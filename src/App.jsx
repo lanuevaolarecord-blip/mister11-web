@@ -11,6 +11,7 @@ import Planificacion from './pages/Planificacion';
 import Tests from './pages/Tests';
 import Partidos from './pages/Partidos';
 import Login from './pages/Login';
+import IAGeneradora from './pages/IAGeneradora';
 import { auth, getRedirectResult } from './firebaseConfig';
 import { onAuthStateChanged } from 'firebase/auth';
 import './App.css';
@@ -20,16 +21,31 @@ function App() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Manejar el resultado del redirect
-    getRedirectResult(auth).catch((error) => {
-      console.error("Error en el redirect de Google", error);
-    });
+    let isMounted = true;
+    let authUnsubscribe;
 
-    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-      setUser(currentUser);
-      setLoading(false);
-    });
-    return () => unsubscribe();
+    const initAuth = async () => {
+      try {
+        // Asegurar de que procesamos el redireccionamiento antes de decidir el estado
+        await getRedirectResult(auth);
+      } catch (error) {
+        console.error("Error en el redirect de Google", error);
+      }
+
+      authUnsubscribe = onAuthStateChanged(auth, (currentUser) => {
+        if (isMounted) {
+          setUser(currentUser);
+          setLoading(false);
+        }
+      });
+    };
+
+    initAuth();
+
+    return () => {
+      isMounted = false;
+      if (authUnsubscribe) authUnsubscribe();
+    };
   }, []);
 
   if (loading) {
@@ -51,7 +67,7 @@ function App() {
           <Route path="planificacion" element={<Planificacion />} />
           <Route path="tests" element={<Tests />} />
           <Route path="partidos" element={<Partidos />} />
-          <Route path="ia-generadora" element={<PlaceholderPage title="IA GENERADORA" />} />
+          <Route path="ia-generadora" element={<IAGeneradora />} />
         </Route>
       </Routes>
     </Router>

@@ -1,0 +1,113 @@
+.login-page {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  background-color: var(--carbon);
+  background-image: linear-gradient(135deg, rgba(27, 58, 45, 0.9) 0%, rgba(17, 17, 17, 0.9) 100%), url('https://images.unsplash.com/photo-1518605368461-1ee12dbce9cc?q=80&w=2070&auto=format&fit=crop');
+  background-size: cover;
+  background-position: center;
+}
+
+.login-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  max-width: 400px;
+  padding: 20px;
+}
+
+.login-logo h1 {
+  font-family: var(--font-title);
+  color: white;
+  font-size: 3rem;
+  margin: 0 0 30px 0;
+  text-shadow: 0 4px 10px rgba(0,0,0,0.5);
+  letter-spacing: 2px;
+}
+
+.login-logo span {
+  color: var(--gold);
+}
+
+.login-card {
+  background: white;
+  width: 100%;
+  padding: 40px 30px;
+  border-radius: 16px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+  text-align: center;
+}
+
+.login-card h2 {
+  font-family: var(--font-title);
+  color: var(--primary);
+  margin: 0 0 10px 0;
+  font-size: 1.5rem;
+}
+
+.login-subtitle {
+  color: #666;
+  font-size: 14px;
+  margin: 0 0 30px 0;
+  line-height: 1.5;
+}
+
+.login-error {
+  background: #FEE2E2;
+  color: #991B1B;
+  padding: 15px;
+  border-radius: 8px;
+  font-size: 13px;
+  margin-bottom: 20px;
+  border: 1px solid #FCA5A5;
+}
+
+.btn-google {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  width: 100%;
+  padding: 12px;
+  background: white;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  font-family: var(--font-body);
+  font-size: 15px;
+  font-weight: bold;
+  color: #444;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.btn-google:hover {
+  background: #f9f9f9;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+  transform: translateY(-1px);
+}
+
+.btn-google:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.google-icon {
+  width: 20px;
+  height: 20px;
+}
+
+.login-footer {
+  margin-top: 30px;
+  border-top: 1px solid #eee;
+  padding-top: 20px;
+}
+
+.login-footer p {
+  font-size: 11px;
+  color: #aaa;
+  margin: 0;
+}

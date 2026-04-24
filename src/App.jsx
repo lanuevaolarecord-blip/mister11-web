@@ -11,7 +11,7 @@ import Planificacion from './pages/Planificacion';
 import Tests from './pages/Tests';
 import Partidos from './pages/Partidos';
 import Login from './pages/Login';
-import { auth } from './firebaseConfig';
+import { auth, getRedirectResult } from './firebaseConfig';
 import { onAuthStateChanged } from 'firebase/auth';
 import './App.css';
 
@@ -20,6 +20,11 @@ function App() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // Manejar el resultado del redirect
+    getRedirectResult(auth).catch((error) => {
+      console.error("Error en el redirect de Google", error);
+    });
+
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       setUser(currentUser);
       setLoading(false);

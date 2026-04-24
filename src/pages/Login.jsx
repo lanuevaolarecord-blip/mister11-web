@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { auth, googleProvider, signInWithPopup } from '../firebaseConfig';
+import { auth, googleProvider, signInWithRedirect } from '../firebaseConfig';
 import './Login.css';
 
 const Login = () => {
@@ -10,17 +10,14 @@ const Login = () => {
     setIsLoading(true);
     setError('');
     try {
-      await signInWithPopup(auth, googleProvider);
-      // App.jsx will automatically redirect due to onAuthStateChanged
+      await signInWithRedirect(auth, googleProvider);
     } catch (err) {
       console.error("Error signing in with Google", err);
-      // Temporary workaround since we have placeholder credentials
       if (err.code === 'auth/invalid-api-key') {
          setError('Configuración de Firebase no válida. Por favor, actualiza firebaseConfig.js con tus credenciales reales.');
       } else {
          setError('Ocurrió un error al iniciar sesión. Inténtalo de nuevo.');
       }
-    } finally {
       setIsLoading(false);
     }
   };

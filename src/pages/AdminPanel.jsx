@@ -195,13 +195,91 @@ const AdminPanel = () => {
         {activeTab === 'ajustes' && (
           <div className="admin-section">
             <header className="section-header">
-              <h2>Ajustes del Entrenador</h2>
-              <p>Configura tu perfil y las preferencias de la aplicación.</p>
+              <h2>Ajustes del Sistema</h2>
+              <p>Personaliza tu experiencia y la identidad visual de tu club.</p>
             </header>
-            {/* ... Ajustes form ... */}
-            <div className="settings-placeholder">
-              <Layers size={48} opacity={0.1} />
-              <p>Configuración de cuenta y club próximamente.</p>
+
+            <div className="settings-grid">
+              {/* CONFIGURACIÓN DE CUENTA */}
+              <div className="settings-card">
+                <div className="card-header-icon">
+                  <Users size={20} />
+                  <h3>Perfil del Entrenador</h3>
+                </div>
+                <div className="settings-form">
+                  <div className="form-group">
+                    <label>Nombre Completo</label>
+                    <input type="text" placeholder="Tu nombre" defaultValue={activeTeam?.entrenador || ''} />
+                  </div>
+                  <div className="form-group">
+                    <label>Especialidad / Cargo</label>
+                    <select className="admin-select-input">
+                      <option>Primer Entrenador</option>
+                      <option>Asistente Técnico</option>
+                      <option>Preparador Físico</option>
+                      <option>Analista</option>
+                    </select>
+                  </div>
+                  <button className="btn-save-settings">Guardar Perfil</button>
+                </div>
+              </div>
+
+              {/* CONFIGURACIÓN DEL CLUB */}
+              <div className="settings-card">
+                <div className="card-header-icon">
+                  <Layers size={20} />
+                  <h3>Identidad del Club</h3>
+                </div>
+                <div className="settings-form">
+                  <div className="form-group">
+                    <label>Nombre del Club</label>
+                    <input type="text" placeholder="Ej. Real Madrid C.F." />
+                  </div>
+                  <div className="form-row-dual">
+                    <div className="form-group">
+                      <label>Color Principal</label>
+                      <input type="color" defaultValue="#1B3A2D" />
+                    </div>
+                    <div className="form-group">
+                      <label>Color Secundario</label>
+                      <input type="color" defaultValue="#4CAF7D" />
+                    </div>
+                  </div>
+                  <div className="form-group">
+                    <label>Escudo del Club (.png / .svg)</label>
+                    <div className="upload-placeholder">
+                      <Download size={20} />
+                      <span>Subir Imagen</span>
+                    </div>
+                  </div>
+                  <button className="btn-save-settings">Actualizar Club</button>
+                </div>
+              </div>
+
+              {/* PREFERENCIAS DE LA APP */}
+              <div className="settings-card">
+                <div className="card-header-icon">
+                  <Settings size={20} />
+                  <h3>Preferencias</h3>
+                </div>
+                <div className="settings-form">
+                  <div className="toggle-group">
+                    <span>Notificaciones de Sesión</span>
+                    <div className="toggle-switch active"></div>
+                  </div>
+                  <div className="toggle-group">
+                    <span>Modo Oscuro Automático</span>
+                    <div className="toggle-switch active"></div>
+                  </div>
+                  <div className="form-group" style={{marginTop: '15px'}}>
+                    <label>Idioma del Sistema</label>
+                    <select className="admin-select-input">
+                      <option>Español (ES)</option>
+                      <option>English (EN)</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         )}

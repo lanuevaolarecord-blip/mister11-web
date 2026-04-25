@@ -28,11 +28,29 @@ const AdminPanel = () => {
   const { matches } = useMatches(activeTeam?.id);
 
   const [newTeam, setNewTeam] = useState({ nombre: '', categoria: '', temporada: '2025-26' });
+  
+  // Estados para Ajustes
+  const [profileName, setProfileName] = useState(activeTeam?.entrenador || '');
+  const [clubName, setClubName] = useState('');
+  const [settings, setSettings] = useState({ notifications: true, darkMode: true });
 
   const handleAddTeam = async () => {
     if (!newTeam.nombre) return;
     await addTeam(newTeam);
     setNewTeam({ nombre: '', categoria: '', temporada: '2025-26' });
+  };
+
+  const handleSaveProfile = () => {
+    alert(`Perfil actualizado: ${profileName}`);
+    // Aquí se integraría con Firebase si fuera necesario persistir el nombre del coach
+  };
+
+  const handleUpdateClub = () => {
+    alert(`Club actualizado: ${clubName}`);
+  };
+
+  const toggleSetting = (key) => {
+    setSettings(prev => ({ ...prev, [key]: !prev[key] }));
   };
 
   const handleExportSeason = () => {
@@ -209,7 +227,12 @@ const AdminPanel = () => {
                 <div className="settings-form">
                   <div className="form-group">
                     <label>Nombre Completo</label>
-                    <input type="text" placeholder="Tu nombre" defaultValue={activeTeam?.entrenador || ''} />
+                    <input 
+                      type="text" 
+                      placeholder="Tu nombre" 
+                      value={profileName} 
+                      onChange={(e) => setProfileName(e.target.value)} 
+                    />
                   </div>
                   <div className="form-group">
                     <label>Especialidad / Cargo</label>
@@ -220,7 +243,7 @@ const AdminPanel = () => {
                       <option>Analista</option>
                     </select>
                   </div>
-                  <button className="btn-save-settings">Guardar Perfil</button>
+                  <button className="btn-save-settings" onClick={handleSaveProfile}>Guardar Perfil</button>
                 </div>
               </div>
 
@@ -233,7 +256,12 @@ const AdminPanel = () => {
                 <div className="settings-form">
                   <div className="form-group">
                     <label>Nombre del Club</label>
-                    <input type="text" placeholder="Ej. Real Madrid C.F." />
+                    <input 
+                      type="text" 
+                      placeholder="Ej. Real Madrid C.F." 
+                      value={clubName} 
+                      onChange={(e) => setClubName(e.target.value)}
+                    />
                   </div>
                   <div className="form-row-dual">
                     <div className="form-group">
@@ -247,12 +275,12 @@ const AdminPanel = () => {
                   </div>
                   <div className="form-group">
                     <label>Escudo del Club (.png / .svg)</label>
-                    <div className="upload-placeholder">
+                    <div className="upload-placeholder" onClick={() => alert('Selector de archivos abierto')}>
                       <Download size={20} />
                       <span>Subir Imagen</span>
                     </div>
                   </div>
-                  <button className="btn-save-settings">Actualizar Club</button>
+                  <button className="btn-save-settings" onClick={handleUpdateClub}>Actualizar Club</button>
                 </div>
               </div>
 
@@ -265,11 +293,17 @@ const AdminPanel = () => {
                 <div className="settings-form">
                   <div className="toggle-group">
                     <span>Notificaciones de Sesión</span>
-                    <div className="toggle-switch active"></div>
+                    <div 
+                      className={`toggle-switch ${settings.notifications ? 'active' : ''}`}
+                      onClick={() => toggleSetting('notifications')}
+                    ></div>
                   </div>
                   <div className="toggle-group">
                     <span>Modo Oscuro Automático</span>
-                    <div className="toggle-switch active"></div>
+                    <div 
+                      className={`toggle-switch ${settings.darkMode ? 'active' : ''}`}
+                      onClick={() => toggleSetting('darkMode')}
+                    ></div>
                   </div>
                   <div className="form-group" style={{marginTop: '15px'}}>
                     <label>Idioma del Sistema</label>

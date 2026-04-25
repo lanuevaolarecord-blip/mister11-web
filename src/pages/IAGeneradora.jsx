@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useExercises } from '../hooks/useExercises';
 import './IAGeneradora.css';
 
 // --- CONFIGURACIÓN ---
@@ -45,7 +46,6 @@ const renderMarkdown = (text) => {
     if (line.startsWith('## ')) return <h2 key={i}>{line.replace('## ', '')}</h2>;
     if (line.startsWith('### ')) return <h3 key={i}>{line.replace('### ', '')}</h3>;
     if (line.startsWith('**') && line.endsWith('**')) return <p key={i}><strong>{line.replace(/\*\*/g, '')}</strong></p>;
-    // Líneas con **negrita:**
     const boldMatch = line.match(/^\*\*(.+?):\*\* (.+)$/);
     if (boldMatch) return <p key={i}><strong>{boldMatch[1]}:</strong> {boldMatch[2]}</p>;
     if (line.startsWith('- ')) return <li key={i}>{line.replace('- ', '')}</li>;
@@ -55,11 +55,11 @@ const renderMarkdown = (text) => {
 };
 
 const IAGeneradora = () => {
+  const { exercises, addExercise } = useExercises();
   const [form, setForm] = useState(INITIAL_FORM);
   const [result, setResult] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [savedExercises, setSavedExercises] = useState([]);
 
   const toggleMaterial = (id) => {
     setForm(prev => ({
@@ -118,22 +118,34 @@ Responde SOLO en español. No incluyas texto fuera del formato indicado.`;
       setResult(text);
     } catch (err) {
       console.error(err);
-      setError(`Error: ${err.message}`);
+      let msg = err.message;
+      if (msg.toLowerCase().includes('quota')) {
+        msg = "Has superado el límite de uso gratuito de la IA (Gemini). Por favor, intenta de nuevo en unos minutos o revisa tu API Key.";
+      }
+      setError(`Error: ${msg}`);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!result) return;
     const firstLine = result.split('\n')[0].replace('## ', '').trim();
-    setSavedExercises(prev => [{ id: Date.now(), title: firstLine, content: result }, ...prev]);
-    alert(`✅ Ejercicio "${firstLine}" guardado en tu biblioteca.`);
+    
+    try {
+      await addExercise({
+        title: firstLine,
+        content: result,
+        parameters: { ...form }
+      });
+      alert(`✅ Ejercicio "${firstLine}" guardado en tu biblioteca.`);
+    } catch (error) {
+      alert("Error al guardar en la biblioteca.");
+    }
   };
 
   return (
     <div className="ia-page">
-      {/* PANEL IZQUIERDO — Formulario */}
       <div className="ia-form-panel">
         <div className="ia-form-header">
           <h1>✨ IA Generadora</h1>
@@ -141,7 +153,6 @@ Responde SOLO en español. No incluyas texto fuera del formato indicado.`;
         </div>
 
         <div className="ia-form-body">
-          {/* Edad */}
           <div className="ia-field">
             <label>Categoría / Edad</label>
             <select value={form.edad} onChange={e => setForm({...form, edad: e.target.value})}>
@@ -150,7 +161,6 @@ Responde SOLO en español. No incluyas texto fuera del formato indicado.`;
             </select>
           </div>
 
-          {/* Número de jugadores */}
           <div className="ia-field">
             <label>Nº de Jugadores: <strong>{form.jugadores}</strong></label>
             <input
@@ -161,7 +171,6 @@ Responde SOLO en español. No incluyas texto fuera del formato indicado.`;
             <div className="slider-labels"><span>4</span><span>22</span></div>
           </div>
 
-          {/* Objetivo */}
           <div className="ia-field">
             <label>Objetivo Principal</label>
             <select value={form.objetivo} onChange={e => setForm({...form, objetivo: e.target.value})}>
@@ -170,7 +179,6 @@ Responde SOLO en español. No incluyas texto fuera del formato indicado.`;
             </select>
           </div>
 
-          {/* Duración */}
           <div className="ia-field">
             <label>Duración</label>
             <div className="chip-group">
@@ -183,7 +191,6 @@ Responde SOLO en español. No incluyas texto fuera del formato indicado.`;
             </div>
           </div>
 
-          {/* Material */}
           <div className="ia-field">
             <label>Material Disponible</label>
             <div className="chip-group">
@@ -196,7 +203,6 @@ Responde SOLO en español. No incluyas texto fuera del formato indicado.`;
             </div>
           </div>
 
-          {/* Espacio */}
           <div className="ia-field">
             <label>Espacio de Trabajo</label>
             <div className="chip-group">
@@ -209,7 +215,6 @@ Responde SOLO en español. No incluyas texto fuera del formato indicado.`;
             </div>
           </div>
 
-          {/* Intensidad */}
           <div className="ia-field">
             <label>Intensidad</label>
             <div className="chip-group">
@@ -222,7 +227,6 @@ Responde SOLO en español. No incluyas texto fuera del formato indicado.`;
             </div>
           </div>
 
-          {/* Observaciones */}
           <div className="ia-field">
             <label>Observaciones (opcional)</label>
             <textarea
@@ -245,13 +249,12 @@ Responde SOLO en español. No incluyas texto fuera del formato indicado.`;
         </div>
       </div>
 
-      {/* PANEL DERECHO — Resultado */}
       <div className="ia-result-panel">
         {!result && !loading && (
           <div className="ia-empty-state">
             <div className="empty-icon">✨</div>
             <h2>Tu ejercicio aparecerá aquí</h2>
-            <p>Configura los parámetros del lado izquierdo y pulsa "Generar Ejercicio" para que la IA cree un entrenamiento personalizado para tu equipo.</p>
+            <p>Configura los parámetros del lado izquierdo y pulsa "Generar Ejercicio" para que la IA cree un entrenamiento personalizado.</p>
           </div>
         )}
 
@@ -280,12 +283,11 @@ Responde SOLO en español. No incluyas texto fuera del formato indicado.`;
           </div>
         )}
 
-        {/* Biblioteca de ejercicios guardados */}
-        {savedExercises.length > 0 && (
+        {exercises.length > 0 && (
           <div className="saved-exercises">
-            <h3>📚 Biblioteca de Ejercicios Guardados</h3>
+            <h3>📚 Biblioteca en la Nube ({exercises.length})</h3>
             <div className="saved-list">
-              {savedExercises.map(ex => (
+              {exercises.map(ex => (
                 <div key={ex.id} className="saved-item" onClick={() => setResult(ex.content)}>
                   <span>📋 {ex.title}</span>
                   <span className="saved-hint">Ver →</span>

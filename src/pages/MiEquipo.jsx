@@ -1,33 +1,24 @@
 import React, { useState } from 'react';
+import { usePlayers } from '../hooks/usePlayers';
 import './MiEquipo.css';
 
 const POSITIONS = ['TODOS', 'POR', 'DEF', 'LTD', 'LTI', 'MCD', 'MC', 'MCO', 'EXT', 'DEL'];
 
-const INITIAL_PLAYERS = [
-  { id: 1, name: 'Hugo García', number: 1, position: 'POR', age: 12, photo: null, category: 'Alevín A', weight: 45, height: 152, foot: 'Derecho', injuries: false },
-  { id: 2, name: 'Leo Messi', number: 10, position: 'DEL', age: 12, photo: null, category: 'Alevín A', weight: 42, height: 148, foot: 'Izquierdo', injuries: false },
-  { id: 3, name: 'Sergio Ramos', number: 4, position: 'DEF', age: 12, photo: null, category: 'Alevín A', weight: 48, height: 155, foot: 'Derecho', injuries: true, injuryType: 'Esguince tobillo' },
-  { id: 4, name: 'Andrés Iniesta', number: 8, position: 'MC', age: 12, photo: null, category: 'Alevín A', weight: 40, height: 145, foot: 'Derecho', injuries: false },
-  { id: 5, name: 'Dani Carvajal', number: 2, position: 'LTD', age: 11, photo: null, category: 'Alevín A', weight: 43, height: 150, foot: 'Derecho', injuries: false },
-  { id: 6, name: 'Jordi Alba', number: 3, position: 'LTI', age: 12, photo: null, category: 'Alevín A', weight: 39, height: 142, foot: 'Izquierdo', injuries: false },
-  { id: 7, name: 'Busquets', number: 5, position: 'MCD', age: 12, photo: null, category: 'Alevín A', weight: 46, height: 160, foot: 'Derecho', injuries: false },
-  { id: 8, name: 'Xavi', number: 6, position: 'MC', age: 12, photo: null, category: 'Alevín A', weight: 41, height: 147, foot: 'Derecho', injuries: false },
-  { id: 9, name: 'Pedri', number: 16, position: 'MCO', age: 12, photo: null, category: 'Alevín A', weight: 40, height: 150, foot: 'Derecho', injuries: false },
-  { id: 10, name: 'Lamine Yamal', number: 19, position: 'EXT', age: 11, photo: null, category: 'Alevín A', weight: 44, height: 158, foot: 'Izquierdo', injuries: false },
-  { id: 11, name: 'Gavi', number: 9, position: 'MC', age: 11, photo: null, category: 'Alevín A', weight: 42, height: 149, foot: 'Derecho', injuries: false },
-  { id: 12, name: 'Casillas', number: 13, position: 'POR', age: 12, photo: null, category: 'Alevín A', weight: 47, height: 154, foot: 'Derecho', injuries: false },
-  { id: 13, name: 'Puyol', number: 5, position: 'DEF', age: 12, photo: null, category: 'Alevín A', weight: 49, height: 152, foot: 'Derecho', injuries: false },
-  { id: 14, name: 'Piqué', number: 3, position: 'DEF', age: 12, photo: null, category: 'Alevín A', weight: 50, height: 165, foot: 'Derecho', injuries: false },
-  { id: 15, name: 'Villa', number: 7, position: 'DEL', age: 12, photo: null, category: 'Alevín A', weight: 43, height: 148, foot: 'Derecho', injuries: false },
-  { id: 16, name: 'Ferran Torres', number: 11, position: 'EXT', age: 12, photo: null, category: 'Alevín A', weight: 45, height: 155, foot: 'Derecho', injuries: false },
-];
-
 const emptyPlayer = {
-  id: null, name: '', number: '', position: 'MC', age: '', category: 'Alevín A', weight: '', height: '', foot: 'Derecho', injuries: false
+  name: '', 
+  number: '', 
+  position: 'MC', 
+  age: '', 
+  category: 'Alevín A', 
+  weight: '', 
+  height: '', 
+  foot: 'Derecho', 
+  injuries: false,
+  injuryType: ''
 };
 
 const MiEquipo = () => {
-  const [players, setPlayers] = useState(INITIAL_PLAYERS);
+  const { players, loading, addPlayer, updatePlayer, removePlayer } = usePlayers();
   const [filter, setFilter] = useState('TODOS');
   const [selectedPlayer, setSelectedPlayer] = useState(null);
   const [activeTab, setActiveTab] = useState('GENERAL');
@@ -35,17 +26,17 @@ const MiEquipo = () => {
   // Modal / Form state
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editData, setEditData] = useState(emptyPlayer);
+  const [isSaving, setIsSaving] = useState(false);
 
   const filteredPlayers = filter === 'TODOS' 
     ? players 
     : players.filter(p => p.position === filter);
 
-  const toggleInjuries = (id) => {
-    setPlayers(prev => prev.map(p => 
-      p.id === id ? { ...p, injuries: !p.injuries } : p
-    ));
-    if (selectedPlayer?.id === id) {
-      setSelectedPlayer(prev => ({ ...prev, injuries: !prev.injuries }));
+  const toggleInjuries = async (player) => {
+    try {
+      await updatePlayer(player.id, { injuries: !player.injuries });
+    } catch (error) {
+      alert("Error al actualizar estado médico.");
     }
   };
 
@@ -56,40 +47,52 @@ const MiEquipo = () => {
 
   // -- CRUD Actions --
   const handleOpenForm = (player = null) => {
-    setEditData(player ? { ...player } : { ...emptyPlayer, id: Date.now() });
+    if (player) {
+      setEditData({ ...player });
+    } else {
+      setEditData({ ...emptyPlayer });
+    }
     setIsFormOpen(true);
   };
 
-  const handleSavePlayer = () => {
+  const handleSavePlayer = async () => {
     if(!editData.name || !editData.number) {
       alert("El nombre y el dorsal son obligatorios.");
       return;
     }
-    
-    setPlayers(prev => {
-      const exists = prev.find(p => p.id === editData.id);
-      if (exists) {
-        return prev.map(p => p.id === editData.id ? editData : p);
-      }
-      return [...prev, editData];
-    });
 
-    if (selectedPlayer?.id === editData.id) {
-      setSelectedPlayer(editData);
-    }
-    
-    setIsFormOpen(false);
-  };
-
-  const handleDeletePlayer = (id) => {
-    if (window.confirm("¿Seguro que deseas eliminar a este jugador?")) {
-      setPlayers(prev => prev.filter(p => p.id !== id));
-      if (selectedPlayer?.id === id) {
-        setSelectedPlayer(null);
+    setIsSaving(true);
+    try {
+      if (editData.id) {
+        await updatePlayer(editData.id, editData);
+      } else {
+        await addPlayer(editData);
       }
       setIsFormOpen(false);
+    } catch (error) {
+      alert("Error al guardar jugador.");
+    } finally {
+      setIsSaving(false);
     }
   };
+
+  const handleDeletePlayer = async (id) => {
+    if (window.confirm("¿Seguro que deseas eliminar a este jugador?")) {
+      try {
+        await removePlayer(id);
+        if (selectedPlayer?.id === id) {
+          setSelectedPlayer(null);
+        }
+        setIsFormOpen(false);
+      } catch (error) {
+        alert("Error al eliminar jugador.");
+      }
+    }
+  };
+
+  if (loading) {
+    return <div className="loading-state">Cargando plantilla...</div>;
+  }
 
   return (
     <div className="equipo-page">
@@ -111,24 +114,33 @@ const MiEquipo = () => {
         </div>
       </header>
 
-      <div className="players-grid">
-        {filteredPlayers.map(player => (
-          <div key={player.id} className="player-card" onClick={() => setSelectedPlayer(player)}>
-            <div className="player-avatar">
-              {player.photo ? <img src={player.photo} alt={player.name} /> : <span>{getInitials(player.name)}</span>}
-              <div className="player-number">{player.number}</div>
-            </div>
-            <div className="player-info">
-              <h3>{player.name}</h3>
-              <div className="player-meta">
-                <span className="pos-badge">{player.position}</span>
-                <span className="age-info">{player.age} años</span>
+      {players.length === 0 ? (
+        <div className="empty-team-state">
+          <div className="empty-icon">⚽</div>
+          <h2>Tu plantilla está vacía</h2>
+          <p>Añade a tus primeros jugadores para empezar a gestionar tu equipo.</p>
+          <button className="btn-primary-team" onClick={() => handleOpenForm(null)}>+ Añadir Jugador</button>
+        </div>
+      ) : (
+        <div className="players-grid">
+          {filteredPlayers.map(player => (
+            <div key={player.id} className="player-card" onClick={() => setSelectedPlayer(player)}>
+              <div className="player-avatar">
+                {player.photo ? <img src={player.photo} alt={player.name} /> : <span>{getInitials(player.name)}</span>}
+                <div className="player-number">{player.number}</div>
               </div>
+              <div className="player-info">
+                <h3>{player.name}</h3>
+                <div className="player-meta">
+                  <span className="pos-badge">{player.position}</span>
+                  <span className="age-info">{player.age} años</span>
+                </div>
+              </div>
+              {player.injuries && <div className="injury-indicator" title="Lesionado">🚑</div>}
             </div>
-            {player.injuries && <div className="injury-indicator" title="Lesionado">🚑</div>}
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
 
       {/* FAB - Añadir Jugador */}
       <button className="fab-add" onClick={() => handleOpenForm(null)}>
@@ -143,7 +155,7 @@ const MiEquipo = () => {
         <div className="modal-overlay" onClick={() => setIsFormOpen(false)}>
           <div className="modal-content" onClick={e => e.stopPropagation()}>
             <div className="modal-header">
-              <h2>{editData.id && players.find(p=>p.id === editData.id) ? 'Editar Jugador' : 'Nuevo Jugador'}</h2>
+              <h2>{editData.id ? 'Editar Jugador' : 'Nuevo Jugador'}</h2>
               <button className="btn-close" onClick={() => setIsFormOpen(false)}>✕</button>
             </div>
             <div className="modal-body">
@@ -187,12 +199,14 @@ const MiEquipo = () => {
               </div>
             </div>
             <div className="modal-footer">
-              {editData.id && players.find(p=>p.id === editData.id) && (
+              {editData.id && (
                 <button className="btn-text-error" onClick={() => handleDeletePlayer(editData.id)}>Eliminar Jugador</button>
               )}
               <div className="footer-actions">
                 <button className="btn-outline-team" onClick={() => setIsFormOpen(false)}>Cancelar</button>
-                <button className="btn-primary-team" onClick={handleSavePlayer}>Guardar</button>
+                <button className="btn-primary-team" onClick={handleSavePlayer} disabled={isSaving}>
+                  {isSaving ? 'Guardando...' : 'Guardar'}
+                </button>
               </div>
             </div>
           </div>
@@ -276,7 +290,7 @@ const MiEquipo = () => {
                   <input 
                     type="checkbox" 
                     checked={selectedPlayer.injuries} 
-                    onChange={() => toggleInjuries(selectedPlayer.id)}
+                    onChange={() => toggleInjuries(selectedPlayer)}
                   />
                 </div>
                 {selectedPlayer.injuries && (
@@ -285,17 +299,12 @@ const MiEquipo = () => {
                     <p>{selectedPlayer.injuryType || 'No especificada'}</p>
                   </div>
                 )}
-                <div className="medical-history">
-                  <h4>Historial médico</h4>
-                  <p className="empty-text">No hay registros previos.</p>
-                </div>
               </div>
             )}
 
             {activeTab === 'HISTORIAL' && (
               <div className="tab-pane">
                 <div className="notes-list">
-                  <button className="btn-outline-gold">+ Añadir nota</button>
                   <p className="empty-text">Sin notas históricas.</p>
                 </div>
               </div>

@@ -9,6 +9,7 @@ import {
   Activity, 
   Trophy, 
   Sparkles,
+  ShieldCheck,
   LogOut
 } from 'lucide-react';
 import { auth, signOut } from '../firebaseConfig';
@@ -23,6 +24,7 @@ const Sidebar = () => {
     { path: '/tests', label: 'TESTS', icon: Activity },
     { path: '/partidos', label: 'PARTIDOS', icon: Trophy },
     { path: '/ia-generadora', label: 'IA GENERADORA', icon: Sparkles },
+    { path: '/admin', label: 'ADMINISTRACIÓN', icon: ShieldCheck },
   ];
 
   return (
@@ -62,12 +64,8 @@ const Sidebar = () => {
 
       <div className="user-profile" style={{ marginTop: 'auto', display: 'flex', flexDirection: 'column', gap: '10px' }}>
         <div style={{display: 'flex', alignItems: 'center', gap: '10px'}}>
-          <div className="user-avatar">
-            {auth.currentUser?.photoURL ? (
-              <img src={auth.currentUser.photoURL} alt="Avatar" style={{width:'100%', height:'100%', borderRadius:'50%', objectFit:'cover'}} />
-            ) : (
-              auth.currentUser?.displayName?.charAt(0) || 'M'
-            )}
+          <div className="user-avatar" style={{background: 'var(--accent)', color: 'white', fontWeight: 'bold', fontSize: '14px', display:'flex', alignItems:'center', justifyContent:'center', borderRadius:'50%', width:'36px', height:'36px', flexShrink:0}}>
+            {auth.currentUser?.displayName?.charAt(0)?.toUpperCase() || 'M'}
           </div>
           <div className="user-info">
             <span className="user-name">{auth.currentUser?.displayName?.split(' ')[0] || 'Míster'}</span>

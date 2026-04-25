@@ -162,7 +162,7 @@
   background-color: #2D5A27;
   position: relative;
   overflow: hidden;
-  min-height: 0; /* critical for flex children */
+  min-height: 0;
 }
 
 .canvas-container-relative {
@@ -182,7 +182,6 @@
   color: var(--white);
 }
 
-/* Material panel styles */
 .material-category {
   border-bottom: 1px solid rgba(255,255,255,0.05);
 }
@@ -239,13 +238,102 @@
   border-width: 2px;
   background: var(--primary);
 }
-/* appended  
-.formation-btn { display:block; width:100%%; padding:6px 10px; margin-bottom:4px; background:#1A1A2A; color:#CCC; border:1px solid rgba(255,255,255,0.1); border-radius:4px; text-align:left; cursor:pointer; font-size:13px; transition:all 0.15s; }  
-.formation-btn:hover { background:#252535; color:#FFF; }  
-.formation-btn.active { background:rgba(76,175,125,0.2); border-color:#4CAF7D; color:#4CAF7D; }  
-.timeline-chips { flex:1; display:flex; gap:5px; overflow-x:auto; padding:0 10px; align-items:center; }  
-.frame-chip { min-width:30px; height:30px; background:#252535; border-radius:4px; cursor:pointer; display:flex; align-items:center; justify-content:center; font-size:11px; color:#FFF; border:1px solid transparent; transition:all 0.15s; flex-shrink:0; }  
-.frame-chip:hover { border-color:#4CAF7D; }  
-.frame-chip.active { background:#4CAF7D; color:#0D2A1A; font-weight:bold; border-color:#4CAF7D; }  
-.placing-hint { position:absolute; top:10px; left:50%%; transform:translateX(-50%%); background:rgba(0,0,0,0.75); color:#FFD700; padding:8px 16px; border-radius:8px; font-size:13px; display:flex; align-items:center; gap:10px; z-index:100; border:1px solid #FFD700; }  
-.placing-hint button { background:transparent; border:none; color:#FFF; cursor:pointer; font-size:16px; } 
+
+/* Estilos de botones de formación y timeline */
+.formation-btn { 
+  display: block; 
+  width: 100%; 
+  padding: 6px 10px; 
+  margin-bottom: 4px; 
+  background: #1A1A2A; 
+  color: #CCC; 
+  border: 1px solid rgba(255,255,255,0.1); 
+  border-radius: 4px; 
+  text-align: left; 
+  cursor: pointer; 
+  font-size: 13px; 
+  transition: all 0.15s; 
+}  
+
+.formation-btn:hover { background: #252535; color: #FFF; }  
+
+.formation-btn.active { 
+  background: rgba(76,175,125,0.2); 
+  border-color: #4CAF7D; 
+  color: #4CAF7D; 
+}  
+
+.timeline-chips { 
+  flex: 1; 
+  display: flex; 
+  gap: 5px; 
+  overflow-x: auto; 
+  padding: 0 10px; 
+  align-items: center; 
+}  
+
+.frame-chip { 
+  min-width: 30px; 
+  height: 30px; 
+  background: #252535; 
+  border-radius: 4px; 
+  cursor: pointer; 
+  display: flex; 
+  align-items: center; 
+  justify-content: center; 
+  font-size: 11px; 
+  color: #FFF; 
+  border: 1px solid transparent; 
+  transition: all 0.15s; 
+  flex-shrink: 0; 
+}  
+
+.frame-chip:hover { border-color: #4CAF7D; }  
+
+.frame-chip.active { 
+  background: #4CAF7D; 
+  color: #0D2A1A; 
+  font-weight: bold; 
+  border-color: #4CAF7D; 
+}  
+
+.placing-hint { 
+  position: absolute; 
+  top: 10px; 
+  left: 50%; 
+  transform: translateX(-50%); 
+  background: rgba(0,0,0,0.75); 
+  color: #FFD700; 
+  padding: 8px 16px; 
+  border-radius: 8px; 
+  font-size: 13px; 
+  display: flex; 
+  align-items: center; 
+  gap: 10px; 
+  z-index: 100; 
+  border: 1px solid #FFD700; 
+}  
+
+.placing-hint button { background: transparent; border: none; color: #FFF; cursor: pointer; font-size: 16px; }
+
+.btn-add-mini {
+  background: var(--accent);
+  color: var(--primary);
+  border: none;
+  width: 20px;
+  height: 20px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  cursor: pointer;
+  font-size: 14px;
+  flex-shrink: 0;
+  transition: transform 0.1s;
+}
+
+.btn-add-mini:hover {
+  transform: scale(1.1);
+  background: var(--gold);
+}

@@ -1,0 +1,213 @@
+import React, { useState } from 'react';
+import { useTeams } from '../hooks/useTeams';
+import { useExercises } from '../hooks/useExercises';
+import { usePlayers } from '../hooks/usePlayers';
+import { useSessions } from '../hooks/useSessions';
+import { useMatches } from '../hooks/useMatches';
+import { 
+  Users, 
+  Dumbbell, 
+  FileText, 
+  Settings, 
+  Plus, 
+  Trash2, 
+  Download,
+  Calendar,
+  Layers,
+  CheckCircle
+} from 'lucide-react';
+import { generateSeasonReport, generateMatchConvocation, generateSessionPDF } from '../utils/pdfGenerator';
+import './AdminPanel.css';
+
+const AdminPanel = () => {
+  const [activeTab, setActiveTab] = useState('equipos');
+  const { teams, activeTeam, addTeam, deleteTeam, selectTeam } = useTeams();
+  const { exercises, removeExercise } = useExercises();
+  const { players } = usePlayers(activeTeam?.id);
+  const { sessions } = useSessions(activeTeam?.id);
+  const { matches } = useMatches(activeTeam?.id);
+
+  const [newTeam, setNewTeam] = useState({ nombre: '', categoria: '', temporada: '2025-26' });
+
+  const handleAddTeam = async () => {
+    if (!newTeam.nombre) return;
+    await addTeam(newTeam);
+    setNewTeam({ nombre: '', categoria: '', temporada: '2025-26' });
+  };
+
+  const handleExportSeason = () => {
+    if (!activeTeam) return;
+    generateSeasonReport(activeTeam, players, matches, sessions);
+  };
+
+  return (
+    <div className="admin-container">
+      <div className="admin-sidebar">
+        <button 
+          className={`admin-nav-item ${activeTab === 'equipos' ? 'active' : ''}`}
+          onClick={() => setActiveTab('equipos')}
+        >
+          <Users size={20} /> <span>Equipos</span>
+        </button>
+        <button 
+          className={`admin-nav-item ${activeTab === 'biblioteca' ? 'active' : ''}`}
+          onClick={() => setActiveTab('biblioteca')}
+        >
+          <Dumbbell size={20} /> <span>Ejercicios IA</span>
+        </button>
+        <button 
+          className={`admin-nav-item ${activeTab === 'exportar' ? 'active' : ''}`}
+          onClick={() => setActiveTab('exportar')}
+        >
+          <FileText size={20} /> <span>Informes PDF</span>
+        </button>
+        <button 
+          className={`admin-nav-item ${activeTab === 'ajustes' ? 'active' : ''}`}
+          onClick={() => setActiveTab('ajustes')}
+        >
+          <Settings size={20} /> <span>Ajustes</span>
+        </button>
+      </div>
+
+      <div className="admin-content">
+        {activeTab === 'equipos' && (
+          <div className="admin-section">
+            <header className="section-header">
+              <h2>Gestión de Equipos</h2>
+              <p>Crea y gestiona tus plantillas para cada temporada.</p>
+            </header>
+
+            <div className="add-team-card">
+              <h3>Nuevo Equipo</h3>
+              <div className="form-row">
+                <input 
+                  type="text" 
+                  placeholder="Nombre (ej. Infantil A)" 
+                  value={newTeam.nombre}
+                  onChange={e => setNewTeam({...newTeam, nombre: e.target.value})}
+                />
+                <input 
+                  type="text" 
+                  placeholder="Categoría" 
+                  value={newTeam.categoria}
+                  onChange={e => setNewTeam({...newTeam, categoria: e.target.value})}
+                />
+                <button className="btn-primary" onClick={handleAddTeam}><Plus size={18}/> Crear</button>
+              </div>
+            </div>
+
+            <div className="teams-grid">
+              {teams.map(team => (
+                <div key={team.id} className={`team-admin-card ${activeTeam?.id === team.id ? 'active' : ''}`}>
+                  <div className="team-badge" style={{background: team.colorLocal || 'var(--accent)'}}>
+                    {team.nombre.charAt(0)}
+                  </div>
+                  <div className="team-info">
+                    <h4>{team.nombre}</h4>
+                    <span>{team.categoria} | {team.temporada}</span>
+                  </div>
+                  <div className="team-actions">
+                    <button className="btn-select" onClick={() => selectTeam(team)}>
+                      {activeTeam?.id === team.id ? <CheckCircle size={18}/> : 'Seleccionar'}
+                    </button>
+                    <button className="btn-delete-icon" onClick={() => deleteTeam(team.id)}>
+                      <Trash2 size={16} />
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'biblioteca' && (
+          <div className="admin-section">
+            <header className="section-header">
+              <h2>Biblioteca de Ejercicios</h2>
+              <p>Tus tácticas generadas por la IA guardadas en la nube.</p>
+            </header>
+            
+            <div className="exercise-list-admin">
+              {exercises.length === 0 && <p className="empty-msg">No hay ejercicios guardados aún.</p>}
+              {exercises.map(ex => (
+                <div key={ex.id} className="exercise-row">
+                  <div className="ex-info">
+                    <strong>{ex.titulo || ex.nombre || 'Ejercicio sin nombre'}</strong>
+                    <span>{ex.objetivo} | {ex.categoria}</span>
+                  </div>
+                  <div className="ex-actions">
+                    <button className="btn-delete-icon" onClick={() => removeExercise(ex.id)}>
+                      <Trash2 size={16} />
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'exportar' && (
+          <div className="admin-section">
+            <header className="section-header">
+              <h2>Centro de Exportación</h2>
+              <p>Genera informes profesionales en PDF para tu club o cuerpo técnico.</p>
+            </header>
+
+            <div className="export-grid">
+              <div className="export-card">
+                <FileText className="export-icon" size={32} />
+                <h3>Informe de Temporada</h3>
+                <p>Estadísticas completas, minutos de jugadores y resumen de tests.</p>
+                <button className="btn-export" onClick={handleExportSeason}>
+                  <Download size={18} /> Generar PDF
+                </button>
+              </div>
+
+              <div className="export-card">
+                <Users className="export-icon" size={32} />
+                <h3>Lista de Convocados</h3>
+                <p>Selecciona un partido próximo para generar la hoja de convocatoria.</p>
+                <select className="admin-select-export">
+                  <option>Seleccionar Partido...</option>
+                  {matches.map(m => <option key={m.id}>{m.rival} ({m.fecha})</option>)}
+                </select>
+                <button className="btn-export outline">
+                  <Download size={18} /> Exportar
+                </button>
+              </div>
+
+              <div className="export-card">
+                <Calendar className="export-icon" size={32} />
+                <h3>Ficha de Sesión</h3>
+                <p>Exporta el detalle de una sesión de entrenamiento específica.</p>
+                <select className="admin-select-export">
+                  <option>Seleccionar Sesión...</option>
+                  {sessions.map(s => <option key={s.id}>{s.titulo} ({s.fecha})</option>)}
+                </select>
+                <button className="btn-export outline">
+                  <Download size={18} /> Exportar
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'ajustes' && (
+          <div className="admin-section">
+            <header className="section-header">
+              <h2>Ajustes del Entrenador</h2>
+              <p>Configura tu perfil y las preferencias de la aplicación.</p>
+            </header>
+            {/* ... Ajustes form ... */}
+            <div className="settings-placeholder">
+              <Layers size={48} opacity={0.1} />
+              <p>Configuración de cuenta y club próximamente.</p>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+export default AdminPanel;

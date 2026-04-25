@@ -1,76 +1,58 @@
-import React, { useState, useEffect } from 'react';
-import { BrowserRouter as Router, Routes, Route, useNavigate } from 'react-router-dom';
+import React from 'react';
+import { Routes, Route, Navigate } from 'react-router-dom';
+import { useAuth } from './context/AuthContext';
 import Layout from './components/Layout';
-import Sidebar from './components/Sidebar';
 import Dashboard from './pages/Dashboard';
-import PlaceholderPage from './pages/PlaceholderPage';
 import PizarraTactica from './pages/PizarraTactica';
 import MiEquipo from './pages/MiEquipo';
 import Sesiones from './pages/Sesiones';
 import Planificacion from './pages/Planificacion';
 import Tests from './pages/Tests';
 import Partidos from './pages/Partidos';
-import Login from './pages/Login';
 import IAGeneradora from './pages/IAGeneradora';
-import { auth, getRedirectResult } from './firebaseConfig';
-import { onAuthStateChanged } from 'firebase/auth';
+import AdminPanel from './pages/AdminPanel';
+import Login from './pages/Login';
 import './App.css';
 
 function App() {
-  const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const { user, loading } = useAuth();
 
-  useEffect(() => {
-    let isMounted = true;
-    let authUnsubscribe;
-
-    const initAuth = async () => {
-      try {
-        // Asegurar de que procesamos el redireccionamiento antes de decidir el estado
-        await getRedirectResult(auth);
-      } catch (error) {
-        console.error("Error en el redirect de Google", error);
-      }
-
-      authUnsubscribe = onAuthStateChanged(auth, (currentUser) => {
-        if (isMounted) {
-          setUser(currentUser);
-          setLoading(false);
-        }
-      });
-    };
-
-    initAuth();
-
-    return () => {
-      isMounted = false;
-      if (authUnsubscribe) authUnsubscribe();
-    };
-  }, []);
-
+  // 4. Mientras onAuthStateChanged no ha respondido todavía, muestra pantalla de carga
   if (loading) {
-    return <div style={{display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', backgroundColor: 'var(--carbon)', color: 'white'}}>Cargando Míster11...</div>;
+    return (
+      <div className="global-loader">
+        <div className="loader-content">
+          <div className="loader-logo">MÍSTER<span>11</span></div>
+          <div className="spinner"></div>
+          <p>Cargando...</p>
+        </div>
+      </div>
+    );
   }
 
-  if (!user) {
-    return <Login />;
-  }
-
+  // 5. Lógica de autenticación: Si devuelve un usuario, muestra la app; si devuelve null, muestra login
   return (
-    <Router>
-      <Routes>
-        <Route path="/" element={<Layout />}>
-          <Route index element={<Dashboard />} />
-          <Route path="pizarra" element={<PizarraTactica />} />
-          <Route path="equipo" element={<MiEquipo />} />
-          <Route path="sesiones" element={<Sesiones />} />
-          <Route path="planificacion" element={<Planificacion />} />
-          <Route path="tests" element={<Tests />} />
-          <Route path="partidos" element={<Partidos />} />
-          <Route path="ia-generadora" element={<IAGeneradora />} />
-        </Route>
-      </Routes>
-    </Router>
+    <Routes>
+      <Route 
+        path="/login" 
+        element={user ? <Navigate to="/" replace /> : <Login />} 
+      />
+
+      <Route 
+        path="/*" 
+        element={user ? <Layout /> : <Navigate to="/login" replace />}
+      >
+        <Route index element={<Dashboard />} />
+        <Route path="pizarra" element={<PizarraTactica />} />
+        <Route path="equipo" element={<MiEquipo />} />
+        <Route path="sesiones" element={<Sesiones />} />
+        <Route path="planificacion" element={<Planificacion />} />
+        <Route path="tests" element={<Tests />} />
+        <Route path="partidos" element={<Partidos />} />
+        <Route path="ia-generadora" element={<IAGeneradora />} />
+        <Route path="admin" element={<AdminPanel />} />
+      </Route>
+    </Routes>
   );
 }
 

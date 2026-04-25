@@ -1,8 +1,11 @@
 import React from 'react';
 import { useLocation } from 'react-router-dom';
+import { useTeams } from '../hooks/useTeams';
+import { ChevronDown } from 'lucide-react';
 
 const Header = () => {
   const location = useLocation();
+  const { teams, activeTeam, selectTeam } = useTeams();
   
   const getPageTitle = () => {
     switch(location.pathname) {
@@ -14,13 +17,34 @@ const Header = () => {
       case '/tests': return 'TESTS';
       case '/partidos': return 'PARTIDOS';
       case '/ia-generadora': return 'IA GENERADORA';
+      case '/admin': return 'ADMINISTRACIÓN';
       default: return 'MISTER 11';
     }
   };
 
   return (
     <header className="header">
-      <h1>{getPageTitle()}</h1>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
+        <h1>{getPageTitle()}</h1>
+        
+        {teams.length > 0 && (
+          <div className="team-switcher-header">
+            <span className="team-indicator" style={{background: activeTeam?.colorLocal || 'var(--accent)'}} />
+            <select 
+              value={activeTeam?.id || ''} 
+              onChange={(e) => {
+                const team = teams.find(t => t.id === e.target.value);
+                if (team) selectTeam(team);
+              }}
+            >
+              {teams.map(t => (
+                <option key={t.id} value={t.id}>{t.nombre}</option>
+              ))}
+            </select>
+            <ChevronDown size={14} className="switcher-arrow" />
+          </div>
+        )}
+      </div>
       
       <div className="header-actions">
         <button className="icon-btn" title="Notificaciones">

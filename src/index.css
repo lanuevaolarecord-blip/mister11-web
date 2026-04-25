@@ -247,3 +247,42 @@ a {
 ::-webkit-scrollbar-thumb:hover {
   background: var(--primary);
 }
+
+/* Team Switcher Header */
+.team-switcher-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: #f0f0f0;
+  padding: 5px 12px;
+  border-radius: 20px;
+  border: 1px solid #ddd;
+  position: relative;
+}
+
+.team-indicator {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.team-switcher-header select {
+  border: none;
+  background: transparent;
+  font-family: var(--font-body);
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--primary);
+  outline: none;
+  cursor: pointer;
+  appearance: none;
+  padding-right: 20px;
+}
+
+.switcher-arrow {
+  position: absolute;
+  right: 10px;
+  pointer-events: none;
+  color: #666;
+}

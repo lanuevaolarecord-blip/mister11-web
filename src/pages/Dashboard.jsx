@@ -1,19 +1,30 @@
 import React from 'react';
+import { usePlayers } from '../hooks/usePlayers';
+import { useSessions } from '../hooks/useSessions';
+import { useMatches } from '../hooks/useMatches';
+import { useNavigate } from 'react-router-dom';
 import './Dashboard.css';
 
 const Dashboard = () => {
+  const navigate = useNavigate();
+  const { players } = usePlayers();
+  const { sessions } = useSessions();
+  const { matches } = useMatches();
+
+  const nextMatch = matches.find(m => m.status === 'Pendiente') || null;
+  const lastMatches = matches.filter(m => m.status === 'Terminado').slice(-3);
+
   const stats = [
-    { label: 'Jugadores', value: '16', icon: '👥', color: '#4CAF7D' },
-    { label: 'Sesiones/Semana', value: '4', icon: '📋', color: '#D4A843' },
-    { label: 'Próximo Partido', value: 'Sáb', icon: '⚽', color: '#1B3A2D' },
-    { label: 'Tests Pendientes', value: '2', icon: '⏱', color: '#EF4444' },
+    { label: 'Jugadores', value: players.length, icon: '👥', color: '#4CAF7D' },
+    { label: 'Sesiones', value: sessions.length, icon: '📋', color: '#D4A843' },
+    { label: 'Próximo Rival', value: nextMatch ? nextMatch.rival.split(' ')[0] : 'None', icon: '⚽', color: '#1B3A2D' },
+    { label: 'Partidos', value: matches.length, icon: '🏟️', color: '#3B82F6' },
   ];
 
-  const upcomingSessions = [
-    { id: 1, title: 'Técnica Individual', date: 'Hoy, 17:30', cat: 'Técnica', intensity: 'Media' },
-    { id: 2, title: 'Presión tras pérdida', date: 'Mañana, 18:00', cat: 'Táctica', intensity: 'Alta' },
-    { id: 3, title: 'Recuperación Activa', date: 'Jueves, 17:00', cat: 'Física', intensity: 'Baja' },
-  ];
+  const upcomingSessions = sessions
+    .filter(s => new Date(s.date) >= new Date().setHours(0,0,0,0))
+    .sort((a, b) => new Date(a.date) - new Date(b.date))
+    .slice(0, 3);
 
   const weeklyLoad = [
     { day: 'Lun', val: 40 },
@@ -33,8 +44,8 @@ const Dashboard = () => {
           <p>Esta es la actividad de tu equipo para esta semana.</p>
         </div>
         <div className="current-date">
-          <span>Abril 2026</span>
-          <strong>Semana 17</strong>
+          <span>{new Date().toLocaleDateString('es-ES', { month: 'long', year: 'numeric' })}</span>
+          <strong>Hoy</strong>
         </div>
       </header>
 
@@ -49,7 +60,6 @@ const Dashboard = () => {
               <span className="stat-label-dash">{s.label}</span>
               <span className="stat-value-dash">{s.value}</span>
             </div>
-            <div className="stat-trend-dash">↑ 12%</div>
           </div>
         ))}
       </div>
@@ -58,10 +68,9 @@ const Dashboard = () => {
         {/* Weekly Load Chart */}
         <div className="dash-section chart-section">
           <div className="section-header">
-            <h2>Carga de Trabajo Semanal</h2>
+            <h2>Carga de Trabajo Estimada</h2>
             <select className="dash-select">
               <option>Esta semana</option>
-              <option>Semana pasada</option>
             </select>
           </div>
           <div className="bar-chart">
@@ -82,22 +91,26 @@ const Dashboard = () => {
         <div className="dash-section sessions-section">
           <div className="section-header">
             <h2>Próximas Sesiones</h2>
-            <button className="btn-text">Ver todas</button>
+            <button className="btn-text" onClick={() => navigate('/sesiones')}>Ver todas</button>
           </div>
           <div className="sessions-list-dash">
-            {upcomingSessions.map(s => (
-              <div key={s.id} className="session-item-dash">
-                <div className={`session-indicator ${s.cat.toLowerCase()}`} />
-                <div className="session-info-dash">
-                  <strong>{s.title}</strong>
-                  <span>{s.date}</span>
+            {upcomingSessions.length === 0 ? (
+              <div className="empty-dash-list">No hay sesiones próximas.</div>
+            ) : (
+              upcomingSessions.map(s => (
+                <div key={s.id} className="session-item-dash" onClick={() => navigate('/sesiones')}>
+                  <div className={`session-indicator ${s.category.toLowerCase()}`} />
+                  <div className="session-info-dash">
+                    <strong>{s.title}</strong>
+                    <span>{s.date} · {s.time}</span>
+                  </div>
+                  <div className="session-badges">
+                    <span className="badge-dash">{s.category}</span>
+                    <span className={`badge-dash intensity ${s.intensity.toLowerCase()}`}>{s.intensity}</span>
+                  </div>
                 </div>
-                <div className="session-badges">
-                  <span className="badge-dash">{s.cat}</span>
-                  <span className={`badge-dash intensity ${s.intensity.toLowerCase()}`}>{s.intensity}</span>
-                </div>
-              </div>
-            ))}
+              ))
+            )}
           </div>
         </div>
       </div>
@@ -106,19 +119,19 @@ const Dashboard = () => {
       <div className="quick-actions-dash">
         <h2>Acceso Rápido</h2>
         <div className="actions-grid-dash">
-          <button className="action-btn-dash">
+          <button className="action-btn-dash" onClick={() => navigate('/pizarra')}>
             <span>⚽</span>
-            Nueva Jugada
+            Pizarra Táctica
           </button>
-          <button className="action-btn-dash">
+          <button className="action-btn-dash" onClick={() => navigate('/sesiones')}>
             <span>📋</span>
             Crear Sesión
           </button>
-          <button className="action-btn-dash">
+          <button className="action-btn-dash" onClick={() => navigate('/equipo')}>
             <span>👥</span>
-            Ficha Médica
+            Mi Equipo
           </button>
-          <button className="action-btn-dash">
+          <button className="action-btn-dash" onClick={() => navigate('/ia-generadora')}>
             <span>✨</span>
             IA Generator
           </button>

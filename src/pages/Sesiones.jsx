@@ -1,27 +1,19 @@
 import React, { useState, useRef } from 'react';
+import { useSessions } from '../hooks/useSessions';
+import { usePlayers } from '../hooks/usePlayers';
 import './Sesiones.css';
 
-// --- MOCK DATA ---
-const MOCK_SESSIONS = [
-  { id: 1, title: 'Técnica Individual y Pase', date: '2026-04-24', time: '17:30', category: 'Técnica', intensity: 'Media', duration: 90, blocks: [], players: [], files: [], objectives: '', materials: '' },
-  { id: 2, title: 'Presión tras Pérdida G3', date: '2026-04-25', time: '18:00', category: 'Táctica', intensity: 'Alta', duration: 75, blocks: [], players: [], files: [], objectives: '', materials: '' },
-];
-
-const MOCK_PLAYERS = [
-  { id: 1, name: 'Hugo García', number: 1 }, { id: 2, name: 'Leo Messi', number: 10 },
-  { id: 3, name: 'Sergio Ramos', number: 4 }, { id: 4, name: 'Andrés Iniesta', number: 8 },
-  { id: 5, name: 'Dani Carvajal', number: 2 }, { id: 6, name: 'Jordi Alba', number: 3 },
-  { id: 7, name: 'Busquets', number: 5 }, { id: 8, name: 'Xavi', number: 6 },
-];
-
 const Sesiones = () => {
-  const [sessions, setSessions] = useState(MOCK_SESSIONS);
+  const { sessions, loading: loadingSessions, addSession, updateSession, removeSession } = useSessions();
+  const { players, loading: loadingPlayers } = usePlayers();
+  
   const [viewMode, setViewMode] = useState('list'); // 'list' | 'edit'
-  const [selectedSession, setSelectedSession] = useState(null); // Used for preview in list mode
+  const [selectedSession, setSelectedSession] = useState(null);
+  const [isSaving, setIsSaving] = useState(false);
   
   // Edit mode state
   const [editData, setEditData] = useState(null);
-  const [pdfPreview, setPdfPreview] = useState(null); // URL to preview PDF
+  const [pdfPreview, setPdfPreview] = useState(null);
   const fileInputRef = useRef(null);
 
   const categories = ['Todas', 'Técnica', 'Táctica', 'Física', 'Mixta'];
@@ -34,53 +26,60 @@ const Sesiones = () => {
   // --- LIST MODE FUNCTIONS ---
   const handleCreateNew = () => {
     setEditData({
-      id: Date.now(),
       title: '',
       date: new Date().toISOString().split('T')[0],
       time: '18:00',
       category: 'Táctica',
       intensity: 'Media',
       duration: 90,
-      players: MOCK_PLAYERS.map(p => p.id), // All selected by default
+      players: players.map(p => p.id), // All selected by default
       files: [],
       objectives: '',
       materials: 'Balones, petos, conos, setas',
       blocks: [
-        { id: Date.now() + 1, name: 'Calentamiento', duration: 15, type: 'Física', description: '' }
+        { id: Date.now(), name: 'Calentamiento', duration: 15, type: 'Física', description: '' }
       ]
     });
     setViewMode('edit');
   };
 
   const handleEditSession = (session) => {
-    setEditData(JSON.parse(JSON.stringify(session))); // Deep copy
+    setEditData({ ...session }); 
     setViewMode('edit');
   };
 
-  const handleDeleteSession = (id) => {
+  const handleDeleteSession = async (id) => {
     if(window.confirm('¿Eliminar esta sesión?')) {
-      setSessions(prev => prev.filter(s => s.id !== id));
-      if(selectedSession?.id === id) setSelectedSession(null);
+      try {
+        await removeSession(id);
+        if(selectedSession?.id === id) setSelectedSession(null);
+      } catch (error) {
+        alert("Error al eliminar sesión.");
+      }
     }
   };
 
   // --- EDIT MODE FUNCTIONS ---
-  const handleSaveSession = () => {
+  const handleSaveSession = async () => {
     if (!editData.title.trim()) {
       alert('El título es obligatorio');
       return;
     }
-    setSessions(prev => {
-      const idx = prev.findIndex(s => s.id === editData.id);
-      if (idx >= 0) {
-        const next = [...prev];
-        next[idx] = editData;
-        return next;
+    
+    setIsSaving(true);
+    try {
+      if (editData.id) {
+        await updateSession(editData.id, editData);
+      } else {
+        await addSession(editData);
       }
-      return [editData, ...prev];
-    });
-    setViewMode('list');
-    setSelectedSession(editData);
+      setViewMode('list');
+      setSelectedSession(editData);
+    } catch (error) {
+      alert("Error al guardar sesión.");
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const handleAddBlock = () => {
@@ -118,6 +117,7 @@ const Sesiones = () => {
     const file = e.target.files[0];
     if (!file) return;
     
+    // Simulado: En producción usaríamos Firebase Storage
     const fileUrl = URL.createObjectURL(file);
     
     const newFile = {
@@ -141,7 +141,11 @@ const Sesiones = () => {
     }));
   };
 
-  // --- RENDERERS ---
+  if (loadingSessions || loadingPlayers) {
+    return <div className="loading-state">Cargando sesiones...</div>;
+  }
+
+  // --- RENDER EDIT MODE ---
   if (viewMode === 'edit' && editData) {
     return (
       <div className="sesiones-page">
@@ -153,13 +157,14 @@ const Sesiones = () => {
             </div>
             <div className="header-actions">
               <button className="btn-outline" onClick={() => setViewMode('list')}>Cancelar</button>
-              <button className="btn-primary" onClick={handleSaveSession}>Guardar Sesión</button>
+              <button className="btn-primary" onClick={handleSaveSession} disabled={isSaving}>
+                {isSaving ? 'Guardando...' : 'Guardar Sesión'}
+              </button>
             </div>
           </div>
         </header>
 
         <div className="editor-content">
-          {/* LEFT COLUMN: Config */}
           <div className="editor-left">
             <div className="edit-section">
               <h3>Datos Generales</h3>
@@ -238,11 +243,11 @@ const Sesiones = () => {
 
             <div className="edit-section">
               <div className="section-header-flex">
-                <h3>Convocatoria ({editData.players.length}/{MOCK_PLAYERS.length})</h3>
-                <button className="btn-text" onClick={() => setEditData({...editData, players: MOCK_PLAYERS.map(p=>p.id)})}>Marcar Todos</button>
+                <h3>Convocatoria ({editData.players.length}/{players.length})</h3>
+                <button className="btn-text" onClick={() => setEditData({...editData, players: players.map(p=>p.id)})}>Marcar Todos</button>
               </div>
               <div className="players-checklist">
-                {MOCK_PLAYERS.map(p => (
+                {players.map(p => (
                   <label key={p.id} className={`player-check-item ${editData.players.includes(p.id) ? 'selected' : ''}`}>
                     <input type="checkbox" checked={editData.players.includes(p.id)} onChange={() => handleTogglePlayer(p.id)} />
                     <span className="p-num">{p.number}</span>
@@ -253,7 +258,6 @@ const Sesiones = () => {
             </div>
           </div>
 
-          {/* RIGHT COLUMN: Blocks Builder */}
           <div className="editor-right">
             <div className="blocks-header">
               <h3>Formato de la Sesión</h3>
@@ -290,9 +294,6 @@ const Sesiones = () => {
                       <div className="form-group full">
                         <label>Descripción y Reglas</label>
                         <textarea value={block.description} onChange={e => handleUpdateBlock(block.id, 'description', e.target.value)} placeholder="Describe el ejercicio, restricciones, puntuación..."></textarea>
-                      </div>
-                      <div className="block-editor-actions">
-                        <button className="btn-outline-accent">✏️ Abrir en Pizarra Táctica</button>
                       </div>
                     </div>
                   </div>
@@ -380,7 +381,6 @@ const Sesiones = () => {
           )}
         </div>
 
-        {/* Quick Preview Panel (PC only) */}
         <div className="session-preview-panel">
           {selectedSession ? (
             <div className="preview-content">
@@ -436,10 +436,8 @@ const Sesiones = () => {
         </div>
       </div>
 
-      {/* FAB for Mobile/Tablet */}
       <button className="fab-session" onClick={handleCreateNew}>+</button>
 
-      {/* PDF PREVIEW MODAL (LIST MODE) */}
       {pdfPreview && (
         <div className="modal-overlay-pdf" onClick={() => setPdfPreview(null)}>
           <div className="modal-content-pdf" onClick={e => e.stopPropagation()}>

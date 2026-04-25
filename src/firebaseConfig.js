@@ -1,5 +1,5 @@
 import { initializeApp } from "firebase/app";
-import { getAuth, GoogleAuthProvider, signInWithRedirect, getRedirectResult, signOut } from "firebase/auth";
+import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, signOut, setPersistence, browserLocalPersistence } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
 
 // Your web app's Firebase configuration
@@ -18,4 +18,7 @@ const auth = getAuth(app);
 const db = getFirestore(app);
 const googleProvider = new GoogleAuthProvider();
 
-export { auth, db, googleProvider, signInWithRedirect, getRedirectResult, signOut };
+// Forzar persistencia local para que la sesión sobreviva recargas
+setPersistence(auth, browserLocalPersistence).catch(console.error);
+
+export { auth, db, googleProvider, signInWithPopup, signInWithRedirect, signOut };

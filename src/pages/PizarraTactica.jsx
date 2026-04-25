@@ -63,6 +63,32 @@ const PizarraTactica = () => {
     framesR.current[idx] = { ...framesR.current[idx], state };
   }, []);
 
+  // ─── Create a single player object ─────────────────────────────────────────
+  const createPlayer = useCallback((x, y, options = {}) => {
+    const { color = '#4CAF7D', label = '1', type = 'local' } = options;
+    const circle = new fabric.Circle({
+      radius: 16, originX: 'center', originY: 'center',
+      fill: color,
+      stroke: '#FFFFFF', strokeWidth: 2.5,
+    });
+    const text = new fabric.Text(String(label), {
+      fontSize: 13, fontWeight: 'bold', fill: '#FFFFFF',
+      originX: 'center', originY: 'center',
+    });
+    const group = new fabric.Group([circle, text], {
+      left: x, top: y,
+      originX: 'center', originY: 'center',
+      hasControls: true, hasBorders: true,
+      data: { type: 'player', playerType: type },
+    });
+    
+    import('../lib/mister11-materials.js').then(m => {
+      m.applyMister11Controls(group);
+    });
+
+    return group;
+  }, []);
+
   // ─── Draw players from formation onto canvas ──────────────────────────────
   const drawPlayers = useCallback((canvas, renderer, type, form) => {
     const bounds = renderer.getFieldBounds();
@@ -76,29 +102,19 @@ const PizarraTactica = () => {
       let x = bounds.x + rX * bounds.w;
       let y = bounds.y + rY * bounds.h;
 
-      // half-field: defenders are mirrored on x
       if (type === 'half-defense') {
         x = bounds.x + (1 - rX) * bounds.w;
       }
 
-      const circle = new fabric.Circle({
-        radius: 16, originX: 'center', originY: 'center',
-        fill: isGk ? '#FFD700' : '#4CAF7D',
-        stroke: '#FFFFFF', strokeWidth: 2.5,
+      const player = createPlayer(x, y, {
+        color: isGk ? '#FFD700' : '#4CAF7D',
+        label: i + 1,
+        type: 'local'
       });
-      const label = new fabric.Text(String(i + 1), {
-        fontSize: 13, fontWeight: 'bold', fill: '#FFFFFF',
-        originX: 'center', originY: 'center',
-      });
-      const group = new fabric.Group([circle, label], {
-        left: x, top: y,
-        hasControls: false, hasBorders: false,
-        data: { type: 'player', idx: i },
-      });
-      canvas.add(group);
+      canvas.add(player);
     });
     canvas.renderAll();
-  }, []);
+  }, [createPlayer]);
 
   // ─── Initialize canvases once on mount ───────────────────────────────────
   useEffect(() => {
@@ -201,10 +217,33 @@ const PizarraTactica = () => {
   // ─── Color / width change ─────────────────────────────────────────────────
   useEffect(() => {
     const tm = tmRef.current;
-    if (!tm) return;
+    const fc = fcRef.current;
+    if (!tm || !fc) return;
+    
     tm.setStrokeColor(activeColor);
     tm.setStrokeWidth(activeWidth);
-  }, [activeColor, activeWidth]);
+
+    // Si hay un objeto seleccionado, intentar cambiar su color
+    const activeObj = fc.getActiveObject();
+    if (activeObj) {
+      if (activeObj.data?.type === 'player') {
+        const circle = activeObj.item(0);
+        if (circle) circle.set('fill', activeColor);
+      } else if (activeObj.type === 'path') {
+        activeObj.set('stroke', activeColor);
+      } else if (activeObj.data?.type === 'material') {
+        // Algunos materiales pueden no soportar cambio de color directo
+        if (activeObj.setFill) activeObj.setFill(activeColor);
+        else if (activeObj._objects) {
+           activeObj._objects.forEach(o => {
+             if (o.fill && o.fill !== 'transparent') o.set('fill', activeColor);
+           });
+        }
+      }
+      fc.renderAll();
+      saveFrameState();
+    }
+  }, [activeColor, activeWidth, saveFrameState]);
 
   // ─── Material placement ───────────────────────────────────────────────────
   useEffect(() => {
@@ -366,6 +405,35 @@ const PizarraTactica = () => {
     playingR.current = false;
   };
 
+  // ─── Add Single Players ───────────────────────────────────────────────────
+  const addManualPlayer = (type) => {
+    const fc = fcRef.current;
+    if (!fc) return;
+    
+    let color = '#4CAF7D';
+    let label = '1';
+    if (type === 'rival') color = '#E53935';
+    if (type === 'joker') color = '#D4A843';
+
+    const center = fc.getCenter();
+    const player = createPlayer(center.left, center.top, { color, label, type });
+    fc.add(player);
+    fc.setActiveObject(player);
+    fc.renderAll();
+    saveFrameState();
+  };
+
+  const deleteSelected = () => {
+    const fc = fcRef.current;
+    if (!fc) return;
+    const active = fc.getActiveObject();
+    if (active) {
+      fc.remove(active);
+      fc.renderAll();
+      saveFrameState();
+    }
+  };
+
   // ─── JSX ──────────────────────────────────────────────────────────────────
   return (
     <div className="pizarra-container">
@@ -440,8 +508,14 @@ const PizarraTactica = () => {
         <div className="panel-izq">
           <div className="panel-title">EQUIPOS</div>
           <div style={{ padding: '10px' }}>
-            <TeamCard color="#4CAF7D" name="Local"  count={Object.keys(FORMATIONS[formation]||{}).length} />
-            <TeamCard color="#E53935" name="Rival"  count={0} style={{ marginTop: 8 }} />
+            <TeamCard color="#4CAF7D" name="Local" count={11} onAdd={() => addManualPlayer('local')} />
+            <TeamCard color="#E53935" name="Rival" count={0} onAdd={() => addManualPlayer('rival')} style={{ marginTop: 8 }} />
+            <TeamCard color="#D4A843" name="Comodín" count={0} onAdd={() => addManualPlayer('joker')} style={{ marginTop: 8 }} />
+          </div>
+
+          <div className="panel-title" style={{ marginTop: 12 }}>ACCIONES</div>
+          <div style={{ padding: '0 10px 10px', display: 'flex', gap: 5 }}>
+            <button className="topbar-btn outline" style={{flex: 1}} onClick={deleteSelected}>🗑 Eliminar</button>
           </div>
 
           <div className="panel-title" style={{ marginTop: 12 }}>FORMACIÓN</div>
@@ -560,14 +634,15 @@ const PizarraTactica = () => {
 };
 
 // ─── Small helper sub-component ──────────────────────────────────────────────
-const TeamCard = ({ color, name, count }) => (
+const TeamCard = ({ color, name, count, onAdd, style }) => (
   <div style={{
     background: '#252535', borderRadius: 8, padding: '8px 10px',
     display: 'flex', alignItems: 'center', gap: 8,
+    ...style
   }}>
     <div style={{ width: 14, height: 14, borderRadius: '50%', background: color, flexShrink: 0 }} />
     <span style={{ color: '#FFF', fontSize: 13, flex: 1 }}>{name}</span>
-    <span style={{ color: '#999', fontSize: 11 }}>{count > 0 ? `${count} jug.` : 'Sin jug.'}</span>
+    <button className="btn-add-mini" onClick={onAdd}>+</button>
   </div>
 );
 

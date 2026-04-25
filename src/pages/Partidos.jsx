@@ -1,31 +1,7 @@
 import React, { useState } from 'react';
+import { useMatches } from '../hooks/useMatches';
+import { usePlayers } from '../hooks/usePlayers';
 import './Partidos.css';
-
-// --- MOCK DATA ---
-const MOCK_PLAYERS = [
-  { id: 1, name: 'Hugo García', number: 1, position: 'POR' },
-  { id: 2, name: 'Leo Messi', number: 10, position: 'DEL' },
-  { id: 3, name: 'Sergio Ramos', number: 4, position: 'DEF' },
-  { id: 4, name: 'Andrés Iniesta', number: 8, position: 'MC' },
-  { id: 5, name: 'Dani Carvajal', number: 2, position: 'LTD' },
-  { id: 6, name: 'Jordi Alba', number: 3, position: 'LTI' },
-  { id: 7, name: 'Busquets', number: 5, position: 'MCD' },
-  { id: 8, name: 'Xavi', number: 6, position: 'MC' },
-  { id: 9, name: 'Pedri', number: 16, position: 'MCO' },
-  { id: 10, name: 'Lamine Yamal', number: 19, position: 'EXT' },
-  { id: 11, name: 'Gavi', number: 9, position: 'MC' },
-  { id: 12, name: 'Casillas', number: 13, position: 'POR' },
-  { id: 13, name: 'Puyol', number: 5, position: 'DEF' },
-  { id: 14, name: 'Piqué', number: 3, position: 'DEF' },
-  { id: 15, name: 'Villa', number: 7, position: 'DEL' },
-  { id: 16, name: 'Ferran Torres', number: 11, position: 'EXT' }
-];
-
-const MOCK_MATCHES = [
-  { id: 1, rival: 'Real Madrid Alevín', date: '2026-04-10', time: '10:00', location: 'Ciudad Deportiva', type: 'Local', status: 'Terminado', goalsFor: 3, goalsAgainst: 1, lineup: '4-3-3' },
-  { id: 2, rival: 'Atlético de Madrid', date: '2026-04-17', time: '12:30', location: 'Cerro del Espino', type: 'Visitante', status: 'Terminado', goalsFor: 2, goalsAgainst: 2, lineup: '4-4-2' },
-  { id: 3, rival: 'Sevilla FC', date: '2026-04-24', time: '11:00', location: 'Estadio Principal', type: 'Local', status: 'Pendiente', goalsFor: 0, goalsAgainst: 0, lineup: '4-3-3' }
-];
 
 const FORMATIONS = {
   '4-3-3': [
@@ -57,10 +33,13 @@ const FORMATIONS = {
 };
 
 const Partidos = () => {
-  const [matches, setMatches] = useState(MOCK_MATCHES);
+  const { matches, loading: loadingMatches, addMatch, updateMatch, removeMatch } = useMatches();
+  const { players, loading: loadingPlayers } = usePlayers();
+  
   const [viewMode, setViewMode] = useState('LIST'); // 'LIST' or 'EDIT'
   const [filterMode, setFilterMode] = useState('Todos'); // 'Todos', 'Pendientes', 'Terminados'
   const [selectedMatch, setSelectedMatch] = useState(null);
+  const [isSaving, setIsSaving] = useState(false);
   
   // Edit State Tabs
   const [editTab, setEditTab] = useState('PRE-PARTIDO');
@@ -69,7 +48,6 @@ const Partidos = () => {
 
   const handleNewMatch = () => {
     const newMatch = {
-      id: Date.now(),
       rival: '',
       date: '',
       time: '',
@@ -79,17 +57,19 @@ const Partidos = () => {
       goalsFor: 0,
       goalsAgainst: 0,
       lineup: '4-3-3',
-      events: [] // Goals, cards
+      events: [],
+      titulares: [],
+      suplentes: []
     };
     setMatchData(newMatch);
-    setCalledPlayers(MOCK_PLAYERS.map(p => p.id).slice(0, 16)); // Auto select 16
+    setCalledPlayers([]); 
     setEditTab('PRE-PARTIDO');
     setViewMode('EDIT');
   };
 
   const handleEditMatch = (match) => {
     setMatchData({ ...match });
-    setCalledPlayers(MOCK_PLAYERS.map(p => p.id).slice(0, 16)); // Mock called
+    setCalledPlayers(match.convocados || []);
     setEditTab('PRE-PARTIDO');
     setViewMode('EDIT');
   };
@@ -103,16 +83,27 @@ const Partidos = () => {
     }
   };
 
-  const handleSaveMatch = () => {
+  const handleSaveMatch = async () => {
     if (!matchData.rival) return alert("El nombre del rival es obligatorio.");
     
-    setMatches(prev => {
-      const exists = prev.find(m => m.id === matchData.id);
-      if (exists) return prev.map(m => m.id === matchData.id ? matchData : m);
-      return [...prev, matchData];
-    });
-    
-    setViewMode('LIST');
+    setIsSaving(true);
+    try {
+      const dataToSave = {
+        ...matchData,
+        convocados: calledPlayers
+      };
+
+      if (matchData.id) {
+        await updateMatch(matchData.id, dataToSave);
+      } else {
+        await addMatch(dataToSave);
+      }
+      setViewMode('LIST');
+    } catch (error) {
+      alert("Error al guardar el partido.");
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const filteredMatches = matches.filter(m => {
@@ -120,6 +111,10 @@ const Partidos = () => {
     if (filterMode === 'Terminados') return m.status === 'Terminado';
     return true; // 'Todos'
   });
+
+  if (loadingMatches || loadingPlayers) {
+    return <div className="loading-state">Cargando datos de partidos...</div>;
+  }
 
   return (
     <div className="partidos-page">
@@ -132,7 +127,9 @@ const Partidos = () => {
           {viewMode === 'EDIT' && (
             <div className="header-actions">
               <button className="btn-outline" onClick={() => setViewMode('LIST')}>Cancelar</button>
-              <button className="btn-primary" onClick={handleSaveMatch}>Guardar Partido</button>
+              <button className="btn-primary" onClick={handleSaveMatch} disabled={isSaving}>
+                {isSaving ? 'Guardando...' : 'Guardar Partido'}
+              </button>
             </div>
           )}
         </div>
@@ -140,52 +137,63 @@ const Partidos = () => {
 
       {viewMode === 'LIST' && (
         <div className="partidos-list-container">
-          <div className="list-filters">
-            <button 
-              className={`filter-tab ${filterMode === 'Todos' ? 'active' : ''}`}
-              onClick={() => setFilterMode('Todos')}
-            >Todos</button>
-            <button 
-              className={`filter-tab ${filterMode === 'Pendientes' ? 'active' : ''}`}
-              onClick={() => setFilterMode('Pendientes')}
-            >Pendientes</button>
-            <button 
-              className={`filter-tab ${filterMode === 'Terminados' ? 'active' : ''}`}
-              onClick={() => setFilterMode('Terminados')}
-            >Terminados</button>
-          </div>
-          
-          <div className="matches-grid">
-            {filteredMatches.map(m => (
-              <div key={m.id} className="match-card" onClick={() => handleEditMatch(m)}>
-                <div className="mc-header">
-                  <span className={`status-badge ${m.status.toLowerCase()}`}>{m.status}</span>
-                  <span className="mc-date">{m.date.split('-').reverse().join('/')} - {m.time}</span>
-                </div>
-                
-                <div className="mc-body">
-                  <div className="team-local">
-                    <span className="t-name">{m.type === 'Local' ? 'Míster11 FC' : m.rival}</span>
-                  </div>
-                  <div className="mc-score">
-                    {m.status === 'Terminado' ? (
-                      <strong>{m.type === 'Local' ? m.goalsFor : m.goalsAgainst} - {m.type === 'Local' ? m.goalsAgainst : m.goalsFor}</strong>
-                    ) : (
-                      <span className="vs">VS</span>
-                    )}
-                  </div>
-                  <div className="team-visit">
-                    <span className="t-name">{m.type === 'Visitante' ? 'Míster11 FC' : m.rival}</span>
-                  </div>
-                </div>
-                
-                <div className="mc-footer">
-                  <span>📍 {m.location}</span>
-                  <span>🛡️ Formación: {m.lineup}</span>
-                </div>
+          {matches.length === 0 ? (
+            <div className="empty-state">
+              <span className="icon">🏟️</span>
+              <h2>No hay partidos registrados</h2>
+              <p>Comienza a planificar tu temporada añadiendo tu primer encuentro.</p>
+              <button className="btn-primary" onClick={handleNewMatch}>+ Nuevo Partido</button>
+            </div>
+          ) : (
+            <>
+              <div className="list-filters">
+                <button 
+                  className={`filter-tab ${filterMode === 'Todos' ? 'active' : ''}`}
+                  onClick={() => setFilterMode('Todos')}
+                >Todos</button>
+                <button 
+                  className={`filter-tab ${filterMode === 'Pendientes' ? 'active' : ''}`}
+                  onClick={() => setFilterMode('Pendientes')}
+                >Pendientes</button>
+                <button 
+                  className={`filter-tab ${filterMode === 'Terminados' ? 'active' : ''}`}
+                  onClick={() => setFilterMode('Terminados')}
+                >Terminados</button>
               </div>
-            ))}
-          </div>
+              
+              <div className="matches-grid">
+                {filteredMatches.map(m => (
+                  <div key={m.id} className="match-card" onClick={() => handleEditMatch(m)}>
+                    <div className="mc-header">
+                      <span className={`status-badge ${m.status.toLowerCase()}`}>{m.status}</span>
+                      <span className="mc-date">{m.date ? m.date.split('-').reverse().join('/') : '--/--/--'} - {m.time || '--:--'}</span>
+                    </div>
+                    
+                    <div className="mc-body">
+                      <div className="team-local">
+                        <span className="t-name">{m.type === 'Local' ? 'Míster11 FC' : m.rival}</span>
+                      </div>
+                      <div className="mc-score">
+                        {m.status === 'Terminado' ? (
+                          <strong>{m.type === 'Local' ? m.goalsFor : m.goalsAgainst} - {m.type === 'Local' ? m.goalsAgainst : m.goalsFor}</strong>
+                        ) : (
+                          <span className="vs">VS</span>
+                        )}
+                      </div>
+                      <div className="team-visit">
+                        <span className="t-name">{m.type === 'Visitante' ? 'Míster11 FC' : m.rival}</span>
+                      </div>
+                    </div>
+                    
+                    <div className="mc-footer">
+                      <span>📍 {m.location || 'Sin ubicación'}</span>
+                      <span>🛡️ Formación: {m.lineup}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
         </div>
       )}
 
@@ -254,23 +262,27 @@ const Partidos = () => {
                   </span>
                 </div>
                 <div className="players-checklist large">
-                  {MOCK_PLAYERS.map(p => {
-                    const isSelected = calledPlayers.includes(p.id);
-                    return (
-                      <div 
-                        key={p.id} 
-                        className={`player-check-item ${isSelected ? 'selected' : ''}`}
-                        onClick={() => togglePlayerCall(p.id)}
-                      >
-                        <div className="p-num">{p.number}</div>
-                        <div className="p-info">
-                          <span className="p-name">{p.name}</span>
-                          <span className="p-pos">{p.position}</span>
+                  {players.length === 0 ? (
+                    <p className="empty-text">No hay jugadores en la plantilla. Añádelos en la sección de Equipo.</p>
+                  ) : (
+                    players.map(p => {
+                      const isSelected = calledPlayers.includes(p.id);
+                      return (
+                        <div 
+                          key={p.id} 
+                          className={`player-check-item ${isSelected ? 'selected' : ''}`}
+                          onClick={() => togglePlayerCall(p.id)}
+                        >
+                          <div className="p-num">{p.number}</div>
+                          <div className="p-info">
+                            <span className="p-name">{p.name}</span>
+                            <span className="p-pos">{p.position}</span>
+                          </div>
+                          <div className="check-indicator">{isSelected ? '✓' : ''}</div>
                         </div>
-                        <div className="check-indicator">{isSelected ? '✓' : ''}</div>
-                      </div>
-                    );
-                  })}
+                      );
+                    })
+                  )}
                 </div>
               </div>
             )}
@@ -291,31 +303,37 @@ const Partidos = () => {
 
                   <div className="titulares-list mt-3">
                     <h4>XI Titular</h4>
-                    <p className="hint">Arrastra jugadores (Simulado)</p>
-                    {calledPlayers.slice(0,11).map(id => {
-                      const p = MOCK_PLAYERS.find(pl => pl.id === id);
-                      return <div key={id} className="alin-player-list-item"><span>{p.number}</span> {p.name}</div>
-                    })}
-                    <h4 className="mt-3">Suplentes</h4>
-                    {calledPlayers.slice(11).map(id => {
-                      const p = MOCK_PLAYERS.find(pl => pl.id === id);
-                      return <div key={id} className="alin-player-list-item sub"><span>{p.number}</span> {p.name}</div>
-                    })}
+                    <p className="hint">Lista de convocados</p>
+                    {calledPlayers.length === 0 ? (
+                      <p className="empty-text">No hay jugadores convocados.</p>
+                    ) : (
+                      <>
+                        {calledPlayers.slice(0,11).map(id => {
+                          const p = players.find(pl => pl.id === id);
+                          if (!p) return null;
+                          return <div key={id} className="alin-player-list-item"><span>{p.number}</span> {p.name}</div>
+                        })}
+                        <h4 className="mt-3">Suplentes</h4>
+                        {calledPlayers.slice(11).map(id => {
+                          const p = players.find(pl => pl.id === id);
+                          if (!p) return null;
+                          return <div key={id} className="alin-player-list-item sub"><span>{p.number}</span> {p.name}</div>
+                        })}
+                      </>
+                    )}
                   </div>
                 </div>
                 <div className="alin-main">
                   <div className="mini-pitch-container">
                     <div className="mini-pitch">
-                      {/* Líneas del campo */}
                       <div className="pitch-line center-line"></div>
                       <div className="pitch-circle center-circle"></div>
                       <div className="pitch-box penalty-box bottom"></div>
                       <div className="pitch-box penalty-box top"></div>
                       
-                      {/* Jugadores Posicionados según Formación */}
                       {FORMATIONS[matchData.lineup].map((pos, idx) => {
                         const pid = calledPlayers[idx];
-                        const player = pid ? MOCK_PLAYERS.find(p => p.id === pid) : null;
+                        const player = pid ? players.find(p => p.id === pid) : null;
                         
                         return (
                           <div 
@@ -342,7 +360,7 @@ const Partidos = () => {
                   <div className="empty-state-post">
                     <span className="icon">⚽</span>
                     <h3>El partido aún no ha terminado</h3>
-                    <p>Cambia el estado del partido a "Terminado" en la pestaña Pre-Partido para registrar el resultado, goleadores y estadísticas.</p>
+                    <p>Cambia el estado del partido a "Terminado" en la pestaña Pre-Partido para registrar el resultado.</p>
                   </div>
                 ) : (
                   <div className="post-grid">
@@ -375,15 +393,17 @@ const Partidos = () => {
                     
                     <div className="events-panel">
                       <h3>Goleadores y Tarjetas</h3>
-                      <div className="events-list">
-                        <button className="btn-outline-gold mb-2">+ Añadir Evento</button>
-                        <p className="hint">Función de registro rápido de minutos en desarrollo...</p>
-                      </div>
+                      <p className="hint">Módulo de estadísticas detalladas en desarrollo...</p>
                     </div>
 
                     <div className="analysis-panel full">
-                      <h3>Análisis y Observaciones del Entrenador</h3>
-                      <textarea rows="4" placeholder="Análisis táctico del rendimiento del equipo, cosas a mejorar, etc."></textarea>
+                      <h3>Análisis del Entrenador</h3>
+                      <textarea 
+                        rows="4" 
+                        placeholder="Análisis táctico..."
+                        value={matchData.notas || ''}
+                        onChange={e => setMatchData({...matchData, notas: e.target.value})}
+                      ></textarea>
                     </div>
                   </div>
                 )}

@@ -581,6 +581,18 @@ export async function placeMaterialOnCanvas(canvas, itemId, x, y, color) {
  * a cualquier objeto Fabric (material, jugador, trazo)
  */
 export function applyMister11Controls(obj) {
+  // Configuración base de controles
+  obj.set({
+    hasControls: true,
+    hasBorders: true,
+    borderColor: '#4CAF7D',
+    cornerColor: '#FFFFFF',
+    cornerStrokeColor: '#4CAF7D',
+    cornerSize: 10,
+    transparentCorners: false,
+    padding: 5
+  });
+
   // Eliminar controles predeterminados de Fabric
   obj.setControlsVisibility({
     mt: false, mb: false, ml: false, mr: false,
@@ -605,7 +617,6 @@ export function applyMister11Controls(obj) {
       ctx.arc(left, top, 8, 0, Math.PI * 2);
       ctx.fill();
       ctx.stroke();
-      // Icono de rotación
       ctx.fillStyle = '#FFFFFF';
       ctx.font = '10px Arial';
       ctx.textAlign = 'center';
@@ -628,7 +639,8 @@ export function applyMister11Controls(obj) {
       ctx.strokeStyle = '#4CAF7D';
       ctx.lineWidth = 2;
       ctx.beginPath();
-      ctx.roundRect(left - 7, top - 7, 14, 14, 3);
+      if (ctx.roundRect) ctx.roundRect(left - 7, top - 7, 14, 14, 3);
+      else ctx.rect(left - 7, top - 7, 14, 14);
       ctx.fill();
       ctx.stroke();
       ctx.restore();

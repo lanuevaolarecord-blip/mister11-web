@@ -303,7 +303,7 @@ const FieldCanvas = ({ fieldView, elements, setElements, activeTool, activeColor
   };
 
   const handlePointerDown = (e) => {
-    if (e.type === 'touchstart') e.preventDefault(); 
+    if (e.type === 'touchstart') { /* allow touch */ } 
     const pos = getPointerPos(e);
 
     if (activeTool === 'select') {
@@ -354,7 +354,7 @@ const FieldCanvas = ({ fieldView, elements, setElements, activeTool, activeColor
   const handlePointerMove = (e) => {
     const state = interactState.current;
     if (!state.isDragging && !state.isDrawing) return;
-    if (e.type === 'touchmove') e.preventDefault();
+    if (e.type === 'touchmove') { /* allow touch */ }
     
     state.hasMoved = true;
     const pos = getPointerPos(e);

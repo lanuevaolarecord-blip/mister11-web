@@ -111,6 +111,15 @@
   margin: 0;
   padding: 0;
   box-sizing: border-box;
+  -webkit-overflow-scrolling: touch;
+  scroll-behavior: smooth;
+}
+
+html, body {
+  overflow-x: hidden;
+  overflow-y: auto;
+  height: 100%;
+  touch-action: pan-y;
 }
 
 body {
@@ -284,6 +293,8 @@ a {
   overflow-y: auto;
   overflow-x: hidden;
   width: 100%;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
 }
 
 /* Header Styles */
@@ -324,10 +335,24 @@ a {
 }
 
 /* Page Content */
-.page-content {
+.page-content,
+.admin-container,
+.sesiones-page,
+.planificacion-page,
+.ia-page,
+.tests-content,
+.partidos-page,
+.mi-equipo-page,
+.players-grid,
+.tests-grid,
+.editor-content,
+.ia-form-body,
+.ia-result-panel {
   flex: 1;
   padding: 30px;
   overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
 }
 
 /* Global Components per User Rules */

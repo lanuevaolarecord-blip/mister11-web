@@ -97,32 +97,45 @@ Parámetros: edad ${form.edad}, ${form.jugadores} jugadores, objetivo ${form.obj
 ${form.observaciones ? `Observaciones adicionales: ${form.observaciones}` : ''}
 Responde SOLO en español. No incluyas texto fuera del formato indicado.`;
 
-    try {
-      const response = await fetch(GEMINI_API_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: prompt }] }],
-          generationConfig: { temperature: 0.8, maxOutputTokens: 1024 }
-        })
-      });
-
+    const makeRequest = async () => {
+      const response = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${import.meta.env.VITE_GEMINI_API_KEY}`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contents: [{ parts: [{ text: prompt }] }]
+          })
+        }
+      );
+      
+      const data = await response.json();
+      
       if (!response.ok) {
-        const errData = await response.json();
-        throw new Error(errData?.error?.message || 'Error al contactar con la IA.');
+        // Lanzamos el error con el mensaje exacto de Google
+        throw new Error(data.error?.message || JSON.stringify(data));
+      }
+      
+      if (!data.candidates?.[0]?.content?.parts?.[0]?.text) {
+        throw new Error('La respuesta de la IA no contiene texto válido.');
       }
 
-      const data = await response.json();
-      const text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
-      if (!text) throw new Error('Respuesta vacía de la IA.');
-      setResult(text);
+      return data.candidates[0].content.parts[0].text;
+    };
+
+    try {
+      try {
+        const text = await makeRequest();
+        setResult(text);
+      } catch (firstErr) {
+        console.warn("Primer intento fallido, reintentando en 2s...", firstErr);
+        await new Promise(res => setTimeout(res, 2000));
+        const text = await makeRequest();
+        setResult(text);
+      }
     } catch (err) {
       console.error(err);
-      let msg = err.message;
-      if (msg.toLowerCase().includes('quota')) {
-        msg = "Has superado el límite de uso gratuito de la IA (Gemini). Por favor, intenta de nuevo en unos minutos o revisa tu API Key.";
-      }
-      setError(`Error: ${msg}`);
+      setError(`Error: ${err.message}`);
     } finally {
       setLoading(false);
     }

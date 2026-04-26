@@ -1,13 +1,10 @@
 import React from 'react';
 import { X, Bell, Info, AlertTriangle } from 'lucide-react';
+import { useNotifications } from '../hooks/useNotifications';
 import './NotificationsPanel.css';
 
 const NotificationsPanel = ({ isOpen, onClose }) => {
-  const notifications = [
-    { id: 1, type: 'info', text: 'Nueva sesión de entrenamiento programada para mañana.', time: 'Hace 5 min' },
-    { id: 2, type: 'warning', text: 'Lamine Yamal tiene una molestia en el isquiotibial.', time: 'Hace 2 horas' },
-    { id: 3, type: 'success', text: 'Informe de Test de Cooper completado para todo el equipo.', time: 'Ayer' },
-  ];
+  const { notifications, loading } = useNotifications();
 
   if (!isOpen) return null;
 

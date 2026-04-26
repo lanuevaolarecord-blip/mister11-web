@@ -43,6 +43,8 @@ const PizarraTactica = () => {
     'balon': true, 'coordinacion': false,
     'zonas': false, 'material': false,
   });
+  const [localColor,   setLocalColor]   = useState('#4CAF7D');
+  const [rivalColor,   setRivalColor]   = useState('#E53935');
 
   // keep refs in sync with state
   useEffect(() => { frameIdxR.current = frameIdx; }, [frameIdx]);
@@ -107,14 +109,14 @@ const PizarraTactica = () => {
       }
 
       const player = createPlayer(x, y, {
-        color: isGk ? '#FFD700' : '#4CAF7D',
+        color: isGk ? '#FFD700' : (type === 'local' ? localColor : rivalColor),
         label: i + 1,
-        type: 'local'
+        type: type === 'local' ? 'player' : 'rival'
       });
       canvas.add(player);
     });
     canvas.renderAll();
-  }, [createPlayer]);
+  }, [createPlayer, localColor, rivalColor]);
 
   // ─── Initialize canvases once on mount ───────────────────────────────────
   useEffect(() => {
@@ -244,6 +246,25 @@ const PizarraTactica = () => {
       saveFrameState();
     }
   }, [activeColor, activeWidth, saveFrameState]);
+
+  // ─── Team colors real-time update ──────────────────────────────────────────
+  useEffect(() => {
+    const fc = fcRef.current;
+    if (!fc) return;
+    fc.getObjects().forEach(obj => {
+      if (obj.data?.type === 'player') {
+        if (obj.data?.playerType === 'local') {
+          const circle = obj.item(0);
+          if (circle) circle.set('fill', localColor);
+        } else if (obj.data?.playerType === 'rival') {
+          const circle = obj.item(0);
+          if (circle) circle.set('fill', rivalColor);
+        }
+      }
+    });
+    fc.renderAll();
+    saveFrameState();
+  }, [localColor, rivalColor, saveFrameState]);
 
   // ─── Material placement ───────────────────────────────────────────────────
   useEffect(() => {
@@ -410,9 +431,9 @@ const PizarraTactica = () => {
     const fc = fcRef.current;
     if (!fc) return;
     
-    let color = '#4CAF7D';
+    let color = localColor;
     let label = '1';
-    if (type === 'rival') color = '#E53935';
+    if (type === 'rival') color = rivalColor;
     if (type === 'joker') color = '#D4A843';
 
     const center = fc.getCenter();
@@ -508,8 +529,21 @@ const PizarraTactica = () => {
         <div className="panel-izq">
           <div className="panel-title">EQUIPOS</div>
           <div style={{ padding: '10px' }}>
-            <TeamCard color="#4CAF7D" name="Local" count={11} onAdd={() => addManualPlayer('local')} />
-            <TeamCard color="#E53935" name="Rival" count={0} onAdd={() => addManualPlayer('rival')} style={{ marginTop: 8 }} />
+            <TeamCard 
+              color={localColor} 
+              name="Local" 
+              count={11} 
+              onAdd={() => addManualPlayer('local')} 
+              onColorChange={setLocalColor}
+            />
+            <TeamCard 
+              color={rivalColor} 
+              name="Rival" 
+              count={0} 
+              onAdd={() => addManualPlayer('rival')} 
+              style={{ marginTop: 8 }} 
+              onColorChange={setRivalColor}
+            />
             <TeamCard color="#D4A843" name="Comodín" count={0} onAdd={() => addManualPlayer('joker')} style={{ marginTop: 8 }} />
           </div>
 
@@ -634,13 +668,26 @@ const PizarraTactica = () => {
 };
 
 // ─── Small helper sub-component ──────────────────────────────────────────────
-const TeamCard = ({ color, name, count, onAdd, style }) => (
+const TeamCard = ({ color, name, count, onAdd, style, onColorChange }) => (
   <div style={{
     background: '#252535', borderRadius: 8, padding: '8px 10px',
     display: 'flex', alignItems: 'center', gap: 8,
     ...style
   }}>
-    <div style={{ width: 14, height: 14, borderRadius: '50%', background: color, flexShrink: 0 }} />
+    <div style={{ position: 'relative', width: 24, height: 24 }}>
+      <div style={{ width: 24, height: 24, borderRadius: '50%', background: color, border: '2px solid white' }} />
+      {onColorChange && (
+        <input 
+          type="color" 
+          value={color} 
+          onChange={(e) => onColorChange(e.target.value)}
+          style={{
+            position: 'absolute', top: 0, left: 0, width: '100%', height: '100%',
+            opacity: 0, cursor: 'pointer'
+          }}
+        />
+      )}
+    </div>
     <span style={{ color: '#FFF', fontSize: 13, flex: 1 }}>{name}</span>
     <button className="btn-add-mini" onClick={onAdd}>+</button>
   </div>

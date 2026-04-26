@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { subscribeToCollection, addDocument, updateDocument, deleteDocument } from '../firebase/db';
+import { subscribeToCollection, addDocument, updateDocument, deleteDocument, createNotification } from '../firebase/db';
 
 export const useSessions = () => {
   const { user } = useAuth();
@@ -20,11 +20,14 @@ export const useSessions = () => {
 
   const addSession = async (sessionData) => {
     if (!user) return;
-    return await addDocument('sessions', {
+    const docId = await addDocument('sessions', {
       ...sessionData,
       creadoPor: user.uid,
       equipoId: 'default'
     });
+
+    await createNotification('success', `Nueva sesión creada: ${sessionData.title}`);
+    return docId;
   };
 
   const updateSession = async (id, sessionData) => {

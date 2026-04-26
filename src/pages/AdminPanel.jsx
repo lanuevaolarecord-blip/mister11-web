@@ -18,6 +18,7 @@ import {
   CheckCircle
 } from 'lucide-react';
 import { generateSeasonReport, generateMatchConvocation, generateSessionPDF } from '../utils/pdfGenerator';
+import { t } from '../i18n/translations';
 import './AdminPanel.css';
 
 const AdminPanel = () => {
@@ -79,8 +80,9 @@ const AdminPanel = () => {
     }
   };
 
-  const toggleSetting = async (key) => {
-    const updatedPrefs = { ...prefData, [key]: !prefData[key] };
+  const toggleSetting = async (key, val = null) => {
+    const newValue = val !== null ? val : !prefData[key];
+    const updatedPrefs = { ...prefData, [key]: newValue };
     setPrefData(updatedPrefs);
     await saveSettings({ ...settings, ...updatedPrefs });
   };
@@ -279,7 +281,7 @@ const AdminPanel = () => {
                       <option>Analista</option>
                     </select>
                   </div>
-                  <button className="btn-save-settings" onClick={handleSaveProfile}>Guardar Perfil</button>
+                  <button className="btn-save-settings" onClick={handleSaveProfile}>{t('btn.save', settings.language)} Perfil</button>
                 </div>
               </div>
 
@@ -324,7 +326,7 @@ const AdminPanel = () => {
                       <span>Subir Imagen</span>
                     </div>
                   </div>
-                  <button className="btn-save-settings" onClick={handleUpdateClub}>Actualizar Club</button>
+                  <button className="btn-save-settings" onClick={handleUpdateClub}>{t('btn.save', settings.language)} Club</button>
                 </div>
               </div>
 
@@ -351,7 +353,11 @@ const AdminPanel = () => {
                   </div>
                   <div className="form-group" style={{marginTop: '15px'}}>
                     <label>Idioma del Sistema</label>
-                    <select className="admin-select-input">
+                    <select 
+                      className="admin-select-input"
+                      value={prefData.language}
+                      onChange={(e) => toggleSetting('language', e.target.value)}
+                    >
                       <option>Español (ES)</option>
                       <option>English (EN)</option>
                     </select>

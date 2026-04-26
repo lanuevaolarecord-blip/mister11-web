@@ -66,3 +66,16 @@ export const deleteDocument = async (collectionName, id) => {
     throw error;
   }
 };
+
+export const createNotification = async (type, text) => {
+  try {
+    const colRef = collection(db, 'notifications');
+    await addDoc(colRef, {
+      type,
+      text,
+      createdAt: serverTimestamp()
+    });
+  } catch (error) {
+    console.error("Error creating notification:", error);
+  }
+};

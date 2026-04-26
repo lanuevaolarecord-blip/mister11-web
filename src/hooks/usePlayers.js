@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { subscribeToCollection, addDocument, updateDocument, deleteDocument } from '../firebase/db';
+import { subscribeToCollection, addDocument, updateDocument, deleteDocument, createNotification } from '../firebase/db';
 
 export const usePlayers = () => {
   const { user } = useAuth();
@@ -22,11 +22,14 @@ export const usePlayers = () => {
 
   const addPlayer = async (playerData) => {
     if (!user) return;
-    return await addDocument('players', {
+    const docId = await addDocument('players', {
       ...playerData,
       creadoPor: user.uid,
       equipoId: 'default' // Por ahora un equipo por defecto
     });
+    
+    await createNotification('info', `Nuevo jugador añadido: ${playerData.nombre}`);
+    return docId;
   };
 
   const updatePlayer = async (id, playerData) => {

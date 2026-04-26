@@ -16,6 +16,49 @@
   --font-numbers: 'Bebas Neue', 'Oswald', sans-serif;
 }
 
+/* Dark Mode Overrides */
+.dark-mode {
+  --sand: #121212;
+  --white: #1E1E1E;
+  --carbon: #E0E0E0;
+  --primary: #2D5A47;
+  --accent: #66BB6A;
+}
+
+.dark-mode body {
+  background-color: var(--sand);
+  color: var(--carbon);
+}
+
+.dark-mode .sidebar {
+  background-color: #1a1a1a;
+  border-right: 1px solid #333;
+}
+
+.dark-mode .header {
+  background-color: #1e1e1e;
+  border-bottom: 1px solid #333;
+}
+
+.dark-mode .card, 
+.dark-mode .settings-card,
+.dark-mode .stat-card-dash,
+.dark-mode .session-item-dash {
+  background: #252525;
+  border: 1px solid #333;
+  color: #fff;
+}
+
+.dark-mode h1, .dark-mode h2, .dark-mode h3, .dark-mode h4 {
+  color: var(--accent);
+}
+
+.dark-mode input, .dark-mode select {
+  background: #333;
+  color: #fff;
+  border: 1px solid #444;
+}
+
 /* Global Reset & Base Styles */
 * {
   margin: 0;

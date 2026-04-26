@@ -4,6 +4,7 @@ import { useSettings } from '../hooks/useSettings';
 import { useSessions } from '../hooks/useSessions';
 import { useMatches } from '../hooks/useMatches';
 import { useNavigate } from 'react-router-dom';
+import { t } from '../i18n/translations';
 import './Dashboard.css';
 
 const Dashboard = () => {
@@ -42,8 +43,8 @@ const Dashboard = () => {
     <div className="dashboard-page">
       <header className="dashboard-header">
         <div className="welcome">
-          <h1>Hola, {settings.profileName?.split(' ')[0] || 'Míster'}</h1>
-          <p>Esta es la actividad de tu equipo ({settings.clubName || 'Mi Equipo'}) para esta semana.</p>
+          <h1>{t('dashboard.welcome', settings.language, { name: settings.profileName?.split(' ')[0] || 'Míster' })}</h1>
+          <p>{t('dashboard.activity', settings.language, { club: settings.clubName || 'Mi Equipo' })}</p>
         </div>
         <div className="current-date">
           <span>{new Date().toLocaleDateString('es-ES', { month: 'long', year: 'numeric' })}</span>

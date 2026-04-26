@@ -14,19 +14,20 @@ import {
 } from 'lucide-react';
 import { auth, signOut } from '../firebaseConfig';
 import { useSettings } from '../hooks/useSettings';
+import { t } from '../i18n/translations';
 
 const Sidebar = () => {
   const { settings } = useSettings();
   const navItems = [
-    { path: '/', label: 'DASHBOARD', icon: LayoutDashboard },
-    { path: '/pizarra', label: 'PIZARRA TÁCTICA', icon: Presentation },
-    { path: '/equipo', label: 'MI EQUIPO', icon: Users },
-    { path: '/sesiones', label: 'SESIONES', icon: CalendarDays },
-    { path: '/planificacion', label: 'PLANIFICACIÓN', icon: TrendingUp },
-    { path: '/tests', label: 'TESTS', icon: Activity },
-    { path: '/partidos', label: 'PARTIDOS', icon: Trophy },
-    { path: '/ia-generadora', label: 'IA GENERADORA', icon: Sparkles },
-    { path: '/admin', label: 'ADMINISTRACIÓN', icon: ShieldCheck },
+    { path: '/', label: t('nav.dashboard', settings.language), icon: LayoutDashboard },
+    { path: '/pizarra', label: t('nav.pizarra', settings.language), icon: Presentation },
+    { path: '/equipo', label: t('nav.equipo', settings.language), icon: Users },
+    { path: '/sesiones', label: t('nav.sesiones', settings.language), icon: CalendarDays },
+    { path: '/planificacion', label: t('nav.planificacion', settings.language), icon: TrendingUp },
+    { path: '/tests', label: t('nav.tests', settings.language), icon: Activity },
+    { path: '/partidos', label: t('nav.partidos', settings.language), icon: Trophy },
+    { path: '/ia-generadora', label: t('nav.ia', settings.language), icon: Sparkles },
+    { path: '/admin', label: t('nav.admin', settings.language), icon: ShieldCheck },
   ];
 
   return (

@@ -189,6 +189,13 @@ const PizarraTactica = () => {
     fc.on('object:removed',  onChange);
 
     // 7. Resize handler
+    const onResize = () => {
+      if (!containerRef.current) return;
+      const nW = containerRef.current.offsetWidth;
+      const nH = containerRef.current.offsetHeight;
+      fieldCanvasRef.current.width  = nW;
+      fieldCanvasRef.current.height = nH;
+      renderer.draw(toLibType(fieldType));
       fc.setDimensions({ width: nW, height: nH });
     };
     window.addEventListener('resize', onResize);

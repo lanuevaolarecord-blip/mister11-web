@@ -1,14 +1,15 @@
-import { useState, useEffect } from 'react';
-import { db } from '../firebaseConfig';
-import { collection, query, orderBy, limit, onSnapshot, addDoc, serverTimestamp } from 'firebase/firestore';
+import { useAuth } from '../context/AuthContext';
 
 export const useNotifications = () => {
+  const { user } = useAuth();
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    if (!user) return;
+
     const q = query(
-      collection(db, 'notifications'),
+      collection(db, 'users', user.uid, 'notifications'),
       orderBy('createdAt', 'desc'),
       limit(20)
     );
@@ -24,11 +25,12 @@ export const useNotifications = () => {
     });
 
     return () => unsubscribe();
-  }, []);
+  }, [user]);
 
   const addNotification = async (type, text) => {
+    if (!user) return;
     try {
-      await addDoc(collection(db, 'notifications'), {
+      await addDoc(collection(db, 'users', user.uid, 'notifications'), {
         type,
         text,
         createdAt: serverTimestamp()

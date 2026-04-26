@@ -12,19 +12,18 @@ export const usePlayers = () => {
 
     // Suscribirse a los jugadores del usuario actual
     // En el futuro podemos filtrar por equipoId si el entrenador tiene varios equipos
-    const unsubscribe = subscribeToCollection('players', (data) => {
+    const unsubscribe = subscribeToCollection(`users/${user.uid}/players`, (data) => {
       setPlayers(data);
       setLoading(false);
-    }, [{ field: 'creadoPor', operator: '==', value: user.uid }]);
+    });
 
     return () => unsubscribe();
   }, [user]);
 
   const addPlayer = async (playerData) => {
     if (!user) return;
-    const docId = await addDocument('players', {
+    const docId = await addDocument(`users/${user.uid}/players`, {
       ...playerData,
-      creadoPor: user.uid,
       equipoId: 'default' // Por ahora un equipo por defecto
     });
     
@@ -33,11 +32,11 @@ export const usePlayers = () => {
   };
 
   const updatePlayer = async (id, playerData) => {
-    return await updateDocument('players', id, playerData);
+    return await updateDocument(`users/${user.uid}/players`, id, playerData);
   };
 
   const removePlayer = async (id) => {
-    return await deleteDocument('players', id);
+    return await deleteDocument(`users/${user.uid}/players`, id);
   };
 
   return { players, loading, addPlayer, updatePlayer, removePlayer };

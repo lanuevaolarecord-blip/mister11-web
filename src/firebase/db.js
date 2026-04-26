@@ -9,7 +9,7 @@ import {
   where, 
   serverTimestamp 
 } from 'firebase/firestore';
-import { db } from '../firebaseConfig';
+import { db, auth } from '../firebaseConfig';
 
 export const subscribeToCollection = (collectionName, callback, filters = []) => {
   const colRef = collection(db, collectionName);
@@ -69,7 +69,8 @@ export const deleteDocument = async (collectionName, id) => {
 
 export const createNotification = async (type, text) => {
   try {
-    const colRef = collection(db, 'notifications');
+    if (!auth.currentUser) return;
+    const colRef = collection(db, 'users', auth.currentUser.uid, 'notifications');
     await addDoc(colRef, {
       type,
       text,

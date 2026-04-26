@@ -21,8 +21,7 @@ export const useTeams = () => {
     if (!auth.currentUser) return;
 
     const q = query(
-      collection(db, 'teams'),
-      where('entrenadorId', '==', auth.currentUser.uid)
+      collection(db, 'users', auth.currentUser.uid, 'teams')
     );
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
@@ -45,20 +44,19 @@ export const useTeams = () => {
   }, [activeTeam]);
 
   const addTeam = async (teamData) => {
-    return await addDoc(collection(db, 'teams'), {
+    return await addDoc(collection(db, 'users', auth.currentUser.uid, 'teams'), {
       ...teamData,
-      entrenadorId: auth.currentUser.uid,
       createdAt: serverTimestamp()
     });
   };
 
   const updateTeam = async (id, data) => {
-    const teamRef = doc(db, 'teams', id);
+    const teamRef = doc(db, 'users', auth.currentUser.uid, 'teams', id);
     return await updateDoc(teamRef, data);
   };
 
   const deleteTeam = async (id) => {
-    const teamRef = doc(db, 'teams', id);
+    const teamRef = doc(db, 'users', auth.currentUser.uid, 'teams', id);
     return await deleteDoc(teamRef);
   };
 

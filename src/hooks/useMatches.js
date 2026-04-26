@@ -10,19 +10,18 @@ export const useMatches = () => {
   useEffect(() => {
     if (!user) return;
 
-    const unsubscribe = subscribeToCollection('matches', (data) => {
+    const unsubscribe = subscribeToCollection(`users/${user.uid}/matches`, (data) => {
       setMatches(data);
       setLoading(false);
-    }, [{ field: 'creadoPor', operator: '==', value: user.uid }]);
+    });
 
     return () => unsubscribe();
   }, [user]);
 
   const addMatch = async (matchData) => {
     if (!user) return;
-    const docId = await addDocument('matches', {
+    const docId = await addDocument(`users/${user.uid}/matches`, {
       ...matchData,
-      creadoPor: user.uid,
       equipoId: 'default'
     });
 
@@ -31,11 +30,11 @@ export const useMatches = () => {
   };
 
   const updateMatch = async (id, matchData) => {
-    return await updateDocument('matches', id, matchData);
+    return await updateDocument(`users/${user.uid}/matches`, id, matchData);
   };
 
   const removeMatch = async (id) => {
-    return await deleteDocument('matches', id);
+    return await deleteDocument(`users/${user.uid}/matches`, id);
   };
 
   return { matches, loading, addMatch, updateMatch, removeMatch };

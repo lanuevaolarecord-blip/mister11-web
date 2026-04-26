@@ -10,19 +10,18 @@ export const useSessions = () => {
   useEffect(() => {
     if (!user) return;
 
-    const unsubscribe = subscribeToCollection('sessions', (data) => {
+    const unsubscribe = subscribeToCollection(`users/${user.uid}/sessions`, (data) => {
       setSessions(data);
       setLoading(false);
-    }, [{ field: 'creadoPor', operator: '==', value: user.uid }]);
+    });
 
     return () => unsubscribe();
   }, [user]);
 
   const addSession = async (sessionData) => {
     if (!user) return;
-    const docId = await addDocument('sessions', {
+    const docId = await addDocument(`users/${user.uid}/sessions`, {
       ...sessionData,
-      creadoPor: user.uid,
       equipoId: 'default'
     });
 
@@ -31,11 +30,11 @@ export const useSessions = () => {
   };
 
   const updateSession = async (id, sessionData) => {
-    return await updateDocument('sessions', id, sessionData);
+    return await updateDocument(`users/${user.uid}/sessions`, id, sessionData);
   };
 
   const removeSession = async (id) => {
-    return await deleteDocument('sessions', id);
+    return await deleteDocument(`users/${user.uid}/sessions`, id);
   };
 
   return { sessions, loading, addSession, updateSession, removeSession };

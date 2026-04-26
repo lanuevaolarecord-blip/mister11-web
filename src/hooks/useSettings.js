@@ -20,7 +20,7 @@ export const useSettings = () => {
   useEffect(() => {
     if (!user) return;
 
-    const docRef = doc(db, 'settings', 'config');
+    const docRef = doc(db, 'users', user.uid, 'settings', 'config');
     const unsubscribe = onSnapshot(docRef, (docSnap) => {
       if (docSnap.exists()) {
         setSettings(docSnap.data());
@@ -33,7 +33,7 @@ export const useSettings = () => {
 
   const saveSettings = async (newSettings) => {
     if (!user) return;
-    const docRef = doc(db, 'settings', 'config');
+    const docRef = doc(db, 'users', user.uid, 'settings', 'config');
     await setDoc(docRef, { ...newSettings, updatedAt: new Date() }, { merge: true });
   };
 

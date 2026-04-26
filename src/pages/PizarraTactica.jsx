@@ -31,6 +31,9 @@ const PizarraTactica = () => {
 
   // React state (UI)
   const [ready,        setReady]        = useState(false);
+  const [isMobile,     setIsMobile]     = useState(window.innerWidth < 768);
+  const [showTeamsDrawer, setShowTeamsDrawer] = useState(false);
+  const [showMatsDrawer, setShowMatsDrawer] = useState(false);
   const [fieldType,    setFieldType]    = useState('full');
   const [formation,    setFormation]    = useState('4-3-3');
   const [activeTool,   setActiveTool]   = useState('select');
@@ -257,17 +260,25 @@ const PizarraTactica = () => {
     fc.on('object:added',    onChange);
     fc.on('object:removed',  onChange);
 
-    // 7. Resize handler
+    // 7. Resize logic with ResizeObserver
     const onResize = () => {
       if (!containerRef.current) return;
       const nW = containerRef.current.offsetWidth;
       const nH = containerRef.current.offsetHeight;
+      
+      setIsMobile(window.innerWidth < 768);
+
       fieldCanvasRef.current.width  = nW;
       fieldCanvasRef.current.height = nH;
       renderer.draw(toLibType(fieldType));
       fc.setDimensions({ width: nW, height: nH });
+      fc.renderAll();
     };
-    window.addEventListener('resize', onResize);
+
+    const resizeObserver = new ResizeObserver(() => {
+      onResize();
+    });
+    resizeObserver.observe(containerRef.current);
 
     // 8. Keyboard shortcuts (Undo/Redo)
     const onKeyDown = (e) => {
@@ -283,7 +294,7 @@ const PizarraTactica = () => {
     window.addEventListener('keydown', onKeyDown);
 
     return () => {
-      window.removeEventListener('resize', onResize);
+      resizeObserver.disconnect();
       window.removeEventListener('keydown', onKeyDown);
       fc.off('object:modified', onChange);
       fc.off('object:added',    onChange);
@@ -565,124 +576,174 @@ const PizarraTactica = () => {
     }
   };
 
+  // ─── Sub-Components (Panels) ──────────────────────────────────────────────
+  const TeamsPanel = () => (
+    <div className="pizarra-sidebar-content">
+      <div className="panel-title">EQUIPOS</div>
+      <div style={{ padding: '10px' }}>
+        <TeamCard 
+          color={localColor} 
+          name="Local" 
+          count={11} 
+          onAdd={() => addManualPlayer('local')} 
+          onColorChange={setLocalColor}
+          formation={localFormation}
+          onFormationChange={setLocalFormation}
+        />
+        <TeamCard 
+          color={rivalColor} 
+          name="Rival" 
+          count={11} 
+          onAdd={() => addManualPlayer('rival')} 
+          style={{ marginTop: 12 }} 
+          onColorChange={setRivalColor}
+          formation={rivalFormation}
+          onFormationChange={setRivalFormation}
+        />
+        <TeamCard 
+          color={jokerColor} 
+          name="Comodín" 
+          count={0} 
+          onAdd={() => addManualPlayer('joker')} 
+          style={{ marginTop: 12 }} 
+          onColorChange={setJokerColor}
+        />
+      </div>
+
+      <div className="panel-title" style={{ marginTop: 12 }}>ACCIONES</div>
+      <div style={{ padding: '0 10px 10px', display: 'flex', flexDirection: 'column', gap: 10 }}>
+        <div className="toggle-rival" style={{ display: 'flex', alignItems: 'center', gap: 10, color: '#CCC', fontSize: 13 }}>
+          <input 
+            type="checkbox" 
+            id="show-rival-toggle" 
+            checked={showRival} 
+            onChange={e => setShowRival(e.target.checked)} 
+          />
+          <label htmlFor="show-rival-toggle">Mostrar equipo rival</label>
+        </div>
+        <button className="topbar-btn outline" style={{flex: 1, minHeight: '44px'}} onClick={deleteSelected}>🗑 Eliminar</button>
+      </div>
+    </div>
+  );
+
+  const MaterialsPanel = () => (
+    <div className="pizarra-sidebar-content">
+      <div className="panel-title">MATERIAL</div>
+      <div className="materials-list">
+        {Object.entries(MATERIALS_BY_CATEGORY).map(([catKey, catData]) => {
+          const catLabel = catData.label || catKey;
+          const catItems = catData.items || catData || [];
+          return (
+            <div key={catKey} className="material-category">
+              <div className="material-header" onClick={() =>
+                setOpenCats(p => ({ ...p, [catKey]: !p[catKey] }))}>
+                <span>{openCats[catKey] ? '▾' : '▸'}</span>
+                <span>{catData.icon || ''} {catLabel}</span>
+              </div>
+              {openCats[catKey] && (
+                <div className="material-items">
+                  {catItems.map(id => {
+                    const mat = MATERIALS_LIBRARY[id];
+                    if (!mat) return null;
+                    return (
+                      <div key={id}
+                        className={`material-item ${placingMat === id ? 'active' : ''}`}
+                        title={mat.label}
+                        onClick={() => { 
+                          setPlacingMat(id); 
+                          setActiveTool('place_material');
+                          if (isMobile) setShowMatsDrawer(false);
+                        }}>
+                        <div dangerouslySetInnerHTML={{ __html: mat.svgPanel }}
+                          style={{ width: 40, height: 40, display: 'flex', alignItems: 'center', justifyContent: 'center' }} />
+                        <span>{mat.label}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+
   // ─── JSX ──────────────────────────────────────────────────────────────────
   return (
-    <div className="pizarra-container">
+    <div className={`pizarra-container ${isMobile ? 'mobile' : 'desktop'}`}>
 
       {/* ── TOP BAR ───────────────────────────────────────────────────────── */}
       <div className="pizarra-topbar">
-
-        {/* Field & Formation selectors */}
-        <div className="topbar-group">
-          <select className="topbar-select" value={fieldType}
-            onChange={e => setFieldType(e.target.value)}>
-            <option value="full">Campo Completo</option>
-            <option value="half-attack">½ Ataque</option>
-            <option value="half-defense">½ Defensa</option>
-          </select>
-          <button 
-            className={`topbar-btn ${isSwapped ? 'active' : ''}`} 
-            onClick={() => setIsSwapped(!isSwapped)}
-            title="Cambiar lados de equipos"
-          >
-            ⇄ Lados
-          </button>
-        </div>
-
-        {/* Drawing tools */}
-        <div className="topbar-group">
-          {Object.values(TOOLS).map(tool => (
-            <button
-              key={tool.id}
-              className={`tool-icon-btn ${activeTool === tool.id ? 'active' : ''}`}
-              title={tool.label}
-              onClick={() => setActiveTool(tool.id)}
-              dangerouslySetInnerHTML={{ __html: tool.icon }}
-            />
-          ))}
-        </div>
-
-        {/* Colors */}
-        <div className="topbar-group">
-          {STROKE_COLORS.map(c => (
-            <div key={c.id}
-              className={`color-swatch-top ${activeColor === c.hex ? 'active' : ''}`}
-              style={{ backgroundColor: c.hex }}
-              title={c.label}
-              onClick={() => setActiveColor(c.hex)}
-            />
-          ))}
-          <div style={{ width: 1, height: 24, background: 'rgba(255,255,255,0.2)' }} />
-          {Object.entries(STROKE_WIDTHS).map(([k, v]) => (
-            <button key={k}
-              className={`topbar-btn ${activeWidth === v.value ? 'active' : ''}`}
-              onClick={() => setActiveWidth(v.value)}
-              style={{ padding: '4px 10px' }}>
-              {v.label}
+        <div className="topbar-scroll-wrapper">
+          {/* Field & Formation selectors */}
+          <div className="topbar-group">
+            <select className="topbar-select" value={fieldType}
+              onChange={e => setFieldType(e.target.value)}>
+              <option value="full">Campo Completo</option>
+              <option value="half-attack">½ Ataque</option>
+              <option value="half-defense">½ Defensa</option>
+            </select>
+            <button 
+              className={`topbar-btn ${isSwapped ? 'active' : ''}`} 
+              onClick={() => setIsSwapped(!isSwapped)}
+              title="Cambiar lados de equipos"
+            >
+              ⇄ Lados
             </button>
-          ))}
-        </div>
+          </div>
 
-        {/* Actions */}
-        <div className="topbar-group">
-          <button className="topbar-btn" onClick={undo} disabled={histCount <= 1} title="Deshacer (Ctrl+Z)">↩</button>
-          <button className="topbar-btn" onClick={redo} disabled={redoCount === 0} title="Rehacer (Ctrl+Y)">↪</button>
-          <button className="topbar-btn" onClick={clearCanvas}>🗑 Limpiar</button>
-          <button className="topbar-btn primary">💾 Guardar</button>
-        </div>
+          {/* Drawing tools */}
+          <div className="topbar-group">
+            {Object.values(TOOLS).map(tool => (
+              <button
+                key={tool.id}
+                className={`tool-icon-btn ${activeTool === tool.id ? 'active' : ''}`}
+                title={tool.label}
+                onClick={() => setActiveTool(tool.id)}
+                dangerouslySetInnerHTML={{ __html: tool.icon }}
+              />
+            ))}
+          </div>
 
+          {/* Colors */}
+          <div className="topbar-group">
+            {STROKE_COLORS.map(c => (
+              <div key={c.id}
+                className={`color-swatch-top ${activeColor === c.hex ? 'active' : ''}`}
+                style={{ backgroundColor: c.hex }}
+                title={c.label}
+                onClick={() => setActiveColor(c.hex)}
+              />
+            ))}
+            <div className="topbar-divider" />
+            {Object.entries(STROKE_WIDTHS).map(([k, v]) => (
+              <button key={k}
+                className={`topbar-btn ${activeWidth === v.value ? 'active' : ''}`}
+                onClick={() => setActiveWidth(v.value)}>
+                {v.label}
+              </button>
+            ))}
+          </div>
+
+          {/* Actions */}
+          <div className="topbar-group">
+            <button className="topbar-btn" onClick={undo} disabled={histCount <= 1} title="Deshacer (Ctrl+Z)">↩</button>
+            <button className="topbar-btn" onClick={redo} disabled={redoCount === 0} title="Rehacer (Ctrl+Y)">↪</button>
+            <button className="topbar-btn" onClick={clearCanvas}>🗑 Limpiar</button>
+            <button className="topbar-btn primary">💾 Guardar</button>
+          </div>
+        </div>
       </div>
 
       {/* ── MAIN BOARD ────────────────────────────────────────────────────── */}
       <div className="pizarra-main">
 
-        {/* LEFT PANEL */}
-        <div className="panel-izq">
-          <div className="panel-title">EQUIPOS</div>
-          <div style={{ padding: '10px' }}>
-            <TeamCard 
-              color={localColor} 
-              name="Local" 
-              count={11} 
-              onAdd={() => addManualPlayer('local')} 
-              onColorChange={setLocalColor}
-              formation={localFormation}
-              onFormationChange={setLocalFormation}
-            />
-            <TeamCard 
-              color={rivalColor} 
-              name="Rival" 
-              count={11} 
-              onAdd={() => addManualPlayer('rival')} 
-              style={{ marginTop: 12 }} 
-              onColorChange={setRivalColor}
-              formation={rivalFormation}
-              onFormationChange={setRivalFormation}
-            />
-            <TeamCard 
-              color={jokerColor} 
-              name="Comodín" 
-              count={0} 
-              onAdd={() => addManualPlayer('joker')} 
-              style={{ marginTop: 12 }} 
-              onColorChange={setJokerColor}
-            />
+        {!isMobile && (
+          <div className="panel-izq">
+            <TeamsPanel />
           </div>
-
-          <div className="panel-title" style={{ marginTop: 12 }}>ACCIONES</div>
-          <div style={{ padding: '0 10px 10px', display: 'flex', flexDirection: 'column', gap: 10 }}>
-            <div className="toggle-rival" style={{ display: 'flex', alignItems: 'center', gap: 10, color: '#CCC', fontSize: 13 }}>
-              <input 
-                type="checkbox" 
-                id="show-rival-toggle" 
-                checked={showRival} 
-                onChange={e => setShowRival(e.target.checked)} 
-              />
-              <label htmlFor="show-rival-toggle">Mostrar equipo rival</label>
-            </div>
-            <button className="topbar-btn outline" style={{flex: 1}} onClick={deleteSelected}>🗑 Eliminar</button>
-          </div>
-        </div>
+        )}
 
         {/* CANVAS */}
         <div className="canvas-area" ref={containerRef}>
@@ -694,94 +755,91 @@ const PizarraTactica = () => {
           {/* Placing-material indicator */}
           {placingMat && (
             <div className="placing-hint">
-              📍 Haz clic en el campo para colocar el material. <button onClick={() => { setPlacingMat(null); setActiveTool('select'); }}>✕ Cancelar</button>
+              📍 Haz clic en el campo para colocar el material. 
+              <button onClick={() => { setPlacingMat(null); setActiveTool('select'); }}>✕</button>
+            </div>
+          )}
+
+          {/* Floating Buttons for Mobile */}
+          {isMobile && (
+            <div className="floating-actions">
+              <button className="btn-floating" onClick={() => setShowTeamsDrawer(true)}>👥 Equipos</button>
+              <button className="btn-floating" onClick={() => setShowMatsDrawer(true)}>🎒 Material</button>
             </div>
           )}
         </div>
 
-        {/* RIGHT PANEL */}
-        <div className="panel-der">
-          <div className="panel-title">MATERIAL</div>
-          <div className="materials-list">
-            {Object.entries(MATERIALS_BY_CATEGORY).map(([catKey, catData]) => {
-              // MATERIALS_BY_CATEGORY structure: { label, icon, items: [ids] }
-              const catLabel = catData.label || catKey;
-              const catItems = catData.items || catData || [];
-              return (
-                <div key={catKey} className="material-category">
-                  <div className="material-header" onClick={() =>
-                    setOpenCats(p => ({ ...p, [catKey]: !p[catKey] }))}>
-                    <span>{openCats[catKey] ? '▾' : '▸'}</span>
-                    <span>{catData.icon || ''} {catLabel}</span>
-                  </div>
-                  {openCats[catKey] && (
-                    <div className="material-items">
-                      {catItems.map(id => {
-                        const mat = MATERIALS_LIBRARY[id];
-                        if (!mat) return null;
-                        return (
-                          <div key={id}
-                            className={`material-item ${placingMat === id ? 'active' : ''}`}
-                            title={mat.label}
-                            onClick={() => { setPlacingMat(id); setActiveTool('place_material'); }}>
-                            <div dangerouslySetInnerHTML={{ __html: mat.svgPanel }}
-                              style={{ width: 40, height: 40, display: 'flex', alignItems: 'center', justifyContent: 'center' }} />
-                            <span>{mat.label}</span>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  )}
-                </div>
-              );
-            })}
+        {!isMobile && (
+          <div className="panel-der">
+            <MaterialsPanel />
           </div>
-        </div>
+        )}
 
       </div>
 
       {/* ── TIMELINE ──────────────────────────────────────────────────────── */}
       <div className="pizarra-timeline">
-        <button className="topbar-btn" onClick={() => loadFrame(0)}
-          disabled={isPlaying || frameIdx === 0}>⏮</button>
-        <button className="topbar-btn"
-          onClick={() => loadFrame(Math.max(0, frameIdx - 1))}
-          disabled={isPlaying || frameIdx === 0}>◀</button>
+        <div className="timeline-scroll-wrapper">
+          <button className="topbar-btn" onClick={() => loadFrame(0)}
+            disabled={isPlaying || frameIdx === 0}>⏮</button>
+          <button className="topbar-btn"
+            onClick={() => loadFrame(Math.max(0, frameIdx - 1))}
+            disabled={isPlaying || frameIdx === 0}>◀</button>
 
-        {isPlaying
-          ? <button className="topbar-btn primary" onClick={stopAnimation}>⏹ Stop</button>
-          : <button className="topbar-btn primary" onClick={playAnimation}
-              disabled={frames.length < 2}>▶ Play</button>
-        }
+          {isPlaying
+            ? <button className="topbar-btn primary" onClick={stopAnimation}>⏹</button>
+            : <button className="topbar-btn primary" onClick={playAnimation}
+                disabled={frames.length < 2}>▶</button>
+          }
 
-        <button className="topbar-btn"
-          onClick={() => loadFrame(Math.min(frames.length - 1, frameIdx + 1))}
-          disabled={isPlaying || frameIdx === frames.length - 1}>▶</button>
-        <button className="topbar-btn"
-          onClick={() => loadFrame(frames.length - 1)}
-          disabled={isPlaying || frameIdx === frames.length - 1}>⏭</button>
+          <button className="topbar-btn"
+            onClick={() => loadFrame(Math.min(frames.length - 1, frameIdx + 1))}
+            disabled={isPlaying || frameIdx === frames.length - 1}>▶</button>
+          <button className="topbar-btn"
+            onClick={() => loadFrame(frames.length - 1)}
+            disabled={isPlaying || frameIdx === frames.length - 1}>⏭</button>
 
-        <span style={{ fontSize: 12, marginLeft: 10 }}>
-          Frame {frames.length > 0 ? frameIdx + 1 : 0} / {frames.length}
-        </span>
+          <span className="frame-counter">
+            {frames.length > 0 ? frameIdx + 1 : 0}/{frames.length}
+          </span>
 
-        {/* Frame chips */}
-        <div className="timeline-chips">
-          {frames.map((f, i) => (
-            <div key={f.id}
-              className={`frame-chip ${i === frameIdx ? 'active' : ''}`}
-              onClick={() => !isPlaying && loadFrame(i)}>
-              {i + 1}
-            </div>
-          ))}
+          <div className="timeline-chips">
+            {frames.map((f, i) => (
+              <div key={f.id}
+                className={`frame-chip ${i === frameIdx ? 'active' : ''}`}
+                onClick={() => !isPlaying && loadFrame(i)}>
+                {i + 1}
+              </div>
+            ))}
+          </div>
+
+          <button className="topbar-btn outline" onClick={addFrame} disabled={isPlaying}>+ Frame</button>
+          <button className="topbar-btn" onClick={deleteFrame}
+            disabled={isPlaying || frames.length <= 1}>🗑</button>
         </div>
-
-        <button className="topbar-btn outline" onClick={addFrame} disabled={isPlaying}>
-          + Frame
-        </button>
-        <button className="topbar-btn" onClick={deleteFrame}
-          disabled={isPlaying || frames.length <= 1}>🗑</button>
       </div>
+
+      {/* ── MOBILE DRAWERS ───────────────────────────────────────────────── */}
+      {isMobile && (
+        <>
+          {showTeamsDrawer && (
+            <div className="bottom-drawer-overlay" onClick={() => setShowTeamsDrawer(false)}>
+              <div className="bottom-drawer" onClick={e => e.stopPropagation()}>
+                <div className="drawer-handle" />
+                <TeamsPanel />
+              </div>
+            </div>
+          )}
+          {showMatsDrawer && (
+            <div className="bottom-drawer-overlay" onClick={() => setShowMatsDrawer(false)}>
+              <div className="bottom-drawer" onClick={e => e.stopPropagation()}>
+                <div className="drawer-handle" />
+                <MaterialsPanel />
+              </div>
+            </div>
+          )}
+        </>
+      )}
 
     </div>
   );

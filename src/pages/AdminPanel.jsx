@@ -19,6 +19,7 @@ import {
 } from 'lucide-react';
 import { generateSeasonReport, generateMatchConvocation, generateSessionPDF } from '../utils/pdfGenerator';
 import { t } from '../i18n/translations';
+import { usePWA } from '../hooks/usePWA';
 import './AdminPanel.css';
 
 const AdminPanel = () => {
@@ -35,6 +36,7 @@ const AdminPanel = () => {
   const [profileData, setProfileData] = useState({ profileName: '', specialty: 'Primer Entrenador' });
   const [clubData, setClubData] = useState({ clubName: '', primaryColor: '#1B3A2D', secondaryColor: '#4CAF7D' });
   const [prefData, setPrefData] = useState({ notifications: true, darkMode: true, language: 'Español (ES)' });
+  const { deferredPrompt, isInstalled, installApp } = usePWA();
 
   // Sync state when settings load
   React.useEffect(() => {
@@ -362,6 +364,16 @@ const AdminPanel = () => {
                       <option>English (EN)</option>
                     </select>
                   </div>
+
+                  {deferredPrompt && !isInstalled && (
+                    <button 
+                      className="btn-primary" 
+                      onClick={installApp}
+                      style={{ marginTop: '20px', width: '100%' }}
+                    >
+                      Instalar App (PWA)
+                    </button>
+                  )}
                 </div>
               </div>
             </div>

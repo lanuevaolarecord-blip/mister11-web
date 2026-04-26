@@ -12,6 +12,7 @@ import Partidos from './pages/Partidos';
 import IAGeneradora from './pages/IAGeneradora';
 import AdminPanel from './pages/AdminPanel';
 import Login from './pages/Login';
+import Instalar from './pages/Instalar';
 import './App.css';
 
 function App() {
@@ -36,6 +37,11 @@ function App() {
       <Route 
         path="/login" 
         element={user ? <Navigate to="/" replace /> : <Login />} 
+      />
+
+      <Route 
+        path="/instalar" 
+        element={<Instalar />} 
       />
 
       <Route 

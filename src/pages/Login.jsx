@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
 import { auth, googleProvider, signInWithPopup, signInWithRedirect } from '../firebaseConfig';
+import { usePWA } from '../hooks/usePWA';
 import './Login.css';
 
 const Login = () => {
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const { deferredPrompt, isInstalled, installApp } = usePWA();
 
   const handleGoogleLogin = async () => {
     setIsLoading(true);
@@ -63,6 +65,16 @@ const Login = () => {
               </>
             )}
           </button>
+
+          {deferredPrompt && !isInstalled && (
+            <button 
+              className="btn-primary outline" 
+              onClick={installApp}
+              style={{ marginTop: '15px', width: '100%' }}
+            >
+              Instalar App
+            </button>
+          )}
           
           <div className="login-footer">
             <p>Al iniciar sesión, aceptas nuestros Términos de Servicio y Política de Privacidad.</p>

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useTeams } from '../hooks/useTeams';
+import { useSettings } from '../hooks/useSettings';
 import { useExercises } from '../hooks/useExercises';
 import { usePlayers } from '../hooks/usePlayers';
 import { useSessions } from '../hooks/useSessions';
@@ -29,10 +30,30 @@ const AdminPanel = () => {
 
   const [newTeam, setNewTeam] = useState({ nombre: '', categoria: '', temporada: '2025-26' });
   
-  // Estados para Ajustes
-  const [profileName, setProfileName] = useState(activeTeam?.entrenador || '');
-  const [clubName, setClubName] = useState('');
-  const [settings, setSettings] = useState({ notifications: true, darkMode: true });
+  const { settings, saveSettings, loading: loadingSettings } = useSettings();
+  const [profileData, setProfileData] = useState({ profileName: '', specialty: 'Primer Entrenador' });
+  const [clubData, setClubData] = useState({ clubName: '', primaryColor: '#1B3A2D', secondaryColor: '#4CAF7D' });
+  const [prefData, setPrefData] = useState({ notifications: true, darkMode: true, language: 'Español (ES)' });
+
+  // Sync state when settings load
+  React.useEffect(() => {
+    if (settings) {
+      setProfileData({ 
+        profileName: settings.profileName || '', 
+        specialty: settings.specialty || 'Primer Entrenador' 
+      });
+      setClubData({ 
+        clubName: settings.clubName || '', 
+        primaryColor: settings.primaryColor || '#1B3A2D', 
+        secondaryColor: settings.secondaryColor || '#4CAF7D' 
+      });
+      setPrefData({ 
+        notifications: settings.notifications ?? true, 
+        darkMode: settings.darkMode ?? true, 
+        language: settings.language || 'Español (ES)' 
+      });
+    }
+  }, [settings]);
 
   const handleAddTeam = async () => {
     if (!newTeam.nombre) return;
@@ -40,17 +61,28 @@ const AdminPanel = () => {
     setNewTeam({ nombre: '', categoria: '', temporada: '2025-26' });
   };
 
-  const handleSaveProfile = () => {
-    alert(`Perfil actualizado: ${profileName}`);
-    // Aquí se integraría con Firebase si fuera necesario persistir el nombre del coach
+  const handleSaveProfile = async () => {
+    try {
+      await saveSettings({ ...settings, ...profileData });
+      alert("Perfil guardado correctamente.");
+    } catch (e) {
+      alert("Error al guardar perfil.");
+    }
   };
 
-  const handleUpdateClub = () => {
-    alert(`Club actualizado: ${clubName}`);
+  const handleUpdateClub = async () => {
+    try {
+      await saveSettings({ ...settings, ...clubData });
+      alert("Club actualizado correctamente.");
+    } catch (e) {
+      alert("Error al actualizar club.");
+    }
   };
 
-  const toggleSetting = (key) => {
-    setSettings(prev => ({ ...prev, [key]: !prev[key] }));
+  const toggleSetting = async (key) => {
+    const updatedPrefs = { ...prefData, [key]: !prefData[key] };
+    setPrefData(updatedPrefs);
+    await saveSettings({ ...settings, ...updatedPrefs });
   };
 
   const handleExportSeason = () => {
@@ -230,13 +262,17 @@ const AdminPanel = () => {
                     <input 
                       type="text" 
                       placeholder="Tu nombre" 
-                      value={profileName} 
-                      onChange={(e) => setProfileName(e.target.value)} 
+                      value={profileData.profileName} 
+                      onChange={(e) => setProfileData({...profileData, profileName: e.target.value})} 
                     />
                   </div>
                   <div className="form-group">
                     <label>Especialidad / Cargo</label>
-                    <select className="admin-select-input">
+                    <select 
+                      className="admin-select-input"
+                      value={profileData.specialty}
+                      onChange={(e) => setProfileData({...profileData, specialty: e.target.value})}
+                    >
                       <option>Primer Entrenador</option>
                       <option>Asistente Técnico</option>
                       <option>Preparador Físico</option>
@@ -259,18 +295,26 @@ const AdminPanel = () => {
                     <input 
                       type="text" 
                       placeholder="Ej. Real Madrid C.F." 
-                      value={clubName} 
-                      onChange={(e) => setClubName(e.target.value)}
+                      value={clubData.clubName} 
+                      onChange={(e) => setClubData({...clubData, clubName: e.target.value})}
                     />
                   </div>
                   <div className="form-row-dual">
                     <div className="form-group">
                       <label>Color Principal</label>
-                      <input type="color" defaultValue="#1B3A2D" />
+                      <input 
+                        type="color" 
+                        value={clubData.primaryColor} 
+                        onChange={(e) => setClubData({...clubData, primaryColor: e.target.value})}
+                      />
                     </div>
                     <div className="form-group">
                       <label>Color Secundario</label>
-                      <input type="color" defaultValue="#4CAF7D" />
+                      <input 
+                        type="color" 
+                        value={clubData.secondaryColor} 
+                        onChange={(e) => setClubData({...clubData, secondaryColor: e.target.value})}
+                      />
                     </div>
                   </div>
                   <div className="form-group">
@@ -294,14 +338,14 @@ const AdminPanel = () => {
                   <div className="toggle-group">
                     <span>Notificaciones de Sesión</span>
                     <div 
-                      className={`toggle-switch ${settings.notifications ? 'active' : ''}`}
+                      className={`toggle-switch ${prefData.notifications ? 'active' : ''}`}
                       onClick={() => toggleSetting('notifications')}
                     ></div>
                   </div>
                   <div className="toggle-group">
                     <span>Modo Oscuro Automático</span>
                     <div 
-                      className={`toggle-switch ${settings.darkMode ? 'active' : ''}`}
+                      className={`toggle-switch ${prefData.darkMode ? 'active' : ''}`}
                       onClick={() => toggleSetting('darkMode')}
                     ></div>
                   </div>

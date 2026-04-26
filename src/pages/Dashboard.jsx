@@ -1,5 +1,6 @@
 import React from 'react';
 import { usePlayers } from '../hooks/usePlayers';
+import { useSettings } from '../hooks/useSettings';
 import { useSessions } from '../hooks/useSessions';
 import { useMatches } from '../hooks/useMatches';
 import { useNavigate } from 'react-router-dom';
@@ -7,6 +8,7 @@ import './Dashboard.css';
 
 const Dashboard = () => {
   const navigate = useNavigate();
+  const { settings } = useSettings();
   const { players } = usePlayers();
   const { sessions } = useSessions();
   const { matches } = useMatches();
@@ -40,8 +42,8 @@ const Dashboard = () => {
     <div className="dashboard-page">
       <header className="dashboard-header">
         <div className="welcome">
-          <h1>Hola, Míster</h1>
-          <p>Esta es la actividad de tu equipo para esta semana.</p>
+          <h1>Hola, {settings.profileName?.split(' ')[0] || 'Míster'}</h1>
+          <p>Esta es la actividad de tu equipo ({settings.clubName || 'Mi Equipo'}) para esta semana.</p>
         </div>
         <div className="current-date">
           <span>{new Date().toLocaleDateString('es-ES', { month: 'long', year: 'numeric' })}</span>

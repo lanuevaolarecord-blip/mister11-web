@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { usePlayers } from '../hooks/usePlayers';
 import './Tests.css';
 
 // --- MOCK DATA ---
@@ -13,40 +14,23 @@ const PREDEFINED_TESTS = [
   { id: 8, category: 'Técnica', name: 'Pase a portería', unit: 'pts', desc: 'Precisión de pase a zonas objetivo (10 pases).', protocol: '10 pases desde la frontal del área hacia pequeñas porterías o zonas marcadas. 1 punto por acierto.', image: 'https://via.placeholder.com/600x300/1B3A2D/D4A843?text=Precision+de+Pase' }
 ];
 
-const MOCK_PLAYERS = [
-  { id: 1, name: 'Hugo García', number: 1, position: 'POR' },
-  { id: 2, name: 'Leo Messi', number: 10, position: 'DEL' },
-  { id: 3, name: 'Sergio Ramos', number: 4, position: 'DEF' },
-  { id: 4, name: 'Andrés Iniesta', number: 8, position: 'MC' },
-  { id: 5, name: 'Dani Carvajal', number: 2, position: 'LTD' },
-  { id: 6, name: 'Jordi Alba', number: 3, position: 'LTI' },
-  { id: 7, name: 'Busquets', number: 5, position: 'MCD' },
-  { id: 8, name: 'Xavi', number: 6, position: 'MC' },
-  { id: 9, name: 'Pedri', number: 16, position: 'MCO' },
-  { id: 10, name: 'Lamine Yamal', number: 19, position: 'EXT' },
-  { id: 11, name: 'Gavi', number: 9, position: 'MC' },
-  { id: 12, name: 'Casillas', number: 13, position: 'POR' },
-  { id: 13, name: 'Puyol', number: 5, position: 'DEF' },
-  { id: 14, name: 'Piqué', number: 3, position: 'DEF' },
-  { id: 15, name: 'Villa', number: 7, position: 'DEL' },
-  { id: 16, name: 'Ferran Torres', number: 11, position: 'EXT' }
-];
+// MOCK_PLAYERS removed, using usePlayers hook
 
-// Generate mock historical data (3 evaluations per player per test)
-const generateHistory = () => {
+// Generate mock historical data based on current players
+const generateMockHistory = (playersList) => {
   const data = {};
-  MOCK_PLAYERS.forEach(p => {
+  playersList.forEach(p => {
     data[p.id] = {};
     PREDEFINED_TESTS.forEach(t => {
-      // Create a random realistic trend (improving or slightly varying)
       let base = 0;
       let betterIsLower = t.unit === 'seg';
       
       if (t.name === 'Test de Cooper') base = 2000 + Math.random() * 800;
-      if (t.name === 'Course Navette') base = 6 + Math.random() * 6;
-      if (t.unit === 'seg') base = 15 - Math.random() * 5;
-      if (t.unit === 'cm') base = 30 + Math.random() * 20;
-      if (t.unit === 'pts') base = 5 + Math.random() * 4;
+      else if (t.name === 'Course Navette') base = 6 + Math.random() * 6;
+      else if (t.unit === 'seg') base = 15 - Math.random() * 5;
+      else if (t.unit === 'cm') base = 30 + Math.random() * 20;
+      else if (t.unit === 'pts') base = 5 + Math.random() * 4;
+      else base = 10 + Math.random() * 10;
 
       data[p.id][t.id] = [
         { date: '2025-09-10', val: Number((base * (betterIsLower ? 1.05 : 0.95)).toFixed(2)) },
@@ -58,9 +42,9 @@ const generateHistory = () => {
   return data;
 };
 
-const MOCK_HISTORY = generateHistory();
-
 const Tests = () => {
+  const { players, loading: loadingPlayers } = usePlayers();
+  const historyData = React.useMemo(() => generateMockHistory(players), [players]);
   const [activeTab, setActiveTab] = useState('BATERÍA');
   const [tests, setTests] = useState(PREDEFINED_TESTS);
   
@@ -69,7 +53,13 @@ const Tests = () => {
   const [regInputs, setRegInputs] = useState({});
 
   // History State
-  const [histSelectedPlayer, setHistSelectedPlayer] = useState(MOCK_PLAYERS[0].id);
+  const [histSelectedPlayer, setHistSelectedPlayer] = useState(null);
+
+  React.useEffect(() => {
+    if (players.length > 0 && !histSelectedPlayer) {
+      setHistSelectedPlayer(players[0].id);
+    }
+  }, [players]);
 
   // New Test State
   const [isNewTestModalOpen, setIsNewTestModalOpen] = useState(false);
@@ -80,7 +70,7 @@ const Tests = () => {
   const [heatSelectedTest, setHeatSelectedTest] = useState(tests[0].id);
 
   const getTestById = (id) => tests.find(t => t.id === Number(id));
-  const getPlayerById = (id) => MOCK_PLAYERS.find(p => p.id === Number(id));
+  const getPlayerById = (id) => players.find(p => p.id === id);
 
   const handleSaveRegistration = () => {
     alert("Resultados guardados exitosamente.");
@@ -177,7 +167,7 @@ const Tests = () => {
                 <span className="unit-badge">Unidad: {getTestById(regSelectedTest)?.unit}</span>
               </div>
               <div className="reg-players-grid">
-                {MOCK_PLAYERS.map(p => (
+                {players.map(p => (
                   <div key={p.id} className="reg-player-card">
                     <div className="rp-info">
                       <div className="rp-num">{p.number}</div>
@@ -205,7 +195,7 @@ const Tests = () => {
             <div className="hist-sidebar">
               <h3>Seleccionar Jugador</h3>
               <div className="player-selector">
-                {MOCK_PLAYERS.map(p => (
+                {players.map(p => (
                   <div 
                     key={p.id} 
                     className={`player-select-item ${histSelectedPlayer === p.id ? 'active' : ''}`}
@@ -224,7 +214,7 @@ const Tests = () => {
               </div>
               <div className="hist-charts-grid">
                 {tests.slice(0, 6).map(t => {
-                  const history = MOCK_HISTORY[histSelectedPlayer]?.[t.id] || [];
+                  const history = historyData[histSelectedPlayer]?.[t.id] || [];
                   if(history.length === 0) return null;
                   
                   // Simple SVG Chart logic
@@ -308,13 +298,13 @@ const Tests = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {MOCK_PLAYERS.map(p => {
+                  {players.map(p => {
                     const testInfo = getTestById(heatSelectedTest);
-                    const history = MOCK_HISTORY[p.id]?.[heatSelectedTest] || [];
+                    const history = historyData[p.id]?.[heatSelectedTest] || [];
                     if(history.length < 3) return null;
 
                     // Calculate global min/max for color scale across ALL players for THIS test's LATEST eval
-                    const allCurrentVals = MOCK_PLAYERS.map(mp => MOCK_HISTORY[mp.id]?.[heatSelectedTest]?.[2]?.val || 0);
+                    const allCurrentVals = players.map(mp => historyData[mp.id]?.[heatSelectedTest]?.[2]?.val || 0);
                     const minVal = Math.min(...allCurrentVals);
                     const maxVal = Math.max(...allCurrentVals);
                     const isTime = testInfo?.unit === 'seg';

@@ -1,10 +1,11 @@
 import React from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { useTeams } from '../hooks/useTeams';
 import { ChevronDown } from 'lucide-react';
 
-const Header = () => {
+const Header = ({ onToggleNotif }) => {
   const location = useLocation();
+  const navigate = useNavigate();
   const { teams, activeTeam, selectTeam } = useTeams();
   
   const getPageTitle = () => {
@@ -47,10 +48,10 @@ const Header = () => {
       </div>
       
       <div className="header-actions">
-        <button className="icon-btn" title="Notificaciones">
+        <button className="icon-btn" title="Notificaciones" onClick={onToggleNotif}>
           🔔
         </button>
-        <button className="icon-btn" title="Ajustes">
+        <button className="icon-btn" title="Ajustes" onClick={() => navigate('/admin')}>
           ⚙️
         </button>
       </div>

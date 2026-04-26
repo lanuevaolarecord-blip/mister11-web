@@ -79,6 +79,12 @@ a {
   margin-bottom: 20px;
 }
 
+.logo-img {
+  width: 44px;
+  height: 44px;
+  object-fit: contain;
+}
+
 .logo-icon {
   width: 40px;
   height: 40px;
@@ -226,6 +232,48 @@ a {
   flex: 1;
   padding: 30px;
   overflow-y: auto;
+}
+
+/* Global Components per User Rules */
+.btn-primary {
+  background-color: var(--primary);
+  color: var(--white) !important;
+  padding: 10px 24px;
+  border-radius: 8px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  transition: opacity 0.2s;
+  min-height: 48px; /* Touch target rules */
+}
+
+.btn-primary:hover {
+  opacity: 0.9;
+}
+
+.btn-success {
+  background-color: var(--success);
+  color: var(--white) !important;
+  padding: 10px 24px;
+  border-radius: 8px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 48px;
+}
+
+.card {
+  background: var(--white);
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  border: 1px solid rgba(0, 0, 0, 0.05);
 }
 
 

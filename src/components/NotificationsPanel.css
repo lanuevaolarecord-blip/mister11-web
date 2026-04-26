@@ -94,3 +94,37 @@
   padding: 40px 20px;
   color: #888;
 }
+
+/* Dark Mode Support */
+.dark-mode .notifications-panel {
+  background: #1a2421;
+  box-shadow: -5px 0 25px rgba(0, 0, 0, 0.4);
+}
+
+.dark-mode .notifications-header {
+  border-bottom-color: #2d3b36;
+}
+
+.dark-mode .notifications-header h2 {
+  color: #ffffff;
+}
+
+.dark-mode .notification-item {
+  border-bottom-color: #2d3b36;
+}
+
+.dark-mode .notification-item:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.dark-mode .notif-content p {
+  color: #e8f0ed;
+}
+
+.dark-mode .notification-item.info .notif-icon { background: #0d2a3a; color: #42a5f5; }
+.dark-mode .notification-item.warning .notif-icon { background: #3a2a0d; color: #ffb74d; }
+.dark-mode .notification-item.success .notif-icon { background: #0d2a1a; color: #66bb6a; }
+
+.dark-mode .close-btn {
+  color: #a0ada9;
+}

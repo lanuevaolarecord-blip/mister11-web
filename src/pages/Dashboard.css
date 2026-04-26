@@ -336,3 +336,79 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* Dark Mode Overrides for Dashboard */
+.dark-mode .dashboard-page {
+  background-color: var(--sand);
+}
+
+.dark-mode .welcome h1 {
+  color: #ffffff;
+}
+
+.dark-mode .welcome p {
+  color: var(--text-dim);
+}
+
+.dark-mode .current-date {
+  background: var(--white);
+  box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+}
+
+.dark-mode .current-date strong {
+  color: var(--accent);
+}
+
+.dark-mode .stat-card-dash {
+  background: var(--white);
+}
+
+.dark-mode .stat-value-dash {
+  color: #ffffff;
+}
+
+.dark-mode .dash-section {
+  background: var(--white);
+}
+
+.dark-mode .section-header h2 {
+  color: #ffffff;
+}
+
+.dark-mode .bar-container {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.dark-mode .session-item-dash {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.dark-mode .session-item-dash:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.dark-mode .session-info-dash strong {
+  color: #ffffff;
+}
+
+.dark-mode .badge-dash.intensity {
+  background: rgba(255, 255, 255, 0.05);
+  color: #a0ada9;
+}
+
+.dark-mode .action-btn-dash {
+  background: var(--white);
+  border-color: rgba(255, 255, 255, 0.05);
+  color: #ffffff;
+}
+
+.dark-mode .action-btn-dash:hover {
+  border-color: var(--accent);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.dark-mode .dash-select {
+  background: var(--white);
+  border-color: #2d3b36;
+  color: #ffffff;
+}

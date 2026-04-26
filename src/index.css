@@ -18,11 +18,12 @@
 
 /* Dark Mode Overrides */
 .dark-mode {
-  --sand: #121212;
-  --white: #1E1E1E;
-  --carbon: #E0E0E0;
-  --primary: #2D5A47;
-  --accent: #66BB6A;
+  --sand: #0f1715; /* Darker background with a hint of primary green */
+  --white: #1a2421; /* Dark surface color */
+  --carbon: #e8f0ed; /* Light text color */
+  --primary: #4CAF7D; /* Use accent as primary in dark mode for better visibility */
+  --accent: #81c784; /* Lighter accent */
+  --text-dim: #a0ada9;
 }
 
 .dark-mode body {
@@ -31,32 +32,78 @@
 }
 
 .dark-mode .sidebar {
-  background-color: #1a1a1a;
-  border-right: 1px solid #333;
+  background-color: #0a0f0e;
+  border-right: 1px solid #1a2421;
 }
 
 .dark-mode .header {
-  background-color: #1e1e1e;
-  border-bottom: 1px solid #333;
+  background-color: #1a2421;
+  border-bottom: 1px solid #2d3b36;
+}
+
+.dark-mode .header h1, 
+.dark-mode .logo-text,
+.dark-mode .nav-item.active,
+.dark-mode h1, .dark-mode h2, .dark-mode h3 {
+  color: #ffffff;
+}
+
+.dark-mode .nav-item {
+  color: #a0ada9;
+}
+
+.dark-mode .nav-item:hover {
+  color: #ffffff;
+  background-color: rgba(76, 175, 125, 0.1);
 }
 
 .dark-mode .card, 
 .dark-mode .settings-card,
 .dark-mode .stat-card-dash,
-.dark-mode .session-item-dash {
-  background: #252525;
-  border: 1px solid #333;
-  color: #fff;
+.dark-mode .session-item-dash,
+.dark-mode .player-card,
+.dark-mode .admin-section {
+  background: #1e2a27;
+  border: 1px solid #2d3b36;
+  color: #ffffff;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.2);
 }
 
-.dark-mode h1, .dark-mode h2, .dark-mode h3, .dark-mode h4 {
-  color: var(--accent);
+.dark-mode input, 
+.dark-mode select, 
+.dark-mode textarea {
+  background: #141d1b !important;
+  color: #ffffff !important;
+  border: 1px solid #2d3b36 !important;
 }
 
-.dark-mode input, .dark-mode select {
-  background: #333;
-  color: #fff;
-  border: 1px solid #444;
+.dark-mode input::placeholder {
+  color: #6a7c76;
+}
+
+.dark-mode .toggle-group span {
+  color: #ffffff;
+}
+
+.dark-mode .user-name {
+  color: #ffffff;
+}
+
+.dark-mode .user-role {
+  color: #a0ada9;
+}
+
+.dark-mode .btn-primary {
+  background-color: var(--accent);
+  color: #0a0f0e !important;
+}
+
+.dark-mode .icon-btn {
+  color: #ffffff;
+}
+
+.dark-mode .icon-btn:hover {
+  background-color: rgba(255, 255, 255, 0.05);
 }
 
 /* Global Reset & Base Styles */

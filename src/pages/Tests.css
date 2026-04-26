@@ -395,3 +395,111 @@
     flex-shrink: 0;
   }
 }
+
+/* Dark Mode Overrides for Tests */
+.dark-mode .tests-page {
+  background-color: var(--sand);
+}
+
+.dark-mode .tests-tab {
+  color: #a0ada9;
+}
+
+.dark-mode .tests-tab:hover, 
+.dark-mode .tests-tab.active {
+  color: var(--accent);
+}
+
+.dark-mode .tests-content {
+  background: var(--white);
+  box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+}
+
+.dark-mode .test-card {
+  background: rgba(255, 255, 255, 0.03);
+  border-color: #2d3b36;
+}
+
+.dark-mode .test-card h4 {
+  color: #ffffff;
+}
+
+.dark-mode .test-card p {
+  color: var(--text-dim);
+}
+
+.dark-mode .reg-sidebar, 
+.dark-mode .hist-sidebar {
+  background: rgba(0,0,0,0.2);
+  border-color: #2d3b36;
+}
+
+.dark-mode .reg-sidebar h3, 
+.dark-mode .hist-sidebar h3 {
+  color: #ffffff;
+}
+
+.dark-mode .test-select-item, 
+.dark-mode .player-select-item {
+  background: var(--white);
+  border-color: #2d3b36;
+}
+
+.dark-mode .test-select-item strong {
+  color: #ffffff;
+}
+
+.dark-mode .p-name {
+  color: #ffffff;
+}
+
+.dark-mode .reg-main-header {
+  background: #0a0f0e;
+}
+
+.dark-mode .reg-player-card {
+  background: rgba(255, 255, 255, 0.03);
+  border-color: #2d3b36;
+}
+
+.dark-mode .rp-name {
+  color: #ffffff;
+}
+
+.dark-mode .hist-chart-card {
+  background: var(--white);
+  border-color: #2d3b36;
+}
+
+.dark-mode .hc-header h4 {
+  color: #ffffff;
+}
+
+.dark-mode .heatmap-table th {
+  background: #0a0f0e;
+}
+
+.dark-mode .heatmap-table td {
+  border-bottom-color: #2d3b36;
+  color: #ffffff;
+}
+
+.dark-mode .heatmap-table tr:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.dark-mode .test-info-block h3 {
+  color: var(--accent);
+}
+
+.dark-mode .test-info-block p {
+  color: #e8f0ed;
+}
+
+.dark-mode .test-meta {
+  background: rgba(0,0,0,0.2);
+}
+
+.dark-mode .test-meta span {
+  color: var(--accent);
+}

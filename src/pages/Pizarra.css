@@ -337,3 +337,28 @@
   transform: scale(1.1);
   background: var(--gold);
 }
+
+.formation-selector-mini {
+  width: 100%;
+}
+
+.mini-select {
+  width: 100%;
+  background: rgba(0,0,0,0.3);
+  color: #FFF;
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 4px;
+  padding: 4px 8px;
+  font-size: 12px;
+  font-family: var(--font-body);
+  cursor: pointer;
+  outline: none;
+}
+
+.mini-select:hover {
+  border-color: var(--accent);
+}
+
+.mini-select option {
+  background: #1A1A2A;
+}

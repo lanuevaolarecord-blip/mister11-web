@@ -1,20 +1,25 @@
 .admin-container {
   display: flex;
   height: calc(100vh - 100px);
-  background: #0D0D0D;
-  color: white;
+  background: var(--sand);
+  color: var(--carbon);
   margin: -20px; /* Offset parent padding */
   overflow: hidden;
 }
 
 .admin-sidebar {
   width: 240px;
-  background: #12121F;
-  border-right: 1px solid rgba(255,255,255,0.1);
+  background: var(--white);
+  border-right: 1px solid rgba(0,0,0,0.05);
   display: flex;
   flex-direction: column;
   padding: 10px;
   gap: 5px;
+}
+
+.dark-mode .admin-sidebar {
+  background: #0a0f0e;
+  border-right-color: rgba(255,255,255,0.05);
 }
 
 .admin-nav-item {
@@ -57,7 +62,11 @@
 .section-header h2 {
   font-size: 1.8rem;
   margin-bottom: 5px;
-  color: var(--white);
+  color: var(--primary);
+}
+
+.dark-mode .section-header h2 {
+  color: #ffffff;
 }
 
 .section-header p {
@@ -66,11 +75,16 @@
 
 /* Teams Tab */
 .add-team-card {
-  background: #1A1A2A;
+  background: var(--white);
   padding: 20px;
   border-radius: 12px;
   margin-bottom: 30px;
-  border: 1px solid rgba(255,255,255,0.05);
+  border: 1px solid rgba(0,0,0,0.05);
+}
+
+.dark-mode .add-team-card {
+  background: #1e2a27;
+  border-color: rgba(255,255,255,0.05);
 }
 
 .add-team-card h3 {
@@ -85,12 +99,18 @@
 
 .form-row input {
   flex: 1;
-  background: #0D0D0D;
-  border: 1px solid #333;
-  color: white;
+  background: var(--sand);
+  border: 1px solid rgba(0,0,0,0.1);
+  color: var(--carbon);
   padding: 10px 15px;
   border-radius: 6px;
   outline: none;
+}
+
+.dark-mode .form-row input {
+  background: #141d1b;
+  border-color: #2d3b36;
+  color: #fff;
 }
 
 .form-row input:focus {
@@ -104,7 +124,7 @@
 }
 
 .team-admin-card {
-  background: #1A1A2A;
+  background: var(--white);
   padding: 15px;
   border-radius: 12px;
   display: flex;
@@ -112,6 +132,11 @@
   gap: 15px;
   border: 2px solid transparent;
   transition: all 0.2s;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.02);
+}
+
+.dark-mode .team-admin-card {
+  background: #1e2a27;
 }
 
 .team-admin-card.active {
@@ -186,7 +211,7 @@
 }
 
 .export-card {
-  background: #1A1A2A;
+  background: var(--white);
   padding: 30px;
   border-radius: 16px;
   text-align: center;
@@ -194,7 +219,13 @@
   flex-direction: column;
   align-items: center;
   gap: 15px;
-  border: 1px solid rgba(255,255,255,0.05);
+  border: 1px solid rgba(0,0,0,0.05);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+}
+
+.dark-mode .export-card {
+  background: #1e2a27;
+  border-color: rgba(255,255,255,0.05);
 }
 
 .export-icon {
@@ -252,9 +283,15 @@
 
 /* Exercise Library */
 .exercise-list-admin {
-  background: #1A1A2A;
+  background: var(--white);
   border-radius: 12px;
   overflow: hidden;
+  border: 1px solid rgba(0,0,0,0.05);
+}
+
+.dark-mode .exercise-list-admin {
+  background: #1e2a27;
+  border-color: rgba(255,255,255,0.05);
 }
 
 .exercise-row {
@@ -308,9 +345,13 @@
 }
 
 .card-header-icon h3 {
-  color: white;
+  color: var(--primary);
   margin: 0;
   font-size: 1.1rem;
+}
+
+.dark-mode .card-header-icon h3 {
+  color: #ffffff;
 }
 
 .settings-form {

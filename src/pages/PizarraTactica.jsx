@@ -43,8 +43,12 @@ const PizarraTactica = () => {
     'balon': true, 'coordinacion': false,
     'zonas': false, 'material': false,
   });
-  const [localColor,   setLocalColor]   = useState('#4CAF7D');
-  const [rivalColor,   setRivalColor]   = useState('#E53935');
+  const [localColor,     setLocalColor]     = useState('#4CAF7D');
+  const [rivalColor,     setRivalColor]     = useState('#E53935');
+  const [jokerColor,     setJokerColor]     = useState('#D4A843');
+  const [localFormation, setLocalFormation] = useState('4-3-3');
+  const [rivalFormation, setRivalFormation] = useState('4-4-2');
+  const [isSwapped,      setIsSwapped]      = useState(false);
 
   // keep refs in sync with state
   useEffect(() => { frameIdxR.current = frameIdx; }, [frameIdx]);
@@ -92,29 +96,45 @@ const PizarraTactica = () => {
   }, []);
 
   // ─── Draw players from formation onto canvas ──────────────────────────────
-  const drawPlayers = useCallback((canvas, renderer, type, form) => {
+  const drawPlayers = useCallback((canvas, renderer, fieldType, formations, swapped) => {
     const bounds = renderer.getFieldBounds();
     if (!bounds || bounds.w === 0) return;
-    const positions = FORMATIONS[form] || FORMATIONS['4-3-3'];
 
-    positions.forEach((pos, i) => {
-      const isGk = i === 0;
-      const rX = pos.relX ?? 0;
-      const rY = pos.relY ?? 0;
-      let x = bounds.x + rX * bounds.w;
-      let y = bounds.y + rY * bounds.h;
+    const drawTeam = (type, form, color, side) => {
+      const positions = FORMATIONS[form] || FORMATIONS['4-3-3'];
+      positions.forEach((pos, i) => {
+        const isGk = i === 0;
+        const rX = pos.relX ?? 0;
+        const rY = pos.relY ?? 0;
+        
+        let finalX;
+        // side 'L' means 0-0.5, side 'R' means 0.5-1.0
+        // But FORMATIONS are relX 0 to 1.0 (full field)
+        // If swapped, Local goes to Right (relX 0.5-1.0) and Rival to Left (0-0.5)
+        
+        if (side === 'L') {
+          finalX = bounds.x + (rX * 0.45) * bounds.w; // Left half
+        } else {
+          finalX = bounds.x + (1 - rX * 0.45) * bounds.w; // Right half
+        }
 
-      if (type === 'half-defense') {
-        x = bounds.x + (1 - rX) * bounds.w;
-      }
+        const x = finalX;
+        const y = bounds.y + rY * bounds.h;
 
-      const player = createPlayer(x, y, {
-        color: isGk ? '#FFD700' : (type === 'local' ? localColor : rivalColor),
-        label: i + 1,
-        type: type === 'local' ? 'player' : 'rival'
+        const player = createPlayer(x, y, {
+          color: isGk ? '#FFD700' : color,
+          label: i + 1,
+          type: type
+        });
+        canvas.add(player);
       });
-      canvas.add(player);
-    });
+    };
+
+    // Draw Local
+    drawTeam('local', formations.local, localColor, swapped ? 'R' : 'L');
+    // Draw Rival
+    drawTeam('rival', formations.rival, rivalColor, swapped ? 'L' : 'R');
+
     canvas.renderAll();
   }, [createPlayer, localColor, rivalColor]);
 
@@ -146,7 +166,7 @@ const PizarraTactica = () => {
     tmRef.current = tm;
 
     // 4. Draw initial players
-    drawPlayers(fc, renderer, 'full', '4-3-3');
+    drawPlayers(fc, renderer, 'full', { local: localFormation, rival: rivalFormation }, isSwapped);
 
     // 5. Save first frame
     setTimeout(() => {
@@ -190,7 +210,7 @@ const PizarraTactica = () => {
     if (!fc || !fr || playingR.current) return;
     fr.draw(toLibType(fieldType));
     fc.clear();
-    drawPlayers(fc, fr, fieldType, formation);
+    drawPlayers(fc, fr, fieldType, { local: localFormation, rival: rivalFormation }, isSwapped);
     if (tm) tm.setupHistory(30);
     saveFrameState();
   }, [fieldType]); // eslint-disable-line
@@ -200,10 +220,10 @@ const PizarraTactica = () => {
     const fc = fcRef.current; const fr = frRef.current; const tm = tmRef.current;
     if (!fc || !fr || playingR.current) return;
     fc.clear();
-    drawPlayers(fc, fr, fieldType, formation);
+    drawPlayers(fc, fr, fieldType, { local: localFormation, rival: rivalFormation }, isSwapped);
     if (tm) tm.setupHistory(30);
     saveFrameState();
-  }, [formation]); // eslint-disable-line
+  }, [localFormation, rivalFormation, isSwapped]); // eslint-disable-line
 
   // ─── Tool change ──────────────────────────────────────────────────────────
   useEffect(() => {
@@ -259,12 +279,15 @@ const PizarraTactica = () => {
         } else if (obj.data?.playerType === 'rival') {
           const circle = obj.item(0);
           if (circle) circle.set('fill', rivalColor);
+        } else if (obj.data?.playerType === 'joker') {
+          const circle = obj.item(0);
+          if (circle) circle.set('fill', jokerColor);
         }
       }
     });
     fc.renderAll();
     saveFrameState();
-  }, [localColor, rivalColor, saveFrameState]);
+  }, [localColor, rivalColor, jokerColor, saveFrameState]);
 
   // ─── Material placement ───────────────────────────────────────────────────
   useEffect(() => {
@@ -434,7 +457,7 @@ const PizarraTactica = () => {
     let color = localColor;
     let label = '1';
     if (type === 'rival') color = rivalColor;
-    if (type === 'joker') color = '#D4A843';
+    if (type === 'joker') color = jokerColor;
 
     const center = fc.getCenter();
     const player = createPlayer(center.left, center.top, { color, label, type });
@@ -470,12 +493,13 @@ const PizarraTactica = () => {
             <option value="half-attack">½ Ataque</option>
             <option value="half-defense">½ Defensa</option>
           </select>
-          <select className="topbar-select" value={formation}
-            onChange={e => setFormation(e.target.value)}>
-            {Object.keys(FORMATIONS).map(f =>
-              <option key={f} value={f}>{f}</option>
-            )}
-          </select>
+          <button 
+            className={`topbar-btn ${isSwapped ? 'active' : ''}`} 
+            onClick={() => setIsSwapped(!isSwapped)}
+            title="Cambiar lados de equipos"
+          >
+            ⇄ Lados
+          </button>
         </div>
 
         {/* Drawing tools */}
@@ -535,32 +559,32 @@ const PizarraTactica = () => {
               count={11} 
               onAdd={() => addManualPlayer('local')} 
               onColorChange={setLocalColor}
+              formation={localFormation}
+              onFormationChange={setLocalFormation}
             />
             <TeamCard 
               color={rivalColor} 
               name="Rival" 
-              count={0} 
+              count={11} 
               onAdd={() => addManualPlayer('rival')} 
-              style={{ marginTop: 8 }} 
+              style={{ marginTop: 12 }} 
               onColorChange={setRivalColor}
+              formation={rivalFormation}
+              onFormationChange={setRivalFormation}
             />
-            <TeamCard color="#D4A843" name="Comodín" count={0} onAdd={() => addManualPlayer('joker')} style={{ marginTop: 8 }} />
+            <TeamCard 
+              color={jokerColor} 
+              name="Comodín" 
+              count={0} 
+              onAdd={() => addManualPlayer('joker')} 
+              style={{ marginTop: 12 }} 
+              onColorChange={setJokerColor}
+            />
           </div>
 
           <div className="panel-title" style={{ marginTop: 12 }}>ACCIONES</div>
           <div style={{ padding: '0 10px 10px', display: 'flex', gap: 5 }}>
             <button className="topbar-btn outline" style={{flex: 1}} onClick={deleteSelected}>🗑 Eliminar</button>
-          </div>
-
-          <div className="panel-title" style={{ marginTop: 12 }}>FORMACIÓN</div>
-          <div style={{ padding: '0 10px 10px' }}>
-            {Object.keys(FORMATIONS).map(f => (
-              <button key={f}
-                className={`formation-btn ${formation === f ? 'active' : ''}`}
-                onClick={() => setFormation(f)}>
-                {f}
-              </button>
-            ))}
           </div>
         </div>
 
@@ -668,28 +692,43 @@ const PizarraTactica = () => {
 };
 
 // ─── Small helper sub-component ──────────────────────────────────────────────
-const TeamCard = ({ color, name, count, onAdd, style, onColorChange }) => (
+const TeamCard = ({ color, name, count, onAdd, style, onColorChange, formation, onFormationChange }) => (
   <div style={{
-    background: '#252535', borderRadius: 8, padding: '8px 10px',
-    display: 'flex', alignItems: 'center', gap: 8,
+    background: '#252535', borderRadius: 10, padding: '12px',
+    display: 'flex', flexDirection: 'column', gap: 10,
+    border: '1px solid rgba(255,255,255,0.05)',
     ...style
   }}>
-    <div style={{ position: 'relative', width: 24, height: 24 }}>
-      <div style={{ width: 24, height: 24, borderRadius: '50%', background: color, border: '2px solid white' }} />
-      {onColorChange && (
-        <input 
-          type="color" 
-          value={color} 
-          onChange={(e) => onColorChange(e.target.value)}
-          style={{
-            position: 'absolute', top: 0, left: 0, width: '100%', height: '100%',
-            opacity: 0, cursor: 'pointer'
-          }}
-        />
-      )}
+    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+      <div style={{ position: 'relative', width: 24, height: 24 }}>
+        <div style={{ width: 24, height: 24, borderRadius: '50%', background: color, border: '2px solid white' }} />
+        {onColorChange && (
+          <input 
+            type="color" 
+            value={color} 
+            onChange={(e) => onColorChange(e.target.value)}
+            style={{
+              position: 'absolute', top: 0, left: 0, width: '100%', height: '100%',
+              opacity: 0, cursor: 'pointer'
+            }}
+          />
+        )}
+      </div>
+      <span style={{ color: '#FFF', fontSize: 14, fontWeight: 'bold', flex: 1 }}>{name}</span>
+      <button className="btn-add-mini" onClick={onAdd} title="Añadir jugador">+</button>
     </div>
-    <span style={{ color: '#FFF', fontSize: 13, flex: 1 }}>{name}</span>
-    <button className="btn-add-mini" onClick={onAdd}>+</button>
+
+    {onFormationChange && (
+      <div className="formation-selector-mini">
+        <select 
+          value={formation} 
+          onChange={(e) => onFormationChange(e.target.value)}
+          className="mini-select"
+        >
+          {Object.keys(FORMATIONS).map(f => <option key={f} value={f}>{f}</option>)}
+        </select>
+      </div>
+    )}
   </div>
 );
 

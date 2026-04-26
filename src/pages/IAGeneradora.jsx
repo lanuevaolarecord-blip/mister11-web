@@ -141,6 +141,8 @@ Responde SOLO en español. No incluyas texto fuera del formato indicado.`;
     }
   };
 
+  const [selectedExerciseDetail, setSelectedExerciseDetail] = useState(null);
+
   const handleSave = async () => {
     if (!result) return;
     const firstLine = result.split('\n')[0].replace('## ', '').trim();
@@ -149,7 +151,8 @@ Responde SOLO en español. No incluyas texto fuera del formato indicado.`;
       await addExercise({
         title: firstLine,
         content: result,
-        parameters: { ...form }
+        parameters: { ...form },
+        timestamp: new Date().toISOString()
       });
       alert(`✅ Ejercicio "${firstLine}" guardado en tu biblioteca.`);
     } catch (error) {
@@ -301,8 +304,11 @@ Responde SOLO en español. No incluyas texto fuera del formato indicado.`;
             <h3>📚 Biblioteca en la Nube ({exercises.length})</h3>
             <div className="saved-list">
               {exercises.map(ex => (
-                <div key={ex.id} className="saved-item" onClick={() => setResult(ex.content)}>
-                  <span>📋 {ex.title}</span>
+                <div key={ex.id} className="saved-item" onClick={() => setSelectedExerciseDetail(ex)}>
+                  <div className="saved-item-info">
+                    <strong>📋 {ex.title}</strong>
+                    <span className="preview-text">{ex.content?.substring(0, 100)}...</span>
+                  </div>
                   <span className="saved-hint">Ver →</span>
                 </div>
               ))}
@@ -310,6 +316,23 @@ Responde SOLO en español. No incluyas texto fuera del formato indicado.`;
           </div>
         )}
       </div>
+
+      {/* Modal de Detalle de Ejercicio */}
+      {selectedExerciseDetail && (
+        <div className="ia-modal-overlay" onClick={() => setSelectedExerciseDetail(null)}>
+          <div className="ia-modal-container" onClick={e => e.stopPropagation()}>
+            <div className="ia-modal-header">
+              <h2>{selectedExerciseDetail.title}</h2>
+              <button className="btn-close-modal" onClick={() => setSelectedExerciseDetail(null)}>×</button>
+            </div>
+            <div className="ia-modal-body">
+              <div className="result-markdown">
+                {renderMarkdown(selectedExerciseDetail.content)}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

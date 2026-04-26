@@ -10,7 +10,7 @@ export const useExercises = () => {
   useEffect(() => {
     if (!user) return;
 
-    const unsubscribe = subscribeToCollection('exercises', (data) => {
+    const unsubscribe = subscribeToCollection('ejercicios', (data) => {
       setExercises(data);
       setLoading(false);
     }, [{ field: 'creadoPor', operator: '==', value: user.uid }]);
@@ -20,7 +20,7 @@ export const useExercises = () => {
 
   const addExercise = async (exerciseData) => {
     if (!user) return;
-    const docId = await addDocument('exercises', {
+    const docId = await addDocument('ejercicios', {
       ...exerciseData,
       creadoPor: user.uid
     });
@@ -30,7 +30,7 @@ export const useExercises = () => {
   };
 
   const removeExercise = async (id) => {
-    return await deleteDocument('exercises', id);
+    return await deleteDocument('ejercicios', id);
   };
 
   return { exercises, loading, addExercise, removeExercise };

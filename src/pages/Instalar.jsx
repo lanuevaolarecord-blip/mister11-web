@@ -8,7 +8,7 @@ const Instalar = () => {
   return (
     <div className="admin-container" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh', textAlign: 'center', padding: '20px' }}>
       <div className="settings-card" style={{ maxWidth: '500px', width: '100%' }}>
-        <img src="/logo_mister11.png" alt="Mister11 Logo" style={{ width: '120px', marginBottom: '20px' }} />
+        <img src="/logo_mister11.png" alt="Míster11" width="120" style={{ marginBottom: '20px' }} />
         <h1 style={{ color: '#ffffff', marginBottom: '10px' }}>Instalar Míster 11</h1>
         <p style={{ color: 'var(--accent)', marginBottom: '30px' }}>El banquillo en tu bolsillo</p>
 

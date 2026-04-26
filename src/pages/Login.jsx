@@ -38,7 +38,7 @@ const Login = () => {
     <div className="login-page">
       <div className="login-container">
         <div className="login-logo">
-          <h1>MÍSTER<span>11</span></h1>
+          <img src="/logo_mister11.png" alt="Míster11" width="120"/>
         </div>
         
         <div className="login-card">

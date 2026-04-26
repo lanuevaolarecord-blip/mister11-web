@@ -26,6 +26,8 @@ const PizarraTactica = () => {
   const framesR  = useRef([]);    // current frames array
   const frameIdxR = useRef(0);   // current frame index
   const playingR  = useRef(false); // is animation playing
+  const historyR  = useRef([]);    // undo history (max 20)
+  const redoR     = useRef([]);    // redo history (max 20)
 
   // React state (UI)
   const [ready,        setReady]        = useState(false);
@@ -50,6 +52,8 @@ const PizarraTactica = () => {
   const [rivalFormation, setRivalFormation] = useState('4-4-2');
   const [isSwapped,      setIsSwapped]      = useState(false);
   const [showRival,      setShowRival]      = useState(false);
+  const [histCount,      setHistCount]      = useState(0);
+  const [redoCount,      setRedoCount]      = useState(0);
 
   // keep refs in sync with state
   useEffect(() => { frameIdxR.current = frameIdx; }, [frameIdx]);
@@ -69,6 +73,68 @@ const PizarraTactica = () => {
     });
     framesR.current[idx] = { ...framesR.current[idx], state };
   }, []);
+
+  // ─── Push to undo history ─────────────────────────────────────────────────
+  const pushToHistory = useCallback(() => {
+    const fc = fcRef.current;
+    if (!fc) return;
+    const state = JSON.stringify(fc.toJSON(['data']));
+    const h = historyR.current;
+    // Don't push if the last state is identical
+    if (h.length > 0 && h[h.length - 1] === state) return;
+    
+    const next = [...h, state];
+    if (next.length > 20) next.shift(); // Max 20 states
+    historyR.current = next;
+    redoR.current = []; // Clear redo on new action
+    setHistCount(next.length);
+    setRedoCount(0);
+  }, []);
+
+  const undo = useCallback(() => {
+    const fc = fcRef.current;
+    const h = historyR.current;
+    if (!fc || h.length <= 1) return;
+    
+    // Save current state to redo
+    const currentState = h[h.length - 1];
+    const newRedo = [...redoR.current, currentState];
+    redoR.current = newRedo;
+
+    // Remove current state
+    const next = [...h];
+    next.pop();
+    const prevState = next[next.length - 1];
+    
+    fc.loadFromJSON(prevState, () => {
+      fc.renderAll();
+      historyR.current = next;
+      setHistCount(next.length);
+      setRedoCount(newRedo.length);
+      saveFrameState();
+    });
+  }, [saveFrameState]);
+
+  const redo = useCallback(() => {
+    const fc = fcRef.current;
+    const r = redoR.current;
+    if (!fc || r.length === 0) return;
+
+    const nextRedo = [...r];
+    const stateToRestore = nextRedo.pop();
+    redoR.current = nextRedo;
+
+    // Push back to history
+    const nextHist = [...historyR.current, stateToRestore];
+    historyR.current = nextHist;
+
+    fc.loadFromJSON(stateToRestore, () => {
+      fc.renderAll();
+      setHistCount(nextHist.length);
+      setRedoCount(nextRedo.length);
+      saveFrameState();
+    });
+  }, [saveFrameState]);
 
   // ─── Create a single player object ─────────────────────────────────────────
   const createPlayer = useCallback((x, y, options = {}) => {
@@ -182,8 +248,11 @@ const PizarraTactica = () => {
       setReady(true);
     }, 250);
 
-    // 6. Auto-save on object changes
-    const onChange = () => saveFrameState();
+    // 6. Auto-save on object changes & history
+    const onChange = () => {
+      saveFrameState();
+      pushToHistory();
+    };
     fc.on('object:modified', onChange);
     fc.on('object:added',    onChange);
     fc.on('object:removed',  onChange);
@@ -204,11 +273,11 @@ const PizarraTactica = () => {
     const onKeyDown = (e) => {
       if ((e.ctrlKey || e.metaKey) && e.key === 'z') {
         e.preventDefault();
-        tmRef.current?.undo();
+        undo();
       }
       if ((e.ctrlKey || e.metaKey) && e.key === 'y') {
         e.preventDefault();
-        tmRef.current?.redo();
+        redo();
       }
     };
     window.addEventListener('keydown', onKeyDown);
@@ -230,18 +299,18 @@ const PizarraTactica = () => {
     fr.draw(toLibType(fieldType));
     fc.clear();
     drawPlayers(fc, fr, fieldType, { local: localFormation, rival: rivalFormation }, isSwapped);
-    if (tm) tm.setupHistory(30);
     saveFrameState();
+    pushToHistory();
   }, [fieldType]); // eslint-disable-line
 
   // ─── Formation change ─────────────────────────────────────────────────────
   useEffect(() => {
-    const fc = fcRef.current; const fr = frRef.current; const tm = tmRef.current;
+    const fc = fcRef.current; const fr = frRef.current;
     if (!fc || !fr || playingR.current) return;
     fc.clear();
     drawPlayers(fc, fr, fieldType, { local: localFormation, rival: rivalFormation }, isSwapped);
-    if (tm) tm.setupHistory(20); // Limit to 20 steps as requested
     saveFrameState();
+    pushToHistory();
   }, [localFormation, rivalFormation, isSwapped, showRival]); // eslint-disable-line
 
   // ─── Tool change ──────────────────────────────────────────────────────────
@@ -329,9 +398,8 @@ const PizarraTactica = () => {
     return () => fc.off('mouse:down', onDown);
   }, [placingMat, saveFrameState]);
 
-  // ─── Undo / Redo ──────────────────────────────────────────────────────────
-  const undo = () => tmRef.current?.undo();
-  const redo = () => tmRef.current?.redo();
+  // ─── Undo / Redo (connected to manual history) ──────────────────────────
+  // functions defined above with useCallback
 
   // ─── Clear canvas ─────────────────────────────────────────────────────────
   const clearCanvas = () => {
@@ -557,8 +625,8 @@ const PizarraTactica = () => {
 
         {/* Actions */}
         <div className="topbar-group">
-          <button className="topbar-btn" onClick={undo} title="Deshacer (Ctrl+Z)">↩</button>
-          <button className="topbar-btn" onClick={redo} title="Rehacer">↪</button>
+          <button className="topbar-btn" onClick={undo} disabled={histCount <= 1} title="Deshacer (Ctrl+Z)">↩</button>
+          <button className="topbar-btn" onClick={redo} disabled={redoCount === 0} title="Rehacer (Ctrl+Y)">↪</button>
           <button className="topbar-btn" onClick={clearCanvas}>🗑 Limpiar</button>
           <button className="topbar-btn primary">💾 Guardar</button>
         </div>

@@ -345,7 +345,7 @@ const AdminPanel = () => {
                     ></div>
                   </div>
                   <div className="toggle-group">
-                    <span>Modo Oscuro Automático</span>
+                    <span>Modo Oscuro</span>
                     <div 
                       className={`toggle-switch ${prefData.darkMode ? 'active' : ''}`}
                       onClick={() => toggleSetting('darkMode')}

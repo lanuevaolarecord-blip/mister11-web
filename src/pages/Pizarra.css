@@ -3,19 +3,25 @@
   flex-direction: column;
   height: 100%;
   width: 100%;
-  background-color: #0D0D0D;
+  background-color: var(--sand);
   overflow: hidden;
 }
 
 .pizarra-topbar {
   height: 52px;
-  background-color: #12121F;
+  background-color: var(--white);
   display: flex;
   justify-content: space-between;
   align-items: center;
   padding: 0 15px;
-  color: var(--white);
-  border-bottom: 1px solid rgba(255,255,255,0.1);
+  color: var(--carbon);
+  border-bottom: 1px solid rgba(0,0,0,0.05);
+}
+
+.dark-mode .pizarra-topbar {
+  background-color: #12121F;
+  border-bottom-color: rgba(255,255,255,0.1);
+  color: #ffffff;
 }
 
 .topbar-group {
@@ -25,12 +31,18 @@
 }
 
 .topbar-select {
-  background: #1A1A2A;
-  color: var(--white);
-  border: 1px solid rgba(255,255,255,0.2);
+  background: var(--sand);
+  color: var(--carbon);
+  border: 1px solid rgba(0,0,0,0.1);
   padding: 4px 8px;
   border-radius: 4px;
   font-family: var(--font-body);
+}
+
+.dark-mode .topbar-select {
+  background: #1A1A2A;
+  color: #fff;
+  border-color: rgba(255,255,255,0.2);
 }
 
 .tool-icon-btn {
@@ -76,15 +88,21 @@
 }
 
 .topbar-btn {
-  background: #1A1A2A;
-  color: var(--white);
-  border: 1px solid rgba(255,255,255,0.2);
+  background: var(--sand);
+  color: var(--carbon);
+  border: 1px solid rgba(0,0,0,0.1);
   padding: 6px 12px;
   border-radius: 4px;
   font-size: 0.85rem;
   min-height: 32px;
   cursor: pointer;
   transition: background 0.2s, border-color 0.2s;
+}
+
+.dark-mode .topbar-btn {
+  background: #1A1A2A;
+  color: #fff;
+  border-color: rgba(255,255,255,0.2);
 }
 
 .topbar-btn:hover:not(:disabled) {
@@ -129,22 +147,34 @@
 
 .panel-izq {
   width: 180px;
-  background-color: #1A1A2A;
-  color: #CCCCCC;
+  background-color: var(--white);
+  color: var(--carbon);
   display: flex;
   flex-direction: column;
-  border-right: 1px solid rgba(255,255,255,0.1);
+  border-right: 1px solid rgba(0,0,0,0.05);
   overflow-y: auto;
+}
+
+.dark-mode .panel-izq {
+  background-color: #1A1A2A;
+  color: #CCCCCC;
+  border-right-color: rgba(255,255,255,0.1);
 }
 
 .panel-der {
   width: 200px;
-  background-color: #1A1A2A;
-  color: #CCCCCC;
+  background-color: var(--white);
+  color: var(--carbon);
   display: flex;
   flex-direction: column;
-  border-left: 1px solid rgba(255,255,255,0.1);
+  border-left: 1px solid rgba(0,0,0,0.05);
   overflow-y: auto;
+}
+
+.dark-mode .panel-der {
+  background-color: #1A1A2A;
+  color: #CCCCCC;
+  border-left-color: rgba(255,255,255,0.1);
 }
 
 .panel-title {
@@ -173,13 +203,19 @@
 
 .pizarra-timeline {
   height: 56px;
-  background-color: #12121F;
-  border-top: 1px solid rgba(255,255,255,0.1);
+  background-color: var(--white);
+  border-top: 1px solid rgba(0,0,0,0.05);
   display: flex;
   align-items: center;
   padding: 0 15px;
   gap: 15px;
-  color: var(--white);
+  color: var(--carbon);
+}
+
+.dark-mode .pizarra-timeline {
+  background-color: #12121F;
+  border-top-color: rgba(255,255,255,0.1);
+  color: #ffffff;
 }
 
 .material-category {
@@ -361,4 +397,22 @@
 
 .mini-select option {
   background: #1A1A2A;
+}
+
+.team-card-pizarra {
+  background: var(--sand);
+  border: 1px solid rgba(0,0,0,0.1);
+}
+
+.dark-mode .team-card-pizarra {
+  background: #252535;
+  border-color: rgba(255,255,255,0.05);
+}
+
+.team-name-pizarra {
+  color: var(--carbon);
+}
+
+.dark-mode .team-name-pizarra {
+  color: #ffffff;
 }

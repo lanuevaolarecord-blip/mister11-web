@@ -49,6 +49,7 @@ const PizarraTactica = () => {
   const [localFormation, setLocalFormation] = useState('4-3-3');
   const [rivalFormation, setRivalFormation] = useState('4-4-2');
   const [isSwapped,      setIsSwapped]      = useState(false);
+  const [showRival,      setShowRival]      = useState(false);
 
   // keep refs in sync with state
   useEffect(() => { frameIdxR.current = frameIdx; }, [frameIdx]);
@@ -113,9 +114,11 @@ const PizarraTactica = () => {
         // If swapped, Local goes to Right (relX 0.5-1.0) and Rival to Left (0-0.5)
         
         if (side === 'L') {
-          finalX = bounds.x + (rX * 0.45) * bounds.w; // Left half
+          // Local starts from Left (0) to Right (1)
+          finalX = bounds.x + rX * bounds.w;
         } else {
-          finalX = bounds.x + (1 - rX * 0.45) * bounds.w; // Right half
+          // Rival starts from Right (1) to Left (0)
+          finalX = bounds.x + (1 - rX) * bounds.w;
         }
 
         const x = finalX;
@@ -132,11 +135,13 @@ const PizarraTactica = () => {
 
     // Draw Local
     drawTeam('local', formations.local, localColor, swapped ? 'R' : 'L');
-    // Draw Rival
-    drawTeam('rival', formations.rival, rivalColor, swapped ? 'L' : 'R');
+    // Draw Rival (if enabled)
+    if (showRival) {
+      drawTeam('rival', formations.rival, rivalColor, swapped ? 'L' : 'R');
+    }
 
     canvas.renderAll();
-  }, [createPlayer, localColor, rivalColor]);
+  }, [createPlayer, localColor, rivalColor, showRival]);
 
   // ─── Initialize canvases once on mount ───────────────────────────────────
   useEffect(() => {
@@ -184,19 +189,26 @@ const PizarraTactica = () => {
     fc.on('object:removed',  onChange);
 
     // 7. Resize handler
-    const onResize = () => {
-      if (!containerRef.current) return;
-      const nW = containerRef.current.offsetWidth;
-      const nH = containerRef.current.offsetHeight;
-      fieldCanvasRef.current.width  = nW;
-      fieldCanvasRef.current.height = nH;
-      renderer.draw(toLibType(fieldType));
       fc.setDimensions({ width: nW, height: nH });
     };
     window.addEventListener('resize', onResize);
 
+    // 8. Keyboard shortcuts (Undo/Redo)
+    const onKeyDown = (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'z') {
+        e.preventDefault();
+        tmRef.current?.undo();
+      }
+      if ((e.ctrlKey || e.metaKey) && e.key === 'y') {
+        e.preventDefault();
+        tmRef.current?.redo();
+      }
+    };
+    window.addEventListener('keydown', onKeyDown);
+
     return () => {
       window.removeEventListener('resize', onResize);
+      window.removeEventListener('keydown', onKeyDown);
       fc.off('object:modified', onChange);
       fc.off('object:added',    onChange);
       fc.off('object:removed',  onChange);
@@ -221,9 +233,9 @@ const PizarraTactica = () => {
     if (!fc || !fr || playingR.current) return;
     fc.clear();
     drawPlayers(fc, fr, fieldType, { local: localFormation, rival: rivalFormation }, isSwapped);
-    if (tm) tm.setupHistory(30);
+    if (tm) tm.setupHistory(20); // Limit to 20 steps as requested
     saveFrameState();
-  }, [localFormation, rivalFormation, isSwapped]); // eslint-disable-line
+  }, [localFormation, rivalFormation, isSwapped, showRival]); // eslint-disable-line
 
   // ─── Tool change ──────────────────────────────────────────────────────────
   useEffect(() => {
@@ -583,7 +595,16 @@ const PizarraTactica = () => {
           </div>
 
           <div className="panel-title" style={{ marginTop: 12 }}>ACCIONES</div>
-          <div style={{ padding: '0 10px 10px', display: 'flex', gap: 5 }}>
+          <div style={{ padding: '0 10px 10px', display: 'flex', flexDirection: 'column', gap: 10 }}>
+            <div className="toggle-rival" style={{ display: 'flex', alignItems: 'center', gap: 10, color: '#CCC', fontSize: 13 }}>
+              <input 
+                type="checkbox" 
+                id="show-rival-toggle" 
+                checked={showRival} 
+                onChange={e => setShowRival(e.target.checked)} 
+              />
+              <label htmlFor="show-rival-toggle">Mostrar equipo rival</label>
+            </div>
             <button className="topbar-btn outline" style={{flex: 1}} onClick={deleteSelected}>🗑 Eliminar</button>
           </div>
         </div>
@@ -693,10 +714,9 @@ const PizarraTactica = () => {
 
 // ─── Small helper sub-component ──────────────────────────────────────────────
 const TeamCard = ({ color, name, count, onAdd, style, onColorChange, formation, onFormationChange }) => (
-  <div style={{
-    background: '#252535', borderRadius: 10, padding: '12px',
+  <div className="team-card-pizarra" style={{
+    borderRadius: 10, padding: '12px',
     display: 'flex', flexDirection: 'column', gap: 10,
-    border: '1px solid rgba(255,255,255,0.05)',
     ...style
   }}>
     <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
@@ -714,7 +734,7 @@ const TeamCard = ({ color, name, count, onAdd, style, onColorChange, formation, 
           />
         )}
       </div>
-      <span style={{ color: '#FFF', fontSize: 14, fontWeight: 'bold', flex: 1 }}>{name}</span>
+      <span className="team-name-pizarra" style={{ fontSize: 14, fontWeight: 'bold', flex: 1 }}>{name}</span>
       <button className="btn-add-mini" onClick={onAdd} title="Añadir jugador">+</button>
     </div>
 

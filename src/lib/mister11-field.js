@@ -162,9 +162,9 @@ export class FieldRenderer {
     const H = this.canvas.height = this.canvas.offsetHeight;
     const p = this.padding;
 
-    // Campo SIEMPRE en landscape (105 > 68)
-    // Calcular escala para que quepa con padding
-    const scaleByW = (W - p * 2) / FIFA.LENGTH;
+    // Account for GOAL_DEPTH on BOTH SIDES in scale calculations (Full field)
+    const totalLength = FIFA.LENGTH + FIFA.GOAL_DEPTH * 2;
+    const scaleByW = (W - p * 2) / totalLength;
     const scaleByH = (H - p * 2) / FIFA.WIDTH;
     const scale = Math.min(scaleByW, scaleByH);
 
@@ -412,14 +412,15 @@ export class FieldRenderer {
     const canvas = this.canvas;
     const p = this.padding;
 
-    // La mitad del campo mide 52.5m x 68m
-    const scaleByW = (canvas.width  - p * 2) / (FIFA.LENGTH / 2);
+    // Half field length + ONE goal depth
+    const totalHalfLength = (FIFA.LENGTH / 2) + FIFA.GOAL_DEPTH;
+    const scaleByW = (canvas.width  - p * 2) / totalHalfLength;
     const scaleByH = (canvas.height - p * 2) / FIFA.WIDTH;
     const scale = Math.min(scaleByW, scaleByH);
 
     const halfW = (FIFA.LENGTH / 2) * scale;
     const fieldH = FIFA.WIDTH * scale;
-    const fx = (canvas.width  - halfW) / 2;
+    const fx = (canvas.width - halfW) / 2;
     const fy = (canvas.height - fieldH) / 2;
 
     // Actualizar field para referencias externas
@@ -475,7 +476,8 @@ export class FieldRenderer {
     const canvas = this.canvas;
     const p = this.padding;
 
-    const scaleByW = (canvas.width  - p * 2) / (FIFA.LENGTH / 2);
+    const totalHalfLength = (FIFA.LENGTH / 2) + FIFA.GOAL_DEPTH;
+    const scaleByW = (canvas.width  - p * 2) / totalHalfLength;
     const scaleByH = (canvas.height - p * 2) / FIFA.WIDTH;
     const scale = Math.min(scaleByW, scaleByH);
 

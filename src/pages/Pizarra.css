@@ -538,3 +538,60 @@
 .mobile .material-items {
   grid-template-columns: repeat(3, 1fr);
 }
+
+/* Timeline specific layout */
+.pizarra-timeline {
+  height: 60px;
+  background-color: var(--bg-card);
+  border-top: 1px solid var(--border-color);
+  display: flex;
+  align-items: center;
+  padding: 0 15px;
+  flex-shrink: 0;
+}
+
+.dark .pizarra-timeline {
+  background-color: var(--bg-sidebar);
+}
+
+.timeline-chips {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  overflow-x: auto;
+  flex: 1;
+  padding: 4px 0;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+
+.timeline-chips::-webkit-scrollbar {
+  display: none;
+}
+
+.frame-chip {
+  min-width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  cursor: pointer;
+  border: 1px solid var(--border-color);
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+
+.dark .frame-chip {
+  background-color: var(--bg-card);
+  color: var(--white);
+}
+
+.frame-chip.active {
+  background-color: var(--accent);
+  color: var(--white);
+  border-color: var(--accent);
+}

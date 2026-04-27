@@ -22,6 +22,7 @@ const Dashboard = () => {
   const { players } = usePlayers();
   const { sessions } = useSessions();
   const { matches } = useMatches();
+  const [workloadPeriod, setWorkloadPeriod] = useState('Esta semana');
 
   const nextMatch = matches.find(m => m.status === 'Pendiente') || null;
   const lastMatches = matches.filter(m => m.status === 'Terminado').slice(-3);
@@ -38,15 +39,46 @@ const Dashboard = () => {
     .sort((a, b) => new Date(a.date) - new Date(b.date))
     .slice(0, 3);
 
-  const weeklyLoad = [
-    { day: 'Lun', val: 40 },
-    { day: 'Mar', val: 85 },
-    { day: 'Mié', val: 20 },
-    { day: 'Jue', val: 70 },
-    { day: 'Vie', val: 95 },
-    { day: 'Sáb', val: 100 },
-    { day: 'Dom', val: 0 },
-  ];
+  const getWorkloadData = () => {
+    switch (workloadPeriod) {
+      case 'Esta sesión':
+        return [
+          { day: 'Calent.', val: 20 },
+          { day: 'Técnica', val: 50 },
+          { day: 'Táctica', val: 80 },
+          { day: 'ABP', val: 30 },
+          { day: 'Físico', val: 60 },
+        ];
+      case 'Esta semana':
+        return [
+          { day: 'Lun', val: 40 }, { day: 'Mar', val: 85 }, { day: 'Mié', val: 20 },
+          { day: 'Jue', val: 70 }, { day: 'Vie', val: 95 }, { day: 'Sáb', val: 100 },
+          { day: 'Dom', val: 0 },
+        ];
+      case 'Este microciclo':
+        return [
+          { day: 'S1', val: 70 }, { day: 'S2', val: 85 }, { day: 'S3', val: 60 },
+          { day: 'S4', val: 90 }, { day: 'S5', val: 100 }, { day: 'S6', val: 40 },
+          { day: 'S7', val: 20 },
+        ];
+      case 'Este mesociclo':
+        return [
+          { day: 'Sem 1', val: 80 }, { day: 'Sem 2', val: 90 },
+          { day: 'Sem 3', val: 100 }, { day: 'Sem 4', val: 60 },
+        ];
+      case 'Este macrociclo':
+        return [
+          { day: 'Sep', val: 40 }, { day: 'Oct', val: 60 }, { day: 'Nov', val: 80 },
+          { day: 'Dic', val: 50 }, { day: 'Ene', val: 70 }, { day: 'Feb', val: 90 },
+          { day: 'Mar', val: 100 }, { day: 'Abr', val: 85 }, { day: 'May', val: 75 },
+          { day: 'Jun', val: 30 },
+        ];
+      default:
+        return [];
+    }
+  };
+
+  const workloadData = getWorkloadData();
 
   const getBarLevelClass = (val) => {
     if (val === 0) return 'empty';
@@ -88,16 +120,20 @@ const Dashboard = () => {
         <div className="dash-section chart-section">
           <div className="section-header">
             <h2>Carga de Trabajo Estimada</h2>
-            <select className="dash-select">
-              <option>Esta sesión</option>
-              <option selected>Esta semana</option>
-              <option>Este microciclo</option>
-              <option>Este mesociclo</option>
-              <option>Este macrociclo</option>
+            <select 
+              className="dash-select" 
+              value={workloadPeriod}
+              onChange={(e) => setWorkloadPeriod(e.target.value)}
+            >
+              <option value="Esta sesión">Esta sesión</option>
+              <option value="Esta semana">Esta semana</option>
+              <option value="Este microciclo">Este microciclo</option>
+              <option value="Este mesociclo">Este mesociclo</option>
+              <option value="Este macrociclo">Este macrociclo</option>
             </select>
           </div>
           <div className="bar-chart">
-            {weeklyLoad.map((d, i) => (
+            {workloadData.map((d, i) => (
               <div key={i} className="bar-wrapper">
                 <div className="bar-container">
                   <div className={`bar-fill ${getBarLevelClass(d.val)}`} style={{ height: `${d.val}%` }}>

@@ -59,9 +59,21 @@ const Planificacion = () => {
   const [assignedSessions, setAssignedSessions] = useState({});
   const [guideOpen, setGuideOpen] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [toast, setToast] = useState(null); // { msg, type }
+  const [savingMicro, setSavingMicro] = useState(false);
+  const [toast, setToast] = useState(null);
 
-  // ── LOAD FROM FIRESTORE ON MOUNT ──────────────────────────────────
+  // Controlled state for each day of the week
+  const initialWeekDays = Array.from({ length: 7 }, () => ({
+    type: 'Descanso',
+    load: '',
+  }));
+  const [weekDays, setWeekDays] = useState(initialWeekDays);
+
+  const updateDayField = (i, field, value) => {
+    setWeekDays(prev => prev.map((d, idx) => idx === i ? { ...d, [field]: value } : d));
+  };
+
+  // ── LOAD FROM FIRESTORE ON MOUNT ──────────────────────────────────────────
   useEffect(() => {
     const loadConfig = async () => {
       const user = auth.currentUser;
@@ -72,9 +84,9 @@ const Planificacion = () => {
         if (snap.exists()) {
           const data = snap.data();
           if (data.macroInfo) setMacroInfo(data.macroInfo);
-          if (data.microcycles && data.microcycles.length > 0) {
-            setMicrocycles(data.microcycles);
-          }
+          if (data.microcycles && data.microcycles.length > 0) setMicrocycles(data.microcycles);
+          if (data.weekDays && data.weekDays.length === 7) setWeekDays(data.weekDays);
+          if (data.assignedSessions) setAssignedSessions(data.assignedSessions);
         }
       } catch (err) {
         console.error('Error al cargar planificación:', err);
@@ -83,35 +95,48 @@ const Planificacion = () => {
     loadConfig();
   }, []);
 
-  // ── SHOW TOAST HELPER ──────────────────────────────────────────
+  // ── SHOW TOAST ───────────────────────────────────────────────────────────
   const showToast = useCallback((msg, type = 'success') => {
     setToast({ msg, type });
     setTimeout(() => setToast(null), 3000);
   }, []);
 
-  // ── SAVE TO FIRESTORE ───────────────────────────────────────────
+  // ── SAVE MACRO TO FIRESTORE ───────────────────────────────────────────────
   const handleSave = useCallback(async () => {
     const user = auth.currentUser;
-    if (!user) {
-      showToast('Inicia sesión para guardar', 'error');
-      return;
-    }
+    if (!user) { showToast('Inicia sesión para guardar', 'error'); return; }
     setSaving(true);
     try {
       const ref = doc(db, 'users', user.uid, 'planificacion', 'config');
-      await setDoc(ref, {
-        macroInfo,
-        microcycles,
-        updatedAt: serverTimestamp(),
-      }, { merge: true });
+      await setDoc(ref, { macroInfo, microcycles, updatedAt: serverTimestamp() }, { merge: true });
       showToast('Planificación guardada ✓');
     } catch (err) {
-      console.error('Error al guardar planificación:', err);
       showToast('Error al guardar. Inténtalo de nuevo.', 'error');
     } finally {
       setSaving(false);
     }
   }, [macroInfo, microcycles, showToast]);
+
+  // ── SAVE MICROCICLO TO FIRESTORE ─────────────────────────────────────────
+  const handleSaveMicro = useCallback(async () => {
+    const user = auth.currentUser;
+    if (!user) { showToast('Inicia sesión para guardar', 'error'); return; }
+    setSavingMicro(true);
+    try {
+      const ref = doc(db, 'users', user.uid, 'planificacion', 'config');
+      await setDoc(ref, {
+        weekDays,
+        assignedSessions,
+        weekDate: new Date().toISOString().split('T')[0],
+        updatedAt: serverTimestamp(),
+      }, { merge: true });
+      showToast('Microciclo guardado correctamente ✓');
+    } catch (err) {
+      showToast('Error al guardar microciclo.', 'error');
+    } finally {
+      setSavingMicro(false);
+    }
+  }, [weekDays, assignedSessions, showToast]);
 
   // Editable Grid Handlers
   const handleMicroChange = (id, field, value) => {
@@ -497,7 +522,10 @@ const Planificacion = () => {
                     <span className="d-name">{day}</span>
                   </div>
                   <div className="day-type-select">
-                    <select>
+                    <select
+                      value={weekDays[i].type}
+                      onChange={e => updateDayField(i, 'type', e.target.value)}
+                    >
                       <option value="Descanso">Descanso</option>
                       <option value="Entrenamiento">Entrenamiento</option>
                       <option value="Partido">Partido</option>
@@ -517,14 +545,26 @@ const Planificacion = () => {
                   </div>
                   <div className="day-load-input">
                     <label>Carga (0-100)</label>
-                    <input type="number" placeholder="%" />
+                    <input
+                      type="number"
+                      min="0" max="100"
+                      placeholder="%"
+                      value={weekDays[i].load}
+                      onChange={e => updateDayField(i, 'load', e.target.value)}
+                    />
                   </div>
                 </div>
               ))}
             </div>
             
             <div className="macro-summary" style={{marginTop: '20px'}}>
-              <button className="btn-primary">Guardar Microciclo</button>
+              <button
+                className="btn-primary"
+                onClick={handleSaveMicro}
+                disabled={savingMicro}
+              >
+                {savingMicro ? 'Guardando...' : 'Guardar Microciclo'}
+              </button>
             </div>
           </div>
         )}

@@ -31,6 +31,8 @@ const AdminPanel = () => {
   const { matches } = useMatches(activeTeam?.id);
 
   const [newTeam, setNewTeam] = useState({ nombre: '', categoria: '', temporada: '2025-26' });
+  const [selectedMatchId, setSelectedMatchId] = useState('');
+  const [selectedSessionId, setSelectedSessionId] = useState('');
   
   const { settings, saveSettings, loading: loadingSettings } = useSettings();
   const [profileData, setProfileData] = useState({ profileName: '', specialty: 'Primer Entrenador' });
@@ -90,8 +92,22 @@ const AdminPanel = () => {
   };
 
   const handleExportSeason = () => {
-    if (!activeTeam) return;
-    generateSeasonReport(activeTeam, players, matches, sessions);
+    if (!activeTeam) { alert('Selecciona un equipo primero.'); return; }
+    generateSeasonReport(activeTeam, players, matches);
+  };
+
+  const handleExportConvocatoria = () => {
+    if (!selectedMatchId) { alert('Selecciona un partido primero.'); return; }
+    const match = matches.find(m => m.id === selectedMatchId);
+    if (!match) { alert('Partido no encontrado.'); return; }
+    generateMatchConvocation(match, players);
+  };
+
+  const handleExportSession = () => {
+    if (!selectedSessionId) { alert('Selecciona una sesión primero.'); return; }
+    const session = sessions.find(s => s.id === selectedSessionId);
+    if (!session) { alert('Sesión no encontrada.'); return; }
+    generateSessionPDF(session);
   };
 
   return (
@@ -221,11 +237,17 @@ const AdminPanel = () => {
                 <Users className="export-icon" size={32} />
                 <h3>Lista de Convocados</h3>
                 <p>Selecciona un partido próximo para generar la hoja de convocatoria.</p>
-                <select className="admin-select-export">
-                  <option>Seleccionar Partido...</option>
-                  {matches.map(m => <option key={m.id}>{m.rival} ({m.fecha})</option>)}
+                <select
+                  className="admin-select-export"
+                  value={selectedMatchId}
+                  onChange={e => setSelectedMatchId(e.target.value)}
+                >
+                  <option value="">Seleccionar Partido...</option>
+                  {matches.map(m => (
+                    <option key={m.id} value={m.id}>{m.rival} ({m.fecha})</option>
+                  ))}
                 </select>
-                <button className="btn-export outline">
+                <button className="btn-export outline" onClick={handleExportConvocatoria}>
                   <Download size={18} /> Exportar
                 </button>
               </div>
@@ -234,11 +256,17 @@ const AdminPanel = () => {
                 <Calendar className="export-icon" size={32} />
                 <h3>Ficha de Sesión</h3>
                 <p>Exporta el detalle de una sesión de entrenamiento específica.</p>
-                <select className="admin-select-export">
-                  <option>Seleccionar Sesión...</option>
-                  {sessions.map(s => <option key={s.id}>{s.titulo} ({s.fecha})</option>)}
+                <select
+                  className="admin-select-export"
+                  value={selectedSessionId}
+                  onChange={e => setSelectedSessionId(e.target.value)}
+                >
+                  <option value="">Seleccionar Sesión...</option>
+                  {sessions.map(s => (
+                    <option key={s.id} value={s.id}>{s.titulo} ({s.fecha})</option>
+                  ))}
                 </select>
-                <button className="btn-export outline">
+                <button className="btn-export outline" onClick={handleExportSession}>
                   <Download size={18} /> Exportar
                 </button>
               </div>

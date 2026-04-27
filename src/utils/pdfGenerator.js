@@ -300,82 +300,117 @@ export const generateSessionPDF = (session) => {
 };
 
 /**
- * Genera un informe de temporada completo en PDF
+ * INFORME DE TEMPORADA - Completo con estadísticas de jugadores
  */
-export const generateSeasonReport = (team, players, matches, sessions) => {
+export const generateSeasonReport = (team, players, matches) => {
   const doc = new jsPDF();
-  addHeader(doc, 'INFORME DE TEMPORADA', team.nombre);
+  const teamName = team?.nombre || 'Equipo';
+  const season = team?.temporada || new Date().getFullYear();
 
-  // --- INFO GENERAL ---
-  doc.setTextColor(0, 0, 0);
-  doc.setFontSize(12);
-  doc.text(`Categoría: ${team.categoria}`, 15, 50);
-  doc.text(`Temporada: ${team.temporada}`, 15, 57);
-  doc.text(`Fecha de generación: ${new Date().toLocaleDateString()}`, 15, 64);
+  addHeader(doc, 'INFORME DE TEMPORADA', `${teamName} · Temporada ${season}`);
 
-  // --- PLANTILLA TABLE ---
-  doc.setFontSize(16);
-  doc.text('Plantilla y Estadísticas', 15, 80);
-  
-  const playerRows = players.map(p => [
-    p.dorsal || '-',
-    p.nombre,
-    p.posicion || '-',
-    p.minutosTemporada || 0,
-    p.lesionActiva ? 'LESIONADO' : 'OK'
-  ]);
+  doc.setTextColor(45, 45, 45);
+  doc.setFontSize(11);
+  doc.text(`Categoría: ${team?.categoria || '-'}`, 15, 50);
+  doc.text(`Temporada: ${season}`, 110, 50);
+  doc.text(`Fecha: ${new Date().toLocaleDateString('es-ES')}`, 15, 57);
+  doc.text(`Total jugadores: ${players.length}`, 110, 57);
+
+  doc.setFontSize(13);
+  doc.setTextColor(...THEME_COLOR);
+  doc.setFont(undefined, 'bold');
+  doc.text('Estadísticas de Plantilla', 15, 70);
+  doc.setFont(undefined, 'normal');
 
   doc.autoTable({
-    startY: 85,
-    head: [['#', 'Jugador', 'Posición', 'Minutos', 'Estado']],
-    body: playerRows,
-    headStyles: { fillColor: THEME_COLOR },
+    startY: 74,
+    head: [['#', 'Jugador', 'Posición', 'Min.', 'PJ', 'Goles', 'Asist.', 'TA', 'TR', 'Estado']],
+    body: players.map(p => [
+      p.dorsal || '-',
+      p.nombre || '-',
+      p.posicion || '-',
+      p.minutosTemporada || 0,
+      p.partidosJugados || 0,
+      p.goles || 0,
+      p.asistencias || 0,
+      p.tarjetasAmarillas || 0,
+      p.tarjetasRojas || 0,
+      p.lesionActiva ? 'LESIONADO' : 'Disponible',
+    ]),
+    headStyles: { fillColor: THEME_COLOR, textColor: [255,255,255], fontStyle: 'bold', fontSize: 8 },
+    bodyStyles: { textColor: [45,45,45], fontSize: 8, halign: 'center' },
+    columnStyles: { 1: { halign: 'left' } },
+    alternateRowStyles: { fillColor: [245, 240, 232] },
+    styles: { cellPadding: 2.5, fillColor: [255,255,255] },
+    margin: { left: 15, right: 15 },
   });
 
-  // --- PARTIDOS TABLE ---
-  const finalY = doc.lastAutoTable.finalY || 100;
-  doc.setFontSize(16);
-  doc.text('Últimos Partidos', 15, finalY + 15);
+  if (matches && matches.length > 0) {
+    const y1 = (doc.lastAutoTable?.finalY || 100) + 12;
+    doc.setFontSize(13);
+    doc.setTextColor(...THEME_COLOR);
+    doc.setFont(undefined, 'bold');
+    doc.text('Historial de Partidos', 15, y1);
+    doc.setFont(undefined, 'normal');
 
-  const matchRows = matches.map(m => [
-    m.fecha,
-    m.rival,
-    m.esLocal ? 'Local' : 'Visitante',
-    m.resultado ? `${m.resultado.local}-${m.resultado.visitante}` : 'Pendiente'
-  ]);
-
-  doc.autoTable({
-    startY: finalY + 20,
-    head: [['Fecha', 'Rival', 'Campo', 'Resultado']],
-    body: matchRows,
-    headStyles: { fillColor: THEME_COLOR },
-  });
+    doc.autoTable({
+      startY: y1 + 4,
+      head: [['Fecha', 'Rival', 'Campo', 'Resultado']],
+      body: matches.map(m => [
+        m.fecha || '-',
+        m.rival || '-',
+        m.esLocal ? 'Local' : 'Visitante',
+        m.resultado ? `${m.resultado.local ?? '-'} - ${m.resultado.visitante ?? '-'}` : 'Pendiente',
+      ]),
+      headStyles: { fillColor: THEME_COLOR, textColor: [255,255,255], fontStyle: 'bold', fontSize: 8 },
+      bodyStyles: { textColor: [45,45,45], fontSize: 8 },
+      alternateRowStyles: { fillColor: [245, 240, 232] },
+      styles: { fillColor: [255,255,255] },
+      margin: { left: 15, right: 15 },
+    });
+  }
 
   addFooter(doc);
-  doc.save(`Informe_${team.nombre}_${team.temporada}.pdf`);
+  doc.save(`Informe_Temporada_${teamName.replace(/\s+/g,'_')}.pdf`);
 };
 
 /**
- * Genera la hoja de convocatoria para un partido
+ * HOJA DE CONVOCATORIA - Para un partido con lista de convocados
  */
 export const generateMatchConvocation = (match, players) => {
   const doc = new jsPDF();
-  addHeader(doc, 'HOJA DE CONVOCATORIA', `Rival: ${match.rival}`);
+  addHeader(doc, 'HOJA DE CONVOCATORIA', `vs. ${match.rival}`);
 
-  doc.setTextColor(0);
-  doc.setFontSize(14);
-  doc.text(`Fecha: ${match.fecha} | Hora: ${match.hora || '--:--'}`, 15, 55);
-  doc.text(`Lugar: ${match.lugar || 'Por determinar'}`, 15, 62);
+  doc.setTextColor(45, 45, 45);
+  doc.setFontSize(12);
+  doc.text(`Rival: ${match.rival || '-'}`, 15, 50);
+  doc.text(`Fecha: ${match.fecha || '-'}`, 80, 50);
+  doc.text(`Hora: ${match.hora || '--:--'}`, 150, 50);
+  doc.text(`Lugar: ${match.lugar || 'Por determinar'}`, 15, 58);
+  if (match.formacion) doc.text(`Formación: ${match.formacion}`, 110, 58);
 
-  const convocados = players.filter(p => match.convocados?.includes(p.id)) || [];
-  
+  const convocados = players.filter(p => match.convocados?.includes(p.id));
+
+  doc.setFontSize(13);
+  doc.setTextColor(...THEME_COLOR);
+  doc.setFont(undefined, 'bold');
+  doc.text(`Convocados (${convocados.length})`, 15, 70);
+  doc.setFont(undefined, 'normal');
+
   doc.autoTable({
-    startY: 75,
+    startY: 74,
     head: [['#', 'Nombre del Jugador', 'Posición']],
-    body: convocados.map(p => [p.dorsal || '-', p.nombre, p.posicion || '-']),
-    headStyles: { fillColor: THEME_COLOR },
+    body: convocados.length > 0
+      ? convocados.map((p, i) => [p.dorsal || i+1, p.nombre, p.posicion || '-'])
+      : [['', 'No hay convocados registrados para este partido.', '']],
+    headStyles: { fillColor: THEME_COLOR, textColor: [255,255,255], fontStyle: 'bold' },
+    bodyStyles: { textColor: [45,45,45], fontSize: 10 },
+    alternateRowStyles: { fillColor: [245,240,232] },
+    styles: { fillColor: [255,255,255] },
+    margin: { left: 15, right: 15 },
   });
 
   addFooter(doc);
-  doc.save(`Convocatoria_${match.rival}_${match.fecha}.pdf`);
+  const safeRival = (match.rival || 'Partido').replace(/\s+/g,'_');
+  doc.save(`Convocatoria_${safeRival}_${match.fecha || 'Hoy'}.pdf`);
 };

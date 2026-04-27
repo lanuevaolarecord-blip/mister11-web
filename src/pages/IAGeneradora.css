@@ -455,3 +455,94 @@
 .dark .saved-item {
   background: rgba(255, 255, 255, 0.03);
 }
+
+/* ======================================================
+   EXERCISE DIAGRAM
+   ====================================================== */
+.exercise-diagram {
+  margin-top: 24px;
+  border-radius: 14px;
+  overflow: hidden;
+  border: 1px solid rgba(76, 175, 125, 0.25);
+  background: #1a2e1a;
+}
+
+.diagram-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  background: rgba(0, 0, 0, 0.25);
+}
+
+.diagram-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: #D4A843;
+  display: block;
+  margin-bottom: 2px;
+}
+
+.diagram-sub {
+  font-size: 11px;
+  color: #AAAAAA;
+  display: block;
+}
+
+.diagram-legend {
+  display: flex;
+  gap: 16px;
+  padding: 8px 16px;
+  background: rgba(0,0,0,0.15);
+  flex-wrap: wrap;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  color: #CCCCCC;
+}
+
+.legend-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  display: inline-block;
+  border: 1.5px solid rgba(255,255,255,0.5);
+  flex-shrink: 0;
+}
+
+.legend-arrow-icon {
+  font-size: 16px;
+  color: rgba(255,255,255,0.7);
+  line-height: 1;
+}
+
+.diagram-canvas {
+  display: block;
+  width: 100%;
+  height: 300px;
+  cursor: default;
+}
+
+.diagram-actions {
+  display: flex;
+  gap: 10px;
+  padding: 12px 16px;
+  background: rgba(0,0,0,0.2);
+  border-top: 1px solid rgba(255,255,255,0.06);
+}
+
+.diagram-actions .btn-outline {
+  font-size: 12px;
+  padding: 8px 16px;
+  border-color: rgba(76, 175, 125, 0.4);
+  color: #4CAF7D;
+}
+
+.diagram-actions .btn-outline:hover {
+  background: rgba(76, 175, 125, 0.15);
+}
+

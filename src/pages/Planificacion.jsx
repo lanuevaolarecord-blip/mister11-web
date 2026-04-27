@@ -1,4 +1,6 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect, useCallback } from 'react';
+import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
+import { db, auth } from '../firebaseConfig';
 import { generatePlanificacionPDF } from '../utils/pdfGenerator';
 import './Planificacion.css';
 
@@ -56,28 +58,101 @@ const Planificacion = () => {
   const [microcycles, setMicrocycles] = useState(generateMicrocycles());
   const [assignedSessions, setAssignedSessions] = useState({});
   const [guideOpen, setGuideOpen] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [toast, setToast] = useState(null); // { msg, type }
+
+  // ── LOAD FROM FIRESTORE ON MOUNT ──────────────────────────────────
+  useEffect(() => {
+    const loadConfig = async () => {
+      const user = auth.currentUser;
+      if (!user) return;
+      try {
+        const ref = doc(db, 'users', user.uid, 'planificacion', 'config');
+        const snap = await getDoc(ref);
+        if (snap.exists()) {
+          const data = snap.data();
+          if (data.macroInfo) setMacroInfo(data.macroInfo);
+          if (data.microcycles && data.microcycles.length > 0) {
+            setMicrocycles(data.microcycles);
+          }
+        }
+      } catch (err) {
+        console.error('Error al cargar planificación:', err);
+      }
+    };
+    loadConfig();
+  }, []);
+
+  // ── SHOW TOAST HELPER ──────────────────────────────────────────
+  const showToast = useCallback((msg, type = 'success') => {
+    setToast({ msg, type });
+    setTimeout(() => setToast(null), 3000);
+  }, []);
+
+  // ── SAVE TO FIRESTORE ───────────────────────────────────────────
+  const handleSave = useCallback(async () => {
+    const user = auth.currentUser;
+    if (!user) {
+      showToast('Inicia sesión para guardar', 'error');
+      return;
+    }
+    setSaving(true);
+    try {
+      const ref = doc(db, 'users', user.uid, 'planificacion', 'config');
+      await setDoc(ref, {
+        macroInfo,
+        microcycles,
+        updatedAt: serverTimestamp(),
+      }, { merge: true });
+      showToast('Planificación guardada ✓');
+    } catch (err) {
+      console.error('Error al guardar planificación:', err);
+      showToast('Error al guardar. Inténtalo de nuevo.', 'error');
+    } finally {
+      setSaving(false);
+    }
+  }, [macroInfo, microcycles, showToast]);
 
   // Editable Grid Handlers
   const handleMicroChange = (id, field, value) => {
     setMicrocycles(prev => prev.map(m => m.id === id ? { ...m, [field]: value } : m));
   };
 
-  // Training days toggle
+  // ── SYNC VOLUME TO ALL MICROCYCLES ──────────────────────────────────
+  const syncVolumeToAll = useCallback((days, duration) => {
+    const vol = days * (Number(duration) || 0);
+    setMicrocycles(prev => prev.map(m => ({ ...m, volume: vol })));
+  }, []);
+
+  // Training days toggle — syncs volume immediately
   const toggleDay = (idx) => {
     setMacroInfo(prev => {
       const days = prev.trainingDays.includes(idx)
         ? prev.trainingDays.filter(d => d !== idx)
         : [...prev.trainingDays, idx];
+      syncVolumeToAll(days.length, prev.sessionDuration);
       return { ...prev, trainingDays: days };
     });
   };
 
-  // Auto volume calculation based on days × duration
-  const weeklyVolume = macroInfo.trainingDays.length * (Number(macroInfo.sessionDuration) || 0);
-  const calculateTotalVolume = () => {
-    // Total = weeks * weekly volume (40 weeks)
-    return weeklyVolume * 40;
+  // Duration change — syncs volume immediately
+  const handleDurationChange = (newDuration) => {
+    setMacroInfo(prev => {
+      syncVolumeToAll(prev.trainingDays.length, newDuration);
+      return { ...prev, sessionDuration: Number(newDuration) };
+    });
   };
+
+  // Derived values
+  const weeklyVolume = macroInfo.trainingDays.length * (Number(macroInfo.sessionDuration) || 0);
+
+  // Total = sum of all actual microcycle volumes
+  const totalMinutes = microcycles.reduce((acc, m) => acc + Number(m.volume || 0), 0);
+  const totalHours = Math.floor(totalMinutes / 60);
+  const remainingMins = totalMinutes % 60;
+  const totalVolumeLabel = totalHours > 0
+    ? `${totalHours}h ${remainingMins}min (${totalMinutes} minutos totales)`
+    : `${totalMinutes} minutos totales`;
 
   // Compute current mesocycle based on today's date vs macrocycle start
   const currentMeso = useMemo(() => {
@@ -130,6 +205,12 @@ const Planificacion = () => {
 
   return (
     <div className="planificacion-page">
+      {/* TOAST NOTIFICATION */}
+      {toast && (
+        <div className={`plan-toast ${toast.type === 'error' ? 'plan-toast--error' : ''}`}>
+          {toast.msg}
+        </div>
+      )}
       <header className="plan-header">
         <div className="header-top">
           <h1>PLANIFICACIÓN ESTRATÉGICA</h1>
@@ -182,9 +263,9 @@ const Planificacion = () => {
                     <label>Duración por Sesión (min)</label>
                     <input
                       type="number"
-                      min="30" max="180" step="15"
+                      min="30" max="360" step="5"
                       value={macroInfo.sessionDuration}
-                      onChange={e => setMacroInfo({...macroInfo, sessionDuration: Number(e.target.value)})}
+                      onChange={e => handleDurationChange(e.target.value)}
                       className="duration-input"
                     />
                   </div>
@@ -382,12 +463,20 @@ const Planificacion = () => {
             </div>
 
             <div className="macro-summary">
-              <p>Volumen Total Temporada: <strong>{calculateTotalVolume()} minutos</strong>
-                <span style={{marginLeft:'12px', fontSize:'12px', color:'var(--text-muted)'}}>
-                  ({macroInfo.trainingDays.length} días/sem × {macroInfo.sessionDuration} min × 40 semanas)
+              <div className="macro-summary-vol">
+                <span className="msv-label">Volumen Total Temporada</span>
+                <span className="msv-value">{totalVolumeLabel}</span>
+                <span className="msv-formula">
+                  {macroInfo.trainingDays.length} días/sem × {macroInfo.sessionDuration} min × {microcycles.length} semanas
                 </span>
-              </p>
-              <button className="btn-primary" onClick={() => alert('Planificación guardada con éxito.')}>Guardar Planificación</button>
+              </div>
+              <button
+                className="btn-primary"
+                onClick={handleSave}
+                disabled={saving}
+              >
+                {saving ? 'Guardando...' : 'Guardar Planificación'}
+              </button>
             </div>
           </div>
         )}

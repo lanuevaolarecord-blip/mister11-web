@@ -36,55 +36,105 @@ const addFooter = (doc) => {
 };
 
 /**
- * PLANIFICACIÓN - Macrociclo
+ * PLANIFICACIÓN - Macrociclo (Landscape, dark theme)
  */
 export const generatePlanificacionPDF = (macroInfo, microcycles) => {
-  const doc = new jsPDF();
-  
-  addHeader(doc, `PLANIFICACIÓN ESTRATÉGICA`, `${macroInfo.category || 'Equipo'} | Temporada: ${macroInfo.startDate} a ${macroInfo.endDate}`);
+  const doc = new jsPDF({ orientation: 'landscape' });
+  const pageW = doc.internal.pageSize.getWidth(); // 297mm landscape
 
-  // General Info
-  doc.setTextColor(0, 0, 0);
-  doc.setFontSize(12);
-  doc.text(`Entrenador: ${macroInfo.trainer || 'Míster'}`, 15, 50);
-  doc.text(`Fecha de generación: ${new Date().toLocaleDateString()}`, 15, 57);
+  // ── CABECERA ─────────────────────────────────────────────────────────────
+  doc.setFillColor(27, 58, 45);
+  doc.rect(0, 0, pageW, 36, 'F');
 
-  // Table Data
-  doc.setFontSize(14);
-  doc.text('Detalle del Macrociclo', 15, 70);
+  doc.setTextColor(212, 168, 67);
+  doc.setFontSize(20);
+  doc.setFont(undefined, 'bold');
+  doc.text('MÍSTER11', pageW / 2, 14, { align: 'center' });
 
-  const tableBody = microcycles.map(m => [
-    m.month,
-    m.period,
-    m.etapa,
-    m.mesoId,
-    m.id,
-    m.type,
-    m.sessions,
-    m.volume,
-    `${m.physical}%`,
-    `${m.technical}%`,
-    `${m.tactical}%`
+  doc.setTextColor(255, 255, 255);
+  doc.setFontSize(13);
+  doc.setFont(undefined, 'normal');
+  doc.text('Planificación Estratégica', pageW / 2, 22, { align: 'center' });
+
+  doc.setTextColor(204, 204, 204);
+  doc.setFontSize(9);
+  const subtitle = `${macroInfo.category || 'Equipo'} · Temporada ${macroInfo.startDate || ''} — ${macroInfo.endDate || ''}  ·  Entrenador: ${macroInfo.trainer || 'Míster'}`;
+  doc.text(subtitle, pageW / 2, 30, { align: 'center' });
+
+  doc.setTextColor(120);
+  doc.setFontSize(8);
+  doc.text(`Generado: ${new Date().toLocaleString()}`, 10, 42);
+
+  // ── TABLA MACROCICLO ───────────────────────────────────────────────────
+  const head = [['Mes', 'Periodo', 'Etapa', 'Nº Meso', 'Nº Micro', 'Tipo Micro', 'Nº Ses.', 'Vol.(min)', '% Físico', '% Técnico', '% Táctico']];
+  const body = microcycles.map(m => [
+    m.month, m.period, m.etapa, m.mesoId, m.id,
+    m.type, m.sessions, m.volume,
+    `${m.physical}%`, `${m.technical}%`, `${m.tactical}%`,
   ]);
 
   doc.autoTable({
-    startY: 75,
-    head: [['Mes', 'Periodo', 'Etapa', 'Meso', 'Micro', 'Tipo', 'Ses', 'Vol(m)', 'Fis%', 'Tec%', 'Tac%']],
-    body: tableBody,
-    headStyles: { fillColor: THEME_COLOR, textColor: TEXT_COLOR },
-    styles: { fontSize: 8, cellPadding: 2 },
-    alternateRowStyles: { fillColor: [245, 245, 245] }
+    startY: 46,
+    head,
+    body,
+    headStyles: {
+      fillColor: [27, 58, 45],
+      textColor: [255, 255, 255],
+      fontStyle: 'bold',
+      fontSize: 8,
+      halign: 'center',
+    },
+    bodyStyles: {
+      textColor: [204, 204, 204],
+      fontSize: 7.5,
+      halign: 'center',
+      fillColor: [27, 58, 45],
+    },
+    alternateRowStyles: {
+      fillColor: [20, 46, 34],
+    },
+    styles: { cellPadding: 2 },
+    columnStyles: {
+      0: { cellWidth: 18 }, 1: { cellWidth: 30 }, 2: { cellWidth: 28 },
+      3: { cellWidth: 18 }, 4: { cellWidth: 20 }, 5: { cellWidth: 28 },
+      6: { cellWidth: 18 }, 7: { cellWidth: 20 },
+      8: { cellWidth: 18 }, 9: { cellWidth: 20 }, 10: { cellWidth: 20 },
+    },
+    margin: { left: 10, right: 10 },
   });
 
-  // Objetivos
-  const finalY = doc.lastAutoTable.finalY || 100;
-  doc.setFontSize(14);
-  doc.text('Objetivos de la Temporada', 15, finalY + 15);
-  doc.setFontSize(10);
-  doc.text(doc.splitTextToSize(macroInfo.objective || 'Sin objetivos definidos', 180), 15, finalY + 22);
+  // ── OBJETIVOS ──────────────────────────────────────────────────────────────
+  const finalY = (doc.lastAutoTable?.finalY || 46) + 10;
+  if (finalY < doc.internal.pageSize.getHeight() - 30) {
+    doc.setFillColor(27, 58, 45);
+    doc.rect(10, finalY, pageW - 20, 7, 'F');
+    doc.setTextColor(212, 168, 67);
+    doc.setFontSize(9);
+    doc.setFont(undefined, 'bold');
+    doc.text('Objetivos de la Temporada', 14, finalY + 5);
+    doc.setFont(undefined, 'normal');
+    doc.setTextColor(60, 60, 60);
+    doc.setFontSize(8.5);
+    const objLines = doc.splitTextToSize(macroInfo.objective || 'Sin objetivos definidos.', pageW - 24);
+    doc.text(objLines, 14, finalY + 13);
+  }
 
-  addFooter(doc);
-  doc.save(`Planificacion_${macroInfo.category || 'Equipo'}_${macroInfo.startDate.split('-')[0]}.pdf`);
+  // ── PIE DE PÁGINA ──────────────────────────────────────────────────────
+  const pageCount = doc.internal.getNumberOfPages();
+  for (let i = 1; i <= pageCount; i++) {
+    doc.setPage(i);
+    doc.setFontSize(8);
+    doc.setTextColor(150);
+    doc.text(
+      `Página ${i} de ${pageCount}  |  Generado por Míster11 Tactical Engine`,
+      pageW / 2, doc.internal.pageSize.getHeight() - 6,
+      { align: 'center' }
+    );
+  }
+
+  const safeName = (macroInfo.category || 'Equipo').replace(/\s+/g, '_');
+  const year = (macroInfo.startDate || '').split('-')[0] || new Date().getFullYear();
+  doc.save(`Planificacion_${safeName}_${year}.pdf`);
 };
 
 /**

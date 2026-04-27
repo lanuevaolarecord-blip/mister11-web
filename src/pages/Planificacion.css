@@ -7,6 +7,36 @@
   overflow: hidden;
 }
 
+/* ── TOAST NOTIFICATION ───────────────────────────────────────── */
+.plan-toast {
+  position: fixed;
+  bottom: 28px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #4CAF7D;
+  color: #FFFFFF;
+  font-weight: 700;
+  font-size: 14px;
+  padding: 12px 28px;
+  border-radius: 30px;
+  box-shadow: 0 6px 24px rgba(76, 175, 125, 0.45);
+  z-index: 9999;
+  animation: toast-in 0.3s ease;
+  white-space: nowrap;
+}
+
+.plan-toast--error {
+  background: #EF4444;
+  box-shadow: 0 6px 24px rgba(239, 68, 68, 0.4);
+}
+
+@keyframes toast-in {
+  from { opacity: 0; transform: translateX(-50%) translateY(16px); }
+  to   { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+
+
+
 .plan-header {
   margin-bottom: 24px;
   flex-shrink: 0;
@@ -243,10 +273,41 @@
   justify-content: space-between;
   align-items: center;
   margin-top: 20px;
-  padding: 15px;
+  padding: 16px 20px;
   background: var(--sand);
   border-radius: 12px;
+  gap: 16px;
+  flex-wrap: wrap;
 }
+
+.macro-summary-vol {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.msv-label {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: var(--text-muted);
+}
+
+.msv-value {
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: var(--text-primary);
+  font-family: var(--font-numbers, monospace);
+}
+
+.msv-formula {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-top: 1px;
+}
+
+
 
 /* --- MICROCICLO SEMANAL --- */
 .micro-view {

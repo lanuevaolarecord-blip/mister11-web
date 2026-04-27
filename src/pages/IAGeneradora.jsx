@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useExercises } from '../hooks/useExercises';
+import ExerciseDiagram from '../components/ExerciseDiagram';
 import './IAGeneradora.css';
 
 // --- CONFIGURACIÓN ---
@@ -302,6 +303,15 @@ Responde SOLO en español. No incluyas texto fuera del formato indicado.`;
             <div className="result-markdown">
               {renderMarkdown(result)}
             </div>
+
+            {/* DIAGRAMA AUTOMÁTICO */}
+            {form.espacio && form.espacio !== 'Sala / Gimnasio' && (
+              <ExerciseDiagram
+                espacio={form.espacio}
+                jugadores={form.jugadores}
+                resultText={result}
+              />
+            )}
           </div>
         )}
 

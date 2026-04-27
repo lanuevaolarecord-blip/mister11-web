@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Outlet } from 'react-router-dom';
 import Sidebar from './Sidebar';
 import Header from './Header';
@@ -9,8 +9,18 @@ const Layout = () => {
   const [isNotifOpen, setIsNotifOpen] = useState(false);
   const { settings } = useSettings();
 
+  useEffect(() => {
+    if (settings.darkMode) {
+      document.documentElement.classList.add('dark');
+      document.documentElement.classList.remove('light');
+    } else {
+      document.documentElement.classList.add('light');
+      document.documentElement.classList.remove('dark');
+    }
+  }, [settings.darkMode]);
+
   return (
-    <div className={`app-container ${settings.darkMode ? 'dark' : 'light'}`}>
+    <div className="app-container">
       <Sidebar />
       <div className="main-content">
         <Header onToggleNotif={() => setIsNotifOpen(!isNotifOpen)} />

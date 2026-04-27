@@ -13,20 +13,16 @@
   --font-body: 'Inter', system-ui, -apple-system, sans-serif;
   --font-title: 'Georgia', 'Merriweather', serif;
   --font-numbers: 'Bebas Neue', 'Oswald', sans-serif;
-}
 
-/* THEME: LIGHT */
-.light {
+  /* THEME: LIGHT (DEFAULT) */
   --text-primary: #1B3A2D;
   --text-secondary: #2D2D2D;
   --text-muted: #555555;
   --bg-primary: #F5F0E8;
   --bg-card: #FFFFFF;
-  --bg-sidebar: #1B3A2D;
-  --text-sidebar: #FFFFFF;
   --border-color: #D4A843;
-  
-  /* Map internal variables to theme ones */
+
+  /* Legacy mappings for compatibility during transition */
   --title-color: var(--text-primary);
   --body-color: var(--text-secondary);
   --secondary-color: var(--text-muted);
@@ -35,106 +31,17 @@
 }
 
 /* THEME: DARK */
-.dark {
+html.dark {
   --text-primary: #FFFFFF;
   --text-secondary: #CCCCCC;
   --text-muted: #AAAAAA;
   --bg-primary: #0D1F0D;
   --bg-card: #1B3A2D;
-  --bg-sidebar: #0D1F0D;
-  --text-sidebar: #FFFFFF;
   --border-color: #4CAF7D;
-
-  /* Map internal variables to theme ones */
-  --title-color: var(--text-primary);
-  --body-color: var(--text-secondary);
-  --secondary-color: var(--text-muted);
-  --card-text: var(--text-primary);
-  --label-color: var(--text-secondary);
 
   --input-bg: #1E3A2E;
   --input-border: #4CAF7D;
   --input-text: #FFFFFF;
-}
-
-.dark body {
-  background-color: var(--bg-primary);
-  color: var(--body-color);
-}
-
-.dark .sidebar {
-  background-color: var(--bg-sidebar);
-  border-right: 1px solid rgba(255,255,255,0.1);
-}
-
-.dark .header {
-  background-color: var(--bg-card);
-  border-bottom: 1px solid var(--border-color);
-}
-
-.dark .header h1, 
-.dark .logo-text,
-.dark .nav-item.active,
-.dark h1, .dark h2, .dark h3, .dark h4 {
-  color: var(--text-primary);
-}
-
-.dark .nav-item {
-  color: var(--text-muted);
-}
-
-.dark .nav-item:hover {
-  color: #ffffff;
-  background-color: rgba(76, 175, 125, 0.1);
-}
-
-.dark .card, 
-.dark .settings-card,
-.dark .stat-card-dash,
-.dark .session-item-dash,
-.dark .player-card,
-.dark .admin-section {
-  background: var(--bg-card);
-  border: 1px solid var(--border-color);
-  color: var(--text-primary);
-  box-shadow: 0 4px 20px rgba(0,0,0,0.4);
-}
-
-.dark input, 
-.dark select, 
-.dark textarea {
-  background: var(--input-bg) !important;
-  color: var(--input-text) !important;
-  border: 1px solid var(--input-border) !important;
-}
-
-.dark input::placeholder {
-  color: #6a7c76;
-}
-
-.dark .toggle-group span {
-  color: #ffffff;
-}
-
-.dark .user-name {
-  color: #ffffff;
-}
-
-.dark .user-role {
-  color: var(--text-muted);
-}
-
-.dark .btn-primary {
-  background-color: var(--accent);
-  color: #0a0f0e !important;
-}
-
-.dark .icon-btn {
-  color: #ffffff;
-}
-
-.dark .icon-btn:hover {
-  background-color: rgba(255, 255, 255, 0.05);
 }
 
 /* Global Reset & Base Styles */
@@ -156,9 +63,15 @@ html, body {
 body {
   font-family: var(--font-body);
   background-color: var(--bg-primary);
-  color: var(--body-color);
+  color: var(--text-secondary);
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-title);
+  color: var(--text-primary);
+  margin-bottom: 1rem;
 }
 
 @media screen and (orientation: landscape) {
@@ -195,14 +108,14 @@ a {
 
 /* Sidebar Styles */
 .sidebar {
-  background-color: var(--bg-sidebar);
+  background-color: #1B3A2D;
   width: 260px;
   min-width: 260px;
   display: flex;
   flex-direction: column;
   padding: 20px 0;
-  border-right: 1px solid var(--border-color);
-  color: var(--text-sidebar);
+  border-right: 1px solid rgba(255, 255, 255, 0.1);
+  color: #FFFFFF;
   height: 100vh;
 }
 
@@ -230,7 +143,7 @@ a {
   font-family: var(--font-title);
   font-size: 1.6rem;
   font-weight: 700;
-  color: var(--text-sidebar);
+  color: #FFFFFF;
   letter-spacing: 0.5px;
   line-height: 1;
 }
@@ -253,7 +166,7 @@ a {
   align-items: center;
   gap: 15px;
   padding: 12px 20px;
-  color: var(--text-muted);
+  color: #AAAAAA;
   font-weight: 500;
   transition: all 0.2s;
   border-left: 3px solid transparent;
@@ -261,7 +174,7 @@ a {
 
 .nav-item:hover {
   background-color: rgba(76, 175, 125, 0.1);
-  color: var(--text-sidebar);
+  color: #FFFFFF;
 }
 
 .nav-item.active {
@@ -298,7 +211,7 @@ a {
 .user-name {
   font-weight: bold;
   font-size: 0.9rem;
-  color: var(--text-sidebar);
+  color: #FFFFFF;
 }
 
 .user-role {

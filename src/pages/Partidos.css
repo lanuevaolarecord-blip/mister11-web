@@ -221,7 +221,7 @@
   transition: all 0.2s;
   user-select: none;
 }
-.player-check-item:hover { border-color: #ccc; }
+.player-check-item:hover { border-color: var(--accent); background: var(--bg-card); }
 .player-check-item.selected {
   border-color: var(--accent);
   background: rgba(76, 175, 125, 0.05);
@@ -232,7 +232,7 @@
   width: 24px;
   height: 24px;
   border-radius: 50%;
-  border: 2px solid #ddd;
+  border: 2px solid var(--border-color);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -257,7 +257,7 @@
   display: flex;
   flex-direction: column;
 }
-.form-select { width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #ccc; font-weight: bold; }
+.form-select { width: 100%; padding: 10px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--bg-primary); color: var(--text-primary); font-weight: bold; }
 .titulares-list h4 { margin: 20px 0 10px 0; color: var(--text-primary); border-bottom: 1px solid var(--border-color); padding-bottom: 5px; }
 .hint { font-size: 11px; color: var(--text-muted); font-style: italic; margin-top: -5px; }
 .alin-player-list-item {
@@ -389,7 +389,7 @@
   background: var(--bg-card);
 }
 .score-team input:focus { border-color: var(--accent); outline: none; }
-.score-inputs .vs { font-size: 24px; color: #ccc; font-weight: bold; }
+.score-inputs .vs { font-size: 24px; color: var(--text-muted); font-weight: bold; }
 
 .analysis-panel textarea {
   width: 100%;

@@ -158,13 +158,14 @@
 .bar-container {
   width: 24px;
   height: 160px;
-  background: #F0F2F1;
+  background: var(--bg-primary);
   border-radius: 12px;
   display: flex;
   flex-direction: column;
   justify-content: flex-end;
   overflow: visible;
   position: relative;
+  border: 1px solid var(--border-color);
 }
 
 .bar-fill {
@@ -264,15 +265,16 @@
   font-size: 10px;
   padding: 2px 8px;
   border-radius: 4px;
-  background: #E8F5E9;
+  background: var(--bg-primary);
   color: var(--accent);
+  border: 1px solid var(--border-color);
   font-weight: bold;
   text-transform: uppercase;
 }
 
 .badge-dash.intensity {
-  background: #F5F5F5;
-  color: #666;
+  background: var(--bg-card);
+  color: var(--text-muted);
 }
 
 .badge-dash.intensity.alta { background: #FEE2E2; color: #EF4444; }
@@ -328,8 +330,9 @@
 .dash-select {
   padding: 6px 12px;
   border-radius: 8px;
-  border: 1px solid #eee;
-  color: #666;
+  border: 1px solid var(--border-color);
+  background: var(--bg-primary);
+  color: var(--text-secondary);
   font-size: 12px;
 }
 

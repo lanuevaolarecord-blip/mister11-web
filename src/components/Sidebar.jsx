@@ -54,7 +54,7 @@ const Sidebar = () => {
 
       <div className="user-profile" style={{ marginTop: 'auto', display: 'flex', flexDirection: 'column', gap: '10px' }}>
         <div style={{display: 'flex', alignItems: 'center', gap: '10px'}}>
-          <div className="user-avatar" style={{background: 'var(--accent)', color: 'white', fontWeight: 'bold', fontSize: '14px', display:'flex', alignItems:'center', justifyContent:'center', borderRadius:'50%', width:'36px', height:'36px', flexShrink:0}}>
+          <div className="user-avatar" style={{background: '#4CAF7D', color: '#FFFFFF', fontWeight: 'bold', fontSize: '14px', display:'flex', alignItems:'center', justifyContent:'center', borderRadius:'50%', width:'36px', height:'36px', flexShrink:0}}>
             {auth.currentUser?.displayName?.charAt(0)?.toUpperCase() || 'M'}
           </div>
           <div className="user-info">
@@ -65,7 +65,7 @@ const Sidebar = () => {
         <button 
           onClick={() => signOut(auth)} 
           style={{
-            background: 'transparent', border: '1px solid #444', color: '#888', 
+            background: 'transparent', border: '1px solid rgba(255,255,255,0.2)', color: '#AAAAAA', 
             padding: '5px 10px', borderRadius: '4px', cursor: 'pointer', 
             display: 'flex', alignItems: 'center', gap: '5px', fontSize: '12px',
             marginTop: '5px'

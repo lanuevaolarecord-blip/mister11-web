@@ -82,7 +82,7 @@
   width: 100%;
   height: 6px;
   border-radius: 3px;
-  background: linear-gradient(to right, var(--accent) 0%, #e5e7eb 0%);
+  background: linear-gradient(to right, var(--accent) 0%, var(--border-color) 0%);
   outline: none;
   cursor: pointer;
 }
@@ -92,7 +92,7 @@
   height: 20px;
   border-radius: 50%;
   background: var(--primary);
-  border: 2px solid white;
+  border: 2px solid var(--bg-card);
   box-shadow: 0 2px 5px rgba(0,0,0,0.2);
   cursor: pointer;
 }
@@ -136,12 +136,12 @@
 
 /* Error */
 .ia-error {
-  background: #FEE2E2;
-  color: #991B1B;
+  background: var(--bg-primary);
+  color: #EF4444;
   padding: 12px 16px;
   border-radius: 8px;
   font-size: 13px;
-  border: 1px solid #FCA5A5;
+  border: 1px solid var(--border-color);
 }
 
 /* Botón Generar */
@@ -200,7 +200,7 @@
   justify-content: center;
   text-align: center;
   padding: 60px 40px;
-  color: #9ca3af;
+  color: var(--text-muted);
 }
 
 .empty-icon {
@@ -349,7 +349,7 @@
 }
 
 .btn-close-modal {
-  background: rgba(255,255,255,0.2);
+  background: rgba(255,255,255,0.1);
   color: white;
   border: none;
   width: 40px;

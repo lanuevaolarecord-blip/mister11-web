@@ -41,13 +41,13 @@
 
 .dark .topbar-select {
   background: var(--bg-sidebar);
-  color: #fff;
+  color: var(--white);
   border-color: var(--border-color);
 }
 
 .tool-icon-btn {
   background: transparent;
-  color: #CCCCCC;
+  color: var(--text-muted);
   border: 1px solid transparent;
   padding: 6px;
   border-radius: 4px;
@@ -101,13 +101,13 @@
 
 .dark .topbar-btn {
   background: var(--bg-sidebar);
-  color: #fff;
+  color: var(--white);
   border-color: var(--border-color);
 }
 
 .topbar-btn:hover:not(:disabled) {
-  background: #2A2A3A;
-  border-color: rgba(255,255,255,0.4);
+  background: var(--bg-primary);
+  border-color: var(--accent);
 }
 
 .topbar-btn:disabled {
@@ -246,7 +246,7 @@
 .topbar-divider {
   width: 1px;
   height: 24px;
-  background: rgba(255,255,255,0.2);
+  background: var(--border-color);
   flex-shrink: 0;
 }
 
@@ -301,7 +301,7 @@
 }
 
 .bottom-drawer {
-  background: #1A1A2A;
+  background: var(--bg-sidebar);
   width: 100%;
   max-height: 80vh;
   border-top-left-radius: 24px;

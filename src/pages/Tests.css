@@ -76,7 +76,7 @@
 }
 
 .test-card {
-  background: var(--bg-primary);
+  background: var(--bg-card);
   border: 1px solid var(--border-color);
   padding: 20px;
   border-radius: 12px;
@@ -94,11 +94,11 @@
   justify-content: space-between;
   margin-bottom: 15px;
 }
-.t-cat { font-size: 11px; font-weight: bold; background: rgba(76, 175, 125, 0.2); color: var(--text-primary); padding: 4px 8px; border-radius: 4px; text-transform: uppercase; }
-.t-unit { font-size: 11px; font-weight: bold; color: var(--text-muted); background: var(--bg-card); padding: 4px 8px; border-radius: 4px; border: 1px solid var(--border-color);}
+.t-cat { font-size: 11px; font-weight: bold; background: #1B3A2D !important; color: #D4A843 !important; border: 1px solid #D4A843 !important; padding: 4px 8px; border-radius: 4px; text-transform: uppercase; }
+.t-unit { font-size: 11px; font-weight: bold; color: #4CAF7D !important; background: #142E22 !important; padding: 4px 8px; border-radius: 4px; border: 1px solid var(--border-color);}
 
-.test-card h4 { margin: 0 0 10px 0; color: var(--text-primary); font-size: 1.1rem; }
-.test-card p { margin: 0; font-size: 13px; color: var(--text-muted); line-height: 1.4; flex: 1; }
+.test-card h4 { margin: 0 0 10px 0; color: #FFFFFF !important; font-size: 1.1rem; font-weight: 600; }
+.test-card p { margin: 0; font-size: 13px; color: #AAAAAA !important; line-height: 1.4; flex: 1; }
 
 .view-detail-hint {
   display: block;

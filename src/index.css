@@ -23,6 +23,8 @@
   --bg-sidebar: #1B3A2D;
   --text-sidebar: #FFFFFF;
   --border-color: #D4A843;
+  --accent: #4CAF7D;
+  --white: #FFFFFF;
   --input-bg: #FFFFFF;
   --input-text: #2D2D2D;
   --input-border: #D4A843;
@@ -255,14 +257,15 @@ a {
   align-items: center;
   justify-content: space-between;
   padding: 0 30px;
-  background-color: var(--bg-card);
+  background-color: #1B3A2D !important;
   border-bottom: 1px solid var(--border-color);
 }
 
 .header h1 {
   margin: 0;
   font-size: 1.5rem;
-  color: var(--primary);
+  color: #FFFFFF !important;
+  font-weight: 700 !important;
 }
 
 .header-actions {
@@ -272,7 +275,7 @@ a {
 }
 
 .icon-btn {
-  color: var(--text-primary);
+  color: #D4A843 !important;
   background: none;
   border: none;
   cursor: pointer;
@@ -442,10 +445,10 @@ input::placeholder, textarea::placeholder {
   display: flex;
   align-items: center;
   gap: 10px;
-  background: #f0f0f0;
+  background: rgba(255, 255, 255, 0.1);
   padding: 5px 12px;
   border-radius: 20px;
-  border: 1px solid #ddd;
+  border: 1px solid rgba(255, 255, 255, 0.2);
   position: relative;
 }
 
@@ -462,7 +465,7 @@ input::placeholder, textarea::placeholder {
   font-family: var(--font-body);
   font-size: 0.85rem;
   font-weight: 600;
-  color: var(--primary);
+  color: #FFFFFF;
   outline: none;
   cursor: pointer;
   appearance: none;
@@ -473,5 +476,5 @@ input::placeholder, textarea::placeholder {
   position: absolute;
   right: 10px;
   pointer-events: none;
-  color: #666;
+  color: #CCCCCC;
 }

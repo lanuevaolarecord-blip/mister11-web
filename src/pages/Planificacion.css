@@ -97,19 +97,21 @@
 }
 
 .form-group-macro label {
-  font-size: 12px;
-  font-weight: bold;
-  color: var(--primary);
+  font-size: 11px !important;
+  font-weight: 600 !important;
+  color: #D4A843 !important;
   text-transform: uppercase;
 }
 
 .form-group-macro input, .form-group-macro textarea {
   padding: 10px;
-  border: 1px solid #ccc;
+  border: 1px solid #4CAF7D !important;
   border-radius: 8px;
   font-family: var(--font-body);
   font-size: 14px;
   width: 100%;
+  background: #142E22 !important;
+  color: #FFFFFF !important;
 }
 
 .full-width-macro textarea {
@@ -169,7 +171,7 @@
   align-items: center;
   font-size: 11px;
   font-weight: bold;
-  border-bottom: 1px solid rgba(255,255,255,0.1);
+  border-bottom: 1px solid #2D5A27 !important;
   white-space: nowrap;
 }
 .section-head { background: rgba(255,255,255,0.05); }
@@ -185,17 +187,18 @@
   display: flex;
   flex-direction: column;
   width: 60px;
-  border-right: 1px solid #eee;
+  border-right: 1px solid #2D5A27 !important;
 }
 
 .cell {
   height: 40px;
-  border-bottom: 1px solid #eee;
+  border-bottom: 1px solid #2D5A27 !important;
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 12px;
   position: relative;
+  color: #CCCCCC !important;
 }
 
 .cell input, .cell select {
@@ -214,9 +217,21 @@
   background: var(--bg-primary);
 }
 
-.cell.fw-bold { font-weight: bold; color: var(--primary); background: #f9f9f9; }
-.cell.sub-cell input { color: #666; }
-.cell.highlight-vol input { font-weight: bold; color: var(--accent); }
+.month-cell { background: #142E22 !important; }
+.month-cell input { color: #D4A843 !important; font-weight: 600 !important; }
+
+.period-cell input { color: #4CAF7D !important; font-weight: 600 !important; }
+
+.cell.fw-bold { font-weight: bold; color: #CCCCCC !important; background: transparent; }
+.cell.sub-cell input { color: #AAAAAA !important; }
+.cell.highlight-vol input { font-weight: 700 !important; color: #D4A843 !important; }
+
+.cell select {
+  background: #1B3A2D !important;
+  color: #CCCCCC !important;
+  border: 1px solid #4CAF7D !important;
+  border-radius: 4px;
+}
 
 /* Periodo Colors */
 .period-cell.preparatorio input { color: var(--gold); font-weight: bold; }

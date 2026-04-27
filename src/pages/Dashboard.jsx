@@ -4,6 +4,15 @@ import { useSettings } from '../hooks/useSettings';
 import { useSessions } from '../hooks/useSessions';
 import { useMatches } from '../hooks/useMatches';
 import { useNavigate } from 'react-router-dom';
+import { 
+  Users, 
+  ClipboardList, 
+  Trophy, 
+  Calendar, 
+  Presentation, 
+  FilePlus, 
+  Sparkles 
+} from 'lucide-react';
 import { t } from '../i18n/translations';
 import './Dashboard.css';
 
@@ -18,10 +27,10 @@ const Dashboard = () => {
   const lastMatches = matches.filter(m => m.status === 'Terminado').slice(-3);
 
   const stats = [
-    { label: 'Jugadores', value: players.length, icon: '👥', color: '#4CAF7D' },
-    { label: 'Sesiones', value: sessions.length, icon: '📋', color: '#D4A843' },
-    { label: 'Próximo Rival', value: nextMatch ? nextMatch.rival.split(' ')[0] : 'None', icon: '⚽', color: '#1B3A2D' },
-    { label: 'Partidos', value: matches.length, icon: '🏟️', color: '#3B82F6' },
+    { label: 'Jugadores', value: players.length, icon: <Users size={24} />, color: '#4CAF7D' },
+    { label: 'Sesiones', value: sessions.length, icon: <ClipboardList size={24} />, color: '#4CAF7D' },
+    { label: 'Próximo Rival', value: nextMatch ? nextMatch.rival.split(' ')[0] : 'Sin rival', icon: <Trophy size={24} />, color: '#4CAF7D' },
+    { label: 'Partidos', value: matches.length, icon: <Calendar size={24} />, color: '#4CAF7D' },
   ];
 
   const upcomingSessions = sessions
@@ -38,6 +47,13 @@ const Dashboard = () => {
     { day: 'Sáb', val: 100 },
     { day: 'Dom', val: 0 },
   ];
+
+  const getBarLevelClass = (val) => {
+    if (val === 0) return 'empty';
+    if (val < 50) return 'low';
+    if (val < 80) return 'medium';
+    return 'high';
+  };
 
   return (
     <div className="dashboard-page">
@@ -61,7 +77,7 @@ const Dashboard = () => {
             </div>
             <div className="stat-content-dash">
               <span className="stat-label-dash">{s.label}</span>
-              <span className="stat-value-dash">{s.value}</span>
+              <span className={`stat-value-dash ${s.label === 'Próximo Rival' && s.value === 'Sin rival' ? 'no-rival' : ''}`}>{s.value}</span>
             </div>
           </div>
         ))}
@@ -80,7 +96,7 @@ const Dashboard = () => {
             {weeklyLoad.map((d, i) => (
               <div key={i} className="bar-wrapper">
                 <div className="bar-container">
-                  <div className="bar-fill" style={{ height: `${d.val}%` }}>
+                  <div className={`bar-fill ${getBarLevelClass(d.val)}`} style={{ height: `${d.val}%` }}>
                     <div className="bar-tooltip">{d.val}%</div>
                   </div>
                 </div>
@@ -123,19 +139,19 @@ const Dashboard = () => {
         <h2>Acceso Rápido</h2>
         <div className="actions-grid-dash">
           <button className="action-btn-dash" onClick={() => navigate('/pizarra')}>
-            <span>⚽</span>
+            <Presentation size={24} color="#4CAF7D" />
             Pizarra Táctica
           </button>
           <button className="action-btn-dash" onClick={() => navigate('/sesiones')}>
-            <span>📋</span>
+            <FilePlus size={24} color="#4CAF7D" />
             Crear Sesión
           </button>
           <button className="action-btn-dash" onClick={() => navigate('/equipo')}>
-            <span>👥</span>
+            <Users size={24} color="#4CAF7D" />
             Mi Equipo
           </button>
           <button className="action-btn-dash" onClick={() => navigate('/ia-generadora')}>
-            <span>✨</span>
+            <Sparkles size={24} color="#4CAF7D" />
             IA Generator
           </button>
         </div>

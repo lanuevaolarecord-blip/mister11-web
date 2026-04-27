@@ -42,20 +42,20 @@
 .chip {
   padding: 8px 16px;
   border-radius: 20px;
-  background: var(--bg-card);
-  border: 1px solid var(--border-color);
-  color: var(--text-secondary);
+  background: transparent;
+  border: 1px solid #4CAF7D;
+  color: #4CAF7D;
   font-size: 13px;
-  font-weight: 500;
+  font-weight: 600;
   cursor: pointer;
   white-space: nowrap;
   transition: all 0.2s;
 }
 
 .chip.active {
-  background: var(--primary);
-  color: white;
-  border-color: var(--primary);
+  background: #4CAF7D !important;
+  color: #FFFFFF !important;
+  border-color: #4CAF7D !important;
 }
 
 /* Players Grid */
@@ -535,11 +535,6 @@
 }
 
 /* Dark Mode Overrides for MiEquipo (Minimal as most are now global) */
-.dark .chip.active {
-  background: var(--accent);
-  color: #0a0f0e;
-  border-color: var(--accent);
-}
 
 .dark .sidebar-header {
   background: #0a0f0e;

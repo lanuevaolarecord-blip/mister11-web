@@ -137,14 +137,15 @@
 .filter-tab {
   padding: 8px 16px;
   border-radius: 8px;
-  background: var(--bg-card);
-  color: var(--text-muted);
+  background: transparent;
+  color: #4CAF7D;
   font-size: 13px;
   font-weight: 600;
-  border: 1px solid var(--border-color);
+  border: 1px solid #4CAF7D;
   transition: all 0.2s;
+  cursor: pointer;
 }
-.filter-tab.active { background: var(--primary); color: white; border-color: var(--primary); }
+.filter-tab.active { background: #4CAF7D !important; color: #FFFFFF !important; border-color: #4CAF7D !important; }
 
 .sessions-content {
   display: grid;
@@ -200,7 +201,7 @@
 .badge.blocks { background: var(--bg-primary); color: var(--text-muted); }
 
 .session-arrow { color: var(--text-muted); font-size: 14px; }
-.empty-state-list { text-align: center; color: var(--text-muted); padding: 40px; }
+.empty-state-list { text-align: center; color: #CCCCCC !important; padding: 40px; }
 
 /* Preview Panel */
 .session-preview-panel {

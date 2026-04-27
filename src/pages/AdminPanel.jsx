@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useTeams } from '../hooks/useTeams';
 import { useSettings } from '../hooks/useSettings';
 import { useExercises } from '../hooks/useExercises';
@@ -39,7 +39,7 @@ const AdminPanel = () => {
   const { deferredPrompt, isInstalled, installApp } = usePWA();
 
   // Sync state when settings load
-  React.useEffect(() => {
+  useEffect(() => {
     if (settings) {
       setProfileData({ 
         profileName: settings.profileName || '', 

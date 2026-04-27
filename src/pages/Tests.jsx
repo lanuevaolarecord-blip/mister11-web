@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { usePlayers } from '../hooks/usePlayers';
 import './Tests.css';
 
@@ -44,7 +44,7 @@ const generateMockHistory = (playersList) => {
 
 const Tests = () => {
   const { players, loading: loadingPlayers } = usePlayers();
-  const historyData = React.useMemo(() => generateMockHistory(players), [players]);
+  const historyData = useMemo(() => generateMockHistory(players), [players]);
   const [activeTab, setActiveTab] = useState('BATERÍA');
   const [tests, setTests] = useState(PREDEFINED_TESTS);
   
@@ -55,7 +55,7 @@ const Tests = () => {
   // History State
   const [histSelectedPlayer, setHistSelectedPlayer] = useState(null);
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (players.length > 0 && !histSelectedPlayer) {
       setHistSelectedPlayer(players[0].id);
     }

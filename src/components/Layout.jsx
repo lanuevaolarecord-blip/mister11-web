@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Outlet } from 'react-router-dom';
 import Sidebar from './Sidebar';
 import Header from './Header';
@@ -6,7 +6,7 @@ import NotificationsPanel from './NotificationsPanel';
 import { useSettings } from '../hooks/useSettings';
 
 const Layout = () => {
-  const [isNotifOpen, setIsNotifOpen] = React.useState(false);
+  const [isNotifOpen, setIsNotifOpen] = useState(false);
   const { settings } = useSettings();
 
   return (

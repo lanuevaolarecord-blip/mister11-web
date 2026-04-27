@@ -1,25 +1,25 @@
 .admin-container {
   display: flex;
   height: calc(100vh - 100px);
-  background: var(--sand);
-  color: var(--body-color);
+  background: var(--bg-primary);
+  color: var(--text-secondary);
   margin: -20px; /* Offset parent padding */
   overflow: hidden;
 }
 
 .admin-sidebar {
   width: 240px;
-  background: var(--white);
-  border-right: 1px solid rgba(0,0,0,0.05);
+  background: var(--bg-card);
+  border-right: 1px solid var(--border-color);
   display: flex;
   flex-direction: column;
   padding: 10px;
   gap: 5px;
 }
 
-.dark-mode .admin-sidebar {
-  background: var(--white);
-  border-right-color: rgba(255,255,255,0.05);
+.dark .admin-sidebar {
+  background: var(--bg-sidebar);
+  border-right-color: var(--border-color);
 }
 
 .admin-nav-item {
@@ -29,7 +29,7 @@
   padding: 12px 15px;
   border: none;
   background: transparent;
-  color: #888;
+  color: var(--text-muted);
   border-radius: 8px;
   cursor: pointer;
   transition: all 0.2s;
@@ -62,29 +62,29 @@
 .section-header h2 {
   font-size: 1.8rem;
   margin-bottom: 5px;
-  color: var(--title-color);
+  color: var(--text-primary);
 }
 
-.dark-mode .section-header h2 {
-  color: var(--title-color);
+.dark .section-header h2 {
+  color: var(--text-primary);
 }
 
 .section-header p {
-  color: var(--secondary-color);
+  color: var(--text-muted);
 }
 
 /* Teams Tab */
 .add-team-card {
-  background: var(--white);
+  background: var(--bg-card);
   padding: 20px;
   border-radius: 12px;
   margin-bottom: 30px;
-  border: 1px solid rgba(0,0,0,0.05);
+  border: 1px solid var(--border-color);
 }
 
-.dark-mode .add-team-card {
-  background: var(--white);
-  border-color: rgba(255,255,255,0.05);
+.dark .add-team-card {
+  background: var(--bg-card);
+  border-color: var(--border-color);
 }
 
 .add-team-card h3 {
@@ -99,18 +99,18 @@
 
 .form-row input {
   flex: 1;
-  background: var(--sand);
-  border: 1px solid rgba(0,0,0,0.1);
-  color: var(--body-color);
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  color: var(--text-secondary);
   padding: 10px 15px;
   border-radius: 6px;
   outline: none;
 }
 
-.dark-mode .form-row input {
-  background: var(--input-bg);
-  border-color: var(--input-border);
-  color: var(--input-text);
+.dark .form-row input {
+  background: var(--bg-primary);
+  border-color: var(--border-color);
+  color: var(--text-secondary);
 }
 
 .form-row input:focus {
@@ -124,19 +124,19 @@
 }
 
 .team-admin-card {
-  background: var(--white);
+  background: var(--bg-card);
   padding: 15px;
   border-radius: 12px;
   display: flex;
   align-items: center;
   gap: 15px;
-  border: 2px solid transparent;
+  border: 2px solid var(--border-color);
   transition: all 0.2s;
   box-shadow: 0 2px 8px rgba(0,0,0,0.02);
 }
 
-.dark-mode .team-admin-card {
-  background: var(--white);
+.dark .team-admin-card {
+  background: var(--bg-card);
 }
 
 .team-admin-card.active {
@@ -163,12 +163,12 @@
 .team-info h4 {
   margin: 0;
   font-size: 1rem;
-  color: var(--card-text);
+  color: var(--text-primary);
 }
 
 .team-info span {
   font-size: 0.8rem;
-  color: var(--secondary-color);
+  color: var(--text-muted);
 }
 
 .team-actions {
@@ -212,7 +212,7 @@
 }
 
 .export-card {
-  background: var(--white);
+  background: var(--bg-card);
   padding: 30px;
   border-radius: 16px;
   text-align: center;
@@ -220,13 +220,13 @@
   flex-direction: column;
   align-items: center;
   gap: 15px;
-  border: 1px solid rgba(0,0,0,0.05);
+  border: 1px solid var(--border-color);
   box-shadow: 0 4px 12px rgba(0,0,0,0.05);
 }
 
-.dark-mode .export-card {
-  background: var(--white);
-  border-color: rgba(255,255,255,0.05);
+.dark .export-card {
+  background: var(--bg-card);
+  border-color: var(--border-color);
 }
 
 .export-icon {
@@ -242,24 +242,24 @@
 
 .export-card p {
   font-size: 0.9rem;
-  color: var(--secondary-color);
+  color: var(--text-muted);
   line-height: 1.4;
 }
 
 .admin-select-export {
   width: 100%;
-  background: var(--sand);
-  color: var(--body-color);
-  border: 1px solid rgba(0,0,0,0.1);
+  background: var(--bg-primary);
+  color: var(--text-secondary);
+  border: 1px solid var(--border-color);
   padding: 10px;
   border-radius: 6px;
   outline: none;
 }
 
-.dark-mode .admin-select-export {
-  background: var(--input-bg);
-  color: var(--input-text);
-  border-color: var(--input-border);
+.dark .admin-select-export {
+  background: var(--bg-primary);
+  color: var(--text-secondary);
+  border-color: var(--border-color);
 }
 
 .btn-export {
@@ -290,15 +290,15 @@
 
 /* Exercise Library */
 .exercise-list-admin {
-  background: var(--white);
+  background: var(--bg-card);
   border-radius: 12px;
   overflow: hidden;
-  border: 1px solid rgba(0,0,0,0.05);
+  border: 1px solid var(--border-color);
 }
 
-.dark-mode .exercise-list-admin {
-  background: var(--white);
-  border-color: rgba(255,255,255,0.05);
+.dark .exercise-list-admin {
+  background: var(--bg-card);
+  border-color: var(--border-color);
 }
 
 .exercise-row {
@@ -320,12 +320,12 @@
 
 .ex-info strong {
   font-size: 1rem;
-  color: var(--card-text);
+  color: var(--text-primary);
 }
 
 .ex-info span {
   font-size: 0.8rem;
-  color: var(--secondary-color);
+  color: var(--text-muted);
 }
 
 /* Ajustes Section */
@@ -336,10 +336,10 @@
 }
 
 .settings-card {
-  background: var(--white);
+  background: var(--bg-card);
   padding: 25px;
   border-radius: 16px;
-  border: 1px solid rgba(0,0,0,0.05);
+  border: 1px solid var(--border-color);
   display: flex;
   flex-direction: column;
   gap: 20px;
@@ -353,13 +353,13 @@
 }
 
 .card-header-icon h3 {
-  color: var(--primary);
+  color: var(--text-primary);
   margin: 0;
   font-size: 1.1rem;
 }
 
-.dark-mode .card-header-icon h3 {
-  color: #ffffff;
+.dark .card-header-icon h3 {
+  color: var(--text-primary);
 }
 
 .settings-form {
@@ -376,27 +376,27 @@
 
 .form-group label {
   font-size: 0.8rem;
-  color: var(--secondary-color);
+  color: var(--text-muted);
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
 
 .form-group input[type="text"],
 .admin-select-input {
-  background: var(--sand);
-  border: 1px solid rgba(0,0,0,0.1);
-  color: var(--body-color);
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  color: var(--text-secondary);
   padding: 12px;
   border-radius: 8px;
   outline: none;
   font-family: inherit;
 }
 
-.dark-mode .form-group input[type="text"],
-.dark-mode .admin-select-input {
-  background: var(--input-bg);
-  border-color: var(--input-border);
-  color: var(--input-text);
+.dark .form-group input[type="text"],
+.dark .admin-select-input {
+  background: var(--bg-primary);
+  border-color: var(--border-color);
+  color: var(--text-secondary);
 }
 
 .form-row-dual {
@@ -428,8 +428,8 @@
   transition: all 0.2s;
 }
 
-.dark-mode .upload-placeholder {
-  border-color: rgba(255,255,255,0.2);
+.dark .upload-placeholder {
+  border-color: var(--border-color);
 }
 
 .upload-placeholder:hover {

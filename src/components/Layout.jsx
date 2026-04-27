@@ -10,7 +10,7 @@ const Layout = () => {
   const { settings } = useSettings();
 
   return (
-    <div className={`app-container ${settings.darkMode ? 'dark-mode' : ''}`}>
+    <div className={`app-container ${settings.darkMode ? 'dark' : 'light'}`}>
       <Sidebar />
       <div className="main-content">
         <Header onToggleNotif={() => setIsNotifOpen(!isNotifOpen)} />

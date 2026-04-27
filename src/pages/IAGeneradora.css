@@ -2,15 +2,15 @@
   display: flex;
   height: 100%;
   overflow: hidden;
-  background: var(--sand);
+  background: var(--bg-primary);
 }
 
 /* ===== PANEL IZQUIERDO ===== */
 .ia-form-panel {
   width: 380px;
   flex-shrink: 0;
-  background: white;
-  border-right: 1px solid #e5e7eb;
+  background: var(--bg-card);
+  border-right: 1px solid var(--border-color);
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -50,7 +50,7 @@
   display: block;
   font-size: 11px;
   font-weight: 800;
-  color: var(--secondary-color);
+  color: var(--text-muted);
   text-transform: uppercase;
   letter-spacing: 0.05em;
   margin-bottom: 8px;
@@ -60,12 +60,12 @@
 .ia-field textarea {
   width: 100%;
   padding: 10px 12px;
-  border: 1.5px solid rgba(0,0,0,0.1);
+  border: 1.5px solid var(--border-color);
   border-radius: 8px;
   font-family: var(--font-body);
   font-size: 14px;
-  color: var(--body-color);
-  background: var(--sand);
+  color: var(--text-secondary);
+  background: var(--bg-primary);
   transition: border-color 0.2s;
 }
 
@@ -73,7 +73,7 @@
 .ia-field textarea:focus {
   border-color: var(--accent);
   outline: none;
-  background: white;
+  background: var(--bg-card);
 }
 
 /* Slider */
@@ -100,7 +100,7 @@
   display: flex;
   justify-content: space-between;
   font-size: 11px;
-  color: var(--secondary-color);
+  color: var(--text-muted);
   margin-top: 4px;
 }
 
@@ -112,13 +112,13 @@
 }
 
 .chip {
-  background: var(--white);
-  border: 1.5px solid rgba(0,0,0,0.1);
+  background: var(--bg-card);
+  border: 1.5px solid var(--border-color);
   padding: 7px 14px;
   border-radius: 20px;
   font-size: 13px;
   font-weight: 600;
-  color: var(--secondary-color);
+  color: var(--text-muted);
   cursor: pointer;
   transition: all 0.15s ease;
 }
@@ -210,7 +210,7 @@
 }
 
 .ia-empty-state h2 {
-  color: var(--title-color);
+  color: var(--text-primary);
   font-size: 1.5rem;
   margin: 0 0 10px 0;
 }
@@ -219,7 +219,7 @@
   font-size: 14px;
   max-width: 400px;
   line-height: 1.6;
-  color: var(--secondary-color);
+  color: var(--text-muted);
 }
 
 /* Loading animation */
@@ -246,10 +246,10 @@
 
 /* Resultado */
 .ia-result-content {
-  background: white;
+  background: var(--bg-card);
   border-radius: 16px;
   box-shadow: 0 4px 15px rgba(0,0,0,0.05);
-  border: 1px solid #e5e7eb;
+  border: 1px solid var(--border-color);
   overflow-y: auto;
   max-height: calc(100vh - 120px);
   -webkit-overflow-scrolling: touch;
@@ -262,13 +262,13 @@
   display: flex;
   gap: 10px;
   padding: 16px 24px;
-  background: var(--sand);
-  border-bottom: 1px solid #e5e7eb;
+  background: var(--bg-primary);
+  border-bottom: 1px solid var(--border-color);
 }
 
 .result-markdown {
   padding: 24px;
-  color: var(--body-color);
+  color: var(--text-secondary);
   line-height: 1.7;
   font-size: 15px;
 }
@@ -276,7 +276,7 @@
 .result-markdown h2 {
   font-family: var(--font-title);
   font-size: 1.6rem;
-  color: var(--title-color);
+  color: var(--text-primary);
   border-bottom: 3px solid var(--accent);
   padding-bottom: 10px;
   margin: 0 0 20px 0;
@@ -284,14 +284,14 @@
 
 .result-markdown h3 {
   font-size: 1rem;
-  color: var(--title-color);
+  color: var(--text-primary);
   margin: 20px 0 8px 0;
   text-transform: uppercase;
   letter-spacing: 0.05em;
 }
 
 .result-markdown p { margin: 4px 0; }
-.result-markdown strong { color: var(--title-color); }
+.result-markdown strong { color: var(--text-primary); }
 .result-markdown li {
   position: relative;
   padding-left: 16px;
@@ -321,7 +321,7 @@
 }
 
 .ia-modal-container {
-  background: white;
+  background: var(--bg-card);
   width: 100%;
   max-width: 800px;
   max-height: 90vh;
@@ -330,6 +330,7 @@
   flex-direction: column;
   overflow: hidden;
   box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+  border: 1px solid var(--border-color);
 }
 
 .ia-modal-header {
@@ -375,7 +376,7 @@
 .preview-text {
   display: block;
   font-size: 12px;
-  color: var(--secondary-color);
+  color: var(--text-muted);
   margin-top: 4px;
   white-space: nowrap;
   overflow: hidden;
@@ -385,15 +386,15 @@
 
 /* Biblioteca de ejercicios */
 .saved-exercises {
-  background: white;
+  background: var(--bg-card);
   border-radius: 16px;
   padding: 20px 24px;
   box-shadow: 0 4px 15px rgba(0,0,0,0.05);
-  border: 1px solid #e5e7eb;
+  border: 1px solid var(--border-color);
 }
 
 .saved-exercises h3 {
-  color: var(--title-color);
+  color: var(--text-primary);
   margin: 0 0 16px 0;
   font-size: 1.1rem;
 }
@@ -409,13 +410,13 @@
   justify-content: space-between;
   align-items: center;
   padding: 12px 16px;
-  background: var(--sand);
+  background: var(--bg-primary);
   border-radius: 8px;
   cursor: pointer;
   font-size: 14px;
-  color: var(--body-color);
+  color: var(--text-secondary);
   transition: background 0.15s;
-  border: 1px solid transparent;
+  border: 1px solid var(--border-color);
 }
 
 .saved-item:hover {
@@ -438,19 +439,19 @@
 }
 
 /* Dark Mode Overrides for IA (Minimal) */
-.dark-mode .ia-form-panel,
-.dark-mode .ia-result-content,
-.dark-mode .ia-modal-container,
-.dark-mode .saved-exercises {
-  background: var(--white);
-  border-color: rgba(255,255,255,0.05);
+.dark .ia-form-panel,
+.dark .ia-result-content,
+.dark .ia-modal-container,
+.dark .saved-exercises {
+  background: var(--bg-card);
+  border-color: var(--border-color);
 }
 
-.dark-mode .result-actions {
-  background: var(--sand);
-  border-color: rgba(255,255,255,0.05);
+.dark .result-actions {
+  background: var(--bg-primary);
+  border-color: var(--border-color);
 }
 
-.dark-mode .saved-item {
+.dark .saved-item {
   background: rgba(255, 255, 255, 0.03);
 }

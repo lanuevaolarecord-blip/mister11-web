@@ -553,17 +553,17 @@ export class FieldRenderer {
 // ─────────────────────────────────────────
 export const FORMATIONS = {
   '4-3-3': [
-    { pos: 'PO', relX: 0.04, relY: 0.50 },
-    { pos: 'LD', relX: 0.18, relY: 0.15 },
-    { pos: 'DC', relX: 0.18, relY: 0.38 },
-    { pos: 'DC', relX: 0.18, relY: 0.62 },
-    { pos: 'LI', relX: 0.18, relY: 0.85 },
-    { pos: 'MC', relX: 0.40, relY: 0.25 },
-    { pos: 'MCD',relX: 0.38, relY: 0.50 },
-    { pos: 'MC', relX: 0.40, relY: 0.75 },
-    { pos: 'EX', relX: 0.70, relY: 0.15 },
-    { pos: 'SD', relX: 0.74, relY: 0.50 },
-    { pos: 'EX', relX: 0.70, relY: 0.85 },
+    { pos: 'PO', relX: 0.05, relY: 0.50 },
+    { pos: 'DF', relX: 0.20, relY: 0.20 },
+    { pos: 'DF', relX: 0.20, relY: 0.38 },
+    { pos: 'DF', relX: 0.20, relY: 0.62 },
+    { pos: 'DF', relX: 0.20, relY: 0.80 },
+    { pos: 'MC', relX: 0.50, relY: 0.25 },
+    { pos: 'MC', relX: 0.50, relY: 0.50 },
+    { pos: 'MC', relX: 0.50, relY: 0.75 },
+    { pos: 'DL', relX: 0.80, relY: 0.20 },
+    { pos: 'DL', relX: 0.80, relY: 0.50 },
+    { pos: 'DL', relX: 0.80, relY: 0.80 },
   ],
   '4-4-2': [
     { pos: 'PO', relX: 0.04, relY: 0.50 },

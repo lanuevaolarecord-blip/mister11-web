@@ -611,7 +611,7 @@ const PizarraTactica = () => {
   // ─── Sub-Components (Panels) ──────────────────────────────────────────────
   const TeamsPanel = () => (
     <div className="pizarra-sidebar-content">
-      <div className="panel-title">EQUIPOS</div>
+      <div className="panel-title" style={{ color: 'var(--text-primary)', fontWeight: 'bold', padding: '15px 15px 5px' }}>EQUIPOS</div>
       <div style={{ padding: '10px' }}>
         <TeamCard 
           color={localColor} 
@@ -642,9 +642,9 @@ const PizarraTactica = () => {
         />
       </div>
 
-      <div className="panel-title" style={{ marginTop: 12 }}>ACCIONES</div>
+      <div className="panel-title" style={{ marginTop: 12, color: 'var(--text-primary)', fontWeight: 'bold', padding: '15px 15px 5px' }}>ACCIONES</div>
       <div style={{ padding: '0 10px 10px', display: 'flex', flexDirection: 'column', gap: 10 }}>
-        <div className="toggle-rival" style={{ display: 'flex', alignItems: 'center', gap: 10, color: '#CCC', fontSize: 13 }}>
+        <div className="toggle-rival" style={{ display: 'flex', alignItems: 'center', gap: 10, color: 'var(--text-muted)', fontSize: 13 }}>
           <input 
             type="checkbox" 
             id="show-rival-toggle" 
@@ -660,7 +660,7 @@ const PizarraTactica = () => {
 
   const MaterialsPanel = () => (
     <div className="pizarra-sidebar-content">
-      <div className="panel-title">MATERIAL</div>
+      <div className="panel-title" style={{ color: 'var(--text-primary)', fontWeight: 'bold', padding: '15px 15px 5px' }}>MATERIAL</div>
       <div className="materials-list">
         {Object.entries(MATERIALS_BY_CATEGORY).map(([catKey, catData]) => {
           const catLabel = catData.label || catKey;
@@ -688,7 +688,7 @@ const PizarraTactica = () => {
                         }}>
                         <div dangerouslySetInnerHTML={{ __html: mat.svgPanel }}
                           style={{ width: 40, height: 40, display: 'flex', alignItems: 'center', justifyContent: 'center' }} />
-                        <span>{mat.label}</span>
+                        <span style={{ color: 'var(--text-secondary)' }}>{mat.label}</span>
                       </div>
                     );
                   })}

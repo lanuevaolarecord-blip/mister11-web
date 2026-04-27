@@ -1,6 +1,6 @@
 .dashboard-page {
   padding: 30px;
-  background-color: var(--sand);
+  background-color: var(--bg-primary);
   min-height: 100%;
 }
 
@@ -13,35 +13,36 @@
 
 .welcome h1 {
   font-family: var(--font-title);
-  color: var(--title-color);
+  color: var(--text-primary);
   font-size: 2.2rem;
   margin: 0;
 }
 
 .welcome p {
-  color: var(--secondary-color);
+  color: var(--text-muted);
   margin: 5px 0 0 0;
 }
 
 .current-date {
   text-align: right;
-  background: white;
+  background: var(--bg-card);
   padding: 10px 20px;
   border-radius: 12px;
   box-shadow: 0 4px 12px rgba(27, 58, 45, 0.05);
+  border: 1px solid var(--border-color);
 }
 
 .current-date span {
   display: block;
   font-size: 12px;
-  color: var(--secondary-color);
+  color: var(--text-muted);
   text-transform: uppercase;
   letter-spacing: 1px;
 }
 
 .current-date strong {
   font-size: 1.2rem;
-  color: var(--title-color);
+  color: var(--text-primary);
 }
 
 /* Stats Grid */
@@ -53,7 +54,7 @@
 }
 
 .stat-card-dash {
-  background: white;
+  background: var(--bg-card);
   padding: 24px;
   border-radius: 16px;
   display: flex;
@@ -62,6 +63,7 @@
   position: relative;
   box-shadow: 0 4px 15px rgba(27, 58, 45, 0.04);
   transition: transform 0.2s;
+  border: 1px solid var(--border-color);
 }
 
 .stat-card-dash:hover {
@@ -85,14 +87,14 @@
 
 .stat-label-dash {
   font-size: 13px;
-  color: var(--secondary-color);
+  color: var(--text-muted);
   font-weight: 500;
 }
 
 .stat-value-dash {
   font-size: 1.5rem;
   font-weight: 800;
-  color: var(--title-color);
+  color: var(--text-primary);
   font-family: var(--font-numbers);
   letter-spacing: 1px;
 }
@@ -115,10 +117,11 @@
 }
 
 .dash-section {
-  background: white;
+  background: var(--bg-card);
   padding: 24px;
   border-radius: 16px;
   box-shadow: 0 4px 15px rgba(27, 58, 45, 0.04);
+  border: 1px solid var(--border-color);
 }
 
 .section-header {
@@ -130,7 +133,7 @@
 
 .section-header h2 {
   font-family: var(--font-title);
-  color: var(--title-color);
+  color: var(--text-primary);
   font-size: 1.2rem;
   margin: 0;
 }
@@ -197,7 +200,7 @@
 
 .bar-label {
   font-size: 12px;
-  color: var(--secondary-color);
+  color: var(--text-muted);
   font-weight: 500;
 }
 
@@ -214,14 +217,14 @@
   gap: 15px;
   padding: 12px;
   border-radius: 12px;
-  background: #F8F9F8;
-  border: 1px solid transparent;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
   transition: all 0.2s;
 }
 
 .session-item-dash:hover {
   border-color: var(--accent);
-  background: white;
+  background: var(--bg-card);
 }
 
 .session-indicator {
@@ -242,12 +245,12 @@
 
 .session-info-dash strong {
   font-size: 14px;
-  color: var(--body-color);
+  color: var(--text-secondary);
 }
 
 .session-info-dash span {
   font-size: 12px;
-  color: var(--secondary-color);
+  color: var(--text-muted);
 }
 
 .session-badges {
@@ -277,7 +280,7 @@
 /* Quick Actions */
 .quick-actions-dash h2 {
   font-family: var(--font-title);
-  color: var(--title-color);
+  color: var(--text-primary);
   font-size: 1.2rem;
   margin: 0 0 20px 0;
 }
@@ -289,17 +292,17 @@
 }
 
 .action-btn-dash {
-  background: var(--white);
+  background: var(--bg-card);
   padding: 20px;
   border-radius: 16px;
-  border: 1px solid rgba(0,0,0,0.05);
+  border: 1px solid var(--border-color);
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 10px;
   cursor: pointer;
   transition: all 0.2s;
-  color: var(--title-color);
+  color: var(--text-primary);
   font-weight: 600;
   font-size: 14px;
 }
@@ -337,22 +340,18 @@
 }
 
 /* Dark Mode Overrides for Dashboard (Minimal) */
-.dark-mode .current-date {
+.dark .current-date {
   box-shadow: 0 4px 15px rgba(0,0,0,0.4);
 }
 
-.dark-mode .bar-container {
+.dark .bar-container {
   background: rgba(255, 255, 255, 0.05);
 }
 
-.dark-mode .session-item-dash {
-  background: rgba(255, 255, 255, 0.03);
-}
-
-.dark-mode .session-item-dash:hover {
+.dark .session-item-dash:hover {
   background: rgba(255, 255, 255, 0.08);
 }
 
-.dark-mode .action-btn-dash:hover {
+.dark .action-btn-dash:hover {
   background: rgba(255, 255, 255, 0.05);
 }

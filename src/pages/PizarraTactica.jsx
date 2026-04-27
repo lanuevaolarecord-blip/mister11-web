@@ -216,13 +216,21 @@ const PizarraTactica = () => {
   useEffect(() => {
     if (!containerRef.current || !fieldCanvasRef.current || !fabricElemRef.current) return;
 
-    const W = containerRef.current.offsetWidth  || 800;
-    const H = containerRef.current.offsetHeight || 500;
+    const containerW = containerRef.current.offsetWidth  || 800;
+    const containerH = containerRef.current.offsetHeight || 500;
+
+    let W = containerW;
+    let H = containerW * (68 / 105);
+
+    if (H > containerH) {
+      H = containerH;
+      W = containerH * (105 / 68);
+    }
 
     // 1. Field (2D canvas)
     fieldCanvasRef.current.width  = W;
     fieldCanvasRef.current.height = H;
-    const renderer = new FieldRenderer(fieldCanvasRef.current, { padding: 20 });
+    const renderer = new FieldRenderer(fieldCanvasRef.current, { padding: 0 });
     renderer.draw('full');
     frRef.current = renderer;
 
@@ -262,17 +270,47 @@ const PizarraTactica = () => {
 
     // 7. Resize logic with ResizeObserver
     const onResize = () => {
-      if (!containerRef.current) return;
-      const nW = containerRef.current.offsetWidth;
-      const nH = containerRef.current.offsetHeight;
+      if (!containerRef.current || !fieldCanvasRef.current || !fcRef.current) return;
       
+      const containerW = containerRef.current.offsetWidth;
+      const containerH = containerRef.current.offsetHeight;
+      
+      // Requirement 5: Maintain proportions 105x68m
+      let nW = containerW;
+      let nH = containerW * (68 / 105);
+      
+      if (nH > containerH) {
+        nH = containerH;
+        nW = containerH * (105 / 68);
+      }
+      
+      const oldW = fcRef.current.width;
+      const scaleFactor = nW / oldW;
+
       setIsMobile(window.innerWidth < 768);
 
       fieldCanvasRef.current.width  = nW;
       fieldCanvasRef.current.height = nH;
-      renderer.draw(toLibType(fieldType));
-      fc.setDimensions({ width: nW, height: nH });
-      fc.renderAll();
+      
+      if (frRef.current) {
+        frRef.current.draw(toLibType(fieldType));
+      }
+      
+      fcRef.current.setDimensions({ width: nW, height: nH });
+      
+      // Requirement 4: Scale coordinates relatively
+      if (scaleFactor !== 1 && !isNaN(scaleFactor)) {
+        fcRef.current.getObjects().forEach(obj => {
+          obj.left *= scaleFactor;
+          obj.top *= scaleFactor;
+          // Scale group size too
+          obj.scaleX *= scaleFactor;
+          obj.scaleY *= scaleFactor;
+          obj.setCoords();
+        });
+      }
+      
+      fcRef.current.renderAll();
     };
 
     const resizeObserver = new ResizeObserver(() => {
@@ -745,12 +783,15 @@ const PizarraTactica = () => {
           </div>
         )}
 
-        {/* CANVAS */}
+        {/* CANVAS AREA - Requirement 1 */}
         <div className="canvas-area" ref={containerRef}>
-          <canvas ref={fieldCanvasRef}
-            style={{ position: 'absolute', top: 0, left: 0, pointerEvents: 'none' }} />
-          <canvas ref={fabricElemRef}
-            style={{ position: 'absolute', top: 0, left: 0 }} />
+          {/* Field Canvas - Requirement 2 */}
+          <canvas ref={fieldCanvasRef} className="field-renderer-canvas"
+            style={{ pointerEvents: 'none', zIndex: 1 }} />
+          
+          {/* Fabric Canvas - Requirement 2 */}
+          <canvas ref={fabricElemRef} className="fabric-canvas-elem"
+            style={{ zIndex: 2 }} />
 
           {/* Placing-material indicator */}
           {placingMat && (

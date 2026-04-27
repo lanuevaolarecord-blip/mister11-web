@@ -139,6 +139,81 @@
   color: var(--accent);
 }
 
+.pizarra-main {
+  flex: 1;
+  display: flex;
+  overflow: hidden;
+  background-color: var(--sand);
+}
+
+.panel-izq, .panel-der {
+  width: 280px;
+  min-width: 280px;
+  background-color: var(--white);
+  border-right: 1px solid rgba(0,0,0,0.05);
+  display: flex;
+  flex-direction: column;
+  z-index: 10;
+}
+
+.panel-der {
+  border-right: none;
+  border-left: 1px solid rgba(0,0,0,0.05);
+}
+
+.dark-mode .panel-izq, 
+.dark-mode .panel-der {
+  background-color: #12121F;
+  border-color: rgba(255,255,255,0.1);
+}
+
+.canvas-area {
+  flex: 1;
+  position: relative; /* Requirement 1 */
+  background-color: #0d1117; /* Dark background for the area around the field */
+  overflow: hidden; /* Requirement 3 */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.canvas-area canvas {
+  display: block;
+  box-shadow: 0 0 30px rgba(0,0,0,0.5);
+}
+
+/* Fabric Wrapper Fix - Ensure it stays centered and stacked */
+.canvas-container {
+  position: absolute !important;
+  top: 50% !important;
+  left: 50% !important;
+  transform: translate(-50%, -50%) !important;
+}
+
+/* Ensure the field renderer canvas is also centered */
+.canvas-area .field-renderer-canvas {
+  position: absolute !important;
+  top: 50% !important;
+  left: 50% !important;
+  transform: translate(-50%, -50%) !important;
+}
+
+.placing-hint {
+  position: absolute;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0,0,0,0.8);
+  color: white;
+  padding: 8px 16px;
+  border-radius: 20px;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 14px;
+}
+
 /* Layout Responsivo */
 .pizarra-container.mobile .panel-izq,
 .pizarra-container.mobile .panel-der {

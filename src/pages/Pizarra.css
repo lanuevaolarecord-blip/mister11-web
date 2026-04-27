@@ -54,24 +54,24 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 36px;
-  height: 36px;
+  width: 44px; /* Improved touch target */
+  height: 44px;
+  transition: all 0.2s;
 }
 
 .tool-icon-btn svg {
-  width: 20px;
-  height: 20px;
+  width: 24px;
+  height: 24px;
 }
 
 .tool-icon-btn:hover {
-  background: rgba(255,255,255,0.1);
-  color: var(--white);
+  background: var(--bg-primary);
+  color: var(--accent);
 }
 
 .tool-icon-btn.active {
-  background: rgba(76, 175, 125, 0.2);
-  color: var(--accent);
-  border-color: var(--accent);
+  background: var(--accent);
+  color: var(--white);
 }
 
 .color-swatch-top {

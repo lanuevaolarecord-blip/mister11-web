@@ -142,8 +142,8 @@
 }
 
 .pos-badge {
-  background: #E8F5E9;
-  color: var(--accent);
+  background: var(--accent);
+  color: var(--white);
   padding: 2px 8px;
   border-radius: 4px;
   font-size: 11px;
@@ -262,8 +262,24 @@
   border-radius: 0 0 16px 16px;
 }
 .footer-actions { display: flex; gap: 10px; margin-left: auto;}
-.btn-outline-team { padding: 8px 16px; border: 1px solid #ccc; background: transparent; border-radius: 8px; cursor: pointer; font-weight: bold;}
-.btn-primary-team { padding: 8px 16px; background: var(--accent); color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold;}
+.btn-outline-team { 
+  background: transparent;
+  border: 2px solid var(--accent);
+  color: var(--accent);
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-weight: bold;
+  cursor: pointer;
+}
+.btn-primary-team { 
+  background: var(--accent);
+  color: var(--white);
+  padding: 8px 16px;
+  border: none;
+  border-radius: 8px;
+  font-weight: bold;
+  cursor: pointer;
+}
 
 /* Sidebar Detalle */
 .player-sidebar {
@@ -442,22 +458,22 @@
 }
 
 .injury-box {
-  background: #FEE2E2;
-  border: 1px solid #EF4444;
+  background: rgba(239, 68, 68, 0.1);
+  border: 1.5px solid #EF4444;
   padding: 15px;
   border-radius: 8px;
   margin-bottom: 20px;
 }
 
 .injury-box label {
-  color: #B91C1C;
+  color: #EF4444;
   font-size: 12px;
   font-weight: bold;
 }
 
 .injury-box p {
   margin: 5px 0 0 0;
-  color: #7F1D1D;
+  color: var(--text-primary);
   font-weight: 500;
 }
 
@@ -499,11 +515,16 @@
   width: 100%;
   padding: 12px;
   background: transparent;
-  border: 1px solid var(--gold);
-  color: var(--gold);
+  border: 2px solid var(--accent);
+  color: var(--accent);
   border-radius: 8px;
   font-weight: bold;
   cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-outline-gold:hover {
+  background: rgba(76, 175, 125, 0.1);
 }
 
 @media (max-width: 768px) {

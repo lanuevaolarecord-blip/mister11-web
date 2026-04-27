@@ -95,8 +95,8 @@
   border-radius: 4px;
   text-transform: uppercase;
 }
-.status-badge.terminado { background: #E8F5E9; color: #166534; }
-.status-badge.pendiente { background: #FEF3C7; color: #92400E; }
+.status-badge.terminado { background: rgba(76, 175, 125, 0.1); color: #4CAF7D; border: 1px solid #4CAF7D; }
+.status-badge.pendiente { background: rgba(212, 168, 67, 0.1); color: #D4A843; border: 1px solid #D4A843; }
 .mc-date { font-size: 12px; color: var(--text-muted); font-weight: bold; }
 
 .mc-body {
@@ -202,7 +202,7 @@
   margin-bottom: 20px;
 }
 .conv-count { font-weight: bold; font-size: 14px; color: var(--text-primary); background: var(--bg-primary); padding: 5px 15px; border-radius: 20px; border: 1px solid var(--border-color); }
-.conv-count.error { background: #FEE2E2; color: #991B1B; }
+.conv-count.error { background: rgba(239, 68, 68, 0.1); color: #EF4444; border-color: #EF4444; }
 
 .players-checklist {
   display: grid;
@@ -317,15 +317,15 @@
 .pp-circle {
   width: 28px;
   height: 28px;
-  background: var(--bg-card);
-  border: 2px solid var(--text-primary);
+  background: var(--white);
+  border: 2px solid var(--primary);
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
   font-weight: bold;
   font-size: 12px;
-  color: var(--text-primary);
+  color: var(--primary);
   box-shadow: 0 2px 5px rgba(0,0,0,0.3);
 }
 .pp-name {

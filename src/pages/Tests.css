@@ -250,11 +250,11 @@
 .hc-header .unit { color: var(--text-muted); font-weight: normal; font-size: 11px; }
 
 .trend-arrow { font-size: 12px; font-weight: bold; padding: 4px 8px; border-radius: 4px; }
-.trend-arrow.good { background: #E8F5E9; color: #166534; }
-.trend-arrow.bad { background: #FEE2E2; color: #991B1B; }
+.trend-arrow.good { background: rgba(76, 175, 125, 0.1); color: #4CAF7D; border: 1px solid #4CAF7D; }
+.trend-arrow.bad { background: rgba(239, 68, 68, 0.1); color: #EF4444; border: 1px solid #EF4444; }
 .trend-badge { font-size: 11px; font-weight: bold; padding: 4px 8px; border-radius: 4px; }
-.trend-badge.good { background: #E8F5E9; color: #166534; }
-.trend-badge.bad { background: #FEE2E2; color: #991B1B; }
+.trend-badge.good { background: rgba(76, 175, 125, 0.1); color: #4CAF7D; border: 1px solid #4CAF7D; }
+.trend-badge.bad { background: rgba(239, 68, 68, 0.1); color: #EF4444; border: 1px solid #EF4444; }
 
 .svg-chart {
   width: 100%;
@@ -327,8 +327,12 @@
 }
 
 .heat-cell {
-  color: #111 !important;
-  text-shadow: 0 1px 2px rgba(255,255,255,0.5);
+  color: #1B3A2D !important;
+  font-weight: 800 !important;
+}
+
+.dark .heat-cell {
+  color: #0D1F0D !important;
 }
 
 /* MODAL DETALLES DEL TEST */
@@ -405,11 +409,11 @@
 }
 
 .dark .reg-main-header {
-  background: #0a0f0e;
+  background: var(--bg-sidebar);
 }
 
 .dark .heatmap-table th {
-  background: #0a0f0e;
+  background: var(--bg-sidebar);
 }
 
 .dark .heatmap-table tr:hover {

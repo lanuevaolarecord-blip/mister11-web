@@ -39,13 +39,13 @@
 }
 
 .admin-nav-item:hover {
-  background: rgba(255,255,255,0.05);
-  color: white;
+  background: var(--bg-primary);
+  color: var(--text-primary);
 }
 
 .admin-nav-item.active {
-  background: rgba(76, 175, 125, 0.15);
-  color: var(--accent);
+  background: var(--accent);
+  color: var(--white);
   font-weight: bold;
 }
 
@@ -178,18 +178,19 @@
 }
 
 .btn-select {
-  background: var(--primary);
-  color: white;
+  background: var(--accent);
+  color: var(--white);
   border: none;
-  padding: 5px 10px;
+  padding: 5px 12px;
   border-radius: 4px;
   font-size: 0.75rem;
+  font-weight: bold;
   cursor: pointer;
 }
 
 .team-admin-card.active .btn-select {
-  background: var(--accent);
-  color: var(--primary);
+  background: var(--primary);
+  color: var(--white);
 }
 
 .btn-delete-icon {
@@ -268,7 +269,7 @@
   border-radius: 8px;
   border: none;
   background: var(--accent);
-  color: var(--primary);
+  color: var(--white);
   font-weight: bold;
   cursor: pointer;
   display: flex;
@@ -280,12 +281,12 @@
 
 .btn-export.outline {
   background: transparent;
-  border: 1px solid var(--accent);
+  border: 2px solid var(--accent);
   color: var(--accent);
 }
 
 .btn-export:hover {
-  opacity: 0.8;
+  opacity: 0.9;
 }
 
 /* Exercise Library */
@@ -440,13 +441,13 @@
 
 .btn-save-settings {
   background: var(--accent);
-  color: var(--primary);
+  color: var(--white);
   border: none;
   padding: 12px;
   border-radius: 8px;
   font-weight: bold;
   cursor: pointer;
-  transition: transform 0.1s;
+  transition: all 0.1s;
 }
 
 .btn-save-settings:active {

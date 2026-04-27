@@ -7,6 +7,10 @@ if (typeof window !== 'undefined') window.fabric = fabric;
 import { MATERIALS_LIBRARY, MATERIALS_BY_CATEGORY, placeMaterialOnCanvas } from '../lib/mister11-materials.js';
 import { TOOLS, STROKE_COLORS, STROKE_WIDTHS, ToolManager } from '../lib/mister11-tools.js';
 import { FieldRenderer, FORMATIONS } from '../lib/mister11-field.js';
+import { useAuth } from '../context/AuthContext';
+import { db } from '../firebaseConfig';
+import { collection, doc, setDoc, addDoc, serverTimestamp, onSnapshot, query, orderBy } from 'firebase/firestore';
+import { useSearchParams } from 'react-router-dom';
 import './Pizarra.css';
 
 // helper: 'half-attack' → 'half_attack' (library uses underscores)
@@ -28,6 +32,11 @@ const PizarraTactica = () => {
   const playingR  = useRef(false); // is animation playing
   const historyR  = useRef([]);    // undo history (max 20)
   const redoR     = useRef([]);    // redo history (max 20)
+
+  // Auth & URL
+  const { user } = useAuth();
+  const [searchParams] = useSearchParams();
+  const planId = searchParams.get('id') || 'default-pizarra';
 
   // React state (UI)
   const [ready,        setReady]        = useState(false);
@@ -64,18 +73,33 @@ const PizarraTactica = () => {
   useEffect(() => { framesR.current = frames; }, [frames]);
 
   // ─── Save current canvas state into current frame ─────────────────────────
-  const saveFrameState = useCallback(() => {
+  const saveFrameState = useCallback(async () => {
     const fc = fcRef.current;
-    if (!fc || playingR.current || framesR.current.length === 0) return;
+    if (!fc || playingR.current || framesR.current.length === 0 || !user) return;
     const idx   = frameIdxR.current;
     const state = fc.toJSON(['data']);
+    const frame = framesR.current[idx];
+    if (!frame) return;
+
+    // Update Local State
     setFrames(prev => {
       const next = [...prev];
       if (next[idx]) next[idx] = { ...next[idx], state };
       return next;
     });
     framesR.current[idx] = { ...framesR.current[idx], state };
-  }, []);
+
+    // Update Firestore
+    try {
+      const frameRef = doc(db, 'users', user.uid, 'planning', planId, 'frames', frame.id);
+      await setDoc(frameRef, {
+        state: JSON.stringify(state),
+        updatedAt: serverTimestamp()
+      }, { merge: true });
+    } catch (err) {
+      console.error("Error updating frame in Firestore:", err);
+    }
+  }, [user, planId]);
 
   // ─── Push to undo history ─────────────────────────────────────────────────
   const pushToHistory = useCallback(() => {
@@ -242,14 +266,51 @@ const PizarraTactica = () => {
     // 4. Draw initial players
     drawPlayers(fc, renderer, 'full', { local: localFormation, rival: rivalFormation }, isSwapped);
 
-    // 5. Save first frame
-    setTimeout(() => {
-      const state = fc.toJSON(['data']);
-      const init  = [{ id: '1', name: 'Frame 1', state, duration: 800 }];
-      setFrames(init);
-      framesR.current = init;
-      setReady(true);
-    }, 250);
+    // 5. Load frames from Firestore
+    let unsubscribe;
+    if (user && planId) {
+      const framesColRef = collection(db, 'users', user.uid, 'planning', planId, 'frames');
+      const q = query(framesColRef, orderBy('order', 'asc'));
+      
+      unsubscribe = onSnapshot(q, (snapshot) => {
+        if (snapshot.empty) {
+          // If no frames in DB, create initial one
+          const state = fc.toJSON(['data']);
+          addDoc(framesColRef, {
+            name: 'Frame 1',
+            state: JSON.stringify(state),
+            duration: 800,
+            order: 0,
+            createdAt: serverTimestamp()
+          });
+          return;
+        }
+
+        const dbFrames = snapshot.docs.map(doc => {
+          const data = doc.data();
+          return {
+            id: doc.id,
+            ...data,
+            state: typeof data.state === 'string' ? JSON.parse(data.state) : data.state
+          };
+        });
+
+        setFrames(dbFrames);
+        framesR.current = dbFrames;
+
+        if (!ready) {
+          setReady(true);
+          // Load first frame into canvas
+          if (dbFrames.length > 0) {
+            fc.loadFromJSON(dbFrames[0].state, () => {
+              fc.renderAll();
+              setFrameIdx(0);
+              frameIdxR.current = 0;
+            });
+          }
+        }
+      });
+    }
 
     // 6. Auto-save on object changes & history
     const onChange = () => {
@@ -315,6 +376,7 @@ const PizarraTactica = () => {
     window.addEventListener('keydown', onKeyDown);
 
     return () => {
+      if (unsubscribe) unsubscribe();
       resizeObserver.disconnect();
       window.removeEventListener('keydown', onKeyDown);
       fc.off('object:modified', onChange);
@@ -322,7 +384,7 @@ const PizarraTactica = () => {
       fc.off('object:removed',  onChange);
       fc.dispose();
     };
-  }, []); // eslint-disable-line
+  }, [user, planId]); // eslint-disable-line
 
   // ─── Field type change ────────────────────────────────────────────────────
   useEffect(() => {
@@ -456,27 +518,47 @@ const PizarraTactica = () => {
   };
 
   // ─── Add Frame ────────────────────────────────────────────────────────────
-  const addFrame = () => {
-    saveFrameState();
-    setTimeout(() => {
-      const fc = fcRef.current;
-      if (!fc) return;
-      const state = fc.toJSON(['data']);
-      const newFrame = {
-        id: Date.now().toString(),
-        name: `Frame ${framesR.current.length + 1}`,
-        state,
+  const addFrame = async () => {
+    if (!user) return;
+    const fc = fcRef.current;
+    if (!fc) return;
+
+    // 1. Save current before adding
+    await saveFrameState();
+
+    // 2. Clone current state
+    const state = fc.toJSON(['data']);
+    
+    try {
+      const framesColRef = collection(db, 'users', user.uid, 'planning', planId, 'frames');
+      const newFrameData = {
+        name: `Frame ${frames.length + 1}`,
+        state: JSON.stringify(state),
         duration: 800,
+        order: frames.length,
+        createdAt: serverTimestamp()
       };
+      
+      const docRef = await addDoc(framesColRef, newFrameData);
+      
+      const newFrame = {
+        id: docRef.id,
+        ...newFrameData,
+        state // Keep it as object in local state
+      };
+
       setFrames(prev => {
         const next = [...prev, newFrame];
         framesR.current = next;
         return next;
       });
-      const newIdx = framesR.current.length - 1;
-      setFrameIdx(newIdx);
-      frameIdxR.current = newIdx;
-    }, 100);
+      
+      const nextIdx = frames.length; 
+      setFrameIdx(nextIdx);
+      frameIdxR.current = nextIdx;
+    } catch (err) {
+      console.error("Error adding frame:", err);
+    }
   };
 
   // ─── Load Frame ──────────────────────────────────────────────────────────

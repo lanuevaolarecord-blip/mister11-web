@@ -8,7 +8,7 @@ export const useSessions = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!user) return;
+    if (!user?.uid) return;
 
     const unsubscribe = subscribeToCollection(`users/${user.uid}/sessions`, (data) => {
       setSessions(data);
@@ -16,7 +16,7 @@ export const useSessions = () => {
     });
 
     return () => unsubscribe();
-  }, [user]);
+  }, [user?.uid]);
 
   const addSession = async (sessionData) => {
     if (!user) return;

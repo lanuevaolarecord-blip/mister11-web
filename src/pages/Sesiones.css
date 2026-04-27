@@ -437,8 +437,8 @@
 .modal-content-pdf {
   background: var(--bg-card);
   width: 90%;
-  max-width: 1000px;
-  height: 90vh;
+  max-width: 90vw;
+  max-height: 85vh;
   border-radius: 16px;
   display: flex;
   flex-direction: column;
@@ -490,5 +490,11 @@
   }
   .session-preview-panel {
     display: none;
+  }
+}
+
+@media (min-width: 768px) {
+  .modal-content-pdf {
+    min-width: 700px;
   }
 }

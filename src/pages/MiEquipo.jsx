@@ -11,10 +11,12 @@ const emptyPlayer = {
   age: '', 
   category: 'Alevín A', 
   weight: '', 
+  weight: '', 
   height: '', 
   foot: 'Derecho', 
   injuries: false,
-  injuryType: ''
+  injuryType: '',
+  fechaNacimiento: ''
 };
 
 const MiEquipo = () => {
@@ -43,6 +45,35 @@ const MiEquipo = () => {
   const getInitials = (name) => {
     if(!name) return '??';
     return name.split(' ').map(n => n[0]).join('').toUpperCase().substring(0,2);
+  };
+
+  const calcularEdad = (fechaNacimiento) => {
+    if (fechaNacimiento === null || fechaNacimiento === undefined || fechaNacimiento === '') {
+      return "Sin edad";
+    }
+    
+    let fechaDate;
+    if (typeof fechaNacimiento === 'string') {
+      fechaDate = new Date(fechaNacimiento);
+    } else if (fechaNacimiento.toDate) {
+      fechaDate = fechaNacimiento.toDate();
+    } else if (fechaNacimiento instanceof Date) {
+      fechaDate = fechaNacimiento;
+    } else {
+      return "Sin edad";
+    }
+
+    if (isNaN(fechaDate.getTime())) return "Sin edad";
+
+    const hoy = new Date();
+    let edad = hoy.getFullYear() - fechaDate.getFullYear();
+    const mes = hoy.getMonth() - fechaDate.getMonth();
+    
+    if (mes < 0 || (mes === 0 && hoy.getDate() < fechaDate.getDate())) {
+      edad--;
+    }
+    
+    return `${edad} años`;
   };
 
   // -- CRUD Actions --
@@ -133,7 +164,7 @@ const MiEquipo = () => {
                 <h3>{player.name}</h3>
                 <div className="player-meta">
                   <span className="pos-badge">{player.position}</span>
-                  <span className="age-info">{player.age} años</span>
+                  <span className="age-info">{calcularEdad(player.fechaNacimiento || player.birthDate || player.age)}</span>
                 </div>
               </div>
               {player.injuries && <div className="injury-indicator" title="Lesionado">🚑</div>}
@@ -175,8 +206,8 @@ const MiEquipo = () => {
                   </select>
                 </div>
                 <div className="form-group-team">
-                  <label>Edad</label>
-                  <input type="number" value={editData.age} onChange={e => setEditData({...editData, age: e.target.value})} />
+                  <label>Fecha de Nacimiento</label>
+                  <input type="date" value={editData.fechaNacimiento || editData.birthDate || editData.age || ''} onChange={e => setEditData({...editData, fechaNacimiento: e.target.value, age: e.target.value})} />
                 </div>
               </div>
               <div className="form-row-team">

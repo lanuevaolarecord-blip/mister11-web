@@ -210,9 +210,8 @@
 .modal-content {
   background: var(--bg-card);
   width: 90%;
-  min-width: 600px;
   max-width: 90vw;
-  max-height: 90vh;
+  max-height: 85vh;
   border-radius: 16px;
   box-shadow: 0 20px 40px rgba(0,0,0,0.2);
   display: flex;
@@ -541,6 +540,12 @@
   .player-sidebar {
     width: 100%;
     right: -100%;
+  }
+}
+
+@media (min-width: 768px) {
+  .modal-content {
+    min-width: 700px;
   }
 }
 

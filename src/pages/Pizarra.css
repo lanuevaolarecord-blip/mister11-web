@@ -48,7 +48,7 @@
 
 .tool-icon-btn {
   background: transparent;
-  color: var(--text-muted);
+  color: #CCCCCC;
   border: 1px solid transparent;
   padding: 4px;
   border-radius: 4px;
@@ -67,13 +67,14 @@
 }
 
 .tool-icon-btn:hover {
-  background: var(--bg-primary);
-  color: var(--accent);
+  background: #1E3A2E;
+  color: #FFFFFF;
 }
 
 .tool-icon-btn.active {
-  background: var(--accent);
-  color: var(--white);
+  background: #4CAF7D;
+  color: #FFFFFF;
+  border-radius: 6px;
 }
 
 .color-swatch-top {

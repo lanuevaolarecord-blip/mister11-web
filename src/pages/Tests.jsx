@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { usePlayers } from '../hooks/usePlayers';
+import { generateTestsReport } from '../utils/pdfGenerator';
 import './Tests.css';
 
 // --- MOCK DATA ---
@@ -101,7 +102,7 @@ const Tests = () => {
         <div className="header-top">
           <h1>EVALUACIÓN Y TESTS</h1>
           <div className="header-actions">
-            <button className="btn-outline">Exportar Informe</button>
+            <button className="btn-outline" onClick={() => generateTestsReport(tests, players, historyData)}>Exportar Informe</button>
           </div>
         </div>
 
@@ -282,7 +283,7 @@ const Tests = () => {
                   {tests.map(t => <option key={t.id} value={t.id}>{t.name} ({t.unit})</option>)}
                 </select>
               </div>
-              <button className="btn-outline-gold" onClick={() => alert('Generando Informe de Rendimiento Colectivo en PDF...')}>📄 Exportar Informe Colectivo</button>
+              <button className="btn-outline-gold" onClick={() => generateTestsReport(tests, players, historyData)}>📄 Exportar Informe Colectivo</button>
             </div>
             
             <div className="heatmap-container">

@@ -1,9 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
+import { generatePlanificacionPDF } from '../utils/pdfGenerator';
 import './Planificacion.css';
 
 // --- CONSTANTS ---
 const MONTHS = ['Sep', 'Oct', 'Nov', 'Dic', 'Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun'];
 const MICRO_TYPES = ['Ajuste', 'Carga', 'Choque', 'Aproximación', 'Competición', 'Recuperación'];
+const DAYS_LABELS = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
 
 // --- MOCK DATA BASED ON 'MACRO jhojan' ---
 const initialMacroData = {
@@ -11,7 +13,9 @@ const initialMacroData = {
   endDate: '2026-06-15',
   category: 'Alevín - Infantil',
   objective: 'Adaptar a los niños en la práctica del fútbol, mediante trabajos psicomotrices y técnico-tácticos.',
-  trainer: 'Míster'
+  trainer: 'Míster',
+  sessionDuration: 90,
+  trainingDays: [0, 2, 4], // Mon, Wed, Fri by default
 };
 
 // Generate 40 weeks (4 per month roughly)
@@ -51,13 +55,63 @@ const Planificacion = () => {
   const [macroInfo, setMacroInfo] = useState(initialMacroData);
   const [microcycles, setMicrocycles] = useState(generateMicrocycles());
   const [assignedSessions, setAssignedSessions] = useState({});
+  const [guideOpen, setGuideOpen] = useState(false);
 
   // Editable Grid Handlers
   const handleMicroChange = (id, field, value) => {
     setMicrocycles(prev => prev.map(m => m.id === id ? { ...m, [field]: value } : m));
   };
 
-  const calculateTotalVolume = () => microcycles.reduce((acc, curr) => acc + Number(curr.volume || 0), 0);
+  // Training days toggle
+  const toggleDay = (idx) => {
+    setMacroInfo(prev => {
+      const days = prev.trainingDays.includes(idx)
+        ? prev.trainingDays.filter(d => d !== idx)
+        : [...prev.trainingDays, idx];
+      return { ...prev, trainingDays: days };
+    });
+  };
+
+  // Auto volume calculation based on days × duration
+  const weeklyVolume = macroInfo.trainingDays.length * (Number(macroInfo.sessionDuration) || 0);
+  const calculateTotalVolume = () => {
+    // Total = weeks * weekly volume (40 weeks)
+    return weeklyVolume * 40;
+  };
+
+  // Compute current mesocycle based on today's date vs macrocycle start
+  const currentMeso = useMemo(() => {
+    const today = new Date();
+    const start = new Date(macroInfo.startDate);
+    const diffDays = Math.floor((today - start) / (1000 * 60 * 60 * 24));
+    const currentWeek = Math.max(0, Math.floor(diffDays / 7));
+    const mesoNumber = Math.floor(currentWeek / 4) + 1;
+    const mesoStartWeek = (mesoNumber - 1) * 4;
+    const mesoStart = new Date(start);
+    mesoStart.setDate(mesoStart.getDate() + mesoStartWeek * 7);
+    const mesoEnd = new Date(mesoStart);
+    mesoEnd.setDate(mesoEnd.getDate() + 27); // 4 weeks
+    const daysLeft = Math.max(0, Math.floor((mesoEnd - today) / (1000 * 60 * 60 * 24)));
+    const mesoMicros = microcycles.filter(m => m.mesoId === mesoNumber);
+    const avgPhysical = mesoMicros.length ? Math.round(mesoMicros.reduce((a, b) => a + Number(b.physical), 0) / mesoMicros.length) : 0;
+    const avgTechnical = mesoMicros.length ? Math.round(mesoMicros.reduce((a, b) => a + Number(b.technical), 0) / mesoMicros.length) : 0;
+    const avgTactical = mesoMicros.length ? Math.round(mesoMicros.reduce((a, b) => a + Number(b.tactical), 0) / mesoMicros.length) : 0;
+    const plannedSessions = mesoMicros.reduce((a, b) => a + Number(b.sessions), 0);
+    const period = mesoMicros[0]?.period || 'Competitivo';
+    return {
+      number: mesoNumber,
+      startDate: mesoStart.toLocaleDateString(),
+      endDate: mesoEnd.toLocaleDateString(),
+      daysLeft,
+      physical: avgPhysical,
+      technical: avgTechnical,
+      tactical: avgTactical,
+      plannedSessions,
+      completedSessions: Math.min(3, Math.floor((4 - daysLeft / 7) * macroInfo.trainingDays.length)),
+      period,
+      type: mesoMicros[0]?.type || 'Competición',
+    };
+  }, [microcycles, macroInfo.startDate, macroInfo.trainingDays]);
 
   const handleAssignSession = (dayIndex) => {
     const sessionName = window.prompt("Introduce el nombre de la sesión a asignar (ej. Sesión Física 1):");
@@ -80,7 +134,7 @@ const Planificacion = () => {
         <div className="header-top">
           <h1>PLANIFICACIÓN ESTRATÉGICA</h1>
           <div className="header-actions">
-            <button className="btn-outline">Exportar Excel/PDF</button>
+            <button className="btn-outline" onClick={() => generatePlanificacionPDF(macroInfo, microcycles)}>Exportar PDF</button>
           </div>
         </div>
 
@@ -120,21 +174,161 @@ const Planificacion = () => {
                   <input type="text" value={macroInfo.trainer} onChange={e => setMacroInfo({...macroInfo, trainer: e.target.value})} />
                 </div>
               </div>
-              <div className="form-group-macro full-width-macro">
+
+              {/* MEJORA 2 — Días y duración de entrenamiento */}
+              <div className="training-schedule-config">
+                <div className="schedule-row">
+                  <div className="form-group-macro">
+                    <label>Duración por Sesión (min)</label>
+                    <input
+                      type="number"
+                      min="30" max="180" step="15"
+                      value={macroInfo.sessionDuration}
+                      onChange={e => setMacroInfo({...macroInfo, sessionDuration: Number(e.target.value)})}
+                      className="duration-input"
+                    />
+                  </div>
+                  <div className="weekly-volume-badge">
+                    <span className="wv-label">Volumen Semanal</span>
+                    <span className="wv-value">{weeklyVolume} min</span>
+                  </div>
+                </div>
+                <div className="form-group-macro">
+                  <label>Días de Entrenamiento</label>
+                  <div className="days-selector">
+                    {DAYS_LABELS.map((day, idx) => (
+                      <button
+                        key={idx}
+                        className={`day-pill ${macroInfo.trainingDays.includes(idx) ? 'active' : ''}`}
+                        onClick={() => toggleDay(idx)}
+                        type="button"
+                      >
+                        {day}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              <div className="form-group-macro full-width-macro" style={{marginTop: '12px'}}>
                 <label>Objetivo General de la Temporada</label>
                 <textarea value={macroInfo.objective} onChange={e => setMacroInfo({...macroInfo, objective: e.target.value})} />
               </div>
             </div>
 
-            {/* Legend for Abbreviations */}
-            <div className="macro-legend">
-              <strong>Leyenda Tipos de Microciclo:</strong> 
-              <span><strong>Aju:</strong> Ajuste</span>
-              <span><strong>Car:</strong> Carga</span>
-              <span><strong>Cho:</strong> Choque</span>
-              <span><strong>Apr:</strong> Aproximación</span>
-              <span><strong>Com:</strong> Competición</span>
-              <span><strong>Rec:</strong> Recuperación</span>
+            {/* MEJORA 1 — Mesociclo en Curso */}
+            <div className="meso-en-curso">
+              <div className="meso-header-row">
+                <div>
+                  <span className="meso-badge">MESOCICLO {currentMeso.number}</span>
+                  <span className="meso-period-tag">{currentMeso.period}</span>
+                </div>
+                <div className="meso-countdown">
+                  <span className="countdown-num">{currentMeso.daysLeft}</span>
+                  <span className="countdown-label">días restantes</span>
+                </div>
+              </div>
+              <div className="meso-info-grid">
+                <div className="meso-stat">
+                  <span className="ms-label">Inicio</span>
+                  <span className="ms-value">{currentMeso.startDate}</span>
+                </div>
+                <div className="meso-stat">
+                  <span className="ms-label">Fin</span>
+                  <span className="ms-value">{currentMeso.endDate}</span>
+                </div>
+                <div className="meso-stat">
+                  <span className="ms-label">Tipo</span>
+                  <span className="ms-value">{currentMeso.type}</span>
+                </div>
+                <div className="meso-stat">
+                  <span className="ms-label">Sesiones</span>
+                  <span className="ms-value">
+                    <span style={{color:'#4CAF7D'}}>{currentMeso.completedSessions}</span>
+                    {' / '}{currentMeso.plannedSessions}
+                  </span>
+                </div>
+              </div>
+              <div className="meso-loads">
+                <div className="load-bar-item">
+                  <span className="lb-label">Físico</span>
+                  <div className="lb-track"><div className="lb-fill physical" style={{width:`${currentMeso.physical}%`}} /></div>
+                  <span className="lb-pct">{currentMeso.physical}%</span>
+                </div>
+                <div className="load-bar-item">
+                  <span className="lb-label">Técnico</span>
+                  <div className="lb-track"><div className="lb-fill technical" style={{width:`${currentMeso.technical}%`}} /></div>
+                  <span className="lb-pct">{currentMeso.technical}%</span>
+                </div>
+                <div className="load-bar-item">
+                  <span className="lb-label">Táctico</span>
+                  <div className="lb-track"><div className="lb-fill tactical" style={{width:`${currentMeso.tactical}%`}} /></div>
+                  <span className="lb-pct">{currentMeso.tactical}%</span>
+                </div>
+              </div>
+            </div>
+
+            {/* MEJORA 3 — Guía de Planificación colapsable */}
+            <div className="planning-guide">
+              <button className="guide-toggle" onClick={() => setGuideOpen(o => !o)}>
+                <span>📖 Guía de Planificación</span>
+                <span className="guide-arrow">{guideOpen ? '▲' : '▼'}</span>
+              </button>
+              {guideOpen && (
+                <div className="guide-content">
+                  <div className="guide-section">
+                    <p className="guide-section-title">Tipos de Microciclo</p>
+                    <div className="guide-items">
+                      {[
+                        { code: 'Car', name: 'Carga', desc: 'Alta intensidad, alto volumen. Desarrollo de capacidades.' },
+                        { code: 'Cho', name: 'Choque', desc: 'Máxima intensidad. Bloque de sobrecarga controlada.' },
+                        { code: 'Apu', name: 'Aproximación', desc: 'Intensidad media-alta. Transición hacia competición.' },
+                        { code: 'Com', name: 'Competición', desc: 'Intensidad orientada al partido. Activación.' },
+                        { code: 'Rec', name: 'Recuperación', desc: 'Baja intensidad. Regeneración activa.' },
+                        { code: 'Aju', name: 'Ajuste', desc: 'Corrección técnico-táctica. Intensidad moderada.' },
+                      ].map(item => (
+                        <div key={item.code} className="guide-item">
+                          <span className="gi-code">{item.code}</span>
+                          <span className="gi-name">{item.name}:</span>
+                          <span className="gi-desc">{item.desc}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                  <div className="guide-section">
+                    <p className="guide-section-title">Tipos de Etapa</p>
+                    <div className="guide-items">
+                      {[
+                        { code: 'Gen', name: 'General', desc: 'Desarrollo de capacidades físicas base.' },
+                        { code: 'Esp', name: 'Específica', desc: 'Trabajo orientado al modelo de juego.' },
+                        { code: 'Com', name: 'Competitiva', desc: 'Mantenimiento y puesta a punto para partidos.' },
+                      ].map(item => (
+                        <div key={item.code} className="guide-item">
+                          <span className="gi-code">{item.code}</span>
+                          <span className="gi-name">{item.name}:</span>
+                          <span className="gi-desc">{item.desc}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                  <div className="guide-section">
+                    <p className="guide-section-title">Tipos de Período</p>
+                    <div className="guide-items">
+                      {[
+                        { code: 'Pre', name: 'Pretemporada', desc: 'Preparación física y táctica inicial.' },
+                        { code: 'Cmp', name: 'Competición', desc: 'Temporada regular con partidos semanales.' },
+                        { code: 'Tra', name: 'Transición', desc: 'Recuperación entre temporadas.' },
+                      ].map(item => (
+                        <div key={item.code} className="guide-item">
+                          <span className="gi-code">{item.code}</span>
+                          <span className="gi-name">{item.name}:</span>
+                          <span className="gi-desc">{item.desc}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Grid del Macrociclo estilo Excel */}
@@ -188,7 +382,11 @@ const Planificacion = () => {
             </div>
 
             <div className="macro-summary">
-              <p>Volumen Total Temporada: <strong>{calculateTotalVolume()} minutos</strong></p>
+              <p>Volumen Total Temporada: <strong>{calculateTotalVolume()} minutos</strong>
+                <span style={{marginLeft:'12px', fontSize:'12px', color:'var(--text-muted)'}}>
+                  ({macroInfo.trainingDays.length} días/sem × {macroInfo.sessionDuration} min × 40 semanas)
+                </span>
+              </p>
               <button className="btn-primary" onClick={() => alert('Planificación guardada con éxito.')}>Guardar Planificación</button>
             </div>
           </div>

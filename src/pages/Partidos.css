@@ -201,7 +201,7 @@
   align-items: center;
   margin-bottom: 20px;
 }
-.conv-count { font-weight: bold; font-size: 14px; color: var(--text-primary); background: var(--bg-primary); padding: 5px 15px; border-radius: 20px; border: 1px solid var(--border-color); }
+.conv-count { font-weight: bold; font-size: 14px; color: #4CAF7D; background: rgba(76, 175, 125, 0.1); padding: 5px 15px; border-radius: 20px; border: 1px solid #4CAF7D; transition: all 0.2s; }
 .conv-count.error { background: rgba(239, 68, 68, 0.1); color: #EF4444; border-color: #EF4444; }
 
 .players-checklist {

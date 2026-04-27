@@ -400,3 +400,334 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* =============================================
+   MEJORA 2 — TRAINING SCHEDULE CONFIG
+   ============================================= */
+.training-schedule-config {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border-color);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.schedule-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.duration-input {
+  width: 120px !important;
+  padding: 8px 12px;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  background: var(--bg-card);
+  color: var(--text-primary);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.weekly-volume-badge {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: rgba(76, 175, 125, 0.12);
+  border: 1px solid rgba(76, 175, 125, 0.4);
+  border-radius: 10px;
+  padding: 8px 18px;
+  min-width: 130px;
+}
+
+.wv-label {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-muted);
+}
+
+.wv-value {
+  font-size: 1.4rem;
+  font-weight: 800;
+  color: #4CAF7D;
+  font-family: var(--font-numbers, monospace);
+}
+
+.days-selector {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 4px;
+}
+
+.day-pill {
+  min-width: 48px;
+  height: 48px;
+  border-radius: 10px;
+  border: 2px solid var(--border-color);
+  background: var(--bg-card);
+  color: var(--text-muted);
+  font-weight: 700;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.day-pill:hover {
+  border-color: #4CAF7D;
+  color: #4CAF7D;
+}
+
+.day-pill.active {
+  background: #4CAF7D;
+  border-color: #4CAF7D;
+  color: #FFFFFF;
+  box-shadow: 0 2px 8px rgba(76, 175, 125, 0.4);
+}
+
+/* =============================================
+   MEJORA 1 — MESOCICLO EN CURSO
+   ============================================= */
+.meso-en-curso {
+  background: linear-gradient(135deg, #142E22 0%, #1B3A2D 100%);
+  border-radius: 14px;
+  padding: 20px;
+  margin-bottom: 16px;
+  border: 1px solid rgba(76, 175, 125, 0.25);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+}
+
+.meso-header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.meso-badge {
+  background: #D4A843;
+  color: #0D1F0D;
+  font-weight: 800;
+  font-size: 12px;
+  padding: 4px 12px;
+  border-radius: 20px;
+  letter-spacing: 0.5px;
+  margin-right: 8px;
+}
+
+.meso-period-tag {
+  background: rgba(76, 175, 125, 0.2);
+  color: #4CAF7D;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 6px;
+  border: 1px solid rgba(76, 175, 125, 0.3);
+}
+
+.meso-countdown {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.countdown-num {
+  font-size: 2rem;
+  font-weight: 800;
+  color: #D4A843;
+  font-family: var(--font-numbers, monospace);
+  line-height: 1;
+}
+
+.countdown-label {
+  font-size: 10px;
+  text-transform: uppercase;
+  color: #AAAAAA;
+  letter-spacing: 0.5px;
+}
+
+.meso-info-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.meso-stat {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.ms-label {
+  font-size: 10px;
+  text-transform: uppercase;
+  color: #888;
+  letter-spacing: 0.5px;
+}
+
+.ms-value {
+  font-size: 13px;
+  font-weight: 700;
+  color: #FFFFFF;
+}
+
+.meso-loads {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.load-bar-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.lb-label {
+  font-size: 11px;
+  color: #AAAAAA;
+  width: 55px;
+  flex-shrink: 0;
+}
+
+.lb-track {
+  flex: 1;
+  height: 8px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.lb-fill {
+  height: 100%;
+  border-radius: 4px;
+  transition: width 0.6s ease;
+}
+
+.lb-fill.physical  { background: linear-gradient(90deg, #EF4444, #F97316); }
+.lb-fill.technical { background: linear-gradient(90deg, #3B82F6, #60A5FA); }
+.lb-fill.tactical  { background: linear-gradient(90deg, #4CAF7D, #22C55E); }
+
+.lb-pct {
+  font-size: 12px;
+  font-weight: 700;
+  color: #CCCCCC;
+  width: 32px;
+  text-align: right;
+}
+
+/* =============================================
+   MEJORA 3 — GUÍA DE PLANIFICACIÓN
+   ============================================= */
+.planning-guide {
+  margin-bottom: 16px;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.guide-toggle {
+  width: 100%;
+  background: #142E22;
+  border: none;
+  padding: 12px 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+  color: #D4A843;
+  transition: background 0.2s;
+}
+
+.guide-toggle:hover {
+  background: #1B3A2D;
+}
+
+.guide-arrow {
+  font-size: 10px;
+  color: #AAAAAA;
+}
+
+.guide-content {
+  background: #142E22;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.guide-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.guide-section-title {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: #D4A843;
+  margin: 0 0 4px 0;
+  padding-bottom: 6px;
+  border-bottom: 1px solid rgba(212, 168, 67, 0.2);
+}
+
+.guide-items {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.guide-item {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.gi-code {
+  font-size: 11px;
+  font-weight: 800;
+  color: #4CAF7D;
+  background: rgba(76, 175, 125, 0.12);
+  padding: 1px 6px;
+  border-radius: 4px;
+  border: 1px solid rgba(76, 175, 125, 0.3);
+  flex-shrink: 0;
+  font-family: monospace;
+}
+
+.gi-name {
+  font-size: 12px;
+  font-weight: 600;
+  color: #4CAF7D;
+  flex-shrink: 0;
+}
+
+.gi-desc {
+  font-size: 12px;
+  color: #CCCCCC;
+  line-height: 1.4;
+}
+
+@media (max-width: 768px) {
+  .meso-info-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .schedule-row {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
+

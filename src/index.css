@@ -167,7 +167,7 @@ a {
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 5px;
+  gap: 4px;
 }
 
 .nav-item {
@@ -177,6 +177,7 @@ a {
   padding: 12px 20px;
   color: #AAAAAA;
   font-weight: 500;
+  font-size: 14px;
   transition: all 0.2s;
   border-left: 3px solid transparent;
 }

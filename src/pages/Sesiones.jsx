@@ -1,4 +1,5 @@
 import React, { useState, useRef } from 'react';
+import { generateSessionPDF } from '../utils/pdfGenerator';
 import { useSessions } from '../hooks/useSessions';
 import { usePlayers } from '../hooks/usePlayers';
 import './Sesiones.css';
@@ -37,7 +38,7 @@ const Sesiones = () => {
       objectives: '',
       materials: 'Balones, petos, conos, setas',
       blocks: [
-        { id: Date.now(), name: 'Calentamiento', duration: 15, type: 'Física', description: '' }
+        { id: Date.now() + Math.random(), name: 'Calentamiento', duration: 15, type: 'Física', description: '' }
       ]
     });
     setViewMode('edit');
@@ -85,7 +86,7 @@ const Sesiones = () => {
   const handleAddBlock = () => {
     setEditData(prev => ({
       ...prev,
-      blocks: [...prev.blocks, { id: Date.now(), name: 'Nuevo Ejercicio', duration: 15, type: 'Táctica', description: '' }]
+      blocks: [...prev.blocks, { id: Date.now() + Math.random(), name: 'Nuevo Ejercicio', duration: 15, type: 'Táctica', description: '' }]
     }));
   };
 
@@ -272,7 +273,7 @@ const Sesiones = () => {
                   <div key={block.id} className="block-editor-card">
                     <div className="block-editor-header">
                       <span className="block-number">{index + 1}</span>
-                      <input type="text" className="block-title-input" value={block.name} onChange={e => handleUpdateBlock(block.id, 'name', e.target.value)} placeholder="Nombre del ejercicio" />
+                      <input type="text" className="block-title-input" value={block.name || ''} onChange={e => handleUpdateBlock(block.id, 'name', e.target.value)} placeholder="Nombre del ejercicio" />
                       <button className="btn-del-icon" onClick={() => handleDeleteBlock(block.id)}>✕</button>
                     </div>
                     <div className="block-editor-body">
@@ -293,7 +294,7 @@ const Sesiones = () => {
                       </div>
                       <div className="form-group full">
                         <label>Descripción y Reglas</label>
-                        <textarea value={block.description} onChange={e => handleUpdateBlock(block.id, 'description', e.target.value)} placeholder="Describe el ejercicio, restricciones, puntuación..."></textarea>
+                        <textarea value={block.description || ''} onChange={e => handleUpdateBlock(block.id, 'description', e.target.value)} placeholder="Describe el ejercicio, restricciones, puntuación..."></textarea>
                       </div>
                     </div>
                   </div>
@@ -435,6 +436,7 @@ const Sesiones = () => {
               </div>
               
               <div className="preview-actions">
+                <button className="btn-primary full-width" style={{marginBottom: '10px'}} onClick={() => generateSessionPDF(selectedSession)}>📄 Exportar a PDF</button>
                 <button className="btn-outline-gold full-width" onClick={() => handleEditSession(selectedSession)}>✏️ Editar Sesión</button>
                 <button className="btn-text-error full-width" onClick={() => handleDeleteSession(selectedSession.id)}>Eliminar Sesión</button>
               </div>

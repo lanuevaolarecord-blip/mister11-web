@@ -347,12 +347,15 @@
 }
 
 .dash-select {
-  padding: 6px 12px;
+  padding: 8px 12px;
   border-radius: 8px;
-  border: 1px solid var(--border-color);
-  background: var(--bg-primary);
-  color: var(--text-secondary);
-  font-size: 12px;
+  border: 1px solid #4CAF7D !important;
+  background-color: #142E22 !important;
+  color: #CCCCCC !important;
+  font-size: 13px;
+  font-family: var(--font-body);
+  outline: none;
+  cursor: pointer;
 }
 
 @media (max-width: 1024px) {

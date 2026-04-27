@@ -87,16 +87,92 @@
   transform: scale(1.1);
 }
 
-.topbar-btn {
-  background: var(--bg-primary);
-  color: var(--text-primary);
-  border: 1px solid var(--border-color);
-  padding: 6px 12px;
-  border-radius: 4px;
-  font-size: 0.85rem;
-  min-height: 32px;
+.team-card-pizarra {
+  background: #142E22 !important;
+  border-radius: 8px !important;
+  padding: 12px !important;
+  border: 1px solid #2D5A27 !important;
+  margin-bottom: 12px;
+}
+
+.team-header-pizarra {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.team-name-pizarra {
+  color: #FFFFFF !important;
+  font-size: 14px !important;
+  font-weight: 500 !important;
+}
+
+.btn-add-player-pizarra {
+  color: #4CAF7D !important;
+  font-size: 20px !important;
+  font-weight: 300 !important;
+  background: transparent;
+  border: none;
   cursor: pointer;
-  transition: background 0.2s, border-color 0.2s;
+}
+
+.formation-select-pizarra {
+  background: #1B3A2D !important;
+  color: #CCCCCC !important;
+  border: 1px solid #4CAF7D !important;
+  border-radius: 6px !important;
+  padding: 6px 10px !important;
+  width: 100% !important;
+  outline: none;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.collapsible-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  padding: 8px 15px;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+
+.collapsible-arrow {
+  color: #D4A843 !important;
+  font-size: 10px;
+  transition: transform 0.2s;
+  display: inline-block;
+}
+
+.collapsible-header .material-header-label {
+  color: #D4A843 !important;
+  font-size: 11px !important;
+  font-weight: 600 !important;
+  text-transform: uppercase !important;
+}
+
+.topbar-btn {
+  background: #142E22 !important;
+  color: #CCCCCC !important;
+  border: 1px solid #2D5A27 !important;
+  padding: 6px 12px !important;
+  border-radius: 6px !important;
+  font-size: 13px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+  min-width: 40px;
+}
+
+.topbar-btn.active {
+  background: #4CAF7D !important;
+  color: #FFFFFF !important;
+  border-color: #4CAF7D !important;
 }
 
 .dark .topbar-btn {
@@ -133,12 +209,6 @@
   color: var(--accent);
 }
 
-.topbar-btn.active {
-  background: rgba(76,175,125,0.3);
-  border-color: var(--accent);
-  color: var(--accent);
-}
-
 .pizarra-main {
   flex: 1;
   display: flex;
@@ -147,13 +217,14 @@
 }
 
 .panel-izq, .panel-der {
-  width: 280px;
-  min-width: 280px;
-  background-color: var(--bg-card);
-  border-right: 1px solid var(--border-color);
+  width: 250px;
+  height: 100%;
+  background-color: #1A2E1A !important;
   display: flex;
   flex-direction: column;
+  border-right: 1px solid var(--border-color);
   z-index: 10;
+  overflow-y: auto;
 }
 
 .panel-der {
@@ -169,18 +240,63 @@
 
 .panel-title {
   color: #D4A843 !important;
-  font-weight: 800 !important;
+  font-weight: 700 !important;
+  font-size: 12px !important;
   text-transform: uppercase;
-  letter-spacing: 1px;
+  letter-spacing: 0.1em !important;
+  padding: 12px 15px !important;
 }
 
 .material-header span:last-child {
   color: #D4A843 !important;
+  font-size: 11px !important;
+  font-weight: 600 !important;
+}
+
+.material-items {
+  display: grid !important;
+  grid-template-columns: 1fr 1fr !important;
+  gap: 10px !important;
+  padding: 10px !important;
+}
+
+.material-item {
+  background: #142E22 !important;
+  border-radius: 8px !important;
+  padding: 8px !important;
+  border: 1px solid #2D5A27 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 6px !important;
+  cursor: pointer;
+  transition: all 0.2s;
+  aspect-ratio: 1 / 1;
+}
+
+.material-item svg, 
+.material-item div[dangerouslySetInnerHTML] > svg,
+.material-item .mat-icon-wrapper svg {
+  width: 40px !important;
+  height: 40px !important;
+}
+
+.material-item:hover {
+  border-color: #4CAF7D !important;
+  background: #1B3A2D !important;
+}
+
+.material-item.active {
+  border-color: #D4A843 !important;
+  background: #1E3A2E !important;
 }
 
 .material-item span {
   color: #CCCCCC !important;
-  font-size: 11px;
+  font-size: 10px !important;
+  text-align: center;
+  font-weight: 500;
 }
 
 .canvas-area {
@@ -395,6 +511,13 @@
   color: #EF4444 !important;
   border: 1px solid #EF4444 !important;
   font-weight: bold;
+  border-radius: 6px !important;
+  padding: 8px !important;
+  width: 100% !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 8px !important;
   transition: all 0.2s;
 }
 

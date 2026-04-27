@@ -637,7 +637,6 @@ const PizarraTactica = () => {
           name="Comodín" 
           count={0} 
           onAdd={() => addManualPlayer('joker')} 
-          style={{ marginTop: 12 }} 
           onColorChange={setJokerColor}
         />
       </div>
@@ -653,7 +652,7 @@ const PizarraTactica = () => {
           />
           <label htmlFor="show-rival-toggle">Mostrar equipo rival</label>
         </div>
-        <button className="topbar-btn btn-delete-pizarra" style={{flex: 1, minHeight: '44px'}} onClick={deleteSelected}>🗑 Eliminar</button>
+        <button className="btn-delete-pizarra" onClick={deleteSelected}>🗑 ELIMINAR SELECCIÓN</button>
       </div>
     </div>
   );
@@ -665,14 +664,15 @@ const PizarraTactica = () => {
         {Object.entries(MATERIALS_BY_CATEGORY).map(([catKey, catData]) => {
           const catLabel = catData.label || catKey;
           const catItems = catData.items || catData || [];
+          const isOpen = openCats[catKey];
           return (
             <div key={catKey} className="material-category">
-              <div className="material-header" onClick={() =>
+              <div className="collapsible-header" onClick={() =>
                 setOpenCats(p => ({ ...p, [catKey]: !p[catKey] }))}>
-                <span>{openCats[catKey] ? '▾' : '▸'}</span>
-                <span>{catData.icon || ''} {catLabel}</span>
+                <span className="collapsible-arrow">{isOpen ? '▼' : '▶'}</span>
+                <span className="material-header-label">{catLabel}</span>
               </div>
-              {openCats[catKey] && (
+              {isOpen && (
                 <div className="material-items">
                   {catItems.map(id => {
                     const mat = MATERIALS_LIBRARY[id];
@@ -680,14 +680,12 @@ const PizarraTactica = () => {
                     return (
                       <div key={id}
                         className={`material-item ${placingMat === id ? 'active' : ''}`}
-                        title={mat.label}
                         onClick={() => { 
                           setPlacingMat(id); 
                           setActiveTool('place_material');
                           if (isMobile) setShowMatsDrawer(false);
                         }}>
-                        <div dangerouslySetInnerHTML={{ __html: mat.svgPanel }}
-                          style={{ width: 40, height: 40, display: 'flex', alignItems: 'center', justifyContent: 'center' }} />
+                        <div dangerouslySetInnerHTML={{ __html: mat.svgPanel }} />
                         <span>{mat.label}</span>
                       </div>
                     );
@@ -881,13 +879,9 @@ const PizarraTactica = () => {
 };
 
 // ─── Small helper sub-component ──────────────────────────────────────────────
-const TeamCard = ({ color, name, count, onAdd, style, onColorChange, formation, onFormationChange }) => (
-  <div className="team-card-pizarra" style={{
-    borderRadius: 10, padding: '12px',
-    display: 'flex', flexDirection: 'column', gap: 10,
-    ...style
-  }}>
-    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+const TeamCard = ({ color, name, count, onAdd, onColorChange, formation, onFormationChange }) => (
+  <div className="team-card-pizarra">
+    <div className="team-header-pizarra">
       <div style={{ position: 'relative', width: 24, height: 24 }}>
         <div style={{ width: 24, height: 24, borderRadius: '50%', background: color, border: '2px solid white' }} />
         {onColorChange && (
@@ -902,20 +896,18 @@ const TeamCard = ({ color, name, count, onAdd, style, onColorChange, formation, 
           />
         )}
       </div>
-      <span className="team-name-pizarra" style={{ fontSize: 14, fontWeight: 'bold', flex: 1 }}>{name}</span>
-      <button className="btn-add-mini" onClick={onAdd} title="Añadir jugador">+</button>
+      <span className="team-name-pizarra">{name}</span>
+      <button className="btn-add-player-pizarra" onClick={onAdd}>+</button>
     </div>
 
     {onFormationChange && (
-      <div className="formation-selector-mini">
-        <select 
-          value={formation} 
-          onChange={(e) => onFormationChange(e.target.value)}
-          className="mini-select"
-        >
-          {Object.keys(FORMATIONS).map(f => <option key={f} value={f}>{f}</option>)}
-        </select>
-      </div>
+      <select 
+        value={formation} 
+        onChange={(e) => onFormationChange(e.target.value)}
+        className="formation-select-pizarra"
+      >
+        {Object.keys(FORMATIONS).map(f => <option key={f} value={f}>{f}</option>)}
+      </select>
     )}
   </div>
 );

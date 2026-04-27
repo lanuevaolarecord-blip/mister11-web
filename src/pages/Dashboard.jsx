@@ -89,7 +89,11 @@ const Dashboard = () => {
           <div className="section-header">
             <h2>Carga de Trabajo Estimada</h2>
             <select className="dash-select">
-              <option>Esta semana</option>
+              <option>Esta sesión</option>
+              <option selected>Esta semana</option>
+              <option>Este microciclo</option>
+              <option>Este mesociclo</option>
+              <option>Este macrociclo</option>
             </select>
           </div>
           <div className="bar-chart">

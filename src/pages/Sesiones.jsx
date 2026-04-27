@@ -333,12 +333,24 @@ const Sesiones = () => {
         </div>
 
         <div className="calendar-strip">
-          {['L', 'M', 'X', 'J', 'V', 'S', 'D'].map((day, i) => (
-            <div key={i} className={`day-chip ${i === 4 ? 'active' : ''}`}>
-              <span className="day-name">{day}</span>
-              <span className="day-num">{20 + i}</span>
-            </div>
-          ))}
+          {(() => {
+            const today = new Date();
+            const currentDay = today.getDay(); // 0 (Sun) to 6 (Sat)
+            const diff = today.getDate() - currentDay + (currentDay === 0 ? -6 : 1);
+            const monday = new Date(today.setDate(diff));
+            
+            return ['L', 'M', 'X', 'J', 'V', 'S', 'D'].map((day, i) => {
+              const date = new Date(monday);
+              date.setDate(monday.getDate() + i);
+              const isToday = date.toDateString() === new Date().toDateString();
+              return (
+                <div key={i} className={`day-chip ${isToday ? 'active today' : ''}`}>
+                  <span className="day-name">{day}</span>
+                  <span className="day-num">{date.getDate()}</span>
+                </div>
+              );
+            });
+          })()}
         </div>
 
         <div className="filters-row">

@@ -210,12 +210,15 @@
 .modal-content {
   background: var(--bg-card);
   width: 90%;
-  max-width: 500px;
+  min-width: 600px;
+  max-width: 90vw;
+  max-height: 90vh;
   border-radius: 16px;
   box-shadow: 0 20px 40px rgba(0,0,0,0.2);
   display: flex;
   flex-direction: column;
   border: 1px solid var(--border-color);
+  overflow-y: auto;
 }
 .modal-header {
   padding: 20px 24px;
@@ -230,6 +233,7 @@
   display: flex;
   flex-direction: column;
   gap: 16px;
+  overflow-y: auto;
 }
 .form-row-team {
   display: flex;
@@ -242,15 +246,21 @@
   gap: 6px;
 }
 .form-group-team.full { flex: none; width: 100%; }
-.form-group-team label { font-size: 12px; font-weight: bold; color: var(--text-secondary); }
+.form-group-team label { 
+  font-size: 12px; 
+  font-weight: 600; 
+  color: #D4A843 !important; 
+  margin-bottom: 4px;
+}
 .form-group-team input, .form-group-team select {
   padding: 10px;
-  border: 1px solid var(--border-color);
+  border: 1px solid #4CAF7D !important;
   border-radius: 8px;
-  background: var(--bg-primary);
-  color: var(--text-secondary);
+  background: #142E22 !important;
+  color: #FFFFFF !important;
   font-family: var(--font-body);
   font-size: 14px;
+  width: 100%;
 }
 .modal-footer {
   padding: 20px 24px;

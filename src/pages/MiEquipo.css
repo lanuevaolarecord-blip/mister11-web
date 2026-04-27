@@ -14,15 +14,14 @@
 }
 
 .header-info h1 {
-  font-family: 'Georgia', serif;
-  color: var(--primary);
+  font-family: var(--font-title);
+  color: var(--title-color);
   font-size: 2rem;
   margin: 0;
 }
 
 .header-info p {
-  color: var(--carbon);
-  opacity: 0.7;
+  color: var(--secondary-color);
   margin: 4px 0 0 0;
 }
 
@@ -43,9 +42,9 @@
 .chip {
   padding: 8px 16px;
   border-radius: 20px;
-  background: white;
+  background: var(--white);
   border: 1px solid rgba(0,0,0,0.1);
-  color: var(--carbon);
+  color: var(--body-color);
   font-size: 13px;
   font-weight: 500;
   cursor: pointer;
@@ -130,7 +129,7 @@
 .player-info h3 {
   margin: 0;
   font-size: 1.1rem;
-  color: var(--primary);
+  color: var(--card-text);
 }
 
 .player-meta {
@@ -152,7 +151,7 @@
 
 .age-info {
   font-size: 12px;
-  color: #666;
+  color: var(--secondary-color);
 }
 
 .injury-indicator {
@@ -213,7 +212,7 @@
   justify-content: space-between;
   align-items: center;
 }
-.modal-header h2 { margin: 0; font-size: 1.2rem; color: var(--primary); }
+.modal-header h2 { margin: 0; font-size: 1.2rem; color: var(--title-color); }
 .modal-body {
   padding: 24px;
   display: flex;
@@ -231,11 +230,13 @@
   gap: 6px;
 }
 .form-group-team.full { flex: none; width: 100%; }
-.form-group-team label { font-size: 12px; font-weight: bold; color: #666; }
+.form-group-team label { font-size: 12px; font-weight: bold; color: var(--secondary-color); }
 .form-group-team input, .form-group-team select {
   padding: 10px;
-  border: 1px solid #ddd;
+  border: 1px solid rgba(0,0,0,0.1);
   border-radius: 8px;
+  background: var(--sand);
+  color: var(--body-color);
   font-family: var(--font-body);
   font-size: 14px;
 }
@@ -369,13 +370,13 @@
 }
 
 .info-row label {
-  color: #666;
+  color: var(--secondary-color);
   font-size: 13px;
 }
 
 .info-row span {
   font-weight: 600;
-  color: var(--primary);
+  color: var(--body-color);
 }
 
 .badge-pos {
@@ -403,7 +404,7 @@
 .stat-val {
   font-size: 1.5rem;
   font-weight: bold;
-  color: var(--primary);
+  color: var(--title-color);
 }
 
 .stat-val span {
@@ -414,7 +415,7 @@
 .stat-item label {
   display: block;
   font-size: 11px;
-  color: #666;
+  color: var(--secondary-color);
   margin-top: 4px;
 }
 
@@ -468,7 +469,7 @@
 
 .stat-card strong {
   font-size: 1.8rem;
-  color: var(--primary);
+  color: var(--title-color);
   margin-top: 5px;
 }
 
@@ -497,70 +498,11 @@
   }
 }
 
-/* Dark Mode Overrides for MiEquipo */
-.dark-mode .equipo-page {
-  background-color: var(--sand);
-}
-
-.dark-mode .header-info h1 {
-  color: #ffffff;
-}
-
-.dark-mode .header-info p {
-  color: var(--text-dim);
-}
-
-.dark-mode .chip {
-  background: var(--white);
-  border-color: #2d3b36;
-  color: #a0ada9;
-}
-
+/* Dark Mode Overrides for MiEquipo (Minimal as most are now global) */
 .dark-mode .chip.active {
   background: var(--accent);
   color: #0a0f0e;
   border-color: var(--accent);
-}
-
-.dark-mode .player-card {
-  background: var(--white);
-  box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-}
-
-.dark-mode .player-info h3 {
-  color: #ffffff;
-}
-
-.dark-mode .pos-badge {
-  background: rgba(76, 175, 125, 0.1);
-  color: var(--accent);
-}
-
-.dark-mode .age-info {
-  color: var(--text-dim);
-}
-
-.dark-mode .modal-content {
-  background: var(--white);
-  color: #ffffff;
-}
-
-.dark-mode .modal-header,
-.dark-mode .modal-footer {
-  border-color: #2d3b36;
-  background: rgba(255, 255, 255, 0.02);
-}
-
-.dark-mode .modal-header h2 {
-  color: #ffffff;
-}
-
-.dark-mode .form-group-team label {
-  color: var(--text-dim);
-}
-
-.dark-mode .player-sidebar {
-  background: var(--white);
 }
 
 .dark-mode .sidebar-header {
@@ -569,50 +511,10 @@
 
 .dark-mode .sidebar-tabs {
   background: rgba(0,0,0,0.2);
-  border-bottom-color: #2d3b36;
+  border-bottom-color: rgba(255,255,255,0.1);
 }
 
-.dark-mode .sidebar-tabs button {
-  color: #a0ada9;
-}
-
-.dark-mode .sidebar-tabs button.active {
-  color: var(--accent);
-}
-
-.dark-mode .info-row {
-  border-bottom-color: #2d3b36;
-}
-
-.dark-mode .info-row label {
-  color: var(--text-dim);
-}
-
-.dark-mode .info-row span {
-  color: #ffffff;
-}
-
-.dark-mode .stat-item {
-  background: rgba(0,0,0,0.2);
-}
-
-.dark-mode .stat-val {
-  color: var(--accent);
-}
-
+.dark-mode .stat-item,
 .dark-mode .stat-card {
   background: rgba(0,0,0,0.2);
-}
-
-.dark-mode .stat-card strong {
-  color: #ffffff;
-}
-
-.dark-mode .btn-outline-team {
-  border-color: #2d3b36;
-  color: #ffffff;
-}
-
-.dark-mode .player-avatar {
-  border-color: #2d3b36;
 }

@@ -216,16 +216,8 @@ const PizarraTactica = () => {
   useEffect(() => {
     if (!containerRef.current || !fieldCanvasRef.current || !fabricElemRef.current) return;
 
-    const containerW = containerRef.current.offsetWidth  || 800;
-    const containerH = containerRef.current.offsetHeight || 500;
-
-    let W = containerW;
-    let H = containerW * (68 / 105);
-
-    if (H > containerH) {
-      H = containerH;
-      W = containerH * (105 / 68);
-    }
+    const W = containerRef.current.offsetWidth  || 800;
+    const H = containerRef.current.offsetHeight || 500;
 
     // 1. Field (2D canvas)
     fieldCanvasRef.current.width  = W;
@@ -272,17 +264,8 @@ const PizarraTactica = () => {
     const onResize = () => {
       if (!containerRef.current || !fieldCanvasRef.current || !fcRef.current) return;
       
-      const containerW = containerRef.current.offsetWidth;
-      const containerH = containerRef.current.offsetHeight;
-      
-      // Requirement 5: Maintain proportions 105x68m
-      let nW = containerW;
-      let nH = containerW * (68 / 105);
-      
-      if (nH > containerH) {
-        nH = containerH;
-        nW = containerH * (105 / 68);
-      }
+      const nW = containerRef.current.offsetWidth;
+      const nH = containerRef.current.offsetHeight;
       
       const oldW = fcRef.current.width;
       const scaleFactor = nW / oldW;
@@ -299,7 +282,7 @@ const PizarraTactica = () => {
       fcRef.current.setDimensions({ width: nW, height: nH });
       
       // Requirement 4: Scale coordinates relatively
-      if (scaleFactor !== 1 && !isNaN(scaleFactor)) {
+      if (scaleFactor !== 1 && !isNaN(scaleFactor) && scaleFactor > 0) {
         fcRef.current.getObjects().forEach(obj => {
           obj.left *= scaleFactor;
           obj.top *= scaleFactor;
@@ -356,11 +339,22 @@ const PizarraTactica = () => {
   useEffect(() => {
     const fc = fcRef.current; const fr = frRef.current;
     if (!fc || !fr || playingR.current) return;
-    fc.clear();
+    
+    // Ensure renderer has latest dimensions and bounds
+    fr.draw(toLibType(fieldType));
+
+    // Clear previous players before adding new ones
+    const objects = [...fc.getObjects()]; // copy to avoid splice issues
+    objects.forEach(obj => {
+      if (obj.data && (obj.data.type === 'player' || obj.data.playerType)) {
+        fc.remove(obj);
+      }
+    });
+
     drawPlayers(fc, fr, fieldType, { local: localFormation, rival: rivalFormation }, isSwapped);
     saveFrameState();
     pushToHistory();
-  }, [localFormation, rivalFormation, isSwapped, showRival]); // eslint-disable-line
+  }, [localFormation, rivalFormation, isSwapped, showRival, fieldType]); // eslint-disable-line
 
   // ─── Tool change ──────────────────────────────────────────────────────────
   useEffect(() => {

@@ -4,11 +4,18 @@
   --accent: #4CAF7D;
   --gold: #D4A843;
   --sand: #F5F0E8;
-  --carbon: #2D2D2D;
+  --carbon: #2D2D2D; /* Body text light mode */
   --white: #FFFFFF;
   --success: #4CAF7D;
   --warning: #D4A843;
   --error: #EF4444;
+
+  /* Semantic Colors - Light Mode */
+  --title-color: #1B3A2D;
+  --body-color: #2D2D2D;
+  --secondary-color: #555555;
+  --card-text: #2D2D2D;
+  --label-color: #2D2D2D;
 
   /* Typography */
   --font-body: 'Inter', system-ui, -apple-system, sans-serif;
@@ -18,17 +25,27 @@
 
 /* Dark Mode Overrides */
 .dark-mode {
-  --sand: #0f1715; /* Darker background with a hint of primary green */
-  --white: #1a2421; /* Dark surface color */
-  --carbon: #e8f0ed; /* Light text color */
-  --primary: #4CAF7D; /* Use accent as primary in dark mode for better visibility */
-  --accent: #81c784; /* Lighter accent */
-  --text-dim: #a0ada9;
+  --sand: #0f1715; 
+  --white: #142E22; /* Requirement: Darker green for surfaces */
+  --carbon: #FFFFFF; /* Requirement: Card text white */
+  --primary: #4CAF7D; 
+  --accent: #81c784; 
+  
+  /* Semantic Colors - Dark Mode */
+  --title-color: #FFFFFF;
+  --body-color: #CCCCCC;
+  --secondary-color: #AAAAAA;
+  --card-text: #FFFFFF;
+  --label-color: #CCCCCC;
+  
+  --input-bg: #1E3A2E;
+  --input-border: #4CAF7D;
+  --input-text: #FFFFFF;
 }
 
 .dark-mode body {
   background-color: var(--sand);
-  color: var(--carbon);
+  color: var(--body-color);
 }
 
 .dark-mode .sidebar {
@@ -44,8 +61,8 @@
 .dark-mode .header h1, 
 .dark-mode .logo-text,
 .dark-mode .nav-item.active,
-.dark-mode h1, .dark-mode h2, .dark-mode h3 {
-  color: #ffffff;
+.dark-mode h1, .dark-mode h2, .dark-mode h3, .dark-mode h4 {
+  color: var(--title-color);
 }
 
 .dark-mode .nav-item {
@@ -63,18 +80,18 @@
 .dark-mode .session-item-dash,
 .dark-mode .player-card,
 .dark-mode .admin-section {
-  background: #1e2a27;
-  border: 1px solid #2d3b36;
-  color: #ffffff;
-  box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+  background: var(--white);
+  border: 1px solid rgba(76, 175, 125, 0.2);
+  color: var(--card-text);
+  box-shadow: 0 4px 20px rgba(0,0,0,0.4);
 }
 
 .dark-mode input, 
 .dark-mode select, 
 .dark-mode textarea {
-  background: #141d1b !important;
-  color: #ffffff !important;
-  border: 1px solid #2d3b36 !important;
+  background: var(--input-bg) !important;
+  color: var(--input-text) !important;
+  border: 1px solid var(--input-border) !important;
 }
 
 .dark-mode input::placeholder {
@@ -125,7 +142,7 @@ html, body {
 body {
   font-family: var(--font-body);
   background-color: var(--sand);
-  color: var(--carbon);
+  color: var(--body-color);
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
 }
@@ -138,7 +155,7 @@ body {
 
 h1, h2, h3, h4, h5, h6 {
   font-family: var(--font-title);
-  color: var(--primary);
+  color: var(--title-color);
   margin-bottom: 1rem;
 }
 
@@ -395,6 +412,18 @@ a {
   padding: 20px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
   border: 1px solid rgba(0, 0, 0, 0.05);
+  color: var(--card-text);
+}
+
+label {
+  color: var(--label-color);
+  font-weight: 500;
+  margin-bottom: 6px;
+  display: block;
+}
+
+.text-secondary {
+  color: var(--secondary-color);
 }
 
 

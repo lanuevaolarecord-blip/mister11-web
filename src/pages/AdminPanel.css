@@ -2,7 +2,7 @@
   display: flex;
   height: calc(100vh - 100px);
   background: var(--sand);
-  color: var(--carbon);
+  color: var(--body-color);
   margin: -20px; /* Offset parent padding */
   overflow: hidden;
 }
@@ -18,7 +18,7 @@
 }
 
 .dark-mode .admin-sidebar {
-  background: #0a0f0e;
+  background: var(--white);
   border-right-color: rgba(255,255,255,0.05);
 }
 
@@ -62,15 +62,15 @@
 .section-header h2 {
   font-size: 1.8rem;
   margin-bottom: 5px;
-  color: var(--primary);
+  color: var(--title-color);
 }
 
 .dark-mode .section-header h2 {
-  color: #ffffff;
+  color: var(--title-color);
 }
 
 .section-header p {
-  color: #888;
+  color: var(--secondary-color);
 }
 
 /* Teams Tab */
@@ -83,7 +83,7 @@
 }
 
 .dark-mode .add-team-card {
-  background: #1e2a27;
+  background: var(--white);
   border-color: rgba(255,255,255,0.05);
 }
 
@@ -101,16 +101,16 @@
   flex: 1;
   background: var(--sand);
   border: 1px solid rgba(0,0,0,0.1);
-  color: var(--carbon);
+  color: var(--body-color);
   padding: 10px 15px;
   border-radius: 6px;
   outline: none;
 }
 
 .dark-mode .form-row input {
-  background: #141d1b;
-  border-color: #2d3b36;
-  color: #fff;
+  background: var(--input-bg);
+  border-color: var(--input-border);
+  color: var(--input-text);
 }
 
 .form-row input:focus {
@@ -136,7 +136,7 @@
 }
 
 .dark-mode .team-admin-card {
-  background: #1e2a27;
+  background: var(--white);
 }
 
 .team-admin-card.active {
@@ -163,11 +163,12 @@
 .team-info h4 {
   margin: 0;
   font-size: 1rem;
+  color: var(--card-text);
 }
 
 .team-info span {
   font-size: 0.8rem;
-  color: #888;
+  color: var(--secondary-color);
 }
 
 .team-actions {
@@ -224,7 +225,7 @@
 }
 
 .dark-mode .export-card {
-  background: #1e2a27;
+  background: var(--white);
   border-color: rgba(255,255,255,0.05);
 }
 
@@ -241,18 +242,24 @@
 
 .export-card p {
   font-size: 0.9rem;
-  color: #888;
+  color: var(--secondary-color);
   line-height: 1.4;
 }
 
 .admin-select-export {
   width: 100%;
-  background: #0D0D0D;
-  color: white;
-  border: 1px solid #333;
+  background: var(--sand);
+  color: var(--body-color);
+  border: 1px solid rgba(0,0,0,0.1);
   padding: 10px;
   border-radius: 6px;
   outline: none;
+}
+
+.dark-mode .admin-select-export {
+  background: var(--input-bg);
+  color: var(--input-text);
+  border-color: var(--input-border);
 }
 
 .btn-export {
@@ -290,7 +297,7 @@
 }
 
 .dark-mode .exercise-list-admin {
-  background: #1e2a27;
+  background: var(--white);
   border-color: rgba(255,255,255,0.05);
 }
 
@@ -313,11 +320,12 @@
 
 .ex-info strong {
   font-size: 1rem;
+  color: var(--card-text);
 }
 
 .ex-info span {
   font-size: 0.8rem;
-  color: #888;
+  color: var(--secondary-color);
 }
 
 /* Ajustes Section */
@@ -328,10 +336,10 @@
 }
 
 .settings-card {
-  background: #1A1A2A;
+  background: var(--white);
   padding: 25px;
   border-radius: 16px;
-  border: 1px solid rgba(255,255,255,0.05);
+  border: 1px solid rgba(0,0,0,0.05);
   display: flex;
   flex-direction: column;
   gap: 20px;
@@ -368,20 +376,27 @@
 
 .form-group label {
   font-size: 0.8rem;
-  color: #888;
+  color: var(--secondary-color);
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
 
 .form-group input[type="text"],
 .admin-select-input {
-  background: #0D0D0D;
-  border: 1px solid #333;
-  color: white;
+  background: var(--sand);
+  border: 1px solid rgba(0,0,0,0.1);
+  color: var(--body-color);
   padding: 12px;
   border-radius: 8px;
   outline: none;
   font-family: inherit;
+}
+
+.dark-mode .form-group input[type="text"],
+.dark-mode .admin-select-input {
+  background: var(--input-bg);
+  border-color: var(--input-border);
+  color: var(--input-text);
 }
 
 .form-row-dual {
@@ -401,16 +416,20 @@
 }
 
 .upload-placeholder {
-  border: 2px dashed #333;
+  border: 2px dashed rgba(0,0,0,0.2);
   padding: 20px;
   border-radius: 12px;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 10px;
-  color: #666;
+  color: var(--secondary-color);
   cursor: pointer;
   transition: all 0.2s;
+}
+
+.dark-mode .upload-placeholder {
+  border-color: rgba(255,255,255,0.2);
 }
 
 .upload-placeholder:hover {

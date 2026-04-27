@@ -169,9 +169,10 @@
 
 .canvas-area {
   flex: 1;
-  position: relative; /* Requirement 1 */
-  background-color: #0d1117; /* Dark background for the area around the field */
-  overflow: hidden; /* Requirement 3 */
+  height: 100%; /* Requirement: fill available height */
+  position: relative;
+  background-color: #2D5A27; /* Requirement: green background, not black */
+  overflow: hidden;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -179,23 +180,26 @@
 
 .canvas-area canvas {
   display: block;
-  box-shadow: 0 0 30px rgba(0,0,0,0.5);
+  width: 100%;
+  height: 100%;
 }
 
-/* Fabric Wrapper Fix - Ensure it stays centered and stacked */
+/* Fabric Wrapper Fix - Fill the container */
 .canvas-container {
   position: absolute !important;
-  top: 50% !important;
-  left: 50% !important;
-  transform: translate(-50%, -50%) !important;
+  top: 0 !important;
+  left: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
 }
 
-/* Ensure the field renderer canvas is also centered */
+/* Ensure the field renderer canvas is also filling */
 .canvas-area .field-renderer-canvas {
   position: absolute !important;
-  top: 50% !important;
-  left: 50% !important;
-  transform: translate(-50%, -50%) !important;
+  top: 0 !important;
+  left: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
 }
 
 .placing-hint {

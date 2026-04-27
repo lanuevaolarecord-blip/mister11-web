@@ -32,7 +32,7 @@
 
 .ia-form-header p {
   font-size: 13px;
-  color: rgba(255,255,255,0.75);
+  color: rgba(255,255,255,0.9);
   margin: 0;
   line-height: 1.4;
 }
@@ -50,7 +50,7 @@
   display: block;
   font-size: 11px;
   font-weight: 800;
-  color: var(--primary);
+  color: var(--secondary-color);
   text-transform: uppercase;
   letter-spacing: 0.05em;
   margin-bottom: 8px;
@@ -60,11 +60,11 @@
 .ia-field textarea {
   width: 100%;
   padding: 10px 12px;
-  border: 1.5px solid #e5e7eb;
+  border: 1.5px solid rgba(0,0,0,0.1);
   border-radius: 8px;
   font-family: var(--font-body);
   font-size: 14px;
-  color: var(--carbon);
+  color: var(--body-color);
   background: var(--sand);
   transition: border-color 0.2s;
 }
@@ -100,7 +100,7 @@
   display: flex;
   justify-content: space-between;
   font-size: 11px;
-  color: #9ca3af;
+  color: var(--secondary-color);
   margin-top: 4px;
 }
 
@@ -112,13 +112,13 @@
 }
 
 .chip {
-  background: var(--sand);
-  border: 1.5px solid #e5e7eb;
+  background: var(--white);
+  border: 1.5px solid rgba(0,0,0,0.1);
   padding: 7px 14px;
   border-radius: 20px;
   font-size: 13px;
   font-weight: 600;
-  color: #555;
+  color: var(--secondary-color);
   cursor: pointer;
   transition: all 0.15s ease;
 }
@@ -210,7 +210,7 @@
 }
 
 .ia-empty-state h2 {
-  color: var(--primary);
+  color: var(--title-color);
   font-size: 1.5rem;
   margin: 0 0 10px 0;
 }
@@ -219,7 +219,7 @@
   font-size: 14px;
   max-width: 400px;
   line-height: 1.6;
-  color: #6b7280;
+  color: var(--secondary-color);
 }
 
 /* Loading animation */
@@ -268,7 +268,7 @@
 
 .result-markdown {
   padding: 24px;
-  color: var(--carbon);
+  color: var(--body-color);
   line-height: 1.7;
   font-size: 15px;
 }
@@ -276,7 +276,7 @@
 .result-markdown h2 {
   font-family: var(--font-title);
   font-size: 1.6rem;
-  color: var(--primary);
+  color: var(--title-color);
   border-bottom: 3px solid var(--accent);
   padding-bottom: 10px;
   margin: 0 0 20px 0;
@@ -284,14 +284,14 @@
 
 .result-markdown h3 {
   font-size: 1rem;
-  color: var(--primary);
+  color: var(--title-color);
   margin: 20px 0 8px 0;
   text-transform: uppercase;
   letter-spacing: 0.05em;
 }
 
 .result-markdown p { margin: 4px 0; }
-.result-markdown strong { color: var(--primary); }
+.result-markdown strong { color: var(--title-color); }
 .result-markdown li {
   position: relative;
   padding-left: 16px;
@@ -375,7 +375,7 @@
 .preview-text {
   display: block;
   font-size: 12px;
-  color: #6b7280;
+  color: var(--secondary-color);
   margin-top: 4px;
   white-space: nowrap;
   overflow: hidden;
@@ -393,7 +393,7 @@
 }
 
 .saved-exercises h3 {
-  color: var(--primary);
+  color: var(--title-color);
   margin: 0 0 16px 0;
   font-size: 1.1rem;
 }
@@ -413,7 +413,7 @@
   border-radius: 8px;
   cursor: pointer;
   font-size: 14px;
-  color: var(--carbon);
+  color: var(--body-color);
   transition: background 0.15s;
   border: 1px solid transparent;
 }
@@ -430,8 +430,27 @@
 }
 
 /* Responsive */
+/* Responsive */
 @media (max-width: 900px) {
   .ia-page { flex-direction: column; }
   .ia-form-panel { width: 100%; max-height: 50vh; }
   .ia-result-content { max-height: none; }
+}
+
+/* Dark Mode Overrides for IA (Minimal) */
+.dark-mode .ia-form-panel,
+.dark-mode .ia-result-content,
+.dark-mode .ia-modal-container,
+.dark-mode .saved-exercises {
+  background: var(--white);
+  border-color: rgba(255,255,255,0.05);
+}
+
+.dark-mode .result-actions {
+  background: var(--sand);
+  border-color: rgba(255,255,255,0.05);
+}
+
+.dark-mode .saved-item {
+  background: rgba(255, 255, 255, 0.03);
 }

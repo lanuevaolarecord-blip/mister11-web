@@ -326,10 +326,28 @@ const PizarraTactica = () => {
           if (dbFrames.length > 0) {
             syncingR.current = true;
             fc.loadFromJSON(dbFrames[0].state, () => {
+              
+              // USER REQUIREMENT: Disparar automáticamente la función de "aplicar formación"
+              // Remove any existing messy players
+              const objects = [...fc.getObjects()];
+              objects.forEach(obj => {
+                if (obj.data && (obj.data.type === 'player' || obj.data.playerType)) {
+                  fc.remove(obj);
+                }
+              });
+              
+              // Re-draw players with default formation safely
+              if (frRef.current) {
+                drawPlayers(fc, frRef.current, 'full', { local: localFormation, rival: rivalFormation }, isSwapped);
+              }
+              
               syncingR.current = false;
               fc.renderAll();
               setFrameIdx(0);
               frameIdxR.current = 0;
+              
+              // Force save this ordered state back to Firestore
+              setTimeout(() => saveFrameState(true), 500);
             });
           }
         }
@@ -540,6 +558,22 @@ const PizarraTactica = () => {
     drawPlayers(fc, fr, fieldType, formation);
     if (tm) tm.setupHistory(30);
     saveFrameState();
+  };
+
+  // ─── Guardar (Manual Save) ────────────────────────────────────────────────
+  const handleSave = () => {
+    if (!user) {
+      alert("No estás autenticado. No se puede guardar.");
+      return;
+    }
+    saveFrameState(true);
+    // Opcional: Feedback visual rápido para el usuario
+    const btn = document.getElementById('btn-guardar-pizarra');
+    if (btn) {
+      const originalText = btn.innerHTML;
+      btn.innerHTML = '✅ Guardado';
+      setTimeout(() => { btn.innerHTML = originalText; }, 2000);
+    }
   };
 
   // ─── Add Frame ────────────────────────────────────────────────────────────
@@ -871,7 +905,7 @@ const PizarraTactica = () => {
             <button className="topbar-btn" onClick={undo} disabled={histCount <= 1} title="Deshacer (Ctrl+Z)">↩</button>
             <button className="topbar-btn" onClick={redo} disabled={redoCount === 0} title="Rehacer (Ctrl+Y)">↪</button>
             <button className="topbar-btn" onClick={clearCanvas}>🗑 Limpiar</button>
-            <button className="topbar-btn primary">💾 Guardar</button>
+            <button id="btn-guardar-pizarra" className="topbar-btn primary" onClick={handleSave}>💾 Guardar</button>
           </div>
         </div>
       </div>

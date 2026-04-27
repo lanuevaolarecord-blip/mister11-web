@@ -32,6 +32,9 @@ const PizarraTactica = () => {
   const playingR  = useRef(false); // is animation playing
   const historyR  = useRef([]);    // undo history (max 20)
   const redoR     = useRef([]);    // redo history (max 20)
+  const syncingR  = useRef(false); // prevent events during load
+  const readyR    = useRef(false); // track initial load safely
+  const saveTimeoutR = useRef(null); // for debouncing saves
 
   // Auth & URL
   const { user } = useAuth();
@@ -73,15 +76,18 @@ const PizarraTactica = () => {
   useEffect(() => { framesR.current = frames; }, [frames]);
 
   // ─── Save current canvas state into current frame ─────────────────────────
-  const saveFrameState = useCallback(async () => {
+  const saveFrameState = useCallback(async (immediate = false) => {
+    if (syncingR.current) return; // Block saves while loading/syncing
+    
     const fc = fcRef.current;
     if (!fc || playingR.current || framesR.current.length === 0 || !user) return;
+    
     const idx   = frameIdxR.current;
     const state = fc.toJSON(['data']);
     const frame = framesR.current[idx];
     if (!frame) return;
 
-    // Update Local State
+    // Update Local State (Immediate)
     setFrames(prev => {
       const next = [...prev];
       if (next[idx]) next[idx] = { ...next[idx], state };
@@ -89,15 +95,24 @@ const PizarraTactica = () => {
     });
     framesR.current[idx] = { ...framesR.current[idx], state };
 
-    // Update Firestore
-    try {
-      const frameRef = doc(db, 'users', user.uid, 'planning', planId, 'frames', frame.id);
-      await setDoc(frameRef, {
-        state: JSON.stringify(state),
-        updatedAt: serverTimestamp()
-      }, { merge: true });
-    } catch (err) {
-      console.error("Error updating frame in Firestore:", err);
+    // Debounced Firestore Update (Async, non-blocking)
+    const saveToDB = async () => {
+      try {
+        const frameRef = doc(db, 'users', user.uid, 'planning', planId, 'frames', frame.id);
+        await setDoc(frameRef, {
+          state: JSON.stringify(state),
+          updatedAt: serverTimestamp()
+        }, { merge: true });
+      } catch (err) {
+        console.error("Error updating frame in Firestore:", err);
+      }
+    };
+
+    if (immediate) {
+      saveToDB();
+    } else {
+      if (saveTimeoutR.current) clearTimeout(saveTimeoutR.current);
+      saveTimeoutR.current = setTimeout(saveToDB, 1000); // 1s debounce
     }
   }, [user, planId]);
 
@@ -134,11 +149,12 @@ const PizarraTactica = () => {
     const prevState = next[next.length - 1];
     
     fc.loadFromJSON(prevState, () => {
+      syncingR.current = false;
       fc.renderAll();
       historyR.current = next;
       setHistCount(next.length);
       setRedoCount(newRedo.length);
-      saveFrameState();
+      saveFrameState(true);
     });
   }, [saveFrameState]);
 
@@ -147,6 +163,7 @@ const PizarraTactica = () => {
     const r = redoR.current;
     if (!fc || r.length === 0) return;
 
+    syncingR.current = true;
     const nextRedo = [...r];
     const stateToRestore = nextRedo.pop();
     redoR.current = nextRedo;
@@ -156,10 +173,11 @@ const PizarraTactica = () => {
     historyR.current = nextHist;
 
     fc.loadFromJSON(stateToRestore, () => {
+      syncingR.current = false;
       fc.renderAll();
       setHistCount(nextHist.length);
       setRedoCount(nextRedo.length);
-      saveFrameState();
+      saveFrameState(true);
     });
   }, [saveFrameState]);
 
@@ -227,12 +245,13 @@ const PizarraTactica = () => {
     };
 
     // Draw Local
+    syncingR.current = true;
     drawTeam('local', formations.local, localColor, swapped ? 'R' : 'L');
     // Draw Rival (if enabled)
     if (showRival) {
       drawTeam('rival', formations.rival, rivalColor, swapped ? 'L' : 'R');
     }
-
+    syncingR.current = false;
     canvas.renderAll();
   }, [createPlayer, localColor, rivalColor, showRival]);
 
@@ -264,7 +283,9 @@ const PizarraTactica = () => {
     tmRef.current = tm;
 
     // 4. Draw initial players
+    syncingR.current = true;
     drawPlayers(fc, renderer, 'full', { local: localFormation, rival: rivalFormation }, isSwapped);
+    syncingR.current = false;
 
     // 5. Load frames from Firestore
     let unsubscribe;
@@ -298,11 +319,14 @@ const PizarraTactica = () => {
         setFrames(dbFrames);
         framesR.current = dbFrames;
 
-        if (!ready) {
+        if (!readyR.current) {
+          readyR.current = true;
           setReady(true);
-          // Load first frame into canvas
+          // Load first frame into canvas safely
           if (dbFrames.length > 0) {
+            syncingR.current = true;
             fc.loadFromJSON(dbFrames[0].state, () => {
+              syncingR.current = false;
               fc.renderAll();
               setFrameIdx(0);
               frameIdxR.current = 0;
@@ -314,7 +338,8 @@ const PizarraTactica = () => {
 
     // 6. Auto-save on object changes & history
     const onChange = () => {
-      saveFrameState();
+      if (syncingR.current) return;
+      saveFrameState(false); // Debounced save
       pushToHistory();
     };
     fc.on('object:modified', onChange);
@@ -565,9 +590,12 @@ const PizarraTactica = () => {
   const loadFrame = (idx) => {
     const fc = fcRef.current;
     if (!fc || !framesR.current[idx]) return;
-    saveFrameState();
+    saveFrameState(true); // Save current immediately
+    
     setTimeout(() => {
+      syncingR.current = true;
       fc.loadFromJSON(framesR.current[idx].state, () => {
+        syncingR.current = false;
         fc.renderAll();
         setFrameIdx(idx);
         frameIdxR.current = idx;

@@ -9,7 +9,7 @@ import { TOOLS, STROKE_COLORS, STROKE_WIDTHS, ToolManager } from '../lib/mister1
 import { FieldRenderer, FORMATIONS } from '../lib/mister11-field.js';
 import { useAuth } from '../context/AuthContext';
 import { db } from '../firebaseConfig';
-import { collection, doc, setDoc, addDoc, serverTimestamp, onSnapshot, query, orderBy } from 'firebase/firestore';
+import { collection, doc, setDoc, addDoc, deleteDoc, serverTimestamp, onSnapshot, query, orderBy } from 'firebase/firestore';
 import { useSearchParams } from 'react-router-dom';
 import './Pizarra.css';
 
@@ -98,7 +98,7 @@ const PizarraTactica = () => {
     // Debounced Firestore Update (Async, non-blocking)
     const saveToDB = async () => {
       try {
-        const frameRef = doc(db, 'users', user.uid, 'planning', planId, 'frames', frame.id);
+        const frameRef = doc(db, 'users', user.uid, 'exercises', planId, 'frames', frame.id);
         await setDoc(frameRef, {
           state: JSON.stringify(state),
           updatedAt: serverTimestamp()
@@ -290,7 +290,7 @@ const PizarraTactica = () => {
     // 5. Load frames from Firestore
     let unsubscribe;
     if (user && planId) {
-      const framesColRef = collection(db, 'users', user.uid, 'planning', planId, 'frames');
+      const framesColRef = collection(db, 'users', user.uid, 'exercises', planId, 'frames');
       const q = query(framesColRef, orderBy('order', 'asc'));
       
       unsubscribe = onSnapshot(q, (snapshot) => {
@@ -561,18 +561,33 @@ const PizarraTactica = () => {
   };
 
   // ─── Guardar (Manual Save) ────────────────────────────────────────────────
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!user) {
       alert("No estás autenticado. No se puede guardar.");
       return;
     }
     saveFrameState(true);
-    // Opcional: Feedback visual rápido para el usuario
-    const btn = document.getElementById('btn-guardar-pizarra');
-    if (btn) {
-      const originalText = btn.innerHTML;
-      btn.innerHTML = '✅ Guardado';
-      setTimeout(() => { btn.innerHTML = originalText; }, 2000);
+    
+    // Save the parent exercise document so it shows in the list
+    try {
+      const exerciseRef = doc(db, 'users', user.uid, 'exercises', planId);
+      await setDoc(exerciseRef, {
+        id: planId,
+        title: `Pizarra Táctica (${new Date().toLocaleDateString()})`,
+        type: 'pizarra',
+        framesCount: framesR.current.length,
+        updatedAt: serverTimestamp()
+      }, { merge: true });
+      
+      // Feedback visual rápido para el usuario
+      const btn = document.getElementById('btn-guardar-pizarra');
+      if (btn) {
+        const originalText = btn.innerHTML;
+        btn.innerHTML = '✅ Guardado';
+        setTimeout(() => { btn.innerHTML = originalText; }, 2000);
+      }
+    } catch (err) {
+      console.error("Error saving exercise metadata:", err);
     }
   };
 
@@ -589,7 +604,7 @@ const PizarraTactica = () => {
     const state = fc.toJSON(['data']);
     
     try {
-      const framesColRef = collection(db, 'users', user.uid, 'planning', planId, 'frames');
+      const framesColRef = collection(db, 'users', user.uid, 'exercises', planId, 'frames');
       const newFrameData = {
         name: `Frame ${frames.length + 1}`,
         state: JSON.stringify(state),
@@ -638,18 +653,33 @@ const PizarraTactica = () => {
   };
 
   // ─── Delete Frame ─────────────────────────────────────────────────────────
-  const deleteFrame = () => {
+  const deleteFrame = async () => {
     const cur = frameIdxR.current;
     if (framesR.current.length <= 1) return;
+    
+    const frameToDelete = framesR.current[cur];
+    
     const next = framesR.current.filter((_, i) => i !== cur);
     const newIdx = Math.max(0, cur - 1);
+    
     framesR.current = next;
     setFrames(next);
     setFrameIdx(newIdx);
     frameIdxR.current = newIdx;
+    
     const fc = fcRef.current;
     if (fc) {
       fc.loadFromJSON(next[newIdx].state, () => fc.renderAll());
+    }
+    
+    // Firebase delete
+    if (user && frameToDelete && frameToDelete.id) {
+      try {
+        const frameRef = doc(db, 'users', user.uid, 'exercises', planId, 'frames', frameToDelete.id);
+        await deleteDoc(frameRef);
+      } catch (err) {
+        console.error("Error deleting frame in Firestore:", err);
+      }
     }
   };
 

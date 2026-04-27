@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useExercises } from '../hooks/useExercises';
 import './IAGeneradora.css';
 
@@ -56,6 +57,7 @@ const renderMarkdown = (text) => {
 
 const IAGeneradora = () => {
   const { exercises, addExercise } = useExercises();
+  const navigate = useNavigate();
   const [form, setForm] = useState(INITIAL_FORM);
   const [result, setResult] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -304,12 +306,22 @@ Responde SOLO en español. No incluyas texto fuera del formato indicado.`;
             <h3>📚 Biblioteca en la Nube ({exercises.length})</h3>
             <div className="saved-list">
               {exercises.map(ex => (
-                <div key={ex.id} className="saved-item" onClick={() => setSelectedExerciseDetail(ex)}>
+                <div key={ex.id} className="saved-item" onClick={() => {
+                  if (ex.type === 'pizarra') {
+                    navigate(`/pizarra?id=${ex.id}`);
+                  } else {
+                    setSelectedExerciseDetail(ex);
+                  }
+                }}>
                   <div className="saved-item-info">
-                    <strong>📋 {ex.title}</strong>
-                    <span className="preview-text">{ex.content?.substring(0, 100)}...</span>
+                    <strong>{ex.type === 'pizarra' ? '📋 Pizarra' : '✨ IA'} - {ex.title}</strong>
+                    <span className="preview-text">
+                      {ex.type === 'pizarra' 
+                        ? `Ejercicio táctico interactivo con ${ex.framesCount || 1} frames.`
+                        : `${ex.content?.substring(0, 100)}...`}
+                    </span>
                   </div>
-                  <span className="saved-hint">Ver →</span>
+                  <span className="saved-hint">{ex.type === 'pizarra' ? 'Editar →' : 'Ver →'}</span>
                 </div>
               ))}
             </div>

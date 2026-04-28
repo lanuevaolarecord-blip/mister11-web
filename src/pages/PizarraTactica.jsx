@@ -378,14 +378,18 @@ const PizarraTactica = () => {
       const scaleFactor = nW / oldW;
 
       const isLandscape = window.innerWidth > window.innerHeight;
-      const isMobileView = window.innerWidth < 1024 || (window.innerWidth < 1280 && isLandscape);
+      const isMobileView = window.innerWidth < 1024 ||
+        (window.innerWidth < 1280 && isLandscape);
       setIsMobile(isMobileView);
-
-      // Recalcular altura restando topbar (60px) y timeline (60px)
-      if (isLandscape) {
-        nH = window.innerHeight - 130; 
+      fieldCanvasRef.current.width = nW;
+      if (isMobileView) {
+        if (isLandscape) {
+          nH = window.innerHeight - 110;
+        } else {
+          nH = Math.min(nW * (68/105), window.innerHeight - 200);
+        }
       } else {
-        nH = Math.min(nW * (68/105), window.innerHeight - 250);
+        nH = containerRef.current.offsetHeight || 500;
       }
       
       fieldCanvasRef.current.height = nH;
@@ -956,6 +960,11 @@ const PizarraTactica = () => {
 
       {/* ── MAIN BOARD ────────────────────────────────────────────────────── */}
       <div className="pizarra-main">
+
+        <div className="panel-izq">
+          <TeamsPanel />
+        </div>
+
         <div className="canvas-area" ref={containerRef}>
           {/* Field Canvas */}
           <canvas ref={fieldCanvasRef} className="field-renderer-canvas"
@@ -979,6 +988,11 @@ const PizarraTactica = () => {
             <button className="btn-floating-right" onClick={() => setShowMatsDrawer(true)}>🎽 Material</button>
           </div>
         </div>
+
+        <div className="panel-der">
+          <MaterialsPanel />
+        </div>
+
       </div>
 
       {/* ── TIMELINE ──────────────────────────────────────────────────────── */}

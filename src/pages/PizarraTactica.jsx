@@ -188,12 +188,12 @@ const PizarraTactica = () => {
   const createPlayer = useCallback((x, y, options = {}) => {
     const { color = '#4CAF7D', label = '1', type = 'local' } = options;
     const circle = new fabric.Circle({
-      radius: 13, originX: 'center', originY: 'center',
+      radius: 15, originX: 'center', originY: 'center',
       fill: color,
       stroke: '#FFFFFF', strokeWidth: 2,
     });
     const text = new fabric.Text(String(label), {
-      fontSize: 11, fontWeight: 'bold', fill: '#FFFFFF',
+      fontSize: 12, fontWeight: 'bold', fill: '#FFFFFF',
       originX: 'center', originY: 'center',
     });
     const group = new fabric.Group([circle, text], {
@@ -378,14 +378,14 @@ const PizarraTactica = () => {
       const scaleFactor = nW / oldW;
 
       const isLandscape = window.innerWidth > window.innerHeight;
-      
-      // TAREA 1 & 3: Sidebar siempre oculto, interfaz flotante global
-      // TAREA 4: height: calc(100vh - 80px) en landscape
+      const isMobileView = window.innerWidth < 1024 || (window.innerWidth < 1280 && isLandscape);
+      setIsMobile(isMobileView);
+
+      // Recalcular altura restando topbar (60px) y timeline (60px)
       if (isLandscape) {
-        nH = window.innerHeight - 80;
+        nH = window.innerHeight - 130; 
       } else {
-        // En vertical, intentamos mantener una proporción decente o usar el resto del alto
-        nH = Math.min(nW * (68/105), window.innerHeight - 200);
+        nH = Math.min(nW * (68/105), window.innerHeight - 250);
       }
       
       fieldCanvasRef.current.height = nH;
@@ -885,8 +885,11 @@ const PizarraTactica = () => {
   );
 
   // ─── JSX ──────────────────────────────────────────────────────────────────
+  const isLandscape = window.innerWidth > window.innerHeight;
+
   return (
-    <div className="pizarra-container" style={{ touchAction: 'pan-y' }}>
+    <div className={`pizarra-container ${isMobile ? 'mobile' : 'desktop'} ${isLandscape ? 'landscape' : 'portrait'}`} 
+      style={{ touchAction: 'pan-y' }}>
 
       {/* ── TOP BAR ───────────────────────────────────────────────────────── */}
       <div className="pizarra-topbar">
@@ -953,7 +956,6 @@ const PizarraTactica = () => {
 
       {/* ── MAIN BOARD ────────────────────────────────────────────────────── */}
       <div className="pizarra-main">
-        {/* CANVAS AREA - Sidebar siempre oculto por overlay */}
         <div className="canvas-area" ref={containerRef}>
           {/* Field Canvas */}
           <canvas ref={fieldCanvasRef} className="field-renderer-canvas"

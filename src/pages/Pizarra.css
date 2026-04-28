@@ -121,7 +121,7 @@
 /* LANDSCAPE OPTIMIZATION */
 @media screen and (orientation: landscape) {
   .canvas-area {
-    height: calc(100vh - 110px);
+    height: calc(100vh - 130px);
   }
   .floating-actions {
     bottom: 70px;

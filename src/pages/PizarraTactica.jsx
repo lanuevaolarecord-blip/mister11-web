@@ -369,7 +369,7 @@ const PizarraTactica = () => {
       if (!containerRef.current || !fieldCanvasRef.current || !fcRef.current) return;
       
       const nW = containerRef.current.offsetWidth;
-      const nH = containerRef.current.offsetHeight;
+      let nH;
       
       const oldW = fcRef.current.width;
       const scaleFactor = nW / oldW;
@@ -378,7 +378,6 @@ const PizarraTactica = () => {
 
       fieldCanvasRef.current.width  = nW;
       
-      let nH;
       if (window.innerWidth < 768) {
         nH = nW * (68/105);
       } else {

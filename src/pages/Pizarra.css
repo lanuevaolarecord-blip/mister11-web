@@ -61,13 +61,21 @@
   background: #162416;
 }
 
-.field-renderer-canvas,
+.field-renderer-canvas {
+  position: absolute !important;
+  top: 50% !important;
+  left: 50% !important;
+  transform: translate(-50%, -50%) !important;
+  z-index: 1 !important;
+}
+
 .fabric-canvas-elem,
 .canvas-container {
   position: absolute !important;
   top: 50% !important;
   left: 50% !important;
   transform: translate(-50%, -50%) !important;
+  z-index: 10 !important;
 }
 
 .pizarra-timeline {

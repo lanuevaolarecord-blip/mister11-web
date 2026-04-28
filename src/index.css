@@ -62,25 +62,17 @@ html.dark {
   scroll-behavior: smooth;
 }
 
-html, body {
-  overflow-x: hidden;
-  overflow-y: auto;
-  height: 100%;
-  touch-action: pan-y;
+main, .page-container {
+  padding: 16px 16px 30px; /* Safety padding */
+  max-width: 1400px;
+  margin: 0 auto;
 }
 
-body {
-  font-family: var(--font-body);
-  background-color: #1a2e1a !important;
-  color: var(--text-secondary);
-  line-height: 1.5;
-  -webkit-font-smoothing: antialiased;
-}
-
-h1, h2, h3, h4, h5, h6 {
-  font-family: var(--font-title);
-  color: var(--text-primary);
-  margin-bottom: 1rem;
+/* Ensure pizarra doesn't get this padding as it handles its own */
+.pizarra-container main, 
+.pizarra-container .page-container {
+  padding: 0;
+  max-width: none;
 }
 
 @media screen and (orientation: landscape) {

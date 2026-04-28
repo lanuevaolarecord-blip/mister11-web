@@ -264,14 +264,14 @@ const PizarraTactica = () => {
 
     // 1. Field (2D canvas)
     fieldCanvasRef.current.width  = W;
-    fieldCanvasRef.current.height = H;
+    fieldCanvasRef.current.height = isMobile ? (W * 68/105) : H;
     const renderer = new FieldRenderer(fieldCanvasRef.current, { padding: 0 });
     renderer.draw('full');
     frRef.current = renderer;
 
     // 2. Fabric overlay canvas
     const fc = new fabric.Canvas(fabricElemRef.current, {
-      width: W, height: H,
+      width: W, height: isMobile ? (W * 68/105) : H,
       allowTouchScrolling: false,
       selection: true,
     });
@@ -377,6 +377,14 @@ const PizarraTactica = () => {
       setIsMobile(window.innerWidth < 768);
 
       fieldCanvasRef.current.width  = nW;
+      
+      let nH;
+      if (window.innerWidth < 768) {
+        nH = nW * (68/105);
+      } else {
+        nH = containerRef.current.offsetHeight || 500;
+      }
+      
       fieldCanvasRef.current.height = nH;
       
       if (frRef.current) {
@@ -875,7 +883,7 @@ const PizarraTactica = () => {
 
   // ─── JSX ──────────────────────────────────────────────────────────────────
   return (
-    <div className={`pizarra-container ${isMobile ? 'mobile' : 'desktop'}`}>
+    <div className={`pizarra-container ${isMobile ? 'mobile' : 'desktop'}`} style={{ touchAction: 'pan-y' }}>
 
       {/* ── TOP BAR ───────────────────────────────────────────────────────── */}
       <div className="pizarra-topbar">
@@ -957,7 +965,7 @@ const PizarraTactica = () => {
           
           {/* Fabric Canvas - Requirement 2 */}
           <canvas ref={fabricElemRef} className="fabric-canvas-elem"
-            style={{ zIndex: 2 }} />
+            style={{ zIndex: 2, touchAction: 'none' }} />
 
           {/* Placing-material indicator */}
           {placingMat && (
@@ -970,8 +978,8 @@ const PizarraTactica = () => {
           {/* Floating Buttons for Mobile */}
           {isMobile && (
             <div className="floating-actions">
-              <button className="btn-floating" onClick={() => setShowTeamsDrawer(true)}>👥 Equipos</button>
-              <button className="btn-floating" onClick={() => setShowMatsDrawer(true)}>🎒 Material</button>
+              <button className="btn-floating-left" onClick={() => setShowTeamsDrawer(true)}>⚽ Equipos</button>
+              <button className="btn-floating-right" onClick={() => setShowMatsDrawer(true)}>🎽 Material</button>
             </div>
           )}
         </div>

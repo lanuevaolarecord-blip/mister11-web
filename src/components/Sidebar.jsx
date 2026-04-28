@@ -16,7 +16,7 @@ import { auth, signOut } from '../firebaseConfig';
 import { useSettings } from '../hooks/useSettings';
 import { t } from '../i18n/translations';
 
-const Sidebar = () => {
+const Sidebar = ({ isOpen, onClose }) => {
   const { settings } = useSettings();
   const navItems = [
     { path: '/', label: t('nav.dashboard', settings.language), icon: LayoutDashboard },
@@ -31,7 +31,7 @@ const Sidebar = () => {
   ];
 
   return (
-    <aside className="sidebar">
+    <aside className={`sidebar ${isOpen ? 'open' : ''}`}>
       <div className="logo-container">
         <img src="/logo_mister11.png" alt="Míster11" height="40"/>
       </div>
@@ -44,6 +44,7 @@ const Sidebar = () => {
               key={item.path}
               to={item.path} 
               className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
+              onClick={onClose}
             >
               <Icon size={18} />
               <span>{item.label}</span>
@@ -63,7 +64,10 @@ const Sidebar = () => {
           </div>
         </div>
         <button 
-          onClick={() => signOut(auth)} 
+          onClick={() => {
+            signOut(auth);
+            onClose();
+          }} 
           style={{
             background: 'transparent', border: '1px solid rgba(255,255,255,0.2)', color: '#AAAAAA', 
             padding: '5px 10px', borderRadius: '4px', cursor: 'pointer', 

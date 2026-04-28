@@ -401,29 +401,27 @@
 
 /* Floating Actions */
 .floating-actions {
-  position: absolute;
-  bottom: 20px;
+  position: fixed;
+  bottom: 80px;
   left: 0;
   right: 0;
   display: flex;
-  justify-content: center;
-  gap: 15px;
-  padding: 0 20px;
+  justify-content: space-between;
+  padding: 0 16px;
   z-index: 100;
   pointer-events: none;
 }
 
-.btn-floating {
+.btn-floating-left, .btn-floating-right {
   pointer-events: auto;
-  background: var(--primary);
-  color: white;
-  border: 1px solid var(--accent);
-  padding: 0 20px;
-  height: 48px;
-  border-radius: 24px;
-  font-family: var(--font-title);
-  font-size: 14px;
-  font-weight: bold;
+  background: #1B3A2D !important;
+  color: #FFFFFF !important;
+  border: none;
+  padding: 10px 16px;
+  border-radius: 20px;
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 600;
   box-shadow: 0 4px 15px rgba(0,0,0,0.3);
   display: flex;
   align-items: center;
@@ -431,7 +429,7 @@
   gap: 8px;
 }
 
-.btn-floating:active {
+.btn-floating-left:active, .btn-floating-right:active {
   transform: scale(0.95);
 }
 
@@ -450,16 +448,17 @@
 }
 
 .bottom-drawer {
-  background: var(--bg-sidebar);
+  background: #1A2E1A !important;
   width: 100%;
-  max-height: 80vh;
-  border-top-left-radius: 24px;
-  border-top-right-radius: 24px;
+  max-height: 60vh;
+  border-top-left-radius: 20px;
+  border-top-right-radius: 20px;
   padding: 0 0 20px 0;
   display: flex;
   flex-direction: column;
   box-shadow: 0 -5px 25px rgba(0,0,0,0.3);
   animation: slideUp 0.3s ease-out;
+  overflow: hidden;
 }
 
 @keyframes slideUp {
@@ -470,9 +469,10 @@
 .drawer-handle {
   width: 40px;
   height: 4px;
-  background: rgba(255,255,255,0.2);
+  background: #666;
   border-radius: 2px;
   margin: 12px auto;
+  flex-shrink: 0;
 }
 
 .pizarra-sidebar-content {
@@ -506,10 +506,22 @@
   .topbar-btn, .tool-icon-btn, .frame-chip {
     min-width: 44px;
     min-height: 44px;
+    padding: 10px !important;
   }
   
-  .pizarra-topbar, .pizarra-timeline {
-    height: 64px;
+  .pizarra-topbar {
+    height: auto;
+    min-height: 64px;
+    padding: 0 10px;
+  }
+
+  .pizarra-timeline {
+    height: 70px;
+  }
+  
+  .topbar-scroll-wrapper {
+    gap: 8px;
+    padding: 8px 0;
   }
 }
 

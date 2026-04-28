@@ -479,3 +479,104 @@ input::placeholder, textarea::placeholder {
   pointer-events: none;
   color: #CCCCCC;
 }
+
+/* MOBILE REFINEMENTS (WIDTH < 768px) */
+@media screen and (max-width: 767px) {
+  /* PROBLEM 1: SIDEBAR */
+  .hamburger-btn {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 44px;
+    height: 44px;
+    background: #1B3A2D;
+    color: #FFFFFF;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    border: none;
+    cursor: pointer;
+    border-radius: 0 0 8px 0;
+  }
+
+  .sidebar-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 1000;
+    display: none;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+
+  .sidebar-overlay.open {
+    display: block;
+    opacity: 1;
+  }
+
+  .sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 280px !important;
+    max-width: 85% !important;
+    min-width: 0 !important;
+    height: 100vh !important;
+    z-index: 1001 !important;
+    transform: translateX(-100%);
+    transition: transform 0.3s ease;
+    border-right: none;
+    margin: 0;
+    display: flex !important;
+  }
+
+  .sidebar.open {
+    transform: translateX(0);
+  }
+
+  .header {
+    padding-left: 54px; /* Space for hamburger */
+  }
+
+  /* PROBLEM 3: SCROLL */
+  .main-wrapper {
+    height: calc(100vh - 70px);
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-y: contain;
+  }
+
+  /* Specific containers that might block scroll */
+  .page-content, 
+  .admin-container, 
+  .sesiones-page, 
+  .planificacion-page, 
+  .tests-content, 
+  .partidos-page, 
+  .mi-equipo-page {
+    height: auto !important;
+    min-height: calc(100vh - 70px);
+    padding: 16px;
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-y: contain;
+  }
+
+  /* Forms long containers */
+  .ia-form-body, 
+  .modal-body,
+  .admin-form-container {
+    max-height: calc(100vh - 180px) !important;
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* General Touch Targets */
+  button, .nav-item, input, select {
+    min-height: 48px;
+  }
+}

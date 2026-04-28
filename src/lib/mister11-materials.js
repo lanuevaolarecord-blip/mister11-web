@@ -1,3 +1,5 @@
+import { fabric } from 'fabric';
+
 /**
  * ============================================================
  * MÍSTER11 — Librería de Material Deportivo
@@ -64,17 +66,43 @@ export const MATERIALS_LIBRARY = {
     colors: ['#FF6600', '#FFCC00', '#FF0000', '#0066FF', '#FFFFFF'],
     fabricConfig: (x, y, color = '#FF6600') => ({
       type: 'triangle',
-      left: x,
-      top: y,
-      width: 18,
-      height: 21,
-      fill: color,
-      stroke: shadeColor(color, -30),
-      strokeWidth: 1,
-      originX: 'center',
-      originY: 'center',
-      lockScalingFlip: true,
+      left: x, top: y, width: 18, height: 21,
+      fill: color, stroke: shadeColor(color, -30), strokeWidth: 1,
+      originX: 'center', originY: 'center', lockScalingFlip: true,
     }),
+  },
+
+  cono_amarillo: {
+    id: 'cono_amarillo', label: 'Cono Amarillo', category: 'señalizacion', defaultSize: 18, defaultColor: '#FFD700',
+    canRotate: false, canResize: true,
+    svgPanel: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48"><polygon points="24,5 9,43 39,43" fill="#FFD700" stroke="#CCA800" stroke-width="1"/></svg>`,
+    fabricConfig: (x, y) => ({ type: 'triangle', left: x, top: y, width: 18, height: 21, fill: '#FFD700', stroke: '#CCA800', strokeWidth: 1, originX: 'center', originY: 'center' }),
+  },
+
+  cono_rojo: {
+    id: 'cono_rojo', label: 'Cono Rojo', category: 'señalizacion', defaultSize: 18, defaultColor: '#EF4444',
+    canRotate: false, canResize: true,
+    svgPanel: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48"><polygon points="24,5 9,43 39,43" fill="#EF4444" stroke="#B91C1C" stroke-width="1"/></svg>`,
+    fabricConfig: (x, y) => ({ type: 'triangle', left: x, top: y, width: 18, height: 21, fill: '#EF4444', stroke: '#B91C1C', strokeWidth: 1, originX: 'center', originY: 'center' }),
+  },
+
+  cono_negro: {
+    id: 'cono_negro', label: 'Cono Negro', category: 'señalizacion', defaultSize: 18, defaultColor: '#222222',
+    canRotate: false, canResize: true,
+    svgPanel: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48"><polygon points="24,5 9,43 39,43" fill="#222222" stroke="#000000" stroke-width="1"/></svg>`,
+    fabricConfig: (x, y) => ({ type: 'triangle', left: x, top: y, width: 18, height: 21, fill: '#222222', stroke: '#000000', strokeWidth: 1, originX: 'center', originY: 'center' }),
+  },
+
+  grupo_conos: {
+    id: 'grupo_conos', label: 'Grupo 3 Conos', category: 'señalizacion', defaultSize: 40, defaultColor: '#FF6600',
+    canRotate: true, canResize: true,
+    svgPanel: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48"><polygon points="12,15 4,40 20,40" fill="#FF6600"/><polygon points="24,15 16,40 32,40" fill="#FF6600"/><polygon points="36,15 28,40 44,40" fill="#FF6600"/></svg>`,
+    fabricConfig: (x, y) => {
+      const c1 = new fabric.Triangle({ left: -15, top: 0, width: 15, height: 18, fill: '#FF6600', stroke: '#CC4400', strokeWidth: 1 });
+      const c2 = new fabric.Triangle({ left: 0, top: 0, width: 15, height: 18, fill: '#FF6600', stroke: '#CC4400', strokeWidth: 1 });
+      const c3 = new fabric.Triangle({ left: 15, top: 0, width: 15, height: 18, fill: '#FF6600', stroke: '#CC4400', strokeWidth: 1 });
+      return new fabric.Group([c1, c2, c3], { left: x, top: y, originX: 'center', originY: 'center' });
+    },
   },
 
   platillo: {
@@ -228,6 +256,52 @@ export const MATERIALS_LIBRARY = {
     fabricConfig: (x, y) => ({ left: x, top: y, width: 66, height: 39 }),
   },
 
+  porteria_lateral: {
+    id: 'porteria_lateral', label: 'Port. Lateral', category: 'porteria', defaultSize: 45, defaultColor: '#FFFFFF',
+    canRotate: true, canResize: true,
+    svgPanel: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" style="transform: rotate(90deg)"><rect x="7" y="14" width="34" height="3.5" fill="white" stroke="#AAA"/><rect x="7" y="14" width="3.5" height="22" fill="white" stroke="#AAA"/><rect x="37.5" y="14" width="3.5" height="22" fill="white" stroke="#AAA"/></svg>`,
+    fabricConfig: (x, y) => ({ left: x, top: y, width: 31.5, height: 48, angle: 90 }),
+  },
+
+  // ═══════════════════════════════════════
+  // CATEGORÍA: MEDIDAS
+  // ═══════════════════════════════════════
+
+  linea_distancia: {
+    id: 'linea_distancia', label: 'Línea Distancia', category: 'medidas', defaultSize: 100, defaultColor: '#FFFFFF',
+    canRotate: true, canResize: true,
+    svgPanel: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 48"><line x1="10" y1="24" x2="90" y2="24" stroke="white" stroke-width="2"/><polyline points="15,19 10,24 15,29" fill="none" stroke="white"/><polyline points="85,19 90,24 85,29" fill="none" stroke="white"/><text x="50" y="22" fill="white" font-size="10" text-anchor="middle">5 m</text></svg>`,
+    fabricConfig: (x, y) => {
+      const line = new fabric.Line([0, 0, 100, 0], { stroke: 'white', strokeWidth: 2 });
+      const t1 = new fabric.Polyline([{x:5,y:-5},{x:0,y:0},{x:5,y:5}], { fill: 'transparent', stroke: 'white', strokeWidth: 2 });
+      const t2 = new fabric.Polyline([{x:95,y:-5},{x:100,y:0},{x:95,y:5}], { fill: 'transparent', stroke: 'white', strokeWidth: 2 });
+      const txt = new fabric.Text('5 m', { fontSize: 14, fill: 'white', top: -15, left: 50, originX: 'center' });
+      return new fabric.Group([line, t1, t2, txt], { left: x, top: y, originX: 'center', originY: 'center' });
+    },
+  },
+
+  flecha_ataque_v: {
+    id: 'flecha_ataque_v', label: 'Flecha Ataque V', category: 'medidas', defaultSize: 60, defaultColor: '#8B5CF6',
+    canRotate: true, canResize: true,
+    svgPanel: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 80"><path d="M24 10 L10 30 L18 30 L18 70 L30 70 L30 30 L38 30 Z" fill="#8B5CF6"/><text x="24" y="50" fill="white" font-size="10" text-anchor="middle" style="writing-mode: vertical-rl">ATAQUE</text></svg>`,
+    fabricConfig: (x, y) => {
+      const path = new fabric.Path("M 0 0 L 10 -10 L 20 0 L 14 0 L 14 40 L 6 40 L 6 0 Z", { fill: '#8B5CF6' });
+      const txt = new fabric.Text('ATAQUE', { fontSize: 10, fill: 'white', top: 15, left: 10, originX: 'center', angle: 0 });
+      return new fabric.Group([path, txt], { left: x, top: y, originX: 'center', originY: 'center' });
+    },
+  },
+
+  flecha_ataque_h: {
+    id: 'flecha_ataque_h', label: 'Flecha Ataque H', category: 'medidas', defaultSize: 80, defaultColor: '#8B5CF6',
+    canRotate: true, canResize: true,
+    svgPanel: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 48"><path d="M70 24 L50 10 L50 18 L10 18 L10 30 L50 30 L50 38 Z" fill="#8B5CF6"/><text x="35" y="28" fill="white" font-size="10" text-anchor="middle">ATAQUE</text></svg>`,
+    fabricConfig: (x, y) => {
+      const path = new fabric.Path("M 0 0 L 10 -10 L 10 -4 L -30 -4 L -30 4 L 10 4 L 10 10 Z", { fill: '#8B5CF6' });
+      const txt = new fabric.Text('ATAQUE', { fontSize: 10, fill: 'white', top: 0, left: -10, originX: 'center' });
+      return new fabric.Group([path, txt], { left: x, top: y, originX: 'center', originY: 'center', angle: 0 });
+    },
+  },
+
   // ═══════════════════════════════════════
   // CATEGORÍA: BALÓN
   // ═══════════════════════════════════════
@@ -257,14 +331,21 @@ export const MATERIALS_LIBRARY = {
     colors: ['#FFFFFF', '#FF6600', '#FFCC00'],
     fabricConfig: (x, y) => ({
       type: 'circle',
-      left: x,
-      top: y,
-      radius: 7.5,
-      fill: '#FFFFFF',
-      stroke: '#333333',
-      strokeWidth: 2,
-      originX: 'center',
-      originY: 'center',
+      left: x, top: y, radius: 7.5,
+      fill: '#FFFFFF', stroke: '#333333', strokeWidth: 2,
+      originX: 'center', originY: 'center',
+    }),
+  },
+
+  balon_negro: {
+    id: 'balon_negro', label: 'Balón Negro', category: 'balon', defaultSize: 15, defaultColor: '#000000',
+    canRotate: false, canResize: true,
+    svgPanel: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48"><circle cx="24" cy="24" r="20" fill="black" stroke="white" stroke-width="2"/><path d="M15 15 L33 33 M15 33 L33 15" stroke="white" stroke-width="1" opacity="0.6"/></svg>`,
+    fabricConfig: (x, y) => ({
+      type: 'circle',
+      left: x, top: y, radius: 7.5,
+      fill: '#000000', stroke: '#FFFFFF', strokeWidth: 1.5,
+      originX: 'center', originY: 'center',
     }),
   },
 
@@ -471,22 +552,27 @@ export const MATERIALS_BY_CATEGORY = {
   señalizacion: {
     label: 'Señalización',
     icon: '🔴',
-    items: ['cono', 'platillo', 'banderin', 'pica', 'poste'],
+    items: ['cono', 'cono_amarillo', 'cono_rojo', 'cono_negro', 'grupo_conos', 'platillo', 'banderin', 'pica', 'poste'],
   },
   porteria: {
     label: 'Portería',
     icon: '🥅',
-    items: ['porteria_pequena', 'porteria_grande'],
+    items: ['porteria_pequena', 'porteria_grande', 'porteria_lateral'],
   },
   balon: {
     label: 'Balón',
     icon: '⚽',
-    items: ['balon'],
+    items: ['balon', 'balon_negro'],
   },
   coordinacion: {
     label: 'Coordinación',
     icon: '🔵',
     items: ['aro', 'valla', 'escalera', 'pared_rebote'],
+  },
+  medidas: {
+    label: 'Medidas',
+    icon: '📏',
+    items: ['linea_distancia', 'flecha_ataque_v', 'flecha_ataque_h'],
   },
   zonas: {
     label: 'Zonas',

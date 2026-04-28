@@ -14,6 +14,7 @@
  * ============================================================
  */
 
+import { fabric } from 'fabric';
 import { applyMister11Controls } from './mister11-materials.js';
 
 // ─────────────────────────────────────────
@@ -110,11 +111,33 @@ export const TOOLS = {
   text: {
     id: 'text',
     label: 'Texto',
-    icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-      <path d="M4 7V4h16v3M9 20h6M12 4v16"/>
-    </svg>`,
+    icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7V4h16v3M9 20h6M12 4v16"/></svg>`,
     cursor: 'text',
     group: 'shape',
+  },
+
+  shot: {
+    id: 'shot',
+    label: 'Tiro (Doble flecha)',
+    icon: `<svg viewBox="0 0 24 24" fill="none" stroke="#EF4444" stroke-width="2"><line x1="4" y1="16" x2="16" y2="4"/><line x1="8" y1="20" x2="20" y2="8"/><polyline points="12,4 16,4 16,8"/><polyline points="16,8 20,8 20,12"/></svg>`,
+    cursor: 'crosshair',
+    group: 'draw',
+  },
+
+  sprint: {
+    id: 'sprint',
+    label: 'Sprint (Puntos gruesa)',
+    icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-dasharray="1,4"><line x1="4" y1="20" x2="20" y2="4"/></svg>`,
+    cursor: 'crosshair',
+    group: 'draw',
+  },
+
+  dribble: {
+    id: 'dribble',
+    label: 'Conducción / Zigzag',
+    icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="4,16 8,8 12,16 16,8 20,16"/></svg>`,
+    cursor: 'crosshair',
+    group: 'draw',
   },
 
 };
@@ -196,8 +219,26 @@ export class ToolManager {
 
       case 'pencil':
         this.canvas.isDrawingMode = true;
+        this.canvas.freeDrawingBrush = new fabric.PencilBrush(this.canvas);
         this.canvas.freeDrawingBrush.color = this.strokeColor;
         this.canvas.freeDrawingBrush.width = this.strokeWidth;
+        break;
+
+      case 'sprint':
+        this.canvas.isDrawingMode = true;
+        this.canvas.freeDrawingBrush = new fabric.PencilBrush(this.canvas);
+        this.canvas.freeDrawingBrush.color = this.strokeColor;
+        this.canvas.freeDrawingBrush.width = this.strokeWidth * 2;
+        this.canvas.freeDrawingBrush.strokeDashArray = [10, 15];
+        break;
+
+      case 'dribble':
+        this.canvas.isDrawingMode = true;
+        this.canvas.freeDrawingBrush = new fabric.PencilBrush(this.canvas);
+        this.canvas.freeDrawingBrush.color = this.strokeColor;
+        this.canvas.freeDrawingBrush.width = this.strokeWidth;
+        // Simulación de zigzag con dash corto
+        this.canvas.freeDrawingBrush.strokeDashArray = [2, 4];
         break;
 
       default:
@@ -239,16 +280,21 @@ export class ToolManager {
 
       case 'arrow':
       case 'dashed':
+      case 'shot':
         if (this._drawState.phase === 'idle') {
           this._drawState.phase = 'started';
           this._drawState.startX = x;
           this._drawState.startY = y;
         } else if (this._drawState.phase === 'started') {
-          this._createArrow(
-            this._drawState.startX, this._drawState.startY,
-            x, y,
-            this.activeTool === 'dashed'
-          );
+          if (this.activeTool === 'shot') {
+            this._createShotArrow(this._drawState.startX, this._drawState.startY, x, y);
+          } else {
+            this._createArrow(
+              this._drawState.startX, this._drawState.startY,
+              x, y,
+              this.activeTool === 'dashed'
+            );
+          }
           this._drawState.phase = 'idle';
           this._removeTempLine();
         }
@@ -305,11 +351,11 @@ export class ToolManager {
     if (this._drawState.phase === 'started') {
       this._removeTempLine();
 
-      if (this.activeTool === 'arrow' || this.activeTool === 'dashed') {
+      if (this.activeTool === 'arrow' || this.activeTool === 'dashed' || this.activeTool === 'shot') {
         const line = new fabric.Line(
           [this._drawState.startX, this._drawState.startY, x, y],
           {
-            stroke: this.strokeColor,
+            stroke: this.activeTool === 'shot' ? '#EF4444' : this.strokeColor,
             strokeWidth: this.strokeWidth,
             strokeDashArray: this.activeTool === 'dashed' ? [8, 6] : null,
             selectable: false,
@@ -401,6 +447,29 @@ export class ToolManager {
     this.canvas.add(group);
     this.canvas.renderAll();
     return group;
+  }
+
+  // ───────────────────────────────────────
+  // CREAR DOBLE FLECHA (TIRO)
+  // ───────────────────────────────────────
+  _createShotArrow(x1, y1, x2, y2) {
+    const angle = Math.atan2(y2 - y1, x2 - x1);
+    const headLen = 16;
+    const offset = 4;
+    const dx = offset * Math.cos(angle + Math.PI/2);
+    const dy = offset * Math.sin(angle + Math.PI/2);
+    
+    const line1 = new fabric.Line([x1+dx, y1+dy, x2+dx, y2+dy], { stroke: '#EF4444', strokeWidth: 2 });
+    const line2 = new fabric.Line([x1-dx, y1-dy, x2-dx, y2-dy], { stroke: '#EF4444', strokeWidth: 2 });
+    
+    const tip1 = { x: x2 - headLen * Math.cos(angle - Math.PI/6), y: y2 - headLen * Math.sin(angle - Math.PI/6) };
+    const tip2 = { x: x2 - headLen * Math.cos(angle + Math.PI/6), y: y2 - headLen * Math.sin(angle + Math.PI/6) };
+    const head = new fabric.Polyline([{x:x2,y:y2}, tip1, tip2, {x:x2,y:y2}], { fill: '#EF4444', stroke: '#EF4444', strokeWidth: 1 });
+    
+    const group = new fabric.Group([line1, line2, head], { selectable: true, data: { type: 'stroke', tool: 'shot' } });
+    applyMister11Controls(group);
+    this.canvas.add(group);
+    this.canvas.renderAll();
   }
 
   // ───────────────────────────────────────

@@ -43,7 +43,10 @@ const PizarraTactica = () => {
 
   // React state (UI)
   const [ready,        setReady]        = useState(false);
-  const [isMobile,     setIsMobile]     = useState(window.innerWidth < 1024);
+  const [isMobile, setIsMobile] = useState(
+    window.innerWidth < 1024 ||
+    (window.innerWidth < 1280 && window.innerWidth > window.innerHeight)
+  );
   const [showTeamsDrawer, setShowTeamsDrawer] = useState(false);
   const [showMatsDrawer, setShowMatsDrawer] = useState(false);
   const [fieldType,    setFieldType]    = useState('full');
@@ -374,18 +377,16 @@ const PizarraTactica = () => {
       const oldW = fcRef.current.width;
       const scaleFactor = nW / oldW;
 
-      setIsMobile(window.innerWidth < 1024);
-
-      fieldCanvasRef.current.width  = nW;
-      
       const isLandscape = window.innerWidth > window.innerHeight;
-      
-      if (window.innerWidth < 1024) {
+      const isMobileView = window.innerWidth < 1024 ||
+        (window.innerWidth < 1280 && isLandscape);
+      setIsMobile(isMobileView);
+      fieldCanvasRef.current.width = nW;
+      if (isMobileView) {
         if (isLandscape) {
-          // Task 2: Full screen height
-          nH = window.innerHeight - 60;
+          nH = window.innerHeight - 110;
         } else {
-          nH = nW * (68/105);
+          nH = Math.min(nW * (68/105), window.innerHeight - 200);
         }
       } else {
         nH = containerRef.current.offsetHeight || 500;

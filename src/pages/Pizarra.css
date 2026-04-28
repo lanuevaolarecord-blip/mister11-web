@@ -10,18 +10,22 @@
 
 .pizarra-topbar {
   flex-shrink: 0;
-  height: 50px;
+  height: 60px;
   background: #1a2e1a;
-  border-bottom: 1px solid #2d4a2d;
+  border-bottom: 1px solid #c9a84c;
   overflow: hidden;
+  display: flex;
+  align-items: center;
+  z-index: 100;
 }
 
 .topbar-scroll-wrapper {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 0 10px;
+  gap: 12px;
+  padding: 0 15px;
   height: 100%;
+  width: 100%;
   overflow-x: auto;
   overflow-y: hidden;
   white-space: nowrap;

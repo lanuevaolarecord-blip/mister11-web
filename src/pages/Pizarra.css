@@ -442,10 +442,31 @@
 .toggle-rival {
   display: flex;
   align-items: center;
-  gap: 8px;
-  color: #ccc;
-  font-size: 13px;
+  justify-content: center;
+  gap: 10px;
+  background-color: #ffffff;
+  color: #1a2e1a;
+  padding: 8px 16px;
+  border-radius: 8px;
   cursor: pointer;
-  transform: scale(0.7);
-  transform-origin: left center;
+  width: fit-content;
+  min-width: 150px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+  margin: 5px 0;
+}
+
+.toggle-rival label {
+  font-size: 15px !important;
+  font-weight: 800;
+  cursor: pointer;
+  color: #1a2e1a;
+  margin: 0;
+  white-space: nowrap;
+}
+
+.toggle-rival input {
+  cursor: pointer;
+  width: 16px;
+  height: 16px;
+  accent-color: #1a2e1a;
 }

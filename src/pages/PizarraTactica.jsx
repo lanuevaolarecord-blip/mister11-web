@@ -43,7 +43,7 @@ const PizarraTactica = () => {
 
   // React state (UI)
   const [ready,        setReady]        = useState(false);
-  const [isMobile,     setIsMobile]     = useState(window.innerWidth < 768);
+  const [isMobile,     setIsMobile]     = useState(window.innerWidth < 1024);
   const [showTeamsDrawer, setShowTeamsDrawer] = useState(false);
   const [showMatsDrawer, setShowMatsDrawer] = useState(false);
   const [fieldType,    setFieldType]    = useState('full');
@@ -374,7 +374,7 @@ const PizarraTactica = () => {
       const oldW = fcRef.current.width;
       const scaleFactor = nW / oldW;
 
-      setIsMobile(window.innerWidth < 768);
+      setIsMobile(window.innerWidth < 1024);
 
       fieldCanvasRef.current.width  = nW;
       

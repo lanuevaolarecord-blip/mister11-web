@@ -480,8 +480,8 @@ input::placeholder, textarea::placeholder {
   color: #CCCCCC;
 }
 
-/* MOBILE REFINEMENTS (WIDTH < 768px) */
-@media screen and (max-width: 767px) {
+/* MOBILE & TABLET REFINEMENTS (WIDTH < 1024px) */
+@media screen and (max-width: 1023px) {
   /* PROBLEM 1: SIDEBAR */
   .hamburger-btn {
     position: fixed;
@@ -546,7 +546,7 @@ input::placeholder, textarea::placeholder {
   .main-wrapper {
     height: calc(100vh - 70px);
     overflow-y: auto !important;
-    -webkit-overflow-scrolling: touch;
+    -webkit-overflow-scrolling: touch !important;
     overscroll-behavior-y: contain;
   }
 
@@ -557,26 +557,30 @@ input::placeholder, textarea::placeholder {
   .planificacion-page, 
   .tests-content, 
   .partidos-page, 
-  .mi-equipo-page {
+  .mi-equipo-page,
+  .players-grid,
+  .tests-grid {
     height: auto !important;
     min-height: calc(100vh - 70px);
     padding: 16px;
     overflow-y: auto !important;
-    -webkit-overflow-scrolling: touch;
+    -webkit-overflow-scrolling: touch !important;
     overscroll-behavior-y: contain;
   }
 
   /* Forms long containers */
   .ia-form-body, 
   .modal-body,
-  .admin-form-container {
+  .admin-form-container,
+  .sidebar-body {
     max-height: calc(100vh - 180px) !important;
     overflow-y: auto !important;
-    -webkit-overflow-scrolling: touch;
+    -webkit-overflow-scrolling: touch !important;
   }
 
-  /* General Touch Targets */
-  button, .nav-item, input, select {
-    min-height: 48px;
+  /* General Touch Targets (Requirement 44x44px) */
+  button, .nav-item, input, select, .icon-btn, .topbar-btn, .tool-icon-btn {
+    min-height: 44px;
+    min-width: 44px;
   }
 }

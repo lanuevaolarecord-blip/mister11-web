@@ -354,7 +354,7 @@
   font-size: 14px;
 }
 
-/* Layout Responsivo */
+/* Layout Responsivo (Móvil y Tablet) */
 .pizarra-container.mobile .panel-izq,
 .pizarra-container.mobile .panel-der {
   display: none;
@@ -374,11 +374,11 @@
   padding: 4px 0;
 }
 
-@media (max-width: 1024px) {
+@media (max-width: 1023px) {
   .topbar-scroll-wrapper {
     flex-wrap: nowrap;
     overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
+    -webkit-overflow-scrolling: touch !important;
     scrollbar-width: thin;
   }
   
@@ -501,8 +501,8 @@
   white-space: nowrap;
 }
 
-/* Touch Targets */
-@media (max-width: 768px) {
+/* Touch Targets (Requirement 44x44px) */
+@media (max-width: 1023px) {
   .topbar-btn, .tool-icon-btn, .frame-chip {
     min-width: 44px;
     min-height: 44px;
@@ -522,6 +522,13 @@
   .topbar-scroll-wrapper {
     gap: 8px;
     padding: 8px 0;
+  }
+
+  /* ORIENTACIÓN LANDSCAPE (Optimización Tablet) */
+  @media screen and (orientation: landscape) {
+    .canvas-area {
+      max-height: 80vh !important;
+    }
   }
 }
 

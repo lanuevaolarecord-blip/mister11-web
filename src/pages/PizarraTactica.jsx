@@ -244,6 +244,7 @@ const PizarraTactica = () => {
           type: type
         });
         canvas.add(player);
+        player.bringToFront();
       });
     };
 
@@ -381,11 +382,11 @@ const PizarraTactica = () => {
       const isMobileView = window.innerWidth < 1024 || (window.innerWidth < 1280 && isLandscape);
       setIsMobile(isMobileView);
 
-      // Recalcular altura restando topbar (60px) y timeline (60px)
+      // Recalcular altura restando topbar (50px) y timeline (60px) = 110px
       if (isLandscape) {
-        nH = window.innerHeight - 130; 
+        nH = window.innerHeight - 110; 
       } else {
-        nH = Math.min(nW * (68/105), window.innerHeight - 250);
+        nH = Math.min(nW * (68/105), window.innerHeight - 220);
       }
       
       fieldCanvasRef.current.height = nH;
@@ -777,6 +778,7 @@ const PizarraTactica = () => {
     const center = fc.getCenter();
     const player = createPlayer(center.left, center.top, { color, label, type });
     fc.add(player);
+    player.bringToFront(); // Z-INDEX: 20 logic
     fc.setActiveObject(player);
     fc.renderAll();
     saveFrameState();

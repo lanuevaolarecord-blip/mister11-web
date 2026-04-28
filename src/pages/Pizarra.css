@@ -10,13 +10,14 @@
 
 .pizarra-topbar {
   flex-shrink: 0;
-  height: 60px;
+  height: 50px; /* Thinner */
   background: #1a2e1a;
   border-bottom: 1px solid #c9a84c;
   overflow: hidden;
   display: flex;
+  flex-direction: row !important; /* Horizontal */
   align-items: center;
-  z-index: 100;
+  z-index: 1000; /* UI Always on top */
 }
 
 .topbar-scroll-wrapper {
@@ -60,13 +61,21 @@
   width: 100vw;
 }
 
-.field-renderer-canvas,
+.field-renderer-canvas {
+  position: absolute !important;
+  top: 50% !important;
+  left: 50% !important;
+  transform: translate(-50%, -50%) !important;
+  z-index: 1 !important;
+}
+
 .fabric-canvas-elem,
 .canvas-container {
   position: absolute !important;
   top: 50% !important;
   left: 50% !important;
   transform: translate(-50%, -50%) !important;
+  z-index: 10 !important; /* Players and materials here */
 }
 
 .pizarra-timeline {
@@ -121,7 +130,7 @@
 /* LANDSCAPE OPTIMIZATION */
 @media screen and (orientation: landscape) {
   .canvas-area {
-    height: calc(100vh - 130px);
+    height: calc(100vh - 110px);
   }
   .floating-actions {
     bottom: 70px;

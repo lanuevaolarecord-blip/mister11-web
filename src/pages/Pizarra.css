@@ -433,6 +433,20 @@
   transform: scale(0.95);
 }
 
+@media (max-width: 1023px) and (orientation: landscape) {
+  .floating-actions {
+    bottom: 16px;
+    padding: 0 16px;
+  }
+  
+  .btn-floating-left, .btn-floating-right {
+    height: 38px;
+    padding: 0 12px;
+    font-size: 11px;
+    border-radius: 12px;
+  }
+}
+
 /* Bottom Drawers */
 .bottom-drawer-overlay {
   position: fixed;
@@ -527,7 +541,8 @@
   /* ORIENTACIÓN LANDSCAPE (Optimización Tablet) */
   @media screen and (orientation: landscape) {
     .canvas-area {
-      max-height: 80vh !important;
+      height: auto !important;
+      min-height: 0 !important;
     }
   }
 }

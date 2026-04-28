@@ -378,8 +378,15 @@ const PizarraTactica = () => {
 
       fieldCanvasRef.current.width  = nW;
       
-      if (window.innerWidth < 768) {
-        nH = nW * (68/105);
+      const isLandscape = window.innerWidth > window.innerHeight;
+      
+      if (window.innerWidth < 1024) {
+        if (isLandscape) {
+          // Task 3: calc(100vh - 120px) in landscape
+          nH = Math.max(window.innerHeight - 120, 300);
+        } else {
+          nH = nW * (68/105);
+        }
       } else {
         nH = containerRef.current.offsetHeight || 500;
       }

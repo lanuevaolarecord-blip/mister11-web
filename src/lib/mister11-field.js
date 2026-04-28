@@ -84,7 +84,7 @@ export class FieldRenderer {
     this.canvas = canvas;
     this.ctx = canvas.getContext('2d');
     this.currentType = 'full';
-    this.padding = options.padding ?? 24; // px de margen alrededor del campo
+    this.padding = options.padding ?? { v: 12, h: 16 }; // px de margen {v, h}
 
     // Dimensiones calculadas (se actualizan en draw)
     this.field = {
@@ -160,12 +160,13 @@ export class FieldRenderer {
   _resize() {
     const W = this.canvas.width  = this.canvas.offsetWidth;
     const H = this.canvas.height = this.canvas.offsetHeight;
-    const p = this.padding;
+    const pH = (typeof this.padding === 'object') ? (this.padding.h ?? 16) : this.padding;
+    const pV = (typeof this.padding === 'object') ? (this.padding.v ?? 12) : this.padding;
 
     // Account for GOAL_DEPTH on BOTH SIDES in scale calculations (Full field)
     const totalLength = FIFA.LENGTH + FIFA.GOAL_DEPTH * 2;
-    const scaleByW = (W - p * 2) / totalLength;
-    const scaleByH = (H - p * 2) / FIFA.WIDTH;
+    const scaleByW = (W - pH * 2) / totalLength;
+    const scaleByH = (H - pV * 2) / FIFA.WIDTH;
     const scale = Math.min(scaleByW, scaleByH);
 
     const fieldW = FIFA.LENGTH * scale;

@@ -268,7 +268,7 @@ const PizarraTactica = () => {
     // 1. Field (2D canvas)
     fieldCanvasRef.current.width  = W;
     fieldCanvasRef.current.height = isMobile ? (W * 68/105) : H;
-    const renderer = new FieldRenderer(fieldCanvasRef.current, { padding: 0 });
+    const renderer = new FieldRenderer(fieldCanvasRef.current, { padding: { v: 12, h: 16 } });
     renderer.draw('full');
     frRef.current = renderer;
 
@@ -801,7 +801,7 @@ const PizarraTactica = () => {
   const TeamsPanel = () => (
     <div className="pizarra-sidebar-content">
       <div className="panel-title">EQUIPOS</div>
-      <div style={{ padding: '10px' }}>
+      <div style={{ padding: '0 0 8px' }}>
         <TeamCard 
           color={localColor} 
           name="Local" 
@@ -816,7 +816,6 @@ const PizarraTactica = () => {
           name="Rival" 
           count={11} 
           onAdd={() => addManualPlayer('rival')} 
-          style={{ marginTop: 12 }} 
           onColorChange={setRivalColor}
           formation={rivalFormation}
           onFormationChange={setRivalFormation}
@@ -998,22 +997,22 @@ const PizarraTactica = () => {
       {/* ── TIMELINE ──────────────────────────────────────────────────────── */}
       <div className="pizarra-timeline">
         <div className="timeline-scroll-wrapper">
-          <button className="topbar-btn" onClick={() => loadFrame(0)}
+          <button className="timeline-btn-nav" onClick={() => loadFrame(0)}
             disabled={isPlaying || frameIdx === 0}>⏮</button>
-          <button className="topbar-btn"
+          <button className="timeline-btn-nav"
             onClick={() => loadFrame(Math.max(0, frameIdx - 1))}
             disabled={isPlaying || frameIdx === 0}>◀</button>
 
           {isPlaying
-            ? <button className="topbar-btn primary" onClick={stopAnimation}>⏹</button>
-            : <button className="topbar-btn primary" onClick={playAnimation}
+            ? <button className="timeline-btn-nav play" onClick={stopAnimation}>⏹</button>
+            : <button className="timeline-btn-nav play" onClick={playAnimation}
                 disabled={frames.length < 2}>▶</button>
           }
 
-          <button className="topbar-btn"
+          <button className="timeline-btn-nav"
             onClick={() => loadFrame(Math.min(frames.length - 1, frameIdx + 1))}
             disabled={isPlaying || frameIdx === frames.length - 1}>▶</button>
-          <button className="topbar-btn"
+          <button className="timeline-btn-nav"
             onClick={() => loadFrame(frames.length - 1)}
             disabled={isPlaying || frameIdx === frames.length - 1}>⏭</button>
 
@@ -1031,8 +1030,8 @@ const PizarraTactica = () => {
             ))}
           </div>
 
-          <button className="topbar-btn outline" onClick={addFrame} disabled={isPlaying}>+ Frame</button>
-          <button className="topbar-btn" onClick={deleteFrame}
+          <button className="btn-add-frame" onClick={addFrame} disabled={isPlaying}>+ Frame</button>
+          <button className="btn-trash-frame" onClick={deleteFrame}
             disabled={isPlaying || frames.length <= 1}>🗑</button>
         </div>
       </div>
@@ -1063,8 +1062,8 @@ const PizarraTactica = () => {
 const TeamCard = ({ color, name, count, onAdd, onColorChange, formation, onFormationChange }) => (
   <div className="team-card-pizarra">
     <div className="team-header-pizarra">
-      <div style={{ position: 'relative', width: 24, height: 24 }}>
-        <div style={{ width: 24, height: 24, borderRadius: '50%', background: color, border: '2px solid white' }} />
+      <div style={{ position: 'relative', width: 22, height: 22 }}>
+        <div style={{ width: 22, height: 22, borderRadius: '50%', background: color, border: '1px solid white' }} />
         {onColorChange && (
           <input 
             type="color" 

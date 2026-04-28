@@ -248,11 +248,20 @@
   justify-content: center;
 }
 
-.field-renderer-canvas, .fabric-canvas-elem, .canvas-container {
+.field-renderer-canvas {
   position: absolute !important;
   top: 50% !important;
   left: 50% !important;
   transform: translate(-50%, -50%) !important;
+  z-index: 1 !important;
+}
+
+.fabric-canvas-elem, .canvas-container {
+  position: absolute !important;
+  top: 50% !important;
+  left: 50% !important;
+  transform: translate(-50%, -50%) !important;
+  z-index: 999 !important;
 }
 
 /* PANEL DERECHO — 168px */

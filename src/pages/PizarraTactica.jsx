@@ -188,12 +188,12 @@ const PizarraTactica = () => {
   const createPlayer = useCallback((x, y, options = {}) => {
     const { color = '#4CAF7D', label = '1', type = 'local' } = options;
     const circle = new fabric.Circle({
-      radius: 20, originX: 'center', originY: 'center',
+      radius: 15, originX: 'center', originY: 'center',
       fill: color,
       stroke: '#FFFFFF', strokeWidth: 2.5,
     });
     const text = new fabric.Text(String(label), {
-      fontSize: 14, fontWeight: 'bold', fill: '#FFFFFF',
+      fontSize: 12, fontWeight: 'bold', fill: '#FFFFFF',
       originX: 'center', originY: 'center',
     });
     const group = new fabric.Group([circle, text], {
@@ -244,7 +244,6 @@ const PizarraTactica = () => {
           type: type
         });
         canvas.add(player);
-        player.bringToFront();
       });
     };
 
@@ -382,11 +381,11 @@ const PizarraTactica = () => {
       const isMobileView = window.innerWidth < 1024 || (window.innerWidth < 1280 && isLandscape);
       setIsMobile(isMobileView);
 
-      // Recalcular altura restando topbar (50px) y timeline (60px) = 110px
+      // Recalcular altura restando topbar (60px) y timeline (60px)
       if (isLandscape) {
-        nH = window.innerHeight - 110; 
+        nH = window.innerHeight - 130; 
       } else {
-        nH = Math.min(nW * (68/105), window.innerHeight - 250); // More space for mobile
+        nH = Math.min(nW * (68/105), window.innerHeight - 250);
       }
       
       fieldCanvasRef.current.height = nH;
@@ -778,7 +777,6 @@ const PizarraTactica = () => {
     const center = fc.getCenter();
     const player = createPlayer(center.left, center.top, { color, label, type });
     fc.add(player);
-    player.bringToFront(); // Z-INDEX: 20 logic
     fc.setActiveObject(player);
     fc.renderAll();
     saveFrameState();

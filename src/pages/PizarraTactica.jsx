@@ -188,12 +188,12 @@ const PizarraTactica = () => {
   const createPlayer = useCallback((x, y, options = {}) => {
     const { color = '#4CAF7D', label = '1', type = 'local' } = options;
     const circle = new fabric.Circle({
-      radius: 14, originX: 'center', originY: 'center',
+      radius: 20, originX: 'center', originY: 'center',
       fill: color,
-      stroke: '#FFFFFF', strokeWidth: 2,
+      stroke: '#FFFFFF', strokeWidth: 2.5,
     });
     const text = new fabric.Text(String(label), {
-      fontSize: 11, fontWeight: 'bold', fill: '#FFFFFF',
+      fontSize: 14, fontWeight: 'bold', fill: '#FFFFFF',
       originX: 'center', originY: 'center',
     });
     const group = new fabric.Group([circle, text], {
@@ -386,7 +386,7 @@ const PizarraTactica = () => {
       if (isLandscape) {
         nH = window.innerHeight - 110; 
       } else {
-        nH = Math.min(nW * (68/105), window.innerHeight - 220);
+        nH = Math.min(nW * (68/105), window.innerHeight - 250); // More space for mobile
       }
       
       fieldCanvasRef.current.height = nH;

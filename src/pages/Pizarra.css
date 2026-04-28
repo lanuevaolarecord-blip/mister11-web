@@ -207,15 +207,29 @@
 }
 
 .toggle-rival {
+  height: 26px !important;
+  font-size: 10px !important;
+  padding: 0 8px !important;
+  border: 1px solid #2D5A27 !important;
+  color: #CCCCCC !important;
+  background: transparent !important;
+  border-radius: 4px !important;
+  width: 100% !important;
+  cursor: pointer;
   display: flex;
   align-items: center;
-  gap: 5px;
+  justify-content: center;
   margin-bottom: 8px;
+  transition: all 0.2s;
+  text-transform: uppercase;
+  font-weight: 600;
+  letter-spacing: 0.5px;
 }
-.toggle-rival label {
-  font-size: 11px;
-  color: #AAAAAA;
-  cursor: pointer;
+.toggle-rival:hover { background: #1E3A2E !important; }
+.toggle-rival.active {
+  background: #1E3A2E !important;
+  color: #FFFFFF !important;
+  border-color: #4CAF7D !important;
 }
 .toggle-rival input {
   width: 13px;

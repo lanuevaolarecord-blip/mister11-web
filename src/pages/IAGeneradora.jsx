@@ -259,15 +259,11 @@ Responde SOLO en español. No incluyas texto fuera del formato indicado.`;
           {error && <div className="ia-error">{error}</div>}
 
           <button 
-            className="btn-generate" 
+            className={`btn-generate ${loading ? 'loading' : ''}`}
             onClick={handleGenerate} 
             disabled={loading || form.espacio === '' || form.espacio === null || form.espacio === undefined}
           >
-            {loading ? (
-              <><span className="spinner"></span> Generando ejercicio...</>
-            ) : (
-              <>✨ Generar Ejercicio</>
-            )}
+            {loading ? '⏳ Analizando contexto...' : '✨ Generar Ejercicio'}
           </button>
         </div>
       </div>

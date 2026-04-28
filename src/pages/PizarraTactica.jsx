@@ -386,7 +386,13 @@ const PizarraTactica = () => {
         if (isLandscape) {
           nH = window.innerHeight - 110;
         } else {
-          nH = Math.min(nW * (68/105), window.innerHeight - 200);
+          // Portrait: calcula altura respetando proporción del campo (105x68)
+          // pero nunca supera el espacio disponible
+          const maxH = window.innerHeight - 170; // topbar + timeline + floating buttons
+          const proportionalH = nW * (68 / 105);
+          nH = Math.min(proportionalH, maxH);
+          // Si el campo quedaría muy pequeño, usa el espacio disponible con proporción inversa
+          if (nH < 200) nH = Math.min(maxH, nW * 0.6);
         }
       } else {
         nH = containerRef.current.offsetHeight || 500;
@@ -831,15 +837,12 @@ const PizarraTactica = () => {
 
       <div className="panel-title">ACCIONES</div>
       <div className="acciones-panel-container">
-        <div className="toggle-rival">
-          <input 
-            type="checkbox" 
-            id="show-rival-toggle" 
-            checked={showRival} 
-            onChange={e => setShowRival(e.target.checked)} 
-          />
-          <label htmlFor="show-rival-toggle">Mostrar equipo rival</label>
-        </div>
+        <button 
+          className={`toggle-rival ${showRival ? 'active' : ''}`}
+          onClick={() => setShowRival(!showRival)}
+        >
+          {showRival ? '👁 OCULTAR EQUIPO RIVAL' : '👁 MOSTRAR EQUIPO RIVAL'}
+        </button>
         <button className="btn-delete-pizarra" onClick={deleteSelected}>🗑 ELIMINAR SELECCIÓN</button>
       </div>
     </div>

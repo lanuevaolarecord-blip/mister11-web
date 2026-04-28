@@ -310,7 +310,7 @@ export const MATERIALS_LIBRARY = {
     id: 'balon',
     label: 'Balón',
     category: 'balon',
-    defaultSize: 15,
+    defaultSize: 30,
     defaultColor: '#FFFFFF',
     canRotate: false,
     canResize: true,
@@ -331,19 +331,19 @@ export const MATERIALS_LIBRARY = {
     colors: ['#FFFFFF', '#FF6600', '#FFCC00'],
     fabricConfig: (x, y) => ({
       type: 'circle',
-      left: x, top: y, radius: 7.5,
+      left: x, top: y, radius: 15,
       fill: '#FFFFFF', stroke: '#333333', strokeWidth: 2,
       originX: 'center', originY: 'center',
     }),
   },
 
   balon_negro: {
-    id: 'balon_negro', label: 'Balón Negro', category: 'balon', defaultSize: 15, defaultColor: '#000000',
+    id: 'balon_negro', label: 'Balón Negro', category: 'balon', defaultSize: 30, defaultColor: '#000000',
     canRotate: false, canResize: true,
     svgPanel: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48"><circle cx="24" cy="24" r="20" fill="black" stroke="white" stroke-width="2"/><path d="M15 15 L33 33 M15 33 L33 15" stroke="white" stroke-width="1" opacity="0.6"/></svg>`,
     fabricConfig: (x, y) => ({
       type: 'circle',
-      left: x, top: y, radius: 7.5,
+      left: x, top: y, radius: 15,
       fill: '#000000', stroke: '#FFFFFF', strokeWidth: 1.5,
       originX: 'center', originY: 'center',
     }),

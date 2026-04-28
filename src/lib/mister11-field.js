@@ -172,10 +172,7 @@ export class FieldRenderer {
     const fieldW = FIFA.LENGTH * scale;
     const fieldH = FIFA.WIDTH  * scale;
 
-    // VERIFICACIÓN: fieldW siempre mayor que fieldH
-    if (fieldW < fieldH) {
-      console.error('[Míster11] ERROR: el campo está en vertical. Revisa las dimensiones del canvas.');
-    }
+    // El campo se dibuja proporcionalmente incluso en portrait gracias a Math.min(scaleByW, scaleByH)
 
     this.field = {
       x: (W - fieldW) / 2,

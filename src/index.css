@@ -480,8 +480,8 @@ input::placeholder, textarea::placeholder {
   color: #CCCCCC;
 }
 
-/* MOBILE & TABLET REFINEMENTS (WIDTH < 1024px) */
-@media screen and (max-width: 1023px) {
+/* MOBILE & TABLET REFINEMENTS (FORCED BREAKPOINT 1024px) */
+@media screen and (max-width: 1024px) {
   /* PROBLEM 1: SIDEBAR */
   .hamburger-btn {
     position: fixed;

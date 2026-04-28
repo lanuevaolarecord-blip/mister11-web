@@ -957,11 +957,9 @@ const PizarraTactica = () => {
       {/* ── MAIN BOARD ────────────────────────────────────────────────────── */}
       <div className="pizarra-main">
 
-        {!isMobile && (
-          <div className="panel-izq">
-            <TeamsPanel />
-          </div>
-        )}
+        <div className="panel-izq">
+          <TeamsPanel />
+        </div>
 
         {/* CANVAS AREA - Requirement 1 */}
         <div className="canvas-area" ref={containerRef}>
@@ -982,19 +980,15 @@ const PizarraTactica = () => {
           )}
 
           {/* Floating Buttons for Mobile */}
-          {isMobile && (
-            <div className="floating-actions">
-              <button className="btn-floating-left" onClick={() => setShowTeamsDrawer(true)}>⚽ Equipos</button>
-              <button className="btn-floating-right" onClick={() => setShowMatsDrawer(true)}>🎽 Material</button>
-            </div>
-          )}
+          <div className="floating-actions">
+            <button className="btn-floating-left" onClick={() => setShowTeamsDrawer(true)}>⚽ Equipos</button>
+            <button className="btn-floating-right" onClick={() => setShowMatsDrawer(true)}>🎽 Material</button>
+          </div>
         </div>
 
-        {!isMobile && (
-          <div className="panel-der">
-            <MaterialsPanel />
-          </div>
-        )}
+        <div className="panel-der">
+          <MaterialsPanel />
+        </div>
 
       </div>
 
@@ -1041,25 +1035,21 @@ const PizarraTactica = () => {
       </div>
 
       {/* ── MOBILE DRAWERS ───────────────────────────────────────────────── */}
-      {isMobile && (
-        <>
-          {showTeamsDrawer && (
-            <div className="bottom-drawer-overlay" onClick={() => setShowTeamsDrawer(false)}>
-              <div className="bottom-drawer" onClick={e => e.stopPropagation()}>
-                <div className="drawer-handle" />
-                <TeamsPanel />
-              </div>
-            </div>
-          )}
-          {showMatsDrawer && (
-            <div className="bottom-drawer-overlay" onClick={() => setShowMatsDrawer(false)}>
-              <div className="bottom-drawer" onClick={e => e.stopPropagation()}>
-                <div className="drawer-handle" />
-                <MaterialsPanel />
-              </div>
-            </div>
-          )}
-        </>
+      {showTeamsDrawer && (
+        <div className="bottom-drawer-overlay" onClick={() => setShowTeamsDrawer(false)}>
+          <div className="bottom-drawer" onClick={e => e.stopPropagation()}>
+            <div className="drawer-handle" />
+            <TeamsPanel />
+          </div>
+        </div>
+      )}
+      {showMatsDrawer && (
+        <div className="bottom-drawer-overlay" onClick={() => setShowMatsDrawer(false)}>
+          <div className="bottom-drawer" onClick={e => e.stopPropagation()}>
+            <div className="drawer-handle" />
+            <MaterialsPanel />
+          </div>
+        </div>
       )}
 
     </div>

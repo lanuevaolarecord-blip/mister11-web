@@ -354,10 +354,15 @@
   font-size: 14px;
 }
 
-/* Layout Responsivo (Móvil y Tablet) */
-.pizarra-container.mobile .panel-izq,
-.pizarra-container.mobile .panel-der {
-  display: none;
+/* Layout Responsivo (Móvil y Tablet < 1024px) - FORZADO POR CSS */
+@media (max-width: 1024px) {
+  .panel-izq, .panel-der {
+    display: none !important;
+  }
+  
+  .floating-actions {
+    display: flex !important;
+  }
 }
 
 /* Topbar Scroll */
@@ -374,7 +379,7 @@
   padding: 4px 0;
 }
 
-@media (max-width: 1023px) {
+@media (max-width: 1024px) {
   .topbar-scroll-wrapper {
     flex-wrap: nowrap;
     overflow-x: auto;
@@ -401,11 +406,11 @@
 
 /* Floating Actions */
 .floating-actions {
+  display: none;
   position: fixed;
   bottom: 80px;
   left: 0;
   right: 0;
-  display: flex;
   justify-content: space-between;
   padding: 0 16px;
   z-index: 100;
@@ -433,7 +438,7 @@
   transform: scale(0.95);
 }
 
-@media (max-width: 1023px) and (orientation: landscape) {
+@media (max-width: 1024px) and (orientation: landscape) {
   .floating-actions {
     bottom: 16px;
     padding: 0 16px;
@@ -516,7 +521,7 @@
 }
 
 /* Touch Targets (Requirement 44x44px) */
-@media (max-width: 1023px) {
+@media (max-width: 1024px) {
   .topbar-btn, .tool-icon-btn, .frame-chip {
     min-width: 44px;
     min-height: 44px;

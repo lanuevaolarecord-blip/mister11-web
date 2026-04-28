@@ -480,143 +480,127 @@ input::placeholder, textarea::placeholder {
   color: #CCCCCC;
 }
 
-/* MOBILE & TABLET REFINEMENTS (FORCED BREAKPOINT 1024px) */
-@media screen and (max-width: 1024px) {
-  /* PROBLEM 1: SIDEBAR */
-  .hamburger-btn {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 44px;
-    height: 44px;
-    background: #1B3A2D;
-    color: #FFFFFF;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 1000;
-    border: none;
-    cursor: pointer;
-    border-radius: 0 0 8px 0;
-  }
+/* GLOBAL HAMBURGER & SIDEBAR (ALL RESOLUTIONS) */
+.hamburger-btn {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 44px;
+  height: 44px;
+  background: #1B3A2D;
+  color: #FFFFFF;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  border: none;
+  cursor: pointer;
+  border-radius: 0 0 8px 0;
+}
 
-  .sidebar-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100vw;
-    height: 100vh;
-    background: rgba(0, 0, 0, 0.5);
-    z-index: 1000;
-    display: none;
-    opacity: 0;
-    transition: opacity 0.3s ease;
-  }
+.sidebar-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 1000;
+  display: none;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
 
-  .sidebar-overlay.open {
-    display: block;
-    opacity: 1;
-  }
+.sidebar-overlay.open {
+  display: block;
+  opacity: 1;
+}
 
-  .sidebar {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 280px !important;
-    max-width: 85% !important;
-    min-width: 0 !important;
-    height: 100vh !important;
-    z-index: 1001 !important;
-    transform: translateX(-100%);
-    transition: transform 0.3s ease;
-    border-right: none;
-    margin: 0;
-    display: flex !important;
-    flex-direction: column;
-    overflow-y: auto !important;
-    -webkit-overflow-scrolling: touch !important;
-  }
+.sidebar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 280px !important;
+  max-width: 85% !important;
+  min-width: 0 !important;
+  height: 100vh !important;
+  z-index: 1001 !important;
+  transform: translateX(-100%);
+  transition: transform 0.3s ease;
+  border-right: none;
+  margin: 0;
+  display: flex !important;
+  flex-direction: column;
+  overflow-y: auto !important;
+  -webkit-overflow-scrolling: touch !important;
+  background-color: #1A2E1A !important;
+}
 
-  .sidebar.open {
-    transform: translateX(0);
-  }
+.sidebar.open {
+  transform: translateX(0);
+}
 
-  .header {
-    padding-left: 54px; /* Space for hamburger */
-    transition: all 0.2s;
-    height: 50px !important;
-  }
+.sidebar-close-btn {
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+}
 
-  .header h1 {
-    font-size: 1rem !important;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    max-width: 150px;
-  }
+.header {
+  padding-left: 54px !important; /* Always space for hamburger */
+  height: 60px !important;
+  transition: all 0.2s;
+}
 
-  .sidebar-close-btn {
-    display: flex !important;
-    align-items: center;
-    justify-content: center;
-  }
+.header h1 {
+  font-size: 1.1rem !important;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 200px;
+}
 
-  /* TAREA 2: REDUCCIÓN DE CABECERAS (MODO HORIZONTAL) */
-  @media (orientation: landscape) {
-    .header h1 { display: none !important; }
-    .header, .top-bar { 
-      height: 44px !important; 
-      padding: 0 10px 0 54px !important; 
-    }
-    .logo-container img { 
-      height: 30px !important; 
-    }
-  }
+.main-content {
+  margin-left: 0 !important;
+  width: 100vw !important;
+}
 
-  /* PROBLEM 3: SCROLL */
-  .main-wrapper {
-    height: calc(100vh - 50px);
-    overflow-y: auto !important;
-    -webkit-overflow-scrolling: touch !important;
-    overscroll-behavior-y: contain;
-    padding: 0 !important; /* Edge to edge */
-  }
+.main-wrapper {
+  height: calc(100vh - 60px);
+  overflow-y: auto !important;
+  -webkit-overflow-scrolling: touch !important;
+  overscroll-behavior-y: contain;
+  padding: 0 !important;
+}
 
-  .app-container, .main-content {
-    background-color: #1a2e1a !important;
-  }
+.app-container, .main-content {
+  background-color: #1a2e1a !important;
+}
 
-  /* Specific containers that might block scroll */
-  .page-content, 
-  .admin-container, 
-  .sesiones-page, 
-  .planificacion-page, 
-  .tests-content, 
-  .partidos-page, 
-  .mi-equipo-page,
-  .players-grid,
-  .tests-grid {
-    height: auto !important;
-    min-height: calc(100vh - 50px);
-    padding: 16px;
-    overflow-y: auto !important;
-    -webkit-overflow-scrolling: touch !important;
-    overscroll-behavior-y: contain;
-  }
+/* Specific containers */
+.page-content, 
+.admin-container, 
+.sesiones-page, 
+.planificacion-page, 
+.tests-content, 
+.partidos-page, 
+.mi-equipo-page,
+.players-grid,
+.tests-grid {
+  height: auto !important;
+  min-height: calc(100vh - 60px);
+  padding: 16px;
+  overflow-y: auto !important;
+  -webkit-overflow-scrolling: touch !important;
+}
 
-  /* Forms long containers */
-  .ia-form-body, 
-  .modal-body,
-  .admin-form-container,
-  .sidebar-body {
-    max-height: calc(100vh - 180px) !important;
-    overflow-y: auto !important;
-    -webkit-overflow-scrolling: touch !important;
-  }
+/* Touch Targets (Requirement 44x44px) */
+button, .nav-item, input, select, .icon-btn, .topbar-btn, .tool-icon-btn {
+  min-height: 44px;
+  min-width: 44px;
+}
 
-  /* General Touch Targets (Requirement 44x44px) */
-  button, .nav-item, input, select, .icon-btn, .topbar-btn, .tool-icon-btn {
-    min-height: 44px;
-    min-width: 44px;
-  }
+@media (orientation: landscape) and (max-height: 500px) {
+  .header h1 { display: none !important; }
+  .header { height: 44px !important; }
 }

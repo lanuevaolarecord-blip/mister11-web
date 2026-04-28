@@ -378,18 +378,14 @@ const PizarraTactica = () => {
       const scaleFactor = nW / oldW;
 
       const isLandscape = window.innerWidth > window.innerHeight;
-      const isMobileView = window.innerWidth < 1024 ||
-        (window.innerWidth < 1280 && isLandscape);
-      setIsMobile(isMobileView);
-      fieldCanvasRef.current.width = nW;
-      if (isMobileView) {
-        if (isLandscape) {
-          nH = window.innerHeight - 110;
-        } else {
-          nH = Math.min(nW * (68/105), window.innerHeight - 200);
-        }
+      
+      // TAREA 1 & 3: Sidebar siempre oculto, interfaz flotante global
+      // TAREA 4: height: calc(100vh - 80px) en landscape
+      if (isLandscape) {
+        nH = window.innerHeight - 80;
       } else {
-        nH = containerRef.current.offsetHeight || 500;
+        // En vertical, intentamos mantener una proporción decente o usar el resto del alto
+        nH = Math.min(nW * (68/105), window.innerHeight - 200);
       }
       
       fieldCanvasRef.current.height = nH;
@@ -890,7 +886,7 @@ const PizarraTactica = () => {
 
   // ─── JSX ──────────────────────────────────────────────────────────────────
   return (
-    <div className={`pizarra-container ${isMobile ? 'mobile' : 'desktop'}`} style={{ touchAction: 'pan-y' }}>
+    <div className="pizarra-container" style={{ touchAction: 'pan-y' }}>
 
       {/* ── TOP BAR ───────────────────────────────────────────────────────── */}
       <div className="pizarra-topbar">
@@ -957,18 +953,13 @@ const PizarraTactica = () => {
 
       {/* ── MAIN BOARD ────────────────────────────────────────────────────── */}
       <div className="pizarra-main">
-
-        <div className="panel-izq">
-          <TeamsPanel />
-        </div>
-
-        {/* CANVAS AREA - Requirement 1 */}
+        {/* CANVAS AREA - Sidebar siempre oculto por overlay */}
         <div className="canvas-area" ref={containerRef}>
-          {/* Field Canvas - Requirement 2 */}
+          {/* Field Canvas */}
           <canvas ref={fieldCanvasRef} className="field-renderer-canvas"
             style={{ pointerEvents: 'none', zIndex: 1 }} />
           
-          {/* Fabric Canvas - Requirement 2 */}
+          {/* Fabric Canvas */}
           <canvas ref={fabricElemRef} className="fabric-canvas-elem"
             style={{ zIndex: 2, touchAction: 'none' }} />
 
@@ -980,17 +971,12 @@ const PizarraTactica = () => {
             </div>
           )}
 
-          {/* Floating Buttons for Mobile */}
+          {/* Floating Buttons - Global (Web/Tablet/Móvil) */}
           <div className="floating-actions">
             <button className="btn-floating-left" onClick={() => setShowTeamsDrawer(true)}>⚽ Equipos</button>
             <button className="btn-floating-right" onClick={() => setShowMatsDrawer(true)}>🎽 Material</button>
           </div>
         </div>
-
-        <div className="panel-der">
-          <MaterialsPanel />
-        </div>
-
       </div>
 
       {/* ── TIMELINE ──────────────────────────────────────────────────────── */}

@@ -832,7 +832,7 @@ const PizarraTactica = () => {
 
       <div className="panel-title">ACCIONES</div>
       <div style={{ padding: '0 10px 10px', display: 'flex', flexDirection: 'column', gap: 10 }}>
-        <div className="toggle-rival">
+        <div className="toggle-rival btn-pizarra-accion">
           <input 
             type="checkbox" 
             id="show-rival-toggle" 
@@ -841,7 +841,7 @@ const PizarraTactica = () => {
           />
           <label htmlFor="show-rival-toggle">Mostrar equipo rival</label>
         </div>
-        <button className="btn-delete-pizarra" onClick={deleteSelected}>🗑 ELIMINAR SELECCIÓN</button>
+        <button className="btn-delete-pizarra btn-pizarra-accion" onClick={deleteSelected}>🗑 ELIMINAR SELECCIÓN</button>
       </div>
     </div>
   );

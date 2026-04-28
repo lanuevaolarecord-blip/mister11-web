@@ -32,8 +32,18 @@ const Sidebar = ({ isOpen, onClose }) => {
 
   return (
     <aside className={`sidebar ${isOpen ? 'open' : ''}`}>
-      <div className="logo-container">
+      <div className="logo-container" style={{ position: 'relative', justifyContent: 'space-between' }}>
         <img src="/logo_mister11.png" alt="Míster11" height="40"/>
+        <button 
+          className="sidebar-close-btn" 
+          onClick={onClose}
+          style={{ 
+            background: 'transparent', border: 'none', color: 'white', 
+            fontSize: '24px', cursor: 'pointer', display: 'none'
+          }}
+        >
+          ✕
+        </button>
       </div>
       
       <nav className="nav-menu">

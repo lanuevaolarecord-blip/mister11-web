@@ -525,17 +525,17 @@
   
   .pizarra-topbar {
     height: auto;
-    min-height: 64px;
-    padding: 0 10px;
+    min-height: 44px;
+    padding: 0 5px;
   }
 
   .pizarra-timeline {
-    height: 70px;
+    height: 60px;
   }
   
   .topbar-scroll-wrapper {
-    gap: 8px;
-    padding: 8px 0;
+    gap: 5px;
+    padding: 4px 0;
   }
 
   /* ORIENTACIÓN LANDSCAPE (Optimización Tablet) */

@@ -71,7 +71,7 @@ html, body {
 
 body {
   font-family: var(--font-body);
-  background-color: var(--bg-primary);
+  background-color: #1a2e1a !important;
   color: var(--text-secondary);
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
@@ -544,14 +544,26 @@ input::placeholder, textarea::placeholder {
   .header {
     padding-left: 54px; /* Space for hamburger */
     transition: all 0.2s;
+    height: 50px !important;
+  }
+
+  .header h1 {
+    font-size: 1rem !important;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 150px;
+  }
+
+  .sidebar-close-btn {
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
   }
 
   /* TAREA 2: REDUCCIÓN DE CABECERAS (MODO HORIZONTAL) */
-  @media (orientation: landscape) and (max-height: 500px) {
-    h1, h2, .header h1, .titulo-pagina { 
-      font-size: 1.1rem !important; 
-      margin: 2px 0 !important; 
-    }
+  @media (orientation: landscape) {
+    .header h1 { display: none !important; }
     .header, .top-bar { 
       height: 44px !important; 
       padding: 0 10px 0 54px !important; 
@@ -559,17 +571,19 @@ input::placeholder, textarea::placeholder {
     .logo-container img { 
       height: 30px !important; 
     }
-    .icon-btn {
-      padding: 4px !important;
-    }
   }
 
   /* PROBLEM 3: SCROLL */
   .main-wrapper {
-    height: calc(100vh - 70px);
+    height: calc(100vh - 50px);
     overflow-y: auto !important;
     -webkit-overflow-scrolling: touch !important;
     overscroll-behavior-y: contain;
+    padding: 0 !important; /* Edge to edge */
+  }
+
+  .app-container, .main-content {
+    background-color: #1a2e1a !important;
   }
 
   /* Specific containers that might block scroll */
@@ -583,7 +597,7 @@ input::placeholder, textarea::placeholder {
   .players-grid,
   .tests-grid {
     height: auto !important;
-    min-height: calc(100vh - 70px);
+    min-height: calc(100vh - 50px);
     padding: 16px;
     overflow-y: auto !important;
     -webkit-overflow-scrolling: touch !important;

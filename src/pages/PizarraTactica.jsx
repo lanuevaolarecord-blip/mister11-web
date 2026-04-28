@@ -382,8 +382,8 @@ const PizarraTactica = () => {
       
       if (window.innerWidth < 1024) {
         if (isLandscape) {
-          // Task 3: calc(100vh - 120px) in landscape
-          nH = Math.max(window.innerHeight - 120, 300);
+          // Task 2: Full screen height
+          nH = window.innerHeight - 60;
         } else {
           nH = nW * (68/105);
         }

@@ -63,9 +63,7 @@ html.dark {
 }
 
 main, .page-container {
-  padding: 16px 16px 30px; /* Safety padding */
-  max-width: 1400px;
-  margin: 0 auto;
+  padding: 16px 0; /* Vertical margin only, full width lateral */
 }
 
 /* Ensure pizarra doesn't get this padding as it handles its own */

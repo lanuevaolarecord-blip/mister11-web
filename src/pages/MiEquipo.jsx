@@ -50,30 +50,41 @@ const MiEquipo = () => {
 
   const calcularEdad = (fechaNacimiento) => {
     if (fechaNacimiento === null || fechaNacimiento === undefined || fechaNacimiento === '') {
-      return "Sin edad";
-    }
-    
-    let fechaDate;
-    if (typeof fechaNacimiento === 'string') {
-      fechaDate = new Date(fechaNacimiento);
-    } else if (fechaNacimiento.toDate) {
-      fechaDate = fechaNacimiento.toDate();
-    } else if (fechaNacimiento instanceof Date) {
-      fechaDate = fechaNacimiento;
-    } else {
-      return "Sin edad";
+      return 'Sin edad';
     }
 
-    if (isNaN(fechaDate.getTime())) return "Sin edad";
+    let fecha;
+    // Timestamp de Firestore
+    if (fechaNacimiento?.toDate) {
+      fecha = fechaNacimiento.toDate();
+    }
+    // String formato YYYY-MM-DD o ISO
+    else if (typeof fechaNacimiento === 'string') {
+      fecha = new Date(fechaNacimiento);
+      // Si no parsea, intentar DD/MM/YYYY
+      if (isNaN(fecha.getTime())) {
+        const parts = fechaNacimiento.split('/');
+        if (parts.length === 3) {
+          fecha = new Date(parts[2], parts[1] - 1, parts[0]);
+        }
+      }
+    }
+    // Ya es Date
+    else if (fechaNacimiento instanceof Date) {
+      fecha = fechaNacimiento;
+    }
+    else {
+      return 'Sin edad';
+    }
+
+    if (!fecha || isNaN(fecha.getTime())) return 'Sin edad';
 
     const hoy = new Date();
-    let edad = hoy.getFullYear() - fechaDate.getFullYear();
-    const mes = hoy.getMonth() - fechaDate.getMonth();
-    
-    if (mes < 0 || (mes === 0 && hoy.getDate() < fechaDate.getDate())) {
+    let edad = hoy.getFullYear() - fecha.getFullYear();
+    const mes = hoy.getMonth() - fecha.getMonth();
+    if (mes < 0 || (mes === 0 && hoy.getDate() < fecha.getDate())) {
       edad--;
     }
-    
     return `${edad} años`;
   };
 
@@ -303,7 +314,7 @@ const MiEquipo = () => {
                 </div>
                 <div className="info-row">
                   <label>Edad</label>
-                  <span>{selectedPlayer.age} años</span>
+                  <span>{calcularEdad(selectedPlayer.fechaNacimiento || selectedPlayer.birthDate || selectedPlayer.age)}</span>
                 </div>
               </div>
             )}

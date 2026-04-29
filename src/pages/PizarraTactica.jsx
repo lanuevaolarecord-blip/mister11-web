@@ -452,11 +452,26 @@ const PizarraTactica = () => {
 
   // ─── Field type change ────────────────────────────────────────────────────
   useEffect(() => {
-    const fc = fcRef.current; const fr = frRef.current; const tm = tmRef.current;
+    const fc = fcRef.current; const fr = frRef.current;
     if (!fc || !fr || playingR.current) return;
+
+    // Save drawings (arrows, shapes, materials) — not players
+    const savedObjects = fc.getObjects().filter(
+      obj => obj.data?.type !== 'player'
+    );
+
     fr.draw(toLibType(fieldType));
     fc.clear();
+
+    // Redraw players in new field proportions
     drawPlayers(fc, fr, fieldType, { local: localFormation, rival: rivalFormation }, isSwapped);
+
+    // Restore saved drawings
+    savedObjects.forEach(obj => {
+      fc.add(obj);
+    });
+
+    fc.renderAll();
     saveFrameState();
     pushToHistory();
   }, [fieldType]); // eslint-disable-line

@@ -3,8 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { useExercises } from '../hooks/useExercises';
 import './IAGeneradora.css';
 
-// --- CONFIGURACIÓN ---
-const GEMINI_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${import.meta.env.VITE_GEMINI_API_KEY}`;
+// --- CONFIGURACIÓN --- (La key se accede en runtime, no al importar el módulo)
+// IMPORTANTE: VITE_GEMINI_API_KEY debe estar configurada en Vercel → Settings → Environment Variables
 
 // --- OPCIONES DE FORMULARIO ---
 const OBJETIVOS = [
@@ -162,6 +162,10 @@ const IAGeneradora = () => {
   const isCallingRef = useRef(false);
   const [countdown, setCountdown] = useState(null);
 
+  // Verificar API Key al montar
+  const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
+  const apiKeyMissing = !apiKey || apiKey === 'undefined';
+
   useEffect(() => {
     if (countdown === null) return;
     if (countdown > 0) {
@@ -278,6 +282,17 @@ Responde SOLO en español. No incluyas texto fuera del formato indicado.`;
 
   return (
     <div className="ia-page">
+      {/* Banner de error de configuración */}
+      {apiKeyMissing && (
+        <div style={{
+          background: '#FDEDEC', color: '#C0392B', border: '1px solid #E74C3C',
+          borderRadius: 8, padding: '12px 16px', margin: 16, fontSize: 13,
+          fontWeight: 600
+        }}>
+          ⚠️ La clave de API de Gemini no está configurada. Contacta al administrador
+          o configura la variable <code>VITE_GEMINI_API_KEY</code> en Vercel.
+        </div>
+      )}
       <div className="ia-form-panel">
         <div className="ia-form-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
           <div>

@@ -14,23 +14,31 @@
 
 .tests-tabs {
   display: flex;
-  gap: 15px;
-  border-bottom: 2px solid var(--border-color);
-  padding-bottom: 10px;
   overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  white-space: nowrap;
+  gap: 8px;
+  border-bottom: 2px solid var(--border-color);
+  padding-bottom: 4px;
+  scrollbar-width: none;
+  flex-wrap: nowrap;
 }
+.tests-tabs::-webkit-scrollbar { display: none; }
 
 .tests-tab {
+  flex-shrink: 0;
   background: transparent;
   border: none;
   font-family: var(--font-body);
   font-weight: bold;
   color: var(--text-muted);
-  padding: 8px 16px;
+  padding: 8px 14px;
   cursor: pointer;
   white-space: nowrap;
   position: relative;
   transition: color 0.2s;
+  min-height: 44px;
+  min-width: 44px;
 }
 
 .tests-tab:hover, .tests-tab.active {
@@ -40,7 +48,7 @@
 .tests-tab.active::after {
   content: '';
   position: absolute;
-  bottom: -12px;
+  bottom: -6px;
   left: 0;
   width: 100%;
   height: 3px;

@@ -605,3 +605,65 @@ button, .nav-item, input, select, .icon-btn, .topbar-btn, .tool-icon-btn {
   .header h1 { display: none !important; }
   .header { height: 44px !important; }
 }
+
+/* ========================================
+   GLOBAL SPINNER (Bug 2 - UX Improvement)
+   ======================================== */
+.spinner {
+  width: 36px;
+  height: 36px;
+  border: 3px solid #2D5A27;
+  border-top-color: #4CAF7D;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  flex-shrink: 0;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.spinner-center {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 200px;
+  width: 100%;
+}
+
+/* EMPTY STATES */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 24px;
+  text-align: center;
+  gap: 12px;
+  color: var(--text-muted);
+}
+
+.empty-state-icon {
+  font-size: 48px;
+  opacity: 0.4;
+  line-height: 1;
+}
+
+.empty-state h3 {
+  color: var(--text-primary);
+  font-size: 1.1rem;
+  margin: 0;
+}
+
+.empty-state p {
+  font-size: 14px;
+  max-width: 280px;
+  line-height: 1.5;
+}
+
+/* Cursor pointer para elementos clicables */
+.player-card, .frame-chip, .material-item,
+.test-card, .session-item-dash, .action-btn-dash,
+.player-select-item, .test-select-item {
+  cursor: pointer;
+}

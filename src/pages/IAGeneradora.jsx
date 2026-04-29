@@ -160,6 +160,18 @@ const IAGeneradora = () => {
   const [showBiblioteca, setShowBiblioteca] = useState(false);
   const canvasRef = useRef(null);
   const isCallingRef = useRef(false);
+  const [countdown, setCountdown] = useState(null);
+
+  useEffect(() => {
+    if (countdown === null) return;
+    if (countdown > 0) {
+      const timer = setTimeout(() => setCountdown(countdown - 1), 1000);
+      return () => clearTimeout(timer);
+    } else {
+      setCountdown(null);
+      handleGenerate(true);
+    }
+  }, [countdown]);
 
   useEffect(() => {
     if (result && canvasRef.current) {
@@ -176,8 +188,9 @@ const IAGeneradora = () => {
     }));
   };
 
-  const handleGenerate = async () => {
-    if (isCallingRef.current) return;
+  const handleGenerate = async (isRetryOption) => {
+    const isRetry = isRetryOption === true;
+    if (isCallingRef.current && !isRetry) return;
     
     if (!form.edad || !form.objetivo || !form.espacio) {
       setError('Por favor completa: Edad, Objetivo y Espacio antes de generar.');
@@ -209,24 +222,35 @@ Responde SOLO en español. No incluyas texto fuera del formato indicado.`;
 
     try {
       const response = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${import.meta.env.VITE_GEMINI_API_KEY}`,
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${import.meta.env.VITE_GEMINI_API_KEY}`,
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            contents: [{ parts: [{ text: prompt }] }],
-            generationConfig: { temperature: 0.8, maxOutputTokens: 1024 }
+            contents: [{ parts: [{ text: prompt }] }]
           })
         }
       );
-      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      if (!response.ok) {
+        if (response.status === 429) {
+          throw new Error(isRetry ? '429_LIMIT' : '429_RETRY');
+        }
+        throw new Error(`HTTP ${response.status}`);
+      }
       const data = await response.json();
       const text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
       if (!text) throw new Error('Respuesta vacía de Gemini');
       setResult(text);
     } catch (err) {
       console.error('Error Gemini:', err);
-      setError('No se pudo generar el ejercicio. Verifica tu conexión o la clave API.');
+      if (err.message === '429_RETRY') {
+        setError('Has realizado demasiadas solicitudes. Espera 30 segundos e inténtalo de nuevo.');
+        setCountdown(30);
+      } else if (err.message === '429_LIMIT') {
+        setError('Límite de solicitudes alcanzado. Espera unos minutos antes de generar otro ejercicio.');
+      } else {
+        setError('No se pudo generar el ejercicio. Verifica tu conexión o la clave API.');
+      }
     } finally {
       setLoading(false);
       isCallingRef.current = false;
@@ -360,13 +384,16 @@ Responde SOLO en español. No incluyas texto fuera del formato indicado.`;
           {error && <div className="ia-error" style={{
               background: '#FDEDEC', color: '#C0392B', border: '1px solid #E74C3C',
               borderRadius: 8, padding: '10px 14px', marginTop: 8, fontSize: 13
-            }}>⚠️ {error}</div>}
+            }}>
+              ⚠️ {error}
+              {countdown !== null && <div style={{ marginTop: 6, fontWeight: 'bold' }}>Reintentando en {countdown} segundos...</div>}
+            </div>}
 
           <button 
             className={`btn-generate ${loading ? 'loading' : ''}`}
             onClick={handleGenerate} 
-            disabled={loading || form.espacio === '' || form.espacio === null || form.espacio === undefined}
-            style={{ opacity: loading ? 0.65 : 1, cursor: loading ? 'not-allowed' : 'pointer', pointerEvents: loading ? 'none' : 'auto' }}
+            disabled={loading || countdown !== null || form.espacio === '' || form.espacio === null || form.espacio === undefined}
+            style={{ opacity: (loading || countdown !== null) ? 0.65 : 1, cursor: (loading || countdown !== null) ? 'not-allowed' : 'pointer', pointerEvents: (loading || countdown !== null) ? 'none' : 'auto' }}
           >
             {loading ? '⏳ Analizando contexto...' : '✨ Generar Ejercicio'}
           </button>

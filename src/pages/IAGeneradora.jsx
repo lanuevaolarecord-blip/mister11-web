@@ -159,6 +159,7 @@ const IAGeneradora = () => {
   const [error, setError] = useState('');
   const [showBiblioteca, setShowBiblioteca] = useState(false);
   const canvasRef = useRef(null);
+  const isCallingRef = useRef(false);
 
   useEffect(() => {
     if (result && canvasRef.current) {
@@ -176,10 +177,14 @@ const IAGeneradora = () => {
   };
 
   const handleGenerate = async () => {
+    if (isCallingRef.current) return;
+    
     if (!form.edad || !form.objetivo || !form.espacio) {
       setError('Por favor completa: Edad, Objetivo y Espacio antes de generar.');
       return;
     }
+    
+    isCallingRef.current = true;
     setError('');
     setLoading(true);
     setResult(null);
@@ -224,6 +229,7 @@ Responde SOLO en español. No incluyas texto fuera del formato indicado.`;
       setError('No se pudo generar el ejercicio. Verifica tu conexión o la clave API.');
     } finally {
       setLoading(false);
+      isCallingRef.current = false;
     }
   };
 
@@ -360,7 +366,7 @@ Responde SOLO en español. No incluyas texto fuera del formato indicado.`;
             className={`btn-generate ${loading ? 'loading' : ''}`}
             onClick={handleGenerate} 
             disabled={loading || form.espacio === '' || form.espacio === null || form.espacio === undefined}
-            style={{ opacity: loading ? 0.65 : 1, cursor: loading ? 'not-allowed' : 'pointer' }}
+            style={{ opacity: loading ? 0.65 : 1, cursor: loading ? 'not-allowed' : 'pointer', pointerEvents: loading ? 'none' : 'auto' }}
           >
             {loading ? '⏳ Analizando contexto...' : '✨ Generar Ejercicio'}
           </button>

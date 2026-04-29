@@ -986,8 +986,8 @@ const PizarraTactica = () => {
 
           {/* Floating Buttons - Global (Web/Tablet/Móvil) */}
           <div className="floating-actions">
-            <button className="btn-floating-left" onClick={() => setShowTeamsDrawer(true)}>⚽ Equipos</button>
-            <button className="btn-floating-right" onClick={() => setShowMatsDrawer(true)}>🎽 Material</button>
+            <button className="btn-floating-left" onClick={() => { setShowTeamsDrawer(!showTeamsDrawer); setShowMatsDrawer(false); }}>⚽ Equipos</button>
+            <button className="btn-floating-right" onClick={() => { setShowMatsDrawer(!showMatsDrawer); setShowTeamsDrawer(false); }}>🎽 Material</button>
           </div>
         </div>
 

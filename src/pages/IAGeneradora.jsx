@@ -1,7 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useExercises } from '../hooks/useExercises';
-import ExerciseDiagram from '../components/ExerciseDiagram';
 import './IAGeneradora.css';
 
 // --- CONFIGURACIÓN ---
@@ -56,6 +55,101 @@ const renderMarkdown = (text) => {
   });
 };
 
+// Función para dibujar diagrama dinámico según el ejercicio
+const dibujarDiagrama = (canvas, textoEjercicio) => {
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  // Fondo campo de fútbol simplificado
+  ctx.fillStyle = '#2d5a1b';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  // Líneas del campo
+  ctx.strokeStyle = 'rgba(255,255,255,0.6)';
+  ctx.lineWidth = 1.5;
+  // Borde
+  ctx.strokeRect(20, 20, canvas.width - 40, canvas.height - 40);
+  // Línea central
+  ctx.beginPath();
+  ctx.moveTo(canvas.width / 2, 20);
+  ctx.lineTo(canvas.width / 2, canvas.height - 20);
+  ctx.stroke();
+  // Círculo central
+  ctx.beginPath();
+  ctx.arc(canvas.width / 2, canvas.height / 2, 40, 0, Math.PI * 2);
+  ctx.stroke();
+
+  // Detectar número de jugadores mencionados en el texto
+  const matchJugadores = textoEjercicio.match(/(\d+)\s*(jugador|jugadores|vs|contra)/i);
+  const numJugadores = matchJugadores ? Math.min(parseInt(matchJugadores[1]), 11) : 6;
+
+  // Detectar tipo de ejercicio para posicionar jugadores
+  const esRondo = /rondo|posesión|toque/i.test(textoEjercicio);
+  const esPorteria = /portería|portero|disparo|tiro|finalización/i.test(textoEjercicio);
+  const esPresion = /presión|pressing|recuperación/i.test(textoEjercicio);
+
+  // Posiciones base según tipo
+  let posiciones = [];
+  if (esRondo) {
+    // Círculo de jugadores
+    for (let i = 0; i < numJugadores; i++) {
+      const angle = (i / numJugadores) * Math.PI * 2;
+      posiciones.push({
+        x: canvas.width/2 + Math.cos(angle) * 70,
+        y: canvas.height/2 + Math.sin(angle) * 55,
+        color: i === 0 ? '#E74C3C' : '#c9a84c'
+      });
+    }
+  } else if (esPorteria) {
+    // Jugadores orientados a portería
+    posiciones = [
+      { x: canvas.width*0.2, y: canvas.height*0.5, color: '#c9a84c' },
+      { x: canvas.width*0.4, y: canvas.height*0.35, color: '#c9a84c' },
+      { x: canvas.width*0.4, y: canvas.height*0.65, color: '#c9a84c' },
+      { x: canvas.width*0.65, y: canvas.height*0.5, color: '#c9a84c' },
+      { x: canvas.width*0.85, y: canvas.height*0.5, color: '#3498DB' },
+    ];
+  } else {
+    // Disposición genérica en líneas
+    const cols = Math.ceil(numJugadores / 2);
+    for (let i = 0; i < numJugadores; i++) {
+      posiciones.push({
+        x: canvas.width * (0.2 + (i % cols) * (0.6 / cols)),
+        y: canvas.height * (i < cols ? 0.3 : 0.65),
+        color: '#c9a84c'
+      });
+    }
+  }
+
+  // Dibujar jugadores
+  posiciones.forEach((p, i) => {
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, 14, 0, Math.PI * 2);
+    ctx.fillStyle = p.color;
+    ctx.fill();
+    ctx.strokeStyle = '#fff';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+    ctx.fillStyle = '#fff';
+    ctx.font = 'bold 10px Arial';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(i + 1, p.x, p.y);
+  });
+
+  // Flecha de movimiento central si hay ejercicio de presión
+  if (esPresion) {
+    ctx.strokeStyle = '#E74C3C';
+    ctx.lineWidth = 2;
+    ctx.setLineDash([5, 3]);
+    ctx.beginPath();
+    ctx.moveTo(posiciones[0]?.x || canvas.width*0.3, posiciones[0]?.y || canvas.height*0.5);
+    ctx.lineTo(canvas.width*0.6, canvas.height*0.5);
+    ctx.stroke();
+    ctx.setLineDash([]);
+  }
+};
+
 const IAGeneradora = () => {
   const { exercises, addExercise } = useExercises();
   const navigate = useNavigate();
@@ -63,6 +157,14 @@ const IAGeneradora = () => {
   const [result, setResult] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [showBiblioteca, setShowBiblioteca] = useState(false);
+  const canvasRef = useRef(null);
+
+  useEffect(() => {
+    if (result && canvasRef.current) {
+      dibujarDiagrama(canvasRef.current, result);
+    }
+  }, [result]);
 
   const toggleMaterial = (id) => {
     setForm(prev => ({
@@ -100,45 +202,26 @@ Parámetros: edad ${form.edad}, ${form.jugadores} jugadores, objetivo ${form.obj
 ${form.observaciones ? `Observaciones adicionales: ${form.observaciones}` : ''}
 Responde SOLO en español. No incluyas texto fuera del formato indicado.`;
 
-    const makeRequest = async () => {
+    try {
       const response = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${import.meta.env.VITE_GEMINI_API_KEY}`,
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${import.meta.env.VITE_GEMINI_API_KEY}`,
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            contents: [{ parts: [{ text: prompt }] }]
+            contents: [{ parts: [{ text: prompt }] }],
+            generationConfig: { temperature: 0.8, maxOutputTokens: 1024 }
           })
         }
       );
-      
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
       const data = await response.json();
-      
-      if (!response.ok) {
-        // Lanzamos el error con el mensaje exacto de Google
-        throw new Error(data.error?.message || JSON.stringify(data));
-      }
-      
-      if (!data.candidates?.[0]?.content?.parts?.[0]?.text) {
-        throw new Error('La respuesta de la IA no contiene texto válido.');
-      }
-
-      return data.candidates[0].content.parts[0].text;
-    };
-
-    try {
-      try {
-        const text = await makeRequest();
-        setResult(text);
-      } catch (firstErr) {
-        console.warn("Primer intento fallido, reintentando en 2s...", firstErr);
-        await new Promise(res => setTimeout(res, 2000));
-        const text = await makeRequest();
-        setResult(text);
-      }
+      const text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+      if (!text) throw new Error('Respuesta vacía de Gemini');
+      setResult(text);
     } catch (err) {
-      console.error(err);
-      setError(`Error: ${err.message}`);
+      console.error('Error Gemini:', err);
+      setError('No se pudo generar el ejercicio. Verifica tu conexión o la clave API.');
     } finally {
       setLoading(false);
     }
@@ -166,9 +249,21 @@ Responde SOLO en español. No incluyas texto fuera del formato indicado.`;
   return (
     <div className="ia-page">
       <div className="ia-form-panel">
-        <div className="ia-form-header">
-          <h1>✨ IA Generadora</h1>
-          <p>Configura los parámetros y genera ejercicios de entrenamiento personalizados con Gemini AI.</p>
+        <div className="ia-form-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+          <div>
+            <h1>✨ IA Generadora</h1>
+            <p>Configura los parámetros y genera ejercicios de entrenamiento personalizados con Gemini AI.</p>
+          </div>
+          <button
+            onClick={() => setShowBiblioteca(true)}
+            style={{
+              background: 'transparent', border: '1.5px solid #c9a84c', color: '#c9a84c',
+              borderRadius: 8, padding: '8px 16px', fontSize: 13, fontWeight: 600,
+              cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0
+            }}
+          >
+            ☁️ Biblioteca ({exercises.length})
+          </button>
         </div>
 
         <div className="ia-form-body">
@@ -256,12 +351,16 @@ Responde SOLO en español. No incluyas texto fuera del formato indicado.`;
             />
           </div>
 
-          {error && <div className="ia-error">{error}</div>}
+          {error && <div className="ia-error" style={{
+              background: '#FDEDEC', color: '#C0392B', border: '1px solid #E74C3C',
+              borderRadius: 8, padding: '10px 14px', marginTop: 8, fontSize: 13
+            }}>⚠️ {error}</div>}
 
           <button 
             className={`btn-generate ${loading ? 'loading' : ''}`}
             onClick={handleGenerate} 
             disabled={loading || form.espacio === '' || form.espacio === null || form.espacio === undefined}
+            style={{ opacity: loading ? 0.65 : 1, cursor: loading ? 'not-allowed' : 'pointer' }}
           >
             {loading ? '⏳ Analizando contexto...' : '✨ Generar Ejercicio'}
           </button>
@@ -296,48 +395,105 @@ Responde SOLO en español. No incluyas texto fuera del formato indicado.`;
               <button className="btn-outline" onClick={() => { setResult(null); }}>🔄 Limpiar</button>
               <button className="btn-outline-gold" onClick={handleGenerate}>✨ Regenerar</button>
             </div>
-            <div className="result-markdown">
-              {renderMarkdown(result)}
+            <div style={{
+              flex: 1,
+              minHeight: 320,
+              maxHeight: '60vh',
+              overflowY: 'auto',
+              background: '#0f1a0f',
+              border: '1px solid #2d4a2d',
+              borderRadius: 12,
+              padding: '16px 20px',
+              marginTop: 12,
+              lineHeight: 1.7,
+              fontSize: 14,
+              color: '#e0e0e0',
+              whiteSpace: 'pre-wrap',
+              wordBreak: 'break-word'
+            }}>
+              {renderMarkdown(result) || (
+                <span style={{ color: '#555', fontStyle: 'italic' }}>
+                  El ejercicio generado aparecerá aquí...
+                </span>
+              )}
             </div>
 
             {/* DIAGRAMA AUTOMÁTICO */}
-            {form.espacio && form.espacio !== 'Sala / Gimnasio' && (
-              <ExerciseDiagram
-                espacio={form.espacio}
-                jugadores={form.jugadores}
-                resultText={result}
-              />
-            )}
-          </div>
-        )}
-
-        {exercises.length > 0 && (
-          <div className="saved-exercises">
-            <h3>📚 Biblioteca en la Nube ({exercises.length})</h3>
-            <div className="saved-list">
-              {exercises.map(ex => (
-                <div key={ex.id} className="saved-item" onClick={() => {
-                  if (ex.type === 'pizarra') {
-                    navigate(`/pizarra?id=${ex.id}`);
-                  } else {
-                    setSelectedExerciseDetail(ex);
-                  }
-                }}>
-                  <div className="saved-item-info">
-                    <strong>{ex.type === 'pizarra' ? '📋 Pizarra' : '✨ IA'} - {ex.title}</strong>
-                    <span className="preview-text">
-                      {ex.type === 'pizarra' 
-                        ? `Ejercicio táctico interactivo con ${ex.framesCount || 1} frames.`
-                        : `${ex.content?.substring(0, 100)}...`}
-                    </span>
-                  </div>
-                  <span className="saved-hint">{ex.type === 'pizarra' ? 'Editar →' : 'Ver →'}</span>
-                </div>
-              ))}
-            </div>
+            <canvas
+              ref={canvasRef}
+              width={420}
+              height={280}
+              style={{ borderRadius: 12, width: '100%', display: result ? 'block' : 'none', marginTop: 12 }}
+            />
           </div>
         )}
       </div>
+
+      {/* Drawer Biblioteca */}
+      {showBiblioteca && (
+        <div
+          style={{
+            position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)',
+            zIndex: 1000, display: 'flex', alignItems: 'flex-end'
+          }}
+          onClick={() => setShowBiblioteca(false)}
+        >
+          <div
+            style={{
+              width: '100%', maxHeight: '75vh', background: '#1a2e1a',
+              borderRadius: '16px 16px 0 0', overflowY: 'auto', padding: '0 0 24px 0'
+            }}
+            onClick={e => e.stopPropagation()}
+          >
+            <div style={{
+              width: 40, height: 4, background: '#c9a84c44',
+              borderRadius: 2, margin: '12px auto'
+            }} />
+            <div style={{ padding: '0 16px' }}>
+              <div style={{
+                display: 'flex', justifyContent: 'space-between',
+                alignItems: 'center', marginBottom: 12
+              }}>
+                <h3 style={{ color: '#c9a84c', margin: 0, fontSize: 15 }}>
+                  ☁️ Biblioteca de Ejercicios
+                </h3>
+                <button
+                  onClick={() => setShowBiblioteca(false)}
+                  style={{ background: 'none', border: 'none', color: '#888', fontSize: 20, cursor: 'pointer' }}
+                >✕</button>
+              </div>
+              {exercises.length === 0 ? (
+                <p style={{ color: '#666', textAlign: 'center', marginTop: 24 }}>
+                  No hay ejercicios guardados aún.
+                </p>
+              ) : (
+                exercises.map((ej) => (
+                  <div key={ej.id} style={{
+                    background: '#0f1a0f', border: '1px solid #2d4a2d',
+                    borderRadius: 8, padding: '10px 14px', marginBottom: 8, cursor: 'pointer'
+                  }}
+                    onClick={() => { 
+                      if (ej.type === 'pizarra') {
+                        navigate(`/pizarra?id=${ej.id}`);
+                      } else {
+                        setResult(ej.content); 
+                        setShowBiblioteca(false); 
+                      }
+                    }}
+                  >
+                    <div style={{ color: '#c9a84c', fontWeight: 600, fontSize: 13 }}>
+                      {ej.type === 'pizarra' ? '📋 Pizarra - ' : '✨ IA - '} {ej.title || 'Sin título'}
+                    </div>
+                    <div style={{ color: '#888', fontSize: 11, marginTop: 2 }}>
+                      {new Date(ej.timestamp).toLocaleDateString()} · {ej.type === 'pizarra' ? 'Interactivo' : 'Texto'}
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Modal de Detalle de Ejercicio */}
       {selectedExerciseDetail && (

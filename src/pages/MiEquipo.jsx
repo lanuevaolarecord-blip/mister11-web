@@ -29,6 +29,7 @@ const MiEquipo = () => {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editData, setEditData] = useState(emptyPlayer);
   const [isSaving, setIsSaving] = useState(false);
+  const [formError, setFormError] = useState('');
 
   const filteredPlayers = filter === 'TODOS' 
     ? players 
@@ -83,6 +84,7 @@ const MiEquipo = () => {
     } else {
       setEditData({ ...emptyPlayer });
     }
+    setFormError('');
     setIsFormOpen(true);
   };
 
@@ -93,6 +95,7 @@ const MiEquipo = () => {
     }
 
     setIsSaving(true);
+    setFormError('');
     try {
       if (editData.id) {
         await updatePlayer(editData.id, editData);
@@ -101,7 +104,8 @@ const MiEquipo = () => {
       }
       setIsFormOpen(false);
     } catch (error) {
-      alert("Error al guardar jugador.");
+      console.error('Error al guardar jugador:', error);
+      setFormError('No se pudo guardar. Verifica tu conexión e inténtalo de nuevo.');
     } finally {
       setIsSaving(false);
     }
@@ -229,7 +233,16 @@ const MiEquipo = () => {
                 </div>
               </div>
             </div>
-            <div className="modal-footer">
+            <div className="modal-footer" style={{ flexWrap: 'wrap' }}>
+              {formError && (
+                <div style={{
+                  background: '#FDEDEC', color: '#C0392B', border: '1px solid #E74C3C',
+                  borderRadius: 8, padding: '8px 12px', marginBottom: 8, fontSize: 13,
+                  width: '100%', textAlign: 'left'
+                }}>
+                  ⚠️ {formError}
+                </div>
+              )}
               {editData.id && (
                 <button className="btn-text-error" onClick={() => handleDeletePlayer(editData.id)}>Eliminar Jugador</button>
               )}

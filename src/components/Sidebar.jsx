@@ -30,6 +30,15 @@ const Sidebar = ({ isOpen, onClose }) => {
     { path: '/admin', label: t('nav.admin', settings.language), icon: ShieldCheck },
   ];
 
+  const handleLogout = async () => {
+    try {
+      await signOut(auth);
+      if (onClose) onClose();
+    } catch (err) {
+      console.error('Error al cerrar sesión:', err);
+    }
+  };
+
   return (
     <aside className={`sidebar ${isOpen ? 'open' : ''}`}>
       <div className="logo-container" style={{ position: 'relative', justifyContent: 'space-between' }}>
@@ -74,10 +83,7 @@ const Sidebar = ({ isOpen, onClose }) => {
           </div>
         </div>
         <button 
-          onClick={() => {
-            signOut(auth);
-            onClose();
-          }} 
+          onClick={handleLogout} 
           style={{
             background: 'transparent', border: '1px solid rgba(255,255,255,0.2)', color: '#AAAAAA', 
             padding: '5px 10px', borderRadius: '4px', cursor: 'pointer', 

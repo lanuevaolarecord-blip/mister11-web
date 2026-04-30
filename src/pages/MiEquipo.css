@@ -1,7 +1,6 @@
 .equipo-page {
   padding: 24px;
   background-color: var(--bg-primary);
-  min-height: 100%;
   position: relative;
   overflow-x: hidden;
 }

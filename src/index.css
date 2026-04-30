@@ -58,7 +58,6 @@ html.dark {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
-  -webkit-overflow-scrolling: touch;
   scroll-behavior: smooth;
 }
 
@@ -306,9 +305,7 @@ a {
 .ia-result-panel {
   flex: 1;
   padding: 30px;
-  overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
-  overscroll-behavior: contain;
+  /* overflow-y removido: .main-wrapper es el único contenedor de scroll */
 }
 
 /* Global Components per User Rules */
@@ -589,10 +586,9 @@ input::placeholder, textarea::placeholder {
 .players-grid,
 .tests-grid {
   height: auto !important;
-  min-height: calc(100vh - 60px);
+  min-height: auto;
   padding: 16px;
-  overflow-y: auto !important;
-  -webkit-overflow-scrolling: touch !important;
+  /* overflow-y removido: solo .main-wrapper scrollea para evitar conflicto táctil */
 }
 
 /* Touch Targets (Requirement 44x44px) */

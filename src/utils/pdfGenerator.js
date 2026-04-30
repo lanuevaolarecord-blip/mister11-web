@@ -1,5 +1,5 @@
 import { jsPDF } from 'jspdf';
-import 'jspdf-autotable';
+import autoTable from 'jspdf-autotable';
 
 // Configuración de colores corporativos
 const THEME_COLOR = [27, 58, 45]; // #1B3A2D
@@ -73,7 +73,7 @@ export const generatePlanificacionPDF = (macroInfo, microcycles) => {
     `${m.physical}%`, `${m.technical}%`, `${m.tactical}%`,
   ]);
 
-  doc.autoTable({
+  const macroTable = autoTable(doc, {
     startY: 46,
     head,
     body,
@@ -104,7 +104,7 @@ export const generatePlanificacionPDF = (macroInfo, microcycles) => {
   });
 
   // ── OBJETIVOS ──────────────────────────────────────────────────────────────
-  const finalY = (doc.lastAutoTable?.finalY || 46) + 10;
+  const finalY = (macroTable?.finalY || 46) + 10;
   if (finalY < doc.internal.pageSize.getHeight() - 30) {
     doc.setFillColor(27, 58, 45);
     doc.rect(10, finalY, pageW - 20, 7, 'F');
@@ -153,13 +153,12 @@ export const generateTestsReport = (tests, players, historyData) => {
   const head = ['Jugador', ...tests.map(t => `${t.name} (${t.unit})`)];
   
   // Extraer valores más recientes
+  // FIX: los jugadores usan p.name (no p.nombre)
   const recentData = players.map(p => {
-    const rowData = { player: p.nombre };
+    const rowData = { player: p.name || p.nombre || '-' };
     tests.forEach(t => {
       const pHistory = historyData[p.id]?.[t.id];
       if (pHistory && pHistory.length > 0) {
-        // Asumimos que el último elemento es el más reciente (o el primero dependiendo de la implementación)
-        // En nuestro mock el último index es el más reciente
         rowData[t.id] = pHistory[pHistory.length - 1].val;
       } else {
         rowData[t.id] = null;
@@ -188,7 +187,7 @@ export const generateTestsReport = (tests, players, historyData) => {
     ];
   });
 
-  doc.autoTable({
+  const testsTable = autoTable(doc, {
     startY: 55,
     head: [head],
     body: body,
@@ -203,7 +202,6 @@ export const generateTestsReport = (tests, players, historyData) => {
         if (val !== '-' && testStats[test.id]) {
           const stats = testStats[test.id];
           if (stats.min !== stats.max) {
-            // Check if it's the best or worst
             const isBest = stats.lowerIsBetter ? (val === stats.min) : (val === stats.max);
             const isWorst = stats.lowerIsBetter ? (val === stats.max) : (val === stats.min);
             
@@ -220,7 +218,7 @@ export const generateTestsReport = (tests, players, historyData) => {
     }
   });
 
-  const finalY = doc.lastAutoTable.finalY || 100;
+  const finalY = testsTable?.finalY || 100;
   doc.setFontSize(10);
   doc.setTextColor(100);
   doc.text('* Verde: Mejor resultado en el equipo | Rojo: Resultado más bajo', 15, finalY + 10);
@@ -322,7 +320,7 @@ export const generateSeasonReport = (team, players, matches) => {
   doc.text('Estadísticas de Plantilla', 15, 70);
   doc.setFont(undefined, 'normal');
 
-  doc.autoTable({
+  const seasonTable = autoTable(doc, {
     startY: 74,
     head: [['#', 'Jugador', 'Posición', 'Min.', 'PJ', 'Goles', 'Asist.', 'TA', 'TR', 'Estado']],
     body: players.map(p => [
@@ -346,14 +344,14 @@ export const generateSeasonReport = (team, players, matches) => {
   });
 
   if (matches && matches.length > 0) {
-    const y1 = (doc.lastAutoTable?.finalY || 100) + 12;
+    const y1 = (seasonTable?.finalY || 100) + 12;
     doc.setFontSize(13);
     doc.setTextColor(...THEME_COLOR);
     doc.setFont(undefined, 'bold');
     doc.text('Historial de Partidos', 15, y1);
     doc.setFont(undefined, 'normal');
 
-    doc.autoTable({
+    autoTable(doc, {
       startY: y1 + 4,
       head: [['Fecha', 'Rival', 'Campo', 'Resultado']],
       body: matches.map(m => [
@@ -397,7 +395,7 @@ export const generateMatchConvocation = (match, players) => {
   doc.text(`Convocados (${convocados.length})`, 15, 70);
   doc.setFont(undefined, 'normal');
 
-  doc.autoTable({
+  autoTable(doc, {
     startY: 74,
     head: [['#', 'Nombre del Jugador', 'Posición']],
     body: convocados.length > 0

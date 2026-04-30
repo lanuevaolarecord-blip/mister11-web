@@ -195,65 +195,98 @@ const IAGeneradora = () => {
   const handleGenerate = async (isRetryOption) => {
     const isRetry = isRetryOption === true;
     if (isCallingRef.current && !isRetry) return;
-    
+
     if (!form.edad || !form.objetivo || !form.espacio) {
       setError('Por favor completa: Edad, Objetivo y Espacio antes de generar.');
       return;
     }
-    
+
     isCallingRef.current = true;
     setError('');
     setLoading(true);
     setResult(null);
 
+    const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
+
     const materialesStr = form.materiales.length > 0
       ? MATERIALES.filter(m => form.materiales.includes(m.id)).map(m => m.label).join(', ')
       : 'Sin material específico';
 
-    const prompt = `Eres experto en metodología del fútbol formativo. Genera UN ejercicio con este formato markdown:
-## Nombre del ejercicio
-**Objetivo:** ...
-**Organización:** ...
-**Desarrollo:** ...
-**Reglas:** ...
-**Variantes:** (2-3 variantes)
-**Puntos de coaching:** (lista 3-5 puntos)
-**Descripción del diagrama:** (posiciones con A=atacantes, D=defensores, P=portero, →=movimiento)
+    const prompt = `Eres experto en metodología del fútbol formativo. Genera UN ejercicio con este formato markdown:\n## Nombre del ejercicio\n**Objetivo:** ...\n**Organización:** ...\n**Desarrollo:** ...\n**Reglas:** ...\n**Variantes:** (2-3 variantes)\n**Puntos de coaching:** (lista 3-5 puntos)\n**Descripción del diagrama:** (posiciones con A=atacantes, D=defensores, P=portero, →=movimiento)\n\nParámetros: edad ${form.edad}, ${form.jugadores} jugadores, objetivo ${form.objetivo}, ${form.duracion} min, material: ${materialesStr}, espacio: ${form.espacio}, intensidad: ${form.intensidad}.\n${form.observaciones ? `Observaciones adicionales: ${form.observaciones}` : ''}\nResponde SOLO en español. No incluyas texto fuera del formato indicado.`;
 
-Parámetros: edad ${form.edad}, ${form.jugadores} jugadores, objetivo ${form.objetivo}, ${form.duracion} min, material: ${materialesStr}, espacio: ${form.espacio}, intensidad: ${form.intensidad}.
-${form.observaciones ? `Observaciones adicionales: ${form.observaciones}` : ''}
-Responde SOLO en español. No incluyas texto fuera del formato indicado.`;
+    // Modelos en orden de preferencia: primary → fallback
+    const MODELS = [
+      'gemini-2.0-flash-lite',
+      'gemini-1.5-flash-8b',
+    ];
+
+    const tryModel = async (modelName) => {
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`;
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: prompt }] }],
+          generationConfig: {
+            temperature: 0.7,
+            maxOutputTokens: 1024,
+          },
+        }),
+      });
+
+      // Debug: log the raw response status
+      console.log(`[Gemini] model=${modelName} status=${response.status}`);
+
+      const data = await response.json();
+      console.log('[Gemini] response data:', data);
+
+      if (!response.ok) {
+        const errorMsg = data?.error?.message || `Error HTTP ${response.status}`;
+        throw new Error(`[${modelName}] ${errorMsg}`);
+      }
+
+      const text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+      if (!text) throw new Error(`[${modelName}] Respuesta vacía de Gemini`);
+      return text;
+    };
 
     try {
-      const response = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${import.meta.env.VITE_GEMINI_API_KEY}`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            contents: [{ parts: [{ text: prompt }] }]
-          })
+      let text = null;
+      let lastError = null;
+
+      for (const model of MODELS) {
+        try {
+          text = await tryModel(model);
+          break; // éxito — salir del loop
+        } catch (modelErr) {
+          console.warn(`[Gemini] Fallo con ${model}:`, modelErr.message);
+          lastError = modelErr;
+          // Si es 429 no intentar el siguiente modelo
+          if (modelErr.message.includes('429') || modelErr.message.toLowerCase().includes('quota')) {
+            throw modelErr;
+          }
+          // Para cualquier otro error intentar el siguiente modelo
         }
-      );
-      if (!response.ok) {
-        if (response.status === 429) {
-          throw new Error(isRetry ? '429_LIMIT' : '429_RETRY');
-        }
-        throw new Error(`HTTP ${response.status}`);
       }
-      const data = await response.json();
-      const text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
-      if (!text) throw new Error('Respuesta vacía de Gemini');
+
+      if (!text) throw lastError;
+
       setResult(text);
+
     } catch (err) {
-      console.error('Error Gemini:', err);
-      if (err.message === '429_RETRY') {
-        setError('Has realizado demasiadas solicitudes. Espera 30 segundos e inténtalo de nuevo.');
-        setCountdown(30);
-      } else if (err.message === '429_LIMIT') {
-        setError('Límite de solicitudes alcanzado. Espera unos minutos antes de generar otro ejercicio.');
+      console.error('[Gemini] Error final:', err);
+      const msg = err.message || '';
+
+      if (msg.includes('429') || msg.toLowerCase().includes('quota') || msg.toLowerCase().includes('rate')) {
+        if (isRetry) {
+          setError('Límite de solicitudes alcanzado. Espera unos minutos antes de generar otro ejercicio.');
+        } else {
+          setError('Has realizado demasiadas solicitudes. Espera 30 segundos e inténtalo de nuevo.');
+          setCountdown(30);
+        }
       } else {
-        setError('No se pudo generar el ejercicio. Verifica tu conexión o la clave API.');
+        // Mostrar el mensaje EXACTO de Google para facilitar el diagnóstico
+        setError(`Error de Gemini: ${msg}`);
       }
     } finally {
       setLoading(false);

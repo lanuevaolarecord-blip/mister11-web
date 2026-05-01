@@ -51,16 +51,7 @@ const PizarraTactica = () => {
   const readyR    = useRef(false); // track initial load safely
   const saveTimeoutR = useRef(null); // for debouncing saves
 
-  // Track canvas dimensions for resizing
-  const canvasPrevDimR = useRef({ w: CANVAS_REF_WIDTH, h: CANVAS_REF_HEIGHT });
-
   // ─── Utilidades de Escala ─────────────────────────────────────────────────
-  const getRadioJugador = useCallback(() => {
-    const fc = fcRef.current;
-    if (!fc) return 13;
-    // 3.5% del ancho del canvas según requerimiento
-    return Math.max(6, Math.round(fc.width * 0.035));
-  }, []);
 
   const serializarFrame = useCallback(() => {
     const fc = fcRef.current;
@@ -108,7 +99,7 @@ const PizarraTactica = () => {
       if (objData.radiusRel !== undefined) {
         radius = objData.radiusRel * Math.min(canvasW, canvasH);
       } else if (objData.data?.type === 'player') {
-        radius = getRadioJugador();
+        radius = 13;
       }
 
       return { ...objData, left, top, radius };
@@ -119,7 +110,7 @@ const PizarraTactica = () => {
       fc.renderAll();
       if (callback) callback();
     });
-  }, [getRadioJugador]);
+  }, []);
 
   const reposicionarTodo = useCallback((anchoAnterior, altoAnterior, anchoNuevo, altoNuevo) => {
     const fc = fcRef.current;
@@ -152,10 +143,7 @@ const PizarraTactica = () => {
 
   // React state (UI)
   const [ready,        setReady]        = useState(false);
-  const [isMobile, setIsMobile] = useState(
-    window.innerWidth < 1024 ||
-    (window.innerWidth < 1280 && window.innerWidth > window.innerHeight)
-  );
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 1024);
   const [showTeamsDrawer, setShowTeamsDrawer] = useState(false);
   const [showMatsDrawer, setShowMatsDrawer] = useState(false);
   const [fieldType,    setFieldType]    = useState('full');
@@ -299,7 +287,7 @@ const PizarraTactica = () => {
     if (!fc) return null;
     
     const { color = '#4CAF7D', label = '1', type = 'local' } = options;
-    const radius = getRadioJugador();
+    const radius = 13;
     
     const circle = new fabric.Circle({
       radius: radius, originX: 'center', originY: 'center',
@@ -327,7 +315,7 @@ const PizarraTactica = () => {
     });
 
     return group;
-  }, [getRadioJugador]);
+  }, []);
 
   // ─── Draw players from formation onto canvas ──────────────────────────────
   const drawPlayers = useCallback((canvas, renderer, fieldType, formations, swapped) => {
@@ -385,16 +373,23 @@ const PizarraTactica = () => {
     const W = containerRef.current.offsetWidth  || 800;
     const H = containerRef.current.offsetHeight || 500;
 
+    let initW = W;
+    let initH = W / 1.5;
+    if (initH > H) {
+      initH = H;
+      initW = initH * 1.5;
+    }
+
     // 1. Field (2D canvas)
-    fieldCanvasRef.current.width  = W;
-    fieldCanvasRef.current.height = isMobile ? (W * 68/105) : H;
+    fieldCanvasRef.current.width  = initW;
+    fieldCanvasRef.current.height = initH;
     const renderer = new FieldRenderer(fieldCanvasRef.current, { padding: { v: 12, h: 16 } });
     renderer.draw('full');
     frRef.current = renderer;
 
     // 2. Fabric overlay canvas
     const fc = new fabric.Canvas(fabricElemRef.current, {
-      width: W, height: isMobile ? (W * 68/105) : H,
+      width: initW, height: initH,
       allowTouchScrolling: false,
       selection: true,
     });
@@ -506,9 +501,9 @@ const PizarraTactica = () => {
           left: xRel * nuevoAncho,
           top: yRel * nuevoAlto
         });
-        if (obj.data?.tipo === 'player' && obj.radius) {
-          // El radio se recalcula según el nuevo ancho
-          obj.set({ radius: Math.max(6, Math.round(nuevoAncho * 0.035)) });
+        if (obj.data?.type === 'player' && obj.radius) {
+          // Mantener radio estable
+          obj.set({ radius: 13 });
         }
         obj.setCoords();
       });

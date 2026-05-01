@@ -14,7 +14,7 @@ import { fabric } from 'fabric';
 // ─── Referencias de diseño ──────────────────────────────────────────────────
 const CANVAS_REF_WIDTH = 380;
 const CANVAS_REF_HEIGHT = 520;
-const PLAYER_BASE_RADIUS = 13;
+const RADIO_JUGADOR = 10.5;
 
 // ─── Make fabric global BEFORE library imports use it ───────────────────────
 if (typeof window !== 'undefined') window.fabric = fabric;
@@ -99,7 +99,7 @@ const PizarraTactica = () => {
       if (objData.radiusRel !== undefined) {
         radius = objData.radiusRel * Math.min(canvasW, canvasH);
       } else if (objData.data?.type === 'player') {
-        radius = 10.5;
+        radius = RADIO_JUGADOR;
       }
 
       return { ...objData, left, top, radius };
@@ -291,7 +291,7 @@ const PizarraTactica = () => {
     if (!fc) return null;
     
     const { color = '#4CAF7D', label = '1', type = 'local' } = options;
-    const radius = 10.5;
+    const radius = RADIO_JUGADOR;
     
     const xRel = x / fc.width;
     const yRel = y / fc.height;
@@ -511,7 +511,7 @@ const PizarraTactica = () => {
         });
         if (obj.data?.type === 'player' && obj.radius) {
           // Mantener radio estable
-          obj.set({ radius: 10.5 });
+          obj.set({ radius: RADIO_JUGADOR });
         }
         obj.setCoords();
       });
@@ -1109,9 +1109,9 @@ const PizarraTactica = () => {
 
           {/* Placing-material indicator */}
           {placingMat && (
-            <div className="placing-hint">
+            <div className="placing-hint" style={{ position: 'absolute', top: '10px', left: '50%', transform: 'translateX(-50%)', zIndex: 1000, background: 'rgba(0,0,0,0.8)', color: 'white', padding: '10px 20px', borderRadius: '8px', display: 'flex', gap: '10px', alignItems: 'center' }}>
               📍 Haz clic en el campo para colocar el material. 
-              <button onClick={() => { setPlacingMat(null); setActiveTool('select'); }}>✕</button>
+              <button onClick={() => { setPlacingMat(null); setActiveTool('select'); }} style={{ background: 'transparent', border: 'none', color: 'white', cursor: 'pointer', fontSize: '16px' }}>✕</button>
             </div>
           )}
 

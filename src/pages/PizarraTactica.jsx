@@ -1,5 +1,20 @@
+// FIX coordenadas relativas - 01/05/2026
+// PROBLEMA: Posiciones y radios en px absolutos 
+//   calculados para móvil vertical (380×520px).
+//   En cualquier otro canvas los mismos px producen
+//   posiciones y tamaños incorrectos.
+// CAUSA: Sin sistema de referencia, cada dispositivo
+//   interpreta las coordenadas de forma distinta.
+// SOLUCIÓN: Guardar xRel/yRel (0.0-1.0) y radiusRel,
+//   recalcular al cargar y al cambiar tamaño de canvas.
+
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { fabric } from 'fabric';
+
+// ─── Referencias de diseño ──────────────────────────────────────────────────
+const CANVAS_REF_WIDTH = 380;
+const CANVAS_REF_HEIGHT = 520;
+const PLAYER_BASE_RADIUS = 13;
 
 // ─── Make fabric global BEFORE library imports use it ───────────────────────
 if (typeof window !== 'undefined') window.fabric = fabric;
@@ -35,6 +50,102 @@ const PizarraTactica = () => {
   const syncingR  = useRef(false); // prevent events during load
   const readyR    = useRef(false); // track initial load safely
   const saveTimeoutR = useRef(null); // for debouncing saves
+
+  // Track canvas dimensions for resizing
+  const canvasPrevDimR = useRef({ w: CANVAS_REF_WIDTH, h: CANVAS_REF_HEIGHT });
+
+  // ─── Utilidades de Escala ─────────────────────────────────────────────────
+  const getPlayerRadius = useCallback(() => {
+    const fc = fcRef.current;
+    if (!fc) return PLAYER_BASE_RADIUS;
+    const scaleX = fc.width / CANVAS_REF_WIDTH;
+    const scaleY = fc.height / CANVAS_REF_HEIGHT;
+    const scale = Math.min(scaleX, scaleY);
+    return Math.round(PLAYER_BASE_RADIUS * scale);
+  }, []);
+
+  const serializarFrame = useCallback(() => {
+    const fc = fcRef.current;
+    if (!fc) return { objects: [] };
+    const objects = fc.getObjects().map(obj => {
+      const serializado = obj.toObject(['data']);
+      return {
+        ...serializado,
+        xRel: obj.left / fc.width,
+        yRel: obj.top / fc.height,
+        radiusRel: obj.radius 
+          ? obj.radius / Math.min(fc.width, fc.height)
+          : undefined
+      };
+    });
+    return { version: fabric.version, objects };
+  }, []);
+
+  const cargarFrame = useCallback((state, callback) => {
+    const fc = fcRef.current;
+    if (!fc || !state) return;
+
+    fc.clear();
+    const objsToEnliven = Array.isArray(state.objects) ? state.objects : [];
+    
+    if (objsToEnliven.length === 0) {
+      if (callback) callback();
+      return;
+    }
+
+    const canvasW = fc.width;
+    const canvasH = fc.height;
+
+    const enlivenedData = objsToEnliven.map(objData => {
+      let left, top;
+      if (objData.xRel !== undefined) {
+        left = objData.xRel * canvasW;
+        top  = objData.yRel * canvasH;
+      } else {
+        left = (objData.left / CANVAS_REF_WIDTH) * canvasW;
+        top  = (objData.top / CANVAS_REF_HEIGHT) * canvasH;
+      }
+
+      let radius = objData.radius;
+      if (objData.radiusRel !== undefined) {
+        radius = objData.radiusRel * Math.min(canvasW, canvasH);
+      } else if (objData.data?.type === 'player') {
+        radius = getPlayerRadius();
+      }
+
+      return { ...objData, left, top, radius };
+    });
+
+    fabric.util.enlivenObjects(enlivenedData, (objects) => {
+      objects.forEach(o => fc.add(o));
+      fc.renderAll();
+      if (callback) callback();
+    });
+  }, [getPlayerRadius]);
+
+  const reposicionarTodo = useCallback((anchoAnterior, altoAnterior, anchoNuevo, altoNuevo) => {
+    const fc = fcRef.current;
+    if (!fc) return;
+
+    fc.getObjects().forEach(obj => {
+      const xRel = obj.left / anchoAnterior;
+      const yRel = obj.top / altoAnterior;
+
+      obj.set({
+        left: xRel * anchoNuevo,
+        top: yRel * altoNuevo
+      });
+
+      if (obj.data?.type === 'player' && obj.radius) {
+        const scaleX = anchoNuevo / anchoAnterior;
+        const scaleY = altoNuevo / altoAnterior;
+        const scale = Math.min(scaleX, scaleY);
+        obj.set({ radius: obj.radius * scale });
+      }
+      obj.setCoords();
+    });
+    fc.renderAll();
+  }, []);
 
   // Auth & URL
   const { user } = useAuth();
@@ -86,7 +197,7 @@ const PizarraTactica = () => {
     if (!fc || playingR.current || framesR.current.length === 0 || !user) return;
     
     const idx   = frameIdxR.current;
-    const state = fc.toJSON(['data']);
+    const state = serializarFrame();
     const frame = framesR.current[idx];
     if (!frame) return;
 
@@ -159,7 +270,7 @@ const PizarraTactica = () => {
       setRedoCount(newRedo.length);
       saveFrameState(true);
     });
-  }, [saveFrameState]);
+  }, [saveFrameState, serializarFrame]);
 
   const redo = useCallback(() => {
     const fc = fcRef.current;
@@ -182,25 +293,35 @@ const PizarraTactica = () => {
       setRedoCount(nextRedo.length);
       saveFrameState(true);
     });
-  }, [saveFrameState]);
+  }, [saveFrameState, serializarFrame]);
 
   // ─── Create a single player object ─────────────────────────────────────────
   const createPlayer = useCallback((x, y, options = {}) => {
+    const fc = fcRef.current;
+    if (!fc) return null;
+    
     const { color = '#4CAF7D', label = '1', type = 'local' } = options;
+    const radius = getPlayerRadius();
+    
     const circle = new fabric.Circle({
-      radius: 13, originX: 'center', originY: 'center',
+      radius: radius, originX: 'center', originY: 'center',
       fill: color,
-      stroke: '#FFFFFF', strokeWidth: 2,
+      stroke: '#FFFFFF', strokeWidth: Math.max(1, radius * 0.15),
     });
     const text = new fabric.Text(String(label), {
-      fontSize: 10, fontWeight: 'bold', fill: '#FFFFFF',
+      fontSize: Math.round(radius * 0.8), fontWeight: 'bold', fill: '#FFFFFF',
       originX: 'center', originY: 'center',
     });
     const group = new fabric.Group([circle, text], {
       left: x, top: y,
       originX: 'center', originY: 'center',
       hasControls: true, hasBorders: true,
-      data: { type: 'player', playerType: type },
+      data: { 
+        type: 'player', 
+        playerType: type,
+        xRel: x / fc.width,
+        yRel: y / fc.height
+      },
     });
     
     import('../lib/mister11-materials.js').then(m => {
@@ -208,7 +329,7 @@ const PizarraTactica = () => {
     });
 
     return group;
-  }, []);
+  }, [getPlayerRadius]);
 
   // ─── Draw players from formation onto canvas ──────────────────────────────
   const drawPlayers = useCallback((canvas, renderer, fieldType, formations, swapped) => {
@@ -300,7 +421,7 @@ const PizarraTactica = () => {
       unsubscribe = onSnapshot(q, (snapshot) => {
         if (snapshot.empty) {
           // If no frames in DB, create initial one
-          const state = fc.toJSON(['data']);
+          const state = serializarFrame();
           addDoc(framesColRef, {
             name: 'Frame 1',
             state: JSON.stringify(state),
@@ -329,7 +450,7 @@ const PizarraTactica = () => {
           // Load first frame into canvas safely
           if (dbFrames.length > 0) {
             syncingR.current = true;
-            fc.loadFromJSON(dbFrames[0].state, () => {
+            cargarFrame(dbFrames[0].state, () => {
               
               // USER REQUIREMENT: Disparar automáticamente la función de "aplicar formación"
               // Remove any existing messy players
@@ -376,7 +497,7 @@ const PizarraTactica = () => {
       let nH;
       
       const oldW = fcRef.current.width;
-      const scaleFactor = nW / oldW;
+      const oldH = fcRef.current.height;
 
       const isLandscape = window.innerWidth > window.innerHeight;
       const isMobileView = window.innerWidth < 1024 ||
@@ -387,12 +508,9 @@ const PizarraTactica = () => {
         if (isLandscape) {
           nH = window.innerHeight - 110;
         } else {
-          // Portrait: calcula altura respetando proporción del campo (105x68)
-          // pero nunca supera el espacio disponible
-          const maxH = window.innerHeight - 170; // topbar + timeline + floating buttons
+          const maxH = window.innerHeight - 170;
           const proportionalH = nW * (68 / 105);
           nH = Math.min(proportionalH, maxH);
-          // Si el campo quedaría muy pequeño, usa el espacio disponible con proporción inversa
           if (nH < 200) nH = Math.min(maxH, nW * 0.6);
         }
       } else {
@@ -404,22 +522,14 @@ const PizarraTactica = () => {
       if (frRef.current) {
         frRef.current.draw(toLibType(fieldType));
       }
+
+      // Reposicionar objetos antes de cambiar dimensiones de Fabric
+      reposicionarTodo(oldW, oldH, nW, nH);
       
       fcRef.current.setDimensions({ width: nW, height: nH });
-      
-      // Requirement 4: Scale coordinates relatively
-      if (scaleFactor !== 1 && !isNaN(scaleFactor) && scaleFactor > 0) {
-        fcRef.current.getObjects().forEach(obj => {
-          obj.left *= scaleFactor;
-          obj.top *= scaleFactor;
-          // Scale group size too
-          obj.scaleX *= scaleFactor;
-          obj.scaleY *= scaleFactor;
-          obj.setCoords();
-        });
-      }
-      
       fcRef.current.renderAll();
+      
+      canvasPrevDimR.current = { w: nW, h: nH };
     };
 
     const resizeObserver = new ResizeObserver(() => {
@@ -638,7 +748,7 @@ const PizarraTactica = () => {
     await saveFrameState();
 
     // 2. Clone current state
-    const state = fc.toJSON(['data']);
+    const state = serializarFrame();
     
     try {
       const framesColRef = collection(db, 'users', user.uid, 'exercises', planId, 'frames');
@@ -680,7 +790,7 @@ const PizarraTactica = () => {
     
     setTimeout(() => {
       syncingR.current = true;
-      fc.loadFromJSON(framesR.current[idx].state, () => {
+      cargarFrame(framesR.current[idx].state, () => {
         syncingR.current = false;
         fc.renderAll();
         setFrameIdx(idx);

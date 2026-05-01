@@ -28,7 +28,7 @@ const Dashboard = () => {
   const lastMatches = matches.filter(m => m.status === 'Terminado').slice(-3);
 
   const stats = [
-    { label: 'Jugadores', value: players.length, icon: <Users size={24} />, color: '#4CAF7D', route: '/jugadores' },
+    { label: 'Jugadores', value: players.length, icon: <Users size={24} />, color: '#4CAF7D', route: '/equipo' },
     { label: 'Sesiones', value: sessions.length, icon: <ClipboardList size={24} />, color: '#4CAF7D', route: '/sesiones' },
     { label: 'Próximo Rival', value: nextMatch ? nextMatch.rival.split(' ')[0] : 'Sin rival', icon: <Trophy size={24} />, color: '#4CAF7D', route: '/partidos' },
     { label: 'Partidos', value: matches.length, icon: <Calendar size={24} />, color: '#4CAF7D', route: '/partidos' },

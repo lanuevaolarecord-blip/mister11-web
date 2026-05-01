@@ -252,7 +252,8 @@ const PizarraTactica = () => {
     next.pop();
     const prevState = next[next.length - 1];
     
-    // Usar cargarFrame para asegurar el escalado al deshacer
+    // CRITICAL: block onChange during restore to avoid corrupting history
+    syncingR.current = true;
     const stateObj = typeof prevState === 'string' ? JSON.parse(prevState) : prevState;
     cargarFrame(stateObj, () => {
       syncingR.current = false;

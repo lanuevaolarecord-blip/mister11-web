@@ -11,7 +11,10 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { fabric } from 'fabric';
 
+<<<<<<< HEAD
 // ─── Referencias de diseño ──────────────────────────────────────────────────
+=======
+>>>>>>> 21ae8757866de38b79d456c5697fdae00d2309c0
 const CANVAS_REF_WIDTH = 380;
 const CANVAS_REF_HEIGHT = 520;
 const PLAYER_BASE_RADIUS = 13;
@@ -175,6 +178,92 @@ const PizarraTactica = () => {
   useEffect(() => { playingR.current = isPlaying; }, [isPlaying]);
   useEffect(() => { framesR.current = frames; }, [frames]);
 
+  // ─── PASO 2: FUNCIÓN DE ESCALA UNIVERSAL ────────────────────────────────
+  const escalarAlCanvas = useCallback((valor, esAncho = true) => {
+    const canvasActual = esAncho 
+      ? fcRef.current?.width || CANVAS_REF_WIDTH
+      : fcRef.current?.height || CANVAS_REF_HEIGHT;
+    const referencia = esAncho ? CANVAS_REF_WIDTH : CANVAS_REF_HEIGHT;
+    return valor * (canvasActual / referencia);
+  }, []);
+
+  const getPlayerRadius = useCallback(() => {
+    if (!fcRef.current) return PLAYER_BASE_RADIUS;
+    const scaleX = fcRef.current.width / CANVAS_REF_WIDTH;
+    const scaleY = fcRef.current.height / CANVAS_REF_HEIGHT;
+    const scale = Math.min(scaleX, scaleY); // usar la escala menor
+    return Math.round(PLAYER_BASE_RADIUS * scale);
+  }, []);
+
+  // ─── PASO 4: AL GUARDAR UN FRAME EN FIRESTORE ───────────────────────────
+  const serializarFrame = useCallback(() => {
+    const fc = fcRef.current;
+    if (!fc) return [];
+    return fc.getObjects().map(obj => {
+      const serializado = obj.toObject(['data']);
+      return {
+        ...serializado,
+        xRel: obj.left / fc.width,
+        yRel: obj.top / fc.height,
+        // Si es jugador también guarda radio relativo
+        radiusRel: obj.radius 
+          ? obj.radius / Math.min(fc.width, fc.height)
+          : undefined
+      };
+    });
+  }, []);
+
+  // ─── PASO 5: AL CARGAR UN FRAME DESDE FIRESTORE ─────────────────────────
+  const cargarFrame = useCallback((stateData, callback) => {
+    const fc = fcRef.current;
+    if (!fc || !stateData) {
+      if (callback) callback();
+      return;
+    }
+    
+    fc.clear();
+    const objetosGuardados = Array.isArray(stateData) ? stateData : (stateData.objects || []);
+    
+    if (objetosGuardados.length === 0) {
+      if (callback) callback();
+      return;
+    }
+    
+    const enlivenedData = objetosGuardados.map(objData => {
+      const canvasW = fc.width;
+      const canvasH = fc.height;
+      
+      // Calcular posición real en este canvas
+      let left, top;
+      if (objData.xRel !== undefined) {
+        // Datos nuevos con coordenadas relativas
+        left = objData.xRel * canvasW;
+        top  = objData.yRel * canvasH;
+      } else {
+        // Datos viejos — escalar desde canvas de referencia
+        left = (objData.left / CANVAS_REF_WIDTH) * canvasW;
+        top  = (objData.top / CANVAS_REF_HEIGHT) * canvasH;
+      }
+      
+      // Calcular radio real si es jugador
+      let radius = objData.radius;
+      if (objData.radiusRel !== undefined) {
+        radius = objData.radiusRel * Math.min(canvasW, canvasH);
+      } else if (objData.data?.tipo === 'jugador' || objData.data?.type === 'player') {
+        radius = getPlayerRadius();
+      }
+      
+      return { ...objData, left, top, radius };
+    });
+    
+    // Recrear el objeto con posición y tamaño correctos
+    fabric.util.enlivenObjects(enlivenedData, (objetos) => {
+      objetos.forEach(o => fc.add(o));
+      fc.renderAll();
+      if (callback) callback();
+    });
+  }, [getPlayerRadius]);
+
   // ─── Save current canvas state into current frame ─────────────────────────
   const saveFrameState = useCallback(async (immediate = false) => {
     if (syncingR.current) return; // Block saves while loading/syncing
@@ -183,7 +272,13 @@ const PizarraTactica = () => {
     if (!fc || playingR.current || framesR.current.length === 0 || !user) return;
     
     const idx   = frameIdxR.current;
+<<<<<<< HEAD
     const state = serializarFrame();
+=======
+    // Guardar el estado usando nuestra función de serialización para coords relativas
+    const stateObjects = serializarFrame();
+    const state = { version: fabric.version, objects: stateObjects };
+>>>>>>> 21ae8757866de38b79d456c5697fdae00d2309c0
     const frame = framesR.current[idx];
     if (!frame) return;
 
@@ -220,7 +315,8 @@ const PizarraTactica = () => {
   const pushToHistory = useCallback(() => {
     const fc = fcRef.current;
     if (!fc) return;
-    const state = JSON.stringify(fc.toJSON(['data']));
+    const stateObjects = serializarFrame();
+    const state = JSON.stringify({ version: fabric.version, objects: stateObjects });
     const h = historyR.current;
     // Don't push if the last state is identical
     if (h.length > 0 && h[h.length - 1] === state) return;
@@ -248,15 +344,20 @@ const PizarraTactica = () => {
     next.pop();
     const prevState = next[next.length - 1];
     
-    fc.loadFromJSON(prevState, () => {
+    // Usar cargarFrame para asegurar el escalado al deshacer
+    const stateObj = typeof prevState === 'string' ? JSON.parse(prevState) : prevState;
+    cargarFrame(stateObj, () => {
       syncingR.current = false;
-      fc.renderAll();
       historyR.current = next;
       setHistCount(next.length);
       setRedoCount(newRedo.length);
       saveFrameState(true);
     });
+<<<<<<< HEAD
   }, [saveFrameState, serializarFrame]);
+=======
+  }, [saveFrameState, cargarFrame]);
+>>>>>>> 21ae8757866de38b79d456c5697fdae00d2309c0
 
   const redo = useCallback(() => {
     const fc = fcRef.current;
@@ -272,14 +373,18 @@ const PizarraTactica = () => {
     const nextHist = [...historyR.current, stateToRestore];
     historyR.current = nextHist;
 
-    fc.loadFromJSON(stateToRestore, () => {
+    const stateObj = typeof stateToRestore === 'string' ? JSON.parse(stateToRestore) : stateToRestore;
+    cargarFrame(stateObj, () => {
       syncingR.current = false;
-      fc.renderAll();
       setHistCount(nextHist.length);
       setRedoCount(nextRedo.length);
       saveFrameState(true);
     });
+<<<<<<< HEAD
   }, [saveFrameState, serializarFrame]);
+=======
+  }, [saveFrameState, cargarFrame]);
+>>>>>>> 21ae8757866de38b79d456c5697fdae00d2309c0
 
   // ─── Create a single player object ─────────────────────────────────────────
   const createPlayer = useCallback((x, y, options = {}) => {
@@ -287,8 +392,18 @@ const PizarraTactica = () => {
     if (!fc) return null;
     
     const { color = '#4CAF7D', label = '1', type = 'local' } = options;
+<<<<<<< HEAD
     const radius = 13;
     
+=======
+    const fc = fcRef.current;
+    
+    // PASO 3: Guardar siempre coordenadas relativas
+    const xRel = fc ? x / fc.width : (x / CANVAS_REF_WIDTH);
+    const yRel = fc ? y / fc.height : (y / CANVAS_REF_HEIGHT);
+    const radius = getPlayerRadius();
+
+>>>>>>> 21ae8757866de38b79d456c5697fdae00d2309c0
     const circle = new fabric.Circle({
       radius: radius, originX: 'center', originY: 'center',
       fill: color,
@@ -304,9 +419,16 @@ const PizarraTactica = () => {
       hasControls: true, hasBorders: true,
       data: { 
         type: 'player', 
+<<<<<<< HEAD
         playerType: type,
         xRel: x / fc.width,
         yRel: y / fc.height
+=======
+        tipo: 'jugador', // fallback para la logica
+        playerType: type,
+        xRel: xRel,
+        yRel: yRel
+>>>>>>> 21ae8757866de38b79d456c5697fdae00d2309c0
       },
     });
     
@@ -444,8 +566,25 @@ const PizarraTactica = () => {
           if (dbFrames.length > 0) {
             syncingR.current = true;
             cargarFrame(dbFrames[0].state, () => {
+<<<<<<< HEAD
+=======
+              
+              // USER REQUIREMENT: Disparar automáticamente la función de "aplicar formación"
+              // Remove any existing messy players
+              const objects = [...fc.getObjects()];
+              objects.forEach(obj => {
+                if (obj.data && (obj.data.type === 'player' || obj.data.playerType || obj.data.tipo === 'jugador')) {
+                  fc.remove(obj);
+                }
+              });
+              
+              // Re-draw players with default formation safely
+              if (frRef.current) {
+                drawPlayers(fc, frRef.current, 'full', { local: localFormation, rival: rivalFormation }, isSwapped);
+              }
+              
+>>>>>>> 21ae8757866de38b79d456c5697fdae00d2309c0
               syncingR.current = false;
-              fc.renderAll();
               setFrameIdx(0);
               frameIdxR.current = 0;
             });
@@ -493,6 +632,7 @@ const PizarraTactica = () => {
       
       if (nuevoAncho === anchoAnterior && nuevoAlto === altoAnterior) return;
       
+<<<<<<< HEAD
       // Reposicionar objetos antes de cambiar canvas
       fc.getObjects().forEach(obj => {
         const xRel = obj.left / anchoAnterior;
@@ -522,6 +662,60 @@ const PizarraTactica = () => {
         fr.draw(toLibType(fieldType));
       }
       fc.renderAll();
+=======
+      if (frRef.current) {
+        frRef.current.draw(toLibType(fieldType));
+      }
+      
+      fcRef.current.setDimensions({ width: nW, height: nH });
+      
+      // PASO 6: AL CAMBIAR ORIENTACIÓN O TAMAÑO
+      const reposicionarTodo = (anchoAnterior, altoAnterior, anchoNuevo, altoNuevo) => {
+        fcRef.current.getObjects().forEach(obj => {
+          // Calcular posición relativa actual si no existe
+          const xRel = obj.data?.xRel ?? (obj.left / anchoAnterior);
+          const yRel = obj.data?.yRel ?? (obj.top / altoAnterior);
+          
+          // Aplicar al nuevo canvas
+          obj.set({
+            left: xRel * anchoNuevo,
+            top:  yRel * altoNuevo
+          });
+          
+          // Actualizar datos relativos internamente
+          if (obj.data) {
+            obj.data.xRel = xRel;
+            obj.data.yRel = yRel;
+          }
+          
+          // Si es jugador, recalcular radio
+          if ((obj.data?.tipo === 'jugador' || obj.data?.type === 'player') && obj.radius) {
+            const scaleX = anchoNuevo / anchoAnterior;
+            const scaleY = altoNuevo / altoAnterior;
+            const scale = Math.min(scaleX, scaleY);
+            obj.set({ radius: obj.radius * scale });
+            // Scale group size too
+            obj.scaleX *= scale;
+            obj.scaleY *= scale;
+          } else if (scaleFactor !== 1 && !isNaN(scaleFactor) && scaleFactor > 0) {
+            // Escalar otros objetos como materiales proporcionalmente
+            obj.scaleX *= scaleFactor;
+            obj.scaleY *= scaleFactor;
+          }
+          
+          obj.setCoords();
+        });
+        
+        fcRef.current.renderAll();
+      };
+
+      // En el ResizeObserver, usar dimensiones anteriores:
+      const canvasAnteriorW = oldW || CANVAS_REF_WIDTH;
+      const canvasAnteriorH = canvasPrevDimR.current.h;
+
+      reposicionarTodo(canvasAnteriorW, canvasAnteriorH, nW, nH);
+      canvasPrevDimR.current = { w: nW, h: nH };
+>>>>>>> 21ae8757866de38b79d456c5697fdae00d2309c0
     };
 
     const ro = new ResizeObserver(resizeCanvas);

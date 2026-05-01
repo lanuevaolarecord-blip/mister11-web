@@ -55,13 +55,12 @@ const PizarraTactica = () => {
   const canvasPrevDimR = useRef({ w: CANVAS_REF_WIDTH, h: CANVAS_REF_HEIGHT });
 
   // ─── Utilidades de Escala ─────────────────────────────────────────────────
-  const getPlayerRadius = useCallback(() => {
+  const getRadioJugador = useCallback(() => {
     const fc = fcRef.current;
-    if (!fc) return PLAYER_BASE_RADIUS;
-    const scaleX = fc.width / CANVAS_REF_WIDTH;
-    const scaleY = fc.height / CANVAS_REF_HEIGHT;
-    const scale = Math.min(scaleX, scaleY);
-    return Math.round(PLAYER_BASE_RADIUS * scale);
+    if (!fc) return 13;
+    const canvasMin = Math.min(fc.width, fc.height);
+    // Radio proporcional: 3.5% del lado menor del canvas
+    return Math.max(6, Math.round(canvasMin * 0.035));
   }, []);
 
   const serializarFrame = useCallback(() => {
@@ -110,7 +109,7 @@ const PizarraTactica = () => {
       if (objData.radiusRel !== undefined) {
         radius = objData.radiusRel * Math.min(canvasW, canvasH);
       } else if (objData.data?.type === 'player') {
-        radius = getPlayerRadius();
+        radius = getRadioJugador();
       }
 
       return { ...objData, left, top, radius };
@@ -121,7 +120,7 @@ const PizarraTactica = () => {
       fc.renderAll();
       if (callback) callback();
     });
-  }, [getPlayerRadius]);
+  }, [getRadioJugador]);
 
   const reposicionarTodo = useCallback((anchoAnterior, altoAnterior, anchoNuevo, altoNuevo) => {
     const fc = fcRef.current;
@@ -301,7 +300,7 @@ const PizarraTactica = () => {
     if (!fc) return null;
     
     const { color = '#4CAF7D', label = '1', type = 'local' } = options;
-    const radius = getPlayerRadius();
+    const radius = getRadioJugador();
     
     const circle = new fabric.Circle({
       radius: radius, originX: 'center', originY: 'center',
@@ -329,7 +328,7 @@ const PizarraTactica = () => {
     });
 
     return group;
-  }, [getPlayerRadius]);
+  }, [getRadioJugador]);
 
   // ─── Draw players from formation onto canvas ──────────────────────────────
   const drawPlayers = useCallback((canvas, renderer, fieldType, formations, swapped) => {
@@ -472,52 +471,58 @@ const PizarraTactica = () => {
     fc.on('object:removed',  onChange);
 
     // 7. Resize logic with ResizeObserver
-    const onResize = () => {
-      if (!containerRef.current || !fieldCanvasRef.current || !fcRef.current) return;
+    const resizeCanvas = () => {
+      const contenedor = document.getElementById('canvas-container');
+      const fc = fcRef.current;
+      const fr = frRef.current;
+      if (!contenedor || !fc) return;
       
-      const nW = containerRef.current.offsetWidth;
-      let nH;
+      const anchoAnterior = fc.width;
+      const altoAnterior = fc.height;
       
-      const oldW = fcRef.current.width;
-      const oldH = fcRef.current.height;
-
-      const isLandscape = window.innerWidth > window.innerHeight;
-      const isMobileView = window.innerWidth < 1024 ||
-        (window.innerWidth < 1280 && isLandscape);
-      setIsMobile(isMobileView);
-      fieldCanvasRef.current.width = nW;
-      if (isMobileView) {
-        if (isLandscape) {
-          nH = window.innerHeight - 110;
-        } else {
-          const maxH = window.innerHeight - 170;
-          const proportionalH = nW * (68 / 105);
-          nH = Math.min(proportionalH, maxH);
-          if (nH < 200) nH = Math.min(maxH, nW * 0.6);
+      const nuevoAncho = contenedor.offsetWidth;
+      const nuevoAlto = contenedor.offsetHeight;
+      
+      if (nuevoAncho === anchoAnterior && nuevoAlto === altoAnterior) return;
+      
+      // Reposicionar objetos antes de cambiar canvas
+      fc.getObjects().forEach(obj => {
+        const xRel = obj.left / anchoAnterior;
+        const yRel = obj.top / altoAnterior;
+        obj.set({
+          left: xRel * nuevoAncho,
+          top: yRel * nuevoAlto
+        });
+        if (obj.data?.tipo === 'player' && obj.radius) {
+          const scale = Math.min(
+            nuevoAncho / anchoAnterior,
+            nuevoAlto / altoAnterior
+          );
+          obj.set({ radius: Math.max(6, obj.radius * scale) });
         }
-      } else {
-        nH = containerRef.current.offsetHeight || 500;
+        obj.setCoords();
+      });
+      
+      fc.setDimensions({
+        width: nuevoAncho,
+        height: nuevoAlto
+      });
+      
+      // Redibujar el campo con nuevas dimensiones
+      if (fr) {
+        fr.draw(toLibType(fieldType));
       }
-      
-      fieldCanvasRef.current.height = nH;
-      
-      if (frRef.current) {
-        frRef.current.draw(toLibType(fieldType));
-      }
-
-      // Reposicionar objetos antes de cambiar dimensiones de Fabric
-      reposicionarTodo(oldW, oldH, nW, nH);
-      
-      fcRef.current.setDimensions({ width: nW, height: nH });
-      fcRef.current.renderAll();
-      
-      canvasPrevDimR.current = { w: nW, h: nH };
+      fc.renderAll();
     };
 
-    const resizeObserver = new ResizeObserver(() => {
-      onResize();
-    });
-    resizeObserver.observe(containerRef.current);
+    const ro = new ResizeObserver(resizeCanvas);
+    ro.observe(document.getElementById('canvas-container'));
+
+    // orientationchange listener
+    const handleOrientationChange = () => {
+      setTimeout(resizeCanvas, 300);
+    };
+    window.addEventListener('orientationchange', handleOrientationChange);
 
     // 8. Keyboard shortcuts (Undo/Redo)
     const onKeyDown = (e) => {
@@ -534,7 +539,8 @@ const PizarraTactica = () => {
 
     return () => {
       if (unsubscribe) unsubscribe();
-      resizeObserver.disconnect();
+      ro.disconnect();
+      window.removeEventListener('orientationchange', handleOrientationChange);
       window.removeEventListener('keydown', onKeyDown);
       fc.off('object:modified', onChange);
       fc.off('object:added',    onChange);
@@ -1075,13 +1081,13 @@ const PizarraTactica = () => {
           <TeamsPanel />
         </div>
 
-        <div className="canvas-area" ref={containerRef}>
+        <div id="canvas-container" className="canvas-area" ref={containerRef}>
           {/* Field Canvas */}
           <canvas ref={fieldCanvasRef} className="field-renderer-canvas"
             style={{ pointerEvents: 'none', zIndex: 1 }} />
           
           {/* Fabric Canvas */}
-          <canvas ref={fabricElemRef} className="fabric-canvas-elem"
+          <canvas id="fabric-canvas" ref={fabricElemRef} className="fabric-canvas-elem"
             style={{ zIndex: 2, touchAction: 'none' }} />
 
           {/* Placing-material indicator */}

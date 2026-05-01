@@ -262,6 +262,24 @@
   justify-content: center;
 }
 
+#canvas-container, 
+.canvas-container,
+[id*="canvas"][class*="container"] {
+  width: 100% !important;
+  height: 100% !important;
+  flex: 1 !important;
+  min-height: 300px;
+  position: relative;
+}
+
+canvas#fabric-canvas,
+canvas.upper-canvas,
+canvas.lower-canvas {
+  width: 100% !important;
+  height: 100% !important;
+  touch-action: none;
+}
+
 .field-renderer-canvas {
   position: absolute !important;
   top: 50% !important;
@@ -270,7 +288,7 @@
   z-index: 1 !important;
 }
 
-.fabric-canvas-elem, .canvas-container {
+.fabric-canvas-elem {
   position: absolute !important;
   top: 50% !important;
   left: 50% !important;

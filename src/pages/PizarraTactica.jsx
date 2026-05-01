@@ -451,28 +451,10 @@ const PizarraTactica = () => {
           if (dbFrames.length > 0) {
             syncingR.current = true;
             cargarFrame(dbFrames[0].state, () => {
-              
-              // USER REQUIREMENT: Disparar automáticamente la función de "aplicar formación"
-              // Remove any existing messy players
-              const objects = [...fc.getObjects()];
-              objects.forEach(obj => {
-                if (obj.data && (obj.data.type === 'player' || obj.data.playerType)) {
-                  fc.remove(obj);
-                }
-              });
-              
-              // Re-draw players with default formation safely
-              if (frRef.current) {
-                drawPlayers(fc, frRef.current, 'full', { local: localFormation, rival: rivalFormation }, isSwapped);
-              }
-              
               syncingR.current = false;
               fc.renderAll();
               setFrameIdx(0);
               frameIdxR.current = 0;
-              
-              // Force save this ordered state back to Firestore
-              setTimeout(() => saveFrameState(true), 500);
             });
           }
         }

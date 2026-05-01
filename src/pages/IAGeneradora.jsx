@@ -165,7 +165,7 @@ const IAGeneradora = () => {
   const [countdown, setCountdown] = useState(null);
 
   // Verificar API Key al montar
-  const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
+  const apiKey = import.meta.env.VITE_GROQ_API_KEY;
   const apiKeyMissing = !apiKey || apiKey === 'undefined';
 
   useEffect(() => {
@@ -194,47 +194,51 @@ const IAGeneradora = () => {
     }));
   };
 
-  // Llama a Gemini con reintento automático en error 429
-  const callGeminiWithRetry = async (prompt, retries = 3) => {
-    const key = import.meta.env.VITE_GEMINI_API_KEY;
-    for (let i = 0; i < retries; i++) {
-      try {
-        const response = await fetch(
-          `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${key}`,
-          {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              contents: [{ parts: [{ text: prompt }] }],
-              generationConfig: { temperature: 0.8, maxOutputTokens: 1024 }
-            })
-          }
-        );
-
-        if (response.status === 429) {
-          const waitSeconds = (i + 1) * 5;
-          console.warn(`[Gemini] 429 — reintentando en ${waitSeconds}s (intento ${i + 1}/${retries})`);
-          setLoadingMsg(`Límite de peticiones alcanzado. Reintentando en ${waitSeconds}s...`);
-          await new Promise(resolve => setTimeout(resolve, waitSeconds * 1000));
-          setLoadingMsg('⏳ Analizando contexto...');
-          continue;
+  // Llama a Groq (Llama 3) para generar el contenido
+  const callGroq = async (promptTexto) => {
+    const key = import.meta.env.VITE_GROQ_API_KEY;
+    
+    try {
+      const response = await fetch(
+        'https://api.groq.com/openai/v1/chat/completions',
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${key}`
+          },
+          body: JSON.stringify({
+            model: 'llama3-8b-8192',
+            messages: [
+              {
+                role: 'system',
+                content: 'Eres un experto en metodología del fútbol formativo. Respondes siempre en español.'
+              },
+              {
+                role: 'user',
+                content: promptTexto
+              }
+            ],
+            max_tokens: 1024,
+            temperature: 0.7
+          })
         }
+      );
 
-        if (!response.ok) {
-          const data = await response.json();
-          throw new Error(data?.error?.message || `HTTP ${response.status}`);
-        }
-
-        const data = await response.json();
-        console.log('[Gemini] response data:', data);
-        const text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
-        if (!text) throw new Error('Respuesta vacía de Gemini');
-        return text;
-
-      } catch (err) {
-        if (i === retries - 1) throw err;
-        console.warn(`[Gemini] Error intento ${i + 1}:`, err.message);
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData?.error?.message || `Error HTTP ${response.status}`);
       }
+
+      const data = await response.json();
+      const text = data.choices[0].message.content;
+      
+      if (!text) throw new Error('Respuesta vacía de la IA');
+      return text;
+
+    } catch (err) {
+      console.error('[Groq] Error:', err);
+      throw err;
     }
   };
 
@@ -259,11 +263,11 @@ const IAGeneradora = () => {
     const prompt = `Eres experto en metodología del fútbol formativo. Genera UN ejercicio con este formato markdown:\n## Nombre del ejercicio\n**Objetivo:** ...\n**Organización:** ...\n**Desarrollo:** ...\n**Reglas:** ...\n**Variantes:** (2-3 variantes)\n**Puntos de coaching:** (lista 3-5 puntos)\n**Descripción del diagrama:** (posiciones con A=atacantes, D=defensores, P=portero, →=movimiento)\n\nParámetros: edad ${form.edad}, ${form.jugadores} jugadores, objetivo ${form.objetivo}, ${form.duracion} min, material: ${materialesStr}, espacio: ${form.espacio}, intensidad: ${form.intensidad}.\n${form.observaciones ? `Observaciones adicionales: ${form.observaciones}` : ''}\nResponde SOLO en español. No incluyas texto fuera del formato indicado.`;
 
     try {
-      const texto = await callGeminiWithRetry(prompt);
+      const texto = await callGroq(prompt);
       setResult(texto);
     } catch (err) {
-      console.error('[Gemini] Error final:', err);
-      setError('No se pudo generar. Intenta de nuevo en 1 minuto.');
+      console.error('[Groq] Error final:', err);
+      setError(`Error: ${err.message}`);
     } finally {
       setIsGenerating(false);
       setLoadingMsg('⏳ Analizando contexto...');
@@ -299,8 +303,8 @@ const IAGeneradora = () => {
           borderRadius: 8, padding: '12px 16px', margin: 16, fontSize: 13,
           fontWeight: 600
         }}>
-          ⚠️ La clave de API de Gemini no está configurada. Contacta al administrador
-          o configura la variable <code>VITE_GEMINI_API_KEY</code> en Vercel.
+          ⚠️ La clave de API de Groq no está configurada. Contacta al administrador
+          o configura la variable <code>VITE_GROQ_API_KEY</code> en Vercel.
         </div>
       )}
       <div className="ia-form-panel">

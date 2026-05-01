@@ -50,6 +50,7 @@ const PizarraTactica = () => {
   const syncingR  = useRef(false); // prevent events during load
   const readyR    = useRef(false); // track initial load safely
   const saveTimeoutR = useRef(null); // for debouncing saves
+  const clipboardR = useRef(null); // for copy/paste
 
   // ─── Utilidades de Escala ─────────────────────────────────────────────────
 
@@ -456,6 +457,7 @@ const PizarraTactica = () => {
               syncingR.current = false;
               setFrameIdx(0);
               frameIdxR.current = 0;
+              pushToHistory();
             });
           }
         }
@@ -541,7 +543,7 @@ const PizarraTactica = () => {
     };
     window.addEventListener('orientationchange', handleOrientationChange);
 
-    // 8. Keyboard shortcuts (Undo/Redo)
+    // 8. Keyboard shortcuts (Undo/Redo/Copy/Paste)
     const onKeyDown = (e) => {
       if ((e.ctrlKey || e.metaKey) && e.key === 'z') {
         e.preventDefault();
@@ -551,8 +553,63 @@ const PizarraTactica = () => {
         e.preventDefault();
         redo();
       }
+      if ((e.ctrlKey || e.metaKey) && e.key === 'c') {
+        e.preventDefault();
+        const activeObj = fcRef.current.getActiveObject();
+        if (activeObj) {
+          activeObj.clone((cloned) => {
+            clipboardR.current = cloned;
+          }, ['data', 'hasControls', 'hasBorders', 'playerType', 'tipo', 'radius']);
+        }
+      }
+      if ((e.ctrlKey || e.metaKey) && e.key === 'v') {
+        e.preventDefault();
+        if (clipboardR.current) {
+          clipboardR.current.clone((clonedObj) => {
+            const fc = fcRef.current;
+            fc.discardActiveObject();
+            clonedObj.set({
+              left: clonedObj.left + 20,
+              top: clonedObj.top + 20,
+              evented: true,
+            });
+            if (clonedObj.type === 'activeSelection') {
+              clonedObj.canvas = fc;
+              clonedObj.forEachObject((obj) => fc.add(obj));
+              clonedObj.setCoords();
+            } else {
+              fc.add(clonedObj);
+            }
+            clipboardR.current.top += 20;
+            clipboardR.current.left += 20;
+            fc.setActiveObject(clonedObj);
+            fc.requestRenderAll();
+            pushToHistory();
+          }, ['data', 'hasControls', 'hasBorders', 'playerType', 'tipo', 'radius']);
+        }
+      }
     };
     window.addEventListener('keydown', onKeyDown);
+
+    // Ctrl+Click to duplicate
+    const onMouseDownClone = (opt) => {
+      if ((opt.e.ctrlKey || opt.e.metaKey) && opt.target) {
+        opt.target.clone((clonedObj) => {
+          const fc = fcRef.current;
+          fc.discardActiveObject();
+          clonedObj.set({
+            left: clonedObj.left + 20,
+            top: clonedObj.top + 20,
+            evented: true,
+          });
+          fc.add(clonedObj);
+          fc.setActiveObject(clonedObj);
+          fc.requestRenderAll();
+          pushToHistory();
+        }, ['data', 'hasControls', 'hasBorders', 'playerType', 'tipo', 'radius']);
+      }
+    };
+    fc.on('mouse:down', onMouseDownClone);
 
     return () => {
       if (unsubscribe) unsubscribe();
@@ -562,6 +619,7 @@ const PizarraTactica = () => {
       fc.off('object:modified', onChange);
       fc.off('object:added',    onChange);
       fc.off('object:removed',  onChange);
+      fc.off('mouse:down', onMouseDownClone);
       fc.dispose();
     };
   }, [user, planId]); // eslint-disable-line

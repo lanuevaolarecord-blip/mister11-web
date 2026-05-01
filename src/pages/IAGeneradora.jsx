@@ -156,6 +156,8 @@ const IAGeneradora = () => {
   const [form, setForm] = useState(INITIAL_FORM);
   const [result, setResult] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [loadingMsg, setLoadingMsg] = useState('⏳ Analizando contexto...');
   const [error, setError] = useState('');
   const [showBiblioteca, setShowBiblioteca] = useState(false);
   const canvasRef = useRef(null);
@@ -192,9 +194,52 @@ const IAGeneradora = () => {
     }));
   };
 
-  const handleGenerate = async (isRetryOption) => {
-    const isRetry = isRetryOption === true;
-    if (isCallingRef.current && !isRetry) return;
+  // Llama a Gemini con reintento automático en error 429
+  const callGeminiWithRetry = async (prompt, retries = 3) => {
+    const key = import.meta.env.VITE_GEMINI_API_KEY;
+    for (let i = 0; i < retries; i++) {
+      try {
+        const response = await fetch(
+          `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${key}`,
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              contents: [{ parts: [{ text: prompt }] }],
+              generationConfig: { temperature: 0.8, maxOutputTokens: 1024 }
+            })
+          }
+        );
+
+        if (response.status === 429) {
+          const waitSeconds = (i + 1) * 5;
+          console.warn(`[Gemini] 429 — reintentando en ${waitSeconds}s (intento ${i + 1}/${retries})`);
+          setLoadingMsg(`Límite de peticiones alcanzado. Reintentando en ${waitSeconds}s...`);
+          await new Promise(resolve => setTimeout(resolve, waitSeconds * 1000));
+          setLoadingMsg('⏳ Analizando contexto...');
+          continue;
+        }
+
+        if (!response.ok) {
+          const data = await response.json();
+          throw new Error(data?.error?.message || `HTTP ${response.status}`);
+        }
+
+        const data = await response.json();
+        console.log('[Gemini] response data:', data);
+        const text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+        if (!text) throw new Error('Respuesta vacía de Gemini');
+        return text;
+
+      } catch (err) {
+        if (i === retries - 1) throw err;
+        console.warn(`[Gemini] Error intento ${i + 1}:`, err.message);
+      }
+    }
+  };
+
+  const handleGenerate = async () => {
+    if (isCallingRef.current) return;
 
     if (!form.edad || !form.objetivo || !form.espacio) {
       setError('Por favor completa: Edad, Objetivo y Espacio antes de generar.');
@@ -202,11 +247,10 @@ const IAGeneradora = () => {
     }
 
     isCallingRef.current = true;
+    setIsGenerating(true);
+    setLoadingMsg('⏳ Analizando contexto...');
     setError('');
-    setLoading(true);
     setResult(null);
-
-    const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
 
     const materialesStr = form.materiales.length > 0
       ? MATERIALES.filter(m => form.materiales.includes(m.id)).map(m => m.label).join(', ')
@@ -214,82 +258,15 @@ const IAGeneradora = () => {
 
     const prompt = `Eres experto en metodología del fútbol formativo. Genera UN ejercicio con este formato markdown:\n## Nombre del ejercicio\n**Objetivo:** ...\n**Organización:** ...\n**Desarrollo:** ...\n**Reglas:** ...\n**Variantes:** (2-3 variantes)\n**Puntos de coaching:** (lista 3-5 puntos)\n**Descripción del diagrama:** (posiciones con A=atacantes, D=defensores, P=portero, →=movimiento)\n\nParámetros: edad ${form.edad}, ${form.jugadores} jugadores, objetivo ${form.objetivo}, ${form.duracion} min, material: ${materialesStr}, espacio: ${form.espacio}, intensidad: ${form.intensidad}.\n${form.observaciones ? `Observaciones adicionales: ${form.observaciones}` : ''}\nResponde SOLO en español. No incluyas texto fuera del formato indicado.`;
 
-    // Modelos en orden de preferencia: primary → fallback
-    const MODELS = [
-      'gemini-2.0-flash-lite',
-      'gemini-1.5-flash-8b',
-    ];
-
-    const tryModel = async (modelName) => {
-      const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`;
-      const response = await fetch(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: prompt }] }],
-          generationConfig: {
-            temperature: 0.7,
-            maxOutputTokens: 1024,
-          },
-        }),
-      });
-
-      // Debug: log the raw response status
-      console.log(`[Gemini] model=${modelName} status=${response.status}`);
-
-      const data = await response.json();
-      console.log('[Gemini] response data:', data);
-
-      if (!response.ok) {
-        const errorMsg = data?.error?.message || `Error HTTP ${response.status}`;
-        throw new Error(`[${modelName}] ${errorMsg}`);
-      }
-
-      const text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
-      if (!text) throw new Error(`[${modelName}] Respuesta vacía de Gemini`);
-      return text;
-    };
-
     try {
-      let text = null;
-      let lastError = null;
-
-      for (const model of MODELS) {
-        try {
-          text = await tryModel(model);
-          break; // éxito — salir del loop
-        } catch (modelErr) {
-          console.warn(`[Gemini] Fallo con ${model}:`, modelErr.message);
-          lastError = modelErr;
-          // Si es 429 no intentar el siguiente modelo
-          if (modelErr.message.includes('429') || modelErr.message.toLowerCase().includes('quota')) {
-            throw modelErr;
-          }
-          // Para cualquier otro error intentar el siguiente modelo
-        }
-      }
-
-      if (!text) throw lastError;
-
-      setResult(text);
-
+      const texto = await callGeminiWithRetry(prompt);
+      setResult(texto);
     } catch (err) {
       console.error('[Gemini] Error final:', err);
-      const msg = err.message || '';
-
-      if (msg.includes('429') || msg.toLowerCase().includes('quota') || msg.toLowerCase().includes('rate')) {
-        if (isRetry) {
-          setError('Límite de solicitudes alcanzado. Espera unos minutos antes de generar otro ejercicio.');
-        } else {
-          setError('Has realizado demasiadas solicitudes. Espera 30 segundos e inténtalo de nuevo.');
-          setCountdown(30);
-        }
-      } else {
-        // Mostrar el mensaje EXACTO de Google para facilitar el diagnóstico
-        setError(`Error de Gemini: ${msg}`);
-      }
+      setError('No se pudo generar. Intenta de nuevo en 1 minuto.');
     } finally {
-      setLoading(false);
+      setIsGenerating(false);
+      setLoadingMsg('⏳ Analizando contexto...');
       isCallingRef.current = false;
     }
   };
@@ -438,12 +415,12 @@ const IAGeneradora = () => {
             </div>}
 
           <button 
-            className={`btn-generate ${loading ? 'loading' : ''}`}
+            className={`btn-generate ${(loading || isGenerating) ? 'loading' : ''}`}
             onClick={handleGenerate} 
-            disabled={loading || countdown !== null || form.espacio === '' || form.espacio === null || form.espacio === undefined}
-            style={{ opacity: (loading || countdown !== null) ? 0.65 : 1, cursor: (loading || countdown !== null) ? 'not-allowed' : 'pointer', pointerEvents: (loading || countdown !== null) ? 'none' : 'auto' }}
+            disabled={loading || isGenerating || countdown !== null || form.espacio === '' || form.espacio === null || form.espacio === undefined}
+            style={{ opacity: (loading || isGenerating || countdown !== null) ? 0.65 : 1, cursor: (loading || isGenerating || countdown !== null) ? 'not-allowed' : 'pointer', pointerEvents: (loading || isGenerating || countdown !== null) ? 'none' : 'auto' }}
           >
-            {loading ? '⏳ Analizando contexto...' : '✨ Generar Ejercicio'}
+            {(loading || isGenerating) ? loadingMsg : '✨ Generar Ejercicio'}
           </button>
         </div>
       </div>

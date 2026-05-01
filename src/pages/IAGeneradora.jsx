@@ -55,100 +55,7 @@ const renderMarkdown = (text) => {
   });
 };
 
-// Función para dibujar diagrama dinámico según el ejercicio
-const dibujarDiagrama = (canvas, textoEjercicio) => {
-  const ctx = canvas.getContext('2d');
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-  // Fondo campo de fútbol simplificado
-  ctx.fillStyle = '#2d5a1b';
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-  // Líneas del campo
-  ctx.strokeStyle = 'rgba(255,255,255,0.6)';
-  ctx.lineWidth = 1.5;
-  // Borde
-  ctx.strokeRect(20, 20, canvas.width - 40, canvas.height - 40);
-  // Línea central
-  ctx.beginPath();
-  ctx.moveTo(canvas.width / 2, 20);
-  ctx.lineTo(canvas.width / 2, canvas.height - 20);
-  ctx.stroke();
-  // Círculo central
-  ctx.beginPath();
-  ctx.arc(canvas.width / 2, canvas.height / 2, 40, 0, Math.PI * 2);
-  ctx.stroke();
-
-  // Detectar número de jugadores mencionados en el texto
-  const matchJugadores = textoEjercicio.match(/(\d+)\s*(jugador|jugadores|vs|contra)/i);
-  const numJugadores = matchJugadores ? Math.min(parseInt(matchJugadores[1]), 11) : 6;
-
-  // Detectar tipo de ejercicio para posicionar jugadores
-  const esRondo = /rondo|posesión|toque/i.test(textoEjercicio);
-  const esPorteria = /portería|portero|disparo|tiro|finalización/i.test(textoEjercicio);
-  const esPresion = /presión|pressing|recuperación/i.test(textoEjercicio);
-
-  // Posiciones base según tipo
-  let posiciones = [];
-  if (esRondo) {
-    // Círculo de jugadores
-    for (let i = 0; i < numJugadores; i++) {
-      const angle = (i / numJugadores) * Math.PI * 2;
-      posiciones.push({
-        x: canvas.width/2 + Math.cos(angle) * 70,
-        y: canvas.height/2 + Math.sin(angle) * 55,
-        color: i === 0 ? '#E74C3C' : '#c9a84c'
-      });
-    }
-  } else if (esPorteria) {
-    // Jugadores orientados a portería
-    posiciones = [
-      { x: canvas.width*0.2, y: canvas.height*0.5, color: '#c9a84c' },
-      { x: canvas.width*0.4, y: canvas.height*0.35, color: '#c9a84c' },
-      { x: canvas.width*0.4, y: canvas.height*0.65, color: '#c9a84c' },
-      { x: canvas.width*0.65, y: canvas.height*0.5, color: '#c9a84c' },
-      { x: canvas.width*0.85, y: canvas.height*0.5, color: '#3498DB' },
-    ];
-  } else {
-    // Disposición genérica en líneas
-    const cols = Math.ceil(numJugadores / 2);
-    for (let i = 0; i < numJugadores; i++) {
-      posiciones.push({
-        x: canvas.width * (0.2 + (i % cols) * (0.6 / cols)),
-        y: canvas.height * (i < cols ? 0.3 : 0.65),
-        color: '#c9a84c'
-      });
-    }
-  }
-
-  // Dibujar jugadores
-  posiciones.forEach((p, i) => {
-    ctx.beginPath();
-    ctx.arc(p.x, p.y, 14, 0, Math.PI * 2);
-    ctx.fillStyle = p.color;
-    ctx.fill();
-    ctx.strokeStyle = '#fff';
-    ctx.lineWidth = 2;
-    ctx.stroke();
-    ctx.fillStyle = '#fff';
-    ctx.font = 'bold 10px Arial';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText(i + 1, p.x, p.y);
-  });
-
-  // Flecha de movimiento central si hay ejercicio de presión
-  if (esPresion) {
-    ctx.strokeStyle = '#E74C3C';
-    ctx.lineWidth = 2;
-    ctx.setLineDash([5, 3]);
-    ctx.beginPath();
-    ctx.moveTo(posiciones[0]?.x || canvas.width*0.3, posiciones[0]?.y || canvas.height*0.5);
-    ctx.lineTo(canvas.width*0.6, canvas.height*0.5);
-    ctx.stroke();
-    ctx.setLineDash([]);
-  }
-};
+// --- FIN CONFIGURACIÓN ---
 
 const IAGeneradora = () => {
   const { exercises, addExercise } = useExercises();
@@ -179,11 +86,7 @@ const IAGeneradora = () => {
     }
   }, [countdown]);
 
-  useEffect(() => {
-    if (result && canvasRef.current) {
-      dibujarDiagrama(canvasRef.current, result);
-    }
-  }, [result]);
+  // El diagrama ha sido desactivado para priorizar el contenido textual detallado.
 
   const toggleMaterial = (id) => {
     setForm(prev => ({
@@ -260,7 +163,48 @@ const IAGeneradora = () => {
       ? MATERIALES.filter(m => form.materiales.includes(m.id)).map(m => m.label).join(', ')
       : 'Sin material específico';
 
-    const prompt = `Eres experto en metodología del fútbol formativo. Genera UN ejercicio con este formato markdown:\n## Nombre del ejercicio\n**Objetivo:** ...\n**Organización:** ...\n**Desarrollo:** ...\n**Reglas:** ...\n**Variantes:** (2-3 variantes)\n**Puntos de coaching:** (lista 3-5 puntos)\n**Descripción del diagrama:** (posiciones con A=atacantes, D=defensores, P=portero, →=movimiento)\n\nParámetros: edad ${form.edad}, ${form.jugadores} jugadores, objetivo ${form.objetivo}, ${form.duracion} min, material: ${materialesStr}, espacio: ${form.espacio}, intensidad: ${form.intensidad}.\n${form.observaciones ? `Observaciones adicionales: ${form.observaciones}` : ''}\nResponde SOLO en español. No incluyas texto fuera del formato indicado.`;
+    const prompt = `Eres un experto en metodología del fútbol formativo. Genera UN ejercicio de entrenamiento completo en español con este formato markdown exacto:
+
+## [Nombre del ejercicio]
+
+**🎯 Objetivo:** [objetivo específico y medible]
+
+**👥 Jugadores:** [número y organización]
+
+**📐 Espacio:** [dimensiones y tipo de espacio]
+
+**⏱️ Tiempos:** [duración, repeticiones, descansos]
+
+**🔧 Material:** [material necesario]
+
+---
+
+### Organización inicial
+[Cómo se colocan los jugadores antes de empezar, descripción clara de posiciones]
+
+### Desarrollo del ejercicio
+[Descripción paso a paso de cómo se ejecuta el ejercicio, quién hace qué, en qué orden y cómo]
+
+### Reglas
+[Normas específicas del ejercicio]
+
+### Progresiones y variantes
+- **Variante 1 (más fácil):** [descripción]
+- **Variante 2 (más difícil):** [descripción]
+- **Variante 3:** [descripción]
+
+### 🗣️ Puntos clave de coaching
+1. [punto clave 1]
+2. [punto clave 2]
+3. [punto clave 3]
+4. [punto clave 4]
+5. [punto clave 5]
+
+### 📊 Criterios de éxito
+[Cómo sabe el entrenador que el ejercicio se está ejecutando correctamente]
+
+Parámetros del ejercicio: edad ${form.edad}, ${form.jugadores} jugadores, objetivo ${form.objetivo}, ${form.duracion} min, material: ${materialesStr}, espacio: ${form.espacio}, intensidad: ${form.intensidad}.${form.observaciones ? `\nObservaciones adicionales: ${form.observaciones}` : ''}
+Responde SOLO en español. Sé específico y práctico.`;
 
     try {
       const texto = await callGroq(prompt);
@@ -426,6 +370,29 @@ const IAGeneradora = () => {
           >
             {(loading || isGenerating) ? loadingMsg : '✨ Generar Ejercicio'}
           </button>
+
+          {/* Banner de aviso permanente */}
+          <div style={{
+            marginTop: 20,
+            background: '#1B3A2D',
+            borderLeft: '4px solid #D4A843',
+            borderRadius: 8,
+            padding: '12px 16px',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 4
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <span style={{ fontSize: 18 }}>💡</span>
+              <span style={{ color: '#D4A843', fontWeight: 600, fontSize: 14 }}>Recuerda, Míster</span>
+            </div>
+            <p style={{ color: '#CCCCCC', fontSize: 13, margin: 0, lineHeight: 1.5 }}>
+              Los ejercicios generados por IA son una guía de inspiración. Tu experiencia como entrenador es insustituible. 
+              Siempre adapta, modifica y crea tus propios ejercicios basándote en el conocimiento real de tu equipo y tus jugadores. 
+              ¡Tú eres el verdadero Míster!
+            </p>
+          </div>
+        </div>
         </div>
       </div>
 
@@ -480,13 +447,7 @@ const IAGeneradora = () => {
               )}
             </div>
 
-            {/* DIAGRAMA AUTOMÁTICO */}
-            <canvas
-              ref={canvasRef}
-              width={420}
-              height={280}
-              style={{ borderRadius: 12, width: '100%', display: result ? 'block' : 'none', marginTop: 12 }}
-            />
+            {/* DIAGRAMA DESACTIVADO */}
           </div>
         )}
       </div>

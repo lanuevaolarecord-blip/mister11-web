@@ -194,47 +194,50 @@ const IAGeneradora = () => {
     }));
   };
 
-  // Llama a Gemini con reintento automático en error 429
-  const callGeminiWithRetry = async (prompt, retries = 3) => {
-    const key = import.meta.env.VITE_GEMINI_API_KEY;
-    for (let i = 0; i < retries; i++) {
-      try {
-        const response = await fetch(
-          `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${key}`,
-          {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              contents: [{ parts: [{ text: prompt }] }],
-              generationConfig: { temperature: 0.8, maxOutputTokens: 1024 }
-            })
-          }
-        );
+  // Llama a Gemini con máximo 2 reintentos y countdown visual en 429
+  const callGeminiWithRetry = async (prompt) => {
+    const maxRetries = 2;
+    const waitTimes = [15000, 30000]; // 15s y 30s
 
-        if (response.status === 429) {
-          const waitSeconds = (i + 1) * 5;
-          console.warn(`[Gemini] 429 — reintentando en ${waitSeconds}s (intento ${i + 1}/${retries})`);
-          setLoadingMsg(`Límite de peticiones alcanzado. Reintentando en ${waitSeconds}s...`);
-          await new Promise(resolve => setTimeout(resolve, waitSeconds * 1000));
-          setLoadingMsg('⏳ Analizando contexto...');
-          continue;
+    for (let i = 0; i <= maxRetries; i++) {
+      const response = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${import.meta.env.VITE_GEMINI_API_KEY}`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contents: [{ parts: [{ text: prompt }] }],
+            generationConfig: { temperature: 0.8, maxOutputTokens: 1024 }
+          })
         }
+      );
 
-        if (!response.ok) {
-          const data = await response.json();
-          throw new Error(data?.error?.message || `HTTP ${response.status}`);
+      if (response.status === 429) {
+        if (i === maxRetries) {
+          // Agotados los reintentos — para definitivamente
+          throw new Error('RATE_LIMIT');
         }
-
-        const data = await response.json();
-        console.log('[Gemini] response data:', data);
-        const text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
-        if (!text) throw new Error('Respuesta vacía de Gemini');
-        return text;
-
-      } catch (err) {
-        if (i === retries - 1) throw err;
-        console.warn(`[Gemini] Error intento ${i + 1}:`, err.message);
+        const seconds = waitTimes[i] / 1000;
+        console.warn(`[Gemini] 429 — esperando ${seconds}s (intento ${i + 1}/${maxRetries})`);
+        // Countdown visual segundo a segundo
+        for (let s = seconds; s > 0; s--) {
+          setLoadingMsg(`⏳ Límite alcanzado. Reintentando en ${s}s...`);
+          await new Promise(r => setTimeout(r, 1000));
+        }
+        setLoadingMsg('⏳ Analizando contexto...');
+        continue;
       }
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data?.error?.message || `HTTP ${response.status}`);
+      }
+
+      const data = await response.json();
+      console.log('[Gemini] response data:', data);
+      const text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+      if (!text) throw new Error('Respuesta vacía de Gemini');
+      return text;
     }
   };
 
@@ -263,7 +266,11 @@ const IAGeneradora = () => {
       setResult(texto);
     } catch (err) {
       console.error('[Gemini] Error final:', err);
-      setError('No se pudo generar. Intenta de nuevo en 1 minuto.');
+      if (err.message === 'RATE_LIMIT') {
+        setError('Has superado el límite gratuito de la API. Espera 1 minuto y vuelve a intentarlo.');
+      } else {
+        setError('No se pudo generar el ejercicio. Verifica tu conexión o la clave API.');
+      }
     } finally {
       setIsGenerating(false);
       setLoadingMsg('⏳ Analizando contexto...');

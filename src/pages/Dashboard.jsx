@@ -28,10 +28,10 @@ const Dashboard = () => {
   const lastMatches = matches.filter(m => m.status === 'Terminado').slice(-3);
 
   const stats = [
-    { label: 'Jugadores', value: players.length, icon: <Users size={24} />, color: '#4CAF7D' },
-    { label: 'Sesiones', value: sessions.length, icon: <ClipboardList size={24} />, color: '#4CAF7D' },
-    { label: 'Próximo Rival', value: nextMatch ? nextMatch.rival.split(' ')[0] : 'Sin rival', icon: <Trophy size={24} />, color: '#4CAF7D' },
-    { label: 'Partidos', value: matches.length, icon: <Calendar size={24} />, color: '#4CAF7D' },
+    { label: 'Jugadores', value: players.length, icon: <Users size={24} />, color: '#4CAF7D', route: '/jugadores' },
+    { label: 'Sesiones', value: sessions.length, icon: <ClipboardList size={24} />, color: '#4CAF7D', route: '/sesiones' },
+    { label: 'Próximo Rival', value: nextMatch ? nextMatch.rival.split(' ')[0] : 'Sin rival', icon: <Trophy size={24} />, color: '#4CAF7D', route: '/partidos' },
+    { label: 'Partidos', value: matches.length, icon: <Calendar size={24} />, color: '#4CAF7D', route: '/partidos' },
   ];
 
   const upcomingSessions = sessions
@@ -103,7 +103,11 @@ const Dashboard = () => {
       {/* Stats Grid */}
       <div className="stats-grid-dash">
         {stats.map((s, i) => (
-          <div key={i} className="stat-card-dash">
+          <div 
+            key={i} 
+            className="stat-card-dash"
+            onClick={() => navigate(s.route)}
+          >
             <div className="stat-icon-dash" style={{ backgroundColor: `${s.color}15`, color: s.color }}>
               {s.icon}
             </div>

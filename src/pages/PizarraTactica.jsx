@@ -14,7 +14,7 @@ import { fabric } from 'fabric';
 // ─── Referencias de diseño ──────────────────────────────────────────────────
 const CANVAS_REF_WIDTH = 380;
 const CANVAS_REF_HEIGHT = 520;
-const RADIO_JUGADOR = 10.5;
+const RADIO_JUGADOR = 12.5;
 
 // ─── Make fabric global BEFORE library imports use it ───────────────────────
 if (typeof window !== 'undefined') window.fabric = fabric;

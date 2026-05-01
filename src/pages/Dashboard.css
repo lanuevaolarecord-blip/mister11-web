@@ -62,12 +62,19 @@
   gap: 15px;
   position: relative;
   box-shadow: 0 4px 15px rgba(27, 58, 45, 0.04);
-  transition: transform 0.2s;
+  transition: all 0.2s;
   border: 1px solid var(--border-color);
+  cursor: pointer;
 }
 
 .stat-card-dash:hover {
   transform: translateY(-5px);
+  box-shadow: 0 8px 20px rgba(27, 58, 45, 0.1);
+  border-color: var(--accent);
+}
+
+.stat-card-dash:active {
+  transform: translateY(-2px);
 }
 
 .stat-icon-dash {

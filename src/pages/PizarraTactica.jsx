@@ -58,9 +58,8 @@ const PizarraTactica = () => {
   const getRadioJugador = useCallback(() => {
     const fc = fcRef.current;
     if (!fc) return 13;
-    const canvasMin = Math.min(fc.width, fc.height);
-    // Radio proporcional: 3.5% del lado menor del canvas
-    return Math.max(6, Math.round(canvasMin * 0.035));
+    // 3.5% del ancho del canvas según requerimiento
+    return Math.max(6, Math.round(fc.width * 0.035));
   }, []);
 
   const serializarFrame = useCallback(() => {
@@ -483,6 +482,10 @@ const PizarraTactica = () => {
       
       const anchoContenedor = contenedor.offsetWidth;
       const altoContenedor = contenedor.offsetHeight;
+
+      // Layout Adaptativo
+      const isMobileView = window.innerWidth < 1024;
+      setIsMobile(isMobileView);
       
       // Proporción 1.5:1 (FIFA aprox)
       let nuevoAncho = anchoContenedor;
@@ -504,11 +507,8 @@ const PizarraTactica = () => {
           top: yRel * nuevoAlto
         });
         if (obj.data?.tipo === 'player' && obj.radius) {
-          const scale = Math.min(
-            nuevoAncho / anchoAnterior,
-            nuevoAlto / altoAnterior
-          );
-          obj.set({ radius: Math.max(6, obj.radius * scale) });
+          // El radio se recalcula según el nuevo ancho
+          obj.set({ radius: Math.max(6, Math.round(nuevoAncho * 0.035)) });
         }
         obj.setCoords();
       });
@@ -964,14 +964,14 @@ const PizarraTactica = () => {
       </div>
 
       <div className="panel-title">ACCIONES</div>
-      <div className="acciones-panel-container">
+      <div className="acciones-panel-container-grid">
         <button 
           className={`toggle-rival ${showRival ? 'active' : ''}`}
           onClick={() => setShowRival(!showRival)}
         >
-          {showRival ? '👁 OCULTAR EQUIPO RIVAL' : '👁 MOSTRAR EQUIPO RIVAL'}
+          {showRival ? '👁 RIVAL' : '👁 RIVAL'}
         </button>
-        <button className="btn-delete-pizarra" onClick={deleteSelected}>🗑 ELIMINAR SELECCIÓN</button>
+        <button className="btn-delete-pizarra" onClick={deleteSelected}>🗑 BORRAR</button>
       </div>
     </div>
   );

@@ -200,30 +200,35 @@
 }
 
 /* SECCIÓN ACCIONES */
-.acciones-panel-container {
+.acciones-panel-container-grid {
   margin-top: 8px;
   padding-top: 8px;
   border-top: 1px solid #2D5A27;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
 }
 
-.toggle-rival {
-  height: 26px !important;
+.toggle-rival, .btn-delete-pizarra {
+  height: 28px !important;
   font-size: 10px !important;
-  padding: 0 8px !important;
-  border: 1px solid #2D5A27 !important;
-  color: #CCCCCC !important;
-  background: transparent !important;
+  padding: 0 4px !important;
   border-radius: 4px !important;
-  width: 100% !important;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-bottom: 8px;
   transition: all 0.2s;
   text-transform: uppercase;
-  font-weight: 600;
+  font-weight: 700;
   letter-spacing: 0.5px;
+  width: 100% !important;
+}
+
+.toggle-rival {
+  border: 1px solid #2D5A27 !important;
+  color: #CCCCCC !important;
+  background: transparent !important;
 }
 .toggle-rival:hover { background: #1E3A2E !important; }
 .toggle-rival.active {
@@ -231,25 +236,13 @@
   color: #FFFFFF !important;
   border-color: #4CAF7D !important;
 }
-.toggle-rival input {
-  width: 13px;
-  height: 13px;
-  cursor: pointer;
-}
 
 .btn-delete-pizarra {
-  height: 26px !important;
-  font-size: 11px !important;
-  padding: 0 8px !important;
   border: 1px solid #EF4444 !important;
   color: #EF4444 !important;
   background: transparent !important;
-  border-radius: 4px !important;
-  width: 100% !important;
-  cursor: pointer;
-  text-transform: uppercase;
-  font-weight: 600;
 }
+.btn-delete-pizarra:hover { background: rgba(239, 68, 68, 0.1) !important; }
 
 /* CANVAS AREA — maximizar */
 .canvas-area {

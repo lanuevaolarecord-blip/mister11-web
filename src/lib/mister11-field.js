@@ -158,8 +158,8 @@ export class FieldRenderer {
   // LAYOUT Y CÁLCULOS
   // ───────────────────────────────────────
   _resize() {
-    const W = this.canvas.width  = this.canvas.offsetWidth;
-    const H = this.canvas.height = this.canvas.offsetHeight;
+    const W = this.canvas.width;
+    const H = this.canvas.height;
     const pH = (typeof this.padding === 'object') ? (this.padding.h ?? 16) : this.padding;
     const pV = (typeof this.padding === 'object') ? (this.padding.v ?? 12) : this.padding;
 

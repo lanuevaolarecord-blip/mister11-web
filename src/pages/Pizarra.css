@@ -275,8 +275,6 @@
 canvas#fabric-canvas,
 canvas.upper-canvas,
 canvas.lower-canvas {
-  width: 100% !important;
-  height: 100% !important;
   touch-action: none;
 }
 

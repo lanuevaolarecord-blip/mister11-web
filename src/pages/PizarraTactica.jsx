@@ -475,13 +475,23 @@ const PizarraTactica = () => {
       const contenedor = document.getElementById('canvas-container');
       const fc = fcRef.current;
       const fr = frRef.current;
-      if (!contenedor || !fc) return;
+      const fieldCanvas = fieldCanvasRef.current;
+      if (!contenedor || !fc || !fieldCanvas) return;
       
       const anchoAnterior = fc.width;
       const altoAnterior = fc.height;
       
-      const nuevoAncho = contenedor.offsetWidth;
-      const nuevoAlto = contenedor.offsetHeight;
+      const anchoContenedor = contenedor.offsetWidth;
+      const altoContenedor = contenedor.offsetHeight;
+      
+      // Proporción 1.5:1 (FIFA aprox)
+      let nuevoAncho = anchoContenedor;
+      let nuevoAlto = nuevoAncho / 1.5;
+      
+      if (nuevoAlto > altoContenedor) {
+        nuevoAlto = altoContenedor;
+        nuevoAncho = nuevoAlto * 1.5;
+      }
       
       if (nuevoAncho === anchoAnterior && nuevoAlto === altoAnterior) return;
       
@@ -502,6 +512,10 @@ const PizarraTactica = () => {
         }
         obj.setCoords();
       });
+      
+      // Actualizar ambos canvases
+      fieldCanvas.width = nuevoAncho;
+      fieldCanvas.height = nuevoAlto;
       
       fc.setDimensions({
         width: nuevoAncho,

@@ -186,17 +186,22 @@ const PizarraTactica = () => {
 
   // ─── Create a single player object ─────────────────────────────────────────
   const createPlayer = useCallback((x, y, options = {}) => {
-    const { color = '#4CAF7D', label = '1', type = 'local' } = options;
+    const { color = '#4CAF7D', label = '1', type = 'local', pos = '' } = options;
     const circle = new fabric.Circle({
-      radius: 20, originX: 'center', originY: 'center',
+      radius: 10, originX: 'center', originY: 'center',
       fill: color,
-      stroke: '#FFFFFF', strokeWidth: 2.5,
+      stroke: '#FFFFFF', strokeWidth: 1.5,
     });
     const text = new fabric.Text(String(label), {
-      fontSize: 14, fontWeight: 'bold', fill: '#FFFFFF',
+      fontSize: 8, fontWeight: 'bold', fill: '#FFFFFF',
       originX: 'center', originY: 'center',
     });
-    const group = new fabric.Group([circle, text], {
+    const posText = new fabric.Text(String(pos), {
+      fontSize: 6, fontWeight: 'bold', fill: '#FFFFFF',
+      originX: 'center', originY: 'center',
+      top: 13
+    });
+    const group = new fabric.Group([circle, text, posText], {
       left: x, top: y,
       originX: 'center', originY: 'center',
       hasControls: true, hasBorders: true,
@@ -241,7 +246,8 @@ const PizarraTactica = () => {
         const player = createPlayer(x, y, {
           color: isGk ? '#FFD700' : color,
           label: i + 1,
-          type: type
+          type: type,
+          pos: pos.pos || ''
         });
         canvas.add(player);
       });
@@ -800,7 +806,7 @@ const PizarraTactica = () => {
     if (type === 'joker') color = jokerColor;
 
     const center = fc.getCenter();
-    const player = createPlayer(center.left, center.top, { color, label, type });
+    const player = createPlayer(center.left, center.top, { color, label, type, pos: '' });
     fc.add(player);
     fc.setActiveObject(player);
     fc.renderAll();

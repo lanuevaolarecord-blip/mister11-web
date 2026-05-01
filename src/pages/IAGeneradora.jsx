@@ -393,7 +393,6 @@ Responde SOLO en español. Sé específico y práctico.`;
             </p>
           </div>
         </div>
-        </div>
       </div>
 
       <div className="ia-result-panel">

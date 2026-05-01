@@ -186,7 +186,7 @@ const PizarraTactica = () => {
 
   // ─── Create a single player object ─────────────────────────────────────────
   const createPlayer = useCallback((x, y, options = {}) => {
-    const { color = '#4CAF7D', label = '1', type = 'local', pos = '' } = options;
+    const { color = '#4CAF7D', label = '1', type = 'local' } = options;
     const circle = new fabric.Circle({
       radius: 13, originX: 'center', originY: 'center',
       fill: color,
@@ -196,12 +196,7 @@ const PizarraTactica = () => {
       fontSize: 10, fontWeight: 'bold', fill: '#FFFFFF',
       originX: 'center', originY: 'center',
     });
-    const posText = new fabric.Text(String(pos), {
-      fontSize: 7, fontWeight: 'bold', fill: '#FFFFFF',
-      originX: 'center', originY: 'center',
-      top: 16
-    });
-    const group = new fabric.Group([circle, text, posText], {
+    const group = new fabric.Group([circle, text], {
       left: x, top: y,
       originX: 'center', originY: 'center',
       hasControls: true, hasBorders: true,

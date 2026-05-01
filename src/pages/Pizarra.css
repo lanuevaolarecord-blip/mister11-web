@@ -46,10 +46,10 @@
   margin: 0 6px;
 }
 
-/* BOTONES DE HERRAMIENTAS (32x32) */
+/* BOTONES DE HERRAMIENTAS (Min 48x48) */
 .tool-icon-btn, .topbar-btn-nav {
-  width: 32px;
-  height: 32px;
+  width: 48px;
+  height: 48px;
   border-radius: 6px;
   padding: 0;
   background: transparent;
@@ -173,8 +173,8 @@
 }
 
 .btn-add-player-pizarra {
-  width: 22px;
-  height: 22px;
+  width: 48px;
+  height: 48px;
   border-radius: 50%;
   border: 1px solid #4CAF7D;
   color: #4CAF7D;
@@ -374,8 +374,8 @@ canvas.lower-canvas {
 .timeline-scroll-wrapper::-webkit-scrollbar { display: none; }
 
 .timeline-btn-nav {
-  width: 30px;
-  height: 30px;
+  width: 48px;
+  height: 48px;
   background: #142E22;
   border: 1px solid #2D5A27;
   border-radius: 4px;
@@ -399,8 +399,8 @@ canvas.lower-canvas {
 .timeline-chips { display: flex; gap: 4px; }
 
 .frame-chip {
-  width: 26px;
-  height: 26px;
+  width: 48px;
+  height: 48px;
   background: #142E22;
   border: 1px solid #2D5A27;
   border-radius: 4px;
@@ -426,8 +426,8 @@ canvas.lower-canvas {
 }
 
 .btn-trash-frame {
-  width: 28px;
-  height: 28px;
+  width: 48px;
+  height: 48px;
   background: transparent;
   color: #888888;
   border: none;

@@ -102,7 +102,7 @@ const PizarraTactica = () => {
       if (objData.radiusRel !== undefined) {
         radius = objData.radiusRel * Math.min(canvasW, canvasH);
       } else if (objData.data?.type === 'player') {
-        radius = 13;
+        radius = 10.5;
       }
 
       return { ...objData, left, top, radius };
@@ -353,11 +353,7 @@ const PizarraTactica = () => {
       setRedoCount(newRedo.length);
       saveFrameState(true);
     });
-<<<<<<< HEAD
   }, [saveFrameState, serializarFrame]);
-=======
-  }, [saveFrameState, cargarFrame]);
->>>>>>> 21ae8757866de38b79d456c5697fdae00d2309c0
 
   const redo = useCallback(() => {
     const fc = fcRef.current;
@@ -380,11 +376,7 @@ const PizarraTactica = () => {
       setRedoCount(nextRedo.length);
       saveFrameState(true);
     });
-<<<<<<< HEAD
   }, [saveFrameState, serializarFrame]);
-=======
-  }, [saveFrameState, cargarFrame]);
->>>>>>> 21ae8757866de38b79d456c5697fdae00d2309c0
 
   // ─── Create a single player object ─────────────────────────────────────────
   const createPlayer = useCallback((x, y, options = {}) => {
@@ -392,18 +384,11 @@ const PizarraTactica = () => {
     if (!fc) return null;
     
     const { color = '#4CAF7D', label = '1', type = 'local' } = options;
-<<<<<<< HEAD
-    const radius = 13;
+    const radius = 10.5;
     
-=======
-    const fc = fcRef.current;
-    
-    // PASO 3: Guardar siempre coordenadas relativas
-    const xRel = fc ? x / fc.width : (x / CANVAS_REF_WIDTH);
-    const yRel = fc ? y / fc.height : (y / CANVAS_REF_HEIGHT);
-    const radius = getPlayerRadius();
+    const xRel = x / fc.width;
+    const yRel = y / fc.height;
 
->>>>>>> 21ae8757866de38b79d456c5697fdae00d2309c0
     const circle = new fabric.Circle({
       radius: radius, originX: 'center', originY: 'center',
       fill: color,
@@ -418,17 +403,11 @@ const PizarraTactica = () => {
       originX: 'center', originY: 'center',
       hasControls: true, hasBorders: true,
       data: { 
-        type: 'player', 
-<<<<<<< HEAD
-        playerType: type,
-        xRel: x / fc.width,
-        yRel: y / fc.height
-=======
-        tipo: 'jugador', // fallback para la logica
+        type: 'player',
+        tipo: 'jugador',
         playerType: type,
         xRel: xRel,
         yRel: yRel
->>>>>>> 21ae8757866de38b79d456c5697fdae00d2309c0
       },
     });
     
@@ -643,7 +622,7 @@ const PizarraTactica = () => {
         });
         if (obj.data?.type === 'player' && obj.radius) {
           // Mantener radio estable
-          obj.set({ radius: 13 });
+          obj.set({ radius: 10.5 });
         }
         obj.setCoords();
       });

@@ -323,53 +323,138 @@ export class FieldRenderer {
   }
 
   _drawHalfAttack() {
+    // En half_attack se ve la mitad derecha del campo (relX 0.5 a 1.0)
+    // getCanvasPoint transforma: finalX = (rx - 0.5) * 2
+    // Entonces relX=0.5 → x=field.x (borde izq canvas)
+    //           relX=1.0 → x=field.x+field.w (borde der canvas)
+    
     this._drawOuterLines();
     this._drawGoalAndAreas(1, 'right');
-    const p1 = this.getCanvasPoint(0.5, 0);
-    const p2 = this.getCanvasPoint(0.5, 1);
-    this.ctx.beginPath(); this.ctx.moveTo(p1.x, p1.y); this.ctx.lineTo(p2.x, p2.y); this.ctx.stroke();
+    
+    // Línea de medio campo = borde izquierdo visible
+    const { x, y, w, h } = this.field;
+    const ctx = this.ctx;
+    ctx.save();
+    ctx.setLineDash([8, 4]);
+    ctx.beginPath();
+    ctx.moveTo(x, y);
+    ctx.lineTo(x, y + h);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.restore();
+    
+    // Semicírculo central (la parte que entra en este medio campo)
+    const cr = (FIFA.CENTER_RADIUS / FIFA.LENGTH) * w;
+    ctx.beginPath();
+    ctx.arc(x, y + h / 2, cr, -Math.PI / 2, Math.PI / 2);
+    ctx.stroke();
+    
+    // Punto central
+    ctx.fillStyle = '#FFF';
+    ctx.beginPath();
+    ctx.arc(x, y + h / 2, 3, 0, Math.PI * 2);
+    ctx.fill();
   }
 
   _drawHalfDefense() {
+    // En half_defense se ve la mitad izquierda (relX 0.0 a 0.5)
+    // getCanvasPoint transforma: finalX = rx * 2
+    // Entonces relX=0.0 → x=field.x
+    //           relX=0.5 → x=field.x+field.w (borde der canvas)
+    
     this._drawOuterLines();
     this._drawGoalAndAreas(0, 'left');
-    const p1 = this.getCanvasPoint(0.5, 0);
-    const p2 = this.getCanvasPoint(0.5, 1);
-    this.ctx.beginPath(); this.ctx.moveTo(p1.x, p1.y); this.ctx.lineTo(p2.x, p2.y); this.ctx.stroke();
+    
+    // Línea de medio campo = borde derecho visible
+    const { x, y, w, h } = this.field;
+    const ctx = this.ctx;
+    ctx.save();
+    ctx.setLineDash([8, 4]);
+    ctx.beginPath();
+    ctx.moveTo(x + w, y);
+    ctx.lineTo(x + w, y + h);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.restore();
+    
+    // Semicírculo central (la parte que entra en este medio campo)
+    const cr = (FIFA.CENTER_RADIUS / FIFA.LENGTH) * w;
+    ctx.beginPath();
+    ctx.arc(x + w, y + h / 2, cr, Math.PI / 2, Math.PI * 3 / 2);
+    ctx.stroke();
+    
+    // Punto central
+    ctx.fillStyle = '#FFF';
+    ctx.beginPath();
+    ctx.arc(x + w, y + h / 2, 3, 0, Math.PI * 2);
+    ctx.fill();
   }
 
   _drawThirdDef() {
+    // Muestra relX 0.0 a 0.333 → getCanvasPoint: finalX = rx * 3
+    // relX=0.333 → x=field.x+field.w (borde derecho visible)
     this._drawOuterLines();
     this._drawGoalAndAreas(0, 'left');
-    // Línea de 1/3
-    const p1 = this.getCanvasPoint(0.333, 0);
-    const p2 = this.getCanvasPoint(0.333, 1);
-    this.ctx.setLineDash([5, 5]);
-    this.ctx.beginPath(); this.ctx.moveTo(p1.x, p1.y); this.ctx.lineTo(p2.x, p2.y); this.ctx.stroke();
+    
+    // Línea límite del tercio = borde derecho del canvas
+    const { x, y, w, h } = this.field;
+    this.ctx.save();
+    this.ctx.setLineDash([8, 4]);
+    this.ctx.beginPath();
+    this.ctx.moveTo(x + w, y);
+    this.ctx.lineTo(x + w, y + h);
+    this.ctx.stroke();
     this.ctx.setLineDash([]);
+    this.ctx.restore();
   }
 
   _drawThirdMid() {
+    // Muestra relX 0.333 a 0.666 → getCanvasPoint: finalX = (rx - 0.333) * 3
+    // relX=0.333 → x=field.x (borde izq), relX=0.666 → x=field.x+field.w (borde der)
     this._drawOuterLines();
+    
+    // Círculo central (relX=0.5, relY=0.5 → centro del canvas)
     this._drawCenterCircle();
-    // Líneas de 1/3
-    const l1 = this.getCanvasPoint(0.333, 0); const l2 = this.getCanvasPoint(0.333, 1);
-    const r1 = this.getCanvasPoint(0.666, 0); const r2 = this.getCanvasPoint(0.666, 1);
-    this.ctx.setLineDash([5, 5]);
-    this.ctx.beginPath(); this.ctx.moveTo(l1.x, l1.y); this.ctx.lineTo(l2.x, l2.y); this.ctx.stroke();
-    this.ctx.beginPath(); this.ctx.moveTo(r1.x, r1.y); this.ctx.lineTo(r2.x, r2.y); this.ctx.stroke();
+    
+    const { x, y, w, h } = this.field;
+    this.ctx.save();
+    this.ctx.setLineDash([8, 4]);
+    // Borde izquierdo = límite con tercio defensivo
+    this.ctx.beginPath();
+    this.ctx.moveTo(x, y);
+    this.ctx.lineTo(x, y + h);
+    this.ctx.stroke();
+    // Borde derecho = límite con tercio ofensivo
+    this.ctx.beginPath();
+    this.ctx.moveTo(x + w, y);
+    this.ctx.lineTo(x + w, y + h);
+    this.ctx.stroke();
     this.ctx.setLineDash([]);
+    this.ctx.restore();
+    
+    // Línea de medio campo real (en el centro del canvas)
+    this.ctx.beginPath();
+    this.ctx.moveTo(x + w / 2, y);
+    this.ctx.lineTo(x + w / 2, y + h);
+    this.ctx.stroke();
   }
 
   _drawThirdOff() {
+    // Muestra relX 0.666 a 1.0 → getCanvasPoint: finalX = (rx - 0.666) * 3
+    // relX=0.666 → x=field.x (borde izq), relX=1.0 → x=field.x+field.w
     this._drawOuterLines();
     this._drawGoalAndAreas(1, 'right');
-    // Línea de 1/3
-    const p1 = this.getCanvasPoint(0.666, 0);
-    const p2 = this.getCanvasPoint(0.666, 1);
-    this.ctx.setLineDash([5, 5]);
-    this.ctx.beginPath(); this.ctx.moveTo(p1.x, p1.y); this.ctx.lineTo(p2.x, p2.y); this.ctx.stroke();
+    
+    // Línea límite del tercio = borde izquierdo del canvas
+    const { x, y, w, h } = this.field;
+    this.ctx.save();
+    this.ctx.setLineDash([8, 4]);
+    this.ctx.beginPath();
+    this.ctx.moveTo(x, y);
+    this.ctx.lineTo(x, y + h);
+    this.ctx.stroke();
     this.ctx.setLineDash([]);
+    this.ctx.restore();
   }
 
   _drawPenaltyZoom() {

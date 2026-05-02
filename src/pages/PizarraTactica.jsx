@@ -29,20 +29,7 @@ import { useSearchParams } from 'react-router-dom';
 import './Pizarra.css';
 
 // helper: 'half-attack' → 'half_attack' (library uses underscores)
-const toLibType = (t) => {
-  const map = {
-    'full':           'full',
-    'half-attack':    'half_attack',
-    'half_attack':    'half_attack',
-    '½ Ataque':       'half_attack',
-    'half-defense':   'half_defense',
-    'half_defense':   'half_defense',
-    '½ Defensa':      'half_defense',
-    'attack':         'half_attack',
-    'defense':        'half_defense',
-  };
-  return map[t] || map[t?.replace(/-/g, '_')] || 'full';
-};
+const toLibType = (t) => t.replace(/-/g, '_');
 
 // ─────────────────────────────────────────────────────────────────────────────
 const PizarraTactica = () => {
@@ -437,15 +424,10 @@ const PizarraTactica = () => {
     const tm = new ToolManager(fc);
     tmRef.current = tm;
 
-    // 4. Draw initial players — defer to next tick so FieldRenderer bounds are ready
-    setTimeout(() => {
-      if (!readyR.current) {
-        syncingR.current = true;
-        drawPlayers(fc, renderer, 'full', { local: localFormation, rival: rivalFormation }, isSwapped);
-        syncingR.current = false;
-        fc.renderAll();
-      }
-    }, 100);
+    // 4. Draw initial players
+    syncingR.current = true;
+    drawPlayers(fc, renderer, 'full', { local: localFormation, rival: rivalFormation }, isSwapped);
+    syncingR.current = false;
 
     // 5. Load frames from Firestore
     let unsubscribe;
@@ -1191,14 +1173,12 @@ const PizarraTactica = () => {
 
         <div id="canvas-container" className="canvas-area" ref={containerRef}>
           {/* Field Canvas */}
-          <canvas ref={fieldCanvasRef} className="field-renderer-canvas field-canvas-2d"
-            style={{ position: 'absolute', top: 0, left: 0, 
-                     width: '100%', height: '100%', 
-                     zIndex: 0, pointerEvents: 'none' }} />
+          <canvas ref={fieldCanvasRef} className="field-renderer-canvas"
+            style={{ pointerEvents: 'none', zIndex: 1 }} />
           
           {/* Fabric Canvas */}
           <canvas id="fabric-canvas" ref={fabricElemRef} className="fabric-canvas-elem"
-            style={{ zIndex: 1, touchAction: 'none' }} />
+            style={{ zIndex: 2, touchAction: 'none' }} />
 
           {/* Placing-material indicator */}
           {placingMat && (

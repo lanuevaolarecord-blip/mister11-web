@@ -605,40 +605,67 @@ export class FieldRenderer {
   _drawGoalAndAreas(rx, side, isZoom = false, mode = 'f11') {
     const ctx = this.ctx;
     const { x: fx, y: fy, w: fw, h: fh } = this.field;
-    
-    // rx=0 → borde izquierdo del canvas visible (fx)
-    // rx=1 → borde derecho del canvas visible (fx+fw)
+
+    // Longitud real visible en metros según el modo actual
+    const VISIBLE_LENGTH = {
+      full:         FIFA.LENGTH,
+      half_attack:  FIFA.LENGTH / 2,
+      half_defense: FIFA.LENGTH / 2,
+      third_def:    FIFA.LENGTH / 3,
+      third_mid:    FIFA.LENGTH / 3,
+      third_off:    FIFA.LENGTH / 3,
+      penalty_zoom: FIFA.PENALTY_AREA_DEPTH + 4,
+      f7:           FIFA.F7_LENGTH,
+      f8:           FIFA.F8_LENGTH,
+      futsal:       FIFA.FUTSAL_LENGTH,
+    };
+    const VISIBLE_WIDTH = {
+      full:         FIFA.WIDTH,
+      half_attack:  FIFA.WIDTH,
+      half_defense: FIFA.WIDTH,
+      third_def:    FIFA.WIDTH,
+      third_mid:    FIFA.WIDTH,
+      third_off:    FIFA.WIDTH,
+      penalty_zoom: FIFA.PENALTY_AREA_WIDTH + 6,
+      f7:           FIFA.F7_WIDTH,
+      f8:           FIFA.F8_WIDTH,
+      futsal:       FIFA.FUTSAL_WIDTH,
+    };
+
+    const visLen = VISIBLE_LENGTH[this.currentType] ?? FIFA.LENGTH;
+    const visWid = VISIBLE_WIDTH[this.currentType] ?? FIFA.WIDTH;
+
+    // lineX = posición X de la línea de fondo en el canvas
     const lineX = fx + rx * fw;
-    const dir = side === 'left' ? 1 : -1;
 
     let penaltyDepth, penaltyWidth, smallDepth, smallWidth,
         goalWidth, goalDepth, penaltySpot;
 
     if (mode === 'f7') {
-      penaltyDepth  = (11 / 65) * fw;
-      penaltyWidth  = (26 / 45) * fh;
-      smallDepth    = 0;
-      smallWidth    = 0;
-      goalWidth     = (6 / 45) * fh;
-      goalDepth     = (2 / 65) * fw;
-      penaltySpot   = (9 / 65) * fw;
+      penaltyDepth = (FIFA.F7_PENALTY_DEPTH / visLen) * fw;
+      penaltyWidth = (FIFA.F7_PENALTY_WIDTH / visWid) * fh;
+      smallDepth   = 0;
+      smallWidth   = 0;
+      goalWidth    = (FIFA.F7_GOAL_WIDTH / visWid) * fh;
+      goalDepth    = (FIFA.F7_GOAL_DEPTH / visLen) * fw;
+      penaltySpot  = (FIFA.F7_PENALTY_SPOT / visLen) * fw;
     } else if (mode === 'f8') {
-      penaltyDepth  = (11 / 62) * fw;
-      penaltyWidth  = (22 / 46) * fh;
-      smallDepth    = 0;
-      smallWidth    = 0;
-      goalWidth     = (6 / 46) * fh;
-      goalDepth     = (2.1 / 62) * fw;
-      penaltySpot   = (9 / 62) * fw;
+      penaltyDepth = (FIFA.F8_PENALTY_DEPTH / visLen) * fw;
+      penaltyWidth = (FIFA.F8_PENALTY_WIDTH / visWid) * fh;
+      smallDepth   = 0;
+      smallWidth   = 0;
+      goalWidth    = (FIFA.F8_GOAL_WIDTH / visWid) * fh;
+      goalDepth    = (FIFA.F8_GOAL_DEPTH / visLen) * fw;
+      penaltySpot  = (11 / visLen) * fw;
     } else {
       // F11 — proporciones FIFA reales respecto al área visible
-      penaltyDepth  = (FIFA.PENALTY_AREA_DEPTH / FIFA.LENGTH) * fw;
-      penaltyWidth  = (FIFA.PENALTY_AREA_WIDTH / FIFA.WIDTH) * fh;
-      smallDepth    = (FIFA.SMALL_AREA_DEPTH / FIFA.LENGTH) * fw;
-      smallWidth    = (FIFA.SMALL_AREA_WIDTH / FIFA.WIDTH) * fh;
-      goalWidth     = (FIFA.GOAL_WIDTH / FIFA.WIDTH) * fh;
-      goalDepth     = (FIFA.GOAL_DEPTH / FIFA.LENGTH) * fw;
-      penaltySpot   = (FIFA.PENALTY_SPOT / FIFA.LENGTH) * fw;
+      penaltyDepth = (FIFA.PENALTY_AREA_DEPTH / visLen) * fw;
+      penaltyWidth = (FIFA.PENALTY_AREA_WIDTH / visWid) * fh;
+      smallDepth   = (FIFA.SMALL_AREA_DEPTH / visLen) * fw;
+      smallWidth   = (FIFA.SMALL_AREA_WIDTH / visWid) * fh;
+      goalWidth    = (FIFA.GOAL_WIDTH / visWid) * fh;
+      goalDepth    = (FIFA.GOAL_DEPTH / visLen) * fw;
+      penaltySpot  = (FIFA.PENALTY_SPOT / visLen) * fw;
     }
 
     const centerY = fy + fh / 2;
@@ -674,20 +701,17 @@ export class FieldRenderer {
 
     // ── Semicírculo del área (solo F11) ──
     if (mode === 'f11') {
-      const arcR = (FIFA.CENTER_RADIUS / FIFA.LENGTH) * fw;
+      const arcR = (FIFA.CENTER_RADIUS / visLen) * fw;
       ctx.beginPath();
       if (side === 'left') {
-        ctx.arc(spX, centerY, arcR,
-          -Math.PI * 0.38, Math.PI * 0.38);
+        ctx.arc(spX, centerY, arcR, -Math.PI * 0.38, Math.PI * 0.38);
       } else {
-        ctx.arc(spX, centerY, arcR,
-          Math.PI * 0.62, Math.PI * 1.38);
+        ctx.arc(spX, centerY, arcR, Math.PI * 0.62, Math.PI * 1.38);
       }
       ctx.stroke();
     }
 
     // ── Portería ──
-    const gDepth = side === 'left' ? -goalDepth : goalDepth;
     const gX = side === 'left' ? lineX - goalDepth : lineX;
     ctx.strokeRect(
       gX,
@@ -695,7 +719,12 @@ export class FieldRenderer {
       goalDepth,
       goalWidth
     );
-    this._drawGoalNet(gX, centerY - goalWidth / 2, goalDepth, goalWidth);
+    this._drawGoalNet(
+      gX,
+      centerY - goalWidth / 2,
+      goalDepth,
+      goalWidth
+    );
   }
 
   _drawGoalNet(gx, gy, gd, gw) {

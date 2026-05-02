@@ -14,10 +14,12 @@ import {
 } from 'lucide-react';
 import { auth, signOut } from '../firebaseConfig';
 import { useSettings } from '../hooks/useSettings';
+import { useAuth } from '../context/AuthContext';
 import { t } from '../i18n/translations';
 
 const Sidebar = ({ isOpen, onClose }) => {
   const { settings } = useSettings();
+  const { teams, activeTeamId, changeActiveTeam } = useAuth();
   const navItems = [
     { path: '/', label: t('nav.dashboard', settings.language), icon: LayoutDashboard },
     { path: '/pizarra', label: t('nav.pizarra', settings.language), icon: Presentation },

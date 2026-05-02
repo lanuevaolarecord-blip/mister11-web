@@ -3,6 +3,7 @@ import { usePlayers } from '../hooks/usePlayers';
 import { useSettings } from '../hooks/useSettings';
 import { useSessions } from '../hooks/useSessions';
 import { useMatches } from '../hooks/useMatches';
+import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { 
   Users, 
@@ -19,9 +20,10 @@ import './Dashboard.css';
 const Dashboard = () => {
   const navigate = useNavigate();
   const { settings } = useSettings();
-  const { players } = usePlayers();
-  const { sessions } = useSessions();
-  const { matches } = useMatches();
+  const { activeTeamId } = useAuth();
+  const { players } = usePlayers(activeTeamId);
+  const { sessions } = useSessions(activeTeamId);
+  const { matches } = useMatches(activeTeamId);
   const [workloadPeriod, setWorkloadPeriod] = useState('Esta semana');
 
   const nextMatch = matches.find(m => m.status === 'Pendiente') || null;

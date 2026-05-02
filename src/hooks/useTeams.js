@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { db, auth } from '../firebaseConfig';
+import { useAuth } from '../context/AuthContext';
 import { 
   collection, 
   query, 
@@ -13,56 +14,35 @@ import {
 } from 'firebase/firestore';
 
 export const useTeams = () => {
-  const [teams, setTeams] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [activeTeam, setActiveTeam] = useState(null);
+  const { user, teams, loading, activeTeamId, changeActiveTeam } = useAuth();
 
-  useEffect(() => {
-    if (!auth.currentUser) return;
-
-    const q = query(
-      collection(db, 'users', auth.currentUser.uid, 'teams')
-    );
-
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const teamList = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      }));
-      setTeams(teamList);
-      
-      // Auto-select first team if none active
-      if (teamList.length > 0 && !activeTeam) {
-        const savedTeamId = localStorage.getItem('mister11_active_team');
-        const found = teamList.find(t => t.id === savedTeamId) || teamList[0];
-        setActiveTeam(found);
-      }
-      setLoading(false);
-    });
-
-    return () => unsubscribe();
-  }, [activeTeam]);
+  const activeTeam = teams.find(t => t.id === activeTeamId) || null;
 
   const addTeam = async (teamData) => {
-    return await addDoc(collection(db, 'users', auth.currentUser.uid, 'teams'), {
+    if (!user) return;
+    const docRef = await addDoc(collection(db, 'users', user.uid, 'teams'), {
       ...teamData,
       createdAt: serverTimestamp()
     });
+    // Al crear un nuevo equipo, cambiar el foco a ese nuevo equipo inmediatamente
+    changeActiveTeam(docRef.id);
+    return docRef;
   };
 
   const updateTeam = async (id, data) => {
-    const teamRef = doc(db, 'users', auth.currentUser.uid, 'teams', id);
+    if (!user) return;
+    const teamRef = doc(db, 'users', user.uid, 'teams', id);
     return await updateDoc(teamRef, data);
   };
 
   const deleteTeam = async (id) => {
-    const teamRef = doc(db, 'users', auth.currentUser.uid, 'teams', id);
+    if (!user) return;
+    const teamRef = doc(db, 'users', user.uid, 'teams', id);
     return await deleteDoc(teamRef);
   };
 
   const selectTeam = (team) => {
-    setActiveTeam(team);
-    localStorage.setItem('mister11_active_team', team.id);
+    changeActiveTeam(team.id);
   };
 
   return { teams, loading, activeTeam, addTeam, updateTeam, deleteTeam, selectTeam };

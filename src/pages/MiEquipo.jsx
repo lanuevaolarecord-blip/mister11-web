@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { usePlayers } from '../hooks/usePlayers';
+import { useAuth } from '../context/AuthContext';
 import './MiEquipo.css';
 
 const POSITIONS = ['TODOS', 'POR', 'DEF', 'LTD', 'LTI', 'MCD', 'MC', 'MCO', 'EXT', 'DEL'];
@@ -20,7 +21,8 @@ const emptyPlayer = {
 };
 
 const MiEquipo = () => {
-  const { players, loading, addPlayer, updatePlayer, removePlayer } = usePlayers();
+  const { activeTeamId } = useAuth();
+  const { players, loading, addPlayer, updatePlayer, removePlayer } = usePlayers(activeTeamId);
   const [filter, setFilter] = useState('TODOS');
   const [selectedPlayer, setSelectedPlayer] = useState(null);
   const [activeTab, setActiveTab] = useState('GENERAL');

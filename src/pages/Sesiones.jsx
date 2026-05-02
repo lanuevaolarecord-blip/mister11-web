@@ -2,11 +2,13 @@ import React, { useState, useRef } from 'react';
 import { generateSessionPDF } from '../utils/pdfGenerator';
 import { useSessions } from '../hooks/useSessions';
 import { usePlayers } from '../hooks/usePlayers';
+import { useAuth } from '../context/AuthContext';
 import './Sesiones.css';
 
 const Sesiones = () => {
-  const { sessions, loading: loadingSessions, addSession, updateSession, removeSession } = useSessions();
-  const { players, loading: loadingPlayers } = usePlayers();
+  const { activeTeamId } = useAuth();
+  const { sessions, loading: loadingSessions, addSession, updateSession, removeSession } = useSessions(activeTeamId);
+  const { players, loading: loadingPlayers } = usePlayers(activeTeamId);
   
   const [viewMode, setViewMode] = useState('list'); // 'list' | 'edit'
   const [selectedSession, setSelectedSession] = useState(null);

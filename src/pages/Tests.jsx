@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { usePlayers } from '../hooks/usePlayers';
+import { useAuth } from '../context/AuthContext';
 import { generateTestsReport } from '../utils/pdfGenerator';
 import './Tests.css';
 
@@ -44,7 +45,8 @@ const generateMockHistory = (playersList) => {
 };
 
 const Tests = () => {
-  const { players, loading: loadingPlayers } = usePlayers();
+  const { activeTeamId } = useAuth();
+  const { players, loading: loadingPlayers } = usePlayers(activeTeamId);
   const historyData = useMemo(() => generateMockHistory(players), [players]);
   const [activeTab, setActiveTab] = useState('BATERÍA');
   const [tests, setTests] = useState(PREDEFINED_TESTS);

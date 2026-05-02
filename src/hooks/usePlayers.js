@@ -2,29 +2,31 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { subscribeToCollection, addDocument, updateDocument, deleteDocument, createNotification } from '../firebase/db';
 
-export const usePlayers = () => {
+export const usePlayers = (teamId) => {
   const { user } = useAuth();
   const [players, setPlayers] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!user) return;
+    if (!user || !teamId) {
+      setPlayers([]);
+      setLoading(false);
+      return;
+    }
 
-    // Suscribirse a los jugadores del usuario actual
-    // En el futuro podemos filtrar por equipoId si el entrenador tiene varios equipos
-    const unsubscribe = subscribeToCollection(`users/${user.uid}/players`, (data) => {
+    setLoading(true);
+    const unsubscribe = subscribeToCollection(`users/${user.uid}/teams/${teamId}/players`, (data) => {
       setPlayers(data);
       setLoading(false);
     });
 
     return () => unsubscribe();
-  }, [user]);
+  }, [user, teamId]);
 
   const addPlayer = async (playerData) => {
-    if (!user) return;
-    const docId = await addDocument(`users/${user.uid}/players`, {
-      ...playerData,
-      equipoId: 'default' // Por ahora un equipo por defecto
+    if (!user || !teamId) return;
+    const docId = await addDocument(`users/${user.uid}/teams/${teamId}/players`, {
+      ...playerData
     });
     
     await createNotification('info', `Nuevo jugador añadido: ${playerData.nombre}`);
@@ -32,11 +34,13 @@ export const usePlayers = () => {
   };
 
   const updatePlayer = async (id, playerData) => {
-    return await updateDocument(`users/${user.uid}/players`, id, playerData);
+    if (!user || !teamId) return;
+    return await updateDocument(`users/${user.uid}/teams/${teamId}/players`, id, playerData);
   };
 
   const removePlayer = async (id) => {
-    return await deleteDocument(`users/${user.uid}/players`, id);
+    if (!user || !teamId) return;
+    return await deleteDocument(`users/${user.uid}/teams/${teamId}/players`, id);
   };
 
   return { players, loading, addPlayer, updatePlayer, removePlayer };

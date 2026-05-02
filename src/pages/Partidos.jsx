@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useMatches } from '../hooks/useMatches';
 import { usePlayers } from '../hooks/usePlayers';
+import { useAuth } from '../context/AuthContext';
 import './Partidos.css';
 
 const FORMATIONS = {
@@ -33,8 +34,9 @@ const FORMATIONS = {
 };
 
 const Partidos = () => {
-  const { matches, loading: loadingMatches, addMatch, updateMatch, removeMatch } = useMatches();
-  const { players, loading: loadingPlayers } = usePlayers();
+  const { activeTeamId } = useAuth();
+  const { matches, loading: loadingMatches, addMatch, updateMatch, removeMatch } = useMatches(activeTeamId);
+  const { players, loading: loadingPlayers } = usePlayers(activeTeamId);
   
   const [viewMode, setViewMode] = useState('LIST'); // 'LIST' or 'EDIT'
   const [filterMode, setFilterMode] = useState('Todos'); // 'Todos', 'Pendientes', 'Terminados'

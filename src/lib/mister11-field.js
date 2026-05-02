@@ -238,30 +238,53 @@ export class FieldRenderer {
     const pH = this.padding.h;
     const pV = this.padding.v;
 
-    // Proporciones objetivo (Largo / Ancho)
-    let ratio = FIFA.LENGTH / FIFA.WIDTH;
-    if (this.currentType === 'futsal') ratio = 2.0; // 40x20 exacto
-    if (this.currentType === 'f7') ratio = 65 / 45;
-    if (this.currentType === 'f8') ratio = 62 / 46;
-    if (this.currentType === 'reduced') ratio = this.reducedDim.w / this.reducedDim.h;
-    if (this.currentType === 'penalty_zoom') ratio = 1.0;
+    // Metros reales visibles por modo (largo × ancho del área mostrada)
+    const METERS = {
+      full:         { w: FIFA.LENGTH,              h: FIFA.WIDTH },
+      half_attack:  { w: FIFA.LENGTH / 2,          h: FIFA.WIDTH },
+      half_defense: { w: FIFA.LENGTH / 2,          h: FIFA.WIDTH },
+      third_def:    { w: FIFA.LENGTH / 3,          h: FIFA.WIDTH },
+      third_mid:    { w: FIFA.LENGTH / 3,          h: FIFA.WIDTH },
+      third_off:    { w: FIFA.LENGTH / 3,          h: FIFA.WIDTH },
+      penalty_zoom: { w: FIFA.PENALTY_AREA_DEPTH + 4, h: FIFA.PENALTY_AREA_WIDTH + 6 },
+      f7:           { w: FIFA.F7_LENGTH,           h: FIFA.F7_WIDTH },
+      f8:           { w: FIFA.F8_LENGTH,           h: FIFA.F8_WIDTH },
+      futsal:       { w: FIFA.FUTSAL_LENGTH,       h: FIFA.FUTSAL_WIDTH },
+    };
 
-    // Recalcular dimensiones visibles según el modo
+    const meters = METERS[this.currentType]
+      ?? (this.currentType === 'reduced'
+          ? { w: this.reducedDim.w, h: this.reducedDim.h }
+          : { w: FIFA.LENGTH, h: FIFA.WIDTH });
+
+    // Ratio de aspecto del área visible (letterbox/pillarbox exacto)
+    const ratio = meters.w / meters.h;
+
+    const availW = W - pH * 2;
+    const availH = H - pV * 2;
+
     let fw, fh;
-    if (W / H > ratio) {
-      fh = H - pV * 2;
+    if (availW / availH > ratio) {
+      fh = availH;
       fw = fh * ratio;
     } else {
-      fw = W - pH * 2;
+      fw = availW;
       fh = fw / ratio;
     }
+
+    // pxPerMeter: escala real del área visible
+    const pxPerMeter = fw / meters.w;
+    // zoomFactor: cuántas veces se amplía respecto al campo completo
+    const zoomFactor = FIFA.LENGTH / meters.w;
 
     this.field = {
       x: (W - fw) / 2,
       y: (H - fh) / 2,
       w: fw,
       h: fh,
-      scale: fw / FIFA.LENGTH
+      scale:     pxPerMeter,   // píxeles por metro real visible
+      fullScale: fw / FIFA.LENGTH, // referencia al campo completo
+      zoom:      zoomFactor,   // factor de zoom (1 = campo completo)
     };
   }
 

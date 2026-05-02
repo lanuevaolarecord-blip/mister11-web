@@ -345,8 +345,7 @@ const PizarraTactica = () => {
     const fr = frRef.current;
     if (!fc || !fr) return null;
     
-    const { color = '#4CAF7D', label = '1', type = 'local' } = options;
-    const radius = RADIO_JUGADOR;
+    const { color = '#4CAF7D', label = '1', type = 'local', radius = RADIO_JUGADOR } = options;
     
     // Obtener coordenadas relativas al CAMPO REAL
     const { rx, ry } = fr.getRelativePoint(x, y);
@@ -384,6 +383,11 @@ const PizarraTactica = () => {
   const drawPlayers = useCallback((canvas, renderer, fieldType, formations, swapped) => {
     const bounds = renderer.getFieldBounds();
     if (!bounds || bounds.w === 0) return;
+
+    // Escalar el radio del jugador proporcionalmente al zoom del campo
+    // zoom=1 → campo completo, zoom=2 → medio campo, zoom=3 → 1/3
+    const zoomFactor = bounds.zoom ?? 1;
+    const playerRadius = Math.round(RADIO_JUGADOR * Math.sqrt(zoomFactor));
 
     // Para medio campo, las formaciones deben comprimirse
     // al espacio real disponible según el tipo de campo
@@ -437,9 +441,10 @@ const PizarraTactica = () => {
           color: isGk ? '#FFD700' : color,
           label: i + 1,
           type: type,
-          pos: pos.pos || ''
+          pos: pos.pos || '',
+          radius: playerRadius,
         });
-        canvas.add(player);
+        if (player) canvas.add(player);
       });
     };
 

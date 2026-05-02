@@ -390,6 +390,29 @@ const PizarraTactica = () => {
 
     const drawTeam = (type, form, color, side) => {
       const positions = FORMATIONS[form] || FORMATIONS['4-3-3'];
+      const libType = toLibType(fieldType);
+      const margin = playerRadius + 6;
+
+      // Rangos visibles de relX según el tipo de campo
+      // relX va de 0 (línea de fondo izq) a 1 (línea de fondo der)
+      const VISIBLE_RANGE = {
+        full:         { min: 0,     max: 1     },
+        half_attack:  { min: 0.5,   max: 1     },
+        half_defense: { min: 0,     max: 0.5   },
+        third_def:    { min: 0,     max: 0.333 },
+        third_mid:    { min: 0.333, max: 0.666 },
+        third_off:    { min: 0.666, max: 1     },
+        penalty_zoom: { min: 0.75,  max: 1     },
+        f7:           { min: 0,     max: 1     },
+        f8:           { min: 0,     max: 1     },
+        futsal:       { min: 0,     max: 1     },
+        reduced:      { min: 0,     max: 1     },
+        blank:        { min: 0,     max: 1     },
+      };
+
+      const range = VISIBLE_RANGE[libType] ?? { min: 0, max: 1 };
+      const visibleLen = range.max - range.min; // longitud visible (0-1)
+
       positions.forEach((pos, i) => {
         const isGk = i === 0;
         const rX = pos.relX ?? 0;
@@ -398,19 +421,33 @@ const PizarraTactica = () => {
         // Espejo para el equipo contrario
         const effectiveRx = (side === 'L') ? rX : (1 - rX);
 
-        // getCanvasPoint maneja correctamente TODOS los modos
-        // (full, half_attack, half_defense, third_def, penalty_zoom, futsal…)
-        const pt = renderer.getCanvasPoint(effectiveRx, rY);
+        // Remapear effectiveRx al rango visible del campo actual
+        // Si el campo muestra relX [0.5, 1.0], remapeamos toda la
+        // formación para que ocupe ese rango completo
+        const remappedRx = range.min + effectiveRx * visibleLen;
 
-        // Saltar jugadores que caen completamente fuera del área visible
-        const margin = playerRadius + 4;
-        const withinX = pt.x >= bounds.x - margin && pt.x <= bounds.x + bounds.w + margin;
-        const withinY = pt.y >= bounds.y - margin && pt.y <= bounds.y + bounds.h + margin;
-        if (!withinX || !withinY) return;
+        // Añadir padding interno para que el portero no quede
+        // pegado a la línea de fondo
+        const paddingRel = 0.03; // 3% del rango visible
+        const clampedRx = Math.max(
+          range.min + paddingRel,
+          Math.min(range.max - paddingRel, remappedRx)
+        );
+        const clampedRy = Math.max(0.04, Math.min(0.96, rY));
 
-        // Asegurar que el centro del jugador no salga de los límites del campo
-        const finalX = Math.max(bounds.x + margin, Math.min(bounds.x + bounds.w - margin, pt.x));
-        const finalY = Math.max(bounds.y + margin, Math.min(bounds.y + bounds.h - margin, pt.y));
+        // getCanvasPoint convierte las coordenadas relativas
+        // al campo completo en píxeles del canvas actual
+        const pt = renderer.getCanvasPoint(clampedRx, clampedRy);
+
+        // Clamp final por si acaso hay desbordamiento de píxeles
+        const finalX = Math.max(
+          bounds.x + margin,
+          Math.min(bounds.x + bounds.w - margin, pt.x)
+        );
+        const finalY = Math.max(
+          bounds.y + margin,
+          Math.min(bounds.y + bounds.h - margin, pt.y)
+        );
 
         const player = createPlayer(finalX, finalY, {
           color: isGk ? '#FFD700' : color,

@@ -463,7 +463,7 @@ input::placeholder, textarea::placeholder {
   background: transparent;
   font-family: var(--font-body);
   font-size: 0.85rem;
-  font-weight: 600;
+  font-weight: 700;
   color: #FFFFFF;
   outline: none;
   cursor: pointer;
@@ -471,11 +471,24 @@ input::placeholder, textarea::placeholder {
   padding-right: 20px;
 }
 
+/* Estilos para el dropdown nativo */
+.team-switcher-header select option {
+  background-color: #FFFFFF;
+  color: #1B3A2D;
+  padding: 12px 16px;
+  font-weight: 600;
+}
+
+.team-switcher-header select option:checked,
+.team-switcher-header select option:hover {
+  background-color: #f5f5f5;
+}
+
 .switcher-arrow {
   position: absolute;
   right: 10px;
   pointer-events: none;
-  color: #CCCCCC;
+  color: #FFFFFF;
 }
 
 /* GLOBAL HAMBURGER & SIDEBAR (ALL RESOLUTIONS) */

@@ -384,9 +384,8 @@ const PizarraTactica = () => {
     const bounds = renderer.getFieldBounds();
     if (!bounds || bounds.w === 0) return;
 
-    // Escalar el radio del jugador proporcionalmente al zoom del campo
-    const zoomFactor = bounds.zoom ?? 1;
-    const playerRadius = Math.round(RADIO_JUGADOR * Math.sqrt(zoomFactor));
+    // Radio fijo igual en todos los modos de campo
+    const playerRadius = RADIO_JUGADOR;
 
     const drawTeam = (type, form, color, side) => {
       const positions = FORMATIONS[form] || FORMATIONS['4-3-3'];

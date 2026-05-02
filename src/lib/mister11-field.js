@@ -388,11 +388,12 @@ export class FieldRenderer {
   }
 
   _drawCenterCircle() {
+    const ctx = this.ctx;
     const p = this.getCanvasPoint(0.5, 0.5);
     const r = (FIFA.CENTER_RADIUS / FIFA.LENGTH) * this.field.w;
-    this.ctx.beginPath(); this.ctx.arc(p.x, p.y, r, 0, Math.PI*2); this.ctx.stroke();
-    this.ctx.fillStyle = '#FFF';
-    this.ctx.beginPath(); ctx.arc(p.x, p.y, 3, 0, Math.PI*2); this.ctx.fill();
+    ctx.beginPath(); ctx.arc(p.x, p.y, r, 0, Math.PI*2); ctx.stroke();
+    ctx.fillStyle = '#FFF';
+    ctx.beginPath(); ctx.arc(p.x, p.y, 3, 0, Math.PI*2); ctx.fill();
   }
 
   _drawGoalAndAreas(rx, side, isZoom = false) {

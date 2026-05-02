@@ -29,7 +29,18 @@ import { useSearchParams } from 'react-router-dom';
 import './Pizarra.css';
 
 // helper: 'half-attack' → 'half_attack' (library uses underscores)
-const toLibType = (t) => t.replace(/-/g, '_');
+const toLibType = (t) => {
+  const map = {
+    'full':           'full',
+    'half-attack':    'half_attack',
+    'half_attack':    'half_attack',
+    '½ Ataque':       'half_attack',
+    'half-defense':   'half_defense',
+    'half_defense':   'half_defense',
+    '½ Defensa':      'half_defense',
+  };
+  return map[t] || t?.replace(/-/g, '_') || 'full';
+};
 
 // ─────────────────────────────────────────────────────────────────────────────
 const PizarraTactica = () => {
@@ -347,6 +358,8 @@ const PizarraTactica = () => {
     const bounds = renderer.getFieldBounds();
     if (!bounds || bounds.w === 0) return;
 
+    const libType = toLibType(fieldType);
+
     const drawTeam = (type, form, color, side) => {
       const positions = FORMATIONS[form] || FORMATIONS['4-3-3'];
       positions.forEach((pos, i) => {
@@ -354,17 +367,16 @@ const PizarraTactica = () => {
         const rX = pos.relX ?? 0;
         const rY = pos.relY ?? 0;
         
+        let relX_full = (side === 'L') ? rX : (1 - rX);
         let finalX;
-        // side 'L' means 0-0.5, side 'R' means 0.5-1.0
-        // But FORMATIONS are relX 0 to 1.0 (full field)
-        // If swapped, Local goes to Right (relX 0.5-1.0) and Rival to Left (0-0.5)
-        
-        if (side === 'L') {
-          // Local starts from Left (0) to Right (1)
-          finalX = bounds.x + rX * bounds.w;
+
+        // Mapeo de coordenadas relativas de campo completo a la vista actual
+        if (libType === 'half_attack') {
+          finalX = bounds.x + (relX_full - 0.5) * 2 * bounds.w;
+        } else if (libType === 'half_defense') {
+          finalX = bounds.x + relX_full * 2 * bounds.w;
         } else {
-          // Rival starts from Right (1) to Left (0)
-          finalX = bounds.x + (1 - rX) * bounds.w;
+          finalX = bounds.x + relX_full * bounds.w;
         }
 
         const x = finalX;
@@ -644,21 +656,45 @@ const PizarraTactica = () => {
     const fc = fcRef.current; const fr = frRef.current;
     if (!fc || !fr || playingR.current) return;
 
-    // Save drawings (arrows, shapes, materials) — not players
-    const savedObjects = fc.getObjects().filter(
-      obj => obj.data?.type !== 'player'
-    );
+    const oldType = toLibType(fr.currentType);
+    const newType = toLibType(fieldType);
+    const oldBounds = { ...fr.getFieldBounds() };
 
-    fr.draw(toLibType(fieldType));
-    fc.clear();
-
-    // Redraw players in new field proportions
-    drawPlayers(fc, fr, fieldType, { local: localFormation, rival: rivalFormation }, isSwapped);
-
-    // Restore saved drawings
-    savedObjects.forEach(obj => {
-      fc.add(obj);
+    // Capturar posiciones relativas al campo completo ANTES del cambio
+    const players = fc.getObjects().filter(o => o.data?.type === 'player');
+    const playerPositions = players.map(obj => {
+      let relX_full;
+      if (oldType === 'half_attack') {
+        relX_full = 0.5 + (obj.left - oldBounds.x) / (oldBounds.w * 2);
+      } else if (oldType === 'half_defense') {
+        relX_full = (obj.left - oldBounds.x) / (oldBounds.w * 2);
+      } else {
+        relX_full = (obj.left - oldBounds.x) / oldBounds.w;
+      }
+      const relY_full = (obj.top - oldBounds.y) / oldBounds.h;
+      return { obj, relX_full, relY_full };
     });
+
+    // Cambiar vista del campo
+    fr.draw(newType);
+    const newBounds = fr.getFieldBounds();
+
+    // Reposicionar jugadores existentes
+    syncingR.current = true;
+    playerPositions.forEach(({ obj, relX_full, relY_full }) => {
+      let newX;
+      if (newType === 'half_attack') {
+        newX = newBounds.x + (relX_full - 0.5) * 2 * newBounds.w;
+      } else if (newType === 'half_defense') {
+        newX = newBounds.x + relX_full * 2 * newBounds.w;
+      } else {
+        newX = newBounds.x + relX_full * newBounds.w;
+      }
+      const newY = newBounds.y + relY_full * newBounds.h;
+      obj.set({ left: newX, top: newY });
+      obj.setCoords();
+    });
+    syncingR.current = false;
 
     fc.renderAll();
     saveFrameState();

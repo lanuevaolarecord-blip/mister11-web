@@ -408,12 +408,13 @@ export class FieldRenderer {
   _drawHalfAttack() {
     // Calcular como si fuera campo completo pero escalar al doble de ancho
     const canvas = this.canvas;
-    const p = this.padding;
+    const pH = (typeof this.padding === 'object') ? (this.padding.h ?? 16) : this.padding;
+    const pV = (typeof this.padding === 'object') ? (this.padding.v ?? 12) : this.padding;
 
     // Half field length + ONE goal depth
     const totalHalfLength = (FIFA.LENGTH / 2) + FIFA.GOAL_DEPTH;
-    const scaleByW = (canvas.width  - p * 2) / totalHalfLength;
-    const scaleByH = (canvas.height - p * 2) / FIFA.WIDTH;
+    const scaleByW = (canvas.width  - pH * 2) / totalHalfLength;
+    const scaleByH = (canvas.height - pV * 2) / FIFA.WIDTH;
     const scale = Math.min(scaleByW, scaleByH);
 
     const halfW = (FIFA.LENGTH / 2) * scale;
@@ -472,11 +473,12 @@ export class FieldRenderer {
   // ───────────────────────────────────────
   _drawHalfDefense() {
     const canvas = this.canvas;
-    const p = this.padding;
+    const pH = (typeof this.padding === 'object') ? (this.padding.h ?? 16) : this.padding;
+    const pV = (typeof this.padding === 'object') ? (this.padding.v ?? 12) : this.padding;
 
     const totalHalfLength = (FIFA.LENGTH / 2) + FIFA.GOAL_DEPTH;
-    const scaleByW = (canvas.width  - p * 2) / totalHalfLength;
-    const scaleByH = (canvas.height - p * 2) / FIFA.WIDTH;
+    const scaleByW = (canvas.width  - pH * 2) / totalHalfLength;
+    const scaleByH = (canvas.height - pV * 2) / FIFA.WIDTH;
     const scale = Math.min(scaleByW, scaleByH);
 
     const halfW = (FIFA.LENGTH / 2) * scale;

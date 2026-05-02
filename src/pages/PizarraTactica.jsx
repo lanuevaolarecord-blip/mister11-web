@@ -45,8 +45,9 @@ const PizarraTactica = () => {
   const framesR  = useRef([]);    // current frames array
   const frameIdxR = useRef(0);   // current frame index
   const playingR  = useRef(false); // is animation playing
-  const historyR  = useRef([]);    // undo history (max 20)
-  const redoR     = useRef([]);    // redo history (max 20)
+  const pastR     = useRef([]);    // past stack (max 30)
+  const presentR  = useRef(null);  // current serialized state
+  const futureR   = useRef([]);    // future stack (redo)
   const syncingR  = useRef(false); // prevent events during load
   const readyR    = useRef(false); // track initial load safely
   const saveTimeoutR = useRef(null); // for debouncing saves
@@ -222,70 +223,84 @@ const PizarraTactica = () => {
   // ─── Push to undo history ─────────────────────────────────────────────────
   const pushToHistory = useCallback(() => {
     const fc = fcRef.current;
-    if (!fc) return;
-    const stateObjects = serializarFrame();
-    const state = JSON.stringify({ version: fabric.version, objects: stateObjects });
-    const h = historyR.current;
-    // Don't push if the last state is identical
-    if (h.length > 0 && h[h.length - 1] === state) return;
+    if (!fc || syncingR.current) return;
+
+    // Capturar estado actual (relativo para consistencia entre dispositivos)
+    const stateObj = serializarFrame();
+    const newState = JSON.stringify(stateObj);
+
+    // Inicializar present si es nulo
+    if (!presentR.current) {
+      presentR.current = newState;
+      return;
+    }
+
+    // Evitar duplicados (no guardar si no ha cambiado nada)
+    if (presentR.current === newState) return;
+
+    // Mover present actual a past
+    pastR.current.push(presentR.current);
     
-    const next = [...h, state];
-    if (next.length > 20) next.shift(); // Max 20 states
-    historyR.current = next;
-    redoR.current = []; // Clear redo on new action
-    setHistCount(next.length);
+    // Limitar historial a 30 movimientos (instrucción técnica)
+    if (pastR.current.length > 30) {
+      pastR.current.shift();
+    }
+
+    // Actualizar present con el nuevo estado
+    presentR.current = newState;
+
+    // Limpiar future (rehacer) al realizar una nueva acción
+    futureR.current = [];
+
+    // Sincronizar contadores para la UI
+    setHistCount(pastR.current.length);
     setRedoCount(0);
-  }, []);
+  }, [serializarFrame]);
 
   const undo = useCallback(() => {
     const fc = fcRef.current;
-    const h = historyR.current;
-    if (!fc || h.length <= 1) return;
-    
-    // Save current state to redo
-    const currentState = h[h.length - 1];
-    const newRedo = [...redoR.current, currentState];
-    redoR.current = newRedo;
+    if (!fc || pastR.current.length === 0) return;
 
-    // Remove current state
-    const next = [...h];
-    next.pop();
-    const prevState = next[next.length - 1];
-    
-    // CRITICAL: block onChange during restore to avoid corrupting history
+    // Mover present actual a future para poder rehacer
+    futureR.current.push(presentR.current);
+
+    // Recuperar el último estado de past y ponerlo en present
+    const prevState = pastR.current.pop();
+    presentR.current = prevState;
+
+    // Cargar el estado en el canvas
     syncingR.current = true;
-    const stateObj = typeof prevState === 'string' ? JSON.parse(prevState) : prevState;
+    const stateObj = JSON.parse(prevState);
     cargarFrame(stateObj, () => {
       syncingR.current = false;
-      historyR.current = next;
-      setHistCount(next.length);
-      setRedoCount(newRedo.length);
+      setHistCount(pastR.current.length);
+      setRedoCount(futureR.current.length);
       saveFrameState(true);
     });
-  }, [saveFrameState, serializarFrame]);
+  }, [cargarFrame, saveFrameState]);
 
   const redo = useCallback(() => {
     const fc = fcRef.current;
-    const r = redoR.current;
-    if (!fc || r.length === 0) return;
+    if (!fc || futureR.current.length === 0) return;
 
+    // Mover present actual a past
+    pastR.current.push(presentR.current);
+    if (pastR.current.length > 30) pastR.current.shift();
+
+    // Recuperar el primer estado disponible de future y ponerlo en present
+    const nextState = futureR.current.pop();
+    presentR.current = nextState;
+
+    // Cargar el estado
     syncingR.current = true;
-    const nextRedo = [...r];
-    const stateToRestore = nextRedo.pop();
-    redoR.current = nextRedo;
-
-    // Push back to history
-    const nextHist = [...historyR.current, stateToRestore];
-    historyR.current = nextHist;
-
-    const stateObj = typeof stateToRestore === 'string' ? JSON.parse(stateToRestore) : stateToRestore;
+    const stateObj = JSON.parse(nextState);
     cargarFrame(stateObj, () => {
       syncingR.current = false;
-      setHistCount(nextHist.length);
-      setRedoCount(nextRedo.length);
+      setHistCount(pastR.current.length);
+      setRedoCount(futureR.current.length);
       saveFrameState(true);
     });
-  }, [saveFrameState, serializarFrame]);
+  }, [cargarFrame, saveFrameState]);
 
   // ─── Create a single player object ─────────────────────────────────────────
   const createPlayer = useCallback((x, y, options = {}) => {
@@ -407,7 +422,6 @@ const PizarraTactica = () => {
 
     // 3. ToolManager
     const tm = new ToolManager(fc);
-    tm.setupHistory(30);
     tmRef.current = tm;
 
     // 4. Draw initial players
@@ -767,8 +781,8 @@ const PizarraTactica = () => {
     if (!fc || !fr) return;
     fc.clear();
     drawPlayers(fc, fr, fieldType, formation);
-    if (tm) tm.setupHistory(30);
     saveFrameState();
+    pushToHistory();
   };
 
   // ─── Guardar (Manual Save) ────────────────────────────────────────────────
@@ -1142,7 +1156,7 @@ const PizarraTactica = () => {
 
           {/* Actions */}
           <div className="topbar-group">
-            <button className="topbar-btn" onClick={undo} disabled={histCount <= 1} title="Deshacer (Ctrl+Z)">↩</button>
+            <button className="topbar-btn" onClick={undo} disabled={histCount === 0} title="Deshacer (Ctrl+Z)">↩</button>
             <button className="topbar-btn" onClick={redo} disabled={redoCount === 0} title="Rehacer (Ctrl+Y)">↪</button>
             <button className="topbar-btn" onClick={clearCanvas}>🗑 Limpiar</button>
             <button id="btn-guardar-pizarra" className="topbar-btn primary" onClick={handleSave}>💾 Guardar</button>

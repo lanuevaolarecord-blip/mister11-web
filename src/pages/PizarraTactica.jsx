@@ -385,6 +385,12 @@ const PizarraTactica = () => {
     const bounds = renderer.getFieldBounds();
     if (!bounds || bounds.w === 0) return;
 
+    // Para medio campo, las formaciones deben comprimirse
+    // al espacio real disponible según el tipo de campo
+    const isHalfAttack  = fieldType === 'half_attack'  || fieldType === 'half-attack';
+    const isHalfDefense = fieldType === 'half_defense' || fieldType === 'half-defense';
+    const isHalf = isHalfAttack || isHalfDefense;
+
     const drawTeam = (type, form, color, side) => {
       const positions = FORMATIONS[form] || FORMATIONS['4-3-3'];
       positions.forEach((pos, i) => {
@@ -392,29 +398,47 @@ const PizarraTactica = () => {
         const rX = pos.relX ?? 0;
         const rY = pos.relY ?? 0;
 
-        // Invertir si es equipo rival o lado cambiado
-        let actualRx = (side === 'L') ? rX : (1 - rX);
-        let actualRy = rY;
+        let finalX;
 
-        // Obtener posición proyectada según el zoom actual del renderer
-        const point = renderer.getCanvasPoint(actualRx, actualRy);
+        if (!isHalf) {
+          // ── Campo completo: comportamiento original ──
+          if (side === 'L') {
+            finalX = bounds.x + rX * bounds.w;
+          } else {
+            finalX = bounds.x + (1 - rX) * bounds.w;
+          }
+        } else if (isHalfAttack) {
+          // ── Medio campo ataque: portería a la DERECHA (fx + halfW) ──
+          // El equipo local ocupa el medio campo completo (rX 0→1 = izq→der)
+          // relX 0 = línea de medio campo (izquierda), relX 1 = línea de fondo (derecha)
+          if (side === 'L') {
+            // Local ataca hacia la derecha: relX va de 0 (medio) a 1 (portería rival)
+            finalX = bounds.x + rX * bounds.w;
+          } else {
+            // Rival defiende: se invierte
+            finalX = bounds.x + (1 - rX) * bounds.w;
+          }
+        } else {
+          // ── Medio campo defensa: portería a la IZQUIERDA (fx) ──
+          // relX 0 = línea de fondo propia (izquierda), relX 1 = línea de medio campo (derecha)
+          if (side === 'L') {
+            // Local defiende: portero en relX 0 (izquierda)
+            finalX = bounds.x + rX * bounds.w;
+          } else {
+            finalX = bounds.x + (1 - rX) * bounds.w;
+          }
+        }
 
-        // Determinar si el punto está dentro de los límites visibles del canvas
-        const isVisible = (
-          point.x >= -10 && 
-          point.x <= canvas.width + 10 &&
-          point.y >= -10 &&
-          point.y <= canvas.height + 10
-        );
+        // Mantener jugadores dentro de los límites del campo
+        finalX = Math.max(bounds.x + 8, Math.min(bounds.x + bounds.w - 8, finalX));
+        const finalY = Math.max(bounds.y + 8, Math.min(bounds.y + bounds.h - 8, bounds.y + rY * bounds.h));
 
-        const player = createPlayer(point.x, point.y, {
+        const player = createPlayer(finalX, finalY, {
           color: isGk ? '#FFD700' : color,
           label: i + 1,
           type: type,
           pos: pos.pos || ''
         });
-
-        player.set({ visible: isVisible });
         canvas.add(player);
       });
     };

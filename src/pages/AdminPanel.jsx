@@ -167,11 +167,13 @@ const AdminPanel = () => {
             </div>
 
             <div className="teams-grid">
-              {teams.map(team => (
-                <div key={team.id} className={`team-admin-card ${activeTeam?.id === team.id ? 'active' : ''}`}>
-                  <div className="team-badge" style={{background: team.colorLocal || 'var(--accent)'}}>
-                    {team.nombre.charAt(0)}
-                  </div>
+              {teams.map(team => {
+                if (!team) return null;
+                return (
+                  <div key={team.id} className={`team-admin-card ${activeTeam?.id === team.id ? 'active' : ''}`}>
+                    <div className="team-badge" style={{background: team.colorLocal || 'var(--accent)'}}>
+                      {(team.nombre || '').charAt(0)}
+                    </div>
                   <div className="team-info">
                     <h4>{team.nombre}</h4>
                     <span>{team.categoria} | {team.temporada}</span>
@@ -184,8 +186,8 @@ const AdminPanel = () => {
                       <Trash2 size={16} />
                     </button>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         )}
@@ -199,19 +201,22 @@ const AdminPanel = () => {
             
             <div className="exercise-list-admin">
               {exercises.length === 0 && <p className="empty-msg">No hay ejercicios guardados aún.</p>}
-              {exercises.map(ex => (
-                <div key={ex.id} className="exercise-row">
-                  <div className="ex-info">
-                    <strong>{ex.titulo || ex.nombre || 'Ejercicio sin nombre'}</strong>
-                    <span>{ex.objetivo} | {ex.categoria}</span>
+              {exercises.map(ex => {
+                if (!ex) return null;
+                return (
+                  <div key={ex.id} className="exercise-row">
+                    <div className="ex-info">
+                      <strong>{ex.titulo || ex.nombre || 'Ejercicio sin nombre'}</strong>
+                      <span>{ex.objetivo} | {ex.categoria}</span>
+                    </div>
+                    <div className="ex-actions">
+                      <button className="btn-delete-icon" onClick={() => removeExercise(ex.id)}>
+                        <Trash2 size={16} />
+                      </button>
+                    </div>
                   </div>
-                  <div className="ex-actions">
-                    <button className="btn-delete-icon" onClick={() => removeExercise(ex.id)}>
-                      <Trash2 size={16} />
-                    </button>
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         )}
@@ -243,9 +248,10 @@ const AdminPanel = () => {
                   onChange={e => setSelectedMatchId(e.target.value)}
                 >
                   <option value="">Seleccionar Partido...</option>
-                  {matches.map(m => (
-                    <option key={m.id} value={m.id}>{m.rival} ({m.fecha})</option>
-                  ))}
+                  {matches.map(m => {
+                    if (!m) return null;
+                    return <option key={m.id} value={m.id}>{m.rival} ({m.fecha})</option>
+                  })}
                 </select>
                 <button className="btn-export outline" onClick={handleExportConvocatoria}>
                   <Download size={18} /> Exportar

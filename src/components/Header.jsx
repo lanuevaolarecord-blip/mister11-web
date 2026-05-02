@@ -38,9 +38,10 @@ const Header = ({ onToggleNotif }) => {
                 if (team) selectTeam(team);
               }}
             >
-              {teams.map(t => (
-                <option key={t.id} value={t.id}>{t.nombre}</option>
-              ))}
+              {teams.map(t => {
+                if (!t) return null;
+                return <option key={t.id} value={t.id}>{t.nombre}</option>
+              })}
             </select>
             <ChevronDown size={14} className="switcher-arrow" />
           </div>

@@ -30,7 +30,7 @@ const Dashboard = () => {
   const stats = [
     { label: 'Jugadores', value: players.length, icon: <Users size={24} />, color: '#4CAF7D', route: '/equipo' },
     { label: 'Sesiones', value: sessions.length, icon: <ClipboardList size={24} />, color: '#4CAF7D', route: '/sesiones' },
-    { label: 'Próximo Rival', value: nextMatch ? nextMatch.rival.split(' ')[0] : 'Sin rival', icon: <Trophy size={24} />, color: '#4CAF7D', route: '/partidos' },
+    { label: 'Próximo Rival', value: nextMatch ? (nextMatch.rival || '').split(' ')[0] || 'Sin rival' : 'Sin rival', icon: <Trophy size={24} />, color: '#4CAF7D', route: '/partidos' },
     { label: 'Partidos', value: matches.length, icon: <Calendar size={24} />, color: '#4CAF7D', route: '/partidos' },
   ];
 
@@ -102,21 +102,24 @@ const Dashboard = () => {
 
       {/* Stats Grid */}
       <div className="stats-grid-dash">
-        {stats.map((s, i) => (
-          <div 
-            key={i} 
-            className="stat-card-dash"
-            onClick={() => navigate(s.route)}
-          >
-            <div className="stat-icon-dash" style={{ backgroundColor: `${s.color}15`, color: s.color }}>
-              {s.icon}
+        {stats.map((s, i) => {
+          if (!s) return null;
+          return (
+            <div 
+              key={i} 
+              className="stat-card-dash"
+              onClick={() => navigate(s.route)}
+            >
+              <div className="stat-icon-dash" style={{ backgroundColor: `${s.color}15`, color: s.color }}>
+                {s.icon}
+              </div>
+              <div className="stat-content-dash">
+                <span className="stat-label-dash">{s.label}</span>
+                <span className={`stat-value-dash ${s.label === 'Próximo Rival' && s.value === 'Sin rival' ? 'no-rival' : ''}`}>{s.value}</span>
+              </div>
             </div>
-            <div className="stat-content-dash">
-              <span className="stat-label-dash">{s.label}</span>
-              <span className={`stat-value-dash ${s.label === 'Próximo Rival' && s.value === 'Sin rival' ? 'no-rival' : ''}`}>{s.value}</span>
-            </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
 
       <div className="dashboard-content">
@@ -137,16 +140,19 @@ const Dashboard = () => {
             </select>
           </div>
           <div className="bar-chart">
-            {workloadData.map((d, i) => (
-              <div key={i} className="bar-wrapper">
-                <div className="bar-container">
-                  <div className={`bar-fill ${getBarLevelClass(d.val)}`} style={{ height: `${d.val}%` }}>
-                    <div className="bar-tooltip">{d.val}%</div>
+            {workloadData.map((d, i) => {
+              if (!d) return null;
+              return (
+                <div key={i} className="bar-wrapper">
+                  <div className="bar-container">
+                    <div className={`bar-fill ${getBarLevelClass(d.val)}`} style={{ height: `${d.val}%` }}>
+                      <div className="bar-tooltip">{d.val}%</div>
+                    </div>
                   </div>
+                  <span className="bar-label">{d.day}</span>
                 </div>
-                <span className="bar-label">{d.day}</span>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
 
@@ -160,19 +166,22 @@ const Dashboard = () => {
             {upcomingSessions.length === 0 ? (
               <div className="empty-dash-list">No hay sesiones próximas.</div>
             ) : (
-              upcomingSessions.map(s => (
-                <div key={s.id} className="session-item-dash" onClick={() => navigate('/sesiones')}>
-                  <div className={`session-indicator ${s.category.toLowerCase()}`} />
-                  <div className="session-info-dash">
-                    <strong>{s.title}</strong>
-                    <span>{s.date} · {s.time}</span>
+              upcomingSessions.map(s => {
+                if (!s) return null;
+                return (
+                  <div key={s.id} className="session-item-dash" onClick={() => navigate('/sesiones')}>
+                    <div className={`session-indicator ${(s.category || '').toLowerCase()}`} />
+                    <div className="session-info-dash">
+                      <strong>{s.title || 'Sin título'}</strong>
+                      <span>{s.date || ''} · {s.time || ''}</span>
+                    </div>
+                    <div className="session-badges">
+                      <span className="badge-dash">{s.category || ''}</span>
+                      <span className={`badge-dash intensity ${(s.intensity || '').toLowerCase()}`}>{s.intensity || ''}</span>
+                    </div>
                   </div>
-                  <div className="session-badges">
-                    <span className="badge-dash">{s.category}</span>
-                    <span className={`badge-dash intensity ${s.intensity.toLowerCase()}`}>{s.intensity}</span>
-                  </div>
-                </div>
-              ))
+                );
+              })
             )}
           </div>
         </div>

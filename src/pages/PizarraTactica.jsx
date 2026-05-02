@@ -368,7 +368,11 @@ const PizarraTactica = () => {
     const bounds = renderer.getFieldBounds();
     if (!bounds || bounds.w === 0) return;
 
-    const libType = toLibType(fieldType);
+    // Para medio campo, las formaciones deben comprimirse
+    // al espacio real disponible según el tipo de campo
+    const isHalfAttack  = fieldType === 'half_attack'  || fieldType === 'half-attack';
+    const isHalfDefense = fieldType === 'half_defense' || fieldType === 'half-defense';
+    const isHalf = isHalfAttack || isHalfDefense;
 
     const drawTeam = (type, form, color, side) => {
       const positions = FORMATIONS[form] || FORMATIONS['4-3-3'];
@@ -376,31 +380,43 @@ const PizarraTactica = () => {
         const isGk = i === 0;
         const rX = pos.relX ?? 0;
         const rY = pos.relY ?? 0;
-        
-        let relX_full = (side === 'L') ? rX : (1 - rX);
+
         let finalX;
 
-        // Mapeo de coordenadas relativas de campo completo a la vista actual
-        if (libType === 'half_attack') {
-          finalX = bounds.x + (relX_full - 0.5) * 2 * bounds.w;
-        } else if (libType === 'half_defense') {
-          finalX = bounds.x + relX_full * 2 * bounds.w;
-        } else if (libType === 'third_defense') {
-          finalX = bounds.x + relX_full * 3 * bounds.w;
-        } else if (libType === 'third_mid') {
-          finalX = bounds.x + (relX_full - 0.33) * 3 * bounds.w;
-        } else if (libType === 'third_attack') {
-          finalX = bounds.x + (relX_full - 0.66) * 3 * bounds.w;
-        } else if (libType === 'penalty_area') {
-          finalX = bounds.x + (relX_full - 0.75) * 4 * bounds.w;
+        if (!isHalf) {
+          // ── Campo completo: comportamiento original ──
+          if (side === 'L') {
+            finalX = bounds.x + rX * bounds.w;
+          } else {
+            finalX = bounds.x + (1 - rX) * bounds.w;
+          }
+        } else if (isHalfAttack) {
+          // ── Medio campo ataque: portería a la DERECHA (fx + halfW) ──
+          // El equipo local ocupa el medio campo completo (rX 0→1 = izq→der)
+          // relX 0 = línea de medio campo (izquierda), relX 1 = línea de fondo (derecha)
+          if (side === 'L') {
+            // Local ataca hacia la derecha: relX va de 0 (medio) a 1 (portería rival)
+            finalX = bounds.x + rX * bounds.w;
+          } else {
+            // Rival defiende: se invierte
+            finalX = bounds.x + (1 - rX) * bounds.w;
+          }
         } else {
-          finalX = bounds.x + relX_full * bounds.w;
+          // ── Medio campo defensa: portería a la IZQUIERDA (fx) ──
+          // relX 0 = línea de fondo propia (izquierda), relX 1 = línea de medio campo (derecha)
+          if (side === 'L') {
+            // Local defiende: portero en relX 0 (izquierda)
+            finalX = bounds.x + rX * bounds.w;
+          } else {
+            finalX = bounds.x + (1 - rX) * bounds.w;
+          }
         }
 
-        const x = finalX;
-        const y = bounds.y + rY * bounds.h;
+        // Mantener jugadores dentro de los límites del campo
+        finalX = Math.max(bounds.x + 8, Math.min(bounds.x + bounds.w - 8, finalX));
+        const finalY = Math.max(bounds.y + 8, Math.min(bounds.y + bounds.h - 8, bounds.y + rY * bounds.h));
 
-        const player = createPlayer(x, y, {
+        const player = createPlayer(finalX, finalY, {
           color: isGk ? '#FFD700' : color,
           label: i + 1,
           type: type,
@@ -410,10 +426,8 @@ const PizarraTactica = () => {
       });
     };
 
-    // Draw Local
     syncingR.current = true;
     drawTeam('local', formations.local, localColor, swapped ? 'R' : 'L');
-    // Draw Rival (if enabled)
     if (showRival) {
       drawTeam('rival', formations.rival, rivalColor, swapped ? 'L' : 'R');
     }

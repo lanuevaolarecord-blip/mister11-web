@@ -518,7 +518,6 @@ export class FieldRenderer {
 
   _drawGoalNet(gx, gy, gd, gw) {
     const ctx = this.ctx; ctx.strokeStyle = FIELD_COLORS.goalNet; ctx.lineWidth = 0.8;
-    const ctx = this.ctx; ctx.strokeStyle = FIELD_COLORS.goalNet; ctx.lineWidth = 0.8;
     const cols = 5; const rows = 4;
     for (let i = 1; i < cols; i++) {
       ctx.beginPath(); ctx.moveTo(gx + (gd / cols) * i, gy); ctx.lineTo(gx + (gd / cols) * i, gy + gw); ctx.stroke();

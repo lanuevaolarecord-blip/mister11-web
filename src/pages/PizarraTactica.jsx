@@ -77,13 +77,20 @@ const PizarraTactica = () => {
 
   const serializarFrame = useCallback(() => {
     const fc = fcRef.current;
-    if (!fc) return { objects: [] };
+    const fr = frRef.current;
+    if (!fc || !fr) return { objects: [] };
+
     const objects = fc.getObjects().map(obj => {
       const serializado = obj.toObject(['data']);
+      
+      // Intentar obtener coordenadas relativas al CAMPO si están en data
+      // O calcularlas si es un movimiento manual
+      const { rx, ry } = fr.getRelativePoint(obj.left, obj.top);
+
       return {
         ...serializado,
-        xRel: obj.left / fc.width,
-        yRel: obj.top / fc.height,
+        xRel: rx,
+        yRel: ry,
         radiusRel: obj.radius 
           ? obj.radius / Math.min(fc.width, fc.height)
           : undefined
@@ -94,7 +101,8 @@ const PizarraTactica = () => {
 
   const cargarFrame = useCallback((state, callback) => {
     const fc = fcRef.current;
-    if (!fc || !state) return;
+    const fr = frRef.current;
+    if (!fc || !fr || !state) return;
 
     fc.clear();
     const objsToEnliven = Array.isArray(state.objects) ? state.objects : [];
@@ -104,27 +112,35 @@ const PizarraTactica = () => {
       return;
     }
 
-    const canvasW = fc.width;
-    const canvasH = fc.height;
-
     const enlivenedData = objsToEnliven.map(objData => {
-      let left, top;
-      if (objData.xRel !== undefined) {
-        left = objData.xRel * canvasW;
-        top  = objData.yRel * canvasH;
+      let left, top, visible = true;
+      
+      if (objData.xRel !== undefined && objData.yRel !== undefined) {
+        // Usar el mapeador del renderer para proyectar al canvas actual
+        const point = fr.getCanvasPoint(objData.xRel, objData.yRel);
+        left = point.x;
+        top  = point.y;
+        
+        // Ocultar si queda fuera del zoom actual
+        visible = (
+          point.x >= -20 && 
+          point.x <= fc.width + 20 &&
+          point.y >= -20 &&
+          point.y <= fc.height + 20
+        );
       } else {
-        left = (objData.left / CANVAS_REF_WIDTH) * canvasW;
-        top  = (objData.top / CANVAS_REF_HEIGHT) * canvasH;
+        left = (objData.left / CANVAS_REF_WIDTH) * fc.width;
+        top  = (objData.top / CANVAS_REF_HEIGHT) * fc.height;
       }
 
       let radius = objData.radius;
       if (objData.radiusRel !== undefined) {
-        radius = objData.radiusRel * Math.min(canvasW, canvasH);
+        radius = objData.radiusRel * Math.min(fc.width, fc.height);
       } else if (objData.data?.type === 'player') {
         radius = RADIO_JUGADOR;
       }
 
-      return { ...objData, left, top, radius };
+      return { ...objData, left, top, radius, visible };
     });
 
     fabric.util.enlivenObjects(enlivenedData, (objects) => {
@@ -326,13 +342,14 @@ const PizarraTactica = () => {
   // ─── Create a single player object ─────────────────────────────────────────
   const createPlayer = useCallback((x, y, options = {}) => {
     const fc = fcRef.current;
-    if (!fc) return null;
+    const fr = frRef.current;
+    if (!fc || !fr) return null;
     
     const { color = '#4CAF7D', label = '1', type = 'local' } = options;
     const radius = RADIO_JUGADOR;
     
-    const xRel = x / fc.width;
-    const yRel = y / fc.height;
+    // Obtener coordenadas relativas al CAMPO REAL
+    const { rx, ry } = fr.getRelativePoint(x, y);
 
     const circle = new fabric.Circle({
       radius: radius, originX: 'center', originY: 'center',
@@ -351,8 +368,8 @@ const PizarraTactica = () => {
         type: 'player',
         tipo: 'jugador',
         playerType: type,
-        xRel: xRel,
-        yRel: yRel
+        xRel: rx,
+        yRel: ry
       },
     });
     
@@ -368,12 +385,6 @@ const PizarraTactica = () => {
     const bounds = renderer.getFieldBounds();
     if (!bounds || bounds.w === 0) return;
 
-    // Para medio campo, las formaciones deben comprimirse
-    // al espacio real disponible según el tipo de campo
-    const isHalfAttack  = fieldType === 'half_attack'  || fieldType === 'half-attack';
-    const isHalfDefense = fieldType === 'half_defense' || fieldType === 'half-defense';
-    const isHalf = isHalfAttack || isHalfDefense;
-
     const drawTeam = (type, form, color, side) => {
       const positions = FORMATIONS[form] || FORMATIONS['4-3-3'];
       positions.forEach((pos, i) => {
@@ -381,47 +392,29 @@ const PizarraTactica = () => {
         const rX = pos.relX ?? 0;
         const rY = pos.relY ?? 0;
 
-        let finalX;
+        // Invertir si es equipo rival o lado cambiado
+        let actualRx = (side === 'L') ? rX : (1 - rX);
+        let actualRy = rY;
 
-        if (!isHalf) {
-          // ── Campo completo: comportamiento original ──
-          if (side === 'L') {
-            finalX = bounds.x + rX * bounds.w;
-          } else {
-            finalX = bounds.x + (1 - rX) * bounds.w;
-          }
-        } else if (isHalfAttack) {
-          // ── Medio campo ataque: portería a la DERECHA (fx + halfW) ──
-          // El equipo local ocupa el medio campo completo (rX 0→1 = izq→der)
-          // relX 0 = línea de medio campo (izquierda), relX 1 = línea de fondo (derecha)
-          if (side === 'L') {
-            // Local ataca hacia la derecha: relX va de 0 (medio) a 1 (portería rival)
-            finalX = bounds.x + rX * bounds.w;
-          } else {
-            // Rival defiende: se invierte
-            finalX = bounds.x + (1 - rX) * bounds.w;
-          }
-        } else {
-          // ── Medio campo defensa: portería a la IZQUIERDA (fx) ──
-          // relX 0 = línea de fondo propia (izquierda), relX 1 = línea de medio campo (derecha)
-          if (side === 'L') {
-            // Local defiende: portero en relX 0 (izquierda)
-            finalX = bounds.x + rX * bounds.w;
-          } else {
-            finalX = bounds.x + (1 - rX) * bounds.w;
-          }
-        }
+        // Obtener posición proyectada según el zoom actual del renderer
+        const point = renderer.getCanvasPoint(actualRx, actualRy);
 
-        // Mantener jugadores dentro de los límites del campo
-        finalX = Math.max(bounds.x + 8, Math.min(bounds.x + bounds.w - 8, finalX));
-        const finalY = Math.max(bounds.y + 8, Math.min(bounds.y + bounds.h - 8, bounds.y + rY * bounds.h));
+        // Determinar si el punto está dentro de los límites visibles del canvas
+        const isVisible = (
+          point.x >= -10 && 
+          point.x <= canvas.width + 10 &&
+          point.y >= -10 &&
+          point.y <= canvas.height + 10
+        );
 
-        const player = createPlayer(finalX, finalY, {
+        const player = createPlayer(point.x, point.y, {
           color: isGk ? '#FFD700' : color,
           label: i + 1,
           type: type,
           pos: pos.pos || ''
         });
+
+        player.set({ visible: isVisible });
         canvas.add(player);
       });
     };
@@ -524,8 +517,21 @@ const PizarraTactica = () => {
     }
 
     // 6. Auto-save on object changes & history
-    const onChange = () => {
+    const onChange = (opt) => {
       if (syncingR.current) return;
+
+      // Sincronizar coordenadas relativas al campo si el objeto se movió
+      if (opt.target && frRef.current) {
+        const targets = opt.target._objects || [opt.target];
+        targets.forEach(t => {
+          if (t.data) {
+            const { rx, ry } = frRef.current.getRelativePoint(t.left, t.top);
+            t.data.xRel = rx;
+            t.data.yRel = ry;
+          }
+        });
+      }
+
       saveFrameState(false); // Debounced save
       pushToHistory();
     };
@@ -558,17 +564,30 @@ const PizarraTactica = () => {
       
       if (nuevoAncho === anchoAnterior && nuevoAlto === altoAnterior) return;
       
-      // Reposicionar objetos antes de cambiar canvas
+      // Reposicionar objetos usando el nuevo mapeo del renderer
       fc.getObjects().forEach(obj => {
-        const xRel = obj.left / anchoAnterior;
-        const yRel = obj.top / altoAnterior;
-        obj.set({
-          left: xRel * nuevoAncho,
-          top: yRel * nuevoAlto
-        });
-        if (obj.data?.type === 'player' && obj.radius) {
-          // Mantener radio estable
-          obj.set({ radius: RADIO_JUGADOR });
+        if (obj.data?.xRel !== undefined && obj.data?.yRel !== undefined) {
+          // Primero redibujamos el campo para tener los nuevos bounds
+          fr.draw(toLibType(fieldType));
+          const point = fr.getCanvasPoint(obj.data.xRel, obj.data.yRel);
+          obj.set({
+            left: point.x,
+            top: point.y,
+            visible: (
+              point.x >= -20 && 
+              point.x <= nuevoAncho + 20 &&
+              point.y >= -20 &&
+              point.y <= nuevoAlto + 20
+            )
+          });
+        } else {
+          // Fallback para objetos sin data relativa (dibujos libres)
+          const xRel = obj.left / anchoAnterior;
+          const yRel = obj.top / altoAnterior;
+          obj.set({
+            left: xRel * nuevoAncho,
+            top: yRel * nuevoAlto
+          });
         }
         obj.setCoords();
       });
@@ -710,6 +729,26 @@ const PizarraTactica = () => {
       fr.setReducedDimensions(reducedDim.w, reducedDim.h);
     }
     fr.draw(newType);
+
+    // Actualizar visibilidad de TODOS los objetos según el nuevo zoom/recorte
+    const objects = fc.getObjects();
+    objects.forEach(obj => {
+      if (obj.data?.xRel !== undefined && obj.data?.yRel !== undefined) {
+        const point = fr.getCanvasPoint(obj.data.xRel, obj.data.yRel);
+        const isVisible = (
+          point.x >= -20 && 
+          point.x <= fc.width + 20 &&
+          point.y >= -20 &&
+          point.y <= fc.height + 20
+        );
+        obj.set({ 
+          left: point.x, 
+          top: point.y, 
+          visible: isVisible 
+        });
+      }
+    });
+
     const newBounds = fr.getFieldBounds();
     const newScale = newBounds.scale;
     const scaleFactor = newScale / oldScale;

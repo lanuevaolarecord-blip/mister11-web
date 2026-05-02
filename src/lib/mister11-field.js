@@ -111,18 +111,12 @@ export class FieldRenderer {
     this.canvas = canvas;
     this.ctx = canvas.getContext('2d');
     this.currentType = 'full';
-    this.padding = options.padding ?? { v: 12, h: 16 };
+    this.padding = options.padding ?? { v: 20, h: 20 };
+    this.lineWeight = 1.8; // Grosor de línea estándar
     
-    // Para campo reducido
     this.reducedDim = { w: 40, h: 30 }; 
-
     this.field = { x: 0, y: 0, w: 0, h: 0, scale: 1 };
     this._bindResize();
-  }
-
-  setReducedDimensions(w, h) {
-    this.reducedDim = { w, h };
-    this.redraw();
   }
 
   draw(type = 'full') {
@@ -130,16 +124,19 @@ export class FieldRenderer {
     this._resize();
     this._clear();
     
-    if (type === 'reduced') {
-      this.ctx.fillStyle = '#4A7C3F';
-      this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
-    } else if (type === 'blank') {
-      this.ctx.fillStyle = '#3D6B34';
+    if (type === 'blank') {
+      this.ctx.fillStyle = '#2D5A27';
       this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
       return; 
-    } else {
-      this._drawBackground();
     }
+    
+    this._drawBackground();
+
+    const ctx = this.ctx;
+    ctx.strokeStyle = FIELD_COLORS.lines;
+    ctx.lineWidth = this.lineWeight;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
 
     switch (type) {
       case 'full':         this._drawFull();        break;
@@ -153,8 +150,7 @@ export class FieldRenderer {
       case 'f8':           this._drawF8();          break;
       case 'futsal':       this._drawFutsal();      break;
       case 'reduced':      this._drawReduced();     break;
-      default:
-        this._drawFull();
+      default:             this._drawFull();
     }
   }
 
@@ -174,15 +170,64 @@ export class FieldRenderer {
     return { ...this.field };
   }
 
-  mToPx(meters) {
-    return meters * this.field.scale;
+  relToCanvas(relX, relY) {
+    return this.getCanvasPoint(relX, relY);
   }
 
-  relToCanvas(relX, relY) {
+  // rx, ry: coordenadas relativas al CAMPO COMPLETO (0 a 1)
+  getCanvasPoint(rx, ry) {
+    const { x, y, w, h } = this.field;
+    const type = this.currentType;
+
+    let finalX = rx;
+    let finalY = ry;
+
+    // Lógica de Zoom/Recorte según el modo
+    if (type === 'half_attack') {
+      finalX = (rx - 0.5) * 2;
+    } else if (type === 'half_defense') {
+      finalX = rx * 2;
+    } else if (type === 'third_def') {
+      finalX = rx * 3;
+    } else if (type === 'third_mid') {
+      finalX = (rx - 0.333) * 3;
+    } else if (type === 'third_off') {
+      finalX = (rx - 0.666) * 3;
+    } else if (type === 'penalty_zoom') {
+      finalX = (rx - 0.75) * 4;
+      finalY = (ry - 0.25) * 2; 
+    }
+
     return {
-      x: this.field.x + relX * this.field.w,
-      y: this.field.y + relY * this.field.h,
+      x: x + finalX * w,
+      y: y + finalY * h
     };
+  }
+
+  // Convierte x, y del canvas a rx, ry del CAMPO COMPLETO (0 a 1)
+  getRelativePoint(cx, cy) {
+    const { x, y, w, h } = this.field;
+    const type = this.currentType;
+
+    let rx = (cx - x) / w;
+    let ry = (cy - y) / h;
+
+    if (type === 'half_attack') {
+      rx = rx / 2 + 0.5;
+    } else if (type === 'half_defense') {
+      rx = rx / 2;
+    } else if (type === 'third_def') {
+      rx = rx / 3;
+    } else if (type === 'third_mid') {
+      rx = rx / 3 + 0.333;
+    } else if (type === 'third_off') {
+      rx = rx / 3 + 0.666;
+    } else if (type === 'penalty_zoom') {
+      rx = rx / 4 + 0.75;
+      ry = ry / 2 + 0.25;
+    }
+
+    return { rx, ry };
   }
 
   _resize() {
@@ -190,60 +235,33 @@ export class FieldRenderer {
     const H = this.canvas.height;
     if (W === 0 || H === 0) return;
 
-    const pH = (this.padding.h ?? 16);
-    const pV = (this.padding.v ?? 12);
+    const pH = this.padding.h;
+    const pV = this.padding.v;
 
-    let targetLength, targetWidth;
-    const type = this.currentType;
+    // Proporciones objetivo (Largo / Ancho)
+    let ratio = FIFA.LENGTH / FIFA.WIDTH;
+    if (this.currentType === 'futsal') ratio = 2.0; // 40x20 exacto
+    if (this.currentType === 'f7') ratio = 65 / 45;
+    if (this.currentType === 'f8') ratio = 62 / 46;
+    if (this.currentType === 'reduced') ratio = this.reducedDim.w / this.reducedDim.h;
+    if (this.currentType === 'penalty_zoom') ratio = 1.0;
 
-    if (type === 'full' || type === 'blank') {
-      targetLength = FIFA.LENGTH + FIFA.GOAL_DEPTH * 2;
-      targetWidth  = FIFA.WIDTH;
-    } else if (type.startsWith('half_')) {
-      targetLength = FIFA.LENGTH / 2 + FIFA.GOAL_DEPTH;
-      targetWidth  = FIFA.WIDTH;
-    } else if (type.startsWith('third_')) {
-      targetLength = FIFA.LENGTH / 3;
-      targetWidth  = FIFA.WIDTH;
-    } else if (type === 'penalty_zoom') {
-      targetLength = FIFA.PENALTY_AREA_DEPTH * 1.5;
-      targetWidth  = FIFA.PENALTY_AREA_WIDTH * 1.2;
-    } else if (type === 'f7') {
-      targetLength = FIFA.F7_LENGTH + FIFA.F7_GOAL_DEPTH * 2;
-      targetWidth  = FIFA.F7_WIDTH;
-    } else if (type === 'f8') {
-      targetLength = FIFA.F8_LENGTH + FIFA.F8_GOAL_DEPTH * 2;
-      targetWidth  = FIFA.F8_WIDTH;
-    } else if (type === 'futsal') {
-      targetLength = FIFA.FUTSAL_LENGTH + FIFA.FUTSAL_GOAL_DEPTH * 2;
-      targetWidth  = FIFA.FUTSAL_WIDTH;
-    } else if (type === 'reduced') {
-      targetLength = this.reducedDim.w;
-      targetWidth  = this.reducedDim.h;
-    } else {
-      targetLength = FIFA.LENGTH;
-      targetWidth  = FIFA.WIDTH;
-    }
-
-    const scale = Math.min((W - pH * 2) / targetLength, (H - pV * 2) / targetWidth);
-
+    // Recalcular dimensiones visibles según el modo
     let fw, fh;
-    if (type === 'full' || type === 'blank') { fw = FIFA.LENGTH * scale; fh = FIFA.WIDTH * scale; }
-    else if (type.startsWith('half_')) { fw = (FIFA.LENGTH / 2) * scale; fh = FIFA.WIDTH * scale; }
-    else if (type.startsWith('third_')) { fw = (FIFA.LENGTH / 3) * scale; fh = FIFA.WIDTH * scale; }
-    else if (type === 'penalty_zoom') { fw = FIFA.PENALTY_AREA_DEPTH * 1.5 * scale; fh = FIFA.PENALTY_AREA_WIDTH * 1.2 * scale; }
-    else if (type === 'f7') { fw = FIFA.F7_LENGTH * scale; fh = FIFA.F7_WIDTH * scale; }
-    else if (type === 'f8') { fw = FIFA.F8_LENGTH * scale; fh = FIFA.F8_WIDTH * scale; }
-    else if (type === 'futsal') { fw = FIFA.FUTSAL_LENGTH * scale; fh = FIFA.FUTSAL_WIDTH * scale; }
-    else if (type === 'reduced') { fw = this.reducedDim.w * scale; fh = this.reducedDim.h * scale; }
-    else { fw = FIFA.LENGTH * scale; fh = FIFA.WIDTH * scale; }
+    if (W / H > ratio) {
+      fh = H - pV * 2;
+      fw = fh * ratio;
+    } else {
+      fw = W - pH * 2;
+      fh = fw / ratio;
+    }
 
     this.field = {
       x: (W - fw) / 2,
       y: (H - fh) / 2,
       w: fw,
       h: fh,
-      scale,
+      scale: fw / FIFA.LENGTH
     };
   }
 
@@ -256,214 +274,153 @@ export class FieldRenderer {
 
   _drawBackground() {
     const ctx = this.ctx;
-    const { x, y, w, h } = this.field;
-
-    // Fondo exterior
     ctx.fillStyle = FIELD_COLORS.outerBg;
     ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
 
-    // Franjas de hierba (12 franjas verticales alternas)
-    const stripeCount = 12;
+    const { x, y, w, h } = this.field;
+    const stripeCount = 10;
     const stripeW = w / stripeCount;
 
     ctx.save();
-    ctx.beginPath();
     ctx.rect(x, y, w, h);
     ctx.clip();
-
     for (let i = 0; i < stripeCount; i++) {
-      ctx.fillStyle = i % 2 === 0
-        ? FIELD_COLORS.stripeDark
-        : FIELD_COLORS.stripeLight;
+      ctx.fillStyle = i % 2 === 0 ? FIELD_COLORS.stripeDark : FIELD_COLORS.stripeLight;
       ctx.fillRect(x + i * stripeW, y, stripeW, h);
     }
     ctx.restore();
   }
 
-  // ───────────────────────────────────────
-  // CAMPO COMPLETO
-  // ───────────────────────────────────────
   _drawFull() {
-    const { x, y, w, h, scale } = this.field;
-    const ctx = this.ctx;
-    ctx.strokeStyle = FIELD_COLORS.lines;
-    ctx.lineWidth = Math.max(1.5, scale * 0.12);
-    ctx.lineCap = 'round';
-    ctx.lineJoin = 'round';
-    ctx.strokeRect(x, y, w, h);
-    ctx.beginPath(); ctx.moveTo(x + w / 2, y); ctx.lineTo(x + w / 2, y + h); ctx.stroke();
-    const cr = FIFA.CENTER_RADIUS * scale;
-    ctx.beginPath(); ctx.arc(x + w / 2, y + h / 2, cr, 0, Math.PI * 2); ctx.stroke();
-    ctx.fillStyle = FIELD_COLORS.lines;
-    ctx.beginPath(); ctx.arc(x + w / 2, y + h / 2, Math.max(3, scale * 0.18), 0, Math.PI * 2); ctx.fill();
-    this._drawGoalAndAreas(x, y, h, scale, 'left');
-    this._drawGoalAndAreas(x + w, y, h, scale, 'right');
-    this._drawCornerArcs(x, y, w, h, scale);
+    this._drawOuterLines();
+    this._drawMidLine();
+    this._drawGoalAndAreas(0, 'left');
+    this._drawGoalAndAreas(1, 'right');
+    this._drawCenterCircle();
   }
 
   _drawHalfAttack() {
-    const { x, y, w, h, scale } = this.field;
-    const ctx = this.ctx;
-    ctx.strokeStyle = FIELD_COLORS.lines; ctx.lineWidth = Math.max(1.5, scale * 0.12);
-    ctx.strokeRect(x, y, w, h);
-    ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x, y + h); ctx.stroke();
-    ctx.beginPath(); ctx.arc(x, y + h / 2, FIFA.CENTER_RADIUS * scale, -Math.PI / 2, Math.PI / 2); ctx.stroke();
-    this._drawGoalAndAreas(x + w, y, h, scale, 'right');
+    this._drawOuterLines();
+    this._drawGoalAndAreas(1, 'right');
+    const p1 = this.getCanvasPoint(0.5, 0);
+    const p2 = this.getCanvasPoint(0.5, 1);
+    this.ctx.beginPath(); this.ctx.moveTo(p1.x, p1.y); this.ctx.lineTo(p2.x, p2.y); this.ctx.stroke();
   }
 
   _drawHalfDefense() {
-    const { x, y, w, h, scale } = this.field;
-    const ctx = this.ctx;
-    ctx.strokeStyle = FIELD_COLORS.lines; ctx.lineWidth = Math.max(1.5, scale * 0.12);
-    ctx.strokeRect(x, y, w, h);
-    ctx.beginPath(); ctx.moveTo(x + w, y); ctx.lineTo(x + w, y + h); ctx.stroke();
-    ctx.beginPath(); ctx.arc(x + w, y + h / 2, FIFA.CENTER_RADIUS * scale, Math.PI / 2, Math.PI * 1.5); ctx.stroke();
-    this._drawGoalAndAreas(x, y, h, scale, 'left');
+    this._drawOuterLines();
+    this._drawGoalAndAreas(0, 'left');
+    const p1 = this.getCanvasPoint(0.5, 0);
+    const p2 = this.getCanvasPoint(0.5, 1);
+    this.ctx.beginPath(); this.ctx.moveTo(p1.x, p1.y); this.ctx.lineTo(p2.x, p2.y); this.ctx.stroke();
   }
 
   _drawThirdDef() {
-    const { x, y, w, h, scale } = this.field;
-    const ctx = this.ctx;
-    ctx.strokeStyle = FIELD_COLORS.lines; ctx.lineWidth = Math.max(1.5, scale * 0.12);
-    ctx.strokeRect(x, y, w, h);
-    this._drawGoalAndAreas(x, y, h, scale, 'left');
+    this._drawOuterLines();
+    this._drawGoalAndAreas(0, 'left');
   }
 
   _drawThirdMid() {
-    const { x, y, w, h, scale } = this.field;
-    const ctx = this.ctx;
-    ctx.strokeStyle = FIELD_COLORS.lines; ctx.lineWidth = Math.max(1.5, scale * 0.12);
-    ctx.strokeRect(x, y, w, h);
-    // Draw full center circle relative to this view
-    // The center of the field is at some offset. 
-    // In third_mid, the center is actually at the horizontal middle of this view.
-    ctx.beginPath(); ctx.arc(x + w / 2, y + h / 2, FIFA.CENTER_RADIUS * scale, 0, Math.PI * 2); ctx.stroke();
+    this._drawOuterLines();
+    this._drawCenterCircle();
   }
 
   _drawThirdOff() {
-    const { x, y, w, h, scale } = this.field;
-    const ctx = this.ctx;
-    ctx.strokeStyle = FIELD_COLORS.lines; ctx.lineWidth = Math.max(1.5, scale * 0.12);
-    ctx.strokeRect(x, y, w, h);
-    this._drawGoalAndAreas(x + w, y, h, scale, 'right');
+    this._drawOuterLines();
+    this._drawGoalAndAreas(1, 'right');
   }
 
   _drawPenaltyZoom() {
-    const { x, y, w, h, scale } = this.field;
-    const ctx = this.ctx;
-    ctx.strokeStyle = FIELD_COLORS.lines; ctx.lineWidth = Math.max(2, scale * 0.15);
-    const areaW = FIFA.PENALTY_AREA_WIDTH * scale;
-    const areaD = FIFA.PENALTY_AREA_DEPTH * scale;
-    const lineX = x + w; 
-    ctx.beginPath(); ctx.moveTo(lineX, y); ctx.lineTo(lineX, y+h); ctx.stroke();
-    ctx.strokeRect(lineX - areaD, y + (h - areaW)/2, areaD, areaW);
-    const gw = FIFA.GOAL_WIDTH * scale; const gy = y + (h - gw)/2;
-    ctx.strokeRect(lineX, gy, FIFA.GOAL_DEPTH * scale, gw);
-    const spotX = lineX - FIFA.PENALTY_SPOT * scale;
-    ctx.fillStyle = FIELD_COLORS.lines;
-    ctx.beginPath(); ctx.arc(spotX, y + h/2, 3*scale, 0, Math.PI*2); ctx.fill();
-    ctx.beginPath(); ctx.arc(spotX, y + h/2, FIFA.CENTER_RADIUS * scale, Math.PI - 0.925, Math.PI + 0.925, true); ctx.stroke();
-  }
-
-  _drawF7() {
-    const { x, y, w, h, scale } = this.field;
-    const ctx = this.ctx;
-    ctx.strokeStyle = FIELD_COLORS.lines; ctx.lineWidth = Math.max(1.5, scale * 0.12);
-    ctx.strokeRect(x, y, w, h);
-    ctx.beginPath(); ctx.moveTo(x + w / 2, y); ctx.lineTo(x + w / 2, y + h); ctx.stroke();
-    this._drawGoalAndAreasF7(x, y, h, scale, 'left');
-    this._drawGoalAndAreasF7(x + w, y, h, scale, 'right');
-  }
-
-  _drawGoalAndAreasF7(lineX, fieldY, fieldH, scale, side) {
-    const ctx = this.ctx;
-    const dir = side === 'left' ? 1 : -1;
-    const gw = FIFA.F7_GOAL_WIDTH * scale; const gy = fieldY + (fieldH - gw)/2;
-    ctx.strokeRect(side === 'left' ? lineX - 2*scale : lineX, gy, 2*scale, gw);
-    const paw = FIFA.F7_PENALTY_WIDTH * scale; const pad = FIFA.F7_PENALTY_DEPTH * scale;
-    const pay = fieldY + (fieldH - paw)/2;
-    ctx.strokeRect(side === 'left' ? lineX : lineX - pad, pay, pad, paw);
-    const spotX = side === 'left' ? lineX + FIFA.F7_PENALTY_SPOT*scale : lineX - FIFA.F7_PENALTY_SPOT*scale;
-    ctx.fillStyle = FIELD_COLORS.lines;
-    ctx.beginPath(); ctx.arc(spotX, fieldY + fieldH/2, 2*scale, 0, Math.PI*2); ctx.fill();
-  }
-
-  _drawF8() {
-    const { x, y, w, h, scale } = this.field;
-    const ctx = this.ctx;
-    ctx.strokeStyle = FIELD_COLORS.lines; ctx.lineWidth = Math.max(1.5, scale * 0.12);
-    ctx.strokeRect(x, y, w, h);
-    ctx.beginPath(); ctx.moveTo(x + w / 2, y); ctx.lineTo(x + w / 2, y + h); ctx.stroke();
-    this._drawGoalAndAreasF8(x, y, h, scale, 'left');
-    this._drawGoalAndAreasF8(x + w, y, h, scale, 'right');
-  }
-
-  _drawGoalAndAreasF8(lineX, fieldY, fieldH, scale, side) {
-    const ctx = this.ctx;
-    const gw = FIFA.F8_GOAL_WIDTH * scale; const gy = fieldY + (fieldH - gw)/2;
-    ctx.strokeRect(side === 'left' ? lineX - 2*scale : lineX, gy, 2*scale, gw);
-    const paw = FIFA.F8_PENALTY_WIDTH * scale; const pad = FIFA.F8_PENALTY_DEPTH * scale;
-    const pay = fieldY + (fieldH - paw)/2;
-    ctx.strokeRect(side === 'left' ? lineX : lineX - pad, pay, pad, paw);
+    this._drawOuterLines();
+    this._drawGoalAndAreas(1, 'right', true);
   }
 
   _drawFutsal() {
-    const { x, y, w, h, scale } = this.field;
-    const ctx = this.ctx;
-    ctx.strokeStyle = FIELD_COLORS.lines; ctx.lineWidth = Math.max(1.5, scale * 0.12);
-    ctx.strokeRect(x, y, w, h);
-    ctx.beginPath(); ctx.moveTo(x + w / 2, y); ctx.lineTo(x + w / 2, y + h); ctx.stroke();
-    this._drawFutsalAreas(x, y, h, scale, 'left');
-    this._drawFutsalAreas(x + w, y, h, scale, 'right');
+    this._drawOuterLines();
+    const mid = this.getCanvasPoint(0.5, 0);
+    const mid2 = this.getCanvasPoint(0.5, 1);
+    this.ctx.beginPath(); this.ctx.moveTo(mid.x, mid.y); this.ctx.lineTo(mid2.x, mid2.y); this.ctx.stroke();
+    this._drawFutsalArea(0, 'left');
+    this._drawFutsalArea(1, 'right');
   }
 
-  _drawFutsalAreas(lineX, fieldY, fieldH, scale, side) {
+  _drawFutsalArea(rx, side) {
     const ctx = this.ctx;
+    const p = this.getCanvasPoint(rx, 0.5);
+    const r = (6 / FIFA.WIDTH) * this.field.h;
     const dir = side === 'left' ? 1 : -1;
-    const r = FIFA.FUTSAL_AREA_RADIUS * scale;
-    const gw = FIFA.FUTSAL_GOAL_WIDTH * scale;
-    const gy1 = fieldY + (fieldH/2 - gw/2);
-    const gy2 = fieldY + (fieldH/2 + gw/2);
+
     ctx.beginPath();
-    ctx.arc(lineX, gy1, r, side === 'left' ? 0 : Math.PI, side === 'left' ? Math.PI*1.5 : Math.PI*0.5, side !== 'left');
-    ctx.lineTo(lineX + dir*r, gy2);
-    ctx.arc(lineX, gy2, r, side === 'left' ? Math.PI*0.5 : Math.PI*1.5, 0, side !== 'left');
+    ctx.arc(p.x, p.y, r, -Math.PI/2, Math.PI/2, side !== 'left');
     ctx.stroke();
-    const spot6 = lineX + dir * FIFA.FUTSAL_PENALTY_SPOT * scale;
-    ctx.beginPath(); ctx.arc(spot6, fieldY + fieldH/2, 1.5*scale, 0, Math.PI*2); ctx.fill();
-    const spot10 = lineX + dir * FIFA.FUTSAL_SECOND_PENALTY * scale;
-    ctx.beginPath(); ctx.arc(spot10, fieldY + fieldH/2, 1.5*scale, 0, Math.PI*2); ctx.fill();
+
+    const sp = this.getCanvasPoint(side === 'left' ? (6/FIFA.LENGTH) : (1 - 6/FIFA.LENGTH), 0.5);
+    ctx.fillStyle = '#FFF';
+    ctx.beginPath(); ctx.arc(sp.x, sp.y, 2.5, 0, Math.PI*2); ctx.fill();
   }
+
+  _drawF7() { this._drawFull(); }
+  _drawF8() { this._drawFull(); }
 
   _drawReduced() {
-    const { x, y, w, h, scale } = this.field;
+    this._drawOuterLines();
     const ctx = this.ctx;
-    ctx.strokeStyle = FIELD_COLORS.lines; ctx.lineWidth = 1.5;
-    ctx.strokeRect(x, y, w, h);
     ctx.strokeStyle = FIELD_COLORS.linesSoft;
-    for (let m = 10; m < this.reducedDim.w; m += 10) {
-      ctx.beginPath(); ctx.moveTo(x + m * scale, y); ctx.lineTo(x + m * scale, y + h); ctx.stroke();
-    }
-    for (let m = 10; m < this.reducedDim.h; m += 10) {
-      ctx.beginPath(); ctx.moveTo(x, y + m * scale); ctx.lineTo(x + w, y + m * scale); ctx.stroke();
+    ctx.lineWidth = 1;
+    for(let i=0.1; i<1; i+=0.1) {
+      const p1 = this.getCanvasPoint(i, 0); const p2 = this.getCanvasPoint(i, 1);
+      ctx.beginPath(); ctx.moveTo(p1.x, p1.y); ctx.lineTo(p2.x, p2.y); ctx.stroke();
+      const h1 = this.getCanvasPoint(0, i); const h2 = this.getCanvasPoint(1, i);
+      ctx.beginPath(); ctx.moveTo(h1.x, h1.y); ctx.lineTo(h2.x, h2.y); ctx.stroke();
     }
   }
 
-  _drawGoalAndAreas(lineX, fieldY, fieldH, scale, side) {
+  _drawOuterLines() {
+    const p1 = this.getCanvasPoint(0,0);
+    const p2 = this.getCanvasPoint(1,1);
+    this.ctx.strokeRect(p1.x, p1.y, p2.x - p1.x, p2.y - p1.y);
+  }
+
+  _drawMidLine() {
+    const p1 = this.getCanvasPoint(0.5, 0);
+    const p2 = this.getCanvasPoint(0.5, 1);
+    this.ctx.beginPath(); this.ctx.moveTo(p1.x, p1.y); this.ctx.lineTo(p2.x, p2.y); this.ctx.stroke();
+  }
+
+  _drawCenterCircle() {
+    const p = this.getCanvasPoint(0.5, 0.5);
+    const r = (FIFA.CENTER_RADIUS / FIFA.LENGTH) * this.field.w;
+    this.ctx.beginPath(); this.ctx.arc(p.x, p.y, r, 0, Math.PI*2); this.ctx.stroke();
+    this.ctx.fillStyle = '#FFF';
+    this.ctx.beginPath(); ctx.arc(p.x, p.y, 3, 0, Math.PI*2); this.ctx.fill();
+  }
+
+  _drawGoalAndAreas(rx, side, isZoom = false) {
     const ctx = this.ctx;
-    const gw = FIFA.GOAL_WIDTH * scale; const gd = FIFA.GOAL_DEPTH * scale;
-    const gy = fieldY + (fieldH - gw) / 2;
-    ctx.strokeRect(side === 'left' ? lineX - gd : lineX, gy, gd, gw);
-    const saw = FIFA.SMALL_AREA_WIDTH * scale; const sad = FIFA.SMALL_AREA_DEPTH * scale;
-    const say = fieldY + (fieldH - saw) / 2;
-    ctx.strokeRect(side === 'left' ? lineX : lineX - sad, say, sad, saw);
-    const paw = FIFA.PENALTY_AREA_WIDTH * scale; const pad = FIFA.PENALTY_AREA_DEPTH * scale;
-    const pay = fieldY + (fieldH - paw) / 2;
-    ctx.strokeRect(side === 'left' ? lineX : lineX - pad, pay, pad, paw);
-    const penX = side === 'left' ? lineX + FIFA.PENALTY_SPOT * scale : lineX - FIFA.PENALTY_SPOT * scale;
-    ctx.fillStyle = FIELD_COLORS.lines;
-    ctx.beginPath(); ctx.arc(penX, fieldY + fieldH / 2, 2 * scale, 0, Math.PI * 2); ctx.fill();
-    ctx.beginPath(); ctx.arc(penX, fieldY + fieldH / 2, FIFA.CENTER_RADIUS * scale, side === 'left' ? -0.925 : Math.PI - 0.925, side === 'left' ? 0.925 : Math.PI + 0.925); ctx.stroke();
+    const dir = side === 'left' ? 1 : -1;
+    
+    const aw = FIFA.PENALTY_AREA_WIDTH / FIFA.WIDTH;
+    const ad = (FIFA.PENALTY_AREA_DEPTH / FIFA.LENGTH) * dir;
+    const pAreaTop = this.getCanvasPoint(rx, 0.5 - aw/2);
+    const pAreaBottom = this.getCanvasPoint(rx + ad, 0.5 + aw/2);
+    ctx.strokeRect(pAreaTop.x, pAreaTop.y, pAreaBottom.x - pAreaTop.x, pAreaBottom.y - pAreaTop.y);
+
+    const sw = FIFA.SMALL_AREA_WIDTH / FIFA.WIDTH;
+    const sd = (FIFA.SMALL_AREA_DEPTH / FIFA.LENGTH) * dir;
+    const pSmallTop = this.getCanvasPoint(rx, 0.5 - sw/2);
+    const pSmallBottom = this.getCanvasPoint(rx + sd, 0.5 + sw/2);
+    ctx.strokeRect(pSmallTop.x, pSmallTop.y, pSmallBottom.x - pSmallTop.x, pSmallBottom.y - pSmallTop.y);
+
+    const spRelX = side === 'left' ? (FIFA.PENALTY_SPOT / FIFA.LENGTH) : (1 - FIFA.PENALTY_SPOT/FIFA.LENGTH);
+    const sp = this.getCanvasPoint(spRelX, 0.5);
+    ctx.fillStyle = '#FFF';
+    ctx.beginPath(); ctx.arc(sp.x, sp.y, 3, 0, Math.PI*2); ctx.fill();
+
+    const gw = FIFA.GOAL_WIDTH / FIFA.WIDTH;
+    const gd = (FIFA.GOAL_DEPTH / FIFA.LENGTH) * dir;
+    const gTop = this.getCanvasPoint(rx, 0.5 - gw/2);
+    const gBottom = this.getCanvasPoint(rx - gd, 0.5 + gw/2);
+    ctx.strokeRect(gTop.x, gTop.y, gBottom.x - gTop.x, gBottom.y - gTop.y);
   }
 
   _drawGoalNet(gx, gy, gd, gw) {

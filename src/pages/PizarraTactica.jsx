@@ -1382,9 +1382,21 @@ const PizarraTactica = () => {
           )}
 
           {/* Floating Buttons - Global (Web/Tablet/Móvil) */}
-          <div className="floating-actions">
-            <button className="btn-floating-left" onClick={() => { setShowTeamsDrawer(!showTeamsDrawer); setShowMatsDrawer(false); }}>⚽ Equipos</button>
-            <button className="btn-floating-right" onClick={() => { setShowMatsDrawer(!showMatsDrawer); setShowTeamsDrawer(false); }}>🎽 Material</button>
+          <div className="floating-actions" style={{ zIndex: 1000 }}>
+            <button 
+              className="btn-floating-left" 
+              style={{ zIndex: 1001 }} 
+              onClick={() => { setShowTeamsDrawer(true); setShowMatsDrawer(false); }}
+            >
+              ⚽ Equipos
+            </button>
+            <button 
+              className="btn-floating-right" 
+              style={{ zIndex: 1001 }} 
+              onClick={() => { setShowMatsDrawer(true); setShowTeamsDrawer(false); }}
+            >
+              🎽 Material
+            </button>
           </div>
         </div>
 

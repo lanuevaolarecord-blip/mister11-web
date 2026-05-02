@@ -38,6 +38,15 @@ const toLibType = (t) => {
     'half-defense':   'half_defense',
     'half_defense':   'half_defense',
     '½ Defensa':      'half_defense',
+    'third_defense':  'third_defense',
+    'third_mid':      'third_mid',
+    'third_attack':   'third_attack',
+    'penalty_area':   'penalty_area',
+    'f7':             'f7',
+    'f8':             'f8',
+    'futsal':         'futsal',
+    'reduced':        'reduced',
+    'blank':          'blank'
   };
   return map[t] || t?.replace(/-/g, '_') || 'full';
 };
@@ -182,6 +191,7 @@ const PizarraTactica = () => {
   const [showRival,      setShowRival]      = useState(false);
   const [histCount,      setHistCount]      = useState(0);
   const [redoCount,      setRedoCount]      = useState(0);
+  const [reducedDim,     setReducedDim]     = useState({ w: 40, h: 30 });
 
   // keep refs in sync with state
   useEffect(() => { frameIdxR.current = frameIdx; }, [frameIdx]);
@@ -375,6 +385,14 @@ const PizarraTactica = () => {
           finalX = bounds.x + (relX_full - 0.5) * 2 * bounds.w;
         } else if (libType === 'half_defense') {
           finalX = bounds.x + relX_full * 2 * bounds.w;
+        } else if (libType === 'third_defense') {
+          finalX = bounds.x + relX_full * 3 * bounds.w;
+        } else if (libType === 'third_mid') {
+          finalX = bounds.x + (relX_full - 0.33) * 3 * bounds.w;
+        } else if (libType === 'third_attack') {
+          finalX = bounds.x + (relX_full - 0.66) * 3 * bounds.w;
+        } else if (libType === 'penalty_area') {
+          finalX = bounds.x + (relX_full - 0.75) * 4 * bounds.w;
         } else {
           finalX = bounds.x + relX_full * bounds.w;
         }
@@ -674,6 +692,9 @@ const PizarraTactica = () => {
     });
 
     // Cambiar vista del campo (el renderer ahora calcula su propia escala óptima)
+    if (newType === 'reduced') {
+      fr.setReducedDimensions(reducedDim.w, reducedDim.h);
+    }
     fr.draw(newType);
     const newBounds = fr.getFieldBounds();
     const newScale = newBounds.scale;
@@ -1155,7 +1176,42 @@ const PizarraTactica = () => {
               <option value="full">Campo Completo</option>
               <option value="half-attack">½ Ataque</option>
               <option value="half-defense">½ Defensa</option>
+              <option value="third_defense">1/3 Defensivo</option>
+              <option value="third_mid">1/3 Medio</option>
+              <option value="third_attack">1/3 Ofensivo</option>
+              <option value="penalty_area">Área Penalti</option>
+              <option value="f7">Fútbol 7 (65x45m)</option>
+              <option value="f8">Fútbol 8 (62x46m)</option>
+              <option value="futsal">Fútbol Sala (40x20m)</option>
+              <option value="reduced">Campo Reducido</option>
+              <option value="blank">Campo en Blanco</option>
             </select>
+            
+            {fieldType === 'reduced' && (
+              <div className="reduced-controls">
+                <div className="slider-box">
+                  <span>Ancho: {reducedDim.w}m</span>
+                  <input type="range" min="10" max="105" value={reducedDim.w} 
+                    onChange={e => {
+                      const w = parseInt(e.target.value);
+                      setReducedDim(p => ({ ...p, w }));
+                      frRef.current?.setReducedDimensions(w, reducedDim.h);
+                    }} 
+                  />
+                </div>
+                <div className="slider-box">
+                  <span>Alto: {reducedDim.h}m</span>
+                  <input type="range" min="10" max="70" value={reducedDim.h} 
+                    onChange={e => {
+                      const h = parseInt(e.target.value);
+                      setReducedDim(p => ({ ...p, h }));
+                      frRef.current?.setReducedDimensions(reducedDim.w, h);
+                    }} 
+                  />
+                </div>
+              </div>
+            )}
+
             <button 
               className={`topbar-btn ${isSwapped ? 'active' : ''}`} 
               onClick={() => setIsSwapped(!isSwapped)}

@@ -140,6 +140,14 @@ export const TOOLS = {
     group: 'draw',
   },
 
+  pressure: {
+    id: 'pressure',
+    label: 'Presión (Ondulada)',
+    icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 12 Q7 8 10 12 T16 12 T20 12" stroke-width="2"/></svg>`,
+    cursor: 'crosshair',
+    group: 'draw',
+  },
+
 };
 
 // ─────────────────────────────────────────
@@ -228,8 +236,8 @@ export class ToolManager {
         this.canvas.isDrawingMode = true;
         this.canvas.freeDrawingBrush = new fabric.PencilBrush(this.canvas);
         this.canvas.freeDrawingBrush.color = this.strokeColor;
-        this.canvas.freeDrawingBrush.width = this.strokeWidth * 2;
-        this.canvas.freeDrawingBrush.strokeDashArray = [10, 15];
+        this.canvas.freeDrawingBrush.width = this.strokeWidth * 1.5;
+        this.canvas.freeDrawingBrush.strokeDashArray = [5, 10];
         break;
 
       case 'dribble':
@@ -237,8 +245,18 @@ export class ToolManager {
         this.canvas.freeDrawingBrush = new fabric.PencilBrush(this.canvas);
         this.canvas.freeDrawingBrush.color = this.strokeColor;
         this.canvas.freeDrawingBrush.width = this.strokeWidth;
-        // Simulación de zigzag con dash corto
-        this.canvas.freeDrawingBrush.strokeDashArray = [2, 4];
+        // Simulación de zigzag con dash corto y shadow
+        this.canvas.freeDrawingBrush.strokeDashArray = [4, 4];
+        this.canvas.freeDrawingBrush.shadow = new fabric.Shadow({ blur: 2, color: 'rgba(0,0,0,0.3)', offsetX: 1, offsetY: 1 });
+        break;
+
+      case 'pressure':
+        this.canvas.isDrawingMode = true;
+        this.canvas.freeDrawingBrush = new fabric.PencilBrush(this.canvas);
+        this.canvas.freeDrawingBrush.color = this.strokeColor;
+        this.canvas.freeDrawingBrush.width = this.strokeWidth;
+        // Efecto ondulado usando un patrón de dash asimétrico que simula vibración
+        this.canvas.freeDrawingBrush.strokeDashArray = [12, 4, 2, 4];
         break;
 
       default:

@@ -178,13 +178,14 @@ const AdminPanel = () => {
                     <h4>{team.nombre}</h4>
                     <span>{team.categoria} | {team.temporada}</span>
                   </div>
-                  <div className="team-actions">
-                    <button className="btn-select" onClick={() => selectTeam(team)}>
-                      {activeTeam?.id === team.id ? <CheckCircle size={18}/> : 'Seleccionar'}
-                    </button>
-                    <button className="btn-delete-icon" onClick={() => deleteTeam(team.id)}>
-                      <Trash2 size={16} />
-                    </button>
+                    <div className="team-actions">
+                      <button className="btn-select" onClick={() => selectTeam(team)}>
+                        {activeTeam?.id === team.id ? <CheckCircle size={18}/> : 'Seleccionar'}
+                      </button>
+                      <button className="btn-delete-icon" onClick={() => deleteTeam(team.id)}>
+                        <Trash2 size={16} />
+                      </button>
+                    </div>
                   </div>
                 );
               })}

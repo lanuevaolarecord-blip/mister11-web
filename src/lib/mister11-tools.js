@@ -143,7 +143,15 @@ export const TOOLS = {
   pressure: {
     id: 'pressure',
     label: 'Presión (Ondulada)',
-    icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 12 Q7 8 10 12 T16 12 T20 12" stroke-width="2"/></svg>`,
+    icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 12 Q7 8 10 12 T16 12 T20 12"/></svg>`,
+    cursor: 'crosshair',
+    group: 'draw',
+  },
+
+  sprint_pro: {
+    id: 'sprint_pro',
+    label: 'Sprint Mejorado',
+    icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-dasharray="8,4"><line x1="4" y1="20" x2="20" y2="4"/><polyline points="15,4 20,4 20,9"/></svg>`,
     cursor: 'crosshair',
     group: 'draw',
   },
@@ -299,6 +307,8 @@ export class ToolManager {
       case 'arrow':
       case 'dashed':
       case 'shot':
+      case 'pressure':
+      case 'sprint_pro':
         if (this._drawState.phase === 'idle') {
           this._drawState.phase = 'started';
           this._drawState.startX = x;
@@ -365,54 +375,61 @@ export class ToolManager {
   _onMouseMove(e) {
     const { x, y } = this._getPointer(e);
 
-    // Preview de la línea temporal mientras se dibuja
     if (this._drawState.phase === 'started') {
       this._removeTempLine();
+      const sx = this._drawState.startX;
+      const sy = this._drawState.startY;
 
       if (this.activeTool === 'arrow' || this.activeTool === 'dashed' || this.activeTool === 'shot') {
-        const line = new fabric.Line(
-          [this._drawState.startX, this._drawState.startY, x, y],
-          {
-            stroke: this.activeTool === 'shot' ? '#EF4444' : this.strokeColor,
-            strokeWidth: this.strokeWidth,
-            strokeDashArray: this.activeTool === 'dashed' ? [8, 6] : null,
-            selectable: false,
-            evented: false,
-            opacity: 0.6,
-            data: { type: 'temp' },
-          }
-        );
+        const line = new fabric.Line([sx, sy, x, y], {
+          stroke: this.activeTool === 'shot' ? '#EF4444' : this.strokeColor,
+          strokeWidth: this.strokeWidth,
+          strokeDashArray: this.activeTool === 'dashed' ? [8, 6] : null,
+          selectable: false, evented: false, opacity: 0.6, data: { type: 'temp' }
+        });
         this._drawState.tempLine = line;
         this.canvas.add(line);
-        this.canvas.renderAll();
+      } else if (this.activeTool === 'pressure') {
+        const wavy = this._createWavyLine(sx, sy, x, y, { opacity: 0.6, data: { type: 'temp' } });
+        this._drawState.tempLine = wavy;
+        this.canvas.add(wavy);
+      } else if (this.activeTool === 'sprint_pro') {
+        const sprint = this._createSprintLinePro(sx, sy, x, y, { opacity: 0.6, data: { type: 'temp' } });
+        this._drawState.tempLine = sprint;
+        this.canvas.add(sprint);
       }
+      this.canvas.renderAll();
     }
   }
 
   _onMouseUp(e) {
     const { x, y } = this._getPointer(e);
 
-    if (this.activeTool === 'zone_circle' && this._drawState.phase === 'started') {
+    if (this._drawState.phase === 'started') {
       const sx = this._drawState.startX;
       const sy = this._drawState.startY;
-      const radius = Math.sqrt(Math.pow(x - sx, 2) + Math.pow(y - sy, 2));
-      if (radius > 10) {
-        this._createZoneCircle((sx + x) / 2, (sy + y) / 2, radius);
-      }
-      this._drawState.phase = 'idle';
-    }
 
-    if (this.activeTool === 'zone_rect' && this._drawState.phase === 'started') {
-      const sx = this._drawState.startX;
-      const sy = this._drawState.startY;
-      const w = Math.abs(x - sx);
-      const h = Math.abs(y - sy);
-      if (w > 10 && h > 10) {
-        this._createZoneRect(
-          Math.min(sx, x), Math.min(sy, y), w, h
-        );
+      if (this.activeTool === 'arrow' || this.activeTool === 'dashed' || this.activeTool === 'shot') {
+        this._removeTempLine();
+        const obj = (this.activeTool === 'shot')
+          ? this._createShot(sx, sy, x, y)
+          : this._createArrow(sx, sy, x, y, this.activeTool === 'dashed');
+        this.canvas.add(obj);
+        this.canvas.setActiveObject(obj);
+      } else if (this.activeTool === 'pressure') {
+        this._removeTempLine();
+        const obj = this._createWavyLine(sx, sy, x, y);
+        this.canvas.add(obj);
+        this.canvas.setActiveObject(obj);
+      } else if (this.activeTool === 'sprint_pro') {
+        this._removeTempLine();
+        const obj = this._createSprintLinePro(sx, sy, x, y);
+        this.canvas.add(obj);
+        this.canvas.setActiveObject(obj);
       }
+
       this._drawState.phase = 'idle';
+      this.canvas.renderAll();
     }
   }
 

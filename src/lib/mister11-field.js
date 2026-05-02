@@ -318,16 +318,35 @@ export class FieldRenderer {
   _drawThirdDef() {
     this._drawOuterLines();
     this._drawGoalAndAreas(0, 'left');
+    // Línea de 1/3
+    const p1 = this.getCanvasPoint(0.333, 0);
+    const p2 = this.getCanvasPoint(0.333, 1);
+    this.ctx.setLineDash([5, 5]);
+    this.ctx.beginPath(); this.ctx.moveTo(p1.x, p1.y); this.ctx.lineTo(p2.x, p2.y); this.ctx.stroke();
+    this.ctx.setLineDash([]);
   }
 
   _drawThirdMid() {
     this._drawOuterLines();
     this._drawCenterCircle();
+    // Líneas de 1/3
+    const l1 = this.getCanvasPoint(0.333, 0); const l2 = this.getCanvasPoint(0.333, 1);
+    const r1 = this.getCanvasPoint(0.666, 0); const r2 = this.getCanvasPoint(0.666, 1);
+    this.ctx.setLineDash([5, 5]);
+    this.ctx.beginPath(); this.ctx.moveTo(l1.x, l1.y); this.ctx.lineTo(l2.x, l2.y); this.ctx.stroke();
+    this.ctx.beginPath(); this.ctx.moveTo(r1.x, r1.y); this.ctx.lineTo(r2.x, r2.y); this.ctx.stroke();
+    this.ctx.setLineDash([]);
   }
 
   _drawThirdOff() {
     this._drawOuterLines();
     this._drawGoalAndAreas(1, 'right');
+    // Línea de 1/3
+    const p1 = this.getCanvasPoint(0.666, 0);
+    const p2 = this.getCanvasPoint(0.666, 1);
+    this.ctx.setLineDash([5, 5]);
+    this.ctx.beginPath(); this.ctx.moveTo(p1.x, p1.y); this.ctx.lineTo(p2.x, p2.y); this.ctx.stroke();
+    this.ctx.setLineDash([]);
   }
 
   _drawPenaltyZoom() {
@@ -337,42 +356,87 @@ export class FieldRenderer {
 
   _drawFutsal() {
     this._drawOuterLines();
-    const mid = this.getCanvasPoint(0.5, 0);
-    const mid2 = this.getCanvasPoint(0.5, 1);
-    this.ctx.beginPath(); this.ctx.moveTo(mid.x, mid.y); this.ctx.lineTo(mid2.x, mid2.y); this.ctx.stroke();
+    const ctx = this.ctx;
+    // Línea central
+    const mid1 = this.getCanvasPoint(0.5, 0); const mid2 = this.getCanvasPoint(0.5, 1);
+    ctx.beginPath(); ctx.moveTo(mid1.x, mid1.y); ctx.lineTo(mid2.x, mid2.y); ctx.stroke();
+    // Círculo central (3m radio en Futsal)
+    const cp = this.getCanvasPoint(0.5, 0.5);
+    const cr = (3 / 40) * this.field.w;
+    ctx.beginPath(); ctx.arc(cp.x, cp.y, cr, 0, Math.PI*2); ctx.stroke();
+    
     this._drawFutsalArea(0, 'left');
     this._drawFutsalArea(1, 'right');
+
+    // Córners (25cm = 0.25m)
+    const corR = (0.25 / 40) * this.field.w;
+    const corners = [ [0,0,0,Math.PI/2], [0,1,-Math.PI/2,0], [1,0,Math.PI/2,Math.PI], [1,1,Math.PI,Math.PI*1.5] ];
+    corners.forEach(c => {
+      const p = this.getCanvasPoint(c[0], c[1]);
+      ctx.beginPath(); ctx.arc(p.x, p.y, corR, c[2], c[3]); ctx.stroke();
+    });
   }
 
   _drawFutsalArea(rx, side) {
     const ctx = this.ctx;
     const p = this.getCanvasPoint(rx, 0.5);
-    const r = (6 / FIFA.WIDTH) * this.field.h;
+    const r = (6 / 20) * this.field.h; // 6m de radio
     const dir = side === 'left' ? 1 : -1;
 
+    // Área semicircular (Futsal)
     ctx.beginPath();
     ctx.arc(p.x, p.y, r, -Math.PI/2, Math.PI/2, side !== 'left');
     ctx.stroke();
 
-    const sp = this.getCanvasPoint(side === 'left' ? (6/FIFA.LENGTH) : (1 - 6/FIFA.LENGTH), 0.5);
+    // Punto penalti 6m
+    const sp1Rel = side === 'left' ? (6/40) : (1 - 6/40);
+    const sp1 = this.getCanvasPoint(sp1Rel, 0.5);
     ctx.fillStyle = '#FFF';
-    ctx.beginPath(); ctx.arc(sp.x, sp.y, 2.5, 0, Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.arc(sp1.x, sp1.y, 2.5, 0, Math.PI*2); ctx.fill();
+
+    // Segundo punto penalti 10m
+    const sp2Rel = side === 'left' ? (10/40) : (1 - 10/40);
+    const sp2 = this.getCanvasPoint(sp2Rel, 0.5);
+    ctx.beginPath(); ctx.arc(sp2.x, sp2.y, 2.5, 0, Math.PI*2); ctx.fill();
   }
 
-  _drawF7() { this._drawFull(); }
-  _drawF8() { this._drawFull(); }
+  _drawF7() {
+    this._drawOuterLines();
+    this._drawMidLine();
+    this._drawGoalAndAreas(0, 'left', false, 'f7');
+    this._drawGoalAndAreas(1, 'right', false, 'f7');
+    this._drawCenterCircle();
+  }
+
+  _drawF8() {
+    this._drawOuterLines();
+    this._drawMidLine();
+    this._drawGoalAndAreas(0, 'left', false, 'f8');
+    this._drawGoalAndAreas(1, 'right', false, 'f8');
+    this._drawCenterCircle();
+  }
 
   _drawReduced() {
-    this._drawOuterLines();
     const ctx = this.ctx;
+    this._drawOuterLines();
     ctx.strokeStyle = FIELD_COLORS.linesSoft;
     ctx.lineWidth = 1;
-    for(let i=0.1; i<1; i+=0.1) {
+    // Cuadrícula cada 10m basada en dimensiones reducidas
+    const stepX = 10 / this.reducedDim.w;
+    const stepY = 10 / this.reducedDim.h;
+    
+    for(let i=stepX; i<1; i+=stepX) {
       const p1 = this.getCanvasPoint(i, 0); const p2 = this.getCanvasPoint(i, 1);
       ctx.beginPath(); ctx.moveTo(p1.x, p1.y); ctx.lineTo(p2.x, p2.y); ctx.stroke();
+    }
+    for(let i=stepY; i<1; i+=stepY) {
       const h1 = this.getCanvasPoint(0, i); const h2 = this.getCanvasPoint(1, i);
       ctx.beginPath(); ctx.moveTo(h1.x, h1.y); ctx.lineTo(h2.x, h2.y); ctx.stroke();
     }
+  }
+
+  _drawBlank() {
+    // Solo fondo verde (ya dibujado por _drawBackground)
   }
 
   _drawOuterLines() {
@@ -396,35 +460,64 @@ export class FieldRenderer {
     ctx.beginPath(); ctx.arc(p.x, p.y, 3, 0, Math.PI*2); ctx.fill();
   }
 
-  _drawGoalAndAreas(rx, side, isZoom = false) {
+  _drawGoalAndAreas(rx, side, isZoom = false, mode = 'f11') {
     const ctx = this.ctx;
     const dir = side === 'left' ? 1 : -1;
     
-    const aw = FIFA.PENALTY_AREA_WIDTH / FIFA.WIDTH;
-    const ad = (FIFA.PENALTY_AREA_DEPTH / FIFA.LENGTH) * dir;
+    let aw, ad, sw, sd, spX, gw, gd;
+    
+    if (mode === 'f7') {
+      aw = 20 / 45; ad = (11 / 65) * dir;
+      sw = 0; sd = 0; // F7 suele no tener área pequeña explícita en TacticalPad
+      spX = side === 'left' ? (9/65) : (1 - 9/65);
+      gw = 6 / 45; gd = (2 / 65) * dir;
+    } else if (mode === 'f8') {
+      aw = 22 / 46; ad = (11 / 62) * dir;
+      sw = 0; sd = 0;
+      spX = side === 'left' ? (9/62) : (1 - 9/62);
+      gw = 6 / 46; gd = (2.1 / 62) * dir;
+    } else {
+      aw = FIFA.PENALTY_AREA_WIDTH / FIFA.WIDTH; ad = (FIFA.PENALTY_AREA_DEPTH / FIFA.LENGTH) * dir;
+      sw = FIFA.SMALL_AREA_WIDTH / FIFA.WIDTH; sd = (FIFA.SMALL_AREA_DEPTH / FIFA.LENGTH) * dir;
+      spX = side === 'left' ? (FIFA.PENALTY_SPOT / FIFA.LENGTH) : (1 - FIFA.PENALTY_SPOT/FIFA.LENGTH);
+      gw = FIFA.GOAL_WIDTH / FIFA.WIDTH; gd = (FIFA.GOAL_DEPTH / FIFA.LENGTH) * dir;
+    }
+
+    // Área grande
     const pAreaTop = this.getCanvasPoint(rx, 0.5 - aw/2);
     const pAreaBottom = this.getCanvasPoint(rx + ad, 0.5 + aw/2);
     ctx.strokeRect(pAreaTop.x, pAreaTop.y, pAreaBottom.x - pAreaTop.x, pAreaBottom.y - pAreaTop.y);
 
-    const sw = FIFA.SMALL_AREA_WIDTH / FIFA.WIDTH;
-    const sd = (FIFA.SMALL_AREA_DEPTH / FIFA.LENGTH) * dir;
-    const pSmallTop = this.getCanvasPoint(rx, 0.5 - sw/2);
-    const pSmallBottom = this.getCanvasPoint(rx + sd, 0.5 + sw/2);
-    ctx.strokeRect(pSmallTop.x, pSmallTop.y, pSmallBottom.x - pSmallTop.x, pSmallBottom.y - pSmallTop.y);
+    // Área pequeña
+    if (sw > 0) {
+      const pSmallTop = this.getCanvasPoint(rx, 0.5 - sw/2);
+      const pSmallBottom = this.getCanvasPoint(rx + sd, 0.5 + sw/2);
+      ctx.strokeRect(pSmallTop.x, pSmallTop.y, pSmallBottom.x - pSmallTop.x, pSmallBottom.y - pSmallTop.y);
+    }
 
-    const spRelX = side === 'left' ? (FIFA.PENALTY_SPOT / FIFA.LENGTH) : (1 - FIFA.PENALTY_SPOT/FIFA.LENGTH);
-    const sp = this.getCanvasPoint(spRelX, 0.5);
+    // Punto penalti
+    const sp = this.getCanvasPoint(spX, 0.5);
     ctx.fillStyle = '#FFF';
     ctx.beginPath(); ctx.arc(sp.x, sp.y, 3, 0, Math.PI*2); ctx.fill();
 
-    const gw = FIFA.GOAL_WIDTH / FIFA.WIDTH;
-    const gd = (FIFA.GOAL_DEPTH / FIFA.LENGTH) * dir;
+    // Semicírculo del área (solo F11)
+    if (mode === 'f11') {
+      const arcR = (9.15 / FIFA.LENGTH) * this.field.w;
+      const arcP = this.getCanvasPoint(spX, 0.5);
+      ctx.beginPath();
+      ctx.arc(arcP.x, arcP.y, arcR, side === 'left' ? -Math.PI*0.3 : Math.PI*0.7, side === 'left' ? Math.PI*0.3 : Math.PI*1.3);
+      ctx.stroke();
+    }
+
+    // Portería
     const gTop = this.getCanvasPoint(rx, 0.5 - gw/2);
     const gBottom = this.getCanvasPoint(rx - gd, 0.5 + gw/2);
     ctx.strokeRect(gTop.x, gTop.y, gBottom.x - gTop.x, gBottom.y - gTop.y);
+    this._drawGoalNet(gTop.x, gTop.y, gBottom.x - gTop.x, gBottom.y - gTop.y);
   }
 
   _drawGoalNet(gx, gy, gd, gw) {
+    const ctx = this.ctx; ctx.strokeStyle = FIELD_COLORS.goalNet; ctx.lineWidth = 0.8;
     const ctx = this.ctx; ctx.strokeStyle = FIELD_COLORS.goalNet; ctx.lineWidth = 0.8;
     const cols = 5; const rows = 4;
     for (let i = 1; i < cols; i++) {

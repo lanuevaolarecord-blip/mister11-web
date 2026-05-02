@@ -133,10 +133,11 @@ export class FieldRenderer {
     this._drawBackground();
 
     const ctx = this.ctx;
+    ctx.globalAlpha = 1.0;
     ctx.strokeStyle = FIELD_COLORS.lines;
     ctx.lineWidth = this.lineWeight;
-    ctx.lineCap = 'round';
-    ctx.lineJoin = 'round';
+    ctx.lineCap = 'butt';
+    ctx.lineJoin = 'miter';
 
     switch (type) {
       case 'full':         this._drawFull();        break;
@@ -326,8 +327,13 @@ export class FieldRenderer {
     const { x, y, w, h } = this.field;
     const ctx = this.ctx;
 
-    // Borde del área visible
-    ctx.strokeRect(x, y, w, h);
+    // Borde del área visible: Superior, Derecho, Inferior (sólido)
+    ctx.beginPath();
+    ctx.moveTo(x, y);
+    ctx.lineTo(x + w, y);
+    ctx.lineTo(x + w, y + h);
+    ctx.lineTo(x, y + h);
+    ctx.stroke();
 
     // Portería y áreas en el lado derecho
     // rx=1 → lineX = x+w (borde derecho del canvas)
@@ -361,8 +367,13 @@ export class FieldRenderer {
     const { x, y, w, h } = this.field;
     const ctx = this.ctx;
 
-    // Borde del área visible
-    ctx.strokeRect(x, y, w, h);
+    // Borde del área visible: Superior, Izquierdo, Inferior (sólido)
+    ctx.beginPath();
+    ctx.moveTo(x + w, y);
+    ctx.lineTo(x, y);
+    ctx.lineTo(x, y + h);
+    ctx.lineTo(x + w, y + h);
+    ctx.stroke();
 
     // Portería y áreas en el lado izquierdo
     // rx=0 → lineX = x (borde izquierdo del canvas)
@@ -395,7 +406,14 @@ export class FieldRenderer {
     const { x, y, w, h } = this.field;
     const ctx = this.ctx;
 
-    ctx.strokeRect(x, y, w, h);
+    // Borde: Superior, Izquierdo, Inferior
+    ctx.beginPath();
+    ctx.moveTo(x + w, y);
+    ctx.lineTo(x, y);
+    ctx.lineTo(x, y + h);
+    ctx.lineTo(x + w, y + h);
+    ctx.stroke();
+    
     this._drawGoalAndAreas(0, 'left');
 
     // Línea límite del tercio = borde derecho (punteada)
@@ -413,7 +431,15 @@ export class FieldRenderer {
     const { x, y, w, h } = this.field;
     const ctx = this.ctx;
 
-    ctx.strokeRect(x, y, w, h);
+    // Borde: Superior, Inferior
+    ctx.beginPath();
+    ctx.moveTo(x, y);
+    ctx.lineTo(x + w, y);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(x, y + h);
+    ctx.lineTo(x + w, y + h);
+    ctx.stroke();
 
     // Línea de medio campo real en el centro del tercio medio
     // El campo completo: 0 a 105m. El tercio medio: 35 a 70m.
@@ -453,7 +479,14 @@ export class FieldRenderer {
     const { x, y, w, h } = this.field;
     const ctx = this.ctx;
 
-    ctx.strokeRect(x, y, w, h);
+    // Borde: Superior, Derecho, Inferior
+    ctx.beginPath();
+    ctx.moveTo(x, y);
+    ctx.lineTo(x + w, y);
+    ctx.lineTo(x + w, y + h);
+    ctx.lineTo(x, y + h);
+    ctx.stroke();
+
     this._drawGoalAndAreas(1, 'right');
 
     // Línea límite del tercio = borde izquierdo (punteada)
@@ -471,7 +504,14 @@ export class FieldRenderer {
     const { x, y, w, h } = this.field;
     const ctx = this.ctx;
 
-    ctx.strokeRect(x, y, w, h);
+    // Borde: Superior, Derecho, Inferior
+    ctx.beginPath();
+    ctx.moveTo(x, y);
+    ctx.lineTo(x + w, y);
+    ctx.lineTo(x + w, y + h);
+    ctx.lineTo(x, y + h);
+    ctx.stroke();
+
     this._drawGoalAndAreas(1, 'right');
 
     // Línea de fondo izquierda (borde del área de penalti)
@@ -671,23 +711,39 @@ export class FieldRenderer {
     const centerY = fy + fh / 2;
 
     // ── Área grande ──
-    const paX = side === 'left' ? lineX : lineX - penaltyDepth;
-    ctx.strokeRect(
-      paX,
-      centerY - penaltyWidth / 2,
-      penaltyDepth,
-      penaltyWidth
-    );
+    ctx.beginPath();
+    const paY1 = centerY - penaltyWidth / 2;
+    const paY2 = centerY + penaltyWidth / 2;
+    if (side === 'left') {
+      ctx.moveTo(lineX, paY1);
+      ctx.lineTo(lineX + penaltyDepth, paY1);
+      ctx.lineTo(lineX + penaltyDepth, paY2);
+      ctx.lineTo(lineX, paY2);
+    } else {
+      ctx.moveTo(lineX, paY1);
+      ctx.lineTo(lineX - penaltyDepth, paY1);
+      ctx.lineTo(lineX - penaltyDepth, paY2);
+      ctx.lineTo(lineX, paY2);
+    }
+    ctx.stroke();
 
     // ── Área pequeña ──
     if (smallDepth > 0 && smallWidth > 0) {
-      const saX = side === 'left' ? lineX : lineX - smallDepth;
-      ctx.strokeRect(
-        saX,
-        centerY - smallWidth / 2,
-        smallDepth,
-        smallWidth
-      );
+      ctx.beginPath();
+      const saY1 = centerY - smallWidth / 2;
+      const saY2 = centerY + smallWidth / 2;
+      if (side === 'left') {
+        ctx.moveTo(lineX, saY1);
+        ctx.lineTo(lineX + smallDepth, saY1);
+        ctx.lineTo(lineX + smallDepth, saY2);
+        ctx.lineTo(lineX, saY2);
+      } else {
+        ctx.moveTo(lineX, saY1);
+        ctx.lineTo(lineX - smallDepth, saY1);
+        ctx.lineTo(lineX - smallDepth, saY2);
+        ctx.lineTo(lineX, saY2);
+      }
+      ctx.stroke();
     }
 
     // ── Punto de penalti ──
@@ -702,23 +758,38 @@ export class FieldRenderer {
     // ── Semicírculo del área (solo F11) ──
     if (mode === 'f11') {
       const arcR = (FIFA.CENTER_RADIUS / visLen) * fw;
+      // Distancia entre el punto de penalti (11m) y la línea frontal del área (16.5m)
+      const distSpotToLine = 16.5 - 11; 
+      // Calculamos el ángulo exacto donde la circunferencia cruza la línea recta
+      const intersectionAngle = Math.acos(distSpotToLine / FIFA.CENTER_RADIUS);
+      
       ctx.beginPath();
       if (side === 'left') {
-        ctx.arc(spX, centerY, arcR, -Math.PI * 0.38, Math.PI * 0.38);
+        ctx.arc(spX, centerY, arcR, -intersectionAngle, intersectionAngle);
       } else {
-        ctx.arc(spX, centerY, arcR, Math.PI * 0.62, Math.PI * 1.38);
+        ctx.arc(spX, centerY, arcR, Math.PI - intersectionAngle, Math.PI + intersectionAngle);
       }
       ctx.stroke();
     }
 
     // ── Portería ──
+    ctx.beginPath();
+    const goY1 = centerY - goalWidth / 2;
+    const goY2 = centerY + goalWidth / 2;
+    if (side === 'left') {
+      ctx.moveTo(lineX, goY1);
+      ctx.lineTo(lineX - goalDepth, goY1);
+      ctx.lineTo(lineX - goalDepth, goY2);
+      ctx.lineTo(lineX, goY2);
+    } else {
+      ctx.moveTo(lineX, goY1);
+      ctx.lineTo(lineX + goalDepth, goY1);
+      ctx.lineTo(lineX + goalDepth, goY2);
+      ctx.lineTo(lineX, goY2);
+    }
+    ctx.stroke();
+
     const gX = side === 'left' ? lineX - goalDepth : lineX;
-    ctx.strokeRect(
-      gX,
-      centerY - goalWidth / 2,
-      goalDepth,
-      goalWidth
-    );
     this._drawGoalNet(
       gX,
       centerY - goalWidth / 2,
@@ -728,7 +799,10 @@ export class FieldRenderer {
   }
 
   _drawGoalNet(gx, gy, gd, gw) {
-    const ctx = this.ctx; ctx.strokeStyle = FIELD_COLORS.goalNet; ctx.lineWidth = 0.8;
+    const ctx = this.ctx; 
+    ctx.save();
+    ctx.strokeStyle = FIELD_COLORS.goalNet; 
+    ctx.lineWidth = 0.8;
     const cols = 5; const rows = 4;
     for (let i = 1; i < cols; i++) {
       ctx.beginPath(); ctx.moveTo(gx + (gd / cols) * i, gy); ctx.lineTo(gx + (gd / cols) * i, gy + gw); ctx.stroke();
@@ -736,7 +810,7 @@ export class FieldRenderer {
     for (let i = 1; i < rows; i++) {
       ctx.beginPath(); ctx.moveTo(gx, gy + (gw / rows) * i); ctx.lineTo(gx + gd, gy + (gw / rows) * i); ctx.stroke();
     }
-    ctx.lineWidth = Math.max(1.5, this.field.scale * 0.12);
+    ctx.restore();
   }
 
   _drawCornerArcs(fx, fy, fw, fh, scale) {

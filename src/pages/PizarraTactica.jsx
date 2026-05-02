@@ -520,13 +520,9 @@ const PizarraTactica = () => {
       setIsMobile(isMobileView);
       
       // Proporción 1.5:1 (FIFA aprox)
+      // Maximizar canvas al contenedor (Android First / Desktop Responsivo)
       let nuevoAncho = anchoContenedor;
-      let nuevoAlto = nuevoAncho / 1.5;
-      
-      if (nuevoAlto > altoContenedor) {
-        nuevoAlto = altoContenedor;
-        nuevoAncho = nuevoAlto * 1.5;
-      }
+      let nuevoAlto = altoContenedor;
       
       if (nuevoAncho === anchoAnterior && nuevoAlto === altoAnterior) return;
       
@@ -659,10 +655,12 @@ const PizarraTactica = () => {
     const oldType = toLibType(fr.currentType);
     const newType = toLibType(fieldType);
     const oldBounds = { ...fr.getFieldBounds() };
+    const oldScale = oldBounds.scale;
 
     // Capturar posiciones relativas al campo completo ANTES del cambio
-    const players = fc.getObjects().filter(o => o.data?.type === 'player');
-    const playerPositions = players.map(obj => {
+    // Incluimos materiales para que también se reposicionen y escalen
+    const objectsToMove = fc.getObjects().filter(o => o.data?.type === 'player' || o.data?.type === 'material');
+    const savedStates = objectsToMove.map(obj => {
       let relX_full;
       if (oldType === 'half_attack') {
         relX_full = 0.5 + (obj.left - oldBounds.x) / (oldBounds.w * 2);
@@ -675,13 +673,15 @@ const PizarraTactica = () => {
       return { obj, relX_full, relY_full };
     });
 
-    // Cambiar vista del campo
+    // Cambiar vista del campo (el renderer ahora calcula su propia escala óptima)
     fr.draw(newType);
     const newBounds = fr.getFieldBounds();
+    const newScale = newBounds.scale;
+    const scaleFactor = newScale / oldScale;
 
-    // Reposicionar jugadores existentes
+    // Reposicionar y escalar objetos existentes
     syncingR.current = true;
-    playerPositions.forEach(({ obj, relX_full, relY_full }) => {
+    savedStates.forEach(({ obj, relX_full, relY_full }) => {
       let newX;
       if (newType === 'half_attack') {
         newX = newBounds.x + (relX_full - 0.5) * 2 * newBounds.w;
@@ -691,7 +691,15 @@ const PizarraTactica = () => {
         newX = newBounds.x + relX_full * newBounds.w;
       }
       const newY = newBounds.y + relY_full * newBounds.h;
+      
+      // Actualizar posición
       obj.set({ left: newX, top: newY });
+      
+      // Escalar materiales para mantener tamaño relativo al campo (Zoom effect)
+      if (obj.data?.type === 'material') {
+        obj.scale(obj.scaleX * scaleFactor);
+      }
+      
       obj.setCoords();
     });
     syncingR.current = false;

@@ -160,19 +160,22 @@ export class FieldRenderer {
   _resize() {
     const W = this.canvas.width;
     const H = this.canvas.height;
+    if (W === 0 || H === 0) return;
+
     const pH = (typeof this.padding === 'object') ? (this.padding.h ?? 16) : this.padding;
     const pV = (typeof this.padding === 'object') ? (this.padding.v ?? 12) : this.padding;
 
-    // Account for GOAL_DEPTH on BOTH SIDES in scale calculations (Full field)
-    const totalLength = FIFA.LENGTH + FIFA.GOAL_DEPTH * 2;
-    const scaleByW = (W - pH * 2) / totalLength;
-    const scaleByH = (H - pV * 2) / FIFA.WIDTH;
+    // Calcular dimensiones objetivo según el tipo de vista
+    const isFull = this.currentType === 'full';
+    const targetLength = isFull ? (FIFA.LENGTH + FIFA.GOAL_DEPTH * 2) : (FIFA.LENGTH / 2 + FIFA.GOAL_DEPTH);
+    const targetWidth  = FIFA.WIDTH;
+
+    const scaleByW = (W - pH * 2) / targetLength;
+    const scaleByH = (H - pV * 2) / targetWidth;
     const scale = Math.min(scaleByW, scaleByH);
 
-    const fieldW = FIFA.LENGTH * scale;
-    const fieldH = FIFA.WIDTH  * scale;
-
-    // El campo se dibuja proporcionalmente incluso en portrait gracias a Math.min(scaleByW, scaleByH)
+    const fieldW = (isFull ? FIFA.LENGTH : FIFA.LENGTH / 2) * scale;
+    const fieldH = FIFA.WIDTH * scale;
 
     this.field = {
       x: (W - fieldW) / 2,
@@ -406,25 +409,7 @@ export class FieldRenderer {
   // MEDIO CAMPO — ATAQUE (mitad derecha)
   // ───────────────────────────────────────
   _drawHalfAttack() {
-    // Calcular como si fuera campo completo pero escalar al doble de ancho
-    const canvas = this.canvas;
-    const pH = (typeof this.padding === 'object') ? (this.padding.h ?? 16) : this.padding;
-    const pV = (typeof this.padding === 'object') ? (this.padding.v ?? 12) : this.padding;
-
-    // Half field length + ONE goal depth
-    const totalHalfLength = (FIFA.LENGTH / 2) + FIFA.GOAL_DEPTH;
-    const scaleByW = (canvas.width  - pH * 2) / totalHalfLength;
-    const scaleByH = (canvas.height - pV * 2) / FIFA.WIDTH;
-    const scale = Math.min(scaleByW, scaleByH);
-
-    const halfW = (FIFA.LENGTH / 2) * scale;
-    const fieldH = FIFA.WIDTH * scale;
-    const fx = (canvas.width - halfW) / 2;
-    const fy = (canvas.height - fieldH) / 2;
-
-    // Actualizar field para referencias externas
-    this.field = { x: fx, y: fy, w: halfW, h: fieldH, scale };
-
+    const { x: fx, y: fy, w: halfW, h: fieldH, scale } = this.field;
     const ctx = this.ctx;
     ctx.strokeStyle = FIELD_COLORS.lines;
     ctx.lineWidth = Math.max(1.5, scale * 0.12);
@@ -472,22 +457,7 @@ export class FieldRenderer {
   // MEDIO CAMPO — DEFENSA (mitad izquierda)
   // ───────────────────────────────────────
   _drawHalfDefense() {
-    const canvas = this.canvas;
-    const pH = (typeof this.padding === 'object') ? (this.padding.h ?? 16) : this.padding;
-    const pV = (typeof this.padding === 'object') ? (this.padding.v ?? 12) : this.padding;
-
-    const totalHalfLength = (FIFA.LENGTH / 2) + FIFA.GOAL_DEPTH;
-    const scaleByW = (canvas.width  - pH * 2) / totalHalfLength;
-    const scaleByH = (canvas.height - pV * 2) / FIFA.WIDTH;
-    const scale = Math.min(scaleByW, scaleByH);
-
-    const halfW = (FIFA.LENGTH / 2) * scale;
-    const fieldH = FIFA.WIDTH * scale;
-    const fx = (canvas.width  - halfW) / 2;
-    const fy = (canvas.height - fieldH) / 2;
-
-    this.field = { x: fx, y: fy, w: halfW, h: fieldH, scale };
-
+    const { x: fx, y: fy, w: halfW, h: fieldH, scale } = this.field;
     const ctx = this.ctx;
     ctx.strokeStyle = FIELD_COLORS.lines;
     ctx.lineWidth = Math.max(1.5, scale * 0.12);

@@ -323,32 +323,33 @@ export class FieldRenderer {
   }
 
   _drawHalfAttack() {
-    // En half_attack se ve la mitad derecha del campo (relX 0.5 a 1.0)
-    // getCanvasPoint transforma: finalX = (rx - 0.5) * 2
-    // Entonces relX=0.5 → x=field.x (borde izq canvas)
-    //           relX=1.0 → x=field.x+field.w (borde der canvas)
-    
-    this._drawOuterLines();
-    this._drawGoalAndAreas(1, 'right');
-    
-    // Línea de medio campo = borde izquierdo visible
     const { x, y, w, h } = this.field;
     const ctx = this.ctx;
+
+    // Borde del área visible
+    ctx.strokeRect(x, y, w, h);
+
+    // Portería y áreas en el lado derecho
+    // rx=1 → lineX = x+w (borde derecho del canvas)
+    this._drawGoalAndAreas(1, 'right');
+
+    // Línea de medio campo = borde izquierdo (punteada)
     ctx.save();
-    ctx.setLineDash([8, 4]);
+    ctx.setLineDash([8, 5]);
     ctx.beginPath();
     ctx.moveTo(x, y);
     ctx.lineTo(x, y + h);
     ctx.stroke();
     ctx.setLineDash([]);
     ctx.restore();
-    
-    // Semicírculo central (la parte que entra en este medio campo)
+
+    // Semicírculo del círculo central
+    // El centro del campo completo está en el borde izq de este canvas
     const cr = (FIFA.CENTER_RADIUS / FIFA.LENGTH) * w;
     ctx.beginPath();
     ctx.arc(x, y + h / 2, cr, -Math.PI / 2, Math.PI / 2);
     ctx.stroke();
-    
+
     // Punto central
     ctx.fillStyle = '#FFF';
     ctx.beginPath();
@@ -357,32 +358,32 @@ export class FieldRenderer {
   }
 
   _drawHalfDefense() {
-    // En half_defense se ve la mitad izquierda (relX 0.0 a 0.5)
-    // getCanvasPoint transforma: finalX = rx * 2
-    // Entonces relX=0.0 → x=field.x
-    //           relX=0.5 → x=field.x+field.w (borde der canvas)
-    
-    this._drawOuterLines();
-    this._drawGoalAndAreas(0, 'left');
-    
-    // Línea de medio campo = borde derecho visible
     const { x, y, w, h } = this.field;
     const ctx = this.ctx;
+
+    // Borde del área visible
+    ctx.strokeRect(x, y, w, h);
+
+    // Portería y áreas en el lado izquierdo
+    // rx=0 → lineX = x (borde izquierdo del canvas)
+    this._drawGoalAndAreas(0, 'left');
+
+    // Línea de medio campo = borde derecho (punteada)
     ctx.save();
-    ctx.setLineDash([8, 4]);
+    ctx.setLineDash([8, 5]);
     ctx.beginPath();
     ctx.moveTo(x + w, y);
     ctx.lineTo(x + w, y + h);
     ctx.stroke();
     ctx.setLineDash([]);
     ctx.restore();
-    
-    // Semicírculo central (la parte que entra en este medio campo)
+
+    // Semicírculo del círculo central
     const cr = (FIFA.CENTER_RADIUS / FIFA.LENGTH) * w;
     ctx.beginPath();
     ctx.arc(x + w, y + h / 2, cr, Math.PI / 2, Math.PI * 3 / 2);
     ctx.stroke();
-    
+
     // Punto central
     ctx.fillStyle = '#FFF';
     ctx.beginPath();
@@ -391,75 +392,97 @@ export class FieldRenderer {
   }
 
   _drawThirdDef() {
-    // Muestra relX 0.0 a 0.333 → getCanvasPoint: finalX = rx * 3
-    // relX=0.333 → x=field.x+field.w (borde derecho visible)
-    this._drawOuterLines();
-    this._drawGoalAndAreas(0, 'left');
-    
-    // Línea límite del tercio = borde derecho del canvas
     const { x, y, w, h } = this.field;
-    this.ctx.save();
-    this.ctx.setLineDash([8, 4]);
-    this.ctx.beginPath();
-    this.ctx.moveTo(x + w, y);
-    this.ctx.lineTo(x + w, y + h);
-    this.ctx.stroke();
-    this.ctx.setLineDash([]);
-    this.ctx.restore();
+    const ctx = this.ctx;
+
+    ctx.strokeRect(x, y, w, h);
+    this._drawGoalAndAreas(0, 'left');
+
+    // Línea límite del tercio = borde derecho (punteada)
+    ctx.save();
+    ctx.setLineDash([8, 5]);
+    ctx.beginPath();
+    ctx.moveTo(x + w, y);
+    ctx.lineTo(x + w, y + h);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.restore();
   }
 
   _drawThirdMid() {
-    // Muestra relX 0.333 a 0.666 → getCanvasPoint: finalX = (rx - 0.333) * 3
-    // relX=0.333 → x=field.x (borde izq), relX=0.666 → x=field.x+field.w (borde der)
-    this._drawOuterLines();
-    
-    // Círculo central (relX=0.5, relY=0.5 → centro del canvas)
-    this._drawCenterCircle();
-    
     const { x, y, w, h } = this.field;
-    this.ctx.save();
-    this.ctx.setLineDash([8, 4]);
-    // Borde izquierdo = límite con tercio defensivo
-    this.ctx.beginPath();
-    this.ctx.moveTo(x, y);
-    this.ctx.lineTo(x, y + h);
-    this.ctx.stroke();
-    // Borde derecho = límite con tercio ofensivo
-    this.ctx.beginPath();
-    this.ctx.moveTo(x + w, y);
-    this.ctx.lineTo(x + w, y + h);
-    this.ctx.stroke();
-    this.ctx.setLineDash([]);
-    this.ctx.restore();
-    
-    // Línea de medio campo real (en el centro del canvas)
-    this.ctx.beginPath();
-    this.ctx.moveTo(x + w / 2, y);
-    this.ctx.lineTo(x + w / 2, y + h);
-    this.ctx.stroke();
+    const ctx = this.ctx;
+
+    ctx.strokeRect(x, y, w, h);
+
+    // Línea de medio campo real en el centro del tercio medio
+    // El campo completo: 0 a 105m. El tercio medio: 35 a 70m.
+    // El centro (52.5m) está a (52.5-35)/(70-35) = 0.5 del tercio
+    const midX = x + w / 2;
+    ctx.beginPath();
+    ctx.moveTo(midX, y);
+    ctx.lineTo(midX, y + h);
+    ctx.stroke();
+
+    // Círculo central completo (ocupa parte del tercio medio)
+    const cr = (FIFA.CENTER_RADIUS / (FIFA.LENGTH / 3)) * w;
+    ctx.beginPath();
+    ctx.arc(x + w / 2, y + h / 2, cr, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.fillStyle = '#FFF';
+    ctx.beginPath();
+    ctx.arc(x + w / 2, y + h / 2, 3, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Límites del tercio (punteados)
+    ctx.save();
+    ctx.setLineDash([8, 5]);
+    ctx.beginPath();
+    ctx.moveTo(x, y);
+    ctx.lineTo(x, y + h);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(x + w, y);
+    ctx.lineTo(x + w, y + h);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.restore();
   }
 
   _drawThirdOff() {
-    // Muestra relX 0.666 a 1.0 → getCanvasPoint: finalX = (rx - 0.666) * 3
-    // relX=0.666 → x=field.x (borde izq), relX=1.0 → x=field.x+field.w
-    this._drawOuterLines();
-    this._drawGoalAndAreas(1, 'right');
-    
-    // Línea límite del tercio = borde izquierdo del canvas
     const { x, y, w, h } = this.field;
-    this.ctx.save();
-    this.ctx.setLineDash([8, 4]);
-    this.ctx.beginPath();
-    this.ctx.moveTo(x, y);
-    this.ctx.lineTo(x, y + h);
-    this.ctx.stroke();
-    this.ctx.setLineDash([]);
-    this.ctx.restore();
+    const ctx = this.ctx;
+
+    ctx.strokeRect(x, y, w, h);
+    this._drawGoalAndAreas(1, 'right');
+
+    // Línea límite del tercio = borde izquierdo (punteada)
+    ctx.save();
+    ctx.setLineDash([8, 5]);
+    ctx.beginPath();
+    ctx.moveTo(x, y);
+    ctx.lineTo(x, y + h);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.restore();
   }
 
   _drawPenaltyZoom() {
-    this._drawOuterLines();
-    this._drawGoalAndAreas(1, 'right', true);
+    const { x, y, w, h } = this.field;
+    const ctx = this.ctx;
+
+    ctx.strokeRect(x, y, w, h);
+    this._drawGoalAndAreas(1, 'right');
+
+    // Línea de fondo izquierda (borde del área de penalti)
+    ctx.save();
+    ctx.setLineDash([8, 5]);
+    ctx.beginPath();
+    ctx.moveTo(x, y);
+    ctx.lineTo(x, y + h);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.restore();
   }
 
   _drawFutsal() {
@@ -548,80 +571,131 @@ export class FieldRenderer {
   }
 
   _drawOuterLines() {
-    const p1 = this.getCanvasPoint(0,0);
-    const p2 = this.getCanvasPoint(1,1);
-    this.ctx.strokeRect(p1.x, p1.y, p2.x - p1.x, p2.y - p1.y);
+    // Siempre dibuja el borde del área visible del canvas
+    // independientemente del modo de campo
+    const { x, y, w, h } = this.field;
+    this.ctx.strokeRect(x, y, w, h);
   }
 
   _drawMidLine() {
-    const p1 = this.getCanvasPoint(0.5, 0);
-    const p2 = this.getCanvasPoint(0.5, 1);
-    this.ctx.beginPath(); this.ctx.moveTo(p1.x, p1.y); this.ctx.lineTo(p2.x, p2.y); this.ctx.stroke();
+    const { x, y, w, h } = this.field;
+    const midX = x + w / 2;
+    this.ctx.beginPath();
+    this.ctx.moveTo(midX, y);
+    this.ctx.lineTo(midX, y + h);
+    this.ctx.stroke();
   }
 
   _drawCenterCircle() {
     const ctx = this.ctx;
-    const p = this.getCanvasPoint(0.5, 0.5);
-    const r = (FIFA.CENTER_RADIUS / FIFA.LENGTH) * this.field.w;
-    ctx.beginPath(); ctx.arc(p.x, p.y, r, 0, Math.PI*2); ctx.stroke();
+    const { x, y, w, h } = this.field;
+    // El centro del campo completo se proyecta al centro del canvas
+    // en modo 'full'. En otros modos se calcula via getCanvasPoint.
+    const cp = this.getCanvasPoint(0.5, 0.5);
+    const r = (FIFA.CENTER_RADIUS / FIFA.LENGTH) * w;
+    ctx.beginPath();
+    ctx.arc(cp.x, cp.y, r, 0, Math.PI * 2);
+    ctx.stroke();
     ctx.fillStyle = '#FFF';
-    ctx.beginPath(); ctx.arc(p.x, p.y, 3, 0, Math.PI*2); ctx.fill();
+    ctx.beginPath();
+    ctx.arc(cp.x, cp.y, 3, 0, Math.PI * 2);
+    ctx.fill();
   }
 
   _drawGoalAndAreas(rx, side, isZoom = false, mode = 'f11') {
     const ctx = this.ctx;
+    const { x: fx, y: fy, w: fw, h: fh } = this.field;
+    
+    // rx=0 → borde izquierdo del canvas visible (fx)
+    // rx=1 → borde derecho del canvas visible (fx+fw)
+    const lineX = fx + rx * fw;
     const dir = side === 'left' ? 1 : -1;
-    
-    let aw, ad, sw, sd, spX, gw, gd;
-    
+
+    let penaltyDepth, penaltyWidth, smallDepth, smallWidth,
+        goalWidth, goalDepth, penaltySpot;
+
     if (mode === 'f7') {
-      aw = 20 / 45; ad = (11 / 65) * dir;
-      sw = 0; sd = 0; // F7 suele no tener área pequeña explícita en TacticalPad
-      spX = side === 'left' ? (9/65) : (1 - 9/65);
-      gw = 6 / 45; gd = (2 / 65) * dir;
+      penaltyDepth  = (11 / 65) * fw;
+      penaltyWidth  = (26 / 45) * fh;
+      smallDepth    = 0;
+      smallWidth    = 0;
+      goalWidth     = (6 / 45) * fh;
+      goalDepth     = (2 / 65) * fw;
+      penaltySpot   = (9 / 65) * fw;
     } else if (mode === 'f8') {
-      aw = 22 / 46; ad = (11 / 62) * dir;
-      sw = 0; sd = 0;
-      spX = side === 'left' ? (9/62) : (1 - 9/62);
-      gw = 6 / 46; gd = (2.1 / 62) * dir;
+      penaltyDepth  = (11 / 62) * fw;
+      penaltyWidth  = (22 / 46) * fh;
+      smallDepth    = 0;
+      smallWidth    = 0;
+      goalWidth     = (6 / 46) * fh;
+      goalDepth     = (2.1 / 62) * fw;
+      penaltySpot   = (9 / 62) * fw;
     } else {
-      aw = FIFA.PENALTY_AREA_WIDTH / FIFA.WIDTH; ad = (FIFA.PENALTY_AREA_DEPTH / FIFA.LENGTH) * dir;
-      sw = FIFA.SMALL_AREA_WIDTH / FIFA.WIDTH; sd = (FIFA.SMALL_AREA_DEPTH / FIFA.LENGTH) * dir;
-      spX = side === 'left' ? (FIFA.PENALTY_SPOT / FIFA.LENGTH) : (1 - FIFA.PENALTY_SPOT/FIFA.LENGTH);
-      gw = FIFA.GOAL_WIDTH / FIFA.WIDTH; gd = (FIFA.GOAL_DEPTH / FIFA.LENGTH) * dir;
+      // F11 — proporciones FIFA reales respecto al área visible
+      penaltyDepth  = (FIFA.PENALTY_AREA_DEPTH / FIFA.LENGTH) * fw;
+      penaltyWidth  = (FIFA.PENALTY_AREA_WIDTH / FIFA.WIDTH) * fh;
+      smallDepth    = (FIFA.SMALL_AREA_DEPTH / FIFA.LENGTH) * fw;
+      smallWidth    = (FIFA.SMALL_AREA_WIDTH / FIFA.WIDTH) * fh;
+      goalWidth     = (FIFA.GOAL_WIDTH / FIFA.WIDTH) * fh;
+      goalDepth     = (FIFA.GOAL_DEPTH / FIFA.LENGTH) * fw;
+      penaltySpot   = (FIFA.PENALTY_SPOT / FIFA.LENGTH) * fw;
     }
 
-    // Área grande
-    const pAreaTop = this.getCanvasPoint(rx, 0.5 - aw/2);
-    const pAreaBottom = this.getCanvasPoint(rx + ad, 0.5 + aw/2);
-    ctx.strokeRect(pAreaTop.x, pAreaTop.y, pAreaBottom.x - pAreaTop.x, pAreaBottom.y - pAreaTop.y);
+    const centerY = fy + fh / 2;
 
-    // Área pequeña
-    if (sw > 0) {
-      const pSmallTop = this.getCanvasPoint(rx, 0.5 - sw/2);
-      const pSmallBottom = this.getCanvasPoint(rx + sd, 0.5 + sw/2);
-      ctx.strokeRect(pSmallTop.x, pSmallTop.y, pSmallBottom.x - pSmallTop.x, pSmallBottom.y - pSmallTop.y);
+    // ── Área grande ──
+    const paX = side === 'left' ? lineX : lineX - penaltyDepth;
+    ctx.strokeRect(
+      paX,
+      centerY - penaltyWidth / 2,
+      penaltyDepth,
+      penaltyWidth
+    );
+
+    // ── Área pequeña ──
+    if (smallDepth > 0 && smallWidth > 0) {
+      const saX = side === 'left' ? lineX : lineX - smallDepth;
+      ctx.strokeRect(
+        saX,
+        centerY - smallWidth / 2,
+        smallDepth,
+        smallWidth
+      );
     }
 
-    // Punto penalti
-    const sp = this.getCanvasPoint(spX, 0.5);
+    // ── Punto de penalti ──
+    const spX = side === 'left'
+      ? lineX + penaltySpot
+      : lineX - penaltySpot;
     ctx.fillStyle = '#FFF';
-    ctx.beginPath(); ctx.arc(sp.x, sp.y, 3, 0, Math.PI*2); ctx.fill();
+    ctx.beginPath();
+    ctx.arc(spX, centerY, 3, 0, Math.PI * 2);
+    ctx.fill();
 
-    // Semicírculo del área (solo F11)
+    // ── Semicírculo del área (solo F11) ──
     if (mode === 'f11') {
-      const arcR = (9.15 / FIFA.LENGTH) * this.field.w;
-      const arcP = this.getCanvasPoint(spX, 0.5);
+      const arcR = (FIFA.CENTER_RADIUS / FIFA.LENGTH) * fw;
       ctx.beginPath();
-      ctx.arc(arcP.x, arcP.y, arcR, side === 'left' ? -Math.PI*0.3 : Math.PI*0.7, side === 'left' ? Math.PI*0.3 : Math.PI*1.3);
+      if (side === 'left') {
+        ctx.arc(spX, centerY, arcR,
+          -Math.PI * 0.38, Math.PI * 0.38);
+      } else {
+        ctx.arc(spX, centerY, arcR,
+          Math.PI * 0.62, Math.PI * 1.38);
+      }
       ctx.stroke();
     }
 
-    // Portería
-    const gTop = this.getCanvasPoint(rx, 0.5 - gw/2);
-    const gBottom = this.getCanvasPoint(rx - gd, 0.5 + gw/2);
-    ctx.strokeRect(gTop.x, gTop.y, gBottom.x - gTop.x, gBottom.y - gTop.y);
-    this._drawGoalNet(gTop.x, gTop.y, gBottom.x - gTop.x, gBottom.y - gTop.y);
+    // ── Portería ──
+    const gDepth = side === 'left' ? -goalDepth : goalDepth;
+    const gX = side === 'left' ? lineX - goalDepth : lineX;
+    ctx.strokeRect(
+      gX,
+      centerY - goalWidth / 2,
+      goalDepth,
+      goalWidth
+    );
+    this._drawGoalNet(gX, centerY - goalWidth / 2, goalDepth, goalWidth);
   }
 
   _drawGoalNet(gx, gy, gd, gw) {

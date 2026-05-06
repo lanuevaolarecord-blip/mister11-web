@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { usePlayers } from '../hooks/usePlayers';
 import { useAuth } from '../context/AuthContext';
+import { useTeams } from '../hooks/useTeams';
 import './MiEquipo.css';
 
 const POSITIONS = ['TODOS', 'POR', 'DEF', 'LTD', 'LTI', 'MCD', 'MC', 'MCO', 'EXT', 'DEL'];
@@ -22,6 +23,7 @@ const emptyPlayer = {
 
 const MiEquipo = () => {
   const { activeTeamId } = useAuth();
+  const { activeTeam } = useTeams();
   const { players, loading, addPlayer, updatePlayer, removePlayer } = usePlayers(activeTeamId);
   const [filter, setFilter] = useState('TODOS');
   const [selectedPlayer, setSelectedPlayer] = useState(null);
@@ -51,43 +53,36 @@ const MiEquipo = () => {
   };
 
   const calcularEdad = (fechaNacimiento) => {
-    if (fechaNacimiento === null || fechaNacimiento === undefined || fechaNacimiento === '') {
-      return 'Sin edad';
-    }
+    if (!fechaNacimiento) return { text: 'Sin edad', cat: 'N/A' };
 
     let fecha;
-    // Timestamp de Firestore
-    if (fechaNacimiento?.toDate) {
-      fecha = fechaNacimiento.toDate();
-    }
-    // String formato YYYY-MM-DD o ISO
+    if (fechaNacimiento?.toDate) fecha = fechaNacimiento.toDate();
     else if (typeof fechaNacimiento === 'string') {
       fecha = new Date(fechaNacimiento);
-      // Si no parsea, intentar DD/MM/YYYY
       if (isNaN(fecha.getTime())) {
         const parts = fechaNacimiento.split('/');
-        if (parts.length === 3) {
-          fecha = new Date(parts[2], parts[1] - 1, parts[0]);
-        }
+        if (parts.length === 3) fecha = new Date(parts[2], parts[1] - 1, parts[0]);
       }
-    }
-    // Ya es Date
-    else if (fechaNacimiento instanceof Date) {
-      fecha = fechaNacimiento;
-    }
-    else {
-      return 'Sin edad';
-    }
+    } else if (fechaNacimiento instanceof Date) fecha = fechaNacimiento;
+    else return { text: 'Sin edad', cat: 'N/A' };
 
-    if (!fecha || isNaN(fecha.getTime())) return 'Sin edad';
+    if (!fecha || isNaN(fecha.getTime())) return { text: 'Sin edad', cat: 'N/A' };
 
     const hoy = new Date();
     let edad = hoy.getFullYear() - fecha.getFullYear();
     const mes = hoy.getMonth() - fecha.getMonth();
-    if (mes < 0 || (mes === 0 && hoy.getDate() < fecha.getDate())) {
-      edad--;
-    }
-    return `${edad} años`;
+    if (mes < 0 || (mes === 0 && hoy.getDate() < fecha.getDate())) edad--;
+
+    let cat = 'Sénior';
+    if (edad <= 5) cat = 'Debutante';
+    else if (edad <= 7) cat = 'Pre-benjamín';
+    else if (edad <= 9) cat = 'Benjamín';
+    else if (edad <= 11) cat = 'Alevín';
+    else if (edad <= 13) cat = 'Infantil';
+    else if (edad <= 15) cat = 'Cadete';
+    else if (edad <= 18) cat = 'Juvenil';
+
+    return { text: `${edad} años`, cat };
   };
 
   // -- CRUD Actions --
@@ -181,7 +176,7 @@ const MiEquipo = () => {
                 <h3>{player.name}</h3>
                 <div className="player-meta">
                   <span className="pos-badge">{player.position}</span>
-                  <span className="age-info">{calcularEdad(player.fechaNacimiento || player.birthDate || player.age)}</span>
+                  <span className="age-info">{calcularEdad(player.fechaNacimiento || player.birthDate || player.age).text}</span>
                 </div>
               </div>
               {player.injuries && <div className="injury-indicator" title="Lesionado">🚑</div>}
@@ -304,7 +299,7 @@ const MiEquipo = () => {
               <div className="tab-pane">
                 <div className="info-row">
                   <label>Categoría</label>
-                  <span>{selectedPlayer.category}</span>
+                  <span>{activeTeam?.categoria || selectedPlayer.category}</span>
                 </div>
                 <div className="info-row">
                   <label>Pie dominante</label>
@@ -316,7 +311,10 @@ const MiEquipo = () => {
                 </div>
                 <div className="info-row">
                   <label>Edad</label>
-                  <span>{calcularEdad(selectedPlayer.fechaNacimiento || selectedPlayer.birthDate || selectedPlayer.age)}</span>
+                  <span>
+                    {calcularEdad(selectedPlayer.fechaNacimiento || selectedPlayer.birthDate || selectedPlayer.age).text} 
+                    ({calcularEdad(selectedPlayer.fechaNacimiento || selectedPlayer.birthDate || selectedPlayer.age).cat})
+                  </span>
                 </div>
               </div>
             )}

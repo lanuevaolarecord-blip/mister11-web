@@ -141,12 +141,13 @@
 }
 
 .pos-badge {
-  background: var(--accent);
-  color: var(--white);
-  padding: 2px 8px;
-  border-radius: 4px;
+  background: var(--primary);
+  color: #FFFFFF;
+  padding: 4px 10px;
+  border-radius: 6px;
   font-size: 11px;
-  font-weight: bold;
+  font-weight: 800;
+  letter-spacing: 0.5px;
 }
 
 .age-info {
@@ -418,9 +419,10 @@
 
 .badge-pos {
   background: var(--primary);
-  color: white;
-  padding: 2px 8px;
-  border-radius: 4px;
+  color: #FFFFFF;
+  padding: 4px 12px;
+  border-radius: 6px;
+  font-weight: 800;
 }
 
 /* Physical Stats */

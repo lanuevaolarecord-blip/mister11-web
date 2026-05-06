@@ -324,11 +324,15 @@
 }
 
 .micro-header {
-  background: var(--sand);
+  background: var(--bg-primary);
   padding: 20px;
   border-radius: 12px;
+  border: 1px solid var(--border-color);
 }
-.micro-title h3 { margin: 0 0 5px 0; color: var(--primary); }
+.dark .micro-header {
+  background: var(--bg-card); /* Mirror: deeper dark */
+}
+.micro-title h3 { margin: 0 0 5px 0; color: var(--gold); }
 
 .week-grid {
   display: grid;
@@ -352,6 +356,7 @@
   border-bottom: 1px solid var(--border-color);
 }
 .d-name { font-weight: bold; color: var(--primary); }
+.dark .d-name { color: #F1F5F9; } /* text-slate-100 */
 
 .day-type-select {
   padding: 10px;
@@ -425,7 +430,21 @@
   border-top: 1px solid #eee;
 }
 .day-load-input label { display: block; font-size: 11px; color: #888; margin-bottom: 5px; }
-.day-load-input input { width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 6px; text-align: center;}
+.day-load-input input { 
+  width: 100%; 
+  padding: 8px; 
+  border: 1px solid var(--border-color); 
+  border-radius: 6px; 
+  text-align: center;
+  background: var(--input-bg);
+  color: var(--input-text);
+  font-family: var(--font-body);
+}
+
+.day-load-input input::placeholder {
+  color: var(--text-muted);
+  opacity: 0.5;
+}
 
 /* --- OBJETIVOS --- */
 .obj-grid {
@@ -441,6 +460,13 @@
   border: 1px solid var(--border-color);
   display: flex;
   flex-direction: column;
+  transition: all 0.3s ease;
+  color: var(--text-primary);
+}
+
+.dark .obj-card {
+  background: var(--bg-primary); /* Mirror effect: dark background */
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
 }
 
 .obj-card h3 {
@@ -695,9 +721,14 @@
 .lb-pct {
   font-size: 12px;
   font-weight: 700;
-  color: #CCCCCC;
+  color: var(--text-muted);
   width: 32px;
   text-align: right;
+  transition: color 0.2s;
+}
+
+.dark .lb-pct {
+  color: #A3E635; /* Lime vibrant for dark mode */
 }
 
 /* =============================================

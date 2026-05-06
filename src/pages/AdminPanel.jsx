@@ -20,6 +20,7 @@ import {
 import { generateSeasonReport, generateMatchConvocation, generateSessionPDF } from '../utils/pdfGenerator';
 import { t } from '../i18n/translations';
 import { usePWA } from '../hooks/usePWA';
+import { useTheme } from '../context/ThemeContext';
 import './AdminPanel.css';
 
 const AdminPanel = () => {
@@ -35,9 +36,10 @@ const AdminPanel = () => {
   const [selectedSessionId, setSelectedSessionId] = useState('');
   
   const { settings, saveSettings, loading: loadingSettings } = useSettings(activeTeam?.id);
+  const { darkMode, toggleTheme } = useTheme();
   const [profileData, setProfileData] = useState({ profileName: '', specialty: 'Primer Entrenador' });
   const [clubData, setClubData] = useState({ clubName: '', primaryColor: '#1B3A2D', secondaryColor: '#4CAF7D' });
-  const [prefData, setPrefData] = useState({ notifications: true, darkMode: true, language: 'Español (ES)' });
+  const [prefData, setPrefData] = useState({ notifications: true, language: 'Español (ES)' });
   const { deferredPrompt, isInstalled, installApp } = usePWA();
 
   // Sync state when settings load
@@ -54,7 +56,6 @@ const AdminPanel = () => {
       });
       setPrefData({ 
         notifications: settings.notifications ?? true, 
-        darkMode: settings.darkMode ?? true, 
         language: settings.language || 'Español (ES)' 
       });
     }
@@ -384,8 +385,8 @@ const AdminPanel = () => {
                   <div className="toggle-group">
                     <span>Modo Oscuro</span>
                     <div 
-                      className={`toggle-switch ${prefData.darkMode ? 'active' : ''}`}
-                      onClick={() => toggleSetting('darkMode')}
+                      className={`toggle-switch ${darkMode ? 'active' : ''}`}
+                      onClick={toggleTheme}
                     ></div>
                   </div>
                   <div className="form-group" style={{marginTop: '15px'}}>

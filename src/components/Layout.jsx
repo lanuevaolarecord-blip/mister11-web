@@ -10,15 +10,8 @@ const Layout = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const { settings } = useSettings();
 
-  useEffect(() => {
-    if (settings.darkMode) {
-      document.documentElement.classList.add('dark');
-      document.documentElement.classList.remove('light');
-    } else {
-      document.documentElement.classList.add('light');
-      document.documentElement.classList.remove('dark');
-    }
-  }, [settings.darkMode]);
+  // Theme is now managed globally by ThemeProvider/ThemeContext
+  // document.documentElement class is handled there.
 
   return (
     <div className="app-container">

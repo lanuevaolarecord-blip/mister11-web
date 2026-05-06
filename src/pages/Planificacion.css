@@ -863,8 +863,12 @@
 .msv-value {
   font-size: 1.8rem;
   font-weight: 800;
-  color: var(--text-primary);
+  color: #1A1A1A; /* High contrast for light mode */
   font-family: var(--font-numbers);
+}
+
+.dark .msv-value {
+  color: #FFFFFF !important;
 }
 
 .msv-formula {

@@ -62,7 +62,15 @@ const Planificacion = () => {
   const [guideOpen, setGuideOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [savingMicro, setSavingMicro] = useState(false);
+  const [savingObjectives, setSavingObjectives] = useState(false);
   const [toast, setToast] = useState(null);
+
+  // Objectives State
+  const [objectives, setObjectives] = useState({
+    individual: '- Mejorar perfil no dominante en mediocentros.\n- Incremento % pases acertados.',
+    team: '- Salida de balón 3-2.\n- Presión tras pérdida 5 seg.',
+    competition: '- Top 3 en liga.\n- Menos de 15 goles en contra.'
+  });
 
   // Controlled state for each day of the week
   const initialWeekDays = Array.from({ length: 7 }, () => ({
@@ -89,6 +97,13 @@ const Planificacion = () => {
           if (data.microcycles && data.microcycles.length > 0) setMicrocycles(data.microcycles);
           if (data.weekDays && data.weekDays.length === 7) setWeekDays(data.weekDays);
           if (data.assignedSessions) setAssignedSessions(data.assignedSessions);
+        }
+
+        // Load Objectives
+        const objRef = doc(db, 'users', user.uid, 'teams', activeTeamId, 'planificacion', 'objectives');
+        const objSnap = await getDoc(objRef);
+        if (objSnap.exists()) {
+          setObjectives(objSnap.data());
         }
       } catch (err) {
         console.error('Error al cargar planificación:', err);
@@ -139,6 +154,25 @@ const Planificacion = () => {
       setSavingMicro(false);
     }
   }, [weekDays, assignedSessions, showToast, activeTeamId]);
+
+  // ── SAVE OBJECTIVES TO FIRESTORE ────────────────────────────────────────
+  const handleSaveObjectives = useCallback(async () => {
+    const user = auth.currentUser;
+    if (!user || !activeTeamId) { showToast('Inicia sesión para guardar', 'error'); return; }
+    setSavingObjectives(true);
+    try {
+      const ref = doc(db, 'users', user.uid, 'teams', activeTeamId, 'planificacion', 'objectives');
+      await setDoc(ref, {
+        ...objectives,
+        updatedAt: serverTimestamp(),
+      });
+      showToast('Objetivos guardados ✓');
+    } catch (err) {
+      showToast('Error al guardar objetivos.', 'error');
+    } finally {
+      setSavingObjectives(false);
+    }
+  }, [objectives, showToast, activeTeamId]);
 
   // Editable Grid Handlers
   const handleMicroChange = (id, field, value) => {
@@ -576,16 +610,44 @@ const Planificacion = () => {
             <div className="obj-grid">
               <div className="obj-card">
                 <h3>Individuales</h3>
-                <textarea className="editable-list" defaultValue="- Mejorar perfil no dominante en mediocentros.&#10;- Incremento % pases acertados." rows="6"></textarea>
+                <textarea 
+                  className="editable-list" 
+                  value={objectives.individual} 
+                  onChange={e => setObjectives({...objectives, individual: e.target.value})}
+                  rows="6"
+                  placeholder="Objetivos para jugadores individuales..."
+                ></textarea>
               </div>
               <div className="obj-card">
                 <h3>Equipo</h3>
-                <textarea className="editable-list" defaultValue="- Salida de balón 3-2.&#10;- Presión tras pérdida 5 seg." rows="6"></textarea>
+                <textarea 
+                  className="editable-list" 
+                  value={objectives.team} 
+                  onChange={e => setObjectives({...objectives, team: e.target.value})}
+                  rows="6"
+                  placeholder="Objetivos para el funcionamiento del equipo..."
+                ></textarea>
               </div>
               <div className="obj-card">
                 <h3>Competición</h3>
-                <textarea className="editable-list" defaultValue="- Top 3 en liga.&#10;- Menos de 15 goles en contra." rows="6"></textarea>
+                <textarea 
+                  className="editable-list" 
+                  value={objectives.competition} 
+                  onChange={e => setObjectives({...objectives, competition: e.target.value})}
+                  rows="6"
+                  placeholder="Metas competitivas y resultados..."
+                ></textarea>
               </div>
+            </div>
+            
+            <div className="macro-summary" style={{marginTop: '20px'}}>
+              <button
+                className="btn-primary"
+                onClick={handleSaveObjectives}
+                disabled={savingObjectives}
+              >
+                {savingObjectives ? 'Guardando...' : 'Guardar Objetivos'}
+              </button>
             </div>
           </div>
         )}

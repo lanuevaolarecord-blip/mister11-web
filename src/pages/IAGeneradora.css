@@ -64,16 +64,22 @@
   border-radius: 8px;
   font-family: var(--font-body);
   font-size: 14px;
-  color: var(--text-secondary);
-  background: var(--bg-primary);
-  transition: border-color 0.2s;
+  color: var(--input-text);
+  background: var(--input-bg);
+  transition: all 0.2s;
+}
+
+.ia-field select::placeholder,
+.ia-field textarea::placeholder {
+  color: var(--text-muted);
+  opacity: 0.6;
 }
 
 .ia-field select:focus,
 .ia-field textarea:focus {
   border-color: var(--accent);
   outline: none;
-  background: var(--bg-card);
+  box-shadow: 0 0 0 2px rgba(76, 175, 125, 0.1);
 }
 
 /* Slider */

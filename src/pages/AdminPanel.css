@@ -99,22 +99,24 @@
 
 .form-row input {
   flex: 1;
-  background: var(--bg-primary);
+  background: var(--input-bg);
   border: 1px solid var(--border-color);
-  color: var(--text-secondary);
+  color: var(--input-text);
   padding: 10px 15px;
   border-radius: 6px;
   outline: none;
+  font-family: var(--font-body);
+  transition: all 0.2s;
 }
 
-.dark .form-row input {
-  background: var(--bg-primary);
-  border-color: var(--border-color);
-  color: var(--text-secondary);
+.form-row input::placeholder {
+  color: var(--text-muted);
+  opacity: 0.6;
 }
 
 .form-row input:focus {
   border-color: var(--accent);
+  box-shadow: 0 0 0 2px rgba(76, 175, 125, 0.1);
 }
 
 .teams-grid {
@@ -385,20 +387,25 @@
 
 .form-group input[type="text"],
 .admin-select-input {
-  background: var(--bg-primary);
+  background: var(--input-bg);
   border: 1px solid var(--border-color);
-  color: var(--text-secondary);
+  color: var(--input-text);
   padding: 12px;
   border-radius: 8px;
   outline: none;
   font-family: inherit;
+  transition: all 0.2s;
 }
 
-.dark .form-group input[type="text"],
-.dark .admin-select-input {
-  background: var(--bg-primary);
-  border-color: var(--border-color);
-  color: var(--text-secondary);
+.form-group input[type="text"]::placeholder {
+  color: var(--text-muted);
+  opacity: 0.6;
+}
+
+.form-group input[type="text"]:focus,
+.admin-select-input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px rgba(76, 175, 125, 0.1);
 }
 
 .form-row-dual {

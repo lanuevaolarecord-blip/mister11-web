@@ -207,7 +207,7 @@ const AdminPanel = () => {
                 return (
                   <div key={ex.id} className="exercise-row">
                     <div className="ex-info">
-                      <strong>{ex.titulo || ex.nombre || 'Ejercicio sin nombre'}</strong>
+                      <strong>{ex.title || ex.name || ex.exerciseName || ex.titulo || ex.nombre || 'Ejercicio sin nombre'}</strong>
                       <span>{ex.objetivo} | {ex.categoria}</span>
                     </div>
                     <div className="ex-actions">

@@ -240,7 +240,7 @@ const PizarraTactica = () => {
     const saveToDB = async () => {
       try {
         if (!activeTeamId) return;
-        const frameRef = doc(db, 'users', user.uid, 'teams', activeTeamId, 'exercises', planId, 'frames', frame.id);
+        const frameRef = doc(db, 'users', user.uid, 'teams', activeTeamId, 'tactics', planId, 'frames', frame.id);
         await setDoc(frameRef, {
           state: JSON.stringify(state),
           updatedAt: serverTimestamp()
@@ -471,6 +471,11 @@ const PizarraTactica = () => {
 
   // ─── Initialize canvases once on mount ───────────────────────────────────
   useEffect(() => {
+    // Reset state on team/plan change
+    setFrames([]);
+    setReady(false);
+    readyR.current = false;
+    
     if (!containerRef.current || !fieldCanvasRef.current || !fabricElemRef.current) return;
 
     const W = containerRef.current.offsetWidth  || 800;
@@ -510,7 +515,7 @@ const PizarraTactica = () => {
     // 5. Load frames from Firestore
     let unsubscribe;
     if (user && planId && activeTeamId) {
-      const framesColRef = collection(db, 'users', user.uid, 'teams', activeTeamId, 'exercises', planId, 'frames');
+      const framesColRef = collection(db, 'users', user.uid, 'teams', activeTeamId, 'tactics', planId, 'frames');
       const q = query(framesColRef, orderBy('order', 'asc'));
       
       unsubscribe = onSnapshot(q, (snapshot) => {
@@ -955,7 +960,7 @@ const PizarraTactica = () => {
     // Save the parent exercise document so it shows in the list
     try {
       if (!activeTeamId) return;
-      const exerciseRef = doc(db, 'users', user.uid, 'teams', activeTeamId, 'exercises', planId);
+      const exerciseRef = doc(db, 'users', user.uid, 'teams', activeTeamId, 'tactics', planId);
       await setDoc(exerciseRef, {
         id: planId,
         title: `Pizarra Táctica (${new Date().toLocaleDateString()})`,
@@ -990,7 +995,7 @@ const PizarraTactica = () => {
     
     try {
       if (!activeTeamId) return;
-      const framesColRef = collection(db, 'users', user.uid, 'teams', activeTeamId, 'exercises', planId, 'frames');
+      const framesColRef = collection(db, 'users', user.uid, 'teams', activeTeamId, 'tactics', planId, 'frames');
       const newFrameData = {
         name: `Frame ${frames.length + 1}`,
         state: JSON.stringify(state),
@@ -1061,7 +1066,7 @@ const PizarraTactica = () => {
     // Firebase delete
     if (user && frameToDelete && frameToDelete.id && activeTeamId) {
       try {
-        const frameRef = doc(db, 'users', user.uid, 'teams', activeTeamId, 'exercises', planId, 'frames', frameToDelete.id);
+        const frameRef = doc(db, 'users', user.uid, 'teams', activeTeamId, 'tactics', planId, 'frames', frameToDelete.id);
         await deleteDoc(frameRef);
       } catch (err) {
         console.error("Error deleting frame in Firestore:", err);

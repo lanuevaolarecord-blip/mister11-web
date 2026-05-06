@@ -135,13 +135,20 @@
 
 .form-group-macro input, .form-group-macro textarea {
   padding: 10px;
-  border: 1px solid #4CAF7D !important;
+  border: 1px solid var(--border-color);
   border-radius: 8px;
   font-family: var(--font-body);
   font-size: 14px;
   width: 100%;
-  background: #142E22 !important;
-  color: #FFFFFF !important;
+  background: var(--input-bg);
+  color: var(--input-text);
+  transition: all 0.2s;
+}
+
+.form-group-macro input::placeholder, 
+.form-group-macro textarea::placeholder {
+  color: var(--text-muted);
+  opacity: 0.7;
 }
 
 .full-width-macro textarea {
@@ -438,7 +445,7 @@
 
 .obj-card h3 {
   margin: 0 0 15px 0;
-  color: var(--primary);
+  color: var(--gold);
   border-bottom: 2px solid var(--accent);
   display: inline-block;
   padding-bottom: 5px;
@@ -447,14 +454,22 @@
 .editable-list {
   width: 100%;
   padding: 15px;
-  border: 1px solid #ccc;
+  border: 1px solid var(--border-color);
   border-radius: 8px;
   font-family: var(--font-body);
   font-size: 14px;
   resize: vertical;
   line-height: 1.5;
+  background: var(--input-bg);
+  color: var(--input-text);
 }
-.editable-list:focus { border-color: var(--accent); outline: none; }
+
+.editable-list::placeholder {
+  color: var(--text-muted);
+  opacity: 0.6;
+}
+
+.editable-list:focus { border-color: var(--accent); outline: none; box-shadow: 0 0 0 2px rgba(76, 175, 125, 0.15); }
 
 @media (max-width: 1024px) {
   .week-grid, .obj-grid {

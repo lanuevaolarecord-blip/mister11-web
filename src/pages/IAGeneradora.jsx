@@ -506,7 +506,7 @@ Responde SOLO en español. Sé específico y práctico.`;
                     }}
                   >
                     <div style={{ color: '#c9a84c', fontWeight: 600, fontSize: 13 }}>
-                      {ej.type === 'pizarra' ? '📋 Pizarra - ' : '✨ IA - '} {ej.title || 'Sin título'}
+                      {ej.type === 'pizarra' ? '📋 Pizarra - ' : '✨ IA - '} {ej.title || ej.name || ej.exerciseName || ej.titulo || ej.nombre || 'Sin título'}
                     </div>
                     <div style={{ color: '#888', fontSize: 11, marginTop: 2 }}>
                       {new Date(ej.timestamp).toLocaleDateString()} · {ej.type === 'pizarra' ? 'Interactivo' : 'Texto'}

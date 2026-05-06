@@ -475,6 +475,12 @@
   border-bottom: 2px solid var(--accent);
   display: inline-block;
   padding-bottom: 5px;
+  transition: color 0.3s;
+}
+
+.dark .obj-card h3 {
+  color: #10B981; /* Emerald Green */
+  border-bottom-color: #10B981;
 }
 
 .editable-list {
@@ -728,7 +734,8 @@
 }
 
 .dark .lb-pct {
-  color: #A3E635; /* Lime vibrant for dark mode */
+  color: #10B981; /* Vibrant Emerald/Lime for percentages in dark mode */
+  text-shadow: 0 0 10px rgba(16, 185, 129, 0.2);
 }
 
 /* =============================================

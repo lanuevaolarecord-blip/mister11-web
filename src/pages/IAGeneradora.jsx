@@ -505,8 +505,13 @@ Responde SOLO en español. Sé específico y práctico.`;
                       }
                     }}
                   >
-                    <div style={{ color: '#c9a84c', fontWeight: 600, fontSize: 13 }}>
-                      {ej.type === 'pizarra' ? '📋 Pizarra - ' : '✨ IA - '} {ej.title || ej.name || ej.exerciseName || ej.titulo || ej.nombre || 'Sin título'}
+                    <div style={{ color: 'var(--gold)', fontWeight: 600, fontSize: 13 }}>
+                      <span style={{ color: darkMode ? '#10B981' : 'var(--accent)' }}>
+                        {ej.type === 'pizarra' ? '📋 Pizarra - ' : '✨ IA - '}
+                      </span>
+                      <span style={{ color: 'var(--text-primary)' }}>
+                        {ej.title || ej.name || ej.exerciseName || ej.titulo || ej.nombre || 'Sin título'}
+                      </span>
                     </div>
                     <div style={{ color: '#888', fontSize: 11, marginTop: 2 }}>
                       {new Date(ej.timestamp).toLocaleDateString()} · {ej.type === 'pizarra' ? 'Interactivo' : 'Texto'}

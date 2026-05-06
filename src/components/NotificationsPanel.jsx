@@ -1,10 +1,12 @@
 import React from 'react';
 import { X, Bell, Info, AlertTriangle } from 'lucide-react';
 import { useNotifications } from '../hooks/useNotifications';
+import { useAuth } from '../context/AuthContext';
 import './NotificationsPanel.css';
 
 const NotificationsPanel = ({ isOpen, onClose }) => {
-  const { notifications, loading } = useNotifications();
+  const { activeTeamId } = useAuth();
+  const { notifications, loading } = useNotifications(activeTeamId);
 
   if (!isOpen) return null;
 

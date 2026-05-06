@@ -19,8 +19,8 @@ import './Dashboard.css';
 
 const Dashboard = () => {
   const navigate = useNavigate();
-  const { settings } = useSettings();
   const { activeTeamId } = useAuth();
+  const { settings } = useSettings(activeTeamId);
   const { players } = usePlayers(activeTeamId);
   const { sessions } = useSessions(activeTeamId);
   const { matches } = useMatches(activeTeamId);

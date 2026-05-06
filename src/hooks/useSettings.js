@@ -3,7 +3,7 @@ import { db } from '../firebaseConfig';
 import { doc, onSnapshot, setDoc, updateDoc } from 'firebase/firestore';
 import { useAuth } from '../context/AuthContext';
 
-export const useSettings = () => {
+export const useSettings = (teamId) => {
   const { user } = useAuth();
   const [settings, setSettings] = useState({
     profileName: '',
@@ -18,9 +18,9 @@ export const useSettings = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!user) return;
+    if (!user || !teamId) return;
 
-    const docRef = doc(db, 'users', user.uid, 'settings', 'config');
+    const docRef = doc(db, 'users', user.uid, 'teams', teamId, 'settings', 'config');
     const unsubscribe = onSnapshot(docRef, (docSnap) => {
       if (docSnap.exists()) {
         setSettings(docSnap.data());
@@ -29,11 +29,11 @@ export const useSettings = () => {
     });
 
     return () => unsubscribe();
-  }, [user]);
+  }, [user, teamId]);
 
   const saveSettings = async (newSettings) => {
-    if (!user) return;
-    const docRef = doc(db, 'users', user.uid, 'settings', 'config');
+    if (!user || !teamId) return;
+    const docRef = doc(db, 'users', user.uid, 'teams', teamId, 'settings', 'config');
     await setDoc(docRef, { ...newSettings, updatedAt: new Date() }, { merge: true });
   };
 

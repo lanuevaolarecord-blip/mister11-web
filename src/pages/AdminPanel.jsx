@@ -25,7 +25,7 @@ import './AdminPanel.css';
 const AdminPanel = () => {
   const [activeTab, setActiveTab] = useState('equipos');
   const { teams, activeTeam, addTeam, deleteTeam, selectTeam } = useTeams();
-  const { exercises, removeExercise } = useExercises();
+  const { exercises, removeExercise } = useExercises(activeTeam?.id);
   const { players } = usePlayers(activeTeam?.id);
   const { sessions } = useSessions(activeTeam?.id);
   const { matches } = useMatches(activeTeam?.id);
@@ -34,7 +34,7 @@ const AdminPanel = () => {
   const [selectedMatchId, setSelectedMatchId] = useState('');
   const [selectedSessionId, setSelectedSessionId] = useState('');
   
-  const { settings, saveSettings, loading: loadingSettings } = useSettings();
+  const { settings, saveSettings, loading: loadingSettings } = useSettings(activeTeam?.id);
   const [profileData, setProfileData] = useState({ profileName: '', specialty: 'Primer Entrenador' });
   const [clubData, setClubData] = useState({ clubName: '', primaryColor: '#1B3A2D', secondaryColor: '#4CAF7D' });
   const [prefData, setPrefData] = useState({ notifications: true, darkMode: true, language: 'Español (ES)' });

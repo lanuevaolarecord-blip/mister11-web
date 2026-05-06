@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useExercises } from '../hooks/useExercises';
+import { useAuth } from '../context/AuthContext';
 import './IAGeneradora.css';
 
 // --- CONFIGURACIÓN --- (La key se accede en runtime, no al importar el módulo)
@@ -58,7 +59,8 @@ const renderMarkdown = (text) => {
 // --- FIN CONFIGURACIÓN ---
 
 const IAGeneradora = () => {
-  const { exercises, addExercise } = useExercises();
+  const { activeTeamId } = useAuth();
+  const { exercises, addExercise } = useExercises(activeTeamId);
   const navigate = useNavigate();
   const [form, setForm] = useState(INITIAL_FORM);
   const [result, setResult] = useState(null);

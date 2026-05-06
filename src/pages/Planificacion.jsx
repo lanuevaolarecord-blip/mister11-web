@@ -1,6 +1,7 @@
 import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { db, auth } from '../firebaseConfig';
+import { useAuth } from '../context/AuthContext';
 import { generatePlanificacionPDF } from '../utils/pdfGenerator';
 import './Planificacion.css';
 
@@ -53,6 +54,7 @@ const generateMicrocycles = () => {
 };
 
 const Planificacion = () => {
+  const { activeTeamId } = useAuth();
   const [activeTab, setActiveTab] = useState('MACROCICLO (PLANTILLA)');
   const [macroInfo, setMacroInfo] = useState(initialMacroData);
   const [microcycles, setMicrocycles] = useState(generateMicrocycles());
@@ -77,9 +79,9 @@ const Planificacion = () => {
   useEffect(() => {
     const loadConfig = async () => {
       const user = auth.currentUser;
-      if (!user) return;
+      if (!user || !activeTeamId) return;
       try {
-        const ref = doc(db, 'users', user.uid, 'planificacion', 'config');
+        const ref = doc(db, 'users', user.uid, 'teams', activeTeamId, 'planificacion', 'config');
         const snap = await getDoc(ref);
         if (snap.exists()) {
           const data = snap.data();
@@ -93,7 +95,7 @@ const Planificacion = () => {
       }
     };
     loadConfig();
-  }, []);
+  }, [activeTeamId]);
 
   // ── SHOW TOAST ───────────────────────────────────────────────────────────
   const showToast = useCallback((msg, type = 'success') => {
@@ -104,10 +106,10 @@ const Planificacion = () => {
   // ── SAVE MACRO TO FIRESTORE ───────────────────────────────────────────────
   const handleSave = useCallback(async () => {
     const user = auth.currentUser;
-    if (!user) { showToast('Inicia sesión para guardar', 'error'); return; }
+    if (!user || !activeTeamId) { showToast('Inicia sesión para guardar', 'error'); return; }
     setSaving(true);
     try {
-      const ref = doc(db, 'users', user.uid, 'planificacion', 'config');
+      const ref = doc(db, 'users', user.uid, 'teams', activeTeamId, 'planificacion', 'config');
       await setDoc(ref, { macroInfo, microcycles, updatedAt: serverTimestamp() }, { merge: true });
       showToast('Planificación guardada ✓');
     } catch (err) {
@@ -115,15 +117,15 @@ const Planificacion = () => {
     } finally {
       setSaving(false);
     }
-  }, [macroInfo, microcycles, showToast]);
+  }, [macroInfo, microcycles, showToast, activeTeamId]);
 
   // ── SAVE MICROCICLO TO FIRESTORE ─────────────────────────────────────────
   const handleSaveMicro = useCallback(async () => {
     const user = auth.currentUser;
-    if (!user) { showToast('Inicia sesión para guardar', 'error'); return; }
+    if (!user || !activeTeamId) { showToast('Inicia sesión para guardar', 'error'); return; }
     setSavingMicro(true);
     try {
-      const ref = doc(db, 'users', user.uid, 'planificacion', 'config');
+      const ref = doc(db, 'users', user.uid, 'teams', activeTeamId, 'planificacion', 'config');
       await setDoc(ref, {
         weekDays,
         assignedSessions,
@@ -136,7 +138,7 @@ const Planificacion = () => {
     } finally {
       setSavingMicro(false);
     }
-  }, [weekDays, assignedSessions, showToast]);
+  }, [weekDays, assignedSessions, showToast, activeTeamId]);
 
   // Editable Grid Handlers
   const handleMicroChange = (id, field, value) => {

@@ -10,12 +10,16 @@ export default defineConfig({
     sourcemap: false,
     rollupOptions: {
       output: {
-        // Separar vendores pesados en chunks independientes
-        // Permite que el navegador los cachee entre deploys
-        manualChunks: {
-          'vendor-react':    ['react', 'react-dom', 'react-router-dom'],
-          'vendor-firebase': ['firebase/app', 'firebase/auth', 'firebase/firestore'],
-          'vendor-fabric':   ['fabric'],
+        manualChunks: (id) => {
+          if (id.includes('node_modules/react') || id.includes('node_modules/react-dom') || id.includes('node_modules/react-router-dom')) {
+            return 'vendor-react';
+          }
+          if (id.includes('node_modules/firebase')) {
+            return 'vendor-firebase';
+          }
+          if (id.includes('node_modules/fabric')) {
+            return 'vendor-fabric';
+          }
         }
       }
     }

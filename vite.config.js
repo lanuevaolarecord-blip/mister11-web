@@ -7,5 +7,17 @@ export default defineConfig({
   build: {
     outDir: 'dist',
     assetsDir: 'assets',
+    sourcemap: false,
+    rollupOptions: {
+      output: {
+        // Separar vendores pesados en chunks independientes
+        // Permite que el navegador los cachee entre deploys
+        manualChunks: {
+          'vendor-react':    ['react', 'react-dom', 'react-router-dom'],
+          'vendor-firebase': ['firebase/app', 'firebase/auth', 'firebase/firestore'],
+          'vendor-fabric':   ['fabric'],
+        }
+      }
+    }
   }
 })

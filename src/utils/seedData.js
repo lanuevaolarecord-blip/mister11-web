@@ -90,34 +90,41 @@ export const seedInitialData = async (teamId, userId) => {
 
       const sampleSessions = [
         {
-          titulo: 'Técnica de pase y control',
-          fecha: dateIn(2),
-          hora: '17:00',
-          duracion: 90,
-          categoria: 'Técnica',
-          objetivos: 'Mejorar la precisión del primer toque y la velocidad del pase corto.',
-          material: ['balones', 'conos'],
-          bloques: [
-            { nombre: 'Calentamiento', tipo: 'Calentamiento', duracion: 15, descripcion: 'Movilidad articular + rondos 4v2.' },
-            { nombre: 'Ejercicio de pase en triángulos', tipo: 'Técnica', duracion: 25, descripcion: 'Triángulos de 10m. Pase-control-pase en 2 toques.' },
-            { nombre: 'Partido posicional 5v5', tipo: 'Táctica', duracion: 30, descripcion: 'Posesión con zonas prohibidas. Premio a los pases consecutivos.' },
-            { nombre: 'Vuelta a la calma', tipo: 'Recuperación', duracion: 10, descripcion: 'Estiramientos en parejas.' }
+          // Campos en inglés: requeridos por Sesiones.jsx
+          title:     'Técnica de pase y control',
+          date:      dateIn(2),
+          time:      '17:00',
+          duration:  90,
+          category:  'Técnica',
+          intensity: 'Media',
+          objectives: 'Mejorar la precisión del primer toque y la velocidad del pase corto.',
+          materials: 'Balones, conos',
+          players:   [],
+          files:     [],
+          blocks: [
+            { id: 1, name: 'Calentamiento',                  type: 'Física',  duration: 15, description: 'Movilidad articular + rondos 4v2.' },
+            { id: 2, name: 'Ejercicio de pase en triángulos', type: 'Técnica', duration: 25, description: 'Triángulos de 10m. Pase-control-pase en 2 toques.' },
+            { id: 3, name: 'Partido posicional 5v5',          type: 'Táctica', duration: 30, description: 'Posesión con zonas prohibidas. Premio a los pases consecutivos.' },
+            { id: 4, name: 'Vuelta a la calma',               type: 'Física',  duration: 10, description: 'Estiramientos en parejas.' }
           ],
           createdAt: serverTimestamp()
         },
         {
-          titulo: 'Táctica defensiva en bloque medio',
-          fecha: dateIn(5),
-          hora: '17:00',
-          duracion: 90,
-          categoria: 'Táctica',
-          objetivos: 'Organizar la defensa en bloque medio y trabajar la salida controlada.',
-          material: ['balones', 'conos', 'petos'],
-          bloques: [
-            { nombre: 'Activación táctica', tipo: 'Calentamiento', duracion: 15, descripcion: 'Posicionamiento inicial y organización defensiva estática.' },
-            { nombre: 'Defensa 8v8 en bloque', tipo: 'Táctica', duracion: 30, descripcion: 'Bloque defensivo medio-bajo. Pressing al portador al recuperar.' },
-            { nombre: 'Transición defensa-ataque', tipo: 'Táctica', duracion: 25, descripcion: 'Salida rápida en 3 segundos al recuperar el balón.' },
-            { nombre: 'Partido condicionado', tipo: 'Juego', duracion: 15, descripcion: 'Aplicación de los conceptos trabajados en partido 8v8.' }
+          title:     'Táctica defensiva en bloque medio',
+          date:      dateIn(5),
+          time:      '17:00',
+          duration:  90,
+          category:  'Táctica',
+          intensity: 'Alta',
+          objectives: 'Organizar la defensa en bloque medio y trabajar la salida controlada.',
+          materials: 'Balones, conos, petos',
+          players:   [],
+          files:     [],
+          blocks: [
+            { id: 1, name: 'Activación táctica',         type: 'Física',  duration: 15, description: 'Posicionamiento inicial y organización defensiva estática.' },
+            { id: 2, name: 'Defensa 8v8 en bloque',       type: 'Táctica', duration: 30, description: 'Bloque defensivo medio-bajo. Pressing al portador al recuperar.' },
+            { id: 3, name: 'Transición defensa-ataque',   type: 'Táctica', duration: 25, description: 'Salida rápida en 3 segundos al recuperar el balón.' },
+            { id: 4, name: 'Partido condicionado',        type: 'Táctica', duration: 15, description: 'Aplicación de los conceptos trabajados en partido 8v8.' }
           ],
           createdAt: serverTimestamp()
         }

@@ -22,9 +22,9 @@ const Sesiones = () => {
   const categories = ['Todas', 'Técnica', 'Táctica', 'Física', 'Mixta'];
   const [catFilter, setCatFilter] = useState('Todas');
 
-  const filteredSessions = catFilter === 'Todas' 
-    ? sessions 
-    : sessions.filter(s => s.category === catFilter);
+  const filteredSessions = catFilter === 'Todas'
+    ? sessions
+    : sessions.filter(s => (s.category || s.categoria || '') === catFilter);
 
   // --- LIST MODE FUNCTIONS ---
   const handleCreateNew = () => {
@@ -64,7 +64,7 @@ const Sesiones = () => {
 
   // --- EDIT MODE FUNCTIONS ---
   const handleSaveSession = async () => {
-    if (!editData.title.trim()) {
+    if (!(editData.title || '').trim()) {
       alert('El título es obligatorio');
       return;
     }
@@ -371,26 +371,35 @@ const Sesiones = () => {
 
       <div className="sessions-content">
         <div className="sessions-list">
-          {filteredSessions.map(session => (
-            <div key={session.id} className={`session-card ${selectedSession?.id === session.id ? 'selected' : ''}`} onClick={() => setSelectedSession(session)}>
-              <div className={`session-strip ${session.category.toLowerCase()}`} />
-              <div className="session-main">
-                <div className="session-date-box">
-                  <span className="time">{session.time}</span>
-                  <span className="duration">{session.duration} min</span>
-                </div>
-                <div className="session-details">
-                  <h3>{session.title}</h3>
-                  <div className="session-badges">
-                    <span className="badge category">{session.category}</span>
-                    <span className={`badge intensity ${session.intensity.toLowerCase()}`}>{session.intensity}</span>
-                    <span className="badge blocks">{session.blocks ? session.blocks.length : 0} bloques</span>
+          {filteredSessions.map(session => {
+            // Normalizar campos: las sesiones del seed usan nombres en español
+            const title      = session.title    || session.titulo    || 'Sin título';
+            const time       = session.time     || session.hora      || '--:--';
+            const duration   = session.duration || session.duracion  || 0;
+            const category   = session.category || session.categoria || 'General';
+            const intensity  = session.intensity|| session.intensidad|| 'Media';
+            const blocks     = session.blocks   || session.bloques   || [];
+            return (
+              <div key={session.id} className={`session-card ${selectedSession?.id === session.id ? 'selected' : ''}`} onClick={() => setSelectedSession(session)}>
+                <div className={`session-strip ${category.toLowerCase()}`} />
+                <div className="session-main">
+                  <div className="session-date-box">
+                    <span className="time">{time}</span>
+                    <span className="duration">{duration} min</span>
                   </div>
+                  <div className="session-details">
+                    <h3>{title}</h3>
+                    <div className="session-badges">
+                      <span className="badge category">{category}</span>
+                      <span className={`badge intensity ${intensity.toLowerCase()}`}>{intensity}</span>
+                      <span className="badge blocks">{blocks.length} bloques</span>
+                    </div>
+                  </div>
+                  <div className="session-arrow">❯</div>
                 </div>
-                <div className="session-arrow">❯</div>
               </div>
-            </div>
-          ))}
+            );
+          })}
           {filteredSessions.length === 0 && (
             <div className="empty-state-list">No hay sesiones en esta categoría.</div>
           )}
@@ -400,13 +409,15 @@ const Sesiones = () => {
           {selectedSession ? (
             <div className="preview-content">
               <div className="preview-header">
-                <h2>{selectedSession.title}</h2>
-                <span className="date-full">{selectedSession.date} · {selectedSession.time}</span>
+                <h2>{selectedSession.title || selectedSession.titulo || 'Sin título'}</h2>
+                <span className="date-full">
+                  {selectedSession.date || selectedSession.fecha || ''} · {selectedSession.time || selectedSession.hora || ''}
+                </span>
               </div>
               <div className="preview-stats">
-                <div className="p-stat"><strong>{selectedSession.duration}</strong><span>MIN</span></div>
-                <div className="p-stat"><strong>{selectedSession.blocks?.length || 0}</strong><span>BLOQUES</span></div>
-                <div className="p-stat"><strong>{selectedSession.intensity}</strong><span>CARGA</span></div>
+                <div className="p-stat"><strong>{selectedSession.duration || selectedSession.duracion || 0}</strong><span>MIN</span></div>
+                <div className="p-stat"><strong>{(selectedSession.blocks || selectedSession.bloques || []).length}</strong><span>BLOQUES</span></div>
+                <div className="p-stat"><strong>{selectedSession.intensity || selectedSession.intensidad || 'Media'}</strong><span>CARGA</span></div>
               </div>
               
               <div className="preview-files">
@@ -422,19 +433,21 @@ const Sesiones = () => {
 
               <div className="preview-blocks">
                 <h4>Estructura de la Sesión</h4>
-                {(!selectedSession.blocks || selectedSession.blocks.length === 0) ? (
-                  <p className="empty-blocks-text">No hay bloques definidos.</p>
-                ) : (
-                  selectedSession.blocks.map((b, i) => (
-                    <div key={b.id} className="block-item-mini">
+                {(() => {
+                  const blocks = selectedSession.blocks || selectedSession.bloques || [];
+                  if (blocks.length === 0) {
+                    return <p className="empty-blocks-text">No hay bloques definidos.</p>;
+                  }
+                  return blocks.map((b, i) => (
+                    <div key={b.id || i} className="block-item-mini">
                       <span className="b-num">{i + 1}</span>
                       <div className="b-info">
-                        <strong>{b.name}</strong>
-                        <span>{b.duration} min · {b.type}</span>
+                        <strong>{b.name || b.nombre || 'Bloque'}</strong>
+                        <span>{b.duration || b.duracion || 0} min · {b.type || b.tipo || ''}</span>
                       </div>
                     </div>
-                  ))
-                )}
+                  ));
+                })()}
               </div>
               
               <div className="preview-actions">

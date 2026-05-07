@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { db, auth } from '../firebaseConfig';
 import { useAuth } from '../context/AuthContext';
+import { seedInitialData } from '../utils/seedData';
 import { 
   collection, 
   query, 
@@ -24,8 +25,10 @@ export const useTeams = () => {
       ...teamData,
       createdAt: serverTimestamp()
     });
-    // Al crear un nuevo equipo, cambiar el foco a ese nuevo equipo inmediatamente
+    // Cambiar el foco al nuevo equipo inmediatamente
     changeActiveTeam(docRef.id);
+    // Insertar datos de muestra en background (no bloquea el flujo)
+    seedInitialData(docRef.id, user.uid);
     return docRef;
   };
 

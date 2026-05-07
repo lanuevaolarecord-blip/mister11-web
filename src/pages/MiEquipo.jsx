@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { usePlayers } from '../hooks/usePlayers';
 import { useAuth } from '../context/AuthContext';
 import { useTeams } from '../hooks/useTeams';
+import { calcularEdad } from '../utils/calcularEdad';
 import './MiEquipo.css';
 
 const POSITIONS = ['TODOS', 'POR', 'DEF', 'LTD', 'LTI', 'MCD', 'MC', 'MCO', 'EXT', 'DEL'];
@@ -52,38 +53,7 @@ const MiEquipo = () => {
     return name.split(' ').map(n => n[0]).join('').toUpperCase().substring(0,2);
   };
 
-  const calcularEdad = (fechaNacimiento) => {
-    if (!fechaNacimiento) return { text: 'Sin edad', cat: 'N/A' };
-
-    let fecha;
-    if (fechaNacimiento?.toDate) fecha = fechaNacimiento.toDate();
-    else if (typeof fechaNacimiento === 'string') {
-      fecha = new Date(fechaNacimiento);
-      if (isNaN(fecha.getTime())) {
-        const parts = fechaNacimiento.split('/');
-        if (parts.length === 3) fecha = new Date(parts[2], parts[1] - 1, parts[0]);
-      }
-    } else if (fechaNacimiento instanceof Date) fecha = fechaNacimiento;
-    else return { text: 'Sin edad', cat: 'N/A' };
-
-    if (!fecha || isNaN(fecha.getTime())) return { text: 'Sin edad', cat: 'N/A' };
-
-    const hoy = new Date();
-    let edad = hoy.getFullYear() - fecha.getFullYear();
-    const mes = hoy.getMonth() - fecha.getMonth();
-    if (mes < 0 || (mes === 0 && hoy.getDate() < fecha.getDate())) edad--;
-
-    let cat = 'Sénior';
-    if (edad <= 5) cat = 'Debutante';
-    else if (edad <= 7) cat = 'Pre-benjamín';
-    else if (edad <= 9) cat = 'Benjamín';
-    else if (edad <= 11) cat = 'Alevín';
-    else if (edad <= 13) cat = 'Infantil';
-    else if (edad <= 15) cat = 'Cadete';
-    else if (edad <= 18) cat = 'Juvenil';
-
-    return { text: `${edad} años`, cat };
-  };
+  // calcularEdad importada desde src/utils/calcularEdad.js
 
   // -- CRUD Actions --
   const handleOpenForm = (player = null) => {
@@ -219,7 +189,11 @@ const MiEquipo = () => {
                 </div>
                 <div className="form-group-team">
                   <label>Fecha de Nacimiento</label>
-                  <input type="date" value={editData.fechaNacimiento || editData.birthDate || editData.age || ''} onChange={e => setEditData({...editData, fechaNacimiento: e.target.value, age: e.target.value})} />
+                  <input
+                    type="date"
+                    value={editData.fechaNacimiento || editData.birthDate || ''}
+                    onChange={e => setEditData({ ...editData, fechaNacimiento: e.target.value })}
+                  />
                 </div>
               </div>
               <div className="form-row-team">

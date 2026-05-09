@@ -3,6 +3,7 @@ import { usePlayers } from '../hooks/usePlayers';
 import { useAuth } from '../context/AuthContext';
 import { useTeams } from '../hooks/useTeams';
 import { calcularEdad } from '../utils/calcularEdad';
+import { generateExpediente } from '../utils/pdfGenerator';
 import './MiEquipo.css';
 
 const POSITIONS = ['TODOS', 'POR', 'DEF', 'LTD', 'LTI', 'MCD', 'MC', 'MCO', 'EXT', 'DEL'];
@@ -245,6 +246,7 @@ const MiEquipo = () => {
           <div className="sidebar-header">
             <button className="btn-close" onClick={() => setSelectedPlayer(null)}>✕</button>
             <div className="header-actions-right">
+              <button className="btn-edit-icon" style={{marginRight: '8px'}} onClick={() => generateExpediente(selectedPlayer, activeTeam)} title="Exportar Expediente">📄</button>
               <button className="btn-edit-icon" onClick={() => handleOpenForm(selectedPlayer)}>✏️</button>
             </div>
             <div className="header-content">

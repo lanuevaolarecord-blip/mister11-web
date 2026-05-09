@@ -6,6 +6,26 @@ const THEME_COLOR = [27, 58, 45]; // #1B3A2D
 const ACCENT_COLOR = [212, 168, 67]; // #D4A843
 const TEXT_COLOR = [255, 255, 255]; // #FFFFFF
 
+// Guarda el PDF de forma segura en Web y APK
+const savePdfUniversal = (doc, filename) => {
+  try {
+    const pdfBlob = doc.output('blob');
+    const url = URL.createObjectURL(pdfBlob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    setTimeout(() => {
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    }, 100);
+  } catch (error) {
+    console.error('Error al guardar PDF:', error);
+    alert('No se pudo descargar el informe. Revisa la consola o los permisos de almacenamiento.');
+  }
+};
+
 const addHeader = (doc, title, subtitle) => {
   doc.setFillColor(...THEME_COLOR);
   doc.rect(0, 0, 210, 40, 'F');
@@ -134,7 +154,7 @@ export const generatePlanificacionPDF = (macroInfo, microcycles) => {
 
   const safeName = (macroInfo.category || 'Equipo').replace(/\s+/g, '_');
   const year = (macroInfo.startDate || '').split('-')[0] || new Date().getFullYear();
-  doc.save(`Planificacion_${safeName}_${year}.pdf`);
+  savePdfUniversal(doc, `Planificacion_${safeName}_${year}.pdf`);
 };
 
 /**
@@ -224,7 +244,104 @@ export const generateTestsReport = (tests, players, historyData) => {
   doc.text('* Verde: Mejor resultado en el equipo | Rojo: Resultado más bajo', 15, finalY + 10);
 
   addFooter(doc);
-  doc.save(`Tests_Equipo_${new Date().toLocaleDateString().replace(/\//g, '-')}.pdf`);
+  savePdfUniversal(doc, `Tests_Equipo_${new Date().toLocaleDateString().replace(/\//g, '-')}.pdf`);
+};
+
+/**
+ * TESTS - Informe Individual (Para el jugador o padre)
+ */
+export const generatePlayerTestReport = (player, tests, historyData) => {
+  const doc = new jsPDF();
+  
+  // Cabecera Institucional
+  doc.setFillColor(27, 58, 45); // #1B3A2D
+  doc.rect(0, 0, 210, 40, 'F');
+  doc.setTextColor(255, 255, 255);
+  doc.setFontSize(22);
+  doc.setFont(undefined, 'bold');
+  doc.text('MÍSTER11', 15, 20);
+  
+  doc.setTextColor(212, 168, 67); // Dorado
+  doc.setFontSize(14);
+  doc.text('INFORME DE RENDIMIENTO INDIVIDUAL', 15, 30);
+  
+  // Datos del Jugador
+  doc.setTextColor(45, 45, 45);
+  doc.setFontSize(12);
+  doc.setFont(undefined, 'bold');
+  doc.text(`Jugador: ${player.name || player.nombre}`, 15, 50);
+  doc.setFont(undefined, 'normal');
+  doc.text(`Dorsal: ${player.number || player.dorsal || '-'} | Posición: ${player.position || player.posicion || '-'}`, 15, 58);
+  doc.text(`Fecha del Informe: ${new Date().toLocaleDateString()}`, 120, 50);
+
+  // Explicación para los padres
+  doc.setFontSize(10);
+  doc.setTextColor(100, 100, 100);
+  const introText = "Estimado padre/tutor: Este informe resume los resultados de las pruebas físicas y técnicas realizadas por el jugador. Ayuda a entender sus fortalezas y áreas de mejora.";
+  doc.text(doc.splitTextToSize(introText, 180), 15, 70);
+
+  // Tabla de resultados
+  const rows = [];
+  tests.forEach(t => {
+    const pHistory = historyData[player.id]?.[t.id];
+    let latestVal = '-';
+    let prevVal = '-';
+    let evolution = '-';
+    
+    if (pHistory && pHistory.length > 0) {
+      latestVal = pHistory[pHistory.length - 1].val;
+      if (pHistory.length > 1) {
+        prevVal = pHistory[pHistory.length - 2].val;
+        const diff = latestVal - prevVal;
+        const isTime = t.unit === 'seg';
+        const improved = isTime ? diff < 0 : diff > 0;
+        
+        if (diff === 0) evolution = 'Mantenido';
+        else evolution = improved ? 'Mejora' : 'Baja';
+      }
+    }
+    
+    // Valoración simplificada
+    let valoracion = 'Bien';
+    if (latestVal !== '-') {
+      // Simplificado para el ejemplo
+      if (evolution === 'Mejora') valoracion = 'Excelente';
+      else if (evolution === 'Baja') valoracion = 'Mejorable';
+    }
+
+    rows.push([
+      t.name,
+      `${latestVal} ${t.unit}`,
+      `${prevVal !== '-' ? prevVal + ' ' + t.unit : '-'}`,
+      evolution,
+      valoracion
+    ]);
+  });
+
+  autoTable(doc, {
+    startY: 85,
+    head: [['Prueba', 'Resultado Actual', 'Eval. Anterior', 'Evolución', 'Valoración']],
+    body: rows,
+    headStyles: { fillColor: [76, 175, 125], textColor: 255, fontStyle: 'bold' },
+    alternateRowStyles: { fillColor: [245, 240, 232] },
+    bodyStyles: { textColor: [45, 45, 45] },
+    styles: { cellPadding: 4, fontSize: 10 }
+  });
+
+  const finalY = doc.lastAutoTable.finalY + 15;
+  doc.setFontSize(12);
+  doc.setFont(undefined, 'bold');
+  doc.setTextColor(27, 58, 45);
+  doc.text('Recomendación del Cuerpo Técnico:', 15, finalY);
+  doc.setFont(undefined, 'normal');
+  doc.setFontSize(10);
+  doc.setTextColor(80, 80, 80);
+  const adviceText = "Sigue entrenando con constancia y compromiso. Es fundamental mantener una buena alimentación y descanso para continuar con la progresión atlética mostrada en las últimas evaluaciones.";
+  doc.text(doc.splitTextToSize(adviceText, 180), 15, finalY + 8);
+
+  addFooter(doc);
+  const safeName = (player.name || player.nombre || 'Jugador').replace(/\s+/g, '_');
+  savePdfUniversal(doc, `Informe_Tests_${safeName}.pdf`);
 };
 
 /**
@@ -294,7 +411,7 @@ export const generateSessionPDF = (session) => {
 
   addFooter(doc);
   const safeTitle = (session.title || session.titulo || 'Sesion').replace(/[^a-z0-9]/gi, '_');
-  doc.save(`Sesion_${safeTitle}_${session.date || session.fecha || 'Hoy'}.pdf`);
+  savePdfUniversal(doc, `Sesion_${safeTitle}_${session.date || session.fecha || 'Hoy'}.pdf`);
 };
 
 /**
@@ -369,7 +486,7 @@ export const generateSeasonReport = (team, players, matches) => {
   }
 
   addFooter(doc);
-  doc.save(`Informe_Temporada_${teamName.replace(/\s+/g,'_')}.pdf`);
+  savePdfUniversal(doc, `Informe_Temporada_${teamName.replace(/\s+/g,'_')}.pdf`);
 };
 
 /**
@@ -410,5 +527,62 @@ export const generateMatchConvocation = (match, players) => {
 
   addFooter(doc);
   const safeRival = (match.rival || 'Partido').replace(/\s+/g,'_');
-  doc.save(`Convocatoria_${safeRival}_${match.fecha || 'Hoy'}.pdf`);
+  savePdfUniversal(doc, `Convocatoria_${safeRival}_${match.fecha || 'Hoy'}.pdf`);
+};
+
+/**
+ * EXPEDIENTE - Jugador individual
+ */
+export const generateExpediente = (player, activeTeam) => {
+  const doc = new jsPDF();
+  addHeader(doc, 'EXPEDIENTE DEPORTIVO', `${player.name || player.nombre}`);
+
+  doc.setTextColor(45, 45, 45);
+  doc.setFontSize(12);
+  doc.setFont(undefined, 'bold');
+  doc.text('Datos Personales', 15, 50);
+  
+  doc.setFont(undefined, 'normal');
+  doc.text(`Dorsal: ${player.number || player.dorsal || '-'}`, 15, 60);
+  doc.text(`Posición: ${player.position || player.posicion || '-'}`, 80, 60);
+  doc.text(`Categoría: ${activeTeam?.categoria || player.category || '-'}`, 140, 60);
+  
+  doc.text(`Pierna: ${player.foot || '-'}`, 15, 68);
+  doc.text(`Altura: ${player.height ? player.height + ' cm' : '-'}`, 80, 68);
+  doc.text(`Peso: ${player.weight ? player.weight + ' kg' : '-'}`, 140, 68);
+  
+  // Estado médico
+  doc.setFont(undefined, 'bold');
+  doc.text('Estado Médico Actual:', 15, 85);
+  doc.setFont(undefined, 'normal');
+  if (player.injuries) {
+    doc.setTextColor(200, 0, 0);
+    doc.text(`LESIONADO - ${player.injuryType || 'No especificado'}`, 65, 85);
+  } else {
+    doc.setTextColor(0, 150, 0);
+    doc.text('APTO', 65, 85);
+  }
+
+  doc.setTextColor(45, 45, 45);
+  doc.setFont(undefined, 'bold');
+  doc.text('Resumen de Rendimiento', 15, 105);
+  doc.setFont(undefined, 'normal');
+  
+  autoTable(doc, {
+    startY: 110,
+    head: [['Partidos', 'Minutos', 'Goles', 'Asistencias', 'Tarjetas']],
+    body: [[
+      player.partidosJugados || 0,
+      player.minutosTemporada || 0,
+      player.goles || 0,
+      player.asistencias || 0,
+      (player.tarjetasAmarillas || 0) + 'A / ' + (player.tarjetasRojas || 0) + 'R'
+    ]],
+    headStyles: { fillColor: THEME_COLOR, textColor: [255,255,255], fontStyle: 'bold' },
+    bodyStyles: { textColor: [45,45,45] },
+  });
+
+  addFooter(doc);
+  const safeName = (player.name || player.nombre || 'Jugador').replace(/\s+/g,'_');
+  savePdfUniversal(doc, `Expediente_${safeName}.pdf`);
 };

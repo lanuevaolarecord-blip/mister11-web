@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { usePlayers } from '../hooks/usePlayers';
 import { useAuth } from '../context/AuthContext';
-import { generateTestsReport } from '../utils/pdfGenerator';
+import { generateTestsReport, generatePlayerTestReport } from '../utils/pdfGenerator';
+import { GraficaEvolucion, GraficaResumen } from '../components/GraficasTest';
 import './Tests.css';
 
 // --- MOCK DATA ---
@@ -213,7 +214,28 @@ const Tests = () => {
             <div className="hist-main">
               <div className="hist-main-header">
                 <h3>Evolución: {getPlayerById(histSelectedPlayer)?.name}</h3>
-                <button className="btn-outline-gold" onClick={() => alert('Generando Informe en PDF para el jugador...')}>📄 Exportar Informe del Jugador</button>
+                <button className="btn-outline-gold" onClick={() => generatePlayerTestReport(getPlayerById(histSelectedPlayer), tests, historyData)}>
+                  📄 Exportar Informe del Jugador
+                </button>
+              </div>
+              
+              <div style={{ marginBottom: '24px' }}>
+                <h4 style={{ color: 'var(--text-primary)', marginBottom: '12px' }}>Perfil de Rendimiento Actual</h4>
+                <GraficaResumen 
+                  playerStats={tests.map(t => {
+                    const h = historyData[histSelectedPlayer]?.[t.id] || [];
+                    let val = h.length > 0 ? h[h.length - 1].val : 0;
+                    // Normalizamos un poco para el radar (simulación simple)
+                    const isTime = t.unit === 'seg';
+                    let radarVal = val;
+                    if (isTime) radarVal = Math.max(0, 100 - (val * 5)); // Invertir y escalar
+                    else if (t.unit === 'cm') radarVal = Math.min(100, val * 2);
+                    else if (t.unit === 'nivel') radarVal = Math.min(100, val * 8);
+                    else radarVal = Math.min(100, val);
+                    
+                    return { subject: t.category, A: radarVal, fullMark: 100 };
+                  })} 
+                />
               </div>
               <div className="hist-charts-grid">
                 {tests.slice(0, 6).map(t => {
@@ -241,23 +263,7 @@ const Tests = () => {
                         </span>
                       </div>
                       
-                      <svg className="svg-chart" viewBox="0 0 200 80" preserveAspectRatio="none">
-                        <polyline
-                          fill="none"
-                          stroke="var(--accent)"
-                          strokeWidth="3"
-                          points={history.map((h, i) => {
-                            const x = (i / (history.length - 1)) * 200;
-                            const y = 80 - ((h.val - min) / range) * 80;
-                            return `${x},${y}`;
-                          }).join(' ')}
-                        />
-                        {history.map((h, i) => {
-                           const x = (i / (history.length - 1)) * 200;
-                           const y = 80 - ((h.val - min) / range) * 80;
-                           return <circle key={i} cx={x} cy={y} r="4" fill="var(--primary)" />
-                        })}
-                      </svg>
+                      <GraficaEvolucion data={history} isTime={isTime} />
                       
                       <div className="hc-labels">
                         {history.map((h, i) => (

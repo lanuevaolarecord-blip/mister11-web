@@ -2,6 +2,7 @@ import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { db, auth } from '../firebaseConfig';
 import { useAuth } from '../context/AuthContext';
+import { useTeams } from '../hooks/useTeams';
 import { generatePlanificacionPDF } from '../utils/pdfGenerator';
 import './Planificacion.css';
 
@@ -55,6 +56,7 @@ const generateMicrocycles = () => {
 
 const Planificacion = () => {
   const { activeTeamId } = useAuth();
+  const { activeTeam } = useTeams();
   const [activeTab, setActiveTab] = useState('MACROCICLO (PLANTILLA)');
   const [macroInfo, setMacroInfo] = useState(initialMacroData);
   const [microcycles, setMicrocycles] = useState(generateMicrocycles());
@@ -276,7 +278,7 @@ const Planificacion = () => {
         <div className="header-top">
           <h1>PLANIFICACIÓN ESTRATÉGICA</h1>
           <div className="header-actions">
-            <button className="btn-outline" onClick={() => generatePlanificacionPDF(macroInfo, microcycles)}>Exportar PDF</button>
+            <button className="btn-outline" onClick={() => generatePlanificacionPDF(macroInfo, microcycles, activeTeam)}>Exportar PDF</button>
           </div>
         </div>
 

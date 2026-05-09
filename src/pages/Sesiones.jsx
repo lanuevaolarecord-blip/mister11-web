@@ -3,10 +3,12 @@ import { generateSessionPDF } from '../utils/pdfGenerator';
 import { useSessions } from '../hooks/useSessions';
 import { usePlayers } from '../hooks/usePlayers';
 import { useAuth } from '../context/AuthContext';
+import { useTeams } from '../hooks/useTeams';
 import './Sesiones.css';
 
 const Sesiones = () => {
   const { activeTeamId } = useAuth();
+  const { activeTeam } = useTeams();
   const { sessions, loading: loadingSessions, addSession, updateSession, removeSession } = useSessions(activeTeamId);
   const { players, loading: loadingPlayers } = usePlayers(activeTeamId);
   
@@ -451,7 +453,7 @@ const Sesiones = () => {
               </div>
               
               <div className="preview-actions">
-                <button className="btn-primary full-width" style={{marginBottom: '10px'}} onClick={() => generateSessionPDF(selectedSession)}>📄 Exportar a PDF</button>
+                <button className="btn-primary full-width" style={{marginBottom: '10px'}} onClick={() => generateSessionPDF(selectedSession, activeTeam)}>📄 Exportar a PDF</button>
                 <button className="btn-outline-gold full-width" onClick={() => handleEditSession(selectedSession)}>✏️ Editar Sesión</button>
                 <button className="btn-text-error full-width" onClick={() => handleDeleteSession(selectedSession.id)}>Eliminar Sesión</button>
               </div>

@@ -10,6 +10,7 @@ import {
   browserLocalPersistence,
 } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
+import { getStorage } from "firebase/storage";
 import { Capacitor } from "@capacitor/core";
 
 // Configuración definitiva de Firebase para Míster11
@@ -26,6 +27,7 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
+const storage = getStorage(app);
 const googleProvider = new GoogleAuthProvider();
 
 // Forzar persistencia para sesiones duraderas
@@ -80,4 +82,5 @@ export {
   signInWithRedirect,
   signInWithGoogle,
   signOut,
+  storage
 };

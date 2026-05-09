@@ -1,8 +1,10 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { usePlayers } from '../hooks/usePlayers';
 import { useAuth } from '../context/AuthContext';
+import { useTeams } from '../hooks/useTeams';
 import { generateTestsReport, generatePlayerTestReport } from '../utils/pdfGenerator';
 import { GraficaEvolucion, GraficaResumen } from '../components/GraficasTest';
+import html2canvas from 'html2canvas';
 import './Tests.css';
 
 // --- MOCK DATA ---
@@ -47,6 +49,7 @@ const generateMockHistory = (playersList) => {
 
 const Tests = () => {
   const { activeTeamId } = useAuth();
+  const { activeTeam } = useTeams();
   const { players, loading: loadingPlayers } = usePlayers(activeTeamId);
   const historyData = useMemo(() => generateMockHistory(players), [players]);
   const [activeTab, setActiveTab] = useState('BATERÍA');
@@ -105,7 +108,7 @@ const Tests = () => {
         <div className="header-top">
           <h1>EVALUACIÓN Y TESTS</h1>
           <div className="header-actions">
-            <button className="btn-outline" onClick={() => generateTestsReport(tests, players, historyData)}>Exportar Informe</button>
+            <button className="btn-outline" onClick={() => generateTestsReport(tests, players, historyData, activeTeam)}>Exportar Informe</button>
           </div>
         </div>
 
@@ -214,12 +217,25 @@ const Tests = () => {
             <div className="hist-main">
               <div className="hist-main-header">
                 <h3>Evolución: {getPlayerById(histSelectedPlayer)?.name}</h3>
-                <button className="btn-outline-gold" onClick={() => generatePlayerTestReport(getPlayerById(histSelectedPlayer), tests, historyData)}>
+                <button className="btn-outline-gold" onClick={async () => {
+                  try {
+                    let graficaUrl = null;
+                    const element = document.getElementById('grafica-rendimiento-jugador');
+                    if (element) {
+                      const canvas = await html2canvas(element, { scale: 2, backgroundColor: null });
+                      graficaUrl = canvas.toDataURL('image/png');
+                    }
+                    await generatePlayerTestReport(getPlayerById(histSelectedPlayer), tests, historyData, activeTeam, graficaUrl);
+                  } catch (e) {
+                    console.error(e);
+                    alert("Error al generar el PDF.");
+                  }
+                }}>
                   📄 Exportar Informe del Jugador
                 </button>
               </div>
               
-              <div style={{ marginBottom: '24px' }}>
+              <div id="grafica-rendimiento-jugador" style={{ marginBottom: '24px' }}>
                 <h4 style={{ color: 'var(--text-primary)', marginBottom: '12px' }}>Perfil de Rendimiento Actual</h4>
                 <GraficaResumen 
                   playerStats={tests.map(t => {
@@ -291,7 +307,7 @@ const Tests = () => {
                   {tests.map(t => <option key={t.id} value={t.id}>{t.name} ({t.unit})</option>)}
                 </select>
               </div>
-              <button className="btn-outline-gold" onClick={() => generateTestsReport(tests, players, historyData)}>📄 Exportar Informe Colectivo</button>
+              <button className="btn-outline-gold" onClick={() => generateTestsReport(tests, players, historyData, activeTeam)}>📄 Exportar Informe Colectivo</button>
             </div>
             
             <div className="heatmap-container">

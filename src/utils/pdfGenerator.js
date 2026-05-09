@@ -7,7 +7,7 @@ const ACCENT_COLOR = [212, 168, 67]; // #D4A843
 const TEXT_COLOR = [255, 255, 255]; // #FFFFFF
 
 // Guarda el PDF de forma segura en Web y APK
-const savePdfUniversal = (doc, filename) => {
+export const savePdfUniversal = (doc, filename) => {
   try {
     const pdfBlob = doc.output('blob');
     const url = URL.createObjectURL(pdfBlob);
@@ -26,14 +26,53 @@ const savePdfUniversal = (doc, filename) => {
   }
 };
 
-const addHeader = (doc, title, subtitle) => {
+const getImageBase64 = async (url) => {
+  try {
+    const response = await fetch(url);
+    const blob = await response.blob();
+    return new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onloadend = () => resolve(reader.result);
+      reader.onerror = () => resolve(null);
+      reader.readAsDataURL(blob);
+    });
+  } catch (e) {
+    return null;
+  }
+};
+
+const addHeader = async (doc, title, subtitle, activeTeam = null) => {
   doc.setFillColor(...THEME_COLOR);
   doc.rect(0, 0, 210, 40, 'F');
   
   doc.setTextColor(...TEXT_COLOR);
   doc.setFontSize(24);
-  doc.text('MÍSTER11', 105, 20, { align: 'center' });
+  doc.text('MÍSTER11', 15, 20); // Left aligned
   
+  if (activeTeam) {
+    if (activeTeam.escudo) {
+      const logoData = await getImageBase64(activeTeam.escudo);
+      if (logoData) {
+        doc.addImage(logoData, 'PNG', 175, 5, 25, 25);
+      } else {
+        doc.setFillColor(255);
+        doc.circle(187, 17, 10, 'F');
+        doc.setTextColor(...THEME_COLOR);
+        doc.setFontSize(14);
+        doc.text((activeTeam.nombre || 'E').charAt(0), 184, 22);
+      }
+    } else {
+      doc.setFillColor(255);
+      doc.circle(187, 17, 10, 'F');
+      doc.setTextColor(...THEME_COLOR);
+      doc.setFontSize(14);
+      doc.text((activeTeam.nombre || 'E').charAt(0), 184, 22);
+    }
+    doc.setFontSize(10);
+    doc.setTextColor(255);
+    doc.text(activeTeam.nombre || '', 187, 36, { align: 'center' });
+  }
+
   doc.setTextColor(...ACCENT_COLOR);
   doc.setFontSize(14);
   doc.text(title, 105, 30, { align: 'center' });
@@ -58,7 +97,7 @@ const addFooter = (doc) => {
 /**
  * PLANIFICACIÓN - Macrociclo (Landscape, dark theme)
  */
-export const generatePlanificacionPDF = (macroInfo, microcycles) => {
+export const generatePlanificacionPDF = async (macroInfo, microcycles, activeTeam = null) => {
   const doc = new jsPDF({ orientation: 'landscape' });
   const pageW = doc.internal.pageSize.getWidth(); // 297mm landscape
 
@@ -69,7 +108,17 @@ export const generatePlanificacionPDF = (macroInfo, microcycles) => {
   doc.setTextColor(212, 168, 67);
   doc.setFontSize(20);
   doc.setFont(undefined, 'bold');
-  doc.text('MÍSTER11', pageW / 2, 14, { align: 'center' });
+  doc.text('MÍSTER11', 15, 14);
+
+  if (activeTeam) {
+    if (activeTeam.escudo) {
+      const logoData = await getImageBase64(activeTeam.escudo);
+      if (logoData) doc.addImage(logoData, 'PNG', pageW - 40, 5, 25, 25);
+    }
+    doc.setFontSize(10);
+    doc.setTextColor(255);
+    doc.text(activeTeam.nombre || '', pageW - 27, 34, { align: 'center' });
+  }
 
   doc.setTextColor(255, 255, 255);
   doc.setFontSize(13);
@@ -160,10 +209,10 @@ export const generatePlanificacionPDF = (macroInfo, microcycles) => {
 /**
  * TESTS - Informe Colectivo
  */
-export const generateTestsReport = (tests, players, historyData) => {
+export const generateTestsReport = async (tests, players, historyData, activeTeam = null) => {
   const doc = new jsPDF();
   
-  addHeader(doc, 'INFORME DE RENDIMIENTO FÍSICO Y TÉCNICO', `Fecha: ${new Date().toLocaleDateString()}`);
+  await addHeader(doc, 'INFORME DE RENDIMIENTO FÍSICO Y TÉCNICO', `Fecha: ${new Date().toLocaleDateString()}`, activeTeam);
 
   doc.setTextColor(0, 0, 0);
   doc.setFontSize(14);
@@ -250,20 +299,10 @@ export const generateTestsReport = (tests, players, historyData) => {
 /**
  * TESTS - Informe Individual (Para el jugador o padre)
  */
-export const generatePlayerTestReport = (player, tests, historyData) => {
+export const generatePlayerTestReport = async (player, tests, historyData, activeTeam = null, graficaDataUrl = null) => {
   const doc = new jsPDF();
   
-  // Cabecera Institucional
-  doc.setFillColor(27, 58, 45); // #1B3A2D
-  doc.rect(0, 0, 210, 40, 'F');
-  doc.setTextColor(255, 255, 255);
-  doc.setFontSize(22);
-  doc.setFont(undefined, 'bold');
-  doc.text('MÍSTER11', 15, 20);
-  
-  doc.setTextColor(212, 168, 67); // Dorado
-  doc.setFontSize(14);
-  doc.text('INFORME DE RENDIMIENTO INDIVIDUAL', 15, 30);
+  await addHeader(doc, 'INFORME DE RENDIMIENTO INDIVIDUAL', `Fecha: ${new Date().toLocaleDateString()}`, activeTeam);
   
   // Datos del Jugador
   doc.setTextColor(45, 45, 45);
@@ -328,7 +367,29 @@ export const generatePlayerTestReport = (player, tests, historyData) => {
     styles: { cellPadding: 4, fontSize: 10 }
   });
 
-  const finalY = doc.lastAutoTable.finalY + 15;
+  let finalY = doc.lastAutoTable.finalY + 15;
+
+  if (graficaDataUrl) {
+    // Asegurarse de que no nos pasamos de página con la gráfica
+    if (finalY + 90 > doc.internal.pageSize.getHeight() - 20) {
+      doc.addPage();
+      finalY = 20;
+    }
+    doc.setFontSize(12);
+    doc.setFont(undefined, 'bold');
+    doc.setTextColor(27, 58, 45);
+    doc.text('Perfil de Rendimiento Actual:', 15, finalY);
+    
+    // Insertar la gráfica capturada
+    doc.addImage(graficaDataUrl, 'PNG', 15, finalY + 5, 180, 80);
+    finalY += 95;
+  }
+
+  // Comprobar si hay espacio para las recomendaciones
+  if (finalY + 30 > doc.internal.pageSize.getHeight() - 20) {
+    doc.addPage();
+    finalY = 20;
+  }
   doc.setFontSize(12);
   doc.setFont(undefined, 'bold');
   doc.setTextColor(27, 58, 45);
@@ -347,10 +408,10 @@ export const generatePlayerTestReport = (player, tests, historyData) => {
 /**
  * SESIONES - Ficha individual
  */
-export const generateSessionPDF = (session) => {
+export const generateSessionPDF = async (session, activeTeam = null) => {
   const doc = new jsPDF();
   
-  addHeader(doc, `FICHA DE ENTRENAMIENTO`, session.title || session.titulo);
+  await addHeader(doc, `FICHA DE ENTRENAMIENTO`, session.title || session.titulo, activeTeam);
 
   doc.setTextColor(0, 0, 0);
   doc.setFontSize(12);
@@ -417,12 +478,12 @@ export const generateSessionPDF = (session) => {
 /**
  * INFORME DE TEMPORADA - Completo con estadísticas de jugadores
  */
-export const generateSeasonReport = (team, players, matches) => {
+export const generateSeasonReport = async (team, players, matches) => {
   const doc = new jsPDF();
   const teamName = team?.nombre || 'Equipo';
   const season = team?.temporada || new Date().getFullYear();
 
-  addHeader(doc, 'INFORME DE TEMPORADA', `${teamName} · Temporada ${season}`);
+  await addHeader(doc, 'INFORME DE TEMPORADA', `${teamName} · Temporada ${season}`, team);
 
   doc.setTextColor(45, 45, 45);
   doc.setFontSize(11);
@@ -492,9 +553,9 @@ export const generateSeasonReport = (team, players, matches) => {
 /**
  * HOJA DE CONVOCATORIA - Para un partido con lista de convocados
  */
-export const generateMatchConvocation = (match, players) => {
+export const generateMatchConvocation = async (match, players, activeTeam = null) => {
   const doc = new jsPDF();
-  addHeader(doc, 'HOJA DE CONVOCATORIA', `vs. ${match.rival}`);
+  await addHeader(doc, 'HOJA DE CONVOCATORIA', `vs. ${match.rival}`, activeTeam);
 
   doc.setTextColor(45, 45, 45);
   doc.setFontSize(12);
@@ -533,9 +594,9 @@ export const generateMatchConvocation = (match, players) => {
 /**
  * EXPEDIENTE - Jugador individual
  */
-export const generateExpediente = (player, activeTeam) => {
+export const generateExpediente = async (player, activeTeam = null) => {
   const doc = new jsPDF();
-  addHeader(doc, 'EXPEDIENTE DEPORTIVO', `${player.name || player.nombre}`);
+  await addHeader(doc, 'EXPEDIENTE DEPORTIVO', `${player.name || player.nombre}`, activeTeam);
 
   doc.setTextColor(45, 45, 45);
   doc.setFontSize(12);

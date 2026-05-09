@@ -20,12 +20,16 @@ import {
 import { generateSeasonReport, generateMatchConvocation, generateSessionPDF } from '../utils/pdfGenerator';
 import { t } from '../i18n/translations';
 import { usePWA } from '../hooks/usePWA';
+import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
+import { storage } from '../firebaseConfig';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import './AdminPanel.css';
 
 const AdminPanel = () => {
   const [activeTab, setActiveTab] = useState('equipos');
-  const { teams, activeTeam, addTeam, deleteTeam, selectTeam } = useTeams();
+  const { user } = useAuth();
+  const { teams, activeTeam, addTeam, deleteTeam, selectTeam, updateTeam } = useTeams();
   const { exercises, removeExercise } = useExercises(activeTeam?.id);
   const { players } = usePlayers(activeTeam?.id);
   const { sessions } = useSessions(activeTeam?.id);
@@ -67,6 +71,26 @@ const AdminPanel = () => {
     setNewTeam({ nombre: '', categoria: '', temporada: '2025-26' });
   };
 
+  const [isUploadingShield, setIsUploadingShield] = useState(false);
+  const handleUploadEscudo = async (e) => {
+    const file = e.target.files[0];
+    if (!file || !user || !activeTeam) return;
+    
+    setIsUploadingShield(true);
+    try {
+      const storageRef = ref(storage, `escudos/${user.uid}/${activeTeam.id}/logo`);
+      await uploadBytes(storageRef, file);
+      const url = await getDownloadURL(storageRef);
+      await updateTeam(activeTeam.id, { escudo: url });
+      alert("Escudo subido correctamente. Actualiza la página si no ves los cambios.");
+    } catch (error) {
+      console.error("Error al subir el escudo:", error);
+      alert("No se pudo subir la imagen. Revisa los permisos.");
+    } finally {
+      setIsUploadingShield(false);
+    }
+  };
+
   const handleSaveProfile = async () => {
     try {
       await saveSettings({ ...settings, ...profileData });
@@ -92,23 +116,23 @@ const AdminPanel = () => {
     await saveSettings({ ...settings, ...updatedPrefs });
   };
 
-  const handleExportSeason = () => {
+  const handleExportSeason = async () => {
     if (!activeTeam) { alert('Selecciona un equipo primero.'); return; }
-    generateSeasonReport(activeTeam, players, matches);
+    await generateSeasonReport(activeTeam, players, matches);
   };
 
-  const handleExportConvocatoria = () => {
+  const handleExportConvocatoria = async () => {
     if (!selectedMatchId) { alert('Selecciona un partido primero.'); return; }
     const match = matches.find(m => m.id === selectedMatchId);
     if (!match) { alert('Partido no encontrado.'); return; }
-    generateMatchConvocation(match, players);
+    await generateMatchConvocation(match, players, activeTeam);
   };
 
-  const handleExportSession = () => {
+  const handleExportSession = async () => {
     if (!selectedSessionId) { alert('Selecciona una sesión primero.'); return; }
     const session = sessions.find(s => s.id === selectedSessionId);
     if (!session) { alert('Sesión no encontrada.'); return; }
-    generateSessionPDF(session);
+    await generateSessionPDF(session, activeTeam);
   };
 
   return (
@@ -358,10 +382,26 @@ const AdminPanel = () => {
                     </div>
                   </div>
                   <div className="form-group">
-                    <label>Escudo del Club (.png / .svg)</label>
-                    <div className="upload-placeholder" onClick={() => alert('Selector de archivos abierto')}>
-                      <Download size={20} />
-                      <span>Subir Imagen</span>
+                    <label>Escudo del Club (Asignado al equipo actual: {activeTeam?.nombre})</label>
+                    <div style={{ display: 'flex', gap: '15px', alignItems: 'center' }}>
+                      <div className="team-badge" style={{background: clubData.primaryColor || 'var(--accent)', minWidth: '60px', height: '60px'}}>
+                        {activeTeam?.escudo ? (
+                          <img src={activeTeam.escudo} alt="Escudo" style={{width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%'}}/>
+                        ) : (
+                          (activeTeam?.nombre || 'E').charAt(0)
+                        )}
+                      </div>
+                      <div className="upload-placeholder" style={{flex: 1, position: 'relative'}}>
+                        <Download size={20} />
+                        <span>{isUploadingShield ? 'Subiendo...' : 'Subir Imagen'}</span>
+                        <input 
+                          type="file" 
+                          accept="image/*" 
+                          onChange={handleUploadEscudo}
+                          disabled={isUploadingShield || !activeTeam}
+                          style={{position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', opacity: 0, cursor: 'pointer'}} 
+                        />
+                      </div>
                     </div>
                   </div>
                   <button className="btn-save-settings" onClick={handleUpdateClub}>{t('btn.save', settings.language)} Club</button>

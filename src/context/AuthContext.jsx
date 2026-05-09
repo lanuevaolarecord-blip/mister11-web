@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useMemo, useCallback } from 'react';
 import { auth, db } from '../firebaseConfig';
 import { onAuthStateChanged } from 'firebase/auth';
 import { collection, query, onSnapshot } from 'firebase/firestore';
@@ -49,13 +49,21 @@ export const AuthProvider = ({ children }) => {
     return () => unsubscribe();
   }, [user]);
 
-  const changeActiveTeam = (id) => {
+  const changeActiveTeam = useCallback((id) => {
     setActiveTeamId(id);
     localStorage.setItem('mister11_active_team', id);
-  };
+  }, []);
+
+  const value = useMemo(() => ({
+    user, 
+    loading, 
+    activeTeamId, 
+    changeActiveTeam, 
+    teams
+  }), [user, loading, activeTeamId, changeActiveTeam, teams]);
 
   return (
-    <AuthContext.Provider value={{ user, loading, activeTeamId, changeActiveTeam, teams }}>
+    <AuthContext.Provider value={value}>
       {children}
     </AuthContext.Provider>
   );

@@ -24,6 +24,8 @@ import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { storage } from '../firebaseConfig';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import imageCompression from 'browser-image-compression';
+import EscudoEquipo from '../components/EscudoEquipo';
 import './AdminPanel.css';
 
 const AdminPanel = () => {
@@ -42,7 +44,7 @@ const AdminPanel = () => {
   const { settings, saveSettings, loading: loadingSettings } = useSettings(activeTeam?.id);
   const { darkMode, toggleTheme } = useTheme();
   const [profileData, setProfileData] = useState({ profileName: '', specialty: 'Primer Entrenador' });
-  const [clubData, setClubData] = useState({ clubName: '', primaryColor: '#1B3A2D', secondaryColor: '#4CAF7D' });
+  const [teamEditData, setTeamEditData] = useState({ nombre: '', categoria: '', temporada: '', colorLocal: '#1B3A2D', colorVisitante: '#4CAF7D' });
   const [prefData, setPrefData] = useState({ notifications: true, language: 'Español (ES)' });
   const { deferredPrompt, isInstalled, installApp } = usePWA();
 
@@ -53,17 +55,24 @@ const AdminPanel = () => {
         profileName: settings.profileName || '', 
         specialty: settings.specialty || 'Primer Entrenador' 
       });
-      setClubData({ 
-        clubName: settings.clubName || '', 
-        primaryColor: settings.primaryColor || '#1B3A2D', 
-        secondaryColor: settings.secondaryColor || '#4CAF7D' 
-      });
       setPrefData({ 
         notifications: settings.notifications ?? true, 
         language: settings.language || 'Español (ES)' 
       });
     }
   }, [settings]);
+
+  useEffect(() => {
+    if (activeTeam) {
+      setTeamEditData({
+        nombre: activeTeam.nombre || '',
+        categoria: activeTeam.categoria || '',
+        temporada: activeTeam.temporada || '',
+        colorLocal: activeTeam.colorLocal || '#1B3A2D',
+        colorVisitante: activeTeam.colorVisitante || '#4CAF7D'
+      });
+    }
+  }, [activeTeam]);
 
   const handleAddTeam = async () => {
     if (!newTeam.nombre) return;
@@ -78,8 +87,15 @@ const AdminPanel = () => {
     
     setIsUploadingShield(true);
     try {
-      const storageRef = ref(storage, `escudos/${user.uid}/${activeTeam.id}/logo`);
-      await uploadBytes(storageRef, file);
+      const options = {
+        maxSizeMB: 0.2,        // 200KB max
+        maxWidthOrHeight: 512, // cuadrado pequeño
+        useWebWorker: true,
+        fileType: 'image/webp'
+      };
+      const compressedFile = await imageCompression(file, options);
+      const storageRef = ref(storage, `escudos/${user.uid}/${activeTeam.id}/logo.webp`);
+      await uploadBytes(storageRef, compressedFile);
       const url = await getDownloadURL(storageRef);
       await updateTeam(activeTeam.id, { escudo: url });
       alert("Escudo subido correctamente. Actualiza la página si no ves los cambios.");
@@ -100,12 +116,13 @@ const AdminPanel = () => {
     }
   };
 
-  const handleUpdateClub = async () => {
+  const handleUpdateTeamInfo = async () => {
+    if (!activeTeam) return;
     try {
-      await saveSettings({ ...settings, ...clubData });
-      alert("Club actualizado correctamente.");
+      await updateTeam(activeTeam.id, teamEditData);
+      alert("Identidad del equipo actualizada correctamente.");
     } catch (e) {
-      alert("Error al actualizar club.");
+      alert("Error al actualizar identidad del equipo.");
     }
   };
 
@@ -196,9 +213,7 @@ const AdminPanel = () => {
                 if (!team) return null;
                 return (
                   <div key={team.id} className={`team-admin-card ${activeTeam?.id === team.id ? 'active' : ''}`}>
-                    <div className="team-badge" style={{background: team.colorLocal || 'var(--accent)'}}>
-                      {(team.nombre || '').charAt(0)}
-                    </div>
+                    <EscudoEquipo src={team.escudo} nombreEquipo={team.nombre} size="48px" borderRadius="12px" />
                   <div className="team-info">
                     <h4>{team.nombre}</h4>
                     <span>{team.categoria} | {team.temporada}</span>
@@ -347,53 +362,70 @@ const AdminPanel = () => {
                 </div>
               </div>
 
-              {/* CONFIGURACIÓN DEL CLUB */}
+              {/* IDENTIDAD DEL EQUIPO */}
               <div className="settings-card">
                 <div className="card-header-icon">
                   <Layers size={20} />
-                  <h3>Identidad del Club</h3>
+                  <h3>Identidad del Equipo ({activeTeam?.nombre || 'Ninguno'})</h3>
                 </div>
                 <div className="settings-form">
                   <div className="form-group">
-                    <label>Nombre del Club</label>
+                    <label>Nombre del Equipo</label>
                     <input 
                       type="text" 
                       placeholder="Ej. Real Madrid C.F." 
-                      value={clubData.clubName} 
-                      onChange={(e) => setClubData({...clubData, clubName: e.target.value})}
+                      value={teamEditData.nombre} 
+                      onChange={(e) => setTeamEditData({...teamEditData, nombre: e.target.value})}
+                      disabled={!activeTeam}
                     />
+                  </div>
+                  <div className="form-row-dual">
+                    <div className="form-group">
+                      <label>Categoría</label>
+                      <input 
+                        type="text" 
+                        value={teamEditData.categoria} 
+                        onChange={(e) => setTeamEditData({...teamEditData, categoria: e.target.value})}
+                        disabled={!activeTeam}
+                      />
+                    </div>
+                    <div className="form-group">
+                      <label>Temporada</label>
+                      <input 
+                        type="text" 
+                        value={teamEditData.temporada} 
+                        onChange={(e) => setTeamEditData({...teamEditData, temporada: e.target.value})}
+                        disabled={!activeTeam}
+                      />
+                    </div>
                   </div>
                   <div className="form-row-dual">
                     <div className="form-group">
                       <label>Color Principal</label>
                       <input 
                         type="color" 
-                        value={clubData.primaryColor} 
-                        onChange={(e) => setClubData({...clubData, primaryColor: e.target.value})}
+                        value={teamEditData.colorLocal} 
+                        onChange={(e) => setTeamEditData({...teamEditData, colorLocal: e.target.value})}
+                        disabled={!activeTeam}
                       />
                     </div>
                     <div className="form-group">
                       <label>Color Secundario</label>
                       <input 
                         type="color" 
-                        value={clubData.secondaryColor} 
-                        onChange={(e) => setClubData({...clubData, secondaryColor: e.target.value})}
+                        value={teamEditData.colorVisitante} 
+                        onChange={(e) => setTeamEditData({...teamEditData, colorVisitante: e.target.value})}
+                        disabled={!activeTeam}
                       />
                     </div>
                   </div>
                   <div className="form-group">
-                    <label>Escudo del Club (Asignado al equipo actual: {activeTeam?.nombre})</label>
+                    <label>Escudo del Equipo</label>
                     <div style={{ display: 'flex', gap: '15px', alignItems: 'center' }}>
-                      <div className="team-badge" style={{background: clubData.primaryColor || 'var(--accent)', minWidth: '60px', height: '60px'}}>
-                        {activeTeam?.escudo ? (
-                          <img src={activeTeam.escudo} alt="Escudo" style={{width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%'}}/>
-                        ) : (
-                          (activeTeam?.nombre || 'E').charAt(0)
-                        )}
-                      </div>
+                      <EscudoEquipo src={activeTeam?.escudo} nombreEquipo={activeTeam?.nombre} size="60px" />
                       <div className="upload-placeholder" style={{flex: 1, position: 'relative'}}>
                         <Download size={20} />
-                        <span>{isUploadingShield ? 'Subiendo...' : 'Subir Imagen'}</span>
+                        <span>{isUploadingShield ? 'Subiendo y optimizando...' : 'Subir Imagen'}</span>
                         <input 
                           type="file" 
                           accept="image/*" 
@@ -404,7 +436,9 @@ const AdminPanel = () => {
                       </div>
                     </div>
                   </div>
-                  <button className="btn-save-settings" onClick={handleUpdateClub}>{t('btn.save', settings.language)} Club</button>
+                  <button className="btn-save-settings" onClick={handleUpdateTeamInfo} disabled={!activeTeam}>
+                    {t('btn.save', settings.language)} Identidad
+                  </button>
                 </div>
               </div>
 

@@ -1,0 +1,100 @@
+{
+  "project_info": {
+    "project_number": "954668402587",
+    "project_id": "mister11",
+    "storage_bucket": "mister11.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:954668402587:android:ae327f672a1cf16c2b833e",
+        "android_client_info": {
+          "package_name": "com.example.mister11_mobile"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "954668402587-12a5sfjmds88v928epqfgnim53boi8bd.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.mister11_mobile",
+            "certificate_hash": "76c8766f61c7b4d1efba4d73c005aa717c110a4e"
+          }
+        },
+        {
+          "client_id": "954668402587-es7agrio9fp3hqn5k39dlkmr90g58o31.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.mister11_mobile",
+            "certificate_hash": "76c8766f61c7b4d1efba4d73cd05aa717c110a4e"
+          }
+        },
+        {
+          "client_id": "954668402587-im73oik073ds12jvkfn0diasvdmkb9qc.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBZUHDdxPUUW8dJ-Qn7YmRZQ8kWl4gkYAQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "954668402587-im73oik073ds12jvkfn0diasvdmkb9qc.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:954668402587:android:2ba4f6b6463c8ff22b833e",
+        "android_client_info": {
+          "package_name": "com.mister11.app"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "954668402587-gj7uu45te51490hknub36earts00pnho.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.mister11.app",
+            "certificate_hash": "76c8766f61c7b4d1efba4d73c005aa717c110a4e"
+          }
+        },
+        {
+          "client_id": "954668402587-mhlm35bgccc0448im1b8ie2o41l0u28b.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.mister11.app",
+            "certificate_hash": "76c8766f61c7b4d1efba4d73cd05aa717c110a4e"
+          }
+        },
+        {
+          "client_id": "954668402587-im73oik073ds12jvkfn0diasvdmkb9qc.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBZUHDdxPUUW8dJ-Qn7YmRZQ8kWl4gkYAQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "954668402587-im73oik073ds12jvkfn0diasvdmkb9qc.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

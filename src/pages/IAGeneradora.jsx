@@ -99,7 +99,7 @@ const IAGeneradora = () => {
     }));
   };
 
-  // Llama a Groq (Llama 3) para generar el contenido
+  // Llama a Groq para generar el contenido
   const callGroq = async (promptTexto) => {
     const key = import.meta.env.VITE_GROQ_API_KEY;
     
@@ -249,7 +249,7 @@ Responde SOLO en español. Sé específico y práctico.`;
           borderRadius: 8, padding: '12px 16px', margin: 16, fontSize: 13,
           fontWeight: 600
         }}>
-          ⚠️ La clave de API de Groq no está configurada. Contacta al administrador
+          ⚠️ La clave de API no está configurada. Contacta al administrador
           o configura la variable <code>VITE_GROQ_API_KEY</code> en Vercel.
         </div>
       )}
@@ -257,7 +257,7 @@ Responde SOLO en español. Sé específico y práctico.`;
         <div className="ia-form-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
           <div>
             <h1>✨ IA Generadora</h1>
-            <p>Configura los parámetros y genera ejercicios de entrenamiento personalizados con Gemini AI.</p>
+            <p>Configura los parámetros y genera ejercicios de entrenamiento personalizados con el Agente IA.</p>
           </div>
           <button
             onClick={() => setShowBiblioteca(true)}
@@ -414,7 +414,7 @@ Responde SOLO en español. Sé específico y práctico.`;
               <div className="ai-dot"></div>
             </div>
             <h2>Analizando parámetros...</h2>
-            <p>Gemini AI está diseñando tu ejercicio de entrenamiento personalizado.</p>
+            <p>El Agente IA está diseñando tu ejercicio de entrenamiento personalizado.</p>
           </div>
         )}
 
@@ -425,27 +425,14 @@ Responde SOLO en español. Sé específico y práctico.`;
               <button className="btn-outline" onClick={() => { setResult(null); }}>🔄 Limpiar</button>
               <button className="btn-outline-gold" onClick={handleGenerate}>✨ Regenerar</button>
             </div>
-            <div style={{
-              flex: 1,
-              minHeight: 320,
-              maxHeight: '60vh',
-              overflowY: 'auto',
-              background: '#0f1a0f',
-              border: '1px solid #2d4a2d',
-              borderRadius: 12,
-              padding: '16px 20px',
-              marginTop: 12,
-              lineHeight: 1.7,
-              fontSize: 14,
-              color: '#e0e0e0',
-              whiteSpace: 'pre-wrap',
-              wordBreak: 'break-word'
-            }}>
+            <div className="ia-markdown-container">
+              <div className="ia-markdown">
               {renderMarkdown(result) || (
-                <span style={{ color: '#555', fontStyle: 'italic' }}>
+                <span className="ia-empty-text">
                   El ejercicio generado aparecerá aquí...
                 </span>
               )}
+              </div>
             </div>
 
             {/* DIAGRAMA DESACTIVADO */}
@@ -506,7 +493,7 @@ Responde SOLO en español. Sé específico y práctico.`;
                     }}
                   >
                     <div style={{ color: 'var(--gold)', fontWeight: 600, fontSize: 13 }}>
-                      <span style={{ color: darkMode ? '#10B981' : 'var(--accent)' }}>
+                      <span style={{ color: 'var(--accent, #10B981)' }}>
                         {ej.type === 'pizarra' ? '📋 Pizarra - ' : '✨ IA - '}
                       </span>
                       <span style={{ color: 'var(--text-primary)' }}>

@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Míster11</string>
+    <string name="title_activity_main">Míster11</string>
+    <string name="package_name">com.mister11.app</string>
+    <string name="custom_url_scheme">com.mister11.app</string>
+</resources>

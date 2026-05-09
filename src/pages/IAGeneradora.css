@@ -282,43 +282,105 @@
   border-bottom: 1px solid var(--border-color);
 }
 
-.result-markdown {
-  padding: 24px;
-  color: var(--text-secondary);
+.ia-markdown-container {
+  flex: 1;
+  min-height: 320px;
+  max-height: 60vh;
+  overflow-y: auto;
+  background: #F5F0E8; /* Modo claro */
+  border: 1px solid #E0DACA;
+  border-radius: 12px;
+  padding: 16px 20px;
+  margin-top: 12px;
   line-height: 1.7;
-  font-size: 15px;
+  font-size: 14px;
+  white-space: pre-wrap;
+  word-break: break-word;
+  color: #2D2D2D; /* Modo claro */
 }
 
-.result-markdown h2 {
-  font-family: var(--font-title);
+.ia-markdown {
+  padding: 8px;
+}
+
+.ia-empty-text {
+  color: #888;
+  font-style: italic;
+}
+
+/* Modo claro (por defecto) */
+.ia-markdown h1, .ia-markdown h2, .ia-markdown h3, .ia-markdown h4 {
+  color: #1B3A2D;
+  font-weight: 700;
+  margin-top: 1.2em;
+  margin-bottom: 0.6em;
+  font-family: var(--font-title, inherit);
+}
+
+.ia-markdown h2 {
   font-size: 1.6rem;
-  color: var(--text-primary);
-  border-bottom: 3px solid var(--accent);
+  border-bottom: 3px solid var(--accent, #10B981);
   padding-bottom: 10px;
-  margin: 0 0 20px 0;
 }
 
-.result-markdown h3 {
+.ia-markdown h3 {
   font-size: 1rem;
-  color: var(--text-primary);
-  margin: 20px 0 8px 0;
   text-transform: uppercase;
   letter-spacing: 0.05em;
 }
 
-.result-markdown p { margin: 4px 0; }
-.result-markdown strong { color: var(--text-primary); }
-.result-markdown li {
+.ia-markdown p, .ia-markdown li {
+  color: #2D2D2D;
+  line-height: 1.6;
+  margin: 6px 0;
+}
+
+.ia-markdown strong {
+  color: #1B3A2D;
+  font-weight: 700;
+}
+
+.ia-markdown code {
+  background: #E8E8E8;
+  color: #C7254E;
+  padding: 0.2em 0.4em;
+  border-radius: 4px;
+}
+
+.ia-markdown li {
   position: relative;
   padding-left: 16px;
-  margin: 4px 0;
 }
-.result-markdown li::before {
+.ia-markdown li::before {
   content: '→';
-  color: var(--accent);
+  color: var(--accent, #10B981);
   position: absolute;
   left: 0;
   font-weight: bold;
+}
+
+/* Modo oscuro */
+.dark .ia-markdown-container {
+  background: #0f1a0f;
+  border-color: #2d4a2d;
+  color: #e0e0e0;
+}
+
+.dark .ia-markdown h1, .dark .ia-markdown h2, .dark .ia-markdown h3, .dark .ia-markdown h4 {
+  color: #D4A843;
+}
+
+.dark .ia-markdown p, .dark .ia-markdown li {
+  color: #F5F0E8;
+}
+
+.dark .ia-markdown strong {
+  color: #FFFFFF;
+}
+
+.dark .ia-markdown code {
+  background: #333;
+  color: #F5F0E8;
 }
 
 /* Modal styles */

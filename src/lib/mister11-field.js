@@ -112,7 +112,7 @@ export class FieldRenderer {
     this.ctx = canvas.getContext('2d');
     this.currentType = 'full';
     this.padding = options.padding ?? { v: 20, h: 20 };
-    this.lineWeight = 1.8; // Grosor de línea estándar
+    this.lineWeight = 2.0; // Grosor de línea estándar (actualizado para alta legibilidad)
     
     this.reducedDim = { w: 40, h: 30 }; 
     this.field = { x: 0, y: 0, w: 0, h: 0, scale: 1 };

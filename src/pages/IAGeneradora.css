@@ -287,8 +287,8 @@
   min-height: 320px;
   max-height: 60vh;
   overflow-y: auto;
-  background: #F5F0E8; /* Modo claro */
-  border: 1px solid #E0DACA;
+  background: var(--bg-card); /* Blanco o negro carbón */
+  border: 1px solid var(--border-color);
   border-radius: 12px;
   padding: 16px 20px;
   margin-top: 12px;
@@ -296,7 +296,7 @@
   font-size: 14px;
   white-space: pre-wrap;
   word-break: break-word;
-  color: #2D2D2D; /* Modo claro */
+  color: var(--text-secondary); 
 }
 
 .ia-markdown {
@@ -304,14 +304,15 @@
 }
 
 .ia-empty-text {
-  color: #888;
+  color: var(--text-muted);
   font-style: italic;
+  font-weight: 500;
 }
 
 /* Modo claro (por defecto) */
 .ia-markdown h1, .ia-markdown h2, .ia-markdown h3, .ia-markdown h4 {
-  color: #1B3A2D;
-  font-weight: 700;
+  color: var(--text-primary);
+  font-weight: 800;
   margin-top: 1.2em;
   margin-bottom: 0.6em;
   font-family: var(--font-title, inherit);
@@ -330,14 +331,15 @@
 }
 
 .ia-markdown p, .ia-markdown li {
-  color: #2D2D2D;
+  color: var(--text-secondary);
   line-height: 1.6;
   margin: 6px 0;
+  font-weight: 500;
 }
 
 .ia-markdown strong {
-  color: #1B3A2D;
-  font-weight: 700;
+  color: var(--text-primary);
+  font-weight: 800;
 }
 
 .ia-markdown code {
@@ -563,8 +565,9 @@
 
 .diagram-sub {
   font-size: 11px;
-  color: #AAAAAA;
+  color: var(--accent-gold);
   display: block;
+  font-weight: bold;
 }
 
 .diagram-legend {
@@ -580,7 +583,7 @@
   align-items: center;
   gap: 5px;
   font-size: 11px;
-  color: #CCCCCC;
+  color: #FFFFFF;
 }
 
 .legend-dot {

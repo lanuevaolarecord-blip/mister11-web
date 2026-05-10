@@ -13,9 +13,9 @@
   bottom: 28px;
   left: 50%;
   transform: translateX(-50%);
-  background: #4CAF7D;
+  background: var(--accent);
   color: #FFFFFF;
-  font-weight: 700;
+  font-weight: 800;
   font-size: 14px;
   padding: 12px 28px;
   border-radius: 30px;
@@ -68,13 +68,14 @@
   background: transparent;
   border: none;
   font-family: var(--font-body);
-  font-weight: bold;
-  color: #888;
+  font-weight: 800;
+  color: var(--text-muted);
   padding: 8px 16px;
   cursor: pointer;
   white-space: nowrap;
   position: relative;
   transition: color 0.2s;
+  font-size: 14px;
 }
 
 .plan-tab:hover, .plan-tab.active {
@@ -161,13 +162,14 @@
   flex-wrap: wrap;
   gap: 15px;
   padding: 10px 15px;
-  background: white;
-  border: 1px solid #eee;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
   border-radius: 8px;
   margin-bottom: 20px;
   font-size: 12px;
-  color: #555;
+  color: var(--text-secondary);
   align-items: center;
+  font-weight: 600;
 }
 
 .macro-legend strong {
@@ -208,11 +210,11 @@
   align-items: center;
   font-size: 11px;
   font-weight: bold;
-  border-bottom: 1px solid #2D5A27 !important;
+  border-bottom: 1px solid var(--border-color);
   white-space: nowrap;
 }
-.section-head { background: rgba(255,255,255,0.05); }
-.sub-head { color: #ccc; font-size: 10px; }
+.section-head { background: rgba(0,0,0,0.1); }
+.sub-head { color: var(--text-muted); font-size: 10px; }
 .highlight-vol { color: var(--gold); }
 
 /* Data columns wrapper */
@@ -229,13 +231,13 @@
 
 .cell {
   height: 40px;
-  border-bottom: 1px solid #2D5A27 !important;
+  border-bottom: 1px solid var(--border-color);
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 12px;
   position: relative;
-  color: #CCCCCC !important;
+  color: var(--text-secondary);
 }
 
 .cell input, .cell select {
@@ -259,14 +261,14 @@
 
 .period-cell input { color: #4CAF7D !important; font-weight: 600 !important; }
 
-.cell.fw-bold { font-weight: bold; color: #CCCCCC !important; background: transparent; }
-.cell.sub-cell input { color: #AAAAAA !important; }
-.cell.highlight-vol input { font-weight: 700 !important; color: #D4A843 !important; }
+.cell.fw-bold { font-weight: bold; color: var(--text-primary); background: transparent; }
+.cell.sub-cell input { color: var(--text-muted); }
+.cell.highlight-vol input { font-weight: 800 !important; color: var(--accent-gold); }
 
 .cell select {
-  background: #1B3A2D !important;
-  color: #CCCCCC !important;
-  border: 1px solid #4CAF7D !important;
+  background: var(--bg-primary);
+  color: var(--text-secondary);
+  border: 1px solid var(--border-color);
   border-radius: 4px;
 }
 
@@ -429,7 +431,7 @@
   background: white;
   border-top: 1px solid #eee;
 }
-.day-load-input label { display: block; font-size: 11px; color: #888; margin-bottom: 5px; }
+.day-load-input label { display: block; font-size: 11px; color: var(--text-muted); margin-bottom: 5px; font-weight: 700; }
 .day-load-input input { 
   width: 100%; 
   padding: 8px; 
@@ -654,8 +656,9 @@
 .countdown-label {
   font-size: 10px;
   text-transform: uppercase;
-  color: #AAAAAA;
+  color: var(--text-muted);
   letter-spacing: 0.5px;
+  font-weight: 700;
 }
 
 .meso-info-grid {
@@ -677,8 +680,9 @@
 .ms-label {
   font-size: 10px;
   text-transform: uppercase;
-  color: #888;
+  color: var(--text-muted);
   letter-spacing: 0.5px;
+  font-weight: 700;
 }
 
 .ms-value {

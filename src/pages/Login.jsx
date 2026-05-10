@@ -70,8 +70,18 @@ const Login = () => {
             </button>
           )}
           
-          <div className="login-footer">
-            <p>Al iniciar sesión, aceptas nuestros Términos de Servicio y Política de Privacidad.</p>
+          <div className="legal-links" style={{ marginTop: '20px', fontSize: '12px', textAlign: 'center', color: 'var(--text-secondary)' }}>
+            <p>
+              Al iniciar sesión, aceptas nuestros{' '}
+              <a href="/legal/terminos.html" target="_blank" rel="noopener noreferrer">Términos y Condiciones</a>{' '}
+              y nuestra{' '}
+              <a href="/legal/privacidad.html" target="_blank" rel="noopener noreferrer">Política de Privacidad</a>.
+            </p>
+            <p style={{ marginTop: '10px' }}>
+              📄{' '}
+              <a href="/legal/consentimiento.html" target="_blank" rel="noopener noreferrer">Modelo de consentimiento para padres</a>{' '}
+              (descargar e imprimir)
+            </p>
           </div>
         </div>
       </div>

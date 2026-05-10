@@ -13,14 +13,14 @@ import './Tests.css';
 
 // PREDEFINED_TESTS remains as base catalog
 const DEFAULT_TESTS = [
-  { id: 't1', category: 'Resistencia', name: 'Test de Cooper', unit: 'm', desc: 'Distancia recorrida en 12 minutos.', protocol: 'Los jugadores deben correr la mayor distancia posible en 12 minutos alrededor de una pista o campo marcado. Se anota la distancia total en metros.', image: 'https://images.unsplash.com/photo-1552674605-db6ffd4facb5?auto=format&fit=crop&q=80&w=600' },
-  { id: 't2', category: 'Resistencia', name: 'Course Navette', unit: 'nivel', desc: 'Carrera de ida y vuelta de 20m con pitidos.', protocol: 'Carreras de 20 metros al ritmo de un pitido de audio que se acelera cada minuto. Se anota el último palier completado.', image: 'https://images.unsplash.com/photo-1461896642383-04018697529f?auto=format&fit=crop&q=80&w=600' },
-  { id: 't3', category: 'Velocidad', name: 'Sprint 10m', unit: 'seg', desc: 'Aceleración en distancia corta.', protocol: 'Desde posición estática, sprint al máximo esfuerzo hasta rebasar la línea de 10 metros. Se usa cronómetro o fotocélulas.', image: 'https://images.unsplash.com/photo-1530549387631-f535c7658f8c?auto=format&fit=crop&q=80&w=600' },
-  { id: 't4', category: 'Velocidad', name: 'Sprint 30m', unit: 'seg', desc: 'Velocidad máxima lanzada.', protocol: 'Igual que 10m, pero se mide el tiempo total a los 30 metros.', image: 'https://images.unsplash.com/photo-1434682881908-b43d0467b798?auto=format&fit=crop&q=80&w=600' },
-  { id: 't5', category: 'Agilidad', name: 'T-Test', unit: 'seg', desc: 'Desplazamientos frontales, laterales y de espaldas.', protocol: 'Sprint 10m al frente, desplazamiento lateral 5m a la izquierda, 10m a la derecha, 5m al centro y 10m de espaldas al inicio.', image: 'https://images.unsplash.com/photo-1517466787929-bc90951d0974?auto=format&fit=crop&q=80&w=600' },
-  { id: 't6', category: 'Fuerza', name: 'Salto CMJ', unit: 'cm', desc: 'Salto vertical con contramovimiento.', protocol: 'Las manos en las caderas. Bajar el centro de gravedad (flexión de rodillas) e inmediatamente saltar lo más alto posible.', image: 'https://images.unsplash.com/photo-1594882645126-14020914d58d?auto=format&fit=crop&q=80&w=600' },
-  { id: 't7', category: 'Técnica', name: 'Conducción conos', unit: 'seg', desc: 'Slalom entre conos con finalización.', protocol: 'Conducir el balón haciendo slalom entre 5 conos separados por 2 metros y dar un pase a un objetivo.', image: 'https://images.unsplash.com/photo-1551958219-acbc608c6377?auto=format&fit=crop&q=80&w=600' },
-  { id: 't8', category: 'Técnica', name: 'Pase a portería', unit: 'pts', desc: 'Precisión de pase a zonas objetivo (10 pases).', protocol: '10 pases desde la frontal del área hacia pequeñas porterías o zonas marcadas. 1 punto por acierto.', image: 'https://images.unsplash.com/photo-1574629810360-7efbbe195018?auto=format&fit=crop&q=80&w=600' }
+  { id: 't1', category: 'Resistencia', name: 'Test de Cooper', unit: 'm', desc: 'Distancia recorrida en 12 minutos.', protocol: 'Los jugadores deben correr la mayor distancia posible en 12 minutos alrededor de una pista o campo marcado. Se anota la distancia total en metros.' },
+  { id: 't2', category: 'Resistencia', name: 'Course Navette', unit: 'nivel', desc: 'Carrera de ida y vuelta de 20m con pitidos.', protocol: 'Carreras de 20 metros al ritmo de un pitido de audio que se acelera cada minuto. Se anota el último palier completado.' },
+  { id: 't3', category: 'Velocidad', name: 'Sprint 10m', unit: 'seg', desc: 'Aceleración en distancia corta.', protocol: 'Desde posición estática, sprint al máximo esfuerzo hasta rebasar la línea de 10 metros. Se usa cronómetro o fotocélulas.' },
+  { id: 't4', category: 'Velocidad', name: 'Sprint 30m', unit: 'seg', desc: 'Velocidad máxima lanzada.', protocol: 'Igual que 10m, pero se mide el tiempo total a los 30 metros.' },
+  { id: 't5', category: 'Agilidad', name: 'T-Test', unit: 'seg', desc: 'Desplazamientos frontales, laterales y de espaldas.', protocol: 'Sprint 10m al frente, desplazamiento lateral 5m a la izquierda, 10m a la derecha, 5m al centro y 10m de espaldas al inicio.' },
+  { id: 't6', category: 'Fuerza', name: 'Salto CMJ', unit: 'cm', desc: 'Salto vertical con contramovimiento.', protocol: 'Las manos en las caderas. Bajar el centro de gravedad (flexión de rodillas) e inmediatamente saltar lo más alto posible.' },
+  { id: 't7', category: 'Técnica', name: 'Conducción conos', unit: 'seg', desc: 'Slalom entre conos con finalización.', protocol: 'Conducir el balón haciendo slalom entre 5 conos separados por 2 metros y dar un pase a un objetivo.' },
+  { id: 't8', category: 'Técnica', name: 'Pase a portería', unit: 'pts', desc: 'Precisión de pase a zonas objetivo (10 pases).', protocol: '10 pases desde la frontal del área hacia pequeñas porterías o zonas marcadas. 1 punto por acierto.' }
 ];
 
 const Tests = () => {
@@ -479,7 +479,7 @@ const Tests = () => {
             </div>
             <div className="modal-body test-detail-body">
               <div className="test-image-placeholder">
-                <img src={selectedTestDetail.image || 'https://via.placeholder.com/600x300/1B3A2D/4CAF7D?text=Imagen+del+Test'} alt={selectedTestDetail.name} />
+                <div className="vector-icon-large">📊</div>
               </div>
               <div className="test-info-block">
                 <div className="protocolo-card">

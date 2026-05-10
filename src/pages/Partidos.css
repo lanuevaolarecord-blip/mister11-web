@@ -95,9 +95,9 @@
   border-radius: 4px;
   text-transform: uppercase;
 }
-.status-badge.terminado { background: rgba(76, 175, 125, 0.1); color: #4CAF7D; border: 1px solid #4CAF7D; }
-.status-badge.pendiente { background: rgba(212, 168, 67, 0.1); color: #D4A843; border: 1px solid #D4A843; }
-.mc-date { font-size: 12px; color: var(--text-muted); font-weight: bold; }
+.status-badge.terminado { background: var(--accent); color: white; border: 1px solid var(--accent); }
+.status-badge.pendiente { background: var(--accent-gold); color: var(--primario-oscuro); border: 1px solid var(--accent-gold); }
+.mc-date { font-size: 12px; color: var(--text-muted); font-weight: 800; }
 
 .mc-body {
   display: flex;
@@ -201,8 +201,8 @@
   align-items: center;
   margin-bottom: 20px;
 }
-.conv-count { font-weight: bold; font-size: 14px; color: #4CAF7D; background: rgba(76, 175, 125, 0.1); padding: 5px 15px; border-radius: 20px; border: 1px solid #4CAF7D; transition: all 0.2s; }
-.conv-count.error { background: rgba(239, 68, 68, 0.1); color: #EF4444; border-color: #EF4444; }
+.conv-count { font-weight: 800; font-size: 14px; color: var(--accent); background: var(--bg-primary); padding: 5px 15px; border-radius: 20px; border: 2px solid var(--accent); transition: all 0.2s; }
+.conv-count.error { background: var(--bg-primary); color: var(--error); border-color: var(--error); }
 
 .players-checklist {
   display: grid;
@@ -297,11 +297,11 @@
   box-shadow: 0 10px 30px rgba(0,0,0,0.2);
 }
 
-.pitch-line { position: absolute; background: rgba(255,255,255,0.5); }
+.pitch-line { position: absolute; background: rgba(255,255,255,0.8); }
 .center-line { top: 50%; left: 0; width: 100%; height: 2px; transform: translateY(-50%); }
-.pitch-circle { position: absolute; border: 2px solid rgba(255,255,255,0.5); border-radius: 50%; }
+.pitch-circle { position: absolute; border: 2px solid rgba(255,255,255,0.8); border-radius: 50%; }
 .center-circle { width: 30%; aspect-ratio: 1; top: 50%; left: 50%; transform: translate(-50%, -50%); }
-.pitch-box { position: absolute; border: 2px solid rgba(255,255,255,0.5); left: 50%; transform: translateX(-50%); width: 50%; height: 15%; }
+.pitch-box { position: absolute; border: 2px solid rgba(255,255,255,0.8); left: 50%; transform: translateX(-50%); width: 50%; height: 15%; }
 .penalty-box.top { top: 0; border-top: none; }
 .penalty-box.bottom { bottom: 0; border-bottom: none; }
 
@@ -329,12 +329,13 @@
   box-shadow: 0 2px 5px rgba(0,0,0,0.3);
 }
 .pp-name {
-  background: rgba(0,0,0,0.6);
+  background: var(--primario-oscuro);
   color: white;
   font-size: 10px;
   padding: 2px 6px;
   border-radius: 4px;
   white-space: nowrap;
+  font-weight: bold;
 }
 
 /* POST-PARTIDO */

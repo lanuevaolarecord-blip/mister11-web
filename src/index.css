@@ -14,43 +14,45 @@
   --font-title: 'Georgia', 'Merriweather', serif;
   --font-numbers: 'Bebas Neue', 'Oswald', sans-serif;
 
-  /* THEME: LIGHT (DEFAULT) */
-  --text-primary: #152C22;
-  --text-secondary: #222222;
-  --text-muted: #444444;
-  --bg-primary: #F5F0E8;
-  --bg-card: #FFFFFF;
+  /* THEME: LIGHT (DEFAULT) - INSTITUTIONAL HIGH CONTRAST */
+  --text-primary: #1B3A2D;   /* Verde selva oscuro */
+  --text-secondary: #2D2D2D; /* Carbón */
+  --text-muted: #1B3A2D;     /* Reemplazado gris por verde oscuro para legibilidad */
+  --bg-primary: #F5F0E8;     /* Arena */
+  --bg-card: #FFFFFF;        /* Blanco puro para contraste */
   --bg-sidebar: #1B3A2D;
   --text-sidebar: #FFFFFF;
-  --border-color: #C09A39;
-  --accent: #4CAF7D;
+  --border-color: #D4A843;   /* Dorado */
+  --accent: #4CAF7D;         /* Verde hierba */
+  --accent-gold: #D4A843;
   --white: #FFFFFF;
   --input-bg: #FFFFFF;
-  --input-text: #222222;
-  --input-border: #C09A39;
+  --input-text: #2D2D2D;
+  --input-border: #D4A843;
 
-  /* Legacy mappings for compatibility during transition */
+  /* Legacy mappings */
   --title-color: var(--text-primary);
   --body-color: var(--text-secondary);
-  --secondary-color: var(--text-muted);
+  --secondary-color: var(--text-secondary);
   --card-text: var(--text-secondary);
-  --label-color: var(--text-secondary);
+  --label-color: var(--text-primary);
 }
 
 /* THEME: DARK */
-html.dark {
-  --text-primary: #FFFFFF;
-  --text-secondary: #E0E0E0;
-  --text-muted: #BBBBBB;
-  --bg-primary: #0D1F0D;
-  --bg-card: #1B3A2D;
-  --bg-sidebar: #0D1F0D;
+.dark, html.dark {
+  --text-primary: #F5F0E8;   /* Arena clara */
+  --text-secondary: #FFFFFF; /* Blanco puro */
+  --text-muted: #D4A843;     /* Dorado para destacar etiquetas secundarias */
+  --bg-primary: #0D0D0D;     /* Negro base */
+  --bg-card: #1E1E1E;        /* Gris carbón */
+  --bg-sidebar: #0D0D0D;
   --text-sidebar: #FFFFFF;
-  --border-color: #5DCE92;
+  --border-color: #4CAF7D;   /* Verde hierba */
 
-  --input-bg: #142E22;
+  --input-bg: #1E1E1E;
   --input-text: #FFFFFF;
-  --input-border: #5DCE92;
+  --input-border: #4CAF7D;
+  --accent-gold: #D4A843;
 }
 
 /* Global Reset & Base Styles */

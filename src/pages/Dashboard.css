@@ -107,7 +107,7 @@
 }
 
 .stat-value-dash.no-rival {
-  color: #FFFFFF !important;
+  color: var(--text-primary) !important;
   font-family: var(--font-body);
   font-size: 1.1rem;
   text-transform: uppercase;
@@ -154,16 +154,16 @@
 
 /* Bar Chart */
 .chart-section {
-  background: #142E22 !important;
+  background: var(--bg-card) !important;
   border-radius: 8px !important;
 }
 
 .chart-section .section-header h2 {
-  color: #FFFFFF;
+  color: var(--text-primary);
 }
 
 .chart-section .section-header .btn-text {
-  color: #CCCCCC;
+  color: var(--accent);
 }
 
 .bar-chart {
@@ -174,7 +174,7 @@
   width: 100%;
   padding: 0 10px;
   position: relative;
-  background-image: linear-gradient(#2D5A27 1px, transparent 1px);
+  background-image: linear-gradient(var(--border-color) 1px, transparent 1px);
   background-size: 100% 40px;
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
@@ -191,14 +191,14 @@
 .bar-container {
   width: 24px;
   height: 160px;
-  background: #2D5A27 !important;
+  background: var(--bg-primary) !important;
   border-radius: 6px !important;
   display: flex;
   flex-direction: column;
   justify-content: flex-end;
   overflow: visible;
   position: relative;
-  border: 1px solid #4CAF7D !important;
+  border: 1px solid var(--border-color) !important;
 }
 
 .bar-fill {
@@ -217,11 +217,14 @@
   top: -20px;
   left: 50%;
   transform: translateX(-50%);
-  color: #FFFFFF;
-  font-size: 11px;
-  font-weight: 600;
+  color: var(--text-primary);
+  font-weight: 800;
   opacity: 1;
   pointer-events: none;
+  background: var(--bg-card);
+  padding: 2px 4px;
+  border-radius: 4px;
+  border: 1px solid var(--border-color);
 }
 
 .bar-fill:hover .bar-tooltip {
@@ -230,8 +233,8 @@
 
 .bar-label {
   font-size: 12px;
-  color: #CCCCCC;
-  font-weight: 500;
+  color: var(--text-secondary);
+  font-weight: 700;
 }
 
 /* Sessions List */
@@ -359,13 +362,14 @@
 .dash-select {
   padding: 8px 12px;
   border-radius: 8px;
-  border: 1px solid #4CAF7D !important;
-  background-color: #142E22 !important;
-  color: #CCCCCC !important;
+  border: 1px solid var(--border-color) !important;
+  background-color: var(--bg-card) !important;
+  color: var(--text-primary) !important;
   font-size: 13px;
   font-family: var(--font-body);
   outline: none;
   cursor: pointer;
+  font-weight: 700;
 }
 
 @media (max-width: 1024px) {

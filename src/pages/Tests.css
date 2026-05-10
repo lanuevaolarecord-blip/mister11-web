@@ -102,11 +102,38 @@
   justify-content: space-between;
   margin-bottom: 15px;
 }
-.t-cat { font-size: 11px; font-weight: bold; background: #1B3A2D !important; color: #D4A843 !important; border: 1px solid #D4A843 !important; padding: 4px 8px; border-radius: 4px; text-transform: uppercase; }
-.t-unit { font-size: 11px; font-weight: bold; color: #4CAF7D !important; background: #142E22 !important; padding: 4px 8px; border-radius: 4px; border: 1px solid var(--border-color);}
+.t-cat { 
+  font-size: 11px; 
+  font-weight: bold; 
+  color: var(--accent) !important; 
+  border: 1px solid var(--accent) !important; 
+  padding: 4px 8px; 
+  border-radius: 4px; 
+  text-transform: uppercase; 
+}
+.t-unit { 
+  font-size: 11px; 
+  font-weight: bold; 
+  color: var(--accent-gold) !important; 
+  background: transparent !important; 
+  padding: 4px 8px; 
+  border-radius: 4px; 
+  border: 1px solid var(--accent-gold) !important;
+}
 
-.test-card h4 { margin: 0 0 10px 0; color: #FFFFFF !important; font-size: 1.1rem; font-weight: 600; }
-.test-card p { margin: 0; font-size: 13px; color: #AAAAAA !important; line-height: 1.4; flex: 1; }
+.test-card h4 { 
+  margin: 0 0 10px 0; 
+  color: var(--text-primary) !important; 
+  font-size: 1.1rem; 
+  font-weight: 700; 
+}
+.test-card p { 
+  margin: 0; 
+  font-size: 13px; 
+  color: var(--text-secondary) !important; 
+  line-height: 1.4; 
+  flex: 1; 
+}
 
 .view-detail-hint {
   display: block;
@@ -192,8 +219,8 @@
   border-radius: 12px;
 }
 .reg-main-header h3 { margin: 0; }
-.reg-main-header h3 span { color: var(--gold); font-weight: normal; margin-left: 10px; }
-.unit-badge { background: rgba(255,255,255,0.2); padding: 5px 10px; border-radius: 6px; font-size: 12px; font-weight: bold; }
+.reg-main-header h3 span { color: var(--accent-gold); font-weight: bold; margin-left: 10px; }
+.unit-badge { background: rgba(255,255,255,0.1); border: 1px solid var(--accent-gold); padding: 5px 10px; border-radius: 6px; font-size: 12px; font-weight: bold; color: var(--accent-gold); }
 
 .reg-players-grid {
   display: grid;

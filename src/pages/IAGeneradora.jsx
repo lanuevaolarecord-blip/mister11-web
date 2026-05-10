@@ -2,6 +2,8 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useExercises } from '../hooks/useExercises';
 import { useAuth } from '../context/AuthContext';
+import { usePlan } from '../hooks/usePlan';
+import UpgradeModal from '../components/UpgradeModal';
 import './IAGeneradora.css';
 
 // --- CONFIGURACIÓN --- (La key se accede en runtime, no al importar el módulo)
@@ -60,6 +62,7 @@ const renderMarkdown = (text) => {
 
 const IAGeneradora = () => {
   const { activeTeamId } = useAuth();
+  const { isPro, limits } = usePlan();
   const { exercises, addExercise } = useExercises(activeTeamId);
   const navigate = useNavigate();
   const [form, setForm] = useState(INITIAL_FORM);
@@ -69,6 +72,7 @@ const IAGeneradora = () => {
   const [loadingMsg, setLoadingMsg] = useState('⏳ Analizando contexto...');
   const [error, setError] = useState('');
   const [showBiblioteca, setShowBiblioteca] = useState(false);
+  const [upgradeModal, setUpgradeModal] = useState({ open: false, message: '' });
   const canvasRef = useRef(null);
   const isCallingRef = useRef(false);
   const [countdown, setCountdown] = useState(null);
@@ -149,6 +153,15 @@ const IAGeneradora = () => {
 
   const handleGenerate = async () => {
     if (isCallingRef.current) return;
+
+    if (!isPro) {
+      // Simulación de límite de generación diaria (esto debería idealmente guardarse en Firestore)
+      // Por ahora lo limitamos a una función PRO o mostramos el modal si ya tiene muchos ejercicios
+      if (exercises.length >= 5) { 
+        setUpgradeModal({ open: true, message: 'Has alcanzado el límite de ejercicios guardados del plan gratuito. Pásate a PRO para generar ilimitadamente.' });
+        return;
+      }
+    }
 
     if (!form.edad || !form.objetivo || !form.espacio) {
       setError('Por favor completa: Edad, Objetivo y Espacio antes de generar.');
@@ -261,11 +274,8 @@ Responde SOLO en español. Sé específico y práctico.`;
           </div>
           <button
             onClick={() => setShowBiblioteca(true)}
-            style={{
-              background: 'transparent', border: '1.5px solid #c9a84c', color: '#c9a84c',
-              borderRadius: 8, padding: '8px 16px', fontSize: 13, fontWeight: 600,
-              cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0
-            }}
+            className="btn-outline-gold"
+            style={{ borderRadius: 8, padding: '8px 16px', fontSize: 13, flexShrink: 0 }}
           >
             ☁️ Biblioteca ({exercises.length})
           </button>
@@ -527,6 +537,12 @@ Responde SOLO en español. Sé específico y práctico.`;
           </div>
         </div>
       )}
+
+      <UpgradeModal 
+        isOpen={upgradeModal.open} 
+        onClose={() => setUpgradeModal({ ...upgradeModal, open: false })}
+        message={upgradeModal.message}
+      />
     </div>
   );
 };

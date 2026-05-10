@@ -66,6 +66,7 @@ const Sesiones = () => {
   const handleDeleteSession = async (id) => {
     if(window.confirm('¿Eliminar esta sesión?')) {
       try {
+        const sessionToDelete = sessions.find(s => s.id === id);
         // Intentar borrar archivos de Storage si existen
         if (sessionToDelete?.files) {
           for (const file of sessionToDelete.files) {

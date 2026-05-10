@@ -304,6 +304,13 @@
   border-color: var(--border-color);
 }
 
+.exercise-row:hover {
+  background: rgba(212, 168, 67, 0.05); /* Oro institucional muy suave */
+  border-left: 4px solid var(--gold);
+  padding-left: 16px; /* Compensar el borde */
+  transition: all 0.2s ease;
+}
+
 .exercise-row {
   display: flex;
   align-items: center;

@@ -72,6 +72,7 @@ const IAGeneradora = () => {
   const [loadingMsg, setLoadingMsg] = useState('⏳ Analizando contexto...');
   const [error, setError] = useState('');
   const [showBiblioteca, setShowBiblioteca] = useState(false);
+  const [selectedExerciseDetail, setSelectedExerciseDetail] = useState(null);
   const [upgradeModal, setUpgradeModal] = useState({ open: false, message: '' });
   const canvasRef = useRef(null);
   const isCallingRef = useRef(false);
@@ -233,8 +234,6 @@ Responde SOLO en español. Sé específico y práctico.`;
       isCallingRef.current = false;
     }
   };
-
-  const [selectedExerciseDetail, setSelectedExerciseDetail] = useState(null);
 
   const handleSave = async () => {
     if (!result) return;
@@ -494,12 +493,7 @@ Responde SOLO en español. Sé específico y práctico.`;
                     borderRadius: 8, padding: '10px 14px', marginBottom: 8, cursor: 'pointer'
                   }}
                     onClick={() => { 
-                      if (ej.type === 'pizarra') {
-                        navigate(`/pizarra?id=${ej.id}`);
-                      } else {
-                        setResult(ej.content); 
-                        setShowBiblioteca(false); 
-                      }
+                      setSelectedExerciseDetail(ej);
                     }}
                   >
                     <div style={{ color: 'var(--gold)', fontWeight: 600, fontSize: 13 }}>
@@ -523,16 +517,24 @@ Responde SOLO en español. Sé específico y práctico.`;
 
       {/* Modal de Detalle de Ejercicio */}
       {selectedExerciseDetail && (
-        <div className="ia-modal-overlay" onClick={() => setSelectedExerciseDetail(null)}>
-          <div className="ia-modal-container" onClick={e => e.stopPropagation()}>
-            <div className="ia-modal-header">
-              <h2>{selectedExerciseDetail.title}</h2>
-              <button className="btn-close-modal" onClick={() => setSelectedExerciseDetail(null)}>×</button>
+        <div className="modal-overlay" style={{ zIndex: 1100 }} onClick={() => setSelectedExerciseDetail(null)}>
+          <div className="modal-content" style={{ maxWidth: '600px' }} onClick={e => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2>{selectedExerciseDetail.title || selectedExerciseDetail.name || 'Detalle del Ejercicio'}</h2>
+              <button className="btn-close" onClick={() => setSelectedExerciseDetail(null)}>✕</button>
             </div>
-            <div className="ia-modal-body">
-              <div className="result-markdown">
-                {renderMarkdown(selectedExerciseDetail.content)}
+            <div className="modal-body" style={{ padding: '20px', lineHeight: '1.6', color: 'var(--text-primary)' }}>
+              <div style={{ whiteSpace: 'pre-wrap', fontSize: '0.95rem' }}>
+                {selectedExerciseDetail.content || selectedExerciseDetail.descripcion || 'Sin contenido detallado.'}
               </div>
+            </div>
+            <div className="modal-footer">
+              <button className="btn-primary" onClick={() => {
+                setResult(selectedExerciseDetail.content);
+                setSelectedExerciseDetail(null);
+                setShowBiblioteca(false);
+              }}>Cargar en Editor</button>
+              <button className="btn-secondary" onClick={() => setSelectedExerciseDetail(null)}>Cerrar</button>
             </div>
           </div>
         </div>

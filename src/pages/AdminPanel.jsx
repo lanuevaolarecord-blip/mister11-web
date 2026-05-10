@@ -40,6 +40,7 @@ const AdminPanel = () => {
   const [newTeam, setNewTeam] = useState({ nombre: '', categoria: '', temporada: '2025-26' });
   const [selectedMatchId, setSelectedMatchId] = useState('');
   const [selectedSessionId, setSelectedSessionId] = useState('');
+  const [selectedExerciseDetail, setSelectedExerciseDetail] = useState(null);
   
   const { settings, saveSettings, loading: loadingSettings } = useSettings(activeTeam?.id);
   const { darkMode, toggleTheme } = useTheme();
@@ -245,7 +246,12 @@ const AdminPanel = () => {
               {exercises.map(ex => {
                 if (!ex) return null;
                 return (
-                  <div key={ex.id} className="exercise-row">
+                  <div 
+                    key={ex.id} 
+                    className="exercise-row" 
+                    onClick={() => setSelectedExerciseDetail(ex)}
+                    style={{ cursor: 'pointer' }}
+                  >
                     <div className="ex-info">
                       <strong>{ex.title || ex.name || ex.exerciseName || ex.titulo || ex.nombre || 'Ejercicio sin nombre'}</strong>
                       <span>{ex.objetivo} | {ex.categoria}</span>
@@ -490,6 +496,25 @@ const AdminPanel = () => {
           </div>
         )}
       </div>
+      {/* Modal de Detalle de Ejercicio */}
+      {selectedExerciseDetail && (
+        <div className="modal-overlay" onClick={() => setSelectedExerciseDetail(null)}>
+          <div className="modal-content" style={{ maxWidth: '600px' }} onClick={e => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2>{selectedExerciseDetail.title || selectedExerciseDetail.name || 'Detalle del Ejercicio'}</h2>
+              <button className="btn-close" onClick={() => setSelectedExerciseDetail(null)}>✕</button>
+            </div>
+            <div className="modal-body" style={{ padding: '20px', lineHeight: '1.6', color: 'var(--text-primary)' }}>
+              <div style={{ whiteSpace: 'pre-wrap', fontSize: '0.95rem' }}>
+                {selectedExerciseDetail.content || selectedExerciseDetail.descripcion || 'Sin contenido detallado.'}
+              </div>
+            </div>
+            <div className="modal-footer">
+              <button className="btn-primary" onClick={() => setSelectedExerciseDetail(null)}>Cerrar</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

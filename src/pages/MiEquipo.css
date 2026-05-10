@@ -424,11 +424,16 @@
 }
 
 .badge-pos {
-  background: var(--primary);
-  color: #FFFFFF;
-  padding: 4px 12px;
-  border-radius: 6px;
+  background: var(--accent); /* Verde hierba para mejor visibilidad */
+  color: #FFFFFF !important;
+  padding: 4px 14px;
+  border-radius: 20px; /* Estilo píldora más moderno */
   font-weight: 800;
+  text-transform: uppercase;
+  font-size: 12px;
+  letter-spacing: 0.5px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  display: inline-block;
 }
 
 /* Physical Stats */

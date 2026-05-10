@@ -4,13 +4,19 @@ import { useSessions } from '../hooks/useSessions';
 import { usePlayers } from '../hooks/usePlayers';
 import { useAuth } from '../context/AuthContext';
 import { useTeams } from '../hooks/useTeams';
+import { usePlan, LIMITS } from '../hooks/usePlan';
+import UpgradeModal from '../components/UpgradeModal';
+import { storage } from '../firebaseConfig';
+import { ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
 import './Sesiones.css';
 
 const Sesiones = () => {
-  const { activeTeamId } = useAuth();
+  const { user, activeTeamId } = useAuth();
   const { activeTeam } = useTeams();
+  const { isPro, limits } = usePlan();
   const { sessions, loading: loadingSessions, addSession, updateSession, removeSession } = useSessions(activeTeamId);
   const { players, loading: loadingPlayers } = usePlayers(activeTeamId);
+  const [upgradeModal, setUpgradeModal] = useState({ open: false, message: '' });
   
   const [viewMode, setViewMode] = useState('list'); // 'list' | 'edit'
   const [selectedSession, setSelectedSession] = useState(null);
@@ -30,6 +36,10 @@ const Sesiones = () => {
 
   // --- LIST MODE FUNCTIONS ---
   const handleCreateNew = () => {
+    if (!isPro && sessions.length >= limits.SESSIONS) {
+      setUpgradeModal({ open: true, message: `Has alcanzado el límite de ${limits.SESSIONS} sesiones del plan gratuito.` });
+      return;
+    }
     setEditData({
       title: '',
       date: new Date().toISOString().split('T')[0],
@@ -56,6 +66,17 @@ const Sesiones = () => {
   const handleDeleteSession = async (id) => {
     if(window.confirm('¿Eliminar esta sesión?')) {
       try {
+        // Intentar borrar archivos de Storage si existen
+        if (sessionToDelete?.files) {
+          for (const file of sessionToDelete.files) {
+            if (file.storagePath) {
+              try {
+                const fileRef = ref(storage, file.storagePath);
+                await deleteObject(fileRef);
+              } catch (e) { console.error("Error deleting file from storage:", e); }
+            }
+          }
+        }
         await removeSession(id);
         if(selectedSession?.id === id) setSelectedSession(null);
       } catch (error) {
@@ -118,28 +139,53 @@ const Sesiones = () => {
     });
   };
 
-  const handleFileUpload = (e) => {
+  const handleFileUpload = async (e) => {
     const file = e.target.files[0];
-    if (!file) return;
+    if (!file || !user || !activeTeamId) return;
     
-    // Simulado: En producción usaríamos Firebase Storage
-    const fileUrl = URL.createObjectURL(file);
-    
-    const newFile = {
-      id: Date.now(),
-      name: file.name,
-      size: (file.size / 1024 / 1024).toFixed(2) + ' MB',
-      type: file.type,
-      url: fileUrl
-    };
+    if (file.type !== 'application/pdf') {
+      alert("Solo se permiten archivos PDF.");
+      return;
+    }
 
-    setEditData(prev => ({
-      ...prev,
-      files: [...prev.files, newFile]
-    }));
+    setIsSaving(true);
+    try {
+      const sessionId = editData.id || `temp_${Date.now()}`;
+      const storagePath = `users/${user.uid}/teams/${activeTeamId}/sessions/${sessionId}/${file.name}`;
+      const fileRef = ref(storage, storagePath);
+      
+      await uploadBytes(fileRef, file);
+      const downloadURL = await getDownloadURL(fileRef);
+      
+      const newFile = {
+        id: Date.now(),
+        name: file.name,
+        size: (file.size / 1024 / 1024).toFixed(2) + ' MB',
+        type: file.type,
+        url: downloadURL,
+        storagePath: storagePath
+      };
+
+      setEditData(prev => ({
+        ...prev,
+        files: [...prev.files, newFile]
+      }));
+    } catch (error) {
+      console.error("Error uploading file:", error);
+      alert("Error al subir el archivo.");
+    } finally {
+      setIsSaving(false);
+    }
   };
 
-  const handleRemoveFile = (fileId) => {
+  const handleRemoveFile = async (fileId) => {
+    const fileToRemove = editData.files.find(f => f.id === fileId);
+    if (fileToRemove?.storagePath) {
+      try {
+        const fileRef = ref(storage, fileToRemove.storagePath);
+        await deleteObject(fileRef);
+      } catch (e) { console.error("Error deleting file:", e); }
+    }
     setEditData(prev => ({
       ...prev,
       files: prev.files.filter(f => f.id !== fileId)
@@ -423,6 +469,12 @@ const Sesiones = () => {
               </div>
               
               <div className="preview-files">
+                {selectedSession.objectives && (
+                  <div className="protocolo-card" style={{marginTop: '0', marginBottom: '15px'}}>
+                    <h4>Objetivos</h4>
+                    <p style={{fontSize: '0.9rem', color: 'inherit'}}>{selectedSession.objectives}</p>
+                  </div>
+                )}
                 {selectedSession.files?.length > 0 && (
                   <div className="files-indicator">
                     <span>📎 {selectedSession.files.length} archivos adjuntos</span>
@@ -453,7 +505,19 @@ const Sesiones = () => {
               </div>
               
               <div className="preview-actions">
-                <button className="btn-primary full-width" style={{marginBottom: '10px'}} onClick={() => generateSessionPDF(selectedSession, activeTeam)}>📄 Exportar a PDF</button>
+                <button 
+                  className="btn-primary full-width" 
+                  style={{marginBottom: '10px'}} 
+                  onClick={() => {
+                    if (!isPro) {
+                      setUpgradeModal({ open: true, message: 'La exportación de sesiones a PDF es una función PRO.' });
+                      return;
+                    }
+                    generateSessionPDF(selectedSession, activeTeam);
+                  }}
+                >
+                  📄 Exportar a PDF
+                </button>
                 <button className="btn-outline-gold full-width" onClick={() => handleEditSession(selectedSession)}>✏️ Editar Sesión</button>
                 <button className="btn-text-error full-width" onClick={() => handleDeleteSession(selectedSession.id)}>Eliminar Sesión</button>
               </div>
@@ -482,6 +546,12 @@ const Sesiones = () => {
           </div>
         </div>
       )}
+
+      <UpgradeModal 
+        isOpen={upgradeModal.open} 
+        onClose={() => setUpgradeModal({ ...upgradeModal, open: false })}
+        message={upgradeModal.message}
+      />
     </div>
   );
 };

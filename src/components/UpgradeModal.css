@@ -1,0 +1,32 @@
+.upgrade-modal {
+  max-width: 400px !important;
+  text-align: center;
+}
+
+.crown-icon {
+  font-size: 48px;
+  margin-bottom: 10px;
+}
+
+.upgrade-message {
+  font-size: 1.1rem;
+  margin-bottom: 20px;
+  color: var(--text-primary);
+}
+
+.benefits-list {
+  text-align: left;
+  list-style: none;
+  padding: 0;
+  margin: 20px 0;
+}
+
+.benefits-list li {
+  padding: 8px 0;
+  border-bottom: 1px solid rgba(0,0,0,0.05);
+  color: var(--text-secondary);
+}
+
+.benefits-list li:last-child {
+  border-bottom: none;
+}

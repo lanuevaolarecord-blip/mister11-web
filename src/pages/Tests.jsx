@@ -1,66 +1,79 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { usePlayers } from '../hooks/usePlayers';
 import { useAuth } from '../context/AuthContext';
 import { useTeams } from '../hooks/useTeams';
+import { usePlan } from '../hooks/usePlan';
+import UpgradeModal from '../components/UpgradeModal';
 import { generateTestsReport, generatePlayerTestReport } from '../utils/pdfGenerator';
 import { GraficaEvolucion, GraficaResumen } from '../components/GraficasTest';
+import { db } from '../firebaseConfig';
+import { collection, addDoc, getDocs, query, where, orderBy, serverTimestamp, writeBatch, doc } from 'firebase/firestore';
 import html2canvas from 'html2canvas';
 import './Tests.css';
 
-// --- MOCK DATA ---
-const PREDEFINED_TESTS = [
-  { id: 1, category: 'Resistencia', name: 'Test de Cooper', unit: 'm', desc: 'Distancia recorrida en 12 minutos.', protocol: 'Los jugadores deben correr la mayor distancia posible en 12 minutos alrededor de una pista o campo marcado. Se anota la distancia total en metros.', image: 'https://via.placeholder.com/600x300/1B3A2D/D4A843?text=Grafico+Test+Cooper' },
-  { id: 2, category: 'Resistencia', name: 'Course Navette', unit: 'nivel', desc: 'Carrera de ida y vuelta de 20m con pitidos.', protocol: 'Carreras de 20 metros al ritmo de un pitido de audio que se acelera cada minuto. Se anota el último palier completado.', image: 'https://via.placeholder.com/600x300/1B3A2D/D4A843?text=Course+Navette+20m' },
-  { id: 3, category: 'Velocidad', name: 'Sprint 10m', unit: 'seg', desc: 'Aceleración en distancia corta.', protocol: 'Desde posición estática, sprint al máximo esfuerzo hasta rebasar la línea de 10 metros. Se usa cronómetro o fotocélulas.', image: 'https://via.placeholder.com/600x300/1B3A2D/D4A843?text=Sprint+10m' },
-  { id: 4, category: 'Velocidad', name: 'Sprint 30m', unit: 'seg', desc: 'Velocidad máxima lanzada.', protocol: 'Igual que 10m, pero se mide el tiempo total a los 30 metros.', image: 'https://via.placeholder.com/600x300/1B3A2D/D4A843?text=Sprint+30m' },
-  { id: 5, category: 'Agilidad', name: 'T-Test', unit: 'seg', desc: 'Desplazamientos frontales, laterales y de espaldas.', protocol: 'Sprint 10m al frente, desplazamiento lateral 5m a la izquierda, 10m a la derecha, 5m al centro y 10m de espaldas al inicio.', image: 'https://via.placeholder.com/600x300/1B3A2D/D4A843?text=T-Test+Agility' },
-  { id: 6, category: 'Fuerza', name: 'Salto CMJ', unit: 'cm', desc: 'Salto vertical con contramovimiento.', protocol: 'Las manos en las caderas. Bajar el centro de gravedad (flexión de rodillas) e inmediatamente saltar lo más alto posible.', image: 'https://via.placeholder.com/600x300/1B3A2D/D4A843?text=Salto+CMJ' },
-  { id: 7, category: 'Técnica', name: 'Conducción conos', unit: 'seg', desc: 'Slalom entre conos con finalización.', protocol: 'Conducir el balón haciendo slalom entre 5 conos separados por 2 metros y dar un pase a un objetivo.', image: 'https://via.placeholder.com/600x300/1B3A2D/D4A843?text=Conduccion+Slalom' },
-  { id: 8, category: 'Técnica', name: 'Pase a portería', unit: 'pts', desc: 'Precisión de pase a zonas objetivo (10 pases).', protocol: '10 pases desde la frontal del área hacia pequeñas porterías o zonas marcadas. 1 punto por acierto.', image: 'https://via.placeholder.com/600x300/1B3A2D/D4A843?text=Precision+de+Pase' }
+// PREDEFINED_TESTS remains as base catalog
+const DEFAULT_TESTS = [
+  { id: 't1', category: 'Resistencia', name: 'Test de Cooper', unit: 'm', desc: 'Distancia recorrida en 12 minutos.', protocol: 'Los jugadores deben correr la mayor distancia posible en 12 minutos alrededor de una pista o campo marcado. Se anota la distancia total en metros.', image: 'https://images.unsplash.com/photo-1552674605-db6ffd4facb5?auto=format&fit=crop&q=80&w=600' },
+  { id: 't2', category: 'Resistencia', name: 'Course Navette', unit: 'nivel', desc: 'Carrera de ida y vuelta de 20m con pitidos.', protocol: 'Carreras de 20 metros al ritmo de un pitido de audio que se acelera cada minuto. Se anota el último palier completado.', image: 'https://images.unsplash.com/photo-1461896642383-04018697529f?auto=format&fit=crop&q=80&w=600' },
+  { id: 't3', category: 'Velocidad', name: 'Sprint 10m', unit: 'seg', desc: 'Aceleración en distancia corta.', protocol: 'Desde posición estática, sprint al máximo esfuerzo hasta rebasar la línea de 10 metros. Se usa cronómetro o fotocélulas.', image: 'https://images.unsplash.com/photo-1530549387631-f535c7658f8c?auto=format&fit=crop&q=80&w=600' },
+  { id: 't4', category: 'Velocidad', name: 'Sprint 30m', unit: 'seg', desc: 'Velocidad máxima lanzada.', protocol: 'Igual que 10m, pero se mide el tiempo total a los 30 metros.', image: 'https://images.unsplash.com/photo-1434682881908-b43d0467b798?auto=format&fit=crop&q=80&w=600' },
+  { id: 't5', category: 'Agilidad', name: 'T-Test', unit: 'seg', desc: 'Desplazamientos frontales, laterales y de espaldas.', protocol: 'Sprint 10m al frente, desplazamiento lateral 5m a la izquierda, 10m a la derecha, 5m al centro y 10m de espaldas al inicio.', image: 'https://images.unsplash.com/photo-1517466787929-bc90951d0974?auto=format&fit=crop&q=80&w=600' },
+  { id: 't6', category: 'Fuerza', name: 'Salto CMJ', unit: 'cm', desc: 'Salto vertical con contramovimiento.', protocol: 'Las manos en las caderas. Bajar el centro de gravedad (flexión de rodillas) e inmediatamente saltar lo más alto posible.', image: 'https://images.unsplash.com/photo-1594882645126-14020914d58d?auto=format&fit=crop&q=80&w=600' },
+  { id: 't7', category: 'Técnica', name: 'Conducción conos', unit: 'seg', desc: 'Slalom entre conos con finalización.', protocol: 'Conducir el balón haciendo slalom entre 5 conos separados por 2 metros y dar un pase a un objetivo.', image: 'https://images.unsplash.com/photo-1551958219-acbc608c6377?auto=format&fit=crop&q=80&w=600' },
+  { id: 't8', category: 'Técnica', name: 'Pase a portería', unit: 'pts', desc: 'Precisión de pase a zonas objetivo (10 pases).', protocol: '10 pases desde la frontal del área hacia pequeñas porterías o zonas marcadas. 1 punto por acierto.', image: 'https://images.unsplash.com/photo-1574629810360-7efbbe195018?auto=format&fit=crop&q=80&w=600' }
 ];
 
-// MOCK_PLAYERS removed, using usePlayers hook
-
-// Generate mock historical data based on current players
-const generateMockHistory = (playersList) => {
-  const data = {};
-  playersList.forEach(p => {
-    data[p.id] = {};
-    PREDEFINED_TESTS.forEach(t => {
-      let base = 0;
-      let betterIsLower = t.unit === 'seg';
-      
-      if (t.name === 'Test de Cooper') base = 2000 + Math.random() * 800;
-      else if (t.name === 'Course Navette') base = 6 + Math.random() * 6;
-      else if (t.unit === 'seg') base = 15 - Math.random() * 5;
-      else if (t.unit === 'cm') base = 30 + Math.random() * 20;
-      else if (t.unit === 'pts') base = 5 + Math.random() * 4;
-      else base = 10 + Math.random() * 10;
-
-      data[p.id][t.id] = [
-        { date: '2025-09-10', val: Number((base * (betterIsLower ? 1.05 : 0.95)).toFixed(2)) },
-        { date: '2025-12-15', val: Number((base).toFixed(2)) },
-        { date: '2026-03-20', val: Number((base * (betterIsLower ? 0.95 : 1.05)).toFixed(2)) }
-      ];
-    });
-  });
-  return data;
-};
-
 const Tests = () => {
-  const { activeTeamId } = useAuth();
+  const { user, activeTeamId } = useAuth();
   const { activeTeam } = useTeams();
+  const { isPro } = usePlan();
   const { players, loading: loadingPlayers } = usePlayers(activeTeamId);
-  const historyData = useMemo(() => generateMockHistory(players), [players]);
+  const [historyData, setHistoryData] = useState({});
   const [activeTab, setActiveTab] = useState('BATERÍA');
-  const [tests, setTests] = useState(PREDEFINED_TESTS);
+  const [tests, setTests] = useState(DEFAULT_TESTS);
+  const [loading, setLoading] = useState(false);
+  const [upgradeModal, setUpgradeModal] = useState({ open: false, message: '' });
   
   // Registration State
-  const [regSelectedTest, setRegSelectedTest] = useState(tests[0].id);
+  const [regSelectedTest, setRegSelectedTest] = useState(DEFAULT_TESTS[0].id);
   const [regInputs, setRegInputs] = useState({});
 
   // History State
   const [histSelectedPlayer, setHistSelectedPlayer] = useState(null);
+
+  // Carga de evaluaciones reales desde Firestore
+  const loadEvaluations = useCallback(async () => {
+    if (!user || !activeTeamId) return;
+    setLoading(true);
+    try {
+      const q = query(
+        collection(db, `users/${user.uid}/teams/${activeTeamId}/evaluaciones`),
+        orderBy('timestamp', 'asc')
+      );
+      const querySnapshot = await getDocs(q);
+      const newHistory = {};
+      
+      querySnapshot.forEach((doc) => {
+        const data = doc.data();
+        const { jugadorId, testId, val, date } = data;
+        
+        if (!newHistory[jugadorId]) newHistory[jugadorId] = {};
+        if (!newHistory[jugadorId][testId]) newHistory[jugadorId][testId] = [];
+        
+        newHistory[jugadorId][testId].push({ date, val: Number(val) });
+      });
+      
+      setHistoryData(newHistory);
+    } catch (error) {
+      console.error("Error loading evaluations:", error);
+    } finally {
+      setLoading(false);
+    }
+  }, [user, activeTeamId]);
+
+  useEffect(() => {
+    loadEvaluations();
+  }, [loadEvaluations]);
 
   useEffect(() => {
     if (players.length > 0 && !histSelectedPlayer) {
@@ -79,9 +92,36 @@ const Tests = () => {
   const getTestById = (id) => tests.find(t => t.id === Number(id));
   const getPlayerById = (id) => players.find(p => p.id === id);
 
-  const handleSaveRegistration = () => {
-    alert("Resultados guardados exitosamente.");
-    setRegInputs({});
+  const handleSaveRegistration = async () => {
+    if (!user || !activeTeamId) return;
+    
+    setLoading(true);
+    try {
+      const batch = writeBatch(db);
+      const today = new Date().toISOString().split('T')[0];
+      
+      Object.entries(regInputs).forEach(([jugadorId, val]) => {
+        if (!val) return;
+        const evalRef = doc(collection(db, `users/${user.uid}/teams/${activeTeamId}/evaluaciones`));
+        batch.set(evalRef, {
+          jugadorId,
+          testId: regSelectedTest,
+          val: Number(val),
+          date: today,
+          timestamp: serverTimestamp()
+        });
+      });
+      
+      await batch.commit();
+      alert("Resultados guardados exitosamente en la nube.");
+      setRegInputs({});
+      loadEvaluations();
+    } catch (error) {
+      console.error("Error saving evaluations:", error);
+      alert("Error al guardar los resultados.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleCreateTest = () => {
@@ -108,7 +148,18 @@ const Tests = () => {
         <div className="header-top">
           <h1>EVALUACIÓN Y TESTS</h1>
           <div className="header-actions">
-            <button className="btn-outline" onClick={() => generateTestsReport(tests, players, historyData, activeTeam)}>Exportar Informe</button>
+            <button 
+              className="btn-outline" 
+              onClick={() => {
+                if (!isPro) {
+                  setUpgradeModal({ open: true, message: 'La exportación de informes completos es una función PRO.' });
+                  return;
+                }
+                generateTestsReport(tests, players, historyData, activeTeam);
+              }}
+            >
+              Exportar Informe
+            </button>
           </div>
         </div>
 
@@ -218,6 +269,10 @@ const Tests = () => {
               <div className="hist-main-header">
                 <h3>Evolución: {getPlayerById(histSelectedPlayer)?.name}</h3>
                 <button className="btn-outline-gold" onClick={async () => {
+                  if (!isPro) {
+                    setUpgradeModal({ open: true, message: 'La exportación de informes individuales es una función PRO.' });
+                    return;
+                  }
                   try {
                     let graficaUrl = null;
                     const element = document.getElementById('grafica-rendimiento-jugador');
@@ -427,11 +482,15 @@ const Tests = () => {
                 <img src={selectedTestDetail.image || 'https://via.placeholder.com/600x300/1B3A2D/4CAF7D?text=Imagen+del+Test'} alt={selectedTestDetail.name} />
               </div>
               <div className="test-info-block">
-                <h3>Objetivo y Descripción</h3>
-                <p>{selectedTestDetail.desc}</p>
+                <div className="protocolo-card">
+                  <h3>Objetivo y Descripción</h3>
+                  <p>{selectedTestDetail.desc}</p>
+                </div>
                 
-                <h3>Protocolo de Ejecución</h3>
-                <p>{selectedTestDetail.protocol || 'No se ha especificado un protocolo detallado para esta prueba.'}</p>
+                <div className="protocolo-card">
+                  <h3>Protocolo de Ejecución</h3>
+                  <p>{selectedTestDetail.protocol || 'No se ha especificado un protocolo detallado para esta prueba.'}</p>
+                </div>
                 
                 <div className="test-meta">
                   <span><strong>Unidad de medida:</strong> {selectedTestDetail.unit}</span>
@@ -451,6 +510,12 @@ const Tests = () => {
           </div>
         </div>
       )}
+
+      <UpgradeModal 
+        isOpen={upgradeModal.open} 
+        onClose={() => setUpgradeModal({ ...upgradeModal, open: false })}
+        message={upgradeModal.message}
+      />
     </div>
   );
 };

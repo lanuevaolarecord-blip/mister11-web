@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { usePlayers } from '../hooks/usePlayers';
 import { useAuth } from '../context/AuthContext';
 import { useTeams } from '../hooks/useTeams';
+import { usePlan } from '../hooks/usePlan';
+import UpgradeModal from '../components/UpgradeModal';
 import { calcularEdad } from '../utils/calcularEdad';
 import { generateExpediente } from '../utils/pdfGenerator';
 import './MiEquipo.css';
@@ -26,10 +28,12 @@ const emptyPlayer = {
 const MiEquipo = () => {
   const { activeTeamId } = useAuth();
   const { activeTeam } = useTeams();
+  const { isPro, limits } = usePlan();
   const { players, loading, addPlayer, updatePlayer, removePlayer } = usePlayers(activeTeamId);
   const [filter, setFilter] = useState('TODOS');
   const [selectedPlayer, setSelectedPlayer] = useState(null);
   const [activeTab, setActiveTab] = useState('GENERAL');
+  const [upgradeModal, setUpgradeModal] = useState({ open: false, message: '' });
   
   // Modal / Form state
   const [isFormOpen, setIsFormOpen] = useState(false);
@@ -58,6 +62,10 @@ const MiEquipo = () => {
 
   // -- CRUD Actions --
   const handleOpenForm = (player = null) => {
+    if (!player && !isPro && players.length >= limits.PLAYERS) {
+      setUpgradeModal({ open: true, message: `Has alcanzado el límite de ${limits.PLAYERS} jugadores del plan gratuito.` });
+      return;
+    }
     if (player) {
       setEditData({ ...player });
     } else {
@@ -133,7 +141,7 @@ const MiEquipo = () => {
           <div className="empty-icon">⚽</div>
           <h2>Tu plantilla está vacía</h2>
           <p>Añade a tus primeros jugadores para empezar a gestionar tu equipo.</p>
-          <button className="btn-primary-team" onClick={() => handleOpenForm(null)}>+ Añadir Jugador</button>
+          <button className="btn-primary" onClick={() => handleOpenForm(null)}>+ Añadir Jugador</button>
         </div>
       ) : (
         <div className="players-grid">
@@ -230,8 +238,8 @@ const MiEquipo = () => {
                 <button className="btn-text-error" onClick={() => handleDeletePlayer(editData.id)}>Eliminar Jugador</button>
               )}
               <div className="footer-actions">
-                <button className="btn-outline-team" onClick={() => setIsFormOpen(false)}>Cancelar</button>
-                <button className="btn-primary-team" onClick={handleSavePlayer} disabled={isSaving}>
+                <button className="btn-secondary" style={{ marginRight: '10px' }} onClick={() => setIsFormOpen(false)}>Cancelar</button>
+                <button className="btn-primary" onClick={handleSavePlayer} disabled={isSaving}>
                   {isSaving ? 'Guardando...' : 'Guardar'}
                 </button>
               </div>
@@ -354,6 +362,11 @@ const MiEquipo = () => {
           </div>
         </div>
       )}
+      <UpgradeModal 
+        isOpen={upgradeModal.open} 
+        onClose={() => setUpgradeModal({ ...upgradeModal, open: false })}
+        message={upgradeModal.message}
+      />
     </div>
   );
 };

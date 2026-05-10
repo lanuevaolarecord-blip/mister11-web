@@ -310,20 +310,20 @@ a {
 
 /* Global Components per User Rules */
 .btn-primary {
-  background-color: var(--accent);
-  color: var(--white) !important;
-  padding: 10px 24px;
-  border-radius: 8px;
-  font-weight: 700;
+  background-color: #4CAF7D !important;
+  color: #FFFFFF !important;
+  border-radius: 8px !important;
+  padding: 12px 24px;
+  font-weight: bold;
+  border: none;
+  cursor: pointer;
   text-transform: uppercase;
-  letter-spacing: 0.5px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
-  transition: opacity 0.2s;
   min-height: 48px;
-  border: none;
+  transition: opacity 0.2s;
 }
 
 .btn-primary:hover {
@@ -331,12 +331,11 @@ a {
 }
 
 .btn-secondary {
-  background: transparent;
-  border: 2px solid var(--accent);
-  color: var(--accent);
-  padding: 10px 24px;
+  background-color: #D4A843 !important;
+  color: #2D2D2D !important;
   border-radius: 8px;
-  font-weight: 700;
+  padding: 12px 24px;
+  font-weight: bold;
   text-transform: uppercase;
   display: inline-flex;
   align-items: center;
@@ -344,6 +343,8 @@ a {
   gap: 8px;
   min-height: 48px;
   transition: all 0.2s;
+  border: none;
+  cursor: pointer;
 }
 
 .btn-secondary:hover {
@@ -386,6 +387,22 @@ a {
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
   border: 1px solid var(--border-color);
   color: var(--text-primary);
+}
+
+.protocolo-card {
+  background-color: #F5F0E8;
+  border-left: 4px solid #D4A843;
+  padding: 16px;
+  margin: 16px 0;
+  border-radius: 8px;
+  font-weight: 500;
+  color: #1B3A2D;
+}
+
+html.dark .protocolo-card {
+  background-color: #2D2D2D;
+  color: #F5F0E8;
+  border-left: 4px solid #D4A843;
 }
 
 label {

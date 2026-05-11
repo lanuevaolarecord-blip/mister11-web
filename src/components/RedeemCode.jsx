@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { db } from '../firebaseConfig';
-import { doc, getDoc, updateDoc, increment, Timestamp } from 'firebase/firestore';
+import { doc, getDoc, updateDoc, setDoc, increment, Timestamp } from 'firebase/firestore';
 import { useAuth } from '../context/AuthContext';
 import { usePlan } from '../hooks/usePlan';
 import { Ticket, Loader2, CheckCircle2, AlertCircle } from 'lucide-react';
@@ -53,10 +53,11 @@ const RedeemCode = () => {
 
       // 5. Actualizar usuario
       const userRef = doc(db, 'users', user.uid);
-      await updateDoc(userRef, {
+      await setDoc(userRef, {
         plan: 'pro',
-        proExpiration: Timestamp.fromDate(expirationDate)
-      });
+        proExpiration: Timestamp.fromDate(expirationDate),
+        updatedAt: Timestamp.now()
+      }, { merge: true });
 
       // 6. Incrementar contador de usos del código
       await updateDoc(codeRef, {

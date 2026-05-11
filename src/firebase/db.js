@@ -7,7 +7,8 @@ import {
   doc, 
   query, 
   where, 
-  serverTimestamp 
+  serverTimestamp,
+  setDoc 
 } from 'firebase/firestore';
 import { db, auth } from '../firebaseConfig';
 
@@ -53,6 +54,19 @@ export const updateDocument = async (collectionName, id, data) => {
     });
   } catch (error) {
     console.error(`Error updating document ${id} in ${collectionName}:`, error);
+    throw error;
+  }
+};
+
+export const setDocument = async (collectionName, id, data) => {
+  try {
+    const docRef = doc(db, collectionName, id);
+    await setDoc(docRef, {
+      ...data,
+      updatedAt: serverTimestamp()
+    }, { merge: true });
+  } catch (error) {
+    console.error(`Error setting document ${id} in ${collectionName}:`, error);
     throw error;
   }
 };

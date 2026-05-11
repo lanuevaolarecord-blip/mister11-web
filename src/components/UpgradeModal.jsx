@@ -23,11 +23,16 @@ const UpgradeModal = ({ isOpen, onClose, message }) => {
             <li>✅ Soporte prioritario</li>
           </ul>
         </div>
-        <div className="modal-footer">
-          <button className="btn-secondary" onClick={onClose}>Más tarde</button>
-          <button className="btn-primary" onClick={() => alert("Próximamente: Integración con pasarela de pagos.")}>
-            Actualizar Ahora
-          </button>
+        <div className="modal-footer" style={{ flexDirection: 'column', gap: '10px' }}>
+          <div style={{ display: 'flex', width: '100%', gap: '10px' }}>
+            <button className="btn-secondary" style={{ flex: 1 }} onClick={onClose}>Más tarde</button>
+            <button className="btn-primary" style={{ flex: 1 }} onClick={() => alert("Próximamente: Integración con pasarela de pagos.")}>
+              Actualizar Ahora
+            </button>
+          </div>
+          <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '5px' }}>
+            ¿Eres usuario Beta? Canjea tu código en <b>Administración {'>'} Ajustes</b>.
+          </p>
         </div>
       </div>
     </div>

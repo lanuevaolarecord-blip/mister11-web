@@ -26,6 +26,7 @@ import { storage } from '../firebaseConfig';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import imageCompression from 'browser-image-compression';
 import EscudoEquipo from '../components/EscudoEquipo';
+import RedeemCode from '../components/RedeemCode';
 import './AdminPanel.css';
 
 const AdminPanel = () => {
@@ -492,6 +493,9 @@ const AdminPanel = () => {
                   )}
                 </div>
               </div>
+
+              {/* CANJE DE CÓDIGOS PROMOCIONALES */}
+              <RedeemCode />
             </div>
           </div>
         )}

@@ -92,19 +92,71 @@
 
 .update-close {
   position: absolute;
-  top: -2px;
-  right: -2px;
-  background: none;
+  top: 4px;
+  right: 4px;
+  background: rgba(255, 255, 255, 0.1);
   border: none;
   color: var(--white, #ffffff);
-  font-size: 1.2rem;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  font-size: 1rem;
   cursor: pointer;
-  opacity: 0.6;
-  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
 }
 
 .update-close:hover {
-  opacity: 1;
+  background: rgba(255, 255, 255, 0.2);
+  transform: scale(1.1);
+}
+
+.update-text {
+  flex: 1;
+}
+
+.update-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.btn-update-action {
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  cursor: pointer;
+  text-decoration: none;
+  transition: all 0.2s;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-update-action.refresh {
+  background: transparent;
+  color: var(--white);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.btn-update-action.refresh:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: var(--white);
+}
+
+.btn-update-action.download {
+  background: var(--accent);
+  color: var(--primary);
+  border: none;
+}
+
+.btn-update-action.download:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(212, 168, 67, 0.3);
 }
 
 @keyframes slide-down {

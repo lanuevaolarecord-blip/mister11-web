@@ -205,7 +205,6 @@ const PizarraTactica = () => {
   const [rivalFormation, setRivalFormation] = useState('4-4-2');
   const [isSwapped,      setIsSwapped]      = useState(false);
   const [showRival,      setShowRival]      = useState(false);
-  const [showMoreMenu,   setShowMoreMenu]   = useState(false);
   const [showColorPicker, setShowColorPicker] = useState(false);
   const [showWidthPicker, setShowWidthPicker] = useState(false);
   const [histCount,      setHistCount]      = useState(0);
@@ -1285,7 +1284,7 @@ const PizarraTactica = () => {
       style={{ touchAction: 'pan-y' }}>
 
       {/* ── TOP BAR ───────────────────────────────────────────────────────── */}
-      <div className={`pizarra-topbar ${showMoreMenu ? 'show-more' : ''}`}>
+      <div className="pizarra-topbar">
         <div className="topbar-scroll-wrapper">
           {/* GRUPO ESENCIAL: Siempre visible */}
           <div className="topbar-group essential">
@@ -1304,19 +1303,9 @@ const PizarraTactica = () => {
               <option value="reduced">Campo Reducido</option>
               <option value="blank">Campo en Blanco</option>
             </select>
-
-            {isMobile && (
-              <button 
-                className={`topbar-btn more-toggle ${showMoreMenu ? 'active' : ''}`}
-                onClick={() => setShowMoreMenu(!showMoreMenu)}
-              >
-                {showMoreMenu ? '✕' : '⋯'}
-              </button>
-            )}
           </div>
 
-          {/* GRUPOS ADAPTATIVOS: Ocultos en móvil tras el "more" si no hay espacio */}
-          <div className={`topbar-adaptive-content ${isMobile && !showMoreMenu ? 'hidden' : ''}`}>
+          <div className="topbar-adaptive-content">
             {fieldType === 'reduced' && (
               <div className="topbar-group reduced-controls-group">
                 <div className="reduced-controls">

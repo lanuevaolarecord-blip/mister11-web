@@ -711,6 +711,20 @@ const PizarraTactica = () => {
           }, ['data', 'hasControls', 'hasBorders', 'playerType', 'tipo', 'radius']);
         }
       }
+      if (e.key === 'Delete' || e.key === 'Backspace') {
+        const fc = fcRef.current;
+        const activeObj = fc.getActiveObject();
+        if (activeObj && !activeObj.isEditing) {
+          if (activeObj.type === 'activeSelection') {
+            activeObj.forEachObject(o => fc.remove(o));
+            fc.discardActiveObject();
+          } else {
+            fc.remove(activeObj);
+          }
+          fc.requestRenderAll();
+          pushToHistory();
+        }
+      }
     };
     window.addEventListener('keydown', onKeyDown);
 

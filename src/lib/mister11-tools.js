@@ -204,6 +204,7 @@ export class ToolManager {
       controlX: 0,
       controlY: 0,
       tempLine: null,
+      tempObj: null,  // para rect y circle
     };
 
     this._bindEvents();
@@ -351,18 +352,31 @@ export class ToolManager {
         break;
 
       case 'zone_circle':
-        if (this._drawState.phase === 'idle') {
-          this._drawState.phase = 'started';
-          this._drawState.startX = x;
-          this._drawState.startY = y;
-        }
-        break;
-
       case 'zone_rect':
         if (this._drawState.phase === 'idle') {
           this._drawState.phase = 'started';
           this._drawState.startX = x;
           this._drawState.startY = y;
+          
+          if (this.activeTool === 'zone_circle') {
+            this._drawState.tempObj = new fabric.Circle({
+              left: x, top: y, radius: 1,
+              fill: hexToRgba('#D4A843', 0.15),
+              stroke: '#D4A843', strokeWidth: 2,
+              strokeDashArray: [6, 4],
+              originX: 'center', originY: 'center',
+              selectable: false, evented: false
+            });
+          } else {
+            this._drawState.tempObj = new fabric.Rect({
+              left: x, top: y, width: 1, height: 1,
+              fill: hexToRgba('#D4A843', 0.12),
+              stroke: '#D4A843', strokeWidth: 2,
+              strokeDashArray: [6, 4],
+              selectable: false, evented: false
+            });
+          }
+          this.canvas.add(this._drawState.tempObj);
         }
         break;
 
@@ -389,6 +403,37 @@ export class ToolManager {
         });
         this._drawState.tempLine = line;
         this.canvas.add(line);
+      } else if (this.activeTool === 'arrow_curve' || this.activeTool === 'dashed_curve') {
+        if (this._drawState.phase === 'started') {
+          // Vista previa de línea recta hasta elegir punto de control
+          const line = new fabric.Line([sx, sy, x, y], {
+            stroke: this.strokeColor, strokeWidth: this.strokeWidth,
+            strokeDashArray: this.activeTool === 'dashed_curve' ? [8, 6] : null,
+            selectable: false, evented: false, opacity: 0.6
+          });
+          this._drawState.tempLine = line;
+          this.canvas.add(line);
+        } else if (this._drawState.phase === 'control') {
+          // Vista previa de curva Bézier
+          const pathData = `M ${sx} ${sy} Q ${this._drawState.controlX} ${this._drawState.controlY} ${x} ${y}`;
+          const curve = new fabric.Path(pathData, {
+            fill: 'transparent', stroke: this.strokeColor, strokeWidth: this.strokeWidth,
+            strokeDashArray: this.activeTool === 'dashed_curve' ? [8, 6] : null,
+            selectable: false, evented: false, opacity: 0.6
+          });
+          this._drawState.tempLine = curve;
+          this.canvas.add(curve);
+        }
+      } else if (this.activeTool === 'zone_circle' && this._drawState.tempObj) {
+        const radius = Math.sqrt(Math.pow(x - sx, 2) + Math.pow(y - sy, 2));
+        this._drawState.tempObj.set({ radius: radius });
+      } else if (this.activeTool === 'zone_rect' && this._drawState.tempObj) {
+        this._drawState.tempObj.set({
+          width: Math.abs(x - sx),
+          height: Math.abs(y - sy),
+          left: x < sx ? x : sx,
+          top: y < sy ? y : sy
+        });
       } else if (this.activeTool === 'pressure') {
         const wavy = this._createWavyLine(sx, sy, x, y, { opacity: 0.6, data: { type: 'temp' } });
         this._drawState.tempLine = wavy;
@@ -412,23 +457,46 @@ export class ToolManager {
       if (this.activeTool === 'arrow' || this.activeTool === 'dashed' || this.activeTool === 'shot') {
         this._removeTempLine();
         const obj = (this.activeTool === 'shot')
-          ? this._createShot(sx, sy, x, y)
+          ? this._createShotArrow(sx, sy, x, y)
           : this._createArrow(sx, sy, x, y, this.activeTool === 'dashed');
         this.canvas.add(obj);
         this.canvas.setActiveObject(obj);
+        this._drawState.phase = 'idle';
+      } else if (this.activeTool === 'zone_circle') {
+        const radius = Math.sqrt(Math.pow(x - sx, 2) + Math.pow(y - sy, 2));
+        if (radius > 5) {
+          this._removeTempLine();
+          const obj = this._createZoneCircle(sx, sy, radius);
+          this.canvas.setActiveObject(obj);
+        } else {
+          this._removeTempLine();
+        }
+        this._drawState.phase = 'idle';
+      } else if (this.activeTool === 'zone_rect') {
+        const w = Math.abs(x - sx);
+        const h = Math.abs(y - sy);
+        if (w > 5 && h > 5) {
+          this._removeTempLine();
+          const obj = this._createZoneRect(x < sx ? x : sx, y < sy ? y : sy, w, h);
+          this.canvas.setActiveObject(obj);
+        } else {
+          this._removeTempLine();
+        }
+        this._drawState.phase = 'idle';
       } else if (this.activeTool === 'pressure') {
         this._removeTempLine();
         const obj = this._createWavyLine(sx, sy, x, y);
         this.canvas.add(obj);
         this.canvas.setActiveObject(obj);
+        this._drawState.phase = 'idle';
       } else if (this.activeTool === 'sprint_pro') {
         this._removeTempLine();
         const obj = this._createSprintLinePro(sx, sy, x, y);
         this.canvas.add(obj);
         this.canvas.setActiveObject(obj);
+        this._drawState.phase = 'idle';
       }
-
-      this._drawState.phase = 'idle';
+      
       this.canvas.renderAll();
     }
   }
@@ -568,15 +636,15 @@ export class ToolManager {
       left: cx,
       top: cy,
       radius: radius,
-      fill: hexToRgba(this.strokeColor, 0.12),
-      stroke: this.strokeColor,
+      fill: hexToRgba('#D4A843', 0.15),
+      stroke: '#D4A843',
       strokeWidth: 2,
       strokeDashArray: [7, 5],
       originX: 'center',
       originY: 'center',
       selectable: true,
-      hasControls: false,
-      hasBorders: false,
+      hasControls: true,
+      hasBorders: true,
       data: { type: 'zone', shape: 'circle' },
     });
     applyMister11Controls(circle);
@@ -591,13 +659,13 @@ export class ToolManager {
   _createZoneRect(left, top, width, height) {
     const rect = new fabric.Rect({
       left, top, width, height,
-      fill: hexToRgba(this.strokeColor, 0.12),
-      stroke: this.strokeColor,
+      fill: hexToRgba('#D4A843', 0.12),
+      stroke: '#D4A843',
       strokeWidth: 2,
       strokeDashArray: [7, 5],
       selectable: true,
-      hasControls: false,
-      hasBorders: false,
+      hasControls: true,
+      hasBorders: true,
       data: { type: 'zone', shape: 'rect' },
     });
     applyMister11Controls(rect);
@@ -652,7 +720,11 @@ export class ToolManager {
       this.canvas.remove(this._drawState.tempLine);
       this._drawState.tempLine = null;
     }
-    // Eliminar cualquier objeto temporal
+    if (this._drawState.tempObj) {
+      this.canvas.remove(this._drawState.tempObj);
+      this._drawState.tempObj = null;
+    }
+    // Eliminar cualquier objeto temporal remanente
     const temps = this.canvas.getObjects().filter(o => o.data?.type === 'temp');
     temps.forEach(o => this.canvas.remove(o));
     this.canvas.renderAll();

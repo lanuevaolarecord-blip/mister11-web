@@ -206,6 +206,8 @@ const PizarraTactica = () => {
   const [isSwapped,      setIsSwapped]      = useState(false);
   const [showRival,      setShowRival]      = useState(false);
   const [showMoreMenu,   setShowMoreMenu]   = useState(false);
+  const [showColorPicker, setShowColorPicker] = useState(false);
+  const [showWidthPicker, setShowWidthPicker] = useState(false);
   const [histCount,      setHistCount]      = useState(0);
   const [redoCount,      setRedoCount]      = useState(0);
   const [reducedDim,     setReducedDim]     = useState({ w: 40, h: 30 });
@@ -1354,35 +1356,59 @@ const PizarraTactica = () => {
               ))}
             </div>
 
-            {/* Colors */}
-            <div className="topbar-group colors">
-              <div className="swatches-container">
-                {STROKE_COLORS.map(c => (
-                  <div key={c.id}
-                    className={`color-swatch-top ${activeColor === c.hex ? 'active' : ''}`}
-                    style={{ backgroundColor: c.hex }}
-                    title={c.label}
-                    onClick={() => setActiveColor(c.hex)}
-                  />
-                ))}
-              </div>
-              <div className="topbar-divider" />
-              <div className="widths-container">
-                {Object.entries(STROKE_WIDTHS).map(([k, v]) => (
-                  <button key={k}
-                    className={`topbar-btn ${activeWidth === v.value ? 'active' : ''}`}
-                    onClick={() => setActiveWidth(v.value)}>
-                    {v.label}
-                  </button>
-                ))}
-              </div>
+            {/* Color Dropdown */}
+            <div className="topbar-group color-picker-container">
+              <button 
+                className="topbar-btn color-trigger" 
+                onClick={() => { setShowColorPicker(!showColorPicker); setShowWidthPicker(false); }}
+                title="Color de trazo"
+              >
+                <div className="current-color-preview" style={{ backgroundColor: activeColor }} />
+              </button>
+              {showColorPicker && (
+                <div className="pizarra-dropdown color-grid">
+                  {STROKE_COLORS.map(c => (
+                    <div key={c.id}
+                      className={`color-swatch-item ${activeColor === c.hex ? 'active' : ''}`}
+                      style={{ backgroundColor: c.hex }}
+                      onClick={() => { setActiveColor(c.hex); setShowColorPicker(false); }}
+                    />
+                  ))}
+                </div>
+              )}
             </div>
+
+            {/* Width Dropdown */}
+            <div className="topbar-group width-picker-container">
+              <button 
+                className="topbar-btn width-trigger" 
+                onClick={() => { setShowWidthPicker(!showWidthPicker); setShowColorPicker(false); }}
+                title="Grosor de trazo"
+              >
+                <span className="current-width-label">
+                  {Object.values(STROKE_WIDTHS).find(v => v.value === activeWidth)?.label || 'Fino'}
+                </span>
+              </button>
+              {showWidthPicker && (
+                <div className="pizarra-dropdown width-list">
+                  {Object.entries(STROKE_WIDTHS).map(([k, v]) => (
+                    <button key={k}
+                      className={`dropdown-item ${activeWidth === v.value ? 'active' : ''}`}
+                      onClick={() => { setActiveWidth(v.value); setShowWidthPicker(false); }}>
+                      {v.label}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <div className="topbar-divider" />
 
             {/* Actions */}
             <div className="topbar-group actions">
               <button className="topbar-btn" onClick={undo} disabled={histCount === 0} title="Deshacer (Ctrl+Z)">↩</button>
               <button className="topbar-btn" onClick={redo} disabled={redoCount === 0} title="Rehacer (Ctrl+Y)">↪</button>
-              <button className="topbar-btn" onClick={clearCanvas}>🗑 Limpiar</button>
+              <button className="topbar-btn" onClick={clearCanvas} title="Limpiar todo">🗑</button>
               <button id="btn-guardar-pizarra" className="topbar-btn primary" onClick={handleSave}>💾 GUARDAR</button>
             </div>
           </div>

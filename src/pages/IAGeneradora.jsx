@@ -4,6 +4,7 @@ import { useExercises } from '../hooks/useExercises';
 import { useAuth } from '../context/AuthContext';
 import { usePlan } from '../hooks/usePlan';
 import UpgradeModal from '../components/UpgradeModal';
+import { useCaptures } from '../hooks/useCaptures';
 import './IAGeneradora.css';
 
 // --- OPCIONES DE FORMULARIO ---
@@ -57,7 +58,8 @@ const renderMarkdown = (text) => {
 const IAGeneradora = () => {
   const { activeTeamId } = useAuth();
   const { isPro } = usePlan();
-  const { exercises, addExercise } = useExercises(activeTeamId);
+  const { captures } = useCaptures(activeTeamId);
+  const [selectedTacticalRef, setSelectedTacticalRef] = useState(null);
   const [form, setForm] = useState(INITIAL_FORM);
   const [result, setResult] = useState(null);
   const [isGenerating, setIsGenerating] = useState(false);
@@ -139,8 +141,10 @@ const IAGeneradora = () => {
 
     const prompt = `Genera UN ejercicio de entrenamiento de fútbol en español:
     Edad: ${form.edad}, Jugadores: ${form.jugadores}, Objetivo: ${form.objetivo}, Duración: ${form.duracion} min, Material: ${materialesStr}, Espacio: ${form.espacio}, Intensidad: ${form.intensidad}.
+    ${selectedTacticalRef ? `IMPORTANTE: Basar el ejercicio en la REFERENCIA TÁCTICA: "${selectedTacticalRef.title}".` : ''}
     ${form.observaciones ? `Observaciones: ${form.observaciones}` : ''}
-    Usa el formato markdown con ## para el título.`;
+    Usa el formato markdown con ## para el título.
+    Explica la dinámica del ejercicio basándote en la referencia táctica si se ha proporcionado.`;
 
     try {
       const texto = await callGroq(prompt);
@@ -227,13 +231,35 @@ const IAGeneradora = () => {
           </div>
 
           <div className="ia-field">
-            <label>Intensidad</label>
-            <div className="chip-group">
-              {INTENSIDADES.map(i => (
-                <button key={i} className={`chip ${form.intensidad === i ? 'active' : ''}`}
-                  onClick={() => setForm({...form, intensidad: i})}>{i}</button>
+            <label>Referencia Táctica (Opcional)</label>
+            <div className="tactical-ref-selector">
+              <div 
+                className={`tactical-thumb-none ${!selectedTacticalRef ? 'active' : ''}`}
+                onClick={() => setSelectedTacticalRef(null)}
+              >
+                <span>Sin Ref.</span>
+              </div>
+              {captures.map(cap => (
+                <div 
+                  key={cap.id} 
+                  className={`tactical-thumb ${selectedTacticalRef?.id === cap.id ? 'active' : ''}`}
+                  onClick={() => setSelectedTacticalRef(cap)}
+                >
+                  <img src={cap.url} alt={cap.title} />
+                  <div className="thumb-check">✓</div>
+                </div>
               ))}
             </div>
+          </div>
+
+          <div className="ia-field">
+            <label>Observaciones adicionales</label>
+            <textarea 
+              value={form.observaciones} 
+              onChange={e => setForm({...form, observaciones: e.target.value})} 
+              placeholder="Ej. Enfocarse en la velocidad de ejecución o en el repliegue defensivo..."
+              className="ia-textarea"
+            />
           </div>
 
           <button className="btn-generate" onClick={handleGenerate} disabled={isGenerating}>

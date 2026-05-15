@@ -8,18 +8,19 @@ import { usePlan, LIMITS } from '../hooks/usePlan';
 import UpgradeModal from '../components/UpgradeModal';
 import { storage } from '../firebaseConfig';
 import { ref, uploadBytesResumable, getDownloadURL, deleteObject } from 'firebase/storage';
+import { useCaptures } from '../hooks/useCaptures';
 import './Sesiones.css';
 
 const Sesiones = () => {
   const { user, activeTeamId } = useAuth();
   const { activeTeam } = useTeams();
   const { isPro, limits } = usePlan();
-  const { sessions, loading: loadingSessions, addSession, updateSession, removeSession } = useSessions(activeTeamId);
-  const { players, loading: loadingPlayers } = usePlayers(activeTeamId);
-  const [upgradeModal, setUpgradeModal] = useState({ open: false, message: '' });
+  const { captures, loading: loadingCaptures, removeCapture } = useCaptures(activeTeamId);
+  const [activeTab, setActiveTab] = useState('sessions'); // 'sessions' | 'captures'
   
   const [viewMode, setViewMode] = useState('list'); // 'list' | 'edit'
   const [selectedSession, setSelectedSession] = useState(null);
+  const [selectedCapture, setSelectedCapture] = useState(null);
   const [isSaving, setIsSaving] = useState(false);
   const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
   
@@ -204,8 +205,8 @@ const Sesiones = () => {
     }));
   };
 
-  if (loadingSessions || loadingPlayers) {
-    return <div className="loading-state">Cargando sesiones...</div>;
+  if (loadingSessions || loadingPlayers || loadingCaptures) {
+    return <div className="loading-state">Cargando datos de entrenamiento...</div>;
   }
 
   // --- RENDER EDIT MODE ---
@@ -394,8 +395,11 @@ const Sesiones = () => {
     <div className="sesiones-page">
       <header className="sesiones-header">
         <div className="header-top">
-          <h1>SESIONES DE ENTRENAMIENTO</h1>
+          <h1>ENTRENAMIENTO</h1>
           <div className="header-actions">
+            <button className={`tab-switcher ${activeTab === 'sessions' ? 'active' : ''}`} onClick={() => setActiveTab('sessions')}>SESIONES</button>
+            <button className={`tab-switcher ${activeTab === 'captures' ? 'active' : ''}`} onClick={() => setActiveTab('captures')}>PIZARRA</button>
+            <div className="topbar-divider-v" />
             <button className="btn-primary" onClick={handleCreateNew}>+ Nueva Sesión</button>
           </div>
         </div>
@@ -421,143 +425,210 @@ const Sesiones = () => {
           })()}
         </div>
 
-        <div className="filters-row">
-          {categories.map(cat => (
-            <button 
-              key={cat} 
-              className={`filter-tab ${catFilter === cat ? 'active' : ''}`}
-              onClick={() => setCatFilter(cat)}
-            >
-              {cat}
-            </button>
-          ))}
-        </div>
+        {activeTab === 'sessions' && (
+          <div className="filters-row">
+            {categories.map(cat => (
+              <button 
+                key={cat} 
+                className={`filter-tab ${catFilter === cat ? 'active' : ''}`}
+                onClick={() => setCatFilter(cat)}
+              >
+                {cat}
+              </button>
+            ))}
+          </div>
+        )}
       </header>
 
-      <div className="sessions-content">
-        <div className="sessions-list">
-          {filteredSessions.map(session => {
-            // Normalizar campos: las sesiones del seed usan nombres en español
-            const title      = session.title    || session.titulo    || 'Sin título';
-            const time       = session.time     || session.hora      || '--:--';
-            const duration   = session.duration || session.duracion  || 0;
-            const category   = session.category || session.categoria || 'General';
-            const intensity  = session.intensity|| session.intensidad|| 'Media';
-            const blocks     = session.blocks   || session.bloques   || [];
-            return (
-              <div key={session.id} className={`session-card ${selectedSession?.id === session.id ? 'selected' : ''}`} onClick={() => setSelectedSession(session)}>
-                <div className={`session-strip ${category.toLowerCase()}`} />
-                <div className="session-main">
-                  <div className="session-date-box">
-                    <span className="time">{time}</span>
-                    <span className="duration">{duration} min</span>
-                  </div>
-                  <div className="session-details">
-                    <h3>{title}</h3>
-                    <div className="session-badges">
-                      <span className="badge category">{category}</span>
-                      <span className={`badge intensity ${intensity.toLowerCase()}`}>{intensity}</span>
-                      <span className="badge blocks">{blocks.length} bloques</span>
+      {activeTab === 'sessions' ? (
+        <div className="sessions-content">
+          <div className="sessions-list">
+            {filteredSessions.map(session => {
+              const title      = session.title    || session.titulo    || 'Sin título';
+              const time       = session.time     || session.hora      || '--:--';
+              const duration   = session.duration || session.duracion  || 0;
+              const category   = session.category || session.categoria || 'General';
+              const intensity  = session.intensity|| session.intensidad|| 'Media';
+              const blocks     = session.blocks   || session.bloques   || [];
+              return (
+                <div key={session.id} className={`session-card ${selectedSession?.id === session.id ? 'selected' : ''}`} onClick={() => setSelectedSession(session)}>
+                  <div className={`session-strip ${category.toLowerCase()}`} />
+                  <div className="session-main">
+                    <div className="session-date-box">
+                      <span className="time">{time}</span>
+                      <span className="duration">{duration} min</span>
                     </div>
-                  </div>
-                  <div className="session-arrow">❯</div>
-                </div>
-              </div>
-            );
-          })}
-          {filteredSessions.length === 0 && (
-            <div className="empty-state-list">No hay sesiones en esta categoría.</div>
-          )}
-        </div>
-
-        <div className="session-preview-panel">
-          {selectedSession ? (
-            <div className="preview-content">
-              <div className="preview-header">
-                <h2>{selectedSession.title || selectedSession.titulo || 'Sin título'}</h2>
-                <span className="date-full">
-                  {selectedSession.date || selectedSession.fecha || ''} · {selectedSession.time || selectedSession.hora || ''}
-                </span>
-              </div>
-              <div className="preview-stats">
-                <div className="p-stat"><strong>{selectedSession.duration || selectedSession.duracion || 0}</strong><span>MIN</span></div>
-                <div className="p-stat"><strong>{(selectedSession.blocks || selectedSession.bloques || []).length}</strong><span>BLOQUES</span></div>
-                <div className="p-stat"><strong>{selectedSession.intensity || selectedSession.intensidad || 'Media'}</strong><span>CARGA</span></div>
-              </div>
-              
-              <div className="preview-files">
-                {selectedSession.objectives && (
-                  <div className="protocolo-card" style={{marginTop: '0', marginBottom: '15px'}}>
-                    <h4>Objetivos</h4>
-                    <p style={{fontSize: '0.9rem', color: 'inherit'}}>{selectedSession.objectives}</p>
-                  </div>
-                )}
-                {selectedSession.files?.length > 0 && (
-                  <div className="files-indicator">
-                    <span>📎 {selectedSession.files.length} archivos adjuntos</span>
-                    {selectedSession.files.map(f => (
-                      f.url ? <button key={f.id} className="btn-text-small" onClick={() => setPdfPreview(f.url)}>Ver PDF</button> : null
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              <div className="preview-blocks">
-                <h4>Estructura de la Sesión</h4>
-                {(() => {
-                  const blocks = selectedSession.blocks || selectedSession.bloques || [];
-                  if (blocks.length === 0) {
-                    return <p className="empty-blocks-text">No hay bloques definidos.</p>;
-                  }
-                  return blocks.map((b, i) => (
-                    <div key={b.id || i} className="block-item-mini">
-                      <span className="b-num">{i + 1}</span>
-                      <div className="b-info">
-                        <strong>{b.name || b.nombre || 'Bloque'}</strong>
-                        <span>{b.duration || b.duracion || 0} min · {b.type || b.tipo || ''}</span>
+                    <div className="session-details">
+                      <h3>{title}</h3>
+                      <div className="session-badges">
+                        <span className="badge category">{category}</span>
+                        <span className={`badge intensity ${intensity.toLowerCase()}`}>{intensity}</span>
+                        <span className="badge blocks">{blocks.length} bloques</span>
                       </div>
                     </div>
-                  ));
-                })()}
-              </div>
-              
-              <div className="preview-actions">
-                <button 
-                  className="btn-primary full-width" 
-                  style={{marginBottom: '10px'}} 
-                  disabled={isGeneratingPDF}
-                  onClick={() => {
-                    if (!isPro) {
-                      setUpgradeModal({ open: true, message: 'La exportación de sesiones a PDF es una función PRO.' });
-                      return;
+                    <div className="session-arrow">❯</div>
+                  </div>
+                </div>
+              );
+            })}
+            {filteredSessions.length === 0 && (
+              <div className="empty-state-list">No hay sesiones en esta categoría.</div>
+            )}
+          </div>
+
+          <div className="session-preview-panel">
+            {selectedSession ? (
+              <div className="preview-content">
+                <div className="preview-header">
+                  <h2>{selectedSession.title || selectedSession.titulo || 'Sin título'}</h2>
+                  <span className="date-full">
+                    {selectedSession.date || selectedSession.fecha || ''} · {selectedSession.time || selectedSession.hora || ''}
+                  </span>
+                </div>
+                <div className="preview-stats">
+                  <div className="p-stat"><strong>{selectedSession.duration || selectedSession.duracion || 0}</strong><span>MIN</span></div>
+                  <div className="p-stat"><strong>{(selectedSession.blocks || selectedSession.bloques || []).length}</strong><span>BLOQUES</span></div>
+                  <div className="p-stat"><strong>{selectedSession.intensity || selectedSession.intensidad || 'Media'}</strong><span>CARGA</span></div>
+                </div>
+                
+                <div className="preview-files">
+                  {selectedSession.objectives && (
+                    <div className="protocolo-card" style={{marginTop: '0', marginBottom: '15px'}}>
+                      <h4>Objetivos</h4>
+                      <p style={{fontSize: '0.9rem', color: 'inherit'}}>{selectedSession.objectives}</p>
+                    </div>
+                  )}
+                  {selectedSession.files?.length > 0 && (
+                    <div className="files-indicator">
+                      <span>📎 {selectedSession.files.length} archivos adjuntos</span>
+                      {selectedSession.files.map(f => (
+                        f.url ? <button key={f.id} className="btn-text-small" onClick={() => setPdfPreview(f.url)}>Ver PDF</button> : null
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                <div className="preview-blocks">
+                  <h4>Estructura de la Sesión</h4>
+                  {(() => {
+                    const blocks = selectedSession.blocks || selectedSession.bloques || [];
+                    if (blocks.length === 0) {
+                      return <p className="empty-blocks-text">No hay bloques definidos.</p>;
                     }
-                    setIsGeneratingPDF(true);
-                    setTimeout(async () => {
-                      try {
-                        await generateSessionPDF(selectedSession, activeTeam);
-                      } catch(err) {
-                        console.error(err);
-                        alert("Error al generar el PDF");
-                      } finally {
-                        setIsGeneratingPDF(false);
+                    return blocks.map((b, i) => (
+                      <div key={b.id || i} className="block-item-mini">
+                        <span className="b-num">{i + 1}</span>
+                        <div className="b-info">
+                          <strong>{b.name || b.nombre || 'Bloque'}</strong>
+                          <span>{b.duration || b.duracion || 0} min · {b.type || b.tipo || ''}</span>
+                        </div>
+                      </div>
+                    ));
+                  })()}
+                </div>
+                
+                <div className="preview-actions">
+                  <button 
+                    className="btn-primary full-width" 
+                    style={{marginBottom: '10px'}} 
+                    disabled={isGeneratingPDF}
+                    onClick={() => {
+                      if (!isPro) {
+                        setUpgradeModal({ open: true, message: 'La exportación de sesiones a PDF es una función PRO.' });
+                        return;
                       }
-                    }, 150);
-                  }}
-                >
-                  {isGeneratingPDF ? '⏳ Generando informe...' : '📄 Exportar a PDF'}
-                </button>
-                <button className="btn-outline-gold full-width" onClick={() => handleEditSession(selectedSession)}>✏️ Editar Sesión</button>
-                <button className="btn-text-error full-width" onClick={() => handleDeleteSession(selectedSession.id)}>Eliminar Sesión</button>
+                      setIsGeneratingPDF(true);
+                      setTimeout(async () => {
+                        try {
+                          await generateSessionPDF(selectedSession, activeTeam);
+                        } catch(err) {
+                          console.error(err);
+                          alert("Error al generar el PDF");
+                        } finally {
+                          setIsGeneratingPDF(false);
+                        }
+                      }, 150);
+                    }}
+                  >
+                    {isGeneratingPDF ? '⏳ Generando informe...' : '📄 Exportar a PDF'}
+                  </button>
+                  <button className="btn-outline-gold full-width" onClick={() => handleEditSession(selectedSession)}>✏️ Editar Sesión</button>
+                  <button className="btn-text-error full-width" onClick={() => handleDeleteSession(selectedSession.id)}>Eliminar Sesión</button>
+                </div>
+              </div>
+            ) : (
+              <div className="preview-empty">
+                <div className="empty-icon">📋</div>
+                <p>Selecciona una sesión para ver los detalles rápidos</p>
+              </div>
+            )}
+          </div>
+        </div>
+      ) : (
+        <div className="captures-grid">
+          {captures.map(cap => (
+            <div key={cap.id} className="capture-card" onClick={() => setSelectedCapture(cap)}>
+              <div className="capture-image-wrapper">
+                <img src={cap.url} alt={cap.title} loading="lazy" />
+                <div className="capture-overlay">
+                  <span className="btn-view-capture">👁 VER</span>
+                </div>
+              </div>
+              <div className="capture-info">
+                <h4>{cap.title}</h4>
+                <div className="capture-meta-row">
+                  <span>{cap.timestamp?.toDate?.().toLocaleString() || 'Reciente'}</span>
+                  <div className="capture-actions">
+                    <button className="btn-download-small" onClick={(e) => {
+                      e.stopPropagation();
+                      const link = document.createElement('a');
+                      link.href = cap.url;
+                      link.download = `pizarra_${cap.id}.png`;
+                      link.target = "_blank";
+                      link.click();
+                    }}>📥</button>
+                    <button className="btn-delete-small" onClick={(e) => {
+                      e.stopPropagation();
+                      if(window.confirm('¿Eliminar esta captura?')) removeCapture(cap.id);
+                    }}>🗑</button>
+                  </div>
+                </div>
               </div>
             </div>
-          ) : (
-            <div className="preview-empty">
-              <div className="empty-icon">📋</div>
-              <p>Selecciona una sesión para ver los detalles rápidos</p>
+          ))}
+          {captures.length === 0 && (
+            <div className="empty-state-full">
+              <div className="empty-icon">🎨</div>
+              <h3>No hay capturas de pizarra</h3>
+              <p>Las capturas que guardes en la Pizarra Táctica aparecerán aquí automáticamente.</p>
             </div>
           )}
         </div>
-      </div>
+      )}
+
+      {/* MODAL VISTA CAPTURA */}
+      {selectedCapture && (
+        <div className="modal-overlay-capture" onClick={() => setSelectedCapture(null)}>
+          <div className="modal-content-capture" onClick={e => e.stopPropagation()}>
+            <div className="modal-header-capture">
+              <h3>{selectedCapture.title}</h3>
+              <button className="btn-close-pdf" onClick={() => setSelectedCapture(null)}>✕</button>
+            </div>
+            <div className="modal-body-capture">
+              <img src={selectedCapture.url} alt="Pizarra" />
+              <div className="capture-actions-float">
+                 <button className="btn-primary" onClick={() => {
+                   const link = document.createElement('a');
+                   link.href = selectedCapture.url;
+                   link.download = "mister11_pizarra.png";
+                   link.target = "_blank";
+                   link.click();
+                 }}>DESCARGAR IMAGEN</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       <button className="fab-session" onClick={handleCreateNew}>+</button>
 

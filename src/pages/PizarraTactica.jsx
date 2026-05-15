@@ -30,8 +30,10 @@ import { TOOLS, STROKE_COLORS, STROKE_WIDTHS, ToolManager } from '../lib/mister1
 import { FieldRenderer, FORMATIONS } from '../lib/mister11-field.js';
 import { useAuth } from '../context/AuthContext';
 import { db } from '../firebaseConfig';
-import { collection, doc, setDoc, addDoc, deleteDoc, serverTimestamp, onSnapshot, query, orderBy } from 'firebase/firestore';
+import { collection, doc, setDoc, addDoc, deleteDoc, serverTimestamp, onSnapshot, query, orderBy, getDoc } from 'firebase/firestore';
+import { ref, uploadString, getDownloadURL } from 'firebase/storage';
 import { useSearchParams } from 'react-router-dom';
+import { storage } from '../firebaseConfig';
 import './Pizarra.css';
 
 // helper: 'half-attack' → 'half_attack' (library uses underscores)
@@ -217,6 +219,8 @@ const PizarraTactica = () => {
   const [histCount,      setHistCount]      = useState(0);
   const [redoCount,      setRedoCount]      = useState(0);
   const [reducedDim,     setReducedDim]     = useState({ w: 40, h: 30 });
+  const [zoomLevel,      setZoomLevel]      = useState(1);
+  const [isCapturing,    setIsCapturing]    = useState(false);
 
   // keep refs in sync with state
   useEffect(() => { frameIdxR.current = frameIdx; }, [frameIdx]);
@@ -771,6 +775,46 @@ const PizarraTactica = () => {
     };
     fc.on('mouse:down', onMouseDownClone);
 
+    // 10. Zoom / Pan (Mouse Wheel & Touch)
+    const handleMouseWheel = (opt) => {
+      const delta = opt.e.deltaY;
+      let zoom = fc.getZoom();
+      zoom *= 0.999 ** delta;
+      if (zoom > 20) zoom = 20;
+      if (zoom < 0.1) zoom = 0.1;
+      fc.zoomToPoint({ x: opt.e.offsetX, y: opt.e.offsetY }, zoom);
+      setZoomLevel(zoom);
+      opt.e.preventDefault();
+      opt.e.stopPropagation();
+    };
+
+    let lastDistance = 0;
+    const handleTouch = (opt) => {
+      if (opt.e.touches && opt.e.touches.length === 2) {
+        const touch1 = opt.e.touches[0];
+        const touch2 = opt.e.touches[1];
+        const dist = Math.hypot(touch1.clientX - touch2.clientX, touch1.clientY - touch2.clientY);
+        
+        if (lastDistance > 0) {
+          const delta = dist / lastDistance;
+          let zoom = fc.getZoom() * delta;
+          if (zoom > 20) zoom = 20;
+          if (zoom < 0.1) zoom = 0.1;
+          
+          const center = {
+            x: (touch1.clientX + touch2.clientX) / 2,
+            y: (touch1.clientY + touch2.clientY) / 2
+          };
+          fc.zoomToPoint(center, zoom);
+          setZoomLevel(zoom);
+        }
+        lastDistance = dist;
+      }
+    };
+
+    fc.on('mouse:wheel', handleMouseWheel);
+    fc.on('touch:gesture', handleTouch);
+
     return () => {
       if (unsubscribe) unsubscribe();
       ro.disconnect();
@@ -782,6 +826,8 @@ const PizarraTactica = () => {
       fc.off('object:added',    onChange);
       fc.off('object:removed',  onChange);
       fc.off('mouse:down', onMouseDownClone);
+      fc.off('mouse:wheel', handleMouseWheel);
+      fc.off('touch:gesture', handleTouch);
       fc.dispose();
     };
   }, [user, planId, activeTeamId]); // eslint-disable-line
@@ -983,12 +1029,72 @@ const PizarraTactica = () => {
   // ─── Clear canvas ─────────────────────────────────────────────────────────
   const clearCanvas = () => {
     if (!window.confirm('¿Limpiar pizarra?')) return;
-    const fc = fcRef.current; const fr = frRef.current; const tm = tmRef.current;
+    const fc = fcRef.current; const fr = frRef.current;
     if (!fc || !fr) return;
     fc.clear();
-    drawPlayers(fc, fr, fieldType, formation);
+    drawPlayers(fc, fr, fieldType, { local: localFormation, rival: rivalFormation }, isSwapped);
     saveFrameState();
     pushToHistory();
+  };
+
+  // ─── Capturar Imagen ──────────────────────────────────────────────────────
+  const handleCapture = async (download = true, silent = false) => {
+    const fc = fcRef.current;
+    const fieldCanvas = fieldCanvasRef.current;
+    if (!fc || !fieldCanvas || !user || !activeTeamId) return null;
+
+    if (!silent) setIsCapturing(true);
+
+    try {
+      // 1. Crear canvas temporal para combinar fondo + objetos
+      const tempCanvas = document.createElement('canvas');
+      tempCanvas.width = fc.width;
+      tempCanvas.height = fc.height;
+      const ctx = tempCanvas.getContext('2d');
+
+      // Dibujar campo
+      ctx.drawImage(fieldCanvas, 0, 0);
+      // Dibujar objetos de Fabric
+      ctx.drawImage(fc.getElement(), 0, 0);
+
+      const dataURL = tempCanvas.toDataURL('image/png', 0.8);
+
+      // 2. Descargar si se solicita
+      if (download) {
+        const link = document.createElement('a');
+        link.download = `mister11_captura_${Date.now()}.png`;
+        link.href = dataURL;
+        link.click();
+      }
+
+      // 3. Subir a Firebase Storage
+      const fileName = `captures/${user.uid}/${activeTeamId}/${Date.now()}.png`;
+      const storageRef = ref(storage, fileName);
+      await uploadString(storageRef, dataURL, 'data_url');
+      const downloadURL = await getDownloadURL(storageRef);
+
+      // 4. Guardar en Firestore (Nueva sección de Capturas)
+      const captureData = {
+        url: downloadURL,
+        timestamp: serverTimestamp(),
+        title: `Captura ${new Date().toLocaleString()}`,
+        teamId: activeTeamId,
+        type: 'tactical_capture'
+      };
+
+      await addDoc(collection(db, 'users', user.uid, 'teams', activeTeamId, 'captures'), captureData);
+
+      if (!silent) {
+        alert("¡Captura guardada en la sección de Sesiones!");
+      }
+      
+      setIsCapturing(false);
+      return downloadURL;
+    } catch (err) {
+      console.error("Error en captura:", err);
+      setIsCapturing(false);
+      return null;
+    }
   };
 
   // ─── Guardar (Manual Save) ────────────────────────────────────────────────
@@ -997,9 +1103,19 @@ const PizarraTactica = () => {
       alert("No estás autenticado. No se puede guardar.");
       return;
     }
-    saveFrameState(true);
     
-    // Save the parent exercise document so it shows in the list
+    // Feedback visual
+    const btn = document.getElementById('btn-guardar-pizarra');
+    const originalText = btn ? btn.innerHTML : '💾 GUARDAR';
+    if (btn) btn.innerHTML = '⏳ Guardando...';
+
+    // Guardar frames
+    await saveFrameState(true);
+
+    // Generar captura automática para la biblioteca
+    const captureUrl = await handleCapture(false, true);
+    
+    // Guardar metadata del ejercicio
     try {
       if (!activeTeamId) return;
       const exerciseRef = doc(db, 'users', user.uid, 'teams', activeTeamId, 'tactics', planId);
@@ -1008,18 +1124,17 @@ const PizarraTactica = () => {
         title: `Pizarra Táctica (${new Date().toLocaleDateString()})`,
         type: 'pizarra',
         framesCount: framesR.current.length,
+        thumbnail: captureUrl || null,
         updatedAt: serverTimestamp()
       }, { merge: true });
       
-      // Feedback visual rápido para el usuario
-      const btn = document.getElementById('btn-guardar-pizarra');
       if (btn) {
-        const originalText = btn.innerHTML;
         btn.innerHTML = '✅ Guardado';
         setTimeout(() => { btn.innerHTML = originalText; }, 2000);
       }
     } catch (err) {
       console.error("Error saving exercise metadata:", err);
+      if (btn) btn.innerHTML = '❌ Error';
     }
   };
 
@@ -1419,10 +1534,33 @@ const PizarraTactica = () => {
 
             {/* Actions */}
             <div className="topbar-group actions">
+              <button className="topbar-btn" onClick={() => {
+                const fc = fcRef.current;
+                if (!fc) return;
+                const zoom = fc.getZoom() * 1.1;
+                fc.setZoom(zoom);
+                setZoomLevel(zoom);
+              }} title="Acercar">🔍+</button>
+              <button className="topbar-btn" onClick={() => {
+                const fc = fcRef.current;
+                if (!fc) return;
+                const zoom = fc.getZoom() / 1.1;
+                fc.setZoom(zoom);
+                setZoomLevel(zoom);
+              }} title="Alejar">🔍-</button>
+              <button className="topbar-btn" onClick={() => {
+                const fc = fcRef.current;
+                if (!fc) return;
+                fc.setZoom(1);
+                fc.absolutePan({ x: 0, y: 0 });
+                setZoomLevel(1);
+              }} title="Reiniciar Zoom">🏠</button>
+              <div className="topbar-divider" />
               <button className="topbar-btn" onClick={undo} disabled={histCount === 0} title="Deshacer (Ctrl+Z)">↩</button>
               <button className="topbar-btn" onClick={redo} disabled={redoCount === 0} title="Rehacer (Ctrl+Y)">↪</button>
               <button className="topbar-btn danger" onClick={clearCanvas} title="Limpiar todo el canvas">🗑</button>
-              <button id="btn-guardar-pizarra" className="topbar-btn primary" onClick={handleSave} title="Guardar pizarra">💾 GUARDAR</button>
+              <button className="topbar-btn" onClick={() => handleCapture(true)} disabled={isCapturing} title="Descargar Imagen">📸</button>
+              <button id="btn-guardar-pizarra" className="topbar-btn primary" onClick={handleSave} disabled={isCapturing} title="Guardar pizarra y captura">💾 GUARDAR</button>
             </div>
           </div>{/* ── FIN topbar-scroll-wrapper ── */}
         </div>{/* ── FIN pizarra-topbar ── */}

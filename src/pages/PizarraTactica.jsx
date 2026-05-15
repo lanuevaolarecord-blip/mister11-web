@@ -1041,7 +1041,12 @@ const PizarraTactica = () => {
   const handleCapture = async (download = true, silent = false) => {
     const fc = fcRef.current;
     const fieldCanvas = fieldCanvasRef.current;
-    if (!fc || !fieldCanvas || !user || !activeTeamId) return null;
+    
+    if (!fc || !fieldCanvas || !user || !activeTeamId) {
+      if (!silent && !user) alert("Debes iniciar sesión para capturar.");
+      if (!silent && user && !activeTeamId) alert("Debes seleccionar un equipo activo.");
+      return null;
+    }
 
     if (!silent) setIsCapturing(true);
 
@@ -1068,21 +1073,27 @@ const PizarraTactica = () => {
       }
 
       // 3. Subir a Firebase Storage
-      const fileName = `captures/${user.uid}/${activeTeamId}/${Date.now()}.png`;
-      const storageRef = ref(storage, fileName);
-      await uploadString(storageRef, dataURL, 'data_url');
-      const downloadURL = await getDownloadURL(storageRef);
+      let downloadURL = null;
+      try {
+        const fileName = `captures/${user.uid}/${activeTeamId}/${Date.now()}.png`;
+        const storageRef = ref(storage, fileName);
+        await uploadString(storageRef, dataURL, 'data_url');
+        downloadURL = await getDownloadURL(storageRef);
 
-      // 4. Guardar en Firestore (Nueva sección de Capturas)
-      const captureData = {
-        url: downloadURL,
-        timestamp: serverTimestamp(),
-        title: `Captura ${new Date().toLocaleString()}`,
-        teamId: activeTeamId,
-        type: 'tactical_capture'
-      };
+        // 4. Guardar en Firestore (Nueva sección de Capturas)
+        const captureData = {
+          url: downloadURL,
+          timestamp: serverTimestamp(),
+          title: `Captura ${new Date().toLocaleString()}`,
+          teamId: activeTeamId,
+          type: 'tactical_capture'
+        };
 
-      await addDoc(collection(db, 'users', user.uid, 'teams', activeTeamId, 'captures'), captureData);
+        await addDoc(collection(db, 'users', user.uid, 'teams', activeTeamId, 'captures'), captureData);
+      } catch (uploadErr) {
+        console.warn("No se pudo subir la captura a la nube:", uploadErr);
+        // Continuamos, la captura local funcionó
+      }
 
       if (!silent) {
         alert("¡Captura guardada en la sección de Sesiones!");
@@ -1092,6 +1103,7 @@ const PizarraTactica = () => {
       return downloadURL;
     } catch (err) {
       console.error("Error en captura:", err);
+      if (!silent) alert("Error al generar la captura. Revisar consola.");
       setIsCapturing(false);
       return null;
     }
@@ -1099,25 +1111,29 @@ const PizarraTactica = () => {
 
   // ─── Guardar (Manual Save) ────────────────────────────────────────────────
   const handleSave = async () => {
+    const btn = document.getElementById('btn-guardar-pizarra');
+    const originalText = btn ? btn.innerHTML : '💾 GUARDAR';
+
     if (!user) {
       alert("No estás autenticado. No se puede guardar.");
       return;
     }
+    if (!activeTeamId) {
+      alert("No hay un equipo activo seleccionado.");
+      return;
+    }
     
     // Feedback visual
-    const btn = document.getElementById('btn-guardar-pizarra');
-    const originalText = btn ? btn.innerHTML : '💾 GUARDAR';
     if (btn) btn.innerHTML = '⏳ Guardando...';
 
-    // Guardar frames
-    await saveFrameState(true);
-
-    // Generar captura automática para la biblioteca
-    const captureUrl = await handleCapture(false, true);
-    
-    // Guardar metadata del ejercicio
     try {
-      if (!activeTeamId) return;
+      // Guardar frames
+      await saveFrameState(true);
+
+      // Generar captura automática para la biblioteca
+      const captureUrl = await handleCapture(false, true);
+      
+      // Guardar metadata del ejercicio
       const exerciseRef = doc(db, 'users', user.uid, 'teams', activeTeamId, 'tactics', planId);
       await setDoc(exerciseRef, {
         id: planId,
@@ -1130,11 +1146,14 @@ const PizarraTactica = () => {
       
       if (btn) {
         btn.innerHTML = '✅ Guardado';
-        setTimeout(() => { btn.innerHTML = originalText; }, 2000);
+        setTimeout(() => { if (btn.innerHTML === '✅ Guardado') btn.innerHTML = originalText; }, 2000);
       }
     } catch (err) {
       console.error("Error saving exercise metadata:", err);
-      if (btn) btn.innerHTML = '❌ Error';
+      if (btn) {
+        btn.innerHTML = '❌ Error';
+        setTimeout(() => { if (btn.innerHTML === '❌ Error') btn.innerHTML = originalText; }, 2000);
+      }
     }
   };
 

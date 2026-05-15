@@ -1385,22 +1385,28 @@ const PizarraTactica = () => {
               ))}
             </div>
 
-            {/* Color trigger — solo el botón, el dropdown está fuera del scroll-wrapper */}
             <div className="topbar-group color-picker-container" style={{ position: 'static' }}>
               <button
                 className="topbar-btn color-trigger"
-                onClick={() => { setShowColorPicker(!showColorPicker); setShowWidthPicker(false); }}
+                onClick={(e) => { 
+                  e.stopPropagation();
+                  setShowColorPicker(!showColorPicker); 
+                  setShowWidthPicker(false); 
+                }}
                 title="Color de trazo"
               >
                 <div className="current-color-preview" style={{ backgroundColor: activeColor }} />
               </button>
             </div>
 
-            {/* Width trigger — solo el botón, el dropdown está fuera del scroll-wrapper */}
             <div className="topbar-group width-picker-container" style={{ position: 'static' }}>
               <button
                 className="topbar-btn width-trigger"
-                onClick={() => { setShowWidthPicker(!showWidthPicker); setShowColorPicker(false); }}
+                onClick={(e) => { 
+                  e.stopPropagation();
+                  setShowWidthPicker(!showWidthPicker); 
+                  setShowColorPicker(false); 
+                }}
                 title="Grosor de trazo"
               >
                 <span className="current-width-label">
@@ -1420,24 +1426,50 @@ const PizarraTactica = () => {
             </div>
           </div>{/* ── FIN topbar-scroll-wrapper ── */}
 
-          {/* ── Dropdowns FUERA del scroll-wrapper para no quedar atrapados en overflow ── */}
+          {/* ── Dropdowns con POSICIONAMIENTO FIJO para máxima compatibilidad móvil ── */}
           {showColorPicker && (
-            <div className="pizarra-dropdown color-grid" style={{ position: 'absolute', top: '62px', left: 'auto', right: '180px', zIndex: 3000 }}>
+            <div className="pizarra-dropdown color-grid" 
+              style={{ 
+                position: 'fixed', 
+                top: '70px', 
+                left: '50%', 
+                transform: 'translateX(-50%)', 
+                zIndex: 9999,
+                width: 'max-content',
+                display: 'grid' 
+              }}>
               {STROKE_COLORS.map(c => (
                 <div key={c.id}
                   className={`color-swatch-item ${activeColor === c.hex ? 'active' : ''}`}
                   style={{ backgroundColor: c.hex }}
-                  onClick={() => { setActiveColor(c.hex); setShowColorPicker(false); }}
+                  onClick={(e) => { 
+                    e.stopPropagation();
+                    setActiveColor(c.hex); 
+                    setShowColorPicker(false); 
+                  }}
                 />
               ))}
             </div>
           )}
           {showWidthPicker && (
-            <div className="pizarra-dropdown width-list" style={{ position: 'absolute', top: '62px', left: 'auto', right: '120px', zIndex: 3000 }}>
+            <div className="pizarra-dropdown width-list" 
+              style={{ 
+                position: 'fixed', 
+                top: '70px', 
+                left: '50%', 
+                transform: 'translateX(-50%)', 
+                zIndex: 9999,
+                width: 'max-content',
+                minWidth: '200px'
+              }}>
               {Object.entries(STROKE_WIDTHS).map(([k, v]) => (
                 <button key={k}
                   className={`dropdown-item ${activeWidth === v.value ? 'active' : ''}`}
-                  onClick={() => { setActiveWidth(v.value); setShowWidthPicker(false); }}>
+                  onClick={(e) => { 
+                    e.stopPropagation();
+                    setActiveWidth(v.value); 
+                    setShowWidthPicker(false); 
+                  }}>
                   {v.label}
                 </button>
               ))}

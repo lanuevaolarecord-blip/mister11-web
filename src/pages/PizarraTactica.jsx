@@ -1053,14 +1053,17 @@ const PizarraTactica = () => {
     try {
       // 1. Crear canvas temporal para combinar fondo + objetos
       const tempCanvas = document.createElement('canvas');
-      tempCanvas.width = fc.width;
-      tempCanvas.height = fc.height;
+      const fabricEl = fc.getElement();
+      
+      // Usar las dimensiones reales del canvas de Fabric (soporta devicePixelRatio)
+      tempCanvas.width = fabricEl.width;
+      tempCanvas.height = fabricEl.height;
       const ctx = tempCanvas.getContext('2d');
 
-      // Dibujar campo
-      ctx.drawImage(fieldCanvas, 0, 0);
-      // Dibujar objetos de Fabric
-      ctx.drawImage(fc.getElement(), 0, 0);
+      // Dibujar campo (se escala a la resolución retina si es necesario)
+      ctx.drawImage(fieldCanvas, 0, 0, tempCanvas.width, tempCanvas.height);
+      // Dibujar objetos de Fabric (ya están en resolución retina)
+      ctx.drawImage(fabricEl, 0, 0, tempCanvas.width, tempCanvas.height);
 
       const dataURL = tempCanvas.toDataURL('image/png', 0.8);
 

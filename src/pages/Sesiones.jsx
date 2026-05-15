@@ -15,9 +15,12 @@ const Sesiones = () => {
   const { user, activeTeamId } = useAuth();
   const { activeTeam } = useTeams();
   const { isPro, limits } = usePlan();
+  const { sessions, addSession, updateSession, removeSession, loading: loadingSessions } = useSessions(activeTeamId);
+  const { players, loading: loadingPlayers } = usePlayers(activeTeamId);
   const { captures, loading: loadingCaptures, removeCapture } = useCaptures(activeTeamId);
   const [activeTab, setActiveTab] = useState('sessions'); // 'sessions' | 'captures'
-  
+  const [upgradeModal, setUpgradeModal] = useState({ open: false, message: '' });
+
   const [viewMode, setViewMode] = useState('list'); // 'list' | 'edit'
   const [selectedSession, setSelectedSession] = useState(null);
   const [selectedCapture, setSelectedCapture] = useState(null);

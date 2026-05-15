@@ -1037,7 +1037,7 @@ const PizarraTactica = () => {
     pushToHistory();
   };
 
-  // ─── Capturar Imagen ──────────────────────────────────────────────────────
+  // ─── Capture Canvas as Image ──────────────────────────────────────────────
   const handleCapture = async (download = true, silent = false) => {
     const fc = fcRef.current;
     const fieldCanvas = fieldCanvasRef.current;
@@ -1051,59 +1051,74 @@ const PizarraTactica = () => {
     if (!silent) setIsCapturing(true);
 
     try {
-      // 1. Crear canvas temporal para combinar fondo + objetos
+      // 1. Crear canvas temporal
       const tempCanvas = document.createElement('canvas');
-      const fabricEl = fc.getElement();
+      const scale = window.devicePixelRatio || 1;
       
-      // Usar las dimensiones reales del canvas de Fabric (soporta devicePixelRatio)
-      tempCanvas.width = fabricEl.width;
-      tempCanvas.height = fabricEl.height;
+      // Dimensiones lógicas (asegura proporciones exactas)
+      tempCanvas.width = fc.width * scale;
+      tempCanvas.height = fc.height * scale;
       const ctx = tempCanvas.getContext('2d');
 
-      // Dibujar campo (se escala a la resolución retina si es necesario)
+      // 2. Dibujar campo base (se estira a la resolución retina del tempCanvas)
+      // Como tempCanvas.width/height mantiene el ratio de fc.width/height, 
+      // el campo NO se deforma.
       ctx.drawImage(fieldCanvas, 0, 0, tempCanvas.width, tempCanvas.height);
-      // Dibujar objetos de Fabric (ya están en resolución retina)
-      ctx.drawImage(fabricEl, 0, 0, tempCanvas.width, tempCanvas.height);
+      
+      // 3. Obtener el contenido de Fabric de forma segura y exacta
+      const fabricDataUrl = fc.toDataURL({
+        format: 'png',
+        multiplier: scale, // Escala nativa a la resolución del dispositivo
+      });
+      
+      // Cargar la imagen generada de Fabric
+      const fabricImg = new Image();
+      fabricImg.src = fabricDataUrl;
+      await new Promise((resolve, reject) => {
+        fabricImg.onload = resolve;
+        fabricImg.onerror = reject;
+      });
 
-      const dataURL = tempCanvas.toDataURL('image/png', 0.8);
+      // 4. Dibujar la imagen de Fabric sobre el campo
+      ctx.drawImage(fabricImg, 0, 0, tempCanvas.width, tempCanvas.height);
 
-      // 2. Descargar si se solicita
+      // 5. Generar imagen final combinada
+      const dataURL = tempCanvas.toDataURL('image/png', 0.85);
+
       if (download) {
         const link = document.createElement('a');
-        link.download = `mister11_captura_${Date.now()}.png`;
+        link.download = `mister11-tactica-${Date.now()}.png`;
         link.href = dataURL;
+        document.body.appendChild(link);
         link.click();
+        document.body.removeChild(link);
       }
 
-      // 3. Subir a Firebase Storage
+      // 6. Subir a Firebase Storage si es necesario (con timeout para evitar bloqueos)
       let downloadURL = null;
-      try {
-        const fileName = `captures/${user.uid}/${activeTeamId}/${Date.now()}.png`;
-        const storageRef = ref(storage, fileName);
-        await uploadString(storageRef, dataURL, 'data_url');
-        downloadURL = await getDownloadURL(storageRef);
+      if (activeTeamId) {
+        try {
+          const fileName = `captures/${user.uid}/${activeTeamId}/${Date.now()}.png`;
+          const storageRef = ref(storage, fileName);
+          
+          const uploadWithTimeout = (promise, ms) => Promise.race([
+            promise,
+            new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), ms))
+          ]);
 
-        // 4. Guardar en Firestore (Nueva sección de Capturas)
-        const captureData = {
-          url: downloadURL,
-          timestamp: serverTimestamp(),
-          title: `Captura ${new Date().toLocaleString()}`,
-          teamId: activeTeamId,
-          type: 'tactical_capture'
-        };
-
-        await addDoc(collection(db, 'users', user.uid, 'teams', activeTeamId, 'captures'), captureData);
-      } catch (uploadErr) {
-        console.warn("No se pudo subir la captura a la nube:", uploadErr);
-        // Continuamos, la captura local funcionó
+          // Intentar subir con timeout de 8 segundos máximo
+          await uploadWithTimeout(uploadString(storageRef, dataURL, 'data_url'), 8000);
+          downloadURL = await uploadWithTimeout(getDownloadURL(storageRef), 5000);
+        } catch (uploadErr) {
+          console.warn("No se pudo subir la captura a la nube (timeout/error):", uploadErr);
+          // Retornamos la base64 como fallback si falla la subida, así no se pierde el thumbnail
+          downloadURL = dataURL;
+        }
       }
 
-      if (!silent) {
-        alert("¡Captura guardada en la sección de Sesiones!");
-      }
-      
-      setIsCapturing(false);
-      return downloadURL;
+      if (!silent) setIsCapturing(false);
+      return downloadURL || dataURL;
+
     } catch (err) {
       console.error("Error en captura:", err);
       if (!silent) alert("Error al generar la captura. Revisar consola.");
@@ -1112,7 +1127,7 @@ const PizarraTactica = () => {
     }
   };
 
-  // ─── Guardar (Manual Save) ────────────────────────────────────────────────
+  // ─── Save entire plan (Frames + Meta) ───────────────────────────────────
   const handleSave = async () => {
     const btn = document.getElementById('btn-guardar-pizarra');
     const originalText = btn ? btn.innerHTML : '💾 GUARDAR';
@@ -1126,19 +1141,23 @@ const PizarraTactica = () => {
       return;
     }
     
-    // Feedback visual
-    if (btn) btn.innerHTML = '⏳ Guardando...';
+    // Bloquear UI y dar feedback visual
+    if (btn) {
+      btn.innerHTML = '⏳ Guardando...';
+      btn.disabled = true;
+      btn.style.pointerEvents = 'none';
+    }
 
     try {
-      // Guardar frames
+      // 1. Forzar guardado del frame actual
       await saveFrameState(true);
 
-      // Generar captura automática para la biblioteca
+      // 2. Generar captura para el thumbnail (silent)
       const captureUrl = await handleCapture(false, true);
-      
-      // Guardar metadata del ejercicio
+
+      // 3. Timeout para la metadata de Firestore (prevenir bloqueos eternos)
       const exerciseRef = doc(db, 'users', user.uid, 'teams', activeTeamId, 'tactics', planId);
-      await setDoc(exerciseRef, {
+      const metaPromise = setDoc(exerciseRef, {
         id: planId,
         title: `Pizarra Táctica (${new Date().toLocaleDateString()})`,
         type: 'pizarra',
@@ -1146,17 +1165,28 @@ const PizarraTactica = () => {
         thumbnail: captureUrl || null,
         updatedAt: serverTimestamp()
       }, { merge: true });
+
+      // Esperar la metadata con máximo 6 segundos de paciencia
+      await Promise.race([
+        metaPromise,
+        new Promise((_, reject) => setTimeout(() => reject(new Error('Firestore timeout')), 6000))
+      ]);
+
+      // Éxito
+      if (btn) btn.innerHTML = '✅ Guardado';
       
-      if (btn) {
-        btn.innerHTML = '✅ Guardado';
-        setTimeout(() => { if (btn.innerHTML === '✅ Guardado') btn.innerHTML = originalText; }, 2000);
-      }
     } catch (err) {
-      console.error("Error saving exercise metadata:", err);
-      if (btn) {
-        btn.innerHTML = '❌ Error';
-        setTimeout(() => { if (btn.innerHTML === '❌ Error') btn.innerHTML = originalText; }, 2000);
-      }
+      console.error("Error al guardar pizarra:", err);
+      if (btn) btn.innerHTML = '❌ Error';
+    } finally {
+      // Restaurar botón pase lo que pase
+      setTimeout(() => { 
+        if (btn) {
+          btn.innerHTML = originalText;
+          btn.disabled = false;
+          btn.style.pointerEvents = 'auto';
+        }
+      }, 2000);
     }
   };
 

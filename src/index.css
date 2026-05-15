@@ -285,8 +285,8 @@ a {
   overflow-y: auto;
   overflow-x: hidden;
   width: 100%;
-  max-width: 1200px; /* Centrado en pantallas grandes */
-  margin: 0 auto;
+  max-width: 100%; /* Eliminado el límite de 1200px para ocupar toda la pantalla */
+  margin: 0;
   -webkit-overflow-scrolling: touch;
   overscroll-behavior: contain;
 }

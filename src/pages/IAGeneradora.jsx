@@ -58,6 +58,7 @@ const renderMarkdown = (text) => {
 const IAGeneradora = () => {
   const { activeTeamId } = useAuth();
   const { isPro } = usePlan();
+  const { exercises, addExercise } = useExercises(activeTeamId);
   const { captures } = useCaptures(activeTeamId);
   const [selectedTacticalRef, setSelectedTacticalRef] = useState(null);
   const [form, setForm] = useState(INITIAL_FORM);

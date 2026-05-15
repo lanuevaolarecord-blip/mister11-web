@@ -253,7 +253,7 @@ const PizarraTactica = () => {
     const saveToDB = async () => {
       try {
         if (!activeTeamId) return;
-        const frameRef = doc(db, 'users', user.uid, 'teams', activeTeamId, 'tactics', planId, 'frames', frame.id);
+        const frameRef = doc(db, 'users', user.uid, 'teams', activeTeamId, 'exercises', planId, 'frames', frame.id);
         await setDoc(frameRef, {
           state: JSON.stringify(state),
           updatedAt: serverTimestamp()
@@ -528,7 +528,7 @@ const PizarraTactica = () => {
     // 5. Load frames from Firestore
     let unsubscribe;
     if (user && planId && activeTeamId) {
-      const framesColRef = collection(db, 'users', user.uid, 'teams', activeTeamId, 'tactics', planId, 'frames');
+      const framesColRef = collection(db, 'users', user.uid, 'teams', activeTeamId, 'exercises', planId, 'frames');
       const q = query(framesColRef, orderBy('order', 'asc'));
       
       unsubscribe = onSnapshot(q, (snapshot) => {
@@ -1109,6 +1109,15 @@ const PizarraTactica = () => {
           // Intentar subir con timeout de 8 segundos máximo
           await uploadWithTimeout(uploadString(storageRef, dataURL, 'data_url'), 8000);
           downloadURL = await uploadWithTimeout(getDownloadURL(storageRef), 5000);
+
+          // Guardar en la colección captures de Firestore para que se muestre en Sesiones > Pizarra
+          const captureDocRef = doc(collection(db, 'users', user.uid, 'teams', activeTeamId, 'captures'));
+          await setDoc(captureDocRef, {
+            id: captureDocRef.id,
+            url: downloadURL,
+            title: `Captura Táctica (${new Date().toLocaleTimeString()})`,
+            timestamp: serverTimestamp()
+          });
         } catch (uploadErr) {
           console.warn("No se pudo subir la captura a la nube (timeout/error):", uploadErr);
           // Retornamos la base64 como fallback si falla la subida, así no se pierde el thumbnail
@@ -1156,7 +1165,7 @@ const PizarraTactica = () => {
       const captureUrl = await handleCapture(false, true);
 
       // 3. Timeout para la metadata de Firestore (prevenir bloqueos eternos)
-      const exerciseRef = doc(db, 'users', user.uid, 'teams', activeTeamId, 'tactics', planId);
+      const exerciseRef = doc(db, 'users', user.uid, 'teams', activeTeamId, 'exercises', planId);
       const metaPromise = setDoc(exerciseRef, {
         id: planId,
         title: `Pizarra Táctica (${new Date().toLocaleDateString()})`,
@@ -1204,7 +1213,7 @@ const PizarraTactica = () => {
     
     try {
       if (!activeTeamId) return;
-      const framesColRef = collection(db, 'users', user.uid, 'teams', activeTeamId, 'tactics', planId, 'frames');
+      const framesColRef = collection(db, 'users', user.uid, 'teams', activeTeamId, 'exercises', planId, 'frames');
       const newFrameData = {
         name: `Frame ${frames.length + 1}`,
         state: JSON.stringify(state),
@@ -1275,7 +1284,7 @@ const PizarraTactica = () => {
     // Firebase delete
     if (user && frameToDelete && frameToDelete.id && activeTeamId) {
       try {
-        const frameRef = doc(db, 'users', user.uid, 'teams', activeTeamId, 'tactics', planId, 'frames', frameToDelete.id);
+        const frameRef = doc(db, 'users', user.uid, 'teams', activeTeamId, 'exercises', planId, 'frames', frameToDelete.id);
         await deleteDoc(frameRef);
       } catch (err) {
         console.error("Error deleting frame in Firestore:", err);

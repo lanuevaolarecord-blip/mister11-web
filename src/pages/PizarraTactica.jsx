@@ -185,7 +185,26 @@ const PizarraTactica = () => {
   // Auth & URL
   const { user, activeTeamId } = useAuth();
   const [searchParams] = useSearchParams();
-  const planId = searchParams.get('id') || 'default-pizarra';
+  
+  // Usar planId de la URL o recuperar el último usado para este equipo (Persistencia al navegar)
+  const [planId, setPlanId] = useState(() => {
+    const fromUrl = searchParams.get('id');
+    if (fromUrl) return fromUrl;
+    return null; // Se resolverá en un useEffect
+  });
+
+  useEffect(() => {
+    if (!planId && activeTeamId) {
+      const lastId = localStorage.getItem(`last_pizarra_${activeTeamId}`);
+      if (lastId) {
+        setPlanId(lastId);
+      } else {
+        const newId = `pizarra-${Date.now()}`;
+        setPlanId(newId);
+        localStorage.setItem(`last_pizarra_${activeTeamId}`, newId);
+      }
+    }
+  }, [planId, activeTeamId]);
 
   // React state (UI)
   const [ready,        setReady]        = useState(false);
@@ -234,12 +253,15 @@ const PizarraTactica = () => {
     if (syncingR.current) return; // Block saves while loading/syncing
     
     const fc = fcRef.current;
-    if (!fc || playingR.current || framesR.current.length === 0 || !user) return;
+    if (!fc || playingR.current || !user || !activeTeamId) return;
     
     const idx   = frameIdxR.current;
+    const frame = (framesR.current && framesR.current[idx]) ? framesR.current[idx] : null;
+    
+    // Si no hay frame definido en el array de la ref, no podemos guardar en DB todavía
+    if (!frame || !frame.id) return;
+
     const state = serializarFrame();
-    const frame = framesR.current[idx];
-    if (!frame) return;
 
     // Update Local State (Immediate)
     setFrames(prev => {
@@ -489,7 +511,7 @@ const PizarraTactica = () => {
     setReady(false);
     readyR.current = false;
     
-    if (!containerRef.current || !fieldCanvasRef.current || !fabricElemRef.current) return;
+    if (!containerRef.current || !fieldCanvasRef.current || !fabricElemRef.current || !user || !activeTeamId || !planId) return;
 
     const W = containerRef.current.offsetWidth  || 800;
     const H = containerRef.current.offsetHeight || 500;
@@ -817,6 +839,19 @@ const PizarraTactica = () => {
 
     return () => {
       if (unsubscribe) unsubscribe();
+      if (saveTimeoutR.current) {
+        clearTimeout(saveTimeoutR.current);
+        // Forzar un último guardado si hay cambios pendientes
+        if (fcRef.current && user && activeTeamId && planId) {
+          const state = serializarFrame();
+          const frame = framesR.current[frameIdxR.current];
+          if (frame && frame.id) {
+            const fRef = doc(db, 'users', user.uid, 'teams', activeTeamId, 'exercises', planId, 'frames', frame.id);
+            setDoc(fRef, { state: JSON.stringify(state), updatedAt: serverTimestamp() }, { merge: true })
+              .catch(e => console.error("Error en guardado final:", e));
+          }
+        }
+      }
       ro.disconnect();
       window.removeEventListener('orientationchange', handleOrientationChange);
       window.removeEventListener('keydown', onKeyDown);
@@ -830,7 +865,22 @@ const PizarraTactica = () => {
       fc.off('touch:gesture', handleTouch);
       fc.dispose();
     };
-  }, [user, planId, activeTeamId]); // eslint-disable-line
+  }, [user, planId, activeTeamId, cargarFrame, serializarFrame, saveFrameState, pushToHistory]);
+
+  // ─── Auto-redibujar y Guardar al cambiar formación ──────────────────────────
+  useEffect(() => {
+    const fc = fcRef.current;
+    const fr = frRef.current;
+    if (!fc || !fr || !ready) return;
+
+    // Solo redibujar si no estamos cargando datos inicialmente
+    if (!syncingR.current) {
+      syncingR.current = true;
+      drawPlayers(fc, fr, fieldType, { local: localFormation, rival: rivalFormation }, isSwapped);
+      syncingR.current = false;
+      saveFrameState(true); // Guardar inmediatamente
+    }
+  }, [localFormation, rivalFormation, isSwapped, fieldType, ready, saveFrameState, drawPlayers]);
 
   // ─── Field type change ────────────────────────────────────────────────────
   useEffect(() => {
@@ -1051,27 +1101,29 @@ const PizarraTactica = () => {
     if (!silent) setIsCapturing(true);
 
     try {
-      // 1. Crear canvas temporal
-      const tempCanvas = document.createElement('canvas');
-      const scale = window.devicePixelRatio || 1;
+      // 1. Crear canvas temporal de alta resolución (Consistencia entre dispositivos)
+      // Usamos una resolución fija de 1280x853 (aprox 1.5:1) para que sea profesional
+      const targetWidth = 1280;
+      const targetHeight = Math.round(targetWidth / 1.5);
       
-      // Dimensiones lógicas (asegura proporciones exactas)
-      tempCanvas.width = fc.width * scale;
-      tempCanvas.height = fc.height * scale;
+      const tempCanvas = document.createElement('canvas');
+      tempCanvas.width = targetWidth;
+      tempCanvas.height = targetHeight;
       const ctx = tempCanvas.getContext('2d');
 
-      // 2. Dibujar campo base (se estira a la resolución retina del tempCanvas)
-      // Como tempCanvas.width/height mantiene el ratio de fc.width/height, 
-      // el campo NO se deforma.
-      ctx.drawImage(fieldCanvas, 0, 0, tempCanvas.width, tempCanvas.height);
-      
-      // 3. Obtener el contenido de Fabric de forma segura y exacta
+      // 2. Redibujar el CAMPO directamente en el canvas de captura
+      // Esto garantiza que el campo esté a la misma resolución que los jugadores
+      // y evita el "desplazamiento" por escalado de imagen
+      const tempRenderer = new FieldRenderer(tempCanvas, { padding: { v: 12, h: 16 } });
+      tempRenderer.draw(toLibType(fieldType));
+
+      // 3. Obtener el contenido de Fabric a la resolución objetivo
+      const multiplier = targetWidth / fc.width;
       const fabricDataUrl = fc.toDataURL({
         format: 'png',
-        multiplier: scale, // Escala nativa a la resolución del dispositivo
+        multiplier: multiplier
       });
       
-      // Cargar la imagen generada de Fabric
       const fabricImg = new Image();
       fabricImg.src = fabricDataUrl;
       await new Promise((resolve, reject) => {
@@ -1079,11 +1131,19 @@ const PizarraTactica = () => {
         fabricImg.onerror = reject;
       });
 
-      // 4. Dibujar la imagen de Fabric sobre el campo
-      ctx.drawImage(fabricImg, 0, 0, tempCanvas.width, tempCanvas.height);
+      // 4. Combinar: Dibujar Fabric sobre el campo redibujado
+      ctx.drawImage(fabricImg, 0, 0, targetWidth, targetHeight);
 
-      // 5. Generar imagen final combinada
-      const dataURL = tempCanvas.toDataURL('image/png', 0.85);
+      // 5. Generar imagen final (PNG para calidad en descarga)
+      const dataURL = tempCanvas.toDataURL('image/png', 0.9);
+
+      // 6. Generar MINIATURA optimizada para Firestore (Evita error de 1MB y "Save Stuck")
+      const thumbCanvas = document.createElement('canvas');
+      thumbCanvas.width = 300; // Suficiente para previsualización
+      thumbCanvas.height = 200;
+      const thumbCtx = thumbCanvas.getContext('2d');
+      thumbCtx.drawImage(tempCanvas, 0, 0, 300, 200);
+      const thumbnailDataURL = thumbCanvas.toDataURL('image/jpeg', 0.6); // Muy ligera
 
       if (download) {
         const link = document.createElement('a');
@@ -1094,39 +1154,43 @@ const PizarraTactica = () => {
         document.body.removeChild(link);
       }
 
-      // 6. Subir a Firebase Storage si es necesario (con timeout para evitar bloqueos)
+      // 7. Subir a Firebase Storage y Firestore
       let downloadURL = null;
-      if (activeTeamId) {
-        try {
-          const fileName = `captures/${user.uid}/${activeTeamId}/${Date.now()}.png`;
-          const storageRef = ref(storage, fileName);
-          
-          const uploadWithTimeout = (promise, ms) => Promise.race([
-            promise,
-            new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), ms))
-          ]);
+      try {
+        const fileName = `captures/${user.uid}/${activeTeamId}/${Date.now()}.png`;
+        const storageRef = ref(storage, fileName);
+        
+        const uploadWithTimeout = (promise, ms) => Promise.race([
+          promise,
+          new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), ms))
+        ]);
 
-          // Intentar subir con timeout de 8 segundos máximo
-          await uploadWithTimeout(uploadString(storageRef, dataURL, 'data_url'), 8000);
-          downloadURL = await uploadWithTimeout(getDownloadURL(storageRef), 5000);
+        // Subir imagen completa a Storage
+        await uploadWithTimeout(uploadString(storageRef, dataURL, 'data_url'), 8000);
+        downloadURL = await uploadWithTimeout(getDownloadURL(storageRef), 5000);
 
-          // Guardar en la colección captures de Firestore para que se muestre en Sesiones > Pizarra
-          const captureDocRef = doc(collection(db, 'users', user.uid, 'teams', activeTeamId, 'captures'));
-          await setDoc(captureDocRef, {
-            id: captureDocRef.id,
-            url: downloadURL,
-            title: `Captura Táctica (${new Date().toLocaleTimeString()})`,
-            timestamp: serverTimestamp()
-          });
-        } catch (uploadErr) {
-          console.warn("No se pudo subir la captura a la nube (timeout/error):", uploadErr);
-          // Retornamos la base64 como fallback si falla la subida, así no se pierde el thumbnail
-          downloadURL = dataURL;
-        }
+        // Guardar referencia en Firestore (Colección de capturas sueltas)
+        const captureDocRef = doc(collection(db, 'users', user.uid, 'teams', activeTeamId, 'captures'));
+        await setDoc(captureDocRef, {
+          id: captureDocRef.id,
+          url: downloadURL || thumbnailDataURL, // Fallback a miniatura si falla Storage
+          title: `Captura Táctica (${new Date().toLocaleTimeString()})`,
+          timestamp: serverTimestamp()
+        });
+
+      } catch (uploadErr) {
+        console.warn("Falló subida a Storage, usando fallback local:", uploadErr);
+        // Si falla Storage, intentamos guardar al menos la miniatura si es para el ejercicio
+        // Pero para la colección 'captures', sin Storage la imagen grande podría ser demasiado para Firestore
       }
 
       if (!silent) setIsCapturing(false);
-      return downloadURL || dataURL;
+      
+      // Retornamos un objeto con ambas URLs para que handleSave decida qué usar
+      return {
+        full: downloadURL || dataURL, // URL de Storage o Base64 grande
+        thumb: thumbnailDataURL       // Base64 pequeño (<50KB) siempre disponible
+      };
 
     } catch (err) {
       console.error("Error en captura:", err);
@@ -1141,16 +1205,12 @@ const PizarraTactica = () => {
     const btn = document.getElementById('btn-guardar-pizarra');
     const originalText = btn ? btn.innerHTML : '💾 GUARDAR';
 
-    if (!user) {
-      alert("No estás autenticado. No se puede guardar.");
-      return;
-    }
-    if (!activeTeamId) {
-      alert("No hay un equipo activo seleccionado.");
+    if (!user || !activeTeamId) {
+      alert("Error: Usuario o Equipo no identificados.");
       return;
     }
     
-    // Bloquear UI y dar feedback visual
+    // Bloquear UI
     if (btn) {
       btn.innerHTML = '⏳ Guardando...';
       btn.disabled = true;
@@ -1158,37 +1218,33 @@ const PizarraTactica = () => {
     }
 
     try {
-      // 1. Forzar guardado del frame actual
+      // 1. Guardar estado lógico de los frames
       await saveFrameState(true);
 
-      // 2. Generar captura para el thumbnail (silent)
-      const captureUrl = await handleCapture(false, true);
+      // 2. Generar captura (silent)
+      const captureResult = await handleCapture(false, true);
+      const finalThumb = captureResult?.thumb || null;
 
-      // 3. Timeout para la metadata de Firestore (prevenir bloqueos eternos)
+      // 3. Guardar Metadatos del ejercicio
       const exerciseRef = doc(db, 'users', user.uid, 'teams', activeTeamId, 'exercises', planId);
-      const metaPromise = setDoc(exerciseRef, {
+      
+      // IMPORTANTE: Nunca guardar base64 grande en el documento del ejercicio
+      // Usamos el thumbnail de 300px que garantizamos que es < 1MB
+      await setDoc(exerciseRef, {
         id: planId,
         title: `Pizarra Táctica (${new Date().toLocaleDateString()})`,
         type: 'pizarra',
         framesCount: framesR.current.length,
-        thumbnail: captureUrl || null,
-        updatedAt: serverTimestamp()
+        thumbnail: finalThumb, // Siempre miniatura ligera
+        timestamp: serverTimestamp()
       }, { merge: true });
 
-      // Esperar la metadata con máximo 6 segundos de paciencia
-      await Promise.race([
-        metaPromise,
-        new Promise((_, reject) => setTimeout(() => reject(new Error('Firestore timeout')), 6000))
-      ]);
-
-      // Éxito
       if (btn) btn.innerHTML = '✅ Guardado';
       
     } catch (err) {
       console.error("Error al guardar pizarra:", err);
       if (btn) btn.innerHTML = '❌ Error';
     } finally {
-      // Restaurar botón pase lo que pase
       setTimeout(() => { 
         if (btn) {
           btn.innerHTML = originalText;
@@ -1198,6 +1254,7 @@ const PizarraTactica = () => {
       }, 2000);
     }
   };
+
 
   // ─── Add Frame ────────────────────────────────────────────────────────────
   const addFrame = async () => {

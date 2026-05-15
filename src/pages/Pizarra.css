@@ -3,6 +3,7 @@
   display: flex;
   flex-direction: column;
   height: 100vh;
+  height: 100dvh; /* Adaptación dinámica para barras nativas en móviles */
   width: 100%;
   overflow: hidden;
   background: var(--bg-primary);
@@ -818,5 +819,59 @@ canvas.lower-canvas {
   /* Esconder paneles fijos (ya se hace en JSX, pero por seguridad) */
   .panel-izq, .panel-der {
     display: none !important;
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   🎯 ULTRA-COMPACTO PARA MÓVIL EN HORIZONTAL (LANDSCAPE)
+   ───────────────────────────────────────────────────────────────────────────── */
+@media (max-width: 950px) and (orientation: landscape), (max-height: 500px) {
+  .pizarra-topbar {
+    height: 36px !important;
+    min-height: 36px !important;
+    padding: 0 4px !important;
+  }
+  
+  .tool-icon-btn, .topbar-btn {
+    width: 28px !important;
+    height: 28px !important;
+    min-width: 28px !important;
+    min-height: 28px !important;
+  }
+  .tool-icon-btn svg {
+    width: 14px !important;
+    height: 14px !important;
+  }
+  .topbar-select {
+    height: 24px !important;
+    min-width: 100px !important;
+    font-size: 10px !important;
+    padding: 0 4px !important;
+  }
+  
+  .pizarra-timeline {
+    height: 32px !important;
+    min-height: 32px !important;
+    padding: 1px 0 !important;
+  }
+  
+  .timeline-btn-nav, .frame-chip, .btn-add-frame {
+    height: 24px !important;
+    min-height: 24px !important;
+    min-width: 24px !important;
+    font-size: 10px !important;
+  }
+  .frame-chip {
+    width: 24px !important;
+  }
+  .frame-counter {
+    font-size: 10px !important;
+    min-width: 35px !important;
+  }
+
+  .btn-floating-left, .btn-floating-right {
+    width: 36px !important;
+    height: 36px !important;
+    font-size: 16px !important;
   }
 }

@@ -536,94 +536,149 @@
   background: rgba(255, 255, 255, 0.03);
 }
 
-/* ======================================================
-   EXERCISE DIAGRAM
-   ====================================================== */
-.exercise-diagram {
-  margin-top: 24px;
-  border-radius: 14px;
-  overflow: hidden;
-  border: 1px solid rgba(76, 175, 125, 0.25);
-  background: #1a2e1a;
-}
 
-.diagram-header {
+/* Header optimizado */
+.ia-form-header {
+  padding: 16px 20px;
+  background: var(--primary);
+  color: white;
   display: flex;
-  justify-content: space-between;
+  gap: 12px;
   align-items: center;
-  padding: 12px 16px;
-  background: rgba(0, 0, 0, 0.25);
-}
-
-.diagram-title {
-  font-size: 13px;
-  font-weight: 700;
-  color: #D4A843;
-  display: block;
-  margin-bottom: 2px;
-}
-
-.diagram-sub {
-  font-size: 11px;
-  color: var(--accent-gold);
-  display: block;
-  font-weight: bold;
-}
-
-.diagram-legend {
-  display: flex;
-  gap: 16px;
-  padding: 8px 16px;
-  background: rgba(0,0,0,0.15);
-  flex-wrap: wrap;
-}
-
-.legend-item {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  font-size: 11px;
-  color: #FFFFFF;
-}
-
-.legend-dot {
-  width: 12px;
-  height: 12px;
-  border-radius: 50%;
-  display: inline-block;
-  border: 1.5px solid rgba(255,255,255,0.5);
   flex-shrink: 0;
 }
 
-.legend-arrow-icon {
-  font-size: 16px;
+.ia-header-text {
+  flex: 1;
+  minWidth: 0;
+}
+
+.ia-form-header h1 {
+  font-family: var(--font-title);
+  font-size: 1.25rem;
+  margin: 0 0 4px 0;
+  color: white;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ia-form-header p {
+  font-size: 11px;
   color: rgba(255,255,255,0.7);
-  line-height: 1;
+  margin: 0;
+  line-height: 1.3;
 }
 
-.diagram-canvas {
-  display: block;
+/* Biblioteca Drawer (Android-style) */
+.library-drawer-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.6);
+  backdrop-filter: blur(2px);
+  z-index: 10000;
+  display: flex;
+  align-items: flex-end;
+}
+
+.library-drawer {
   width: 100%;
-  height: 300px;
-  cursor: default;
+  max-height: 80vh;
+  background: #1a2e1a;
+  border-radius: 20px 20px 0 0;
+  overflow-y: auto;
+  padding-bottom: 30px;
+  box-shadow: 0 -5px 25px rgba(0,0,0,0.3);
+  animation: slideUp 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.diagram-actions {
+@keyframes slideUp {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+
+.drawer-handle-bar {
+  width: 40px;
+  height: 4px;
+  background: rgba(212, 168, 67, 0.3);
+  border-radius: 2px;
+  margin: 12px auto;
+}
+
+.drawer-content {
+  padding: 0 20px;
+}
+
+.drawer-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  padding: 5px 0;
+}
+
+.drawer-header h3 {
+  color: var(--accent-gold, #D4A843);
+  margin: 0;
+  font-size: 1.1rem;
+  font-family: var(--font-title);
+}
+
+.btn-close-drawer {
+  background: rgba(255,255,255,0.1);
+  border: none;
+  color: white;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.exercise-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.exercise-card {
+  background: #0f1a0f;
+  border: 1px solid #2d4a2d;
+  border-radius: 12px;
+  padding: 14px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.exercise-card:active {
+  background: #152515;
+  transform: scale(0.98);
+}
+
+.exercise-card-title {
+  color: var(--accent-gold);
+  font-weight: 700;
+  font-size: 14px;
+  margin-bottom: 4px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.exercise-card-meta {
+  color: #888;
+  font-size: 11px;
   display: flex;
   gap: 10px;
-  padding: 12px 16px;
-  background: rgba(0,0,0,0.2);
-  border-top: 1px solid rgba(255,255,255,0.06);
 }
 
-.diagram-actions .btn-outline {
-  font-size: 12px;
-  padding: 8px 16px;
-  border-color: rgba(76, 175, 125, 0.4);
-  color: #4CAF7D;
+.type-tag {
+  color: var(--accent);
+  text-transform: uppercase;
+  font-weight: 800;
+  font-size: 10px;
 }
 
-.diagram-actions .btn-outline:hover {
-  background: rgba(76, 175, 125, 0.15);
-}
 

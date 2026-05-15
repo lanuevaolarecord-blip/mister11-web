@@ -57,10 +57,45 @@
 
 /* Global Reset & Base Styles */
 * {
-  margin: 0;
-  padding: 0;
+  max-width: 100%;
   box-sizing: border-box;
   scroll-behavior: smooth;
+}
+
+html, body {
+  overflow-x: hidden;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+html, body, #root {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  background-color: var(--bg-primary);
+}
+
+#root {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* En móvil, eliminar scroll fijado y asegurar ancho correcto */
+@media (max-width: 768px) {
+  #root {
+    padding: 0;
+  }
+  
+  html, body {
+    position: relative;
+    overflow-x: hidden;
+    overflow-y: auto;
+    width: 100%;
+    height: 100%;
+  }
 }
 
 /* Scrollable containers optimization */
@@ -113,8 +148,9 @@ a {
 .app-container {
   display: flex;
   height: 100vh;
-  width: 100vw;
+  width: 100%; /* Cambiado de 100vw para evitar scroll horizontal */
   overflow: hidden;
+  background-color: var(--bg-sidebar); /* Matches sidebar for seamless safe areas */
 }
 
 /* Sidebar Styles */
@@ -239,9 +275,9 @@ a {
   height: 100vh;
   overflow: hidden;
   background-color: var(--bg-primary);
+  width: 100%;
 }
 
-/* Main Wrapper for Page Content */
 .main-wrapper {
   flex: 1;
   display: flex;
@@ -249,19 +285,40 @@ a {
   overflow-y: auto;
   overflow-x: hidden;
   width: 100%;
+  max-width: 1200px; /* Centrado en pantallas grandes */
+  margin: 0 auto;
   -webkit-overflow-scrolling: touch;
   overscroll-behavior: contain;
 }
 
+@media (max-width: 768px) {
+  .main-wrapper {
+    max-width: 100%;
+    padding: 0;
+  }
+}
+
 /* Header Styles */
 .header {
-  height: 70px;
+  height: auto !important;
+  min-height: 70px;
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 0 30px;
+  padding-top: env(safe-area-inset-top); /* Padding superior para barra de estado */
+  padding-left: calc(54px + env(safe-area-inset-left)); /* Espacio para hamburger + inset lateral */
+  padding-right: env(safe-area-inset-right);
   background-color: #1B3A2D !important;
   border-bottom: 1px solid var(--border-color);
+}
+
+@media (max-width: 768px) {
+  .header {
+    padding: 10px 15px;
+    padding-top: calc(10px + env(safe-area-inset-top));
+    padding-left: calc(54px + env(safe-area-inset-left));
+  }
 }
 
 .header h1 {
@@ -513,19 +570,28 @@ input::placeholder, textarea::placeholder {
 /* GLOBAL HAMBURGER & SIDEBAR (ALL RESOLUTIONS) */
 .hamburger-btn {
   position: fixed;
-  top: 0;
+  top: env(safe-area-inset-top); /* Respetar notch/status bar */
   left: 0;
   width: 44px;
   height: 44px;
-  background: #1B3A2D;
+  background: var(--bg-sidebar);
   color: #FFFFFF;
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 1000;
+  z-index: 1050;
   border: none;
   cursor: pointer;
   border-radius: 0 0 8px 0;
+  box-shadow: 2px 2px 8px rgba(0,0,0,0.2);
+}
+
+@media (max-width: 768px) {
+  .hamburger-btn {
+    top: calc(8px + env(safe-area-inset-top));
+    left: 8px;
+    border-radius: 8px;
+  }
 }
 
 .sidebar-overlay {
@@ -592,7 +658,7 @@ input::placeholder, textarea::placeholder {
 
 .main-content {
   margin-left: 0 !important;
-  width: 100vw !important;
+  width: 100% !important; /* Cambiado de 100vw */
 }
 
 .main-wrapper {

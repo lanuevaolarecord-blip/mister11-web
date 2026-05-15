@@ -7,7 +7,7 @@ import { useTeams } from '../hooks/useTeams';
 import { usePlan, LIMITS } from '../hooks/usePlan';
 import UpgradeModal from '../components/UpgradeModal';
 import { storage } from '../firebaseConfig';
-import { ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
+import { ref, uploadBytesResumable, getDownloadURL, deleteObject } from 'firebase/storage';
 import './Sesiones.css';
 
 const Sesiones = () => {
@@ -21,11 +21,13 @@ const Sesiones = () => {
   const [viewMode, setViewMode] = useState('list'); // 'list' | 'edit'
   const [selectedSession, setSelectedSession] = useState(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
   
   // Edit mode state
   const [editData, setEditData] = useState(null);
   const [pdfPreview, setPdfPreview] = useState(null);
   const fileInputRef = useRef(null);
+  const [uploadProgress, setUploadProgress] = useState(0);
 
   const categories = ['Todas', 'Técnica', 'Táctica', 'Física', 'Mixta'];
   const [catFilter, setCatFilter] = useState('Todas');
@@ -140,7 +142,7 @@ const Sesiones = () => {
     });
   };
 
-  const handleFileUpload = async (e) => {
+  const handleFileUpload = (e) => {
     const file = e.target.files[0];
     if (!file || !user || !activeTeamId) return;
     
@@ -150,33 +152,42 @@ const Sesiones = () => {
     }
 
     setIsSaving(true);
-    try {
-      const sessionId = editData.id || `temp_${Date.now()}`;
-      const storagePath = `users/${user.uid}/teams/${activeTeamId}/sessions/${sessionId}/${file.name}`;
-      const fileRef = ref(storage, storagePath);
-      
-      await uploadBytes(fileRef, file);
-      const downloadURL = await getDownloadURL(fileRef);
-      
-      const newFile = {
-        id: Date.now(),
-        name: file.name,
-        size: (file.size / 1024 / 1024).toFixed(2) + ' MB',
-        type: file.type,
-        url: downloadURL,
-        storagePath: storagePath
-      };
+    const sessionId = editData.id || `temp_${Date.now()}`;
+    const storagePath = `users/${user.uid}/teams/${activeTeamId}/sessions/${sessionId}/${file.name}`;
+    const fileRef = ref(storage, storagePath);
+    
+    const uploadTask = uploadBytesResumable(fileRef, file);
 
-      setEditData(prev => ({
-        ...prev,
-        files: [...prev.files, newFile]
-      }));
-    } catch (error) {
-      console.error("Error uploading file:", error);
-      alert("Error al subir el archivo.");
-    } finally {
-      setIsSaving(false);
-    }
+    uploadTask.on('state_changed',
+      (snapshot) => {
+        const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+        setUploadProgress(progress);
+      },
+      (error) => {
+        console.error("Error uploading file:", error);
+        alert("Error al subir el archivo. Revisa tu conexión.");
+        setIsSaving(false);
+        setUploadProgress(0);
+      },
+      async () => {
+        const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
+        const newFile = {
+          id: Date.now(),
+          name: file.name,
+          size: (file.size / 1024 / 1024).toFixed(2) + ' MB',
+          type: file.type,
+          url: downloadURL,
+          storagePath: storagePath
+        };
+
+        setEditData(prev => ({
+          ...prev,
+          files: [...prev.files, newFile]
+        }));
+        setIsSaving(false);
+        setUploadProgress(0);
+      }
+    );
   };
 
   const handleRemoveFile = async (fileId) => {
@@ -271,9 +282,14 @@ const Sesiones = () => {
             <div className="edit-section">
               <div className="section-header-flex">
                 <h3>Archivos Adjuntos (PDF)</h3>
-                <button className="btn-small-outline" onClick={() => fileInputRef.current?.click()}>+ Subir PDF</button>
+                <button className="btn-small-outline" onClick={() => fileInputRef.current?.click()} disabled={uploadProgress > 0 && uploadProgress < 100}>+ Subir PDF</button>
                 <input type="file" ref={fileInputRef} style={{display:'none'}} accept=".pdf" onChange={handleFileUpload} />
               </div>
+              {uploadProgress > 0 && uploadProgress < 100 && (
+                <div style={{width: '100%', height: '8px', background: '#e0e0e0', borderRadius: '4px', margin: '10px 0', overflow: 'hidden'}}>
+                  <div style={{width: `${uploadProgress}%`, height: '100%', background: 'var(--m11-green)', transition: 'width 0.3s ease'}}></div>
+                </div>
+              )}
               {editData.files.length === 0 ? (
                 <div className="empty-files">No hay archivos adjuntos. Sube un PDF con diagramas o apuntes.</div>
               ) : (
@@ -509,15 +525,26 @@ const Sesiones = () => {
                 <button 
                   className="btn-primary full-width" 
                   style={{marginBottom: '10px'}} 
+                  disabled={isGeneratingPDF}
                   onClick={() => {
                     if (!isPro) {
                       setUpgradeModal({ open: true, message: 'La exportación de sesiones a PDF es una función PRO.' });
                       return;
                     }
-                    generateSessionPDF(selectedSession, activeTeam);
+                    setIsGeneratingPDF(true);
+                    setTimeout(async () => {
+                      try {
+                        await generateSessionPDF(selectedSession, activeTeam);
+                      } catch(err) {
+                        console.error(err);
+                        alert("Error al generar el PDF");
+                      } finally {
+                        setIsGeneratingPDF(false);
+                      }
+                    }, 150);
                   }}
                 >
-                  📄 Exportar a PDF
+                  {isGeneratingPDF ? '⏳ Generando informe...' : '📄 Exportar a PDF'}
                 </button>
                 <button className="btn-outline-gold full-width" onClick={() => handleEditSession(selectedSession)}>✏️ Editar Sesión</button>
                 <button className="btn-text-error full-width" onClick={() => handleDeleteSession(selectedSession.id)}>Eliminar Sesión</button>

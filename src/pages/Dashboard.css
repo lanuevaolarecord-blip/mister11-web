@@ -1,7 +1,14 @@
 .dashboard-page {
-  padding: 30px;
+  padding: 20px;
   background-color: var(--bg-primary);
   min-height: 100%;
+}
+
+@media (max-width: 768px) {
+  .dashboard-page {
+    padding: 15px;
+    padding-top: 10px;
+  }
 }
 
 .dashboard-header {
@@ -48,9 +55,16 @@
 /* Stats Grid */
 .stats-grid-dash {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 20px;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 15px;
   margin-bottom: 30px;
+}
+
+@media (max-width: 480px) {
+  .stats-grid-dash {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+  }
 }
 
 .stat-card-dash {
@@ -177,7 +191,9 @@
   background-image: linear-gradient(var(--border-color) 1px, transparent 1px);
   background-size: 100% 40px;
   overflow-x: auto;
+  overflow-y: hidden;
   -webkit-overflow-scrolling: touch;
+  gap: 15px;
 }
 
 .bar-wrapper {
@@ -321,8 +337,15 @@
 
 .actions-grid-dash {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
   gap: 15px;
+}
+
+@media (max-width: 480px) {
+  .actions-grid-dash {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+  }
 }
 
 .action-btn-dash {

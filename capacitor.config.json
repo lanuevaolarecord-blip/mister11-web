@@ -1,12 +1,28 @@
 {
   "appId": "com.mister11.app",
-  "appName": "Mister11",
+  "appName": "Míster11",
   "webDir": "dist",
+  "android": {
+    "allowMixedContent": true,
+    "captureInput": true,
+    "webContentsDebuggingEnabled": false,
+    "backgroundColor": "#F5F0E8",
+    "windowSoftInputMode": "adjustResize",
+    "useLegacyBridge": false
+  },
+  "server": {
+    "androidScheme": "https"
+  },
   "plugins": {
     "FirebaseAuthentication": {
       "skipNativeAuth": false,
       "providers": ["google.com"],
       "webClientId": "954668402587-im73oik073ds12jvkfn0diasvdmkb9qc.apps.googleusercontent.com"
+    },
+    "SplashScreen": {
+      "launchShowDuration": 0,
+      "launchAutoHide": true,
+      "androidScaleType": "CENTER_CROP"
     }
   }
 }

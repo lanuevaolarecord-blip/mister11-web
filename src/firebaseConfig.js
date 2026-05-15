@@ -9,7 +9,7 @@ import {
   setPersistence,
   browserLocalPersistence,
 } from "firebase/auth";
-import { getFirestore } from "firebase/firestore";
+import { getFirestore, initializeFirestore, persistentLocalCache, persistentMultipleTabManager } from "firebase/firestore";
 import { getStorage } from "firebase/storage";
 import { Capacitor } from "@capacitor/core";
 
@@ -26,7 +26,9 @@ const firebaseConfig = {
 // Inicializar Firebase
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
-const db = getFirestore(app);
+const db = initializeFirestore(app, {
+  localCache: persistentLocalCache({tabManager: persistentMultipleTabManager()})
+});
 const storage = getStorage(app);
 const googleProvider = new GoogleAuthProvider();
 

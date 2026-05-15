@@ -17,7 +17,13 @@ const CANVAS_REF_HEIGHT = 520;
 const RADIO_JUGADOR = 12.5;
 
 // ─── Make fabric global BEFORE library imports use it ───────────────────────
-if (typeof window !== 'undefined') window.fabric = fabric;
+if (typeof window !== 'undefined') {
+  window.fabric = fabric;
+  // Optimizaciones táctiles globales (Hitboxes amplios para trabajo en campo)
+  fabric.Object.prototype.transparentCorners = false;
+  fabric.Object.prototype.cornerSize = 24; 
+  fabric.Object.prototype.padding = 10;
+}
 
 import { MATERIALS_LIBRARY, MATERIALS_BY_CATEGORY, placeMaterialOnCanvas } from '../lib/mister11-materials.js';
 import { TOOLS, STROKE_COLORS, STROKE_WIDTHS, ToolManager } from '../lib/mister11-tools.js';
@@ -656,7 +662,11 @@ const PizarraTactica = () => {
       fc.renderAll();
     };
 
-    const ro = new ResizeObserver(resizeCanvas);
+    let resizeTimer;
+    const ro = new ResizeObserver(() => {
+      clearTimeout(resizeTimer);
+      resizeTimer = setTimeout(resizeCanvas, 300);
+    });
     ro.observe(document.getElementById('canvas-container'));
 
     // orientationchange listener

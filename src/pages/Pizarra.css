@@ -696,11 +696,15 @@ canvas.lower-canvas {
 @media (max-width: 768px) {
   /* Contenedor principal sin márgenes */
   .pizarra-container {
+    position: fixed;
+    top: 0;
+    left: 0;
     width: 100vw;
     height: 100vh;
     margin: 0 !important;
     padding: 0 !important;
-    overflow: hidden;
+    overflow: hidden !important;
+    z-index: 9999;
   }
 
   /* Asegurar que el fondo sea limpio */

@@ -78,9 +78,11 @@ html, body, #root {
 }
 
 #root {
-  min-height: 100vh;
+  min-height: 100dvh;
+  height: 100dvh;
   display: flex;
   flex-direction: column;
+  overflow: hidden;
 }
 
 /* En móvil, eliminar scroll fijado y asegurar ancho correcto */
@@ -147,10 +149,10 @@ a {
 /* Layout Core Classes */
 .app-container {
   display: flex;
-  height: 100vh;
-  width: 100%; /* Cambiado de 100vw para evitar scroll horizontal */
+  height: 100dvh; /* dvh para adaptarse a barras nativas Android */
+  width: 100%;
   overflow: hidden;
-  background-color: var(--bg-sidebar); /* Matches sidebar for seamless safe areas */
+  background-color: var(--bg-sidebar);
 }
 
 /* Sidebar Styles */
@@ -163,7 +165,9 @@ a {
   padding: 20px 0;
   border-right: 1px solid rgba(255, 255, 255, 0.1);
   color: #FFFFFF;
-  height: 100vh;
+  height: 100dvh; /* dvh en lugar de vh */
+  overflow-y: auto;
+  overflow-x: hidden;
 }
 
 .logo-container {
@@ -272,20 +276,22 @@ a {
   flex: 1;
   display: flex;
   flex-direction: column;
-  height: 100vh;
+  height: 100dvh;
   overflow: hidden;
   background-color: var(--bg-primary);
   width: 100%;
+  min-width: 0; /* Evitar desbordamiento en flex */
 }
 
 .main-wrapper {
   flex: 1;
+  min-height: 0; /* Crítico para flex scroll correcto */
   display: flex;
   flex-direction: column;
   overflow-y: auto;
   overflow-x: hidden;
   width: 100%;
-  max-width: 100%; /* Eliminado el límite de 1200px para ocupar toda la pantalla */
+  max-width: 100%;
   margin: 0;
   -webkit-overflow-scrolling: touch;
   overscroll-behavior: contain;
@@ -662,7 +668,8 @@ input::placeholder, textarea::placeholder {
 }
 
 .main-wrapper {
-  height: calc(100vh - 60px);
+  flex: 1;
+  min-height: 0; /* Permite que el flex se reduzca sin desbordar */
   overflow-y: auto !important;
   -webkit-overflow-scrolling: touch !important;
   overscroll-behavior-y: contain;

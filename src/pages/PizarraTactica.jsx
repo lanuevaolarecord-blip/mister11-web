@@ -600,67 +600,68 @@ const PizarraTactica = () => {
       const fr = frRef.current;
       const fieldCanvas = fieldCanvasRef.current;
       if (!contenedor || !fc || !fieldCanvas) return;
-      
-      const anchoAnterior = fc.width;
-      const altoAnterior = fc.height;
-      
-      const anchoContenedor = contenedor.offsetWidth;
-      const altoContenedor = contenedor.offsetHeight;
 
-      // Layout Adaptativo
+      const anchoContenedor = contenedor.offsetWidth;
+      const altoContenedor  = contenedor.offsetHeight;
+
+      // Layout adaptativo
       const isMobileView = window.innerWidth < 768;
       setIsMobile(isMobileView);
-      
-      // Proporción 1.5:1 (FIFA aprox)
-      // Maximizar canvas al contenedor (Android First / Desktop Responsivo)
+
+      // Aspect Ratio Contain: el campo siempre visible (1.5:1)
+      const aspect = 1.5;
       let nuevoAncho = anchoContenedor;
-      let nuevoAlto = altoContenedor;
-      
-      if (nuevoAncho === anchoAnterior && nuevoAlto === altoAnterior) return;
-      
-      // Reposicionar objetos usando el nuevo mapeo del renderer
-      fc.getObjects().forEach(obj => {
-        if (obj.data?.xRel !== undefined && obj.data?.yRel !== undefined) {
-          // Primero redibujamos el campo para tener los nuevos bounds
-          fr.draw(toLibType(fieldType));
-          const point = fr.getCanvasPoint(obj.data.xRel, obj.data.yRel);
-          obj.set({
-            left: point.x,
-            top: point.y,
-            visible: (
-              point.x >= -20 && 
-              point.x <= nuevoAncho + 20 &&
-              point.y >= -20 &&
-              point.y <= nuevoAlto + 20
-            )
-          });
-        } else {
-          // Fallback para objetos sin data relativa (dibujos libres)
-          const xRel = obj.left / anchoAnterior;
-          const yRel = obj.top / altoAnterior;
-          obj.set({
-            left: xRel * nuevoAncho,
-            top: yRel * nuevoAlto
-          });
-        }
-        obj.setCoords();
-      });
-      
-      // Actualizar ambos canvases
-      fieldCanvas.width = nuevoAncho;
+      let nuevoAlto  = anchoContenedor / aspect;
+      if (nuevoAlto > altoContenedor) {
+        nuevoAlto  = altoContenedor;
+        nuevoAncho = altoContenedor * aspect;
+      }
+
+      // Paso 1: capturar posiciones ANTES de cambiar dimensiones
+      const anchoActual = fc.width  || nuevoAncho;
+      const altoActual  = fc.height || nuevoAlto;
+      const snapshots = fc.getObjects().map(obj => ({
+        obj,
+        xRel: obj.data?.xRel,
+        yRel: obj.data?.yRel,
+        xPct: anchoActual > 0 ? obj.left / anchoActual : 0,
+        yPct: altoActual  > 0 ? obj.top  / altoActual  : 0,
+        hasFieldCoords: obj.data?.xRel !== undefined && obj.data?.yRel !== undefined,
+      }));
+
+      // Paso 2: actualizar dimensiones del canvas
+      fieldCanvas.width  = nuevoAncho;
       fieldCanvas.height = nuevoAlto;
-      
-      fc.setDimensions({
-        width: nuevoAncho,
-        height: nuevoAlto
-      });
-      
-      // Redibujar el campo con nuevas dimensiones
+      fc.setDimensions({ width: nuevoAncho, height: nuevoAlto });
+
+      // Paso 3: redibujar campo para que el renderer tenga bounds actualizados
       if (fr) {
         fr.draw(toLibType(fieldType));
       }
+
+      // Paso 4: reposicionar objetos usando coordenadas guardadas
+      snapshots.forEach(({ obj, xRel, yRel, xPct, yPct, hasFieldCoords }) => {
+        if (hasFieldCoords && fr) {
+          const point = fr.getCanvasPoint(xRel, yRel);
+          obj.set({
+            left: point.x,
+            top:  point.y,
+            visible: (
+              point.x >= -20 &&
+              point.x <= nuevoAncho + 20 &&
+              point.y >= -20 &&
+              point.y <= nuevoAlto  + 20
+            )
+          });
+        } else {
+          obj.set({ left: xPct * nuevoAncho, top: yPct * nuevoAlto });
+        }
+        obj.setCoords();
+      });
+
       fc.renderAll();
     };
+
 
     let resizeTimer;
     const ro = new ResizeObserver(() => {
@@ -1421,8 +1422,8 @@ const PizarraTactica = () => {
             <div className="topbar-group actions">
               <button className="topbar-btn" onClick={undo} disabled={histCount === 0} title="Deshacer (Ctrl+Z)">↩</button>
               <button className="topbar-btn" onClick={redo} disabled={redoCount === 0} title="Rehacer (Ctrl+Y)">↪</button>
-              <button className="topbar-btn" onClick={clearCanvas} title="Limpiar todo">🗑</button>
-              <button id="btn-guardar-pizarra" className="topbar-btn primary" onClick={handleSave}>💾 GUARDAR</button>
+              <button className="topbar-btn danger" onClick={clearCanvas} title="Limpiar todo el canvas">🗑</button>
+              <button id="btn-guardar-pizarra" className="topbar-btn primary" onClick={handleSave} title="Guardar pizarra">💾 GUARDAR</button>
             </div>
           </div>
         </div>

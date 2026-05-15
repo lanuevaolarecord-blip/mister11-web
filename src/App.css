@@ -19,17 +19,18 @@
   color: var(--white);
 }
 
-.loader-logo {
-  font-family: var(--font-title);
-  font-size: 3rem;
-  font-weight: 900;
-  letter-spacing: 3px;
-  text-transform: uppercase;
+.loader-logo-img {
+  width: 140px;
+  height: 140px;
+  object-fit: contain;
+  border-radius: 28px;
+  animation: logo-pulse 2s ease-in-out infinite;
+  box-shadow: 0 0 40px rgba(212, 168, 67, 0.3);
 }
 
-.loader-logo span {
-  color: var(--accent);
-  font-family: var(--font-numbers);
+@keyframes logo-pulse {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.06); opacity: 0.9; }
 }
 
 .spinner {

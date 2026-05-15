@@ -79,7 +79,7 @@ function App() {
     return (
       <div className="global-loader">
         <div className="loader-content">
-          <div className="loader-logo">MÍSTER<span>11</span></div>
+          <img src="/logo_mister11.png" alt="Míster11" className="loader-logo-img" />
           <div className="spinner"></div>
           <p>Cargando...</p>
         </div>

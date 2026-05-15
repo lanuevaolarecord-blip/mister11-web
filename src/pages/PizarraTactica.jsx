@@ -1425,56 +1425,6 @@ const PizarraTactica = () => {
               <button id="btn-guardar-pizarra" className="topbar-btn primary" onClick={handleSave} title="Guardar pizarra">💾 GUARDAR</button>
             </div>
           </div>{/* ── FIN topbar-scroll-wrapper ── */}
-
-          {/* ── Dropdowns con POSICIONAMIENTO FIJO para máxima compatibilidad móvil ── */}
-          {showColorPicker && (
-            <div className="pizarra-dropdown color-grid" 
-              style={{ 
-                position: 'fixed', 
-                top: '70px', 
-                left: '50%', 
-                transform: 'translateX(-50%)', 
-                zIndex: 9999,
-                width: 'max-content',
-                display: 'grid' 
-              }}>
-              {STROKE_COLORS.map(c => (
-                <div key={c.id}
-                  className={`color-swatch-item ${activeColor === c.hex ? 'active' : ''}`}
-                  style={{ backgroundColor: c.hex }}
-                  onClick={(e) => { 
-                    e.stopPropagation();
-                    setActiveColor(c.hex); 
-                    setShowColorPicker(false); 
-                  }}
-                />
-              ))}
-            </div>
-          )}
-          {showWidthPicker && (
-            <div className="pizarra-dropdown width-list" 
-              style={{ 
-                position: 'fixed', 
-                top: '70px', 
-                left: '50%', 
-                transform: 'translateX(-50%)', 
-                zIndex: 9999,
-                width: 'max-content',
-                minWidth: '200px'
-              }}>
-              {Object.entries(STROKE_WIDTHS).map(([k, v]) => (
-                <button key={k}
-                  className={`dropdown-item ${activeWidth === v.value ? 'active' : ''}`}
-                  onClick={(e) => { 
-                    e.stopPropagation();
-                    setActiveWidth(v.value); 
-                    setShowWidthPicker(false); 
-                  }}>
-                  {v.label}
-                </button>
-              ))}
-            </div>
-          )}
         </div>{/* ── FIN pizarra-topbar ── */}
       </div>
 
@@ -1590,6 +1540,64 @@ const PizarraTactica = () => {
             <div className="drawer-handle" />
             <MaterialsPanel />
           </div>
+        </div>
+      )}
+
+      {/* ── Dropdowns Flotantes (Ventanas Emergentes) ── */}
+      {showColorPicker && (
+        <div className="pizarra-dropdown color-grid popup-window" 
+          style={{ 
+            position: 'fixed', 
+            top: '70px', 
+            left: '50%', 
+            transform: 'translateX(-50%)', 
+            zIndex: 10002,
+            width: 'max-content',
+            display: 'grid',
+            boxShadow: '0 12px 40px rgba(0,0,0,0.5)',
+            border: '2px solid var(--accent)',
+            background: 'var(--bg-card)'
+          }}>
+          <div className="popup-arrow" style={{ position: 'absolute', top: '-8px', left: '50%', transform: 'translateX(-50%)', width: '0', height: '0', borderLeft: '8px solid transparent', borderRight: '8px solid transparent', borderBottom: '8px solid var(--accent)' }} />
+          {STROKE_COLORS.map(c => (
+            <div key={c.id}
+              className={`color-swatch-item ${activeColor === c.hex ? 'active' : ''}`}
+              style={{ backgroundColor: c.hex }}
+              onClick={(e) => { 
+                e.stopPropagation();
+                setActiveColor(c.hex); 
+                setShowColorPicker(false); 
+              }}
+            />
+          ))}
+        </div>
+      )}
+      {showWidthPicker && (
+        <div className="pizarra-dropdown width-list popup-window" 
+          style={{ 
+            position: 'fixed', 
+            top: '70px', 
+            left: '50%', 
+            transform: 'translateX(-50%)', 
+            zIndex: 10002,
+            width: 'max-content',
+            minWidth: '220px',
+            boxShadow: '0 12px 40px rgba(0,0,0,0.5)',
+            border: '2px solid var(--accent)',
+            background: 'var(--bg-card)'
+          }}>
+          <div className="popup-arrow" style={{ position: 'absolute', top: '-8px', left: '50%', transform: 'translateX(-50%)', width: '0', height: '0', borderLeft: '8px solid transparent', borderRight: '8px solid transparent', borderBottom: '8px solid var(--accent)' }} />
+          {Object.entries(STROKE_WIDTHS).map(([k, v]) => (
+            <button key={k}
+              className={`dropdown-item ${activeWidth === v.value ? 'active' : ''}`}
+              onClick={(e) => { 
+                e.stopPropagation();
+                setActiveWidth(v.value); 
+                setShowWidthPicker(false); 
+              }}>
+              {v.label}
+            </button>
+          ))}
         </div>
       )}
 

@@ -213,6 +213,7 @@ const PizarraTactica = () => {
   const [showRival,      setShowRival]      = useState(false);
   const [showColorPicker, setShowColorPicker] = useState(false);
   const [showWidthPicker, setShowWidthPicker] = useState(false);
+  const [showMoreMenu,   setShowMoreMenu]   = useState(false);
   const [histCount,      setHistCount]      = useState(0);
   const [redoCount,      setRedoCount]      = useState(0);
   const [reducedDim,     setReducedDim]     = useState({ w: 40, h: 30 });
@@ -676,7 +677,19 @@ const PizarraTactica = () => {
     };
     window.addEventListener('orientationchange', handleOrientationChange);
 
-    // 8. Keyboard shortcuts (Undo/Redo/Copy/Paste)
+    // 8. Cerrar dropdowns al hacer click fuera
+    const handleOutsideClick = (e) => {
+      if (!e.target.closest('.color-picker-container') && !e.target.closest('.pizarra-dropdown.color-grid')) {
+        setShowColorPicker(false);
+      }
+      if (!e.target.closest('.width-picker-container') && !e.target.closest('.pizarra-dropdown.width-list')) {
+        setShowWidthPicker(false);
+      }
+    };
+    document.addEventListener('mousedown', handleOutsideClick);
+    document.addEventListener('touchstart', handleOutsideClick);
+
+    // 9. Keyboard shortcuts (Undo/Redo/Copy/Paste)
     const onKeyDown = (e) => {
       if ((e.ctrlKey || e.metaKey) && e.key === 'z') {
         e.preventDefault();
@@ -763,6 +776,8 @@ const PizarraTactica = () => {
       ro.disconnect();
       window.removeEventListener('orientationchange', handleOrientationChange);
       window.removeEventListener('keydown', onKeyDown);
+      document.removeEventListener('mousedown', handleOutsideClick);
+      document.removeEventListener('touchstart', handleOutsideClick);
       fc.off('object:modified', onChange);
       fc.off('object:added',    onChange);
       fc.off('object:removed',  onChange);
@@ -1370,32 +1385,21 @@ const PizarraTactica = () => {
               ))}
             </div>
 
-            {/* Color Dropdown */}
-            <div className="topbar-group color-picker-container">
-              <button 
-                className="topbar-btn color-trigger" 
+            {/* Color trigger — solo el botón, el dropdown está fuera del scroll-wrapper */}
+            <div className="topbar-group color-picker-container" style={{ position: 'static' }}>
+              <button
+                className="topbar-btn color-trigger"
                 onClick={() => { setShowColorPicker(!showColorPicker); setShowWidthPicker(false); }}
                 title="Color de trazo"
               >
                 <div className="current-color-preview" style={{ backgroundColor: activeColor }} />
               </button>
-              {showColorPicker && (
-                <div className="pizarra-dropdown color-grid">
-                  {STROKE_COLORS.map(c => (
-                    <div key={c.id}
-                      className={`color-swatch-item ${activeColor === c.hex ? 'active' : ''}`}
-                      style={{ backgroundColor: c.hex }}
-                      onClick={() => { setActiveColor(c.hex); setShowColorPicker(false); }}
-                    />
-                  ))}
-                </div>
-              )}
             </div>
 
-            {/* Width Dropdown */}
-            <div className="topbar-group width-picker-container">
-              <button 
-                className="topbar-btn width-trigger" 
+            {/* Width trigger — solo el botón, el dropdown está fuera del scroll-wrapper */}
+            <div className="topbar-group width-picker-container" style={{ position: 'static' }}>
+              <button
+                className="topbar-btn width-trigger"
                 onClick={() => { setShowWidthPicker(!showWidthPicker); setShowColorPicker(false); }}
                 title="Grosor de trazo"
               >
@@ -1403,17 +1407,6 @@ const PizarraTactica = () => {
                   {Object.values(STROKE_WIDTHS).find(v => v.value === activeWidth)?.label || 'Fino'}
                 </span>
               </button>
-              {showWidthPicker && (
-                <div className="pizarra-dropdown width-list">
-                  {Object.entries(STROKE_WIDTHS).map(([k, v]) => (
-                    <button key={k}
-                      className={`dropdown-item ${activeWidth === v.value ? 'active' : ''}`}
-                      onClick={() => { setActiveWidth(v.value); setShowWidthPicker(false); }}>
-                      {v.label}
-                    </button>
-                  ))}
-                </div>
-              )}
             </div>
 
             <div className="topbar-divider" />
@@ -1425,8 +1418,32 @@ const PizarraTactica = () => {
               <button className="topbar-btn danger" onClick={clearCanvas} title="Limpiar todo el canvas">🗑</button>
               <button id="btn-guardar-pizarra" className="topbar-btn primary" onClick={handleSave} title="Guardar pizarra">💾 GUARDAR</button>
             </div>
-          </div>
-        </div>
+          </div>{/* ── FIN topbar-scroll-wrapper ── */}
+
+          {/* ── Dropdowns FUERA del scroll-wrapper para no quedar atrapados en overflow ── */}
+          {showColorPicker && (
+            <div className="pizarra-dropdown color-grid" style={{ position: 'absolute', top: '62px', left: 'auto', right: '180px', zIndex: 3000 }}>
+              {STROKE_COLORS.map(c => (
+                <div key={c.id}
+                  className={`color-swatch-item ${activeColor === c.hex ? 'active' : ''}`}
+                  style={{ backgroundColor: c.hex }}
+                  onClick={() => { setActiveColor(c.hex); setShowColorPicker(false); }}
+                />
+              ))}
+            </div>
+          )}
+          {showWidthPicker && (
+            <div className="pizarra-dropdown width-list" style={{ position: 'absolute', top: '62px', left: 'auto', right: '120px', zIndex: 3000 }}>
+              {Object.entries(STROKE_WIDTHS).map(([k, v]) => (
+                <button key={k}
+                  className={`dropdown-item ${activeWidth === v.value ? 'active' : ''}`}
+                  onClick={() => { setActiveWidth(v.value); setShowWidthPicker(false); }}>
+                  {v.label}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>{/* ── FIN pizarra-topbar ── */}
       </div>
 
       {/* ── MAIN BOARD ────────────────────────────────────────────────────── */}

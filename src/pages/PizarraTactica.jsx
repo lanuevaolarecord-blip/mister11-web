@@ -981,31 +981,40 @@ const PizarraTactica = () => {
   }, [fieldType]); // eslint-disable-line
 
   const formationRunCountR = useRef(0);
-  const lastFormationR = useRef({ local: '4-3-3', rival: '4-3-3', isSwapped: false, fieldType: 'full' });
+  const lastFormationR = useRef({ 
+    local: localFormation, 
+    rival: rivalFormation, 
+    isSwapped: isSwapped, 
+    fieldType: fieldType 
+  });
 
   useEffect(() => {
     const fc = fcRef.current; const fr = frRef.current;
     if (!fc || !fr || playingR.current || !ready || syncingR.current) return;
     
-    // Comparar si realmente hubo un cambio en la formación o tipo de campo
-    // Si los valores coinciden con el último renderizado, no sobreescribimos el canvas
+    // GUARDIA DE INTERACCIÓN:
+    // Solo redibujamos si el valor de formación en el estado de React 
+    // es DIFERENTE al que ya está renderizado en el canvas.
     const hasFormationChanged = 
       lastFormationR.current.local !== localFormation || 
       lastFormationR.current.rival !== rivalFormation ||
       lastFormationR.current.isSwapped !== isSwapped ||
       lastFormationR.current.fieldType !== fieldType;
 
+    // Si no ha cambiado nada en los selectores, no hacemos nada (preservamos posiciones manuales)
     if (!hasFormationChanged) return;
 
-    // Actualizamos la referencia para el próximo cambio
-    lastFormationR.current = { local: localFormation, rival: rivalFormation, isSwapped, fieldType };
-
-    // Si es la primera vez que se monta el componente y NO hay cambio real (carga de DB)
-    // omitimos para no pisar lo que cargó cargarFrame
+    // Si es la carga inicial (ready acaba de pasar a true), actualizamos la referencia 
+    // con los valores actuales pero NO redibujamos, ya que onSnapshot ya se encargó
+    // de cargar los objetos (sean formación por defecto o posiciones movidas).
     if (formationRunCountR.current === 0) {
       formationRunCountR.current++;
+      lastFormationR.current = { local: localFormation, rival: rivalFormation, isSwapped, fieldType };
       return;
     }
+
+    // Si llegamos aquí, es porque el usuario REALMENTE cambió algo en el UI
+    lastFormationR.current = { local: localFormation, rival: rivalFormation, isSwapped, fieldType };
 
     // Ensure renderer has latest dimensions and bounds
     fr.draw(toLibType(fieldType));

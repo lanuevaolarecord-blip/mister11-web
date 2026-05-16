@@ -252,7 +252,7 @@ const IAGeneradora = () => {
                   className={`tactical-thumb ${selectedTacticalRef?.id === cap.id ? 'active' : ''}`}
                   onClick={() => setSelectedTacticalRef(cap)}
                 >
-                  <img src={cap.url} alt={cap.title} />
+                  <img src={cap.thumbnail || cap.url} alt={cap.title} />
                   <div className="thumb-check">✓</div>
                 </div>
               ))}

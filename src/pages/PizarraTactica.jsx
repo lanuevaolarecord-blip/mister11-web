@@ -34,6 +34,7 @@ import { collection, doc, setDoc, addDoc, deleteDoc, serverTimestamp, onSnapshot
 import { ref, uploadString, getDownloadURL } from 'firebase/storage';
 import { useSearchParams } from 'react-router-dom';
 import { storage } from '../firebaseConfig';
+import { savePizarraLocal, getPizarraLocal, clearPizarraLocal } from '../lib/pizarraStorage';
 import './Pizarra.css';
 
 // helper: 'half-attack' → 'half_attack' (library uses underscores)
@@ -597,18 +598,28 @@ const PizarraTactica = () => {
         if (data.fieldType) setFieldTypeState(data.fieldType);
       }
     });
-
     // 5. Load frames from Firestore
     let unsubscribe;
     if (user && planId && activeTeamId) {
       const framesColRef = collection(db, 'users', user.uid, 'teams', activeTeamId, 'pizarras', planId, 'frames');
+      // 1. Intentar carga instantánea desde localStorage (Caché local para navegación rápida)
+      const localCache = getPizarraLocal(activeTeamId, planId);
+      if (localCache && fcRef.current && frRef.current) {
+        console.log("Restaurando desde caché local...");
+        if (localCache.frames) setFrames(localCache.frames);
+        cargarFrame(localCache.objects || localCache);
+      }
+
+      // 2. Suscripción en tiempo real a Firestore (Fuente de verdad)
       const q = query(framesColRef, orderBy('order', 'asc'));
       
       unsubscribe = onSnapshot(q, (snapshot) => {
-        if (snapshot.empty) {
-          // Si no hay frames, dibujar la formación inicial por defecto
+        // Si no hay datos en Firestore y NO teníamos nada en caché local, 
+        // inicializamos con la formación por defecto.
+        if (snapshot.empty && !localCache) {
+          console.log("Pizarra nueva: Dibujando formación por defecto");
           syncingR.current = true;
-          drawPlayers(fc, renderer, 'full', { local: localFormation, rival: rivalFormation }, isSwapped);
+          drawPlayers(fc, fr, fieldType, { local: localFormation, rival: rivalFormation }, isSwapped);
           syncingR.current = false;
 
           // Guardar este estado inicial como el primer frame
@@ -621,33 +632,33 @@ const PizarraTactica = () => {
             createdAt: serverTimestamp()
           });
           return;
-        }
+        } else if (!snapshot.empty) {
+          // Cargar desde Firestore (sobrescribe el caché si hay cambios en el servidor)
+          const dbFrames = snapshot.docs.map(doc => {
+            const data = doc.data();
+            return {
+              id: doc.id,
+              ...data,
+              state: typeof data.state === 'string' ? JSON.parse(data.state) : data.state
+            };
+          });
 
-        const dbFrames = snapshot.docs.map(doc => {
-          const data = doc.data();
-          return {
-            id: doc.id,
-            ...data,
-            state: typeof data.state === 'string' ? JSON.parse(data.state) : data.state
-          };
-        });
+          setFrames(dbFrames);
+          framesR.current = dbFrames;
 
-        setFrames(dbFrames);
-        framesR.current = dbFrames;
-
-        if (!readyR.current) {
-          readyR.current = true;
-          setReady(true);
-          // Load first frame into canvas safely
-          if (dbFrames.length > 0) {
-            syncingR.current = true;
-            cargarFrame(dbFrames[0].state, () => {
-
-              syncingR.current = false;
-              setFrameIdx(0);
-              frameIdxR.current = 0;
-              pushToHistory();
-            });
+          if (!readyR.current) {
+            readyR.current = true;
+            setReady(true);
+            // Load first frame into canvas safely
+            if (dbFrames.length > 0) {
+              syncingR.current = true;
+              cargarFrame(dbFrames[0].state, () => {
+                syncingR.current = false;
+                setFrameIdx(0);
+                frameIdxR.current = 0;
+                pushToHistory();
+              });
+            }
           }
         }
       });
@@ -1065,6 +1076,15 @@ const PizarraTactica = () => {
     pushToHistory();
   }, [localFormation, rivalFormation, isSwapped, showRival, fieldType, ready]); // eslint-disable-line
 
+  // Persistencia al desmontar (Cambio de módulo)
+  useEffect(() => {
+    return () => {
+      if (fcRef.current && activeTeamId && planId) {
+        savePizarraLocal(activeTeamId, planId, fcRef.current, framesR.current);
+      }
+    };
+  }, [activeTeamId, planId]);
+
   // ─── Tool change ──────────────────────────────────────────────────────────
   useEffect(() => {
     const tm = tmRef.current;
@@ -1159,6 +1179,7 @@ const PizarraTactica = () => {
     const fc = fcRef.current; const fr = frRef.current;
     if (!fc || !fr) return;
     fc.clear();
+    clearPizarraLocal(activeTeamId, planId);
     drawPlayers(fc, fr, fieldType, { local: localFormation, rival: rivalFormation }, isSwapped);
     saveFrameState();
     pushToHistory();

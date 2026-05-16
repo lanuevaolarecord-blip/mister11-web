@@ -125,6 +125,13 @@ const PizarraTactica = () => {
     const fr = frRef.current;
     if (!fc || !fr || !state) return;
 
+    // Suspender los listeners de cambio ANTES de manipular el canvas
+    // para no disparar guardados falsos durante la carga
+    fc.off('object:modified');
+    fc.off('object:added');
+    fc.off('object:removed');
+    fc.off('path:created');
+
     fc.clear();
     const objsToEnliven = Array.isArray(state.objects) ? state.objects : [];
     
@@ -137,12 +144,9 @@ const PizarraTactica = () => {
       let left, top, visible = true;
       
       if (objData.xRel !== undefined && objData.yRel !== undefined) {
-        // Usar el mapeador del renderer para proyectar al canvas actual
         const point = fr.getCanvasPoint(objData.xRel, objData.yRel);
         left = point.x;
         top  = point.y;
-        
-        // Ocultar si queda fuera del zoom actual
         visible = (
           point.x >= -20 && 
           point.x <= fc.width + 20 &&
@@ -168,6 +172,7 @@ const PizarraTactica = () => {
       objects.forEach(o => fc.add(o));
       ensurePlayersOnTop();
       fc.renderAll();
+      // Los listeners se reconectan desde el useEffect principal después del callback
       if (callback) callback();
     });
   }, []);
@@ -597,97 +602,9 @@ const PizarraTactica = () => {
         if (data.fieldType) setFieldTypeState(data.fieldType);
       }
     });
-    // 5. CARGA DEL CANVAS - Flujo de una sola fuente de verdad
-    //    Prioridad: localStorage (sesión actual) > Firestore pizarraEstado > frames DB > formación por defecto
+    // 5. CARGA DEL CANVAS - se ejecuta después de definir handlers (ver initCanvas() más abajo)
     let unsubscribe;
-    if (user && planId && activeTeamId) {
-      const framesColRef = collection(db, 'users', user.uid, 'teams', activeTeamId, 'pizarras', planId, 'frames');
-      const estadoDocRef = doc(db, 'users', user.uid, 'teams', activeTeamId, 'pizarraEstado', planId);
-
-      // ── FUENTE 1: localStorage (instánto, prioridad máxima) ─────────────────
-      const localCache = getPizarraLocal(activeTeamId, planId);
-      if (localCache && localCache.objects && localCache.objects.length > 0) {
-        console.log("[Pizarra] ✅ Restaurando desde localStorage");
-        syncingR.current = true;
-        cargarFrame(localCache, () => {
-          syncingR.current = false;
-          ensurePlayersOnTop();
-          fc.renderAll();
-          if (!readyR.current) { readyR.current = true; setReady(true); }
-        });
-        // Con caché local válido: NO cargar desde Firestore (evita carrera de datos)
-        // Solo suscribimos frames para metadatos
-        const q = query(framesColRef, orderBy('order', 'asc'));
-        unsubscribe = onSnapshot(q, (snap) => {
-          if (!snap.empty) {
-            const dbFrames = snap.docs.map(d => {
-              const data = d.data();
-              return { id: d.id, ...data, state: typeof data.state === 'string' ? JSON.parse(data.state) : data.state };
-            });
-            setFrames(dbFrames);
-            framesR.current = dbFrames;
-          }
-          if (!readyR.current) { readyR.current = true; setReady(true); }
-        });
-      } else {
-        // ── FUENTE 2: Firestore pizarraEstado (persistencia entre dispositivos) ─
-        getDoc(estadoDocRef).then(snap => {
-          if (snap.exists()) {
-            const data = snap.data();
-            const serverState = typeof data.canvasState === 'string' ? JSON.parse(data.canvasState) : data.canvasState;
-            if (serverState && serverState.objects && serverState.objects.length > 0) {
-              console.log("[Pizarra] ✅ Restaurando desde Firestore pizarraEstado");
-              syncingR.current = true;
-              cargarFrame(serverState, () => {
-                syncingR.current = false;
-                ensurePlayersOnTop();
-                fc.renderAll();
-                savePizarraLocal(activeTeamId, planId, serverState); // Poblar caché local
-                if (!readyR.current) { readyR.current = true; setReady(true); }
-              });
-              return; // No necesitamos cargar desde frames
-            }
-          }
-          // ── FUENTE 3: Frames de Firestore (fallback) ─────────────────────────
-          const q = query(framesColRef, orderBy('order', 'asc'));
-          unsubscribe = onSnapshot(q, (snapshot) => {
-            if (snapshot.empty) {
-              // ── FUENTE 4: Formación por defecto (pizarra completamente nueva) ─
-              console.log("[Pizarra] ✅ Pizarra nueva: dibujando formación por defecto");
-              syncingR.current = true;
-              drawPlayers(fc, fr, fieldType, { local: localFormation, rival: rivalFormation }, isSwapped);
-              syncingR.current = false;
-              const state = serializarFrame();
-              addDoc(framesColRef, { name: 'Frame 1', state: JSON.stringify(state), duration: 800, order: 0, createdAt: serverTimestamp() });
-              if (!readyR.current) { readyR.current = true; setReady(true); }
-              return;
-            }
-            const dbFrames = snapshot.docs.map(d => {
-              const data = d.data();
-              return { id: d.id, ...data, state: typeof data.state === 'string' ? JSON.parse(data.state) : data.state };
-            });
-            setFrames(dbFrames);
-            framesR.current = dbFrames;
-            if (!readyR.current) {
-              readyR.current = true;
-              setReady(true);
-              if (dbFrames.length > 0) {
-                syncingR.current = true;
-                cargarFrame(dbFrames[0].state, () => {
-                  syncingR.current = false;
-                  setFrameIdx(0);
-                  frameIdxR.current = 0;
-                  pushToHistory();
-                });
-              }
-            }
-          });
-        }).catch(e => {
-          console.error("[Pizarra] Error cargando pizarraEstado:", e);
-          if (!readyR.current) { readyR.current = true; setReady(true); }
-        });
-      }
-    } // fin if (user && planId && activeTeamId)
+    // La inicialización real ocurre en initCanvas() definida más abajo
 
     // 6. Auto-save en cada cambio del canvas
     // Debounce manual de 1 segundo para pizarraEstado en Firestore
@@ -711,8 +628,9 @@ const PizarraTactica = () => {
 
     const onChange = (opt) => {
       if (syncingR.current) return;
+      console.log('[Pizarra] 💾 onChange disparado - guardando estado...');
 
-      // Sincronizar coordenadas relativas al campo si el objeto se movió
+      // Actualizar coordenadas relativas del objeto movido
       if (opt.target && frRef.current) {
         const targets = opt.target._objects || [opt.target];
         targets.forEach(t => {
@@ -725,15 +643,27 @@ const PizarraTactica = () => {
       }
 
       ensurePlayersOnTop();
-      saveFrameState(false); // Guarda en la sub-colección frames (animaciones)
+      saveFrameState(false);
       pushToHistory();
-      // Guardar estado completo del canvas:
-      // a) Inmediatamente en localStorage (caché de sesión)
+      const frameState = serializarFrame();
+      if (activeTeamId && planId) {
+        savePizarraLocal(activeTeamId, planId, frameState);
+        console.log('[Pizarra] 💾 Guardado en localStorage OK');
+      }
+      debouncedSaveEstado();
+    };
+
+    // Guardado al añadir/eliminar objetos (solo si NO es una carga)
+    const onAddedOrRemoved = (opt) => {
+      if (syncingR.current) return;
+      console.log('[Pizarra] 💾 onAddedOrRemoved - guardando estado...');
+      ensurePlayersOnTop();
+      saveFrameState(false);
+      pushToHistory();
       const frameState = serializarFrame();
       if (activeTeamId && planId) {
         savePizarraLocal(activeTeamId, planId, frameState);
       }
-      // b) En Firestore pizarraEstado con debounce 1s (persistencia real)
       debouncedSaveEstado();
     };
 
@@ -747,14 +677,120 @@ const PizarraTactica = () => {
       const frameState = serializarFrame();
       if (activeTeamId && planId) {
         savePizarraLocal(activeTeamId, planId, frameState);
+        console.log('[Pizarra] 💾 Path guardado en localStorage OK');
       }
       debouncedSaveEstado();
     };
 
-    fc.on('object:modified', onChange);
-    fc.on('object:added',    onChange);
-    fc.on('object:removed',  onChange);
-    fc.on('path:created',    onPathCreated);
+    // ── Función para reconectar listeners (se llama tras cargarFrame) ──
+    const attachListeners = () => {
+      fc.off('object:modified');
+      fc.off('object:added');
+      fc.off('object:removed');
+      fc.off('path:created');
+      fc.on('object:modified', onChange);
+      fc.on('object:added',    onAddedOrRemoved);
+      fc.on('object:removed',  onAddedOrRemoved);
+      fc.on('path:created',    onPathCreated);
+      console.log('[Pizarra] 🎯 Listeners reconectados al canvas');
+    };
+
+    // cargarFrame con reconexión automática de listeners
+    const cargarFrameConListeners = (state, callback) => {
+      cargarFrame(state, () => {
+        if (callback) callback();
+        attachListeners();
+      });
+    };
+
+    // 5. CARGA DEL CANVAS - Flujo de una sola fuente de verdad
+    //    Prioridad: localStorage > Firestore pizarraEstado > frames DB > formación por defecto
+    if (user && planId && activeTeamId) {
+      const framesColRef = collection(db, 'users', user.uid, 'teams', activeTeamId, 'pizarras', planId, 'frames');
+      const estadoDocRef = doc(db, 'users', user.uid, 'teams', activeTeamId, 'pizarraEstado', planId);
+
+      // ── FUENTE 1: localStorage (instánto, prioridad máxima) ─────────────────
+      const localCache = getPizarraLocal(activeTeamId, planId);
+      if (localCache && localCache.objects && localCache.objects.length > 0) {
+        console.log("[Pizarra] ✅ Restaurando desde localStorage");
+        cargarFrameConListeners(localCache, () => {
+          ensurePlayersOnTop();
+          fc.renderAll();
+          if (!readyR.current) { readyR.current = true; setReady(true); }
+        });
+        // Solo suscribir frames para metadatos (sin sobreescribir canvas)
+        const q = query(framesColRef, orderBy('order', 'asc'));
+        unsubscribe = onSnapshot(q, (snap) => {
+          if (!snap.empty) {
+            const dbFrames = snap.docs.map(d => {
+              const data = d.data();
+              return { id: d.id, ...data, state: typeof data.state === 'string' ? JSON.parse(data.state) : data.state };
+            });
+            setFrames(dbFrames);
+            framesR.current = dbFrames;
+          }
+          if (!readyR.current) { readyR.current = true; setReady(true); }
+        });
+      } else {
+        // ── FUENTE 2: Firestore pizarraEstado ────────────────────────────────
+        getDoc(estadoDocRef).then(snap => {
+          if (snap.exists()) {
+            const data = snap.data();
+            const serverState = typeof data.canvasState === 'string' ? JSON.parse(data.canvasState) : data.canvasState;
+            if (serverState && serverState.objects && serverState.objects.length > 0) {
+              console.log("[Pizarra] ✅ Restaurando desde Firestore pizarraEstado");
+              cargarFrameConListeners(serverState, () => {
+                ensurePlayersOnTop();
+                fc.renderAll();
+                savePizarraLocal(activeTeamId, planId, serverState);
+                if (!readyR.current) { readyR.current = true; setReady(true); }
+              });
+              return;
+            }
+          }
+          // ── FUENTE 3: Frames de Firestore ────────────────────────────────
+          const q = query(framesColRef, orderBy('order', 'asc'));
+          unsubscribe = onSnapshot(q, (snapshot) => {
+            if (snapshot.empty) {
+              // ── FUENTE 4: Formación por defecto ──────────────────────────
+              console.log("[Pizarra] ✅ Pizarra nueva: dibujando formación por defecto");
+              syncingR.current = true;
+              drawPlayers(fc, fr, fieldType, { local: localFormation, rival: rivalFormation }, isSwapped);
+              syncingR.current = false;
+              attachListeners();
+              const state = serializarFrame();
+              addDoc(framesColRef, { name: 'Frame 1', state: JSON.stringify(state), duration: 800, order: 0, createdAt: serverTimestamp() });
+              if (!readyR.current) { readyR.current = true; setReady(true); }
+              return;
+            }
+            const dbFrames = snapshot.docs.map(d => {
+              const data = d.data();
+              return { id: d.id, ...data, state: typeof data.state === 'string' ? JSON.parse(data.state) : data.state };
+            });
+            setFrames(dbFrames);
+            framesR.current = dbFrames;
+            if (!readyR.current) {
+              readyR.current = true;
+              setReady(true);
+              if (dbFrames.length > 0) {
+                cargarFrameConListeners(dbFrames[0].state, () => {
+                  setFrameIdx(0);
+                  frameIdxR.current = 0;
+                  pushToHistory();
+                });
+              }
+            }
+          });
+        }).catch(e => {
+          console.error("[Pizarra] Error cargando pizarraEstado:", e);
+          attachListeners(); // Siempre conectar listeners aunque haya error
+          if (!readyR.current) { readyR.current = true; setReady(true); }
+        });
+      }
+    } else {
+      // Sin user/planId: conectar listeners de todas formas
+      attachListeners();
+    }
 
     // 7. Resize logic with ResizeObserver
     const resizeCanvas = () => {

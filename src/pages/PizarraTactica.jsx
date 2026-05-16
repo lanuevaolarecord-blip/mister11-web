@@ -107,6 +107,18 @@ const PizarraTactica = () => {
     return { version: fabric.version, objects };
   }, []);
 
+  const ensurePlayersOnTop = useCallback(() => {
+    const fc = fcRef.current;
+    if (!fc) return;
+    // Mover todos los objetos tipo 'player' al frente
+    fc.getObjects().forEach(obj => {
+      if (obj.data?.type === 'player' || obj.data?.tipo === 'jugador') {
+        obj.bringToFront();
+      }
+    });
+    fc.requestRenderAll();
+  }, []);
+
   const cargarFrame = useCallback((state, callback) => {
     const fc = fcRef.current;
     const fr = frRef.current;
@@ -153,6 +165,7 @@ const PizarraTactica = () => {
 
     fabric.util.enlivenObjects(enlivenedData, (objects) => {
       objects.forEach(o => fc.add(o));
+      ensurePlayersOnTop();
       fc.renderAll();
       if (callback) callback();
     });
@@ -613,12 +626,24 @@ const PizarraTactica = () => {
         });
       }
 
+      ensurePlayersOnTop();
       saveFrameState(false); // Debounced save
       pushToHistory();
     };
+
+    const onPathCreated = (opt) => {
+      if (opt.path) {
+        opt.path.set({ data: { type: 'path' } });
+      }
+      ensurePlayersOnTop();
+      saveFrameState(false);
+      pushToHistory();
+    };
+
     fc.on('object:modified', onChange);
     fc.on('object:added',    onChange);
     fc.on('object:removed',  onChange);
+    fc.on('path:created',    onPathCreated);
 
     // 7. Resize logic with ResizeObserver
     const resizeCanvas = () => {
@@ -963,6 +988,7 @@ const PizarraTactica = () => {
     syncingR.current = false;
 
     fc.renderAll();
+    ensurePlayersOnTop();
     saveFrameState();
     pushToHistory();
   }, [fieldType]); // eslint-disable-line
@@ -984,6 +1010,7 @@ const PizarraTactica = () => {
     });
 
     drawPlayers(fc, fr, fieldType, { local: localFormation, rival: rivalFormation }, isSwapped);
+    ensurePlayersOnTop();
     saveFrameState();
     pushToHistory();
   }, [localFormation, rivalFormation, isSwapped, showRival, fieldType]); // eslint-disable-line

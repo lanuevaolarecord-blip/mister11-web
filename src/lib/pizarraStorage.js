@@ -1,45 +1,43 @@
 /**
  * Helper para persistencia local de la Pizarra Táctica.
- * Permite una transición instantánea entre módulos sin esperar a Firestore.
+ * Guarda el estado serializado con el sistema de coordenadas relativas
+ * que ya usa el componente (serializarFrame / cargarFrame).
  * 
- * USA canvas.toJSON() para serialización correcta de objetos Fabric.js
+ * NO usa canvas.toJSON() porque los grupos personalizados de Fabric 
+ * necesitan el flujo serializarFrame/cargarFrame para rehidratarse.
  */
 
-const getStorageKey = (teamId, planId) => `mister11_pizarra_cache_${teamId}_${planId}`;
+const getStorageKey = (teamId, planId) => `mister11_pizarra_v2_${teamId}_${planId}`;
 
 /**
- * Guarda el estado completo del canvas usando toJSON() de Fabric.
- * Debe llamarse CADA VEZ que el canvas cambia (no solo al desmontar).
+ * Guarda el estado serializado (resultado de serializarFrame).
+ * Llamar en cada onChange del canvas.
  */
-export const savePizarraLocal = (teamId, planId, canvas) => {
-  if (!teamId || !planId || !canvas) return;
+export const savePizarraLocal = (teamId, planId, frameState) => {
+  if (!teamId || !planId || !frameState) return;
   try {
-    // toJSON() es el método oficial de Fabric para serializar correctamente
-    // todos los objetos, propiedades y datos personalizados
-    const canvasJSON = canvas.toJSON(['data', 'selectable', 'evented', 'hasControls', 'hasBorders']);
-    localStorage.setItem(getStorageKey(teamId, planId), JSON.stringify(canvasJSON));
+    localStorage.setItem(getStorageKey(teamId, planId), JSON.stringify(frameState));
   } catch (e) {
-    console.warn("Error saving pizarra to localStorage:", e);
+    console.warn("[pizarraStorage] Error saving:", e);
   }
 };
 
 /**
- * Recupera el estado del canvas guardado en localStorage.
- * Retorna el JSON de Fabric o null si no existe.
+ * Recupera el estado serializado o null si no existe.
  */
 export const getPizarraLocal = (teamId, planId) => {
   if (!teamId || !planId) return null;
   try {
-    const data = localStorage.getItem(getStorageKey(teamId, planId));
-    return data ? JSON.parse(data) : null;
+    const raw = localStorage.getItem(getStorageKey(teamId, planId));
+    return raw ? JSON.parse(raw) : null;
   } catch (e) {
-    console.warn("Error reading pizarra from localStorage:", e);
+    console.warn("[pizarraStorage] Error reading:", e);
     return null;
   }
 };
 
 /**
- * Elimina el estado guardado (al reiniciar pizarra o cambiar de equipo).
+ * Elimina el estado guardado (al reiniciar pizarra).
  */
 export const clearPizarraLocal = (teamId, planId) => {
   if (!teamId || !planId) return;

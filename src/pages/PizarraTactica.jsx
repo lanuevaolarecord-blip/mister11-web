@@ -1156,9 +1156,11 @@ const PizarraTactica = () => {
 
       // 7. Subir a Firebase Storage y Firestore
       let downloadURL = null;
+      let storagePath = null;
+      
       try {
-        const fileName = `captures/${user.uid}/${activeTeamId}/${Date.now()}.png`;
-        const storageRef = ref(storage, fileName);
+        storagePath = `captures/${user.uid}/${activeTeamId}/${Date.now()}.png`;
+        const storageRef = ref(storage, storagePath);
         
         const uploadWithTimeout = (promise, ms) => Promise.race([
           promise,
@@ -1168,20 +1170,26 @@ const PizarraTactica = () => {
         // Subir imagen completa a Storage
         await uploadWithTimeout(uploadString(storageRef, dataURL, 'data_url'), 8000);
         downloadURL = await uploadWithTimeout(getDownloadURL(storageRef), 5000);
+      } catch (uploadErr) {
+        console.warn("Falló subida a Storage, usando fallback local:", uploadErr);
+        storagePath = null; // No hay path en storage
+      }
 
-        // Guardar referencia en Firestore (Colección de capturas sueltas)
+      // 8. SIEMPRE guardar referencia en Firestore (Colección de capturas sueltas)
+      // Lo hacemos fuera del try-catch de storage para que aparezca en la lista sí o sí
+      try {
         const captureDocRef = doc(collection(db, 'users', user.uid, 'teams', activeTeamId, 'captures'));
         await setDoc(captureDocRef, {
           id: captureDocRef.id,
           url: downloadURL || thumbnailDataURL, // Fallback a miniatura si falla Storage
+          storagePath: storagePath,
           title: `Captura Táctica (${new Date().toLocaleTimeString()})`,
-          timestamp: serverTimestamp()
+          timestamp: serverTimestamp(),
+          createdAt: serverTimestamp(),
+          updatedAt: serverTimestamp()
         });
-
-      } catch (uploadErr) {
-        console.warn("Falló subida a Storage, usando fallback local:", uploadErr);
-        // Si falla Storage, intentamos guardar al menos la miniatura si es para el ejercicio
-        // Pero para la colección 'captures', sin Storage la imagen grande podría ser demasiado para Firestore
+      } catch (dbErr) {
+        console.error("Error guardando captura en Firestore:", dbErr);
       }
 
       if (!silent) setIsCapturing(false);
@@ -1234,9 +1242,11 @@ const PizarraTactica = () => {
         id: planId,
         title: `Pizarra Táctica (${new Date().toLocaleDateString()})`,
         type: 'pizarra',
-        framesCount: framesR.current.length,
+        framesCount: (framesR.current || []).length,
         thumbnail: finalThumb, // Siempre miniatura ligera
-        timestamp: serverTimestamp()
+        timestamp: serverTimestamp(),
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp()
       }, { merge: true });
 
       if (btn) btn.innerHTML = '✅ Guardado';

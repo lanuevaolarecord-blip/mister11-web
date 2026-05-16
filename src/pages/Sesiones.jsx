@@ -580,7 +580,12 @@ const Sesiones = () => {
               <div className="capture-info">
                 <h4>{cap.title}</h4>
                 <div className="capture-meta-row">
-                  <span>{cap.timestamp?.toDate?.().toLocaleString() || 'Reciente'}</span>
+                                    <span>
+                    {cap.timestamp?.toDate 
+                      ? cap.timestamp.toDate().toLocaleString() 
+                      : (cap.timestamp ? new Date(cap.timestamp).toLocaleString() : 'Reciente')}
+                  </span>
+
                   <div className="capture-actions">
                     <button className="btn-download-small" onClick={(e) => {
                       e.stopPropagation();

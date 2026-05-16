@@ -308,12 +308,23 @@ const IAGeneradora = () => {
                 {exercises.length === 0 ? <p>No hay ejercicios guardados.</p> :
                   exercises.map(ej => (
                     <div key={ej.id} className="exercise-card" onClick={() => setSelectedExerciseDetail(ej)}>
-                      <div className="exercise-card-title">
-                        <span className="type-tag">{ej.type === 'pizarra' ? '📋 Pizarra' : '✨ IA'}</span>
-                        <span>{ej.title || 'Sin título'}</span>
-                      </div>
-                      <div className="exercise-card-meta">
-                        <span>{new Date(ej.timestamp).toLocaleDateString()}</span>
+                      {ej.type === 'pizarra' && ej.thumbnail && (
+                        <div className="exercise-card-thumb">
+                          <img src={ej.thumbnail} alt="Vista previa" />
+                        </div>
+                      )}
+                      <div className="exercise-card-content">
+                        <div className="exercise-card-title">
+                          <span className="type-tag">{ej.type === 'pizarra' ? '📋 Pizarra' : '✨ IA'}</span>
+                          <span>{ej.title || 'Sin título'}</span>
+                        </div>
+                        <div className="exercise-card-meta">
+                          <span>
+                            {ej.timestamp?.toDate 
+                              ? ej.timestamp.toDate().toLocaleDateString() 
+                              : (ej.timestamp ? new Date(ej.timestamp).toLocaleDateString() : 'Reciente')}
+                          </span>
+                        </div>
                       </div>
                     </div>
                   ))
@@ -332,14 +343,30 @@ const IAGeneradora = () => {
               <button className="btn-close" onClick={() => setSelectedExerciseDetail(null)}>✕</button>
             </div>
             <div className="modal-body" style={{whiteSpace:'pre-wrap', padding:'20px'}}>
-              {selectedExerciseDetail.content || 'Sin contenido.'}
+              {selectedExerciseDetail.type === 'pizarra' ? (
+                <div className="pizarra-detail">
+                  {selectedExerciseDetail.thumbnail && <img src={selectedExerciseDetail.thumbnail} alt="Vista previa" style={{width: '100%', borderRadius: '8px', marginBottom: '15px'}} />}
+                  <p><strong>Tipo:</strong> Pizarra Táctica</p>
+                  <p><strong>Frames:</strong> {selectedExerciseDetail.framesCount || 0}</p>
+                  <p style={{marginTop: '10px'}}>Este es un esquema táctico interactivo. Puedes verlo en el módulo de Pizarra Táctica.</p>
+                </div>
+              ) : (
+                selectedExerciseDetail.content || 'Sin contenido.'
+              )}
             </div>
             <div className="modal-footer">
-              <button className="btn-primary" onClick={() => {
-                setResult(selectedExerciseDetail.content);
-                setSelectedExerciseDetail(null);
-                setShowBiblioteca(false);
-              }}>Cargar</button>
+              {selectedExerciseDetail.type !== 'pizarra' && (
+                <button className="btn-primary" onClick={() => {
+                  setResult(selectedExerciseDetail.content);
+                  setSelectedExerciseDetail(null);
+                  setShowBiblioteca(false);
+                }}>Cargar</button>
+              )}
+              {selectedExerciseDetail.type === 'pizarra' && (
+                <button className="btn-primary" onClick={() => {
+                  window.location.href = `/pizarra?id=${selectedExerciseDetail.id}`;
+                }}>Abrir en Pizarra</button>
+              )}
             </div>
           </div>
         </div>

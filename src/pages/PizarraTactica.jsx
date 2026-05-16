@@ -197,7 +197,7 @@ const PizarraTactica = () => {
 
   // Auth & URL
   const { user, activeTeamId } = useAuth();
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   
   // Usar planId de la URL o recuperar el último usado para este equipo (Persistencia al navegar)
   const [planId, setPlanId] = useState(() => {

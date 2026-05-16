@@ -1102,8 +1102,8 @@ const PizarraTactica = () => {
 
     try {
       // 1. Crear canvas temporal de alta resolución (Consistencia entre dispositivos)
-      // Usamos una resolución fija de 1280x853 (aprox 1.5:1) para que sea profesional
-      const targetWidth = 1280;
+      // Usamos una resolución Full HD (1920x1280) para máxima calidad profesional
+      const targetWidth = 1920;
       const targetHeight = Math.round(targetWidth / 1.5);
       
       const tempCanvas = document.createElement('canvas');
@@ -1134,8 +1134,8 @@ const PizarraTactica = () => {
       // 4. Combinar: Dibujar Fabric sobre el campo redibujado
       ctx.drawImage(fabricImg, 0, 0, targetWidth, targetHeight);
 
-      // 5. Generar imagen final (PNG para calidad en descarga)
-      const dataURL = tempCanvas.toDataURL('image/png', 0.9);
+      // 5. Generar imagen final (PNG sin pérdida para máxima calidad)
+      const dataURL = tempCanvas.toDataURL('image/png', 1.0);
 
       // 6. Generar MINIATURA optimizada para Firestore (Evita error de 1MB y "Save Stuck")
       const thumbCanvas = document.createElement('canvas');

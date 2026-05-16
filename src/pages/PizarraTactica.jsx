@@ -597,103 +597,97 @@ const PizarraTactica = () => {
         if (data.fieldType) setFieldTypeState(data.fieldType);
       }
     });
-    // 5. Cargar estado persistido y suscribirse a frames
+    // 5. CARGA DEL CANVAS - Flujo de una sola fuente de verdad
+    //    Prioridad: localStorage (sesión actual) > Firestore pizarraEstado > frames DB > formación por defecto
     let unsubscribe;
     if (user && planId && activeTeamId) {
       const framesColRef = collection(db, 'users', user.uid, 'teams', activeTeamId, 'pizarras', planId, 'frames');
-      // Ruta del documento de estado persistente (UNA escritura por cambio, no por frame)
       const estadoDocRef = doc(db, 'users', user.uid, 'teams', activeTeamId, 'pizarraEstado', planId);
 
-      // ── PASO 1: Carga instantánea desde localStorage (caché de sesión) ──────
+      // ── FUENTE 1: localStorage (instánto, prioridad máxima) ─────────────────
       const localCache = getPizarraLocal(activeTeamId, planId);
-      let canvasLoadedFromCache = false;
-      if (localCache) {
-        console.log("[Pizarra] Restaurando desde caché local...");
+      if (localCache && localCache.objects && localCache.objects.length > 0) {
+        console.log("[Pizarra] ✅ Restaurando desde localStorage");
         syncingR.current = true;
         cargarFrame(localCache, () => {
           syncingR.current = false;
           ensurePlayersOnTop();
           fc.renderAll();
-        });
-        canvasLoadedFromCache = true;
-        readyR.current = true;
-        setReady(true);
-      }
-
-      // ── PASO 2: Cargar estado desde Firestore pizarraEstado (fuente de verdad) ──
-      // Esto sobreescribe el caché local si el servidor tiene una versión más reciente
-      getDoc(estadoDocRef).then(snap => {
-        if (snap.exists()) {
-          const data = snap.data();
-          const serverState = typeof data.canvasState === 'string'
-            ? JSON.parse(data.canvasState)
-            : data.canvasState;
-          if (serverState && serverState.objects) {
-            console.log("[Pizarra] Restaurando desde Firestore pizarraEstado...");
-            syncingR.current = true;
-            cargarFrame(serverState, () => {
-              syncingR.current = false;
-              ensurePlayersOnTop();
-              fc.renderAll();
-              if (!readyR.current) {
-                readyR.current = true;
-                setReady(true);
-              }
-            });
-          }
-        } else if (!canvasLoadedFromCache) {
-          // Pizarra completamente nueva: no hay nada en Firestore ni en caché
-          // La formación por defecto se dibujará cuando llegue el onSnapshot vacío
-          console.log("[Pizarra] Pizarra nueva sin estado previo");
-        }
-      }).catch(e => console.error("[Pizarra] Error cargando pizarraEstado:", e));
-
-      // ── PASO 3: Suscripción a frames (metadatos de animación) ─────────────
-      const q = query(framesColRef, orderBy('order', 'asc'));
-      unsubscribe = onSnapshot(q, (snapshot) => {
-        if (snapshot.empty && !canvasLoadedFromCache) {
-          // Primera vez: dibujar formación por defecto y crear frame inicial
-          syncingR.current = true;
-          drawPlayers(fc, fr, fieldType, { local: localFormation, rival: rivalFormation }, isSwapped);
-          syncingR.current = false;
-          const state = serializarFrame();
-          addDoc(framesColRef, {
-            name: 'Frame 1',
-            state: JSON.stringify(state),
-            duration: 800,
-            order: 0,
-            createdAt: serverTimestamp()
-          });
           if (!readyR.current) { readyR.current = true; setReady(true); }
-          return;
-        } else if (!snapshot.empty) {
-          const dbFrames = snapshot.docs.map(d => {
-            const data = d.data();
-            return {
-              id: d.id,
-              ...data,
-              state: typeof data.state === 'string' ? JSON.parse(data.state) : data.state
-            };
-          });
-          setFrames(dbFrames);
-          framesR.current = dbFrames;
-          // Solo cargar el canvas desde frames si NO hay nada en pizarraEstado ni caché
-          if (!readyR.current) {
-            readyR.current = true;
-            setReady(true);
-            if (dbFrames.length > 0) {
+        });
+        // Con caché local válido: NO cargar desde Firestore (evita carrera de datos)
+        // Solo suscribimos frames para metadatos
+        const q = query(framesColRef, orderBy('order', 'asc'));
+        unsubscribe = onSnapshot(q, (snap) => {
+          if (!snap.empty) {
+            const dbFrames = snap.docs.map(d => {
+              const data = d.data();
+              return { id: d.id, ...data, state: typeof data.state === 'string' ? JSON.parse(data.state) : data.state };
+            });
+            setFrames(dbFrames);
+            framesR.current = dbFrames;
+          }
+          if (!readyR.current) { readyR.current = true; setReady(true); }
+        });
+      } else {
+        // ── FUENTE 2: Firestore pizarraEstado (persistencia entre dispositivos) ─
+        getDoc(estadoDocRef).then(snap => {
+          if (snap.exists()) {
+            const data = snap.data();
+            const serverState = typeof data.canvasState === 'string' ? JSON.parse(data.canvasState) : data.canvasState;
+            if (serverState && serverState.objects && serverState.objects.length > 0) {
+              console.log("[Pizarra] ✅ Restaurando desde Firestore pizarraEstado");
               syncingR.current = true;
-              cargarFrame(dbFrames[0].state, () => {
+              cargarFrame(serverState, () => {
                 syncingR.current = false;
-                setFrameIdx(0);
-                frameIdxR.current = 0;
-                pushToHistory();
+                ensurePlayersOnTop();
+                fc.renderAll();
+                savePizarraLocal(activeTeamId, planId, serverState); // Poblar caché local
+                if (!readyR.current) { readyR.current = true; setReady(true); }
               });
+              return; // No necesitamos cargar desde frames
             }
           }
-        }
-      });
-    }
+          // ── FUENTE 3: Frames de Firestore (fallback) ─────────────────────────
+          const q = query(framesColRef, orderBy('order', 'asc'));
+          unsubscribe = onSnapshot(q, (snapshot) => {
+            if (snapshot.empty) {
+              // ── FUENTE 4: Formación por defecto (pizarra completamente nueva) ─
+              console.log("[Pizarra] ✅ Pizarra nueva: dibujando formación por defecto");
+              syncingR.current = true;
+              drawPlayers(fc, fr, fieldType, { local: localFormation, rival: rivalFormation }, isSwapped);
+              syncingR.current = false;
+              const state = serializarFrame();
+              addDoc(framesColRef, { name: 'Frame 1', state: JSON.stringify(state), duration: 800, order: 0, createdAt: serverTimestamp() });
+              if (!readyR.current) { readyR.current = true; setReady(true); }
+              return;
+            }
+            const dbFrames = snapshot.docs.map(d => {
+              const data = d.data();
+              return { id: d.id, ...data, state: typeof data.state === 'string' ? JSON.parse(data.state) : data.state };
+            });
+            setFrames(dbFrames);
+            framesR.current = dbFrames;
+            if (!readyR.current) {
+              readyR.current = true;
+              setReady(true);
+              if (dbFrames.length > 0) {
+                syncingR.current = true;
+                cargarFrame(dbFrames[0].state, () => {
+                  syncingR.current = false;
+                  setFrameIdx(0);
+                  frameIdxR.current = 0;
+                  pushToHistory();
+                });
+              }
+            }
+          });
+        }).catch(e => {
+          console.error("[Pizarra] Error cargando pizarraEstado:", e);
+          if (!readyR.current) { readyR.current = true; setReady(true); }
+        });
+      }
+    } // fin if (user && planId && activeTeamId)
 
     // 6. Auto-save en cada cambio del canvas
     // Debounce manual de 1 segundo para pizarraEstado en Firestore
@@ -1152,14 +1146,7 @@ const PizarraTactica = () => {
     pushToHistory();
   }, [localFormation, rivalFormation, isSwapped, showRival, fieldType, ready]); // eslint-disable-line
 
-  // Persistencia al desmontar (Cambio de módulo)
-  useEffect(() => {
-    return () => {
-      if (fcRef.current && activeTeamId && planId) {
-        savePizarraLocal(activeTeamId, planId, fcRef.current, framesR.current);
-      }
-    };
-  }, [activeTeamId, planId]);
+  // (El guardado al desmontar ya ocurre dentro del useEffect principal, en el return cleanup)
 
   // ─── Tool change ──────────────────────────────────────────────────────────
   useEffect(() => {

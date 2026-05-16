@@ -207,25 +207,28 @@ const PizarraTactica = () => {
   });
 
   useEffect(() => {
-    if (!planId && activeTeamId) {
-      const lastId = localStorage.getItem(`last_pizarra_${activeTeamId}`);
+    if (!planId && user && activeTeamId) {
+      // Intentar recuperar la última pizarra activa para no crear duplicados vacíos
+      const lastId = localStorage.getItem(`mister11_last_pizarra_${activeTeamId}`);
       if (lastId) {
         setPlanId(lastId);
+        setSearchParams({ id: lastId });
       } else {
         const newId = `pizarra-${Date.now()}`;
         setPlanId(newId);
-        localStorage.setItem(`last_pizarra_${activeTeamId}`, newId);
+        setSearchParams({ id: newId });
       }
+    } else if (planId && activeTeamId) {
+      // Guardar el ID actual como el último editado
+      localStorage.setItem(`mister11_last_pizarra_${activeTeamId}`, planId);
     }
-  }, [planId, activeTeamId]);
+  }, [planId, activeTeamId, user, setSearchParams]);
 
   // React state (UI)
   const [ready,        setReady]        = useState(false);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
   const [showTeamsDrawer, setShowTeamsDrawer] = useState(false);
   const [showMatsDrawer, setShowMatsDrawer] = useState(false);
-  const [fieldType,    setFieldType]    = useState('full');
-  const [formation,    setFormation]    = useState('4-3-3');
   const [activeTool,   setActiveTool]   = useState('select');
   const [activeColor,  setActiveColor]  = useState('#FFFFFF');
   const [activeWidth,  setActiveWidth]  = useState(4);
@@ -241,10 +244,22 @@ const PizarraTactica = () => {
   const [localColor,     setLocalColor]     = useState('#4CAF7D');
   const [rivalColor,     setRivalColor]     = useState('#E53935');
   const [jokerColor,     setJokerColor]     = useState('#D4A843');
-  const [localFormation, setLocalFormation] = useState('4-3-3');
-  const [rivalFormation, setRivalFormation] = useState('4-4-2');
-  const [isSwapped,      setIsSwapped]      = useState(false);
-  const [showRival,      setShowRival]      = useState(false);
+  const [localFormation, setLocalFormationState] = useState('4-3-3');
+  const [rivalFormation, setRivalFormationState] = useState('4-3-3');
+  const [isSwapped, setIsSwappedState] = useState(false);
+  const [fieldType, setFieldTypeState] = useState('full');
+  
+  // Ref para controlar si el redibujado de jugadores fue solicitado por el usuario
+  const drawTriggeredByUiR = useRef(false);
+
+  const setLocalFormation = (v) => { drawTriggeredByUiR.current = true; setLocalFormationState(v); };
+  const setRivalFormation = (v) => { drawTriggeredByUiR.current = true; setRivalFormationState(v); };
+  const setIsSwapped = (v) => { drawTriggeredByUiR.current = true; setIsSwappedState(v); };
+  const setFieldType = (v) => { 
+    // Al cambiar de campo, redibujamos el fondo pero NO reseteamos jugadores 
+    // a menos que el usuario lo pida explícitamente.
+    setFieldTypeState(v); 
+  };
   const [showColorPicker, setShowColorPicker] = useState(false);
   const [showWidthPicker, setShowWidthPicker] = useState(false);
   const [showMoreMenu,   setShowMoreMenu]   = useState(false);
@@ -288,11 +303,22 @@ const PizarraTactica = () => {
     const saveToDB = async () => {
       try {
         if (!activeTeamId) return;
-        const frameRef = doc(db, 'users', user.uid, 'teams', activeTeamId, 'exercises', planId, 'frames', frame.id);
-        await setDoc(frameRef, {
-          state: JSON.stringify(state),
-          updatedAt: serverTimestamp()
-        }, { merge: true });
+        const frameRef = doc(db, 'users', user.uid, 'teams', activeTeamId, 'pizarras', planId, 'frames', frame.id);
+        const parentRef = doc(db, 'users', user.uid, 'teams', activeTeamId, 'pizarras', planId);
+        
+        await Promise.all([
+          setDoc(frameRef, {
+            state: JSON.stringify(state),
+            updatedAt: serverTimestamp()
+          }, { merge: true }),
+          setDoc(parentRef, {
+            localFormation,
+            rivalFormation,
+            isSwapped,
+            fieldType,
+            updatedAt: serverTimestamp()
+          }, { merge: true })
+        ]);
       } catch (err) {
         console.error("Error updating frame in Firestore:", err);
       }
@@ -555,10 +581,23 @@ const PizarraTactica = () => {
     const tm = new ToolManager(fc);
     tmRef.current = tm;
 
-    // 4. Load frames from Firestore (Puntos 4 y 5 consolidados)
+    // 4. Obtener metadatos del plan (formación, campo, etc.)
+    const planDocRef = doc(db, 'users', user.uid, 'teams', activeTeamId, 'pizarras', planId);
+    getDoc(planDocRef).then(docSnap => {
+      if (docSnap.exists()) {
+        const data = docSnap.data();
+        setPlanName(data.name || 'Sin título');
+        if (data.localFormation) setLocalFormationState(data.localFormation);
+        if (data.rivalFormation) setRivalFormationState(data.rivalFormation);
+        if (data.isSwapped !== undefined) setIsSwappedState(data.isSwapped);
+        if (data.fieldType) setFieldTypeState(data.fieldType);
+      }
+    });
+
+    // 5. Load frames from Firestore
     let unsubscribe;
     if (user && planId && activeTeamId) {
-      const framesColRef = collection(db, 'users', user.uid, 'teams', activeTeamId, 'exercises', planId, 'frames');
+      const framesColRef = collection(db, 'users', user.uid, 'teams', activeTeamId, 'pizarras', planId, 'frames');
       const q = query(framesColRef, orderBy('order', 'asc'));
       
       unsubscribe = onSnapshot(q, (snapshot) => {
@@ -991,29 +1030,15 @@ const PizarraTactica = () => {
   useEffect(() => {
     const fc = fcRef.current; const fr = frRef.current;
     if (!fc || !fr || playingR.current || !ready || syncingR.current) return;
-    
-    // GUARDIA DE INTERACCIÓN:
-    // Solo redibujamos si el valor de formación en el estado de React 
-    // es DIFERENTE al que ya está renderizado en el canvas.
-    const hasFormationChanged = 
-      lastFormationR.current.local !== localFormation || 
-      lastFormationR.current.rival !== rivalFormation ||
-      lastFormationR.current.isSwapped !== isSwapped ||
-      lastFormationR.current.fieldType !== fieldType;
 
-    // Si no ha cambiado nada en los selectores, no hacemos nada (preservamos posiciones manuales)
-    if (!hasFormationChanged) return;
-
-    // Si es la carga inicial (ready acaba de pasar a true), actualizamos la referencia 
-    // con los valores actuales pero NO redibujamos, ya que onSnapshot ya se encargó
-    // de cargar los objetos (sean formación por defecto o posiciones movidas).
-    if (formationRunCountR.current === 0) {
-      formationRunCountR.current++;
-      lastFormationR.current = { local: localFormation, rival: rivalFormation, isSwapped, fieldType };
-      return;
-    }
+    // GUARDIA DEFINITIVA:
+    // Solo redibujamos la formación si el usuario tocó un selector de formación 
+    // (determinado por drawTriggeredByUiR). Si es una carga de DB o cambio de campo lateral,
+    // respetamos lo que ya está en el canvas.
+    if (!drawTriggeredByUiR.current) return;
 
     // Si llegamos aquí, es porque el usuario REALMENTE cambió algo en el UI
+    drawTriggeredByUiR.current = false; // Resetear bandera
     lastFormationR.current = { local: localFormation, rival: rivalFormation, isSwapped, fieldType };
 
     // Ensure renderer has latest dimensions and bounds

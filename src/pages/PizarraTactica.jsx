@@ -572,7 +572,6 @@ const PizarraTactica = () => {
     const renderer = new FieldRenderer(fieldCanvasRef.current, { padding: { v: 12, h: 16 } });
     renderer.draw('full');
     frRef.current = renderer;
-
     // 2. Fabric overlay canvas
     const fc = new fabric.Canvas(fabricElemRef.current, {
       width: initW, height: initH,
@@ -602,21 +601,27 @@ const PizarraTactica = () => {
     let unsubscribe;
     if (user && planId && activeTeamId) {
       const framesColRef = collection(db, 'users', user.uid, 'teams', activeTeamId, 'pizarras', planId, 'frames');
+      
       // 1. Intentar carga instantánea desde localStorage (Caché local para navegación rápida)
       const localCache = getPizarraLocal(activeTeamId, planId);
+      let canvasLoadedFromCache = false;
       if (localCache && fcRef.current && frRef.current) {
         console.log("Restaurando desde caché local...");
-        if (localCache.frames) setFrames(localCache.frames);
+        if (localCache.frames && localCache.frames.length > 0) setFrames(localCache.frames);
         cargarFrame(localCache.objects || localCache);
+        canvasLoadedFromCache = true;
+        // Si cargamos desde caché, marcamos como ready de inmediato
+        readyR.current = true;
+        setReady(true);
       }
 
-      // 2. Suscripción en tiempo real a Firestore (Fuente de verdad)
+      // 2. Suscripción en tiempo real a Firestore (Fuente de verdad para metadatos)
       const q = query(framesColRef, orderBy('order', 'asc'));
       
       unsubscribe = onSnapshot(q, (snapshot) => {
         // Si no hay datos en Firestore y NO teníamos nada en caché local, 
         // inicializamos con la formación por defecto.
-        if (snapshot.empty && !localCache) {
+        if (snapshot.empty && !canvasLoadedFromCache) {
           console.log("Pizarra nueva: Dibujando formación por defecto");
           syncingR.current = true;
           drawPlayers(fc, fr, fieldType, { local: localFormation, rival: rivalFormation }, isSwapped);
@@ -647,9 +652,9 @@ const PizarraTactica = () => {
           framesR.current = dbFrames;
 
           if (!readyR.current) {
+            // Primera carga sin caché local: cargar canvas desde Firestore
             readyR.current = true;
             setReady(true);
-            // Load first frame into canvas safely
             if (dbFrames.length > 0) {
               syncingR.current = true;
               cargarFrame(dbFrames[0].state, () => {

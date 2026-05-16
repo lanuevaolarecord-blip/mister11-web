@@ -247,6 +247,7 @@ const PizarraTactica = () => {
   const [localFormation, setLocalFormationState] = useState('4-3-3');
   const [rivalFormation, setRivalFormationState] = useState('4-3-3');
   const [isSwapped, setIsSwappedState] = useState(false);
+  const [showRival, setShowRivalState] = useState(false);
   const [fieldType, setFieldTypeState] = useState('full');
   
   // Ref para controlar si el redibujado de jugadores fue solicitado por el usuario
@@ -255,6 +256,7 @@ const PizarraTactica = () => {
   const setLocalFormation = (v) => { drawTriggeredByUiR.current = true; setLocalFormationState(v); };
   const setRivalFormation = (v) => { drawTriggeredByUiR.current = true; setRivalFormationState(v); };
   const setIsSwapped = (v) => { drawTriggeredByUiR.current = true; setIsSwappedState(v); };
+  const setShowRival = (v) => { drawTriggeredByUiR.current = true; setShowRivalState(v); };
   const setFieldType = (v) => { 
     // Al cambiar de campo, redibujamos el fondo pero NO reseteamos jugadores 
     // a menos que el usuario lo pida explícitamente.
@@ -315,6 +317,7 @@ const PizarraTactica = () => {
             localFormation,
             rivalFormation,
             isSwapped,
+            showRival,
             fieldType,
             updatedAt: serverTimestamp()
           }, { merge: true })
@@ -590,6 +593,7 @@ const PizarraTactica = () => {
         if (data.localFormation) setLocalFormationState(data.localFormation);
         if (data.rivalFormation) setRivalFormationState(data.rivalFormation);
         if (data.isSwapped !== undefined) setIsSwappedState(data.isSwapped);
+        if (data.showRival !== undefined) setShowRivalState(data.showRival);
         if (data.fieldType) setFieldTypeState(data.fieldType);
       }
     });

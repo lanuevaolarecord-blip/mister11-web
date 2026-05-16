@@ -577,9 +577,9 @@ const Sesiones = () => {
             </div>
           ) : (
             captures.map(cap => (
-              <div key={cap.id} className="capture-card" onClick={() => setSelectedCapture({ url: cap.thumbnail, title: cap.name || 'Pizarra' })}>
+              <div key={cap.id} className="capture-card" onClick={() => setSelectedCapture({ url: cap.url || cap.thumbnail, title: cap.name || 'Pizarra' })}>
                 <div className="capture-thumb">
-                  <img src={cap.thumbnail} alt="Pizarra" loading="lazy" />
+                  <img src={cap.thumbnail || cap.url} alt="Pizarra" loading="lazy" />
                   <div className="capture-overlay">
                     <span>👁 Ver</span>
                   </div>

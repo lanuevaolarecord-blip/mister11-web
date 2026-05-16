@@ -555,12 +555,7 @@ const PizarraTactica = () => {
     const tm = new ToolManager(fc);
     tmRef.current = tm;
 
-    // 4. Draw initial players
-    syncingR.current = true;
-    drawPlayers(fc, renderer, 'full', { local: localFormation, rival: rivalFormation }, isSwapped);
-    syncingR.current = false;
-
-    // 5. Load frames from Firestore
+    // 4. Load frames from Firestore (Puntos 4 y 5 consolidados)
     let unsubscribe;
     if (user && planId && activeTeamId) {
       const framesColRef = collection(db, 'users', user.uid, 'teams', activeTeamId, 'exercises', planId, 'frames');
@@ -568,7 +563,12 @@ const PizarraTactica = () => {
       
       unsubscribe = onSnapshot(q, (snapshot) => {
         if (snapshot.empty) {
-          // If no frames in DB, create initial one
+          // Si no hay frames, dibujar la formación inicial por defecto
+          syncingR.current = true;
+          drawPlayers(fc, renderer, 'full', { local: localFormation, rival: rivalFormation }, isSwapped);
+          syncingR.current = false;
+
+          // Guardar este estado inicial como el primer frame
           const state = serializarFrame();
           addDoc(framesColRef, {
             name: 'Frame 1',
@@ -1205,7 +1205,8 @@ const PizarraTactica = () => {
         const captureDocRef = doc(collection(db, 'users', user.uid, 'teams', activeTeamId, 'captures'));
         await setDoc(captureDocRef, {
           id: captureDocRef.id,
-          url: downloadURL || thumbnailDataURL, // Fallback a miniatura si falla Storage
+          url: downloadURL || dataURL, // Imagen completa
+          thumbnail: thumbnailDataURL, // Miniatura para la rejilla
           storagePath: storagePath,
           title: `Captura Táctica (${new Date().toLocaleTimeString()})`,
           timestamp: serverTimestamp(),

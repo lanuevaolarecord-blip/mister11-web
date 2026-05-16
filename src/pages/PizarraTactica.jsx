@@ -893,19 +893,6 @@ const PizarraTactica = () => {
   }, [user, planId, activeTeamId, cargarFrame, serializarFrame, saveFrameState, pushToHistory]);
 
   // ─── Auto-redibujar y Guardar al cambiar formación ──────────────────────────
-  useEffect(() => {
-    const fc = fcRef.current;
-    const fr = frRef.current;
-    if (!fc || !fr || !ready) return;
-
-    // Solo redibujar si no estamos cargando datos inicialmente
-    if (!syncingR.current) {
-      syncingR.current = true;
-      drawPlayers(fc, fr, fieldType, { local: localFormation, rival: rivalFormation }, isSwapped);
-      syncingR.current = false;
-      saveFrameState(true); // Guardar inmediatamente
-    }
-  }, [localFormation, rivalFormation, isSwapped, fieldType, ready, saveFrameState, drawPlayers]);
 
   // ─── Field type change ────────────────────────────────────────────────────
   useEffect(() => {
@@ -993,27 +980,37 @@ const PizarraTactica = () => {
     pushToHistory();
   }, [fieldType]); // eslint-disable-line
 
-  // ─── Formation change ─────────────────────────────────────────────────────
+  const formationRunCountR = useRef(0);
   useEffect(() => {
     const fc = fcRef.current; const fr = frRef.current;
-    if (!fc || !fr || playingR.current) return;
+    if (!fc || !fr || playingR.current || !ready || syncingR.current) return;
     
+    // Si ya tenemos datos de Firestore, no queremos que la formación inicial se "remonte"
+    // Solo actuamos si el usuario explícitamente cambia algo después de la carga inicial.
+    if (formationRunCountR.current === 0) {
+      formationRunCountR.current++;
+      return;
+    }
+
     // Ensure renderer has latest dimensions and bounds
     fr.draw(toLibType(fieldType));
 
     // Clear previous players before adding new ones
-    const objects = [...fc.getObjects()]; // copy to avoid splice issues
+    const objects = [...fc.getObjects()];
     objects.forEach(obj => {
       if (obj.data && (obj.data.type === 'player' || obj.data.playerType)) {
         fc.remove(obj);
       }
     });
 
+    syncingR.current = true;
     drawPlayers(fc, fr, fieldType, { local: localFormation, rival: rivalFormation }, isSwapped);
     ensurePlayersOnTop();
+    syncingR.current = false;
+
     saveFrameState();
     pushToHistory();
-  }, [localFormation, rivalFormation, isSwapped, showRival, fieldType]); // eslint-disable-line
+  }, [localFormation, rivalFormation, isSwapped, showRival, fieldType, ready]); // eslint-disable-line
 
   // ─── Tool change ──────────────────────────────────────────────────────────
   useEffect(() => {

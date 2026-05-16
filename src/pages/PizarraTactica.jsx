@@ -602,17 +602,22 @@ const PizarraTactica = () => {
     if (user && planId && activeTeamId) {
       const framesColRef = collection(db, 'users', user.uid, 'teams', activeTeamId, 'pizarras', planId, 'frames');
       
-      // 1. Intentar carga instantánea desde localStorage (Caché local para navegación rápida)
+      // 1. Intentar carga instantánea desde localStorage (caché local para navegación rápida)
+      //    Usamos loadFromJSON que es el método oficial de Fabric.js para deserializar
       const localCache = getPizarraLocal(activeTeamId, planId);
       let canvasLoadedFromCache = false;
-      if (localCache && fcRef.current && frRef.current) {
-        console.log("Restaurando desde caché local...");
-        if (localCache.frames && localCache.frames.length > 0) setFrames(localCache.frames);
-        cargarFrame(localCache.objects || localCache);
-        canvasLoadedFromCache = true;
-        // Si cargamos desde caché, marcamos como ready de inmediato
-        readyR.current = true;
-        setReady(true);
+      if (localCache && fcRef.current) {
+        console.log("[Pizarra] Restaurando desde caché local...");
+        syncingR.current = true;
+        fc.loadFromJSON(localCache, () => {
+          syncingR.current = false;
+          ensurePlayersOnTop();
+          fc.renderAll();
+          readyR.current = true;
+          setReady(true);
+          canvasLoadedFromCache = true;
+        });
+        canvasLoadedFromCache = true; // flag síncrono para el onSnapshot
       }
 
       // 2. Suscripción en tiempo real a Firestore (Fuente de verdad para metadatos)
@@ -686,8 +691,12 @@ const PizarraTactica = () => {
       }
 
       ensurePlayersOnTop();
-      saveFrameState(false); // Debounced save
+      saveFrameState(false); // Debounced save to Firestore
       pushToHistory();
+      // Guardar en localStorage en cada cambio para persistencia de sesión inmediata
+      if (activeTeamId && planId) {
+        savePizarraLocal(activeTeamId, planId, fcRef.current);
+      }
     };
 
     const onPathCreated = (opt) => {
@@ -697,6 +706,10 @@ const PizarraTactica = () => {
       ensurePlayersOnTop();
       saveFrameState(false);
       pushToHistory();
+      // También persistir paths en localStorage
+      if (activeTeamId && planId) {
+        savePizarraLocal(activeTeamId, planId, fcRef.current);
+      }
     };
 
     fc.on('object:modified', onChange);

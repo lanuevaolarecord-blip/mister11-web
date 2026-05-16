@@ -183,7 +183,13 @@ const IAGeneradora = () => {
             <h1>✨ IA Generadora</h1>
             <p>Diseño de entrenamientos inteligentes</p>
           </div>
-          <button onClick={() => setShowBiblioteca(true)} className="btn-outline-gold library-btn">
+          <button 
+            onClick={() => {
+              console.log("Opening Library...", exercises.length);
+              setShowBiblioteca(true);
+            }} 
+            className={`btn-outline-gold library-btn ${exercises.length > 0 ? 'has-content' : ''}`}
+          >
             ☁️ Biblioteca ({exercises.length})
           </button>
         </header>
@@ -296,17 +302,22 @@ const IAGeneradora = () => {
       </div>
 
       {showBiblioteca && (
-        <div className="library-drawer-overlay" onClick={() => setShowBiblioteca(false)}>
+        <div className="library-drawer-overlay active" onClick={() => setShowBiblioteca(false)}>
           <div className="library-drawer" onClick={e => e.stopPropagation()}>
             <div className="drawer-handle-bar" />
             <div className="drawer-content">
               <div className="drawer-header">
-                <h3>☁️ Biblioteca de Ejercicios</h3>
+                <h3>☁️ Biblioteca Cloud</h3>
                 <button className="btn-close-drawer" onClick={() => setShowBiblioteca(false)}>✕</button>
               </div>
               <div className="exercise-list">
-                {exercises.length === 0 ? <p>No hay ejercicios guardados.</p> :
-                  exercises.map(ej => (
+                {exercises.length === 0 ? (
+                  <div className="empty-library">
+                    <div className="empty-icon">📂</div>
+                    <p>No hay ejercicios guardados aún.</p>
+                  </div>
+                ) : (
+                  exercises.sort((a,b) => (b.timestamp?.seconds || 0) - (a.timestamp?.seconds || 0)).map(ej => (
                     <div key={ej.id} className="exercise-card" onClick={() => setSelectedExerciseDetail(ej)}>
                       {ej.type === 'pizarra' && ej.thumbnail && (
                         <div className="exercise-card-thumb">
@@ -315,8 +326,8 @@ const IAGeneradora = () => {
                       )}
                       <div className="exercise-card-content">
                         <div className="exercise-card-title">
-                          <span className="type-tag">{ej.type === 'pizarra' ? '📋 Pizarra' : '✨ IA'}</span>
-                          <span>{ej.title || 'Sin título'}</span>
+                          <span className={`type-tag ${ej.type || 'ia'}`}>{ej.type === 'pizarra' ? '📋 Pizarra' : '✨ IA'}</span>
+                          <span className="title-text">{ej.title || 'Sin título'}</span>
                         </div>
                         <div className="exercise-card-meta">
                           <span>
@@ -326,9 +337,10 @@ const IAGeneradora = () => {
                           </span>
                         </div>
                       </div>
+                      <div className="exercise-card-arrow">→</div>
                     </div>
                   ))
-                }
+                )}
               </div>
             </div>
           </div>

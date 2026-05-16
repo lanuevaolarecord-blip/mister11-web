@@ -401,7 +401,7 @@ const Sesiones = () => {
           <h1>ENTRENAMIENTO</h1>
           <div className="header-actions">
             <button className={`tab-switcher ${activeTab === 'sessions' ? 'active' : ''}`} onClick={() => setActiveTab('sessions')}>SESIONES</button>
-            <button className={`tab-switcher ${activeTab === 'captures' ? 'active' : ''}`} onClick={() => setActiveTab('captures')}>PIZARRA</button>
+            <button className={`tab-switcher ${activeTab === 'captures' ? 'active' : ''}`} onClick={() => setActiveTab('captures')}>CAPTURAS</button>
             <div className="topbar-divider-v" />
             <button className="btn-primary" onClick={handleCreateNew}>+ Nueva Sesión</button>
           </div>
@@ -569,47 +569,29 @@ const Sesiones = () => {
         </div>
       ) : (
         <div className="captures-grid">
-          {captures.map(cap => (
-            <div key={cap.id} className="capture-card" onClick={() => setSelectedCapture(cap)}>
-              <div className="capture-image-wrapper">
-                <img src={cap.url} alt={cap.title} loading="lazy" />
-                <div className="capture-overlay">
-                  <span className="btn-view-capture">👁 VER</span>
-                </div>
-              </div>
-              <div className="capture-info">
-                <h4>{cap.title}</h4>
-                <div className="capture-meta-row">
-                                    <span>
-                    {cap.timestamp?.toDate 
-                      ? cap.timestamp.toDate().toLocaleString() 
-                      : (cap.timestamp ? new Date(cap.timestamp).toLocaleString() : 'Reciente')}
-                  </span>
-
-                  <div className="capture-actions">
-                    <button className="btn-download-small" onClick={(e) => {
-                      e.stopPropagation();
-                      const link = document.createElement('a');
-                      link.href = cap.url;
-                      link.download = `pizarra_${cap.id}.png`;
-                      link.target = "_blank";
-                      link.click();
-                    }}>📥</button>
-                    <button className="btn-delete-small" onClick={(e) => {
-                      e.stopPropagation();
-                      if(window.confirm('¿Eliminar esta captura?')) removeCapture(cap.id);
-                    }}>🗑</button>
-                  </div>
-                </div>
-              </div>
-            </div>
-          ))}
-          {captures.length === 0 && (
+          {captures.length === 0 ? (
             <div className="empty-state-full">
               <div className="empty-icon">🎨</div>
               <h3>No hay capturas de pizarra</h3>
               <p>Las capturas que guardes en la Pizarra Táctica aparecerán aquí automáticamente.</p>
             </div>
+          ) : (
+            captures.map(cap => (
+              <div key={cap.id} className="capture-card" onClick={() => setSelectedCapture({ url: cap.thumbnail, title: cap.name || 'Pizarra' })}>
+                <div className="capture-thumb">
+                  <img src={cap.thumbnail} alt="Pizarra" loading="lazy" />
+                  <div className="capture-overlay">
+                    <span>👁 Ver</span>
+                  </div>
+                </div>
+                <div className="capture-info">
+                  <span className="capture-name">{cap.name || 'Pizarra'}</span>
+                  <span className="capture-date">
+                    {cap.timestamp?.toDate ? cap.timestamp.toDate().toLocaleDateString() : 'Reciente'}
+                  </span>
+                </div>
+              </div>
+            ))
           )}
         </div>
       )}

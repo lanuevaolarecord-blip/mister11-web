@@ -1188,8 +1188,10 @@ const PizarraTactica = () => {
           createdAt: serverTimestamp(),
           updatedAt: serverTimestamp()
         });
+        alert("✅ Captura guardada. Puedes verla en Sesiones > Capturas.");
       } catch (dbErr) {
         console.error("Error guardando captura en Firestore:", dbErr);
+        alert("❌ Error al guardar en la base de datos.");
       }
 
       if (!silent) setIsCapturing(false);
@@ -1305,9 +1307,13 @@ const PizarraTactica = () => {
       
       const nextIdx = frames.length; 
       setFrameIdx(nextIdx);
-      frameIdxR.current = nextIdx;
-    } catch (err) {
-      console.error("Error adding frame:", err);
+      await setDoc(exerciseDocRef, exerciseData);
+      alert("✅ Ejercicio guardado en tu Biblioteca Cloud.");
+    } catch (error) {
+      console.error("Error saving exercise:", error);
+      alert("❌ Error al guardar el ejercicio.");
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -1866,7 +1872,6 @@ const PizarraTactica = () => {
           ))}
         </div>
       )}
-
     </div>
   );
 };

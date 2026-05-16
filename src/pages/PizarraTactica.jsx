@@ -981,12 +981,27 @@ const PizarraTactica = () => {
   }, [fieldType]); // eslint-disable-line
 
   const formationRunCountR = useRef(0);
+  const lastFormationR = useRef({ local: '4-3-3', rival: '4-3-3', isSwapped: false, fieldType: 'full' });
+
   useEffect(() => {
     const fc = fcRef.current; const fr = frRef.current;
     if (!fc || !fr || playingR.current || !ready || syncingR.current) return;
     
-    // Si ya tenemos datos de Firestore, no queremos que la formación inicial se "remonte"
-    // Solo actuamos si el usuario explícitamente cambia algo después de la carga inicial.
+    // Comparar si realmente hubo un cambio en la formación o tipo de campo
+    // Si los valores coinciden con el último renderizado, no sobreescribimos el canvas
+    const hasFormationChanged = 
+      lastFormationR.current.local !== localFormation || 
+      lastFormationR.current.rival !== rivalFormation ||
+      lastFormationR.current.isSwapped !== isSwapped ||
+      lastFormationR.current.fieldType !== fieldType;
+
+    if (!hasFormationChanged) return;
+
+    // Actualizamos la referencia para el próximo cambio
+    lastFormationR.current = { local: localFormation, rival: rivalFormation, isSwapped, fieldType };
+
+    // Si es la primera vez que se monta el componente y NO hay cambio real (carga de DB)
+    // omitimos para no pisar lo que cargó cargarFrame
     if (formationRunCountR.current === 0) {
       formationRunCountR.current++;
       return;

@@ -1524,7 +1524,7 @@ const PizarraTactica = () => {
     
     try {
       if (!activeTeamId) return;
-      const framesColRef = collection(db, 'users', user.uid, 'teams', activeTeamId, 'exercises', planId, 'frames');
+      const framesColRef = collection(db, 'users', user.uid, 'teams', activeTeamId, 'pizarras', planId, 'frames');
       const newFrameData = {
         name: `Frame ${frames.length + 1}`,
         state: JSON.stringify(state),
@@ -1549,13 +1549,8 @@ const PizarraTactica = () => {
       
       const nextIdx = frames.length; 
       setFrameIdx(nextIdx);
-      await setDoc(exerciseDocRef, exerciseData);
-      alert("✅ Ejercicio guardado en tu Biblioteca Cloud.");
     } catch (error) {
-      console.error("Error saving exercise:", error);
-      alert("❌ Error al guardar el ejercicio.");
-    } finally {
-      setIsSaving(false);
+      console.error("Error saving frame:", error);
     }
   };
 

@@ -19,7 +19,7 @@ import { t } from '../i18n/translations';
 
 const Sidebar = ({ isOpen, onClose }) => {
   const { settings } = useSettings();
-  const { teams, activeTeamId, changeActiveTeam } = useAuth();
+  const { teams, activeTeamId, changeActiveTeam, logout } = useAuth();
   const navItems = [
     { path: '/', label: t('nav.dashboard', settings.language), icon: LayoutDashboard },
     { path: '/pizarra', label: t('nav.pizarra', settings.language), icon: Presentation },
@@ -34,7 +34,7 @@ const Sidebar = ({ isOpen, onClose }) => {
 
   const handleLogout = async () => {
     try {
-      await signOut(auth);
+      await logout();
       if (onClose) onClose();
     } catch (err) {
       console.error('Error al cerrar sesión:', err);

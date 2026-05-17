@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { auth, signInWithGoogle, signInAnonymously, signOut } from '../firebaseConfig';
+import { signInWithGoogle } from '../firebaseConfig';
+import { useAuth } from '../context/AuthContext';
 import { usePWA } from '../hooks/usePWA';
 import './Login.css';
 
@@ -7,6 +8,7 @@ const Login = () => {
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const { deferredPrompt, isInstalled, installApp } = usePWA();
+  const { loginAsGuest } = useAuth();
 
   const handleGoogleLogin = async () => {
     setIsLoading(true);
@@ -29,9 +31,9 @@ const Login = () => {
     setIsLoading(true);
     setError('');
     try {
-      await signInAnonymously(auth);
+      await loginAsGuest();
     } catch (err) {
-      console.error('Error signing in anonymously', err);
+      console.error('Error signing in as guest', err);
       setError(`Error Invitado: ${err.message}`);
     } finally {
       setIsLoading(false);
@@ -55,6 +57,21 @@ const Login = () => {
             className="btn-google" 
             onClick={handleGoogleLogin}
             disabled={isLoading}
+            style={{
+              padding: '12px',
+              borderRadius: '8px',
+              width: '100%',
+              fontWeight: 'bold',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '10px',
+              border: '1px solid var(--border-color)',
+              background: 'transparent',
+              color: 'var(--text-primary)',
+              transition: 'all 0.2s'
+            }}
           >
             {isLoading ? 'Conectando con Google...' : (
               <>
@@ -69,26 +86,24 @@ const Login = () => {
             )}
           </button>
 
-          {(window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') && (
-            <button
-              className="btn-guest"
-              onClick={handleGuestLogin}
-              disabled={isLoading}
-              style={{
-                marginTop: '10px',
-                padding: '12px',
-                background: '#10B981',
-                color: 'white',
-                border: 'none',
-                borderRadius: '8px',
-                width: '100%',
-                fontWeight: 'bold',
-                cursor: 'pointer'
-              }}
-            >
-              Entrar Modo Invitado/Prueba
-            </button>
-          )}
+          <button
+            className="btn-guest"
+            onClick={handleGuestLogin}
+            disabled={isLoading}
+            style={{
+              marginTop: '10px',
+              padding: '12px',
+              background: '#10B981',
+              color: 'white',
+              border: 'none',
+              borderRadius: '8px',
+              width: '100%',
+              fontWeight: 'bold',
+              cursor: 'pointer'
+            }}
+          >
+            {isLoading ? 'Entrando como Invitado...' : 'Entrar Modo Invitado/Prueba'}
+          </button>
 
           {deferredPrompt && !isInstalled && (
             <button 
@@ -120,3 +135,4 @@ const Login = () => {
 };
 
 export default Login;
+

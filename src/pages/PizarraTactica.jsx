@@ -31,7 +31,7 @@ import { FieldRenderer, FORMATIONS } from '../lib/mister11-field.js';
 import { useAuth } from '../context/AuthContext';
 import { usePizarra } from '../context/PizarraContext';
 import { db } from '../firebaseConfig';
-import { collection, doc, setDoc, addDoc, deleteDoc, serverTimestamp, onSnapshot, query, orderBy, getDoc } from 'firebase/firestore';
+import { collection, doc, setDoc, addDoc, deleteDoc, serverTimestamp, onSnapshot, query, orderBy, getDoc, writeBatch } from 'firebase/firestore';
 import { ref, uploadString, getDownloadURL } from 'firebase/storage';
 import { useSearchParams } from 'react-router-dom';
 import { storage } from '../firebaseConfig';
@@ -1527,8 +1527,8 @@ const PizarraTactica = () => {
     const fc = fcRef.current;
     if (!fc) return;
 
-    // 1. Save current before adding
-    await saveFrameState();
+    // 1. Save current immediately before adding to prevent state desync
+    await saveFrameState(true);
 
     // 2. Clone current state
     const state = serializarFrame();
@@ -1552,14 +1552,15 @@ const PizarraTactica = () => {
         state // Keep it as object in local state
       };
 
+      const nextIdx = frames.length; 
       setFrames(prev => {
         const next = [...prev, newFrame];
         framesR.current = next;
         return next;
       });
       
-      const nextIdx = frames.length; 
       setFrameIdx(nextIdx);
+      frameIdxR.current = nextIdx;
     } catch (error) {
       console.error("Error saving frame:", error);
     }
@@ -1599,52 +1600,93 @@ const PizarraTactica = () => {
     
     const fc = fcRef.current;
     if (fc) {
-      fc.loadFromJSON(next[newIdx].state, () => fc.renderAll());
+      syncingR.current = true;
+      cargarFrame(next[newIdx].state, () => {
+        syncingR.current = false;
+        fc.renderAll();
+        attachListeners(); // Reconnect listeners to restore interactive control
+      });
     }
     
-    // Firebase delete
+    // Firebase delete and reordering to prevent sequence gaps
     if (user && frameToDelete && frameToDelete.id && activeTeamId) {
       try {
-        const frameRef = doc(db, 'users', user.uid, 'teams', activeTeamId, 'exercises', planId, 'frames', frameToDelete.id);
+        const frameRef = doc(db, 'users', user.uid, 'teams', activeTeamId, 'pizarras', planId, 'frames', frameToDelete.id);
         await deleteDoc(frameRef);
+        
+        // Re-index remaining frames in Firestore to maintain contiguous sequence order
+        const batch = writeBatch(db);
+        next.forEach((f, idx) => {
+          const fRef = doc(db, 'users', user.uid, 'teams', activeTeamId, 'pizarras', planId, 'frames', f.id);
+          batch.update(fRef, { order: idx });
+        });
+        await batch.commit();
       } catch (err) {
-        console.error("Error deleting frame in Firestore:", err);
+        console.error("Error deleting or reordering frame in Firestore:", err);
       }
     }
   };
 
   // ─── Play Animation ───────────────────────────────────────────────────────
-  const playAnimation = () => {
+  const playAnimation = async () => {
     const fc = fcRef.current;
-    if (!fc || framesR.current.length < 2 || playingR.current) return;
+    const fr = frRef.current;
+    if (!fc || !fr || framesR.current.length < 2 || playingR.current) return;
+    
+    // Save current frame state immediately before starting animation to prevent data loss
+    await saveFrameState(true);
+
     setIsPlaying(true);
     playingR.current = true;
 
     const animate = (idx) => {
+      // Early-exit guard if playback is stopped
+      if (!playingR.current) return;
+
       if (idx >= framesR.current.length - 1) {
         setIsPlaying(false);
         playingR.current = false;
-        setFrameIdx(framesR.current.length - 1);
+        loadFrame(framesR.current.length - 1); // Restore responsive interactivity on the final frame
         return;
       }
 
       setFrameIdx(idx);
+      frameIdxR.current = idx;
       const fA = framesR.current[idx];
       const fB = framesR.current[idx + 1];
       const dur = fB.duration || 800;
 
-      fc.loadFromJSON(fA.state, () => {
-        const objs    = fc.getObjects();
-        const targets = fB.state.objects || [];
+      cargarFrame(fA.state, () => {
+        if (!playingR.current) return;
+        const objs = fc.getObjects();
+        const rawTargets = fB.state.objects || [];
 
-        if (objs.length === 0 || objs.length !== targets.length) {
-          // Fallback: instant transition
-          fc.loadFromJSON(fB.state, () => {
+        if (objs.length === 0 || objs.length !== rawTargets.length) {
+          // Fallback: instant responsive transition
+          cargarFrame(fB.state, () => {
+            if (!playingR.current) return;
             fc.renderAll();
-            setTimeout(() => animate(idx + 1), 300);
+            setTimeout(() => {
+              if (!playingR.current) return;
+              animate(idx + 1);
+            }, 300);
           });
           return;
         }
+
+        // Dynamically compute responsive absolute target coordinates based on relative percentages (xRel/yRel)
+        const targets = rawTargets.map(objData => {
+          let left, top;
+          if (objData.xRel !== undefined && objData.yRel !== undefined) {
+            const point = fr.getCanvasPoint(objData.xRel, objData.yRel);
+            left = point.x;
+            top  = point.y;
+          } else {
+            left = (objData.left / CANVAS_REF_WIDTH) * fc.width;
+            top  = (objData.top / CANVAS_REF_HEIGHT) * fc.height;
+          }
+          return { left, top };
+        });
 
         let completed = 0;
         objs.forEach((obj, i) => {
@@ -1655,6 +1697,7 @@ const PizarraTactica = () => {
             startValue: 0, endValue: 1, duration: dur,
             easing: fabric.util.ease.easeInOutSine,
             onChange: (v) => {
+              if (!playingR.current) return;
               obj.set({
                 left: sLeft + ((t.left || 0) - sLeft) * v,
                 top:  sTop  + ((t.top  || 0) - sTop ) * v,
@@ -1662,11 +1705,16 @@ const PizarraTactica = () => {
               fc.renderAll();
             },
             onComplete: () => {
+              if (!playingR.current) return;
               completed++;
               if (completed === objs.length) {
-                fc.loadFromJSON(fB.state, () => {
+                cargarFrame(fB.state, () => {
+                  if (!playingR.current) return;
                   fc.renderAll();
-                  setTimeout(() => animate(idx + 1), 200);
+                  setTimeout(() => {
+                    if (!playingR.current) return;
+                    animate(idx + 1);
+                  }, 200);
                 });
               }
             },
@@ -1681,6 +1729,8 @@ const PizarraTactica = () => {
   const stopAnimation = () => {
     setIsPlaying(false);
     playingR.current = false;
+    // Reload frame to restore fully interactive state with active drag handlers and event listeners
+    loadFrame(frameIdxR.current);
   };
 
   // ─── Add Single Players ───────────────────────────────────────────────────

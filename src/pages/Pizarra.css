@@ -390,6 +390,52 @@
   font-weight: 700;
 }
 
+.formation-select-container-pizarra {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  margin-top: 10px;
+  width: 100%;
+}
+
+.formation-select-container-pizarra .formation-select-pizarra {
+  margin-top: 0 !important;
+  flex: 1;
+  min-width: 0;
+}
+
+.btn-apply-formation-pizarra {
+  height: 36px;
+  padding: 0 12px;
+  background: var(--accent);
+  color: var(--white);
+  border: 1px solid var(--accent);
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 10px;
+  font-weight: 800;
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  min-width: 48px; /* Touch target minimum support width */
+  min-height: 36px;
+}
+
+.btn-apply-formation-pizarra:hover {
+  filter: brightness(1.15);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+}
+
+.btn-apply-formation-pizarra:active {
+  transform: scale(0.95);
+}
+
+
 /* SECCIÓN ACCIONES */
 .acciones-panel-container-grid {
   margin-top: 8px;

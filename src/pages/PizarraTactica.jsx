@@ -263,18 +263,27 @@ const PizarraTactica = () => {
   const [showRival, setShowRivalState] = useState(false);
   const [fieldType, setFieldTypeState] = useState('full');
   
-  // Ref para controlar si el redibujado de jugadores fue solicitado por el usuario
-  const drawTriggeredByUiR = useRef(false);
-
-  const setLocalFormation = (v) => { drawTriggeredByUiR.current = true; setLocalFormationState(v); };
-  const setRivalFormation = (v) => { drawTriggeredByUiR.current = true; setRivalFormationState(v); };
-  const setIsSwapped = (v) => { drawTriggeredByUiR.current = true; setIsSwappedState(v); };
-  const setShowRival = (v) => { drawTriggeredByUiR.current = true; setShowRivalState(v); };
+  const setLocalFormation = (v) => { 
+    setLocalFormationState(v); 
+    aplicarFormacion('local', v);
+  };
+  const setRivalFormation = (v) => { 
+    setRivalFormationState(v); 
+    if (!showRival) {
+      setShowRivalState(true);
+    }
+    aplicarFormacion('rival', v);
+  };
+  const setIsSwapped = (v) => { 
+    setIsSwappedState(v); 
+  };
+  const setShowRival = (v) => { 
+    setShowRivalState(v); 
+  };
   const setFieldType = (v) => { 
-    // Al cambiar de campo, redibujamos el fondo pero NO reseteamos jugadores 
-    // a menos que el usuario lo pida explícitamente.
     setFieldTypeState(v); 
   };
+
   const [showColorPicker, setShowColorPicker] = useState(false);
   const [showWidthPicker, setShowWidthPicker] = useState(false);
   const [showMoreMenu,   setShowMoreMenu]   = useState(false);
@@ -795,6 +804,86 @@ const PizarraTactica = () => {
     syncingR.current = false;
     canvas.renderAll();
   }, [createPlayer, localColor, rivalColor, showRival]);
+
+  // ─── Aplicar Formación Imperativa (Solución para Android/Táctil y Reset) ───
+  const aplicarFormacion = useCallback((teamType, formationName) => {
+    const fc = fcRef.current; const fr = frRef.current;
+    if (!fc || !fr || playingR.current || !ready) return;
+
+    // Dibujar el fondo del campo primero
+    fr.draw(toLibType(fieldType));
+
+    // Borrar únicamente los jugadores del equipo que se va a aplicar
+    const objects = [...fc.getObjects()];
+    objects.forEach(obj => {
+      if (obj.data && obj.data.type === 'player' && obj.data.playerType === teamType) {
+        fc.remove(obj);
+      }
+    });
+
+    const bounds = fr.getFieldBounds();
+    if (!bounds || bounds.w === 0) return;
+
+    const playerRadius = RADIO_JUGADOR;
+    const positions = FORMATIONS[formationName] || FORMATIONS['4-3-3'];
+    const libType = toLibType(fieldType);
+    const margin = playerRadius + 6;
+
+    const VISIBLE_RANGE = {
+      full:         { min: 0,     max: 1     },
+      half_attack:  { min: 0.5,   max: 1     },
+      half_defense: { min: 0,     max: 0.5   },
+      third_def:    { min: 0,     max: 0.333 },
+      third_mid:    { min: 0.333, max: 0.666 },
+      third_off:    { min: 0.666, max: 1     },
+      penalty_zoom: { min: 0.75,  max: 1     },
+      f7:           { min: 0,     max: 1     },
+      f8:           { min: 0,     max: 1     },
+      futsal:       { min: 0,     max: 1     },
+      reduced:      { min: 0,     max: 1     },
+      blank:        { min: 0,     max: 1     },
+    };
+
+    const range = VISIBLE_RANGE[libType] ?? { min: 0, max: 1 };
+    const visibleLen = range.max - range.min;
+
+    const side = (teamType === 'local') ? (isSwapped ? 'R' : 'L') : (isSwapped ? 'L' : 'R');
+    const color = (teamType === 'local') ? localColor : rivalColor;
+
+    syncingR.current = true;
+    positions.forEach((pos, i) => {
+      const isGk = i === 0;
+      const rX = pos.relX ?? 0;
+      const rY = pos.relY ?? 0;
+
+      const effectiveRx = (side === 'L') ? rX : (1 - rX);
+      const remappedRx = range.min + effectiveRx * visibleLen;
+      const paddingRel = 0.03;
+      const clampedRx = Math.max(range.min + paddingRel, Math.min(range.max - paddingRel, remappedRx));
+      const clampedRy = Math.max(0.04, Math.min(0.96, rY));
+
+      const pt = fr.getCanvasPoint(clampedRx, clampedRy);
+
+      const finalX = Math.max(bounds.x + margin, Math.min(bounds.x + bounds.w - margin, pt.x));
+      const finalY = Math.max(bounds.y + margin, Math.min(bounds.y + bounds.h - margin, pt.y));
+
+      const player = createPlayer(finalX, finalY, {
+        color: isGk ? '#FFD700' : color,
+        label: i + 1,
+        type: teamType,
+        pos: pos.pos || '',
+        radius: playerRadius,
+      });
+      if (player) fc.add(player);
+    });
+
+    ensurePlayersOnTop();
+    syncingR.current = false;
+    fc.renderAll();
+    saveFrameState();
+    pushToHistory();
+  }, [createPlayer, localColor, rivalColor, isSwapped, fieldType, ready, saveFrameState, pushToHistory]);
+
 
   // ─── Initialize canvases once on mount ───────────────────────────────────
   useEffect(() => {
@@ -1432,47 +1521,79 @@ const PizarraTactica = () => {
     pushToHistory();
   }, [fieldType]); // eslint-disable-line
 
-  const formationRunCountR = useRef(0);
-  const lastFormationR = useRef({ 
-    local: localFormation, 
-    rival: rivalFormation, 
-    isSwapped: isSwapped, 
-    fieldType: fieldType 
-  });
+  const lastSwappedR = useRef(isSwapped);
+  useEffect(() => {
+    if (!ready) return;
+    if (lastSwappedR.current !== isSwapped) {
+      lastSwappedR.current = isSwapped;
+      aplicarFormacion('local', localFormation);
+      if (showRival) {
+        aplicarFormacion('rival', rivalFormation);
+      }
+    }
+  }, [isSwapped, ready, localFormation, rivalFormation, showRival, aplicarFormacion]);
 
   useEffect(() => {
-    const fc = fcRef.current; const fr = frRef.current;
-    if (!fc || !fr || playingR.current || !ready || syncingR.current) return;
+    const fc = fcRef.current;
+    if (!fc || !ready) return;
+    if (showRival) {
+      const hasRivals = fc.getObjects().some(obj => obj.data && obj.data.type === 'player' && obj.data.playerType === 'rival');
+      if (!hasRivals) {
+        aplicarFormacion('rival', rivalFormation);
+      }
+    } else {
+      const objects = [...fc.getObjects()];
+      objects.forEach(obj => {
+        if (obj.data && obj.data.type === 'player' && obj.data.playerType === 'rival') {
+          fc.remove(obj);
+        }
+      });
+      fc.renderAll();
+      saveFrameState();
+      pushToHistory();
+    }
+  }, [showRival, ready, rivalFormation, aplicarFormacion]);
 
-    // GUARDIA DEFINITIVA:
-    // Solo redibujamos la formación si el usuario tocó un selector de formación 
-    // (determinado por drawTriggeredByUiR). Si es una carga de DB o cambio de campo lateral,
-    // respetamos lo que ya está en el canvas.
-    if (!drawTriggeredByUiR.current) return;
-
-    // Si llegamos aquí, es porque el usuario REALMENTE cambió algo en el UI
-    drawTriggeredByUiR.current = false; // Resetear bandera
-    lastFormationR.current = { local: localFormation, rival: rivalFormation, isSwapped, fieldType };
-
-    // Ensure renderer has latest dimensions and bounds
-    fr.draw(toLibType(fieldType));
-
-    // Clear previous players before adding new ones
-    const objects = [...fc.getObjects()];
-    objects.forEach(obj => {
-      if (obj.data && (obj.data.type === 'player' || obj.data.playerType)) {
-        fc.remove(obj);
+  useEffect(() => {
+    const fc = fcRef.current;
+    if (!fc || !ready) return;
+    fc.getObjects().forEach(obj => {
+      if (obj.data && obj.data.type === 'player' && obj.data.playerType === 'local') {
+        const isGk = obj.data.label === 1;
+        const targetColor = isGk ? '#FFD700' : localColor;
+        if (obj._objects) {
+          obj._objects.forEach(child => {
+            if (child.type === 'circle') {
+              child.set({ fill: targetColor, stroke: targetColor });
+            }
+          });
+        }
       }
     });
-
-    syncingR.current = true;
-    drawPlayers(fc, fr, fieldType, { local: localFormation, rival: rivalFormation }, isSwapped);
-    ensurePlayersOnTop();
-    syncingR.current = false;
-
+    fc.renderAll();
     saveFrameState();
-    pushToHistory();
-  }, [localFormation, rivalFormation, isSwapped, showRival, fieldType, ready]); // eslint-disable-line
+  }, [localColor, ready]);
+
+  useEffect(() => {
+    const fc = fcRef.current;
+    if (!fc || !ready) return;
+    fc.getObjects().forEach(obj => {
+      if (obj.data && obj.data.type === 'player' && obj.data.playerType === 'rival') {
+        const isGk = obj.data.label === 1;
+        const targetColor = isGk ? '#FFD700' : rivalColor;
+        if (obj._objects) {
+          obj._objects.forEach(child => {
+            if (child.type === 'circle') {
+              child.set({ fill: targetColor, stroke: targetColor });
+            }
+          });
+        }
+      }
+    });
+    fc.renderAll();
+    saveFrameState();
+  }, [rivalColor, ready]);
+
 
   // (El guardado al desmontar ya ocurre dentro del useEffect principal, en el return cleanup)
 
@@ -2011,6 +2132,7 @@ const PizarraTactica = () => {
           onColorChange={setLocalColor}
           formation={localFormation}
           onFormationChange={setLocalFormation}
+          onApply={() => aplicarFormacion('local', localFormation)}
         />
         <TeamCard 
           color={rivalColor} 
@@ -2020,6 +2142,7 @@ const PizarraTactica = () => {
           onColorChange={setRivalColor}
           formation={rivalFormation}
           onFormationChange={setRivalFormation}
+          onApply={() => aplicarFormacion('rival', rivalFormation)}
         />
         <TeamCard 
           color={jokerColor} 
@@ -2028,6 +2151,7 @@ const PizarraTactica = () => {
           onAdd={() => addManualPlayer('joker')} 
           onColorChange={setJokerColor}
         />
+
       </div>
 
       <div className="panel-title">ACCIONES</div>
@@ -2422,7 +2546,7 @@ const PizarraTactica = () => {
 };
 
 // ─── Small helper sub-component ──────────────────────────────────────────────
-const TeamCard = ({ color, name, count, onAdd, onColorChange, formation, onFormationChange }) => (
+const TeamCard = ({ color, name, count, onAdd, onColorChange, formation, onFormationChange, onApply }) => (
   <div className="team-card-pizarra">
     <div className="team-header-pizarra">
       <div style={{ position: 'relative', width: 22, height: 22 }}>
@@ -2444,15 +2568,25 @@ const TeamCard = ({ color, name, count, onAdd, onColorChange, formation, onForma
     </div>
 
     {onFormationChange && (
-      <select 
-        value={formation} 
-        onChange={(e) => onFormationChange(e.target.value)}
-        className="formation-select-pizarra"
-      >
-        {Object.keys(FORMATIONS).map(f => <option key={f} value={f}>{f}</option>)}
-      </select>
+      <div className="formation-select-container-pizarra">
+        <select 
+          value={formation} 
+          onChange={(e) => onFormationChange(e.target.value)}
+          className="formation-select-pizarra"
+        >
+          {Object.keys(FORMATIONS).map(f => <option key={f} value={f}>{f}</option>)}
+        </select>
+        <button 
+          className="btn-apply-formation-pizarra"
+          onClick={onApply}
+          title="Aplicar / Reiniciar alineación"
+        >
+          APLICAR
+        </button>
+      </div>
     )}
   </div>
 );
+
 
 export default PizarraTactica;

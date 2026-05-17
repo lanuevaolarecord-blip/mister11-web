@@ -5,6 +5,7 @@ import { useSessions } from '../hooks/useSessions';
 import { useMatches } from '../hooks/useMatches';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
+import { usePlan } from '../hooks/usePlan';
 import { 
   Users, 
   ClipboardList, 
@@ -12,7 +13,9 @@ import {
   Calendar, 
   Presentation, 
   FilePlus, 
-  Sparkles 
+  Sparkles,
+  Crown,
+  Info
 } from 'lucide-react';
 import { t } from '../i18n/translations';
 import './Dashboard.css';
@@ -24,6 +27,7 @@ const Dashboard = () => {
   const { players } = usePlayers(activeTeamId);
   const { sessions } = useSessions(activeTeamId);
   const { matches } = useMatches(activeTeamId);
+  const { isPro, toggleSimulatedPlan, simulatedPlan, trialDaysRemaining, resetTrial } = usePlan();
   const [workloadPeriod, setWorkloadPeriod] = useState('Esta semana');
 
   const nextMatch = matches.find(m => m.status === 'Pendiente') || null;
@@ -102,6 +106,33 @@ const Dashboard = () => {
         </div>
       </header>
 
+      {/* Premium Trial Banner */}
+      <div className={`trial-banner-dash ${isPro ? 'pro' : 'free'}`}>
+        <div className="trial-banner-content">
+          <div className="crown-badge">
+            {isPro ? <Crown size={22} className="crown-icon-animated" /> : <Info size={22} />}
+          </div>
+          <div className="trial-text-info">
+            <h3>{isPro ? '👑 Míster11 PRO · Prueba Gratuita Activa' : '⭐ Míster11 Plan Gratuito (Limitado)'}</h3>
+            <p>
+              {isPro 
+                ? `Tienes acceso total a todas las funciones premium. Te quedan ${trialDaysRemaining} días de prueba.`
+                : 'Límites activos: 1 equipo, 15 jugadores, 10 sesiones y sin exportación PDF.'}
+            </p>
+          </div>
+        </div>
+        <div className="trial-banner-actions">
+          <button className={`btn-toggle-plan ${isPro ? 'outline' : 'solid'}`} onClick={toggleSimulatedPlan}>
+            {isPro ? 'Probar Plan Gratuito' : 'Activar Prueba PRO (7 días)'}
+          </button>
+          {isPro && (
+            <button className="btn-reset-trial" onClick={resetTrial} title="Reiniciar periodo de prueba a 7 días">
+              🔄 Reiniciar
+            </button>
+          )}
+        </div>
+      </div>
+
       {/* Stats Grid */}
       <div className="stats-grid-dash">
         {stats.map((s, i) => {
@@ -146,7 +177,7 @@ const Dashboard = () => {
               if (!d) return null;
               return (
                 <div key={i} className="bar-wrapper">
-                  <div className="bar-container">
+                   <div className="bar-container">
                     <div className={`bar-fill ${getBarLevelClass(d.val)}`} style={{ height: `${d.val}%` }}>
                       <div className="bar-tooltip">{d.val}%</div>
                     </div>

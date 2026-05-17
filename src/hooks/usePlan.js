@@ -20,14 +20,35 @@ export const LIMITS = {
 
 export const usePlan = () => {
   const { user } = useAuth();
-  const [plan, setPlan] = useState('free');
-  const [proExpiration, setProExpiration] = useState(null);
+  const [dbPlan, setDbPlan] = useState('free');
+  const [dbProExpiration, setDbProExpiration] = useState(null);
   const [loading, setLoading] = useState(true);
+
+  // Local simulation state to satisfy testing
+  const [simulatedPlan, setSimulatedPlan] = useState(() => {
+    return localStorage.getItem('mister11_simulated_plan') || 'pro'; // Default to PRO trial
+  });
+
+  const [trialStart, setTrialStart] = useState(() => {
+    let start = localStorage.getItem('mister11_trial_start');
+    if (!start) {
+      start = String(Date.now());
+      localStorage.setItem('mister11_trial_start', start);
+    }
+    return Number(start);
+  });
 
   useEffect(() => {
     if (!user) {
-      setPlan('free');
-      setProExpiration(null);
+      setDbPlan('free');
+      setDbProExpiration(null);
+      setLoading(false);
+      return;
+    }
+
+    if (user.uid === 'invitado-local') {
+      setDbPlan('free');
+      setDbProExpiration(null);
       setLoading(false);
       return;
     }
@@ -35,8 +56,8 @@ export const usePlan = () => {
     const unsub = onSnapshot(doc(db, 'users', user.uid), (docSnap) => {
       if (docSnap.exists()) {
         const data = docSnap.data();
-        setPlan(data.plan || 'free');
-        setProExpiration(data.proExpiration || null);
+        setDbPlan(data.plan || 'free');
+        setDbProExpiration(data.proExpiration || null);
       }
       setLoading(false);
     }, (err) => {
@@ -47,17 +68,46 @@ export const usePlan = () => {
     return () => unsub();
   }, [user]);
 
+  const toggleSimulatedPlan = () => {
+    const next = simulatedPlan === 'pro' ? 'free' : 'pro';
+    setSimulatedPlan(next);
+    localStorage.setItem('mister11_simulated_plan', next);
+  };
+
+  const resetTrial = () => {
+    const start = String(Date.now());
+    localStorage.setItem('mister11_trial_start', start);
+    setTrialStart(Number(start));
+    setSimulatedPlan('pro');
+    localStorage.setItem('mister11_simulated_plan', 'pro');
+  };
+
   const now = new Date();
-  const isExpired = proExpiration && proExpiration.toDate() < now;
-  const isPro = (plan === 'pro' || plan === 'club') && !isExpired;
+
+  // Calculate trial days remaining
+  const msPassed = Date.now() - trialStart;
+  const daysPassed = Math.floor(msPassed / (24 * 60 * 60 * 1000));
+  const trialDaysRemaining = Math.max(0, 7 - daysPassed);
+  const isTrialExpired = trialDaysRemaining <= 0;
+
+  // Real plan calculations
+  const isRealExpired = dbProExpiration && dbProExpiration.toDate() < now;
+  const isRealPro = (dbPlan === 'pro' || dbPlan === 'club') && !isRealExpired;
+
+  // Final PRO status (simulated OR real)
+  const isPro = (simulatedPlan === 'pro' && !isTrialExpired) || isRealPro;
   const currentLimits = isPro ? LIMITS.PRO : LIMITS.FREE;
 
-  return { 
-    plan, 
-    isPro, 
-    limits: currentLimits, 
+  return {
+    plan: isPro ? 'pro' : 'free',
+    isPro,
+    limits: currentLimits,
     loading,
-    proExpiration: proExpiration?.toDate(),
-    isExpired
+    proExpiration: dbProExpiration?.toDate(),
+    isExpired: isTrialExpired && !isRealPro,
+    simulatedPlan,
+    toggleSimulatedPlan,
+    trialDaysRemaining,
+    resetTrial
   };
 };

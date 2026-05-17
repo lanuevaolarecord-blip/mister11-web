@@ -5,6 +5,7 @@ import { useExercises } from '../hooks/useExercises';
 import { usePlayers } from '../hooks/usePlayers';
 import { useSessions } from '../hooks/useSessions';
 import { useMatches } from '../hooks/useMatches';
+import { usePlan } from '../hooks/usePlan';
 import { 
   Users, 
   Dumbbell, 
@@ -37,6 +38,7 @@ const AdminPanel = () => {
   const { players } = usePlayers(activeTeam?.id);
   const { sessions } = useSessions(activeTeam?.id);
   const { matches } = useMatches(activeTeam?.id);
+  const { isPro, toggleSimulatedPlan, simulatedPlan, trialDaysRemaining, resetTrial, limits } = usePlan();
 
   const [newTeam, setNewTeam] = useState({ nombre: '', categoria: '', temporada: '2025-26' });
   const [selectedMatchId, setSelectedMatchId] = useState('');
@@ -491,6 +493,143 @@ const AdminPanel = () => {
                       Instalar App (PWA)
                     </button>
                   )}
+                </div>
+              </div>
+
+              {/* ESTADO DE SUSCRIPCIÓN Y SIMULACIÓN */}
+              <div className="settings-card subscription-card">
+                <div className="card-header-icon">
+                  <span className="premium-icon" style={{ fontSize: '20px' }}>👑</span>
+                  <h3>Suscripción y Prueba de 7 Días</h3>
+                </div>
+                <div className="settings-form">
+                  <div className="subscription-status" style={{ marginBottom: '15px' }}>
+                    <div className="plan-badge-large" style={{
+                      display: 'inline-block',
+                      padding: '6px 12px',
+                      borderRadius: '6px',
+                      fontWeight: 'bold',
+                      fontSize: '0.9rem',
+                      textTransform: 'uppercase',
+                      backgroundColor: isPro ? 'rgba(212, 168, 67, 0.15)' : 'rgba(255,255,255,0.05)',
+                      color: isPro ? 'var(--gold)' : 'var(--text-secondary)',
+                      border: '1px solid',
+                      borderColor: isPro ? 'rgba(212, 168, 67, 0.3)' : 'var(--border-color)',
+                      marginBottom: '8px'
+                    }}>
+                      {isPro ? 'Míster11 PRO' : 'Plan Gratuito'}
+                    </div>
+                    {isPro && (
+                      <p className="trial-days-left" style={{ margin: 0, fontSize: '0.9rem', color: 'var(--text-secondary)' }}>
+                        Periodo de prueba activo: <strong>Quedan {trialDaysRemaining} días</strong>
+                      </p>
+                    )}
+                  </div>
+
+                  <div className="limits-meters" style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                    <div className="limit-meter-item">
+                      <div className="limit-meter-header" style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem', marginBottom: '4px' }}>
+                        <span style={{ color: 'var(--text-secondary)' }}>Equipos Creados</span>
+                        <strong style={{ color: 'var(--text-primary)' }}>{teams.length} / {limits.TEAMS}</strong>
+                      </div>
+                      <div className="limit-progress-bar" style={{ height: '8px', borderRadius: '4px', backgroundColor: 'rgba(255,255,255,0.05)', border: '1px solid var(--border-color)', overflow: 'hidden' }}>
+                        <div 
+                          className="limit-progress-fill" 
+                          style={{
+                            height: '100%',
+                            backgroundColor: '#4CAF7D',
+                            width: `${Math.min(100, (teams.length / limits.TEAMS) * 100)}%`,
+                            transition: 'width 0.3s ease'
+                          }}
+                        ></div>
+                      </div>
+                    </div>
+
+                    <div className="limit-meter-item">
+                      <div className="limit-meter-header" style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem', marginBottom: '4px' }}>
+                        <span style={{ color: 'var(--text-secondary)' }}>Jugadores ({activeTeam?.nombre || 'Equipo actual'})</span>
+                        <strong style={{ color: 'var(--text-primary)' }}>{players.length} / {limits.PLAYERS}</strong>
+                      </div>
+                      <div className="limit-progress-bar" style={{ height: '8px', borderRadius: '4px', backgroundColor: 'rgba(255,255,255,0.05)', border: '1px solid var(--border-color)', overflow: 'hidden' }}>
+                        <div 
+                          className="limit-progress-fill" 
+                          style={{
+                            height: '100%',
+                            backgroundColor: '#4CAF7D',
+                            width: `${Math.min(100, (players.length / limits.PLAYERS) * 100)}%`,
+                            transition: 'width 0.3s ease'
+                          }}
+                        ></div>
+                      </div>
+                    </div>
+
+                    <div className="limit-meter-item">
+                      <div className="limit-meter-header" style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem', marginBottom: '4px' }}>
+                        <span style={{ color: 'var(--text-secondary)' }}>Sesiones ({activeTeam?.nombre || 'Equipo actual'})</span>
+                        <strong style={{ color: 'var(--text-primary)' }}>{sessions.length} / {limits.SESSIONS}</strong>
+                      </div>
+                      <div className="limit-progress-bar" style={{ height: '8px', borderRadius: '4px', backgroundColor: 'rgba(255,255,255,0.05)', border: '1px solid var(--border-color)', overflow: 'hidden' }}>
+                        <div 
+                          className="limit-progress-fill" 
+                          style={{
+                            height: '100%',
+                            backgroundColor: '#4CAF7D',
+                            width: `${Math.min(100, (sessions.length / limits.SESSIONS) * 100)}%`,
+                            transition: 'width 0.3s ease'
+                          }}
+                        ></div>
+                      </div>
+                    </div>
+
+                    <div className="limit-meter-item flex-row-limit" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.85rem', padding: '10px 0', borderTop: '1px solid var(--border-color)' }}>
+                      <span style={{ color: 'var(--text-secondary)' }}>Informes y Exportaciones PDF</span>
+                      <strong style={{ color: limits.PDF_EXPORT ? '#4CAF7D' : 'var(--text-muted)' }}>
+                        {limits.PDF_EXPORT ? 'Desbloqueado 🟢' : 'Bloqueado 🔴'}
+                      </strong>
+                    </div>
+                  </div>
+
+                  <div className="subscription-actions" style={{ marginTop: '20px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                    <button 
+                      className={`btn-save-settings ${isPro ? 'outline-sub' : 'solid-sub'}`} 
+                      onClick={toggleSimulatedPlan}
+                      style={{
+                        minHeight: '48px',
+                        textTransform: 'uppercase',
+                        borderRadius: '8px',
+                        fontWeight: 'bold',
+                        letterSpacing: '0.5px',
+                        fontSize: '0.85rem',
+                        cursor: 'pointer',
+                        transition: 'all 0.2s ease',
+                        border: '1.5px solid',
+                        backgroundColor: isPro ? 'transparent' : 'var(--accent)',
+                        borderColor: isPro ? 'var(--gold)' : 'transparent',
+                        color: isPro ? 'var(--gold)' : '#ffffff'
+                      }}
+                    >
+                      {isPro ? 'Probar Plan Gratuito' : 'Activar Prueba PRO de 7 Días'}
+                    </button>
+                    {isPro && (
+                      <button 
+                        className="btn-reset-trial-admin" 
+                        onClick={resetTrial}
+                        style={{
+                          minHeight: '48px',
+                          backgroundColor: 'rgba(255, 255, 255, 0.05)',
+                          border: '1px solid var(--border-color)',
+                          color: 'var(--text-secondary)',
+                          cursor: 'pointer',
+                          borderRadius: '8px',
+                          fontWeight: 'bold',
+                          fontSize: '0.9rem',
+                          transition: 'all 0.2s ease'
+                        }}
+                      >
+                        🔄 Reiniciar Prueba de 7 Días
+                      </button>
+                    )}
+                  </div>
                 </div>
               </div>
 

@@ -417,3 +417,159 @@
 .dark .action-btn-dash:hover {
   background: rgba(255, 255, 255, 0.05);
 }
+
+/* Trial Banner Styles */
+.trial-banner-dash {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 18px 24px;
+  border-radius: 16px;
+  margin-bottom: 30px;
+  border: 1.5px solid;
+  transition: all 0.3s ease;
+  gap: 20px;
+}
+
+@media (max-width: 768px) {
+  .trial-banner-dash {
+    flex-direction: column;
+    align-items: stretch;
+    padding: 16px;
+    gap: 15px;
+  }
+}
+
+.trial-banner-dash.pro {
+  background: linear-gradient(135deg, rgba(212, 168, 67, 0.08) 0%, rgba(27, 58, 45, 0.05) 100%);
+  border-color: rgba(212, 168, 67, 0.4);
+  box-shadow: 0 8px 32px 0 rgba(212, 168, 67, 0.08);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.trial-banner-dash.free {
+  background: linear-gradient(135deg, rgba(76, 175, 125, 0.05) 0%, rgba(27, 58, 45, 0.02) 100%);
+  border-color: var(--border-color);
+  box-shadow: 0 4px 15px rgba(27, 58, 45, 0.03);
+}
+
+.trial-banner-content {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.crown-badge {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  background: rgba(212, 168, 67, 0.15);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--gold);
+  flex-shrink: 0;
+}
+
+.trial-banner-dash.free .crown-badge {
+  background: rgba(76, 175, 125, 0.1);
+  color: #4CAF7D;
+}
+
+.trial-text-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.trial-text-info h3 {
+  font-family: var(--font-title);
+  font-size: 1.05rem;
+  margin: 0;
+  color: var(--text-primary);
+  font-weight: 700;
+}
+
+.trial-text-info p {
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  line-height: 1.4;
+}
+
+.trial-banner-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+@media (max-width: 768px) {
+  .trial-banner-actions {
+    justify-content: flex-end;
+  }
+}
+
+.btn-toggle-plan {
+  min-height: 48px;
+  padding: 0 20px;
+  border-radius: 8px;
+  font-weight: 700;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: 1.5px solid transparent;
+}
+
+.btn-toggle-plan.solid {
+  background-color: var(--accent);
+  color: #ffffff;
+}
+
+.btn-toggle-plan.solid:hover {
+  background-color: #3b8e63;
+  transform: translateY(-1px);
+}
+
+.btn-toggle-plan.outline {
+  background-color: transparent;
+  border-color: var(--gold);
+  color: var(--gold);
+}
+
+.btn-toggle-plan.outline:hover {
+  background-color: rgba(212, 168, 67, 0.1);
+  transform: translateY(-1px);
+}
+
+.btn-reset-trial {
+  min-height: 48px;
+  padding: 0 16px;
+  border-radius: 8px;
+  background-color: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border-color);
+  color: var(--text-secondary);
+  font-weight: 600;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-reset-trial:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+  border-color: var(--text-muted);
+}
+
+/* Crown Pulse Animation */
+@keyframes crownPulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.1); }
+  100% { transform: scale(1); }
+}
+
+.crown-icon-animated {
+  animation: crownPulse 2s infinite ease-in-out;
+}

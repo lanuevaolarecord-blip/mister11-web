@@ -1692,7 +1692,6 @@ const PizarraTactica = () => {
     fc.add(player);
     fc.setActiveObject(player);
     fc.renderAll();
-    saveFrameState();
   };
 
   const deleteSelected = () => {

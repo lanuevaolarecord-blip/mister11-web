@@ -25,7 +25,7 @@ if (typeof window !== 'undefined') {
   fabric.Object.prototype.padding = 10;
 }
 
-import { MATERIALS_LIBRARY, MATERIALS_BY_CATEGORY, placeMaterialOnCanvas } from '../lib/mister11-materials.js';
+import { MATERIALS_LIBRARY, MATERIALS_BY_CATEGORY, placeMaterialOnCanvas, applyMister11Controls } from '../lib/mister11-materials.js';
 import { TOOLS, STROKE_COLORS, STROKE_WIDTHS, ToolManager } from '../lib/mister11-tools.js';
 import { FieldRenderer, FORMATIONS } from '../lib/mister11-field.js';
 import { useAuth } from '../context/AuthContext';
@@ -100,9 +100,22 @@ const PizarraTactica = () => {
     const objects = fc.getObjects().map(obj => {
       const serializado = obj.toObject(['data']);
       
-      // Intentar obtener coordenadas relativas al CAMPO si están en data
-      // O calcularlas si es un movimiento manual
-      const { rx, ry } = fr.getRelativePoint(obj.left, obj.top);
+      let absX = obj.left;
+      let absY = obj.top;
+      
+      const matrix = obj.calcTransformMatrix();
+      if (matrix) {
+        const pt = fabric.util.transformPoint({ x: 0, y: 0 }, matrix);
+        absX = pt.x;
+        absY = pt.y;
+      }
+      
+      const { rx, ry } = fr.getRelativePoint(absX, absY);
+
+      if (obj.data) {
+        obj.data.xRel = rx;
+        obj.data.yRel = ry;
+      }
 
       return {
         ...serializado,
@@ -177,7 +190,10 @@ const PizarraTactica = () => {
     });
 
     fabric.util.enlivenObjects(enlivenedData, (objects) => {
-      objects.forEach(o => fc.add(o));
+      objects.forEach(o => {
+        applyMister11Controls(o);
+        fc.add(o);
+      });
       ensurePlayersOnTop();
       fc.renderAll();
       // Los listeners se reconectan desde el useEffect principal después del callback
@@ -889,7 +905,16 @@ const PizarraTactica = () => {
     fc.renderAll();
     saveFrameState();
     pushToHistory();
-  }, [createPlayer, localColor, rivalColor, isSwapped, fieldType, ready, saveFrameState, pushToHistory]);
+    
+    // PERSISTENCIA INMEDIATA TRAS APLICAR FORMACIÓN
+    const frameState = serializarFrame();
+    lastStateRef.current = frameState;
+    if (activeTeamId && planId) {
+      savePizarraLocal(activeTeamId, planId, frameState);
+      guardarEstado(planId, frameState);
+      try { localStorage.setItem(`mister11_pizarra_active_${activeTeamId}_${planId}`, JSON.stringify(frameState)); } catch (_) {}
+    }
+  }, [createPlayer, localColor, rivalColor, isSwapped, fieldType, ready, saveFrameState, pushToHistory, serializarFrame, activeTeamId, planId, guardarEstado]);
 
 
   // ─── Initialize canvases once on mount ───────────────────────────────────
@@ -981,10 +1006,20 @@ const PizarraTactica = () => {
 
       // Actualizar coordenadas relativas del objeto movido
       if (opt.target && frRef.current) {
-        const targets = opt.target._objects || [opt.target];
+        const targets = opt.target.type === 'activeSelection' ? (opt.target._objects || []) : [opt.target];
         targets.forEach(t => {
           if (t.data) {
-            const { rx, ry } = frRef.current.getRelativePoint(t.left, t.top);
+            let absX = t.left;
+            let absY = t.top;
+            
+            const matrix = t.calcTransformMatrix();
+            if (matrix) {
+              const pt = fabric.util.transformPoint({ x: 0, y: 0 }, matrix);
+              absX = pt.x;
+              absY = pt.y;
+            }
+            
+            const { rx, ry } = frRef.current.getRelativePoint(absX, absY);
             t.data.xRel = rx;
             t.data.yRel = ry;
           }
@@ -1000,7 +1035,7 @@ const PizarraTactica = () => {
       if (activeTeamId && planId) {
         savePizarraLocal(activeTeamId, planId, frameState);
         guardarEstado(planId, frameState);
-        try { localStorage.setItem(`mister11_pizarra_active_${activeTeamId}`, JSON.stringify(frameState)); } catch (_) {}
+        try { localStorage.setItem(`mister11_pizarra_active_${activeTeamId}_${planId}`, JSON.stringify(frameState)); } catch (_) {}
       }
       debouncedSaveEstado();
     };
@@ -1016,7 +1051,7 @@ const PizarraTactica = () => {
       if (activeTeamId && planId) {
         savePizarraLocal(activeTeamId, planId, frameState);
         guardarEstado(planId, frameState);
-        try { localStorage.setItem(`mister11_pizarra_active_${activeTeamId}`, JSON.stringify(frameState)); } catch (_) {}
+        try { localStorage.setItem(`mister11_pizarra_active_${activeTeamId}_${planId}`, JSON.stringify(frameState)); } catch (_) {}
       }
       debouncedSaveEstado();
     };
@@ -1032,7 +1067,7 @@ const PizarraTactica = () => {
       if (activeTeamId && planId) {
         savePizarraLocal(activeTeamId, planId, frameState);
         guardarEstado(planId, frameState);
-        try { localStorage.setItem(`mister11_pizarra_active_${activeTeamId}`, JSON.stringify(frameState)); } catch (_) {}
+        try { localStorage.setItem(`mister11_pizarra_active_${activeTeamId}_${planId}`, JSON.stringify(frameState)); } catch (_) {}
         console.log('[Pizarra] 💾 Path guardado en localStorage y Context OK');
       }
       debouncedSaveEstado();
@@ -1070,13 +1105,13 @@ const PizarraTactica = () => {
       const framesColRef = collection(db, 'users', user.uid, 'teams', activeTeamId, 'pizarras', planId, 'frames');
       const estadoDocRef = doc(db, 'users', user.uid, 'teams', activeTeamId, 'pizarraEstado', planId);
 
-      // Clave de estado activo por equipo (independiente del planId)
-      const ACTIVE_STATE_KEY = `mister11_pizarra_active_${activeTeamId}`;
+      // Clave de estado activo por equipo y plan (para segregación limpia de pizarras)
+      const ACTIVE_STATE_KEY = `mister11_pizarra_active_${activeTeamId}_${planId}`;
 
       // ── FUENTE 0: Context API (Memoria volátil, mayor prioridad) ──
       let memoryCache = obtenerEstado(planId);
 
-      // ── FUENTE 1: localStorage clave de EQUIPO (máxima prioridad, sin depender de planId) ──
+      // ── FUENTE 1: localStorage clave de EQUIPO y PLAN (máxima prioridad) ──
       let localCache = null;
       try {
         const raw = localStorage.getItem(ACTIVE_STATE_KEY);
@@ -1127,7 +1162,7 @@ const PizarraTactica = () => {
                 fc.renderAll();
                 lastStateRef.current = serverState;
                 savePizarraLocal(activeTeamId, planId, serverState);
-                try { localStorage.setItem(`mister11_pizarra_active_${activeTeamId}`, JSON.stringify(serverState)); } catch (_) {}
+                try { localStorage.setItem(`mister11_pizarra_active_${activeTeamId}_${planId}`, JSON.stringify(serverState)); } catch (_) {}
                 if (!readyR.current) { readyR.current = true; setReady(true); }
               });
               return;
@@ -1151,7 +1186,7 @@ const PizarraTactica = () => {
               attachListeners();
               const state = serializarFrame();
               // Guardar estado inicial en ambas claves
-              try { localStorage.setItem(`mister11_pizarra_active_${activeTeamId}`, JSON.stringify(state)); } catch (_) {}
+              try { localStorage.setItem(`mister11_pizarra_active_${activeTeamId}_${planId}`, JSON.stringify(state)); } catch (_) {}
               savePizarraLocal(activeTeamId, planId, state);
               addDoc(framesColRef, { name: 'Frame 1', state: JSON.stringify(state), duration: 800, order: 0, createdAt: serverTimestamp() });
               if (!readyR.current) { readyR.current = true; setReady(true); }
@@ -1412,7 +1447,7 @@ const PizarraTactica = () => {
         if (stateToSave && stateToSave.objects && stateToSave.objects.length > 0 && user && activeTeamId) {
           // a) localStorage (síncrono, siempre funciona)
           savePizarraLocal(activeTeamId, planId, stateToSave);
-          try { localStorage.setItem(`mister11_pizarra_active_${activeTeamId}`, JSON.stringify(stateToSave)); } catch (_) {}
+          try { localStorage.setItem(`mister11_pizarra_active_${activeTeamId}_${planId}`, JSON.stringify(stateToSave)); } catch (_) {}
           // b) Firestore (async, best-effort)
           const estadoRef = doc(db, 'users', user.uid, 'teams', activeTeamId, 'pizarra', 'estado_actual');
           setDoc(estadoRef, {
@@ -1430,7 +1465,7 @@ const PizarraTactica = () => {
       const stateToSave = lastStateRef.current || serializarFrame();
       if (stateToSave && activeTeamId) {
         savePizarraLocal(activeTeamId, planId, stateToSave);
-        try { localStorage.setItem(`mister11_pizarra_active_${activeTeamId}`, JSON.stringify(stateToSave)); } catch (_) {}
+        try { localStorage.setItem(`mister11_pizarra_active_${activeTeamId}_${planId}`, JSON.stringify(stateToSave)); } catch (_) {}
       }
     };
     window.addEventListener('beforeunload', handleBeforeUnload);
@@ -1444,7 +1479,7 @@ const PizarraTactica = () => {
       if (stateToSave && stateToSave.objects && stateToSave.objects.length > 0 && user && activeTeamId) {
         // a) localStorage (síncrono e inmediato)
         savePizarraLocal(activeTeamId, planId, stateToSave);
-        try { localStorage.setItem(`mister11_pizarra_active_${activeTeamId}`, JSON.stringify(stateToSave)); } catch (_) {}
+        try { localStorage.setItem(`mister11_pizarra_active_${activeTeamId}_${planId}`, JSON.stringify(stateToSave)); } catch (_) {}
         // b) Firestore (async, usando la referencia correcta)
         const estadoRef = doc(db, 'users', user.uid, 'teams', activeTeamId, 'pizarra', 'estado_actual');
         setDoc(estadoRef, {
@@ -1752,7 +1787,7 @@ const PizarraTactica = () => {
     if (activeTeamId) {
       // Borrar la clave del planId activo y la clave general del equipo
       localStorage.removeItem(`mister11_last_pizarra_${activeTeamId}`);
-      localStorage.removeItem(`mister11_pizarra_active_${activeTeamId}`);
+      localStorage.removeItem(`mister11_pizarra_active_${activeTeamId}_${planId}`);
       clearPizarraLocal(activeTeamId, planId);
       // Resetear la ref del último estado para que no se restaure
       lastStateRef.current = null;

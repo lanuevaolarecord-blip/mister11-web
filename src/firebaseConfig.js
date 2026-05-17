@@ -8,6 +8,7 @@ import {
   signOut,
   setPersistence,
   browserLocalPersistence,
+  signInAnonymously,
 } from "firebase/auth";
 import { getFirestore, initializeFirestore, persistentLocalCache, persistentMultipleTabManager } from "firebase/firestore";
 import { getStorage } from "firebase/storage";
@@ -83,6 +84,7 @@ export {
   signInWithPopup,
   signInWithRedirect,
   signInWithGoogle,
+  signInAnonymously,
   signOut,
   storage
 };

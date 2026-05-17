@@ -11,6 +11,8 @@
 .sesiones-header {
   margin-bottom: 24px;
   flex-shrink: 0;
+  position: relative;
+  z-index: 10;
 }
 
 .edit-mode-header {

@@ -8,7 +8,7 @@ import { usePlan, LIMITS } from '../hooks/usePlan';
 import UpgradeModal from '../components/UpgradeModal';
 import { storage, db } from '../firebaseConfig';
 import { ref, uploadBytesResumable, getDownloadURL, deleteObject } from 'firebase/storage';
-import { collection, getDocs, query, orderBy } from 'firebase/firestore';
+import { collection, getDocs, query, orderBy, doc, deleteDoc, writeBatch } from 'firebase/firestore';
 import { useCaptures } from '../hooks/useCaptures';
 import { useExercises } from '../hooks/useExercises';
 import './Sesiones.css';
@@ -164,10 +164,32 @@ const Sesiones = () => {
   const handleDeleteAnimation = async (anim) => {
     if (window.confirm('¿Eliminar esta animación de la pizarra?')) {
       try {
+        if (user && activeTeamId) {
+          const framesColRef = collection(db, 'users', user.uid, 'teams', activeTeamId, 'pizarras', anim.id, 'frames');
+          const snap = await getDocs(framesColRef);
+          
+          if (!snap.empty) {
+            const batch = writeBatch(db);
+            snap.docs.forEach(d => {
+              batch.delete(d.ref);
+            });
+            await batch.commit();
+          }
+          
+          const pizarraDocRef = doc(db, 'users', user.uid, 'teams', activeTeamId, 'pizarras', anim.id);
+          await deleteDoc(pizarraDocRef);
+
+          // Clear local storage reference to prevent Pizarra from recreating it
+          const lsKey = `mister11_last_pizarra_${activeTeamId}`;
+          if (localStorage.getItem(lsKey) === anim.id) {
+            localStorage.removeItem(lsKey);
+          }
+        }
+
         await removeExercise(anim.id);
         if (selectedAnimation?.id === anim.id) setSelectedAnimation(null);
       } catch (error) {
-        console.error(error);
+        console.error("Error eliminando animación: ", error);
         alert("Error al eliminar animación.");
       }
     }

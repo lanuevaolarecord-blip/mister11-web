@@ -251,9 +251,27 @@ const IAGeneradora = () => {
                   key={cap.id} 
                   className={`tactical-thumb ${selectedTacticalRef?.id === cap.id ? 'active' : ''}`}
                   onClick={() => setSelectedTacticalRef(cap)}
+                  title={cap.title || 'Captura Táctica'}
                 >
                   <img src={cap.thumbnail || cap.url} alt={cap.title} />
                   <div className="thumb-check">✓</div>
+                  <div className="thumb-label">Captura</div>
+                </div>
+              ))}
+              {exercises.filter(ex => ex.type === 'pizarra').map(piz => (
+                <div 
+                  key={piz.id} 
+                  className={`tactical-thumb ${selectedTacticalRef?.id === piz.id ? 'active' : ''}`}
+                  onClick={() => setSelectedTacticalRef(piz)}
+                  title={piz.title || 'Animación'}
+                >
+                  {piz.thumbnail ? (
+                    <img src={piz.thumbnail} alt={piz.title} />
+                  ) : (
+                    <div style={{width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#000', color: '#888', fontSize: '10px', fontWeight: 'bold'}}>🎬 Pizarra</div>
+                  )}
+                  <div className="thumb-check">✓</div>
+                  <div className="thumb-label">Animación ({piz.framesCount || 0}F)</div>
                 </div>
               ))}
             </div>

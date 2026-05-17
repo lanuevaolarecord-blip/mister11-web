@@ -6,9 +6,11 @@ import { useAuth } from '../context/AuthContext';
 import { useTeams } from '../hooks/useTeams';
 import { usePlan, LIMITS } from '../hooks/usePlan';
 import UpgradeModal from '../components/UpgradeModal';
-import { storage } from '../firebaseConfig';
+import { storage, db } from '../firebaseConfig';
 import { ref, uploadBytesResumable, getDownloadURL, deleteObject } from 'firebase/storage';
+import { collection, getDocs, query, orderBy } from 'firebase/firestore';
 import { useCaptures } from '../hooks/useCaptures';
+import { useExercises } from '../hooks/useExercises';
 import './Sesiones.css';
 
 const Sesiones = () => {
@@ -18,12 +20,16 @@ const Sesiones = () => {
   const { sessions, addSession, updateSession, removeSession, loading: loadingSessions } = useSessions(activeTeamId);
   const { players, loading: loadingPlayers } = usePlayers(activeTeamId);
   const { captures, loading: loadingCaptures, removeCapture } = useCaptures(activeTeamId);
-  const [activeTab, setActiveTab] = useState('sessions'); // 'sessions' | 'captures'
+  const { exercises, loading: loadingExercises, removeExercise } = useExercises(activeTeamId);
+  const pizarras = (exercises || []).filter(e => e.type === 'pizarra');
+
+  const [activeTab, setActiveTab] = useState('sessions'); // 'sessions' | 'captures' | 'animations'
   const [upgradeModal, setUpgradeModal] = useState({ open: false, message: '' });
 
   const [viewMode, setViewMode] = useState('list'); // 'list' | 'edit'
   const [selectedSession, setSelectedSession] = useState(null);
   const [selectedCapture, setSelectedCapture] = useState(null);
+  const [selectedAnimation, setSelectedAnimation] = useState(null);
   const [isSaving, setIsSaving] = useState(false);
   const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
   
@@ -57,6 +63,7 @@ const Sesiones = () => {
       files: [],
       objectives: '',
       materials: 'Balones, petos, conos, setas',
+      linkedPizarraId: '',
       blocks: [
         { id: Date.now() + Math.random(), name: 'Calentamiento', duration: 15, type: 'Física', description: '' }
       ]
@@ -65,7 +72,10 @@ const Sesiones = () => {
   };
 
   const handleEditSession = (session) => {
-    setEditData({ ...session }); 
+    setEditData({ 
+      linkedPizarraId: '',
+      ...session 
+    }); 
     setViewMode('edit');
   };
 
@@ -108,6 +118,57 @@ const Sesiones = () => {
       } catch (error) {
         console.error(error);
         alert("Error al eliminar captura.");
+      }
+    }
+  };
+
+  const handleDownloadAnimationJSON = async (anim) => {
+    if (!user || !activeTeamId || !anim) return;
+    try {
+      const framesColRef = collection(db, 'users', user.uid, 'teams', activeTeamId, 'pizarras', anim.id, 'frames');
+      const q = query(framesColRef, orderBy('order'));
+      const snap = await getDocs(q);
+      const framesData = snap.docs.map(doc => {
+        const d = doc.data();
+        return {
+          name: d.name || '',
+          state: typeof d.state === 'string' ? JSON.parse(d.state) : d.state,
+          duration: d.duration || 800,
+          order: d.order ?? 0
+        };
+      });
+
+      const exportData = {
+        app: 'Mister11',
+        version: '1.0.0',
+        title: anim.title || 'Animación',
+        fieldType: anim.fieldType || 'full',
+        frames: framesData
+      };
+
+      const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `pizarra-animacion-${anim.id}.json`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    } catch (e) {
+      console.error("Error downloading animation JSON:", e);
+      alert("Error al descargar la animación.");
+    }
+  };
+
+  const handleDeleteAnimation = async (anim) => {
+    if (window.confirm('¿Eliminar esta animación de la pizarra?')) {
+      try {
+        await removeExercise(anim.id);
+        if (selectedAnimation?.id === anim.id) setSelectedAnimation(null);
+      } catch (error) {
+        console.error(error);
+        alert("Error al eliminar animación.");
       }
     }
   };
@@ -228,7 +289,7 @@ const Sesiones = () => {
     }));
   };
 
-  if (loadingSessions || loadingPlayers || loadingCaptures) {
+  if (loadingSessions || loadingPlayers || loadingCaptures || loadingExercises) {
     return <div className="loading-state">Cargando datos de entrenamiento...</div>;
   }
 
@@ -300,6 +361,30 @@ const Sesiones = () => {
               <div className="form-group full">
                 <label>Material Necesario</label>
                 <input type="text" value={editData.materials || ''} onChange={e => setEditData({...editData, materials: e.target.value})} placeholder="Ej. 10 balones, 15 petos (rojos/azules), 20 conos" />
+              </div>
+              <div className="form-group full" style={{marginTop: '16px'}}>
+                <label>🎬 Vincular Animación / Pizarra Táctica</label>
+                <select 
+                  value={editData.linkedPizarraId || ''} 
+                  onChange={e => setEditData({...editData, linkedPizarraId: e.target.value})}
+                  className="theme-select-mister11"
+                  style={{
+                    width: '100%',
+                    padding: '10px 12px',
+                    borderRadius: '8px',
+                    border: '1.5px solid var(--border-color)',
+                    background: 'var(--input-bg)',
+                    color: 'var(--input-text)',
+                    fontSize: '14px',
+                    outline: 'none',
+                    marginTop: '4px'
+                  }}
+                >
+                  <option value="">Ninguna animación vinculada</option>
+                  {pizarras.map(piz => (
+                    <option key={piz.id} value={piz.id}>{piz.title || 'Sin Título'}</option>
+                  ))}
+                </select>
               </div>
             </div>
 
@@ -422,6 +507,7 @@ const Sesiones = () => {
           <div className="header-actions">
             <button className={`tab-switcher ${activeTab === 'sessions' ? 'active' : ''}`} onClick={() => setActiveTab('sessions')}>SESIONES</button>
             <button className={`tab-switcher ${activeTab === 'captures' ? 'active' : ''}`} onClick={() => setActiveTab('captures')}>CAPTURAS</button>
+            <button className={`tab-switcher ${activeTab === 'animations' ? 'active' : ''}`} onClick={() => setActiveTab('animations')}>ANIMACIONES</button>
             <div className="topbar-divider-v" />
             <button className="btn-primary" onClick={handleCreateNew}>+ Nueva Sesión</button>
           </div>
@@ -521,6 +607,47 @@ const Sesiones = () => {
                       <p style={{fontSize: '0.9rem', color: 'inherit'}}>{selectedSession.objectives}</p>
                     </div>
                   )}
+                  {selectedSession.linkedPizarraId && (() => {
+                    const linkedPiz = pizarras.find(p => p.id === selectedSession.linkedPizarraId);
+                    if (!linkedPiz) return null;
+                    return (
+                      <div className="protocolo-card" style={{marginTop: '15px', marginBottom: '15px', padding: '15px', border: '1.5px solid #2d4a2d', borderRadius: '12px', background: '#0f1a0f'}}>
+                        <h4 style={{display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--accent-gold)', margin: '0 0 10px 0', fontSize: '12px', fontWeight: '800', textTransform: 'uppercase'}}>
+                          🎬 Animación Vinculada
+                        </h4>
+                        <div style={{display: 'flex', gap: '12px', alignItems: 'center'}}>
+                          {linkedPiz.thumbnail ? (
+                            <img 
+                              src={linkedPiz.thumbnail} 
+                              alt="Miniatura Pizarra" 
+                              style={{width: '90px', height: '60px', objectFit: 'cover', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.1)'}} 
+                            />
+                          ) : (
+                            <div style={{width: '90px', height: '60px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#000', borderRadius: '8px', color: '#888', fontSize: '10px'}}>
+                              Pizarra
+                            </div>
+                          )}
+                          <div style={{flex: 1, minWidth: 0}}>
+                            <div style={{fontWeight: '700', fontSize: '13px', color: 'white', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap'}}>{linkedPiz.title || 'Animación'}</div>
+                            <div style={{fontSize: '11px', color: '#888', marginTop: '4px'}}>
+                              {linkedPiz.framesCount || 0} Frames · Animación táctica
+                            </div>
+                          </div>
+                        </div>
+                        <div style={{display: 'flex', gap: '10px', marginTop: '12px'}}>
+                          <button 
+                            className="btn-primary" 
+                            style={{flex: 1, padding: '8px 12px', fontSize: '12px', minHeight: '36px'}}
+                            onClick={() => {
+                              window.location.href = `/pizarra?id=${linkedPiz.id}`;
+                            }}
+                          >
+                            👁 VER ANIMACIÓN
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })()}
                   {selectedSession.files?.length > 0 && (
                     <div className="files-indicator">
                       <span>📎 {selectedSession.files.length} archivos adjuntos</span>
@@ -587,7 +714,7 @@ const Sesiones = () => {
             )}
           </div>
         </div>
-      ) : (
+      ) : activeTab === 'captures' ? (
         <div className="captures-grid">
           {captures.length === 0 ? (
             <div className="empty-state-full">
@@ -608,6 +735,37 @@ const Sesiones = () => {
                   <span className="capture-name">{cap.title || cap.name || 'Captura Táctica'}</span>
                   <span className="capture-date">
                     {cap.timestamp?.toDate ? cap.timestamp.toDate().toLocaleDateString() : 'Reciente'}
+                  </span>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+      ) : (
+        <div className="captures-grid">
+          {pizarras.length === 0 ? (
+            <div className="empty-state-full">
+              <div className="empty-icon">🎬</div>
+              <h3>No hay animaciones de pizarra</h3>
+              <p>Crea animaciones multi-frame en la Pizarra Táctica para exportarlas o vincularlas a tus sesiones.</p>
+            </div>
+          ) : (
+            pizarras.map(piz => (
+              <div key={piz.id} className="capture-card" onClick={() => setSelectedAnimation(piz)}>
+                <div className="capture-thumb">
+                  {piz.thumbnail ? (
+                    <img src={piz.thumbnail} alt="Animación" loading="lazy" style={{objectFit: 'cover'}} />
+                  ) : (
+                    <div style={{width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#111', color: '#888', fontSize: '14px', fontWeight: 'bold'}}>🎬 Pizarra</div>
+                  )}
+                  <div className="capture-overlay">
+                    <span>👁 Ver Detalles</span>
+                  </div>
+                </div>
+                <div className="capture-info">
+                  <span className="capture-name">{piz.title || 'Animación Táctica'}</span>
+                  <span className="capture-date">
+                    {piz.framesCount || 0} Frames · {piz.timestamp?.toDate ? piz.timestamp.toDate().toLocaleDateString() : 'Reciente'}
                   </span>
                 </div>
               </div>
@@ -635,6 +793,33 @@ const Sesiones = () => {
                    link.click();
                  }}>DESCARGAR</button>
                  <button className="btn-text-error" onClick={() => handleDeleteCapture(selectedCapture)} style={{marginLeft: '10px'}}>ELIMINAR</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL VISTA ANIMACIÓN */}
+      {selectedAnimation && (
+        <div className="modal-overlay-capture" onClick={() => setSelectedAnimation(null)}>
+          <div className="modal-content-capture" onClick={e => e.stopPropagation()}>
+            <div className="modal-header-capture">
+              <h3>{selectedAnimation.title || 'Animación Táctica'}</h3>
+              <button className="btn-close-pdf" onClick={() => setSelectedAnimation(null)}>✕</button>
+            </div>
+            <div className="modal-body-capture" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+              {selectedAnimation.thumbnail ? (
+                <img src={selectedAnimation.thumbnail} alt="Animación" style={{ maxHeight: '350px', objectFit: 'contain', borderRadius: '8px' }} />
+              ) : (
+                <div style={{ width: '100%', height: '240px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#111', color: '#888', borderRadius: '8px', fontSize: '18px', fontWeight: 'bold' }}>🎬 Animación sin miniatura</div>
+              )}
+              <div style={{ margin: '15px 0', textAlign: 'center', color: '#ccc', fontSize: '14px' }}>
+                <p><strong>Total de Frames:</strong> {selectedAnimation.framesCount || 0}</p>
+                <p>Esta animación táctica se puede vincular a tus sesiones desde el editor de sesión o exportar en formato JSON compatible con Mister11.</p>
+              </div>
+              <div className="capture-actions-float" style={{ display: 'flex', gap: '10px', justifyContent: 'center', position: 'static', marginTop: '10px' }}>
+                 <button className="btn-primary" onClick={() => handleDownloadAnimationJSON(selectedAnimation)}>DESCARGAR JSON</button>
+                 <button className="btn-text-error" onClick={() => handleDeleteAnimation(selectedAnimation)}>ELIMINAR</button>
               </div>
             </div>
           </div>

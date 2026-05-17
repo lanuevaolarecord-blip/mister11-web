@@ -92,6 +92,26 @@ const Sesiones = () => {
     }
   };
 
+  const handleDeleteCapture = async (capture) => {
+    if(window.confirm('¿Eliminar esta captura?')) {
+      try {
+        if (capture.storagePath) {
+          try {
+            const fileRef = ref(storage, capture.storagePath);
+            await deleteObject(fileRef);
+          } catch (e) {
+            console.error("Error al borrar de Storage:", e);
+          }
+        }
+        await removeCapture(capture.id);
+        if(selectedCapture?.id === capture.id) setSelectedCapture(null);
+      } catch (error) {
+        console.error(error);
+        alert("Error al eliminar captura.");
+      }
+    }
+  };
+
   // --- EDIT MODE FUNCTIONS ---
   const handleSaveSession = async () => {
     if (!(editData.title || '').trim()) {
@@ -577,7 +597,7 @@ const Sesiones = () => {
             </div>
           ) : (
             captures.map(cap => (
-              <div key={cap.id} className="capture-card" onClick={() => setSelectedCapture({ url: cap.url || cap.thumbnail, title: cap.name || 'Pizarra' })}>
+              <div key={cap.id} className="capture-card" onClick={() => setSelectedCapture(cap)}>
                 <div className="capture-thumb">
                   <img src={cap.thumbnail || cap.url} alt="Pizarra" loading="lazy" />
                   <div className="capture-overlay">
@@ -585,7 +605,7 @@ const Sesiones = () => {
                   </div>
                 </div>
                 <div className="capture-info">
-                  <span className="capture-name">{cap.name || 'Pizarra'}</span>
+                  <span className="capture-name">{cap.title || cap.name || 'Captura Táctica'}</span>
                   <span className="capture-date">
                     {cap.timestamp?.toDate ? cap.timestamp.toDate().toLocaleDateString() : 'Reciente'}
                   </span>
@@ -601,19 +621,20 @@ const Sesiones = () => {
         <div className="modal-overlay-capture" onClick={() => setSelectedCapture(null)}>
           <div className="modal-content-capture" onClick={e => e.stopPropagation()}>
             <div className="modal-header-capture">
-              <h3>{selectedCapture.title}</h3>
+              <h3>{selectedCapture.title || selectedCapture.name || 'Captura Táctica'}</h3>
               <button className="btn-close-pdf" onClick={() => setSelectedCapture(null)}>✕</button>
             </div>
             <div className="modal-body-capture">
-              <img src={selectedCapture.url} alt="Pizarra" />
+              <img src={selectedCapture.url || selectedCapture.thumbnail} alt="Pizarra" />
               <div className="capture-actions-float">
                  <button className="btn-primary" onClick={() => {
                    const link = document.createElement('a');
-                   link.href = selectedCapture.url;
+                   link.href = selectedCapture.url || selectedCapture.thumbnail;
                    link.download = "mister11_pizarra.png";
                    link.target = "_blank";
                    link.click();
-                 }}>DESCARGAR IMAGEN</button>
+                 }}>DESCARGAR</button>
+                 <button className="btn-text-error" onClick={() => handleDeleteCapture(selectedCapture)} style={{marginLeft: '10px'}}>ELIMINAR</button>
               </div>
             </div>
           </div>

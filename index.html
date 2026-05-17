@@ -19,12 +19,23 @@
 
     <!-- Manifest PWA -->
     <link rel="manifest" href="/manifest.json" />
+
+    <!-- Control de Errores de Importación Dinámica (Vite Chunks) -->
+    <script>
+      window.addEventListener('error', function(e) {
+        if (e.message && (e.message.indexOf('Failed to fetch dynamically imported module') !== -1 || e.message.indexOf('ChunkLoadError') !== -1)) {
+          console.warn('[Míster11] Error de importación de chunk detectado. Forzando recarga de caché...');
+          window.location.reload(true);
+        }
+      }, true);
+    </script>
   </head>
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
     <script>
-      if ('serviceWorker' in navigator) {
+      // Solo registrar Service Worker en web normal (no en entorno nativo Capacitor)
+      if ('serviceWorker' in navigator && !window.Capacitor) {
         window.addEventListener('load', () => {
           navigator.serviceWorker.register('/sw.js')
             .then(() => console.log('[SW] Service Worker registrado correctamente.'))

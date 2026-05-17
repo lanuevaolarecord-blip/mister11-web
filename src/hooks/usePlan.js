@@ -18,6 +18,12 @@ export const LIMITS = {
   }
 };
 
+export const DEVELOPER_EMAILS = [
+  'lavozdelformador@gmail.com',
+  'lanuevaolarecord@gmail.com',
+  'jhocao111294@gmail.com'
+];
+
 export const usePlan = () => {
   const { user } = useAuth();
   const [dbPlan, setDbPlan] = useState('free');
@@ -90,21 +96,24 @@ export const usePlan = () => {
   const trialDaysRemaining = Math.max(0, 7 - daysPassed);
   const isTrialExpired = trialDaysRemaining <= 0;
 
+  const isDeveloper = user && user.email && DEVELOPER_EMAILS.includes(user.email.toLowerCase());
+
   // Real plan calculations
   const isRealExpired = dbProExpiration && dbProExpiration.toDate() < now;
   const isRealPro = (dbPlan === 'pro' || dbPlan === 'club') && !isRealExpired;
 
-  // Final PRO status (simulated OR real)
-  const isPro = (simulatedPlan === 'pro' && !isTrialExpired) || isRealPro;
+  // Final PRO status (developer OR simulated OR real)
+  const isPro = isDeveloper || (simulatedPlan === 'pro' && !isTrialExpired) || isRealPro;
   const currentLimits = isPro ? LIMITS.PRO : LIMITS.FREE;
 
   return {
     plan: isPro ? 'pro' : 'free',
     isPro,
+    isDeveloper,
     limits: currentLimits,
     loading,
     proExpiration: dbProExpiration?.toDate(),
-    isExpired: isTrialExpired && !isRealPro,
+    isExpired: isDeveloper ? false : (isTrialExpired && !isRealPro),
     simulatedPlan,
     toggleSimulatedPlan,
     trialDaysRemaining,

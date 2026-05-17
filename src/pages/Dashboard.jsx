@@ -27,7 +27,7 @@ const Dashboard = () => {
   const { players } = usePlayers(activeTeamId);
   const { sessions } = useSessions(activeTeamId);
   const { matches } = useMatches(activeTeamId);
-  const { isPro, toggleSimulatedPlan, simulatedPlan, trialDaysRemaining, resetTrial } = usePlan();
+  const { isPro, toggleSimulatedPlan, simulatedPlan, trialDaysRemaining, resetTrial, isDeveloper } = usePlan();
   const [workloadPeriod, setWorkloadPeriod] = useState('Esta semana');
 
   const nextMatch = matches.find(m => m.status === 'Pendiente') || null;
@@ -106,29 +106,55 @@ const Dashboard = () => {
         </div>
       </header>
 
-      {/* Premium Trial Banner */}
-      <div className={`trial-banner-dash ${isPro ? 'pro' : 'free'}`}>
+      {/* Premium Trial / Developer Banner */}
+      <div className={`trial-banner-dash ${isPro ? 'pro' : 'free'} ${isDeveloper ? 'developer' : ''}`}>
         <div className="trial-banner-content">
-          <div className="crown-badge">
-            {isPro ? <Crown size={22} className="crown-icon-animated" /> : <Info size={22} />}
+          <div className="crown-badge" style={{ backgroundColor: isDeveloper ? 'rgba(76, 175, 125, 0.15)' : undefined, color: isDeveloper ? '#4CAF7D' : undefined }}>
+            {isDeveloper ? '🛡️' : (isPro ? <Crown size={22} className="crown-icon-animated" /> : <Info size={22} />)}
           </div>
           <div className="trial-text-info">
-            <h3>{isPro ? '👑 Míster11 PRO · Prueba Gratuita Activa' : '⭐ Míster11 Plan Gratuito (Limitado)'}</h3>
+            <h3>
+              {isDeveloper 
+                ? '🛡️ Acceso de Desarrollador · Míster11 PRO' 
+                : (isPro ? '👑 Míster11 PRO · Prueba Gratuita Activa' : '⭐ Míster11 Plan Gratuito (Limitado)')}
+            </h3>
             <p>
-              {isPro 
-                ? `Tienes acceso total a todas las funciones premium. Te quedan ${trialDaysRemaining} días de prueba.`
-                : 'Límites activos: 1 equipo, 15 jugadores, 10 sesiones y sin exportación PDF.'}
+              {isDeveloper 
+                ? 'Tu cuenta tiene acceso permanente de por vida con todos los límites removidos.' 
+                : (isPro 
+                  ? `Tienes acceso total a todas las funciones premium. Te quedan ${trialDaysRemaining} días de prueba.`
+                  : 'Límites activos: 1 equipo, 15 jugadores, 10 sesiones y sin exportación PDF.')}
             </p>
           </div>
         </div>
         <div className="trial-banner-actions">
-          <button className={`btn-toggle-plan ${isPro ? 'outline' : 'solid'}`} onClick={toggleSimulatedPlan}>
-            {isPro ? 'Probar Plan Gratuito' : 'Activar Prueba PRO (7 días)'}
-          </button>
-          {isPro && (
-            <button className="btn-reset-trial" onClick={resetTrial} title="Reiniciar periodo de prueba a 7 días">
-              🔄 Reiniciar
-            </button>
+          {isDeveloper ? (
+            <span style={{
+              fontSize: '0.8rem',
+              fontWeight: 'bold',
+              color: '#4CAF7D',
+              textTransform: 'uppercase',
+              padding: '10px 16px',
+              backgroundColor: 'rgba(76, 175, 125, 0.12)',
+              borderRadius: '8px',
+              border: '1px solid rgba(76, 175, 125, 0.25)',
+              display: 'inline-flex',
+              alignItems: 'center',
+              minHeight: '48px'
+            }}>
+              ✓ Desarrollador Ilimitado
+            </span>
+          ) : (
+            <>
+              <button className={`btn-toggle-plan ${isPro ? 'outline' : 'solid'}`} onClick={toggleSimulatedPlan}>
+                {isPro ? 'Probar Plan Gratuito' : 'Activar Prueba PRO (7 días)'}
+              </button>
+              {isPro && (
+                <button className="btn-reset-trial" onClick={resetTrial} title="Reiniciar periodo de prueba a 7 días">
+                  🔄 Reiniciar
+                </button>
+              )}
+            </>
           )}
         </div>
       </div>

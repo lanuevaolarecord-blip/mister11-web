@@ -38,7 +38,7 @@ const AdminPanel = () => {
   const { players } = usePlayers(activeTeam?.id);
   const { sessions } = useSessions(activeTeam?.id);
   const { matches } = useMatches(activeTeam?.id);
-  const { isPro, toggleSimulatedPlan, simulatedPlan, trialDaysRemaining, resetTrial, limits } = usePlan();
+  const { isPro, toggleSimulatedPlan, simulatedPlan, trialDaysRemaining, resetTrial, limits, isDeveloper } = usePlan();
 
   const [newTeam, setNewTeam] = useState({ nombre: '', categoria: '', temporada: '2025-26' });
   const [selectedMatchId, setSelectedMatchId] = useState('');
@@ -499,8 +499,12 @@ const AdminPanel = () => {
               {/* ESTADO DE SUSCRIPCIÓN Y SIMULACIÓN */}
               <div className="settings-card subscription-card">
                 <div className="card-header-icon">
-                  <span className="premium-icon" style={{ fontSize: '20px' }}>👑</span>
-                  <h3>Suscripción y Prueba de 7 Días</h3>
+                  <span className="premium-icon" style={{ fontSize: '20px' }}>
+                    {isDeveloper ? '🛡️' : '👑'}
+                  </span>
+                  <h3>
+                    {isDeveloper ? 'Acceso de Desarrollador PRO' : 'Suscripción y Prueba de 7 Días'}
+                  </h3>
                 </div>
                 <div className="settings-form">
                   <div className="subscription-status" style={{ marginBottom: '15px' }}>
@@ -511,19 +515,23 @@ const AdminPanel = () => {
                       fontWeight: 'bold',
                       fontSize: '0.9rem',
                       textTransform: 'uppercase',
-                      backgroundColor: isPro ? 'rgba(212, 168, 67, 0.15)' : 'rgba(255,255,255,0.05)',
-                      color: isPro ? 'var(--gold)' : 'var(--text-secondary)',
+                      backgroundColor: isDeveloper ? 'rgba(76,175,125,0.15)' : (isPro ? 'rgba(212, 168, 67, 0.15)' : 'rgba(255,255,255,0.05)'),
+                      color: isDeveloper ? '#4CAF7D' : (isPro ? 'var(--gold)' : 'var(--text-secondary)'),
                       border: '1px solid',
-                      borderColor: isPro ? 'rgba(212, 168, 67, 0.3)' : 'var(--border-color)',
+                      borderColor: isDeveloper ? 'rgba(76,175,125,0.3)' : (isPro ? 'rgba(212, 168, 67, 0.3)' : 'var(--border-color)'),
                       marginBottom: '8px'
                     }}>
-                      {isPro ? 'Míster11 PRO' : 'Plan Gratuito'}
+                      {isDeveloper ? '🛡️ Míster11 Desarrollador' : (isPro ? 'Míster11 PRO' : 'Plan Gratuito')}
                     </div>
-                    {isPro && (
+                    {isDeveloper ? (
+                      <p className="trial-days-left" style={{ margin: 0, fontSize: '0.9rem', color: 'var(--text-secondary)' }}>
+                        Acceso permanente de por vida: <strong>Ilimitado</strong>
+                      </p>
+                    ) : isPro ? (
                       <p className="trial-days-left" style={{ margin: 0, fontSize: '0.9rem', color: 'var(--text-secondary)' }}>
                         Periodo de prueba activo: <strong>Quedan {trialDaysRemaining} días</strong>
                       </p>
-                    )}
+                    ) : null}
                   </div>
 
                   <div className="limits-meters" style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
@@ -590,44 +598,61 @@ const AdminPanel = () => {
                   </div>
 
                   <div className="subscription-actions" style={{ marginTop: '20px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                    <button 
-                      className={`btn-save-settings ${isPro ? 'outline-sub' : 'solid-sub'}`} 
-                      onClick={toggleSimulatedPlan}
-                      style={{
-                        minHeight: '48px',
-                        textTransform: 'uppercase',
+                    {isDeveloper ? (
+                      <div style={{
+                        padding: '12px 16px',
+                        backgroundColor: 'rgba(76, 175, 125, 0.12)',
+                        border: '1px solid rgba(76, 175, 125, 0.25)',
                         borderRadius: '8px',
-                        fontWeight: 'bold',
-                        letterSpacing: '0.5px',
+                        color: '#4CAF7D',
                         fontSize: '0.85rem',
-                        cursor: 'pointer',
-                        transition: 'all 0.2s ease',
-                        border: '1.5px solid',
-                        backgroundColor: isPro ? 'transparent' : 'var(--accent)',
-                        borderColor: isPro ? 'var(--gold)' : 'transparent',
-                        color: isPro ? 'var(--gold)' : '#ffffff'
-                      }}
-                    >
-                      {isPro ? 'Probar Plan Gratuito' : 'Activar Prueba PRO de 7 Días'}
-                    </button>
-                    {isPro && (
-                      <button 
-                        className="btn-reset-trial-admin" 
-                        onClick={resetTrial}
-                        style={{
-                          minHeight: '48px',
-                          backgroundColor: 'rgba(255, 255, 255, 0.05)',
-                          border: '1px solid var(--border-color)',
-                          color: 'var(--text-secondary)',
-                          cursor: 'pointer',
-                          borderRadius: '8px',
-                          fontWeight: 'bold',
-                          fontSize: '0.9rem',
-                          transition: 'all 0.2s ease'
-                        }}
-                      >
-                        🔄 Reiniciar Prueba de 7 Días
-                      </button>
+                        fontWeight: 'bold',
+                        textAlign: 'center'
+                      }}>
+                        ✓ Cuenta de Desarrollador Autorizada
+                      </div>
+                    ) : (
+                      <>
+                        <button 
+                          className={`btn-save-settings ${isPro ? 'outline-sub' : 'solid-sub'}`} 
+                          onClick={toggleSimulatedPlan}
+                          style={{
+                            minHeight: '48px',
+                            textTransform: 'uppercase',
+                            borderRadius: '8px',
+                            fontWeight: 'bold',
+                            letterSpacing: '0.5px',
+                            fontSize: '0.85rem',
+                            cursor: 'pointer',
+                            transition: 'all 0.2s ease',
+                            border: '1.5px solid',
+                            backgroundColor: isPro ? 'transparent' : 'var(--accent)',
+                            borderColor: isPro ? 'var(--gold)' : 'transparent',
+                            color: isPro ? 'var(--gold)' : '#ffffff'
+                          }}
+                        >
+                          {isPro ? 'Probar Plan Gratuito' : 'Activar Prueba PRO de 7 Días'}
+                        </button>
+                        {isPro && (
+                          <button 
+                            className="btn-reset-trial-admin" 
+                            onClick={resetTrial}
+                            style={{
+                              minHeight: '48px',
+                              backgroundColor: 'rgba(255, 255, 255, 0.05)',
+                              border: '1px solid var(--border-color)',
+                              color: 'var(--text-secondary)',
+                              cursor: 'pointer',
+                              borderRadius: '8px',
+                              fontWeight: 'bold',
+                              fontSize: '0.9rem',
+                              transition: 'all 0.2s ease'
+                            }}
+                          >
+                            🔄 Reiniciar Prueba de 7 Días
+                          </button>
+                        )}
+                      </>
                     )}
                   </div>
                 </div>

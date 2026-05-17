@@ -454,6 +454,14 @@
   box-shadow: 0 4px 15px rgba(27, 58, 45, 0.03);
 }
 
+.trial-banner-dash.developer {
+  background: linear-gradient(135deg, rgba(76, 175, 125, 0.08) 0%, rgba(27, 58, 45, 0.04) 100%);
+  border-color: rgba(76, 175, 125, 0.45);
+  box-shadow: 0 8px 32px 0 rgba(76, 175, 125, 0.08);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
 .trial-banner-content {
   display: flex;
   align-items: center;

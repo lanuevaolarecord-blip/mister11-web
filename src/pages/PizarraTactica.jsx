@@ -29,6 +29,7 @@ import { MATERIALS_LIBRARY, MATERIALS_BY_CATEGORY, placeMaterialOnCanvas } from 
 import { TOOLS, STROKE_COLORS, STROKE_WIDTHS, ToolManager } from '../lib/mister11-tools.js';
 import { FieldRenderer, FORMATIONS } from '../lib/mister11-field.js';
 import { useAuth } from '../context/AuthContext';
+import { usePizarra } from '../context/PizarraContext';
 import { db } from '../firebaseConfig';
 import { collection, doc, setDoc, addDoc, deleteDoc, serverTimestamp, onSnapshot, query, orderBy, getDoc } from 'firebase/firestore';
 import { ref, uploadString, getDownloadURL } from 'firebase/storage';
@@ -63,6 +64,9 @@ const toLibType = (t) => {
 
 // ─────────────────────────────────────────────────────────────────────────────
 const PizarraTactica = () => {
+  // Referencias a Context
+  const { guardarEstado, obtenerEstado } = usePizarra();
+  
   // DOM refs
   const containerRef    = useRef(null);
   const fieldCanvasRef  = useRef(null);
@@ -659,9 +663,9 @@ const PizarraTactica = () => {
       const frameState = serializarFrame();
       if (activeTeamId && planId) {
         savePizarraLocal(activeTeamId, planId, frameState);
-        // Guardar también con clave de equipo (independiente de planId)
+        guardarEstado(planId, frameState);
         try { localStorage.setItem(`mister11_pizarra_active_${activeTeamId}`, JSON.stringify(frameState)); } catch (_) {}
-        console.log('[Pizarra] 💾 Guardado en localStorage OK');
+        console.log('[Pizarra] 💾 Guardado en localStorage y Context OK');
       }
       debouncedSaveEstado();
     };
@@ -676,6 +680,7 @@ const PizarraTactica = () => {
       const frameState = serializarFrame();
       if (activeTeamId && planId) {
         savePizarraLocal(activeTeamId, planId, frameState);
+        guardarEstado(planId, frameState);
         try { localStorage.setItem(`mister11_pizarra_active_${activeTeamId}`, JSON.stringify(frameState)); } catch (_) {}
       }
       debouncedSaveEstado();
@@ -691,8 +696,9 @@ const PizarraTactica = () => {
       const frameState = serializarFrame();
       if (activeTeamId && planId) {
         savePizarraLocal(activeTeamId, planId, frameState);
+        guardarEstado(planId, frameState);
         try { localStorage.setItem(`mister11_pizarra_active_${activeTeamId}`, JSON.stringify(frameState)); } catch (_) {}
-        console.log('[Pizarra] 💾 Path guardado en localStorage OK');
+        console.log('[Pizarra] 💾 Path guardado en localStorage y Context OK');
       }
       debouncedSaveEstado();
     };
@@ -732,6 +738,9 @@ const PizarraTactica = () => {
       // Clave de estado activo por equipo (independiente del planId)
       const ACTIVE_STATE_KEY = `mister11_pizarra_active_${activeTeamId}`;
 
+      // ── FUENTE 0: Context API (Memoria volátil, mayor prioridad) ──
+      let memoryCache = obtenerEstado(planId);
+
       // ── FUENTE 1: localStorage clave de EQUIPO (máxima prioridad, sin depender de planId) ──
       let localCache = null;
       try {
@@ -743,11 +752,13 @@ const PizarraTactica = () => {
       if (!localCache || !localCache.objects || localCache.objects.length === 0) {
         localCache = getPizarraLocal(activeTeamId, planId);
       }
+      
+      const cachedState = memoryCache || localCache;
 
-      if (localCache && localCache.objects && localCache.objects.length > 0) {
-        console.log("[Pizarra] ✅ Restaurando desde localStorage");
+      if (cachedState && cachedState.objects && cachedState.objects.length > 0) {
+        console.log("[Pizarra] ✅ Restaurando desde Contexto / localStorage");
         defaultDrawnR.current = true; // marcar que ya hay estado — no dibujar formación
-        cargarFrameConListeners(localCache, () => {
+        cargarFrameConListeners(cachedState, () => {
           ensurePlayersOnTop();
           fc.renderAll();
           if (!readyR.current) { readyR.current = true; setReady(true); }

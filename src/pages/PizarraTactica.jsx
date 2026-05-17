@@ -687,25 +687,30 @@ const PizarraTactica = () => {
     // Obtener coordenadas relativas al CAMPO REAL
     const { rx, ry } = fr.getRelativePoint(x, y);
 
+    const borderWidth = Math.max(2, radius * 0.18);
     const circle = new fabric.Circle({
       radius: radius, originX: 'center', originY: 'center',
       fill: color,
-      stroke: '#FFFFFF', strokeWidth: Math.max(1, radius * 0.15),
+      stroke: '#FFFFFF', strokeWidth: borderWidth,
     });
     const text = new fabric.Text(String(label), {
-      fontSize: Math.round(radius * 0.8), fontWeight: 'bold', fill: '#FFFFFF',
+      fontSize: Math.round(radius * 0.85), fontWeight: 'bold', fill: '#FFFFFF',
       originX: 'center', originY: 'center',
     });
     const group = new fabric.Group([circle, text], {
       left: x, top: y,
       originX: 'center', originY: 'center',
-      hasControls: true, hasBorders: true,
+      hasControls: true, hasBorders: false,
+      // FIX: stroke en el Group para que sobreviva serialización/deserialización
+      stroke: '#FFFFFF',
+      strokeWidth: borderWidth,
       data: { 
         type: 'player',
         tipo: 'jugador',
         playerType: type,
         xRel: rx,
-        yRel: ry
+        yRel: ry,
+        _strokeWidth: borderWidth  // guardar para restaurar al desserializar
       },
     });
     
@@ -947,13 +952,15 @@ const PizarraTactica = () => {
       const frameState = serializarFrame();
       setAutoSaveStatus('💾 Guardando...');
       try {
-        await setDocument(`users/${user.uid}/teams/${activeTeamId}/pizarra`, 'estado_actual', {
+        // FIX: setDocument() no soporta rutas anidadas de Firestore (>2 segmentos)
+        // Usar setDoc directamente con doc() que acepta segmentos múltiples
+        const estadoRef = doc(db, 'users', user.uid, 'teams', activeTeamId, 'pizarra', 'estado_actual');
+        await setDoc(estadoRef, {
           canvasState: JSON.stringify(frameState),
           framesCount: framesR.current?.length || 0,
           currentFrameIdx: frameIdxR.current || 0,
-          formations: lastFormationR.current || {},
           updatedAt: new Date().toISOString()
-        });
+        }, { merge: true });
         setAutoSaveStatus('✓ Guardado');
         setTimeout(() => setAutoSaveStatus(''), 2000);
       } catch (err) {

@@ -8,9 +8,30 @@ import {
   query, 
   where, 
   serverTimestamp,
-  setDoc 
+  setDoc,
+  getDoc
 } from 'firebase/firestore';
 import { db, auth } from '../firebaseConfig';
+
+/**
+ * Lee un documento único de Firestore.
+ * @param {string} collectionPath - Ruta de colección (puede ser anidada: 'users/uid/teams')
+ * @param {string} docId - ID del documento
+ * @returns {Object|null} Datos del documento o null si no existe
+ */
+export const getDocument = async (collectionPath, docId) => {
+  try {
+    const ref = doc(db, collectionPath, docId);
+    const snap = await getDoc(ref);
+    if (snap.exists()) {
+      return { id: snap.id, ...snap.data() };
+    }
+    return null;
+  } catch (err) {
+    console.error(`[db] Error en getDocument ${collectionPath}/${docId}:`, err);
+    return null;
+  }
+};
 
 export const subscribeToCollection = (collectionName, callback, filters = []) => {
   const colRef = collection(db, collectionName);

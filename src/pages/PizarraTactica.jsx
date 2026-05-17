@@ -1685,9 +1685,8 @@ const PizarraTactica = () => {
   // ─── Undo / Redo (connected to manual history) ──────────────────────────
   // functions defined above with useCallback
 
-  // ─── Clear canvas ─────────────────────────────────────────────────────────
   const clearCanvas = () => {
-    if (!window.confirm('¿Limpiar pizarra?')) return;
+    if (!window.confirm('¿Limpiar pizarra? (Esto borra el dibujo actual, pero no elimina los frames de la animación. Usa "NUEVA" para empezar de cero)')) return;
     const fc = fcRef.current; const fr = frRef.current;
     if (!fc || !fr) return;
     fc.clear();
@@ -1695,6 +1694,36 @@ const PizarraTactica = () => {
     drawPlayers(fc, fr, fieldType, { local: localFormation, rival: rivalFormation }, isSwapped);
     saveFrameState();
     pushToHistory();
+  };
+
+  // ─── Nueva Pizarra ────────────────────────────────────────────────────────
+  const handleNewPizarra = async () => {
+    if (!window.confirm('¿Crear nueva pizarra? Se perderán los cambios no guardados y empezarás una animación desde cero.')) return;
+    
+    // Clear localStorage for this team
+    if (activeTeamId) {
+      localStorage.removeItem(`mister11_last_pizarra_${activeTeamId}`);
+    }
+    
+    // Generate new ID and update URL
+    const newId = `piz_${Date.now()}`;
+    setPlanId(newId);
+    setSearchParams({ id: newId }, { replace: true });
+    
+    // Reset frames state
+    setFrames([]);
+    setFrameIdx(0);
+    framesR.current = [];
+    frameIdxR.current = 0;
+    
+    // Clear canvas
+    const fc = fcRef.current;
+    if (fc) {
+      fc.clear();
+      drawPlayers(fc, frRef.current, fieldType, { local: localFormation, rival: rivalFormation }, isSwapped);
+      saveFrameState();
+      resetHistory();
+    }
   };
 
   // ─── Capture Canvas as Image ──────────────────────────────────────────────
@@ -2356,6 +2385,7 @@ const PizarraTactica = () => {
               <button className="topbar-btn" onClick={undo} disabled={histCount === 0} title="Deshacer (Ctrl+Z)">↩</button>
               <button className="topbar-btn" onClick={redo} disabled={redoCount === 0} title="Rehacer (Ctrl+Y)">↪</button>
               <button className="topbar-btn danger" onClick={clearCanvas} title="Limpiar todo el canvas">🗑</button>
+              <button className="topbar-btn secondary" onClick={handleNewPizarra} title="Crear nueva animación desde cero" style={{ background: 'var(--m11-green)', color: 'white', fontWeight: 'bold' }}>✨ NUEVA</button>
               <button className="topbar-btn" onClick={() => handleCapture(true)} disabled={isCapturing} title="Descargar Imagen">📸</button>
               <button className="topbar-btn" onClick={exportAnimationJSON} title="Exportar animación como JSON para compartir">📤 EXPORTAR</button>
               <button className="topbar-btn" onClick={() => fileImportInputRef.current?.click()} title="Importar animación desde JSON">📥 IMPORTAR</button>

@@ -87,6 +87,8 @@ const PizarraTactica = () => {
   const saveTimeoutR = useRef(null); // for debouncing saves
   const clipboardR = useRef(null); // for copy/paste
   const defaultDrawnR = useRef(false); // prevent double default-formation draw
+  const lastStateRef = useRef(null);  // PERSISTENCIA: último estado serializado (siempre actualizado)
+  const planIdRef    = useRef(null);  // PERSISTENCIA: último planId conocido (para closures)
 
   // ─── Utilidades de Escala ─────────────────────────────────────────────────
 
@@ -976,7 +978,6 @@ const PizarraTactica = () => {
 
     const onChange = (opt) => {
       if (syncingR.current) return;
-      console.log('[Pizarra] 💾 onChange disparado - guardando estado...');
 
       // Actualizar coordenadas relativas del objeto movido
       if (opt.target && frRef.current) {
@@ -994,11 +995,12 @@ const PizarraTactica = () => {
       saveFrameState(false);
       pushToHistory();
       const frameState = serializarFrame();
+      // PERSISTENCIA: Mantener siempre el estado más reciente en la ref
+      lastStateRef.current = frameState;
       if (activeTeamId && planId) {
         savePizarraLocal(activeTeamId, planId, frameState);
         guardarEstado(planId, frameState);
         try { localStorage.setItem(`mister11_pizarra_active_${activeTeamId}`, JSON.stringify(frameState)); } catch (_) {}
-        console.log('[Pizarra] 💾 Guardado en localStorage y Context OK');
       }
       debouncedSaveEstado();
     };
@@ -1111,7 +1113,10 @@ const PizarraTactica = () => {
         });
       } else {
         // ── FUENTE 2: Firestore pizarra/estado_actual ────────────────────────────────
-        getDocument(`users/${user.uid}/teams/${activeTeamId}/pizarra`, 'estado_actual').then(data => {
+        // FIX: getDocument() no soporta rutas anidadas — usar getDoc directamente
+        const estadoRef = doc(db, 'users', user.uid, 'teams', activeTeamId, 'pizarra', 'estado_actual');
+        getDoc(estadoRef).then(snap => {
+          const data = snap.exists() ? snap.data() : null;
           if (data && data.canvasState) {
             const serverState = typeof data.canvasState === 'string' ? JSON.parse(data.canvasState) : data.canvasState;
             if (serverState && serverState.objects && serverState.objects.length > 0) {
@@ -1120,7 +1125,7 @@ const PizarraTactica = () => {
               cargarFrameConListeners(serverState, () => {
                 ensurePlayersOnTop();
                 fc.renderAll();
-                // Guardar en ambas claves de localStorage
+                lastStateRef.current = serverState;
                 savePizarraLocal(activeTeamId, planId, serverState);
                 try { localStorage.setItem(`mister11_pizarra_active_${activeTeamId}`, JSON.stringify(serverState)); } catch (_) {}
                 if (!readyR.current) { readyR.current = true; setReady(true); }
@@ -1399,31 +1404,67 @@ const PizarraTactica = () => {
     fc.on('mouse:wheel', handleMouseWheel);
     fc.on('touch:gesture', handleTouch);
 
+    // ── PERSISTENCIA: guardar al cambiar de tab/minimizar app (crítico en Android) ──
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'hidden') {
+        // El usuario sale del módulo o minimiza la app
+        const stateToSave = lastStateRef.current || serializarFrame();
+        if (stateToSave && stateToSave.objects && stateToSave.objects.length > 0 && user && activeTeamId) {
+          // a) localStorage (síncrono, siempre funciona)
+          savePizarraLocal(activeTeamId, planId, stateToSave);
+          try { localStorage.setItem(`mister11_pizarra_active_${activeTeamId}`, JSON.stringify(stateToSave)); } catch (_) {}
+          // b) Firestore (async, best-effort)
+          const estadoRef = doc(db, 'users', user.uid, 'teams', activeTeamId, 'pizarra', 'estado_actual');
+          setDoc(estadoRef, {
+            canvasState: JSON.stringify(stateToSave),
+            framesCount: framesR.current?.length || 0,
+            updatedAt: new Date().toISOString()
+          }, { merge: true }).catch(() => {});
+        }
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    // ── PERSISTENCIA: guardar al cerrar la pestaña / app ──
+    const handleBeforeUnload = () => {
+      const stateToSave = lastStateRef.current || serializarFrame();
+      if (stateToSave && activeTeamId) {
+        savePizarraLocal(activeTeamId, planId, stateToSave);
+        try { localStorage.setItem(`mister11_pizarra_active_${activeTeamId}`, JSON.stringify(stateToSave)); } catch (_) {}
+      }
+    };
+    window.addEventListener('beforeunload', handleBeforeUnload);
+
     return () => {
       // Cancelar timers pendientes
       if (saveTimeoutR.current) clearTimeout(saveTimeoutR.current);
 
-      // Guardado SÍNCRONO al desmontar: localStorage (inmediato) + autoguardarEstado (async Firestore)
-      if (fcRef.current && user && activeTeamId) {
-        const finalState = serializarFrame();
-        // a) localStorage siempre (no puede fallar) — guardar en AMBAS claves
-        savePizarraLocal(activeTeamId, planId, finalState);
-        try { localStorage.setItem(`mister11_pizarra_active_${activeTeamId}`, JSON.stringify(finalState)); } catch (_) {}
-        
-        // b) Autoguardado a Firestore en estado_actual
-        autoguardarEstado();
-        
-        // c) Guardar también el frame actual (si existe planId explícito)
+      // Guardado SÍNCRONO al desmontar — usar lastStateRef (no necesita serializar)
+      const stateToSave = lastStateRef.current || (fcRef.current ? serializarFrame() : null);
+      if (stateToSave && stateToSave.objects && stateToSave.objects.length > 0 && user && activeTeamId) {
+        // a) localStorage (síncrono e inmediato)
+        savePizarraLocal(activeTeamId, planId, stateToSave);
+        try { localStorage.setItem(`mister11_pizarra_active_${activeTeamId}`, JSON.stringify(stateToSave)); } catch (_) {}
+        // b) Firestore (async, usando la referencia correcta)
+        const estadoRef = doc(db, 'users', user.uid, 'teams', activeTeamId, 'pizarra', 'estado_actual');
+        setDoc(estadoRef, {
+          canvasState: JSON.stringify(stateToSave),
+          framesCount: framesR.current?.length || 0,
+          updatedAt: new Date().toISOString()
+        }, { merge: true }).catch(() => {});
+        // c) Guardar el frame actual si existe
         if (planId) {
           const frame = framesR.current[frameIdxR.current];
           if (frame && frame.id) {
             const frameRef = doc(db, 'users', user.uid, 'teams', activeTeamId, 'pizarras', planId, 'frames', frame.id);
-            setDoc(frameRef, { state: JSON.stringify(finalState), updatedAt: serverTimestamp() }, { merge: true })
-              .catch(e => console.error("[Pizarra] Error en guardado final de frame:", e));
+            setDoc(frameRef, { state: JSON.stringify(stateToSave), updatedAt: serverTimestamp() }, { merge: true })
+              .catch(() => {});
           }
         }
       }
 
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('beforeunload', handleBeforeUnload);
       if (unsubscribe) unsubscribe();
       ro.disconnect();
       window.removeEventListener('orientationchange', handleOrientationChange);
@@ -1707,29 +1748,42 @@ const PizarraTactica = () => {
   const handleNewPizarra = async () => {
     if (!window.confirm('¿Crear nueva pizarra? Se perderán los cambios no guardados y empezarás una animación desde cero.')) return;
     
-    // Clear localStorage for this team
+    // PERSISTENCIA: borrar TODO el estado guardado para este equipo
     if (activeTeamId) {
+      // Borrar la clave del planId activo y la clave general del equipo
       localStorage.removeItem(`mister11_last_pizarra_${activeTeamId}`);
+      localStorage.removeItem(`mister11_pizarra_active_${activeTeamId}`);
+      clearPizarraLocal(activeTeamId, planId);
+      // Resetear la ref del último estado para que no se restaure
+      lastStateRef.current = null;
+      // Borrar estado_actual en Firestore para no restaurar estado viejo
+      if (user) {
+        const estadoRef = doc(db, 'users', user.uid, 'teams', activeTeamId, 'pizarra', 'estado_actual');
+        setDoc(estadoRef, { canvasState: null, updatedAt: new Date().toISOString() }, { merge: true }).catch(() => {});
+      }
     }
     
-    // Generate new ID and update URL
+    // Generar nuevo ID y actualizar URL
     const newId = `piz_${Date.now()}`;
     setPlanId(newId);
     setSearchParams({ id: newId }, { replace: true });
+    localStorage.setItem(`mister11_last_pizarra_${activeTeamId}`, newId);
     
-    // Reset frames state
+    // Resetear frames
     setFrames([]);
     setFrameIdx(0);
     framesR.current = [];
     frameIdxR.current = 0;
+    defaultDrawnR.current = false;
     
-    // Clear canvas
+    // Limpiar canvas y dibujar formación inicial
     const fc = fcRef.current;
     if (fc) {
       fc.clear();
       drawPlayers(fc, frRef.current, fieldType, { local: localFormation, rival: rivalFormation }, isSwapped);
       saveFrameState();
       resetHistory();
+      defaultDrawnR.current = true;
     }
   };
 

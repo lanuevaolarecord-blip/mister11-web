@@ -7,6 +7,8 @@ import UpgradeModal from '../components/UpgradeModal';
 import { generateTestsReport, generatePlayerTestReport } from '../utils/pdfGenerator';
 import { GraficaEvolucion, GraficaResumen } from '../components/GraficasTest';
 import RadarChart from '../components/RadarChart';
+import LegendCard from '../components/LegendCard';
+import ProgressTracker from '../components/ProgressTracker';
 import TestDetail from './TestDetail';
 import { db } from '../firebaseConfig';
 import { collection, addDoc, getDocs, query, where, orderBy, serverTimestamp, writeBatch, doc } from 'firebase/firestore';
@@ -443,47 +445,49 @@ const Tests = () => {
               </div>
               
               <div id="grafica-rendimiento-jugador" style={{ marginBottom: '24px' }}>
-                <h4 style={{ color: 'var(--text-primary)', marginBottom: '12px' }}>Perfil de Rendimiento Actual</h4>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '20px' }}>
-                  <GraficaResumen 
-                    playerStats={tests.filter(t => !t.isQuestionnaire).map(t => {
-                      const h = historyData[histSelectedPlayer]?.[t.id] || [];
-                      let val = h.length > 0 ? h[h.length - 1].val : 0;
-                      const isTime = t.unit === 'seg';
-                      let radarVal = val;
-                      if (isTime) radarVal = Math.max(0, 100 - (val * 5));
-                      else if (t.unit === 'cm') radarVal = Math.min(100, val * 2);
-                      else if (t.unit === 'nivel') radarVal = Math.min(100, val * 8);
-                      else radarVal = Math.min(100, val);
-                      return { subject: t.category, A: radarVal, fullMark: 100 };
-                    })} 
+                <h4 style={{ color: 'var(--text-primary)', marginBottom: '12px', fontFamily: 'Orbitron' }}>M11 Player Analytics</h4>
+                <div style={{ display: 'grid', gridTemplateColumns: 'minmax(260px, auto) 1fr', gap: '30px', alignItems: 'center' }}>
+                  
+                  {/* LEGENDA CARD */}
+                  <LegendCard 
+                    player={getPlayerById(histSelectedPlayer)}
+                    overall={85}
+                    position="POS"
+                    streak={Object.keys(historyData[histSelectedPlayer] || {}).length}
+                    type="elite"
+                    stats={[
+                      { label: 'FÍS', value: 88 },
+                      { label: 'TÉC', value: 82 },
+                      { label: 'PSI', value: 79 },
+                      { label: 'SOC', value: 85 }
+                    ]}
                   />
 
-                  {/* Render dimension radar if player has questionnaire data */}
-                  {(() => {
-                    const dimensionStats = {};
-                    tests.filter(t => t.isQuestionnaire).forEach(t => {
-                      const h = historyData[histSelectedPlayer]?.[t.id];
-                      if (h && h.length > 0) {
-                        const latest = h[h.length - 1];
-                        if (latest.dimensiones) {
-                          Object.keys(latest.dimensiones).forEach(dim => {
-                            dimensionStats[dim] = latest.dimensiones[dim];
-                          });
-                        }
-                      }
-                    });
+                  {/* RADAR CHART AND PROGRESS */}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                    <div style={{ height: '350px' }}>
+                      <RadarChart 
+                        data={tests.filter(t => !t.isQuestionnaire).map(t => {
+                          const h = historyData[histSelectedPlayer]?.[t.id] || [];
+                          let val = h.length > 0 ? h[h.length - 1].val : 0;
+                          const isTime = t.unit === 'seg';
+                          let radarVal = val;
+                          if (isTime) radarVal = Math.max(0, 100 - (val * 5));
+                          else if (t.unit === 'cm') radarVal = Math.min(100, val * 2);
+                          else if (t.unit === 'nivel') radarVal = Math.min(100, val * 8);
+                          else radarVal = Math.min(100, val);
+                          return { subject: t.category, value: radarVal, fullMark: 100 };
+                        })}
+                      />
+                    </div>
 
-                    const dimData = Object.keys(dimensionStats).map(dim => ({
-                      subject: dim,
-                      value: dimensionStats[dim]
-                    }));
-
-                    if (dimData.length > 0) {
-                      return <RadarChart data={dimData} color="#D4A843" />;
-                    }
-                    return null;
-                  })()}
+                    <ProgressTracker 
+                      label="Evaluaciones Completadas"
+                      percentage={Math.min(100, Math.round((Object.keys(historyData[histSelectedPlayer] || {}).length / tests.length) * 100) || 0)}
+                      currentLevel="PROSPECTO"
+                      nextLevelStr="Completa 2 test más para ÉLITE"
+                    />
+                  </div>
                 </div>
               </div>
               <div className="hist-charts-grid">

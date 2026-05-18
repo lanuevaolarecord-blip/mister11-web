@@ -13,14 +13,26 @@ import './Tests.css';
 
 // PREDEFINED_TESTS remains as base catalog
 const DEFAULT_TESTS = [
-  { id: 't1', category: 'Resistencia', name: 'Test de Cooper', unit: 'm', desc: 'Distancia recorrida en 12 minutos.', protocol: 'Los jugadores deben correr la mayor distancia posible en 12 minutos alrededor de una pista o campo marcado. Se anota la distancia total en metros.' },
-  { id: 't2', category: 'Resistencia', name: 'Course Navette', unit: 'nivel', desc: 'Carrera de ida y vuelta de 20m con pitidos.', protocol: 'Carreras de 20 metros al ritmo de un pitido de audio que se acelera cada minuto. Se anota el último palier completado.' },
-  { id: 't3', category: 'Velocidad', name: 'Sprint 10m', unit: 'seg', desc: 'Aceleración en distancia corta.', protocol: 'Desde posición estática, sprint al máximo esfuerzo hasta rebasar la línea de 10 metros. Se usa cronómetro o fotocélulas.' },
-  { id: 't4', category: 'Velocidad', name: 'Sprint 30m', unit: 'seg', desc: 'Velocidad máxima lanzada.', protocol: 'Igual que 10m, pero se mide el tiempo total a los 30 metros.' },
-  { id: 't5', category: 'Agilidad', name: 'T-Test', unit: 'seg', desc: 'Desplazamientos frontales, laterales y de espaldas.', protocol: 'Sprint 10m al frente, desplazamiento lateral 5m a la izquierda, 10m a la derecha, 5m al centro y 10m de espaldas al inicio.' },
-  { id: 't6', category: 'Fuerza', name: 'Salto CMJ', unit: 'cm', desc: 'Salto vertical con contramovimiento.', protocol: 'Las manos en las caderas. Bajar el centro de gravedad (flexión de rodillas) e inmediatamente saltar lo más alto posible.' },
-  { id: 't7', category: 'Técnica', name: 'Conducción conos', unit: 'seg', desc: 'Slalom entre conos con finalización.', protocol: 'Conducir el balón haciendo slalom entre 5 conos separados por 2 metros y dar un pase a un objetivo.' },
-  { id: 't8', category: 'Técnica', name: 'Pase a portería', unit: 'pts', desc: 'Precisión de pase a zonas objetivo (10 pases).', protocol: '10 pases desde la frontal del área hacia pequeñas porterías o zonas marcadas. 1 punto por acierto.' }
+  { id: 't1', type: 'fisico', category: 'Resistencia', name: 'Test de Cooper', unit: 'm', desc: 'Distancia recorrida en 12 minutos.', protocol: 'Los jugadores deben correr la mayor distancia posible en 12 minutos alrededor de una pista o campo marcado. Se anota la distancia total en metros.' },
+  { id: 't2', type: 'fisico', category: 'Resistencia', name: 'Course Navette', unit: 'nivel', desc: 'Carrera de ida y vuelta de 20m con pitidos.', protocol: 'Carreras de 20 metros al ritmo de un pitido de audio que se acelera cada minuto. Se anota el último palier completado.' },
+  { id: 't3', type: 'fisico', category: 'Velocidad', name: 'Sprint 10m', unit: 'seg', desc: 'Aceleración en distancia corta.', protocol: 'Desde posición estática, sprint al máximo esfuerzo hasta rebasar la línea de 10 metros. Se usa cronómetro o fotocélulas.' },
+  { id: 't4', type: 'fisico', category: 'Velocidad', name: 'Sprint 30m', unit: 'seg', desc: 'Velocidad máxima lanzada.', protocol: 'Igual que 10m, pero se mide el tiempo total a los 30 metros.' },
+  { id: 't5', type: 'fisico', category: 'Agilidad', name: 'T-Test', unit: 'seg', desc: 'Desplazamientos frontales, laterales y de espaldas.', protocol: 'Sprint 10m al frente, desplazamiento lateral 5m a la izquierda, 10m a la derecha, 5m al centro y 10m de espaldas al inicio.' },
+  { id: 't6', type: 'fisico', category: 'Fuerza', name: 'Salto CMJ', unit: 'cm', desc: 'Salto vertical con contramovimiento.', protocol: 'Las manos en las caderas. Bajar el centro de gravedad (flexión de rodillas) e inmediatamente saltar lo más alto posible.' },
+  { id: 't7', type: 'fisico', category: 'Técnica', name: 'Conducción conos', unit: 'seg', desc: 'Slalom entre conos con finalización.', protocol: 'Conducir el balón haciendo slalom entre 5 conos separados por 2 metros y dar un pase a un objetivo.' },
+  { id: 't8', type: 'fisico', category: 'Técnica', name: 'Pase a portería', unit: 'pts', desc: 'Precisión de pase a zonas objetivo (10 pases).', protocol: '10 pases desde la frontal del área hacia pequeñas porterías o zonas marcadas. 1 punto por acierto.' },
+
+  { id: 'psi1', type: 'psicodeportivo', category: 'Psicología', name: 'Escala de Autoconfianza', unit: 'pts', desc: 'Mide la confianza del jugador en sus capacidades deportivas', protocol: 'Cuestionario de Rosenberg adaptado al deporte. Respuestas tipo Likert.', rangoMin: 0, rangoMax: 40 },
+  { id: 'psi2', type: 'psicodeportivo', category: 'Psicología', name: 'Ansiedad Competitiva (CSAI-2R)', unit: 'pts', desc: 'Evalúa ansiedad cognitiva, somática y autoconfianza', protocol: 'Cuestionario antes de competir.', rangoMin: 0, rangoMax: 68 },
+  { id: 'psi3', type: 'psicodeportivo', category: 'Psicología', name: 'Motivación Deportiva (SMS-II)', unit: 'pts', desc: 'Mide tipos de motivación en el deporte', protocol: 'Cuestionario SMS-II', rangoMin: 18, rangoMax: 126 },
+  { id: 'psi4', type: 'psicodeportivo', category: 'Psicología', name: 'Resiliencia en el Deporte', unit: 'pts', desc: 'Capacidad de sobreponerse a situaciones adversas', protocol: 'Cuestionario de resiliencia', rangoMin: 0, rangoMax: 50 },
+  { id: 'psi5', type: 'psicodeportivo', category: 'Psicología', name: 'Atención y Concentración', unit: 'seg', desc: 'Mide la atención selectiva y concentración', protocol: 'Prueba cognitiva cronometrada', rangoMin: 0, rangoMax: 100 },
+
+  { id: 'soc1', type: 'sociodeportivo', category: 'Sociología', name: 'Cohesión de Equipo (GEQ)', unit: 'pts', desc: 'Cuestionario del Ambiente de Grupo', protocol: 'Evalúa la cohesión social y de tarea.', rangoMin: 18, rangoMax: 162 },
+  { id: 'soc2', type: 'sociodeportivo', category: 'Sociología', name: 'Escala de Deporte Limpio', unit: 'pts', desc: 'Actitudes hacia el Fair Play', protocol: 'Cuestionario de actitudes.', rangoMin: 0, rangoMax: 50 },
+  { id: 'soc3', type: 'sociodeportivo', category: 'Sociología', name: 'Habilidades Sociales', unit: 'pts', desc: 'Asertividad y comunicación en el deporte', protocol: 'Evaluación de habilidades interpersonales.', rangoMin: 0, rangoMax: 100 },
+  { id: 'soc4', type: 'sociodeportivo', category: 'Sociología', name: 'Liderazgo Percibido', unit: 'pts', desc: 'Percepción de roles de liderazgo en el equipo', protocol: 'Cuestionario de liderazgo deportivo.', rangoMin: 0, rangoMax: 100 },
+  { id: 'soc5', type: 'sociodeportivo', category: 'Sociología', name: 'Satisfacción con el Entrenador', unit: 'pts', desc: 'Percepción sobre el cuerpo técnico', protocol: 'Cuestionario de satisfacción', rangoMin: 0, rangoMax: 50 }
 ];
 
 const Tests = () => {
@@ -29,17 +41,57 @@ const Tests = () => {
   const { isPro } = usePlan();
   const { players, loading: loadingPlayers } = usePlayers(activeTeamId);
   const [historyData, setHistoryData] = useState({});
-  const [activeTab, setActiveTab] = useState('BATERÍA');
-  const [tests, setTests] = useState(DEFAULT_TESTS);
+  const [activeTab, setActiveTab] = useState('FÍSICOS');
+  const [tests, setTests] = useState([]);
   const [loading, setLoading] = useState(false);
   const [upgradeModal, setUpgradeModal] = useState({ open: false, message: '' });
   
   // Registration State
-  const [regSelectedTest, setRegSelectedTest] = useState(DEFAULT_TESTS[0].id);
+  const [isRegModalOpen, setIsRegModalOpen] = useState(false);
+  const [regSelectedTest, setRegSelectedTest] = useState('t1');
   const [regInputs, setRegInputs] = useState({});
 
   // History State
   const [histSelectedPlayer, setHistSelectedPlayer] = useState(null);
+
+  // Firestore Tests Loading
+  const loadTests = useCallback(async () => {
+    if (!user || !activeTeamId) return;
+    try {
+      const testsRef = collection(db, `users/${user.uid}/teams/${activeTeamId}/tests`);
+      const q = query(testsRef);
+      const snapshot = await getDocs(q);
+      
+      if (snapshot.empty) {
+        // Migration: create predefined tests
+        const batch = writeBatch(db);
+        DEFAULT_TESTS.forEach(t => {
+          const newDocRef = doc(testsRef, t.id);
+          batch.set(newDocRef, t);
+        });
+        await batch.commit();
+        setTests(DEFAULT_TESTS);
+        if (DEFAULT_TESTS.length > 0) {
+          setHeatSelectedTest(DEFAULT_TESTS[0].id);
+        }
+      } else {
+        const loadedTests = [];
+        snapshot.forEach(doc => {
+          loadedTests.push({ ...doc.data(), id: doc.id });
+        });
+        setTests(loadedTests);
+        if (loadedTests.length > 0) {
+          setHeatSelectedTest(loadedTests[0].id);
+        }
+      }
+    } catch (error) {
+      console.error("Error loading tests:", error);
+    }
+  }, [user, activeTeamId]);
+
+  useEffect(() => {
+    loadTests();
+  }, [loadTests]);
 
   // Carga de evaluaciones reales desde Firestore
   const loadEvaluations = useCallback(async () => {
@@ -83,13 +135,13 @@ const Tests = () => {
 
   // New Test State
   const [isNewTestModalOpen, setIsNewTestModalOpen] = useState(false);
-  const [newTest, setNewTest] = useState({ name: '', category: 'Física', unit: '', desc: '', protocol: '' });
+  const [newTest, setNewTest] = useState({ name: '', type: 'fisico', category: 'Física', unit: '', desc: '', protocol: '' });
   const [selectedTestDetail, setSelectedTestDetail] = useState(null);
 
   // Heatmap Selected Test
-  const [heatSelectedTest, setHeatSelectedTest] = useState(tests[0].id);
+  const [heatSelectedTest, setHeatSelectedTest] = useState('t1');
 
-  const getTestById = (id) => tests.find(t => t.id === Number(id));
+  const getTestById = (id) => tests.find(t => String(t.id) === String(id));
   const getPlayerById = (id) => players.find(p => p.id === id);
 
   const handleSaveRegistration = async () => {
@@ -124,10 +176,23 @@ const Tests = () => {
     }
   };
 
-  const handleCreateTest = () => {
+  const handleCreateTest = async () => {
     if (!newTest.name || !newTest.unit) return alert("Nombre y unidad son obligatorios");
-    setTests([...tests, { ...newTest, id: Date.now() }]);
-    setIsNewTestModalOpen(false);
+    if (!user || !activeTeamId) return;
+    setLoading(true);
+    try {
+      const testsRef = collection(db, `users/${user.uid}/teams/${activeTeamId}/tests`);
+      const newTestObj = { ...newTest, id: `custom_${Date.now()}` };
+      await addDoc(testsRef, newTestObj);
+      setTests([...tests, newTestObj]);
+      setIsNewTestModalOpen(false);
+      setNewTest({ name: '', type: 'fisico', category: 'Física', unit: '', desc: '', protocol: '' });
+    } catch (error) {
+      console.error(error);
+      alert("Error al crear el test.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   // Heatmap logic
@@ -164,7 +229,7 @@ const Tests = () => {
         </div>
 
         <div className="tests-tabs">
-          {['BATERÍA', 'REGISTRO', 'HISTORIAL POR JUGADOR', 'COMPARATIVA EQUIPO'].map(tab => (
+          {['FÍSICOS', 'PSICODEPORTIVOS', 'SOCIODEPORTIVOS', 'HISTORIAL POR JUGADOR', 'COMPARATIVA EQUIPO'].map(tab => (
             <button 
               key={tab} 
               className={`tests-tab ${activeTab === tab ? 'active' : ''}`}
@@ -177,16 +242,21 @@ const Tests = () => {
       </header>
 
       <div className="tests-content">
-        {/* --- BATERÍA --- */}
-        {activeTab === 'BATERÍA' && (
+        {/* --- CATÁLOGO DE TESTS (FÍSICOS / PSICODEPORTIVOS / SOCIODEPORTIVOS) --- */}
+        {['FÍSICOS', 'PSICODEPORTIVOS', 'SOCIODEPORTIVOS'].includes(activeTab) && (
           <div className="tab-bateria">
             <div className="bateria-header">
-              <h3>Catálogo de Pruebas</h3>
+              <h3>Catálogo de Pruebas: {activeTab}</h3>
               <button className="btn-primary" onClick={() => setIsNewTestModalOpen(true)}>+ Crear Test</button>
             </div>
             
             <div className="tests-grid">
-              {tests.map(t => (
+              {tests.filter(t => {
+                if (activeTab === 'FÍSICOS') return t.type === 'fisico' || !t.type;
+                if (activeTab === 'PSICODEPORTIVOS') return t.type === 'psicodeportivo';
+                if (activeTab === 'SOCIODEPORTIVOS') return t.type === 'sociodeportivo';
+                return false;
+              }).map(t => (
                 <div key={t.id} className="test-card clickable" onClick={() => setSelectedTestDetail(t)}>
                   <div className="t-head">
                     <span className="t-cat">{t.category}</span>
@@ -194,55 +264,19 @@ const Tests = () => {
                   </div>
                   <h4>{t.name}</h4>
                   <p>{t.desc}</p>
-                  <span className="view-detail-hint">Toca para ver detalles y protocolo</span>
+                  <button 
+                    className="btn-primary" 
+                    style={{marginTop: '15px'}} 
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setRegSelectedTest(t.id);
+                      setIsRegModalOpen(true);
+                    }}
+                  >
+                    Registrar Resultados
+                  </button>
                 </div>
               ))}
-            </div>
-          </div>
-        )}
-
-        {/* --- REGISTRO --- */}
-        {activeTab === 'REGISTRO' && (
-          <div className="tab-registro">
-            <div className="reg-sidebar">
-              <h3>Seleccionar Test</h3>
-              <div className="test-selector">
-                {tests.map(t => (
-                  <div 
-                    key={t.id} 
-                    className={`test-select-item ${regSelectedTest === t.id ? 'active' : ''}`}
-                    onClick={() => setRegSelectedTest(t.id)}
-                  >
-                    <strong>{t.name}</strong>
-                    <span>{t.category}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-            <div className="reg-main">
-              <div className="reg-main-header">
-                <h3>Registro de Resultados: <span>{getTestById(regSelectedTest)?.name}</span></h3>
-                <span className="unit-badge">Unidad: {getTestById(regSelectedTest)?.unit}</span>
-              </div>
-              <div className="reg-players-grid">
-                {players.map(p => (
-                  <div key={p.id} className="reg-player-card">
-                    <div className="rp-info">
-                      <div className="rp-num">{p.number}</div>
-                      <div className="rp-name">{p.name}</div>
-                    </div>
-                    <input 
-                      type="number" 
-                      placeholder="0.00" 
-                      value={regInputs[p.id] || ''}
-                      onChange={e => setRegInputs({...regInputs, [p.id]: e.target.value})}
-                    />
-                  </div>
-                ))}
-              </div>
-              <div className="reg-actions">
-                <button className="btn-primary" onClick={handleSaveRegistration}>Guardar Resultados</button>
-              </div>
             </div>
           </div>
         )}
@@ -309,7 +343,7 @@ const Tests = () => {
                 />
               </div>
               <div className="hist-charts-grid">
-                {tests.slice(0, 6).map(t => {
+                {tests.map(t => {
                   const history = historyData[histSelectedPlayer]?.[t.id] || [];
                   if(history.length === 0) return null;
                   
@@ -358,7 +392,7 @@ const Tests = () => {
             <div className="comp-header">
               <div className="comp-select">
                 <label>Test a analizar:</label>
-                <select value={heatSelectedTest} onChange={e => setHeatSelectedTest(Number(e.target.value))}>
+                <select value={heatSelectedTest} onChange={e => setHeatSelectedTest(e.target.value)}>
                   {tests.map(t => <option key={t.id} value={t.id}>{t.name} ({t.unit})</option>)}
                 </select>
               </div>
@@ -371,9 +405,9 @@ const Tests = () => {
                   <tr>
                     <th>Dorsal</th>
                     <th>Jugador</th>
-                    <th>Eval 1 (Sep)</th>
-                    <th>Eval 2 (Dic)</th>
-                    <th>Eval 3 (Mar)</th>
+                    <th>Eval Inicial</th>
+                    <th>Penúltima Eval</th>
+                    <th>Última Eval</th>
                     <th>Evolución</th>
                   </tr>
                 </thead>
@@ -381,20 +415,36 @@ const Tests = () => {
                   {players.map(p => {
                     const testInfo = getTestById(heatSelectedTest);
                     const history = historyData[p.id]?.[heatSelectedTest] || [];
-                    if(history.length < 3) return null;
+                    if(history.length === 0) return null;
 
                     // Calculate global min/max for color scale across ALL players for THIS test's LATEST eval
-                    const allCurrentVals = players.map(mp => historyData[mp.id]?.[heatSelectedTest]?.[2]?.val || 0);
-                    const minVal = Math.min(...allCurrentVals);
-                    const maxVal = Math.max(...allCurrentVals);
+                    const allCurrentVals = players.map(mp => {
+                      const mh = historyData[mp.id]?.[heatSelectedTest] || [];
+                      return mh.length > 0 ? mh[mh.length - 1].val : null;
+                    }).filter(v => v !== null);
+                    
+                    const minVal = allCurrentVals.length > 0 ? Math.min(...allCurrentVals) : 0;
+                    const maxVal = allCurrentVals.length > 0 ? Math.max(...allCurrentVals) : 100;
                     const isTime = testInfo?.unit === 'seg';
 
-                    const v1 = history[0].val;
-                    const v2 = history[1].val;
-                    const v3 = history[2].val;
+                    let v1 = '-';
+                    let v2 = '-';
+                    let v3 = '-';
                     
-                    const improved = isTime ? v3 < v1 : v3 > v1;
-                    const diffPerc = Math.abs(((v3 - v1)/v1)*100).toFixed(1);
+                    if (history.length === 1) {
+                      v3 = history[0].val;
+                    } else if (history.length === 2) {
+                      v1 = history[0].val;
+                      v3 = history[1].val;
+                    } else if (history.length >= 3) {
+                      v1 = history[0].val;
+                      v2 = history[history.length - 2].val;
+                      v3 = history[history.length - 1].val;
+                    }
+
+                    const firstVal = history[0].val;
+                    const improved = isTime ? v3 < firstVal : v3 > firstVal;
+                    const diffPerc = firstVal && v3 !== '-' ? Math.abs(((v3 - firstVal)/firstVal)*100).toFixed(1) : 0;
 
                     return (
                       <tr key={p.id}>
@@ -406,9 +456,13 @@ const Tests = () => {
                           <strong>{v3}</strong>
                         </td>
                         <td className="center">
-                           <span className={`trend-badge ${improved ? 'good' : 'bad'}`}>
-                             {improved ? '▲' : '▼'} {diffPerc}%
-                           </span>
+                          {history.length > 1 ? (
+                            <span className={`trend-badge ${improved ? 'good' : 'bad'}`}>
+                              {improved ? '▲' : '▼'} {diffPerc}%
+                            </span>
+                          ) : (
+                            <span className="trend-badge" style={{backgroundColor: '#e2e8f0', color: '#64748b'}}>-</span>
+                          )}
                         </td>
                       </tr>
                     );
@@ -435,19 +489,21 @@ const Tests = () => {
               </div>
               <div className="form-row-team">
                 <div className="form-group">
-                  <label>Categoría</label>
-                  <select value={newTest.category} onChange={e => setNewTest({...newTest, category: e.target.value})}>
-                    <option>Resistencia</option>
-                    <option>Velocidad</option>
-                    <option>Agilidad</option>
-                    <option>Fuerza</option>
-                    <option>Técnica</option>
+                  <label>Tipo de Test</label>
+                  <select value={newTest.type} onChange={e => setNewTest({...newTest, type: e.target.value})}>
+                    <option value="fisico">Físico</option>
+                    <option value="psicodeportivo">Psicodeportivo</option>
+                    <option value="sociodeportivo">Sociodeportivo</option>
                   </select>
                 </div>
                 <div className="form-group">
-                  <label>Unidad de medida</label>
-                  <input type="text" value={newTest.unit} onChange={e => setNewTest({...newTest, unit: e.target.value})} placeholder="Ej. kg, seg, rep" />
+                  <label>Categoría Específica</label>
+                  <input type="text" value={newTest.category} onChange={e => setNewTest({...newTest, category: e.target.value})} placeholder="Ej. Resistencia, Psicología..." />
                 </div>
+              </div>
+              <div className="form-group">
+                <label>Unidad de medida</label>
+                <input type="text" value={newTest.unit} onChange={e => setNewTest({...newTest, unit: e.target.value})} placeholder="Ej. kg, seg, pts" />
               </div>
               <div className="form-group">
                 <label>Descripción rápida</label>
@@ -502,7 +558,7 @@ const Tests = () => {
               <div className="footer-actions">
                 <button className="btn-primary" onClick={() => {
                   setRegSelectedTest(selectedTestDetail.id);
-                  setActiveTab('REGISTRO');
+                  setIsRegModalOpen(true);
                   setSelectedTestDetail(null);
                 }}>Ir a Registrar Resultados</button>
               </div>
@@ -516,6 +572,46 @@ const Tests = () => {
         onClose={() => setUpgradeModal({ ...upgradeModal, open: false })}
         message={upgradeModal.message}
       />
+
+      {/* MODAL REGISTRO */}
+      {isRegModalOpen && (
+        <div className="modal-overlay" onClick={() => setIsRegModalOpen(false)}>
+          <div className="modal-content large" onClick={e => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2>Registro de Resultados: {getTestById(regSelectedTest)?.name}</h2>
+              <button className="btn-close" onClick={() => setIsRegModalOpen(false)}>✕</button>
+            </div>
+            <div className="modal-body" style={{ maxHeight: '60vh', overflowY: 'auto' }}>
+              <div className="reg-main-header" style={{ marginBottom: '15px' }}>
+                <span className="unit-badge">Unidad: {getTestById(regSelectedTest)?.unit}</span>
+              </div>
+              <div className="reg-players-grid">
+                {players.map(p => (
+                  <div key={p.id} className="reg-player-card">
+                    <div className="rp-info">
+                      <div className="rp-num">{p.number}</div>
+                      <div className="rp-name">{p.name}</div>
+                    </div>
+                    <input 
+                      type="number" 
+                      placeholder="0.00" 
+                      value={regInputs[p.id] || ''}
+                      onChange={e => setRegInputs({...regInputs, [p.id]: e.target.value})}
+                    />
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div className="modal-footer">
+              <button className="btn-outline" onClick={() => setIsRegModalOpen(false)}>Cancelar</button>
+              <button className="btn-primary" onClick={() => {
+                handleSaveRegistration();
+                setIsRegModalOpen(false);
+              }}>Guardar Resultados</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

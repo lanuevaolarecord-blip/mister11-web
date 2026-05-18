@@ -210,86 +210,114 @@ export const generatePlanificacionPDF = async (macroInfo, microcycles, activeTea
  * TESTS - Informe Colectivo
  */
 export const generateTestsReport = async (tests, players, historyData, activeTeam = null) => {
-  const doc = new jsPDF();
+  const doc = new jsPDF({ orientation: 'landscape' });
   
-  await addHeader(doc, 'INFORME DE RENDIMIENTO FÍSICO Y TÉCNICO', `Fecha: ${new Date().toLocaleDateString()}`, activeTeam);
+  await addHeader(doc, 'INFORME DE RENDIMIENTO GLOBAL', `Fecha: ${new Date().toLocaleDateString()}`, activeTeam);
 
   doc.setTextColor(0, 0, 0);
   doc.setFontSize(14);
   doc.text('Resultados Recientes por Jugador', 15, 50);
 
-  // Preparar encabezados
-  const head = ['Jugador', ...tests.map(t => `${t.name} (${t.unit})`)];
-  
-  // Extraer valores más recientes
-  // FIX: los jugadores usan p.name (no p.nombre)
-  const recentData = players.map(p => {
-    const rowData = { player: p.name || p.nombre || '-' };
-    tests.forEach(t => {
-      const pHistory = historyData[p.id]?.[t.id];
-      if (pHistory && pHistory.length > 0) {
-        rowData[t.id] = pHistory[pHistory.length - 1].val;
-      } else {
-        rowData[t.id] = null;
+  let finalY = 55;
+
+  const renderCategoryTable = (groupTests, groupName, headColor) => {
+    if (groupTests.length === 0) return;
+    
+    if (finalY > doc.internal.pageSize.getHeight() - 40 && finalY !== 55) {
+      doc.addPage();
+      finalY = 20;
+    } else if (finalY !== 55) {
+      finalY += 10;
+    }
+
+    doc.setFontSize(12);
+    doc.setTextColor(...headColor);
+    doc.setFont(undefined, 'bold');
+    doc.text(groupName, 15, finalY);
+    finalY += 5;
+
+    const head = ['Jugador', ...groupTests.map(t => `${t.name} (${t.unit})`)];
+    
+    const recentData = players.map(p => {
+      const rowData = { player: p.name || p.nombre || '-' };
+      groupTests.forEach(t => {
+        const pHistory = historyData[p.id]?.[t.id];
+        if (pHistory && pHistory.length > 0) {
+          rowData[t.id] = pHistory[pHistory.length - 1].val;
+        } else {
+          rowData[t.id] = null;
+        }
+      });
+      return rowData;
+    });
+
+    const testStats = {};
+    groupTests.forEach(t => {
+      const vals = recentData.map(r => r[t.id]).filter(v => v !== null && v !== undefined);
+      if (vals.length > 0) {
+        testStats[t.id] = {
+          min: Math.min(...vals),
+          max: Math.max(...vals),
+          lowerIsBetter: t.unit === 'seg'
+        };
       }
     });
-    return rowData;
-  });
 
-  // Calcular min/max para cada test para aplicar colores
-  const testStats = {};
-  tests.forEach(t => {
-    const vals = recentData.map(r => r[t.id]).filter(v => v !== null && v !== undefined);
-    if (vals.length > 0) {
-      testStats[t.id] = {
-        min: Math.min(...vals),
-        max: Math.max(...vals),
-        lowerIsBetter: t.unit === 'seg'
-      };
-    }
-  });
+    const body = recentData.map(r => {
+      return [
+        r.player,
+        ...groupTests.map(t => r[t.id] !== null && r[t.id] !== undefined ? r[t.id] : '-')
+      ];
+    });
 
-  const body = recentData.map(r => {
-    return [
-      r.player,
-      ...tests.map(t => r[t.id] !== null && r[t.id] !== undefined ? r[t.id] : '-')
-    ];
-  });
-
-  const testsTable = autoTable(doc, {
-    startY: 55,
-    head: [head],
-    body: body,
-    headStyles: { fillColor: THEME_COLOR, textColor: TEXT_COLOR },
-    styles: { fontSize: 8 },
-    didParseCell: function(data) {
-      if (data.section === 'body' && data.column.index > 0) {
-        const testIndex = data.column.index - 1;
-        const test = tests[testIndex];
-        const val = data.cell.raw;
-        
-        if (val !== '-' && testStats[test.id]) {
-          const stats = testStats[test.id];
-          if (stats.min !== stats.max) {
-            const isBest = stats.lowerIsBetter ? (val === stats.min) : (val === stats.max);
-            const isWorst = stats.lowerIsBetter ? (val === stats.max) : (val === stats.min);
-            
-            if (isBest) {
-              data.cell.styles.textColor = [76, 175, 125]; // Verde
-              data.cell.styles.fontStyle = 'bold';
-            } else if (isWorst) {
-              data.cell.styles.textColor = [239, 68, 68]; // Rojo
-              data.cell.styles.fontStyle = 'bold';
+    autoTable(doc, {
+      startY: finalY,
+      head: [head],
+      body: body,
+      headStyles: { fillColor: headColor, textColor: TEXT_COLOR },
+      styles: { fontSize: 8 },
+      didParseCell: function(data) {
+        if (data.section === 'body' && data.column.index > 0) {
+          const testIndex = data.column.index - 1;
+          const test = groupTests[testIndex];
+          const val = data.cell.raw;
+          
+          if (val !== '-' && testStats[test.id]) {
+            const stats = testStats[test.id];
+            if (stats.min !== stats.max) {
+              const isBest = stats.lowerIsBetter ? (val === stats.min) : (val === stats.max);
+              const isWorst = stats.lowerIsBetter ? (val === stats.max) : (val === stats.min);
+              
+              if (isBest) {
+                data.cell.styles.textColor = [76, 175, 125];
+                data.cell.styles.fontStyle = 'bold';
+              } else if (isWorst) {
+                data.cell.styles.textColor = [239, 68, 68];
+                data.cell.styles.fontStyle = 'bold';
+              }
             }
           }
         }
       }
-    }
-  });
+    });
+    
+    finalY = doc.lastAutoTable.finalY;
+  };
 
-  const finalY = testsTable?.finalY || 100;
+  const physicalTests = tests.filter(t => t.type === 'fisico' || !t.type);
+  const psychoTests = tests.filter(t => t.type === 'psicodeportivo');
+  const socioTests = tests.filter(t => t.type === 'sociodeportivo');
+
+  renderCategoryTable(physicalTests, 'Pruebas Físicas y Técnicas', THEME_COLOR);
+  renderCategoryTable(psychoTests, 'Pruebas Psicodeportivas', ACCENT_COLOR);
+  renderCategoryTable(socioTests, 'Pruebas Sociodeportivas', ACCENT_COLOR);
+
   doc.setFontSize(10);
   doc.setTextColor(100);
+  if (finalY > doc.internal.pageSize.getHeight() - 20) {
+    doc.addPage();
+    finalY = 20;
+  }
   doc.text('* Verde: Mejor resultado en el equipo | Rojo: Resultado más bajo', 15, finalY + 10);
 
   addFooter(doc);
@@ -319,55 +347,85 @@ export const generatePlayerTestReport = async (player, tests, historyData, activ
   const introText = "Estimado padre/tutor: Este informe resume los resultados de las pruebas físicas y técnicas realizadas por el jugador. Ayuda a entender sus fortalezas y áreas de mejora.";
   doc.text(doc.splitTextToSize(introText, 180), 15, 70);
 
-  // Tabla de resultados
-  const rows = [];
-  tests.forEach(t => {
-    const pHistory = historyData[player.id]?.[t.id];
-    let latestVal = '-';
-    let prevVal = '-';
-    let evolution = '-';
-    
-    if (pHistory && pHistory.length > 0) {
-      latestVal = pHistory[pHistory.length - 1].val;
-      if (pHistory.length > 1) {
-        prevVal = pHistory[pHistory.length - 2].val;
-        const diff = latestVal - prevVal;
-        const isTime = t.unit === 'seg';
-        const improved = isTime ? diff < 0 : diff > 0;
-        
-        if (diff === 0) evolution = 'Mantenido';
-        else evolution = improved ? 'Mejora' : 'Baja';
+  const generateRows = (testsGroup, isPhysical) => {
+    const rows = [];
+    testsGroup.forEach(t => {
+      const pHistory = historyData[player.id]?.[t.id];
+      let latestVal = '-';
+      let prevVal = '-';
+      let evolution = '-';
+      
+      if (pHistory && pHistory.length > 0) {
+        latestVal = pHistory[pHistory.length - 1].val;
+        if (pHistory.length > 1) {
+          prevVal = pHistory[pHistory.length - 2].val;
+          const diff = latestVal - prevVal;
+          const isTime = t.unit === 'seg';
+          const improved = isTime ? diff < 0 : diff > 0;
+          
+          if (diff === 0) evolution = 'Mantenido';
+          else evolution = improved ? 'Mejora' : 'Baja';
+        }
       }
-    }
-    
-    // Valoración simplificada
-    let valoracion = 'Bien';
-    if (latestVal !== '-') {
-      // Simplificado para el ejemplo
-      if (evolution === 'Mejora') valoracion = 'Excelente';
-      else if (evolution === 'Baja') valoracion = 'Mejorable';
-    }
+      
+      if (isPhysical) {
+        let valoracion = 'Bien';
+        if (latestVal !== '-') {
+          if (evolution === 'Mejora') valoracion = 'Excelente';
+          else if (evolution === 'Baja') valoracion = 'Mejorable';
+        }
+        rows.push([t.name, `${latestVal} ${t.unit}`, `${prevVal !== '-' ? prevVal + ' ' + t.unit : '-'}`, evolution, valoracion]);
+      } else {
+        const interpretacion = t.interpretacion || t.desc || 'Análisis pendiente';
+        rows.push([t.name, `${latestVal} ${t.unit}`, interpretacion]);
+      }
+    });
+    return rows;
+  };
 
-    rows.push([
-      t.name,
-      `${latestVal} ${t.unit}`,
-      `${prevVal !== '-' ? prevVal + ' ' + t.unit : '-'}`,
-      evolution,
-      valoracion
-    ]);
-  });
+  const physicalRows = generateRows(tests.filter(t => t.type === 'fisico' || !t.type), true);
+  const psychoRows = generateRows(tests.filter(t => t.type === 'psicodeportivo'), false);
+  const socioRows = generateRows(tests.filter(t => t.type === 'sociodeportivo'), false);
 
   autoTable(doc, {
     startY: 85,
-    head: [['Prueba', 'Resultado Actual', 'Eval. Anterior', 'Evolución', 'Valoración']],
-    body: rows,
+    head: [['Prueba Física', 'Resultado Actual', 'Eval. Anterior', 'Evolución', 'Valoración']],
+    body: physicalRows,
     headStyles: { fillColor: [76, 175, 125], textColor: 255, fontStyle: 'bold' },
     alternateRowStyles: { fillColor: [245, 240, 232] },
     bodyStyles: { textColor: [45, 45, 45] },
     styles: { cellPadding: 4, fontSize: 10 }
   });
 
-  let finalY = doc.lastAutoTable.finalY + 15;
+  let finalY = doc.lastAutoTable.finalY + 10;
+
+  if (psychoRows.length > 0) {
+    if (finalY > doc.internal.pageSize.getHeight() - 40) { doc.addPage(); finalY = 20; }
+    autoTable(doc, {
+      startY: finalY,
+      head: [['Evaluación Psicodeportiva', 'Puntuación', 'Interpretación']],
+      body: psychoRows,
+      headStyles: { fillColor: ACCENT_COLOR, textColor: 255, fontStyle: 'bold' },
+      alternateRowStyles: { fillColor: [245, 240, 232] },
+      bodyStyles: { textColor: [45, 45, 45] },
+      styles: { cellPadding: 4, fontSize: 10 }
+    });
+    finalY = doc.lastAutoTable.finalY + 10;
+  }
+
+  if (socioRows.length > 0) {
+    if (finalY > doc.internal.pageSize.getHeight() - 40) { doc.addPage(); finalY = 20; }
+    autoTable(doc, {
+      startY: finalY,
+      head: [['Evaluación Sociodeportiva', 'Puntuación', 'Interpretación']],
+      body: socioRows,
+      headStyles: { fillColor: ACCENT_COLOR, textColor: 255, fontStyle: 'bold' },
+      alternateRowStyles: { fillColor: [245, 240, 232] },
+      bodyStyles: { textColor: [45, 45, 45] },
+      styles: { cellPadding: 4, fontSize: 10 }
+    });
+    finalY = doc.lastAutoTable.finalY + 15;
+  }
 
   if (graficaDataUrl) {
     // Asegurarse de que no nos pasamos de página con la gráfica

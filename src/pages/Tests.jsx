@@ -10,6 +10,7 @@ import RadarChart from '../components/RadarChart';
 import LegendCard from '../components/LegendCard';
 import ProgressTracker from '../components/ProgressTracker';
 import TestDetail from './TestDetail';
+import PlayerAnalyticsModal from '../components/PlayerAnalyticsModal';
 import { db } from '../firebaseConfig';
 import { collection, addDoc, getDocs, query, where, orderBy, serverTimestamp, writeBatch, doc } from 'firebase/firestore';
 import html2canvas from 'html2canvas';
@@ -121,6 +122,7 @@ const Tests = () => {
 
   // History State
   const [histSelectedPlayer, setHistSelectedPlayer] = useState(null);
+  const [analyticsPlayer, setAnalyticsPlayer] = useState(null);
 
   // Firestore Tests Loading
   const loadTests = useCallback(async () => {
@@ -412,7 +414,7 @@ const Tests = () => {
         </div>
 
         <div className="tests-tabs">
-          {['FÍSICOS', 'PSICODEPORTIVOS', 'SOCIODEPORTIVOS', 'HABILIDADES PSICOSOCIALES', 'BIENESTAR SOCIOEMOCIONAL', 'HISTORIAL POR JUGADOR', 'COMPARATIVA EQUIPO'].map(tab => (
+          {['FÍSICOS', 'PSICOSOCIALES', 'HISTORIAL POR JUGADOR', 'COMPARATIVA EQUIPO'].map(tab => (
             <button 
               key={tab} 
               className={`tests-tab ${activeTab === tab ? 'active' : ''}`}
@@ -426,7 +428,7 @@ const Tests = () => {
 
       <div className="tests-content">
         {/* --- CATÁLOGO DE TESTS --- */}
-        {['FÍSICOS', 'PSICODEPORTIVOS', 'SOCIODEPORTIVOS', 'HABILIDADES PSICOSOCIALES', 'BIENESTAR SOCIOEMOCIONAL'].includes(activeTab) && (
+        {['FÍSICOS', 'PSICOSOCIALES'].includes(activeTab) && (
           <div className="tab-bateria">
             <div className="bateria-header">
               <h3>Catálogo de Pruebas: {activeTab}</h3>
@@ -435,11 +437,10 @@ const Tests = () => {
             
             <div className="tests-grid">
               {tests.filter(t => {
-                if (activeTab === 'FÍSICOS') return t.type === 'fisico' || !t.type;
-                if (activeTab === 'PSICODEPORTIVOS') return t.type === 'psicodeportivo';
-                if (activeTab === 'SOCIODEPORTIVOS') return t.type === 'sociodeportivo';
-                if (activeTab === 'HABILIDADES PSICOSOCIALES') return t.type === 'psicosocial';
-                if (activeTab === 'BIENESTAR SOCIOEMOCIONAL') return t.type === 'socioemocional';
+                if (activeTab === 'FÍSICOS') return (t.type === 'fisico' || !t.type) && ['t1','t3','t4','t5','t6','t7','t8'].includes(t.id);
+                if (activeTab === 'PSICOSOCIALES') return [
+                  'psicodeportivo','psicosocial','sociodeportivo','socioemocional'
+                ].includes(t.type) && ['psi1','psi2','psi3','soc1','soc2','psi1_old','psi2_old','soc1_old','soc2_old'].includes(t.id);
                 return false;
               }).map(t => (
                 <div key={t.id} className="test-card clickable" onClick={() => setSelectedTestDetail(t)}>
@@ -498,6 +499,20 @@ const Tests = () => {
                   </div>
                 ))}
               </div>
+              {histSelectedPlayer && (
+                <button
+                  style={{
+                    marginTop: 16, width: '100%',
+                    background: '#1B3A2D', color: '#FFF',
+                    border: 'none', borderRadius: 8,
+                    padding: '12px 0', fontWeight: 700,
+                    fontSize: 14, cursor: 'pointer', letterSpacing: 0.5
+                  }}
+                  onClick={() => setAnalyticsPlayer(getPlayerById(histSelectedPlayer))}
+                >
+                  📊 Ver Analíticas
+                </button>
+              )}
             </div>
             <div className="hist-main">
               <div className="hist-main-header">
@@ -941,6 +956,23 @@ const Tests = () => {
               console.error(e);
               alert("Error al guardar cuestionario");
             }
+          }}
+        />
+      )}
+
+      {/* MODAL ANALÍTICAS POR JUGADOR */}
+      {analyticsPlayer && (
+        <PlayerAnalyticsModal
+          player={analyticsPlayer}
+          tests={tests}
+          historyData={historyData}
+          onClose={() => setAnalyticsPlayer(null)}
+          onExportPDF={(player) => {
+            if (!isPro) {
+              setUpgradeModal({ open: true, message: 'La exportación de informes individuales es una función PRO.' });
+              return;
+            }
+            generatePlayerTestReport(player, tests, historyData, activeTeam);
           }}
         />
       )}

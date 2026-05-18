@@ -32,15 +32,14 @@ const RadarChart = ({ data, color = 'var(--primary)', secondaryColor = 'var(--go
   return (
     <div style={{ 
       width: '100%', 
-      height, 
-      background: 'var(--bg-primary)', 
-      padding: '16px', 
-      borderRadius: '16px',
-      border: '1px solid rgba(27, 58, 45, 0.1)',
-      boxShadow: '0 4px 6px rgba(0, 0, 0, 0.05)'
+      height: '100%', 
+      minHeight: height,
+      background: 'transparent',
+      padding: '10px',
+      position: 'relative'
     }}>
       <ResponsiveContainer width="100%" height="100%">
-        <RechartsRadarChart cx="50%" cy="50%" outerRadius="75%" data={data}>
+        <RechartsRadarChart cx="50%" cy="50%" outerRadius="70%" data={data}>
           <defs>
             <linearGradient id="neonGradient" x1="0" y1="0" x2="1" y2="1">
               <stop offset="5%" stopColor={color} stopOpacity={0.8}/>
@@ -59,7 +58,7 @@ const RadarChart = ({ data, color = 'var(--primary)', secondaryColor = 'var(--go
             dataKey="subject" 
             tick={{ fill: 'var(--text-primary)', fontSize: 11, fontFamily: 'var(--font-body)', fontWeight: 'bold' }} 
           />
-          <PolarRadiusAxis angle={30} domain={[0, 'dataMax']} tick={false} axisLine={false} />
+          <PolarRadiusAxis angle={30} domain={[0, 100]} tick={false} axisLine={false} />
           
           <Radar 
             name="Evaluación" 

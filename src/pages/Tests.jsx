@@ -513,7 +513,7 @@ const Tests = () => {
 
                         {/* RADAR CHART EN ESPACIO VACÍO A LA DERECHA */}
                         {gamingVisualsV1 ? (
-                          <div style={{ height: '350px', background: 'var(--bg-primary)', borderRadius: '12px', border: '1px solid var(--border-color)' }}>
+                          <div style={{ height: '350px', background: 'var(--bg-primary)', borderRadius: '12px', border: '1px solid var(--border-color)', minWidth: 0, position: 'relative' }}>
                             {testCount > 0 ? (
                               <RadarChart data={radarData} />
                             ) : (
@@ -574,7 +574,7 @@ const Tests = () => {
                         <div style={{ marginTop: '15px' }}>
                           <div style={{ width: '100%', height: '8px', background: 'rgba(27, 58, 45, 0.1)', borderRadius: '4px', overflow: 'hidden' }}>
                             <div style={{ 
-                              width: `${Math.min(100, (last / max) * 100)}%`, 
+                              width: `${max > 0 ? Math.min(100, (last / max) * 100) : 0}%`, 
                               height: '100%', 
                               background: 'var(--gold)', 
                               transition: 'width 1s ease-out' 

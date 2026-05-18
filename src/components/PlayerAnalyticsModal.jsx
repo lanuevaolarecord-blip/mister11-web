@@ -1,8 +1,7 @@
 import React, { useRef } from 'react';
-import {
-  LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer
-} from 'recharts';
 import html2canvas from 'html2canvas';
+import { jsPDF } from 'jspdf';
+import { SvgLineChart } from './GraficasTest';
 
 // ── Colores institucionales ──────────────────────────────────────────────────
 const C_DARK    = '#1B3A2D';
@@ -60,25 +59,36 @@ export const SvgRadar = ({ data, size = 320 }) => {
   });
   const polyStr = dataPoints.map(p => `${p.x},${p.y}`).join(' ');
 
-  // Labels
+  // Labels around the radar
   const labels = data.map((d, i) => {
-    const a  = angleOf(i);
-    const labelR = r + 28;
-    const x = cx + labelR * Math.cos(a);
-    const y = cy + labelR * Math.sin(a);
+    const a = angleOf(i);
+    const labelR = r + 24;
+    const lx = cx + labelR * Math.cos(a);
+    const ly = cy + labelR * Math.sin(a);
+
+    let textAnchor = 'middle';
+    if (Math.cos(a) > 0.1) textAnchor = 'start';
+    else if (Math.cos(a) < -0.1) textAnchor = 'end';
+
     return (
-      <g key={i}>
+      <g key={d.subject}>
         <text
-          x={x} y={y - 6}
-          textAnchor="middle" dominantBaseline="middle"
-          fontSize={12} fontWeight="bold" fill={C_DARK}
+          x={lx}
+          y={ly}
+          textAnchor={textAnchor}
+          dominantBaseline="middle"
+          fill={C_DARK}
+          style={{ fontSize: 12, fontWeight: 800, fontFamily: 'Outfit, sans-serif' }}
         >
           {d.subject}
         </text>
         <text
-          x={x} y={y + 9}
-          textAnchor="middle" dominantBaseline="middle"
-          fontSize={11} fill={C_GOLD} fontWeight="700"
+          x={lx}
+          y={ly + 12}
+          textAnchor={textAnchor}
+          dominantBaseline="middle"
+          fill="#7A7065"
+          style={{ fontSize: 10, fontWeight: 500, fontFamily: 'Outfit, sans-serif' }}
         >
           {d.value || 0}
         </text>
@@ -110,49 +120,16 @@ export const SvgRadar = ({ data, size = 320 }) => {
   );
 };
 
-// ── Gráfica de evolución (línea) ──────────────────────────────────────────────
-const MiniLineChart = ({ data, isTime }) => {
-  if (!data || data.length === 0) return null;
 
-  if (data.length === 1) {
-    const e = data[0];
-    const date = (e.date || '').split('-').reverse().slice(0, 2).join('/');
-    return (
-      <div style={{
-        height: 160, background: C_BEIGE, borderRadius: 10,
-        display: 'flex', flexDirection: 'column',
-        alignItems: 'center', justifyContent: 'center', gap: 6
-      }}>
-        <span style={{ fontSize: 36, fontWeight: 800, color: C_DARK }}>{e.val}</span>
-        <span style={{ fontSize: 12, color: '#7A7065' }}>Primera evaluación · {date}</span>
-      </div>
-    );
-  }
+// ── Mini Line Chart — wrapper de SvgLineChart (sin ResponsiveContainer) ──────
+const MiniLineChart = ({ data, isTime }) => (
+  <SvgLineChart data={data} isTime={isTime} height={152} />
+);
 
-  return (
-    <div style={{ width: '100%', minWidth: 0, height: 160, background: C_BEIGE, borderRadius: 10, overflow: 'hidden', padding: '4px 0' }}>
-      <ResponsiveContainer width="100%" height={152}>
-        <LineChart data={data} margin={{ top: 6, right: 10, left: -24, bottom: 0 }}>
-          <CartesianGrid strokeDasharray="3 3" stroke={C_BORDER} />
-          <XAxis dataKey="date" fontSize={10} stroke={C_TEXT}
-            tickFormatter={t => t.split('-').reverse().slice(0, 2).join('/')} />
-          <YAxis fontSize={10} stroke={C_TEXT}
-            domain={['dataMin - 1', 'dataMax + 1']} reversed={isTime} />
-          <Tooltip
-            contentStyle={{ background: C_DARK, color: '#FFF', borderRadius: 8, border: 'none', fontSize: 12 }}
-            itemStyle={{ color: C_GOLD }}
-          />
-          <Line type="monotone" dataKey="val" stroke={C_GREEN} strokeWidth={2.5}
-            dot={{ r: 4, fill: C_DARK, stroke: C_GOLD, strokeWidth: 2 }}
-            activeDot={{ r: 6 }} />
-        </LineChart>
-      </ResponsiveContainer>
-    </div>
-  );
-};
+
 
 // ── Modal principal ──────────────────────────────────────────────────────────
-const PlayerAnalyticsModal = ({ player, tests, historyData, onClose, onExportPDF }) => {
+const PlayerAnalyticsModal = ({ player, tests, historyData, onClose, onExportPDF, onDeleteLastEval, onDeleteAllEvals }) => {
   const contentRef = useRef(null);
 
   if (!player) return null;
@@ -172,6 +149,7 @@ const PlayerAnalyticsModal = ({ player, tests, historyData, onClose, onExportPDF
     else if (t.unit === 'nivel') norm = Math.min(100, val * 10);
     else if (t.unit === 'm')     norm = Math.min(100, val / 28);
     else                         norm = Math.min(100, val * 4);
+
 
     if (t.type === 'fisico' && t.category !== 'Técnica') { fis += norm; countFis++; }
     if (t.type === 'fisico' && t.category === 'Técnica') { tec += norm; countTec++; }
@@ -198,8 +176,37 @@ const PlayerAnalyticsModal = ({ player, tests, historyData, onClose, onExportPDF
   const testsWithData = tests.filter(t => (historyData[player.id]?.[t.id] || []).length > 0);
 
   const handleExport = async () => {
-    if (onExportPDF) {
-      onExportPDF(player);
+    if (!contentRef.current) return;
+    try {
+      // Hide the buttons during capture
+      const exportBtn = contentRef.current.querySelector('button');
+      const closeBtn = contentRef.current.querySelectorAll('button')[1];
+      const deleteButtons = contentRef.current.querySelectorAll('.delete-actions');
+      
+      if (exportBtn) exportBtn.style.display = 'none';
+      if (closeBtn) closeBtn.style.display = 'none';
+      deleteButtons.forEach(btn => { btn.style.display = 'none'; });
+
+      const canvas = await html2canvas(contentRef.current, { 
+        scale: 2,
+        useCORS: true,
+        backgroundColor: '#FAFAF7'
+      });
+
+      if (exportBtn) exportBtn.style.display = 'block';
+      if (closeBtn) closeBtn.style.display = 'block';
+      deleteButtons.forEach(btn => { btn.style.display = 'flex'; });
+
+      const imgData = canvas.toDataURL('image/png');
+      const doc = new jsPDF('p', 'mm', 'a4');
+      const pdfWidth = doc.internal.pageSize.getWidth();
+      const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+      
+      doc.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+      doc.save(`Informe_Tests_${player.name.replace(/\s+/g, '_')}.pdf`);
+    } catch (e) {
+      console.error("Error generating pdf:", e);
+      alert('Error al exportar PDF');
     }
   };
 
@@ -403,6 +410,34 @@ const PlayerAnalyticsModal = ({ player, tests, historyData, onClose, onExportPDF
                             background: C_GOLD, borderRadius: 3
                           }} />
                         </div>
+                      </div>
+
+                      {/* Delete Actions */}
+                      <div className="delete-actions" style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        marginTop: 12,
+                        paddingTop: 10,
+                        borderTop: `1px solid ${C_BORDER}`
+                      }}>
+                        <button
+                          onClick={() => onDeleteLastEval?.(player.id, t.id)}
+                          style={{
+                            background: 'none', border: 'none', color: '#C62828',
+                            fontSize: 11, cursor: 'pointer', fontWeight: 600, padding: 0
+                          }}
+                        >
+                          🗑️ Eliminar último
+                        </button>
+                        <button
+                          onClick={() => onDeleteAllEvals?.(player.id, t.id)}
+                          style={{
+                            background: 'none', border: 'none', color: '#C62828',
+                            fontSize: 11, cursor: 'pointer', fontWeight: 600, padding: 0, opacity: 0.8
+                          }}
+                        >
+                          💥 Eliminar todos
+                        </button>
                       </div>
                     </div>
                   );

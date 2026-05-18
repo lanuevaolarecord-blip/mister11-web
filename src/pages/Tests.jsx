@@ -12,7 +12,7 @@ import ProgressTracker from '../components/ProgressTracker';
 import TestDetail from './TestDetail';
 import PlayerAnalyticsModal, { SvgRadar } from '../components/PlayerAnalyticsModal';
 import { db } from '../firebaseConfig';
-import { collection, addDoc, getDocs, query, where, orderBy, serverTimestamp, writeBatch, doc } from 'firebase/firestore';
+import { collection, addDoc, getDocs, query, where, orderBy, serverTimestamp, writeBatch, doc, deleteDoc } from 'firebase/firestore';
 import html2canvas from 'html2canvas';
 import './Tests.css';
 
@@ -182,7 +182,7 @@ const Tests = () => {
         if (!newHistory[jugadorId]) newHistory[jugadorId] = {};
         if (!newHistory[jugadorId][testId]) newHistory[jugadorId][testId] = [];
         
-        newHistory[jugadorId][testId].push({ date, val: Number(val) });
+        newHistory[jugadorId][testId].push({ id: doc.id, date, val: Number(val) });
       });
       
       setHistoryData(newHistory);
@@ -243,6 +243,50 @@ const Tests = () => {
       alert("Error al guardar los resultados.");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleDeleteLastEval = async (jugadorId, testId) => {
+    if (!user || !activeTeamId) return;
+    const history = historyData[jugadorId]?.[testId];
+    if (!history || history.length === 0) return;
+    
+    const confirmDelete = window.confirm('¿Estás seguro de que deseas eliminar el último dato agregado para este test?');
+    if (!confirmDelete) return;
+
+    try {
+      const lastEval = history[history.length - 1];
+      if (lastEval.id) {
+        await deleteDoc(doc(db, `users/${user.uid}/teams/${activeTeamId}/evaluaciones`, lastEval.id));
+        await loadEvaluations();
+      }
+    } catch (error) {
+      console.error("Error deleting last eval:", error);
+      alert("Error al eliminar el dato.");
+    }
+  };
+
+  const handleDeleteAllEvals = async (jugadorId, testId) => {
+    if (!user || !activeTeamId) return;
+    const history = historyData[jugadorId]?.[testId];
+    if (!history || history.length === 0) return;
+
+    const confirmDelete = window.confirm('¿Estás seguro de que deseas eliminar TODOS los datos históricos de este test para este jugador?');
+    if (!confirmDelete) return;
+
+    try {
+      const batch = writeBatch(db);
+      history.forEach(item => {
+        if (item.id) {
+          const evalRef = doc(db, `users/${user.uid}/teams/${activeTeamId}/evaluaciones`, item.id);
+          batch.delete(evalRef);
+        }
+      });
+      await batch.commit();
+      await loadEvaluations();
+    } catch (error) {
+      console.error("Error deleting all evals:", error);
+      alert("Error al eliminar los datos.");
     }
   };
 

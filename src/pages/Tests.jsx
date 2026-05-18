@@ -539,112 +539,109 @@ const Tests = () => {
                 </button>
               </div>
               
-              <div id="grafica-rendimiento-jugador" style={{ marginBottom: '24px' }}>
-                <h4 style={{ color: 'var(--text-primary)', marginBottom: '12px', fontFamily: 'var(--font-title)' }}>M11 Player Analytics</h4>
-                <div style={{ display: 'grid', gridTemplateColumns: 'minmax(260px, auto) 1fr', gap: '30px', alignItems: 'center' }}>
-                  
-                  {/* LEGENDA CARD */}
-                  {(() => {
-                    const player = getPlayerById(histSelectedPlayer);
-                    // Basic mock calculation for player attributes based on their data
-                    // If no data, use some defaults or placeholder
-                    let fis = 0, tec = 0, psi = 0, soc = 0, testCount = 0;
-                    
-                    tests.forEach(t => {
-                      const h = historyData[histSelectedPlayer]?.[t.id] || [];
-                      if (h.length > 0) {
-                        testCount++;
-                        let val = parseFloat(String(h[h.length - 1].val).replace(',', '.')) || 0;
-                        let norm = val;
-                        if (t.unit === 'seg') norm = Math.max(0, 100 - (val * 5));
-                        else if (t.unit === 'cm') norm = Math.min(100, val * 2);
-                        else if (t.unit === 'nivel') norm = Math.min(100, val * 8);
-                        else norm = Math.min(100, val);
+              {/* M11 PLAYER ANALYTICS — cálculo previo al JSX */}
+              {(() => {
+                const player = getPlayerById(histSelectedPlayer);
+                let fis = 0, tec = 0, psi = 0, soc = 0, testCount = 0;
+                let countFis = 0, countTec = 0, countPsi = 0, countSoc = 0;
 
-                        if (t.type === 'fisico' && t.category !== 'Técnica') fis += norm;
-                        if (t.type === 'fisico' && t.category === 'Técnica') tec += norm;
-                        if (t.type === 'psicodeportivo' || t.type === 'psicosocial') psi += norm;
-                        if (t.type === 'sociodeportivo' || t.type === 'socioemocional') soc += norm;
-                      }
-                    });
+                tests.forEach(t => {
+                  const h = historyData[histSelectedPlayer]?.[t.id] || [];
+                  if (h.length > 0) {
+                    testCount++;
+                    let val = parseFloat(String(h[h.length - 1].val).replace(',', '.')) || 0;
+                    let norm = val;
+                    if (t.unit === 'seg')   norm = Math.max(0, 100 - (val * 5));
+                    else if (t.unit === 'cm')    norm = Math.min(100, val * 2);
+                    else if (t.unit === 'nivel') norm = Math.min(100, val * 8);
+                    else norm = Math.min(100, val);
 
-                    // For the "Juan" demo, if it's the exact Juan player we can use the requested numbers
-                    if (player?.name?.toLowerCase().includes('juan') && fis===0) {
-                      fis=88; tec=82; psi=79; soc=85; testCount=4;
-                    } else if (testCount > 0) {
-                       fis = Math.min(99, Math.round(fis / (tests.filter(t=>t.type==='fisico'&&t.category!=='Técnica').length || 1)));
-                       tec = Math.min(99, Math.round(tec / (tests.filter(t=>t.category==='Técnica').length || 1)));
-                       psi = Math.min(99, Math.round(psi / (tests.filter(t=>t.type==='psicodeportivo'||t.type==='psicosocial').length || 1)));
-                       soc = Math.min(99, Math.round(soc / (tests.filter(t=>t.type==='sociodeportivo'||t.type==='socioemocional').length || 1)));
-                    }
+                    if (t.type === 'fisico' && t.category !== 'Técnica') { fis += norm; countFis++; }
+                    if (t.type === 'fisico' && t.category === 'Técnica')  { tec += norm; countTec++; }
+                    if (t.type === 'psicodeportivo' || t.type === 'psicosocial')   { psi += norm; countPsi++; }
+                    if (t.type === 'sociodeportivo' || t.type === 'socioemocional') { soc += norm; countSoc++; }
+                  }
+                });
 
-                    const overall = testCount > 0 ? Math.round((fis + tec + psi + soc) / 4) : 0;
-                    const stats = [
-                      { label: 'FÍS', value: fis || '-' },
-                      { label: 'TÉC', value: tec || '-' },
-                      { label: 'PSI', value: psi || '-' },
-                      { label: 'SOC', value: soc || '-' }
-                    ];
+                if (player?.name?.toLowerCase().includes('juan') && fis === 0) {
+                  fis = 88; tec = 82; psi = 79; soc = 85; testCount = 4;
+                  countFis = 1; countTec = 1; countPsi = 1; countSoc = 1;
+                } else if (testCount > 0) {
+                  fis = countFis > 0 ? Math.min(99, Math.round(fis / countFis)) : 0;
+                  tec = countTec > 0 ? Math.min(99, Math.round(tec / countTec)) : 0;
+                  psi = countPsi > 0 ? Math.min(99, Math.round(psi / countPsi)) : 0;
+                  soc = countSoc > 0 ? Math.min(99, Math.round(soc / countSoc)) : 0;
+                }
 
-                    const radarData = [
-                      { subject: 'FÍS', value: fis },
-                      { subject: 'TÉC', value: tec },
-                      { subject: 'PSI', value: psi },
-                      { subject: 'SOC', value: soc }
-                    ];
+                const overall = testCount > 0 ? Math.round((fis + tec + psi + soc) / 4) : 0;
+                const stats = [
+                  { label: 'FÍS', value: fis || '-' },
+                  { label: 'TÉC', value: tec || '-' },
+                  { label: 'PSI', value: psi || '-' },
+                  { label: 'SOC', value: soc || '-' }
+                ];
+                const radarData = [
+                  { subject: 'FÍS', value: fis },
+                  { subject: 'TÉC', value: tec },
+                  { subject: 'PSI', value: psi },
+                  { subject: 'SOC', value: soc }
+                ];
 
-                    return (
-                      <>
-                        <LegendCard 
-                          player={player}
-                          overall={overall || '-'}
-                          position="POS"
-                          streak={testCount}
-                          type="elite"
-                          stats={stats}
-                        />
+                return (
+                  <div id="grafica-rendimiento-jugador" style={{ display: 'flex', gap: 24, alignItems: 'stretch', marginBottom: 24 }}>
+                    {/* LEGEND CARD */}
+                    <div style={{ flexShrink: 0 }}>
+                      <LegendCard
+                        player={player}
+                        overall={overall || '-'}
+                        position="POS"
+                        streak={testCount}
+                        type="elite"
+                        stats={stats}
+                      />
+                    </div>
 
-                        {/* RADAR CHART — SVG puro, siempre visible */}
-                        <div style={{
-                          background: '#F5F0E8',
-                          borderRadius: '16px',
-                          padding: '20px',
-                          display: 'flex',
-                          flexDirection: 'column',
-                          alignItems: 'center',
-                          gap: '12px',
-                          minWidth: 0
-                        }}>
-                          <span style={{ fontSize: '12px', fontWeight: 700, letterSpacing: 1, color: '#1B3A2D' }}>PERFIL DE RENDIMIENTO</span>
-                          {testCount > 0 ? (
-                            <SvgRadar data={radarData} size={280} />
-                          ) : (
-                            <div style={{
-                              width: 280, height: 280,
-                              display: 'flex', alignItems: 'center', justifyContent: 'center',
-                              flexDirection: 'column', gap: 8
-                            }}>
-                              <span style={{ fontSize: 40 }}>📊</span>
-                              <span style={{ fontSize: 13, color: '#7A7065', textAlign: 'center' }}>Sin evaluaciones.<br/>Usa "🎯 Datos Demo" para ver el radar.</span>
-                            </div>
-                          )}
-                          <button
-                            style={{
-                              background: '#1B3A2D', color: '#FFF',
-                              border: 'none', borderRadius: 8,
-                              padding: '10px 20px', fontWeight: 700,
-                              fontSize: 13, cursor: 'pointer', width: '100%'
-                            }}
-                            onClick={() => setAnalyticsPlayer(getPlayerById(histSelectedPlayer))}
-                          >
-                            📈 Ver Analíticas Completas
-                          </button>
+                    {/* SVG RADAR — siempre visible */}
+                    <div style={{
+                      flex: 1,
+                      background: '#F5F0E8',
+                      borderRadius: 16,
+                      padding: '20px 24px',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: 12,
+                      minHeight: 360,
+                      minWidth: 0
+                    }}>
+                      <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: 2, color: '#1B3A2D' }}>
+                        PERFIL DE RENDIMIENTO
+                      </span>
+                      {testCount > 0 ? (
+                        <SvgRadar data={radarData} size={270} />
+                      ) : (
+                        <div style={{ textAlign: 'center', color: '#7A7065' }}>
+                          <div style={{ fontSize: 48 }}>📊</div>
+                          <p style={{ fontSize: 14, marginTop: 8 }}>Sin evaluaciones.<br />Usa "🎯 Datos Demo" para ver el radar.</p>
                         </div>
-                      </>
-                    );
-                  })()}
-                </div>
-              </div>
+                      )}
+                      <button
+                        style={{
+                          background: '#1B3A2D', color: '#FFF',
+                          border: 'none', borderRadius: 8,
+                          padding: '10px 24px', fontWeight: 700,
+                          fontSize: 13, cursor: 'pointer'
+                        }}
+                        onClick={() => setAnalyticsPlayer(getPlayerById(histSelectedPlayer))}
+                      >
+                        📈 Ver Analíticas Completas
+                      </button>
+                    </div>
+                  </div>
+                );
+              })()}
+
               <div className="hist-charts-grid">
                 {tests.filter(t => (historyData[histSelectedPlayer]?.[t.id] || []).length > 0).length === 0 ? (
                   <div style={{ padding: '40px', textAlign: 'center', background: 'var(--bg-secondary)', borderRadius: '12px', gridColumn: '1 / -1' }}>

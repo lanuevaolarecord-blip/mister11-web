@@ -130,8 +130,8 @@ const MiniLineChart = ({ data, isTime }) => {
   }
 
   return (
-    <div style={{ width: '100%', height: 160, background: C_BEIGE, borderRadius: 10, padding: '8px 4px' }}>
-      <ResponsiveContainer width="100%" height="100%">
+    <div style={{ width: '100%', minWidth: 0, height: 160, background: C_BEIGE, borderRadius: 10, overflow: 'hidden', padding: '4px 0' }}>
+      <ResponsiveContainer width="100%" height={152}>
         <LineChart data={data} margin={{ top: 6, right: 10, left: -24, bottom: 0 }}>
           <CartesianGrid strokeDasharray="3 3" stroke={C_BORDER} />
           <XAxis dataKey="date" fontSize={10} stroke={C_TEXT}

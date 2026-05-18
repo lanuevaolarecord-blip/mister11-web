@@ -300,6 +300,76 @@ const Tests = () => {
     URL.revokeObjectURL(url);
   };
 
+  // ─── SEED DEMO DATA ───────────────────────────────────────────────────────
+  const seedDemoEvaluations = async () => {
+    if (!user || !activeTeamId || players.length === 0) {
+      alert('No hay jugadores en el equipo. Añade jugadores primero.');
+      return;
+    }
+    if (!window.confirm(`¿Insertar evaluaciones de demostración para ${players.length} jugador(es)?\nEsto añadirá datos ficticios para visualizar las gráficas.`)) return;
+
+    setLoading(true);
+    try {
+      const batch = writeBatch(db);
+      const baseDate = new Date();
+
+      // 5 fechas escalonadas (últimas 10 semanas)
+      const dates = [10, 8, 6, 3, 0].map(weeksAgo => {
+        const d = new Date(baseDate);
+        d.setDate(d.getDate() - weeksAgo * 7);
+        return d.toISOString().split('T')[0];
+      });
+
+      // Perfil de valores base por jugador (variación aleatoria realista)
+      const demoValues = {
+        t1:       [1900, 2050, 2120, 2200, 2280],  // Cooper (m) — mejora
+        t2:       [7,    8,    9,    9,    10],     // Course Navette (nivel)
+        t3:       [1.82, 1.78, 1.75, 1.73, 1.70],  // Sprint 10m (seg) — baja = mejora
+        t4:       [4.45, 4.30, 4.20, 4.12, 4.05],  // Sprint 30m (seg)
+        t5:       [11.2, 10.9, 10.6, 10.5, 10.3],  // T-Test (seg)
+        t6:       [28,   31,   33,   35,   37],     // Salto CMJ (cm)
+        t7:       [9.8,  9.4,  9.1,  8.9,  8.6],   // Conducción conos (seg)
+        t8:       [5,    6,    7,    7,    8],       // Pase a portería (pts)
+        psi1:     [18,   20,   22,   23,   25],     // Autoconfianza
+        psi2:     [35,   38,   40,   42,   44],     // CSAI
+        soc1_old: [90,   95,   100,  105,  108],    // GEQ Cohesión
+        soc2_old: [28,   30,   32,   33,   35],     // Fair Play
+      };
+
+      players.forEach((player, pIdx) => {
+        // Variación por jugador (±15%) para que cada uno sea diferente
+        const variation = 1 + (pIdx % 3 - 1) * 0.10;
+
+        Object.entries(demoValues).forEach(([testId, vals]) => {
+          const testDef = tests.find(t => t.id === testId);
+          vals.forEach((baseVal, i) => {
+            const adjustedVal = testDef?.unit === 'seg'
+              ? parseFloat((baseVal * (2 - variation + Math.random() * 0.04)).toFixed(2))
+              : Math.round(baseVal * variation + (Math.random() * 4 - 2));
+
+            const evalRef = doc(collection(db, `users/${user.uid}/teams/${activeTeamId}/evaluaciones`));
+            batch.set(evalRef, {
+              jugadorId: player.id,
+              testId,
+              val: adjustedVal,
+              date: dates[i],
+              timestamp: { seconds: Math.floor(Date.now() / 1000) - (10 - i) * 604800, nanoseconds: 0 }
+            });
+          });
+        });
+      });
+
+      await batch.commit();
+      alert(`✅ Datos demo insertados para ${players.length} jugador(es). Recargando...`);
+      loadEvaluations();
+    } catch (err) {
+      console.error('Error seeding demo data:', err);
+      alert('Error al insertar datos de demostración.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // Heatmap logic
   const getHeatmapColor = (val, min, max, isTime) => {
     // isTime means lower is better (green). Higher is worse (red).
@@ -318,6 +388,14 @@ const Tests = () => {
         <div className="header-top">
           <h1>EVALUACIÓN Y TESTS</h1>
           <div className="header-actions">
+            <button
+              className="btn-outline"
+              onClick={seedDemoEvaluations}
+              disabled={loading}
+              title="Inserta evaluaciones ficticias para ver cómo funcionan las gráficas"
+            >
+              🎯 Datos Demo
+            </button>
             <button 
               className="btn-outline" 
               onClick={() => {

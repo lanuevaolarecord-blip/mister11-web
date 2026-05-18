@@ -13,8 +13,31 @@ const COLOR_TEXT = '#2D2D2D';
 export const GraficaEvolucion = ({ data, isTime }) => {
   if (!data || data.length === 0) return null;
 
+  // Single data point: Recharts can't draw a visible line — show a stat card
+  if (data.length === 1) {
+    const entry = data[0];
+    const displayDate = (entry.date || '').split('-').reverse().slice(0, 2).join('/');
+    return (
+      <div style={{
+        width: '100%', height: 220, background: '#F5F0E8', borderRadius: '12px',
+        display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '8px'
+      }}>
+        <div style={{ fontSize: '42px', fontWeight: '800', color: COLOR_PRIMARY, lineHeight: 1 }}>
+          {entry.val}
+        </div>
+        <div style={{ fontSize: '13px', color: '#7A7065' }}>Primera evaluación · {displayDate}</div>
+        <div style={{
+          marginTop: '8px', padding: '4px 12px', borderRadius: '20px',
+          background: COLOR_ACCENT, color: '#FFF', fontSize: '11px', fontWeight: '600'
+        }}>
+          Registra más resultados para ver la evolución
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div style={{ width: '100%', height: 250, background: '#F5F0E8', padding: '16px', borderRadius: '12px' }}>
+    <div style={{ width: '100%', height: 220, background: '#F5F0E8', padding: '16px', borderRadius: '12px' }}>
       <ResponsiveContainer width="100%" height="100%">
         <LineChart data={data} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
           <CartesianGrid strokeDasharray="3 3" stroke="#E0DACA" />
@@ -29,8 +52,8 @@ export const GraficaEvolucion = ({ data, isTime }) => {
             dataKey="val" 
             stroke={COLOR_GREEN} 
             strokeWidth={3}
-            dot={{ r: 4, fill: COLOR_PRIMARY, strokeWidth: 2, stroke: COLOR_ACCENT }}
-            activeDot={{ r: 6 }}
+            dot={{ r: 5, fill: COLOR_PRIMARY, strokeWidth: 2, stroke: COLOR_ACCENT }}
+            activeDot={{ r: 7 }}
           />
         </LineChart>
       </ResponsiveContainer>

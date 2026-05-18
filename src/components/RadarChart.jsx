@@ -8,16 +8,16 @@ const CustomTooltip = ({ active, payload }) => {
   if (active && payload && payload.length) {
     return (
       <div style={{
-        background: 'var(--bg-card)',
-        border: '1px solid var(--border-color)',
+        background: '#1B3A2D',
+        border: '1px solid #D4A843',
         borderRadius: '8px',
         padding: '10px 15px',
-        color: 'var(--text-primary)',
+        color: '#FFF',
         fontFamily: 'var(--font-body)',
-        boxShadow: '0 4px 6px rgba(0,0,0,0.1)'
+        boxShadow: '0 4px 6px rgba(0,0,0,0.15)'
       }}>
-        <p style={{ margin: 0, color: 'var(--primary)', fontWeight: 'bold' }}>{payload[0].payload.subject}</p>
-        <p style={{ margin: 0, fontSize: '1.2rem', color: 'var(--text-primary)' }}>
+        <p style={{ margin: 0, color: '#D4A843', fontWeight: 'bold', fontSize: '13px' }}>{payload[0].payload.subject}</p>
+        <p style={{ margin: 0, fontSize: '1.4rem', color: '#FFF', fontWeight: '800' }}>
           {payload[0].value}
         </p>
       </div>
@@ -26,35 +26,35 @@ const CustomTooltip = ({ active, payload }) => {
   return null;
 };
 
-const RadarChart = ({ data, color = 'var(--primary)', secondaryColor = 'var(--gold)', height = 300 }) => {
+const RadarChart = ({ data, height = 300 }) => {
   if (!data || data.length === 0) return null;
+  // Filter out zero-value subjects for cleaner radar display, but keep at least one
+  const hasAnyValue = data.some(d => d.value > 0);
 
   return (
     <div style={{ 
       width: '100%', 
-      height: '100%', 
-      minHeight: height,
+      height: `${height}px`,
       background: 'transparent',
       padding: '10px',
-      position: 'relative'
     }}>
-      <ResponsiveContainer width="100%" height="100%">
+      <ResponsiveContainer width="100%" height={height}>
         <RechartsRadarChart cx="50%" cy="50%" outerRadius="70%" data={data}>
-          <PolarGrid stroke="rgba(27, 58, 45, 0.2)" strokeDasharray="3 3" />
+          <PolarGrid stroke="rgba(27, 58, 45, 0.25)" strokeDasharray="3 3" />
           <PolarAngleAxis 
             dataKey="subject" 
-            tick={{ fill: 'var(--text-primary)', fontSize: 11, fontFamily: 'var(--font-body)', fontWeight: 'bold' }} 
+            tick={{ fill: '#1B3A2D', fontSize: 12, fontWeight: 'bold' }} 
           />
           <PolarRadiusAxis angle={30} domain={[0, 100]} tick={false} axisLine={false} />
           
           <Radar 
             name="Evaluación" 
             dataKey="value" 
-            stroke={secondaryColor} 
+            stroke="#D4A843" 
             strokeWidth={3}
-            fill={color} 
-            fillOpacity={0.4} 
-            activeDot={{ r: 6, fill: secondaryColor, stroke: 'var(--white)', strokeWidth: 2 }}
+            fill="#1B3A2D"
+            fillOpacity={hasAnyValue ? 0.4 : 0}
+            dot={{ r: 4, fill: '#D4A843', strokeWidth: 2, stroke: '#FFF' }}
           />
           
           <Tooltip content={<CustomTooltip />} />
@@ -65,3 +65,4 @@ const RadarChart = ({ data, color = 'var(--primary)', secondaryColor = 'var(--go
 };
 
 export default RadarChart;
+

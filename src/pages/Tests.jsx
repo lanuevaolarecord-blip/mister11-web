@@ -85,7 +85,17 @@ const DEFAULT_TESTS = [
     { id: 'q1', text: 'Busco soluciones en las que todos ganen.', dimension: 'Negociación' },
     { id: 'q2', text: 'Ayudo a resolver peleas entre compañeros.', dimension: 'Mediación' },
     { id: 'q3', text: 'Estoy dispuesto a ceder para llegar a un acuerdo.', dimension: 'Acuerdo' }
-  ] }
+  ] },
+
+  // Nuevos Tests Añadidos (Psicodeportivos)
+  { id: 'psi_acsi28', type: 'psicodeportivo', category: 'Afrontamiento', name: 'ACSI-28 (Habilidades de Afrontamiento)', unit: 'pts', desc: 'Evalúa cómo maneja la presión, se concentra y se comunica.', protocol: '28 preguntas. Escala 1-4.', rangoMin: 28, rangoMax: 112, isQuestionnaire: true, questions: Array.from({length: 28}, (_, i) => ({id: `q${i+1}`, text: `Pregunta ${i+1}`, dimension: ['Afrontamiento adversidad', 'Entrenabilidad', 'Concentración', 'Confianza', 'Motivación', 'Comunicación con entrenador', 'Afrontamiento de fallos'][i%7]})) },
+  { id: 'psi_ires', type: 'psicodeportivo', category: 'Resiliencia', name: 'IRES (Resiliencia en el Deporte)', unit: 'pts', desc: 'Capacidad de recuperarse de reveses.', protocol: '19 preguntas. Escala 1-4.', rangoMin: 19, rangoMax: 76, isQuestionnaire: true, questions: Array.from({length: 19}, (_, i) => ({id: `q${i+1}`, text: `Pregunta ${i+1}`, dimension: ['Confianza y Determinación', 'Apoyo y Orientación', 'Afrontamiento Activo', 'Persistencia'][i%4]})) },
+  { id: 'psi_gets', type: 'psicodeportivo', category: 'Trabajo en Equipo', name: 'GETS (Trabajo en Equipo para Jóvenes)', unit: 'pts', desc: 'Habilidad para colaborar y comunicarse.', protocol: '10 preguntas. Escala 1-5.', rangoMin: 10, rangoMax: 50, isQuestionnaire: true, questions: Array.from({length: 10}, (_, i) => ({id: `q${i+1}`, text: `Pregunta ${i+1}`, dimension: ['Sinergia', 'Apoyo', 'Colaboración', 'Comunicación Efectiva'][i%4]})) },
+
+  // Nuevos Tests Añadidos (Sociodeportivos)
+  { id: 'soc_cwms', type: 'sociodeportivo', category: 'Bienestar', name: 'CWMS (Bienestar Mental)', unit: 'pts', desc: 'Bienestar emocional, psicológico y social.', protocol: '14 preguntas. Escala 1-5.', rangoMin: 14, rangoMax: 70, isQuestionnaire: true, questions: Array.from({length: 14}, (_, i) => ({id: `q${i+1}`, text: `Pregunta ${i+1}`, dimension: ['Bienestar Psicológico', 'Bienestar Social', 'Bienestar Emocional'][i%3]})) },
+  { id: 'soc_eced', type: 'sociodeportivo', category: 'Cohesión', name: 'ECED (Cohesión en Equipos)', unit: 'pts', desc: 'Cohesión de tarea y social.', protocol: '12 preguntas. Escala 1-7.', rangoMin: 12, rangoMax: 84, isQuestionnaire: true, questions: Array.from({length: 12}, (_, i) => ({id: `q${i+1}`, text: `Pregunta ${i+1}`, dimension: ['Integración social', 'Integración de tarea', 'Atracción por el equipo'][i%3]})) },
+  { id: 'soc_edl', type: 'sociodeportivo', category: 'Convivencia', name: 'EDL (Deporte Limpio)', unit: 'pts', desc: 'Conductas antideportivas y presión por ganar.', protocol: '10 preguntas. Escala 1-4.', rangoMin: 10, rangoMax: 40, isQuestionnaire: true, questions: Array.from({length: 10}, (_, i) => ({id: `q${i+1}`, text: `Pregunta ${i+1}`, dimension: ['Transgresión de normas', 'Presión externa'][i%2]})) }
 ];
 
 const Tests = () => {
@@ -249,6 +259,43 @@ const Tests = () => {
     }
   };
 
+  const descargarPlantilla = (test, players) => {
+    let contenido = `"${test.name}" - Plantilla de registro\n`;
+    contenido += `Instrucciones: ${test.protocol || test.desc}\n`;
+    contenido += `Unidad: ${test.unit}\n\n`;
+
+    let headers = ['Jugador', 'Dorsal'];
+    
+    let isDetailed = test.isQuestionnaire && test.questions;
+    if (isDetailed) {
+       const dims = [...new Set(test.questions.map(q => q.dimension))];
+       headers = headers.concat(dims);
+    }
+    headers.push(`Valoración Total (${test.unit})`);
+    
+    contenido += headers.map(h => `"${h}"`).join(',') + '\n';
+    
+    players.forEach(p => {
+      let row = [`"${p.name}"`, `"${p.number || ''}"`];
+      if (isDetailed) {
+         const dims = [...new Set(test.questions.map(q => q.dimension))];
+         dims.forEach(() => row.push('""'));
+      }
+      row.push('""');
+      contenido += row.join(',') + '\n';
+    });
+
+    const blob = new Blob(["\uFEFF" + contenido], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `${test.id}_plantilla.csv`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
   // Heatmap logic
   const getHeatmapColor = (val, min, max, isTime) => {
     // isTime means lower is better (green). Higher is worse (red).
@@ -320,22 +367,32 @@ const Tests = () => {
                   </div>
                   <h4>{t.name}</h4>
                   <p>{t.desc}</p>
-                  <button 
-                    className="btn-primary" 
-                    style={{marginTop: '15px'}} 
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      if (t.isQuestionnaire) {
-                        setRegSelectedTest(t.id);
-                        setIsQuestionnaireOpen(true);
-                      } else {
-                        setRegSelectedTest(t.id);
-                        setIsRegModalOpen(true);
-                      }
-                    }}
-                  >
-                    Registrar Resultados
-                  </button>
+                  <div style={{ display: 'flex', gap: '10px', marginTop: '15px' }}>
+                    <button 
+                      className="btn-primary" 
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (t.isQuestionnaire) {
+                          setRegSelectedTest(t.id);
+                          setIsQuestionnaireOpen(true);
+                        } else {
+                          setRegSelectedTest(t.id);
+                          setIsRegModalOpen(true);
+                        }
+                      }}
+                    >
+                      Registrar
+                    </button>
+                    <button 
+                      className="btn-outline" 
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        descargarPlantilla(t, players);
+                      }}
+                    >
+                      📥 Plantilla
+                    </button>
+                  </div>
                 </div>
               ))}
             </div>

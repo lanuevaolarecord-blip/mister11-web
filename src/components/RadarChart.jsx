@@ -40,19 +40,6 @@ const RadarChart = ({ data, color = 'var(--primary)', secondaryColor = 'var(--go
     }}>
       <ResponsiveContainer width="100%" height="100%">
         <RechartsRadarChart cx="50%" cy="50%" outerRadius="70%" data={data}>
-          <defs>
-            <linearGradient id="neonGradient" x1="0" y1="0" x2="1" y2="1">
-              <stop offset="5%" stopColor={color} stopOpacity={0.8}/>
-              <stop offset="95%" stopColor={secondaryColor} stopOpacity={0.8}/>
-            </linearGradient>
-            <filter id="glow">
-              <feGaussianBlur stdDeviation="2" result="coloredBlur"/>
-              <feMerge>
-                <feMergeNode in="coloredBlur"/>
-                <feMergeNode in="SourceGraphic"/>
-              </feMerge>
-            </filter>
-          </defs>
           <PolarGrid stroke="rgba(27, 58, 45, 0.2)" strokeDasharray="3 3" />
           <PolarAngleAxis 
             dataKey="subject" 
@@ -63,11 +50,11 @@ const RadarChart = ({ data, color = 'var(--primary)', secondaryColor = 'var(--go
           <Radar 
             name="Evaluación" 
             dataKey="value" 
-            stroke="url(#neonGradient)" 
+            stroke={secondaryColor} 
             strokeWidth={3}
-            fill="url(#neonGradient)" 
-            fillOpacity={0.2} 
-            activeDot={{ r: 6, fill: 'var(--gold)', filter: 'url(#glow)', stroke: 'var(--white)', strokeWidth: 2 }}
+            fill={color} 
+            fillOpacity={0.4} 
+            activeDot={{ r: 6, fill: secondaryColor, stroke: 'var(--white)', strokeWidth: 2 }}
           />
           
           <Tooltip content={<CustomTooltip />} />

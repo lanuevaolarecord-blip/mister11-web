@@ -461,7 +461,7 @@ const Tests = () => {
                       const h = historyData[histSelectedPlayer]?.[t.id] || [];
                       if (h.length > 0) {
                         testCount++;
-                        let val = h[h.length - 1].val;
+                        let val = parseFloat(String(h[h.length - 1].val).replace(',', '.')) || 0;
                         let norm = val;
                         if (t.unit === 'seg') norm = Math.max(0, 100 - (val * 5));
                         else if (t.unit === 'cm') norm = Math.min(100, val * 2);
@@ -538,7 +538,7 @@ const Tests = () => {
                   if(history.length === 0) return null;
                   
                   // Simple SVG Chart logic
-                  const vals = history.map(h => h.val);
+                  const vals = history.map(h => parseFloat(String(h.val).replace(',', '.')) || 0);
                   const min = Math.min(...vals) * 0.9;
                   const max = Math.max(...vals) * 1.1;
                   const range = max - min || 1;

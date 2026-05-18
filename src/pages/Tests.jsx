@@ -24,6 +24,18 @@ const DEFAULT_TESTS = [
   { id: 't7', type: 'fisico', category: 'Técnica', name: 'Conducción conos', unit: 'seg', desc: 'Slalom entre conos con finalización.', protocol: 'Conducir el balón haciendo slalom entre 5 conos separados por 2 metros y dar un pase a un objetivo.' },
   { id: 't8', type: 'fisico', category: 'Técnica', name: 'Pase a portería', unit: 'pts', desc: 'Precisión de pase a zonas objetivo (10 pases).', protocol: '10 pases desde la frontal del área hacia pequeñas porterías o zonas marcadas. 1 punto por acierto.' },
 
+  { id: 'psi1_old', type: 'psicodeportivo', category: 'Psicología', name: 'Escala de Autoconfianza', unit: 'pts', desc: 'Mide la confianza del jugador en sus capacidades deportivas', protocol: 'Cuestionario de Rosenberg adaptado al deporte. Respuestas tipo Likert.', rangoMin: 0, rangoMax: 40 },
+  { id: 'psi2_old', type: 'psicodeportivo', category: 'Psicología', name: 'Ansiedad Competitiva (CSAI-2R)', unit: 'pts', desc: 'Evalúa ansiedad cognitiva, somática y autoconfianza', protocol: 'Cuestionario antes de competir.', rangoMin: 0, rangoMax: 68 },
+  { id: 'psi3_old', type: 'psicodeportivo', category: 'Psicología', name: 'Motivación Deportiva (SMS-II)', unit: 'pts', desc: 'Mide tipos de motivación en el deporte', protocol: 'Cuestionario SMS-II', rangoMin: 18, rangoMax: 126 },
+  { id: 'psi4_old', type: 'psicodeportivo', category: 'Psicología', name: 'Resiliencia en el Deporte', unit: 'pts', desc: 'Capacidad de sobreponerse a situaciones adversas', protocol: 'Cuestionario de resiliencia', rangoMin: 0, rangoMax: 50 },
+  { id: 'psi5_old', type: 'psicodeportivo', category: 'Psicología', name: 'Atención y Concentración', unit: 'seg', desc: 'Mide la atención selectiva y concentración', protocol: 'Prueba cognitiva cronometrada', rangoMin: 0, rangoMax: 100 },
+
+  { id: 'soc1_old', type: 'sociodeportivo', category: 'Sociología', name: 'Cohesión de Equipo (GEQ)', unit: 'pts', desc: 'Cuestionario del Ambiente de Grupo', protocol: 'Evalúa la cohesión social y de tarea.', rangoMin: 18, rangoMax: 162 },
+  { id: 'soc2_old', type: 'sociodeportivo', category: 'Sociología', name: 'Escala de Deporte Limpio', unit: 'pts', desc: 'Actitudes hacia el Fair Play', protocol: 'Cuestionario de actitudes.', rangoMin: 0, rangoMax: 50 },
+  { id: 'soc3_old', type: 'sociodeportivo', category: 'Sociología', name: 'Habilidades Sociales', unit: 'pts', desc: 'Asertividad y comunicación en el deporte', protocol: 'Evaluación de habilidades interpersonales.', rangoMin: 0, rangoMax: 100 },
+  { id: 'soc4_old', type: 'sociodeportivo', category: 'Sociología', name: 'Liderazgo Percibido', unit: 'pts', desc: 'Percepción de roles de liderazgo en el equipo', protocol: 'Cuestionario de liderazgo deportivo.', rangoMin: 0, rangoMax: 100 },
+  { id: 'soc5_old', type: 'sociodeportivo', category: 'Sociología', name: 'Satisfacción con el Entrenador', unit: 'pts', desc: 'Percepción sobre el cuerpo técnico', protocol: 'Cuestionario de satisfacción', rangoMin: 0, rangoMax: 50 },
+
   { id: 'psi1', type: 'psicosocial', category: 'Afrontamiento', name: 'Inventario de Habilidades de Afrontamiento (ACSI-28)', unit: 'pts', desc: 'Evalúa cómo el jugador maneja la presión y la adversidad', protocol: 'Responder cuestionario en escala de 1 a 5.', rangoMin: 0, rangoMax: 30, isQuestionnaire: true, questions: [
     { id: 'q1', text: 'Mantengo la calma cuando cometo un error.', dimension: 'Afrontamiento' },
     { id: 'q2', text: 'Me recupero rápidamente tras una mala jugada.', dimension: 'Afrontamiento' },
@@ -271,7 +283,7 @@ const Tests = () => {
         </div>
 
         <div className="tests-tabs">
-          {['FÍSICOS', 'HABILIDADES PSICOSOCIALES', 'BIENESTAR SOCIOEMOCIONAL', 'HISTORIAL POR JUGADOR', 'COMPARATIVA EQUIPO'].map(tab => (
+          {['FÍSICOS', 'PSICODEPORTIVOS', 'SOCIODEPORTIVOS', 'HABILIDADES PSICOSOCIALES', 'BIENESTAR SOCIOEMOCIONAL', 'HISTORIAL POR JUGADOR', 'COMPARATIVA EQUIPO'].map(tab => (
             <button 
               key={tab} 
               className={`tests-tab ${activeTab === tab ? 'active' : ''}`}
@@ -285,7 +297,7 @@ const Tests = () => {
 
       <div className="tests-content">
         {/* --- CATÁLOGO DE TESTS --- */}
-        {['FÍSICOS', 'HABILIDADES PSICOSOCIALES', 'BIENESTAR SOCIOEMOCIONAL'].includes(activeTab) && (
+        {['FÍSICOS', 'PSICODEPORTIVOS', 'SOCIODEPORTIVOS', 'HABILIDADES PSICOSOCIALES', 'BIENESTAR SOCIOEMOCIONAL'].includes(activeTab) && (
           <div className="tab-bateria">
             <div className="bateria-header">
               <h3>Catálogo de Pruebas: {activeTab}</h3>
@@ -295,6 +307,8 @@ const Tests = () => {
             <div className="tests-grid">
               {tests.filter(t => {
                 if (activeTab === 'FÍSICOS') return t.type === 'fisico' || !t.type;
+                if (activeTab === 'PSICODEPORTIVOS') return t.type === 'psicodeportivo';
+                if (activeTab === 'SOCIODEPORTIVOS') return t.type === 'sociodeportivo';
                 if (activeTab === 'HABILIDADES PSICOSOCIALES') return t.type === 'psicosocial';
                 if (activeTab === 'BIENESTAR SOCIOEMOCIONAL') return t.type === 'socioemocional';
                 return false;

@@ -533,58 +533,76 @@ const Tests = () => {
                 </div>
               </div>
               <div className="hist-charts-grid">
-                {tests.map(t => {
-                  const history = historyData[histSelectedPlayer]?.[t.id] || [];
-                  if(history.length === 0) return null;
-                  
-                  // Simple SVG Chart logic
-                  const vals = history.map(h => parseFloat(String(h.val).replace(',', '.')) || 0);
-                  const min = Math.min(...vals) * 0.9;
-                  const max = Math.max(...vals) * 1.1;
-                  const range = max - min || 1;
-                  
-                  // Determine improvement (green arrow) vs worsen (red arrow)
-                  const first = vals[0];
-                  const last = vals[vals.length - 1];
-                  const isTime = t.unit === 'seg';
-                  const improved = isTime ? last < first : last > first;
+                {tests.filter(t => (historyData[histSelectedPlayer]?.[t.id] || []).length > 0).length === 0 ? (
+                  <div style={{ padding: '40px', textAlign: 'center', background: 'var(--bg-secondary)', borderRadius: '12px', gridColumn: '1 / -1' }}>
+                    <p style={{ fontSize: '18px', color: 'var(--text-secondary)' }}>📊 Sin evaluaciones previas. Registra resultados para ver la evolución.</p>
+                  </div>
+                ) : (
+                  tests.map(t => {
+                    const history = historyData[histSelectedPlayer]?.[t.id] || [];
+                    if(history.length === 0) return null;
+                    
+                    // Parse values to ensure Recharts can plot them
+                    const parsedHistory = history.map(h => ({
+                      ...h,
+                      val: parseFloat(String(h.val).replace(',', '.')) || 0
+                    }));
+                    
+                    const vals = parsedHistory.map(h => h.val);
+                    const min = Math.min(...vals) * 0.9;
+                    const max = Math.max(...vals) * 1.1;
+                    const range = max - min || 1;
+                    
+                    // Determine improvement (green arrow) vs worsen (red arrow)
+                    const first = vals[0];
+                    const last = vals[vals.length - 1];
+                    const isTime = t.unit === 'seg';
+                    const diff = last - first;
+                    const improved = isTime ? diff < 0 : diff > 0;
 
-                  return (
-                    <div key={t.id} className="hist-chart-card">
-                      <div className="hc-header">
-                        <h4>{t.name} <span className="unit">({t.unit})</span></h4>
-                        <span className={`trend-arrow ${improved ? 'good' : 'bad'}`}>
-                          {improved ? '▲' : '▼'} {Math.abs(((last - first)/first)*100).toFixed(1)}%
-                        </span>
-                      </div>
-                      
-                      <GraficaEvolucion data={history} isTime={isTime} />
-                      
-                      <div className="hc-labels">
-                        {history.map((h, i) => (
-                          <div key={i} className="hc-point">
-                            <strong>{h.val}</strong>
-                            <span>{h.date.split('-').reverse().slice(0,2).join('/')}</span>
-                          </div>
-                        ))}
-                      </div>
-
-                      {/* BARRAS DE PROGRESO GAMING (Para Tests) */}
-                      {gamingVisualsV1 && (
-                        <div style={{ marginTop: '15px' }}>
-                          <div style={{ width: '100%', height: '8px', background: 'rgba(27, 58, 45, 0.1)', borderRadius: '4px', overflow: 'hidden' }}>
-                            <div style={{ 
-                              width: `${max > 0 ? Math.min(100, (last / max) * 100) : 0}%`, 
-                              height: '100%', 
-                              background: 'var(--gold)', 
-                              transition: 'width 1s ease-out' 
-                            }}></div>
-                          </div>
+                    return (
+                      <div key={t.id} className="hist-chart-card">
+                        <div className="hc-header">
+                          <h4>{t.name} <span className="unit">({t.unit})</span></h4>
+                          {vals.length > 1 && diff !== 0 ? (
+                            <span className={`trend-arrow ${improved ? 'good' : 'bad'}`}>
+                              {improved ? '▲' : '▼'} {Math.abs((diff/first)*100).toFixed(1)}%
+                            </span>
+                          ) : (
+                            <span className="trend-arrow neutral" style={{ color: 'var(--text-secondary)', background: 'var(--bg-secondary)' }}>
+                              Último: {last}
+                            </span>
+                          )}
                         </div>
-                      )}
-                    </div>
-                  );
-                })}
+                        
+                        <GraficaEvolucion data={parsedHistory} isTime={isTime} />
+                        
+                        <div className="hc-labels">
+                          {parsedHistory.map((h, i) => (
+                            <div key={i} className="hc-point">
+                              <strong>{h.val}</strong>
+                              <span>{h.date.split('-').reverse().slice(0,2).join('/')}</span>
+                            </div>
+                          ))}
+                        </div>
+
+                        {/* BARRAS DE PROGRESO GAMING (Para Tests) */}
+                        {gamingVisualsV1 && (
+                          <div style={{ marginTop: '15px' }}>
+                            <div style={{ width: '100%', height: '8px', background: 'rgba(27, 58, 45, 0.1)', borderRadius: '4px', overflow: 'hidden' }}>
+                              <div style={{ 
+                                width: `${max > 0 ? Math.min(100, (last / max) * 100) : 0}%`, 
+                                height: '100%', 
+                                background: 'var(--gold)', 
+                                transition: 'width 1s ease-out' 
+                              }}></div>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })
+                )}
               </div>
             </div>
           </div>

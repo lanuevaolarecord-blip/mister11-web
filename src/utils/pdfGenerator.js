@@ -305,12 +305,12 @@ export const generateTestsReport = async (tests, players, historyData, activeTea
   };
 
   const physicalTests = tests.filter(t => t.type === 'fisico' || !t.type);
-  const psychoTests = tests.filter(t => t.type === 'psicodeportivo');
-  const socioTests = tests.filter(t => t.type === 'sociodeportivo');
+  const psychoTests = tests.filter(t => t.type === 'psicosocial');
+  const socioTests = tests.filter(t => t.type === 'socioemocional');
 
   renderCategoryTable(physicalTests, 'Pruebas Físicas y Técnicas', THEME_COLOR);
-  renderCategoryTable(psychoTests, 'Pruebas Psicodeportivas', ACCENT_COLOR);
-  renderCategoryTable(socioTests, 'Pruebas Sociodeportivas', ACCENT_COLOR);
+  renderCategoryTable(psychoTests, 'Pruebas Psicosociales', ACCENT_COLOR);
+  renderCategoryTable(socioTests, 'Pruebas Socioemocionales', ACCENT_COLOR);
 
   doc.setFontSize(10);
   doc.setTextColor(100);
@@ -384,8 +384,8 @@ export const generatePlayerTestReport = async (player, tests, historyData, activ
   };
 
   const physicalRows = generateRows(tests.filter(t => t.type === 'fisico' || !t.type), true);
-  const psychoRows = generateRows(tests.filter(t => t.type === 'psicodeportivo'), false);
-  const socioRows = generateRows(tests.filter(t => t.type === 'sociodeportivo'), false);
+  const psychoRows = generateRows(tests.filter(t => t.type === 'psicosocial'), false);
+  const socioRows = generateRows(tests.filter(t => t.type === 'socioemocional'), false);
 
   autoTable(doc, {
     startY: 85,
@@ -403,7 +403,7 @@ export const generatePlayerTestReport = async (player, tests, historyData, activ
     if (finalY > doc.internal.pageSize.getHeight() - 40) { doc.addPage(); finalY = 20; }
     autoTable(doc, {
       startY: finalY,
-      head: [['Evaluación Psicodeportiva', 'Puntuación', 'Interpretación']],
+      head: [['Perfil Psicosocial', 'Puntuación', 'Interpretación']],
       body: psychoRows,
       headStyles: { fillColor: ACCENT_COLOR, textColor: 255, fontStyle: 'bold' },
       alternateRowStyles: { fillColor: [245, 240, 232] },
@@ -417,7 +417,7 @@ export const generatePlayerTestReport = async (player, tests, historyData, activ
     if (finalY > doc.internal.pageSize.getHeight() - 40) { doc.addPage(); finalY = 20; }
     autoTable(doc, {
       startY: finalY,
-      head: [['Evaluación Sociodeportiva', 'Puntuación', 'Interpretación']],
+      head: [['Bienestar en el Equipo', 'Puntuación', 'Interpretación']],
       body: socioRows,
       headStyles: { fillColor: ACCENT_COLOR, textColor: 255, fontStyle: 'bold' },
       alternateRowStyles: { fillColor: [245, 240, 232] },

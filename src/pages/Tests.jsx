@@ -6,6 +6,8 @@ import { usePlan } from '../hooks/usePlan';
 import UpgradeModal from '../components/UpgradeModal';
 import { generateTestsReport, generatePlayerTestReport } from '../utils/pdfGenerator';
 import { GraficaEvolucion, GraficaResumen } from '../components/GraficasTest';
+import RadarChart from '../components/RadarChart';
+import TestDetail from './TestDetail';
 import { db } from '../firebaseConfig';
 import { collection, addDoc, getDocs, query, where, orderBy, serverTimestamp, writeBatch, doc } from 'firebase/firestore';
 import html2canvas from 'html2canvas';
@@ -22,17 +24,56 @@ const DEFAULT_TESTS = [
   { id: 't7', type: 'fisico', category: 'Técnica', name: 'Conducción conos', unit: 'seg', desc: 'Slalom entre conos con finalización.', protocol: 'Conducir el balón haciendo slalom entre 5 conos separados por 2 metros y dar un pase a un objetivo.' },
   { id: 't8', type: 'fisico', category: 'Técnica', name: 'Pase a portería', unit: 'pts', desc: 'Precisión de pase a zonas objetivo (10 pases).', protocol: '10 pases desde la frontal del área hacia pequeñas porterías o zonas marcadas. 1 punto por acierto.' },
 
-  { id: 'psi1', type: 'psicodeportivo', category: 'Psicología', name: 'Escala de Autoconfianza', unit: 'pts', desc: 'Mide la confianza del jugador en sus capacidades deportivas', protocol: 'Cuestionario de Rosenberg adaptado al deporte. Respuestas tipo Likert.', rangoMin: 0, rangoMax: 40 },
-  { id: 'psi2', type: 'psicodeportivo', category: 'Psicología', name: 'Ansiedad Competitiva (CSAI-2R)', unit: 'pts', desc: 'Evalúa ansiedad cognitiva, somática y autoconfianza', protocol: 'Cuestionario antes de competir.', rangoMin: 0, rangoMax: 68 },
-  { id: 'psi3', type: 'psicodeportivo', category: 'Psicología', name: 'Motivación Deportiva (SMS-II)', unit: 'pts', desc: 'Mide tipos de motivación en el deporte', protocol: 'Cuestionario SMS-II', rangoMin: 18, rangoMax: 126 },
-  { id: 'psi4', type: 'psicodeportivo', category: 'Psicología', name: 'Resiliencia en el Deporte', unit: 'pts', desc: 'Capacidad de sobreponerse a situaciones adversas', protocol: 'Cuestionario de resiliencia', rangoMin: 0, rangoMax: 50 },
-  { id: 'psi5', type: 'psicodeportivo', category: 'Psicología', name: 'Atención y Concentración', unit: 'seg', desc: 'Mide la atención selectiva y concentración', protocol: 'Prueba cognitiva cronometrada', rangoMin: 0, rangoMax: 100 },
+  { id: 'psi1', type: 'psicosocial', category: 'Afrontamiento', name: 'Inventario de Habilidades de Afrontamiento (ACSI-28)', unit: 'pts', desc: 'Evalúa cómo el jugador maneja la presión y la adversidad', protocol: 'Responder cuestionario en escala de 1 a 5.', rangoMin: 0, rangoMax: 30, isQuestionnaire: true, questions: [
+    { id: 'q1', text: 'Mantengo la calma cuando cometo un error.', dimension: 'Afrontamiento' },
+    { id: 'q2', text: 'Me recupero rápidamente tras una mala jugada.', dimension: 'Afrontamiento' },
+    { id: 'q3', text: 'Me mantengo concentrado a pesar de las distracciones.', dimension: 'Concentración' },
+    { id: 'q4', text: 'Puedo enfocarme solo en la tarea actual.', dimension: 'Concentración' },
+    { id: 'q5', text: 'Siento seguridad en mis capacidades antes del partido.', dimension: 'Confianza' },
+    { id: 'q6', text: 'No dudo de mí mismo en momentos críticos.', dimension: 'Confianza' }
+  ] },
+  { id: 'psi2', type: 'psicosocial', category: 'Fortaleza Mental', name: 'Cuestionario de Fortaleza Mental (MTQ-10)', unit: 'pts', desc: 'Mide la capacidad de perseverar bajo presión', protocol: 'Cuestionario de 4 preguntas.', rangoMin: 0, rangoMax: 20, isQuestionnaire: true, questions: [
+    { id: 'q1', text: 'Mantengo el control emocional cuando las cosas van mal.', dimension: 'Control' },
+    { id: 'q2', text: 'Cumplo con lo que me propongo hasta el final.', dimension: 'Compromiso' },
+    { id: 'q3', text: 'Veo los problemas como oportunidades de mejora.', dimension: 'Desafío' },
+    { id: 'q4', text: 'Confío en mi capacidad para superar obstáculos.', dimension: 'Confianza' }
+  ] },
+  { id: 'psi3', type: 'psicosocial', category: 'Metas', name: 'Escala de Establecimiento de Metas', unit: 'pts', desc: 'Evalúa capacidad de fijar y perseguir objetivos', protocol: 'Responder a 3 preguntas.', rangoMin: 0, rangoMax: 15, isQuestionnaire: true, questions: [
+    { id: 'q1', text: 'Planifico mis objetivos a corto y largo plazo.', dimension: 'Planificación' },
+    { id: 'q2', text: 'Sigo trabajando duro aunque no vea resultados inmediatos.', dimension: 'Persistencia' },
+    { id: 'q3', text: 'Evalúo mi progreso regularmente.', dimension: 'Revisión' }
+  ] },
+  { id: 'psi4', type: 'psicosocial', category: 'Liderazgo', name: 'Inventario de Liderazgo y Comunicación', unit: 'pts', desc: 'Mide habilidades de liderazgo y comunicación', protocol: 'Responder a 3 preguntas.', rangoMin: 0, rangoMax: 15, isQuestionnaire: true, questions: [
+    { id: 'q1', text: 'Me comunico de forma clara y directa con mis compañeros.', dimension: 'Comunicación' },
+    { id: 'q2', text: 'Motivo a mis compañeros durante el juego.', dimension: 'Liderazgo' },
+    { id: 'q3', text: 'Tomo buenas decisiones bajo presión.', dimension: 'Toma de decisiones' }
+  ] },
 
-  { id: 'soc1', type: 'sociodeportivo', category: 'Sociología', name: 'Cohesión de Equipo (GEQ)', unit: 'pts', desc: 'Cuestionario del Ambiente de Grupo', protocol: 'Evalúa la cohesión social y de tarea.', rangoMin: 18, rangoMax: 162 },
-  { id: 'soc2', type: 'sociodeportivo', category: 'Sociología', name: 'Escala de Deporte Limpio', unit: 'pts', desc: 'Actitudes hacia el Fair Play', protocol: 'Cuestionario de actitudes.', rangoMin: 0, rangoMax: 50 },
-  { id: 'soc3', type: 'sociodeportivo', category: 'Sociología', name: 'Habilidades Sociales', unit: 'pts', desc: 'Asertividad y comunicación en el deporte', protocol: 'Evaluación de habilidades interpersonales.', rangoMin: 0, rangoMax: 100 },
-  { id: 'soc4', type: 'sociodeportivo', category: 'Sociología', name: 'Liderazgo Percibido', unit: 'pts', desc: 'Percepción de roles de liderazgo en el equipo', protocol: 'Cuestionario de liderazgo deportivo.', rangoMin: 0, rangoMax: 100 },
-  { id: 'soc5', type: 'sociodeportivo', category: 'Sociología', name: 'Satisfacción con el Entrenador', unit: 'pts', desc: 'Percepción sobre el cuerpo técnico', protocol: 'Cuestionario de satisfacción', rangoMin: 0, rangoMax: 50 }
+  { id: 'soc1', type: 'socioemocional', category: 'Cohesión', name: 'Cuestionario de Cohesión de Equipo (GEQ)', unit: 'pts', desc: 'Evalúa la unión del grupo', protocol: 'Responder a 4 preguntas.', rangoMin: 0, rangoMax: 20, isQuestionnaire: true, questions: [
+    { id: 'q1', text: 'Todos en el equipo comparten el mismo objetivo.', dimension: 'Cohesión de Tarea' },
+    { id: 'q2', text: 'Nos esforzamos juntos para alcanzar las metas.', dimension: 'Cohesión de Tarea' },
+    { id: 'q3', text: 'Me llevo bien con mis compañeros fuera del campo.', dimension: 'Cohesión Social' },
+    { id: 'q4', text: 'Disfruto pasar tiempo con el equipo.', dimension: 'Cohesión Social' }
+  ] },
+  { id: 'soc2', type: 'socioemocional', category: 'Bienestar', name: 'Escala de Bienestar Mental (MHC-SF)', unit: 'pts', desc: 'Evalúa bienestar emocional, psicológico y social', protocol: 'Responder a 3 preguntas.', rangoMin: 0, rangoMax: 15, isQuestionnaire: true, questions: [
+    { id: 'q1', text: 'Me siento feliz y positivo la mayor parte del tiempo.', dimension: 'Emocional' },
+    { id: 'q2', text: 'Siento que mi vida deportiva tiene propósito.', dimension: 'Psicológico' },
+    { id: 'q3', text: 'Siento que pertenezco y soy valorado en el equipo.', dimension: 'Social' }
+  ] },
+  { id: 'soc3', type: 'socioemocional', category: 'Autoconciencia', name: 'Test de Autoconciencia Emocional', unit: 'pts', desc: 'Capacidad de reconocer y nombrar emociones propias', protocol: 'Responder a 3 preguntas.', rangoMin: 0, rangoMax: 15, isQuestionnaire: true, questions: [
+    { id: 'q1', text: 'Puedo identificar claramente lo que siento durante un partido.', dimension: 'Identificación' },
+    { id: 'q2', text: 'Sé cómo expresar mis emociones de manera adecuada.', dimension: 'Expresión' },
+    { id: 'q3', text: 'Puedo calmarme cuando siento frustración.', dimension: 'Regulación' }
+  ] },
+  { id: 'soc4', type: 'socioemocional', category: 'Empatía', name: 'Escala de Empatía Deportiva', unit: 'pts', desc: 'Capacidad de comprender emociones de compañeros', protocol: 'Responder a 2 preguntas.', rangoMin: 0, rangoMax: 10, isQuestionnaire: true, questions: [
+    { id: 'q1', text: 'Entiendo cómo se sienten mis compañeros tras un error.', dimension: 'Empatía cognitiva' },
+    { id: 'q2', text: 'Me afecta emocionalmente el éxito o fracaso del equipo.', dimension: 'Empatía afectiva' }
+  ] },
+  { id: 'soc5', type: 'socioemocional', category: 'Conflictos', name: 'Cuestionario de Resolución de Conflictos', unit: 'pts', desc: 'Habilidad para manejar desacuerdos constructivamente', protocol: 'Responder a 3 preguntas.', rangoMin: 0, rangoMax: 15, isQuestionnaire: true, questions: [
+    { id: 'q1', text: 'Busco soluciones en las que todos ganen.', dimension: 'Negociación' },
+    { id: 'q2', text: 'Ayudo a resolver peleas entre compañeros.', dimension: 'Mediación' },
+    { id: 'q3', text: 'Estoy dispuesto a ceder para llegar a un acuerdo.', dimension: 'Acuerdo' }
+  ] }
 ];
 
 const Tests = () => {
@@ -50,6 +91,7 @@ const Tests = () => {
   const [isRegModalOpen, setIsRegModalOpen] = useState(false);
   const [regSelectedTest, setRegSelectedTest] = useState('t1');
   const [regInputs, setRegInputs] = useState({});
+  const [isQuestionnaireOpen, setIsQuestionnaireOpen] = useState(false);
 
   // History State
   const [histSelectedPlayer, setHistSelectedPlayer] = useState(null);
@@ -229,7 +271,7 @@ const Tests = () => {
         </div>
 
         <div className="tests-tabs">
-          {['FÍSICOS', 'PSICODEPORTIVOS', 'SOCIODEPORTIVOS', 'HISTORIAL POR JUGADOR', 'COMPARATIVA EQUIPO'].map(tab => (
+          {['FÍSICOS', 'HABILIDADES PSICOSOCIALES', 'BIENESTAR SOCIOEMOCIONAL', 'HISTORIAL POR JUGADOR', 'COMPARATIVA EQUIPO'].map(tab => (
             <button 
               key={tab} 
               className={`tests-tab ${activeTab === tab ? 'active' : ''}`}
@@ -242,8 +284,8 @@ const Tests = () => {
       </header>
 
       <div className="tests-content">
-        {/* --- CATÁLOGO DE TESTS (FÍSICOS / PSICODEPORTIVOS / SOCIODEPORTIVOS) --- */}
-        {['FÍSICOS', 'PSICODEPORTIVOS', 'SOCIODEPORTIVOS'].includes(activeTab) && (
+        {/* --- CATÁLOGO DE TESTS --- */}
+        {['FÍSICOS', 'HABILIDADES PSICOSOCIALES', 'BIENESTAR SOCIOEMOCIONAL'].includes(activeTab) && (
           <div className="tab-bateria">
             <div className="bateria-header">
               <h3>Catálogo de Pruebas: {activeTab}</h3>
@@ -253,8 +295,8 @@ const Tests = () => {
             <div className="tests-grid">
               {tests.filter(t => {
                 if (activeTab === 'FÍSICOS') return t.type === 'fisico' || !t.type;
-                if (activeTab === 'PSICODEPORTIVOS') return t.type === 'psicodeportivo';
-                if (activeTab === 'SOCIODEPORTIVOS') return t.type === 'sociodeportivo';
+                if (activeTab === 'HABILIDADES PSICOSOCIALES') return t.type === 'psicosocial';
+                if (activeTab === 'BIENESTAR SOCIOEMOCIONAL') return t.type === 'socioemocional';
                 return false;
               }).map(t => (
                 <div key={t.id} className="test-card clickable" onClick={() => setSelectedTestDetail(t)}>
@@ -269,8 +311,13 @@ const Tests = () => {
                     style={{marginTop: '15px'}} 
                     onClick={(e) => {
                       e.stopPropagation();
-                      setRegSelectedTest(t.id);
-                      setIsRegModalOpen(true);
+                      if (t.isQuestionnaire) {
+                        setRegSelectedTest(t.id);
+                        setIsQuestionnaireOpen(true);
+                      } else {
+                        setRegSelectedTest(t.id);
+                        setIsRegModalOpen(true);
+                      }
                     }}
                   >
                     Registrar Resultados
@@ -326,21 +373,47 @@ const Tests = () => {
               
               <div id="grafica-rendimiento-jugador" style={{ marginBottom: '24px' }}>
                 <h4 style={{ color: 'var(--text-primary)', marginBottom: '12px' }}>Perfil de Rendimiento Actual</h4>
-                <GraficaResumen 
-                  playerStats={tests.map(t => {
-                    const h = historyData[histSelectedPlayer]?.[t.id] || [];
-                    let val = h.length > 0 ? h[h.length - 1].val : 0;
-                    // Normalizamos un poco para el radar (simulación simple)
-                    const isTime = t.unit === 'seg';
-                    let radarVal = val;
-                    if (isTime) radarVal = Math.max(0, 100 - (val * 5)); // Invertir y escalar
-                    else if (t.unit === 'cm') radarVal = Math.min(100, val * 2);
-                    else if (t.unit === 'nivel') radarVal = Math.min(100, val * 8);
-                    else radarVal = Math.min(100, val);
-                    
-                    return { subject: t.category, A: radarVal, fullMark: 100 };
-                  })} 
-                />
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '20px' }}>
+                  <GraficaResumen 
+                    playerStats={tests.filter(t => !t.isQuestionnaire).map(t => {
+                      const h = historyData[histSelectedPlayer]?.[t.id] || [];
+                      let val = h.length > 0 ? h[h.length - 1].val : 0;
+                      const isTime = t.unit === 'seg';
+                      let radarVal = val;
+                      if (isTime) radarVal = Math.max(0, 100 - (val * 5));
+                      else if (t.unit === 'cm') radarVal = Math.min(100, val * 2);
+                      else if (t.unit === 'nivel') radarVal = Math.min(100, val * 8);
+                      else radarVal = Math.min(100, val);
+                      return { subject: t.category, A: radarVal, fullMark: 100 };
+                    })} 
+                  />
+
+                  {/* Render dimension radar if player has questionnaire data */}
+                  {(() => {
+                    const dimensionStats = {};
+                    tests.filter(t => t.isQuestionnaire).forEach(t => {
+                      const h = historyData[histSelectedPlayer]?.[t.id];
+                      if (h && h.length > 0) {
+                        const latest = h[h.length - 1];
+                        if (latest.dimensiones) {
+                          Object.keys(latest.dimensiones).forEach(dim => {
+                            dimensionStats[dim] = latest.dimensiones[dim];
+                          });
+                        }
+                      }
+                    });
+
+                    const dimData = Object.keys(dimensionStats).map(dim => ({
+                      subject: dim,
+                      value: dimensionStats[dim]
+                    }));
+
+                    if (dimData.length > 0) {
+                      return <RadarChart data={dimData} color="#D4A843" />;
+                    }
+                    return null;
+                  })()}
+                </div>
               </div>
               <div className="hist-charts-grid">
                 {tests.map(t => {
@@ -492,8 +565,9 @@ const Tests = () => {
                   <label>Tipo de Test</label>
                   <select value={newTest.type} onChange={e => setNewTest({...newTest, type: e.target.value})}>
                     <option value="fisico">Físico</option>
-                    <option value="psicodeportivo">Psicodeportivo</option>
-                    <option value="sociodeportivo">Sociodeportivo</option>
+                    <option value="fisico">Físico</option>
+                    <option value="psicosocial">Psicosocial</option>
+                    <option value="socioemocional">Socioemocional</option>
                   </select>
                 </div>
                 <div className="form-group">
@@ -557,8 +631,13 @@ const Tests = () => {
               <button className="btn-outline-gold" onClick={() => alert(`Descargando Plantilla (PDF/Excel) para toma de datos de ${selectedTestDetail.name}...`)}>⬇️ Descargar Plantilla de Toma de Datos</button>
               <div className="footer-actions">
                 <button className="btn-primary" onClick={() => {
-                  setRegSelectedTest(selectedTestDetail.id);
-                  setIsRegModalOpen(true);
+                  if (selectedTestDetail.isQuestionnaire) {
+                    setRegSelectedTest(selectedTestDetail.id);
+                    setIsQuestionnaireOpen(true);
+                  } else {
+                    setRegSelectedTest(selectedTestDetail.id);
+                    setIsRegModalOpen(true);
+                  }
                   setSelectedTestDetail(null);
                 }}>Ir a Registrar Resultados</button>
               </div>
@@ -611,6 +690,32 @@ const Tests = () => {
             </div>
           </div>
         </div>
+      )}
+      {/* MODAL CUESTIONARIO LIKERT */}
+      {isQuestionnaireOpen && getTestById(regSelectedTest) && (
+        <TestDetail 
+          test={getTestById(regSelectedTest)} 
+          players={players} 
+          onClose={() => setIsQuestionnaireOpen(false)}
+          onSave={async (playerId, evalData) => {
+            if(!user || !activeTeamId) return;
+            try {
+              await addDoc(collection(db, `users/${user.uid}/teams/${activeTeamId}/evaluaciones`), {
+                testId: regSelectedTest,
+                jugadorId: playerId,
+                categoria: getTestById(regSelectedTest).type,
+                fecha: serverTimestamp(),
+                ...evalData
+              });
+              alert('Resultados del cuestionario guardados.');
+              setIsQuestionnaireOpen(false);
+              loadEvaluations();
+            } catch(e) {
+              console.error(e);
+              alert("Error al guardar cuestionario");
+            }
+          }}
+        />
       )}
     </div>
   );

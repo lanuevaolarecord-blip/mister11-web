@@ -10,7 +10,7 @@ import RadarChart from '../components/RadarChart';
 import LegendCard from '../components/LegendCard';
 import ProgressTracker from '../components/ProgressTracker';
 import TestDetail from './TestDetail';
-import PlayerAnalyticsModal from '../components/PlayerAnalyticsModal';
+import PlayerAnalyticsModal, { SvgRadar } from '../components/PlayerAnalyticsModal';
 import { db } from '../firebaseConfig';
 import { collection, addDoc, getDocs, query, where, orderBy, serverTimestamp, writeBatch, doc } from 'firebase/firestore';
 import html2canvas from 'html2canvas';
@@ -604,22 +604,42 @@ const Tests = () => {
                           stats={stats}
                         />
 
-                        {/* RADAR CHART EN ESPACIO VACÍO A LA DERECHA */}
-                        {gamingVisualsV1 ? (
-                          <div style={{ height: '350px', background: 'var(--bg-primary)', borderRadius: '12px', border: '1px solid var(--border-color)', minWidth: 0, position: 'relative' }}>
-                            {testCount > 0 ? (
-                              <RadarChart data={radarData} />
-                            ) : (
-                              <div style={{ display: 'flex', height: '100%', alignItems: 'center', justifyContent: 'center', color: 'var(--text-secondary)' }}>
-                                Sin datos aún
-                              </div>
-                            )}
-                          </div>
-                        ) : (
-                          <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-                             {/* Fallback to old behavior if needed */}
-                          </div>
-                        )}
+                        {/* RADAR CHART — SVG puro, siempre visible */}
+                        <div style={{
+                          background: '#F5F0E8',
+                          borderRadius: '16px',
+                          padding: '20px',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          alignItems: 'center',
+                          gap: '12px',
+                          minWidth: 0
+                        }}>
+                          <span style={{ fontSize: '12px', fontWeight: 700, letterSpacing: 1, color: '#1B3A2D' }}>PERFIL DE RENDIMIENTO</span>
+                          {testCount > 0 ? (
+                            <SvgRadar data={radarData} size={280} />
+                          ) : (
+                            <div style={{
+                              width: 280, height: 280,
+                              display: 'flex', alignItems: 'center', justifyContent: 'center',
+                              flexDirection: 'column', gap: 8
+                            }}>
+                              <span style={{ fontSize: 40 }}>📊</span>
+                              <span style={{ fontSize: 13, color: '#7A7065', textAlign: 'center' }}>Sin evaluaciones.<br/>Usa "🎯 Datos Demo" para ver el radar.</span>
+                            </div>
+                          )}
+                          <button
+                            style={{
+                              background: '#1B3A2D', color: '#FFF',
+                              border: 'none', borderRadius: 8,
+                              padding: '10px 20px', fontWeight: 700,
+                              fontSize: 13, cursor: 'pointer', width: '100%'
+                            }}
+                            onClick={() => setAnalyticsPlayer(getPlayerById(histSelectedPlayer))}
+                          >
+                            📈 Ver Analíticas Completas
+                          </button>
+                        </div>
                       </>
                     );
                   })()}

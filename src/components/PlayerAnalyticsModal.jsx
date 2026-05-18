@@ -13,7 +13,7 @@ const C_TEXT    = '#2D2D2D';
 const C_BORDER  = '#E0DACA';
 
 // ── SVG Radar Chart (sin ResponsiveContainer, siempre visible) ──────────────
-const SvgRadar = ({ data, size = 320 }) => {
+export const SvgRadar = ({ data, size = 320 }) => {
   if (!data || data.length === 0) return null;
   const cx = size / 2;
   const cy = size / 2;

@@ -29,3 +29,8 @@ dist-ssr
 !.env.example
 
 .vercel
+
+# Android APKs
+public/mister11.apk
+public/*.apk
+

@@ -17,7 +17,6 @@ const emptyPlayer = {
   age: '', 
   category: 'Alevín A', 
   weight: '', 
-  weight: '', 
   height: '', 
   foot: 'Derecho', 
   injuries: false,

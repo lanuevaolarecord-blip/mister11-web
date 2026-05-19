@@ -27,6 +27,10 @@ export const savePdfUniversal = (doc, filename) => {
 };
 
 const getImageBase64 = async (url) => {
+  if (!url) return null;
+  if (url.startsWith('data:')) {
+    return url;
+  }
   try {
     const response = await fetch(url);
     const blob = await response.blob();
@@ -37,50 +41,75 @@ const getImageBase64 = async (url) => {
       reader.readAsDataURL(blob);
     });
   } catch (e) {
+    console.error("Error al obtener base64 de la imagen:", url, e);
     return null;
   }
 };
 
 const addHeader = async (doc, title, subtitle, activeTeam = null) => {
+  const pageW = doc.internal.pageSize.getWidth();
+  
   doc.setFillColor(...THEME_COLOR);
-  doc.rect(0, 0, 210, 40, 'F');
+  doc.rect(0, 0, pageW, 40, 'F');
   
-  doc.setTextColor(...TEXT_COLOR);
-  doc.setFontSize(24);
-  doc.text('MÍSTER11', 15, 20); // Left aligned
+  // Logotipo oficial de Míster11 a la izquierda
+  const mr11LogoData = await getImageBase64('/logo_mister11.png');
+  if (mr11LogoData) {
+    doc.addImage(mr11LogoData, 'PNG', 15, 5, 18, 18);
+    doc.setTextColor(...TEXT_COLOR);
+    doc.setFontSize(16);
+    doc.setFont(undefined, 'bold');
+    doc.text('MÍSTER11', 37, 16);
+  } else {
+    doc.setTextColor(...TEXT_COLOR);
+    doc.setFontSize(20);
+    doc.setFont(undefined, 'bold');
+    doc.text('MÍSTER11', 15, 18);
+  }
   
+  // Escudo del equipo a la derecha
   if (activeTeam) {
+    const shieldX = pageW - 33;
+    const textX = pageW - 24;
+    
     if (activeTeam.escudo) {
       const logoData = await getImageBase64(activeTeam.escudo);
       if (logoData) {
-        doc.addImage(logoData, 'PNG', 175, 5, 25, 25);
+        doc.addImage(logoData, 'PNG', shieldX, 5, 18, 18);
       } else {
-        doc.setFillColor(255);
-        doc.circle(187, 17, 10, 'F');
+        doc.setFillColor(255, 255, 255);
+        doc.circle(textX, 14, 9, 'F');
         doc.setTextColor(...THEME_COLOR);
-        doc.setFontSize(14);
-        doc.text((activeTeam.nombre || 'E').charAt(0), 184, 22);
+        doc.setFontSize(12);
+        doc.setFont(undefined, 'bold');
+        doc.text((activeTeam.nombre || 'E').charAt(0), textX - 2, 18);
       }
     } else {
-      doc.setFillColor(255);
-      doc.circle(187, 17, 10, 'F');
+      doc.setFillColor(255, 255, 255);
+      doc.circle(textX, 14, 9, 'F');
       doc.setTextColor(...THEME_COLOR);
-      doc.setFontSize(14);
-      doc.text((activeTeam.nombre || 'E').charAt(0), 184, 22);
+      doc.setFontSize(12);
+      doc.setFont(undefined, 'bold');
+      doc.text((activeTeam.nombre || 'E').charAt(0), textX - 2, 18);
     }
-    doc.setFontSize(10);
-    doc.setTextColor(255);
-    doc.text(activeTeam.nombre || '', 187, 36, { align: 'center' });
+    
+    doc.setFontSize(8);
+    doc.setTextColor(255, 255, 255);
+    doc.setFont(undefined, 'normal');
+    doc.text(activeTeam.nombre || '', textX, 33, { align: 'center' });
   }
 
+  // Título y subtítulo centrados
   doc.setTextColor(...ACCENT_COLOR);
-  doc.setFontSize(14);
-  doc.text(title, 105, 30, { align: 'center' });
+  doc.setFontSize(12);
+  doc.setFont(undefined, 'bold');
+  doc.text(title, pageW / 2, 26, { align: 'center' });
   
   if (subtitle) {
-    doc.setTextColor(200);
-    doc.setFontSize(10);
-    doc.text(subtitle, 105, 36, { align: 'center' });
+    doc.setTextColor(200, 200, 200);
+    doc.setFontSize(8.5);
+    doc.setFont(undefined, 'normal');
+    doc.text(subtitle, pageW / 2, 32, { align: 'center' });
   }
 };
 
@@ -105,30 +134,62 @@ export const generatePlanificacionPDF = async (macroInfo, microcycles, activeTea
   doc.setFillColor(27, 58, 45);
   doc.rect(0, 0, pageW, 36, 'F');
 
-  doc.setTextColor(212, 168, 67);
-  doc.setFontSize(20);
-  doc.setFont(undefined, 'bold');
-  doc.text('MÍSTER11', 15, 14);
+  // Logotipo oficial de Míster11 a la izquierda
+  const mr11LogoData = await getImageBase64('/logo_mister11.png');
+  if (mr11LogoData) {
+    doc.addImage(mr11LogoData, 'PNG', 15, 4, 16, 16);
+    doc.setTextColor(212, 168, 67);
+    doc.setFontSize(15);
+    doc.setFont(undefined, 'bold');
+    doc.text('MÍSTER11', 35, 14);
+  } else {
+    doc.setTextColor(212, 168, 67);
+    doc.setFontSize(18);
+    doc.setFont(undefined, 'bold');
+    doc.text('MÍSTER11', 15, 14);
+  }
 
+  // Escudo del equipo a la derecha
   if (activeTeam) {
+    const shieldX = pageW - 31;
+    const textX = pageW - 23;
+    
     if (activeTeam.escudo) {
       const logoData = await getImageBase64(activeTeam.escudo);
-      if (logoData) doc.addImage(logoData, 'PNG', pageW - 40, 5, 25, 25);
+      if (logoData) {
+        doc.addImage(logoData, 'PNG', shieldX, 4, 16, 16);
+      } else {
+        doc.setFillColor(255, 255, 255);
+        doc.circle(textX, 12, 8, 'F');
+        doc.setTextColor(27, 58, 45);
+        doc.setFontSize(11);
+        doc.setFont(undefined, 'bold');
+        doc.text((activeTeam.nombre || 'E').charAt(0), textX - 2, 16);
+      }
+    } else {
+      doc.setFillColor(255, 255, 255);
+      doc.circle(textX, 12, 8, 'F');
+      doc.setTextColor(27, 58, 45);
+      doc.setFontSize(11);
+      doc.setFont(undefined, 'bold');
+      doc.text((activeTeam.nombre || 'E').charAt(0), textX - 2, 16);
     }
-    doc.setFontSize(10);
-    doc.setTextColor(255);
-    doc.text(activeTeam.nombre || '', pageW - 27, 34, { align: 'center' });
+    
+    doc.setFontSize(8.5);
+    doc.setTextColor(255, 255, 255);
+    doc.setFont(undefined, 'normal');
+    doc.text(activeTeam.nombre || '', textX, 29, { align: 'center' });
   }
 
   doc.setTextColor(255, 255, 255);
   doc.setFontSize(13);
   doc.setFont(undefined, 'normal');
-  doc.text('Planificación Estratégica', pageW / 2, 22, { align: 'center' });
+  doc.text('Planificación Estratégica', pageW / 2, 18, { align: 'center' });
 
   doc.setTextColor(204, 204, 204);
   doc.setFontSize(9);
   const subtitle = `${macroInfo.category || 'Equipo'} · Temporada ${macroInfo.startDate || ''} — ${macroInfo.endDate || ''}  ·  Entrenador: ${macroInfo.trainer || 'Míster'}`;
-  doc.text(subtitle, pageW / 2, 30, { align: 'center' });
+  doc.text(subtitle, pageW / 2, 26, { align: 'center' });
 
   doc.setTextColor(120);
   doc.setFontSize(8);

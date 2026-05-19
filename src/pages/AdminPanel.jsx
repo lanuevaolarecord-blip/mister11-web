@@ -92,20 +92,25 @@ const AdminPanel = () => {
     setIsUploadingShield(true);
     try {
       const options = {
-        maxSizeMB: 0.2,        // 200KB max
-        maxWidthOrHeight: 512, // cuadrado pequeño
+        maxSizeMB: 0.04,        // 40KB máximo
+        maxWidthOrHeight: 256,  // 256x256 px
         useWebWorker: true,
         fileType: 'image/webp'
       };
       const compressedFile = await imageCompression(file, options);
-      const storageRef = ref(storage, `escudos/${user.uid}/${activeTeam.id}/logo.webp`);
-      await uploadBytes(storageRef, compressedFile);
-      const url = await getDownloadURL(storageRef);
-      await updateTeam(activeTeam.id, { escudo: url });
-      alert("Escudo subido correctamente. Actualiza la página si no ves los cambios.");
+      
+      const base64data = await new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.readAsDataURL(compressedFile);
+        reader.onloadend = () => resolve(reader.result);
+        reader.onerror = (err) => reject(err);
+      });
+      
+      await updateTeam(activeTeam.id, { escudo: base64data });
+      alert("¡Escudo guardado y optimizado con éxito!");
     } catch (error) {
       console.error("Error al subir el escudo:", error);
-      alert("No se pudo subir la imagen. Revisa los permisos.");
+      alert("No se pudo subir o procesar la imagen. Comprueba que sea un archivo de imagen válido.");
     } finally {
       setIsUploadingShield(false);
     }

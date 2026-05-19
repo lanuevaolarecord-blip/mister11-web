@@ -454,3 +454,29 @@
 .dark .heatmap-table tr:hover {
   background: rgba(255, 255, 255, 0.05);
 }
+
+/* Estilos para el botón de eliminar test */
+.btn-delete-test {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 48px;
+  min-height: 48px;
+  width: 48px;
+  height: 48px;
+  padding: 0;
+  border-radius: 8px;
+  border: 1.5px solid var(--error);
+  background: transparent;
+  color: var(--error);
+  cursor: pointer;
+  font-size: 18px;
+  transition: all 0.2s ease-in-out;
+}
+
+.btn-delete-test:hover {
+  background: var(--error) !important;
+  color: var(--white) !important;
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.2);
+}
+

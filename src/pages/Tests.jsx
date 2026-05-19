@@ -103,6 +103,8 @@ const DEFAULT_TESTS = [
   { id: 'soc_edl', type: 'sociodeportivo', category: 'Convivencia', name: 'EDL (Deporte Limpio)', unit: 'pts', desc: 'Conductas antideportivas y presión por ganar.', protocol: '10 preguntas. Escala 1-4.', rangoMin: 10, rangoMax: 40, isQuestionnaire: true, questions: Array.from({length: 10}, (_, i) => ({id: `q${i+1}`, text: `Pregunta ${i+1}`, dimension: ['Transgresión de normas', 'Presión externa'][i%2]})) }
 ];
 
+const DEFAULT_IDS = DEFAULT_TESTS.map(t => t.id);
+
 const Tests = () => {
   const { user, activeTeamId } = useAuth();
   const { activeTeam } = useTeams();
@@ -287,6 +289,50 @@ const Tests = () => {
     } catch (error) {
       console.error("Error deleting all evals:", error);
       alert("Error al eliminar los datos.");
+    }
+  };
+
+  const handleDeleteTest = async (testId, testName) => {
+    if (!user || !activeTeamId) return;
+    const confirmDelete = window.confirm(`¿Estás seguro de que deseas eliminar el test "${testName}"?\nSe borrarán permanentemente el test y todas las evaluaciones registradas de todos los jugadores para este test.`);
+    if (!confirmDelete) return;
+
+    setLoading(true);
+    try {
+      // 1. Borrar la definición del test de Firestore
+      await deleteDoc(doc(db, `users/${user.uid}/teams/${activeTeamId}/tests`, testId));
+
+      // 2. Buscar y borrar en lote (batch) todas las evaluaciones asociadas a ese test
+      const evalsRef = collection(db, `users/${user.uid}/teams/${activeTeamId}/evaluaciones`);
+      const q = query(evalsRef, where('testId', '==', testId));
+      const snapshot = await getDocs(q);
+
+      if (!snapshot.empty) {
+        const batch = writeBatch(db);
+        snapshot.forEach(docSnap => {
+          batch.delete(docSnap.ref);
+        });
+        await batch.commit();
+      }
+
+      // Evitar caídas de la interfaz si el test estaba seleccionado
+      if (heatSelectedTest === testId) {
+        setHeatSelectedTest('');
+      }
+      if (selectedTestDetail?.id === testId) {
+        setSelectedTestDetail(null);
+      }
+
+      alert(`El test "${testName}" y todas sus evaluaciones asociadas han sido eliminados correctamente.`);
+      
+      // 3. Recargar tests y evaluaciones
+      await loadTests();
+      await loadEvaluations();
+    } catch (error) {
+      console.error("Error deleting test and evaluations:", error);
+      alert("Error al eliminar el test.");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -481,10 +527,10 @@ const Tests = () => {
             
             <div className="tests-grid">
               {tests.filter(t => {
-                if (activeTab === 'FÍSICOS') return (t.type === 'fisico' || !t.type) && ['t1','t3','t4','t5','t6','t7','t8'].includes(t.id);
+                if (activeTab === 'FÍSICOS') return (t.type === 'fisico' || !t.type) && (!DEFAULT_IDS.includes(t.id) || ['t1','t3','t4','t5','t6','t7','t8'].includes(t.id));
                 if (activeTab === 'PSICOSOCIALES') return [
                   'psicodeportivo','psicosocial','sociodeportivo','socioemocional'
-                ].includes(t.type) && ['psi1','psi2','psi3','soc1','soc2','psi1_old','psi2_old','soc1_old','soc2_old'].includes(t.id);
+                ].includes(t.type) && (!DEFAULT_IDS.includes(t.id) || ['psi1','psi2','psi3','soc1','soc2','psi1_old','psi2_old','soc1_old','soc2_old'].includes(t.id));
                 return false;
               }).map(t => (
                 <div key={t.id} className="test-card clickable" onClick={() => setSelectedTestDetail(t)}>
@@ -494,7 +540,7 @@ const Tests = () => {
                   </div>
                   <h4>{t.name}</h4>
                   <p>{t.desc}</p>
-                  <div style={{ display: 'flex', gap: '10px', marginTop: '15px' }}>
+                  <div style={{ display: 'flex', gap: '10px', marginTop: '15px', alignItems: 'center' }}>
                     <button 
                       className="btn-primary" 
                       onClick={(e) => {
@@ -518,6 +564,16 @@ const Tests = () => {
                       }}
                     >
                       📥 Plantilla
+                    </button>
+                    <button 
+                      className="btn-delete-test" 
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDeleteTest(t.id, t.name);
+                      }}
+                      title="Eliminar Test"
+                    >
+                      🗑️
                     </button>
                   </div>
                 </div>

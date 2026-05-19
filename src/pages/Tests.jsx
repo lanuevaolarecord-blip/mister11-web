@@ -336,6 +336,36 @@ const Tests = () => {
     }
   };
 
+  const handleResetSeasonData = async () => {
+    if (!user || !activeTeamId) return;
+    const confirm1 = window.confirm("¿Estás seguro de que deseas iniciar una nueva temporada?\nEsto eliminará permanentemente TODOS los datos y registros de evaluaciones de todos los jugadores de este equipo.");
+    if (!confirm1) return;
+    const confirm2 = window.confirm("⚠️ ATENCIÓN: Esta acción es irreversible y borrará por completo el historial de pruebas del equipo. ¿Confirmas que deseas proceder con el reinicio de datos?");
+    if (!confirm2) return;
+
+    setLoading(true);
+    try {
+      const q = query(collection(db, `users/${user.uid}/teams/${activeTeamId}/evaluaciones`));
+      const querySnapshot = await getDocs(q);
+      
+      if (!querySnapshot.empty) {
+        const batch = writeBatch(db);
+        querySnapshot.forEach(docSnap => {
+          batch.delete(docSnap.ref);
+        });
+        await batch.commit();
+      }
+      
+      alert("✅ Temporada reiniciada. Se han eliminado todos los datos de evaluaciones de los jugadores correctamente.");
+      await loadEvaluations();
+    } catch (error) {
+      console.error("Error resetting season data:", error);
+      alert("Error al reiniciar los datos de la temporada.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleCreateTest = async () => {
     if (!newTest.name || !newTest.unit) return alert("Nombre y unidad son obligatorios");
     if (!user || !activeTeamId) return;
@@ -480,6 +510,26 @@ const Tests = () => {
         <div className="header-top">
           <h1>EVALUACIÓN Y TESTS</h1>
           <div className="header-actions">
+            <button
+              className="btn-outline"
+              style={{
+                borderColor: '#EF4444',
+                color: '#EF4444',
+                background: 'transparent',
+                fontWeight: 'bold',
+                minWidth: '48px',
+                minHeight: '48px',
+                padding: '10px 16px',
+                borderRadius: '8px',
+                cursor: 'pointer',
+                transition: 'all 0.2s'
+              }}
+              onClick={handleResetSeasonData}
+              disabled={loading}
+              title="Elimina todos los datos de evaluaciones de los jugadores para iniciar una nueva temporada"
+            >
+              🗑️ Reiniciar Temporada
+            </button>
             <button
               className="btn-outline"
               onClick={seedDemoEvaluations}
@@ -809,6 +859,56 @@ const Tests = () => {
                             </div>
                           </div>
                         )}
+
+                        {/* Botones para corregir errores de carga */}
+                        <div className="hc-actions" style={{ display: 'flex', gap: '8px', marginTop: '15px' }}>
+                          <button
+                            className="btn-outline"
+                            style={{
+                              flex: 1,
+                              minHeight: '44px',
+                              fontSize: '12px',
+                              fontWeight: 'bold',
+                              borderColor: '#EF4444',
+                              color: '#EF4444',
+                              background: 'transparent',
+                              borderRadius: '6px',
+                              cursor: 'pointer',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              gap: '4px',
+                              transition: 'all 0.2s'
+                            }}
+                            onClick={() => handleDeleteLastEval(histSelectedPlayer, t.id)}
+                            title="Eliminar la última marca registrada por error"
+                          >
+                            🗑️ Borrar Último
+                          </button>
+                          <button
+                            className="btn-outline"
+                            style={{
+                              flex: 1,
+                              minHeight: '44px',
+                              fontSize: '12px',
+                              fontWeight: 'bold',
+                              borderColor: '#EF4444',
+                              color: '#EF4444',
+                              background: 'transparent',
+                              borderRadius: '6px',
+                              cursor: 'pointer',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              gap: '4px',
+                              transition: 'all 0.2s'
+                            }}
+                            onClick={() => handleDeleteAllEvals(histSelectedPlayer, t.id)}
+                            title="Eliminar todo el historial de este test para este jugador"
+                          >
+                            🗑️ Borrar Historial
+                          </button>
+                        </div>
                       </div>
                     );
                   })

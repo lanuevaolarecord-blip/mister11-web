@@ -33,4 +33,6 @@ dist-ssr
 # Android APKs
 public/mister11.apk
 public/*.apk
+android/app/build/
+
 

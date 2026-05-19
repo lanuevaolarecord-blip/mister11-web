@@ -615,16 +615,6 @@ const Tests = () => {
                     >
                       📥 Plantilla
                     </button>
-                    <button 
-                      className="btn-delete-test" 
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleDeleteTest(t.id, t.name);
-                      }}
-                      title="Eliminar Test"
-                    >
-                      🗑️
-                    </button>
                   </div>
                 </div>
               ))}

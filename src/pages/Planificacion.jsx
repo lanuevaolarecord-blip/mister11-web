@@ -733,7 +733,7 @@ const Planificacion = () => {
                   {/* Columns for the 4 filtered weeks */}
                   <div className="data-columns">
                     {filteredMesoWeeks.map(m => (
-                      <div key={m.id} className="data-col" style={{ width: '130px' }}>
+                      <div key={m.id} className="data-col meso-col">
                         <div className={`cell section-cell period-cell ${m.period.toLowerCase()}`}>
                           <input type="text" value={m.period} onChange={e => handleMicroChange(m.id, 'period', e.target.value)} title={m.period} />
                         </div>

@@ -976,6 +976,26 @@
   gap: 10px;
 }
 
+.meso-spreadsheet-wrapper .macro-spreadsheet {
+  width: 100%;
+  min-width: 100%;
+}
+
+.meso-spreadsheet-wrapper .data-columns {
+  display: flex;
+  flex: 1;
+}
+
+.meso-col {
+  flex: 1;
+  min-width: 110px;
+  width: auto !important;
+}
+
+.row-headers .sub-head {
+  color: rgba(255, 255, 255, 0.7) !important;
+}
+
 .spreadsheet-caption {
   font-size: 13px;
   font-weight: 700;

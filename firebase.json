@@ -3,5 +3,13 @@
     "providers": {
       "anonymous": true
     }
+  },
+  "hosting": {
+    "public": "public_hosting",
+    "ignore": [
+      "firebase.json",
+      "**/.*",
+      "**/node_modules/**"
+    ]
   }
 }

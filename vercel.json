@@ -1,4 +1,7 @@
 {
+  "redirects": [
+    { "source": "/mister11.apk", "destination": "https://mister11.web.app/mister11.apk", "permanent": false }
+  ],
   "rewrites": [
     { "source": "/(.*)", "destination": "/index.html" }
   ]

@@ -6,9 +6,20 @@ import { usePlan } from '../hooks/usePlan';
 import UpgradeModal from '../components/UpgradeModal';
 import { calcularEdad } from '../utils/calcularEdad';
 import { generateExpediente } from '../utils/pdfGenerator';
+import imageCompression from 'browser-image-compression';
 import './MiEquipo.css';
 
 const POSITIONS = ['TODOS', 'POR', 'DEF', 'LTD', 'LTI', 'MCD', 'MC', 'MCO', 'EXT', 'DEL'];
+
+const stringToColor = (str) => {
+  if (!str) return '#1B3A2D';
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    hash = str.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  const h = Math.abs(hash) % 360;
+  return `hsl(${h}, 60%, 40%)`;
+};
 
 const emptyPlayer = {
   name: '', 
@@ -21,7 +32,8 @@ const emptyPlayer = {
   foot: 'Derecho', 
   injuries: false,
   injuryType: '',
-  fechaNacimiento: ''
+  fechaNacimiento: '',
+  photo: ''
 };
 
 const MiEquipo = () => {
@@ -38,7 +50,9 @@ const MiEquipo = () => {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editData, setEditData] = useState(emptyPlayer);
   const [isSaving, setIsSaving] = useState(false);
+  const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
   const [formError, setFormError] = useState('');
+
 
   const filteredPlayers = filter === 'TODOS' 
     ? players 
@@ -55,6 +69,35 @@ const MiEquipo = () => {
   const getInitials = (name) => {
     if(!name) return '??';
     return name.split(' ').map(n => n[0]).join('').toUpperCase().substring(0,2);
+  };
+
+  const handlePhotoUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    setIsUploadingPhoto(true);
+    try {
+      const options = {
+        maxSizeMB: 0.04,        // 40KB max
+        maxWidthOrHeight: 256,  // 256x256 px
+        useWebWorker: true,
+        fileType: 'image/webp'
+      };
+      const compressedFile = await imageCompression(file, options);
+      
+      const base64data = await new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.readAsDataURL(compressedFile);
+        reader.onloadend = () => resolve(reader.result);
+        reader.onerror = (err) => reject(err);
+      });
+      
+      setEditData(prev => ({ ...prev, photo: base64data }));
+    } catch (error) {
+      console.error("Error al procesar foto del jugador:", error);
+      alert("No se pudo procesar la imagen. Verifica que sea un archivo válido.");
+    } finally {
+      setIsUploadingPhoto(false);
+    }
   };
 
   // calcularEdad importada desde src/utils/calcularEdad.js
@@ -146,8 +189,8 @@ const MiEquipo = () => {
         <div className="players-grid">
           {filteredPlayers.map(player => (
             <div key={player.id} className="player-card" onClick={() => setSelectedPlayer(player)}>
-              <div className="player-avatar">
-                {player.photo ? <img src={player.photo} alt={player.name} /> : <span>{getInitials(player.name)}</span>}
+              <div className="player-avatar" style={!player.photo ? { backgroundColor: stringToColor(player.id || player.name) } : {}}>
+                {player.photo ? <img src={player.photo} alt={player.name} /> : <span style={{ color: '#FFF' }}>{getInitials(player.name)}</span>}
                 <div className="player-number">{player.number}</div>
               </div>
               <div className="player-info">
@@ -183,6 +226,74 @@ const MiEquipo = () => {
               <div className="form-group-team full">
                 <label>Nombre del Jugador *</label>
                 <input type="text" value={editData.name} onChange={e => setEditData({...editData, name: e.target.value})} placeholder="Ej. Lamine Yamal" />
+              </div>
+              <div className="form-group-team full" style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '16px' }}>
+                <label>Foto del Jugador</label>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                  <div style={{
+                    width: '60px',
+                    height: '60px',
+                    borderRadius: '50%',
+                    backgroundColor: editData.photo ? 'transparent' : stringToColor(editData.id || editData.name),
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    overflow: 'hidden',
+                    border: '2px solid var(--border-color)',
+                    color: '#FFF',
+                    fontWeight: 'bold',
+                    fontSize: '20px'
+                  }}>
+                    {editData.photo ? <img src={editData.photo} alt="Vista previa" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : getInitials(editData.name)}
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      id="player-photo-upload"
+                      style={{ display: 'none' }}
+                      onChange={handlePhotoUpload}
+                      disabled={isUploadingPhoto}
+                    />
+                    <label htmlFor="player-photo-upload" className="btn-secondary" style={{
+                      padding: '8px 16px',
+                      borderRadius: '8px',
+                      cursor: 'pointer',
+                      fontSize: '13px',
+                      fontWeight: 'bold',
+                      display: 'inline-block',
+                      border: '1px solid var(--border-color)',
+                      textAlign: 'center',
+                      minHeight: '48px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center'
+                    }}>
+                      {isUploadingPhoto ? 'Procesando...' : 'Subir Foto'}
+                    </label>
+                    {editData.photo && (
+                      <button
+                        type="button"
+                        onClick={() => setEditData({ ...editData, photo: '' })}
+                        style={{
+                          background: 'none',
+                          border: 'none',
+                          color: '#EF4444',
+                          fontSize: '12px',
+                          fontWeight: 'bold',
+                          cursor: 'pointer',
+                          textAlign: 'left',
+                          padding: '4px 0',
+                          minHeight: '48px',
+                          display: 'flex',
+                          alignItems: 'center'
+                        }}
+                      >
+                        Eliminar Foto
+                      </button>
+                    )}
+                  </div>
+                </div>
               </div>
               <div className="form-row-team">
                 <div className="form-group-team">
@@ -257,8 +368,8 @@ const MiEquipo = () => {
               <button className="btn-edit-icon" onClick={() => handleOpenForm(selectedPlayer)}>✏️</button>
             </div>
             <div className="header-content">
-              <div className="large-avatar">
-                {selectedPlayer.photo ? <img src={selectedPlayer.photo} alt={selectedPlayer.name} /> : <span>{getInitials(selectedPlayer.name)}</span>}
+              <div className="large-avatar" style={!selectedPlayer.photo ? { backgroundColor: stringToColor(selectedPlayer.id || selectedPlayer.name) } : {}}>
+                {selectedPlayer.photo ? <img src={selectedPlayer.photo} alt={selectedPlayer.name} /> : <span style={{ color: '#FFF' }}>{getInitials(selectedPlayer.name)}</span>}
               </div>
               <h2>{selectedPlayer.name}</h2>
               <p>Dorsal {selectedPlayer.number} · {selectedPlayer.position}</p>

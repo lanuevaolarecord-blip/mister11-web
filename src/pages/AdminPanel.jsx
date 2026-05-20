@@ -23,8 +23,9 @@ import { t } from '../i18n/translations';
 import { usePWA } from '../hooks/usePWA';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
-import { storage } from '../firebaseConfig';
+import { storage, db } from '../firebaseConfig';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { collection, getDocs } from 'firebase/firestore';
 import imageCompression from 'browser-image-compression';
 import EscudoEquipo from '../components/EscudoEquipo';
 import RedeemCode from '../components/RedeemCode';
@@ -159,6 +160,57 @@ const AdminPanel = () => {
     const session = sessions.find(s => s.id === selectedSessionId);
     if (!session) { alert('Sesión no encontrada.'); return; }
     await generateSessionPDF(session, activeTeam);
+  };
+
+  const handleExportBackup = async () => {
+    if (!user || !activeTeam) {
+      alert("No hay ningún equipo activo seleccionado.");
+      return;
+    }
+    
+    try {
+      const playersRef = collection(db, `users/${user.uid}/teams/${activeTeam.id}/players`);
+      const playersSnap = await getDocs(playersRef);
+      const playersData = playersSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+      const sessionsRef = collection(db, `users/${user.uid}/teams/${activeTeam.id}/sessions`);
+      const sessionsSnap = await getDocs(sessionsRef);
+      const sessionsData = sessionsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+      const matchesRef = collection(db, `users/${user.uid}/teams/${activeTeam.id}/matches`);
+      const matchesSnap = await getDocs(matchesRef);
+      const matchesData = matchesSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+      const testsRef = collection(db, `users/${user.uid}/teams/${activeTeam.id}/tests`);
+      const testsSnap = await getDocs(testsRef);
+      const testsData = testsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+      const evalsRef = collection(db, `users/${user.uid}/teams/${activeTeam.id}/evaluaciones`);
+      const evalsSnap = await getDocs(evalsRef);
+      const evalsData = evalsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+      const backupData = {
+        version: "1.0",
+        timestamp: new Date().toISOString(),
+        team: activeTeam,
+        players: playersData,
+        sessions: sessionsData,
+        matches: matchesData,
+        tests: testsData,
+        evaluaciones: evalsData
+      };
+
+      const jsonString = `data:text/json;charset=utf-8,${encodeURIComponent(JSON.stringify(backupData, null, 2))}`;
+      const downloadAnchor = document.createElement('a');
+      downloadAnchor.setAttribute("href", jsonString);
+      downloadAnchor.setAttribute("download", `mister11_backup_${activeTeam.nombre.replace(/\s+/g, '_').toLowerCase()}_${new Date().toISOString().slice(0, 10)}.json`);
+      document.body.appendChild(downloadAnchor);
+      downloadAnchor.click();
+      downloadAnchor.remove();
+    } catch (error) {
+      console.error("Error al exportar backup:", error);
+      alert("Error al generar la copia de seguridad.");
+    }
   };
 
   return (
@@ -329,6 +381,15 @@ const AdminPanel = () => {
                 </select>
                 <button className="btn-export outline" onClick={handleExportSession}>
                   <Download size={18} /> Exportar
+                </button>
+              </div>
+
+              <div className="export-card">
+                <Layers className="export-icon" size={32} />
+                <h3>Copia de Seguridad del Equipo</h3>
+                <p>Exporta toda la información del equipo activo (jugadores, sesiones, partidos, tests y evaluaciones) en un archivo JSON.</p>
+                <button className="btn-export" onClick={handleExportBackup} style={{ marginTop: 'auto', background: '#004B87', minHeight: '48px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
+                  <Download size={18} /> Copia de Seguridad
                 </button>
               </div>
             </div>

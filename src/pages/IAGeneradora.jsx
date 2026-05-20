@@ -70,6 +70,8 @@ const IAGeneradora = () => {
   const [selectedExerciseDetail, setSelectedExerciseDetail] = useState(null);
   const [upgradeModal, setUpgradeModal] = useState({ open: false, message: '' });
   const isCallingRef = useRef(false);
+  const [isListening, setIsListening] = useState(false);
+  const recognitionRef = useRef(null);
 
   const apiKey = import.meta.env.VITE_GROQ_API_KEY;
   const apiKeyMissing = !apiKey || apiKey === 'undefined';
@@ -81,6 +83,33 @@ const IAGeneradora = () => {
         ? prev.materiales.filter(m => m !== id)
         : [...prev.materiales, id]
     }));
+  };
+
+  const handleVoiceDictation = () => {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      alert('Tu navegador no soporta el dictado por voz. Usa Chrome en Android para esta función.');
+      return;
+    }
+    if (isListening) {
+      recognitionRef.current?.stop();
+      setIsListening(false);
+      return;
+    }
+    const recog = new SpeechRecognition();
+    recog.lang = 'es-ES';
+    recog.continuous = false;
+    recog.interimResults = false;
+    recog.onresult = (event) => {
+      const transcript = event.results[0][0].transcript;
+      setForm(prev => ({ ...prev, observaciones: prev.observaciones ? prev.observaciones + ' ' + transcript : transcript }));
+      setIsListening(false);
+    };
+    recog.onerror = () => setIsListening(false);
+    recog.onend = () => setIsListening(false);
+    recognitionRef.current = recog;
+    recog.start();
+    setIsListening(true);
   };
 
   const callGroq = async (promptTexto) => {
@@ -279,12 +308,43 @@ const IAGeneradora = () => {
 
           <div className="ia-field">
             <label>Observaciones adicionales</label>
-            <textarea 
-              value={form.observaciones} 
-              onChange={e => setForm({...form, observaciones: e.target.value})} 
-              placeholder="Ej. Enfocarse en la velocidad de ejecución o en el repliegue defensivo..."
-              className="ia-textarea"
-            />
+            <div style={{ position: 'relative' }}>
+              <textarea 
+                value={form.observaciones} 
+                onChange={e => setForm({...form, observaciones: e.target.value})} 
+                placeholder="Ej. Enfocarse en la velocidad de ejecución o en el repliegue defensivo..."
+                className="ia-textarea"
+                style={{ paddingRight: '52px' }}
+              />
+              <button
+                onClick={handleVoiceDictation}
+                title={isListening ? 'Detener dictado' : 'Dictar por voz'}
+                style={{
+                  position: 'absolute',
+                  right: '10px',
+                  bottom: '10px',
+                  width: '40px',
+                  height: '40px',
+                  borderRadius: '50%',
+                  border: 'none',
+                  background: isListening ? '#EF4444' : 'var(--accent)',
+                  color: '#fff',
+                  fontSize: '18px',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  boxShadow: isListening ? '0 0 0 4px rgba(239,68,68,0.3)' : '0 2px 8px rgba(0,0,0,0.15)',
+                  transition: 'all 0.2s',
+                  animation: isListening ? 'pulse 1s infinite' : 'none'
+                }}
+              >
+                {isListening ? '⏹' : '🎤'}
+              </button>
+            </div>
+            {isListening && (
+              <p style={{ fontSize: 12, color: '#EF4444', marginTop: 4, fontWeight: 600 }}>🔴 Escuchando... habla ahora</p>
+            )}
           </div>
 
           <button className="btn-generate" onClick={handleGenerate} disabled={isGenerating}>

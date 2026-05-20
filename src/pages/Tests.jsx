@@ -851,7 +851,7 @@ const Tests = () => {
                         )}
 
                         {/* Botones para corregir errores de carga */}
-                        <div className="hc-actions" style={{ display: 'flex', gap: '8px', marginTop: '15px' }}>
+                        <div className="hc-actions" data-html2canvas-ignore="true" style={{ display: 'flex', gap: '8px', marginTop: '15px' }}>
                           <button
                             className="btn-outline"
                             style={{
@@ -899,6 +899,48 @@ const Tests = () => {
                             🗑️ Borrar Historial
                           </button>
                         </div>
+                        <button
+                          className="btn-export-png"
+                          data-html2canvas-ignore="true"
+                          onClick={async (e) => {
+                            e.stopPropagation();
+                            const cardElement = e.currentTarget.closest('.hist-chart-card');
+                            if (!cardElement) return;
+                            try {
+                              const canvas = await html2canvas(cardElement, { scale: 2, backgroundColor: '#FFFFFF' });
+                              const imgData = canvas.toDataURL('image/png');
+                              const downloadAnchor = document.createElement('a');
+                              downloadAnchor.setAttribute("href", imgData);
+                              downloadAnchor.setAttribute("download", `evolucion_${t.name.replace(/\s+/g, '_').toLowerCase()}_${getPlayerById(histSelectedPlayer)?.name.replace(/\s+/g, '_').toLowerCase() || 'jugador'}.png`);
+                              document.body.appendChild(downloadAnchor);
+                              downloadAnchor.click();
+                              downloadAnchor.remove();
+                            } catch (error) {
+                              console.error("Error al exportar gráfico:", error);
+                              alert("Error al exportar gráfico a imagen.");
+                            }
+                          }}
+                          style={{
+                            marginTop: '12px',
+                            background: '#004B87',
+                            color: '#FFF',
+                            border: 'none',
+                            borderRadius: '8px',
+                            padding: '8px 16px',
+                            fontSize: '12px',
+                            fontWeight: 'bold',
+                            cursor: 'pointer',
+                            width: '100%',
+                            textAlign: 'center',
+                            minHeight: '48px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: '6px'
+                          }}
+                        >
+                          🖼️ Exportar Gráfico (PNG)
+                        </button>
                       </div>
                     );
                   })

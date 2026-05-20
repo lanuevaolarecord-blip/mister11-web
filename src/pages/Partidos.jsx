@@ -30,6 +30,71 @@ const FORMATIONS = {
     { pos: 'MI', top: '40%', left: '15%' },
     { pos: 'DEL', top: '15%', left: '65%' },
     { pos: 'DEL', top: '15%', left: '35%' }
+  ],
+  '3-5-2': [
+    { pos: 'POR', top: '85%', left: '50%' },
+    { pos: 'DEF', top: '70%', left: '70%' },
+    { pos: 'DEF', top: '72%', left: '50%' },
+    { pos: 'DEF', top: '70%', left: '30%' },
+    { pos: 'MD', top: '50%', left: '85%' },
+    { pos: 'MC', top: '45%', left: '65%' },
+    { pos: 'MC', top: '42%', left: '50%' },
+    { pos: 'MC', top: '45%', left: '35%' },
+    { pos: 'MI', top: '50%', left: '15%' },
+    { pos: 'DEL', top: '15%', left: '65%' },
+    { pos: 'DEL', top: '15%', left: '35%' }
+  ],
+  '5-3-2': [
+    { pos: 'POR', top: '85%', left: '50%' },
+    { pos: 'LTD', top: '65%', left: '90%' },
+    { pos: 'DEF', top: '70%', left: '70%' },
+    { pos: 'DEF', top: '72%', left: '50%' },
+    { pos: 'DEF', top: '70%', left: '30%' },
+    { pos: 'LTI', top: '65%', left: '10%' },
+    { pos: 'MC', top: '42%', left: '70%' },
+    { pos: 'MC', top: '40%', left: '50%' },
+    { pos: 'MC', top: '42%', left: '30%' },
+    { pos: 'DEL', top: '15%', left: '65%' },
+    { pos: 'DEL', top: '15%', left: '35%' }
+  ],
+  '4-1-4-1': [
+    { pos: 'POR', top: '85%', left: '50%' },
+    { pos: 'LTD', top: '65%', left: '85%' },
+    { pos: 'DEF', top: '70%', left: '65%' },
+    { pos: 'DEF', top: '70%', left: '35%' },
+    { pos: 'LTI', top: '65%', left: '15%' },
+    { pos: 'MCD', top: '52%', left: '50%' },
+    { pos: 'MD', top: '35%', left: '80%' },
+    { pos: 'MC', top: '37%', left: '60%' },
+    { pos: 'MC', top: '37%', left: '40%' },
+    { pos: 'MI', top: '35%', left: '20%' },
+    { pos: 'DEL', top: '12%', left: '50%' }
+  ],
+  '3-4-3': [
+    { pos: 'POR', top: '85%', left: '50%' },
+    { pos: 'DEF', top: '70%', left: '70%' },
+    { pos: 'DEF', top: '72%', left: '50%' },
+    { pos: 'DEF', top: '70%', left: '30%' },
+    { pos: 'MD', top: '45%', left: '80%' },
+    { pos: 'MC', top: '47%', left: '60%' },
+    { pos: 'MC', top: '47%', left: '40%' },
+    { pos: 'MI', top: '45%', left: '20%' },
+    { pos: 'EXT', top: '15%', left: '80%' },
+    { pos: 'DEL', top: '12%', left: '50%' },
+    { pos: 'EXT', top: '15%', left: '20%' }
+  ],
+  '4-3-2-1': [
+    { pos: 'POR', top: '85%', left: '50%' },
+    { pos: 'LTD', top: '65%', left: '85%' },
+    { pos: 'DEF', top: '70%', left: '65%' },
+    { pos: 'DEF', top: '70%', left: '35%' },
+    { pos: 'LTI', top: '65%', left: '15%' },
+    { pos: 'MC', top: '48%', left: '65%' },
+    { pos: 'MCD', top: '50%', left: '50%' },
+    { pos: 'MC', top: '48%', left: '35%' },
+    { pos: 'MCO', top: '30%', left: '60%' },
+    { pos: 'MCO', top: '30%', left: '40%' },
+    { pos: 'DEL', top: '12%', left: '50%' }
   ]
 };
 
@@ -301,6 +366,11 @@ const Partidos = () => {
                   >
                     <option value="4-3-3">4-3-3 Ofensivo</option>
                     <option value="4-4-2">4-4-2 Clásico</option>
+                    <option value="3-5-2">3-5-2 Mediocampo Amplio</option>
+                    <option value="5-3-2">5-3-2 Bloque Defensivo</option>
+                    <option value="4-1-4-1">4-1-4-1 Doble Pivote</option>
+                    <option value="3-4-3">3-4-3 Ataque Total</option>
+                    <option value="4-3-2-1">4-3-2-1 Árbol de Navidad</option>
                   </select>
 
                   <div className="titulares-list mt-3">

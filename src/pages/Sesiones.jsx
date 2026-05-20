@@ -11,7 +11,115 @@ import { ref, uploadBytesResumable, getDownloadURL, deleteObject } from 'firebas
 import { collection, getDocs, query, orderBy, doc, deleteDoc, writeBatch } from 'firebase/firestore';
 import { useCaptures } from '../hooks/useCaptures';
 import { useExercises } from '../hooks/useExercises';
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  TouchSensor,
+} from '@dnd-kit/core';
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+  useSortable,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 import './Sesiones.css';
+
+const SortableBlockItem = ({ block, index, handleUpdateBlock, handleDeleteBlock }) => {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: block.id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+    position: 'relative',
+    zIndex: isDragging ? 999 : 'auto',
+  };
+
+  return (
+    <div ref={setNodeRef} style={style} className="block-editor-card">
+      <div className="block-editor-header">
+        <div 
+          className="drag-handle" 
+          {...attributes} 
+          {...listeners} 
+          style={{ 
+            cursor: 'grab', 
+            padding: '8px 12px', 
+            display: 'flex', 
+            alignItems: 'center', 
+            justifyContent: 'center',
+            minWidth: '48px',
+            minHeight: '48px',
+            touchAction: 'none'
+          }}
+        >
+          <span style={{ fontSize: '18px', color: 'var(--text-muted)' }}>☰</span>
+        </div>
+        <span className="block-number">{index + 1}</span>
+        <input 
+          type="text" 
+          className="block-title-input" 
+          value={block.name || ''} 
+          onChange={e => handleUpdateBlock(block.id, 'name', e.target.value)} 
+          placeholder="Nombre del ejercicio" 
+        />
+        <button 
+          className="btn-del-icon" 
+          onClick={() => handleDeleteBlock(block.id)}
+          style={{ minWidth: '48px', minHeight: '48px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+        >
+          ✕
+        </button>
+      </div>
+      <div className="block-editor-body">
+        <div className="form-row">
+          <div className="form-group mini">
+            <label>Duración (min)</label>
+            <input 
+              type="number" 
+              min="1" 
+              value={block.duration} 
+              onChange={e => handleUpdateBlock(block.id, 'duration', Number(e.target.value))} 
+            />
+          </div>
+          <div className="form-group mini">
+            <label>Tipo</label>
+            <select 
+              value={block.type} 
+              onChange={e => handleUpdateBlock(block.id, 'type', e.target.value)}
+            >
+              <option value="Física">Calentamiento/Físico</option>
+              <option value="Técnica">Técnico</option>
+              <option value="Táctica">Táctico</option>
+              <option value="Partido">Partido R.</option>
+            </select>
+          </div>
+        </div>
+        <div className="form-group full">
+          <label>Descripción y Reglas</label>
+          <textarea 
+            value={block.description || ''} 
+            onChange={e => handleUpdateBlock(block.id, 'description', e.target.value)} 
+            placeholder="Describe el ejercicio, restricciones, puntuación..."
+          ></textarea>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 const Sesiones = () => {
   const { user, activeTeamId } = useAuth();
@@ -38,6 +146,38 @@ const Sesiones = () => {
   const [pdfPreview, setPdfPreview] = useState(null);
   const fileInputRef = useRef(null);
   const [uploadProgress, setUploadProgress] = useState(0);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8,
+      },
+    }),
+    useSensor(TouchSensor, {
+      activationConstraint: {
+        delay: 200,
+        tolerance: 5,
+      },
+    }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
+
+  const handleDragEnd = (event) => {
+    const { active, over } = event;
+    if (!over) return;
+    if (active.id !== over.id) {
+      setEditData(prev => {
+        const oldIndex = prev.blocks.findIndex(b => b.id === active.id);
+        const newIndex = prev.blocks.findIndex(b => b.id === over.id);
+        return {
+          ...prev,
+          blocks: arrayMove(prev.blocks, oldIndex, newIndex)
+        };
+      });
+    }
+  };
 
   const categories = ['Todas', 'Técnica', 'Táctica', 'Física', 'Mixta'];
   const [catFilter, setCatFilter] = useState('Todas');
@@ -467,36 +607,26 @@ const Sesiones = () => {
               {editData.blocks.length === 0 ? (
                 <div className="empty-blocks">Añade bloques de entrenamiento para organizar tu sesión.</div>
               ) : (
-                editData.blocks.map((block, index) => (
-                  <div key={block.id} className="block-editor-card">
-                    <div className="block-editor-header">
-                      <span className="block-number">{index + 1}</span>
-                      <input type="text" className="block-title-input" value={block.name || ''} onChange={e => handleUpdateBlock(block.id, 'name', e.target.value)} placeholder="Nombre del ejercicio" />
-                      <button className="btn-del-icon" onClick={() => handleDeleteBlock(block.id)}>✕</button>
-                    </div>
-                    <div className="block-editor-body">
-                      <div className="form-row">
-                        <div className="form-group mini">
-                          <label>Duración (min)</label>
-                          <input type="number" min="1" value={block.duration} onChange={e => handleUpdateBlock(block.id, 'duration', Number(e.target.value))} />
-                        </div>
-                        <div className="form-group mini">
-                          <label>Tipo</label>
-                          <select value={block.type} onChange={e => handleUpdateBlock(block.id, 'type', e.target.value)}>
-                            <option value="Física">Calentamiento/Físico</option>
-                            <option value="Técnica">Técnico</option>
-                            <option value="Táctica">Táctico</option>
-                            <option value="Partido">Partido R.</option>
-                          </select>
-                        </div>
-                      </div>
-                      <div className="form-group full">
-                        <label>Descripción y Reglas</label>
-                        <textarea value={block.description || ''} onChange={e => handleUpdateBlock(block.id, 'description', e.target.value)} placeholder="Describe el ejercicio, restricciones, puntuación..."></textarea>
-                      </div>
-                    </div>
-                  </div>
-                ))
+                <DndContext
+                  sensors={sensors}
+                  collisionDetection={closestCenter}
+                  onDragEnd={handleDragEnd}
+                >
+                  <SortableContext
+                    items={editData.blocks.map(b => b.id)}
+                    strategy={verticalListSortingStrategy}
+                  >
+                    {editData.blocks.map((block, index) => (
+                      <SortableBlockItem
+                        key={block.id}
+                        block={block}
+                        index={index}
+                        handleUpdateBlock={handleUpdateBlock}
+                        handleDeleteBlock={handleDeleteBlock}
+                      />
+                    ))}
+                  </SortableContext>
+                </DndContext>
               )}
             </div>
           </div>

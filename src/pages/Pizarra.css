@@ -492,9 +492,7 @@
   justify-content: center;
 }
 
-#canvas-container, 
-.canvas-container,
-[id*="canvas"][class*="container"] {
+#canvas-container {
   width: 100% !important;
   height: 100% !important;
   flex: 1 !important;
@@ -517,10 +515,6 @@ canvas.lower-canvas {
 }
 
 .fabric-canvas-elem {
-  position: absolute !important;
-  top: 50% !important;
-  left: 50% !important;
-  transform: translate(-50%, -50%) !important;
   z-index: 999 !important;
 }
 
@@ -836,6 +830,7 @@ canvas.lower-canvas {
     left: 0;
     width: 100vw;
     height: 100vh;
+    height: 100dvh;
     margin: 0 !important;
     padding: 0 !important;
     overflow: hidden !important;

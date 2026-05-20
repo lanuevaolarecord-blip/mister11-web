@@ -926,8 +926,14 @@ const PizarraTactica = () => {
     
     if (!containerRef.current || !fieldCanvasRef.current || !fabricElemRef.current || !user || !activeTeamId || !planId) return;
 
-    const W = containerRef.current.offsetWidth  || 800;
-    const H = containerRef.current.offsetHeight || 500;
+    let W = containerRef.current.offsetWidth;
+    let H = containerRef.current.offsetHeight;
+
+    // Robust fallback if container is initially collapsed/not-laid-out:
+    if (!W || !H) {
+      W = window.innerWidth;
+      H = Math.max(300, window.innerHeight - 120);
+    }
 
     let initW = W;
     let initH = W / 1.5;
@@ -1230,8 +1236,14 @@ const PizarraTactica = () => {
       const fieldCanvas = fieldCanvasRef.current;
       if (!contenedor || !fc || !fieldCanvas) return;
 
-      const anchoContenedor = contenedor.offsetWidth;
-      const altoContenedor  = contenedor.offsetHeight;
+      let anchoContenedor = contenedor.offsetWidth;
+      let altoContenedor  = contenedor.offsetHeight;
+
+      // Salvaguarda: si el contenedor colapsa temporalmente a 0 o valores mínimos inservibles (ej: teclado móvil)
+      if (anchoContenedor <= 0 || altoContenedor <= 0) {
+        anchoContenedor = window.innerWidth;
+        altoContenedor = Math.max(300, window.innerHeight - 120);
+      }
 
       // Layout adaptativo
       const isMobileView = window.innerWidth < 768;

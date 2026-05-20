@@ -41,6 +41,17 @@ const INITIAL_FORM = {
   observaciones: '',
 };
 
+const INITIAL_PREVENTION_FORM = {
+  descripcion: '',
+  tipo: 'Prevención',
+  zona: '',
+  nivel: 'Intermedio',
+  materiales: [],
+};
+
+const ZONAS_CORPORALES = ['Rodilla', 'Tobillo', 'Isquiotibial', 'Lumbar', 'Hombro', 'Cuádriceps', 'Aductores', 'Core / Pelvis', 'Gemelos'];
+const NIVELES = ['Básico', 'Intermedio', 'Avanzado'];
+
 const renderMarkdown = (text) => {
   if (!text) return null;
   return text.split('\n').map((line, i) => {
@@ -61,7 +72,9 @@ const IAGeneradora = () => {
   const { exercises, addExercise } = useExercises(activeTeamId);
   const { captures } = useCaptures(activeTeamId);
   const [selectedTacticalRef, setSelectedTacticalRef] = useState(null);
+  const [mode, setMode] = useState('tactico'); // 'tactico' | 'prevencion'
   const [form, setForm] = useState(INITIAL_FORM);
+  const [preventionForm, setPreventionForm] = useState(INITIAL_PREVENTION_FORM);
   const [result, setResult] = useState(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [loadingMsg, setLoadingMsg] = useState('⏳ Analizando contexto...');
@@ -154,9 +167,16 @@ const IAGeneradora = () => {
       return;
     }
 
-    if (!form.edad || !form.objetivo || !form.espacio) {
-      setError('Por favor completa: Edad, Objetivo y Espacio.');
-      return;
+    if (mode === 'tactico') {
+      if (!form.edad || !form.objetivo || !form.espacio) {
+        setError('Por favor completa: Edad, Objetivo y Espacio.');
+        return;
+      }
+    } else {
+      if (!preventionForm.descripcion || !preventionForm.zona) {
+        setError('Por favor describe el caso y selecciona una zona corporal.');
+        return;
+      }
     }
 
     isCallingRef.current = true;
@@ -165,16 +185,51 @@ const IAGeneradora = () => {
     setError('');
     setResult(null);
 
-    const materialesStr = form.materiales.length > 0
-      ? MATERIALES.filter(m => form.materiales.includes(m.id)).map(m => m.label).join(', ')
-      : 'Sin material específico';
+    let prompt = '';
+    
+    if (mode === 'tactico') {
+      const materialesStr = form.materiales.length > 0
+        ? MATERIALES.filter(m => form.materiales.includes(m.id)).map(m => m.label).join(', ')
+        : 'Sin material específico';
 
-    const prompt = `Genera UN ejercicio de entrenamiento de fútbol en español:
-    Edad: ${form.edad}, Jugadores: ${form.jugadores}, Objetivo: ${form.objetivo}, Duración: ${form.duracion} min, Material: ${materialesStr}, Espacio: ${form.espacio}, Intensidad: ${form.intensidad}.
-    ${selectedTacticalRef ? `IMPORTANTE: Basar el ejercicio en la REFERENCIA TÁCTICA: "${selectedTacticalRef.title}".` : ''}
-    ${form.observaciones ? `Observaciones: ${form.observaciones}` : ''}
-    Usa el formato markdown con ## para el título.
-    Explica la dinámica del ejercicio basándote en la referencia táctica si se ha proporcionado.`;
+      prompt = `Genera UN ejercicio de entrenamiento de fútbol en español:
+      Edad: ${form.edad}, Jugadores: ${form.jugadores}, Objetivo: ${form.objetivo}, Duración: ${form.duracion} min, Material: ${materialesStr}, Espacio: ${form.espacio}, Intensidad: ${form.intensidad}.
+      ${selectedTacticalRef ? `IMPORTANTE: Basar el ejercicio en la REFERENCIA TÁCTICA: "${selectedTacticalRef.title}".` : ''}
+      ${form.observaciones ? `Observaciones: ${form.observaciones}` : ''}
+      Usa el formato markdown con ## para el título.
+      Explica la dinámica del ejercicio basándote en la referencia táctica si se ha proporcionado.`;
+    } else {
+      const materialesStr = preventionForm.materiales.length > 0
+        ? MATERIALES.filter(m => preventionForm.materiales.includes(m.id)).map(m => m.label).join(', ')
+        : 'Sin material';
+        
+      prompt = `Eres un fisioterapeuta deportivo y preparador físico experto en fútbol formativo.
+El entrenador describe el siguiente caso:
+
+"${preventionForm.descripcion}"
+
+Tipo: ${preventionForm.tipo}
+Zona corporal: ${preventionForm.zona}
+Nivel del jugador: ${preventionForm.nivel}
+Material disponible: ${materialesStr}
+
+Genera un plan de ejercicios estructurado con el siguiente formato:
+
+## [Nombre descriptivo del plan]
+**Objetivo:** ...
+**Contraindicaciones:** ... (si las hay)
+
+### Ejercicios:
+1. **[Nombre del ejercicio]**
+   - **Descripción:** ...
+   - **Series y repeticiones:** ...
+   - **Progresión:** ...
+
+### Frecuencia sugerida: ...
+### Notas para el entrenador: ...
+
+Responde solo en español y usa formato markdown.`;
+    }
 
     try {
       const texto = await callGroq(prompt);
@@ -191,8 +246,15 @@ const IAGeneradora = () => {
     if (!result) return;
     const title = result.split('\n')[0].replace('## ', '').trim();
     try {
-      await addExercise({ title, content: result, timestamp: new Date().toISOString() });
-      alert(`✅ Guardado: ${title}`);
+      await addExercise({ 
+        name: title, 
+        description: result, 
+        source: 'ia', 
+        createdBy: 'ia',
+        category: mode === 'prevencion' ? 'prevencion' : 'tactico',
+        createdAt: new Date().toISOString()
+      });
+      alert(`✅ Guardado en la biblioteca: ${title}`);
     } catch (error) {
       alert("Error al guardar.");
     }
@@ -214,7 +276,6 @@ const IAGeneradora = () => {
           </div>
           <button 
             onClick={() => {
-              console.log("Opening Library...", exercises.length);
               setShowBiblioteca(true);
             }} 
             className={`btn-outline-gold library-btn ${exercises.length > 0 ? 'has-content' : ''}`}
@@ -223,7 +284,26 @@ const IAGeneradora = () => {
           </button>
         </header>
 
+        <div className="ia-mode-selector" style={{ display: 'flex', gap: '10px', padding: '0 30px', marginBottom: '20px' }}>
+          <button 
+            className={`btn-mode ${mode === 'tactico' ? 'active' : ''}`} 
+            onClick={() => setMode('tactico')}
+            style={{ flex: 1, padding: '10px', borderRadius: '8px', border: '1px solid #4CAF7D', background: mode === 'tactico' ? '#4CAF7D' : 'transparent', color: mode === 'tactico' ? '#fff' : '#4CAF7D', fontWeight: 'bold', cursor: 'pointer' }}
+          >
+            ⚽ Ejercicio Táctico
+          </button>
+          <button 
+            className={`btn-mode ${mode === 'prevencion' ? 'active' : ''}`} 
+            onClick={() => setMode('prevencion')}
+            style={{ flex: 1, padding: '10px', borderRadius: '8px', border: '1px solid #4CAF7D', background: mode === 'prevencion' ? '#4CAF7D' : 'transparent', color: mode === 'prevencion' ? '#fff' : '#4CAF7D', fontWeight: 'bold', cursor: 'pointer' }}
+          >
+            🩺 Prevención / Recuperación
+          </button>
+        </div>
+
         <div className="ia-form-body">
+          {mode === 'tactico' ? (
+            <>
           <div className="ia-field">
             <label>Categoría / Edad</label>
             <select value={form.edad} onChange={e => setForm({...form, edad: e.target.value})}>
@@ -346,9 +426,68 @@ const IAGeneradora = () => {
               <p style={{ fontSize: 12, color: '#EF4444', marginTop: 4, fontWeight: 600 }}>🔴 Escuchando... habla ahora</p>
             )}
           </div>
+            </>
+          ) : (
+            <>
+              <div className="ia-field full-width">
+                <label>Descripción Clínica / Problema</label>
+                <textarea
+                  rows="4"
+                  placeholder="Ej: Jugador de 16 años con sobrecarga isquiotibial izquierdo tras partido, necesita ejercicios excéntricos y de fortalecimiento..."
+                  value={preventionForm.descripcion}
+                  onChange={e => setPreventionForm({...preventionForm, descripcion: e.target.value})}
+                  className="ia-textarea"
+                />
+              </div>
+
+              <div className="ia-field">
+                <label>Tipo de Plan</label>
+                <select value={preventionForm.tipo} onChange={e => setPreventionForm({...preventionForm, tipo: e.target.value})}>
+                  <option value="Prevención">Prevención</option>
+                  <option value="Recuperación">Recuperación</option>
+                  <option value="Readaptación">Readaptación</option>
+                </select>
+              </div>
+
+              <div className="ia-field">
+                <label>Zona Corporal</label>
+                <select value={preventionForm.zona} onChange={e => setPreventionForm({...preventionForm, zona: e.target.value})}>
+                  <option value="">Seleccionar...</option>
+                  {ZONAS_CORPORALES.map(z => <option key={z} value={z}>{z}</option>)}
+                </select>
+              </div>
+
+              <div className="ia-field">
+                <label>Nivel del Jugador</label>
+                <select value={preventionForm.nivel} onChange={e => setPreventionForm({...preventionForm, nivel: e.target.value})}>
+                  {NIVELES.map(n => <option key={n} value={n}>{n}</option>)}
+                </select>
+              </div>
+
+              <div className="ia-field full-width">
+                <label>Material Disponible</label>
+                <div className="chip-group">
+                  {MATERIALES.map(m => (
+                    <button
+                      key={m.id}
+                      className={`chip ${preventionForm.materiales.includes(m.id) ? 'active' : ''}`}
+                      onClick={() => setPreventionForm(prev => ({
+                        ...prev,
+                        materiales: prev.materiales.includes(m.id)
+                          ? prev.materiales.filter(x => x !== m.id)
+                          : [...prev.materiales, m.id]
+                      }))}
+                    >
+                      {m.icon} {m.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </>
+          )}
 
           <button className="btn-generate" onClick={handleGenerate} disabled={isGenerating}>
-            {isGenerating ? loadingMsg : '✨ Generar Ejercicio'}
+            {isGenerating ? loadingMsg : (mode === 'prevencion' ? '🩺 Generar Plan de Ejercicios' : '✨ Generar Ejercicio')}
           </button>
         </div>
       </div>

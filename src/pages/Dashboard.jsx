@@ -5,6 +5,7 @@ import { useSessions } from '../hooks/useSessions';
 import { useMatches } from '../hooks/useMatches';
 import { useAuth } from '../context/AuthContext';
 import { useHealthAlerts } from '../hooks/useHealthAlerts';
+import { usePlayerPlans } from '../hooks/usePlayerPlans';
 import { useNavigate } from 'react-router-dom';
 import { usePlan } from '../hooks/usePlan';
 import { 
@@ -30,7 +31,39 @@ const Dashboard = () => {
   const { matches } = useMatches(activeTeamId);
   const { isPro, toggleSimulatedPlan, simulatedPlan, trialDaysRemaining, resetTrial, isDeveloper } = usePlan();
   const { alerts, loading: alertsLoading } = useHealthAlerts();
+  const { playerPlans, teamPlans } = usePlayerPlans(activeTeamId);
   const [workloadPeriod, setWorkloadPeriod] = useState('Esta semana');
+
+  // Calcular jugadores con ejercicios pendientes hoy
+  const today = new Date().toISOString().slice(0, 10);
+  const dayOfWeek = new Date().getDay(); // 0=Dom,1=Lun,...,6=Sáb
+
+  const checkFrequencyMatchesToday = (frequency) => {
+    if (!frequency || frequency === 'daily') return true;
+    if (frequency === 'weekly') return dayOfWeek === 1; // Lunes
+    if (frequency === 'mon-wed-fri') return [1, 3, 5].includes(dayOfWeek);
+    if (frequency === 'pre-match') return false; // Solo el entrenador decide
+    return true;
+  };
+
+  const pendingExercisePlayers = players
+    .map(player => {
+      const myPlans = playerPlans.filter(p => p.playerId === player.id && p.active);
+      const myTeamPlans = teamPlans.filter(p => p.active && p.assignedToAll);
+      const allActivePlans = [...myPlans, ...myTeamPlans];
+
+      const pendingToday = allActivePlans.some(plan =>
+        plan.exercises && plan.exercises.some(ex => {
+          if (!checkFrequencyMatchesToday(ex.frequency)) return false;
+          const completedDates = ex.completedDates || [];
+          return !completedDates.includes(today);
+        })
+      );
+
+      return pendingToday ? player : null;
+    })
+    .filter(Boolean)
+    .slice(0, 5);
 
   const nextMatch = matches.find(m => m.status === 'Pendiente') || null;
   const lastMatches = matches.filter(m => m.status === 'Terminado').slice(-3);
@@ -272,6 +305,41 @@ const Dashboard = () => {
           </div>
         </div>
       </div>
+
+      {/* Widget Ejercicios Pendientes */}
+      {pendingExercisePlayers.length > 0 && (
+        <div className="quick-actions-dash" style={{ background: '#FFFBEB', border: '1px solid #FDE68A' }}>
+          <h2 style={{ color: '#92400E', display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <span>🏋️</span> Ejercicios Pendientes Hoy
+          </h2>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px', marginTop: '12px' }}>
+            {pendingExercisePlayers.map(player => (
+              <div
+                key={player.id}
+                onClick={() => navigate('/equipo')}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: '10px',
+                  background: 'white', borderRadius: '10px', padding: '10px 16px',
+                  cursor: 'pointer', border: '1px solid #FCD34D', boxShadow: '0 2px 6px rgba(0,0,0,0.05)',
+                  transition: 'transform 0.15s'
+                }}
+              >
+                <div style={{
+                  width: '36px', height: '36px', borderRadius: '50%', background: '#FDE68A',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  fontSize: '0.85rem', fontWeight: 'bold', color: '#92400E'
+                }}>
+                  {(player.name || '?').charAt(0).toUpperCase()}
+                </div>
+                <div>
+                  <div style={{ fontWeight: '600', fontSize: '0.9rem', color: '#111827' }}>{player.name}</div>
+                  <div style={{ fontSize: '0.75rem', color: '#B45309' }}>Pendiente de rutina diaria</div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Quick Actions */}
       <div className="quick-actions-dash">

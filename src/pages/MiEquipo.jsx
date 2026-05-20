@@ -10,6 +10,7 @@ import imageCompression from 'browser-image-compression';
 import { storage } from '../firebaseConfig';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import PlayerHealthTab from '../components/PlayerHealthTab';
+import PlayerPlansTab from '../components/PlayerPlansTab';
 import './MiEquipo.css';
 
 const POSITIONS = ['TODOS', 'POR', 'DEF', 'LTD', 'LTI', 'MCD', 'MC', 'MCO', 'EXT', 'DEL'];
@@ -398,7 +399,7 @@ const MiEquipo = () => {
           </div>
 
           <div className="sidebar-tabs">
-            {['GENERAL', 'FÍSICO', 'SALUD', 'HISTORIAL', 'ESTS.'].map(tab => (
+            {['GENERAL', 'FÍSICO', 'SALUD', 'PLANES', 'ESTS.'].map(tab => (
               <button 
                 key={tab} 
                 className={activeTab === tab ? 'active' : ''} 
@@ -457,12 +458,8 @@ const MiEquipo = () => {
               <PlayerHealthTab player={selectedPlayer} teamId={activeTeamId} />
             )}
 
-            {activeTab === 'HISTORIAL' && (
-              <div className="tab-pane">
-                <div className="notes-list">
-                  <p className="empty-text">Sin notas históricas.</p>
-                </div>
-              </div>
+            {activeTab === 'PLANES' && (
+              <PlayerPlansTab player={selectedPlayer} activeTeamId={activeTeamId} />
             )}
 
             {activeTab === 'ESTS.' && (

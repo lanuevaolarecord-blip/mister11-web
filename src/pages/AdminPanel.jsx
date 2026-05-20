@@ -29,6 +29,7 @@ import { collection, getDocs } from 'firebase/firestore';
 import imageCompression from 'browser-image-compression';
 import EscudoEquipo from '../components/EscudoEquipo';
 import RedeemCode from '../components/RedeemCode';
+import ExerciseLibrary from '../components/ExerciseLibrary';
 import './AdminPanel.css';
 
 const AdminPanel = () => {
@@ -223,10 +224,10 @@ const AdminPanel = () => {
           <Users size={20} /> <span>Equipos</span>
         </button>
         <button 
-          className={`admin-nav-item ${activeTab === 'biblioteca' ? 'active' : ''}`}
-          onClick={() => setActiveTab('biblioteca')}
+          className={`admin-nav-item ${activeTab === 'ejercicios' ? 'active' : ''}`}
+          onClick={() => setActiveTab('ejercicios')}
         >
-          <Dumbbell size={20} /> <span>Ejercicios IA</span>
+          <Dumbbell size={20} /> <span>Ejercicios</span>
         </button>
         <button 
           className={`admin-nav-item ${activeTab === 'exportar' ? 'active' : ''}`}
@@ -294,37 +295,9 @@ const AdminPanel = () => {
           </div>
         )}
 
-        {activeTab === 'biblioteca' && (
+        {activeTab === 'ejercicios' && (
           <div className="admin-section">
-            <header className="section-header">
-              <h2>Biblioteca de Ejercicios</h2>
-              <p>Tus tácticas generadas por la IA guardadas en la nube.</p>
-            </header>
-            
-            <div className="exercise-list-admin">
-              {exercises.length === 0 && <p className="empty-msg">No hay ejercicios guardados aún.</p>}
-              {exercises.map(ex => {
-                if (!ex) return null;
-                return (
-                  <div 
-                    key={ex.id} 
-                    className="exercise-row" 
-                    onClick={() => setSelectedExerciseDetail(ex)}
-                    style={{ cursor: 'pointer' }}
-                  >
-                    <div className="ex-info">
-                      <strong>{ex.title || ex.name || ex.exerciseName || ex.titulo || ex.nombre || 'Ejercicio sin nombre'}</strong>
-                      <span>{ex.objetivo} | {ex.categoria}</span>
-                    </div>
-                    <div className="ex-actions">
-                      <button className="btn-delete-icon" onClick={() => removeExercise(ex.id)}>
-                        <Trash2 size={16} />
-                      </button>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
+            <ExerciseLibrary activeTeamId={activeTeam?.id} />
           </div>
         )}
 

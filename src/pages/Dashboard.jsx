@@ -4,6 +4,7 @@ import { useSettings } from '../hooks/useSettings';
 import { useSessions } from '../hooks/useSessions';
 import { useMatches } from '../hooks/useMatches';
 import { useAuth } from '../context/AuthContext';
+import { useHealthAlerts } from '../hooks/useHealthAlerts';
 import { useNavigate } from 'react-router-dom';
 import { usePlan } from '../hooks/usePlan';
 import { 
@@ -28,6 +29,7 @@ const Dashboard = () => {
   const { sessions } = useSessions(activeTeamId);
   const { matches } = useMatches(activeTeamId);
   const { isPro, toggleSimulatedPlan, simulatedPlan, trialDaysRemaining, resetTrial, isDeveloper } = usePlan();
+  const { alerts, loading: alertsLoading } = useHealthAlerts();
   const [workloadPeriod, setWorkloadPeriod] = useState('Esta semana');
 
   const nextMatch = matches.find(m => m.status === 'Pendiente') || null;
@@ -182,6 +184,31 @@ const Dashboard = () => {
       </div>
 
       <div className="dashboard-content">
+        {/* Health Alerts */}
+        {!alertsLoading && alerts.length > 0 && (
+          <div className="dash-section" style={{ width: '100%', marginBottom: '20px' }}>
+            <div className="section-header">
+              <h2 style={{ color: '#EF4444', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span style={{ fontSize: '1.2rem' }}>⚠️</span> Alertas de Salud (Riesgo Alto)
+              </h2>
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '15px' }}>
+              {alerts.map(alert => (
+                <div key={alert.id} style={{ padding: '15px', background: '#FEF2F2', borderLeft: '4px solid #EF4444', borderRadius: '8px', display: 'flex', flexDirection: 'column', gap: '5px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <strong style={{ color: '#991B1B', fontSize: '1.05rem' }}>{alert.playerName}</strong>
+                    <span style={{ fontSize: '0.75rem', color: '#DC2626', fontWeight: 'bold', background: '#FEE2E2', padding: '2px 8px', borderRadius: '12px' }}>
+                      {alert.type === 'rpe' ? 'RPE Alto' : 'Bienestar Bajo'}
+                    </span>
+                  </div>
+                  <span style={{ fontSize: '0.9rem', color: '#B91C1C' }}>{alert.message}</span>
+                  <span style={{ fontSize: '0.75rem', color: '#EF4444', marginTop: '5px' }}>{new Date(alert.date).toLocaleDateString()}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* Weekly Load Chart */}
         <div className="dash-section chart-section">
           <div className="section-header">

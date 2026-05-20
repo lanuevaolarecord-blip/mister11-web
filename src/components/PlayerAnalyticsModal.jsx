@@ -187,11 +187,28 @@ const PlayerAnalyticsModal = ({ player, tests, historyData, onClose, onExportPDF
       if (closeBtn) closeBtn.style.display = 'none';
       deleteButtons.forEach(btn => { btn.style.display = 'none'; });
 
+      // Preparar el contenedor para html2canvas sin recortes
+      const originalMaxHeight = contentRef.current.style.maxHeight;
+      const originalOverflow = contentRef.current.style.overflow;
+      const bodyDiv = contentRef.current.children[1]; 
+      const originalBodyOverflow = bodyDiv ? bodyDiv.style.overflowY : '';
+      
+      contentRef.current.style.maxHeight = 'none';
+      contentRef.current.style.overflow = 'visible';
+      if (bodyDiv) bodyDiv.style.overflowY = 'visible';
+
       const canvas = await html2canvas(contentRef.current, { 
         scale: 2,
         useCORS: true,
-        backgroundColor: '#FAFAF7'
+        backgroundColor: '#FAFAF7',
+        windowWidth: contentRef.current.scrollWidth,
+        windowHeight: contentRef.current.scrollHeight
       });
+
+      // Restaurar estilos originales
+      contentRef.current.style.maxHeight = originalMaxHeight;
+      contentRef.current.style.overflow = originalOverflow;
+      if (bodyDiv) bodyDiv.style.overflowY = originalBodyOverflow;
 
       if (exportBtn) exportBtn.style.display = 'block';
       if (closeBtn) closeBtn.style.display = 'block';

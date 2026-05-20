@@ -14,6 +14,8 @@ import PlayerAnalyticsModal, { SvgRadar } from '../components/PlayerAnalyticsMod
 import { db } from '../firebaseConfig';
 import { collection, addDoc, getDocs, query, where, orderBy, serverTimestamp, writeBatch, doc, deleteDoc } from 'firebase/firestore';
 import html2canvas from 'html2canvas';
+import WellnessTestModal from '../components/WellnessTestModal';
+import RPETestModal from '../components/RPETestModal';
 import './Tests.css';
 
 const gamingVisualsV1 = true;
@@ -121,6 +123,11 @@ const Tests = () => {
   const [regSelectedTest, setRegSelectedTest] = useState('t1');
   const [regInputs, setRegInputs] = useState({});
   const [isQuestionnaireOpen, setIsQuestionnaireOpen] = useState(false);
+  
+  // Preventive Registration State
+  const [isWellnessModalOpen, setIsWellnessModalOpen] = useState(false);
+  const [isRpeModalOpen, setIsRpeModalOpen] = useState(false);
+  const [selectedPlayerForTest, setSelectedPlayerForTest] = useState(null);
 
   // History State
   const [histSelectedPlayer, setHistSelectedPlayer] = useState(null);
@@ -245,6 +252,21 @@ const Tests = () => {
       alert("Error al guardar los resultados.");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleSavePreventiveTest = async (data) => {
+    if (!user || !activeTeamId) return;
+    try {
+      await addDoc(collection(db, `users/${user.uid}/teams/${activeTeamId}/evaluaciones`), {
+        ...data,
+        timestamp: serverTimestamp()
+      });
+      alert("Evaluación guardada exitosamente.");
+      loadEvaluations();
+    } catch (error) {
+      console.error("Error saving prev test", error);
+      alert("Error al guardar la evaluación.");
     }
   };
 
@@ -554,7 +576,7 @@ const Tests = () => {
         </div>
 
         <div className="tests-tabs">
-          {['FÍSICOS', 'PSICOSOCIALES', 'HISTORIAL POR JUGADOR', 'COMPARATIVA EQUIPO'].map(tab => (
+          {['FÍSICOS', 'PSICOSOCIALES', 'PREVENCIÓN', 'HISTORIAL POR JUGADOR', 'COMPARATIVA EQUIPO'].map(tab => (
             <button 
               key={tab} 
               className={`tests-tab ${activeTab === tab ? 'active' : ''}`}
@@ -614,6 +636,47 @@ const Tests = () => {
                       }}
                     >
                       📥 Plantilla
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* --- PREVENCIÓN DE LESIONES --- */}
+        {activeTab === 'PREVENCIÓN' && (
+          <div className="tab-bateria">
+            <div className="bateria-header">
+              <h3>Autoevaluación y Prevención</h3>
+              <p style={{color: 'var(--text-muted)'}}>Registra métricas de bienestar y esfuerzo percibido para prevenir sobrecargas.</p>
+            </div>
+            <div className="players-grid" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))' }}>
+              {players.map(p => (
+                <div key={p.id} className="player-card" style={{ cursor: 'default', display: 'flex', flexDirection: 'column', gap: '15px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+                    <div className="player-avatar" style={{ width: '40px', height: '40px', fontSize: '0.9rem', backgroundColor: !p.avatarUrl ? '#1B3A2D' : 'transparent' }}>
+                      {p.avatarUrl ? <img src={p.avatarUrl} alt={p.name} /> : <span style={{ color: '#FFF' }}>{p.name.substring(0, 2).toUpperCase()}</span>}
+                    </div>
+                    <div className="player-info">
+                      <h4 style={{ margin: 0, fontSize: '1rem', color: 'var(--text-primary)' }}>{p.name}</h4>
+                      <span className="badge-pos">{p.position}</span>
+                    </div>
+                  </div>
+                  <div style={{ display: 'flex', gap: '10px' }}>
+                    <button 
+                      className="btn-primary" 
+                      style={{ flex: 1, fontSize: '0.85rem', padding: '8px' }}
+                      onClick={() => { setSelectedPlayerForTest(p); setIsWellnessModalOpen(true); }}
+                    >
+                      Bienestar
+                    </button>
+                    <button 
+                      className="btn-secondary" 
+                      style={{ flex: 1, fontSize: '0.85rem', padding: '8px' }}
+                      onClick={() => { setSelectedPlayerForTest(p); setIsRpeModalOpen(true); }}
+                    >
+                      RPE
                     </button>
                   </div>
                 </div>
@@ -1225,6 +1288,19 @@ const Tests = () => {
           }}
         />
       )}
+      <WellnessTestModal 
+        isOpen={isWellnessModalOpen} 
+        onClose={() => {setIsWellnessModalOpen(false); setSelectedPlayerForTest(null);}} 
+        onSave={handleSavePreventiveTest} 
+        player={selectedPlayerForTest} 
+      />
+
+      <RPETestModal 
+        isOpen={isRpeModalOpen} 
+        onClose={() => {setIsRpeModalOpen(false); setSelectedPlayerForTest(null);}} 
+        onSave={handleSavePreventiveTest} 
+        player={selectedPlayerForTest} 
+      />
     </div>
   );
 };

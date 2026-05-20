@@ -7,6 +7,9 @@ import UpgradeModal from '../components/UpgradeModal';
 import { calcularEdad } from '../utils/calcularEdad';
 import { generateExpediente } from '../utils/pdfGenerator';
 import imageCompression from 'browser-image-compression';
+import { storage } from '../firebaseConfig';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import PlayerHealthTab from '../components/PlayerHealthTab';
 import './MiEquipo.css';
 
 const POSITIONS = ['TODOS', 'POR', 'DEF', 'LTD', 'LTI', 'MCD', 'MC', 'MCO', 'EXT', 'DEL'];
@@ -30,10 +33,11 @@ const emptyPlayer = {
   weight: '', 
   height: '', 
   foot: 'Derecho', 
-  injuries: false,
-  injuryType: '',
+  currentStatus: 'active',
+  medicalObservations: '',
+  injuryHistory: [],
   fechaNacimiento: '',
-  photo: ''
+  avatarUrl: ''
 };
 
 const MiEquipo = () => {
@@ -77,8 +81,8 @@ const MiEquipo = () => {
     setIsUploadingPhoto(true);
     try {
       const options = {
-        maxSizeMB: 0.04,        // 40KB max
-        maxWidthOrHeight: 256,  // 256x256 px
+        maxSizeMB: 0.2,         // 200KB max per requirements
+        maxWidthOrHeight: 512,  
         useWebWorker: true,
         fileType: 'image/webp'
       };
@@ -91,7 +95,7 @@ const MiEquipo = () => {
         reader.onerror = (err) => reject(err);
       });
       
-      setEditData(prev => ({ ...prev, photo: base64data }));
+      setEditData(prev => ({ ...prev, photoFile: compressedFile, photoPreview: base64data }));
     } catch (error) {
       console.error("Error al procesar foto del jugador:", error);
       alert("No se pudo procesar la imagen. Verifica que sea un archivo válido.");
@@ -126,11 +130,29 @@ const MiEquipo = () => {
     setIsSaving(true);
     setFormError('');
     try {
+      const playerDataToSave = { ...editData };
+      delete playerDataToSave.photoFile;
+      delete playerDataToSave.photoPreview;
+
+      let savedPlayerId = editData.id;
+
       if (editData.id) {
-        await updatePlayer(editData.id, editData);
+        await updatePlayer(editData.id, playerDataToSave);
       } else {
-        await addPlayer(editData);
+        savedPlayerId = await addPlayer(playerDataToSave);
       }
+
+      // If there is a new photo to upload
+      if (editData.photoFile && savedPlayerId) {
+        const fileRef = ref(storage, `users/${user?.uid}/teams/${activeTeamId}/players/${savedPlayerId}/avatar`);
+        await uploadBytes(fileRef, editData.photoFile);
+        const avatarUrl = await getDownloadURL(fileRef);
+        await updatePlayer(savedPlayerId, { avatarUrl });
+      } else if (editData.avatarUrl === '') {
+        // If photo was explicitly removed
+        await updatePlayer(savedPlayerId, { avatarUrl: '' });
+      }
+
       setIsFormOpen(false);
     } catch (error) {
       console.error('Error al guardar jugador:', error);
@@ -189,8 +211,8 @@ const MiEquipo = () => {
         <div className="players-grid">
           {filteredPlayers.map(player => (
             <div key={player.id} className="player-card" onClick={() => setSelectedPlayer(player)}>
-              <div className="player-avatar" style={!player.photo ? { backgroundColor: stringToColor(player.id || player.name) } : {}}>
-                {player.photo ? <img src={player.photo} alt={player.name} /> : <span style={{ color: '#FFF' }}>{getInitials(player.name)}</span>}
+              <div className="player-avatar" style={!player.avatarUrl ? { backgroundColor: stringToColor(player.id || player.name) } : {}}>
+                {player.avatarUrl ? <img src={player.avatarUrl} alt={player.name} /> : <span style={{ color: '#FFF' }}>{getInitials(player.name)}</span>}
                 <div className="player-number">{player.number}</div>
               </div>
               <div className="player-info">
@@ -200,7 +222,7 @@ const MiEquipo = () => {
                   <span className="age-info">{calcularEdad(player.fechaNacimiento || player.birthDate || player.age).text}</span>
                 </div>
               </div>
-              {player.injuries && <div className="injury-indicator" title="Lesionado">🚑</div>}
+              {(player.currentStatus === 'injured' || player.currentStatus === 'recovery') && <div className="injury-indicator" title={player.currentStatus === 'injured' ? "Lesionado" : "En recuperación"}>🚑</div>}
             </div>
           ))}
         </div>
@@ -234,7 +256,7 @@ const MiEquipo = () => {
                     width: '60px',
                     height: '60px',
                     borderRadius: '50%',
-                    backgroundColor: editData.photo ? 'transparent' : stringToColor(editData.id || editData.name),
+                    backgroundColor: (editData.photoPreview || editData.avatarUrl) ? 'transparent' : stringToColor(editData.id || editData.name),
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
@@ -244,9 +266,9 @@ const MiEquipo = () => {
                     fontWeight: 'bold',
                     fontSize: '20px'
                   }}>
-                    {editData.photo ? <img src={editData.photo} alt="Vista previa" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : getInitials(editData.name)}
+                    {(editData.photoPreview || editData.avatarUrl) ? <img src={editData.photoPreview || editData.avatarUrl} alt="Vista previa" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : getInitials(editData.name)}
                   </div>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                     <input
                       type="file"
                       accept="image/*"
@@ -255,38 +277,37 @@ const MiEquipo = () => {
                       onChange={handlePhotoUpload}
                       disabled={isUploadingPhoto}
                     />
-                    <label htmlFor="player-photo-upload" className="btn-secondary" style={{
+                    <label htmlFor="player-photo-upload" style={{
                       padding: '8px 16px',
                       borderRadius: '8px',
                       cursor: 'pointer',
-                      fontSize: '13px',
+                      fontSize: '14px',
                       fontWeight: 'bold',
-                      display: 'inline-block',
-                      border: '1px solid var(--border-color)',
+                      background: '#22C55E',
+                      color: '#FFFFFF',
+                      border: 'none',
                       textAlign: 'center',
-                      minHeight: '48px',
                       display: 'flex',
                       alignItems: 'center',
-                      justifyContent: 'center'
+                      justifyContent: 'center',
+                      gap: '6px'
                     }}>
-                      {isUploadingPhoto ? 'Procesando...' : 'Subir Foto'}
+                      <span style={{ fontSize: '16px' }}>📷</span>
+                      {isUploadingPhoto ? 'Procesando...' : 'Subir foto'}
                     </label>
-                    {editData.photo && (
+                    {(editData.photoPreview || editData.avatarUrl) && (
                       <button
                         type="button"
-                        onClick={() => setEditData({ ...editData, photo: '' })}
+                        onClick={() => setEditData({ ...editData, avatarUrl: '', photoPreview: null, photoFile: null })}
                         style={{
                           background: 'none',
                           border: 'none',
                           color: '#EF4444',
-                          fontSize: '12px',
+                          fontSize: '13px',
                           fontWeight: 'bold',
                           cursor: 'pointer',
                           textAlign: 'left',
-                          padding: '4px 0',
-                          minHeight: '48px',
-                          display: 'flex',
-                          alignItems: 'center'
+                          padding: '0'
                         }}
                       >
                         Eliminar Foto
@@ -368,8 +389,8 @@ const MiEquipo = () => {
               <button className="btn-edit-icon" onClick={() => handleOpenForm(selectedPlayer)}>✏️</button>
             </div>
             <div className="header-content">
-              <div className="large-avatar" style={!selectedPlayer.photo ? { backgroundColor: stringToColor(selectedPlayer.id || selectedPlayer.name) } : {}}>
-                {selectedPlayer.photo ? <img src={selectedPlayer.photo} alt={selectedPlayer.name} /> : <span style={{ color: '#FFF' }}>{getInitials(selectedPlayer.name)}</span>}
+              <div className="large-avatar" style={!selectedPlayer.avatarUrl ? { backgroundColor: stringToColor(selectedPlayer.id || selectedPlayer.name) } : {}}>
+                {selectedPlayer.avatarUrl ? <img src={selectedPlayer.avatarUrl} alt={selectedPlayer.name} /> : <span style={{ color: '#FFF' }}>{getInitials(selectedPlayer.name)}</span>}
               </div>
               <h2>{selectedPlayer.name}</h2>
               <p>Dorsal {selectedPlayer.number} · {selectedPlayer.position}</p>
@@ -377,7 +398,7 @@ const MiEquipo = () => {
           </div>
 
           <div className="sidebar-tabs">
-            {['GENERAL', 'FÍSICO', 'MÉDICO', 'HISTORIAL', 'ESTS.'].map(tab => (
+            {['GENERAL', 'FÍSICO', 'SALUD', 'HISTORIAL', 'ESTS.'].map(tab => (
               <button 
                 key={tab} 
                 className={activeTab === tab ? 'active' : ''} 
@@ -432,23 +453,8 @@ const MiEquipo = () => {
               </div>
             )}
 
-            {activeTab === 'MÉDICO' && (
-              <div className="tab-pane">
-                <div className="medical-toggle">
-                  <label>¿Lesión activa?</label>
-                  <input 
-                    type="checkbox" 
-                    checked={selectedPlayer.injuries} 
-                    onChange={() => toggleInjuries(selectedPlayer)}
-                  />
-                </div>
-                {selectedPlayer.injuries && (
-                  <div className="injury-box">
-                    <label>Tipo de lesión</label>
-                    <p>{selectedPlayer.injuryType || 'No especificada'}</p>
-                  </div>
-                )}
-              </div>
+            {activeTab === 'SALUD' && (
+              <PlayerHealthTab player={selectedPlayer} teamId={activeTeamId} />
             )}
 
             {activeTab === 'HISTORIAL' && (

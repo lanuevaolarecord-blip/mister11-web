@@ -10,7 +10,7 @@ import {
   browserLocalPersistence,
   signInAnonymously,
 } from "firebase/auth";
-import { getFirestore, initializeFirestore, persistentLocalCache, persistentMultipleTabManager } from "firebase/firestore";
+import { getFirestore, initializeFirestore, persistentLocalCache, persistentMultipleTabManager, doc, getDoc, setDoc, serverTimestamp } from "firebase/firestore";
 import { getStorage } from "firebase/storage";
 import { Capacitor } from "@capacitor/core";
 
@@ -37,8 +37,24 @@ const googleProvider = new GoogleAuthProvider();
 setPersistence(auth, browserLocalPersistence).catch(console.error);
 
 /**
- * Función central de login optimizada para Android y Web
+ * Inicializa el documento de usuario en Firestore si es la primera vez que entra.
+ * Registra el trialStartDate en base de datos para evitar que se pueda bypassear.
  */
+const initUserDocument = async (uid, email, displayName) => {
+  const userRef = doc(db, 'users', uid);
+  const userSnap = await getDoc(userRef);
+  if (!userSnap.exists()) {
+    // Primera vez que entra este usuario → crear documento con trial de 7 días
+    await setDoc(userRef, {
+      email: email || '',
+      displayName: displayName || '',
+      plan: 'trial',
+      trialStartDate: serverTimestamp(),
+      createdAt: serverTimestamp(),
+    });
+  }
+};
+
 const signInWithGoogle = async () => {
   if (Capacitor.isNativePlatform()) {
     // IMPORTANTE: Cargamos el plugin dinámicamente para evitar errores en web
@@ -65,7 +81,10 @@ const signInWithGoogle = async () => {
 
   // Flujo Web (Popup -> Redirect)
   try {
-    return await signInWithPopup(auth, googleProvider);
+    const result = await signInWithPopup(auth, googleProvider);
+    // Inicializar documento de usuario en Firestore (solo si es nuevo)
+    await initUserDocument(result.user.uid, result.user.email, result.user.displayName);
+    return result;
   } catch (error) {
     if (
       error.code === "auth/popup-blocked" ||

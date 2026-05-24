@@ -21,6 +21,19 @@ android {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
+        debug {
+            
+        }
+    }
+    
+    applicationVariants.all { variant ->
+        variant.outputs.all { output ->
+            if (variant.buildType.name == 'debug') {
+                outputFileName = "mister11.apk"
+            } else if (variant.buildType.name == 'release') {
+                outputFileName = "mister11-release.apk"
+            }
+        }
     }
 }
 

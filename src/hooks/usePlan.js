@@ -28,33 +28,28 @@ export const usePlan = () => {
   const { user } = useAuth();
   const [dbPlan, setDbPlan] = useState('free');
   const [dbProExpiration, setDbProExpiration] = useState(null);
+  const [dbTrialStartDate, setDbTrialStartDate] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // Local simulation state to satisfy testing
+  // Simulated plan toggle (only for developer testing in the UI)
   const [simulatedPlan, setSimulatedPlan] = useState(() => {
-    return localStorage.getItem('mister11_simulated_plan') || 'pro'; // Default to PRO trial
-  });
-
-  const [trialStart, setTrialStart] = useState(() => {
-    let start = localStorage.getItem('mister11_trial_start');
-    if (!start) {
-      start = String(Date.now());
-      localStorage.setItem('mister11_trial_start', start);
-    }
-    return Number(start);
+    return localStorage.getItem('mister11_simulated_plan') || 'pro';
   });
 
   useEffect(() => {
     if (!user) {
       setDbPlan('free');
       setDbProExpiration(null);
+      setDbTrialStartDate(null);
       setLoading(false);
       return;
     }
 
     if (user.uid === 'invitado-local') {
-      setDbPlan('free');
+      setDbPlan('trial');
       setDbProExpiration(null);
+      // Guests get a local trial fallback
+      setDbTrialStartDate(new Date(Number(localStorage.getItem('mister11_trial_start') || Date.now())));
       setLoading(false);
       return;
     }
@@ -64,6 +59,12 @@ export const usePlan = () => {
         const data = docSnap.data();
         setDbPlan(data.plan || 'free');
         setDbProExpiration(data.proExpiration || null);
+        // trialStartDate comes from Firestore (server-side, tamper-proof)
+        if (data.trialStartDate) {
+          setDbTrialStartDate(data.trialStartDate.toDate());
+        } else {
+          setDbTrialStartDate(null);
+        }
       }
       setLoading(false);
     }, (err) => {
@@ -81,29 +82,28 @@ export const usePlan = () => {
   };
 
   const resetTrial = () => {
-    const start = String(Date.now());
-    localStorage.setItem('mister11_trial_start', start);
-    setTrialStart(Number(start));
+    // Only resets the local simulation (for developer testing)
     setSimulatedPlan('pro');
     localStorage.setItem('mister11_simulated_plan', 'pro');
   };
 
   const now = new Date();
 
-  // Calculate trial days remaining
-  const msPassed = Date.now() - trialStart;
+  // --- Trial calculation (now based on Firestore date, tamper-proof) ---
+  const trialStart = dbTrialStartDate || now;
+  const msPassed = now - trialStart;
   const daysPassed = Math.floor(msPassed / (24 * 60 * 60 * 1000));
   const trialDaysRemaining = Math.max(0, 7 - daysPassed);
   const isTrialExpired = trialDaysRemaining <= 0;
+  const isOnTrial = (dbPlan === 'trial') && !isTrialExpired;
 
+  // --- Real PRO plan ---
   const isDeveloper = user && user.email && DEVELOPER_EMAILS.includes(user.email.toLowerCase());
-
-  // Real plan calculations
-  const isRealExpired = dbProExpiration && dbProExpiration.toDate() < now;
+  const isRealExpired = dbProExpiration && dbProExpiration.toDate && dbProExpiration.toDate() < now;
   const isRealPro = (dbPlan === 'pro' || dbPlan === 'club') && !isRealExpired;
 
-  // Final PRO status (developer OR simulated OR real)
-  const isPro = isDeveloper || (simulatedPlan === 'pro' && !isTrialExpired) || isRealPro;
+  // --- Final PRO status ---
+  const isPro = isDeveloper || isRealPro || isOnTrial || (isDeveloper && simulatedPlan === 'pro');
   const currentLimits = isPro ? LIMITS.PRO : LIMITS.FREE;
 
   return {
@@ -112,11 +112,13 @@ export const usePlan = () => {
     isDeveloper,
     limits: currentLimits,
     loading,
-    proExpiration: dbProExpiration?.toDate(),
+    proExpiration: dbProExpiration?.toDate ? dbProExpiration.toDate() : null,
     isExpired: isDeveloper ? false : (isTrialExpired && !isRealPro),
     simulatedPlan,
     toggleSimulatedPlan,
     trialDaysRemaining,
-    resetTrial
+    resetTrial,
+    isOnTrial,
+    dbPlan,
   };
 };

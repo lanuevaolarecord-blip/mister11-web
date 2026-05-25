@@ -2803,6 +2803,7 @@ const PizarraTactica = () => {
         </div>
       )}
     </div>
+    </>
   );
 };
 

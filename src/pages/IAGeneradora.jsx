@@ -580,13 +580,13 @@ Responde solo en español y usa formato markdown.`;
                   <p style={{marginTop: '10px'}}>Este es un esquema táctico interactivo. Puedes verlo en el módulo de Pizarra Táctica.</p>
                 </div>
               ) : (
-                selectedExerciseDetail.content || 'Sin contenido.'
+                selectedExerciseDetail.content || selectedExerciseDetail.description || 'Sin contenido.'
               )}
             </div>
             <div className="modal-footer">
               {selectedExerciseDetail.type !== 'pizarra' && (
                 <button className="btn-primary" onClick={() => {
-                  setResult(selectedExerciseDetail.content);
+                  setResult(selectedExerciseDetail.content || selectedExerciseDetail.description || '');
                   setSelectedExerciseDetail(null);
                   setShowBiblioteca(false);
                 }}>Cargar</button>

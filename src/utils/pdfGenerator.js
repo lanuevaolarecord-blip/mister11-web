@@ -14,10 +14,11 @@ const TEXT_COLOR = [255, 255, 255]; // #FFFFFF
  */
 export const savePdfUniversal = async (doc, filename) => {
   try {
-    await downloadPDF(doc, filename);
+    const pdfBase64 = doc.output('dataurlstring').split(',')[1];
+    await downloadPDF(pdfBase64, filename);
   } catch (error) {
     console.error('Error al guardar PDF:', error);
-    alert('No se pudo descargar el informe. Revisa los permisos de almacenamiento.');
+    alert('Error al guardar el PDF. Revisa tu espacio y permisos.');
   }
 };
 

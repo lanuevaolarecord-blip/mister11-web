@@ -2,6 +2,7 @@ import React, { useRef } from 'react';
 import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
 import { SvgLineChart } from './GraficasTest';
+import { downloadPDF } from '../utils/download';
 
 // ── Colores institucionales ──────────────────────────────────────────────────
 const C_DARK    = '#1B3A2D';
@@ -220,7 +221,8 @@ const PlayerAnalyticsModal = ({ player, tests, historyData, onClose, onExportPDF
       const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
       
       doc.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
-      doc.save(`Informe_Tests_${player.name.replace(/\s+/g, '_')}.pdf`);
+      const pdfBase64 = doc.output('dataurlstring').split(',')[1];
+      await downloadPDF(pdfBase64, `Informe_Tests_${player.name.replace(/\s+/g, '_')}.pdf`);
     } catch (e) {
       console.error("Error generating pdf:", e);
       alert('Error al exportar PDF');

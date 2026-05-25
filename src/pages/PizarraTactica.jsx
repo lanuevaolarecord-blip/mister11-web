@@ -264,6 +264,7 @@ const PizarraTactica = () => {
   // Drawers laterales para tablet (desktop sin móvil)
   const [leftPanelOpen, setLeftPanelOpen] = useState(false);
   const [rightPanelOpen, setRightPanelOpen] = useState(false);
+  const [fullscreenMode, setFullscreenMode] = useState(false);
   const [activeTool,   setActiveTool]   = useState('select');
   const [activeColor,  setActiveColor]  = useState('#FFFFFF');
   const [activeWidth,  setActiveWidth]  = useState(4);
@@ -2383,8 +2384,9 @@ const PizarraTactica = () => {
   const isLandscape = window.innerWidth > window.innerHeight;
 
   return (
-    <div className={`pizarra-container ${isMobile ? 'mobile' : 'desktop'} ${isLandscape ? 'landscape' : 'portrait'}`} 
-      style={{ touchAction: 'pan-y' }}>
+    <>
+      <div className={`pizarra-container ${isMobile ? 'mobile' : 'desktop'} ${isLandscape ? 'landscape' : 'portrait'} ${fullscreenMode ? 'pizarra-fullscreen' : ''}`} 
+        style={{ touchAction: 'pan-y' }}>
 
       {/* ── TOP BAR ───────────────────────────────────────────────────────── */}
       <div className="pizarra-topbar">
@@ -2397,7 +2399,7 @@ const PizarraTactica = () => {
               </div>
             )}
             {/* Botones para abrir paneles laterales en tablet (no-mobile) */}
-            {isTablet && (
+            {isTablet && !fullscreenMode && (
               <>
                 <button
                   className={`tool-icon-btn ${leftPanelOpen ? 'active' : ''}`}
@@ -2417,6 +2419,18 @@ const PizarraTactica = () => {
                 </button>
                 <div className="topbar-divider" />
               </>
+            )}
+            {!fullscreenMode && (
+              <button className="topbar-btn secondary" onClick={() => {
+                setFullscreenMode(true);
+                setLeftPanelOpen(false);
+                setRightPanelOpen(false);
+                setShowTeamsDrawer(false);
+                setShowMatsDrawer(false);
+                setTimeout(() => window.dispatchEvent(new Event('resize')), 100);
+              }}>
+                🗖 P. Completa
+              </button>
             )}
             <select className="topbar-select" value={fieldType}
               onChange={e => setFieldType(e.target.value)}>
@@ -2523,6 +2537,7 @@ const PizarraTactica = () => {
 
             {/* Actions */}
             <div className="topbar-group actions">
+              {/* ...acciones adicionales... */}
               <button className="topbar-btn" onClick={() => {
                 const fc = fcRef.current;
                 if (!fc) return;
@@ -2561,12 +2576,24 @@ const PizarraTactica = () => {
           </div>{/* ── FIN topbar-scroll-wrapper ── */}
         </div>{/* ── FIN pizarra-topbar ── */}
       </div>
+      
+      {fullscreenMode && (
+        <button 
+          className="floating-exit" 
+          onClick={() => {
+            setFullscreenMode(false);
+            setTimeout(() => window.dispatchEvent(new Event('resize')), 100);
+          }}
+        >
+          ✖ Salir de Pizarra
+        </button>
+      )}
 
       {/* ── MAIN BOARD ────────────────────────────────────────────────────── */}
       <div className="pizarra-main">
 
-        {/* Panel izquierdo – Solo visible en desktop no-tablet */}
-        {!isMobile && !isTablet && (
+        {/* Panel izquierdo – Solo visible en desktop no-tablet (y no en fullscreen) */}
+        {!isMobile && !isTablet && !fullscreenMode && (
           <div className="panel-izq">
             <TeamsPanel />
           </div>
@@ -2701,6 +2728,21 @@ const PizarraTactica = () => {
             <MaterialsPanel />
           </div>
         </div>
+      )}
+
+      {/* ── DESKTOP/TABLET DRAWERS (Colapsables) ─────────────────────────── */}
+      {!fullscreenMode && (
+        <>
+          {leftPanelOpen && <div className="pizarra-overlay" onClick={() => setLeftPanelOpen(false)} />}
+          <div className={`pizarra-drawer left ${leftPanelOpen ? 'open' : ''}`}>
+            <TeamsPanel />
+          </div>
+          
+          {rightPanelOpen && <div className="pizarra-overlay" onClick={() => setRightPanelOpen(false)} />}
+          <div className={`pizarra-drawer right ${rightPanelOpen ? 'open' : ''}`}>
+            <MaterialsPanel />
+          </div>
+        </>
       )}
 
       {/* ── Dropdowns Flotantes (Ventanas Emergentes) ── */}

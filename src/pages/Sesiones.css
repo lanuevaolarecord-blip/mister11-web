@@ -140,23 +140,23 @@
 /* --- LIST MODE --- */
 .calendar-strip {
   display: flex;
-  gap: 12px;
-  margin-top: 24px;
-  margin-bottom: 24px;
+  gap: 8px;
+  margin-top: 12px;
+  margin-bottom: 16px;
   overflow-x: auto;
-  padding-bottom: 5px;
+  padding-bottom: 4px;
 }
 
 .day-chip {
-  min-width: 60px;
-  height: 80px;
+  min-width: 44px;
+  height: 56px;
   background: var(--bg-card) !important;
-  border-radius: 16px;
+  border-radius: 10px;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+  box-shadow: 0 1px 4px rgba(0,0,0,0.04);
   cursor: pointer;
   border: 1px solid var(--border-color);
   transition: all 0.2s;
@@ -167,8 +167,8 @@
   color: var(--white) !important;
   border-color: var(--accent) !important;
 }
-.day-name { font-size: 11px; text-transform: uppercase; color: inherit; opacity: 0.8; font-weight: bold; }
-.day-num { font-size: 1.4rem; font-weight: 800; font-family: var(--font-numbers); color: inherit; }
+.day-name { font-size: 9px; text-transform: uppercase; color: inherit; opacity: 0.7; font-weight: bold; }
+.day-num { font-size: 1.1rem; font-weight: 800; font-family: var(--font-numbers); color: inherit; }
 .day-chip.active .day-name { opacity: 0.9; }
 
 .filters-row { display: flex; gap: 8px; }
@@ -223,12 +223,12 @@
 .session-strip.física { background: #EC4899; }
 .session-strip.mixta { background: #8B5CF6; }
 
-.session-main { flex: 1; display: flex; align-items: center; padding: 24px; gap: 24px; }
+.session-main { flex: 1; display: flex; align-items: center; padding: 20px 24px; gap: 20px; }
 .session-date-box { display: flex; flex-direction: column; min-width: 70px; border-right: 1px solid var(--border-color); }
 .session-date-box .time { font-weight: 800; color: var(--text-primary); font-size: 1.1rem; }
 .session-date-box .duration { font-size: 11px; color: var(--text-muted); }
 .session-details { flex: 1; }
-.session-details h3 { margin: 0 0 8px 0; font-size: 1.1rem; color: var(--text-primary); }
+.session-details h3 { margin: 0 0 10px 0; font-size: 1.25rem; font-weight: 800; color: var(--text-primary); line-height: 1.2; }
 .session-badges { display: flex; gap: 8px; }
 
 .badge { font-size: 10px; padding: 3px 10px; border-radius: 4px; font-weight: bold; text-transform: uppercase; border: 1.5px solid var(--border-color); }

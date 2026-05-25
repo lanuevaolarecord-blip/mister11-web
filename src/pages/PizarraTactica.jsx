@@ -1910,12 +1910,7 @@ const PizarraTactica = () => {
       const thumbnailDataURL = thumbCanvas.toDataURL('image/jpeg', 0.6); // Muy ligera
 
       if (download) {
-        const link = document.createElement('a');
-        link.download = `mister11-tactica-${Date.now()}.png`;
-        link.href = dataURL;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
+        await downloadImage(dataURL, `mister11-tactica-${Date.now()}.png`);
       }
 
       // 7. Subir a Firebase Storage y Firestore

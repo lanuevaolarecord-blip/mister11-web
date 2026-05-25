@@ -20,6 +20,7 @@ import {
 } from 'lucide-react';
 import { generateSeasonReport, generateMatchConvocation, generateSessionPDF } from '../utils/pdfGenerator';
 import { generateGlobalTeamReport } from '../utils/teamReportGenerator';
+import { downloadJSON } from '../utils/download';
 import { APP_VERSION } from '../constants/appVersion';
 import { t } from '../i18n/translations';
 import { usePWA } from '../hooks/usePWA';
@@ -261,13 +262,9 @@ const AdminPanel = () => {
         evaluaciones: evalsData
       };
 
-      const jsonString = `data:text/json;charset=utf-8,${encodeURIComponent(JSON.stringify(backupData, null, 2))}`;
-      const downloadAnchor = document.createElement('a');
-      downloadAnchor.setAttribute("href", jsonString);
-      downloadAnchor.setAttribute("download", `mister11_backup_${activeTeam.nombre.replace(/\s+/g, '_').toLowerCase()}_${new Date().toISOString().slice(0, 10)}.json`);
-      document.body.appendChild(downloadAnchor);
-      downloadAnchor.click();
-      downloadAnchor.remove();
+      const jsonString = JSON.stringify(backupData, null, 2);
+      const filename = `mister11_backup_${activeTeam.nombre.replace(/\s+/g, '_').toLowerCase()}_${new Date().toISOString().slice(0, 10)}.json`;
+      await downloadJSON(jsonString, filename);
     } catch (error) {
       console.error("Error al exportar backup:", error);
       alert("Error al generar la copia de seguridad.");

@@ -5,6 +5,12 @@ export const downloadPDF = async (base64Data, filename) => {
   if (!base64Data) throw new Error('No hay datos para descargar');
   if (Capacitor.isNativePlatform()) {
     try {
+      if (Capacitor.getPlatform() === 'android') {
+        const permissionStatus = await Filesystem.requestPermissions();
+        if (permissionStatus.storage !== 'granted' && permissionStatus.publicStorage !== 'granted') {
+          console.warn('Permisos de almacenamiento no concedidos (puede ser normal en Android 13+)');
+        }
+      }
       const result = await Filesystem.writeFile({
         path: filename,
         data: base64Data,
@@ -19,6 +25,7 @@ export const downloadPDF = async (base64Data, filename) => {
       }
     } catch (err) {
       console.error('Error guardando archivo:', err);
+      alert('Error al guardar el PDF. Inténtalo de nuevo.');
       throw err;
     }
   } else {

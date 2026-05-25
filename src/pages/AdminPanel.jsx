@@ -192,15 +192,30 @@ const AdminPanel = () => {
       const configSnap = await getDoc(configRef);
       if (configSnap.exists()) {
         const { latestApkVersion, apkDownloadUrl } = configSnap.data();
-        if (latestApkVersion && latestApkVersion > APP_VERSION) {
-          if (window.confirm(`🆕 Nueva versión ${latestApkVersion} disponible (actual: ${APP_VERSION}).\n¿Descargar ahora?`)) {
+        
+        // Helper function for comparing semantic versions correctly (e.g. 1.0.10 > 1.0.9)
+        const isNewer = (latest, current) => {
+          if (!latest || !current) return false;
+          const lParts = latest.split('.').map(Number);
+          const cParts = current.split('.').map(Number);
+          for (let i = 0; i < Math.max(lParts.length, cParts.length); i++) {
+            const l = lParts[i] || 0;
+            const c = cParts[i] || 0;
+            if (l > c) return true;
+            if (l < c) return false;
+          }
+          return false;
+        };
+
+        if (isNewer(latestApkVersion, APP_VERSION)) {
+          if (window.confirm(`🆕 Nueva versión ${latestApkVersion} disponible (tu versión actual: ${APP_VERSION}).\n¿Descargar ahora?`)) {
             window.open(apkDownloadUrl, '_blank');
           }
         } else {
-          alert(`✅ Ya tienes la última versión instalada (v${APP_VERSION}).`);
+          alert(`✅ Ya tienes la última versión instalada.\n- Tu versión: v${APP_VERSION}\n- Versión en servidor: v${latestApkVersion || 'No detectada'}`);
         }
       } else {
-        alert('No se pudo comprobar actualizaciones. El servidor de configuración no responde.');
+        alert('No se pudo comprobar actualizaciones. El documento "config/global" no existe en la base de datos.');
       }
     } catch (err) {
       console.error('Error al comprobar actualizaciones:', err);

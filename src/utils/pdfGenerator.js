@@ -191,6 +191,25 @@ export const generatePlanificacionPDF = async (macroInfo, microcycles, activeTea
   doc.setFontSize(8);
   doc.text(`Generado: ${new Date().toLocaleString()}`, 10, 42);
 
+  // ── OBJETIVOS ──────────────────────────────────────────────────────────────
+  let currentY = 46;
+  if (macroInfo.objective) {
+    doc.setFillColor(27, 58, 45);
+    doc.rect(10, 40, pageW - 20, 7, 'F');
+    doc.setTextColor(212, 168, 67);
+    doc.setFontSize(9);
+    doc.setFont(undefined, 'bold');
+    doc.text('Objetivos de la Temporada', 14, 45);
+    
+    doc.setFont(undefined, 'normal');
+    doc.setTextColor(60, 60, 60);
+    doc.setFontSize(8.5);
+    const objLines = doc.splitTextToSize(macroInfo.objective, pageW - 24);
+    doc.text(objLines, 14, 53);
+    
+    currentY = 53 + (objLines.length * 4) + 6;
+  }
+
   // ── TABLA MACROCICLO ───────────────────────────────────────────────────
   const head = [['Mes', 'Periodo', 'Etapa', 'Nº Meso', 'Nº Micro', 'Tipo Micro', 'Nº Ses.', 'Vol.(min)', '% Físico', '% Técnico', '% Táctico']];
   const body = microcycles.map(m => [
@@ -200,7 +219,7 @@ export const generatePlanificacionPDF = async (macroInfo, microcycles, activeTea
   ]);
 
   const macroTable = autoTable(doc, {
-    startY: 46,
+    startY: currentY,
     head,
     body,
     headStyles: {
@@ -229,21 +248,7 @@ export const generatePlanificacionPDF = async (macroInfo, microcycles, activeTea
     margin: { left: 10, right: 10 },
   });
 
-  // ── OBJETIVOS ──────────────────────────────────────────────────────────────
-  const finalY = (macroTable?.finalY || 46) + 10;
-  if (finalY < doc.internal.pageSize.getHeight() - 30) {
-    doc.setFillColor(27, 58, 45);
-    doc.rect(10, finalY, pageW - 20, 7, 'F');
-    doc.setTextColor(212, 168, 67);
-    doc.setFontSize(9);
-    doc.setFont(undefined, 'bold');
-    doc.text('Objetivos de la Temporada', 14, finalY + 5);
-    doc.setFont(undefined, 'normal');
-    doc.setTextColor(60, 60, 60);
-    doc.setFontSize(8.5);
-    const objLines = doc.splitTextToSize(macroInfo.objective || 'Sin objetivos definidos.', pageW - 24);
-    doc.text(objLines, 14, finalY + 13);
-  }
+
 
   // ── PIE DE PÁGINA ──────────────────────────────────────────────────────
   const pageCount = doc.internal.getNumberOfPages();

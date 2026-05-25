@@ -179,7 +179,7 @@ const PlayerAnalyticsModal = ({ player, tests, historyData, onClose, onExportPDF
   const handleExport = async () => {
     if (!contentRef.current) return;
     try {
-      // Hide the buttons during capture
+      // Ocultar botones antes de exportar
       const exportBtn = contentRef.current.querySelector('button');
       const closeBtn = contentRef.current.querySelectorAll('button')[1];
       const deleteButtons = contentRef.current.querySelectorAll('.delete-actions');
@@ -188,41 +188,74 @@ const PlayerAnalyticsModal = ({ player, tests, historyData, onClose, onExportPDF
       if (closeBtn) closeBtn.style.display = 'none';
       deleteButtons.forEach(btn => { btn.style.display = 'none'; });
 
-      // Preparar el contenedor para html2canvas sin recortes
-      const originalMaxHeight = contentRef.current.style.maxHeight;
-      const originalOverflow = contentRef.current.style.overflow;
-      const bodyDiv = contentRef.current.children[1]; 
-      const originalBodyOverflow = bodyDiv ? bodyDiv.style.overflowY : '';
+      const doc = new jsPDF('p', 'mm', 'a4');
+      const pdfWidth = doc.internal.pageSize.getWidth();
+      const pdfHeight = doc.internal.pageSize.getHeight();
       
-      contentRef.current.style.maxHeight = 'none';
-      contentRef.current.style.overflow = 'visible';
-      if (bodyDiv) bodyDiv.style.overflowY = 'visible';
+      const capturarGrafica = async (elementId) => {
+        const element = document.getElementById(elementId);
+        if (!element) return null;
+        
+        // Ajustar temporalmente los estilos para capturar sin recorte
+        const origOverflow = element.style.overflow;
+        element.style.overflow = 'visible';
+        
+        const canvas = await html2canvas(element, { 
+          scale: 2,
+          useCORS: true,
+          backgroundColor: '#FAFAF7',
+          windowWidth: element.scrollWidth,
+          windowHeight: element.scrollHeight
+        });
+        
+        element.style.overflow = origOverflow;
+        return {
+          img: canvas.toDataURL('image/png'),
+          w: canvas.width,
+          h: canvas.height
+        };
+      };
 
-      const canvas = await html2canvas(contentRef.current, { 
-        scale: 2,
-        useCORS: true,
-        backgroundColor: '#FAFAF7',
-        windowWidth: contentRef.current.scrollWidth,
-        windowHeight: contentRef.current.scrollHeight
-      });
+      let yPos = 10;
 
-      // Restaurar estilos originales
-      contentRef.current.style.maxHeight = originalMaxHeight;
-      contentRef.current.style.overflow = originalOverflow;
-      if (bodyDiv) bodyDiv.style.overflowY = originalBodyOverflow;
+      // 1. Cabecera (opcional, dibujada manual o capturada)
+      doc.setFillColor(27, 58, 45);
+      doc.rect(0, 0, pdfWidth, 25, 'F');
+      doc.setTextColor(255, 255, 255);
+      doc.setFontSize(16);
+      doc.setFont(undefined, 'bold');
+      doc.text(`Informe de Jugador: ${player.name}`, 15, 12);
+      doc.setFontSize(10);
+      doc.setTextColor(200, 200, 200);
+      doc.text(`#${player.number} · ${player.position}`, 15, 19);
+      yPos = 30;
 
+      // 2. Radar y Stats
+      const radarData = await capturarGrafica('player-radar-stats');
+      if (radarData) {
+        const imgHeight = (radarData.h * pdfWidth) / radarData.w;
+        doc.addImage(radarData.img, 'PNG', 0, yPos, pdfWidth, imgHeight);
+        yPos += imgHeight + 10;
+      }
+
+      // 3. Evolución
+      const evoData = await capturarGrafica('player-evolution-charts');
+      if (evoData) {
+        const imgHeight = (evoData.h * pdfWidth) / evoData.w;
+        if (yPos + imgHeight > pdfHeight - 20) {
+          doc.addPage();
+          yPos = 10;
+        }
+        doc.addImage(evoData.img, 'PNG', 0, yPos, pdfWidth, imgHeight);
+      }
+
+      // Restaurar botones
       if (exportBtn) exportBtn.style.display = 'block';
       if (closeBtn) closeBtn.style.display = 'block';
       deleteButtons.forEach(btn => { btn.style.display = 'flex'; });
 
-      const imgData = canvas.toDataURL('image/png');
-      const doc = new jsPDF('p', 'mm', 'a4');
-      const pdfWidth = doc.internal.pageSize.getWidth();
-      const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
-      
-      doc.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
       const pdfBase64 = doc.output('dataurlstring').split(',')[1];
-      await downloadPDF(pdfBase64, `Informe_Tests_${player.name.replace(/\s+/g, '_')}.pdf`);
+      await downloadPDF(pdfBase64, `Informe_Jugador_${player.name.replace(/\s+/g, '_')}.pdf`);
     } catch (e) {
       console.error("Error generating pdf:", e);
       alert('Error al exportar PDF');
@@ -302,7 +335,7 @@ const PlayerAnalyticsModal = ({ player, tests, historyData, onClose, onExportPDF
         <div style={{ overflowY: 'auto', flex: 1, padding: '24px 28px' }}>
 
           {/* Top section: Radar + Stats */}
-          <div style={{
+          <div id="player-radar-stats" style={{
             display: 'flex', gap: 28, marginBottom: 32,
             flexWrap: 'wrap'
           }}>
@@ -372,7 +405,7 @@ const PlayerAnalyticsModal = ({ player, tests, historyData, onClose, onExportPDF
               <h3 style={{ color: C_DARK, fontSize: 14, fontWeight: 700, letterSpacing: 1, marginBottom: 16 }}>
                 EVOLUCIÓN POR PRUEBA
               </h3>
-              <div style={{
+              <div id="player-evolution-charts" style={{
                 display: 'grid',
                 gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
                 gap: 20

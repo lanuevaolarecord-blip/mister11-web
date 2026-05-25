@@ -135,3 +135,106 @@
 .btn-delete-exercise:hover {
   background: #FEE2E2;
 }
+
+.exercise-card-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 15px;
+  border-top: 1px solid #E5E7EB;
+  padding-top: 10px;
+}
+
+.btn-view-exercise {
+  background: #E0F2FE;
+  color: #0284C7;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 500;
+  transition: all 0.2s;
+  font-size: 0.85rem;
+}
+
+.btn-view-exercise:hover {
+  background: #BAE6FD;
+}
+
+/* Fix delete button positioning to be in actions instead of absolute */
+.exercise-card .btn-delete-exercise {
+  position: static;
+  border-radius: 6px;
+  padding: 6px 12px;
+}
+
+.view-exercise-modal {
+  max-width: 600px;
+  width: 90%;
+  max-height: 85vh;
+  overflow-y: auto;
+}
+
+.view-exercise-modal .modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 20px;
+  border-bottom: 2px solid #F3F4F6;
+  padding-bottom: 15px;
+}
+
+.view-exercise-modal .modal-header h2 {
+  margin: 0;
+  color: #1B3A2D;
+  font-size: 1.5rem;
+}
+
+.exercise-meta-detail {
+  display: flex;
+  gap: 15px;
+  background: #F9FAFB;
+  padding: 15px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+  font-weight: 500;
+  color: #4B5563;
+}
+
+.exercise-description-detail {
+  line-height: 1.6;
+  color: #374151;
+  background: white;
+  padding: 0 5px;
+}
+
+.ia-markdown h2 {
+  color: #1B3A2D;
+  font-size: 1.3rem;
+  margin-top: 1.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.ia-markdown h3 {
+  color: #2E5C48;
+  font-size: 1.1rem;
+  margin-top: 1.2rem;
+  margin-bottom: 0.5rem;
+}
+
+.ia-markdown p {
+  margin-bottom: 1rem;
+}
+
+.ia-markdown li {
+  margin-bottom: 0.5rem;
+  margin-left: 1.5rem;
+}
+
+.ia-markdown strong {
+  color: #111827;
+}

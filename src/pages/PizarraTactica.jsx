@@ -37,6 +37,7 @@ import { useSearchParams } from 'react-router-dom';
 import { storage } from '../firebaseConfig';
 import { savePizarraLocal, getPizarraLocal, clearPizarraLocal } from '../lib/pizarraStorage';
 import { getDocument, setDocument } from '../firebase/db';
+import { downloadJSON, downloadImage } from '../utils/download.js';
 import './Pizarra.css';
 
 // helper: 'half-attack' → 'half_attack' (library uses underscores)
@@ -257,8 +258,12 @@ const PizarraTactica = () => {
   // React state (UI)
   const [ready,        setReady]        = useState(false);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+  const [isTablet, setIsTablet] = useState(window.innerWidth >= 768 && window.innerWidth <= 1024);
   const [showTeamsDrawer, setShowTeamsDrawer] = useState(false);
   const [showMatsDrawer, setShowMatsDrawer] = useState(false);
+  // Drawers laterales para tablet (desktop sin móvil)
+  const [leftPanelOpen, setLeftPanelOpen] = useState(false);
+  const [rightPanelOpen, setRightPanelOpen] = useState(false);
   const [activeTool,   setActiveTool]   = useState('select');
   const [activeColor,  setActiveColor]  = useState('#FFFFFF');
   const [activeWidth,  setActiveWidth]  = useState(4);
@@ -474,15 +479,10 @@ const PizarraTactica = () => {
         order: f.order ?? 0
       }))
     };
-    const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `pizarra-animacion-${planId}.json`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
+    const jsonString = JSON.stringify(exportData, null, 2);
+    const filename = `pizarra-animacion-${planId}.json`;
+    // Usa downloadJSON que soporta Capacitor Filesystem en APK
+    downloadJSON(jsonString, filename);
   };
 
   // ─── Import Animation JSON ────────────────────────────────────────────────
@@ -1143,12 +1143,18 @@ const PizarraTactica = () => {
         const q = query(framesColRef, orderBy('order', 'asc'));
         unsubscribe = onSnapshot(q, (snap) => {
           if (!snap.empty) {
-            const dbFrames = snap.docs.map(d => {
-              const data = d.data();
-              return { id: d.id, ...data, state: typeof data.state === 'string' ? JSON.parse(data.state) : data.state };
-            });
-            setFrames(dbFrames);
-            framesR.current = dbFrames;
+            // FIX: filtrar frames que hemos eliminado localmente y aún no se han
+            // propagado en Firestore (evita que el onSnapshot los restaure)
+            const dbFrames = snap.docs
+              .filter(d => !deletedFrameIdsR.current.has(d.id))
+              .map(d => {
+                const data = d.data();
+                return { id: d.id, ...data, state: typeof data.state === 'string' ? JSON.parse(data.state) : data.state };
+              });
+            if (dbFrames.length > 0) {
+              setFrames(dbFrames);
+              framesR.current = dbFrames;
+            }
           }
           if (!readyR.current) { readyR.current = true; setReady(true); }
         });
@@ -1198,10 +1204,12 @@ const PizarraTactica = () => {
               if (!readyR.current) { readyR.current = true; setReady(true); }
               return;
             }
-            const dbFrames = snapshot.docs.map(d => {
-              const data = d.data();
-              return { id: d.id, ...data, state: typeof data.state === 'string' ? JSON.parse(data.state) : data.state };
-            });
+            const dbFrames = snapshot.docs
+              .filter(d => !deletedFrameIdsR.current.has(d.id))
+              .map(d => {
+                const data = d.data();
+                return { id: d.id, ...data, state: typeof data.state === 'string' ? JSON.parse(data.state) : data.state };
+              });
             setFrames(dbFrames);
             framesR.current = dbFrames;
             if (!readyR.current) {
@@ -1247,7 +1255,9 @@ const PizarraTactica = () => {
 
       // Layout adaptativo
       const isMobileView = window.innerWidth < 768;
+      const isTabletView = window.innerWidth >= 768 && window.innerWidth <= 1024;
       setIsMobile(isMobileView);
+      setIsTablet(isTabletView);
 
       // Aspect Ratio Contain: el campo siempre visible (1.5:1)
       const aspect = 1.5;
@@ -1692,14 +1702,20 @@ const PizarraTactica = () => {
 
   // (El guardado al desmontar ya ocurre dentro del useEffect principal, en el return cleanup)
 
-  // ─── Tool change ──────────────────────────────────────────────────────────
+  // ─── Tool change (con try/catch para evitar crash en APK) ───────────────────
   useEffect(() => {
     const tm = tmRef.current;
     if (!tm) return;
-    if (activeTool === 'place_material') {
-      tm.activateTool('select'); // suppress drawing while placing
-    } else {
-      tm.activateTool(activeTool);
+    try {
+      if (activeTool === 'place_material') {
+        tm.activateTool('select'); // suppress drawing while placing
+      } else {
+        tm.activateTool(activeTool);
+      }
+    } catch (err) {
+      console.warn('[Pizarra] Error al activar herramienta:', activeTool, err);
+      // Fallback seguro: volver a selección
+      try { tm.activateTool('select'); } catch (_) {}
     }
   }, [activeTool]);
 
@@ -2079,27 +2095,39 @@ const PizarraTactica = () => {
   };
 
   // ─── Delete Frame ─────────────────────────────────────────────────────────
+  // FIX: usamos una ref local para trackear IDs eliminados y evitar que el
+  // onSnapshot de Firestore los restaure antes de que se complete el deleteDoc.
+  const deletedFrameIdsR = useRef(new Set());
+
   const deleteFrame = async () => {
     const cur = frameIdxR.current;
     if (framesR.current.length <= 1) return;
     
     const frameToDelete = framesR.current[cur];
+    if (!frameToDelete) return;
+
+    // Marcar el frame como eliminado ANTES de cualquier operación asíncrona
+    // para que el onSnapshot lo filtre si dispara antes del deleteDoc
+    if (frameToDelete.id) {
+      deletedFrameIdsR.current.add(frameToDelete.id);
+    }
     
     const next = framesR.current.filter((_, i) => i !== cur);
     const newIdx = Math.max(0, cur - 1);
     
+    // Actualizar estado local INMEDIATAMENTE
     framesR.current = next;
-    setFrames(next);
+    setFrames([...next]);
     setFrameIdx(newIdx);
     frameIdxR.current = newIdx;
     
     const fc = fcRef.current;
-    if (fc) {
+    if (fc && next[newIdx]) {
       syncingR.current = true;
       cargarFrame(next[newIdx].state, () => {
         syncingR.current = false;
         fc.renderAll();
-        attachListeners(); // Reconnect listeners to restore interactive control
+        try { attachListeners(); } catch (_) {}
       });
     }
     
@@ -2116,8 +2144,13 @@ const PizarraTactica = () => {
           batch.update(fRef, { order: idx });
         });
         await batch.commit();
+        
+        // Limpiar el ID de la lista de eliminados una vez confirmado en Firestore
+        deletedFrameIdsR.current.delete(frameToDelete.id);
       } catch (err) {
         console.error("Error deleting or reordering frame in Firestore:", err);
+        // En caso de error, quitar de eliminados para no bloquear futuros snapshots
+        deletedFrameIdsR.current.delete(frameToDelete.id);
       }
     }
   };
@@ -2363,6 +2396,28 @@ const PizarraTactica = () => {
                 {autoSaveStatus}
               </div>
             )}
+            {/* Botones para abrir paneles laterales en tablet (no-mobile) */}
+            {isTablet && (
+              <>
+                <button
+                  className={`tool-icon-btn ${leftPanelOpen ? 'active' : ''}`}
+                  title="Panel Equipos"
+                  onClick={() => { setLeftPanelOpen(v => !v); setRightPanelOpen(false); }}
+                  style={{ fontSize: '18px' }}
+                >
+                  👥
+                </button>
+                <button
+                  className={`tool-icon-btn ${rightPanelOpen ? 'active' : ''}`}
+                  title="Panel Material"
+                  onClick={() => { setRightPanelOpen(v => !v); setLeftPanelOpen(false); }}
+                  style={{ fontSize: '18px' }}
+                >
+                  🧰
+                </button>
+                <div className="topbar-divider" />
+              </>
+            )}
             <select className="topbar-select" value={fieldType}
               onChange={e => setFieldType(e.target.value)}>
               <option value="full">Campo Completo</option>
@@ -2510,7 +2565,8 @@ const PizarraTactica = () => {
       {/* ── MAIN BOARD ────────────────────────────────────────────────────── */}
       <div className="pizarra-main">
 
-        {!isMobile && (
+        {/* Panel izquierdo – Solo visible en desktop no-tablet */}
+        {!isMobile && !isTablet && (
           <div className="panel-izq">
             <TeamsPanel />
           </div>
@@ -2552,9 +2608,34 @@ const PizarraTactica = () => {
               </button>
             </div>
           )}
+
+          {/* Drawers laterales para TABLET (overlay sobre el canvas, sin desplazarlo) */}
+          {isTablet && leftPanelOpen && (
+            <>
+              <div className="pizarra-overlay" onClick={() => setLeftPanelOpen(false)} />
+              <div className="pizarra-drawer left open">
+                <div style={{ display: 'flex', justifyContent: 'flex-end', padding: '8px 8px 0' }}>
+                  <button onClick={() => setLeftPanelOpen(false)} style={{ background: 'transparent', border: 'none', color: 'var(--text-primary)', fontSize: '18px', cursor: 'pointer' }}>✕</button>
+                </div>
+                <TeamsPanel />
+              </div>
+            </>
+          )}
+          {isTablet && rightPanelOpen && (
+            <>
+              <div className="pizarra-overlay" onClick={() => setRightPanelOpen(false)} />
+              <div className="pizarra-drawer right open">
+                <div style={{ display: 'flex', justifyContent: 'flex-end', padding: '8px 8px 0' }}>
+                  <button onClick={() => setRightPanelOpen(false)} style={{ background: 'transparent', border: 'none', color: 'var(--text-primary)', fontSize: '18px', cursor: 'pointer' }}>✕</button>
+                </div>
+                <MaterialsPanel />
+              </div>
+            </>
+          )}
         </div>
 
-        {!isMobile && (
+        {/* Panel derecho – Solo visible en desktop no-tablet */}
+        {!isMobile && !isTablet && (
           <div className="panel-der">
             <MaterialsPanel />
           </div>

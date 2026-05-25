@@ -1,28 +1,23 @@
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
+import { downloadPDF } from './download.js';
 
 // Configuración de colores corporativos
 const THEME_COLOR = [27, 58, 45]; // #1B3A2D
 const ACCENT_COLOR = [212, 168, 67]; // #D4A843
 const TEXT_COLOR = [255, 255, 255]; // #FFFFFF
 
-// Guarda el PDF de forma segura en Web y APK
-export const savePdfUniversal = (doc, filename) => {
+/**
+ * savePdfUniversal – guarda el PDF correctamente en Web Y en APK Android.
+ * En Android (Capacitor) usa Filesystem → carpeta Descargas.
+ * En web usa el método clásico blob + <a download>.
+ */
+export const savePdfUniversal = async (doc, filename) => {
   try {
-    const pdfBlob = doc.output('blob');
-    const url = URL.createObjectURL(pdfBlob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = filename;
-    document.body.appendChild(link);
-    link.click();
-    setTimeout(() => {
-      document.body.removeChild(link);
-      URL.revokeObjectURL(url);
-    }, 100);
+    await downloadPDF(doc, filename);
   } catch (error) {
     console.error('Error al guardar PDF:', error);
-    alert('No se pudo descargar el informe. Revisa la consola o los permisos de almacenamiento.');
+    alert('No se pudo descargar el informe. Revisa los permisos de almacenamiento.');
   }
 };
 

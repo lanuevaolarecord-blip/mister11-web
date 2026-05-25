@@ -1,14 +1,29 @@
 import React, { useState } from 'react';
-import { Plus, Trash2, Search, Filter } from 'lucide-react';
+import { Plus, Trash2, Search, Filter, Eye } from 'lucide-react';
 import { useExercises } from '../hooks/useExercises';
 import { useAuth } from '../context/AuthContext';
 import './ExerciseLibrary.css';
+
+const renderMarkdown = (text) => {
+  if (!text) return null;
+  return text.split('\n').map((line, i) => {
+    if (line.startsWith('## ')) return <h2 key={i}>{line.replace('## ', '')}</h2>;
+    if (line.startsWith('### ')) return <h3 key={i}>{line.replace('### ', '')}</h3>;
+    if (line.startsWith('**') && line.endsWith('**')) return <p key={i}><strong>{line.replace(/\*\*/g, '')}</strong></p>;
+    const boldMatch = line.match(/^\*\*(.+?):\*\* (.+)$/);
+    if (boldMatch) return <p key={i}><strong>{boldMatch[1]}:</strong> {boldMatch[2]}</p>;
+    if (line.startsWith('- ')) return <li key={i}>{line.replace('- ', '')}</li>;
+    if (line.trim() === '') return <br key={i} />;
+    return <p key={i}>{line}</p>;
+  });
+};
 
 const ExerciseLibrary = ({ activeTeamId }) => {
   const { exercises, loading, addExercise, removeExercise } = useExercises(activeTeamId);
   const [searchTerm, setSearchTerm] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('all');
   const [showModal, setShowModal] = useState(false);
+  const [viewExercise, setViewExercise] = useState(null);
   const [newExercise, setNewExercise] = useState({
     name: '', category: 'fortalecimiento', targetZones: [], injuryTypes: [], 
     difficulty: 1, description: '', durationSeconds: 0, reps: 0, series: 1
@@ -86,11 +101,16 @@ const ExerciseLibrary = ({ activeTeamId }) => {
                   <span>⭐ Nivel {ex.difficulty}</span>
                 </div>
               </div>
-              {ex.source !== 'system' && (
-                <button className="btn-delete-exercise" onClick={() => removeExercise(ex.id)}>
-                  <Trash2 size={16} />
+              <div className="exercise-card-actions">
+                <button className="btn-view-exercise" onClick={() => setViewExercise(ex)} title="Ver detalle">
+                  <Eye size={16} /> Ver
                 </button>
-              )}
+                {ex.source !== 'system' && (
+                  <button className="btn-delete-exercise" onClick={() => removeExercise(ex.id)} title="Eliminar">
+                    <Trash2 size={16} />
+                  </button>
+                )}
+              </div>
             </div>
           ))}
         </div>
@@ -140,6 +160,38 @@ const ExerciseLibrary = ({ activeTeamId }) => {
             <div className="modal-actions">
               <button className="btn-cancel" onClick={() => setShowModal(false)}>Cancelar</button>
               <button className="btn-save" onClick={handleSave}>Guardar Ejercicio</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {viewExercise && (
+        <div className="modal-overlay" onClick={() => setViewExercise(null)}>
+          <div className="modal-content view-exercise-modal" onClick={e => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2>{viewExercise.name || viewExercise.titulo}</h2>
+              <span className={`badge-cat cat-${viewExercise.category}`}>{viewExercise.category}</span>
+            </div>
+            
+            <div className="exercise-meta-detail">
+              {viewExercise.durationSeconds > 0 && <span>⏱️ {viewExercise.durationSeconds}s</span>}
+              {viewExercise.reps > 0 && <span>🔁 {viewExercise.reps} reps</span>}
+              {viewExercise.series > 0 && <span>🔄 {viewExercise.series} series</span>}
+              <span>⭐ Nivel {viewExercise.difficulty}</span>
+            </div>
+
+            <div className="exercise-description-detail">
+              {viewExercise.markdown ? (
+                <div className="ia-markdown">
+                  {renderMarkdown(viewExercise.markdown)}
+                </div>
+              ) : (
+                <p>{viewExercise.description || 'Sin descripción'}</p>
+              )}
+            </div>
+
+            <div className="modal-actions">
+              <button className="btn-primary" onClick={() => setViewExercise(null)}>Cerrar</button>
             </div>
           </div>
         </div>

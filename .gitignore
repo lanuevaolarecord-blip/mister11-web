@@ -41,3 +41,8 @@ android/app/build/
 .firebase/
 
 
+
+# APKs generados
+Mister11.apk
+*.apk
+android/app/build/

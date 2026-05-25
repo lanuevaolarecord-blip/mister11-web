@@ -92,42 +92,49 @@
 }
 
 .btn-primary {
-  background: var(--accent);
+  background: var(--primary);
   color: white;
-  padding: 10px 24px;
-  border-radius: 12px;
+  padding: 12px 24px;
+  border-radius: 8px;
   font-weight: bold;
   font-size: 14px;
-  box-shadow: 0 4px 12px rgba(76, 175, 125, 0.3);
-  transition: transform 0.2s;
+  text-transform: uppercase;
+  box-shadow: 0 4px 12px rgba(27, 58, 45, 0.3);
+  transition: transform 0.2s, filter 0.2s;
+  border: none;
+  cursor: pointer;
 }
 .btn-primary:hover {
   transform: translateY(-2px);
-  background: #3d9c6c;
+  filter: brightness(1.15);
 }
 
 .btn-outline {
   background: transparent;
-  color: var(--accent);
-  border: 2px solid var(--accent);
+  color: var(--primary);
+  border: 2px solid var(--primary);
   padding: 10px 24px;
-  border-radius: 12px;
+  border-radius: 8px;
   font-weight: bold;
   font-size: 14px;
+  text-transform: uppercase;
   transition: all 0.2s;
   cursor: pointer;
 }
 .btn-outline:hover {
-  background: rgba(76, 175, 125, 0.1);
+  background: rgba(27, 58, 45, 0.1);
 }
 
 .btn-primary-small {
-  background: var(--accent);
+  background: var(--primary);
   color: white;
   padding: 8px 16px;
   border-radius: 8px;
   font-weight: bold;
-  font-size: 13px;
+  font-size: 12px;
+  text-transform: uppercase;
+  border: none;
+  cursor: pointer;
 }
 
 /* --- LIST MODE --- */
@@ -189,17 +196,17 @@
 .sessions-list {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 20px;
   overflow-y: auto;
   padding-right: 10px;
 }
 
 .session-card {
   background: var(--bg-card);
-  border-radius: 16px;
+  border-radius: 12px;
   overflow: hidden;
   display: flex;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+  box-shadow: 0 4px 16px rgba(0,0,0,0.04);
   cursor: pointer;
   transition: transform 0.2s, box-shadow 0.2s;
   border: 1px solid var(--border-color);
@@ -216,7 +223,7 @@
 .session-strip.física { background: #EC4899; }
 .session-strip.mixta { background: #8B5CF6; }
 
-.session-main { flex: 1; display: flex; align-items: center; padding: 20px; gap: 20px; }
+.session-main { flex: 1; display: flex; align-items: center; padding: 24px; gap: 24px; }
 .session-date-box { display: flex; flex-direction: column; min-width: 70px; border-right: 1px solid var(--border-color); }
 .session-date-box .time { font-weight: 800; color: var(--text-primary); font-size: 1.1rem; }
 .session-date-box .duration { font-size: 11px; color: var(--text-muted); }

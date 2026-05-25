@@ -19,13 +19,15 @@ import {
   CheckCircle
 } from 'lucide-react';
 import { generateSeasonReport, generateMatchConvocation, generateSessionPDF } from '../utils/pdfGenerator';
+import { generateGlobalTeamReport } from '../utils/teamReportGenerator';
+import { APP_VERSION } from '../constants/appVersion';
 import { t } from '../i18n/translations';
 import { usePWA } from '../hooks/usePWA';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { storage, db } from '../firebaseConfig';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
-import { collection, getDocs } from 'firebase/firestore';
+import { collection, getDocs, doc, getDoc } from 'firebase/firestore';
 import imageCompression from 'browser-image-compression';
 import EscudoEquipo from '../components/EscudoEquipo';
 import RedeemCode from '../components/RedeemCode';
@@ -46,6 +48,9 @@ const AdminPanel = () => {
   const [selectedMatchId, setSelectedMatchId] = useState('');
   const [selectedSessionId, setSelectedSessionId] = useState('');
   const [selectedExerciseDetail, setSelectedExerciseDetail] = useState(null);
+  const [teamTests, setTeamTests] = useState([]);
+  const [teamEvaluaciones, setTeamEvaluaciones] = useState([]);
+  const [checkingUpdate, setCheckingUpdate] = useState(false);
   
   const { settings, saveSettings, loading: loadingSettings } = useSettings(activeTeam?.id);
   const { darkMode, toggleTheme } = useTheme();
@@ -67,6 +72,25 @@ const AdminPanel = () => {
       });
     }
   }, [settings]);
+
+  // Cargar tests y evaluaciones del equipo activo
+  useEffect(() => {
+    if (!user || !activeTeam) return;
+    const fetchTestsAndEvals = async () => {
+      try {
+        const testsSnap = await getDocs(collection(db, `users/${user.uid}/teams/${activeTeam.id}/tests`));
+        const tests = testsSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+        setTeamTests(tests);
+
+        const evalsSnap = await getDocs(collection(db, `users/${user.uid}/teams/${activeTeam.id}/evaluaciones`));
+        const evals = evalsSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+        setTeamEvaluaciones(evals);
+      } catch (err) {
+        console.error('Error cargando tests/evaluaciones para informe:', err);
+      }
+    };
+    fetchTestsAndEvals();
+  }, [user, activeTeam]);
 
   useEffect(() => {
     if (activeTeam) {
@@ -147,6 +171,42 @@ const AdminPanel = () => {
   const handleExportSeason = async () => {
     if (!activeTeam) { alert('Selecciona un equipo primero.'); return; }
     await generateSeasonReport(activeTeam, players, matches);
+  };
+
+  const handleExportGlobalReport = async () => {
+    if (!activeTeam) { alert('Selecciona un equipo primero.'); return; }
+    if (players.length === 0) { alert('No hay jugadores en el equipo activo.'); return; }
+    try {
+      await generateGlobalTeamReport(players, teamTests, teamEvaluaciones, activeTeam);
+    } catch (err) {
+      console.error('Error generando informe global:', err);
+      alert('Error al generar el informe global.');
+    }
+  };
+
+  const checkForUpdates = async () => {
+    setCheckingUpdate(true);
+    try {
+      const configRef = doc(db, 'config', 'global');
+      const configSnap = await getDoc(configRef);
+      if (configSnap.exists()) {
+        const { latestApkVersion, apkDownloadUrl } = configSnap.data();
+        if (latestApkVersion && latestApkVersion > APP_VERSION) {
+          if (window.confirm(`🆕 Nueva versión ${latestApkVersion} disponible (actual: ${APP_VERSION}).\n¿Descargar ahora?`)) {
+            window.open(apkDownloadUrl, '_blank');
+          }
+        } else {
+          alert(`✅ Ya tienes la última versión instalada (v${APP_VERSION}).`);
+        }
+      } else {
+        alert('No se pudo comprobar actualizaciones. El servidor de configuración no responde.');
+      }
+    } catch (err) {
+      console.error('Error al comprobar actualizaciones:', err);
+      alert('Error al conectar con el servidor de actualizaciones.');
+    } finally {
+      setCheckingUpdate(false);
+    }
   };
 
   const handleExportConvocatoria = async () => {
@@ -359,6 +419,15 @@ const AdminPanel = () => {
 
               <div className="export-card">
                 <Layers className="export-icon" size={32} />
+                <h3>Informe Global del Equipo</h3>
+                <p>Análisis completo: rangos de rendimiento, mejores jugadores y áreas de mejora por área (Física, Técnica, Táctica).</p>
+                <button className="btn-export" onClick={handleExportGlobalReport} style={{ marginTop: 'auto', background: '#1B3A2D', minHeight: '48px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
+                  <FileText size={18} /> 📊 Informe Global
+                </button>
+              </div>
+
+              <div className="export-card">
+                <Layers className="export-icon" size={32} />
                 <h3>Copia de Seguridad del Equipo</h3>
                 <p>Exporta toda la información del equipo activo (jugadores, sesiones, partidos, tests y evaluaciones) en un archivo JSON.</p>
                 <button className="btn-export" onClick={handleExportBackup} style={{ marginTop: 'auto', background: '#004B87', minHeight: '48px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
@@ -532,6 +601,22 @@ const AdminPanel = () => {
                       Instalar App (PWA)
                     </button>
                   )}
+
+                  {/* Actualización Manual */}
+                  <div style={{ marginTop: '24px', borderTop: '1px solid var(--border-color)', paddingTop: '20px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                      <span style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>Versión actual de la app</span>
+                      <strong style={{ color: 'var(--text-primary)', fontFamily: 'monospace' }}>v{APP_VERSION}</strong>
+                    </div>
+                    <button
+                      className="btn-primary"
+                      onClick={checkForUpdates}
+                      disabled={checkingUpdate}
+                      style={{ width: '100%', minHeight: '48px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', opacity: checkingUpdate ? 0.7 : 1 }}
+                    >
+                      {checkingUpdate ? '⏳ Comprobando...' : '🔍 Buscar actualizaciones'}
+                    </button>
+                  </div>
                 </div>
               </div>
 

@@ -1346,6 +1346,8 @@ canvas.lower-canvas {
   height: 100% !important;
   background: transparent !important;
   position: relative;
+  padding: 0 100px !important;
+  box-sizing: border-box !important;
 }
 
 /* Borde tipo tiza en los bordes del canvas fullscreen */

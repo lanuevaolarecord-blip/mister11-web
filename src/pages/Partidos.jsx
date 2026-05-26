@@ -255,7 +255,7 @@ const Partidos = () => {
                 {filteredMatches.map(m => (
                   <div key={m.id} className="match-card" onClick={() => handleEditMatch(m)}>
                     <div className="mc-header">
-                      <span className={`status-badge ${m.status.toLowerCase()}`}>{m.status}</span>
+                      <span className={`status-badge ${m.status?.toLowerCase()}`}>{m.status}</span>
                       <span className="mc-date">{m.date ? m.date.split('-').reverse().join('/') : '--/--/--'} - {m.time || '--:--'}</span>
                     </div>
                     

@@ -1244,20 +1244,20 @@ const PizarraTactica = () => {
       let anchoContenedor = contenedor.offsetWidth;
       let altoContenedor  = contenedor.offsetHeight;
 
-      // Salvaguarda: si el contenedor colapsa temporalmente a 0 o valores mínimos inservibles
+      // Salvaguarda: si el contenedor colapsa temporalmente a 0
       if (anchoContenedor <= 0 || altoContenedor <= 0) {
         anchoContenedor = window.innerWidth;
         altoContenedor = Math.max(300, window.innerHeight - 120);
       }
 
-      // En fullscreen, ignoramos el flex del contenedor porque el canvas lo puede estirar.
-      // Calculamos basado estrictamente en el tamaño de la ventana.
+      // En fullscreen, el contenedor flex ya ocupa el espacio correcto,
+      // pero debemos descontar el espacio que tapan las toolbars flotantes (position: fixed).
       const isFS = document.querySelector('.pizarra-fullscreen') !== null;
       if (isFS) {
-        // toolbar izq (~76px) + toolbar der (~76px) + padding seguridad = ~176px
-        anchoContenedor = Math.max(window.innerWidth - 180, 200);
-        // Descontamos topbar (~56px) + padding de seguridad inferior = ~80px
-        altoContenedor = Math.max(window.innerHeight - 80, 200);
+        // Toolbar izq (~76px) + Toolbar der (~76px) + margen = ~180px
+        anchoContenedor = Math.max(anchoContenedor - 180, 200);
+        // Pequeño padding vertical para que no toque los bordes superior/inferior
+        altoContenedor = Math.max(altoContenedor - 32, 200);
       }
 
       // Layout adaptativo

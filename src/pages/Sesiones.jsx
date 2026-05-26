@@ -264,6 +264,8 @@ const Sesiones = () => {
   };
 
   const handleDownloadAnimationJSON = async (anim) => {
+    alert("Para exportar esta animación como VIDEO (MP4/WebM), ábrela en la Pizarra Táctica y haz clic en el botón superior derecho 'Exportar Video'.\n\nEl archivo JSON solo sirve para hacer respaldos.");
+    // Proceder con la descarga de respaldo
     if (!user || !activeTeamId || !anim) return;
     try {
       const framesColRef = collection(db, 'users', user.uid, 'teams', activeTeamId, 'pizarras', anim.id, 'frames');

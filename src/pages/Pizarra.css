@@ -1344,6 +1344,7 @@ canvas.lower-canvas {
   flex: 1 !important;
   width: 100% !important;
   height: 100% !important;
+  min-height: 0 !important; /* PREVENTS FLEX ITEM FROM STRETCHING TO CONTENT */
   background: transparent !important;
   position: relative;
   display: flex !important;
@@ -1355,10 +1356,7 @@ canvas.lower-canvas {
 
 /* Borde tipo tiza en los bordes del canvas fullscreen */
 .pizarra-fullscreen #canvas-container {
-  width: 100% !important;
-  height: 100% !important;
-  position: absolute !important;
-  inset: 0 !important;
+  /* position: absolute y inset: 0 removidos para no romper flexbox */
   /* Sombra interior que imita el marco de una pizarra */
   box-shadow: inset 0 0 60px rgba(0,0,0,0.6), inset 0 0 20px rgba(0,0,0,0.4);
 }

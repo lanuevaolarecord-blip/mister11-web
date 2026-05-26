@@ -147,12 +147,8 @@ const PizarraTactica = () => {
     const fr = frRef.current;
     if (!fc || !fr || !state) return;
 
-    // Suspender los listeners de cambio ANTES de manipular el canvas
-    // para no disparar guardados falsos durante la carga
-    fc.off('object:modified');
-    fc.off('object:added');
-    fc.off('object:removed');
-    fc.off('path:created');
+    // No desconectamos los listeners porque syncingR.current ya evita bucles infinitos de guardado
+    // fc.off(...) eliminado para reparar undo/redo
 
     fc.clear();
     const objsToEnliven = Array.isArray(state.objects) ? state.objects : [];
@@ -1063,6 +1059,7 @@ const PizarraTactica = () => {
     };
 
     const onPathCreated = (opt) => {
+      if (syncingR.current) return;
       if (opt.path) {
         opt.path.set({ data: { type: 'path' } });
       }
@@ -1247,20 +1244,20 @@ const PizarraTactica = () => {
       let anchoContenedor = contenedor.offsetWidth;
       let altoContenedor  = contenedor.offsetHeight;
 
-      // Salvaguarda: si el contenedor colapsa temporalmente a 0 o valores mínimos inservibles (ej: teclado móvil)
+      // Salvaguarda: si el contenedor colapsa temporalmente a 0 o valores mínimos inservibles
       if (anchoContenedor <= 0 || altoContenedor <= 0) {
         anchoContenedor = window.innerWidth;
         altoContenedor = Math.max(300, window.innerHeight - 120);
       }
 
-      // En fullscreen, los toolbars flotantes (izq ~76px + der ~76px) tapan el campo.
-      // Descontamos su ancho para que el canvas quede centrado y completamente visible.
+      // En fullscreen, ignoramos el flex del contenedor porque el canvas lo puede estirar.
+      // Calculamos basado estrictamente en el tamaño de la ventana.
       const isFS = document.querySelector('.pizarra-fullscreen') !== null;
       if (isFS) {
-        // toolbar izq (72px + 16px margen) + toolbar der (72px + 16px margen) = ~176px total
-        anchoContenedor = Math.max(anchoContenedor - 176, 200);
-        // También reducimos la altura para que quepan topbar (~56px) y sea visible el campo entero
-        altoContenedor = Math.max(altoContenedor - 16, 200);
+        // toolbar izq (~76px) + toolbar der (~76px) + padding seguridad = ~176px
+        anchoContenedor = Math.max(window.innerWidth - 180, 200);
+        // Descontamos topbar (~56px) + padding de seguridad inferior = ~80px
+        altoContenedor = Math.max(window.innerHeight - 80, 200);
       }
 
       // Layout adaptativo

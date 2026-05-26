@@ -11,6 +11,7 @@ import { ref, uploadBytesResumable, getDownloadURL, deleteObject } from 'firebas
 import { collection, getDocs, query, orderBy, doc, deleteDoc, writeBatch } from 'firebase/firestore';
 import { useCaptures } from '../hooks/useCaptures';
 import { useExercises } from '../hooks/useExercises';
+import { downloadJSON, downloadImage } from '../utils/download.js';
 import {
   DndContext,
   closestCenter,
@@ -286,15 +287,7 @@ const Sesiones = () => {
         frames: framesData
       };
 
-      const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = `pizarra-animacion-${anim.id}.json`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      URL.revokeObjectURL(url);
+      await downloadJSON(JSON.stringify(exportData, null, 2), `pizarra-animacion-${anim.id}.json`);
     } catch (e) {
       console.error("Error downloading animation JSON:", e);
       alert("Error al descargar la animación.");
@@ -938,11 +931,7 @@ const Sesiones = () => {
               <img src={selectedCapture.url || selectedCapture.thumbnail} alt="Pizarra" />
               <div className="capture-actions-float">
                  <button className="btn-primary" onClick={() => {
-                   const link = document.createElement('a');
-                   link.href = selectedCapture.url || selectedCapture.thumbnail;
-                   link.download = "mister11_pizarra.png";
-                   link.target = "_blank";
-                   link.click();
+                   downloadImage(selectedCapture.url || selectedCapture.thumbnail, "mister11_pizarra.png");
                  }}>DESCARGAR</button>
                  <button className="btn-text-error" onClick={() => handleDeleteCapture(selectedCapture)} style={{marginLeft: '10px'}}>ELIMINAR</button>
               </div>

@@ -2573,15 +2573,52 @@ const PizarraTactica = () => {
       </div>
       
       {fullscreenMode && (
-        <button 
-          className="floating-exit" 
-          onClick={() => {
-            setFullscreenMode(false);
-            setTimeout(() => window.dispatchEvent(new Event('resize')), 100);
-          }}
-        >
-          ✖ Salir de Pizarra
-        </button>
+        <>
+          {/* Botón salir fullscreen */}
+          <button
+            className="floating-exit"
+            onClick={() => {
+              setFullscreenMode(false);
+              setTimeout(() => window.dispatchEvent(new Event('resize')), 100);
+            }}
+          >
+            ✖ Salir Pizarra
+          </button>
+
+          {/* Mini-barra flotante: herramientas esenciales en fullscreen */}
+          <div className="pizarra-fullscreen-toolbar">
+            {/* Herramientas de dibujo */}
+            {Object.values(TOOLS).map(tool => (
+              <button
+                key={tool.id}
+                className={activeTool === tool.id ? 'active' : ''}
+                title={tool.label}
+                onClick={() => setActiveTool(tool.id)}
+                dangerouslySetInnerHTML={{ __html: tool.icon }}
+              />
+            ))}
+
+            <div className="fs-divider" />
+
+            {/* Colores rápidos */}
+            {['#FFFFFF', '#FFEB3B', '#F44336', '#2196F3', '#4CAF50'].map(color => (
+              <div
+                key={color}
+                className={`color-dot ${activeColor === color ? 'active' : ''}`}
+                style={{ backgroundColor: color }}
+                onClick={() => setActiveColor(color)}
+                title={color}
+              />
+            ))}
+
+            <div className="fs-divider" />
+
+            {/* Deshacer / Limpiar */}
+            <button onClick={undo} title="Deshacer">↩</button>
+            <button onClick={clearCanvas} title="Limpiar todo" style={{ color: '#ff6b6b' }}>🗑</button>
+            <button onClick={() => handleCapture(true)} title="Capturar imagen">📸</button>
+          </div>
+        </>
       )}
 
       {/* ── MAIN BOARD ────────────────────────────────────────────────────── */}

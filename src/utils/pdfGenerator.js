@@ -123,6 +123,12 @@ const addFooter = (doc) => {
  * PLANIFICACIÓN - Macrociclo (Landscape, dark theme)
  */
 export const generatePlanificacionPDF = async (macroInfo, microcycles, activeTeam = null) => {
+  window.dispatchEvent(new CustomEvent('m11-loading', { detail: { show: true, message: 'Generando PDF...' } }));
+  await new Promise(r => setTimeout(r, 150));
+  try {
+  } finally {
+    window.dispatchEvent(new CustomEvent('m11-loading', { detail: { show: false } }));
+  }
   const doc = new jsPDF({ orientation: 'landscape' });
   const pageW = doc.internal.pageSize.getWidth(); // 297mm landscape
 
@@ -272,6 +278,12 @@ export const generatePlanificacionPDF = async (macroInfo, microcycles, activeTea
  * TESTS - Informe Colectivo
  */
 export const generateTestsReport = async (tests, players, historyData, activeTeam = null) => {
+  window.dispatchEvent(new CustomEvent('m11-loading', { detail: { show: true, message: 'Generando PDF...' } }));
+  await new Promise(r => setTimeout(r, 150));
+  try {
+  } finally {
+    window.dispatchEvent(new CustomEvent('m11-loading', { detail: { show: false } }));
+  }
   const doc = new jsPDF({ orientation: 'landscape' });
   
   await addHeader(doc, 'INFORME DE RENDIMIENTO GLOBAL', `Fecha: ${new Date().toLocaleDateString()}`, activeTeam);
@@ -390,6 +402,12 @@ export const generateTestsReport = async (tests, players, historyData, activeTea
  * TESTS - Informe Individual (Para el jugador o padre)
  */
 export const generatePlayerTestReport = async (player, tests, historyData, activeTeam = null, graficaDataUrl = null) => {
+  window.dispatchEvent(new CustomEvent('m11-loading', { detail: { show: true, message: 'Generando PDF...' } }));
+  await new Promise(r => setTimeout(r, 150));
+  try {
+  } finally {
+    window.dispatchEvent(new CustomEvent('m11-loading', { detail: { show: false } }));
+  }
   const doc = new jsPDF();
   
   await addHeader(doc, 'INFORME DE RENDIMIENTO INDIVIDUAL', `Fecha: ${new Date().toLocaleDateString()}`, activeTeam);
@@ -529,6 +547,12 @@ export const generatePlayerTestReport = async (player, tests, historyData, activ
  * SESIONES - Ficha individual
  */
 export const generateSessionPDF = async (session, activeTeam = null) => {
+  window.dispatchEvent(new CustomEvent('m11-loading', { detail: { show: true, message: 'Generando PDF...' } }));
+  await new Promise(r => setTimeout(r, 150));
+  try {
+  } finally {
+    window.dispatchEvent(new CustomEvent('m11-loading', { detail: { show: false } }));
+  }
   const doc = new jsPDF();
   
   await addHeader(doc, `FICHA DE ENTRENAMIENTO`, session.title || session.titulo, activeTeam);
@@ -599,6 +623,12 @@ export const generateSessionPDF = async (session, activeTeam = null) => {
  * INFORME DE TEMPORADA - Completo con estadísticas de jugadores
  */
 export const generateSeasonReport = async (team, players, matches) => {
+  window.dispatchEvent(new CustomEvent('m11-loading', { detail: { show: true, message: 'Generando PDF...' } }));
+  await new Promise(r => setTimeout(r, 150));
+  try {
+  } finally {
+    window.dispatchEvent(new CustomEvent('m11-loading', { detail: { show: false } }));
+  }
   const doc = new jsPDF();
   const teamName = team?.nombre || 'Equipo';
   const season = team?.temporada || new Date().getFullYear();
@@ -674,6 +704,12 @@ export const generateSeasonReport = async (team, players, matches) => {
  * HOJA DE CONVOCATORIA - Para un partido con lista de convocados
  */
 export const generateMatchConvocation = async (match, players, activeTeam = null) => {
+  window.dispatchEvent(new CustomEvent('m11-loading', { detail: { show: true, message: 'Generando PDF...' } }));
+  await new Promise(r => setTimeout(r, 150));
+  try {
+  } finally {
+    window.dispatchEvent(new CustomEvent('m11-loading', { detail: { show: false } }));
+  }
   const doc = new jsPDF();
   await addHeader(doc, 'HOJA DE CONVOCATORIA', `vs. ${match.rival}`, activeTeam);
 
@@ -715,6 +751,12 @@ export const generateMatchConvocation = async (match, players, activeTeam = null
  * EXPEDIENTE - Jugador individual
  */
 export const generateExpediente = async (player, activeTeam = null) => {
+  window.dispatchEvent(new CustomEvent('m11-loading', { detail: { show: true, message: 'Generando PDF...' } }));
+  await new Promise(r => setTimeout(r, 150));
+  try {
+  } finally {
+    window.dispatchEvent(new CustomEvent('m11-loading', { detail: { show: false } }));
+  }
   const doc = new jsPDF();
   await addHeader(doc, 'EXPEDIENTE DEPORTIVO', `${player.name || player.nombre}`, activeTeam);
 

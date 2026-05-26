@@ -1862,7 +1862,11 @@ const PizarraTactica = () => {
       return null;
     }
 
-    if (!silent) setIsCapturing(true);
+    if (!silent) {
+      setIsCapturing(true);
+      window.dispatchEvent(new CustomEvent('m11-loading', { detail: { show: true, message: 'Capturando imagen...' } }));
+      await new Promise(r => setTimeout(r, 150));
+    }
 
     try {
       // 1. Crear canvas temporal de alta resolución (Consistencia entre dispositivos)

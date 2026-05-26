@@ -74,6 +74,19 @@ function App() {
     setShowUpdate(false);
   };
 
+  const [globalActionLoading, setGlobalActionLoading] = useState({ show: false, message: '' });
+
+  useEffect(() => {
+    const handleGlobalLoading = (e) => {
+      setGlobalActionLoading({
+        show: e.detail?.show || false,
+        message: e.detail?.message || 'Procesando...'
+      });
+    };
+    window.addEventListener('m11-loading', handleGlobalLoading);
+    return () => window.removeEventListener('m11-loading', handleGlobalLoading);
+  }, []);
+
   // 4. Mientras onAuthStateChanged no ha respondido todavía, muestra pantalla de carga
   if (loading) {
     return (
@@ -90,6 +103,14 @@ function App() {
   // 5. Lógica de autenticación: Si devuelve un usuario, muestra la app; si devuelve null, muestra login
   return (
     <>
+      {globalActionLoading.show && (
+        <div className="global-loader" style={{ zIndex: 99999, background: 'rgba(0,0,0,0.8)' }}>
+          <div className="loader-content">
+            <div className="spinner"></div>
+            <p style={{ marginTop: '16px', color: 'white', fontWeight: 'bold' }}>{globalActionLoading.message}</p>
+          </div>
+        </div>
+      )}
       {showUpdate && (
         <div className="update-notification">
           <div className="update-content">

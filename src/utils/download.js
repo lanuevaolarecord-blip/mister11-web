@@ -18,27 +18,36 @@ const _saveToCache = async (filename, base64Data) => {
 };
 
 const _openNative = async (uri, mimeType, filename, base64Data) => {
+  // Primero intentamos compartir con el sheet nativo de Android
+  // La API correcta para archivos es { files: [uri] }, NO { url: uri }
   try {
-    await Share.share({
-      title: 'MISTER 11',
-      url: uri,
-      dialogTitle: 'Guardar o compartir archivo',
-    });
-    return;
-  } catch (err) {
-    console.error('[download] Share failed, trying Documents dir:', err);
-    try {
-      await Filesystem.writeFile({
-        path: `Mister11/${filename}`,
-        data: base64Data,
-        directory: Directory.Documents,
-        recursive: true
+    const canShare = await Share.canShare();
+    if (canShare?.value) {
+      await Share.share({
+        title: 'MISTER 11 - Guardar archivo',
+        files: [uri],
+        dialogTitle: 'Guardar o compartir en...',
       });
-      alert(`✅ Archivo guardado en Documentos/Mister11/${filename}`);
-    } catch (saveErr) {
-      console.error('[download] Documents save failed:', saveErr);
-      window.open(uri, '_system');
+      return;
     }
+  } catch (shareErr) {
+    console.warn('[download] Share.share falló, intentando Documents:', shareErr);
+  }
+
+  // Fallback: guardar directamente en Documents/Mister11/
+  try {
+    await Filesystem.writeFile({
+      path: `Mister11/${filename}`,
+      data: base64Data,
+      directory: Directory.Documents,
+      recursive: true,
+    });
+    alert(`✅ Guardado en: Documentos/Mister11/${filename}`);
+  } catch (docErr) {
+    console.error('[download] Documents también falló:', docErr);
+    // Último fallback: abrir directamente
+    try { window.open(uri, '_system'); } catch (_) {}
+    alert(`El archivo se guardó en caché. Si no se abre, busca "${filename}" en Archivos > Android > data > com.mister11.app > cache`);
   }
 };
 

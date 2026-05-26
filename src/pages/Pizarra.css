@@ -1339,14 +1339,17 @@ canvas.lower-canvas {
   display: none !important;
 }
 
-/* El canvas ocupa todo el espacio restante */
+/* El canvas ocupa todo el espacio restante y centra el campo */
 .pizarra-fullscreen .canvas-area {
   flex: 1 !important;
   width: 100% !important;
   height: 100% !important;
   background: transparent !important;
   position: relative;
-  padding: 0 100px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 0 !important;
   box-sizing: border-box !important;
 }
 

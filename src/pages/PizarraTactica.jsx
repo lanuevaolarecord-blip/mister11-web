@@ -1253,6 +1253,16 @@ const PizarraTactica = () => {
         altoContenedor = Math.max(300, window.innerHeight - 120);
       }
 
+      // En fullscreen, los toolbars flotantes (izq ~76px + der ~76px) tapan el campo.
+      // Descontamos su ancho para que el canvas quede centrado y completamente visible.
+      const isFS = document.querySelector('.pizarra-fullscreen') !== null;
+      if (isFS) {
+        // toolbar izq (72px + 16px margen) + toolbar der (72px + 16px margen) = ~176px total
+        anchoContenedor = Math.max(anchoContenedor - 176, 200);
+        // También reducimos la altura para que quepan topbar (~56px) y sea visible el campo entero
+        altoContenedor = Math.max(altoContenedor - 16, 200);
+      }
+
       // Layout adaptativo
       const isMobileView = window.innerWidth < 768;
       const isTabletView = window.innerWidth >= 768 && window.innerWidth <= 1024;

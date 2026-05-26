@@ -628,6 +628,58 @@ const AdminPanel = () => {
                     >
                       {checkingUpdate ? '⏳ Comprobando...' : '🔍 Buscar actualizaciones'}
                     </button>
+
+                    {/* ═══ BOTÓN DESCARGAR APK ═══ */}
+                    <div style={{
+                      marginTop: '16px',
+                      padding: '16px',
+                      background: 'linear-gradient(135deg, rgba(76,175,125,0.12), rgba(33,150,243,0.08))',
+                      borderRadius: '12px',
+                      border: '1px solid rgba(76,175,125,0.25)',
+                    }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '10px' }}>
+                        <span style={{ fontSize: '24px' }}>📱</span>
+                        <div>
+                          <div style={{ fontWeight: '600', color: 'var(--text-primary)', fontSize: '0.95rem' }}>
+                            Aplicación Android (APK)
+                          </div>
+                          <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+                            Instala Mister 11 directamente en tu tablet Android
+                          </div>
+                        </div>
+                      </div>
+                      <a
+                        href="/mister11.apk"
+                        download="mister11.apk"
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          gap: '8px',
+                          width: '100%',
+                          minHeight: '48px',
+                          background: 'linear-gradient(135deg, #4CAF7D, #2196F3)',
+                          color: '#fff',
+                          fontWeight: '700',
+                          fontSize: '0.9rem',
+                          textTransform: 'uppercase',
+                          letterSpacing: '0.5px',
+                          borderRadius: '8px',
+                          textDecoration: 'none',
+                          boxSizing: 'border-box',
+                          padding: '0 16px',
+                          boxShadow: '0 4px 16px rgba(76,175,125,0.3)',
+                          transition: 'all 0.2s ease',
+                        }}
+                        onMouseEnter={e => e.currentTarget.style.opacity = '0.88'}
+                        onMouseLeave={e => e.currentTarget.style.opacity = '1'}
+                      >
+                        ⬇️ DESCARGAR APK v{APP_VERSION}
+                      </a>
+                      <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginTop: '8px', marginBottom: 0, textAlign: 'center' }}>
+                        Solo para Android · Habilita "Fuentes desconocidas" en Ajustes del sistema antes de instalar
+                      </p>
+                    </div>
                   </div>
                 </div>
               </div>

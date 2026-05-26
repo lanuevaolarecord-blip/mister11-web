@@ -484,6 +484,7 @@ Responde solo en español y usa formato markdown.`;
                 </div>
               </div>
             </>
+          )}
           {error && <div className="error-msg" style={{color: '#EF4444', backgroundColor: '#FEE2E2', padding: '12px', borderRadius: '8px', marginBottom: '16px', fontSize: '0.9rem', border: '1px solid #FCA5A5'}}>{error}</div>}
 
           <button className="btn-generate" onClick={handleGenerate} disabled={isGenerating}>

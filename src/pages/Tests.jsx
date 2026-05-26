@@ -5,6 +5,7 @@ import { useTeams } from '../hooks/useTeams';
 import { usePlan } from '../hooks/usePlan';
 import UpgradeModal from '../components/UpgradeModal';
 import { generateTestsReport, generatePlayerTestReport } from '../utils/pdfGenerator';
+import { downloadCSV } from '../utils/download.js';
 import { GraficaEvolucion, GraficaResumen } from '../components/GraficasTest';
 import RadarChart from '../components/RadarChart';
 import LegendCard from '../components/LegendCard';
@@ -433,15 +434,7 @@ const Tests = () => {
       contenido += row.join(',') + '\n';
     });
 
-    const blob = new Blob(["\uFEFF" + contenido], { type: "text/csv;charset=utf-8;" });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = `${test.id}_plantilla.csv`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
+    downloadCSV(contenido, `${test.id}_plantilla.csv`);
   };
 
   // ─── SEED DEMO DATA ───────────────────────────────────────────────────────
@@ -1182,7 +1175,7 @@ const Tests = () => {
               </div>
             </div>
             <div className="modal-footer" style={{justifyContent: 'space-between'}}>
-              <button className="btn-outline-gold" onClick={() => alert(`Descargando Plantilla (PDF/Excel) para toma de datos de ${selectedTestDetail.name}...`)}>⬇️ Descargar Plantilla de Toma de Datos</button>
+              <button className="btn-outline-gold" onClick={() => descargarPlantilla(selectedTestDetail, players)}>⬇️ Descargar Plantilla de Toma de Datos</button>
               <div className="footer-actions">
                 <button className="btn-primary" onClick={() => {
                   if (selectedTestDetail.isQuestionnaire) {

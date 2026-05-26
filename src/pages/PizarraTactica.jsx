@@ -37,7 +37,7 @@ import { useSearchParams } from 'react-router-dom';
 import { storage } from '../firebaseConfig';
 import { savePizarraLocal, getPizarraLocal, clearPizarraLocal } from '../lib/pizarraStorage';
 import { getDocument, setDocument } from '../firebase/db';
-import { downloadJSON, downloadImage } from '../utils/download.js';
+import { downloadJSON, downloadImage, downloadVideo } from '../utils/download.js';
 import './Pizarra.css';
 
 // helper: 'half-attack' → 'half_attack' (library uses underscores)
@@ -580,15 +580,14 @@ const PizarraTactica = () => {
       recorder.onstop = () => {
         const fileType = options.mimeType && options.mimeType.includes('mp4') ? 'mp4' : 'webm';
         const blob = new Blob(chunks, { type: `video/${fileType}` });
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.download = `animacion-mister11-${planId}.${fileType}`;
-        link.href = url;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        URL.revokeObjectURL(url);
-        setIsRecording(false);
+        
+        const reader = new FileReader();
+        reader.readAsDataURL(blob);
+        reader.onloadend = () => {
+          const base64data = reader.result.split(',')[1];
+          downloadVideo(base64data, `animacion-mister11-${planId}.${fileType}`, `video/${fileType}`);
+          setIsRecording(false);
+        };
       };
       const renderCombiner = () => {
         recCtx.clearRect(0, 0, recCanvas.width, recCanvas.height);

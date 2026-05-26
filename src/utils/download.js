@@ -119,3 +119,64 @@ const _downloadImageWeb = (dataUrl, filename) => {
     console.error('[download] Error _downloadImageWeb:', err);
   }
 };
+
+// ─── CSV ──────────────────────────────────────────────────────────────────────
+export const downloadCSV = async (csvString, filename) => {
+  if (Capacitor.isNativePlatform()) {
+    try {
+      const base64 = btoa(unescape(encodeURIComponent(csvString)));
+      const uri = await _saveToCache(filename, base64);
+      await _openNative(uri, 'text/csv');
+      alert(`✅ Plantilla guardada: "${filename}"`);
+    } catch (err) {
+      console.error('[download] Error CSV Android:', err);
+      _downloadCSVWeb(csvString, filename);
+    }
+  } else {
+    _downloadCSVWeb(csvString, filename);
+  }
+};
+
+const _downloadCSVWeb = (csvString, filename) => {
+  try {
+    const blob = new Blob(["\uFEFF" + csvString], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    setTimeout(() => { document.body.removeChild(link); URL.revokeObjectURL(url); }, 150);
+  } catch (err) {
+    console.error('[download] Error _downloadCSVWeb:', err);
+  }
+};
+
+// ─── Video (Animaciones) ──────────────────────────────────────────────────────
+export const downloadVideo = async (base64Data, filename, mimeType) => {
+  if (Capacitor.isNativePlatform()) {
+    try {
+      const uri = await _saveToCache(filename, base64Data);
+      await _openNative(uri, mimeType);
+      alert(`✅ Animación guardada: "${filename}"`);
+    } catch (err) {
+      console.error('[download] Error Video Android:', err);
+      _downloadVideoWeb(base64Data, filename, mimeType);
+    }
+  } else {
+    _downloadVideoWeb(base64Data, filename, mimeType);
+  }
+};
+
+const _downloadVideoWeb = (base64Data, filename, mimeType) => {
+  try {
+    const link = document.createElement('a');
+    link.href = `data:${mimeType};base64,${base64Data}`;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    setTimeout(() => document.body.removeChild(link), 150);
+  } catch (err) {
+    console.error('[download] Error _downloadVideoWeb:', err);
+  }
+};

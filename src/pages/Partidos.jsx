@@ -173,10 +173,28 @@ const Partidos = () => {
     }
   };
 
+  const handleDeleteMatch = async () => {
+    if (!matchData.id) return;
+    if (!window.confirm("¿Estás seguro de que deseas eliminar este partido?")) return;
+    setIsSaving(true);
+    try {
+      await removeMatch(matchData.id);
+      setViewMode('LIST');
+    } catch (error) {
+      alert("Error al eliminar el partido.");
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
   const filteredMatches = matches.filter(m => {
     if (filterMode === 'Pendientes') return m.status === 'Pendiente';
     if (filterMode === 'Terminados') return m.status === 'Terminado';
     return true; // 'Todos'
+  }).sort((a, b) => {
+    if (!a.date) return 1;
+    if (!b.date) return -1;
+    return new Date(b.date) - new Date(a.date);
   });
 
   if (loadingMatches || loadingPlayers) {
@@ -193,6 +211,11 @@ const Partidos = () => {
           )}
           {viewMode === 'EDIT' && (
             <div className="header-actions">
+              {matchData.id && (
+                <button className="btn-outline" style={{ borderColor: '#EF4444', color: '#EF4444' }} onClick={handleDeleteMatch} disabled={isSaving}>
+                  🗑️ Eliminar
+                </button>
+              )}
               <button className="btn-outline" onClick={() => setViewMode('LIST')}>Cancelar</button>
               <button className="btn-primary" onClick={handleSaveMatch} disabled={isSaving}>
                 {isSaving ? 'Guardando...' : 'Guardar Partido'}

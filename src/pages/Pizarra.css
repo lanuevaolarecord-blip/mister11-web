@@ -1523,6 +1523,7 @@ canvas.lower-canvas {
   gap: 8px !important;
   padding: 0 !important;
   height: auto !important;
+  flex-shrink: 0 !important;
 }
 
 .pizarra-fullscreen .timeline-chips {

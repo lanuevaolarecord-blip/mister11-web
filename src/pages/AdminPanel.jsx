@@ -648,9 +648,22 @@ const AdminPanel = () => {
                           </div>
                         </div>
                       </div>
-                      <a
-                        href="/mister11.apk"
-                        download="mister11.apk"
+                      <button
+                        onClick={async () => {
+                          try {
+                            const configRef = doc(db, 'config', 'global');
+                            const configSnap = await getDoc(configRef);
+                            const url = configSnap.exists() ? configSnap.data().apkDownloadUrl : null;
+                            if (url) {
+                              window.open(url, '_blank');
+                            } else {
+                              alert('URL de descarga no configurada. Contacta al administrador.');
+                            }
+                          } catch (err) {
+                            console.error('Error al obtener URL de APK:', err);
+                            alert('Error al obtener el enlace de descarga.');
+                          }
+                        }}
                         style={{
                           display: 'flex',
                           alignItems: 'center',
@@ -665,17 +678,15 @@ const AdminPanel = () => {
                           textTransform: 'uppercase',
                           letterSpacing: '0.5px',
                           borderRadius: '8px',
-                          textDecoration: 'none',
-                          boxSizing: 'border-box',
+                          border: 'none',
+                          cursor: 'pointer',
                           padding: '0 16px',
                           boxShadow: '0 4px 16px rgba(76,175,125,0.3)',
                           transition: 'all 0.2s ease',
                         }}
-                        onMouseEnter={e => e.currentTarget.style.opacity = '0.88'}
-                        onMouseLeave={e => e.currentTarget.style.opacity = '1'}
                       >
                         ⬇️ DESCARGAR APK v{APP_VERSION}
-                      </a>
+                      </button>
                       <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginTop: '8px', marginBottom: 0, textAlign: 'center' }}>
                         Solo para Android · Habilita "Fuentes desconocidas" en Ajustes del sistema antes de instalar
                       </p>

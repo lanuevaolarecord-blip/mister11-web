@@ -572,36 +572,87 @@ const PizarraTactica = () => {
     }
     if (isRecording) return;
     setIsRecording(true);
+    
+    let recordingActive = true;
+    
     try {
+      // 1. Asegurar que los frames estén guardados antes de exportar
       await saveFrameState(true);
+      
+      // 2. Crear un canvas de grabación a ALTA RESOLUCIÓN (2x) para máxima nitidez
+      const scale = 2;
       const recCanvas = document.createElement('canvas');
-      recCanvas.width = fc.width;
-      recCanvas.height = fc.height;
+      recCanvas.width = fc.width * scale;
+      recCanvas.height = fc.height * scale;
       const recCtx = recCanvas.getContext('2d');
+      
+      // Optimizar suavizado del renderizado
+      recCtx.imageSmoothingEnabled = true;
+      recCtx.imageSmoothingQuality = 'high';
+      
+      // 3. Capturar stream a 30fps con bitrate premium (8 Mbps) para calidad profesional
       const stream = recCanvas.captureStream(30);
-      let options = { mimeType: 'video/webm;codecs=vp9' };
+      let options = { 
+        mimeType: 'video/webm;codecs=vp9',
+        videoBitsPerSecond: 8000000 // 8 Mbps
+      };
+      
       if (typeof MediaRecorder.isTypeSupported === 'function') {
-        if (!MediaRecorder.isTypeSupported(options.mimeType)) options = { mimeType: 'video/webm;codecs=vp8' };
-        if (!MediaRecorder.isTypeSupported(options.mimeType)) options = { mimeType: 'video/webm' };
-        if (!MediaRecorder.isTypeSupported(options.mimeType)) options = { mimeType: 'video/mp4' };
-        if (!MediaRecorder.isTypeSupported(options.mimeType)) options = {};
+        if (!MediaRecorder.isTypeSupported(options.mimeType)) {
+          options = { mimeType: 'video/webm;codecs=vp8', videoBitsPerSecond: 8000000 };
+        }
+        if (!MediaRecorder.isTypeSupported(options.mimeType)) {
+          options = { mimeType: 'video/webm', videoBitsPerSecond: 8000000 };
+        }
+        if (!MediaRecorder.isTypeSupported(options.mimeType)) {
+          options = { mimeType: 'video/mp4', videoBitsPerSecond: 8000000 };
+        }
+        if (!MediaRecorder.isTypeSupported(options.mimeType)) {
+          options = { videoBitsPerSecond: 8000000 };
+        }
       } else {
-        options = {};
+        options = { videoBitsPerSecond: 8000000 };
       }
+      
       const recorder = new MediaRecorder(stream, options);
       const chunks = [];
       recorder.ondataavailable = (e) => { if (e.data && e.data.size > 0) chunks.push(e.data); };
+      
       recorder.onstop = () => {
+        recordingActive = false;
         const fileType = options.mimeType && options.mimeType.includes('mp4') ? 'mp4' : 'webm';
         const blob = new Blob(chunks, { type: `video/${fileType}` });
         
         const reader = new FileReader();
         reader.readAsDataURL(blob);
-        reader.onloadend = () => {
-          const base64data = reader.result.split(',')[1];
-          const fileType = options.mimeType && options.mimeType.includes('mp4') ? 'mp4' : 'webm';
+        reader.onloadend = async () => {
+          const dataURL = reader.result;
+          const base64data = dataURL.split(',')[1];
           const filename = `animacion-mister11-${planId || 'export'}.${fileType}`;
           const finalMime = `video/${fileType}`;
+
+          // Subir a Firebase Storage si el usuario está autenticado
+          if (user && activeTeamId) {
+            try {
+              const storagePath = `pizarras/${user.uid}/${activeTeamId}/${planId}/video.${fileType}`;
+              const storageRef = ref(storage, storagePath);
+              
+              // Subir video como data URL
+              await uploadString(storageRef, dataURL, 'data_url');
+              const downloadURL = await getDownloadURL(storageRef);
+              
+              // Actualizar el documento del ejercicio con la URL del video para que Sesiones.jsx lo vea
+              const exerciseRef = doc(db, 'users', user.uid, 'teams', activeTeamId, 'exercises', planId);
+              await setDoc(exerciseRef, {
+                videoUrl: downloadURL,
+                videoMimeType: finalMime,
+                updatedAt: serverTimestamp()
+              }, { merge: true });
+              
+            } catch (uploadErr) {
+              console.error("Error al guardar el video en la nube:", uploadErr);
+            }
+          }
 
           setIsRecording(false);
           const autoExport = new URLSearchParams(window.location.search).get('autoExport');
@@ -612,18 +663,29 @@ const PizarraTactica = () => {
           }
         };
       };
+      
+      // 4. Render Combiner: Dibuja el campo y los jugadores escalados al tamaño de recCanvas
       const renderCombiner = () => {
         recCtx.clearRect(0, 0, recCanvas.width, recCanvas.height);
         recCtx.drawImage(fieldCanvas, 0, 0, recCanvas.width, recCanvas.height);
         recCtx.drawImage(fabricElemRef.current, 0, 0, recCanvas.width, recCanvas.height);
       };
-      fc.on('after:render', renderCombiner);
+      
+      // 5. Bucle de renderizado continuo sincronizado con la pantalla (para movimientos perfectos y suaves)
+      const drawLoop = () => {
+        if (!recordingActive) return;
+        renderCombiner();
+        requestAnimationFrame(drawLoop);
+      };
+      requestAnimationFrame(drawLoop);
+      
       recorder.start();
       setIsPlaying(true);
       playingR.current = true;
+      
       const runRecordingAnimation = (idx) => {
         if (!playingR.current) {
-          fc.off('after:render', renderCombiner);
+          recordingActive = false;
           if (recorder.state !== 'inactive') recorder.stop();
           return;
         }
@@ -632,19 +694,21 @@ const PizarraTactica = () => {
           playingR.current = false;
           loadFrame(framesR.current.length - 1);
           setTimeout(() => {
-            fc.off('after:render', renderCombiner);
+            recordingActive = false;
             if (recorder.state !== 'inactive') recorder.stop();
           }, 500);
           return;
         }
+        
         setFrameIdx(idx);
         frameIdxR.current = idx;
         const fA = framesR.current[idx];
         const fB = framesR.current[idx + 1];
         const dur = fB.duration || 800;
+        
         cargarFrame(fA.state, () => {
           if (!playingR.current) {
-            fc.off('after:render', renderCombiner);
+            recordingActive = false;
             if (recorder.state !== 'inactive') recorder.stop();
             return;
           }
@@ -653,7 +717,7 @@ const PizarraTactica = () => {
           if (objs.length === 0 || objs.length !== rawTargets.length) {
             cargarFrame(fB.state, () => {
               if (!playingR.current) {
-                fc.off('after:render', renderCombiner);
+                recordingActive = false;
                 if (recorder.state !== 'inactive') recorder.stop();
                 return;
               }
@@ -664,6 +728,7 @@ const PizarraTactica = () => {
             });
             return;
           }
+          
           const targets = rawTargets.map(objData => {
             let left, top;
             if (objData.xRel !== undefined && objData.yRel !== undefined) {
@@ -676,6 +741,7 @@ const PizarraTactica = () => {
             }
             return { left, top };
           });
+          
           let completed = 0;
           objs.forEach((obj, i) => {
             const t = targets[i];
@@ -714,6 +780,7 @@ const PizarraTactica = () => {
       console.error("Error al exportar video:", err);
       alert("Error al exportar la animación como video.");
       setIsRecording(false);
+      recordingActive = false;
       const autoExport = new URLSearchParams(window.location.search).get('autoExport');
       if (autoExport === 'true' && window.parent) {
         window.parent.postMessage('EXPORT_ERROR', '*');
@@ -2076,31 +2143,35 @@ const PizarraTactica = () => {
     if (!fc) return;
 
     // 1. Save current immediately before adding to prevent state desync
-    await saveFrameState(true);
+    saveFrameState(true);
 
     // 2. Clone current state
     const state = serializarFrame();
     
+    if (!activeTeamId) return;
+    
     try {
-      if (!activeTeamId) return;
       const framesColRef = collection(db, 'users', user.uid, 'teams', activeTeamId, 'pizarras', planId, 'frames');
+      // Generamos el ID y la referencia de forma síncrona
+      const newDocRef = doc(framesColRef);
+      
+      const nextIdx = frames.length;
+      
       const newFrameData = {
-        name: `Frame ${frames.length + 1}`,
+        name: `Frame ${nextIdx + 1}`,
         state: JSON.stringify(state),
         duration: 800,
-        order: frames.length,
-        createdAt: serverTimestamp()
+        order: nextIdx,
+        createdAt: new Date().toISOString() // Fallback local para el optimistic update
       };
       
-      const docRef = await addDoc(framesColRef, newFrameData);
-      
       const newFrame = {
-        id: docRef.id,
+        id: newDocRef.id,
         ...newFrameData,
         state // Keep it as object in local state
       };
 
-      const nextIdx = frames.length; 
+      // 3. Actualización Optimista del Estado Local (INMEDIATA)
       setFrames(prev => {
         const next = [...prev, newFrame];
         framesR.current = next;
@@ -2109,6 +2180,13 @@ const PizarraTactica = () => {
       
       setFrameIdx(nextIdx);
       frameIdxR.current = nextIdx;
+
+      // 4. Guardar en Firebase asíncronamente sin bloquear la UI
+      await setDoc(newDocRef, {
+        ...newFrameData,
+        createdAt: serverTimestamp() // Timestamp real del servidor
+      });
+      
     } catch (error) {
       console.error("Error saving frame:", error);
     }
@@ -2601,11 +2679,8 @@ const PizarraTactica = () => {
               <button className="topbar-btn danger" onClick={clearCanvas} title="Limpiar todo el canvas">🗑</button>
               <button className="topbar-btn secondary" onClick={handleNewPizarra} title="Crear nueva animación desde cero" style={{ background: 'var(--m11-green)', color: 'white', fontWeight: 'bold' }}>✨ NUEVA</button>
               <button className="topbar-btn" onClick={() => handleCapture(true)} disabled={isCapturing} title="Descargar Imagen">📸</button>
-              <button className="topbar-btn" onClick={exportAnimationJSON} title="Exportar animación como JSON para compartir">📤 EXPORTAR</button>
-              <button className="topbar-btn" onClick={() => fileImportInputRef.current?.click()} title="Importar animación desde JSON">📥 IMPORTAR</button>
-              <input type="file" ref={fileImportInputRef} style={{ display: 'none' }} accept=".json" onChange={importAnimationJSON} />
-              <button className="topbar-btn" onClick={exportAnimationVideo} disabled={isRecording} title="Exportar animación como video MP4/WebM">
-                {isRecording ? '⏺️ GRABANDO...' : '🎥 VIDEO'}
+              <button className="topbar-btn" onClick={exportAnimationVideo} disabled={isRecording} title="Exportar animación como video MP4" style={{ background: 'var(--m11-green)', color: 'white', fontWeight: 'bold' }}>
+                {isRecording ? '⏺️ EXPORTANDO MP4...' : '🎥 EXPORTAR MP4'}
               </button>
               <button id="btn-guardar-pizarra" className="topbar-btn primary" onClick={handleSave} disabled={isCapturing} title="Guardar pizarra y captura">💾 GUARDAR</button>
             </div>

@@ -149,24 +149,30 @@ const Sesiones = () => {
   const [uploadProgress, setUploadProgress] = useState(0);
   const [exportingId, setExportingId] = useState(null);
 
-  React.useEffect(() => {
-    const handler = async (e) => {
-      if (e.data && e.data.type === 'EXPORT_DONE') {
-        const { base64data, filename, mimeType } = e.data;
-        try {
-          const { downloadVideo } = await import('../utils/download.js');
-          await downloadVideo(base64data, filename, mimeType);
-        } catch (err) {
-          console.error(err);
-        }
+  const handleExportMP4 = async (anim) => {
+    if (!anim.videoUrl) {
+      alert("Aún no has guardado el video de esta animación. Por favor, abre la Pizarra y presiona el botón 'EXPORTAR MP4' para generarlo y guardarlo en la nube.");
+      return;
+    }
+    
+    try {
+      setExportingId(anim.id);
+      const response = await fetch(anim.videoUrl);
+      const blob = await response.blob();
+      const reader = new FileReader();
+      reader.readAsDataURL(blob);
+      reader.onloadend = async () => {
+        const base64data = reader.result.split(',')[1];
+        const { downloadVideo } = await import('../utils/download.js');
+        await downloadVideo(base64data, `animacion-${anim.id}.mp4`, 'video/mp4');
         setExportingId(null);
-      } else if (e.data === 'EXPORT_ERROR' || (e.data && e.data.type === 'EXPORT_ERROR')) {
-        setExportingId(null);
-      }
-    };
-    window.addEventListener('message', handler);
-    return () => window.removeEventListener('message', handler);
-  }, []);
+      };
+    } catch (err) {
+      console.error(err);
+      alert("Error al descargar el video. Intenta de nuevo.");
+      setExportingId(null);
+    }
+  };
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -929,27 +935,18 @@ const Sesiones = () => {
         </div>
       )}
 
-      {/* MODAL EXPORTANDO MP4 */}
+      {/* MODAL DESCARGANDO MP4 */}
       {exportingId && (
         <div style={{
           position: 'fixed', inset: 0, zIndex: 99999, background: 'rgba(0,0,0,0.92)', 
           display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center'
         }}>
           <div style={{zIndex: 2, textAlign: 'center', color: 'white', padding: '20px', borderRadius: '12px', background: '#1A2E1A', border: '1px solid #4CAF7D'}}>
-            <h2 style={{margin: '0 0 10px 0', fontSize: '1.5rem'}}>🎬 Generando Video MP4...</h2>
-            <p style={{margin: 0, color: '#ccc'}}>Procesando la animación, por favor espera.</p>
-            <p style={{marginTop: '10px', fontSize: '0.85rem', color: '#888'}}>Esto puede tardar unos segundos. No cierres esta ventana.</p>
+            <h2 style={{margin: '0 0 10px 0', fontSize: '1.5rem'}}>🎬 Descargando Video MP4...</h2>
+            <p style={{margin: 0, color: '#ccc'}}>Por favor espera un momento.</p>
             <div style={{marginTop: '20px', width: '40px', height: '40px', border: '4px solid rgba(76,175,125,0.3)', borderTop: '4px solid #4CAF7D', borderRadius: '50%', animation: 'spin 1s linear infinite', margin: '0 auto'}}></div>
             <style>{`@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }`}</style>
           </div>
-          <iframe 
-            src={`/pizarra?id=${exportingId}&autoExport=true`} 
-            style={{
-              position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', 
-              zIndex: 1, opacity: 0.01, pointerEvents: 'none', border: 'none'
-            }}
-            title="Hidden Pizarra for MP4 Export"
-          />
         </div>
       )}
 
@@ -972,7 +969,7 @@ const Sesiones = () => {
                 <p>La animación se exportará directamente en formato MP4 (Video).</p>
               </div>
               <div className="capture-actions-float" style={{ display: 'flex', gap: '10px', justifyContent: 'center', position: 'static', marginTop: '10px' }}>
-                 <button className="btn-primary" onClick={() => setExportingId(selectedAnimation.id)}>🎬 EXPORTAR MP4</button>
+                 <button className="btn-primary" onClick={() => handleExportMP4(selectedAnimation)}>🎬 EXPORTAR MP4</button>
                  <button className="btn-text-error" onClick={() => handleDeleteAnimation(selectedAnimation)}>ELIMINAR</button>
               </div>
             </div>

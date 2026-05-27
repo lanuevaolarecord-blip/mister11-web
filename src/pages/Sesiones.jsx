@@ -263,41 +263,8 @@ const Sesiones = () => {
     }
   };
 
-  const handleDownloadAnimationJSON = async (anim) => {
-    alert("Para exportar esta animación como VIDEO (MP4/WebM), ábrela en la Pizarra Táctica y haz clic en el botón superior derecho 'Exportar Video'.\n\nEl archivo JSON solo sirve para hacer respaldos.");
-    // Proceder con la descarga de respaldo
-    if (!user || !activeTeamId || !anim) return;
-    try {
-      const framesColRef = collection(db, 'users', user.uid, 'teams', activeTeamId, 'pizarras', anim.id, 'frames');
-      const q = query(framesColRef, orderBy('order'));
-      const snap = await getDocs(q);
-      const framesData = snap.docs.map(doc => {
-        const d = doc.data();
-        return {
-          name: d.name || '',
-          state: typeof d.state === 'string' ? JSON.parse(d.state) : d.state,
-          duration: d.duration || 800,
-          order: d.order ?? 0
-        };
-      });
-
-      const exportData = {
-        app: 'Mister11',
-        version: '1.0.0',
-        title: anim.title || 'Animación',
-        fieldType: anim.fieldType || 'full',
-        frames: framesData
-      };
-
-      await downloadJSON(JSON.stringify(exportData, null, 2), `pizarra-animacion-${anim.id}.json`);
-    } catch (e) {
-      console.error("Error downloading animation JSON:", e);
-      alert("Error al descargar la animación.");
-    }
-  };
-
   const handleDeleteAnimation = async (anim) => {
-    if (window.confirm('¿Eliminar esta animación de la pizarra?')) {
+    if (window.confirm('¿Eliminar esta animación permanentemente?')) {
       try {
         if (user && activeTeamId) {
           const framesColRef = collection(db, 'users', user.uid, 'teams', activeTeamId, 'pizarras', anim.id, 'frames');
@@ -958,10 +925,10 @@ const Sesiones = () => {
               )}
               <div style={{ margin: '15px 0', textAlign: 'center', color: '#ccc', fontSize: '14px' }}>
                 <p><strong>Total de Frames:</strong> {selectedAnimation.framesCount || 0}</p>
-                <p>Esta animación táctica se puede vincular a tus sesiones desde el editor de sesión o exportar en formato JSON compatible con Mister11.</p>
+                <p>Esta animación táctica se puede vincular a tus sesiones desde el editor de sesión o abrir en la Pizarra Táctica para exportarla como Video (MP4/WebM).</p>
               </div>
               <div className="capture-actions-float" style={{ display: 'flex', gap: '10px', justifyContent: 'center', position: 'static', marginTop: '10px' }}>
-                 <button className="btn-primary" onClick={() => handleDownloadAnimationJSON(selectedAnimation)}>DESCARGAR JSON</button>
+                 <button className="btn-primary" onClick={() => window.location.href = `/pizarra?id=${selectedAnimation.id}`}>ABRIR PARA EXPORTAR VIDEO</button>
                  <button className="btn-text-error" onClick={() => handleDeleteAnimation(selectedAnimation)}>ELIMINAR</button>
               </div>
             </div>

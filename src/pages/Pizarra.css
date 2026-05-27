@@ -2,8 +2,8 @@
 .pizarra-container {
   display: flex;
   flex-direction: column;
-  height: 100vh;
-  height: 100dvh; /* Adaptación dinámica para barras nativas en móviles */
+  flex: 1;
+  height: 100%;
   width: 100%;
   overflow: hidden;
   background: var(--bg-primary);

@@ -569,10 +569,88 @@ export class ToolManager {
     const tip2 = { x: x2 - headLen * Math.cos(angle + Math.PI/6), y: y2 - headLen * Math.sin(angle + Math.PI/6) };
     const head = new fabric.Polyline([{x:x2,y:y2}, tip1, tip2, {x:x2,y:y2}], { fill: '#EF4444', stroke: '#EF4444', strokeWidth: 1 });
     
-    const group = new fabric.Group([line1, line2, head], { selectable: true, data: { type: 'stroke', tool: 'shot' } });
+    const group = new fabric.Group([line1, line2, head], { selectable: true, hasControls: false, hasBorders: false, data: { type: 'stroke', tool: 'shot' } });
     applyMister11Controls(group);
-    this.canvas.add(group);
-    this.canvas.renderAll();
+    return group;
+  }
+
+  _createWavyLine(x1, y1, x2, y2, extraOptions = {}) {
+    const dx = x2 - x1;
+    const dy = y2 - y1;
+    const dist = Math.sqrt(dx*dx + dy*dy);
+    const angle = Math.atan2(dy, dx);
+    const waves = Math.floor(dist / 20) || 1;
+    let pathData = `M ${x1} ${y1}`;
+    for (let i = 1; i <= waves; i++) {
+        const segX = x1 + (dx / waves) * i;
+        const segY = y1 + (dy / waves) * i;
+        const midX = x1 + (dx / waves) * (i - 0.5);
+        const midY = y1 + (dy / waves) * (i - 0.5);
+        const perpX = 10 * Math.cos(angle + Math.PI/2);
+        const perpY = 10 * Math.sin(angle + Math.PI/2);
+        const cx = midX + (i % 2 === 0 ? perpX : -perpX);
+        const cy = midY + (i % 2 === 0 ? perpY : -perpY);
+        pathData += ` Q ${cx} ${cy} ${segX} ${segY}`;
+    }
+    
+    const path = new fabric.Path(pathData, {
+      fill: 'transparent',
+      stroke: this.strokeColor,
+      strokeWidth: this.strokeWidth,
+      selectable: true,
+      hasControls: false,
+      hasBorders: false,
+      data: { type: 'stroke', tool: this.activeTool },
+      ...extraOptions
+    });
+    
+    if (!extraOptions.data || extraOptions.data.type !== 'temp') {
+      applyMister11Controls(path);
+    }
+    return path;
+  }
+
+  _createSprintLinePro(x1, y1, x2, y2, extraOptions = {}) {
+    const angle = Math.atan2(y2 - y1, x2 - x1);
+    const headLen = 16;
+    const headAngle = Math.PI / 6;
+
+    const line = new fabric.Line([x1, y1, x2, y2], {
+      stroke: this.strokeColor,
+      strokeWidth: this.strokeWidth,
+      strokeDashArray: [12, 8],
+      selectable: false,
+      evented: false,
+    });
+
+    const tip1x = x2 - headLen * Math.cos(angle - headAngle);
+    const tip1y = y2 - headLen * Math.sin(angle - headAngle);
+    const tip2x = x2 - headLen * Math.cos(angle + headAngle);
+    const tip2y = y2 - headLen * Math.sin(angle + headAngle);
+
+    const arrowHead = new fabric.Polygon(
+      [{ x: x2, y: y2 }, { x: tip1x, y: tip1y }, { x: tip2x, y: tip2y }],
+      {
+        fill: 'transparent',
+        stroke: this.strokeColor,
+        strokeWidth: 2,
+        selectable: false,
+        evented: false,
+      }
+    );
+
+    const group = new fabric.Group([line, arrowHead], {
+      selectable: true,
+      hasControls: false,
+      hasBorders: false,
+      data: { type: 'stroke', tool: this.activeTool },
+      ...extraOptions
+    });
+
+    if (!extraOptions.data || extraOptions.data.type !== 'temp') {
+      applyMister11Controls(group);
+    }
+    return group;
   }
 
   // ───────────────────────────────────────

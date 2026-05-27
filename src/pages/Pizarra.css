@@ -1,3 +1,15 @@
+/* Bloquear el scroll de toda la app al abrir la Pizarra */
+body.pizarra-active {
+  overflow: hidden !important;
+}
+body.pizarra-active .app-container,
+body.pizarra-active .main-content,
+body.pizarra-active .main-wrapper {
+  overflow: hidden !important;
+  padding: 0 !important;
+  margin: 0 !important;
+}
+
 /* LAYOUT PRINCIPAL */
 .pizarra-container {
   display: flex;

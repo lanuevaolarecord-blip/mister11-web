@@ -150,8 +150,17 @@ const Sesiones = () => {
   const [exportingId, setExportingId] = useState(null);
 
   React.useEffect(() => {
-    const handler = (e) => {
-      if (e.data === 'EXPORT_DONE' || e.data === 'EXPORT_ERROR') {
+    const handler = async (e) => {
+      if (e.data && e.data.type === 'EXPORT_DONE') {
+        const { base64data, filename, mimeType } = e.data;
+        try {
+          const { downloadVideo } = await import('../utils/download.js');
+          await downloadVideo(base64data, filename, mimeType);
+        } catch (err) {
+          console.error(err);
+        }
+        setExportingId(null);
+      } else if (e.data === 'EXPORT_ERROR' || (e.data && e.data.type === 'EXPORT_ERROR')) {
         setExportingId(null);
       }
     };

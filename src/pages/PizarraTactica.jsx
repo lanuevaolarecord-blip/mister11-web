@@ -68,6 +68,12 @@ const PizarraTactica = () => {
   // Referencias a Context
   const { guardarEstado, obtenerEstado } = usePizarra();
   
+  // Bloquear scroll de la app mientras la Pizarra está abierta
+  useEffect(() => {
+    document.body.classList.add('pizarra-active');
+    return () => document.body.classList.remove('pizarra-active');
+  }, []);
+
   // DOM refs
   const containerRef    = useRef(null);
   const fieldCanvasRef  = useRef(null);
@@ -593,11 +599,16 @@ const PizarraTactica = () => {
         reader.readAsDataURL(blob);
         reader.onloadend = () => {
           const base64data = reader.result.split(',')[1];
-          downloadVideo(base64data, `animacion-mister11-${planId || 'export'}.${fileType}`, `video/${fileType}`);
+          const fileType = options.mimeType && options.mimeType.includes('mp4') ? 'mp4' : 'webm';
+          const filename = `animacion-mister11-${planId || 'export'}.${fileType}`;
+          const finalMime = `video/${fileType}`;
+
           setIsRecording(false);
           const autoExport = new URLSearchParams(window.location.search).get('autoExport');
           if (autoExport === 'true' && window.parent) {
-            window.parent.postMessage('EXPORT_DONE', '*');
+            window.parent.postMessage({ type: 'EXPORT_DONE', base64data, filename, mimeType: finalMime }, '*');
+          } else {
+            downloadVideo(base64data, filename, finalMime);
           }
         };
       };

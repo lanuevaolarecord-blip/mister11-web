@@ -315,6 +315,18 @@ const PizarraTactica = () => {
   const [isRecording,    setIsRecording]    = useState(false);
   const fileImportInputRef = useRef(null);
 
+  const autoExport = new URLSearchParams(location.search).get('autoExport');
+  const [autoExportTriggered, setAutoExportTriggered] = useState(false);
+
+  useEffect(() => {
+    if (autoExport === 'true' && !autoExportTriggered && frames.length > 1 && fcRef.current && fieldCanvasRef.current && !isRecording) {
+      setAutoExportTriggered(true);
+      setTimeout(() => {
+        exportAnimationVideo();
+      }, 1500); // Give it time to render the frame completely
+    }
+  }, [frames, autoExport, autoExportTriggered, isRecording]);
+
   // keep refs in sync with state
   useEffect(() => { frameIdxR.current = frameIdx; }, [frameIdx]);
   useEffect(() => { playingR.current = isPlaying; }, [isPlaying]);
@@ -581,8 +593,12 @@ const PizarraTactica = () => {
         reader.readAsDataURL(blob);
         reader.onloadend = () => {
           const base64data = reader.result.split(',')[1];
-          downloadVideo(base64data, `animacion-mister11-${planId}.${fileType}`, `video/${fileType}`);
+          downloadVideo(base64data, `animacion-mister11-${planId || 'export'}.${fileType}`, `video/${fileType}`);
           setIsRecording(false);
+          const autoExport = new URLSearchParams(window.location.search).get('autoExport');
+          if (autoExport === 'true' && window.parent) {
+            window.parent.postMessage('EXPORT_DONE', '*');
+          }
         };
       };
       const renderCombiner = () => {
@@ -687,6 +703,10 @@ const PizarraTactica = () => {
       console.error("Error al exportar video:", err);
       alert("Error al exportar la animación como video.");
       setIsRecording(false);
+      const autoExport = new URLSearchParams(window.location.search).get('autoExport');
+      if (autoExport === 'true' && window.parent) {
+        window.parent.postMessage('EXPORT_ERROR', '*');
+      }
     }
   };
 

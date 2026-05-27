@@ -147,6 +147,17 @@ const Sesiones = () => {
   const [pdfPreview, setPdfPreview] = useState(null);
   const fileInputRef = useRef(null);
   const [uploadProgress, setUploadProgress] = useState(0);
+  const [exportingId, setExportingId] = useState(null);
+
+  React.useEffect(() => {
+    const handler = (e) => {
+      if (e.data === 'EXPORT_DONE' || e.data === 'EXPORT_ERROR') {
+        setExportingId(null);
+      }
+    };
+    window.addEventListener('message', handler);
+    return () => window.removeEventListener('message', handler);
+  }, []);
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -909,6 +920,30 @@ const Sesiones = () => {
         </div>
       )}
 
+      {/* MODAL EXPORTANDO MP4 */}
+      {exportingId && (
+        <div style={{
+          position: 'fixed', inset: 0, zIndex: 99999, background: 'rgba(0,0,0,0.92)', 
+          display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center'
+        }}>
+          <div style={{zIndex: 2, textAlign: 'center', color: 'white', padding: '20px', borderRadius: '12px', background: '#1A2E1A', border: '1px solid #4CAF7D'}}>
+            <h2 style={{margin: '0 0 10px 0', fontSize: '1.5rem'}}>🎬 Generando Video MP4...</h2>
+            <p style={{margin: 0, color: '#ccc'}}>Procesando la animación, por favor espera.</p>
+            <p style={{marginTop: '10px', fontSize: '0.85rem', color: '#888'}}>Esto puede tardar unos segundos. No cierres esta ventana.</p>
+            <div style={{marginTop: '20px', width: '40px', height: '40px', border: '4px solid rgba(76,175,125,0.3)', borderTop: '4px solid #4CAF7D', borderRadius: '50%', animation: 'spin 1s linear infinite', margin: '0 auto'}}></div>
+            <style>{`@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }`}</style>
+          </div>
+          <iframe 
+            src={`/pizarra?id=${exportingId}&autoExport=true`} 
+            style={{
+              position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', 
+              zIndex: 1, opacity: 0.01, pointerEvents: 'none', border: 'none'
+            }}
+            title="Hidden Pizarra for MP4 Export"
+          />
+        </div>
+      )}
+
       {/* MODAL VISTA ANIMACIÓN */}
       {selectedAnimation && (
         <div className="modal-overlay-capture" onClick={() => setSelectedAnimation(null)}>
@@ -925,10 +960,10 @@ const Sesiones = () => {
               )}
               <div style={{ margin: '15px 0', textAlign: 'center', color: '#ccc', fontSize: '14px' }}>
                 <p><strong>Total de Frames:</strong> {selectedAnimation.framesCount || 0}</p>
-                <p>Esta animación táctica se puede vincular a tus sesiones desde el editor de sesión o abrir en la Pizarra Táctica para exportarla como Video (MP4/WebM).</p>
+                <p>La animación se exportará directamente en formato MP4 (Video).</p>
               </div>
               <div className="capture-actions-float" style={{ display: 'flex', gap: '10px', justifyContent: 'center', position: 'static', marginTop: '10px' }}>
-                 <button className="btn-primary" onClick={() => window.location.href = `/pizarra?id=${selectedAnimation.id}`}>ABRIR PARA EXPORTAR VIDEO</button>
+                 <button className="btn-primary" onClick={() => setExportingId(selectedAnimation.id)}>🎬 EXPORTAR MP4</button>
                  <button className="btn-text-error" onClick={() => handleDeleteAnimation(selectedAnimation)}>ELIMINAR</button>
               </div>
             </div>

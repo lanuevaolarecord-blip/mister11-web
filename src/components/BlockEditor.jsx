@@ -1,11 +1,14 @@
-import React, { useRef } from 'react';
+import React, { useRef, useState } from 'react';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { uploadImageFile } from '../utils/uploadImage';
 import { auth } from '../firebaseConfig';
+import { useCaptures } from '../hooks/useCaptures';
 
 const BlockEditor = ({ block, index, handleUpdateBlock, handleDeleteBlock, teamId, sessionId }) => {
   const fileInputRef = useRef(null);
+  const [showCaptureModal, setShowCaptureModal] = useState(false);
+  const { captures } = useCaptures(teamId);
 
   const {
     attributes,
@@ -133,14 +136,46 @@ const BlockEditor = ({ block, index, handleUpdateBlock, handleDeleteBlock, teamI
             <button className="btn-outline" onClick={() => fileInputRef.current?.click()}>
               📸 Subir Imagen
             </button>
-            <button className="btn-outline" onClick={() => {
-              window.dispatchEvent(new CustomEvent('m11-open-pizarra', { detail: { blockId: block.id } }));
-            }}>
-              🖍️ Dibujar en Pizarra
+            <button className="btn-outline" onClick={() => setShowCaptureModal(true)}>
+              🖼️ Seleccionar Captura
             </button>
           </div>
         </div>
       </div>
+
+      {showCaptureModal && (
+        <div className="modal-overlay" onClick={() => setShowCaptureModal(false)} style={{ zIndex: 9999 }}>
+          <div className="modal-content" onClick={e => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3>Seleccionar Captura</h3>
+              <button className="btn-close" onClick={() => setShowCaptureModal(false)}>✕</button>
+            </div>
+            <div className="modal-body">
+              {captures && captures.length > 0 ? (
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))', gap: '10px' }}>
+                  {captures.map(cap => (
+                    <div 
+                      key={cap.id} 
+                      style={{ cursor: 'pointer', border: '2px solid transparent', borderRadius: '8px', overflow: 'hidden' }}
+                      onClick={() => {
+                        handleUpdateBlock(block.id, 'imagenProtocolo', cap.url);
+                        setShowCaptureModal(false);
+                      }}
+                    >
+                      <img src={cap.url} alt={cap.title} style={{ width: '100%', height: '100px', objectFit: 'cover' }} />
+                      <p style={{ fontSize: '12px', textAlign: 'center', padding: '4px', margin: 0, backgroundColor: '#f1f5f9' }}>
+                        {cap.title || 'Captura'}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p>No hay capturas disponibles.</p>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

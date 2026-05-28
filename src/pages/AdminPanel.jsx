@@ -421,7 +421,7 @@ const AdminPanel = () => {
                 >
                   <option value="">Seleccionar Sesión...</option>
                   {sessions.map(s => (
-                    <option key={s.id} value={s.id}>{s.titulo} ({s.fecha})</option>
+                    <option key={s.id} value={s.id}>{s.title || s.name || s.titulo || 'Sesión sin título'} ({s.date || s.fecha || 'Sin fecha'})</option>
                   ))}
                 </select>
                 <button className="btn-export outline" onClick={handleExportSession}>

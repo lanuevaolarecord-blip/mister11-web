@@ -462,7 +462,7 @@ const Partidos = () => {
                       <div className="pitch-box penalty-box bottom"></div>
                       <div className="pitch-box penalty-box top"></div>
                       
-                      {FORMATIONS[matchData.lineup].map((pos, idx) => {
+                      {(FORMATIONS[matchData.lineup] || FORMATIONS['4-3-3']).map((pos, idx) => {
                         const pid = calledPlayers[idx];
                         const player = pid ? players.find(p => p.id === pid) : null;
                         

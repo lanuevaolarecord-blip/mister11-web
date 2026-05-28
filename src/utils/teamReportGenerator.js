@@ -76,12 +76,14 @@ export const generateGlobalTeamReport = async (players, tests, evaluaciones, act
       const v = parseFloat(String(ev.val).replace(',', '.')) || 0;
       
       const cat = (testDef.category || '').toLowerCase();
-      if (cat.includes('físic') || cat.includes('fisic') || cat.includes('velocidad') || cat.includes('resistencia')) {
-        physical += v; counts.p++;
-      } else if (cat.includes('técnic') || cat.includes('tecnic') || cat.includes('pase') || cat.includes('control')) {
+      const type = (testDef.type || '').toLowerCase();
+      
+      if (cat.includes('técnic') || cat.includes('tecnic') || cat.includes('pase') || cat.includes('control') || type === 'tecnico') {
         technical += v; counts.tec++;
-      } else if (cat.includes('táctic') || cat.includes('tactic') || cat.includes('decisión')) {
+      } else if (cat.includes('táctic') || cat.includes('tactic') || cat.includes('decisión') || type === 'tactico') {
         tactical += v; counts.tac++;
+      } else if (cat.includes('físic') || cat.includes('fisic') || cat.includes('velocidad') || cat.includes('resistencia') || cat.includes('fuerza') || cat.includes('agilidad') || type === 'fisico') {
+        physical += v; counts.p++;
       }
     });
 
@@ -128,9 +130,9 @@ export const generateGlobalTeamReport = async (players, tests, evaluaciones, act
   doc.text('2. TOP RENDIMIENTO (TOP 3 POR ÁREA)', 15, yPos);
   yPos += 10;
 
-  const topP = [...stats].sort((a, b) => b.avgP - a.avgP).slice(0, 3);
-  const topTec = [...stats].sort((a, b) => b.avgTec - a.avgTec).slice(0, 3);
-  const topTac = [...stats].sort((a, b) => b.avgTac - a.avgTac).slice(0, 3);
+  const topP = [...stats].filter(p => p.avgP > 0).sort((a, b) => b.avgP - a.avgP).slice(0, 3);
+  const topTec = [...stats].filter(p => p.avgTec > 0).sort((a, b) => b.avgTec - a.avgTec).slice(0, 3);
+  const topTac = [...stats].filter(p => p.avgTac > 0).sort((a, b) => b.avgTac - a.avgTac).slice(0, 3);
 
   const topData = [
     ['Área', '1º Puesto', '2º Puesto', '3º Puesto'],

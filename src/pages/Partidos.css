@@ -252,10 +252,14 @@
   height: 100%;
 }
 .alin-sidebar {
-  width: 250px;
+  width: 30%;
   flex-shrink: 0;
   display: flex;
   flex-direction: column;
+}
+.alin-main {
+  width: 70%;
+  flex-grow: 1;
 }
 .form-select { width: 100%; padding: 10px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--bg-primary); color: var(--text-primary); font-weight: bold; }
 .titulares-list h4 { margin: 20px 0 10px 0; color: var(--text-primary); border-bottom: 1px solid var(--border-color); padding-bottom: 5px; }

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useMatches } from '../hooks/useMatches';
 import { usePlayers } from '../hooks/usePlayers';
 import { useAuth } from '../context/AuthContext';
@@ -112,7 +112,43 @@ const Partidos = () => {
   const [editTab, setEditTab] = useState('PRE-PARTIDO');
   const [matchData, setMatchData] = useState({});
   const [calledPlayers, setCalledPlayers] = useState([]); // Array of IDs
+  const [draggingIdx, setDraggingIdx] = useState(null);
+  const pitchRef = useRef(null);
 
+  useEffect(() => {
+    const handlePointerUpWindow = () => {
+      setDraggingIdx(null);
+    };
+    window.addEventListener('pointerup', handlePointerUpWindow);
+    window.addEventListener('touchend', handlePointerUpWindow);
+    return () => {
+      window.removeEventListener('pointerup', handlePointerUpWindow);
+      window.removeEventListener('touchend', handlePointerUpWindow);
+    };
+  }, []);
+
+  const handlePitchPointerMove = (e) => {
+    if (draggingIdx === null || !pitchRef.current) return;
+    const rect = pitchRef.current.getBoundingClientRect();
+    
+    let clientX = e.clientX;
+    let clientY = e.clientY;
+    if (e.touches && e.touches.length > 0) {
+      clientX = e.touches[0].clientX;
+      clientY = e.touches[0].clientY;
+    }
+    
+    const xRel = Math.max(0, Math.min(100, ((clientX - rect.left) / rect.width) * 100));
+    const yRel = Math.max(0, Math.min(100, ((clientY - rect.top) / rect.height) * 100));
+    
+    setMatchData(prev => ({
+      ...prev,
+      customPositions: {
+        ...(prev.customPositions || {}),
+        [draggingIdx]: { top: `${yRel}%`, left: `${xRel}%` }
+      }
+    }));
+  };
   const handleNewMatch = () => {
     const newMatch = {
       rival: '',
@@ -419,7 +455,7 @@ const Partidos = () => {
                   </div>
                 </div>
                 <div className="alin-main">
-                  <div className="mini-pitch-container">
+                  <div className="mini-pitch-container" ref={pitchRef} onPointerMove={handlePitchPointerMove} onTouchMove={handlePitchPointerMove} style={{ touchAction: 'none' }}>
                     <div className="mini-pitch">
                       <div className="pitch-line center-line"></div>
                       <div className="pitch-circle center-circle"></div>
@@ -430,12 +466,24 @@ const Partidos = () => {
                         const pid = calledPlayers[idx];
                         const player = pid ? players.find(p => p.id === pid) : null;
                         
+                        const customPos = matchData.customPositions && matchData.customPositions[idx];
+                        const topPos = customPos ? customPos.top : pos.top;
+                        const leftPos = customPos ? customPos.left : pos.left;
+                        
                         return (
                           <div 
                             key={idx} 
                             className="pitch-player" 
-                            style={{ top: pos.top, left: pos.left, transform: 'translate(-50%, -50%)' }}
+                            style={{ 
+                              top: topPos, 
+                              left: leftPos, 
+                              transform: 'translate(-50%, -50%)', 
+                              cursor: 'grab', 
+                              zIndex: draggingIdx === idx ? 10 : 1 
+                            }}
                             title={pos.pos}
+                            onPointerDown={(e) => { e.preventDefault(); setDraggingIdx(idx); }}
+                            onTouchStart={(e) => { e.stopPropagation(); setDraggingIdx(idx); }}
                           >
                             <div className="pp-circle">{player ? player.number : '+'}</div>
                             <span className="pp-name">{player ? player.name.split(' ')[0] : pos.pos}</span>

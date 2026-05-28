@@ -35,7 +35,7 @@ export const generateGlobalTeamReport = async (players, tests, evaluaciones, act
 
   // 1. Cabecera
   doc.setFillColor(27, 58, 45);
-  doc.rect(0, 0, pageW, 30, 'F');
+  doc.rect(0, 0, pageW, 45, 'F');
   
   const mr11LogoData = await getImageBase64('/logo_mister11.png');
   if (mr11LogoData) {
@@ -47,13 +47,13 @@ export const generateGlobalTeamReport = async (players, tests, evaluaciones, act
   doc.text('MÍSTER11', 35, 17);
 
   doc.setTextColor(255, 255, 255);
-  doc.setFontSize(14);
-  doc.text('INFORME GLOBAL DE RENDIMIENTO', pageW / 2, 14, { align: 'center' });
-  doc.setFontSize(9);
+  doc.setFontSize(16);
+  doc.text('INFORME GLOBAL DE RENDIMIENTO', pageW / 2, 32, { align: 'center' });
+  doc.setFontSize(10);
   doc.setTextColor(200, 200, 200);
-  doc.text(`Equipo: ${activeTeam?.nombre || 'General'} | Fecha: ${new Date().toLocaleDateString()}`, pageW / 2, 22, { align: 'center' });
+  doc.text(`Equipo: ${activeTeam?.nombre || 'General'} | Fecha: ${new Date().toLocaleDateString()}`, pageW / 2, 40, { align: 'center' });
 
-  let yPos = 40;
+  let yPos = 55;
 
   // 2. Procesar datos
   if (!players || players.length === 0) {

@@ -555,13 +555,13 @@ export const generateSessionPDF = async (session, activeTeam = null) => {
   }
   const doc = new jsPDF();
   
-  await addHeader(doc, `FICHA DE ENTRENAMIENTO`, session.title || session.titulo, activeTeam);
+  await addHeader(doc, `FICHA DE ENTRENAMIENTO`, session.nombre || session.title || session.titulo || 'Sesión sin nombre', activeTeam);
 
   doc.setTextColor(0, 0, 0);
   doc.setFontSize(12);
-  doc.text(`Fecha: ${session.date || session.fecha || new Date().toLocaleDateString()}`, 15, 50);
+  doc.text(`Fecha: ${session.fechaCreacion || session.date || session.fecha || new Date().toLocaleDateString()}`, 15, 50);
   doc.text(`Hora: ${session.time || '18:00'}`, 80, 50);
-  doc.text(`Duración: ${session.duration || session.duracion} min`, 140, 50);
+  doc.text(`Duración: ${session.duration || session.duracion || '90'} min`, 140, 50);
   
   doc.text(`Intensidad: ${session.intensity || 'Media'}`, 15, 58);
   doc.text(`Tipo: ${session.category || 'Mixta'}`, 80, 58);
@@ -579,7 +579,7 @@ export const generateSessionPDF = async (session, activeTeam = null) => {
     doc.text('No hay bloques definidos para esta sesión.', 15, currentY);
     currentY += 10;
   } else {
-    blocks.forEach((b, i) => {
+    for (const b of blocks) {
       // Check for page break
       if (currentY > 250) {
         doc.addPage();
@@ -588,7 +588,7 @@ export const generateSessionPDF = async (session, activeTeam = null) => {
       
       doc.setFontSize(12);
       doc.setFont(undefined, 'bold');
-      doc.text(`${i+1}. ${b.name || b.titulo} (${b.duration || b.tiempo} min) [${b.type || '-'}]`, 15, currentY);
+      doc.text(`${blocks.indexOf(b)+1}. ${b.name || b.titulo} (${b.duration || b.tiempo} min) [${b.type || '-'}]`, 15, currentY);
       
       doc.setFont(undefined, 'normal');
       doc.setFontSize(10);
@@ -596,7 +596,24 @@ export const generateSessionPDF = async (session, activeTeam = null) => {
       doc.text(descLines, 15, currentY + 6);
       
       currentY += 8 + (descLines.length * 5) + 5;
-    });
+
+      if (b.imagenProtocolo) {
+        if (currentY > 220) {
+          doc.addPage();
+          currentY = 20;
+        }
+        try {
+          const imgBase64 = await getImageBase64(b.imagenProtocolo);
+          if (imgBase64) {
+            // Draw image with max width 180, height auto (approx 100 for aspect ratio)
+            doc.addImage(imgBase64, 'PNG', 15, currentY, 180, 100);
+            currentY += 110;
+          }
+        } catch (e) {
+          console.warn('Could not load block image for PDF', e);
+        }
+      }
+    }
   }
 
   // Check for page break before notes
@@ -711,15 +728,17 @@ export const generateMatchConvocation = async (match, players, activeTeam = null
     window.dispatchEvent(new CustomEvent('m11-loading', { detail: { show: false } }));
   }
   const doc = new jsPDF();
-  await addHeader(doc, 'HOJA DE CONVOCATORIA', `vs. ${match.rival}`, activeTeam);
+  const matchName = match.nombre || match.title || 'Partido Oficial';
+  await addHeader(doc, 'HOJA DE CONVOCATORIA', `${matchName} vs. ${match.rival || '-'}`, activeTeam);
 
   doc.setTextColor(45, 45, 45);
   doc.setFontSize(12);
-  doc.text(`Rival: ${match.rival || '-'}`, 15, 50);
-  doc.text(`Fecha: ${match.fecha || '-'}`, 80, 50);
-  doc.text(`Hora: ${match.hora || '--:--'}`, 150, 50);
-  doc.text(`Lugar: ${match.lugar || 'Por determinar'}`, 15, 58);
-  if (match.formacion) doc.text(`Formación: ${match.formacion}`, 110, 58);
+  doc.text(`Partido: ${matchName}`, 15, 50);
+  doc.text(`Rival: ${match.rival || '-'}`, 80, 50);
+  doc.text(`Fecha: ${match.fecha || '-'}`, 150, 50);
+  doc.text(`Hora: ${match.hora || '--:--'}`, 15, 58);
+  doc.text(`Lugar: ${match.lugar || 'Por determinar'}`, 80, 58);
+  if (match.formacion) doc.text(`Formación: ${match.formacion}`, 150, 58);
 
   const convocados = players.filter(p => match.convocados?.includes(p.id));
 

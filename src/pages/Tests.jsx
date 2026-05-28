@@ -23,14 +23,14 @@ const gamingVisualsV1 = true;
 
 // PREDEFINED_TESTS remains as base catalog
 const DEFAULT_TESTS = [
-  { id: 't1', type: 'fisico', category: 'Resistencia', name: 'Test de Cooper', unit: 'm', desc: 'Distancia recorrida en 12 minutos.', protocol: 'Los jugadores deben correr la mayor distancia posible en 12 minutos alrededor de una pista o campo marcado. Se anota la distancia total en metros.' },
-  { id: 't2', type: 'fisico', category: 'Resistencia', name: 'Course Navette', unit: 'nivel', desc: 'Carrera de ida y vuelta de 20m con pitidos.', protocol: 'Carreras de 20 metros al ritmo de un pitido de audio que se acelera cada minuto. Se anota el último palier completado.' },
-  { id: 't3', type: 'fisico', category: 'Velocidad', name: 'Sprint 10m', unit: 'seg', desc: 'Aceleración en distancia corta.', protocol: 'Desde posición estática, sprint al máximo esfuerzo hasta rebasar la línea de 10 metros. Se usa cronómetro o fotocélulas.' },
-  { id: 't4', type: 'fisico', category: 'Velocidad', name: 'Sprint 30m', unit: 'seg', desc: 'Velocidad máxima lanzada.', protocol: 'Igual que 10m, pero se mide el tiempo total a los 30 metros.' },
-  { id: 't5', type: 'fisico', category: 'Agilidad', name: 'T-Test', unit: 'seg', desc: 'Desplazamientos frontales, laterales y de espaldas.', protocol: 'Sprint 10m al frente, desplazamiento lateral 5m a la izquierda, 10m a la derecha, 5m al centro y 10m de espaldas al inicio.' },
-  { id: 't6', type: 'fisico', category: 'Fuerza', name: 'Salto CMJ', unit: 'cm', desc: 'Salto vertical con contramovimiento.', protocol: 'Las manos en las caderas. Bajar el centro de gravedad (flexión de rodillas) e inmediatamente saltar lo más alto posible.' },
-  { id: 't7', type: 'fisico', category: 'Técnica', name: 'Conducción conos', unit: 'seg', desc: 'Slalom entre conos con finalización.', protocol: 'Conducir el balón haciendo slalom entre 5 conos separados por 2 metros y dar un pase a un objetivo.' },
-  { id: 't8', type: 'fisico', category: 'Técnica', name: 'Pase a portería', unit: 'pts', desc: 'Precisión de pase a zonas objetivo (10 pases).', protocol: '10 pases desde la frontal del área hacia pequeñas porterías o zonas marcadas. 1 punto por acierto.' },
+  { id: 't1', type: 'fisico', category: 'Resistencia', name: 'Test de Cooper', unit: 'm', desc: 'Distancia recorrida en 12 minutos.', protocol: { ejecucion: 'Correr la mayor distancia posible en 12 minutos alrededor de una pista o campo marcado.', medicion: 'Se anota la distancia total en metros usando cinta métrica o GPS.', objetivo: 'Medir la capacidad aeróbica máxima (VO2 máx) y la resistencia general.' } },
+  { id: 't2', type: 'fisico', category: 'Resistencia', name: 'Course Navette', unit: 'nivel', desc: 'Carrera de ida y vuelta de 20m con pitidos.', protocol: { ejecucion: 'Carreras de 20 metros al ritmo de un pitido de audio que se acelera cada minuto.', medicion: 'Se anota el último palier (nivel) completado antes de no llegar a tiempo a la línea.', objetivo: 'Medir la potencia aeróbica máxima y el consumo máximo de oxígeno.' } },
+  { id: 't3', type: 'fisico', category: 'Velocidad', name: 'Sprint 10m', unit: 'seg', desc: 'Aceleración en distancia corta.', protocol: { ejecucion: 'Desde posición estática, sprint al máximo esfuerzo hasta rebasar la línea de 10 metros.', medicion: 'Uso de cronómetro manual o fotocélulas. Se anota el tiempo en segundos.', objetivo: 'Mejorar la capacidad de aceleración y explosividad en los primeros metros.' } },
+  { id: 't4', type: 'fisico', category: 'Velocidad', name: 'Sprint 30m', unit: 'seg', desc: 'Velocidad máxima lanzada.', protocol: { ejecucion: 'Sprint de 30 metros al máximo esfuerzo desde posición estática.', medicion: 'Tiempo en segundos cronometrado.', objetivo: 'Medir la velocidad máxima y capacidad anaeróbica aláctica.' } },
+  { id: 't5', type: 'fisico', category: 'Agilidad', name: 'T-Test', unit: 'seg', desc: 'Desplazamientos frontales, laterales y de espaldas.', protocol: { ejecucion: 'Sprint 10m al frente, desplazamiento lateral 5m a la izquierda, 10m a la derecha, 5m al centro y 10m de espaldas al inicio.', medicion: 'Tiempo en segundos. Se penaliza si se cruzan las piernas en el lateral.', objetivo: 'Evaluar la agilidad, equilibrio y cambios de dirección rápidos.' } },
+  { id: 't6', type: 'fisico', category: 'Fuerza', name: 'Salto CMJ', unit: 'cm', desc: 'Salto vertical con contramovimiento.', protocol: { ejecucion: 'Manos en las caderas. Bajar el centro de gravedad (flexión de rodillas) e inmediatamente saltar lo más alto posible.', medicion: 'Altura del salto en centímetros (usar plataforma de contacto o app de video).', objetivo: 'Medir la potencia explosiva del tren inferior (fuerza reactiva).' } },
+  { id: 't7', type: 'fisico', category: 'Técnica', name: 'Conducción conos', unit: 'seg', desc: 'Slalom entre conos con finalización.', protocol: { ejecucion: 'Conducir el balón haciendo slalom entre 5 conos separados por 2 metros y dar un pase a un objetivo.', medicion: 'Tiempo total en segundos desde inicio hasta que el pase entra al objetivo.', objetivo: 'Evaluar el control del balón en velocidad y precisión final.' } },
+  { id: 't8', type: 'fisico', category: 'Técnica', name: 'Pase a portería', unit: 'pts', desc: 'Precisión de pase a zonas objetivo (10 pases).', protocol: { ejecucion: '10 pases desde la frontal del área hacia pequeñas porterías o zonas marcadas.', medicion: '1 punto por cada acierto. Total de 10 puntos posibles.', objetivo: 'Medir la precisión del golpeo y concentración técnica.' } },
 
   { id: 'psi1_old', type: 'psicodeportivo', category: 'Psicología', name: 'Escala de Autoconfianza', unit: 'pts', desc: 'Mide la confianza del jugador en sus capacidades deportivas', protocol: 'Cuestionario de Rosenberg adaptado al deporte. Respuestas tipo Likert.', rangoMin: 0, rangoMax: 40 },
   { id: 'psi2_old', type: 'psicodeportivo', category: 'Psicología', name: 'Ansiedad Competitiva (CSAI-2R)', unit: 'pts', desc: 'Evalúa ansiedad cognitiva, somática y autoconfianza', protocol: 'Cuestionario antes de competir.', rangoMin: 0, rangoMax: 68 },
@@ -1155,8 +1155,12 @@ const Tests = () => {
               <button className="btn-close" onClick={() => setSelectedTestDetail(null)}>✕</button>
             </div>
             <div className="modal-body test-detail-body">
-              <div className="test-image-placeholder">
-                <div className="vector-icon-large">📊</div>
+              <div className="test-image-placeholder" style={{ padding: selectedTestDetail.imagenProtocolo ? '0' : '20px', backgroundColor: selectedTestDetail.imagenProtocolo ? 'transparent' : '#e2e8f0', borderRadius: '12px', marginBottom: '20px', display: 'flex', justifyContent: 'center', alignItems: 'center', overflow: 'hidden' }}>
+                {selectedTestDetail.imagenProtocolo ? (
+                  <img src={selectedTestDetail.imagenProtocolo} alt="Protocolo" style={{ width: '100%', height: 'auto', objectFit: 'contain' }} />
+                ) : (
+                  <div className="vector-icon-large" style={{ fontSize: '3rem' }}>📊</div>
+                )}
               </div>
               <div className="test-info-block">
                 <div className="protocolo-card">
@@ -1166,7 +1170,17 @@ const Tests = () => {
                 
                 <div className="protocolo-card">
                   <h3>Protocolo de Ejecución</h3>
-                  <p>{selectedTestDetail.protocol || 'No se ha especificado un protocolo detallado para esta prueba.'}</p>
+                  {typeof selectedTestDetail.protocol === 'string' ? (
+                    <p>{selectedTestDetail.protocol || 'No se ha especificado un protocolo detallado para esta prueba.'}</p>
+                  ) : selectedTestDetail.protocol && typeof selectedTestDetail.protocol === 'object' ? (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                      <p><strong>Ejecución:</strong> {selectedTestDetail.protocol.ejecucion}</p>
+                      <p><strong>Medición:</strong> {selectedTestDetail.protocol.medicion}</p>
+                      <p><strong>Objetivo:</strong> {selectedTestDetail.protocol.objetivo}</p>
+                    </div>
+                  ) : (
+                    <p>No se ha especificado un protocolo detallado para esta prueba.</p>
+                  )}
                 </div>
                 
                 <div className="test-meta">

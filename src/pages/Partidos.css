@@ -291,7 +291,7 @@
 
 .mini-pitch-container {
   width: 100%;
-  max-width: 600px;
+  max-width: 1000px;
   aspect-ratio: 3/2;
   background: #2E5A3C; /* Dark green field */
   border-radius: 8px;

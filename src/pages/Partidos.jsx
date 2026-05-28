@@ -6,95 +6,95 @@ import './Partidos.css';
 
 const FORMATIONS = {
   '4-3-3': [
-    { pos: 'POR', top: '85%', left: '50%' },
-    { pos: 'LTD', top: '65%', left: '85%' },
-    { pos: 'DEF', top: '70%', left: '65%' },
-    { pos: 'DEF', top: '70%', left: '35%' },
-    { pos: 'LTI', top: '65%', left: '15%' },
-    { pos: 'MCD', top: '45%', left: '50%' },
-    { pos: 'MC', top: '35%', left: '75%' },
-    { pos: 'MC', top: '35%', left: '25%' },
-    { pos: 'EXT', top: '15%', left: '85%' },
-    { pos: 'DEL', top: '10%', left: '50%' },
-    { pos: 'EXT', top: '15%', left: '15%' }
+    { pos: 'POR', top: '50%', left: '15%' },
+    { pos: 'LTD', top: '85%', left: '35%' },
+    { pos: 'DEF', top: '65%', left: '30%' },
+    { pos: 'DEF', top: '35%', left: '30%' },
+    { pos: 'LTI', top: '15%', left: '35%' },
+    { pos: 'MCD', top: '50%', left: '55%' },
+    { pos: 'MC', top: '75%', left: '65%' },
+    { pos: 'MC', top: '25%', left: '65%' },
+    { pos: 'EXT', top: '85%', left: '85%' },
+    { pos: 'DEL', top: '50%', left: '90%' },
+    { pos: 'EXT', top: '15%', left: '85%' }
   ],
   '4-4-2': [
-    { pos: 'POR', top: '85%', left: '50%' },
-    { pos: 'LTD', top: '65%', left: '85%' },
-    { pos: 'DEF', top: '70%', left: '65%' },
-    { pos: 'DEF', top: '70%', left: '35%' },
-    { pos: 'LTI', top: '65%', left: '15%' },
-    { pos: 'MD', top: '40%', left: '85%' },
-    { pos: 'MC', top: '45%', left: '60%' },
-    { pos: 'MC', top: '45%', left: '40%' },
-    { pos: 'MI', top: '40%', left: '15%' },
-    { pos: 'DEL', top: '15%', left: '65%' },
-    { pos: 'DEL', top: '15%', left: '35%' }
+    { pos: 'POR', top: '50%', left: '15%' },
+    { pos: 'LTD', top: '85%', left: '35%' },
+    { pos: 'DEF', top: '65%', left: '30%' },
+    { pos: 'DEF', top: '35%', left: '30%' },
+    { pos: 'LTI', top: '15%', left: '35%' },
+    { pos: 'MD', top: '85%', left: '60%' },
+    { pos: 'MC', top: '60%', left: '55%' },
+    { pos: 'MC', top: '40%', left: '55%' },
+    { pos: 'MI', top: '15%', left: '60%' },
+    { pos: 'DEL', top: '65%', left: '85%' },
+    { pos: 'DEL', top: '35%', left: '85%' }
   ],
   '3-5-2': [
-    { pos: 'POR', top: '85%', left: '50%' },
-    { pos: 'DEF', top: '70%', left: '70%' },
-    { pos: 'DEF', top: '72%', left: '50%' },
+    { pos: 'POR', top: '50%', left: '15%' },
     { pos: 'DEF', top: '70%', left: '30%' },
-    { pos: 'MD', top: '50%', left: '85%' },
-    { pos: 'MC', top: '45%', left: '65%' },
-    { pos: 'MC', top: '42%', left: '50%' },
-    { pos: 'MC', top: '45%', left: '35%' },
-    { pos: 'MI', top: '50%', left: '15%' },
-    { pos: 'DEL', top: '15%', left: '65%' },
-    { pos: 'DEL', top: '15%', left: '35%' }
+    { pos: 'DEF', top: '50%', left: '28%' },
+    { pos: 'DEF', top: '30%', left: '30%' },
+    { pos: 'MD', top: '85%', left: '50%' },
+    { pos: 'MC', top: '65%', left: '55%' },
+    { pos: 'MC', top: '50%', left: '58%' },
+    { pos: 'MC', top: '35%', left: '55%' },
+    { pos: 'MI', top: '15%', left: '50%' },
+    { pos: 'DEL', top: '65%', left: '85%' },
+    { pos: 'DEL', top: '35%', left: '85%' }
   ],
   '5-3-2': [
-    { pos: 'POR', top: '85%', left: '50%' },
-    { pos: 'LTD', top: '65%', left: '90%' },
-    { pos: 'DEF', top: '70%', left: '70%' },
-    { pos: 'DEF', top: '72%', left: '50%' },
+    { pos: 'POR', top: '50%', left: '15%' },
+    { pos: 'LTD', top: '90%', left: '35%' },
     { pos: 'DEF', top: '70%', left: '30%' },
-    { pos: 'LTI', top: '65%', left: '10%' },
-    { pos: 'MC', top: '42%', left: '70%' },
-    { pos: 'MC', top: '40%', left: '50%' },
-    { pos: 'MC', top: '42%', left: '30%' },
-    { pos: 'DEL', top: '15%', left: '65%' },
-    { pos: 'DEL', top: '15%', left: '35%' }
+    { pos: 'DEF', top: '50%', left: '28%' },
+    { pos: 'DEF', top: '30%', left: '30%' },
+    { pos: 'LTI', top: '10%', left: '35%' },
+    { pos: 'MC', top: '70%', left: '58%' },
+    { pos: 'MC', top: '50%', left: '60%' },
+    { pos: 'MC', top: '30%', left: '58%' },
+    { pos: 'DEL', top: '65%', left: '85%' },
+    { pos: 'DEL', top: '35%', left: '85%' }
   ],
   '4-1-4-1': [
-    { pos: 'POR', top: '85%', left: '50%' },
-    { pos: 'LTD', top: '65%', left: '85%' },
-    { pos: 'DEF', top: '70%', left: '65%' },
-    { pos: 'DEF', top: '70%', left: '35%' },
-    { pos: 'LTI', top: '65%', left: '15%' },
-    { pos: 'MCD', top: '52%', left: '50%' },
-    { pos: 'MD', top: '35%', left: '80%' },
-    { pos: 'MC', top: '37%', left: '60%' },
-    { pos: 'MC', top: '37%', left: '40%' },
-    { pos: 'MI', top: '35%', left: '20%' },
-    { pos: 'DEL', top: '12%', left: '50%' }
+    { pos: 'POR', top: '50%', left: '15%' },
+    { pos: 'LTD', top: '85%', left: '35%' },
+    { pos: 'DEF', top: '65%', left: '30%' },
+    { pos: 'DEF', top: '35%', left: '30%' },
+    { pos: 'LTI', top: '15%', left: '35%' },
+    { pos: 'MCD', top: '50%', left: '48%' },
+    { pos: 'MD', top: '80%', left: '65%' },
+    { pos: 'MC', top: '60%', left: '63%' },
+    { pos: 'MC', top: '40%', left: '63%' },
+    { pos: 'MI', top: '20%', left: '65%' },
+    { pos: 'DEL', top: '50%', left: '88%' }
   ],
   '3-4-3': [
-    { pos: 'POR', top: '85%', left: '50%' },
-    { pos: 'DEF', top: '70%', left: '70%' },
-    { pos: 'DEF', top: '72%', left: '50%' },
+    { pos: 'POR', top: '50%', left: '15%' },
     { pos: 'DEF', top: '70%', left: '30%' },
-    { pos: 'MD', top: '45%', left: '80%' },
-    { pos: 'MC', top: '47%', left: '60%' },
-    { pos: 'MC', top: '47%', left: '40%' },
-    { pos: 'MI', top: '45%', left: '20%' },
-    { pos: 'EXT', top: '15%', left: '80%' },
-    { pos: 'DEL', top: '12%', left: '50%' },
-    { pos: 'EXT', top: '15%', left: '20%' }
+    { pos: 'DEF', top: '50%', left: '28%' },
+    { pos: 'DEF', top: '30%', left: '30%' },
+    { pos: 'MD', top: '80%', left: '55%' },
+    { pos: 'MC', top: '60%', left: '53%' },
+    { pos: 'MC', top: '40%', left: '53%' },
+    { pos: 'MI', top: '20%', left: '55%' },
+    { pos: 'EXT', top: '80%', left: '85%' },
+    { pos: 'DEL', top: '50%', left: '88%' },
+    { pos: 'EXT', top: '20%', left: '85%' }
   ],
   '4-3-2-1': [
-    { pos: 'POR', top: '85%', left: '50%' },
-    { pos: 'LTD', top: '65%', left: '85%' },
-    { pos: 'DEF', top: '70%', left: '65%' },
-    { pos: 'DEF', top: '70%', left: '35%' },
-    { pos: 'LTI', top: '65%', left: '15%' },
-    { pos: 'MC', top: '48%', left: '65%' },
+    { pos: 'POR', top: '50%', left: '15%' },
+    { pos: 'LTD', top: '85%', left: '35%' },
+    { pos: 'DEF', top: '65%', left: '30%' },
+    { pos: 'DEF', top: '35%', left: '30%' },
+    { pos: 'LTI', top: '15%', left: '35%' },
+    { pos: 'MC', top: '65%', left: '52%' },
     { pos: 'MCD', top: '50%', left: '50%' },
-    { pos: 'MC', top: '48%', left: '35%' },
-    { pos: 'MCO', top: '30%', left: '60%' },
-    { pos: 'MCO', top: '30%', left: '40%' },
-    { pos: 'DEL', top: '12%', left: '50%' }
+    { pos: 'MC', top: '35%', left: '52%' },
+    { pos: 'MCO', top: '60%', left: '70%' },
+    { pos: 'MCO', top: '40%', left: '70%' },
+    { pos: 'DEL', top: '50%', left: '88%' }
   ]
 };
 
@@ -459,8 +459,8 @@ const Partidos = () => {
                     <div className="mini-pitch">
                       <div className="pitch-line center-line"></div>
                       <div className="pitch-circle center-circle"></div>
-                      <div className="pitch-box penalty-box bottom"></div>
-                      <div className="pitch-box penalty-box top"></div>
+                      <div className="pitch-box penalty-box left"></div>
+                      <div className="pitch-box penalty-box right"></div>
                       
                       {(FORMATIONS[matchData.lineup] || FORMATIONS['4-3-3']).map((pos, idx) => {
                         const pid = calledPlayers[idx];

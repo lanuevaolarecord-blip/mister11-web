@@ -455,8 +455,14 @@ const Partidos = () => {
                   </div>
                 </div>
                 <div className="alin-main">
-                  <div className="mini-pitch-container" ref={pitchRef} onPointerMove={handlePitchPointerMove} onTouchMove={handlePitchPointerMove} style={{ touchAction: 'none' }}>
-                    <div className="mini-pitch">
+                  <div className="mini-pitch-container">
+                    <div 
+                      className="mini-pitch" 
+                      ref={pitchRef} 
+                      onPointerMove={handlePitchPointerMove} 
+                      onTouchMove={handlePitchPointerMove} 
+                      style={{ touchAction: 'none' }}
+                    >
                       <div className="pitch-line center-line"></div>
                       <div className="pitch-circle center-circle"></div>
                       <div className="pitch-box penalty-box left"></div>

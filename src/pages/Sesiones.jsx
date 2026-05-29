@@ -638,15 +638,20 @@ const Sesiones = () => {
             )}
           </div>
 
-          <div className="session-preview-panel">
-            {selectedSession ? (
-              <div className="preview-content">
-                <div className="preview-header">
-                  <h2>{selectedSession.title || selectedSession.titulo || 'Sin título'}</h2>
-                  <span className="date-full">
-                    {selectedSession.date || selectedSession.fecha || ''} · {selectedSession.time || selectedSession.hora || ''}
-                  </span>
-                </div>
+          {/* SESSION PREVIEW MODAL */}
+          {selectedSession && (
+            <div className="modal-overlay-pdf" onClick={() => setSelectedSession(null)}>
+              <div className="session-preview-modal" onClick={e => e.stopPropagation()}>
+                <div className="preview-content">
+                  <div className="preview-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                    <div>
+                      <h2>{selectedSession.title || selectedSession.titulo || 'Sin título'}</h2>
+                      <span className="date-full">
+                        {selectedSession.date || selectedSession.fecha || ''} · {selectedSession.time || selectedSession.hora || ''}
+                      </span>
+                    </div>
+                    <button className="btn-close-pdf" style={{ color: 'var(--text-primary)', marginTop: '-10px', marginRight: '-10px' }} onClick={() => setSelectedSession(null)}>✕</button>
+                  </div>
                 <div className="preview-stats">
                   <div className="p-stat"><strong>{selectedSession.duration || selectedSession.duracion || 0}</strong><span>MIN</span></div>
                   <div className="p-stat"><strong>{(selectedSession.blocks || selectedSession.bloques || []).length}</strong><span>BLOQUES</span></div>
@@ -759,13 +764,9 @@ const Sesiones = () => {
                   <button className="btn-text-error full-width" onClick={() => handleDeleteSession(selectedSession.id)}>Eliminar Sesión</button>
                 </div>
               </div>
-            ) : (
-              <div className="preview-empty">
-                <div className="empty-icon">📋</div>
-                <p>Selecciona una sesión para ver los detalles rápidos</p>
-              </div>
-            )}
+            </div>
           </div>
+          )}
         </div>
       ) : activeTab === 'captures' ? (
         <div className="captures-grid">

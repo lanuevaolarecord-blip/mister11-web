@@ -728,17 +728,17 @@ export const generateMatchConvocation = async (match, players, activeTeam = null
     window.dispatchEvent(new CustomEvent('m11-loading', { detail: { show: false } }));
   }
   const doc = new jsPDF();
-  const matchName = match.nombre || match.title || 'Partido Oficial';
-  await addHeader(doc, 'HOJA DE CONVOCATORIA', `${matchName} vs. ${match.rival || '-'}`, activeTeam);
+  const matchName = match.rival ? `Partido vs ${match.rival}` : (match.nombre || match.title || 'Partido Oficial');
+  await addHeader(doc, 'HOJA DE CONVOCATORIA', matchName, activeTeam);
 
   doc.setTextColor(45, 45, 45);
   doc.setFontSize(12);
   doc.text(`Partido: ${matchName}`, 15, 50);
   doc.text(`Rival: ${match.rival || '-'}`, 80, 50);
-  doc.text(`Fecha: ${match.fecha || '-'}`, 150, 50);
-  doc.text(`Hora: ${match.hora || '--:--'}`, 15, 58);
-  doc.text(`Lugar: ${match.lugar || 'Por determinar'}`, 80, 58);
-  if (match.formacion) doc.text(`Formación: ${match.formacion}`, 150, 58);
+  doc.text(`Fecha: ${match.date || match.fecha || '-'}`, 150, 50);
+  doc.text(`Hora: ${match.time || match.hora || '--:--'}`, 15, 58);
+  doc.text(`Lugar: ${match.location || match.lugar || 'Por determinar'}`, 80, 58);
+  if (match.lineup || match.formacion) doc.text(`Formación: ${match.lineup || match.formacion}`, 150, 58);
 
   const convocados = players.filter(p => match.convocados?.includes(p.id));
 
@@ -752,7 +752,7 @@ export const generateMatchConvocation = async (match, players, activeTeam = null
     startY: 74,
     head: [['#', 'Nombre del Jugador', 'Posición']],
     body: convocados.length > 0
-      ? convocados.map((p, i) => [p.dorsal || i+1, p.nombre, p.posicion || '-'])
+      ? convocados.map((p, i) => [p.number || p.dorsal || i+1, p.name || p.nombre || '-', p.position || p.posicion || '-'])
       : [['', 'No hay convocados registrados para este partido.', '']],
     headStyles: { fillColor: THEME_COLOR, textColor: [255,255,255], fontStyle: 'bold' },
     bodyStyles: { textColor: [45,45,45], fontSize: 10 },
@@ -763,7 +763,7 @@ export const generateMatchConvocation = async (match, players, activeTeam = null
 
   addFooter(doc);
   const safeRival = (match.rival || 'Partido').replace(/\s+/g,'_');
-  savePdfUniversal(doc, `Convocatoria_${safeRival}_${match.fecha || 'Hoy'}.pdf`);
+  savePdfUniversal(doc, `Convocatoria_${safeRival}_${match.date || match.fecha || 'Hoy'}.pdf`);
 };
 
 /**

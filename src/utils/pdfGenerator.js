@@ -733,12 +733,14 @@ export const generateMatchConvocation = async (match, players, activeTeam = null
 
   doc.setTextColor(45, 45, 45);
   doc.setFontSize(12);
-  doc.text(`Partido: ${matchName}`, 15, 50);
-  doc.text(`Rival: ${match.rival || '-'}`, 80, 50);
-  doc.text(`Fecha: ${match.date || match.fecha || '-'}`, 150, 50);
+  const tituloPartido = (match.nombre || match.title || 'Partido Oficial');
+  doc.text(`Partido: ${tituloPartido.length > 25 ? tituloPartido.substring(0, 25) + '...' : tituloPartido}`, 15, 50);
+  const rivalText = match.rival || '-';
+  doc.text(`Rival: ${rivalText.length > 20 ? rivalText.substring(0, 20) + '...' : rivalText}`, 95, 50);
+  doc.text(`Fecha: ${match.date || match.fecha || '-'}`, 155, 50);
   doc.text(`Hora: ${match.time || match.hora || '--:--'}`, 15, 58);
-  doc.text(`Lugar: ${match.location || match.lugar || 'Por determinar'}`, 80, 58);
-  if (match.lineup || match.formacion) doc.text(`Formación: ${match.lineup || match.formacion}`, 150, 58);
+  doc.text(`Lugar: ${match.location || match.lugar || 'Por determinar'}`, 95, 58);
+  if (match.lineup || match.formacion) doc.text(`Formación: ${match.lineup || match.formacion}`, 155, 58);
 
   const convocados = players.filter(p => match.convocados?.includes(p.id));
 

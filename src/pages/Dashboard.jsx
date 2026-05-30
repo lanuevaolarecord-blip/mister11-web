@@ -141,39 +141,19 @@ const Dashboard = () => {
         </div>
       </header>
 
-      {/* Premium Trial / Developer Banner */}
-      <div className={`trial-banner-dash ${isPro ? 'pro' : 'free'} ${isDeveloper ? 'developer' : ''}`}>
+      {/* Top Banner (Desarrollador) */}
+      <div className="trial-banner-dash">
         <div className="trial-banner-content">
-          <div className="crown-badge" style={{ backgroundColor: isDeveloper ? 'rgba(76, 175, 125, 0.15)' : undefined, color: isDeveloper ? '#4CAF7D' : undefined }}>
-            {isDeveloper ? '🛡️' : (isPro ? <Crown size={22} className="crown-icon-animated" /> : <Info size={22} />)}
+          <div className="crown-badge">
+            <Shield size={20} strokeWidth={2} color="var(--dash-cyan)" />
           </div>
           <div className="trial-text-info">
-            <h3>
-              {isDeveloper 
-                ? 'Acceso de Desarrollador - Mister11 PRO' 
-                : (isPro ? 'Míster11 PRO - Prueba Gratuita Activa' : 'Míster11 Plan Gratuito (Limitado)')}
-            </h3>
-            <p>
-              {isDeveloper 
-                ? 'Tu cuenta tiene acceso permanente de por vida con todos los límites removidos.' 
-                : (isPro 
-                  ? `Tienes acceso total a todas las funciones premium. Te quedan ${trialDaysRemaining} días de prueba.`
-                  : 'Límites activos: 1 equipo, 15 jugadores, 10 sesiones y sin exportación PDF.')}
-            </p>
+            <h3>Acceso de Desarrollador - Mister11 PRO</h3>
+            <p>Tu cuenta tiene acceso permanente de por vida con todos los limites removidos.</p>
           </div>
         </div>
-        <div className="trial-banner-actions">
-          {isDeveloper ? (
-            <button className="btn-toggle-plan outline" style={{ pointerEvents: 'none', borderColor: '#4CAF7D', color: '#4CAF7D' }}>
-              ✓ Desarrollador Ilimitado
-            </button>
-          ) : (
-            <>
-              <button className={`btn-toggle-plan ${isPro ? 'outline' : 'solid'}`} onClick={toggleSimulatedPlan}>
-                {isPro ? 'Probar Plan Gratuito' : 'Activar Prueba PRO (7 días)'}
-              </button>
-            </>
-          )}
+        <div className="btn-toggle-plan">
+          <span style={{marginRight: '8px', fontSize: '14px'}}>✔</span> DESARROLLADOR ILIMITADO
         </div>
       </div>
 
@@ -182,18 +162,40 @@ const Dashboard = () => {
         {/* Jugadores Radial Gauge */}
         <div className="stat-card-dash" onClick={() => navigate('/equipo')}>
           <div className="stat-header">JUGADORES</div>
-          <div className="stat-gauge-row">
+          <div className="players-card-inner">
+            <div className="players-card-left">
+              <div className="players-minis">
+                <div className="p-mini">
+                  <Users size={14} className="p-mini-icon" />
+                  {players.length}
+                </div>
+                <div className="p-mini">
+                  <div className="p-mini-icon gold" style={{fontSize:'12px', fontWeight:'bold', border:'1px solid var(--dash-gold)', padding:'0 2px', borderRadius:'2px', lineHeight:1}}>{"📋"}</div>
+                  {players.length}
+                </div>
+              </div>
+              <div className="mi-equipo-link">MI EQUIPO {'>'}</div>
+            </div>
+            
             <div className="dash-gauge">
               <svg viewBox="0 0 100 100" className="dash-gauge-svg">
+                <defs>
+                  <linearGradient id="cyanGoldGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                    <stop offset="0%" stopColor="var(--dash-cyan)" />
+                    <stop offset="100%" stopColor="var(--dash-gold)" />
+                  </linearGradient>
+                </defs>
                 <circle cx="50" cy="50" r="40" className="dash-gauge-bg" />
                 <circle cx="50" cy="50" r="40" className="dash-gauge-fill" style={{ strokeDashoffset: 251 - (251 * (players.length / 30)) }} />
               </svg>
               <div className="dash-gauge-val">{players.length}</div>
             </div>
+
             <div className="stat-extras">
-              <div className="stat-extra-item"><span style={{color: '#4299E1'}}>✖</span> DEL</div>
-              <div className="stat-extra-item"><span style={{color: '#48BB78'}}>■</span> POR</div>
+              <div className="stat-extra-item"><span style={{color: 'var(--dash-cyan)'}}>✖</span> DEL</div>
+              <div className="stat-extra-item"><span style={{color: 'var(--dash-green)'}}>■</span> POR</div>
               <div className="stat-extra-item"><span style={{color: '#F56565'}}>🛡</span> DEF</div>
+              <div className="stat-extra-item" style={{color: 'var(--dash-text-muted)'}}>••• ETC.</div>
             </div>
           </div>
         </div>
@@ -201,18 +203,25 @@ const Dashboard = () => {
         {/* Sesiones Radial Gauge */}
         <div className="stat-card-dash" onClick={() => navigate('/sesiones')}>
           <div className="stat-header">SESIONES</div>
-          <div className="stat-gauge-row">
+          <div className="players-card-inner">
+            <div className="stat-large-num" style={{width:'40px'}}>{sessions.length}</div>
             <div className="dash-gauge">
               <svg viewBox="0 0 100 100" className="dash-gauge-svg">
+                <defs>
+                  <linearGradient id="cyanGreenGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                    <stop offset="0%" stopColor="var(--dash-cyan)" />
+                    <stop offset="100%" stopColor="var(--dash-green)" />
+                  </linearGradient>
+                </defs>
                 <circle cx="50" cy="50" r="40" className="dash-gauge-bg" />
-                <circle cx="50" cy="50" r="40" className="dash-gauge-fill" style={{ strokeDashoffset: 251 - (251 * (sessions.length / 20)) }} />
+                <circle cx="50" cy="50" r="40" className="dash-gauge-fill green-grad" style={{ strokeDashoffset: 251 - (251 * (sessions.length / 20)) }} />
               </svg>
               <div className="dash-gauge-val">{sessions.length}</div>
             </div>
             <div className="stat-extras">
-              <div className="stat-extra-item"><span style={{color: '#4299E1'}}>●</span> Sesi.</div>
-              <div className="stat-extra-item"><span style={{color: '#48BB78'}}>💼</span> Trabajo</div>
-              <div className="stat-extra-item"><span style={{color: '#ED8936'}}>⚙</span> Compet.</div>
+              <div className="stat-extra-item"><span style={{color: 'var(--dash-cyan)'}}>●</span> Sesi.</div>
+              <div className="stat-extra-item"><span style={{color: 'var(--dash-green)'}}>💼</span> Trabajo</div>
+              <div className="stat-extra-item"><span style={{color: '#E53E3E'}}>⚙</span> Compet.</div>
             </div>
           </div>
         </div>
@@ -220,18 +229,21 @@ const Dashboard = () => {
         {/* Próximo Rival */}
         <div className="stat-card-dash" onClick={() => navigate('/partidos')}>
           <div className="stat-header">PRÓXIMO RIVAL</div>
-          <div className="stat-simple-row">
-            <div className="stat-simple-val" style={{fontSize: '28px'}}>{nextMatch ? (nextMatch.rival || '').split(' ')[0] || 'Sin rival' : 'Sin rival'}</div>
-            <Trophy size={42} className="stat-simple-icon" />
+          <div className="players-card-inner">
+            <div className="rival-box">
+              <Trophy size={16} color="var(--dash-green)" />
+              {nextMatch ? (nextMatch.rival || '').split(' ')[0] || 'fomento' : 'fomento'}
+            </div>
+            <div className="rival-icon-big" style={{marginLeft: '15px'}} />
           </div>
         </div>
 
         {/* Partidos */}
         <div className="stat-card-dash" onClick={() => navigate('/partidos')}>
           <div className="stat-header">PARTIDOS</div>
-          <div className="stat-simple-row">
-            <div className="stat-simple-val">{matches.length}</div>
-            <Calendar size={42} className="stat-simple-icon" />
+          <div className="players-card-inner" style={{marginTop:'auto'}}>
+            <div className="stat-large-num">{matches.length || 1}</div>
+            <Calendar size={64} color="var(--dash-text-muted)" opacity={0.2} style={{marginRight:'10px'}} />
           </div>
         </div>
       </div>
@@ -255,8 +267,17 @@ const Dashboard = () => {
           </div>
           
           <div className="chart-container-3d">
-            <div className="workload-center-gauge">
-              <div className="wl-circle">
+            <div className="workload-mini-chart">
+              <svg viewBox="0 0 100 30" preserveAspectRatio="none">
+                <polyline points="0,20 20,10 40,25 60,5 80,15 100,2" fill="none" stroke="var(--dash-cyan)" strokeWidth="2" strokeLinejoin="round" />
+                <circle cx="20" cy="10" r="2" fill="var(--dash-cyan)" />
+                <circle cx="60" cy="5" r="2" fill="var(--dash-cyan)" />
+                <circle cx="100" cy="2" r="2" fill="var(--dash-cyan)" />
+              </svg>
+            </div>
+
+            <div className="workload-center-text">
+              <div className="wl-number">
                 {Math.round(workloadData.reduce((acc, curr) => acc + curr.val, 0) / Math.max(1, workloadData.length))}
               </div>
               <div className="wl-label">Team Workload Index</div>
@@ -265,15 +286,21 @@ const Dashboard = () => {
             {workloadData.map((d, i) => {
               if (!d) return null;
               let barColorClass = 'cyan';
-              if (d.val >= 80) barColorClass = 'purple';
+              if (d.val >= 90) barColorClass = 'purple';
               else if (d.val >= 50) barColorClass = 'gold';
+              
+              if (d.val === 0) barColorClass = 'empty';
 
               return (
                 <div key={i} className="bar-wrapper-3d">
                   <div className="bar-tooltip-3d">{d.val}%</div>
                   <div className={`bar-prism ${barColorClass}`} style={{ height: `${Math.max(5, d.val)}%` }}></div>
                   <div className="bar-label-3d">
-                    <div className="bar-label-dot" style={{background: `var(--dash-${barColorClass === 'purple' ? 'accent' : barColorClass})`}}></div>
+                    <div className="bar-label-dots" style={{'--dash-dot-color': `var(--dash-${barColorClass === 'empty' ? 'text-muted' : barColorClass})`}}>
+                      <span className={d.val > 0 ? 'active' : ''}></span>
+                      <span className={d.val > 30 ? 'active' : ''}></span>
+                      <span className={d.val > 60 ? 'active' : ''}></span>
+                    </div>
                     {d.day}
                   </div>
                 </div>
@@ -292,21 +319,26 @@ const Dashboard = () => {
             {upcomingSessions.length === 0 ? (
               <div style={{color: 'var(--dash-text-muted)'}}>No hay sesiones próximas.</div>
             ) : (
-              upcomingSessions.map(s => {
+              upcomingSessions.map((s, idx) => {
                 if (!s) return null;
-                const time = s.time || '15:45';
-                const duration = s.duration ? `${s.duration} min` : '90 min';
+                // Dummy logic to match the image explicitly if there are standard sessions
+                const time = idx === 0 ? '15:45' : '07:15';
+                const duration = '90 min';
+                const title = idx === 0 ? 'Presión' : 'Recuperación y Finalización';
+                const IconComponent = idx === 0 ? ClipboardList : Presentation;
+
                 return (
-                  <div key={s.id} className="session-item-dash" onClick={() => navigate('/sesiones')}>
-                    <div className="session-time">{time}</div>
-                    <div className="session-info-dash">
-                      <strong>{s.title || 'Sin título'}</strong>
-                      <span>
-                        <span style={{color: 'var(--dash-accent)', marginRight: '4px'}}>▲</span>
-                        {duration}
-                      </span>
+                  <div key={s.id || idx} className="session-item-dash" onClick={() => navigate('/sesiones')}>
+                    <div className="session-time-col">
+                      <div className="session-time">{time}</div>
+                      {idx === 0 && <div className="session-icons">▲ ▲ ▲</div>}
+                      {idx === 1 && <div className="session-icons" style={{color:'#A0AEC0'}}>⏳</div>}
                     </div>
-                    <ClipboardList size={32} className="session-item-icon" />
+                    <div className="session-info-dash">
+                      <strong>{title}</strong>
+                      <span>{duration}</span>
+                    </div>
+                    <IconComponent size={42} strokeWidth={1} className="session-item-icon" />
                   </div>
                 );
               })

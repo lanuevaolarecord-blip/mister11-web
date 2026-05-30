@@ -270,10 +270,10 @@ const Dashboard = () => {
           <div className="chart-container-3d">
             <div className="workload-mini-chart">
               <svg viewBox="0 0 100 30" preserveAspectRatio="none">
-                <polyline points="0,20 20,10 40,25 60,5 80,15 100,2" fill="none" stroke="var(--dash-cyan)" strokeWidth="2" strokeLinejoin="round" />
-                <circle cx="20" cy="10" r="2" fill="var(--dash-cyan)" />
-                <circle cx="60" cy="5" r="2" fill="var(--dash-cyan)" />
-                <circle cx="100" cy="2" r="2" fill="var(--dash-cyan)" />
+                <polyline points="0,20 20,10 40,25 60,5 80,15 100,2" fill="none" stroke="var(--accent)" strokeWidth="2" strokeLinejoin="round" />
+                <circle cx="20" cy="10" r="2" fill="var(--accent)" />
+                <circle cx="60" cy="5" r="2" fill="var(--accent)" />
+                <circle cx="100" cy="2" r="2" fill="var(--accent)" />
               </svg>
             </div>
 

@@ -6,33 +6,39 @@
 
 /* --- THEME VARIABLES --- */
 .ps-page {
-  /* LIGHT MODE VARS */
-  --bg-main: #f3f4f6;
-  --bg-card: #ffffff;
-  --bg-header: #ffffff;
-  --text-main: #1f2937;
-  --text-muted: #6b7280;
-  --border-color: #e5e7eb;
-  --ps-cyan: #0ea5e9;
-  --ps-green: #10b981;
-  --ps-orange: #f59e0b;
-  --ps-purple: #8b5cf6;
-  --ps-gauge-bg: #e5e7eb;
-  --ps-input-bg: #f9fafb;
-  --ps-input-border: #d1d5db;
-  --ps-table-bg: #ffffff;
-  --ps-table-border: #e5e7eb;
-  --ps-table-header: #f3f4f6;
-  --ps-row-hover: #f9fafb;
-  --ps-btn-bg: #0ea5e9;
-  --ps-btn-text: #ffffff;
+  /* LIGHT MODE VARS (Mapped to Global Theme) */
+  --bg-main: var(--bg-primary, #F5F0E8);
+  --bg-card: var(--bg-card, #FFFFFF);
+  --bg-header: var(--bg-card, #FFFFFF);
+  --text-main: var(--text-primary, #1B3A2D);
+  --text-muted: var(--text-secondary, #2D2D2D);
+  --border-color: var(--border-color, #D4A843);
+  
+  --ps-cyan: var(--accent, #4CAF7D);
+  --ps-green: var(--accent-gold, #D4A843);
+  --ps-orange: var(--accent-gold, #D4A843);
+  --ps-purple: var(--accent, #4CAF7D);
+  
+  --ps-gauge-bg: rgba(27, 58, 45, 0.1);
+  --ps-input-bg: var(--input-bg, #FFFFFF);
+  --ps-input-border: var(--input-border, #D4A843);
+  
+  --ps-table-bg: var(--bg-card, #FFFFFF);
+  --ps-table-border: var(--border-color, #D4A843);
+  --ps-table-header: rgba(76, 175, 125, 0.1);
+  --ps-row-hover: rgba(76, 175, 125, 0.05);
+  
+  --ps-btn-bg: var(--accent, #4CAF7D);
+  --ps-btn-text: #FFFFFF;
   --ps-btn-outline: transparent;
-  --ps-tab-bg: #e5e7eb;
-  --ps-tab-text: #4b5563;
-  --ps-tab-active-bg: #0ea5e9;
-  --ps-tab-active-text: #ffffff;
-  --matrix-number-color: #111827;
-  --matrix-cell-bg: #ffffff;
+  
+  --ps-tab-bg: var(--bg-card, #FFFFFF);
+  --ps-tab-text: var(--text-primary, #1B3A2D);
+  --ps-tab-active-bg: var(--accent, #4CAF7D);
+  --ps-tab-active-text: #FFFFFF;
+  
+  --matrix-number-color: var(--text-primary, #1B3A2D);
+  --matrix-cell-bg: var(--bg-card, #FFFFFF);
 
   /* Fonts */
   --font-main: 'Inter', sans-serif;
@@ -48,39 +54,45 @@
   box-sizing: border-box;
 }
 
-/* DARK MODE VARS */
+/* DARK MODE VARS (Mapped to Global Theme) */
 .ps-page.dark {
-  --bg-main: #111827;
-  --bg-card: rgba(31, 41, 55, 0.7);
-  --bg-header: rgba(17, 24, 39, 0.9);
-  --text-main: #f3f4f6;
-  --text-muted: #9ca3af;
-  --border-color: rgba(255, 255, 255, 0.1);
-  --ps-cyan: #00f0ff;
-  --ps-green: #39ff14;
-  --ps-orange: #ff9900;
-  --ps-purple: #bc13fe;
+  --bg-main: var(--bg-primary, #0D0D0D);
+  --bg-card: var(--bg-card, #1E1E1E);
+  --bg-header: var(--bg-card, #1E1E1E);
+  --text-main: var(--text-primary, #F5F0E8);
+  --text-muted: var(--text-muted, #D4A843);
+  --border-color: var(--border-color, #4CAF7D);
+  
+  --ps-cyan: var(--accent, #4CAF7D);
+  --ps-green: var(--accent-gold, #D4A843);
+  --ps-orange: var(--accent-gold, #D4A843);
+  --ps-purple: var(--accent, #4CAF7D);
+  
   --ps-gauge-bg: rgba(255, 255, 255, 0.05);
-  --ps-input-bg: rgba(0, 0, 0, 0.5);
-  --ps-input-border: rgba(0, 240, 255, 0.3);
-  --ps-table-bg: #1f2937;
-  --ps-table-border: rgba(255, 255, 255, 0.05);
-  --ps-table-header: rgba(17, 24, 39, 0.8);
+  --ps-input-bg: var(--input-bg, #1E1E1E);
+  --ps-input-border: var(--input-border, #4CAF7D);
+  
+  --ps-table-bg: var(--bg-card, #1E1E1E);
+  --ps-table-border: var(--border-color, #4CAF7D);
+  --ps-table-header: rgba(76, 175, 125, 0.1);
   --ps-row-hover: rgba(255, 255, 255, 0.02);
-  --ps-btn-bg: rgba(0, 240, 255, 0.1);
-  --ps-btn-text: #00f0ff;
-  --ps-btn-outline: rgba(0, 240, 255, 0.5);
+  
+  --ps-btn-bg: rgba(76, 175, 125, 0.1);
+  --ps-btn-text: var(--accent, #4CAF7D);
+  --ps-btn-outline: rgba(76, 175, 125, 0.5);
+  
   --ps-tab-bg: rgba(255,255,255,0.05);
-  --ps-tab-text: #9ca3af;
-  --ps-tab-active-bg: rgba(0, 240, 255, 0.1);
-  --ps-tab-active-text: #00f0ff;
-  --matrix-number-color: #f3f4f6;
+  --ps-tab-text: var(--text-primary, #F5F0E8);
+  --ps-tab-active-bg: rgba(76, 175, 125, 0.1);
+  --ps-tab-active-text: var(--accent, #4CAF7D);
+  
+  --matrix-number-color: var(--text-primary, #F5F0E8);
   --matrix-cell-bg: rgba(255,255,255,0.02);
 
-  /* Background pattern for dark mode */
+  /* Background pattern for dark mode - adapted to project palette */
   background-color: var(--bg-main);
   background-image: 
-    radial-gradient(circle at 50% 50%, rgba(0, 240, 255, 0.05) 0%, transparent 60%),
+    radial-gradient(circle at 50% 50%, rgba(76, 175, 125, 0.05) 0%, transparent 60%),
     linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
     linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
   background-size: 100% 100%, 40px 40px, 40px 40px;

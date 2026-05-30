@@ -4,7 +4,8 @@ import { db, auth } from '../firebaseConfig';
 import { useAuth } from '../context/AuthContext';
 import { useTeams } from '../hooks/useTeams';
 import { generatePlanificacionPDF } from '../utils/pdfGenerator';
-import { Settings, Target, Grid, Hourglass, Calendar, User, Save, FileDown, Plus, Sun, Moon } from 'lucide-react';
+import { useTheme } from '../context/ThemeContext';
+import { Settings, Target, Grid, Hourglass, Calendar, User, Save, FileDown, Plus } from 'lucide-react';
 import './Planificacion.css';
 
 // --- CONSTANTS ---
@@ -59,7 +60,9 @@ const Planificacion = () => {
   const { activeTeamId } = useAuth();
   const { activeTeam } = useTeams();
   
-  const [theme, setTheme] = useState('dark');
+  const { darkMode } = useTheme();
+  const themeClass = darkMode ? 'dark' : 'light';
+
   const [activeTab, setActiveTab] = useState('MACROCICLO (PLANTILLA)');
   
   const [macroInfo, setMacroInfo] = useState(initialMacroData);
@@ -273,55 +276,31 @@ const Planificacion = () => {
   };
 
   return (
-    <div className={`ps-page ${theme}`}>
+    <div className={`ps-page ${themeClass}`}>
       {toast && (
         <div className={`ps-toast ${toast.type === 'error' ? 'ps-toast-error' : ''}`}>
           {toast.msg}
         </div>
       )}
 
-      {/* HEADER */}
-      <header className="ps-header">
-        <div className="ps-header-left">
-          <div className="ps-logo-icon">P</div>
-          <div className="ps-header-titles">
-            <h1>PLANIFICACIÓN</h1>
-            <h2>ESTRATÉGICA</h2>
-          </div>
+      {/* HEADER / TABS NAVIGATION */}
+      <div className="ps-tabs-container" style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
+        <div className="ps-tabs-list" style={{display: 'flex', gap: '8px'}}>
+          {['MACROCICLO (PLANTILLA)', 'MESOCICLO', 'MICROCICLO SEMANAL', 'OBJETIVOS'].map(tab => (
+            <button 
+              key={tab} 
+              className={`ps-tab ${activeTab === tab ? 'active' : ''}`}
+              onClick={() => setActiveTab(tab)}
+            >
+              {tab}
+            </button>
+          ))}
         </div>
-
-        <div className="ps-header-center">
-          <div className="ps-team-selector">
-            <img src={activeTeam?.logoUrl || "https://ui-avatars.com/api/?name=Team&background=random"} alt="team" />
-            <span>EQUIPO: {activeTeam?.name || 'SELECCIONA EQUIPO'}</span>
-            <span className="ps-chevron">▼</span>
-          </div>
-        </div>
-
-        <div className="ps-header-right">
-          <button 
-            className="ps-btn ps-btn-icon" 
-            onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-            title="Cambiar Modo"
-          >
-            {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
+        <div className="ps-header-actions" style={{display: 'flex', gap: '8px'}}>
+          <button className="ps-btn ps-btn-outline" onClick={() => generatePlanificacionPDF(macroInfo, microcycles, activeTeam)}>
+            <FileDown size={16}/> EXPORTAR PDF
           </button>
-          <button className="ps-btn ps-btn-outline"><Plus size={16}/> NUEVO PLAN</button>
-          <button className="ps-btn ps-btn-outline" onClick={() => generatePlanificacionPDF(macroInfo, microcycles, activeTeam)}><FileDown size={16}/> EXPORTAR PDF</button>
         </div>
-      </header>
-
-      {/* TABS NAVIGATION */}
-      <div className="ps-tabs-container">
-        {['MACROCICLO (PLANTILLA)', 'MESOCICLO', 'MICROCICLO SEMANAL', 'OBJETIVOS'].map(tab => (
-          <button 
-            key={tab} 
-            className={`ps-tab ${activeTab === tab ? 'active' : ''}`}
-            onClick={() => setActiveTab(tab)}
-          >
-            {tab}
-          </button>
-        ))}
       </div>
 
       {/* TAB CONTENT */}

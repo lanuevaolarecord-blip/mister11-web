@@ -505,33 +505,41 @@ const Planificacion = () => {
         {/* --- MESOCICLO TAB --- */}
         {activeTab === 'MESOCICLO' && (
           <div className="ps-meso-tab-layout">
-            <div className="ps-card ps-meso-controls">
-              <div className="ps-meso-header">
-                <label>SELECCIONAR MESOCICLO</label>
-                <select className="ps-select-input" value={selectedMesoId} onChange={e => setSelectedMesoId(Number(e.target.value))}>
+            <div className="ps-top-cards">
+              <div className="ps-card ps-meso-controls" style={{gridColumn: '1 / -1'}}>
+                <div className="ps-card-header">
+                  <Calendar size={18} className="ps-icon-cyan" />
+                  <h3>SELECCIONAR MESOCICLO</h3>
+                </div>
+                <select className="ps-select-input mb-3" value={selectedMesoId} onChange={e => setSelectedMesoId(Number(e.target.value))}>
                   {Array.from({ length: 10 }, (_, i) => (
                     <option key={i + 1} value={i + 1}>Mesociclo {i + 1} (Semanas {i * 4 + 1} a {i * 4 + 4})</option>
                   ))}
                 </select>
-              </div>
-              <div className="ps-meso-dates">
-                <div className="ps-form-group">
-                  <label>INICIO MESO</label>
-                  <input type="date" value={selectedMesoData.startDate} onChange={e => handleMesoConfigChange('startDate', e.target.value)} className="ps-input" />
+                
+                <div className="ps-meso-dates mt-4">
+                  <div className="ps-form-group">
+                    <label>INICIO MESO</label>
+                    <input type="date" value={selectedMesoData.startDate} onChange={e => handleMesoConfigChange('startDate', e.target.value)} className="ps-input" />
+                  </div>
+                  <div className="ps-form-group">
+                    <label>FIN MESO</label>
+                    <input type="date" value={selectedMesoData.endDate} onChange={e => handleMesoConfigChange('endDate', e.target.value)} className="ps-input" />
+                  </div>
                 </div>
-                <div className="ps-form-group">
-                  <label>FIN MESO</label>
-                  <input type="date" value={selectedMesoData.endDate} onChange={e => handleMesoConfigChange('endDate', e.target.value)} className="ps-input" />
+                
+                <div className="ps-form-group ps-full-w mt-4">
+                  <label>OBJETIVOS DEL MESOCICLO</label>
+                  <textarea value={selectedMesoData.objective} onChange={e => handleMesoConfigChange('objective', e.target.value)} className="ps-textarea" rows="3"/>
                 </div>
-              </div>
-              <div className="ps-form-group ps-full-w">
-                <label>OBJETIVOS DEL MESOCICLO</label>
-                <textarea value={selectedMesoData.objective} onChange={e => handleMesoConfigChange('objective', e.target.value)} className="ps-textarea" rows="3"/>
               </div>
             </div>
 
             <div className="ps-matrix-section">
-              <h3 className="ps-matrix-title">EDICIÓN DEL MESOCICLO {selectedMesoId}</h3>
+              <div className="ps-card-header mb-3" style={{borderBottom: '1px solid var(--border-color)', paddingBottom: '10px'}}>
+                <Grid size={18} className="ps-icon-cyan" />
+                <h3 className="ps-matrix-title" style={{margin: 0}}>EDICIÓN DEL MESOCICLO {selectedMesoId}</h3>
+              </div>
               <div className="ps-matrix-wrapper">
                 <div className="ps-matrix-table">
                   <div className="ps-row ps-row-header">
@@ -589,7 +597,7 @@ const Planificacion = () => {
         {activeTab === 'MICROCICLO SEMANAL' && (
           <div className="ps-micro-tab-layout">
             <div className="ps-week-grid">
-              {['L', 'M', 'X', 'J', 'V', 'S', 'D'].map((day, i) => (
+              {['LUN', 'MAR', 'MIÉ', 'JUE', 'VIE', 'SÁB', 'DOM'].map((day, i) => (
                 <div key={i} className="ps-day-card">
                   <div className="ps-day-header">{day}</div>
                   <div className="ps-day-body">
@@ -607,13 +615,13 @@ const Planificacion = () => {
                           <button onClick={() => handleRemoveSession(i)} className="ps-remove-btn">✕</button>
                         </div>
                       ) : (
-                        <button className="ps-assign-btn" onClick={() => handleAssignSession(i)}>+ Asignar</button>
+                        <button className="ps-assign-btn" onClick={() => handleAssignSession(i)}>+ Asignar Sesión</button>
                       )}
                     </div>
 
-                    <div className="ps-form-group">
-                      <label>CARGA (0-100)</label>
-                      <input type="number" min="0" max="100" placeholder="%" value={weekDays[i].load} onChange={e => updateDayField(i, 'load', e.target.value)} className="ps-input text-center" />
+                    <div className="ps-form-group" style={{marginTop: 'auto'}}>
+                      <label style={{textAlign: 'center', fontSize: '11px'}}>CARGA (0-100)</label>
+                      <input type="number" min="0" max="100" placeholder="%" value={weekDays[i].load} onChange={e => updateDayField(i, 'load', e.target.value)} className="ps-input text-center" style={{fontSize: '16px', fontWeight: 'bold'}} />
                     </div>
                   </div>
                 </div>
@@ -622,7 +630,7 @@ const Planificacion = () => {
             <div className="ps-footer mt-4">
               <div className="ps-footer-info">
                 <span className="ps-f-label">SEMANA ACTUAL</span>
-                <span className="ps-f-val">Estructura del Microciclo</span>
+                <span className="ps-f-val">Estructura del Microciclo Semanal</span>
               </div>
               <button className="ps-btn-save" onClick={handleSaveMicro} disabled={savingMicro}>
                 {savingMicro ? 'GUARDANDO...' : 'GUARDAR MICROCICLO'} <Save size={18} style={{marginLeft: '8px'}} />
@@ -634,18 +642,27 @@ const Planificacion = () => {
         {/* --- OBJETIVOS TAB --- */}
         {activeTab === 'OBJETIVOS' && (
           <div className="ps-obj-tab-layout">
-            <div className="ps-obj-grid">
+            <div className="ps-top-cards" style={{gridTemplateColumns: 'repeat(3, 1fr)'}}>
               <div className="ps-card">
-                <h3 className="ps-text-gold mb-3">INDIVIDUALES</h3>
-                <textarea className="ps-textarea" rows="10" value={objectives.individual} onChange={e => setObjectives({...objectives, individual: e.target.value})} />
+                <div className="ps-card-header mb-3">
+                  <User size={18} className="ps-icon-cyan" />
+                  <h3>INDIVIDUALES</h3>
+                </div>
+                <textarea className="ps-textarea" rows="12" value={objectives.individual} onChange={e => setObjectives({...objectives, individual: e.target.value})} style={{resize: 'none'}} />
               </div>
               <div className="ps-card">
-                <h3 className="ps-text-cyan mb-3">EQUIPO</h3>
-                <textarea className="ps-textarea" rows="10" value={objectives.team} onChange={e => setObjectives({...objectives, team: e.target.value})} />
+                <div className="ps-card-header mb-3">
+                  <Grid size={18} className="ps-icon-cyan" />
+                  <h3>EQUIPO</h3>
+                </div>
+                <textarea className="ps-textarea" rows="12" value={objectives.team} onChange={e => setObjectives({...objectives, team: e.target.value})} style={{resize: 'none'}} />
               </div>
               <div className="ps-card">
-                <h3 className="ps-text-green mb-3">COMPETICIÓN</h3>
-                <textarea className="ps-textarea" rows="10" value={objectives.competition} onChange={e => setObjectives({...objectives, competition: e.target.value})} />
+                <div className="ps-card-header mb-3">
+                  <Target size={18} className="ps-icon-cyan" />
+                  <h3>COMPETICIÓN</h3>
+                </div>
+                <textarea className="ps-textarea" rows="12" value={objectives.competition} onChange={e => setObjectives({...objectives, competition: e.target.value})} style={{resize: 'none'}} />
               </div>
             </div>
             <div className="ps-footer mt-4">

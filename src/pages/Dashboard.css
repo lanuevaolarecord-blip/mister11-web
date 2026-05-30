@@ -247,23 +247,21 @@
   justify-content: center;
 }
 
-.dash-gauge-svg { width: 100%; height: 100%; transform: rotate(135deg); position: absolute; top:0; left:0; }
+.dash-gauge-svg { width: 100%; height: 100%; transform: rotate(-90deg); position: absolute; top:0; left:0; }
 
+.dash-gauge-bg { fill: none; stroke: rgba(255,255,255,0.05); stroke-width: 10; }
 .dash-gauge-fill { 
   fill: none; 
   stroke: url(#cyanGoldGrad); 
-  stroke-width: 8; 
+  stroke-width: 10; 
   stroke-linecap: round; 
-  stroke-dasharray: 264; /* ~2 * pi * r (r=42) */
+  stroke-dasharray: 251;
   transition: stroke-dashoffset 1s ease;
   filter: drop-shadow(0 0 6px var(--dash-cyan));
 }
-.dash-gauge-fill.players-gauge {
-  stroke-dasharray: 200 264; /* Creates the gap at the bottom */
-}
-.dash-gauge-fill.sessions-gauge {
+.dash-gauge-fill.green-grad {
   stroke: url(#cyanGreenGrad);
-  stroke-dasharray: 180 238; /* For r=38 */
+  filter: drop-shadow(0 0 6px var(--dash-green));
 }
 
 .dash-gauge-val {
@@ -444,66 +442,80 @@
   letter-spacing: 1px;
 }
 
-/* Hexagonal Prism Bars */
-.hex-prism {
+/* Neon Pillars (Replaces broken 3D Hexagons) */
+.neon-bar-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 40px;
+  height: 100%;
+  justify-content: flex-end;
+  position: relative;
+}
+
+.neon-bar-tooltip {
+  position: absolute;
+  top: -25px;
+  font-family: 'Inter', sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  color: #FFF;
+}
+
+.neon-pillar {
   position: relative;
   width: 100%;
+  background: linear-gradient(to top, var(--neon-dark), var(--neon-light));
+  border-top: 3px solid var(--neon-bright);
+  border-radius: 4px 4px 0 0;
   transition: height 0.5s ease;
-  z-index: 1;
+  box-shadow: inset 0 0 10px var(--neon-shadow), 0 -5px 15px var(--neon-glow);
 }
 
-.hex-face {
+.neon-pillar-inner {
   position: absolute;
-  bottom: 0;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: linear-gradient(90deg, rgba(255,255,255,0.1) 0%, transparent 50%, rgba(0,0,0,0.2) 100%);
 }
 
-.hex-face.top {
-  width: 100%;
-  height: 15px;
-  background: var(--hex-top);
-  top: -15px;
-  clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%);
+.neon-pillar.cyan {
+  --neon-dark: rgba(0, 163, 181, 0.2);
+  --neon-light: rgba(0, 240, 255, 0.6);
+  --neon-bright: #00F0FF;
+  --neon-shadow: rgba(0,240,255,0.3);
+  --neon-glow: rgba(0,240,255,0.4);
 }
-
-.hex-face.front-left {
-  width: 50%;
-  height: 100%;
-  left: 0;
-  background: linear-gradient(to bottom, var(--hex-fl-light), var(--hex-fl-dark));
-  transform: skewY(-15deg);
-  transform-origin: top right;
+.neon-pillar.gold {
+  --neon-dark: rgba(212, 144, 0, 0.2);
+  --neon-light: rgba(255, 192, 0, 0.6);
+  --neon-bright: #FFC000;
+  --neon-shadow: rgba(255,192,0,0.3);
+  --neon-glow: rgba(255,192,0,0.4);
 }
-
-.hex-face.front-right {
-  width: 50%;
-  height: 100%;
-  right: 0;
-  background: linear-gradient(to bottom, var(--hex-fr-light), var(--hex-fr-dark));
-  transform: skewY(15deg);
-  transform-origin: top left;
+.neon-pillar.purple {
+  --neon-dark: rgba(120, 16, 168, 0.2);
+  --neon-light: rgba(181, 53, 246, 0.6);
+  --neon-bright: #B535F6;
+  --neon-shadow: rgba(181,53,246,0.3);
+  --neon-glow: rgba(181,53,246,0.4);
 }
-
-/* Colors mapped from the image */
-.hex-prism.cyan {
-  --hex-top: #A0FFFF;
-  --hex-fl-light: #00F0FF; --hex-fl-dark: #008090;
-  --hex-fr-light: #00C0D0; --hex-fr-dark: #005060;
-}
-.hex-prism.gold {
-  --hex-top: #FFE580;
-  --hex-fl-light: #FFC000; --hex-fl-dark: #A07000;
-  --hex-fr-light: #D4A000; --hex-fr-dark: #705000;
-}
-.hex-prism.purple {
-  --hex-top: #DF90FF;
-  --hex-fl-light: #B535F6; --hex-fl-dark: #601090;
-  --hex-fr-light: #9020D0; --hex-fr-dark: #400060;
-}
-.hex-prism.empty {
-  --hex-top: transparent;
-  --hex-fl-light: transparent; --hex-fl-dark: transparent;
-  --hex-fr-light: transparent; --hex-fr-dark: transparent;
+.neon-pillar.empty {
+  background: transparent;
+  border-top: none;
   border-bottom: 1px dashed rgba(255,255,255,0.2);
+  box-shadow: none;
+}
+
+.neon-bar-label {
+  position: absolute;
+  bottom: -30px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--dash-text-muted);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
 }
 
 .bar-pill-dots {

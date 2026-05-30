@@ -186,12 +186,8 @@ const Dashboard = () => {
                     <stop offset="100%" stopColor="#00F0FF" />
                   </linearGradient>
                 </defs>
-                {/* Outer Track */}
-                <circle cx="50" cy="50" r="42" fill="none" stroke="rgba(255,255,255,0.05)" strokeWidth="6" />
-                {/* Inner Track */}
-                <circle cx="50" cy="50" r="34" fill="none" stroke="rgba(255,255,255,0.02)" strokeWidth="12" />
-                
-                <circle cx="50" cy="50" r="42" className="dash-gauge-fill players-gauge" style={{ strokeDashoffset: 264 - (264 * (players.length / 30)) }} />
+                <circle cx="50" cy="50" r="40" className="dash-gauge-bg" />
+                <circle cx="50" cy="50" r="40" className="dash-gauge-fill" style={{ strokeDashoffset: Math.max(0, 251 - (251 * (Math.min(players.length, 30) / 30))) }} />
               </svg>
               <div className="dash-gauge-val">{players.length}</div>
             </div>
@@ -218,8 +214,8 @@ const Dashboard = () => {
                     <stop offset="100%" stopColor="#00FF66" />
                   </linearGradient>
                 </defs>
-                <circle cx="50" cy="50" r="38" fill="none" stroke="rgba(255,255,255,0.05)" strokeWidth="12" />
-                <circle cx="50" cy="50" r="38" className="dash-gauge-fill sessions-gauge" style={{ strokeDashoffset: 238 - (238 * (sessions.length / 20)) }} />
+                <circle cx="50" cy="50" r="40" className="dash-gauge-bg" />
+                <circle cx="50" cy="50" r="40" className="dash-gauge-fill green-grad" style={{ strokeDashoffset: Math.max(0, 251 - (251 * (Math.min(sessions.length, 30) / 30))) }} />
               </svg>
               <div className="dash-gauge-val">{sessions.length}</div>
             </div>
@@ -297,14 +293,12 @@ const Dashboard = () => {
               if (d.val === 0) barColorClass = 'empty';
 
               return (
-                <div key={i} className="bar-wrapper-3d">
-                  <div className="bar-tooltip-3d">{d.val}%</div>
-                  <div className={`hex-prism ${barColorClass}`} style={{ height: `${Math.max(5, d.val)}%` }}>
-                    <div className="hex-face top"></div>
-                    <div className="hex-face front-left"></div>
-                    <div className="hex-face front-right"></div>
+                <div key={i} className="neon-bar-wrapper">
+                  <div className="neon-bar-tooltip">{d.val}%</div>
+                  <div className={`neon-pillar ${barColorClass}`} style={{ height: `${Math.max(5, d.val)}%` }}>
+                    <div className="neon-pillar-inner"></div>
                   </div>
-                  <div className="bar-label-3d">
+                  <div className="neon-bar-label">
                     <div className={`bar-pill-dots ${barColorClass}`}>
                       <span className={d.val > 0 ? 'active' : ''}></span>
                       <span className={d.val > 30 ? 'active' : ''}></span>

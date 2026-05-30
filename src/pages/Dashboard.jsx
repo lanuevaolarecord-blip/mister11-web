@@ -150,8 +150,8 @@ const Dashboard = () => {
           <div className="trial-text-info">
             <h3>
               {isDeveloper 
-                ? '🛡️ Acceso de Desarrollador · Míster11 PRO' 
-                : (isPro ? '👑 Míster11 PRO · Prueba Gratuita Activa' : '⭐ Míster11 Plan Gratuito (Limitado)')}
+                ? 'Acceso de Desarrollador - Mister11 PRO' 
+                : (isPro ? 'Míster11 PRO - Prueba Gratuita Activa' : 'Míster11 Plan Gratuito (Limitado)')}
             </h3>
             <p>
               {isDeveloper 
@@ -164,31 +164,14 @@ const Dashboard = () => {
         </div>
         <div className="trial-banner-actions">
           {isDeveloper ? (
-            <span style={{
-              fontSize: '0.8rem',
-              fontWeight: 'bold',
-              color: '#4CAF7D',
-              textTransform: 'uppercase',
-              padding: '10px 16px',
-              backgroundColor: 'rgba(76, 175, 125, 0.12)',
-              borderRadius: '8px',
-              border: '1px solid rgba(76, 175, 125, 0.25)',
-              display: 'inline-flex',
-              alignItems: 'center',
-              minHeight: '48px'
-            }}>
+            <button className="btn-toggle-plan outline" style={{ pointerEvents: 'none', borderColor: '#4CAF7D', color: '#4CAF7D' }}>
               ✓ Desarrollador Ilimitado
-            </span>
+            </button>
           ) : (
             <>
               <button className={`btn-toggle-plan ${isPro ? 'outline' : 'solid'}`} onClick={toggleSimulatedPlan}>
                 {isPro ? 'Probar Plan Gratuito' : 'Activar Prueba PRO (7 días)'}
               </button>
-              {isPro && (
-                <button className="btn-reset-trial" onClick={resetTrial} title="Reiniciar periodo de prueba a 7 días">
-                  🔄 Reiniciar
-                </button>
-              )}
             </>
           )}
         </div>
@@ -196,79 +179,103 @@ const Dashboard = () => {
 
       {/* Stats Grid */}
       <div className="stats-grid-dash">
-        {stats.map((s, i) => {
-          if (!s) return null;
-          return (
-            <div 
-              key={i} 
-              className="stat-card-dash"
-              onClick={() => navigate(s.route)}
-            >
-              <div className="stat-icon-dash" style={{ backgroundColor: `${s.color}15`, color: s.color }}>
-                {s.icon}
-              </div>
-              <div className="stat-content-dash">
-                <span className="stat-label-dash">{s.label}</span>
-                <span className={`stat-value-dash ${s.label === 'Próximo Rival' && s.value === 'Sin rival' ? 'no-rival' : ''}`}>{s.value}</span>
-              </div>
+        {/* Jugadores Radial Gauge */}
+        <div className="stat-card-dash" onClick={() => navigate('/equipo')}>
+          <div className="stat-header">JUGADORES</div>
+          <div className="stat-gauge-row">
+            <div className="dash-gauge">
+              <svg viewBox="0 0 100 100" className="dash-gauge-svg">
+                <circle cx="50" cy="50" r="40" className="dash-gauge-bg" />
+                <circle cx="50" cy="50" r="40" className="dash-gauge-fill" style={{ strokeDashoffset: 251 - (251 * (players.length / 30)) }} />
+              </svg>
+              <div className="dash-gauge-val">{players.length}</div>
             </div>
-          );
-        })}
+            <div className="stat-extras">
+              <div className="stat-extra-item"><span style={{color: '#4299E1'}}>✖</span> DEL</div>
+              <div className="stat-extra-item"><span style={{color: '#48BB78'}}>■</span> POR</div>
+              <div className="stat-extra-item"><span style={{color: '#F56565'}}>🛡</span> DEF</div>
+            </div>
+          </div>
+        </div>
+
+        {/* Sesiones Radial Gauge */}
+        <div className="stat-card-dash" onClick={() => navigate('/sesiones')}>
+          <div className="stat-header">SESIONES</div>
+          <div className="stat-gauge-row">
+            <div className="dash-gauge">
+              <svg viewBox="0 0 100 100" className="dash-gauge-svg">
+                <circle cx="50" cy="50" r="40" className="dash-gauge-bg" />
+                <circle cx="50" cy="50" r="40" className="dash-gauge-fill" style={{ strokeDashoffset: 251 - (251 * (sessions.length / 20)) }} />
+              </svg>
+              <div className="dash-gauge-val">{sessions.length}</div>
+            </div>
+            <div className="stat-extras">
+              <div className="stat-extra-item"><span style={{color: '#4299E1'}}>●</span> Sesi.</div>
+              <div className="stat-extra-item"><span style={{color: '#48BB78'}}>💼</span> Trabajo</div>
+              <div className="stat-extra-item"><span style={{color: '#ED8936'}}>⚙</span> Compet.</div>
+            </div>
+          </div>
+        </div>
+
+        {/* Próximo Rival */}
+        <div className="stat-card-dash" onClick={() => navigate('/partidos')}>
+          <div className="stat-header">PRÓXIMO RIVAL</div>
+          <div className="stat-simple-row">
+            <div className="stat-simple-val" style={{fontSize: '28px'}}>{nextMatch ? (nextMatch.rival || '').split(' ')[0] || 'Sin rival' : 'Sin rival'}</div>
+            <Trophy size={42} className="stat-simple-icon" />
+          </div>
+        </div>
+
+        {/* Partidos */}
+        <div className="stat-card-dash" onClick={() => navigate('/partidos')}>
+          <div className="stat-header">PARTIDOS</div>
+          <div className="stat-simple-row">
+            <div className="stat-simple-val">{matches.length}</div>
+            <Calendar size={42} className="stat-simple-icon" />
+          </div>
+        </div>
       </div>
 
       <div className="dashboard-content">
-        {/* Health Alerts */}
-        {!alertsLoading && alerts.length > 0 && (
-          <div className="dash-section" style={{ width: '100%', marginBottom: '20px' }}>
-            <div className="section-header">
-              <h2 style={{ color: '#EF4444', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <span style={{ fontSize: '1.2rem' }}>⚠️</span> Alertas de Salud (Riesgo Alto)
-              </h2>
-            </div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '15px' }}>
-              {alerts.map(alert => (
-                <div key={alert.id} style={{ padding: '15px', background: '#FEF2F2', borderLeft: '4px solid #EF4444', borderRadius: '8px', display: 'flex', flexDirection: 'column', gap: '5px' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <strong style={{ color: '#991B1B', fontSize: '1.05rem' }}>{alert.playerName}</strong>
-                    <span style={{ fontSize: '0.75rem', color: '#DC2626', fontWeight: 'bold', background: '#FEE2E2', padding: '2px 8px', borderRadius: '12px' }}>
-                      {alert.type === 'rpe' ? 'RPE Alto' : 'Bienestar Bajo'}
-                    </span>
-                  </div>
-                  <span style={{ fontSize: '0.9rem', color: '#B91C1C' }}>{alert.message}</span>
-                  <span style={{ fontSize: '0.75rem', color: '#EF4444', marginTop: '5px' }}>{new Date(alert.date).toLocaleDateString()}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Weekly Load Chart */}
-        <div className="dash-section chart-section">
+        {/* Weekly Load Chart (3D) */}
+        <div className="dash-section">
           <div className="section-header">
-            <h2>Carga de Trabajo Estimada</h2>
+            <h2>CARGA DE TRABAJO ESTIMADA</h2>
             <select 
               className="dash-select" 
               value={workloadPeriod}
               onChange={(e) => setWorkloadPeriod(e.target.value)}
+              style={{background: 'transparent', color: 'var(--dash-text-muted)', border: 'none', fontWeight: 'bold'}}
             >
               <option value="Esta sesión">Esta sesión</option>
               <option value="Esta semana">Esta semana</option>
               <option value="Este microciclo">Este microciclo</option>
               <option value="Este mesociclo">Este mesociclo</option>
-              <option value="Este macrociclo">Este macrociclo</option>
             </select>
           </div>
-          <div className="bar-chart">
+          
+          <div className="chart-container-3d">
+            <div className="workload-center-gauge">
+              <div className="wl-circle">
+                {Math.round(workloadData.reduce((acc, curr) => acc + curr.val, 0) / Math.max(1, workloadData.length))}
+              </div>
+              <div className="wl-label">Team Workload Index</div>
+            </div>
+
             {workloadData.map((d, i) => {
               if (!d) return null;
+              let barColorClass = 'cyan';
+              if (d.val >= 80) barColorClass = 'purple';
+              else if (d.val >= 50) barColorClass = 'gold';
+
               return (
-                <div key={i} className="bar-wrapper">
-                   <div className="bar-container">
-                    <div className={`bar-fill ${getBarLevelClass(d.val)}`} style={{ height: `${d.val}%` }}>
-                      <div className="bar-tooltip">{d.val}%</div>
-                    </div>
+                <div key={i} className="bar-wrapper-3d">
+                  <div className="bar-tooltip-3d">{d.val}%</div>
+                  <div className={`bar-prism ${barColorClass}`} style={{ height: `${Math.max(5, d.val)}%` }}></div>
+                  <div className="bar-label-3d">
+                    <div className="bar-label-dot" style={{background: `var(--dash-${barColorClass === 'purple' ? 'accent' : barColorClass})`}}></div>
+                    {d.day}
                   </div>
-                  <span className="bar-label">{d.day}</span>
                 </div>
               );
             })}
@@ -276,28 +283,30 @@ const Dashboard = () => {
         </div>
 
         {/* Upcoming Sessions */}
-        <div className="dash-section sessions-section">
+        <div className="dash-section">
           <div className="section-header">
-            <h2>Próximas Sesiones</h2>
+            <h2>PRÓXIMAS SESIONES</h2>
             <button className="btn-text" onClick={() => navigate('/sesiones')}>Ver todas</button>
           </div>
           <div className="sessions-list-dash">
             {upcomingSessions.length === 0 ? (
-              <div className="empty-dash-list">No hay sesiones próximas.</div>
+              <div style={{color: 'var(--dash-text-muted)'}}>No hay sesiones próximas.</div>
             ) : (
               upcomingSessions.map(s => {
                 if (!s) return null;
+                const time = s.time || '15:45';
+                const duration = s.duration ? `${s.duration} min` : '90 min';
                 return (
                   <div key={s.id} className="session-item-dash" onClick={() => navigate('/sesiones')}>
-                    <div className={`session-indicator ${(s.category || '').toLowerCase()}`} />
+                    <div className="session-time">{time}</div>
                     <div className="session-info-dash">
                       <strong>{s.title || 'Sin título'}</strong>
-                      <span>{s.date || ''} · {s.time || ''}</span>
+                      <span>
+                        <span style={{color: 'var(--dash-accent)', marginRight: '4px'}}>▲</span>
+                        {duration}
+                      </span>
                     </div>
-                    <div className="session-badges">
-                      <span className="badge-dash">{s.category || ''}</span>
-                      <span className={`badge-dash intensity ${(s.intensity || '').toLowerCase()}`}>{s.intensity || ''}</span>
-                    </div>
+                    <ClipboardList size={32} className="session-item-icon" />
                   </div>
                 );
               })
@@ -306,60 +315,33 @@ const Dashboard = () => {
         </div>
       </div>
 
-      {/* Widget Ejercicios Pendientes */}
-      {pendingExercisePlayers.length > 0 && (
-        <div className="quick-actions-dash" style={{ background: '#FFFBEB', border: '1px solid #FDE68A' }}>
-          <h2 style={{ color: '#92400E', display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <span>🏋️</span> Ejercicios Pendientes Hoy
-          </h2>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px', marginTop: '12px' }}>
-            {pendingExercisePlayers.map(player => (
-              <div
-                key={player.id}
-                onClick={() => navigate('/equipo')}
-                style={{
-                  display: 'flex', alignItems: 'center', gap: '10px',
-                  background: 'white', borderRadius: '10px', padding: '10px 16px',
-                  cursor: 'pointer', border: '1px solid #FCD34D', boxShadow: '0 2px 6px rgba(0,0,0,0.05)',
-                  transition: 'transform 0.15s'
-                }}
-              >
-                <div style={{
-                  width: '36px', height: '36px', borderRadius: '50%', background: '#FDE68A',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  fontSize: '0.85rem', fontWeight: 'bold', color: '#92400E'
-                }}>
-                  {(player.name || '?').charAt(0).toUpperCase()}
-                </div>
-                <div>
-                  <div style={{ fontWeight: '600', fontSize: '0.9rem', color: '#111827' }}>{player.name}</div>
-                  <div style={{ fontSize: '0.75rem', color: '#B45309' }}>Pendiente de rutina diaria</div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
       {/* Quick Actions */}
       <div className="quick-actions-dash">
-        <h2>Acceso Rápido</h2>
+        <h2>ACCESO RÁPIDO</h2>
         <div className="actions-grid-dash">
           <button className="action-btn-dash" onClick={() => navigate('/pizarra')}>
-            <Presentation size={24} color="#4CAF7D" />
-            Pizarra Táctica
+            <div className="action-icon-circle">
+              <Presentation size={24} />
+            </div>
+            PIZARRA TÁCTICA
           </button>
           <button className="action-btn-dash" onClick={() => navigate('/sesiones')}>
-            <FilePlus size={24} color="#4CAF7D" />
-            Crear Sesión
+            <div className="action-icon-circle">
+              <FilePlus size={24} />
+            </div>
+            CREAR SESIÓN
           </button>
           <button className="action-btn-dash" onClick={() => navigate('/equipo')}>
-            <Users size={24} color="#4CAF7D" />
-            Mi Equipo
+            <div className="action-icon-circle">
+              <Users size={24} />
+            </div>
+            MI EQUIPO
           </button>
           <button className="action-btn-dash" onClick={() => navigate('/ia-generadora')}>
-            <Sparkles size={24} color="#4CAF7D" />
-            IA Generator
+            <div className="action-icon-circle">
+              <Sparkles size={24} />
+            </div>
+            IA GENERATOR
           </button>
         </div>
       </div>

@@ -17,7 +17,8 @@ import {
   FilePlus, 
   Sparkles,
   Crown,
-  Info
+  Info,
+  Shield
 } from 'lucide-react';
 import { t } from '../i18n/translations';
 import './Dashboard.css';

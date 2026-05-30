@@ -30,7 +30,6 @@ const Dashboard = () => {
   const { players } = usePlayers(activeTeamId);
   const { sessions } = useSessions(activeTeamId);
   const { matches } = useMatches(activeTeamId);
-  const { isPro, toggleSimulatedPlan, simulatedPlan, trialDaysRemaining, resetTrial, isDeveloper } = usePlan();
   const { alerts, loading: alertsLoading } = useHealthAlerts();
   const { playerPlans, teamPlans } = usePlayerPlans(activeTeamId);
   const [workloadPeriod, setWorkloadPeriod] = useState('Esta semana');
@@ -181,13 +180,18 @@ const Dashboard = () => {
             <div className="dash-gauge">
               <svg viewBox="0 0 100 100" className="dash-gauge-svg">
                 <defs>
-                  <linearGradient id="cyanGoldGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-                    <stop offset="0%" stopColor="var(--dash-cyan)" />
-                    <stop offset="100%" stopColor="var(--dash-gold)" />
+                  <linearGradient id="cyanGoldGrad" x1="0%" y1="100%" x2="100%" y2="0%">
+                    <stop offset="0%" stopColor="#00FF66" />
+                    <stop offset="50%" stopColor="#FFC000" />
+                    <stop offset="100%" stopColor="#00F0FF" />
                   </linearGradient>
                 </defs>
-                <circle cx="50" cy="50" r="40" className="dash-gauge-bg" />
-                <circle cx="50" cy="50" r="40" className="dash-gauge-fill" style={{ strokeDashoffset: 251 - (251 * (players.length / 30)) }} />
+                {/* Outer Track */}
+                <circle cx="50" cy="50" r="42" fill="none" stroke="rgba(255,255,255,0.05)" strokeWidth="6" />
+                {/* Inner Track */}
+                <circle cx="50" cy="50" r="34" fill="none" stroke="rgba(255,255,255,0.02)" strokeWidth="12" />
+                
+                <circle cx="50" cy="50" r="42" className="dash-gauge-fill players-gauge" style={{ strokeDashoffset: 264 - (264 * (players.length / 30)) }} />
               </svg>
               <div className="dash-gauge-val">{players.length}</div>
             </div>
@@ -209,13 +213,13 @@ const Dashboard = () => {
             <div className="dash-gauge">
               <svg viewBox="0 0 100 100" className="dash-gauge-svg">
                 <defs>
-                  <linearGradient id="cyanGreenGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-                    <stop offset="0%" stopColor="var(--dash-cyan)" />
-                    <stop offset="100%" stopColor="var(--dash-green)" />
+                  <linearGradient id="cyanGreenGrad" x1="0%" y1="100%" x2="100%" y2="0%">
+                    <stop offset="0%" stopColor="#00F0FF" />
+                    <stop offset="100%" stopColor="#00FF66" />
                   </linearGradient>
                 </defs>
-                <circle cx="50" cy="50" r="40" className="dash-gauge-bg" />
-                <circle cx="50" cy="50" r="40" className="dash-gauge-fill green-grad" style={{ strokeDashoffset: 251 - (251 * (sessions.length / 20)) }} />
+                <circle cx="50" cy="50" r="38" fill="none" stroke="rgba(255,255,255,0.05)" strokeWidth="12" />
+                <circle cx="50" cy="50" r="38" className="dash-gauge-fill sessions-gauge" style={{ strokeDashoffset: 238 - (238 * (sessions.length / 20)) }} />
               </svg>
               <div className="dash-gauge-val">{sessions.length}</div>
             </div>
@@ -235,7 +239,7 @@ const Dashboard = () => {
               <Trophy size={16} color="var(--dash-green)" />
               {nextMatch ? (nextMatch.rival || '').split(' ')[0] || 'fomento' : 'fomento'}
             </div>
-            <div className="rival-icon-big" style={{marginLeft: '15px'}} />
+            <div className="rival-icon-3d">🏆</div>
           </div>
         </div>
 
@@ -295,9 +299,13 @@ const Dashboard = () => {
               return (
                 <div key={i} className="bar-wrapper-3d">
                   <div className="bar-tooltip-3d">{d.val}%</div>
-                  <div className={`bar-prism ${barColorClass}`} style={{ height: `${Math.max(5, d.val)}%` }}></div>
+                  <div className={`hex-prism ${barColorClass}`} style={{ height: `${Math.max(5, d.val)}%` }}>
+                    <div className="hex-face top"></div>
+                    <div className="hex-face front-left"></div>
+                    <div className="hex-face front-right"></div>
+                  </div>
                   <div className="bar-label-3d">
-                    <div className="bar-label-dots" style={{'--dash-dot-color': `var(--dash-${barColorClass === 'empty' ? 'text-muted' : barColorClass})`}}>
+                    <div className={`bar-pill-dots ${barColorClass}`}>
                       <span className={d.val > 0 ? 'active' : ''}></span>
                       <span className={d.val > 30 ? 'active' : ''}></span>
                       <span className={d.val > 60 ? 'active' : ''}></span>
@@ -339,7 +347,9 @@ const Dashboard = () => {
                       <strong>{title}</strong>
                       <span>{duration}</span>
                     </div>
-                    <IconComponent size={42} strokeWidth={1} className="session-item-icon" />
+                    <div className="session-card-icon-box">
+                      <IconComponent size={32} strokeWidth={1} />
+                    </div>
                   </div>
                 );
               })

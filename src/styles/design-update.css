@@ -353,3 +353,176 @@
   text-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
 
+/* PLANIFICACION V2 SPECIFIC CLASSES */
+.planificacion-v2-wrapper {
+  position: relative;
+  min-height: 100vh;
+  padding: 20px;
+  background-color: var(--bg-app);
+  /* Abstract soccer pitch background + graph dots */
+  background-image: 
+    radial-gradient(circle at 50% 50%, rgba(212, 168, 67, 0.05) 0%, transparent 40%),
+    linear-gradient(rgba(0, 0, 0, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 0, 0, 0.03) 1px, transparent 1px),
+    url('data:image/svg+xml;utf8,<svg width="100%" height="100%" viewBox="0 0 800 400" xmlns="http://www.w3.org/2000/svg"><rect width="800" height="400" fill="none" stroke="%231B3A2D" stroke-width="1" stroke-opacity="0.1"/><circle cx="400" cy="200" r="50" fill="none" stroke="%231B3A2D" stroke-width="1" stroke-opacity="0.1"/><line x1="400" y1="0" x2="400" y2="400" stroke="%231B3A2D" stroke-width="1" stroke-opacity="0.1"/></svg>');
+  background-size: 100% 100%, 40px 40px, 40px 40px, 100% 100%;
+  background-position: center, center top, center top, center;
+  background-attachment: fixed;
+  color: var(--text-primary);
+  font-family: var(--font-body);
+}
+
+.ps-glass-card {
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+  border-radius: 12px;
+  padding: 20px;
+  position: relative;
+  z-index: 2;
+}
+
+/* Rediseño de cabecera de macro-ciclo */
+.ps-mesociclo-timeline-v2 {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 16px;
+  position: relative;
+}
+
+.ps-timeline-track {
+  position: relative;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+
+.ps-timeline-line {
+  position: absolute;
+  left: 100px; /* offset for label */
+  right: 0;
+  height: 2px;
+  background: var(--border-light);
+  z-index: 1;
+}
+
+.ps-timeline-point {
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  border: 2px solid #FFF;
+  z-index: 2;
+  top: 50%;
+  transform: translateY(-50%);
+  box-shadow: 0 0 0 2px var(--bg-card);
+}
+
+.ps-timeline-label {
+  width: 90px;
+  font-size: 10px;
+  font-weight: bold;
+  color: var(--text-secondary);
+}
+
+/* Tabla Matrix V2 (Oscura) */
+.ps-matrix-table-v2 {
+  display: flex;
+  flex-direction: column;
+  background: #111B21;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+  border: 1px solid #23343C;
+}
+
+.ps-matrix-table-v2 .ps-row {
+  display: flex;
+  border-bottom: 1px solid #1A2830;
+}
+
+.ps-matrix-table-v2 .ps-row:last-child {
+  border-bottom: none;
+}
+
+.ps-matrix-table-v2 .ps-cell {
+  flex: 1;
+  min-width: 45px;
+  padding: 6px 2px;
+  text-align: center;
+  font-size: 11px;
+  border-right: 1px solid #1A2830;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  color: #8C9EA8;
+}
+
+.ps-matrix-table-v2 .ps-cell input {
+  width: 100%;
+  background: transparent;
+  border: none;
+  text-align: center;
+  color: #FFF;
+  font-size: 11px;
+  font-weight: 500;
+  outline: none;
+}
+
+.ps-matrix-table-v2 .ps-cell-sticky {
+  flex: 0 0 120px;
+  justify-content: flex-start;
+  padding-left: 12px;
+  background: #162228;
+  font-weight: bold;
+  color: #A0B2BC;
+  border-right: 2px solid #0D161A;
+  position: sticky;
+  left: 0;
+  z-index: 5;
+}
+
+.ps-matrix-table-v2 .ps-row-header .ps-cell {
+  background: #1D2A32;
+  color: #D4A843;
+  font-weight: bold;
+  font-size: 10px;
+}
+
+.ps-matrix-table-v2 .ps-row-header .ps-cell-sticky {
+  background: #162228;
+}
+
+/* Colores de celdas de datos Matrix V2 */
+.ps-matrix-table-v2 .bg-dark-teal {
+  background: #132729;
+}
+.ps-matrix-table-v2 .bg-dark-teal-alt {
+  background: #183133;
+}
+.ps-matrix-table-v2 .bg-dark-gold {
+  background: #2D2614;
+}
+.ps-matrix-table-v2 .text-gold {
+  color: #D4A843 !important;
+}
+
+.ps-graph-bg-container {
+  position: absolute;
+  top: 150px;
+  left: 0;
+  right: 0;
+  height: 400px;
+  opacity: 0.15;
+  pointer-events: none;
+  z-index: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow: hidden;
+}
+

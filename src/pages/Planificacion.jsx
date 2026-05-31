@@ -284,11 +284,13 @@ const Planificacion = () => {
       )}
 
       {/* HEADER / TABS NAVIGATION */}
-      <header className="page-header" style={{ marginBottom: '24px' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-          <h1 className="page-title" style={{ margin: 0 }}>PLANIFICACIÓN TÁCTICA</h1>
-          <button className="btn-outline" onClick={() => generatePlanificacionPDF(macroInfo, microcycles, activeTeam)}>
-            <FileDown size={16}/> EXPORTAR PDF
+      <header className="page-header" style={{ position: 'relative', zIndex: 2 }}>
+        <div style={{ marginBottom: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+          <div>
+            <h1 className="page-title">PLANIFICACIÓN TÁCTICA</h1>
+          </div>
+          <button className="btn-secondary" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <FileText size={16} /> EXPORTAR PDF
           </button>
         </div>
         
@@ -310,49 +312,36 @@ const Planificacion = () => {
         
         {/* --- MACROCICLO TAB --- */}
         {activeTab === 'MACROCICLO (PLANTILLA)' && (
-          <div className="ps-macro-tab-layout">
+          <div className="ps-macro-tab-layout" style={{ position: 'relative', zIndex: 2 }}>
             <div className="ps-top-cards" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '20px', marginBottom: '24px' }}>
-              <div className="card-base" style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <Settings size={18} color="var(--accent-green)" />
-                  <h3 style={{ margin: 0, fontSize: '14px', fontWeight: 'bold', color: 'var(--text-primary)' }}>TEMPORADA</h3>
-                </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'var(--bg-app)', padding: '12px', borderRadius: '8px', border: '1px solid var(--border-light)' }}>
-                  <Calendar size={16} color="var(--text-secondary)" />
-                  <input type="date" value={macroInfo.startDate} onChange={e => setMacroInfo({...macroInfo, startDate: e.target.value})} style={{ border: 'none', background: 'transparent', color: 'var(--text-primary)', outline: 'none', width: '100%' }} />
-                  <span style={{ color: 'var(--text-secondary)' }}>→</span>
-                  <input type="date" value={macroInfo.endDate} onChange={e => setMacroInfo({...macroInfo, endDate: e.target.value})} style={{ border: 'none', background: 'transparent', color: 'var(--text-primary)', outline: 'none', width: '100%' }} />
-                </div>
-                <div>
-                  <h4 style={{ margin: '0 0 12px 0', fontSize: '12px', color: 'var(--text-secondary)' }}>DÍAS DE ENTRENAMIENTO</h4>
-                  <div style={{ display: 'flex', gap: '8px' }}>
-                    {DAYS_LABELS_SHORT.map((day, idx) => (
-                      <button key={idx} style={{ flex: 1, padding: '8px 0', borderRadius: '8px', border: macroInfo.trainingDays.includes(idx) ? '1px solid var(--accent-green)' : '1px solid var(--border-light)', background: macroInfo.trainingDays.includes(idx) ? 'var(--accent-green-light)' : 'var(--bg-app)', color: macroInfo.trainingDays.includes(idx) ? 'var(--accent-green)' : 'var(--text-secondary)', fontWeight: 'bold', cursor: 'pointer' }} onClick={() => toggleDay(idx)}>
-                        {day}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              </div>
-
-              <div className="card-base" style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <Target size={18} color="var(--accent-green)" />
-                  <h3 style={{ margin: 0, fontSize: '14px', fontWeight: 'bold', color: 'var(--text-primary)' }}>OBJETIVO GENERAL</h3>
-                </div>
-                <div style={{ flex: 1, background: 'var(--bg-app)', borderRadius: '8px', border: '1px solid var(--border-light)', padding: '12px', display: 'flex', position: 'relative' }}>
-                  <textarea value={macroInfo.objective} onChange={e => setMacroInfo({...macroInfo, objective: e.target.value})} style={{ width: '100%', height: '100%', border: 'none', background: 'transparent', color: 'var(--text-primary)', resize: 'none', outline: 'none' }} />
-                  <span style={{ position: 'absolute', bottom: '12px', right: '12px', fontSize: '24px', opacity: 0.2 }}>♟️</span>
-                </div>
-              </div>
-
-              <div className="card-base" style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              <div className="ps-glass-card" style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                   <Grid size={18} color="var(--accent-green)" />
                   <h3 style={{ margin: 0, fontSize: '14px', fontWeight: 'bold', color: 'var(--text-primary)' }}>CATEGORÍA</h3>
                 </div>
                 <input type="text" value={macroInfo.category} onChange={e => setMacroInfo({...macroInfo, category: e.target.value})} style={{ padding: '12px', borderRadius: '8px', border: '1px solid var(--border-light)', background: 'var(--bg-app)', color: 'var(--text-primary)', outline: 'none' }} />
                 
+                <h4 style={{ margin: '8px 0 4px 0', fontSize: '12px', color: 'var(--text-secondary)', fontWeight: 'bold' }}>DÍAS DE ENTRENAMIENTO</h4>
+                <div style={{ display: 'flex', gap: '4px' }}>
+                  {DAYS_LABELS_SHORT.map((day, idx) => (
+                    <button key={idx} style={{ flex: 1, padding: '6px 0', borderRadius: '16px', border: 'none', background: macroInfo.trainingDays.includes(idx) ? 'var(--accent-green)' : 'var(--bg-app)', color: macroInfo.trainingDays.includes(idx) ? '#FFF' : 'var(--text-secondary)', fontWeight: 'bold', fontSize: '11px', cursor: 'pointer' }} onClick={() => toggleDay(idx)}>
+                      {day}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="ps-glass-card" style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <Calendar size={18} color="var(--accent-green)" />
+                  <h3 style={{ margin: 0, fontSize: '14px', fontWeight: 'bold', color: 'var(--text-primary)' }}>FECHA TEMPORADA</h3>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'var(--bg-app)', padding: '12px', borderRadius: '8px', border: '1px solid var(--border-light)' }}>
+                  <input type="date" value={macroInfo.startDate} onChange={e => setMacroInfo({...macroInfo, startDate: e.target.value})} style={{ border: 'none', background: 'transparent', color: 'var(--text-primary)', outline: 'none', width: '100%' }} />
+                  <span style={{ color: 'var(--text-secondary)' }}>→</span>
+                  <input type="date" value={macroInfo.endDate} onChange={e => setMacroInfo({...macroInfo, endDate: e.target.value})} style={{ border: 'none', background: 'transparent', color: 'var(--text-primary)', outline: 'none', width: '100%' }} />
+                </div>
+
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '8px' }}>
                   <User size={18} color="var(--accent-green)" />
                   <h3 style={{ margin: 0, fontSize: '14px', fontWeight: 'bold', color: 'var(--text-primary)' }}>ENTRENADOR</h3>
@@ -363,138 +352,126 @@ const Planificacion = () => {
                 </div>
               </div>
 
-              <div className="card-base" style={{ padding: '20px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
-                  <Hourglass size={18} color="var(--accent-green)" />
-                  <h3 style={{ margin: 0, fontSize: '14px', fontWeight: 'bold', color: 'var(--text-primary)' }}>VOLUMEN TEMPORADA</h3>
+              <div className="ps-glass-card" style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <Target size={18} color="var(--accent-green)" />
+                  <h3 style={{ margin: 0, fontSize: '14px', fontWeight: 'bold', color: 'var(--text-primary)' }}>OBJETIVO GENERAL A LA TEMPORADA</h3>
                 </div>
-                <div style={{ position: 'relative', width: '160px', height: '80px', overflow: 'hidden', display: 'flex', justifyContent: 'center' }}>
-                  <svg viewBox="0 0 200 100" style={{ width: '100%', height: '100%', overflow: 'visible' }}>
-                    <path d="M 20 90 A 80 80 0 0 1 180 90" fill="none" stroke="var(--border-light)" strokeWidth="16" strokeLinecap="round" />
-                    <path d="M 20 90 A 80 80 0 0 1 180 90" fill="none" stroke="var(--accent-gold)" strokeWidth="16" strokeLinecap="round" strokeDasharray="251" strokeDashoffset="60" />
-                  </svg>
-                  <div style={{ position: 'absolute', bottom: '0', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                    <span style={{ fontSize: '24px', fontWeight: 'bold', fontFamily: 'var(--font-heading)' }}>{weeklyVolume}</span>
-                    <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>min/sem</span>
-                  </div>
+                <div style={{ flex: 1, background: 'var(--bg-app)', borderRadius: '8px', border: '1px solid var(--border-light)', padding: '12px', display: 'flex', position: 'relative' }}>
+                  <textarea value={macroInfo.objective} onChange={e => setMacroInfo({...macroInfo, objective: e.target.value})} style={{ width: '100%', height: '100%', border: 'none', background: 'transparent', color: 'var(--text-primary)', resize: 'none', outline: 'none' }} />
                 </div>
-                <div style={{ marginTop: '16px', fontSize: '12px', color: 'var(--text-secondary)', textAlign: 'center' }}>{totalHours}h {remainingMins}min totales</div>
               </div>
             </div>
 
-            <div className="ps-macro-overview">
-              <div className="ps-macro-header">
-                <Calendar size={16} className="ps-icon-cyan" />
-                <h3>MACRO-CICLO</h3>
+            <div className="ps-glass-card" style={{ marginBottom: '24px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <h3 style={{ margin: 0, fontSize: '14px', fontWeight: 'bold', color: 'var(--accent-green)' }}>MESOCICLO 1 <span style={{ color: 'var(--text-secondary)', fontWeight: 'normal', fontSize: '12px' }}>Preparatorio</span></h3>
+                </div>
+                <span style={{ fontSize: '24px', fontWeight: 'bold', color: 'var(--text-primary)', opacity: 0.8 }}>58</span>
               </div>
               
-              <div className="ps-macro-stats-row">
-                <div className="ps-macro-session-col">
-                  <span className="ps-label">SESIONES 📅</span>
-                  <div className="ps-session-bar-wrap">
-                    <div className="ps-bar-bg"><div className="ps-bar-fill cyan" style={{width: `${(fakeCompletedSessions/totalSessionsPlanned)*100}%`}}></div></div>
-                    <span className="ps-val"><span className="text-cyan">{fakeCompletedSessions}</span>/{totalSessionsPlanned}</span>
-                  </div>
+              <div className="ps-mesociclo-timeline-v2">
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '10px', color: 'var(--text-primary)', fontWeight: 'bold' }}>
+                  <span>1/1/2026</span>
+                  <span>24/7/2036</span>
+                  <span>28/7/2026</span>
                 </div>
-
-                <div className="ps-macro-circle">
-                  <svg viewBox="0 0 100 100">
-                    <circle cx="50" cy="50" r="45" fill="none" stroke="var(--ps-gauge-bg)" strokeWidth="6" />
-                    <circle cx="50" cy="50" r="45" fill="none" stroke="var(--ps-cyan)" strokeWidth="6" strokeDasharray="282" strokeDashoffset="100" strokeLinecap="round" />
-                  </svg>
-                  <div className="ps-mc-inner"><span>{avgPhysical + avgTactical}</span></div>
+                
+                <div className="ps-timeline-track">
+                  <span className="ps-timeline-label">Fuerza</span>
+                  <div className="ps-timeline-line"></div>
+                  <div className="ps-timeline-point" style={{ left: '150px', background: '#D97706' }}></div>
+                  <div className="ps-timeline-point" style={{ left: '400px', background: '#D97706' }}></div>
                 </div>
-
-                <div className="ps-macro-bars-col">
-                  <div className="ps-macro-bar-item">
-                    <span className="ps-label">TRABAJO Físico <span className="ps-small-val">{avgPhysical}/100</span></span>
-                    <div className="ps-bar-bg large"><div className="ps-bar-fill green-grad" style={{width: `${avgPhysical}%`}}></div></div>
-                  </div>
-                  <div className="ps-macro-bar-item">
-                    <span className="ps-label">TRABAJO Táctico <span className="ps-small-val">{avgTactical}/100</span></span>
-                    <div className="ps-bar-bg large"><div className="ps-bar-fill green-grad-light" style={{width: `${avgTactical}%`}}></div></div>
-                  </div>
+                
+                <div className="ps-timeline-track">
+                  <span className="ps-timeline-label">Velocidad</span>
+                  <div className="ps-timeline-line"></div>
+                  <div className="ps-timeline-point" style={{ left: '250px', background: '#2563EB' }}></div>
+                  <div className="ps-timeline-point" style={{ left: '600px', background: '#2563EB' }}></div>
                 </div>
-
-                <div className="ps-macro-bars-col">
-                  <div className="ps-macro-bar-item">
-                    <span className="ps-label">COMPET. <span className="ps-small-val text-orange">2/10</span></span>
-                    <div className="ps-bar-bg large"><div className="ps-bar-fill orange-grad" style={{width: '20%'}}></div></div>
-                  </div>
-                  <div className="ps-macro-bar-item">
-                    <span className="ps-label">OTRO <span className="ps-small-val text-purple">2/10</span></span>
-                    <div className="ps-bar-bg large"><div className="ps-bar-fill purple-grad" style={{width: '20%'}}></div></div>
-                  </div>
+                
+                <div className="ps-timeline-track">
+                  <span className="ps-timeline-label">Técnica</span>
+                  <div className="ps-timeline-line"></div>
+                  <div className="ps-timeline-point" style={{ left: '120px', background: '#059669' }}></div>
+                  <div className="ps-timeline-point" style={{ left: '350px', background: '#059669' }}></div>
+                  <div className="ps-timeline-point" style={{ left: '650px', background: '#059669' }}></div>
                 </div>
               </div>
             </div>
 
-            <div className="ps-matrix-section">
-              <h3 className="ps-matrix-title">PLANIFICA MATRIX</h3>
+            <div className="ps-matrix-section" style={{ position: 'relative', zIndex: 2, marginBottom: '24px' }}>
               <div className="ps-matrix-wrapper">
-                <div className="ps-matrix-table">
+                <div className="ps-matrix-table ps-matrix-table-v2">
                   <div className="ps-row ps-row-header">
                     <div className="ps-cell ps-cell-sticky">MESES</div>
                     {microcycles.map(m => <div key={m.id} className="ps-cell"><input value={m.month} onChange={e => handleMicroChange(m.id, 'month', e.target.value)} /></div>)}
                   </div>
-                  <div className="ps-row ps-row-period">
+                  <div className="ps-row ps-row-header">
                     <div className="ps-cell ps-cell-sticky">PERIODOS</div>
-                    {microcycles.map(m => <div key={m.id} className={`ps-cell bg-${m.period.substring(0,4).toLowerCase()}`}><input value={m.period.substring(0,5)} onChange={e => handleMicroChange(m.id, 'period', e.target.value)} /></div>)}
+                    {microcycles.map(m => <div key={m.id} className={`ps-cell`}><input value={m.period.substring(0,5)} onChange={e => handleMicroChange(m.id, 'period', e.target.value)} style={{ color: '#D4A843' }} /></div>)}
                   </div>
-                  <div className="ps-row ps-row-etapa">
+                  <div className="ps-row ps-row-header">
                     <div className="ps-cell ps-cell-sticky">ETAPAS</div>
-                    {microcycles.map(m => <div key={m.id} className="ps-cell bg-darker"><input value={m.etapa.substring(0,5)} onChange={e => handleMicroChange(m.id, 'etapa', e.target.value)} /></div>)}
+                    {microcycles.map(m => <div key={m.id} className="ps-cell"><input value={m.etapa.substring(0,5)} onChange={e => handleMicroChange(m.id, 'etapa', e.target.value)} /></div>)}
                   </div>
                   <div className="ps-row">
                     <div className="ps-cell ps-cell-sticky">Nº MICROCICLO</div>
-                    {microcycles.map(m => <div key={m.id} className="ps-cell">{m.id}</div>)}
+                    {microcycles.map(m => <div key={m.id} className="ps-cell bg-dark-teal">{m.id}</div>)}
                   </div>
                   <div className="ps-row">
                     <div className="ps-cell ps-cell-sticky">TIPO MICRO</div>
                     {microcycles.map(m => (
-                      <div key={m.id} className="ps-cell">
-                        <select value={m.type} onChange={e => handleMicroChange(m.id, 'type', e.target.value)} className={`ps-micro-type bg-${m.type.substring(0,3).toLowerCase()}`}>
-                          <option value="Carga">🚀</option>
-                          <option value="Competición">⚔️</option>
-                          <option value="Recuperación">🔋</option>
-                          <option value="Ajuste">⚙️</option>
-                          <option value="Choque">⚡</option>
-                          <option value="Aproximación">🎯</option>
+                      <div key={m.id} className="ps-cell bg-dark-teal-alt">
+                        <select value={m.type} onChange={e => handleMicroChange(m.id, 'type', e.target.value)} style={{ background: 'transparent', border: 'none', color: '#FFF', width: '100%', fontSize: '11px', outline: 'none', appearance: 'none', textAlign: 'center' }}>
+                          <option value="Carga">3</option>
+                          <option value="Competición">5</option>
+                          <option value="Recuperación">1</option>
+                          <option value="Ajuste">2</option>
+                          <option value="Choque">4</option>
                         </select>
                       </div>
                     ))}
                   </div>
                   <div className="ps-row">
-                    <div className="ps-cell ps-cell-sticky">Nº SESIONES</div>
-                    {microcycles.map(m => <div key={m.id} className="ps-cell bg-darker"><input type="number" value={m.sessions} onChange={e => handleMicroChange(m.id, 'sessions', e.target.value)} /></div>)}
+                    <div className="ps-cell ps-cell-sticky">VOLUMEN (MIN)</div>
+                    {microcycles.map(m => <div key={m.id} className="ps-cell bg-dark-teal text-gold"><input type="number" value={m.volume} onChange={e => handleMicroChange(m.id, 'volume', e.target.value)} style={{ color: '#D4A843' }} /></div>)}
                   </div>
                   <div className="ps-row">
-                    <div className="ps-cell ps-cell-sticky">VOLUMEN SESIÓN</div>
-                    {microcycles.map(m => <div key={m.id} className="ps-cell text-gold fw-bold"><input type="number" value={m.volume} onChange={e => handleMicroChange(m.id, 'volume', e.target.value)} /></div>)}
+                    <div className="ps-cell ps-cell-sticky">M. FÍSICO</div>
+                    {microcycles.map(m => <div key={m.id} className="ps-cell bg-dark-teal-alt"><input type="number" value={m.physical} onChange={e => handleMicroChange(m.id, 'physical', e.target.value)} /></div>)}
                   </div>
                   <div className="ps-row">
-                    <div className="ps-cell ps-cell-sticky">% FÍSICO</div>
-                    {microcycles.map(m => <div key={m.id} className="ps-cell"><input type="number" value={m.physical} onChange={e => handleMicroChange(m.id, 'physical', e.target.value)} /></div>)}
+                    <div className="ps-cell ps-cell-sticky">M. TÉCNICO</div>
+                    {microcycles.map(m => <div key={m.id} className="ps-cell bg-dark-teal"><input type="number" value={m.technical} onChange={e => handleMicroChange(m.id, 'technical', e.target.value)} /></div>)}
                   </div>
                   <div className="ps-row">
-                    <div className="ps-cell ps-cell-sticky">% TÉCNICO</div>
-                    {microcycles.map(m => <div key={m.id} className="ps-cell"><input type="number" value={m.technical} onChange={e => handleMicroChange(m.id, 'technical', e.target.value)} /></div>)}
-                  </div>
-                  <div className="ps-row">
-                    <div className="ps-cell ps-cell-sticky">% TÁCTICO</div>
-                    {microcycles.map(m => <div key={m.id} className="ps-cell"><input type="number" value={m.tactical} onChange={e => handleMicroChange(m.id, 'tactical', e.target.value)} /></div>)}
+                    <div className="ps-cell ps-cell-sticky">M. TÁCTICO</div>
+                    {microcycles.map(m => <div key={m.id} className="ps-cell bg-dark-teal-alt"><input type="number" value={m.tactical} onChange={e => handleMicroChange(m.id, 'tactical', e.target.value)} /></div>)}
                   </div>
                 </div>
               </div>
             </div>
 
-            <div className="ps-footer">
-              <div className="ps-footer-info">
-                <span className="ps-f-label">VOLUMEN TOTAL TEMPORADA</span>
-                <span className="ps-f-val">{totalHours}h {remainingMins}min ({totalMinutes} minutos totales)</span>
+            <div className="ps-footer" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', background: 'transparent', padding: '0' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '40px' }}>
+                <div style={{ display: 'flex', flexDirection: 'column' }}>
+                  <span style={{ fontSize: '10px', fontWeight: 'bold', color: 'var(--text-secondary)' }}>VOLUMEN TOTAL TEMPORADA</span>
+                  <span style={{ fontSize: '20px', fontWeight: 'bold', fontFamily: 'var(--font-heading)', color: 'var(--text-primary)' }}>{totalHours}h {remainingMins}min <span style={{ fontSize: '14px', fontWeight: 'normal', color: 'var(--text-secondary)' }}>({totalMinutes} minutos totales)</span></span>
+                  <span style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>3 días / sem -- 5 Meses</span>
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column' }}>
+                  <span style={{ fontSize: '10px', fontWeight: 'bold', color: 'var(--text-secondary)' }}>TEMPORADA PROGRESION</span>
+                  <svg width="100" height="40" viewBox="0 0 100 40">
+                    <path d="M0 40 L10 30 L20 35 L30 20 L40 25 L50 10 L60 15 L70 5 L80 15 L90 0 L100 10 L100 40 Z" fill="rgba(27, 58, 45, 0.2)" />
+                    <path d="M0 40 L10 30 L20 35 L30 20 L40 25 L50 10 L60 15 L70 5 L80 15 L90 0 L100 10" fill="none" stroke="var(--accent-green)" strokeWidth="2" />
+                  </svg>
+                </div>
               </div>
-              <button className="ps-btn-save" onClick={handleSave} disabled={saving}>
-                {saving ? 'GUARDANDO...' : 'GUARDAR MACROCICLO'} <Save size={18} style={{marginLeft: '8px'}} />
+              <button style={{ background: 'var(--accent-gold)', color: '#000', border: 'none', padding: '12px 24px', borderRadius: '24px', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', boxShadow: '0 4px 15px rgba(212, 168, 67, 0.3)' }} onClick={handleSave} disabled={saving}>
+                {saving ? 'GUARDANDO...' : 'GUARDAR PLANIFICACIÓN'} <Save size={18} />
               </button>
             </div>
           </div>

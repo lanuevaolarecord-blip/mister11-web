@@ -794,7 +794,7 @@ const Sesiones = () => {
           ) : (
             captures.map(cap => (
               <div key={cap.id} className="capture-card" onClick={() => setSelectedCapture(cap)}>
-                <div className="capture-thumb">
+                <div className="capture-image-wrapper">
                   <img src={cap.thumbnail || cap.url} alt="Pizarra" loading="lazy" />
                   <div className="capture-overlay">
                     <span>👁 Ver</span>
@@ -821,7 +821,7 @@ const Sesiones = () => {
           ) : (
             pizarras.map(piz => (
               <div key={piz.id} className="capture-card" onClick={() => setSelectedAnimation(piz)}>
-                <div className="capture-thumb">
+                <div className="capture-image-wrapper">
                   {piz.thumbnail ? (
                     <img src={piz.thumbnail} alt="Animación" loading="lazy" style={{objectFit: 'cover'}} />
                   ) : (

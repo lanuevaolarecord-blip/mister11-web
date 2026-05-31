@@ -155,9 +155,20 @@ const Tests = () => {
           setHeatSelectedTest(DEFAULT_TESTS[0].id);
         }
       } else {
+        // Build a lookup map of DEFAULT_TESTS images by id
+        const defaultImgMap = {};
+        DEFAULT_TESTS.forEach(dt => {
+          if (dt.imagenProtocolo) defaultImgMap[dt.id] = dt.imagenProtocolo;
+        });
+
         const loadedTests = [];
         snapshot.forEach(doc => {
-          loadedTests.push({ ...doc.data(), id: doc.id });
+          const data = doc.data();
+          // Inject imagenProtocolo from DEFAULT_TESTS if not already set in Firestore
+          if (!data.imagenProtocolo && defaultImgMap[doc.id]) {
+            data.imagenProtocolo = defaultImgMap[doc.id];
+          }
+          loadedTests.push({ ...data, id: doc.id });
         });
         setTests(loadedTests);
         if (loadedTests.length > 0) {

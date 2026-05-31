@@ -231,6 +231,7 @@ const Dashboard = () => {
               <option value="Esta semana">Esta semana</option>
               <option value="Este microciclo">Este microciclo</option>
               <option value="Este mesociclo">Este mesociclo</option>
+              <option value="Este macrociclo">Este macrociclo</option>
             </select>
           </div>
           
@@ -315,7 +316,7 @@ const Dashboard = () => {
             </div>
           ))}
 
-          <button style={{ padding: '12px 32px', borderRadius: '30px', background: 'var(--bg-card)', border: '2px solid var(--accent-gold)', color: 'var(--text-primary)', fontWeight: 'bold', fontSize: '14px', cursor: 'pointer', boxShadow: '0 4px 15px rgba(212, 168, 67, 0.2)', fontFamily: 'var(--font-heading)' }}>
+          <button className="btn-guardar-dashboard">
             GUARDAR DASHBOARD
           </button>
 

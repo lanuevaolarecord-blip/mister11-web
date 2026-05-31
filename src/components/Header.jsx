@@ -43,7 +43,7 @@ const Header = ({ onToggleNotif }) => {
                 const team = teams.find(t => t.id === e.target.value);
                 if (team) selectTeam(team);
               }}
-              style={{ background: 'transparent', border: 'none', color: '#000', fontWeight: 'bold', outline: 'none', fontFamily: 'var(--font-heading)', cursor: 'pointer' }}
+              style={{ background: 'transparent', border: 'none', color: '#000', fontWeight: 'bold', outline: 'none', fontFamily: 'var(--font-heading)', cursor: 'pointer', appearance: 'none', WebkitAppearance: 'none', MozAppearance: 'none', paddingRight: '6px' }}
             >
               {teams.map(t => {
                 if (!t) return null;

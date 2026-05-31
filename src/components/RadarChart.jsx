@@ -3,6 +3,7 @@ import {
   Radar, RadarChart as RechartsRadarChart, PolarGrid, 
   PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer, Tooltip
 } from 'recharts';
+import { useTheme } from '../context/ThemeContext';
 
 const CustomTooltip = ({ active, payload }) => {
   if (active && payload && payload.length) {
@@ -27,6 +28,9 @@ const CustomTooltip = ({ active, payload }) => {
 };
 
 const RadarChart = ({ data, height = 300 }) => {
+  const { darkMode } = useTheme();
+  const tickColor = darkMode ? '#F5F0E8' : '#1B3A2D';
+
   if (!data || data.length === 0) return null;
   // Filter out zero-value subjects for cleaner radar display, but keep at least one
   const hasAnyValue = data.some(d => d.value > 0);
@@ -43,7 +47,7 @@ const RadarChart = ({ data, height = 300 }) => {
           <PolarGrid stroke="rgba(27, 58, 45, 0.25)" strokeDasharray="3 3" />
           <PolarAngleAxis 
             dataKey="subject" 
-            tick={{ fill: '#1B3A2D', fontSize: 12, fontWeight: 'bold' }} 
+            tick={{ fill: tickColor, fontSize: 12, fontWeight: 'bold' }} 
           />
           <PolarRadiusAxis angle={30} domain={[0, 100]} tick={false} axisLine={false} />
           

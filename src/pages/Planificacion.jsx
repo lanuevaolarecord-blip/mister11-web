@@ -5,7 +5,7 @@ import { useAuth } from '../context/AuthContext';
 import { useTeams } from '../hooks/useTeams';
 import { generatePlanificacionPDF } from '../utils/pdfGenerator';
 import { useTheme } from '../context/ThemeContext';
-import { Settings, Target, Grid, Hourglass, Calendar, User, Save, FileDown, Plus } from 'lucide-react';
+import { Settings, Target, Grid, Hourglass, Calendar, User, Save, FileDown, Plus, FileText } from 'lucide-react';
 import './Planificacion.css';
 
 // --- CONSTANTS ---

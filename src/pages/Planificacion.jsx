@@ -386,42 +386,313 @@ const Planificacion = () => {
 
             </div>
 
-            <div className="ps-glass-card" style={{ marginBottom: '24px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div className="ps-glass-card" style={{ 
+              marginBottom: '24px', 
+              border: '1px solid #C4A47A', 
+              boxShadow: '0 4px 15px rgba(196, 164, 122, 0.15)',
+              background: darkMode ? 'rgba(20, 26, 23, 0.9)' : '#FAF8F5',
+              padding: '16px 20px',
+              borderRadius: '16px'
+            }}>
+              {/* Header section with capsules */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <h3 style={{ margin: 0, fontSize: '14px', fontWeight: 'bold', color: 'var(--accent-green)' }}>MESOCICLO 1 <span style={{ color: 'var(--text-secondary)', fontWeight: 'normal', fontSize: '12px' }}>Preparatorio</span></h3>
+                  <span style={{ 
+                    background: '#8C6F3D', 
+                    color: '#FFFFFF', 
+                    fontSize: '11px', 
+                    fontWeight: 'bold', 
+                    padding: '4px 12px', 
+                    borderRadius: '20px',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.5px'
+                  }}>
+                    MESOCICLO 1
+                  </span>
+                  <span style={{ 
+                    background: darkMode ? 'rgba(76, 175, 125, 0.2)' : '#D1E7DD', 
+                    color: darkMode ? '#82D2A7' : '#198754', 
+                    fontSize: '11px', 
+                    fontWeight: 'bold', 
+                    padding: '4px 12px', 
+                    borderRadius: '20px'
+                  }}>
+                    Preparatorio
+                  </span>
                 </div>
-                <span style={{ fontSize: '24px', fontWeight: 'bold', color: 'var(--text-primary)', opacity: 0.8 }}>58</span>
+                <span style={{ 
+                  fontSize: '28px', 
+                  fontWeight: 'bold', 
+                  color: '#8C6F3D', 
+                  fontFamily: 'var(--font-heading)' 
+                }}>
+                  58
+                </span>
               </div>
               
-              <div className="ps-mesociclo-timeline-v2">
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '10px', color: 'var(--text-primary)', fontWeight: 'bold' }}>
-                  <span>1/1/2026</span>
-                  <span>24/7/2036</span>
-                  <span>28/7/2026</span>
+              {/* Timeline bar container (Grey bar) */}
+              <div style={{ 
+                background: darkMode ? '#1C221F' : '#E6E4DD', 
+                borderRadius: '8px', 
+                padding: '6px 12px', 
+                display: 'flex', 
+                alignItems: 'center', 
+                position: 'relative', 
+                height: '36px', 
+                marginBottom: '20px',
+                border: darkMode ? '1px solid #2C3831' : '1px solid rgba(0,0,0,0.05)'
+              }}>
+                {/* Date tags absolute positioned to match Imagen 2 proportional layout */}
+                <div style={{ 
+                  background: darkMode ? '#2D3748' : '#FFFFFF', 
+                  border: darkMode ? '1px solid #4CAF7D' : '1px solid #CCCCCC',
+                  borderRadius: '4px',
+                  padding: '2px 8px',
+                  fontSize: '10px',
+                  fontWeight: 'bold',
+                  color: darkMode ? '#FFF' : '#333',
+                  position: 'absolute',
+                  left: '12px'
+                }}>
+                  1/1/2026
                 </div>
+
+                <div style={{ 
+                  background: darkMode ? '#2D3748' : '#FFFFFF', 
+                  border: darkMode ? '1px solid #4CAF7D' : '1px solid #CCCCCC',
+                  borderRadius: '4px',
+                  padding: '2px 8px',
+                  fontSize: '10px',
+                  fontWeight: 'bold',
+                  color: darkMode ? '#FFF' : '#333',
+                  position: 'absolute',
+                  left: '32%'
+                }}>
+                  24/7/2036
+                </div>
+
+                <div style={{ 
+                  background: darkMode ? '#2D3748' : '#FFFFFF', 
+                  border: darkMode ? '1px solid #4CAF7D' : '1px solid #CCCCCC',
+                  borderRadius: '4px',
+                  padding: '2px 8px',
+                  fontSize: '10px',
+                  fontWeight: 'bold',
+                  color: darkMode ? '#FFF' : '#333',
+                  position: 'absolute',
+                  left: '52%'
+                }}>
+                  28/7/2026
+                </div>
+
+                {/* Right side indicators */}
+                <div style={{ 
+                  position: 'absolute', 
+                  right: '12px', 
+                  display: 'flex', 
+                  gap: '6px',
+                  alignItems: 'center' 
+                }}>
+                  <span style={{ 
+                    background: '#FADBD8', 
+                    color: '#78281F', 
+                    fontSize: '10px', 
+                    fontWeight: 'bold', 
+                    padding: '2px 8px', 
+                    borderRadius: '4px' 
+                  }}>
+                    -11L/13
+                  </span>
+                  <span style={{ 
+                    background: '#D4EFDF', 
+                    color: '#196F3D', 
+                    fontSize: '10px', 
+                    fontWeight: 'bold', 
+                    padding: '2px 8px', 
+                    borderRadius: '4px' 
+                  }}>
+                    -5L/12
+                  </span>
+                </div>
+              </div>
+
+              {/* Three horizontal tracks with colored tracks and circular dials */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
                 
-                <div className="ps-timeline-track">
-                  <span className="ps-timeline-label">Fuerza</span>
-                  <div className="ps-timeline-line"></div>
-                  <div className="ps-timeline-point" style={{ left: '150px', background: '#D97706' }}></div>
-                  <div className="ps-timeline-point" style={{ left: '400px', background: '#D97706' }}></div>
+                {/* Track 1: Fuerza */}
+                <div style={{ display: 'flex', alignItems: 'center' }}>
+                  <span style={{ 
+                    width: '80px', 
+                    fontSize: '11px', 
+                    fontWeight: 'bold', 
+                    color: darkMode ? '#A3B5AD' : '#111B21' 
+                  }}>
+                    Fuerza
+                  </span>
+                  <div style={{ flex: 1, position: 'relative', height: '24px', display: 'flex', alignItems: 'center' }}>
+                    {/* Background grey track line */}
+                    <div style={{ position: 'absolute', left: 0, right: 0, height: '4px', background: darkMode ? '#222D27' : '#E6E4DD', borderRadius: '2px' }}></div>
+                    {/* Active colored line (Red) */}
+                    <div style={{ position: 'absolute', left: 0, width: '42%', height: '6px', background: '#B03A2E', borderRadius: '3px', zIndex: 2 }}></div>
+                    
+                    {/* Circular dial nodes */}
+                    <div style={{ 
+                      position: 'absolute', 
+                      left: '20%', 
+                      zIndex: 3, 
+                      width: '20px', 
+                      height: '20px', 
+                      borderRadius: '50%', 
+                      border: '2px solid #111B21', 
+                      background: '#9C7C38', 
+                      display: 'flex', 
+                      alignItems: 'center', 
+                      justifyContent: 'center',
+                      fontSize: '10px',
+                      fontWeight: 'bold',
+                      color: '#FFF',
+                      transform: 'translateX(-50%)'
+                    }}>
+                      9
+                    </div>
+                    <div style={{ 
+                      position: 'absolute', 
+                      left: '42%', 
+                      zIndex: 3, 
+                      width: '20px', 
+                      height: '20px', 
+                      borderRadius: '50%', 
+                      border: '2px solid #111B21', 
+                      background: '#9C7C38', 
+                      display: 'flex', 
+                      alignItems: 'center', 
+                      justifyContent: 'center',
+                      fontSize: '10px',
+                      fontWeight: 'bold',
+                      color: '#FFF',
+                      transform: 'translateX(-50%)'
+                    }}>
+                      9
+                    </div>
+                  </div>
                 </div>
-                
-                <div className="ps-timeline-track">
-                  <span className="ps-timeline-label">Velocidad</span>
-                  <div className="ps-timeline-line"></div>
-                  <div className="ps-timeline-point" style={{ left: '250px', background: '#4CAF7D' }}></div>
-                  <div className="ps-timeline-point" style={{ left: '600px', background: '#4CAF7D' }}></div>
+
+                {/* Track 2: Velocidad */}
+                <div style={{ display: 'flex', alignItems: 'center' }}>
+                  <span style={{ 
+                    width: '80px', 
+                    fontSize: '11px', 
+                    fontWeight: 'bold', 
+                    color: darkMode ? '#A3B5AD' : '#111B21' 
+                  }}>
+                    Velocidad
+                  </span>
+                  <div style={{ flex: 1, position: 'relative', height: '24px', display: 'flex', alignItems: 'center' }}>
+                    {/* Background grey track line */}
+                    <div style={{ position: 'absolute', left: 0, right: 0, height: '4px', background: darkMode ? '#222D27' : '#E6E4DD', borderRadius: '2px' }}></div>
+                    {/* Active colored line (Blue) */}
+                    <div style={{ position: 'absolute', left: 0, width: '65%', height: '6px', background: '#2E86C1', borderRadius: '3px', zIndex: 2 }}></div>
+                    
+                    {/* Circular dial nodes */}
+                    <div style={{ 
+                      position: 'absolute', 
+                      left: '15%', 
+                      zIndex: 3, 
+                      width: '20px', 
+                      height: '20px', 
+                      borderRadius: '50%', 
+                      border: '2px solid #111B21', 
+                      background: '#1F618D', 
+                      display: 'flex', 
+                      alignItems: 'center', 
+                      justifyContent: 'center',
+                      fontSize: '10px',
+                      fontWeight: 'bold',
+                      color: '#FFF',
+                      transform: 'translateX(-50%)'
+                    }}>
+                      6
+                    </div>
+                    <div style={{ 
+                      position: 'absolute', 
+                      left: '35%', 
+                      zIndex: 3, 
+                      width: '20px', 
+                      height: '20px', 
+                      borderRadius: '50%', 
+                      border: '2px solid #111B21', 
+                      background: '#1F618D', 
+                      display: 'flex', 
+                      alignItems: 'center', 
+                      justifyContent: 'center',
+                      fontSize: '10px',
+                      fontWeight: 'bold',
+                      color: '#FFF',
+                      transform: 'translateX(-50%)'
+                    }}>
+                      6
+                    </div>
+                    <div style={{ 
+                      position: 'absolute', 
+                      left: '65%', 
+                      zIndex: 3, 
+                      width: '20px', 
+                      height: '20px', 
+                      borderRadius: '50%', 
+                      border: '2px solid #111B21', 
+                      background: '#85C1E9', 
+                      display: 'flex', 
+                      alignItems: 'center', 
+                      justifyContent: 'center',
+                      fontSize: '10px',
+                      fontWeight: 'bold',
+                      color: '#111B21',
+                      transform: 'translateX(-50%)'
+                    }}>
+                      0
+                    </div>
+                  </div>
                 </div>
-                
-                <div className="ps-timeline-track">
-                  <span className="ps-timeline-label">Técnica</span>
-                  <div className="ps-timeline-line"></div>
-                  <div className="ps-timeline-point" style={{ left: '120px', background: '#059669' }}></div>
-                  <div className="ps-timeline-point" style={{ left: '350px', background: '#059669' }}></div>
-                  <div className="ps-timeline-point" style={{ left: '650px', background: '#059669' }}></div>
+
+                {/* Track 3: Técnica */}
+                <div style={{ display: 'flex', alignItems: 'center' }}>
+                  <span style={{ 
+                    width: '80px', 
+                    fontSize: '11px', 
+                    fontWeight: 'bold', 
+                    color: darkMode ? '#A3B5AD' : '#111B21' 
+                  }}>
+                    Técnica
+                  </span>
+                  <div style={{ flex: 1, position: 'relative', height: '24px', display: 'flex', alignItems: 'center' }}>
+                    {/* Background grey track line */}
+                    <div style={{ position: 'absolute', left: 0, right: 0, height: '4px', background: darkMode ? '#222D27' : '#E6E4DD', borderRadius: '2px' }}></div>
+                    {/* Active colored line (Green) */}
+                    <div style={{ position: 'absolute', left: 0, width: '25%', height: '6px', background: '#27AE60', borderRadius: '3px', zIndex: 2 }}></div>
+                    
+                    {/* Circular dial nodes */}
+                    <div style={{ 
+                      position: 'absolute', 
+                      left: '25%', 
+                      zIndex: 3, 
+                      width: '20px', 
+                      height: '20px', 
+                      borderRadius: '50%', 
+                      border: '2px solid #111B21', 
+                      background: '#A9DFBF', 
+                      display: 'flex', 
+                      alignItems: 'center', 
+                      justifyContent: 'center',
+                      fontSize: '10px',
+                      fontWeight: 'bold',
+                      color: '#111B21',
+                      transform: 'translateX(-50%)'
+                    }}>
+                      0
+                    </div>
+                  </div>
                 </div>
+
               </div>
             </div>
 
@@ -484,19 +755,29 @@ const Planificacion = () => {
             <div className="ps-footer-v3" style={{ position: 'relative', zIndex: 2 }}>
               <div className="ps-footer-left">
                 <div className="ps-footer-vol">
-                  <span className="ps-footer-vol-label">VOLUMEN TOTAL TEMPORADA</span>
-                  <span className="ps-footer-vol-value">180h 0Min <span className="ps-footer-vol-sub">(10800 minutos totales)</span></span>
-                  <span className="ps-footer-vol-days">3 días / sem -- 5 Meses</span>
+                  <span className="ps-footer-vol-label" style={{ color: darkMode ? 'var(--accent-gold)' : '#111B21' }}>
+                    VOLUMEN TOTAL TEMPORADA
+                  </span>
+                  <span className="ps-footer-vol-value" style={{ color: darkMode ? '#FFFFFF' : '#111B21' }}>
+                    180h 0Min <span className="ps-footer-vol-sub" style={{ color: darkMode ? 'var(--text-secondary)' : '#6B7280' }}>(10800 minutos totales)</span>
+                  </span>
+                  <span className="ps-footer-vol-days" style={{ color: darkMode ? 'var(--text-secondary)' : '#8C9EA8' }}>
+                    3 días / sem -- 5 Meses
+                  </span>
                 </div>
               </div>
               
               <div className="ps-footer-center">
-                <span className="ps-footer-center-value">180h 0Min <span className="ps-footer-center-sub">(10800 minutos)</span></span>
+                <span className="ps-footer-center-value" style={{ color: darkMode ? 'var(--accent-gold)' : '#183133' }}>
+                  180h 0Min <span className="ps-footer-center-sub" style={{ color: darkMode ? '#FFFFFF' : '#111B21' }}>(10800 minutos)</span>
+                </span>
                 <div className="ps-footer-chart">
-                  <span className="ps-footer-chart-label">TEMPORAL LE PROGRESSION</span>
+                  <span className="ps-footer-chart-label" style={{ color: darkMode ? 'var(--text-secondary)' : '#111B21' }}>
+                    TEMPORAL LE PROGRESSION
+                  </span>
                   <svg width="120" height="40" viewBox="0 0 120 40">
-                    <path d="M0 40 L10 30 L20 35 L30 20 L40 25 L50 10 L60 15 L70 5 L80 15 L90 0 L100 10 L110 5 L120 15 L120 40 Z" fill="#1B3A2D" opacity="0.8" />
-                    <path d="M0 40 L10 30 L20 35 L30 20 L40 25 L50 10 L60 15 L70 5 L80 15 L90 0 L100 10 L110 5 L120 15" fill="none" stroke="#D4A843" strokeWidth="1.5" />
+                    <path d="M0 40 L10 30 L20 35 L30 20 L40 25 L50 10 L60 15 L70 5 L80 15 L90 0 L100 10 L110 5 L120 15 L120 40 Z" fill={darkMode ? '#0E1410' : '#1B3A2D'} opacity="0.8" />
+                    <path d="M0 40 L10 30 L20 35 L30 20 L40 25 L50 10 L60 15 L70 5 L80 15 L90 0 L100 10 L110 5 L120 15" fill="none" stroke="var(--accent-gold)" strokeWidth="1.5" />
                   </svg>
                 </div>
               </div>

@@ -16,14 +16,14 @@
   --font-body: 'Inter', sans-serif;
 }
 [data-theme="dark"], .dark, html.dark {
-  --bg-app: #0F172A;
-  --bg-card: #1E293B;
-  --topbar-bg: #0B1422;
-  --text-primary: #E2E8F0;
-  --text-secondary: #94A3B8;
-  --border-light: #334155;
-  --shadow-card: 0 2px 12px rgba(0,0,0,0.3);
-  --accent-green-light: rgba(46, 125, 92, 0.15);
+  --bg-app: #070A08;
+  --bg-card: #141A17;
+  --topbar-bg: #080C0A;
+  --text-primary: #F5F0E8;
+  --text-secondary: #A3B5AD;
+  --border-light: #222D27;
+  --shadow-card: 0 4px 20px rgba(0,0,0,0.4);
+  --accent-green-light: rgba(76, 175, 125, 0.15);
   --accent-gold-light: rgba(212, 168, 67, 0.15);
 }
 
@@ -789,21 +789,21 @@
    ========================================================================== */
 
 .dark .planificacion-v2-wrapper {
-  background-color: #0D0D0D;
-  background-image: url('data:image/svg+xml;utf8,<svg width="1200" height="600" viewBox="0 0 1200 600" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="%23090F1E"/><stop offset="100%" stop-color="%230F172A"/></linearGradient></defs><rect width="1200" height="600" fill="url(%23g)"/><path d="M100 300 L300 200 L400 350 L600 150 L800 250 L900 100 L1100 400" fill="none" stroke="%23D4A843" stroke-width="2" stroke-opacity="0.15"/><circle cx="100" cy="300" r="10" fill="%234CAF7D" fill-opacity="0.7"/><circle cx="300" cy="200" r="15" fill="%234CAF7D" fill-opacity="0.7"/><circle cx="400" cy="350" r="20" fill="%234CAF7D" fill-opacity="0.7"/><circle cx="600" cy="150" r="12" fill="%234CAF7D" fill-opacity="0.7"/><circle cx="800" cy="250" r="18" fill="%234CAF7D" fill-opacity="0.7"/><circle cx="900" cy="100" r="10" fill="%234CAF7D" fill-opacity="0.7"/><circle cx="1100" cy="400" r="16" fill="%234CAF7D" fill-opacity="0.7"/><path d="M300 200 L400 350 L800 250" fill="%23D4A843" opacity="0.04"/><circle cx="600" cy="300" r="150" fill="none" stroke="%234CAF7D" stroke-opacity="0.1" stroke-width="2"/><line x1="600" y1="0" x2="600" y2="600" stroke="%234CAF7D" stroke-opacity="0.1" stroke-width="2"/></svg>');
+  background-color: #070A08;
+  background-image: url('data:image/svg+xml;utf8,<svg width="1200" height="600" viewBox="0 0 1200 600" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="%23050806"/><stop offset="100%" stop-color="%230E1410"/></linearGradient></defs><rect width="1200" height="600" fill="url(%23g)"/><path d="M100 300 L300 200 L400 350 L600 150 L800 250 L900 100 L1100 400" fill="none" stroke="%23D4A843" stroke-width="2" stroke-opacity="0.15"/><circle cx="100" cy="300" r="10" fill="%234CAF7D" fill-opacity="0.7"/><circle cx="300" cy="200" r="15" fill="%234CAF7D" fill-opacity="0.7"/><circle cx="400" cy="350" r="20" fill="%234CAF7D" fill-opacity="0.7"/><circle cx="600" cy="150" r="12" fill="%234CAF7D" fill-opacity="0.7"/><circle cx="800" cy="250" r="18" fill="%234CAF7D" fill-opacity="0.7"/><circle cx="900" cy="100" r="10" fill="%234CAF7D" fill-opacity="0.7"/><circle cx="1100" cy="400" r="16" fill="%234CAF7D" fill-opacity="0.7"/><path d="M300 200 L400 350 L800 250" fill="%23D4A843" opacity="0.04"/><circle cx="600" cy="300" r="150" fill="none" stroke="%234CAF7D" stroke-opacity="0.1" stroke-width="2"/><line x1="600" y1="0" x2="600" y2="600" stroke="%234CAF7D" stroke-opacity="0.1" stroke-width="2"/></svg>');
 }
 
 /* Translucent dark glass cards */
 .dark .ps-glass-card {
-  background: rgba(30, 41, 59, 0.75);
-  border-color: rgba(255, 255, 255, 0.08);
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+  background: rgba(20, 26, 23, 0.85);
+  border-color: rgba(76, 175, 125, 0.15);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
 }
 
 .dark .ps-glass-card-v3 {
-  background: rgba(30, 41, 59, 0.6);
-  border-color: rgba(255, 255, 255, 0.06);
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+  background: rgba(20, 26, 23, 0.7);
+  border-color: rgba(76, 175, 125, 0.1);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
 }
 
 /* Contrast fixes for texts */
@@ -831,23 +831,23 @@
 
 /* Inputs and Buttons */
 .dark .ps-v3-input-container {
-  background: #1E293B !important;
-  border-color: #334155 !important;
+  background: #1C221F !important;
+  border-color: #2C3831 !important;
 }
 .dark .ps-v3-input {
   color: #FFF !important;
 }
 .dark .ps-v3-day-btn {
-  background: #1E293B !important;
-  color: #94A3B8 !important;
+  background: #1C221F !important;
+  color: #A3B5AD !important;
 }
 .dark .ps-v3-day-btn.active {
   background: var(--accent-green) !important;
   color: #FFF !important;
 }
 .dark .ps-v3-textarea {
-  background: #1E293B !important;
-  border-color: #334155 !important;
+  background: #1C221F !important;
+  border-color: #2C3831 !important;
   color: #FFF !important;
 }
 .dark .ps-v3-icon-suffix,
@@ -857,23 +857,23 @@
 
 /* Matrix Table Sticky columns readability in dark mode */
 .dark .ps-matrix-table-v3 .ps-row-light .ps-cell {
-  background: #1E293B !important;
-  color: #E2E8F0 !important;
-  border-right-color: #334155 !important;
+  background: #141A17 !important;
+  color: #F5F0E8 !important;
+  border-right-color: #222D27 !important;
 }
 .dark .ps-matrix-table-v3 .ps-row-light .ps-cell input {
   color: #FFF !important;
 }
 .dark .ps-matrix-table-v3 .ps-row-light .ps-cell-sticky {
-  background: #0F172A !important;
+  background: #0A0D0B !important;
   color: var(--accent-gold) !important;
-  border-right-color: #334155 !important;
+  border-right-color: #222D27 !important;
 }
 .dark .ps-matrix-table-v3 .ps-row-light select {
   color: #FFF !important;
 }
 .dark .ps-matrix-table-v3 .ps-row-light select option {
-  background: #1E293B !important;
+  background: #141A17 !important;
   color: #FFF !important;
 }
 

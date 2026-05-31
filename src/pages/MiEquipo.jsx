@@ -395,27 +395,42 @@ const MiEquipo = () => {
 
       {/* SIDEBAR DETALLE JUGADOR */}
       {selectedPlayer && (
-        <div className={`player-sidebar ${selectedPlayer ? 'open' : ''}`}>
-          <div className="sidebar-header">
-            <button className="btn-close" onClick={() => setSelectedPlayer(null)}>✕</button>
-            <div className="header-actions-right">
-              <button className="btn-edit-icon" style={{marginRight: '8px'}} onClick={() => generateExpediente(selectedPlayer, activeTeam)} title="Exportar Expediente">📄</button>
-              <button className="btn-edit-icon" onClick={() => handleOpenForm(selectedPlayer)}>✏️</button>
-            </div>
-            <div className="header-content">
-              <div className="large-avatar" style={!selectedPlayer.avatarUrl ? { backgroundColor: stringToColor(selectedPlayer.id || selectedPlayer.name) } : {}}>
-                {selectedPlayer.avatarUrl ? <img src={selectedPlayer.avatarUrl} alt={selectedPlayer.name} /> : <span style={{ color: '#FFF' }}>{getInitials(selectedPlayer.name)}</span>}
+        <div className={`player-sidebar ${selectedPlayer ? 'open' : ''}`} style={{ background: 'var(--bg-app)', borderLeft: '1px solid var(--border-light)' }}>
+          <div style={{ position: 'relative', padding: '24px 24px 0 24px', textAlign: 'center' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', position: 'absolute', top: '16px', left: '16px', right: '16px' }}>
+              <button style={{ background: 'none', border: 'none', fontSize: '20px', color: 'var(--text-secondary)', cursor: 'pointer' }} onClick={() => setSelectedPlayer(null)}>✕</button>
+              <div style={{ display: 'flex', gap: '8px' }}>
+                <button className="btn-edit-icon" onClick={() => generateExpediente(selectedPlayer, activeTeam)} title="Exportar Expediente">📄</button>
+                <button className="btn-edit-icon" onClick={() => handleOpenForm(selectedPlayer)}>✏️</button>
               </div>
-              <h2>{selectedPlayer.name}</h2>
-              <p>Dorsal {selectedPlayer.number} · {selectedPlayer.position}</p>
+            </div>
+            
+            <div style={{ width: '100px', height: '100px', margin: '20px auto 12px auto', borderRadius: '50%', background: !selectedPlayer.avatarUrl ? stringToColor(selectedPlayer.id || selectedPlayer.name) : '#FFF', border: '4px solid var(--bg-card)', boxShadow: '0 0 0 2px var(--accent-gold)', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              {selectedPlayer.avatarUrl ? <img src={selectedPlayer.avatarUrl} alt={selectedPlayer.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <span style={{ color: '#FFF', fontSize: '32px', fontWeight: 'bold' }}>{getInitials(selectedPlayer.name)}</span>}
+            </div>
+            
+            <h2 style={{ margin: '0 0 4px 0', fontSize: '20px', fontFamily: 'var(--font-heading)', color: 'var(--text-primary)' }}>{selectedPlayer.name}</h2>
+            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px', fontSize: '18px', fontWeight: 'bold', color: 'var(--text-primary)', marginBottom: '24px' }}>
+              <span>{selectedPlayer.number}</span>
+              <span style={{ fontSize: '14px', fontWeight: 'normal', color: 'var(--text-secondary)' }}>{selectedPlayer.position}</span>
             </div>
           </div>
 
-          <div className="sidebar-tabs">
+          <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0 16px', borderBottom: '1px solid var(--border-light)', marginBottom: '16px', overflowX: 'auto' }}>
             {['GENERAL', 'FÍSICO', 'SALUD', 'PLANES', 'ESTS.'].map(tab => (
               <button 
                 key={tab} 
-                className={activeTab === tab ? 'active' : ''} 
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  borderBottom: activeTab === tab ? '3px solid var(--accent-green)' : '3px solid transparent',
+                  padding: '12px 8px',
+                  fontSize: '11px',
+                  fontWeight: 'bold',
+                  color: activeTab === tab ? 'var(--accent-green)' : 'var(--text-secondary)',
+                  cursor: 'pointer',
+                  whiteSpace: 'nowrap'
+                }}
                 onClick={() => setActiveTab(tab)}
               >
                 {tab}
@@ -423,27 +438,33 @@ const MiEquipo = () => {
             ))}
           </div>
 
-          <div className="sidebar-body">
+          <div className="sidebar-body" style={{ padding: '0 24px 24px 24px' }}>
             {activeTab === 'GENERAL' && (
-              <div className="tab-pane">
-                <div className="info-row">
-                  <label>Categoría</label>
-                  <span>{activeTeam?.categoria || selectedPlayer.category}</span>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: '12px', borderBottom: '1px dashed var(--border-light)' }}>
+                  <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>Categoría</span>
+                  <strong style={{ fontSize: '13px', color: 'var(--text-primary)' }}>{activeTeam?.categoria || selectedPlayer.category}</strong>
                 </div>
-                <div className="info-row">
-                  <label>Pie dominante</label>
-                  <span>{selectedPlayer.foot}</span>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: '12px', borderBottom: '1px dashed var(--border-light)' }}>
+                  <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>Pie dominante</span>
+                  <strong style={{ fontSize: '13px', color: 'var(--text-primary)' }}>{selectedPlayer.foot}</strong>
                 </div>
-                <div className="info-row">
-                  <label>Posición Principal</label>
-                  <span className="badge-pos">{selectedPlayer.position}</span>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: '12px', borderBottom: '1px dashed var(--border-light)' }}>
+                  <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>Posición Principal</span>
+                  <span style={{ background: 'var(--accent-green-light)', color: 'var(--accent-green)', padding: '4px 12px', borderRadius: '16px', fontSize: '12px', fontWeight: 'bold' }}>{selectedPlayer.position}</span>
                 </div>
-                <div className="info-row">
-                  <label>Edad</label>
-                  <span>
-                    {calcularEdad(selectedPlayer.fechaNacimiento || selectedPlayer.birthDate || selectedPlayer.age).text} 
-                    ({calcularEdad(selectedPlayer.fechaNacimiento || selectedPlayer.birthDate || selectedPlayer.age).cat})
-                  </span>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: '12px', borderBottom: '1px dashed var(--border-light)' }}>
+                  <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>Edad</span>
+                  <strong style={{ fontSize: '13px', color: 'var(--text-primary)' }}>{calcularEdad(selectedPlayer.fechaNacimiento || selectedPlayer.birthDate || selectedPlayer.age).text}</strong>
+                </div>
+                
+                {/* Fake Radial Chart matching the image */}
+                <div style={{ marginTop: '32px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                  <div style={{ position: 'relative', width: '120px', height: '120px', borderRadius: '50%', background: 'conic-gradient(var(--accent-green) 70%, var(--accent-gold) 70% 90%, var(--bg-card) 90% 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <div style={{ width: '90px', height: '90px', borderRadius: '50%', background: 'var(--bg-app)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <span style={{ fontSize: '28px', fontWeight: 'bold', fontFamily: 'var(--font-heading)' }}>{selectedPlayer.number}</span>
+                    </div>
+                  </div>
                 </div>
               </div>
             )}

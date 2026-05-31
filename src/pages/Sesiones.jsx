@@ -615,33 +615,35 @@ const Sesiones = () => {
               const linkedPiz = session.linkedPizarraId ? pizarras.find(p => p.id === session.linkedPizarraId) : null;
               
               return (
-                <div key={session.id} className="card-base" style={{ padding: '0', cursor: 'pointer', display: 'flex', flexDirection: 'column' }} onClick={() => setSelectedSession(session)}>
+                <div key={session.id} className="card-base" style={{ padding: '0', cursor: 'pointer', display: 'flex', flexDirection: 'column', height: '100%' }} onClick={() => setSelectedSession(session)}>
                   <div style={{ padding: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border-light)' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <span style={{ background: 'var(--accent-green-light)', color: 'var(--accent-green)', padding: '4px 8px', borderRadius: '4px', fontSize: '12px', fontWeight: 'bold' }}>{time}</span>
-                      <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>{duration} min</span>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                      <span style={{ background: 'var(--accent-green-light)', color: 'var(--accent-green)', padding: '4px 12px', borderRadius: '16px', fontSize: '12px', fontWeight: 'bold' }}>{time}</span>
+                      <span style={{ fontSize: '13px', color: 'var(--text-secondary)', fontWeight: 'bold' }}>{duration} min</span>
                     </div>
-                    <div style={{ color: 'var(--text-secondary)' }}>⋮</div>
+                    <div style={{ color: 'var(--text-secondary)', fontWeight: 'bold', fontSize: '18px' }}>⋮</div>
                   </div>
                   
-                  <div style={{ padding: '16px', flex: 1 }}>
-                    <h3 style={{ margin: '0 0 12px 0', fontSize: '16px', fontFamily: 'var(--font-heading)' }}>{title}</h3>
-                    <div style={{ height: '120px', background: 'var(--bg-app)', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', border: '1px solid var(--border-light)', position: 'relative' }}>
-                      {linkedPiz && linkedPiz.thumbnail ? (
-                        <img src={linkedPiz.thumbnail} alt="Diagrama" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                      ) : (
-                        <span style={{ color: 'var(--text-secondary)', fontSize: '12px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
-                          <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" strokeWidth="2" fill="none"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
-                          Sin diagrama
-                        </span>
-                      )}
+                  <div style={{ padding: '16px', flex: 1, display: 'flex', flexDirection: 'column' }}>
+                    <h3 style={{ margin: '0 0 16px 0', fontSize: '18px', fontFamily: 'var(--font-heading)', color: 'var(--text-primary)' }}>{title}</h3>
+                    <div style={{ display: 'flex', gap: '12px', flex: 1 }}>
+                      <div style={{ flex: 1, background: 'var(--bg-app)', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', border: '1px solid var(--border-light)', position: 'relative', minHeight: '130px' }}>
+                        {linkedPiz && linkedPiz.thumbnail ? (
+                          <img src={linkedPiz.thumbnail} alt="Diagrama" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                        ) : (
+                          <span style={{ color: 'var(--text-secondary)', fontSize: '12px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
+                            <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" strokeWidth="2" fill="none"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
+                            Sin diagrama
+                          </span>
+                        )}
+                      </div>
+                      
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', minWidth: '110px' }}>
+                        <span style={{ fontSize: '11px', fontWeight: 'bold', background: 'var(--bg-card)', border: '1px solid var(--border-light)', padding: '8px', borderRadius: '8px', color: 'var(--text-primary)', textAlign: 'center', boxShadow: '0 1px 2px rgba(0,0,0,0.02)' }}>{category}</span>
+                        <span style={{ fontSize: '11px', fontWeight: 'bold', background: 'var(--bg-card)', border: '1px solid var(--border-light)', padding: '8px', borderRadius: '8px', color: 'var(--text-primary)', textAlign: 'center', boxShadow: '0 1px 2px rgba(0,0,0,0.02)' }}>{intensity}</span>
+                        <span style={{ fontSize: '11px', fontWeight: 'bold', background: 'var(--bg-card)', border: '1px solid var(--border-light)', padding: '8px', borderRadius: '8px', color: 'var(--text-primary)', textAlign: 'center', boxShadow: '0 1px 2px rgba(0,0,0,0.02)' }}>{blocks.length} Bloques</span>
+                      </div>
                     </div>
-                  </div>
-                  
-                  <div style={{ padding: '16px', borderTop: '1px solid var(--border-light)', display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-                    <span style={{ fontSize: '10px', background: 'var(--bg-app)', padding: '4px 8px', borderRadius: '4px', color: 'var(--text-primary)' }}>{category}</span>
-                    <span style={{ fontSize: '10px', background: 'var(--bg-app)', padding: '4px 8px', borderRadius: '4px', color: 'var(--text-primary)' }}>Intensidad {intensity}</span>
-                    <span style={{ fontSize: '10px', background: 'var(--bg-app)', padding: '4px 8px', borderRadius: '4px', color: 'var(--text-primary)' }}>{blocks.length} Bloques</span>
                   </div>
                 </div>
               );

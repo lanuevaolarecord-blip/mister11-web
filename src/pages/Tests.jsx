@@ -590,7 +590,7 @@ const Tests = () => {
               <button className="btn-primary" onClick={() => setIsNewTestModalOpen(true)}>+ Crear Test</button>
             </div>
             
-            <div className="tests-grid">
+            <div className="grid-3-cols">
               {tests.filter(t => {
                 if (activeTab === 'FÍSICOS') return (t.type === 'fisico' || !t.type) && (!DEFAULT_IDS.includes(t.id) || ['t1','t3','t4','t5','t6','t7','t8'].includes(t.id));
                 if (activeTab === 'PSICOSOCIALES') return [
@@ -598,38 +598,49 @@ const Tests = () => {
                 ].includes(t.type) && (!DEFAULT_IDS.includes(t.id) || ['psi1','psi2','psi3','soc1','soc2','psi1_old','psi2_old','soc1_old','soc2_old'].includes(t.id));
                 return false;
               }).map(t => (
-                <div key={t.id} className="test-card clickable" onClick={() => setSelectedTestDetail(t)}>
-                  <div className="t-head">
-                    <span className="t-cat">{t.category}</span>
-                    <span className="t-unit">{t.unit}</span>
+                <div key={t.id} className="card-base" style={{ padding: '0', cursor: 'pointer', display: 'flex', flexDirection: 'column' }} onClick={() => setSelectedTestDetail(t)}>
+                  <div style={{ position: 'relative', height: '140px', background: 'var(--bg-app)', borderTopLeftRadius: '12px', borderTopRightRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', borderBottom: '1px solid var(--border-light)' }}>
+                    {/* Placeholder Illustration */}
+                    <svg viewBox="0 0 24 24" width="48" height="48" stroke="var(--text-secondary)" strokeWidth="1.5" fill="none"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                    
+                    <div style={{ position: 'absolute', top: '12px', left: '12px', display: 'flex', gap: '8px' }}>
+                      <span style={{ background: 'var(--accent-green)', color: '#FFF', padding: '4px 8px', borderRadius: '4px', fontSize: '10px', fontWeight: 'bold', textTransform: 'uppercase' }}>{t.category}</span>
+                      <span style={{ background: 'var(--bg-card)', color: 'var(--text-primary)', border: '1px solid var(--border-light)', padding: '4px 8px', borderRadius: '4px', fontSize: '10px', fontWeight: 'bold' }}>Medida: {t.unit}</span>
+                    </div>
                   </div>
-                  <h4>{t.name}</h4>
-                  <p>{t.desc}</p>
-                  <div style={{ display: 'flex', gap: '10px', marginTop: '15px', alignItems: 'center' }}>
-                    <button 
-                      className="btn-primary" 
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        if (t.isQuestionnaire) {
-                          setRegSelectedTest(t.id);
-                          setIsQuestionnaireOpen(true);
-                        } else {
-                          setRegSelectedTest(t.id);
-                          setIsRegModalOpen(true);
-                        }
-                      }}
-                    >
-                      Registrar
-                    </button>
-                    <button 
-                      className="btn-outline" 
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        descargarPlantilla(t, players);
-                      }}
-                    >
-                      📥 Plantilla
-                    </button>
+                  
+                  <div style={{ padding: '20px', flex: 1, display: 'flex', flexDirection: 'column' }}>
+                    <h4 style={{ margin: '0 0 8px 0', fontSize: '18px', fontFamily: 'var(--font-heading)', color: 'var(--text-primary)' }}>{t.name}</h4>
+                    <p style={{ margin: '0 0 20px 0', fontSize: '13px', color: 'var(--text-secondary)', lineHeight: '1.5', flex: 1 }}>{t.desc}</p>
+                    
+                    <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+                      <button 
+                        className="btn-primary" 
+                        style={{ flex: 1, padding: '10px 0', fontSize: '12px' }}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (t.isQuestionnaire) {
+                            setRegSelectedTest(t.id);
+                            setIsQuestionnaireOpen(true);
+                          } else {
+                            setRegSelectedTest(t.id);
+                            setIsRegModalOpen(true);
+                          }
+                        }}
+                      >
+                        REGISTRAR
+                      </button>
+                      <button 
+                        className="btn-outline" 
+                        style={{ flex: 1, padding: '10px 0', fontSize: '12px' }}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          descargarPlantilla(t, players);
+                        }}
+                      >
+                        📥 PLANTILLA
+                      </button>
+                    </div>
                   </div>
                 </div>
               ))}
@@ -797,42 +808,61 @@ const Tests = () => {
                       />
                     </div>
 
-                    {/* SVG RADAR — siempre visible */}
+                    {/* SVG RADAR & TPI */}
                     <div style={{
                       flex: 1,
-                      background: '#F5F0E8',
+                      background: 'var(--m11-green)',
                       borderRadius: 16,
-                      padding: '20px 24px',
+                      padding: '24px',
                       display: 'flex',
-                      flexDirection: 'column',
                       alignItems: 'center',
-                      justifyContent: 'center',
-                      gap: 12,
+                      justifyContent: 'space-around',
+                      gap: 24,
                       minHeight: 360,
-                      minWidth: 0
+                      minWidth: 0,
+                      position: 'relative',
+                      overflow: 'hidden'
                     }}>
-                      <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: 2, color: '#1B3A2D' }}>
-                        PERFIL DE RENDIMIENTO
-                      </span>
-                      {testCount > 0 ? (
-                        <SvgRadar data={radarData} size={270} />
-                      ) : (
-                        <div style={{ textAlign: 'center', color: '#7A7065' }}>
-                          <div style={{ fontSize: 48 }}>📊</div>
-                          <p style={{ fontSize: 14, marginTop: 8 }}>Sin evaluaciones.<br />Usa "🎯 Datos Demo" para ver el radar.</p>
+                      {/* Subtle Pitch Background */}
+                      <div style={{ position: 'absolute', inset: 0, opacity: 0.1, backgroundImage: 'url(https://upload.wikimedia.org/wikipedia/commons/4/45/Football_field.svg)', backgroundSize: 'cover', backgroundPosition: 'center' }} />
+                      
+                      <div style={{ zIndex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                        <span style={{ fontSize: 12, fontWeight: 700, letterSpacing: 2, color: 'var(--accent-gold)', marginBottom: '16px' }}>
+                          PERFIL DE RENDIMIENTO
+                        </span>
+                        {testCount > 0 ? (
+                          <SvgRadar data={radarData} size={250} />
+                        ) : (
+                          <div style={{ textAlign: 'center', color: '#7A7065' }}>
+                            <div style={{ fontSize: 48 }}>📊</div>
+                            <p style={{ fontSize: 14, marginTop: 8, color: '#FFF' }}>Sin evaluaciones.<br />Registra datos para ver el radar.</p>
+                          </div>
+                        )}
+                      </div>
+
+                      <div style={{ zIndex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                        <span style={{ fontSize: 12, fontWeight: 700, letterSpacing: 2, color: 'var(--accent-gold)', marginBottom: '16px' }}>
+                          TEST PERFORMANCE INDEX
+                        </span>
+                        <div style={{ position: 'relative', width: '200px', height: '200px', borderRadius: '50%', background: `conic-gradient(var(--accent-gold) ${overall}%, rgba(255,255,255,0.1) ${overall}% 100%)`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                          <div style={{ width: '170px', height: '170px', borderRadius: '50%', background: 'var(--m11-green)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+                            <span style={{ fontSize: '64px', fontWeight: 'bold', fontFamily: 'var(--font-heading)', color: '#FFF', lineHeight: '1' }}>{overall}</span>
+                            <span style={{ fontSize: '14px', color: 'rgba(255,255,255,0.6)', fontWeight: 'bold' }}>TPI SCORE</span>
+                          </div>
                         </div>
-                      )}
-                      <button
-                        style={{
-                          background: '#1B3A2D', color: '#FFF',
-                          border: 'none', borderRadius: 8,
-                          padding: '10px 24px', fontWeight: 700,
-                          fontSize: 13, cursor: 'pointer'
-                        }}
-                        onClick={() => setAnalyticsPlayer(getPlayerById(histSelectedPlayer))}
-                      >
-                        📈 Ver Analíticas Completas
-                      </button>
+                        <button
+                          style={{
+                            marginTop: '24px',
+                            background: 'var(--accent-gold)', color: '#000',
+                            border: 'none', borderRadius: 8,
+                            padding: '10px 24px', fontWeight: 700,
+                            fontSize: 13, cursor: 'pointer'
+                          }}
+                          onClick={() => setAnalyticsPlayer(getPlayerById(histSelectedPlayer))}
+                        >
+                          📈 Ver Analíticas Completas
+                        </button>
+                      </div>
                     </div>
                   </div>
                 );

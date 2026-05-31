@@ -284,24 +284,26 @@ const Planificacion = () => {
       )}
 
       {/* HEADER / TABS NAVIGATION */}
-      <div className="ps-tabs-container" style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
-        <div className="ps-tabs-list" style={{display: 'flex', gap: '8px'}}>
+      <header className="page-header" style={{ marginBottom: '24px' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+          <h1 className="page-title" style={{ margin: 0 }}>PLANIFICACIÓN TÁCTICA</h1>
+          <button className="btn-outline" onClick={() => generatePlanificacionPDF(macroInfo, microcycles, activeTeam)}>
+            <FileDown size={16}/> EXPORTAR PDF
+          </button>
+        </div>
+        
+        <div className="ps-tabs-list" style={{display: 'flex', gap: '8px', overflowX: 'auto', paddingBottom: '8px'}}>
           {['MACROCICLO (PLANTILLA)', 'MESOCICLO', 'MICROCICLO SEMANAL', 'OBJETIVOS'].map(tab => (
             <button 
               key={tab} 
-              className={`ps-tab ${activeTab === tab ? 'active' : ''}`}
+              className={`chip ${activeTab === tab ? 'active' : ''}`}
               onClick={() => setActiveTab(tab)}
             >
               {tab}
             </button>
           ))}
         </div>
-        <div className="ps-header-actions" style={{display: 'flex', gap: '8px'}}>
-          <button className="ps-btn ps-btn-outline" onClick={() => generatePlanificacionPDF(macroInfo, microcycles, activeTeam)}>
-            <FileDown size={16}/> EXPORTAR PDF
-          </button>
-        </div>
-      </div>
+      </header>
 
       {/* TAB CONTENT */}
       <div className="ps-tab-content">
@@ -309,24 +311,23 @@ const Planificacion = () => {
         {/* --- MACROCICLO TAB --- */}
         {activeTab === 'MACROCICLO (PLANTILLA)' && (
           <div className="ps-macro-tab-layout">
-            <div className="ps-top-cards">
-              <div className="ps-card">
-                <div className="ps-card-header">
-                  <Settings size={18} className="ps-icon-cyan" />
-                  <h3>TEMPORADA</h3>
+            <div className="ps-top-cards" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '20px', marginBottom: '24px' }}>
+              <div className="card-base" style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <Settings size={18} color="var(--accent-green)" />
+                  <h3 style={{ margin: 0, fontSize: '14px', fontWeight: 'bold', color: 'var(--text-primary)' }}>TEMPORADA</h3>
                 </div>
-                <div className="ps-date-range">
-                  <Calendar size={16} className="ps-icon-muted" />
-                  <input type="date" value={macroInfo.startDate} onChange={e => setMacroInfo({...macroInfo, startDate: e.target.value})} className="ps-date-input" />
-                  <span className="ps-arrow">→</span>
-                  <input type="date" value={macroInfo.endDate} onChange={e => setMacroInfo({...macroInfo, endDate: e.target.value})} className="ps-date-input" />
-                  <Calendar size={16} className="ps-icon-muted" />
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'var(--bg-app)', padding: '12px', borderRadius: '8px', border: '1px solid var(--border-light)' }}>
+                  <Calendar size={16} color="var(--text-secondary)" />
+                  <input type="date" value={macroInfo.startDate} onChange={e => setMacroInfo({...macroInfo, startDate: e.target.value})} style={{ border: 'none', background: 'transparent', color: 'var(--text-primary)', outline: 'none', width: '100%' }} />
+                  <span style={{ color: 'var(--text-secondary)' }}>→</span>
+                  <input type="date" value={macroInfo.endDate} onChange={e => setMacroInfo({...macroInfo, endDate: e.target.value})} style={{ border: 'none', background: 'transparent', color: 'var(--text-primary)', outline: 'none', width: '100%' }} />
                 </div>
-                <div className="ps-days-section">
-                  <h4>DÍAS DE ENTRENAMIENTO</h4>
-                  <div className="ps-days-row">
+                <div>
+                  <h4 style={{ margin: '0 0 12px 0', fontSize: '12px', color: 'var(--text-secondary)' }}>DÍAS DE ENTRENAMIENTO</h4>
+                  <div style={{ display: 'flex', gap: '8px' }}>
                     {DAYS_LABELS_SHORT.map((day, idx) => (
-                      <button key={idx} className={`ps-day-circle ${macroInfo.trainingDays.includes(idx) ? 'active' : ''}`} onClick={() => toggleDay(idx)}>
+                      <button key={idx} style={{ flex: 1, padding: '8px 0', borderRadius: '8px', border: macroInfo.trainingDays.includes(idx) ? '1px solid var(--accent-green)' : '1px solid var(--border-light)', background: macroInfo.trainingDays.includes(idx) ? 'var(--accent-green-light)' : 'var(--bg-app)', color: macroInfo.trainingDays.includes(idx) ? 'var(--accent-green)' : 'var(--text-secondary)', fontWeight: 'bold', cursor: 'pointer' }} onClick={() => toggleDay(idx)}>
                         {day}
                       </button>
                     ))}
@@ -334,53 +335,50 @@ const Planificacion = () => {
                 </div>
               </div>
 
-              <div className="ps-card ps-card-obj">
-                <div className="ps-card-header">
-                  <Target size={18} className="ps-icon-cyan" />
-                  <h3>OBJETIVO GENERAL</h3>
+              <div className="card-base" style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <Target size={18} color="var(--accent-green)" />
+                  <h3 style={{ margin: 0, fontSize: '14px', fontWeight: 'bold', color: 'var(--text-primary)' }}>OBJETIVO GENERAL</h3>
                 </div>
-                <div className="ps-obj-content">
-                  <textarea value={macroInfo.objective} onChange={e => setMacroInfo({...macroInfo, objective: e.target.value})} className="ps-obj-textarea" />
-                  <div className="ps-obj-icon-wrapper"><span className="ps-chess-icon">♟️</span></div>
-                </div>
-              </div>
-
-              <div className="ps-card ps-card-cat">
-                <div className="ps-card-header">
-                  <Grid size={18} className="ps-icon-cyan" />
-                  <h3>CATEGORÍA</h3>
-                </div>
-                <input type="text" value={macroInfo.category} onChange={e => setMacroInfo({...macroInfo, category: e.target.value})} className="ps-cat-input" />
-                <div className="ps-card-header mt-10">
-                  <User size={18} className="ps-icon-cyan" />
-                  <h3>ENTRENADOR</h3>
-                </div>
-                <div className="ps-trainer-row">
-                  <img src={auth.currentUser?.photoURL || "https://ui-avatars.com/api/?name=Entrenador&background=14B8A6&color=fff"} alt="trainer" className="ps-trainer-avatar"/>
-                  <input type="text" value={macroInfo.trainer} onChange={e => setMacroInfo({...macroInfo, trainer: e.target.value})} className="ps-cat-input" />
+                <div style={{ flex: 1, background: 'var(--bg-app)', borderRadius: '8px', border: '1px solid var(--border-light)', padding: '12px', display: 'flex', position: 'relative' }}>
+                  <textarea value={macroInfo.objective} onChange={e => setMacroInfo({...macroInfo, objective: e.target.value})} style={{ width: '100%', height: '100%', border: 'none', background: 'transparent', color: 'var(--text-primary)', resize: 'none', outline: 'none' }} />
+                  <span style={{ position: 'absolute', bottom: '12px', right: '12px', fontSize: '24px', opacity: 0.2 }}>♟️</span>
                 </div>
               </div>
 
-              <div className="ps-card ps-card-vol">
-                <div className="ps-card-header">
-                  <Hourglass size={18} className="ps-icon-cyan" />
-                  <h3>VOLUMEN TEMPORADA</h3>
+              <div className="card-base" style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <Grid size={18} color="var(--accent-green)" />
+                  <h3 style={{ margin: 0, fontSize: '14px', fontWeight: 'bold', color: 'var(--text-primary)' }}>CATEGORÍA</h3>
                 </div>
-                <div className="ps-gauge-container">
-                  <svg viewBox="0 0 200 100" className="ps-gauge-svg">
-                    <path d="M 20 90 A 80 80 0 0 1 180 90" fill="none" stroke="var(--ps-gauge-bg)" strokeWidth="15" strokeLinecap="round" />
-                    <path d="M 20 90 A 80 80 0 0 1 180 90" fill="none" stroke="url(#cyan-grad)" strokeWidth="15" strokeLinecap="round" strokeDasharray="251" strokeDashoffset="60" />
-                    <defs>
-                      <linearGradient id="cyan-grad" x1="0%" y1="0%" x2="100%" y2="0%">
-                        <stop offset="0%" stopColor="var(--ps-cyan)" />
-                        <stop offset="100%" stopColor="var(--ps-green)" />
-                      </linearGradient>
-                    </defs>
+                <input type="text" value={macroInfo.category} onChange={e => setMacroInfo({...macroInfo, category: e.target.value})} style={{ padding: '12px', borderRadius: '8px', border: '1px solid var(--border-light)', background: 'var(--bg-app)', color: 'var(--text-primary)', outline: 'none' }} />
+                
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '8px' }}>
+                  <User size={18} color="var(--accent-green)" />
+                  <h3 style={{ margin: 0, fontSize: '14px', fontWeight: 'bold', color: 'var(--text-primary)' }}>ENTRENADOR</h3>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '8px 12px', borderRadius: '8px', border: '1px solid var(--border-light)', background: 'var(--bg-app)' }}>
+                  <img src={auth.currentUser?.photoURL || "https://ui-avatars.com/api/?name=Entrenador&background=1B3A2D&color=fff"} alt="trainer" style={{ width: '32px', height: '32px', borderRadius: '50%' }}/>
+                  <input type="text" value={macroInfo.trainer} onChange={e => setMacroInfo({...macroInfo, trainer: e.target.value})} style={{ border: 'none', background: 'transparent', color: 'var(--text-primary)', outline: 'none', width: '100%' }} />
+                </div>
+              </div>
+
+              <div className="card-base" style={{ padding: '20px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
+                  <Hourglass size={18} color="var(--accent-green)" />
+                  <h3 style={{ margin: 0, fontSize: '14px', fontWeight: 'bold', color: 'var(--text-primary)' }}>VOLUMEN TEMPORADA</h3>
+                </div>
+                <div style={{ position: 'relative', width: '160px', height: '80px', overflow: 'hidden', display: 'flex', justifyContent: 'center' }}>
+                  <svg viewBox="0 0 200 100" style={{ width: '100%', height: '100%', overflow: 'visible' }}>
+                    <path d="M 20 90 A 80 80 0 0 1 180 90" fill="none" stroke="var(--border-light)" strokeWidth="16" strokeLinecap="round" />
+                    <path d="M 20 90 A 80 80 0 0 1 180 90" fill="none" stroke="var(--accent-gold)" strokeWidth="16" strokeLinecap="round" strokeDasharray="251" strokeDashoffset="60" />
                   </svg>
-                  <div className="ps-gauge-text"><span className="ps-gauge-big">{weeklyVolume} min</span></div>
-                  <Hourglass size={40} className="ps-gauge-icon-right" />
+                  <div style={{ position: 'absolute', bottom: '0', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                    <span style={{ fontSize: '24px', fontWeight: 'bold', fontFamily: 'var(--font-heading)' }}>{weeklyVolume}</span>
+                    <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>min/sem</span>
+                  </div>
                 </div>
-                <div className="ps-vol-sub">{totalHours}h {remainingMins}min ({totalMinutes} min totales)</div>
+                <div style={{ marginTop: '16px', fontSize: '12px', color: 'var(--text-secondary)', textAlign: 'center' }}>{totalHours}h {remainingMins}min totales</div>
               </div>
             </div>
 

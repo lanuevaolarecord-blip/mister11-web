@@ -599,9 +599,18 @@ const Tests = () => {
                 return false;
               }).map(t => (
                 <div key={t.id} className="card-base" style={{ padding: '0', cursor: 'pointer', display: 'flex', flexDirection: 'column' }} onClick={() => setSelectedTestDetail(t)}>
-                  <div style={{ position: 'relative', height: '140px', background: 'var(--bg-app)', borderTopLeftRadius: '12px', borderTopRightRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', borderBottom: '1px solid var(--border-light)' }}>
-                    {/* Placeholder Illustration */}
-                    <svg viewBox="0 0 24 24" width="48" height="48" stroke="var(--text-secondary)" strokeWidth="1.5" fill="none"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                  <div style={{ position: 'relative', height: '140px', background: t.imagenProtocolo ? '#f8f6f0' : 'var(--bg-app)', borderTopLeftRadius: '12px', borderTopRightRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', borderBottom: '1px solid var(--border-light)', overflow: 'hidden' }}>
+                    {/* Ilustración del test */}
+                    {t.imagenProtocolo ? (
+                      <img
+                        src={t.imagenProtocolo}
+                        alt={t.name}
+                        style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center' }}
+                        onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'flex'; }}
+                      />
+                    ) : null}
+                    {/* Fallback SVG si no hay imagen */}
+                    <svg viewBox="0 0 24 24" width="48" height="48" stroke="var(--text-secondary)" strokeWidth="1.5" fill="none" style={{ display: t.imagenProtocolo ? 'none' : 'block' }}><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
                     
                     <div style={{ position: 'absolute', top: '12px', left: '12px', display: 'flex', gap: '8px' }}>
                       <span style={{ background: 'var(--accent-green)', color: '#FFF', padding: '4px 8px', borderRadius: '4px', fontSize: '10px', fontWeight: 'bold', textTransform: 'uppercase' }}>{t.category}</span>

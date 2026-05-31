@@ -26,39 +26,44 @@ const Header = ({ onToggleNotif }) => {
   };
 
   return (
-    <header className="header">
+    <header className="header" style={{ position: 'relative' }}>
+      <div className="header-central-shield-container">
+        <Shield fill="#1B3A2D" color="#D4A843" size={48} strokeWidth={1.5} />
+      </div>
+
       <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
-        <h1>{getPageTitle()}</h1>
+        <h1 style={{ fontFamily: 'var(--font-heading)', fontSize: '24px', margin: 0, letterSpacing: '1px' }}>{getPageTitle()}</h1>
         
         {teams.length > 0 && (
-          <div className="team-switcher-header">
-            <span className="team-indicator" style={{background: activeTeam?.colorLocal || 'var(--accent)'}} />
+          <div className="team-switcher-header-v2">
+            <Shield fill="#1B3A2D" color="#FFF" size={16} />
             <select 
               value={activeTeam?.id || ''} 
               onChange={(e) => {
                 const team = teams.find(t => t.id === e.target.value);
                 if (team) selectTeam(team);
               }}
+              style={{ background: 'transparent', border: 'none', color: '#000', fontWeight: 'bold', outline: 'none', fontFamily: 'var(--font-heading)', cursor: 'pointer' }}
             >
               {teams.map(t => {
                 if (!t) return null;
-                return <option key={t.id} value={t.id}>{t.nombre}</option>
+                return <option key={t.id} value={t.id}>{t.nombre.toUpperCase()}</option>
               })}
             </select>
-            <ChevronDown size={14} className="switcher-arrow" />
+            <ChevronDown size={14} />
           </div>
         )}
       </div>
       
       <div className="header-actions">
         <button className="icon-btn theme-toggle" title="Cambiar Tema" onClick={toggleTheme}>
-          {darkMode ? <Sun size={20} /> : <Moon size={20} />}
+          {darkMode ? <Sun size={20} color="var(--accent-gold)" /> : <Moon size={20} color="var(--accent-gold)" />}
         </button>
         <button className="icon-btn" title="Notificaciones" onClick={onToggleNotif}>
-          <Bell size={20} />
+          <Bell size={20} color="var(--accent-gold)" />
         </button>
         <button className="icon-btn" title="Ajustes" onClick={() => navigate('/admin')}>
-          <Settings size={20} />
+          <Settings size={20} color="var(--accent-gold)" />
         </button>
       </div>
     </header>

@@ -161,6 +161,11 @@
 /* PAGE WRAPPERS */
 .page-wrapper {
   background-color: var(--bg-app);
+  background-image: 
+    linear-gradient(rgba(0, 0, 0, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 0, 0, 0.03) 1px, transparent 1px);
+  background-size: 40px 40px;
+  background-position: center top;
   color: var(--text-primary);
   font-family: var(--font-body);
   min-height: 100vh;
@@ -183,3 +188,168 @@
   font-size: 14px;
   margin: 0;
 }
+
+/* DASHBOARD V2 SPECIFIC CLASSES */
+
+/* Header Shield */
+.header-central-shield-container {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 100;
+  width: 70px;
+  height: 85px;
+  background: var(--topbar-bg);
+  border: 2px solid var(--accent-gold);
+  border-top: none;
+  border-bottom-left-radius: 50%;
+  border-bottom-right-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  box-shadow: 0 8px 15px rgba(0, 0, 0, 0.3);
+}
+
+.team-switcher-header-v2 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--accent-gold);
+  color: #000;
+  padding: 6px 16px 6px 10px;
+  border-radius: 20px;
+  font-family: var(--font-heading);
+  font-size: 12px;
+  font-weight: 700;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+}
+
+/* Floating Elements for Cards */
+.dashboard-stat-card-v2 {
+  position: relative;
+  overflow: visible !important;
+  border: 1px solid var(--accent-gold);
+  background: var(--bg-card);
+  border-radius: 16px;
+  padding: 20px;
+  box-shadow: 0 4px 15px rgba(212, 168, 67, 0.1);
+}
+
+.dashboard-stat-icon-floating {
+  position: absolute;
+  right: -10px;
+  bottom: 0px;
+  filter: drop-shadow(0 10px 15px rgba(0,0,0,0.3));
+  transform: scale(1.1);
+  pointer-events: none;
+}
+
+/* Golden Glowing Circle for "Jugadores 16" */
+.golden-ring-stat {
+  position: absolute;
+  right: 15%;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 90px;
+  height: 90px;
+  border-radius: 50%;
+  background: #FFF;
+  border: 6px solid var(--accent-gold);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  box-shadow: 0 0 20px rgba(212, 168, 67, 0.4), inset 0 0 10px rgba(212, 168, 67, 0.2);
+  z-index: 10;
+}
+.golden-ring-stat span {
+  font-family: var(--font-heading);
+  font-size: 32px;
+  font-weight: bold;
+  color: var(--text-primary);
+}
+
+/* Horizontal grid for workload chart */
+.chart-container-3d-v2 {
+  position: relative;
+  height: 250px;
+  width: 100%;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-around;
+  padding-bottom: 20px;
+}
+.chart-grid-lines {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 30px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  z-index: 0;
+}
+.chart-grid-line {
+  border-bottom: 1px solid var(--accent-gold);
+  opacity: 0.3;
+  width: 100%;
+}
+
+/* 3D Cylinders */
+.workload-bar-3d-v2 {
+  width: 40px;
+  border-radius: 10px 10px 4px 4px;
+  position: relative;
+  z-index: 1;
+  box-shadow: 0 8px 15px rgba(0,0,0,0.2), inset -5px 0 10px rgba(0,0,0,0.2);
+}
+
+.workload-bar-3d-v2.low { background: linear-gradient(90deg, #34D399, #059669); }
+.workload-bar-3d-v2.medium { background: linear-gradient(90deg, #FBBF24, #D97706); }
+.workload-bar-3d-v2.high { background: linear-gradient(90deg, #F87171, #DC2626); }
+
+/* Quick Access Concentric Buttons */
+.quick-access-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+}
+.quick-access-ring-outer {
+  padding: 10px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(212,168,67,0.15) 0%, transparent 70%);
+}
+.quick-access-ring-inner {
+  padding: 4px;
+  border-radius: 50%;
+  border: 1px solid var(--accent-gold);
+  background: var(--bg-card);
+  box-shadow: inset 0 0 10px rgba(0,0,0,0.05), 0 4px 10px rgba(0,0,0,0.05);
+}
+.quick-access-btn-core {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: #FFF;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  color: var(--accent-green);
+}
+.quick-access-wrapper:hover .quick-access-ring-inner {
+  background: var(--accent-gold-light);
+}
+
+/* TWI Header */
+.twi-number-v2 {
+  font-family: var(--font-heading);
+  font-size: 42px;
+  font-weight: bold;
+  color: var(--accent-gold);
+  line-height: 1;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+

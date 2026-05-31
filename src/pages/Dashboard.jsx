@@ -157,29 +157,75 @@ const Dashboard = () => {
 
       {/* Stats Grid */}
       <div className="grid-4-cols" style={{ marginBottom: '24px' }}>
-        {stats.map((s, idx) => (
-          <div key={idx} className="card-base" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer', padding: '20px' }} onClick={() => navigate(s.route)}>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-              <div style={{ color: 'var(--text-secondary)', fontSize: '12px', textTransform: 'uppercase' }}>{s.label}</div>
-              <div style={{ fontSize: '28px', fontWeight: 'bold', color: 'var(--text-primary)', fontFamily: 'var(--font-heading)', lineHeight: 1 }}>{s.value}</div>
+        {stats.map((s, idx) => {
+          // Renderizado personalizado para igualar la Imagen 2
+          return (
+            <div key={idx} className="dashboard-stat-card-v2" onClick={() => navigate(s.route)} style={{ cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', zIndex: 1 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  {s.icon}
+                  <span style={{ color: 'var(--text-secondary)', fontSize: '12px', textTransform: 'uppercase', fontWeight: 'bold' }}>{s.label}</span>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginTop: '8px' }}>
+                  <div style={{ fontSize: '28px', fontWeight: 'bold', color: 'var(--text-primary)', fontFamily: 'var(--font-heading)', lineHeight: 1 }}>{s.value}</div>
+                  <div style={{ width: '40px', height: '2px', background: 'var(--accent-gold)' }}></div>
+                  <div style={{ width: '20px', height: '2px', background: 'var(--accent-green)' }}></div>
+                </div>
+              </div>
+              
+              {idx === 0 && (
+                <div className="golden-ring-stat">
+                  <span>{s.value}</span>
+                </div>
+              )}
+              {idx === 1 && (
+                <div className="dashboard-stat-icon-floating" style={{ right: '-5px', bottom: '-5px' }}>
+                  <div style={{ fontSize: '60px', textShadow: '0 10px 20px rgba(0,0,0,0.3)' }}>📋</div>
+                </div>
+              )}
+              {idx === 2 && (
+                <div className="dashboard-stat-icon-floating" style={{ right: '-5px', bottom: '-15px' }}>
+                  <div style={{ fontSize: '60px', textShadow: '0 10px 20px rgba(0,0,0,0.3)' }}>🛡️</div>
+                </div>
+              )}
+              {idx === 3 && (
+                <div className="dashboard-stat-icon-floating" style={{ right: '-5px', bottom: '-10px' }}>
+                  <div style={{ fontSize: '60px', textShadow: '0 10px 20px rgba(0,0,0,0.3)' }}>📅</div>
+                </div>
+              )}
             </div>
-            <div style={{ color: 'var(--accent-gold)' }}>
-              {s.icon}
-            </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
 
       <div className="grid-3-cols">
         {/* Weekly Load Chart (3D) */}
-        <div className="card-base" style={{ gridColumn: 'span 2' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-            <h2 style={{ fontSize: '18px', margin: 0, fontFamily: 'var(--font-heading)' }}>Carga de Trabajo Estimada</h2>
+        <div className="card-base" style={{ gridColumn: 'span 2', position: 'relative' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '24px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+              <h2 style={{ fontSize: '20px', margin: 0, fontFamily: 'var(--font-heading)' }}>Carga de Trabajo Estimada</h2>
+              <div style={{ border: '1px solid var(--accent-gold)', borderRadius: '8px', padding: '4px 8px', background: '#FFF' }}>
+                <svg viewBox="0 0 100 30" style={{ width: '80px', height: '24px' }} preserveAspectRatio="none">
+                  <polyline points="0,20 20,10 40,25 60,5 80,15 100,2" fill="none" stroke="var(--accent-green)" strokeWidth="2" strokeLinejoin="round" />
+                  <circle cx="20" cy="10" r="2" fill="var(--accent-green)" />
+                  <circle cx="60" cy="5" r="2" fill="var(--accent-green)" />
+                  <circle cx="100" cy="2" r="2" fill="var(--accent-green)" />
+                </svg>
+              </div>
+            </div>
+            
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+              <div style={{ fontSize: '11px', color: 'var(--text-secondary)', fontWeight: 'bold' }}>Team Workload Index</div>
+              <div className="twi-number-v2">
+                {Math.round(workloadData.reduce((acc, curr) => acc + curr.val, 0) / Math.max(1, workloadData.length))}
+              </div>
+            </div>
+
             <select 
               className="chip"
               value={workloadPeriod}
               onChange={(e) => setWorkloadPeriod(e.target.value)}
-              style={{ border: 'none', background: 'transparent', padding: '0', color: 'var(--text-secondary)' }}
+              style={{ border: '1px solid var(--accent-gold)', background: '#FFF', padding: '4px 12px', color: 'var(--text-primary)', fontWeight: 'bold' }}
             >
               <option value="Esta sesión">Esta sesión</option>
               <option value="Esta semana">Esta semana</option>
@@ -188,48 +234,24 @@ const Dashboard = () => {
             </select>
           </div>
           
-          <div className="chart-container-3d" style={{ border: 'none', marginTop: '40px', height: '180px' }}>
-            <div className="workload-mini-chart" style={{ background: 'transparent', border: 'none', boxShadow: 'none', left: '0', top: '-40px' }}>
-              <svg viewBox="0 0 100 30" preserveAspectRatio="none">
-                <polyline points="0,20 20,10 40,25 60,5 80,15 100,2" fill="none" stroke="var(--accent-green)" strokeWidth="2" strokeLinejoin="round" />
-                <circle cx="20" cy="10" r="2" fill="var(--accent-green)" />
-                <circle cx="60" cy="5" r="2" fill="var(--accent-green)" />
-                <circle cx="100" cy="2" r="2" fill="var(--accent-green)" />
-              </svg>
-            </div>
-
-            <div className="workload-center-text" style={{ top: '-40px' }}>
-              <div style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>Team Workload Index</div>
-              <div className="wl-number" style={{ color: 'var(--accent-gold)', fontSize: '32px' }}>
-                {Math.round(workloadData.reduce((acc, curr) => acc + curr.val, 0) / Math.max(1, workloadData.length))}
-              </div>
+          <div className="chart-container-3d-v2">
+            <div className="chart-grid-lines">
+              <div className="chart-grid-line"></div>
+              <div className="chart-grid-line"></div>
+              <div className="chart-grid-line"></div>
+              <div className="chart-grid-line"></div>
+              <div className="chart-grid-line"></div>
             </div>
 
             {workloadData.map((d, i) => {
               if (!d) return null;
-              let barColor = 'var(--accent-green)';
-              if (d.val >= 70) barColor = 'var(--accent-gold)';
-              if (d.val >= 90) barColor = '#E53E3E'; // Red for high workload
-              
-              if (d.val === 0) barColor = 'transparent';
+              const barLevel = getBarLevelClass(d.val);
 
               return (
-                <div key={i} className="neon-bar-wrapper">
-                  <div className="neon-bar-tooltip" style={{ color: 'var(--text-primary)' }}>{d.val}%</div>
-                  <div 
-                    style={{ 
-                      height: `${Math.max(5, d.val)}%`, 
-                      width: '100%', 
-                      background: d.val === 0 ? 'transparent' : `linear-gradient(to right, ${barColor} 0%, rgba(255,255,255,0.4) 20%, ${barColor} 50%, rgba(0,0,0,0.2) 100%)`, 
-                      borderRadius: '16px 16px 4px 4px',
-                      border: d.val === 0 ? '1px dashed var(--border-light)' : 'none',
-                      borderTop: d.val !== 0 ? `4px solid ${barColor}` : 'none'
-                    }}
-                  >
-                  </div>
-                  <div className="neon-bar-label" style={{ color: 'var(--text-primary)', bottom: '-25px' }}>
-                    {d.day}
-                  </div>
+                <div key={i} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', zIndex: 1 }}>
+                  <div style={{ color: 'var(--text-primary)', fontSize: '12px', fontWeight: 'bold', marginBottom: '8px' }}>{d.val}%</div>
+                  <div className={`workload-bar-3d-v2 ${barLevel}`} style={{ height: `${Math.max(5, d.val * 1.5)}px` }}></div>
+                  <div style={{ color: 'var(--text-primary)', fontSize: '12px', fontWeight: 'bold', marginTop: '12px' }}>{d.day}</div>
                 </div>
               );
             })}
@@ -273,28 +295,44 @@ const Dashboard = () => {
       </div>
 
       {/* Quick Actions */}
-      <div style={{ marginTop: '40px', marginBottom: '40px' }}>
-        <h2 style={{ fontSize: '18px', fontFamily: 'var(--font-heading)', marginBottom: '24px' }}>Acceso Rápido</h2>
-        <div style={{ display: 'flex', gap: '32px', alignItems: 'center' }}>
+      <div style={{ marginTop: '40px', marginBottom: '40px', display: 'flex', alignItems: 'center' }}>
+        <h2 style={{ fontSize: '18px', fontFamily: 'var(--font-heading)', margin: 0, width: '150px' }}>Acceso Rápido</h2>
+        
+        <div style={{ display: 'flex', gap: '32px', alignItems: 'center', flex: 1, justifyContent: 'space-between' }}>
           {[
             { label: 'Pizarra Táctica', icon: <Presentation size={24} />, route: '/pizarra' },
-            { label: 'Crear Sesión', icon: <FilePlus size={24} />, route: '/sesiones' },
-            { label: 'GUARDAR DASHBOARD', isMain: true },
+            { label: 'Crear Sesión', icon: <FilePlus size={24} />, route: '/sesiones' }
+          ].map((action, idx) => (
+            <div key={idx} className="quick-access-wrapper" onClick={() => navigate(action.route)}>
+              <div className="quick-access-ring-outer">
+                <div className="quick-access-ring-inner">
+                  <div className="quick-access-btn-core">
+                    {action.icon}
+                  </div>
+                </div>
+              </div>
+              <span style={{ fontSize: '13px', fontWeight: '600', color: 'var(--text-primary)' }}>{action.label}</span>
+            </div>
+          ))}
+
+          <button style={{ padding: '12px 32px', borderRadius: '30px', background: '#FFF', border: '2px solid var(--accent-gold)', color: 'var(--text-primary)', fontWeight: 'bold', fontSize: '14px', cursor: 'pointer', boxShadow: '0 4px 15px rgba(212, 168, 67, 0.2)', fontFamily: 'var(--font-heading)' }}>
+            GUARDAR DASHBOARD
+          </button>
+
+          {[
             { label: 'Mi Equipo', icon: <Users size={24} />, route: '/equipo' },
             { label: 'IA Generator', icon: <Sparkles size={24} />, route: '/ia-generadora' }
           ].map((action, idx) => (
-             action.isMain ? (
-               <button key={idx} style={{ padding: '10px 24px', borderRadius: 'var(--radius-chip)', background: 'var(--bg-app)', border: '1px solid var(--text-primary)', color: 'var(--text-primary)', fontWeight: 'bold', cursor: 'pointer', margin: '0 auto', boxShadow: 'var(--shadow-card)' }}>
-                 {action.label}
-               </button>
-             ) : (
-               <div key={idx} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px', cursor: 'pointer' }} onClick={() => navigate(action.route)}>
-                 <div style={{ width: '80px', height: '80px', borderRadius: '50%', background: 'var(--bg-app)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--accent-green)', boxShadow: 'inset 0 0 0 2px var(--accent-gold-light), var(--shadow-card)' }}>
-                   {action.icon}
-                 </div>
-                 <span style={{ fontSize: '13px', fontWeight: '600', color: 'var(--text-primary)' }}>{action.label}</span>
-               </div>
-             )
+            <div key={idx} className="quick-access-wrapper" onClick={() => navigate(action.route)}>
+              <div className="quick-access-ring-outer">
+                <div className="quick-access-ring-inner">
+                  <div className="quick-access-btn-core">
+                    {action.icon}
+                  </div>
+                </div>
+              </div>
+              <span style={{ fontSize: '13px', fontWeight: '600', color: 'var(--text-primary)' }}>{action.label}</span>
+            </div>
           ))}
         </div>
       </div>

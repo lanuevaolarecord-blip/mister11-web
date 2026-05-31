@@ -276,7 +276,7 @@ const Planificacion = () => {
   };
 
   return (
-    <div className={`ps-page ${themeClass}`}>
+    <div className={`ps-page ${themeClass} planificacion-v2-wrapper`}>
       {toast && (
         <div className={`ps-toast ${toast.type === 'error' ? 'ps-toast-error' : ''}`}>
           {toast.msg}
@@ -449,7 +449,7 @@ const Planificacion = () => {
                     <div className="ps-cell ps-cell-sticky" style={{background: '#F8F8F8'}}>TIPO MICRO</div>
                     {microcycles.map(m => (
                       <div key={m.id} className="ps-cell">
-                        <select value={m.type} onChange={e => handleMicroChange(m.id, 'type', e.target.value)} style={{ background: 'transparent', border: 'none', color: '#000', width: '100%', fontSize: '11px', outline: 'none', appearance: 'none', textAlign: 'center', fontWeight: 'bold' }}>
+                        <select value={m.type} onChange={e => handleMicroChange(m.id, 'type', e.target.value)} style={{ background: 'transparent', border: 'none', width: '100%', fontSize: '11px', outline: 'none', appearance: 'none', textAlign: 'center', fontWeight: 'bold' }}>
                           <option value="Carga">3</option>
                           <option value="Competición">5</option>
                           <option value="Recuperación">1</option>
@@ -461,7 +461,7 @@ const Planificacion = () => {
                   </div>
                   <div className="ps-row ps-row-light">
                     <div className="ps-cell ps-cell-sticky" style={{fontWeight: 'bold', background: '#F0F0F0'}}>VOLUMEN (MIN)</div>
-                    {microcycles.map(m => <div key={m.id} className="ps-cell fw-bold"><input type="number" value={m.volume} onChange={e => handleMicroChange(m.id, 'volume', e.target.value)} style={{ color: '#000', fontWeight: 'bold' }} /></div>)}
+                    {microcycles.map(m => <div key={m.id} className="ps-cell fw-bold"><input type="number" value={m.volume} onChange={e => handleMicroChange(m.id, 'volume', e.target.value)} style={{ fontWeight: 'bold' }} /></div>)}
                   </div>
 
                   {/* --- DARK SECTION --- */}

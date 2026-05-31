@@ -23,6 +23,8 @@
   --text-secondary: #94A3B8;
   --border-light: #334155;
   --shadow-card: 0 2px 12px rgba(0,0,0,0.3);
+  --accent-green-light: rgba(46, 125, 92, 0.15);
+  --accent-gold-light: rgba(212, 168, 67, 0.15);
 }
 
 /* UTILITY CLASSES */
@@ -780,5 +782,107 @@
 .ps-btn-guardar-v3:hover {
   transform: translateY(-2px);
   box-shadow: 0 8px 25px rgba(212, 168, 67, 0.5);
+}
+
+/* ==========================================================================
+   DARK THEME OPTIMIZATIONS FOR MISTER11 VISIBILITY AND CONTRAST
+   ========================================================================== */
+
+.dark .planificacion-v2-wrapper {
+  background-color: #0D0D0D;
+  background-image: url('data:image/svg+xml;utf8,<svg width="1200" height="600" viewBox="0 0 1200 600" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="%23090F1E"/><stop offset="100%" stop-color="%230F172A"/></linearGradient></defs><rect width="1200" height="600" fill="url(%23g)"/><path d="M100 300 L300 200 L400 350 L600 150 L800 250 L900 100 L1100 400" fill="none" stroke="%23D4A843" stroke-width="2" stroke-opacity="0.15"/><circle cx="100" cy="300" r="10" fill="%234CAF7D" fill-opacity="0.7"/><circle cx="300" cy="200" r="15" fill="%234CAF7D" fill-opacity="0.7"/><circle cx="400" cy="350" r="20" fill="%234CAF7D" fill-opacity="0.7"/><circle cx="600" cy="150" r="12" fill="%234CAF7D" fill-opacity="0.7"/><circle cx="800" cy="250" r="18" fill="%234CAF7D" fill-opacity="0.7"/><circle cx="900" cy="100" r="10" fill="%234CAF7D" fill-opacity="0.7"/><circle cx="1100" cy="400" r="16" fill="%234CAF7D" fill-opacity="0.7"/><path d="M300 200 L400 350 L800 250" fill="%23D4A843" opacity="0.04"/><circle cx="600" cy="300" r="150" fill="none" stroke="%234CAF7D" stroke-opacity="0.1" stroke-width="2"/><line x1="600" y1="0" x2="600" y2="600" stroke="%234CAF7D" stroke-opacity="0.1" stroke-width="2"/></svg>');
+}
+
+/* Translucent dark glass cards */
+.dark .ps-glass-card {
+  background: rgba(30, 41, 59, 0.75);
+  border-color: rgba(255, 255, 255, 0.08);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+}
+
+.dark .ps-glass-card-v3 {
+  background: rgba(30, 41, 59, 0.6);
+  border-color: rgba(255, 255, 255, 0.06);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+}
+
+/* Contrast fixes for texts */
+.dark .ps-v3-label {
+  color: var(--accent-gold) !important;
+}
+
+.dark .vol-title, 
+.dark .vol-value,
+.dark .ps-footer-vol-label,
+.dark .ps-footer-vol-value,
+.dark .ps-footer-center-sub,
+.dark .ps-footer-chart-label {
+  color: var(--text-primary) !important;
+}
+
+.dark .ps-v3-vol-diario {
+  background: rgba(212, 168, 67, 0.1) !important;
+  border-color: rgba(212, 168, 67, 0.3) !important;
+}
+.dark .ps-v3-vol-diario .vol-title,
+.dark .ps-v3-vol-diario .vol-value {
+  color: var(--accent-gold) !important;
+}
+
+/* Inputs and Buttons */
+.dark .ps-v3-input-container {
+  background: #1E293B !important;
+  border-color: #334155 !important;
+}
+.dark .ps-v3-input {
+  color: #FFF !important;
+}
+.dark .ps-v3-day-btn {
+  background: #1E293B !important;
+  color: #94A3B8 !important;
+}
+.dark .ps-v3-day-btn.active {
+  background: var(--accent-green) !important;
+  color: #FFF !important;
+}
+.dark .ps-v3-textarea {
+  background: #1E293B !important;
+  border-color: #334155 !important;
+  color: #FFF !important;
+}
+.dark .ps-v3-icon-suffix,
+.dark .ps-v3-date-icon {
+  color: var(--accent-green) !important;
+}
+
+/* Matrix Table Sticky columns readability in dark mode */
+.dark .ps-matrix-table-v3 .ps-row-light .ps-cell {
+  background: #1E293B !important;
+  color: #E2E8F0 !important;
+  border-right-color: #334155 !important;
+}
+.dark .ps-matrix-table-v3 .ps-row-light .ps-cell input {
+  color: #FFF !important;
+}
+.dark .ps-matrix-table-v3 .ps-row-light .ps-cell-sticky {
+  background: #0F172A !important;
+  color: var(--accent-gold) !important;
+  border-right-color: #334155 !important;
+}
+.dark .ps-matrix-table-v3 .ps-row-light select {
+  color: #FFF !important;
+}
+.dark .ps-matrix-table-v3 .ps-row-light select option {
+  background: #1E293B !important;
+  color: #FFF !important;
+}
+
+/* Dashboard Specific Adaptations */
+.dark .golden-ring-stat {
+  background: var(--bg-card) !important;
+  box-shadow: 0 0 25px rgba(212, 168, 67, 0.3), inset 0 0 15px rgba(212, 168, 67, 0.1) !important;
+}
+.dark .golden-ring-stat span {
+  color: var(--text-primary) !important;
 }
 

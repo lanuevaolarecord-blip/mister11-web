@@ -204,7 +204,7 @@ const Dashboard = () => {
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '24px' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
               <h2 style={{ fontSize: '20px', margin: 0, fontFamily: 'var(--font-heading)' }}>Carga de Trabajo Estimada</h2>
-              <div style={{ border: '1px solid var(--accent-gold)', borderRadius: '8px', padding: '4px 8px', background: '#FFF' }}>
+              <div style={{ border: '1px solid var(--accent-gold)', borderRadius: '8px', padding: '4px 8px', background: 'var(--bg-card)' }}>
                 <svg viewBox="0 0 100 30" style={{ width: '80px', height: '24px' }} preserveAspectRatio="none">
                   <polyline points="0,20 20,10 40,25 60,5 80,15 100,2" fill="none" stroke="var(--accent-green)" strokeWidth="2" strokeLinejoin="round" />
                   <circle cx="20" cy="10" r="2" fill="var(--accent-green)" />
@@ -225,7 +225,7 @@ const Dashboard = () => {
               className="chip"
               value={workloadPeriod}
               onChange={(e) => setWorkloadPeriod(e.target.value)}
-              style={{ border: '1px solid var(--accent-gold)', background: '#FFF', padding: '4px 12px', color: 'var(--text-primary)', fontWeight: 'bold' }}
+              style={{ border: '1px solid var(--accent-gold)', background: 'var(--bg-card)', padding: '4px 12px', color: 'var(--text-primary)', fontWeight: 'bold' }}
             >
               <option value="Esta sesión">Esta sesión</option>
               <option value="Esta semana">Esta semana</option>
@@ -315,7 +315,7 @@ const Dashboard = () => {
             </div>
           ))}
 
-          <button style={{ padding: '12px 32px', borderRadius: '30px', background: '#FFF', border: '2px solid var(--accent-gold)', color: 'var(--text-primary)', fontWeight: 'bold', fontSize: '14px', cursor: 'pointer', boxShadow: '0 4px 15px rgba(212, 168, 67, 0.2)', fontFamily: 'var(--font-heading)' }}>
+          <button style={{ padding: '12px 32px', borderRadius: '30px', background: 'var(--bg-card)', border: '2px solid var(--accent-gold)', color: 'var(--text-primary)', fontWeight: 'bold', fontSize: '14px', cursor: 'pointer', boxShadow: '0 4px 15px rgba(212, 168, 67, 0.2)', fontFamily: 'var(--font-heading)' }}>
             GUARDAR DASHBOARD
           </button>
 

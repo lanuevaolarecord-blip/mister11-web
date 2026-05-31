@@ -670,14 +670,14 @@ const Tests = () => {
                   <div style={{ display: 'flex', gap: '10px' }}>
                     <button 
                       className="btn-primary" 
-                      style={{ flex: 1, fontSize: '0.85rem', padding: '8px' }}
+                      style={{ flex: 1, fontSize: '0.85rem', padding: '8px 12px', minHeight: '44px', height: '44px' }}
                       onClick={() => { setSelectedPlayerForTest(p); setIsWellnessModalOpen(true); }}
                     >
                       Bienestar
                     </button>
                     <button 
                       className="btn-secondary" 
-                      style={{ flex: 1, fontSize: '0.85rem', padding: '8px' }}
+                      style={{ flex: 1, fontSize: '0.85rem', padding: '8px 12px', minHeight: '44px', height: '44px' }}
                       onClick={() => { setSelectedPlayerForTest(p); setIsRpeModalOpen(true); }}
                     >
                       RPE

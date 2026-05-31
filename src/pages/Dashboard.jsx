@@ -298,8 +298,8 @@ const Dashboard = () => {
       </div>
 
       {/* Quick Actions */}
-      <div style={{ marginTop: '40px', marginBottom: '40px', display: 'flex', alignItems: 'center' }}>
-        <h2 style={{ fontSize: '18px', fontFamily: 'var(--font-heading)', margin: 0, width: '150px', color: darkMode ? '#F5F0E8' : '#1B3A2D' }}>Acceso Rápido</h2>
+      <div className="quick-actions-bar">
+        <h2 className="quick-actions-title">Acceso Rápido</h2>
         
         <div style={{ display: 'flex', gap: '32px', alignItems: 'center', flex: 1, justifyContent: 'space-between' }}>
           {[
@@ -314,7 +314,7 @@ const Dashboard = () => {
                   </div>
                 </div>
               </div>
-              <span style={{ fontSize: '13px', fontWeight: '600', color: darkMode ? '#FFFFFF' : '#1B3A2D' }}>{action.label}</span>
+              <span className="quick-access-label">{action.label}</span>
             </div>
           ))}
 
@@ -334,7 +334,7 @@ const Dashboard = () => {
                   </div>
                 </div>
               </div>
-              <span style={{ fontSize: '13px', fontWeight: '600', color: darkMode ? '#FFFFFF' : '#1B3A2D' }}>{action.label}</span>
+              <span className="quick-access-label">{action.label}</span>
             </div>
           ))}
         </div>

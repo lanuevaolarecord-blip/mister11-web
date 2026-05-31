@@ -390,6 +390,7 @@ a {
   justify-content: center;
   gap: 8px;
   min-height: 48px;
+  line-height: 1 !important;
   transition: opacity 0.2s;
 }
 
@@ -409,6 +410,7 @@ a {
   justify-content: center;
   gap: 8px;
   min-height: 48px;
+  line-height: 1 !important;
   transition: all 0.2s;
   border: none;
   cursor: pointer;
@@ -679,7 +681,7 @@ input::placeholder, textarea::placeholder {
 }
 
 .app-container, .main-content {
-  background-color: #1a2e1a !important;
+  background-color: var(--bg-primary) !important;
 }
 
 /* Specific containers */

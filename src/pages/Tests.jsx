@@ -610,13 +610,13 @@ const Tests = () => {
                 return false;
               }).map(t => (
                 <div key={t.id} className="card-base" style={{ padding: '0', cursor: 'pointer', display: 'flex', flexDirection: 'column' }} onClick={() => setSelectedTestDetail(t)}>
-                  <div style={{ position: 'relative', height: '140px', background: t.imagenProtocolo ? '#f8f6f0' : 'var(--bg-app)', borderTopLeftRadius: '12px', borderTopRightRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', borderBottom: '1px solid var(--border-light)', overflow: 'hidden' }}>
+                  <div style={{ position: 'relative', height: '190px', background: '#fdfcf8', borderTopLeftRadius: '12px', borderTopRightRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', borderBottom: '1px solid var(--border-light)', overflow: 'hidden' }}>
                     {/* Ilustración del test */}
                     {t.imagenProtocolo ? (
                       <img
                         src={t.imagenProtocolo}
                         alt={t.name}
-                        style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center' }}
+                        style={{ width: '100%', height: '100%', objectFit: 'contain', objectPosition: 'center', padding: '10px' }}
                         onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'flex'; }}
                       />
                     ) : null}

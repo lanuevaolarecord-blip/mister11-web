@@ -1,7 +1,7 @@
 import React from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useTeams } from '../hooks/useTeams';
-import { ChevronDown, Sun, Moon, Bell, Settings } from 'lucide-react';
+import { ChevronDown, Sun, Moon, Bell, Settings, Shield } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
 
 const Header = ({ onToggleNotif }) => {

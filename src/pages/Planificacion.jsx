@@ -13,13 +13,12 @@ const DAYS_LABELS = ['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'];
 
 const MATRIX_ROWS = [
   { id: 'periodo',   label: 'PERÍODO',        type: 'select', options: ['Prep','Comp','Trans'], colorClass: 'row-periodo' },
-  { id: 'carga',     label: 'CARGA',          type: 'select', options: ['Frape','Cump','Prosp','Comp'], colorClass: 'row-carga' },
+  { id: 'carga',     label: 'TIPO MICRO',     type: 'select', options: ['Carga','Ajuste','Choque','Comp','Recup'], colorClass: 'row-carga' },
   { id: 'microciclo',label: 'Nº MICROCICLO',  type: 'number', colorClass: 'row-micro' },
-  { id: 'fisio',     label: 'FISIOLÓGICO',    type: 'check',  colorClass: 'row-fisio' },
-  { id: 'infl',      label: 'INFL EMBD',      type: 'badge',  colorClass: 'row-infl' },
-  { id: 'activ',     label: 'ACTIV LARG CAPAC',type: 'text2h', colorClass: 'row-activ' },
-  { id: 'artist',    label: 'N. ARTIST',      type: 'number', colorClass: 'row-artist' },
-  { id: 'mocior',    label: 'MOCIOR BMIN',    type: 'number', colorClass: 'row-mocior' },
+  { id: 'fisio',     label: 'TEST FÍSICO',    type: 'check',  colorClass: 'row-fisio' },
+  { id: 'infl',      label: 'DINÁMICA CARGA', type: 'badge',  colorClass: 'row-infl' },
+  { id: 'volume',    label: 'VOLUMEN (MIN)',  type: 'number', colorClass: 'row-activ' },
+  { id: 'sessions',  label: 'SESIONES',       type: 'number', colorClass: 'row-artist' },
 ];
 
 const generateMicrocycles = (startDate = '2025-09-01', sessionDuration = 90, trainingDays = [0, 2, 4]) => {
@@ -32,7 +31,7 @@ const generateMicrocycles = (startDate = '2025-09-01', sessionDuration = 90, tra
       id: i + 1,
       month: MONTHS[monthIdx],
       periodo: period,
-      carga: isPrep ? 'Frape' : 'Cump',
+      carga: isPrep ? 'Carga' : 'Comp',
       microciclo: i + 1,
       fisio: i % 3 !== 0,
       infl: i % 4 === 0 ? '↗' : (i % 4 === 1 ? '↘' : ''),
@@ -390,13 +389,13 @@ const Planificacion = () => {
 
       {/* ── ROW 3: PLANNING MATRIX ─────────────────────────────────── */}
       <div className="plan-matrix-card">
-        <div className="plan-matrix-title">PLANNINGA MATRIX</div>
+        <div className="plan-matrix-title">MATRIZ DE PLANIFICACIÓN</div>
         <div className="plan-matrix-scroll">
           <table className="plan-matrix-table">
             <thead>
               {/* Month header row */}
               <tr className="plan-mrow plan-mrow-month">
-                <th className="plan-msticky plan-mlabel-cell">VIÑE</th>
+                <th className="plan-msticky plan-mlabel-cell">MESES</th>
                 {Object.entries(monthGroups).map(([month, weeks]) => (
                   <th key={month} colSpan={weeks.length} className="plan-month-header">
                     {month}
@@ -405,16 +404,16 @@ const Planificacion = () => {
               </tr>
               {/* Carga sub-header */}
               <tr className="plan-mrow plan-mrow-carga">
-                <th className="plan-msticky plan-mlabel-cell">PEGADO</th>
+                <th className="plan-msticky plan-mlabel-cell">TIPO MICRO</th>
                 {microcycles.map(m => (
                   <th key={m.id} className="plan-mcell plan-mcell-carga">
                     <select value={m.carga} onChange={e => handleMicroChange(m.id, 'carga', e.target.value)}
                       className="plan-cell-select plan-cell-select-carga">
-                      <option>Frape</option>
-                      <option>Cump</option>
-                      <option>Prosp</option>
+                      <option>Carga</option>
+                      <option>Ajuste</option>
+                      <option>Choque</option>
                       <option>Comp</option>
-                      <option>Turno</option>
+                      <option>Recup</option>
                     </select>
                   </th>
                 ))}
@@ -423,7 +422,7 @@ const Planificacion = () => {
             <tbody>
               {/* CARGA row */}
               <tr className="plan-mrow plan-mrow-alt">
-                <td className="plan-msticky plan-mlabel-cell">CARGD</td>
+                <td className="plan-msticky plan-mlabel-cell">PERÍODOS</td>
                 {microcycles.map(m => (
                   <td key={m.id} className="plan-mcell">
                     <select value={m.periodo} onChange={e => handleMicroChange(m.id, 'periodo', e.target.value)}
@@ -436,7 +435,7 @@ const Planificacion = () => {
 
               {/* Nº MICROCICLO */}
               <tr className="plan-mrow">
-                <td className="plan-msticky plan-mlabel-cell">IV/NMICROCICLO</td>
+                <td className="plan-msticky plan-mlabel-cell">Nº MICROCICLO</td>
                 {microcycles.map(m => (
                   <td key={m.id} className="plan-mcell plan-mcell-num">
                     {m.id}
@@ -446,7 +445,7 @@ const Planificacion = () => {
 
               {/* FISIOLÓGICO — checkmarks */}
               <tr className="plan-mrow plan-mrow-fisio">
-                <td className="plan-msticky plan-mlabel-cell">FISIOLÓGICO</td>
+                <td className="plan-msticky plan-mlabel-cell">TEST FÍSICO</td>
                 {microcycles.map(m => (
                   <td key={m.id} className="plan-mcell" style={{ cursor:'pointer' }}
                     onClick={() => handleMicroChange(m.id, 'fisio', !m.fisio)}>
@@ -459,7 +458,7 @@ const Planificacion = () => {
 
               {/* INFL EMBD — arrows */}
               <tr className="plan-mrow plan-mrow-infl">
-                <td className="plan-msticky plan-mlabel-cell">INFL EMBD</td>
+                <td className="plan-msticky plan-mlabel-cell">DINÁMICA CARGA</td>
                 {microcycles.map(m => (
                   <td key={m.id} className="plan-mcell" style={{ cursor:'pointer' }}
                     onClick={() => {
@@ -473,38 +472,29 @@ const Planificacion = () => {
                 ))}
               </tr>
 
-              {/* ACTIV LARG CAPAC — 2H */}
+              {/* VOLUMEN (MIN) */}
               <tr className="plan-mrow plan-mrow-activ">
-                <td className="plan-msticky plan-mlabel-cell">ACTIV LARG CAPAC</td>
+                <td className="plan-msticky plan-mlabel-cell">VOLUMEN (MIN)</td>
                 {microcycles.map(m => (
                   <td key={m.id} className="plan-mcell">
-                    <input className="plan-cell-input" value={m.activ}
-                      onChange={e => handleMicroChange(m.id, 'activ', e.target.value)} />
+                    <input type="number" className="plan-cell-input" value={m.volume}
+                      onChange={e => handleMicroChange(m.id, 'volume', e.target.value)} />
                   </td>
                 ))}
               </tr>
 
-              {/* N. ARTIST */}
+              {/* SESIONES */}
               <tr className="plan-mrow">
-                <td className="plan-msticky plan-mlabel-cell">N. ARTIST</td>
+                <td className="plan-msticky plan-mlabel-cell">SESIONES</td>
                 {microcycles.map(m => (
                   <td key={m.id} className="plan-mcell">
-                    <input type="number" className="plan-cell-input" value={m.artist}
-                      onChange={e => handleMicroChange(m.id, 'artist', e.target.value)} />
+                    <input type="number" className="plan-cell-input" value={m.sessions}
+                      onChange={e => handleMicroChange(m.id, 'sessions', e.target.value)} />
                   </td>
                 ))}
               </tr>
 
-              {/* MOCIOR BMIN */}
-              <tr className="plan-mrow plan-mrow-alt">
-                <td className="plan-msticky plan-mlabel-cell">MOCIOR BMIN</td>
-                {microcycles.map(m => (
-                  <td key={m.id} className="plan-mcell">
-                    <input type="number" className="plan-cell-input" value={m.mocior}
-                      onChange={e => handleMicroChange(m.id, 'mocior', e.target.value)} />
-                  </td>
-                ))}
-              </tr>
+              {/* Deleted MOCIOR BMIN */}
 
               {/* % FÍSICO */}
               <tr className="plan-mrow plan-mrow-fisic">

@@ -358,15 +358,10 @@
   position: relative;
   min-height: 100vh;
   padding: 20px;
-  background-color: var(--bg-app);
-  /* Abstract soccer pitch background + graph dots */
-  background-image: 
-    radial-gradient(circle at 50% 50%, rgba(212, 168, 67, 0.05) 0%, transparent 40%),
-    linear-gradient(rgba(0, 0, 0, 0.03) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(0, 0, 0, 0.03) 1px, transparent 1px),
-    url('data:image/svg+xml;utf8,<svg width="100%" height="100%" viewBox="0 0 800 400" xmlns="http://www.w3.org/2000/svg"><rect width="800" height="400" fill="none" stroke="%231B3A2D" stroke-width="1" stroke-opacity="0.1"/><circle cx="400" cy="200" r="50" fill="none" stroke="%231B3A2D" stroke-width="1" stroke-opacity="0.1"/><line x1="400" y1="0" x2="400" y2="400" stroke="%231B3A2D" stroke-width="1" stroke-opacity="0.1"/></svg>');
-  background-size: 100% 100%, 40px 40px, 40px 40px, 100% 100%;
-  background-position: center, center top, center top, center;
+  background-color: #F6F4EE; /* Base color from Image 2 */
+  background-image: url('data:image/svg+xml;utf8,<svg width="1200" height="600" viewBox="0 0 1200 600" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="%23EFE9DD"/><stop offset="100%" stop-color="%23F6F4EE"/></linearGradient></defs><rect width="1200" height="600" fill="url(%23g)"/><path d="M100 300 L300 200 L400 350 L600 150 L800 250 L900 100 L1100 400" fill="none" stroke="%23D4A843" stroke-width="2" stroke-opacity="0.3"/><circle cx="100" cy="300" r="10" fill="%23111B21"/><circle cx="300" cy="200" r="15" fill="%23111B21"/><circle cx="400" cy="350" r="20" fill="%23111B21"/><circle cx="600" cy="150" r="12" fill="%23111B21"/><circle cx="800" cy="250" r="18" fill="%23111B21"/><circle cx="900" cy="100" r="10" fill="%23111B21"/><circle cx="1100" cy="400" r="16" fill="%23111B21"/><path d="M300 200 L400 350 L800 250" fill="%23D4A843" opacity="0.1"/><circle cx="600" cy="300" r="150" fill="none" stroke="%231B3A2D" stroke-opacity="0.1" stroke-width="2"/><line x1="600" y1="0" x2="600" y2="600" stroke="%231B3A2D" stroke-opacity="0.1" stroke-width="2"/></svg>');
+  background-size: cover;
+  background-position: center top;
   background-attachment: fixed;
   color: var(--text-primary);
   font-family: var(--font-body);
@@ -524,5 +519,266 @@
   justify-content: center;
   align-items: center;
   overflow: hidden;
+}
+
+/* --- ESTILOS DE TARJETAS V3 (NUEVOS) --- */
+.ps-glass-card-v3 {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
+  border-radius: 8px;
+  padding: 16px;
+  position: relative;
+  z-index: 2;
+}
+
+.ps-v3-label {
+  font-size: 9px;
+  font-weight: bold;
+  color: #111B21;
+  margin: 0 0 6px 0;
+  text-transform: uppercase;
+}
+
+.ps-v3-input-container {
+  background: #EAE6DB; /* Light tan for inputs */
+  border-radius: 6px;
+  border: 1px solid rgba(0,0,0,0.05);
+  display: flex;
+  align-items: center;
+  padding: 8px 12px;
+}
+
+.ps-v3-input {
+  background: transparent;
+  border: none;
+  outline: none;
+  width: 100%;
+  color: #111B21;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.ps-v3-icon-suffix {
+  color: #1B3A2D;
+  font-size: 10px;
+  margin-left: 8px;
+}
+
+.ps-v3-date-group {
+  justify-content: space-between;
+}
+
+.ps-v3-date-icon {
+  color: #1B3A2D;
+}
+
+.ps-v3-vol-diario {
+  background: rgba(212, 168, 67, 0.15);
+  border: 1px solid rgba(212, 168, 67, 0.3);
+  border-radius: 6px;
+  padding: 8px 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+.ps-v3-vol-diario .vol-title {
+  font-size: 8px;
+  font-weight: bold;
+  color: #111B21;
+  margin-bottom: 2px;
+}
+.ps-v3-vol-diario .vol-value {
+  font-size: 14px;
+  font-weight: bold;
+  color: #111B21;
+}
+
+.ps-v3-day-btn {
+  flex: 1;
+  padding: 6px 0;
+  border-radius: 12px;
+  border: none;
+  background: #EAE6DB;
+  color: #8C9EA8;
+  font-size: 11px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.ps-v3-day-btn.active {
+  background: #1B3A2D;
+  color: #FFF;
+}
+
+.ps-v3-textarea {
+  background: #EAE6DB;
+  border-radius: 6px;
+  border: 1px solid rgba(0,0,0,0.05);
+  width: 100%;
+  flex: 1;
+  min-height: 80px;
+  padding: 10px;
+  resize: none;
+  outline: none;
+  color: #111B21;
+  font-size: 12px;
+}
+
+/* --- TABLA MATRIZ V3 --- */
+.ps-matrix-table-v3 {
+  display: flex;
+  flex-direction: column;
+  border-radius: 8px;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+  border: 1px solid rgba(0,0,0,0.1);
+  width: max-content;
+  background: transparent;
+}
+
+.ps-matrix-table-v3 .ps-row-light {
+  background: #F8F8F8;
+  border-bottom: 1px solid #E0E0E0;
+}
+.ps-matrix-table-v3 .ps-row-light .ps-cell {
+  border-right: 1px solid #E0E0E0;
+  color: #000;
+}
+.ps-matrix-table-v3 .ps-row-light .ps-cell input {
+  color: #000;
+  font-weight: 500;
+}
+
+.ps-matrix-table-v3 .ps-row-header-v3 {
+  background: #F0F0F0;
+}
+.ps-matrix-table-v3 .ps-row-header-v3 .ps-cell {
+  font-size: 10px;
+  font-weight: bold;
+}
+
+.ps-matrix-table-v3 .ps-row-dark {
+  background: #111B21;
+  border-bottom: 1px solid #1A2830;
+}
+.ps-matrix-table-v3 .ps-row-dark .ps-cell {
+  border-right: 1px solid #1A2830;
+  color: #FFF;
+}
+.ps-matrix-table-v3 .ps-row-dark .ps-cell input {
+  color: #FFF;
+}
+
+.ps-matrix-table-v3 .ps-cell-dark-teal {
+  background: #132729;
+}
+.ps-matrix-table-v3 .ps-cell-dark-teal-alt {
+  background: #183133;
+}
+
+.ps-matrix-table-v3 .ps-cell-sticky {
+  flex: 0 0 120px;
+  justify-content: flex-start;
+  padding-left: 12px;
+  position: sticky;
+  left: 0;
+  z-index: 5;
+}
+.ps-matrix-table-v3 .ps-row-light .ps-cell-sticky {
+  background: #F0F0F0;
+  border-right: 2px solid #E0E0E0;
+}
+.ps-matrix-table-v3 .ps-row-dark .ps-cell-sticky {
+  background: #162228;
+  border-right: 2px solid #0D161A;
+}
+
+/* --- FOOTER V3 --- */
+.ps-footer-v3 {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  padding: 0;
+  margin-top: 20px;
+}
+
+.ps-footer-left .ps-footer-vol-label {
+  display: block;
+  font-size: 10px;
+  font-weight: bold;
+  color: #111B21;
+  margin-bottom: -4px;
+}
+.ps-footer-left .ps-footer-vol-value {
+  font-family: var(--font-heading);
+  font-size: 24px;
+  font-weight: bold;
+  color: #111B21;
+  line-height: 1;
+}
+.ps-footer-left .ps-footer-vol-sub {
+  font-family: var(--font-body);
+  font-size: 14px;
+  font-weight: normal;
+}
+.ps-footer-left .ps-footer-vol-days {
+  display: block;
+  font-size: 11px;
+  color: #8C9EA8;
+  font-weight: bold;
+}
+
+.ps-footer-center {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: absolute;
+  left: 50%;
+  bottom: 0;
+  transform: translateX(-50%);
+}
+.ps-footer-center-value {
+  font-family: var(--font-heading);
+  font-size: 32px;
+  font-weight: bold;
+  color: #183133;
+  margin-bottom: 4px;
+}
+.ps-footer-center-sub {
+  font-family: var(--font-body);
+  font-size: 16px;
+  font-weight: normal;
+  color: #111B21;
+}
+.ps-footer-chart-label {
+  display: block;
+  text-align: center;
+  font-size: 8px;
+  font-weight: bold;
+  color: #111B21;
+  margin-bottom: 2px;
+}
+
+.ps-btn-guardar-v3 {
+  background: linear-gradient(135deg, #D4A843, #B8860B);
+  color: #000;
+  border: none;
+  padding: 14px 28px;
+  border-radius: 30px;
+  font-weight: bold;
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  box-shadow: 0 6px 20px rgba(212, 168, 67, 0.4);
+  transition: all 0.2s ease;
+}
+.ps-btn-guardar-v3:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(212, 168, 67, 0.5);
 }
 

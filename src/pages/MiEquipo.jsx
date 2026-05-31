@@ -42,7 +42,7 @@ const emptyPlayer = {
 };
 
 const MiEquipo = () => {
-  const { activeTeamId } = useAuth();
+  const { user, activeTeamId } = useAuth();
   const { activeTeam } = useTeams();
   const { isPro, limits } = usePlan();
   const { players, loading, addPlayer, updatePlayer, removePlayer } = usePlayers(activeTeamId);

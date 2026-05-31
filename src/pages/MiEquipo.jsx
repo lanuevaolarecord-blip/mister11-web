@@ -182,13 +182,13 @@ const MiEquipo = () => {
   }
 
   return (
-    <div className="equipo-page">
-      <header className="equipo-header">
-        <div className="header-info">
-          <h1>MI EQUIPO</h1>
-          <p>{players.length} jugadores en la plantilla</p>
+    <div className="page-wrapper">
+      <header className="page-header">
+        <div style={{ marginBottom: '16px' }}>
+          <h1 className="page-title">Mi Equipo</h1>
+          <p className="page-subtitle">{players.length} jugadores en la plantilla</p>
         </div>
-        <div className="filter-chips">
+        <div className="filter-chips" style={{ display: 'flex', gap: '8px', overflowX: 'auto', paddingBottom: '8px' }}>
           {POSITIONS.map(pos => (
             <button 
               key={pos} 
@@ -206,31 +206,44 @@ const MiEquipo = () => {
           <div className="empty-icon">⚽</div>
           <h2>Tu plantilla está vacía</h2>
           <p>Añade a tus primeros jugadores para empezar a gestionar tu equipo.</p>
-          <button className="btn-primary" onClick={() => handleOpenForm(null)}>+ Añadir Jugador</button>
+          <button className="btn-primary-new" onClick={() => handleOpenForm(null)}>+ Añadir Jugador</button>
         </div>
       ) : (
-        <div className="players-grid">
+        <div className="grid-8-cols">
           {filteredPlayers.map(player => (
-            <div key={player.id} className="player-card" onClick={() => setSelectedPlayer(player)}>
-              <div className="player-avatar" style={!player.avatarUrl ? { backgroundColor: stringToColor(player.id || player.name) } : {}}>
-                {player.avatarUrl ? <img src={player.avatarUrl} alt={player.name} /> : <span style={{ color: '#FFF' }}>{getInitials(player.name)}</span>}
-                <div className="player-number">{player.number}</div>
-              </div>
-              <div className="player-info">
-                <h3>{player.name}</h3>
-                <div className="player-meta">
-                  <span className="pos-badge">{player.position}</span>
-                  <span className="age-info">{calcularEdad(player.fechaNacimiento || player.birthDate || player.age).text}</span>
+            <div key={player.id} className="card-base" style={{ padding: '0', cursor: 'pointer', textAlign: 'center', position: 'relative', overflow: 'hidden' }} onClick={() => setSelectedPlayer(player)}>
+              <div style={{ background: 'var(--accent-green-light)', height: '60px', width: '100%' }}></div>
+              <div style={{ position: 'relative', marginTop: '-30px', marginBottom: '12px' }}>
+                <div style={{ width: '60px', height: '60px', borderRadius: '50%', background: !player.avatarUrl ? stringToColor(player.id || player.name) : '#FFF', margin: '0 auto', border: '3px solid var(--bg-card)', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  {player.avatarUrl ? <img src={player.avatarUrl} alt={player.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <span style={{ color: '#FFF', fontSize: '20px', fontWeight: 'bold' }}>{getInitials(player.name)}</span>}
+                </div>
+                <div style={{ position: 'absolute', bottom: '0', right: 'calc(50% - 30px)', background: 'var(--accent-gold)', color: '#FFF', borderRadius: '50%', width: '22px', height: '22px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '10px', fontWeight: 'bold', border: '2px solid var(--bg-card)' }}>
+                  {player.number}
                 </div>
               </div>
-              {(player.currentStatus === 'injured' || player.currentStatus === 'recovery') && <div className="injury-indicator" title={player.currentStatus === 'injured' ? "Lesionado" : "En recuperación"}>🚑</div>}
+              <h3 style={{ margin: '0 0 16px 0', fontSize: '15px', color: 'var(--text-primary)', fontFamily: 'var(--font-heading)' }}>{player.name}</h3>
+              <div style={{ background: 'var(--bg-app)', margin: '0 12px 12px 12px', padding: '8px', borderRadius: '8px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div style={{ display: 'flex', flexDirection: 'column' }}>
+                  <span style={{ fontSize: '10px', color: 'var(--text-secondary)' }}>Pos</span>
+                  <strong style={{ fontSize: '12px', color: 'var(--text-primary)' }}>{player.position}</strong>
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column' }}>
+                  <span style={{ fontSize: '10px', color: 'var(--text-secondary)' }}>Edad</span>
+                  <strong style={{ fontSize: '12px', color: 'var(--text-primary)' }}>{calcularEdad(player.fechaNacimiento || player.birthDate || player.age).text}</strong>
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column' }}>
+                  <span style={{ fontSize: '10px', color: 'var(--text-secondary)' }}>Alt</span>
+                  <strong style={{ fontSize: '12px', color: 'var(--text-primary)' }}>{player.height || '--'}</strong>
+                </div>
+              </div>
+              {(player.currentStatus === 'injured' || player.currentStatus === 'recovery') && <div style={{ position: 'absolute', top: '8px', right: '8px', background: 'var(--bg-card)', borderRadius: '50%', padding: '4px', boxShadow: 'var(--shadow-card)' }} title={player.currentStatus === 'injured' ? "Lesionado" : "En recuperación"}>🚑</div>}
             </div>
           ))}
         </div>
       )}
 
       {/* FAB - Añadir Jugador */}
-      <button className="fab-add" onClick={() => handleOpenForm(null)}>
+      <button className="fab" onClick={() => handleOpenForm(null)}>
         <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
           <line x1="12" y1="5" x2="12" y2="19"></line>
           <line x1="5" y1="12" x2="19" y2="12"></line>

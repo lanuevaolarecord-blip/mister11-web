@@ -553,20 +553,20 @@ const Sesiones = () => {
 
   // --- RENDER LIST MODE ---
   return (
-    <div className="sesiones-page">
-      <header className="sesiones-header">
-        <div className="header-top">
-          <h1>ENTRENAMIENTO</h1>
-          <div className="header-actions">
-            <button className={`tab-switcher ${activeTab === 'sessions' ? 'active' : ''}`} onClick={() => setActiveTab('sessions')}>SESIONES</button>
-            <button className={`tab-switcher ${activeTab === 'captures' ? 'active' : ''}`} onClick={() => setActiveTab('captures')}>CAPTURAS</button>
-            <button className={`tab-switcher ${activeTab === 'animations' ? 'active' : ''}`} onClick={() => setActiveTab('animations')}>ANIMACIONES</button>
-            <div className="topbar-divider-v" />
-            <button className="btn-primary" onClick={handleCreateNew}>+ Nueva Sesión</button>
+    <div className="page-wrapper">
+      <header className="page-header">
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+          <h1 className="page-title">Entrenamiento</h1>
+          <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+            <button className={`chip ${activeTab === 'sessions' ? 'active' : ''}`} onClick={() => setActiveTab('sessions')}>SESIONES</button>
+            <button className={`chip ${activeTab === 'captures' ? 'active' : ''}`} onClick={() => setActiveTab('captures')}>CAPTURAS</button>
+            <button className={`chip ${activeTab === 'animations' ? 'active' : ''}`} onClick={() => setActiveTab('animations')}>ANIMACIONES</button>
+            <div style={{ width: '1px', height: '24px', background: 'var(--border-light)', margin: '0 8px' }} />
+            <button className="btn-primary-new" onClick={handleCreateNew}>+ Nueva Sesión</button>
           </div>
         </div>
 
-        <div className="calendar-strip">
+        <div style={{ display: 'flex', gap: '8px', overflowX: 'auto', paddingBottom: '8px', marginBottom: '16px' }}>
           {(() => {
             const today = new Date();
             const currentDay = today.getDay(); // 0 (Sun) to 6 (Sat)
@@ -578,9 +578,9 @@ const Sesiones = () => {
               date.setDate(monday.getDate() + i);
               const isToday = date.toDateString() === new Date().toDateString();
               return (
-                <div key={i} className={`day-chip ${isToday ? 'active today' : ''}`}>
-                  <span className="day-name">{day}</span>
-                  <span className="day-num">{date.getDate()}</span>
+                <div key={i} className={`chip-gold ${isToday ? 'active' : ''}`} style={{ cursor: 'pointer', background: isToday ? 'var(--accent-gold)' : 'var(--bg-card)', border: '1px solid var(--border-light)' }}>
+                  <span style={{ fontSize: '12px', opacity: isToday ? 1 : 0.6 }}>{day}</span>
+                  <strong style={{ fontSize: '16px' }}>{date.getDate()}</strong>
                 </div>
               );
             });
@@ -588,11 +588,11 @@ const Sesiones = () => {
         </div>
 
         {activeTab === 'sessions' && (
-          <div className="filters-row">
+          <div style={{ display: 'flex', gap: '8px', overflowX: 'auto', paddingBottom: '8px' }}>
             {categories.map(cat => (
               <button 
                 key={cat} 
-                className={`filter-tab ${catFilter === cat ? 'active' : ''}`}
+                className={`chip ${catFilter === cat ? 'active' : ''}`}
                 onClick={() => setCatFilter(cat)}
               >
                 {cat}
@@ -604,7 +604,7 @@ const Sesiones = () => {
 
       {activeTab === 'sessions' ? (
         <div className="sessions-content">
-          <div className="sessions-list">
+          <div className="grid-3-cols">
             {filteredSessions.map(session => {
               const title      = session.title    || session.titulo    || 'Sin título';
               const time       = session.time     || session.hora      || '--:--';
@@ -612,23 +612,36 @@ const Sesiones = () => {
               const category   = session.category || session.categoria || 'General';
               const intensity  = session.intensity|| session.intensidad|| 'Media';
               const blocks     = session.blocks   || session.bloques   || [];
+              const linkedPiz = session.linkedPizarraId ? pizarras.find(p => p.id === session.linkedPizarraId) : null;
+              
               return (
-                <div key={session.id} className={`session-card ${selectedSession?.id === session.id ? 'selected' : ''}`} onClick={() => setSelectedSession(session)}>
-                  <div className={`session-strip ${category.toLowerCase()}`} />
-                  <div className="session-main">
-                    <div className="session-date-box">
-                      <span className="time">{time}</span>
-                      <span className="duration">{duration} min</span>
+                <div key={session.id} className="card-base" style={{ padding: '0', cursor: 'pointer', display: 'flex', flexDirection: 'column' }} onClick={() => setSelectedSession(session)}>
+                  <div style={{ padding: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border-light)' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <span style={{ background: 'var(--accent-green-light)', color: 'var(--accent-green)', padding: '4px 8px', borderRadius: '4px', fontSize: '12px', fontWeight: 'bold' }}>{time}</span>
+                      <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>{duration} min</span>
                     </div>
-                    <div className="session-details">
-                      <h3>{title}</h3>
-                      <div className="session-badges">
-                        <span className="badge category">{category}</span>
-                        <span className={`badge intensity ${intensity.toLowerCase()}`}>{intensity}</span>
-                        <span className="badge blocks">{blocks.length} bloques</span>
-                      </div>
+                    <div style={{ color: 'var(--text-secondary)' }}>⋮</div>
+                  </div>
+                  
+                  <div style={{ padding: '16px', flex: 1 }}>
+                    <h3 style={{ margin: '0 0 12px 0', fontSize: '16px', fontFamily: 'var(--font-heading)' }}>{title}</h3>
+                    <div style={{ height: '120px', background: 'var(--bg-app)', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', border: '1px solid var(--border-light)', position: 'relative' }}>
+                      {linkedPiz && linkedPiz.thumbnail ? (
+                        <img src={linkedPiz.thumbnail} alt="Diagrama" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                      ) : (
+                        <span style={{ color: 'var(--text-secondary)', fontSize: '12px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
+                          <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" strokeWidth="2" fill="none"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
+                          Sin diagrama
+                        </span>
+                      )}
                     </div>
-                    <div className="session-arrow">❯</div>
+                  </div>
+                  
+                  <div style={{ padding: '16px', borderTop: '1px solid var(--border-light)', display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                    <span style={{ fontSize: '10px', background: 'var(--bg-app)', padding: '4px 8px', borderRadius: '4px', color: 'var(--text-primary)' }}>{category}</span>
+                    <span style={{ fontSize: '10px', background: 'var(--bg-app)', padding: '4px 8px', borderRadius: '4px', color: 'var(--text-primary)' }}>Intensidad {intensity}</span>
+                    <span style={{ fontSize: '10px', background: 'var(--bg-app)', padding: '4px 8px', borderRadius: '4px', color: 'var(--text-primary)' }}>{blocks.length} Bloques</span>
                   </div>
                 </div>
               );

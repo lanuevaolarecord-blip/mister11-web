@@ -812,11 +812,7 @@
 }
 
 .dark .vol-title, 
-.dark .vol-value,
-.dark .ps-footer-vol-label,
-.dark .ps-footer-vol-value,
-.dark .ps-footer-center-sub,
-.dark .ps-footer-chart-label {
+.dark .vol-value {
   color: var(--text-primary) !important;
 }
 
@@ -827,6 +823,32 @@
 .dark .ps-v3-vol-diario .vol-title,
 .dark .ps-v3-vol-diario .vol-value {
   color: var(--accent-gold) !important;
+}
+
+/* High specificity overrides for Planificacion Footer in dark mode */
+.dark .ps-footer-left .ps-footer-vol-label {
+  color: var(--accent-gold) !important;
+}
+.dark .ps-footer-left .ps-footer-vol-value {
+  color: var(--text-primary) !important;
+}
+.dark .ps-footer-left .ps-footer-vol-sub {
+  color: var(--text-secondary) !important;
+  opacity: 0.8;
+}
+.dark .ps-footer-left .ps-footer-vol-days {
+  color: var(--text-secondary) !important;
+  opacity: 0.7;
+}
+.dark .ps-footer-center-value {
+  color: var(--accent-gold) !important;
+}
+.dark .ps-footer-center-sub {
+  color: var(--text-primary) !important;
+}
+.dark .ps-footer-chart-label {
+  color: var(--text-secondary) !important;
+  opacity: 0.8;
 }
 
 /* Inputs and Buttons */

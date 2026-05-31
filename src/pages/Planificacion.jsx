@@ -411,8 +411,8 @@ const Planificacion = () => {
                 <div className="ps-timeline-track">
                   <span className="ps-timeline-label">Velocidad</span>
                   <div className="ps-timeline-line"></div>
-                  <div className="ps-timeline-point" style={{ left: '250px', background: '#2563EB' }}></div>
-                  <div className="ps-timeline-point" style={{ left: '600px', background: '#2563EB' }}></div>
+                  <div className="ps-timeline-point" style={{ left: '250px', background: '#4CAF7D' }}></div>
+                  <div className="ps-timeline-point" style={{ left: '600px', background: '#4CAF7D' }}></div>
                 </div>
                 
                 <div className="ps-timeline-track">
@@ -496,7 +496,7 @@ const Planificacion = () => {
                   <span className="ps-footer-chart-label">TEMPORAL LE PROGRESSION</span>
                   <svg width="120" height="40" viewBox="0 0 120 40">
                     <path d="M0 40 L10 30 L20 35 L30 20 L40 25 L50 10 L60 15 L70 5 L80 15 L90 0 L100 10 L110 5 L120 15 L120 40 Z" fill="#1B3A2D" opacity="0.8" />
-                    <path d="M0 40 L10 30 L20 35 L30 20 L40 25 L50 10 L60 15 L70 5 L80 15 L90 0 L100 10 L110 5 L120 15" fill="none" stroke="#2563EB" strokeWidth="1.5" />
+                    <path d="M0 40 L10 30 L20 35 L30 20 L40 25 L50 10 L60 15 L70 5 L80 15 L90 0 L100 10 L110 5 L120 15" fill="none" stroke="#D4A843" strokeWidth="1.5" />
                   </svg>
                 </div>
               </div>

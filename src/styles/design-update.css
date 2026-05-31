@@ -435,9 +435,9 @@
   flex-direction: column;
   background: #111B21;
   border-radius: 8px;
-  overflow: hidden;
   box-shadow: 0 10px 25px rgba(0,0,0,0.2);
   border: 1px solid #23343C;
+  width: max-content;
 }
 
 .ps-matrix-table-v2 .ps-row {

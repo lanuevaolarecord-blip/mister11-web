@@ -706,33 +706,32 @@
   padding: 0;
   margin-top: 20px;
 }
-
 .ps-footer-left .ps-footer-vol-label {
   display: block;
   font-size: 10px;
   font-weight: bold;
-  color: #111B21;
+  color: var(--text-primary);
   margin-bottom: -4px;
 }
 .ps-footer-left .ps-footer-vol-value {
   font-family: var(--font-heading);
   font-size: 24px;
   font-weight: bold;
-  color: #111B21;
+  color: var(--text-primary);
   line-height: 1;
 }
 .ps-footer-left .ps-footer-vol-sub {
   font-family: var(--font-body);
   font-size: 14px;
   font-weight: normal;
+  color: var(--text-secondary);
 }
 .ps-footer-left .ps-footer-vol-days {
   display: block;
   font-size: 11px;
-  color: #8C9EA8;
+  color: var(--text-secondary);
   font-weight: bold;
 }
-
 .ps-footer-center {
   display: flex;
   flex-direction: column;
@@ -746,21 +745,21 @@
   font-family: var(--font-heading);
   font-size: 32px;
   font-weight: bold;
-  color: #183133;
+  color: var(--accent-gold);
   margin-bottom: 4px;
 }
 .ps-footer-center-sub {
   font-family: var(--font-body);
   font-size: 16px;
   font-weight: normal;
-  color: #111B21;
+  color: var(--text-primary);
 }
 .ps-footer-chart-label {
   display: block;
   text-align: center;
   font-size: 8px;
   font-weight: bold;
-  color: #111B21;
+  color: var(--text-secondary);
   margin-bottom: 2px;
 }
 

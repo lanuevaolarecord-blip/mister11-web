@@ -21,9 +21,11 @@ import {
   Shield
 } from 'lucide-react';
 import { t } from '../i18n/translations';
+import { useTheme } from '../context/ThemeContext';
 import './Dashboard.css';
 
 const Dashboard = () => {
+  const { darkMode } = useTheme();
   const navigate = useNavigate();
   const { activeTeamId } = useAuth();
   const { settings } = useSettings(activeTeamId);
@@ -297,7 +299,7 @@ const Dashboard = () => {
 
       {/* Quick Actions */}
       <div style={{ marginTop: '40px', marginBottom: '40px', display: 'flex', alignItems: 'center' }}>
-        <h2 style={{ fontSize: '18px', fontFamily: 'var(--font-heading)', margin: 0, width: '150px' }}>Acceso Rápido</h2>
+        <h2 style={{ fontSize: '18px', fontFamily: 'var(--font-heading)', margin: 0, width: '150px', color: darkMode ? '#F5F0E8' : '#1B3A2D' }}>Acceso Rápido</h2>
         
         <div style={{ display: 'flex', gap: '32px', alignItems: 'center', flex: 1, justifyContent: 'space-between' }}>
           {[
@@ -312,7 +314,7 @@ const Dashboard = () => {
                   </div>
                 </div>
               </div>
-              <span style={{ fontSize: '13px', fontWeight: '600', color: 'var(--text-primary)' }}>{action.label}</span>
+              <span style={{ fontSize: '13px', fontWeight: '600', color: darkMode ? '#FFFFFF' : '#1B3A2D' }}>{action.label}</span>
             </div>
           ))}
 
@@ -332,7 +334,7 @@ const Dashboard = () => {
                   </div>
                 </div>
               </div>
-              <span style={{ fontSize: '13px', fontWeight: '600', color: 'var(--text-primary)' }}>{action.label}</span>
+              <span style={{ fontSize: '13px', fontWeight: '600', color: darkMode ? '#FFFFFF' : '#1B3A2D' }}>{action.label}</span>
             </div>
           ))}
         </div>

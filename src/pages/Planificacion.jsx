@@ -755,24 +755,24 @@ const Planificacion = () => {
             <div className="ps-footer-v3" style={{ position: 'relative', zIndex: 2 }}>
               <div className="ps-footer-left">
                 <div className="ps-footer-vol">
-                  <span className="ps-footer-vol-label" style={{ color: darkMode ? 'var(--accent-gold)' : '#111B21' }}>
+                  <span className="ps-footer-vol-label">
                     VOLUMEN TOTAL TEMPORADA
                   </span>
-                  <span className="ps-footer-vol-value" style={{ color: darkMode ? '#FFFFFF' : '#111B21' }}>
-                    180h 0Min <span className="ps-footer-vol-sub" style={{ color: darkMode ? 'var(--text-secondary)' : '#6B7280' }}>(10800 minutos totales)</span>
+                  <span className="ps-footer-vol-value">
+                    180h 0Min <span className="ps-footer-vol-sub">(10800 minutos totales)</span>
                   </span>
-                  <span className="ps-footer-vol-days" style={{ color: darkMode ? 'var(--text-secondary)' : '#8C9EA8' }}>
+                  <span className="ps-footer-vol-days">
                     3 días / sem -- 5 Meses
                   </span>
                 </div>
               </div>
               
               <div className="ps-footer-center">
-                <span className="ps-footer-center-value" style={{ color: darkMode ? 'var(--accent-gold)' : '#183133' }}>
-                  180h 0Min <span className="ps-footer-center-sub" style={{ color: darkMode ? '#FFFFFF' : '#111B21' }}>(10800 minutos)</span>
+                <span className="ps-footer-center-value">
+                  180h 0Min <span className="ps-footer-center-sub">(10800 minutos)</span>
                 </span>
                 <div className="ps-footer-chart">
-                  <span className="ps-footer-chart-label" style={{ color: darkMode ? 'var(--text-secondary)' : '#111B21' }}>
+                  <span className="ps-footer-chart-label">
                     TEMPORAL LE PROGRESSION
                   </span>
                   <svg width="120" height="40" viewBox="0 0 120 40">

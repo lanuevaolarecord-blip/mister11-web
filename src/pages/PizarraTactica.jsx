@@ -148,10 +148,17 @@ const PizarraTactica = () => {
     fc.requestRenderAll();
   }, []);
 
+  // Ref para prevenir race conditions al cargar frames asíncronamente
+  const loadTokenR = useRef(0);
+
   const cargarFrame = useCallback((state, callback) => {
     const fc = fcRef.current;
     const fr = frRef.current;
     if (!fc || !fr || !state) return;
+
+    // Incrementar token para invalidar cargas anteriores en progreso
+    loadTokenR.current += 1;
+    const currentToken = loadTokenR.current;
 
     // No desconectamos los listeners porque syncingR.current ya evita bucles infinitos de guardado
     // fc.off(...) eliminado para reparar undo/redo
@@ -193,6 +200,13 @@ const PizarraTactica = () => {
     });
 
     fabric.util.enlivenObjects(enlivenedData, (objects) => {
+      // Si el token cambió, significa que otra carga inició antes de que esta terminara.
+      // Abortamos para evitar duplicación masiva de objetos en el canvas (efecto estela).
+      if (loadTokenR.current !== currentToken) {
+        console.warn('[Pizarra] ⚠️ Carga asíncrona abortada por race condition.');
+        return;
+      }
+
       objects.forEach(o => {
         applyMister11Controls(o);
         fc.add(o);

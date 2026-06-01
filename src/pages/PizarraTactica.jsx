@@ -1103,6 +1103,7 @@ const PizarraTactica = () => {
 
     const onChange = (opt) => {
       if (syncingR.current) return;
+      if (opt.target && opt.target.data && opt.target.data.type === 'temp') return;
 
       // Actualizar coordenadas relativas del objeto movido
       if (opt.target && frRef.current) {
@@ -1143,6 +1144,7 @@ const PizarraTactica = () => {
     // Guardado al añadir/eliminar objetos (solo si NO es una carga)
     const onAddedOrRemoved = (opt) => {
       if (syncingR.current) return;
+      if (opt.target && opt.target.data && opt.target.data.type === 'temp') return;
       console.log('[Pizarra] 💾 onAddedOrRemoved - guardando estado...');
       ensurePlayersOnTop();
       saveFrameState(false);
@@ -1158,6 +1160,7 @@ const PizarraTactica = () => {
 
     const onPathCreated = (opt) => {
       if (syncingR.current) return;
+      if (opt.target && opt.target.data && opt.target.data.type === 'temp') return;
       if (opt.path) {
         opt.path.set({ data: { type: 'path' } });
       }
@@ -1444,48 +1447,6 @@ const PizarraTactica = () => {
     document.addEventListener('mousedown', handleOutsideClick);
     document.addEventListener('touchstart', handleOutsideClick);
 
-    // Manejo de historial unificado
-    const pushToHistory = () => {
-      const newState = serializarFrame();
-      if (presentR.current === newState) return;
-      pastR.current.push(presentR.current);
-      if (pastR.current.length > 30) pastR.current.shift();
-      presentR.current = newState;
-      futureR.current = [];
-      setHistCount(pastR.current.length);
-      setRedoCount(0);
-    };
-
-    // Guardado al modificar objetos (drag/resize)
-    const onChange = (opt) => {
-      if (syncingR.current) return;
-      if (opt.target && opt.target.data && opt.target.data.type === 'temp') return;
-      console.log('[Pizarra] 💾 onChange - guardando estado...');
-      ensurePlayersOnTop();
-      saveFrameState(false);
-      pushToHistory();
-    };
-
-    // Guardado al añadir/eliminar objetos (solo si NO es una carga)
-    const onAddedOrRemoved = (opt) => {
-      if (syncingR.current) return;
-      if (opt.target && opt.target.data && opt.target.data.type === 'temp') return;
-      console.log('[Pizarra] 💾 onAddedOrRemoved - guardando estado...');
-      ensurePlayersOnTop();
-      saveFrameState(false);
-      pushToHistory();
-    };
-
-    const onPathCreated = (opt) => {
-      if (syncingR.current) return;
-      if (opt.target && opt.target.data && opt.target.data.type === 'temp') return;
-      if (opt.path) {
-        opt.path.set({ data: { type: 'path' } });
-      }
-      ensurePlayersOnTop();
-      saveFrameState(false);
-      pushToHistory();
-    };
 
     // 9. Keyboard shortcuts (Undo/Redo/Copy/Paste)
     const onKeyDown = (e) => {

@@ -429,26 +429,7 @@ const Partidos = () => {
                   <p>Cambie el estado del partido a "Terminado" en la pestaña Pre-Partido para registrar el resultado.</p>
                   
                   <div className="post-partido-image">
-                    {/* Placeholder para la imagen de la bola 3D proporcionada en el diseño */}
-                    <svg viewBox="0 0 800 400" width="100%" height="100%">
-                      <defs>
-                        <linearGradient id="fieldGrad" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="0%" stopColor="#2E5A3C"/>
-                          <stop offset="100%" stopColor="#1B3A2D"/>
-                        </linearGradient>
-                      </defs>
-                      <path d="M 50 350 L 250 150 L 550 150 L 750 350 Z" fill="url(#fieldGrad)" stroke="#D4A843" strokeWidth="8"/>
-                      <path d="M 150 350 L 300 200 L 500 200 L 650 350" fill="none" stroke="rgba(255,255,255,0.4)" strokeWidth="2"/>
-                      <circle cx="400" cy="275" r="30" fill="none" stroke="rgba(255,255,255,0.4)" strokeWidth="2" transform="scale(1, 0.5) translate(0, 275)"/>
-                      <g transform="translate(400, 220)">
-                        <circle cx="0" cy="0" r="45" fill="#D4A843"/>
-                        <circle cx="0" cy="0" r="45" fill="none" stroke="#B88A36" strokeWidth="2"/>
-                        <path d="M -15 -20 L 15 -20 L 25 10 L 0 30 L -25 10 Z" fill="#4B3A1A" opacity="0.8"/>
-                      </g>
-                      <path d="M 400 120 L 410 145 L 435 145 L 415 160 L 420 185 L 400 170 L 380 185 L 385 160 L 365 145 L 390 145 Z" fill="#1B3A2D"/>
-                      <path d="M 330 90 L 335 105 L 350 105 L 338 115 L 342 130 L 330 120 L 318 130 L 322 115 L 310 105 L 325 105 Z" fill="#1B3A2D" transform="scale(0.7) translate(150, 0)"/>
-                      <path d="M 470 90 L 475 105 L 490 105 L 478 115 L 482 130 L 470 120 L 458 130 L 462 115 L 450 105 L 465 105 Z" fill="#1B3A2D" transform="scale(0.7) translate(-50, 0)"/>
-                    </svg>
+                    <img src="/assets/post-partido.png" alt="Partido no terminado" />
                   </div>
                 </div>
               </div>

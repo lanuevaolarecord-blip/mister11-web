@@ -1140,6 +1140,70 @@ const Tests = () => {
                 </tbody>
               </table>
             </div>
+
+            {/* BAR CHART DE COMPARATIVA */}
+            {(() => {
+              const allCurrentValsForChart = players.map(mp => {
+                const mh = historyData[mp.id]?.[heatSelectedTest] || [];
+                return mh.length > 0 ? mh[mh.length - 1].val : null;
+              }).filter(v => v !== null);
+
+              if (allCurrentValsForChart.length === 0) return null;
+
+              const maxValForChart = Math.max(...allCurrentValsForChart);
+              const minValForChart = Math.min(...allCurrentValsForChart);
+
+              return (
+                <div className="comp-bar-chart" style={{ marginTop: '32px', background: 'var(--bg-card)', padding: '24px', borderRadius: '12px', border: '1px solid var(--border-light)', boxShadow: '0 4px 12px rgba(0,0,0,0.03)' }}>
+                  <h3 style={{ marginTop: 0, marginBottom: '24px', fontSize: '18px', color: 'var(--text-primary)', fontFamily: 'var(--font-heading)' }}>Resultados Actuales (Última Evaluación)</h3>
+                  <div style={{ display: 'flex', alignItems: 'flex-end', gap: '8px', height: '220px', paddingTop: '24px' }}>
+                    {players.map(p => {
+                      const history = historyData[p.id]?.[heatSelectedTest] || [];
+                      const val = history.length > 0 ? history[history.length - 1].val : null;
+                      if (val === null) return null;
+                      
+                      const heightPerc = maxValForChart > 0 ? (val / maxValForChart) * 100 : 0;
+                      // Color dinamico: verde para mejores marcas, amarillo promedio, rojo peor. Similar a getHeatmapColor pero adaptado a la barra
+                      let barColor = 'var(--primary-color)';
+                      const isTime = getTestById(heatSelectedTest)?.unit === 'seg';
+                      
+                      if (maxValForChart !== minValForChart) {
+                         const norm = (val - minValForChart) / (maxValForChart - minValForChart);
+                         const score = isTime ? 1 - norm : norm;
+                         if (score > 0.7) barColor = 'var(--accent-green)'; // Buen rendimiento
+                         else if (score < 0.3) barColor = '#fca5a5'; // Mal rendimiento
+                         else barColor = '#fde047'; // Regular
+                      }
+
+                      return (
+                        <div key={p.id} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', height: '100%', minWidth: '30px' }}>
+                          <div style={{ flex: 1, display: 'flex', alignItems: 'flex-end', width: '100%', position: 'relative' }}>
+                            <div style={{ 
+                              width: '100%', 
+                              height: `${heightPerc}%`, 
+                              backgroundColor: barColor,
+                              borderTopLeftRadius: '6px',
+                              borderTopRightRadius: '6px',
+                              minHeight: '4px',
+                              transition: 'height 0.5s ease',
+                              opacity: 0.9
+                            }}>
+                              <div style={{ position: 'absolute', width: '100%', textAlign: 'center', top: `calc(100% - ${heightPerc}% - 22px)`, fontSize: '12px', fontWeight: 'bold', color: 'var(--text-primary)', textShadow: '0 1px 2px rgba(255,255,255,0.8)' }}>
+                                {val}
+                              </div>
+                            </div>
+                          </div>
+                          <div style={{ marginTop: '8px', fontSize: '11px', fontWeight: 700, color: 'var(--text-secondary)', textAlign: 'center', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', width: '100%' }}>
+                            {p.name.split(' ')[0]}
+                          </div>
+                          <div style={{ fontSize: '9px', color: 'var(--text-muted)' }}>#{p.number}</div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              );
+            })()}
           </div>
         )}
       </div>

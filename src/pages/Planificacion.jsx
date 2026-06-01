@@ -98,6 +98,7 @@ const Planificacion = () => {
   const [toast, setToast] = useState(null);
   const [activeTab, setActiveTab] = useState('macrociclo'); // 'macrociclo' | 'mesociclo' | 'microciclo' | 'objetivos'
   const [selectedMicro, setSelectedMicro] = useState(1);
+  const [selectedMesoItem, setSelectedMesoItem] = useState(null);
 
   const mesocycles = useMemo(() => {
     const groups = {};
@@ -588,32 +589,134 @@ const Planificacion = () => {
       {/* ── MESOCICLO TAB ─────────────────────────────────── */}
       {activeTab === 'mesociclo' && (
         <div className="plan-meso-tab">
-          <div className="plan-meso-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '16px' }}>
-            {mesocycles.map((meso, idx) => (
-              <div key={idx} className="plan-card">
-                <div className="plan-card-label" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span><span className="plan-icon">📆</span> MES {meso.month.toUpperCase()}</span>
-                  <span className="plan-legend-chip chip-sesiones">{meso.micros.length} Semanas</span>
+          {!selectedMesoItem ? (
+            <div className="plan-meso-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '16px' }}>
+              {mesocycles.map((meso, idx) => (
+                <div key={idx} className="plan-card" style={{ cursor: 'pointer' }} onClick={() => setSelectedMesoItem(meso.month)}>
+                  <div className="plan-card-label" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span><span className="plan-icon">📆</span> MES {meso.month.toUpperCase()}</span>
+                    <span className="plan-legend-chip chip-sesiones">{meso.micros.length} Semanas</span>
+                  </div>
+                  <div style={{ marginTop: '10px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #e8e0d0', paddingBottom: '8px', marginBottom: '8px' }}>
+                      <span style={{ fontSize: 12, color: '#888', fontWeight: 600 }}>VOLUMEN TOTAL</span>
+                      <span style={{ fontSize: 14, color: 'var(--text-primary)', fontWeight: 800 }}>{meso.volume} min</span>
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #e8e0d0', paddingBottom: '8px', marginBottom: '8px' }}>
+                      <span style={{ fontSize: 12, color: '#888', fontWeight: 600 }}>SESIONES</span>
+                      <span style={{ fontSize: 14, color: 'var(--text-primary)', fontWeight: 800 }}>{meso.sessions}</span>
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                      <span style={{ fontSize: 12, color: '#888', fontWeight: 600 }}>TIPO PREDOMINANTE</span>
+                      <span className={`plan-metric-badge ${meso.carga >= meso.micros.length / 2 ? '' : 'chip-compet-badge'}`}>
+                        {meso.carga >= meso.micros.length / 2 ? 'CARGA' : 'COMPETICIÓN'}
+                      </span>
+                    </div>
+                  </div>
                 </div>
-                <div style={{ marginTop: '10px' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #e8e0d0', paddingBottom: '8px', marginBottom: '8px' }}>
-                    <span style={{ fontSize: 12, color: '#888', fontWeight: 600 }}>VOLUMEN TOTAL</span>
-                    <span style={{ fontSize: 14, color: 'var(--text-primary)', fontWeight: 800 }}>{meso.volume} min</span>
-                  </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #e8e0d0', paddingBottom: '8px', marginBottom: '8px' }}>
-                    <span style={{ fontSize: 12, color: '#888', fontWeight: 600 }}>SESIONES</span>
-                    <span style={{ fontSize: 14, color: 'var(--text-primary)', fontWeight: 800 }}>{meso.sessions}</span>
-                  </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <span style={{ fontSize: 12, color: '#888', fontWeight: 600 }}>TIPO PREDOMINANTE</span>
-                    <span className={`plan-metric-badge ${meso.carga >= meso.micros.length / 2 ? '' : 'chip-compet-badge'}`}>
-                      {meso.carga >= meso.micros.length / 2 ? 'CARGA' : 'COMPETICIÓN'}
-                    </span>
-                  </div>
-                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="plan-meso-detail">
+              <div style={{ marginBottom: 16, display: 'flex', alignItems: 'center', gap: 12 }}>
+                <button 
+                  className="btn-secondary"
+                  style={{ padding: '6px 12px', fontSize: 13, background: '#fff', border: '1px solid #ddd', borderRadius: 6, cursor: 'pointer', fontWeight: 600 }}
+                  onClick={() => setSelectedMesoItem(null)}
+                >
+                  ← Volver a Mesociclos
+                </button>
+                <h3 style={{ margin: 0, fontSize: 18, color: 'var(--text-primary)' }}>Detalle del Mes: {selectedMesoItem.toUpperCase()}</h3>
               </div>
-            ))}
-          </div>
+              <div className="plan-matrix-container" style={{ overflowX: 'auto', background: darkMode ? 'var(--bg-secondary)' : '#fff', padding: '16px', borderRadius: '12px', boxShadow: '0 4px 12px rgba(0,0,0,0.03)' }}>
+                <table className="plan-matrix-table" style={{ width: '100%', minWidth: '600px' }}>
+                  <thead>
+                    <tr>
+                      <th className="plan-msticky plan-mheader" style={{ width: '140px' }}>MES</th>
+                      {mesocycles.find(m => m.month === selectedMesoItem)?.micros.map(m => (
+                        <th key={m.id} className="plan-mheader">
+                          <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--primary-color)' }}>{m.month.toUpperCase()}</span>
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {/* PERÍODOS */}
+                    <tr className="plan-mrow plan-mrow-alt">
+                      <td className="plan-msticky plan-mlabel-cell">PERÍODOS</td>
+                      {mesocycles.find(m => m.month === selectedMesoItem)?.micros.map(m => (
+                        <td key={m.id} className="plan-mcell">
+                          <span style={{ fontSize: 12, fontWeight: 600, color: '#555' }}>{m.periodo}</span>
+                        </td>
+                      ))}
+                    </tr>
+                    {/* Nº MICROCICLO */}
+                    <tr className="plan-mrow">
+                      <td className="plan-msticky plan-mlabel-cell">Nº MICROCICLO</td>
+                      {mesocycles.find(m => m.month === selectedMesoItem)?.micros.map(m => (
+                        <td key={m.id} className="plan-mcell plan-mcell-num">{m.id}</td>
+                      ))}
+                    </tr>
+                    {/* TEST FÍSICO */}
+                    <tr className="plan-mrow plan-mrow-fisio">
+                      <td className="plan-msticky plan-mlabel-cell">TEST FÍSICO</td>
+                      {mesocycles.find(m => m.month === selectedMesoItem)?.micros.map(m => (
+                        <td key={m.id} className="plan-mcell">
+                          <span className={`plan-check ${m.fisio ? 'plan-check-active' : ''}`}>{m.fisio ? '✓' : ''}</span>
+                        </td>
+                      ))}
+                    </tr>
+                    {/* DINÁMICA CARGA */}
+                    <tr className="plan-mrow plan-mrow-infl">
+                      <td className="plan-msticky plan-mlabel-cell">DINÁMICA CARGA</td>
+                      {mesocycles.find(m => m.month === selectedMesoItem)?.micros.map(m => (
+                        <td key={m.id} className="plan-mcell">
+                          <span className={`plan-arrow-badge plan-arrow-${m.infl === '↗' ? 'up' : m.infl === '↘' ? 'down' : 'none'}`}>
+                            {m.infl || ''}
+                          </span>
+                        </td>
+                      ))}
+                    </tr>
+                    {/* VOLUMEN (MIN) */}
+                    <tr className="plan-mrow plan-mrow-activ">
+                      <td className="plan-msticky plan-mlabel-cell">VOLUMEN (MIN)</td>
+                      {mesocycles.find(m => m.month === selectedMesoItem)?.micros.map(m => (
+                        <td key={m.id} className="plan-mcell"><span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{m.volume}</span></td>
+                      ))}
+                    </tr>
+                    {/* SESIONES */}
+                    <tr className="plan-mrow">
+                      <td className="plan-msticky plan-mlabel-cell">SESIONES</td>
+                      {mesocycles.find(m => m.month === selectedMesoItem)?.micros.map(m => (
+                        <td key={m.id} className="plan-mcell"><span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{m.sessions}</span></td>
+                      ))}
+                    </tr>
+                    {/* % FÍSICO */}
+                    <tr className="plan-mrow plan-mrow-fisic">
+                      <td className="plan-msticky plan-mlabel-cell">% FÍSICO</td>
+                      {mesocycles.find(m => m.month === selectedMesoItem)?.micros.map(m => (
+                        <td key={m.id} className="plan-mcell"><span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{m.physical}</span></td>
+                      ))}
+                    </tr>
+                    {/* % TÉCNICO */}
+                    <tr className="plan-mrow plan-mrow-tecnico">
+                      <td className="plan-msticky plan-mlabel-cell">% TÉCNICO</td>
+                      {mesocycles.find(m => m.month === selectedMesoItem)?.micros.map(m => (
+                        <td key={m.id} className="plan-mcell"><span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{m.technical}</span></td>
+                      ))}
+                    </tr>
+                    {/* % TÁCTICO */}
+                    <tr className="plan-mrow plan-mrow-tactico">
+                      <td className="plan-msticky plan-mlabel-cell">% TÁCTICO</td>
+                      {mesocycles.find(m => m.month === selectedMesoItem)?.micros.map(m => (
+                        <td key={m.id} className="plan-mcell"><span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{m.tactical}</span></td>
+                      ))}
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
         </div>
       )}
 

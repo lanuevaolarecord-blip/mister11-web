@@ -110,11 +110,13 @@ const PizarraTactica = () => {
       let absX = obj.left;
       let absY = obj.top;
       
-      const matrix = obj.calcTransformMatrix();
-      if (matrix) {
-        const pt = fabric.util.transformPoint({ x: 0, y: 0 }, matrix);
-        absX = pt.x;
-        absY = pt.y;
+      if (obj.type !== 'path' && obj.type !== 'line') {
+        const matrix = obj.calcTransformMatrix();
+        if (matrix) {
+          const pt = fabric.util.transformPoint({ x: 0, y: 0 }, matrix);
+          absX = pt.x;
+          absY = pt.y;
+        }
       }
       
       const { rx, ry } = fr.getRelativePoint(absX, absY);
@@ -208,6 +210,15 @@ const PizarraTactica = () => {
       }
 
       objects.forEach(o => {
+        // Restaurar borde blanco en los jugadores
+        if (o.data?.type === 'player' || o.data?.tipo === 'jugador') {
+          if (o.type === 'group') {
+            const circle = o.getObjects().find(child => child.type === 'circle');
+            if (circle && o.data._strokeWidth) {
+              circle.set({ stroke: '#FFFFFF', strokeWidth: o.data._strokeWidth });
+            }
+          }
+        }
         applyMister11Controls(o);
         fc.add(o);
       });

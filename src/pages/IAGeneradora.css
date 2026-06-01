@@ -11,7 +11,7 @@
   --ia-panel-left: #234535; /* Un verde ligeramente más claro que el fondo */
   --ia-panel-right: #f5f1e8; /* Crema/Hueso */
   --ia-text-left: #ffffff;
-  --ia-text-left-muted: rgba(255, 255, 255, 0.6);
+  --ia-text-left-muted: rgba(255, 255, 255, 0.8);
   --ia-text-right: #1B3A2D;
   --ia-border: rgba(255, 255, 255, 0.15);
   --ia-border-active: #4caf7d;
@@ -56,7 +56,7 @@ html.dark .ia-page, .dark .ia-page {
   --ia-panel-left: #171717;
   --ia-panel-right: #1e1e1e;
   --ia-text-left: #f5f0e8;
-  --ia-text-left-muted: rgba(255, 255, 255, 0.5);
+  --ia-text-left-muted: rgba(255, 255, 255, 0.7);
   --ia-text-right: #f5f0e8;
   --ia-border: rgba(255, 255, 255, 0.1);
   --ia-border-active: #4caf7d;
@@ -224,6 +224,23 @@ html.dark .ia-page, .dark .ia-page {
 .ia-field select option {
   background: var(--ia-panel-left);
   color: var(--ia-text-left);
+}
+
+.ia-field select::placeholder,
+.ia-field textarea::placeholder,
+.ia-field input::placeholder {
+  color: var(--ia-text-left-muted);
+  opacity: 0.8;
+}
+
+.ia-error {
+  background: rgba(239, 68, 68, 0.15);
+  color: #fca5a5;
+  padding: 12px 16px;
+  border-radius: 10px;
+  font-size: 13px;
+  border: 1px solid rgba(239,68,68,0.4);
+  margin-bottom: 16px;
 }
 
 /* Fila de Jugadores */

@@ -496,7 +496,7 @@ Responde solo en español y usa formato markdown.`;
               </div>
             </>
           )}
-          {error && <div className="error-msg" style={{color: '#EF4444', backgroundColor: '#FEE2E2', padding: '12px', borderRadius: '8px', marginBottom: '16px', fontSize: '0.9rem', border: '1px solid #FCA5A5'}}>{error}</div>}
+          {error && <div className="ia-error">{error}</div>}
 
           <button className="btn-generate" onClick={handleGenerate} disabled={isGenerating}>
             {isGenerating ? loadingMsg : (mode === 'prevencion' ? '🩺 Generar Plan de Ejercicios' : '✨ Generar Ejercicio')}
@@ -522,14 +522,14 @@ Responde solo en español y usa formato markdown.`;
                 <div className="ai-dot"/>
                 <div className="ai-dot"/>
               </div>
-              <h2 style={{ color: '#3a2e1a', fontFamily: 'var(--font-heading, Georgia, serif)' }}>Generando...</h2>
+              <h2 style={{ color: 'var(--ia-text-right)', fontFamily: 'var(--font-heading, Georgia, serif)' }}>Generando...</h2>
             </div>
           )}
           {result && !isGenerating && (
             <div className="ia-result-content">
               <div className="result-actions">
                 <button className="btn-primary" onClick={handleSave}>💾 Guardar</button>
-                <button className="btn-outline" style={{ borderColor: '#1B3A2D', color: '#1B3A2D' }} onClick={() => setResult(null)}>🔄 Limpiar</button>
+                <button className="btn-outline" style={{ borderColor: 'var(--ia-text-right)', color: 'var(--ia-text-right)' }} onClick={() => setResult(null)}>🔄 Limpiar</button>
               </div>
               <div className="ia-markdown-container">
                 <div className="ia-markdown">{renderMarkdown(result)}</div>

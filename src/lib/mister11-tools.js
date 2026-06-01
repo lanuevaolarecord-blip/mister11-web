@@ -365,7 +365,8 @@ export class ToolManager {
               stroke: '#D4A843', strokeWidth: 2,
               strokeDashArray: [6, 4],
               originX: 'center', originY: 'center',
-              selectable: false, evented: false
+              selectable: false, evented: false,
+              data: { type: 'temp' }
             });
           } else {
             this._drawState.tempObj = new fabric.Rect({
@@ -373,7 +374,8 @@ export class ToolManager {
               fill: hexToRgba('#D4A843', 0.12),
               stroke: '#D4A843', strokeWidth: 2,
               strokeDashArray: [6, 4],
-              selectable: false, evented: false
+              selectable: false, evented: false,
+              data: { type: 'temp' }
             });
           }
           this.canvas.add(this._drawState.tempObj);
@@ -409,7 +411,7 @@ export class ToolManager {
           const line = new fabric.Line([sx, sy, x, y], {
             stroke: this.strokeColor, strokeWidth: this.strokeWidth,
             strokeDashArray: this.activeTool === 'dashed_curve' ? [8, 6] : null,
-            selectable: false, evented: false, opacity: 0.6
+            selectable: false, evented: false, opacity: 0.6, data: { type: 'temp' }
           });
           this._drawState.tempLine = line;
           this.canvas.add(line);
@@ -419,7 +421,7 @@ export class ToolManager {
           const curve = new fabric.Path(pathData, {
             fill: 'transparent', stroke: this.strokeColor, strokeWidth: this.strokeWidth,
             strokeDashArray: this.activeTool === 'dashed_curve' ? [8, 6] : null,
-            selectable: false, evented: false, opacity: 0.6
+            selectable: false, evented: false, opacity: 0.6, data: { type: 'temp' }
           });
           this._drawState.tempLine = curve;
           this.canvas.add(curve);

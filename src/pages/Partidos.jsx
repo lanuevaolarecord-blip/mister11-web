@@ -374,7 +374,10 @@ const Partidos = () => {
                         if (!p) return null;
                         return (
                           <div key={id} className="alin-player-item">
-                            <span>{p.number}</span> {p.name}
+                            <div className="alin-player-item-left">
+                              <span>{p.number}</span> {p.name.split(' ')[0]}
+                            </div>
+                            <div className="alin-player-status"></div>
                           </div>
                         );
                       })
@@ -387,6 +390,12 @@ const Partidos = () => {
                   <div className="pitch-circle pitch-center-circle"></div>
                   <div className="pitch-box pitch-penalty-left"></div>
                   <div className="pitch-box pitch-penalty-right"></div>
+                  
+                  {/* Corner Arcs */}
+                  <div className="pitch-corner top-left"></div>
+                  <div className="pitch-corner top-right"></div>
+                  <div className="pitch-corner bottom-left"></div>
+                  <div className="pitch-corner bottom-right"></div>
                   
                   {(FORMATIONS[matchData.lineup || '4-3-3'] || FORMATIONS['4-3-3']).map((pos, idx) => {
                     const pid = calledPlayers[idx];

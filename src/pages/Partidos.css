@@ -647,6 +647,47 @@ html.dark {
 }
 
 /* =========================================================
+   POST-PARTIDO FORM
+========================================================= */
+.post-partido-form {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.score-inputs {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  margin-top: 20px;
+}
+
+.score-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+.score-box .partidos-input {
+  width: 80px;
+  height: 80px;
+  font-size: 2rem;
+  text-align: center;
+  font-weight: 800;
+  border-radius: 12px;
+}
+
+.score-divider {
+  font-size: 2rem;
+  font-weight: 800;
+  color: var(--partidos-text-muted);
+}
+
+/* =========================================================
    RESPONSIVE
 ========================================================= */
 @media (max-width: 600px) {

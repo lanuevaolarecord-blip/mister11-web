@@ -424,14 +424,81 @@ const Partidos = () => {
             {/* PESTAÑA: POST-PARTIDO */}
             {editTab === 'POST-PARTIDO' && (
               <div className="tab-pane post-partido-container">
-                <div className="empty-state-post">
-                  <h2>El partido aún no ha terminado</h2>
-                  <p>Cambie el estado del partido a "Terminado" en la pestaña Pre-Partido para registrar el resultado.</p>
-                  
-                  <div className="post-partido-image">
-                    <img src="/assets/post-partido.png" alt="Partido no terminado" />
+                {matchData.status !== 'Terminado' ? (
+                  <div className="empty-state-post">
+                    <h2>El partido aún no ha terminado</h2>
+                    <p>Cambie el estado del partido a "Terminado" en la pestaña Pre-Partido para registrar el resultado.</p>
+                    
+                    <div className="post-partido-image">
+                      <img src="/assets/post-partido.png" alt="Partido no terminado" />
+                    </div>
                   </div>
-                </div>
+                ) : (
+                  <div className="post-partido-form">
+                    <h3 className="section-title">Resultados y Análisis</h3>
+                    
+                    <div className="score-inputs">
+                      <div className="score-box">
+                        <label>Goles a Favor</label>
+                        <input 
+                          type="number" 
+                          className="partidos-input text-center text-2xl" 
+                          value={matchData.goalsFor || 0} 
+                          onChange={e => setMatchData({...matchData, goalsFor: parseInt(e.target.value) || 0})} 
+                        />
+                      </div>
+                      <div className="score-divider">-</div>
+                      <div className="score-box">
+                        <label>Goles en Contra</label>
+                        <input 
+                          type="number" 
+                          className="partidos-input text-center text-2xl" 
+                          value={matchData.goalsAgainst || 0} 
+                          onChange={e => setMatchData({...matchData, goalsAgainst: parseInt(e.target.value) || 0})} 
+                        />
+                      </div>
+                    </div>
+
+                    <div className="form-grid" style={{ marginTop: '30px' }}>
+                      <div className="form-group half">
+                        <label>MVP del Partido</label>
+                        <select 
+                          className="partidos-input"
+                          value={matchData.mvp || ''}
+                          onChange={e => setMatchData({...matchData, mvp: e.target.value})}
+                        >
+                          <option value="">Seleccione MVP</option>
+                          {calledPlayers.map(id => {
+                            const p = players.find(pl => pl.id === id);
+                            return p ? <option key={id} value={p.name}>{p.name}</option> : null;
+                          })}
+                        </select>
+                      </div>
+                      
+                      <div className="form-group full">
+                        <label>Goleadores y Asistencias</label>
+                        <textarea 
+                          className="partidos-input" 
+                          rows="2" 
+                          value={matchData.scorers || ''} 
+                          onChange={e => setMatchData({...matchData, scorers: e.target.value})}
+                          placeholder="Ej. Juan (2), Pedro (1 asistencia)"
+                        ></textarea>
+                      </div>
+                      
+                      <div className="form-group full">
+                        <label>Análisis del Entrenador (Notas Tácticas)</label>
+                        <textarea 
+                          className="partidos-input" 
+                          rows="4" 
+                          value={matchData.notes || ''} 
+                          onChange={e => setMatchData({...matchData, notes: e.target.value})}
+                          placeholder="Escribe tus conclusiones del partido, puntos de mejora, etc."
+                        ></textarea>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
           </div>

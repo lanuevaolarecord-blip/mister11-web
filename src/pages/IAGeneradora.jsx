@@ -284,20 +284,20 @@ Responde solo en español y usa formato markdown.`;
           </button>
         </header>
 
-        <div className="ia-mode-selector" style={{ display: 'flex', gap: '10px', padding: '0 30px', marginBottom: '20px' }}>
-          <button 
-            className={`btn-mode ${mode === 'tactico' ? 'active' : ''}`} 
+        <div className="ia-mode-selector" style={{ display: 'flex', gap: '8px', padding: '12px 16px', background: '#172e20' }}>
+          <button
+            className={`btn-mode-card ${mode === 'tactico' ? 'active' : ''}`}
             onClick={() => setMode('tactico')}
-            style={{ flex: 1, padding: '10px', borderRadius: '8px', border: '1px solid #4CAF7D', background: mode === 'tactico' ? '#4CAF7D' : 'transparent', color: mode === 'tactico' ? '#fff' : '#4CAF7D', fontWeight: 'bold', cursor: 'pointer' }}
           >
-            ⚽ Ejercicio Táctico
+            <span className="mode-icon">⚽</span>
+            <span>Ejercicio Táctico</span>
           </button>
-          <button 
-            className={`btn-mode ${mode === 'prevencion' ? 'active' : ''}`} 
+          <button
+            className={`btn-mode-card ${mode === 'prevencion' ? 'active-prevention' : ''}`}
             onClick={() => setMode('prevencion')}
-            style={{ flex: 1, padding: '10px', borderRadius: '8px', border: '1px solid #4CAF7D', background: mode === 'prevencion' ? '#4CAF7D' : 'transparent', color: mode === 'prevencion' ? '#fff' : '#4CAF7D', fontWeight: 'bold', cursor: 'pointer' }}
           >
-            🩺 Prevención / Recuperación
+            <span className="mode-icon">➕</span>
+            <span>Prevención / Recuperación</span>
           </button>
         </div>
 
@@ -313,9 +313,18 @@ Responde solo en español y usa formato markdown.`;
           </div>
 
           <div className="ia-field">
-            <label>Nº de Jugadores: <strong>{form.jugadores}</strong></label>
-            <input type="range" min="4" max="22" value={form.jugadores}
-              onChange={e => setForm({...form, jugadores: Number(e.target.value)})} className="ia-slider" />
+            <label>N° De Jugadores: {form.jugadores}</label>
+            <div className="ia-players-row">
+              <div className="ia-players-count">
+                <span className="player-icon">👤</span>
+                <span className="player-num">{form.jugadores}</span>
+              </div>
+              <input
+                type="range" min="4" max="22" value={form.jugadores}
+                onChange={e => setForm({...form, jugadores: Number(e.target.value)})}
+                className="ia-slider"
+              />
+            </div>
           </div>
 
           <div className="ia-field">
@@ -494,29 +503,38 @@ Responde solo en español y usa formato markdown.`;
       </div>
 
       <div className="ia-result-panel">
-        {!result && !isGenerating && (
-          <div className="ia-empty-state">
-            <div className="empty-icon">✨</div>
-            <h2>Tu ejercicio aparecerá aquí</h2>
-          </div>
-        )}
-        {isGenerating && (
-          <div className="ia-empty-state">
-            <div className="ia-loading-animation"><div className="ai-dot"/><div className="ai-dot"/><div className="ai-dot"/></div>
-            <h2>Generando...</h2>
-          </div>
-        )}
-        {result && !isGenerating && (
-          <div className="ia-result-content">
-            <div className="result-actions">
-              <button className="btn-primary" onClick={handleSave}>💾 Guardar</button>
-              <button className="btn-outline" onClick={() => setResult(null)}>🔄 Limpiar</button>
+        <div className="ia-result-canvas">
+          {!result && !isGenerating && (
+            <div className="ia-empty-state">
+              <div className="ia-sparkle-icon">
+                <span className="sparkle-small">✦</span>
+                <span className="sparkle-big">✦</span>
+              </div>
+              <h2>Tu ejercicio aparecerá aquí</h2>
             </div>
-            <div className="ia-markdown-container">
-              <div className="ia-markdown">{renderMarkdown(result)}</div>
+          )}
+          {isGenerating && (
+            <div className="ia-empty-state">
+              <div className="ia-loading-animation">
+                <div className="ai-dot"/>
+                <div className="ai-dot"/>
+                <div className="ai-dot"/>
+              </div>
+              <h2 style={{ color: '#3a2e1a', fontFamily: 'var(--font-heading, Georgia, serif)' }}>Generando...</h2>
             </div>
-          </div>
-        )}
+          )}
+          {result && !isGenerating && (
+            <div className="ia-result-content">
+              <div className="result-actions">
+                <button className="btn-primary" onClick={handleSave}>💾 Guardar</button>
+                <button className="btn-outline" style={{ borderColor: '#1B3A2D', color: '#1B3A2D' }} onClick={() => setResult(null)}>🔄 Limpiar</button>
+              </div>
+              <div className="ia-markdown-container">
+                <div className="ia-markdown">{renderMarkdown(result)}</div>
+              </div>
+            </div>
+          )}
+        </div>
       </div>
 
       {showBiblioteca && (

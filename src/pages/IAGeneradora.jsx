@@ -284,20 +284,20 @@ Responde solo en español y usa formato markdown.`;
           </button>
         </header>
 
-        <div className="ia-mode-selector" style={{ display: 'flex', gap: '8px', padding: '12px 16px', background: '#172e20' }}>
+        <div className="ia-mode-cards">
           <button
-            className={`btn-mode-card ${mode === 'tactico' ? 'active' : ''}`}
+            className={`mode-card ${mode === 'tactico' ? 'active' : ''}`}
             onClick={() => setMode('tactico')}
           >
-            <span className="mode-icon">⚽</span>
-            <span>Ejercicio Táctico</span>
+            <div className="mode-card-icon">⚽</div>
+            <span>Ejercicio<br/>Táctico</span>
           </button>
           <button
-            className={`btn-mode-card ${mode === 'prevencion' ? 'active-prevention' : ''}`}
+            className={`mode-card ${mode === 'prevencion' ? 'active' : ''}`}
             onClick={() => setMode('prevencion')}
           >
-            <span className="mode-icon">➕</span>
-            <span>Prevención / Recuperación</span>
+            <div className="mode-card-icon">🩺</div>
+            <span>Prevención /<br/>Recuperación</span>
           </button>
         </div>
 
@@ -340,7 +340,9 @@ Responde solo en español y usa formato markdown.`;
             <div className="chip-group">
               {MATERIALES.map(m => (
                 <button key={m.id} className={`chip ${form.materiales.includes(m.id) ? 'active' : ''}`}
-                  onClick={() => toggleMaterial(m.id)}> {m.icon} {m.label} </button>
+                  onClick={() => toggleMaterial(m.id)}>
+                  <span className="chip-icon">{m.icon}</span> {m.label}
+                </button>
               ))}
             </div>
           </div>
@@ -507,8 +509,8 @@ Responde solo en español y usa formato markdown.`;
           {!result && !isGenerating && (
             <div className="ia-empty-state">
               <div className="ia-sparkle-icon">
-                <span className="sparkle-small">✦</span>
-                <span className="sparkle-big">✦</span>
+                <div className="sparkle-main">✦</div>
+                <div className="sparkle-mini">✦</div>
               </div>
               <h2>Tu ejercicio aparecerá aquí</h2>
             </div>

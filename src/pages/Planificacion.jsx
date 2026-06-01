@@ -97,6 +97,19 @@ const Planificacion = () => {
   const [saving, setSaving] = useState(false);
   const [toast, setToast] = useState(null);
   const [activeTab, setActiveTab] = useState('macrociclo'); // 'macrociclo' | 'mesociclo' | 'microciclo' | 'objetivos'
+  const [selectedMicro, setSelectedMicro] = useState(1);
+
+  const mesocycles = useMemo(() => {
+    const groups = {};
+    microcycles.forEach(mc => {
+      if (!groups[mc.month]) groups[mc.month] = { month: mc.month, micros: [], volume: 0, sessions: 0, carga: 0 };
+      groups[mc.month].micros.push(mc);
+      groups[mc.month].volume += mc.volume;
+      groups[mc.month].sessions += mc.sessions;
+      if (mc.carga === 'Carga') groups[mc.month].carga += 1;
+    });
+    return Object.values(groups);
+  }, [microcycles]);
 
   // Macro-ciclo counts
   const [macroCounts, setMacroCounts] = useState({ sesiones: 3, sesionesMax: 10, trabajo: 4, trabajoMax: 10, compet: 2, competMax: 10 });
@@ -574,19 +587,108 @@ const Planificacion = () => {
 
       {/* ── MESOCICLO TAB ─────────────────────────────────── */}
       {activeTab === 'mesociclo' && (
-        <div className="plan-empty-tab">
-          <div className="plan-empty-tab-icon">🔄</div>
-          <h2>Mesociclo</h2>
-          <p>Planificación por bloques de 3-6 semanas. Próximamente disponible.</p>
+        <div className="plan-meso-tab">
+          <div className="plan-meso-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '16px' }}>
+            {mesocycles.map((meso, idx) => (
+              <div key={idx} className="plan-card">
+                <div className="plan-card-label" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span><span className="plan-icon">📆</span> MES {meso.month.toUpperCase()}</span>
+                  <span className="plan-legend-chip chip-sesiones">{meso.micros.length} Semanas</span>
+                </div>
+                <div style={{ marginTop: '10px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #e8e0d0', paddingBottom: '8px', marginBottom: '8px' }}>
+                    <span style={{ fontSize: 12, color: '#888', fontWeight: 600 }}>VOLUMEN TOTAL</span>
+                    <span style={{ fontSize: 14, color: 'var(--text-primary)', fontWeight: 800 }}>{meso.volume} min</span>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #e8e0d0', paddingBottom: '8px', marginBottom: '8px' }}>
+                    <span style={{ fontSize: 12, color: '#888', fontWeight: 600 }}>SESIONES</span>
+                    <span style={{ fontSize: 14, color: 'var(--text-primary)', fontWeight: 800 }}>{meso.sessions}</span>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                    <span style={{ fontSize: 12, color: '#888', fontWeight: 600 }}>TIPO PREDOMINANTE</span>
+                    <span className={`plan-metric-badge ${meso.carga >= meso.micros.length / 2 ? '' : 'chip-compet-badge'}`}>
+                      {meso.carga >= meso.micros.length / 2 ? 'CARGA' : 'COMPETICIÓN'}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       )}
 
       {/* ── MICROCICLO SEMANAL TAB ────────────────────────── */}
       {activeTab === 'microciclo' && (
-        <div className="plan-empty-tab">
-          <div className="plan-empty-tab-icon">📅</div>
-          <h2>Microciclo Semanal</h2>
-          <p>Vista detallada semana a semana con cargas y sesiones. Próximamente disponible.</p>
+        <div className="plan-micro-tab">
+          <div className="plan-card" style={{ marginBottom: 16, display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
+            <div className="plan-card-label"><span className="plan-icon">📅</span> SELECCIONAR SEMANA</div>
+            <select 
+              className="plan-dur-input" 
+              style={{ width: 'auto', minWidth: '160px' }}
+              value={selectedMicro} 
+              onChange={e => setSelectedMicro(Number(e.target.value))}
+            >
+              {microcycles.map(mc => (
+                <option key={mc.id} value={mc.id}>Semana {mc.microciclo} - {mc.month} ({mc.periodo})</option>
+              ))}
+            </select>
+            {microcycles.find(m => m.id === selectedMicro) && (
+              <div style={{ marginLeft: 'auto', display: 'flex', gap: 8 }}>
+                <span className="plan-legend-chip chip-sesiones">{microcycles.find(m => m.id === selectedMicro).carga}</span>
+                <span className="plan-legend-chip chip-trabajo">{microcycles.find(m => m.id === selectedMicro).volume} min</span>
+              </div>
+            )}
+          </div>
+          
+          <div className="plan-micro-week" style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+            {DAYS_LABELS.map((day, idx) => {
+              const currentMicro = microcycles.find(m => m.id === selectedMicro) || microcycles[0];
+              const isTrainingDay = macroInfo.trainingDays.includes(idx);
+              const isMatchDay = idx === 6; // Sunday default
+              const isRestDay = !isTrainingDay && !isMatchDay;
+              
+              let statusText = 'Descanso';
+              let statusColor = '#888';
+              let statusBg = 'transparent';
+              
+              if (isMatchDay) {
+                statusText = 'Día de Partido';
+                statusColor = '#8C6D1F';
+                statusBg = '#FDF3DC';
+              } else if (isTrainingDay) {
+                statusText = `Sesión (${macroInfo.sessionDuration} min)`;
+                statusColor = 'var(--text-primary)';
+                statusBg = '#E8F5EE';
+              }
+              
+              return (
+                <div key={idx} className="plan-card" style={{ flexDirection: 'row', alignItems: 'center', padding: '12px 16px', background: isRestDay ? (darkMode ? 'transparent' : '#fdfdfd') : '' }}>
+                  <div style={{ width: 60, fontSize: 13, fontWeight: 900, color: isRestDay ? '#aaa' : 'var(--text-primary)' }}>{day}</div>
+                  <div style={{ flex: 1 }}>
+                    <span style={{ fontSize: 11, fontWeight: 800, padding: '4px 10px', borderRadius: 20, color: statusColor, background: statusBg, border: `1px solid ${statusBg !== 'transparent' ? statusColor + '40' : '#ddd'}` }}>
+                      {statusText}
+                    </span>
+                  </div>
+                  {isTrainingDay && (
+                    <div style={{ display: 'flex', gap: 10 }}>
+                      <div style={{ fontSize: 11, color: '#555', textAlign: 'center' }}>
+                        <div style={{ fontWeight: 800, color: 'var(--text-primary)' }}>{currentMicro.physical}%</div>
+                        <div style={{ fontSize: 9 }}>Físico</div>
+                      </div>
+                      <div style={{ fontSize: 11, color: '#555', textAlign: 'center' }}>
+                        <div style={{ fontWeight: 800, color: 'var(--text-primary)' }}>{currentMicro.technical}%</div>
+                        <div style={{ fontSize: 9 }}>Técnico</div>
+                      </div>
+                      <div style={{ fontSize: 11, color: '#555', textAlign: 'center' }}>
+                        <div style={{ fontWeight: 800, color: 'var(--text-primary)' }}>{currentMicro.tactical}%</div>
+                        <div style={{ fontSize: 9 }}>Táctico</div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
         </div>
       )}
 

@@ -1,10 +1,10 @@
 .sesiones-page {
   display: flex;
   flex-direction: column;
-  height: 100%;
+  min-height: 100%;
   background-color: var(--bg-primary);
   padding: 24px;
-  overflow: hidden;
+  overflow-y: auto;
 }
 
 /* --- HEADERS --- */
@@ -296,18 +296,19 @@
 /* --- EDIT MODE (EDITOR) --- */
 .editor-content {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: minmax(320px, 1fr) minmax(320px, 1fr);
   gap: 24px;
   flex: 1;
-  overflow: hidden;
+  overflow: visible;
+  margin-top: 16px;
 }
 
 .editor-left, .editor-right {
-  overflow-y: auto;
+  overflow-y: visible;
   display: flex;
   flex-direction: column;
   gap: 24px;
-  padding-right: 10px;
+  padding-right: 4px;
 }
 
 .edit-section {
@@ -534,7 +535,7 @@
   margin-left: 10px;
 }
 
-@media (max-width: 1024px) {
+@media (max-width: 860px) {
   .editor-content {
     grid-template-columns: 1fr;
   }

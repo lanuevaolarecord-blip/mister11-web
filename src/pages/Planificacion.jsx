@@ -96,6 +96,7 @@ const Planificacion = () => {
   const [microcycles, setMicrocycles] = useState(() => generateMicrocycles());
   const [saving, setSaving] = useState(false);
   const [toast, setToast] = useState(null);
+  const [activeTab, setActiveTab] = useState('macrociclo'); // 'macrociclo' | 'mesociclo' | 'microciclo' | 'objetivos'
 
   // Macro-ciclo counts
   const [macroCounts, setMacroCounts] = useState({ sesiones: 3, sesionesMax: 10, trabajo: 4, trabajoMax: 10, compet: 2, competMax: 10 });
@@ -189,7 +190,7 @@ const Planificacion = () => {
 
       {/* PAGE HEADER */}
       <div className="plan-page-header">
-        <h1 className="page-title">PLANIFICACIÓN</h1>
+        <h1 className="page-title">PLANIFICACIÓN ESTRATÉGICA</h1>
         <div style={{ display: 'flex', gap: 10 }}>
           <button className="btn-outline" style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13 }}>
             <FileText size={15} /> EXPORTAR PDF
@@ -200,7 +201,26 @@ const Planificacion = () => {
         </div>
       </div>
 
-      {/* ── ROW 1: 4 TOP CARDS ─────────────────────────────────────── */}
+      {/* ── TAB BAR ───────────────────────────────────────── */}
+      <div className="plan-tab-bar">
+        {[
+          { id: 'macrociclo', label: 'MACROCICLO (PLANTILLA)' },
+          { id: 'mesociclo',  label: 'MESOCICLO' },
+          { id: 'microciclo', label: 'MICROCICLO SEMANAL' },
+          { id: 'objetivos',  label: 'OBJETIVOS' },
+        ].map(tab => (
+          <button
+            key={tab.id}
+            className={`plan-tab-btn ${activeTab === tab.id ? 'active' : ''}`}
+            onClick={() => setActiveTab(tab.id)}
+          >
+            {tab.label}
+          </button>
+        ))}
+      </div>
+
+      {/* ── TAB CONTENT ───────────────────────────────────── */}
+      {activeTab === 'macrociclo' && (<>
       <div className="plan-top-grid">
 
         {/* CARD 1 — TEMPORADA */}
@@ -549,6 +569,61 @@ const Planificacion = () => {
           </button>
         </div>
       </div>
+
+      </>) /* end macrociclo tab */}
+
+      {/* ── MESOCICLO TAB ─────────────────────────────────── */}
+      {activeTab === 'mesociclo' && (
+        <div className="plan-empty-tab">
+          <div className="plan-empty-tab-icon">🔄</div>
+          <h2>Mesociclo</h2>
+          <p>Planificación por bloques de 3-6 semanas. Próximamente disponible.</p>
+        </div>
+      )}
+
+      {/* ── MICROCICLO SEMANAL TAB ────────────────────────── */}
+      {activeTab === 'microciclo' && (
+        <div className="plan-empty-tab">
+          <div className="plan-empty-tab-icon">📅</div>
+          <h2>Microciclo Semanal</h2>
+          <p>Vista detallada semana a semana con cargas y sesiones. Próximamente disponible.</p>
+        </div>
+      )}
+
+      {/* ── OBJETIVOS TAB ─────────────────────────────────── */}
+      {activeTab === 'objetivos' && (
+        <div className="plan-objetivos-tab">
+          <div className="plan-card" style={{ marginBottom: 16 }}>
+            <div className="plan-card-label"><span className="plan-icon">🎯</span> OBJETIVO GENERAL DE TEMPORADA</div>
+            <textarea
+              className="plan-objetivo-textarea"
+              style={{ minHeight: 120, border: '1px solid #e0d9cc', borderRadius: 8, padding: '10px 12px', background: '#fff', width: '100%', boxSizing: 'border-box' }}
+              value={macroInfo.objective}
+              onChange={e => setMacroInfo(p => ({ ...p, objective: e.target.value }))}
+              placeholder="Describe el objetivo principal de la temporada..."
+            />
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+            {[
+              { icon: '💪', label: 'OBJETIVO FÍSICO', key: 'objFisico', placeholder: 'Mejorar la resistencia aeróbica y la velocidad de reacción...' },
+              { icon: '⚽', label: 'OBJETIVO TÉCNICO', key: 'objTecnico', placeholder: 'Mejorar el control y el pase en espacios reducidos...' },
+              { icon: '♟️', label: 'OBJETIVO TÁCTICO', key: 'objTactico', placeholder: 'Dominar la presión alta y la salida de balón...' },
+              { icon: '🧠', label: 'OBJETIVO MENTAL', key: 'objMental', placeholder: 'Desarrollar la concentración y el trabajo en equipo...' },
+            ].map(({ icon, label, key, placeholder }) => (
+              <div key={key} className="plan-card">
+                <div className="plan-card-label"><span className="plan-icon">{icon}</span> {label}</div>
+                <textarea
+                  className="plan-objetivo-textarea"
+                  style={{ minHeight: 90, border: '1px solid #e0d9cc', borderRadius: 8, padding: '8px 10px', background: '#fff', width: '100%', boxSizing: 'border-box' }}
+                  value={macroInfo[key] || ''}
+                  onChange={e => setMacroInfo(p => ({ ...p, [key]: e.target.value }))}
+                  placeholder={placeholder}
+                />
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
     </div>
   );

@@ -714,3 +714,104 @@
   flex-wrap: wrap;
   gap: 4px;
 }
+
+/* ══════════════════════════════════════════════════════
+   TAB BAR
+   ══════════════════════════════════════════════════════ */
+.plan-tab-bar {
+  display: flex;
+  gap: 0;
+  border-bottom: 2px solid #E8E0D0;
+  margin-bottom: 20px;
+  overflow-x: auto;
+}
+.plan-page.dark .plan-tab-bar {
+  border-color: rgba(255,255,255,.10);
+}
+
+.plan-tab-btn {
+  padding: 10px 20px;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  color: #888;
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -2px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: color 0.2s, border-color 0.2s;
+}
+.plan-tab-btn:hover {
+  color: #1B3A2D;
+}
+.plan-tab-btn.active {
+  color: #1B3A2D;
+  border-bottom-color: #1B3A2D;
+}
+.plan-page.dark .plan-tab-btn {
+  color: #888;
+}
+.plan-page.dark .plan-tab-btn:hover {
+  color: #e0e0e0;
+}
+.plan-page.dark .plan-tab-btn.active {
+  color: #4CAF7D;
+  border-bottom-color: #4CAF7D;
+}
+
+/* ══════════════════════════════════════════════════════
+   EMPTY TAB PLACEHOLDER
+   ══════════════════════════════════════════════════════ */
+.plan-empty-tab {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 80px 20px;
+  text-align: center;
+  background: #FAF8F3;
+  border: 1px solid #E8E0D0;
+  border-radius: 14px;
+  box-shadow: 0 2px 8px rgba(0,0,0,.05);
+}
+.plan-empty-tab-icon {
+  font-size: 48px;
+  margin-bottom: 16px;
+  opacity: 0.7;
+}
+.plan-empty-tab h2 {
+  font-family: var(--font-heading, 'Outfit', sans-serif);
+  font-size: 22px;
+  font-weight: 900;
+  color: #1B3A2D;
+  margin: 0 0 10px 0;
+}
+.plan-empty-tab p {
+  font-size: 14px;
+  color: #888;
+  max-width: 360px;
+  line-height: 1.6;
+  margin: 0;
+}
+.plan-page.dark .plan-empty-tab {
+  background: rgba(255,255,255,.04);
+  border-color: rgba(255,255,255,.08);
+}
+.plan-page.dark .plan-empty-tab h2 { color: #e0e0e0; }
+
+/* ══════════════════════════════════════════════════════
+   OBJETIVOS TAB
+   ══════════════════════════════════════════════════════ */
+.plan-objetivos-tab {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+@media (max-width: 680px) {
+  .plan-objetivos-tab > div > div {
+    grid-template-columns: 1fr !important;
+  }
+}

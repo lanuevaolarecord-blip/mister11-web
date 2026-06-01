@@ -1,12 +1,71 @@
+/* =========================================================
+   VARIABLES DE TEMA PARA PARTIDOS
+========================================================= */
+html {
+  --partidos-bg: #f5f0e8; /* Crema claro */
+  --partidos-panel-bg: #ffffff; /* Blanco */
+  --partidos-text-primary: #1b3a2d; /* Verde oscuro */
+  --partidos-text-muted: #6b7280; /* Gris */
+  --partidos-accent: #1b3a2d; /* Verde oscuro */
+  --partidos-gold: #d4a843;
+  --partidos-border: #e5e7eb;
+  
+  --partidos-pill-bg: #ffffff;
+  --partidos-pill-border: #d1d5db;
+  --partidos-pill-text: #374151;
+  --partidos-pill-active-bg: #1b3a2d;
+  --partidos-pill-active-text: #ffffff;
+
+  --partidos-input-bg: #f5f0e8;
+  --partidos-card-bg: #ffffff;
+  --partidos-player-card-bg: #f5f0e8;
+  --partidos-player-card-selected: #eaf1ed;
+  
+  --partidos-danger: #ef4444;
+  --partidos-danger-bg: #fee2e2;
+}
+
+html.dark {
+  --partidos-bg: #121212;
+  --partidos-panel-bg: #1e1e1e;
+  --partidos-text-primary: #f5f0e8;
+  --partidos-text-muted: #9ca3af;
+  --partidos-accent: #4caf7d; /* Verde más claro para contraste en oscuro */
+  --partidos-gold: #d4a843;
+  --partidos-border: #333333;
+  
+  --partidos-pill-bg: #1e1e1e;
+  --partidos-pill-border: #333333;
+  --partidos-pill-text: #d1d5db;
+  --partidos-pill-active-bg: #2d4a2d; /* Un verde oscuro sutil pero visible */
+  --partidos-pill-active-text: #ffffff;
+
+  --partidos-input-bg: #2a2a2a;
+  --partidos-card-bg: #1e1e1e;
+  --partidos-player-card-bg: #2a2a2a;
+  --partidos-player-card-selected: #253f32;
+
+  --partidos-danger: #f87171;
+  --partidos-danger-bg: rgba(239, 68, 68, 0.15);
+}
+
+/* =========================================================
+   ESTILOS BASE
+========================================================= */
 .partidos-page {
   display: flex;
   flex-direction: column;
   height: 100%;
-  background-color: var(--bg-primary);
+  background-color: var(--partidos-bg);
   padding: 24px;
   overflow: hidden;
+  color: var(--partidos-text-primary);
+  font-family: var(--font-body, system-ui, sans-serif);
 }
 
+/* =========================================================
+   HEADER
+========================================================= */
 .partidos-header {
   margin-bottom: 24px;
   flex-shrink: 0;
@@ -19,18 +78,67 @@
 }
 
 .header-top h1 {
-  font-family: var(--font-title);
-  font-size: 1.8rem;
-  color: var(--text-primary);
+  font-family: var(--font-heading, Georgia, serif);
+  font-size: 2rem;
+  color: var(--partidos-text-primary);
   margin: 0;
+  font-weight: 700;
 }
+
+.btn-primary-dark {
+  background-color: var(--partidos-accent);
+  color: #fff;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-weight: 700;
+  font-size: 0.9rem;
+  cursor: pointer;
+  text-transform: uppercase;
+  transition: opacity 0.2s;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+.btn-primary-dark:hover { opacity: 0.9; }
+
+.btn-outline-dark {
+  background-color: transparent;
+  color: var(--partidos-text-primary);
+  border: 1px solid var(--partidos-text-primary);
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-weight: 700;
+  font-size: 0.9rem;
+  cursor: pointer;
+  text-transform: uppercase;
+  transition: all 0.2s;
+}
+.btn-outline-dark:hover { background-color: rgba(0,0,0,0.05); }
+
+.btn-danger {
+  background-color: var(--partidos-danger-bg);
+  color: var(--partidos-danger);
+  border: 1px solid var(--partidos-danger);
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-weight: 700;
+  font-size: 0.9rem;
+  cursor: pointer;
+  text-transform: uppercase;
+  transition: opacity 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.btn-danger:hover { opacity: 0.8; }
 
 .header-actions {
   display: flex;
-  gap: 10px;
+  gap: 12px;
 }
 
-/* --- LIST VIEW --- */
+/* =========================================================
+   VISTA DE LISTA (LIST VIEW)
+========================================================= */
 .partidos-list-container {
   flex: 1;
   display: flex;
@@ -40,121 +148,150 @@
 
 .list-filters {
   display: flex;
-  gap: 10px;
-  margin-bottom: 20px;
+  gap: 12px;
+  margin-bottom: 24px;
 }
 
 .filter-tab {
-  background: var(--bg-card);
-  border: 1px solid var(--border-color);
-  padding: 8px 16px;
+  background: var(--partidos-pill-bg);
+  border: 1px solid var(--partidos-pill-border);
+  color: var(--partidos-pill-text);
+  padding: 8px 20px;
   border-radius: 20px;
-  font-size: 13px;
-  font-weight: bold;
-  color: var(--text-muted);
+  font-size: 14px;
+  font-weight: 700;
   cursor: pointer;
+  transition: all 0.2s;
+}
+.filter-tab:hover {
+  border-color: var(--partidos-accent);
 }
 .filter-tab.active {
-  background: var(--primary);
-  color: white;
-  border-color: var(--primary);
+  background: var(--partidos-pill-active-bg);
+  color: var(--partidos-pill-active-text);
+  border-color: var(--partidos-pill-active-bg);
 }
 
 .matches-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
   gap: 20px;
 }
 
 .match-card {
-  background: var(--bg-card);
+  background: var(--partidos-card-bg);
   border-radius: 12px;
   padding: 20px;
   box-shadow: 0 4px 10px rgba(0,0,0,0.03);
-  border: 1px solid var(--border-color);
+  border: 1px solid var(--partidos-border);
   cursor: pointer;
   transition: transform 0.2s, box-shadow 0.2s;
-  color: var(--text-secondary);
 }
 .match-card:hover {
   transform: translateY(-3px);
   box-shadow: 0 8px 20px rgba(0,0,0,0.06);
-  border-color: var(--accent);
+  border-color: var(--partidos-gold);
 }
 
 .mc-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 15px;
+  margin-bottom: 20px;
 }
 .status-badge {
   font-size: 11px;
-  font-weight: bold;
-  padding: 4px 8px;
-  border-radius: 4px;
+  font-weight: 800;
+  padding: 4px 10px;
+  border-radius: 6px;
   text-transform: uppercase;
+  background: #1b3a2d;
+  color: white;
 }
-.status-badge.terminado { background: var(--accent); color: white; border: 1px solid var(--accent); }
-.status-badge.pendiente { background: var(--accent-gold); color: var(--primario-oscuro); border: 1px solid var(--accent-gold); }
-.mc-date { font-size: 12px; color: var(--text-muted); font-weight: 800; }
+.status-badge.terminado { background: var(--partidos-gold); color: #1b3a2d; }
+.status-badge.pendiente { background: #1b3a2d; color: white; }
+
+.mc-date { font-size: 13px; color: var(--partidos-text-primary); font-weight: 700; }
 
 .mc-body {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 15px 0;
-  border-top: 1px solid var(--border-color);
-  border-bottom: 1px solid var(--border-color);
+  padding: 20px 0;
+  border-top: 1px solid var(--partidos-border);
+  border-bottom: 1px solid var(--partidos-border);
   margin-bottom: 15px;
 }
-.t-name { font-weight: bold; color: var(--text-secondary); font-size: 14px; text-align: center; flex: 1; }
-.mc-score { font-size: 24px; font-weight: bold; color: var(--text-primary); padding: 0 15px; }
-.mc-score .vs { font-size: 16px; color: var(--text-muted); }
+.team-local, .team-visit {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+}
+.team-visit { justify-content: flex-end; }
+.team-local { justify-content: flex-start; }
+
+.team-logo {
+  width: 40px;
+  height: 40px;
+  object-fit: contain;
+}
+
+.t-name { font-weight: 800; color: var(--partidos-text-primary); font-size: 15px; }
+
+.mc-score { font-size: 24px; font-weight: 800; color: var(--partidos-text-primary); padding: 0 20px; }
+.mc-score .vs { font-size: 16px; color: var(--partidos-text-muted); font-weight: 800; }
 
 .mc-footer {
   display: flex;
   justify-content: space-between;
-  font-size: 12px;
-  color: var(--text-muted);
+  font-size: 13px;
+  color: var(--partidos-text-muted);
+  font-weight: 600;
 }
+.mc-footer span { display: flex; align-items: center; gap: 6px; }
 
-/* --- EDITOR VIEW --- */
+/* =========================================================
+   VISTA DE EDICIÓN (EDITOR CONTAINER)
+========================================================= */
 .partidos-editor-container {
   flex: 1;
-  background: var(--bg-card);
+  background: var(--partidos-panel-bg);
   border-radius: 16px;
-  box-shadow: 0 4px 15px rgba(27, 58, 45, 0.05);
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  color: var(--text-secondary);
-  border: 1px solid var(--border-color);
+  border: 1px solid var(--partidos-border);
+  box-shadow: 0 4px 15px rgba(0,0,0,0.03);
 }
 
 .editor-tabs {
   display: flex;
-  background: var(--bg-primary);
-  padding: 15px 20px 0 20px;
-  border-bottom: 1px solid var(--border-color);
+  background: var(--partidos-panel-bg);
+  padding: 0 20px;
+  border-bottom: 1px solid var(--partidos-border);
 }
 
 .e-tab {
   background: transparent;
   border: none;
   font-family: var(--font-body);
-  font-weight: bold;
-  color: var(--text-muted);
-  padding: 12px 20px;
+  font-weight: 800;
+  color: var(--partidos-text-muted);
+  padding: 16px 20px;
   cursor: pointer;
   position: relative;
+  text-transform: uppercase;
+  font-size: 13px;
+  transition: color 0.2s;
 }
-.e-tab.active { color: var(--text-primary); }
+.e-tab:hover { color: var(--partidos-text-primary); }
+.e-tab.active { color: var(--partidos-text-primary); }
 .e-tab.active::after {
   content: '';
   position: absolute;
-  bottom: 0; left: 0; width: 100%; height: 3px;
-  background: var(--accent);
+  bottom: -1px; left: 0; width: 100%; height: 3px;
+  background: var(--partidos-accent);
   border-radius: 3px 3px 0 0;
 }
 
@@ -165,177 +302,242 @@
   display: flex;
   flex-direction: column;
 }
-
 .tab-pane {
   flex: 1;
   display: flex;
   flex-direction: column;
 }
 
-/* PRE-PARTIDO */
-.tab-pane h3 { color: var(--text-primary); margin: 0 0 20px 0; font-size: 1.3rem; border-bottom: 2px solid var(--accent); display: inline-block; padding-bottom: 5px; }
+/* =========================================================
+   PESTAÑA: PRE-PARTIDO
+========================================================= */
+.pre-partido-container {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.section-title {
+  font-family: var(--font-heading, Georgia, serif);
+  color: var(--partidos-text-primary);
+  font-size: 1.4rem;
+  margin: 0;
+  font-weight: 700;
+  display: inline-block;
+  padding-bottom: 8px;
+  border-bottom: 2px solid var(--partidos-accent);
+  margin-bottom: 24px;
+}
 
 .form-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  grid-template-columns: repeat(4, 1fr);
   gap: 20px;
 }
 .form-group.full { grid-column: 1 / -1; }
+.form-group.half { grid-column: span 2; }
+.form-group.quarter { grid-column: span 1; }
 
 .form-group label {
   display: block;
   font-size: 12px;
-  font-weight: bold;
-  color: var(--text-primary);
+  font-weight: 800;
+  color: var(--partidos-text-primary);
   text-transform: uppercase;
   margin-bottom: 8px;
 }
-.form-group input, .form-group select, .form-group textarea {
+
+.partidos-input {
   width: 100%;
-  padding: 12px;
-  border: 1px solid var(--border-color);
+  padding: 12px 16px;
+  border: 1px solid var(--partidos-border);
   border-radius: 8px;
   font-family: var(--font-body);
   font-size: 14px;
-  background: var(--bg-primary);
-  color: var(--text-secondary);
+  background: var(--partidos-input-bg);
+  color: var(--partidos-text-primary);
+  transition: border-color 0.2s;
+  font-weight: 600;
 }
-.form-group input:focus, .form-group select:focus { border-color: var(--accent); outline: none; background: var(--bg-card); }
+.partidos-input:focus {
+  border-color: var(--partidos-accent);
+  outline: none;
+}
 
-/* CONVOCATORIA */
+.form-actions-bottom {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 40px;
+}
+.form-actions-right {
+  display: flex;
+  gap: 12px;
+}
+
+/* Switch UI for Eliminar */
+.eliminar-toggle {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: var(--partidos-danger-bg);
+  padding: 8px 16px;
+  border-radius: 20px;
+  border: 1px solid rgba(239, 68, 68, 0.3);
+}
+.eliminar-toggle span {
+  color: var(--partidos-danger);
+  font-weight: 800;
+  text-transform: uppercase;
+  font-size: 13px;
+}
+
+/* =========================================================
+   PESTAÑA: CONVOCATORIA
+========================================================= */
 .conv-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 20px;
+  margin-bottom: 24px;
 }
-.conv-count { font-weight: 800; font-size: 14px; color: var(--accent); background: var(--bg-primary); padding: 5px 15px; border-radius: 20px; border: 2px solid var(--accent); transition: all 0.2s; }
-.conv-count.error { background: var(--bg-primary); color: var(--error); border-color: var(--error); }
+.conv-header h3 { margin: 0; font-family: var(--font-heading, Georgia, serif); font-size: 1.4rem; color: var(--partidos-text-primary); }
+.conv-count {
+  background: var(--partidos-input-bg);
+  color: var(--partidos-text-primary);
+  padding: 6px 16px;
+  border-radius: 20px;
+  font-weight: 800;
+  font-size: 13px;
+  border: 1px solid var(--partidos-border);
+}
 
 .players-checklist {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-  gap: 15px;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 16px;
 }
-.player-check-item {
+
+.player-card {
   display: flex;
   align-items: center;
-  gap: 15px;
-  padding: 15px;
-  border: 2px solid var(--border-color);
+  background: var(--partidos-player-card-bg);
+  border: 1px solid var(--partidos-border);
   border-radius: 12px;
-  background: var(--bg-primary);
+  padding: 12px;
   cursor: pointer;
   transition: all 0.2s;
-  user-select: none;
 }
-.player-check-item:hover { border-color: var(--accent); background: var(--bg-card); }
-.player-check-item.selected {
-  border-color: var(--accent);
-  background: rgba(76, 175, 125, 0.05);
+.player-card:hover { border-color: var(--partidos-accent); }
+.player-card.selected {
+  background: var(--partidos-player-card-selected);
+  border-color: var(--partidos-accent);
 }
-.p-info { flex: 1; display: flex; flex-direction: column; color: var(--text-secondary); }
-.p-pos { font-size: 11px; color: var(--text-muted); }
-.check-indicator {
+
+.pc-number {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--partidos-gold);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 14px;
+  margin-right: 12px;
+}
+.player-card.selected .pc-number {
+  background: var(--partidos-accent);
+}
+
+.pc-info { flex: 1; display: flex; flex-direction: column; }
+.pc-name { font-weight: 800; color: var(--partidos-text-primary); font-size: 14px; }
+.pc-pos { font-size: 12px; color: var(--partidos-text-muted); font-weight: 700; }
+
+.pc-check {
   width: 24px;
   height: 24px;
   border-radius: 50%;
-  border: 2px solid var(--border-color);
+  border: 2px solid var(--partidos-text-muted);
   display: flex;
   align-items: center;
   justify-content: center;
-  color: white;
-  font-weight: bold;
-  font-size: 12px;
+  color: transparent;
+  transition: all 0.2s;
 }
-.player-check-item.selected .check-indicator {
-  background: var(--accent);
-  border-color: var(--accent);
+.player-card.selected .pc-check {
+  background: var(--partidos-accent);
+  border-color: var(--partidos-accent);
+  color: #fff;
 }
 
-/* ALINEACIÓN */
-.alineacion {
+/* =========================================================
+   PESTAÑA: ALINEACIÓN
+========================================================= */
+.alineacion-layout {
   display: flex;
-  flex-direction: row;
-  gap: 20px;
+  gap: 24px;
   height: 100%;
 }
+
 .alin-sidebar {
-  flex: 0 0 250px;
+  width: 260px;
   display: flex;
   flex-direction: column;
+  gap: 20px;
+}
+
+.alin-sidebar h4 {
+  font-family: var(--font-heading, Georgia, serif);
+  font-size: 1.1rem;
+  color: var(--partidos-text-primary);
+  margin: 0 0 10px 0;
+  border-bottom: 1px solid var(--partidos-border);
+  padding-bottom: 8px;
+}
+
+.titulares-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
   overflow-y: auto;
-  padding-right: 5px;
 }
-.alin-main {
-  flex: 1;
-  min-width: 0;
-}
-.form-select { width: 100%; padding: 10px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--bg-primary); color: var(--text-primary); font-weight: bold; }
-.titulares-list h4 { margin: 20px 0 10px 0; color: var(--text-primary); border-bottom: 1px solid var(--border-color); padding-bottom: 5px; }
-.hint { font-size: 11px; color: var(--text-muted); font-style: italic; margin-top: -5px; }
-.alin-player-list-item {
-  padding: 8px;
-  background: var(--bg-primary);
-  border-radius: 6px;
-  margin-bottom: 5px;
-  font-size: 13px;
+
+.alin-player-item {
   display: flex;
   align-items: center;
   gap: 10px;
-  border: 1px solid var(--border-color);
+  padding: 6px 12px;
+  background: var(--partidos-input-bg);
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--partidos-text-primary);
+  border: 1px solid var(--partidos-border);
 }
-.alin-player-list-item span { font-weight: bold; color: var(--gold); }
-.alin-player-list-item.sub { opacity: 0.7; }
+.alin-player-item span { color: var(--partidos-accent); font-weight: 800; width: 20px; text-align: center; }
 
-.alin-main {
+/* Pizarra Verde */
+.alin-pitch-container {
   flex: 1;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  background: var(--bg-primary);
-  border-radius: 16px;
-  padding: 0;
-  border: 1px solid var(--border-color);
+  background: #1B3A2D; /* Verde oscuro estilo Míster 11 */
+  border-radius: 12px;
+  position: relative;
   overflow: hidden;
-}
-
-.mini-pitch-container {
-  flex: 1;
-  width: 100%;
-  height: 100%;
+  border: 4px solid var(--partidos-border);
   min-height: 400px;
-  background: var(--bg-primary); /* Outer area uses background color */
-  position: relative;
-  overflow: hidden;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  container-type: size;
 }
 
-.mini-pitch {
-  background: #2E5A3C; /* The actual pitch is green */
-  position: relative;
-  border: 2px solid rgba(255,255,255,0.8);
-  width: 100cqw;
-  height: 100cqh;
-  max-width: calc(100cqh * 1.544);
-  max-height: calc(100cqw / 1.544);
-}
+/* Líneas del campo */
+.pitch-line { position: absolute; background: rgba(255,255,255,0.4); }
+.pitch-center-line { top: 0; left: 50%; width: 2px; height: 100%; transform: translateX(-50%); }
+.pitch-circle { position: absolute; border: 2px solid rgba(255,255,255,0.4); border-radius: 50%; }
+.pitch-center-circle { height: 30%; aspect-ratio: 1; top: 50%; left: 50%; transform: translate(-50%, -50%); }
 
-.pitch-line { position: absolute; background: rgba(255,255,255,0.8); }
-.center-line { top: 0; left: 50%; width: 2px; height: 100%; transform: translateX(-50%); }
-.pitch-circle { position: absolute; border: 2px solid rgba(255,255,255,0.8); border-radius: 50%; }
-
-/* Real football pitch proportions (105m x 68m = 1.544 ratio) */
-/* Center circle: diameter 18.3m -> 17.4% of length, 26.9% of width */
-.center-circle { height: 26.9%; width: 17.4%; top: 50%; left: 50%; transform: translate(-50%, -50%); }
-
-/* Penalty box: 16.5m deep, 40.3m wide -> 15.7% of length, 59.2% of width */
-.pitch-box { position: absolute; border: 2px solid rgba(255,255,255,0.8); top: 50%; transform: translateY(-50%); height: 59.2%; width: 15.7%; }
-.penalty-box.left { left: 0; border-left: none; }
-.penalty-box.right { right: 0; border-right: none; }
+.pitch-box { position: absolute; border: 2px solid rgba(255,255,255,0.4); top: 50%; transform: translateY(-50%); height: 60%; width: 16%; }
+.pitch-penalty-left { left: 0; border-left: none; }
+.pitch-penalty-right { right: 0; border-right: none; }
 
 .pitch-player {
   position: absolute;
@@ -346,99 +548,87 @@
   z-index: 10;
   transition: all 0.3s ease;
 }
+
 .pp-circle {
-  width: 28px;
-  height: 28px;
-  background: var(--white);
-  border: 2px solid var(--primary);
+  width: 32px;
+  height: 32px;
+  background: #F5F0E8; /* Crema */
+  border: 2px solid #1B3A2D; /* Verde oscuro */
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-weight: bold;
-  font-size: 12px;
-  color: var(--primary);
-  box-shadow: 0 2px 5px rgba(0,0,0,0.3);
-}
-.pp-name {
-  background: var(--primario-oscuro);
-  color: white;
-  font-size: 10px;
-  padding: 2px 6px;
-  border-radius: 4px;
-  white-space: nowrap;
-  font-weight: bold;
+  font-weight: 800;
+  font-size: 14px;
+  color: #1B3A2D;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.3);
 }
 
-/* POST-PARTIDO */
+.pp-name {
+  color: #F5F0E8;
+  font-size: 11px;
+  white-space: nowrap;
+  font-weight: 800;
+  text-shadow: 1px 1px 2px rgba(0,0,0,0.8);
+}
+
+/* =========================================================
+   PESTAÑA: POST-PARTIDO
+========================================================= */
+.post-partido-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  text-align: center;
+}
+
 .empty-state-post {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 50px 20px;
-  text-align: center;
-  color: var(--text-muted);
-}
-.empty-state-post .icon { font-size: 48px; margin-bottom: 20px; opacity: 0.5; }
-
-.post-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 30px;
-}
-.analysis-panel.full { grid-column: 1 / -1; }
-
-.resultado-panel, .events-panel, .analysis-panel {
-  background: var(--bg-primary);
-  padding: 20px;
-  border-radius: 12px;
-  border: 1px solid var(--border-color);
 }
 
-.score-inputs {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 20px;
+.empty-state-post h2 {
+  font-family: var(--font-heading, Georgia, serif);
+  font-size: 2rem;
+  color: var(--partidos-text-primary);
+  margin-bottom: 10px;
+}
+
+.empty-state-post p {
+  color: var(--partidos-text-muted);
+  max-width: 400px;
+  font-size: 14px;
+  margin-bottom: 40px;
+}
+
+.post-partido-image {
+  width: 100%;
+  max-width: 500px;
   margin-top: 20px;
 }
-.score-team {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 10px;
-}
-.score-team span { font-weight: bold; font-size: 16px; color: var(--text-primary); }
-.score-team input {
-  width: 80px;
-  height: 80px;
-  font-size: 36px;
-  font-weight: bold;
-  text-align: center;
-  border: 1px solid var(--border-color);
-  border-radius: 12px;
-  color: var(--text-primary);
-  background: var(--bg-card);
-}
-.score-team input:focus { border-color: var(--accent); outline: none; }
-.score-inputs .vs { font-size: 24px; color: var(--text-muted); font-weight: bold; }
 
-.analysis-panel textarea {
+.post-partido-image img {
   width: 100%;
-  padding: 15px;
-  border: 1px solid var(--border-color);
-  border-radius: 8px;
-  font-family: var(--font-body);
-  resize: vertical;
-  background: var(--bg-card);
-  color: var(--text-secondary);
+  height: auto;
+  object-fit: contain;
 }
 
-@media (max-width: 768px) {
-  .alineacion { flex-direction: column; }
-  .alin-sidebar { flex: none; width: 100%; overflow-y: visible; padding-right: 0; }
-  .alin-main { width: 100%; }
-  .mini-pitch-container { min-height: 350px; }
-  .post-grid { grid-template-columns: 1fr; }
+/* =========================================================
+   RESPONSIVE
+========================================================= */
+@media (max-width: 900px) {
+  .alineacion-layout { flex-direction: column; }
+  .alin-sidebar { width: 100%; }
+  .form-grid { grid-template-columns: 1fr 1fr; }
+  .form-actions-bottom { flex-direction: column; gap: 20px; align-items: stretch; }
+  .form-actions-right { flex-direction: column; }
+}
+
+@media (max-width: 600px) {
+  .form-grid { grid-template-columns: 1fr; }
+  .matches-grid { grid-template-columns: 1fr; }
 }

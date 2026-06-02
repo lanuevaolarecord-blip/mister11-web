@@ -1779,6 +1779,7 @@ const PizarraTactica = () => {
   const lastSwappedR = useRef(isSwapped);
   const lastLocalColorRef = useRef(localColor);
   const lastRivalColorRef = useRef(rivalColor);
+  const lastJokerColorRef = useRef(jokerColor);
   const lastShowRivalR = useRef(showRival);
 
   useEffect(() => {
@@ -1816,51 +1817,63 @@ const PizarraTactica = () => {
     }
   }, [showRival, ready, rivalFormation, aplicarFormacion]);
 
+  // ─── Team colors real-time update (Unificado) ──────────────────────────────
   useEffect(() => {
     const fc = fcRef.current;
     if (!fc || !ready) return;
-    if (lastLocalColorRef.current === localColor) return;
-    lastLocalColorRef.current = localColor;
+
+    let changed = false;
+    if (lastLocalColorRef.current !== localColor) {
+      lastLocalColorRef.current = localColor;
+      changed = true;
+    }
+    if (lastRivalColorRef.current !== rivalColor) {
+      lastRivalColorRef.current = rivalColor;
+      changed = true;
+    }
+    if (lastJokerColorRef.current !== jokerColor) {
+      lastJokerColorRef.current = jokerColor;
+      changed = true;
+    }
+
+    if (!changed) return;
 
     fc.getObjects().forEach(obj => {
-      if (obj.data && obj.data.type === 'player' && obj.data.playerType === 'local') {
+      if (obj.data && (obj.data.type === 'player' || obj.data.tipo === 'jugador')) {
+        const pType = obj.data.playerType;
         const isGk = obj.data.label === 1;
-        const targetColor = isGk ? '#FFD700' : localColor;
-        if (obj._objects) {
-          obj._objects.forEach(child => {
-            if (child.type === 'circle') {
-              child.set({ fill: targetColor, stroke: '#FFFFFF' });
+        
+        let targetColor = null;
+        if (pType === 'local') {
+          targetColor = isGk ? '#FFD700' : localColor;
+        } else if (pType === 'rival') {
+          targetColor = isGk ? '#FFD700' : rivalColor;
+        } else if (pType === 'joker') {
+          targetColor = isGk ? '#FFD700' : jokerColor;
+        }
+
+        if (targetColor) {
+          if (obj._objects) {
+            obj._objects.forEach(child => {
+              if (child.type === 'circle') {
+                child.set({ fill: targetColor, stroke: '#FFFFFF' });
+              }
+            });
+            obj.dirty = true;
+          } else if (obj.type === 'group') {
+            const circle = obj.getObjects().find(child => child.type === 'circle');
+            if (circle) {
+              circle.set({ fill: targetColor, stroke: '#FFFFFF' });
+              obj.dirty = true;
             }
-          });
+          }
         }
       }
     });
+
     fc.renderAll();
     saveFrameState();
-  }, [localColor, ready]);
-
-  useEffect(() => {
-    const fc = fcRef.current;
-    if (!fc || !ready) return;
-    if (lastRivalColorRef.current === rivalColor) return;
-    lastRivalColorRef.current = rivalColor;
-
-    fc.getObjects().forEach(obj => {
-      if (obj.data && obj.data.type === 'player' && obj.data.playerType === 'rival') {
-        const isGk = obj.data.label === 1;
-        const targetColor = isGk ? '#FFD700' : rivalColor;
-        if (obj._objects) {
-          obj._objects.forEach(child => {
-            if (child.type === 'circle') {
-              child.set({ fill: targetColor, stroke: '#FFFFFF' });
-            }
-          });
-        }
-      }
-    });
-    fc.renderAll();
-    saveFrameState();
-  }, [rivalColor, ready]);
+  }, [localColor, rivalColor, jokerColor, ready, saveFrameState]);
 
 
   // (El guardado al desmontar ya ocurre dentro del useEffect principal, en el return cleanup)
@@ -1896,7 +1909,10 @@ const PizarraTactica = () => {
     if (activeObj) {
       if (activeObj.data?.type === 'player') {
         const circle = activeObj.item(0);
-        if (circle) circle.set('fill', activeColor);
+        if (circle) {
+          circle.set('fill', activeColor);
+          activeObj.dirty = true;
+        }
       } else if (activeObj.type === 'path') {
         activeObj.set('stroke', activeColor);
       } else if (activeObj.data?.type === 'material') {
@@ -1904,8 +1920,12 @@ const PizarraTactica = () => {
         if (activeObj.setFill) activeObj.setFill(activeColor);
         else if (activeObj._objects) {
            activeObj._objects.forEach(o => {
-             if (o.fill && o.fill !== 'transparent') o.set('fill', activeColor);
+             if (o.fill && o.fill !== 'transparent') {
+               o.set('fill', activeColor);
+               o.dirty = true;
+             }
            });
+           activeObj.dirty = true;
         }
       }
       fc.renderAll();
@@ -1913,27 +1933,7 @@ const PizarraTactica = () => {
     }
   }, [activeColor, activeWidth, saveFrameState]);
 
-  // ─── Team colors real-time update ──────────────────────────────────────────
-  useEffect(() => {
-    const fc = fcRef.current;
-    if (!fc) return;
-    fc.getObjects().forEach(obj => {
-      if (obj.data?.type === 'player') {
-        if (obj.data?.playerType === 'local') {
-          const circle = obj.item(0);
-          if (circle) circle.set('fill', localColor);
-        } else if (obj.data?.playerType === 'rival') {
-          const circle = obj.item(0);
-          if (circle) circle.set('fill', rivalColor);
-        } else if (obj.data?.playerType === 'joker') {
-          const circle = obj.item(0);
-          if (circle) circle.set('fill', jokerColor);
-        }
-      }
-    });
-    fc.renderAll();
-    saveFrameState();
-  }, [localColor, rivalColor, jokerColor, saveFrameState]);
+  // NOTA: El efecto de actualización de colores en tiempo real se unificó arriba bajo la guarda 'ready' para evitar sobreescribir el canvas en el mount.
 
   // ─── Material placement ───────────────────────────────────────────────────
   useEffect(() => {

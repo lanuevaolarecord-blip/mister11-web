@@ -534,7 +534,7 @@ const PizarraTactica = () => {
       try {
         const data = JSON.parse(event.target.result);
         if (data.app !== 'Mister11' || !Array.isArray(data.frames)) {
-          alert('El archivo no tiene el formato válido de animación de Míster11.');
+          showToast('El archivo no tiene el formato válido de animación de Míster11.', 'error');
           return;
         }
         if (!window.confirm(`¿Importar esta animación con ${data.frames.length} frames? Esto reemplazará los frames actuales.`)) {
@@ -577,10 +577,10 @@ const PizarraTactica = () => {
             fcRef.current?.renderAll();
           });
         }
-        alert('¡Animación importada con éxito!');
+        showToast('¡Animación importada con éxito!', 'success');
       } catch (err) {
         console.error('Error al importar:', err);
-        alert('Error al procesar el archivo JSON de animación.');
+        showToast('Error al procesar el archivo JSON de animación.', 'error');
       }
     };
     reader.readAsText(file);
@@ -592,11 +592,12 @@ const PizarraTactica = () => {
     const fc = fcRef.current;
     const fieldCanvas = fieldCanvasRef.current;
     if (!fc || !fieldCanvas || framesR.current.length < 2) {
-      alert("Necesitas al menos 2 frames para exportar un video.");
+      showToast("Necesitas al menos 2 frames para exportar un video.", 'info');
       return;
     }
     if (isRecording) return;
     setIsRecording(true);
+    showToast("Generando video, por favor espera...", 'info');
     
     let recordingActive = true;
     
@@ -684,6 +685,7 @@ const PizarraTactica = () => {
           if (autoExport === 'true' && window.parent) {
             window.parent.postMessage({ type: 'EXPORT_DONE', base64data, filename, mimeType: finalMime }, '*');
           } else {
+            showToast("Video exportado exitosamente.", 'success');
             downloadVideo(base64data, filename, finalMime);
           }
         };
@@ -803,7 +805,7 @@ const PizarraTactica = () => {
       runRecordingAnimation(0);
     } catch (err) {
       console.error("Error al exportar video:", err);
-      alert("Error al exportar la animación como video.");
+      showToast("Error al exportar la animación como video.", 'error');
       setIsRecording(false);
       recordingActive = false;
       const autoExport = new URLSearchParams(window.location.search).get('autoExport');

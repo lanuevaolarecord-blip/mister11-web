@@ -206,7 +206,7 @@ const Planificacion = () => {
       <div className="plan-page-header">
         <h1 className="page-title">PLANIFICACIÓN ESTRATÉGICA</h1>
         <div style={{ display: 'flex', gap: 10 }}>
-          <button className="btn-outline" style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13 }}>
+          <button className="btn-outline" onClick={() => showToast('Exportación PDF próximamente disponible', 'info')} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13 }}>
             <FileText size={15} /> EXPORTAR PDF
           </button>
           <button className="btn-primary" onClick={handleSave} disabled={saving} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13 }}>

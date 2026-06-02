@@ -1,6 +1,7 @@
 import { Filesystem, Directory, Encoding } from '@capacitor/filesystem';
 import { Capacitor } from '@capacitor/core';
 import { Share } from '@capacitor/share';
+import { showToast } from './toast';
 
 // ─── HELPER: Guarda en caché y lanza el visor nativo ─────────────────────────
 // En Android 13+ WRITE_EXTERNAL_STORAGE no existe. La forma correcta es:
@@ -42,12 +43,12 @@ const _openNative = async (uri, mimeType, filename, base64Data) => {
       directory: Directory.Documents,
       recursive: true,
     });
-    alert(`✅ Guardado en: Documentos/Mister11/${filename}`);
+    showToast(`✅ Guardado en: Documentos/Mister11/${filename}`, 'success');
   } catch (docErr) {
     console.error('[download] Documents también falló:', docErr);
     // Último fallback: abrir directamente
     try { window.open(uri, '_system'); } catch (_) {}
-    alert(`El archivo se guardó en caché. Si no se abre, busca "${filename}" en Archivos > Android > data > com.mister11.app > cache`);
+    showToast(`Guardado en caché. Si no se abre, busca "${filename}" en Archivos`, 'info');
   }
 };
 
@@ -59,11 +60,10 @@ export const downloadPDF = async (base64Data, filename) => {
     try {
       const uri = await _saveToCache(filename, base64Data);
       await _openNative(uri, 'application/pdf', filename, base64Data);
-      // Aviso siempre como respaldo visual
-      alert(`✅ PDF listo: "${filename}"\nSi no se abre automáticamente, búscalo en la carpeta Descargas.`);
+      showToast(`✅ PDF listo: "${filename}"`, 'success');
     } catch (err) {
       console.error('[download] Error PDF Android:', err);
-      alert(`Error al guardar el PDF: ${err.message || err}`);
+      showToast(`Error al guardar el PDF`, 'error');
     }
   } else {
     const link = document.createElement('a');
@@ -82,7 +82,7 @@ export const downloadJSON = async (jsonString, filename) => {
       const base64 = btoa(unescape(encodeURIComponent(jsonString)));
       const uri = await _saveToCache(filename, base64);
       await _openNative(uri, 'application/json', filename, base64);
-      alert(`✅ Archivo exportado exitosamente.`);
+      showToast(`✅ Archivo exportado exitosamente.`, 'success');
     } catch (err) {
       console.error('[download] Error JSON Android:', err);
       _downloadJSONWeb(jsonString, filename);
@@ -99,7 +99,7 @@ export const downloadImage = async (dataUrl, filename) => {
       const base64 = dataUrl.includes(',') ? dataUrl.split(',')[1] : dataUrl;
       const uri = await _saveToCache(filename, base64);
       await _openNative(uri, 'image/png', filename, base64);
-      alert(`✅ Imagen exportada exitosamente.`);
+      showToast(`✅ Imagen exportada exitosamente.`, 'success');
     } catch (err) {
       console.error('[download] Error Imagen Android:', err);
       _downloadImageWeb(dataUrl, filename);
@@ -145,7 +145,7 @@ export const downloadCSV = async (csvString, filename) => {
       const base64 = btoa(unescape(encodeURIComponent(csvString)));
       const uri = await _saveToCache(filename, base64);
       await _openNative(uri, 'text/csv', filename, base64);
-      alert(`✅ Plantilla exportada exitosamente.`);
+      showToast(`✅ Plantilla exportada exitosamente.`, 'success');
     } catch (err) {
       console.error('[download] Error CSV Android:', err);
       _downloadCSVWeb(csvString, filename);
@@ -176,7 +176,7 @@ export const downloadVideo = async (base64Data, filename, mimeType) => {
     try {
       const uri = await _saveToCache(filename, base64Data);
       await _openNative(uri, mimeType, filename, base64Data);
-      alert(`✅ Animación exportada exitosamente.`);
+      showToast(`✅ Animación exportada exitosamente.`, 'success');
     } catch (err) {
       console.error('[download] Error Video Android:', err);
       _downloadVideoWeb(base64Data, filename, mimeType);

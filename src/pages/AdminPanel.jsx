@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { APP_VERSION } from '../constants/appVersion';
 import { useTeams } from '../hooks/useTeams';
 import { useSettings } from '../hooks/useSettings';
 import { useExercises } from '../hooks/useExercises';
@@ -21,9 +22,9 @@ import {
 import { generateSeasonReport, generateMatchConvocation, generateSessionPDF } from '../utils/pdfGenerator';
 import { generateGlobalTeamReport } from '../utils/teamReportGenerator';
 import { downloadJSON } from '../utils/download';
-import { APP_VERSION } from '../constants/appVersion';
 import { t } from '../i18n/translations';
 import { usePWA } from '../hooks/usePWA';
+import { showToast } from '../utils/toast';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { storage, db } from '../firebaseConfig';
@@ -134,10 +135,10 @@ const AdminPanel = () => {
       });
       
       await updateTeam(activeTeam.id, { escudo: base64data });
-      alert("¡Escudo guardado y optimizado con éxito!");
+      showToast("¡Escudo guardado y optimizado con éxito!", "success");
     } catch (error) {
       console.error("Error al subir el escudo:", error);
-      alert("No se pudo subir o procesar la imagen. Comprueba que sea un archivo de imagen válido.");
+      showToast("No se pudo subir o procesar la imagen.", "error");
     } finally {
       setIsUploadingShield(false);
     }
@@ -146,9 +147,9 @@ const AdminPanel = () => {
   const handleSaveProfile = async () => {
     try {
       await saveSettings({ ...settings, ...profileData });
-      alert("Perfil guardado correctamente.");
+      showToast("Perfil guardado correctamente.", "success");
     } catch (e) {
-      alert("Error al guardar perfil.");
+      showToast("Error al guardar perfil.", "error");
     }
   };
 
@@ -156,9 +157,9 @@ const AdminPanel = () => {
     if (!activeTeam) return;
     try {
       await updateTeam(activeTeam.id, teamEditData);
-      alert("Identidad del equipo actualizada correctamente.");
+      showToast("Identidad del equipo actualizada correctamente.", "success");
     } catch (e) {
-      alert("Error al actualizar identidad del equipo.");
+      showToast("Error al actualizar identidad del equipo.", "error");
     }
   };
 
@@ -170,18 +171,18 @@ const AdminPanel = () => {
   };
 
   const handleExportSeason = async () => {
-    if (!activeTeam) { alert('Selecciona un equipo primero.'); return; }
+    if (!activeTeam) { showToast('Selecciona un equipo primero.', 'info'); return; }
     await generateSeasonReport(activeTeam, players, matches);
   };
 
   const handleExportGlobalReport = async () => {
-    if (!activeTeam) { alert('Selecciona un equipo primero.'); return; }
-    if (players.length === 0) { alert('No hay jugadores en el equipo activo.'); return; }
+    if (!activeTeam) { showToast('Selecciona un equipo primero.', 'info'); return; }
+    if (players.length === 0) { showToast('No hay jugadores en el equipo activo.', 'info'); return; }
     try {
       await generateGlobalTeamReport(players, teamTests, teamEvaluaciones, activeTeam);
     } catch (err) {
       console.error('Error generando informe global:', err);
-      alert('Error al generar el informe global.');
+      showToast('Error al generar el informe global.', 'error');
     }
   };
 
@@ -212,36 +213,36 @@ const AdminPanel = () => {
             window.open(apkDownloadUrl, '_blank');
           }
         } else {
-          alert(`✅ Ya tienes la última versión instalada.\n- Tu versión: v${APP_VERSION}\n- Versión en servidor: v${latestApkVersion || 'No detectada'}`);
+          showToast(`✅ Ya tienes la última versión instalada (v${APP_VERSION}).`, 'success');
         }
       } else {
-        alert('No se pudo comprobar actualizaciones. El documento "config/global" no existe en la base de datos.');
+        showToast('No se pudo comprobar actualizaciones.', 'error');
       }
     } catch (err) {
       console.error('Error al comprobar actualizaciones:', err);
-      alert('Error al conectar con el servidor de actualizaciones.');
+      showToast('Error al conectar con el servidor.', 'error');
     } finally {
       setCheckingUpdate(false);
     }
   };
 
   const handleExportConvocatoria = async () => {
-    if (!selectedMatchId) { alert('Selecciona un partido primero.'); return; }
+    if (!selectedMatchId) { showToast('Selecciona un partido primero.', 'info'); return; }
     const match = matches.find(m => m.id === selectedMatchId);
-    if (!match) { alert('Partido no encontrado.'); return; }
+    if (!match) { showToast('Partido no encontrado.', 'error'); return; }
     await generateMatchConvocation(match, players, activeTeam);
   };
 
   const handleExportSession = async () => {
-    if (!selectedSessionId) { alert('Selecciona una sesión primero.'); return; }
+    if (!selectedSessionId) { showToast('Selecciona una sesión primero.', 'info'); return; }
     const session = sessions.find(s => s.id === selectedSessionId);
-    if (!session) { alert('Sesión no encontrada.'); return; }
+    if (!session) { showToast('Sesión no encontrada.', 'error'); return; }
     await generateSessionPDF(session, activeTeam);
   };
 
   const handleExportBackup = async () => {
     if (!user || !activeTeam) {
-      alert("No hay ningún equipo activo seleccionado.");
+      showToast("No hay ningún equipo activo seleccionado.", "error");
       return;
     }
     
@@ -282,7 +283,7 @@ const AdminPanel = () => {
       await downloadJSON(jsonString, filename);
     } catch (error) {
       console.error("Error al exportar backup:", error);
-      alert("Error al generar la copia de seguridad.");
+      showToast("Error al generar la copia de seguridad.", "error");
     }
   };
 
@@ -356,7 +357,11 @@ const AdminPanel = () => {
                       <button className="btn-select" onClick={() => selectTeam(team)}>
                         {activeTeam?.id === team.id ? <CheckCircle size={18}/> : 'Seleccionar'}
                       </button>
-                      <button className="btn-delete-icon" onClick={() => deleteTeam(team.id)}>
+                      <button className="btn-delete-icon" onClick={() => {
+                        if (window.confirm(`⚠️ ¿Eliminar el equipo "${team.nombre}"?\n\nEsta acción eliminará PERMANENTEMENTE todos los jugadores, sesiones, partidos, tests y evaluaciones asociados. No se puede deshacer.`)) {
+                          deleteTeam(team.id);
+                        }
+                      }}>
                         <Trash2 size={16} />
                       </button>
                     </div>
@@ -402,7 +407,8 @@ const AdminPanel = () => {
                   <option value="">Seleccionar Partido...</option>
                   {matches.map(m => {
                     if (!m) return null;
-                    return <option key={m.id} value={m.id}>{m.rival} ({m.fecha})</option>
+                    const fechaDisplay = m.date || m.fecha || 'Sin fecha';
+                    return <option key={m.id} value={m.id}>{m.rival} ({fechaDisplay})</option>
                   })}
                 </select>
                 <button className="btn-export outline" onClick={handleExportConvocatoria}>
@@ -433,7 +439,7 @@ const AdminPanel = () => {
                 <Layers className="export-icon" size={32} />
                 <h3>Informe Global del Equipo</h3>
                 <p>Análisis completo: rangos de rendimiento, mejores jugadores y áreas de mejora por área (Física, Técnica, Táctica).</p>
-                <button className="btn-export" onClick={handleExportGlobalReport} style={{ marginTop: 'auto', background: '#1B3A2D', minHeight: '48px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
+                <button className="btn-export" onClick={handleExportGlobalReport} style={{ marginTop: 'auto', background: '#004B87', minHeight: '48px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
                   <FileText size={18} /> 📊 Informe Global
                 </button>
               </div>
@@ -657,11 +663,11 @@ const AdminPanel = () => {
                             if (url) {
                               window.open(url, '_blank');
                             } else {
-                              alert('URL de descarga no configurada. Contacta al administrador.');
+                              showToast('URL de descarga no configurada. Contacta al administrador.', 'error');
                             }
                           } catch (err) {
                             console.error('Error al obtener URL de APK:', err);
-                            alert('Error al obtener el enlace de descarga.');
+                            showToast('Error al obtener el enlace de descarga.', 'error');
                           }
                         }}
                         style={{

@@ -7,7 +7,9 @@ import { useTheme } from '../context/ThemeContext';
 import { Save, FileText } from 'lucide-react';
 import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
+import autoTable from 'jspdf-autotable';
 import { downloadPDF } from '../utils/download';
+import { APP_VERSION } from '../constants/appVersion';
 import './Planificacion.css';
 
 // --- CONSTANTS ---
@@ -155,86 +157,409 @@ const Planificacion = () => {
   }, [macroInfo, microcycles, macroCounts, showToast, activeTeamId]);
 
   const handleExportPDF = async () => {
-    const element = document.getElementById('plan-export-container');
-    if (!element) {
-      showToast('Error al exportar: no se encontró el contenedor.', 'error');
-      return;
-    }
     showToast('Generando PDF...', 'info');
 
     try {
-      // 1. Identificar y expandir elementos con scroll horizontal (tablas de planificación y contenedores mesociclo)
-      const scrollables = element.querySelectorAll('.plan-matrix-scroll, .plan-matrix-container');
-      const originalStyles = [];
-
-      scrollables.forEach(el => {
-        originalStyles.push({
-          el,
-          overflowX: el.style.overflowX,
-          overflow: el.style.overflow,
-          width: el.style.width,
-          maxWidth: el.style.maxWidth,
-          display: el.style.display
-        });
-        
-        // Hacer visible todo el contenido sin barras de scroll
-        el.style.overflow = 'visible';
-        el.style.overflowX = 'visible';
-        el.style.width = 'auto';
-        el.style.maxWidth = 'none';
-      });
-
-      // 2. Renderizar con html2canvas
-      const canvas = await html2canvas(element, {
-        scale: 2,
-        useCORS: true,
-        backgroundColor: darkMode ? '#0D0D0D' : '#F5F0E8',
-        windowWidth: element.scrollWidth + 100, // Margen extra para evitar recortes
-        windowHeight: element.scrollHeight + 100
-      });
-
-      // 3. Restaurar estilos originales
-      originalStyles.forEach(({ el, overflowX, overflow, width, maxWidth, display }) => {
-        el.style.overflow = overflow;
-        el.style.overflowX = overflowX;
-        el.style.width = width;
-        el.style.maxWidth = maxWidth;
-        el.style.display = display;
-      });
-
-      // 4. Crear PDF usando jsPDF
-      const imgData = canvas.toDataURL('image/png');
-      const isLandscape = canvas.width > canvas.height;
+      const isLandscape = activeTab === 'macrociclo' || (activeTab === 'mesociclo' && selectedMesoItem);
       const doc = new jsPDF(isLandscape ? 'l' : 'p', 'mm', 'a4');
-
       const pdfWidth = doc.internal.pageSize.getWidth();
       const pdfHeight = doc.internal.pageSize.getHeight();
 
-      // Calcular ancho y alto proporcional
-      const imgWidth = pdfWidth - 20; // 10mm margenes laterales
-      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+      // Colores institucionales y tema
+      const cDark = [27, 58, 45]; // #1B3A2D (RGB)
+      const cGold = [212, 168, 67]; // #D4A843 (RGB)
+      const cBeige = [245, 240, 232]; // #F5F0E8 (RGB)
+      const cText = [45, 45, 45];
 
-      let yPos = 10;
-      let heightLeft = imgHeight;
-      let position = 10;
+      // Función para dibujar encabezado común
+      const drawHeader = (titleSub) => {
+        // Banner principal verde oscuro
+        doc.setFillColor(cDark[0], cDark[1], cDark[2]);
+        doc.rect(0, 0, pdfWidth, 24, 'F');
+        
+        // Línea decorativa dorada inferior
+        doc.setFillColor(cGold[0], cGold[1], cGold[2]);
+        doc.rect(0, 24, pdfWidth, 1.5, 'F');
 
-      // Si la altura cabe en una página, la ponemos
-      if (heightLeft < pdfHeight - 20) {
-        doc.addImage(imgData, 'PNG', 10, yPos, imgWidth, imgHeight);
-      } else {
-        // Paginación si es necesario
-        doc.addImage(imgData, 'PNG', 10, position, imgWidth, imgHeight);
-        heightLeft -= (pdfHeight - 20);
+        // Texto principal
+        doc.setTextColor(255, 255, 255);
+        doc.setFont('Helvetica', 'bold');
+        doc.setFontSize(14);
+        doc.text('MÍSTER 11 - PLANIFICACIÓN ESTRATÉGICA', 12, 11);
 
-        while (heightLeft >= 0) {
-          position = heightLeft - imgHeight + 10;
-          doc.addPage();
-          doc.addImage(imgData, 'PNG', 10, position, imgWidth, imgHeight);
-          heightLeft -= (pdfHeight - 20);
+        // Subtítulo
+        doc.setFont('Helvetica', 'normal');
+        doc.setFontSize(9);
+        doc.setTextColor(210, 225, 215);
+        doc.text(titleSub.toUpperCase(), 12, 17);
+
+        // Nombre del equipo y fecha en el lado derecho
+        doc.setFont('Helvetica', 'bold');
+        doc.setTextColor(255, 255, 255);
+        doc.setFontSize(10);
+        const teamNameText = activeTeam?.name ? activeTeam.name.toUpperCase() : 'MI EQUIPO';
+        doc.text(teamNameText, pdfWidth - 12, 11, { align: 'right' });
+
+        doc.setFont('Helvetica', 'normal');
+        doc.setFontSize(8);
+        doc.setTextColor(210, 225, 215);
+        const todayStr = new Date().toLocaleDateString('es-ES');
+        doc.text(`Fecha: ${todayStr} | Versión: ${APP_VERSION}`, pdfWidth - 12, 17, { align: 'right' });
+      };
+
+      // Función para dibujar pie de página
+      const drawFooter = (pageNum, totalPages) => {
+        doc.setFillColor(cDark[0], cDark[1], cDark[2]);
+        doc.rect(0, pdfHeight - 10, pdfWidth, 10, 'F');
+        doc.setTextColor(255, 255, 255);
+        doc.setFontSize(8);
+        doc.setFont('Helvetica', 'normal');
+        doc.text('Míster 11 - Inteligencia y Gestión Deportiva', 12, pdfHeight - 4);
+        doc.text(`Página ${pageNum} de ${totalPages}`, pdfWidth - 12, pdfHeight - 4, { align: 'right' });
+      };
+
+      // 1. MACROCICLO TAB
+      if (activeTab === 'macrociclo') {
+        drawHeader('MACROCICLO COMPLETO (MATRIZ Y DATOS GENERALES)');
+
+        let yPos = 35;
+
+        // Cuadro de Información General
+        doc.setFillColor(cBeige[0], cBeige[1], cBeige[2]);
+        doc.rect(12, yPos, pdfWidth - 24, 25, 'F');
+        
+        doc.setTextColor(cDark[0], cDark[1], cDark[2]);
+        doc.setFont('Helvetica', 'bold');
+        doc.setFontSize(9);
+        doc.text('INFORMACIÓN DE TEMPORADA', 16, yPos + 6);
+        
+        doc.setFont('Helvetica', 'normal');
+        doc.setFontSize(8);
+        doc.setTextColor(cText[0], cText[1], cText[2]);
+        doc.text(`Inicio: ${macroInfo.startDate}   Fin: ${macroInfo.endDate}`, 16, yPos + 12);
+        doc.text(`Categoría: ${macroInfo.category || 'Infantil A'}`, 16, yPos + 17);
+        doc.text(`Entrenador: ${macroInfo.trainer || 'Sin Entrenador'}`, 16, yPos + 22);
+
+        doc.text(`Horas Totales: ${totalHours}h ${remainingMins}min (${totalMinutes} min)`, 110, yPos + 12);
+        doc.text(`Duración Sesión: ${macroInfo.sessionDuration} min`, 110, yPos + 17);
+        const daysText = macroInfo.trainingDays.map(d => DAYS_LABELS[d]).join(', ');
+        doc.text(`Días de Entreno: ${daysText}`, 110, yPos + 22);
+
+        // Indicadores macro-ciclo
+        doc.setFont('Helvetica', 'bold');
+        doc.setFontSize(9);
+        doc.setTextColor(cDark[0], cDark[1], cDark[2]);
+        doc.text('MÉTRICAS CLAVE', 200, yPos + 6);
+        
+        doc.setFont('Helvetica', 'normal');
+        doc.setFontSize(8);
+        doc.setTextColor(cText[0], cText[1], cText[2]);
+        doc.text(`Calificación Global: ${overallScore}%`, 200, yPos + 12);
+        doc.text(`Sesiones: ${macroCounts.sesiones} / ${macroCounts.sesionesMax}`, 200, yPos + 17);
+        doc.text(`Trabajo: ${macroCounts.trabajo} / ${macroCounts.trabajoMax} | Competiciones: ${macroCounts.compet} / ${macroCounts.competMax}`, 200, yPos + 22);
+
+        yPos += 30;
+
+        // Objetivo General
+        doc.setFillColor(255, 255, 255);
+        doc.setDrawColor(cGold[0], cGold[1], cGold[2]);
+        doc.rect(12, yPos, pdfWidth - 24, 18);
+        
+        doc.setTextColor(cDark[0], cDark[1], cDark[2]);
+        doc.setFont('Helvetica', 'bold');
+        doc.setFontSize(8);
+        doc.text('OBJETIVO GENERAL DE LA TEMPORADA:', 16, yPos + 5);
+        
+        doc.setFont('Helvetica', 'normal');
+        doc.setFontSize(8);
+        doc.setTextColor(cText[0], cText[1], cText[2]);
+        const splitObjective = doc.splitTextToSize(macroInfo.objective || 'Sin objetivo general configurado.', pdfWidth - 36);
+        doc.text(splitObjective, 16, yPos + 10);
+
+        yPos += 26;
+
+        // Matriz de Planificación (40 Microciclos)
+        // La dividiremos en 4 tablas de 10 microciclos cada una para encajar en páginas apaisadas A4.
+        const chunkLength = 10;
+        const totalMicros = microcycles.length;
+        
+        for (let chunkIdx = 0; chunkIdx < 4; chunkIdx++) {
+          const start = chunkIdx * chunkLength;
+          const end = Math.min(start + chunkLength, totalMicros);
+          const chunkMicros = microcycles.slice(start, end);
+
+          // Si es la segunda página o posterior de la matriz, agregamos una página y dibujamos encabezado
+          if (chunkIdx > 0) {
+            doc.addPage();
+            drawHeader(`MATRIZ DE PLANIFICACIÓN (MICROCICLOS ${start + 1} AL ${end})`);
+            yPos = 30;
+          } else {
+            doc.setFont('Helvetica', 'bold');
+            doc.setFontSize(10);
+            doc.setTextColor(cDark[0], cDark[1], cDark[2]);
+            doc.text(`MATRIZ DE MICROCICLOS - PARTE ${chunkIdx + 1}/4`, 12, yPos - 2);
+          }
+
+          // Columnas representarán a cada microciclo. Columna 0 es la etiqueta del renglón.
+          const headers = ['MÉTRICA / VARIABLE', ...chunkMicros.map(m => `Micro ${m.id}`)];
+          
+          const rows = [
+            ['Mes', ...chunkMicros.map(m => m.month)],
+            ['Período', ...chunkMicros.map(m => m.periodo)],
+            ['Tipo Micro (Carga)', ...chunkMicros.map(m => m.carga)],
+            ['Test Físico', ...chunkMicros.map(m => m.fisio ? '✓' : '')],
+            ['Dinámica Carga', ...chunkMicros.map(m => m.infl || '')],
+            ['Volumen (min)', ...chunkMicros.map(m => m.volume)],
+            ['Sesiones', ...chunkMicros.map(m => m.sessions)],
+            ['% Físico', ...chunkMicros.map(m => `${m.physical}%`)],
+            ['% Técnico', ...chunkMicros.map(m => `${m.technical}%`)],
+            ['% Táctico', ...chunkMicros.map(m => `${m.tactical}%`)],
+          ];
+
+          doc.autoTable({
+            startY: yPos,
+            head: [headers],
+            body: rows,
+            theme: 'grid',
+            headStyles: {
+              fillColor: cDark,
+              textColor: [255, 255, 255],
+              fontSize: 8,
+              fontStyle: 'bold',
+              halign: 'center'
+            },
+            columnStyles: {
+              0: { fillColor: cBeige, textColor: cDark, fontStyle: 'bold', fontSize: 8, halign: 'left', cellWidth: 45 }
+            },
+            styles: {
+              fontSize: 8,
+              halign: 'center',
+              valign: 'middle'
+            },
+            margin: { left: 12, right: 12 }
+          });
         }
       }
 
-      // 5. Descargar PDF utilizando el helper nativo / web
+      // 2. MESOCICLO TAB
+      else if (activeTab === 'mesociclo') {
+        if (!selectedMesoItem) {
+          // Vista general de todos los mesociclos
+          drawHeader('MESOCICLOS - VISTA GENERAL');
+          
+          let yPos = 35;
+          doc.setFont('Helvetica', 'bold');
+          doc.setFontSize(11);
+          doc.setTextColor(cDark[0], cDark[1], cDark[2]);
+          doc.text('RESUMEN MENSUAL DE LA PLANIFICACIÓN', 12, yPos);
+
+          const headers = ['Mes / Período', 'Semanas', 'Volumen Total', 'Sesiones Totales', 'Tipo Predominante'];
+          const rows = mesocycles.map(meso => [
+            meso.month.toUpperCase(),
+            `${meso.micros.length} semanas`,
+            `${meso.volume} min`,
+            meso.sessions,
+            meso.carga >= meso.micros.length / 2 ? 'CARGA' : 'COMPETICIÓN'
+          ]);
+
+          doc.autoTable({
+            startY: yPos + 5,
+            head: [headers],
+            body: rows,
+            theme: 'striped',
+            headStyles: {
+              fillColor: cDark,
+              textColor: [255, 255, 255],
+              fontSize: 9,
+              fontStyle: 'bold'
+            },
+            styles: {
+              fontSize: 9,
+              valign: 'middle'
+            },
+            margin: { left: 12, right: 12 }
+          });
+        } else {
+          // Vista de detalle de un mes específico (Landscape para tabla horizontal)
+          drawHeader(`DETALLE DEL MESOCICLO: ${selectedMesoItem.toUpperCase()}`);
+          
+          const meso = mesocycles.find(m => m.month === selectedMesoItem);
+          const chunkMicros = meso?.micros || [];
+          
+          let yPos = 35;
+          doc.setFont('Helvetica', 'bold');
+          doc.setFontSize(11);
+          doc.setTextColor(cDark[0], cDark[1], cDark[2]);
+          doc.text(`SEMANAS REGISTRADAS EN EL MES DE ${selectedMesoItem.toUpperCase()}`, 12, yPos);
+
+          const headers = ['METRICA / VARIABLE', ...chunkMicros.map(m => `Semana ${m.id}`)];
+          const rows = [
+            ['Período', ...chunkMicros.map(m => m.periodo)],
+            ['Nº Microciclo', ...chunkMicros.map(m => m.id)],
+            ['Test Físico', ...chunkMicros.map(m => m.fisio ? '✓' : '')],
+            ['Dinámica Carga', ...chunkMicros.map(m => m.infl || '')],
+            ['Volumen (min)', ...chunkMicros.map(m => m.volume)],
+            ['Sesiones', ...chunkMicros.map(m => m.sessions)],
+            ['% Físico', ...chunkMicros.map(m => `${m.physical}%`)],
+            ['% Técnico', ...chunkMicros.map(m => `${m.technical}%`)],
+            ['% Táctico', ...chunkMicros.map(m => `${m.tactical}%`)],
+          ];
+
+          doc.autoTable({
+            startY: yPos + 5,
+            head: [headers],
+            body: rows,
+            theme: 'grid',
+            headStyles: {
+              fillColor: cDark,
+              textColor: [255, 255, 255],
+              fontSize: 8,
+              fontStyle: 'bold',
+              halign: 'center'
+            },
+            columnStyles: {
+              0: { fillColor: cBeige, textColor: cDark, fontStyle: 'bold', fontSize: 8, halign: 'left', cellWidth: 45 }
+            },
+            styles: {
+              fontSize: 8,
+              halign: 'center',
+              valign: 'middle'
+            },
+            margin: { left: 12, right: 12 }
+          });
+        }
+      }
+
+      // 3. MICROCICLO SEMANAL TAB
+      else if (activeTab === 'microciclo') {
+        drawHeader(`MICROCICLO SEMANAL - SEMANA ${selectedMicro}`);
+        
+        const mc = microcycles.find(m => m.id === selectedMicro) || microcycles[0];
+        
+        let yPos = 35;
+
+        // Card de Información del Microciclo
+        doc.setFillColor(cBeige[0], cBeige[1], cBeige[2]);
+        doc.rect(12, yPos, pdfWidth - 24, 20, 'F');
+        
+        doc.setTextColor(cDark[0], cDark[1], cDark[2]);
+        doc.setFont('Helvetica', 'bold');
+        doc.setFontSize(10);
+        doc.text(`SEMANAS Y METAS - SEMANA ${mc.id} (${mc.month.toUpperCase()})`, 16, yPos + 6);
+        
+        doc.setFont('Helvetica', 'normal');
+        doc.setFontSize(9);
+        doc.setTextColor(cText[0], cText[1], cText[2]);
+        doc.text(`Período: ${mc.periodo}  |  Carga: ${mc.carga}  |  Sesiones: ${mc.sessions}  |  Volumen Semanal: ${mc.volume} minutos`, 16, yPos + 13);
+
+        yPos += 28;
+
+        // Tabla de los 7 días
+        const headers = ['Día', 'Actividad / Estado', 'Distribución de Trabajo (% Fis / Tec / Tac)'];
+        const rows = DAYS_LABELS.map((day, idx) => {
+          const isTrainingDay = macroInfo.trainingDays.includes(idx);
+          const isMatchDay = idx === 6; // Domingo default
+          
+          let activityText = 'Descanso';
+          let detailsText = '-';
+          
+          if (isMatchDay) {
+            activityText = 'DÍA DE PARTIDO';
+          } else if (isTrainingDay) {
+            activityText = `Sesión de Entrenamiento (${macroInfo.sessionDuration} min)`;
+            detailsText = `Físico: ${mc.physical}%  |  Técnico: ${mc.technical}%  |  Táctico: ${mc.tactical}%`;
+          }
+          
+          return [day.toUpperCase(), activityText, detailsText];
+        });
+
+        doc.autoTable({
+          startY: yPos,
+          head: [headers],
+          body: rows,
+          theme: 'striped',
+          headStyles: {
+            fillColor: cDark,
+            textColor: [255, 255, 255],
+            fontSize: 9,
+            fontStyle: 'bold'
+          },
+          styles: {
+            fontSize: 9,
+            valign: 'middle'
+          },
+          columnStyles: {
+            0: { fontStyle: 'bold', textColor: cDark, cellWidth: 25 },
+            1: { cellWidth: 65 }
+          },
+          margin: { left: 12, right: 12 }
+        });
+      }
+
+      // 4. OBJETIVOS TAB
+      else if (activeTab === 'objetivos') {
+        drawHeader('PLANIFICACIÓN ESTRATÉGICA - OBJETIVOS');
+        
+        let yPos = 35;
+        
+        // OBJETIVO GENERAL
+        doc.setFillColor(cDark[0], cDark[1], cDark[2]);
+        doc.rect(12, yPos, pdfWidth - 24, 7, 'F');
+        doc.setTextColor(255, 255, 255);
+        doc.setFont('Helvetica', 'bold');
+        doc.setFontSize(9);
+        doc.text('🎯 OBJETIVO GENERAL DE TEMPORADA', 16, yPos + 5);
+
+        doc.setFillColor(cBeige[0], cBeige[1], cBeige[2]);
+        doc.rect(12, yPos + 7, pdfWidth - 24, 25, 'F');
+        
+        doc.setTextColor(cText[0], cText[1], cText[2]);
+        doc.setFont('Helvetica', 'normal');
+        doc.setFontSize(9);
+        const splitGeneral = doc.splitTextToSize(macroInfo.objective || 'No se ha configurado un objetivo general.', pdfWidth - 32);
+        doc.text(splitGeneral, 16, yPos + 13);
+
+        yPos += 40;
+
+        // OBJETIVOS ESPECÍFICOS (Físico, Técnico, Táctico, Mental)
+        const specificObjs = [
+          { title: '💪 OBJETIVO FÍSICO', val: macroInfo.objFisico, key: 'objFisico', placeholder: 'Mejorar la resistencia aeróbica y la velocidad de reacción...' },
+          { title: '⚽ OBJETIVO TÉCNICO', val: macroInfo.objTecnico, key: 'objTecnico', placeholder: 'Mejorar el control y el pase en espacios reducidos...' },
+          { title: '♟️ OBJETIVO TÁCTICO', val: macroInfo.objTactico, key: 'objTactico', placeholder: 'Dominar la presión alta y la salida de balón...' },
+          { title: '🧠 OBJETIVO MENTAL', val: macroInfo.objMental, key: 'objMental', placeholder: 'Desarrollar la concentración y el trabajo en equipo...' },
+        ];
+
+        specificObjs.forEach(obj => {
+          doc.setFillColor(cDark[0], cDark[1], cDark[2]);
+          doc.rect(12, yPos, pdfWidth - 24, 7, 'F');
+          doc.setTextColor(255, 255, 255);
+          doc.setFont('Helvetica', 'bold');
+          doc.setFontSize(9);
+          doc.text(obj.title, 16, yPos + 5);
+
+          // Fondo blanco con borde para los específicos
+          doc.setFillColor(255, 255, 255);
+          doc.setDrawColor(cBeige[0], cBeige[1], cBeige[2]);
+          doc.rect(12, yPos + 7, pdfWidth - 24, 22, 'FD');
+          
+          doc.setTextColor(cText[0], cText[1], cText[2]);
+          doc.setFont('Helvetica', 'normal');
+          doc.setFontSize(9);
+          const splitText = doc.splitTextToSize(obj.val || obj.placeholder, pdfWidth - 32);
+          doc.text(splitText, 16, yPos + 13);
+
+          yPos += 36;
+        });
+      }
+
+      // 5. Dibujar numeración de páginas y pies de página retroactivamente
+      const totalPages = doc.internal.getNumberOfPages();
+      for (let i = 1; i <= totalPages; i++) {
+        doc.setPage(i);
+        drawFooter(i, totalPages);
+      }
+
+      // 6. Descargar PDF utilizando el helper nativo / web
       const pdfBase64 = doc.output('dataurlstring').split(',')[1];
       let tabName = activeTab.toUpperCase();
       if (activeTab === 'mesociclo' && selectedMesoItem) {

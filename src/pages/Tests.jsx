@@ -715,30 +715,63 @@ const Tests = () => {
             <div className="hist-sidebar">
               <h3>Seleccionar Jugador</h3>
               <div className="player-selector">
-                {players.map(p => (
+                {players.map((p, idx) => (
                   <div 
                     key={p.id} 
                     className={`player-select-item ${histSelectedPlayer === p.id ? 'active' : ''}`}
+                    style={
+                      histSelectedPlayer === p.id 
+                        ? { background: '#4CAF7D', color: '#FFF', borderColor: '#4CAF7D' } 
+                        : idx === 1 
+                          ? { background: '#FFFFFF', borderColor: '#D4A843' } 
+                          : idx === 2 
+                            ? { background: '#A3D9C9', borderColor: '#A3D9C9' } 
+                            : {}
+                    }
                     onClick={() => setHistSelectedPlayer(p.id)}
                   >
-                    <span className="p-num">{p.number}</span>
-                    <span className="p-name">{p.name}</span>
+                    <span className="p-num" style={
+                      histSelectedPlayer === p.id 
+                        ? { background: '#FFF', color: '#4CAF7D' } 
+                        : idx === 2 
+                          ? { background: '#1B3A2D', color: '#FFF' } 
+                          : {}
+                    }>{p.number}</span>
+                    <span className="p-name" style={
+                      histSelectedPlayer === p.id 
+                        ? { color: '#FFF' } 
+                        : {}
+                    }>{p.name}</span>
                   </div>
                 ))}
               </div>
               {histSelectedPlayer && (
-                <button
-                  style={{
-                    marginTop: 16, width: '100%',
-                    background: '#1B3A2D', color: '#FFF',
-                    border: 'none', borderRadius: 8,
-                    padding: '12px 0', fontWeight: 700,
-                    fontSize: 14, cursor: 'pointer', letterSpacing: 0.5
-                  }}
-                  onClick={() => setAnalyticsPlayer(getPlayerById(histSelectedPlayer))}
-                >
-                  📊 Ver Analíticas
-                </button>
+                <>
+                  <button
+                    style={{
+                      marginTop: 16, width: '100%',
+                      background: 'var(--accent-gold, #D4A843)', color: '#000',
+                      border: 'none', borderRadius: 8,
+                      padding: '12px 0', fontWeight: 700,
+                      fontSize: 14, cursor: 'pointer', letterSpacing: 0.5,
+                      display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8
+                    }}
+                    onClick={() => setAnalyticsPlayer(getPlayerById(histSelectedPlayer))}
+                  >
+                    📊 Ver Analíticas
+                  </button>
+                  <div style={{ marginTop: 24, display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '16px 0', borderTop: '1px dashed var(--border-color)' }}>
+                    <svg width="80" height="80" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <rect x="3" y="14" width="3" height="6" rx="1" fill="#D4A843" />
+                      <rect x="8" y="10" width="3" height="10" rx="1" fill="#D4A843" />
+                      <rect x="13" y="6" width="3" height="14" rx="1" fill="#D4A843" />
+                      <circle cx="19" cy="10" r="3" fill="#D4A843" />
+                      <path d="M3 10L10 5L15 8L21 2" stroke="#1B3A2D" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                      <path d="M17 2H21V6" stroke="#1B3A2D" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                    <span style={{ fontSize: 13, fontWeight: 800, color: 'var(--text-primary)', marginTop: 8, textTransform: 'uppercase', letterSpacing: 0.5 }}>Ver Analíticas</span>
+                  </div>
+                </>
               )}
             </div>
             <div className="hist-main">
@@ -828,10 +861,11 @@ const Tests = () => {
                       />
                     </div>
 
-                    {/* SVG RADAR & TPI */}
+                    {/* SVG RADAR & TPI WITH SOCCER FIELD STYLING */}
                     <div style={{
                       flex: 1,
-                      background: 'var(--m11-green)',
+                      background: 'var(--bg-card, #FFFFFF)',
+                      border: '1.5px solid var(--border-color, #D4A843)',
                       borderRadius: 16,
                       padding: '24px',
                       display: 'flex',
@@ -841,48 +875,134 @@ const Tests = () => {
                       minHeight: 360,
                       minWidth: 0,
                       position: 'relative',
-                      overflow: 'hidden'
+                      overflow: 'hidden',
+                      boxShadow: '0 4px 15px rgba(27, 58, 45, 0.05)'
                     }}>
-                      {/* Subtle Pitch Background */}
-                      <div style={{ position: 'absolute', inset: 0, opacity: 0.1, backgroundImage: 'url(https://upload.wikimedia.org/wikipedia/commons/4/45/Football_field.svg)', backgroundSize: 'cover', backgroundPosition: 'center' }} />
-                      
+                      {/* SVG Pitch Background */}
+                      <svg width="100%" height="100%" viewBox="0 0 400 250" xmlns="http://www.w3.org/2000/svg" style={{ position: 'absolute', inset: 0, opacity: 0.1, pointerEvents: 'none' }}>
+                        <rect x="10" y="10" width="380" height="230" fill="none" stroke="#1B3A2D" strokeWidth="2" />
+                        <line x1="200" y1="10" x2="200" y2="240" stroke="#1B3A2D" strokeWidth="2" />
+                        <circle cx="200" cy="125" r="40" fill="none" stroke="#1B3A2D" strokeWidth="2" />
+                        <circle cx="200" cy="125" r="3" fill="#1B3A2D" />
+                        <rect x="10" y="55" width="50" height="140" fill="none" stroke="#1B3A2D" strokeWidth="2" />
+                        <rect x="340" y="55" width="50" height="140" fill="none" stroke="#1B3A2D" strokeWidth="2" />
+                        <rect x="10" y="85" width="20" height="80" fill="none" stroke="#1B3A2D" strokeWidth="1.5" />
+                        <rect x="370" y="85" width="20" height="80" fill="none" stroke="#1B3A2D" strokeWidth="1.5" />
+                        <path d="M 60,105 A 25,25 0 0,1 60,145" fill="none" stroke="#1B3A2D" strokeWidth="2" />
+                        <path d="M 340,105 A 25,25 0 0,0 340,145" fill="none" stroke="#1B3A2D" strokeWidth="2" />
+                      </svg>
+
+                      {/* 3D Wireframe soccer ball centered */}
+                      <div style={{ position: 'absolute', left: '50%', top: '50%', transform: 'translate(-50%, -50%)', opacity: 0.08, pointerEvents: 'none' }}>
+                        <svg width="240" height="240" viewBox="0 0 100 100">
+                          <circle cx="50" cy="50" r="48" stroke="#1B3A2D" strokeWidth="0.75" fill="none" />
+                          <polygon points="50,30 38,38 42,54 58,54 62,38" stroke="#1B3A2D" strokeWidth="0.75" fill="none" />
+                          <line x1="50" y1="30" x2="50" y2="12" stroke="#1B3A2D" strokeWidth="0.75" />
+                          <line x1="38" y1="38" x2="20" y2="32" stroke="#1B3A2D" strokeWidth="0.75" />
+                          <line x1="42" y1="54" x2="28" y2="68" stroke="#1B3A2D" strokeWidth="0.75" />
+                          <line x1="58" y1="54" x2="72" y2="68" stroke="#1B3A2D" strokeWidth="0.75" />
+                          <line x1="62" y1="38" x2="80" y2="32" stroke="#1B3A2D" strokeWidth="0.75" />
+                          <path d="M50,12 C40,12 30,18 20,32" stroke="#1B3A2D" strokeWidth="0.75" fill="none" />
+                          <path d="M20,32 C12,45 15,58 28,68" stroke="#1B3A2D" strokeWidth="0.75" fill="none" />
+                          <path d="M28,68 C40,80 60,80 72,68" stroke="#1B3A2D" strokeWidth="0.75" fill="none" />
+                          <path d="M72,68 C85,58 88,45 80,32" stroke="#1B3A2D" strokeWidth="0.75" fill="none" />
+                          <path d="M80,32 C70,18 60,12 50,12" stroke="#1B3A2D" strokeWidth="0.75" fill="none" />
+                        </svg>
+                      </div>
+
+                      {/* Performance Profile / Radar Chart */}
                       <div style={{ zIndex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                        <span style={{ fontSize: 12, fontWeight: 700, letterSpacing: 2, color: 'var(--accent-gold)', marginBottom: '16px' }}>
+                        <span style={{ fontSize: 12, fontWeight: 800, letterSpacing: 2, color: 'var(--text-primary, #1B3A2D)', marginBottom: '16px', textTransform: 'uppercase' }}>
                           PERFIL DE RENDIMIENTO
                         </span>
                         {testCount > 0 ? (
                           <SvgRadar data={radarData} size={250} />
                         ) : (
-                          <div style={{ textAlign: 'center', color: '#7A7065' }}>
-                            <div style={{ fontSize: 48 }}>📊</div>
-                            <p style={{ fontSize: 14, marginTop: 8, color: '#FFF' }}>Sin evaluaciones.<br />Registra datos para ver el radar.</p>
+                          <div style={{ textAlign: 'center', color: '#1B3A2D', opacity: 0.8 }}>
+                            <div style={{ fontSize: 48, filter: 'grayscale(1)' }}>📊</div>
+                            <p style={{ fontSize: 14, marginTop: 8, fontWeight: 600, color: 'var(--text-secondary)' }}>Sin evaluaciones.<br />Registra datos para ver el radar.</p>
                           </div>
                         )}
                       </div>
 
-                      <div style={{ zIndex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                        <span style={{ fontSize: 12, fontWeight: 700, letterSpacing: 2, color: 'var(--accent-gold)', marginBottom: '16px' }}>
+                      {/* TPI Score and Actions */}
+                      <div style={{ zIndex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', minWidth: '180px' }}>
+                        <span style={{ fontSize: 12, fontWeight: 800, letterSpacing: 2, color: 'var(--text-primary, #1B3A2D)', marginBottom: '12px', textTransform: 'uppercase' }}>
                           TEST PERFORMANCE INDEX
                         </span>
-                        <div style={{ position: 'relative', width: '200px', height: '200px', borderRadius: '50%', background: `conic-gradient(var(--accent-gold) ${overall}%, rgba(255,255,255,0.1) ${overall}% 100%)`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                          <div style={{ width: '170px', height: '170px', borderRadius: '50%', background: 'var(--m11-green)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
-                            <span style={{ fontSize: '64px', fontWeight: 'bold', fontFamily: 'var(--font-heading)', color: '#FFF', lineHeight: '1' }}>{overall}</span>
-                            <span style={{ fontSize: '14px', color: 'rgba(255,255,255,0.6)', fontWeight: 'bold' }}>TPI SCORE</span>
-                          </div>
+                        
+                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', margin: '16px 0' }}>
+                          <span style={{ fontSize: '72px', fontWeight: 900, fontFamily: 'var(--font-heading, sans-serif)', color: 'var(--accent-gold, #D4A843)', lineHeight: '1' }}>
+                            {overall}
+                          </span>
+                          <span style={{ fontSize: '13px', color: 'var(--accent-gold, #D4A843)', fontWeight: 800, letterSpacing: 1, marginTop: 4 }}>
+                            TPI SCORE
+                          </span>
                         </div>
-                        <button
-                          style={{
-                            marginTop: '24px',
-                            background: 'var(--accent-gold)', color: '#000',
-                            border: 'none', borderRadius: 8,
-                            padding: '10px 24px', fontWeight: 700,
-                            fontSize: 13, cursor: 'pointer'
-                          }}
-                          onClick={() => setAnalyticsPlayer(getPlayerById(histSelectedPlayer))}
-                        >
-                          📈 Ver Analíticas Completas
-                        </button>
+
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', width: '100%', marginTop: '16px' }}>
+                          <button
+                            style={{
+                              background: 'var(--accent-gold, #D4A843)', color: '#000',
+                              border: 'none', borderRadius: 8,
+                              padding: '10px 20px', fontWeight: 700,
+                              fontSize: 13, cursor: 'pointer',
+                              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+                              boxShadow: '0 2px 6px rgba(212, 168, 67, 0.2)'
+                            }}
+                            onClick={() => setAnalyticsPlayer(getPlayerById(histSelectedPlayer))}
+                          >
+                            📈 Ver Analíticas Completas
+                          </button>
+                          
+                          <button
+                            style={{
+                              background: 'linear-gradient(135deg, #D4A843 0%, #B8860B 100%)', color: '#FFF',
+                              border: 'none', borderRadius: 8,
+                              padding: '10px 20px', fontWeight: 700,
+                              fontSize: 13, cursor: 'pointer',
+                              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+                              boxShadow: '0 2px 6px rgba(184, 134, 11, 0.2)'
+                            }}
+                            onClick={async () => {
+                              if (!isPro) {
+                                setUpgradeModal({ open: true, message: 'La exportación de informes individuales es una función PRO.' });
+                                return;
+                              }
+                              try {
+                                let graficaUrl = null;
+                                const element = document.getElementById('grafica-rendimiento-jugador');
+                                if (element) {
+                                  const canvas = await html2canvas(element, { scale: 2, backgroundColor: null });
+                                  graficaUrl = canvas.toDataURL('image/png');
+                                }
+                                await generatePlayerTestReport(getPlayerById(histSelectedPlayer), tests, historyData, activeTeam, graficaUrl);
+                              } catch (e) {
+                                console.error(e);
+                                alert("Error al generar el PDF.");
+                              }
+                            }}
+                          >
+                            📄 Resumen Técnico
+                          </button>
+                        </div>
                       </div>
+
+                      {/* Medal of Performance (Bottom Left) */}
+                      <div style={{ position: 'absolute', bottom: '12px', left: '16px', display: 'flex', alignItems: 'center', gap: '8px', zIndex: 2 }}>
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                          <path d="M7 14 L4 22 L9 20 L12 22 L15 20 L20 22 L17 14" fill="#004B87" stroke="#002d54" strokeWidth="0.5" />
+                          <path d="M9 14 L6 22 L9 20 L10 21" fill="#4CAF7D" />
+                          <path d="M15 14 L18 22 L15 20 L14 21" fill="#4CAF7D" />
+                          <circle cx="12" cy="9" r="6" fill="#D4A843" stroke="#B8860B" strokeWidth="1" />
+                          <circle cx="12" cy="9" r="4" fill="none" stroke="#FFF" strokeWidth="0.5" />
+                          <path d="M12 6.5 L12.5 8 L14 8.2 L12.8 9.3 L13.2 10.8 L12 9.8 L10.8 10.8 L11.2 9.3 L10 8.2 L11.5 8 Z" fill="#FFF" />
+                        </svg>
+                        <span style={{ fontSize: 11, fontWeight: 800, color: 'var(--text-primary, #1B3A2D)', textTransform: 'uppercase', letterSpacing: 0.5 }}>
+                          Medalla de Rendimiento
+                        </span>
+                      </div>
+
                     </div>
                   </div>
                 );

@@ -662,50 +662,40 @@ const Planificacion = () => {
         {activeTab === 'macrociclo' && (<>
       <div className="plan-top-grid">
 
-        {/* CARD 1 — TEMPORADA */}
-        <div className="plan-card plan-card-temporada">
+        {/* CARD 1 — FECHAS DE TEMPORADA */}
+        <div className="plan-card plan-card-fechas">
           <div className="plan-card-label">
-            <span className="plan-icon">⚙</span> TEMPORADA
+            <span className="plan-icon">📅</span> RANGO DE FECHAS
           </div>
           <div className="plan-date-row">
             <div className="plan-date-block">
-              <span className="plan-date-icon">📅</span>
+              <label>Inicio</label>
               <input type="date" value={macroInfo.startDate}
                 onChange={e => setMacroInfo(p => ({ ...p, startDate: e.target.value }))}
                 className="plan-date-input" />
             </div>
-            <span className="plan-date-arrow">→</span>
             <div className="plan-date-block">
+              <label>Fin</label>
               <input type="date" value={macroInfo.endDate}
                 onChange={e => setMacroInfo(p => ({ ...p, endDate: e.target.value }))}
                 className="plan-date-input" />
             </div>
           </div>
-          <div className="plan-days-label">DÍAS DE ENTRENAMIENTO</div>
+        </div>
+
+        {/* CARD 2 — DÍAS DE ENTRENAMIENTO */}
+        <div className="plan-card plan-card-dias">
+          <div className="plan-card-label">
+            <span className="plan-icon">⚙</span> DÍAS DE ENTRENAMIENTO
+          </div>
           <div className="plan-days-row">
             {DAYS_LABELS.map((day, idx) => (
               <button key={idx}
                 className={`plan-day-btn ${macroInfo.trainingDays.includes(idx) ? 'active' : ''}`}
                 onClick={() => toggleDay(idx)}>
-                {day.substring(0,3)}
+                {day}
               </button>
             ))}
-          </div>
-        </div>
-
-        {/* CARD 2 — OBJETIVO GENERAL */}
-        <div className="plan-card plan-card-objetivo">
-          <div className="plan-card-label">
-            <span className="plan-icon">🎯</span> OBJETIVO GENERAL
-          </div>
-          <div className="plan-objetivo-body">
-            <textarea
-              className="plan-objetivo-textarea"
-              value={macroInfo.objective}
-              onChange={e => setMacroInfo(p => ({ ...p, objective: e.target.value }))}
-              rows={4}
-            />
-            <div className="plan-objetivo-icon">🤝</div>
           </div>
         </div>
 
@@ -759,6 +749,23 @@ const Planificacion = () => {
           </div>
         </div>
 
+      </div>
+
+      {/* CARD 5 — OBJETIVO GENERAL (100% Ancho) */}
+      <div className="plan-card plan-card-objetivo">
+        <div className="plan-card-label">
+          <span className="plan-icon">🎯</span> OBJETIVO GENERAL DE LA TEMPORADA
+        </div>
+        <div className="plan-objetivo-body">
+          <textarea
+            className="plan-objetivo-textarea"
+            value={macroInfo.objective}
+            onChange={e => setMacroInfo(p => ({ ...p, objective: e.target.value }))}
+            rows={3}
+            placeholder="Escribe el objetivo general de la temporada..."
+          />
+          <div className="plan-objetivo-icon">🤝</div>
+        </div>
       </div>
 
       {/* ── ROW 2: MACRO-CICLO ──────────────────────────────────────── */}

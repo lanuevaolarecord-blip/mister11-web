@@ -1,6 +1,6 @@
 .legend-card-wrapper {
-  width: 260px;
-  height: 400px;
+  width: 250px;
+  height: 380px;
   perspective: 1000px;
   margin: 0 auto;
   cursor: pointer;
@@ -10,13 +10,13 @@
 .legend-card-inner {
   width: 100%;
   height: 100%;
-  border-radius: 12px;
-  background: var(--bg-card);
-  border: 2px solid var(--border-color);
+  border-radius: 14px;
+  background: var(--bg-card, #FFFFFF);
+  border: 2px solid var(--border-color, #D4A843);
   display: flex;
   flex-direction: column;
-  padding: 15px;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  padding: 12px 14px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
   transition: transform 0.3s ease, box-shadow 0.3s ease;
   position: relative;
   overflow: hidden;
@@ -24,91 +24,107 @@
 
 .legend-card-wrapper:hover .legend-card-inner {
   transform: translateY(-5px);
-  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 12px 24px rgba(212, 168, 67, 0.2);
 }
 
 /* Card Types */
 .card-type-starter .legend-card-inner {
-  border-color: var(--primary);
+  border-color: var(--primary, #1B3A2D);
 }
 
 .card-type-pro .legend-card-inner {
-  border-color: var(--accent);
+  border-color: var(--accent, #4CAF7D);
 }
 
 .card-type-elite .legend-card-inner {
-  border-color: var(--gold);
-  background: var(--bg-primary);
+  border: 3px solid #D4A843;
+  background: linear-gradient(135deg, #FFFDF8 0%, #FAF8F3 50%, #F5F0E8 100%);
+  box-shadow: 0 8px 24px rgba(212, 168, 67, 0.25), inset 0 0 16px rgba(212, 168, 67, 0.1);
 }
 
-/* Header */
-.card-header {
+.dark .card-type-elite .legend-card-inner {
+  border: 3px solid #4CAF7D;
+  background: linear-gradient(135deg, #141A17 0%, #0D1410 100%);
+  box-shadow: 0 8px 24px rgba(76, 175, 125, 0.2), inset 0 0 16px rgba(76, 175, 125, 0.1);
+}
+
+/* FUT Header Layout */
+.card-header-new {
   display: flex;
   justify-content: space-between;
-  align-items: flex-start;
-  height: 140px;
+  align-items: center;
+  height: 120px;
   position: relative;
+  width: 100%;
+  margin-top: 15px;
 }
 
-.card-rating {
+.card-header-left, .card-header-right {
   display: flex;
   flex-direction: column;
   align-items: center;
-  font-family: var(--font-numbers);
-  text-transform: uppercase;
+  flex: 1;
+  gap: 2px;
 }
 
-.rating-num {
-  font-size: 2.5rem;
+.card-header-val {
+  font-family: var(--font-numbers, 'Bebas Neue', sans-serif);
+  font-size: 1.8rem;
   font-weight: 700;
   line-height: 1;
-  color: var(--text-primary);
+  color: var(--text-primary, #1B3A2D);
 }
 
-.rating-pos {
-  font-size: 1rem;
-  color: var(--text-secondary);
+.card-header-label {
+  font-size: 0.8rem;
+  color: var(--text-secondary, #2D2D2D);
+  font-weight: 800;
 }
 
-.card-image-container {
-  width: 120px;
-  height: 120px;
-  position: absolute;
-  bottom: 0;
-  left: 50%;
-  transform: translateX(-50%);
-  display: flex;
-  justify-content: center;
-  align-items: flex-end;
+.card-star {
+  font-size: 1.2rem;
+  color: var(--gold, #D4A843);
 }
 
-.card-image {
-  max-width: 100%;
-  max-height: 100%;
-  object-fit: cover;
-  filter: drop-shadow(0 5px 5px rgba(0,0,0,0.5));
-}
-
-.card-placeholder {
+.card-avatar-wrapper {
+  position: relative;
   width: 100px;
   height: 100px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.card-avatar-circle {
+  width: 80px;
+  height: 80px;
   border-radius: 50%;
-  background: var(--bg-primary);
+  border: 3px solid var(--gold, #D4A843);
+  background: var(--bg-primary, #F5F0E8);
+  overflow: hidden;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 3rem;
-  font-family: var(--font-title);
-  color: var(--text-secondary);
+  z-index: 1;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.12);
+  position: relative;
 }
 
-.card-badge {
-  width: 30px;
-  height: 40px;
-  background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%23FFD700"><path d="M12 2L15 8l6 1-4.5 4.5L18 20l-6-3-6 3 1.5-6.5L3 9l6-1z"/></svg>');
-  background-size: contain;
-  background-repeat: no-repeat;
-  filter: drop-shadow(0 0 5px rgba(255,215,0,0.8));
+.dark .card-avatar-circle {
+  border-color: var(--border-color, #4CAF7D);
+}
+
+.card-avatar-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.avatar-placeholder {
+  font-size: 2.2rem;
+  font-family: var(--font-title, Georgia, serif);
+  color: var(--text-primary, #1B3A2D);
+  font-weight: bold;
 }
 
 /* Body */
@@ -118,48 +134,81 @@
   flex-direction: column;
   align-items: center;
   text-align: center;
+  margin-top: 5px;
 }
 
 .card-name {
-  font-family: var(--font-title);
-  font-size: 1.2rem;
-  margin: 10px 0 5px;
-  color: var(--text-primary);
+  font-family: var(--font-title, Georgia, serif);
+  font-size: 1.15rem;
+  margin: 5px 0;
+  color: var(--text-primary, #1B3A2D);
   text-transform: uppercase;
   letter-spacing: 1px;
+  font-weight: 800;
 }
 
 .card-divider {
-  width: 80%;
-  height: 1px;
-  background: rgba(27, 58, 45, 0.2);
-  margin: 8px 0;
+  width: 90%;
+  height: 1.5px;
+  background: rgba(27, 58, 45, 0.15);
+  margin: 6px 0;
 }
 
-/* Stats */
-.card-stats-grid {
+.dark .card-divider {
+  background: rgba(255, 255, 255, 0.15);
+}
+
+/* 2x2 Stats Grid of Pill Buttons */
+.card-stats-grid-new {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 8px 20px;
+  gap: 8px 12px;
   width: 100%;
-  padding: 0 10px;
+  padding: 4px 5px;
 }
 
-.stat-item {
+.stat-pill-btn {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  font-family: var(--font-numbers);
-  font-size: 1rem;
+  background: linear-gradient(135deg, #EADCB8 0%, #D4A843 100%);
+  border: 1px solid #1B3A2D;
+  border-radius: 20px;
+  padding: 4px 10px;
+  color: #1B3A2D;
+  font-weight: 800;
+  font-size: 0.75rem;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.06);
+  transition: transform 0.1s;
 }
 
-.stat-label {
-  color: var(--text-secondary);
+.dark .stat-pill-btn {
+  background: linear-gradient(135deg, #1A2E22 0%, #2D6A4F 100%);
+  border-color: #4CAF7D;
+  color: #FFF;
 }
 
-.stat-value {
-  color: var(--text-primary);
-  font-weight: 700;
+.stat-pill-btn:hover {
+  transform: scale(1.04);
+}
+
+.stat-pill-label {
+  font-family: var(--font-body, sans-serif);
+}
+
+.stat-pill-icon {
+  display: flex;
+  align-items: center;
+  background: #1B3A2D;
+  color: #D4A843;
+  padding: 3px;
+  border-radius: 50%;
+  margin-left: 4px;
+}
+
+.dark .stat-pill-icon {
+  background: #000;
+  color: #4CAF7D;
 }
 
 /* Footer */
@@ -168,28 +217,32 @@
   width: 100%;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 4px;
 }
 
 .progress-container {
   width: 100%;
-  height: 6px;
-  background: var(--bg-primary);
+  height: 5px;
+  background: var(--bg-primary, #F5F0E8);
   border-radius: 3px;
   overflow: hidden;
 }
 
+.dark .progress-container {
+  background: rgba(255, 255, 255, 0.1);
+}
+
 .progress-bar-fill {
   height: 100%;
-  background: var(--accent);
+  background: var(--accent, #4CAF7D);
   transition: width 0.5s ease;
 }
 
 .streak-info {
   display: flex;
   justify-content: space-between;
-  font-family: var(--font-body);
-  font-size: 0.8rem;
-  color: var(--text-secondary);
+  font-family: var(--font-body, sans-serif);
+  font-size: 0.75rem;
+  color: var(--text-secondary, #2D2D2D);
   font-weight: bold;
 }

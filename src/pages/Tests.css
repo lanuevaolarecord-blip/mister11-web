@@ -41,19 +41,18 @@
   min-width: 44px;
 }
 
-.tests-tab:hover, .tests-tab.active {
+.tests-tab:hover {
   color: var(--primary);
 }
 
+.tests-tab.active {
+  background-color: var(--gold, #D4A843);
+  color: var(--primary, #1B3A2D) !important;
+  border-radius: 6px;
+}
+
 .tests-tab.active::after {
-  content: '';
-  position: absolute;
-  bottom: -6px;
-  left: 0;
-  width: 100%;
-  height: 3px;
-  background-color: var(--accent);
-  border-radius: 3px 3px 0 0;
+  display: none;
 }
 
 .tests-content {

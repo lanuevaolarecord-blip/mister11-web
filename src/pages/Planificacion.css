@@ -91,13 +91,13 @@
    ══════════════════════════════════════════════════════ */
 .plan-top-grid {
   display: grid;
-  grid-template-columns: 1.2fr 1.3fr 1fr 1.2fr;
-  gap: 14px;
-  margin-bottom: 14px;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  margin-bottom: 16px;
 }
 
-@media (max-width: 1100px) {
-  .plan-top-grid { grid-template-columns: 1fr 1fr; }
+@media (max-width: 1200px) {
+  .plan-top-grid { grid-template-columns: repeat(2, 1fr); }
 }
 @media (max-width: 680px) {
   .plan-top-grid { grid-template-columns: 1fr; }
@@ -137,27 +137,40 @@
 .plan-icon { font-size: 14px; }
 
 /* ── CARD 1: TEMPORADA ──────────────────────────────── */
+.plan-card-fechas {
+  min-width: 220px;
+}
 .plan-date-row {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 24px;
   flex-wrap: wrap;
+  width: 100%;
 }
 .plan-date-block {
   display: flex;
-  align-items: center;
+  flex-direction: column;
   gap: 4px;
+  flex: 1;
+  min-width: 140px;
 }
-.plan-date-icon { font-size: 14px; }
+.plan-date-block label {
+  font-size: 11px;
+  font-weight: 700;
+  color: #888;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
 .plan-date-input {
   background: #fff;
   border: 1.5px solid #D4A843;
   border-radius: 6px;
-  padding: 5px 8px;
-  font-size: 13px;
+  padding: 8px 10px;
+  font-size: 15px;
   font-weight: 700;
   color: #1B3A2D;
-  width: 120px;
+  width: 100%;
+  box-sizing: border-box;
   cursor: pointer;
 }
 .plan-page.dark .plan-date-input {
@@ -166,50 +179,38 @@
   color: #f0f0f0;
 }
 .plan-date-input:focus { outline: none; border-color: #4CAF7D; }
-.plan-date-arrow {
-  font-size: 16px;
-  font-weight: 900;
-  color: #888;
-}
-.plan-days-label {
-  font-size: 10px;
-  font-weight: 700;
-  color: #888;
-  letter-spacing: .8px;
-  text-transform: uppercase;
-  margin-top: 2px;
-}
 .plan-days-row {
   display: flex;
-  gap: 5px;
+  gap: 8px;
   flex-wrap: wrap;
 }
 .plan-day-btn {
-  padding: 5px 7px;
-  border-radius: 6px;
-  border: 1.5px solid #ccc;
-  background: #fff;
-  font-size: 11px;
+  padding: 8px 16px;
+  border-radius: 32px;
+  border: none;
+  background: #E0E0E0;
+  font-size: 13px;
   font-weight: 700;
-  color: #888;
+  color: #1B3A2D;
   cursor: pointer;
-  transition: all .18s;
-  min-width: 38px;
+  transition: all 0.2s ease;
+  min-width: 48px;
+  min-height: 48px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   text-align: center;
 }
 .plan-day-btn.active {
-  background: #1B3A2D;
-  border-color: #1B3A2D;
+  background: #4CAF7D;
   color: #fff;
 }
 .plan-day-btn:hover:not(.active) {
-  border-color: #4CAF7D;
-  color: #4CAF7D;
+  background: #ccc;
 }
 .plan-page.dark .plan-day-btn {
-  background: rgba(255,255,255,.05);
-  border-color: rgba(255,255,255,.15);
-  color: #aaa;
+  background: rgba(255,255,255,.1);
+  color: #e0e0e0;
 }
 .plan-page.dark .plan-day-btn.active {
   background: #4CAF7D;
@@ -220,23 +221,43 @@
 /* ── CARD 2: OBJETIVO GENERAL ───────────────────────── */
 .plan-objetivo-body {
   display: flex;
-  gap: 12px;
+  gap: 16px;
   align-items: flex-start;
-  flex: 1;
+  width: 100%;
+}
+.plan-card-objetivo {
+  width: 100%;
+  box-sizing: border-box;
+  margin-bottom: 20px;
+  background: var(--bg-card, #FFFFFF);
+  border-radius: 12px;
+  padding: 16px;
 }
 .plan-objetivo-textarea {
   flex: 1;
-  border: none;
-  background: transparent;
-  font-size: 13px;
-  line-height: 1.6;
+  border: 1px solid var(--border-color, #E8E0D0);
+  border-radius: 8px;
+  padding: 12px;
+  font-size: 14px;
+  line-height: 1.5;
   color: var(--text-primary, #1B3A2D);
-  resize: none;
+  resize: vertical;
+  background: var(--input-bg, #fff);
+  min-height: 90px;
+  word-wrap: break-word;
+  white-space: normal;
+  width: 100%;
   font-family: inherit;
-  min-height: 70px;
 }
-.plan-objetivo-textarea:focus { outline: none; }
-.plan-page.dark .plan-objetivo-textarea { color: #e0e0e0; }
+.plan-objetivo-textarea:focus {
+  outline: none;
+  border-color: #4CAF7D;
+}
+.plan-page.dark .plan-objetivo-textarea {
+  color: #e0e0e0;
+  background: var(--input-bg, rgba(255,255,255,.06));
+  border-color: var(--border-color, rgba(255,255,255,.08));
+}
 .plan-objetivo-icon {
   font-size: 36px;
   opacity: .7;

@@ -668,43 +668,51 @@ const Tests = () => {
           </div>
         )}
 
-        {/* --- PREVENCIÓN DE LESIONES --- */}
+        {/* --- PREVENCIÓN DE LESIONES v1.0.18 --- */}
         {activeTab === 'PREVENCIÓN' && (
-          <div className="tab-bateria">
-            <div className="bateria-header">
-              <h3>Autoevaluación y Prevención</h3>
-              <p style={{color: 'var(--text-muted)'}}>Registra métricas de bienestar y esfuerzo percibido para prevenir sobrecargas.</p>
+          <div className="tab-prevencion">
+            <div className="prevencion-section-header">
+              <div>
+                <h3>🛡️ Autoevaluación y Prevención</h3>
+              </div>
+              <p>Registra métricas de bienestar y esfuerzo percibido para prevenir sobrecargas.</p>
             </div>
-            <div className="players-grid" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))' }}>
-              {players.map(p => (
-                <div key={p.id} className="player-card" style={{ cursor: 'default', display: 'flex', flexDirection: 'column', gap: '15px' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-                    <div className="player-avatar" style={{ width: '40px', height: '40px', fontSize: '0.9rem', backgroundColor: !p.avatarUrl ? '#1B3A2D' : 'transparent' }}>
-                      {p.avatarUrl ? <img src={p.avatarUrl} alt={p.name} /> : <span style={{ color: '#FFF' }}>{p.name.substring(0, 2).toUpperCase()}</span>}
+            <div className="prevencion-grid">
+              {players.map(p => {
+                const initials = (p.name || p.nombre || 'JJ').substring(0, 2).toUpperCase();
+                return (
+                  <div key={p.id} className="prev-player-card">
+                    <div className="prev-card-top">
+                      <span className="prev-initials-badge">{initials}</span>
+                      <div className="prev-avatar-wrap">
+                        {p.avatarUrl || p.imageUrl ? (
+                          <img src={p.avatarUrl || p.imageUrl} alt={p.name} className="prev-avatar" />
+                        ) : (
+                          <div className="prev-avatar-placeholder">{initials.charAt(0)}</div>
+                        )}
+                      </div>
+                      <div className="prev-player-info">
+                        <p className="prev-player-name">{p.name || p.nombre}</p>
+                        <span className="badge-pos-prev">{p.position || p.posicion || '-'}</span>
+                      </div>
                     </div>
-                    <div className="player-info">
-                      <h4 style={{ margin: 0, fontSize: '1rem', color: 'var(--text-primary)' }}>{p.name}</h4>
-                      <span className="badge-pos">{p.position}</span>
+                    <div className="prev-card-actions">
+                      <button
+                        className="btn-prev-wellness"
+                        onClick={() => { setSelectedPlayerForTest(p); setIsWellnessModalOpen(true); }}
+                      >
+                        🌿 Bienestar
+                      </button>
+                      <button
+                        className="btn-prev-rpe"
+                        onClick={() => { setSelectedPlayerForTest(p); setIsRpeModalOpen(true); }}
+                      >
+                        🏋 RPE
+                      </button>
                     </div>
                   </div>
-                  <div style={{ display: 'flex', gap: '10px' }}>
-                    <button 
-                      className="btn-primary" 
-                      style={{ flex: 1, fontSize: '0.85rem', padding: '8px 12px', minHeight: '44px', height: '44px' }}
-                      onClick={() => { setSelectedPlayerForTest(p); setIsWellnessModalOpen(true); }}
-                    >
-                      Bienestar
-                    </button>
-                    <button 
-                      className="btn-secondary" 
-                      style={{ flex: 1, fontSize: '0.85rem', padding: '8px 12px', minHeight: '44px', height: '44px' }}
-                      onClick={() => { setSelectedPlayerForTest(p); setIsRpeModalOpen(true); }}
-                    >
-                      RPE
-                    </button>
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         )}
@@ -1176,154 +1184,144 @@ const Tests = () => {
           </div>
         )}
 
-        {/* --- COMPARATIVA EQUIPO --- */}
+        {/* --- COMPARATIVA EQUIPO v1.0.18 --- */}
         {activeTab === 'COMPARATIVA EQUIPO' && (
-          <div className="tab-comparativa">
-            <div className="comp-header">
-              <div className="comp-select">
-                <label>Test a analizar:</label>
-                <select value={heatSelectedTest} onChange={e => setHeatSelectedTest(e.target.value)}>
-                  {tests.map(t => <option key={t.id} value={t.id}>{t.name} ({t.unit})</option>)}
-                </select>
+          <div className="tab-comparativa-v2">
+            {/* Columna principal */}
+            <div className="comp-main-col">
+              {/* Título descriptivo */}
+              <div className="comp-title-bar">
+                Versiones de Mejora Individuales de la Planificación Estratégica (Basado en la Referencia)
               </div>
-              <button className="btn-outline-gold" onClick={() => generateTestsReport(tests, players, historyData, activeTeam)}>📄 Exportar Informe Colectivo</button>
-            </div>
-            
-            <div className="heatmap-container">
-              <table className="heatmap-table">
-                <thead>
-                  <tr>
-                    <th>Dorsal</th>
-                    <th>Jugador</th>
-                    <th>Eval Inicial</th>
-                    <th>Penúltima Eval</th>
-                    <th>Última Eval</th>
-                    <th>Evolución</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {players.map(p => {
-                    const testInfo = getTestById(heatSelectedTest);
-                    const history = historyData[p.id]?.[heatSelectedTest] || [];
-                    if(history.length === 0) return null;
 
-                    // Calculate global min/max for color scale across ALL players for THIS test's LATEST eval
-                    const allCurrentVals = players.map(mp => {
-                      const mh = historyData[mp.id]?.[heatSelectedTest] || [];
-                      return mh.length > 0 ? mh[mh.length - 1].val : null;
-                    }).filter(v => v !== null);
-                    
-                    const minVal = allCurrentVals.length > 0 ? Math.min(...allCurrentVals) : 0;
-                    const maxVal = allCurrentVals.length > 0 ? Math.max(...allCurrentVals) : 100;
-                    const isTime = testInfo?.unit === 'seg';
-
-                    let v1 = '-';
-                    let v2 = '-';
-                    let v3 = '-';
-                    
-                    if (history.length === 1) {
-                      v3 = history[0].val;
-                    } else if (history.length === 2) {
-                      v1 = history[0].val;
-                      v3 = history[1].val;
-                    } else if (history.length >= 3) {
-                      v1 = history[0].val;
-                      v2 = history[history.length - 2].val;
-                      v3 = history[history.length - 1].val;
-                    }
-
-                    const firstVal = history[0].val;
-                    const improved = isTime ? v3 < firstVal : v3 > firstVal;
-                    const diffPerc = firstVal && v3 !== '-' ? Math.abs(((v3 - firstVal)/firstVal)*100).toFixed(1) : 0;
-
-                    return (
-                      <tr key={p.id}>
-                        <td className="center"><strong>{p.number}</strong></td>
-                        <td>{p.name}</td>
-                        <td className="center">{v1}</td>
-                        <td className="center">{v2}</td>
-                        <td className="center heat-cell" style={{backgroundColor: getHeatmapColor(v3, minVal, maxVal, isTime)}}>
-                          <strong>{v3}</strong>
-                        </td>
-                        <td className="center">
-                          {history.length > 1 ? (
-                            <span className={`trend-badge ${improved ? 'good' : 'bad'}`}>
-                              {improved ? '▲' : '▼'} {diffPerc}%
-                            </span>
-                          ) : (
-                            <span className="trend-badge" style={{backgroundColor: '#e2e8f0', color: '#64748b'}}>-</span>
-                          )}
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-
-            {/* BAR CHART DE COMPARATIVA */}
-            {(() => {
-              const allCurrentValsForChart = players.map(mp => {
-                const mh = historyData[mp.id]?.[heatSelectedTest] || [];
-                return mh.length > 0 ? mh[mh.length - 1].val : null;
-              }).filter(v => v !== null);
-
-              if (allCurrentValsForChart.length === 0) return null;
-
-              const maxValForChart = Math.max(...allCurrentValsForChart);
-              const minValForChart = Math.min(...allCurrentValsForChart);
-
-              return (
-                <div className="comp-bar-chart" style={{ marginTop: '32px', background: 'var(--bg-card)', padding: '24px', borderRadius: '12px', border: '1px solid var(--border-light)', boxShadow: '0 4px 12px rgba(0,0,0,0.03)' }}>
-                  <h3 style={{ marginTop: 0, marginBottom: '24px', fontSize: '18px', color: 'var(--text-primary)', fontFamily: 'var(--font-heading)' }}>Resultados Actuales (Última Evaluación)</h3>
-                  <div style={{ display: 'flex', alignItems: 'flex-end', gap: '8px', height: '220px', paddingTop: '24px' }}>
-                    {players.map(p => {
-                      const history = historyData[p.id]?.[heatSelectedTest] || [];
-                      const val = history.length > 0 ? history[history.length - 1].val : null;
-                      if (val === null) return null;
-                      
-                      const heightPerc = maxValForChart > 0 ? (val / maxValForChart) * 100 : 0;
-                      // Color dinamico: verde para mejores marcas, amarillo promedio, rojo peor. Similar a getHeatmapColor pero adaptado a la barra
-                      let barColor = 'var(--primary-color)';
-                      const isTime = getTestById(heatSelectedTest)?.unit === 'seg';
-                      
-                      if (maxValForChart !== minValForChart) {
-                         const norm = (val - minValForChart) / (maxValForChart - minValForChart);
-                         const score = isTime ? 1 - norm : norm;
-                         if (score > 0.7) barColor = 'var(--accent-green)'; // Buen rendimiento
-                         else if (score < 0.3) barColor = '#fca5a5'; // Mal rendimiento
-                         else barColor = '#fde047'; // Regular
-                      }
-
-                      return (
-                        <div key={p.id} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', height: '100%', minWidth: '30px' }}>
-                          <div style={{ flex: 1, display: 'flex', alignItems: 'flex-end', width: '100%', position: 'relative' }}>
-                            <div style={{ 
-                              width: '100%', 
-                              height: `${heightPerc}%`, 
-                              backgroundColor: barColor,
-                              borderTopLeftRadius: '6px',
-                              borderTopRightRadius: '6px',
-                              minHeight: '4px',
-                              transition: 'height 0.5s ease',
-                              opacity: 0.9
-                            }}>
-                              <div style={{ position: 'absolute', width: '100%', textAlign: 'center', top: `calc(100% - ${heightPerc}% - 22px)`, fontSize: '12px', fontWeight: 'bold', color: 'var(--text-primary)', textShadow: '0 1px 2px rgba(255,255,255,0.8)' }}>
-                                {val}
-                              </div>
-                            </div>
-                          </div>
-                          <div style={{ marginTop: '8px', fontSize: '11px', fontWeight: 700, color: 'var(--text-secondary)', textAlign: 'center', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', width: '100%' }}>
-                            {p.name.split(' ')[0]}
-                          </div>
-                          <div style={{ fontSize: '9px', color: 'var(--text-muted)' }}>#{p.number}</div>
-                        </div>
-                      );
-                    })}
-                  </div>
+              {/* Controles */}
+              <div className="comp-controls-row">
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <label>Test a analizar:</label>
+                  <select value={heatSelectedTest} onChange={e => setHeatSelectedTest(e.target.value)}>
+                    {tests.map(t => <option key={t.id} value={t.id}>{t.name} ({t.unit})</option>)}
+                  </select>
                 </div>
-              );
-            })()}
+                <button className="btn-outline-gold" onClick={() => generateTestsReport(tests, players, historyData, activeTeam)}>
+                  📄 Exportar Informe Colectivo
+                </button>
+              </div>
+
+              {/* PLANNINGA MATRIX */}
+              <div>
+                <div className="matrix-label-row">PLANNINGA MATRIX</div>
+                <div className="matrix-container">
+                  <table className="matrix-table">
+                    <thead>
+                      <tr>
+                        <th>Dorsal</th>
+                        <th style={{ textAlign: 'left' }}>Jugador</th>
+                        <th>Eval Inicial</th>
+                        <th>✓</th><th>✓</th><th>✓</th><th>✓</th><th>✓</th><th>✓</th>
+                        <th>Penúltima Eval</th>
+                        <th>Última Eval</th>
+                        <th>Evolución</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {players.map(p => {
+                        const testInfo = getTestById(heatSelectedTest);
+                        const history = historyData[p.id]?.[heatSelectedTest] || [];
+                        if (history.length === 0) return null;
+
+                        const allCurrentVals = players.map(mp => {
+                          const mh = historyData[mp.id]?.[heatSelectedTest] || [];
+                          return mh.length > 0 ? mh[mh.length - 1].val : null;
+                        }).filter(v => v !== null);
+
+                        const isTime = testInfo?.unit === 'seg';
+                        let v1 = '-', v2 = '-', v3 = '-';
+
+                        if (history.length === 1) { v3 = history[0].val; }
+                        else if (history.length === 2) { v1 = history[0].val; v3 = history[1].val; }
+                        else if (history.length >= 3) {
+                          v1 = history[0].val;
+                          v2 = history[history.length - 2].val;
+                          v3 = history[history.length - 1].val;
+                        }
+
+                        const firstVal = history[0].val;
+                        const improved = v3 !== '-' ? (isTime ? v3 < firstVal : v3 > firstVal) : false;
+                        const diffPerc = firstVal && v3 !== '-' ? Math.abs(((v3 - firstVal) / firstVal) * 100).toFixed(1) : 0;
+
+                        // Checkmarks basados en si tiene datos en distintos puntos
+                        const hasData = history.length;
+                        const checks = [hasData >= 1, hasData >= 2, hasData >= 3, hasData >= 4, hasData >= 5, hasData >= 6];
+
+                        return (
+                          <tr key={p.id}>
+                            <td className="dorsal-cell">{p.number}</td>
+                            <td className="name-cell">{p.name || p.nombre}</td>
+                            <td className="eval-cell">{v1}</td>
+                            {checks.map((c, i) => (
+                              <td key={i} className="eval-cell">
+                                {c ? <span className="check-icon">✓</span> : <span className="dash-icon">—</span>}
+                              </td>
+                            ))}
+                            <td className="eval-cell">{v2}</td>
+                            <td className="last-eval-cell">{v3}</td>
+                            <td>
+                              {history.length > 1 ? (
+                                <span className={improved ? 'evo-badge-pos' : 'evo-badge-neg'}>
+                                  {improved ? '▲' : '▼'} {diffPerc}%
+                                </span>
+                              ) : (
+                                <span className="evo-badge-neutral">—</span>
+                              )}
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              {/* Footer temporada */}
+              {(() => {
+                const allVals = players.flatMap(p => {
+                  const h = historyData[p.id]?.[heatSelectedTest] || [];
+                  return h.map(e => e.val);
+                });
+                if (allVals.length === 0) return null;
+                const total = allVals.reduce((a, b) => a + Number(b), 0);
+                const testInfo = getTestById(heatSelectedTest);
+                return (
+                  <div className="comp-season-footer">
+                    <strong>VOLUMEN TOTAL TEMPORADA</strong>
+                    <p>
+                      Evaluaciones registradas: <strong>{allVals.length}</strong> &nbsp;·&nbsp;
+                      Media general: <strong>{(total / allVals.length).toFixed(1)} {testInfo?.unit}</strong> &nbsp;·&nbsp;
+                      Total acumulado: <strong>{total.toFixed(1)}</strong>
+                    </p>
+                  </div>
+                );
+              })()}
+            </div>
+
+            {/* Sidebar recursos */}
+            <div className="comp-sidebar-resources">
+              <div className="resources-title">Recursos y Herramientas</div>
+              {[
+                { icon: '📋', label: 'Tactical Library' },
+                { icon: '🗂️', label: 'Drill Database' },
+                { icon: '📊', label: 'Tactical Test' },
+                { icon: '💬', label: 'Team Chat' },
+                { icon: '🏆', label: 'Season Report' },
+                { icon: '🛡️', label: 'Mi Equipo' },
+              ].map((r, i) => (
+                <div key={i} className="resource-item">
+                  <span className="resource-icon">{r.icon}</span>
+                  <span className="resource-label">{r.label}</span>
+                  <span className="resource-arrow">↗</span>
+                </div>
+              ))}
+            </div>
           </div>
         )}
       </div>

@@ -17,26 +17,10 @@ const BallSvg = () => (
   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><circle cx="12" cy="12" r="10"/><path d="M12 2v4M12 18v4M2 12h4M18 12h2M12 6l3.5 3.5M12 6L8.5 9.5M12 18l3.5-3.5M12 18l-3.5-3.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
 );
 
-const WreathSvg = () => (
-  <svg viewBox="0 0 100 100" style={{ position: 'absolute', width: '130px', height: '130px', top: '-15px', left: '-15px', pointerEvents: 'none', zIndex: 2 }}>
-    {/* Left branch */}
-    <path d="M 32,75 C 16,68 14,35 32,22" fill="none" stroke="#D4A843" strokeWidth="2.5" strokeLinecap="round" />
-    <path d="M 29,70 C 23,68 21,62 24,60 C 27,58 31,62 29,70 Z" fill="#D4A843" />
-    <path d="M 25,58 C 18,55 16,49 19,47 C 22,45 26,49 25,58 Z" fill="#D4A843" />
-    <path d="M 24,45 C 17,42 15,36 18,34 C 21,32 25,36 24,45 Z" fill="#D4A843" />
-    <path d="M 27,32 C 21,28 21,22 24,20 C 27,18 30,23 27,32 Z" fill="#D4A843" />
 
-    {/* Right branch */}
-    <path d="M 68,75 C 84,68 86,35 68,22" fill="none" stroke="#D4A843" strokeWidth="2.5" strokeLinecap="round" />
-    <path d="M 71,70 C 77,68 79,62 76,60 C 73,58 69,62 71,70 Z" fill="#D4A843" />
-    <path d="M 75,58 C 82,55 84,49 81,47 C 78,45 74,49 75,58 Z" fill="#D4A843" />
-    <path d="M 76,45 C 83,42 85,36 82,34 C 79,32 75,36 76,45 Z" fill="#D4A843" />
-    <path d="M 73,32 C 79,28 79,22 76,20 C 73,18 70,23 73,32 Z" fill="#D4A843" />
-  </svg>
-);
 
 const CrownSvg = () => (
-  <svg viewBox="0 0 24 16" style={{ position: 'absolute', width: '36px', height: '24px', top: '-20px', left: '50%', transform: 'translateX(-50%)', zIndex: 3, pointerEvents: 'none' }}>
+  <svg viewBox="0 0 24 16" style={{ position: 'absolute', width: '36px', height: '24px', top: '-26px', left: '50%', transform: 'translateX(-50%)', zIndex: 3, pointerEvents: 'none' }}>
     <path d="M 2,14 L 4,4 L 9,9 L 12,2 L 15,9 L 20,4 L 22,14 Z" fill="#D4A843" stroke="#B8860B" strokeWidth="0.75" />
     <circle cx="2" cy="3.5" r="0.8" fill="#FFF" />
     <circle cx="12" cy="1.5" r="1" fill="#FFF" />
@@ -83,7 +67,6 @@ const LegendCard = ({ player, stats, overall, position, streak, type = "gold" })
           
           <div className="card-avatar-wrapper">
             <CrownSvg />
-            <WreathSvg />
             <div className="card-avatar-circle">
               {player?.avatarUrl || player?.imageUrl ? (
                 <img src={player.avatarUrl || player.imageUrl} alt={player.name} className="card-avatar-img" />

@@ -285,42 +285,69 @@ export const generateTestsReport = async (tests, players, historyData, activeTea
     window.dispatchEvent(new CustomEvent('m11-loading', { detail: { show: false } }));
   }
   const doc = new jsPDF({ orientation: 'landscape' });
-  
+  const pageW = doc.internal.pageSize.getWidth();
+
   await addHeader(doc, 'INFORME DE RENDIMIENTO GLOBAL', `Fecha: ${new Date().toLocaleDateString()}`, activeTeam);
 
-  doc.setTextColor(0, 0, 0);
-  doc.setFontSize(14);
-  doc.text('Resultados Recientes por Jugador', 15, 50);
+  // ── BANDA KPI ──────────────────────────────────────────────────────────────
+  const totalPlayers = players.length;
+  const totalTests   = tests.length;
+  const evaluated    = players.filter(p => tests.some(t => historyData[p.id]?.[t.id]?.length > 0)).length;
+  const today        = new Date().toLocaleDateString();
 
-  let finalY = 55;
+  doc.setFillColor(20, 46, 34);
+  doc.rect(0, 40, pageW, 16, 'F');
 
-  const renderCategoryTable = (groupTests, groupName, headColor) => {
+  const kpis = [
+    { label: 'Jugadores',  value: totalPlayers },
+    { label: 'Evaluados',  value: evaluated },
+    { label: 'Pruebas',    value: totalTests },
+    { label: 'Fecha',      value: today },
+  ];
+  kpis.forEach((k, i) => {
+    const x = 15 + i * (pageW / 4);
+    doc.setFontSize(14);
+    doc.setFont(undefined, 'bold');
+    doc.setTextColor(...ACCENT_COLOR);
+    doc.text(String(k.value), x, 50);
+    doc.setFontSize(7);
+    doc.setFont(undefined, 'normal');
+    doc.setTextColor(180, 200, 180);
+    doc.text(k.label.toUpperCase(), x, 54);
+  });
+
+  let finalY = 62;
+
+  const renderCategoryTable = (groupTests, groupName, headFill, headText) => {
     if (groupTests.length === 0) return;
-    
-    if (finalY > doc.internal.pageSize.getHeight() - 40 && finalY !== 55) {
+
+    if (finalY > doc.internal.pageSize.getHeight() - 40 && finalY !== 62) {
       doc.addPage();
       finalY = 20;
-    } else if (finalY !== 55) {
-      finalY += 10;
+    } else if (finalY !== 62) {
+      // Separador dorado entre categorías
+      doc.setDrawColor(...ACCENT_COLOR);
+      doc.setLineWidth(0.4);
+      doc.line(10, finalY + 6, pageW - 10, finalY + 6);
+      finalY += 14;
     }
 
-    doc.setFontSize(12);
-    doc.setTextColor(...headColor);
+    // Etiqueta de sección
+    doc.setFillColor(...headFill);
+    doc.rect(10, finalY - 5, pageW - 20, 8, 'F');
+    doc.setFontSize(10);
+    doc.setTextColor(...headText);
     doc.setFont(undefined, 'bold');
-    doc.text(groupName, 15, finalY);
-    finalY += 5;
+    doc.text(groupName.toUpperCase(), 14, finalY + 1);
+    finalY += 8;
 
-    const head = ['Jugador', ...groupTests.map(t => `${t.name} (${t.unit})`)];
-    
+    const head = ['Jugador', ...groupTests.map(t => `${t.name}\n(${t.unit})`)];
+
     const recentData = players.map(p => {
       const rowData = { player: p.name || p.nombre || '-' };
       groupTests.forEach(t => {
         const pHistory = historyData[p.id]?.[t.id];
-        if (pHistory && pHistory.length > 0) {
-          rowData[t.id] = pHistory[pHistory.length - 1].val;
-        } else {
-          rowData[t.id] = null;
-        }
+        rowData[t.id] = pHistory?.length > 0 ? pHistory[pHistory.length - 1].val : null;
       });
       return rowData;
     });
@@ -329,70 +356,79 @@ export const generateTestsReport = async (tests, players, historyData, activeTea
     groupTests.forEach(t => {
       const vals = recentData.map(r => r[t.id]).filter(v => v !== null && v !== undefined);
       if (vals.length > 0) {
-        testStats[t.id] = {
-          min: Math.min(...vals),
-          max: Math.max(...vals),
-          lowerIsBetter: t.unit === 'seg'
-        };
+        testStats[t.id] = { min: Math.min(...vals), max: Math.max(...vals), lowerIsBetter: t.unit === 'seg' };
       }
     });
 
-    const body = recentData.map(r => {
-      return [
-        r.player,
-        ...groupTests.map(t => r[t.id] !== null && r[t.id] !== undefined ? r[t.id] : '-')
-      ];
-    });
+    const body = recentData.map(r => [
+      r.player,
+      ...groupTests.map(t => r[t.id] !== null && r[t.id] !== undefined ? r[t.id] : '-')
+    ]);
 
     autoTable(doc, {
       startY: finalY,
       head: [head],
-      body: body,
-      headStyles: { fillColor: headColor, textColor: TEXT_COLOR },
-      styles: { fontSize: 8 },
-      didParseCell: function(data) {
+      body,
+      headStyles: {
+        fillColor: headFill,
+        textColor: headText,
+        fontStyle: 'bold',
+        fontSize: 8,
+        halign: 'center',
+        cellPadding: 3,
+      },
+      bodyStyles: {
+        fillColor: [27, 58, 45],
+        textColor: [200, 220, 210],
+        fontSize: 8,
+        halign: 'center',
+        cellPadding: 3,
+      },
+      alternateRowStyles: {
+        fillColor: [20, 46, 34],
+      },
+      columnStyles: { 0: { halign: 'left', fontStyle: 'bold', textColor: [212, 168, 67] } },
+      margin: { left: 10, right: 10 },
+      styles: { lineColor: [40, 70, 55], lineWidth: 0.2 },
+      didParseCell(data) {
         if (data.section === 'body' && data.column.index > 0) {
-          const testIndex = data.column.index - 1;
-          const test = groupTests[testIndex];
-          const val = data.cell.raw;
-          
-          if (val !== '-' && testStats[test.id]) {
-            const stats = testStats[test.id];
-            if (stats.min !== stats.max) {
-              const isBest = stats.lowerIsBetter ? (val === stats.min) : (val === stats.max);
-              const isWorst = stats.lowerIsBetter ? (val === stats.max) : (val === stats.min);
-              
-              if (isBest) {
-                data.cell.styles.textColor = [76, 175, 125];
-                data.cell.styles.fontStyle = 'bold';
-              } else if (isWorst) {
-                data.cell.styles.textColor = [239, 68, 68];
-                data.cell.styles.fontStyle = 'bold';
-              }
+          const test = groupTests[data.column.index - 1];
+          const val  = data.cell.raw;
+          if (val !== '-' && testStats[test?.id]) {
+            const s = testStats[test.id];
+            if (s.min !== s.max) {
+              const isBest  = s.lowerIsBetter ? (val === s.min) : (val === s.max);
+              const isWorst = s.lowerIsBetter ? (val === s.max) : (val === s.min);
+              if (isBest)  { data.cell.styles.textColor = [76, 175, 125]; data.cell.styles.fontStyle = 'bold'; }
+              if (isWorst) { data.cell.styles.textColor = [239, 68, 68];  data.cell.styles.fontStyle = 'bold'; }
             }
           }
         }
-      }
+      },
     });
-    
     finalY = doc.lastAutoTable.finalY;
   };
 
   const physicalTests = tests.filter(t => t.type === 'fisico' || !t.type);
-  const psychoTests = tests.filter(t => t.type === 'psicosocial');
-  const socioTests = tests.filter(t => t.type === 'socioemocional');
+  const psychoTests   = tests.filter(t => t.type === 'psicosocial');
+  const socioTests    = tests.filter(t => t.type === 'socioemocional');
 
-  renderCategoryTable(physicalTests, 'Pruebas Físicas y Técnicas', THEME_COLOR);
-  renderCategoryTable(psychoTests, 'Pruebas Psicosociales', ACCENT_COLOR);
-  renderCategoryTable(socioTests, 'Pruebas Socioemocionales', ACCENT_COLOR);
+  renderCategoryTable(physicalTests, 'Pruebas Físicas y Técnicas',   THEME_COLOR,  ACCENT_COLOR);
+  renderCategoryTable(psychoTests,   'Pruebas Psicosociales',        ACCENT_COLOR, THEME_COLOR);
+  renderCategoryTable(socioTests,    'Pruebas Socioemocionales',     ACCENT_COLOR, THEME_COLOR);
 
-  doc.setFontSize(10);
-  doc.setTextColor(100);
-  if (finalY > doc.internal.pageSize.getHeight() - 20) {
-    doc.addPage();
-    finalY = 20;
-  }
-  doc.text('* Verde: Mejor resultado en el equipo | Rojo: Resultado más bajo', 15, finalY + 10);
+  // Leyenda
+  const legendY = Math.min(finalY + 10, doc.internal.pageSize.getHeight() - 16);
+  doc.setFontSize(8);
+  doc.setFont(undefined, 'italic');
+  doc.setTextColor(76, 175, 125);
+  doc.text('■ ', 10, legendY);
+  doc.setTextColor(120);
+  doc.text('Mejor del equipo    ', 15, legendY);
+  doc.setTextColor(239, 68, 68);
+  doc.text('■ ', 55, legendY);
+  doc.setTextColor(120);
+  doc.text('Resultado más bajo', 60, legendY);
 
   addFooter(doc);
   savePdfUniversal(doc, `Tests_Equipo_${new Date().toLocaleDateString().replace(/\//g, '-')}.pdf`);
@@ -409,139 +445,187 @@ export const generatePlayerTestReport = async (player, tests, historyData, activ
     window.dispatchEvent(new CustomEvent('m11-loading', { detail: { show: false } }));
   }
   const doc = new jsPDF();
-  
-  await addHeader(doc, 'INFORME DE RENDIMIENTO INDIVIDUAL', `Fecha: ${new Date().toLocaleDateString()}`, activeTeam);
-  
-  // Datos del Jugador
-  doc.setTextColor(45, 45, 45);
-  doc.setFontSize(12);
-  doc.setFont(undefined, 'bold');
-  doc.text(`Jugador: ${player.name || player.nombre}`, 15, 50);
-  doc.setFont(undefined, 'normal');
-  doc.text(`Dorsal: ${player.number || player.dorsal || '-'} | Posición: ${player.position || player.posicion || '-'}`, 15, 58);
-  doc.text(`Fecha del Informe: ${new Date().toLocaleDateString()}`, 120, 50);
+  const pageW = doc.internal.pageSize.getWidth();
 
-  // Explicación para los padres
+  await addHeader(doc, 'INFORME DE RENDIMIENTO INDIVIDUAL', `Fecha: ${new Date().toLocaleDateString()}`, activeTeam);
+
+  // ── TARJETA DE JUGADOR ────────────────────────────────────────────────────
+  doc.setFillColor(...THEME_COLOR);
+  doc.rect(10, 44, pageW - 20, 22, 'F');
+
+  // Avatar circular placeholder
+  doc.setFillColor(...ACCENT_COLOR);
+  doc.circle(24, 55, 8, 'F');
   doc.setFontSize(10);
+  doc.setFont(undefined, 'bold');
+  doc.setTextColor(...THEME_COLOR);
+  const initials = (player.name || player.nombre || 'J').charAt(0).toUpperCase();
+  doc.text(initials, 21.5, 58);
+
+  // Nombre del jugador
+  doc.setTextColor(...ACCENT_COLOR);
+  doc.setFontSize(13);
+  doc.setFont(undefined, 'bold');
+  doc.text(player.name || player.nombre || 'Jugador', 36, 51);
+
+  // Dorsal | Posición
+  doc.setTextColor(180, 220, 200);
+  doc.setFontSize(8.5);
+  doc.setFont(undefined, 'normal');
+  doc.text(`Dorsal: ${player.number || player.dorsal || '-'}   |   Posición: ${player.position || player.posicion || '-'}`, 36, 58);
+
+  // Overall a la derecha
+  const allVals = tests.map(t => historyData[player.id]?.[t.id]).filter(h => h?.length > 0).map(h => h[h.length - 1].val);
+  const overallAvg = allVals.length > 0 ? Math.round(allVals.reduce((a, b) => a + b, 0) / allVals.length) : null;
+  if (overallAvg !== null) {
+    doc.setFontSize(22);
+    doc.setFont(undefined, 'bold');
+    doc.setTextColor(...ACCENT_COLOR);
+    doc.text(String(overallAvg), pageW - 24, 54, { align: 'center' });
+    doc.setFontSize(7);
+    doc.setFont(undefined, 'normal');
+    doc.setTextColor(180, 220, 200);
+    doc.text('MEDIA', pageW - 24, 61, { align: 'center' });
+  }
+
+  // ── TEXTO INTRODUCTORIO ───────────────────────────────────────────────────
+  doc.setFillColor(250, 248, 240);
+  doc.rect(10, 68, pageW - 20, 14, 'F');
+  doc.setFontSize(8.5);
   doc.setTextColor(100, 100, 100);
-  const introText = "Estimado padre/tutor: Este informe resume los resultados de las pruebas físicas y técnicas realizadas por el jugador. Ayuda a entender sus fortalezas y áreas de mejora.";
-  doc.text(doc.splitTextToSize(introText, 180), 15, 70);
+  doc.setFont(undefined, 'italic');
+  const introText = 'Estimado padre/tutor: Este informe resume los resultados de las pruebas físicas y técnicas realizadas por el jugador. Ayuda a entender sus fortalezas y áreas de mejora.';
+  doc.text(doc.splitTextToSize(introText, pageW - 28), 14, 74);
 
   const generateRows = (testsGroup, isPhysical) => {
     const rows = [];
     testsGroup.forEach(t => {
       const pHistory = historyData[player.id]?.[t.id];
-      let latestVal = '-';
-      let prevVal = '-';
-      let evolution = '-';
-      
-      if (pHistory && pHistory.length > 0) {
+      let latestVal = '-', prevVal = '-', evolution = '-';
+      if (pHistory?.length > 0) {
         latestVal = pHistory[pHistory.length - 1].val;
         if (pHistory.length > 1) {
           prevVal = pHistory[pHistory.length - 2].val;
           const diff = latestVal - prevVal;
-          const isTime = t.unit === 'seg';
-          const improved = isTime ? diff < 0 : diff > 0;
-          
-          if (diff === 0) evolution = 'Mantenido';
-          else evolution = improved ? 'Mejora' : 'Baja';
+          const improved = t.unit === 'seg' ? diff < 0 : diff > 0;
+          evolution = diff === 0 ? 'Mantenido' : (improved ? '(+) Mejora' : '(-) Baja');
         }
       }
-      
       if (isPhysical) {
-        let valoracion = 'Bien';
-        if (latestVal !== '-') {
-          if (evolution === 'Mejora') valoracion = 'Excelente';
-          else if (evolution === 'Baja') valoracion = 'Mejorable';
-        }
-        rows.push([t.name, `${latestVal} ${t.unit}`, `${prevVal !== '-' ? prevVal + ' ' + t.unit : '-'}`, evolution, valoracion]);
+        let valoracion = latestVal !== '-' ? (evolution.includes('Mejora') ? 'Excelente' : (evolution.includes('Baja') ? 'Mejorable' : 'Bien')) : '-';
+        rows.push([t.name, `${latestVal} ${latestVal !== '-' ? t.unit : ''}`, `${prevVal !== '-' ? prevVal + ' ' + t.unit : '-'}`, evolution, valoracion]);
       } else {
-        const interpretacion = t.interpretacion || t.desc || 'Análisis pendiente';
-        rows.push([t.name, `${latestVal} ${t.unit}`, interpretacion]);
+        rows.push([t.name, `${latestVal} ${latestVal !== '-' ? t.unit : ''}`, t.interpretacion || t.desc || 'Análisis pendiente']);
       }
     });
     return rows;
   };
 
   const physicalRows = generateRows(tests.filter(t => t.type === 'fisico' || !t.type), true);
-  const psychoRows = generateRows(tests.filter(t => t.type === 'psicosocial'), false);
-  const socioRows = generateRows(tests.filter(t => t.type === 'socioemocional'), false);
+  const psychoRows   = generateRows(tests.filter(t => t.type === 'psicosocial'), false);
+  const socioRows    = generateRows(tests.filter(t => t.type === 'socioemocional'), false);
 
+  // ── TABLA FÍSICA ─────────────────────────────────────────────────────────
   autoTable(doc, {
     startY: 85,
-    head: [['Prueba Física', 'Resultado Actual', 'Eval. Anterior', 'Evolución', 'Valoración']],
+    head: [['Prueba Física / Técnica', 'Resultado Actual', 'Eval. Anterior', 'Evolución', 'Valoración']],
     body: physicalRows,
-    headStyles: { fillColor: [76, 175, 125], textColor: 255, fontStyle: 'bold' },
-    alternateRowStyles: { fillColor: [245, 240, 232] },
-    bodyStyles: { textColor: [45, 45, 45] },
-    styles: { cellPadding: 4, fontSize: 10 }
+    headStyles: { fillColor: THEME_COLOR, textColor: ACCENT_COLOR, fontStyle: 'bold', fontSize: 9 },
+    bodyStyles: { fillColor: [27, 58, 45], textColor: [200, 220, 210], fontSize: 9, cellPadding: 3 },
+    alternateRowStyles: { fillColor: [20, 46, 34] },
+    columnStyles: {
+      0: { fontStyle: 'bold', textColor: ACCENT_COLOR, halign: 'left' },
+      3: { halign: 'center' },
+      4: { halign: 'center', fontStyle: 'bold' },
+    },
+    styles: { lineColor: [40, 70, 55], lineWidth: 0.2 },
+    didParseCell(data) {
+      if (data.section === 'body' && data.column.index === 3) {
+        const v = String(data.cell.raw);
+        if (v.includes('Mejora'))   data.cell.styles.textColor = [76, 175, 125];
+        else if (v.includes('Baja')) data.cell.styles.textColor = [239, 68, 68];
+        else                         data.cell.styles.textColor = [200, 200, 200];
+      }
+      if (data.section === 'body' && data.column.index === 4) {
+        const v = String(data.cell.raw);
+        if (v.includes('Excelente')) data.cell.styles.textColor = [76, 175, 125];
+        else if (v.includes('Mejorable')) data.cell.styles.textColor = [239, 68, 68];
+        else data.cell.styles.textColor = [212, 168, 67];
+      }
+    },
   });
 
   let finalY = doc.lastAutoTable.finalY + 10;
 
+  // ── TABLA PSICOSOCIAL ─────────────────────────────────────────────────────
   if (psychoRows.length > 0) {
     if (finalY > doc.internal.pageSize.getHeight() - 40) { doc.addPage(); finalY = 20; }
     autoTable(doc, {
       startY: finalY,
       head: [['Perfil Psicosocial', 'Puntuación', 'Interpretación']],
       body: psychoRows,
-      headStyles: { fillColor: ACCENT_COLOR, textColor: 255, fontStyle: 'bold' },
-      alternateRowStyles: { fillColor: [245, 240, 232] },
-      bodyStyles: { textColor: [45, 45, 45] },
-      styles: { cellPadding: 4, fontSize: 10 }
+      headStyles: { fillColor: ACCENT_COLOR, textColor: THEME_COLOR, fontStyle: 'bold', fontSize: 9 },
+      bodyStyles: { fillColor: [27, 58, 45], textColor: [200, 220, 210], fontSize: 9, cellPadding: 3 },
+      alternateRowStyles: { fillColor: [20, 46, 34] },
+      columnStyles: { 0: { fontStyle: 'bold', textColor: ACCENT_COLOR } },
+      styles: { lineColor: [40, 70, 55], lineWidth: 0.2 },
     });
     finalY = doc.lastAutoTable.finalY + 10;
   }
 
+  // ── TABLA SOCIOEMOCIONAL ──────────────────────────────────────────────────
   if (socioRows.length > 0) {
     if (finalY > doc.internal.pageSize.getHeight() - 40) { doc.addPage(); finalY = 20; }
     autoTable(doc, {
       startY: finalY,
       head: [['Bienestar en el Equipo', 'Puntuación', 'Interpretación']],
       body: socioRows,
-      headStyles: { fillColor: ACCENT_COLOR, textColor: 255, fontStyle: 'bold' },
-      alternateRowStyles: { fillColor: [245, 240, 232] },
-      bodyStyles: { textColor: [45, 45, 45] },
-      styles: { cellPadding: 4, fontSize: 10 }
+      headStyles: { fillColor: ACCENT_COLOR, textColor: THEME_COLOR, fontStyle: 'bold', fontSize: 9 },
+      bodyStyles: { fillColor: [27, 58, 45], textColor: [200, 220, 210], fontSize: 9, cellPadding: 3 },
+      alternateRowStyles: { fillColor: [20, 46, 34] },
+      columnStyles: { 0: { fontStyle: 'bold', textColor: ACCENT_COLOR } },
+      styles: { lineColor: [40, 70, 55], lineWidth: 0.2 },
     });
     finalY = doc.lastAutoTable.finalY + 15;
   }
 
+  // ── GRÁFICA DE RENDIMIENTO ────────────────────────────────────────────────
   if (graficaDataUrl) {
-    // Asegurarse de que no nos pasamos de página con la gráfica
-    if (finalY + 90 > doc.internal.pageSize.getHeight() - 20) {
-      doc.addPage();
-      finalY = 20;
-    }
-    doc.setFontSize(12);
+    if (finalY + 90 > doc.internal.pageSize.getHeight() - 20) { doc.addPage(); finalY = 20; }
+    doc.setFontSize(11);
     doc.setFont(undefined, 'bold');
-    doc.setTextColor(27, 58, 45);
-    doc.text('Perfil de Rendimiento Actual:', 15, finalY);
-    
-    // Insertar la gráfica capturada
-    doc.addImage(graficaDataUrl, 'PNG', 15, finalY + 5, 180, 80);
+    doc.setTextColor(...THEME_COLOR);
+    doc.text('Perfil de Rendimiento Actual', 15, finalY);
+    doc.setDrawColor(...ACCENT_COLOR);
+    doc.setLineWidth(0.6);
+    doc.line(15, finalY + 1, 15 + doc.getTextWidth('Perfil de Rendimiento Actual'), finalY + 1);
+    doc.addImage(graficaDataUrl, 'PNG', 15, finalY + 5, pageW - 30, 80);
     finalY += 95;
   }
 
-  // Comprobar si hay espacio para las recomendaciones
-  if (finalY + 30 > doc.internal.pageSize.getHeight() - 20) {
-    doc.addPage();
-    finalY = 20;
-  }
-  doc.setFontSize(12);
-  doc.setFont(undefined, 'bold');
-  doc.setTextColor(27, 58, 45);
-  doc.text('Recomendación del Cuerpo Técnico:', 15, finalY);
-  doc.setFont(undefined, 'normal');
+  // ── BLOQUE DE RECOMENDACIÓN ───────────────────────────────────────────────
+  if (finalY + 30 > doc.internal.pageSize.getHeight() - 20) { doc.addPage(); finalY = 20; }
+
+  doc.setFillColor(250, 248, 240);
+  doc.rect(10, finalY, pageW - 20, 28, 'F');
+  doc.setFillColor(...ACCENT_COLOR);
+  doc.rect(10, finalY, 3, 28, 'F');
+
   doc.setFontSize(10);
+  doc.setFont(undefined, 'bold');
+  doc.setTextColor(...THEME_COLOR);
+  doc.text('Recomendación del Cuerpo Técnico', 17, finalY + 8);
+  doc.setFont(undefined, 'normal');
+  doc.setFontSize(9);
   doc.setTextColor(80, 80, 80);
-  const adviceText = "Sigue entrenando con constancia y compromiso. Es fundamental mantener una buena alimentación y descanso para continuar con la progresión atlética mostrada en las últimas evaluaciones.";
-  doc.text(doc.splitTextToSize(adviceText, 180), 15, finalY + 8);
+  const adviceText = 'Sigue entrenando con constancia y compromiso. Es fundamental mantener una buena alimentación y descanso para continuar con la progresión atlética mostrada en las últimas evaluaciones.';
+  doc.text(doc.splitTextToSize(adviceText, pageW - 30), 17, finalY + 16);
 
   addFooter(doc);
   const safeName = (player.name || player.nombre || 'Jugador').replace(/\s+/g, '_');
   savePdfUniversal(doc, `Informe_Tests_${safeName}.pdf`);
 };
+
 
 /**
  * SESIONES - Ficha individual

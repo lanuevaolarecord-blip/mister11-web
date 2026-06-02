@@ -52,7 +52,9 @@
 .admin-content {
   flex: 1;
   overflow-y: auto;
+  overflow-x: hidden;
   padding: 30px;
+  box-sizing: border-box;
 }
 
 .section-header {

@@ -68,8 +68,19 @@ const PizarraTactica = () => {
   // Referencias a Context
   const { guardarEstado, obtenerEstado } = usePizarra();
   
-  // Bloquear scroll de la app mientras la Pizarra está abierta
+  // Bloquear scroll de la app mientras la Pizarra está abierta y resetear posición de scroll al inicio
   useEffect(() => {
+    // Resetear scroll de la ventana y cuerpo
+    window.scrollTo(0, 0);
+    if (document.documentElement) document.documentElement.scrollTo(0, 0);
+    if (document.body) document.body.scrollTo(0, 0);
+
+    // Resetear contenedores de diseño comunes
+    const scrollContainers = document.querySelectorAll('.app-container, .main-content, .main-wrapper');
+    scrollContainers.forEach(container => {
+      container.scrollTop = 0;
+    });
+
     document.body.classList.add('pizarra-active');
     return () => document.body.classList.remove('pizarra-active');
   }, []);

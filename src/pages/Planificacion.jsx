@@ -5,6 +5,9 @@ import { useAuth } from '../context/AuthContext';
 import { useTeams } from '../hooks/useTeams';
 import { useTheme } from '../context/ThemeContext';
 import { Save, FileText } from 'lucide-react';
+import html2canvas from 'html2canvas';
+import { jsPDF } from 'jspdf';
+import { downloadPDF } from '../utils/download';
 import './Planificacion.css';
 
 // --- CONSTANTS ---
@@ -151,6 +154,102 @@ const Planificacion = () => {
     finally { setSaving(false); }
   }, [macroInfo, microcycles, macroCounts, showToast, activeTeamId]);
 
+  const handleExportPDF = async () => {
+    const element = document.getElementById('plan-export-container');
+    if (!element) {
+      showToast('Error al exportar: no se encontró el contenedor.', 'error');
+      return;
+    }
+    showToast('Generando PDF...', 'info');
+
+    try {
+      // 1. Identificar y expandir elementos con scroll horizontal (tablas de planificación y contenedores mesociclo)
+      const scrollables = element.querySelectorAll('.plan-matrix-scroll, .plan-matrix-container');
+      const originalStyles = [];
+
+      scrollables.forEach(el => {
+        originalStyles.push({
+          el,
+          overflowX: el.style.overflowX,
+          overflow: el.style.overflow,
+          width: el.style.width,
+          maxWidth: el.style.maxWidth,
+          display: el.style.display
+        });
+        
+        // Hacer visible todo el contenido sin barras de scroll
+        el.style.overflow = 'visible';
+        el.style.overflowX = 'visible';
+        el.style.width = 'auto';
+        el.style.maxWidth = 'none';
+      });
+
+      // 2. Renderizar con html2canvas
+      const canvas = await html2canvas(element, {
+        scale: 2,
+        useCORS: true,
+        backgroundColor: darkMode ? '#0D0D0D' : '#F5F0E8',
+        windowWidth: element.scrollWidth + 100, // Margen extra para evitar recortes
+        windowHeight: element.scrollHeight + 100
+      });
+
+      // 3. Restaurar estilos originales
+      originalStyles.forEach(({ el, overflowX, overflow, width, maxWidth, display }) => {
+        el.style.overflow = overflow;
+        el.style.overflowX = overflowX;
+        el.style.width = width;
+        el.style.maxWidth = maxWidth;
+        el.style.display = display;
+      });
+
+      // 4. Crear PDF usando jsPDF
+      const imgData = canvas.toDataURL('image/png');
+      const isLandscape = canvas.width > canvas.height;
+      const doc = new jsPDF(isLandscape ? 'l' : 'p', 'mm', 'a4');
+
+      const pdfWidth = doc.internal.pageSize.getWidth();
+      const pdfHeight = doc.internal.pageSize.getHeight();
+
+      // Calcular ancho y alto proporcional
+      const imgWidth = pdfWidth - 20; // 10mm margenes laterales
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+
+      let yPos = 10;
+      let heightLeft = imgHeight;
+      let position = 10;
+
+      // Si la altura cabe en una página, la ponemos
+      if (heightLeft < pdfHeight - 20) {
+        doc.addImage(imgData, 'PNG', 10, yPos, imgWidth, imgHeight);
+      } else {
+        // Paginación si es necesario
+        doc.addImage(imgData, 'PNG', 10, position, imgWidth, imgHeight);
+        heightLeft -= (pdfHeight - 20);
+
+        while (heightLeft >= 0) {
+          position = heightLeft - imgHeight + 10;
+          doc.addPage();
+          doc.addImage(imgData, 'PNG', 10, position, imgWidth, imgHeight);
+          heightLeft -= (pdfHeight - 20);
+        }
+      }
+
+      // 5. Descargar PDF utilizando el helper nativo / web
+      const pdfBase64 = doc.output('dataurlstring').split(',')[1];
+      let tabName = activeTab.toUpperCase();
+      if (activeTab === 'mesociclo' && selectedMesoItem) {
+        tabName += `_${selectedMesoItem.toUpperCase()}`;
+      }
+      const fileName = `Planificacion_${activeTeam?.name || 'Equipo'}_${tabName}.pdf`;
+
+      await downloadPDF(pdfBase64, fileName);
+      showToast('PDF exportado ✓');
+    } catch (err) {
+      console.error('Error generating PDF:', err);
+      showToast('Error al exportar PDF.', 'error');
+    }
+  };
+
   const toggleDay = (idx) => {
     setMacroInfo(prev => {
       const days = prev.trainingDays.includes(idx)
@@ -206,7 +305,7 @@ const Planificacion = () => {
       <div className="plan-page-header">
         <h1 className="page-title">PLANIFICACIÓN ESTRATÉGICA</h1>
         <div style={{ display: 'flex', gap: 10 }}>
-          <button className="btn-outline" onClick={() => showToast('Exportación PDF próximamente disponible', 'info')} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13 }}>
+          <button className="btn-outline" onClick={handleExportPDF} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13 }}>
             <FileText size={15} /> EXPORTAR PDF
           </button>
           <button className="btn-primary" onClick={handleSave} disabled={saving} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13 }}>
@@ -234,7 +333,8 @@ const Planificacion = () => {
       </div>
 
       {/* ── TAB CONTENT ───────────────────────────────────── */}
-      {activeTab === 'macrociclo' && (<>
+      <div id="plan-export-container">
+        {activeTab === 'macrociclo' && (<>
       <div className="plan-top-grid">
 
         {/* CARD 1 — TEMPORADA */}
@@ -829,7 +929,7 @@ const Planificacion = () => {
           </div>
         </div>
       )}
-
+      </div>
     </div>
   );
 };

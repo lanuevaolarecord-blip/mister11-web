@@ -864,9 +864,7 @@ const PizarraTactica = () => {
       },
     });
     
-    import('../lib/mister11-materials.js').then(m => {
-      m.applyMister11Controls(group);
-    });
+    applyMister11Controls(group);
 
     return group;
   }, []);
@@ -1779,6 +1777,10 @@ const PizarraTactica = () => {
   }, [fieldType]); // eslint-disable-line
 
   const lastSwappedR = useRef(isSwapped);
+  const lastLocalColorRef = useRef(localColor);
+  const lastRivalColorRef = useRef(rivalColor);
+  const lastShowRivalR = useRef(showRival);
+
   useEffect(() => {
     if (!ready) return;
     if (lastSwappedR.current !== isSwapped) {
@@ -1793,6 +1795,9 @@ const PizarraTactica = () => {
   useEffect(() => {
     const fc = fcRef.current;
     if (!fc || !ready) return;
+    if (lastShowRivalR.current === showRival) return;
+    lastShowRivalR.current = showRival;
+
     if (showRival) {
       const hasRivals = fc.getObjects().some(obj => obj.data && obj.data.type === 'player' && obj.data.playerType === 'rival');
       if (!hasRivals) {
@@ -1814,6 +1819,9 @@ const PizarraTactica = () => {
   useEffect(() => {
     const fc = fcRef.current;
     if (!fc || !ready) return;
+    if (lastLocalColorRef.current === localColor) return;
+    lastLocalColorRef.current = localColor;
+
     fc.getObjects().forEach(obj => {
       if (obj.data && obj.data.type === 'player' && obj.data.playerType === 'local') {
         const isGk = obj.data.label === 1;
@@ -1821,7 +1829,7 @@ const PizarraTactica = () => {
         if (obj._objects) {
           obj._objects.forEach(child => {
             if (child.type === 'circle') {
-              child.set({ fill: targetColor, stroke: targetColor });
+              child.set({ fill: targetColor, stroke: '#FFFFFF' });
             }
           });
         }
@@ -1834,6 +1842,9 @@ const PizarraTactica = () => {
   useEffect(() => {
     const fc = fcRef.current;
     if (!fc || !ready) return;
+    if (lastRivalColorRef.current === rivalColor) return;
+    lastRivalColorRef.current = rivalColor;
+
     fc.getObjects().forEach(obj => {
       if (obj.data && obj.data.type === 'player' && obj.data.playerType === 'rival') {
         const isGk = obj.data.label === 1;
@@ -1841,7 +1852,7 @@ const PizarraTactica = () => {
         if (obj._objects) {
           obj._objects.forEach(child => {
             if (child.type === 'circle') {
-              child.set({ fill: targetColor, stroke: targetColor });
+              child.set({ fill: targetColor, stroke: '#FFFFFF' });
             }
           });
         }

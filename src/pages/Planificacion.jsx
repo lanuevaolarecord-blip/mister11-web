@@ -316,7 +316,7 @@ const Planificacion = () => {
             ['% Táctico', ...chunkMicros.map(m => `${m.tactical}%`)],
           ];
 
-          doc.autoTable({
+          autoTable(doc, {
             startY: yPos,
             head: [headers],
             body: rows,
@@ -362,7 +362,7 @@ const Planificacion = () => {
             meso.carga >= meso.micros.length / 2 ? 'CARGA' : 'COMPETICIÓN'
           ]);
 
-          doc.autoTable({
+          autoTable(doc, {
             startY: yPos + 5,
             head: [headers],
             body: rows,
@@ -405,7 +405,7 @@ const Planificacion = () => {
             ['% Táctico', ...chunkMicros.map(m => `${m.tactical}%`)],
           ];
 
-          doc.autoTable({
+          autoTable(doc, {
             startY: yPos + 5,
             head: [headers],
             body: rows,
@@ -473,7 +473,7 @@ const Planificacion = () => {
           return [day.toUpperCase(), activityText, detailsText];
         });
 
-        doc.autoTable({
+        autoTable(doc, {
           startY: yPos,
           head: [headers],
           body: rows,

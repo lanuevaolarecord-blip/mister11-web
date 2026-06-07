@@ -40,7 +40,7 @@ android {
             if (variant.buildType.name == 'debug') {
                 outputFileName = "mister11.apk"
             } else if (variant.buildType.name == 'release') {
-                outputFileName = "mister11-release.apk"
+                outputFileName = "mister11.apk"
             }
         }
     }

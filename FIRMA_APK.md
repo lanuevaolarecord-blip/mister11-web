@@ -40,12 +40,12 @@ Ejecuta el siguiente comando desde la raíz del proyecto para compilar y firmar 
 $env:JAVA_HOME="C:\Program Files\Android\Android Studio\jbr"; cd android; .\gradlew assembleRelease
 ```
 El archivo firmado se generará en:  
-[`android/app/build/outputs/apk/release/mister11-release.apk`](file:///c:/Users/jhojan/Desktop/MISTER%2011/mister11-web/android/app/build/outputs/apk/release/mister11-release.apk)
+[`android/app/build/outputs/apk/release/mister11.apk`](file:///c:/Users/jhojan/Desktop/MISTER%2011/mister11-web/android/app/build/outputs/apk/release/mister11.apk)
 
 ### 2. Verificar la Firma del APK
 Para comprobar que el APK está correctamente firmado y ver qué huellas digitales tiene aplicadas:
 ```powershell
-$env:JAVA_HOME="C:\Program Files\Android\Android Studio\jbr"; & "C:\Users\jhojan\AppData\Local\Android\Sdk\build-tools\35.0.0\apksigner.bat" verify --verbose --print-certs "android/app/build/outputs/apk/release/mister11-release.apk"
+$env:JAVA_HOME="C:\Program Files\Android\Android Studio\jbr"; & "C:\Users\jhojan\AppData\Local\Android\Sdk\build-tools\35.0.0\apksigner.bat" verify --verbose --print-certs "android/app/build/outputs/apk/release/mister11.apk"
 ```
 
 ### 3. Inspeccionar el Contenido del Keystore

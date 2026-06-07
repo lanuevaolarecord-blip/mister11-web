@@ -9,12 +9,14 @@ export const LIMITS = {
     PLAYERS: 15,
     SESSIONS: 10,
     PDF_EXPORT: false,
+    IA_GENERATIONS: 5,
   },
   PRO: {
     TEAMS: 100,
     PLAYERS: 1000,
     SESSIONS: 1000,
     PDF_EXPORT: true,
+    IA_GENERATIONS: 1000,
   }
 };
 
@@ -33,7 +35,7 @@ export const usePlan = () => {
 
   // Simulated plan toggle (only for developer testing in the UI)
   const [simulatedPlan, setSimulatedPlan] = useState(() => {
-    return localStorage.getItem('mister11_simulated_plan') || 'pro';
+    return localStorage.getItem('mister11_simulated_plan') || '';
   });
 
   useEffect(() => {
@@ -76,7 +78,7 @@ export const usePlan = () => {
   }, [user]);
 
   const toggleSimulatedPlan = () => {
-    const next = simulatedPlan === 'pro' ? 'free' : 'pro';
+    const next = isPro ? 'free' : 'pro';
     setSimulatedPlan(next);
     localStorage.setItem('mister11_simulated_plan', next);
   };
@@ -103,7 +105,7 @@ export const usePlan = () => {
   const isRealPro = (dbPlan === 'pro' || dbPlan === 'club') && !isRealExpired;
 
   // --- Final PRO status ---
-  const isPro = isDeveloper || isRealPro || isOnTrial || (isDeveloper && simulatedPlan === 'pro');
+  const isPro = isRealPro || isOnTrial || (simulatedPlan === 'pro') || (isDeveloper && simulatedPlan !== 'free');
   const currentLimits = isPro ? LIMITS.PRO : LIMITS.FREE;
 
   return {

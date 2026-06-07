@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import { Browser } from '@capacitor/browser';
+import { Capacitor } from '@capacitor/core';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { APP_VERSION } from '../constants/appVersion';
 import { useTeams } from '../hooks/useTeams';
@@ -38,6 +40,7 @@ import imageCompression from 'browser-image-compression';
 import EscudoEquipo from '../components/EscudoEquipo';
 import RedeemCode from '../components/RedeemCode';
 import ExerciseLibrary from '../components/ExerciseLibrary';
+import UpgradeModal from '../components/UpgradeModal';
 import './AdminPanel.css';
 
 const AdminPanel = () => {
@@ -64,6 +67,7 @@ const AdminPanel = () => {
   const { sessions } = useSessions(activeTeam?.id);
   const { matches } = useMatches(activeTeam?.id);
   const { isPro, toggleSimulatedPlan, simulatedPlan, trialDaysRemaining, resetTrial, limits, isDeveloper } = usePlan();
+  const [upgradeModal, setUpgradeModal] = useState({ open: false, message: '' });
 
   const [newTeam, setNewTeam] = useState({ nombre: '', categoria: '', temporada: '2025-26' });
   const [selectedMatchId, setSelectedMatchId] = useState('');
@@ -127,6 +131,10 @@ const AdminPanel = () => {
 
   const handleAddTeam = async () => {
     if (!newTeam.nombre) return;
+    if (!isPro && teams.length >= limits.TEAMS) {
+      setUpgradeModal({ open: true, message: `Has alcanzado el límite de ${limits.TEAMS} equipo(s) del plan gratuito. Pásate a PRO para crear más.` });
+      return;
+    }
     await addTeam(newTeam);
     setNewTeam({ nombre: '', categoria: '', temporada: '2025-26' });
   };
@@ -204,11 +212,19 @@ const AdminPanel = () => {
   };
 
   const handleExportSeason = async () => {
+    if (!isPro) {
+      setUpgradeModal({ open: true, message: 'La exportación del Informe de Temporada a PDF es una función PRO.' });
+      return;
+    }
     if (!activeTeam) { showToast('Selecciona un equipo primero.', 'info'); return; }
     await generateSeasonReport(activeTeam, players, matches);
   };
 
   const handleExportGlobalReport = async () => {
+    if (!isPro) {
+      setUpgradeModal({ open: true, message: 'La generación del Informe Global del Equipo a PDF es una función PRO.' });
+      return;
+    }
     if (!activeTeam) { showToast('Selecciona un equipo primero.', 'info'); return; }
     if (players.length === 0) { showToast('No hay jugadores en el equipo activo.', 'info'); return; }
     try {
@@ -243,7 +259,11 @@ const AdminPanel = () => {
 
         if (isNewer(latestApkVersion, APP_VERSION)) {
           if (window.confirm(`🆕 Nueva versión ${latestApkVersion} disponible (tu versión actual: ${APP_VERSION}).\n¿Descargar ahora?`)) {
-            window.open(apkDownloadUrl, '_blank');
+            if (Capacitor.isNativePlatform()) {
+              await Browser.open({ url: apkDownloadUrl, presentationStyle: 'popover' });
+            } else {
+              window.open(apkDownloadUrl, '_blank');
+            }
           }
         } else {
           showToast(`✅ Ya tienes la última versión instalada (v${APP_VERSION}).`, 'success');
@@ -260,6 +280,10 @@ const AdminPanel = () => {
   };
 
   const handleExportConvocatoria = async () => {
+    if (!isPro) {
+      setUpgradeModal({ open: true, message: 'La exportación de la lista de convocados a PDF es una función PRO.' });
+      return;
+    }
     if (!selectedMatchId) { showToast('Selecciona un partido primero.', 'info'); return; }
     const match = matches.find(m => m.id === selectedMatchId);
     if (!match) { showToast('Partido no encontrado.', 'error'); return; }
@@ -267,6 +291,10 @@ const AdminPanel = () => {
   };
 
   const handleExportSession = async () => {
+    if (!isPro) {
+      setUpgradeModal({ open: true, message: 'La exportación de la ficha de sesión a PDF es una función PRO.' });
+      return;
+    }
     if (!selectedSessionId) { showToast('Selecciona una sesión primero.', 'info'); return; }
     const session = sessions.find(s => s.id === selectedSessionId);
     if (!session) { showToast('Sesión no encontrada.', 'error'); return; }
@@ -694,7 +722,11 @@ const AdminPanel = () => {
                             const configSnap = await getDoc(configRef);
                             const url = configSnap.exists() ? configSnap.data().apkDownloadUrl : null;
                             if (url) {
-                              window.open(url, '_blank');
+                              if (Capacitor.isNativePlatform()) {
+                                await Browser.open({ url, presentationStyle: 'popover' });
+                              } else {
+                                window.open(url, '_blank');
+                              }
                             } else {
                               showToast('URL de descarga no configurada. Contacta al administrador.', 'error');
                             }
@@ -921,6 +953,7 @@ const AdminPanel = () => {
           </div>
         </div>
       )}
+      <UpgradeModal isOpen={upgradeModal.open} onClose={() => setUpgradeModal({ ...upgradeModal, open: false })} message={upgradeModal.message} />
     </div>
   );
 };

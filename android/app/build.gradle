@@ -1,6 +1,21 @@
 apply plugin: 'com.android.application'
 
 android {
+signingConfigs {
+    release {
+        storeFile file("mister11.keystore")
+        storePassword "Mister11_2026"
+        keyAlias "mister11"
+        keyPassword "Mister11_2026"
+    }
+}
+buildTypes {
+    release {
+        signingConfig signingConfigs.release
+        minifyEnabled true
+        proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+    }
+}
     namespace = "com.mister11.app"
     compileSdk = rootProject.ext.compileSdkVersion
     defaultConfig {

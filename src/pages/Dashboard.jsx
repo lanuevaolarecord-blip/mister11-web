@@ -30,6 +30,7 @@ const Dashboard = () => {
   const { darkMode } = useTheme();
   const navigate = useNavigate();
   const { activeTeamId } = useAuth();
+  const { isPro, isDeveloper, trialDaysRemaining, toggleSimulatedPlan, resetTrial } = usePlan();
   const { settings } = useSettings(activeTeamId);
   const { players } = usePlayers(activeTeamId);
   const { sessions } = useSessions(activeTeamId);
@@ -298,19 +299,114 @@ const Dashboard = () => {
         </div>
       </header>
 
-      {/* Top Banner (Desarrollador) */}
-      <div className="card-base" style={{ background: 'var(--accent-green-light)', borderColor: 'var(--accent-green)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-          <Shield size={28} strokeWidth={1.5} color="var(--accent-green)" />
-          <div>
-            <h3 style={{ margin: 0, color: 'var(--text-primary)', fontSize: '16px', fontFamily: 'var(--font-heading)' }}>{t('dashboard.devAccess', settings.language)}</h3>
-            <p style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '13px' }}>{t('dashboard.devDesc', settings.language)}</p>
+      {/* Premium Trial / Developer Banner */}
+      {isDeveloper ? (
+        <div className="card-base" style={{ background: 'var(--accent-green-light)', borderColor: 'var(--accent-green)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+            <Shield size={28} strokeWidth={1.5} color="var(--accent-green)" />
+            <div>
+              <h3 style={{ margin: 0, color: 'var(--text-primary)', fontSize: '16px', fontFamily: 'var(--font-heading)' }}>{t('dashboard.devAccess', settings.language)}</h3>
+              <p style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '13px' }}>{t('dashboard.devDesc', settings.language)}</p>
+            </div>
+          </div>
+          <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+            <button 
+              className={`chip ${isPro ? 'active' : ''}`}
+              onClick={toggleSimulatedPlan}
+              style={{
+                border: '1px solid var(--accent-green)',
+                background: isPro ? 'transparent' : 'var(--accent-green)',
+                color: isPro ? 'var(--accent-green)' : '#000',
+                padding: '8px 16px',
+                borderRadius: '8px',
+                fontWeight: 'bold',
+                cursor: 'pointer',
+                minHeight: '48px',
+                minWidth: '150px'
+              }}
+            >
+              {isPro ? 'Probar Plan Gratuito' : 'Activar Modo PRO'}
+            </button>
+            <div className="btn-outline-green" style={{ fontSize: '12px' }}>
+              {t('dashboard.devUnlimited', settings.language)}
+            </div>
           </div>
         </div>
-        <div className="btn-outline-green" style={{ fontSize: '12px' }}>
-          {t('dashboard.devUnlimited', settings.language)}
+      ) : (
+        <div className={`trial-banner-dash ${isPro ? 'pro' : 'free'}`} style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          padding: '16px 24px',
+          borderRadius: '12px',
+          background: isPro ? 'linear-gradient(135deg, rgba(212,168,67,0.12), rgba(27,58,45,0.2))' : 'linear-gradient(135deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01))',
+          border: '1.5px solid',
+          borderColor: isPro ? 'var(--gold)' : 'var(--border-color)',
+          marginBottom: '24px'
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+            <div className="crown-badge" style={{
+              width: '40px',
+              height: '40px',
+              borderRadius: '8px',
+              background: isPro ? 'rgba(212, 168, 67, 0.15)' : 'rgba(255,255,255,0.05)',
+              color: isPro ? 'var(--gold)' : 'var(--text-secondary)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
+            }}>
+              {isPro ? <Crown size={22} className="crown-icon-animated" /> : <Info size={22} />}
+            </div>
+            <div>
+              <h3 style={{ margin: 0, color: 'var(--text-primary)', fontSize: '16px', fontFamily: 'var(--font-heading)' }}>
+                {isPro ? '👑 Míster11 PRO · Prueba Gratuita Activa' : '⭐ Míster11 Plan Gratuito (Limitado)'}
+              </h3>
+              <p style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '13px', marginTop: '4px' }}>
+                {isPro 
+                  ? `Tienes acceso total a todas las funciones premium. Te quedan ${trialDaysRemaining} días de prueba.`
+                  : 'Límites activos: 1 equipo, 15 jugadores, 10 sesiones y sin exportación PDF.'}
+              </p>
+            </div>
+          </div>
+          <div style={{ display: 'flex', gap: '10px' }}>
+            <button 
+              className={`chip ${isPro ? 'active' : ''}`}
+              onClick={toggleSimulatedPlan}
+              style={{
+                border: '1px solid var(--accent-gold)',
+                background: isPro ? 'transparent' : 'var(--accent-gold)',
+                color: isPro ? 'var(--accent-gold)' : '#000',
+                padding: '8px 16px',
+                borderRadius: '8px',
+                fontWeight: 'bold',
+                cursor: 'pointer',
+                minHeight: '48px',
+                minWidth: '150px'
+              }}
+            >
+              {isPro ? 'Probar Plan Gratuito' : 'Activar Prueba PRO'}
+            </button>
+            {isPro && (
+              <button 
+                className="chip"
+                onClick={resetTrial}
+                style={{
+                  border: '1px solid var(--border-color)',
+                  background: 'rgba(255,255,255,0.05)',
+                  color: 'var(--text-primary)',
+                  padding: '8px 16px',
+                  borderRadius: '8px',
+                  fontWeight: 'bold',
+                  cursor: 'pointer',
+                  minHeight: '48px'
+                }}
+              >
+                🔄 Reiniciar
+              </button>
+            )}
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Stats Grid */}
       <div className="grid-4-cols" style={{ marginBottom: '24px' }}>

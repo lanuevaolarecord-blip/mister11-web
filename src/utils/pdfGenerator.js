@@ -1,4 +1,4 @@
-﻿import { jsPDF } from 'jspdf';
+import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { downloadPDF } from './download.js';
 import { db, auth } from '../firebaseConfig';
@@ -1045,11 +1045,38 @@ export const generatePostMatchReportPDF = async (match, players, activeTeam = nu
     doc.setFontSize(10);
     doc.text(`MVP: ${match.mvp || 'No especificado'}`, 15, 87);
     
-    const scorersText = match.scorers || 'No especificado';
+    let scorersText = match.scorers;
+    if (!scorersText && match.goleadoresList && match.goleadoresList.length > 0) {
+      scorersText = match.goleadoresList
+        .map(g => {
+          const p = players.find(pl => pl.id === g.jugadorId);
+          return `${p ? (p.name || p.nombre) : 'Jugador'} (${g.minuto}')`;
+        })
+        .join(', ');
+    }
+    if (!scorersText) scorersText = 'No especificado';
+
+    let cardsText = '';
+    if (match.tarjetasList && match.tarjetasList.length > 0) {
+      cardsText = match.tarjetasList
+        .map(t => {
+          const p = players.find(pl => pl.id === t.jugadorId);
+          const tipo = t.tipo === 'amarilla' ? 'Amarilla' : 'Roja';
+          return `${tipo} - ${p ? (p.name || p.nombre) : 'Jugador'} (${t.minuto}')`;
+        })
+        .join(', ');
+    }
+    if (!cardsText) cardsText = 'Ninguna';
+
     const splitScorers = doc.splitTextToSize(`Goleadores/Asistencias: ${scorersText}`, pageW - 30);
     doc.text(splitScorers, 15, 94);
     
-    let currentY = 94 + (splitScorers.length * 5) + 6;
+    let currentY = 94 + (splitScorers.length * 5);
+    
+    const splitCards = doc.splitTextToSize(`Tarjetas: ${cardsText}`, pageW - 30);
+    doc.text(splitCards, 15, currentY);
+    
+    currentY += (splitCards.length * 5) + 6;
     
     // Alineación si hay convocados
     const convocados = players.filter(p => match.convocados?.includes(p.id));

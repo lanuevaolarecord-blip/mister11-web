@@ -908,3 +908,156 @@ html.dark {
   from { transform: translateY(20px); opacity: 0; }
   to { transform: translateY(0); opacity: 1; }
 }
+
+/* =========================================================
+   ESTILOS DE CUESTIONARIO Y TARJETAS POST-PARTIDO
+   ========================================================= */
+.post-match-card {
+  background: var(--partidos-panel-bg);
+  border: 1px solid var(--partidos-border);
+  border-radius: 12px;
+  padding: 24px;
+  margin-bottom: 24px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+html.dark .post-match-card {
+  background: var(--partidos-card-bg);
+  border-color: var(--partidos-border);
+  box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+}
+
+.card-section-title {
+  font-family: var(--font-heading, Georgia, serif);
+  font-size: 1.15rem;
+  font-weight: 700;
+  margin: 0 0 20px 0;
+  color: var(--partidos-text-primary);
+  border-bottom: 1px solid var(--partidos-border);
+  padding-bottom: 8px;
+}
+
+/* Score and MVP styling */
+.score-and-mvp-row {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+@media (min-width: 768px) {
+  .score-and-mvp-row {
+    flex-direction: row;
+    align-items: flex-end;
+    gap: 32px;
+  }
+}
+
+.score-inputs-container {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.mvp-selection-box {
+  flex: 1;
+}
+
+.input-label-caps {
+  display: block;
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+  color: var(--partidos-text-muted);
+  margin-bottom: 8px;
+  letter-spacing: 0.5px;
+}
+
+/* Stats section grid */
+.stats-sections-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 32px;
+}
+
+@media (min-width: 768px) {
+  .stats-sections-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.stats-col {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* Questionnaire block styles */
+.questionnaire-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.questionnaire-field-block {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.question-field-label {
+  font-family: var(--font-heading, Georgia, serif);
+  font-size: 1rem;
+  font-weight: 800;
+  color: var(--partidos-text-primary);
+}
+
+.question-field-desc {
+  font-size: 13px;
+  color: var(--partidos-text-muted);
+  margin: 0 0 6px 0;
+  line-height: 1.4;
+}
+
+/* Buttons style updates */
+.btn-primary-blue-allcaps {
+  background-color: #004B87 !important; /* Azul Institucional */
+  color: #FFFFFF !important;
+  border: none !important;
+  padding: 12px 24px;
+  border-radius: 8px !important;
+  font-weight: 700;
+  font-size: 0.9rem;
+  cursor: pointer;
+  text-transform: uppercase;
+  min-height: 48px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  transition: opacity 0.2s;
+}
+.btn-primary-blue-allcaps:hover {
+  opacity: 0.9;
+}
+
+.btn-success-green-allcaps {
+  background-color: #2E7D5C !important; /* Verde Campo */
+  color: #FFFFFF !important;
+  border: none !important;
+  padding: 12px 24px;
+  border-radius: 8px !important;
+  font-weight: 700;
+  font-size: 0.9rem;
+  cursor: pointer;
+  text-transform: uppercase;
+  min-height: 48px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  transition: opacity 0.2s;
+}
+.btn-success-green-allcaps:hover {
+  opacity: 0.9;
+}
+

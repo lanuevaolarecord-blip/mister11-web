@@ -235,7 +235,9 @@ const Partidos = () => {
       titulares: [],
       suplentes: [],
       postMatchAnswers: { tactical: '', physical: '', improvement: '', highlights: '' },
-      postMatchImages: []
+      postMatchImages: [],
+      goleadoresList: [],
+      tarjetasList: []
     };
     setMatchData(newMatch);
     setCalledPlayers([]); 
@@ -247,6 +249,8 @@ const Partidos = () => {
     setMatchData({ 
       postMatchAnswers: { tactical: '', physical: '', improvement: '', highlights: '' },
       postMatchImages: [],
+      goleadoresList: [],
+      tarjetasList: [],
       ...match 
     });
     setCalledPlayers(match.convocados || []);
@@ -563,45 +567,64 @@ const Partidos = () => {
                   <div className="post-partido-form">
                     <h3 className="section-title">{getLangText('post.title')}</h3>
                     
-                    {/* Score */}
-                    <div className="score-inputs">
-                      <div className="score-box">
-                        <label style={{fontSize:'12px',fontWeight:'800',textTransform:'uppercase',color:'var(--partidos-text-muted)'}}>
-                          {getLangText('post.goalsFor')}
-                        </label>
-                        <input 
-                          type="number" 
-                          className="partidos-input text-center text-2xl" 
-                          value={matchData.goalsFor || 0} 
-                          onChange={e => setMatchData({...matchData, goalsFor: parseInt(e.target.value) || 0})} 
-                        />
-                      </div>
-                      <div className="score-divider">-</div>
-                      <div className="score-box">
-                        <label style={{fontSize:'12px',fontWeight:'800',textTransform:'uppercase',color:'var(--partidos-text-muted)'}}>
-                          {getLangText('post.goalsAgainst')}
-                        </label>
-                        <input 
-                          type="number" 
-                          className="partidos-input text-center text-2xl" 
-                          value={matchData.goalsAgainst || 0} 
-                          onChange={e => setMatchData({...matchData, goalsAgainst: parseInt(e.target.value) || 0})} 
-                        />
+                    {/* Tarjeta 1: Resultado y MVP del Partido */}
+                    <div className="post-match-card">
+                      <h4 className="card-section-title">⚽ Resultado y MVP del Partido</h4>
+                      <div className="score-and-mvp-row">
+                        <div className="score-inputs-container">
+                          <div className="score-box">
+                            <label className="input-label-caps">{getLangText('post.goalsFor')}</label>
+                            <input 
+                              type="number" 
+                              className="partidos-input text-center text-2xl" 
+                              value={matchData.goalsFor || 0} 
+                              onChange={e => setMatchData({...matchData, goalsFor: parseInt(e.target.value) || 0})} 
+                            />
+                          </div>
+                          <div className="score-divider">-</div>
+                          <div className="score-box">
+                            <label className="input-label-caps">{getLangText('post.goalsAgainst')}</label>
+                            <input 
+                              type="number" 
+                              className="partidos-input text-center text-2xl" 
+                              value={matchData.goalsAgainst || 0} 
+                              onChange={e => setMatchData({...matchData, goalsAgainst: parseInt(e.target.value) || 0})} 
+                            />
+                          </div>
+                        </div>
+
+                        <div className="mvp-selection-box">
+                          <label className="input-label-caps">{getLangText('post.mvp')}</label>
+                          <select 
+                            className="partidos-input"
+                            value={matchData.mvp || ''}
+                            onChange={e => setMatchData({...matchData, mvp: e.target.value})}
+                            style={{ minHeight: '48px' }}
+                          >
+                            <option value="">{getLangText('post.mvpSelect')}</option>
+                            {calledPlayers.map(id => {
+                              const p = players.find(pl => pl.id === id);
+                              return p ? <option key={id} value={p.name}>{p.name}</option> : null;
+                            })}
+                          </select>
+                        </div>
                       </div>
                     </div>
 
-                    {/* 2-column grid */}
-                    <div className="post-partido-grid">
-                      {/* LEFT COLUMN */}
-                      <div className="post-partido-col">
+                    {/* Tarjeta 2: Estadísticas de Rendimiento (Goleadores y Tarjetas) */}
+                    <div className="post-match-card">
+                      <h4 className="card-section-title">📊 Goleadores y Tarjetas</h4>
+                      
+                      <div className="stats-sections-grid">
                         {/* Goleadores dinámicos */}
-                        <div>
+                        <div className="stats-col">
                           <p className="sub-section-title">⚽ Goleadores y Asistencias</p>
                           <div className="goleadores-list">
                             {(matchData.goleadoresList || []).map((g, idx) => (
                               <div key={idx} className="goleador-row">
                                 <select
                                   value={g.jugadorId || ''}
+                                  style={{ minHeight: '48px' }}
                                   onChange={e => {
                                     const list = [...(matchData.goleadoresList || [])];
                                     list[idx] = {...list[idx], jugadorId: e.target.value};
@@ -619,6 +642,7 @@ const Partidos = () => {
                                   min="1"
                                   max="120"
                                   placeholder="Min"
+                                  style={{ minHeight: '48px' }}
                                   value={g.minuto || ''}
                                   onChange={e => {
                                     const list = [...(matchData.goleadoresList || [])];
@@ -627,7 +651,9 @@ const Partidos = () => {
                                   }}
                                 />
                                 <button
+                                  type="button"
                                   className="btn-remove-row"
+                                  style={{ width: '48px', height: '48px' }}
                                   onClick={() => {
                                     const list = (matchData.goleadoresList || []).filter((_,i) => i !== idx);
                                     setMatchData({...matchData, goleadoresList: list});
@@ -636,22 +662,27 @@ const Partidos = () => {
                               </div>
                             ))}
                           </div>
-                          <button className="btn-add-row" onClick={() =>
-                            setMatchData({...matchData, goleadoresList: [...(matchData.goleadoresList || []), {jugadorId:'',minuto:''}]})
-                          }>
+                          <button 
+                            type="button"
+                            className="btn-add-row" 
+                            style={{ minHeight: '48px', color: '#004B87', borderColor: '#004B87' }} 
+                            onClick={() =>
+                              setMatchData({...matchData, goleadoresList: [...(matchData.goleadoresList || []), {jugadorId:'',minuto:''}]})
+                            }
+                          >
                             + Añadir Goleador
                           </button>
                         </div>
 
                         {/* Tarjetas dinámicas */}
-                        <div>
+                        <div className="stats-col">
                           <p className="sub-section-title">🟨🟥 Tarjetas</p>
                           <div className="goleadores-list">
                             {(matchData.tarjetasList || []).map((t, idx) => (
                               <div key={idx} className="goleador-row">
                                 <select
                                   value={t.tipo || 'amarilla'}
-                                  style={{flex:'0 0 110px'}}
+                                  style={{ flex: '0 0 110px', minHeight: '48px' }}
                                   onChange={e => {
                                     const list = [...(matchData.tarjetasList || [])];
                                     list[idx] = {...list[idx], tipo: e.target.value};
@@ -663,6 +694,7 @@ const Partidos = () => {
                                 </select>
                                 <select
                                   value={t.jugadorId || ''}
+                                  style={{ minHeight: '48px' }}
                                   onChange={e => {
                                     const list = [...(matchData.tarjetasList || [])];
                                     list[idx] = {...list[idx], jugadorId: e.target.value};
@@ -680,6 +712,7 @@ const Partidos = () => {
                                   min="1"
                                   max="120"
                                   placeholder="Min"
+                                  style={{ minHeight: '48px' }}
                                   value={t.minuto || ''}
                                   onChange={e => {
                                     const list = [...(matchData.tarjetasList || [])];
@@ -688,7 +721,9 @@ const Partidos = () => {
                                   }}
                                 />
                                 <button
+                                  type="button"
                                   className="btn-remove-row"
+                                  style={{ width: '48px', height: '48px' }}
                                   onClick={() => {
                                     const list = (matchData.tarjetasList || []).filter((_,i) => i !== idx);
                                     setMatchData({...matchData, tarjetasList: list});
@@ -697,90 +732,63 @@ const Partidos = () => {
                               </div>
                             ))}
                           </div>
-                          <button className="btn-add-row" onClick={() =>
-                            setMatchData({...matchData, tarjetasList: [...(matchData.tarjetasList || []), {jugadorId:'',tipo:'amarilla',minuto:''}]})
-                          }>
+                          <button 
+                            type="button"
+                            className="btn-add-row" 
+                            style={{ minHeight: '48px', color: '#004B87', borderColor: '#004B87' }} 
+                            onClick={() =>
+                              setMatchData({...matchData, tarjetasList: [...(matchData.tarjetasList || []), {jugadorId:'',tipo:'amarilla',minuto:''}]})
+                            }
+                          >
                             + Añadir Tarjeta
                           </button>
                         </div>
                       </div>
-
-                      {/* RIGHT COLUMN */}
-                      <div className="post-partido-col">
-                        {/* MVP */}
-                        <div className="form-group">
-                          <label className="sub-section-title">🏆 {getLangText('post.mvp')}</label>
-                          <select 
-                            className="partidos-input"
-                            value={matchData.mvp || ''}
-                            onChange={e => setMatchData({...matchData, mvp: e.target.value})}
-                          >
-                            <option value="">{getLangText('post.mvpSelect')}</option>
-                            {calledPlayers.map(id => {
-                              const p = players.find(pl => pl.id === id);
-                              return p ? <option key={id} value={p.name}>{p.name}</option> : null;
-                            })}
-                          </select>
-                        </div>
-
-                        {/* Notas tácticas */}
-                        <div className="form-group">
-                          <label className="sub-section-title">📝 {getLangText('post.notes')}</label>
-                          <textarea 
-                            className="partidos-input textarea-tall" 
-                            value={matchData.notes || ''} 
-                            onChange={e => setMatchData({...matchData, notes: e.target.value})}
-                            placeholder={getLangText('post.notesPlaceholder')}
-                            rows={5}
-                          />
-                        </div>
-                      </div>
                     </div>
 
-                    {/* Cuestionario con Botones de Preguntas */}
-                    <div className="report-builder-section" style={{ marginTop: '30px', textAlign: 'left' }}>
-                      <h4 className="sub-section-title" style={{ fontSize: '1.1rem', fontWeight: '800', marginBottom: '16px', borderBottom: '1px solid var(--partidos-border)', paddingBottom: '8px', textTransform:'none', color:'var(--partidos-text-primary)' }}>
-                        📋 {getLangText('post.reportBuilder')}
-                      </h4>
-                      <div className="question-buttons-grid" style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: '16px' }}>
+                    {/* Tarjeta 3: Cuestionario de Análisis del Partido (Listado Secuencial) */}
+                    <div className="post-match-card">
+                      <h4 className="card-section-title">📋 Cuestionario de Informe de Partido</h4>
+                      
+                      <div className="questionnaire-fields">
                         {reportQuestions.map(q => (
-                          <button
-                            key={q.key}
-                            type="button"
-                            className={`filter-tab ${activeQuestion === q.key ? 'active' : ''}`}
-                            style={{ minHeight: '48px', padding: '0 16px', borderRadius: '8px' }}
-                            onClick={() => setActiveQuestion(q.key)}
-                          >
-                            {q.label}
-                          </button>
-                        ))}
-                      </div>
-
-                      {reportQuestions.map(q => {
-                        if (activeQuestion !== q.key) return null;
-                        return (
-                          <div key={q.key} className="active-question-card" style={{ background: 'var(--partidos-player-card-bg)', padding: '16px', borderRadius: '12px', border: '1px solid var(--partidos-border)', marginBottom: '24px' }}>
-                            <p style={{ fontWeight: '700', fontSize: '14px', marginBottom: '10px', color: 'var(--partidos-text-primary)' }}>{q.question}</p>
+                          <div key={q.key} className="questionnaire-field-block">
+                            <label className="question-field-label">{q.label}</label>
+                            <p className="question-field-desc">{q.question}</p>
                             <textarea
                               className="partidos-input"
                               rows="4"
                               value={(matchData.postMatchAnswers && matchData.postMatchAnswers[q.key]) || ''}
                               onChange={e => handleAnswerChange(q.key, e.target.value)}
                               placeholder="..."
-                              style={{ width: '100%', background: 'var(--partidos-panel-bg)' }}
+                              style={{ width: '100%', background: 'var(--partidos-input-bg)', minHeight: '100px' }}
                             />
                           </div>
-                        );
-                      })}
+                        ))}
+                      </div>
                     </div>
 
-                    {/* Imágenes del Partido */}
-                    <div className="post-match-images-section" style={{ marginTop: '10px', textAlign: 'left' }}>
-                      <h4 className="sub-section-title" style={{ fontSize: '1.1rem', fontWeight: '800', marginBottom: '16px', borderBottom: '1px solid var(--partidos-border)', paddingBottom: '8px', textTransform:'none', color:'var(--partidos-text-primary)' }}>
-                        📷 {getLangText('post.images')}
-                      </h4>
+                    {/* Tarjeta 4: Notas Tácticas Generales */}
+                    <div className="post-match-card">
+                      <h4 className="card-section-title">📝 {getLangText('post.notes')}</h4>
+                      <div className="questionnaire-field-block">
+                        <p className="question-field-desc">{getLangText('post.notesPlaceholder')}</p>
+                        <textarea 
+                          className="partidos-input textarea-tall" 
+                          value={matchData.notes || ''} 
+                          onChange={e => setMatchData({...matchData, notes: e.target.value})}
+                          placeholder={getLangText('post.notesPlaceholder')}
+                          rows={5}
+                          style={{ minHeight: '120px' }}
+                        />
+                      </div>
+                    </div>
+
+                    {/* Tarjeta 5: Galería de Imágenes y Fotos del Partido */}
+                    <div className="post-match-card">
+                      <h4 className="card-section-title">📷 {getLangText('post.images')}</h4>
                       
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '16px' }}>
+                      <div className="image-upload-wrapper">
                         <input
                           type="file"
                           accept="image/*"
@@ -789,16 +797,25 @@ const Partidos = () => {
                           style={{ display: 'none' }}
                           onChange={handleImageUpload}
                         />
-                        <label htmlFor="post-match-photo-upload" className="btn-primary-dark" style={{
-                          padding: '12px 20px',
-                          borderRadius: '8px',
-                          cursor: 'pointer',
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          gap: '8px',
-                          minHeight: '48px',
-                          boxSizing: 'border-box'
-                        }}>
+                        <label 
+                          htmlFor="post-match-photo-upload" 
+                          className="btn-primary-blue-allcaps"
+                          style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: '8px',
+                            minHeight: '48px',
+                            cursor: 'pointer',
+                            padding: '0 24px',
+                            border: 'none',
+                            borderRadius: '8px',
+                            fontWeight: '700',
+                            textTransform: 'uppercase',
+                            background: '#004B87',
+                            color: '#FFFFFF'
+                          }}
+                        >
                           📷 {getLangText('post.uploadBtn')}
                         </label>
                       </div>
@@ -814,8 +831,8 @@ const Partidos = () => {
                                 position: 'absolute',
                                 top: '4px',
                                 right: '4px',
-                                width: '28px',
-                                height: '28px',
+                                width: '32px',
+                                height: '32px',
                                 borderRadius: '50%',
                                 background: 'rgba(239, 68, 68, 0.9)',
                                 color: 'white',
@@ -824,7 +841,7 @@ const Partidos = () => {
                                 display: 'flex',
                                 alignItems: 'center',
                                 justifyContent: 'center',
-                                fontSize: '12px',
+                                fontSize: '14px',
                                 fontWeight: 'bold'
                               }}
                             >
@@ -840,15 +857,26 @@ const Partidos = () => {
                       <button
                         type="button"
                         className="btn-outline-dark"
-                        style={{ minHeight: '48px', padding: '0 24px' }}
+                        style={{ minHeight: '48px', padding: '0 24px', borderRadius: '8px', fontWeight: '800' }}
                         onClick={() => setShowReportPreview(true)}
                       >
                         👁️ {getLangText('post.viewReport')}
                       </button>
                       <button
                         type="button"
-                        className="btn-primary-dark"
-                        style={{ minHeight: '48px', padding: '0 24px' }}
+                        className="btn-success-green-allcaps"
+                        style={{
+                          minHeight: '48px',
+                          padding: '0 24px',
+                          borderRadius: '8px',
+                          fontWeight: '800',
+                          background: '#2E7D5C',
+                          color: '#FFFFFF',
+                          border: 'none',
+                          boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
+                          cursor: 'pointer',
+                          textTransform: 'uppercase'
+                        }}
                         onClick={handleExportPDF}
                       >
                         📥 {getLangText('post.downloadReport')}
@@ -882,14 +910,33 @@ const Partidos = () => {
                 </div>
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '24px' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '16px', marginBottom: '24px' }}>
                 <div>
                   <h4 style={{ margin: '0 0 6px 0', fontSize: '12px', fontWeight: '800', textTransform: 'uppercase', color: 'var(--partidos-text-muted)' }}>{getLangText('post.mvp')}</h4>
                   <p style={{ margin: '0', fontWeight: '700', fontSize: '15px' }}>{matchData.mvp || '-'}</p>
                 </div>
                 <div>
                   <h4 style={{ margin: '0 0 6px 0', fontSize: '12px', fontWeight: '800', textTransform: 'uppercase', color: 'var(--partidos-text-muted)' }}>{getLangText('post.scorers')}</h4>
-                  <p style={{ margin: '0', fontWeight: '700', fontSize: '15px' }}>{matchData.scorers || '-'}</p>
+                  <p style={{ margin: '0', fontWeight: '700', fontSize: '15px' }}>
+                    {matchData.goleadoresList && matchData.goleadoresList.length > 0
+                      ? matchData.goleadoresList.map(g => {
+                          const p = players.find(pl => pl.id === g.jugadorId);
+                          return `${p ? p.name : 'Jugador'} (${g.minuto}')`;
+                        }).join(', ')
+                      : '-'}
+                  </p>
+                </div>
+                <div>
+                  <h4 style={{ margin: '0 0 6px 0', fontSize: '12px', fontWeight: '800', textTransform: 'uppercase', color: 'var(--partidos-text-muted)' }}>Tarjetas</h4>
+                  <p style={{ margin: '0', fontWeight: '700', fontSize: '15px' }}>
+                    {matchData.tarjetasList && matchData.tarjetasList.length > 0
+                      ? matchData.tarjetasList.map(t => {
+                          const p = players.find(pl => pl.id === t.jugadorId);
+                          const emoji = t.tipo === 'amarilla' ? '🟨' : '🟥';
+                          return `${emoji} ${p ? p.name : 'Jugador'} (${t.minuto}')`;
+                        }).join(', ')
+                      : '-'}
+                  </p>
                 </div>
               </div>
 
@@ -933,6 +980,7 @@ const Partidos = () => {
           </div>
         </div>
       )}
+
     </div>
   );
 };

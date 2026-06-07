@@ -1,7 +1,8 @@
 import React, { createContext, useContext, useState, useEffect, useMemo, useCallback } from 'react';
 import { auth, db } from '../firebaseConfig';
 import { onAuthStateChanged, signInAnonymously } from 'firebase/auth';
-import { collection, query, onSnapshot } from 'firebase/firestore';
+import { collection, query, onSnapshot, addDoc, serverTimestamp } from 'firebase/firestore';
+import { seedInitialData } from '../utils/seedData';
 
 const AuthContext = createContext();
 
@@ -45,11 +46,41 @@ export const AuthProvider = ({ children }) => {
           setActiveTeamId(teamList[0].id);
           localStorage.setItem('mister11_active_team', teamList[0].id);
         }
+        setLoading(false);
       } else {
-        setActiveTeamId(null);
-        localStorage.removeItem('mister11_active_team');
+        // Si el usuario real no tiene ningún equipo, creamos uno por defecto automáticamente
+        const creatingKey = `mister11_creating_team_${user.uid}`;
+        if (!localStorage.getItem(creatingKey)) {
+          localStorage.setItem(creatingKey, 'true');
+          
+          const createDefaultTeam = async () => {
+            try {
+              const docRef = await addDoc(collection(db, 'users', user.uid, 'teams'), {
+                nombre: 'Mi Equipo',
+                categoria: 'General',
+                temporada: '2025-26',
+                createdAt: serverTimestamp()
+              });
+              
+              localStorage.setItem('mister11_active_team', docRef.id);
+              setActiveTeamId(docRef.id);
+              
+              // Inyectar datos iniciales
+              await seedInitialData(docRef.id, user.uid);
+            } catch (err) {
+              console.error("Error al crear equipo por defecto para nuevo usuario:", err);
+            } finally {
+              localStorage.removeItem(creatingKey);
+              setLoading(false);
+            }
+          };
+          createDefaultTeam();
+        } else {
+          setActiveTeamId(null);
+          localStorage.removeItem('mister11_active_team');
+          setLoading(false);
+        }
       }
-      setLoading(false);
     });
 
     return () => unsubscribe();

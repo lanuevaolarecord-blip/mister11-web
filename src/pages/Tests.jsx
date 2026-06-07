@@ -1310,7 +1310,7 @@ const Tests = () => {
                 { icon: '📋', label: t('tests.resources.tacticalLibrary', settings.language), path: '/pizarra' },
                 { icon: '🗂️', label: t('tests.resources.drillDatabase', settings.language), path: '/admin', tab: 'ejercicios' },
                 { icon: '📊', label: t('tests.resources.tacticalTest', settings.language), action: () => setIsNewTestModalOpen(true) },
-                { icon: '💬', label: t('tests.resources.teamChat', settings.language), path: '/ia-generadora' },
+                { icon: '🤖', label: t('tests.resources.teamChat', settings.language), path: '/ia-generadora' },
                 { icon: '🏆', label: t('tests.resources.seasonReport', settings.language), path: '/admin', tab: 'exportar' },
                 { icon: '🛡️', label: t('tests.resources.myTeam', settings.language), path: '/equipo' },
               ].map((r, i) => (
@@ -1353,7 +1353,7 @@ const Tests = () => {
                   <label>Tipo de Test</label>
                   <select value={newTest.type} onChange={e => setNewTest({...newTest, type: e.target.value})}>
                     <option value="fisico">Físico</option>
-                    <option value="fisico">Físico</option>
+                    <option value="tactico">Táctico</option>
                     <option value="psicosocial">Psicosocial</option>
                     <option value="socioemocional">Socioemocional</option>
                   </select>

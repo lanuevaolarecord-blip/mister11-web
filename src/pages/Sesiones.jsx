@@ -613,6 +613,8 @@ const Sesiones = () => {
               const intensity  = session.intensity|| session.intensidad|| 'Media';
               const blocks     = session.blocks   || session.bloques   || [];
               const linkedPiz = session.linkedPizarraId ? pizarras.find(p => p.id === session.linkedPizarraId) : null;
+              const firstBlockWithImg = blocks.find(b => b.imagenProtocolo);
+              const fallbackImage = firstBlockWithImg ? firstBlockWithImg.imagenProtocolo : null;
               
               return (
                 <div key={session.id} className="card-base" style={{ padding: '0', cursor: 'pointer', display: 'flex', flexDirection: 'column', height: '100%' }} onClick={() => setSelectedSession(session)}>
@@ -630,6 +632,8 @@ const Sesiones = () => {
                       <div style={{ flex: 1, background: 'var(--bg-app)', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', border: '1px solid var(--border-light)', position: 'relative', minHeight: '130px' }}>
                         {linkedPiz && linkedPiz.thumbnail ? (
                           <img src={linkedPiz.thumbnail} alt="Diagrama" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                        ) : fallbackImage ? (
+                          <img src={fallbackImage} alt="Diagrama de Bloque" style={{ width: '100%', height: '100%', objectFit: 'contain', padding: '4px' }} />
                         ) : (
                           <span style={{ color: 'var(--text-secondary)', fontSize: '12px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
                             <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" strokeWidth="2" fill="none"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
@@ -674,6 +678,17 @@ const Sesiones = () => {
                 </div>
                 
                 <div className="preview-files">
+                  {(() => {
+                    const linkedPiz = selectedSession.linkedPizarraId ? pizarras.find(p => p.id === selectedSession.linkedPizarraId) : null;
+                    const fallbackImg = (selectedSession.blocks || selectedSession.bloques || []).find(b => b.imagenProtocolo)?.imagenProtocolo;
+                    const diagramUrl = (linkedPiz && linkedPiz.thumbnail) || fallbackImg;
+                    if (!diagramUrl) return null;
+                    return (
+                      <div className="protocolo-card" style={{marginTop: '0', marginBottom: '15px', padding: '8px', display: 'flex', justifyContent: 'center', background: '#f8fafc', border: '1px solid var(--border-light)', borderRadius: '12px', overflow: 'hidden'}}>
+                        <img src={diagramUrl} alt="Diagrama Principal" style={{ maxWidth: '100%', maxHeight: '200px', objectFit: 'contain' }} />
+                      </div>
+                    );
+                  })()}
                   {selectedSession.objectives && (
                     <div className="protocolo-card" style={{marginTop: '0', marginBottom: '15px'}}>
                       <h4>Objetivos</h4>
@@ -763,7 +778,7 @@ const Sesiones = () => {
                       setIsGeneratingPDF(true);
                       setTimeout(async () => {
                         try {
-                          await generateSessionPDF(selectedSession, activeTeam);
+                          await generateSessionPDF(selectedSession, activeTeam, pizarras);
                         } catch(err) {
                           console.error(err);
                           alert("Error al generar el PDF");

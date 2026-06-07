@@ -31,20 +31,56 @@ const BlockEditor = ({ block, index, handleUpdateBlock, handleDeleteBlock, teamI
     const file = e.target.files[0];
     if (!file) return;
 
-    window.dispatchEvent(new CustomEvent('m11-loading', { detail: { show: true, message: 'Subiendo diagrama...' } }));
+    window.dispatchEvent(new CustomEvent('m11-loading', { detail: { show: true, message: 'Procesando diagrama...' } }));
     try {
-      const userId = auth.currentUser?.uid;
-      // Use teamId and a fallback session string if session isn't saved yet
-      const currentSessionId = sessionId || 'temp_session';
-      const path = `users/${userId}/teams/${teamId}/sessions/${currentSessionId}/blocks/${block.id}/diagram_${Date.now()}.png`;
-      
-      const url = await uploadImageFile(file, path);
-      handleUpdateBlock(block.id, 'imagenProtocolo', url);
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const img = new Image();
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          let width = img.width;
+          let height = img.height;
+          
+          const MAX_WIDTH = 600;
+          const MAX_HEIGHT = 600;
+          
+          if (width > height) {
+            if (width > MAX_WIDTH) {
+              height *= MAX_WIDTH / width;
+              width = MAX_WIDTH;
+            }
+          } else {
+            if (height > MAX_HEIGHT) {
+              width *= MAX_HEIGHT / height;
+              height = MAX_HEIGHT;
+            }
+          }
+          
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, width, height);
+          
+          const base64Url = canvas.toDataURL('image/jpeg', 0.7);
+          handleUpdateBlock(block.id, 'imagenProtocolo', base64Url);
+          window.dispatchEvent(new CustomEvent('m11-loading', { detail: { show: false } }));
+        };
+        img.onerror = () => {
+          alert('Error al procesar la imagen.');
+          window.dispatchEvent(new CustomEvent('m11-loading', { detail: { show: false } }));
+        };
+        img.src = event.target.result;
+      };
+      reader.onerror = () => {
+        alert('Error al leer el archivo.');
+        window.dispatchEvent(new CustomEvent('m11-loading', { detail: { show: false } }));
+      };
+      reader.readAsDataURL(file);
     } catch (err) {
       console.error(err);
-      alert('Error al subir la imagen.');
-    } finally {
+      alert('Error al procesar la imagen.');
       window.dispatchEvent(new CustomEvent('m11-loading', { detail: { show: false } }));
+    } finally {
       if (fileInputRef.current) {
         fileInputRef.current.value = '';
       }

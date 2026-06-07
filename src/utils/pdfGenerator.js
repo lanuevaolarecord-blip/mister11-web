@@ -1,6 +1,8 @@
-import { jsPDF } from 'jspdf';
+﻿import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { downloadPDF } from './download.js';
+import { db, auth } from '../firebaseConfig';
+import { doc, getDoc } from 'firebase/firestore';
 
 // Configuración de colores corporativos
 const THEME_COLOR = [27, 58, 45]; // #1B3A2D
@@ -125,10 +127,6 @@ const addFooter = (doc) => {
 export const generatePlanificacionPDF = async (macroInfo, microcycles, activeTeam = null) => {
   window.dispatchEvent(new CustomEvent('m11-loading', { detail: { show: true, message: 'Generando PDF...' } }));
   await new Promise(r => setTimeout(r, 150));
-  try {
-  } finally {
-    window.dispatchEvent(new CustomEvent('m11-loading', { detail: { show: false } }));
-  }
   const doc = new jsPDF({ orientation: 'landscape' });
   const pageW = doc.internal.pageSize.getWidth(); // 297mm landscape
 
@@ -272,6 +270,7 @@ export const generatePlanificacionPDF = async (macroInfo, microcycles, activeTea
   const safeName = (macroInfo.category || 'Equipo').replace(/\s+/g, '_');
   const year = (macroInfo.startDate || '').split('-')[0] || new Date().getFullYear();
   savePdfUniversal(doc, `Planificacion_${safeName}_${year}.pdf`);
+  window.dispatchEvent(new CustomEvent('m11-loading', { detail: { show: false } }));
 };
 
 /**
@@ -280,10 +279,6 @@ export const generatePlanificacionPDF = async (macroInfo, microcycles, activeTea
 export const generateTestsReport = async (tests, players, historyData, activeTeam = null) => {
   window.dispatchEvent(new CustomEvent('m11-loading', { detail: { show: true, message: 'Generando PDF...' } }));
   await new Promise(r => setTimeout(r, 150));
-  try {
-  } finally {
-    window.dispatchEvent(new CustomEvent('m11-loading', { detail: { show: false } }));
-  }
   const doc = new jsPDF({ orientation: 'landscape' });
   const pageW = doc.internal.pageSize.getWidth();
 
@@ -432,6 +427,7 @@ export const generateTestsReport = async (tests, players, historyData, activeTea
 
   addFooter(doc);
   savePdfUniversal(doc, `Tests_Equipo_${new Date().toLocaleDateString().replace(/\//g, '-')}.pdf`);
+  window.dispatchEvent(new CustomEvent('m11-loading', { detail: { show: false } }));
 };
 
 /**
@@ -440,10 +436,6 @@ export const generateTestsReport = async (tests, players, historyData, activeTea
 export const generatePlayerTestReport = async (player, tests, historyData, activeTeam = null, graficaDataUrl = null) => {
   window.dispatchEvent(new CustomEvent('m11-loading', { detail: { show: true, message: 'Generando PDF...' } }));
   await new Promise(r => setTimeout(r, 150));
-  try {
-  } finally {
-    window.dispatchEvent(new CustomEvent('m11-loading', { detail: { show: false } }));
-  }
   const doc = new jsPDF();
   const pageW = doc.internal.pageSize.getWidth();
 
@@ -624,100 +616,158 @@ export const generatePlayerTestReport = async (player, tests, historyData, activ
   addFooter(doc);
   const safeName = (player.name || player.nombre || 'Jugador').replace(/\s+/g, '_');
   savePdfUniversal(doc, `Informe_Tests_${safeName}.pdf`);
+  window.dispatchEvent(new CustomEvent('m11-loading', { detail: { show: false } }));
 };
 
 
 /**
  * SESIONES - Ficha individual
  */
-export const generateSessionPDF = async (session, activeTeam = null) => {
-  window.dispatchEvent(new CustomEvent('m11-loading', { detail: { show: true, message: 'Generando PDF...' } }));
+export const generateSessionPDF = async (session, activeTeam = null, pizarras = []) => {
+  window.dispatchEvent(new CustomEvent('m11-loading', { detail: { show: true, message: 'Generando PDF de Sesión...' } }));
   await new Promise(r => setTimeout(r, 150));
   try {
-  } finally {
-    window.dispatchEvent(new CustomEvent('m11-loading', { detail: { show: false } }));
-  }
-  const doc = new jsPDF();
-  
-  await addHeader(doc, `FICHA DE ENTRENAMIENTO`, session.nombre || session.title || session.titulo || 'Sesión sin nombre', activeTeam);
+    const doc = new jsPDF();
+    
+    await addHeader(doc, `FICHA DE ENTRENAMIENTO`, session.nombre || session.title || session.titulo || 'Sesión sin nombre', activeTeam);
 
-  doc.setTextColor(0, 0, 0);
-  doc.setFontSize(12);
-  doc.text(`Fecha: ${session.fechaCreacion || session.date || session.fecha || new Date().toLocaleDateString()}`, 15, 50);
-  doc.text(`Hora: ${session.time || '18:00'}`, 80, 50);
-  doc.text(`Duración: ${session.duration || session.duracion || '90'} min`, 140, 50);
-  
-  doc.text(`Intensidad: ${session.intensity || 'Media'}`, 15, 58);
-  doc.text(`Tipo: ${session.category || 'Mixta'}`, 80, 58);
+    doc.setTextColor(0, 0, 0);
+    doc.setFontSize(12);
+    doc.text(`Fecha: ${session.fechaCreacion || session.date || session.fecha || new Date().toLocaleDateString()}`, 15, 50);
+    doc.text(`Hora: ${session.time || '18:00'}`, 80, 50);
+    doc.text(`Duración: ${session.duration || session.duracion || '90'} min`, 140, 50);
+    
+    doc.text(`Intensidad: ${session.intensity || 'Media'}`, 15, 58);
+    doc.text(`Tipo: ${session.category || 'Mixta'}`, 80, 58);
 
-  doc.setFontSize(14);
-  doc.setTextColor(...THEME_COLOR);
-  doc.text('Bloques de la Sesión', 15, 75);
-  doc.setTextColor(0);
-
-  let currentY = 85;
-  const blocks = session.blocks || session.bloques || [];
-  
-  if (blocks.length === 0) {
-    doc.setFontSize(11);
-    doc.text('No hay bloques definidos para esta sesión.', 15, currentY);
-    currentY += 10;
-  } else {
-    for (const b of blocks) {
-      // Check for page break
-      if (currentY > 250) {
-        doc.addPage();
-        currentY = 20;
-      }
-      
-      doc.setFontSize(12);
-      doc.setFont(undefined, 'bold');
-      doc.text(`${blocks.indexOf(b)+1}. ${b.name || b.titulo} (${b.duration || b.tiempo} min) [${b.type || '-'}]`, 15, currentY);
-      
-      doc.setFont(undefined, 'normal');
-      doc.setFontSize(10);
-      const descLines = doc.splitTextToSize(b.description || b.descripcion || 'Sin descripción', 180);
-      doc.text(descLines, 15, currentY + 6);
-      
-      currentY += 8 + (descLines.length * 5) + 5;
-
-      if (b.imagenProtocolo) {
-        if (currentY > 220) {
-          doc.addPage();
-          currentY = 20;
-        }
+    // Intentar obtener el diagrama principal
+    let sessionDiagram = null;
+    const blocks = session.blocks || session.bloques || [];
+    
+    if (session.linkedPizarraId) {
+      const found = (pizarras || []).find(p => p.id === session.linkedPizarraId);
+      if (found && found.thumbnail) {
+        sessionDiagram = found.thumbnail;
+      } else {
+        // Intentar recuperar de Firestore
         try {
-          const imgBase64 = await getImageBase64(b.imagenProtocolo);
-          if (imgBase64) {
-            // Draw image with max width 180, height auto (approx 100 for aspect ratio)
-            doc.addImage(imgBase64, 'PNG', 15, currentY, 180, 100);
-            currentY += 110;
+          const user = auth.currentUser;
+          if (user && activeTeam?.id) {
+            const exerciseRef = doc(db, 'users', user.uid, 'teams', activeTeam.id, 'exercises', session.linkedPizarraId);
+            const exerciseSnap = await getDoc(exerciseRef);
+            if (exerciseSnap.exists() && exerciseSnap.data().thumbnail) {
+              sessionDiagram = exerciseSnap.data().thumbnail;
+            } else {
+              const pizarraRef = doc(db, 'users', user.uid, 'teams', activeTeam.id, 'pizarras', session.linkedPizarraId);
+              const pizarraSnap = await getDoc(pizarraRef);
+              if (pizarraSnap.exists() && pizarraSnap.data().thumbnail) {
+                sessionDiagram = pizarraSnap.data().thumbnail;
+              }
+            }
           }
-        } catch (e) {
-          console.warn('Could not load block image for PDF', e);
+        } catch (err) {
+          console.error("Error al recuperar pizarra para PDF:", err);
         }
       }
     }
+
+    // Fallback al diagrama del primer bloque si no hay pizarra
+    if (!sessionDiagram) {
+      const firstBlockWithImg = blocks.find(b => b.imagenProtocolo);
+      if (firstBlockWithImg) {
+        sessionDiagram = firstBlockWithImg.imagenProtocolo;
+      }
+    }
+
+    let currentY = 66;
+
+    if (sessionDiagram) {
+      try {
+        const imgBase64 = await getImageBase64(sessionDiagram);
+        if (imgBase64) {
+          doc.addImage(imgBase64, 'PNG', 15, currentY, 180, 100);
+          currentY += 105;
+        }
+      } catch (e) {
+        console.warn('Could not load session diagram for PDF', e);
+      }
+    }
+
+    // Verificar salto de página para el título de bloques
+    if (currentY > 260) {
+      doc.addPage();
+      currentY = 20;
+    }
+
+    doc.setFontSize(14);
+    doc.setTextColor(...THEME_COLOR);
+    doc.text('Bloques de la Sesión', 15, currentY);
+    doc.setTextColor(0);
+
+    currentY += 10;
+    
+    if (blocks.length === 0) {
+      doc.setFontSize(11);
+      doc.text('No hay bloques definidos para esta sesión.', 15, currentY);
+      currentY += 10;
+    } else {
+      for (const b of blocks) {
+        if (currentY > 250) {
+          doc.addPage();
+          currentY = 20;
+        }
+        
+        doc.setFontSize(12);
+        doc.setFont(undefined, 'bold');
+        doc.text(`${blocks.indexOf(b)+1}. ${b.name || b.titulo || 'Bloque'} (${b.duration || b.tiempo || 0} min) [${b.type || '-'}]`, 15, currentY);
+        
+        doc.setFont(undefined, 'normal');
+        doc.setFontSize(10);
+        const descLines = doc.splitTextToSize(b.description || b.descripcion || 'Sin descripción', 180);
+        doc.text(descLines, 15, currentY + 6);
+        
+        currentY += 8 + (descLines.length * 5) + 5;
+
+        if (b.imagenProtocolo) {
+          if (currentY > 220) {
+            doc.addPage();
+            currentY = 20;
+          }
+          try {
+            const imgBase64 = await getImageBase64(b.imagenProtocolo);
+            if (imgBase64) {
+              doc.addImage(imgBase64, 'PNG', 15, currentY, 180, 100);
+              currentY += 110;
+            }
+          } catch (e) {
+            console.warn('Could not load block image for PDF', e);
+          }
+        }
+      }
+    }
+
+    if (currentY > 220) {
+      doc.addPage();
+      currentY = 20;
+    }
+
+    doc.setFontSize(14);
+    doc.setTextColor(...THEME_COLOR);
+    doc.text('Notas y Observaciones Post-Sesión', 15, currentY + 15);
+    
+    doc.setDrawColor(200);
+    doc.setFillColor(250);
+    doc.rect(15, currentY + 20, 180, 50, 'FD');
+
+    addFooter(doc);
+    const safeTitle = (session.title || session.titulo || 'Sesion').replace(/[^a-z0-9]/gi, '_');
+    await savePdfUniversal(doc, `Sesion_${safeTitle}_${session.date || session.fecha || 'Hoy'}.pdf`);
+  } catch (err) {
+    console.error('Error al generar PDF de sesión:', err);
+    alert('Error al generar el PDF de la sesión.');
+  } finally {
+    window.dispatchEvent(new CustomEvent('m11-loading', { detail: { show: false } }));
   }
-
-  // Check for page break before notes
-  if (currentY > 220) {
-    doc.addPage();
-    currentY = 20;
-  }
-
-  doc.setFontSize(14);
-  doc.setTextColor(...THEME_COLOR);
-  doc.text('Notas y Observaciones Post-Sesión', 15, currentY + 15);
-  
-  // Dibujar caja para notas
-  doc.setDrawColor(200);
-  doc.setFillColor(250);
-  doc.rect(15, currentY + 20, 180, 50, 'FD');
-
-  addFooter(doc);
-  const safeTitle = (session.title || session.titulo || 'Sesion').replace(/[^a-z0-9]/gi, '_');
-  savePdfUniversal(doc, `Sesion_${safeTitle}_${session.date || session.fecha || 'Hoy'}.pdf`);
 };
 
 /**
@@ -726,10 +776,6 @@ export const generateSessionPDF = async (session, activeTeam = null) => {
 export const generateSeasonReport = async (team, players, matches) => {
   window.dispatchEvent(new CustomEvent('m11-loading', { detail: { show: true, message: 'Generando PDF...' } }));
   await new Promise(r => setTimeout(r, 150));
-  try {
-  } finally {
-    window.dispatchEvent(new CustomEvent('m11-loading', { detail: { show: false } }));
-  }
   const doc = new jsPDF();
   const teamName = team?.nombre || 'Equipo';
   const season = team?.temporada || new Date().getFullYear();
@@ -799,6 +845,7 @@ export const generateSeasonReport = async (team, players, matches) => {
 
   addFooter(doc);
   savePdfUniversal(doc, `Informe_Temporada_${teamName.replace(/\s+/g,'_')}.pdf`);
+  window.dispatchEvent(new CustomEvent('m11-loading', { detail: { show: false } }));
 };
 
 /**
@@ -807,10 +854,6 @@ export const generateSeasonReport = async (team, players, matches) => {
 export const generateMatchConvocation = async (match, players, activeTeam = null) => {
   window.dispatchEvent(new CustomEvent('m11-loading', { detail: { show: true, message: 'Generando PDF...' } }));
   await new Promise(r => setTimeout(r, 150));
-  try {
-  } finally {
-    window.dispatchEvent(new CustomEvent('m11-loading', { detail: { show: false } }));
-  }
   const doc = new jsPDF();
   const matchName = match.rival ? `Partido vs ${match.rival}` : (match.nombre || match.title || 'Partido Oficial');
   await addHeader(doc, 'HOJA DE CONVOCATORIA', matchName, activeTeam);
@@ -850,6 +893,7 @@ export const generateMatchConvocation = async (match, players, activeTeam = null
   addFooter(doc);
   const safeRival = (match.rival || 'Partido').replace(/\s+/g,'_');
   savePdfUniversal(doc, `Convocatoria_${safeRival}_${match.date || match.fecha || 'Hoy'}.pdf`);
+  window.dispatchEvent(new CustomEvent('m11-loading', { detail: { show: false } }));
 };
 
 /**
@@ -858,10 +902,6 @@ export const generateMatchConvocation = async (match, players, activeTeam = null
 export const generateExpediente = async (player, activeTeam = null) => {
   window.dispatchEvent(new CustomEvent('m11-loading', { detail: { show: true, message: 'Generando PDF...' } }));
   await new Promise(r => setTimeout(r, 150));
-  try {
-  } finally {
-    window.dispatchEvent(new CustomEvent('m11-loading', { detail: { show: false } }));
-  }
   const doc = new jsPDF();
   await addHeader(doc, 'EXPEDIENTE DEPORTIVO', `${player.name || player.nombre}`, activeTeam);
 
@@ -913,6 +953,7 @@ export const generateExpediente = async (player, activeTeam = null) => {
   addFooter(doc);
   const safeName = (player.name || player.nombre || 'Jugador').replace(/\s+/g,'_');
   savePdfUniversal(doc, `Expediente_${safeName}.pdf`);
+  window.dispatchEvent(new CustomEvent('m11-loading', { detail: { show: false } }));
 };
 
 export const generateExercisesReport = async (exercises, activeTeam = null) => {

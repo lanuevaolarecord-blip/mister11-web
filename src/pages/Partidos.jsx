@@ -2,6 +2,9 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useMatches } from '../hooks/useMatches';
 import { usePlayers } from '../hooks/usePlayers';
 import { useAuth } from '../context/AuthContext';
+import { useSettings } from '../hooks/useSettings';
+import { useTeams } from '../hooks/useTeams';
+import { generatePostMatchReportPDF } from '../utils/pdfGenerator';
 import './Partidos.css';
 
 const FORMATIONS = {
@@ -55,6 +58,8 @@ const Partidos = () => {
   const { activeTeamId } = useAuth();
   const { matches, loading: loadingMatches, addMatch, updateMatch, removeMatch } = useMatches(activeTeamId);
   const { players, loading: loadingPlayers } = usePlayers(activeTeamId);
+  const { settings } = useSettings(activeTeamId);
+  const { activeTeam } = useTeams();
   
   const [viewMode, setViewMode] = useState('LIST'); // 'LIST' or 'EDIT'
   const [filterMode, setFilterMode] = useState('Todos'); // 'Todos', 'Pendientes', 'Terminados'
@@ -66,6 +71,121 @@ const Partidos = () => {
   const [calledPlayers, setCalledPlayers] = useState([]); // Array of IDs
   const [draggingIdx, setDraggingIdx] = useState(null);
   const pitchRef = useRef(null);
+
+  const [activeQuestion, setActiveQuestion] = useState('tactical');
+  const [showReportPreview, setShowReportPreview] = useState(false);
+
+  const getLangText = (key) => {
+    const isEn = settings && settings.language === 'English (EN)';
+    const texts = {
+      'post.title': { es: 'Resultados y Análisis', en: 'Results & Analysis' },
+      'post.goalsFor': { es: 'Goles a Favor', en: 'Goals For' },
+      'post.goalsAgainst': { es: 'Goles en Contra', en: 'Goals Against' },
+      'post.mvp': { es: 'MVP del Partido', en: 'Match MVP' },
+      'post.mvpSelect': { es: 'Seleccione MVP', en: 'Select MVP' },
+      'post.scorers': { es: 'Goleadores y Asistencias', en: 'Scorers & Assists' },
+      'post.scorersPlaceholder': { es: 'Ej. Juan (2), Pedro (1 asistencia)', en: 'e.g. John (2), Peter (1 assist)' },
+      'post.notes': { es: 'Análisis General (Notas Tácticas)', en: 'General Analysis (Tactical Notes)' },
+      'post.notesPlaceholder': { es: 'Escribe tus conclusiones del partido, puntos de mejora, etc.', en: 'Write match conclusions, areas of improvement, etc.' },
+      'post.reportBuilder': { es: 'Informe Guiado (Cuestionario)', en: 'Guided Report (Questionnaire)' },
+      'post.images': { es: 'Imágenes y Fotos del Partido', en: 'Match Images & Photos' },
+      'post.uploadBtn': { es: 'Subir Fotos', en: 'Upload Photos' },
+      'post.viewReport': { es: 'Visualizar Informe', en: 'View Report' },
+      'post.downloadReport': { es: 'Descargar PDF', en: 'Download PDF' },
+      'post.notFinished': { es: 'El partido aún no ha terminado', en: 'The match has not finished yet' },
+      'post.notFinishedDesc': { es: 'Cambie el estado del partido a "Terminado" en la pestaña Pre-Partido para registrar el resultado.', en: 'Change the match status to "Terminado" in the Pre-Partido tab to record the result.' },
+      'post.tactical': { es: 'Rendimiento Táctico', en: 'Tactical Performance' },
+      'post.tacticalQ': { es: '¿Qué aspectos tácticos del plan de juego funcionaron y cuáles no?', en: 'Which tactical aspects of the game plan worked and which did not?' },
+      'post.physical': { es: 'Aspecto Físico/Mental', en: 'Physical/Mental Aspect' },
+      'post.physicalQ': { es: '¿Cómo evalúas el nivel físico, esfuerzo y la actitud mental del equipo?', en: 'How do you evaluate the physical level, effort, and mental attitude of the team?' },
+      'post.improvement': { es: 'Puntos de Mejora', en: 'Areas for Improvement' },
+      'post.improvementQ': { es: '¿Cuáles son los errores clave a corregir y las áreas de mejora prioritarias?', en: 'What are the key errors to correct and priority areas for improvement?' },
+      'post.highlights': { es: 'Momentos Clave', en: 'Key Moments' },
+      'post.highlightsQ': { es: '¿Qué jugadas destacadas, detalles individuales o notas adicionales deseas resaltar?', en: 'What highlights, individual details, or additional notes do you want to highlight?' },
+      'post.previewTitle': { es: 'Vista Previa del Informe Post-Partido', en: 'Post-Match Report Preview' },
+      'post.close': { es: 'Cerrar', en: 'Close' },
+      'post.noAnswers': { es: 'Sin responder aún.', en: 'Not answered yet.' },
+      'post.noImages': { es: 'No hay imágenes adjuntas.', en: 'No images attached.' }
+    };
+    return texts[key] ? (isEn ? texts[key].en : texts[key].es) : key;
+  };
+
+  const handleImageUpload = (e) => {
+    const files = Array.from(e.target.files);
+    if (!files.length) return;
+    
+    files.forEach(file => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = (event) => {
+        const img = new Image();
+        img.src = event.target.result;
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          let width = img.width;
+          let height = img.height;
+          
+          const MAX_WIDTH = 800;
+          const MAX_HEIGHT = 800;
+          if (width > height) {
+            if (width > MAX_WIDTH) {
+              height *= MAX_WIDTH / width;
+              width = MAX_WIDTH;
+            }
+          } else {
+            if (height > MAX_HEIGHT) {
+              width *= MAX_HEIGHT / height;
+              height = MAX_HEIGHT;
+            }
+          }
+          
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, width, height);
+          
+          const compressedBase64 = canvas.toDataURL('image/jpeg', 0.6);
+          
+          setMatchData(prev => ({
+            ...prev,
+            postMatchImages: [...(prev.postMatchImages || []), compressedBase64]
+          }));
+        };
+      };
+    });
+  };
+
+  const handleDeleteImage = (indexToRemove) => {
+    setMatchData(prev => ({
+      ...prev,
+      postMatchImages: (prev.postMatchImages || []).filter((_, idx) => idx !== indexToRemove)
+    }));
+  };
+
+  const handleAnswerChange = (key, value) => {
+    setMatchData(prev => ({
+      ...prev,
+      postMatchAnswers: {
+        ...(prev.postMatchAnswers || {}),
+        [key]: value
+      }
+    }));
+  };
+
+  const handleExportPDF = () => {
+    if (!matchData.id) {
+      alert("Guarde el partido antes de exportar el PDF.");
+      return;
+    }
+    generatePostMatchReportPDF(matchData, players, activeTeam);
+  };
+
+  const reportQuestions = [
+    { key: 'tactical', label: getLangText('post.tactical'), question: getLangText('post.tacticalQ') },
+    { key: 'physical', label: getLangText('post.physical'), question: getLangText('post.physicalQ') },
+    { key: 'improvement', label: getLangText('post.improvement'), question: getLangText('post.improvementQ') },
+    { key: 'highlights', label: getLangText('post.highlights'), question: getLangText('post.highlightsQ') }
+  ];
 
   useEffect(() => {
     const handlePointerUpWindow = () => setDraggingIdx(null);
@@ -113,7 +233,9 @@ const Partidos = () => {
       lineup: '4-3-3',
       events: [],
       titulares: [],
-      suplentes: []
+      suplentes: [],
+      postMatchAnswers: { tactical: '', physical: '', improvement: '', highlights: '' },
+      postMatchImages: []
     };
     setMatchData(newMatch);
     setCalledPlayers([]); 
@@ -122,7 +244,11 @@ const Partidos = () => {
   };
 
   const handleEditMatch = (match) => {
-    setMatchData({ ...match });
+    setMatchData({ 
+      postMatchAnswers: { tactical: '', physical: '', improvement: '', highlights: '' },
+      postMatchImages: [],
+      ...match 
+    });
     setCalledPlayers(match.convocados || []);
     setEditTab('PRE-PARTIDO');
     setViewMode('EDIT');
@@ -426,8 +552,8 @@ const Partidos = () => {
               <div className="tab-pane post-partido-container">
                 {matchData.status !== 'Terminado' ? (
                   <div className="empty-state-post">
-                    <h2>El partido aún no ha terminado</h2>
-                    <p>Cambie el estado del partido a "Terminado" en la pestaña Pre-Partido para registrar el resultado.</p>
+                    <h2>{getLangText('post.notFinished')}</h2>
+                    <p>{getLangText('post.notFinishedDesc')}</p>
                     
                     <div className="post-partido-image">
                       <img src="/assets/post-partido.png" alt="Partido no terminado" />
@@ -435,11 +561,11 @@ const Partidos = () => {
                   </div>
                 ) : (
                   <div className="post-partido-form">
-                    <h3 className="section-title">Resultados y Análisis</h3>
+                    <h3 className="section-title">{getLangText('post.title')}</h3>
                     
                     <div className="score-inputs">
                       <div className="score-box">
-                        <label>Goles a Favor</label>
+                        <label>{getLangText('post.goalsFor')}</label>
                         <input 
                           type="number" 
                           className="partidos-input text-center text-2xl" 
@@ -449,7 +575,7 @@ const Partidos = () => {
                       </div>
                       <div className="score-divider">-</div>
                       <div className="score-box">
-                        <label>Goles en Contra</label>
+                        <label>{getLangText('post.goalsAgainst')}</label>
                         <input 
                           type="number" 
                           className="partidos-input text-center text-2xl" 
@@ -461,13 +587,13 @@ const Partidos = () => {
 
                     <div className="form-grid" style={{ marginTop: '30px' }}>
                       <div className="form-group half">
-                        <label>MVP del Partido</label>
+                        <label>{getLangText('post.mvp')}</label>
                         <select 
                           className="partidos-input"
                           value={matchData.mvp || ''}
                           onChange={e => setMatchData({...matchData, mvp: e.target.value})}
                         >
-                          <option value="">Seleccione MVP</option>
+                          <option value="">{getLangText('post.mvpSelect')}</option>
                           {calledPlayers.map(id => {
                             const p = players.find(pl => pl.id === id);
                             return p ? <option key={id} value={p.name}>{p.name}</option> : null;
@@ -476,31 +602,221 @@ const Partidos = () => {
                       </div>
                       
                       <div className="form-group full">
-                        <label>Goleadores y Asistencias</label>
+                        <label>{getLangText('post.scorers')}</label>
                         <textarea 
                           className="partidos-input" 
                           rows="2" 
                           value={matchData.scorers || ''} 
                           onChange={e => setMatchData({...matchData, scorers: e.target.value})}
-                          placeholder="Ej. Juan (2), Pedro (1 asistencia)"
+                          placeholder={getLangText('post.scorersPlaceholder')}
                         ></textarea>
                       </div>
                       
                       <div className="form-group full">
-                        <label>Análisis del Entrenador (Notas Tácticas)</label>
+                        <label>{getLangText('post.notes')}</label>
                         <textarea 
                           className="partidos-input" 
-                          rows="4" 
+                          rows="3" 
                           value={matchData.notes || ''} 
                           onChange={e => setMatchData({...matchData, notes: e.target.value})}
-                          placeholder="Escribe tus conclusiones del partido, puntos de mejora, etc."
+                          placeholder={getLangText('post.notesPlaceholder')}
                         ></textarea>
                       </div>
+                    </div>
+
+                    {/* Cuestionario con Botones de Preguntas */}
+                    <div className="report-builder-section" style={{ marginTop: '30px', textAlign: 'left' }}>
+                      <h4 className="sub-section-title" style={{ fontSize: '1.1rem', fontWeight: '800', marginBottom: '16px', borderBottom: '1px solid var(--partidos-border)', paddingBottom: '8px' }}>
+                        {getLangText('post.reportBuilder')}
+                      </h4>
+                      <div className="question-buttons-grid" style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: '16px' }}>
+                        {reportQuestions.map(q => (
+                          <button
+                            key={q.key}
+                            type="button"
+                            className={`filter-tab ${activeQuestion === q.key ? 'active' : ''}`}
+                            style={{ minHeight: '48px', padding: '0 16px', borderRadius: '8px' }}
+                            onClick={() => setActiveQuestion(q.key)}
+                          >
+                            {q.label}
+                          </button>
+                        ))}
+                      </div>
+
+                      {reportQuestions.map(q => {
+                        if (activeQuestion !== q.key) return null;
+                        return (
+                          <div key={q.key} className="active-question-card" style={{ background: 'var(--partidos-player-card-bg)', padding: '16px', borderRadius: '12px', border: '1px solid var(--partidos-border)', marginBottom: '24px' }}>
+                            <p style={{ fontWeight: '700', fontSize: '14px', marginBottom: '10px', color: 'var(--partidos-text-primary)' }}>{q.question}</p>
+                            <textarea
+                              className="partidos-input"
+                              rows="4"
+                              value={(matchData.postMatchAnswers && matchData.postMatchAnswers[q.key]) || ''}
+                              onChange={e => handleAnswerChange(q.key, e.target.value)}
+                              placeholder="..."
+                              style={{ width: '100%', background: 'var(--partidos-panel-bg)' }}
+                            />
+                          </div>
+                        );
+                      })}
+                    </div>
+
+                    {/* Imágenes del Partido */}
+                    <div className="post-match-images-section" style={{ marginTop: '10px', textAlign: 'left' }}>
+                      <h4 className="sub-section-title" style={{ fontSize: '1.1rem', fontWeight: '800', marginBottom: '16px', borderBottom: '1px solid var(--partidos-border)', paddingBottom: '8px' }}>
+                        {getLangText('post.images')}
+                      </h4>
+                      
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '16px' }}>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          multiple
+                          id="post-match-photo-upload"
+                          style={{ display: 'none' }}
+                          onChange={handleImageUpload}
+                        />
+                        <label htmlFor="post-match-photo-upload" className="btn-primary-dark" style={{
+                          padding: '12px 20px',
+                          borderRadius: '8px',
+                          cursor: 'pointer',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '8px',
+                          minHeight: '48px',
+                          boxSizing: 'border-box'
+                        }}>
+                          📷 {getLangText('post.uploadBtn')}
+                        </label>
+                      </div>
+
+                      <div className="images-gallery" style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', marginTop: '16px' }}>
+                        {(matchData.postMatchImages || []).map((img, idx) => (
+                          <div key={idx} className="gallery-thumbnail-container" style={{ position: 'relative', width: '100px', height: '100px', borderRadius: '8px', overflow: 'hidden', border: '1px solid var(--partidos-border)' }}>
+                            <img src={img} alt={`Match Photo ${idx + 1}`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                            <button
+                              type="button"
+                              onClick={() => handleDeleteImage(idx)}
+                              style={{
+                                position: 'absolute',
+                                top: '4px',
+                                right: '4px',
+                                width: '28px',
+                                height: '28px',
+                                borderRadius: '50%',
+                                background: 'rgba(239, 68, 68, 0.9)',
+                                color: 'white',
+                                border: 'none',
+                                cursor: 'pointer',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                fontSize: '12px',
+                                fontWeight: 'bold'
+                              }}
+                            >
+                              ✕
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Botones de acción del informe */}
+                    <div style={{ display: 'flex', gap: '12px', marginTop: '40px', justifyContent: 'flex-end', flexWrap: 'wrap' }}>
+                      <button
+                        type="button"
+                        className="btn-outline-dark"
+                        style={{ minHeight: '48px', padding: '0 24px' }}
+                        onClick={() => setShowReportPreview(true)}
+                      >
+                        👁️ {getLangText('post.viewReport')}
+                      </button>
+                      <button
+                        type="button"
+                        className="btn-primary-dark"
+                        style={{ minHeight: '48px', padding: '0 24px' }}
+                        onClick={handleExportPDF}
+                      >
+                        📥 {getLangText('post.downloadReport')}
+                      </button>
                     </div>
                   </div>
                 )}
               </div>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* MODAL DE VISTA PREVIA DEL INFORME */}
+      {showReportPreview && (
+        <div className="modal-overlay" onClick={() => setShowReportPreview(false)} style={{ zIndex: 1000 }}>
+          <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: '700px', width: '90%', maxHeight: '85vh', overflowY: 'auto', borderRadius: '16px', padding: '24px' }}>
+            <div className="modal-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--partidos-border)', paddingBottom: '16px', marginBottom: '20px' }}>
+              <h2 style={{ margin: '0', fontSize: '1.4rem', fontFamily: 'var(--font-heading)' }}>{getLangText('post.previewTitle')}</h2>
+              <button className="btn-close" onClick={() => setShowReportPreview(false)} style={{ background: 'none', border: 'none', fontSize: '20px', cursor: 'pointer', color: 'var(--partidos-text-primary)' }}>✕</button>
+            </div>
+            
+            <div className="modal-body" style={{ textAlign: 'left' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--partidos-player-card-bg)', padding: '16px', borderRadius: '12px', marginBottom: '20px' }}>
+                <div>
+                  <h3 style={{ margin: '0 0 4px 0', fontSize: '1.2rem', fontWeight: '800' }}>{activeTeam?.nombre || 'Míster 11 FC'} vs {matchData.rival}</h3>
+                  <span style={{ fontSize: '12px', color: 'var(--partidos-text-muted)' }}>{matchData.date} | {matchData.time} | {matchData.location}</span>
+                </div>
+                <div style={{ fontSize: '1.8rem', fontWeight: '800', color: 'var(--partidos-accent)' }}>
+                  {matchData.type === 'Local' ? matchData.goalsFor : matchData.goalsAgainst} - {matchData.type === 'Local' ? matchData.goalsAgainst : matchData.goalsFor}
+                </div>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '24px' }}>
+                <div>
+                  <h4 style={{ margin: '0 0 6px 0', fontSize: '12px', fontWeight: '800', textTransform: 'uppercase', color: 'var(--partidos-text-muted)' }}>{getLangText('post.mvp')}</h4>
+                  <p style={{ margin: '0', fontWeight: '700', fontSize: '15px' }}>{matchData.mvp || '-'}</p>
+                </div>
+                <div>
+                  <h4 style={{ margin: '0 0 6px 0', fontSize: '12px', fontWeight: '800', textTransform: 'uppercase', color: 'var(--partidos-text-muted)' }}>{getLangText('post.scorers')}</h4>
+                  <p style={{ margin: '0', fontWeight: '700', fontSize: '15px' }}>{matchData.scorers || '-'}</p>
+                </div>
+              </div>
+
+              {matchData.notes && (
+                <div style={{ marginBottom: '24px' }}>
+                  <h4 style={{ margin: '0 0 6px 0', fontSize: '12px', fontWeight: '800', textTransform: 'uppercase', color: 'var(--partidos-text-muted)' }}>{getLangText('post.notes')}</h4>
+                  <p style={{ margin: '0', fontSize: '14px', background: 'var(--partidos-player-card-bg)', padding: '12px', borderRadius: '8px', whiteSpace: 'pre-wrap' }}>{matchData.notes}</p>
+                </div>
+              )}
+
+              <div style={{ borderTop: '1px solid var(--partidos-border)', paddingTop: '20px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                {reportQuestions.map(q => (
+                  <div key={q.key}>
+                    <h4 style={{ margin: '0 0 6px 0', fontSize: '13px', fontWeight: '800', color: 'var(--partidos-accent)' }}>{q.label}</h4>
+                    <p style={{ margin: '0', fontSize: '14px', background: 'var(--partidos-player-card-bg)', padding: '12px', borderRadius: '8px', whiteSpace: 'pre-wrap', fontStyle: !(matchData.postMatchAnswers && matchData.postMatchAnswers[q.key]) ? 'italic' : 'normal', color: !(matchData.postMatchAnswers && matchData.postMatchAnswers[q.key]) ? 'var(--partidos-text-muted)' : 'var(--partidos-text-primary)' }}>
+                      {(matchData.postMatchAnswers && matchData.postMatchAnswers[q.key]) || getLangText('post.noAnswers')}
+                    </p>
+                  </div>
+                ))}
+              </div>
+
+              <div style={{ borderTop: '1px solid var(--partidos-border)', paddingTop: '20px', marginTop: '20px' }}>
+                <h4 style={{ margin: '0 0 12px 0', fontSize: '12px', fontWeight: '800', textTransform: 'uppercase', color: 'var(--partidos-text-muted)' }}>{getLangText('post.images')}</h4>
+                {(!matchData.postMatchImages || matchData.postMatchImages.length === 0) ? (
+                  <p style={{ margin: '0', fontSize: '14px', color: 'var(--partidos-text-muted)', fontStyle: 'italic' }}>{getLangText('post.noImages')}</p>
+                ) : (
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))', gap: '12px' }}>
+                    {matchData.postMatchImages.map((img, idx) => (
+                      <div key={idx} style={{ aspectRatio: '4/3', borderRadius: '8px', overflow: 'hidden', border: '1px solid var(--partidos-border)' }}>
+                        <img src={img} alt={`Preview Match ${idx}`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className="modal-footer" style={{ borderTop: '1px solid var(--partidos-border)', paddingTop: '16px', marginTop: '24px', display: 'flex', justifyContent: 'flex-end' }}>
+              <button className="btn-primary-dark" style={{ minHeight: '48px', padding: '0 24px' }} onClick={() => setShowReportPreview(false)}>{getLangText('post.close')}</button>
+            </div>
           </div>
         </div>
       )}

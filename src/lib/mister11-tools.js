@@ -64,17 +64,6 @@ export const TOOLS = {
     group: 'draw',
   },
 
-  dashed: {
-    id: 'dashed',
-    label: 'Línea punteada',
-    icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-               stroke-dasharray="3,2">
-      <line x1="4" y1="20" x2="20" y2="4"/>
-    </svg>`,
-    cursor: 'crosshair',
-    group: 'draw',
-  },
-
   dashed_curve: {
     id: 'dashed_curve',
     label: 'Curva punteada',
@@ -257,15 +246,6 @@ export class ToolManager {
         // Simulación de zigzag con dash corto y shadow
         this.canvas.freeDrawingBrush.strokeDashArray = [4, 4];
         this.canvas.freeDrawingBrush.shadow = new fabric.Shadow({ blur: 2, color: 'rgba(0,0,0,0.3)', offsetX: 1, offsetY: 1 });
-        break;
-
-      case 'pressure':
-        this.canvas.isDrawingMode = true;
-        this.canvas.freeDrawingBrush = new fabric.PencilBrush(this.canvas);
-        this.canvas.freeDrawingBrush.color = this.strokeColor;
-        this.canvas.freeDrawingBrush.width = this.strokeWidth;
-        // Efecto ondulado usando un patrón de dash asimétrico que simula vibración
-        this.canvas.freeDrawingBrush.strokeDashArray = [12, 4, 2, 4];
         break;
 
       default:

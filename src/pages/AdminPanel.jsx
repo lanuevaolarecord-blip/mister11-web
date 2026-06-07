@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { APP_VERSION } from '../constants/appVersion';
 import { useTeams } from '../hooks/useTeams';
 import { useSettings } from '../hooks/useSettings';
@@ -17,9 +17,12 @@ import {
   Download,
   Calendar,
   Layers,
-  CheckCircle
+  CheckCircle,
+  Search,
+  Sparkles,
+  Clipboard
 } from 'lucide-react';
-import { generateSeasonReport, generateMatchConvocation, generateSessionPDF } from '../utils/pdfGenerator';
+import { generateSeasonReport, generateMatchConvocation, generateSessionPDF, generateExercisesReport } from '../utils/pdfGenerator';
 import { generateGlobalTeamReport } from '../utils/teamReportGenerator';
 import { downloadJSON } from '../utils/download';
 import { t } from '../i18n/translations';
@@ -37,10 +40,25 @@ import ExerciseLibrary from '../components/ExerciseLibrary';
 import './AdminPanel.css';
 
 const AdminPanel = () => {
-  const [activeTab, setActiveTab] = useState('equipos');
+  const navigate = useNavigate();
+  const location = useLocation();
+  const [activeTab, setActiveTab] = useState(location.state?.activeTab || 'equipos');
+
+  useEffect(() => {
+    if (location.state?.activeTab) {
+      setActiveTab(location.state.activeTab);
+    }
+  }, [location.state?.activeTab]);
+
   const { user } = useAuth();
   const { teams, activeTeam, addTeam, deleteTeam, selectTeam, updateTeam } = useTeams();
-  const { exercises, removeExercise } = useExercises(activeTeam?.id);
+  const { exercises, removeExercise, addExercise } = useExercises(activeTeam?.id);
+  const [exerciseSearchTerm, setExerciseSearchTerm] = useState('');
+  const [showAddExerciseModal, setShowAddExerciseModal] = useState(false);
+  const [newExercise, setNewExercise] = useState({
+    name: '', category: 'fortalecimiento', targetZones: [], injuryTypes: [], 
+    difficulty: 1, description: '', durationSeconds: 0, reps: 0, series: 1
+  });
   const { players } = usePlayers(activeTeam?.id);
   const { sessions } = useSessions(activeTeam?.id);
   const { matches } = useMatches(activeTeam?.id);
@@ -110,6 +128,20 @@ const AdminPanel = () => {
     if (!newTeam.nombre) return;
     await addTeam(newTeam);
     setNewTeam({ nombre: '', categoria: '', temporada: '2025-26' });
+  };
+
+  const handleSaveExercise = async () => {
+    if (!newExercise.name) return;
+    await addExercise({
+      ...newExercise,
+      source: 'manual',
+      createdBy: 'trainer'
+    });
+    setShowAddExerciseModal(false);
+    setNewExercise({
+      name: '', category: 'fortalecimiento', targetZones: [], injuryTypes: [], 
+      difficulty: 1, description: '', durationSeconds: 0, reps: 0, series: 1
+    });
   };
 
   const [isUploadingShield, setIsUploadingShield] = useState(false);

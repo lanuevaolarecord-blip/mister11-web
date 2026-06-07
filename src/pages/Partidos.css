@@ -698,3 +698,54 @@ html.dark {
   .form-actions-bottom { flex-direction: column; gap: 20px; align-items: stretch; }
   .form-actions-right { flex-direction: column; }
 }
+
+/* =========================================================
+   ESTILOS DE MODAL Y REPORTE POST-PARTIDO
+========================================================= */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  animation: fadeIn 0.2s ease-out;
+}
+
+.modal-content {
+  background: var(--partidos-panel-bg);
+  border: 1px solid var(--partidos-border);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+  color: var(--partidos-text-primary);
+  animation: slideUp 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.btn-close {
+  color: var(--partidos-text-muted);
+  transition: color 0.2s;
+}
+.btn-close:hover {
+  color: var(--partidos-text-primary);
+}
+
+.gallery-thumbnail-container {
+  transition: transform 0.2s;
+}
+.gallery-thumbnail-container:hover {
+  transform: scale(1.05);
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from { transform: translateY(20px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}

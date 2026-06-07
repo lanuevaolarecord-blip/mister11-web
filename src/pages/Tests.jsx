@@ -1,8 +1,11 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { usePlayers } from '../hooks/usePlayers';
 import { useAuth } from '../context/AuthContext';
 import { useTeams } from '../hooks/useTeams';
 import { usePlan } from '../hooks/usePlan';
+import { t } from '../i18n/translations';
+import { useSettings } from '../hooks/useSettings';
 import UpgradeModal from '../components/UpgradeModal';
 import { generateTestsReport, generatePlayerTestReport } from '../utils/pdfGenerator';
 import { downloadCSV } from '../utils/download.js';
@@ -109,7 +112,9 @@ const DEFAULT_TESTS = [
 const DEFAULT_IDS = DEFAULT_TESTS.map(t => t.id);
 
 const Tests = () => {
+  const navigate = useNavigate();
   const { user, activeTeamId } = useAuth();
+  const { settings } = useSettings(activeTeamId);
   const { activeTeam } = useTeams();
   const { isPro } = usePlan();
   const { players, loading: loadingPlayers } = usePlayers(activeTeamId);
@@ -730,20 +735,14 @@ const Tests = () => {
                     style={
                       histSelectedPlayer === p.id 
                         ? { background: '#4CAF7D', color: '#FFF', borderColor: '#4CAF7D' } 
-                        : idx === 1 
-                          ? { background: '#FFFFFF', borderColor: '#D4A843' } 
-                          : idx === 2 
-                            ? { background: '#A3D9C9', borderColor: '#A3D9C9' } 
-                            : {}
+                        : {}
                     }
                     onClick={() => setHistSelectedPlayer(p.id)}
                   >
                     <span className="p-num" style={
                       histSelectedPlayer === p.id 
                         ? { background: '#FFF', color: '#4CAF7D' } 
-                        : idx === 2 
-                          ? { background: '#1B3A2D', color: '#FFF' } 
-                          : {}
+                        : {}
                     }>{p.number}</span>
                     <span className="p-name" style={
                       histSelectedPlayer === p.id 
@@ -1306,16 +1305,26 @@ const Tests = () => {
 
             {/* Sidebar recursos */}
             <div className="comp-sidebar-resources">
-              <div className="resources-title">Recursos y Herramientas</div>
+              <div className="resources-title">{t('tests.resources.title', settings.language)}</div>
               {[
-                { icon: '📋', label: 'Tactical Library' },
-                { icon: '🗂️', label: 'Drill Database' },
-                { icon: '📊', label: 'Tactical Test' },
-                { icon: '💬', label: 'Team Chat' },
-                { icon: '🏆', label: 'Season Report' },
-                { icon: '🛡️', label: 'Mi Equipo' },
+                { icon: '📋', label: t('tests.resources.tacticalLibrary', settings.language), path: '/pizarra' },
+                { icon: '🗂️', label: t('tests.resources.drillDatabase', settings.language), path: '/admin', tab: 'ejercicios' },
+                { icon: '📊', label: t('tests.resources.tacticalTest', settings.language), action: () => setIsNewTestModalOpen(true) },
+                { icon: '💬', label: t('tests.resources.teamChat', settings.language), path: '/ia-generadora' },
+                { icon: '🏆', label: t('tests.resources.seasonReport', settings.language), path: '/admin', tab: 'exportar' },
+                { icon: '🛡️', label: t('tests.resources.myTeam', settings.language), path: '/equipo' },
               ].map((r, i) => (
-                <div key={i} className="resource-item">
+                <div 
+                  key={i} 
+                  className="resource-item"
+                  onClick={() => {
+                    if (r.action) {
+                      r.action();
+                    } else if (r.path) {
+                      navigate(r.path, r.tab ? { state: { activeTab: r.tab } } : undefined);
+                    }
+                  }}
+                >
                   <span className="resource-icon">{r.icon}</span>
                   <span className="resource-label">{r.label}</span>
                   <span className="resource-arrow">↗</span>

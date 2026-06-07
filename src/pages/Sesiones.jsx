@@ -457,7 +457,7 @@ const Sesiones = () => {
               </div>
               {uploadProgress > 0 && uploadProgress < 100 && (
                 <div style={{width: '100%', height: '8px', background: '#e0e0e0', borderRadius: '4px', margin: '10px 0', overflow: 'hidden'}}>
-                  <div style={{width: `${uploadProgress}%`, height: '100%', background: 'var(--m11-green)', transition: 'width 0.3s ease'}}></div>
+                  <div style={{width: `${uploadProgress}%`, height: '100%', background: 'var(--accent)', transition: 'width 0.3s ease'}}></div>
                 </div>
               )}
               {editData.files.length === 0 ? (

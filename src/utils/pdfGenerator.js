@@ -914,3 +914,228 @@ export const generateExpediente = async (player, activeTeam = null) => {
   const safeName = (player.name || player.nombre || 'Jugador').replace(/\s+/g,'_');
   savePdfUniversal(doc, `Expediente_${safeName}.pdf`);
 };
+
+export const generateExercisesReport = async (exercises, activeTeam = null) => {
+  window.dispatchEvent(new CustomEvent('m11-loading', { detail: { show: true, message: 'Generando PDF...' } }));
+  await new Promise(r => setTimeout(r, 150));
+  try {
+    const doc = new jsPDF();
+    const teamName = activeTeam?.nombre || 'Míster 11';
+    await addHeader(doc, 'BIBLIOTECA DE EJERCICIOS', `Equipo: ${teamName}`, activeTeam);
+
+    const tableData = exercises.map(ex => [
+      ex.name || ex.titulo || 'Sin nombre',
+      (ex.category || 'General').toUpperCase(),
+      (ex.targetZones || []).join(', ') || 'N/A',
+      `${ex.series || 3} series` + (ex.reps ? ` x ${ex.reps} reps` : '') + (ex.durationSeconds ? ` x ${ex.durationSeconds}s` : ''),
+      ex.description || ex.descripcion || 'Sin descripción'
+    ]);
+
+    autoTable(doc, {
+      startY: 48,
+      head: [['Ejercicio', 'Categoría', 'Zonas Objetivo', 'Parámetros', 'Descripción']],
+      body: tableData,
+      theme: 'striped',
+      headStyles: { fillColor: THEME_COLOR, textColor: TEXT_COLOR },
+      styles: { fontSize: 9 },
+      columnStyles: {
+        4: { cellWidth: 70 }
+      }
+    });
+
+    await savePdfUniversal(doc, `biblioteca_ejercicios_${teamName.toLowerCase().replace(/\s+/g, '_')}.pdf`);
+  } catch (error) {
+    console.error('Error generating exercises report:', error);
+    alert('Error al generar el PDF.');
+  } finally {
+    window.dispatchEvent(new CustomEvent('m11-loading', { detail: { show: false } }));
+  }
+};
+
+/**
+ * INFORME POST-PARTIDO - Completo con cuestionario e imágenes
+ */
+export const generatePostMatchReportPDF = async (match, players, activeTeam = null) => {
+  window.dispatchEvent(new CustomEvent('m11-loading', { detail: { show: true, message: 'Generando PDF...' } }));
+  await new Promise(r => setTimeout(r, 150));
+  try {
+    const doc = new jsPDF();
+    const pageW = doc.internal.pageSize.getWidth();
+    const pageH = doc.internal.pageSize.getHeight();
+    const rival = match.rival || 'Rival';
+    
+    await addHeader(doc, 'INFORME POST-PARTIDO', `vs ${rival}`, activeTeam);
+    
+    // 1. Detalles del encuentro
+    doc.setTextColor(45, 45, 45);
+    doc.setFontSize(11);
+    doc.setFont(undefined, 'bold');
+    doc.text('Detalles del Encuentro', 15, 50);
+    
+    doc.setFont(undefined, 'normal');
+    doc.setFontSize(10);
+    doc.text(`Fecha: ${match.date || '--/--/----'}`, 15, 57);
+    doc.text(`Hora: ${match.time || '--:--'}`, 80, 57);
+    doc.text(`Lugar: ${match.location || 'No especificado'}`, 140, 57);
+    
+    doc.text(`Condición: ${match.type || 'Local'}`, 15, 64);
+    doc.text(`Formación inicial: ${match.lineup || '4-3-3'}`, 80, 64);
+    
+    // Resultado destacado
+    doc.setFillColor(27, 58, 45); // THEME_COLOR
+    doc.rect(140, 62, 55, 14, 'F');
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(12);
+    doc.setFont(undefined, 'bold');
+    const goalsLocal = match.type === 'Local' ? (match.goalsFor ?? 0) : (match.goalsAgainst ?? 0);
+    const goalsVisit = match.type === 'Local' ? (match.goalsAgainst ?? 0) : (match.goalsFor ?? 0);
+    doc.text(`${goalsLocal} - ${goalsVisit}`, 167.5, 70, { align: 'center' });
+    doc.setFontSize(8);
+    doc.setTextColor(200, 200, 200);
+    doc.text('RESULTADO FINAL', 167.5, 74, { align: 'center' });
+    
+    // MVP y Goleadores
+    doc.setTextColor(45, 45, 45);
+    doc.setFontSize(11);
+    doc.setFont(undefined, 'bold');
+    doc.text('Destacados del Partido', 15, 80);
+    
+    doc.setFont(undefined, 'normal');
+    doc.setFontSize(10);
+    doc.text(`MVP: ${match.mvp || 'No especificado'}`, 15, 87);
+    
+    const scorersText = match.scorers || 'No especificado';
+    const splitScorers = doc.splitTextToSize(`Goleadores/Asistencias: ${scorersText}`, pageW - 30);
+    doc.text(splitScorers, 15, 94);
+    
+    let currentY = 94 + (splitScorers.length * 5) + 6;
+    
+    // Alineación si hay convocados
+    const convocados = players.filter(p => match.convocados?.includes(p.id));
+    if (convocados.length > 0) {
+      doc.setFont(undefined, 'bold');
+      doc.setFontSize(11);
+      doc.text('Convocados y Alineación', 15, currentY);
+      currentY += 5;
+      
+      const tableBody = convocados.map((p, i) => [
+        p.number || p.dorsal || i + 1,
+        p.name || p.nombre || '-',
+        p.position || p.posicion || '-',
+        i < 11 ? 'XI Titular' : 'Suplente'
+      ]);
+      
+      autoTable(doc, {
+        startY: currentY,
+        head: [['#', 'Nombre del Jugador', 'Posición', 'Rol']],
+        body: tableBody,
+        headStyles: { fillColor: THEME_COLOR, textColor: [255, 255, 255], fontStyle: 'bold', fontSize: 9 },
+        bodyStyles: { textColor: [45, 45, 45], fontSize: 8.5 },
+        alternateRowStyles: { fillColor: [245, 240, 232] },
+        styles: { cellPadding: 2 },
+        margin: { left: 15, right: 15 }
+      });
+      currentY = doc.lastAutoTable.finalY + 12;
+    }
+    
+    // 2. Cuestionario guiado (respuestas)
+    const reportQuestions = [
+      { key: 'tactical', label: 'Rendimiento Táctico' },
+      { key: 'physical', label: 'Rendimiento Físico/Mental' },
+      { key: 'improvement', label: 'Puntos de Mejora' },
+      { key: 'highlights', label: 'Notas Destacadas y MVP' }
+    ];
+    
+    // Notas generales
+    if (match.notes) {
+      if (currentY > pageH - 40) {
+        doc.addPage();
+        currentY = 48;
+      }
+      doc.setFont(undefined, 'bold');
+      doc.setFontSize(11);
+      doc.text('Análisis General (Notas Tácticas)', 15, currentY);
+      currentY += 6;
+      
+      doc.setFont(undefined, 'normal');
+      doc.setFontSize(9.5);
+      const splitNotes = doc.splitTextToSize(match.notes, pageW - 30);
+      doc.text(splitNotes, 15, currentY);
+      currentY += (splitNotes.length * 5) + 10;
+    }
+    
+    // Preguntas guiadas
+    for (const q of reportQuestions) {
+      const answer = (match.postMatchAnswers && match.postMatchAnswers[q.key]) || '';
+      if (answer) {
+        if (currentY > pageH - 45) {
+          doc.addPage();
+          currentY = 48;
+        }
+        
+        doc.setFont(undefined, 'bold');
+        doc.setFontSize(11);
+        doc.text(q.label, 15, currentY);
+        currentY += 6;
+        
+        doc.setFont(undefined, 'normal');
+        doc.setFontSize(9.5);
+        const splitAns = doc.splitTextToSize(answer, pageW - 30);
+        doc.text(splitAns, 15, currentY);
+        currentY += (splitAns.length * 5) + 10;
+      }
+    }
+    
+    // 3. Imágenes adjuntas
+    const images = match.postMatchImages || [];
+    if (images.length > 0) {
+      if (currentY > pageH - 75) {
+        doc.addPage();
+        currentY = 48;
+      }
+      
+      doc.setFont(undefined, 'bold');
+      doc.setFontSize(11);
+      doc.text('Imágenes Adjuntas', 15, currentY);
+      currentY += 8;
+      
+      let imgX = 15;
+      const imgW = 85;
+      const imgH = 64; // Aspect ratio ~ 4:3
+      
+      for (let i = 0; i < images.length; i++) {
+        // Verificar si cabe en la página
+        if (currentY + imgH > pageH - 25) {
+          doc.addPage();
+          currentY = 48;
+          imgX = 15;
+        }
+        
+        try {
+          doc.addImage(images[i], 'JPEG', imgX, currentY, imgW, imgH);
+        } catch (e) {
+          console.error("Error al añadir imagen al PDF:", e);
+        }
+        
+        // Colocar dos imágenes por fila
+        if (i % 2 === 0 && i < images.length - 1) {
+          imgX = 110;
+        } else {
+          imgX = 15;
+          currentY += imgH + 8;
+        }
+      }
+    }
+    
+    addFooter(doc);
+    const safeRival = rival.replace(/\s+/g, '_');
+    const safeDate = (match.date || 'Hoy').replace(/-+/g, '_');
+    await savePdfUniversal(doc, `Informe_PostPartido_${safeRival}_${safeDate}.pdf`);
+  } catch (error) {
+    console.error('Error generating post-match report:', error);
+    alert('Error al generar el PDF del informe.');
+  } finally {
+    window.dispatchEvent(new CustomEvent('m11-loading', { detail: { show: false } }));
+  }
+};
+

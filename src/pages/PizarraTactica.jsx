@@ -222,12 +222,23 @@ const PizarraTactica = () => {
 
       objects.forEach(o => {
         // Restaurar borde blanco en los jugadores
-        if (o.data?.type === 'player' || o.data?.tipo === 'jugador') {
-          if (o.type === 'group') {
-            const circle = o.getObjects().find(child => child.type === 'circle');
-            if (circle && o.data._strokeWidth) {
-              circle.set({ stroke: '#FFFFFF', strokeWidth: o.data._strokeWidth });
-            }
+        const isPlayer = o.data?.type === 'player' || 
+                         o.data?.tipo === 'jugador' || 
+                         (o.type === 'group' && 
+                          o.getObjects && 
+                          o.getObjects().length === 2 && 
+                          o.getObjects().some(child => child.type === 'circle') && 
+                          o.getObjects().some(child => child.type === 'text'));
+
+        if (isPlayer && o.type === 'group') {
+          const circle = o.getObjects().find(child => child.type === 'circle');
+          if (circle) {
+            const r = o.radius || circle.radius || RADIO_JUGADOR;
+            const sw = o.data?._strokeWidth || Math.max(2, r * 0.18);
+            circle.set({ stroke: '#FFFFFF', strokeWidth: sw });
+            circle.dirty = true;
+            o.set({ stroke: '#FFFFFF', strokeWidth: sw });
+            o.dirty = true;
           }
         }
         applyMister11Controls(o);
@@ -433,6 +444,14 @@ const PizarraTactica = () => {
     }
   }, [user, planId, activeTeamId]);
 
+  const resetHistory = useCallback(() => {
+    pastR.current = [];
+    futureR.current = [];
+    presentR.current = null;
+    setHistCount(0);
+    setRedoCount(0);
+  }, []);
+
   // ─── Push to undo history ─────────────────────────────────────────────────
   const pushToHistory = useCallback(() => {
     const fc = fcRef.current;
@@ -586,6 +605,8 @@ const PizarraTactica = () => {
         if (newFrames.length > 0) {
           cargarFrame(newFrames[0].state, () => {
             fcRef.current?.renderAll();
+            resetHistory();
+            presentR.current = JSON.stringify(newFrames[0].state);
           });
         }
         showToast('¡Animación importada con éxito!', 'success');
@@ -1354,7 +1375,6 @@ const PizarraTactica = () => {
                 cargarFrameConListeners(dbFrames[0].state, () => {
                   setFrameIdx(0);
                   frameIdxR.current = 0;
-                  pushToHistory();
                 });
               }
             }
@@ -1455,6 +1475,11 @@ const PizarraTactica = () => {
       });
 
       fc.renderAll();
+
+      if (readyR.current && !presentR.current) {
+        const stateObj = serializarFrame();
+        presentR.current = JSON.stringify(stateObj);
+      }
     };
 
 
@@ -1839,9 +1864,17 @@ const PizarraTactica = () => {
     if (!changed) return;
 
     fc.getObjects().forEach(obj => {
-      if (obj.data && (obj.data.type === 'player' || obj.data.tipo === 'jugador')) {
-        const pType = obj.data.playerType;
-        const isGk = obj.data.label === 1;
+      const isPlayer = obj.data?.type === 'player' || 
+                       obj.data?.tipo === 'jugador' || 
+                       (obj.type === 'group' && 
+                        obj.getObjects && 
+                        obj.getObjects().length === 2 && 
+                        obj.getObjects().some(child => child.type === 'circle') && 
+                        obj.getObjects().some(child => child.type === 'text'));
+
+      if (isPlayer) {
+        const pType = obj.data?.playerType || 'local';
+        const isGk = obj.data?.label === 1;
         
         let targetColor = null;
         if (pType === 'local') {
@@ -1856,14 +1889,18 @@ const PizarraTactica = () => {
           if (obj._objects) {
             obj._objects.forEach(child => {
               if (child.type === 'circle') {
-                child.set({ fill: targetColor, stroke: '#FFFFFF' });
+                const sw = obj.data?._strokeWidth || Math.max(2, (obj.radius || child.radius || RADIO_JUGADOR) * 0.18);
+                child.set({ fill: targetColor, stroke: '#FFFFFF', strokeWidth: sw });
+                child.dirty = true;
               }
             });
             obj.dirty = true;
           } else if (obj.type === 'group') {
             const circle = obj.getObjects().find(child => child.type === 'circle');
             if (circle) {
-              circle.set({ fill: targetColor, stroke: '#FFFFFF' });
+              const sw = obj.data?._strokeWidth || Math.max(2, (obj.radius || circle.radius || RADIO_JUGADOR) * 0.18);
+              circle.set({ fill: targetColor, stroke: '#FFFFFF', strokeWidth: sw });
+              circle.dirty = true;
               obj.dirty = true;
             }
           }
@@ -2263,6 +2300,8 @@ const PizarraTactica = () => {
         fc.renderAll();
         setFrameIdx(idx);
         frameIdxR.current = idx;
+        resetHistory();
+        presentR.current = JSON.stringify(framesR.current[idx].state);
       });
     }, 80);
   };
@@ -2301,6 +2340,8 @@ const PizarraTactica = () => {
         syncingR.current = false;
         fc.renderAll();
         try { attachListeners(); } catch (_) {}
+        resetHistory();
+        presentR.current = JSON.stringify(next[newIdx].state);
       });
     }
     
@@ -2735,9 +2776,9 @@ const PizarraTactica = () => {
               <button className="topbar-btn" onClick={undo} disabled={histCount === 0} title="Deshacer (Ctrl+Z)">↩</button>
               <button className="topbar-btn" onClick={redo} disabled={redoCount === 0} title="Rehacer (Ctrl+Y)">↪</button>
               <button className="topbar-btn danger" onClick={clearCanvas} title="Limpiar todo el canvas">🗑</button>
-              <button className="topbar-btn secondary" onClick={handleNewPizarra} title="Crear nueva animación desde cero" style={{ background: 'var(--m11-green)', color: 'white', fontWeight: 'bold' }}>✨ NUEVA</button>
+              <button className="topbar-btn secondary" onClick={handleNewPizarra} title="Crear nueva animación desde cero" style={{ background: 'var(--accent)', color: 'white', fontWeight: 'bold' }}>✨ NUEVA</button>
               <button className="topbar-btn" onClick={() => handleCapture(true)} disabled={isCapturing} title="Descargar Imagen">📸</button>
-              <button className="topbar-btn" onClick={exportAnimationVideo} disabled={isRecording} title="Exportar animación como video MP4" style={{ background: 'var(--m11-green)', color: 'white', fontWeight: 'bold' }}>
+              <button className="topbar-btn" onClick={exportAnimationVideo} disabled={isRecording} title="Exportar animación como video MP4" style={{ background: 'var(--accent)', color: 'white', fontWeight: 'bold' }}>
                 {isRecording ? '⏺️ EXPORTANDO MP4...' : '🎥 EXPORTAR MP4'}
               </button>
               <button id="btn-guardar-pizarra" className="topbar-btn primary" onClick={handleSave} disabled={isCapturing} title="Guardar pizarra y captura">💾 GUARDAR</button>

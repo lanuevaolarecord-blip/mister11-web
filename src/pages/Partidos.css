@@ -604,12 +604,9 @@ html.dark {
    PESTAÑA: POST-PARTIDO
 ========================================================= */
 .post-partido-container {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  height: 100%;
-  text-align: center;
+  display: block;
+  height: auto;
+  text-align: left;
 }
 
 .empty-state-post {

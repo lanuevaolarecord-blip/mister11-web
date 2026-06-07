@@ -462,7 +462,7 @@ const Dashboard = () => {
         <div style={{ display: 'flex', gap: '32px', alignItems: 'center', flex: 1, justifyContent: 'space-between' }}>
           {[
             { label: t('nav.pizarra', settings.language), icon: <Presentation size={24} />, route: '/pizarra' },
-            { label: t('dashboard.quickAccess.createSession', settings.language), icon: <FilePlus size={24} />, route: '/sesiones' }
+            { label: t('nav.sesiones', settings.language), icon: <FilePlus size={24} />, route: '/sesiones' }
           ].map((action, idx) => (
             <div key={idx} className="quick-access-wrapper" onClick={() => navigate(action.route)}>
               <div className="quick-access-ring-outer">

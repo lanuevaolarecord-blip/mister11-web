@@ -5,7 +5,7 @@ import { uploadImageFile } from '../utils/uploadImage';
 import { auth } from '../firebaseConfig';
 import { useCaptures } from '../hooks/useCaptures';
 
-const BlockEditor = ({ block, index, handleUpdateBlock, handleDeleteBlock, teamId, sessionId }) => {
+const BlockEditor = ({ block, index, handleUpdateBlock, handleDeleteBlock, handleDuplicateBlock, teamId, sessionId }) => {
   const fileInputRef = useRef(null);
   const [showCaptureModal, setShowCaptureModal] = useState(false);
   const { captures } = useCaptures(teamId);
@@ -106,6 +106,15 @@ const BlockEditor = ({ block, index, handleUpdateBlock, handleDeleteBlock, teamI
           onChange={e => handleUpdateBlock(block.id, 'name', e.target.value)} 
           placeholder="Nombre del ejercicio" 
         />
+        {handleDuplicateBlock && (
+          <button
+            title="Duplicar bloque"
+            onClick={() => handleDuplicateBlock(block)}
+            style={{ minWidth: '48px', minHeight: '48px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'transparent', border: '1px solid var(--border-light, #e2e8f0)', borderRadius: '8px', cursor: 'pointer', color: 'var(--text-secondary)', fontSize: '16px', transition: 'all 0.2s', marginRight: '4px' }}
+          >
+            ⧉
+          </button>
+        )}
         <button 
           className="btn-del-icon" 
           onClick={() => handleDeleteBlock(block.id)}

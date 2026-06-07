@@ -1201,9 +1201,35 @@ const Tests = () => {
                     {tests.map(t => <option key={t.id} value={t.id}>{t.name} ({t.unit})</option>)}
                   </select>
                 </div>
-                <button className="btn-outline-gold" onClick={() => generateTestsReport(tests, players, historyData, activeTeam)}>
-                  📄 Exportar Informe Colectivo
-                </button>
+                <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                  <button
+                    className="btn-outline-gold"
+                    style={{ minHeight: '44px', display: 'flex', alignItems: 'center', gap: '6px' }}
+                    onClick={() => {
+                      const testInfo = getTestById(heatSelectedTest);
+                      if (!testInfo) return;
+                      let csv = `"Dorsal","Jugador","Eval Inicial","Penúltima Eval","Última Eval","Evolución (%)"\n`;
+                      players.forEach(p => {
+                        const history = historyData[p.id]?.[heatSelectedTest] || [];
+                        if (history.length === 0) return;
+                        const isTime = testInfo?.unit === 'seg';
+                        const v1 = history[0].val;
+                        const v2 = history.length >= 2 ? history[history.length - 2].val : '-';
+                        const v3 = history[history.length - 1].val;
+                        const improved = isTime ? v3 < v1 : v3 > v1;
+                        const diffPerc = v1 ? (((v3 - v1) / v1) * 100).toFixed(1) : 0;
+                        const evo = history.length > 1 ? `${improved ? '+' : ''}${diffPerc}%` : '-';
+                        csv += `"${p.number || ''}","${p.name || ''}","${v1}","${v2}","${v3}","${evo}"\n`;
+                      });
+                      downloadCSV(csv, `comparativa_${testInfo.name.replace(/\s+/g,'_')}.csv`);
+                    }}
+                  >
+                    📊 Exportar CSV
+                  </button>
+                  <button className="btn-outline-gold" onClick={() => generateTestsReport(tests, players, historyData, activeTeam)}>
+                    📄 Exportar Informe Colectivo
+                  </button>
+                </div>
               </div>
 
               {/* PLANNINGA MATRIX */}

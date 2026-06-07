@@ -278,6 +278,16 @@ const Sesiones = () => {
     }));
   };
 
+  const handleDuplicateBlock = (block) => {
+    const duplicate = { ...block, id: Date.now() + Math.random(), name: `${block.name} (copia)` };
+    setEditData(prev => {
+      const idx = prev.blocks.findIndex(b => b.id === block.id);
+      const newBlocks = [...prev.blocks];
+      newBlocks.splice(idx + 1, 0, duplicate);
+      return { ...prev, blocks: newBlocks };
+    });
+  };
+
   const handleTogglePlayer = (playerId) => {
     setEditData(prev => {
       const has = prev.players.includes(playerId);
@@ -522,6 +532,7 @@ const Sesiones = () => {
                         index={index}
                         handleUpdateBlock={handleUpdateBlock}
                         handleDeleteBlock={handleDeleteBlock}
+                        handleDuplicateBlock={handleDuplicateBlock}
                         teamId={activeTeam?.id}
                         sessionId={editData?.id}
                       />

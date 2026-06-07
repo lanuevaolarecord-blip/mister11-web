@@ -653,10 +653,10 @@ html.dark {
   display: flex;
   flex-direction: column;
   width: 100%;
-  max-width: 800px;
-  margin: 0 auto;
+  text-align: left;
 }
 
+/* Score inputs row */
 .score-inputs {
   display: flex;
   align-items: center;
@@ -679,12 +679,171 @@ html.dark {
   text-align: center;
   font-weight: 800;
   border-radius: 12px;
+  padding: 0;
 }
 
 .score-divider {
   font-size: 2rem;
   font-weight: 800;
   color: var(--partidos-text-muted);
+}
+
+/* 2-column grid for the post-match details */
+.post-partido-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 24px;
+  margin-top: 28px;
+}
+
+@media (min-width: 768px) {
+  .post-partido-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+/* Column within the post-match grid */
+.post-partido-col {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* Dynamic goleadores list */
+.goleadores-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.goleador-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.goleador-row select,
+.goleador-row input {
+  flex: 1;
+  min-height: 44px;
+  padding: 10px 12px;
+  border: 1px solid var(--partidos-border);
+  border-radius: 8px;
+  font-family: var(--font-body);
+  font-size: 14px;
+  background: var(--partidos-input-bg);
+  color: var(--partidos-text-primary);
+  font-weight: 600;
+}
+
+.goleador-row input[type="number"] {
+  width: 70px;
+  flex: 0 0 70px;
+}
+
+.goleador-row .btn-remove-row {
+  width: 36px;
+  height: 36px;
+  background: var(--partidos-danger-bg);
+  color: var(--partidos-danger);
+  border: 1px solid rgba(239,68,68,0.3);
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: bold;
+  flex-shrink: 0;
+  transition: opacity 0.2s;
+}
+
+.goleador-row .btn-remove-row:hover { opacity: 0.8; }
+
+.btn-add-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: transparent;
+  border: 1px dashed var(--partidos-accent);
+  color: var(--partidos-accent);
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-weight: 700;
+  font-size: 13px;
+  cursor: pointer;
+  transition: background 0.2s;
+  min-height: 40px;
+}
+.btn-add-row:hover { background: rgba(27,58,45,0.05); }
+
+/* Tarjetas section */
+.tarjetas-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.tarjeta-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--partidos-player-card-bg);
+  border: 1px solid var(--partidos-border);
+  border-radius: 8px;
+  padding: 8px 10px;
+}
+
+.tarjeta-badge {
+  width: 22px;
+  height: 28px;
+  border-radius: 3px;
+  flex-shrink: 0;
+}
+.tarjeta-badge.amarilla { background: #facc15; }
+.tarjeta-badge.roja { background: #ef4444; }
+
+.tarjeta-item select {
+  flex: 1;
+  min-height: 36px;
+  padding: 6px 8px;
+  border: 1px solid var(--partidos-border);
+  border-radius: 6px;
+  font-size: 13px;
+  background: var(--partidos-input-bg);
+  color: var(--partidos-text-primary);
+}
+
+.tarjeta-item .btn-remove-row {
+  width: 28px;
+  height: 28px;
+  background: var(--partidos-danger-bg);
+  color: var(--partidos-danger);
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: bold;
+  flex-shrink: 0;
+}
+
+.sub-section-title {
+  font-size: 13px;
+  font-weight: 800;
+  text-transform: uppercase;
+  color: var(--partidos-text-muted);
+  margin: 0 0 10px 0;
+  letter-spacing: 0.5px;
+}
+
+/* Tall textarea for right column */
+.textarea-tall {
+  min-height: 120px;
+  resize: vertical;
 }
 
 /* =========================================================

@@ -4,6 +4,9 @@
       "anonymous": true
     }
   },
+  "firestore": {
+    "rules": "firestore.rules"
+  },
   "hosting": {
     "public": "public_hosting",
     "ignore": [

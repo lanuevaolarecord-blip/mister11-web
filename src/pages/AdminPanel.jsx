@@ -56,6 +56,8 @@ const AdminPanel = () => {
   }, [location.state?.activeTab]);
 
   const { user } = useAuth();
+  const adminEmails = ['lanuevaolarecord@gmail.com', 'lavozdelformador@gmail.com', 'jhocao111294@gmail.com'];
+  const isAdmin = user?.email && adminEmails.includes(user.email.toLowerCase());
   const { teams, activeTeam, addTeam, deleteTeam, selectTeam, updateTeam } = useTeams();
   const { exercises, removeExercise, addExercise } = useExercises(activeTeam?.id);
   const [exerciseSearchTerm, setExerciseSearchTerm] = useState('');
@@ -83,19 +85,81 @@ const AdminPanel = () => {
 
     setLoadingPortal(true);
     try {
+      // 1. Verificar si el usuario tiene una suscripción activa/cliente de Stripe
+      let hasCustomerId = false;
+      let stripeCustomerId = activeTeam?.stripeCustomerId || activeTeam?.customerId || activeTeam?.stripeId || user?.stripeCustomerId || user?.stripeId || user?.customerId;
+      
+      if (stripeCustomerId) {
+        hasCustomerId = true;
+      } else {
+        try {
+          if (activeTeam?.id) {
+            const teamSnap = await getDoc(doc(db, 'users', user.uid, 'teams', activeTeam.id));
+            if (teamSnap.exists()) {
+              const teamData = teamSnap.data();
+              stripeCustomerId = teamData.stripeCustomerId || teamData.customerId || teamData.stripeId;
+            }
+          }
+          if (!stripeCustomerId) {
+            const userSnap = await getDoc(doc(db, 'users', user.uid));
+            if (userSnap.exists()) {
+              const userData = userSnap.data();
+              stripeCustomerId = userData.stripeCustomerId || userData.customerId || userData.stripeId;
+            }
+          }
+          if (!stripeCustomerId) {
+            const custSnap = await getDoc(doc(db, 'customers', user.uid));
+            if (custSnap.exists()) {
+              const custData = custSnap.data();
+              stripeCustomerId = custData.stripeId || custData.stripeCustomerId || custData.customerId;
+            }
+          }
+          if (stripeCustomerId) {
+            hasCustomerId = true;
+          }
+        } catch (err) {
+          console.error("Error al buscar Stripe Customer ID en la base de datos:", err);
+        }
+      }
+
+      if (!hasCustomerId) {
+        alert("Aún no tienes una suscripción activa. Actualiza a Pro para gestionar tu suscripción.");
+        setLoadingPortal(false);
+        return;
+      }
+
+      // 2. Llamar a la Cloud Function para generar el enlace del Portal
       const functions = getFunctions();
-      const createPortalLink = httpsCallable(functions, 'ext-firestore-stripe-payments-createPortalLink');
-      const result = await createPortalLink({
-        returnUrl: window.location.href,
-      });
-      if (result.data && result.data.url) {
+      let createPortalLink = httpsCallable(functions, 'ext-firestore-stripe-payments-createPortalLink');
+      let result;
+      try {
+        result = await createPortalLink({
+          returnUrl: window.location.origin + '/dashboard',
+        });
+      } catch (err) {
+        if (err.message?.includes('not found') || err.message?.includes('NOT_FOUND') || err.code === 'not-found') {
+          console.warn("Function ext-firestore-stripe-payments-createPortalLink not found, trying ext-firebase-stripe-createPortalLink...");
+          createPortalLink = httpsCallable(functions, 'ext-firebase-stripe-createPortalLink');
+          result = await createPortalLink({
+            returnUrl: window.location.origin + '/dashboard',
+          });
+        } else {
+          throw err;
+        }
+      }
+
+      if (result && result.data && result.data.url) {
         window.location.assign(result.data.url);
       } else {
         throw new Error("No se devolvió la URL del Portal.");
       }
     } catch (error) {
-      console.error('Error al abrir el portal de suscripción:', error);
-      showToast('No se pudo abrir el portal de suscripción en este momento.', 'error');
+      console.error('Error al abrir Customer Portal:', error);
+      if (error.message?.includes('not found') || error.message?.includes('NOT_FOUND') || error.code === 'not-found') {
+        alert('El portal de suscripción no está disponible. Asegúrate de que la extensión de Stripe está instalada y que tienes una suscripción activa.');
+      } else {
+        alert('No se pudo abrir el portal de suscripción. Inténtalo de nuevo más tarde.');
+      }
     } finally {
       setLoadingPortal(false);
     }
@@ -900,21 +964,21 @@ const AdminPanel = () => {
                   </div>
 
                   <div className="subscription-actions" style={{ marginTop: '20px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                    {isDeveloper ? (
-                      <div style={{
-                        padding: '12px 16px',
-                        backgroundColor: 'rgba(76, 175, 125, 0.12)',
-                        border: '1px solid rgba(76, 175, 125, 0.25)',
-                        borderRadius: '8px',
-                        color: '#4CAF7D',
-                        fontSize: '0.85rem',
-                        fontWeight: 'bold',
-                        textAlign: 'center'
-                      }}>
-                        ✓ Cuenta de Desarrollador Autorizada
-                      </div>
-                    ) : (
+                    {isAdmin && (
                       <>
+                        <div style={{
+                          padding: '12px 16px',
+                          backgroundColor: 'rgba(76, 175, 125, 0.12)',
+                          border: '1px solid rgba(76, 175, 125, 0.25)',
+                          borderRadius: '8px',
+                          color: '#4CAF7D',
+                          fontSize: '0.85rem',
+                          fontWeight: 'bold',
+                          textAlign: 'center',
+                          marginBottom: '5px'
+                        }}>
+                          ✓ Cuenta de Desarrollador Autorizada
+                        </div>
                         <button 
                           className={`btn-save-settings ${isPro ? 'outline-sub' : 'solid-sub'}`} 
                           onClick={toggleSimulatedPlan}
@@ -948,7 +1012,8 @@ const AdminPanel = () => {
                               borderRadius: '8px',
                               fontWeight: 'bold',
                               fontSize: '0.9rem',
-                              transition: 'all 0.2s ease'
+                              transition: 'all 0.2s ease',
+                              marginTop: '5px'
                             }}
                           >
                             🔄 Reiniciar Prueba de 7 Días
@@ -956,6 +1021,29 @@ const AdminPanel = () => {
                         )}
                       </>
                     )}
+                    
+                    {!isAdmin && !isProActive && (
+                      <button
+                        className="btn-primary"
+                        onClick={() => setUpgradeModal({ open: true, message: 'Obtén acceso ilimitado a todas las funciones avanzadas de Míster11.' })}
+                        style={{
+                          width: '100%',
+                          minHeight: '48px',
+                          background: 'linear-gradient(135deg, #4CAF7D, #2196F3)',
+                          color: '#ffffff',
+                          border: 'none',
+                          borderRadius: '8px',
+                          fontWeight: 'bold',
+                          cursor: 'pointer',
+                          textTransform: 'uppercase',
+                          fontSize: '0.85rem',
+                          letterSpacing: '0.5px'
+                        }}
+                      >
+                        👑 VER PLANES MÍSTER11 PRO
+                      </button>
+                    )}
+
                     {isProActive && (
                       <button 
                         className="btn-primary-blue-allcaps" 

@@ -30,6 +30,8 @@ const Dashboard = () => {
   const { darkMode } = useTheme();
   const navigate = useNavigate();
   const { user, activeTeamId } = useAuth();
+  const adminEmails = ['lanuevaolarecord@gmail.com', 'lavozdelformador@gmail.com', 'jhocao111294@gmail.com'];
+  const isAdmin = user?.email && adminEmails.includes(user.email.toLowerCase());
   const { isPro, isDeveloper, trialDaysRemaining, toggleSimulatedPlan, resetTrial } = usePlan();
   const { settings } = useSettings(activeTeamId);
   const { players } = usePlayers(activeTeamId);
@@ -300,7 +302,7 @@ const Dashboard = () => {
       </header>
 
       {/* Premium Trial / Developer Banner */}
-      {isDeveloper ? (
+      {isAdmin ? (
         <div className="card-base" style={{ background: 'var(--accent-green-light)', borderColor: 'var(--accent-green)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
             <Shield size={28} strokeWidth={1.5} color="var(--accent-green)" />
@@ -369,40 +371,66 @@ const Dashboard = () => {
             </div>
           </div>
           <div style={{ display: 'flex', gap: '10px' }}>
-            <button 
-              className={`chip ${isPro ? 'active' : ''}`}
-              onClick={toggleSimulatedPlan}
-              style={{
-                border: '1px solid var(--accent-gold)',
-                background: isPro ? 'transparent' : 'var(--accent-gold)',
-                color: isPro ? 'var(--accent-gold)' : '#000',
-                padding: '8px 16px',
-                borderRadius: '8px',
-                fontWeight: 'bold',
-                cursor: 'pointer',
-                minHeight: '48px',
-                minWidth: '150px'
-              }}
-            >
-              {isPro ? 'Probar Plan Gratuito' : 'Activar Prueba PRO'}
-            </button>
-            {isPro && (
-              <button 
-                className="chip"
-                onClick={resetTrial}
-                style={{
-                  border: '1px solid var(--border-color)',
-                  background: 'rgba(255,255,255,0.05)',
-                  color: 'var(--text-primary)',
-                  padding: '8px 16px',
-                  borderRadius: '8px',
-                  fontWeight: 'bold',
-                  cursor: 'pointer',
-                  minHeight: '48px'
-                }}
-              >
-                🔄 Reiniciar
-              </button>
+            {isAdmin ? (
+              <>
+                <button 
+                  className={`chip ${isPro ? 'active' : ''}`}
+                  onClick={toggleSimulatedPlan}
+                  style={{
+                    border: '1px solid var(--accent-gold)',
+                    background: isPro ? 'transparent' : 'var(--accent-gold)',
+                    color: isPro ? 'var(--accent-gold)' : '#000',
+                    padding: '8px 16px',
+                    borderRadius: '8px',
+                    fontWeight: 'bold',
+                    cursor: 'pointer',
+                    minHeight: '48px',
+                    minWidth: '150px'
+                  }}
+                >
+                  {isPro ? 'Probar Plan Gratuito' : 'Activar Prueba PRO'}
+                </button>
+                {isPro && (
+                  <button 
+                    className="chip"
+                    onClick={resetTrial}
+                    style={{
+                      border: '1px solid var(--border-color)',
+                      background: 'rgba(255,255,255,0.05)',
+                      color: 'var(--text-primary)',
+                      padding: '8px 16px',
+                      borderRadius: '8px',
+                      fontWeight: 'bold',
+                      cursor: 'pointer',
+                      minHeight: '48px'
+                    }}
+                  >
+                    🔄 Reiniciar
+                  </button>
+                )}
+              </>
+            ) : (
+              !isPro && (
+                <button 
+                  className="chip active"
+                  onClick={() => navigate('/admin', { state: { activeTab: 'ajustes' } })}
+                  style={{
+                    border: '1.5px solid var(--accent)',
+                    background: 'var(--accent)',
+                    color: '#ffffff',
+                    padding: '8px 20px',
+                    borderRadius: '8px',
+                    fontWeight: 'bold',
+                    cursor: 'pointer',
+                    minHeight: '48px',
+                    textTransform: 'uppercase',
+                    fontSize: '0.85rem',
+                    letterSpacing: '0.5px'
+                  }}
+                >
+                  Suscripciones
+                </button>
+              )
             )}
           </div>
         </div>

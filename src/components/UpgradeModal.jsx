@@ -1,104 +1,181 @@
-import React, { useState } from 'react';
-import { getFunctions, httpsCallable } from 'firebase/functions';
+import React, { useState, useEffect, useRef } from 'react';
+import { db, auth } from '../firebaseConfig';
+import { collection, addDoc, onSnapshot } from 'firebase/firestore';
 import { STRIPE_PRICE_IDS } from '../config/stripe';
 import './UpgradeModal.css';
 
-// Firebase Stripe Extension function names to try (in order)
-const CHECKOUT_FUNCTION_NAMES = [
-  'ext-firestore-stripe-payments-createCheckoutSession',
-  'ext-firebase-stripe-payments-createCheckoutSession',
-  'ext-firebase-stripe-createCheckoutSession',
-  'createCheckoutSession',
-];
+/**
+ * Crea una sesión de Stripe Checkout usando la extensión oficial de Firebase.
+ * La extensión escucha la colección `customers/{uid}/checkout_sessions`
+ * y retorna la URL de pago cuando está lista.
+ */
+const createStripeCheckoutSession = async (uid, priceId, successUrl, cancelUrl) => {
+  const sessionRef = await addDoc(
+    collection(db, 'customers', uid, 'checkout_sessions'),
+    {
+      price: priceId,
+      success_url: successUrl,
+      cancel_url: cancelUrl,
+      allow_promotion_codes: true,
+      billing_address_collection: 'auto',
+    }
+  );
+  return sessionRef;
+};
 
 const UpgradeModal = ({ isOpen, onClose, message, urgency = false }) => {
   const [loadingPlan, setLoadingPlan] = useState(null);
   const [stripeError, setStripeError] = useState(null);
+  const [statusMsg, setStatusMsg] = useState('');
+  const unsubscribeRef = useRef(null);
+  const timeoutRef = useRef(null);
+
+  // Cleanup listeners on unmount or close
+  useEffect(() => {
+    return () => {
+      if (unsubscribeRef.current) unsubscribeRef.current();
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    };
+  }, []);
 
   if (!isOpen) return null;
 
   const handleSubscribe = async (priceId, planName) => {
     setLoadingPlan(planName);
     setStripeError(null);
+    setStatusMsg('Preparando sesión de pago...');
 
-    // Validate price ID is configured
+    // Validate price ID
     if (!priceId || priceId === 'undefined') {
       setStripeError({
         type: 'config',
-        message: `El ID de precio para el Plan ${planName} no está configurado. Verifica las variables de entorno VITE_STRIPE_PRICE_${planName.toUpperCase()} en Vercel.`,
-        priceId: priceId,
+        message: `El precio del Plan ${planName} no está configurado. Verifica la variable VITE_STRIPE_PRICE_${planName.toUpperCase()} en Vercel.`,
       });
       setLoadingPlan(null);
+      setStatusMsg('');
       return;
     }
 
+    // Guest / demo mode
     const activeUid = localStorage.getItem('mister11_active_user_uid');
-
     if (activeUid === 'invitado-local') {
-      localStorage.setItem('mister11_simulated_plan', planName.toLowerCase() === 'pro' ? 'pro' : 'club');
-      alert(`¡Modo ${planName.toUpperCase()} Simulado activado!`);
-      onClose();
-      window.location.reload();
+      alert('El pago no está disponible en modo invitado. Inicia sesión primero.');
+      setLoadingPlan(null);
+      setStatusMsg('');
+      return;
+    }
+
+    const user = auth.currentUser;
+    if (!user) {
+      setStripeError({ type: 'auth', message: 'Debes iniciar sesión para suscribirte.' });
+      setLoadingPlan(null);
+      setStatusMsg('');
       return;
     }
 
     try {
-      const functions = getFunctions();
-      // Also try with europe-west1 region if us-central1 fails
-      const functionsEU = getFunctions(undefined, 'europe-west1');
+      setStatusMsg('Creando sesión en Stripe...');
+      const sessionRef = await createStripeCheckoutSession(
+        user.uid,
+        priceId,
+        `${window.location.origin}/dashboard?subscribed=1`,
+        `${window.location.origin}/admin`
+      );
 
-      let result = null;
-      let lastError = null;
+      setStatusMsg('Esperando confirmación de Stripe...');
 
-      // Try each function name and region combination
-      const attempts = [
-        { fn: functions, name: CHECKOUT_FUNCTION_NAMES[0] },
-        { fn: functions, name: CHECKOUT_FUNCTION_NAMES[1] },
-        { fn: functions, name: CHECKOUT_FUNCTION_NAMES[2] },
-        { fn: functionsEU, name: CHECKOUT_FUNCTION_NAMES[0] },
-        { fn: functionsEU, name: CHECKOUT_FUNCTION_NAMES[2] },
-      ];
+      // Listen for the extension to populate the URL (or error)
+      unsubscribeRef.current = onSnapshot(sessionRef, (snap) => {
+        if (!snap.exists()) return;
+        const data = snap.data();
 
-      for (const attempt of attempts) {
-        try {
-          console.log(`[Stripe] Trying: ${attempt.name}...`);
-          const fn = httpsCallable(attempt.fn, attempt.name, { timeout: 15000 });
-          result = await fn({
-            priceId: priceId,
-            successUrl: `${window.location.origin}/dashboard?subscribed=1`,
-            cancelUrl: `${window.location.origin}/admin`,
+        if (data?.error) {
+          // Stripe extension returned an error
+          if (unsubscribeRef.current) unsubscribeRef.current();
+          if (timeoutRef.current) clearTimeout(timeoutRef.current);
+          setStripeError({
+            type: 'stripe',
+            message: data.error?.message || JSON.stringify(data.error),
+            code: data.error?.code || '',
           });
-          console.log(`[Stripe] Success with: ${attempt.name}`, result?.data);
-          break; // success — stop trying
-        } catch (err) {
-          console.warn(`[Stripe] Failed ${attempt.name}:`, err.code, err.message);
-          lastError = err;
-          // Only continue if it's a "not found" error
-          const isNotFound = err.code === 'functions/not-found' ||
-            err.message?.toLowerCase().includes('not found') ||
-            err.message?.toLowerCase().includes('internal');
-          if (!isNotFound) break; // Non-404 error, stop trying
+          setLoadingPlan(null);
+          setStatusMsg('');
+          return;
         }
-      }
 
-      if (result && result.data && result.data.url) {
-        window.location.assign(result.data.url);
-      } else if (lastError) {
-        throw lastError;
-      } else {
-        throw new Error('No se devolvió URL de redirección desde Stripe.');
-      }
-    } catch (error) {
-      console.error('[Stripe] Final error:', error);
-      setStripeError({
-        type: 'firebase',
-        code: error.code || 'unknown',
-        message: error.message || 'Error desconocido',
-        priceId: priceId,
+        if (data?.url) {
+          // Got the Stripe Checkout URL — redirect
+          if (unsubscribeRef.current) unsubscribeRef.current();
+          if (timeoutRef.current) clearTimeout(timeoutRef.current);
+          window.location.assign(data.url);
+        }
+      }, (err) => {
+        // Firestore listener error (usually permissions)
+        setStripeError({
+          type: 'firestore',
+          message: err.message,
+          code: err.code,
+        });
+        setLoadingPlan(null);
+        setStatusMsg('');
       });
-    } finally {
+
+      // Timeout after 30 seconds
+      timeoutRef.current = setTimeout(() => {
+        if (unsubscribeRef.current) unsubscribeRef.current();
+        setStripeError({
+          type: 'timeout',
+          message: 'El tiempo de espera agotó (30s). Verifica que la extensión de Stripe está activa en Firebase.',
+        });
+        setLoadingPlan(null);
+        setStatusMsg('');
+      }, 30000);
+
+    } catch (error) {
+      console.error('[Stripe Checkout]', error);
+      setStripeError({
+        type: error.code === 'permission-denied' ? 'permissions' : 'unknown',
+        message: error.message,
+        code: error.code,
+      });
       setLoadingPlan(null);
+      setStatusMsg('');
     }
+  };
+
+  const getErrorHelp = (error) => {
+    if (!error) return null;
+    if (error.type === 'permissions' || error.code === 'permission-denied') {
+      return (
+        <div style={{ marginTop: '8px', padding: '8px 10px', background: 'rgba(255,255,255,0.04)', borderRadius: '6px', fontSize: '0.78rem', color: 'var(--text-secondary)' }}>
+          💡 <strong>Solución:</strong> Las reglas de Firestore no permiten escribir en{' '}
+          <code style={{ background: 'rgba(255,255,255,0.06)', padding: '1px 4px', borderRadius: '3px' }}>
+            customers/{'{'}uid{'}'}/checkout_sessions
+          </code>.{' '}
+          Hay que actualizar las reglas en Firebase Console o con{' '}
+          <code style={{ background: 'rgba(255,255,255,0.06)', padding: '1px 4px', borderRadius: '3px' }}>firebase deploy --only firestore:rules</code>.
+        </div>
+      );
+    }
+    if (error.type === 'timeout') {
+      return (
+        <div style={{ marginTop: '8px', padding: '8px 10px', background: 'rgba(255,255,255,0.04)', borderRadius: '6px', fontSize: '0.78rem', color: 'var(--text-secondary)' }}>
+          💡 La extensión "Run Payments with Stripe" puede no estar activa o configurada en Firebase.
+          Ve a <a href="https://console.firebase.google.com/project/mister11/extensions" target="_blank" rel="noopener noreferrer" style={{ color: '#4CAF7D' }}>Firebase Extensions</a> para verificarla.
+        </div>
+      );
+    }
+    if (error.type === 'stripe') {
+      return (
+        <div style={{ marginTop: '8px', padding: '8px 10px', background: 'rgba(255,255,255,0.04)', borderRadius: '6px', fontSize: '0.78rem', color: 'var(--text-secondary)' }}>
+          💡 Error de Stripe. Verifica que el Price ID existe en tu{' '}
+          <a href="https://dashboard.stripe.com/test/products" target="_blank" rel="noopener noreferrer" style={{ color: '#4CAF7D' }}>
+            dashboard de Stripe (modo test)
+          </a>.
+        </div>
+      );
+    }
+    return null;
   };
 
   const proBenefits = [
@@ -134,7 +211,23 @@ const UpgradeModal = ({ isOpen, onClose, message, urgency = false }) => {
           </p>
         </div>
 
-        {/* Error panel — shows when Stripe fails */}
+        {/* Status message while loading */}
+        {loadingPlan && statusMsg && (
+          <div style={{
+            margin: '8px 20px 0',
+            padding: '10px 14px',
+            background: 'rgba(0,75,135,0.1)',
+            border: '1px solid rgba(0,75,135,0.25)',
+            borderRadius: '8px',
+            fontSize: '0.82rem',
+            color: 'rgba(100,160,220,0.9)',
+            textAlign: 'center',
+          }}>
+            ⏳ {statusMsg}
+          </div>
+        )}
+
+        {/* Error panel */}
         {stripeError && (
           <div style={{
             margin: '12px 20px 0',
@@ -146,52 +239,22 @@ const UpgradeModal = ({ isOpen, onClose, message, urgency = false }) => {
             lineHeight: '1.5'
           }}>
             <div style={{ color: '#ef4444', fontWeight: 'bold', marginBottom: '6px' }}>
-              ⚠️ {stripeError.type === 'config' ? 'Error de configuración' : 'Error al iniciar el pago'}
+              ⚠️ {stripeError.type === 'config' ? 'Error de configuración' :
+                   stripeError.type === 'auth' ? 'No autenticado' :
+                   stripeError.type === 'permissions' ? 'Error de permisos Firestore' :
+                   stripeError.type === 'timeout' ? 'Tiempo de espera agotado' :
+                   'Error al iniciar el pago'}
             </div>
-            <div style={{ color: 'var(--text-secondary)', marginBottom: '8px' }}>
-              {stripeError.type === 'config' ? (
-                stripeError.message
-              ) : (
-                <>
-                  <strong>Código:</strong> {stripeError.code}<br />
-                  <strong>Detalle:</strong> {stripeError.message}
-                </>
-              )}
+            <div style={{ color: 'var(--text-secondary)', marginBottom: '4px' }}>
+              {stripeError.code && <><strong>Código:</strong> {stripeError.code}<br /></>}
+              <strong>Detalle:</strong> {stripeError.message}
             </div>
-            {stripeError.type === 'firebase' && (
-              <details style={{ marginTop: '6px' }}>
-                <summary style={{ cursor: 'pointer', color: 'var(--text-secondary)', fontSize: '0.78rem' }}>
-                  ℹ️ Información de diagnóstico
-                </summary>
-                <div style={{ marginTop: '6px', fontFamily: 'monospace', fontSize: '0.75rem', color: 'var(--text-muted)', wordBreak: 'break-all' }}>
-                  Price ID: {stripeError.priceId}<br />
-                  Funciones probadas: ext-firestore-stripe-payments-createCheckoutSession,<br />
-                  ext-firebase-stripe-createCheckoutSession (us-central1 + europe-west1)
-                </div>
-              </details>
-            )}
-            {stripeError.type === 'firebase' && (stripeError.code === 'functions/not-found' || stripeError.message?.includes('not found')) && (
-              <div style={{ marginTop: '8px', padding: '8px', background: 'rgba(255,255,255,0.04)', borderRadius: '6px', fontSize: '0.78rem', color: 'var(--text-secondary)' }}>
-                💡 <strong>Solución:</strong> La extensión de Stripe no está instalada en Firebase. Ve a la{' '}
-                <a href="https://console.firebase.google.com" target="_blank" rel="noopener noreferrer" style={{ color: '#4CAF7D' }}>
-                  consola de Firebase
-                </a>{' '}
-                → Extensions → Instala "Run Payments with Stripe".
-              </div>
-            )}
-            <button
-              onClick={() => setStripeError(null)}
-              style={{
-                marginTop: '8px',
-                background: 'none',
-                border: 'none',
-                color: '#ef4444',
-                fontSize: '0.78rem',
-                cursor: 'pointer',
-                textDecoration: 'underline',
-                padding: 0
-              }}
-            >
+            {getErrorHelp(stripeError)}
+            <button onClick={() => setStripeError(null)} style={{
+              marginTop: '8px', background: 'none', border: 'none',
+              color: '#ef4444', fontSize: '0.78rem', cursor: 'pointer',
+              textDecoration: 'underline', padding: 0
+            }}>
               Cerrar este mensaje
             </button>
           </div>
@@ -200,7 +263,7 @@ const UpgradeModal = ({ isOpen, onClose, message, urgency = false }) => {
         {/* Plans Grid */}
         <div className="upgrade-plans-grid">
 
-          {/* --- PRO PLAN --- */}
+          {/* PRO PLAN */}
           <div className="upgrade-plan-card upgrade-plan-pro">
             <div className="upgrade-plan-badge badge-popular">⭐ MÁS POPULAR</div>
             <div className="upgrade-plan-icon">🚀</div>
@@ -227,7 +290,7 @@ const UpgradeModal = ({ isOpen, onClose, message, urgency = false }) => {
             </button>
           </div>
 
-          {/* --- CLUB PLAN --- */}
+          {/* CLUB PLAN */}
           <div className="upgrade-plan-card upgrade-plan-club">
             <div className="upgrade-plan-badge badge-club">🏆 PARA CLUBS</div>
             <div className="upgrade-plan-icon">🏟️</div>
@@ -263,7 +326,11 @@ const UpgradeModal = ({ isOpen, onClose, message, urgency = false }) => {
           textAlign: 'center'
         }}>
           <p style={{ fontSize: '0.72rem', color: 'var(--text-secondary, rgba(255,255,255,0.4))', margin: 0 }}>
-            🧪 <strong>Modo de prueba Stripe:</strong> Usa tarjeta <code style={{ background: 'rgba(255,255,255,0.06)', padding: '1px 5px', borderRadius: '3px' }}>4242 4242 4242 4242</code>, cualquier fecha futura y CVC 123.
+            🧪 <strong>Modo de prueba Stripe:</strong> Usa tarjeta{' '}
+            <code style={{ background: 'rgba(255,255,255,0.06)', padding: '1px 5px', borderRadius: '3px' }}>
+              4242 4242 4242 4242
+            </code>
+            , cualquier fecha futura y CVC <code style={{ background: 'rgba(255,255,255,0.06)', padding: '1px 5px', borderRadius: '3px' }}>123</code>.
           </p>
         </div>
 

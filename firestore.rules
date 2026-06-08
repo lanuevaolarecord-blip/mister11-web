@@ -1,13 +1,38 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
+
+    // Datos del usuario (equipos, jugadores, sesiones, etc.)
     match /users/{userId}/{document=**} {
       allow read, write: if request.auth != null
         && request.auth.uid == userId;
     }
+
+    // Configuración pública (solo lectura)
     match /config/{document} {
       allow read: if true;
       allow write: if false;
+    }
+
+    // Stripe: colección customers (necesaria para la extensión Firebase Stripe)
+    // El usuario solo puede leer/escribir su propio documento y subcolecciones
+    match /customers/{uid} {
+      allow read: if request.auth != null && request.auth.uid == uid;
+
+      // checkout_sessions: el usuario crea la sesión, la extensión la actualiza
+      match /checkout_sessions/{sessionId} {
+        allow read, write: if request.auth != null && request.auth.uid == uid;
+      }
+
+      // subscriptions: la extensión escribe aquí — solo lectura para el usuario
+      match /subscriptions/{subscriptionId} {
+        allow read: if request.auth != null && request.auth.uid == uid;
+      }
+
+      // payments: solo lectura para el usuario
+      match /payments/{paymentId} {
+        allow read: if request.auth != null && request.auth.uid == uid;
+      }
     }
   }
 }

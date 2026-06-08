@@ -232,6 +232,8 @@
   background: var(--bg-card, #FFFFFF);
   border-radius: 12px;
   padding: 16px;
+  word-wrap: break-word;
+  white-space: normal;
 }
 .plan-objetivo-textarea {
   flex: 1;
@@ -509,9 +511,7 @@
   border-color: #4CAF7D;
 }
 
-/* ══════════════════════════════════════════════════════
-   ROW 3 — PLANNING MATRIX
-   ══════════════════════════════════════════════════════ */
+/* ── PLANNING MATRIX ─────────────────────────────────── */
 .plan-matrix-card {
   background: #FAF8F3;
   border: 1px solid #E8E0D0;
@@ -783,9 +783,7 @@
   border-bottom-color: #4CAF7D;
 }
 
-/* ══════════════════════════════════════════════════════
-   EMPTY TAB PLACEHOLDER
-   ══════════════════════════════════════════════════════ */
+/* ── EMPTY TAB PLACEHOLDER ─────────────────────────── */
 .plan-empty-tab {
   display: flex;
   flex-direction: column;
@@ -834,5 +832,41 @@
 @media (max-width: 680px) {
   .plan-objetivos-tab > div > div {
     grid-template-columns: 1fr !important;
+  }
+}
+
+/* ══════════════════════════════════════════════════════
+   RESPONSIVE OVERRIDES FOR TABLET HORIZONTAL
+   ══════════════════════════════════════════════════════ */
+@media (min-width: 768px) and (max-width: 1024px) {
+  .plan-top-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+  .plan-card-fechas, 
+  .plan-card-dias, 
+  .plan-card-categoria, 
+  .plan-card-volumen {
+    grid-column: span 1;
+    width: 100%;
+    box-sizing: border-box;
+  }
+  .plan-card-objetivo {
+    width: 100%;
+    box-sizing: border-box;
+    word-wrap: break-word;
+    white-space: normal;
+  }
+  .plan-objetivo-textarea {
+    width: 100%;
+    word-wrap: break-word;
+    white-space: normal;
+  }
+  /* Adjust paddings for tablet horizontal view */
+  .plan-page {
+    padding: 16px;
+  }
+  .plan-card {
+    padding: 14px 16px;
   }
 }

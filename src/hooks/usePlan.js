@@ -27,7 +27,7 @@ export const DEVELOPER_EMAILS = [
 ];
 
 export const usePlan = () => {
-  const { user } = useAuth();
+  const { user, activeTeamId } = useAuth();
   const [dbPlan, setDbPlan] = useState('free');
   const [dbProExpiration, setDbProExpiration] = useState(null);
   const [dbTrialStartDate, setDbTrialStartDate] = useState(null);
@@ -56,17 +56,26 @@ export const usePlan = () => {
       return;
     }
 
-    const unsub = onSnapshot(doc(db, 'users', user.uid), (docSnap) => {
+    if (!activeTeamId) {
+      setLoading(false);
+      return;
+    }
+
+    const unsub = onSnapshot(doc(db, 'users', user.uid, 'teams', activeTeamId), (docSnap) => {
       if (docSnap.exists()) {
         const data = docSnap.data();
         setDbPlan(data.plan || 'free');
         setDbProExpiration(data.proExpiration || null);
         // trialStartDate comes from Firestore (server-side, tamper-proof)
         if (data.trialStartDate) {
-          setDbTrialStartDate(data.trialStartDate.toDate());
+          setDbTrialStartDate(typeof data.trialStartDate.toDate === 'function' ? data.trialStartDate.toDate() : new Date(data.trialStartDate));
         } else {
           setDbTrialStartDate(null);
         }
+      } else {
+        setDbPlan('free');
+        setDbProExpiration(null);
+        setDbTrialStartDate(null);
       }
       setLoading(false);
     }, (err) => {
@@ -75,7 +84,7 @@ export const usePlan = () => {
     });
 
     return () => unsub();
-  }, [user]);
+  }, [user, activeTeamId]);
 
   const toggleSimulatedPlan = () => {
     const next = isPro ? 'free' : 'pro';
@@ -101,12 +110,14 @@ export const usePlan = () => {
 
   // --- Real PRO plan ---
   const isDeveloper = user && user.email && DEVELOPER_EMAILS.includes(user.email.toLowerCase());
-  const isRealExpired = dbProExpiration && dbProExpiration.toDate && dbProExpiration.toDate() < now;
+  const isRealExpired = dbProExpiration && (typeof dbProExpiration.toDate === 'function' ? dbProExpiration.toDate() : new Date(dbProExpiration)) < now;
   const isRealPro = (dbPlan === 'pro' || dbPlan === 'club') && !isRealExpired;
 
   // --- Final PRO status ---
   const isPro = isRealPro || isOnTrial || (simulatedPlan === 'pro') || (isDeveloper && simulatedPlan !== 'free');
   const currentLimits = isPro ? LIMITS.PRO : LIMITS.FREE;
+
+  const isProActive = isRealPro || isOnTrial || (simulatedPlan === 'pro') || (isDeveloper && simulatedPlan !== 'free');
 
   return {
     plan: isPro ? 'pro' : 'free',
@@ -114,7 +125,7 @@ export const usePlan = () => {
     isDeveloper,
     limits: currentLimits,
     loading,
-    proExpiration: dbProExpiration?.toDate ? dbProExpiration.toDate() : null,
+    proExpiration: dbProExpiration?.toDate ? dbProExpiration.toDate() : (dbProExpiration ? new Date(dbProExpiration) : null),
     isExpired: isDeveloper ? false : (isTrialExpired && !isRealPro),
     simulatedPlan,
     toggleSimulatedPlan,
@@ -122,5 +133,6 @@ export const usePlan = () => {
     resetTrial,
     isOnTrial,
     dbPlan,
+    isProActive
   };
 };

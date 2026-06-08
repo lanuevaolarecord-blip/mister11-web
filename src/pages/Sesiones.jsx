@@ -36,7 +36,7 @@ import BlockEditor from '../components/BlockEditor';
 const Sesiones = () => {
   const { user, activeTeamId } = useAuth();
   const { activeTeam } = useTeams();
-  const { isPro, limits } = usePlan();
+  const { isPro, limits, isProActive } = usePlan();
   const { sessions, addSession, updateSession, removeSession, loading: loadingSessions } = useSessions(activeTeamId);
   const { players, loading: loadingPlayers } = usePlayers(activeTeamId);
   const { captures, loading: loadingCaptures, removeCapture } = useCaptures(activeTeamId);
@@ -782,8 +782,8 @@ const Sesiones = () => {
                     style={{marginBottom: '10px'}} 
                     disabled={isGeneratingPDF}
                     onClick={() => {
-                      if (!isPro) {
-                        setUpgradeModal({ open: true, message: 'La exportación de sesiones a PDF es una función PRO.' });
+                      if (!isProActive) {
+                        setUpgradeModal({ open: true, message: 'La exportación de sesiones a PDF es una función PRO. Sube de nivel para usarla.' });
                         return;
                       }
                       setIsGeneratingPDF(true);

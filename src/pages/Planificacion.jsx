@@ -4,13 +4,15 @@ import { db, auth } from '../firebaseConfig';
 import { useAuth } from '../context/AuthContext';
 import { useTeams } from '../hooks/useTeams';
 import { useTheme } from '../context/ThemeContext';
+import { usePlan } from '../hooks/usePlan';
+import UpgradeModal from '../components/UpgradeModal';
 import { Save, FileText } from 'lucide-react';
 import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { downloadPDF } from '../utils/download';
 import { APP_VERSION } from '../constants/appVersion';
-import './Planificacion.css';
+import '../styles/planificacion.css';
 
 // --- CONSTANTS ---
 const MONTHS = ['Sep','Oct','Nov','Dic','Ene','Feb','Mar','Abr','May','Jun'];
@@ -87,11 +89,13 @@ const Planificacion = () => {
   const { activeTeamId } = useAuth();
   const { activeTeam } = useTeams();
   const { darkMode } = useTheme();
+  const { isProActive } = usePlan();
+  const [upgradeModal, setUpgradeModal] = useState({ open: false, message: '' });
 
   const [macroInfo, setMacroInfo] = useState({
     startDate: '2025-09-01',
     endDate: '2026-06-15',
-    category: activeTeam?.category || 'Infantil A',
+    category: activeTeam?.categoria || activeTeam?.category || 'Infantil A',
     objective: 'Adapteremos al equipo en la parte técnica y táctica, mediante trabajos de posición y finalización.',
     trainer: 'Jhojan',
     sessionDuration: 90,
@@ -157,6 +161,10 @@ const Planificacion = () => {
   }, [macroInfo, microcycles, macroCounts, showToast, activeTeamId]);
 
   const handleExportPDF = async () => {
+    if (!isProActive) {
+      setUpgradeModal({ open: true, message: 'La exportación del plan estratégico a PDF es una función PRO. Sube de nivel para usarla.' });
+      return;
+    }
     showToast('Generando PDF...', 'info');
 
     try {
@@ -197,7 +205,7 @@ const Planificacion = () => {
         doc.setFont('Helvetica', 'bold');
         doc.setTextColor(255, 255, 255);
         doc.setFontSize(10);
-        const teamNameText = activeTeam?.name ? activeTeam.name.toUpperCase() : 'MI EQUIPO';
+        const teamNameText = (activeTeam?.nombre || activeTeam?.name || 'MI EQUIPO').toUpperCase();
         doc.text(teamNameText, pdfWidth - 12, 11, { align: 'right' });
 
         doc.setFont('Helvetica', 'normal');
@@ -1261,6 +1269,7 @@ const Planificacion = () => {
           </div>
         </div>
       )}
+      <UpgradeModal isOpen={upgradeModal.open} onClose={() => setUpgradeModal({ ...upgradeModal, open: false })} message={upgradeModal.message} />
       </div>
     </div>
   );

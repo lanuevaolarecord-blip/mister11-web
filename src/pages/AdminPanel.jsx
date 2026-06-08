@@ -36,6 +36,7 @@ import { useTheme } from '../context/ThemeContext';
 import { storage, db } from '../firebaseConfig';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { collection, getDocs, doc, getDoc } from 'firebase/firestore';
+import { getFunctions, httpsCallable } from 'firebase/functions';
 import imageCompression from 'browser-image-compression';
 import EscudoEquipo from '../components/EscudoEquipo';
 import RedeemCode from '../components/RedeemCode';
@@ -66,8 +67,30 @@ const AdminPanel = () => {
   const { players } = usePlayers(activeTeam?.id);
   const { sessions } = useSessions(activeTeam?.id);
   const { matches } = useMatches(activeTeam?.id);
-  const { isPro, toggleSimulatedPlan, simulatedPlan, trialDaysRemaining, resetTrial, limits, isDeveloper } = usePlan();
+  const { isPro, toggleSimulatedPlan, simulatedPlan, trialDaysRemaining, resetTrial, limits, isDeveloper, isProActive, dbPlan } = usePlan();
   const [upgradeModal, setUpgradeModal] = useState({ open: false, message: '' });
+  const [loadingPortal, setLoadingPortal] = useState(false);
+
+  const handleManageSubscription = async () => {
+    setLoadingPortal(true);
+    try {
+      const functions = getFunctions();
+      const createPortalLink = httpsCallable(functions, 'ext-firebase-stripe-createPortalLink');
+      const result = await createPortalLink({
+        returnUrl: window.location.href,
+      });
+      if (result.data && result.data.url) {
+        window.location.assign(result.data.url);
+      } else {
+        throw new Error("No se devolvió la URL del Portal.");
+      }
+    } catch (error) {
+      console.error('Error al abrir el portal de suscripción:', error);
+      showToast('No se pudo abrir el portal de suscripción en este momento.', 'error');
+    } finally {
+      setLoadingPortal(false);
+    }
+  };
 
   const [newTeam, setNewTeam] = useState({ nombre: '', categoria: '', temporada: '2025-26' });
   const [selectedMatchId, setSelectedMatchId] = useState('');
@@ -923,6 +946,30 @@ const AdminPanel = () => {
                           </button>
                         )}
                       </>
+                    )}
+                    {isProActive && (
+                      <button 
+                        className="btn-primary-blue-allcaps" 
+                        onClick={handleManageSubscription}
+                        disabled={loadingPortal}
+                        style={{
+                          width: '100%',
+                          minHeight: '48px',
+                          background: '#004B87',
+                          color: '#FFFFFF',
+                          border: 'none',
+                          borderRadius: '8px',
+                          fontWeight: '700',
+                          textTransform: 'uppercase',
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          marginTop: '10px'
+                        }}
+                      >
+                        {loadingPortal ? 'Cargando...' : 'GESTIONAR SUSCRIPCIÓN'}
+                      </button>
                     )}
                   </div>
                 </div>

@@ -117,9 +117,15 @@ export const AuthProvider = ({ children }) => {
         // Creamos un equipo mock de pruebas
         const mockTeam = {
           id: 'team-invitado',
+          nombre: 'FC Invitado',
           name: 'FC Invitado',
+          categoria: 'Juvenil',
           category: 'Juvenil',
-          color: '#10B981'
+          temporada: '2025-26',
+          colorLocal: '#10B981',
+          colorVisitante: '#059669',
+          color: '#10B981',
+          escudo: ''
         };
         setTeams([mockTeam]);
         setActiveTeamId('team-invitado');

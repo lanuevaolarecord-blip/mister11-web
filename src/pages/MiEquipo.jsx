@@ -44,7 +44,7 @@ const emptyPlayer = {
 const MiEquipo = () => {
   const { user, activeTeamId } = useAuth();
   const { activeTeam } = useTeams();
-  const { isPro, limits } = usePlan();
+  const { isPro, limits, isProActive } = usePlan();
   const { players, loading, addPlayer, updatePlayer, removePlayer } = usePlayers(activeTeamId);
   const [filter, setFilter] = useState('TODOS');
   const [selectedPlayer, setSelectedPlayer] = useState(null);
@@ -400,7 +400,22 @@ const MiEquipo = () => {
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', position: 'absolute', top: '16px', left: '16px', right: '16px' }}>
               <button style={{ background: 'none', border: 'none', fontSize: '20px', color: 'var(--text-secondary)', cursor: 'pointer' }} onClick={() => setSelectedPlayer(null)}>✕</button>
               <div style={{ display: 'flex', gap: '8px' }}>
-                <button className="btn-edit-icon" onClick={() => generateExpediente(selectedPlayer, activeTeam)} title="Exportar Expediente">📄</button>
+                <button 
+                  className="btn-edit-icon" 
+                  onClick={() => {
+                    if (!isProActive) {
+                      setUpgradeModal({ 
+                        open: true, 
+                        message: "La exportación del expediente del jugador es una función PRO. Sube de nivel para usarla." 
+                      });
+                    } else {
+                      generateExpediente(selectedPlayer, activeTeam);
+                    }
+                  }} 
+                  title="Exportar Expediente"
+                >
+                  📄
+                </button>
                 <button className="btn-edit-icon" onClick={() => handleOpenForm(selectedPlayer)}>✏️</button>
               </div>
             </div>

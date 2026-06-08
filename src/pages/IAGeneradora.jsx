@@ -68,7 +68,7 @@ const renderMarkdown = (text) => {
 
 const IAGeneradora = () => {
   const { activeTeamId } = useAuth();
-  const { isPro } = usePlan();
+  const { isPro, isProActive } = usePlan();
   const { exercises, addExercise } = useExercises(activeTeamId);
   const { captures } = useCaptures(activeTeamId);
   const [selectedTacticalRef, setSelectedTacticalRef] = useState(null);
@@ -162,8 +162,8 @@ const IAGeneradora = () => {
 
   const handleGenerate = async () => {
     if (isCallingRef.current) return;
-    if (!isPro && exercises.length >= 5) {
-      setUpgradeModal({ open: true, message: 'Has alcanzado el límite de ejercicios del plan gratuito. Pásate a PRO para generar ilimitadamente.' });
+    if (!isProActive) {
+      setUpgradeModal({ open: true, message: 'La generación de ejercicios con Inteligencia Artificial es una función PRO. Sube de nivel para usarla.' });
       return;
     }
 

@@ -30,6 +30,8 @@ import { TOOLS, STROKE_COLORS, STROKE_WIDTHS, ToolManager } from '../lib/mister1
 import { FieldRenderer, FORMATIONS } from '../lib/mister11-field.js';
 import { useAuth } from '../context/AuthContext';
 import { usePizarra } from '../context/PizarraContext';
+import { usePlan } from '../hooks/usePlan';
+import UpgradeModal from '../components/UpgradeModal';
 import { db } from '../firebaseConfig';
 import { collection, doc, setDoc, addDoc, deleteDoc, serverTimestamp, onSnapshot, query, orderBy, getDoc, writeBatch, getDocs } from 'firebase/firestore';
 import { ref, uploadString, getDownloadURL } from 'firebase/storage';
@@ -67,6 +69,8 @@ const toLibType = (t) => {
 const PizarraTactica = () => {
   // Referencias a Context
   const { guardarEstado, obtenerEstado } = usePizarra();
+  const { isProActive } = usePlan();
+  const [upgradeModal, setUpgradeModal] = useState({ open: false, message: '' });
   
   // Bloquear scroll de la app mientras la Pizarra está abierta y resetear posición de scroll al inicio
   useEffect(() => {
@@ -621,6 +625,10 @@ const PizarraTactica = () => {
 
   // ─── Export Animation Video (MP4/WebM) ────────────────────────────────────
   const exportAnimationVideo = async () => {
+    if (!isProActive) {
+      setUpgradeModal({ open: true, message: 'La exportación de animaciones en video MP4 es una función PRO. Sube de nivel para usarla.' });
+      return;
+    }
     const fc = fcRef.current;
     const fieldCanvas = fieldCanvasRef.current;
     if (!fc || !fieldCanvas || framesR.current.length < 2) {
@@ -2052,6 +2060,10 @@ const PizarraTactica = () => {
 
   // ─── Capture Canvas as Image ──────────────────────────────────────────────
   const handleCapture = async (download = true, silent = false) => {
+    if ((download || !silent) && !isProActive) {
+      setUpgradeModal({ open: true, message: 'La descarga y captura de imágenes de la pizarra es una función PRO. Sube de nivel para usarla.' });
+      return null;
+    }
     const fc = fcRef.current;
     const fieldCanvas = fieldCanvasRef.current;
     
@@ -3050,6 +3062,7 @@ const PizarraTactica = () => {
         </div>
       )}
     </div>
+    <UpgradeModal isOpen={upgradeModal.open} onClose={() => setUpgradeModal({ ...upgradeModal, open: false })} message={upgradeModal.message} />
     </>
   );
 };

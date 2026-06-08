@@ -8,7 +8,7 @@ import { t } from '../i18n/translations';
 import { useSettings } from '../hooks/useSettings';
 import UpgradeModal from '../components/UpgradeModal';
 import { generateTestsReport, generatePlayerTestReport } from '../utils/pdfGenerator';
-import { downloadCSV } from '../utils/download.js';
+import { downloadCSV } from '../utils/downloadCSV.js';
 import { GraficaEvolucion, GraficaResumen } from '../components/GraficasTest';
 import RadarChart from '../components/RadarChart';
 import LegendCard from '../components/LegendCard';
@@ -116,7 +116,7 @@ const Tests = () => {
   const { user, activeTeamId } = useAuth();
   const { settings } = useSettings(activeTeamId);
   const { activeTeam } = useTeams();
-  const { isPro } = usePlan();
+  const { isPro, isProActive } = usePlan();
   const { players, loading: loadingPlayers } = usePlayers(activeTeamId);
   const [historyData, setHistoryData] = useState({});
   const [activeTab, setActiveTab] = useState('FÍSICOS');
@@ -972,8 +972,8 @@ const Tests = () => {
                               boxShadow: '0 2px 6px rgba(184, 134, 11, 0.2)'
                             }}
                             onClick={async () => {
-                              if (!isPro) {
-                                setUpgradeModal({ open: true, message: 'La exportación de informes individuales es una función PRO.' });
+                              if (!isProActive) {
+                                setUpgradeModal({ open: true, message: 'La exportación de informes individuales es una función PRO. Sube de nivel para usarla.' });
                                 return;
                               }
                               try {
@@ -1206,27 +1206,55 @@ const Tests = () => {
                     className="btn-outline-gold"
                     style={{ minHeight: '44px', display: 'flex', alignItems: 'center', gap: '6px' }}
                     onClick={() => {
+                      if (!isProActive) {
+                        setUpgradeModal({ open: true, message: 'La exportación de informes en CSV es una función PRO. Sube de nivel para usarla.' });
+                        return;
+                      }
                       const testInfo = getTestById(heatSelectedTest);
                       if (!testInfo) return;
-                      let csv = `"Dorsal","Jugador","Eval Inicial","Penúltima Eval","Última Eval","Evolución (%)"\n`;
+                      
+                      const allEvals = [];
                       players.forEach(p => {
                         const history = historyData[p.id]?.[heatSelectedTest] || [];
-                        if (history.length === 0) return;
-                        const isTime = testInfo?.unit === 'seg';
-                        const v1 = history[0].val;
-                        const v2 = history.length >= 2 ? history[history.length - 2].val : '-';
-                        const v3 = history[history.length - 1].val;
-                        const improved = isTime ? v3 < v1 : v3 > v1;
-                        const diffPerc = v1 ? (((v3 - v1) / v1) * 100).toFixed(1) : 0;
-                        const evo = history.length > 1 ? `${improved ? '+' : ''}${diffPerc}%` : '-';
-                        csv += `"${p.number || ''}","${p.name || ''}","${v1}","${v2}","${v3}","${evo}"\n`;
+                        history.forEach(item => {
+                          allEvals.push({
+                            playerName: p.name || p.nombre || '',
+                            val: item.val,
+                            date: item.date || ''
+                          });
+                        });
                       });
+                      
+                      const allVals = allEvals.map(e => e.val);
+                      const isTime = testInfo.unit === 'seg';
+                      
+                      let csv = `Test;Fecha;Jugador;Valor;Percentil;Nota\n`;
+                      allEvals.forEach(ev => {
+                        let pct = 100;
+                        if (allVals.length > 1) {
+                          const worse = allVals.filter(v => isTime ? v > ev.val : v < ev.val).length;
+                          const equal = allVals.filter(v => v === ev.val).length;
+                          pct = Math.round(((worse + 0.5 * equal) / allVals.length) * 100);
+                        }
+                        const nota = (1 + 9 * (pct / 100)).toFixed(1);
+                        csv += `"${testInfo.name}";"${ev.date}";"${ev.playerName}";"${ev.val}";"${pct}%";"${nota}"\n`;
+                      });
+                      
                       downloadCSV(csv, `comparativa_${testInfo.name.replace(/\s+/g,'_')}.csv`);
                     }}
                   >
                     📊 Exportar CSV
                   </button>
-                  <button className="btn-outline-gold" onClick={() => generateTestsReport(tests, players, historyData, activeTeam)}>
+                  <button 
+                    className="btn-outline-gold" 
+                    onClick={() => {
+                      if (!isProActive) {
+                        setUpgradeModal({ open: true, message: 'La exportación de informes colectivos es una función PRO. Sube de nivel para usarla.' });
+                      } else {
+                        generateTestsReport(tests, players, historyData, activeTeam);
+                      }
+                    }}
+                  >
                     📄 Exportar Informe Colectivo
                   </button>
                 </div>

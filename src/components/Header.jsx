@@ -47,7 +47,8 @@ const Header = ({ onToggleNotif }) => {
             >
               {teams.map(t => {
                 if (!t) return null;
-                return <option key={t.id} value={t.id}>{t.nombre.toUpperCase()}</option>
+                const teamName = t.nombre || t.name || 'MI EQUIPO';
+                return <option key={t.id} value={t.id}>{teamName.toUpperCase()}</option>
               })}
             </select>
             <ChevronDown size={14} />

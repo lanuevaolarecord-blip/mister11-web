@@ -554,323 +554,373 @@ const Partidos = () => {
             {/* PESTAÑA: POST-PARTIDO */}
             {editTab === 'POST-PARTIDO' && (
               <div className="tab-pane post-partido-container">
-                <div className="post-partido-form">
-                  <h3 className="section-title">{getLangText('post.title')}</h3>
-                  
-                  {/* Tarjeta 1: Resultado y MVP del Partido */}
-                  <div className="post-match-card">
-                    <h4 className="card-section-title">⚽ Resultado y MVP del Partido</h4>
-                    <div className="score-and-mvp-row">
-                      <div className="score-inputs-container">
-                        <div className="score-box">
-                          <label className="input-label-caps">{getLangText('post.goalsFor')}</label>
+                <div className="post-partido-grid-layout">
+                  {/* Columna Izquierda: Marcador, Goleadores, Tarjetas */}
+                  <div className="post-partido-left-col">
+                    {/* Tarjeta 1: Marcador */}
+                    <div className="post-match-card">
+                      <h4 className="card-section-title">⚽ Marcador del Partido</h4>
+                      <div className="score-inputs-container" style={{ display: 'flex', alignItems: 'center', gap: '15px', justifyContent: 'center', marginTop: '10px' }}>
+                        <div className="score-box" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                          <label className="input-label-caps" style={{ fontSize: '11px', fontWeight: '700', marginBottom: '6px', color: 'var(--partidos-text-muted)' }}>{getLangText('post.goalsFor')}</label>
                           <input 
                             type="number" 
                             className="partidos-input text-center text-2xl" 
+                            style={{ minHeight: '48px', fontSize: '20px', width: '80px', textAlign: 'center', borderRadius: '8px', border: '1px solid var(--partidos-border)', background: 'var(--partidos-input-bg)', color: 'var(--partidos-text-primary)' }}
                             value={matchData.goalsFor || 0} 
                             onChange={e => setMatchData({...matchData, goalsFor: parseInt(e.target.value) || 0})} 
                           />
                         </div>
-                        <div className="score-divider">-</div>
-                        <div className="score-box">
-                          <label className="input-label-caps">{getLangText('post.goalsAgainst')}</label>
+                        <div className="score-divider" style={{ fontSize: '24px', fontWeight: 'bold', color: 'var(--partidos-text-primary)' }}>-</div>
+                        <div className="score-box" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                          <label className="input-label-caps" style={{ fontSize: '11px', fontWeight: '700', marginBottom: '6px', color: 'var(--partidos-text-muted)' }}>{getLangText('post.goalsAgainst')}</label>
                           <input 
                             type="number" 
                             className="partidos-input text-center text-2xl" 
+                            style={{ minHeight: '48px', fontSize: '20px', width: '80px', textAlign: 'center', borderRadius: '8px', border: '1px solid var(--partidos-border)', background: 'var(--partidos-input-bg)', color: 'var(--partidos-text-primary)' }}
                             value={matchData.goalsAgainst || 0} 
                             onChange={e => setMatchData({...matchData, goalsAgainst: parseInt(e.target.value) || 0})} 
                           />
                         </div>
                       </div>
+                    </div>
 
-                      <div className="mvp-selection-box">
-                        <label className="input-label-caps">{getLangText('post.mvp')}</label>
-                        <select 
-                          className="partidos-input"
-                          value={matchData.mvp || ''}
-                          onChange={e => setMatchData({...matchData, mvp: e.target.value})}
-                          style={{ minHeight: '48px' }}
-                        >
-                          <option value="">{getLangText('post.mvpSelect')}</option>
-                          {calledPlayers.map(id => {
-                            const p = players.find(pl => pl.id === id);
-                            return p ? <option key={id} value={p.name}>{p.name}</option> : null;
-                          })}
-                        </select>
+                    {/* Tarjeta 2: Goleadores */}
+                    <div className="post-match-card">
+                      <h4 className="card-section-title">⚽ Goleadores y Asistencias</h4>
+                      <div className="goleadores-list" style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '10px' }}>
+                        {(matchData.goleadoresList || []).map((g, idx) => (
+                          <div key={idx} className="goleador-row" style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                            <select
+                              value={g.jugadorId || ''}
+                              style={{ minHeight: '48px', flex: 1, padding: '0 8px', borderRadius: '8px', border: '1px solid var(--partidos-border)', background: 'var(--partidos-input-bg)', color: 'var(--partidos-text-primary)' }}
+                              onChange={e => {
+                                const list = [...(matchData.goleadoresList || [])];
+                                list[idx] = {...list[idx], jugadorId: e.target.value};
+                                setMatchData({...matchData, goleadoresList: list});
+                              }}
+                            >
+                              <option value="">Jugador...</option>
+                              {calledPlayers.map(id => {
+                                const p = players.find(pl => pl.id === id);
+                                return p ? <option key={id} value={id}>{p.name}</option> : null;
+                              })}
+                            </select>
+                            <input
+                              type="number"
+                              min="1"
+                              max="120"
+                              placeholder="Min"
+                              style={{ minHeight: '48px', width: '70px', padding: '0 8px', borderRadius: '8px', border: '1px solid var(--partidos-border)', background: 'var(--partidos-input-bg)', color: 'var(--partidos-text-primary)' }}
+                              value={g.minuto || ''}
+                              onChange={e => {
+                                const list = [...(matchData.goleadoresList || [])];
+                                list[idx] = {...list[idx], minuto: e.target.value};
+                                setMatchData({...matchData, goleadoresList: list});
+                              }}
+                            />
+                            <button
+                              type="button"
+                              className="btn-remove-row"
+                              style={{ width: '48px', height: '48px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#EF4444', color: '#FFF', border: 'none', borderRadius: '8px', cursor: 'pointer', fontSize: '16px' }}
+                              onClick={() => {
+                                const list = (matchData.goleadoresList || []).filter((_,i) => i !== idx);
+                                setMatchData({...matchData, goleadoresList: list});
+                              }}
+                            >✕</button>
+                          </div>
+                        ))}
                       </div>
+                      <button 
+                        type="button"
+                        className="btn-add-row" 
+                        style={{ minHeight: '48px', width: '100%', marginTop: '10px', color: '#004B87', borderColor: '#004B87', border: '1.5px dashed', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold', background: 'transparent' }} 
+                        onClick={() =>
+                          setMatchData({...matchData, goleadoresList: [...(matchData.goleadoresList || []), {jugadorId:'',minuto:''}]})
+                        }
+                      >
+                        + Añadir Goleador
+                      </button>
+                    </div>
+
+                    {/* Tarjeta 3: Tarjetas */}
+                    <div className="post-match-card">
+                      <h4 className="card-section-title">🟨 Tarjetas</h4>
+                      <div className="goleadores-list" style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '10px' }}>
+                        {(matchData.tarjetasList || []).map((t, idx) => (
+                          <div key={idx} className="goleador-row" style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                            <select
+                              value={t.tipo || 'amarilla'}
+                              style={{ minHeight: '48px', width: '120px', padding: '0 8px', borderRadius: '8px', border: '1px solid var(--partidos-border)', background: 'var(--partidos-input-bg)', color: 'var(--partidos-text-primary)' }}
+                              onChange={e => {
+                                const list = [...(matchData.tarjetasList || [])];
+                                list[idx] = {...list[idx], tipo: e.target.value};
+                                setMatchData({...matchData, tarjetasList: list});
+                              }}
+                            >
+                              <option value="amarilla">🟨 Amarilla</option>
+                              <option value="roja">🟥 Roja</option>
+                            </select>
+                            <select
+                              value={t.jugadorId || ''}
+                              style={{ minHeight: '48px', flex: 1, padding: '0 8px', borderRadius: '8px', border: '1px solid var(--partidos-border)', background: 'var(--partidos-input-bg)', color: 'var(--partidos-text-primary)' }}
+                              onChange={e => {
+                                const list = [...(matchData.tarjetasList || [])];
+                                list[idx] = {...list[idx], jugadorId: e.target.value};
+                                setMatchData({...matchData, tarjetasList: list});
+                              }}
+                            >
+                              <option value="">Jugador...</option>
+                              {calledPlayers.map(id => {
+                                const p = players.find(pl => pl.id === id);
+                                return p ? <option key={id} value={id}>{p.name}</option> : null;
+                              })}
+                            </select>
+                            <input
+                              type="number"
+                              min="1"
+                              max="120"
+                              placeholder="Min"
+                              style={{ minHeight: '48px', width: '70px', padding: '0 8px', borderRadius: '8px', border: '1px solid var(--partidos-border)', background: 'var(--partidos-input-bg)', color: 'var(--partidos-text-primary)' }}
+                              value={t.minuto || ''}
+                              onChange={e => {
+                                const list = [...(matchData.tarjetasList || [])];
+                                list[idx] = {...list[idx], minuto: e.target.value};
+                                setMatchData({...matchData, tarjetasList: list});
+                              }}
+                            />
+                            <button
+                              type="button"
+                              className="btn-remove-row"
+                              style={{ width: '48px', height: '48px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#EF4444', color: '#FFF', border: 'none', borderRadius: '8px', cursor: 'pointer', fontSize: '16px' }}
+                              onClick={() => {
+                                const list = (matchData.tarjetasList || []).filter((_,i) => i !== idx);
+                                setMatchData({...matchData, tarjetasList: list});
+                              }}
+                            >✕</button>
+                          </div>
+                        ))}
+                      </div>
+                      <button 
+                        type="button"
+                        className="btn-add-row" 
+                        style={{ minHeight: '48px', width: '100%', marginTop: '10px', color: '#004B87', borderColor: '#004B87', border: '1.5px dashed', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold', background: 'transparent' }} 
+                        onClick={() =>
+                          setMatchData({...matchData, tarjetasList: [...(matchData.tarjetasList || []), {jugadorId:'',tipo:'amarilla',minuto:''}]})
+                        }
+                      >
+                        + Añadir Tarjeta
+                      </button>
                     </div>
                   </div>
 
-                  {/* Tarjeta 2: Estadísticas de Rendimiento (Goleadores y Tarjetas) */}
-                  <div className="post-match-card">
-                    <h4 className="card-section-title">📊 Goleadores y Tarjetas</h4>
-                    
-                    <div className="stats-sections-grid">
-                      {/* Goleadores dinámicos */}
-                      <div className="stats-col">
-                        <p className="sub-section-title">⚽ Goleadores y Asistencias</p>
-                        <div className="goleadores-list">
-                          {(matchData.goleadoresList || []).map((g, idx) => (
-                            <div key={idx} className="goleador-row">
-                              <select
-                                value={g.jugadorId || ''}
-                                style={{ minHeight: '48px' }}
-                                onChange={e => {
-                                  const list = [...(matchData.goleadoresList || [])];
-                                  list[idx] = {...list[idx], jugadorId: e.target.value};
-                                  setMatchData({...matchData, goleadoresList: list});
-                                }}
-                              >
-                                <option value="">Jugador...</option>
-                                {calledPlayers.map(id => {
-                                  const p = players.find(pl => pl.id === id);
-                                  return p ? <option key={id} value={id}>{p.name}</option> : null;
-                                })}
-                              </select>
-                              <input
-                                type="number"
-                                min="1"
-                                max="120"
-                                placeholder="Min"
-                                style={{ minHeight: '48px' }}
-                                value={g.minuto || ''}
-                                onChange={e => {
-                                  const list = [...(matchData.goleadoresList || [])];
-                                  list[idx] = {...list[idx], minuto: e.target.value};
-                                  setMatchData({...matchData, goleadoresList: list});
-                                }}
-                              />
-                              <button
-                                type="button"
-                                className="btn-remove-row"
-                                style={{ width: '48px', height: '48px' }}
-                                onClick={() => {
-                                  const list = (matchData.goleadoresList || []).filter((_,i) => i !== idx);
-                                  setMatchData({...matchData, goleadoresList: list});
-                                }}
-                              >✕</button>
-                            </div>
-                          ))}
-                        </div>
-                        <button 
-                          type="button"
-                          className="btn-add-row" 
-                          style={{ minHeight: '48px', color: '#004B87', borderColor: '#004B87' }} 
-                          onClick={() =>
-                            setMatchData({...matchData, goleadoresList: [...(matchData.goleadoresList || []), {jugadorId:'',minuto:''}]})
-                          }
-                        >
-                          + Añadir Goleador
-                        </button>
-                      </div>
-
-                      {/* Tarjetas dinámicas */}
-                      <div className="stats-col">
-                        <p className="sub-section-title">🟨🟥 Tarjetas</p>
-                        <div className="goleadores-list">
-                          {(matchData.tarjetasList || []).map((t, idx) => (
-                            <div key={idx} className="goleador-row">
-                              <select
-                                value={t.tipo || 'amarilla'}
-                                style={{ flex: '0 0 110px', minHeight: '48px' }}
-                                onChange={e => {
-                                  const list = [...(matchData.tarjetasList || [])];
-                                  list[idx] = {...list[idx], tipo: e.target.value};
-                                  setMatchData({...matchData, tarjetasList: list});
-                                }}
-                              >
-                                <option value="amarilla">🟨 Amarilla</option>
-                                <option value="roja">🟥 Roja</option>
-                              </select>
-                              <select
-                                value={t.jugadorId || ''}
-                                style={{ minHeight: '48px' }}
-                                onChange={e => {
-                                  const list = [...(matchData.tarjetasList || [])];
-                                  list[idx] = {...list[idx], jugadorId: e.target.value};
-                                  setMatchData({...matchData, tarjetasList: list});
-                                }}
-                              >
-                                <option value="">Jugador...</option>
-                                {calledPlayers.map(id => {
-                                  const p = players.find(pl => pl.id === id);
-                                  return p ? <option key={id} value={id}>{p.name}</option> : null;
-                                })}
-                              </select>
-                              <input
-                                type="number"
-                                min="1"
-                                max="120"
-                                placeholder="Min"
-                                style={{ minHeight: '48px' }}
-                                value={t.minuto || ''}
-                                onChange={e => {
-                                  const list = [...(matchData.tarjetasList || [])];
-                                  list[idx] = {...list[idx], minuto: e.target.value};
-                                  setMatchData({...matchData, tarjetasList: list});
-                                }}
-                              />
-                              <button
-                                type="button"
-                                className="btn-remove-row"
-                                style={{ width: '48px', height: '48px' }}
-                                onClick={() => {
-                                  const list = (matchData.tarjetasList || []).filter((_,i) => i !== idx);
-                                  setMatchData({...matchData, tarjetasList: list});
-                                }}
-                              >✕</button>
-                            </div>
-                          ))}
-                        </div>
-                        <button 
-                          type="button"
-                          className="btn-add-row" 
-                          style={{ minHeight: '48px', color: '#004B87', borderColor: '#004B87' }} 
-                          onClick={() =>
-                            setMatchData({...matchData, tarjetasList: [...(matchData.tarjetasList || []), {jugadorId:'',tipo:'amarilla',minuto:''}]})
-                          }
-                        >
-                          + Añadir Tarjeta
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Tarjeta 3: Cuestionario de Análisis del Partido (Listado Secuencial) */}
-                  <div className="post-match-card">
-                    <h4 className="card-section-title">📋 Cuestionario de Informe de Partido</h4>
-                    
-                    <div className="questionnaire-fields">
-                      {reportQuestions.map(q => (
-                        <div key={q.key} className="questionnaire-field-block">
-                          <label className="question-field-label">{q.label}</label>
-                          <p className="question-field-desc">{q.question}</p>
-                          <textarea
+                  {/* Columna Derecha: MVP, Valoración, Notas, Botón de Guardar */}
+                  <div className="post-partido-right-col">
+                    {/* Tarjeta 4: MVP y Valoración */}
+                    <div className="post-match-card">
+                      <h4 className="card-section-title">👑 MVP y Valoración</h4>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '15px', marginTop: '10px' }}>
+                        <div className="mvp-selection-box" style={{ display: 'flex', flexDirection: 'column' }}>
+                          <label className="input-label-caps" style={{ fontSize: '11px', fontWeight: '700', marginBottom: '6px', color: 'var(--partidos-text-muted)' }}>{getLangText('post.mvp')}</label>
+                          <select 
                             className="partidos-input"
-                            rows="4"
-                            value={(matchData.postMatchAnswers && matchData.postMatchAnswers[q.key]) || ''}
-                            onChange={e => handleAnswerChange(q.key, e.target.value)}
-                            placeholder="..."
-                            style={{ width: '100%', background: 'var(--partidos-input-bg)', minHeight: '100px' }}
+                            value={matchData.mvp || ''}
+                            onChange={e => setMatchData({...matchData, mvp: e.target.value})}
+                            style={{ minHeight: '48px', padding: '0 8px', borderRadius: '8px', border: '1px solid var(--partidos-border)', background: 'var(--partidos-input-bg)', color: 'var(--partidos-text-primary)' }}
+                          >
+                            <option value="">{getLangText('post.mvpSelect')}</option>
+                            {calledPlayers.map(id => {
+                              const p = players.find(pl => pl.id === id);
+                              return p ? <option key={id} value={p.name}>{p.name}</option> : null;
+                            })}
+                          </select>
+                        </div>
+
+                        {/* Valoración del equipo slider 1-10 */}
+                        <div style={{ display: 'flex', flexDirection: 'column' }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                            <label className="input-label-caps" style={{ fontSize: '11px', fontWeight: '700', color: 'var(--partidos-text-muted)' }}>VALORACIÓN DEL EQUIPO</label>
+                            <span style={{ fontSize: '15px', fontWeight: 'bold', color: '#004B87' }}>{matchData.teamRating || 5} / 10</span>
+                          </div>
+                          <input 
+                            type="range" 
+                            min="1" 
+                            max="10" 
+                            step="1"
+                            value={matchData.teamRating || 5} 
+                            onChange={e => setMatchData({...matchData, teamRating: parseInt(e.target.value) || 5})}
+                            style={{ width: '100%', cursor: 'pointer', height: '8px', borderRadius: '4px', background: '#e5e7eb' }}
                           />
                         </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Tarjeta 4: Notas Tácticas Generales */}
-                  <div className="post-match-card">
-                    <h4 className="card-section-title">📝 {getLangText('post.notes')}</h4>
-                    <div className="questionnaire-field-block">
-                      <p className="question-field-desc">{getLangText('post.notesPlaceholder')}</p>
-                      <textarea 
-                        className="partidos-input textarea-tall" 
-                        value={matchData.notes || ''} 
-                        onChange={e => setMatchData({...matchData, notes: e.target.value})}
-                        placeholder={getLangText('post.notesPlaceholder')}
-                        rows={5}
-                        style={{ minHeight: '120px' }}
-                      />
-                    </div>
-                  </div>
-
-                  {/* Tarjeta 5: Galería de Imágenes y Fotos del Partido */}
-                  <div className="post-match-card">
-                    <h4 className="card-section-title">📷 {getLangText('post.images')}</h4>
-                    
-                    <div className="image-upload-wrapper">
-                      <input
-                        type="file"
-                        accept="image/*"
-                        multiple
-                        id="post-match-photo-upload"
-                        style={{ display: 'none' }}
-                        onChange={handleImageUpload}
-                      />
-                      <label 
-                        htmlFor="post-match-photo-upload" 
-                        className="btn-primary-blue-allcaps"
-                        style={{
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          gap: '8px',
-                          minHeight: '48px',
-                          cursor: 'pointer',
-                          padding: '0 24px',
-                          border: 'none',
-                          borderRadius: '8px',
-                          fontWeight: '700',
-                          textTransform: 'uppercase',
-                          background: '#004B87',
-                          color: '#FFFFFF'
-                        }}
-                      >
-                        📷 {getLangText('post.uploadBtn')}
-                      </label>
+                      </div>
                     </div>
 
-                    <div className="images-gallery" style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', marginTop: '16px' }}>
-                      {(matchData.postMatchImages || []).map((img, idx) => (
-                        <div key={idx} className="gallery-thumbnail-container" style={{ position: 'relative', width: '100px', height: '100px', borderRadius: '8px', overflow: 'hidden', border: '1px solid var(--partidos-border)' }}>
-                          <img src={img} alt={`Match Photo ${idx + 1}`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                          <button
-                            type="button"
-                            onClick={() => handleDeleteImage(idx)}
-                            style={{
-                              position: 'absolute',
-                              top: '4px',
-                              right: '4px',
-                              width: '32px',
-                              height: '32px',
-                              borderRadius: '50%',
-                              background: 'rgba(239, 68, 68, 0.9)',
-                              color: 'white',
-                              border: 'none',
-                              cursor: 'pointer',
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              fontSize: '14px',
-                              fontWeight: 'bold'
-                            }}
-                          >
-                            ✕
-                          </button>
-                        </div>
-                      ))}
+                    {/* Tarjeta 5: Notas Tácticas */}
+                    <div className="post-match-card">
+                      <h4 className="card-section-title">📝 Notas Tácticas</h4>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginTop: '10px' }}>
+                        <label className="input-label-caps" style={{ fontSize: '11px', fontWeight: '700', color: 'var(--partidos-text-muted)' }}>{getLangText('post.notes')}</label>
+                        <textarea 
+                          className="partidos-input textarea-tall" 
+                          value={matchData.notes || ''} 
+                          onChange={e => setMatchData({...matchData, notes: e.target.value})}
+                          placeholder={getLangText('post.notesPlaceholder')}
+                          rows={5}
+                          style={{ minHeight: '120px', width: '100%', padding: '8px', borderRadius: '8px', border: '1px solid var(--partidos-border)', background: 'var(--partidos-input-bg)', color: 'var(--partidos-text-primary)', boxSizing: 'border-box' }}
+                        />
+                      </div>
                     </div>
-                  </div>
 
-                  {/* Botones de acción del informe */}
-                  <div style={{ display: 'flex', gap: '12px', marginTop: '40px', justifyContent: 'flex-end', flexWrap: 'wrap' }}>
-                    <button
-                      type="button"
-                      className="btn-outline-dark"
-                      style={{ minHeight: '48px', padding: '0 24px', borderRadius: '8px', fontWeight: '800' }}
-                      onClick={() => setShowReportPreview(true)}
-                    >
-                      👁️ {getLangText('post.viewReport')}
-                    </button>
+                    {/* Botón de Guardar Post-Partido (Verde Campo) */}
                     <button
                       type="button"
                       className="btn-success-green-allcaps"
+                      onClick={handleSaveMatch}
+                      disabled={isSaving}
                       style={{
-                        minHeight: '48px',
-                        padding: '0 24px',
-                        borderRadius: '8px',
-                        fontWeight: '800',
+                        width: '100%',
+                        minHeight: '52px',
                         background: '#2E7D5C',
                         color: '#FFFFFF',
                         border: 'none',
-                        boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
+                        borderRadius: '8px',
+                        fontWeight: '700',
+                        fontSize: '15px',
                         cursor: 'pointer',
-                        textTransform: 'uppercase'
+                        textTransform: 'uppercase',
+                        boxShadow: '0 4px 10px rgba(46,125,92,0.2)',
+                        transition: 'all 0.2s ease',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '8px',
+                        marginTop: '10px'
                       }}
-                      onClick={handleExportPDF}
                     >
-                      📥 {getLangText('post.downloadReport')}
+                      {isSaving ? 'GUARDANDO...' : '💾 GUARDAR POST-PARTIDO'}
                     </button>
+                  </div>
+
+                  {/* Secciones de ancho completo abajo */}
+                  <div className="post-partido-full-width-card" style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                    {/* Tarjeta 6: Cuestionario de Análisis */}
+                    <div className="post-match-card">
+                      <h4 className="card-section-title">📋 Cuestionario de Informe de Partido</h4>
+                      <div className="questionnaire-fields" style={{ marginTop: '10px' }}>
+                        {reportQuestions.map(q => (
+                          <div key={q.key} className="questionnaire-field-block" style={{ marginBottom: '15px' }}>
+                            <label className="question-field-label" style={{ fontWeight: 'bold', fontSize: '13px' }}>{q.label}</label>
+                            <p className="question-field-desc" style={{ fontSize: '12px', color: 'var(--partidos-text-muted)', margin: '4px 0 8px 0' }}>{q.question}</p>
+                            <textarea
+                              className="partidos-input"
+                              rows="4"
+                              value={(matchData.postMatchAnswers && matchData.postMatchAnswers[q.key]) || ''}
+                              onChange={e => handleAnswerChange(q.key, e.target.value)}
+                              placeholder="..."
+                              style={{ width: '100%', background: 'var(--partidos-input-bg)', minHeight: '100px', padding: '8px', borderRadius: '8px', border: '1px solid var(--partidos-border)', color: 'var(--partidos-text-primary)' }}
+                            />
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Tarjeta 7: Galería de Imágenes */}
+                    <div className="post-match-card">
+                      <h4 className="card-section-title">📷 {getLangText('post.images')}</h4>
+                      <div className="image-upload-wrapper" style={{ marginTop: '10px' }}>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          multiple
+                          id="post-match-photo-upload"
+                          style={{ display: 'none' }}
+                          onChange={handleImageUpload}
+                        />
+                        <label 
+                          htmlFor="post-match-photo-upload" 
+                          className="btn-primary-blue-allcaps"
+                          style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: '8px',
+                            minHeight: '48px',
+                            cursor: 'pointer',
+                            padding: '0 24px',
+                            border: 'none',
+                            borderRadius: '8px',
+                            fontWeight: '700',
+                            textTransform: 'uppercase',
+                            background: '#004B87',
+                            color: '#FFFFFF'
+                          }}
+                        >
+                          📷 {getLangText('post.uploadBtn')}
+                        </label>
+                      </div>
+
+                      <div className="images-gallery" style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', marginTop: '16px' }}>
+                        {(matchData.postMatchImages || []).map((img, idx) => (
+                          <div key={idx} className="gallery-thumbnail-container" style={{ position: 'relative', width: '100px', height: '100px', borderRadius: '8px', overflow: 'hidden', border: '1px solid var(--partidos-border)' }}>
+                            <img src={img} alt={`Match Photo ${idx + 1}`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                            <button
+                              type="button"
+                              onClick={() => handleDeleteImage(idx)}
+                              style={{
+                                position: 'absolute',
+                                top: '4px',
+                                right: '4px',
+                                width: '32px',
+                                height: '32px',
+                                borderRadius: '50%',
+                                background: 'rgba(239, 68, 68, 0.9)',
+                                color: 'white',
+                                border: 'none',
+                                cursor: 'pointer',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                fontSize: '14px',
+                                fontWeight: 'bold'
+                              }}
+                            >
+                              ✕
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Botones de acción del informe */}
+                    <div style={{ display: 'flex', gap: '12px', marginTop: '20px', justifyContent: 'flex-end', flexWrap: 'wrap' }}>
+                      <button
+                        type="button"
+                        className="btn-outline-dark"
+                        style={{ minHeight: '48px', padding: '0 24px', borderRadius: '8px', fontWeight: '800', border: '1px solid var(--partidos-text-primary)', color: 'var(--partidos-text-primary)', background: 'transparent', cursor: 'pointer' }}
+                        onClick={() => setShowReportPreview(true)}
+                      >
+                        👁️ {getLangText('post.viewReport')}
+                      </button>
+                      <button
+                        type="button"
+                        className="btn-success-green-allcaps"
+                        style={{
+                          minHeight: '48px',
+                          padding: '0 24px',
+                          borderRadius: '8px',
+                          fontWeight: '800',
+                          background: '#2E7D5C',
+                          color: '#FFFFFF',
+                          border: 'none',
+                          boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
+                          cursor: 'pointer',
+                          textTransform: 'uppercase'
+                        }}
+                        onClick={handleExportPDF}
+                      >
+                        📥 {getLangText('post.downloadReport')}
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>

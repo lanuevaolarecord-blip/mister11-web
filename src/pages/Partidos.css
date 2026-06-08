@@ -1058,3 +1058,35 @@ html.dark .post-match-card {
   opacity: 0.9;
 }
 
+/* =========================================================
+   NUEVO GRID LAYOUT POST-PARTIDO (UX)
+   ========================================================= */
+.post-partido-grid-layout {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 20px;
+  width: 100%;
+}
+
+@media (min-width: 768px) {
+  .post-partido-grid-layout {
+    grid-template-columns: 1fr 1fr;
+  }
+  .post-partido-full-width-card {
+    grid-column: 1 / -1;
+  }
+}
+
+.post-partido-left-col,
+.post-partido-right-col {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.goleador-row select,
+.goleador-row input,
+.goleador-row button {
+  min-height: 48px;
+}
+

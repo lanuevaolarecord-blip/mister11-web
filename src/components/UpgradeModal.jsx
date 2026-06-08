@@ -10,9 +10,19 @@ const UpgradeModal = ({ isOpen, onClose, message }) => {
 
   const handleSubscribe = async (priceId, planName) => {
     setLoadingPlan(planName);
+    const activeUid = localStorage.getItem('mister11_active_user_uid');
+    
+    if (activeUid === 'invitado-local') {
+      localStorage.setItem('mister11_simulated_plan', planName.toLowerCase() === 'pro' ? 'pro' : 'club');
+      alert(`¡Modo ${planName.toUpperCase()} Simulado activado para el Modo de Prueba!`);
+      onClose();
+      window.location.reload();
+      return;
+    }
+
     try {
       const functions = getFunctions();
-      const createCheckoutSession = httpsCallable(functions, 'ext-firebase-stripe-createCheckoutSession');
+      const createCheckoutSession = httpsCallable(functions, 'ext-firestore-stripe-payments-createCheckoutSession');
       
       const result = await createCheckoutSession({
         priceId: priceId,

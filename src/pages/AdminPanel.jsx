@@ -72,10 +72,19 @@ const AdminPanel = () => {
   const [loadingPortal, setLoadingPortal] = useState(false);
 
   const handleManageSubscription = async () => {
+    const activeUid = localStorage.getItem('mister11_active_user_uid');
+    if (activeUid === 'invitado-local') {
+      if (window.confirm("Estás en Modo de Prueba con un plan simulado. ¿Deseas desactivar el plan simulado para volver al plan gratuito y probar las restricciones?")) {
+        localStorage.removeItem('mister11_simulated_plan');
+        window.location.reload();
+      }
+      return;
+    }
+
     setLoadingPortal(true);
     try {
       const functions = getFunctions();
-      const createPortalLink = httpsCallable(functions, 'ext-firebase-stripe-createPortalLink');
+      const createPortalLink = httpsCallable(functions, 'ext-firestore-stripe-payments-createPortalLink');
       const result = await createPortalLink({
         returnUrl: window.location.href,
       });

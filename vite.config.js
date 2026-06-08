@@ -1,8 +1,18 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
+import { fileURLToPath } from 'url'
+import path from 'path'
+
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = path.dirname(__filename)
 
 export default defineConfig({
+  resolve: {
+    alias: {
+      'firebase/firestore': path.resolve(__dirname, 'src/firebase/firestore-proxy.js')
+    }
+  },
   plugins: [
     react(),
     VitePWA({

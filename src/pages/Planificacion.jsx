@@ -86,7 +86,7 @@ const ProgressBar = ({ value, max, color }) => {
 };
 
 const Planificacion = () => {
-  const { activeTeamId } = useAuth();
+  const { user, activeTeamId } = useAuth();
   const { activeTeam } = useTeams();
   const { darkMode } = useTheme();
   const { isProActive } = usePlan();
@@ -127,7 +127,6 @@ const Planificacion = () => {
   // ── LOAD FROM FIRESTORE ──────────────────────────────────────────
   useEffect(() => {
     const load = async () => {
-      const user = auth.currentUser;
       if (!user || !activeTeamId) return;
       try {
         const ref = doc(db, 'users', user.uid, 'teams', activeTeamId, 'planificacion', 'config');
@@ -141,7 +140,7 @@ const Planificacion = () => {
       } catch (e) { console.error(e); }
     };
     load();
-  }, [activeTeamId]);
+  }, [user, activeTeamId]);
 
   const showToast = useCallback((msg, type = 'success') => {
     setToast({ msg, type });
@@ -149,7 +148,6 @@ const Planificacion = () => {
   }, []);
 
   const handleSave = useCallback(async () => {
-    const user = auth.currentUser;
     if (!user || !activeTeamId) { showToast('Inicia sesión para guardar', 'error'); return; }
     setSaving(true);
     try {
@@ -158,7 +156,7 @@ const Planificacion = () => {
       showToast('Planificación guardada ✓');
     } catch (e) { showToast('Error al guardar.', 'error'); }
     finally { setSaving(false); }
-  }, [macroInfo, microcycles, macroCounts, showToast, activeTeamId]);
+  }, [user, macroInfo, microcycles, macroCounts, showToast, activeTeamId]);
 
   const handleExportPDF = async () => {
     if (!isProActive) {

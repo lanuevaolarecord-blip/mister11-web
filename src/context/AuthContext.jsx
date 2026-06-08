@@ -17,9 +17,16 @@ export const AuthProvider = ({ children }) => {
       // Si entra un usuario real por Firebase, limpiamos cualquier estado local mock
       if (currentUser) {
         setUser(currentUser);
+        localStorage.setItem('mister11_active_user_uid', currentUser.uid);
       } else {
         // Solo limpiamos si no estamos en modo invitado local
-        setUser((prev) => (prev && prev.uid === 'invitado-local' ? prev : null));
+        setUser((prev) => {
+          if (prev && prev.uid === 'invitado-local') {
+            return prev;
+          }
+          localStorage.removeItem('mister11_active_user_uid');
+          return null;
+        });
         if (!user || user.uid !== 'invitado-local') {
           setActiveTeamId(null);
           setTeams([]);
@@ -112,6 +119,7 @@ export const AuthProvider = ({ children }) => {
           displayName: 'Entrenador Invitado',
           isAnonymous: true
         };
+        localStorage.setItem('mister11_active_user_uid', 'invitado-local');
         setUser(mockUser);
         
         // Creamos un equipo mock de pruebas
@@ -138,6 +146,7 @@ export const AuthProvider = ({ children }) => {
   const logout = useCallback(async () => {
     setLoading(true);
     try {
+      localStorage.removeItem('mister11_active_user_uid');
       if (user && user.uid === 'invitado-local') {
         setUser(null);
         setActiveTeamId(null);

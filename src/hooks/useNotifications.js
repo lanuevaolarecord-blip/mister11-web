@@ -56,7 +56,7 @@ export const useNotifications = (teamId) => {
 
 const formatTime = (timestamp) => {
   if (!timestamp) return 'Ahora';
-  const date = timestamp.toDate();
+  const date = (timestamp && typeof timestamp.toDate === 'function') ? timestamp.toDate() : new Date(timestamp);
   const now = new Date();
   const diffInSeconds = Math.floor((now - date) / 1000);
 

@@ -97,7 +97,7 @@ const Planificacion = () => {
     endDate: '2026-06-15',
     category: activeTeam?.categoria || activeTeam?.category || 'Infantil A',
     objective: 'Adapteremos al equipo en la parte técnica y táctica, mediante trabajos de posición y finalización.',
-    trainer: 'Jhojan',
+    trainer: user?.displayName || 'Míster',
     sessionDuration: 90,
     trainingDays: [0, 2, 4],
   });

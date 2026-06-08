@@ -29,7 +29,7 @@ import './Dashboard.css';
 const Dashboard = () => {
   const { darkMode } = useTheme();
   const navigate = useNavigate();
-  const { activeTeamId } = useAuth();
+  const { user, activeTeamId } = useAuth();
   const { isPro, isDeveloper, trialDaysRemaining, toggleSimulatedPlan, resetTrial } = usePlan();
   const { settings } = useSettings(activeTeamId);
   const { players } = usePlayers(activeTeamId);
@@ -288,7 +288,7 @@ const Dashboard = () => {
     <div className="page-wrapper">
       <header className="page-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div>
-          <h1 className="page-title">{t('dashboard.welcome', settings.language, { name: settings.profileName?.split(' ')[0] || 'jhojan' })}</h1>
+          <h1 className="page-title">{t('dashboard.welcome', settings.language, { name: (settings.profileName || user?.displayName || 'Míster').trim().split(' ')[0] })}</h1>
           <p className="page-subtitle">{t('dashboard.activity', settings.language, { club: settings.clubName || 'burriana e.d.' })}</p>
         </div>
         <div className="card-base" style={{ padding: '8px 16px', textAlign: 'center' }}>

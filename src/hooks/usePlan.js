@@ -103,8 +103,10 @@ export const usePlan = () => {
   // --- Trial calculation (now based on Firestore date, tamper-proof) ---
   const trialStart = dbTrialStartDate || now;
   const msPassed = now - trialStart;
+  const hoursPassed = Math.floor(msPassed / (60 * 60 * 1000));
   const daysPassed = Math.floor(msPassed / (24 * 60 * 60 * 1000));
   const trialDaysRemaining = Math.max(0, 7 - daysPassed);
+  const trialHoursRemaining = Math.max(0, 7 * 24 - hoursPassed);
   const isTrialExpired = trialDaysRemaining <= 0;
   const isOnTrial = (dbPlan === 'trial') && !isTrialExpired;
 
@@ -113,7 +115,10 @@ export const usePlan = () => {
   const isRealExpired = dbProExpiration && (typeof dbProExpiration.toDate === 'function' ? dbProExpiration.toDate() : new Date(dbProExpiration)) < now;
   const isRealPro = (dbPlan === 'pro' || dbPlan === 'club') && !isRealExpired;
 
-  // --- Final PRO status ---
+  // isRealPaidPro = true ONLY when there is a real paid Stripe subscription (not simulated, not trial)
+  const isRealPaidPro = isRealPro;
+
+  // --- Final PRO status (includes simulated for developer testing) ---
   const isPro = isRealPro || isOnTrial || (simulatedPlan === 'pro') || (isDeveloper && simulatedPlan !== 'free');
   const currentLimits = isPro ? LIMITS.PRO : LIMITS.FREE;
 
@@ -130,9 +135,12 @@ export const usePlan = () => {
     simulatedPlan,
     toggleSimulatedPlan,
     trialDaysRemaining,
+    trialHoursRemaining,
     resetTrial,
     isOnTrial,
+    isTrialExpired,
     dbPlan,
-    isProActive
+    isProActive,
+    isRealPaidPro
   };
 };

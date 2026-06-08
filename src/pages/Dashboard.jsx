@@ -32,7 +32,7 @@ const Dashboard = () => {
   const { user, activeTeamId } = useAuth();
   const adminEmails = ['lanuevaolarecord@gmail.com', 'lavozdelformador@gmail.com', 'jhocao111294@gmail.com'];
   const isAdmin = user?.email && adminEmails.includes(user.email.toLowerCase());
-  const { isPro, isDeveloper, trialDaysRemaining, toggleSimulatedPlan, resetTrial } = usePlan();
+  const { isPro, isDeveloper, trialDaysRemaining, trialHoursRemaining, isOnTrial, isTrialExpired, isRealPaidPro, toggleSimulatedPlan, resetTrial } = usePlan();
   const { settings } = useSettings(activeTeamId);
   const { players } = usePlayers(activeTeamId);
   const { sessions } = useSessions(activeTeamId);
@@ -341,39 +341,69 @@ const Dashboard = () => {
           alignItems: 'center',
           padding: '16px 24px',
           borderRadius: '12px',
-          background: isPro ? 'linear-gradient(135deg, rgba(212,168,67,0.12), rgba(27,58,45,0.2))' : 'linear-gradient(135deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01))',
+          background: (!isAdmin && isOnTrial && trialDaysRemaining <= 1)
+            ? 'linear-gradient(135deg, rgba(239,68,68,0.12), rgba(239,68,68,0.06))'
+            : isPro
+              ? 'linear-gradient(135deg, rgba(212,168,67,0.12), rgba(27,58,45,0.2))'
+              : 'linear-gradient(135deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01))',
           border: '1.5px solid',
-          borderColor: isPro ? 'var(--gold)' : 'var(--border-color)',
-          marginBottom: '24px'
+          borderColor: (!isAdmin && isOnTrial && trialDaysRemaining <= 1)
+            ? 'rgba(239,68,68,0.5)'
+            : isPro ? 'var(--gold)' : 'var(--border-color)',
+          marginBottom: '24px',
+          flexWrap: 'wrap',
+          gap: '12px'
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
             <div className="crown-badge" style={{
               width: '40px',
               height: '40px',
               borderRadius: '8px',
-              background: isPro ? 'rgba(212, 168, 67, 0.15)' : 'rgba(255,255,255,0.05)',
-              color: isPro ? 'var(--gold)' : 'var(--text-secondary)',
+              background: (!isAdmin && isOnTrial && trialDaysRemaining <= 1)
+                ? 'rgba(239,68,68,0.15)'
+                : isPro ? 'rgba(212, 168, 67, 0.15)' : 'rgba(255,255,255,0.05)',
+              color: (!isAdmin && isOnTrial && trialDaysRemaining <= 1)
+                ? '#ef4444'
+                : isPro ? 'var(--gold)' : 'var(--text-secondary)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center'
             }}>
-              {isPro ? <Crown size={22} className="crown-icon-animated" /> : <Info size={22} />}
+              {(!isAdmin && isOnTrial && trialDaysRemaining <= 1) ? '⚠️' : isPro ? <Crown size={22} className="crown-icon-animated" /> : <Info size={22} />}
             </div>
             <div>
-              <h3 style={{ margin: 0, color: 'var(--text-primary)', fontSize: '16px', fontFamily: 'var(--font-heading)' }}>
-                {isPro ? '👑 Míster11 PRO · Prueba Gratuita Activa' : '⭐ Míster11 Plan Gratuito (Limitado)'}
+              <h3 style={{
+                margin: 0,
+                color: (!isAdmin && isOnTrial && trialDaysRemaining <= 1) ? '#ef4444' : 'var(--text-primary)',
+                fontSize: '16px',
+                fontFamily: 'var(--font-heading)'
+              }}>
+                {(!isAdmin && isOnTrial && trialDaysRemaining <= 1)
+                  ? '⚠️ ¡Tu prueba vence pronto!'
+                  : isPro
+                    ? '👑 Míster11 PRO · Prueba Gratuita Activa'
+                    : '⭐ Míster11 Plan Gratuito (Limitado)'}
               </h3>
-              <p style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '13px', marginTop: '4px' }}>
-                {isPro 
-                  ? `Tienes acceso total a todas las funciones premium. Te quedan ${trialDaysRemaining} días de prueba.`
-                  : 'Límites activos: 1 equipo, 15 jugadores, 10 sesiones y sin exportación PDF.'}
+              <p style={{
+                margin: 0,
+                color: (!isAdmin && isOnTrial && trialDaysRemaining <= 1) ? 'rgba(239,68,68,0.85)' : 'var(--text-secondary)',
+                fontSize: '13px',
+                marginTop: '4px'
+              }}>
+                {(!isAdmin && isOnTrial && trialDaysRemaining <= 1)
+                  ? `Solo quedan ${trialHoursRemaining > 0 ? trialHoursRemaining + ' horas' : 'pocas horas'} de prueba. Suscríbete para no perder el acceso.`
+                  : isPro
+                    ? `Tienes acceso total a todas las funciones premium. Te quedan ${trialDaysRemaining} días (${trialHoursRemaining % 24}h) de prueba.`
+                    : isTrialExpired
+                      ? '🔒 Tu prueba gratuita ha finalizado. Suscríbete para recuperar el acceso PRO.'
+                      : 'Límites activos: 1 equipo, 15 jugadores, 10 sesiones y sin exportación PDF.'}
               </p>
             </div>
           </div>
           <div style={{ display: 'flex', gap: '10px' }}>
             {isAdmin ? (
               <>
-                <button 
+                <button
                   className={`chip ${isPro ? 'active' : ''}`}
                   onClick={toggleSimulatedPlan}
                   style={{
@@ -391,7 +421,7 @@ const Dashboard = () => {
                   {isPro ? 'Probar Plan Gratuito' : 'Activar Prueba PRO'}
                 </button>
                 {isPro && (
-                  <button 
+                  <button
                     className="chip"
                     onClick={resetTrial}
                     style={{
@@ -410,27 +440,33 @@ const Dashboard = () => {
                 )}
               </>
             ) : (
-              !isPro && (
-                <button 
-                  className="chip active"
-                  onClick={() => navigate('/admin', { state: { activeTab: 'ajustes' } })}
-                  style={{
-                    border: '1.5px solid var(--accent)',
-                    background: 'var(--accent)',
-                    color: '#ffffff',
-                    padding: '8px 20px',
-                    borderRadius: '8px',
-                    fontWeight: 'bold',
-                    cursor: 'pointer',
-                    minHeight: '48px',
-                    textTransform: 'uppercase',
-                    fontSize: '0.85rem',
-                    letterSpacing: '0.5px'
-                  }}
-                >
-                  Suscripciones
-                </button>
-              )
+              /* Para no-admins: siempre mostrar botón de planes */
+              <button
+                className="chip active"
+                id="btn-dash-ver-planes"
+                onClick={() => navigate('/admin', { state: { activeTab: 'ajustes' } })}
+                style={{
+                  border: '1.5px solid',
+                  borderColor: (!isAdmin && isOnTrial && trialDaysRemaining <= 1) ? '#ef4444' : 'var(--accent)',
+                  background: (!isAdmin && isOnTrial && trialDaysRemaining <= 1)
+                    ? 'linear-gradient(135deg, #c53030, #e53e3e)'
+                    : isTrialExpired
+                      ? 'linear-gradient(135deg, #c53030, #e53e3e)'
+                      : 'var(--accent)',
+                  color: '#ffffff',
+                  padding: '8px 20px',
+                  borderRadius: '8px',
+                  fontWeight: 'bold',
+                  cursor: 'pointer',
+                  minHeight: '48px',
+                  textTransform: 'uppercase',
+                  fontSize: '0.82rem',
+                  letterSpacing: '0.5px',
+                  whiteSpace: 'nowrap'
+                }}
+              >
+                {isTrialExpired ? '🔓 RENOVAR ACCESO' : (!isAdmin && isOnTrial && trialDaysRemaining <= 1) ? '⚡ SUSCRIBIRME' : isPro ? '👑 VER PLANES' : '👑 VER PLANES PRO'}
+              </button>
             )}
           </div>
         </div>

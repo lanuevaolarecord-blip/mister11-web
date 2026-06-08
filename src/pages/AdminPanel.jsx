@@ -69,7 +69,7 @@ const AdminPanel = () => {
   const { players } = usePlayers(activeTeam?.id);
   const { sessions } = useSessions(activeTeam?.id);
   const { matches } = useMatches(activeTeam?.id);
-  const { isPro, toggleSimulatedPlan, simulatedPlan, trialDaysRemaining, resetTrial, limits, isDeveloper, isProActive, dbPlan } = usePlan();
+  const { isPro, toggleSimulatedPlan, simulatedPlan, trialDaysRemaining, trialHoursRemaining, resetTrial, limits, isDeveloper, isProActive, isOnTrial, isTrialExpired, isRealPaidPro, dbPlan } = usePlan();
   const [upgradeModal, setUpgradeModal] = useState({ open: false, message: '' });
   const [loadingPortal, setLoadingPortal] = useState(false);
 
@@ -881,23 +881,69 @@ const AdminPanel = () => {
                       fontWeight: 'bold',
                       fontSize: '0.9rem',
                       textTransform: 'uppercase',
-                      backgroundColor: isDeveloper ? 'rgba(76,175,125,0.15)' : (isPro ? 'rgba(212, 168, 67, 0.15)' : 'rgba(255,255,255,0.05)'),
-                      color: isDeveloper ? '#4CAF7D' : (isPro ? 'var(--gold)' : 'var(--text-secondary)'),
+                      backgroundColor: isAdmin ? 'rgba(76,175,125,0.15)' : (isRealPaidPro ? 'rgba(212,168,67,0.18)' : (isOnTrial ? 'rgba(212,168,67,0.12)' : 'rgba(255,255,255,0.05)')),
+                      color: isAdmin ? '#4CAF7D' : (isRealPaidPro || isOnTrial ? 'var(--gold)' : 'var(--text-secondary)'),
                       border: '1px solid',
-                      borderColor: isDeveloper ? 'rgba(76,175,125,0.3)' : (isPro ? 'rgba(212, 168, 67, 0.3)' : 'var(--border-color)'),
-                      marginBottom: '8px'
+                      borderColor: isAdmin ? 'rgba(76,175,125,0.3)' : (isRealPaidPro || isOnTrial ? 'rgba(212,168,67,0.3)' : 'var(--border-color)'),
+                      marginBottom: '10px'
                     }}>
-                      {isDeveloper ? '🛡️ Míster11 Desarrollador' : (isPro ? 'Míster11 PRO' : 'Plan Gratuito')}
+                      {isAdmin
+                        ? '🛡️ Míster11 Desarrollador'
+                        : isRealPaidPro
+                          ? `👑 Míster11 ${dbPlan === 'club' ? 'CLUB' : 'PRO'} — Activo`
+                          : isOnTrial
+                            ? '⏱️ Míster11 PRO — Prueba'
+                            : '⭐ Plan Gratuito'}
                     </div>
-                    {isDeveloper ? (
+
+                    {/* Status message and countdown */}
+                    {isAdmin ? (
                       <p className="trial-days-left" style={{ margin: 0, fontSize: '0.9rem', color: 'var(--text-secondary)' }}>
                         Acceso permanente de por vida: <strong>Ilimitado</strong>
                       </p>
-                    ) : isPro ? (
-                      <p className="trial-days-left" style={{ margin: 0, fontSize: '0.9rem', color: 'var(--text-secondary)' }}>
-                        Periodo de prueba activo: <strong>Quedan {trialDaysRemaining} días</strong>
+                    ) : isRealPaidPro ? (
+                      <p className="trial-days-left" style={{ margin: 0, fontSize: '0.9rem', color: '#4CAF7D', fontWeight: '600' }}>
+                        ✅ Suscripción activa — acceso ilimitado garantizado
                       </p>
-                    ) : null}
+                    ) : isOnTrial ? (
+                      <div>
+                        {trialDaysRemaining <= 1 && (
+                          <div style={{
+                            padding: '10px 14px',
+                            background: 'linear-gradient(135deg, rgba(239,68,68,0.15), rgba(239,68,68,0.08))',
+                            border: '1px solid rgba(239,68,68,0.3)',
+                            borderRadius: '8px',
+                            color: '#ef4444',
+                            fontSize: '0.82rem',
+                            fontWeight: 'bold',
+                            marginBottom: '8px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '6px'
+                          }}>
+                            ⚠️ {trialDaysRemaining === 0 ? '¡Hoy es el último día de tu prueba!' : '¡Solo queda 1 día de prueba!'} Suscríbete ahora.
+                          </div>
+                        )}
+                        <p className="trial-days-left" style={{ margin: 0, fontSize: '0.9rem', color: trialDaysRemaining <= 1 ? '#ef4444' : 'var(--text-secondary)' }}>
+                          Periodo de prueba activo:{' '}
+                          <strong>
+                            {trialDaysRemaining > 1
+                              ? `Quedan ${trialDaysRemaining} días (${trialHoursRemaining % 24}h exactas)`
+                              : trialHoursRemaining > 0
+                                ? `Quedan ${trialHoursRemaining} horas`
+                                : 'Expira en breve'}
+                          </strong>
+                        </p>
+                      </div>
+                    ) : isTrialExpired ? (
+                      <p style={{ margin: 0, fontSize: '0.9rem', color: '#ef4444', fontWeight: 'bold' }}>
+                        🔒 Tu prueba de 7 días ha finalizado.
+                      </p>
+                    ) : (
+                      <p className="trial-days-left" style={{ margin: 0, fontSize: '0.9rem', color: 'var(--text-secondary)' }}>
+                        Plan básico con funciones limitadas. Inicia una prueba gratuita de 7 días.
+                      </p>
+                    )}
                   </div>
 
                   <div className="limits-meters" style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
@@ -964,6 +1010,8 @@ const AdminPanel = () => {
                   </div>
 
                   <div className="subscription-actions" style={{ marginTop: '20px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+
+                    {/* ====== ADMIN CONTROLS (solo para administradores) ====== */}
                     {isAdmin && (
                       <>
                         <div style={{
@@ -975,12 +1023,12 @@ const AdminPanel = () => {
                           fontSize: '0.85rem',
                           fontWeight: 'bold',
                           textAlign: 'center',
-                          marginBottom: '5px'
+                          marginBottom: '4px'
                         }}>
                           ✓ Cuenta de Desarrollador Autorizada
                         </div>
-                        <button 
-                          className={`btn-save-settings ${isPro ? 'outline-sub' : 'solid-sub'}`} 
+                        <button
+                          className={`btn-save-settings ${isPro ? 'outline-sub' : 'solid-sub'}`}
                           onClick={toggleSimulatedPlan}
                           style={{
                             minHeight: '48px',
@@ -1000,8 +1048,8 @@ const AdminPanel = () => {
                           {isPro ? 'Probar Plan Gratuito' : 'Activar Prueba PRO de 7 Días'}
                         </button>
                         {isPro && (
-                          <button 
-                            className="btn-reset-trial-admin" 
+                          <button
+                            className="btn-reset-trial-admin"
                             onClick={resetTrial}
                             style={{
                               minHeight: '48px',
@@ -1013,7 +1061,7 @@ const AdminPanel = () => {
                               fontWeight: 'bold',
                               fontSize: '0.9rem',
                               transition: 'all 0.2s ease',
-                              marginTop: '5px'
+                              marginTop: '4px'
                             }}
                           >
                             🔄 Reiniciar Prueba de 7 Días
@@ -1021,52 +1069,107 @@ const AdminPanel = () => {
                         )}
                       </>
                     )}
-                    
-                    {!isAdmin && !isProActive && (
-                      <button
-                        className="btn-primary"
-                        onClick={() => setUpgradeModal({ open: true, message: 'Obtén acceso ilimitado a todas las funciones avanzadas de Míster11.' })}
-                        style={{
-                          width: '100%',
-                          minHeight: '48px',
-                          background: 'linear-gradient(135deg, #4CAF7D, #2196F3)',
-                          color: '#ffffff',
-                          border: 'none',
-                          borderRadius: '8px',
-                          fontWeight: 'bold',
-                          cursor: 'pointer',
-                          textTransform: 'uppercase',
-                          fontSize: '0.85rem',
-                          letterSpacing: '0.5px'
-                        }}
-                      >
-                        👑 VER PLANES MÍSTER11 PRO
-                      </button>
-                    )}
 
-                    {isProActive && (
-                      <button 
-                        className="btn-primary-blue-allcaps" 
-                        onClick={handleManageSubscription}
-                        disabled={loadingPortal}
-                        style={{
-                          width: '100%',
-                          minHeight: '48px',
-                          background: '#004B87',
-                          color: '#FFFFFF',
-                          border: 'none',
-                          borderRadius: '8px',
-                          fontWeight: '700',
-                          textTransform: 'uppercase',
-                          cursor: 'pointer',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          marginTop: '10px'
-                        }}
-                      >
-                        {loadingPortal ? 'Cargando...' : 'GESTIONAR SUSCRIPCIÓN'}
-                      </button>
+                    {/* ====== USUARIO NORMAL (no administrador) ====== */}
+                    {!isAdmin && (
+                      <>
+                        {/* Banner de urgencia: aparece cuando queda 1 día o menos */}
+                        {isOnTrial && trialDaysRemaining <= 1 && (
+                          <div style={{
+                            padding: '12px 16px',
+                            background: 'linear-gradient(135deg, rgba(239,68,68,0.15), rgba(239,68,68,0.08))',
+                            border: '1px solid rgba(239,68,68,0.4)',
+                            borderRadius: '10px',
+                            color: '#ef4444',
+                            fontSize: '0.83rem',
+                            fontWeight: 'bold',
+                            lineHeight: '1.4',
+                            animation: 'urgencyPulseAdmin 2s ease-in-out infinite'
+                          }}>
+                            <style>{`@keyframes urgencyPulseAdmin { 0%,100%{opacity:1} 50%{opacity:0.75} }`}</style>
+                            ⚠️ ¡{trialDaysRemaining === 0 ? 'Hoy vence' : 'Mañana vence'} tu prueba! Suscríbete ahora para no perder el acceso.
+                          </div>
+                        )}
+
+                        {/* Aviso de prueba expirada */}
+                        {isTrialExpired && !isRealPaidPro && (
+                          <div style={{
+                            padding: '12px 16px',
+                            background: 'rgba(239,68,68,0.08)',
+                            border: '1px solid rgba(239,68,68,0.25)',
+                            borderRadius: '10px',
+                            color: '#ef4444',
+                            fontSize: '0.83rem',
+                            fontWeight: '600'
+                          }}>
+                            🔒 Tu prueba de 7 días ha expirado. Suscríbete para recuperar el acceso PRO.
+                          </div>
+                        )}
+
+                        {/* Botón de UPGRADE — visible siempre que no tenga plan real pagado */}
+                        {!isRealPaidPro && (
+                          <button
+                            id="btn-ver-planes-pro"
+                            onClick={() => setUpgradeModal({
+                              open: true,
+                              message: isTrialExpired
+                                ? 'Tu prueba ha finalizado. Suscríbete para continuar usando Míster11 sin límites.'
+                                : isOnTrial && trialDaysRemaining <= 1
+                                  ? '¡Tu prueba vence pronto! Asegura tu acceso suscribiéndote ahora.'
+                                  : 'Obtén acceso ilimitado a todas las funciones avanzadas de Míster11.'
+                            })}
+                            style={{
+                              width: '100%',
+                              minHeight: '52px',
+                              background: isTrialExpired
+                                ? 'linear-gradient(135deg, #c53030, #e53e3e)'
+                                : 'linear-gradient(135deg, #004B87, #2E7D5C)',
+                              color: '#ffffff',
+                              border: 'none',
+                              borderRadius: '10px',
+                              fontWeight: '800',
+                              cursor: 'pointer',
+                              textTransform: 'uppercase',
+                              fontSize: '0.88rem',
+                              letterSpacing: '0.6px',
+                              boxShadow: isTrialExpired
+                                ? '0 4px 16px rgba(197,48,48,0.4)'
+                                : '0 4px 16px rgba(0,75,135,0.35)',
+                              transition: 'all 0.2s ease'
+                            }}
+                          >
+                            {isTrialExpired
+                              ? '🔓 RENOVAR ACCESO — VER PLANES'
+                              : '👑 VER PLANES MÍSTER11 PRO'}
+                          </button>
+                        )}
+
+                        {/* Botón GESTIONAR SUSCRIPCIÓN — SOLO si hay plan real de Stripe */}
+                        {isRealPaidPro && (
+                          <button
+                            className="btn-primary-blue-allcaps"
+                            onClick={handleManageSubscription}
+                            disabled={loadingPortal}
+                            style={{
+                              width: '100%',
+                              minHeight: '48px',
+                              background: '#004B87',
+                              color: '#FFFFFF',
+                              border: 'none',
+                              borderRadius: '8px',
+                              fontWeight: '700',
+                              textTransform: 'uppercase',
+                              cursor: 'pointer',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              gap: '8px'
+                            }}
+                          >
+                            {loadingPortal ? '⏳ Cargando...' : '⚙️ GESTIONAR SUSCRIPCIÓN'}
+                          </button>
+                        )}
+                      </>
                     )}
                   </div>
                 </div>

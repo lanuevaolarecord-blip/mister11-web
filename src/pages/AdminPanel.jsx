@@ -69,7 +69,7 @@ const AdminPanel = () => {
   const { players } = usePlayers(activeTeam?.id);
   const { sessions } = useSessions(activeTeam?.id);
   const { matches } = useMatches(activeTeam?.id);
-  const { isPro, toggleSimulatedPlan, simulatedPlan, trialDaysRemaining, trialHoursRemaining, resetTrial, limits, isDeveloper, isProActive, isOnTrial, isTrialExpired, isRealPaidPro, dbPlan } = usePlan();
+  const { isPro, toggleSimulatedPlan, simulatedPlan, isSimulatingFree, trialDaysRemaining, trialHoursRemaining, resetTrial, limits, isDeveloper, isProActive, isOnTrial, isTrialExpired, isRealPaidPro, dbPlan } = usePlan();
   const [upgradeModal, setUpgradeModal] = useState({ open: false, message: '' });
   const [loadingPortal, setLoadingPortal] = useState(false);
 
@@ -866,10 +866,12 @@ const AdminPanel = () => {
               <div className="settings-card subscription-card">
                 <div className="card-header-icon">
                   <span className="premium-icon" style={{ fontSize: '20px' }}>
-                    {isDeveloper ? '🛡️' : '👑'}
+                    {isAdmin ? (isSimulatingFree ? '🧪' : '🛡️') : '👑'}
                   </span>
                   <h3>
-                    {isDeveloper ? 'Acceso de Desarrollador PRO' : 'Suscripción y Prueba de 7 Días'}
+                    {isAdmin
+                      ? (isSimulatingFree ? 'Modo Simulación — Vista Gratuita' : 'Licencia de Desarrollador Ilimitada')
+                      : 'Suscripción y Prueba de 7 Días'}
                   </h3>
                 </div>
                 <div className="settings-form">
@@ -881,14 +883,20 @@ const AdminPanel = () => {
                       fontWeight: 'bold',
                       fontSize: '0.9rem',
                       textTransform: 'uppercase',
-                      backgroundColor: isAdmin ? 'rgba(76,175,125,0.15)' : (isRealPaidPro ? 'rgba(212,168,67,0.18)' : (isOnTrial ? 'rgba(212,168,67,0.12)' : 'rgba(255,255,255,0.05)')),
-                      color: isAdmin ? '#4CAF7D' : (isRealPaidPro || isOnTrial ? 'var(--gold)' : 'var(--text-secondary)'),
+                      backgroundColor: isAdmin
+                        ? (isSimulatingFree ? 'rgba(255,165,0,0.12)' : 'rgba(76,175,125,0.15)')
+                        : (isRealPaidPro ? 'rgba(212,168,67,0.18)' : (isOnTrial ? 'rgba(212,168,67,0.12)' : 'rgba(255,255,255,0.05)')),
+                      color: isAdmin
+                        ? (isSimulatingFree ? '#FFA500' : '#4CAF7D')
+                        : (isRealPaidPro || isOnTrial ? 'var(--gold)' : 'var(--text-secondary)'),
                       border: '1px solid',
-                      borderColor: isAdmin ? 'rgba(76,175,125,0.3)' : (isRealPaidPro || isOnTrial ? 'rgba(212,168,67,0.3)' : 'var(--border-color)'),
+                      borderColor: isAdmin
+                        ? (isSimulatingFree ? 'rgba(255,165,0,0.35)' : 'rgba(76,175,125,0.3)')
+                        : (isRealPaidPro || isOnTrial ? 'rgba(212,168,67,0.3)' : 'var(--border-color)'),
                       marginBottom: '10px'
                     }}>
                       {isAdmin
-                        ? '🛡️ Míster11 Desarrollador'
+                        ? (isSimulatingFree ? '🧪 Simulación — Plan Gratuito' : '🛡️ Míster11 Desarrollador')
                         : isRealPaidPro
                           ? `👑 Míster11 ${dbPlan === 'club' ? 'CLUB' : 'PRO'} — Activo`
                           : isOnTrial
@@ -898,9 +906,15 @@ const AdminPanel = () => {
 
                     {/* Status message and countdown */}
                     {isAdmin ? (
-                      <p className="trial-days-left" style={{ margin: 0, fontSize: '0.9rem', color: 'var(--text-secondary)' }}>
-                        Acceso permanente de por vida: <strong>Ilimitado</strong>
-                      </p>
+                      isSimulatingFree ? (
+                        <p className="trial-days-left" style={{ margin: 0, fontSize: '0.85rem', color: '#FFA500' }}>
+                          🧪 Viendo la UI como usuario gratuito. <strong>Tu acceso real es ilimitado.</strong>
+                        </p>
+                      ) : (
+                        <p className="trial-days-left" style={{ margin: 0, fontSize: '0.9rem', color: 'var(--text-secondary)' }}>
+                          Acceso permanente de por vida: <strong>Ilimitado ✅</strong>
+                        </p>
+                      )
                     ) : isRealPaidPro ? (
                       <p className="trial-days-left" style={{ margin: 0, fontSize: '0.9rem', color: '#4CAF7D', fontWeight: '600' }}>
                         ✅ Suscripción activa — acceso ilimitado garantizado
@@ -1014,21 +1028,42 @@ const AdminPanel = () => {
                     {/* ====== ADMIN CONTROLS (solo para administradores) ====== */}
                     {isAdmin && (
                       <>
-                        <div style={{
-                          padding: '12px 16px',
-                          backgroundColor: 'rgba(76, 175, 125, 0.12)',
-                          border: '1px solid rgba(76, 175, 125, 0.25)',
-                          borderRadius: '8px',
-                          color: '#4CAF7D',
-                          fontSize: '0.85rem',
-                          fontWeight: 'bold',
-                          textAlign: 'center',
-                          marginBottom: '4px'
-                        }}>
-                          ✓ Cuenta de Desarrollador Autorizada
-                        </div>
+                        {/* Banner de modo simulación */}
+                        {isSimulatingFree ? (
+                          <div style={{
+                            padding: '12px 16px',
+                            background: 'linear-gradient(135deg, rgba(255,165,0,0.15), rgba(255,140,0,0.08))',
+                            border: '1px solid rgba(255,165,0,0.4)',
+                            borderRadius: '10px',
+                            color: '#FFA500',
+                            fontSize: '0.82rem',
+                            fontWeight: 'bold',
+                            textAlign: 'center',
+                            lineHeight: '1.4'
+                          }}>
+                            🧪 MODO SIMULACIÓN ACTIVO — Viendo experiencia de usuario gratuito
+                            <br />
+                            <span style={{ fontSize: '0.75rem', opacity: 0.85, fontWeight: 'normal' }}>
+                              Tu acceso real sigue siendo ilimitado. Esto es solo para testing de UX.
+                            </span>
+                          </div>
+                        ) : (
+                          <div style={{
+                            padding: '12px 16px',
+                            backgroundColor: 'rgba(76, 175, 125, 0.12)',
+                            border: '1px solid rgba(76, 175, 125, 0.25)',
+                            borderRadius: '8px',
+                            color: '#4CAF7D',
+                            fontSize: '0.85rem',
+                            fontWeight: 'bold',
+                            textAlign: 'center'
+                          }}>
+                            🛡️ Licencia de Desarrollador — Acceso Ilimitado de Por Vida
+                          </div>
+                        )}
+
+                        {/* Botón de simulación */}
                         <button
-                          className={`btn-save-settings ${isPro ? 'outline-sub' : 'solid-sub'}`}
                           onClick={toggleSimulatedPlan}
                           style={{
                             minHeight: '48px',
@@ -1036,39 +1071,42 @@ const AdminPanel = () => {
                             borderRadius: '8px',
                             fontWeight: 'bold',
                             letterSpacing: '0.5px',
-                            fontSize: '0.85rem',
+                            fontSize: '0.82rem',
                             cursor: 'pointer',
                             transition: 'all 0.2s ease',
                             border: '1.5px solid',
-                            backgroundColor: isPro ? 'transparent' : 'var(--accent)',
-                            borderColor: isPro ? 'var(--gold)' : 'transparent',
-                            color: isPro ? 'var(--gold)' : '#ffffff'
+                            backgroundColor: isSimulatingFree ? 'var(--accent)' : 'transparent',
+                            borderColor: isSimulatingFree ? 'transparent' : 'rgba(255,165,0,0.5)',
+                            color: isSimulatingFree ? '#ffffff' : '#FFA500'
                           }}
                         >
-                          {isPro ? 'Probar Plan Gratuito' : 'Activar Prueba PRO de 7 Días'}
+                          {isSimulatingFree
+                            ? '✅ VOLVER A MODO DESARROLLADOR (PRO)'
+                            : '🧪 SIMULAR EXPERIENCIA DE USUARIO GRATUITO'}
                         </button>
-                        {isPro && (
+
+                        {/* Botón de reset — solo cuando está en simulación free */}
+                        {isSimulatingFree && (
                           <button
-                            className="btn-reset-trial-admin"
                             onClick={resetTrial}
                             style={{
-                              minHeight: '48px',
-                              backgroundColor: 'rgba(255, 255, 255, 0.05)',
-                              border: '1px solid var(--border-color)',
-                              color: 'var(--text-secondary)',
+                              minHeight: '44px',
+                              backgroundColor: 'rgba(255,165,0,0.08)',
+                              border: '1px solid rgba(255,165,0,0.3)',
+                              color: '#FFA500',
                               cursor: 'pointer',
                               borderRadius: '8px',
                               fontWeight: 'bold',
-                              fontSize: '0.9rem',
-                              transition: 'all 0.2s ease',
-                              marginTop: '4px'
+                              fontSize: '0.82rem',
+                              transition: 'all 0.2s ease'
                             }}
                           >
-                            🔄 Reiniciar Prueba de 7 Días
+                            🔄 SALIR DE SIMULACIÓN — RESTAURAR ACCESO PRO
                           </button>
                         )}
                       </>
                     )}
+
 
                     {/* ====== USUARIO NORMAL (no administrador) ====== */}
                     {!isAdmin && (

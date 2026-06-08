@@ -87,15 +87,20 @@ export const usePlan = () => {
   }, [user, activeTeamId]);
 
   const toggleSimulatedPlan = () => {
-    const next = isPro ? 'free' : 'pro';
+    // For developers: toggle between showing PRO UI vs FREE UI (simulation only)
+    const next = simulatedPlan === 'free' ? '' : 'free';
     setSimulatedPlan(next);
-    localStorage.setItem('mister11_simulated_plan', next);
+    if (next) {
+      localStorage.setItem('mister11_simulated_plan', next);
+    } else {
+      localStorage.removeItem('mister11_simulated_plan');
+    }
   };
 
   const resetTrial = () => {
-    // Only resets the local simulation (for developer testing)
-    setSimulatedPlan('pro');
-    localStorage.setItem('mister11_simulated_plan', 'pro');
+    // Reset simulation: remove 'free' simulation to return to full developer access
+    setSimulatedPlan('');
+    localStorage.removeItem('mister11_simulated_plan');
   };
 
   const now = new Date();
@@ -118,16 +123,26 @@ export const usePlan = () => {
   // isRealPaidPro = true ONLY when there is a real paid Stripe subscription (not simulated, not trial)
   const isRealPaidPro = isRealPro;
 
-  // --- Final PRO status (includes simulated for developer testing) ---
-  const isPro = isRealPro || isOnTrial || (simulatedPlan === 'pro') || (isDeveloper && simulatedPlan !== 'free');
+  // Developers always have full PRO access — simulation is UI-only for testing UX
+  // isSimulatingFree = developer is deliberately testing free-plan UI (doesn't remove access)
+  const isSimulatingFree = isDeveloper && simulatedPlan === 'free';
+
+  // --- Final PRO status ---
+  // Developers ALWAYS get isPro=true (lifetime unlimited access)
+  // For regular users: trial or real paid plan grants PRO
+  const isPro = isDeveloper || isRealPro || isOnTrial;
+
+  // currentLimits: developers always get PRO limits regardless of simulation
   const currentLimits = isPro ? LIMITS.PRO : LIMITS.FREE;
 
-  const isProActive = isRealPro || isOnTrial || (simulatedPlan === 'pro') || (isDeveloper && simulatedPlan !== 'free');
+  // isProActive: for legacy compatibility — same as isPro
+  const isProActive = isPro;
 
   return {
     plan: isPro ? 'pro' : 'free',
     isPro,
     isDeveloper,
+    isSimulatingFree,
     limits: currentLimits,
     loading,
     proExpiration: dbProExpiration?.toDate ? dbProExpiration.toDate() : (dbProExpiration ? new Date(dbProExpiration) : null),

@@ -32,7 +32,7 @@ const Dashboard = () => {
   const { user, activeTeamId } = useAuth();
   const adminEmails = ['lanuevaolarecord@gmail.com', 'lavozdelformador@gmail.com', 'jhocao111294@gmail.com'];
   const isAdmin = user?.email && adminEmails.includes(user.email.toLowerCase());
-  const { isPro, isDeveloper, trialDaysRemaining, trialHoursRemaining, isOnTrial, isTrialExpired, isRealPaidPro, toggleSimulatedPlan, resetTrial } = usePlan();
+  const { isPro, isDeveloper, trialDaysRemaining, trialHoursRemaining, isOnTrial, isTrialExpired, isRealPaidPro, isSimulatingFree, toggleSimulatedPlan, resetTrial } = usePlan();
   const { settings } = useSettings(activeTeamId);
   const { players } = usePlayers(activeTeamId);
   const { sessions } = useSessions(activeTeamId);

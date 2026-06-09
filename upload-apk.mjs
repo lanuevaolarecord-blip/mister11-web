@@ -84,7 +84,9 @@ async function main() {
     await setDoc(configRef, {
       ...currentData,
       latestApkVersion: APP_VERSION,
+      appVersion:       APP_VERSION,
       apkDownloadUrl:   downloadURL,
+      apkUrl:           downloadURL,
       apkUpdatedAt:     new Date().toISOString(),
     });
 

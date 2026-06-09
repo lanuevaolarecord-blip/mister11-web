@@ -23,7 +23,7 @@ import {
 import { t } from '../i18n/translations';
 import { useTheme } from '../context/ThemeContext';
 import { db, auth } from '../firebaseConfig';
-import { doc, getDoc } from 'firebase/firestore';
+import { doc, getDoc, collection, updateDoc, onSnapshot } from 'firebase/firestore';
 import './Dashboard.css';
 
 const Dashboard = () => {
@@ -33,20 +33,78 @@ const Dashboard = () => {
   const adminEmails = ['lanuevaolarecord@gmail.com', 'lavozdelformador@gmail.com', 'jhocao111294@gmail.com'];
   const isAdmin = user?.email && adminEmails.includes(user.email.toLowerCase());
 
-  // Detect payment success from Stripe
+  // Detect payment success from Stripe & synchronize client-side
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
-    if (urlParams.get('payment') === 'success') {
+    const isSuccess = urlParams.get('payment') === 'success' || urlParams.get('subscribed') === '1' || urlParams.get('subscribe') === '1';
+
+    if (isSuccess && user && activeTeamId) {
+      console.log("[Stripe Success Hook] Detectado retorno de pago exitoso. Sincronizando plan...");
+
       // Limpiar el parámetro de la URL sin recargar la página
       window.history.replaceState({}, document.title, window.location.pathname);
-      // Forzar recarga del equipo
-      if (typeof refreshTeam === 'function') {
-        refreshTeam();
-      }
-      // Mostrar mensaje de éxito
-      alert('¡Pago completado! Tu plan se actualizará en breve.');
+
+      // Iniciar escucha activa en la colección de suscripciones del cliente
+      const subsRef = collection(db, 'customers', user.uid, 'subscriptions');
+
+      const unsubscribeSubs = onSnapshot(subsRef, async (snapshot) => {
+        const activeSub = snapshot.docs
+          .map(doc => ({ id: doc.id, ...doc.data() }))
+          .find(sub => sub.status === 'active' || sub.status === 'trialing');
+
+        if (activeSub) {
+          console.log("[Stripe Success Hook] Suscripción activa encontrada:", activeSub);
+
+          // Determinar el tipo de plan
+          let planType = 'pro';
+          if (activeSub.role === 'club' || (activeSub.metadata && activeSub.metadata.plan === 'club')) {
+            planType = 'club';
+          } else if (activeSub.items && activeSub.items[0]) {
+            const priceId = activeSub.items[0].price?.id;
+            if (priceId && priceId.includes('club')) {
+              planType = 'club';
+            }
+          }
+
+          // Actualizar Firestore para el equipo activo
+          try {
+            const teamRef = doc(db, 'users', user.uid, 'teams', activeTeamId);
+            await updateDoc(teamRef, {
+              plan: planType,
+              proExpiration: activeSub.current_period_end || null,
+              stripeSubscriptionId: activeSub.id
+            });
+            console.log(`[Stripe Success Hook] Plan del equipo actualizado a ${planType} exitosamente.`);
+
+            // Actualizar contexto
+            if (typeof refreshTeam === 'function') {
+              refreshTeam();
+            }
+
+            alert(`¡Pago completado! Tu plan de Míster11 se ha actualizado a ${planType.toUpperCase()} con éxito.`);
+          } catch (err) {
+            console.error("[Stripe Success Hook] Error actualizando plan de equipo:", err);
+          }
+
+          // Dejar de escuchar una vez detectado y procesado
+          unsubscribeSubs();
+        }
+      }, (err) => {
+        console.error("[Stripe Success Hook] Error escuchando suscripciones:", err);
+      });
+
+      // Timeout de salvaguarda por si tarda demasiado (15 segundos)
+      const timeoutId = setTimeout(() => {
+        unsubscribeSubs();
+        console.warn("[Stripe Success Hook] Tiempo de espera agotado para sincronización de suscripción.");
+      }, 15000);
+
+      return () => {
+        unsubscribeSubs();
+        clearTimeout(timeoutId);
+      };
     }
-  }, [refreshTeam]);
+  }, [user, activeTeamId, refreshTeam]);
   const { isPro, isDeveloper, trialDaysRemaining, trialHoursRemaining, isOnTrial, isTrialExpired, isRealPaidPro, isSimulatingFree, toggleSimulatedPlan, resetTrial } = usePlan();
   const { settings } = useSettings(activeTeamId);
   const { players } = usePlayers(activeTeamId);

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Routes, Route, Navigate } from 'react-router-dom';
+import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { doc, getDoc } from 'firebase/firestore';
 import { useAuth } from './context/AuthContext';
 import { db } from './firebaseConfig';
@@ -31,6 +31,11 @@ function compareVersions(remote, local) {
     if (ri < li) return -1;
   }
   return 0;
+}
+
+function RedirectToRoot() {
+  const location = useLocation();
+  return <Navigate to={`/${location.search}`} replace />;
 }
 
 function App() {
@@ -151,7 +156,7 @@ function App() {
           element={user ? <Layout /> : <Navigate to="/login" replace />}
         >
           <Route index element={<Dashboard />} />
-          <Route path="dashboard" element={<Dashboard />} />
+          <Route path="dashboard" element={<RedirectToRoot />} />
           <Route path="pricing" element={<Navigate to="/admin" state={{ activeTab: 'ajustes' }} replace />} />
           <Route path="pizarra" element={<PizarraTactica />} />
           <Route path="equipo" element={<MiEquipo />} />

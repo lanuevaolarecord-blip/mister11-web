@@ -151,6 +151,8 @@ function App() {
           element={user ? <Layout /> : <Navigate to="/login" replace />}
         >
           <Route index element={<Dashboard />} />
+          <Route path="dashboard" element={<Dashboard />} />
+          <Route path="pricing" element={<Navigate to="/admin" state={{ activeTab: 'ajustes' }} replace />} />
           <Route path="pizarra" element={<PizarraTactica />} />
           <Route path="equipo" element={<MiEquipo />} />
           <Route path="sesiones" element={<Sesiones />} />

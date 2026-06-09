@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { db, auth } from '../firebaseConfig';
 import { collection, addDoc, onSnapshot } from 'firebase/firestore';
 import { STRIPE_PRICE_IDS } from '../config/stripe';
+import { useAuth } from '../context/AuthContext';
 import './UpgradeModal.css';
 
 /**
@@ -9,7 +10,7 @@ import './UpgradeModal.css';
  * La extensión escucha la colección `customers/{uid}/checkout_sessions`
  * y retorna la URL de pago cuando está lista.
  */
-const createStripeCheckoutSession = async (uid, priceId, successUrl, cancelUrl) => {
+const createStripeCheckoutSession = async (uid, priceId, successUrl, cancelUrl, teamId) => {
   const sessionRef = await addDoc(
     collection(db, 'customers', uid, 'checkout_sessions'),
     {
@@ -18,12 +19,16 @@ const createStripeCheckoutSession = async (uid, priceId, successUrl, cancelUrl) 
       cancel_url: cancelUrl,
       allow_promotion_codes: true,
       billing_address_collection: 'auto',
+      metadata: {
+        teamId: teamId || ''
+      }
     }
   );
   return sessionRef;
 };
 
 const UpgradeModal = ({ isOpen, onClose, message, urgency = false }) => {
+  const { activeTeamId } = useAuth();
   const [loadingPlan, setLoadingPlan] = useState(null);
   const [stripeError, setStripeError] = useState(null);
   const [statusMsg, setStatusMsg] = useState('');
@@ -74,13 +79,16 @@ const UpgradeModal = ({ isOpen, onClose, message, urgency = false }) => {
     }
 
     try {
+      console.log('Llamando a createCheckoutSession con priceId:', priceId, 'y teamId:', activeTeamId);
       setStatusMsg('Creando sesión en Stripe...');
       const sessionRef = await createStripeCheckoutSession(
         user.uid,
         priceId,
-        `${window.location.origin}/dashboard?subscribed=1`,
-        `${window.location.origin}/admin`
+        `${window.location.origin}/dashboard?payment=success`,
+        `${window.location.origin}/pricing`,
+        activeTeamId
       );
+      console.log('Resultado (documento creado):', sessionRef.id);
 
       setStatusMsg('Esperando confirmación de Stripe...');
 

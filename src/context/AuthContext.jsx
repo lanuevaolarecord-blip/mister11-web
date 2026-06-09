@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, useMemo, useCallback } from 'react';
 import { auth, db } from '../firebaseConfig';
 import { onAuthStateChanged, signInAnonymously } from 'firebase/auth';
-import { collection, query, onSnapshot, addDoc, serverTimestamp } from 'firebase/firestore';
+import { collection, query, onSnapshot, addDoc, serverTimestamp, getDocs } from 'firebase/firestore';
 import { seedInitialData } from '../utils/seedData';
 
 const AuthContext = createContext();
@@ -98,6 +98,18 @@ export const AuthProvider = ({ children }) => {
     localStorage.setItem('mister11_active_team', id);
   }, []);
 
+  const refreshTeam = useCallback(async () => {
+    if (!user || user.uid === 'invitado-local') return;
+    try {
+      const q = query(collection(db, 'users', user.uid, 'teams'));
+      const snapshot = await getDocs(q);
+      const teamList = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      setTeams(teamList);
+    } catch (err) {
+      console.error("Error refreshing teams:", err);
+    }
+  }, [user]);
+
   // Función centralizada para iniciar sesión en Modo Invitado de forma 100% a prueba de fallos
   const loginAsGuest = useCallback(async () => {
     setLoading(true);
@@ -169,8 +181,9 @@ export const AuthProvider = ({ children }) => {
     changeActiveTeam, 
     teams,
     loginAsGuest,
-    logout
-  }), [user, loading, activeTeamId, changeActiveTeam, teams, loginAsGuest, logout]);
+    logout,
+    refreshTeam
+  }), [user, loading, activeTeamId, changeActiveTeam, teams, loginAsGuest, logout, refreshTeam]);
 
   return (
     <AuthContext.Provider value={value}>

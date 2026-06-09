@@ -29,9 +29,24 @@ import './Dashboard.css';
 const Dashboard = () => {
   const { darkMode } = useTheme();
   const navigate = useNavigate();
-  const { user, activeTeamId } = useAuth();
+  const { user, activeTeamId, refreshTeam } = useAuth();
   const adminEmails = ['lanuevaolarecord@gmail.com', 'lavozdelformador@gmail.com', 'jhocao111294@gmail.com'];
   const isAdmin = user?.email && adminEmails.includes(user.email.toLowerCase());
+
+  // Detect payment success from Stripe
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('payment') === 'success') {
+      // Limpiar el parámetro de la URL sin recargar la página
+      window.history.replaceState({}, document.title, window.location.pathname);
+      // Forzar recarga del equipo
+      if (typeof refreshTeam === 'function') {
+        refreshTeam();
+      }
+      // Mostrar mensaje de éxito
+      alert('¡Pago completado! Tu plan se actualizará en breve.');
+    }
+  }, [refreshTeam]);
   const { isPro, isDeveloper, trialDaysRemaining, trialHoursRemaining, isOnTrial, isTrialExpired, isRealPaidPro, isSimulatingFree, toggleSimulatedPlan, resetTrial } = usePlan();
   const { settings } = useSettings(activeTeamId);
   const { players } = usePlayers(activeTeamId);

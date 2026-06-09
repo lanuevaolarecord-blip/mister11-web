@@ -464,9 +464,11 @@ const Dashboard = () => {
               }}>
                 {(!isAdmin && isOnTrial && trialDaysRemaining <= 1)
                   ? '⚠️ ¡Tu prueba vence pronto!'
-                  : isPro
+                  : isPro && isOnTrial
                     ? '👑 Míster11 PRO · Prueba Gratuita Activa'
-                    : '⭐ Míster11 Plan Gratuito (Limitado)'}
+                    : isPro && isRealPaidPro
+                      ? '👑 Míster11 PRO · Plan Activo'
+                      : '⭐ Míster11 Plan Gratuito (Limitado)'}
               </h3>
               <p style={{
                 margin: 0,
@@ -476,11 +478,13 @@ const Dashboard = () => {
               }}>
                 {(!isAdmin && isOnTrial && trialDaysRemaining <= 1)
                   ? `Solo quedan ${trialHoursRemaining > 0 ? trialHoursRemaining + ' horas' : 'pocas horas'} de prueba. Suscríbete para no perder el acceso.`
-                  : isPro
+                  : isPro && isOnTrial
                     ? `Tienes acceso total a todas las funciones premium. Te quedan ${trialDaysRemaining} días (${trialHoursRemaining % 24}h) de prueba.`
-                    : isTrialExpired
-                      ? '🔒 Tu prueba gratuita ha finalizado. Suscríbete para recuperar el acceso PRO.'
-                      : 'Límites activos: 1 equipo, 15 jugadores, 10 sesiones y sin exportación PDF.'}
+                    : isPro && isRealPaidPro
+                      ? 'Tienes acceso completo a todas las funciones. Gracias por ser parte de Míster11 PRO.'
+                      : isTrialExpired
+                        ? '🔒 Tu prueba gratuita ha finalizado. Suscríbete para recuperar el acceso PRO.'
+                        : 'Límites activos: 1 equipo, 15 jugadores, 10 sesiones y sin exportación PDF.'}
               </p>
             </div>
           </div>
@@ -685,8 +689,8 @@ const Dashboard = () => {
                       <Calendar size={20} />
                     </div>
                     <div style={{ flex: 1 }}>
-                      <div style={{ fontSize: '12px', color: 'var(--text-secondary)', marginBottom: '4px' }}>{formattedDate} | {time}</div>
-                      <strong style={{ fontSize: '15px', color: 'var(--text-primary)' }}>{title} | {time}</strong>
+                      <div style={{ fontSize: '12px', color: 'var(--text-secondary)', marginBottom: '4px' }}>{formattedDate} · {time}</div>
+                      <strong style={{ fontSize: '15px', color: 'var(--text-primary)' }}>{title}</strong>
                     </div>
                     <div style={{ color: 'var(--accent-green)' }}>
                       <ClipboardList size={32} strokeWidth={1} />
@@ -720,8 +724,12 @@ const Dashboard = () => {
             </div>
           ))}
 
-          <button className="btn-guardar-dashboard">
-            {t('dashboard.saveDashboard', settings.language)}
+          <button
+            className="btn-guardar-dashboard"
+            onClick={() => navigate('/admin', { state: { activeTab: 'ajustes' } })}
+            title="Ir a ajustes del equipo"
+          >
+            ⚙️ Ajustes
           </button>
 
           {[

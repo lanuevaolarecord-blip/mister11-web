@@ -287,6 +287,7 @@ const UpgradeModal = ({ isOpen, onClose, message, urgency = false }) => {
               <span className="price-amount">7,99€</span>
               <span className="price-period">/mes</span>
             </div>
+            <p style={{ margin: '0 0 12px 0', fontSize: '11px', color: 'var(--text-secondary)', textAlign: 'center' }}>IVA incluido · Cancela cuando quieras</p>
             <ul className="upgrade-benefits-list">
               {proBenefits.map((b, i) => (
                 <li key={i} className="upgrade-benefit-row">
@@ -333,21 +334,6 @@ const UpgradeModal = ({ isOpen, onClose, message, urgency = false }) => {
           </div>
         </div>
 
-        {/* Test mode note */}
-        <div style={{
-          padding: '10px 20px',
-          borderTop: '1px solid var(--border-color, rgba(255,255,255,0.06))',
-          background: 'rgba(0,0,0,0.05)',
-          textAlign: 'center'
-        }}>
-          <p style={{ fontSize: '0.72rem', color: 'var(--text-secondary, rgba(255,255,255,0.4))', margin: 0 }}>
-            🧪 <strong>Modo de prueba Stripe:</strong> Usa tarjeta{' '}
-            <code style={{ background: 'rgba(255,255,255,0.06)', padding: '1px 5px', borderRadius: '3px' }}>
-              4242 4242 4242 4242
-            </code>
-            , cualquier fecha futura y CVC <code style={{ background: 'rgba(255,255,255,0.06)', padding: '1px 5px', borderRadius: '3px' }}>123</code>.
-          </p>
-        </div>
 
         {/* Footer */}
         <div className="upgrade-modal-footer">

@@ -2,31 +2,149 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Consentimiento para padres - Míster11</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Consentimiento Parental para Tratamiento de Datos - Míster11</title>
     <style>
-        body { font-family: 'Inter', sans-serif; max-width: 600px; margin: 40px auto; padding: 20px; border: 1px solid #ccc; border-radius: 8px; }
-        h1 { color: #1B3A2D; }
-        .firma { margin-top: 40px; }
-        button { background: #4CAF7D; color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; margin-top: 20px; }
-        button:hover { background: #3d8b63; }
+        body { font-family: 'Inter', sans-serif; max-width: 680px; margin: 40px auto; padding: 20px; color: #2D2D2D; background: #F5F0E8; }
+        h1 { color: #1B3A2D; font-size: 1.3rem; border-bottom: 3px solid #D4A843; padding-bottom: 10px; }
+        h2 { color: #1B3A2D; font-size: 1rem; margin-top: 24px; }
+        .container { background: white; padding: 36px; border-radius: 12px; box-shadow: 0 2px 12px rgba(0,0,0,0.1); }
+        .logo-row { display: flex; align-items: center; gap: 14px; margin-bottom: 20px; }
+        .logo-row img { width: 48px; }
+        .logo-row span { font-size: 1.4rem; font-weight: 900; color: #1B3A2D; }
+        .field-line { border: none; border-bottom: 2px solid #1B3A2D; width: 100%; margin: 4px 0 16px 0; height: 28px; display: block; }
+        .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+        .field-block label { font-size: 0.82rem; font-weight: 600; color: #555; display: block; margin-bottom: 2px; }
+        ul { margin: 12px 0 12px 20px; line-height: 1.8; }
+        .info-box { background: #f0faf5; border-left: 4px solid #4CAF7D; padding: 12px 16px; border-radius: 0 8px 8px 0; font-size: 0.88rem; margin: 16px 0; }
+        .firma-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; margin-top: 40px; }
+        .firma-block { text-align: center; }
+        .firma-line { border-top: 2px solid #1B3A2D; margin-top: 50px; padding-top: 6px; font-size: 0.82rem; color: #555; }
+        .checkbox-row { display: flex; align-items: flex-start; gap: 10px; margin: 10px 0; font-size: 0.9rem; line-height: 1.4; }
+        .checkbox-row input[type="checkbox"] { margin-top: 2px; flex-shrink: 0; width: 18px; height: 18px; }
+        .footer-note { font-size: 0.78rem; color: #888; margin-top: 30px; border-top: 1px solid #eee; padding-top: 12px; text-align: center; }
+        @media print {
+            body { background: white; margin: 0; padding: 0; }
+            .btn-print { display: none; }
+        }
+        .btn-print { background: #4CAF7D; color: white; border: none; padding: 12px 28px; border-radius: 8px; cursor: pointer; margin-top: 24px; font-size: 1rem; font-weight: bold; display: block; width: 100%; }
+        .btn-print:hover { background: #3d8b63; }
     </style>
 </head>
 <body>
-    <h1>Autorización para el tratamiento de datos de menor de edad en Míster11</h1>
-    <p>Yo, <strong>__________________________</strong> (nombre del padre, madre o tutor), con DNI/NIE <strong>_____________</strong>, en mi condición de responsable legal del menor <strong>__________________________</strong>, con fecha de nacimiento ___/___/______,</p>
-    <p><strong>AUTORIZO</strong> al entrenador <strong>__________________________</strong> a registrar y almacenar en la aplicación Míster11 los siguientes datos de mi hijo/a:</p>
-    <ul>
-        <li>Nombre y apellidos</li>
-        <li>Fecha de nacimiento</li>
-        <li>Posición deportiva</li>
-        <li>Altura y peso (opcional)</li>
-        <li>Resultados de pruebas físicas (sprints, saltos, test de Cooper, etc.)</li>
-        <li>Historial de lesiones (solo las comunicadas por el club)</li>
-    </ul>
-    <p>Entiendo que estos datos serán usados exclusivamente para el seguimiento deportivo y no serán cedidos a terceros con fines comerciales. Puedo solicitar la rectificación o cancelación en cualquier momento contactando al entrenador o al responsable de la app (lavozdelformado@gmail.com).</p>
-    <p>Fecha: ___/___/______</p>
-    <div class="firma">Firma del padre/madre/tutor: ___________________________</div>
-    <p><small>Este documento debe ser conservado por el entrenador. No es necesario enviarlo al desarrollador.</small></p>
-    <button onclick="window.print();">🖨️ Imprimir / Guardar como PDF</button>
+<div class="container">
+    <div class="logo-row">
+        <img src="/logo_mister11.png" alt="Míster11" onerror="this.style.display='none'">
+        <span>Míster11</span>
+    </div>
+
+    <h1>Autorización para el tratamiento de datos personales de menor de edad</h1>
+    <p style="font-size:0.88rem; color:#666;">Conforme al Reglamento (UE) 2016/679 (RGPD) y la Ley Orgánica 3/2018 (LOPDGDD) · Versión 1.1 – Junio 2026</p>
+
+    <h2>Datos del padre / madre / tutor legal</h2>
+    <div class="field-row">
+        <div class="field-block">
+            <label>Nombre completo *</label>
+            <span class="field-line"></span>
+        </div>
+        <div class="field-block">
+            <label>DNI / NIE / Pasaporte *</label>
+            <span class="field-line"></span>
+        </div>
+    </div>
+    <div class="field-row">
+        <div class="field-block">
+            <label>Relación con el menor (padre / madre / tutor) *</label>
+            <span class="field-line"></span>
+        </div>
+        <div class="field-block">
+            <label>Teléfono de contacto</label>
+            <span class="field-line"></span>
+        </div>
+    </div>
+
+    <h2>Datos del menor</h2>
+    <div class="field-row">
+        <div class="field-block">
+            <label>Nombre y apellidos del menor *</label>
+            <span class="field-line"></span>
+        </div>
+        <div class="field-block">
+            <label>Fecha de nacimiento *</label>
+            <span class="field-line"></span>
+        </div>
+    </div>
+    <div class="field-row">
+        <div class="field-block">
+            <label>Equipo / Club deportivo</label>
+            <span class="field-line"></span>
+        </div>
+        <div class="field-block">
+            <label>Temporada</label>
+            <span class="field-line"></span>
+        </div>
+    </div>
+
+    <h2>Datos del entrenador responsable</h2>
+    <div class="field-row">
+        <div class="field-block">
+            <label>Nombre del entrenador *</label>
+            <span class="field-line"></span>
+        </div>
+        <div class="field-block">
+            <label>Correo electrónico del entrenador</label>
+            <span class="field-line"></span>
+        </div>
+    </div>
+
+    <h2>Datos autorizados para su registro en Míster11</h2>
+    <p>Autorizo expresamente el registro y tratamiento de los siguientes datos de mi hijo/a en la aplicación Míster11:</p>
+
+    <div class="checkbox-row"><input type="checkbox" checked disabled> Nombre y apellidos</div>
+    <div class="checkbox-row"><input type="checkbox" checked disabled> Fecha de nacimiento</div>
+    <div class="checkbox-row"><input type="checkbox" checked disabled> Posición deportiva y número de dorsal</div>
+    <div class="checkbox-row"><input type="checkbox"> Altura y peso corporal (datos antropométricos)</div>
+    <div class="checkbox-row"><input type="checkbox"> Resultados de pruebas físicas (velocidad, resistencia, fuerza, agilidad, técnica)</div>
+    <div class="checkbox-row"><input type="checkbox"> Resultados de cuestionarios psicosociales deportivos (fortaleza mental, cohesión de equipo, bienestar emocional)</div>
+    <div class="checkbox-row"><input type="checkbox"> Historial de lesiones comunicadas al entrenador por el propio menor o su familia</div>
+    <div class="checkbox-row"><input type="checkbox"> Foto o avatar del jugador (imagen del menor)</div>
+    <div class="checkbox-row"><input type="checkbox"> Participación en sesiones de entrenamiento y partidos (fechas, asistencia)</div>
+    <div class="checkbox-row"><input type="checkbox"> Planes de ejercicios físicos individualizados de recuperación o prevención</div>
+
+    <div class="info-box">
+        <strong>Información sobre el tratamiento:</strong><br>
+        <strong>Responsable:</strong> Jhojan Stiven Caicedo Quiñones (NIE Y9540787X) · <a href="mailto:lavozdelformador@gmail.com">lavozdelformador@gmail.com</a><br>
+        <strong>Finalidad:</strong> Seguimiento del rendimiento deportivo y gestión del equipo.<br>
+        <strong>Almacenamiento:</strong> Google Firebase (servidores en EE. UU. con Cláusulas Contractuales Tipo UE).<br>
+        <strong>Cesión:</strong> No se cederán los datos a terceros con fines comerciales.<br>
+        <strong>Conservación:</strong> Mientras el equipo esté activo. Máximo 2 temporadas sin uso.<br>
+        <strong>Derechos:</strong> El firmante puede ejercer los derechos de acceso, rectificación, supresión, portabilidad y oposición escribiendo a <a href="mailto:lavozdelformador@gmail.com">lavozdelformador@gmail.com</a>.<br>
+        <strong>Autoridad de control:</strong> AEPD (<a href="https://www.aepd.es">www.aepd.es</a>).
+    </div>
+
+    <h2>Declaración y consentimiento</h2>
+    <p>El abajo firmante, en su condición de <strong>padre / madre / tutor legal</strong> del menor identificado, DECLARA haber sido informado de los fines del tratamiento y OTORGA su consentimiento expreso para el registro y tratamiento de los datos marcados anteriormente en la aplicación Míster11, con los fines exclusivamente deportivos indicados.</p>
+    <p>Este consentimiento puede ser revocado en cualquier momento dirigiéndose al entrenador o al responsable de la aplicación.</p>
+
+    <div class="firma-grid">
+        <div class="firma-block">
+            <div class="firma-line">Firma del padre / madre / tutor legal</div>
+        </div>
+        <div class="firma-block">
+            <div style="margin-top: 0;">
+                <label style="font-size:0.82rem; font-weight:600; color:#555;">Lugar y fecha</label>
+                <span class="field-line"></span>
+            </div>
+            <div class="firma-line">DNI / NIE del firmante</div>
+        </div>
+    </div>
+
+    <div class="footer-note">
+        <p>Este documento debe ser conservado por el entrenador durante toda la temporada y hasta 2 años después de finalizar la vinculación del menor con el equipo. No es necesario enviarlo al desarrollador de la App. En caso de requerimiento legal, el entrenador será el responsable de exhibirlo.</p>
+        <p>Míster11 · <a href="https://mister11.app">mister11.app</a> · <a href="mailto:lavozdelformador@gmail.com">lavozdelformador@gmail.com</a></p>
+    </div>
+
+    <button class="btn-print" onclick="window.print();">🖨️ Imprimir / Guardar como PDF</button>
+</div>
 </body>
 </html>

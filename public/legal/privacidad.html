@@ -5,43 +5,137 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Política de Privacidad - Míster11</title>
     <style>
-        body { font-family: 'Inter', sans-serif; line-height: 1.6; max-width: 800px; margin: 40px auto; padding: 20px; background: #F5F0E8; color: #2D2D2D; }
+        body { font-family: 'Inter', sans-serif; line-height: 1.7; max-width: 820px; margin: 40px auto; padding: 20px; background: #F5F0E8; color: #2D2D2D; }
         h1, h2 { color: #1B3A2D; }
-        .container { background: white; padding: 30px; border-radius: 16px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        h1 { border-bottom: 3px solid #D4A843; padding-bottom: 12px; }
+        h2 { margin-top: 32px; font-size: 1.1rem; border-left: 4px solid #4CAF7D; padding-left: 10px; }
+        .container { background: white; padding: 40px; border-radius: 16px; box-shadow: 0 2px 16px rgba(0,0,0,0.1); }
+        table { width: 100%; border-collapse: collapse; margin: 16px 0; font-size: 0.9rem; }
+        table th { background: #1B3A2D; color: white; padding: 10px 14px; text-align: left; }
+        table td { padding: 10px 14px; border-bottom: 1px solid #eee; vertical-align: top; }
+        .highlight { background: #f0faf5; border-left: 4px solid #4CAF7D; padding: 12px 16px; border-radius: 0 8px 8px 0; margin: 16px 0; }
+        .rights-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 16px 0; }
+        .right-card { background: #f8f9fa; border-radius: 8px; padding: 14px; border: 1px solid #e9ecef; }
+        .right-card strong { display: block; color: #1B3A2D; margin-bottom: 4px; }
+        .footer-note { font-size: 0.85rem; color: #777; margin-top: 40px; border-top: 1px solid #eee; padding-top: 16px; }
     </style>
 </head>
 <body>
 <div class="container">
-    <h1>Política de Privacidad</h1>
-    <p><strong>Responsable del tratamiento:</strong> Jhojan Stiven Caicedo Quiñones, NIE Y9540787X, lavozdelformado@gmail.com.</p>
+    <h1>Política de Privacidad — Míster11</h1>
+    <p><strong>Última actualización: Junio de 2026</strong></p>
 
-    <h2>1. Datos que recogemos</h2>
+    <div class="highlight">
+        <strong>Responsable del tratamiento:</strong><br>
+        Jhojan Stiven Caicedo Quiñones | NIE: Y9540787X<br>
+        Domicilio: Burriana, Castellón, España<br>
+        Correo: <a href="mailto:lavozdelformador@gmail.com">lavozdelformador@gmail.com</a><br>
+        Web: <a href="https://mister11.app">https://mister11.app</a>
+    </div>
+
+    <h2>1. Datos personales que recogemos</h2>
+    <table>
+        <tr><th>Categoría</th><th>Datos recogidos</th><th>Origen</th></tr>
+        <tr>
+            <td><strong>Del entrenador</strong></td>
+            <td>Nombre, apellidos, correo electrónico, foto de perfil, UID de Firebase, idioma y preferencias de la app</td>
+            <td>Google (login OAuth), configuración del usuario</td>
+        </tr>
+        <tr>
+            <td><strong>Del equipo</strong></td>
+            <td>Nombre del equipo, categoría, escudo (imagen), colores, nombre del club, temporada</td>
+            <td>Introducidos por el entrenador</td>
+        </tr>
+        <tr>
+            <td><strong>De los jugadores</strong></td>
+            <td>Nombre y apellidos, fecha de nacimiento, posición deportiva, dorsal, altura, peso, historial de lesiones, resultados de tests físicos y psicosociales, planes de ejercicios individuales, historial de sesiones y partidos, foto/avatar (opcional)</td>
+            <td>Introducidos por el entrenador con consentimiento de padres/tutores</td>
+        </tr>
+        <tr>
+            <td><strong>De uso y técnicos</strong></td>
+            <td>Fecha y hora de acceso, interacciones con la app, ejercicios generados por IA, preferencias de tema (claro/oscuro)</td>
+            <td>Recogidos automáticamente por Firebase</td>
+        </tr>
+        <tr>
+            <td><strong>De pago</strong></td>
+            <td>Datos de suscripción (plan, estado, fecha de renovación). <strong>Nota:</strong> Los datos de tarjeta de crédito son gestionados íntegramente por Stripe y nunca son accesibles por el desarrollador de Míster11</td>
+            <td>Stripe (integración OAuth)</td>
+        </tr>
+    </table>
+
+    <h2>2. Finalidad del tratamiento</h2>
+    <table>
+        <tr><th>Finalidad</th><th>Base legal</th></tr>
+        <tr><td>Gestionar la cuenta del entrenador y permitir el uso de la App</td><td>Ejecución del contrato (art. 6.1.b RGPD)</td></tr>
+        <tr><td>Mostrar estadísticas, gráficas y análisis de rendimiento</td><td>Ejecución del contrato (art. 6.1.b RGPD)</td></tr>
+        <tr><td>Exportar informes en PDF y CSV</td><td>Ejecución del contrato (art. 6.1.b RGPD)</td></tr>
+        <tr><td>Generar ejercicios y sesiones con IA</td><td>Ejecución del contrato (art. 6.1.b RGPD)</td></tr>
+        <tr><td>Gestionar suscripciones y pagos (Stripe)</td><td>Ejecución del contrato (art. 6.1.b RGPD)</td></tr>
+        <tr><td>Cumplir con obligaciones legales (fiscales, contables)</td><td>Obligación legal (art. 6.1.c RGPD)</td></tr>
+        <tr><td>Mejorar la seguridad y el funcionamiento del servicio</td><td>Interés legítimo del responsable (art. 6.1.f RGPD)</td></tr>
+        <tr><td>Comunicaciones sobre cambios de servicio, actualizaciones importantes</td><td>Interés legítimo / consentimiento (art. 6.1.a RGPD)</td></tr>
+    </table>
+    <p><strong>No se utilizan los datos para publicidad de terceros ni se ceden a terceros con fines comerciales.</strong></p>
+
+    <h2>3. Datos de menores de edad</h2>
+    <p>La App permite registrar datos de jugadores menores de 18 años. El tratamiento de estos datos se realiza bajo las siguientes garantías:</p>
     <ul>
-        <li>Del entrenador: nombre, correo, foto de perfil (Google), UID.</li>
-        <li>Del equipo: nombre, categoría, escudo, colores.</li>
-        <li>De los jugadores: nombre, fecha de nacimiento, posición, altura, peso, lesiones, resultados de tests, historial de sesiones y partidos.</li>
-        <li>Datos de uso: interacciones, ejercicios generados por IA, preferencias de tema.</li>
+        <li>El entrenador (responsable del equipo) actúa como <strong>encargado del tratamiento</strong> respecto a los datos de los menores.</li>
+        <li>El entrenador declara haber obtenido el consentimiento explícito y firmado de los padres o tutores legales de cada jugador menor, conforme al artículo 8 del RGPD y la Ley Orgánica 3/2018 (LOPDGDD) en España.</li>
+        <li>Se prohíbe el registro de imágenes de menores sin consentimiento específico para ese tratamiento.</li>
+        <li>El modelo de consentimiento puede descargarse en: <a href="/legal/consentimiento.html">/legal/consentimiento.html</a></li>
     </ul>
 
-    <h2>2. Finalidad</h2>
-    <p>Gestionar la cuenta del entrenador, mostrar estadísticas, exportar informes, generar ejercicios con IA, gestionar suscripciones (Stripe) y mejorar la seguridad.</p>
-
-    <h2>3. Legitimación</h2>
-    <p>El consentimiento del Usuario (al registrarse). Para los datos de menores, el entrenador declara haber obtenido el consentimiento de padres/tutores.</p>
-
     <h2>4. Destinatarios y transferencias internacionales</h2>
-    <p>Los datos se alojan en Firebase (Google Cloud) en servidores en Estados Unidos (us-central1). Google cumple con cláusulas contractuales tipo UE. Los pagos son gestionados por Stripe (Irlanda/EE. UU.). No cedemos datos a terceros.</p>
+    <table>
+        <tr><th>Proveedor</th><th>Servicio</th><th>País de alojamiento</th><th>Garantía</th></tr>
+        <tr><td><strong>Google Firebase</strong></td><td>Base de datos (Firestore), autenticación, almacenamiento de archivos</td><td>EE. UU. (us-central1)</td><td>Cláusulas Contractuales Tipo UE</td></tr>
+        <tr><td><strong>Vercel</strong></td><td>Hosting de la aplicación web</td><td>EE. UU. / Europa</td><td>Cumplimiento RGPD (DPA disponible)</td></tr>
+        <tr><td><strong>Stripe Payments Europe, Ltd.</strong></td><td>Procesamiento de pagos y suscripciones</td><td>Irlanda (UE)</td><td>Dentro de la UE; cumple RGPD</td></tr>
+        <tr><td><strong>Google (Gemini API)</strong></td><td>Generación de contenido con IA</td><td>EE. UU.</td><td>Cláusulas Contractuales Tipo UE</td></tr>
+    </table>
+    <p>No se realizan otras transferencias internacionales de datos.</p>
 
     <h2>5. Plazos de conservación</h2>
-    <p>Los datos se conservan mientras la cuenta esté activa. Al cancelar, se eliminan en 30 días. Los datos de jugadores pueden anonimizarse tras dos temporadas sin uso.</p>
+    <ul>
+        <li><strong>Datos de la cuenta activa:</strong> mientras la cuenta permanezca activa.</li>
+        <li><strong>Tras cancelación de la cuenta:</strong> los datos se eliminan en un plazo máximo de 30 días naturales, salvo que la ley exija su conservación por mayor tiempo (p. ej., datos fiscales: 5 años en España).</li>
+        <li><strong>Datos de menores:</strong> se eliminarán cuando el entrenador los borre o cuando se elimine el equipo. No se conservarán más de 2 temporadas sin actividad.</li>
+        <li><strong>Datos de pago (Stripe):</strong> conservados por Stripe conforme a sus propias políticas y a las obligaciones legales de registro contable.</li>
+    </ul>
 
     <h2>6. Derechos del Usuario</h2>
-    <p>Acceso, rectificación, supresión, limitación, oposición y portabilidad. Ejercerlos escribiendo a lavozdelformado@gmail.com. También puede reclamar ante la AEPD (España) o la SIC (Colombia).</p>
+    <div class="rights-grid">
+        <div class="right-card"><strong>Acceso</strong>Conocer qué datos tuyos tratamos y obtener una copia.</div>
+        <div class="right-card"><strong>Rectificación</strong>Corregir datos inexactos o incompletos.</div>
+        <div class="right-card"><strong>Supresión ("derecho al olvido")</strong>Solicitar la eliminación de tus datos cuando ya no sean necesarios.</div>
+        <div class="right-card"><strong>Limitación</strong>Solicitar que dejemos de tratar tus datos temporalmente.</div>
+        <div class="right-card"><strong>Portabilidad</strong>Recibir tus datos en formato estructurado y legible por máquina (JSON/CSV).</div>
+        <div class="right-card"><strong>Oposición</strong>Oponerte al tratamiento basado en nuestro interés legítimo.</div>
+    </div>
+    <p>Para ejercer cualquier derecho, escríbenos a <a href="mailto:lavozdelformador@gmail.com">lavozdelformador@gmail.com</a> indicando tu solicitud y datos de identificación. Responderemos en un plazo máximo de <strong>30 días hábiles</strong>.</p>
+    <p>También tienes derecho a presentar una reclamación ante la <strong>Agencia Española de Protección de Datos (AEPD)</strong>: <a href="https://www.aepd.es" target="_blank" rel="noopener noreferrer">www.aepd.es</a></p>
+    <p>En Colombia, puedes acudir a la <strong>Superintendencia de Industria y Comercio (SIC)</strong>: <a href="https://www.sic.gov.co" target="_blank" rel="noopener noreferrer">www.sic.gov.co</a></p>
 
-    <h2>7. Seguridad</h2>
-    <p>Se aplican medidas técnicas (encriptación TLS/SSL, autenticación fuerte) y organizativas.</p>
+    <h2>7. Seguridad de los datos</h2>
+    <p>Aplicamos las siguientes medidas técnicas y organizativas:</p>
+    <ul>
+        <li>Cifrado en tránsito: TLS 1.2/1.3 en todas las comunicaciones.</li>
+        <li>Cifrado en reposo: proporcionado por Google Firebase y Vercel.</li>
+        <li>Autenticación robusta: exclusivamente a través de Google OAuth 2.0.</li>
+        <li>Reglas de seguridad de Firestore: cada usuario solo puede acceder a sus propios datos.</li>
+        <li>Control de acceso: solo el desarrollador tiene acceso a la consola de Firebase con autenticación de dos factores activa.</li>
+    </ul>
 
-    <p><em>Última actualización: 10 de mayo de 2026</em></p>
+    <h2>8. Cookies y tecnologías de rastreo</h2>
+    <p>Míster11 es una PWA (Progressive Web App) que no utiliza cookies propias de rastreo ni analítica de terceros (Google Analytics, Facebook Pixel, etc.). Firebase puede utilizar identificadores locales (<code>localStorage</code>) para mantener la sesión activa. Estos datos no se comparten con anunciantes.</p>
+
+    <h2>9. Cambios en esta política</h2>
+    <p>Podemos actualizar esta Política de Privacidad. Te notificaremos por correo electrónico y mediante aviso en la App con al menos 15 días de antelación antes de que los cambios entren en vigor.</p>
+
+    <div class="footer-note">
+        <p>Última actualización: Junio de 2026 | Míster11 — <a href="https://mister11.app">mister11.app</a></p>
+    </div>
 </div>
 </body>
 </html>

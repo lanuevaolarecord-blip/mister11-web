@@ -27,7 +27,7 @@ const firebaseConfig = {
 const APP_VERSION    = '1.0.21';
 const APK_LOCAL_PATH = resolve(
   __dirname,
-  'android/app/build/outputs/apk/debug/mister11.apk'
+  'android/app/build/outputs/apk/release/mister11.apk'
 );
 const APK_STORAGE_PATH = 'mister11.apk'; // Ruta en Firebase Storage
 
@@ -64,7 +64,7 @@ async function main() {
       customMetadata: {
         versionName: APP_VERSION,
         uploadedAt:  new Date().toISOString(),
-        description: 'Mister11 Android App - Debug Build',
+        description: 'Mister11 Android App - Release Build',
       },
     });
     console.log(`✅ APK subido correctamente: ${snapshot.metadata.fullPath}`);

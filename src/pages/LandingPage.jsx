@@ -75,18 +75,58 @@ const LandingPage = () => {
               <span className="preview-title">Pizarra Táctica Míster11 · Vista Previa</span>
             </div>
             <div className="preview-field-canvas">
-              <div className="preview-field-lines">
-                <div className="preview-center-circle"></div>
-                <div className="preview-penalty-area left"></div>
-                <div className="preview-penalty-area right"></div>
-              </div>
-              <div className="player-node p-blue p1" style={{ top: '30%', left: '40%' }}>10</div>
-              <div className="player-node p-blue p2" style={{ top: '60%', left: '45%' }}>8</div>
-              <div className="player-node p-red p3" style={{ top: '45%', left: '60%' }}>4</div>
-              <div className="ball-node" style={{ top: '48%', left: '48%' }}>⚽</div>
-              <svg className="preview-tactical-arrows">
-                <path d="M 45 35 Q 48 48 60 48" fill="none" stroke="var(--accent-gold)" strokeWidth="3" strokeDasharray="5" />
+              {/* Football Field Markings SVG */}
+              <svg className="field-markings-svg" viewBox="0 0 120 80" xmlns="http://www.w3.org/2000/svg">
+                <defs>
+                  <marker id="arrow" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                    <path d="M 0 2 L 8 5 L 0 8 z" fill="var(--accent-gold)" />
+                  </marker>
+                </defs>
+                {/* Boundary */}
+                <rect x="5" y="5" width="110" height="70" fill="none" stroke="rgba(255,255,255,0.4)" strokeWidth="0.8" />
+                {/* Halfway line */}
+                <line x1="60" y1="5" x2="60" y2="75" stroke="rgba(255,255,255,0.4)" strokeWidth="0.8" />
+                {/* Center circle */}
+                <circle cx="60" cy="40" r="12" fill="none" stroke="rgba(255,255,255,0.4)" strokeWidth="0.8" />
+                {/* Center spot */}
+                <circle cx="60" cy="40" r="1" fill="rgba(255,255,255,0.8)" />
+                
+                {/* Left Penalty Area */}
+                <rect x="5" y="20" width="18" height="40" fill="none" stroke="rgba(255,255,255,0.4)" strokeWidth="0.8" />
+                {/* Left Goal Area */}
+                <rect x="5" y="29" width="6" height="22" fill="none" stroke="rgba(255,255,255,0.4)" strokeWidth="0.8" />
+                {/* Left Penalty Spot */}
+                <circle cx="17" cy="40" r="0.8" fill="rgba(255,255,255,0.8)" />
+                {/* Left Penalty Arc */}
+                <path d="M 23 32 A 10 10 0 0 1 23 48" fill="none" stroke="rgba(255,255,255,0.4)" strokeWidth="0.8" />
+                
+                {/* Right Penalty Area */}
+                <rect x="97" y="20" width="18" height="40" fill="none" stroke="rgba(255,255,255,0.4)" strokeWidth="0.8" />
+                {/* Right Goal Area */}
+                <rect x="109" y="29" width="6" height="22" fill="none" stroke="rgba(255,255,255,0.4)" strokeWidth="0.8" />
+                {/* Right Penalty Spot */}
+                <circle cx="103" cy="40" r="0.8" fill="rgba(255,255,255,0.8)" />
+                {/* Right Penalty Arc */}
+                <path d="M 97 32 A 10 10 0 0 0 97 48" fill="none" stroke="rgba(255,255,255,0.4)" strokeWidth="0.8" />
+                
+                {/* Corner Arcs */}
+                <path d="M 5 8 A 3 3 0 0 1 8 5" fill="none" stroke="rgba(255,255,255,0.3)" strokeWidth="0.8" />
+                <path d="M 8 75 A 3 3 0 0 1 5 72" fill="none" stroke="rgba(255,255,255,0.3)" strokeWidth="0.8" />
+                <path d="M 112 5 A 3 3 0 0 1 115 8" fill="none" stroke="rgba(255,255,255,0.3)" strokeWidth="0.8" />
+                <path d="M 115 72 A 3 3 0 0 1 112 75" fill="none" stroke="rgba(255,255,255,0.3)" strokeWidth="0.8" />
+                
+                {/* Goals */}
+                <rect x="1.5" y="33" width="3.5" height="14" fill="none" stroke="rgba(255,255,255,0.4)" strokeWidth="0.8" />
+                <rect x="115" y="33" width="3.5" height="14" fill="none" stroke="rgba(255,255,255,0.4)" strokeWidth="0.8" />
+                
+                {/* Tactical Arrow */}
+                <path d="M 54 28 Q 66 38 76 40" fill="none" stroke="var(--accent-gold)" strokeWidth="1.2" strokeDasharray="3,3" markerEnd="url(#arrow)" />
               </svg>
+
+              <div className="player-node p-blue p1" style={{ top: '35%', left: '45%' }}>10</div>
+              <div className="player-node p-blue p2" style={{ top: '65%', left: '50%' }}>8</div>
+              <div className="player-node p-red p3" style={{ top: '50%', left: '65%' }}>4</div>
+              <div className="ball-node" style={{ top: '52%', left: '55%' }}>⚽</div>
             </div>
           </div>
         </div>

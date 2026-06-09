@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { db } from '../firebaseConfig';
-import { doc, onSnapshot } from 'firebase/firestore';
+import { doc, onSnapshot, collection } from 'firebase/firestore';
 
 export const LIMITS = {
   FREE: {
@@ -31,6 +31,8 @@ export const usePlan = () => {
   const [dbPlan, setDbPlan] = useState('free');
   const [dbProExpiration, setDbProExpiration] = useState(null);
   const [dbTrialStartDate, setDbTrialStartDate] = useState(null);
+  const [stripeActivePlan, setStripeActivePlan] = useState('free');
+  const [stripeProExpiration, setStripeProExpiration] = useState(null);
   const [loading, setLoading] = useState(true);
 
   // Simulated plan toggle (only for developer testing in the UI)
@@ -43,6 +45,8 @@ export const usePlan = () => {
       setDbPlan('free');
       setDbProExpiration(null);
       setDbTrialStartDate(null);
+      setStripeActivePlan('free');
+      setStripeProExpiration(null);
       setLoading(false);
       return;
     }
@@ -50,6 +54,8 @@ export const usePlan = () => {
     if (user.uid === 'invitado-local') {
       setDbPlan('trial');
       setDbProExpiration(null);
+      setStripeActivePlan('free');
+      setStripeProExpiration(null);
       // Guests get a local trial fallback
       setDbTrialStartDate(new Date(Number(localStorage.getItem('mister11_trial_start') || Date.now())));
       setLoading(false);
@@ -83,7 +89,36 @@ export const usePlan = () => {
       setLoading(false);
     });
 
-    return () => unsub();
+    const subsRef = collection(db, 'customers', user.uid, 'subscriptions');
+    const unsubSubs = onSnapshot(subsRef, (snapshot) => {
+      const activeSub = snapshot.docs
+        .map(doc => ({ id: doc.id, ...doc.data() }))
+        .find(sub => sub.status === 'active' || sub.status === 'trialing');
+
+      if (activeSub) {
+        let planType = 'pro';
+        if (activeSub.role === 'club' || (activeSub.metadata && activeSub.metadata.plan === 'club')) {
+          planType = 'club';
+        } else if (activeSub.items && activeSub.items[0]) {
+          const priceId = activeSub.items[0].price?.id;
+          if (priceId && priceId.includes('club')) {
+            planType = 'club';
+          }
+        }
+        setStripeActivePlan(planType);
+        setStripeProExpiration(activeSub.current_period_end || null);
+      } else {
+        setStripeActivePlan('free');
+        setStripeProExpiration(null);
+      }
+    }, (err) => {
+      console.error("Error loading stripe sub in usePlan:", err);
+    });
+
+    return () => {
+      unsub();
+      unsubSubs();
+    };
   }, [user, activeTeamId]);
 
   const toggleSimulatedPlan = () => {
@@ -117,8 +152,13 @@ export const usePlan = () => {
 
   // --- Real PRO plan ---
   const isDeveloper = user && user.email && DEVELOPER_EMAILS.includes(user.email.toLowerCase());
-  const isRealExpired = dbProExpiration && (typeof dbProExpiration.toDate === 'function' ? dbProExpiration.toDate() : new Date(dbProExpiration)) < now;
-  const isRealPro = (dbPlan === 'pro' || dbPlan === 'club') && !isRealExpired;
+  
+  // Combine Firestore team plan expiration with active Stripe subscription expiration
+  const activeExpiration = dbProExpiration || stripeProExpiration;
+  const isRealExpired = activeExpiration && (typeof activeExpiration.toDate === 'function' ? activeExpiration.toDate() : new Date(activeExpiration)) < now;
+  
+  const currentPlan = dbPlan === 'pro' || dbPlan === 'club' ? dbPlan : stripeActivePlan;
+  const isRealPro = (currentPlan === 'pro' || currentPlan === 'club') && !isRealExpired;
 
   // isRealPaidPro = true ONLY when there is a real paid Stripe subscription (not simulated, not trial)
   const isRealPaidPro = isRealPro;
@@ -138,14 +178,16 @@ export const usePlan = () => {
   // isProActive: for legacy compatibility — same as isPro
   const isProActive = isPro;
 
+  const effectivePlan = currentPlan === 'club' ? 'club' : (currentPlan === 'pro' ? 'pro' : 'free');
+
   return {
-    plan: isPro ? 'pro' : 'free',
+    plan: isPro ? (effectivePlan !== 'free' ? effectivePlan : 'pro') : 'free',
     isPro,
     isDeveloper,
     isSimulatingFree,
     limits: currentLimits,
     loading,
-    proExpiration: dbProExpiration?.toDate ? dbProExpiration.toDate() : (dbProExpiration ? new Date(dbProExpiration) : null),
+    proExpiration: activeExpiration?.toDate ? activeExpiration.toDate() : (activeExpiration ? new Date(activeExpiration) : null),
     isExpired: isDeveloper ? false : (isTrialExpired && !isRealPro),
     simulatedPlan,
     toggleSimulatedPlan,
@@ -154,7 +196,7 @@ export const usePlan = () => {
     resetTrial,
     isOnTrial,
     isTrialExpired,
-    dbPlan,
+    dbPlan: currentPlan,
     isProActive,
     isRealPaidPro
   };

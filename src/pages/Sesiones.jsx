@@ -46,6 +46,45 @@ const Sesiones = () => {
   const [activeTab, setActiveTab] = useState('sessions'); // 'sessions' | 'captures' | 'animations'
   const [upgradeModal, setUpgradeModal] = useState({ open: false, message: '' });
 
+  // Custom Confirmation Dialog State
+  const [modalConfig, setModalConfig] = useState({
+    isOpen: false,
+    title: '',
+    message: '',
+    onConfirm: null,
+    isConfirm: false,
+  });
+
+  const showAlert = (title, message) => {
+    return new Promise((resolve) => {
+      setModalConfig({
+        isOpen: true,
+        title,
+        message,
+        onConfirm: () => {
+          setModalConfig(prev => ({ ...prev, isOpen: false }));
+          resolve();
+        },
+        isConfirm: false
+      });
+    });
+  };
+
+  const showConfirm = (title, message) => {
+    return new Promise((resolve) => {
+      setModalConfig({
+        isOpen: true,
+        title,
+        message,
+        onConfirm: (res) => {
+          setModalConfig(prev => ({ ...prev, isOpen: false }));
+          resolve(res);
+        },
+        isConfirm: true
+      });
+    });
+  };
+
   const [viewMode, setViewMode] = useState('list'); // 'list' | 'edit'
   const [selectedSession, setSelectedSession] = useState(null);
   const [selectedCapture, setSelectedCapture] = useState(null);
@@ -62,7 +101,7 @@ const Sesiones = () => {
 
   const handleExportMP4 = async (anim) => {
     if (!anim.videoUrl) {
-      alert("Aún no has guardado el video de esta animación. Por favor, abre la Pizarra y presiona el botón 'EXPORTAR MP4' para generarlo y guardarlo en la nube.");
+      await showAlert("Aviso", "Aún no has guardado el video de esta animación. Por favor, abre la Pizarra y presiona el botón 'EXPORTAR MP4' para generarlo y guardarlo en la nube.");
       return;
     }
     
@@ -80,7 +119,7 @@ const Sesiones = () => {
       };
     } catch (err) {
       console.error(err);
-      alert("Error al descargar el video. Intenta de nuevo.");
+      await showAlert("Error", "Error al descargar el video. Intenta de nuevo.");
       setExportingId(null);
     }
   };
@@ -158,7 +197,8 @@ const Sesiones = () => {
   };
 
   const handleDeleteSession = async (id) => {
-    if(window.confirm('¿Eliminar esta sesión?')) {
+    const confirmDelete = await showConfirm('Confirmar eliminación', '¿Eliminar esta sesión?');
+    if (confirmDelete) {
       try {
         const sessionToDelete = sessions.find(s => s.id === id);
         // Intentar borrar archivos de Storage si existen
@@ -175,13 +215,14 @@ const Sesiones = () => {
         await removeSession(id);
         if(selectedSession?.id === id) setSelectedSession(null);
       } catch (error) {
-        alert("Error al eliminar sesión.");
+        await showAlert("Error", "Error al eliminar sesión.");
       }
     }
   };
 
   const handleDeleteCapture = async (capture) => {
-    if(window.confirm('¿Eliminar esta captura?')) {
+    const confirmDelete = await showConfirm('Confirmar eliminación', '¿Eliminar esta captura?');
+    if (confirmDelete) {
       try {
         if (capture.storagePath) {
           try {
@@ -195,13 +236,14 @@ const Sesiones = () => {
         if(selectedCapture?.id === capture.id) setSelectedCapture(null);
       } catch (error) {
         console.error(error);
-        alert("Error al eliminar captura.");
+        await showAlert("Error", "Error al eliminar captura.");
       }
     }
   };
 
   const handleDeleteAnimation = async (anim) => {
-    if (window.confirm('¿Eliminar esta animación permanentemente?')) {
+    const confirmDelete = await showConfirm('Confirmar eliminación', '¿Eliminar esta animación permanentemente?');
+    if (confirmDelete) {
       try {
         if (user && activeTeamId) {
           const framesColRef = collection(db, 'users', user.uid, 'teams', activeTeamId, 'pizarras', anim.id, 'frames');
@@ -229,7 +271,7 @@ const Sesiones = () => {
         if (selectedAnimation?.id === anim.id) setSelectedAnimation(null);
       } catch (error) {
         console.error("Error eliminando animación: ", error);
-        alert("Error al eliminar animación.");
+        await showAlert("Error", "Error al eliminar animación.");
       }
     }
   };
@@ -237,7 +279,7 @@ const Sesiones = () => {
   // --- EDIT MODE FUNCTIONS ---
   const handleSaveSession = async () => {
     if (!(editData.title || '').trim()) {
-      alert('El título es obligatorio');
+      await showAlert('Validación', 'El título es obligatorio');
       return;
     }
     
@@ -251,7 +293,7 @@ const Sesiones = () => {
       setViewMode('list');
       setSelectedSession(editData);
     } catch (error) {
-      alert("Error al guardar sesión.");
+      await showAlert("Error", "Error al guardar sesión.");
     } finally {
       setIsSaving(false);
     }
@@ -298,12 +340,12 @@ const Sesiones = () => {
     });
   };
 
-  const handleFileUpload = (e) => {
+  const handleFileUpload = async (e) => {
     const file = e.target.files[0];
     if (!file || !user || !activeTeamId) return;
     
     if (file.type !== 'application/pdf') {
-      alert("Solo se permiten archivos PDF.");
+      await showAlert("Validación", "Solo se permiten archivos PDF.");
       return;
     }
 
@@ -319,9 +361,9 @@ const Sesiones = () => {
         const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
         setUploadProgress(progress);
       },
-      (error) => {
+      async (error) => {
         console.error("Error uploading file:", error);
-        alert("Error al subir el archivo. Revisa tu conexión.");
+        await showAlert("Error", "Error al subir el archivo. Revisa tu conexión.");
         setIsSaving(false);
         setUploadProgress(0);
       },
@@ -361,7 +403,24 @@ const Sesiones = () => {
   };
 
   if (loadingSessions || loadingPlayers || loadingCaptures || loadingExercises) {
-    return <div className="loading-state">Cargando datos de entrenamiento...</div>;
+    return (
+      <div className="page-wrapper" style={{ padding: '24px' }}>
+        <header className="page-header">
+          <div className="skeleton-line" style={{ width: '180px', height: '32px', marginBottom: '12px' }}></div>
+          <div className="skeleton-line" style={{ width: '280px', height: '18px' }}></div>
+        </header>
+        <div style={{ display: 'flex', gap: '8px', overflowX: 'auto', paddingBottom: '8px', marginBottom: '20px' }}>
+          {[1, 2, 3, 4, 5, 6, 7].map(n => (
+            <div key={n} className="skeleton-line" style={{ width: '50px', height: '60px', borderRadius: '8px' }}></div>
+          ))}
+        </div>
+        <div className="grid-3-cols" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '24px' }}>
+          {[1, 2, 3].map(n => (
+            <div key={n} className="skeleton-card" style={{ height: '220px', borderRadius: '16px' }}></div>
+          ))}
+        </div>
+      </div>
+    );
   }
 
   // --- RENDER EDIT MODE ---
@@ -792,7 +851,7 @@ const Sesiones = () => {
                           await generateSessionPDF(selectedSession, activeTeam, pizarras);
                         } catch(err) {
                           console.error(err);
-                          alert("Error al generar el PDF");
+                          await showAlert("Error", "Error al generar el PDF");
                         } finally {
                           setIsGeneratingPDF(false);
                         }
@@ -953,6 +1012,32 @@ const Sesiones = () => {
         onClose={() => setUpgradeModal({ ...upgradeModal, open: false })}
         message={upgradeModal.message}
       />
+
+      {/* Custom Dialog Modal (Glassmorphism Premium) */}
+      {modalConfig.isOpen && (
+        <div className="custom-modal-backdrop">
+          <div className="custom-modal-card">
+            <h3 className="custom-modal-title">{modalConfig.title}</h3>
+            <p className="custom-modal-message">{modalConfig.message}</p>
+            <div className="custom-modal-actions">
+              {modalConfig.isConfirm && (
+                <button 
+                  className="btn-modal-cancel" 
+                  onClick={() => modalConfig.onConfirm(false)}
+                >
+                  CANCELAR
+                </button>
+              )}
+              <button 
+                className="btn-modal-confirm" 
+                onClick={() => modalConfig.onConfirm(true)}
+              >
+                ACEPTAR
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

@@ -99,14 +99,113 @@ const DEFAULT_TESTS = [
   ] },
 
   // Nuevos Tests Añadidos (Psicodeportivos)
-  { id: 'psi_acsi28', type: 'psicodeportivo', category: 'Afrontamiento', name: 'ACSI-28 (Habilidades de Afrontamiento)', unit: 'pts', desc: 'Evalúa cómo maneja la presión, se concentra y se comunica.', imagenProtocolo: '/img/tests/acsi28_afrontamiento.png', protocol: '28 preguntas. Escala 1-4.', rangoMin: 28, rangoMax: 112, isQuestionnaire: true, questions: Array.from({length: 28}, (_, i) => ({id: `q${i+1}`, text: `Pregunta ${i+1}`, dimension: ['Afrontamiento adversidad', 'Entrenabilidad', 'Concentración', 'Confianza', 'Motivación', 'Comunicación con entrenador', 'Afrontamiento de fallos'][i%7]})) },
-  { id: 'psi_ires', type: 'psicodeportivo', category: 'Resiliencia', name: 'IRES (Resiliencia en el Deporte)', unit: 'pts', desc: 'Capacidad de recuperarse de reveses.', imagenProtocolo: '/img/tests/resiliencia_ires.png', protocol: '19 preguntas. Escala 1-4.', rangoMin: 19, rangoMax: 76, isQuestionnaire: true, questions: Array.from({length: 19}, (_, i) => ({id: `q${i+1}`, text: `Pregunta ${i+1}`, dimension: ['Confianza y Determinación', 'Apoyo y Orientación', 'Afrontamiento Activo', 'Persistencia'][i%4]})) },
-  { id: 'psi_gets', type: 'psicodeportivo', category: 'Trabajo en Equipo', name: 'GETS (Trabajo en Equipo para Jóvenes)', unit: 'pts', desc: 'Habilidad para colaborar y comunicarse.', imagenProtocolo: '/img/tests/cohesion_equipo.png', protocol: '10 preguntas. Escala 1-5.', rangoMin: 10, rangoMax: 50, isQuestionnaire: true, questions: Array.from({length: 10}, (_, i) => ({id: `q${i+1}`, text: `Pregunta ${i+1}`, dimension: ['Sinergia', 'Apoyo', 'Colaboración', 'Comunicación Efectiva'][i%4]})) },
+  { id: 'psi_acsi28', type: 'psicodeportivo', category: 'Afrontamiento', name: 'ACSI-28 (Habilidades de Afrontamiento)', unit: 'pts', desc: 'Evalúa cómo maneja la presión, se concentra y se comunica.', imagenProtocolo: '/img/tests/acsi28_afrontamiento.png', protocol: '28 preguntas. Escala 1-4.', rangoMin: 28, rangoMax: 112, isQuestionnaire: true, questions: [
+    { id: 'q1', text: 'Mantengo una actitud positiva e intensa en el partido aunque vayamos perdiendo.', dimension: 'Afrontamiento adversidad' },
+    { id: 'q2', text: 'Cuando las cosas salen mal en el campo, me esfuerzo aún más en lugar de frustrarme.', dimension: 'Afrontamiento adversidad' },
+    { id: 'q3', text: 'Si cometo un error defensivo o pierdo un balón, me olvido rápidamente y me enfoco en la siguiente jugada.', dimension: 'Afrontamiento adversidad' },
+    { id: 'q4', text: 'Supero los baches de juego o fallos de puntería con confianza y calma.', dimension: 'Afrontamiento adversidad' },
+    { id: 'q5', text: 'Acepto las correcciones tácticas del míster sin tomármelas como algo personal.', dimension: 'Entrenabilidad' },
+    { id: 'q6', text: 'Si el entrenador me critica en el entrenamiento, entiendo que es para ayudarme a mejorar como jugador.', dimension: 'Entrenabilidad' },
+    { id: 'q7', text: 'Escucho atentamente las instrucciones del cuerpo técnico, incluso cuando no estoy de acuerdo con ellas.', dimension: 'Entrenabilidad' },
+    { id: 'q8', text: 'Me muestro receptivo a cambiar mi forma de jugar o posición si el equipo lo necesita.', dimension: 'Entrenabilidad' },
+    { id: 'q9', text: 'Mantengo la concentración en mi marca e instrucciones tácticas durante todo el partido.', dimension: 'Concentración' },
+    { id: 'q10', text: 'Puedo abstraerme de los gritos del público o provocaciones del rival y centrarme en el balón.', dimension: 'Concentración' },
+    { id: 'q11', text: 'En los balones parados o transiciones rápidas, mi mente está al 100% enfocada en el juego.', dimension: 'Concentración' },
+    { id: 'q12', text: 'Es raro que me distraiga o pierda el hilo táctico durante el transcurso del partido.', dimension: 'Concentración' },
+    { id: 'q13', text: 'Confío plenamente en mis capacidades físicas y técnicas antes de salir al campo.', dimension: 'Confianza' },
+    { id: 'q14', text: 'Me esfuerzo al máximo en cada entrenamiento para ganarme el puesto de titular.', dimension: 'Confianza' },
+    { id: 'q15', text: 'Tengo una gran motivación por conseguir los objetivos del equipo y mejorar individualmente.', dimension: 'Motivación' },
+    { id: 'q16', text: 'Afronto los partidos contra rivales difíciles convencido de que podemos competir y ganar.', dimension: 'Motivación' },
+    { id: 'q17', text: 'Visualizo mis acciones de juego y movimientos tácticos antes de que empiece el partido.', dimension: 'Comunicación con entrenador' },
+    { id: 'q18', text: 'Me propongo metas concretas de rendimiento para cada entrenamiento y partido.', dimension: 'Comunicación con entrenador' },
+    { id: 'q19', text: 'Analizo mentalmente mis aciertos y errores tácticos después de cada encuentro.', dimension: 'Comunicación con entrenador' },
+    { id: 'q20', text: 'Preparo mi mente y concentración durante el calentamiento previo al silbato inicial.', dimension: 'Comunicación con entrenador' },
+    { id: 'q21', text: 'Los minutos finales de un partido ajustado o una tanda de penaltis me motivan en lugar de paralizarme.', dimension: 'Afrontamiento de fallos' },
+    { id: 'q22', text: 'Tomo mejores decisiones de pase o tiro cuando la presión defensiva del rival es intensa.', dimension: 'Afrontamiento de fallos' },
+    { id: 'q23', text: 'Siento que la presión de los partidos importantes saca la mejor versión de mi fútbol.', dimension: 'Afrontamiento de fallos' },
+    { id: 'q24', text: 'En situaciones críticas del encuentro (ir por detrás en el marcador), asumo la responsabilidad con seguridad.', dimension: 'Afrontamiento de fallos' },
+    { id: 'q25', text: 'Juego sin el miedo constante a cometer un error que condicione al equipo.', dimension: 'Afrontamiento de fallos' },
+    { id: 'q26', text: 'No me obsesiono con lo que los padres, compañeros o prensa puedan opinar de mi nivel.', dimension: 'Afrontamiento de fallos' },
+    { id: 'q27', text: 'Duermo bien y me siento relajado la noche anterior a un partido decisivo.', dimension: 'Afrontamiento de fallos' },
+    { id: 'q28', text: 'Si juego un mal partido, no dejo que la frustración me afecte durante los días siguientes.', dimension: 'Afrontamiento de fallos' }
+  ] },
+  { id: 'psi_ires', type: 'psicodeportivo', category: 'Resiliencia', name: 'IRES (Resiliencia en el Deporte)', unit: 'pts', desc: 'Capacidad de recuperarse de reveses.', imagenProtocolo: '/img/tests/resiliencia_ires.png', protocol: '19 preguntas. Escala 1-4.', rangoMin: 19, rangoMax: 76, isQuestionnaire: true, questions: [
+    { id: 'q1', text: 'Confío en mi capacidad para superar rachas de malos resultados.', dimension: 'Confianza y Determinación' },
+    { id: 'q2', text: 'Estoy convencido de que puedo recuperar mi mejor nivel tras una lesión.', dimension: 'Confianza y Determinación' },
+    { id: 'q3', text: 'Afronto las decisiones difíciles del míster con determinación para ganarme su confianza.', dimension: 'Confianza y Determinación' },
+    { id: 'q4', text: 'Mantengo la fe en mis posibilidades futbolísticas incluso en momentos difíciles.', dimension: 'Confianza y Determinación' },
+    { id: 'q5', text: 'Sé que mi constancia me permitirá alcanzar el éxito en mi carrera deportiva.', dimension: 'Confianza y Determinación' },
+    { id: 'q6', text: 'Cuento con el apoyo incondicional de mi familia en mi trayectoria deportiva.', dimension: 'Apoyo y Orientación' },
+    { id: 'q7', text: 'Siento que puedo confiar en el cuerpo técnico cuando paso por un mal momento.', dimension: 'Apoyo y Orientación' },
+    { id: 'q8', text: 'Mis compañeros de equipo me respaldan y me ayudan a seguir adelante.', dimension: 'Apoyo y Orientación' },
+    { id: 'q9', text: 'Busco consejo profesional o de veteranos para mejorar mis puntos débiles.', dimension: 'Apoyo y Orientación' },
+    { id: 'q10', text: 'Siento que el entorno del club me proporciona la estabilidad necesaria.', dimension: 'Apoyo y Orientación' },
+    { id: 'q11', text: 'Busco soluciones prácticas a los problemas en lugar de lamentarme.', dimension: 'Afrontamiento Activo' },
+    { id: 'q12', text: 'Analizo mis estadísticas y rendimiento de forma objetiva para mejorar.', dimension: 'Afrontamiento Activo' },
+    { id: 'q13', text: 'Adapto mis entrenamientos si detecto que tengo carencias físicas o técnicas.', dimension: 'Afrontamiento Activo' },
+    { id: 'q14', text: 'Acepto los retos tácticos complejos como una oportunidad de aprendizaje.', dimension: 'Afrontamiento Activo' },
+    { id: 'q15', text: 'Mantengo una comunicación abierta con el míster sobre mis necesidades en el campo.', dimension: 'Afrontamiento Activo' },
+    { id: 'q16', text: 'Sigo entrenando al 100% aunque no sea convocado o no juegue minutos.', dimension: 'Persistencia' },
+    { id: 'q17', text: 'No me rindo en los duelos individuales o disputas físicas hasta el último segundo.', dimension: 'Persistencia' },
+    { id: 'q18', text: 'Insisto en perfeccionar mis controles y golpeos a base de repeticiones.', dimension: 'Persistencia' },
+    { id: 'q19', text: 'Finalizo todas mis rutinas de ejercicio diarias sin saltarme ninguna serie.', dimension: 'Persistencia' }
+  ] },
+  { id: 'psi_gets', type: 'psicodeportivo', category: 'Trabajo en Equipo', name: 'GETS (Trabajo en Equipo para Jóvenes)', unit: 'pts', desc: 'Habilidad para colaborar y comunicarse.', imagenProtocolo: '/img/tests/cohesion_equipo.png', protocol: '10 preguntas. Escala 1-5.', rangoMin: 10, rangoMax: 50, isQuestionnaire: true, questions: [
+    { id: 'q1', text: 'Siento que jugamos mejor cuando combinamos nuestros esfuerzos tácticos en lugar de hacer jugadas individuales.', dimension: 'Sinergia' },
+    { id: 'q2', text: 'El equipo consigue mejores resultados gracias al esfuerzo colectivo de todos.', dimension: 'Sinergia' },
+    { id: 'q3', text: 'Animo a mis compañeros cuando fallan un pase, un tiro o cometen un penalti.', dimension: 'Apoyo' },
+    { id: 'q4', text: 'Mis compañeros me ayudan y me arropan cuando me siento cansado o frustrado.', dimension: 'Apoyo' },
+    { id: 'q5', text: 'Celebramos los éxitos de cada compañero como si fueran de todo el grupo.', dimension: 'Apoyo' },
+    { id: 'q6', text: 'Ayudo en tareas colectivas del equipo (recoger material, preparar el vestuario).', dimension: 'Colaboración' },
+    { id: 'q7', text: 'Me esfuerzo en las coberturas y ayudas defensivas para facilitarle el trabajo a mis compañeros.', dimension: 'Colaboración' },
+    { id: 'q8', text: 'Respeto el rol y posición que le toca jugar a cada miembro de la plantilla.', dimension: 'Colaboración' },
+    { id: 'q9', text: 'Hablo de forma constructiva y doy indicaciones de apoyo a mis compañeros durante el partido.', dimension: 'Comunicación Efectiva' },
+    { id: 'q10', text: 'Resolvemos los desacuerdos tácticos en el vestuario hablando con respeto.', dimension: 'Comunicación Efectiva' }
+  ] },
 
   // Nuevos Tests Añadidos (Sociodeportivos)
-  { id: 'soc_cwms', type: 'sociodeportivo', category: 'Bienestar', name: 'CWMS (Bienestar Mental)', unit: 'pts', desc: 'Bienestar emocional, psicológico y social.', imagenProtocolo: '/img/tests/bienestar_mental.png', protocol: '14 preguntas. Escala 1-5.', rangoMin: 14, rangoMax: 70, isQuestionnaire: true, questions: Array.from({length: 14}, (_, i) => ({id: `q${i+1}`, text: `Pregunta ${i+1}`, dimension: ['Bienestar Psicológico', 'Bienestar Social', 'Bienestar Emocional'][i%3]})) },
-  { id: 'soc_eced', type: 'sociodeportivo', category: 'Cohesión', name: 'ECED (Cohesión en Equipos)', unit: 'pts', desc: 'Cohesión de tarea y social.', imagenProtocolo: '/img/tests/cohesion_equipo.png', protocol: '12 preguntas. Escala 1-7.', rangoMin: 12, rangoMax: 84, isQuestionnaire: true, questions: Array.from({length: 12}, (_, i) => ({id: `q${i+1}`, text: `Pregunta ${i+1}`, dimension: ['Integración social', 'Integración de tarea', 'Atracción por el equipo'][i%3]})) },
-  { id: 'soc_edl', type: 'sociodeportivo', category: 'Convivencia', name: 'EDL (Deporte Limpio)', unit: 'pts', desc: 'Conductas antideportivas y presión por ganar.', imagenProtocolo: '/img/tests/deporte_limpio.png', protocol: '10 preguntas. Escala 1-4.', rangoMin: 10, rangoMax: 40, isQuestionnaire: true, questions: Array.from({length: 10}, (_, i) => ({id: `q${i+1}`, text: `Pregunta ${i+1}`, dimension: ['Transgresión de normas', 'Presión externa'][i%2]})) }
+  { id: 'soc_cwms', type: 'sociodeportivo', category: 'Bienestar', name: 'CWMS (Bienestar Mental)', unit: 'pts', desc: 'Bienestar emocional, psicológico y social.', imagenProtocolo: '/img/tests/bienestar_mental.png', protocol: '14 preguntas. Escala 1-5.', rangoMin: 14, rangoMax: 70, isQuestionnaire: true, questions: [
+    { id: 'q1', text: 'Siento que estoy creciendo y mejorando mis habilidades futbolísticas cada semana.', dimension: 'Bienestar Psicológico' },
+    { id: 'q2', text: 'Tengo claros mis objetivos deportivos y qué debo hacer para alcanzarlos.', dimension: 'Bienestar Psicológico' },
+    { id: 'q3', text: 'Acepto mis características físicas y de juego y trabajo sobre ellas.', dimension: 'Bienestar Psicológico' },
+    { id: 'q4', text: 'Siento que tengo autonomía para tomar mis propias decisiones en el campo de juego.', dimension: 'Bienestar Psicológico' },
+    { id: 'q5', text: 'Soy capaz de gestionar las exigencias del fútbol y de mis estudios/trabajo.', dimension: 'Bienestar Psicológico' },
+    { id: 'q6', text: 'Me siento parte fundamental y cohesionada del grupo de jugadores.', dimension: 'Bienestar Social' },
+    { id: 'q7', text: 'Siento que mis opiniones y aportaciones son respetadas por la plantilla.', dimension: 'Bienestar Social' },
+    { id: 'q8', text: 'Creo que aporto cosas positivas al ambiente del vestuario y a los entrenamientos.', dimension: 'Bienestar Social' },
+    { id: 'q9', text: 'Me resulta fácil integrarme y comunicarme con los nuevos compañeros de equipo.', dimension: 'Bienestar Social' },
+    { id: 'q10', text: 'Confío en las buenas intenciones de las personas que forman el club.', dimension: 'Bienestar Social' },
+    { id: 'q11', text: 'Me siento alegre y con energía cuando voy a entrenar.', dimension: 'Bienestar Emocional' },
+    { id: 'q12', text: 'Disfruto de la práctica diaria del fútbol y del ambiente deportivo.', dimension: 'Bienestar Emocional' },
+    { id: 'q13', text: 'Siento tranquilidad y paz mental respecto a mi rol en el equipo.', dimension: 'Bienestar Emocional' },
+    { id: 'q14', text: 'Me siento satisfecho y orgulloso de mi esfuerzo y dedicación deportiva.', dimension: 'Bienestar Emocional' }
+  ] },
+  { id: 'soc_eced', type: 'sociodeportivo', category: 'Cohesión', name: 'ECED (Cohesión en Equipos)', unit: 'pts', desc: 'Cohesión de tarea y social.', imagenProtocolo: '/img/tests/cohesion_equipo.png', protocol: '12 preguntas. Escala 1-7.', rangoMin: 12, rangoMax: 84, isQuestionnaire: true, questions: [
+    { id: 'q1', text: 'Disfruto quedando con mis compañeros de equipo fuera de las instalaciones del club.', dimension: 'Integración social' },
+    { id: 'q2', text: 'La plantilla se reúne a menudo para cenar o hacer actividades extradeportivas.', dimension: 'Integración social' },
+    { id: 'q3', text: 'Considero que mis mejores amigos están dentro del vestuario de este equipo.', dimension: 'Integración social' },
+    { id: 'q4', text: 'Nos apoyamos mutuamente ante problemas personales ajenos al fútbol.', dimension: 'Integración social' },
+    { id: 'q5', text: 'Todos los jugadores estamos comprometidos al 100% con el estilo de juego del entrenador.', dimension: 'Integración de tarea' },
+    { id: 'q6', text: 'Si el equipo juega mal, todos asumimos nuestra parte de culpa y trabajamos para solucionarlo.', dimension: 'Integración de tarea' },
+    { id: 'q7', text: 'Priorizamos el éxito del colectivo por encima de las estadísticas goleadoras individuales.', dimension: 'Integración de tarea' },
+    { id: 'q8', text: 'Entrenamos con la máxima intensidad competitiva respetando al compañero.', dimension: 'Integración de tarea' },
+    { id: 'q9', text: 'Siento un gran orgullo al vestir la camiseta y escudo de este club.', dimension: 'Atracción por el equipo' },
+    { id: 'q10', text: 'No cambiaría de equipo aunque me ofrecieran mejores condiciones en otro club.', dimension: 'Atracción por el equipo' },
+    { id: 'q11', text: 'Valoro enormemente el ambiente de competitividad sana que hay en el grupo.', dimension: 'Atracción por el equipo' },
+    { id: 'q12', text: 'Me siento motivado por venir a cada entrenamiento y dar lo mejor de mí.', dimension: 'Atracción por el equipo' }
+  ] },
+  { id: 'soc_edl', type: 'sociodeportivo', category: 'Convivencia', name: 'EDL (Deporte Limpio)', unit: 'pts', desc: 'Conductas antideportivas y presión por ganar.', imagenProtocolo: '/img/tests/deporte_limpio.png', protocol: '10 preguntas. Escala 1-4.', rangoMin: 10, rangoMax: 40, isQuestionnaire: true, questions: [
+    { id: 'q1', text: 'Evito simular faltas o lesiones para engañar al árbitro y perder tiempo.', dimension: 'Transgresión de normas' },
+    { id: 'q2', text: 'Respeto las decisiones arbitrales sin protestar de forma desairada ni insultar.', dimension: 'Transgresión de normas' },
+    { id: 'q3', text: 'Trato con respeto y deportividad a los jugadores rivales, jueguen como jueguen.', dimension: 'Transgresión de normas' },
+    { id: 'q4', text: 'Prefiero perder jugando limpio antes que ganar cometiendo trampas o juego sucio.', dimension: 'Transgresión de normas' },
+    { id: 'q5', text: 'Cuido el material de entrenamiento y las instalaciones del club rival de la misma forma que las nuestras.', dimension: 'Transgresión de normas' },
+    { id: 'q6', text: 'Sé mantener mis valores de deportividad a pesar de la presión o gritos de la grada.', dimension: 'Presión externa' },
+    { id: 'q7', text: 'Juego limpio aunque el entrenador me pida hacer acciones antideportivas para ganar.', dimension: 'Presión externa' },
+    { id: 'q8', text: 'No me dejo influenciar por las provocaciones físicas o verbales de los rivales.', dimension: 'Presión externa' },
+    { id: 'q9', text: 'Controlo mis impulsos agresivos en los momentos de alta tensión del encuentro.', dimension: 'Presión externa' },
+    { id: 'q10', text: 'Entiendo el fútbol como una competición sana y no como una guerra contra el adversario.', dimension: 'Presión externa' }
+  ] }
 ];
 
 const DEFAULT_IDS = DEFAULT_TESTS.map(t => t.id);
@@ -123,6 +222,45 @@ const Tests = () => {
   const [tests, setTests] = useState([]);
   const [loading, setLoading] = useState(false);
   const [upgradeModal, setUpgradeModal] = useState({ open: false, message: '' });
+  
+  // Custom Confirmation Dialog State
+  const [modalConfig, setModalConfig] = useState({
+    isOpen: false,
+    title: '',
+    message: '',
+    onConfirm: null,
+    isConfirm: false,
+  });
+
+  const showAlert = (title, message) => {
+    return new Promise((resolve) => {
+      setModalConfig({
+        isOpen: true,
+        title,
+        message,
+        onConfirm: () => {
+          setModalConfig(prev => ({ ...prev, isOpen: false }));
+          resolve();
+        },
+        isConfirm: false
+      });
+    });
+  };
+
+  const showConfirm = (title, message) => {
+    return new Promise((resolve) => {
+      setModalConfig({
+        isOpen: true,
+        title,
+        message,
+        onConfirm: (res) => {
+          setModalConfig(prev => ({ ...prev, isOpen: false }));
+          resolve(res);
+        },
+        isConfirm: true
+      });
+    });
+  };
   
   // Registration State
   const [isRegModalOpen, setIsRegModalOpen] = useState(false);
@@ -261,12 +399,12 @@ const Tests = () => {
       });
       
       await batch.commit();
-      alert("Resultados guardados exitosamente en la nube.");
+      await showAlert("Éxito", "Resultados guardados exitosamente en la nube.");
       setRegInputs({});
       loadEvaluations();
     } catch (error) {
       console.error("Error saving evaluations:", error);
-      alert("Error al guardar los resultados.");
+      await showAlert("Error", "Error al guardar los resultados.");
     } finally {
       setLoading(false);
     }
@@ -279,11 +417,11 @@ const Tests = () => {
         ...data,
         timestamp: serverTimestamp()
       });
-      alert("Evaluación guardada exitosamente.");
+      await showAlert("Éxito", "Evaluación guardada exitosamente.");
       loadEvaluations();
     } catch (error) {
       console.error("Error saving prev test", error);
-      alert("Error al guardar la evaluación.");
+      await showAlert("Error", "Error al guardar la evaluación.");
     }
   };
 
@@ -292,7 +430,7 @@ const Tests = () => {
     const history = historyData[jugadorId]?.[testId];
     if (!history || history.length === 0) return;
     
-    const confirmDelete = window.confirm('¿Estás seguro de que deseas eliminar el último dato agregado para este test?');
+    const confirmDelete = await showConfirm('Confirmar eliminación', '¿Estás seguro de que deseas eliminar el último dato agregado para este test?');
     if (!confirmDelete) return;
 
     try {
@@ -303,7 +441,7 @@ const Tests = () => {
       }
     } catch (error) {
       console.error("Error deleting last eval:", error);
-      alert("Error al eliminar el dato.");
+      await showAlert("Error", "Error al eliminar el dato.");
     }
   };
 
@@ -312,7 +450,7 @@ const Tests = () => {
     const history = historyData[jugadorId]?.[testId];
     if (!history || history.length === 0) return;
 
-    const confirmDelete = window.confirm('¿Estás seguro de que deseas eliminar TODOS los datos históricos de este test para este jugador?');
+    const confirmDelete = await showConfirm('Confirmar eliminación', '¿Estás seguro de que deseas eliminar TODOS los datos históricos de este test para este jugador?');
     if (!confirmDelete) return;
 
     try {
@@ -327,13 +465,13 @@ const Tests = () => {
       await loadEvaluations();
     } catch (error) {
       console.error("Error deleting all evals:", error);
-      alert("Error al eliminar los datos.");
+      await showAlert("Error", "Error al eliminar los datos.");
     }
   };
 
   const handleDeleteTest = async (testId, testName) => {
     if (!user || !activeTeamId) return;
-    const confirmDelete = window.confirm(`¿Estás seguro de que deseas eliminar el test "${testName}"?\nSe borrarán permanentemente el test y todas las evaluaciones registradas de todos los jugadores para este test.`);
+    const confirmDelete = await showConfirm('Confirmar eliminación', `¿Estás seguro de que deseas eliminar el test "${testName}"?\nSe borrarán permanentemente el test y todas las evaluaciones registradas de todos los jugadores para este test.`);
     if (!confirmDelete) return;
 
     setLoading(true);
@@ -362,14 +500,14 @@ const Tests = () => {
         setSelectedTestDetail(null);
       }
 
-      alert(`El test "${testName}" y todas sus evaluaciones asociadas han sido eliminados correctamente.`);
+      await showAlert("Éxito", `El test "${testName}" y todas sus evaluaciones asociadas han sido eliminados correctamente.`);
       
       // 3. Recargar tests y evaluaciones
       await loadTests();
       await loadEvaluations();
     } catch (error) {
       console.error("Error deleting test and evaluations:", error);
-      alert("Error al eliminar el test.");
+      await showAlert("Error", "Error al eliminar el test.");
     } finally {
       setLoading(false);
     }
@@ -377,9 +515,9 @@ const Tests = () => {
 
   const handleResetSeasonData = async () => {
     if (!user || !activeTeamId) return;
-    const confirm1 = window.confirm("¿Estás seguro de que deseas iniciar una nueva temporada?\nEsto eliminará permanentemente TODOS los datos y registros de evaluaciones de todos los jugadores de este equipo.");
+    const confirm1 = await showConfirm('Reiniciar Temporada', '¿Estás seguro de que deseas iniciar una nueva temporada?\nEsto eliminará permanentemente TODOS los datos y registros de evaluaciones de todos los jugadores de este equipo.');
     if (!confirm1) return;
-    const confirm2 = window.confirm("⚠️ ATENCIÓN: Esta acción es irreversible y borrará por completo el historial de pruebas del equipo. ¿Confirmas que deseas proceder con el reinicio de datos?");
+    const confirm2 = await showConfirm('⚠️ ATENCIÓN', '⚠️ ATENCIÓN: Esta acción es irreversible y borrará por completo el historial de pruebas del equipo. ¿Confirmas que deseas proceder con el reinicio de datos?');
     if (!confirm2) return;
 
     setLoading(true);
@@ -395,18 +533,21 @@ const Tests = () => {
         await batch.commit();
       }
       
-      alert("✅ Temporada reiniciada. Se han eliminado todos los datos de evaluaciones de los jugadores correctamente.");
+      await showAlert("Éxito", "✅ Temporada reiniciada. Se han eliminado todos los datos de evaluaciones de los jugadores correctamente.");
       await loadEvaluations();
     } catch (error) {
       console.error("Error resetting season data:", error);
-      alert("Error al reiniciar los datos de la temporada.");
+      await showAlert("Error", "Error al reiniciar los datos de la temporada.");
     } finally {
       setLoading(false);
     }
   };
 
   const handleCreateTest = async () => {
-    if (!newTest.name || !newTest.unit) return alert("Nombre y unidad son obligatorios");
+    if (!newTest.name || !newTest.unit) {
+      await showAlert("Validación", "Nombre y unidad son obligatorios");
+      return;
+    }
     if (!user || !activeTeamId) return;
     setLoading(true);
     try {
@@ -418,7 +559,7 @@ const Tests = () => {
       setNewTest({ name: '', type: 'fisico', category: 'Física', unit: '', desc: '', protocol: '' });
     } catch (error) {
       console.error(error);
-      alert("Error al crear el test.");
+      await showAlert("Error", "Error al crear el test.");
     } finally {
       setLoading(false);
     }
@@ -456,10 +597,11 @@ const Tests = () => {
   // ─── SEED DEMO DATA ───────────────────────────────────────────────────────
   const seedDemoEvaluations = async () => {
     if (!user || !activeTeamId || players.length === 0) {
-      alert('No hay jugadores en el equipo. Añade jugadores primero.');
+      await showAlert('Validación', 'No hay jugadores en el equipo. Añade jugadores primero.');
       return;
     }
-    if (!window.confirm(`¿Insertar evaluaciones de demostración para ${players.length} jugador(es)?\nEsto añadirá datos ficticios para visualizar las gráficas.`)) return;
+    const confirmSeed = await showConfirm('Insertar datos demo', `¿Insertar evaluaciones de demostración para ${players.length} jugador(es)?\nEsto añadirá datos ficticios para visualizar las gráficas.`);
+    if (!confirmSeed) return;
 
     setLoading(true);
     try {
@@ -513,11 +655,11 @@ const Tests = () => {
       });
 
       await batch.commit();
-      alert(`✅ Datos demo insertados para ${players.length} jugador(es). Recargando...`);
+      await showAlert("Éxito", `✅ Datos demo insertados para ${players.length} jugador(es). Recargando...`);
       loadEvaluations();
     } catch (err) {
       console.error('Error seeding demo data:', err);
-      alert('Error al insertar datos de demostración.');
+      await showAlert("Error", 'Error al insertar datos de demostración.');
     } finally {
       setLoading(false);
     }
@@ -535,8 +677,45 @@ const Tests = () => {
     return `hsl(${hue}, 70%, 85%)`;
   };
 
+  if (loadingPlayers && tests.length === 0) {
+    return (
+      <div className="tests-page" style={{ padding: '24px' }}>
+        <header className="tests-header">
+          <div className="skeleton-line" style={{ width: '220px', height: '32px', marginBottom: '12px' }}></div>
+          <div className="skeleton-line" style={{ width: '340px', height: '18px' }}></div>
+        </header>
+        <div className="tests-tabs" style={{ gap: '8px', borderBottom: '2px solid var(--border-color)', paddingBottom: '4px', display: 'flex', marginBottom: '20px' }}>
+          {[1, 2, 3, 4].map(n => (
+            <div key={n} className="skeleton-line" style={{ width: '100px', height: '40px', borderRadius: '6px' }}></div>
+          ))}
+        </div>
+        <div className="tests-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: '20px' }}>
+          {[1, 2, 3, 4, 5, 6].map(n => (
+            <div key={n} className="skeleton-card" style={{ height: '160px', borderRadius: '12px' }}></div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="tests-page">
+      {/* --- CUSTOM DIALOG --- */}
+      {modalConfig.isOpen && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div style={{ background: '#FFF', padding: '24px', borderRadius: '12px', width: '90%', maxWidth: '400px' }}>
+            <h3 style={{ marginTop: 0 }}>{modalConfig.title}</h3>
+            <p style={{ color: 'var(--text-secondary)' }}>{modalConfig.message}</p>
+            <div style={{ display: 'flex', gap: '10px', marginTop: '20px' }}>
+              {modalConfig.isConfirm && (
+                <button className="btn-outline" onClick={() => modalConfig.onConfirm(false)}>Cancelar</button>
+              )}
+              <button className="btn-primary" style={{ flex: 1 }} onClick={() => modalConfig.onConfirm(true)}>Aceptar</button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <header className="tests-header">
         <div className="header-top">
           <h1>EVALUACIÓN Y TESTS</h1>
@@ -611,7 +790,7 @@ const Tests = () => {
                 if (activeTab === 'FÍSICOS') return (t.type === 'fisico' || !t.type) && (!DEFAULT_IDS.includes(t.id) || ['t1','t3','t4','t5','t6','t7','t8'].includes(t.id));
                 if (activeTab === 'PSICOSOCIALES') return [
                   'psicodeportivo','psicosocial','sociodeportivo','socioemocional'
-                ].includes(t.type) && (!DEFAULT_IDS.includes(t.id) || ['psi1','psi2','psi3','soc1','soc2','psi1_old','psi2_old','soc1_old','soc2_old'].includes(t.id));
+                ].includes(t.type) && (!DEFAULT_IDS.includes(t.id) || ['psi1','psi2','psi3','soc1','soc2','psi1_old','psi2_old','soc1_old','soc2_old','psi_acsi28','psi_ires','psi_gets','soc_cwms','soc_eced','soc_edl'].includes(t.id));
                 return false;
               }).map(t => (
                 <div key={t.id} className="card-base" style={{ padding: '0', cursor: 'pointer', display: 'flex', flexDirection: 'column' }} onClick={() => setSelectedTestDetail(t)}>
@@ -799,7 +978,7 @@ const Tests = () => {
                     await generatePlayerTestReport(getPlayerById(histSelectedPlayer), tests, historyData, activeTeam, graficaUrl);
                   } catch (e) {
                     console.error(e);
-                    alert("Error al generar el PDF.");
+                    await showAlert("Error", "Error al generar el PDF.");
                   }
                 }}>
                   📄 Exportar Informe del Jugador
@@ -986,7 +1165,7 @@ const Tests = () => {
                                 await generatePlayerTestReport(getPlayerById(histSelectedPlayer), tests, historyData, activeTeam, graficaUrl);
                               } catch (e) {
                                 console.error(e);
-                                alert("Error al generar el PDF.");
+                                await showAlert("Error", "Error al generar el PDF.");
                               }
                             }}
                           >
@@ -1563,12 +1742,12 @@ const Tests = () => {
                 fecha: serverTimestamp(),
                 ...evalData
               });
-              alert('Resultados del cuestionario guardados.');
+              await showAlert('Éxito', 'Resultados del cuestionario guardados.');
               setIsQuestionnaireOpen(false);
               loadEvaluations();
             } catch(e) {
               console.error(e);
-              alert("Error al guardar cuestionario");
+              await showAlert("Error", "Error al guardar cuestionario");
             }
           }}
         />
@@ -1603,6 +1782,32 @@ const Tests = () => {
         onSave={handleSavePreventiveTest} 
         player={selectedPlayerForTest} 
       />
+
+      {/* Custom Dialog Modal (Glassmorphism Premium) */}
+      {modalConfig.isOpen && (
+        <div className="custom-modal-backdrop">
+          <div className="custom-modal-card">
+            <h3 className="custom-modal-title">{modalConfig.title}</h3>
+            <p className="custom-modal-message">{modalConfig.message}</p>
+            <div className="custom-modal-actions">
+              {modalConfig.isConfirm && (
+                <button 
+                  className="btn-modal-cancel" 
+                  onClick={() => modalConfig.onConfirm(false)}
+                >
+                  CANCELAR
+                </button>
+              )}
+              <button 
+                className="btn-modal-confirm" 
+                onClick={() => modalConfig.onConfirm(true)}
+              >
+                ACEPTAR
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

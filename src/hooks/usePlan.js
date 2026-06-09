@@ -148,7 +148,6 @@ export const usePlan = () => {
   const trialDaysRemaining = Math.max(0, 7 - daysPassed);
   const trialHoursRemaining = Math.max(0, 7 * 24 - hoursPassed);
   const isTrialExpired = trialDaysRemaining <= 0;
-  const isOnTrial = (dbPlan === 'trial') && !isTrialExpired;
 
   // --- Real PRO plan ---
   const isDeveloper = user && user.email && DEVELOPER_EMAILS.includes(user.email.toLowerCase());
@@ -159,6 +158,8 @@ export const usePlan = () => {
   
   const currentPlan = dbPlan === 'pro' || dbPlan === 'club' ? dbPlan : stripeActivePlan;
   const isRealPro = (currentPlan === 'pro' || currentPlan === 'club') && !isRealExpired;
+
+  const isOnTrial = (dbPlan === 'trial') && !isTrialExpired && !isRealPro;
 
   // isRealPaidPro = true ONLY when there is a real paid Stripe subscription (not simulated, not trial)
   const isRealPaidPro = isRealPro;

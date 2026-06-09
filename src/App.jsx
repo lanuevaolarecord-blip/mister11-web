@@ -17,6 +17,7 @@ import IAGeneradora from './pages/IAGeneradora';
 import AdminPanel from './pages/AdminPanel';
 import Login from './pages/Login';
 import Instalar from './pages/Instalar';
+import LandingPage from './pages/LandingPage';
 
 import './App.css';
 
@@ -142,6 +143,13 @@ function App() {
       )}
       <Routes>
         <Route 
+          path="/" 
+          element={user ? <Layout /> : <LandingPage />}
+        >
+          <Route index element={<Dashboard />} />
+        </Route>
+
+        <Route 
           path="/login" 
           element={user ? <Navigate to="/" replace /> : <Login />} 
         />
@@ -155,7 +163,6 @@ function App() {
           path="/*" 
           element={user ? <Layout /> : <Navigate to="/login" replace />}
         >
-          <Route index element={<Dashboard />} />
           <Route path="dashboard" element={<RedirectToRoot />} />
           <Route path="pricing" element={<Navigate to="/admin" state={{ activeTab: 'ajustes' }} replace />} />
           <Route path="pizarra" element={<PizarraTactica />} />

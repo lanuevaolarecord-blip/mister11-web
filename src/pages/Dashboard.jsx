@@ -116,7 +116,7 @@ const Dashboard = () => {
       };
     }
   }, [user, activeTeamId, refreshTeam]);
-  const { isPro, isDeveloper, trialDaysRemaining, trialHoursRemaining, isOnTrial, isTrialExpired, isRealPaidPro, isSimulatingFree, toggleSimulatedPlan, resetTrial } = usePlan();
+  const { plan, isPro, isDeveloper, trialDaysRemaining, trialHoursRemaining, isOnTrial, isTrialExpired, isRealPaidPro, isSimulatingFree, toggleSimulatedPlan, resetTrial } = usePlan();
   const { settings } = useSettings(activeTeamId);
   const { players } = usePlayers(activeTeamId);
   const { sessions } = useSessions(activeTeamId);
@@ -465,9 +465,9 @@ const Dashboard = () => {
                 {(!isAdmin && isOnTrial && trialDaysRemaining <= 1)
                   ? '⚠️ ¡Tu prueba vence pronto!'
                   : isPro && isOnTrial
-                    ? '👑 Míster11 PRO · Prueba Gratuita Activa'
+                    ? `👑 Míster11 ${plan.toUpperCase()} · Prueba Gratuita Activa`
                     : isPro && isRealPaidPro
-                      ? '👑 Míster11 PRO · Plan Activo'
+                      ? `👑 Míster11 ${plan.toUpperCase()} · Plan Activo`
                       : '⭐ Míster11 Plan Gratuito (Limitado)'}
               </h3>
               <p style={{
@@ -681,7 +681,7 @@ const Dashboard = () => {
                 const dateObj = new Date(s.date);
                 const formattedDate = isNaN(dateObj.getTime())
                   ? (s.date || '')
-                  : dateObj.toLocaleDateString(settings.language === 'English (EN)' ? 'en-US' : 'es-ES', { month: 'long', year: 'numeric' });
+                  : dateObj.toLocaleDateString(settings.language === 'English (EN)' ? 'en-US' : 'es-ES', { weekday: 'short', day: 'numeric', month: 'short' });
 
                 return (
                   <div key={s.id || idx} className="card-base" style={{ padding: '16px', display: 'flex', alignItems: 'center', gap: '16px', cursor: 'pointer', boxShadow: 'none' }} onClick={() => navigate('/sesiones')}>

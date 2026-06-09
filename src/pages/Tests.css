@@ -917,3 +917,121 @@
   font-size: 0.7rem;
   color: var(--text-muted);
 }
+
+/* Custom Modal Backdrop (Glassmorphism) */
+.custom-modal-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+}
+
+.custom-modal-card {
+  background: var(--bg-card);
+  border: 1.5px solid var(--border-color);
+  border-radius: 12px;
+  width: 90%;
+  max-width: 440px;
+  padding: 24px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+  text-align: center;
+  animation: modalScaleIn 0.25s ease-out;
+}
+
+@keyframes modalScaleIn {
+  from { transform: scale(0.9); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+.custom-modal-title {
+  margin: 0 0 12px 0;
+  font-family: var(--font-heading);
+  color: var(--text-primary);
+  font-size: 1.2rem;
+  font-weight: bold;
+}
+
+.custom-modal-message {
+  margin: 0 0 24px 0;
+  color: var(--text-secondary);
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+
+.custom-modal-actions {
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+}
+
+.btn-modal-cancel {
+  background: #E5E7EB;
+  color: #374151;
+  border: none;
+  border-radius: 8px;
+  font-weight: bold;
+  padding: 12px 24px;
+  font-size: 0.85rem;
+  cursor: pointer;
+  min-height: 48px;
+  min-width: 120px;
+}
+
+.dark .btn-modal-cancel {
+  background: #374151;
+  color: #E5E7EB;
+}
+
+.btn-modal-confirm {
+  background-color: #004B87; /* Azul Institucional */
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-weight: bold;
+  padding: 12px 24px;
+  font-size: 0.85rem;
+  cursor: pointer;
+  min-height: 48px;
+  min-width: 120px;
+}
+
+.btn-modal-confirm:hover {
+  background-color: #003663;
+}
+
+/* Skeleton Loaders Styling */
+.skeleton-line {
+  background: linear-gradient(90deg, rgba(255,255,255,0.05) 25%, rgba(255,255,255,0.1) 50%, rgba(255,255,255,0.05) 75%);
+  background-size: 200% 100%;
+  animation: loadingPulse 1.5s infinite;
+  border-radius: 4px;
+}
+
+.skeleton-card {
+  background: linear-gradient(90deg, rgba(255,255,255,0.03) 25%, rgba(255,255,255,0.07) 50%, rgba(255,255,255,0.03) 75%);
+  background-size: 200% 100%;
+  animation: loadingPulse 1.5s infinite;
+  border-radius: 12px;
+  border: 1px solid var(--border-color);
+}
+
+@keyframes loadingPulse {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+.dark .skeleton-line {
+  background: linear-gradient(90deg, rgba(255,255,255,0.03) 25%, rgba(255,255,255,0.06) 50%, rgba(255,255,255,0.03) 75%);
+}
+
+.dark .skeleton-card {
+  background: linear-gradient(90deg, rgba(255,255,255,0.02) 25%, rgba(255,255,255,0.04) 50%, rgba(255,255,255,0.02) 75%);
+}

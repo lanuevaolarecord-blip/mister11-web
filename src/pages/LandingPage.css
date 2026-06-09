@@ -342,8 +342,14 @@
   margin: 0 auto;
 }
 
-.landing-features .section-subtitle {
-  color: #475569;
+.landing-features .section-title,
+.landing-pricing .section-title {
+  color: #0F172A !important;
+}
+
+.landing-features .section-subtitle,
+.landing-pricing .section-subtitle {
+  color: #475569 !important;
 }
 
 .section-header {
@@ -429,6 +435,8 @@
 .pricing-card-container {
   display: flex;
   justify-content: center;
+  gap: 30px;
+  flex-wrap: wrap;
   margin-top: 40px;
 }
 

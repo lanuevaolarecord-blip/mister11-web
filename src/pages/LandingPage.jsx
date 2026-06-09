@@ -210,8 +210,8 @@ const LandingPage = () => {
         </div>
 
         <div className="pricing-card-container">
-          <div className="pricing-card premium">
-            <div className="pricing-badge">MÁS POPULAR</div>
+          {/* PLAN PRO */}
+          <div className="pricing-card">
             <h3 className="pricing-plan-name">Míster11 PRO</h3>
             <div className="pricing-price-block">
               <span className="price-number">7.99€</span>
@@ -220,19 +220,45 @@ const LandingPage = () => {
             <p className="pricing-tax-info">IVA incluido · Cancela cuando quieras</p>
             
             <ul className="pricing-features-list">
-              <li><Check size={18} /> Equipos ilimitados (hasta 100)</li>
-              <li><Check size={18} /> Jugadores ilimitados (hasta 1000)</li>
+              <li><Check size={18} /> <strong>3 Equipos</strong> (limitado)</li>
+              <li><Check size={18} /> <strong>Hasta 30 Jugadores</strong> (limitado)</li>
               <li><Check size={18} /> Planificación completa de Macrociclos</li>
               <li><Check size={18} /> Todos los Tests Físicos y Psicosociales</li>
-              <li><Check size={18} /> Exportación en PDF Institucional para informes</li>
-              <li><Check size={18} /> Generación con IA Ilimitada</li>
-              <li><Check size={18} /> Pizarra táctica de Fabric.js con exportaciones</li>
+              <li><Check size={18} /> Exportación en PDF para informes</li>
+              <li><Check size={18} /> Generación con IA</li>
+              <li><Check size={18} /> Pizarra táctica interactiva</li>
             </ul>
 
             <button className="btn-verde-exito pricing-cta" onClick={handleStart}>
               REGISTRARME EN PRO
             </button>
             <p className="pricing-trial-footer">O inicia una prueba gratuita de 7 días sin compromiso</p>
+          </div>
+
+          {/* PLAN CLUB */}
+          <div className="pricing-card premium">
+            <div className="pricing-badge">MÁS COMPLETO</div>
+            <h3 className="pricing-plan-name">Míster11 CLUB</h3>
+            <div className="pricing-price-block">
+              <span className="price-number">39.99€</span>
+              <span className="price-period">/ mes</span>
+            </div>
+            <p className="pricing-tax-info">IVA incluido · Facturación mensual</p>
+            
+            <ul className="pricing-features-list">
+              <li><Check size={18} /> <strong>Equipos ilimitados</strong></li>
+              <li><Check size={18} /> <strong>Jugadores ilimitados</strong></li>
+              <li><Check size={18} /> Licencia multi-entrenador</li>
+              <li><Check size={18} /> Panel administrativo del club</li>
+              <li><Check size={18} /> Informes consolidados de todo el club</li>
+              <li><Check size={18} /> Soporte prioritario 24/7</li>
+              <li><Check size={18} /> Todo lo del Plan PRO incluido</li>
+            </ul>
+
+            <button className="btn-azul-primario pricing-cta" onClick={handleStart}>
+              EMPEZAR CON CLUB
+            </button>
+            <p className="pricing-trial-footer">Ideal para escuelas, academias y clubes deportivos</p>
           </div>
         </div>
       </section>

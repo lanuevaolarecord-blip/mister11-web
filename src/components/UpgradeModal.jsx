@@ -81,6 +81,13 @@ const UpgradeModal = ({ isOpen, onClose, message, urgency = false }) => {
     try {
       console.log('Llamando a createCheckoutSession con priceId:', priceId, 'y teamId:', activeTeamId);
       setStatusMsg('Creando sesión en Stripe...');
+
+      // Guardar el plan elegido en localStorage ANTES de salir a Stripe
+      // Esto permite actualizar el plan al regresar aunque no haya webhook configurado
+      const planTypeName = planName.toLowerCase(); // 'pro' o 'club'
+      localStorage.setItem('mister11_pending_plan', planTypeName);
+      localStorage.setItem('mister11_pending_plan_teamId', activeTeamId || '');
+
       const sessionRef = await createStripeCheckoutSession(
         user.uid,
         priceId,

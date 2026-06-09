@@ -33,75 +33,86 @@ const Dashboard = () => {
   const adminEmails = ['lanuevaolarecord@gmail.com', 'lavozdelformador@gmail.com', 'jhocao111294@gmail.com'];
   const isAdmin = user?.email && adminEmails.includes(user.email.toLowerCase());
 
-  // Detect payment success from Stripe & synchronize client-side
+  // Detect payment success from Stripe & synchronize plan immediately
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
     const isSuccess = urlParams.get('payment') === 'success' || urlParams.get('subscribed') === '1' || urlParams.get('subscribe') === '1';
 
-    if (isSuccess && user && activeTeamId) {
-      console.log("[Stripe Success Hook] Detectado retorno de pago exitoso. Sincronizando plan...");
+    if (!isSuccess) return;
 
-      // Limpiar el parámetro de la URL sin recargar la página
-      window.history.replaceState({}, document.title, window.location.pathname);
+    // Clean URL parameter immediately
+    window.history.replaceState({}, document.title, window.location.pathname);
 
-      // Iniciar escucha activa en la colección de suscripciones del cliente
+    if (!user || user.uid === 'invitado-local' || !activeTeamId) {
+      console.warn("[Stripe] Pago detectado pero sin usuario o equipo activo.");
+      return;
+    }
+
+    // Read the plan the user selected before going to Stripe (saved in localStorage)
+    const pendingPlan = localStorage.getItem('mister11_pending_plan'); // 'pro' or 'club'
+    const pendingTeamId = localStorage.getItem('mister11_pending_plan_teamId') || activeTeamId;
+
+    const applyPlanUpdate = async (planType) => {
+      try {
+        const teamId = pendingTeamId || activeTeamId;
+        const teamRef = doc(db, 'users', user.uid, 'teams', teamId);
+        // Set expiration 1 year from now as default (webhook will correct if active)
+        const oneYearFromNow = new Date();
+        oneYearFromNow.setFullYear(oneYearFromNow.getFullYear() + 1);
+        await updateDoc(teamRef, {
+          plan: planType,
+          proExpiration: oneYearFromNow.toISOString(),
+          stripePaymentConfirmedAt: new Date().toISOString()
+        });
+        console.log(`[Stripe] Plan '${planType}' aplicado al equipo '${teamId}'.`);
+        // Clear localStorage flags
+        localStorage.removeItem('mister11_pending_plan');
+        localStorage.removeItem('mister11_pending_plan_teamId');
+        // Refresh context
+        if (typeof refreshTeam === 'function') refreshTeam();
+      } catch (err) {
+        console.error("[Stripe] Error al aplicar plan:", err);
+      }
+    };
+
+    if (pendingPlan && (pendingPlan === 'pro' || pendingPlan === 'club')) {
+      // Primary path: we know the plan from localStorage → update immediately
+      console.log(`[Stripe] Plan pendiente encontrado en localStorage: '${pendingPlan}'. Aplicando...`);
+      applyPlanUpdate(pendingPlan);
+    } else {
+      // Fallback: try to read from Stripe subscriptions collection (requires webhook)
+      console.log("[Stripe] Sin plan en localStorage. Intentando desde Firestore subscriptions...");
       const subsRef = collection(db, 'customers', user.uid, 'subscriptions');
-
+      let resolved = false;
       const unsubscribeSubs = onSnapshot(subsRef, async (snapshot) => {
+        if (resolved) return;
         const activeSub = snapshot.docs
-          .map(doc => ({ id: doc.id, ...doc.data() }))
+          .map(d => ({ id: d.id, ...d.data() }))
           .find(sub => sub.status === 'active' || sub.status === 'trialing');
 
         if (activeSub) {
-          console.log("[Stripe Success Hook] Suscripción activa encontrada:", activeSub);
-
-          // Determinar el tipo de plan
+          resolved = true;
           let planType = 'pro';
-          if (activeSub.role === 'club' || (activeSub.metadata && activeSub.metadata.plan === 'club')) {
-            planType = 'club';
-          } else if (activeSub.items && activeSub.items[0]) {
-            const priceId = activeSub.items[0].price?.id;
-            if (priceId && priceId.includes('club')) {
-              planType = 'club';
-            }
-          }
-
-          // Actualizar Firestore para el equipo activo
-          try {
-            const teamRef = doc(db, 'users', user.uid, 'teams', activeTeamId);
-            await updateDoc(teamRef, {
-              plan: planType,
-              proExpiration: activeSub.current_period_end || null,
-              stripeSubscriptionId: activeSub.id
-            });
-            console.log(`[Stripe Success Hook] Plan del equipo actualizado a ${planType} exitosamente.`);
-
-            // Actualizar contexto
-            if (typeof refreshTeam === 'function') {
-              refreshTeam();
-            }
-
-            alert(`¡Pago completado! Tu plan de Míster11 se ha actualizado a ${planType.toUpperCase()} con éxito.`);
-          } catch (err) {
-            console.error("[Stripe Success Hook] Error actualizando plan de equipo:", err);
-          }
-
-          // Dejar de escuchar una vez detectado y procesado
+          if (activeSub.role === 'club' || (activeSub.metadata?.plan === 'club')) planType = 'club';
+          else if (activeSub.items?.[0]?.price?.id?.includes('club')) planType = 'club';
+          await applyPlanUpdate(planType);
           unsubscribeSubs();
         }
-      }, (err) => {
-        console.error("[Stripe Success Hook] Error escuchando suscripciones:", err);
-      });
+      }, (err) => console.error("[Stripe] Error leyendo subscriptions:", err));
 
-      // Timeout de salvaguarda por si tarda demasiado (15 segundos)
-      const timeoutId = setTimeout(() => {
-        unsubscribeSubs();
-        console.warn("[Stripe Success Hook] Tiempo de espera agotado para sincronización de suscripción.");
-      }, 15000);
+      // Timeout: if webhook never fires within 20s, default to 'pro'
+      const fallbackTimeout = setTimeout(() => {
+        if (!resolved) {
+          resolved = true;
+          console.warn("[Stripe] Timeout esperando webhook. Aplicando 'pro' por defecto.");
+          applyPlanUpdate('pro');
+          unsubscribeSubs();
+        }
+      }, 20000);
 
       return () => {
         unsubscribeSubs();
-        clearTimeout(timeoutId);
+        clearTimeout(fallbackTimeout);
       };
     }
   }, [user, activeTeamId, refreshTeam]);

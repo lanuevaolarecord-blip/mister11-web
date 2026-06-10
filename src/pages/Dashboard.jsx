@@ -126,21 +126,18 @@ const Dashboard = () => {
   const [workloadPeriod, setWorkloadPeriod] = useState('Esta semana');
   const [planningConfig, setPlanningConfig] = useState(null);
 
-  // Load planning config from Firestore
+  // Listen to planning config in real-time from Firestore
   useEffect(() => {
-    const loadPlanning = async () => {
-      if (!activeTeamId || !auth.currentUser) return;
-      try {
-        const ref = doc(db, 'users', auth.currentUser.uid, 'teams', activeTeamId, 'planificacion', 'config');
-        const snap = await getDoc(ref);
-        if (snap.exists()) {
-          setPlanningConfig(snap.data());
-        }
-      } catch (e) {
-        console.error("Error loading planning config in dashboard:", e);
+    if (!activeTeamId || !auth.currentUser) return;
+    const ref = doc(db, 'users', auth.currentUser.uid, 'teams', activeTeamId, 'planificacion', 'config');
+    const unsubscribe = onSnapshot(ref, (snap) => {
+      if (snap.exists()) {
+        setPlanningConfig(snap.data());
       }
-    };
-    loadPlanning();
+    }, (err) => {
+      console.error("Error listening to planning config in dashboard:", err);
+    });
+    return () => unsubscribe();
   }, [activeTeamId]);
 
   // Calcular jugadores con ejercicios pendientes hoy

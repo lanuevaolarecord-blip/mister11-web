@@ -416,6 +416,7 @@ const PizarraTactica = () => {
 
     // Debounced Firestore Update (Async, non-blocking)
     const saveToDB = async () => {
+      if (user.uid === 'invitado-local') return;
       try {
         if (!activeTeamId) return;
         const frameRef = doc(db, 'users', user.uid, 'teams', activeTeamId, 'pizarras', planId, 'frames', frame.id);
@@ -1294,6 +1295,32 @@ const PizarraTactica = () => {
       
       const cachedState = memoryCache || localCache;
 
+      if (user.uid === 'invitado-local') {
+        console.log("[Pizarra] Modo Invitado Local - Cargando en memoria/local únicamente");
+        defaultDrawnR.current = true;
+        if (cachedState && cachedState.objects && cachedState.objects.length > 0) {
+          cargarFrameConListeners(cachedState, () => {
+            ensurePlayersOnTop();
+            fc.renderAll();
+            if (!readyR.current) { readyR.current = true; setReady(true); }
+          });
+        } else {
+          console.log("[Pizarra] Modo Invitado Local - Dibujando formación por defecto");
+          const objsActuales = fc.getObjects().filter(o => o.data?.type !== 'field');
+          objsActuales.forEach(o => fc.remove(o));
+          syncingR.current = true;
+          drawPlayers(fc, fr, fieldType, { local: localFormation, rival: rivalFormation }, isSwapped);
+          syncingR.current = false;
+          attachListeners();
+          const state = serializarFrame();
+          try { localStorage.setItem(ACTIVE_STATE_KEY, JSON.stringify(state)); } catch (_) {}
+          savePizarraLocal(activeTeamId, planId, state);
+          setFrames([{ id: 'frame-1', name: 'Frame 1', state, duration: 800, order: 0 }]);
+          if (!readyR.current) { readyR.current = true; setReady(true); }
+        }
+        return;
+      }
+
       if (cachedState && cachedState.objects && cachedState.objects.length > 0) {
         console.log("[Pizarra] ✅ Restaurando desde Contexto / localStorage");
         defaultDrawnR.current = true; // marcar que ya hay estado — no dibujar formación
@@ -1654,12 +1681,14 @@ const PizarraTactica = () => {
           savePizarraLocal(activeTeamId, planId, stateToSave);
           try { localStorage.setItem(`mister11_pizarra_active_${activeTeamId}_${planId}`, JSON.stringify(stateToSave)); } catch (_) {}
           // b) Firestore (async, best-effort)
-          const estadoRef = doc(db, 'users', user.uid, 'teams', activeTeamId, 'pizarra', 'estado_actual');
-          setDoc(estadoRef, {
-            canvasState: JSON.stringify(stateToSave),
-            framesCount: framesR.current?.length || 0,
-            updatedAt: new Date().toISOString()
-          }, { merge: true }).catch(() => {});
+          if (user.uid !== 'invitado-local') {
+            const estadoRef = doc(db, 'users', user.uid, 'teams', activeTeamId, 'pizarra', 'estado_actual');
+            setDoc(estadoRef, {
+              canvasState: JSON.stringify(stateToSave),
+              framesCount: framesR.current?.length || 0,
+              updatedAt: new Date().toISOString()
+            }, { merge: true }).catch(() => {});
+          }
         }
       }
     };
@@ -1686,19 +1715,21 @@ const PizarraTactica = () => {
         savePizarraLocal(activeTeamId, planId, stateToSave);
         try { localStorage.setItem(`mister11_pizarra_active_${activeTeamId}_${planId}`, JSON.stringify(stateToSave)); } catch (_) {}
         // b) Firestore (async, usando la referencia correcta)
-        const estadoRef = doc(db, 'users', user.uid, 'teams', activeTeamId, 'pizarra', 'estado_actual');
-        setDoc(estadoRef, {
-          canvasState: JSON.stringify(stateToSave),
-          framesCount: framesR.current?.length || 0,
-          updatedAt: new Date().toISOString()
-        }, { merge: true }).catch(() => {});
-        // c) Guardar el frame actual si existe
-        if (planId) {
-          const frame = framesR.current[frameIdxR.current];
-          if (frame && frame.id) {
-            const frameRef = doc(db, 'users', user.uid, 'teams', activeTeamId, 'pizarras', planId, 'frames', frame.id);
-            setDoc(frameRef, { state: JSON.stringify(stateToSave), updatedAt: serverTimestamp() }, { merge: true })
-              .catch(() => {});
+        if (user.uid !== 'invitado-local') {
+          const estadoRef = doc(db, 'users', user.uid, 'teams', activeTeamId, 'pizarra', 'estado_actual');
+          setDoc(estadoRef, {
+            canvasState: JSON.stringify(stateToSave),
+            framesCount: framesR.current?.length || 0,
+            updatedAt: new Date().toISOString()
+          }, { merge: true }).catch(() => {});
+          // c) Guardar el frame actual si existe
+          if (planId) {
+            const frame = framesR.current[frameIdxR.current];
+            if (frame && frame.id) {
+              const frameRef = doc(db, 'users', user.uid, 'teams', activeTeamId, 'pizarras', planId, 'frames', frame.id);
+              setDoc(frameRef, { state: JSON.stringify(stateToSave), updatedAt: serverTimestamp() }, { merge: true })
+                .catch(() => {});
+            }
           }
         }
       }
@@ -2028,7 +2059,7 @@ const PizarraTactica = () => {
       // Resetear la ref del último estado para que no se restaure
       lastStateRef.current = null;
       // Borrar estado_actual en Firestore para no restaurar estado viejo
-      if (user) {
+      if (user && user.uid !== 'invitado-local') {
         const estadoRef = doc(db, 'users', user.uid, 'teams', activeTeamId, 'pizarra', 'estado_actual');
         setDoc(estadoRef, { canvasState: null, updatedAt: new Date().toISOString() }, { merge: true }).catch(() => {});
       }
@@ -2132,41 +2163,49 @@ const PizarraTactica = () => {
       let downloadURL = null;
       let storagePath = null;
       
-      try {
-        storagePath = `captures/${user.uid}/${activeTeamId}/${Date.now()}.png`;
-        const storageRef = ref(storage, storagePath);
-        
-        const uploadWithTimeout = (promise, ms) => Promise.race([
-          promise,
-          new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), ms))
-        ]);
+      if (user.uid !== 'invitado-local') {
+        try {
+          storagePath = `captures/${user.uid}/${activeTeamId}/${Date.now()}.png`;
+          const storageRef = ref(storage, storagePath);
+          
+          const uploadWithTimeout = (promise, ms) => Promise.race([
+            promise,
+            new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), ms))
+          ]);
 
-        // Subir imagen completa a Storage
-        await uploadWithTimeout(uploadString(storageRef, dataURL, 'data_url'), 8000);
-        downloadURL = await uploadWithTimeout(getDownloadURL(storageRef), 5000);
-      } catch (uploadErr) {
-        console.warn("Falló subida a Storage, usando fallback local:", uploadErr);
-        storagePath = null; // No hay path en storage
-      }
+          // Subir imagen completa a Storage
+          await uploadWithTimeout(uploadString(storageRef, dataURL, 'data_url'), 8000);
+          downloadURL = await uploadWithTimeout(getDownloadURL(storageRef), 5000);
+        } catch (uploadErr) {
+          console.warn("Falló subida a Storage, usando fallback local:", uploadErr);
+          storagePath = null; // No hay path en storage
+        }
 
-      // 8. SIEMPRE guardar referencia en Firestore (Colección de capturas sueltas)
-      // Lo hacemos fuera del try-catch de storage para que aparezca en la lista sí o sí
-      try {
-        const captureDocRef = doc(collection(db, 'users', user.uid, 'teams', activeTeamId, 'captures'));
-        await setDoc(captureDocRef, {
-          id: captureDocRef.id,
-          url: downloadURL || dataURL, // Imagen completa
-          thumbnail: thumbnailDataURL, // Miniatura para la rejilla
-          storagePath: storagePath,
-          title: `Captura Táctica (${new Date().toLocaleTimeString()})`,
-          timestamp: serverTimestamp(),
-          createdAt: serverTimestamp(),
-          updatedAt: serverTimestamp()
-        });
-        alert("✅ Captura guardada. Puedes verla en Sesiones > Capturas.");
-      } catch (dbErr) {
-        console.error("Error guardando captura en Firestore:", dbErr);
-        alert("❌ Error al guardar en la base de datos.");
+        // 8. SIEMPRE guardar referencia en Firestore (Colección de capturas sueltas)
+        // Lo hacemos fuera del try-catch de storage para que aparezca en la lista sí o sí
+        try {
+          const captureDocRef = doc(collection(db, 'users', user.uid, 'teams', activeTeamId, 'captures'));
+          await setDoc(captureDocRef, {
+            id: captureDocRef.id,
+            url: downloadURL || dataURL, // Imagen completa
+            thumbnail: thumbnailDataURL, // Miniatura para la rejilla
+            storagePath: storagePath,
+            title: `Captura Táctica (${new Date().toLocaleTimeString()})`,
+            timestamp: serverTimestamp(),
+            createdAt: serverTimestamp(),
+            updatedAt: serverTimestamp()
+          });
+          alert("✅ Captura guardada. Puedes verla en Sesiones > Capturas.");
+        } catch (dbErr) {
+          console.error("Error guardando captura en Firestore:", dbErr);
+          alert("❌ Error al guardar en la base de datos.");
+        }
+      } else {
+        if (download) {
+          // Ya descargado por downloadImage
+        } else {
+          alert("✅ Captura completada localmente.");
+        }
       }
 
       if (!silent) setIsCapturing(false);
@@ -2211,20 +2250,22 @@ const PizarraTactica = () => {
       const finalThumb = captureResult?.thumb || null;
 
       // 3. Guardar Metadatos del ejercicio
-      const exerciseRef = doc(db, 'users', user.uid, 'teams', activeTeamId, 'exercises', planId);
-      
-      // IMPORTANTE: Nunca guardar base64 grande en el documento del ejercicio
-      // Usamos el thumbnail de 300px que garantizamos que es < 1MB
-      await setDoc(exerciseRef, {
-        id: planId,
-        title: `Pizarra Táctica (${new Date().toLocaleDateString()})`,
-        type: 'pizarra',
-        framesCount: (framesR.current || []).length,
-        thumbnail: finalThumb, // Siempre miniatura ligera
-        timestamp: serverTimestamp(),
-        createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp()
-      }, { merge: true });
+      if (user.uid !== 'invitado-local') {
+        const exerciseRef = doc(db, 'users', user.uid, 'teams', activeTeamId, 'exercises', planId);
+        
+        // IMPORTANTE: Nunca guardar base64 grande en el documento del ejercicio
+        // Usamos el thumbnail de 300px que garantizamos que es < 1MB
+        await setDoc(exerciseRef, {
+          id: planId,
+          title: `Pizarra Táctica (${new Date().toLocaleDateString()})`,
+          type: 'pizarra',
+          framesCount: (framesR.current || []).length,
+          thumbnail: finalThumb, // Siempre miniatura ligera
+          timestamp: serverTimestamp(),
+          createdAt: serverTimestamp(),
+          updatedAt: serverTimestamp()
+        }, { merge: true });
+      }
 
       if (btn) btn.innerHTML = '✅ Guardado';
       
@@ -2289,10 +2330,12 @@ const PizarraTactica = () => {
       frameIdxR.current = nextIdx;
 
       // 4. Guardar en Firebase asíncronamente sin bloquear la UI
-      await setDoc(newDocRef, {
-        ...newFrameData,
-        createdAt: serverTimestamp() // Timestamp real del servidor
-      });
+      if (user.uid !== 'invitado-local') {
+        await setDoc(newDocRef, {
+          ...newFrameData,
+          createdAt: serverTimestamp() // Timestamp real del servidor
+        });
+      }
       
     } catch (error) {
       console.error("Error saving frame:", error);
@@ -2358,7 +2401,7 @@ const PizarraTactica = () => {
     }
     
     // Firebase delete and reordering to prevent sequence gaps
-    if (user && frameToDelete && frameToDelete.id && activeTeamId) {
+    if (user && frameToDelete && frameToDelete.id && activeTeamId && user.uid !== 'invitado-local') {
       try {
         const frameRef = doc(db, 'users', user.uid, 'teams', activeTeamId, 'pizarras', planId, 'frames', frameToDelete.id);
         await deleteDoc(frameRef);

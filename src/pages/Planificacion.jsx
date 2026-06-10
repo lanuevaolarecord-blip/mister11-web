@@ -123,6 +123,7 @@ const Planificacion = () => {
 
   // Macro-ciclo counts
   const [macroCounts, setMacroCounts] = useState({ sesiones: 3, sesionesMax: 10, trabajo: 4, trabajoMax: 10, compet: 2, competMax: 10 });
+  const [isLoaded, setIsLoaded] = useState(false);
 
   // ── LOAD FROM FIRESTORE ──────────────────────────────────────────
   useEffect(() => {
@@ -137,10 +138,36 @@ const Planificacion = () => {
           if (d.microcycles?.length > 0) setMicrocycles(d.microcycles);
           if (d.macroCounts) setMacroCounts(d.macroCounts);
         }
-      } catch (e) { console.error(e); }
+      } catch (e) { 
+        console.error(e); 
+      } finally {
+        setIsLoaded(true);
+      }
     };
     load();
   }, [user, activeTeamId]);
+
+  // Auto-save planning configuration to Firestore on changes (with a 1.5s debounce)
+  useEffect(() => {
+    if (!user || !activeTeamId || !isLoaded) return;
+
+    const timer = setTimeout(async () => {
+      try {
+        const ref = doc(db, 'users', user.uid, 'teams', activeTeamId, 'planificacion', 'config');
+        await setDoc(ref, { 
+          macroInfo, 
+          microcycles, 
+          macroCounts, 
+          updatedAt: serverTimestamp() 
+        }, { merge: true });
+        console.log("Planificación auto-guardada con éxito");
+      } catch (e) {
+        console.error("Error en auto-guardado de planificación:", e);
+      }
+    }, 1500);
+
+    return () => clearTimeout(timer);
+  }, [macroInfo, microcycles, macroCounts, user, activeTeamId, isLoaded]);
 
   const showToast = useCallback((msg, type = 'success') => {
     setToast({ msg, type });

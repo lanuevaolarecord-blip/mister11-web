@@ -123,8 +123,8 @@ const MiEquipo = () => {
   };
 
   const handleSavePlayer = async () => {
-    if(!editData.name || !editData.number) {
-      alert("El nombre y el dorsal son obligatorios.");
+    if(!editData.name || !editData.number || (!editData.fechaNacimiento && !editData.birthDate)) {
+      setFormError("El nombre, el dorsal y la fecha de nacimiento son obligatorios.");
       return;
     }
 

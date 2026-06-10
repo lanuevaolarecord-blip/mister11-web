@@ -18,8 +18,8 @@ import { useAuth } from '../context/AuthContext';
 import { t } from '../i18n/translations';
 
 const Sidebar = ({ isOpen, onClose }) => {
-  const { settings } = useSettings();
   const { teams, activeTeamId, changeActiveTeam, logout } = useAuth();
+  const { settings } = useSettings(activeTeamId);
   const navItems = [
     { path: '/', label: t('nav.dashboard', settings.language), icon: LayoutDashboard },
     { path: '/pizarra', label: t('nav.pizarra', settings.language), icon: Presentation },

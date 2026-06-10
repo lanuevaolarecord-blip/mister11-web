@@ -11,6 +11,20 @@
 export const calcularEdad = (fechaNacimiento) => {
   if (!fechaNacimiento) return { text: 'Sin edad', cat: 'N/A' };
 
+  // Caso especial: edad directa en años como número o string numérico
+  const valNum = parseInt(fechaNacimiento);
+  if (!isNaN(valNum) && valNum > 0 && valNum < 120 && !fechaNacimiento.toString().includes('-') && !fechaNacimiento.toString().includes('/')) {
+    let cat = 'Sénior';
+    if (valNum <= 5)       cat = 'Debutante';
+    else if (valNum <= 7)  cat = 'Pre-benjamín';
+    else if (valNum <= 9)  cat = 'Benjamín';
+    else if (valNum <= 11) cat = 'Alevín';
+    else if (valNum <= 13) cat = 'Infantil';
+    else if (valNum <= 15) cat = 'Cadete';
+    else if (valNum <= 18) cat = 'Juvenil';
+    return { text: `${valNum} años`, cat };
+  }
+
   let fecha;
 
   // Caso 1: Timestamp de Firestore (tiene método .toDate())

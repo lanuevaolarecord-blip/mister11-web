@@ -46,7 +46,3 @@ android/app/build/
 Mister11.apk
 *.apk
 android/app/build/
-
-# Permitir APKs en la carpeta public para Vercel
-!public/mister11.apk
-!public/Mister11.apk

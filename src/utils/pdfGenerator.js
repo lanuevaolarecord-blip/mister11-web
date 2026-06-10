@@ -1207,3 +1207,76 @@ export const generatePostMatchReportPDF = async (match, players, activeTeam = nu
   }
 };
 
+/**
+ * EJERCICIO IA / GENERADO - Ficha de Ejercicio en PDF
+ */
+export const generateExercisePDF = async (exercise, activeTeam = null) => {
+  window.dispatchEvent(new CustomEvent('m11-loading', { detail: { show: true, message: 'Generando PDF del Ejercicio...' } }));
+  await new Promise(r => setTimeout(r, 150));
+  try {
+    const doc = new jsPDF();
+    const pageW = doc.internal.pageSize.getWidth();
+    
+    // Título del PDF
+    const title = exercise.title || exercise.name || 'Ejercicio Generado';
+    await addHeader(doc, `FICHA DE EJERCICIO IA`, title, activeTeam);
+    
+    // Contenido del Ejercicio
+    doc.setTextColor(0, 0, 0);
+    doc.setFontSize(11);
+    
+    let currentY = 50;
+    
+    // Si hay un contenido/descripción estructurado
+    const textContent = exercise.content || exercise.description || '';
+    
+    if (textContent) {
+      const textLines = doc.splitTextToSize(textContent, 180);
+      
+      // Itera sobre las líneas y maneja saltos de página automáticamente
+      for (let i = 0; i < textLines.length; i++) {
+        if (currentY > 270) {
+          doc.addPage();
+          // Cabecera simplificada para nuevas páginas
+          doc.setFillColor(...THEME_COLOR);
+          doc.rect(0, 0, pageW, 15, 'F');
+          doc.setTextColor(...TEXT_COLOR);
+          doc.setFontSize(9);
+          doc.text(`Ficha: ${title}`, 15, 10);
+          currentY = 25;
+        }
+        
+        const line = textLines[i];
+        if (line.startsWith('## ') || line.startsWith('### ')) {
+          doc.setFont(undefined, 'bold');
+          doc.setFontSize(13);
+          doc.setTextColor(...THEME_COLOR);
+          doc.text(line.replace(/#+\s+/, ''), 15, currentY);
+          currentY += 8;
+        } else if (line.startsWith('**') && line.endsWith('**')) {
+          doc.setFont(undefined, 'bold');
+          doc.setFontSize(10.5);
+          doc.setTextColor(0, 0, 0);
+          doc.text(line.replace(/\*\*/g, ''), 15, currentY);
+          currentY += 6;
+        } else {
+          doc.setFont(undefined, 'normal');
+          doc.setFontSize(10);
+          doc.setTextColor(50, 50, 50);
+          doc.text(line, 15, currentY);
+          currentY += 5;
+        }
+      }
+    }
+    
+    addFooter(doc);
+    const safeTitle = (exercise.name || exercise.title || 'Ejercicio').replace(/[^a-z0-9]/gi, '_');
+    await savePdfUniversal(doc, `Ejercicio_${safeTitle}.pdf`);
+  } catch (err) {
+    console.error('Error al generar PDF del ejercicio:', err);
+    alert('Error al generar el PDF del ejercicio.');
+  } finally {
+    window.dispatchEvent(new CustomEvent('m11-loading', { detail: { show: false } }));
+  }
+};
+

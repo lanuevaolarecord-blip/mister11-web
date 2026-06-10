@@ -5,6 +5,7 @@ import { useAuth } from '../context/AuthContext';
 import { usePlan } from '../hooks/usePlan';
 import UpgradeModal from '../components/UpgradeModal';
 import { useCaptures } from '../hooks/useCaptures';
+import { generateExercisePDF } from '../utils/pdfGenerator';
 import './IAGeneradora.css';
 
 // --- OPCIONES DE FORMULARIO ---
@@ -67,7 +68,8 @@ const renderMarkdown = (text) => {
 };
 
 const IAGeneradora = () => {
-  const { activeTeamId } = useAuth();
+  const { activeTeamId, teams } = useAuth();
+  const activeTeam = teams.find(t => t.id === activeTeamId) || null;
   const { isPro, isProActive } = usePlan();
   const { exercises, addExercise } = useExercises(activeTeamId);
   const { captures } = useCaptures(activeTeamId);
@@ -86,7 +88,7 @@ const IAGeneradora = () => {
   const [isListening, setIsListening] = useState(false);
   const recognitionRef = useRef(null);
 
-  const apiKey = import.meta.env.VITE_GROQ_API_KEY;
+  const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
   const apiKeyMissing = !apiKey || apiKey === 'undefined';
 
   const toggleMaterial = (id) => {
@@ -125,24 +127,25 @@ const IAGeneradora = () => {
     setIsListening(true);
   };
 
-  const callGroq = async (promptTexto) => {
+  const callGemini = async (promptTexto) => {
     try {
       const response = await fetch(
-        'https://api.groq.com/openai/v1/chat/completions',
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
         {
           method: 'POST',
           headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${apiKey}`
+            'Content-Type': 'application/json'
           },
           body: JSON.stringify({
-            model: 'llama-3.3-70b-versatile',
-            messages: [
-              { role: 'system', content: 'Eres un experto en metodología del fútbol formativo. Respondes siempre en español.' },
-              { role: 'user', content: promptTexto }
-            ],
-            max_tokens: 1024,
-            temperature: 0.7
+            contents: [
+              {
+                parts: [
+                  {
+                    text: `Eres un experto en metodología del fútbol formativo. Respondes siempre en español.\n\n${promptTexto}`
+                  }
+                ]
+              }
+            ]
           })
         }
       );
@@ -153,9 +156,9 @@ const IAGeneradora = () => {
       }
 
       const data = await response.json();
-      return data.choices[0].message.content;
+      return data.candidates[0].content.parts[0].text;
     } catch (err) {
-      console.error('[Groq] Error:', err);
+      console.error('[Gemini] Error:', err);
       throw err;
     }
   };
@@ -232,7 +235,7 @@ Responde solo en español y usa formato markdown.`;
     }
 
     try {
-      const texto = await callGroq(prompt);
+      const texto = await callGemini(prompt);
       setResult(texto);
     } catch (err) {
       setError(`Error: ${err.message}`);
@@ -264,7 +267,7 @@ Responde solo en español y usa formato markdown.`;
     <div className="ia-page">
       {apiKeyMissing && (
         <div className="ia-config-error">
-          ⚠️ API Key faltante. Configura VITE_GROQ_API_KEY.
+          ⚠️ API Key faltante. Configura VITE_GEMINI_API_KEY.
         </div>
       )}
 
@@ -527,8 +530,9 @@ Responde solo en español y usa formato markdown.`;
           )}
           {result && !isGenerating && (
             <div className="ia-result-content">
-              <div className="result-actions">
+              <div className="result-actions" style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
                 <button className="btn-primary" onClick={handleSave}>💾 Guardar</button>
+                <button className="btn-primary" onClick={() => generateExercisePDF({ title: result.split('\n')[0].replace('## ', '').trim(), content: result }, activeTeam)}>📄 Exportar PDF</button>
                 <button className="btn-outline" style={{ borderColor: 'var(--ia-text-right)', color: 'var(--ia-text-right)' }} onClick={() => setResult(null)}>🔄 Limpiar</button>
               </div>
               <div className="ia-markdown-container">
@@ -606,11 +610,14 @@ Responde solo en español y usa formato markdown.`;
             </div>
             <div className="modal-footer">
               {selectedExerciseDetail.type !== 'pizarra' && (
-                <button className="btn-primary" onClick={() => {
-                  setResult(selectedExerciseDetail.content || selectedExerciseDetail.description || '');
-                  setSelectedExerciseDetail(null);
-                  setShowBiblioteca(false);
-                }}>Cargar</button>
+                <>
+                  <button className="btn-outline" style={{ marginRight: '8px' }} onClick={() => generateExercisePDF({ title: selectedExerciseDetail.title || selectedExerciseDetail.name, content: selectedExerciseDetail.content || selectedExerciseDetail.description }, activeTeam)}>📄 Exportar PDF</button>
+                  <button className="btn-primary" onClick={() => {
+                    setResult(selectedExerciseDetail.content || selectedExerciseDetail.description || '');
+                    setSelectedExerciseDetail(null);
+                    setShowBiblioteca(false);
+                  }}>Cargar</button>
+                </>
               )}
               {selectedExerciseDetail.type === 'pizarra' && (
                 <button className="btn-primary" onClick={() => {

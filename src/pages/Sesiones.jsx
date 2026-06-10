@@ -681,18 +681,18 @@ const Sesiones = () => {
   return (
     <div className="page-wrapper">
       <header className="page-header">
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-          <h1 className="page-title">Entrenamiento</h1>
-          <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-            <button className={`chip ${activeTab === 'sessions' ? 'active' : ''}`} onClick={() => setActiveTab('sessions')}>SESIONES</button>
-            <button className={`chip ${activeTab === 'captures' ? 'active' : ''}`} onClick={() => setActiveTab('captures')}>CAPTURAS</button>
-            <button className={`chip ${activeTab === 'animations' ? 'active' : ''}`} onClick={() => setActiveTab('animations')}>ANIMACIONES</button>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', flexWrap: 'wrap', gap: '16px' }}>
+          <h1 className="page-title" style={{ margin: 0 }}>Entrenamiento</h1>
+          <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
+            <button className={`tab-switcher ${activeTab === 'sessions' ? 'active' : ''}`} onClick={() => setActiveTab('sessions')}>SESIONES</button>
+            <button className={`tab-switcher ${activeTab === 'captures' ? 'active' : ''}`} onClick={() => setActiveTab('captures')}>CAPTURAS</button>
+            <button className={`tab-switcher ${activeTab === 'animations' ? 'active' : ''}`} onClick={() => setActiveTab('animations')}>ANIMACIONES</button>
             <div style={{ width: '1px', height: '24px', background: 'var(--border-light)', margin: '0 8px' }} />
             {activeTab === 'sessions' && sessions.length > 0 && (
               <button 
                 className="btn-outline-gold" 
                 onClick={handleExportAllSessionsICS}
-                style={{ padding: '0 16px', minHeight: '44px', fontWeight: 'bold' }}
+                style={{ padding: '8px 16px', minHeight: '44px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '6px', fontWeight: 'bold' }}
               >
                 📥 Exportar ICS
               </button>

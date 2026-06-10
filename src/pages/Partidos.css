@@ -532,72 +532,296 @@ html.dark {
 .alin-player-item span { color: var(--partidos-gold); font-weight: 800; width: 16px; text-align: left; }
 .alin-player-status { width: 10px; height: 10px; border-radius: 50%; background: #4caf7d; }
 
-/* Pizarra Verde */
+/* Pizarra Verde Realista (Estilo Césped Bicolor) */
 .alin-pitch-container {
   flex: 1;
-  background: #1B3A2D; /* Verde oscuro estilo Míster 11 */
-  border-radius: 4px;
+  background-color: #1a4224;
+  background-image: repeating-linear-gradient(
+    90deg,
+    #1b4324,
+    #1b4324 8%,
+    #24532e 8%,
+    #24532e 16%
+  );
+  border-radius: 12px;
   position: relative;
   overflow: hidden;
-  min-height: 400px;
-  border: 1px solid rgba(255,255,255,0.8);
-  box-shadow: 0 0 0 6px var(--partidos-panel-bg), 0 0 0 7px var(--partidos-border);
-  margin: 7px;
+  min-height: 480px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: inset 0 0 35px rgba(0, 0, 0, 0.45), 0 6px 18px rgba(0, 0, 0, 0.2);
+  margin: 10px;
+  user-select: none;
 }
 
-/* Líneas del campo */
-.pitch-line { position: absolute; background: rgba(255,255,255,0.4); }
-.pitch-center-line { top: 0; left: 50%; width: 1px; height: 100%; transform: translateX(-50%); }
-.pitch-circle { position: absolute; border: 1px solid rgba(255,255,255,0.4); border-radius: 50%; }
-.pitch-center-circle { height: 30%; aspect-ratio: 1; top: 50%; left: 50%; transform: translate(-50%, -50%); }
-
-.pitch-box { position: absolute; border: 1px solid rgba(255,255,255,0.4); top: 50%; transform: translateY(-50%); height: 50%; width: 15%; }
-.pitch-penalty-left { left: 0; border-left: none; }
-.pitch-penalty-right { right: 0; border-right: none; }
-
-.pitch-corner {
+/* Líneas de juego profesionales */
+.pitch-outer-line {
   position: absolute;
-  width: 24px;
-  height: 24px;
-  border: 1px solid rgba(255,255,255,0.4);
+  top: 16px;
+  bottom: 16px;
+  left: 16px;
+  right: 16px;
+  border: 1.5px solid rgba(255, 255, 255, 0.5);
+  pointer-events: none;
+}
+
+.pitch-line {
+  position: absolute;
+  background: rgba(255, 255, 255, 0.5);
+}
+
+.pitch-center-line {
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  width: 1.5px;
+  transform: translateX(-50%);
+}
+
+.pitch-circle {
+  position: absolute;
+  border: 1.5px solid rgba(255, 255, 255, 0.5);
   border-radius: 50%;
 }
-.pitch-corner.top-left { top: -12px; left: -12px; }
-.pitch-corner.top-right { top: -12px; right: -12px; }
-.pitch-corner.bottom-left { bottom: -12px; left: -12px; }
-.pitch-corner.bottom-right { bottom: -12px; right: -12px; }
 
+.pitch-center-circle {
+  height: 28%;
+  aspect-ratio: 1;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.pitch-spot-center {
+  position: absolute;
+  width: 6px;
+  height: 6px;
+  background-color: rgba(255, 255, 255, 0.85);
+  border-radius: 50%;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+}
+
+/* Áreas de penalti */
+.pitch-penalty-left {
+  position: absolute;
+  left: 0;
+  top: 18%;
+  width: 16.5%;
+  height: 64%;
+  border: 1.5px solid rgba(255, 255, 255, 0.5);
+  border-left: none;
+}
+
+.pitch-penalty-right {
+  position: absolute;
+  right: 0;
+  top: 18%;
+  width: 16.5%;
+  height: 64%;
+  border: 1.5px solid rgba(255, 255, 255, 0.5);
+  border-right: none;
+}
+
+/* Áreas de meta (chicas) */
+.pitch-goal-left {
+  position: absolute;
+  left: 0;
+  top: 35%;
+  width: 5.5%;
+  height: 30%;
+  border: 1.5px solid rgba(255, 255, 255, 0.5);
+  border-left: none;
+}
+
+.pitch-goal-right {
+  position: absolute;
+  right: 0;
+  top: 35%;
+  width: 5.5%;
+  height: 30%;
+  border: 1.5px solid rgba(255, 255, 255, 0.5);
+  border-right: none;
+}
+
+/* Puntos de penalti */
+.pitch-spot-left {
+  position: absolute;
+  left: 11%;
+  top: 50%;
+  width: 6px;
+  height: 6px;
+  background-color: rgba(255, 255, 255, 0.85);
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.pitch-spot-right {
+  position: absolute;
+  right: 11%;
+  top: 50%;
+  width: 6px;
+  height: 6px;
+  background-color: rgba(255, 255, 255, 0.85);
+  border-radius: 50%;
+  transform: translate(50%, -50%);
+}
+
+/* Semicírculos de área */
+.pitch-arc-left {
+  position: absolute;
+  left: 11%;
+  top: 50%;
+  width: 18.3%;
+  height: 28%;
+  border: 1.5px solid rgba(255, 255, 255, 0.5);
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  clip-path: inset(0 0 0 50%);
+}
+
+.pitch-arc-right {
+  position: absolute;
+  right: 11%;
+  top: 50%;
+  width: 18.3%;
+  height: 28%;
+  border: 1.5px solid rgba(255, 255, 255, 0.5);
+  border-radius: 50%;
+  transform: translate(50%, -50%);
+  clip-path: inset(0 50% 0 0);
+}
+
+/* Esquinas de córner realistas */
+.pitch-corner {
+  position: absolute;
+  width: 12px;
+  height: 12px;
+}
+.pitch-corner.top-left {
+  top: -1px;
+  left: -1px;
+  border-right: 1.5px solid rgba(255, 255, 255, 0.5);
+  border-bottom: 1.5px solid rgba(255, 255, 255, 0.5);
+  border-radius: 0 0 100% 0;
+}
+.pitch-corner.top-right {
+  top: -1px;
+  right: -1px;
+  border-left: 1.5px solid rgba(255, 255, 255, 0.5);
+  border-bottom: 1.5px solid rgba(255, 255, 255, 0.5);
+  border-radius: 0 0 0 100%;
+}
+.pitch-corner.bottom-left {
+  bottom: -1px;
+  left: -1px;
+  border-right: 1.5px solid rgba(255, 255, 255, 0.5);
+  border-top: 1.5px solid rgba(255, 255, 255, 0.5);
+  border-radius: 0 100% 0 0;
+}
+.pitch-corner.bottom-right {
+  bottom: -1px;
+  right: -1px;
+  border-left: 1.5px solid rgba(255, 255, 255, 0.5);
+  border-top: 1.5px solid rgba(255, 255, 255, 0.5);
+  border-radius: 100% 0 0 0;
+}
+
+/* Elementos del jugador en el campo */
 .pitch-player {
   position: absolute;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 4px;
+  gap: 5px;
   z-index: 10;
-  transition: all 0.3s ease;
+  transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  user-select: none;
+}
+
+.pp-circle-wrapper {
+  position: relative;
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .pp-circle {
-  width: 32px;
-  height: 32px;
-  background: #F5F0E8; /* Crema */
-  border: 2px solid #1B3A2D; /* Verde oscuro */
+  width: 38px;
+  height: 38px;
+  background: #ffffff;
+  border: 3px solid #004B87; /* Azul Institucional por defecto */
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-weight: 800;
+  font-weight: 900;
   font-size: 14px;
-  color: #1B3A2D;
-  box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+  color: #004B87;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.35);
+  transition: all 0.2s ease;
+}
+
+.pitch-player.selected-swap .pp-circle {
+  border-color: #d4a843;
+  color: #d4a843;
+  background: #1b3a2d;
+  box-shadow: 0 0 14px #d4a843, 0 4px 8px rgba(0, 0, 0, 0.35);
+  transform: scale(1.1);
+  animation: pulse-gold 1.5s infinite alternate;
+}
+
+@keyframes pulse-gold {
+  0% { box-shadow: 0 0 5px #d4a843, 0 4px 8px rgba(0, 0, 0, 0.35); }
+  100% { box-shadow: 0 0 18px #d4a843, 0 4px 8px rgba(0, 0, 0, 0.35); }
+}
+
+/* Badge de la posición del jugador */
+.pp-badge {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  background: #d4a843; /* Oro */
+  color: #1b3a2d;
+  font-size: 8px;
+  font-weight: 900;
+  padding: 1px 4px;
+  border-radius: 5px;
+  border: 1.5px solid #ffffff;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.25);
+  letter-spacing: 0.1px;
 }
 
 .pp-name {
-  color: #F5F0E8;
+  color: #ffffff;
   font-size: 11px;
   white-space: nowrap;
   font-weight: 800;
-  text-shadow: 1px 1px 2px rgba(0,0,0,0.8);
+  text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.85);
+  padding: 1px 5px;
+  background: rgba(27, 58, 45, 0.75);
+  border-radius: 4px;
+}
+
+/* Estilos de Puesto Vacío en el campo */
+.pitch-player.empty-slot .pp-circle {
+  background: rgba(255, 255, 255, 0.15);
+  border: 2px dashed rgba(255, 255, 255, 0.5);
+  color: rgba(255, 255, 255, 0.6);
+  box-shadow: none;
+}
+
+.pitch-player.empty-slot .pp-badge {
+  background: rgba(255, 255, 255, 0.25);
+  color: rgba(255, 255, 255, 0.8);
+  border-color: rgba(255, 255, 255, 0.5);
+}
+
+.pitch-player.empty-slot .pp-name {
+  color: rgba(255, 255, 255, 0.5);
+  background: rgba(0, 0, 0, 0.2);
 }
 
 /* =========================================================
@@ -1405,4 +1629,145 @@ html.dark .post-match-card {
   background: var(--partidos-player-card-selected);
   border-color: var(--partidos-accent);
 }
+
+/* Estilos de alineación y swaps interactivos */
+.alin-player-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 12px 14px;
+  background: var(--partidos-input-bg);
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--partidos-text-primary);
+  border: 2px solid var(--partidos-border);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  min-height: 48px;
+  position: relative;
+}
+
+.alin-player-item:hover {
+  border-color: var(--partidos-accent);
+}
+
+.alin-player-item.selected-swap {
+  border-color: #d4a843;
+  background: var(--partidos-player-card-selected);
+  box-shadow: 0 0 8px rgba(212, 168, 67, 0.3);
+  transform: translateY(-1px);
+}
+
+.alin-player-item.empty-slot {
+  border-style: dashed;
+  opacity: 0.6;
+  background: transparent;
+}
+
+.alin-player-item-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.alin-player-item span.slot-num {
+  color: var(--partidos-gold);
+  font-weight: 900;
+  font-size: 14px;
+  min-width: 18px;
+}
+
+.alin-player-item span.slot-role {
+  font-size: 10px;
+  background: rgba(0, 0, 0, 0.06);
+  padding: 2px 6px;
+  border-radius: 4px;
+  color: var(--partidos-text-muted);
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+html.dark .alin-player-item span.slot-role {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+/* Panel de asignación de posiciones tácticas */
+.pos-assignment-panel {
+  margin-top: 15px;
+  background: var(--partidos-input-bg);
+  border: 1px solid var(--partidos-border);
+  border-radius: 10px;
+  padding: 12px;
+  animation: fadeIn 0.2s ease;
+}
+
+.pos-assignment-panel h5 {
+  margin: 0 0 10px 0;
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+  color: var(--partidos-text-muted);
+  letter-spacing: 0.5px;
+}
+
+.pos-badges-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+}
+
+.pos-badge-btn {
+  min-height: 36px;
+  padding: 6px 0;
+  border: 1px solid var(--partidos-border);
+  background: var(--partidos-panel-bg);
+  color: var(--partidos-text-primary);
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.pos-badge-btn:hover {
+  border-color: var(--partidos-accent);
+}
+
+.pos-badge-btn.active {
+  background: #004B87;
+  color: #ffffff;
+  border-color: #004B87;
+  box-shadow: 0 2px 4px rgba(0, 75, 135, 0.2);
+}
+
+/* Botón de restablecer la pizarra táctica */
+.btn-reset-layout {
+  min-height: 44px;
+  padding: 0 12px;
+  background: transparent;
+  border: 1.5px solid var(--partidos-danger);
+  color: var(--partidos-danger);
+  border-radius: 8px;
+  font-weight: 700;
+  font-size: 12px;
+  text-transform: uppercase;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+  transition: all 0.2s ease;
+  margin-top: 10px;
+}
+
+.btn-reset-layout:hover {
+  background: var(--partidos-danger-bg);
+}
+
 

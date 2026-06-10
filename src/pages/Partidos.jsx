@@ -73,6 +73,10 @@ const Partidos = () => {
   const [draggingIdx, setDraggingIdx] = useState(null);
   const pitchRef = useRef(null);
 
+  const [selectedSlotIdx, setSelectedSlotIdx] = useState(null);
+  const dragStartPosRef = useRef({ x: 0, y: 0 });
+  const draggedDistanceRef = useRef(0);
+
   const [activeQuestion, setActiveQuestion] = useState('tactical');
   const [showReportPreview, setShowReportPreview] = useState(false);
 
@@ -371,15 +375,107 @@ const Partidos = () => {
     { key: 'highlights', label: getLangText('post.highlights'), question: getLangText('post.highlightsQ') }
   ];
 
+  const handleSlotClick = (idx) => {
+    if (selectedSlotIdx === null) {
+      setSelectedSlotIdx(idx);
+    } else {
+      if (selectedSlotIdx === idx) {
+        setSelectedSlotIdx(null);
+        return;
+      }
+      
+      const newCalled = [...calledPlayers];
+      while (newCalled.length < 18) {
+        newCalled.push(undefined);
+      }
+
+      const temp = newCalled[selectedSlotIdx];
+      newCalled[selectedSlotIdx] = newCalled[idx];
+      newCalled[idx] = temp;
+      
+      const cleanedCalled = newCalled.map(item => item === undefined ? null : item);
+      while (cleanedCalled.length > 0 && cleanedCalled[cleanedCalled.length - 1] === null) {
+        cleanedCalled.pop();
+      }
+
+      setCalledPlayers(cleanedCalled);
+
+      // Swap coordinates if custom positions exist
+      const newCustomPos = { ...(matchData.customPositions || {}) };
+      const posA = newCustomPos[selectedSlotIdx];
+      const posB = newCustomPos[idx];
+
+      if (posA) newCustomPos[idx] = posA;
+      else delete newCustomPos[idx];
+
+      if (posB) newCustomPos[selectedSlotIdx] = posB;
+      else delete newCustomPos[selectedSlotIdx];
+
+      setMatchData(prev => ({
+        ...prev,
+        convocados: cleanedCalled,
+        customPositions: newCustomPos
+      }));
+
+      setSelectedSlotIdx(null);
+    }
+  };
+
+  const handleAssignPosition = (idx, posName) => {
+    setMatchData(prev => ({
+      ...prev,
+      customRoles: {
+        ...(prev.customRoles || {}),
+        [idx]: posName
+      }
+    }));
+  };
+
+  const handleResetPositions = () => {
+    setMatchData(prev => ({
+      ...prev,
+      customPositions: {},
+      customRoles: {}
+    }));
+    setSelectedSlotIdx(null);
+  };
+
+  const getSlotPosition = (idx) => {
+    if (matchData.customRoles && matchData.customRoles[idx]) {
+      return matchData.customRoles[idx];
+    }
+    const defaultForm = FORMATIONS[matchData.lineup || '4-3-3'] || FORMATIONS['4-3-3'];
+    return defaultForm[idx]?.pos || 'DEF';
+  };
+
+  const handleDragStart = (e, idx) => {
+    let clientX = e.clientX;
+    let clientY = e.clientY;
+    if (e.touches && e.touches.length > 0) {
+      clientX = e.touches[0].clientX;
+      clientY = e.touches[0].clientY;
+    }
+    setDraggingIdx(idx);
+    dragStartPosRef.current = { x: clientX, y: clientY };
+    draggedDistanceRef.current = 0;
+  };
+
   useEffect(() => {
-    const handlePointerUpWindow = () => setDraggingIdx(null);
+    const handlePointerUpWindow = () => {
+      if (draggingIdx !== null) {
+        if (draggedDistanceRef.current < 8) {
+          handleSlotClick(draggingIdx);
+        }
+        setDraggingIdx(null);
+      }
+    };
     window.addEventListener('pointerup', handlePointerUpWindow);
     window.addEventListener('touchend', handlePointerUpWindow);
     return () => {
       window.removeEventListener('pointerup', handlePointerUpWindow);
       window.removeEventListener('touchend', handlePointerUpWindow);
     };
-  }, []);
+  }, [draggingIdx, selectedSlotIdx, calledPlayers, matchData]);
 
   const handlePitchPointerMove = (e) => {
     if (draggingIdx === null || !pitchRef.current) return;
@@ -391,6 +487,9 @@ const Partidos = () => {
       clientX = e.touches[0].clientX;
       clientY = e.touches[0].clientY;
     }
+    
+    const dist = Math.hypot(clientX - dragStartPosRef.current.x, clientY - dragStartPosRef.current.y);
+    draggedDistanceRef.current = dist;
     
     const xRel = Math.max(0, Math.min(100, ((clientX - rect.left) / rect.width) * 100));
     const yRel = Math.max(0, Math.min(100, ((clientY - rect.top) / rect.height) * 100));
@@ -789,45 +888,108 @@ const Partidos = () => {
             {editTab === 'ALINEACIÓN' && (
               <div className="tab-pane alineacion-layout">
                 <div className="alin-sidebar">
-                  <h4>Formación Táctica</h4>
-                  <select className="partidos-input" value={matchData.lineup || '4-3-3'} onChange={e => setMatchData({...matchData, lineup: e.target.value})}>
-                    <option value="4-3-3">4-3-3</option>
-                    <option value="4-4-2">4-4-2</option>
-                    <option value="3-5-2">3-5-2</option>
-                  </select>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    <label style={{ fontSize: '11px', fontWeight: '800', color: 'var(--partidos-text-muted)' }}>FORMACIÓN TÁCTICA</label>
+                    <select className="partidos-input" value={matchData.lineup || '4-3-3'} onChange={e => setMatchData({...matchData, lineup: e.target.value})}>
+                      <option value="4-3-3">4-3-3</option>
+                      <option value="4-4-2">4-4-2</option>
+                      <option value="3-5-2">3-5-2</option>
+                    </select>
+                    <button type="button" className="btn-reset-layout" onClick={handleResetPositions}>
+                      🔄 Restablecer Campo
+                    </button>
+                  </div>
 
                   <h4 style={{marginTop: '20px'}}>XI Titular</h4>
-                  <div className="titulares-list">
-                    {calledPlayers.length === 0 ? (
-                      <p style={{fontSize: '12px', color: 'var(--partidos-text-muted)'}}>No hay convocados.</p>
-                    ) : (
-                      calledPlayers.slice(0, 11).map(id => {
-                        const p = players.find(pl => pl.id === id);
-                        if (!p) return null;
-                        return (
-                          <div key={id} className="alin-player-item">
-                            <div className="alin-player-item-left">
-                              <span>{p.number}</span> {p.name.split(' ')[0]}
-                            </div>
-                            <div className="alin-player-status"></div>
+                  <div className="titulares-list" style={{maxHeight: '260px'}}>
+                    {Array.from({ length: 11 }).map((_, idx) => {
+                      const pid = calledPlayers[idx];
+                      const player = pid ? players.find(p => p.id === pid) : null;
+                      const posName = getSlotPosition(idx);
+                      const isSelected = selectedSlotIdx === idx;
+                      
+                      return (
+                        <div 
+                          key={`starter-${idx}`} 
+                          className={`alin-player-item ${player ? '' : 'empty-slot'} ${isSelected ? 'selected-swap' : ''}`}
+                          onClick={() => handleSlotClick(idx)}
+                        >
+                          <div className="alin-player-item-left">
+                            <span className="slot-num">{player ? player.number : '-'}</span>
+                            <span className="slot-name">{player ? player.name.split(' ')[0] : 'Puesto Vacío'}</span>
                           </div>
-                        );
-                      })
-                    )}
+                          <span className="slot-role">{posName}</span>
+                        </div>
+                      );
+                    })}
                   </div>
+
+                  <h4 style={{marginTop: '20px'}}>Suplentes</h4>
+                  <div className="titulares-list" style={{maxHeight: '180px'}}>
+                    {Array.from({ length: 7 }).map((_, subIdx) => {
+                      const idx = 11 + subIdx;
+                      const pid = calledPlayers[idx];
+                      const player = pid ? players.find(p => p.id === pid) : null;
+                      const isSelected = selectedSlotIdx === idx;
+                      
+                      return (
+                        <div 
+                          key={`sub-${idx}`} 
+                          className={`alin-player-item ${player ? '' : 'empty-slot'} ${isSelected ? 'selected-swap' : ''}`}
+                          onClick={() => handleSlotClick(idx)}
+                        >
+                          <div className="alin-player-item-left">
+                            <span className="slot-num">{player ? player.number : '-'}</span>
+                            <span className="slot-name">{player ? player.name.split(' ')[0] : 'Banca Vacía'}</span>
+                          </div>
+                          <span className="slot-role" style={{ background: 'rgba(212,168,67,0.1)', color: 'var(--partidos-gold)' }}>SUP</span>
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  {selectedSlotIdx !== null && selectedSlotIdx < 11 && (
+                    <div className="pos-assignment-panel">
+                      <h5>Asignar Posición</h5>
+                      <div className="pos-badges-grid">
+                        {['POR', 'LTD', 'DEF', 'LTI', 'MCD', 'MC', 'MCO', 'EXT', 'DEL'].map(posName => (
+                          <button 
+                            key={posName} 
+                            type="button" 
+                            className={`pos-badge-btn ${getSlotPosition(selectedSlotIdx) === posName ? 'active' : ''}`}
+                            onClick={() => handleAssignPosition(selectedSlotIdx, posName)}
+                          >
+                            {posName}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 <div className="alin-pitch-container" ref={pitchRef} onPointerMove={handlePitchPointerMove} onTouchMove={handlePitchPointerMove} style={{touchAction: 'none'}}>
-                  <div className="pitch-line pitch-center-line"></div>
-                  <div className="pitch-circle pitch-center-circle"></div>
-                  <div className="pitch-box pitch-penalty-left"></div>
-                  <div className="pitch-box pitch-penalty-right"></div>
-                  
-                  {/* Corner Arcs */}
-                  <div className="pitch-corner top-left"></div>
-                  <div className="pitch-corner top-right"></div>
-                  <div className="pitch-corner bottom-left"></div>
-                  <div className="pitch-corner bottom-right"></div>
+                  <div className="pitch-outer-line">
+                    <div className="pitch-line pitch-center-line"></div>
+                    <div className="pitch-circle pitch-center-circle"></div>
+                    <div className="pitch-spot-center"></div>
+                    
+                    <div className="pitch-penalty-left"></div>
+                    <div className="pitch-penalty-right"></div>
+                    
+                    <div className="pitch-goal-left"></div>
+                    <div className="pitch-goal-right"></div>
+                    
+                    <div className="pitch-spot-left"></div>
+                    <div className="pitch-spot-right"></div>
+                    
+                    <div className="pitch-arc-left"></div>
+                    <div className="pitch-arc-right"></div>
+                    
+                    <div className="pitch-corner top-left"></div>
+                    <div className="pitch-corner top-right"></div>
+                    <div className="pitch-corner bottom-left"></div>
+                    <div className="pitch-corner bottom-right"></div>
+                  </div>
                   
                   {(FORMATIONS[matchData.lineup || '4-3-3'] || FORMATIONS['4-3-3']).map((pos, idx) => {
                     const pid = calledPlayers[idx];
@@ -835,17 +997,28 @@ const Partidos = () => {
                     const customPos = matchData.customPositions && matchData.customPositions[idx];
                     const topPos = customPos ? customPos.top : pos.top;
                     const leftPos = customPos ? customPos.left : pos.left;
+                    const posLabel = getSlotPosition(idx);
+                    const isSelected = selectedSlotIdx === idx;
                     
                     return (
                       <div 
                         key={idx} 
-                        className="pitch-player" 
-                        style={{ top: topPos, left: leftPos, transform: 'translate(-50%, -50%)', cursor: 'grab', zIndex: draggingIdx === idx ? 10 : 1 }}
-                        onPointerDown={(e) => { e.preventDefault(); setDraggingIdx(idx); }}
-                        onTouchStart={(e) => { e.stopPropagation(); setDraggingIdx(idx); }}
+                        className={`pitch-player ${player ? '' : 'empty-slot'} ${isSelected ? 'selected-swap' : ''}`}
+                        style={{ top: topPos, left: leftPos, transform: 'translate(-50%, -50%)', zIndex: draggingIdx === idx ? 20 : isSelected ? 15 : 10 }}
                       >
-                        <div className="pp-circle">{player ? player.number : idx + 1}</div>
-                        <span className="pp-name">{player ? player.name.split(' ')[0] : pos.pos}</span>
+                        <div 
+                          className="pp-circle-wrapper"
+                          onPointerDown={(e) => handleDragStart(e, idx)}
+                          onTouchStart={(e) => handleDragStart(e, idx)}
+                        >
+                          <div className="pp-circle">
+                            {player ? player.number : idx + 1}
+                          </div>
+                          <span className="pp-badge">{posLabel}</span>
+                        </div>
+                        <span className="pp-name">
+                          {player ? player.name.split(' ')[0] : 'Vacío'}
+                        </span>
                       </div>
                     );
                   })}

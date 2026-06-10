@@ -30,7 +30,7 @@ const PlayerPlansTab = ({ player, activeTeamId }) => {
 
       const sharedPlanData = {
         name: plan.name || plan.reason || 'Plan Asignado',
-        teamName: activeTeam ? activeTeam.name : '',
+        teamName: activeTeam ? (activeTeam.nombre || activeTeam.name || '') : '',
         exercises: resolvedExercises,
         sharedAt: new Date().toISOString()
       };

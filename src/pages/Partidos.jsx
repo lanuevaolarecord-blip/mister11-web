@@ -5,6 +5,7 @@ import { useAuth } from '../context/AuthContext';
 import { useSettings } from '../hooks/useSettings';
 import { useTeams } from '../hooks/useTeams';
 import { generatePostMatchReportPDF } from '../utils/pdfGenerator';
+import { generateGoogleCalendarUrl, generateICSContent, downloadICSFile } from '../utils/calendarHelper';
 import './Partidos.css';
 
 const FORMATIONS = {
@@ -74,6 +75,189 @@ const Partidos = () => {
 
   const [activeQuestion, setActiveQuestion] = useState('tactical');
   const [showReportPreview, setShowReportPreview] = useState(false);
+
+  // --- Estados de Match Day ---
+  const [matchSeconds, setMatchSeconds] = useState(0);
+  const [isTimerRunning, setIsTimerRunning] = useState(false);
+  const timerIntervalRef = useRef(null);
+
+  const [subOutId, setSubOutId] = useState('');
+  const [subInId, setSubInId] = useState('');
+  const [pendingEventType, setPendingEventType] = useState(null); // 'amarilla' | 'roja' | 'lesion' | 'gol_local'
+  const [showEventPlayerSelector, setShowEventPlayerSelector] = useState(false);
+
+  useEffect(() => {
+    if (matchData.id) {
+      const savedSecs = sessionStorage.getItem(`mister11_match_seconds_${matchData.id}`);
+      if (savedSecs) setMatchSeconds(parseInt(savedSecs, 10));
+      else setMatchSeconds(0);
+      const savedRunning = sessionStorage.getItem(`mister11_match_running_${matchData.id}`);
+      setIsTimerRunning(savedRunning === 'true');
+    }
+  }, [matchData.id]);
+
+  useEffect(() => {
+    if (matchData.id) {
+      sessionStorage.setItem(`mister11_match_seconds_${matchData.id}`, matchSeconds);
+      sessionStorage.setItem(`mister11_match_running_${matchData.id}`, isTimerRunning);
+    }
+  }, [matchSeconds, isTimerRunning, matchData.id]);
+
+  useEffect(() => {
+    if (isTimerRunning) {
+      timerIntervalRef.current = setInterval(() => {
+        setMatchSeconds(prev => prev + 1);
+      }, 1000);
+    } else {
+      if (timerIntervalRef.current) clearInterval(timerIntervalRef.current);
+    }
+    return () => {
+      if (timerIntervalRef.current) clearInterval(timerIntervalRef.current);
+    };
+  }, [isTimerRunning]);
+
+  const formatTime = (totalSeconds) => {
+    const mins = Math.floor(totalSeconds / 60);
+    const secs = totalSeconds % 60;
+    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  };
+
+  const handleTimerToggle = () => setIsTimerRunning(prev => !prev);
+  const handleTimerReset = () => {
+    setIsTimerRunning(false);
+    setMatchSeconds(0);
+  };
+  const handleTimerAdjust = (amount) => {
+    setMatchSeconds(prev => Math.max(0, prev + amount));
+  };
+
+  const currentMinute = Math.max(1, Math.ceil(matchSeconds / 60));
+
+  const handleTriggerEvent = (type) => {
+    if (type === 'gol_rival') {
+      const newEvent = {
+        type: 'gol_rival',
+        player: 'Rival',
+        playerName: 'Gol del Rival',
+        minute: currentMinute,
+        timestamp: new Date().toISOString()
+      };
+      setMatchData(prev => ({
+        ...prev,
+        goalsAgainst: (prev.goalsAgainst || 0) + 1,
+        events: [...(prev.events || []), newEvent]
+      }));
+    } else {
+      setPendingEventType(type);
+      setShowEventPlayerSelector(true);
+    }
+  };
+
+  const handleSelectEventPlayer = (playerId) => {
+    const player = players.find(p => p.id === playerId);
+    if (!player) return;
+
+    const newEvent = {
+      type: pendingEventType,
+      playerId,
+      playerName: player.name,
+      minute: currentMinute,
+      timestamp: new Date().toISOString()
+    };
+
+    setMatchData(prev => {
+      let updatedGoalsFor = prev.goalsFor || 0;
+      let updatedGoleadores = [...(prev.goleadoresList || [])];
+      let updatedTarjetas = [...(prev.tarjetasList || [])];
+
+      if (pendingEventType === 'gol_local') {
+        updatedGoalsFor += 1;
+        updatedGoleadores.push({ jugadorId: playerId, minuto: currentMinute.toString() });
+      } else if (pendingEventType === 'amarilla' || pendingEventType === 'roja') {
+        updatedTarjetas.push({ jugadorId: playerId, tipo: pendingEventType, minuto: currentMinute.toString() });
+      }
+
+      return {
+        ...prev,
+        goalsFor: updatedGoalsFor,
+        goleadoresList: updatedGoleadores,
+        tarjetasList: updatedTarjetas,
+        events: [...(prev.events || []), newEvent]
+      };
+    });
+
+    setPendingEventType(null);
+    setShowEventPlayerSelector(false);
+  };
+
+  const handleMakeSubstitution = () => {
+    if (!subOutId || !subInId) return alert("Por favor selecciona quién sale y quién entra.");
+    const playerOut = players.find(p => p.id === subOutId);
+    const playerIn = players.find(p => p.id === subInId);
+    if (!playerOut || !playerIn) return;
+
+    const idxOut = calledPlayers.indexOf(subOutId);
+    const idxIn = calledPlayers.indexOf(subInId);
+
+    if (idxOut === -1 || idxIn === -1) return alert("Los jugadores deben estar en la convocatoria.");
+
+    const newCalled = [...calledPlayers];
+    newCalled[idxOut] = subInId;
+    newCalled[idxIn] = subOutId;
+
+    setCalledPlayers(newCalled);
+
+    const newEvent = {
+      type: 'sustitucion',
+      playerOutId: subOutId,
+      playerOutName: playerOut.name,
+      playerInId: subInId,
+      playerInName: playerIn.name,
+      minute: currentMinute,
+      timestamp: new Date().toISOString()
+    };
+
+    setMatchData(prev => ({
+      ...prev,
+      convocados: newCalled,
+      events: [...(prev.events || []), newEvent]
+    }));
+
+    setSubOutId('');
+    setSubInId('');
+  };
+
+  const handleRemoveEvent = (eventIdx) => {
+    const event = matchData.events && matchData.events[eventIdx];
+    if (!event) return;
+
+    setMatchData(prev => {
+      let updatedGoalsFor = prev.goalsFor || 0;
+      let updatedGoalsAgainst = prev.goalsAgainst || 0;
+      let updatedGoleadores = [...(prev.goleadoresList || [])];
+      let updatedTarjetas = [...(prev.tarjetasList || [])];
+
+      if (event.type === 'gol_local') {
+        updatedGoalsFor = Math.max(0, updatedGoalsFor - 1);
+        updatedGoleadores = updatedGoleadores.filter(g => !(g.jugadorId === event.playerId && g.minuto === event.minute.toString()));
+      } else if (event.type === 'gol_rival') {
+        updatedGoalsAgainst = Math.max(0, updatedGoalsAgainst - 1);
+      } else if (event.type === 'amarilla' || event.type === 'roja') {
+        updatedTarjetas = updatedTarjetas.filter(t => !(t.jugadorId === event.playerId && t.tipo === event.type && t.minuto === event.minute.toString()));
+      }
+
+      const updatedEvents = (prev.events || []).filter((_, idx) => idx !== eventIdx);
+
+      return {
+        ...prev,
+        goalsFor: updatedGoalsFor,
+        goalsAgainst: updatedGoalsAgainst,
+        goleadoresList: updatedGoleadores,
+        tarjetasList: updatedTarjetas,
+        events: updatedEvents
+      };
+    });
+  };
 
   const getLangText = (key) => {
     const isEn = settings && settings.language === 'English (EN)';
@@ -220,6 +404,66 @@ const Partidos = () => {
     }));
   };
 
+  const parseMatchDateTime = (dateStr, timeStr) => {
+    if (!dateStr) return new Date();
+    const [year, month, day] = dateStr.split('-').map(Number);
+    const [hour, minute] = (timeStr || '00:00').split(':').map(Number);
+    return new Date(year, month - 1, day, hour, minute);
+  };
+
+  const handleAddToGoogleCalendar = () => {
+    if (!matchData.rival) {
+      alert("Introduce el nombre del rival antes de sincronizar.");
+      return;
+    }
+    const startDate = parseMatchDateTime(matchData.date, matchData.time);
+    const endDate = new Date(startDate.getTime() + 90 * 60 * 1000);
+    const url = generateGoogleCalendarUrl({
+      title: `PARTIDO: ${activeTeam?.nombre || 'Míster11 FC'} vs ${matchData.rival}`,
+      description: `Partido de fútbol. Alineación prevista: ${matchData.lineup || '4-3-3'}.`,
+      location: matchData.location || '',
+      startDate,
+      endDate
+    });
+    window.open(url, '_blank');
+  };
+
+  const handleExportICS = () => {
+    if (!matchData.rival) {
+      alert("Introduce el nombre del rival antes de exportar.");
+      return;
+    }
+    const startDate = parseMatchDateTime(matchData.date, matchData.time);
+    const endDate = new Date(startDate.getTime() + 90 * 60 * 1000);
+    const icsContent = generateICSContent([{
+      id: matchData.id || `match-${Date.now()}`,
+      title: `PARTIDO: ${activeTeam?.nombre || 'Míster11 FC'} vs ${matchData.rival}`,
+      description: `Partido de fútbol. Alineación prevista: ${matchData.lineup || '4-3-3'}.`,
+      location: matchData.location || '',
+      startDate,
+      endDate
+    }]);
+    downloadICSFile(`partido_${matchData.rival.replace(/\s+/g, '_')}.ics`, icsContent);
+  };
+
+  const handleExportAllMatchesICS = () => {
+    if (matches.length === 0) return;
+    const events = matches.map(m => {
+      const startDate = parseMatchDateTime(m.date, m.time);
+      const endDate = new Date(startDate.getTime() + 90 * 60 * 1000);
+      return {
+        id: m.id,
+        title: `PARTIDO: ${activeTeam?.nombre || 'Míster11 FC'} vs ${m.rival}`,
+        description: `Partido de fútbol. Alineación prevista: ${m.lineup || '4-3-3'}. Estado: ${m.status}.`,
+        location: m.location || '',
+        startDate,
+        endDate
+      };
+    });
+    const icsContent = generateICSContent(events);
+    downloadICSFile(`calendario_partidos_${activeTeam?.nombre?.replace(/\s+/g, '_') || 'equipo'}.ics`, icsContent);
+  };
+
   const handleNewMatch = () => {
     const newMatch = {
       rival: '',
@@ -317,7 +561,18 @@ const Partidos = () => {
           <h1>GESTIÓN DE PARTIDOS</h1>
           <div className="header-actions">
             {viewMode === 'LIST' ? (
-              <button className="btn-primary-dark" onClick={handleNewMatch}>+ NUEVO PARTIDO</button>
+              <>
+                {matches.length > 0 && (
+                  <button 
+                    className="btn-outline-dark" 
+                    onClick={handleExportAllMatchesICS}
+                    style={{ marginRight: '10px', minHeight: '44px', padding: '0 16px', fontWeight: 'bold' }}
+                  >
+                    📥 EXPORTAR ICS
+                  </button>
+                )}
+                <button className="btn-primary-dark" onClick={handleNewMatch}>+ NUEVO PARTIDO</button>
+              </>
             ) : (
               <>
                 {matchData.id && (
@@ -392,7 +647,7 @@ const Partidos = () => {
       {viewMode === 'EDIT' && (
         <div className="partidos-editor-container">
           <div className="editor-tabs">
-            {['PRE-PARTIDO', 'CONVOCATORIA', 'ALINEACIÓN', 'POST-PARTIDO'].map(tab => (
+            {['PRE-PARTIDO', 'CONVOCATORIA', 'ALINEACIÓN', 'MATCH-DAY', 'POST-PARTIDO'].map(tab => (
               <button 
                 key={tab} 
                 className={`e-tab ${editTab === tab ? 'active' : ''}`}
@@ -438,6 +693,53 @@ const Partidos = () => {
                   <div className="form-group half">
                     <label>Estadio / Lugar</label>
                     <input type="text" className="partidos-input" value={matchData.location} onChange={e => setMatchData({...matchData, location: e.target.value})} placeholder="Ej. facsa castellon c.d" />
+                  </div>
+                  <div className="form-group full" style={{ marginTop: '16px' }}>
+                    <label>Sincronización de Calendario</label>
+                    <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+                      <button 
+                        type="button" 
+                        onClick={handleAddToGoogleCalendar}
+                        style={{
+                          backgroundColor: '#004B87',
+                          color: '#FFFFFF',
+                          borderRadius: '8px',
+                          padding: '10px 16px',
+                          fontWeight: 'bold',
+                          cursor: 'pointer',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '8px',
+                          fontSize: '13px',
+                          textTransform: 'uppercase',
+                          minHeight: '44px',
+                          border: 'none'
+                        }}
+                      >
+                        📅 Google Calendar
+                      </button>
+                      <button 
+                        type="button" 
+                        onClick={handleExportICS}
+                        style={{
+                          backgroundColor: '#4CAF7D',
+                          color: '#FFFFFF',
+                          borderRadius: '8px',
+                          padding: '10px 16px',
+                          fontWeight: 'bold',
+                          cursor: 'pointer',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '8px',
+                          fontSize: '13px',
+                          textTransform: 'uppercase',
+                          minHeight: '44px',
+                          border: 'none'
+                        }}
+                      >
+                        📥 Exportar .ICS
+                      </button>
+                    </div>
                   </div>
                 </div>
 
@@ -547,6 +849,134 @@ const Partidos = () => {
                       </div>
                     );
                   })}
+                </div>
+              </div>
+            )}
+
+            {/* PESTAÑA: MATCH-DAY */}
+            {editTab === 'MATCH-DAY' && (
+              <div className="tab-pane match-day-container">
+                <h3 className="section-title">⏱️ Panel de Control - Match Day</h3>
+                
+                <div className="match-day-grid">
+                  {/* Cronómetro y Marcador */}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                    <div className="timer-card">
+                      <span className="timer-display">{formatTime(matchSeconds)}</span>
+                      <div className="timer-controls">
+                        <button 
+                          className={`timer-btn ${isTimerRunning ? 'pause' : 'start'}`}
+                          onClick={handleTimerToggle}
+                        >
+                          {isTimerRunning ? '⏸️ Pausar' : '▶️ Iniciar'}
+                        </button>
+                        <button className="timer-btn reset" onClick={handleTimerReset}>🔄 Reiniciar</button>
+                      </div>
+                      <div className="timer-adjust">
+                        <button className="timer-adjust-btn" onClick={() => handleTimerAdjust(-60)}>-1m</button>
+                        <button className="timer-adjust-btn" onClick={() => handleTimerAdjust(60)}>+1m</button>
+                      </div>
+                    </div>
+
+                    <div className="live-scoreboard">
+                      <div className="scoreboard-teams">
+                        <div className="scoreboard-team">{activeTeam?.nombre || 'Míster11 FC'}</div>
+                        <div className="scoreboard-score">
+                          {matchData.goalsFor || 0} - {matchData.goalsAgainst || 0}
+                        </div>
+                        <div className="scoreboard-team">{matchData.rival || 'Rival'}</div>
+                      </div>
+                      <div className="scoreboard-buttons">
+                        <button className="scoreboard-btn local" onClick={() => handleTriggerEvent('gol_local')}>⚽ GOL LOCAL</button>
+                        <button className="scoreboard-btn rival" onClick={() => handleTriggerEvent('gol_rival')}>⚽ GOL RIVAL</button>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Acciones y Sustituciones */}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                    <div className="substitutions-panel">
+                      <h4 className="sub-section-title" style={{ borderBottom: '1px solid var(--partidos-border)', paddingBottom: '6px', marginBottom: '12px' }}>🔄 Realizar Sustitución</h4>
+                      <div className="sub-selectors">
+                        <div>
+                          <label className="input-label-caps" style={{ fontSize: '11px' }}>Sale (Titular)</label>
+                          <select 
+                            className="partidos-input" 
+                            value={subOutId} 
+                            onChange={e => setSubOutId(e.target.value)}
+                          >
+                            <option value="">Seleccionar...</option>
+                            {calledPlayers.slice(0, 11).map(id => {
+                              const p = players.find(pl => pl.id === id);
+                              return p ? <option key={id} value={id}>{p.name}</option> : null;
+                            })}
+                          </select>
+                        </div>
+                        <div>
+                          <label className="input-label-caps" style={{ fontSize: '11px' }}>Entra (Suplente)</label>
+                          <select 
+                            className="partidos-input" 
+                            value={subInId} 
+                            onChange={e => setSubInId(e.target.value)}
+                          >
+                            <option value="">Seleccionar...</option>
+                            {calledPlayers.slice(11).map(id => {
+                              const p = players.find(pl => pl.id === id);
+                              return p ? <option key={id} value={id}>{p.name}</option> : null;
+                            })}
+                          </select>
+                        </div>
+                      </div>
+                      <button 
+                        className="btn-success-green-allcaps" 
+                        style={{ width: '100%', minHeight: '48px' }} 
+                        onClick={handleMakeSubstitution}
+                      >
+                        🔄 Confirmar Sustitución
+                      </button>
+                    </div>
+
+                    <div className="live-events-panel">
+                      <div className="event-action-buttons">
+                        <button className="event-action-btn" onClick={() => handleTriggerEvent('amarilla')}>🟨 Amarilla</button>
+                        <button className="event-action-btn" onClick={() => handleTriggerEvent('roja')}>🟥 Roja</button>
+                        <button className="event-action-btn" onClick={() => handleTriggerEvent('lesion')}>🩺 Lesión</button>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Bitácora de Eventos */}
+                  <div className="post-partido-full-width-card" style={{ gridColumn: '1 / -1' }}>
+                    <div className="events-log-card">
+                      <h4 className="card-section-title" style={{ margin: 0 }}>📋 Bitácora del Partido (Tiempo Real)</h4>
+                      <div className="events-log-list">
+                        {(!matchData.events || matchData.events.length === 0) ? (
+                          <p style={{ margin: '15px 0', fontSize: '14px', color: 'var(--partidos-text-muted)', fontStyle: 'italic', textAlign: 'center' }}>No se han registrado eventos en este partido.</p>
+                        ) : (
+                          [...matchData.events].reverse().map((ev, idx) => {
+                            const originalIdx = matchData.events.length - 1 - idx;
+                            let icon = '⚡';
+                            let desc = '';
+                            if (ev.type === 'gol_local') { icon = '⚽'; desc = `¡GOL! ${ev.playerName} anota para el equipo.`; }
+                            else if (ev.type === 'gol_rival') { icon = '⚽'; desc = `Gol de ${matchData.rival || 'Rival'}.`; }
+                            else if (ev.type === 'amarilla') { icon = '🟨'; desc = `Tarjeta Amarilla para ${ev.playerName}.`; }
+                            else if (ev.type === 'roja') { icon = '🟥'; desc = `Tarjeta Roja para ${ev.playerName}.`; }
+                            else if (ev.type === 'lesion') { icon = '🩺'; desc = `Lesión de ${ev.playerName}.`; }
+                            else if (ev.type === 'sustitucion') { icon = '🔄'; desc = `Cambio: Sale ${ev.playerOutName} y entra ${ev.playerInName}.`; }
+
+                            return (
+                              <div key={idx} className="event-log-item">
+                                <span className="event-log-time">Min. {ev.minute}'</span>
+                                <span style={{ fontSize: '18px' }}>{icon}</span>
+                                <span className="event-log-desc">{desc}</span>
+                                <button className="event-log-remove" onClick={() => handleRemoveEvent(originalIdx)} title="Eliminar evento">✕</button>
+                              </div>
+                            );
+                          })
+                        )}
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
             )}
@@ -1015,6 +1445,41 @@ const Partidos = () => {
 
             <div className="modal-footer" style={{ borderTop: '1px solid var(--partidos-border)', paddingTop: '16px', marginTop: '24px', display: 'flex', justifyContent: 'flex-end' }}>
               <button className="btn-primary-dark" style={{ minHeight: '48px', padding: '0 24px' }} onClick={() => setShowReportPreview(false)}>{getLangText('post.close')}</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL PARA SELECCIONAR JUGADOR EN EVENTO MATCH DAY */}
+      {showEventPlayerSelector && (
+        <div className="event-selector-overlay" onClick={() => setShowEventPlayerSelector(false)}>
+          <div className="event-selector-modal" onClick={e => e.stopPropagation()}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <h4 className="event-selector-title">
+                {pendingEventType === 'gol_local' ? '⚽ Seleccionar Goleador' : 
+                 pendingEventType === 'amarilla' ? '🟨 Tarjeta Amarilla' :
+                 pendingEventType === 'roja' ? '🟥 Tarjeta Roja' : '🩺 Registrar Lesión'}
+              </h4>
+              <button 
+                onClick={() => setShowEventPlayerSelector(false)}
+                style={{ background: 'none', border: 'none', fontSize: '18px', cursor: 'pointer', color: 'var(--partidos-text-primary)' }}
+              >✕</button>
+            </div>
+            
+            <div className="event-selector-list">
+              {calledPlayers.slice(0, 11).map(id => {
+                const p = players.find(pl => pl.id === id);
+                return p ? (
+                  <button 
+                    key={id}
+                    className="event-selector-item"
+                    type="button"
+                    onClick={() => handleSelectEventPlayer(id)}
+                  >
+                    {p.number} - {p.name}
+                  </button>
+                ) : null;
+              })}
             </div>
           </div>
         </div>

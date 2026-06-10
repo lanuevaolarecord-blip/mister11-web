@@ -12,6 +12,13 @@ export const LIMITS = {
     IA_GENERATIONS: 5,
   },
   PRO: {
+    TEAMS: 3,
+    PLAYERS: 22,
+    SESSIONS: 1000,
+    PDF_EXPORT: true,
+    IA_GENERATIONS: 1000,
+  },
+  CLUB: {
     TEAMS: 100,
     PLAYERS: 1000,
     SESSIONS: 1000,
@@ -173,8 +180,9 @@ export const usePlan = () => {
   // For regular users: trial or real paid plan grants PRO
   const isPro = isDeveloper || isRealPro || isOnTrial;
 
-  // currentLimits: developers always get PRO limits regardless of simulation
-  const currentLimits = isPro ? LIMITS.PRO : LIMITS.FREE;
+  // currentLimits: developers always get CLUB/PRO limits.
+  const isClub = isDeveloper || currentPlan === 'club';
+  const currentLimits = isClub ? LIMITS.CLUB : (isPro ? LIMITS.PRO : LIMITS.FREE);
 
   // isProActive: for legacy compatibility — same as isPro
   const isProActive = isPro;

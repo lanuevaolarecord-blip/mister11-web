@@ -1280,3 +1280,139 @@ export const generateExercisePDF = async (exercise, activeTeam = null) => {
   }
 };
 
+/**
+ * INFORME SEMANAL - Resumen de la semana (entrenamientos, partidos, alertas, RPE)
+ */
+export const generateWeeklyReportPDF = async (weeklyData, activeTeam = null) => {
+  window.dispatchEvent(new CustomEvent('m11-loading', { detail: { show: true, message: 'Generando Informe Semanal...' } }));
+  await new Promise(r => setTimeout(r, 150));
+  try {
+    const doc = new jsPDF();
+    const pageW = doc.internal.pageSize.getWidth();
+    const pageH = doc.internal.pageSize.getHeight();
+    
+    const { weekStart, weekEnd, sessions = [], matches = [], activeAlerts = 0, testsCount = 0 } = weeklyData;
+    
+    const weekStr = `${weekStart.split('-').reverse().join('/')} al ${weekEnd.split('-').reverse().join('/')}`;
+    await addHeader(doc, `INFORME SEMANAL DE RENDIMIENTO`, `Semana del ${weekStr}`, activeTeam);
+    
+    // --- RESUMEN DE ACTIVIDAD ---
+    doc.setTextColor(...THEME_COLOR);
+    doc.setFont(undefined, 'bold');
+    doc.setFontSize(14);
+    doc.text('Resumen General de Actividad', 15, 50);
+    
+    // Grid de Estadísticas
+    doc.setFillColor(245, 240, 232); // Fondo claro
+    doc.rect(15, 55, pageW - 30, 25, 'F');
+    
+    doc.setTextColor(0, 0, 0);
+    doc.setFontSize(10);
+    doc.setFont(undefined, 'normal');
+    
+    const totalSessions = sessions.length;
+    const totalMatches = matches.length;
+    
+    doc.text(`Entrenamientos Realizados:`, 20, 63);
+    doc.setFont(undefined, 'bold');
+    doc.text(`${totalSessions}`, 70, 63);
+    
+    doc.setFont(undefined, 'normal');
+    doc.text(`Partidos Jugados:`, 20, 71);
+    doc.setFont(undefined, 'bold');
+    doc.text(`${totalMatches}`, 70, 71);
+    
+    doc.setFont(undefined, 'normal');
+    doc.text(`Alertas de Salud Activas:`, 110, 63);
+    doc.setFont(undefined, 'bold');
+    if (activeAlerts > 0) {
+      doc.setTextColor(200, 50, 50); // Rojo si hay alertas
+    }
+    doc.text(`${activeAlerts}`, 160, 63);
+    
+    doc.setTextColor(0, 0, 0);
+    doc.setFont(undefined, 'normal');
+    doc.text(`Evaluaciones / Tests:`, 110, 71);
+    doc.setFont(undefined, 'bold');
+    doc.text(`${testsCount}`, 160, 71);
+    
+    let currentY = 90;
+    
+    // --- TABLA DE ENTRENAMIENTOS ---
+    if (sessions.length > 0) {
+      doc.setTextColor(...THEME_COLOR);
+      doc.setFont(undefined, 'bold');
+      doc.setFontSize(13);
+      doc.text('Sesiones de Entrenamiento', 15, currentY);
+      currentY += 6;
+      
+      const sessionData = sessions.map(s => [
+        s.date ? s.date.split('-').reverse().join('/') : 'S/D',
+        s.title || 'Entrenamiento',
+        s.type || 'Físico/Táctico',
+        `${s.duration || 90} min`,
+        s.intensity || 'Media'
+      ]);
+      
+      autoTable(doc, {
+        startY: currentY,
+        head: [['Fecha', 'Título', 'Enfoque', 'Duración', 'Intensidad']],
+        body: sessionData,
+        headStyles: { fillColor: THEME_COLOR, textColor: [255, 255, 255], fontStyle: 'bold', fontSize: 9 },
+        bodyStyles: { textColor: [45, 45, 45], fontSize: 8.5 },
+        alternateRowStyles: { fillColor: [245, 240, 232] },
+        styles: { cellPadding: 2.5 },
+        margin: { left: 15, right: 15 }
+      });
+      currentY = doc.lastAutoTable.finalY + 12;
+    }
+    
+    // --- TABLA DE PARTIDOS ---
+    if (matches.length > 0) {
+      if (currentY > pageH - 50) {
+        doc.addPage();
+        currentY = 48;
+      }
+      
+      doc.setTextColor(...THEME_COLOR);
+      doc.setFont(undefined, 'bold');
+      doc.setFontSize(13);
+      doc.text('Partidos de la Semana', 15, currentY);
+      currentY += 6;
+      
+      const matchData = matches.map(m => {
+        const dateStr = m.date ? m.date.split('-').reverse().join('/') : 'S/D';
+        const rivalStr = m.rival || 'Rival';
+        const scoreStr = m.status === 'Terminado' ? `${m.goalsFor} - ${m.goalsAgainst}` : 'Pendiente';
+        return [
+          dateStr,
+          `vs ${rivalStr}`,
+          m.type || 'Local',
+          scoreStr,
+          m.location || 'Sin Ubicación'
+        ];
+      });
+      
+      autoTable(doc, {
+        startY: currentY,
+        head: [['Fecha', 'Rival', 'Condición', 'Resultado', 'Ubicación']],
+        body: matchData,
+        headStyles: { fillColor: THEME_COLOR, textColor: [255, 255, 255], fontStyle: 'bold', fontSize: 9 },
+        bodyStyles: { textColor: [45, 45, 45], fontSize: 8.5 },
+        alternateRowStyles: { fillColor: [245, 240, 232] },
+        styles: { cellPadding: 2.5 },
+        margin: { left: 15, right: 15 }
+      });
+      currentY = doc.lastAutoTable.finalY + 12;
+    }
+    
+    addFooter(doc);
+    const safeDate = weekEnd.replace(/-+/g, '_');
+    await savePdfUniversal(doc, `Informe_Semanal_${safeDate}.pdf`);
+  } catch (error) {
+    console.error('Error generating weekly report PDF:', error);
+    alert('Error al generar el PDF del informe semanal.');
+  } finally {
+    window.dispatchEvent(new CustomEvent('m11-loading', { detail: { show: false } }));
+  }
+};

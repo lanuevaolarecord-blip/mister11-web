@@ -18,6 +18,7 @@ import AdminPanel from './pages/AdminPanel';
 import Login from './pages/Login';
 import Instalar from './pages/Instalar';
 import LandingPage from './pages/LandingPage';
+import SharedPlan from './pages/SharedPlan';
 
 import './App.css';
 
@@ -152,6 +153,11 @@ function App() {
         <Route 
           path="/login" 
           element={user ? <Navigate to="/" replace /> : <Login />} 
+        />
+
+        <Route 
+          path="/shared/plan/:planId" 
+          element={<SharedPlan />} 
         />
 
         <Route 

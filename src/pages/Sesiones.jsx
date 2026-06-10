@@ -12,6 +12,7 @@ import { collection, getDocs, query, orderBy, doc, deleteDoc, writeBatch } from 
 import { useCaptures } from '../hooks/useCaptures';
 import { useExercises } from '../hooks/useExercises';
 import { downloadJSON, downloadImage } from '../utils/download.js';
+import { generateGoogleCalendarUrl, generateICSContent, downloadICSFile } from '../utils/calendarHelper';
 import {
   DndContext,
   closestCenter,
@@ -164,6 +165,61 @@ const Sesiones = () => {
     : sessions.filter(s => (s.category || s.categoria || '') === catFilter);
 
   // --- LIST MODE FUNCTIONS ---
+  const parseSessionDateTime = (dateStr, timeStr) => {
+    if (!dateStr) return new Date();
+    const [year, month, day] = dateStr.split('-').map(Number);
+    const [hour, minute] = (timeStr || '00:00').split(':').map(Number);
+    return new Date(year, month - 1, day, hour, minute);
+  };
+
+  const handleAddToGoogleCalendar = (session) => {
+    const startDate = parseSessionDateTime(session.date, session.time);
+    const durationMin = session.duration || session.duracion || 90;
+    const endDate = new Date(startDate.getTime() + durationMin * 60 * 1000);
+    const url = generateGoogleCalendarUrl({
+      title: `ENTRENAMIENTO: ${session.title || session.titulo || 'Sesión'}`,
+      description: `Sesión de entrenamiento. Objetivos: ${session.objectives || ''}. Carga: ${session.intensity || 'Media'}.`,
+      location: 'Campo de entrenamiento',
+      startDate,
+      endDate
+    });
+    window.open(url, '_blank');
+  };
+
+  const handleExportICS = (session) => {
+    const startDate = parseSessionDateTime(session.date, session.time);
+    const durationMin = session.duration || session.duracion || 90;
+    const endDate = new Date(startDate.getTime() + durationMin * 60 * 1000);
+    const icsContent = generateICSContent([{
+      id: session.id || `session-${Date.now()}`,
+      title: `ENTRENAMIENTO: ${session.title || session.titulo || 'Sesión'}`,
+      description: `Sesión de entrenamiento. Objetivos: ${session.objectives || ''}. Carga: ${session.intensity || 'Media'}.`,
+      location: 'Campo de entrenamiento',
+      startDate,
+      endDate
+    }]);
+    downloadICSFile(`entrenamiento_${(session.title || 'sesion').replace(/\s+/g, '_')}.ics`, icsContent);
+  };
+
+  const handleExportAllSessionsICS = () => {
+    if (sessions.length === 0) return;
+    const events = sessions.map(s => {
+      const startDate = parseSessionDateTime(s.date, s.time);
+      const durationMin = s.duration || s.duracion || 90;
+      const endDate = new Date(startDate.getTime() + durationMin * 60 * 1000);
+      return {
+        id: s.id,
+        title: `ENTRENAMIENTO: ${s.title || s.titulo || 'Sesión'}`,
+        description: `Sesión de entrenamiento. Objetivos: ${s.objectives || ''}. Carga: ${s.intensity || 'Media'}.`,
+        location: 'Campo de entrenamiento',
+        startDate,
+        endDate
+      };
+    });
+    const icsContent = generateICSContent(events);
+    downloadICSFile(`calendario_entrenamientos_${activeTeam?.nombre?.replace(/\s+/g, '_') || 'equipo'}.ics`, icsContent);
+  };
+
   const handleCreateNew = () => {
     if (!isPro && sessions.length >= limits.SESSIONS) {
       setUpgradeModal({ open: true, message: `Has alcanzado el límite de ${limits.SESSIONS} sesiones del plan gratuito.` });
@@ -632,6 +688,15 @@ const Sesiones = () => {
             <button className={`chip ${activeTab === 'captures' ? 'active' : ''}`} onClick={() => setActiveTab('captures')}>CAPTURAS</button>
             <button className={`chip ${activeTab === 'animations' ? 'active' : ''}`} onClick={() => setActiveTab('animations')}>ANIMACIONES</button>
             <div style={{ width: '1px', height: '24px', background: 'var(--border-light)', margin: '0 8px' }} />
+            {activeTab === 'sessions' && sessions.length > 0 && (
+              <button 
+                className="btn-outline-gold" 
+                onClick={handleExportAllSessionsICS}
+                style={{ padding: '0 16px', minHeight: '44px', fontWeight: 'bold' }}
+              >
+                📥 Exportar ICS
+              </button>
+            )}
             <button className="btn-primary-new" onClick={handleCreateNew}>+ Nueva Sesión</button>
           </div>
         </div>
@@ -860,7 +925,23 @@ const Sesiones = () => {
                   >
                     {isGeneratingPDF ? '⏳ Generando informe...' : '📄 Exportar a PDF'}
                   </button>
-                  <button className="btn-outline-gold full-width" onClick={() => handleEditSession(selectedSession)}>✏️ Editar Sesión</button>
+                  <div style={{ display: 'flex', gap: '10px', marginBottom: '10px' }}>
+                    <button 
+                      className="btn-outline" 
+                      style={{ flex: 1, backgroundColor: '#004B87', color: 'white', border: 'none', minHeight: '44px', fontWeight: 'bold' }} 
+                      onClick={() => handleAddToGoogleCalendar(selectedSession)}
+                    >
+                      📅 Google Cal
+                    </button>
+                    <button 
+                      className="btn-outline" 
+                      style={{ flex: 1, backgroundColor: '#4CAF7D', color: 'white', border: 'none', minHeight: '44px', fontWeight: 'bold' }} 
+                      onClick={() => handleExportICS(selectedSession)}
+                    >
+                      📥 ICS
+                    </button>
+                  </div>
+                  <button className="btn-outline-gold full-width" style={{marginBottom: '10px'}} onClick={() => handleEditSession(selectedSession)}>✏️ Editar Sesión</button>
                   <button className="btn-text-error full-width" onClick={() => handleDeleteSession(selectedSession.id)}>Eliminar Sesión</button>
                 </div>
               </div>

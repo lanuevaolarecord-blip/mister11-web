@@ -221,7 +221,7 @@ const LandingPage = () => {
             
             <ul className="pricing-features-list">
               <li><Check size={18} /> <strong>3 Equipos</strong> (limitado)</li>
-              <li><Check size={18} /> <strong>Hasta 30 Jugadores</strong> (limitado)</li>
+              <li><Check size={18} /> <strong>Hasta 22 Jugadores por equipo</strong> (limitado)</li>
               <li><Check size={18} /> Planificación completa de Macrociclos</li>
               <li><Check size={18} /> Todos los Tests Físicos y Psicosociales</li>
               <li><Check size={18} /> Exportación en PDF para informes</li>

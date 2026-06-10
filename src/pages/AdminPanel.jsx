@@ -227,8 +227,8 @@ const AdminPanel = () => {
 
   const handleAddTeam = async () => {
     if (!newTeam.nombre) return;
-    if (!isPro && teams.length >= limits.TEAMS) {
-      setUpgradeModal({ open: true, message: `Has alcanzado el límite de ${limits.TEAMS} equipo(s) del plan gratuito. Pásate a PRO para crear más.` });
+    if (teams.length >= limits.TEAMS) {
+      setUpgradeModal({ open: true, message: `Has alcanzado el límite de ${limits.TEAMS} equipo(s) en tu plan actual.` });
       return;
     }
     await addTeam(newTeam);

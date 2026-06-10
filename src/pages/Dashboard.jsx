@@ -24,12 +24,14 @@ import { t } from '../i18n/translations';
 import { useTheme } from '../context/ThemeContext';
 import { db, auth } from '../firebaseConfig';
 import { doc, getDoc, collection, updateDoc, onSnapshot } from 'firebase/firestore';
+import { createNotification } from '../firebase/db';
 import './Dashboard.css';
 
 const Dashboard = () => {
   const { darkMode } = useTheme();
   const navigate = useNavigate();
-  const { user, activeTeamId, refreshTeam } = useAuth();
+  const { user, activeTeamId, refreshTeam, teams } = useAuth();
+  const activeTeam = teams?.find(t => t.id === activeTeamId) || null;
   const adminEmails = ['lanuevaolarecord@gmail.com', 'lavozdelformador@gmail.com', 'jhocao111294@gmail.com'];
   const isAdmin = user?.email && adminEmails.includes(user.email.toLowerCase());
 
@@ -125,6 +127,64 @@ const Dashboard = () => {
   const { playerPlans, teamPlans } = usePlayerPlans(activeTeamId);
   const [workloadPeriod, setWorkloadPeriod] = useState('Esta semana');
   const [planningConfig, setPlanningConfig] = useState(null);
+
+  // --- Estados de Informe Semanal ---
+  const [showWeeklyReportBanner, setShowWeeklyReportBanner] = useState(false);
+  const [weeklyReportData, setWeeklyReportData] = useState(null);
+
+  useEffect(() => {
+    if (!activeTeamId || !user) return;
+
+    const checkSundayReport = async () => {
+      const todayDate = new Date();
+      // 0 = Domingo
+      if (todayDate.getDay() !== 0) {
+        setShowWeeklyReportBanner(false);
+        return;
+      }
+
+      const dateStr = todayDate.toISOString().slice(0, 10);
+      const storageKey = `mister11_weekly_report_${activeTeamId}_${dateStr}`;
+      
+      const startOfWeek = new Date(todayDate);
+      startOfWeek.setDate(todayDate.getDate() - 6); // Lunes
+      startOfWeek.setHours(0,0,0,0);
+      
+      const endOfWeek = new Date(todayDate);
+      endOfWeek.setHours(23,59,59,999);
+
+      const weekStartStr = startOfWeek.toISOString().slice(0, 10);
+      const weekEndStr = endOfWeek.toISOString().slice(0, 10);
+
+      const weeklySessions = sessions.filter(s => s.date >= weekStartStr && s.date <= weekEndStr);
+      const weeklyMatches = matches.filter(m => m.date >= weekStartStr && m.date <= weekEndStr);
+      const activeAlertsCount = alerts ? alerts.length : 0;
+
+      const reportData = {
+        weekStart: weekStartStr,
+        weekEnd: weekEndStr,
+        sessions: weeklySessions,
+        matches: weeklyMatches,
+        activeAlerts: activeAlertsCount,
+        testsCount: 0
+      };
+
+      setWeeklyReportData(reportData);
+      setShowWeeklyReportBanner(true);
+
+      const alreadyProcessed = localStorage.getItem(storageKey);
+      if (!alreadyProcessed) {
+        try {
+          await createNotification('success', `📋 Tu informe semanal del equipo ya está listo. ¡Descárgalo en el panel principal!`);
+          localStorage.setItem(storageKey, 'notified');
+        } catch (e) {
+          console.error("Error creating weekly report notification:", e);
+        }
+      }
+    };
+
+    checkSundayReport();
+  }, [activeTeamId, user, sessions, matches, alerts]);
 
   // Listen to planning config in real-time from Firestore
   useEffect(() => {
@@ -381,6 +441,76 @@ const Dashboard = () => {
           <strong style={{ display: 'block', fontSize: '14px', color: 'var(--text-primary)' }}>{t('dashboard.today', settings.language)}</strong>
         </div>
       </header>
+
+      {/* Banner de Informe Semanal del Domingo */}
+      {showWeeklyReportBanner && weeklyReportData && (
+        <div className="card-base weekly-report-banner" style={{
+          background: 'linear-gradient(135deg, #1b3a2d 0%, #2d4a2d 100%)',
+          borderColor: 'var(--partidos-gold, #d4a843)',
+          borderWidth: '2px',
+          color: '#ffffff',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          padding: '20px 24px',
+          borderRadius: '12px',
+          marginBottom: '24px',
+          flexWrap: 'wrap',
+          gap: '16px',
+          boxShadow: '0 10px 20px rgba(0,0,0,0.15)'
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+            <div style={{
+              width: '48px',
+              height: '48px',
+              borderRadius: '50%',
+              background: 'rgba(212, 168, 67, 0.2)',
+              color: 'var(--partidos-gold, #d4a843)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: '24px'
+            }}>
+              📋
+            </div>
+            <div>
+              <h3 style={{ margin: 0, color: '#ffffff', fontSize: '18px', fontFamily: 'var(--font-heading)' }}>
+                ¡Tu Informe Semanal está listo!
+              </h3>
+              <p style={{ margin: '4px 0 0 0', color: '#cbd5e1', fontSize: '13px' }}>
+                Resumen de entrenamientos y partidos de la semana ({weeklyReportData.sessions.length} sesiones, {weeklyReportData.matches.length} partidos).
+              </p>
+            </div>
+          </div>
+          <div>
+            <button
+              onClick={async () => {
+                const { generateWeeklyReportPDF } = await import('../utils/pdfGenerator');
+                const teamData = activeTeam || { nombre: settings.clubName || 'Mi Equipo' };
+                generateWeeklyReportPDF(weeklyReportData, teamData);
+              }}
+              style={{
+                background: 'var(--partidos-gold, #d4a843)',
+                color: '#1b3a2d',
+                border: 'none',
+                padding: '12px 24px',
+                borderRadius: '8px',
+                fontWeight: 'bold',
+                fontSize: '14px',
+                cursor: 'pointer',
+                minHeight: '48px',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '8px',
+                textTransform: 'uppercase',
+                boxShadow: '0 4px 6px rgba(0,0,0,0.1)'
+              }}
+            >
+              📥 Descargar PDF
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Premium Trial / Developer Banner */}
       {isAdmin ? (

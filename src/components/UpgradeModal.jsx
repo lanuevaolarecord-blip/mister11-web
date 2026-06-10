@@ -194,7 +194,7 @@ const UpgradeModal = ({ isOpen, onClose, message, urgency = false }) => {
   };
 
   const proBenefits = [
-    { icon: '♾️', text: 'Equipos y jugadores ilimitados' },
+    { icon: '🛡️', text: 'Hasta 3 equipos y 22 jugadores/equipo' },
     { icon: '📄', text: 'Exportación de informes en PDF/CSV' },
     { icon: '🤖', text: 'Generación ilimitada con IA' },
     { icon: '🎨', text: 'Pizarra táctica (exportar PNG/MP4)' },

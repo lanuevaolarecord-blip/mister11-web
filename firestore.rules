@@ -14,6 +14,12 @@ service cloud.firestore {
       allow write: if false;
     }
 
+    // Planes compartidos con jugadores
+    match /sharedPlans/{planId} {
+      allow read: if true;
+      allow write: if request.auth != null;
+    }
+
     // Stripe: colección customers (necesaria para la extensión Firebase Stripe)
     // El usuario solo puede leer/escribir su propio documento y subcolecciones
     match /customers/{uid} {

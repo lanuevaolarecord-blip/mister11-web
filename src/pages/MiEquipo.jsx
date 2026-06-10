@@ -109,8 +109,8 @@ const MiEquipo = () => {
 
   // -- CRUD Actions --
   const handleOpenForm = (player = null) => {
-    if (!player && !isPro && players.length >= limits.PLAYERS) {
-      setUpgradeModal({ open: true, message: `Has alcanzado el límite de ${limits.PLAYERS} jugadores del plan gratuito.` });
+    if (!player && players.length >= limits.PLAYERS) {
+      setUpgradeModal({ open: true, message: `Has alcanzado el límite de ${limits.PLAYERS} jugadores por equipo en tu plan actual.` });
       return;
     }
     if (player) {

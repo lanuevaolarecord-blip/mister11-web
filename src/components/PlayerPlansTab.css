@@ -129,3 +129,27 @@
   color: #64748B;
   font-size: 0.8rem;
 }
+
+.plan-card-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.btn-share-plan {
+  background: none;
+  border: none;
+  color: #004B87;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+  transition: 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-share-plan:hover {
+  background: #E0F2FE;
+}
+

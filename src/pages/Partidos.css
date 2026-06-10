@@ -1090,3 +1090,319 @@ html.dark .post-match-card {
   min-height: 48px;
 }
 
+/* =========================================================
+   ESTILOS DE MODO MATCH DAY
+   ========================================================= */
+.match-day-container {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.match-day-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 20px;
+}
+
+@media (min-width: 768px) {
+  .match-day-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.timer-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 30px;
+  background: var(--partidos-panel-bg);
+  border: 1px solid var(--partidos-border);
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+}
+
+.timer-display {
+  font-family: monospace;
+  font-size: 3.5rem;
+  font-weight: bold;
+  color: var(--partidos-text-primary);
+  margin-bottom: 15px;
+  letter-spacing: 2px;
+}
+
+.timer-controls {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 15px;
+}
+
+.timer-btn {
+  min-height: 48px;
+  padding: 0 20px;
+  border-radius: 8px;
+  font-weight: bold;
+  font-size: 14px;
+  cursor: pointer;
+  border: none;
+  text-transform: uppercase;
+}
+
+.timer-btn.start {
+  background: #2E7D5C;
+  color: white;
+}
+
+.timer-btn.pause {
+  background: #D4A843;
+  color: #1b3a2d;
+}
+
+.timer-btn.reset {
+  background: var(--partidos-input-bg);
+  color: var(--partidos-text-primary);
+  border: 1px solid var(--partidos-border);
+}
+
+.timer-adjust {
+  display: flex;
+  gap: 8px;
+}
+
+.timer-adjust-btn {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--partidos-input-bg);
+  border: 1px solid var(--partidos-border);
+  color: var(--partidos-text-primary);
+  font-weight: bold;
+  font-size: 14px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.live-scoreboard {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 24px;
+  background: var(--partidos-panel-bg);
+  border: 1px solid var(--partidos-border);
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+}
+
+.scoreboard-teams {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  margin-bottom: 20px;
+}
+
+.scoreboard-team {
+  font-size: 1.2rem;
+  font-weight: 800;
+  max-width: 45%;
+  text-align: center;
+}
+
+.scoreboard-score {
+  font-size: 2.5rem;
+  font-weight: 900;
+  color: var(--partidos-text-primary);
+  padding: 0 15px;
+}
+
+.scoreboard-buttons {
+  display: flex;
+  gap: 15px;
+  width: 100%;
+}
+
+.scoreboard-btn {
+  flex: 1;
+  min-height: 48px;
+  border-radius: 8px;
+  font-weight: bold;
+  text-transform: uppercase;
+  cursor: pointer;
+  border: none;
+  font-size: 13px;
+}
+
+.scoreboard-btn.local {
+  background: #004B87;
+  color: white;
+}
+
+.scoreboard-btn.rival {
+  background: #ef4444;
+  color: white;
+}
+
+.live-events-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.event-action-buttons {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+
+.event-action-btn {
+  min-height: 48px;
+  border-radius: 8px;
+  font-weight: bold;
+  cursor: pointer;
+  border: 1px solid var(--partidos-border);
+  background: var(--partidos-panel-bg);
+  color: var(--partidos-text-primary);
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.event-action-btn:hover {
+  background: var(--partidos-input-bg);
+  border-color: var(--partidos-accent);
+}
+
+.substitutions-panel {
+  display: flex;
+  flex-direction: column;
+  padding: 20px;
+  background: var(--partidos-panel-bg);
+  border: 1px solid var(--partidos-border);
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+}
+
+.sub-selectors {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+@media (min-width: 480px) {
+  .sub-selectors {
+    flex-direction: row;
+    align-items: center;
+    gap: 15px;
+  }
+  .sub-selectors > div {
+    flex: 1;
+  }
+}
+
+.events-log-card {
+  display: flex;
+  flex-direction: column;
+  padding: 20px;
+  background: var(--partidos-panel-bg);
+  border: 1px solid var(--partidos-border);
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+  max-height: 350px;
+  overflow-y: auto;
+}
+
+.events-log-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.event-log-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  background: var(--partidos-player-card-bg);
+  border-radius: 8px;
+  font-size: 14px;
+  border: 1px solid var(--partidos-border);
+}
+
+.event-log-time {
+  font-weight: 800;
+  color: var(--partidos-gold);
+  min-width: 40px;
+}
+
+.event-log-desc {
+  flex: 1;
+  font-weight: 600;
+}
+
+.event-log-remove {
+  background: none;
+  border: none;
+  color: var(--partidos-danger);
+  cursor: pointer;
+  font-weight: bold;
+  padding: 4px;
+}
+
+.event-selector-overlay {
+  position: fixed;
+  top: 0; left: 0; width: 100vw; height: 100vh;
+  background: rgba(0,0,0,0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10500;
+}
+
+.event-selector-modal {
+  background: var(--partidos-panel-bg);
+  border-radius: 12px;
+  padding: 24px;
+  width: 90%;
+  max-width: 400px;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.event-selector-title {
+  font-weight: bold;
+  font-size: 16px;
+  margin: 0;
+}
+
+.event-selector-list {
+  max-height: 250px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.event-selector-item {
+  padding: 10px 14px;
+  background: var(--partidos-player-card-bg);
+  border: 1px solid var(--partidos-border);
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  text-align: left;
+}
+
+.event-selector-item:hover {
+  background: var(--partidos-player-card-selected);
+  border-color: var(--partidos-accent);
+}
+

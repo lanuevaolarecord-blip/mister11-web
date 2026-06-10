@@ -19,10 +19,18 @@ const PlayerPlansTab = ({ player, activeTeamId }) => {
 
   const handleSharePlan = async (plan) => {
     try {
-      const resolvedExercises = plan.exercises.map(ex => {
-        const details = exercises.find(e => e.id === ex.exerciseId) || { name: 'Ejercicio', description: '' };
+      if (!plan) {
+        alert("Error: No se pudo obtener la información del plan.");
+        return;
+      }
+
+      // Usamos el id del plan o generamos uno único
+      const planDocId = plan.id || `shared_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+
+      const resolvedExercises = (plan.exercises || []).map(ex => {
+        const details = exercises.find(e => e.id === ex.exerciseId) || { name: ex.exerciseId || 'Ejercicio', description: '' };
         return {
-          name: details.name || details.titulo || 'Ejercicio',
+          name: details.name || details.titulo || ex.exerciseId || 'Ejercicio',
           description: details.description || details.descripcion || '',
           frequency: ex.frequency || 'Diario'
         };
@@ -35,15 +43,15 @@ const PlayerPlansTab = ({ player, activeTeamId }) => {
         sharedAt: new Date().toISOString()
       };
 
-      await setDoc(doc(db, 'sharedPlans', plan.id), sharedPlanData);
+      await setDoc(doc(db, 'sharedPlans', planDocId), sharedPlanData);
 
-      const shareUrl = `${window.location.origin}/shared/plan/${plan.id}`;
+      const shareUrl = `${window.location.origin}/shared/plan/${planDocId}`;
       setSharedLink(shareUrl);
       setShowShareModal(true);
       setCopied(false);
     } catch (error) {
       console.error("Error al compartir el plan:", error);
-      alert("Hubo un error al generar el enlace para compartir.");
+      alert(`Error al generar el enlace: ${error.message || 'Error desconocido. Verifica tu conexión e inténtalo de nuevo.'}`);
     }
   };
 

@@ -478,16 +478,20 @@ html.dark {
 .alineacion-layout {
   display: flex;
   flex-direction: row;
-  gap: 24px;
+  gap: 16px;
   height: 100%;
+  align-items: flex-start;
 }
 
 .alin-sidebar {
-  width: 220px;
+  width: 300px;
+  min-width: 300px;
   display: flex;
   flex-direction: column;
-  gap: 16px;
-  padding-right: 8px; /* For scrollbar */
+  gap: 12px;
+  overflow-y: auto;
+  max-height: 90vh;
+  padding-right: 4px;
 }
 
 .alin-sidebar h4 {
@@ -532,25 +536,29 @@ html.dark {
 .alin-player-item span { color: var(--partidos-gold); font-weight: 800; width: 16px; text-align: left; }
 .alin-player-status { width: 10px; height: 10px; border-radius: 50%; background: #4caf7d; }
 
-/* Pizarra Verde Realista (Estilo Césped Bicolor) */
+/* Pizarra Verde Realista (Proporcionada como campo de fútbol real 68x105m) */
 .alin-pitch-container {
   flex: 1;
+  /* Aspect ratio de campo de fútbol real: 68m ancho x 105m largo = 0.648 */
+  aspect-ratio: 68 / 105;
+  max-height: 82vh;
+  width: auto;
   background-color: #1a4224;
   background-image: repeating-linear-gradient(
     90deg,
     #1b4324,
-    #1b4324 8%,
-    #24532e 8%,
-    #24532e 16%
+    #1b4324 8.33%,
+    #24532e 8.33%,
+    #24532e 16.66%
   );
-  border-radius: 12px;
+  border-radius: 8px;
   position: relative;
   overflow: hidden;
-  min-height: 480px;
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  border: 2px solid rgba(255, 255, 255, 0.25);
   box-shadow: inset 0 0 35px rgba(0, 0, 0, 0.45), 0 6px 18px rgba(0, 0, 0, 0.2);
-  margin: 10px;
+  margin: 0;
   user-select: none;
+  flex-shrink: 0;
 }
 
 /* Líneas de juego profesionales */

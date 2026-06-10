@@ -13,7 +13,7 @@ export const LIMITS = {
   },
   PRO: {
     TEAMS: 3,
-    PLAYERS: 22,
+    PLAYERS: 66, // 66 total distribuibles entre los 3 equipos del plan PRO
     SESSIONS: 1000,
     PDF_EXPORT: true,
     IA_GENERATIONS: 1000,

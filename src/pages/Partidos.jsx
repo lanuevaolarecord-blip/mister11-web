@@ -864,7 +864,7 @@ const Partidos = () => {
               <div className="tab-pane">
                 <div className="conv-header">
                   <h3>Selección de Jugadores</h3>
-                  <div className="conv-count">{calledPlayers.length} / 18 Seleccionados</div>
+                  <div className="conv-count">{calledPlayers.length} / 18 Convocados</div>
                 </div>
                 <div className="players-checklist">
                   {players.map(p => {
@@ -900,52 +900,60 @@ const Partidos = () => {
                     </button>
                   </div>
 
-                  <h4 style={{marginTop: '20px'}}>XI Titular</h4>
-                  <div className="titulares-list" style={{maxHeight: '260px'}}>
-                    {Array.from({ length: 11 }).map((_, idx) => {
-                      const pid = calledPlayers[idx];
-                      const player = pid ? players.find(p => p.id === pid) : null;
-                      const posName = getSlotPosition(idx);
-                      const isSelected = selectedSlotIdx === idx;
-                      
-                      return (
-                        <div 
-                          key={`starter-${idx}`} 
-                          className={`alin-player-item ${player ? '' : 'empty-slot'} ${isSelected ? 'selected-swap' : ''}`}
-                          onClick={() => handleSlotClick(idx)}
-                        >
-                          <div className="alin-player-item-left">
-                            <span className="slot-num">{player ? player.number : '-'}</span>
-                            <span className="slot-name">{player ? player.name.split(' ')[0] : 'Puesto Vacío'}</span>
+                  {/* XI Titular - en dos columnas */}
+                  <div>
+                    <h4 style={{margin: '8px 0'}}>XI Titular <span style={{fontSize:'12px', fontWeight:'normal', color:'var(--partidos-text-muted)'}}>({calledPlayers.slice(0,11).filter(Boolean).length}/11)</span></h4>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '5px' }}>
+                      {Array.from({ length: 11 }).map((_, idx) => {
+                        const pid = calledPlayers[idx];
+                        const player = pid ? players.find(p => p.id === pid) : null;
+                        const posName = getSlotPosition(idx);
+                        const isSelected = selectedSlotIdx === idx;
+                        
+                        return (
+                          <div 
+                            key={`starter-${idx}`} 
+                            className={`alin-player-item ${player ? '' : 'empty-slot'} ${isSelected ? 'selected-swap' : ''}`}
+                            onClick={() => handleSlotClick(idx)}
+                            style={{ flexDirection: 'column', alignItems: 'flex-start', padding: '6px 8px', gap: '2px', cursor: 'pointer' }}
+                          >
+                            <span className="slot-role" style={{ fontSize: '9px', marginBottom: '1px' }}>{posName}</span>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                              <span className="slot-num" style={{ fontSize: '12px', fontWeight: '900', width: 'auto', color: 'var(--partidos-gold)' }}>{player ? player.number : '-'}</span>
+                              <span className="slot-name" style={{ fontSize: '11px', fontWeight: '700', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '70px' }}>{player ? player.name.split(' ')[0] : 'Vacío'}</span>
+                            </div>
                           </div>
-                          <span className="slot-role">{posName}</span>
-                        </div>
-                      );
-                    })}
+                        );
+                      })}
+                    </div>
                   </div>
 
-                  <h4 style={{marginTop: '20px'}}>Suplentes</h4>
-                  <div className="titulares-list" style={{maxHeight: '180px'}}>
-                    {Array.from({ length: 7 }).map((_, subIdx) => {
-                      const idx = 11 + subIdx;
-                      const pid = calledPlayers[idx];
-                      const player = pid ? players.find(p => p.id === pid) : null;
-                      const isSelected = selectedSlotIdx === idx;
-                      
-                      return (
-                        <div 
-                          key={`sub-${idx}`} 
-                          className={`alin-player-item ${player ? '' : 'empty-slot'} ${isSelected ? 'selected-swap' : ''}`}
-                          onClick={() => handleSlotClick(idx)}
-                        >
-                          <div className="alin-player-item-left">
-                            <span className="slot-num">{player ? player.number : '-'}</span>
-                            <span className="slot-name">{player ? player.name.split(' ')[0] : 'Banca Vacía'}</span>
+                  {/* Suplentes - en dos columnas */}
+                  <div>
+                    <h4 style={{margin: '8px 0'}}>Suplentes <span style={{fontSize:'12px', fontWeight:'normal', color:'var(--partidos-text-muted)'}}>({calledPlayers.slice(11).filter(Boolean).length}/7)</span></h4>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '5px' }}>
+                      {Array.from({ length: 7 }).map((_, subIdx) => {
+                        const idx = 11 + subIdx;
+                        const pid = calledPlayers[idx];
+                        const player = pid ? players.find(p => p.id === pid) : null;
+                        const isSelected = selectedSlotIdx === idx;
+                        
+                        return (
+                          <div 
+                            key={`sub-${idx}`} 
+                            className={`alin-player-item ${player ? '' : 'empty-slot'} ${isSelected ? 'selected-swap' : ''}`}
+                            onClick={() => handleSlotClick(idx)}
+                            style={{ flexDirection: 'column', alignItems: 'flex-start', padding: '6px 8px', gap: '2px', cursor: 'pointer' }}
+                          >
+                            <span className="slot-role" style={{ fontSize: '9px', background: 'rgba(212,168,67,0.1)', color: 'var(--partidos-gold)', marginBottom: '1px' }}>SUP</span>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                              <span className="slot-num" style={{ fontSize: '12px', fontWeight: '900', width: 'auto', color: 'var(--partidos-gold)' }}>{player ? player.number : '-'}</span>
+                              <span className="slot-name" style={{ fontSize: '11px', fontWeight: '700', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '70px' }}>{player ? player.name.split(' ')[0] : 'Vacío'}</span>
+                            </div>
                           </div>
-                          <span className="slot-role" style={{ background: 'rgba(212,168,67,0.1)', color: 'var(--partidos-gold)' }}>SUP</span>
-                        </div>
-                      );
-                    })}
+                        );
+                      })}
+                    </div>
                   </div>
 
                   {selectedSlotIdx !== null && selectedSlotIdx < 11 && (

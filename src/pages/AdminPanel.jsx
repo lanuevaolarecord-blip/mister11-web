@@ -80,50 +80,7 @@ const AdminPanel = () => {
   const [selectedCoachForTeams, setSelectedCoachForTeams] = useState(null);
   const [coachSelectedTeams, setCoachSelectedTeams] = useState([]);
 
-  const handleCreateDemoClub = async () => {
-    if (!user) return;
-    const clubName = window.prompt("Introduce el nombre de tu academia o club:", "CD Burriana");
-    if (!clubName) return;
 
-    try {
-      const newClubId = `club_${Date.now()}`;
-      
-      const clubRef = doc(db, 'clubs', newClubId);
-      await setDoc(clubRef, {
-        id: newClubId,
-        name: clubName,
-        ownerId: user.uid,
-        status: 'active',
-        plan: 'club',
-        createdAt: serverTimestamp(),
-        coaches: [
-          {
-            uid: user.uid,
-            email: user.email,
-            role: 'owner',
-            status: 'active',
-            assignedTeams: []
-          }
-        ]
-      });
-
-      const userRef = doc(db, 'users', user.uid);
-      await updateDoc(userRef, {
-        clubId: newClubId,
-        clubRole: 'owner'
-      });
-
-      localStorage.setItem('mister11_club_id', newClubId);
-      showToast(`Club "${clubName}" creado correctamente.`, 'success');
-      
-      setTimeout(() => {
-        window.location.reload();
-      }, 1500);
-    } catch (err) {
-      console.error("Error creating demo club:", err);
-      showToast("Error al crear el club de demostración.", "error");
-    }
-  };
 
   const handleInviteCoach = async (e) => {
     e.preventDefault();
@@ -1402,30 +1359,7 @@ const AdminPanel = () => {
               {/* CANJE DE CÓDIGOS PROMOCIONALES */}
               <RedeemCode />
 
-              {/* MODO CLUB DEMO */}
-              {!isClubMember && (
-                <div className="settings-card" style={{
-                  background: 'linear-gradient(135deg, rgba(33,150,243,0.08), rgba(76,175,125,0.06))',
-                  border: '1px solid rgba(33,150,243,0.2)'
-                }}>
-                  <div className="card-header-icon">
-                    <Shield size={20} style={{ color: '#2196F3' }} />
-                    <h3>Modo Club (Demo)</h3>
-                  </div>
-                  <div className="settings-form" style={{ padding: '15px' }}>
-                    <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '15px', lineHeight: '1.4' }}>
-                      Crea un club de demostración para experimentar la gestión centralizada de múltiples entrenadores y equipos bajo una misma organización.
-                    </p>
-                    <button 
-                      className="btn-primary" 
-                      onClick={handleCreateDemoClub}
-                      style={{ width: '100%', minHeight: '48px', textTransform: 'uppercase', fontWeight: 'bold' }}
-                    >
-                      🚀 Crear Club de Pruebas
-                    </button>
-                  </div>
-                </div>
-              )}
+
             </div>
           </div>
         )}

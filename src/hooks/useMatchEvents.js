@@ -1,6 +1,6 @@
 import { useCallback } from 'react';
 
-export const useMatchEvents = (matchData, setMatchData, players) => {
+export const useMatchEvents = (matchData, setMatchData, players, updateMatch) => {
   const addEvent = useCallback((type, playerId, playerName, minute, additional = {}) => {
     const newEvent = {
       type,
@@ -34,7 +34,7 @@ export const useMatchEvents = (matchData, setMatchData, players) => {
         });
       }
 
-      return {
+      const nextData = {
         ...prev,
         goalsFor: updatedGoalsFor,
         goalsAgainst: updatedGoalsAgainst,
@@ -42,8 +42,16 @@ export const useMatchEvents = (matchData, setMatchData, players) => {
         tarjetasList: updatedTarjetas,
         events: [...(prev.events || []), newEvent]
       };
+
+      if (updateMatch && prev.id) {
+        updateMatch(prev.id, nextData).catch(err => {
+          console.error("Error auto-saving match event in Firestore:", err);
+        });
+      }
+
+      return nextData;
     });
-  }, [setMatchData]);
+  }, [setMatchData, updateMatch]);
 
   const removeEvent = useCallback((eventIdx) => {
     setMatchData(prev => {
@@ -70,7 +78,7 @@ export const useMatchEvents = (matchData, setMatchData, players) => {
 
       const updatedEvents = (prev.events || []).filter((_, idx) => idx !== eventIdx);
 
-      return {
+      const nextData = {
         ...prev,
         goalsFor: updatedGoalsFor,
         goalsAgainst: updatedGoalsAgainst,
@@ -78,8 +86,16 @@ export const useMatchEvents = (matchData, setMatchData, players) => {
         tarjetasList: updatedTarjetas,
         events: updatedEvents
       };
+
+      if (updateMatch && prev.id) {
+        updateMatch(prev.id, nextData).catch(err => {
+          console.error("Error auto-saving remove event in Firestore:", err);
+        });
+      }
+
+      return nextData;
     });
-  }, [setMatchData]);
+  }, [setMatchData, updateMatch]);
 
   const makeSubstitution = useCallback((subOutId, subInId, minute) => {
     const playerOut = players.find(p => p.id === subOutId);
@@ -106,15 +122,23 @@ export const useMatchEvents = (matchData, setMatchData, players) => {
         newCalled[idxIn] = subOutId;
       }
 
-      return {
+      const nextData = {
         ...prev,
         convocados: newCalled,
         events: [...(prev.events || []), newEvent]
       };
+
+      if (updateMatch && prev.id) {
+        updateMatch(prev.id, nextData).catch(err => {
+          console.error("Error auto-saving substitution in Firestore:", err);
+        });
+      }
+
+      return nextData;
     });
 
     return true;
-  }, [players, setMatchData]);
+  }, [players, setMatchData, updateMatch]);
 
   return { addEvent, removeEvent, makeSubstitution };
 };

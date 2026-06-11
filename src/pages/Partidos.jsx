@@ -99,8 +99,8 @@ const Partidos = () => {
   const [editingCustomFormation, setEditingCustomFormation] = useState(null);
   const { customFormations, addCustomFormation, updateCustomFormation, deleteCustomFormation } = useCustomFormations();
 
-  // --- Hook de Eventos de Partido ---
-  const { addEvent, removeEvent, makeSubstitution } = useMatchEvents(matchData, setMatchData, players);
+  // --- Hook de Eventos de Partido (con guardado automático en Firestore) ---
+  const { addEvent, removeEvent, makeSubstitution } = useMatchEvents(matchData, setMatchData, players, updateMatch);
 
   // --- Estados de Match Day ---
   const [matchSeconds, setMatchSeconds] = useState(0);

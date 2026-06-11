@@ -3,7 +3,7 @@ import { useAuth } from '../context/AuthContext';
 import { subscribeToCollection, addDocument, updateDocument, deleteDocument, createNotification } from '../firebase/db';
 
 export const usePlayerPlans = (teamId) => {
-  const { user } = useAuth();
+  const { user, getTeamPath } = useAuth();
   const [playerPlans, setPlayerPlans] = useState([]);
   const [teamPlans, setTeamPlans] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -17,11 +17,12 @@ export const usePlayerPlans = (teamId) => {
     }
 
     setLoading(true);
-    const unsubPlayerPlans = subscribeToCollection(`users/${user.uid}/teams/${teamId}/playerPlans`, (data) => {
+    const path = getTeamPath(teamId);
+    const unsubPlayerPlans = subscribeToCollection(`${path}/playerPlans`, (data) => {
       setPlayerPlans(data);
     });
 
-    const unsubTeamPlans = subscribeToCollection(`users/${user.uid}/teams/${teamId}/teamPlans`, (data) => {
+    const unsubTeamPlans = subscribeToCollection(`${path}/teamPlans`, (data) => {
       setTeamPlans(data);
       setLoading(false);
     });
@@ -30,11 +31,12 @@ export const usePlayerPlans = (teamId) => {
       unsubPlayerPlans();
       unsubTeamPlans();
     };
-  }, [user, teamId]);
+  }, [user, teamId, getTeamPath]);
 
   const addPlayerPlan = async (planData) => {
     if (!user || !teamId) return;
-    const docId = await addDocument(`users/${user.uid}/teams/${teamId}/playerPlans`, {
+    const path = getTeamPath(teamId);
+    const docId = await addDocument(`${path}/playerPlans`, {
       ...planData,
       createdAt: new Date().toISOString(),
       active: true
@@ -45,12 +47,14 @@ export const usePlayerPlans = (teamId) => {
 
   const updatePlayerPlan = async (planId, data) => {
     if (!user || !teamId) return;
-    await updateDocument(`users/${user.uid}/teams/${teamId}/playerPlans`, planId, data);
+    const path = getTeamPath(teamId);
+    await updateDocument(`${path}/playerPlans`, planId, data);
   };
 
   const addTeamPlan = async (planData) => {
     if (!user || !teamId) return;
-    const docId = await addDocument(`users/${user.uid}/teams/${teamId}/teamPlans`, {
+    const path = getTeamPath(teamId);
+    const docId = await addDocument(`${path}/teamPlans`, {
       ...planData,
       createdAt: new Date().toISOString(),
       active: true
@@ -61,18 +65,21 @@ export const usePlayerPlans = (teamId) => {
 
   const updateTeamPlan = async (planId, data) => {
     if (!user || !teamId) return;
-    await updateDocument(`users/${user.uid}/teams/${teamId}/teamPlans`, planId, data);
+    const path = getTeamPath(teamId);
+    await updateDocument(`${path}/teamPlans`, planId, data);
   };
 
   const removePlayerPlan = async (id) => {
     if (!user || !teamId) return;
-    await deleteDocument(`users/${user.uid}/teams/${teamId}/playerPlans`, id);
+    const path = getTeamPath(teamId);
+    await deleteDocument(`${path}/playerPlans`, id);
     await createNotification('info', 'Plan individual eliminado');
   };
 
   const removeTeamPlan = async (id) => {
     if (!user || !teamId) return;
-    await deleteDocument(`users/${user.uid}/teams/${teamId}/teamPlans`, id);
+    const path = getTeamPath(teamId);
+    await deleteDocument(`${path}/teamPlans`, id);
     await createNotification('info', 'Plan de equipo eliminado');
   };
 

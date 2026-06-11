@@ -21,6 +21,7 @@ import Login from './pages/Login';
 import Instalar from './pages/Instalar';
 import LandingPage from './pages/LandingPage';
 import SharedPlan from './pages/SharedPlan';
+import AcceptInvitation from './pages/AcceptInvitation';
 
 import './App.css';
 
@@ -46,6 +47,15 @@ function App() {
   const { user, loading } = useAuth();
   const [showUpdate, setShowUpdate] = useState(false);
   const [updateData, setUpdateData] = useState({ version: '', url: '' });
+
+  useEffect(() => {
+    if (user) {
+      const pendingInviteToken = localStorage.getItem('mister11_pending_invite_token');
+      if (pendingInviteToken) {
+        window.location.href = `/accept-invitation?token=${pendingInviteToken}`;
+      }
+    }
+  }, [user]);
 
   useEffect(() => {
     const checkVersion = async () => {
@@ -179,6 +189,11 @@ function App() {
         <Route 
           path="/instalar" 
           element={<Instalar />} 
+        />
+
+        <Route 
+          path="/accept-invitation" 
+          element={<AcceptInvitation />} 
         />
 
         <Route 

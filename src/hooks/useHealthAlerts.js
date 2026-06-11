@@ -4,7 +4,7 @@ import { db } from '../firebaseConfig';
 import { collection, query, onSnapshot, orderBy, where, Timestamp } from 'firebase/firestore';
 
 export const useHealthAlerts = () => {
-  const { user, activeTeamId } = useAuth();
+  const { user, activeTeamId, getTeamPath } = useAuth();
   const [alerts, setAlerts] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -20,8 +20,9 @@ export const useHealthAlerts = () => {
     sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
     const dateString = sevenDaysAgo.toISOString().split('T')[0];
 
+    const path = getTeamPath(activeTeamId);
     const q = query(
-      collection(db, `users/${user.uid}/teams/${activeTeamId}/evaluaciones`),
+      collection(db, `${path}/evaluaciones`),
       where('date', '>=', dateString),
       orderBy('date', 'desc')
     );

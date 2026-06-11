@@ -3,7 +3,7 @@ import { useAuth } from '../context/AuthContext';
 import { subscribeToCollection, addDocument, updateDocument, deleteDocument, createNotification } from '../firebase/db';
 
 export const usePlayers = (teamId) => {
-  const { user } = useAuth();
+  const { user, getTeamPath } = useAuth();
   const [players, setPlayers] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -15,17 +15,19 @@ export const usePlayers = (teamId) => {
     }
 
     setLoading(true);
-    const unsubscribe = subscribeToCollection(`users/${user.uid}/teams/${teamId}/players`, (data) => {
+    const path = getTeamPath(teamId);
+    const unsubscribe = subscribeToCollection(`${path}/players`, (data) => {
       setPlayers(data);
       setLoading(false);
     });
 
     return () => unsubscribe();
-  }, [user, teamId]);
+  }, [user, teamId, getTeamPath]);
 
   const addPlayer = async (playerData) => {
     if (!user || !teamId) return;
-    const docId = await addDocument(`users/${user.uid}/teams/${teamId}/players`, {
+    const path = getTeamPath(teamId);
+    const docId = await addDocument(`${path}/players`, {
       ...playerData
     });
     
@@ -35,12 +37,14 @@ export const usePlayers = (teamId) => {
 
   const updatePlayer = async (id, playerData) => {
     if (!user || !teamId) return;
-    return await updateDocument(`users/${user.uid}/teams/${teamId}/players`, id, playerData);
+    const path = getTeamPath(teamId);
+    return await updateDocument(`${path}/players`, id, playerData);
   };
 
   const removePlayer = async (id) => {
     if (!user || !teamId) return;
-    return await deleteDocument(`users/${user.uid}/teams/${teamId}/players`, id);
+    const path = getTeamPath(teamId);
+    return await deleteDocument(`${path}/players`, id);
   };
 
   return { players, loading, addPlayer, updatePlayer, removePlayer };

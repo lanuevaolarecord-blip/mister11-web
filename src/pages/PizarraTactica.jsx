@@ -280,7 +280,7 @@ const PizarraTactica = () => {
   }, []);
 
   // Auth & URL
-  const { user, activeTeamId } = useAuth();
+  const { user, activeTeamId, getTeamPath } = useAuth();
   const [searchParams, setSearchParams] = useSearchParams();
   
   // Usar planId de la URL o recuperar el último usado para este equipo (Persistencia al navegar)
@@ -419,8 +419,8 @@ const PizarraTactica = () => {
       if (user.uid === 'invitado-local') return;
       try {
         if (!activeTeamId) return;
-        const frameRef = doc(db, 'users', user.uid, 'teams', activeTeamId, 'pizarras', planId, 'frames', frame.id);
-        const parentRef = doc(db, 'users', user.uid, 'teams', activeTeamId, 'pizarras', planId);
+        const frameRef = doc(db, getTeamPath(), 'pizarras', planId, 'frames', frame.id);
+        const parentRef = doc(db, getTeamPath(), 'pizarras', planId);
         
         await Promise.all([
           setDoc(frameRef, {
@@ -575,7 +575,7 @@ const PizarraTactica = () => {
         if (!window.confirm(`¿Importar esta animación con ${data.frames.length} frames? Esto reemplazará los frames actuales.`)) {
           return;
         }
-        const framesColRef = collection(db, 'users', user.uid, 'teams', activeTeamId, 'pizarras', planId, 'frames');
+        const framesColRef = collection(db, getTeamPath(), 'pizarras', planId, 'frames');
         const existingSnap = await getDocs(framesColRef);
         for (const dDoc of existingSnap.docs) {
           await deleteDoc(dDoc.ref);
@@ -701,7 +701,7 @@ const PizarraTactica = () => {
           // Subir a Firebase Storage si el usuario está autenticado
           if (user && activeTeamId) {
             try {
-              const storagePath = `pizarras/${user.uid}/${activeTeamId}/${planId}/video.${fileType}`;
+              const storagePath = `pizarras/${getTeamPath()}/${planId}/video.${fileType}`;
               const storageRef = ref(storage, storagePath);
               
               // Subir video como data URL
@@ -709,7 +709,7 @@ const PizarraTactica = () => {
               const downloadURL = await getDownloadURL(storageRef);
               
               // Actualizar el documento del ejercicio con la URL del video para que Sesiones.jsx lo vea
-              const exerciseRef = doc(db, 'users', user.uid, 'teams', activeTeamId, 'exercises', planId);
+              const exerciseRef = doc(db, getTeamPath(), 'exercises', planId);
               await setDoc(exerciseRef, {
                 videoUrl: downloadURL,
                 videoMimeType: finalMime,
@@ -1121,7 +1121,7 @@ const PizarraTactica = () => {
     tmRef.current = tm;
 
     // 4. Obtener metadatos del plan (formación, campo, etc.)
-    const planDocRef = doc(db, 'users', user.uid, 'teams', activeTeamId, 'pizarras', planId);
+    const planDocRef = doc(db, getTeamPath(), 'pizarras', planId);
     getDoc(planDocRef).then(docSnap => {
       if (docSnap.exists()) {
         const data = docSnap.data();
@@ -1147,7 +1147,7 @@ const PizarraTactica = () => {
       try {
         // FIX: setDocument() no soporta rutas anidadas de Firestore (>2 segmentos)
         // Usar setDoc directamente con doc() que acepta segmentos múltiples
-        const estadoRef = doc(db, 'users', user.uid, 'teams', activeTeamId, 'pizarra', 'estado_actual');
+        const estadoRef = doc(db, getTeamPath(), 'pizarra', 'estado_actual');
         await setDoc(estadoRef, {
           canvasState: JSON.stringify(frameState),
           framesCount: framesR.current?.length || 0,
@@ -1272,8 +1272,8 @@ const PizarraTactica = () => {
     //      4. Frames de Firestore
     //      5. Formación por defecto (solo si el canvas está vacío y no se ha dibujado aún)
     if (user && planId && activeTeamId) {
-      const framesColRef = collection(db, 'users', user.uid, 'teams', activeTeamId, 'pizarras', planId, 'frames');
-      const estadoDocRef = doc(db, 'users', user.uid, 'teams', activeTeamId, 'pizarraEstado', planId);
+      const framesColRef = collection(db, getTeamPath(), 'pizarras', planId, 'frames');
+      const estadoDocRef = doc(db, getTeamPath(), 'pizarraEstado', planId);
 
       // Clave de estado activo por equipo y plan (para segregación limpia de pizarras)
       const ACTIVE_STATE_KEY = `mister11_pizarra_active_${activeTeamId}_${planId}`;
@@ -1351,7 +1351,7 @@ const PizarraTactica = () => {
       } else {
         // ── FUENTE 2: Firestore pizarra/estado_actual ────────────────────────────────
         // FIX: getDocument() no soporta rutas anidadas — usar getDoc directamente
-        const estadoRef = doc(db, 'users', user.uid, 'teams', activeTeamId, 'pizarra', 'estado_actual');
+        const estadoRef = doc(db, getTeamPath(), 'pizarra', 'estado_actual');
         getDoc(estadoRef).then(snap => {
           const data = snap.exists() ? snap.data() : null;
           if (data && data.canvasState) {
@@ -1682,7 +1682,7 @@ const PizarraTactica = () => {
           try { localStorage.setItem(`mister11_pizarra_active_${activeTeamId}_${planId}`, JSON.stringify(stateToSave)); } catch (_) {}
           // b) Firestore (async, best-effort)
           if (user.uid !== 'invitado-local') {
-            const estadoRef = doc(db, 'users', user.uid, 'teams', activeTeamId, 'pizarra', 'estado_actual');
+            const estadoRef = doc(db, getTeamPath(), 'pizarra', 'estado_actual');
             setDoc(estadoRef, {
               canvasState: JSON.stringify(stateToSave),
               framesCount: framesR.current?.length || 0,
@@ -1716,7 +1716,7 @@ const PizarraTactica = () => {
         try { localStorage.setItem(`mister11_pizarra_active_${activeTeamId}_${planId}`, JSON.stringify(stateToSave)); } catch (_) {}
         // b) Firestore (async, usando la referencia correcta)
         if (user.uid !== 'invitado-local') {
-          const estadoRef = doc(db, 'users', user.uid, 'teams', activeTeamId, 'pizarra', 'estado_actual');
+          const estadoRef = doc(db, getTeamPath(), 'pizarra', 'estado_actual');
           setDoc(estadoRef, {
             canvasState: JSON.stringify(stateToSave),
             framesCount: framesR.current?.length || 0,
@@ -1726,7 +1726,7 @@ const PizarraTactica = () => {
           if (planId) {
             const frame = framesR.current[frameIdxR.current];
             if (frame && frame.id) {
-              const frameRef = doc(db, 'users', user.uid, 'teams', activeTeamId, 'pizarras', planId, 'frames', frame.id);
+              const frameRef = doc(db, getTeamPath(), 'pizarras', planId, 'frames', frame.id);
               setDoc(frameRef, { state: JSON.stringify(stateToSave), updatedAt: serverTimestamp() }, { merge: true })
                 .catch(() => {});
             }
@@ -2060,7 +2060,7 @@ const PizarraTactica = () => {
       lastStateRef.current = null;
       // Borrar estado_actual en Firestore para no restaurar estado viejo
       if (user && user.uid !== 'invitado-local') {
-        const estadoRef = doc(db, 'users', user.uid, 'teams', activeTeamId, 'pizarra', 'estado_actual');
+        const estadoRef = doc(db, getTeamPath(), 'pizarra', 'estado_actual');
         setDoc(estadoRef, { canvasState: null, updatedAt: new Date().toISOString() }, { merge: true }).catch(() => {});
       }
     }
@@ -2184,7 +2184,7 @@ const PizarraTactica = () => {
         // 8. SIEMPRE guardar referencia en Firestore (Colección de capturas sueltas)
         // Lo hacemos fuera del try-catch de storage para que aparezca en la lista sí o sí
         try {
-          const captureDocRef = doc(collection(db, 'users', user.uid, 'teams', activeTeamId, 'captures'));
+          const captureDocRef = doc(collection(db, getTeamPath(), 'captures'));
           await setDoc(captureDocRef, {
             id: captureDocRef.id,
             url: downloadURL || dataURL, // Imagen completa
@@ -2251,7 +2251,7 @@ const PizarraTactica = () => {
 
       // 3. Guardar Metadatos del ejercicio
       if (user.uid !== 'invitado-local') {
-        const exerciseRef = doc(db, 'users', user.uid, 'teams', activeTeamId, 'exercises', planId);
+        const exerciseRef = doc(db, getTeamPath(), 'exercises', planId);
         
         // IMPORTANTE: Nunca guardar base64 grande en el documento del ejercicio
         // Usamos el thumbnail de 300px que garantizamos que es < 1MB
@@ -2299,7 +2299,7 @@ const PizarraTactica = () => {
     if (!activeTeamId) return;
     
     try {
-      const framesColRef = collection(db, 'users', user.uid, 'teams', activeTeamId, 'pizarras', planId, 'frames');
+      const framesColRef = collection(db, getTeamPath(), 'pizarras', planId, 'frames');
       // Generamos el ID y la referencia de forma síncrona
       const newDocRef = doc(framesColRef);
       
@@ -2403,13 +2403,13 @@ const PizarraTactica = () => {
     // Firebase delete and reordering to prevent sequence gaps
     if (user && frameToDelete && frameToDelete.id && activeTeamId && user.uid !== 'invitado-local') {
       try {
-        const frameRef = doc(db, 'users', user.uid, 'teams', activeTeamId, 'pizarras', planId, 'frames', frameToDelete.id);
+        const frameRef = doc(db, getTeamPath(), 'pizarras', planId, 'frames', frameToDelete.id);
         await deleteDoc(frameRef);
         
         // Re-index remaining frames in Firestore to maintain contiguous sequence order
         const batch = writeBatch(db);
         next.forEach((f, idx) => {
-          const fRef = doc(db, 'users', user.uid, 'teams', activeTeamId, 'pizarras', planId, 'frames', f.id);
+          const fRef = doc(db, getTeamPath(), 'pizarras', planId, 'frames', f.id);
           batch.update(fRef, { order: idx });
         });
         await batch.commit();

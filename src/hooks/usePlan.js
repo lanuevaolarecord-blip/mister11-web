@@ -34,7 +34,7 @@ export const DEVELOPER_EMAILS = [
 ];
 
 export const usePlan = () => {
-  const { user, activeTeamId } = useAuth();
+  const { user, activeTeamId, clubId, clubRole, isClubMember, club } = useAuth();
   const [dbPlan, setDbPlan] = useState('free');
   const [dbProExpiration, setDbProExpiration] = useState(null);
   const [dbTrialStartDate, setDbTrialStartDate] = useState(null);
@@ -163,13 +163,15 @@ export const usePlan = () => {
   const activeExpiration = dbProExpiration || stripeProExpiration;
   const isRealExpired = activeExpiration && (typeof activeExpiration.toDate === 'function' ? activeExpiration.toDate() : new Date(activeExpiration)) < now;
   
-  const currentPlan = dbPlan === 'pro' || dbPlan === 'club' ? dbPlan : stripeActivePlan;
+  const isClubActive = isClubMember && club && club.status === 'active';
+  
+  const currentPlan = isClubActive ? 'club' : (dbPlan === 'pro' || dbPlan === 'club' ? dbPlan : stripeActivePlan);
   const isRealPro = (currentPlan === 'pro' || currentPlan === 'club') && !isRealExpired;
 
-  const isOnTrial = (dbPlan === 'trial') && !isTrialExpired && !isRealPro;
+  const isOnTrial = (dbPlan === 'trial') && !isTrialExpired && !isRealPro && !isClubActive;
 
   // isRealPaidPro = true ONLY when there is a real paid Stripe subscription (not simulated, not trial)
-  const isRealPaidPro = isRealPro;
+  const isRealPaidPro = isRealPro || isClubActive;
 
   // Developers always have full PRO access — simulation is UI-only for testing UX
   // isSimulatingFree = developer is deliberately testing free-plan UI (doesn't remove access)
@@ -178,16 +180,16 @@ export const usePlan = () => {
   // --- Final PRO status ---
   // Developers ALWAYS get isPro=true (lifetime unlimited access)
   // For regular users: trial or real paid plan grants PRO
-  const isPro = isDeveloper || isRealPro || isOnTrial;
+  const isPro = isDeveloper || isRealPro || isOnTrial || isClubActive;
 
   // currentLimits: developers always get CLUB/PRO limits.
-  const isClub = isDeveloper || currentPlan === 'club';
+  const isClub = isDeveloper || currentPlan === 'club' || isClubActive;
   const currentLimits = isClub ? LIMITS.CLUB : (isPro ? LIMITS.PRO : LIMITS.FREE);
 
   // isProActive: for legacy compatibility — same as isPro
   const isProActive = isPro;
 
-  const effectivePlan = currentPlan === 'club' ? 'club' : (currentPlan === 'pro' ? 'pro' : 'free');
+  const effectivePlan = isClub ? 'club' : (isPro ? 'pro' : 'free');
 
   return {
     plan: isPro ? (effectivePlan !== 'free' ? effectivePlan : 'pro') : 'free',
@@ -197,7 +199,7 @@ export const usePlan = () => {
     limits: currentLimits,
     loading,
     proExpiration: activeExpiration?.toDate ? activeExpiration.toDate() : (activeExpiration ? new Date(activeExpiration) : null),
-    isExpired: isDeveloper ? false : (isTrialExpired && !isRealPro),
+    isExpired: isDeveloper ? false : (isTrialExpired && !isRealPro && !isClubActive),
     simulatedPlan,
     toggleSimulatedPlan,
     trialDaysRemaining,
@@ -207,6 +209,9 @@ export const usePlan = () => {
     isTrialExpired,
     dbPlan: currentPlan,
     isProActive,
-    isRealPaidPro
+    isRealPaidPro,
+    isClubMember,
+    clubRole,
+    isClubActive
   };
 };

@@ -12,15 +12,16 @@ import {
 } from 'firebase/firestore';
 
 export const useNotifications = (teamId) => {
-  const { user } = useAuth();
+  const { user, getTeamPath } = useAuth();
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (!user || !teamId) return;
 
+    const path = getTeamPath(teamId);
     const q = query(
-      collection(db, 'users', user.uid, 'teams', teamId, 'notifications'),
+      collection(db, path, 'notifications'),
       orderBy('createdAt', 'desc'),
       limit(20)
     );
@@ -36,12 +37,13 @@ export const useNotifications = (teamId) => {
     });
 
     return () => unsubscribe();
-  }, [user, teamId]);
+  }, [user, teamId, getTeamPath]);
 
   const addNotification = async (type, text) => {
     if (!user || !teamId) return;
     try {
-      await addDoc(collection(db, 'users', user.uid, 'teams', teamId, 'notifications'), {
+      const path = getTeamPath(teamId);
+      await addDoc(collection(db, path, 'notifications'), {
         type,
         text,
         createdAt: serverTimestamp()

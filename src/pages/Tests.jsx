@@ -212,7 +212,7 @@ const DEFAULT_IDS = DEFAULT_TESTS.map(t => t.id);
 
 const Tests = () => {
   const navigate = useNavigate();
-  const { user, activeTeamId } = useAuth();
+  const { user, activeTeamId, getTeamPath } = useAuth();
   const { settings } = useSettings(activeTeamId);
   const { activeTeam } = useTeams();
   const { isPro, isProActive } = usePlan();
@@ -281,7 +281,7 @@ const Tests = () => {
   const loadTests = useCallback(async () => {
     if (!user || !activeTeamId) return;
     try {
-      const testsRef = collection(db, `users/${user.uid}/teams/${activeTeamId}/tests`);
+      const testsRef = collection(db, getTeamPath(), 'tests');
       const q = query(testsRef);
       const snapshot = await getDocs(q);
       
@@ -333,7 +333,7 @@ const Tests = () => {
     setLoading(true);
     try {
       const q = query(
-        collection(db, `users/${user.uid}/teams/${activeTeamId}/evaluaciones`),
+        collection(db, getTeamPath(), 'evaluaciones'),
         orderBy('timestamp', 'asc')
       );
       const querySnapshot = await getDocs(q);
@@ -388,7 +388,7 @@ const Tests = () => {
       
       Object.entries(regInputs).forEach(([jugadorId, val]) => {
         if (!val) return;
-        const evalRef = doc(collection(db, `users/${user.uid}/teams/${activeTeamId}/evaluaciones`));
+        const evalRef = doc(collection(db, getTeamPath(), 'evaluaciones'));
         batch.set(evalRef, {
           jugadorId,
           testId: regSelectedTest,
@@ -413,7 +413,7 @@ const Tests = () => {
   const handleSavePreventiveTest = async (data) => {
     if (!user || !activeTeamId) return;
     try {
-      await addDoc(collection(db, `users/${user.uid}/teams/${activeTeamId}/evaluaciones`), {
+      await addDoc(collection(db, getTeamPath(), 'evaluaciones'), {
         ...data,
         timestamp: serverTimestamp()
       });
@@ -436,7 +436,7 @@ const Tests = () => {
     try {
       const lastEval = history[history.length - 1];
       if (lastEval.id) {
-        await deleteDoc(doc(db, `users/${user.uid}/teams/${activeTeamId}/evaluaciones`, lastEval.id));
+        await deleteDoc(doc(db, getTeamPath(), 'evaluaciones', lastEval.id));
         await loadEvaluations();
       }
     } catch (error) {
@@ -457,7 +457,7 @@ const Tests = () => {
       const batch = writeBatch(db);
       history.forEach(item => {
         if (item.id) {
-          const evalRef = doc(db, `users/${user.uid}/teams/${activeTeamId}/evaluaciones`, item.id);
+          const evalRef = doc(db, getTeamPath(), 'evaluaciones', item.id);
           batch.delete(evalRef);
         }
       });
@@ -477,10 +477,10 @@ const Tests = () => {
     setLoading(true);
     try {
       // 1. Borrar la definición del test de Firestore
-      await deleteDoc(doc(db, `users/${user.uid}/teams/${activeTeamId}/tests`, testId));
+      await deleteDoc(doc(db, getTeamPath(), 'tests', testId));
 
       // 2. Buscar y borrar en lote (batch) todas las evaluaciones asociadas a ese test
-      const evalsRef = collection(db, `users/${user.uid}/teams/${activeTeamId}/evaluaciones`);
+      const evalsRef = collection(db, getTeamPath(), 'evaluaciones');
       const q = query(evalsRef, where('testId', '==', testId));
       const snapshot = await getDocs(q);
 
@@ -522,7 +522,7 @@ const Tests = () => {
 
     setLoading(true);
     try {
-      const q = query(collection(db, `users/${user.uid}/teams/${activeTeamId}/evaluaciones`));
+      const q = query(collection(db, getTeamPath(), 'evaluaciones'));
       const querySnapshot = await getDocs(q);
       
       if (!querySnapshot.empty) {
@@ -551,7 +551,7 @@ const Tests = () => {
     if (!user || !activeTeamId) return;
     setLoading(true);
     try {
-      const testsRef = collection(db, `users/${user.uid}/teams/${activeTeamId}/tests`);
+      const testsRef = collection(db, getTeamPath(), 'tests');
       const newTestObj = { ...newTest, id: `custom_${Date.now()}` };
       await addDoc(testsRef, newTestObj);
       setTests([...tests, newTestObj]);
@@ -642,7 +642,7 @@ const Tests = () => {
               ? parseFloat((baseVal * (2 - variation + Math.random() * 0.04)).toFixed(2))
               : Math.round(baseVal * variation + (Math.random() * 4 - 2));
 
-            const evalRef = doc(collection(db, `users/${user.uid}/teams/${activeTeamId}/evaluaciones`));
+            const evalRef = doc(collection(db, getTeamPath(), 'evaluaciones'));
             batch.set(evalRef, {
               jugadorId: player.id,
               testId,
@@ -1735,7 +1735,7 @@ const Tests = () => {
           onSave={async (playerId, evalData) => {
             if(!user || !activeTeamId) return;
             try {
-              await addDoc(collection(db, `users/${user.uid}/teams/${activeTeamId}/evaluaciones`), {
+              await addDoc(collection(db, getTeamPath(), 'evaluaciones'), {
                 testId: regSelectedTest,
                 jugadorId: playerId,
                 categoria: getTestById(regSelectedTest).type,

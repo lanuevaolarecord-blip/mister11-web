@@ -66,7 +66,7 @@ export const PREDEFINED_EXERCISES = [
 ];
 
 export const useExercises = (teamId) => {
-  const { user } = useAuth();
+  const { user, getTeamPath } = useAuth();
   const [exercises, setExercises] = useState(PREDEFINED_EXERCISES);
   const [loading, setLoading] = useState(true);
 
@@ -78,18 +78,20 @@ export const useExercises = (teamId) => {
     }
 
     setLoading(true);
-    const unsubscribe = subscribeToCollection(`users/${user.uid}/teams/${teamId}/exercises`, (data) => {
+    const path = getTeamPath(teamId);
+    const unsubscribe = subscribeToCollection(`${path}/exercises`, (data) => {
       // Combinar los predefinidos con los guardados en Firestore
       setExercises([...PREDEFINED_EXERCISES, ...data]);
       setLoading(false);
     });
 
     return () => unsubscribe();
-  }, [user, teamId]);
+  }, [user, teamId, getTeamPath]);
 
   const addExercise = async (exerciseData) => {
     if (!user || !teamId) return;
-    const docId = await addDocument(`users/${user.uid}/teams/${teamId}/exercises`, {
+    const path = getTeamPath(teamId);
+    const docId = await addDocument(`${path}/exercises`, {
       ...exerciseData,
       createdAt: new Date().toISOString()
     });
@@ -104,7 +106,8 @@ export const useExercises = (teamId) => {
       await createNotification('error', 'No puedes eliminar un ejercicio predefinido del sistema.');
       return;
     }
-    return await deleteDocument(`users/${user.uid}/teams/${teamId}/exercises`, id);
+    const path = getTeamPath(teamId);
+    return await deleteDocument(`${path}/exercises`, id);
   };
 
   return { exercises, loading, addExercise, removeExercise };

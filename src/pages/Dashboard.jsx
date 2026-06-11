@@ -30,7 +30,7 @@ import './Dashboard.css';
 const Dashboard = () => {
   const { darkMode } = useTheme();
   const navigate = useNavigate();
-  const { user, activeTeamId, refreshTeam, teams } = useAuth();
+  const { user, activeTeamId, refreshTeam, teams, getTeamPath } = useAuth();
   const activeTeam = teams?.find(t => t.id === activeTeamId) || null;
   const adminEmails = ['lanuevaolarecord@gmail.com', 'lavozdelformador@gmail.com', 'jhocao111294@gmail.com'];
   const isAdmin = user?.email && adminEmails.includes(user.email.toLowerCase());
@@ -57,7 +57,7 @@ const Dashboard = () => {
     const applyPlanUpdate = async (planType) => {
       try {
         const teamId = pendingTeamId || activeTeamId;
-        const teamRef = doc(db, 'users', user.uid, 'teams', teamId);
+        const teamRef = doc(db, getTeamPath(teamId));
         // Set expiration 1 year from now as default (webhook will correct if active)
         const oneYearFromNow = new Date();
         oneYearFromNow.setFullYear(oneYearFromNow.getFullYear() + 1);
@@ -189,7 +189,7 @@ const Dashboard = () => {
   // Listen to planning config in real-time from Firestore
   useEffect(() => {
     if (!activeTeamId || !auth.currentUser) return;
-    const ref = doc(db, 'users', auth.currentUser.uid, 'teams', activeTeamId, 'planificacion', 'config');
+    const ref = doc(db, getTeamPath(), 'planificacion', 'config');
     const unsubscribe = onSnapshot(ref, (snap) => {
       if (snap.exists()) {
         setPlanningConfig(snap.data());

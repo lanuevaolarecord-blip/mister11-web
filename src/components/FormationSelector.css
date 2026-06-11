@@ -1,0 +1,140 @@
+.fs-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+}
+
+.fs-label {
+  font-family: var(--font-heading);
+  font-size: 11px;
+  font-weight: 800;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.fs-scroll-container {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding: 4px 2px 8px 2px;
+  scrollbar-width: thin;
+  -webkit-overflow-scrolling: touch;
+}
+
+.fs-scroll-container::-webkit-scrollbar {
+  height: 4px;
+}
+
+.fs-scroll-container::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 4px;
+}
+
+[data-theme="dark"] .fs-scroll-container::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.fs-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-light);
+  padding: 0 16px;
+  height: 48px; /* Touch target size */
+  border-radius: 8px;
+  font-family: var(--font-heading);
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-primary);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s ease;
+  user-select: none;
+  flex-shrink: 0;
+  box-shadow: var(--shadow-card);
+}
+
+.fs-item:hover {
+  border-color: var(--accent-gold);
+}
+
+.fs-item.active {
+  background: var(--topbar-bg);
+  color: #FFFFFF;
+  border-color: var(--topbar-bg);
+}
+
+[data-theme="dark"] .fs-item.active {
+  background: var(--accent-gold);
+  color: #000000;
+  border-color: var(--accent-gold);
+}
+
+.fs-custom-badge {
+  font-size: 10px;
+  background: rgba(212, 168, 67, 0.2);
+  color: var(--accent-gold);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+}
+
+.fs-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: 4px;
+}
+
+.fs-action-btn {
+  background: transparent;
+  border: none;
+  color: inherit;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0.7;
+  transition: opacity 0.2s, background-color 0.2s;
+  width: 28px;
+  height: 28px;
+}
+
+.fs-action-btn:hover {
+  opacity: 1;
+  background: rgba(27, 58, 45, 0.1);
+}
+
+.fs-item.active .fs-action-btn:hover {
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.fs-new-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: transparent;
+  border: 1.5px dashed var(--accent-gold);
+  color: var(--accent-gold);
+  padding: 0 16px;
+  height: 48px;
+  border-radius: 8px;
+  font-family: var(--font-heading);
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.fs-new-btn:hover {
+  background: var(--accent-gold-light);
+  border-color: var(--accent-gold);
+}

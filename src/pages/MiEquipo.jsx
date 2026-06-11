@@ -42,7 +42,7 @@ const emptyPlayer = {
 };
 
 const MiEquipo = () => {
-  const { user, activeTeamId } = useAuth();
+  const { user, activeTeamId, getTeamPath } = useAuth();
   const { activeTeam } = useTeams();
   const { isPro, limits, isProActive } = usePlan();
   const { players, loading, addPlayer, updatePlayer, removePlayer } = usePlayers(activeTeamId);
@@ -145,7 +145,7 @@ const MiEquipo = () => {
 
       // If there is a new photo to upload
       if (editData.photoFile && savedPlayerId) {
-        const fileRef = ref(storage, `users/${user?.uid}/teams/${activeTeamId}/players/${savedPlayerId}/avatar`);
+        const fileRef = ref(storage, `players/${getTeamPath()}/${savedPlayerId}/avatar`);
         await uploadBytes(fileRef, editData.photoFile);
         const avatarUrl = await getDownloadURL(fileRef);
         await updatePlayer(savedPlayerId, { avatarUrl });

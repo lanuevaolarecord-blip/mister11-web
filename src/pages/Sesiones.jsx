@@ -35,7 +35,7 @@ import './Sesiones.css';
 import BlockEditor from '../components/BlockEditor';
 
 const Sesiones = () => {
-  const { user, activeTeamId } = useAuth();
+  const { user, activeTeamId, getTeamPath } = useAuth();
   const { activeTeam } = useTeams();
   const { isPro, limits, isProActive } = usePlan();
   const { sessions, addSession, updateSession, removeSession, loading: loadingSessions } = useSessions(activeTeamId);
@@ -302,7 +302,7 @@ const Sesiones = () => {
     if (confirmDelete) {
       try {
         if (user && activeTeamId) {
-          const framesColRef = collection(db, 'users', user.uid, 'teams', activeTeamId, 'pizarras', anim.id, 'frames');
+          const framesColRef = collection(db, getTeamPath(), 'pizarras', anim.id, 'frames');
           const snap = await getDocs(framesColRef);
           
           if (!snap.empty) {
@@ -313,7 +313,7 @@ const Sesiones = () => {
             await batch.commit();
           }
           
-          const pizarraDocRef = doc(db, 'users', user.uid, 'teams', activeTeamId, 'pizarras', anim.id);
+          const pizarraDocRef = doc(db, getTeamPath(), 'pizarras', anim.id);
           await deleteDoc(pizarraDocRef);
 
           // Clear local storage reference to prevent Pizarra from recreating it
@@ -407,7 +407,7 @@ const Sesiones = () => {
 
     setIsSaving(true);
     const sessionId = editData.id || `temp_${Date.now()}`;
-    const storagePath = `users/${user.uid}/teams/${activeTeamId}/sessions/${sessionId}/${file.name}`;
+    const storagePath = `sessions/${getTeamPath()}/${sessionId}/${file.name}`;
     const fileRef = ref(storage, storagePath);
     
     const uploadTask = uploadBytesResumable(fileRef, file);

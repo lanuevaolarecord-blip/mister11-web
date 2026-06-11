@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { useTeams } from '../hooks/useTeams';
 import { ChevronDown, Sun, Moon, Bell, Settings, Shield } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
+import ModeSwitcher from './ModeSwitcher';
 
 const Header = ({ onToggleNotif }) => {
   const location = useLocation();
@@ -45,6 +46,8 @@ const Header = ({ onToggleNotif }) => {
 
       <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
         <h1 style={{ fontFamily: 'var(--font-heading)', fontSize: '24px', margin: 0, letterSpacing: '1px' }}>{getPageTitle()}</h1>
+        
+        <ModeSwitcher />
         
         {teams.length > 0 && (
           <div className="team-switcher-header-v2">

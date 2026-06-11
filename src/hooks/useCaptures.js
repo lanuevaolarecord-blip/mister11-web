@@ -3,7 +3,7 @@ import { useAuth } from '../context/AuthContext';
 import { subscribeToCollection, addDocument, deleteDocument } from '../firebase/db';
 
 export const useCaptures = (teamId) => {
-  const { user } = useAuth();
+  const { user, getTeamPath } = useAuth();
   const [captures, setCaptures] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -15,7 +15,8 @@ export const useCaptures = (teamId) => {
     }
 
     setLoading(true);
-    const unsubscribe = subscribeToCollection(`users/${user.uid}/teams/${teamId}/captures`, (data) => {
+    const path = getTeamPath(teamId);
+    const unsubscribe = subscribeToCollection(`${path}/captures`, (data) => {
       // Ordenar por fecha descendente
       const sorted = data.sort((a, b) => {
         const t1 = a.timestamp?.seconds || 0;
@@ -27,11 +28,12 @@ export const useCaptures = (teamId) => {
     });
 
     return () => unsubscribe();
-  }, [user?.uid, teamId]);
+  }, [user?.uid, teamId, getTeamPath]);
 
   const removeCapture = async (id) => {
     if (!user || !teamId) return;
-    return await deleteDocument(`users/${user.uid}/teams/${teamId}/captures`, id);
+    const path = getTeamPath(teamId);
+    return await deleteDocument(`${path}/captures`, id);
   };
 
   return { captures, loading, removeCapture };

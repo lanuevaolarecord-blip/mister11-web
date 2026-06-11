@@ -86,7 +86,7 @@ const ProgressBar = ({ value, max, color }) => {
 };
 
 const Planificacion = () => {
-  const { user, activeTeamId } = useAuth();
+  const { user, activeTeamId, getTeamPath } = useAuth();
   const { activeTeam } = useTeams();
   const { darkMode } = useTheme();
   const { isProActive } = usePlan();
@@ -130,7 +130,7 @@ const Planificacion = () => {
     const load = async () => {
       if (!user || !activeTeamId) return;
       try {
-        const ref = doc(db, 'users', user.uid, 'teams', activeTeamId, 'planificacion', 'config');
+        const ref = doc(db, getTeamPath(), 'planificacion', 'config');
         const snap = await getDoc(ref);
         if (snap.exists()) {
           const d = snap.data();
@@ -153,7 +153,7 @@ const Planificacion = () => {
 
     const timer = setTimeout(async () => {
       try {
-        const ref = doc(db, 'users', user.uid, 'teams', activeTeamId, 'planificacion', 'config');
+        const ref = doc(db, getTeamPath(), 'planificacion', 'config');
         await setDoc(ref, { 
           macroInfo, 
           microcycles, 
@@ -178,7 +178,7 @@ const Planificacion = () => {
     if (!user || !activeTeamId) { showToast('Inicia sesión para guardar', 'error'); return; }
     setSaving(true);
     try {
-      const ref = doc(db, 'users', user.uid, 'teams', activeTeamId, 'planificacion', 'config');
+      const ref = doc(db, getTeamPath(), 'planificacion', 'config');
       await setDoc(ref, { macroInfo, microcycles, macroCounts, updatedAt: serverTimestamp() }, { merge: true });
       showToast('Planificación guardada ✓');
     } catch (e) { showToast('Error al guardar.', 'error'); }

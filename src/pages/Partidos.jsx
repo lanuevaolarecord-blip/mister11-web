@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { useMatches } from '../hooks/useMatches';
 import { usePlayers } from '../hooks/usePlayers';
 import { useAuth } from '../context/AuthContext';
@@ -6,49 +6,63 @@ import { useSettings } from '../hooks/useSettings';
 import { useTeams } from '../hooks/useTeams';
 import { generatePostMatchReportPDF } from '../utils/pdfGenerator';
 import { generateGoogleCalendarUrl, generateICSContent, downloadICSFile } from '../utils/calendarHelper';
+import { PREDEFINED_FORMATIONS } from '../utils/formaciones';
+import { useCustomFormations } from '../hooks/useCustomFormations';
+import { useMatchEvents } from '../hooks/useMatchEvents';
+import CustomFormationModal from '../components/CustomFormationModal';
+import FormationSelector from '../components/FormationSelector';
 import './Partidos.css';
 
-const FORMATIONS = {
-  '4-3-3': [
-    { pos: 'POR', top: '50%', left: '10%' },
-    { pos: 'LTD', top: '85%', left: '30%' },
-    { pos: 'DEF', top: '65%', left: '25%' },
-    { pos: 'DEF', top: '35%', left: '25%' },
-    { pos: 'LTI', top: '15%', left: '30%' },
-    { pos: 'MCD', top: '50%', left: '50%' },
-    { pos: 'MC', top: '75%', left: '60%' },
-    { pos: 'MC', top: '25%', left: '60%' },
-    { pos: 'EXT', top: '85%', left: '85%' },
-    { pos: 'DEL', top: '50%', left: '90%' },
-    { pos: 'EXT', top: '15%', left: '85%' }
-  ],
-  '4-4-2': [
-    { pos: 'POR', top: '50%', left: '10%' },
-    { pos: 'LTD', top: '85%', left: '30%' },
-    { pos: 'DEF', top: '65%', left: '25%' },
-    { pos: 'DEF', top: '35%', left: '25%' },
-    { pos: 'LTI', top: '15%', left: '30%' },
-    { pos: 'MD', top: '85%', left: '60%' },
-    { pos: 'MC', top: '65%', left: '55%' },
-    { pos: 'MC', top: '35%', left: '55%' },
-    { pos: 'MI', top: '15%', left: '60%' },
-    { pos: 'DEL', top: '65%', left: '85%' },
-    { pos: 'DEL', top: '35%', left: '85%' }
-  ],
-  '3-5-2': [
-    { pos: 'POR', top: '50%', left: '10%' },
-    { pos: 'DEF', top: '70%', left: '25%' },
-    { pos: 'DEF', top: '50%', left: '22%' },
-    { pos: 'DEF', top: '30%', left: '25%' },
-    { pos: 'MD', top: '85%', left: '50%' },
-    { pos: 'MC', top: '65%', left: '55%' },
-    { pos: 'MC', top: '50%', left: '58%' },
-    { pos: 'MC', top: '35%', left: '55%' },
-    { pos: 'MI', top: '15%', left: '50%' },
-    { pos: 'DEL', top: '65%', left: '85%' },
-    { pos: 'DEL', top: '35%', left: '85%' }
-  ]
+// Auxiliar para determinar la zona general de una posición táctica
+const getGeneralZone = (pos) => {
+  if (['POR'].includes(pos)) return 'POR';
+  if (['DEF', 'LTD', 'LTI'].includes(pos)) return 'DEF';
+  if (['MC', 'MCD', 'MCO', 'MD', 'MI'].includes(pos)) return 'MC';
+  if (['DEL', 'EXT'].includes(pos)) return 'DEL';
+  return 'MC';
 };
+
+// Distribuidor inteligente de jugadores según posiciones naturales
+const alignStartersByPosition = (calledIds, players, positionsList) => {
+  const startersIds = calledIds.slice(0, 11).filter(Boolean);
+  const subsIds = calledIds.slice(11);
+  const starters = startersIds.map(id => players.find(p => p.id === id)).filter(Boolean);
+  const assigned = Array(11).fill(null);
+  const unassigned = [...starters];
+
+  // 1ra pasada: coincidencias exactas
+  positionsList.forEach((slot, slotIdx) => {
+    const exactMatchIdx = unassigned.findIndex(p => p.position === slot.pos);
+    if (exactMatchIdx !== -1) {
+      assigned[slotIdx] = unassigned[exactMatchIdx].id;
+      unassigned.splice(exactMatchIdx, 1);
+    }
+  });
+
+  // 2da pasada: zona general (ej: lateral derecho en defensa)
+  positionsList.forEach((slot, slotIdx) => {
+    if (assigned[slotIdx]) return;
+    const slotZone = getGeneralZone(slot.pos);
+    const zoneMatchIdx = unassigned.findIndex(p => getGeneralZone(p.position) === slotZone);
+    if (zoneMatchIdx !== -1) {
+      assigned[slotIdx] = unassigned[zoneMatchIdx].id;
+      unassigned.splice(zoneMatchIdx, 1);
+    }
+  });
+
+  // 3ra pasada: rellenar slots vacíos restantes con los jugadores sobrantes
+  positionsList.forEach((slot, slotIdx) => {
+    if (assigned[slotIdx]) return;
+    if (unassigned.length > 0) {
+      assigned[slotIdx] = unassigned[0].id;
+      unassigned.splice(0, 1);
+    }
+  });
+
+  const alignedXI = assigned.map(val => val || null);
+  return [...alignedXI, ...subsIds];
+};
+
 
 // SVG Iconos reutilizables
 const TrashIcon = () => (
@@ -80,6 +94,14 @@ const Partidos = () => {
   const [activeQuestion, setActiveQuestion] = useState('tactical');
   const [showReportPreview, setShowReportPreview] = useState(false);
 
+  // --- Estados de Formación Personalizada ---
+  const [isCustomModalOpen, setIsCustomModalOpen] = useState(false);
+  const [editingCustomFormation, setEditingCustomFormation] = useState(null);
+  const { customFormations, addCustomFormation, updateCustomFormation, deleteCustomFormation } = useCustomFormations();
+
+  // --- Hook de Eventos de Partido ---
+  const { addEvent, removeEvent, makeSubstitution } = useMatchEvents(matchData, setMatchData, players);
+
   // --- Estados de Match Day ---
   const [matchSeconds, setMatchSeconds] = useState(0);
   const [isTimerRunning, setIsTimerRunning] = useState(false);
@@ -92,6 +114,15 @@ const Partidos = () => {
   
   const [isFullscreen, setIsFullscreen] = useState(false);
   const matchDayRef = useRef(null);
+
+  const getFormationPositions = useCallback((lineupName) => {
+    if (PREDEFINED_FORMATIONS[lineupName]) {
+      return PREDEFINED_FORMATIONS[lineupName];
+    }
+    const custom = customFormations.find(f => f.name === lineupName);
+    if (custom) return custom.positions;
+    return PREDEFINED_FORMATIONS['4-3-3'];
+  }, [customFormations]);
 
   const toggleFullscreen = () => {
     if (!matchDayRef.current) return;
@@ -107,6 +138,17 @@ const Partidos = () => {
       });
     }
   };
+
+  const handleTabChange = useCallback(async (tab) => {
+    setEditTab(tab);
+    if (matchData.id) {
+      try {
+        await updateMatch(matchData.id, { ...matchData, convocados: calledPlayers });
+      } catch (err) {
+        console.error("Error auto-saving match on tab change:", err);
+      }
+    }
+  }, [matchData, calledPlayers, updateMatch]);
 
   useEffect(() => {
     const handleFullscreenChange = () => {
@@ -165,18 +207,7 @@ const Partidos = () => {
 
   const handleTriggerEvent = (type) => {
     if (type === 'gol_rival') {
-      const newEvent = {
-        type: 'gol_rival',
-        player: 'Rival',
-        playerName: 'Gol del Rival',
-        minute: currentMinute,
-        timestamp: new Date().toISOString()
-      };
-      setMatchData(prev => ({
-        ...prev,
-        goalsAgainst: (prev.goalsAgainst || 0) + 1,
-        events: [...(prev.events || []), newEvent]
-      }));
+      addEvent('gol_rival', 'Rival', 'Gol del Rival', currentMinute);
     } else {
       setPendingEventType(type);
       setShowEventPlayerSelector(true);
@@ -186,107 +217,32 @@ const Partidos = () => {
   const handleSelectEventPlayer = (playerId) => {
     const player = players.find(p => p.id === playerId);
     if (!player) return;
-
-    const newEvent = {
-      type: pendingEventType,
-      playerId,
-      playerName: player.name,
-      minute: currentMinute,
-      timestamp: new Date().toISOString()
-    };
-
-    setMatchData(prev => {
-      let updatedGoalsFor = prev.goalsFor || 0;
-      let updatedGoleadores = [...(prev.goleadoresList || [])];
-      let updatedTarjetas = [...(prev.tarjetasList || [])];
-
-      if (pendingEventType === 'gol_local') {
-        updatedGoalsFor += 1;
-        updatedGoleadores.push({ jugadorId: playerId, minuto: currentMinute.toString() });
-      } else if (pendingEventType === 'amarilla' || pendingEventType === 'roja') {
-        updatedTarjetas.push({ jugadorId: playerId, tipo: pendingEventType, minuto: currentMinute.toString() });
-      }
-
-      return {
-        ...prev,
-        goalsFor: updatedGoalsFor,
-        goleadoresList: updatedGoleadores,
-        tarjetasList: updatedTarjetas,
-        events: [...(prev.events || []), newEvent]
-      };
-    });
-
+    addEvent(pendingEventType, playerId, player.name, currentMinute);
     setPendingEventType(null);
     setShowEventPlayerSelector(false);
   };
 
   const handleMakeSubstitution = () => {
     if (!subOutId || !subInId) return alert("Por favor selecciona quién sale y quién entra.");
-    const playerOut = players.find(p => p.id === subOutId);
-    const playerIn = players.find(p => p.id === subInId);
-    if (!playerOut || !playerIn) return;
-
-    const idxOut = calledPlayers.indexOf(subOutId);
-    const idxIn = calledPlayers.indexOf(subInId);
-
-    if (idxOut === -1 || idxIn === -1) return alert("Los jugadores deben estar en la convocatoria.");
-
-    const newCalled = [...calledPlayers];
-    newCalled[idxOut] = subInId;
-    newCalled[idxIn] = subOutId;
-
-    setCalledPlayers(newCalled);
-
-    const newEvent = {
-      type: 'sustitucion',
-      playerOutId: subOutId,
-      playerOutName: playerOut.name,
-      playerInId: subInId,
-      playerInName: playerIn.name,
-      minute: currentMinute,
-      timestamp: new Date().toISOString()
-    };
-
-    setMatchData(prev => ({
-      ...prev,
-      convocados: newCalled,
-      events: [...(prev.events || []), newEvent]
-    }));
-
-    setSubOutId('');
-    setSubInId('');
+    const success = makeSubstitution(subOutId, subInId, currentMinute);
+    if (success) {
+      const newCalled = [...calledPlayers];
+      const idxOut = newCalled.indexOf(subOutId);
+      const idxIn = newCalled.indexOf(subInId);
+      if (idxOut !== -1 && idxIn !== -1) {
+        newCalled[idxOut] = subInId;
+        newCalled[idxIn] = subOutId;
+        setCalledPlayers(newCalled);
+      }
+      setSubOutId('');
+      setSubInId('');
+    } else {
+      alert("Error al realizar la sustitución. Verifica la convocatoria.");
+    }
   };
 
   const handleRemoveEvent = (eventIdx) => {
-    const event = matchData.events && matchData.events[eventIdx];
-    if (!event) return;
-
-    setMatchData(prev => {
-      let updatedGoalsFor = prev.goalsFor || 0;
-      let updatedGoalsAgainst = prev.goalsAgainst || 0;
-      let updatedGoleadores = [...(prev.goleadoresList || [])];
-      let updatedTarjetas = [...(prev.tarjetasList || [])];
-
-      if (event.type === 'gol_local') {
-        updatedGoalsFor = Math.max(0, updatedGoalsFor - 1);
-        updatedGoleadores = updatedGoleadores.filter(g => !(g.jugadorId === event.playerId && g.minuto === event.minute.toString()));
-      } else if (event.type === 'gol_rival') {
-        updatedGoalsAgainst = Math.max(0, updatedGoalsAgainst - 1);
-      } else if (event.type === 'amarilla' || event.type === 'roja') {
-        updatedTarjetas = updatedTarjetas.filter(t => !(t.jugadorId === event.playerId && t.tipo === event.type && t.minuto === event.minute.toString()));
-      }
-
-      const updatedEvents = (prev.events || []).filter((_, idx) => idx !== eventIdx);
-
-      return {
-        ...prev,
-        goalsFor: updatedGoalsFor,
-        goalsAgainst: updatedGoalsAgainst,
-        goleadoresList: updatedGoleadores,
-        tarjetasList: updatedTarjetas,
-        events: updatedEvents
-      };
-    });
+    removeEvent(eventIdx);
   };
 
   const getLangText = (key) => {
@@ -458,8 +414,14 @@ const Partidos = () => {
   };
 
   const handleResetPositions = () => {
+    const currentLineup = matchData.lineup || '4-3-3';
+    const slots = getFormationPositions(currentLineup);
+    const newCalled = alignStartersByPosition(calledPlayers, players, slots);
+    setCalledPlayers(newCalled);
+
     setMatchData(prev => ({
       ...prev,
+      convocados: newCalled,
       customPositions: {},
       customRoles: {}
     }));
@@ -470,7 +432,7 @@ const Partidos = () => {
     if (matchData.customRoles && matchData.customRoles[idx]) {
       return matchData.customRoles[idx];
     }
-    const defaultForm = FORMATIONS[matchData.lineup || '4-3-3'] || FORMATIONS['4-3-3'];
+    const defaultForm = getFormationPositions(matchData.lineup || '4-3-3');
     return defaultForm[idx]?.pos || 'DEF';
   };
 
@@ -776,7 +738,7 @@ const Partidos = () => {
               <button 
                 key={tab} 
                 className={`e-tab ${editTab === tab ? 'active' : ''}`}
-                onClick={() => setEditTab(tab)}
+                onClick={() => handleTabChange(tab)}
               >
                 {tab}
               </button>
@@ -915,12 +877,39 @@ const Partidos = () => {
               <div className="tab-pane alineacion-layout">
                 <div className="alin-sidebar">
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                    <label style={{ fontSize: '11px', fontWeight: '800', color: 'var(--partidos-text-muted)' }}>FORMACIÓN TÁCTICA</label>
-                    <select className="partidos-input" value={matchData.lineup || '4-3-3'} onChange={e => setMatchData({...matchData, lineup: e.target.value})}>
-                      <option value="4-3-3">4-3-3</option>
-                      <option value="4-4-2">4-4-2</option>
-                      <option value="3-5-2">3-5-2</option>
-                    </select>
+                    <FormationSelector
+                      activeFormation={matchData.lineup || '4-3-3'}
+                      onSelect={(formationName, isCustom, customObj) => {
+                        setMatchData(prev => ({
+                          ...prev,
+                          lineup: formationName
+                        }));
+                        const slots = isCustom ? customObj.positions : PREDEFINED_FORMATIONS[formationName];
+                        if (slots) {
+                          const newCalled = alignStartersByPosition(calledPlayers, players, slots);
+                          setCalledPlayers(newCalled);
+                          setMatchData(prev => ({ ...prev, convocados: newCalled }));
+                        }
+                      }}
+                      onNewFormation={() => {
+                        setEditingCustomFormation(null);
+                        setIsCustomModalOpen(true);
+                      }}
+                      onEditFormation={(f) => {
+                        setEditingCustomFormation(f);
+                        setIsCustomModalOpen(true);
+                      }}
+                      onDeleteFormation={async (id) => {
+                        try {
+                          await deleteCustomFormation(id);
+                          if (matchData.lineup === id) {
+                            setMatchData(prev => ({ ...prev, lineup: '4-3-3' }));
+                          }
+                        } catch (err) {
+                          alert("Error al eliminar la formación.");
+                        }
+                      }}
+                    />
                     <button type="button" className="btn-reset-layout" onClick={handleResetPositions}>
                       🔄 Restablecer Campo
                     </button>
@@ -946,7 +935,7 @@ const Partidos = () => {
                             <span className="slot-role" style={{ fontSize: '9px', marginBottom: '1px' }}>{posName}</span>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
                               <span className="slot-num" style={{ fontSize: '12px', fontWeight: '900', width: 'auto', color: 'var(--partidos-gold)' }}>{player ? player.number : '-'}</span>
-                              <span className="slot-name" style={{ fontSize: '11px', fontWeight: '700', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '70px' }}>{player ? player.name.split(' ')[0] : 'Vacío'}</span>
+                              <span className="slot-name" style={{ fontSize: '11px', fontWeight: '700', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '140px' }}>{player ? player.name : 'Vacío'}</span>
                             </div>
                           </div>
                         );
@@ -974,7 +963,7 @@ const Partidos = () => {
                             <span className="slot-role" style={{ fontSize: '9px', background: 'rgba(212,168,67,0.1)', color: 'var(--partidos-gold)', marginBottom: '1px' }}>SUP</span>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
                               <span className="slot-num" style={{ fontSize: '12px', fontWeight: '900', width: 'auto', color: 'var(--partidos-gold)' }}>{player ? player.number : '-'}</span>
-                              <span className="slot-name" style={{ fontSize: '11px', fontWeight: '700', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '70px' }}>{player ? player.name.split(' ')[0] : 'Vacío'}</span>
+                              <span className="slot-name" style={{ fontSize: '11px', fontWeight: '700', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '140px' }}>{player ? player.name : 'Vacío'}</span>
                             </div>
                           </div>
                         );
@@ -1026,7 +1015,7 @@ const Partidos = () => {
                       <div className="pitch-corner bottom-right"></div>
                     </div>
                     
-                    {(FORMATIONS[matchData.lineup || '4-3-3'] || FORMATIONS['4-3-3']).map((pos, idx) => {
+                    {getFormationPositions(matchData.lineup || '4-3-3').map((pos, idx) => {
                       const pid = calledPlayers[idx];
                       const player = pid ? players.find(p => p.id === pid) : null;
                       const customPos = matchData.customPositions && matchData.customPositions[idx];
@@ -1040,6 +1029,7 @@ const Partidos = () => {
                           key={idx} 
                           className={`pitch-player ${player ? '' : 'empty-slot'} ${isSelected ? 'selected-swap' : ''}`}
                           style={{ top: topPos, left: leftPos, transform: 'translate(-50%, -50%)', zIndex: draggingIdx === idx ? 20 : isSelected ? 15 : 10 }}
+                          title={player ? `Jugador: ${player.name}\nDorsal: ${player.number}\nPosición: ${player.position}` : 'Slot Vacío'}
                         >
                           <div 
                             className="pp-circle-wrapper"
@@ -1051,9 +1041,6 @@ const Partidos = () => {
                             </div>
                             <span className="pp-badge">{posLabel}</span>
                           </div>
-                          <span className="pp-name">
-                            {player ? player.name.split(' ')[0] : 'Vacío'}
-                          </span>
                         </div>
                       );
                     })}
@@ -1717,6 +1704,46 @@ const Partidos = () => {
           </div>
         </div>
       )}
+
+      {/* MODAL DE FORMACIÓN PERSONALIZADA */}
+      <CustomFormationModal
+        isOpen={isCustomModalOpen}
+        onClose={() => {
+          setIsCustomModalOpen(false);
+          setEditingCustomFormation(null);
+        }}
+        editFormation={editingCustomFormation}
+        onSave={async (formationData) => {
+          try {
+            let savedName = formationData.name;
+            if (editingCustomFormation) {
+              await updateCustomFormation(editingCustomFormation.id, formationData);
+            } else {
+              await addCustomFormation(formationData);
+            }
+
+            // Auto-seleccionar y auto-alinear
+            setMatchData(prev => ({
+              ...prev,
+              lineup: savedName
+            }));
+
+            const newCalled = alignStartersByPosition(calledPlayers, players, formationData.positions);
+            setCalledPlayers(newCalled);
+            setMatchData(prev => ({
+              ...prev,
+              convocados: newCalled,
+              lineup: savedName
+            }));
+
+            setIsCustomModalOpen(false);
+            setEditingCustomFormation(null);
+          } catch (err) {
+            console.error("Error saving custom formation:", err);
+            alert("Error al guardar la formación personalizada.");
+          }
+        }}
+      />
 
     </div>
   );

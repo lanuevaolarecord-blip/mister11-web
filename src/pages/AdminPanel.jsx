@@ -43,6 +43,7 @@ import EscudoEquipo from '../components/EscudoEquipo';
 import RedeemCode from '../components/RedeemCode';
 import ExerciseLibrary from '../components/ExerciseLibrary';
 import UpgradeModal from '../components/UpgradeModal';
+import ClubManagement from '../components/ClubManagement';
 import './AdminPanel.css';
 
 const AdminPanel = () => {
@@ -75,91 +76,7 @@ const AdminPanel = () => {
   const [newTeamSource, setNewTeamSource] = useState('personal');
   const [loadingPortal, setLoadingPortal] = useState(false);
 
-  const [inviteEmail, setInviteEmail] = useState('');
-  const [generatedLink, setGeneratedLink] = useState('');
-  const [selectedCoachForTeams, setSelectedCoachForTeams] = useState(null);
-  const [coachSelectedTeams, setCoachSelectedTeams] = useState([]);
 
-
-
-  const handleInviteCoach = async (e) => {
-    e.preventDefault();
-    if (!inviteEmail || !clubId) return;
-
-    try {
-      const token = `inv_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-      const newCoach = {
-        email: inviteEmail.trim().toLowerCase(),
-        role: 'coach',
-        status: 'pending_invite',
-        inviteToken: token,
-        assignedTeams: []
-      };
-
-      const updatedCoaches = [...(club?.coaches || []), newCoach];
-      await updateDoc(doc(db, 'clubs', clubId), {
-        coaches: updatedCoaches
-      });
-
-      const invRef = doc(db, 'invitations', token);
-      await setDoc(invRef, {
-        id: token,
-        clubId: clubId,
-        clubName: club?.name || 'Club',
-        email: inviteEmail.trim().toLowerCase(),
-        role: 'coach',
-        status: 'pending',
-        createdAt: new Date().toISOString()
-      });
-
-      const link = `${window.location.origin}/accept-invitation?token=${token}`;
-      setGeneratedLink(link);
-      setInviteEmail('');
-      showToast("Invitación generada con éxito.", "success");
-    } catch (err) {
-      console.error("Error inviting coach:", err);
-      showToast("Error al generar la invitación.", "error");
-    }
-  };
-
-  const handleSaveCoachTeams = async (coachEmail, coachUid, selectedTeams) => {
-    if (!clubId) return;
-    try {
-      const updatedCoaches = (club?.coaches || []).map(c => {
-        if (c.email === coachEmail) {
-          return { ...c, assignedTeams: selectedTeams };
-        }
-        return c;
-      });
-      await updateDoc(doc(db, 'clubs', clubId), { coaches: updatedCoaches });
-
-      if (coachUid) {
-        for (const team of teams) {
-          const teamRef = doc(db, 'clubs', clubId, 'teams', team.id);
-          if (selectedTeams.includes(team.id)) {
-            await updateDoc(teamRef, {
-              assignedCoaches: arrayUnion(coachUid)
-            });
-          } else {
-            const teamSnap = await getDoc(teamRef);
-            if (teamSnap.exists()) {
-              const tData = teamSnap.data();
-              const currentCoaches = tData.assignedCoaches || [];
-              if (currentCoaches.includes(coachUid)) {
-                await updateDoc(teamRef, {
-                  assignedCoaches: currentCoaches.filter(id => id !== coachUid)
-                });
-              }
-            }
-          }
-        }
-      }
-      showToast("Equipos asignados correctamente.", "success");
-    } catch (err) {
-      console.error("Error saving coach teams:", err);
-      showToast("Error al asignar equipos.", "error");
-    }
-  };
 
   const handleManageSubscription = async () => {
     const activeUid = localStorage.getItem('mister11_active_user_uid');
@@ -1355,11 +1272,6 @@ const AdminPanel = () => {
                   </div>
                 </div>
               </div>
-
-              {/* CANJE DE CÓDIGOS PROMOCIONALES */}
-              <RedeemCode />
-
-
             </div>
           </div>
         )}
@@ -1369,264 +1281,27 @@ const AdminPanel = () => {
           <div className="admin-section">
             <header className="section-header">
               <h2>Mi Club</h2>
-              <p>Gestiona los entrenadores, equipos y asignaciones de <strong>{club?.name || 'Cargando Club...'}</strong></p>
+              <p>Información y gestión de <strong>{club?.name || 'Cargando Club...'}</strong></p>
             </header>
 
-            <div className="settings-grid">
-              
-              {/* 1. SECCIÓN SUSCRIPCIÓN DEL CLUB */}
-              <div className="settings-card" style={{ gridColumn: '1 / -1' }}>
-                <div className="card-header-icon">
-                  <Sparkles size={20} style={{ color: 'var(--gold)' }} />
-                  <h3>Estado de Suscripción del Club</h3>
+            {clubRole === 'coach' ? (
+              <div className="settings-card" style={{ padding: '24px', textAlign: 'center', maxWidth: '600px', margin: '40px auto' }}>
+                <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '16px' }}>
+                  <Shield size={48} style={{ color: 'var(--primary-color)' }} />
                 </div>
-                <div style={{ padding: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '15px' }}>
-                  <div>
-                    <span className="plan-badge-large" style={{ background: 'rgba(33,150,243,0.15)', color: '#2196F3', borderColor: 'rgba(33,150,243,0.3)', marginRight: '10px', display: 'inline-block', fontWeight: 'bold' }}>
-                      PLAN CLUB ACTIVO
-                    </span>
-                    <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginTop: '8px' }}>
-                      Suscripción administrada centralizadamente por el propietario del club. Todos los miembros disfrutan de acceso Pro ilimitado.
-                    </p>
-                  </div>
-                  {clubRole === 'owner' && (
-                    <button className="btn-primary outline" onClick={handleManageSubscription} style={{ minHeight: '40px' }}>
-                      Gestionar Facturación
-                    </button>
-                  )}
-                </div>
+                <h3 style={{ fontSize: '1.2rem', marginBottom: '12px', fontWeight: 'bold', color: 'var(--text-primary)' }}>Cuenta de Entrenador</h3>
+                <p style={{ fontSize: '0.95rem', color: 'var(--text-secondary)', lineHeight: '1.6', margin: 0 }}>
+                  Eres entrenador en el club <strong>{club?.name || 'Cargando Club...'}</strong>. 
+                  Los equipos que te han sido asignados aparecerán automáticamente en tu selector de equipos en el encabezado. 
+                  Por favor, contacta con el administrador de tu organización para gestionar equipos, invitaciones o permisos.
+                </p>
               </div>
-
-              {/* 2. SECCIÓN ENTRENADORES */}
-              <div className="settings-card" style={{ flex: 1, minWidth: '320px' }}>
-                <div className="card-header-icon">
-                  <Users size={20} />
-                  <h3>Entrenadores de la Organización</h3>
-                </div>
-                <div style={{ padding: '20px' }}>
-                  {clubRole === 'owner' && (
-                    <form onSubmit={handleInviteCoach} style={{ marginBottom: '20px', borderBottom: '1px solid var(--border-color)', paddingBottom: '20px' }}>
-                      <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 'bold', marginBottom: '8px', color: 'var(--text-primary)' }}>
-                        Invitar Nuevo Entrenador (Email)
-                      </label>
-                      <div style={{ display: 'flex', gap: '10px' }}>
-                        <input 
-                          type="email" 
-                          placeholder="correo@ejemplo.com" 
-                          value={inviteEmail}
-                          onChange={(e) => setInviteEmail(e.target.value)}
-                          required
-                          style={{ flex: 1, padding: '10px', borderRadius: '8px', border: '1px solid var(--border-color)', background: 'var(--bg-card)', color: 'var(--text-primary)' }}
-                        />
-                        <button type="submit" className="btn-primary" style={{ padding: '0 15px', minHeight: '40px' }}>
-                          Generar Link
-                        </button>
-                      </div>
-                      
-                      {generatedLink && (
-                        <div style={{ marginTop: '12px', background: 'rgba(76,175,125,0.08)', border: '1px solid rgba(76,175,125,0.3)', borderRadius: '8px', padding: '12px' }}>
-                          <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '8px' }}>
-                            Comparte este enlace con el entrenador para que acepte la invitación:
-                          </p>
-                          <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
-                            <input 
-                              type="text" 
-                              readOnly 
-                              value={generatedLink}
-                              onClick={(e) => e.target.select()}
-                              style={{ flex: 1, padding: '8px', fontSize: '0.8rem', border: '1px solid var(--border-color)', borderRadius: '6px', background: 'var(--bg-card-secondary)', color: 'var(--text-primary)' }}
-                            />
-                            <button 
-                              type="button"
-                              className="btn-primary"
-                              onClick={() => {
-                                navigator.clipboard.writeText(generatedLink);
-                                showToast("¡Enlace copiado al portapapeles!", "success");
-                              }}
-                              style={{ padding: '8px 12px', fontSize: '0.8rem', minHeight: '32px' }}
-                            >
-                              Copiar
-                            </button>
-                          </div>
-                        </div>
-                      )}
-                    </form>
-                  )}
-
-                  {/* Listado de coaches */}
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                    {(club?.coaches || []).map((coach, idx) => (
-                      <div key={idx} style={{ 
-                        display: 'flex', 
-                        justifyContent: 'space-between', 
-                        alignItems: 'center', 
-                        padding: '12px', 
-                        border: '1px solid var(--border-color)', 
-                        borderRadius: '8px',
-                        background: 'var(--bg-card)' 
-                      }}>
-                        <div>
-                          <p style={{ fontWeight: '600', color: 'var(--text-primary)', fontSize: '0.9rem', margin: 0 }}>
-                            {coach.email}
-                          </p>
-                          <div style={{ display: 'flex', gap: '6px', marginTop: '4px', alignItems: 'center' }}>
-                            <span style={{ 
-                              padding: '2px 6px', 
-                              borderRadius: '4px', 
-                              fontSize: '0.7rem', 
-                              fontWeight: 'bold',
-                              background: coach.role === 'owner' ? 'rgba(76,175,125,0.15)' : 'rgba(33,150,243,0.15)',
-                              color: coach.role === 'owner' ? '#4CAF7D' : '#2196F3'
-                            }}>
-                              {coach.role === 'owner' ? 'Propietario' : 'Entrenador'}
-                            </span>
-                            <span style={{ 
-                              padding: '2px 6px', 
-                              borderRadius: '4px', 
-                              fontSize: '0.7rem', 
-                              fontWeight: 'bold',
-                              background: coach.status === 'active' ? 'rgba(76,175,125,0.15)' : 'rgba(255,165,0,0.15)',
-                              color: coach.status === 'active' ? '#4CAF7D' : '#FFA500'
-                            }}>
-                              {coach.status === 'active' ? 'Activo' : 'Pendiente'}
-                            </span>
-                          </div>
-                          {coach.role !== 'owner' && (
-                            <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginTop: '6px' }}>
-                              Equipos asignados: {coach.assignedTeams?.length || 0}
-                            </p>
-                          )}
-                        </div>
-
-                        {clubRole === 'owner' && coach.role !== 'owner' && (
-                          <button 
-                            className="btn-primary outline" 
-                            style={{ padding: '6px 12px', fontSize: '0.8rem', minHeight: '36px' }}
-                            onClick={() => {
-                              setSelectedCoachForTeams(coach);
-                              setCoachSelectedTeams(coach.assignedTeams || []);
-                            }}
-                          >
-                            Asignar
-                          </button>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-
-              {/* 3. SECCIÓN EQUIPOS DEL CLUB */}
-              <div className="settings-card" style={{ flex: 1, minWidth: '320px' }}>
-                <div className="card-header-icon">
-                  <Layers size={20} />
-                  <h3>Equipos de la Organización</h3>
-                </div>
-                <div style={{ padding: '20px' }}>
-                  {clubRole === 'owner' && (
-                    <button 
-                      className="btn-primary" 
-                      onClick={async () => {
-                        const name = window.prompt("Nombre del equipo:");
-                        if (!name) return;
-                        const category = window.prompt("Categoría (Ej. Juvenil A, Femenino Senior):", "General");
-                        const season = window.prompt("Temporada (Ej. 2026-27):", "2026-27");
-                        try {
-                          await addTeam({ nombre: name, categoria: category || 'General', temporada: season || '2026-27' }, 'club');
-                          showToast("Equipo del club creado correctamente.", "success");
-                        } catch (err) {
-                          console.error(err);
-                          showToast("Error al crear el equipo.", "error");
-                        }
-                      }}
-                      style={{ width: '100%', marginBottom: '20px', minHeight: '48px', fontWeight: 'bold' }}
-                    >
-                      + Crear Equipo del Club
-                    </button>
-                  )}
-
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                    {teams.map((team, idx) => (
-                      <div key={idx} style={{ 
-                        display: 'flex', 
-                        justifyContent: 'space-between', 
-                        alignItems: 'center', 
-                        padding: '10px 12px', 
-                        border: '1px solid var(--border-color)', 
-                        borderRadius: '8px',
-                        background: 'var(--bg-card)'
-                      }}>
-                        <div>
-                          <p style={{ fontWeight: '600', margin: 0, fontSize: '0.9rem', color: 'var(--text-primary)' }}>{team.nombre}</p>
-                          <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
-                            {team.categoria} · {team.temporada}
-                          </span>
-                        </div>
-                        <span style={{ fontSize: '0.8rem', color: '#2196F3', fontWeight: 'bold' }}>
-                          ID: {team.id}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-
-            </div>
+            ) : (
+              <ClubManagement />
+            )}
           </div>
         )}
       </div>
-
-      {/* Modal de Asignación de Equipos */}
-      {selectedCoachForTeams && (
-        <div className="modal-overlay" onClick={() => setSelectedCoachForTeams(null)}>
-          <div className="modal-content" style={{ maxWidth: '450px' }} onClick={e => e.stopPropagation()}>
-            <div className="modal-header">
-              <h2>Asignar Equipos</h2>
-              <button className="btn-close" onClick={() => setSelectedCoachForTeams(null)}>✕</button>
-            </div>
-            <div className="modal-body" style={{ padding: '20px' }}>
-              <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '15px' }}>
-                Selecciona los equipos a los que el entrenador <strong>{selectedCoachForTeams.email}</strong> tendrá acceso:
-              </p>
-              
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', maxHeight: '250px', overflowY: 'auto' }}>
-                {teams.map((team) => (
-                  <label key={team.id} style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px', border: '1px solid var(--border-color)', borderRadius: '8px', cursor: 'pointer', background: 'var(--bg-card)' }}>
-                    <input 
-                      type="checkbox" 
-                      checked={coachSelectedTeams.includes(team.id)}
-                      onChange={(e) => {
-                        if (e.target.checked) {
-                          setCoachSelectedTeams([...coachSelectedTeams, team.id]);
-                        } else {
-                          setCoachSelectedTeams(coachSelectedTeams.filter(id => id !== team.id));
-                        }
-                      }}
-                      style={{ width: '20px', height: '20px', cursor: 'pointer' }}
-                    />
-                    <div>
-                      <p style={{ fontWeight: '600', margin: 0, fontSize: '0.9rem', color: 'var(--text-primary)' }}>{team.nombre}</p>
-                      <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>{team.categoria}</span>
-                    </div>
-                  </label>
-                ))}
-              </div>
-            </div>
-            <div className="modal-footer" style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
-              <button className="btn-outline" onClick={() => setSelectedCoachForTeams(null)}>Cancelar</button>
-              <button 
-                className="btn-primary" 
-                onClick={async () => {
-                  await handleSaveCoachTeams(selectedCoachForTeams.email, selectedCoachForTeams.uid, coachSelectedTeams);
-                  setSelectedCoachForTeams(null);
-                }}
-              >
-                Guardar Cambios
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
       {/* Modal de Detalle de Ejercicio */}
       {selectedExerciseDetail && (
         <div className="modal-overlay" onClick={() => setSelectedExerciseDetail(null)}>

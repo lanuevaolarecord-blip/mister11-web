@@ -4,6 +4,8 @@ import { doc, getDoc } from 'firebase/firestore';
 import { useAuth } from './context/AuthContext';
 import { db } from './firebaseConfig';
 import { APP_VERSION } from './constants/appVersion';
+import { Capacitor } from '@capacitor/core';
+import { Browser } from '@capacitor/browser';
 
 import Layout from './components/Layout';
 import Dashboard from './pages/Dashboard';
@@ -132,9 +134,23 @@ function App() {
                   Recargar Web
                 </button>
                 {updateData.url && (
-                  <a href={updateData.url} target="_blank" rel="noopener noreferrer" className="btn-update-action download">
+                  <button
+                    className="btn-update-action download"
+                    onClick={async () => {
+                      if (Capacitor.isNativePlatform()) {
+                        try {
+                          await Browser.open({ url: updateData.url, presentationStyle: 'popover' });
+                        } catch (err) {
+                          console.error('Error opening browser:', err);
+                          window.open(updateData.url, '_blank');
+                        }
+                      } else {
+                        window.open(updateData.url, '_blank');
+                      }
+                    }}
+                  >
                     Descargar APK
-                  </a>
+                  </button>
                 )}
               </div>
             </div>

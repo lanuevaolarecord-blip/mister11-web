@@ -27,8 +27,20 @@ const Header = ({ onToggleNotif }) => {
 
   return (
     <header className="header" style={{ position: 'relative' }}>
-      <div className="header-central-shield-container">
-        <Shield fill="#1B3A2D" color="#D4A843" size={48} strokeWidth={1.5} />
+      <div className="header-central-shield-container" style={{ cursor: 'pointer' }} onClick={() => navigate('/admin')}>
+        {activeTeam?.escudo ? (
+          <img 
+            src={activeTeam.escudo} 
+            alt="Escudo" 
+            style={{ width: '45px', height: '45px', objectFit: 'contain', borderRadius: '50%' }} 
+          />
+        ) : (
+          <img 
+            src="/logo_mister11.png" 
+            alt="Míster11" 
+            style={{ width: '45px', height: '45px', objectFit: 'contain' }} 
+          />
+        )}
       </div>
 
       <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>

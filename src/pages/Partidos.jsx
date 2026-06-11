@@ -915,10 +915,10 @@ const Partidos = () => {
                     </button>
                   </div>
 
-                  {/* XI Titular - en dos columnas */}
+                  {/* XI Titular - en una sola columna para nombre completo */}
                   <div>
                     <h4 style={{margin: '8px 0'}}>XI Titular <span style={{fontSize:'12px', fontWeight:'normal', color:'var(--partidos-text-muted)'}}>({calledPlayers.slice(0,11).filter(Boolean).length}/11)</span></h4>
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '5px' }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '6px' }}>
                       {Array.from({ length: 11 }).map((_, idx) => {
                         const pid = calledPlayers[idx];
                         const player = pid ? players.find(p => p.id === pid) : null;
@@ -930,23 +930,23 @@ const Partidos = () => {
                             key={`starter-${idx}`} 
                             className={`alin-player-item ${player ? '' : 'empty-slot'} ${isSelected ? 'selected-swap' : ''}`}
                             onClick={() => handleSlotClick(idx)}
-                            style={{ flexDirection: 'column', alignItems: 'flex-start', padding: '6px 8px', gap: '2px', cursor: 'pointer' }}
+                            style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: '10px 14px', gap: '10px', cursor: 'pointer', minWidth: 0 }}
                           >
-                            <span className="slot-role" style={{ fontSize: '9px', marginBottom: '1px' }}>{posName}</span>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-                              <span className="slot-num" style={{ fontSize: '12px', fontWeight: '900', width: 'auto', color: 'var(--partidos-gold)' }}>{player ? player.number : '-'}</span>
-                              <span className="slot-name" style={{ fontSize: '11px', fontWeight: '700', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '140px' }}>{player ? player.name : 'Vacío'}</span>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', minWidth: 0, flex: 1 }}>
+                              <span className="slot-num" style={{ fontSize: '14px', fontWeight: '900', color: 'var(--partidos-gold)', minWidth: '20px' }}>{player ? player.number : '-'}</span>
+                              <span className="slot-name" style={{ fontSize: '13px', fontWeight: '700', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1, minWidth: 0 }}>{player ? player.name : 'Vacío'}</span>
                             </div>
+                            <span className="slot-role" style={{ fontSize: '10px', padding: '3px 8px', borderRadius: '4px', background: 'rgba(0,0,0,0.06)', color: 'var(--partidos-text-muted)', fontWeight: '800' }}>{posName}</span>
                           </div>
                         );
                       })}
                     </div>
                   </div>
 
-                  {/* Suplentes - en dos columnas */}
+                  {/* Suplentes - en una sola columna para nombre completo */}
                   <div>
                     <h4 style={{margin: '8px 0'}}>Suplentes <span style={{fontSize:'12px', fontWeight:'normal', color:'var(--partidos-text-muted)'}}>({calledPlayers.slice(11).filter(Boolean).length}/7)</span></h4>
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '5px' }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '6px' }}>
                       {Array.from({ length: 7 }).map((_, subIdx) => {
                         const idx = 11 + subIdx;
                         const pid = calledPlayers[idx];
@@ -958,13 +958,13 @@ const Partidos = () => {
                             key={`sub-${idx}`} 
                             className={`alin-player-item ${player ? '' : 'empty-slot'} ${isSelected ? 'selected-swap' : ''}`}
                             onClick={() => handleSlotClick(idx)}
-                            style={{ flexDirection: 'column', alignItems: 'flex-start', padding: '6px 8px', gap: '2px', cursor: 'pointer' }}
+                            style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: '10px 14px', gap: '10px', cursor: 'pointer', minWidth: 0 }}
                           >
-                            <span className="slot-role" style={{ fontSize: '9px', background: 'rgba(212,168,67,0.1)', color: 'var(--partidos-gold)', marginBottom: '1px' }}>SUP</span>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-                              <span className="slot-num" style={{ fontSize: '12px', fontWeight: '900', width: 'auto', color: 'var(--partidos-gold)' }}>{player ? player.number : '-'}</span>
-                              <span className="slot-name" style={{ fontSize: '11px', fontWeight: '700', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '140px' }}>{player ? player.name : 'Vacío'}</span>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', minWidth: 0, flex: 1 }}>
+                              <span className="slot-num" style={{ fontSize: '14px', fontWeight: '900', color: 'var(--partidos-gold)', minWidth: '20px' }}>{player ? player.number : '-'}</span>
+                              <span className="slot-name" style={{ fontSize: '13px', fontWeight: '700', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1, minWidth: 0 }}>{player ? player.name : 'Vacío'}</span>
                             </div>
+                            <span className="slot-role" style={{ fontSize: '10px', padding: '3px 8px', borderRadius: '4px', background: 'rgba(212,168,67,0.1)', color: 'var(--partidos-gold)', fontWeight: '800' }}>SUP</span>
                           </div>
                         );
                       })}

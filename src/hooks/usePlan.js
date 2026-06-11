@@ -34,7 +34,7 @@ export const DEVELOPER_EMAILS = [
 ];
 
 export const usePlan = () => {
-  const { user, activeTeamId, clubId, clubRole, isClubMember, club } = useAuth();
+  const { user, activeTeamId, clubId, clubRole, isClubMember, club, teams } = useAuth();
   const [dbPlan, setDbPlan] = useState('free');
   const [dbProExpiration, setDbProExpiration] = useState(null);
   const [dbTrialStartDate, setDbTrialStartDate] = useState(null);
@@ -74,27 +74,38 @@ export const usePlan = () => {
       return;
     }
 
-    const unsub = onSnapshot(doc(db, 'users', user.uid, 'teams', activeTeamId), (docSnap) => {
-      if (docSnap.exists()) {
-        const data = docSnap.data();
-        setDbPlan(data.plan || 'free');
-        setDbProExpiration(data.proExpiration || null);
-        // trialStartDate comes from Firestore (server-side, tamper-proof)
-        if (data.trialStartDate) {
-          setDbTrialStartDate(typeof data.trialStartDate.toDate === 'function' ? data.trialStartDate.toDate() : new Date(data.trialStartDate));
+    const activeTeam = teams?.find(t => t.id === activeTeamId);
+    const isActiveTeamClub = activeTeam?.source === 'club';
+
+    let unsub = () => {};
+
+    if (isActiveTeamClub) {
+      setDbPlan('free');
+      setDbProExpiration(null);
+      setDbTrialStartDate(null);
+      setLoading(false);
+    } else {
+      unsub = onSnapshot(doc(db, 'users', user.uid, 'teams', activeTeamId), (docSnap) => {
+        if (docSnap.exists()) {
+          const data = docSnap.data();
+          setDbPlan(data.plan || 'free');
+          setDbProExpiration(data.proExpiration || null);
+          if (data.trialStartDate) {
+            setDbTrialStartDate(typeof data.trialStartDate.toDate === 'function' ? data.trialStartDate.toDate() : new Date(data.trialStartDate));
+          } else {
+            setDbTrialStartDate(null);
+          }
         } else {
+          setDbPlan('free');
+          setDbProExpiration(null);
           setDbTrialStartDate(null);
         }
-      } else {
-        setDbPlan('free');
-        setDbProExpiration(null);
-        setDbTrialStartDate(null);
-      }
-      setLoading(false);
-    }, (err) => {
-      console.error("Error loading plan:", err);
-      setLoading(false);
-    });
+        setLoading(false);
+      }, (err) => {
+        console.error("Error loading plan:", err);
+        setLoading(false);
+      });
+    }
 
     const subsRef = collection(db, 'customers', user.uid, 'subscriptions');
     const unsubSubs = onSnapshot(subsRef, (snapshot) => {
@@ -123,10 +134,10 @@ export const usePlan = () => {
     });
 
     return () => {
-      unsub();
+      if (typeof unsub === 'function') unsub();
       unsubSubs();
     };
-  }, [user, activeTeamId]);
+  }, [user, activeTeamId, teams]);
 
   const toggleSimulatedPlan = () => {
     // For developers: toggle between showing PRO UI vs FREE UI (simulation only)
@@ -163,27 +174,28 @@ export const usePlan = () => {
   const activeExpiration = dbProExpiration || stripeProExpiration;
   const isRealExpired = activeExpiration && (typeof activeExpiration.toDate === 'function' ? activeExpiration.toDate() : new Date(activeExpiration)) < now;
   
+  const activeTeam = teams?.find(t => t.id === activeTeamId) || null;
+  const isActiveTeamClub = activeTeam?.source === 'club';
+
   const isClubActive = isClubMember && club && club.status === 'active';
   
-  const currentPlan = isClubActive ? 'club' : (dbPlan === 'pro' || dbPlan === 'club' ? dbPlan : stripeActivePlan);
+  // Lógica del plan individual del usuario
+  const currentPlan = dbPlan === 'pro' || dbPlan === 'club' ? dbPlan : stripeActivePlan;
   const isRealPro = (currentPlan === 'pro' || currentPlan === 'club') && !isRealExpired;
+  const isOnTrial = (dbPlan === 'trial') && !isTrialExpired && !isRealPro;
 
-  const isOnTrial = (dbPlan === 'trial') && !isTrialExpired && !isRealPro && !isClubActive;
+  // isPro depende de si es un equipo del club (entonces depende de isClubActive) o personal (depende del plan individual)
+  const isPro = isDeveloper || (isActiveTeamClub ? isClubActive : (isRealPro || isOnTrial));
 
-  // isRealPaidPro = true ONLY when there is a real paid Stripe subscription (not simulated, not trial)
-  const isRealPaidPro = isRealPro || isClubActive;
+  // isRealPaidPro = true si hay una suscripción de pago real en el contexto activo
+  const isRealPaidPro = isDeveloper || (isActiveTeamClub ? isClubActive : isRealPro);
 
   // Developers always have full PRO access — simulation is UI-only for testing UX
   // isSimulatingFree = developer is deliberately testing free-plan UI (doesn't remove access)
   const isSimulatingFree = isDeveloper && simulatedPlan === 'free';
 
-  // --- Final PRO status ---
-  // Developers ALWAYS get isPro=true (lifetime unlimited access)
-  // For regular users: trial or real paid plan grants PRO
-  const isPro = isDeveloper || isRealPro || isOnTrial || isClubActive;
-
-  // currentLimits: developers always get CLUB/PRO limits.
-  const isClub = isDeveloper || currentPlan === 'club' || isClubActive;
+  // Límites según el tipo de equipo activo
+  const isClub = isDeveloper || (isActiveTeamClub && isClubActive);
   const currentLimits = isClub ? LIMITS.CLUB : (isPro ? LIMITS.PRO : LIMITS.FREE);
 
   // isProActive: for legacy compatibility — same as isPro

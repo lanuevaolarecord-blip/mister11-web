@@ -3,7 +3,6 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { useTeams } from '../hooks/useTeams';
 import { ChevronDown, Sun, Moon, Bell, Settings, Shield } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
-import ModeSwitcher from './ModeSwitcher';
 
 const Header = ({ onToggleNotif }) => {
   const location = useLocation();
@@ -47,8 +46,6 @@ const Header = ({ onToggleNotif }) => {
       <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
         <h1 style={{ fontFamily: 'var(--font-heading)', fontSize: '24px', margin: 0, letterSpacing: '1px' }}>{getPageTitle()}</h1>
         
-        <ModeSwitcher />
-        
         {teams.length > 0 && (
           <div className="team-switcher-header-v2">
             <Shield fill="#1B3A2D" color="#FFF" size={16} />
@@ -63,7 +60,13 @@ const Header = ({ onToggleNotif }) => {
               {teams.map(t => {
                 if (!t) return null;
                 const teamName = t.nombre || t.name || 'MI EQUIPO';
-                return <option key={t.id} value={t.id}>{teamName.toUpperCase()}</option>
+                const prefix = t.source === 'club' ? `🏢 ${t.clubName || 'Club'} - ` : '👤 ';
+                const label = `${prefix}${teamName}`;
+                return (
+                  <option key={t.id} value={t.id} style={{ color: '#000' }}>
+                    {label.toUpperCase()}
+                  </option>
+                );
               })}
             </select>
             <ChevronDown size={14} />

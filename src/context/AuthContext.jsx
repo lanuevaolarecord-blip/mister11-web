@@ -12,10 +12,10 @@ export const AuthProvider = ({ children }) => {
   const [club, setClub] = useState(null);
   const [loading, setLoading] = useState(true);
   const [activeTeamId, setActiveTeamId] = useState(null);
-  const [teams, setTeams] = useState([]);
-  const [currentMode, setCurrentMode] = useState(() => {
-    return localStorage.getItem('mister11_current_mode') || 'pro';
-  });
+  const [personalTeams, setPersonalTeams] = useState([]);
+  const [personalTeamsLoaded, setPersonalTeamsLoaded] = useState(false);
+  const [clubTeams, setClubTeams] = useState([]);
+  const [clubTeamsLoaded, setClubTeamsLoaded] = useState(false);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
@@ -34,7 +34,10 @@ export const AuthProvider = ({ children }) => {
         });
         if (!user || user.uid !== 'invitado-local') {
           setActiveTeamId(null);
-          setTeams([]);
+          setPersonalTeams([]);
+          setPersonalTeamsLoaded(false);
+          setClubTeams([]);
+          setClubTeamsLoaded(false);
           setUserProfile(null);
           setClub(null);
           setLoading(false);
@@ -80,191 +83,204 @@ export const AuthProvider = ({ children }) => {
     return () => unsubUser();
   }, [user]);
 
-  // Si el usuario no tiene clubId, forzar modo 'pro'
+  // Escuchar los equipos personales en Firestore
   useEffect(() => {
-    if (userProfile && !userProfile.clubId && currentMode !== 'pro') {
-      setCurrentMode('pro');
-      localStorage.setItem('mister11_current_mode', 'pro');
+    if (!user) {
+      setPersonalTeams([]);
+      setPersonalTeamsLoaded(false);
+      return;
     }
-  }, [userProfile, currentMode]);
-
-  // Escuchar el club del usuario en Firestore
-  useEffect(() => {
-    if (!user || !userProfile || !userProfile.clubId) {
-      setClub(null);
+    if (user.uid === 'invitado-local') {
+      setPersonalTeamsLoaded(true);
       return;
     }
 
-    const unsubClub = onSnapshot(doc(db, 'clubs', userProfile.clubId), (docSnap) => {
-      if (docSnap.exists()) {
-        setClub(docSnap.data());
+    const q = query(collection(db, 'users', user.uid, 'teams'));
+    const unsubPersonal = onSnapshot(q, (snapshot) => {
+      const list = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data(),
+        source: 'personal'
+      }));
+      setPersonalTeams(list);
+      setPersonalTeamsLoaded(true);
+    }, (err) => {
+      console.error("Error loading personal teams:", err);
+      setPersonalTeamsLoaded(true);
+    });
+
+    return () => unsubPersonal();
+  }, [user]);
+
+  // Escuchar los equipos del club en Firestore (solo si el club está activo)
+  useEffect(() => {
+    if (!user || user.uid === 'invitado-local') {
+      setClubTeams([]);
+      setClubTeamsLoaded(true);
+      return;
+    }
+
+    const clubId = userProfile?.clubId;
+    if (!clubId) {
+      setClubTeams([]);
+      setClubTeamsLoaded(true);
+      return;
+    }
+
+    // Si el club existe pero no está activo, detenemos la suscripción y vaciamos
+    if (club && club.status !== 'active') {
+      setClubTeams([]);
+      setClubTeamsLoaded(true);
+      return;
+    }
+
+    // Esperar a que el club esté cargado para saber coaches/assignedTeams
+    if (!club) {
+      return;
+    }
+
+    const coaches = club.coaches || [];
+    const coachInfo = coaches.find(c => c.uid === user.uid);
+    const isOwner = userProfile?.clubRole === 'owner';
+    const assignedTeams = coachInfo?.assignedTeams || [];
+
+    const teamsRef = collection(db, 'clubs', clubId, 'teams');
+    const unsubClub = onSnapshot(teamsRef, (snapshot) => {
+      const allTeams = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data(),
+        source: 'club',
+        clubName: club.name || 'Club'
+      }));
+      
+      let filteredTeams;
+      if (isOwner) {
+        filteredTeams = allTeams;
       } else {
-        setClub(null);
+        filteredTeams = allTeams.filter(t => assignedTeams.includes(t.id));
       }
+      setClubTeams(filteredTeams);
+      setClubTeamsLoaded(true);
+    }, (err) => {
+      console.error("Error loading club teams:", err);
+      setClubTeamsLoaded(true);
     });
 
     return () => unsubClub();
-  }, [user, userProfile]);
+  }, [user, userProfile, club]);
 
-  // Escuchar los equipos (usuario o club) en Firestore
+  // Combinar ambas listas de equipos de forma reactiva
+  const teams = useMemo(() => {
+    if (user && user.uid === 'invitado-local') {
+      return [{
+        id: 'team-invitado',
+        nombre: 'FC Invitado',
+        name: 'FC Invitado',
+        categoria: 'Juvenil',
+        category: 'Juvenil',
+        temporada: '2025-26',
+        colorLocal: '#10B981',
+        colorVisitante: '#059669',
+        color: '#10B981',
+        escudo: ''
+      }];
+    }
+    return [...personalTeams, ...clubTeams];
+  }, [user, personalTeams, clubTeams]);
+
+  // Selección de equipo activo y creación de equipo por defecto
   useEffect(() => {
-    if (!user || user.uid === 'invitado-local') return;
-
-    let unsubTeams = () => {};
-
-    const handleActiveTeamSelection = (teamList) => {
-      const storageKey = currentMode === 'club' ? 'mister11_active_team_club' : 'mister11_active_team_pro';
-      const savedTeamId = localStorage.getItem(storageKey);
-      if (teamList.length > 0) {
-        if (savedTeamId && teamList.find(t => t.id === savedTeamId)) {
-          setActiveTeamId(savedTeamId);
-          localStorage.setItem('mister11_active_team', savedTeamId);
-        } else {
-          setActiveTeamId(teamList[0].id);
-          localStorage.setItem(storageKey, teamList[0].id);
-          localStorage.setItem('mister11_active_team', teamList[0].id);
-        }
-      } else {
-        setActiveTeamId(null);
-      }
+    if (!user) return;
+    if (user.uid === 'invitado-local') {
+      setActiveTeamId('team-invitado');
       setLoading(false);
-    };
-
-    const isClub = currentMode === 'club' && userProfile && userProfile.clubId;
-
-    if (isClub) {
-      const clubId = userProfile.clubId;
-      const coaches = club?.coaches || [];
-      const coachInfo = coaches.find(c => c.uid === user.uid);
-      const isOwner = userProfile.clubRole === 'owner';
-      const assignedTeams = coachInfo?.assignedTeams || [];
-
-      const teamsRef = collection(db, 'clubs', clubId, 'teams');
-      unsubTeams = onSnapshot(teamsRef, (snapshot) => {
-        const allTeams = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        let filteredTeams;
-        if (isOwner) {
-          filteredTeams = allTeams;
-        } else {
-          filteredTeams = allTeams.filter(t => assignedTeams.includes(t.id));
-        }
-        setTeams(filteredTeams);
-        handleActiveTeamSelection(filteredTeams);
-      }, (err) => {
-        console.error("Error loading club teams:", err);
-        setLoading(false);
-      });
-    } else {
-      // Entrenador individual
-      const q = query(collection(db, 'users', user.uid, 'teams'));
-      unsubTeams = onSnapshot(q, (snapshot) => {
-        const teamList = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        setTeams(teamList);
-        
-        if (teamList.length > 0) {
-          handleActiveTeamSelection(teamList);
-        } else {
-          // Si el usuario real no tiene ningún equipo, creamos uno por defecto automáticamente
-          const creatingKey = `mister11_creating_team_${user.uid}`;
-          if (!localStorage.getItem(creatingKey)) {
-            localStorage.setItem(creatingKey, 'true');
-            
-            const createDefaultTeam = async () => {
-              try {
-                const docRef = await addDoc(collection(db, 'users', user.uid, 'teams'), {
-                  nombre: 'Mi Equipo',
-                  categoria: 'General',
-                  temporada: '2025-26',
-                  createdAt: serverTimestamp()
-                });
-                
-                const storageKey = currentMode === 'club' ? 'mister11_active_team_club' : 'mister11_active_team_pro';
-                localStorage.setItem(storageKey, docRef.id);
-                localStorage.setItem('mister11_active_team', docRef.id);
-                setActiveTeamId(docRef.id);
-                
-                // Inyectar datos iniciales
-                await seedInitialData(docRef.id, user.uid);
-              } catch (err) {
-                console.error("Error al crear equipo por defecto para nuevo usuario:", err);
-              } finally {
-                localStorage.removeItem(creatingKey);
-                setLoading(false);
-              }
-            };
-            createDefaultTeam();
-          } else {
-            setActiveTeamId(null);
-            localStorage.removeItem('mister11_active_team');
-            setLoading(false);
-          }
-        }
-      }, (err) => {
-        console.error("Error loading user teams:", err);
-        setLoading(false);
-      });
+      return;
     }
 
-    return () => unsubTeams();
-  }, [user, userProfile, club, currentMode]);
+    // Esperar a que terminen de cargar ambos
+    if (!personalTeamsLoaded || !clubTeamsLoaded) {
+      return;
+    }
+
+    const combinedTeams = [...personalTeams, ...clubTeams];
+
+    if (combinedTeams.length > 0) {
+      const savedTeamId = localStorage.getItem('mister11_active_team');
+      if (savedTeamId && combinedTeams.some(t => t.id === savedTeamId)) {
+        setActiveTeamId(savedTeamId);
+      } else {
+        setActiveTeamId(combinedTeams[0].id);
+        localStorage.setItem('mister11_active_team', combinedTeams[0].id);
+      }
+      setLoading(false);
+    } else {
+      // Si el usuario no tiene ningún equipo (ni personal ni de club), creamos uno por defecto
+      const creatingKey = `mister11_creating_team_${user.uid}`;
+      if (!localStorage.getItem(creatingKey)) {
+        localStorage.setItem(creatingKey, 'true');
+        
+        const createDefaultTeam = async () => {
+          try {
+            const docRef = await addDoc(collection(db, 'users', user.uid, 'teams'), {
+              nombre: 'Mi Equipo',
+              categoria: 'General',
+              temporada: '2025-26',
+              source: 'personal',
+              createdAt: serverTimestamp()
+            });
+            
+            localStorage.setItem('mister11_active_team', docRef.id);
+            setActiveTeamId(docRef.id);
+            
+            // Inyectar datos iniciales
+            await seedInitialData(docRef.id, user.uid, `users/${user.uid}/teams/${docRef.id}`);
+          } catch (err) {
+            console.error("Error al crear equipo por defecto para nuevo usuario:", err);
+          } finally {
+            localStorage.removeItem(creatingKey);
+            setLoading(false);
+          }
+        };
+        createDefaultTeam();
+      } else {
+        setActiveTeamId(null);
+        setLoading(false);
+      }
+    }
+  }, [user, personalTeamsLoaded, clubTeamsLoaded, personalTeams, clubTeams]);
+
+  // Determinar de forma dinámica el modo actual (retrocompatibilidad)
+  const currentMode = useMemo(() => {
+    const activeTeam = teams.find(t => t.id === activeTeamId);
+    return activeTeam?.source === 'club' ? 'club' : 'pro';
+  }, [teams, activeTeamId]);
 
   const changeActiveTeam = useCallback((id) => {
     setActiveTeamId(id);
-    const storageKey = currentMode === 'club' ? 'mister11_active_team_club' : 'mister11_active_team_pro';
-    localStorage.setItem(storageKey, id);
     localStorage.setItem('mister11_active_team', id);
-  }, [currentMode]);
+  }, []);
 
   const toggleMode = useCallback(() => {
-    if (!userProfile?.clubId) return;
-    setCurrentMode(prev => {
-      const next = prev === 'club' ? 'pro' : 'club';
-      localStorage.setItem('mister11_current_mode', next);
-      return next;
-    });
-  }, [userProfile]);
+    // No-op (se eliminó el selector manual de modo)
+  }, []);
 
   const refreshTeam = useCallback(async () => {
-    if (!user || user.uid === 'invitado-local') return;
-    try {
-      const cId = userProfile?.clubId || localStorage.getItem('mister11_club_id');
-      if (currentMode === 'club' && cId) {
-        const coaches = club?.coaches || [];
-        const coachInfo = coaches.find(c => c.uid === user.uid);
-        const isOwner = userProfile?.clubRole === 'owner';
-        const assignedTeams = coachInfo?.assignedTeams || [];
-
-        const snapshot = await getDocs(collection(db, 'clubs', cId, 'teams'));
-        const allTeams = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        
-        let filteredTeams;
-        if (isOwner) {
-          filteredTeams = allTeams;
-        } else {
-          filteredTeams = allTeams.filter(t => assignedTeams.includes(t.id));
-        }
-        setTeams(filteredTeams);
-      } else {
-        const q = query(collection(db, 'users', user.uid, 'teams'));
-        const snapshot = await getDocs(q);
-        const teamList = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        setTeams(teamList);
-      }
-    } catch (err) {
-      console.error("Error refreshing teams:", err);
-    }
-  }, [user, userProfile, club, currentMode]);
+    // No-op (los listeners en tiempo real mantienen todo actualizado)
+  }, []);
 
   const getTeamPath = useCallback((teamId = activeTeamId) => {
     if (!user || user.uid === 'invitado-local') return '';
     const tId = teamId || activeTeamId;
     if (!tId) return '';
-    const cId = userProfile?.clubId || localStorage.getItem('mister11_club_id');
-    if (currentMode === 'club' && cId) {
+    
+    // Buscar el equipo en la lista unificada
+    const team = [...personalTeams, ...clubTeams].find(t => t.id === tId);
+    if (team?.source === 'club') {
+      const cId = userProfile?.clubId || localStorage.getItem('mister11_club_id');
       return `clubs/${cId}/teams/${tId}`;
     }
     return `users/${user.uid}/teams/${tId}`;
-  }, [user, userProfile, activeTeamId, currentMode]);
+  }, [user, userProfile, activeTeamId, personalTeams, clubTeams]);
 
   // Función centralizada para iniciar sesión en Modo Invitado
   const loginAsGuest = useCallback(async () => {

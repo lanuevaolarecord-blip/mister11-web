@@ -56,7 +56,7 @@ const AdminPanel = () => {
     }
   }, [location.state?.activeTab]);
 
-  const { user, getTeamPath, clubId, clubRole, isClubMember, club } = useAuth();
+  const { user, getTeamPath, clubId, clubRole, isClubMember, club, userProfile } = useAuth();
   const adminEmails = ['lanuevaolarecord@gmail.com', 'lavozdelformador@gmail.com', 'jhocao111294@gmail.com'];
   const isAdmin = user?.email && adminEmails.includes(user.email.toLowerCase());
   const { teams, activeTeam, addTeam, deleteTeam, selectTeam, updateTeam } = useTeams();
@@ -70,8 +70,9 @@ const AdminPanel = () => {
   const { players } = usePlayers(activeTeam?.id);
   const { sessions } = useSessions(activeTeam?.id);
   const { matches } = useMatches(activeTeam?.id);
-  const { isPro, toggleSimulatedPlan, simulatedPlan, isSimulatingFree, trialDaysRemaining, trialHoursRemaining, resetTrial, limits, isDeveloper, isProActive, isOnTrial, isTrialExpired, isRealPaidPro, dbPlan } = usePlan();
+  const { isPro, toggleSimulatedPlan, simulatedPlan, isSimulatingFree, trialDaysRemaining, trialHoursRemaining, resetTrial, limits, isDeveloper, isProActive, isOnTrial, isTrialExpired, isRealPaidPro, dbPlan, isClubActive } = usePlan();
   const [upgradeModal, setUpgradeModal] = useState({ open: false, message: '' });
+  const [newTeamSource, setNewTeamSource] = useState('personal');
   const [loadingPortal, setLoadingPortal] = useState(false);
 
   const [inviteEmail, setInviteEmail] = useState('');
@@ -357,12 +358,24 @@ const AdminPanel = () => {
 
   const handleAddTeam = async () => {
     if (!newTeam.nombre) return;
-    if (teams.length >= limits.TEAMS) {
-      setUpgradeModal({ open: true, message: `Has alcanzado el límite de ${limits.TEAMS} equipo(s) en tu plan actual.` });
-      return;
+    
+    if (newTeamSource === 'personal') {
+      const hasPersonalPro = isDeveloper || userProfile?.plan === 'pro' || dbPlan === 'pro';
+      const personalTeamsLimit = hasPersonalPro ? 3 : 1;
+      const personalTeamsCount = teams.filter(t => t.source === 'personal' || !t.source).length;
+      
+      if (personalTeamsCount >= personalTeamsLimit) {
+        setUpgradeModal({ 
+          open: true, 
+          message: `Has alcanzado el límite de ${personalTeamsLimit} equipo(s) personal(es) en tu plan individual. Contrata un plan Pro para crear más.` 
+        });
+        return;
+      }
     }
-    await addTeam(newTeam);
+    
+    await addTeam(newTeam, newTeamSource);
     setNewTeam({ nombre: '', categoria: '', temporada: '2025-26' });
+    setNewTeamSource('personal');
   };
 
   const handleSaveExercise = async () => {
@@ -621,20 +634,55 @@ const AdminPanel = () => {
 
             <div className="add-team-card">
               <h3>Nuevo Equipo</h3>
-              <div className="form-row">
-                <input 
-                  type="text" 
-                  placeholder="Nombre (ej. Infantil A)" 
-                  value={newTeam.nombre}
-                  onChange={e => setNewTeam({...newTeam, nombre: e.target.value})}
-                />
-                <input 
-                  type="text" 
-                  placeholder="Categoría" 
-                  value={newTeam.categoria}
-                  onChange={e => setNewTeam({...newTeam, categoria: e.target.value})}
-                />
-                <button className="btn-primary" onClick={handleAddTeam}><Plus size={18}/> Crear</button>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+                <div className="form-row" style={{ width: '100%' }}>
+                  <input 
+                    type="text" 
+                    placeholder="Nombre (ej. Infantil A)" 
+                    value={newTeam.nombre}
+                    onChange={e => setNewTeam({...newTeam, nombre: e.target.value})}
+                  />
+                  <input 
+                    type="text" 
+                    placeholder="Categoría" 
+                    value={newTeam.categoria}
+                    onChange={e => setNewTeam({...newTeam, categoria: e.target.value})}
+                  />
+                </div>
+                
+                {isClubActive && (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                    <label style={{ fontSize: '0.9rem', fontWeight: 'bold', color: 'var(--text-secondary)' }}>
+                      Destino del equipo:
+                    </label>
+                    <select
+                      value={newTeamSource}
+                      onChange={e => setNewTeamSource(e.target.value)}
+                      style={{
+                        padding: '10px 16px',
+                        borderRadius: '8px',
+                        border: '1px solid var(--border-color)',
+                        background: 'var(--bg-card)',
+                        color: 'var(--text-primary)',
+                        cursor: 'pointer',
+                        fontSize: '0.9rem',
+                        minHeight: '48px',
+                        fontWeight: '600'
+                      }}
+                    >
+                      <option value="personal">👤 Personal (Tu Cuenta)</option>
+                      <option value="club">🏢 Club (Organización)</option>
+                    </select>
+                  </div>
+                )}
+                
+                <button 
+                  className="btn-primary" 
+                  onClick={handleAddTeam}
+                  style={{ alignSelf: 'flex-end', minHeight: '48px', padding: '0 24px', fontWeight: 'bold' }}
+                >
+                  <Plus size={18}/> Crear
+                </button>
               </div>
             </div>
 
@@ -1550,7 +1598,7 @@ const AdminPanel = () => {
                         const category = window.prompt("Categoría (Ej. Juvenil A, Femenino Senior):", "General");
                         const season = window.prompt("Temporada (Ej. 2026-27):", "2026-27");
                         try {
-                          await addTeam({ nombre: name, categoria: category || 'General', temporada: season || '2026-27' });
+                          await addTeam({ nombre: name, categoria: category || 'General', temporada: season || '2026-27' }, 'club');
                           showToast("Equipo del club creado correctamente.", "success");
                         } catch (err) {
                           console.error(err);

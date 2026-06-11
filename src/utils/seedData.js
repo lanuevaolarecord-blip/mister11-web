@@ -17,10 +17,10 @@ import {
  * @param {string} teamId - ID del equipo recién creado
  * @param {string} userId - UID del usuario autenticado
  */
-export const seedInitialData = async (teamId, userId) => {
+export const seedInitialData = async (teamId, userId, customPath = null) => {
   if (!teamId || !userId) return;
 
-  const teamPath = `users/${userId}/teams/${teamId}`;
+  const teamPath = customPath || `users/${userId}/teams/${teamId}`;
 
   try {
     // ─── 1. JUGADORES ──────────────────────────────────────────────────────────

@@ -302,6 +302,11 @@ html.dark {
   display: flex;
   flex-direction: column;
 }
+
+.editor-content:has(.alineacion-layout) {
+  overflow: hidden;
+  padding: 20px 30px 10px 30px;
+}
 .tab-pane {
   flex: 1;
   display: flex;
@@ -548,13 +553,16 @@ html.dark {
   height: 100%;
   max-height: 100%;
   overflow: hidden;
+  container-type: size;
 }
 
 /* Pizarra Verde Realista (Proporcionada como campo de fútbol real 68x105m) */
 .alin-pitch-container {
-  height: 100%;
+  width: min(100cqw, calc(100cqh * 105 / 68));
+  aspect-ratio: 105 / 68;
+  height: auto;
+  max-width: 100%;
   max-height: 100%;
-  aspect-ratio: 68 / 105;
   background-color: #1a4224;
   background-image: repeating-linear-gradient(
     90deg,
@@ -576,10 +584,10 @@ html.dark {
 /* Líneas de juego profesionales */
 .pitch-outer-line {
   position: absolute;
-  top: 16px;
-  bottom: 16px;
-  left: 16px;
-  right: 16px;
+  top: min(16px, 3cqw);
+  bottom: min(16px, 3cqw);
+  left: min(16px, 3cqw);
+  right: min(16px, 3cqw);
   border: 1.5px solid rgba(255, 255, 255, 0.5);
   pointer-events: none;
 }

@@ -1343,6 +1343,15 @@ html.dark .post-match-card {
   gap: 24px;
 }
 
+.match-day-container:fullscreen {
+  background-color: var(--partidos-bg, #f5f0e8);
+  padding: 40px;
+  overflow-y: auto;
+  box-sizing: border-box;
+  width: 100vw;
+  height: 100vh;
+}
+
 .match-day-grid {
   display: grid;
   grid-template-columns: 1fr;

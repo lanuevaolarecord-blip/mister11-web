@@ -89,6 +89,32 @@ const Partidos = () => {
   const [subInId, setSubInId] = useState('');
   const [pendingEventType, setPendingEventType] = useState(null); // 'amarilla' | 'roja' | 'lesion' | 'gol_local'
   const [showEventPlayerSelector, setShowEventPlayerSelector] = useState(false);
+  
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const matchDayRef = useRef(null);
+
+  const toggleFullscreen = () => {
+    if (!matchDayRef.current) return;
+    if (!document.fullscreenElement) {
+      matchDayRef.current.requestFullscreen().then(() => {
+        setIsFullscreen(true);
+      }).catch(err => {
+        console.error("Error enabling fullscreen:", err);
+      });
+    } else {
+      document.exitFullscreen().then(() => {
+        setIsFullscreen(false);
+      });
+    }
+  };
+
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      setIsFullscreen(!!document.fullscreenElement);
+    };
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
+    return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
+  }, []);
 
   useEffect(() => {
     if (matchData.id) {
@@ -1038,8 +1064,32 @@ const Partidos = () => {
 
             {/* PESTAÑA: MATCH-DAY */}
             {editTab === 'MATCH-DAY' && (
-              <div className="tab-pane match-day-container">
-                <h3 className="section-title">⏱️ Panel de Control - Match Day</h3>
+              <div className="tab-pane match-day-container" ref={matchDayRef}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '15px', marginBottom: '8px' }}>
+                  <h3 className="section-title" style={{ margin: 0 }}>⏱️ Panel de Control - Match Day</h3>
+                  <button 
+                    type="button"
+                    className="btn-outline-dark" 
+                    onClick={toggleFullscreen}
+                    style={{ 
+                      display: 'flex', 
+                      alignItems: 'center', 
+                      gap: '8px', 
+                      padding: '10px 16px', 
+                      minHeight: '44px',
+                      cursor: 'pointer',
+                      border: '1px solid var(--partidos-border)',
+                      borderRadius: '8px',
+                      background: 'var(--partidos-input-bg)',
+                      color: 'var(--partidos-text-primary)',
+                      fontFamily: 'var(--font-heading)',
+                      fontWeight: 'bold',
+                      fontSize: '12px'
+                    }}
+                  >
+                    {isFullscreen ? '🗗 Salir Pantalla Completa' : '📺 Pantalla Completa'}
+                  </button>
+                </div>
                 
                 <div className="match-day-grid">
                   {/* Cronómetro y Marcador */}

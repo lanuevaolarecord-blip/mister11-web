@@ -404,6 +404,19 @@ const MiEquipo = () => {
                 <button 
                   className="btn-edit-icon" 
                   onClick={() => {
+                    const baseUrl = window.location.origin;
+                    const consentLink = `${baseUrl}/shared/consentimiento?coachId=${user.uid}&teamId=${activeTeamId}&teamName=${encodeURIComponent(activeTeam?.nombre || 'Míster11 Club')}&coachName=${encodeURIComponent(user.displayName || 'el Entrenador')}`;
+                    const whatsappMsg = `Hola, necesito que firmes el consentimiento digital para registrar a ${selectedPlayer.name} en la plataforma deportiva Míster11. Puedes rellenarlo y firmarlo con tu dedo en 1 minuto desde este enlace: ${consentLink}`;
+                    window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(whatsappMsg)}`, '_blank');
+                  }}
+                  title="Compartir link de Consentimiento Digital por WhatsApp"
+                  style={{ background: '#25D366', color: '#FFF' }}
+                >
+                  💬
+                </button>
+                <button 
+                  className="btn-edit-icon" 
+                  onClick={() => {
                     if (!isProActive) {
                       setUpgradeModal({ 
                         open: true, 

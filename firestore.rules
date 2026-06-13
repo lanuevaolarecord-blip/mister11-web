@@ -50,6 +50,13 @@ service cloud.firestore {
       allow write: if request.auth != null;
     }
 
+    // Consentimientos digitales firmados por los padres
+    match /consents/{consentId} {
+      allow create: if true;
+      allow read: if request.auth != null;
+      allow update, delete: if false;
+    }
+
     // Stripe: colección customers (necesaria para la extensión Firebase Stripe)
     // El usuario solo puede leer/escribir su propio documento y subcolecciones
     match /customers/{uid} {

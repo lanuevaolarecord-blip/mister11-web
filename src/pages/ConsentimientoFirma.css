@@ -1,0 +1,379 @@
+.consent-page-container, .consent-signed-container {
+  min-height: 100vh;
+  background-color: #f4f6f9;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  color: #333;
+  display: flex;
+  flex-direction: column;
+}
+
+.consent-page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 24px;
+  background-color: #fff;
+  border-bottom: 1px solid #e1e8ed;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+}
+
+.sp-logo-area {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.sp-logo-img {
+  width: 36px;
+  height: 36px;
+  object-fit: contain;
+}
+
+.sp-brand {
+  font-weight: 800;
+  font-size: 18px;
+  letter-spacing: 0.5px;
+  color: #0B3056;
+}
+
+.sp-team-badge {
+  font-size: 13px;
+  font-weight: 700;
+  background-color: #e6f0fa;
+  color: #0B3056;
+  padding: 6px 14px;
+  border-radius: 20px;
+}
+
+.consent-form-main {
+  flex: 1;
+  max-width: 680px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 24px 16px;
+  box-sizing: border-box;
+}
+
+.consent-heading-block {
+  text-align: center;
+  margin-bottom: 24px;
+}
+
+.sp-icon-wrapper {
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background-color: #e6f0fa;
+  margin-bottom: 12px;
+}
+
+.consent-heading-block h1 {
+  font-size: 24px;
+  margin: 0 0 8px 0;
+  font-weight: 800;
+  color: #0B3056;
+}
+
+.consent-heading-block .sub-title {
+  font-size: 14px;
+  color: #666;
+  margin: 0;
+}
+
+.consent-form-card {
+  background-color: #fff;
+  border-radius: 12px;
+  padding: 24px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+  border: 1px solid #e1e8ed;
+}
+
+.consent-form-card h2 {
+  font-size: 18px;
+  margin: 0 0 6px 0;
+  color: #0B3056;
+}
+
+.consent-form-card .instructions {
+  font-size: 13px;
+  color: #666;
+  margin: 0 0 24px 0;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+@media (max-width: 580px) {
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.form-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.form-field label {
+  font-size: 12px;
+  font-weight: 700;
+  color: #555;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.form-field input, .form-field select {
+  padding: 12px;
+  border: 1.5px solid #d1d9e0;
+  border-radius: 8px;
+  font-size: 14px;
+  background-color: #fff;
+  color: #333;
+  transition: border-color 0.2s;
+  box-sizing: border-box;
+}
+
+.form-field input:focus, .form-field select:focus {
+  outline: none;
+  border-color: #0B3056;
+}
+
+.legal-consent-boxes {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin-bottom: 24px;
+  padding: 16px;
+  background-color: #f8fafc;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+}
+
+.checkbox-field {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  cursor: pointer;
+}
+
+.checkbox-field input[type="checkbox"] {
+  width: 20px;
+  height: 20px;
+  margin-top: 2px;
+  cursor: pointer;
+  accent-color: #0B3056;
+  flex-shrink: 0;
+}
+
+.checkbox-text {
+  font-size: 13px;
+  line-height: 1.5;
+  color: #444;
+}
+
+.signature-section {
+  margin-bottom: 24px;
+}
+
+.signature-label {
+  display: flex;
+  align-items: center;
+  font-size: 12px;
+  font-weight: 700;
+  color: #555;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 8px;
+}
+
+.signature-pad-container {
+  width: 100%;
+  height: 180px;
+  border: 2px dashed #0B3056;
+  border-radius: 8px;
+  background-color: #fcfcfc;
+  position: relative;
+  overflow: hidden;
+}
+
+.signature-canvas {
+  width: 100%;
+  height: 100%;
+  cursor: crosshair;
+  touch-action: none;
+  display: block;
+}
+
+.signature-pad-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 8px;
+}
+
+.btn-clear-sig {
+  background: none;
+  border: none;
+  color: #666;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: underline;
+  padding: 4px 8px;
+}
+
+.btn-clear-sig:hover {
+  color: #0B3056;
+}
+
+.consent-error-message {
+  background-color: #fee2e2;
+  color: #ef4444;
+  padding: 12px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 20px;
+  border: 1px solid #fca5a5;
+}
+
+.btn-submit-consent {
+  width: 100%;
+  background-color: #0B3056;
+  color: #fff;
+  border: none;
+  padding: 14px;
+  font-size: 14px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: opacity 0.2s;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 48px;
+}
+
+.btn-submit-consent:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.btn-submit-consent:not(:disabled):hover {
+  opacity: 0.95;
+}
+
+/* Success Card CSS */
+.consent-signed-container {
+  justify-content: center;
+  align-items: center;
+  padding: 16px;
+  box-sizing: border-box;
+}
+
+.consent-signed-card {
+  max-width: 500px;
+  width: 100%;
+  background-color: #fff;
+  border-radius: 12px;
+  padding: 36px 24px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.06);
+  border: 1px solid #e1e8ed;
+  text-align: center;
+}
+
+.success-icon-wrapper {
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background-color: #228B22; /* Verde Campo */
+  margin-bottom: 20px;
+}
+
+.consent-signed-card h2 {
+  color: #228B22;
+  font-size: 24px;
+  margin: 0 0 12px 0;
+  font-weight: 800;
+}
+
+.consent-signed-card p {
+  font-size: 14px;
+  color: #555;
+  line-height: 1.5;
+  margin: 0 0 28px 0;
+}
+
+.signed-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.btn-whatsapp-share {
+  background-color: #25d366; /* WhatsApp Green */
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 14px;
+  font-weight: 700;
+  font-size: 14px;
+  cursor: pointer;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 48px;
+}
+
+.btn-whatsapp-share:hover {
+  background-color: #20ba5a;
+}
+
+.btn-download-pdf {
+  background-color: #0B3056;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 14px;
+  font-weight: 700;
+  font-size: 14px;
+  cursor: pointer;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  text-decoration: none;
+  min-height: 48px;
+}
+
+.btn-download-pdf:hover {
+  opacity: 0.95;
+}
+
+.consent-signed-card .footer-notice {
+  font-size: 12px;
+  color: #888;
+  margin: 0;
+}
+
+.consent-page-footer {
+  text-align: center;
+  padding: 16px;
+  font-size: 12px;
+  color: #888;
+  border-top: 1px solid #e1e8ed;
+  background-color: #fff;
+  margin-top: auto;
+}

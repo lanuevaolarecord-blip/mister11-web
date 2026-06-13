@@ -88,8 +88,8 @@ const IAGeneradora = () => {
   const [isListening, setIsListening] = useState(false);
   const recognitionRef = useRef(null);
 
-  const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
-  const apiKeyMissing = !apiKey || apiKey === 'undefined';
+  const apiKey = import.meta.env.VITE_GROQ_API_KEY;
+  const apiKeyMissing = !apiKey || apiKey === 'undefined' || apiKey === 'PEGA_AQUI_TU_NUEVA_CLAVE_GROQ';
 
   const toggleMaterial = (id) => {
     setForm(prev => ({
@@ -127,25 +127,30 @@ const IAGeneradora = () => {
     setIsListening(true);
   };
 
-  const callGemini = async (promptTexto) => {
+  const callGroq = async (promptTexto) => {
     try {
       const response = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
+        'https://api.groq.com/openai/v1/chat/completions',
         {
           method: 'POST',
           headers: {
-            'Content-Type': 'application/json'
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${apiKey}`
           },
           body: JSON.stringify({
-            contents: [
+            model: 'llama-3.3-70b-versatile',
+            messages: [
               {
-                parts: [
-                  {
-                    text: `Eres un experto en metodología del fútbol formativo. Respondes siempre en español.\n\n${promptTexto}`
-                  }
-                ]
+                role: 'system',
+                content: 'Eres un experto en metodología del fútbol formativo. Respondes siempre en español.'
+              },
+              {
+                role: 'user',
+                content: promptTexto
               }
-            ]
+            ],
+            max_tokens: 1024,
+            temperature: 0.7
           })
         }
       );
@@ -156,9 +161,11 @@ const IAGeneradora = () => {
       }
 
       const data = await response.json();
-      return data.candidates[0].content.parts[0].text;
+      const text = data?.choices?.[0]?.message?.content;
+      if (!text) throw new Error('Respuesta vacía de la IA');
+      return text;
     } catch (err) {
-      console.error('[Gemini] Error:', err);
+      console.error('[Groq] Error:', err);
       throw err;
     }
   };
@@ -235,7 +242,7 @@ Responde solo en español y usa formato markdown.`;
     }
 
     try {
-      const texto = await callGemini(prompt);
+      const texto = await callGroq(prompt);
       setResult(texto);
     } catch (err) {
       setError(`Error: ${err.message}`);
@@ -267,7 +274,7 @@ Responde solo en español y usa formato markdown.`;
     <div className="ia-page">
       {apiKeyMissing && (
         <div className="ia-config-error">
-          ⚠️ API Key faltante. Configura VITE_GEMINI_API_KEY.
+          ⚠️ API Key de Groq faltante o por defecto. Configura VITE_GROQ_API_KEY en tu archivo .env.
         </div>
       )}
 

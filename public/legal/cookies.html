@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Política de Cookies - Míster11</title>
+    <style>
+        body { font-family: 'Inter', sans-serif; line-height: 1.7; max-width: 820px; margin: 40px auto; padding: 20px; background: #F5F0E8; color: #2D2D2D; }
+        h1, h2 { color: #1B3A2D; }
+        h1 { border-bottom: 3px solid #D4A843; padding-bottom: 12px; }
+        h2 { margin-top: 32px; font-size: 1.1rem; border-left: 4px solid #4CAF7D; padding-left: 10px; }
+        .container { background: white; padding: 40px; border-radius: 16px; box-shadow: 0 2px 16px rgba(0,0,0,0.1); }
+        table { width: 100%; border-collapse: collapse; margin: 16px 0; font-size: 0.9rem; }
+        table th { background: #1B3A2D; color: white; padding: 10px 14px; text-align: left; }
+        table td { padding: 10px 14px; border-bottom: 1px solid #eee; vertical-align: top; }
+        .highlight { background: #f0faf5; border-left: 4px solid #4CAF7D; padding: 12px 16px; border-radius: 0 8px 8px 0; margin: 16px 0; }
+        .footer-note { font-size: 0.85rem; color: #777; margin-top: 40px; border-top: 1px solid #eee; padding-top: 16px; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>Política de Cookies y Almacenamiento Local — Míster11</h1>
+    <p><strong>Última actualización: Junio de 2026</strong></p>
+
+    <div class="highlight">
+        <strong>Resumen rápido:</strong> Míster11 es una aplicación web progresiva (PWA) limpia. <strong>No utilizamos cookies de seguimiento, ni píxeles publicitarios, ni analíticas intrusivas de terceros</strong> (como Google Analytics o Facebook Pixel). Únicamente empleamos el almacenamiento técnico estrictamente necesario para mantener tu sesión activa y gestionar de forma segura los cobros a través de Stripe.
+    </div>
+
+    <h2>1. ¿Qué es el almacenamiento local y las cookies?</h2>
+    <p>Las cookies son pequeños archivos de texto que los sitios web almacenan en tu navegador. El almacenamiento local (<code>localStorage</code> e <code>IndexedDB</code>) es una tecnología similar integrada en tu navegador que permite a las aplicaciones web modernas guardar datos de forma más rápida y segura, permitiendo el funcionamiento sin conexión a internet (Modo Offline / PWA).</p>
+
+    <h2>2. ¿Qué tecnologías de almacenamiento utiliza Míster11?</h2>
+    <p>Para prestar nuestros servicios SaaS de gestión deportiva, utilizamos las siguientes herramientas técnicas de almacenamiento local en tu dispositivo:</p>
+
+    <table>
+        <tr>
+            <th>Proveedor / Herramienta</th>
+            <th>Tipo y Nombre</th>
+            <th>Finalidad Técnica</th>
+            <th>Duración</th>
+        </tr>
+        <tr>
+            <td><strong>Firebase Authentication</strong></td>
+            <td>Local Storage (Claves con prefijo <code>firebase:authUser</code>)</td>
+            <td>Identifica de forma segura tu sesión activa de Google Sign-In. Evita que tengas que iniciar sesión cada vez que recargas la página o abres la app.</td>
+            <td>Persistente hasta que cierres la sesión manualmente.</td>
+        </tr>
+        <tr>
+            <td><strong>Míster11 (Local Cache)</strong></td>
+            <td>Local Storage (<code>dismissedUpdateVersion</code>, etc.)</td>
+            <td>Registra preferencias del usuario como si ha cerrado la alerta de actualización de la versión APK de la app, o tokens de invitaciones pendientes de aceptación.</td>
+            <td>Persistente.</td>
+        </tr>
+        <tr>
+            <td><strong>Stripe (Pasarela de pagos)</strong></td>
+            <td>Cookies técnicas (<code>__stripe_mid</code>, <code>__stripe_sid</code>) e identificadores locales</td>
+            <td>Proporcionados de forma exclusiva por Stripe para prevenir el fraude en las transacciones con tarjeta de crédito, verificar el método de pago y gestionar las suscripciones activas del plan PRO.</td>
+            <td>Desde la sesión hasta 1 año.</td>
+        </tr>
+        <tr>
+            <td><strong>Service Worker (PWA)</strong></td>
+            <td>Cache Storage (Navegador)</td>
+            <td>Almacena los archivos estáticos de la aplicación (CSS, JavaScript, iconos) en tu dispositivo para que la app cargue de forma instantánea y sea usable sin conexión a Internet.</td>
+            <td>Hasta que se limpie la caché del navegador o se actualice la app.</td>
+        </tr>
+    </table>
+
+    <h2>3. Consentimiento y gestión de cookies</h2>
+    <p>Al tratarse de tecnologías de almacenamiento **estrictamente necesarias para el funcionamiento del servicio y la seguridad de los pagos**, de conformidad con el artículo 22.2 de la LSSI-CE de España, **no se requiere el consentimiento explícito del Usuario para su instalación**.</p>
+    <p>Si deseas desactivar o borrar estas tecnologías, puedes hacerlo en cualquier momento configurando las opciones de privacidad de tu navegador web o eliminando los datos de navegación/aplicación. No obstante, ten en cuenta que si desactivas el almacenamiento local de Firebase Authentication, **la aplicación no podrá validar tu identidad y no podrás acceder a tu cuenta ni usar Míster11**.</p>
+
+    <h2>4. Cambios en esta política</h2>
+    <p>Es posible que actualicemos la información sobre el almacenamiento de datos si introducimos nuevos módulos o funcionalidades en el futuro. Te recomendamos revisar esta política periódicamente para mantenerte informado sobre cómo utilizamos estas tecnologías.</p>
+
+    <div class="footer-note">
+        <p>Última actualización: Junio de 2026 | Míster11 — <a href="https://mister11.app">mister11.app</a></p>
+    </div>
+</div>
+</body>
+</html>

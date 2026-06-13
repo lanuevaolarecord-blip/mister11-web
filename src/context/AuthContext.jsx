@@ -315,7 +315,7 @@ export const AuthProvider = ({ children }) => {
           color: '#10B981',
           escudo: ''
         };
-        setTeams([mockTeam]);
+        setPersonalTeams([mockTeam]);
         setActiveTeamId('team-invitado');
       }
     } finally {
@@ -330,7 +330,7 @@ export const AuthProvider = ({ children }) => {
       if (user && user.uid === 'invitado-local') {
         setUser(null);
         setActiveTeamId(null);
-        setTeams([]);
+        setPersonalTeams([]);
       } else {
         const { signOut } = await import('firebase/auth');
         await signOut(auth);

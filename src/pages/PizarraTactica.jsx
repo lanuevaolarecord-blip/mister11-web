@@ -111,6 +111,7 @@ const PizarraTactica = () => {
   const defaultDrawnR = useRef(false); // prevent double default-formation draw
   const lastStateRef = useRef(null);  // PERSISTENCIA: último estado serializado (siempre actualizado)
   const planIdRef    = useRef(null);  // PERSISTENCIA: último planId conocido (para closures)
+  const deletedFrameIdsR = useRef(new Set());
 
   // ─── Utilidades de Escala ─────────────────────────────────────────────────
 
@@ -310,6 +311,7 @@ const PizarraTactica = () => {
 
   // React state (UI)
   const [ready,        setReady]        = useState(false);
+  const [planName,     setPlanName]     = useState('Sin título');
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
   const [isTablet, setIsTablet] = useState(window.innerWidth >= 768 && window.innerWidth <= 1024);
   const [showTeamsDrawer, setShowTeamsDrawer] = useState(false);
@@ -2364,7 +2366,6 @@ const PizarraTactica = () => {
   // ─── Delete Frame ─────────────────────────────────────────────────────────
   // FIX: usamos una ref local para trackear IDs eliminados y evitar que el
   // onSnapshot de Firestore los restaure antes de que se complete el deleteDoc.
-  const deletedFrameIdsR = useRef(new Set());
 
   const deleteFrame = async () => {
     const cur = frameIdxR.current;

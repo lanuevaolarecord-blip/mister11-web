@@ -88,8 +88,17 @@ const IAGeneradora = () => {
   const [isListening, setIsListening] = useState(false);
   const recognitionRef = useRef(null);
 
-  const apiKey = import.meta.env.VITE_GROQ_API_KEY;
+  const [customApiKey, setCustomApiKey] = useState(() => localStorage.getItem('m11_groq_api_key') || '');
+  const apiKey = (import.meta.env.VITE_GROQ_API_KEY && import.meta.env.VITE_GROQ_API_KEY !== 'PEGA_AQUI_TU_NUEVA_CLAVE_GROQ') 
+    ? import.meta.env.VITE_GROQ_API_KEY 
+    : customApiKey;
+  
   const apiKeyMissing = !apiKey || apiKey === 'undefined' || apiKey === 'PEGA_AQUI_TU_NUEVA_CLAVE_GROQ';
+
+  const handleSaveApiKey = (key) => {
+    localStorage.setItem('m11_groq_api_key', key.trim());
+    setCustomApiKey(key.trim());
+  };
 
   const toggleMaterial = (id) => {
     setForm(prev => ({
@@ -272,283 +281,338 @@ Responde solo en español y usa formato markdown.`;
 
   return (
     <div className="ia-page">
-      {apiKeyMissing && (
-        <div className="ia-config-error">
-          ⚠️ API Key de Groq faltante o por defecto. Configura VITE_GROQ_API_KEY en tu archivo .env.
-        </div>
-      )}
-
-      <div className="ia-form-panel">
-        <header className="ia-form-header">
-          <div className="ia-header-text">
-            <h1>✨ IA Generadora</h1>
-            <p>Diseño de entrenamientos inteligentes</p>
-          </div>
-          <button 
-            onClick={() => {
-              setShowBiblioteca(true);
-            }} 
-            className={`btn-outline-gold library-btn ${exercises.length > 0 ? 'has-content' : ''}`}
-          >
-            ☁️ Biblioteca ({exercises.length})
-          </button>
-        </header>
-
-        <div className="ia-mode-cards">
-          <button
-            className={`mode-card ${mode === 'tactico' ? 'active' : ''}`}
-            onClick={() => setMode('tactico')}
-          >
-            <div className="mode-card-icon">⚽</div>
-            <span>Ejercicio<br/>Táctico</span>
-          </button>
-          <button
-            className={`mode-card ${mode === 'prevencion' ? 'active' : ''}`}
-            onClick={() => setMode('prevencion')}
-          >
-            <div className="mode-card-icon">🩺</div>
-            <span>Prevención /<br/>Recuperación</span>
-          </button>
-        </div>
-
-        <div className="ia-form-body">
-          {mode === 'tactico' ? (
-            <>
-          <div className="ia-field">
-            <label>Categoría / Edad</label>
-            <select value={form.edad} onChange={e => setForm({...form, edad: e.target.value})}>
-              <option value="">Seleccionar...</option>
-              {EDADES.map(e => <option key={e} value={e}>{e}</option>)}
-            </select>
-          </div>
-
-          <div className="ia-field">
-            <label>N° De Jugadores: {form.jugadores}</label>
-            <div className="ia-players-row">
-              <div className="ia-players-count">
-                <span className="player-icon">👤</span>
-                <span className="player-num">{form.jugadores}</span>
-              </div>
-              <input
-                type="range" min="4" max="22" value={form.jugadores}
-                onChange={e => setForm({...form, jugadores: Number(e.target.value)})}
-                className="ia-slider"
+      {apiKeyMissing ? (
+        <div className="ia-form-panel" style={{ maxWidth: '500px', margin: '40px auto', float: 'none', width: '100%', border: '1px solid var(--border-light)', borderRadius: '12px', padding: '24px' }}>
+          <header className="ia-form-header">
+            <div className="ia-header-text">
+              <h1>✨ IA Generadora</h1>
+              <p>Configura tu API Key de Groq</p>
+            </div>
+          </header>
+          <div className="ia-form-body" style={{ textAlign: 'center', padding: '24px 0' }}>
+            <div style={{ fontSize: '48px', marginBottom: '16px' }}>🔑</div>
+            <h2 style={{ color: 'var(--text-primary)', marginBottom: '8px', fontSize: '18px', fontFamily: 'var(--font-heading)' }}>Activar Inteligencia Artificial</h2>
+            <p style={{ color: 'var(--text-secondary)', fontSize: '13px', marginBottom: '24px', lineHeight: '1.6' }}>
+              No se ha detectado una clave de API de Groq configurada en tu archivo <code>.env</code> o la actual es la por defecto.
+              Para activar el diseñador de ejercicios tácticos y planes clínicos, introduce tu API Key personal de Groq.
+            </p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', alignItems: 'stretch' }}>
+              <input 
+                type="password" 
+                placeholder="gsk_..." 
+                id="custom-groq-key-input"
+                style={{ padding: '12px', borderRadius: '8px', border: '1px solid var(--border-color)', background: 'var(--bg-app)', color: 'var(--text-primary)', fontSize: '14px' }}
               />
-            </div>
-          </div>
-
-          <div className="ia-field">
-            <label>Objetivo Principal</label>
-            <select value={form.objetivo} onChange={e => setForm({...form, objetivo: e.target.value})}>
-              <option value="">Seleccionar...</option>
-              {OBJETIVOS.map(o => <option key={o} value={o}>{o}</option>)}
-            </select>
-          </div>
-
-          <div className="ia-field">
-            <label>Materiales</label>
-            <div className="chip-group">
-              {MATERIALES.map(m => (
-                <button key={m.id} className={`chip ${form.materiales.includes(m.id) ? 'active' : ''}`}
-                  onClick={() => toggleMaterial(m.id)}>
-                  <span className="chip-icon">{m.icon}</span> {m.label}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div className="ia-field">
-            <label>Espacio</label>
-            <div className="chip-group">
-              {ESPACIOS.map(e => (
-                <button key={e} className={`chip ${form.espacio === e ? 'active' : ''}`}
-                  onClick={() => setForm({...form, espacio: e})}>{e}</button>
-              ))}
-            </div>
-          </div>
-
-          <div className="ia-field">
-            <label>Referencia Táctica (Opcional)</label>
-            <div className="tactical-ref-selector">
-              <div 
-                className={`tactical-thumb-none ${!selectedTacticalRef ? 'active' : ''}`}
-                onClick={() => setSelectedTacticalRef(null)}
-              >
-                <span>Sin Ref.</span>
-              </div>
-              {captures.map(cap => (
-                <div 
-                  key={cap.id} 
-                  className={`tactical-thumb ${selectedTacticalRef?.id === cap.id ? 'active' : ''}`}
-                  onClick={() => setSelectedTacticalRef(cap)}
-                  title={cap.title || 'Captura Táctica'}
-                >
-                  <img src={cap.thumbnail || cap.url} alt={cap.title} />
-                  <div className="thumb-check">✓</div>
-                  <div className="thumb-label">Captura</div>
-                </div>
-              ))}
-              {exercises.filter(ex => ex.type === 'pizarra').map(piz => (
-                <div 
-                  key={piz.id} 
-                  className={`tactical-thumb ${selectedTacticalRef?.id === piz.id ? 'active' : ''}`}
-                  onClick={() => setSelectedTacticalRef(piz)}
-                  title={piz.title || 'Animación'}
-                >
-                  {piz.thumbnail ? (
-                    <img src={piz.thumbnail} alt={piz.title} />
-                  ) : (
-                    <div style={{width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#000', color: '#888', fontSize: '10px', fontWeight: 'bold'}}>🎬 Pizarra</div>
-                  )}
-                  <div className="thumb-check">✓</div>
-                  <div className="thumb-label">Animación ({piz.framesCount || 0}F)</div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <div className="ia-field">
-            <label>Observaciones adicionales</label>
-            <div style={{ position: 'relative' }}>
-              <textarea 
-                value={form.observaciones} 
-                onChange={e => setForm({...form, observaciones: e.target.value})} 
-                placeholder="Ej. Enfocarse en la velocidad de ejecución o en el repliegue defensivo..."
-                className="ia-textarea"
-                style={{ paddingRight: '52px' }}
-              />
-              <button
-                onClick={handleVoiceDictation}
-                title={isListening ? 'Detener dictado' : 'Dictar por voz'}
-                style={{
-                  position: 'absolute',
-                  right: '10px',
-                  bottom: '10px',
-                  width: '40px',
-                  height: '40px',
-                  borderRadius: '50%',
-                  border: 'none',
-                  background: isListening ? '#EF4444' : 'var(--accent)',
-                  color: '#fff',
-                  fontSize: '18px',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  boxShadow: isListening ? '0 0 0 4px rgba(239,68,68,0.3)' : '0 2px 8px rgba(0,0,0,0.15)',
-                  transition: 'all 0.2s',
-                  animation: isListening ? 'pulse 1s infinite' : 'none'
+              <button 
+                onClick={() => {
+                  const val = document.getElementById('custom-groq-key-input')?.value;
+                  if (val) {
+                    handleSaveApiKey(val);
+                  } else {
+                    alert("Por favor, introduce una clave válida.");
+                  }
                 }}
+                className="btn-primary"
+                style={{ padding: '12px', borderRadius: '8px', fontWeight: 'bold', border: 'none', background: 'var(--accent)', color: 'white', cursor: 'pointer' }}
               >
-                {isListening ? '⏹' : '🎤'}
+                Activar IA
               </button>
             </div>
-            {isListening && (
-              <p style={{ fontSize: 12, color: '#EF4444', marginTop: 4, fontWeight: 600 }}>🔴 Escuchando... habla ahora</p>
-            )}
+            <p style={{ marginTop: '20px', fontSize: '12px', color: 'var(--text-secondary)' }}>
+              ¿No tienes una clave? Consigue una gratis en <a href="https://console.groq.com" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--accent)', textDecoration: 'underline' }}>console.groq.com</a>.
+            </p>
           </div>
-            </>
-          ) : (
-            <>
-              <div className="ia-field full-width">
-                <label>Descripción Clínica / Problema</label>
-                <textarea
-                  rows="4"
-                  placeholder="Ej: Jugador de 16 años con sobrecarga isquiotibial izquierdo tras partido, necesita ejercicios excéntricos y de fortalecimiento..."
-                  value={preventionForm.descripcion}
-                  onChange={e => setPreventionForm({...preventionForm, descripcion: e.target.value})}
-                  className="ia-textarea"
-                />
+        </div>
+      ) : (
+        <>
+          <div className="ia-form-panel">
+            <header className="ia-form-header">
+              <div className="ia-header-text">
+                <h1>✨ IA Generadora</h1>
+                <p>Diseño de entrenamientos inteligentes</p>
               </div>
-
-              <div className="ia-field">
-                <label>Tipo de Plan</label>
-                <select value={preventionForm.tipo} onChange={e => setPreventionForm({...preventionForm, tipo: e.target.value})}>
-                  <option value="Prevención">Prevención</option>
-                  <option value="Recuperación">Recuperación</option>
-                  <option value="Readaptación">Readaptación</option>
-                </select>
+              <div style={{ display: 'flex', gap: '8px' }}>
+                <button 
+                  onClick={() => {
+                    setShowBiblioteca(true);
+                  }} 
+                  className={`btn-outline-gold library-btn ${exercises.length > 0 ? 'has-content' : ''}`}
+                >
+                  ☁️ Biblioteca ({exercises.length})
+                </button>
+                <button 
+                  onClick={() => {
+                    if (window.confirm("¿Deseas restablecer o cambiar tu clave de API de Groq?")) {
+                      localStorage.removeItem('m11_groq_api_key');
+                      setCustomApiKey('');
+                    }
+                  }}
+                  className="btn-outline"
+                  style={{ padding: '4px 10px', fontSize: '12px', borderColor: 'var(--border-color)', color: 'var(--text-secondary)', borderRadius: '6px' }}
+                  title="Cambiar API Key de Groq"
+                >
+                  ⚙️ Clave IA
+                </button>
               </div>
+            </header>
 
+            <div className="ia-mode-cards">
+              <button
+                className={`mode-card ${mode === 'tactico' ? 'active' : ''}`}
+                onClick={() => setMode('tactico')}
+              >
+                <div className="mode-card-icon">⚽</div>
+                <span>Ejercicio<br/>Táctico</span>
+              </button>
+              <button
+                className={`mode-card ${mode === 'prevencion' ? 'active' : ''}`}
+                onClick={() => setMode('prevencion')}
+              >
+                <div className="mode-card-icon">🩺</div>
+                <span>Prevención /<br/>Recuperación</span>
+              </button>
+            </div>
+
+            <div className="ia-form-body">
+              {mode === 'tactico' ? (
+                <>
               <div className="ia-field">
-                <label>Zona Corporal</label>
-                <select value={preventionForm.zona} onChange={e => setPreventionForm({...preventionForm, zona: e.target.value})}>
+                <label>Categoría / Edad</label>
+                <select value={form.edad} onChange={e => setForm({...form, edad: e.target.value})}>
                   <option value="">Seleccionar...</option>
-                  {ZONAS_CORPORALES.map(z => <option key={z} value={z}>{z}</option>)}
+                  {EDADES.map(e => <option key={e} value={e}>{e}</option>)}
                 </select>
               </div>
 
               <div className="ia-field">
-                <label>Nivel del Jugador</label>
-                <select value={preventionForm.nivel} onChange={e => setPreventionForm({...preventionForm, nivel: e.target.value})}>
-                  {NIVELES.map(n => <option key={n} value={n}>{n}</option>)}
+                <label>N° De Jugadores: {form.jugadores}</label>
+                <div className="ia-players-row">
+                  <div className="ia-players-count">
+                    <span className="player-icon">👤</span>
+                    <span className="player-num">{form.jugadores}</span>
+                  </div>
+                  <input
+                    type="range" min="4" max="22" value={form.jugadores}
+                    onChange={e => setForm({...form, jugadores: Number(e.target.value)})}
+                    className="ia-slider"
+                  />
+                </div>
+              </div>
+
+              <div className="ia-field">
+                <label>Objetivo Principal</label>
+                <select value={form.objetivo} onChange={e => setForm({...form, objetivo: e.target.value})}>
+                  <option value="">Seleccionar...</option>
+                  {OBJETIVOS.map(o => <option key={o} value={o}>{o}</option>)}
                 </select>
               </div>
 
-              <div className="ia-field full-width">
-                <label>Material Disponible</label>
+              <div className="ia-field">
+                <label>Materiales</label>
                 <div className="chip-group">
                   {MATERIALES.map(m => (
-                    <button
-                      key={m.id}
-                      className={`chip ${preventionForm.materiales.includes(m.id) ? 'active' : ''}`}
-                      onClick={() => setPreventionForm(prev => ({
-                        ...prev,
-                        materiales: prev.materiales.includes(m.id)
-                          ? prev.materiales.filter(x => x !== m.id)
-                          : [...prev.materiales, m.id]
-                      }))}
-                    >
-                      {m.icon} {m.label}
+                    <button key={m.id} className={`chip ${form.materiales.includes(m.id) ? 'active' : ''}`}
+                      onClick={() => toggleMaterial(m.id)}>
+                      <span className="chip-icon">{m.icon}</span> {m.label}
                     </button>
                   ))}
                 </div>
               </div>
-            </>
-          )}
-          {error && <div className="ia-error">{error}</div>}
 
-          <button className="btn-generate" onClick={handleGenerate} disabled={isGenerating}>
-            {isGenerating ? loadingMsg : (mode === 'prevencion' ? '🩺 Generar Plan de Ejercicios' : '✨ Generar Ejercicio')}
-          </button>
-        </div>
-      </div>
+              <div className="ia-field">
+                <label>Espacio</label>
+                <div className="chip-group">
+                  {ESPACIOS.map(e => (
+                    <button key={e} className={`chip ${form.espacio === e ? 'active' : ''}`}
+                      onClick={() => setForm({...form, espacio: e})}>{e}</button>
+                  ))}
+                </div>
+              </div>
 
-      <div className="ia-result-panel">
-        <div className="ia-result-canvas">
-          {!result && !isGenerating && (
-            <div className="ia-empty-state">
-              <div className="ia-sparkle-icon">
-                <div className="sparkle-main">✦</div>
-                <div className="sparkle-mini">✦</div>
+              <div className="ia-field">
+                <label>Referencia Táctica (Opcional)</label>
+                <div className="tactical-ref-selector">
+                  <div 
+                    className={`tactical-thumb-none ${!selectedTacticalRef ? 'active' : ''}`}
+                    onClick={() => setSelectedTacticalRef(null)}
+                  >
+                    <span>Sin Ref.</span>
+                  </div>
+                  {captures.map(cap => (
+                    <div 
+                      key={cap.id} 
+                      className={`tactical-thumb ${selectedTacticalRef?.id === cap.id ? 'active' : ''}`}
+                      onClick={() => setSelectedTacticalRef(cap)}
+                      title={cap.title || 'Captura Táctica'}
+                    >
+                      <img src={cap.thumbnail || cap.url} alt={cap.title} />
+                      <div className="thumb-check">✓</div>
+                      <div className="thumb-label">Captura</div>
+                    </div>
+                  ))}
+                  {exercises.filter(ex => ex.type === 'pizarra').map(piz => (
+                    <div 
+                      key={piz.id} 
+                      className={`tactical-thumb ${selectedTacticalRef?.id === piz.id ? 'active' : ''}`}
+                      onClick={() => setSelectedTacticalRef(piz)}
+                      title={piz.title || 'Animación'}
+                    >
+                      {piz.thumbnail ? (
+                        <img src={piz.thumbnail} alt={piz.title} />
+                      ) : (
+                        <div style={{width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#000', color: '#888', fontSize: '10px', fontWeight: 'bold'}}>🎬 Pizarra</div>
+                      )}
+                      <div className="thumb-check">✓</div>
+                      <div className="thumb-label">Animación ({piz.framesCount || 0}F)</div>
+                    </div>
+                  ))}
+                </div>
               </div>
-              <h2>Tu ejercicio aparecerá aquí</h2>
+
+              <div className="ia-field">
+                <label>Observaciones adicionales</label>
+                <div style={{ position: 'relative' }}>
+                  <textarea 
+                    value={form.observaciones} 
+                    onChange={e => setForm({...form, observaciones: e.target.value})} 
+                    placeholder="Ej. Enfocarse en la velocidad de ejecución o en el repliegue defensivo..."
+                    className="ia-textarea"
+                    style={{ paddingRight: '52px' }}
+                  />
+                  <button
+                    onClick={handleVoiceDictation}
+                    title={isListening ? 'Detener dictado' : 'Dictar por voz'}
+                    style={{
+                      position: 'absolute',
+                      right: '10px',
+                      bottom: '10px',
+                      width: '40px',
+                      height: '40px',
+                      borderRadius: '50%',
+                      border: 'none',
+                      background: isListening ? '#EF4444' : 'var(--accent)',
+                      color: '#fff',
+                      fontSize: '18px',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      boxShadow: isListening ? '0 0 0 4px rgba(239,68,68,0.3)' : '0 2px 8px rgba(0,0,0,0.15)',
+                      transition: 'all 0.2s',
+                      animation: isListening ? 'pulse 1s infinite' : 'none'
+                    }}
+                  >
+                    {isListening ? '⏹' : '🎤'}
+                  </button>
+                </div>
+                {isListening && (
+                  <p style={{ fontSize: 12, color: '#EF4444', marginTop: 4, fontWeight: 600 }}>🔴 Escuchando... habla ahora</p>
+                )}
+              </div>
+                </>
+              ) : (
+                <>
+                  <div className="ia-field full-width">
+                    <label>Descripción Clínica / Problema</label>
+                    <textarea
+                      rows="4"
+                      placeholder="Ej: Jugador de 16 años con sobrecarga isquiotibial izquierdo tras partido, necesita ejercicios excéntricos y de fortalecimiento..."
+                      value={preventionForm.descripcion}
+                      onChange={e => setPreventionForm({...preventionForm, descripcion: e.target.value})}
+                      className="ia-textarea"
+                    />
+                  </div>
+
+                  <div className="ia-field">
+                    <label>Tipo de Plan</label>
+                    <select value={preventionForm.tipo} onChange={e => setPreventionForm({...preventionForm, tipo: e.target.value})}>
+                      <option value="Prevención">Prevención</option>
+                      <option value="Recuperación">Recuperación</option>
+                      <option value="Readaptación">Readaptación</option>
+                    </select>
+                  </div>
+
+                  <div className="ia-field">
+                    <label>Zona Corporal</label>
+                    <select value={preventionForm.zona} onChange={e => setPreventionForm({...preventionForm, zona: e.target.value})}>
+                      <option value="">Seleccionar...</option>
+                      {ZONAS_CORPORALES.map(z => <option key={z} value={z}>{z}</option>)}
+                    </select>
+                  </div>
+
+                  <div className="ia-field">
+                    <label>Nivel del Jugador</label>
+                    <select value={preventionForm.nivel} onChange={e => setPreventionForm({...preventionForm, nivel: e.target.value})}>
+                      {NIVELES.map(n => <option key={n} value={n}>{n}</option>)}
+                    </select>
+                  </div>
+
+                  <div className="ia-field full-width">
+                    <label>Material Disponible</label>
+                    <div className="chip-group">
+                      {MATERIALES.map(m => (
+                        <button
+                          key={m.id}
+                          className={`chip ${preventionForm.materiales.includes(m.id) ? 'active' : ''}`}
+                          onClick={() => setPreventionForm(prev => ({
+                            ...prev,
+                            materiales: prev.materiales.includes(m.id)
+                              ? prev.materiales.filter(x => x !== m.id)
+                              : [...prev.materiales, m.id]
+                          }))}
+                        >
+                          {m.icon} {m.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </>
+              )}
+              {error && <div className="ia-error">{error}</div>}
+
+              <button className="btn-generate" onClick={handleGenerate} disabled={isGenerating}>
+                {isGenerating ? loadingMsg : (mode === 'prevencion' ? '🩺 Generar Plan de Ejercicios' : '✨ Generar Ejercicio')}
+              </button>
             </div>
-          )}
-          {isGenerating && (
-            <div className="ia-empty-state">
-              <div className="ia-loading-animation">
-                <div className="ai-dot"/>
-                <div className="ai-dot"/>
-                <div className="ai-dot"/>
-              </div>
-              <h2 style={{ color: 'var(--ia-text-right)', fontFamily: 'var(--font-heading, Georgia, serif)' }}>Generando...</h2>
+          </div>
+
+          <div className="ia-result-panel">
+            <div className="ia-result-canvas">
+              {!result && !isGenerating && (
+                <div className="ia-empty-state">
+                  <div className="ia-sparkle-icon">
+                    <div className="sparkle-main">✦</div>
+                    <div className="sparkle-mini">✦</div>
+                  </div>
+                  <h2>Tu ejercicio aparecerá aquí</h2>
+                </div>
+              )}
+              {isGenerating && (
+                <div className="ia-empty-state">
+                  <div className="ia-loading-animation">
+                    <div className="ai-dot"/>
+                    <div className="ai-dot"/>
+                    <div className="ai-dot"/>
+                  </div>
+                  <h2 style={{ color: 'var(--ia-text-right)', fontFamily: 'var(--font-heading, Georgia, serif)' }}>Generando...</h2>
+                </div>
+              )}
+              {result && !isGenerating && (
+                <div className="ia-result-content">
+                  <div className="result-actions" style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                    <button className="btn-primary" onClick={handleSave}>💾 Guardar</button>
+                    <button className="btn-primary" onClick={() => generateExercisePDF({ title: result.split('\n')[0].replace('## ', '').trim(), content: result }, activeTeam)}>📄 Exportar PDF</button>
+                    <button className="btn-outline" style={{ borderColor: 'var(--ia-text-right)', color: 'var(--ia-text-right)' }} onClick={() => setResult(null)}>🔄 Limpiar</button>
+                  </div>
+                  <div className="ia-markdown-container">
+                    <div className="ia-markdown">{renderMarkdown(result)}</div>
+                  </div>
+                </div>
+              )}
             </div>
-          )}
-          {result && !isGenerating && (
-            <div className="ia-result-content">
-              <div className="result-actions" style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-                <button className="btn-primary" onClick={handleSave}>💾 Guardar</button>
-                <button className="btn-primary" onClick={() => generateExercisePDF({ title: result.split('\n')[0].replace('## ', '').trim(), content: result }, activeTeam)}>📄 Exportar PDF</button>
-                <button className="btn-outline" style={{ borderColor: 'var(--ia-text-right)', color: 'var(--ia-text-right)' }} onClick={() => setResult(null)}>🔄 Limpiar</button>
-              </div>
-              <div className="ia-markdown-container">
-                <div className="ia-markdown">{renderMarkdown(result)}</div>
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
+          </div>
+        </>
+      )}
 
       {showBiblioteca && (
         <div className="library-drawer-overlay active" onClick={() => setShowBiblioteca(false)}>

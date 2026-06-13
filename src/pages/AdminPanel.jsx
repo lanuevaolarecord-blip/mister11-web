@@ -684,6 +684,81 @@ const AdminPanel = () => {
             </header>
 
             <div className="settings-grid">
+              {/* DOCUMENTOS LEGALES Y CONSENTIMIENTO */}
+              <div className="settings-card">
+                <div className="card-header-icon">
+                  <Shield size={20} />
+                  <h3>Centro Legal y Consentimientos</h3>
+                </div>
+                <div className="settings-form" style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                  <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', margin: '0 0 8px 0', lineHeight: '1.4' }}>
+                    Descarga plantillas legales obligatorias y gestiona el consentimiento informado para los padres de tus jugadores menores de edad.
+                  </p>
+                  
+                  <button
+                    onClick={() => {
+                      const consentUrl = `${window.location.origin}/legal/consentimiento.html`;
+                      window.open(consentUrl, '_blank');
+                    }}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '8px',
+                      width: '100%',
+                      minHeight: '40px',
+                      background: 'var(--accent-green, #228B22)',
+                      color: '#fff',
+                      fontWeight: '700',
+                      fontSize: '0.85rem',
+                      borderRadius: '8px',
+                      border: 'none',
+                      cursor: 'pointer',
+                      padding: '8px 16px'
+                    }}
+                  >
+                    ⬇️ Descargar Consentimiento Parental (Imprimible)
+                  </button>
+
+                  <button
+                    onClick={() => {
+                      if (!activeTeam) {
+                        showToast("Selecciona un equipo primero.", "info");
+                        return;
+                      }
+                      const baseUrl = window.location.origin;
+                      const consentLink = `${baseUrl}/shared/consentimiento?coachId=${user.uid}&teamId=${activeTeam.id}&teamName=${encodeURIComponent(activeTeam.nombre || 'Míster11 Club')}&coachName=${encodeURIComponent(user.displayName || 'el Entrenador')}`;
+                      navigator.clipboard.writeText(consentLink);
+                      showToast("¡Enlace copiado al portapapeles! Envíalo por WhatsApp.", "success");
+                    }}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '8px',
+                      width: '100%',
+                      minHeight: '40px',
+                      background: '#0B3056',
+                      color: '#fff',
+                      fontWeight: '700',
+                      fontSize: '0.85rem',
+                      borderRadius: '8px',
+                      border: 'none',
+                      cursor: 'pointer',
+                      padding: '8px 16px'
+                    }}
+                  >
+                    🔗 Copiar Link de Consentimiento Digital
+                  </button>
+
+                  <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', marginTop: '12px', borderTop: '1px solid var(--border-color)', paddingTop: '12px' }}>
+                    <a href="/legal/privacidad.html" target="_blank" rel="noopener noreferrer" style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', textDecoration: 'underline' }}>Privacidad</a>
+                    <a href="/legal/terminos.html" target="_blank" rel="noopener noreferrer" style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', textDecoration: 'underline' }}>Términos</a>
+                    <a href="/legal/cookies.html" target="_blank" rel="noopener noreferrer" style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', textDecoration: 'underline' }}>Cookies</a>
+                  </div>
+                </div>
+              </div>
+
               {/* CONFIGURACIÓN DE CUENTA */}
               <div className="settings-card">
                 <div className="card-header-icon">

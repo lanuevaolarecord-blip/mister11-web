@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useExercises } from '../hooks/useExercises';
 import { useAuth } from '../context/AuthContext';
 import { usePlan } from '../hooks/usePlan';
+import { useIAUsage } from '../hooks/useIAUsage';
 import UpgradeModal from '../components/UpgradeModal';
 import { useCaptures } from '../hooks/useCaptures';
 import { generateExercisePDF } from '../utils/pdfGenerator';
@@ -88,17 +89,17 @@ const IAGeneradora = () => {
   const [isListening, setIsListening] = useState(false);
   const recognitionRef = useRef(null);
 
-  const [customApiKey, setCustomApiKey] = useState(() => localStorage.getItem('m11_groq_api_key') || '');
-  const apiKey = (import.meta.env.VITE_GROQ_API_KEY && import.meta.env.VITE_GROQ_API_KEY !== 'PEGA_AQUI_TU_NUEVA_CLAVE_GROQ') 
-    ? import.meta.env.VITE_GROQ_API_KEY 
-    : customApiKey;
-  
-  const apiKeyMissing = !apiKey || apiKey === 'undefined' || apiKey === 'PEGA_AQUI_TU_NUEVA_CLAVE_GROQ';
+  // Hook de uso mensual de IA
+  const {
+    usageCount,
+    limit,
+    loading: loadingUsage,
+    checkUsage,
+    incrementUsage,
+    getRemainingUsages
+  } = useIAUsage();
 
-  const handleSaveApiKey = (key) => {
-    localStorage.setItem('m11_groq_api_key', key.trim());
-    setCustomApiKey(key.trim());
-  };
+  const apiKey = import.meta.env.VITE_GROQ_API_KEY;
 
   const toggleMaterial = (id) => {
     setForm(prev => ({
@@ -181,8 +182,18 @@ const IAGeneradora = () => {
 
   const handleGenerate = async () => {
     if (isCallingRef.current) return;
-    if (!isProActive) {
-      setUpgradeModal({ open: true, message: 'La generación de ejercicios con Inteligencia Artificial es una función PRO. Sube de nivel para usarla.' });
+
+    // 1. Verificar si la clave de Groq está configurada en las variables de entorno
+    const GROQ_API_KEY = import.meta.env.VITE_GROQ_API_KEY;
+    if (!GROQ_API_KEY || GROQ_API_KEY === 'PEGA_AQUI_TU_NUEVA_CLAVE_GROQ' || GROQ_API_KEY === 'undefined') {
+      alert('La IA no está configurada. Contacta con el administrador.');
+      return;
+    }
+
+    // 2. Verificar si el usuario ha alcanzado su límite mensual de uso
+    const hasUsage = await checkUsage();
+    if (!hasUsage) {
+      alert(`Has alcanzado el límite de ${limit} generaciones de IA este mes. El límite se reinicia el próximo mes.`);
       return;
     }
 
@@ -253,6 +264,7 @@ Responde solo en español y usa formato markdown.`;
     try {
       const texto = await callGroq(prompt);
       setResult(texto);
+      await incrementUsage();
     } catch (err) {
       setError(`Error: ${err.message}`);
     } finally {
@@ -281,80 +293,23 @@ Responde solo en español y usa formato markdown.`;
 
   return (
     <div className="ia-page">
-      {apiKeyMissing ? (
-        <div className="ia-form-panel" style={{ maxWidth: '500px', margin: '40px auto', float: 'none', width: '100%', border: '1px solid var(--border-light)', borderRadius: '12px', padding: '24px' }}>
-          <header className="ia-form-header">
-            <div className="ia-header-text">
-              <h1>✨ IA Generadora</h1>
-              <p>Configura tu API Key de Groq</p>
-            </div>
-          </header>
-          <div className="ia-form-body" style={{ textAlign: 'center', padding: '24px 0' }}>
-            <div style={{ fontSize: '48px', marginBottom: '16px' }}>🔑</div>
-            <h2 style={{ color: 'var(--text-primary)', marginBottom: '8px', fontSize: '18px', fontFamily: 'var(--font-heading)' }}>Activar Inteligencia Artificial</h2>
-            <p style={{ color: 'var(--text-secondary)', fontSize: '13px', marginBottom: '24px', lineHeight: '1.6' }}>
-              No se ha detectado una clave de API de Groq configurada en tu archivo <code>.env</code> o la actual es la por defecto.
-              Para activar el diseñador de ejercicios tácticos y planes clínicos, introduce tu API Key personal de Groq.
-            </p>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', alignItems: 'stretch' }}>
-              <input 
-                type="password" 
-                placeholder="gsk_..." 
-                id="custom-groq-key-input"
-                style={{ padding: '12px', borderRadius: '8px', border: '1px solid var(--border-color)', background: 'var(--bg-app)', color: 'var(--text-primary)', fontSize: '14px' }}
-              />
-              <button 
-                onClick={() => {
-                  const val = document.getElementById('custom-groq-key-input')?.value;
-                  if (val) {
-                    handleSaveApiKey(val);
-                  } else {
-                    alert("Por favor, introduce una clave válida.");
-                  }
-                }}
-                className="btn-primary"
-                style={{ padding: '12px', borderRadius: '8px', fontWeight: 'bold', border: 'none', background: 'var(--accent)', color: 'white', cursor: 'pointer' }}
-              >
-                Activar IA
-              </button>
-            </div>
-            <p style={{ marginTop: '20px', fontSize: '12px', color: 'var(--text-secondary)' }}>
-              ¿No tienes una clave? Consigue una gratis en <a href="https://console.groq.com" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--accent)', textDecoration: 'underline' }}>console.groq.com</a>.
-            </p>
+      <div className="ia-form-panel">
+        <header className="ia-form-header">
+          <div className="ia-header-text">
+            <h1>✨ IA Generadora</h1>
+            <p>Diseño de entrenamientos inteligentes</p>
           </div>
-        </div>
-      ) : (
-        <>
-          <div className="ia-form-panel">
-            <header className="ia-form-header">
-              <div className="ia-header-text">
-                <h1>✨ IA Generadora</h1>
-                <p>Diseño de entrenamientos inteligentes</p>
-              </div>
-              <div style={{ display: 'flex', gap: '8px' }}>
-                <button 
-                  onClick={() => {
-                    setShowBiblioteca(true);
-                  }} 
-                  className={`btn-outline-gold library-btn ${exercises.length > 0 ? 'has-content' : ''}`}
-                >
-                  ☁️ Biblioteca ({exercises.length})
-                </button>
-                <button 
-                  onClick={() => {
-                    if (window.confirm("¿Deseas restablecer o cambiar tu clave de API de Groq?")) {
-                      localStorage.removeItem('m11_groq_api_key');
-                      setCustomApiKey('');
-                    }
-                  }}
-                  className="btn-outline"
-                  style={{ padding: '4px 10px', fontSize: '12px', borderColor: 'var(--border-color)', color: 'var(--text-secondary)', borderRadius: '6px' }}
-                  title="Cambiar API Key de Groq"
-                >
-                  ⚙️ Clave IA
-                </button>
-              </div>
-            </header>
+          <div style={{ display: 'flex', gap: '8px' }}>
+            <button 
+              onClick={() => {
+                setShowBiblioteca(true);
+              }} 
+              className={`btn-outline-gold library-btn ${exercises.length > 0 ? 'has-content' : ''}`}
+            >
+              ☁️ Biblioteca ({exercises.length})
+            </button>
+          </div>
+        </header>
 
             <div className="ia-mode-cards">
               <button
@@ -568,11 +523,21 @@ Responde solo en español y usa formato markdown.`;
                   </div>
                 </>
               )}
+
               {error && <div className="ia-error">{error}</div>}
 
-              <button className="btn-generate" onClick={handleGenerate} disabled={isGenerating}>
-                {isGenerating ? loadingMsg : (mode === 'prevencion' ? '🩺 Generar Plan de Ejercicios' : '✨ Generar Ejercicio')}
-              </button>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', alignItems: 'center', marginTop: '16px' }}>
+                <button className="btn-generate" onClick={handleGenerate} disabled={isGenerating || loadingUsage} style={{ width: '100%' }}>
+                  {isGenerating ? loadingMsg : (mode === 'prevencion' ? '🩺 Generar Plan de Ejercicios' : '✨ Generar Ejercicio')}
+                </button>
+                <div style={{ fontSize: '13px', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '4px', fontWeight: 'bold' }}>
+                  {loadingUsage ? (
+                    <span>🔑 IA: Cargando usos...</span>
+                  ) : (
+                    <span>🔑 IA: te quedan {getRemainingUsages()} usos este mes (límite {limit})</span>
+                  )}
+                </div>
+              </div>
             </div>
           </div>
 
@@ -611,8 +576,6 @@ Responde solo en español y usa formato markdown.`;
               )}
             </div>
           </div>
-        </>
-      )}
 
       {showBiblioteca && (
         <div className="library-drawer-overlay active" onClick={() => setShowBiblioteca(false)}>

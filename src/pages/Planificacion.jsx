@@ -12,6 +12,7 @@ import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { downloadPDF } from '../utils/download';
 import { APP_VERSION } from '../constants/appVersion';
+import { exportMonthlyPlan } from '../utils/exportMonthlyPlan';
 import '../styles/planificacion.css';
 
 // --- CONSTANTS ---
@@ -184,6 +185,26 @@ const Planificacion = () => {
     } catch (e) { showToast('Error al guardar.', 'error'); }
     finally { setSaving(false); }
   }, [user, macroInfo, microcycles, macroCounts, showToast, activeTeamId]);
+
+  const handleExportMonthlyPDF = async () => {
+    if (!isProActive) {
+      setUpgradeModal({ open: true, message: 'La exportación del mesociclo a PDF es una función PRO. Sube de nivel para usarla.' });
+      return;
+    }
+    showToast('Generando PDF del mesociclo...', 'info');
+    try {
+      const meso = mesocycles.find(m => m.month === selectedMesoItem);
+      if (!meso) {
+        showToast('Error: No se encontró la información del mes.', 'error');
+        return;
+      }
+      exportMonthlyPlan(meso, macroInfo, activeTeam, APP_VERSION);
+      showToast('PDF del mesociclo generado con éxito ✓');
+    } catch (err) {
+      console.error(err);
+      showToast('Error al exportar PDF.', 'error');
+    }
+  };
 
   const handleExportPDF = async () => {
     if (!isProActive) {
@@ -1092,6 +1113,13 @@ const Planificacion = () => {
                   ← Volver a Mesociclos
                 </button>
                 <h3 style={{ margin: 0, fontSize: 18, color: 'var(--text-primary)' }}>Detalle del Mes: {selectedMesoItem.toUpperCase()}</h3>
+                <button 
+                  className="btn-primary"
+                  style={{ padding: '6px 12px', fontSize: 13, background: '#004B87', color: '#fff', border: 'none', borderRadius: 6, cursor: 'pointer', fontWeight: 600, marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '6px' }}
+                  onClick={handleExportMonthlyPDF}
+                >
+                  📄 Exportar mes a PDF
+                </button>
               </div>
               <div className="plan-matrix-container" style={{ overflowX: 'auto', background: darkMode ? 'var(--bg-secondary)' : '#fff', padding: '16px', borderRadius: '12px', boxShadow: '0 4px 12px rgba(0,0,0,0.03)' }}>
                 <table className="plan-matrix-table" style={{ width: '100%', minWidth: '600px' }}>

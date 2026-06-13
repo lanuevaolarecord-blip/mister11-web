@@ -12,6 +12,7 @@ import { useMatchEvents } from '../hooks/useMatchEvents';
 import CustomFormationModal from '../components/CustomFormationModal';
 import FormationSelector from '../components/FormationSelector';
 import './Partidos.css';
+import { normalizeText } from '../utils/normalizeInput';
 
 // Auxiliar para determinar la zona general de una posición táctica
 const getGeneralZone = (pos) => {
@@ -753,7 +754,7 @@ const Partidos = () => {
                 <div className="form-grid">
                   <div className="form-group full">
                     <label>Equipo Rival</label>
-                    <input type="text" className="partidos-input" value={matchData.rival} onChange={e => setMatchData({...matchData, rival: e.target.value})} placeholder="Ej. fomento castellon" />
+                    <input type="text" className="partidos-input" value={matchData.rival} onChange={e => setMatchData({...matchData, rival: e.target.value})} onBlur={e => setMatchData(prev => ({...prev, rival: normalizeText(e.target.value)}))} placeholder="Ej. fomento castellon" />
                   </div>
                   <div className="form-group quarter">
                     <label>Fecha</label>
@@ -779,7 +780,7 @@ const Partidos = () => {
                   </div>
                   <div className="form-group half">
                     <label>Estadio / Lugar</label>
-                    <input type="text" className="partidos-input" value={matchData.location} onChange={e => setMatchData({...matchData, location: e.target.value})} placeholder="Ej. facsa castellon c.d" />
+                    <input type="text" className="partidos-input" value={matchData.location} onChange={e => setMatchData({...matchData, location: e.target.value})} onBlur={e => setMatchData(prev => ({...prev, location: normalizeText(e.target.value)}))} placeholder="Ej. facsa castellon c.d" />
                   </div>
                   <div className="form-group full" style={{ marginTop: '16px' }}>
                     <label>Sincronización de Calendario</label>

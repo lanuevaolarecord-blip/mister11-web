@@ -6,6 +6,7 @@ import { usePlan } from '../hooks/usePlan';
 import UpgradeModal from '../components/UpgradeModal';
 import { calcularEdad } from '../utils/calcularEdad';
 import { generateExpediente } from '../utils/pdfGenerator';
+import { normalizeText } from '../utils/normalizeInput';
 import imageCompression from 'browser-image-compression';
 import { storage } from '../firebaseConfig';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
@@ -261,7 +262,7 @@ const MiEquipo = () => {
             <div className="modal-body">
               <div className="form-group-team full">
                 <label>Nombre del Jugador *</label>
-                <input type="text" value={editData.name} onChange={e => setEditData({...editData, name: e.target.value})} placeholder="Ej. Lamine Yamal" />
+                <input type="text" value={editData.name} onChange={e => setEditData({...editData, name: e.target.value})} onBlur={e => setEditData(prev => ({...prev, name: normalizeText(e.target.value)}))} placeholder="Ej. Lamine Yamal" />
               </div>
               <div className="form-group-team full" style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '16px' }}>
                 <label>Foto del Jugador</label>

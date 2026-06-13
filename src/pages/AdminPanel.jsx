@@ -3,6 +3,7 @@ import { Browser } from '@capacitor/browser';
 import { Capacitor } from '@capacitor/core';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { APP_VERSION } from '../constants/appVersion';
+import { normalizeText } from '../utils/normalizeInput';
 import { useTeams } from '../hooks/useTeams';
 import { useSettings } from '../hooks/useSettings';
 import { useExercises } from '../hooks/useExercises';
@@ -515,12 +516,14 @@ const AdminPanel = () => {
                     placeholder="Nombre (ej. Infantil A)" 
                     value={newTeam.nombre}
                     onChange={e => setNewTeam({...newTeam, nombre: e.target.value})}
+                    onBlur={e => setNewTeam(prev => ({...prev, nombre: normalizeText(e.target.value)}))}
                   />
                   <input 
                     type="text" 
                     placeholder="Categoría" 
                     value={newTeam.categoria}
                     onChange={e => setNewTeam({...newTeam, categoria: e.target.value})}
+                    onBlur={e => setNewTeam(prev => ({...prev, categoria: normalizeText(e.target.value)}))}
                   />
                 </div>
                 
@@ -728,6 +731,7 @@ const AdminPanel = () => {
                       placeholder="Ej. Real Madrid C.F." 
                       value={teamEditData.nombre} 
                       onChange={(e) => setTeamEditData({...teamEditData, nombre: e.target.value})}
+                      onBlur={e => setTeamEditData(prev => ({...prev, nombre: normalizeText(e.target.value)}))}
                       disabled={!activeTeam}
                     />
                   </div>
@@ -738,6 +742,7 @@ const AdminPanel = () => {
                         type="text" 
                         value={teamEditData.categoria} 
                         onChange={(e) => setTeamEditData({...teamEditData, categoria: e.target.value})}
+                        onBlur={e => setTeamEditData(prev => ({...prev, categoria: normalizeText(e.target.value)}))}
                         disabled={!activeTeam}
                       />
                     </div>
@@ -747,6 +752,7 @@ const AdminPanel = () => {
                         type="text" 
                         value={teamEditData.temporada} 
                         onChange={(e) => setTeamEditData({...teamEditData, temporada: e.target.value})}
+                        onBlur={e => setTeamEditData(prev => ({...prev, temporada: normalizeText(e.target.value)}))}
                         disabled={!activeTeam}
                       />
                     </div>

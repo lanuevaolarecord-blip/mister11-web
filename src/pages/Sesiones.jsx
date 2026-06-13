@@ -13,6 +13,7 @@ import { useCaptures } from '../hooks/useCaptures';
 import { useExercises } from '../hooks/useExercises';
 import { downloadJSON, downloadImage } from '../utils/download.js';
 import { generateGoogleCalendarUrl, generateICSContent, downloadICSFile } from '../utils/calendarHelper';
+import { normalizeText } from '../utils/normalizeInput';
 import {
   DndContext,
   closestCenter,
@@ -504,7 +505,7 @@ const Sesiones = () => {
               <h3>Datos Generales</h3>
               <div className="form-group full">
                 <label>Título de la Sesión</label>
-                <input type="text" value={editData.title} onChange={e => setEditData({...editData, title: e.target.value})} placeholder="Ej. Activación y Rondo..." />
+                <input type="text" value={editData.title} onChange={e => setEditData({...editData, title: e.target.value})} onBlur={e => setEditData(prev => ({...prev, title: normalizeText(e.target.value)}))} placeholder="Ej. Activación y Rondo..." />
               </div>
               <div className="form-row">
                 <div className="form-group">
@@ -546,7 +547,7 @@ const Sesiones = () => {
               </div>
               <div className="form-group full">
                 <label>Material Necesario</label>
-                <input type="text" value={editData.materials || ''} onChange={e => setEditData({...editData, materials: e.target.value})} placeholder="Ej. 10 balones, 15 petos (rojos/azules), 20 conos" />
+                <input type="text" value={editData.materials || ''} onChange={e => setEditData({...editData, materials: e.target.value})} onBlur={e => setEditData(prev => ({...prev, materials: normalizeText(e.target.value)}))} placeholder="Ej. 10 balones, 15 petos (rojos/azules), 20 conos" />
               </div>
               <div className="form-group full" style={{marginTop: '16px'}}>
                 <label>🎬 Vincular Animación / Pizarra Táctica</label>

@@ -2142,7 +2142,7 @@ const PizarraTactica = () => {
 
     if (!silent) {
       setIsCapturing(true);
-      window.dispatchEvent(new CustomEvent('m11-loading', { detail: { show: true, message: 'Capturando imagen...' } }));
+
       await new Promise(r => setTimeout(r, 150));
     }
 

@@ -2202,64 +2202,74 @@ const PizarraTactica = () => {
         await downloadImage(dataURL, `mister11-tactica-${Date.now()}.png`);
       }
 
-      // 7. Subir a Firebase Storage y Firestore
-      let downloadURL = null;
+      // 7. Subir a Firebase Storage (con fallback JPEG si el PNG falla)
+      let finalUrl = '';      // Siempre string, NUNCA base64 en Firestore
       let storagePath = null;
-      
-      if (user.uid !== 'invitado-local') {
-        try {
-          storagePath = `captures/${user.uid}/${activeTeamId}/${Date.now()}.png`;
-          const storageRef = ref(storage, storagePath);
-          
-          const uploadWithTimeout = (promise, ms) => Promise.race([
-            promise,
-            new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), ms))
-          ]);
 
-          // Subir imagen completa a Storage
-          await uploadWithTimeout(uploadString(storageRef, dataURL, 'data_url'), 8000);
-          downloadURL = await uploadWithTimeout(getDownloadURL(storageRef), 5000);
-        } catch (uploadErr) {
-          console.warn("Falló subida a Storage, usando fallback local:", uploadErr);
-          storagePath = null; // No hay path en storage
+      if (user.uid !== 'invitado-local') {
+        const uploadWithTimeout = (promise, ms) => Promise.race([
+          promise,
+          new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), ms))
+        ]);
+
+        // Intento 1: Subir PNG completo a Storage
+        try {
+          const pngPath = `captures/${user.uid}/${activeTeamId}/${Date.now()}.png`;
+          const pngRef = ref(storage, pngPath);
+          await uploadWithTimeout(uploadString(pngRef, dataURL, 'data_url'), 8000);
+          finalUrl = await uploadWithTimeout(getDownloadURL(pngRef), 5000);
+          storagePath = pngPath;
+        } catch (pngErr) {
+          console.warn('[Pizarra] Falló subida PNG, intentando JPEG fallback:', pngErr.message);
+
+          // Intento 2: Subir JPEG fallback comprimido (mucho más pequeño)
+          try {
+            const jpgPath = `captures/${user.uid}/${activeTeamId}/${Date.now()}_fb.jpg`;
+            const jpgRef = ref(storage, jpgPath);
+            await uploadWithTimeout(uploadString(jpgRef, fallbackDataURL, 'data_url'), 8000);
+            finalUrl = await uploadWithTimeout(getDownloadURL(jpgRef), 5000);
+            storagePath = jpgPath;
+          } catch (jpgErr) {
+            console.warn('[Pizarra] También falló JPEG fallback, guardando sin imagen:', jpgErr.message);
+            finalUrl = '';   // Sin URL — el doc se guarda igual pero sin imagen
+            storagePath = null;
+          }
         }
 
-        // 8. SIEMPRE guardar referencia en Firestore (Colección de capturas sueltas)
-        // Lo hacemos fuera del try-catch de storage para que aparezca en la lista sí o sí
+        // 8. Guardar en Firestore — NUNCA base64, solo URLs de Storage o ''
+        // La causa del error `invalid-argument` era almacenar base64 (~400KB) en el campo `url`,
+        // lo que podía superar el límite de 1MB por documento de Firestore.
         try {
-          // BUG FIX: validar que el path sea válido antes de escribir en Firestore.
-          // Si getTeamPath() devuelve vacío o contiene 'undefined'/'null', usamos
-          // la colección de usuario como fallback para no perder la captura.
           const teamPath = getTeamPath();
-          let capturesColPath;
-          if (teamPath && !teamPath.includes('undefined') && !teamPath.includes('null')) {
-            capturesColPath = `${teamPath}/captures`;
-          } else {
-            console.warn('[Pizarra] Path de equipo inválido, guardando captura en path de usuario:', teamPath);
-            capturesColPath = `users/${user.uid}/captures`;
-          }
+          const capturesColPath = (teamPath && !teamPath.includes('undefined') && !teamPath.includes('null'))
+            ? `${teamPath}/captures`
+            : `users/${user.uid}/captures`;
 
-          const captureDocRef = doc(collection(db, capturesColPath));
-          await setDoc(captureDocRef, {
-            id: captureDocRef.id,
-            url: downloadURL || fallbackDataURL, // URL de Storage o Base64 comprimido ligero
-            thumbnail: thumbnailDataURL, // Miniatura para la rejilla
-            storagePath: storagePath,
+          // Thumbnail: solo se guarda si cabe cómodamente (<80KB base64)
+          const safeThumb = (typeof thumbnailDataURL === 'string' && thumbnailDataURL.length < 80000)
+            ? thumbnailDataURL
+            : '';
+
+          console.log('[Capture] Guardando en Firestore:', capturesColPath, '| url:', finalUrl ? 'Storage URL' : 'vacía', '| thumb:', safeThumb.length, 'chars');
+
+          await addDoc(collection(db, capturesColPath), {
+            url: finalUrl,                           // Storage URL o '' — NUNCA base64
+            thumbnail: safeThumb,                    // Miniatura <80KB o ''
+            storagePath: storagePath ?? null,
             title: `Captura Táctica (${new Date().toLocaleTimeString()})`,
+            hasImage: finalUrl !== '',
             timestamp: serverTimestamp(),
             createdAt: serverTimestamp(),
             updatedAt: serverTimestamp()
           });
-          alert("✅ Captura guardada. Puedes verla en Sesiones > Capturas.");
+          alert('✅ Captura guardada. Puedes verla en Sesiones > Capturas.');
         } catch (dbErr) {
-          console.error("Error guardando captura en Firestore:", dbErr);
-          alert("❌ Error al guardar en la base de datos: " + (dbErr?.code || dbErr?.message || 'Error desconocido'));
+          console.error('[Capture] Error guardando en Firestore:', dbErr);
+          alert('❌ Error al guardar: ' + (dbErr?.code || dbErr?.message || 'Error desconocido'));
         }
       } else {
-        if (download) {
-          // Ya descargado por downloadImage
-        } else {
-          alert("✅ Captura completada localmente.");
+        if (!download) {
+          alert('✅ Captura completada localmente.');
         }
       }
 
@@ -2267,8 +2277,8 @@ const PizarraTactica = () => {
       
       // Retornamos un objeto con ambas URLs para que handleSave decida qué usar
       return {
-        full: downloadURL || fallbackDataURL, // URL de Storage o Base64 comprimido ligero
-        thumb: thumbnailDataURL       // Base64 pequeño (<50KB) siempre disponible
+        full: finalUrl || '',                                       // Storage URL o ''
+        thumb: (typeof thumbnailDataURL === 'string') ? thumbnailDataURL : ''  // Miniatura base64 o ''
       };
 
     } catch (err) {

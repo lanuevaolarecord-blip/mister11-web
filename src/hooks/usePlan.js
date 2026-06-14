@@ -30,7 +30,8 @@ export const LIMITS = {
 export const DEVELOPER_EMAILS = [
   'mister11.app@gmail.com',
   'lanuevaolarecord@gmail.com',
-  'jhocao111294@gmail.com'
+  'jhocao111294@gmail.com',
+  'lavozdelformador@gmail.com'
 ];
 
 export const usePlan = () => {

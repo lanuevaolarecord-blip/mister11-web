@@ -2157,6 +2157,14 @@ const PizarraTactica = () => {
       thumbCtx.drawImage(tempCanvas, 0, 0, 300, 200);
       const thumbnailDataURL = thumbCanvas.toDataURL('image/jpeg', 0.6); // Muy ligera
 
+      // Generar imagen fallback comprimida para Firestore si falla la subida a Storage (evita error de 1MB)
+      const fallbackCanvas = document.createElement('canvas');
+      fallbackCanvas.width = 800; // Suficiente para visualización de fallback
+      fallbackCanvas.height = 533;
+      const fallbackCtx = fallbackCanvas.getContext('2d');
+      fallbackCtx.drawImage(tempCanvas, 0, 0, 800, 533);
+      const fallbackDataURL = fallbackCanvas.toDataURL('image/jpeg', 0.75); // Muy ligera (~60KB)
+
       if (download) {
         await downloadImage(dataURL, `mister11-tactica-${Date.now()}.png`);
       }
@@ -2189,7 +2197,7 @@ const PizarraTactica = () => {
           const captureDocRef = doc(collection(db, getTeamPath(), 'captures'));
           await setDoc(captureDocRef, {
             id: captureDocRef.id,
-            url: downloadURL || dataURL, // Imagen completa
+            url: downloadURL || fallbackDataURL, // URL de Storage o Base64 comprimido ligero
             thumbnail: thumbnailDataURL, // Miniatura para la rejilla
             storagePath: storagePath,
             title: `Captura Táctica (${new Date().toLocaleTimeString()})`,
@@ -2214,7 +2222,7 @@ const PizarraTactica = () => {
       
       // Retornamos un objeto con ambas URLs para que handleSave decida qué usar
       return {
-        full: downloadURL || dataURL, // URL de Storage o Base64 grande
+        full: downloadURL || fallbackDataURL, // URL de Storage o Base64 comprimido ligero
         thumb: thumbnailDataURL       // Base64 pequeño (<50KB) siempre disponible
       };
 

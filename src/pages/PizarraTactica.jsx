@@ -434,9 +434,11 @@ const PizarraTactica = () => {
     const saveToDB = async () => {
       if (user.uid === 'invitado-local') return;
       try {
-        if (!activeTeamId) return;
-        const frameRef = doc(db, getTeamPath(), 'pizarras', planId, 'frames', frame.id);
-        const parentRef = doc(db, getTeamPath(), 'pizarras', planId);
+        if (!activeTeamId || !planId) return; // Guard: planId requerido
+        const teamPath = getTeamPath();
+        if (!teamPath || teamPath.includes('undefined') || teamPath.includes('null')) return;
+        const frameRef = doc(db, teamPath, 'pizarras', planId, 'frames', frame.id);
+        const parentRef = doc(db, teamPath, 'pizarras', planId);
         
         await Promise.all([
           setDoc(frameRef, {
@@ -453,7 +455,7 @@ const PizarraTactica = () => {
           }, { merge: true })
         ]);
       } catch (err) {
-        console.error("Error updating frame in Firestore:", err);
+        console.error('Error updating frame in Firestore:', err);
       }
     };
 
@@ -659,6 +661,12 @@ const PizarraTactica = () => {
 
   // ─── Export Animation Video (MP4/WebM) ────────────────────────────────────
   const exportAnimationVideo = async () => {
+    // Helper local: showToast usa el sistema de notificaciones real del componente
+    const showToast = (msg, type = 'info') => {
+      setCaptureToast({ type: type === 'info' ? 'success' : type, msg });
+      setTimeout(() => setCaptureToast(null), type === 'error' ? 5000 : 3500);
+    };
+
     if (!isProActive) {
       setUpgradeModal({ open: true, message: 'La exportación de animaciones en video MP4 es una función PRO. Sube de nivel para usarla.' });
       return;
@@ -666,14 +674,15 @@ const PizarraTactica = () => {
     const fc = fcRef.current;
     const fieldCanvas = fieldCanvasRef.current;
     if (!fc || !fieldCanvas || framesR.current.length < 2) {
-      showToast("Necesitas al menos 2 frames para exportar un video.", 'info');
+      showToast('Necesitas al menos 2 frames para exportar un video.', 'info');
       return;
     }
     if (isRecording) return;
     setIsRecording(true);
-    showToast("Generando video, por favor espera...", 'info');
+    showToast('Generando video, por favor espera...', 'info');
     
     let recordingActive = true;
+
     
     try {
       // 1. Asegurar que los frames estén guardados antes de exportar
@@ -2454,25 +2463,21 @@ const PizarraTactica = () => {
       if (user.uid === 'invitado-local') {
         newFrameId = `frame-${Date.now()}`;
       } else {
-        // BUG FIX: envolver la creación del path en try-catch para evitar crash
-        // cuando getTeamPath() devuelve string vacío o ruta inválida.
-        // El frame se añade igualmente de forma local con un ID generado.
         try {
           const teamPath = getTeamPath();
-          if (!teamPath || teamPath.includes('undefined') || teamPath.includes('null')) {
-            console.warn('[Pizarra] addFrame: ruta de equipo inválida, usando ID local:', teamPath);
+          // Validar que tanto teamPath como planId sean válidos antes de crear la referencia
+          if (!teamPath || teamPath.includes('undefined') || teamPath.includes('null') ||
+              !planId || planId.includes('undefined') || planId.includes('null')) {
+            console.warn('[Pizarra] addFrame: ruta inválida, usando ID local. teamPath:', teamPath, 'planId:', planId);
             newFrameId = `frame-${Date.now()}`;
           } else {
             const framesColRef = collection(db, teamPath, 'pizarras', planId, 'frames');
-            // Generamos el ID y la referencia de forma síncrona
             const newDocRef = doc(framesColRef);
             newFrameId = newDocRef.id;
-            
-            // Guardar en Firebase asíncronamente sin bloquear la UI
             setDoc(newDocRef, {
               ...newFrameData,
-              createdAt: serverTimestamp() // Timestamp real del servidor
-            }).catch(err => console.error("Error setting frame doc:", err));
+              createdAt: serverTimestamp()
+            }).catch(err => console.error('Error setting frame doc:', err));
           }
         } catch (pathErr) {
           console.warn('[Pizarra] addFrame: error al crear referencia Firestore, usando ID local:', pathErr);

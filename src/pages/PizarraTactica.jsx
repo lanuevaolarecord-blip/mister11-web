@@ -2273,8 +2273,6 @@ const PizarraTactica = () => {
         }
       }
 
-      if (!silent) setIsCapturing(false);
-      
       // Retornamos un objeto con ambas URLs para que handleSave decida qué usar
       return {
         full: finalUrl || '',                                       // Storage URL o ''
@@ -2284,8 +2282,11 @@ const PizarraTactica = () => {
     } catch (err) {
       console.error("Error en captura:", err);
       if (!silent) alert("Error al generar la captura. Revisar consola.");
-      setIsCapturing(false);
       return null;
+    } finally {
+      // SIEMPRE ocultar el overlay de captura, pase lo que pase
+      // (éxito, error, timeout, alerta descartada, etc.)
+      if (!silent) setIsCapturing(false);
     }
   };
 

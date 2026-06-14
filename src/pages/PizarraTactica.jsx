@@ -792,99 +792,155 @@ const PizarraTactica = () => {
       setIsPlaying(true);
       playingR.current = true;
       
-      const runRecordingAnimation = (idx) => {
-        if (!playingR.current) {
-          recordingActive = false;
+      // ── Helper para detener la grabación de forma segura ────────────────────────
+      // Garantiza que isRecording SIEMPRE vuelve a false, sin importar qué falle.
+      const safeStop = (reason) => {
+        console.log('[MP4 Export] Deteniendo grabación:', reason);
+        recordingActive = false;
+        setIsPlaying(false);
+        playingR.current = false;
+        try {
           if (recorder.state !== 'inactive') recorder.stop();
+        } catch (e) {
+          console.warn('[MP4 Export] recorder.stop() falló:', e);
+          setIsRecording(false); // fallback directo si stop() falla
+        }
+      };
+
+      // ── Timeout de seguridad (60s) ─────────────────────────────────────
+      // Si ningún error es capturado pero la grabación no termina,
+      // este timeout garantiza que el botón siempre quede usable.
+      const safetyTimeout = setTimeout(() => {
+        if (recordingActive) {
+          console.warn('[MP4 Export] Timeout de seguridad. Forzando parada.');
+          safeStop('safety-timeout');
+          showToast('La exportación tardó demasiado. Intenta con menos frames.', 'error');
+          setIsRecording(false);
+        }
+      }, 60000);
+
+      // ── Función de animación de grabación (con protección completa) ───────
+      const runRecordingAnimation = (idx) => {
+        if (!playingR.current || !recordingActive) {
+          clearTimeout(safetyTimeout);
+          safeStop('stopped-early');
           return;
         }
         if (idx >= framesR.current.length - 1) {
-          setIsPlaying(false);
-          playingR.current = false;
+          clearTimeout(safetyTimeout);
           loadFrame(framesR.current.length - 1);
-          setTimeout(() => {
-            recordingActive = false;
-            if (recorder.state !== 'inactive') recorder.stop();
-          }, 500);
+          setTimeout(() => safeStop('animation-complete'), 500);
           return;
         }
-        
+
         setFrameIdx(idx);
         frameIdxR.current = idx;
+
         const fA = framesR.current[idx];
         const fB = framesR.current[idx + 1];
+        if (!fA || !fB) {
+          clearTimeout(safetyTimeout);
+          safeStop('frame-undefined');
+          showToast('Error: frame no encontrado durante la exportación.', 'error');
+          setIsRecording(false);
+          return;
+        }
+
+        // Normalizar state (puede ser string JSON o objeto)
+        const parseState = (s) => {
+          if (!s) return { objects: [] };
+          if (typeof s === 'string') { try { return JSON.parse(s); } catch(_) { return { objects: [] }; } }
+          return s;
+        };
+        const stateA = parseState(fA.state);
+        const stateB = parseState(fB.state);
         const dur = fB.duration || 800;
-        
-        cargarFrame(fA.state, () => {
-          if (!playingR.current) {
-            recordingActive = false;
-            if (recorder.state !== 'inactive') recorder.stop();
-            return;
-          }
-          const objs = fc.getObjects();
-          const rawTargets = fB.state.objects || [];
-          if (objs.length === 0 || objs.length !== rawTargets.length) {
-            cargarFrame(fB.state, () => {
-              if (!playingR.current) {
-                recordingActive = false;
-                if (recorder.state !== 'inactive') recorder.stop();
+
+        try {
+          cargarFrame(stateA, () => {
+            try {
+              if (!playingR.current || !recordingActive) {
+                clearTimeout(safetyTimeout);
+                safeStop('stopped-after-cargarFrame-A');
                 return;
               }
-              fc.renderAll();
-              setTimeout(() => {
-                runRecordingAnimation(idx + 1);
-              }, 300);
-            });
-            return;
-          }
-          
-          const targets = rawTargets.map(objData => {
-            let left, top;
-            if (objData.xRel !== undefined && objData.yRel !== undefined) {
-              const point = frRef.current.getCanvasPoint(objData.xRel, objData.yRel);
-              left = point.x;
-              top  = point.y;
-            } else {
-              left = (objData.left / CANVAS_REF_WIDTH) * fc.width;
-              top  = (objData.top / CANVAS_REF_HEIGHT) * fc.height;
-            }
-            return { left, top };
-          });
-          
-          let completed = 0;
-          objs.forEach((obj, i) => {
-            const t = targets[i];
-            const sLeft = obj.left || 0;
-            const sTop  = obj.top  || 0;
-            fabric.util.animate({
-              startValue: 0, endValue: 1, duration: dur,
-              easing: fabric.util.ease.easeInOutSine,
-              onChange: (v) => {
-                if (!playingR.current) return;
-                obj.set({
-                  left: sLeft + ((t.left || 0) - sLeft) * v,
-                  top:  sTop  + ((t.top  || 0) - sTop ) * v,
-                });
-                fc.renderAll();
-              },
-              onComplete: () => {
-                if (!playingR.current) return;
-                completed++;
-                if (completed === objs.length) {
-                  cargarFrame(fB.state, () => {
-                    if (!playingR.current) return;
-                    fc.renderAll();
-                    setTimeout(() => {
-                      runRecordingAnimation(idx + 1);
-                    }, 200);
+              const objs = fc.getObjects();
+              const rawTargets = stateB.objects || [];
+
+              if (objs.length === 0 || objs.length !== rawTargets.length) {
+                // Fallback: corte directo al frame B
+                try {
+                  cargarFrame(stateB, () => {
+                    try {
+                      if (!playingR.current || !recordingActive) { clearTimeout(safetyTimeout); safeStop('stopped-fallback-B'); return; }
+                      fc.renderAll();
+                      setTimeout(() => runRecordingAnimation(idx + 1), 300);
+                    } catch (e) { clearTimeout(safetyTimeout); safeStop('err-fallback-B-cb'); showToast('Error exportación frame B.', 'error'); setIsRecording(false); }
                   });
+                } catch (e) { clearTimeout(safetyTimeout); safeStop('err-cargarFrame-B-fallback'); showToast('Error cargando frame B.', 'error'); setIsRecording(false); }
+                return;
+              }
+
+              const targets = rawTargets.map(objData => {
+                let left, top;
+                if (objData.xRel !== undefined && objData.yRel !== undefined) {
+                  const point = frRef.current.getCanvasPoint(objData.xRel, objData.yRel);
+                  left = point.x; top = point.y;
+                } else {
+                  left = (objData.left / CANVAS_REF_WIDTH) * fc.width;
+                  top  = (objData.top / CANVAS_REF_HEIGHT) * fc.height;
                 }
-              },
-            });
+                return { left, top };
+              });
+
+              let completed = 0;
+              objs.forEach((obj, i) => {
+                const t = targets[i] || { left: obj.left, top: obj.top };
+                const sLeft = obj.left || 0;
+                const sTop  = obj.top  || 0;
+                fabric.util.animate({
+                  startValue: 0, endValue: 1, duration: dur,
+                  easing: fabric.util.ease.easeInOutSine,
+                  onChange: (v) => {
+                    if (!playingR.current) return;
+                    obj.set({ left: sLeft + ((t.left || 0) - sLeft) * v, top: sTop + ((t.top || 0) - sTop) * v });
+                    fc.renderAll();
+                  },
+                  onComplete: () => {
+                    if (!playingR.current || !recordingActive) return;
+                    completed++;
+                    if (completed === objs.length) {
+                      try {
+                        cargarFrame(stateB, () => {
+                          try {
+                            if (!playingR.current || !recordingActive) return;
+                            fc.renderAll();
+                            setTimeout(() => runRecordingAnimation(idx + 1), 200);
+                          } catch (e) { clearTimeout(safetyTimeout); safeStop('err-cargarFrame-B-complete-cb'); showToast('Error exportación final.', 'error'); setIsRecording(false); }
+                        });
+                      } catch (e) { clearTimeout(safetyTimeout); safeStop('err-cargarFrame-B-complete'); showToast('Error exportación.', 'error'); setIsRecording(false); }
+                    }
+                  },
+                });
+              });
+            } catch (cbErr) {
+              clearTimeout(safetyTimeout);
+              console.error('[MP4 Export] Error en callback cargarFrame A:', cbErr);
+              safeStop('err-in-A-callback');
+              showToast('Error al animar los jugadores.', 'error');
+              setIsRecording(false);
+            }
           });
-        });
+        } catch (e) {
+          clearTimeout(safetyTimeout);
+          console.error('[MP4 Export] Error al llamar cargarFrame A:', e);
+          safeStop('err-calling-A');
+          showToast('Error al cargar frame de exportación.', 'error');
+          setIsRecording(false);
+        }
       };
       runRecordingAnimation(0);
+
     } catch (err) {
       console.error("Error al exportar video:", err);
       showToast("Error al exportar la animación como video.", 'error');

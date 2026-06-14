@@ -58,6 +58,8 @@ const MiEquipo = () => {
   const [isSaving, setIsSaving] = useState(false);
   const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
   const [formError, setFormError] = useState('');
+  const [isConsentModalOpen, setIsConsentModalOpen] = useState(false);
+  const [consentChecked, setConsentChecked] = useState(false);
 
 
   const filteredPlayers = filter === 'TODOS' 
@@ -119,6 +121,7 @@ const MiEquipo = () => {
     } else {
       setEditData({ ...emptyPlayer });
     }
+    setConsentChecked(false);
     setFormError('');
     setIsFormOpen(true);
   };
@@ -126,6 +129,10 @@ const MiEquipo = () => {
   const handleSavePlayer = async () => {
     if(!editData.name || !editData.number || (!editData.fechaNacimiento && !editData.birthDate)) {
       setFormError("El nombre, el dorsal y la fecha de nacimiento son obligatorios.");
+      return;
+    }
+    if (!consentChecked) {
+      setFormError("Debes confirmar que te responsabilizas de obtener el consentimiento parental.");
       return;
     }
 
@@ -369,6 +376,30 @@ const MiEquipo = () => {
                   </select>
                 </div>
               </div>
+              
+              <div style={{ 
+                marginTop: '16px', 
+                padding: '12px', 
+                background: '#f8fafc', 
+                borderRadius: '8px', 
+                border: '1px solid #e2e8f0',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '8px'
+              }}>
+                <p style={{ margin: 0, fontSize: '11px', color: '#555', lineHeight: '1.4' }}>
+                  <strong>Aviso de Gobernanza Legal:</strong> El entrenador es responsable de obtener el consentimiento informado de los padres/tutores de los jugadores menores de edad conforme a la normativa de protección de datos (RGPD/LOPDGDD).
+                </p>
+                <label style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', cursor: 'pointer', fontSize: '12px', color: 'var(--text-primary)', fontWeight: 'bold' }}>
+                  <input 
+                    type="checkbox" 
+                    checked={consentChecked} 
+                    onChange={e => setConsentChecked(e.target.checked)} 
+                    style={{ marginTop: '2px', width: '16px', height: '16px' }}
+                  />
+                  <span>Confirmo que he sido informado y que obtendré los consentimientos necesarios. *</span>
+                </label>
+              </div>
             </div>
             <div className="modal-footer" style={{ flexWrap: 'wrap' }}>
               {formError && (
@@ -486,6 +517,30 @@ const MiEquipo = () => {
                   <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>Edad</span>
                   <strong style={{ fontSize: '13px', color: 'var(--text-primary)' }}>{calcularEdad(selectedPlayer.fechaNacimiento || selectedPlayer.birthDate || selectedPlayer.age).text}</strong>
                 </div>
+
+                <button
+                  onClick={() => setIsConsentModalOpen(true)}
+                  style={{
+                    background: 'var(--accent-green)',
+                    color: '#FFF',
+                    border: 'none',
+                    borderRadius: '8px',
+                    padding: '12px',
+                    fontSize: '13px',
+                    fontWeight: 'bold',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '8px',
+                    marginTop: '12px',
+                    boxShadow: 'var(--shadow-card)',
+                    minHeight: '48px',
+                    width: '100%'
+                  }}
+                >
+                  <span>📄</span> Compartir Consentimiento Parental
+                </button>
                 
                 {/* Fake Radial Chart matching the image */}
                 <div style={{ marginTop: '32px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
@@ -538,6 +593,106 @@ const MiEquipo = () => {
           </div>
         </div>
       )}
+      {/* MODAL COMPARTIR CONSENTIMIENTO PARENTAL */}
+      {isConsentModalOpen && selectedPlayer && (
+        <div className="modal-overlay" onClick={() => setIsConsentModalOpen(false)}>
+          <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: '500px' }}>
+            <div className="modal-header">
+              <h2>📄 Consentimiento Parental</h2>
+              <button className="btn-close" onClick={() => setIsConsentModalOpen(false)}>✕</button>
+            </div>
+            <div className="modal-body" style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              <div style={{ 
+                padding: '12px', 
+                background: '#e6f0fa', 
+                color: '#0B3056', 
+                borderRadius: '8px', 
+                fontSize: '13px', 
+                lineHeight: '1.5',
+                borderLeft: '4px solid #0B3056'
+              }}>
+                Este enlace permite a los padres rellenar el formulario de consentimiento y firmarlo digitalmente en su móvil. <strong>Ellos recibirán el PDF firmado para descargar. Tú también puedes descargarlo desde el mismo enlace.</strong>
+                <br /><br />
+                ⚠️ Míster11 no almacena copias de las firmas ni de los PDF firmados. Es tu responsabilidad exclusiva descargar y guardar una copia del PDF firmado.
+              </div>
+
+              <div className="form-group-team full">
+                <label>Enlace público de consentimiento</label>
+                <div style={{ display: 'flex', gap: '8px', marginTop: '4px' }}>
+                  <input 
+                    type="text" 
+                    readOnly 
+                    value={`${window.location.origin}/consentimiento?playerName=${encodeURIComponent(selectedPlayer.name)}&teamName=${encodeURIComponent(activeTeam?.nombre || '')}&coachName=${encodeURIComponent(user.displayName || '')}`}
+                    style={{ flex: 1, padding: '10px', fontSize: '12px', background: '#f4f6f9', border: '1px solid #d1d9e0', borderRadius: '6px' }}
+                    onClick={e => e.target.select()}
+                  />
+                  <button 
+                    onClick={() => {
+                      const link = `${window.location.origin}/consentimiento?playerName=${encodeURIComponent(selectedPlayer.name)}&teamName=${encodeURIComponent(activeTeam?.nombre || '')}&coachName=${encodeURIComponent(user.displayName || '')}`;
+                      navigator.clipboard.writeText(link);
+                      alert('¡Enlace copiado al portapapeles!');
+                    }}
+                    style={{
+                      background: '#0B3056',
+                      color: '#FFF',
+                      border: 'none',
+                      padding: '0 16px',
+                      borderRadius: '6px',
+                      fontSize: '13px',
+                      fontWeight: 'bold',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    Copiar
+                  </button>
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                <button
+                  onClick={() => {
+                    const link = `${window.location.origin}/consentimiento?playerName=${encodeURIComponent(selectedPlayer.name)}&teamName=${encodeURIComponent(activeTeam?.nombre || '')}&coachName=${encodeURIComponent(user.displayName || '')}`;
+                    const whatsappMsg = `Hola, necesito que firmes el consentimiento digital para registrar a ${selectedPlayer.name} en la plataforma deportiva Míster11. Puedes rellenarlo y firmarlo con tu dedo en 1 minuto desde este enlace: ${link}`;
+                    window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(whatsappMsg)}`, '_blank');
+                  }}
+                  style={{
+                    background: '#25D366',
+                    color: '#FFF',
+                    border: 'none',
+                    borderRadius: '8px',
+                    padding: '12px',
+                    fontSize: '14px',
+                    fontWeight: 'bold',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '8px',
+                    minHeight: '48px'
+                  }}
+                >
+                  💬 Compartir por WhatsApp
+                </button>
+
+                <div style={{ borderTop: '1px solid #e2e8f0', paddingTop: '16px', marginTop: '8px', textAlign: 'center' }}>
+                  <a 
+                    href="/legal/consentimiento.html" 
+                    target="_blank" 
+                    rel="noreferrer"
+                    style={{ fontSize: '13px', color: '#0B3056', fontWeight: 'bold', textDecoration: 'underline' }}
+                  >
+                    Descargar consentimiento en blanco para imprimir (Papel)
+                  </a>
+                </div>
+              </div>
+            </div>
+            <div className="modal-footer">
+              <button className="btn-secondary" onClick={() => setIsConsentModalOpen(false)}>Cerrar</button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <UpgradeModal 
         isOpen={upgradeModal.open} 
         onClose={() => setUpgradeModal({ ...upgradeModal, open: false })}

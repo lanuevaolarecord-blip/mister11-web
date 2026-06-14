@@ -23,6 +23,7 @@ import LandingPage from './pages/LandingPage';
 import SharedPlan from './pages/SharedPlan';
 import AcceptInvitation from './pages/AcceptInvitation';
 import ConsentimientoFirma from './pages/ConsentimientoFirma';
+import ConsentForm from './pages/ConsentForm';
 
 import './App.css';
 
@@ -200,6 +201,11 @@ function App() {
         <Route 
           path="/shared/consentimiento" 
           element={<ConsentimientoFirma />} 
+        />
+
+        <Route 
+          path="/consentimiento" 
+          element={<ConsentForm />} 
         />
 
         <Route 

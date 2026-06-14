@@ -83,6 +83,37 @@ export const AuthProvider = ({ children }) => {
     return () => unsubUser();
   }, [user]);
 
+  // ─── CARGA DEL DOCUMENTO DE CLUB ──────────────────────────────────────────
+  // BUG FIX: el estado `club` se declaraba pero NUNCA se cargaba de Firestore.
+  // Sin este useEffect, el guard `if (!club) return` en la carga de equipos de
+  // club bloqueaba la suscripción indefinidamente, impidiendo que `clubTeamsLoaded`
+  // se marcara como true y dejando el contexto en estado de carga infinita.
+  useEffect(() => {
+    if (!user || user.uid === 'invitado-local') {
+      setClub(null);
+      return;
+    }
+    const clubId = userProfile?.clubId;
+    if (!clubId) {
+      setClub(null);
+      return;
+    }
+
+    const unsubClub = onSnapshot(doc(db, 'clubs', clubId), (snap) => {
+      if (snap.exists()) {
+        setClub({ id: snap.id, ...snap.data() });
+      } else {
+        setClub(null);
+      }
+    }, (err) => {
+      console.error('[AuthContext] Error al cargar documento de club:', err);
+      // En caso de error de permisos, marcar como cargado sin club
+      setClub(null);
+    });
+
+    return () => unsubClub();
+  }, [user, userProfile?.clubId]);
+
   // Escuchar los equipos personales en Firestore
   useEffect(() => {
     if (!user) {

@@ -2227,7 +2227,19 @@ const PizarraTactica = () => {
         // 8. SIEMPRE guardar referencia en Firestore (Colección de capturas sueltas)
         // Lo hacemos fuera del try-catch de storage para que aparezca en la lista sí o sí
         try {
-          const captureDocRef = doc(collection(db, getTeamPath(), 'captures'));
+          // BUG FIX: validar que el path sea válido antes de escribir en Firestore.
+          // Si getTeamPath() devuelve vacío o contiene 'undefined'/'null', usamos
+          // la colección de usuario como fallback para no perder la captura.
+          const teamPath = getTeamPath();
+          let capturesColPath;
+          if (teamPath && !teamPath.includes('undefined') && !teamPath.includes('null')) {
+            capturesColPath = `${teamPath}/captures`;
+          } else {
+            console.warn('[Pizarra] Path de equipo inválido, guardando captura en path de usuario:', teamPath);
+            capturesColPath = `users/${user.uid}/captures`;
+          }
+
+          const captureDocRef = doc(collection(db, capturesColPath));
           await setDoc(captureDocRef, {
             id: captureDocRef.id,
             url: downloadURL || fallbackDataURL, // URL de Storage o Base64 comprimido ligero
@@ -2241,7 +2253,7 @@ const PizarraTactica = () => {
           alert("✅ Captura guardada. Puedes verla en Sesiones > Capturas.");
         } catch (dbErr) {
           console.error("Error guardando captura en Firestore:", dbErr);
-          alert("❌ Error al guardar en la base de datos.");
+          alert("❌ Error al guardar en la base de datos: " + (dbErr?.code || dbErr?.message || 'Error desconocido'));
         }
       } else {
         if (download) {
@@ -2356,16 +2368,30 @@ const PizarraTactica = () => {
       if (user.uid === 'invitado-local') {
         newFrameId = `frame-${Date.now()}`;
       } else {
-        const framesColRef = collection(db, getTeamPath(), 'pizarras', planId, 'frames');
-        // Generamos el ID y la referencia de forma síncrona
-        const newDocRef = doc(framesColRef);
-        newFrameId = newDocRef.id;
-        
-        // Guardar en Firebase asíncronamente sin bloquear la UI
-        setDoc(newDocRef, {
-          ...newFrameData,
-          createdAt: serverTimestamp() // Timestamp real del servidor
-        }).catch(err => console.error("Error setting frame doc:", err));
+        // BUG FIX: envolver la creación del path en try-catch para evitar crash
+        // cuando getTeamPath() devuelve string vacío o ruta inválida.
+        // El frame se añade igualmente de forma local con un ID generado.
+        try {
+          const teamPath = getTeamPath();
+          if (!teamPath || teamPath.includes('undefined') || teamPath.includes('null')) {
+            console.warn('[Pizarra] addFrame: ruta de equipo inválida, usando ID local:', teamPath);
+            newFrameId = `frame-${Date.now()}`;
+          } else {
+            const framesColRef = collection(db, teamPath, 'pizarras', planId, 'frames');
+            // Generamos el ID y la referencia de forma síncrona
+            const newDocRef = doc(framesColRef);
+            newFrameId = newDocRef.id;
+            
+            // Guardar en Firebase asíncronamente sin bloquear la UI
+            setDoc(newDocRef, {
+              ...newFrameData,
+              createdAt: serverTimestamp() // Timestamp real del servidor
+            }).catch(err => console.error("Error setting frame doc:", err));
+          }
+        } catch (pathErr) {
+          console.warn('[Pizarra] addFrame: error al crear referencia Firestore, usando ID local:', pathErr);
+          newFrameId = `frame-${Date.now()}`;
+        }
       }
       
       const newFrame = {

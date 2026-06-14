@@ -1353,6 +1353,7 @@ const AdminPanel = () => {
                   </div>
                 </div>
               </div>
+              <RedeemCode />
             </div>
           </div>
         )}

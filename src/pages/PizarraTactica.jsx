@@ -590,11 +590,17 @@ const PizarraTactica = () => {
         if (!window.confirm(`¿Importar esta animación con ${data.frames.length} frames? Esto reemplazará los frames actuales.`)) {
           return;
         }
-        const framesColRef = collection(db, getTeamPath(), 'pizarras', planId, 'frames');
-        const existingSnap = await getDocs(framesColRef);
-        for (const dDoc of existingSnap.docs) {
-          await deleteDoc(dDoc.ref);
+
+        const isGuest = user.uid === 'invitado-local';
+        let framesColRef = null;
+        if (!isGuest) {
+          framesColRef = collection(db, getTeamPath(), 'pizarras', planId, 'frames');
+          const existingSnap = await getDocs(framesColRef);
+          for (const dDoc of existingSnap.docs) {
+            await deleteDoc(dDoc.ref);
+          }
         }
+
         const newFrames = [];
         for (let i = 0; i < data.frames.length; i++) {
           const f = data.frames[i];
@@ -604,11 +610,22 @@ const PizarraTactica = () => {
             state: JSON.stringify(parsedState),
             duration: f.duration || 800,
             order: i,
-            createdAt: serverTimestamp()
+            createdAt: new Date().toISOString()
           };
-          const docRef = await addDoc(framesColRef, newFrameData);
+
+          let frameId;
+          if (isGuest) {
+            frameId = `frame-${Date.now()}-${i}`;
+          } else {
+            const docRef = await addDoc(framesColRef, {
+              ...newFrameData,
+              createdAt: serverTimestamp()
+            });
+            frameId = docRef.id;
+          }
+
           newFrames.push({
-            id: docRef.id,
+            id: frameId,
             ...newFrameData,
             state: parsedState
           });
@@ -714,7 +731,7 @@ const PizarraTactica = () => {
           const finalMime = `video/${fileType}`;
 
           // Subir a Firebase Storage si el usuario está autenticado
-          if (user && activeTeamId) {
+          if (user && activeTeamId && user.uid !== 'invitado-local') {
             try {
               const storagePath = `pizarras/${getTeamPath()}/${planId}/video.${fileType}`;
               const storageRef = ref(storage, storagePath);
@@ -1136,18 +1153,20 @@ const PizarraTactica = () => {
     tmRef.current = tm;
 
     // 4. Obtener metadatos del plan (formación, campo, etc.)
-    const planDocRef = doc(db, getTeamPath(), 'pizarras', planId);
-    getDoc(planDocRef).then(docSnap => {
-      if (docSnap.exists()) {
-        const data = docSnap.data();
-        setPlanName(data.name || 'Sin título');
-        if (data.localFormation) setLocalFormationState(data.localFormation);
-        if (data.rivalFormation) setRivalFormationState(data.rivalFormation);
-        if (data.isSwapped !== undefined) setIsSwappedState(data.isSwapped);
-        if (data.showRival !== undefined) setShowRivalState(data.showRival);
-        if (data.fieldType) setFieldTypeState(data.fieldType);
-      }
-    });
+    if (user.uid !== 'invitado-local') {
+      const planDocRef = doc(db, getTeamPath(), 'pizarras', planId);
+      getDoc(planDocRef).then(docSnap => {
+        if (docSnap.exists()) {
+          const data = docSnap.data();
+          setPlanName(data.name || 'Sin título');
+          if (data.localFormation) setLocalFormationState(data.localFormation);
+          if (data.rivalFormation) setRivalFormationState(data.rivalFormation);
+          if (data.isSwapped !== undefined) setIsSwappedState(data.isSwapped);
+          if (data.showRival !== undefined) setShowRivalState(data.showRival);
+          if (data.fieldType) setFieldTypeState(data.fieldType);
+        }
+      }).catch(err => console.error("Error fetching plan metadata:", err));
+    }
     // 5. CARGA DEL CANVAS - se ejecuta después de definir handlers (ver initCanvas() más abajo)
     let unsubscribe;
     // La inicialización real ocurre en initCanvas() definida más abajo
@@ -1156,6 +1175,7 @@ const PizarraTactica = () => {
     // Debounce manual de 1.5 segundos para pizarra/estado_actual en Firestore
     const autoguardarEstado = async () => {
       if (!user || !activeTeamId || defaultDrawnR.current === false) return;
+      if (user.uid === 'invitado-local') return;
       
       const frameState = serializarFrame();
       setAutoSaveStatus('💾 Guardando...');
@@ -1287,9 +1307,6 @@ const PizarraTactica = () => {
     //      4. Frames de Firestore
     //      5. Formación por defecto (solo si el canvas está vacío y no se ha dibujado aún)
     if (user && planId && activeTeamId) {
-      const framesColRef = collection(db, getTeamPath(), 'pizarras', planId, 'frames');
-      const estadoDocRef = doc(db, getTeamPath(), 'pizarraEstado', planId);
-
       // Clave de estado activo por equipo y plan (para segregación limpia de pizarras)
       const ACTIVE_STATE_KEY = `mister11_pizarra_active_${activeTeamId}_${planId}`;
 
@@ -1335,6 +1352,9 @@ const PizarraTactica = () => {
         }
         return;
       }
+
+      const framesColRef = collection(db, getTeamPath(), 'pizarras', planId, 'frames');
+      const estadoDocRef = doc(db, getTeamPath(), 'pizarraEstado', planId);
 
       if (cachedState && cachedState.objects && cachedState.objects.length > 0) {
         console.log("[Pizarra] ✅ Restaurando desde Contexto / localStorage");
@@ -2322,10 +2342,6 @@ const PizarraTactica = () => {
     if (!activeTeamId) return;
     
     try {
-      const framesColRef = collection(db, getTeamPath(), 'pizarras', planId, 'frames');
-      // Generamos el ID y la referencia de forma síncrona
-      const newDocRef = doc(framesColRef);
-      
       const nextIdx = frames.length;
       
       const newFrameData = {
@@ -2335,9 +2351,25 @@ const PizarraTactica = () => {
         order: nextIdx,
         createdAt: new Date().toISOString() // Fallback local para el optimistic update
       };
+
+      let newFrameId;
+      if (user.uid === 'invitado-local') {
+        newFrameId = `frame-${Date.now()}`;
+      } else {
+        const framesColRef = collection(db, getTeamPath(), 'pizarras', planId, 'frames');
+        // Generamos el ID y la referencia de forma síncrona
+        const newDocRef = doc(framesColRef);
+        newFrameId = newDocRef.id;
+        
+        // Guardar en Firebase asíncronamente sin bloquear la UI
+        setDoc(newDocRef, {
+          ...newFrameData,
+          createdAt: serverTimestamp() // Timestamp real del servidor
+        }).catch(err => console.error("Error setting frame doc:", err));
+      }
       
       const newFrame = {
-        id: newDocRef.id,
+        id: newFrameId,
         ...newFrameData,
         state // Keep it as object in local state
       };
@@ -2351,14 +2383,6 @@ const PizarraTactica = () => {
       
       setFrameIdx(nextIdx);
       frameIdxR.current = nextIdx;
-
-      // 4. Guardar en Firebase asíncronamente sin bloquear la UI
-      if (user.uid !== 'invitado-local') {
-        await setDoc(newDocRef, {
-          ...newFrameData,
-          createdAt: serverTimestamp() // Timestamp real del servidor
-        });
-      }
       
     } catch (error) {
       console.error("Error saving frame:", error);

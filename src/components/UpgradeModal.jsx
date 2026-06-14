@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { db, auth } from '../firebaseConfig';
-import { collection, addDoc, onSnapshot } from 'firebase/firestore';
+import { collection, addDoc, onSnapshot, doc, getDoc, setDoc, updateDoc, increment, getDocs, writeBatch, Timestamp } from 'firebase/firestore';
 import { STRIPE_PRICE_IDS } from '../config/stripe';
 import { useAuth } from '../context/AuthContext';
 import './UpgradeModal.css';
@@ -34,6 +34,102 @@ const UpgradeModal = ({ isOpen, onClose, message, urgency = false }) => {
   const [statusMsg, setStatusMsg] = useState('');
   const unsubscribeRef = useRef(null);
   const timeoutRef = useRef(null);
+
+  // Estados para Canjear Código Promocional
+  const [promoCode, setPromoCode] = useState('');
+  const [redeeming, setRedeeming] = useState(false);
+  const [promoMessage, setPromoMessage] = useState({ type: '', text: '' });
+
+  const handleRedeemPromoCode = async () => {
+    const codeStr = promoCode.trim().toUpperCase();
+    if (!codeStr) return;
+
+    const user = auth.currentUser;
+    if (!user) {
+      setPromoMessage({ type: 'error', text: 'Debes iniciar sesión para canjear un código.' });
+      return;
+    }
+
+    setRedeeming(true);
+    setPromoMessage({ type: '', text: '' });
+
+    try {
+      let durationDays = 30; // por defecto 30 días
+      const isBetaCode = codeStr === 'BETA2026';
+
+      if (isBetaCode) {
+        durationDays = 90; // Código especial BETA2026 otorga 90 días
+      } else {
+        // Consultar en Firestore para otros códigos
+        const codeRef = doc(db, 'promoCodes', codeStr);
+        const codeSnap = await getDoc(codeRef);
+
+        if (!codeSnap.exists()) {
+          throw new Error('Código promocional no válido.');
+        }
+
+        const codeData = codeSnap.data();
+        if (!codeData.active) {
+          throw new Error('Este código ya no está activo.');
+        }
+        if (codeData.usedCount >= codeData.maxUses) {
+          throw new Error('Este código ha alcanzado su límite de usos.');
+        }
+
+        durationDays = codeData.durationDays || 30;
+
+        // Incrementar el contador de usos
+        await updateDoc(codeRef, {
+          usedCount: increment(1)
+        });
+      }
+
+      // Calcular fecha de expiración
+      const expirationDate = new Date(Date.now() + durationDays * 24 * 60 * 60 * 1000);
+
+      // Actualizar el plan del usuario y sus equipos
+      const batch = writeBatch(db);
+      
+      const userRef = doc(db, 'users', user.uid);
+      batch.set(userRef, {
+        plan: 'pro',
+        proExpiration: Timestamp.fromDate(expirationDate),
+        updatedAt: Timestamp.now()
+      }, { merge: true });
+
+      const teamsRef = collection(db, 'users', user.uid, 'teams');
+      const teamsSnap = await getDocs(teamsRef);
+      teamsSnap.forEach((teamDoc) => {
+        batch.update(teamDoc.ref, {
+          plan: 'pro',
+          proExpiration: Timestamp.fromDate(expirationDate),
+          updatedAt: Timestamp.now()
+        });
+      });
+
+      await batch.commit();
+
+      setPromoMessage({
+        type: 'success',
+        text: `¡Código canjeado con éxito! Plan PRO activo hasta el ${expirationDate.toLocaleDateString()}.`
+      });
+      setPromoCode('');
+
+      // Recargar la página después de 1.5s para aplicar cambios reactivos
+      setTimeout(() => {
+        window.location.reload();
+      }, 1500);
+
+    } catch (err) {
+      console.error('Error al canjear código en modal:', err);
+      setPromoMessage({
+        type: 'error',
+        text: err.message || 'Error al procesar el código.'
+      });
+    } finally {
+      setRedeeming(false);
+    }
+  };
 
   // Cleanup listeners on unmount or close
   useEffect(() => {
@@ -334,6 +430,67 @@ const UpgradeModal = ({ isOpen, onClose, message, urgency = false }) => {
           </div>
         </div>
 
+        {/* Canjear Código Beta */}
+        <div className="upgrade-promo-section" style={{
+          margin: '20px',
+          padding: '16px',
+          background: 'rgba(255,255,255,0.03)',
+          borderRadius: '12px',
+          border: '1px dashed var(--border-color)',
+          textAlign: 'center'
+        }}>
+          <h4 style={{ margin: '0 0 8px 0', fontSize: '0.9rem', color: 'var(--text-primary)' }}>🔑 ¿Tienes un código de prueba beta?</h4>
+          <p style={{ margin: '0 0 12px 0', fontSize: '0.78rem', color: 'var(--text-secondary)' }}>
+            Introduce tu código de acceso para desbloquear instantáneamente el Plan PRO de la fase beta.
+          </p>
+          <div style={{ display: 'flex', gap: '8px', maxWidth: '360px', margin: '0 auto' }}>
+            <input 
+              type="text" 
+              placeholder="Código beta (ej. BETA2026)" 
+              value={promoCode}
+              onChange={e => setPromoCode(e.target.value.toUpperCase())}
+              disabled={redeeming}
+              style={{
+                flex: 1,
+                padding: '0 12px',
+                height: '38px',
+                borderRadius: '6px',
+                border: '1px solid var(--border-color)',
+                backgroundColor: 'rgba(0,0,0,0.2)',
+                color: '#fff',
+                fontSize: '0.82rem',
+                textAlign: 'center'
+              }}
+            />
+            <button 
+              onClick={handleRedeemPromoCode}
+              disabled={redeeming || !promoCode.trim()}
+              style={{
+                padding: '0 16px',
+                height: '38px',
+                borderRadius: '6px',
+                backgroundColor: 'var(--accent-green, #4CAF7D)',
+                color: '#fff',
+                fontWeight: 'bold',
+                fontSize: '0.82rem',
+                border: 'none',
+                cursor: 'pointer'
+              }}
+            >
+              {redeeming ? 'Procesando...' : 'Canjear'}
+            </button>
+          </div>
+          {promoMessage.text && (
+            <div style={{
+              marginTop: '10px',
+              fontSize: '0.8rem',
+              color: promoMessage.type === 'success' ? '#4CAF7D' : '#ef4444',
+              fontWeight: '600'
+            }}>
+              {promoMessage.text}
+            </div>
+          )}
+        </div>
 
         {/* Footer */}
         <div className="upgrade-modal-footer">

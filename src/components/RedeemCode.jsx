@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { db } from '../firebaseConfig';
-import { doc, getDoc, updateDoc, setDoc, increment, Timestamp } from 'firebase/firestore';
+import { doc, getDoc, updateDoc, setDoc, increment, Timestamp, collection, getDocs, writeBatch } from 'firebase/firestore';
 import { useAuth } from '../context/AuthContext';
 import { usePlan } from '../hooks/usePlan';
 import { Ticket, Loader2, CheckCircle2, AlertCircle } from 'lucide-react';
@@ -29,46 +29,75 @@ const RedeemCode = () => {
         return;
       }
 
-      // 2. Buscar el código en Firestore
-      const codeRef = doc(db, 'promoCodes', code.trim().toUpperCase());
-      const codeSnap = await getDoc(codeRef);
+      const codeStr = code.trim().toUpperCase();
+      let durationDays = 30;
+      const isBetaCode = codeStr === 'BETA2026';
 
-      if (!codeSnap.exists()) {
-        throw new Error('Código no válido.');
-      }
+      if (isBetaCode) {
+        durationDays = 90; // Código especial BETA2026 otorga 90 días
+      } else {
+        // 2. Buscar el código en Firestore
+        const codeRef = doc(db, 'promoCodes', codeStr);
+        const codeSnap = await getDoc(codeRef);
 
-      const codeData = codeSnap.data();
+        if (!codeSnap.exists()) {
+          throw new Error('Código no válido.');
+        }
 
-      // 3. Validaciones de negocio
-      if (!codeData.active) {
-        throw new Error('Este código ya no está activo.');
-      }
-      if (codeData.usedCount >= codeData.maxUses) {
-        throw new Error('Este código ha alcanzado su límite de usos.');
+        const codeData = codeSnap.data();
+
+        // 3. Validaciones de negocio
+        if (!codeData.active) {
+          throw new Error('Este código ya no está activo.');
+        }
+        if (codeData.usedCount >= codeData.maxUses) {
+          throw new Error('Este código ha alcanzado su límite de usos.');
+        }
+
+        durationDays = codeData.durationDays || 30;
+
+        // Incrementar contador de usos del código
+        await updateDoc(codeRef, {
+          usedCount: increment(1)
+        });
       }
 
       // 4. Calcular nueva fecha de expiración (hoy + durationDays)
-      const durationMs = (codeData.durationDays || 30) * 24 * 60 * 60 * 1000;
-      const expirationDate = new Date(Date.now() + durationMs);
+      const expirationDate = new Date(Date.now() + durationDays * 24 * 60 * 60 * 1000);
 
-      // 5. Actualizar usuario
+      // 5. Actualizar usuario y sus equipos con writeBatch
+      const batch = writeBatch(db);
+      
       const userRef = doc(db, 'users', user.uid);
-      await setDoc(userRef, {
+      batch.set(userRef, {
         plan: 'pro',
         proExpiration: Timestamp.fromDate(expirationDate),
         updatedAt: Timestamp.now()
       }, { merge: true });
 
-      // 6. Incrementar contador de usos del código
-      await updateDoc(codeRef, {
-        usedCount: increment(1)
+      const teamsRef = collection(db, 'users', user.uid, 'teams');
+      const teamsSnap = await getDocs(teamsRef);
+      teamsSnap.forEach((teamDoc) => {
+        batch.update(teamDoc.ref, {
+          plan: 'pro',
+          proExpiration: Timestamp.fromDate(expirationDate),
+          updatedAt: Timestamp.now()
+        });
       });
+
+      await batch.commit();
 
       setMessage({ 
         type: 'success', 
         text: `¡Felicidades! Plan Pro activado hasta el ${expirationDate.toLocaleDateString()}.` 
       });
       setCode('');
+
+      // Recargar la página después de 1.5s para aplicar cambios reactivos
+      setTimeout(() => {
+        window.location.reload();
+      }, 1500);
+
     } catch (error) {
       console.error("Error al canjear código:", error);
       setMessage({ 

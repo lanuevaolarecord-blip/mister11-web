@@ -52,14 +52,14 @@ Familiarízate con la ubicación de las piezas clave antes de programar:
 
 ### 3.1 Lista Blanca de Desarrolladores Permanentemente PRO
 Las siguientes cuentas de Google tienen acceso de por vida ilimitado forzado en el frontend:
-* `lavozdelformador@gmail.com`
+* `mister11.app@gmail.com`
 * `lanuevaolarecord@gmail.com`
 * `jhocao111294@gmail.com`
 
 Cualquier cambio en la lógica del plan en `usePlan.js` debe respetar esta whitelist:
 ```javascript
 export const DEVELOPER_EMAILS = [
-  'lavozdelformador@gmail.com',
+  'mister11.app@gmail.com',
   'lanuevaolarecord@gmail.com',
   'jhocao111294@gmail.com'
 ];

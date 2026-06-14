@@ -59,7 +59,7 @@ const AdminPanel = () => {
   }, [location.state?.activeTab]);
 
   const { user, getTeamPath, clubId, clubRole, isClubMember, club, userProfile } = useAuth();
-  const adminEmails = ['lanuevaolarecord@gmail.com', 'lavozdelformador@gmail.com', 'jhocao111294@gmail.com'];
+  const adminEmails = ['lanuevaolarecord@gmail.com', 'mister11.app@gmail.com', 'jhocao111294@gmail.com'];
   const isAdmin = user?.email && adminEmails.includes(user.email.toLowerCase());
   const { teams, activeTeam, addTeam, deleteTeam, selectTeam, updateTeam } = useTeams();
   const { exercises, removeExercise, addExercise } = useExercises(activeTeam?.id);

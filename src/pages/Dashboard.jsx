@@ -32,7 +32,7 @@ const Dashboard = () => {
   const navigate = useNavigate();
   const { user, activeTeamId, refreshTeam, teams, getTeamPath } = useAuth();
   const activeTeam = teams?.find(t => t.id === activeTeamId) || null;
-  const adminEmails = ['lanuevaolarecord@gmail.com', 'lavozdelformador@gmail.com', 'jhocao111294@gmail.com'];
+  const adminEmails = ['lanuevaolarecord@gmail.com', 'mister11.app@gmail.com', 'jhocao111294@gmail.com'];
   const isAdmin = user?.email && adminEmails.includes(user.email.toLowerCase());
 
   // Detect payment success from Stripe & synchronize plan immediately

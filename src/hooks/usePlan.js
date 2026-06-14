@@ -28,7 +28,7 @@ export const LIMITS = {
 };
 
 export const DEVELOPER_EMAILS = [
-  'lavozdelformador@gmail.com',
+  'mister11.app@gmail.com',
   'lanuevaolarecord@gmail.com',
   'jhocao111294@gmail.com'
 ];

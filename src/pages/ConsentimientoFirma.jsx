@@ -205,7 +205,7 @@ const ConsentimientoFirma = () => {
       const splitText2 = doc.splitTextToSize(legalText2, 180);
       doc.text(splitText2, 15, 125);
 
-      const legalText3 = `En cumplimiento del RGPD (UE) 2016/679 y la LOPDGDD 3/2018 de España, se le informa que el responsable del tratamiento de los datos es el club deportivo o entrenador a cargo de la gestión del equipo. Míster11 actúa únicamente como encargado del tratamiento facilitando la plataforma de software. Puede ejercer sus derechos de Acceso, Rectificación, Supresión u Oposición contactando con el club/entrenador o escribiendo al soporte técnico de la plataforma: lavozdelformador@gmail.com.`;
+      const legalText3 = `En cumplimiento del RGPD (UE) 2016/679 y la LOPDGDD 3/2018 de España, se le informa que el responsable del tratamiento de los datos es el club deportivo o entrenador a cargo de la gestión del equipo. Míster11 actúa únicamente como encargado del tratamiento facilitando la plataforma de software. Puede ejercer sus derechos de Acceso, Rectificación, Supresión u Oposición contactando con el club/entrenador o escribiendo al soporte técnico de la plataforma: mister11.app@gmail.com.`;
       const splitText3 = doc.splitTextToSize(legalText3, 180);
       doc.text(splitText3, 15, 145);
 

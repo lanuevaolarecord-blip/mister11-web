@@ -172,11 +172,17 @@ const PizarraTactica = () => {
   const cargarFrame = useCallback((state, callback) => {
     const fc = fcRef.current;
     const fr = frRef.current;
-    if (!fc || !fr || !state) return;
+    if (!fc || !fr || !state) {
+      if (callback) callback();
+      return;
+    }
 
     // Incrementar token para invalidar cargas anteriores en progreso
     loadTokenR.current += 1;
     const currentToken = loadTokenR.current;
+
+    // Desactivamos temporalmente el guardado para evitar bucles durante la carga
+    syncingR.current = true;
 
     // No desconectamos los listeners porque syncingR.current ya evita bucles infinitos de guardado
     // fc.off(...) eliminado para reparar undo/redo
@@ -185,6 +191,7 @@ const PizarraTactica = () => {
     const objsToEnliven = Array.isArray(state.objects) ? state.objects : [];
     
     if (objsToEnliven.length === 0) {
+      syncingR.current = false;
       if (callback) callback();
       return;
     }
@@ -251,6 +258,9 @@ const PizarraTactica = () => {
       });
       ensurePlayersOnTop();
       fc.renderAll();
+      
+      // La sincronización ha terminado, reactivar eventos
+      syncingR.current = false;
       // Los listeners se reconectan desde el useEffect principal después del callback
       if (callback) callback();
     });

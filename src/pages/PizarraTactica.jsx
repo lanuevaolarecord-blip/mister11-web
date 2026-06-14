@@ -692,22 +692,18 @@ const PizarraTactica = () => {
       
       // 3. Capturar stream a 30fps con bitrate premium (8 Mbps) para calidad profesional
       const stream = recCanvas.captureStream(30);
-      let options = { 
-        mimeType: 'video/webm;codecs=vp9',
-        videoBitsPerSecond: 8000000 // 8 Mbps
-      };
-      
+      // Detectar el mejor formato soportado (else-if para no sobrescribir formatos válidos)
+      let options;
       if (typeof MediaRecorder.isTypeSupported === 'function') {
-        if (!MediaRecorder.isTypeSupported(options.mimeType)) {
+        if (MediaRecorder.isTypeSupported('video/webm;codecs=vp9')) {
+          options = { mimeType: 'video/webm;codecs=vp9', videoBitsPerSecond: 8000000 };
+        } else if (MediaRecorder.isTypeSupported('video/webm;codecs=vp8')) {
           options = { mimeType: 'video/webm;codecs=vp8', videoBitsPerSecond: 8000000 };
-        }
-        if (!MediaRecorder.isTypeSupported(options.mimeType)) {
+        } else if (MediaRecorder.isTypeSupported('video/webm')) {
           options = { mimeType: 'video/webm', videoBitsPerSecond: 8000000 };
-        }
-        if (!MediaRecorder.isTypeSupported(options.mimeType)) {
+        } else if (MediaRecorder.isTypeSupported('video/mp4')) {
           options = { mimeType: 'video/mp4', videoBitsPerSecond: 8000000 };
-        }
-        if (!MediaRecorder.isTypeSupported(options.mimeType)) {
+        } else {
           options = { videoBitsPerSecond: 8000000 };
         }
       } else {
@@ -723,8 +719,20 @@ const PizarraTactica = () => {
         const fileType = options.mimeType && options.mimeType.includes('mp4') ? 'mp4' : 'webm';
         const blob = new Blob(chunks, { type: `video/${fileType}` });
         
+        if (chunks.length === 0 || blob.size === 0) {
+          console.error('[MP4 Export] El blob de video está vacío. Puede que el canvas no tenga contenido o que MediaRecorder no capturó frames.');
+          showToast('Error: el video grabado está vacío. Asegúrate de tener al menos 2 frames con contenido.', 'error');
+          setIsRecording(false);
+          return;
+        }
+
         const reader = new FileReader();
         reader.readAsDataURL(blob);
+        reader.onerror = () => {
+          console.error('[MP4 Export] Error al leer el blob de video.');
+          showToast('Error al procesar el video generado.', 'error');
+          setIsRecording(false);
+        };
         reader.onloadend = async () => {
           const dataURL = reader.result;
           const base64data = dataURL.split(',')[1];
@@ -736,21 +744,16 @@ const PizarraTactica = () => {
             try {
               const storagePath = `pizarras/${getTeamPath()}/${planId}/video.${fileType}`;
               const storageRef = ref(storage, storagePath);
-              
-              // Subir video como data URL
               await uploadString(storageRef, dataURL, 'data_url');
               const downloadURL = await getDownloadURL(storageRef);
-              
-              // Actualizar el documento del ejercicio con la URL del video para que Sesiones.jsx lo vea
               const exerciseRef = doc(db, getTeamPath(), 'exercises', planId);
               await setDoc(exerciseRef, {
                 videoUrl: downloadURL,
                 videoMimeType: finalMime,
                 updatedAt: serverTimestamp()
               }, { merge: true });
-              
             } catch (uploadErr) {
-              console.error("Error al guardar el video en la nube:", uploadErr);
+              console.error('Error al guardar el video en la nube:', uploadErr);
             }
           }
 
@@ -759,17 +762,22 @@ const PizarraTactica = () => {
           if (autoExport === 'true' && window.parent) {
             window.parent.postMessage({ type: 'EXPORT_DONE', base64data, filename, mimeType: finalMime }, '*');
           } else {
-            showToast("Video exportado exitosamente.", 'success');
+            showToast('Video exportado exitosamente.', 'success');
             downloadVideo(base64data, filename, finalMime);
           }
         };
       };
       
       // 4. Render Combiner: Dibuja el campo y los jugadores escalados al tamaño de recCanvas
+      // NOTA: fc.getElement() es el canvas real donde Fabric pinta los objetos.
+      // fabricElemRef.current es el <canvas> DOM original (vacío tras init de Fabric).
+      const fabricCanvas = fc.getElement();
       const renderCombiner = () => {
         recCtx.clearRect(0, 0, recCanvas.width, recCanvas.height);
         recCtx.drawImage(fieldCanvas, 0, 0, recCanvas.width, recCanvas.height);
-        recCtx.drawImage(fabricElemRef.current, 0, 0, recCanvas.width, recCanvas.height);
+        if (fabricCanvas && fabricCanvas.width > 0) {
+          recCtx.drawImage(fabricCanvas, 0, 0, recCanvas.width, recCanvas.height);
+        }
       };
       
       // 5. Bucle de renderizado continuo sincronizado con la pantalla (para movimientos perfectos y suaves)
@@ -2927,8 +2935,8 @@ const PizarraTactica = () => {
               <button className="topbar-btn danger" onClick={clearCanvas} title="Limpiar todo el canvas">🗑</button>
               <button className="topbar-btn secondary" onClick={handleNewPizarra} title="Crear nueva animación desde cero" style={{ background: 'var(--accent)', color: 'white', fontWeight: 'bold' }}>✨ NUEVA</button>
               <button className="topbar-btn" onClick={() => handleCapture(true)} disabled={isCapturing} title="Descargar Imagen">📸</button>
-              <button className="topbar-btn" onClick={exportAnimationVideo} disabled={isRecording} title="Exportar animación como video MP4" style={{ background: 'var(--accent)', color: 'white', fontWeight: 'bold' }}>
-                {isRecording ? '⏺️ EXPORTANDO MP4...' : '🎥 EXPORTAR MP4'}
+              <button className="topbar-btn" onClick={exportAnimationVideo} disabled={isRecording} title="Exportar animacion como video MP4" style={{ background: 'var(--accent)', color: 'white', fontWeight: 'bold' }}>
+                {isRecording ? 'REC... EXPORTANDO MP4' : 'EXPORTAR MP4'}
               </button>
               <button id="btn-guardar-pizarra" className="topbar-btn primary" onClick={handleSave} disabled={isCapturing} title="Guardar pizarra y captura">💾 GUARDAR</button>
             </div>

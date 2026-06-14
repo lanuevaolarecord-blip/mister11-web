@@ -384,6 +384,7 @@ const PizarraTactica = () => {
   const [reducedDim,     setReducedDim]     = useState({ w: 40, h: 30 });
   const [zoomLevel,      setZoomLevel]      = useState(1);
   const [isCapturing,    setIsCapturing]    = useState(false);
+  const [captureToast,   setCaptureToast]   = useState(null);  // { type: 'success'|'error', msg: string }
   const [isRecording,    setIsRecording]    = useState(false);
   const fileImportInputRef = useRef(null);
 
@@ -2262,14 +2263,19 @@ const PizarraTactica = () => {
             createdAt: serverTimestamp(),
             updatedAt: serverTimestamp()
           });
-          alert('✅ Captura guardada. Puedes verla en Sesiones > Capturas.');
+          // Toast no bloqueante — permite que React procese setIsCapturing(false) sin trabas
+          setCaptureToast({ type: 'success', msg: '✅ Captura guardada. Puedes verla en Sesiones > Capturas.' });
+          setTimeout(() => setCaptureToast(null), 4000);
         } catch (dbErr) {
           console.error('[Capture] Error guardando en Firestore:', dbErr);
-          alert('❌ Error al guardar: ' + (dbErr?.code || dbErr?.message || 'Error desconocido'));
+          setCaptureToast({ type: 'error', msg: '❌ Error al guardar: ' + (dbErr?.code || dbErr?.message || 'Error desconocido') });
+          setTimeout(() => setCaptureToast(null), 5000);
         }
       } else {
         if (!download) {
-          alert('✅ Captura completada localmente.');
+          // invitado: notificar sin alert bloqueante
+          setCaptureToast({ type: 'success', msg: '✅ Captura completada localmente.' });
+          setTimeout(() => setCaptureToast(null), 4000);
         }
       }
 
@@ -2281,11 +2287,16 @@ const PizarraTactica = () => {
 
     } catch (err) {
       console.error("Error en captura:", err);
-      if (!silent) alert("Error al generar la captura. Revisar consola.");
+      if (!silent) {
+        setCaptureToast({ type: 'error', msg: '❌ Error al generar la captura. Revisar consola.' });
+        setTimeout(() => setCaptureToast(null), 5000);
+      }
       return null;
     } finally {
-      // SIEMPRE ocultar el overlay de captura, pase lo que pase
-      // (éxito, error, timeout, alerta descartada, etc.)
+      // SIEMPRE ocultar el overlay de captura, pase lo que pase.
+      // Usando setIsCapturing aqui (en finally) en lugar de antes de alert()
+      // garantiza que el overlay desaparece ANTES de cualquier re-render.
+      // Como ya no usamos alert() bloqueante, React puede procesar este update inmediatamente.
       if (!silent) setIsCapturing(false);
     }
   };
@@ -3189,6 +3200,49 @@ const PizarraTactica = () => {
       )}
     </div>
     <UpgradeModal isOpen={upgradeModal.open} onClose={() => setUpgradeModal({ ...upgradeModal, open: false })} message={upgradeModal.message} />
+
+    {/* ── OVERLAY DE CAPTURA (spinner mientras procesa) ── */}
+    {isCapturing && (
+      <div style={{
+        position: 'fixed', inset: 0, zIndex: 9999,
+        background: 'rgba(0,0,0,0.7)',
+        display: 'flex', flexDirection: 'column',
+        alignItems: 'center', justifyContent: 'center',
+        gap: 16
+      }}>
+        <div style={{
+          width: 48, height: 48, borderRadius: '50%',
+          border: '4px solid rgba(255,255,255,0.2)',
+          borderTopColor: '#4CAF7D',
+          animation: 'spin 0.8s linear infinite'
+        }} />
+        <p style={{ color: '#fff', fontSize: 14, fontWeight: 700, letterSpacing: 2, margin: 0 }}>
+          CAPTURANDO IMAGEN...
+        </p>
+      </div>
+    )}
+
+    {/* ── TOAST DE CAPTURA (no bloqueante, reemplaza alert()) ── */}
+    {captureToast && (
+      <div style={{
+        position: 'fixed', bottom: 80, left: '50%', transform: 'translateX(-50%)',
+        zIndex: 10000, minWidth: 280, maxWidth: 420,
+        background: captureToast.type === 'success' ? '#1a3a2a' : '#3a1a1a',
+        border: `1px solid ${captureToast.type === 'success' ? '#4CAF7D' : '#E53935'}`,
+        borderRadius: 12, padding: '14px 20px',
+        color: '#fff', fontSize: 14, fontWeight: 600,
+        boxShadow: '0 8px 32px rgba(0,0,0,0.5)',
+        display: 'flex', alignItems: 'center', gap: 10,
+        animation: 'fadeInUp 0.3s ease'
+      }}>
+        <span style={{ fontSize: 18 }}>{captureToast.type === 'success' ? '✅' : '❌'}</span>
+        <span>{captureToast.msg.replace(/^[✅❌]\s*/, '')}</span>
+        <button onClick={() => setCaptureToast(null)} style={{
+          marginLeft: 'auto', background: 'none', border: 'none',
+          color: 'rgba(255,255,255,0.6)', cursor: 'pointer', fontSize: 16, padding: 0
+        }}>✕</button>
+      </div>
+    )}
     </>
   );
 };

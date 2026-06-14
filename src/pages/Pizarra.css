@@ -1570,3 +1570,9 @@ canvas.lower-canvas {
   writing-mode: vertical-rl;
   text-orientation: mixed;
 }
+
+/* Toast animations */
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateX(-50%) translateY(16px); }
+  to   { opacity: 1; transform: translateX(-50%) translateY(0);    }
+}

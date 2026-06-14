@@ -281,7 +281,10 @@ const PizarraTactica = () => {
   }, []);
 
   // Auth & URL
-  const { user, activeTeamId, getTeamPath } = useAuth();
+  const { user, activeTeamId, getTeamPath: getTeamPathRaw } = useAuth();
+  const getTeamPath = useCallback((teamId = activeTeamId) => {
+    return getTeamPathRaw(teamId || activeTeamId);
+  }, [getTeamPathRaw, activeTeamId]);
   const [searchParams, setSearchParams] = useSearchParams();
   
   // Usar planId de la URL o recuperar el último usado para este equipo (Persistencia al navegar)

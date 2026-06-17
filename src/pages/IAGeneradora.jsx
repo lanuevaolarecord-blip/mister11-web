@@ -7,6 +7,8 @@ import { useIAUsage } from '../hooks/useIAUsage';
 import UpgradeModal from '../components/UpgradeModal';
 import { useCaptures } from '../hooks/useCaptures';
 import { generateExercisePDF } from '../utils/pdfGenerator';
+import { db } from '../firebaseConfig';
+import { doc, getDoc } from 'firebase/firestore';
 import './IAGeneradora.css';
 
 // --- OPCIONES DE FORMULARIO ---
@@ -30,7 +32,7 @@ const MATERIALES = [
 const ESPACIOS = ['Área penal', 'Medio campo', '3/4 campo', 'Campo completo', 'Espacio reducido', 'Sala / Gimnasio'];
 const DURACIONES = [5, 10, 15, 20, 25, 30];
 const INTENSIDADES = ['Baja', 'Media', 'Alta', 'Máxima'];
-const EDADES = ['Fútbol base (6-10 años)', 'Prebenjamín / Benjamín (8-10)', 'Alevín (10-12)', 'Infantil (12-14)', 'Cadete (14-16)', 'Juvenil (16-18)'];
+const EDADES = ['Fútbol base (6-10 años)', 'Prebenjamín / Benjamín (8-10)', 'Alevín (10-12)', 'Infantil (12-14)', 'Cadete (14-16)', 'Juvenil (16-18)', 'Amateur'];
 
 const INITIAL_FORM = {
   edad: '',
@@ -99,7 +101,32 @@ const IAGeneradora = () => {
     getRemainingUsages
   } = useIAUsage();
 
-  const apiKey = import.meta.env.VITE_GROQ_API_KEY;
+  const [firebaseApiKey, setFirebaseApiKey] = useState('');
+
+  useEffect(() => {
+    const fetchApiKey = async () => {
+      try {
+        const configSnap = await getDoc(doc(db, 'config', 'global'));
+        if (configSnap.exists()) {
+          const data = configSnap.data();
+          if (data.groqApiKey) {
+            setFirebaseApiKey(data.groqApiKey);
+          }
+        }
+      } catch (err) {
+        console.error('Error fetching Groq API key from Firestore:', err);
+      }
+    };
+    fetchApiKey();
+  }, []);
+
+  const getEffectiveApiKey = () => {
+    const envKey = import.meta.env.VITE_GROQ_API_KEY;
+    if (envKey && envKey !== 'PEGA_AQUI_TU_NUEVA_CLAVE_GROQ' && envKey !== 'undefined') {
+      return envKey;
+    }
+    return firebaseApiKey;
+  };
 
   const toggleMaterial = (id) => {
     setForm(prev => ({
@@ -138,6 +165,7 @@ const IAGeneradora = () => {
   };
 
   const callGroq = async (promptTexto) => {
+    const activeKey = getEffectiveApiKey();
     try {
       const response = await fetch(
         'https://api.groq.com/openai/v1/chat/completions',
@@ -145,7 +173,7 @@ const IAGeneradora = () => {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${apiKey}`
+            'Authorization': `Bearer ${activeKey}`
           },
           body: JSON.stringify({
             model: 'llama-3.3-70b-versatile',
@@ -183,10 +211,10 @@ const IAGeneradora = () => {
   const handleGenerate = async () => {
     if (isCallingRef.current) return;
 
-    // 1. Verificar si la clave de Groq está configurada en las variables de entorno
-    const GROQ_API_KEY = import.meta.env.VITE_GROQ_API_KEY;
+    // 1. Verificar si la clave de Groq está configurada
+    const GROQ_API_KEY = getEffectiveApiKey();
     if (!GROQ_API_KEY || GROQ_API_KEY === 'PEGA_AQUI_TU_NUEVA_CLAVE_GROQ' || GROQ_API_KEY === 'undefined') {
-      alert('La IA no está configurada. Contacta con el administrador.');
+      setError('⚠️ La clave de IA (Groq) no está configurada. Contacta al administrador para configurarla en la pestaña Ajustes del panel de control.');
       return;
     }
 

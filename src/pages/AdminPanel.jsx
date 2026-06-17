@@ -178,6 +178,26 @@ const AdminPanel = () => {
   const [teamTests, setTeamTests] = useState([]);
   const [teamEvaluaciones, setTeamEvaluaciones] = useState([]);
   const [checkingUpdate, setCheckingUpdate] = useState(false);
+  const [groqApiKey, setGroqApiKey] = useState('');
+
+  // Cargar clave de Groq si el usuario es administrador
+  useEffect(() => {
+    if (!isAdmin) return;
+    const fetchGroqKey = async () => {
+      try {
+        const configSnap = await getDoc(doc(db, 'config', 'global'));
+        if (configSnap.exists()) {
+          const data = configSnap.data();
+          if (data.groqApiKey) {
+            setGroqApiKey(data.groqApiKey);
+          }
+        }
+      } catch (err) {
+        console.error('Error fetching Groq key for admin:', err);
+      }
+    };
+    fetchGroqKey();
+  }, [user, isAdmin]);
   
   const { settings, saveSettings, loading: loadingSettings } = useSettings(activeTeam?.id);
   const { darkMode, toggleTheme } = useTheme();
@@ -1002,6 +1022,56 @@ const AdminPanel = () => {
                   </div>
                 </div>
               </div>
+
+              {/* CONFIGURACIÓN DE IA (SOLO PARA ADMIN) */}
+              {isAdmin && (
+                <div className="settings-card">
+                  <div className="card-header-icon">
+                    <Sparkles size={20} />
+                    <h3>Configuración de IA (Groq)</h3>
+                  </div>
+                  <div className="settings-form">
+                    <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', margin: '0 0 12px 0', lineHeight: '1.4' }}>
+                      Configura la clave API de Groq para que la IA Generadora funcione en todos los dispositivos (incluyendo el APK de la tablet sin necesidad de recompilar).
+                    </p>
+                    <div className="form-group">
+                      <label>Clave API de Groq (gsk_...)</label>
+                      <input 
+                        type="password" 
+                        placeholder="Pega tu clave gsk_..." 
+                        value={groqApiKey} 
+                        onChange={(e) => setGroqApiKey(e.target.value)} 
+                        style={{
+                          padding: '10px 16px',
+                          borderRadius: '8px',
+                          border: '1px solid var(--border-color)',
+                          background: 'var(--bg-card)',
+                          color: 'var(--text-primary)',
+                          fontSize: '0.9rem',
+                          minHeight: '48px',
+                          width: '100%',
+                          boxSizing: 'border-box'
+                        }}
+                      />
+                    </div>
+                    <button 
+                      className="btn-primary" 
+                      onClick={async () => {
+                        try {
+                          await setDoc(doc(db, 'config', 'global'), { groqApiKey }, { merge: true });
+                          showToast("¡Clave API de Groq guardada con éxito!", "success");
+                        } catch (err) {
+                          console.error("Error al guardar clave en Firestore:", err);
+                          showToast("Error al guardar la clave API en Firestore.", "error");
+                        }
+                      }}
+                      style={{ width: '100%', minHeight: '48px', fontWeight: 'bold' }}
+                    >
+                      Guardar Clave
+                    </button>
+                  </div>
+                </div>
+              )}
 
               {/* ESTADO DE SUSCRIPCIÓN Y SIMULACIÓN */}
               <div className="settings-card subscription-card">

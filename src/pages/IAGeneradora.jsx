@@ -307,6 +307,7 @@ Responde solo en español y usa formato markdown.`;
     try {
       await addExercise({ 
         name: title, 
+        title: title, 
         description: result, 
         source: 'ia', 
         createdBy: 'ia',
@@ -631,7 +632,7 @@ Responde solo en español y usa formato markdown.`;
                       <div className="exercise-card-content">
                         <div className="exercise-card-title">
                           <span className={`type-tag ${ej.type || 'ia'}`}>{ej.type === 'pizarra' ? '📋 Pizarra' : '✨ IA'}</span>
-                          <span className="title-text">{ej.title || 'Sin título'}</span>
+                          <span className="title-text">{ej.title || ej.name || ej.nombre || 'Sin título'}</span>
                         </div>
                         <div className="exercise-card-meta">
                           <span>
@@ -655,7 +656,7 @@ Responde solo en español y usa formato markdown.`;
         <div className="modal-overlay" style={{ zIndex: 11000 }} onClick={() => setSelectedExerciseDetail(null)}>
           <div className="modal-content" onClick={e => e.stopPropagation()}>
             <div className="modal-header">
-              <h2>{selectedExerciseDetail.title || 'Detalle'}</h2>
+              <h2>{selectedExerciseDetail.title || selectedExerciseDetail.name || selectedExerciseDetail.nombre || 'Detalle'}</h2>
               <button className="btn-close" onClick={() => setSelectedExerciseDetail(null)}>✕</button>
             </div>
             <div className="modal-body" style={{whiteSpace:'pre-wrap', padding:'20px'}}>

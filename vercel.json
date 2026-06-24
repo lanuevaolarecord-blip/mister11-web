@@ -1,6 +1,7 @@
 {
   "redirects": [
-    { "source": "/Mister11.apk", "destination": "/mister11.apk", "permanent": true }
+    { "source": "/Mister11.apk", "destination": "https://firebasestorage.googleapis.com/v0/b/mister11.firebasestorage.app/o/mister11.apk?alt=media&token=9f1838cf-6340-4407-9c95-472628b47ab3", "permanent": false },
+    { "source": "/mister11.apk", "destination": "https://firebasestorage.googleapis.com/v0/b/mister11.firebasestorage.app/o/mister11.apk?alt=media&token=9f1838cf-6340-4407-9c95-472628b47ab3", "permanent": false }
   ],
   "rewrites": [
     { "source": "/(.*)", "destination": "/index.html" }

@@ -1441,6 +1441,7 @@ const PizarraTactica = () => {
         });
         const q = query(framesColRef, orderBy('order', 'asc'));
         unsubscribe = onSnapshot(q, (snap) => {
+          if (playingR.current) return; // IGNORAR actualizaciones durante la reproducción/exportación
           if (!snap.empty) {
             // FIX: filtrar frames que hemos eliminado localmente y aún no se han
             // propagado en Firestore (evita que el onSnapshot los restaure)
@@ -1496,6 +1497,7 @@ const PizarraTactica = () => {
           // ── FUENTE 3: Frames de Firestore ────────────────────────────────
           const q = query(framesColRef, orderBy('order', 'asc'));
           unsubscribe = onSnapshot(q, (snapshot) => {
+            if (playingR.current) return; // IGNORAR actualizaciones durante la reproducción/exportación
             if (snapshot.empty) {
               // ── FUENTE 4: Formación por defecto ──────────────────────────
               // GUARDIA: solo dibujar UNA VEZ y solo si el canvas está verdaderamente vacío

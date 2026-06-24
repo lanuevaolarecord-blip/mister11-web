@@ -460,7 +460,8 @@ const PizarraTactica = () => {
     };
 
     if (immediate) {
-      saveToDB();
+      if (saveTimeoutR.current) clearTimeout(saveTimeoutR.current);
+      return await saveToDB();
     } else {
       if (saveTimeoutR.current) clearTimeout(saveTimeoutR.current);
       saveTimeoutR.current = setTimeout(saveToDB, 1000); // 1s debounce
@@ -1438,17 +1439,30 @@ const PizarraTactica = () => {
           fc.renderAll();
           if (!readyR.current) { readyR.current = true; setReady(true); }
         });
-        // Solo suscribir frames para metadatos (sin sobreescribir canvas)
         const q = query(framesColRef, orderBy('order', 'asc'));
         unsubscribe = onSnapshot(q, (snap) => {
           if (!snap.empty) {
             // FIX: filtrar frames que hemos eliminado localmente y aún no se han
             // propagado en Firestore (evita que el onSnapshot los restaure)
+            const currentIdx = frameIdxR.current;
+            const currentLocalFrame = (framesR.current && framesR.current[currentIdx]) ? framesR.current[currentIdx] : null;
+
             const dbFrames = snap.docs
               .filter(d => !deletedFrameIdsR.current.has(d.id))
               .map(d => {
                 const data = d.data();
-                return { id: d.id, ...data, state: typeof data.state === 'string' ? JSON.parse(data.state) : data.state };
+                const parsedState = typeof data.state === 'string' ? JSON.parse(data.state) : data.state;
+                
+                // Si este frame coincide con el frame activo local, preservar el estado local
+                if (currentLocalFrame && d.id === currentLocalFrame.id) {
+                  return {
+                    id: d.id,
+                    ...data,
+                    state: currentLocalFrame.state
+                  };
+                }
+                
+                return { id: d.id, ...data, state: parsedState };
               });
             if (dbFrames.length > 0) {
               setFrames(dbFrames);
@@ -1503,11 +1517,25 @@ const PizarraTactica = () => {
               if (!readyR.current) { readyR.current = true; setReady(true); }
               return;
             }
+            const currentIdx = frameIdxR.current;
+            const currentLocalFrame = (framesR.current && framesR.current[currentIdx]) ? framesR.current[currentIdx] : null;
+
             const dbFrames = snapshot.docs
               .filter(d => !deletedFrameIdsR.current.has(d.id))
               .map(d => {
                 const data = d.data();
-                return { id: d.id, ...data, state: typeof data.state === 'string' ? JSON.parse(data.state) : data.state };
+                const parsedState = typeof data.state === 'string' ? JSON.parse(data.state) : data.state;
+                
+                // Si este frame coincide con el frame activo local, preservar el estado local
+                if (currentLocalFrame && d.id === currentLocalFrame.id) {
+                  return {
+                    id: d.id,
+                    ...data,
+                    state: currentLocalFrame.state
+                  };
+                }
+                
+                return { id: d.id, ...data, state: parsedState };
               });
             setFrames(dbFrames);
             framesR.current = dbFrames;
@@ -2441,7 +2469,7 @@ const PizarraTactica = () => {
     if (!fc) return;
 
     // 1. Save current immediately before adding to prevent state desync
-    saveFrameState(true);
+    await saveFrameState(true);
 
     // 2. Clone current state
     const state = serializarFrame();
@@ -2507,22 +2535,20 @@ const PizarraTactica = () => {
   };
 
   // ─── Load Frame ──────────────────────────────────────────────────────────
-  const loadFrame = (idx) => {
+  const loadFrame = async (idx) => {
     const fc = fcRef.current;
     if (!fc || !framesR.current[idx]) return;
-    saveFrameState(true); // Save current immediately
+    await saveFrameState(true); // Save current immediately
     
-    setTimeout(() => {
-      syncingR.current = true;
-      cargarFrame(framesR.current[idx].state, () => {
-        syncingR.current = false;
-        fc.renderAll();
-        setFrameIdx(idx);
-        frameIdxR.current = idx;
-        resetHistory();
-        presentR.current = JSON.stringify(framesR.current[idx].state);
-      });
-    }, 80);
+    syncingR.current = true;
+    cargarFrame(framesR.current[idx].state, () => {
+      syncingR.current = false;
+      fc.renderAll();
+      setFrameIdx(idx);
+      frameIdxR.current = idx;
+      resetHistory();
+      presentR.current = JSON.stringify(framesR.current[idx].state);
+    });
   };
 
   // ─── Delete Frame ─────────────────────────────────────────────────────────

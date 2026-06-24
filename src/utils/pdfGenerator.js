@@ -1,4 +1,4 @@
-﻿import { jsPDF } from 'jspdf';
+import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { downloadPDF } from './download.js';
 import { db, auth } from '../firebaseConfig';
@@ -113,13 +113,30 @@ const addHeader = async (doc, title, subtitle, activeTeam = null) => {
 
 const addFooter = (doc) => {
   const pageCount = doc.internal.getNumberOfPages();
-  for(let i = 1; i <= pageCount; i++) {
+  const pageW = doc.internal.pageSize.getWidth();
+  const pageH = doc.internal.pageSize.getHeight();
+  const generatedDate = new Date().toLocaleDateString('es-ES', { day: '2-digit', month: 'long', year: 'numeric' });
+  for (let i = 1; i <= pageCount; i++) {
     doc.setPage(i);
-    doc.setFontSize(10);
-    doc.setTextColor(150);
-    doc.text(`Página ${i} de ${pageCount} | Generado por Míster11`, 105, 285, { align: 'center' });
+    // Línea separadora dorada
+    doc.setFillColor(...ACCENT_COLOR);
+    doc.rect(0, pageH - 12, pageW, 0.5, 'F');
+    // Texto del pie — marca izquierda
+    doc.setFontSize(7.5);
+    doc.setFont(undefined, 'bold');
+    doc.setTextColor(...THEME_COLOR);
+    doc.text('MISTER11', 15, pageH - 6);
+    doc.setFont(undefined, 'normal');
+    doc.setTextColor(150, 150, 150);
+    doc.text(' · El banquillo en tu bolsillo · Generado: ' + generatedDate, 31, pageH - 6);
+    // Número de página — derecha
+    doc.setFont(undefined, 'bold');
+    doc.setTextColor(...THEME_COLOR);
+    doc.text(`${i} / ${pageCount}`, pageW - 15, pageH - 6, { align: 'right' });
   }
 };
+
+
 
 /**
  * PLANIFICACIÓN - Macrociclo (Landscape, dark theme)

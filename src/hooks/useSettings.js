@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { db } from '../firebaseConfig';
-import { doc, onSnapshot, setDoc, updateDoc } from 'firebase/firestore';
+import { doc, onSnapshot, setDoc, updateDoc } from '../firebase/firestore-proxy';
 import { useAuth } from '../context/AuthContext';
 
 export const useSettings = (teamId) => {

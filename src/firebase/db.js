@@ -10,7 +10,7 @@ import {
   serverTimestamp,
   setDoc,
   getDoc
-} from 'firebase/firestore';
+} from './firestore-proxy';
 import { db, auth } from '../firebaseConfig';
 
 /**
@@ -104,8 +104,9 @@ export const deleteDocument = async (collectionName, id) => {
 
 export const createNotification = async (type, text) => {
   try {
-    if (!auth.currentUser) return;
-    const colRef = collection(db, 'users', auth.currentUser.uid, 'notifications');
+    const uid = auth.currentUser?.uid || localStorage.getItem('mister11_active_user_uid');
+    if (!uid || uid === 'invitado-local') return; // Silenciar en modo invitado
+    const colRef = collection(db, 'users', uid, 'notifications');
     await addDoc(colRef, {
       type,
       text,

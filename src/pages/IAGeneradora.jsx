@@ -303,20 +303,36 @@ Responde solo en español y usa formato markdown.`;
 
   const handleSave = async () => {
     if (!result) return;
-    const title = result.split('\n')[0].replace('## ', '').trim();
+    // Extrae el título de forma robusta desde el markdown generado por la IA
+    const extractTitle = (text) => {
+      const lines = text.split('\n');
+      for (const line of lines) {
+        const trimmed = line.trim();
+        if (!trimmed) continue;
+        // Encabezados markdown: ## Título o # Título
+        if (trimmed.startsWith('## ')) return trimmed.replace(/^##\s+/, '').trim();
+        if (trimmed.startsWith('# '))  return trimmed.replace(/^#\s+/, '').trim();
+        // Primera línea no vacía como fallback
+        if (trimmed.length > 0) return trimmed.slice(0, 80);
+      }
+      return `Ejercicio IA ${new Date().toLocaleTimeString()}`;
+    };
+    const title = extractTitle(result);
     try {
       await addExercise({ 
         name: title, 
         title: title, 
         description: result, 
+        content: result,
         source: 'ia', 
         createdBy: 'ia',
         category: mode === 'prevencion' ? 'prevencion' : 'tactico',
         createdAt: new Date().toISOString()
       });
-      alert(`✅ Guardado en la biblioteca: ${title}`);
+      alert(`✅ Guardado en la biblioteca: "${title}"`);
     } catch (error) {
-      alert("Error al guardar.");
+      console.error('Error al guardar ejercicio IA:', error);
+      alert("Error al guardar el ejercicio. Intenta de nuevo.");
     }
   };
 

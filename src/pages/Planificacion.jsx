@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect, useCallback } from 'react';
-import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
+import { doc, getDoc, setDoc, serverTimestamp } from '../firebase/firestore-proxy';
 import { db, auth } from '../firebaseConfig';
 import { useAuth } from '../context/AuthContext';
 import { useTeams } from '../hooks/useTeams';

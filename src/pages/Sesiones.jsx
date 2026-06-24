@@ -8,7 +8,7 @@ import { usePlan, LIMITS } from '../hooks/usePlan';
 import UpgradeModal from '../components/UpgradeModal';
 import { storage, db } from '../firebaseConfig';
 import { ref, uploadBytesResumable, getDownloadURL, deleteObject } from 'firebase/storage';
-import { collection, getDocs, query, orderBy, doc, deleteDoc, writeBatch } from 'firebase/firestore';
+import { collection, getDocs, query, orderBy, doc, deleteDoc, writeBatch } from '../firebase/firestore-proxy';
 import { useCaptures } from '../hooks/useCaptures';
 import { useExercises } from '../hooks/useExercises';
 import { downloadJSON, downloadImage } from '../utils/download.js';

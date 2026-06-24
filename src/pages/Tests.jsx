@@ -16,7 +16,7 @@ import ProgressTracker from '../components/ProgressTracker';
 import TestDetail from './TestDetail';
 import PlayerAnalyticsModal, { SvgRadar } from '../components/PlayerAnalyticsModal';
 import { db } from '../firebaseConfig';
-import { collection, addDoc, getDocs, query, where, orderBy, serverTimestamp, writeBatch, doc, deleteDoc } from 'firebase/firestore';
+import { collection, addDoc, getDocs, query, where, orderBy, serverTimestamp, writeBatch, doc, deleteDoc } from '../firebase/firestore-proxy';
 import html2canvas from 'html2canvas';
 import WellnessTestModal from '../components/WellnessTestModal';
 import RPETestModal from '../components/RPETestModal';

@@ -300,7 +300,12 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   const getTeamPath = useCallback((teamId = activeTeamId) => {
-    if (!user || user.uid === 'invitado-local') return '';
+    if (!user) return '';
+    // Para el usuario invitado local, devolver el path mock del equipo invitado
+    if (user.uid === 'invitado-local') {
+      const tId = teamId || 'team-invitado';
+      return `users/invitado-local/teams/${tId}`;
+    }
     const tId = teamId || activeTeamId;
     if (!tId) return '';
     

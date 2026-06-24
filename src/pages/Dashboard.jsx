@@ -23,7 +23,7 @@ import {
 import { t } from '../i18n/translations';
 import { useTheme } from '../context/ThemeContext';
 import { db, auth } from '../firebaseConfig';
-import { doc, getDoc, collection, updateDoc, onSnapshot } from 'firebase/firestore';
+import { doc, getDoc, collection, updateDoc, onSnapshot } from '../firebase/firestore-proxy';
 import { createNotification } from '../firebase/db';
 import './Dashboard.css';
 

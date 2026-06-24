@@ -257,6 +257,18 @@ const triggerListeners = (path, data) => {
 // --- INTERCEPTED FUNCTIONS ---
 
 export const doc = (dbOrRef, path, ...childPaths) => {
+  if (path === undefined) {
+    const finalPath = (dbOrRef instanceof MockCollectionRef || dbOrRef instanceof MockDocRef) 
+      ? dbOrRef.path 
+      : (typeof dbOrRef === 'string' ? dbOrRef : (dbOrRef?.path || ''));
+
+    if (isLocalGuest(finalPath)) {
+      const randomId = 'local_' + Math.random().toString(36).substr(2, 9);
+      return new MockDocRef(`${finalPath}/${randomId}`);
+    }
+    return real.doc(dbOrRef);
+  }
+
   const fullPath = [path, ...childPaths].filter(Boolean).join('/');
   const finalPath = (dbOrRef instanceof MockCollectionRef || dbOrRef instanceof MockDocRef) 
     ? `${dbOrRef.path}/${fullPath}` 

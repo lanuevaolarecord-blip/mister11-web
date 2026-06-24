@@ -33,7 +33,7 @@ import { usePizarra } from '../context/PizarraContext';
 import { usePlan } from '../hooks/usePlan';
 import UpgradeModal from '../components/UpgradeModal';
 import { db } from '../firebaseConfig';
-import { collection, doc, setDoc, addDoc, deleteDoc, serverTimestamp, onSnapshot, query, orderBy, getDoc, writeBatch, getDocs } from 'firebase/firestore';
+import { collection, doc, setDoc, addDoc, deleteDoc, serverTimestamp, onSnapshot, query, orderBy, getDoc, writeBatch, getDocs } from '../firebase/firestore-proxy';
 import { ref, uploadString, getDownloadURL } from 'firebase/storage';
 import { useSearchParams } from 'react-router-dom';
 import { storage } from '../firebaseConfig';

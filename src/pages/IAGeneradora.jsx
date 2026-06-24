@@ -638,29 +638,53 @@ Responde solo en español y usa formato markdown.`;
                     <p>No hay ejercicios guardados aún.</p>
                   </div>
                 ) : (
-                  exercises.sort((a,b) => (b.timestamp?.seconds || 0) - (a.timestamp?.seconds || 0)).map(ej => (
-                    <div key={ej.id} className="exercise-card" onClick={() => setSelectedExerciseDetail(ej)}>
-                      {ej.type === 'pizarra' && ej.thumbnail && (
-                        <div className="exercise-card-thumb">
-                          <img src={ej.thumbnail} alt="Vista previa" />
-                        </div>
-                      )}
-                      <div className="exercise-card-content">
-                        <div className="exercise-card-title">
-                          <span className={`type-tag ${ej.type || 'ia'}`}>{ej.type === 'pizarra' ? '📋 Pizarra' : '✨ IA'}</span>
-                          <span className="title-text">{ej.title || ej.name || ej.nombre || 'Sin título'}</span>
-                        </div>
-                        <div className="exercise-card-meta">
-                          <span>
-                            {ej.timestamp?.toDate 
-                              ? ej.timestamp.toDate().toLocaleDateString() 
-                              : (ej.timestamp ? new Date(ej.timestamp).toLocaleDateString() : 'Reciente')}
-                          </span>
-                        </div>
-                      </div>
-                      <div className="exercise-card-arrow">→</div>
-                    </div>
-                  ))
+                  (() => {
+                    const getExerciseDate = (ej) => {
+                      if (ej.timestamp) {
+                        if (typeof ej.timestamp.toDate === 'function') return ej.timestamp.toDate();
+                        if (ej.timestamp.seconds) return new Date(ej.timestamp.seconds * 1000);
+                        return new Date(ej.timestamp);
+                      }
+                      if (ej.createdAt) {
+                        if (typeof ej.createdAt.toDate === 'function') return ej.createdAt.toDate();
+                        return new Date(ej.createdAt);
+                      }
+                      return null;
+                    };
+
+                    return [...exercises]
+                      .sort((a, b) => {
+                        const dateA = getExerciseDate(a) || new Date(0);
+                        const dateB = getExerciseDate(b) || new Date(0);
+                        return dateB.getTime() - dateA.getTime();
+                      })
+                      .map(ej => {
+                        const dateVal = getExerciseDate(ej);
+                        const dateStr = dateVal 
+                          ? dateVal.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })
+                          : 'Sistema';
+
+                        return (
+                          <div key={ej.id} className="exercise-card" onClick={() => setSelectedExerciseDetail(ej)}>
+                            {ej.type === 'pizarra' && ej.thumbnail && (
+                              <div className="exercise-card-thumb">
+                                <img src={ej.thumbnail} alt="Vista previa" />
+                              </div>
+                            )}
+                            <div className="exercise-card-content">
+                              <div className="exercise-card-title">
+                                <span className={`type-tag ${ej.type || 'ia'}`}>{ej.type === 'pizarra' ? '📋 Pizarra' : '✨ IA'}</span>
+                                <span className="title-text">{ej.title || ej.name || ej.nombre || 'Sin título'}</span>
+                              </div>
+                              <div className="exercise-card-meta">
+                                <span>{dateStr}</span>
+                              </div>
+                            </div>
+                            <div className="exercise-card-arrow">→</div>
+                          </div>
+                        );
+                      });
+                  })()
                 )}
               </div>
             </div>

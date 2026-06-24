@@ -1,4 +1,4 @@
-import { jsPDF } from 'jspdf';
+﻿import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { downloadPDF } from './download.js';
 import { db, auth } from '../firebaseConfig';
@@ -711,7 +711,7 @@ export const generateSessionPDF = async (session, activeTeam = null, pizarras = 
       doc.setFontSize(9);
       doc.setFont(undefined, 'italic');
       doc.setTextColor(60, 80, 70);
-      const objLines = doc.splitTextToSize(`🎯 Objetivo: ${objText}`, pageW - 30);
+      const objLines = doc.splitTextToSize(`Objetivo: ${objText}`, pageW - 30);
       doc.text(objLines, 15, meta2Y + 24);
     }
 
@@ -751,7 +751,7 @@ export const generateSessionPDF = async (session, activeTeam = null, pizarras = 
 
     if (sessionDiagram) {
       if (currentY + 75 > pageH - 25) { doc.addPage(); currentY = 20; }
-      currentY = drawSectionHeader(doc, currentY, '🗺️  DIAGRAMA TÁCTICO PRINCIPAL', pageW);
+      currentY = drawSectionHeader(doc, currentY, 'DIAGRAMA TÁCTICO PRINCIPAL', pageW);
       try {
         const imgBase64 = await getImageBase64(sessionDiagram);
         if (imgBase64) {
@@ -767,7 +767,7 @@ export const generateSessionPDF = async (session, activeTeam = null, pizarras = 
 
     // ─── BLOQUES DE LA SESIÓN ─────────────────────────────────────────────────
     if (currentY + 15 > pageH - 25) { doc.addPage(); currentY = 20; }
-    currentY = drawSectionHeader(doc, currentY, '📋  BLOQUES DE ENTRENAMIENTO', pageW);
+    currentY = drawSectionHeader(doc, currentY, 'BLOQUES DE ENTRENAMIENTO', pageW);
 
     if (blocks.length === 0) {
       doc.setFontSize(10);
@@ -822,7 +822,17 @@ export const generateSessionPDF = async (session, activeTeam = null, pizarras = 
         if (b.imagenProtocolo) {
           if (currentY + 65 > pageH - 25) { doc.addPage(); currentY = 20; }
           try {
-            const imgBase64 = await getImageBase64(b.imagenProtocolo);
+            let imgData = b.imagenProtocolo;
+            // Si la imagen es una URL remota, intentamos buscar en la lista de capturas
+            // para obtener el base64 local (evitando bloqueos de CORS)
+            if (b.imagenProtocolo.startsWith('http') && captures && captures.length > 0) {
+              const matchedCap = captures.find(c => c.url === b.imagenProtocolo || c.thumbnail === b.imagenProtocolo);
+              if (matchedCap && matchedCap.thumbnail) {
+                imgData = matchedCap.thumbnail;
+              }
+            }
+
+            const imgBase64 = await getImageBase64(imgData);
             if (imgBase64) {
               doc.setDrawColor(200, 210, 205);
               doc.setLineWidth(0.3);
@@ -869,10 +879,17 @@ export const generateSessionPDF = async (session, activeTeam = null, pizarras = 
             doc.setLineWidth(0.3);
             doc.roundedRect(capImgX - 1, capRowY - 1, capImgW + 2, capImgH + 13, 2, 2, 'S');
             doc.addImage(imgBase64, 'PNG', capImgX, capRowY, capImgW, capImgH);
-            doc.setFontSize(7);
+            doc.setFontSize(7.5);
             doc.setFont(undefined, 'normal');
             doc.setTextColor(80, 100, 90);
-            const capLabel = (cap.title || cap.label || cap.name || ('Captura ' + (ci + 1))).slice(0, 35);
+            
+            // Buscar si esta captura estÃ¡ siendo usada en algÃºn bloque de la sesiÃ³n para mostrar su nombre
+            const matchedBlock = blocks.find(b => b.imagenProtocolo === imgSrc || b.imagenProtocolo === cap.url || b.imagenProtocolo === cap.thumbnail);
+            let capLabel = cap.title || cap.label || cap.name || ('Captura ' + (ci + 1));
+            if (matchedBlock) {
+              capLabel = `${matchedBlock.name} - ${capLabel}`;
+            }
+            capLabel = capLabel.slice(0, 45);
             doc.text(capLabel, capImgX + 1, capRowY + capImgH + 9);
           }
         } catch (e) { console.warn('Error cargando captura ' + ci + ':', e); }

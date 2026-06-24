@@ -202,10 +202,10 @@ const BlockEditor = ({ block, index, handleUpdateBlock, handleDeleteBlock, handl
                     <div 
                       key={cap.id} 
                       style={{ cursor: 'pointer', border: '2px solid transparent', borderRadius: '8px', overflow: 'hidden' }}
-                      onClick={() => {
-                        handleUpdateBlock(block.id, 'imagenProtocolo', cap.url);
-                        setShowCaptureModal(false);
-                      }}
+                        onClick={() => {
+                          handleUpdateBlock(block.id, 'imagenProtocolo', cap.thumbnail || cap.url);
+                          setShowCaptureModal(false);
+                        }}
                     >
                       <img src={cap.url} alt={cap.title} style={{ width: '100%', height: '100px', objectFit: 'cover' }} />
                       <p style={{ fontSize: '12px', textAlign: 'center', padding: '4px', margin: 0, backgroundColor: '#f1f5f9' }}>

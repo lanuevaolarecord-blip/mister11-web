@@ -1,4 +1,4 @@
-import { jsPDF } from 'jspdf';
+﻿import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { downloadPDF } from './download.js';
 import { db, auth } from '../firebaseConfig';
@@ -619,152 +619,315 @@ export const generatePlayerTestReport = async (player, tests, historyData, activ
   window.dispatchEvent(new CustomEvent('m11-loading', { detail: { show: false } }));
 };
 
+/**
+ * Dibuja una tarjeta de información compacta (etiqueta + valor) en posición x,y
+ */
+const drawInfoCard = (doc, x, y, w, h, label, value, bgColor = [245, 247, 250], labelColor = [100, 120, 110], valueColor = [27, 58, 45]) => {
+  doc.setFillColor(...bgColor);
+  doc.roundedRect(x, y, w, h, 2, 2, 'F');
+  doc.setFontSize(7);
+  doc.setFont(undefined, 'normal');
+  doc.setTextColor(...labelColor);
+  doc.text(label, x + 3, y + 5);
+  doc.setFontSize(10);
+  doc.setFont(undefined, 'bold');
+  doc.setTextColor(...valueColor);
+  doc.text(String(value || '—').slice(0, 22), x + 3, y + 12);
+};
 
 /**
- * SESIONES - Ficha individual
+ * Dibuja una línea separadora con título de sección
  */
-export const generateSessionPDF = async (session, activeTeam = null, pizarras = []) => {
+const drawSectionHeader = (doc, y, title, pageW) => {
+  doc.setFillColor(...THEME_COLOR);
+  doc.rect(15, y, pageW - 30, 0.5, 'F');
+  doc.setFillColor(...ACCENT_COLOR);
+  doc.rect(15, y, 4, 7, 'F');
+  doc.setFontSize(11);
+  doc.setFont(undefined, 'bold');
+  doc.setTextColor(...THEME_COLOR);
+  doc.text(title, 22, y + 5.5);
+  return y + 12;
+};
+
+/**
+ * SESIONES - Ficha individual profesional con capturas de pizarra
+ * @param {Object} session - Sesión a exportar
+ * @param {Object} activeTeam - Equipo activo
+ * @param {Array} pizarras - Ejercicios tipo pizarra
+ * @param {Array} captures - Capturas de la pizarra táctica
+ * @param {Array} players - Lista de jugadores del equipo
+ */
+export const generateSessionPDF = async (session, activeTeam = null, pizarras = [], captures = [], players = []) => {
   window.dispatchEvent(new CustomEvent('m11-loading', { detail: { show: true, message: 'Generando PDF de Sesión...' } }));
   await new Promise(r => setTimeout(r, 150));
   try {
     const doc = new jsPDF();
-    
-    await addHeader(doc, `FICHA DE ENTRENAMIENTO`, session.nombre || session.title || session.titulo || 'Sesión sin nombre', activeTeam);
+    const pageW = doc.internal.pageSize.getWidth();
+    const pageH = doc.internal.pageSize.getHeight();
 
-    doc.setTextColor(0, 0, 0);
-    doc.setFontSize(12);
-    doc.text(`Fecha: ${session.fechaCreacion || session.date || session.fecha || new Date().toLocaleDateString()}`, 15, 50);
-    doc.text(`Hora: ${session.time || '18:00'}`, 80, 50);
-    doc.text(`Duración: ${session.duration || session.duracion || '90'} min`, 140, 50);
-    
-    doc.text(`Intensidad: ${session.intensity || 'Media'}`, 15, 58);
-    doc.text(`Tipo: ${session.category || 'Mixta'}`, 80, 58);
+    // ─── CABECERA PROFESIONAL ─────────────────────────────────────────────────
+    await addHeader(doc, 'FICHA DE ENTRENAMIENTO', session.nombre || session.title || session.titulo || 'Sesión sin nombre', activeTeam);
 
-    // Intentar obtener el diagrama principal
+    // Banda dorada decorativa bajo el header
+    doc.setFillColor(...ACCENT_COLOR);
+    doc.rect(0, 40, pageW, 2, 'F');
+
+    // ─── TARJETAS DE METADATOS ────────────────────────────────────────────────
+    const metaY = 46;
+    const cardW = (pageW - 38) / 4;
+    const date = (session.date || session.fecha || new Date().toLocaleDateString()).split('-').reverse().join('/');
+    drawInfoCard(doc, 15,          metaY, cardW, 18, 'FECHA',       date);
+    drawInfoCard(doc, 16 + cardW,  metaY, cardW, 18, 'HORA',        session.time || session.hora || '18:00');
+    drawInfoCard(doc, 17 + cardW*2,metaY, cardW, 18, 'DURACIÓN',    `${session.duration || session.duracion || 90} min`);
+    drawInfoCard(doc, 18 + cardW*3,metaY, cardW, 18, 'INTENSIDAD',  session.intensity || session.intensidad || 'Media');
+
+    const meta2Y = metaY + 22;
+    const cardW2 = (pageW - 32) / 3;
+    drawInfoCard(doc, 15,           meta2Y, cardW2, 18, 'CATEGORÍA', session.category || session.categoria || 'General');
+    drawInfoCard(doc, 17 + cardW2,  meta2Y, cardW2, 18, 'MATERIAL',  (session.materials || session.material || 'Balones, conos').slice(0, 30));
+    drawInfoCard(doc, 19 + cardW2*2,meta2Y, cardW2 - 4, 18, 'BLOQUES', `${(session.blocks || session.bloques || []).length} bloques`);
+
+    // Objetivo
+    if (session.objectives || session.objetivo) {
+      const objText = session.objectives || session.objetivo || '';
+      doc.setFontSize(9);
+      doc.setFont(undefined, 'italic');
+      doc.setTextColor(60, 80, 70);
+      const objLines = doc.splitTextToSize(`🎯 Objetivo: ${objText}`, pageW - 30);
+      doc.text(objLines, 15, meta2Y + 24);
+    }
+
+    let currentY = meta2Y + 34;
+
+    // ─── DIAGRAMA TÁCTICO PRINCIPAL ───────────────────────────────────────────
     let sessionDiagram = null;
     const blocks = session.blocks || session.bloques || [];
-    
+
     if (session.linkedPizarraId) {
       const found = (pizarras || []).find(p => p.id === session.linkedPizarraId);
       if (found && found.thumbnail) {
         sessionDiagram = found.thumbnail;
       } else {
-        // Intentar recuperar de Firestore
         try {
-          const user = auth.currentUser;
+          const { getDoc: fsGetDoc, doc: fsDoc } = await import('firebase/firestore');
+          const { db: fsDb, auth: fsAuth } = await import('../firebaseConfig');
+          const user = fsAuth.currentUser;
           if (user && activeTeam?.id) {
-            const exerciseRef = doc(db, 'users', user.uid, 'teams', activeTeam.id, 'exercises', session.linkedPizarraId);
-            const exerciseSnap = await getDoc(exerciseRef);
-            if (exerciseSnap.exists() && exerciseSnap.data().thumbnail) {
-              sessionDiagram = exerciseSnap.data().thumbnail;
-            } else {
-              const pizarraRef = doc(db, 'users', user.uid, 'teams', activeTeam.id, 'pizarras', session.linkedPizarraId);
-              const pizarraSnap = await getDoc(pizarraRef);
-              if (pizarraSnap.exists() && pizarraSnap.data().thumbnail) {
-                sessionDiagram = pizarraSnap.data().thumbnail;
-              }
+            const pizarraRef = fsDoc(fsDb, 'users', user.uid, 'teams', activeTeam.id, 'pizarras', session.linkedPizarraId);
+            const pizarraSnap = await fsGetDoc(pizarraRef);
+            if (pizarraSnap.exists() && pizarraSnap.data().thumbnail) {
+              sessionDiagram = pizarraSnap.data().thumbnail;
             }
           }
         } catch (err) {
-          console.error("Error al recuperar pizarra para PDF:", err);
+          console.warn('No se pudo recuperar la pizarra desde Firestore:', err);
         }
       }
     }
 
-    // Fallback al diagrama del primer bloque si no hay pizarra
+    // Fallback al diagrama del primer bloque
     if (!sessionDiagram) {
       const firstBlockWithImg = blocks.find(b => b.imagenProtocolo);
-      if (firstBlockWithImg) {
-        sessionDiagram = firstBlockWithImg.imagenProtocolo;
-      }
+      if (firstBlockWithImg) sessionDiagram = firstBlockWithImg.imagenProtocolo;
     }
 
-    let currentY = 66;
-
     if (sessionDiagram) {
+      if (currentY + 75 > pageH - 25) { doc.addPage(); currentY = 20; }
+      currentY = drawSectionHeader(doc, currentY, '🗺️  DIAGRAMA TÁCTICO PRINCIPAL', pageW);
       try {
         const imgBase64 = await getImageBase64(sessionDiagram);
         if (imgBase64) {
-          doc.addImage(imgBase64, 'PNG', 15, currentY, 180, 100);
-          currentY += 105;
+          // Marco decorativo
+          doc.setDrawColor(...THEME_COLOR);
+          doc.setLineWidth(0.5);
+          doc.rect(14, currentY - 1, pageW - 28, 72);
+          doc.addImage(imgBase64, 'PNG', 15, currentY, pageW - 30, 70);
+          currentY += 75;
         }
-      } catch (e) {
-        console.warn('Could not load session diagram for PDF', e);
-      }
+      } catch (e) { console.warn('No se pudo cargar el diagrama principal:', e); }
     }
 
-    // Verificar salto de página para el título de bloques
-    if (currentY > 260) {
-      doc.addPage();
-      currentY = 20;
-    }
+    // ─── BLOQUES DE LA SESIÓN ─────────────────────────────────────────────────
+    if (currentY + 15 > pageH - 25) { doc.addPage(); currentY = 20; }
+    currentY = drawSectionHeader(doc, currentY, '📋  BLOQUES DE ENTRENAMIENTO', pageW);
 
-    doc.setFontSize(14);
-    doc.setTextColor(...THEME_COLOR);
-    doc.text('Bloques de la Sesión', 15, currentY);
-    doc.setTextColor(0);
-
-    currentY += 10;
-    
     if (blocks.length === 0) {
-      doc.setFontSize(11);
+      doc.setFontSize(10);
+      doc.setTextColor(120);
+      doc.setFont(undefined, 'italic');
       doc.text('No hay bloques definidos para esta sesión.', 15, currentY);
       currentY += 10;
     } else {
-      for (const b of blocks) {
-        if (currentY > 250) {
-          doc.addPage();
-          currentY = 20;
-        }
+      const blockColors = [
+        [245, 247, 250], [240, 252, 245], [250, 248, 240], [248, 243, 255]
+      ];
+      for (let bi = 0; bi < blocks.length; bi++) {
+        const b = blocks[bi];
+        const descLines = doc.splitTextToSize(b.description || b.descripcion || 'Sin descripción', pageW - 55);
+        const blockH = 8 + (descLines.length * 4.5) + 6;
         
-        doc.setFontSize(12);
-        doc.setFont(undefined, 'bold');
-        doc.text(`${blocks.indexOf(b)+1}. ${b.name || b.titulo || 'Bloque'} (${b.duration || b.tiempo || 0} min) [${b.type || '-'}]`, 15, currentY);
-        
-        doc.setFont(undefined, 'normal');
-        doc.setFontSize(10);
-        const descLines = doc.splitTextToSize(b.description || b.descripcion || 'Sin descripción', 180);
-        doc.text(descLines, 15, currentY + 6);
-        
-        currentY += 8 + (descLines.length * 5) + 5;
+        if (currentY + blockH > pageH - 25) { doc.addPage(); currentY = 20; }
 
+        const bg = blockColors[bi % blockColors.length];
+        doc.setFillColor(...bg);
+        doc.roundedRect(15, currentY, pageW - 30, blockH, 2, 2, 'F');
+
+        doc.setFillColor(...THEME_COLOR);
+        doc.circle(22, currentY + 5, 4, 'F');
+        doc.setTextColor(255, 255, 255);
+        doc.setFontSize(8);
+        doc.setFont(undefined, 'bold');
+        doc.text(String(bi + 1), 22, currentY + 7, { align: 'center' });
+
+        doc.setTextColor(...THEME_COLOR);
+        doc.setFontSize(10);
+        doc.setFont(undefined, 'bold');
+        doc.text(b.name || b.titulo || `Bloque ${bi+1}`, 30, currentY + 6.5);
+
+        const typeTag = b.type || b.tipo || 'General';
+        const durTag = `${b.duration || b.tiempo || 0} min`;
+        doc.setFontSize(7.5);
+        doc.setFont(undefined, 'normal');
+        doc.setTextColor(80, 100, 90);
+        doc.text(`[${typeTag}]`, pageW - 45, currentY + 6.5);
+        doc.setTextColor(...ACCENT_COLOR);
+        doc.text(durTag, pageW - 25, currentY + 6.5);
+
+        // Descripción
+        doc.setFont(undefined, 'normal');
+        doc.setFontSize(8.5);
+        doc.setTextColor(60, 70, 65);
+        doc.text(descLines, 28, currentY + 13);
+        currentY += blockH + 2;
+
+        // Imagen del bloque con diseno mejorado
         if (b.imagenProtocolo) {
-          if (currentY > 220) {
-            doc.addPage();
-            currentY = 20;
-          }
+          if (currentY + 65 > pageH - 25) { doc.addPage(); currentY = 20; }
           try {
             const imgBase64 = await getImageBase64(b.imagenProtocolo);
             if (imgBase64) {
-              doc.addImage(imgBase64, 'PNG', 15, currentY, 180, 100);
-              currentY += 110;
+              doc.setDrawColor(200, 210, 205);
+              doc.setLineWidth(0.3);
+              doc.rect(25, currentY, pageW - 50, 62);
+              doc.addImage(imgBase64, 'PNG', 26, currentY + 1, pageW - 52, 60);
+              currentY += 65;
             }
-          } catch (e) {
-            console.warn('Could not load block image for PDF', e);
-          }
+          } catch (e) { console.warn('No se pudo cargar imagen del bloque:', e); }
         }
+        currentY += 3;
       }
     }
 
-    if (currentY > 220) {
-      doc.addPage();
-      currentY = 20;
+    // CAPTURAS DE PIZARRA TACTICA
+    const linkedCaptures = (captures || []).filter(c => c.sessionId === session.id);
+    const displayCaptures = linkedCaptures.length > 0
+      ? linkedCaptures.slice(0, 8)
+      : (captures || []).slice(0, 6);
+
+    if (displayCaptures.length > 0) {
+      if (currentY + 15 > pageH - 25) { doc.addPage(); currentY = 20; }
+      currentY = drawSectionHeader(doc, currentY, 'CAPTURAS DE PIZARRA TACTICA', pageW);
+
+      const capImgW = (pageW - 42) / 2;
+      const capImgH = capImgW * 0.65;
+      let capImgX = 15;
+      let capRowY = currentY;
+
+      for (let ci = 0; ci < displayCaptures.length; ci++) {
+        const cap = displayCaptures[ci];
+        const imgSrc = cap.dataUrl || cap.url || cap.imageUrl || cap.thumbnail || cap.imageData;
+        if (!imgSrc) continue;
+
+        if (capRowY + capImgH + 15 > pageH - 25) {
+          doc.addPage(); capRowY = 20; capImgX = 15;
+        }
+
+        try {
+          const imgBase64 = await getImageBase64(imgSrc);
+          if (imgBase64) {
+            doc.setFillColor(245, 247, 250);
+            doc.roundedRect(capImgX - 1, capRowY - 1, capImgW + 2, capImgH + 13, 2, 2, 'F');
+            doc.setDrawColor(...THEME_COLOR);
+            doc.setLineWidth(0.3);
+            doc.roundedRect(capImgX - 1, capRowY - 1, capImgW + 2, capImgH + 13, 2, 2, 'S');
+            doc.addImage(imgBase64, 'PNG', capImgX, capRowY, capImgW, capImgH);
+            doc.setFontSize(7);
+            doc.setFont(undefined, 'normal');
+            doc.setTextColor(80, 100, 90);
+            const capLabel = (cap.title || cap.label || cap.name || ('Captura ' + (ci + 1))).slice(0, 35);
+            doc.text(capLabel, capImgX + 1, capRowY + capImgH + 9);
+          }
+        } catch (e) { console.warn('Error cargando captura ' + ci + ':', e); }
+
+        if (ci % 2 === 0) {
+          capImgX = 15 + capImgW + 12;
+        } else {
+          capImgX = 15;
+          capRowY += capImgH + 18;
+          currentY = capRowY;
+        }
+      }
+      if (displayCaptures.length % 2 !== 0) {
+        currentY = capRowY + capImgH + 18;
+      }
     }
 
-    doc.setFontSize(14);
-    doc.setTextColor(...THEME_COLOR);
-    doc.text('Notas y Observaciones Post-Sesión', 15, currentY + 15);
-    
-    doc.setDrawColor(200);
-    doc.setFillColor(250);
-    doc.rect(15, currentY + 20, 180, 50, 'FD');
+    // CONVOCATORIA
+    const sessionPlayerIds = session.players || session.convocados || [];
+    const convocados = (players || []).filter(p => sessionPlayerIds.includes(p.id));
 
+    if (convocados.length > 0) {
+      if (currentY + 20 > pageH - 25) { doc.addPage(); currentY = 20; }
+      currentY = drawSectionHeader(doc, currentY, 'CONVOCATORIA (' + convocados.length + ' jugadores)', pageW);
+
+      const convCols = 2;
+      const convColW = (pageW - 30) / convCols;
+      const convRowH = 8;
+      const convStartY = currentY;
+
+      for (let pi = 0; pi < convocados.length; pi++) {
+        const p = convocados[pi];
+        const colIdx = pi % convCols;
+        const rowIdx = Math.floor(pi / convCols);
+        const cx = 15 + (colIdx * convColW);
+        const cy = convStartY + (rowIdx * convRowH);
+        if (cy + convRowH > pageH - 25) break;
+        doc.setFillColor(pi % 2 === 0 ? 248 : 255, 248, 248);
+        doc.rect(cx, cy, convColW - 3, convRowH - 1, 'F');
+        doc.setFontSize(8);
+        doc.setFont(undefined, 'bold');
+        doc.setTextColor(...THEME_COLOR);
+        doc.text(String(p.number || p.dorsal || '-'), cx + 2, cy + 5.5);
+        doc.setFont(undefined, 'normal');
+        doc.setTextColor(40, 40, 40);
+        doc.text((p.name || p.nombre || 'Jugador').slice(0, 20), cx + 10, cy + 5.5);
+        doc.setTextColor(130);
+        doc.text((p.position || p.posicion || ''), cx + convColW - 22, cy + 5.5);
+      }
+      currentY = convStartY + (Math.ceil(convocados.length / convCols)) * convRowH + 6;
+    }
+
+    // NOTAS Y OBSERVACIONES
+    if (currentY + 40 > pageH - 25) { doc.addPage(); currentY = 20; }
+    currentY = drawSectionHeader(doc, currentY, 'NOTAS POST-SESION', pageW);
+    doc.setFillColor(252, 252, 248);
+    doc.setDrawColor(200, 210, 200);
+    doc.setLineWidth(0.3);
+    doc.roundedRect(15, currentY, pageW - 30, 38, 2, 2, 'FD');
+    for (let li = 0; li < 4; li++) {
+      doc.setDrawColor(220, 225, 220);
+      doc.setLineWidth(0.2);
+      doc.line(22, currentY + 8 + (li * 8), pageW - 22, currentY + 8 + (li * 8));
+    }
+
+    // PIE DE PAGINA
     addFooter(doc);
     const safeTitle = (session.title || session.titulo || 'Sesion').replace(/[^a-z0-9]/gi, '_');
-    await savePdfUniversal(doc, `Sesion_${safeTitle}_${session.date || session.fecha || 'Hoy'}.pdf`);
+    await savePdfUniversal(doc, 'Sesion_' + safeTitle + '_' + (session.date || 'Hoy').replace(/-/g, '') + '.pdf');
   } catch (err) {
-    console.error('Error al generar PDF de sesión:', err);
-    alert('Error al generar el PDF de la sesión.');
+    console.error('Error al generar PDF de sesion:', err);
+    alert('Error al generar el PDF de la sesion.');
   } finally {
     window.dispatchEvent(new CustomEvent('m11-loading', { detail: { show: false } }));
   }

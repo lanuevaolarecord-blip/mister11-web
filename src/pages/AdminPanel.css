@@ -1,6 +1,6 @@
 .admin-container {
   display: flex;
-  height: calc(100vh - 100px);
+  height: calc(100dvh - 100px);
   background: var(--bg-primary);
   color: var(--text-secondary);
   margin: -20px; /* Offset parent padding */
@@ -586,10 +586,19 @@
     width: 100%;
     flex-direction: row;
     overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
     border-right: none;
     border-bottom: 1px solid var(--border-color);
+    padding: 10px;
+    gap: 8px;
+  }
+  .admin-nav-item {
+    padding: 10px 14px;
+    flex-shrink: 0;
   }
   .admin-nav-item span {
-    display: none;
+    display: inline;
+    font-size: 0.85rem;
+    white-space: nowrap;
   }
 }

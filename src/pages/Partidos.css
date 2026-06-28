@@ -1115,7 +1115,7 @@ html.dark {
   top: 0;
   left: 0;
   width: 100vw;
-  height: 100vh;
+  height: 100dvh;
   background: rgba(0, 0, 0, 0.6);
   backdrop-filter: blur(4px);
   display: flex;
@@ -1357,7 +1357,7 @@ html.dark .post-match-card {
   overflow-y: auto;
   box-sizing: border-box;
   width: 100vw;
-  height: 100vh;
+  height: 100dvh;
 }
 
 .match-day-grid {
@@ -1618,7 +1618,7 @@ html.dark .post-match-card {
 
 .event-selector-overlay {
   position: fixed;
-  top: 0; left: 0; width: 100vw; height: 100vh;
+  top: 0; left: 0; width: 100vw; height: 100dvh;
   background: rgba(0,0,0,0.5);
   display: flex;
   align-items: center;

@@ -93,3 +93,12 @@ Ejecuta estos comandos en la terminal de Powershell desde la raíz de `mister11-
 ## 🌐 5. Configuración de Red y Producción
 * **Dominio Oficial**: `https://mister11.app` (Desplegado automáticamente desde la rama `main` en Vercel).
 * **Base de Datos**: Google Cloud Firestore (Modo producción con reglas de acceso en `firestore.rules`).
+
+---
+
+## 📋 6. Log de Cambios y Gobernanza
+
+* **[2026-06-28] Optimización Responsiva e Inmersión Móvil (Android APK)**:
+  * **Problema Resuelto**: Recorte visual de la interfaz y desbordamiento de elementos del menú en dispositivos móviles al instalar la APK en Android.
+  * **Solución Aplicada**: Estandarización de alturas dinámicas utilizando unidades `100dvh` (Dynamic Viewport Height) en sustitución de `100vh` en el menú principal (`index.css`), panel de administración (`AdminPanel.css`), vista de mi equipo (`MiEquipo.css`) y modales de partidos (`Partidos.css`).
+  * **Mejoras UX/UI**: Implementación de `calc(24px + env(safe-area-inset-bottom))` para respetar las zonas seguras (safe areas) de gestos y barras de navegación en Android. Habilitación de desplazamiento táctil fluido (`-webkit-overflow-scrolling: touch`) en contenedores laterales y menús. Visualización activa de etiquetas de pestañas en móvil para el Panel de Administración. Compilación verificada exitosamente sin errores (`npm run build`).

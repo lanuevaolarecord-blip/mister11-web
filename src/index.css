@@ -164,12 +164,14 @@ a {
   min-width: 260px;
   display: flex;
   flex-direction: column;
-  padding: 20px 0;
+  padding: 20px 0 calc(24px + env(safe-area-inset-bottom));
   border-right: 1px solid rgba(255, 255, 255, 0.1);
   color: #FFFFFF;
   height: 100dvh; /* dvh en lugar de vh */
+  max-height: 100dvh;
   overflow-y: auto;
   overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
 }
 
 .logo-container {
@@ -209,9 +211,12 @@ a {
 
 .nav-menu {
   flex: 1;
+  min-height: 0;
   display: flex;
   flex-direction: column;
   gap: 4px;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .nav-item {
@@ -629,7 +634,9 @@ input::placeholder, textarea::placeholder {
   width: 280px !important;
   max-width: 85% !important;
   min-width: 0 !important;
-  height: 100vh !important;
+  height: 100dvh !important;
+  max-height: 100dvh !important;
+  padding-bottom: calc(24px + env(safe-area-inset-bottom)) !important;
   z-index: 1001 !important;
   transform: translateX(-100%);
   transition: transform 0.3s ease;

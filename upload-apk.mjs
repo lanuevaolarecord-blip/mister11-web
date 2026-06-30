@@ -24,7 +24,7 @@ const firebaseConfig = {
 };
 
 // ─── Datos de la versión ─────────────────────────────────────────────────────
-const APP_VERSION    = '1.1.3';
+const APP_VERSION    = '1.1.5';
 const APK_LOCAL_PATH = resolve(
   __dirname,
   'android/app/build/outputs/apk/release/mister11.apk'

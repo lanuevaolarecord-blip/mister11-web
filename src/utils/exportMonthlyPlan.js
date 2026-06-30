@@ -12,20 +12,25 @@ import autoTable from 'jspdf-autotable';
 export const exportMonthlyPlan = (mesocycle, macroInfo, activeTeam, appVersion) => {
   if (!mesocycle) return;
 
+  const monthsList = ['Sep', 'Oct', 'Nov', 'Dic', 'Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun'];
+  const formattedMonth = mesocycle.month.charAt(0).toUpperCase() + mesocycle.month.slice(1).toLowerCase();
+  const mesoNum = monthsList.indexOf(formattedMonth) + 1;
+  const mesoNumStr = mesoNum > 0 ? `Nº ${mesoNum}` : '';
+
   // Creamos el documento PDF en formato Portrait (vertical)
   const doc = new jsPDF('p', 'mm', 'a4');
   const pdfWidth = doc.internal.pageSize.getWidth();
   const pdfHeight = doc.internal.pageSize.getHeight();
 
   // Paleta de colores Míster11
-  const cDark = [0, 75, 135]; // Azul Institucional (#004B87)
+  const cDark = [27, 58, 45]; // Verde Institucional (#1B3A2D)
   const cGold = [212, 168, 67]; // Dorado (#D4A843)
   const cBeige = [245, 240, 232]; // Beige claro (#F5F0E8)
   const cText = [45, 45, 45]; // Texto oscuro
-
+ 
   // Encabezado
   const drawHeader = (titleSub) => {
-    // Banner superior azul
+    // Banner superior verde
     doc.setFillColor(cDark[0], cDark[1], cDark[2]);
     doc.rect(0, 0, pdfWidth, 24, 'F');
     
@@ -42,7 +47,7 @@ export const exportMonthlyPlan = (mesocycle, macroInfo, activeTeam, appVersion) 
     // Subtítulo
     doc.setFont('Helvetica', 'normal');
     doc.setFontSize(9);
-    doc.setTextColor(210, 225, 245);
+    doc.setTextColor(210, 225, 215);
     doc.text(titleSub.toUpperCase(), 12, 17);
 
     // Nombre de equipo
@@ -55,7 +60,7 @@ export const exportMonthlyPlan = (mesocycle, macroInfo, activeTeam, appVersion) 
     // Versión y Fecha
     doc.setFont('Helvetica', 'normal');
     doc.setFontSize(8);
-    doc.setTextColor(210, 225, 245);
+    doc.setTextColor(210, 225, 215);
     const todayStr = new Date().toLocaleDateString('es-ES');
     doc.text(`Fecha: ${todayStr} | Versión: ${appVersion}`, pdfWidth - 12, 17, { align: 'right' });
   };
@@ -72,7 +77,7 @@ export const exportMonthlyPlan = (mesocycle, macroInfo, activeTeam, appVersion) 
     doc.text(`Página ${pageNum} de ${totalPages}`, pdfWidth - 12, pdfHeight - 4, { align: 'right' });
   };
 
-  drawHeader(`Mesociclo: ${mesocycle.month.toUpperCase()}`);
+  drawHeader(`Mesociclo ${mesoNumStr} (${mesocycle.month.toUpperCase()})`);
 
   let yPos = 32;
 
@@ -88,7 +93,7 @@ export const exportMonthlyPlan = (mesocycle, macroInfo, activeTeam, appVersion) 
   doc.setFont('Helvetica', 'normal');
   doc.setFontSize(9);
   doc.setTextColor(cText[0], cText[1], cText[2]);
-  doc.text(`Mes: ${mesocycle.month.toUpperCase()}`, 16, yPos + 13);
+  doc.text(`Mes: ${mesocycle.month.toUpperCase()} (Meso ${mesoNumStr})`, 16, yPos + 13);
   doc.text(`Semanas registradas: ${mesocycle.micros.length}`, 16, yPos + 19);
 
   doc.text(`Volumen total del mes: ${mesocycle.volume} min`, 80, yPos + 13);
@@ -127,8 +132,10 @@ export const exportMonthlyPlan = (mesocycle, macroInfo, activeTeam, appVersion) 
 
   const headers = ['Métrica / Variable', ...mesocycle.micros.map(m => `Semana ${m.id} (Micro ${m.microciclo})`)];
   const rows = [
+    ['Mes / Mesociclo', ...mesocycle.micros.map(m => `${m.month} (Meso ${monthsList.indexOf(m.month.charAt(0).toUpperCase() + m.month.slice(1).toLowerCase()) + 1})`)],
     ['Período', ...mesocycle.micros.map(m => m.periodo)],
-    ['Tipo de Microciclo', ...mesocycle.micros.map(m => m.carga)],
+    ['Tipo de Microciclo (Carga)', ...mesocycle.micros.map(m => m.carga)],
+    ['Nº Microciclo', ...mesocycle.micros.map(m => m.microciclo)],
     ['Test Físico', ...mesocycle.micros.map(m => m.fisio ? 'Sí' : 'No')],
     ['Tendencia Carga', ...mesocycle.micros.map(m => m.infl || 'Estable')],
     ['Sesiones', ...mesocycle.micros.map(m => m.sessions)],

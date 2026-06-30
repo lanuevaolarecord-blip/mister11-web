@@ -220,14 +220,14 @@ const Planificacion = () => {
       const pdfHeight = doc.internal.pageSize.getHeight();
 
       // Colores institucionales y tema
-      const cDark = [0, 75, 135]; // Azul Institucional (#004B87)
+      const cDark = [27, 58, 45]; // Verde Institucional (#1B3A2D)
       const cGold = [212, 168, 67]; // #D4A843 (RGB)
       const cBeige = [245, 240, 232]; // #F5F0E8 (RGB)
       const cText = [45, 45, 45];
 
       // Función para dibujar encabezado común
       const drawHeader = (titleSub) => {
-        // Banner principal azul institucional
+        // Banner principal verde institucional
         doc.setFillColor(cDark[0], cDark[1], cDark[2]);
         doc.rect(0, 0, pdfWidth, 24, 'F');
         
@@ -244,7 +244,7 @@ const Planificacion = () => {
         // Subtítulo
         doc.setFont('Helvetica', 'normal');
         doc.setFontSize(9);
-        doc.setTextColor(210, 225, 245);
+        doc.setTextColor(210, 225, 215);
         doc.text(titleSub.toUpperCase(), 12, 17);
 
         // Nombre del equipo y fecha en el lado derecho
@@ -256,7 +256,7 @@ const Planificacion = () => {
 
         doc.setFont('Helvetica', 'normal');
         doc.setFontSize(8);
-        doc.setTextColor(210, 225, 245);
+        doc.setTextColor(210, 225, 215);
         const todayStr = new Date().toLocaleDateString('es-ES');
         doc.text(`Fecha: ${todayStr} | Versión: ${APP_VERSION}`, pdfWidth - 12, 17, { align: 'right' });
       };
@@ -338,7 +338,7 @@ const Planificacion = () => {
         doc.text('MÉTRICAS CLAVE (CARGA)', 222.5, yPos + 6, { align: 'center' });
 
         // Dibujar los 4 indicadores circulares alineados
-        drawCircleMetric(185, yPos + 16, overallScore, 100, 'Global', cDark, [230, 240, 250]);
+        drawCircleMetric(185, yPos + 16, overallScore, 100, 'Global', cDark, [232, 245, 238]);
         drawCircleMetric(210, yPos + 16, macroCounts.sesiones, macroCounts.sesionesMax, 'Sesiones', [27, 58, 45], [232, 245, 238]);
         drawCircleMetric(235, yPos + 16, macroCounts.trabajo, macroCounts.trabajoMax, 'Trabajo', [76, 175, 125], [232, 245, 238]);
         drawCircleMetric(260, yPos + 16, macroCounts.compet, macroCounts.competMax, 'Compet.', [212, 168, 67], [253, 243, 220]);
@@ -389,9 +389,10 @@ const Planificacion = () => {
           const headers = ['MÉTRICA / VARIABLE', ...chunkMicros.map(m => `Micro ${m.id}`)];
           
           const rows = [
-            ['Mes', ...chunkMicros.map(m => m.month)],
+            ['Mes / Mesociclo', ...chunkMicros.map(m => `${m.month} (Meso ${MONTHS.indexOf(m.month) + 1})`)],
             ['Período', ...chunkMicros.map(m => m.periodo)],
             ['Tipo Micro (Carga)', ...chunkMicros.map(m => m.carga)],
+            ['Nº Microciclo', ...chunkMicros.map(m => m.id)],
             ['Test Físico', ...chunkMicros.map(m => m.fisio ? '✓' : '')],
             ['Dinámica Carga', ...chunkMicros.map(m => m.infl || '')],
             ['Volumen (min)', ...chunkMicros.map(m => m.volume)],
@@ -438,9 +439,9 @@ const Planificacion = () => {
           doc.setTextColor(cDark[0], cDark[1], cDark[2]);
           doc.text('RESUMEN MENSUAL DE LA PLANIFICACIÓN', 12, yPos);
 
-          const headers = ['Mes / Período', 'Semanas', 'Volumen Total', 'Sesiones Totales', 'Tipo Predominante'];
+          const headers = ['Mesociclo / Mes', 'Semanas', 'Volumen Total', 'Sesiones Totales', 'Tipo Predominante'];
           const rows = mesocycles.map(meso => [
-            meso.month.toUpperCase(),
+            `Meso ${MONTHS.indexOf(meso.month) + 1} (${meso.month.toUpperCase()})`,
             `${meso.micros.length} semanas`,
             `${meso.volume} min`,
             meso.sessions,
@@ -479,6 +480,7 @@ const Planificacion = () => {
 
           const headers = ['METRICA / VARIABLE', ...chunkMicros.map(m => `Semana ${m.id}`)];
           const rows = [
+            ['Mes / Mesociclo', ...chunkMicros.map(m => `${m.month} (Meso ${MONTHS.indexOf(m.month) + 1})`)],
             ['Período', ...chunkMicros.map(m => m.periodo)],
             ['Nº Microciclo', ...chunkMicros.map(m => m.id)],
             ['Test Físico', ...chunkMicros.map(m => m.fisio ? '✓' : '')],

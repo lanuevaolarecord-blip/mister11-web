@@ -220,14 +220,14 @@ const Planificacion = () => {
       const pdfHeight = doc.internal.pageSize.getHeight();
 
       // Colores institucionales y tema
-      const cDark = [27, 58, 45]; // #1B3A2D (RGB)
+      const cDark = [0, 75, 135]; // Azul Institucional (#004B87)
       const cGold = [212, 168, 67]; // #D4A843 (RGB)
       const cBeige = [245, 240, 232]; // #F5F0E8 (RGB)
       const cText = [45, 45, 45];
 
       // Función para dibujar encabezado común
       const drawHeader = (titleSub) => {
-        // Banner principal verde oscuro
+        // Banner principal azul institucional
         doc.setFillColor(cDark[0], cDark[1], cDark[2]);
         doc.rect(0, 0, pdfWidth, 24, 'F');
         
@@ -244,7 +244,7 @@ const Planificacion = () => {
         // Subtítulo
         doc.setFont('Helvetica', 'normal');
         doc.setFontSize(9);
-        doc.setTextColor(210, 225, 215);
+        doc.setTextColor(210, 225, 245);
         doc.text(titleSub.toUpperCase(), 12, 17);
 
         // Nombre del equipo y fecha en el lado derecho
@@ -256,7 +256,7 @@ const Planificacion = () => {
 
         doc.setFont('Helvetica', 'normal');
         doc.setFontSize(8);
-        doc.setTextColor(210, 225, 215);
+        doc.setTextColor(210, 225, 245);
         const todayStr = new Date().toLocaleDateString('es-ES');
         doc.text(`Fecha: ${todayStr} | Versión: ${APP_VERSION}`, pdfWidth - 12, 17, { align: 'right' });
       };
@@ -272,6 +272,38 @@ const Planificacion = () => {
         doc.text(`Página ${pageNum} de ${totalPages}`, pdfWidth - 12, pdfHeight - 4, { align: 'right' });
       };
 
+      // Función auxiliar para dibujar un indicador de métrica circular en el PDF
+      const drawCircleMetric = (x, y, value, max, label, color, bgColor) => {
+        // Círculo de fondo (relleno)
+        doc.setFillColor(bgColor[0], bgColor[1], bgColor[2]);
+        doc.circle(x, y, 5.5, 'F');
+
+        // Borde del círculo
+        doc.setDrawColor(color[0], color[1], color[2]);
+        doc.setLineWidth(0.8);
+        doc.circle(x, y, 5.5, 'S');
+
+        // Valor numérico
+        doc.setFont('Helvetica', 'bold');
+        doc.setFontSize(7.5);
+        doc.setTextColor(color[0], color[1], color[2]);
+        const displayVal = max === 100 ? `${value}%` : String(value);
+        doc.text(displayVal, x, y + 2.2, { align: 'center' });
+
+        // Etiqueta
+        doc.setFont('Helvetica', 'bold');
+        doc.setFontSize(6);
+        doc.setTextColor(cDark[0], cDark[1], cDark[2]);
+        doc.text(label.toUpperCase(), x, y + 8.5, { align: 'center' });
+
+        // Rango/Fracción
+        doc.setFont('Helvetica', 'normal');
+        doc.setFontSize(5);
+        doc.setTextColor(cText[0], cText[1], cText[2]);
+        const ratioVal = max === 100 ? 'SCORE' : `${value}/${max}`;
+        doc.text(ratioVal, x, y + 11.5, { align: 'center' });
+      };
+
       // 1. MACROCICLO TAB
       if (activeTab === 'macrociclo') {
         drawHeader('MACROCICLO COMPLETO (MATRIZ Y DATOS GENERALES)');
@@ -280,7 +312,7 @@ const Planificacion = () => {
 
         // Cuadro de Información General
         doc.setFillColor(cBeige[0], cBeige[1], cBeige[2]);
-        doc.rect(12, yPos, pdfWidth - 24, 25, 'F');
+        doc.rect(12, yPos, pdfWidth - 24, 32, 'F');
         
         doc.setTextColor(cDark[0], cDark[1], cDark[2]);
         doc.setFont('Helvetica', 'bold');
@@ -290,29 +322,28 @@ const Planificacion = () => {
         doc.setFont('Helvetica', 'normal');
         doc.setFontSize(8);
         doc.setTextColor(cText[0], cText[1], cText[2]);
-        doc.text(`Inicio: ${macroInfo.startDate}   Fin: ${macroInfo.endDate}`, 16, yPos + 12);
-        doc.text(`Categoría: ${macroInfo.category || 'Infantil A'}`, 16, yPos + 17);
-        doc.text(`Entrenador: ${macroInfo.trainer || 'Sin Entrenador'}`, 16, yPos + 22);
+        doc.text(`Inicio: ${macroInfo.startDate}   Fin: ${macroInfo.endDate}`, 16, yPos + 13);
+        doc.text(`Categoría: ${macroInfo.category || 'Infantil A'}`, 16, yPos + 19);
+        doc.text(`Entrenador: ${macroInfo.trainer || 'Sin Entrenador'}`, 16, yPos + 25);
 
-        doc.text(`Horas Totales: ${totalHours}h ${remainingMins}min (${totalMinutes} min)`, 110, yPos + 12);
-        doc.text(`Duración Sesión: ${macroInfo.sessionDuration} min`, 110, yPos + 17);
+        doc.text(`Horas Totales: ${totalHours}h ${remainingMins}min (${totalMinutes} min)`, 110, yPos + 13);
+        doc.text(`Duración Sesión: ${macroInfo.sessionDuration} min`, 110, yPos + 19);
         const daysText = macroInfo.trainingDays.map(d => DAYS_LABELS[d]).join(', ');
-        doc.text(`Días de Entreno: ${daysText}`, 110, yPos + 22);
+        doc.text(`Días de Entreno: ${daysText}`, 110, yPos + 25);
 
-        // Indicadores macro-ciclo
+        // Indicadores macro-ciclo visuales
         doc.setFont('Helvetica', 'bold');
-        doc.setFontSize(9);
-        doc.setTextColor(cDark[0], cDark[1], cDark[2]);
-        doc.text('MÉTRICAS CLAVE', 200, yPos + 6);
-        
-        doc.setFont('Helvetica', 'normal');
         doc.setFontSize(8);
-        doc.setTextColor(cText[0], cText[1], cText[2]);
-        doc.text(`Calificación Global: ${overallScore}%`, 200, yPos + 12);
-        doc.text(`Sesiones: ${macroCounts.sesiones} / ${macroCounts.sesionesMax}`, 200, yPos + 17);
-        doc.text(`Trabajo: ${macroCounts.trabajo} / ${macroCounts.trabajoMax} | Competiciones: ${macroCounts.compet} / ${macroCounts.competMax}`, 200, yPos + 22);
+        doc.setTextColor(cDark[0], cDark[1], cDark[2]);
+        doc.text('MÉTRICAS CLAVE (CARGA)', 222.5, yPos + 6, { align: 'center' });
 
-        yPos += 30;
+        // Dibujar los 4 indicadores circulares alineados
+        drawCircleMetric(185, yPos + 16, overallScore, 100, 'Global', cDark, [230, 240, 250]);
+        drawCircleMetric(210, yPos + 16, macroCounts.sesiones, macroCounts.sesionesMax, 'Sesiones', [27, 58, 45], [232, 245, 238]);
+        drawCircleMetric(235, yPos + 16, macroCounts.trabajo, macroCounts.trabajoMax, 'Trabajo', [76, 175, 125], [232, 245, 238]);
+        drawCircleMetric(260, yPos + 16, macroCounts.compet, macroCounts.competMax, 'Compet.', [212, 168, 67], [253, 243, 220]);
+
+        yPos += 37;
 
         // Objetivo General
         doc.setFillColor(255, 255, 255);
@@ -837,7 +868,7 @@ const Planificacion = () => {
         <div className="plan-macro-body">
           {/* Left: score circle */}
           <div className="plan-macro-score">
-            <CircularGauge value={overallScore} max={100} size={100} color="#4CAF7D" bgColor="#d4e8da" />
+            <CircularGauge value={macroCounts.sesiones} max={macroCounts.sesionesMax} size={100} color="#1B3A2D" bgColor="#E8F5EE" />
           </div>
 
           {/* Center & right: 3 metric groups */}
@@ -861,7 +892,7 @@ const Planificacion = () => {
 
             {/* Score 2 */}
             <div className="plan-macro-score-mid">
-              <CircularGauge value={overallScore} max={100} size={90} color="#D4A843" bgColor="#f0e4c0" />
+              <CircularGauge value={macroCounts.trabajo} max={macroCounts.trabajoMax} size={90} color="#4CAF7D" bgColor="#E8F5EE" />
             </div>
 
             {/* TRABAJO */}
@@ -883,7 +914,7 @@ const Planificacion = () => {
 
             {/* Score 3 */}
             <div className="plan-macro-score-mid">
-              <CircularGauge value={overallScore} max={100} size={90} color="#D4A843" bgColor="#f0e4c0" />
+              <CircularGauge value={macroCounts.compet} max={macroCounts.competMax} size={90} color="#D4A843" bgColor="#FDF3DC" />
             </div>
 
             {/* COMPET */}

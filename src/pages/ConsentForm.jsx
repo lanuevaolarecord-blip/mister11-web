@@ -109,8 +109,8 @@ const ConsentForm = () => {
         format: 'a4'
       });
 
-      const primaryColor = [11, 48, 86]; // Azul Institucional (#0B3056)
-      const accentColor = [34, 139, 34]; // Verde Campo
+      const primaryColor = [27, 58, 45]; // Verde Institucional (#1B3A2D)
+      const accentColor = [76, 175, 125]; // Verde Acento (#4CAF7D)
       const textColor = [51, 51, 51];
 
       // Cabecera del Documento
@@ -269,7 +269,7 @@ const ConsentForm = () => {
           </div>
 
           <div style={{ padding: '16px', background: '#f8fafc', borderRadius: '8px', border: '1px solid #e2e8f0', textAlign: 'left', marginBottom: '20px' }}>
-            <span style={{ display: 'flex', gap: '8px', color: '#0B3056', fontWeight: 'bold', fontSize: '13px', marginBottom: '8px' }}>
+            <span style={{ display: 'flex', gap: '8px', color: '#1B3A2D', fontWeight: 'bold', fontSize: '13px', marginBottom: '8px' }}>
               <Info size={16} /> AVISO DE PRIVACIDAD
             </span>
             <p className="consent-signed-card" style={{ fontSize: '12px', color: '#666', margin: '0', textAlign: 'left', border: 'none', padding: '0', boxShadow: 'none' }}>
@@ -294,7 +294,7 @@ const ConsentForm = () => {
       <main className="consent-form-main">
         <div className="consent-heading-block">
           <div className="sp-icon-wrapper">
-            <Shield size={24} color="#0B3056" />
+            <Shield size={24} color="#1B3A2D" />
           </div>
           <h1>Consentimiento Parental Digital</h1>
           <p className="sub-title">Autorización informada para la gestión deportiva del jugador menor de edad.</p>
@@ -304,7 +304,7 @@ const ConsentForm = () => {
           <h2>Detalles del Consentimiento</h2>
           <p className="instructions">Cumplimente los datos requeridos. Los campos marcados con (*) son obligatorios.</p>
 
-          <h3 style={{ fontSize: '14px', color: '#0B3056', borderBottom: '1px solid #e2e8f0', paddingBottom: '6px', marginBottom: '14px' }}>1. Datos del Padre, Madre o Tutor</h3>
+          <h3 style={{ fontSize: '14px', color: '#1B3A2D', borderBottom: '1px solid #e2e8f0', paddingBottom: '6px', marginBottom: '14px' }}>1. Datos del Padre, Madre o Tutor</h3>
           <div className="form-grid">
             <div className="form-field">
               <label>Nombre del Tutor *</label>
@@ -345,7 +345,7 @@ const ConsentForm = () => {
             </div>
           </div>
 
-          <h3 style={{ fontSize: '14px', color: '#0B3056', borderBottom: '1px solid #e2e8f0', paddingBottom: '6px', marginBottom: '14px' }}>2. Datos del Deportista (Menor)</h3>
+          <h3 style={{ fontSize: '14px', color: '#1B3A2D', borderBottom: '1px solid #e2e8f0', paddingBottom: '6px', marginBottom: '14px' }}>2. Datos del Deportista (Menor)</h3>
           <div className="form-grid">
             <div className="form-field">
               <label>Nombre del Jugador *</label>
@@ -386,7 +386,7 @@ const ConsentForm = () => {
             </div>
           </div>
 
-          <h3 style={{ fontSize: '14px', color: '#0B3056', borderBottom: '1px solid #e2e8f0', paddingBottom: '6px', marginBottom: '14px' }}>3. Datos del Entrenador</h3>
+          <h3 style={{ fontSize: '14px', color: '#1B3A2D', borderBottom: '1px solid #e2e8f0', paddingBottom: '6px', marginBottom: '14px' }}>3. Datos del Entrenador</h3>
           <div className="form-grid" style={{ gridTemplateColumns: '1fr', marginBottom: '24px' }}>
             <div className="form-field">
               <label>Nombre del Entrenador Responsable</label>
@@ -399,7 +399,7 @@ const ConsentForm = () => {
             </div>
           </div>
 
-          <h3 style={{ fontSize: '14px', color: '#0B3056', borderBottom: '1px solid #e2e8f0', paddingBottom: '6px', marginBottom: '14px' }}>4. Autorizaciones de Datos Personales</h3>
+          <h3 style={{ fontSize: '14px', color: '#1B3A2D', borderBottom: '1px solid #e2e8f0', paddingBottom: '6px', marginBottom: '14px' }}>4. Autorizaciones de Datos Personales</h3>
           <p className="instructions" style={{ margin: '0 0 12px 0' }}>Seleccione qué datos autoriza que sean procesados en Míster11 por el cuerpo técnico:</p>
           <div className="legal-consent-boxes">
             <label className="checkbox-field">
@@ -444,7 +444,7 @@ const ConsentForm = () => {
             </label>
           </div>
 
-          <h3 style={{ fontSize: '14px', color: '#0B3056', borderBottom: '1px solid #e2e8f0', paddingBottom: '6px', marginBottom: '14px' }}>5. Firma del Tutor</h3>
+          <h3 style={{ fontSize: '14px', color: '#1B3A2D', borderBottom: '1px solid #e2e8f0', paddingBottom: '6px', marginBottom: '14px' }}>5. Firma del Tutor</h3>
           <div className="signature-section">
             <label className="signature-label">
               <PenTool size={14} style={{ marginRight: '6px' }} />

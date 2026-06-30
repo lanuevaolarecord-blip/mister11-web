@@ -193,7 +193,7 @@ const PlayerPlansTab = ({ player, activeTeamId }) => {
           }}>
             {/* Header */}
             <div style={{
-              background: '#004B87', color: '#fff', padding: '20px 24px',
+              background: '#1B3A2D', color: '#fff', padding: '20px 24px',
               display: 'flex', justifyContent: 'space-between', alignItems: 'center',
               borderTopLeftRadius: '16px', borderTopRightRadius: '16px'
             }}>
@@ -232,7 +232,7 @@ const PlayerPlansTab = ({ player, activeTeamId }) => {
               <button 
                 onClick={handleCopyLink} 
                 style={{
-                  background: copied ? '#4CAF7D' : '#004B87', 
+                  background: copied ? '#4CAF7D' : '#1B3A2D', 
                   color: 'white', 
                   fontWeight: 700, 
                   border: 'none',

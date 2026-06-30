@@ -33,14 +33,14 @@
   font-weight: 800;
   font-size: 18px;
   letter-spacing: 0.5px;
-  color: #0B3056;
+  color: #1B3A2D;
 }
 
 .sp-team-badge {
   font-size: 13px;
   font-weight: 700;
-  background-color: #e6f0fa;
-  color: #0B3056;
+  background-color: #e8f5ee;
+  color: #1B3A2D;
   padding: 6px 14px;
   border-radius: 20px;
 }
@@ -66,7 +66,7 @@
   width: 48px;
   height: 48px;
   border-radius: 50%;
-  background-color: #e6f0fa;
+  background-color: #e8f5ee;
   margin-bottom: 12px;
 }
 
@@ -74,7 +74,7 @@
   font-size: 24px;
   margin: 0 0 8px 0;
   font-weight: 800;
-  color: #0B3056;
+  color: #1B3A2D;
 }
 
 .consent-heading-block .sub-title {
@@ -94,7 +94,7 @@
 .consent-form-card h2 {
   font-size: 18px;
   margin: 0 0 6px 0;
-  color: #0B3056;
+  color: #1B3A2D;
 }
 
 .consent-form-card .instructions {
@@ -143,7 +143,7 @@
 
 .form-field input:focus, .form-field select:focus {
   outline: none;
-  border-color: #0B3056;
+  border-color: #1B3A2D;
 }
 
 .legal-consent-boxes {
@@ -169,7 +169,7 @@
   height: 20px;
   margin-top: 2px;
   cursor: pointer;
-  accent-color: #0B3056;
+  accent-color: #1B3A2D;
   flex-shrink: 0;
 }
 
@@ -197,7 +197,7 @@
 .signature-pad-container {
   width: 100%;
   height: 180px;
-  border: 2px dashed #0B3056;
+  border: 2px dashed #1B3A2D;
   border-radius: 8px;
   background-color: #fcfcfc;
   position: relative;
@@ -230,7 +230,7 @@
 }
 
 .btn-clear-sig:hover {
-  color: #0B3056;
+  color: #1B3A2D;
 }
 
 .consent-error-message {
@@ -246,7 +246,7 @@
 
 .btn-submit-consent {
   width: 100%;
-  background-color: #0B3056;
+  background-color: #1B3A2D;
   color: #fff;
   border: none;
   padding: 14px;
@@ -343,7 +343,7 @@
 }
 
 .btn-download-pdf {
-  background-color: #0B3056;
+  background-color: #1B3A2D;
   color: #fff;
   border: none;
   border-radius: 8px;

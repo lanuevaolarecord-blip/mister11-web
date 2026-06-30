@@ -1177,7 +1177,7 @@ const Tests = () => {
                       {/* Medal of Performance (Bottom Left) */}
                       <div style={{ position: 'absolute', bottom: '12px', left: '16px', display: 'flex', alignItems: 'center', gap: '8px', zIndex: 2 }}>
                         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                          <path d="M7 14 L4 22 L9 20 L12 22 L15 20 L20 22 L17 14" fill="#004B87" stroke="#002d54" strokeWidth="0.5" />
+                          <path d="M7 14 L4 22 L9 20 L12 22 L15 20 L20 22 L17 14" fill="#1B3A2D" stroke="#0e1f18" strokeWidth="0.5" />
                           <path d="M9 14 L6 22 L9 20 L10 21" fill="#4CAF7D" />
                           <path d="M15 14 L18 22 L15 20 L14 21" fill="#4CAF7D" />
                           <circle cx="12" cy="9" r="6" fill="#D4A843" stroke="#B8860B" strokeWidth="1" />
@@ -1334,7 +1334,7 @@ const Tests = () => {
                           }}
                           style={{
                             marginTop: '12px',
-                            background: '#004B87',
+                            background: '#1B3A2D',
                             color: '#FFF',
                             border: 'none',
                             borderRadius: '8px',

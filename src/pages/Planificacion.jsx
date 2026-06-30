@@ -339,9 +339,9 @@ const Planificacion = () => {
 
         // Dibujar los 4 indicadores circulares alineados
         drawCircleMetric(185, yPos + 16, overallScore, 100, 'Global', cDark, [232, 245, 238]);
-        drawCircleMetric(210, yPos + 16, macroCounts.sesiones, macroCounts.sesionesMax, 'Sesiones', [27, 58, 45], [232, 245, 238]);
-        drawCircleMetric(235, yPos + 16, macroCounts.trabajo, macroCounts.trabajoMax, 'Trabajo', [76, 175, 125], [232, 245, 238]);
-        drawCircleMetric(260, yPos + 16, macroCounts.compet, macroCounts.competMax, 'Compet.', [212, 168, 67], [253, 243, 220]);
+        drawCircleMetric(210, yPos + 16, computedMetrics.sesiones, computedMetrics.sesionesMax, 'Sesiones', [27, 58, 45], [232, 245, 238]);
+        drawCircleMetric(235, yPos + 16, computedMetrics.trabajo, computedMetrics.trabajoMax, 'Trabajo', [76, 175, 125], [232, 245, 238]);
+        drawCircleMetric(260, yPos + 16, computedMetrics.compet, computedMetrics.competMax, 'Compet.', [212, 168, 67], [253, 243, 220]);
 
         yPos += 37;
 
@@ -681,6 +681,48 @@ const Planificacion = () => {
   const totalHours = Math.floor(totalMinutes / 60);
   const remainingMins = totalMinutes % 60;
 
+  const computedMetrics = useMemo(() => {
+    let activeMicros = [];
+    let title = "MACRO-CICLO";
+    
+    if (activeTab === 'macrociclo') {
+      activeMicros = microcycles;
+      title = "MACRO-CICLO";
+    } else if (activeTab === 'mesociclo') {
+      if (selectedMesoItem) {
+        const meso = mesocycles.find(m => m.month === selectedMesoItem);
+        activeMicros = meso?.micros || [];
+        title = `MESO-CICLO: ${selectedMesoItem.toUpperCase()}`;
+      } else {
+        activeMicros = microcycles;
+        title = "MESO-CICLOS (VISTA GENERAL)";
+      }
+    }
+    
+    const sesiones = activeMicros.reduce((sum, m) => sum + (Number(m.sessions) || 0), 0);
+    const sesionesMax = activeMicros.length * 4; // Promedio de 4 sesiones semanales como máximo
+    
+    const trabajo = activeMicros.filter(m => ['Carga', 'Ajuste', 'Choque', 'Recup'].includes(m.carga)).length;
+    const trabajoMax = activeMicros.length;
+    
+    const compet = activeMicros.filter(m => m.carga === 'Comp').length;
+    const competMax = activeMicros.length;
+    
+    const avg = activeMicros.reduce((a, m) => a + (Number(m.physical||0) + Number(m.technical||0) + Number(m.tactical||0)) / 3, 0) / (activeMicros.length || 1);
+    const overall = Math.round(avg);
+
+    return {
+      title,
+      sesiones,
+      sesionesMax,
+      trabajo,
+      trabajoMax,
+      compet,
+      competMax,
+      overall
+    };
+  }, [activeTab, selectedMesoItem, microcycles, mesocycles]);
+
   const overallScore = useMemo(() => {
     const avg = microcycles.reduce((a, m) => a + (Number(m.physical||0) + Number(m.technical||0) + Number(m.tactical||0)) / 3, 0) / (microcycles.length || 1);
     return Math.round(avg);
@@ -859,18 +901,18 @@ const Planificacion = () => {
       <div className="plan-macro-card">
         <div className="plan-macro-header">
           <span className="plan-macro-title-icon">⟳</span>
-          <span className="plan-macro-title">MACRO-CICLO</span>
+          <span className="plan-macro-title">{computedMetrics.title}</span>
           <div className="plan-macro-legend">
-            <span className="plan-legend-chip chip-sesiones">Sesiones {macroCounts.sesiones}/{macroCounts.sesionesMax}</span>
-            <span className="plan-legend-chip chip-trabajo">🏋 Trabajo {macroCounts.trabajo}/{macroCounts.trabajoMax}</span>
-            <span className="plan-legend-chip chip-compet">● Compet. {macroCounts.compet}/{macroCounts.competMax}</span>
+            <span className="plan-legend-chip chip-sesiones">Sesiones {computedMetrics.sesiones}/{computedMetrics.sesionesMax}</span>
+            <span className="plan-legend-chip chip-trabajo">🏋 Trabajo {computedMetrics.trabajo}/{computedMetrics.trabajoMax}</span>
+            <span className="plan-legend-chip chip-compet">● Compet. {computedMetrics.compet}/{computedMetrics.competMax}</span>
           </div>
         </div>
 
         <div className="plan-macro-body">
           {/* Left: score circle */}
           <div className="plan-macro-score">
-            <CircularGauge value={macroCounts.sesiones} max={macroCounts.sesionesMax} size={100} color="#1B3A2D" bgColor="#E8F5EE" />
+            <CircularGauge value={computedMetrics.sesiones} max={computedMetrics.sesionesMax} size={100} color="#1B3A2D" bgColor="#E8F5EE" />
           </div>
 
           {/* Center & right: 3 metric groups */}
@@ -881,20 +923,19 @@ const Planificacion = () => {
               <div className="plan-metric-header">
                 <span className="plan-metric-icon">📅</span>
                 <span className="plan-metric-name">SESIONES</span>
-                <span className="plan-metric-count">{macroCounts.sesiones}/{macroCounts.sesionesMax}</span>
+                <span className="plan-metric-count">{computedMetrics.sesiones}/{computedMetrics.sesionesMax}</span>
               </div>
-              <div style={{ display:'flex', alignItems:'center', gap:8 }}>
-                <ProgressBar value={macroCounts.sesiones} max={macroCounts.sesionesMax} color="#1B3A2D" />
-                <input type="number" min={0} max={macroCounts.sesionesMax} value={macroCounts.sesiones}
-                  onChange={e => setMacroCounts(p => ({ ...p, sesiones: Number(e.target.value) }))}
-                  className="plan-count-input" />
-                <span style={{ fontSize:11, color:'#888' }}>/{macroCounts.sesionesMax}</span>
+              <div style={{ display:'flex', alignItems:'center', gap:8, minHeight: '32px' }}>
+                <ProgressBar value={computedMetrics.sesiones} max={computedMetrics.sesionesMax} color="#1B3A2D" />
+                <span className="plan-metric-value-display" style={{ fontWeight: 800, fontSize: '13px', color: '#1B3A2D', whiteSpace: 'nowrap' }}>
+                  {computedMetrics.sesiones} / {computedMetrics.sesionesMax}
+                </span>
               </div>
             </div>
 
             {/* Score 2 */}
             <div className="plan-macro-score-mid">
-              <CircularGauge value={macroCounts.trabajo} max={macroCounts.trabajoMax} size={90} color="#4CAF7D" bgColor="#E8F5EE" />
+              <CircularGauge value={computedMetrics.trabajo} max={computedMetrics.trabajoMax} size={90} color="#4CAF7D" bgColor="#E8F5EE" />
             </div>
 
             {/* TRABAJO */}
@@ -903,20 +944,19 @@ const Planificacion = () => {
                 <span className="plan-metric-icon">🏋</span>
                 <span className="plan-metric-name">TRABAJO</span>
                 <span className="plan-metric-badge">Tektips</span>
-                <span className="plan-metric-count">{macroCounts.trabajo}/{macroCounts.trabajoMax}</span>
+                <span className="plan-metric-count">{computedMetrics.trabajo}/{computedMetrics.trabajoMax}</span>
               </div>
-              <div style={{ display:'flex', alignItems:'center', gap:8 }}>
-                <ProgressBar value={macroCounts.trabajo} max={macroCounts.trabajoMax} color="#4CAF7D" />
-                <input type="number" min={0} max={macroCounts.trabajoMax} value={macroCounts.trabajo}
-                  onChange={e => setMacroCounts(p => ({ ...p, trabajo: Number(e.target.value) }))}
-                  className="plan-count-input" />
-                <span style={{ fontSize:11, color:'#888' }}>/{macroCounts.trabajoMax}</span>
+              <div style={{ display:'flex', alignItems:'center', gap:8, minHeight: '32px' }}>
+                <ProgressBar value={computedMetrics.trabajo} max={computedMetrics.trabajoMax} color="#4CAF7D" />
+                <span className="plan-metric-value-display" style={{ fontWeight: 800, fontSize: '13px', color: '#4CAF7D', whiteSpace: 'nowrap' }}>
+                  {computedMetrics.trabajo} / {computedMetrics.trabajoMax}
+                </span>
               </div>
             </div>
 
             {/* Score 3 */}
             <div className="plan-macro-score-mid">
-              <CircularGauge value={macroCounts.compet} max={macroCounts.competMax} size={90} color="#D4A843" bgColor="#FDF3DC" />
+              <CircularGauge value={computedMetrics.compet} max={computedMetrics.competMax} size={90} color="#D4A843" bgColor="#FDF3DC" />
             </div>
 
             {/* COMPET */}
@@ -925,14 +965,13 @@ const Planificacion = () => {
                 <span className="plan-metric-icon">🏆</span>
                 <span className="plan-metric-name">COMPET.</span>
                 <span className="plan-metric-badge chip-compet-badge">Competencia</span>
-                <span className="plan-metric-count">{macroCounts.compet}/{macroCounts.competMax}</span>
+                <span className="plan-metric-count">{computedMetrics.compet}/{computedMetrics.competMax}</span>
               </div>
-              <div style={{ display:'flex', alignItems:'center', gap:8 }}>
-                <ProgressBar value={macroCounts.compet} max={macroCounts.competMax} color="#D4A843" />
-                <input type="number" min={0} max={macroCounts.competMax} value={macroCounts.compet}
-                  onChange={e => setMacroCounts(p => ({ ...p, compet: Number(e.target.value) }))}
-                  className="plan-count-input" />
-                <span style={{ fontSize:11, color:'#888' }}>/{macroCounts.competMax}</span>
+              <div style={{ display:'flex', alignItems:'center', gap:8, minHeight: '32px' }}>
+                <ProgressBar value={computedMetrics.compet} max={computedMetrics.competMax} color="#D4A843" />
+                <span className="plan-metric-value-display" style={{ fontWeight: 800, fontSize: '13px', color: '#D4A843', whiteSpace: 'nowrap' }}>
+                  {computedMetrics.compet} / {computedMetrics.competMax}
+                </span>
               </div>
             </div>
 

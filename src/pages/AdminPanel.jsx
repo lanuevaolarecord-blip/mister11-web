@@ -679,7 +679,7 @@ const AdminPanel = () => {
                 <Layers className="export-icon" size={32} />
                 <h3>Informe Global del Equipo</h3>
                 <p>Análisis completo: rangos de rendimiento, mejores jugadores y áreas de mejora por área (Física, Técnica, Táctica).</p>
-                <button className="btn-export" onClick={handleExportGlobalReport} style={{ marginTop: 'auto', background: '#004B87', minHeight: '48px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
+                <button className="btn-export" onClick={handleExportGlobalReport} style={{ marginTop: 'auto', background: '#1B3A2D', minHeight: '48px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
                   <FileText size={18} /> 📊 Informe Global
                 </button>
               </div>
@@ -688,7 +688,7 @@ const AdminPanel = () => {
                 <Layers className="export-icon" size={32} />
                 <h3>Copia de Seguridad del Equipo</h3>
                 <p>Exporta toda la información del equipo activo (jugadores, sesiones, partidos, tests y evaluaciones) en un archivo JSON.</p>
-                <button className="btn-export" onClick={handleExportBackup} style={{ marginTop: 'auto', background: '#004B87', minHeight: '48px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
+                <button className="btn-export" onClick={handleExportBackup} style={{ marginTop: 'auto', background: '#1B3A2D', minHeight: '48px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
                   <Download size={18} /> Copia de Seguridad
                 </button>
               </div>
@@ -758,7 +758,7 @@ const AdminPanel = () => {
                       gap: '8px',
                       width: '100%',
                       minHeight: '40px',
-                      background: '#0B3056',
+                      background: '#1B3A2D',
                       color: '#fff',
                       fontWeight: '700',
                       fontSize: '0.85rem',
@@ -1372,7 +1372,7 @@ const AdminPanel = () => {
                               minHeight: '52px',
                               background: isTrialExpired
                                 ? 'linear-gradient(135deg, #c53030, #e53e3e)'
-                                : 'linear-gradient(135deg, #004B87, #2E7D5C)',
+                                : 'linear-gradient(135deg, #1B3A2D, #2E7D5C)',
                               color: '#ffffff',
                               border: 'none',
                               borderRadius: '10px',
@@ -1383,7 +1383,7 @@ const AdminPanel = () => {
                               letterSpacing: '0.6px',
                               boxShadow: isTrialExpired
                                 ? '0 4px 16px rgba(197,48,48,0.4)'
-                                : '0 4px 16px rgba(0,75,135,0.35)',
+                                : '0 4px 16px rgba(27,58,45,0.35)',
                               transition: 'all 0.2s ease'
                             }}
                           >
@@ -1402,7 +1402,7 @@ const AdminPanel = () => {
                             style={{
                               width: '100%',
                               minHeight: '48px',
-                              background: '#004B87',
+                              background: '#1B3A2D',
                               color: '#FFFFFF',
                               border: 'none',
                               borderRadius: '8px',

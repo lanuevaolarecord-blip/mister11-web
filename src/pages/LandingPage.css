@@ -1,7 +1,7 @@
 /* Landing Page Styles */
 
 .landing-wrapper {
-  --primary-blue: #004B87;      /* Azul Institucional */
+  --primary-blue: #1B3A2D;      /* Verde Selva (Color Institucional) */
   --success-green: #2E7D5C;     /* Verde Campo */
   --accent-gold: #D4A843;       /* Dorado PRO */
   --bg-dark-pizarra: #111B21;   /* Fondo oscuro pizarra */
@@ -558,7 +558,7 @@
 
 /* CTA Bottom Banner */
 .cta-banner {
-  background: linear-gradient(135deg, #09131a, #004B87);
+  background: linear-gradient(135deg, #09131a, #1B3A2D);
   padding: 80px 5%;
   text-align: center;
 }

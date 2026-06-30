@@ -789,7 +789,7 @@ const Partidos = () => {
                         type="button" 
                         onClick={handleAddToGoogleCalendar}
                         style={{
-                          backgroundColor: '#004B87',
+                          backgroundColor: '#1B3A2D',
                           color: '#FFFFFF',
                           borderRadius: '8px',
                           padding: '10px 16px',
@@ -1285,7 +1285,7 @@ const Partidos = () => {
                       <button 
                         type="button"
                         className="btn-add-row" 
-                        style={{ minHeight: '48px', width: '100%', marginTop: '10px', color: '#004B87', borderColor: '#004B87', border: '1.5px dashed', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold', background: 'transparent' }} 
+                        style={{ minHeight: '48px', width: '100%', marginTop: '10px', color: '#1B3A2D', borderColor: '#1B3A2D', border: '1.5px dashed', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold', background: 'transparent' }} 
                         onClick={() =>
                           setMatchData({...matchData, goleadoresList: [...(matchData.goleadoresList || []), {jugadorId:'',minuto:''}]})
                         }
@@ -1355,7 +1355,7 @@ const Partidos = () => {
                       <button 
                         type="button"
                         className="btn-add-row" 
-                        style={{ minHeight: '48px', width: '100%', marginTop: '10px', color: '#004B87', borderColor: '#004B87', border: '1.5px dashed', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold', background: 'transparent' }} 
+                        style={{ minHeight: '48px', width: '100%', marginTop: '10px', color: '#1B3A2D', borderColor: '#1B3A2D', border: '1.5px dashed', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold', background: 'transparent' }} 
                         onClick={() =>
                           setMatchData({...matchData, tarjetasList: [...(matchData.tarjetasList || []), {jugadorId:'',tipo:'amarilla',minuto:''}]})
                         }
@@ -1391,7 +1391,7 @@ const Partidos = () => {
                         <div style={{ display: 'flex', flexDirection: 'column' }}>
                           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
                             <label className="input-label-caps" style={{ fontSize: '11px', fontWeight: '700', color: 'var(--partidos-text-muted)' }}>VALORACIÓN DEL EQUIPO</label>
-                            <span style={{ fontSize: '15px', fontWeight: 'bold', color: '#004B87' }}>{matchData.teamRating || 5} / 10</span>
+                            <span style={{ fontSize: '15px', fontWeight: 'bold', color: '#1B3A2D' }}>{matchData.teamRating || 5} / 10</span>
                           </div>
                           <input 
                             type="range" 
@@ -1502,7 +1502,7 @@ const Partidos = () => {
                             borderRadius: '8px',
                             fontWeight: '700',
                             textTransform: 'uppercase',
-                            background: '#004B87',
+                            background: '#1B3A2D',
                             color: '#FFFFFF'
                           }}
                         >

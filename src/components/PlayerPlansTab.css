@@ -139,7 +139,7 @@
 .btn-share-plan {
   background: none;
   border: none;
-  color: #004B87;
+  color: #1B3A2D;
   cursor: pointer;
   padding: 4px;
   border-radius: 4px;
@@ -150,6 +150,6 @@
 }
 
 .btn-share-plan:hover {
-  background: #E0F2FE;
+  background: #e8f5ee;
 }
 

@@ -929,7 +929,7 @@ const Sesiones = () => {
                   <div style={{ display: 'flex', gap: '10px', marginBottom: '10px' }}>
                     <button 
                       className="btn-outline" 
-                      style={{ flex: 1, backgroundColor: '#004B87', color: 'white', border: 'none', minHeight: '44px', fontWeight: 'bold' }} 
+                      style={{ flex: 1, backgroundColor: '#1B3A2D', color: 'white', border: 'none', minHeight: '44px', fontWeight: 'bold' }} 
                       onClick={() => handleAddToGoogleCalendar(selectedSession)}
                     >
                       📅 Google Cal

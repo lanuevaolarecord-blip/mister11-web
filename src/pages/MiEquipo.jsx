@@ -604,12 +604,12 @@ const MiEquipo = () => {
             <div className="modal-body" style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
               <div style={{ 
                 padding: '12px', 
-                background: '#e6f0fa', 
-                color: '#0B3056', 
+                background: '#e8f5ee', 
+                color: '#1B3A2D', 
                 borderRadius: '8px', 
                 fontSize: '13px', 
                 lineHeight: '1.5',
-                borderLeft: '4px solid #0B3056'
+                borderLeft: '4px solid #1B3A2D'
               }}>
                 Este enlace permite a los padres rellenar el formulario de consentimiento y firmarlo digitalmente en su móvil. <strong>Ellos recibirán el PDF firmado para descargar. Tú también puedes descargarlo desde el mismo enlace.</strong>
                 <br /><br />
@@ -633,7 +633,7 @@ const MiEquipo = () => {
                       alert('¡Enlace copiado al portapapeles!');
                     }}
                     style={{
-                      background: '#0B3056',
+                      background: '#1B3A2D',
                       color: '#FFF',
                       border: 'none',
                       padding: '0 16px',
@@ -679,7 +679,7 @@ const MiEquipo = () => {
                     href="/legal/consentimiento.html" 
                     target="_blank" 
                     rel="noreferrer"
-                    style={{ fontSize: '13px', color: '#0B3056', fontWeight: 'bold', textDecoration: 'underline' }}
+                    style={{ fontSize: '13px', color: '#1B3A2D', fontWeight: 'bold', textDecoration: 'underline' }}
                   >
                     Descargar consentimiento en blanco para imprimir (Papel)
                   </a>

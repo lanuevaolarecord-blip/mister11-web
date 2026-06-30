@@ -25,7 +25,7 @@
 /* Header */
 .upgrade-modal-header {
   position: relative;
-  background: linear-gradient(135deg, #003870 0%, #004B87 50%, #1B3A2D 100%);
+  background: linear-gradient(135deg, #0e1f18 0%, #1B3A2D 50%, #2e5a43 100%);
   padding: 36px 28px 28px;
   text-align: center;
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
@@ -241,14 +241,14 @@
 }
 
 .btn-pro {
-  background: linear-gradient(135deg, #004B87, #0068be);
+  background: linear-gradient(135deg, #1B3A2D, #2e5a43);
   color: #fff;
-  box-shadow: 0 4px 16px rgba(0,75,135,0.3);
+  box-shadow: 0 4px 16px rgba(27,58,45,0.3);
 }
 
 .btn-pro:hover:not(:disabled) {
   transform: translateY(-2px);
-  box-shadow: 0 8px 24px rgba(0,75,135,0.45);
+  box-shadow: 0 8px 24px rgba(27,58,45,0.45);
 }
 
 .btn-club {

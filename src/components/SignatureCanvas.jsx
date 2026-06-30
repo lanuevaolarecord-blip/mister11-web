@@ -1,6 +1,6 @@
 import React, { useRef, useEffect, useImperativeHandle, forwardRef } from 'react';
 
-const SignatureCanvas = forwardRef(({ onStroke, strokeColor = '#0B3056', lineWidth = 3 }, ref) => {
+const SignatureCanvas = forwardRef(({ onStroke, strokeColor = '#1B3A2D', lineWidth = 3 }, ref) => {
   const canvasRef = useRef(null);
   const isDrawing = useRef(false);
 

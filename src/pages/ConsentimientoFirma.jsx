@@ -40,7 +40,7 @@ const ConsentimientoFirma = () => {
     if (!canvas) return;
 
     const ctx = canvas.getContext('2d');
-    ctx.strokeStyle = '#0B3056'; // Azul Institucional
+    ctx.strokeStyle = '#1B3A2D'; // Verde Institucional
     ctx.lineWidth = 3;
     ctx.lineCap = 'round';
     ctx.lineJoin = 'round';
@@ -51,7 +51,7 @@ const ConsentimientoFirma = () => {
       canvas.width = rect.width;
       canvas.height = rect.height;
       // Volver a configurar el trazo después del cambio de tamaño
-      ctx.strokeStyle = '#0B3056';
+      ctx.strokeStyle = '#1B3A2D';
       ctx.lineWidth = 3;
       ctx.lineCap = 'round';
       ctx.lineJoin = 'round';
@@ -157,8 +157,8 @@ const ConsentimientoFirma = () => {
         format: 'a4'
       });
 
-      const primaryColor = [11, 48, 86]; // Azul Institucional (#0B3056)
-      const accentColor = [34, 139, 34]; // Verde Campo
+      const primaryColor = [27, 58, 45]; // Verde Institucional (#1B3A2D)
+      const accentColor = [76, 175, 125]; // Verde Acento (#4CAF7D)
       const textColor = [51, 51, 51];
 
       // Cabecera institucional
@@ -310,7 +310,7 @@ const ConsentimientoFirma = () => {
       <main className="consent-form-main">
         <div className="consent-heading-block">
           <div className="sp-icon-wrapper">
-            <Shield size={24} color="#0B3056" />
+            <Shield size={24} color="#1B3A2D" />
           </div>
           <h1>Consentimiento de Protección de Datos</h1>
           <p className="sub-title">Autorización obligatoria para el registro de menores en la plataforma deportiva Míster11.</p>

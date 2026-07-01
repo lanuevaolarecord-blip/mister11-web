@@ -56,19 +56,39 @@ const INITIAL_PREVENTION_FORM = {
 const ZONAS_CORPORALES = ['Rodilla', 'Tobillo', 'Isquiotibial', 'Lumbar', 'Hombro', 'Cuádriceps', 'Aductores', 'Core / Pelvis', 'Gemelos'];
 const NIVELES = ['Básico', 'Intermedio', 'Avanzado'];
 
+const escapeHTML = (str) => {
+  if (!str) return '';
+  return str
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+};
+
 const renderMarkdown = (text) => {
   if (!text) return null;
   return text.split('\n').map((line, i) => {
-    if (line.startsWith('## ')) return <h2 key={i}>{line.replace('## ', '')}</h2>;
-    if (line.startsWith('### ')) return <h3 key={i}>{line.replace('### ', '')}</h3>;
-    if (line.startsWith('**') && line.endsWith('**')) return <p key={i}><strong>{line.replace(/\*\*/g, '')}</strong></p>;
-    const boldMatch = line.match(/^\*\*(.+?):\*\* (.+)$/);
-    if (boldMatch) return <p key={i}><strong>{boldMatch[1]}:</strong> {boldMatch[2]}</p>;
-    if (line.startsWith('- ')) return <li key={i}>{line.replace('- ', '')}</li>;
-    if (line.trim() === '') return <br key={i} />;
-    return <p key={i}>{line}</p>;
+    const cleanLine = line.trim();
+    if (cleanLine.startsWith('## ')) return <h2 key={i}>{cleanLine.replace('## ', '')}</h2>;
+    if (cleanLine.startsWith('### ')) return <h3 key={i}>{cleanLine.replace('### ', '')}</h3>;
+    
+    // Reemplazo básico de negritas internas **texto**
+    if (cleanLine.includes('**')) {
+      const parts = cleanLine.split('**');
+      return (
+        <p key={i} className="ia-md-p">
+          {parts.map((part, idx) => (idx % 2 === 1 ? <strong key={idx}>{part}</strong> : part))}
+        </p>
+      );
+    }
+    
+    if (cleanLine.startsWith('- ')) return <li key={i} className="ia-md-li">{cleanLine.replace('- ', '')}</li>;
+    if (cleanLine === '') return <br key={i} />;
+    return <p key={i} className="ia-md-p">{cleanLine}</p>;
   });
 };
+
 
 const IAGeneradora = () => {
   const { activeTeamId, teams } = useAuth();

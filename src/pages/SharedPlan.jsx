@@ -60,13 +60,42 @@ const SharedPlan = () => {
     return (
       <div className="shared-plan-error-page">
         <div className="sp-error-card">
+          <img src="/logo_mister11.png" alt="Míster11" style={{ height: '56px', marginBottom: '16px' }} />
           <span className="sp-error-icon">⚠️</span>
-          <h2>Atención</h2>
+          <h2>Plan no encontrado</h2>
           <p>{error || 'No se pudo cargar el plan.'}</p>
+          <p style={{ fontSize: '0.85rem', color: '#888', marginTop: '8px' }}>
+            Es posible que el enlace haya expirado o que el entrenador haya eliminado este plan.
+          </p>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginTop: '24px', width: '100%', maxWidth: '280px' }}>
+            <a 
+              href="/" 
+              style={{ 
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                background: '#1B3A2D', color: '#fff', borderRadius: '8px',
+                padding: '14px 24px', textDecoration: 'none', fontWeight: '700',
+                fontSize: '0.9rem', gap: '8px'
+              }}
+            >
+              🏠 Ir a Míster 11
+            </a>
+            <a 
+              href="/instalar" 
+              style={{ 
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                background: 'transparent', color: '#1B3A2D', border: '2px solid #1B3A2D',
+                borderRadius: '8px', padding: '14px 24px', textDecoration: 'none',
+                fontWeight: '700', fontSize: '0.9rem', gap: '8px'
+              }}
+            >
+              📲 Instalar la App
+            </a>
+          </div>
         </div>
       </div>
     );
   }
+
 
   return (
     <div className="shared-plan-page">

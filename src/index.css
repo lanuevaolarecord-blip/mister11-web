@@ -657,6 +657,21 @@ input::placeholder, textarea::placeholder {
   display: flex !important;
   align-items: center;
   justify-content: center;
+  background: transparent;
+  border: none;
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 20px;
+  cursor: pointer;
+  min-width: 48px;
+  min-height: 48px;
+  border-radius: 8px;
+  transition: background 0.2s, color 0.2s;
+  flex-shrink: 0;
+}
+
+.sidebar-close-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
 }
 
 .header {
@@ -779,3 +794,28 @@ button, .nav-item, input, select, .icon-btn, .topbar-btn, .tool-icon-btn {
 .player-select-item, .test-select-item {
   cursor: pointer;
 }
+
+/* Sidebar Logout Button Styles (BAJO-07) */
+.btn-logout-sidebar {
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #AAAAAA;
+  padding: 6px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  margin-top: 8px;
+  font-family: inherit;
+  transition: all 0.2s;
+  min-height: 36px;
+}
+
+.btn-logout-sidebar:hover {
+  background: rgba(255, 255, 255, 0.05);
+  color: #FFFFFF;
+  border-color: rgba(255, 255, 255, 0.4);
+}
+

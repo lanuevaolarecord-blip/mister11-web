@@ -47,15 +47,31 @@ const Header = ({ onToggleNotif }) => {
         <h1 style={{ fontFamily: 'var(--font-heading)', fontSize: '24px', margin: 0, letterSpacing: '1px' }}>{getPageTitle()}</h1>
         
         {teams.length > 0 && (
-          <div className="team-switcher-header-v2">
-            <Shield fill="#1B3A2D" color="#FFF" size={16} />
+          <div className="team-switcher-header-v2" style={{ position: 'relative', cursor: 'pointer', display: 'inline-flex', alignItems: 'center' }}>
+            <Shield fill="#1B3A2D" color="#FFF" size={16} style={{ pointerEvents: 'none', marginRight: '6px' }} />
+            <span style={{ pointerEvents: 'none', marginRight: '6px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '140px' }}>
+              {(activeTeam?.nombre || activeTeam?.name || 'MI EQUIPO').toUpperCase()}
+            </span>
+            <ChevronDown size={14} style={{ pointerEvents: 'none' }} />
+            
             <select 
               value={activeTeam?.id || ''} 
               onChange={(e) => {
                 const team = teams.find(t => t.id === e.target.value);
                 if (team) selectTeam(team);
               }}
-              style={{ background: 'transparent', border: 'none', color: '#000', fontWeight: 'bold', outline: 'none', fontFamily: 'var(--font-heading)', cursor: 'pointer', appearance: 'none', WebkitAppearance: 'none', MozAppearance: 'none', paddingRight: '6px' }}
+              style={{ 
+                position: 'absolute', 
+                top: 0, 
+                left: 0, 
+                width: '100%', 
+                height: '100%', 
+                opacity: 0, 
+                cursor: 'pointer',
+                zIndex: 2,
+                appearance: 'none',
+                WebkitAppearance: 'none'
+              }}
             >
               {teams.map(t => {
                 if (!t) return null;
@@ -63,15 +79,15 @@ const Header = ({ onToggleNotif }) => {
                 const prefix = t.source === 'club' ? `🏢 ${t.clubName || 'Club'} - ` : '👤 ';
                 const label = `${prefix}${teamName}`;
                 return (
-                  <option key={t.id} value={t.id} style={{ color: '#000' }}>
+                  <option key={t.id} value={t.id} style={{ color: '#000', background: '#fff' }}>
                     {label.toUpperCase()}
                   </option>
                 );
               })}
             </select>
-            <ChevronDown size={14} />
           </div>
         )}
+
       </div>
       
       <div className="header-actions">

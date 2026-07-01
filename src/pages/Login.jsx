@@ -9,6 +9,10 @@ const Login = () => {
   const [isLoading, setIsLoading] = useState(false);
   const { deferredPrompt, isInstalled, installApp } = usePWA();
   const { loginAsGuest } = useAuth();
+  
+  const urlParams = new URLSearchParams(window.location.search);
+  const selectedPlan = urlParams.get('plan');
+
 
   const handleGoogleLogin = async () => {
     setIsLoading(true);
@@ -48,8 +52,25 @@ const Login = () => {
         </div>
         
         <div className="login-card">
+          {selectedPlan && (
+            <div className="login-plan-banner" style={{
+              background: 'rgba(212, 168, 67, 0.12)',
+              border: '1px solid rgba(212, 168, 67, 0.4)',
+              color: 'var(--accent-gold, #D4A843)',
+              borderRadius: '8px',
+              padding: '12px',
+              marginBottom: '20px',
+              fontSize: '13px',
+              fontWeight: '700',
+              textAlign: 'center',
+              lineHeight: '1.4'
+            }}>
+              ⭐ Estás a un paso de activar tu plan {selectedPlan.toUpperCase()} de Míster11. Inicia sesión o crea una cuenta para continuar.
+            </div>
+          )}
           <h2>Bienvenido al banquillo</h2>
           <p className="login-subtitle">Inicia sesión para gestionar tu equipo, sesiones y rendimiento táctico.</p>
+
           
           {error && <div className="login-error">{error}</div>}
           

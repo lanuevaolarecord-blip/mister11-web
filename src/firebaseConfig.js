@@ -105,5 +105,7 @@ export {
   signInWithGoogle,
   signInAnonymously,
   signOut,
-  storage
+  storage,
+  initUserDocument
 };
+

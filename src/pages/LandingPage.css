@@ -619,7 +619,7 @@
     grid-template-columns: 1fr;
     text-align: center;
     padding-top: 40px;
-    gap: 50px;
+    gap: 40px;
   }
   
   .landing-hero-content {
@@ -639,23 +639,51 @@
   }
 }
 
+@media (max-width: 768px) {
+  .hero-title {
+    font-size: 2rem;
+  }
+  
+  .hero-description {
+    font-size: 1rem;
+    padding: 0 10px;
+  }
+  
+  .landing-header {
+    padding: 15px 4%;
+  }
+  
+  .features-grid {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+}
+
 @media (max-width: 480px) {
   .hero-title {
-    font-size: 1.8rem;
+    font-size: 1.7rem;
+    line-height: 1.3;
   }
   
   .navbar-cta {
-    padding: 0 16px;
-    font-size: 0.8rem;
+    padding: 0 14px;
+    font-size: 0.75rem;
   }
   
   .hero-actions {
     flex-direction: column;
     width: 100%;
+    gap: 12px;
   }
   
   .hero-actions button,
   .hero-actions a {
     width: 100%;
+    margin: 0;
+  }
+  
+  .preview-field-canvas {
+    height: 260px;
   }
 }
+

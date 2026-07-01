@@ -8,6 +8,7 @@ import { useHealthAlerts } from '../hooks/useHealthAlerts';
 import { usePlayerPlans } from '../hooks/usePlayerPlans';
 import { useNavigate } from 'react-router-dom';
 import { usePlan } from '../hooks/usePlan';
+import { isDeveloperEmail } from '../config/admins';
 import { 
   Users, 
   ClipboardList, 
@@ -18,12 +19,13 @@ import {
   Sparkles,
   Crown,
   Info,
-  Shield
+  Shield,
+  CheckCircle
 } from 'lucide-react';
 import { t } from '../i18n/translations';
 import { useTheme } from '../context/ThemeContext';
 import { db, auth } from '../firebaseConfig';
-import { doc, getDoc, collection, updateDoc, onSnapshot } from '../firebase/firestore-proxy';
+import { doc, getDoc, collection, onSnapshot } from '../firebase/firestore-proxy';
 import { createNotification } from '../firebase/db';
 import './Dashboard.css';
 
@@ -32,92 +34,44 @@ const Dashboard = () => {
   const navigate = useNavigate();
   const { user, activeTeamId, refreshTeam, teams, getTeamPath } = useAuth();
   const activeTeam = teams?.find(t => t.id === activeTeamId) || null;
-  const adminEmails = ['lanuevaolarecord@gmail.com', 'mister11.app@gmail.com', 'jhocao111294@gmail.com', 'lavozdelformador@gmail.com'];
-  const isAdmin = user?.email && adminEmails.includes(user.email.toLowerCase());
+  const isAdmin = isDeveloperEmail(user?.email);
 
-  // Detect payment success from Stripe & synchronize plan immediately
+
+  // Detect payment success from Stripe — solo limpia URL y muestra confirmación.
+  // El plan real lo actualiza ÚNICAMENTE el webhook de Stripe en el backend.
+  // NUNCA escribir el plan desde el cliente (vulnerabilidad de bypass de pago).
+  const [paymentSuccessBanner, setPaymentSuccessBanner] = useState(false);
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
-    const isSuccess = urlParams.get('payment') === 'success' || urlParams.get('subscribed') === '1' || urlParams.get('subscribe') === '1';
+    const isSuccess =
+      urlParams.get('payment') === 'success' ||
+      urlParams.get('subscribed') === '1' ||
+      urlParams.get('subscribe') === '1';
 
     if (!isSuccess) return;
 
-    // Clean URL parameter immediately
+    // Limpiar parámetros de URL inmediatamente
     window.history.replaceState({}, document.title, window.location.pathname);
 
-    if (!user || user.uid === 'invitado-local' || !activeTeamId) {
-      console.warn("[Stripe] Pago detectado pero sin usuario o equipo activo.");
-      return;
-    }
+    // Limpiar flags de localStorage del flujo de pago
+    localStorage.removeItem('mister11_pending_plan');
+    localStorage.removeItem('mister11_pending_plan_teamId');
 
-    // Read the plan the user selected before going to Stripe (saved in localStorage)
-    const pendingPlan = localStorage.getItem('mister11_pending_plan'); // 'pro' or 'club'
-    const pendingTeamId = localStorage.getItem('mister11_pending_plan_teamId') || activeTeamId;
+    if (!user || user.uid === 'invitado-local') return;
 
-    const applyPlanUpdate = async (planType) => {
-      try {
-        const teamId = pendingTeamId || activeTeamId;
-        const teamRef = doc(db, getTeamPath(teamId));
-        // Set expiration 1 year from now as default (webhook will correct if active)
-        const oneYearFromNow = new Date();
-        oneYearFromNow.setFullYear(oneYearFromNow.getFullYear() + 1);
-        await updateDoc(teamRef, {
-          plan: planType,
-          proExpiration: oneYearFromNow.toISOString(),
-          stripePaymentConfirmedAt: new Date().toISOString()
-        });
-        console.log(`[Stripe] Plan '${planType}' aplicado al equipo '${teamId}'.`);
-        // Clear localStorage flags
-        localStorage.removeItem('mister11_pending_plan');
-        localStorage.removeItem('mister11_pending_plan_teamId');
-        // Refresh context
-        if (typeof refreshTeam === 'function') refreshTeam();
-      } catch (err) {
-        console.error("[Stripe] Error al aplicar plan:", err);
-      }
-    };
+    // Mostrar banner de confirmación y dejar que el webhook actualice el plan
+    setPaymentSuccessBanner(true);
 
-    if (pendingPlan && (pendingPlan === 'pro' || pendingPlan === 'club')) {
-      // Primary path: we know the plan from localStorage → update immediately
-      console.log(`[Stripe] Plan pendiente encontrado en localStorage: '${pendingPlan}'. Aplicando...`);
-      applyPlanUpdate(pendingPlan);
-    } else {
-      // Fallback: try to read from Stripe subscriptions collection (requires webhook)
-      console.log("[Stripe] Sin plan en localStorage. Intentando desde Firestore subscriptions...");
-      const subsRef = collection(db, 'customers', user.uid, 'subscriptions');
-      let resolved = false;
-      const unsubscribeSubs = onSnapshot(subsRef, async (snapshot) => {
-        if (resolved) return;
-        const activeSub = snapshot.docs
-          .map(d => ({ id: d.id, ...d.data() }))
-          .find(sub => sub.status === 'active' || sub.status === 'trialing');
+    // El webhook de Stripe actualizará Firestore automáticamente.
+    // El onSnapshot en usePlan detectará el cambio y actualizará la UI.
+    console.log('[Stripe] Pago detectado. Esperando sincronización del webhook...');
 
-        if (activeSub) {
-          resolved = true;
-          let planType = 'pro';
-          if (activeSub.role === 'club' || (activeSub.metadata?.plan === 'club')) planType = 'club';
-          else if (activeSub.items?.[0]?.price?.id?.includes('club')) planType = 'club';
-          await applyPlanUpdate(planType);
-          unsubscribeSubs();
-        }
-      }, (err) => console.error("[Stripe] Error leyendo subscriptions:", err));
-
-      // Timeout: if webhook never fires within 20s, default to 'pro'
-      const fallbackTimeout = setTimeout(() => {
-        if (!resolved) {
-          resolved = true;
-          console.warn("[Stripe] Timeout esperando webhook. Aplicando 'pro' por defecto.");
-          applyPlanUpdate('pro');
-          unsubscribeSubs();
-        }
-      }, 20000);
-
-      return () => {
-        unsubscribeSubs();
-        clearTimeout(fallbackTimeout);
-      };
+    // Refrescar el contexto del equipo para recoger cambios del webhook
+    if (typeof refreshTeam === 'function') {
+      setTimeout(() => refreshTeam(), 3000);
     }
   }, [user, activeTeamId, refreshTeam]);
+
   const { plan, isPro, isDeveloper, trialDaysRemaining, trialHoursRemaining, isOnTrial, isTrialExpired, isRealPaidPro, isSimulatingFree, toggleSimulatedPlan, resetTrial } = usePlan();
   const { settings } = useSettings(activeTeamId);
   const { players } = usePlayers(activeTeamId);

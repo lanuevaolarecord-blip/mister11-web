@@ -1,9 +1,28 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { usePWA } from '../hooks/usePWA';
 import './PlaceholderPage.css'; // Reuse some basic styles or create specific ones
 
 const Instalar = () => {
   const { deferredPrompt, isInstalled, installApp } = usePWA();
+
+  useEffect(() => {
+    document.title = "Instalar Míster11 — La App de Fútbol para Entrenadores";
+    let metaDesc = document.querySelector('meta[name="description"]');
+    const originalDesc = metaDesc ? metaDesc.content : "";
+    
+    if (!metaDesc) {
+      metaDesc = document.createElement('meta');
+      metaDesc.name = "description";
+      document.head.appendChild(metaDesc);
+    }
+    metaDesc.content = "Instrucciones de instalación paso a paso de la aplicación PWA Míster11 para dispositivos Android e iOS.";
+    
+    return () => {
+      document.title = "Míster11 — El banquillo en tu bolsillo";
+      if (metaDesc) metaDesc.content = originalDesc;
+    };
+  }, []);
+
 
   return (
     <div className="admin-container" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh', textAlign: 'center', padding: '20px' }}>

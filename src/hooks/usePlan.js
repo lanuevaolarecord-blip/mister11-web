@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { db } from '../firebaseConfig';
 import { doc, onSnapshot, collection } from 'firebase/firestore';
+import { DEVELOPER_EMAILS } from '../config/admins';
 
 export const LIMITS = {
   FREE: {
@@ -27,12 +28,24 @@ export const LIMITS = {
   }
 };
 
-export const DEVELOPER_EMAILS = [
-  'mister11.app@gmail.com',
-  'lanuevaolarecord@gmail.com',
-  'jhocao111294@gmail.com',
-  'lavozdelformador@gmail.com'
-];
+// Importado desde src/config/admins.js (fuente única de verdad)
+export { DEVELOPER_EMAILS };
+
+const getCookie = (name) => {
+  if (typeof document === 'undefined') return null;
+  const value = `; ${document.cookie}`;
+  const parts = value.split(`; ${name}=`);
+  if (parts.length === 2) return parts.pop().split(';').shift();
+  return null;
+};
+
+const setCookie = (name, value, days) => {
+  if (typeof document === 'undefined') return;
+  const date = new Date();
+  date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
+  const expires = `; expires=${date.toUTCString()}`;
+  document.cookie = `${name}=${value || ""}${expires}; path=/; SameSite=Strict`;
+};
 
 export const usePlan = () => {
   const { user, activeTeamId, clubId, clubRole, isClubMember, club, teams } = useAuth();
@@ -43,10 +56,9 @@ export const usePlan = () => {
   const [stripeProExpiration, setStripeProExpiration] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // Simulated plan toggle (only for developer testing in the UI)
-  const [simulatedPlan, setSimulatedPlan] = useState(() => {
-    return localStorage.getItem('mister11_simulated_plan') || '';
-  });
+  // Simulated plan toggle — SOLO para emails de desarrollador verificados.
+  // La comprobación se hace contra el token de Firebase (no localStorage).
+  const [simulatedPlan, setSimulatedPlan] = useState('');
 
   useEffect(() => {
     if (!user) {
@@ -64,8 +76,23 @@ export const usePlan = () => {
       setDbProExpiration(null);
       setStripeActivePlan('free');
       setStripeProExpiration(null);
-      // Guests get a local trial fallback
-      setDbTrialStartDate(new Date(Number(localStorage.getItem('mister11_trial_start') || Date.now())));
+      
+      // Intentar leer desde localStorage o Cookies para evitar bypass fácil (ALTO-06)
+      let localStart = localStorage.getItem('mister11_trial_start');
+      let cookieStart = getCookie('mister11_trial_start');
+      
+      let finalStart = localStart || cookieStart;
+      if (!finalStart) {
+        finalStart = String(Date.now());
+        localStorage.setItem('mister11_trial_start', finalStart);
+        setCookie('mister11_trial_start', finalStart, 365); // Expira en 1 año
+      } else {
+        // Sincronizar
+        if (!localStart) localStorage.setItem('mister11_trial_start', finalStart);
+        if (!cookieStart) setCookie('mister11_trial_start', finalStart, 365);
+      }
+
+      setDbTrialStartDate(new Date(Number(finalStart)));
       setLoading(false);
       return;
     }
@@ -141,20 +168,15 @@ export const usePlan = () => {
   }, [user, activeTeamId, teams]);
 
   const toggleSimulatedPlan = () => {
-    // For developers: toggle between showing PRO UI vs FREE UI (simulation only)
-    const next = simulatedPlan === 'free' ? '' : 'free';
-    setSimulatedPlan(next);
-    if (next) {
-      localStorage.setItem('mister11_simulated_plan', next);
-    } else {
-      localStorage.removeItem('mister11_simulated_plan');
-    }
+    // Solo disponible para desarrolladores. No se persiste en localStorage
+    // para evitar que usuarios normales lo manipulen.
+    if (!isDeveloper) return;
+    setSimulatedPlan(prev => (prev === 'free' ? '' : 'free'));
   };
 
   const resetTrial = () => {
-    // Reset simulation: remove 'free' simulation to return to full developer access
+    if (!isDeveloper) return;
     setSimulatedPlan('');
-    localStorage.removeItem('mister11_simulated_plan');
   };
 
   const now = new Date();

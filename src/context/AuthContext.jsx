@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useMemo, useCallback } from 'react';
-import { auth, db } from '../firebaseConfig';
+import { auth, db, initUserDocument } from '../firebaseConfig';
 import { onAuthStateChanged, signInAnonymously } from 'firebase/auth';
 import { collection, query, onSnapshot, addDoc, serverTimestamp, getDocs, doc, getDoc } from 'firebase/firestore';
 import { seedInitialData } from '../utils/seedData';
@@ -17,35 +17,41 @@ export const AuthProvider = ({ children }) => {
   const [clubTeams, setClubTeams] = useState([]);
   const [clubTeamsLoaded, setClubTeamsLoaded] = useState(false);
 
+  // Ref para saber si estamos en modo invitado sin depender del estado (evita loops)
+  const isGuestRef = React.useRef(false);
+
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-      // Si entra un usuario real por Firebase, limpiamos cualquier estado local mock
+    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       if (currentUser) {
+        isGuestRef.current = false;
         setUser(currentUser);
         localStorage.setItem('mister11_active_user_uid', currentUser.uid);
-      } else {
-        // Solo limpiamos si no estamos en modo invitado local
-        setUser((prev) => {
-          if (prev && prev.uid === 'invitado-local') {
-            return prev;
-          }
-          localStorage.removeItem('mister11_active_user_uid');
-          return null;
-        });
-        if (!user || user.uid !== 'invitado-local') {
-          setActiveTeamId(null);
-          setPersonalTeams([]);
-          setPersonalTeamsLoaded(false);
-          setClubTeams([]);
-          setClubTeamsLoaded(false);
-          setUserProfile(null);
-          setClub(null);
-          setLoading(false);
+        
+        // Inicializar documento en Firestore para garantizar trialStartDate inalterable
+        try {
+          await initUserDocument(currentUser.uid, currentUser.email, currentUser.displayName || (currentUser.isAnonymous ? 'Entrenador Invitado' : ''));
+        } catch (err) {
+          console.error('[AuthContext] Error inicializando documento de usuario:', err);
         }
+      } else {
+        // Si estamos en modo invitado, preservar el estado local
+        if (isGuestRef.current) return;
+        localStorage.removeItem('mister11_active_user_uid');
+        setUser(null);
+        setActiveTeamId(null);
+        setPersonalTeams([]);
+        setPersonalTeamsLoaded(false);
+        setClubTeams([]);
+        setClubTeamsLoaded(false);
+        setUserProfile(null);
+        setClub(null);
+        setLoading(false);
       }
     });
     return () => unsubscribe();
-  }, [user]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // [] intencional: onAuthStateChanged solo se registra una vez
+
 
   // Escuchar el perfil del usuario en Firestore
   useEffect(() => {
@@ -336,8 +342,10 @@ export const AuthProvider = ({ children }) => {
           displayName: 'Entrenador Invitado',
           isAnonymous: true
         };
+        isGuestRef.current = true;
         localStorage.setItem('mister11_active_user_uid', 'invitado-local');
         setUser(mockUser);
+
         
         const mockTeam = {
           id: 'team-invitado',

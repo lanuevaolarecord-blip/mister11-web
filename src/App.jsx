@@ -24,6 +24,7 @@ import SharedPlan from './pages/SharedPlan';
 import AcceptInvitation from './pages/AcceptInvitation';
 import ConsentimientoFirma from './pages/ConsentimientoFirma';
 import ConsentForm from './pages/ConsentForm';
+import NotFound from './pages/NotFound';
 
 import './App.css';
 
@@ -109,13 +110,14 @@ function App() {
   }, []);
 
   // 4. Mientras onAuthStateChanged no ha respondido todavía, muestra pantalla de carga
+  // Se usa visibility:hidden en lugar de nada para evitar FOUC (Flash of Unstyled Content)
   if (loading) {
     return (
-      <div className="global-loader">
+      <div className="global-loader" style={{ backgroundColor: '#111B21', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <div className="loader-content">
-          <img src="/logo_mister11.png" alt="Míster11" className="loader-logo-img" />
+          <img src="/logo_mister11.png" alt="Míster11" className="loader-logo-img" style={{ height: '72px', marginBottom: '20px' }} />
           <div className="spinner"></div>
-          <p>Cargando...</p>
+          <p style={{ color: 'rgba(255,255,255,0.6)', marginTop: '12px', fontFamily: 'Outfit, sans-serif' }}>Cargando...</p>
         </div>
       </div>
     );
@@ -222,7 +224,12 @@ function App() {
           <Route path="partidos" element={<Partidos />} />
           <Route path="ia-generadora" element={<IAGeneradora />} />
           <Route path="admin" element={<AdminPanel />} />
+          {/* Ruta 404 para subrutas desconocidas dentro del layout */}
+          <Route path="*" element={<NotFound />} />
         </Route>
+
+        {/* Ruta 404 global para rutas no reconocidas por el router */}
+        <Route path="*" element={<NotFound />} />
       </Routes>
     </>
   );

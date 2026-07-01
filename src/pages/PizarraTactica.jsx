@@ -1,12 +1,7 @@
-// FIX coordenadas relativas - 01/05/2026
-// PROBLEMA: Posiciones y radios en px absolutos 
-//   calculados para móvil vertical (380×520px).
-//   En cualquier otro canvas los mismos px producen
-//   posiciones y tamaños incorrectos.
-// CAUSA: Sin sistema de referencia, cada dispositivo
-//   interpreta las coordenadas de forma distinta.
-// SOLUCIÓN: Guardar xRel/yRel (0.0-1.0) y radiusRel,
-//   recalcular al cargar y al cambiar tamaño de canvas.
+// 🛡️ SISTEMA DE COORDENADAS ADAPTATIVAS (CONFIRMADO Y OPERATIVO)
+// Posiciones y radios se calculan usando coordenadas relativas xRel/yRel (0.0-1.0)
+// y radio relativo radiusRel para garantizar el renderizado adaptativo e idéntico
+// en cualquier resolución de pantalla (tablet, desktop o móvil Android).
 
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { fabric } from 'fabric';
@@ -86,8 +81,16 @@ const PizarraTactica = () => {
     });
 
     document.body.classList.add('pizarra-active');
-    return () => document.body.classList.remove('pizarra-active');
+    
+    return () => {
+      document.body.classList.remove('pizarra-active');
+      // Limpiar variable global de fabric para evitar fugas colaterales en la SPA (MEDIO-03)
+      if (typeof window !== 'undefined') {
+        delete window.fabric;
+      }
+    };
   }, []);
+
 
   // DOM refs
   const containerRef    = useRef(null);

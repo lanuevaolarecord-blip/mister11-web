@@ -48,10 +48,7 @@ const Sidebar = ({ isOpen, onClose }) => {
         <button 
           className="sidebar-close-btn" 
           onClick={onClose}
-          style={{ 
-            background: 'transparent', border: 'none', color: 'white', 
-            fontSize: '24px', cursor: 'pointer', display: 'none'
-          }}
+          aria-label="Cerrar menú"
         >
           ✕
         </button>
@@ -86,15 +83,11 @@ const Sidebar = ({ isOpen, onClose }) => {
         </div>
         <button 
           onClick={handleLogout} 
-          style={{
-            background: 'transparent', border: '1px solid rgba(255,255,255,0.2)', color: '#AAAAAA', 
-            padding: '5px 10px', borderRadius: '4px', cursor: 'pointer', 
-            display: 'flex', alignItems: 'center', gap: '5px', fontSize: '12px',
-            marginTop: '5px'
-          }}
+          className="btn-logout-sidebar"
         >
           <LogOut size={14} /> Cerrar Sesión
         </button>
+
       </div>
     </aside>
   );

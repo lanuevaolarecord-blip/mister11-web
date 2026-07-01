@@ -222,6 +222,8 @@ const Tests = () => {
   const [tests, setTests] = useState([]);
   const [loading, setLoading] = useState(false);
   const [upgradeModal, setUpgradeModal] = useState({ open: false, message: '' });
+  const [imageErrors, setImageErrors] = useState({});
+
   
   // Custom Confirmation Dialog State
   const [modalConfig, setModalConfig] = useState({
@@ -790,22 +792,24 @@ const Tests = () => {
                 if (activeTab === 'FÍSICOS') return (t.type === 'fisico' || !t.type) && (!DEFAULT_IDS.includes(t.id) || ['t1','t3','t4','t5','t6','t7','t8'].includes(t.id));
                 if (activeTab === 'PSICOSOCIALES') return [
                   'psicodeportivo','psicosocial','sociodeportivo','socioemocional'
-                ].includes(t.type) && (!DEFAULT_IDS.includes(t.id) || ['psi1','psi2','psi3','soc1','soc2','psi1_old','psi2_old','soc1_old','soc2_old','psi_acsi28','psi_ires','psi_gets','soc_cwms','soc_eced','soc_edl'].includes(t.id));
+                ].includes(t.type) && (!DEFAULT_IDS.includes(t.id) || ['psi1','psi2','psi3','soc1','soc2','psi_acsi28','psi_ires','psi_gets','soc_cwms','soc_eced','soc_edl'].includes(t.id));
                 return false;
               }).map(t => (
                 <div key={t.id} className="card-base" style={{ padding: '0', cursor: 'pointer', display: 'flex', flexDirection: 'column' }} onClick={() => setSelectedTestDetail(t)}>
                   <div style={{ position: 'relative', height: '190px', background: '#fdfcf8', borderTopLeftRadius: '12px', borderTopRightRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', borderBottom: '1px solid var(--border-light)', overflow: 'hidden' }}>
                     {/* Ilustración del test */}
-                    {t.imagenProtocolo ? (
+                    {t.imagenProtocolo && !imageErrors[t.id] ? (
                       <img
                         src={t.imagenProtocolo}
                         alt={t.name}
                         style={{ width: '100%', height: '100%', objectFit: 'contain', objectPosition: 'center', padding: '10px' }}
-                        onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'flex'; }}
+                        onError={() => setImageErrors(prev => ({ ...prev, [t.id]: true }))}
                       />
-                    ) : null}
-                    {/* Fallback SVG si no hay imagen */}
-                    <svg viewBox="0 0 24 24" width="48" height="48" stroke="var(--text-secondary)" strokeWidth="1.5" fill="none" style={{ display: t.imagenProtocolo ? 'none' : 'block' }}><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                    ) : (
+                      /* Fallback SVG si no hay imagen o si falló al cargar */
+                      <svg viewBox="0 0 24 24" width="48" height="48" stroke="var(--text-secondary)" strokeWidth="1.5" fill="none"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                    )}
+
                     
                     <div style={{ position: 'absolute', top: '12px', left: '12px', display: 'flex', gap: '8px' }}>
                       <span style={{ background: 'var(--accent-green)', color: '#FFF', padding: '4px 8px', borderRadius: '4px', fontSize: '10px', fontWeight: 'bold', textTransform: 'uppercase' }}>{t.category}</span>

@@ -1,8 +1,143 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    match /{document=**} {
-      allow read, write: if true;
+
+    // ── Helpers ──────────────────────────────────────────────────────────────
+    function isAuth() {
+      return request.auth != null;
     }
+    function isOwner(uid) {
+      return isAuth() && request.auth.uid == uid;
+    }
+    function isDevEmail() {
+      return isAuth() && request.auth.token.email in [
+        'mister11.app@gmail.com',
+        'lanuevaolarecord@gmail.com',
+        'jhocao111294@gmail.com',
+        'lavozdelformador@gmail.com'
+      ];
+    }
+
+    // ── Configuración global (solo lectura pública) ───────────────────────────
+    match /config/{docId} {
+      allow read: if true;
+      allow write: if isDevEmail();
+    }
+
+    // ── Datos de usuario ──────────────────────────────────────────────────────
+    match /users/{userId} {
+      allow read, write: if isOwner(userId) || isDevEmail();
+
+      // Equipos personales del usuario
+      match /teams/{teamId} {
+        allow read, write: if isOwner(userId) || isDevEmail();
+      }
+
+      // Subcollections adicionales del usuario
+      match /{subcollection}/{docId} {
+        allow read, write: if isOwner(userId) || isDevEmail();
+      }
+    }
+
+    // ── Clubs ─────────────────────────────────────────────────────────────────
+    match /clubs/{clubId} {
+      // Cualquier usuario autenticado puede leer datos del club (para invitaciones)
+      allow read: if isAuth();
+
+      // Solo el propietario del club (owner) o devs pueden modificar el club
+      allow create: if isAuth();
+      allow update, delete: if isAuth() && (
+        isDevEmail() ||
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('clubRole', '') == 'owner'
+      );
+
+      // Equipos del club
+      match /teams/{teamId} {
+        allow read: if isAuth();
+        allow write: if isAuth() && (
+          isDevEmail() ||
+          get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('clubRole', '') in ['owner', 'admin']
+        );
+
+        // Subcollections dentro de equipos de club
+        match /{subcollection}/{docId} {
+          allow read: if isAuth();
+          allow write: if isAuth() && (
+            isDevEmail() ||
+            get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('clubRole', '') in ['owner', 'admin', 'coach']
+          );
+        }
+      }
+
+      // Miembros del club
+      match /members/{memberId} {
+        allow read: if isAuth();
+        allow write: if isAuth() && (
+          isDevEmail() ||
+          get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('clubRole', '') == 'owner'
+        );
+      }
+    }
+
+    // ── Stripe / Customers (solo el propio usuario y el backend) ─────────────
+    match /customers/{userId} {
+      allow read: if isOwner(userId) || isDevEmail();
+      // Las checkout_sessions las crea el cliente, subscriptions las gestiona el webhook
+      allow create: if isOwner(userId);
+      allow update, delete: if isDevEmail();
+
+      match /checkout_sessions/{sessionId} {
+        allow read, create: if isOwner(userId);
+        allow update, delete: if isDevEmail();
+      }
+
+      match /subscriptions/{subId} {
+        allow read: if isOwner(userId) || isDevEmail();
+        allow write: if isDevEmail();
+      }
+
+      match /payments/{paymentId} {
+        allow read: if isOwner(userId) || isDevEmail();
+        allow write: if isDevEmail();
+      }
+    }
+
+    // ── Códigos promocionales ─────────────────────────────────────────────────
+    match /promoCodes/{codeId} {
+      allow read: if isAuth();
+      // Solo devs pueden crear/modificar códigos
+      allow write: if isDevEmail();
+    }
+
+    // ── Planes compartidos (SharedPlan) ───────────────────────────────────────
+    match /sharedPlans/{planId} {
+      // Públicos en lectura (links compartidos sin login)
+      allow read: if true;
+      // Solo usuarios autenticados pueden crear/actualizar
+      allow create, update: if isAuth();
+      allow delete: if isAuth();
+    }
+
+    // ── Invitaciones ──────────────────────────────────────────────────────────
+    match /invitations/{invitationId} {
+      allow read: if isAuth();
+      allow create: if isAuth();
+      allow update, delete: if isAuth() && (
+        isDevEmail() ||
+        resource.data.get('invitedBy', '') == request.auth.uid ||
+        resource.data.get('invitedEmail', '') == request.auth.token.email
+      );
+    }
+
+    // ── Notificaciones ────────────────────────────────────────────────────────
+    match /notifications/{notifId} {
+      allow read, write: if isAuth() && (
+        isDevEmail() ||
+        resource.data.get('userId', '') == request.auth.uid ||
+        request.resource.data.get('userId', '') == request.auth.uid
+      );
+    }
+
   }
 }
+

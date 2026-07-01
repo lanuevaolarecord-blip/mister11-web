@@ -31,7 +31,13 @@ service cloud.firestore {
       // Equipos personales del usuario
       match /teams/{teamId} {
         allow read, write: if isOwner(userId) || isDevEmail();
+
+        // Subcolecciones de los equipos personales (players, tests, evaluaciones, planificaciones, etc.)
+        match /{subcollection}/{docId} {
+          allow read, write: if isOwner(userId) || isDevEmail();
+        }
       }
+
 
       // Subcollections adicionales del usuario
       match /{subcollection}/{docId} {

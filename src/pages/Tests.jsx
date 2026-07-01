@@ -282,6 +282,15 @@ const Tests = () => {
   // Firestore Tests Loading
   const loadTests = useCallback(async () => {
     if (!user || !activeTeamId) return;
+
+    if (user.uid === 'invitado-local') {
+      setTests(DEFAULT_TESTS);
+      if (DEFAULT_TESTS.length > 0) {
+        setHeatSelectedTest(DEFAULT_TESTS[0].id);
+      }
+      return;
+    }
+
     try {
       const testsRef = collection(db, getTeamPath(), 'tests');
       const q = query(testsRef);
@@ -332,6 +341,29 @@ const Tests = () => {
   // Carga de evaluaciones reales desde Firestore
   const loadEvaluations = useCallback(async () => {
     if (!user || !activeTeamId) return;
+
+    if (user.uid === 'invitado-local') {
+      setLoading(true);
+      try {
+        const localEvals = localStorage.getItem('mister11_local_evaluaciones') || '[]';
+        const parsed = JSON.parse(localEvals);
+        const newHistory = {};
+        
+        parsed.forEach((item) => {
+          const { jugadorId, testId, val, date } = item;
+          if (!newHistory[jugadorId]) newHistory[jugadorId] = {};
+          if (!newHistory[jugadorId][testId]) newHistory[jugadorId][testId] = [];
+          newHistory[jugadorId][testId].push({ id: item.id, date, val: Number(val) });
+        });
+        setHistoryData(newHistory);
+      } catch (e) {
+        console.error("Error parsing local evaluations:", e);
+      } finally {
+        setLoading(false);
+      }
+      return;
+    }
+
     setLoading(true);
     try {
       const q = query(
@@ -363,6 +395,7 @@ const Tests = () => {
     loadEvaluations();
   }, [loadEvaluations]);
 
+
   useEffect(() => {
     if (players.length > 0 && !histSelectedPlayer) {
       setHistSelectedPlayer(players[0].id);
@@ -382,7 +415,37 @@ const Tests = () => {
 
   const handleSaveRegistration = async () => {
     if (!user || !activeTeamId) return;
-    
+
+    if (user.uid === 'invitado-local') {
+      setLoading(true);
+      try {
+        const today = new Date().toISOString().split('T')[0];
+        const localEvals = JSON.parse(localStorage.getItem('mister11_local_evaluaciones') || '[]');
+        
+        Object.entries(regInputs).forEach(([jugadorId, val]) => {
+          if (!val) return;
+          localEvals.push({
+            id: `eval-${Date.now()}-${Math.random()}`,
+            jugadorId,
+            testId: regSelectedTest,
+            val: Number(val),
+            date: today
+          });
+        });
+        
+        localStorage.setItem('mister11_local_evaluaciones', JSON.stringify(localEvals));
+        await showAlert("Éxito", "Resultados guardados localmente en el dispositivo.");
+        setRegInputs({});
+        loadEvaluations();
+      } catch (error) {
+        console.error("Error saving local evaluations:", error);
+        await showAlert("Error", "Error al guardar los resultados localmente.");
+      } finally {
+        setLoading(false);
+      }
+      return;
+    }
+
     setLoading(true);
     try {
       const batch = writeBatch(db);
@@ -414,6 +477,25 @@ const Tests = () => {
 
   const handleSavePreventiveTest = async (data) => {
     if (!user || !activeTeamId) return;
+
+    if (user.uid === 'invitado-local') {
+      try {
+        const localEvals = JSON.parse(localStorage.getItem('mister11_local_evaluaciones') || '[]');
+        localEvals.push({
+          id: `eval-${Date.now()}-${Math.random()}`,
+          ...data,
+          date: new Date().toISOString().split('T')[0]
+        });
+        localStorage.setItem('mister11_local_evaluaciones', JSON.stringify(localEvals));
+        await showAlert("Éxito", "Evaluación guardada localmente.");
+        loadEvaluations();
+      } catch (error) {
+        console.error("Error saving local prev test", error);
+        await showAlert("Error", "Error al guardar la evaluación localmente.");
+      }
+      return;
+    }
+
     try {
       await addDoc(collection(db, getTeamPath(), 'evaluaciones'), {
         ...data,
@@ -427,6 +509,7 @@ const Tests = () => {
     }
   };
 
+
   const handleDeleteLastEval = async (jugadorId, testId) => {
     if (!user || !activeTeamId) return;
     const history = historyData[jugadorId]?.[testId];
@@ -434,6 +517,19 @@ const Tests = () => {
     
     const confirmDelete = await showConfirm('Confirmar eliminación', '¿Estás seguro de que deseas eliminar el último dato agregado para este test?');
     if (!confirmDelete) return;
+
+    if (user.uid === 'invitado-local') {
+      try {
+        const lastEval = history[history.length - 1];
+        const localEvals = JSON.parse(localStorage.getItem('mister11_local_evaluaciones') || '[]');
+        const filtered = localEvals.filter(item => item.id !== lastEval.id);
+        localStorage.setItem('mister11_local_evaluaciones', JSON.stringify(filtered));
+        await loadEvaluations();
+      } catch (error) {
+        console.error("Error deleting local last eval:", error);
+      }
+      return;
+    }
 
     try {
       const lastEval = history[history.length - 1];
@@ -455,6 +551,19 @@ const Tests = () => {
     const confirmDelete = await showConfirm('Confirmar eliminación', '¿Estás seguro de que deseas eliminar TODOS los datos históricos de este test para este jugador?');
     if (!confirmDelete) return;
 
+    if (user.uid === 'invitado-local') {
+      try {
+        const localEvals = JSON.parse(localStorage.getItem('mister11_local_evaluaciones') || '[]');
+        const idsToDelete = history.map(item => item.id);
+        const filtered = localEvals.filter(item => !idsToDelete.includes(item.id));
+        localStorage.setItem('mister11_local_evaluaciones', JSON.stringify(filtered));
+        await loadEvaluations();
+      } catch (error) {
+        console.error("Error deleting local all evals:", error);
+      }
+      return;
+    }
+
     try {
       const batch = writeBatch(db);
       history.forEach(item => {
@@ -470,6 +579,7 @@ const Tests = () => {
       await showAlert("Error", "Error al eliminar los datos.");
     }
   };
+
 
   const handleDeleteTest = async (testId, testName) => {
     if (!user || !activeTeamId) return;

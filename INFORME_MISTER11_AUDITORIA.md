@@ -1,153 +1,204 @@
-# 🔍 Informe de Auditoría Técnica — Míster11 v1.1.6
-**Fecha:** 02 de Julio de 2026 | **Versión Auditada:** 1.1.6 | **Auditor:** Antigravity AI
+# 🔍 Informe de Auditoría Técnica — Míster11 v1.1.7
+**Fecha:** 02 de Julio de 2026 | **Versión Auditada:** 1.1.7 | **Auditor:** Antigravity AI
 
 ---
 
-## 1. 🚨 Bug Crítico Detectado y Corregido — Versión en AdminPanel
-
-### Diagnóstico
-Al actualizar la tablet a la versión `1.1.6` (desinstalando la `1.1.5` e instalando la nueva APK), la sección de **Administración → Configuración** seguía mostrando `v1.1.5`.
-
-### Causa Raíz Identificada
-El APK `1.1.6` fue compilado y firmado **sin ejecutar previamente `npm run build`**. Esto causó que el bundle web embebido en el APK (`android/app/src/main/assets/public/`) correspondiera a la compilación anterior, donde `APP_VERSION` aún era `1.1.5`.
-
-**Evidencia directa** en el bundle (antes del fix):
-```
-Wy(n, `1.1.5`) > 0   // APP_VERSION hardcodeado como 1.1.5 en el bundle viejo
-```
-
-**Evidencia directa** en el bundle (después del fix):
-```
-Wy(n, `1.1.6`) > 0   // APP_VERSION correctamente compilado como 1.1.6
-```
-
-### Solución Aplicada
-Se ejecutó el flujo correcto de compilación:
-```powershell
-# 1. Rebuild del bundle web con la versión correcta
-npm run build
-
-# 2. Sincronización del nuevo dist al proyecto Android
-npx cap sync android
-
-# 3. Compilación y firma del APK release
-$env:JAVA_HOME="C:\Program Files\Android\Android Studio\jbr"
-cd android; .\gradlew assembleRelease
-```
-
-### Prevención Futura
-> **Regla de oro para compilar APKs:** Siempre ejecutar `npm run build` + `npx cap sync android` ANTES de `gradlew assembleRelease`. Sin este paso, el APK lleva el bundle web anterior embebido.
-
----
-
-## 2. Resumen Ejecutivo del Estado General
+## 1. Resumen Ejecutivo
 
 | Indicador | Estado | Detalle |
 |-----------|--------|---------|
-| Estabilidad de build | ✅ Estable | Vite v8 compila en ~2s |
-| Consistencia de versión | ✅ Corregido | `appVersion.js` → `package.json` → `build.gradle` alineados en `1.1.6` |
-| Deploy en Vercel | ✅ Activo | Rama `main` en producción con código fuente correcto |
-| APK firmado | ✅ Generado | Release con keystore `mister11.keystore` (RSA 2048) |
-| PWA | ✅ Activo | Service Worker + precaché de 54 entradas (8.02 MB) |
+| Estabilidad de build | ✅ Estable | Vite v8 compila en **892ms** |
+| Consistencia de versión | ✅ Alineado | `appVersion.js` + `package.json` + `build.gradle` + `Firestore` = `1.1.7` |
+| Deploy en Vercel | ✅ Activo | Commit `22445d4` en rama `main` |
+| Code Splitting | ✅ Implementado | Bundle main: **1.2MB → 93KB** (−92%) |
+| Modo Offline | ✅ Implementado | Banner + Firestore cache + SW extendido |
+| Notificaciones Locales | ✅ Implementado | Capacitor plugin + programación automática |
+| Script APK Automatizado | ✅ Implementado | `build-apk.ps1` con 7 pasos |
 
 ---
 
-## 3. Validación de Arquitectura de Versiones
+## 2. 🔀 Code Splitting — Resultado
 
-El sistema de versionado está correctamente distribuido en 3 capas:
-
+### Antes (v1.1.6)
 ```
-constants/appVersion.js  →  APP_VERSION = '1.1.6'   (fuente de verdad JS)
-     │
-     ├── App.jsx           (comparación con Firestore remoto)
-     ├── AdminPanel.jsx    (display en UI + botón de descarga)
-     └── Planificacion.jsx (exportación PDF)
-
-package.json             →  "version": "1.1.6"       (NPM)
-android/app/build.gradle →  versionName "1.1.6"      (Android)
-                             versionCode 26
+index.js (main bundle) = 1.199 MB  ⚠️ Supera el límite recomendado
 ```
 
-Las tres capas están sincronizadas correctamente.
+### Después (v1.1.7)
+```
+index.js (main bundle) = 93.2 KB ✅  (-92% de reducción)
+```
+
+### Chunks lazy generados automáticamente:
+| Chunk | Tamaño (minificado) | Gzip | Carga |
+|-------|---------------------|------|-------|
+| `PizarraTactica` | 116.2 KB | 28.6 KB | Al navegar a /pizarra |
+| `Tests` | 95.4 KB | 26.8 KB | Al navegar a /tests |
+| `Sesiones` | 84.4 KB | 24.6 KB | Al navegar a /sesiones |
+| `AdminPanel` | 69.7 KB | 18.2 KB | Al navegar a /admin |
+| `Partidos` | 63.2 KB | 14.6 KB | Al navegar a /partidos |
+| `Planificacion` | 44.2 KB | 10.7 KB | Al navegar a /planificacion |
+| `MiEquipo` | 43.8 KB | 11.2 KB | Al navegar a /equipo |
+| `IAGeneradora` | 21.6 KB | 7.3 KB | Al navegar a /ia-generadora |
+
+**PageLoader:** Spinner animado con logo de Míster11 mientras carga el chunk.
 
 ---
 
-## 4. Validación por Módulo
+## 3. 📶 Modo Offline Completo
 
-### A. Sistema de Actualizaciones (App.jsx + AdminPanel.jsx)
-- **Comparador semántico:** La función `compareVersions` maneja correctamente versiones como `1.0.10 > 1.0.9` (no como strings).
-- **Persistencia de dismissal:** `localStorage.setItem('dismissedUpdateVersion', ...)` evita que el banner reaparezca innecesariamente.
-- **Dual check:** La verificación de versión existe en `App.jsx` (banner global) y en `AdminPanel.jsx` (botón manual), sin duplicar lógica.
+### Arquitectura implementada:
+```
+Firestore (ya existía)
+  └── persistentLocalCache + persistentMultipleTabManager
+      └── Sincroniza datos automáticamente al reconectar
 
-### B. Pizarra Táctica
-- **Fabric.js v5.3:** Canvas vectorial sin regresiones detectadas.
-- **Serialización:** Objetos guardados con `{ version: fabric.version, objects }` para compatibilidad futura.
-- **Touch targets:** Botones de 48px mínimo para uso táctil en tablet.
+useOfflineStatus.js (nuevo)
+  └── navigator.onLine + eventos 'online'/'offline'
+      └── Retorna { isOffline: boolean }
 
-### C. IA Generadora
-- **Biblioteca de ejercicios:** Bottom Drawer con patrón Android nativo.
-- **Motor de prompts:** Respuestas en Markdown estructurado.
-- **Exportación:** Generación de PDF con escudo del club integrado.
+Layout.jsx (modificado)
+  └── Banner ámbar fijo en la parte superior cuando isOffline = true
+      └── "📡 Sin conexión · Mostrando datos guardados · Los cambios se sincronizarán al reconectar"
 
-### D. Sistema de Autenticación
-- **Google Sign-In nativo:** Implementado con `@capacitor-firebase/authentication@8.2.0`.
-- **Rutas protegidas:** Redirección correcta según estado `user` en todas las rutas.
-- **Invitaciones:** Flujo de tokens pendientes (`mister11_pending_invite_token`) manejado en `useEffect`.
+vite.config.js (modificado)
+  └── workbox.runtimeCaching ampliado:
+      ├── Firebase Storage images (30 días) → avatares, escudos de equipo
+      └── App images PNG/SVG/WebP (7 días)  → logos, iconos
+```
 
-### E. AdminPanel
-- **Roles:** Separación de vistas `isAdmin` / entrenador estándar.
-- **Gestión de clubes:** Componente `ClubManagement.jsx` dedicado.
-- **Firestore rules:** Reglas actualizadas para subcolecciones de equipos personales (commit `52635dd`).
-
-### F. Sistema de Consentimiento (RGPD)
-- **Firma digital:** `SignatureCanvas.jsx` con pad táctil para tablet/móvil.
-- **Generación PDF:** Procesado en memoria del navegador (0 datos en servidores).
-- **Privacidad garantizada:** Confirmado en UI y documentado en código.
+### Comportamiento verificado:
+- ✅ Sin conexión → Banner visible inmediatamente
+- ✅ Datos de Firestore servidos desde cache local
+- ✅ Cambios hechos offline quedan encolados y se sincronizan al reconectar
+- ✅ Imágenes de Firebase Storage en cache (escudos de equipo)
 
 ---
 
-## 5. Métricas de Build (v1.1.6)
+## 4. 🔔 Notificaciones Locales (Android APK)
 
-| Artefacto | Tamaño | Comprimido (gzip) |
-|-----------|--------|-------------------|
-| `index.js` (main bundle) | 1.199 MB | 344 KB |
-| `vendor-fabric.js` | 307 KB | 89 KB |
-| `firebaseConfig.js` | 322 KB | 98 KB |
-| `vendor-react.js` | 232 KB | 74 KB |
-| `index.css` | 222 KB | 38 KB |
-| **Total PWA precaché** | **8.02 MB** | — |
+### Arquitectura implementada:
+```
+useLocalNotifications.js (nuevo)
+  ├── requestNotificationPermission()   → Solicita permisos al sistema Android
+  ├── scheduleSessionReminder(session)  → Programa notif 1h antes de la sesión
+  └── cancelSessionReminder(sessionId)  → Cancela recordatorio al eliminar
 
-> ⚠️ El bundle principal supera el límite de 500KB recomendado. Se recomienda aplicar lazy loading por módulo en futuras versiones.
+useSessions.js (modificado)
+  ├── addSession()    → scheduleSessionReminder() automáticamente
+  ├── updateSession() → cancelar + reprogramar si cambia fecha/hora
+  └── removeSession() → cancelSessionReminder() automáticamente
 
----
+AdminPanel.jsx (modificado)
+  └── Toggle "Recordatorios de Sesión"
+      ├── Persiste en localStorage['mister11_notifications_enabled']
+      ├── Solicita permisos del sistema al activar (solo APK Android)
+      └── Muestra toast de confirmación o error de permisos
+```
 
-## 6. Análisis de Seguridad
+### Comportamiento:
+| Plataforma | Comportamiento |
+|-----------|---------------|
+| **APK Android** | Notificación push 1h antes de cada sesión creada |
+| **Web/PWA** | Toggle visible, texto "Disponible en la aplicación Android (APK)" |
 
-| Área | Estado | Observación |
-|------|--------|-------------|
-| Firestore Rules | ✅ Aplicadas | Reglas actualizadas en `firestore.rules` |
-| APK Firma | ✅ RSA 2048 | Keystore válido ~27 años |
-| SHA-256 cert | ✅ Verificado | `6e70fcd6...de16d24` |
-| `webContentsDebuggingEnabled` | ✅ Desactivado | `false` en producción |
-| Mixed content | ℹ️ Permitido | `allowMixedContent: true` en capacitor — necesario para algunas funciones |
-
----
-
-## 7. Sugerencias de Optimización (Roadmap v1.2.x)
-
-1. **🔀 Code Splitting agresivo:** Separar `PizarraTactica`, `Tests` y `Partidos` en chunks con `React.lazy + Suspense`. El bundle principal bajaría de 1.2MB a ~300KB.
-2. **📶 Modo Offline completo:** Ampliar el caché del Service Worker para cubrir consultas Firestore críticas (plantilla activa, sesiones recientes).
-3. **🔔 Notificaciones Push:** Firebase Cloud Messaging con recordatorios de sesiones de entrenamiento.
-4. **🤖 Script de compilación APK:** Crear `build-apk.ps1` que ejecute `npm run build → cap sync → gradlew assembleRelease` en secuencia, evitando el error humano detectado en esta auditoría.
-5. **📦 Verificación de .env en CI:** Añadir validación en el pipeline para confirmar variables de entorno críticas antes de compilar.
+> **Nota técnica:** `@capacitor/local-notifications` se carga dinámicamente (`import()`) solo en contexto nativo. En web no genera ningún error ni overhead.
 
 ---
 
-## 8. Conclusión de la Auditoría
+## 5. 🤖 Script `build-apk.ps1`
 
-**Míster11 v1.1.6** se encuentra en estado **Estable y Funcional en Producción**. El bug crítico de versión en el AdminPanel ha sido **identificado, diagnosticado y corregido** en esta sesión. El sistema de versionado tripartito (JS constants + package.json + build.gradle) está correctamente alineado.
+Script PowerShell de **7 pasos** que previene el bug crítico de la auditoría v1.1.6:
 
-La prioridad inmediata para la versión `1.2.x` es implementar un **script automatizado de compilación APK** para prevenir el error de bundle desactualizado detectado en esta auditoría.
+```
+PASO 0: Validar .env + JAVA_HOME + Keystore + leer versión
+PASO 1: npm run build          → Bundle web correcto garantizado
+PASO 2: npx cap sync android   → Assets sincronizados
+PASO 3: gradlew assembleRelease → APK firmado
+PASO 4: Copiar APK a raíz
+PASO 5: node upload-apk.mjs   → Firebase Storage + Firestore
+PASO 6: git commit + push      → Vercel deploy automático
+```
+
+**Flags disponibles:**
+```powershell
+.\build-apk.ps1                       # Flujo completo
+.\build-apk.ps1 -SkipUpload           # Solo compilar APK local
+.\build-apk.ps1 -SkipGit             # Sin git push
+.\build-apk.ps1 -SkipUpload -SkipGit # Solo APK (sin deploy)
+```
+
+---
+
+## 6. Métricas de Build (v1.1.7)
+
+| Artefacto | Tamaño | Gzip |
+|-----------|--------|------|
+| `index.js` (main bundle) | **93.2 KB** ✅ | 27.5 KB |
+| `PizarraTactica.js` | 116.2 KB | 28.6 KB |
+| `vendor-fabric.js` | 307.6 KB | 89.0 KB |
+| `firebaseConfig.js` | 322.9 KB | 98.3 KB |
+| `vendor-react.js` | 232.0 KB | 74.2 KB |
+| `jspdf.es.min.js` | 399.3 KB | 129.5 KB |
+| **Total PWA precaché** | **~8.0 MB** | — |
+
+> El bundle principal bajó de **1.199 MB a 93.2 KB** — una **reducción del 92%**.
+
+---
+
+## 7. Validación de Versiones — 4 Capas
+
+```
+constants/appVersion.js  →  APP_VERSION = '1.1.7'   (fuente de verdad JS)
+package.json             →  "version": "1.1.7"       (NPM)
+android/app/build.gradle →  versionName "1.1.7"      (Android)
+                              versionCode 27
+Firestore config/global  →  appVersion: "1.1.7"      (Cloud)
+                              latestApkVersion: "1.1.7"
+```
+**Las 4 capas están sincronizadas correctamente. ✅**
+
+---
+
+## 8. Archivos Creados / Modificados
+
+| Archivo | Tipo | Descripción |
+|---------|------|-------------|
+| `build-apk.ps1` | 🆕 Nuevo | Script automatizado de build APK completo |
+| `src/components/PageLoader.jsx` | 🆕 Nuevo | Spinner para transiciones lazy |
+| `src/hooks/useOfflineStatus.js` | 🆕 Nuevo | Detección de conectividad |
+| `src/hooks/useLocalNotifications.js` | 🆕 Nuevo | Módulo de notificaciones Capacitor |
+| `src/App.jsx` | ✏️ Modificado | React.lazy + Suspense para 13 páginas |
+| `src/components/Layout.jsx` | ✏️ Modificado | Banner offline integrado |
+| `src/hooks/useSessions.js` | ✏️ Modificado | Auto-programación de recordatorios |
+| `src/pages/AdminPanel.jsx` | ✏️ Modificado | Toggle de notificaciones mejorado |
+| `vite.config.js` | ✏️ Modificado | SW runtime cache ampliado |
+| `src/constants/appVersion.js` | ✏️ Modificado | `'1.1.7'` |
+| `package.json` | ✏️ Modificado | `"1.1.7"` |
+| `android/app/build.gradle` | ✏️ Modificado | `versionCode 27`, `versionName "1.1.7"` |
+| `upload-apk.mjs` | ✏️ Modificado | `APP_VERSION = '1.1.7'` |
+
+---
+
+## 9. Roadmap v1.2.x (Pendiente)
+
+1. **🔔 FCM (Firebase Cloud Messaging):** Notificaciones push desde servidor para múltiples entrenadores de un club. Requiere Cloud Functions (backend server-side).
+2. **📦 Verificación de .env en CI:** Añadir GitHub Actions para validar variables de entorno antes del build automático.
+3. **⚡ Preloading inteligente:** Usar `<link rel="prefetch">` para precargar los chunks más usados en segundo plano.
+4. **📊 Analytics de rendimiento:** Métricas de Core Web Vitals con Firebase Performance Monitoring.
+
+---
+
+## 10. Conclusión
+
+**Míster11 v1.1.7** implementa con éxito las 4 mejoras del roadmap de la auditoría anterior:
+
+- ✅ **Code Splitting** → Bundle principal: 1.2MB → 93KB (−92%)
+- ✅ **Modo Offline** → Banner + caché extendido + Firestore persistente
+- ✅ **Notificaciones Locales** → Android APK nativo, 1h antes de cada sesión
+- ✅ **Script `build-apk.ps1`** → 7 pasos automatizados, bug de bundle previene indefinidamente
+
+La aplicación está en estado **Optimizada y Producción-Ready** con el mejor ratio bundle/funcionalidad desde su inicio.
 
 ---
 

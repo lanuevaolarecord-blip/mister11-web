@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { lazy, Suspense, useEffect, useState } from 'react';
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { doc, getDoc } from 'firebase/firestore';
 import { useAuth } from './context/AuthContext';
@@ -7,24 +7,28 @@ import { APP_VERSION } from './constants/appVersion';
 import { Capacitor } from '@capacitor/core';
 import { Browser } from '@capacitor/browser';
 
+// ── Carga ESTÁTICA (crítica en boot) ─────────────────────────────────────────
 import Layout from './components/Layout';
 import Dashboard from './pages/Dashboard';
-import PizarraTactica from './pages/PizarraTactica';
-import MiEquipo from './pages/MiEquipo';
-import Sesiones from './pages/Sesiones';
-import Planificacion from './pages/Planificacion';
-import Tests from './pages/Tests';
-import Partidos from './pages/Partidos';
-import IAGeneradora from './pages/IAGeneradora';
-import AdminPanel from './pages/AdminPanel';
 import Login from './pages/Login';
-import Instalar from './pages/Instalar';
 import LandingPage from './pages/LandingPage';
-import SharedPlan from './pages/SharedPlan';
-import AcceptInvitation from './pages/AcceptInvitation';
-import ConsentimientoFirma from './pages/ConsentimientoFirma';
-import ConsentForm from './pages/ConsentForm';
 import NotFound from './pages/NotFound';
+import PageLoader from './components/PageLoader';
+
+// ── Carga DIFERIDA (code splitting) — se cargan solo cuando se navega ────────
+const PizarraTactica    = lazy(() => import('./pages/PizarraTactica'));
+const MiEquipo          = lazy(() => import('./pages/MiEquipo'));
+const Sesiones          = lazy(() => import('./pages/Sesiones'));
+const Planificacion     = lazy(() => import('./pages/Planificacion'));
+const Tests             = lazy(() => import('./pages/Tests'));
+const Partidos          = lazy(() => import('./pages/Partidos'));
+const IAGeneradora      = lazy(() => import('./pages/IAGeneradora'));
+const AdminPanel        = lazy(() => import('./pages/AdminPanel'));
+const Instalar          = lazy(() => import('./pages/Instalar'));
+const SharedPlan        = lazy(() => import('./pages/SharedPlan'));
+const AcceptInvitation  = lazy(() => import('./pages/AcceptInvitation'));
+const ConsentimientoFirma = lazy(() => import('./pages/ConsentimientoFirma'));
+const ConsentForm       = lazy(() => import('./pages/ConsentForm'));
 
 import './App.css';
 
@@ -172,65 +176,67 @@ function App() {
           </div>
         </div>
       )}
-      <Routes>
-        <Route 
-          path="/" 
-          element={user ? <Layout /> : <LandingPage />}
-        >
-          <Route index element={<Dashboard />} />
-        </Route>
+      <Suspense fallback={<PageLoader />}>
+        <Routes>
+          <Route 
+            path="/" 
+            element={user ? <Layout /> : <LandingPage />}
+          >
+            <Route index element={<Dashboard />} />
+          </Route>
 
-        <Route 
-          path="/login" 
-          element={user ? <Navigate to="/" replace /> : <Login />} 
-        />
+          <Route 
+            path="/login" 
+            element={user ? <Navigate to="/" replace /> : <Login />} 
+          />
 
-        <Route 
-          path="/shared/plan/:planId" 
-          element={<SharedPlan />} 
-        />
+          <Route 
+            path="/shared/plan/:planId" 
+            element={<SharedPlan />} 
+          />
 
-        <Route 
-          path="/instalar" 
-          element={<Instalar />} 
-        />
+          <Route 
+            path="/instalar" 
+            element={<Instalar />} 
+          />
 
-        <Route 
-          path="/accept-invitation" 
-          element={<AcceptInvitation />} 
-        />
+          <Route 
+            path="/accept-invitation" 
+            element={<AcceptInvitation />} 
+          />
 
-        <Route 
-          path="/shared/consentimiento" 
-          element={<ConsentimientoFirma />} 
-        />
+          <Route 
+            path="/shared/consentimiento" 
+            element={<ConsentimientoFirma />} 
+          />
 
-        <Route 
-          path="/consentimiento" 
-          element={<ConsentForm />} 
-        />
+          <Route 
+            path="/consentimiento" 
+            element={<ConsentForm />} 
+          />
 
-        <Route 
-          path="/*" 
-          element={user ? <Layout /> : <Navigate to="/login" replace />}
-        >
-          <Route path="dashboard" element={<RedirectToRoot />} />
-          <Route path="pricing" element={<Navigate to="/admin" state={{ activeTab: 'ajustes' }} replace />} />
-          <Route path="pizarra" element={<PizarraTactica />} />
-          <Route path="equipo" element={<MiEquipo />} />
-          <Route path="sesiones" element={<Sesiones />} />
-          <Route path="planificacion" element={<Planificacion />} />
-          <Route path="tests" element={<Tests />} />
-          <Route path="partidos" element={<Partidos />} />
-          <Route path="ia-generadora" element={<IAGeneradora />} />
-          <Route path="admin" element={<AdminPanel />} />
-          {/* Ruta 404 para subrutas desconocidas dentro del layout */}
+          <Route 
+            path="/*" 
+            element={user ? <Layout /> : <Navigate to="/login" replace />}
+          >
+            <Route path="dashboard" element={<RedirectToRoot />} />
+            <Route path="pricing" element={<Navigate to="/admin" state={{ activeTab: 'ajustes' }} replace />} />
+            <Route path="pizarra" element={<PizarraTactica />} />
+            <Route path="equipo" element={<MiEquipo />} />
+            <Route path="sesiones" element={<Sesiones />} />
+            <Route path="planificacion" element={<Planificacion />} />
+            <Route path="tests" element={<Tests />} />
+            <Route path="partidos" element={<Partidos />} />
+            <Route path="ia-generadora" element={<IAGeneradora />} />
+            <Route path="admin" element={<AdminPanel />} />
+            {/* Ruta 404 para subrutas desconocidas dentro del layout */}
+            <Route path="*" element={<NotFound />} />
+          </Route>
+
+          {/* Ruta 404 global para rutas no reconocidas por el router */}
           <Route path="*" element={<NotFound />} />
-        </Route>
-
-        {/* Ruta 404 global para rutas no reconocidas por el router */}
-        <Route path="*" element={<NotFound />} />
-      </Routes>
+        </Routes>
+      </Suspense>
     </>
   );
 }

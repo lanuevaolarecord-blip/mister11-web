@@ -11,6 +11,7 @@ import { usePlayers } from '../hooks/usePlayers';
 import { useSessions } from '../hooks/useSessions';
 import { useMatches } from '../hooks/useMatches';
 import { usePlan } from '../hooks/usePlan';
+import { requestNotificationPermission } from '../hooks/useLocalNotifications';
 import { 
   Users, 
   Dumbbell, 
@@ -902,12 +903,33 @@ const AdminPanel = () => {
                   <h3>Preferencias</h3>
                 </div>
                 <div className="settings-form">
-                  <div className="toggle-group">
-                    <span>Notificaciones de Sesión</span>
-                    <div 
-                      className={`toggle-switch ${prefData.notifications ? 'active' : ''}`}
-                      onClick={() => toggleSetting('notifications')}
-                    ></div>
+                  <div className="toggle-group" style={{ flexDirection: 'column', alignItems: 'flex-start', gap: '6px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
+                      <span>Recordatorios de Sesión</span>
+                      <div 
+                        className={`toggle-switch ${prefData.notifications ? 'active' : ''}`}
+                        onClick={async () => {
+                          const newVal = !prefData.notifications;
+                          toggleSetting('notifications');
+                          // Persistir en localStorage para el sistema de notificaciones locales
+                          localStorage.setItem('mister11_notifications_enabled', String(newVal));
+                          // Solicitar permisos de notificación en Android al activar
+                          if (newVal && Capacitor.isNativePlatform()) {
+                            const granted = await requestNotificationPermission();
+                            if (!granted) {
+                              showToast('No se concedieron permisos de notificación. Actívalos en Ajustes del sistema.', 'warning');
+                            } else {
+                              showToast('✅ Recordatorios activados. Se avisará 1h antes de cada sesión.', 'success');
+                            }
+                          }
+                        }}
+                      ></div>
+                    </div>
+                    <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', margin: 0 }}>
+                      {Capacitor.isNativePlatform()
+                        ? 'Recibirás una notificación 1 hora antes de cada sesión de entrenamiento.'
+                        : 'Disponible en la aplicación Android (APK).'}
+                    </p>
                   </div>
                   <div className="toggle-group">
                     <span>Modo Oscuro</span>

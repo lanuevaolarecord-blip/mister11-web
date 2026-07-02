@@ -38,6 +38,26 @@ export default defineConfig({
               expiration: { maxEntries: 10, maxAgeSeconds: 60 * 60 * 24 * 365 },
               cacheableResponse: { statuses: [0, 200] }
             }
+          },
+          // ── Imágenes de Firebase Storage (escudos de equipo, avatares) ───────
+          {
+            urlPattern: /^https:\/\/firebasestorage\.googleapis\.com\/.*/i,
+            handler: 'CacheFirst',
+            options: {
+              cacheName: 'firebase-storage-images',
+              expiration: { maxEntries: 60, maxAgeSeconds: 60 * 60 * 24 * 30 }, // 30 días
+              cacheableResponse: { statuses: [0, 200] }
+            }
+          },
+          // ── Assets de la app propios (logos, iconos) ────────────────────────
+          {
+            urlPattern: /\.(png|jpg|jpeg|svg|webp|ico)$/i,
+            handler: 'CacheFirst',
+            options: {
+              cacheName: 'app-images',
+              expiration: { maxEntries: 80, maxAgeSeconds: 60 * 60 * 24 * 7 }, // 7 días
+              cacheableResponse: { statuses: [0, 200] }
+            }
           }
         ]
       },

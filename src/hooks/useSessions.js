@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { subscribeToCollection, addDocument, updateDocument, deleteDocument, createNotification } from '../firebase/db';
+import { scheduleSessionReminder, cancelSessionReminder, requestNotificationPermission } from './useLocalNotifications';
 
 export const useSessions = (teamId) => {
   const { user, getTeamPath } = useAuth();
@@ -32,18 +33,36 @@ export const useSessions = (teamId) => {
     });
 
     await createNotification('success', `Nueva sesión creada: ${sessionData.title}`);
+
+    // Programar recordatorio local (Android nativo) si las notificaciones están habilitadas
+    const notifEnabled = localStorage.getItem('mister11_notifications_enabled') !== 'false';
+    if (notifEnabled && docId) {
+      await requestNotificationPermission();
+      await scheduleSessionReminder({ ...sessionData, id: docId });
+    }
+
     return docId;
   };
 
   const updateSession = async (id, sessionData) => {
     if (!user || !teamId) return;
     const path = getTeamPath(teamId);
+    // Reprogramar recordatorio si cambió la fecha/hora
+    if (sessionData.date || sessionData.time) {
+      const existing = sessions.find(s => s.id === id) || {};
+      const updated = { ...existing, ...sessionData, id };
+      await cancelSessionReminder(id);
+      const notifEnabled = localStorage.getItem('mister11_notifications_enabled') !== 'false';
+      if (notifEnabled) await scheduleSessionReminder(updated);
+    }
     return await updateDocument(`${path}/sessions`, id, sessionData);
   };
 
   const removeSession = async (id) => {
     if (!user || !teamId) return;
     const path = getTeamPath(teamId);
+    // Cancelar recordatorio al eliminar sesión
+    await cancelSessionReminder(id);
     return await deleteDocument(`${path}/sessions`, id);
   };
 

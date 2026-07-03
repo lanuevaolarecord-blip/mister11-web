@@ -370,6 +370,35 @@ const AdminPanel = () => {
     }
   };
 
+  // ── Descarga el APK forzando Content-Disposition: attachment via fetch→blob ──
+  // Esto evita que Chrome en Android abra la URL inline y elimine el archivo.
+  const downloadApk = async (url, version) => {
+    try {
+      showToast('⬇️ Iniciando descarga del APK...', 'info');
+      const response = await fetch(url);
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      const blob = await response.blob();
+      const blobUrl = URL.createObjectURL(
+        new Blob([blob], { type: 'application/vnd.android.package-archive' })
+      );
+      const a = document.createElement('a');
+      a.href = blobUrl;
+      a.download = `mister11-v${version || APP_VERSION}.apk`;
+      document.body.appendChild(a);
+      a.click();
+      setTimeout(() => {
+        document.body.removeChild(a);
+        URL.revokeObjectURL(blobUrl);
+      }, 5000);
+      showToast('✅ Descarga completada. Busca el archivo en tu carpeta de Descargas e instálalo.', 'success');
+    } catch (err) {
+      console.error('Error en descarga APK:', err);
+      // Fallback: abrir en _system para que el SO gestione la descarga
+      showToast('⚠️ Descarga directa fallida. Abriendo enlace alternativo...', 'warning');
+      window.open(url, '_system');
+    }
+  };
+
   const checkForUpdates = async () => {
     setCheckingUpdate(true);
     try {
@@ -398,11 +427,7 @@ const AdminPanel = () => {
 
         if (isNewer(remoteVersion, APP_VERSION)) {
           if (window.confirm(`🆕 Nueva versión ${remoteVersion} disponible (tu versión actual: ${APP_VERSION}).\n¿Descargar ahora?`)) {
-            if (Capacitor.isNativePlatform()) {
-              window.open(apkDownloadUrl, '_system');
-            } else {
-              window.open(apkDownloadUrl, '_blank');
-            }
+            await downloadApk(apkDownloadUrl, remoteVersion);
           }
         } else {
           showToast(`✅ Ya tienes la última versión instalada (v${APP_VERSION}).`, 'success');
@@ -1007,15 +1032,11 @@ const AdminPanel = () => {
                             const url = configSnap.exists()
                               ? (configSnap.data().apkDownloadUrl || configSnap.data().apkUrl || '/mister11.apk')
                               : '/mister11.apk';
-                            if (Capacitor.isNativePlatform()) {
-                              window.open(url, '_system');
-                            } else {
-                              window.open(url, '_blank');
-                            }
+                            await downloadApk(url, APP_VERSION);
                           } catch (err) {
                             console.error('Error al obtener URL de APK:', err);
-                            // Fallback: descargar el APK local directamente
-                            window.open('/mister11.apk', '_blank');
+                            // Fallback: abrir enlace directo
+                            window.open('/mister11.apk', '_system');
                           }
                         }}
                         style={{

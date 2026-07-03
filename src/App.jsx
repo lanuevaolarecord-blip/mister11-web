@@ -155,10 +155,25 @@ function App() {
                   <button
                     className="btn-update-action download"
                     onClick={async () => {
-                      if (Capacitor.isNativePlatform()) {
+                      try {
+                        const response = await fetch(updateData.url);
+                        if (!response.ok) throw new Error('fetch failed');
+                        const blob = await response.blob();
+                        const blobUrl = URL.createObjectURL(
+                          new Blob([blob], { type: 'application/vnd.android.package-archive' })
+                        );
+                        const a = document.createElement('a');
+                        a.href = blobUrl;
+                        a.download = `mister11-v${updateData.version}.apk`;
+                        document.body.appendChild(a);
+                        a.click();
+                        setTimeout(() => {
+                          document.body.removeChild(a);
+                          URL.revokeObjectURL(blobUrl);
+                        }, 5000);
+                      } catch {
+                        // Fallback
                         window.open(updateData.url, '_system');
-                      } else {
-                        window.open(updateData.url, '_blank');
                       }
                     }}
                   >

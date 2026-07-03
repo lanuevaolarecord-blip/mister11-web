@@ -61,6 +61,7 @@ async function main() {
   try {
     const snapshot = await uploadBytes(storageRef, apkBuffer, {
       contentType: 'application/vnd.android.package-archive',
+      contentDisposition: 'attachment; filename="mister11.apk"',
       customMetadata: {
         versionName: APP_VERSION,
         uploadedAt:  new Date().toISOString(),

@@ -7,6 +7,8 @@ android {
             storePassword "Mister11_2026"
             keyAlias "mister11"
             keyPassword "Mister11_2026"
+            v1SigningEnabled true
+            v2SigningEnabled true
         }
     }
     namespace = "com.mister11.app"

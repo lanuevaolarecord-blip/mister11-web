@@ -219,6 +219,18 @@
   justify-content: center;
   align-items: center;
   box-shadow: 0 8px 15px rgba(0, 0, 0, 0.3);
+  transition: all 0.2s ease;
+}
+
+@media (max-width: 768px) {
+  .header-central-shield-container {
+    height: 60px !important;
+    width: 52px !important;
+  }
+  .header-central-shield-container img {
+    width: 32px !important;
+    height: 32px !important;
+  }
 }
 
 .team-switcher-header-v2 {

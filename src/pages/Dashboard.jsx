@@ -468,15 +468,15 @@ const Dashboard = () => {
 
       {/* Premium Trial / Developer Banner */}
       {isAdmin ? (
-        <div className="card-base" style={{ background: 'var(--accent-green-light)', borderColor: 'var(--accent-green)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+        <div className="card-base" style={{ background: 'var(--accent-green-light)', borderColor: 'var(--accent-green)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', flexWrap: 'wrap', gap: '16px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flexWrap: 'wrap' }}>
             <Shield size={28} strokeWidth={1.5} color="var(--accent-green)" />
             <div>
               <h3 style={{ margin: 0, color: 'var(--text-primary)', fontSize: '16px', fontFamily: 'var(--font-heading)' }}>{t('dashboard.devAccess', settings.language)}</h3>
               <p style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '13px' }}>{t('dashboard.devDesc', settings.language)}</p>
             </div>
           </div>
-          <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+          <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
             <button 
               className={`chip ${isPro ? 'active' : ''}`}
               onClick={toggleSimulatedPlan}

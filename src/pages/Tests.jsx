@@ -1148,7 +1148,7 @@ const Tests = () => {
                 ];
 
                 return (
-                  <div id="grafica-rendimiento-jugador" style={{ display: 'flex', gap: 24, alignItems: 'stretch', marginBottom: 24 }}>
+                  <div id="grafica-rendimiento-jugador" style={{ display: 'flex', flexWrap: 'wrap', gap: 24, alignItems: 'stretch', marginBottom: 24 }}>
                     {/* LEGEND CARD */}
                     <div style={{ flexShrink: 0 }}>
                       <LegendCard

@@ -106,11 +106,15 @@ html, body, #root {
 .pizarra-sidebar-content, 
 .materials-list, 
 .timeline-scroll-wrapper,
-.topbar-scroll-wrapper,
-.main-wrapper {
+.topbar-scroll-wrapper {
   scroll-behavior: smooth;
   -webkit-overflow-scrolling: touch;
   will-change: transform;
+}
+
+.main-wrapper {
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
 }
 
 main, .page-container {

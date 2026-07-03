@@ -34,13 +34,40 @@
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
     <script>
-      // Solo registrar Service Worker en web normal (no en entorno nativo Capacitor)
-      if ('serviceWorker' in navigator && !window.Capacitor) {
-        window.addEventListener('load', () => {
-          navigator.serviceWorker.register('/sw.js')
-            .then(() => console.log('[SW] Service Worker registrado correctamente.'))
-            .catch((err) => console.warn('[SW] Error al registrar Service Worker:', err));
-        });
+      // Detectar si estamos en un entorno nativo (Capacitor/WebView)
+      const isCapacitorWebView = 
+        window.Capacitor || 
+        window.location.protocol === 'capacitor:' || 
+        (window.location.hostname === 'localhost' && !window.location.port) ||
+        /capacitor/i.test(navigator.userAgent);
+
+      if ('serviceWorker' in navigator) {
+        if (isCapacitorWebView) {
+          // Desregistrar activamente todos los service workers para evitar persistir caché vieja
+          navigator.serviceWorker.getRegistrations().then(function(registrations) {
+            for (let registration of registrations) {
+              registration.unregister().then(function(success) {
+                if (success) console.log('[SW] Service Worker desregistrado en entorno nativo.');
+              });
+            }
+          });
+          // Limpiar el caché storage completo en entorno nativo
+          if (window.caches) {
+            caches.keys().then(function(names) {
+              for (let name of names) {
+                caches.delete(name);
+              }
+              console.log('[SW] Caché limpiada en entorno nativo.');
+            });
+          }
+        } else {
+          // Registrar Service Worker solo en la web
+          window.addEventListener('load', () => {
+            navigator.serviceWorker.register('/sw.js')
+              .then(() => console.log('[SW] Service Worker registrado correctamente.'))
+              .catch((err) => console.warn('[SW] Error al registrar Service Worker:', err));
+          });
+        }
       }
     </script>
   </body>

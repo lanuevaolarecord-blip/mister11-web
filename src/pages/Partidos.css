@@ -270,7 +270,12 @@ html.dark {
   background: var(--partidos-panel-bg);
   padding: 0 20px;
   border-bottom: 1px solid var(--partidos-border);
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  flex-wrap: nowrap;
 }
+.editor-tabs::-webkit-scrollbar { display: none; }
 
 .e-tab {
   background: transparent;
@@ -284,6 +289,8 @@ html.dark {
   text-transform: uppercase;
   font-size: 13px;
   transition: color 0.2s;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 .e-tab:hover { color: var(--partidos-text-primary); }
 .e-tab.active { color: var(--partidos-text-primary); }
@@ -293,6 +300,17 @@ html.dark {
   bottom: -1px; left: 0; width: 100%; height: 3px;
   background: var(--partidos-accent);
   border-radius: 3px 3px 0 0;
+}
+
+/* MÓVIL: tabs más compactos */
+@media (max-width: 600px) {
+  .editor-tabs {
+    padding: 0 8px;
+  }
+  .e-tab {
+    padding: 14px 10px;
+    font-size: 11px;
+  }
 }
 
 .editor-content {

@@ -73,10 +73,10 @@ function App() {
         if (versionSnap.exists()) {
           const data = versionSnap.data();
           const remoteVersion = data.appVersion;
-          const apkUrl = data.apkUrl || '';
+          // Unificado: usa apkDownloadUrl (igual que AdminPanel) con fallback a apkUrl
+          const apkUrl = data.apkDownloadUrl || data.apkUrl || '/mister11.apk';
           
           if (remoteVersion && compareVersions(remoteVersion, APP_VERSION) > 0) {
-            // Verificar si el usuario ya cerró esta versión específica
             const dismissedVersion = localStorage.getItem('dismissedUpdateVersion');
             if (dismissedVersion !== remoteVersion) {
               setUpdateData({ version: remoteVersion, url: apkUrl });

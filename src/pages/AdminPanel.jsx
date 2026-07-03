@@ -376,7 +376,11 @@ const AdminPanel = () => {
       const configRef = doc(db, 'config', 'global');
       const configSnap = await getDoc(configRef);
       if (configSnap.exists()) {
-        const { latestApkVersion, apkDownloadUrl } = configSnap.data();
+        const data = configSnap.data();
+        // Unificado: usa appVersion (igual que App.jsx) con fallback a latestApkVersion
+        const remoteVersion = data.appVersion || data.latestApkVersion;
+        // Unificado: usa apkDownloadUrl con fallback a apkUrl y /mister11.apk
+        const apkDownloadUrl = data.apkDownloadUrl || data.apkUrl || '/mister11.apk';
         
         // Helper function for comparing semantic versions correctly (e.g. 1.0.10 > 1.0.9)
         const isNewer = (latest, current) => {
@@ -392,8 +396,8 @@ const AdminPanel = () => {
           return false;
         };
 
-        if (isNewer(latestApkVersion, APP_VERSION)) {
-          if (window.confirm(`🆕 Nueva versión ${latestApkVersion} disponible (tu versión actual: ${APP_VERSION}).\n¿Descargar ahora?`)) {
+        if (isNewer(remoteVersion, APP_VERSION)) {
+          if (window.confirm(`🆕 Nueva versión ${remoteVersion} disponible (tu versión actual: ${APP_VERSION}).\n¿Descargar ahora?`)) {
             if (Capacitor.isNativePlatform()) {
               await Browser.open({ url: apkDownloadUrl, presentationStyle: 'popover' });
             } else {
@@ -999,19 +1003,19 @@ const AdminPanel = () => {
                           try {
                             const configRef = doc(db, 'config', 'global');
                             const configSnap = await getDoc(configRef);
-                            const url = configSnap.exists() ? configSnap.data().apkDownloadUrl : null;
-                            if (url) {
-                              if (Capacitor.isNativePlatform()) {
-                                await Browser.open({ url, presentationStyle: 'popover' });
-                              } else {
-                                window.open(url, '_blank');
-                              }
+                            // Unificado: apkDownloadUrl con fallback a apkUrl y archivo local
+                            const url = configSnap.exists()
+                              ? (configSnap.data().apkDownloadUrl || configSnap.data().apkUrl || '/mister11.apk')
+                              : '/mister11.apk';
+                            if (Capacitor.isNativePlatform()) {
+                              await Browser.open({ url, presentationStyle: 'popover' });
                             } else {
-                              showToast('URL de descarga no configurada. Contacta al administrador.', 'error');
+                              window.open(url, '_blank');
                             }
                           } catch (err) {
                             console.error('Error al obtener URL de APK:', err);
-                            showToast('Error al obtener el enlace de descarga.', 'error');
+                            // Fallback: descargar el APK local directamente
+                            window.open('/mister11.apk', '_blank');
                           }
                         }}
                         style={{

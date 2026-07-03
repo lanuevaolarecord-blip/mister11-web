@@ -88,10 +88,18 @@
   cursor: pointer;
   z-index: 1000;
   border: none;
+  /* Fix para Android WebViews: forzar compositor layer para que position:fixed
+     funcione correctamente dentro de contenedores con overflow:auto */
+  transform: translateZ(0);
+  -webkit-transform: translateZ(0);
+  will-change: transform;
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
 }
 
 .fab:hover {
-  transform: scale(1.05);
+  transform: translateZ(0) scale(1.05);
+  -webkit-transform: translateZ(0) scale(1.05);
 }
 
 /* GRIDS */

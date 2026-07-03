@@ -745,7 +745,11 @@
   border-bottom: 2px solid #E8E0D0;
   margin-bottom: 20px;
   overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  flex-wrap: nowrap;
 }
+.plan-tab-bar::-webkit-scrollbar { display: none; }
 .plan-page.dark .plan-tab-bar {
   border-color: rgba(255,255,255,.10);
 }
@@ -763,6 +767,7 @@
   margin-bottom: -2px;
   cursor: pointer;
   white-space: nowrap;
+  flex-shrink: 0;
   transition: color 0.2s, border-color 0.2s;
 }
 .plan-tab-btn:hover {
@@ -781,6 +786,15 @@
 .plan-page.dark .plan-tab-btn.active {
   color: #4CAF7D;
   border-bottom-color: #4CAF7D;
+}
+
+/* MÓVIL: tabs más compactos */
+@media (max-width: 600px) {
+  .plan-tab-btn {
+    padding: 10px 12px;
+    font-size: 10px;
+    letter-spacing: 0.4px;
+  }
 }
 
 /* ── EMPTY TAB PLACEHOLDER ─────────────────────────── */

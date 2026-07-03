@@ -156,12 +156,7 @@ function App() {
                     className="btn-update-action download"
                     onClick={async () => {
                       if (Capacitor.isNativePlatform()) {
-                        try {
-                          await Browser.open({ url: updateData.url, presentationStyle: 'popover' });
-                        } catch (err) {
-                          console.error('Error opening browser:', err);
-                          window.open(updateData.url, '_blank');
-                        }
+                        window.open(updateData.url, '_system');
                       } else {
                         window.open(updateData.url, '_blank');
                       }

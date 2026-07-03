@@ -399,7 +399,7 @@ const AdminPanel = () => {
         if (isNewer(remoteVersion, APP_VERSION)) {
           if (window.confirm(`🆕 Nueva versión ${remoteVersion} disponible (tu versión actual: ${APP_VERSION}).\n¿Descargar ahora?`)) {
             if (Capacitor.isNativePlatform()) {
-              await Browser.open({ url: apkDownloadUrl, presentationStyle: 'popover' });
+              window.open(apkDownloadUrl, '_system');
             } else {
               window.open(apkDownloadUrl, '_blank');
             }
@@ -1008,7 +1008,7 @@ const AdminPanel = () => {
                               ? (configSnap.data().apkDownloadUrl || configSnap.data().apkUrl || '/mister11.apk')
                               : '/mister11.apk';
                             if (Capacitor.isNativePlatform()) {
-                              await Browser.open({ url, presentationStyle: 'popover' });
+                              window.open(url, '_system');
                             } else {
                               window.open(url, '_blank');
                             }

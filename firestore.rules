@@ -127,7 +127,7 @@ service cloud.firestore {
     // ── Invitaciones ──────────────────────────────────────────────────────────
     match /invitations/{invitationId} {
       allow read: if isAuth();
-      allow create: if isAuth();
+      allow create: if isAuth() && request.resource.data.invitedBy == request.auth.uid;
       allow update, delete: if isAuth() && (
         isDevEmail() ||
         resource.data.get('invitedBy', '') == request.auth.uid ||

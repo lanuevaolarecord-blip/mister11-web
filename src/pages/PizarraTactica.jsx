@@ -2848,7 +2848,7 @@ const PizarraTactica = () => {
           className={`toggle-rival ${showRival ? 'active' : ''}`}
           onClick={() => setShowRival(!showRival)}
         >
-          {showRival ? '👁 RIVAL' : '👁 RIVAL'}
+          {showRival ? '👁 QUITAR RIVAL' : '👁 MOSTRAR RIVAL'}
         </button>
         <button className="btn-delete-pizarra" onClick={deleteSelected}>🗑 BORRAR</button>
       </div>

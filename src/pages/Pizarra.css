@@ -1603,3 +1603,18 @@ canvas.lower-canvas {
   from { opacity: 0; transform: translateX(-50%) translateY(16px); }
   to   { opacity: 1; transform: translateX(-50%) translateY(0);    }
 }
+
+@media (max-width: 768px) {
+  .pizarra-container,
+  .pizarra-root,
+  .pizarra-wrapper,
+  [class*="pizarra"] {
+    padding-bottom: calc(60px + var(--sab, 0px)) !important;
+  }
+
+  .pizarra-timeline,
+  .timeline-bar,
+  [class*="timeline"] {
+    bottom: calc(60px + var(--sab, 0px)) !important;
+  }
+}

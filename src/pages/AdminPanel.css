@@ -578,27 +578,45 @@
 
 @media (max-width: 768px) {
   .admin-container {
-    flex-direction: column;
-    height: auto;
-    overflow: visible;
+    flex-direction: column !important;
+    height: auto !important;
+    overflow: visible !important;
+    margin: 0 !important;
   }
+
   .admin-sidebar {
-    width: 100%;
-    flex-direction: row;
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-    border-right: none;
-    border-bottom: 1px solid var(--border-color);
-    padding: 10px;
-    gap: 8px;
+    width: 100% !important;
+    display: flex !important;
+    flex-wrap: wrap !important; /* 2x2 grid wrap en lugar de scroll rígido horizontal */
+    flex-direction: row !important;
+    border-right: none !important;
+    border-bottom: 1px solid var(--border-color) !important;
+    padding: 10px !important;
+    gap: 8px !important;
   }
+
   .admin-nav-item {
-    padding: 10px 14px;
-    flex-shrink: 0;
+    flex: 1 1 calc(50% - 8px) !important; /* Cada botón de tab ocupa la mitad de la fila */
+    padding: 12px 14px !important;
+    justify-content: center !important;
+    text-align: center !important;
   }
+
   .admin-nav-item span {
-    display: inline;
-    font-size: 0.85rem;
-    white-space: nowrap;
+    display: inline !important;
+    font-size: 0.85rem !important;
+    white-space: nowrap !important;
+  }
+
+  .admin-content {
+    padding: 16px !important; /* Menor padding lateral para evitar que empuje las tarjetas fuera de la pantalla */
+    width: 100% !important;
+    box-sizing: border-box !important;
+  }
+
+  /* Ajustes responsivos para las tarjetas del sistema */
+  .settings-grid {
+    grid-template-columns: 1fr !important; /* Stack vertical de tarjetas de ajustes */
+    gap: 16px !important;
   }
 }

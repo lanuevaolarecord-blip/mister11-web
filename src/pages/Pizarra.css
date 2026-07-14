@@ -29,7 +29,7 @@ body.pizarra-active .main-wrapper {
   border-bottom: 1px solid var(--border-color);
   display: flex;
   align-items: center;
-  z-index: 1001;
+  z-index: 100;
   overflow: visible; /* visible para que los dropdowns puedan salir del topbar */
   position: relative;
 }

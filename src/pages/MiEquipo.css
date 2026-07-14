@@ -558,7 +558,13 @@
   }
 }
 
-@media (min-width: 768px) {
+@media (min-width: 769px) and (max-width: 1024px) {
+  .modal-content {
+    min-width: min(700px, 90vw);
+    max-width: 90vw;
+  }
+}
+@media (min-width: 1025px) {
   .modal-content {
     min-width: 700px;
   }

@@ -5,6 +5,7 @@ import Header from './Header';
 import NotificationsPanel from './NotificationsPanel';
 import { useSettings } from '../hooks/useSettings';
 import { useOfflineStatus } from '../hooks/useOfflineStatus';
+import BottomNav from './BottomNav';
 
 const Layout = () => {
   const [isNotifOpen, setIsNotifOpen] = useState(false);
@@ -73,6 +74,7 @@ const Layout = () => {
         </main>
       </div>
       <NotificationsPanel isOpen={isNotifOpen} onClose={() => setIsNotifOpen(false)} />
+      <BottomNav />
     </div>
   );
 };

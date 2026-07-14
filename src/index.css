@@ -1,6 +1,13 @@
 @import './styles/design-update.css';
 
 :root {
+  --bp-mobile: 480px;
+  --bp-tablet: 768px;
+  --bp-tablet-lg: 1024px;
+  --bp-desktop: 1280px;
+  --header-height: 60px;
+  --nav-bottom-height: 60px;
+
   /* TIERRA Y CAMPO PALETTE (Mister 11 v2.0) */
   --primary: #1B3A2D;
   --accent: #4CAF7D;
@@ -828,5 +835,150 @@ button, .nav-item, input, select, .icon-btn, .topbar-btn, .tool-icon-btn {
   background: rgba(255, 255, 255, 0.05);
   color: #FFFFFF;
   border-color: rgba(255, 255, 255, 0.4);
+}
+
+/* ── NAVEGACIÓN INFERIOR MÓVIL ── */
+.bottom-nav {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  /* Ocultar sidebar en móvil — se reemplaza por bottom nav */
+  .sidebar {
+    display: none !important;
+  }
+  
+  .sidebar-overlay {
+    display: none !important;
+  }
+  
+  .hamburger-btn {
+    display: none !important;
+  }
+
+  /* El contenido ocupa todo el ancho */
+  .main-content {
+    margin-left: 0 !important;
+    width: 100% !important;
+    padding-bottom: var(--nav-bottom-height) !important;
+  }
+
+  /* Navegación inferior visible */
+  .bottom-nav {
+    display: flex;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: var(--nav-bottom-height);
+    padding-bottom: var(--sab);
+    background: #1a2e1a;
+    border-top: 1px solid #2d4a2d;
+    z-index: 1000;
+    align-items: center;
+    justify-content: space-around;
+  }
+
+  .bottom-nav-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    flex: 1;
+    height: 100%;
+    gap: 2px;
+    color: rgba(255,255,255,0.5);
+    font-size: 9px;
+    font-weight: 500;
+    text-decoration: none;
+    cursor: pointer;
+    transition: color 0.2s;
+    min-width: 44px;
+    min-height: 44px;
+  }
+
+  .bottom-nav-item.active {
+    color: #c9a84c;
+  }
+
+  .bottom-nav-item svg {
+    width: 20px;
+    height: 20px;
+  }
+
+  /* Header en móvil más compacto */
+  .header {
+    height: 52px !important;
+    min-height: 52px !important;
+    padding: var(--sat) 12px 0 !important;
+  }
+
+  /* Modales a pantalla completa en móvil */
+  .modal-content {
+    min-width: unset !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    border-radius: 16px 16px 0 0 !important;
+    position: fixed !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    max-height: 90vh !important;
+    overflow-y: auto !important;
+  }
+
+  .modal-overlay {
+    align-items: flex-end !important;
+  }
+}
+
+/* ── TABLET PORTRAIT (768px - 1024px) ── */
+@media (min-width: 769px) and (max-width: 1024px) {
+  .sidebar {
+    width: 220px !important;
+    min-width: 220px !important;
+    position: relative !important;
+    transform: none !important;
+    display: flex !important;
+  }
+
+  .hamburger-btn {
+    display: none !important;
+  }
+
+  .main-content {
+    margin-left: 0 !important;
+  }
+
+  .bottom-nav {
+    display: none !important;
+  }
+
+  .header {
+    padding-left: 16px !important;
+    padding-right: 16px !important;
+  }
+
+  .header h1 {
+    font-size: 16px !important;
+  }
+}
+
+/* ── TABLET LANDSCAPE Y DESKTOP ── */
+@media (min-width: 1025px) {
+  .sidebar {
+    position: relative !important;
+    transform: none !important;
+    width: 260px !important;
+  }
+
+  .hamburger-btn {
+    display: none !important;
+  }
+
+  .bottom-nav {
+    display: none !important;
+  }
 }
 

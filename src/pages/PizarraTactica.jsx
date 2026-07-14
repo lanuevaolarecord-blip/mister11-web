@@ -171,6 +171,50 @@ const PizarraTactica = () => {
     fc.requestRenderAll();
   }, []);
 
+  const normalizarTamañoJugadores = useCallback((canvas) => {
+    if (!canvas) return;
+    const targetRadius = Math.max(15, Math.min(24, Math.round(canvas.width * 0.038)));
+    const borderWidth = Math.max(2, targetRadius * 0.18);
+    const targetFontSize = Math.round(targetRadius * 0.85);
+
+    canvas.getObjects().forEach(obj => {
+      const isPlayer = obj.data?.type === 'player' || 
+                       obj.data?.tipo === 'jugador' || 
+                       (obj.type === 'group' && 
+                        obj.getObjects && 
+                        obj.getObjects().length === 2 && 
+                        obj.getObjects().some(child => child.type === 'circle') && 
+                        obj.getObjects().some(child => child.type === 'text'));
+
+      if (isPlayer && obj.type === 'group') {
+        const circle = obj.getObjects().find(child => child.type === 'circle');
+        const text = obj.getObjects().find(child => child.type === 'text');
+
+        if (circle) {
+          circle.set({
+            radius: targetRadius,
+            strokeWidth: borderWidth,
+            dirty: true
+          });
+        }
+        if (text) {
+          text.set({
+            fontSize: targetFontSize,
+            dirty: true
+          });
+        }
+        obj.set({
+          scaleX: 1,
+          scaleY: 1,
+          dirty: true
+        });
+        obj._calcBounds(true);
+        obj.setCoords();
+      }
+    });
+    canvas.renderAll();
+  }, []);
+
   // Ref para prevenir race conditions al cargar frames asíncronamente
   const loadTokenR = useRef(0);
 
@@ -271,50 +315,6 @@ const PizarraTactica = () => {
       if (callback) callback();
     });
   }, [normalizarTamañoJugadores]);
-
-  const normalizarTamañoJugadores = useCallback((canvas) => {
-    if (!canvas) return;
-    const targetRadius = Math.max(15, Math.min(24, Math.round(canvas.width * 0.038)));
-    const borderWidth = Math.max(2, targetRadius * 0.18);
-    const targetFontSize = Math.round(targetRadius * 0.85);
-
-    canvas.getObjects().forEach(obj => {
-      const isPlayer = obj.data?.type === 'player' || 
-                       obj.data?.tipo === 'jugador' || 
-                       (obj.type === 'group' && 
-                        obj.getObjects && 
-                        obj.getObjects().length === 2 && 
-                        obj.getObjects().some(child => child.type === 'circle') && 
-                        obj.getObjects().some(child => child.type === 'text'));
-
-      if (isPlayer && obj.type === 'group') {
-        const circle = obj.getObjects().find(child => child.type === 'circle');
-        const text = obj.getObjects().find(child => child.type === 'text');
-
-        if (circle) {
-          circle.set({
-            radius: targetRadius,
-            strokeWidth: borderWidth,
-            dirty: true
-          });
-        }
-        if (text) {
-          text.set({
-            fontSize: targetFontSize,
-            dirty: true
-          });
-        }
-        obj.set({
-          scaleX: 1,
-          scaleY: 1,
-          dirty: true
-        });
-        obj._calcBounds(true);
-        obj.setCoords();
-      }
-    });
-    canvas.renderAll();
-  }, []);
 
   const reposicionarTodo = useCallback((anchoAnterior, altoAnterior, anchoNuevo, altoNuevo) => {
     const fc = fcRef.current;

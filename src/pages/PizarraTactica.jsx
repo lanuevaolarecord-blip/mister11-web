@@ -261,6 +261,7 @@ const PizarraTactica = () => {
         applyMister11Controls(o);
         fc.add(o);
       });
+      normalizarTamañoJugadores(fc);
       ensurePlayersOnTop();
       fc.renderAll();
       
@@ -269,6 +270,50 @@ const PizarraTactica = () => {
       // Los listeners se reconectan desde el useEffect principal después del callback
       if (callback) callback();
     });
+  }, [normalizarTamañoJugadores]);
+
+  const normalizarTamañoJugadores = useCallback((canvas) => {
+    if (!canvas) return;
+    const targetRadius = Math.max(15, Math.min(24, Math.round(canvas.width * 0.038)));
+    const borderWidth = Math.max(2, targetRadius * 0.18);
+    const targetFontSize = Math.round(targetRadius * 0.85);
+
+    canvas.getObjects().forEach(obj => {
+      const isPlayer = obj.data?.type === 'player' || 
+                       obj.data?.tipo === 'jugador' || 
+                       (obj.type === 'group' && 
+                        obj.getObjects && 
+                        obj.getObjects().length === 2 && 
+                        obj.getObjects().some(child => child.type === 'circle') && 
+                        obj.getObjects().some(child => child.type === 'text'));
+
+      if (isPlayer && obj.type === 'group') {
+        const circle = obj.getObjects().find(child => child.type === 'circle');
+        const text = obj.getObjects().find(child => child.type === 'text');
+
+        if (circle) {
+          circle.set({
+            radius: targetRadius,
+            strokeWidth: borderWidth,
+            dirty: true
+          });
+        }
+        if (text) {
+          text.set({
+            fontSize: targetFontSize,
+            dirty: true
+          });
+        }
+        obj.set({
+          scaleX: 1,
+          scaleY: 1,
+          dirty: true
+        });
+        obj._calcBounds(true);
+        obj.setCoords();
+      }
+    });
+    canvas.renderAll();
   }, []);
 
   const reposicionarTodo = useCallback((anchoAnterior, altoAnterior, anchoNuevo, altoNuevo) => {
@@ -292,8 +337,9 @@ const PizarraTactica = () => {
       }
       obj.setCoords();
     });
+    normalizarTamañoJugadores(fc);
     fc.renderAll();
-  }, []);
+  }, [normalizarTamañoJugadores]);
 
   // Auth & URL
   const { user, activeTeamId, getTeamPath: getTeamPathRaw } = useAuth();
@@ -974,7 +1020,8 @@ const PizarraTactica = () => {
     const fr = frRef.current;
     if (!fc || !fr) return null;
     
-    const { color = '#4CAF7D', label = '1', type = 'local', radius = RADIO_JUGADOR } = options;
+    const targetRadius = Math.max(15, Math.min(24, Math.round(fc.width * 0.038)));
+    const { color = '#4CAF7D', label = '1', type = 'local', radius = targetRadius } = options;
     
     // Obtener coordenadas relativas al CAMPO REAL
     const { rx, ry } = fr.getRelativePoint(x, y);
@@ -1096,9 +1143,10 @@ const PizarraTactica = () => {
     if (showRival) {
       drawTeam('rival', formations.rival, rivalColor, swapped ? 'L' : 'R');
     }
+    normalizarTamañoJugadores(canvas);
     syncingR.current = false;
     canvas.renderAll();
-  }, [createPlayer, localColor, rivalColor, showRival]);
+  }, [createPlayer, localColor, rivalColor, showRival, normalizarTamañoJugadores]);
 
   // ─── Aplicar Formación Imperativa (Solución para Android/Táctil y Reset) ───
   const aplicarFormacion = useCallback((teamType, formationName) => {
@@ -1172,6 +1220,7 @@ const PizarraTactica = () => {
       if (player) fc.add(player);
     });
 
+    normalizarTamañoJugadores(fc);
     ensurePlayersOnTop();
     syncingR.current = false;
     fc.renderAll();
@@ -1186,7 +1235,7 @@ const PizarraTactica = () => {
       guardarEstado(planId, frameState);
       try { localStorage.setItem(`mister11_pizarra_active_${activeTeamId}_${planId}`, JSON.stringify(frameState)); } catch (_) {}
     }
-  }, [createPlayer, localColor, rivalColor, isSwapped, fieldType, ready, saveFrameState, pushToHistory, serializarFrame, activeTeamId, planId, guardarEstado]);
+  }, [createPlayer, localColor, rivalColor, isSwapped, fieldType, ready, saveFrameState, pushToHistory, serializarFrame, activeTeamId, planId, guardarEstado, normalizarTamañoJugadores]);
 
 
   // ─── Initialize canvases once on mount ───────────────────────────────────
@@ -1655,6 +1704,7 @@ const PizarraTactica = () => {
         obj.setCoords();
       });
 
+      normalizarTamañoJugadores(fc);
       fc.renderAll();
 
       if (readyR.current && !presentR.current) {
@@ -2741,6 +2791,7 @@ const PizarraTactica = () => {
     const center = fc.getCenter();
     const player = createPlayer(center.left, center.top, { color, label, type, pos: '' });
     fc.add(player);
+    normalizarTamañoJugadores(fc);
     fc.setActiveObject(player);
     fc.renderAll();
   };

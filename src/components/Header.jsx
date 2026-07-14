@@ -26,7 +26,7 @@ const Header = ({ onToggleNotif }) => {
   };
 
   return (
-    <header className="header" style={{ position: 'relative' }}>
+    <header className="header">
       <div className="header-central-shield-container" style={{ cursor: 'pointer' }} onClick={() => navigate('/admin')}>
         {activeTeam?.escudo ? (
           <img 

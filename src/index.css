@@ -1215,37 +1215,38 @@ button, .nav-item, input, select, .icon-btn, .topbar-btn, .tool-icon-btn {
     flex-direction: column !important;
     height: 100dvh !important;
     overflow: hidden !important;
+    width: 100vw !important;
   }
 
   .main-content {
     flex: 1 !important;
     display: flex !important;
     flex-direction: column !important;
-    height: auto !important;
-    overflow-y: auto !important; /* Habilitar scroll por defecto */
-    overflow-x: hidden !important;
+    height: 100% !important;
+    min-height: 0 !important;
+    overflow: hidden !important; /* El contenedor no hace scroll */
     padding-bottom: 0 !important;
   }
 
   .main-wrapper {
     flex: 1 !important;
-    overflow: visible !important; /* Permitir scroll por defecto */
-    height: auto !important;
+    min-height: 0 !important;
+    overflow-y: auto !important; /* Único contenedor con scroll vertical */
+    overflow-x: hidden !important;
     display: flex !important;
     flex-direction: column !important;
+    padding-bottom: 30px !important; /* Colchón inferior cómodo */
+    -webkit-overflow-scrolling: touch !important;
   }
 
-  /* Excepción exclusiva: Bloquear scroll solo en la Pizarra Táctica */
-  body.pizarra-active .main-content {
-    overflow: hidden !important;
-  }
+  /* Excepción exclusiva: Bloquear scroll en la Pizarra Táctica */
   body.pizarra-active .main-wrapper {
     overflow: hidden !important;
   }
 
   .bottom-nav {
     display: flex !important;
-    position: static !important; /* Parte del flujo flex de empuje */
+    position: static !important; /* Fijo abajo por flujo flex */
     height: 64px !important;
     flex-shrink: 0 !important;
     width: 100% !important;

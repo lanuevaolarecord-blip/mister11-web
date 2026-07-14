@@ -645,31 +645,31 @@ const Partidos = () => {
   return (
     <div className="partidos-page">
       <header className="partidos-header">
-        <div className="header-top">
-          <h1>GESTIÓN DE PARTIDOS</h1>
-          <div className="header-actions">
+        <div className="header-top w-full flex flex-col space-y-3 md:flex-row md:justify-between md:items-center md:space-y-0">
+          <h1 className="w-full text-center md:text-left text-xl font-bold tracking-normal block whitespace-normal">GESTIÓN DE PARTIDOS</h1>
+          <div className="header-actions w-full flex flex-row flex-wrap justify-center gap-2 md:w-auto md:justify-end md:gap-3">
             {viewMode === 'LIST' ? (
               <>
                 {matches.length > 0 && (
                   <button 
-                    className="btn-outline-dark" 
+                    className="btn-outline-dark flex-1 w-full text-xs md:text-sm" 
                     onClick={handleExportAllMatchesICS}
-                    style={{ marginRight: '10px', minHeight: '44px', padding: '0 16px', fontWeight: 'bold' }}
+                    style={{ minHeight: '44px', padding: '0 16px', fontWeight: 'bold' }}
                   >
                     📥 EXPORTAR ICS
                   </button>
                 )}
-                <button className="btn-primary-dark" onClick={handleNewMatch}>+ NUEVO PARTIDO</button>
+                <button className="btn-primary-dark flex-1 w-full text-xs md:text-sm" onClick={handleNewMatch}>+ NUEVO PARTIDO</button>
               </>
             ) : (
               <>
                 {matchData.id && (
-                  <button className="btn-danger" onClick={handleDeleteMatch} disabled={isSaving}>
+                  <button className="btn-danger flex-1 w-full text-xs md:text-sm" onClick={handleDeleteMatch} disabled={isSaving}>
                     <TrashIcon /> ELIMINAR
                   </button>
                 )}
-                <button className="btn-outline-dark" onClick={() => setViewMode('LIST')}>CANCELAR</button>
-                <button className="btn-primary-dark" onClick={handleSaveMatch} disabled={isSaving}>
+                <button className="btn-outline-dark flex-1 w-full text-xs md:text-sm" onClick={() => setViewMode('LIST')}>CANCELAR</button>
+                <button className="btn-primary-dark flex-1 w-full text-xs md:text-sm" onClick={handleSaveMatch} disabled={isSaving}>
                   {isSaving ? 'GUARDANDO...' : 'GUARDAR PARTIDO'}
                 </button>
               </>
@@ -734,7 +734,7 @@ const Partidos = () => {
 
       {viewMode === 'EDIT' && (
         <div className="partidos-editor-container">
-          <div className="editor-tabs">
+          <div className="editor-tabs mt-4 flex flex-row flex-nowrap overflow-x-auto whitespace-nowrap">
             {['PRE-PARTIDO', 'CONVOCATORIA', 'ALINEACIÓN', 'MATCH-DAY', 'POST-PARTIDO'].map(tab => (
               <button 
                 key={tab} 

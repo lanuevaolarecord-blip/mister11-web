@@ -191,52 +191,9 @@ const AdminPanel = () => {
     return () => unsub();
   }, []);
 
-  // Versión remota del APK (campo que escribe upload-apk.mjs)
+  // Versión remota del APK (campo que escribe upload-apk.mjs) — actualización en tiempo real
   const remoteVersion = globalConfig?.latestApkVersion || globalConfig?.appVersion || APP_VERSION;
   const remoteApkUrl  = globalConfig?.apkDownloadUrl  || globalConfig?.apkUrl  || '/mister11.apk';
-
-  // Descarga el APK y lanza Browser nativo en Capacitor o pestaña en web
-  const downloadApk = async (url) => {
-    try {
-      if (Capacitor.isNativePlatform()) {
-        await Browser.open({ url, presentationStyle: 'popover' });
-      } else {
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = `mister11_v${remoteVersion}.apk`;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-      }
-    } catch (err) {
-      console.error('Error al descargar APK:', err);
-      window.open(url, '_blank');
-    }
-  };
-
-  // Compara versión local vs remota y notifica
-  const checkForUpdates = async () => {
-    setCheckingUpdate(true);
-    try {
-      const configSnap = await getDoc(doc(db, 'config', 'global'));
-      if (!configSnap.exists()) {
-        showToast('No se encontró información de actualización.', 'info');
-        return;
-      }
-      const data = configSnap.data();
-      const latest = data.latestApkVersion || data.appVersion || APP_VERSION;
-      if (latest !== APP_VERSION) {
-        showToast(`🎉 Nueva versión disponible: v${latest}. Pulsa «DESCARGAR APK» para instalarla.`, 'info');
-      } else {
-        showToast('✅ Ya tienes la versión más reciente instalada.', 'success');
-      }
-    } catch (err) {
-      console.error('Error al buscar actualizaciones:', err);
-      showToast('No se pudo comprobar actualizaciones.', 'error');
-    } finally {
-      setCheckingUpdate(false);
-    }
-  };
 
   // Cargar clave de Groq si el usuario es administrador
   useEffect(() => {

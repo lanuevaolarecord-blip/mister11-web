@@ -1620,45 +1620,9 @@ canvas.lower-canvas {
   to   { opacity: 1; transform: translateX(-50%) translateY(0);    }
 }
 
-@media (max-width: 768px) {
-  .pizarra-container,
-  .pizarra-root,
-  .pizarra-wrapper,
-  [class*="pizarra"] {
-    padding-bottom: calc(60px + var(--sab, 0px)) !important;
+/* Ocultar barra de navegación inferior cuando la pizarra está activa solo en landscape */
+@media (orientation: landscape) {
+  body.pizarra-active .bottom-nav {
+    display: none !important;
   }
-
-  .pizarra-timeline,
-  .timeline-bar,
-  [class*="timeline"] {
-    bottom: calc(60px + var(--sab, 0px)) !important;
-  }
-}
-
-/* Rotación forzada por Software/CSS para móviles en modo vertical */
-@media (max-width: 768px) and (orientation: portrait) {
-  .pizarra-container {
-    transform: rotate(90deg) !important;
-    transform-origin: center !important;
-    width: 100vh !important;
-    height: 100vw !important;
-    position: fixed !important;
-    top: 50% !important;
-    left: 50% !important;
-    margin-top: -50vw !important;
-    margin-left: -50vh !important;
-    z-index: 99999 !important;
-    padding-bottom: 0 !important;
-  }
-
-  .pizarra-timeline,
-  .timeline-bar,
-  [class*="timeline"] {
-    bottom: 0 !important;
-  }
-}
-
-/* Ocultar barra de navegación inferior cuando la pizarra está activa */
-body.pizarra-active .bottom-nav {
-  display: none !important;
 }

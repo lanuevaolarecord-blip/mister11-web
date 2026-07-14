@@ -1206,3 +1206,61 @@ button, .nav-item, input, select, .icon-btn, .topbar-btn, .tool-icon-btn {
   font-weight: 700;
 }
 
+/* ── LAYOUT DE PIZARRA ADAPTATIVO POR ORIENTACIÓN ── */
+
+/* 1. Modo Vertical (Portrait) en móviles: Layout flex vertical */
+@media (max-width: 768px) and (orientation: portrait) {
+  .app-container {
+    display: flex !important;
+    flex-direction: column !important;
+    height: 100dvh !important;
+    overflow: hidden !important;
+  }
+
+  .main-content {
+    flex: 1 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    height: auto !important;
+    overflow: hidden !important;
+    padding-bottom: 0 !important;
+  }
+
+  .main-wrapper {
+    flex: 1 !important;
+    overflow: hidden !important;
+    height: auto !important;
+    display: flex !important;
+    flex-direction: column !important;
+  }
+
+  .bottom-nav {
+    display: flex !important;
+    position: static !important; /* Parte del flujo flex de empuje */
+    height: 64px !important;
+    flex-shrink: 0 !important;
+    width: 100% !important;
+    border-top: 1px solid rgba(255, 255, 255, 0.1) !important;
+    box-sizing: border-box !important;
+  }
+}
+
+/* 2. Modo Horizontal (Landscape) en móviles: Priorizar canvas táctico */
+@media (orientation: landscape) and (max-height: 500px), (max-width: 950px) and (orientation: landscape) {
+  .app-container {
+    display: block !important;
+    height: 100dvh !important;
+    overflow: hidden !important;
+  }
+
+  .main-content {
+    width: 100% !important;
+    height: 100% !important;
+    padding-bottom: 0 !important;
+  }
+
+  .bottom-nav {
+    display: none !important; /* Ocultar barra en landscape para más espacio */
+  }
+}
+

@@ -82,35 +82,9 @@ const PizarraTactica = () => {
     });
 
     document.body.classList.add('pizarra-active');
-
-    // Bloquear orientación en landscape (Capacitor / Mobile native)
-    const lockOrientation = async () => {
-      if (Capacitor.isNativePlatform()) {
-        try {
-          const { ScreenOrientation } = await import('@capacitor/screen-orientation');
-          await ScreenOrientation.lock({ orientation: 'landscape' });
-        } catch (err) {
-          console.error('Failed to lock screen orientation:', err);
-        }
-      }
-    };
-    lockOrientation();
     
     return () => {
       document.body.classList.remove('pizarra-active');
-
-      // Restaurar orientación original (Capacitor / Mobile native)
-      const unlockOrientation = async () => {
-        if (Capacitor.isNativePlatform()) {
-          try {
-            const { ScreenOrientation } = await import('@capacitor/screen-orientation');
-            await ScreenOrientation.unlock();
-          } catch (err) {
-            console.error('Failed to unlock screen orientation:', err);
-          }
-        }
-      };
-      unlockOrientation();
 
       // Limpiar variable global de fabric para evitar fugas colaterales en la SPA (MEDIO-03)
       if (typeof window !== 'undefined') {
@@ -1628,14 +1602,7 @@ const PizarraTactica = () => {
       setIsMobile(isMobileView);
       setIsTablet(isTabletView);
 
-      // Si es móvil y la orientación física es vertical, invertimos las dimensiones del contenedor
-      // porque el CSS rotará el contenedor 90 grados para simular landscape.
-      const isPortraitMobile = isMobileView && (window.innerHeight > window.innerWidth);
-      if (isPortraitMobile) {
-        const temp = anchoContenedor;
-        anchoContenedor = altoContenedor;
-        altoContenedor = temp;
-      }
+      // Removida la inversión por rotación forzada para alinearse al flujo elástico de pantalla vertical.
 
       // Aspect Ratio Contain: el campo siempre visible (1.5:1)
       const aspect = 1.5;

@@ -3266,17 +3266,21 @@ const PizarraTactica = () => {
       {/* ── MOBILE DRAWERS ───────────────────────────────────────────────── */}
       {showTeamsDrawer && (
         <div className="bottom-drawer-overlay" onClick={() => setShowTeamsDrawer(false)}>
-          <div className="bottom-drawer" onClick={e => e.stopPropagation()}>
+          <div className="bottom-drawer flex flex-col" onClick={e => e.stopPropagation()}>
             <div className="drawer-handle" />
-            <TeamsPanel />
+            <div className="max-h-[60vh] overflow-y-auto pb-16">
+              <TeamsPanel />
+            </div>
           </div>
         </div>
       )}
       {showMatsDrawer && (
         <div className="bottom-drawer-overlay" onClick={() => setShowMatsDrawer(false)}>
-          <div className="bottom-drawer" onClick={e => e.stopPropagation()}>
+          <div className="bottom-drawer flex flex-col" onClick={e => e.stopPropagation()}>
             <div className="drawer-handle" />
-            <MaterialsPanel />
+            <div className="max-h-[60vh] overflow-y-auto pb-16">
+              <MaterialsPanel />
+            </div>
           </div>
         </div>
       )}

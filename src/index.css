@@ -893,8 +893,8 @@ button, .nav-item, input, select, .icon-btn, .topbar-btn, .tool-icon-btn {
     height: 100%;
     gap: 2px;
     color: rgba(255,255,255,0.5);
-    font-size: 9px;
-    font-weight: 500;
+    font-size: 10px !important;
+    font-weight: 600;
     text-decoration: none;
     cursor: pointer;
     transition: color 0.2s;
@@ -911,11 +911,81 @@ button, .nav-item, input, select, .icon-btn, .topbar-btn, .tool-icon-btn {
     height: 20px;
   }
 
-  /* Header en móvil más compacto */
+  .bottom-nav-icon {
+    font-size: 18px;
+    line-height: 1;
+  }
+
+  /* Reposicionar botones flotantes por encima de la barra inferior */
+  .fab, .fab-add, .fab-session {
+    bottom: calc(var(--nav-bottom-height) + 16px) !important;
+  }
+
+  /* Header en móvil más compacto y flex */
   .header {
-    height: 52px !important;
-    min-height: 52px !important;
-    padding: var(--sat) 12px 0 !important;
+    height: 56px !important;
+    min-height: 56px !important;
+    padding: calc(6px + var(--sat)) 16px 6px 16px !important;
+    display: flex !important;
+    flex-direction: row !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+  }
+
+  .header-title {
+    display: none !important;
+  }
+
+  .header-title-container {
+    order: 1 !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+  }
+
+  .header-central-shield-container {
+    order: 2 !important;
+    position: relative !important;
+    top: unset !important;
+    left: unset !important;
+    transform: unset !important;
+    width: auto !important;
+    height: auto !important;
+    box-shadow: none !important;
+    border: none !important;
+    background: transparent !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+
+  .header-central-shield-container img {
+    width: 36px !important;
+    height: 36px !important;
+    border-radius: 50% !important;
+  }
+
+  .header-actions {
+    order: 3 !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+  }
+
+  .header-actions .icon-btn {
+    padding: 6px !important;
+    min-width: 36px !important;
+    min-height: 36px !important;
+  }
+
+  /* Reducir el switcher de equipo en móvil */
+  .team-switcher-header-v2 {
+    padding: 4px 10px 4px 8px !important;
+  }
+  
+  .team-name-span {
+    max-width: 75px !important;
+    font-size: 11px !important;
   }
 
   /* Modales a pantalla completa en móvil */

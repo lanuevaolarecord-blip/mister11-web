@@ -892,18 +892,34 @@ canvas.lower-canvas {
   }
 
   .topbar-scroll-wrapper {
-    gap: 8px;
-    padding: 0 8px;
+    display: flex !important;
+    flex-direction: row !important;
+    flex-wrap: nowrap !important;
+    overflow-x: auto !important;
+    overflow-y: visible !important;
+    -webkit-overflow-scrolling: touch !important;
+    gap: 8px !important;
+    padding: 0 8px !important;
   }
 
   /* Botones compactos en topbar */
-  .tool-icon-btn, .topbar-btn {
+  .tool-icon-btn {
     width: 36px !important;
     height: 36px !important;
     min-width: 36px !important;
     min-height: 36px !important;
     padding: 0 !important;
     border-radius: 6px;
+  }
+
+  .topbar-btn {
+    width: auto !important;
+    min-width: auto !important;
+    height: 36px !important;
+    min-height: 36px !important;
+    padding: 0 10px !important;
+    border-radius: 6px;
+    white-space: nowrap !important;
   }
 
   .topbar-select {

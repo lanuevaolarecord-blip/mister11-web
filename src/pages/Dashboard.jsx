@@ -20,7 +20,8 @@ import {
   Crown,
   Info,
   Shield,
-  CheckCircle
+  CheckCircle,
+  Settings
 } from 'lucide-react';
 import { t } from '../i18n/translations';
 import { useTheme } from '../context/ThemeContext';
@@ -791,33 +792,12 @@ const Dashboard = () => {
         <div style={{ display: 'flex', gap: '32px', alignItems: 'center', flex: 1, justifyContent: 'space-between' }}>
           {[
             { label: t('nav.pizarra', settings.language), icon: <Presentation size={24} />, route: '/pizarra' },
-            { label: t('nav.sesiones', settings.language), icon: <FilePlus size={24} />, route: '/sesiones' }
-          ].map((action, idx) => (
-            <div key={idx} className="quick-access-wrapper" onClick={() => navigate(action.route)}>
-              <div className="quick-access-ring-outer">
-                <div className="quick-access-ring-inner">
-                  <div className="quick-access-btn-core">
-                    {action.icon}
-                  </div>
-                </div>
-              </div>
-              <span className="quick-access-label">{action.label}</span>
-            </div>
-          ))}
-
-          <button
-            className="btn-guardar-dashboard"
-            onClick={() => navigate('/admin', { state: { activeTab: 'ajustes' } })}
-            title="Ir a ajustes del equipo"
-          >
-            ⚙️ Ajustes
-          </button>
-
-          {[
+            { label: t('nav.sesiones', settings.language), icon: <FilePlus size={24} />, route: '/sesiones' },
+            { label: 'AJUSTES', icon: <Settings size={24} />, route: '/admin', state: { activeTab: 'ajustes' } },
             { label: t('nav.equipo', settings.language), icon: <Users size={24} />, route: '/equipo' },
             { label: t('nav.ia', settings.language), icon: <Sparkles size={24} />, route: '/ia-generadora' }
           ].map((action, idx) => (
-            <div key={idx} className="quick-access-wrapper" onClick={() => navigate(action.route)}>
+            <div key={idx} className="quick-access-wrapper" onClick={() => navigate(action.route, action.state ? { state: action.state } : undefined)}>
               <div className="quick-access-ring-outer">
                 <div className="quick-access-ring-inner">
                   <div className="quick-access-btn-core">

@@ -25,7 +25,7 @@ const BottomNav = () => {
             className={`bottom-nav-item ${activo ? 'active' : ''}`}
             onClick={() => navigate(item.ruta)}
           >
-            <span style={{ fontSize: 20 }}>{item.icono}</span>
+            <span className="bottom-nav-icon">{item.icono}</span>
             <span>{item.label}</span>
           </div>
         );

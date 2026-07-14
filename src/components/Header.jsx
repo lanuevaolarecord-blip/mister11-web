@@ -43,13 +43,13 @@ const Header = ({ onToggleNotif }) => {
         )}
       </div>
 
-      <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
-        <h1 style={{ fontFamily: 'var(--font-heading)', fontSize: '24px', margin: 0, letterSpacing: '1px' }}>{getPageTitle()}</h1>
+      <div className="header-title-container" style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
+        <h1 className="header-title" style={{ fontFamily: 'var(--font-heading)', fontSize: '24px', margin: 0, letterSpacing: '1px' }}>{getPageTitle()}</h1>
         
         {teams.length > 0 && (
           <div className="team-switcher-header-v2" style={{ position: 'relative', cursor: 'pointer', display: 'inline-flex', alignItems: 'center' }}>
             <Shield fill="#1B3A2D" color="#FFF" size={16} style={{ pointerEvents: 'none', marginRight: '6px' }} />
-            <span style={{ pointerEvents: 'none', marginRight: '6px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '140px' }}>
+            <span className="team-name-span" style={{ pointerEvents: 'none', marginRight: '6px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '140px' }}>
               {(activeTeam?.nombre || activeTeam?.name || 'MI EQUIPO').toUpperCase()}
             </span>
             <ChevronDown size={14} style={{ pointerEvents: 'none' }} />

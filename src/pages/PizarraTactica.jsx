@@ -3265,20 +3265,20 @@ const PizarraTactica = () => {
 
       {/* ── MOBILE DRAWERS ───────────────────────────────────────────────── */}
       {showTeamsDrawer && (
-        <div className="bottom-drawer-overlay" onClick={() => setShowTeamsDrawer(false)}>
-          <div className="bottom-drawer flex flex-col" onClick={e => e.stopPropagation()}>
+      <div className="bottom-drawer-overlay" onClick={() => setShowTeamsDrawer(false)}>
+          <div className="bottom-drawer flex flex-col w-full box-border" onClick={e => e.stopPropagation()}>
             <div className="drawer-handle" />
-            <div className="max-h-[60vh] overflow-y-auto pb-16">
+            <div className="max-h-[50vh] sm:max-h-[55vh] overflow-y-auto overscroll-contain px-2 pt-1 pb-16 w-full box-border">
               <TeamsPanel />
             </div>
           </div>
         </div>
       )}
       {showMatsDrawer && (
-        <div className="bottom-drawer-overlay" onClick={() => setShowMatsDrawer(false)}>
-          <div className="bottom-drawer flex flex-col" onClick={e => e.stopPropagation()}>
+      <div className="bottom-drawer-overlay" onClick={() => setShowMatsDrawer(false)}>
+          <div className="bottom-drawer flex flex-col w-full box-border" onClick={e => e.stopPropagation()}>
             <div className="drawer-handle" />
-            <div className="max-h-[60vh] overflow-y-auto pb-16">
+            <div className="max-h-[50vh] sm:max-h-[55vh] overflow-y-auto overscroll-contain px-2 pt-1 pb-16 w-full box-border">
               <MaterialsPanel />
             </div>
           </div>

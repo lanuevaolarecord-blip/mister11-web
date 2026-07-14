@@ -38,7 +38,7 @@ import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { storage, db } from '../firebaseConfig';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
-import { collection, getDocs, doc, getDoc, setDoc, updateDoc, serverTimestamp, arrayUnion } from 'firebase/firestore';
+import { collection, getDocs, doc, getDoc, setDoc, updateDoc, serverTimestamp, arrayUnion, onSnapshot } from 'firebase/firestore';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 import imageCompression from 'browser-image-compression';
 import EscudoEquipo from '../components/EscudoEquipo';
@@ -180,6 +180,63 @@ const AdminPanel = () => {
   const [teamEvaluaciones, setTeamEvaluaciones] = useState([]);
   const [checkingUpdate, setCheckingUpdate] = useState(false);
   const [groqApiKey, setGroqApiKey] = useState('');
+  // ── Configuración global en tiempo real (versión APK remota) ─────────────
+  const [globalConfig, setGlobalConfig] = useState(null);
+
+  useEffect(() => {
+    const configRef = doc(db, 'config', 'global');
+    const unsub = onSnapshot(configRef, (snap) => {
+      if (snap.exists()) setGlobalConfig(snap.data());
+    });
+    return () => unsub();
+  }, []);
+
+  // Versión remota del APK (campo que escribe upload-apk.mjs)
+  const remoteVersion = globalConfig?.latestApkVersion || globalConfig?.appVersion || APP_VERSION;
+  const remoteApkUrl  = globalConfig?.apkDownloadUrl  || globalConfig?.apkUrl  || '/mister11.apk';
+
+  // Descarga el APK y lanza Browser nativo en Capacitor o pestaña en web
+  const downloadApk = async (url) => {
+    try {
+      if (Capacitor.isNativePlatform()) {
+        await Browser.open({ url, presentationStyle: 'popover' });
+      } else {
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `mister11_v${remoteVersion}.apk`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      }
+    } catch (err) {
+      console.error('Error al descargar APK:', err);
+      window.open(url, '_blank');
+    }
+  };
+
+  // Compara versión local vs remota y notifica
+  const checkForUpdates = async () => {
+    setCheckingUpdate(true);
+    try {
+      const configSnap = await getDoc(doc(db, 'config', 'global'));
+      if (!configSnap.exists()) {
+        showToast('No se encontró información de actualización.', 'info');
+        return;
+      }
+      const data = configSnap.data();
+      const latest = data.latestApkVersion || data.appVersion || APP_VERSION;
+      if (latest !== APP_VERSION) {
+        showToast(`🎉 Nueva versión disponible: v${latest}. Pulsa «DESCARGAR APK» para instalarla.`, 'info');
+      } else {
+        showToast('✅ Ya tienes la versión más reciente instalada.', 'success');
+      }
+    } catch (err) {
+      console.error('Error al buscar actualizaciones:', err);
+      showToast('No se pudo comprobar actualizaciones.', 'error');
+    } finally {
+      setCheckingUpdate(false);
+    }
+  };
 
   // Cargar clave de Groq si el usuario es administrador
   useEffect(() => {
@@ -1024,21 +1081,7 @@ const AdminPanel = () => {
                         </div>
                       </div>
                       <button
-                        onClick={async () => {
-                          try {
-                            const configRef = doc(db, 'config', 'global');
-                            const configSnap = await getDoc(configRef);
-                            // Unificado: apkDownloadUrl con fallback a apkUrl y archivo local
-                            const url = configSnap.exists()
-                              ? (configSnap.data().apkDownloadUrl || configSnap.data().apkUrl || '/mister11.apk')
-                              : '/mister11.apk';
-                            await downloadApk(url, APP_VERSION);
-                          } catch (err) {
-                            console.error('Error al obtener URL de APK:', err);
-                            // Fallback: abrir enlace directo
-                            window.open('/mister11.apk', '_system');
-                          }
-                        }}
+                        onClick={() => downloadApk(remoteApkUrl)}
                         style={{
                           display: 'flex',
                           alignItems: 'center',
@@ -1060,7 +1103,7 @@ const AdminPanel = () => {
                           transition: 'all 0.2s ease',
                         }}
                       >
-                        ⬇️ DESCARGAR APK v{APP_VERSION}
+                        ⬇️ DESCARGAR APK v{remoteVersion}
                       </button>
                       <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginTop: '8px', marginBottom: 0, textAlign: 'center' }}>
                         Solo para Android · Habilita "Fuentes desconocidas" en Ajustes del sistema antes de instalar

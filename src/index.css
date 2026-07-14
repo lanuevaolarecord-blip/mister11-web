@@ -40,6 +40,13 @@
   --label-color: var(--text-primary);
 }
 
+:root {
+  --sat: env(safe-area-inset-top, 0px);
+  --sar: env(safe-area-inset-right, 0px);
+  --sab: env(safe-area-inset-bottom, 0px);
+  --sal: env(safe-area-inset-left, 0px);
+}
+
 /* THEME: DARK */
 .dark, html.dark {
   --text-primary: #F5F0E8;   /* Arena clara */
@@ -168,7 +175,7 @@ a {
   min-width: 260px;
   display: flex;
   flex-direction: column;
-  padding: 20px 0 calc(24px + env(safe-area-inset-bottom));
+  padding: 20px 0 calc(24px + var(--sab));
   border-right: 1px solid rgba(255, 255, 255, 0.1);
   color: #FFFFFF;
   height: 100dvh; /* dvh en lugar de vh */
@@ -323,9 +330,9 @@ a {
   align-items: center;
   justify-content: space-between;
   padding: 0 30px;
-  padding-top: env(safe-area-inset-top); /* Padding superior para barra de estado */
-  padding-left: calc(54px + env(safe-area-inset-left)); /* Espacio para hamburger + inset lateral */
-  padding-right: env(safe-area-inset-right);
+  padding-top: var(--sat); /* Padding superior para barra de estado */
+  padding-left: calc(54px + var(--sal)); /* Espacio para hamburger + inset lateral */
+  padding-right: var(--sar);
   background-color: #1B3A2D !important;
   border-bottom: 1px solid var(--border-color);
 }
@@ -333,8 +340,8 @@ a {
 @media (max-width: 768px) {
   .header {
     padding: 10px 15px;
-    padding-top: calc(10px + env(safe-area-inset-top));
-    padding-left: calc(54px + env(safe-area-inset-left));
+    padding-top: calc(10px + var(--sat));
+    padding-left: calc(54px + var(--sal));
   }
 }
 
@@ -589,7 +596,7 @@ input::placeholder, textarea::placeholder {
 /* GLOBAL HAMBURGER & SIDEBAR (ALL RESOLUTIONS) */
 .hamburger-btn {
   position: fixed;
-  top: env(safe-area-inset-top); /* Respetar notch/status bar */
+  top: var(--sat); /* Respetar notch/status bar */
   left: 0;
   width: 44px;
   height: 44px;
@@ -607,7 +614,7 @@ input::placeholder, textarea::placeholder {
 
 @media (max-width: 768px) {
   .hamburger-btn {
-    top: calc(8px + env(safe-area-inset-top));
+    top: calc(8px + var(--sat));
     left: 8px;
     border-radius: 8px;
   }
@@ -640,7 +647,7 @@ input::placeholder, textarea::placeholder {
   min-width: 0 !important;
   height: 100dvh !important;
   max-height: 100dvh !important;
-  padding-bottom: calc(24px + env(safe-area-inset-bottom)) !important;
+  padding-bottom: calc(24px + var(--sab)) !important;
   z-index: 1001 !important;
   transform: translateX(-100%);
   transition: transform 0.3s ease;

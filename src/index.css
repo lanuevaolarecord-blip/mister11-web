@@ -1222,16 +1222,25 @@ button, .nav-item, input, select, .icon-btn, .topbar-btn, .tool-icon-btn {
     display: flex !important;
     flex-direction: column !important;
     height: auto !important;
-    overflow: hidden !important;
+    overflow-y: auto !important; /* Habilitar scroll por defecto */
+    overflow-x: hidden !important;
     padding-bottom: 0 !important;
   }
 
   .main-wrapper {
     flex: 1 !important;
-    overflow: hidden !important;
+    overflow: visible !important; /* Permitir scroll por defecto */
     height: auto !important;
     display: flex !important;
     flex-direction: column !important;
+  }
+
+  /* Excepción exclusiva: Bloquear scroll solo en la Pizarra Táctica */
+  body.pizarra-active .main-content {
+    overflow: hidden !important;
+  }
+  body.pizarra-active .main-wrapper {
+    overflow: hidden !important;
   }
 
   .bottom-nav {

@@ -5,11 +5,12 @@
 
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { fabric } from 'fabric';
+import { Capacitor } from '@capacitor/core';
 
 // ─── Referencias de diseño ──────────────────────────────────────────────────
 const CANVAS_REF_WIDTH = 380;
 const CANVAS_REF_HEIGHT = 520;
-const RADIO_JUGADOR = 12.5;
+const RADIO_JUGADOR = (typeof window !== 'undefined' && (window.innerWidth < 768 || window.innerHeight < 768)) ? 22 : 12.5;
 
 // ─── Make fabric global BEFORE library imports use it ───────────────────────
 if (typeof window !== 'undefined') {
@@ -81,9 +82,36 @@ const PizarraTactica = () => {
     });
 
     document.body.classList.add('pizarra-active');
+
+    // Bloquear orientación en landscape (Capacitor / Mobile native)
+    const lockOrientation = async () => {
+      if (Capacitor.isNativePlatform()) {
+        try {
+          const { ScreenOrientation } = await import('@capacitor/screen-orientation');
+          await ScreenOrientation.lock({ orientation: 'landscape' });
+        } catch (err) {
+          console.error('Failed to lock screen orientation:', err);
+        }
+      }
+    };
+    lockOrientation();
     
     return () => {
       document.body.classList.remove('pizarra-active');
+
+      // Restaurar orientación original (Capacitor / Mobile native)
+      const unlockOrientation = async () => {
+        if (Capacitor.isNativePlatform()) {
+          try {
+            const { ScreenOrientation } = await import('@capacitor/screen-orientation');
+            await ScreenOrientation.unlock();
+          } catch (err) {
+            console.error('Failed to unlock screen orientation:', err);
+          }
+        }
+      };
+      unlockOrientation();
+
       // Limpiar variable global de fabric para evitar fugas colaterales en la SPA (MEDIO-03)
       if (typeof window !== 'undefined') {
         delete window.fabric;
@@ -1595,10 +1623,19 @@ const PizarraTactica = () => {
       }
 
       // Layout adaptativo
-      const isMobileView = window.innerWidth < 768;
-      const isTabletView = window.innerWidth >= 768 && window.innerWidth <= 1024;
+      const isMobileView = window.innerWidth < 768 || window.innerHeight < 768;
+      const isTabletView = !isMobileView && window.innerWidth <= 1024;
       setIsMobile(isMobileView);
       setIsTablet(isTabletView);
+
+      // Si es móvil y la orientación física es vertical, invertimos las dimensiones del contenedor
+      // porque el CSS rotará el contenedor 90 grados para simular landscape.
+      const isPortraitMobile = isMobileView && (window.innerHeight > window.innerWidth);
+      if (isPortraitMobile) {
+        const temp = anchoContenedor;
+        anchoContenedor = altoContenedor;
+        altoContenedor = temp;
+      }
 
       // Aspect Ratio Contain: el campo siempre visible (1.5:1)
       const aspect = 1.5;

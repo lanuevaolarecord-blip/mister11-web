@@ -3265,24 +3265,52 @@ const PizarraTactica = () => {
 
       {/* ── MOBILE DRAWERS ───────────────────────────────────────────────── */}
       {showTeamsDrawer && (
-      <div className="bottom-drawer-overlay" onClick={() => setShowTeamsDrawer(false)}>
-          <div className="bottom-drawer flex flex-col w-full box-border" onClick={e => e.stopPropagation()}>
-            <div className="drawer-handle" />
-            <div className="max-h-[50vh] sm:max-h-[55vh] overflow-y-auto overscroll-contain px-2 pt-1 pb-16 w-full box-border">
-              <TeamsPanel />
+        <>
+          {/* Backdrop/Overlay oscuro con z-index alto para atenuar fondo */}
+          <div 
+            className="fixed inset-0 bg-black/60 z-[24999]" 
+            onClick={() => setShowTeamsDrawer(false)}
+          />
+          {/* Contenedor del Drawer (Bottom Sheet Wrapper) */}
+          <div 
+            className="fixed bottom-0 left-0 right-0 z-[25000] pb-[env(safe-area-inset-bottom,0px)] bg-transparent"
+            onClick={() => setShowTeamsDrawer(false)}
+          >
+            <div 
+              className="bottom-drawer flex flex-col w-full box-border max-h-[55vh] h-[55vh] overflow-y-auto overscroll-contain pb-16" 
+              onClick={e => e.stopPropagation()}
+            >
+              <div className="drawer-handle" />
+              <div className="px-2 pt-1 w-full box-border">
+                <TeamsPanel />
+              </div>
             </div>
           </div>
-        </div>
+        </>
       )}
       {showMatsDrawer && (
-      <div className="bottom-drawer-overlay" onClick={() => setShowMatsDrawer(false)}>
-          <div className="bottom-drawer flex flex-col w-full box-border" onClick={e => e.stopPropagation()}>
-            <div className="drawer-handle" />
-            <div className="max-h-[50vh] sm:max-h-[55vh] overflow-y-auto overscroll-contain px-2 pt-1 pb-16 w-full box-border">
-              <MaterialsPanel />
+        <>
+          {/* Backdrop/Overlay oscuro con z-index alto para atenuar fondo */}
+          <div 
+            className="fixed inset-0 bg-black/60 z-[24999]" 
+            onClick={() => setShowMatsDrawer(false)}
+          />
+          {/* Contenedor del Drawer (Bottom Sheet Wrapper) */}
+          <div 
+            className="fixed bottom-0 left-0 right-0 z-[25000] pb-[env(safe-area-inset-bottom,0px)] bg-transparent"
+            onClick={() => setShowMatsDrawer(false)}
+          >
+            <div 
+              className="bottom-drawer flex flex-col w-full box-border max-h-[55vh] h-[55vh] overflow-y-auto overscroll-contain pb-16" 
+              onClick={e => e.stopPropagation()}
+            >
+              <div className="drawer-handle" />
+              <div className="px-2 pt-1 w-full box-border">
+                <MaterialsPanel />
+              </div>
             </div>
           </div>
-        </div>
+        </>
       )}
 
       {/* ── DESKTOP/TABLET DRAWERS (Colapsables) ─────────────────────────── */}

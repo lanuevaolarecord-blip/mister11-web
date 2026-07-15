@@ -997,6 +997,54 @@ canvas.lower-canvas {
   .panel-izq, .panel-der {
     display: none !important;
   }
+
+  /* Compactar las tarjetas de equipos en la pizarra móvil */
+  .bottom-drawer {
+    overflow-y: auto !important;
+    max-height: 55vh !important;
+    height: 55vh !important;
+  }
+  .team-card-pizarra {
+    padding: 6px 8px !important;
+    margin-bottom: 6px !important;
+  }
+  .team-header-pizarra {
+    gap: 6px !important;
+  }
+  .team-name-pizarra {
+    font-size: 13px !important;
+  }
+  .btn-add-player-pizarra {
+    width: 32px !important;
+    height: 32px !important;
+    font-size: 14px !important;
+  }
+  .formation-select-container-pizarra {
+    margin-top: 6px !important;
+    gap: 4px !important;
+  }
+  .formation-select-container-pizarra .formation-select-pizarra {
+    height: 30px !important;
+    font-size: 11px !important;
+  }
+  .btn-apply-formation-pizarra {
+    height: 30px !important;
+    padding: 0 8px !important;
+    font-size: 9px !important;
+  }
+  .panel-title {
+    margin-bottom: 4px !important;
+    font-size: 9px !important;
+  }
+  .acciones-panel-container-grid {
+    margin-top: 6px !important;
+    padding-top: 6px !important;
+    gap: 6px !important;
+  }
+  .toggle-rival, .btn-delete-pizarra {
+    height: 28px !important;
+    font-size: 9px !important;
+  }
 }
 
 /* ─────────────────────────────────────────────────────────────────────────────

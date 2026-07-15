@@ -1676,3 +1676,42 @@ canvas.lower-canvas {
     display: none !important;
   }
 }
+
+/* Botones flotantes de Equipos y Herramientas en pantalla completa */
+.btn-fullscreen-floating-left,
+.btn-fullscreen-floating-right {
+  pointer-events: auto !important;
+  position: absolute !important;
+  bottom: 16px !important;
+  width: 48px !important;
+  height: 48px !important;
+  border-radius: 50% !important;
+  background: rgba(26, 107, 46, 0.92) !important;
+  color: #FFFFFF !important;
+  border: 2px solid #4CAF7D !important;
+  box-shadow: 0 4px 14px rgba(0,0,0,0.45) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  font-size: 20px !important;
+  cursor: pointer !important;
+  backdrop-filter: blur(4px) !important;
+  transition: transform 0.15s !important;
+  z-index: 25000 !important;
+}
+
+.btn-fullscreen-floating-left {
+  left: 80px !important;
+  right: auto !important;
+}
+
+.btn-fullscreen-floating-right {
+  right: 80px !important;
+  left: auto !important;
+}
+
+.btn-fullscreen-floating-left:hover,
+.btn-fullscreen-floating-right:hover {
+  transform: scale(1.08) !important;
+}
+

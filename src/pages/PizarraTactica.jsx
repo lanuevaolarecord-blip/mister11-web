@@ -3167,24 +3167,43 @@ const PizarraTactica = () => {
             </div>
           )}
 
-          {/* Floating Buttons - Solo en móvil */}
-          {isMobile && (
-            <div className="floating-actions">
+          {/* Floating Buttons - Lógica condicional responsiva para Pantalla Completa */}
+          {fullscreenMode ? (
+            <>
               <button 
-                className="btn-floating-left" 
+                className="btn-fullscreen-floating-left" 
                 onClick={() => { setShowTeamsDrawer(true); setShowMatsDrawer(false); }}
                 title="Equipos"
               >
                 📋
               </button>
               <button 
-                className="btn-floating-right" 
+                className="btn-fullscreen-floating-right" 
                 onClick={() => { setShowMatsDrawer(true); setShowTeamsDrawer(false); }}
                 title="Materiales"
               >
                 🧰
               </button>
-            </div>
+            </>
+          ) : (
+            isMobile && (
+              <div className="floating-actions">
+                <button 
+                  className="btn-floating-left" 
+                  onClick={() => { setShowTeamsDrawer(true); setShowMatsDrawer(false); }}
+                  title="Equipos"
+                >
+                  📋
+                </button>
+                <button 
+                  className="btn-floating-right" 
+                  onClick={() => { setShowMatsDrawer(true); setShowTeamsDrawer(false); }}
+                  title="Materiales"
+                >
+                  🧰
+                </button>
+              </div>
+            )
           )}
 
           {/* Drawers laterales para TABLET (overlay sobre el canvas, sin desplazarlo) */}

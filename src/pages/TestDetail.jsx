@@ -39,8 +39,8 @@ const TestDetail = ({ test, players, onClose, onSave }) => {
 
   return (
     <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-content large" onClick={e => e.stopPropagation()}>
-        <div className="modal-header">
+      <div className="modal-content large" onClick={e => e.stopPropagation()} style={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - 56px)', maxHeight: 'calc(100vh - 56px)', overflow: 'hidden', backgroundColor: '#FAF8F5' }}>
+        <div className="modal-header" style={{ flexShrink: 0 }}>
           <div style={{display: 'flex', alignItems: 'center', gap: '15px'}}>
             <span className="t-cat" style={{backgroundColor: 'var(--accent-gold)', color: '#fff'}}>{test.category}</span>
             <h2 style={{margin: 0}}>{test.name}</h2>
@@ -48,7 +48,7 @@ const TestDetail = ({ test, players, onClose, onSave }) => {
           <button className="btn-close" onClick={onClose}>✕</button>
         </div>
         
-        <div className="modal-body" style={{ maxHeight: '70vh', overflowY: 'auto', padding: '20px' }}>
+        <div className="modal-body flex-1 overflow-y-auto overscroll-contain px-4 py-3 pb-24" style={{ padding: '20px' }}>
           <div className="form-group" style={{ marginBottom: '20px' }}>
             <label>Seleccionar Jugador a Evaluar</label>
             <select 
@@ -97,22 +97,23 @@ const TestDetail = ({ test, players, onClose, onSave }) => {
               </div>
             ))}
           </div>
-        </div>
-        
-        <div className="modal-footer" style={{justifyContent: 'space-between'}}>
-          <div style={{ color: '#64748b', fontSize: '0.9rem' }}>
-            {Object.keys(answers).length} de {test.questions?.length} respondidas
-          </div>
-          <div className="footer-actions">
-            <button className="btn-outline" onClick={onClose}>Cancelar</button>
-            <button 
-              className="btn-primary" 
-              onClick={handleSave}
-              disabled={!isComplete}
-              style={{ opacity: isComplete ? 1 : 0.5, cursor: isComplete ? 'pointer' : 'not-allowed' }}
-            >
-              Guardar Evaluación
-            </button>
+
+          {/* Botones de acción integrados en la zona de scroll con padding inferior */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginTop: '24px' }}>
+            <div style={{ color: '#64748b', fontSize: '0.9rem', textAlign: 'center', fontWeight: 'bold' }}>
+              {Object.keys(answers).length} de {test.questions?.length} respondidas
+            </div>
+            <div style={{ display: 'flex', gap: '10px' }}>
+              <button className="btn-outline" style={{ flex: 1, minHeight: '44px' }} onClick={onClose}>Cancelar</button>
+              <button 
+                className="btn-primary" 
+                onClick={handleSave}
+                disabled={!isComplete}
+                style={{ flex: 1, minHeight: '44px', opacity: isComplete ? 1 : 0.5, cursor: isComplete ? 'pointer' : 'not-allowed' }}
+              >
+                Guardar Evaluación
+              </button>
+            </div>
           </div>
         </div>
       </div>

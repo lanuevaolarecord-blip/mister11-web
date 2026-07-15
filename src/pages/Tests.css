@@ -496,6 +496,23 @@
     height: 150px;
     flex-shrink: 0;
   }
+  /* Estándar global de modales elásticos en Tests */
+  .modal-content.large, .modal-content {
+    height: calc(100dvh - 56px) !important;
+    max-height: calc(100dvh - 56px) !important;
+    display: flex !important;
+    flex-direction: column !important;
+    overflow: hidden !important;
+    background-color: #FAF8F5 !important;
+    bottom: 56px !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    border-radius: 16px 16px 0 0 !important;
+    margin: 0 !important;
+    position: fixed !important;
+    left: 0 !important;
+    right: 0 !important;
+  }
 }
 
 /* Dark Mode Overrides for Tests (Minimal) */

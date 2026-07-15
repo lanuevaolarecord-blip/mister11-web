@@ -358,7 +358,7 @@ Responde solo en español y usa formato markdown.`;
 
   return (
     <div className="ia-page">
-      <div className="ia-form-panel">
+      <div className="ia-form-panel landscape:max-h-[75vh] landscape:overflow-y-auto landscape:pb-8">
         <header className="ia-form-header">
           <div className="ia-header-text">
             <h1>✨ IA Generadora</h1>
@@ -378,14 +378,14 @@ Responde solo en español y usa formato markdown.`;
 
             <div className="ia-mode-cards">
               <button
-                className={`mode-card ${mode === 'tactico' ? 'active' : ''}`}
+                className={`mode-card ${mode === 'tactico' ? 'active' : ''} landscape:py-2`}
                 onClick={() => setMode('tactico')}
               >
                 <div className="mode-card-icon">⚽</div>
                 <span>Ejercicio<br/>Táctico</span>
               </button>
               <button
-                className={`mode-card ${mode === 'prevencion' ? 'active' : ''}`}
+                className={`mode-card ${mode === 'prevencion' ? 'active' : ''} landscape:py-2`}
                 onClick={() => setMode('prevencion')}
               >
                 <div className="mode-card-icon">🩺</div>

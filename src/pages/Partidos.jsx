@@ -645,31 +645,31 @@ const Partidos = () => {
   return (
     <div className="partidos-page">
       <header className="partidos-header">
-        <div className="header-top w-full flex flex-col space-y-3 md:flex-row md:justify-between md:items-center md:space-y-0">
-          <h1 className="w-full text-center md:text-left text-xl font-bold tracking-normal block whitespace-normal">GESTIÓN DE PARTIDOS</h1>
-          <div className="header-actions w-full flex flex-row flex-wrap justify-center gap-2 md:w-auto md:justify-end md:gap-3">
+        <div className="header-top w-full flex flex-col items-center space-y-4 md:flex-row md:justify-between md:items-center md:space-y-0 landscape:flex-row landscape:justify-between landscape:items-center landscape:space-y-0 px-4">
+          <h1 className="text-xl md:text-2xl font-bold text-slate-800 whitespace-normal text-center md:text-left tracking-wide">GESTIÓN DE PARTIDOS</h1>
+          <div className="header-actions flex flex-row items-center justify-center gap-2 w-full md:w-auto">
             {viewMode === 'LIST' ? (
               <>
                 {matches.length > 0 && (
                   <button 
-                    className="btn-outline-dark flex-1 w-full text-xs md:text-sm" 
+                    className="btn-outline-dark flex-1 md:flex-initial px-3 py-2 text-xs md:text-sm" 
                     onClick={handleExportAllMatchesICS}
-                    style={{ minHeight: '44px', padding: '0 16px', fontWeight: 'bold' }}
+                    style={{ minHeight: '40px', fontWeight: 'bold' }}
                   >
                     📥 EXPORTAR ICS
                   </button>
                 )}
-                <button className="btn-primary-dark flex-1 w-full text-xs md:text-sm" onClick={handleNewMatch}>+ NUEVO PARTIDO</button>
+                <button className="btn-primary-dark flex-1 md:flex-initial px-3 py-2 text-xs md:text-sm" onClick={handleNewMatch} style={{ minHeight: '40px' }}>+ NUEVO PARTIDO</button>
               </>
             ) : (
               <>
                 {matchData.id && (
-                  <button className="btn-danger flex-1 w-full text-xs md:text-sm" onClick={handleDeleteMatch} disabled={isSaving}>
+                  <button className="btn-danger flex-1 md:flex-initial px-3 py-2 text-xs md:text-sm" onClick={handleDeleteMatch} disabled={isSaving} style={{ minHeight: '40px' }}>
                     <TrashIcon /> ELIMINAR
                   </button>
                 )}
-                <button className="btn-outline-dark flex-1 w-full text-xs md:text-sm" onClick={() => setViewMode('LIST')}>CANCELAR</button>
-                <button className="btn-primary-dark flex-1 w-full text-xs md:text-sm" onClick={handleSaveMatch} disabled={isSaving}>
+                <button className="btn-outline-dark flex-1 md:flex-initial px-3 py-2 text-xs md:text-sm" onClick={() => setViewMode('LIST')} style={{ minHeight: '40px' }}>CANCELAR</button>
+                <button className="btn-primary-dark flex-1 md:flex-initial px-3 py-2 text-xs md:text-sm" onClick={handleSaveMatch} disabled={isSaving} style={{ minHeight: '40px' }}>
                   {isSaving ? 'GUARDANDO...' : 'GUARDAR PARTIDO'}
                 </button>
               </>

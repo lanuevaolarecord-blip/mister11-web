@@ -773,3 +773,30 @@ html.dark .result-actions {
   pointer-events: none;
   z-index: 3;
 }
+
+/* Optimización para orientación Landscape en móviles */
+@media screen and (orientation: landscape) and (max-height: 500px) {
+  .ia-form-panel {
+    max-height: 75vh !important;
+    height: 75vh !important;
+    overflow-y: auto !important;
+    padding-bottom: 24px !important;
+  }
+  .ia-form-header {
+    padding: 12px 20px 8px 20px !important;
+  }
+  .ia-mode-cards {
+    padding: 0 20px 8px 20px !important;
+  }
+  .mode-card {
+    padding: 6px 10px !important;
+    font-size: 10px !important;
+  }
+  .ia-field {
+    margin-bottom: 8px !important;
+  }
+  .btn-generate {
+    padding: 10px 16px !important;
+  }
+}
+

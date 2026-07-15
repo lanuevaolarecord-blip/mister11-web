@@ -555,6 +555,10 @@
   .player-sidebar {
     width: 100%;
     right: -100%;
+    height: calc(100dvh - 56px) !important;
+    max-height: calc(100dvh - 56px) !important;
+    overflow-y: auto !important;
+    padding-bottom: 80px !important;
   }
 }
 

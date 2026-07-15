@@ -1734,15 +1734,16 @@ const Tests = () => {
       {/* MODAL DETALLES DEL TEST */}
       {selectedTestDetail && (
         <div className="modal-overlay" onClick={() => setSelectedTestDetail(null)}>
-          <div className="modal-content large" onClick={e => e.stopPropagation()}>
-            <div className="modal-header">
+          <div className="modal-content large" onClick={e => e.stopPropagation()} style={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - 56px)', maxHeight: 'calc(100vh - 56px)', overflow: 'hidden', backgroundColor: '#FAF8F5' }}>
+            <div className="modal-header" style={{ flexShrink: 0 }}>
               <div style={{display: 'flex', alignItems: 'center', gap: '15px'}}>
                 <span className="t-cat">{selectedTestDetail.category}</span>
                 <h2 style={{margin: 0}}>{selectedTestDetail.name}</h2>
               </div>
               <button className="btn-close" onClick={() => setSelectedTestDetail(null)}>✕</button>
             </div>
-            <div className="modal-body test-detail-body">
+            
+            <div className="modal-body test-detail-body flex-1 overflow-y-auto overscroll-contain px-4 py-3 pb-24" style={{ padding: '20px' }}>
               <div className="test-image-placeholder" style={{ padding: selectedTestDetail.imagenProtocolo ? '0' : '20px', backgroundColor: selectedTestDetail.imagenProtocolo ? 'transparent' : '#e2e8f0', borderRadius: '12px', marginBottom: '20px', display: 'flex', justifyContent: 'center', alignItems: 'center', overflow: 'hidden' }}>
                 {selectedTestDetail.imagenProtocolo ? (
                   <img src={selectedTestDetail.imagenProtocolo} alt="Protocolo" style={{ width: '100%', height: 'auto', objectFit: 'contain' }} />
@@ -1750,13 +1751,13 @@ const Tests = () => {
                   <div className="vector-icon-large" style={{ fontSize: '3rem' }}>📊</div>
                 )}
               </div>
-              <div className="test-info-block">
+              <div className="test-info-block" style={{ padding: '0 0 20px 0' }}>
                 <div className="protocolo-card">
                   <h3>Objetivo y Descripción</h3>
                   <p>{selectedTestDetail.desc}</p>
                 </div>
                 
-                <div className="protocolo-card">
+                <div className="protocolo-card" style={{ marginTop: '16px' }}>
                   <h3>Protocolo de Ejecución</h3>
                   {typeof selectedTestDetail.protocol === 'string' ? (
                     <p>{selectedTestDetail.protocol || 'No se ha especificado un protocolo detallado para esta prueba.'}</p>
@@ -1771,15 +1772,17 @@ const Tests = () => {
                   )}
                 </div>
                 
-                <div className="test-meta">
+                <div className="test-meta" style={{ marginTop: '16px' }}>
                   <span><strong>Unidad de medida:</strong> {selectedTestDetail.unit}</span>
                 </div>
               </div>
-            </div>
-            <div className="modal-footer" style={{justifyContent: 'space-between'}}>
-              <button className="btn-outline-gold" onClick={() => descargarPlantilla(selectedTestDetail, players)}>⬇️ Descargar Plantilla de Toma de Datos</button>
-              <div className="footer-actions">
-                <button className="btn-primary" onClick={() => {
+
+              {/* Botones de acción integrados en la zona de scroll con colchón pb-24 */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginTop: '24px' }}>
+                <button className="btn-outline-gold" style={{ width: '100%', minHeight: '44px' }} onClick={() => descargarPlantilla(selectedTestDetail, players)}>
+                  ⬇️ Descargar Plantilla de Toma de Datos
+                </button>
+                <button className="btn-primary" style={{ width: '100%', minHeight: '44px' }} onClick={() => {
                   if (selectedTestDetail.isQuestionnaire) {
                     setRegSelectedTest(selectedTestDetail.id);
                     setIsQuestionnaireOpen(true);
@@ -1788,7 +1791,9 @@ const Tests = () => {
                     setIsRegModalOpen(true);
                   }
                   setSelectedTestDetail(null);
-                }}>Ir a Registrar Resultados</button>
+                }}>
+                  Ir a Registrar Resultados
+                </button>
               </div>
             </div>
           </div>
@@ -1804,38 +1809,41 @@ const Tests = () => {
       {/* MODAL REGISTRO */}
       {isRegModalOpen && (
         <div className="modal-overlay" onClick={() => setIsRegModalOpen(false)}>
-          <div className="modal-content large" onClick={e => e.stopPropagation()}>
-            <div className="modal-header">
-              <h2>Registro de Resultados: {getTestById(regSelectedTest)?.name}</h2>
+          <div className="modal-content large" onClick={e => e.stopPropagation()} style={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - 56px)', maxHeight: 'calc(100vh - 56px)', overflow: 'hidden', backgroundColor: '#FAF8F5' }}>
+            <div className="modal-header" style={{ flexShrink: 0 }}>
+              <h2>Registro: {getTestById(regSelectedTest)?.name}</h2>
               <button className="btn-close" onClick={() => setIsRegModalOpen(false)}>✕</button>
             </div>
-            <div className="modal-body" style={{ maxHeight: '60vh', overflowY: 'auto' }}>
+            <div className="modal-body flex-1 overflow-y-auto overscroll-contain px-4 py-3 pb-24" style={{ padding: '20px' }}>
               <div className="reg-main-header" style={{ marginBottom: '15px' }}>
                 <span className="unit-badge">Unidad: {getTestById(regSelectedTest)?.unit}</span>
               </div>
-              <div className="reg-players-grid">
+              <div className="reg-players-grid" style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                 {players.map(p => (
-                  <div key={p.id} className="reg-player-card">
-                    <div className="rp-info">
-                      <div className="rp-num">{p.number}</div>
-                      <div className="rp-name">{p.name}</div>
+                  <div key={p.id} className="reg-player-card" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--bg-primary)', padding: '10px 14px', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
+                    <div className="rp-info" style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                      <div className="rp-num" style={{ width: '28px', height: '28px', borderRadius: '50%', background: 'var(--accent-green-light)', color: 'var(--accent-green)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '13px', fontWeight: 'bold' }}>{p.number}</div>
+                      <div className="rp-name" style={{ fontSize: '14px', fontWeight: 'bold', color: 'var(--text-primary)' }}>{p.name}</div>
                     </div>
                     <input 
                       type="number" 
                       placeholder="0.00" 
                       value={regInputs[p.id] || ''}
                       onChange={e => setRegInputs({...regInputs, [p.id]: e.target.value})}
+                      style={{ width: '90px', padding: '8px', borderRadius: '6px', border: '1px solid var(--border-color)', background: 'var(--input-bg)', color: 'var(--input-text)', textAlign: 'right' }}
                     />
                   </div>
                 ))}
               </div>
-            </div>
-            <div className="modal-footer">
-              <button className="btn-outline" onClick={() => setIsRegModalOpen(false)}>Cancelar</button>
-              <button className="btn-primary" onClick={() => {
-                handleSaveRegistration();
-                setIsRegModalOpen(false);
-              }}>Guardar Resultados</button>
+
+              {/* Botones de acción integrados en la zona de scroll con colchón pb-24 */}
+              <div style={{ display: 'flex', gap: '10px', marginTop: '24px' }}>
+                <button className="btn-outline" style={{ flex: 1, minHeight: '44px' }} onClick={() => setIsRegModalOpen(false)}>Cancelar</button>
+                <button className="btn-primary" style={{ flex: 1, minHeight: '44px' }} onClick={() => {
+                  handleSaveRegistration();
+                  setIsRegModalOpen(false);
+                }}>Guardar Resultados</button>
+              </div>
             </div>
           </div>
         </div>

@@ -427,7 +427,7 @@ const MiEquipo = () => {
 
       {/* SIDEBAR DETALLE JUGADOR */}
       {selectedPlayer && (
-        <div className={`player-sidebar ${selectedPlayer ? 'open' : ''}`} style={{ background: 'var(--bg-app)', borderLeft: '1px solid var(--border-light)' }}>
+        <div className={`player-sidebar ${selectedPlayer ? 'open' : ''} h-[calc(100vh-56px)] max-h-[calc(100vh-56px)] overflow-y-auto overscroll-contain pb-20`} style={{ background: 'var(--bg-app)', borderLeft: '1px solid var(--border-light)' }}>
           <div style={{ position: 'relative', padding: '24px 24px 0 24px', textAlign: 'center' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', position: 'absolute', top: '16px', left: '16px', right: '16px' }}>
               <button style={{ background: 'none', border: 'none', fontSize: '20px', color: 'var(--text-secondary)', cursor: 'pointer' }} onClick={() => setSelectedPlayer(null)}>✕</button>
@@ -472,7 +472,7 @@ const MiEquipo = () => {
             <h2 style={{ margin: '0 0 4px 0', fontSize: '20px', fontFamily: 'var(--font-heading)', color: 'var(--text-primary)' }}>{selectedPlayer.name}</h2>
             <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px', fontSize: '18px', fontWeight: 'bold', color: 'var(--text-primary)', marginBottom: '24px' }}>
               <span>{selectedPlayer.number}</span>
-              <span style={{ fontSize: '14px', fontWeight: 'normal', color: 'var(--text-secondary)' }}>{selectedPlayer.position}</span>
+              <span className="capitalize" style={{ fontSize: '14px', fontWeight: 'normal', color: 'var(--text-secondary)' }}>{selectedPlayer.position}</span>
             </div>
           </div>
 
@@ -503,15 +503,15 @@ const MiEquipo = () => {
               <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: '12px', borderBottom: '1px dashed var(--border-light)' }}>
                   <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>Categoría</span>
-                  <strong style={{ fontSize: '13px', color: 'var(--text-primary)' }}>{activeTeam?.categoria || selectedPlayer.category}</strong>
+                  <strong className="capitalize" style={{ fontSize: '13px', color: 'var(--text-primary)' }}>{activeTeam?.categoria || selectedPlayer.category}</strong>
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: '12px', borderBottom: '1px dashed var(--border-light)' }}>
                   <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>Pie dominante</span>
-                  <strong style={{ fontSize: '13px', color: 'var(--text-primary)' }}>{selectedPlayer.foot}</strong>
+                  <strong className="capitalize" style={{ fontSize: '13px', color: 'var(--text-primary)' }}>{selectedPlayer.foot}</strong>
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: '12px', borderBottom: '1px dashed var(--border-light)' }}>
                   <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>Posición Principal</span>
-                  <span style={{ background: 'var(--accent-green-light)', color: 'var(--accent-green)', padding: '4px 12px', borderRadius: '16px', fontSize: '12px', fontWeight: 'bold' }}>{selectedPlayer.position}</span>
+                  <span className="capitalize" style={{ background: 'var(--accent-green-light)', color: 'var(--accent-green)', padding: '4px 12px', borderRadius: '16px', fontSize: '12px', fontWeight: 'bold' }}>{selectedPlayer.position}</span>
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: '12px', borderBottom: '1px dashed var(--border-light)' }}>
                   <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>Edad</span>

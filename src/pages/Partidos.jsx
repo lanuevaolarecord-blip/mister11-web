@@ -991,7 +991,7 @@ const Partidos = () => {
                   )}
                 </div>
 
-                <div className="alin-pitch-wrapper">
+                <div className="alin-pitch-wrapper w-full max-w-[400px] mx-auto flex items-center justify-center p-4 aspect-[4/3]">
                   <div className="alin-pitch-container" ref={pitchRef} onPointerMove={handlePitchPointerMove} onTouchMove={handlePitchPointerMove} style={{touchAction: 'none'}}>
                     <div className="pitch-outer-line">
                       <div className="pitch-line pitch-center-line"></div>

@@ -1744,9 +1744,9 @@ const Tests = () => {
             </div>
             
             <div className="modal-body test-detail-body flex-1 overflow-y-auto overscroll-contain px-4 py-3 pb-24" style={{ padding: '20px' }}>
-              <div className="test-image-placeholder" style={{ padding: selectedTestDetail.imagenProtocolo ? '0' : '20px', backgroundColor: selectedTestDetail.imagenProtocolo ? 'transparent' : '#e2e8f0', borderRadius: '12px', marginBottom: '20px', display: 'flex', justifyContent: 'center', alignItems: 'center', overflow: 'hidden' }}>
+              <div className="test-image-placeholder" style={{ padding: selectedTestDetail.imagenProtocolo ? '0' : '20px', backgroundColor: selectedTestDetail.imagenProtocolo ? 'transparent' : '#e2e8f0', borderRadius: '12px', marginBottom: '20px', display: 'flex', justifyContent: 'center', alignItems: 'center', overflow: 'hidden', width: '100%' }}>
                 {selectedTestDetail.imagenProtocolo ? (
-                  <img src={selectedTestDetail.imagenProtocolo} alt="Protocolo" style={{ width: '100%', height: 'auto', objectFit: 'contain' }} />
+                  <img src={selectedTestDetail.imagenProtocolo} alt="Protocolo" className="w-full h-auto max-h-[220px] object-contain rounded-xl block mx-auto" />
                 ) : (
                   <div className="vector-icon-large" style={{ fontSize: '3rem' }}>📊</div>
                 )}

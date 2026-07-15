@@ -1825,6 +1825,43 @@ html.dark .alin-player-item span.slot-role {
   background: var(--partidos-danger-bg);
 }
 
+/* Ajustes Responsive para móvil en vertical */
+@media (max-width: 767px) {
+  .alineacion-layout {
+    flex-direction: column !important;
+    overflow-y: auto !important;
+    align-items: center !important;
+    height: auto !important;
+    max-height: none !important;
+    gap: 24px !important;
+  }
+  .alin-sidebar {
+    width: 100% !important;
+    min-width: 100% !important;
+    height: auto !important;
+    max-height: none !important;
+    overflow-y: visible !important;
+  }
+  .alin-pitch-wrapper {
+    width: 100% !important;
+    max-width: 400px !important;
+    margin: 0 auto !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 16px !important;
+    aspect-ratio: 4 / 3 !important;
+    height: auto !important;
+  }
+  .alin-pitch-container {
+    width: 100% !important;
+    height: auto !important;
+    aspect-ratio: 105 / 68 !important;
+    max-height: 100% !important;
+    max-width: 100% !important;
+  }
+}
+
 /* Ajustes Responsive y Tablet Horizontal (>= 70% Ancho Campo) */
 @media (min-width: 768px) {
   .alineacion-layout {

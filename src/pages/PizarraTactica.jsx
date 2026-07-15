@@ -3268,19 +3268,25 @@ const PizarraTactica = () => {
         <>
           {/* Backdrop/Overlay oscuro con z-index alto para atenuar fondo */}
           <div 
-            className="fixed inset-0 bg-black/60 z-[24999]" 
+            className="fixed inset-0 bg-black/60 z-[24999] cursor-pointer" 
             onClick={() => setShowTeamsDrawer(false)}
           />
           {/* Contenedor del Drawer (Bottom Sheet Wrapper) */}
           <div 
-            className="fixed bottom-0 left-0 right-0 z-[25000] pb-[env(safe-area-inset-bottom,0px)] bg-transparent"
-            onClick={() => setShowTeamsDrawer(false)}
+            className="fixed inset-0 z-[25000] flex flex-col justify-end bg-transparent pointer-events-none"
           >
+            {/* Click-outside area inside wrapper */}
+            <div className="flex-1 pointer-events-auto" onClick={() => setShowTeamsDrawer(false)} />
+            
             <div 
-              className="bottom-drawer flex flex-col w-full box-border max-h-[55vh] h-[55vh] overflow-y-auto overscroll-contain pb-16" 
+              className="bottom-drawer flex flex-col w-full box-border max-h-[55vh] h-[55vh] overflow-y-auto overscroll-contain pb-16 pointer-events-auto" 
               onClick={e => e.stopPropagation()}
             >
-              <div className="drawer-handle" />
+              <div 
+                className="drawer-handle cursor-pointer" 
+                onClick={() => setShowTeamsDrawer(false)}
+                style={{ cursor: 'pointer' }}
+              />
               <div className="px-2 pt-1 w-full box-border">
                 <TeamsPanel />
               </div>
@@ -3292,19 +3298,25 @@ const PizarraTactica = () => {
         <>
           {/* Backdrop/Overlay oscuro con z-index alto para atenuar fondo */}
           <div 
-            className="fixed inset-0 bg-black/60 z-[24999]" 
+            className="fixed inset-0 bg-black/60 z-[24999] cursor-pointer" 
             onClick={() => setShowMatsDrawer(false)}
           />
           {/* Contenedor del Drawer (Bottom Sheet Wrapper) */}
           <div 
-            className="fixed bottom-0 left-0 right-0 z-[25000] pb-[env(safe-area-inset-bottom,0px)] bg-transparent"
-            onClick={() => setShowMatsDrawer(false)}
+            className="fixed inset-0 z-[25000] flex flex-col justify-end bg-transparent pointer-events-none"
           >
+            {/* Click-outside area inside wrapper */}
+            <div className="flex-1 pointer-events-auto" onClick={() => setShowMatsDrawer(false)} />
+            
             <div 
-              className="bottom-drawer flex flex-col w-full box-border max-h-[55vh] h-[55vh] overflow-y-auto overscroll-contain pb-16" 
+              className="bottom-drawer flex flex-col w-full box-border max-h-[55vh] h-[55vh] overflow-y-auto overscroll-contain pb-16 pointer-events-auto" 
               onClick={e => e.stopPropagation()}
             >
-              <div className="drawer-handle" />
+              <div 
+                className="drawer-handle cursor-pointer" 
+                onClick={() => setShowMatsDrawer(false)}
+                style={{ cursor: 'pointer' }}
+              />
               <div className="px-2 pt-1 w-full box-border">
                 <MaterialsPanel />
               </div>

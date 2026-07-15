@@ -23,8 +23,9 @@ const firebaseConfig = {
   appId:             '1:954668402587:web:ccae27f1bba1396d2b833e',
 };
 
-// ─── Datos de la versión ─────────────────────────────────────────────────────
-const APP_VERSION    = '1.1.9';
+// ─── Datos de la versión (Leída de package.json) ─────────────────────────────
+const pkgJson = JSON.parse(readFileSync(resolve(__dirname, 'package.json'), 'utf8'));
+const APP_VERSION = pkgJson.version;
 const APK_LOCAL_PATH = resolve(
   __dirname,
   'android/app/build/outputs/apk/release/mister11.apk'

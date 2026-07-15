@@ -645,9 +645,9 @@ const Partidos = () => {
   return (
     <div className="partidos-page">
       <header className="partidos-header">
-        <div className="header-top w-full flex flex-col items-center space-y-4 md:flex-row md:justify-between md:items-center md:space-y-0 landscape:flex-row landscape:justify-between landscape:items-center landscape:space-y-0 px-4">
-          <h1 className="text-xl md:text-2xl font-bold text-slate-800 whitespace-normal text-center md:text-left tracking-wide">GESTIÓN DE PARTIDOS</h1>
-          <div className="header-actions flex flex-row items-center justify-center gap-2 w-full md:w-auto">
+        <div className="header-top w-full flex flex-col items-center space-y-3 md:flex-row md:justify-between px-4">
+          <h1 className="whitespace-normal text-xl font-bold block text-center">GESTIÓN DE PARTIDOS</h1>
+          <div className="header-actions flex flex-row gap-2 w-full justify-center md:w-auto">
             {viewMode === 'LIST' ? (
               <>
                 {matches.length > 0 && (

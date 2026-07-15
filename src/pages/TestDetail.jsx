@@ -48,7 +48,7 @@ const TestDetail = ({ test, players, onClose, onSave }) => {
           <button className="btn-close" onClick={onClose}>✕</button>
         </div>
         
-        <div className="modal-body flex-1 overflow-y-auto overscroll-contain px-4 py-3 pb-24" style={{ padding: '20px' }}>
+        <div className="modal-body flex-1 overflow-y-auto overscroll-contain px-4 py-3 pb-24" style={{ padding: '20px 20px 100px 20px' }}>
           <div className="form-group" style={{ marginBottom: '20px' }}>
             <label>Seleccionar Jugador a Evaluar</label>
             <select 

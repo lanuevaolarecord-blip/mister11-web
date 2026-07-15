@@ -1743,7 +1743,7 @@ const Tests = () => {
               <button className="btn-close" onClick={() => setSelectedTestDetail(null)}>✕</button>
             </div>
             
-            <div className="modal-body test-detail-body flex-1 overflow-y-auto overscroll-contain px-4 py-3 pb-24" style={{ padding: '20px' }}>
+            <div className="modal-body test-detail-body flex-1 overflow-y-auto overscroll-contain px-4 py-3 pb-24" style={{ padding: '20px 20px 100px 20px' }}>
               <div className="test-image-placeholder" style={{ padding: selectedTestDetail.imagenProtocolo ? '0' : '20px', backgroundColor: selectedTestDetail.imagenProtocolo ? 'transparent' : '#e2e8f0', borderRadius: '12px', marginBottom: '20px', display: 'flex', justifyContent: 'center', alignItems: 'center', overflow: 'hidden', width: '100%' }}>
                 {selectedTestDetail.imagenProtocolo ? (
                   <img src={selectedTestDetail.imagenProtocolo} alt="Protocolo" className="w-full h-auto max-h-[220px] object-contain rounded-xl block mx-auto" />
@@ -1814,7 +1814,7 @@ const Tests = () => {
               <h2>Registro: {getTestById(regSelectedTest)?.name}</h2>
               <button className="btn-close" onClick={() => setIsRegModalOpen(false)}>✕</button>
             </div>
-            <div className="modal-body flex-1 overflow-y-auto overscroll-contain px-4 py-3 pb-24" style={{ padding: '20px' }}>
+            <div className="modal-body flex-1 overflow-y-auto overscroll-contain px-4 py-3 pb-24" style={{ padding: '20px 20px 100px 20px' }}>
               <div className="reg-main-header" style={{ marginBottom: '15px' }}>
                 <span className="unit-badge">Unidad: {getTestById(regSelectedTest)?.unit}</span>
               </div>

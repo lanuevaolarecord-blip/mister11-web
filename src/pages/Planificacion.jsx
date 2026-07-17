@@ -744,7 +744,10 @@ const Planificacion = () => {
     }
     
     const sesiones = activeMicros.reduce((sum, m) => sum + (Number(m.sessions) || 0), 0);
-    const sesionesMax = activeMicros.length * 4; // Promedio de 4 sesiones semanales como máximo
+    // FIX: El denominador se deriva del mismo parámetro base que el numerador.
+    // Antes: activeMicros.length * 4 (hardcodeado → daba 160 con 40 micros, incorrecto si hay ≠4 días)
+    // Ahora: activeMicros.length * trainingDays.length (siempre sincronizado con la configuración activa)
+    const sesionesMax = activeMicros.length * macroInfo.trainingDays.length;
     
     const trabajo = activeMicros.filter(m => ['Carga', 'Ajuste', 'Choque', 'Recup'].includes(m.carga)).length;
     const trabajoMax = activeMicros.length;
@@ -765,7 +768,7 @@ const Planificacion = () => {
       competMax,
       overall
     };
-  }, [activeTab, selectedMesoItem, microcycles, mesocycles]);
+  }, [activeTab, selectedMesoItem, microcycles, mesocycles, macroInfo]);
 
   const overallScore = useMemo(() => {
     const avg = microcycles.reduce((a, m) => a + (Number(m.physical||0) + Number(m.technical||0) + Number(m.tactical||0)) / 3, 0) / (microcycles.length || 1);

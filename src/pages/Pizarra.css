@@ -1733,3 +1733,67 @@ canvas.lower-canvas {
   transform: scale(1.08) !important;
 }
 
+/* PORTRAIT INTEGRATED FLOW DRAWER: Desplaza el canvas hacia arriba en vertical */
+.pizarra-portrait-drawer {
+  height: 40vh;
+  background: var(--bg-card);
+  border-top: 2px solid var(--border-color);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  flex-shrink: 0;
+  width: 100%;
+}
+
+.pizarra-portrait-drawer-header {
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 16px;
+  background: var(--bg-primary);
+  border-bottom: 1px solid var(--border-color);
+  flex-shrink: 0;
+}
+
+.pizarra-portrait-drawer-header h3 {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.btn-close-portrait-drawer {
+  background: transparent;
+  border: none;
+  font-size: 18px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  padding: 4px 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.pizarra-portrait-drawer-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 12px;
+  box-sizing: border-box;
+}
+
+.pizarra-portrait-drawer-body .team-card-pizarra {
+  padding: 8px 10px !important;
+  margin-bottom: 8px !important;
+}
+
+/* Botón flotante activo en modo retrato */
+.floating-actions .active,
+.btn-fullscreen-floating-left.active,
+.btn-fullscreen-floating-right.active {
+  background: var(--accent-gold) !important;
+  border-color: var(--accent-gold) !important;
+  color: var(--white) !important;
+}
+
+

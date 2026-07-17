@@ -1662,8 +1662,9 @@ const PizarraTactica = () => {
         altoContenedor = Math.max(altoContenedor - 32, 200);
       }
 
-      // Layout adaptativo
-      const isMobileView = window.innerWidth < 768 || window.innerHeight < 768;
+      // Layout adaptativo: 768px es el breakpoint estándar.
+      // Solo consideramos mobile si el ancho es menor a 768px, o si la altura es extremadamente pequeña (orientación horizontal en móvil).
+      const isMobileView = window.innerWidth < 768 || (window.innerWidth < 950 && window.innerHeight < 500);
       const isTabletView = !isMobileView && window.innerWidth <= 1024;
       setIsMobile(isMobileView);
       setIsTablet(isTabletView);
@@ -3165,19 +3166,19 @@ const PizarraTactica = () => {
             </div>
           )}
 
-          {/* Floating Buttons - Lógica condicional responsiva para Pantalla Completa */}
+          {/* Floating Buttons - Lógica condicional responsiva para Pantalla Completa o Modo Retrato */}
           {fullscreenMode ? (
             <>
               <button 
-                className="btn-fullscreen-floating-left" 
-                onClick={() => { setShowTeamsDrawer(true); setShowMatsDrawer(false); }}
+                className={`btn-fullscreen-floating-left ${showTeamsDrawer ? 'active' : ''}`} 
+                onClick={() => { setShowTeamsDrawer(v => !v); setShowMatsDrawer(false); }}
                 title="Equipos"
               >
                 📋
               </button>
               <button 
-                className="btn-fullscreen-floating-right" 
-                onClick={() => { setShowMatsDrawer(true); setShowTeamsDrawer(false); }}
+                className={`btn-fullscreen-floating-right ${showMatsDrawer ? 'active' : ''}`} 
+                onClick={() => { setShowMatsDrawer(v => !v); setShowTeamsDrawer(false); }}
                 title="Materiales"
               >
                 🧰
@@ -3187,15 +3188,15 @@ const PizarraTactica = () => {
             !showSidebars && (
               <div className="floating-actions">
                 <button 
-                  className="btn-floating-left" 
-                  onClick={() => { setShowTeamsDrawer(true); setShowMatsDrawer(false); }}
+                  className={`btn-floating-left ${showTeamsDrawer ? 'active' : ''}`} 
+                  onClick={() => { setShowTeamsDrawer(v => !v); setShowMatsDrawer(false); }}
                   title="Equipos"
                 >
                   📋
                 </button>
                 <button 
-                  className="btn-floating-right" 
-                  onClick={() => { setShowMatsDrawer(true); setShowTeamsDrawer(false); }}
+                  className={`btn-floating-right ${showMatsDrawer ? 'active' : ''}`} 
+                  onClick={() => { setShowMatsDrawer(v => !v); setShowTeamsDrawer(false); }}
                   title="Materiales"
                 >
                   🧰
@@ -3203,14 +3204,30 @@ const PizarraTactica = () => {
               </div>
             )
           )}
-
-          {/* Drawers laterales TABLET: eliminados — Sidebars fijos ya se muestran fuera del canvas */}
         </div>
 
         {/* Panel derecho — Materiales (tablet + desktop, solo landscape) */}
         {showSidebars && (
           <div className="panel-der">
             <MaterialsPanel />
+          </div>
+        )}
+
+        {/* PORTRAIT INTEGRATED DRAWER: Desplaza el campo hacia arriba en vertical */}
+        {!showSidebars && (showTeamsDrawer || showMatsDrawer) && (
+          <div className="pizarra-portrait-drawer">
+            <div className="pizarra-portrait-drawer-header">
+              <h3>{showTeamsDrawer ? 'Equipos y Formaciones' : 'Materiales'}</h3>
+              <button 
+                className="btn-close-portrait-drawer" 
+                onClick={() => { setShowTeamsDrawer(false); setShowMatsDrawer(false); }}
+              >
+                ✕
+              </button>
+            </div>
+            <div className="pizarra-portrait-drawer-body">
+              {showTeamsDrawer ? <TeamsPanel /> : <MaterialsPanel />}
+            </div>
           </div>
         )}
 
@@ -3258,82 +3275,7 @@ const PizarraTactica = () => {
         </div>
       </div>
 
-      {/* ── MOBILE DRAWERS ───────────────────────────────────────────────── */}
-      {showTeamsDrawer && (
-        <>
-          {/* Backdrop/Overlay oscuro con z-index alto para atenuar fondo */}
-          <div 
-            className="fixed inset-0 bg-black/60 z-[24999] cursor-pointer" 
-            onClick={() => setShowTeamsDrawer(false)}
-          />
-          {/* Contenedor del Drawer (Bottom Sheet Wrapper) */}
-          <div 
-            className="fixed inset-0 z-[25000] flex flex-col justify-end bg-transparent pointer-events-none"
-          >
-            {/* Click-outside area inside wrapper */}
-            <div className="flex-1 pointer-events-auto" onClick={() => setShowTeamsDrawer(false)} />
-            
-            <div 
-              className="bottom-drawer flex flex-col w-full box-border max-h-[55vh] h-[55vh] overflow-y-auto overscroll-contain pb-16 pointer-events-auto" 
-              onClick={e => e.stopPropagation()}
-            >
-              <div 
-                className="drawer-handle cursor-pointer" 
-                onClick={() => setShowTeamsDrawer(false)}
-                style={{ cursor: 'pointer' }}
-              />
-              <div className="px-2 pt-1 w-full box-border">
-                <TeamsPanel />
-              </div>
-            </div>
-          </div>
-        </>
-      )}
-      {showMatsDrawer && (
-        <>
-          {/* Backdrop/Overlay oscuro con z-index alto para atenuar fondo */}
-          <div 
-            className="fixed inset-0 bg-black/60 z-[24999] cursor-pointer" 
-            onClick={() => setShowMatsDrawer(false)}
-          />
-          {/* Contenedor del Drawer (Bottom Sheet Wrapper) */}
-          <div 
-            className="fixed inset-0 z-[25000] flex flex-col justify-end bg-transparent pointer-events-none"
-          >
-            {/* Click-outside area inside wrapper */}
-            <div className="flex-1 pointer-events-auto" onClick={() => setShowMatsDrawer(false)} />
-            
-            <div 
-              className="bottom-drawer flex flex-col w-full box-border max-h-[55vh] h-[55vh] overflow-y-auto overscroll-contain pb-16 pointer-events-auto" 
-              onClick={e => e.stopPropagation()}
-            >
-              <div 
-                className="drawer-handle cursor-pointer" 
-                onClick={() => setShowMatsDrawer(false)}
-                style={{ cursor: 'pointer' }}
-              />
-              <div className="px-2 pt-1 w-full box-border">
-                <MaterialsPanel />
-              </div>
-            </div>
-          </div>
-        </>
-      )}
 
-      {/* ── DESKTOP/TABLET DRAWERS (Colapsables) ─────────────────────────── */}
-      {!fullscreenMode && (
-        <>
-          {leftPanelOpen && <div className="pizarra-overlay" onClick={() => setLeftPanelOpen(false)} />}
-          <div className={`pizarra-drawer left ${leftPanelOpen ? 'open' : ''}`}>
-            <TeamsPanel />
-          </div>
-          
-          {rightPanelOpen && <div className="pizarra-overlay" onClick={() => setRightPanelOpen(false)} />}
-          <div className={`pizarra-drawer right ${rightPanelOpen ? 'open' : ''}`}>
-            <MaterialsPanel />
-          </div>
-        </>
-      )}
 
       {/* ── Dropdowns Flotantes (Ventanas Emergentes) ── */}
       {showColorPicker && (

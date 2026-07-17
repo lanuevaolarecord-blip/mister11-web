@@ -27,6 +27,7 @@ import { t } from '../i18n/translations';
 import { useTheme } from '../context/ThemeContext';
 import { db, auth } from '../firebaseConfig';
 import { doc, getDoc, collection, onSnapshot } from '../firebase/firestore-proxy';
+import UpgradeModal from '../components/UpgradeModal';
 import { createNotification } from '../firebase/db';
 import './Dashboard.css';
 
@@ -810,6 +811,14 @@ const Dashboard = () => {
           ))}
         </div>
       </div>
+
+      {paymentSuccessBanner && (
+        <UpgradeModal 
+          isOpen={true} 
+          onClose={() => setPaymentSuccessBanner(false)} 
+          isSuccessState={true}
+        />
+      )}
     </div>
   );
 };

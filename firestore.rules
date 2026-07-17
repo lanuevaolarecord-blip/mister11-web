@@ -32,9 +32,18 @@ service cloud.firestore {
       match /teams/{teamId} {
         allow read, write: if isOwner(userId) || isDevEmail();
 
-        // Subcolecciones de los equipos personales (players, tests, evaluaciones, planificaciones, etc.)
+        // Limitar la subcolección de players para usuarios gratuitos (Fase 1 Monetización)
+        match /players/{playerId} {
+          allow read, update, delete: if isOwner(userId) || isDevEmail();
+          allow create: if (isOwner(userId) || isDevEmail()) && (
+            get(/databases/$(database)/documents/users/$(userId)).data.get('plan', 'free') != 'free' ||
+            get(/databases/$(database)/documents/users/$(userId)/teams/$(teamId)).data.get('playerCount', 0) < 15
+          );
+        }
+
+        // Resto de subcolecciones de los equipos personales
         match /{subcollection}/{docId} {
-          allow read, write: if isOwner(userId) || isDevEmail();
+          allow read, write: if (isOwner(userId) || isDevEmail()) && subcollection != 'players';
         }
       }
 

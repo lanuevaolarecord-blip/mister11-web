@@ -31,6 +31,12 @@ export const usePlayers = (teamId) => {
       ...playerData
     });
     
+    // Actualizar playerCount en el documento del equipo
+    const pathParts = path.split('/');
+    const tId = pathParts.pop();
+    const colPath = pathParts.join('/');
+    await updateDocument(colPath, tId, { playerCount: players.length + 1 });
+    
     await createNotification('info', `Nuevo jugador añadido: ${playerData.nombre}`);
     return docId;
   };
@@ -44,7 +50,13 @@ export const usePlayers = (teamId) => {
   const removePlayer = async (id) => {
     if (!user || !teamId) return;
     const path = getTeamPath(teamId);
-    return await deleteDocument(`${path}/players`, id);
+    await deleteDocument(`${path}/players`, id);
+    
+    // Actualizar playerCount en el documento del equipo
+    const pathParts = path.split('/');
+    const tId = pathParts.pop();
+    const colPath = pathParts.join('/');
+    await updateDocument(colPath, tId, { playerCount: Math.max(0, players.length - 1) });
   };
 
   return { players, loading, addPlayer, updatePlayer, removePlayer };

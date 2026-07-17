@@ -27,7 +27,7 @@ const createStripeCheckoutSession = async (uid, priceId, successUrl, cancelUrl, 
   return sessionRef;
 };
 
-const UpgradeModal = ({ isOpen, onClose, message, urgency = false }) => {
+const UpgradeModal = ({ isOpen, onClose, message, urgency = false, isSuccessState = false }) => {
   const { activeTeamId } = useAuth();
   const [loadingPlan, setLoadingPlan] = useState(null);
   const [stripeError, setStripeError] = useState(null);
@@ -140,6 +140,37 @@ const UpgradeModal = ({ isOpen, onClose, message, urgency = false }) => {
   }, []);
 
   if (!isOpen) return null;
+
+  if (isSuccessState) {
+    return (
+      <div className="modal-overlay" onClick={onClose}>
+        <div className="upgrade-modal-wrapper success-loading-wrapper" onClick={e => e.stopPropagation()} style={{ padding: '24px', maxWidth: '500px' }}>
+          <div className="upgrade-modal-header" style={{ borderBottom: 'none', padding: 0 }}>
+            <button className="upgrade-close-x" onClick={onClose} aria-label="Cerrar">✕</button>
+            <div className="success-spinner-container" style={{ margin: '30px auto 16px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+              <div className="spinner" style={{ width: '48px', height: '48px', border: '4px solid rgba(46, 125, 50, 0.15)', borderTopColor: '#2e7d32', borderRadius: '50%' }}></div>
+              <h3 style={{ marginTop: '20px', fontSize: '1.3rem', fontWeight: '800', color: 'var(--text-primary)' }}>¡Pago Recibido!</h3>
+            </div>
+            <p style={{ 
+              fontSize: '0.92rem', 
+              lineHeight: '1.6', 
+              color: 'var(--text-secondary)', 
+              textAlign: 'center',
+              margin: '0 auto 20px',
+              padding: '0 10px'
+            }}>
+              Procesando tu suscripción... Stripe está confirmando el pago. Tu cuenta se actualizará a PRO automáticamente en unos instantes. Puedes cerrar esta ventana.
+            </p>
+          </div>
+          <div className="upgrade-modal-footer" style={{ borderTop: 'none', paddingTop: 0, marginTop: 0 }}>
+            <button className="upgrade-subscribe-btn btn-pro" onClick={onClose} style={{ maxWidth: '180px', margin: '0 auto' }}>
+              ENTENDIDO
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   const handleSubscribe = async (priceId, planName) => {
     setLoadingPlan(planName);

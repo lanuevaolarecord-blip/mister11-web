@@ -162,14 +162,34 @@ const PizarraTactica = () => {
   const ensurePlayersOnTop = useCallback(() => {
     const fc = fcRef.current;
     if (!fc) return;
-    // Mover todos los objetos tipo 'player' al frente
+
+    // 1. Enviar el objeto del campo (si existe) al fondo absoluto
     fc.getObjects().forEach(obj => {
-      if (obj.data?.type === 'player' || obj.data?.tipo === 'jugador') {
-        obj.bringToFront();
+      if (
+        obj.data?.type === 'field' || 
+        obj.data?.type === 'campo' || 
+        obj.id === 'campo' || 
+        obj.data?.type === 'background' ||
+        (obj.fill && (obj.fill === '#1b3a2d' || obj.fill === '#132a14' || obj.fill === '#224422'))
+      ) {
+        fc.sendToBack(obj);
       }
     });
-    fc.requestRenderAll();
+
+    // 2. Traer jugadores y materiales al frente
+    fc.getObjects().forEach(obj => {
+      const isPlayer = obj.data?.type === 'player' || obj.data?.tipo === 'jugador';
+      const isMaterial = obj.data?.type === 'material' || obj.data?.tipo === 'material' || obj.data?.isMaterial || obj.type === 'image';
+      if (isPlayer || isMaterial) {
+        fc.bringToFront(obj);
+      }
+    });
+
+    // 3. Refrescar instancia
+    fc.calcOffset();
+    fc.renderAll();
   }, []);
+
 
   const normalizarTamañoJugadores = useCallback((canvas) => {
     if (!canvas) return;
@@ -380,6 +400,16 @@ const PizarraTactica = () => {
   const [isTablet, setIsTablet] = useState(window.innerWidth >= 768 && window.innerWidth <= 1024);
   const [showTeamsDrawer, setShowTeamsDrawer] = useState(false);
   const [showMatsDrawer, setShowMatsDrawer] = useState(false);
+  
+  const toggleLeftPanel = () => {
+    setShowTeamsDrawer(prev => !prev);
+    setShowMatsDrawer(false);
+  };
+  const toggleRightPanel = () => {
+    setShowMatsDrawer(prev => !prev);
+    setShowTeamsDrawer(false);
+  };
+
   // Drawers laterales para tablet (desktop sin móvil)
   const [leftPanelOpen, setLeftPanelOpen] = useState(false);
   const [rightPanelOpen, setRightPanelOpen] = useState(false);
@@ -3166,6 +3196,27 @@ const PizarraTactica = () => {
             </div>
           )}
 
+          {/* MÓDULO 1: Paneles flotantes en pantalla completa */}
+          {fullscreenMode && showTeamsDrawer && (
+            <div className="absolute left-[90px] top-[80px] w-[320px] h-[calc(100vh-120px)] bg-white/95 backdrop-blur-md rounded-2xl shadow-2xl border border-gray-200 z-[1020] overflow-y-auto p-4 text-black fullscreen-floating-panel-left">
+              <div className="flex justify-between items-center mb-4 border-b pb-2">
+                <h3 className="font-bold text-lg text-gray-800">Equipos</h3>
+                <button className="text-gray-500 hover:text-black text-xl" onClick={() => setShowTeamsDrawer(false)}>✕</button>
+              </div>
+              <TeamsPanel />
+            </div>
+          )}
+
+          {fullscreenMode && showMatsDrawer && (
+            <div className="absolute right-[90px] top-[140px] w-[320px] h-[calc(100vh-180px)] bg-white/95 backdrop-blur-md rounded-2xl shadow-2xl border border-gray-200 z-[1020] overflow-y-auto p-4 text-black fullscreen-floating-panel-right">
+              <div className="flex justify-between items-center mb-4 border-b pb-2">
+                <h3 className="font-bold text-lg text-gray-800">Materiales</h3>
+                <button className="text-gray-500 hover:text-black text-xl" onClick={() => setShowMatsDrawer(false)}>✕</button>
+              </div>
+              <MaterialsPanel />
+            </div>
+          )}
+
           {/* Floating Buttons - Lógica condicional responsiva para Pantalla Completa o Modo Retrato */}
           {fullscreenMode ? (
             <>
@@ -3185,18 +3236,19 @@ const PizarraTactica = () => {
               </button>
             </>
           ) : (
+            /* MÓDULO 3: Restaurar botones flotantes en modo vertical */
             !showSidebars && (
-              <div className="floating-actions">
+              <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex flex-row gap-4 z-[1010]">
                 <button 
-                  className={`btn-floating-left ${showTeamsDrawer ? 'active' : ''}`} 
-                  onClick={() => { setShowTeamsDrawer(v => !v); setShowMatsDrawer(false); }}
+                  onClick={() => toggleLeftPanel()} 
+                  className={`w-12 h-12 rounded-full bg-[#2e7d32] text-white flex items-center justify-center shadow-lg text-xl transition-all duration-200 ${showTeamsDrawer ? 'active scale-95' : ''}`}
                   title="Equipos"
                 >
-                  📋
+                  👥
                 </button>
                 <button 
-                  className={`btn-floating-right ${showMatsDrawer ? 'active' : ''}`} 
-                  onClick={() => { setShowMatsDrawer(v => !v); setShowTeamsDrawer(false); }}
+                  onClick={() => toggleRightPanel()} 
+                  className={`w-12 h-12 rounded-full bg-[#c62828] text-white flex items-center justify-center shadow-lg text-xl transition-all duration-200 ${showMatsDrawer ? 'active scale-95' : ''}`}
                   title="Materiales"
                 >
                   🧰
@@ -3214,7 +3266,7 @@ const PizarraTactica = () => {
         )}
 
         {/* PORTRAIT INTEGRATED DRAWER: Desplaza el campo hacia arriba en vertical */}
-        {!showSidebars && (showTeamsDrawer || showMatsDrawer) && (
+        {!showSidebars && !fullscreenMode && (showTeamsDrawer || showMatsDrawer) && (
           <div className="pizarra-portrait-drawer">
             <div className="pizarra-portrait-drawer-header">
               <h3>{showTeamsDrawer ? 'Equipos y Formaciones' : 'Materiales'}</h3>

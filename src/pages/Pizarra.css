@@ -1796,4 +1796,54 @@ canvas.lower-canvas {
   color: var(--white) !important;
 }
 
+/* PANELES FLOTANTES DE PANTALLA COMPLETA (MÓDULO 1) */
+.fullscreen-floating-panel-left,
+.fullscreen-floating-panel-right {
+  color: #1e293b !important;
+}
+
+.fullscreen-floating-panel-left h3,
+.fullscreen-floating-panel-right h3 {
+  color: #0f172a !important;
+  margin: 0;
+}
+
+.fullscreen-floating-panel-left .team-card-pizarra,
+.fullscreen-floating-panel-right .team-card-pizarra {
+  background: #f8fafc !important;
+  border: 1px solid #e2e8f0 !important;
+  color: #334155 !important;
+}
+
+.fullscreen-floating-panel-left .team-header-pizarra span,
+.fullscreen-floating-panel-right .team-header-pizarra span {
+  color: #334155 !important;
+}
+
+.fullscreen-floating-panel-left select,
+.fullscreen-floating-panel-right select,
+.fullscreen-floating-panel-left input,
+.fullscreen-floating-panel-right input {
+  background: #ffffff !important;
+  color: #0f172a !important;
+  border: 1.5px solid #cbd5e1 !important;
+}
+
+.fullscreen-floating-panel-left .collapsible-header,
+.fullscreen-floating-panel-right .collapsible-header {
+  color: #334155 !important;
+  background: #f1f5f9 !important;
+}
+
+.fullscreen-floating-panel-left button:not(.btn-delete-pizarra),
+.fullscreen-floating-panel-right button:not(.btn-delete-pizarra) {
+  color: #0f172a !important;
+}
+
+/* Asegurar que el botón de salir de pantalla completa nunca quede bloqueado */
+.floating-exit {
+  z-index: 10030 !important; /* Más alto que 1020 */
+}
+
+
 

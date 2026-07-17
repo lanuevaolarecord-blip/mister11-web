@@ -11,6 +11,8 @@ service firebase.storage {
         'lavozdelformador@gmail.com'
       ];
     }
+
+
     // Resto de archivos: solo usuarios autenticados
     match /{allPaths=**} {
       allow read, write: if request.auth != null;

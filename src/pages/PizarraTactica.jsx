@@ -1324,6 +1324,13 @@ const PizarraTactica = () => {
     });
     fcRef.current = fc;
 
+    // Cerrar los drawers flotantes cuando se haga tap en cualquier parte del canvas
+    fc.on('mouse:down', () => {
+      setShowTeamsDrawer(false);
+      setShowMatsDrawer(false);
+    });
+
+
     // 3. ToolManager
     const tm = new ToolManager(fc);
     tmRef.current = tm;
@@ -3198,20 +3205,40 @@ const PizarraTactica = () => {
 
           {/* MÓDULO 1: Paneles flotantes en pantalla completa */}
           {fullscreenMode && showTeamsDrawer && (
-            <div className="absolute left-[90px] top-[80px] w-[320px] h-[calc(100vh-120px)] bg-white/95 backdrop-blur-md rounded-2xl shadow-2xl border border-gray-200 z-[1020] overflow-y-auto p-4 text-black fullscreen-floating-panel-left">
+            <div 
+              className="absolute left-[90px] top-[80px] w-[320px] h-[calc(100vh-120px)] bg-white/95 backdrop-blur-md rounded-2xl shadow-2xl border border-gray-200 z-[1020] overflow-y-auto p-4 text-black fullscreen-floating-panel-left"
+              style={{ zIndex: 10020, pointerEvents: 'auto' }}
+              onClick={(e) => e.stopPropagation()}
+              onMouseDown={(e) => e.stopPropagation()}
+              onMouseUp={(e) => e.stopPropagation()}
+              onTouchStart={(e) => e.stopPropagation()}
+              onTouchEnd={(e) => e.stopPropagation()}
+              onPointerDown={(e) => e.stopPropagation()}
+              onPointerUp={(e) => e.stopPropagation()}
+            >
               <div className="flex justify-between items-center mb-4 border-b pb-2">
                 <h3 className="font-bold text-lg text-gray-800">Equipos</h3>
-                <button className="text-gray-500 hover:text-black text-xl" onClick={() => setShowTeamsDrawer(false)}>✕</button>
+                <button className="text-gray-500 hover:text-black text-xl" onClick={(e) => { e.stopPropagation(); setShowTeamsDrawer(false); }}>✕</button>
               </div>
               <TeamsPanel />
             </div>
           )}
 
           {fullscreenMode && showMatsDrawer && (
-            <div className="absolute right-[90px] top-[140px] w-[320px] h-[calc(100vh-180px)] bg-white/95 backdrop-blur-md rounded-2xl shadow-2xl border border-gray-200 z-[1020] overflow-y-auto p-4 text-black fullscreen-floating-panel-right">
+            <div 
+              className="absolute right-[90px] top-[140px] w-[320px] h-[calc(100vh-180px)] bg-white/95 backdrop-blur-md rounded-2xl shadow-2xl border border-gray-200 z-[1020] overflow-y-auto p-4 text-black fullscreen-floating-panel-right"
+              style={{ zIndex: 10020, pointerEvents: 'auto' }}
+              onClick={(e) => e.stopPropagation()}
+              onMouseDown={(e) => e.stopPropagation()}
+              onMouseUp={(e) => e.stopPropagation()}
+              onTouchStart={(e) => e.stopPropagation()}
+              onTouchEnd={(e) => e.stopPropagation()}
+              onPointerDown={(e) => e.stopPropagation()}
+              onPointerUp={(e) => e.stopPropagation()}
+            >
               <div className="flex justify-between items-center mb-4 border-b pb-2">
                 <h3 className="font-bold text-lg text-gray-800">Materiales</h3>
-                <button className="text-gray-500 hover:text-black text-xl" onClick={() => setShowMatsDrawer(false)}>✕</button>
+                <button className="text-gray-500 hover:text-black text-xl" onClick={(e) => { e.stopPropagation(); setShowMatsDrawer(false); }}>✕</button>
               </div>
               <MaterialsPanel />
             </div>

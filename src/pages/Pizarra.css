@@ -1799,6 +1799,9 @@ canvas.lower-canvas {
 /* PANELES FLOTANTES DE PANTALLA COMPLETA (MÓDULO 1) */
 .fullscreen-floating-panel-left,
 .fullscreen-floating-panel-right {
+  position: absolute !important;
+  z-index: 10020 !important;
+  pointer-events: auto !important;
   color: #1e293b !important;
 }
 

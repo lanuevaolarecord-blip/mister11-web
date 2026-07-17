@@ -3265,22 +3265,22 @@ const PizarraTactica = () => {
           ) : (
             /* MÓDULO 3: Restaurar botones flotantes en modo vertical */
             !showSidebars && (
-              <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex flex-row gap-4 z-[1010]">
+              <>
                 <button 
                   onClick={() => toggleLeftPanel()} 
-                  className={`w-12 h-12 rounded-full bg-[#2e7d32] text-white flex items-center justify-center shadow-lg text-xl transition-all duration-200 ${showTeamsDrawer ? 'active scale-95' : ''}`}
+                  className={`btn-portrait-floating-left ${showTeamsDrawer ? 'active' : ''}`}
                   title="Equipos"
                 >
                   👥
                 </button>
                 <button 
                   onClick={() => toggleRightPanel()} 
-                  className={`w-12 h-12 rounded-full bg-[#c62828] text-white flex items-center justify-center shadow-lg text-xl transition-all duration-200 ${showMatsDrawer ? 'active scale-95' : ''}`}
+                  className={`btn-portrait-floating-right ${showMatsDrawer ? 'active' : ''}`}
                   title="Materiales"
                 >
                   🧰
                 </button>
-              </div>
+              </>
             )
           )}
         </div>

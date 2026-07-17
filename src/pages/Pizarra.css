@@ -1857,6 +1857,118 @@ canvas.lower-canvas {
     width: 100% !important;
     flex: 1 !important;
   }
+
+  /* BOTONES FLOTANTES EN MODO RETRATO (NO FULLSCREEN) */
+  .btn-portrait-floating-left,
+  .btn-portrait-floating-right {
+    pointer-events: auto !important;
+    position: absolute !important;
+    bottom: 16px !important;
+    width: 48px !important;
+    height: 48px !important;
+    border-radius: 50% !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    font-size: 20px !important;
+    cursor: pointer !important;
+    backdrop-filter: blur(4px) !important;
+    -webkit-backdrop-filter: blur(4px) !important;
+    z-index: 10010 !important; /* Por encima del canvas */
+    box-shadow: 0 4px 14px rgba(0,0,0,0.45) !important;
+    transition: transform 0.15s !important;
+  }
+
+  .btn-portrait-floating-left {
+    left: 16px !important;
+    background: rgba(46, 125, 50, 0.92) !important; /* Verde */
+    color: #FFFFFF !important;
+    border: 2px solid #4CAF7D !important;
+  }
+
+  .btn-portrait-floating-right {
+    right: 16px !important;
+    background: rgba(198, 40, 40, 0.92) !important; /* Rojo */
+    color: #FFFFFF !important;
+    border: 2px solid #ef5350 !important;
+  }
+
+  .btn-portrait-floating-left.active,
+  .btn-portrait-floating-right.active {
+    background: var(--accent-gold) !important;
+    border-color: var(--accent-gold) !important;
+    color: var(--white) !important;
+  }
+
+  .btn-portrait-floating-left:hover,
+  .btn-portrait-floating-right:hover {
+    transform: scale(1.08) !important;
+  }
+}
+
+/* MEJORA UI/UX DE LAS VENTANAS MODALES TÁCTICAS (GLASSMORPHISM) */
+.tactical-modal {
+  background: rgba(255, 255, 255, 0.9) !important;
+  backdrop-filter: blur(10px) !important;
+  -webkit-backdrop-filter: blur(10px) !important;
+  border-radius: 12px !important;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15) !important;
+  border: 1px solid rgba(226, 232, 240, 0.8) !important;
+  padding: 16px !important;
+}
+
+body.dark-mode .tactical-modal {
+  background: rgba(30, 41, 59, 0.9) !important;
+  border-color: rgba(255, 255, 255, 0.1) !important;
+  color: #f8fafc !important;
+}
+
+/* Inputs, selects y botones internos en modales y paneles flotantes */
+.tactical-modal input,
+.tactical-modal select,
+.fullscreen-floating-panel-left select,
+.fullscreen-floating-panel-left input,
+.fullscreen-floating-panel-right select,
+.fullscreen-floating-panel-right input {
+  border-radius: 6px !important;
+  padding: 8px 12px !important;
+  border: 1.5px solid #e2e8f0 !important;
+  background: #ffffff !important;
+  color: #0f172a !important;
+  outline: none !important;
+  transition: border-color 0.2s, box-shadow 0.2s !important;
+}
+
+.tactical-modal input:focus,
+.tactical-modal select:focus,
+.fullscreen-floating-panel-left select:focus,
+.fullscreen-floating-panel-left input:focus,
+.fullscreen-floating-panel-right select:focus,
+.fullscreen-floating-panel-right input:focus {
+  border-color: #2e7d32 !important; /* Verde corporativo Míster 11 */
+  box-shadow: 0 0 0 2px rgba(46, 125, 50, 0.25) !important;
+}
+
+/* Botones internos planos (no circulares) */
+.tactical-modal button:not(.btn-close-portrait-drawer):not(.btn-delete-pizarra),
+.fullscreen-floating-panel-left button:not(.btn-close-portrait-drawer):not(.btn-delete-pizarra):not(.btn-add-player-pizarra),
+.fullscreen-floating-panel-right button:not(.btn-close-portrait-drawer):not(.btn-delete-pizarra):not(.btn-add-player-pizarra) {
+  border-radius: 6px !important;
+  padding: 8px 14px !important;
+  border: 1px solid #cbd5e1 !important;
+  background: #f8fafc !important;
+  color: #334155 !important;
+  font-weight: 700 !important;
+  cursor: pointer !important;
+  transition: all 0.2s ease !important;
+}
+
+.tactical-modal button:not(.btn-close-portrait-drawer):not(.btn-delete-pizarra):hover,
+.fullscreen-floating-panel-left button:not(.btn-close-portrait-drawer):not(.btn-delete-pizarra):not(.btn-add-player-pizarra):hover,
+.fullscreen-floating-panel-right button:not(.btn-close-portrait-drawer):not(.btn-delete-pizarra):not(.btn-add-player-pizarra):hover {
+  background: #e8f5e9 !important;
+  border-color: #2e7d32 !important;
+  color: #2e7d32 !important;
 }
 
 

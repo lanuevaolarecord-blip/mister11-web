@@ -451,10 +451,27 @@ const PizarraTactica = () => {
     }
   }, [frames, autoExport, autoExportTriggered, isRecording]);
 
+  useEffect(() => {
+    const handleForceResize = () => {
+      const fc = fcRef.current;
+      if (fc && containerRef.current) {
+        fc.calcOffset();
+        fc.renderAll();
+      }
+    };
+    window.addEventListener('resize', handleForceResize);
+    window.addEventListener('orientationchange', handleForceResize);
+    return () => {
+      window.removeEventListener('resize', handleForceResize);
+      window.removeEventListener('orientationchange', handleForceResize);
+    };
+  }, []);
+
   // keep refs in sync with state
   useEffect(() => { frameIdxR.current = frameIdx; }, [frameIdx]);
   useEffect(() => { playingR.current = isPlaying; }, [isPlaying]);
   useEffect(() => { framesR.current = frames; }, [frames]);
+
 
 
 
@@ -1020,7 +1037,7 @@ const PizarraTactica = () => {
     const fr = frRef.current;
     if (!fc || !fr) return null;
     
-    const targetRadius = Math.max(15, Math.min(24, Math.round(fc.width * 0.038)));
+    const targetRadius = Math.max(10, Math.min(18, Math.round(fc.width * 0.025)));
     const { color = '#4CAF7D', label = '1', type = 'local', radius = targetRadius } = options;
     
     // Obtener coordenadas relativas al CAMPO REAL
@@ -2899,6 +2916,7 @@ const PizarraTactica = () => {
 
   // ─── JSX ──────────────────────────────────────────────────────────────────
   const isLandscape = window.innerWidth > window.innerHeight;
+  const showSidebars = !isMobile && !fullscreenMode && isLandscape;
 
   return (
     <>
@@ -3123,8 +3141,8 @@ const PizarraTactica = () => {
       {/* ── MAIN BOARD ────────────────────────────────────────────────────── */}
       <div className="pizarra-main">
 
-        {/* Panel izquierdo — Equipos (tablet + desktop, no en fullscreen) */}
-        {!isMobile && !fullscreenMode && (
+        {/* Panel izquierdo — Equipos (tablet + desktop, solo landscape) */}
+        {showSidebars && (
           <div className="panel-izq">
             <TeamsPanel />
           </div>
@@ -3166,7 +3184,7 @@ const PizarraTactica = () => {
               </button>
             </>
           ) : (
-            isMobile && (
+            !showSidebars && (
               <div className="floating-actions">
                 <button 
                   className="btn-floating-left" 
@@ -3189,8 +3207,8 @@ const PizarraTactica = () => {
           {/* Drawers laterales TABLET: eliminados — Sidebars fijos ya se muestran fuera del canvas */}
         </div>
 
-        {/* Panel derecho — Materiales (tablet + desktop, no en fullscreen) */}
-        {!isMobile && !fullscreenMode && (
+        {/* Panel derecho — Materiales (tablet + desktop, solo landscape) */}
+        {showSidebars && (
           <div className="panel-der">
             <MaterialsPanel />
           </div>

@@ -70,7 +70,7 @@ const generateMicrocycles = (startDate = '2025-09-01', sessionDuration = 90, tra
 const CircularGauge = ({ value, max, size = 90, color = '#4CAF7D', bgColor = '#e5e7eb', label }) => {
   const r = (size - 12) / 2;
   const circ = 2 * Math.PI * r;
-  const pct = Math.min(value / max, 1);
+  const pct = max > 0 ? Math.min(value / max, 1) : 0;
   const dash = pct * circ;
   return (
     <div style={{ position: 'relative', width: size, height: size, flexShrink: 0 }}>
@@ -89,7 +89,7 @@ const CircularGauge = ({ value, max, size = 90, color = '#4CAF7D', bgColor = '#e
 
 // ── PROGRESS BAR ────────────────────────────────────────────────────
 const ProgressBar = ({ value, max, color }) => {
-  const pct = Math.min((value / max) * 100, 100);
+  const pct = max > 0 ? Math.min((value / max) * 100, 100) : 0;
   return (
     <div style={{ background:'rgba(0,0,0,0.08)', borderRadius:4, height:8, flex:1, overflow:'hidden' }}>
       <div style={{ width:`${pct}%`, height:'100%', background: color, borderRadius:4, transition:'width 0.4s ease' }} />

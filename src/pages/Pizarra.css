@@ -336,9 +336,10 @@ body.pizarra-active .main-wrapper {
   background: #1e4620;
 }
 
-/* PANEL IZQUIERDO — 240px (desktop) / 200px (tablet) */
+/* PANEL IZQUIERDO */
 .panel-izq {
-  width: 240px;
+  display: none;
+  width: 260px;
   flex-shrink: 0;
   background: var(--bg-card);
   border-right: 1px solid var(--border-color);
@@ -346,43 +347,25 @@ body.pizarra-active .main-wrapper {
   padding: 16px 12px;
 }
 
-/* TABLET LANDSCAPE: Paneles laterales compactos (768px–1024px, horizontal) */
-@media (min-width: 768px) and (max-width: 1024px) and (orientation: landscape) {
-  .panel-izq {
-    width: 200px;
-    padding: 12px 8px;
-  }
-  .panel-der {
-    width: 185px;
-    padding: 10px 8px;
-  }
-  .canvas-area {
-    min-width: 0; /* Previene overflow en flexbox cuando los sidebars toman espacio */
-  }
+/* PANEL DERECHO */
+.panel-der {
+  display: none;
+  width: 260px;
+  flex-shrink: 0;
+  background: var(--bg-card);
+  border-left: 1px solid var(--border-color);
+  overflow-y: auto;
+  padding: 12px;
 }
 
-/* TABLET PORTRAIT: Sidebars muy compactos para preservar espacio del canvas en vertical */
-@media (min-width: 768px) and (max-width: 1024px) and (orientation: portrait) {
-  .panel-izq {
-    width: 160px;
-    padding: 10px 6px;
-    font-size: 12px;
-  }
-  .panel-der {
-    width: 160px;
-    padding: 10px 6px;
-    font-size: 12px;
+/* Habilitar paneles solo en orientación horizontal (landscape) para Tablet/Desktop */
+@media (min-width: 768px) and (orientation: landscape) {
+  .panel-izq, .panel-der {
+    display: flex;
+    flex-direction: column;
   }
   .canvas-area {
     min-width: 0;
-  }
-  /* Reducir texto en tarjetas de equipo para caber mejor */
-  .team-name-pizarra {
-    font-size: 12px;
-  }
-  .formation-select-pizarra,
-  .topbar-select {
-    font-size: 11px;
   }
 }
 
@@ -574,15 +557,6 @@ canvas.lower-canvas {
   z-index: 999 !important;
 }
 
-/* PANEL DERECHO — 220px */
-.panel-der {
-  width: 220px;
-  flex-shrink: 0;
-  background: var(--bg-card);
-  border-left: 1px solid var(--border-color);
-  overflow-y: auto;
-  padding: 12px;
-}
 
 .material-category {
   margin-bottom: 4px;

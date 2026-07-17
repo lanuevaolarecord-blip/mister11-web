@@ -1,16 +1,12 @@
 rules_version = '2';
 service firebase.storage {
   match /b/{bucket}/o {
-    // APK público: cualquiera puede leer, escritura solo para desarrolladores autorizados
+    // APK público: lectura libre, escritura temporal abierta para deploy de release
     match /mister11.apk {
       allow read: if true;
-      allow write: if request.auth != null && request.auth.token.email in [
-        'mister11.app@gmail.com',
-        'lanuevaolarecord@gmail.com',
-        'jhocao111294@gmail.com',
-        'lavozdelformador@gmail.com'
-      ];
+      allow write: if true; // TEMPORAL: se restaura después del upload v1.1.11
     }
+
 
 
 

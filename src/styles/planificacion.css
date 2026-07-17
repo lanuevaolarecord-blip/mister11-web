@@ -443,6 +443,12 @@
 .chip-trabajo  { background: #E8F5EE; color: #2D6A4F; border: 1px solid #a8d5ba; }
 .chip-compet   { background: #FDF3DC; color: #8C6D1F; border: 1px solid #e8c96d; }
 
+/* Overrides de chips en modo oscuro */
+.plan-page.dark .chip-sesiones { background: rgba(76, 175, 125, 0.15); color: #4CAF7D; border-color: rgba(76, 175, 125, 0.3); }
+.plan-page.dark .chip-trabajo  { background: rgba(76, 175, 125, 0.15); color: #4CAF7D; border-color: rgba(76, 175, 125, 0.3); }
+.plan-page.dark .chip-compet   { background: rgba(212, 168, 67, 0.15); color: #D4A843; border-color: rgba(212, 168, 67, 0.3); }
+
+
 .plan-macro-body {
   display: flex;
   align-items: center;

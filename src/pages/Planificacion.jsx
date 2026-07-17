@@ -104,6 +104,17 @@ const Planificacion = () => {
   const { isProActive } = usePlan();
   const [upgradeModal, setUpgradeModal] = useState({ open: false, message: '' });
 
+  // Colores adaptativos de contraste dorado/verde según el modo de tema
+  const sesionesColor = darkMode ? '#4CAF7D' : '#1B3A2D';
+  const sesionesBg = darkMode ? 'rgba(255, 255, 255, 0.1)' : '#E8F5EE';
+  
+  const trabajoColor = '#4CAF7D';
+  const trabajoBg = darkMode ? 'rgba(255, 255, 255, 0.1)' : '#E8F5EE';
+  
+  const competColor = '#D4A843';
+  const competBg = darkMode ? 'rgba(255, 255, 255, 0.1)' : '#FDF3DC';
+
+
   const [macroInfo, setMacroInfo] = useState({
     startDate: '2025-09-01',
     endDate: '2026-06-15',
@@ -959,7 +970,7 @@ const Planificacion = () => {
         <div className="plan-macro-body">
           {/* Left: score circle */}
           <div className="plan-macro-score">
-            <CircularGauge value={computedMetrics.sesiones} max={computedMetrics.sesionesMax} size={100} color="#1B3A2D" bgColor="#E8F5EE" />
+            <CircularGauge value={computedMetrics.sesiones} max={computedMetrics.sesionesMax} size={100} color={sesionesColor} bgColor={sesionesBg} />
           </div>
 
           {/* Center & right: 3 metric groups */}
@@ -970,11 +981,11 @@ const Planificacion = () => {
               <div className="plan-metric-header">
                 <span className="plan-metric-icon">📅</span>
                 <span className="plan-metric-name">SESIONES</span>
-                <span className="plan-metric-count">{computedMetrics.sesiones}/{computedMetrics.sesionesMax}</span>
+                <span className="plan-metric-count" style={{ color: sesionesColor }}>{computedMetrics.sesiones}/{computedMetrics.sesionesMax}</span>
               </div>
               <div style={{ display:'flex', alignItems:'center', gap:8, minHeight: '32px' }}>
-                <ProgressBar value={computedMetrics.sesiones} max={computedMetrics.sesionesMax} color="#1B3A2D" />
-                <span className="plan-metric-value-display" style={{ fontWeight: 800, fontSize: '13px', color: '#1B3A2D', whiteSpace: 'nowrap' }}>
+                <ProgressBar value={computedMetrics.sesiones} max={computedMetrics.sesionesMax} color={sesionesColor} />
+                <span className="plan-metric-value-display" style={{ fontWeight: 800, fontSize: '13px', color: sesionesColor, whiteSpace: 'nowrap' }}>
                   {computedMetrics.sesiones} / {computedMetrics.sesionesMax}
                 </span>
               </div>
@@ -982,7 +993,7 @@ const Planificacion = () => {
 
             {/* Score 2 */}
             <div className="plan-macro-score-mid">
-              <CircularGauge value={computedMetrics.trabajo} max={computedMetrics.trabajoMax} size={90} color="#4CAF7D" bgColor="#E8F5EE" />
+              <CircularGauge value={computedMetrics.trabajo} max={computedMetrics.trabajoMax} size={90} color={trabajoColor} bgColor={trabajoBg} />
             </div>
 
             {/* TRABAJO */}
@@ -991,11 +1002,11 @@ const Planificacion = () => {
                 <span className="plan-metric-icon">🏋</span>
                 <span className="plan-metric-name">TRABAJO</span>
                 <span className="plan-metric-badge">Tektips</span>
-                <span className="plan-metric-count">{computedMetrics.trabajo}/{computedMetrics.trabajoMax}</span>
+                <span className="plan-metric-count" style={{ color: trabajoColor }}>{computedMetrics.trabajo}/{computedMetrics.trabajoMax}</span>
               </div>
               <div style={{ display:'flex', alignItems:'center', gap:8, minHeight: '32px' }}>
-                <ProgressBar value={computedMetrics.trabajo} max={computedMetrics.trabajoMax} color="#4CAF7D" />
-                <span className="plan-metric-value-display" style={{ fontWeight: 800, fontSize: '13px', color: '#4CAF7D', whiteSpace: 'nowrap' }}>
+                <ProgressBar value={computedMetrics.trabajo} max={computedMetrics.trabajoMax} color={trabajoColor} />
+                <span className="plan-metric-value-display" style={{ fontWeight: 800, fontSize: '13px', color: trabajoColor, whiteSpace: 'nowrap' }}>
                   {computedMetrics.trabajo} / {computedMetrics.trabajoMax}
                 </span>
               </div>
@@ -1003,7 +1014,7 @@ const Planificacion = () => {
 
             {/* Score 3 */}
             <div className="plan-macro-score-mid">
-              <CircularGauge value={computedMetrics.compet} max={computedMetrics.competMax} size={90} color="#D4A843" bgColor="#FDF3DC" />
+              <CircularGauge value={computedMetrics.compet} max={computedMetrics.competMax} size={90} color={competColor} bgColor={competBg} />
             </div>
 
             {/* COMPET */}
@@ -1012,11 +1023,11 @@ const Planificacion = () => {
                 <span className="plan-metric-icon">🏆</span>
                 <span className="plan-metric-name">COMPET.</span>
                 <span className="plan-metric-badge chip-compet-badge">Competencia</span>
-                <span className="plan-metric-count">{computedMetrics.compet}/{computedMetrics.competMax}</span>
+                <span className="plan-metric-count" style={{ color: competColor }}>{computedMetrics.compet}/{computedMetrics.competMax}</span>
               </div>
               <div style={{ display:'flex', alignItems:'center', gap:8, minHeight: '32px' }}>
-                <ProgressBar value={computedMetrics.compet} max={computedMetrics.competMax} color="#D4A843" />
-                <span className="plan-metric-value-display" style={{ fontWeight: 800, fontSize: '13px', color: '#D4A843', whiteSpace: 'nowrap' }}>
+                <ProgressBar value={computedMetrics.compet} max={computedMetrics.competMax} color={competColor} />
+                <span className="plan-metric-value-display" style={{ fontWeight: 800, fontSize: '13px', color: competColor, whiteSpace: 'nowrap' }}>
                   {computedMetrics.compet} / {computedMetrics.competMax}
                 </span>
               </div>

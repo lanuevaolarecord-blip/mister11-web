@@ -26,23 +26,34 @@ const MATRIX_ROWS = [
   { id: 'fisio',     label: 'TEST FÍSICO',    type: 'check',  colorClass: 'row-fisio' },
   { id: 'infl',      label: 'DINÁMICA CARGA', type: 'badge',  colorClass: 'row-infl' },
   { id: 'volume',    label: 'VOLUMEN (MIN)',  type: 'number', colorClass: 'row-activ' },
-  { id: 'sessions',  label: 'SESIONES',       type: 'number', colorClass: 'row-artist' },
+  { id: 'sessions',  label: 'SESIONES',       type: 'number', colorClass: 'row-artist' }
 ];
 
+// Función auxiliar: obtiene la etiqueta del mes abreviado en español desde una fecha Date
+const getMonthLabel = (date) => {
+  const labels = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+  return labels[date.getMonth()];
+};
+
 const generateMicrocycles = (startDate = '2025-09-01', sessionDuration = 90, trainingDays = [0, 2, 4]) => {
+  const baseDate = new Date(startDate + 'T00:00:00');
   return Array.from({ length: 40 }, (_, i) => {
-    const monthIdx = Math.min(Math.floor(i / 4), MONTHS.length - 1);
+    // Calcular la fecha de inicio de cada microciclo (1 microciclo = 1 semana)
+    const microDate = new Date(baseDate);
+    microDate.setDate(baseDate.getDate() + i * 7);
+    const month = getMonthLabel(microDate);
+
     const isPrep = i < 8;
     const isTrans = i > 36;
-    let period = isPrep ? 'Prep' : (isTrans ? 'Trans' : 'Comp');
+    const period = isPrep ? 'Prep' : (isTrans ? 'Trans' : 'Comp');
     return {
       id: i + 1,
-      month: MONTHS[monthIdx],
+      month,
       periodo: period,
       carga: isPrep ? 'Carga' : 'Comp',
       microciclo: i + 1,
       fisio: i % 3 !== 0,
-      infl: i % 4 === 0 ? '↗' : (i % 4 === 1 ? '↘' : ''),
+      infl: i % 4 === 0 ? '\u2197' : (i % 4 === 1 ? '\u2198' : ''),
       activ: '2H',
       artist: Math.floor(20 + (i % 20)),
       mocior: Math.floor(13 + (i % 18)),
@@ -169,6 +180,39 @@ const Planificacion = () => {
 
     return () => clearTimeout(timer);
   }, [macroInfo, microcycles, macroCounts, user, activeTeamId, isLoaded]);
+
+  // ── SINCRONIZACIÓN EN CASCADA: Recalcular sessions/volume en todos los microciclos
+  // cuando el usuario cambia los días de entrenamiento, la duración de sesión o la fecha de inicio.
+  // Esto mantiene la coherencia de datos entre el macrociclo global y la tabla de microciclos.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    if (!isLoaded) return; // No sincronizar antes de que Firestore haya cargado los datos iniciales
+
+    const sessionsPerWeek = macroInfo.trainingDays.length;
+    const volPerWeek = sessionsPerWeek * Number(macroInfo.sessionDuration || 90);
+
+    // Recalcular también el mes de cada microciclo si cambió startDate
+    const baseDate = macroInfo.startDate ? new Date(macroInfo.startDate + 'T00:00:00') : null;
+    const monthLabels = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+
+    setMicrocycles(prev => prev.map((m, idx) => {
+      const updated = {
+        ...m,
+        sessions: sessionsPerWeek,  // Sincroniza sesiones/semana en todos los microciclos
+        volume: volPerWeek,          // Sincroniza volumen/semana (min) en todos los microciclos
+      };
+      // Re-derivar el mes desde la fecha de inicio si está disponible
+      if (baseDate) {
+        const microDate = new Date(baseDate);
+        microDate.setDate(baseDate.getDate() + idx * 7);
+        updated.month = monthLabels[microDate.getMonth()];
+      }
+      return updated;
+    }));
+  // Usamos JSON.stringify(trainingDays) para comparación estable de arrays en el dep array
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [JSON.stringify(macroInfo.trainingDays), macroInfo.sessionDuration, macroInfo.startDate, isLoaded]);
+
 
   const showToast = useCallback((msg, type = 'success') => {
     setToast({ msg, type });

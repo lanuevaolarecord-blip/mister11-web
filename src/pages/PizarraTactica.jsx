@@ -10,7 +10,7 @@ import { Capacitor } from '@capacitor/core';
 // ─── Referencias de diseño ──────────────────────────────────────────────────
 const CANVAS_REF_WIDTH = 380;
 const CANVAS_REF_HEIGHT = 520;
-const RADIO_JUGADOR = (typeof window !== 'undefined' && (window.innerWidth < 768 || window.innerHeight < 768)) ? 22 : 12.5;
+const RADIO_JUGADOR = (typeof window !== 'undefined' && (window.innerWidth < 768 || window.innerHeight < 768)) ? 16 : 12;
 
 // ─── Make fabric global BEFORE library imports use it ───────────────────────
 if (typeof window !== 'undefined') {
@@ -173,7 +173,7 @@ const PizarraTactica = () => {
 
   const normalizarTamañoJugadores = useCallback((canvas) => {
     if (!canvas) return;
-    const targetRadius = Math.max(15, Math.min(24, Math.round(canvas.width * 0.038)));
+    const targetRadius = Math.max(10, Math.min(18, Math.round(canvas.width * 0.025)));
     const borderWidth = Math.max(2, targetRadius * 0.18);
     const targetFontSize = Math.round(targetRadius * 0.85);
 
@@ -2915,28 +2915,8 @@ const PizarraTactica = () => {
                 {autoSaveStatus}
               </div>
             )}
-            {/* Botones para abrir paneles laterales en tablet (no-mobile) */}
-            {isTablet && !fullscreenMode && (
-              <>
-                <button
-                  className={`tool-icon-btn ${leftPanelOpen ? 'active' : ''}`}
-                  title="Panel Equipos"
-                  onClick={() => { setLeftPanelOpen(v => !v); setRightPanelOpen(false); }}
-                  style={{ fontSize: '18px' }}
-                >
-                  👥
-                </button>
-                <button
-                  className={`tool-icon-btn ${rightPanelOpen ? 'active' : ''}`}
-                  title="Panel Material"
-                  onClick={() => { setRightPanelOpen(v => !v); setLeftPanelOpen(false); }}
-                  style={{ fontSize: '18px' }}
-                >
-                  🧰
-                </button>
-                <div className="topbar-divider" />
-              </>
-            )}
+            {/* Los paneles laterales ahora son permanentes en tablet+desktop, sin toggle */}
+
             {!fullscreenMode && (
               <button className="topbar-btn secondary" onClick={() => {
                 setFullscreenMode(true);
@@ -3143,8 +3123,8 @@ const PizarraTactica = () => {
       {/* ── MAIN BOARD ────────────────────────────────────────────────────── */}
       <div className="pizarra-main">
 
-        {/* Panel izquierdo – Solo visible en desktop no-tablet (y no en fullscreen) */}
-        {!isMobile && !isTablet && !fullscreenMode && (
+        {/* Panel izquierdo — Equipos (tablet + desktop, no en fullscreen) */}
+        {!isMobile && !fullscreenMode && (
           <div className="panel-izq">
             <TeamsPanel />
           </div>
@@ -3206,33 +3186,11 @@ const PizarraTactica = () => {
             )
           )}
 
-          {/* Drawers laterales para TABLET (overlay sobre el canvas, sin desplazarlo) */}
-          {isTablet && leftPanelOpen && (
-            <>
-              <div className="pizarra-overlay" onClick={() => setLeftPanelOpen(false)} />
-              <div className="pizarra-drawer left open">
-                <div style={{ display: 'flex', justifyContent: 'flex-end', padding: '8px 8px 0' }}>
-                  <button onClick={() => setLeftPanelOpen(false)} style={{ background: 'transparent', border: 'none', color: 'var(--text-primary)', fontSize: '18px', cursor: 'pointer' }}>✕</button>
-                </div>
-                <TeamsPanel />
-              </div>
-            </>
-          )}
-          {isTablet && rightPanelOpen && (
-            <>
-              <div className="pizarra-overlay" onClick={() => setRightPanelOpen(false)} />
-              <div className="pizarra-drawer right open">
-                <div style={{ display: 'flex', justifyContent: 'flex-end', padding: '8px 8px 0' }}>
-                  <button onClick={() => setRightPanelOpen(false)} style={{ background: 'transparent', border: 'none', color: 'var(--text-primary)', fontSize: '18px', cursor: 'pointer' }}>✕</button>
-                </div>
-                <MaterialsPanel />
-              </div>
-            </>
-          )}
+          {/* Drawers laterales TABLET: eliminados — Sidebars fijos ya se muestran fuera del canvas */}
         </div>
 
-        {/* Panel derecho – Solo visible en desktop no-tablet */}
-        {!isMobile && !isTablet && (
+        {/* Panel derecho — Materiales (tablet + desktop, no en fullscreen) */}
+        {!isMobile && !fullscreenMode && (
           <div className="panel-der">
             <MaterialsPanel />
           </div>

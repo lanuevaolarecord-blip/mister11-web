@@ -29,6 +29,7 @@ const SharedPlan        = lazy(() => import('./pages/SharedPlan'));
 const AcceptInvitation  = lazy(() => import('./pages/AcceptInvitation'));
 const ConsentimientoFirma = lazy(() => import('./pages/ConsentimientoFirma'));
 const ConsentForm       = lazy(() => import('./pages/ConsentForm'));
+const DemoMode          = lazy(() => import('./pages/DemoMode'));
 
 import './App.css';
 
@@ -223,6 +224,12 @@ function App() {
           <Route 
             path="/consentimiento" 
             element={<ConsentForm />} 
+          />
+
+          {/* Ruta /demo: modo screenshots para Google Play Store (sin auth) */}
+          <Route
+            path="/demo"
+            element={<DemoMode />}
           />
 
           <Route 

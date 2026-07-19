@@ -1,0 +1,268 @@
+/* DemoMode.css — Estilos para la ruta /demo (Screenshots Play Store) */
+
+.demo-container {
+  min-height: 100vh;
+  background: #f0f4f0;
+  display: flex;
+  flex-direction: column;
+  font-family: 'Inter', 'Roboto', sans-serif;
+}
+
+/* ── Header ───────────────────────────────────────────────────────────────── */
+.demo-header {
+  background: linear-gradient(135deg, #1B3A2D 0%, #2d5a3d 100%);
+  color: white;
+  padding: 12px 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+.demo-header-left { display: flex; flex-direction: column; gap: 2px; }
+.demo-badge {
+  background: #D4A843;
+  color: #1B3A2D;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  width: fit-content;
+}
+.demo-subtitle { font-size: 11px; opacity: 0.75; }
+.demo-exit-btn {
+  background: rgba(255,255,255,0.15);
+  color: white;
+  border: 1px solid rgba(255,255,255,0.3);
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 13px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.demo-exit-btn:hover { background: rgba(255,255,255,0.25); }
+
+/* ── Nav ──────────────────────────────────────────────────────────────────── */
+.demo-nav {
+  display: flex;
+  overflow-x: auto;
+  background: #1B3A2D;
+  padding: 0 8px;
+  gap: 4px;
+  scrollbar-width: none;
+}
+.demo-nav::-webkit-scrollbar { display: none; }
+.demo-nav-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 10px 14px;
+  background: none;
+  border: none;
+  color: rgba(255,255,255,0.6);
+  font-size: 10px;
+  cursor: pointer;
+  white-space: nowrap;
+  border-bottom: 2px solid transparent;
+  transition: all 0.2s;
+}
+.demo-nav-btn.active {
+  color: #D4A843;
+  border-bottom-color: #D4A843;
+}
+.demo-nav-icon { font-size: 18px; }
+.demo-nav-label { font-size: 10px; font-weight: 600; }
+
+/* ── Content ─────────────────────────────────────────────────────────────── */
+.demo-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px;
+}
+.demo-view h2 {
+  font-size: 18px;
+  font-weight: 700;
+  color: #1B3A2D;
+  margin: 0 0 16px;
+}
+
+/* ── Dashboard ───────────────────────────────────────────────────────────── */
+.demo-team-name { font-size: 20px !important; }
+.demo-team-sub { color: #666; font-size: 13px; margin: -10px 0 16px; }
+.demo-stats-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+.demo-stat-card {
+  background: white;
+  border-radius: 10px;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+}
+.demo-stat-icon { font-size: 24px; }
+.demo-stat-value { font-size: 28px; font-weight: 800; color: #1B3A2D; }
+.demo-stat-label { font-size: 11px; color: #888; text-transform: uppercase; letter-spacing: 0.5px; }
+.demo-next-match {
+  background: white;
+  border-radius: 10px;
+  padding: 16px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+}
+.demo-next-match h3 { font-size: 14px; margin: 0 0 10px; color: #1B3A2D; }
+.demo-match-rival { font-size: 18px; font-weight: 700; color: #1B3A2D; margin-bottom: 6px; }
+.demo-match-details, .demo-match-place { font-size: 13px; color: #555; margin-bottom: 4px; }
+
+/* ── Equipo ──────────────────────────────────────────────────────────────── */
+.demo-players-list { display: flex; flex-direction: column; gap: 6px; }
+.demo-player-row {
+  background: white;
+  border-radius: 8px;
+  padding: 10px 14px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+}
+.demo-player-dorsal { font-size: 13px; font-weight: 700; color: #1B3A2D; min-width: 28px; }
+.demo-player-name { flex: 1; font-size: 14px; font-weight: 600; color: #222; }
+.demo-player-pos { font-size: 11px; color: #888; min-width: 90px; }
+.demo-player-estado { font-size: 11px; }
+
+/* ── Pizarra Field ───────────────────────────────────────────────────────── */
+.demo-field {
+  position: relative;
+  width: 100%;
+  padding-bottom: 150%;
+  background: linear-gradient(180deg, #2d7a3a 0%, #4CAF7D 50%, #2d7a3a 100%);
+  border-radius: 12px;
+  overflow: hidden;
+  border: 3px solid #1B3A2D;
+}
+.demo-field-center-line {
+  position: absolute;
+  top: 50%;
+  left: 5%;
+  right: 5%;
+  height: 2px;
+  background: rgba(255,255,255,0.6);
+  transform: translateY(-50%);
+}
+.demo-field-center-circle {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 60px;
+  height: 60px;
+  border: 2px solid rgba(255,255,255,0.6);
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+}
+.demo-field-penalty-top,
+.demo-field-penalty-bottom {
+  position: absolute;
+  left: 25%;
+  right: 25%;
+  height: 15%;
+  border: 2px solid rgba(255,255,255,0.6);
+}
+.demo-field-penalty-top { top: 0; border-top: none; }
+.demo-field-penalty-bottom { bottom: 0; border-bottom: none; }
+.demo-player-token {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+.demo-token-circle {
+  width: 30px;
+  height: 30px;
+  background: #1B3A2D;
+  border: 2px solid #D4A843;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 700;
+  color: white;
+}
+.demo-token-name {
+  font-size: 9px;
+  color: white;
+  font-weight: 600;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.8);
+  white-space: nowrap;
+}
+
+/* ── IA ──────────────────────────────────────────────────────────────────── */
+.demo-ia-chat { display: flex; flex-direction: column; gap: 12px; }
+.demo-ia-bubble {
+  padding: 12px 16px;
+  border-radius: 12px;
+  font-size: 14px;
+  line-height: 1.5;
+}
+.demo-ia-bubble.user {
+  background: #E8F5E9;
+  color: #1B3A2D;
+  align-self: flex-end;
+  max-width: 85%;
+  border-bottom-right-radius: 4px;
+}
+.demo-ia-bubble.ai {
+  background: white;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  border-bottom-left-radius: 4px;
+}
+.demo-ia-exercise h3 { font-size: 16px; color: #1B3A2D; margin: 0 0 10px; }
+.demo-ia-exercise p { font-size: 13px; color: #333; margin: 0 0 6px; }
+
+/* ── Tests ───────────────────────────────────────────────────────────────── */
+.demo-tests-list { display: flex; flex-direction: column; gap: 10px; }
+.demo-test-row {
+  background: white;
+  border-radius: 8px;
+  padding: 10px 14px;
+  display: grid;
+  grid-template-columns: 90px 1fr 55px 80px;
+  align-items: center;
+  gap: 8px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+}
+.demo-test-name { font-size: 13px; font-weight: 600; color: #222; }
+.demo-test-bar-wrap { background: #f0f0f0; border-radius: 4px; height: 8px; overflow: hidden; }
+.demo-test-bar { height: 100%; border-radius: 4px; transition: width 0.5s ease; }
+.demo-test-value { font-size: 13px; font-weight: 700; color: #1B3A2D; text-align: right; }
+.demo-test-navette { font-size: 11px; color: #888; text-align: right; }
+
+/* ── Planificación ───────────────────────────────────────────────────────── */
+.demo-plan-grid { display: flex; flex-direction: column; gap: 12px; }
+.demo-week-card {
+  background: white;
+  border-radius: 10px;
+  padding: 14px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+  border-left: 4px solid #4CAF7D;
+}
+.demo-week-card h4 { font-size: 13px; font-weight: 700; color: #1B3A2D; margin: 0 0 8px; }
+.demo-week-card ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px; }
+.demo-week-card li { font-size: 12px; color: #444; }
+
+/* ── Footer ──────────────────────────────────────────────────────────────── */
+.demo-footer {
+  background: #1B3A2D;
+  color: rgba(255,255,255,0.8);
+  text-align: center;
+  padding: 10px;
+  font-size: 12px;
+}

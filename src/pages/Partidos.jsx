@@ -11,7 +11,6 @@ import { useCustomFormations } from '../hooks/useCustomFormations';
 import { useMatchEvents } from '../hooks/useMatchEvents';
 import CustomFormationModal from '../components/CustomFormationModal';
 import FormationSelector from '../components/FormationSelector';
-import { createPortal } from 'react-dom';
 import './Partidos.css';
 import { normalizeText } from '../utils/normalizeInput';
 
@@ -1199,6 +1198,40 @@ const Partidos = () => {
                       </div>
                     </div>
                   </div>
+                  {/* MODAL PARA SELECCIONAR JUGADOR EN EVENTO MATCH DAY (Dentro del contenedor Fullscreen) */}
+                  {showEventPlayerSelector && (
+                    <div className="event-selector-overlay" onClick={() => setShowEventPlayerSelector(false)} style={{ zIndex: 99999 }}>
+                      <div className="event-selector-modal" onClick={e => e.stopPropagation()}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <h4 className="event-selector-title">
+                            {pendingEventType === 'gol_local' ? '⚽ Seleccionar Goleador' : 
+                             pendingEventType === 'amarilla' ? '🟨 Tarjeta Amarilla' :
+                             pendingEventType === 'roja' ? '🟥 Tarjeta Roja' : '🩺 Registrar Lesión'}
+                          </h4>
+                          <button 
+                            onClick={() => setShowEventPlayerSelector(false)}
+                            style={{ background: 'none', border: 'none', fontSize: '18px', cursor: 'pointer', color: 'var(--partidos-text-primary)' }}
+                          >✕</button>
+                        </div>
+                        
+                        <div className="event-selector-list">
+                          {calledPlayers.slice(0, 11).map(id => {
+                            const p = players.find(pl => pl.id === id);
+                            return p ? (
+                              <button 
+                                key={id}
+                                className="event-selector-item"
+                                type="button"
+                                onClick={() => handleSelectEventPlayer(id)}
+                              >
+                                {p.number} - {p.name}
+                              </button>
+                            ) : null;
+                          })}
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
             )}
@@ -1671,43 +1704,6 @@ const Partidos = () => {
           </div>
         </div>
       )}
-
-      {/* MODAL PARA SELECCIONAR JUGADOR EN EVENTO MATCH DAY */}
-      {showEventPlayerSelector && createPortal(
-        <div className="event-selector-overlay" onClick={() => setShowEventPlayerSelector(false)} style={{ zIndex: 99999 }}>
-          <div className="event-selector-modal" onClick={e => e.stopPropagation()}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <h4 className="event-selector-title">
-                {pendingEventType === 'gol_local' ? '⚽ Seleccionar Goleador' : 
-                 pendingEventType === 'amarilla' ? '🟨 Tarjeta Amarilla' :
-                 pendingEventType === 'roja' ? '🟥 Tarjeta Roja' : '🩺 Registrar Lesión'}
-              </h4>
-              <button 
-                onClick={() => setShowEventPlayerSelector(false)}
-                style={{ background: 'none', border: 'none', fontSize: '18px', cursor: 'pointer', color: 'var(--partidos-text-primary)' }}
-              >✕</button>
-            </div>
-            
-            <div className="event-selector-list">
-              {calledPlayers.slice(0, 11).map(id => {
-                const p = players.find(pl => pl.id === id);
-                return p ? (
-                  <button 
-                    key={id}
-                    className="event-selector-item"
-                    type="button"
-                    onClick={() => handleSelectEventPlayer(id)}
-                  >
-                    {p.number} - {p.name}
-                  </button>
-                ) : null;
-              })}
-            </div>
-          </div>
-        </div>,
-        document.body
-      )}
-
       {/* MODAL DE FORMACIÓN PERSONALIZADA */}
       <CustomFormationModal
         isOpen={isCustomModalOpen}

@@ -1,8 +1,9 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { generateSessionPDF } from '../utils/pdfGenerator';
 import { useSessions } from '../hooks/useSessions';
 import { usePlayers } from '../hooks/usePlayers';
 import { useAuth } from '../context/AuthContext';
+import { showToast } from '../utils/toast';
 import { useTeams } from '../hooks/useTeams';
 import { usePlan, LIMITS } from '../hooks/usePlan';
 import UpgradeModal from '../components/UpgradeModal';
@@ -102,29 +103,68 @@ const Sesiones = () => {
   const [exportingId, setExportingId] = useState(null);
 
   const handleExportMP4 = async (anim) => {
-    if (!anim.videoUrl) {
-      await showAlert("Aviso", "Aún no has guardado el video de esta animación. Por favor, abre la Pizarra y presiona el botón 'EXPORTAR MP4' para generarlo y guardarlo en la nube.");
-      return;
-    }
+    if (!anim) return;
     
-    try {
+    // Si ya existe la URL de video en la nube, descargamos directamente
+    if (anim.videoUrl) {
+      try {
+        setExportingId(anim.id);
+        const response = await fetch(anim.videoUrl);
+        const blob = await response.blob();
+        const reader = new FileReader();
+        reader.readAsDataURL(blob);
+        reader.onloadend = async () => {
+          try {
+            const base64data = reader.result.split(',')[1];
+            const fileType = anim.videoMimeType && anim.videoMimeType.includes('mp4') ? 'mp4' : 'webm';
+            const { downloadVideo } = await import('../utils/download.js');
+            await downloadVideo(base64data, `animacion_sesion.${fileType}`, anim.videoMimeType || 'video/webm');
+          } catch (e) {
+            console.error("Error al procesar descarga de video existente:", e);
+            showToast("Error al guardar el video localmente", "error");
+          } finally {
+            setExportingId(null);
+          }
+        };
+      } catch (err) {
+        console.error("Fallo al descargar video pre-renderizado:", err);
+        // Fallback: renderizar en segundo plano si el enlace de storage no responde
+        setExportingId(anim.id);
+        showToast("Intentando renderizar animación en segundo plano...", "info");
+      }
+    } else {
+      // Si no existe videoUrl (animación no compilada), disparamos la exportación en segundo plano
       setExportingId(anim.id);
-      const response = await fetch(anim.videoUrl);
-      const blob = await response.blob();
-      const reader = new FileReader();
-      reader.readAsDataURL(blob);
-      reader.onloadend = async () => {
-        const base64data = reader.result.split(',')[1];
-        const { downloadVideo } = await import('../utils/download.js');
-        await downloadVideo(base64data, `animacion-${anim.id}.mp4`, 'video/mp4');
-        setExportingId(null);
-      };
-    } catch (err) {
-      console.error(err);
-      await showAlert("Error", "Error al descargar el video. Intenta de nuevo.");
-      setExportingId(null);
+      showToast("Generando video de la animación en segundo plano. Por favor, espera...", "info");
     }
   };
+
+  useEffect(() => {
+    const handleExportMessage = async (event) => {
+      if (event.data && event.data.type === 'EXPORT_DONE') {
+        const { base64data, filename, mimeType } = event.data;
+        try {
+          const { downloadVideo } = await import('../utils/download.js');
+          const finalExt = filename.includes('mp4') ? 'mp4' : 'webm';
+          await downloadVideo(base64data, `animacion_sesion.${finalExt}`, mimeType);
+          showToast("🎉 Animación descargada exitosamente", "success");
+        } catch (err) {
+          console.error("Error descargando video renderizado en backend:", err);
+          await showAlert("Error", "No se pudo descargar la animación renderizada.");
+        } finally {
+          setExportingId(null);
+        }
+      } else if (event.data === 'EXPORT_ERROR') {
+        await showAlert("Error", "Error al procesar el renderizado en la pizarra táctica.");
+        setExportingId(null);
+      }
+    };
+
+    window.addEventListener('message', handleExportMessage);
+    return () => {
+      window.removeEventListener('message', handleExportMessage);
+    };
+  }, []);
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -299,36 +339,69 @@ const Sesiones = () => {
   };
 
   const handleDeleteAnimation = async (anim) => {
+    if (!anim) return;
     const confirmDelete = await showConfirm('Confirmar eliminación', '¿Eliminar esta animación permanentemente?');
     if (confirmDelete) {
       try {
         if (user && activeTeamId) {
-          const framesColRef = collection(db, getTeamPath(), 'pizarras', anim.id, 'frames');
-          const snap = await getDocs(framesColRef);
-          
-          if (!snap.empty) {
-            const batch = writeBatch(db);
-            snap.docs.forEach(d => {
-              batch.delete(d.ref);
-            });
-            await batch.commit();
-          }
-          
-          const pizarraDocRef = doc(db, getTeamPath(), 'pizarras', anim.id);
-          await deleteDoc(pizarraDocRef);
+          const teamPath = getTeamPath();
 
-          // Clear local storage reference to prevent Pizarra from recreating it
+          // 1. Borrar el video compilado de Storage (si existe y no es nulo)
+          if (anim.videoUrl && anim.videoUrl.includes('firebasestorage.googleapis.com')) {
+            try {
+              const fileType = anim.videoMimeType && anim.videoMimeType.includes('mp4') ? 'mp4' : 'webm';
+              const storagePath = `pizarras/${teamPath}/${anim.id}/video.${fileType}`;
+              const videoRef = ref(storage, storagePath);
+              await deleteObject(videoRef);
+            } catch (storageErr) {
+              console.warn('[handleDeleteAnimation] No se pudo eliminar el video de Storage (posiblemente no existía o expiró):', storageErr);
+            }
+          }
+
+          // 2. Borrar subcolección de frames en Firestore (si existe y no es nula)
+          try {
+            const framesColRef = collection(db, teamPath, 'pizarras', anim.id, 'frames');
+            const snap = await getDocs(framesColRef);
+            if (snap && !snap.empty) {
+              const batch = writeBatch(db);
+              snap.docs.forEach(d => {
+                batch.delete(d.ref);
+              });
+              await batch.commit();
+            }
+          } catch (framesErr) {
+            console.error('[handleDeleteAnimation] Error al borrar frames de la animación:', framesErr);
+          }
+
+          // 3. Borrar el documento de la pizarra en Firestore
+          try {
+            const pizarraDocRef = doc(db, teamPath, 'pizarras', anim.id);
+            await deleteDoc(pizarraDocRef);
+          } catch (docErr) {
+            console.error('[handleDeleteAnimation] Error al borrar documento pizarra:', docErr);
+          }
+
+          // 4. Limpiar almacenamiento local
           const lsKey = `mister11_last_pizarra_${activeTeamId}`;
           if (localStorage.getItem(lsKey) === anim.id) {
             localStorage.removeItem(lsKey);
           }
         }
 
-        await removeExercise(anim.id);
-        if (selectedAnimation?.id === anim.id) setSelectedAnimation(null);
+        // 5. Eliminar la referencia en la colección de ejercicios
+        try {
+          await removeExercise(anim.id);
+        } catch (exErr) {
+          console.error('[handleDeleteAnimation] Error al borrar el ejercicio en Firestore:', exErr);
+        }
+
+        if (selectedAnimation && selectedAnimation.id === anim.id) {
+          setSelectedAnimation(null);
+        }
+        showToast("Animación eliminada exitosamente", "success");
       } catch (error) {
-        console.error("Error eliminando animación: ", error);
-        await showAlert("Error", "Error al eliminar animación.");
+        console.error("Error general eliminando animación: ", error);
+        await showAlert("Error", "Error al eliminar la animación.");
       }
     }
   };
@@ -1043,6 +1116,12 @@ const Sesiones = () => {
             <div style={{marginTop: '20px', width: '40px', height: '40px', border: '4px solid rgba(76,175,125,0.3)', borderTop: '4px solid #4CAF7D', borderRadius: '50%', animation: 'spin 1s linear infinite', margin: '0 auto'}}></div>
             <style>{`@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }`}</style>
           </div>
+          {/* Iframe invisible para forzar la compilación del video en segundo plano usando la Pizarra Táctica */}
+          <iframe 
+            src={`/pizarra?id=${exportingId}&autoExport=true`} 
+            style={{ width: '1px', height: '1px', visibility: 'hidden', position: 'absolute' }}
+            title="Auto-Exporter Frame"
+          />
         </div>
       )}
 

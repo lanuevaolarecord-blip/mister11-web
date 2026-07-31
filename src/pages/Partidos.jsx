@@ -11,6 +11,7 @@ import { useCustomFormations } from '../hooks/useCustomFormations';
 import { useMatchEvents } from '../hooks/useMatchEvents';
 import CustomFormationModal from '../components/CustomFormationModal';
 import FormationSelector from '../components/FormationSelector';
+import { createPortal } from 'react-dom';
 import './Partidos.css';
 import { normalizeText } from '../utils/normalizeInput';
 
@@ -1672,8 +1673,8 @@ const Partidos = () => {
       )}
 
       {/* MODAL PARA SELECCIONAR JUGADOR EN EVENTO MATCH DAY */}
-      {showEventPlayerSelector && (
-        <div className="event-selector-overlay" onClick={() => setShowEventPlayerSelector(false)}>
+      {showEventPlayerSelector && createPortal(
+        <div className="event-selector-overlay" onClick={() => setShowEventPlayerSelector(false)} style={{ zIndex: 99999 }}>
           <div className="event-selector-modal" onClick={e => e.stopPropagation()}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <h4 className="event-selector-title">
@@ -1703,7 +1704,8 @@ const Partidos = () => {
               })}
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* MODAL DE FORMACIÓN PERSONALIZADA */}

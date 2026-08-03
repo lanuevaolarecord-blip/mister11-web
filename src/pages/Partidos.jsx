@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
+import { useMatch } from '../context/MatchContext';
 import { useMatches } from '../hooks/useMatches';
 import { usePlayers } from '../hooks/usePlayers';
 import { useAuth } from '../context/AuthContext';
@@ -103,10 +104,17 @@ const Partidos = () => {
   // --- Hook de Eventos de Partido (con guardado automático en Firestore) ---
   const { addEvent, removeEvent, makeSubstitution } = useMatchEvents(matchData, setMatchData, players, updateMatch);
 
-  // --- Estados de Match Day ---
-  const [matchSeconds, setMatchSeconds] = useState(0);
-  const [isTimerRunning, setIsTimerRunning] = useState(false);
-  const timerIntervalRef = useRef(null);
+  // --- Estados de Match Day (gestionados por MatchContext global) ---
+  const {
+    matchSeconds,
+    isRunning: isTimerRunning,
+    toggleTimer,
+    resetTimer: resetTimerCtx,
+    adjustTimer,
+    setActiveMatchId,
+    currentMinute: ctxCurrentMinute,
+    formatMatchTime,
+  } = useMatch();
 
   const [subOutId, setSubOutId] = useState('');
   const [subInId, setSubInId] = useState('');
@@ -159,52 +167,21 @@ const Partidos = () => {
     return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
   }, []);
 
+  // Registrar el partido activo en el contexto global al abrirlo
   useEffect(() => {
     if (matchData.id) {
-      const savedSecs = sessionStorage.getItem(`mister11_match_seconds_${matchData.id}`);
-      if (savedSecs) setMatchSeconds(parseInt(savedSecs, 10));
-      else setMatchSeconds(0);
-      const savedRunning = sessionStorage.getItem(`mister11_match_running_${matchData.id}`);
-      setIsTimerRunning(savedRunning === 'true');
+      setActiveMatchId(matchData.id);
     }
-  }, [matchData.id]);
+  }, [matchData.id, setActiveMatchId]);
 
-  useEffect(() => {
-    if (matchData.id) {
-      sessionStorage.setItem(`mister11_match_seconds_${matchData.id}`, matchSeconds);
-      sessionStorage.setItem(`mister11_match_running_${matchData.id}`, isTimerRunning);
-    }
-  }, [matchSeconds, isTimerRunning, matchData.id]);
+  // formatTime usa la función del contexto
+  const formatTime = formatMatchTime;
 
-  useEffect(() => {
-    if (isTimerRunning) {
-      timerIntervalRef.current = setInterval(() => {
-        setMatchSeconds(prev => prev + 1);
-      }, 1000);
-    } else {
-      if (timerIntervalRef.current) clearInterval(timerIntervalRef.current);
-    }
-    return () => {
-      if (timerIntervalRef.current) clearInterval(timerIntervalRef.current);
-    };
-  }, [isTimerRunning]);
+  const handleTimerToggle = toggleTimer;
+  const handleTimerReset = resetTimerCtx;
+  const handleTimerAdjust = adjustTimer;
 
-  const formatTime = (totalSeconds) => {
-    const mins = Math.floor(totalSeconds / 60);
-    const secs = totalSeconds % 60;
-    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-  };
-
-  const handleTimerToggle = () => setIsTimerRunning(prev => !prev);
-  const handleTimerReset = () => {
-    setIsTimerRunning(false);
-    setMatchSeconds(0);
-  };
-  const handleTimerAdjust = (amount) => {
-    setMatchSeconds(prev => Math.max(0, prev + amount));
-  };
-
-  const currentMinute = Math.max(1, Math.ceil(matchSeconds / 60));
+  const currentMinute = ctxCurrentMinute;
 
   const handleTriggerEvent = (type) => {
     if (type === 'gol_rival') {

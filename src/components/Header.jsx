@@ -3,12 +3,14 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { useTeams } from '../hooks/useTeams';
 import { ChevronDown, Sun, Moon, Bell, Settings, Shield } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
+import { useMatch } from '../context/MatchContext';
 
 const Header = ({ onToggleNotif }) => {
   const location = useLocation();
   const navigate = useNavigate();
   const { teams, activeTeam, selectTeam } = useTeams();
   const { darkMode, toggleTheme } = useTheme();
+  const { isRunning, matchSeconds, formatMatchTime } = useMatch();
   
   const getPageTitle = () => {
     switch(location.pathname) {
@@ -91,6 +93,36 @@ const Header = ({ onToggleNotif }) => {
       </div>
       
       <div className="header-actions">
+        {/* ── Badge partido en vivo (solo visible fuera de /partidos) ── */}
+        {isRunning && location.pathname !== '/partidos' && (
+          <button
+            onClick={() => navigate('/partidos')}
+            title="Partido en curso · Ir al Match Day"
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '6px',
+              background: 'linear-gradient(135deg, #16a34a, #15803d)',
+              color: '#fff',
+              border: 'none',
+              borderRadius: '20px',
+              padding: '5px 12px',
+              fontSize: '0.78rem',
+              fontWeight: '700',
+              fontFamily: 'Outfit, Inter, sans-serif',
+              cursor: 'pointer',
+              letterSpacing: '0.3px',
+              boxShadow: '0 0 0 2px rgba(22,163,74,0.35), 0 4px 12px rgba(0,0,0,0.25)',
+              animation: 'matchBadgePulse 2s ease-in-out infinite',
+              whiteSpace: 'nowrap',
+              minWidth: 0,
+              flexShrink: 0,
+            }}
+          >
+            <span style={{ fontSize: '0.9rem' }}>⚽</span>
+            {formatMatchTime(matchSeconds)}
+          </button>
+        )}
         <button className="icon-btn theme-toggle" title="Cambiar Tema" onClick={toggleTheme}>
           {darkMode ? <Sun size={20} color="var(--accent-gold)" /> : <Moon size={20} color="var(--accent-gold)" />}
         </button>

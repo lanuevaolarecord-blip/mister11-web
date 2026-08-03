@@ -1274,3 +1274,11 @@ button, .nav-item, input, select, .icon-btn, .topbar-btn, .tool-icon-btn {
   }
 }
 
+/* ── Match Day Live Badge — animación de pulso ───────────────────────────── */
+@keyframes matchBadgePulse {
+  0%   { box-shadow: 0 0 0 0 rgba(22, 163, 74, 0.55), 0 4px 12px rgba(0,0,0,0.25); }
+  50%  { box-shadow: 0 0 0 6px rgba(22, 163, 74, 0),  0 4px 12px rgba(0,0,0,0.25); }
+  100% { box-shadow: 0 0 0 0 rgba(22, 163, 74, 0.55), 0 4px 12px rgba(0,0,0,0.25); }
+}
+
+

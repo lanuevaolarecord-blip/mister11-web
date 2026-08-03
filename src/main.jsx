@@ -5,6 +5,7 @@ import { AuthProvider } from './context/AuthContext.jsx'
 import { TeamProvider } from './context/TeamContext.jsx'
 import { ThemeProvider } from './context/ThemeContext.jsx'
 import { PizarraProvider } from './context/PizarraContext.jsx'
+import { MatchProvider } from './context/MatchContext.jsx'
 import './index.css'
 import App from './App.jsx'
 import { StatusBar, Style } from '@capacitor/status-bar';
@@ -23,9 +24,11 @@ createRoot(document.getElementById('root')).render(
       <AuthProvider>
         <TeamProvider>
           <PizarraProvider>
-            <BrowserRouter>
-              <App />
-            </BrowserRouter>
+            <MatchProvider>
+              <BrowserRouter>
+                <App />
+              </BrowserRouter>
+            </MatchProvider>
           </PizarraProvider>
         </TeamProvider>
       </AuthProvider>

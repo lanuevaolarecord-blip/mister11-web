@@ -7,8 +7,6 @@ import { useIAUsage } from '../hooks/useIAUsage';
 import UpgradeModal from '../components/UpgradeModal';
 import { useCaptures } from '../hooks/useCaptures';
 import { generateExercisePDF } from '../utils/pdfGenerator';
-import { db } from '../firebaseConfig';
-import { doc, getDoc } from 'firebase/firestore';
 import './IAGeneradora.css';
 
 // --- OPCIONES DE FORMULARIO ---
@@ -121,31 +119,29 @@ const IAGeneradora = () => {
     getRemainingUsages
   } = useIAUsage();
 
-  const [firebaseApiKey, setFirebaseApiKey] = useState('');
+  // ── callGroq: delega al proxy del servidor /api/ia-generate ─────────────────
+  // La clave de Groq NUNCA llega al cliente — vive en las env vars de Vercel.
+  const callGroq = async (promptTexto) => {
+    try {
+      const response = await fetch('/api/ia-generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prompt: promptTexto }),
+      });
 
-  useEffect(() => {
-    const fetchApiKey = async () => {
-      try {
-        const configSnap = await getDoc(doc(db, 'config', 'global'));
-        if (configSnap.exists()) {
-          const data = configSnap.data();
-          if (data.groqApiKey) {
-            setFirebaseApiKey(data.groqApiKey);
-          }
-        }
-      } catch (err) {
-        console.error('Error fetching Groq API key from Firestore:', err);
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData?.error || `Error HTTP ${response.status}`);
       }
-    };
-    fetchApiKey();
-  }, []);
 
-  const getEffectiveApiKey = () => {
-    const envKey = import.meta.env.VITE_GROQ_API_KEY;
-    if (envKey && envKey !== 'PEGA_AQUI_TU_NUEVA_CLAVE_GROQ' && envKey !== 'undefined') {
-      return envKey;
+      const data = await response.json();
+      const text = data?.result;
+      if (!text) throw new Error('Respuesta vacía de la IA');
+      return text;
+    } catch (err) {
+      console.error('[IA Generadora] Error en proxy:', err);
+      throw err;
     }
-    return firebaseApiKey;
   };
 
   const toggleMaterial = (id) => {
@@ -184,61 +180,10 @@ const IAGeneradora = () => {
     setIsListening(true);
   };
 
-  const callGroq = async (promptTexto) => {
-    const activeKey = getEffectiveApiKey();
-    try {
-      const response = await fetch(
-        'https://api.groq.com/openai/v1/chat/completions',
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${activeKey}`
-          },
-          body: JSON.stringify({
-            model: 'llama-3.3-70b-versatile',
-            messages: [
-              {
-                role: 'system',
-                content: 'Eres un experto en metodología del fútbol formativo. Respondes siempre en español.'
-              },
-              {
-                role: 'user',
-                content: promptTexto
-              }
-            ],
-            max_tokens: 1024,
-            temperature: 0.7
-          })
-        }
-      );
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData?.error?.message || `Error HTTP ${response.status}`);
-      }
-
-      const data = await response.json();
-      const text = data?.choices?.[0]?.message?.content;
-      if (!text) throw new Error('Respuesta vacía de la IA');
-      return text;
-    } catch (err) {
-      console.error('[Groq] Error:', err);
-      throw err;
-    }
-  };
-
   const handleGenerate = async () => {
     if (isCallingRef.current) return;
 
-    // 1. Verificar si la clave de Groq está configurada
-    const GROQ_API_KEY = getEffectiveApiKey();
-    if (!GROQ_API_KEY || GROQ_API_KEY === 'PEGA_AQUI_TU_NUEVA_CLAVE_GROQ' || GROQ_API_KEY === 'undefined') {
-      setError('⚠️ La clave de IA (Groq) no está configurada. Contacta al administrador para configurarla en la pestaña Ajustes del panel de control.');
-      return;
-    }
-
-    // 2. Verificar si el usuario ha alcanzado su límite mensual de uso
+    // 1. Verificar si el usuario ha alcanzado su límite mensual de uso
     const hasUsage = await checkUsage();
     if (!hasUsage) {
       alert(`Has alcanzado el límite de ${limit} generaciones de IA este mes. El límite se reinicia el próximo mes.`);

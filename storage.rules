@@ -12,16 +12,15 @@ service firebase.storage {
       ];
     }
 
-
-
-
-
-
-
-
-    // Resto de archivos: solo usuarios autenticados
+    // Resto de archivos (fotos de jugadores, capturas de pizarra, etc.)
+    // Solo usuarios autenticados, tipo imagen y tamaño máximo 5 MB.
+    // Nota: las capturas de pizarra y avatares de jugadores son siempre imágenes
+    // comprimidas con browser-image-compression, por lo que quedan por debajo del límite.
     match /{allPaths=**} {
-      allow read, write: if request.auth != null;
+      allow read: if request.auth != null;
+      allow write: if request.auth != null
+        && request.resource.contentType.matches('image/.*')
+        && request.resource.size < 5 * 1024 * 1024;
     }
   }
 }

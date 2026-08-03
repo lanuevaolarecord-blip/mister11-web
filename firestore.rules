@@ -18,9 +18,11 @@ service cloud.firestore {
       ];
     }
 
-    // ── Configuración global (solo lectura pública) ───────────────────────────
+    // ── Configuración global (solo usuarios autenticados pueden leer) ─────────
+    // NOTA: se cerró el acceso público para evitar la exposición de groqApiKey.
+    // El cliente ya no necesita leer esta colección — la IA se proxifica por /api/ia-generate.
     match /config/{docId} {
-      allow read: if true;
+      allow read: if isAuth();
       allow write: if isDevEmail();
     }
 

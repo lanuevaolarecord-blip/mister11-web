@@ -3,6 +3,7 @@ import { Browser } from '@capacitor/browser';
 import { Capacitor } from '@capacitor/core';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { APP_VERSION } from '../constants/appVersion';
+import { isDeveloperEmail } from '../config/admins';
 import { normalizeText } from '../utils/normalizeInput';
 import { useTeams } from '../hooks/useTeams';
 import { useSettings } from '../hooks/useSettings';
@@ -60,8 +61,7 @@ const AdminPanel = () => {
   }, [location.state?.activeTab]);
 
   const { user, getTeamPath, clubId, clubRole, isClubMember, club, userProfile } = useAuth();
-  const adminEmails = ['lanuevaolarecord@gmail.com', 'mister11.app@gmail.com', 'jhocao111294@gmail.com', 'lavozdelformador@gmail.com'];
-  const isAdmin = user?.email && adminEmails.includes(user.email.toLowerCase());
+  const isAdmin = isDeveloperEmail(user?.email);
   const { teams, activeTeam, addTeam, deleteTeam, selectTeam, updateTeam } = useTeams();
   const { exercises, removeExercise, addExercise } = useExercises(activeTeam?.id);
   const [exerciseSearchTerm, setExerciseSearchTerm] = useState('');

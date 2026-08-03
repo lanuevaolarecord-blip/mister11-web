@@ -10,7 +10,7 @@
  * Documentos afectados: users/{uid}/teams/{teamId} y users/{uid}
  */
 
-const { onDocumentWritten } = require('firebase-functions/v2/firestore');
+const { onDocumentWritten, onDocumentDeleted } = require('firebase-functions/v2/firestore');
 const { initializeApp } = require('firebase-admin/app');
 const { getFirestore, FieldValue } = require('firebase-admin/firestore');
 const { logger } = require('firebase-functions');
@@ -150,3 +150,42 @@ async function syncAllTeamsForUser(uid, planType, proExpiration, subscriptionId)
   await batch.commit();
   logger.info(`[Stripe Sync] ${snapshot.size} equipos de ${uid} actualizados a plan ${planType}.`);
 }
+
+/**
+ * Borrado en cascada automático cuando se elimina un equipo personal.
+ */
+exports.cascadeDeleteUserTeam = onDocumentDeleted(
+  'users/{uid}/teams/{teamId}',
+  async (event) => {
+    const snapshot = event.data;
+    if (!snapshot) return null;
+    logger.info(`[Cascade Delete] Borrando subcolecciones para equipo personal: users/${event.params.uid}/teams/${event.params.teamId}`);
+    try {
+      await db.recursiveDelete(snapshot.ref);
+      logger.info(`[Cascade Delete] Subcolecciones eliminadas con éxito para ${event.params.teamId}`);
+    } catch (err) {
+      logger.error(`[Cascade Delete] Error al borrar subcolecciones de ${event.params.teamId}:`, err);
+    }
+    return null;
+  }
+);
+
+/**
+ * Borrado en cascada automático cuando se elimina un equipo de club.
+ */
+exports.cascadeDeleteClubTeam = onDocumentDeleted(
+  'clubs/{clubId}/teams/{teamId}',
+  async (event) => {
+    const snapshot = event.data;
+    if (!snapshot) return null;
+    logger.info(`[Cascade Delete] Borrando subcolecciones para equipo de club: clubs/${event.params.clubId}/teams/${event.params.teamId}`);
+    try {
+      await db.recursiveDelete(snapshot.ref);
+      logger.info(`[Cascade Delete] Subcolecciones eliminadas con éxito para ${event.params.teamId}`);
+    } catch (err) {
+      logger.error(`[Cascade Delete] Error al borrar subcolecciones de club ${event.params.teamId}:`, err);
+    }
+    return null;
+  }
+);
+

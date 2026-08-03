@@ -12,6 +12,8 @@ import {
   deleteDoc, 
   doc, 
   getDoc,
+  getDocs,
+  writeBatch,
   serverTimestamp 
 } from 'firebase/firestore';
 
@@ -93,7 +95,38 @@ export const useTeams = () => {
 
   const deleteTeam = useCallback(async (id) => {
     if (!user) return;
-    const teamRef = doc(db, getTeamPath(id));
+    const path = getTeamPath(id);
+    const teamRef = doc(db, path);
+
+    // Borrado en cascada en cliente (limpieza inmediata y resiliencia offline)
+    const subcollections = [
+      'players',
+      'sessions',
+      'planning',
+      'matches',
+      'exercises',
+      'notifications',
+      'evaluaciones',
+      'formations',
+      'plans',
+      'pizarras',
+      'iaUsage'
+    ];
+
+    try {
+      const batch = writeBatch(db);
+      for (const sub of subcollections) {
+        const colRef = collection(db, `${path}/${sub}`);
+        const snap = await getDocs(colRef);
+        snap.docs.forEach((d) => {
+          batch.delete(d.ref);
+        });
+      }
+      await batch.commit();
+    } catch (err) {
+      console.error("Error al borrar subcolecciones del equipo en cliente:", err);
+    }
+
     return await deleteDoc(teamRef);
   }, [user, getTeamPath]);
 

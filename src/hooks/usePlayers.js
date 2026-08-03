@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { subscribeToCollection, addDocument, updateDocument, deleteDocument, createNotification } from '../firebase/db';
+import { increment } from 'firebase/firestore';
 
 export const usePlayers = (teamId) => {
   const { user, getTeamPath } = useAuth();
@@ -31,11 +32,11 @@ export const usePlayers = (teamId) => {
       ...playerData
     });
     
-    // Actualizar playerCount en el documento del equipo
+    // Actualizar playerCount en el documento del equipo de forma atómica
     const pathParts = path.split('/');
     const tId = pathParts.pop();
     const colPath = pathParts.join('/');
-    await updateDocument(colPath, tId, { playerCount: players.length + 1 });
+    await updateDocument(colPath, tId, { playerCount: increment(1) });
     
     await createNotification('info', `Nuevo jugador añadido: ${playerData.nombre}`);
     return docId;
@@ -52,11 +53,11 @@ export const usePlayers = (teamId) => {
     const path = getTeamPath(teamId);
     await deleteDocument(`${path}/players`, id);
     
-    // Actualizar playerCount en el documento del equipo
+    // Actualizar playerCount en el documento del equipo de forma atómica
     const pathParts = path.split('/');
     const tId = pathParts.pop();
     const colPath = pathParts.join('/');
-    await updateDocument(colPath, tId, { playerCount: Math.max(0, players.length - 1) });
+    await updateDocument(colPath, tId, { playerCount: increment(-1) });
   };
 
   return { players, loading, addPlayer, updatePlayer, removePlayer };

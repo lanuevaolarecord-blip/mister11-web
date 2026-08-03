@@ -36,6 +36,10 @@ import { storage } from '../firebaseConfig';
 import { savePizarraLocal, getPizarraLocal, clearPizarraLocal } from '../lib/pizarraStorage';
 import { getDocument, setDocument } from '../firebase/db';
 import { downloadJSON, downloadImage, downloadVideo } from '../utils/download.js';
+import CanvasToolbar from '../components/pizarra/CanvasToolbar';
+import MaterialsPanel from '../components/pizarra/MaterialsPanel';
+import SavedPlaysPanel from '../components/pizarra/SavedPlaysPanel';
+import AnimationPanel from '../components/pizarra/AnimationPanel';
 import './Pizarra.css';
 
 // helper: 'half-attack' → 'half_attack' (library uses underscores)
@@ -2862,94 +2866,37 @@ const PizarraTactica = () => {
     }
   };
 
-  // ─── Sub-Components (Panels) ──────────────────────────────────────────────
+  // ─── Sub-Components (Panels Extraídos) ───────────────────────────────────
   const TeamsPanel = () => (
-    <div className="pizarra-sidebar-content">
-      <div className="panel-title">EQUIPOS</div>
-      <div style={{ padding: '0 0 8px' }}>
-        <TeamCard 
-          color={localColor} 
-          name="Local" 
-          count={11} 
-          onAdd={() => addManualPlayer('local')} 
-          onColorChange={setLocalColor}
-          formation={localFormation}
-          onFormationChange={setLocalFormation}
-          onApply={() => aplicarFormacion('local', localFormation)}
-        />
-        <TeamCard 
-          color={rivalColor} 
-          name="Rival" 
-          count={11} 
-          onAdd={() => addManualPlayer('rival')} 
-          onColorChange={setRivalColor}
-          formation={rivalFormation}
-          onFormationChange={setRivalFormation}
-          onApply={() => aplicarFormacion('rival', rivalFormation)}
-        />
-        <TeamCard 
-          color={jokerColor} 
-          name="Comodín" 
-          count={0} 
-          onAdd={() => addManualPlayer('joker')} 
-          onColorChange={setJokerColor}
-        />
-
-      </div>
-
-      <div className="panel-title">ACCIONES</div>
-      <div className="acciones-panel-container-grid">
-        <button 
-          className={`toggle-rival ${showRival ? 'active' : ''}`}
-          onClick={() => setShowRival(!showRival)}
-        >
-          {showRival ? '👁 QUITAR RIVAL' : '👁 MOSTRAR RIVAL'}
-        </button>
-        <button className="btn-delete-pizarra" onClick={deleteSelected}>🗑 BORRAR</button>
-      </div>
-    </div>
+    <SavedPlaysPanel
+      localColor={localColor}
+      setLocalColor={setLocalColor}
+      rivalColor={rivalColor}
+      setRivalColor={setRivalColor}
+      jokerColor={jokerColor}
+      setJokerColor={setJokerColor}
+      localFormation={localFormation}
+      setLocalFormation={setLocalFormation}
+      rivalFormation={rivalFormation}
+      setRivalFormation={setRivalFormation}
+      addManualPlayer={addManualPlayer}
+      aplicarFormacion={aplicarFormacion}
+      showRival={showRival}
+      setShowRival={setShowRival}
+      deleteSelected={deleteSelected}
+    />
   );
 
-  const MaterialsPanel = () => (
-    <div className="pizarra-sidebar-content">
-      <div className="panel-title">MATERIAL</div>
-      <div className="materials-list">
-        {Object.entries(MATERIALS_BY_CATEGORY).map(([catKey, catData]) => {
-          const catLabel = catData.label || catKey;
-          const catItems = catData.items || catData || [];
-          const isOpen = openCats[catKey];
-          return (
-            <div key={catKey} className="material-category">
-              <div className="collapsible-header" onClick={() =>
-                setOpenCats(p => ({ ...p, [catKey]: !p[catKey] }))}>
-                <span className="collapsible-arrow">{isOpen ? '▼' : '▶'}</span>
-                <span className="material-header-label">{catLabel}</span>
-              </div>
-              {isOpen && (
-                <div className="material-items">
-                  {catItems.map(id => {
-                    const mat = MATERIALS_LIBRARY[id];
-                    if (!mat) return null;
-                    return (
-                      <div key={id}
-                        className={`material-item ${placingMat === id ? 'active' : ''}`}
-                        onClick={() => { 
-                          setPlacingMat(id); 
-                          setActiveTool('place_material');
-                          if (isMobile) setShowMatsDrawer(false);
-                        }}>
-                        <div dangerouslySetInnerHTML={{ __html: mat.svgPanel }} />
-                        <span>{mat.label}</span>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
-          );
-        })}
-      </div>
-    </div>
+  const MaterialsPanelWrapper = () => (
+    <MaterialsPanel
+      openCats={openCats}
+      setOpenCats={setOpenCats}
+      placingMat={placingMat}
+      setPlacingMat={setPlacingMat}
+      setActiveTool={setActiveTool}
+      isMobile={isMobile}
+      setShowMatsDrawer={setShowMatsDrawer}
+    />
   );
 
   // ─── JSX ──────────────────────────────────────────────────────────────────
@@ -2961,171 +2908,46 @@ const PizarraTactica = () => {
       <div className={`pizarra-container ${isMobile ? 'mobile' : 'desktop'} ${isLandscape ? 'landscape' : 'portrait'} ${fullscreenMode ? 'pizarra-fullscreen' : ''}`} 
         style={{ touchAction: 'pan-y' }}>
 
-      {/* ── TOP BAR ───────────────────────────────────────────────────────── */}
-      <div className="pizarra-topbar">
-        <div className="topbar-scroll-wrapper">
-          {/* GRUPO ESENCIAL: Siempre visible */}
-          <div className="topbar-group essential">
-            {autoSaveStatus && (
-              <div style={{ color: autoSaveStatus.includes('Error') ? '#ff4d4f' : '#10b981', fontSize: '12px', fontWeight: 'bold', marginRight: '8px', whiteSpace: 'nowrap' }}>
-                {autoSaveStatus}
-              </div>
-            )}
-            {/* Los paneles laterales ahora son permanentes en tablet+desktop, sin toggle */}
-
-            {!fullscreenMode && (
-              <button className="topbar-btn secondary" onClick={() => {
-                setFullscreenMode(true);
-                setLeftPanelOpen(false);
-                setRightPanelOpen(false);
-                setShowTeamsDrawer(false);
-                setShowMatsDrawer(false);
-                setTimeout(() => window.dispatchEvent(new Event('resize')), 100);
-              }}>
-                🗖 P. Completa
-              </button>
-            )}
-            <select className="topbar-select" value={fieldType}
-              onChange={e => setFieldType(e.target.value)}>
-              <option value="full">Campo Completo</option>
-              <option value="half-attack">½ Ataque</option>
-              <option value="half-defense">½ Defensa</option>
-              <option value="third_defense">1/3 Defensivo</option>
-              <option value="third_mid">1/3 Medio</option>
-              <option value="third_attack">1/3 Ofensivo</option>
-              <option value="penalty_area">Área Penalti</option>
-              <option value="f7">Fútbol 7 (65x45m)</option>
-              <option value="f8">Fútbol 8 (62x46m)</option>
-              <option value="futsal">Fútbol Sala (40x20m)</option>
-              <option value="reduced">Campo Reducido</option>
-              <option value="blank">Campo en Blanco</option>
-            </select>
-          </div>
-
-          <div className="topbar-adaptive-content">
-            {fieldType === 'reduced' && (
-              <div className="topbar-group reduced-controls-group">
-                <div className="reduced-controls">
-                  <div className="slider-box">
-                    <span>Ancho: {reducedDim.w}m</span>
-                    <input type="range" min="10" max="105" value={reducedDim.w} 
-                      onChange={e => {
-                        const w = parseInt(e.target.value);
-                        setReducedDim(p => ({ ...p, w }));
-                        frRef.current?.setReducedDimensions(w, reducedDim.h);
-                      }} 
-                    />
-                  </div>
-                  <div className="slider-box">
-                    <span>Alto: {reducedDim.h}m</span>
-                    <input type="range" min="10" max="70" value={reducedDim.h} 
-                      onChange={e => {
-                        const h = parseInt(e.target.value);
-                        setReducedDim(p => ({ ...p, h }));
-                        frRef.current?.setReducedDimensions(reducedDim.w, h);
-                      }} 
-                    />
-                  </div>
-                </div>
-              </div>
-            )}
-
-            <div className="topbar-group">
-              <button 
-                className={`topbar-btn ${isSwapped ? 'active' : ''}`} 
-                onClick={() => setIsSwapped(!isSwapped)}
-                title="Cambiar lados de equipos"
-              >
-                ⇄ Lados
-              </button>
-            </div>
-
-            {/* Drawing tools */}
-            <div className="topbar-group tools">
-              {Object.values(TOOLS).map(tool => (
-                <button
-                  key={tool.id}
-                  className={`tool-icon-btn ${activeTool === tool.id ? 'active' : ''}`}
-                  title={tool.label}
-                  onClick={() => {
-                    setActiveTool(tool.id);
-                    if (isMobile) setShowMoreMenu(false);
-                  }}
-                  dangerouslySetInnerHTML={{ __html: tool.icon }}
-                />
-              ))}
-            </div>
-
-            <div className="topbar-group color-picker-container" style={{ position: 'static' }}>
-              <button
-                className="topbar-btn color-trigger"
-                onClick={(e) => { 
-                  e.stopPropagation();
-                  setShowColorPicker(!showColorPicker); 
-                  setShowWidthPicker(false); 
-                }}
-                title="Color de trazo"
-              >
-                <div className="current-color-preview" style={{ backgroundColor: activeColor }} />
-              </button>
-            </div>
-
-            <div className="topbar-group width-picker-container" style={{ position: 'static' }}>
-              <button
-                className="topbar-btn width-trigger"
-                onClick={(e) => { 
-                  e.stopPropagation();
-                  setShowWidthPicker(!showWidthPicker); 
-                  setShowColorPicker(false); 
-                }}
-                title="Grosor de trazo"
-              >
-                <span className="current-width-label">
-                  {Object.values(STROKE_WIDTHS).find(v => v.value === activeWidth)?.label || 'Fino'}
-                </span>
-              </button>
-            </div>
-
-            <div className="topbar-divider" />
-
-            {/* Actions */}
-            <div className="topbar-group actions">
-              {/* ...acciones adicionales... */}
-              <button className="topbar-btn" onClick={() => {
-                const fc = fcRef.current;
-                if (!fc) return;
-                const zoom = fc.getZoom() * 1.1;
-                fc.setZoom(zoom);
-                setZoomLevel(zoom);
-              }} title="Acercar">🔍+</button>
-              <button className="topbar-btn" onClick={() => {
-                const fc = fcRef.current;
-                if (!fc) return;
-                const zoom = fc.getZoom() / 1.1;
-                fc.setZoom(zoom);
-                setZoomLevel(zoom);
-              }} title="Alejar">🔍-</button>
-              <button className="topbar-btn" onClick={() => {
-                const fc = fcRef.current;
-                if (!fc) return;
-                fc.setZoom(1);
-                fc.absolutePan({ x: 0, y: 0 });
-                setZoomLevel(1);
-              }} title="Reiniciar Zoom">🏠</button>
-              <div className="topbar-divider" />
-              <button className="topbar-btn" onClick={undo} disabled={histCount === 0} title="Deshacer (Ctrl+Z)">↩</button>
-              <button className="topbar-btn" onClick={redo} disabled={redoCount === 0} title="Rehacer (Ctrl+Y)">↪</button>
-              <button className="topbar-btn danger" onClick={clearCanvas} title="Limpiar todo el canvas">🗑</button>
-              <button className="topbar-btn secondary" onClick={handleNewPizarra} title="Crear nueva animación desde cero" style={{ background: 'var(--accent)', color: 'white', fontWeight: 'bold' }}>✨ NUEVA</button>
-              <button className="topbar-btn" onClick={() => handleCapture(true)} disabled={isCapturing} title="Descargar Imagen">📸</button>
-              <button className="topbar-btn" onClick={exportAnimationVideo} disabled={isRecording} title="Exportar animacion como video MP4" style={{ background: 'var(--accent)', color: 'white', fontWeight: 'bold' }}>
-                {isRecording ? 'REC... EXPORTANDO MP4' : 'EXPORTAR MP4'}
-              </button>
-              <button id="btn-guardar-pizarra" className="topbar-btn primary" onClick={handleSave} disabled={isCapturing} title="Guardar pizarra y captura">💾 GUARDAR</button>
-            </div>
-          </div>{/* ── FIN topbar-scroll-wrapper ── */}
-        </div>{/* ── FIN pizarra-topbar ── */}
-      </div>
+      {/* ── TOP BAR (Extraída) ────────────────────────────────────────────── */}
+      <CanvasToolbar
+        fieldType={fieldType}
+        setFieldType={setFieldType}
+        fullscreenMode={fullscreenMode}
+        setFullscreenMode={setFullscreenMode}
+        autoSaveStatus={autoSaveStatus}
+        reducedDim={reducedDim}
+        setReducedDim={setReducedDim}
+        frRef={frRef}
+        isSwapped={isSwapped}
+        setIsSwapped={setIsSwapped}
+        activeTool={activeTool}
+        setActiveTool={setActiveTool}
+        isMobile={isMobile}
+        setShowMoreMenu={setShowMoreMenu}
+        activeColor={activeColor}
+        showColorPicker={showColorPicker}
+        setShowColorPicker={setShowColorPicker}
+        activeWidth={activeWidth}
+        showWidthPicker={showWidthPicker}
+        setShowWidthPicker={setShowWidthPicker}
+        fcRef={fcRef}
+        setZoomLevel={setZoomLevel}
+        undo={undo}
+        redo={redo}
+        histCount={histCount}
+        redoCount={redoCount}
+        clearCanvas={clearCanvas}
+        handleNewPizarra={handleNewPizarra}
+        handleCapture={handleCapture}
+        isCapturing={isCapturing}
+        exportAnimationVideo={exportAnimationVideo}
+        isRecording={isRecording}
+        handleSave={handleSave}
+        setLeftPanelOpen={setLeftPanelOpen}
+        setRightPanelOpen={setRightPanelOpen}
+        setShowTeamsDrawer={setShowTeamsDrawer}
+        setShowMatsDrawer={setShowMatsDrawer}
+      />
       
       {fullscreenMode && (
         <>
@@ -3240,7 +3062,7 @@ const PizarraTactica = () => {
                 <h3 className="font-bold text-lg text-gray-800">Materiales</h3>
                 <button className="text-gray-500 hover:text-black text-xl" onClick={(e) => { e.stopPropagation(); setShowMatsDrawer(false); }}>✕</button>
               </div>
-              <MaterialsPanel />
+              <MaterialsPanelWrapper />
             </div>
           )}
 
@@ -3288,7 +3110,7 @@ const PizarraTactica = () => {
         {/* Panel derecho — Materiales (tablet + desktop, solo landscape) */}
         {showSidebars && (
           <div className="panel-der">
-            <MaterialsPanel />
+            <MaterialsPanelWrapper />
           </div>
         )}
 
@@ -3305,54 +3127,24 @@ const PizarraTactica = () => {
               </button>
             </div>
             <div className="pizarra-portrait-drawer-body">
-              {showTeamsDrawer ? <TeamsPanel /> : <MaterialsPanel />}
+              {showTeamsDrawer ? <TeamsPanel /> : <MaterialsPanelWrapper />}
             </div>
           </div>
         )}
 
       </div>
 
-      {/* ── TIMELINE ──────────────────────────────────────────────────────── */}
-      <div className="pizarra-timeline">
-        <div className="timeline-scroll-wrapper">
-          <button className="timeline-btn-nav" onClick={() => loadFrame(0)}
-            disabled={isPlaying || frameIdx === 0}>⏮</button>
-          <button className="timeline-btn-nav"
-            onClick={() => loadFrame(Math.max(0, frameIdx - 1))}
-            disabled={isPlaying || frameIdx === 0}>◀</button>
-
-          {isPlaying
-            ? <button className="timeline-btn-nav play" onClick={stopAnimation}>⏹</button>
-            : <button className="timeline-btn-nav play" onClick={playAnimation}
-                disabled={frames.length < 2}>▶</button>
-          }
-
-          <button className="timeline-btn-nav"
-            onClick={() => loadFrame(Math.min(frames.length - 1, frameIdx + 1))}
-            disabled={isPlaying || frameIdx === frames.length - 1}>▶</button>
-          <button className="timeline-btn-nav"
-            onClick={() => loadFrame(frames.length - 1)}
-            disabled={isPlaying || frameIdx === frames.length - 1}>⏭</button>
-
-          <span className="frame-counter">
-            {frames.length > 0 ? frameIdx + 1 : 0}/{frames.length}
-          </span>
-
-          <div className="timeline-chips">
-            {frames.map((f, i) => (
-              <div key={f.id}
-                className={`frame-chip ${i === frameIdx ? 'active' : ''}`}
-                onClick={() => !isPlaying && loadFrame(i)}>
-                {i + 1}
-              </div>
-            ))}
-          </div>
-
-          <button className="btn-add-frame" onClick={addFrame} disabled={isPlaying}>+ Frame</button>
-          <button className="btn-trash-frame" onClick={deleteFrame}
-            disabled={isPlaying || frames.length <= 1}>🗑</button>
-        </div>
-      </div>
+      {/* ── TIMELINE (Extraída) ───────────────────────────────────────────── */}
+      <AnimationPanel
+        frames={frames}
+        frameIdx={frameIdx}
+        isPlaying={isPlaying}
+        loadFrame={loadFrame}
+        stopAnimation={stopAnimation}
+        playAnimation={playAnimation}
+        addFrame={addFrame}
+        deleteFrame={deleteFrame}
+      />
 
 
 
@@ -3461,49 +3253,6 @@ const PizarraTactica = () => {
     </>
   );
 };
-
-// ─── Small helper sub-component ──────────────────────────────────────────────
-const TeamCard = ({ color, name, count, onAdd, onColorChange, formation, onFormationChange, onApply }) => (
-  <div className="team-card-pizarra">
-    <div className="team-header-pizarra">
-      <div style={{ position: 'relative', width: 22, height: 22 }}>
-        <div style={{ width: 22, height: 22, borderRadius: '50%', background: color, border: '1px solid white' }} />
-        {onColorChange && (
-          <input 
-            type="color" 
-            value={color} 
-            onChange={(e) => onColorChange(e.target.value)}
-            style={{
-              position: 'absolute', top: 0, left: 0, width: '100%', height: '100%',
-              opacity: 0, cursor: 'pointer'
-            }}
-          />
-        )}
-      </div>
-      <span className="team-name-pizarra">{name}</span>
-      <button className="btn-add-player-pizarra" onClick={onAdd}>+</button>
-    </div>
-
-    {onFormationChange && (
-      <div className="formation-select-container-pizarra">
-        <select 
-          value={formation} 
-          onChange={(e) => onFormationChange(e.target.value)}
-          className="formation-select-pizarra"
-        >
-          {Object.keys(FORMATIONS).map(f => <option key={f} value={f}>{f}</option>)}
-        </select>
-        <button 
-          className="btn-apply-formation-pizarra"
-          onClick={onApply}
-          title="Aplicar / Reiniciar alineación"
-        >
-          APLICAR
-        </button>
-      </div>
-    )}
-  </div>
-);
 
 
 export default PizarraTactica;

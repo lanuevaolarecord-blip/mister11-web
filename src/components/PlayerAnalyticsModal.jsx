@@ -1,6 +1,4 @@
 import React, { useRef } from 'react';
-import html2canvas from 'html2canvas';
-import { jsPDF } from 'jspdf';
 import { SvgLineChart } from './GraficasTest';
 import { downloadPDF } from '../utils/download';
 
@@ -187,6 +185,9 @@ const PlayerAnalyticsModal = ({ player, tests, historyData, onClose, onExportPDF
       if (exportBtn) exportBtn.style.display = 'none';
       if (closeBtn) closeBtn.style.display = 'none';
       deleteButtons.forEach(btn => { btn.style.display = 'none'; });
+
+      const { jsPDF } = await import('jspdf');
+      const html2canvas = (await import('html2canvas')).default;
 
       const doc = new jsPDF('p', 'mm', 'a4');
       const pdfWidth = doc.internal.pageSize.getWidth();

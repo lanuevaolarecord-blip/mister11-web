@@ -236,15 +236,21 @@ const Dashboard = () => {
     });
   };
 
-  const getFallbackMacroInfo = () => ({
-    startDate: '2025-09-01',
-    endDate: '2026-06-15',
-    category: 'Infantil A',
-    objective: '',
-    trainer: '',
-    sessionDuration: 90,
-    trainingDays: [0, 2, 4], // Lun, Mié, Vie
-  });
+  const getFallbackMacroInfo = () => {
+    const now = new Date();
+    const month = now.getMonth();
+    const year = now.getFullYear();
+    const startYear = month < 7 ? year - 1 : year;
+    return {
+      startDate: `${startYear}-09-01`,
+      endDate: `${startYear + 1}-06-15`,
+      category: 'Infantil A',
+      objective: '',
+      trainer: '',
+      sessionDuration: 90,
+      trainingDays: [0, 2, 4],
+    };
+  };
 
   const macroInfo = planningConfig?.macroInfo || getFallbackMacroInfo();
   const microcycles = planningConfig?.microcycles || getFallbackMicrocycles();

@@ -17,26 +17,76 @@ export const useNotifications = (teamId) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!user || !teamId) return;
+    if (!user) return;
 
-    const path = getTeamPath(teamId);
-    const q = query(
-      collection(db, path, 'notifications'),
+    let unsubTeam = null;
+    let unsubUser = null;
+    let teamNotifs = [];
+    let userNotifs = [];
+
+    const updateMerged = () => {
+      const all = [...teamNotifs, ...userNotifs];
+      const unique = [];
+      const seen = new Set();
+      for (const item of all) {
+        if (!seen.has(item.id)) {
+          seen.add(item.id);
+          unique.push(item);
+        }
+      }
+      unique.sort((a, b) => {
+        const tA = a.rawDate?.toMillis ? a.rawDate.toMillis() : (a.rawDate?.seconds ? a.rawDate.seconds * 1000 : 0);
+        const tB = b.rawDate?.toMillis ? b.rawDate.toMillis() : (b.rawDate?.seconds ? b.rawDate.seconds * 1000 : 0);
+        return tB - tA;
+      });
+      setNotifications(unique.slice(0, 20));
+      setLoading(false);
+    };
+
+    if (teamId) {
+      const teamPath = getTeamPath(teamId);
+      const qTeam = query(
+        collection(db, teamPath, 'notifications'),
+        orderBy('createdAt', 'desc'),
+        limit(20)
+      );
+      unsubTeam = onSnapshot(qTeam, (snapshot) => {
+        teamNotifs = snapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data(),
+          rawDate: doc.data().createdAt,
+          time: formatTime(doc.data().createdAt)
+        }));
+        updateMerged();
+      }, (err) => {
+        console.warn('[useNotifications] Error en escucha de notificaciones del equipo:', err);
+        setLoading(false);
+      });
+    }
+
+    // Ruta legacy para asegurar que las notificaciones previas de los usuarios no se pierdan
+    const qUser = query(
+      collection(db, 'users', user.uid, 'notifications'),
       orderBy('createdAt', 'desc'),
       limit(20)
     );
-
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const data = snapshot.docs.map(doc => ({
+    unsubUser = onSnapshot(qUser, (snapshot) => {
+      userNotifs = snapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data(),
+        rawDate: doc.data().createdAt,
         time: formatTime(doc.data().createdAt)
       }));
-      setNotifications(data);
+      updateMerged();
+    }, (err) => {
+      console.warn('[useNotifications] Error en escucha de notificaciones legacy:', err);
       setLoading(false);
     });
 
-    return () => unsubscribe();
+    return () => {
+      if (unsubTeam) unsubTeam();
+      if (unsubUser) unsubUser();
+    };
   }, [user, teamId, getTeamPath]);
 
   const addNotification = async (type, text) => {

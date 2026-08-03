@@ -102,11 +102,16 @@ export const deleteDocument = async (collectionName, id) => {
   }
 };
 
-export const createNotification = async (type, text) => {
+export const createNotification = async (type, text, targetTeamId = null) => {
   try {
     const uid = auth.currentUser?.uid || localStorage.getItem('mister11_active_user_uid');
     if (!uid || uid === 'invitado-local') return; // Silenciar en modo invitado
-    const colRef = collection(db, 'users', uid, 'notifications');
+    
+    const activeTeamId = targetTeamId || localStorage.getItem('mister11_active_team_id');
+    const colRef = activeTeamId
+      ? collection(db, 'users', uid, 'teams', activeTeamId, 'notifications')
+      : collection(db, 'users', uid, 'notifications');
+
     await addDoc(colRef, {
       type,
       text,

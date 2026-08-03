@@ -1,6 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import jsPDF from 'jspdf';
 import { Shield, PenTool, Check, Download, Info } from 'lucide-react';
 import SignatureCanvas from '../components/SignatureCanvas';
 import '../styles/consent.css';
@@ -86,7 +85,7 @@ const ConsentForm = () => {
     return null;
   };
 
-  const handleGeneratePDF = (e) => {
+  const handleGeneratePDF = async (e) => {
     e.preventDefault();
     const validationError = validateForm();
     if (validationError) {
@@ -102,7 +101,8 @@ const ConsentForm = () => {
     try {
       const signatureDataUrl = signatureRef.current.getDataUrl();
 
-      // Crear documento PDF A4 vertical con jsPDF
+      // Crear documento PDF A4 vertical con jsPDF (carga diferida)
+      const { default: jsPDF } = await import('jspdf');
       const doc = new jsPDF({
         orientation: 'portrait',
         unit: 'mm',

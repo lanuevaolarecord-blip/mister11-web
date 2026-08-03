@@ -1,5 +1,3 @@
-import { jsPDF } from 'jspdf';
-import autoTable from 'jspdf-autotable';
 import { downloadPDF } from './download.js';
 
 const THEME_COLOR = [27, 58, 45];
@@ -25,10 +23,8 @@ const getImageBase64 = async (url) => {
 export const generateGlobalTeamReport = async (players, tests, evaluaciones, activeTeam = null) => {
   window.dispatchEvent(new CustomEvent('m11-loading', { detail: { show: true, message: 'Generando PDF...' } }));
   await new Promise(r => setTimeout(r, 150));
-  try {
-  } finally {
-    window.dispatchEvent(new CustomEvent('m11-loading', { detail: { show: false } }));
-  }
+  const { jsPDF } = await import('jspdf');
+  await import('jspdf-autotable');
   const doc = new jsPDF('p', 'mm', 'a4');
   const pageW = doc.internal.pageSize.getWidth();
   const pageH = doc.internal.pageSize.getHeight();

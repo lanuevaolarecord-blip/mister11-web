@@ -185,10 +185,14 @@ const getSeededCollection = (path) => {
 // Seed local documents for guest user
 const getSeededDoc = (path) => {
   if (path.endsWith('/planificacion/config')) {
+    const now = new Date();
+    const month = now.getMonth();
+    const year = now.getFullYear();
+    const startYear = month < 7 ? year - 1 : year;
     return {
       macroInfo: {
-        startDate: '2025-09-01',
-        endDate: '2026-06-15',
+        startDate: `${startYear}-09-01`,
+        endDate: `${startYear + 1}-06-15`,
         category: 'Juvenil',
         objective: 'Adapteremos al equipo en la parte técnica y táctica, mediante trabajos de posición y finalización.',
         trainer: 'Entrenador Invitado',

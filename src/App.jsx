@@ -14,6 +14,7 @@ import Login from './pages/Login';
 import LandingPage from './pages/LandingPage';
 import NotFound from './pages/NotFound';
 import PageLoader from './components/PageLoader';
+import ErrorBoundary from './components/ErrorBoundary';
 
 // ── Carga DIFERIDA (code splitting) — se cargan solo cuando se navega ────────
 const PizarraTactica    = lazy(() => import('./pages/PizarraTactica'));
@@ -193,7 +194,7 @@ function App() {
             path="/" 
             element={user ? <Layout /> : <LandingPage />}
           >
-            <Route index element={<Dashboard />} />
+            <Route index element={<ErrorBoundary><Dashboard /></ErrorBoundary>} />
           </Route>
 
           <Route 
@@ -238,14 +239,14 @@ function App() {
           >
             <Route path="dashboard" element={<RedirectToRoot />} />
             <Route path="pricing" element={<Navigate to="/admin" state={{ activeTab: 'ajustes' }} replace />} />
-            <Route path="pizarra" element={<PizarraTactica />} />
-            <Route path="equipo" element={<MiEquipo />} />
-            <Route path="sesiones" element={<Sesiones />} />
-            <Route path="planificacion" element={<Planificacion />} />
-            <Route path="tests" element={<Tests />} />
-            <Route path="partidos" element={<Partidos />} />
-            <Route path="ia-generadora" element={<IAGeneradora />} />
-            <Route path="admin" element={<AdminPanel />} />
+            <Route path="pizarra" element={<ErrorBoundary><PizarraTactica /></ErrorBoundary>} />
+            <Route path="equipo" element={<ErrorBoundary><MiEquipo /></ErrorBoundary>} />
+            <Route path="sesiones" element={<ErrorBoundary><Sesiones /></ErrorBoundary>} />
+            <Route path="planificacion" element={<ErrorBoundary><Planificacion /></ErrorBoundary>} />
+            <Route path="tests" element={<ErrorBoundary><Tests /></ErrorBoundary>} />
+            <Route path="partidos" element={<ErrorBoundary><Partidos /></ErrorBoundary>} />
+            <Route path="ia-generadora" element={<ErrorBoundary><IAGeneradora /></ErrorBoundary>} />
+            <Route path="admin" element={<ErrorBoundary><AdminPanel /></ErrorBoundary>} />
             {/* Ruta 404 para subrutas desconocidas dentro del layout */}
             <Route path="*" element={<NotFound />} />
           </Route>

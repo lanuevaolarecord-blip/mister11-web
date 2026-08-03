@@ -1,16 +1,8 @@
-import jsPDF from 'jspdf';
-import autoTable from 'jspdf-autotable';
-
-/**
- * Genera y descarga un informe PDF con los 4 microciclos de un mes seleccionado.
- * 
- * @param {Object} mesocycle - El mesociclo a exportar.
- * @param {Object} macroInfo - Datos generales del macrociclo/temporada.
- * @param {Object} activeTeam - El equipo activo seleccionado.
- * @param {string} appVersion - Versión actual de la app.
- */
-export const exportMonthlyPlan = (mesocycle, macroInfo, activeTeam, appVersion) => {
+export const exportMonthlyPlan = async (mesocycle, macroInfo, activeTeam, appVersion) => {
   if (!mesocycle) return;
+
+  const { default: jsPDF } = await import('jspdf');
+  await import('jspdf-autotable');
 
   const monthsList = ['Sep', 'Oct', 'Nov', 'Dic', 'Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun'];
   const formattedMonth = mesocycle.month.charAt(0).toUpperCase() + mesocycle.month.slice(1).toLowerCase();

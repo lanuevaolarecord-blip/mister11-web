@@ -17,7 +17,6 @@ import TestDetail from './TestDetail';
 import PlayerAnalyticsModal, { SvgRadar } from '../components/PlayerAnalyticsModal';
 import { db } from '../firebaseConfig';
 import { collection, addDoc, getDocs, query, where, orderBy, serverTimestamp, writeBatch, doc, deleteDoc } from '../firebase/firestore-proxy';
-import html2canvas from 'html2canvas';
 import WellnessTestModal from '../components/WellnessTestModal';
 import RPETestModal from '../components/RPETestModal';
 import './Tests.css';
@@ -35,17 +34,7 @@ const DEFAULT_TESTS = [
   { id: 't7', type: 'fisico', category: 'Técnica', name: 'Conducción conos', unit: 'seg', desc: 'Slalom entre conos con finalización.', imagenProtocolo: '/img/tests/conduccion_conos.png', protocol: { ejecucion: 'Conducir el balón haciendo slalom entre 5 conos separados por 2 metros y dar un pase a un objetivo.', medicion: 'Tiempo total en segundos desde inicio hasta que el pase entra al objetivo.', objetivo: 'Evaluar el control del balón en velocidad y precisión final.' } },
   { id: 't8', type: 'fisico', category: 'Técnica', name: 'Pase a portería', unit: 'pts', desc: 'Precisión de pase a zonas objetivo (10 pases).', imagenProtocolo: '/img/tests/pase_porteria.png', protocol: { ejecucion: '10 pases desde la frontal del área hacia pequeñas porterías o zonas marcadas.', medicion: '1 punto por cada acierto. Total de 10 puntos posibles.', objetivo: 'Medir la precisión del golpeo y concentración técnica.' } },
 
-  { id: 'psi1_old', type: 'psicodeportivo', category: 'Psicología', name: 'Escala de Autoconfianza', unit: 'pts', desc: 'Mide la confianza del jugador en sus capacidades deportivas', imagenProtocolo: '/img/tests/bienestar_general.png', protocol: 'Cuestionario de Rosenberg adaptado al deporte. Respuestas tipo Likert.', rangoMin: 0, rangoMax: 40 },
-  { id: 'psi2_old', type: 'psicodeportivo', category: 'Psicología', name: 'Ansiedad Competitiva (CSAI-2R)', unit: 'pts', desc: 'Evalúa ansiedad cognitiva, somática y autoconfianza', imagenProtocolo: '/img/tests/ansiedad_competitiva.png', protocol: 'Cuestionario antes de competir.', rangoMin: 0, rangoMax: 68 },
-  { id: 'psi3_old', type: 'psicodeportivo', category: 'Psicología', name: 'Motivación Deportiva (SMS-II)', unit: 'pts', desc: 'Mide tipos de motivación en el deporte', imagenProtocolo: '/img/tests/resiliencia_ires.png', protocol: 'Cuestionario SMS-II', rangoMin: 18, rangoMax: 126 },
-  { id: 'psi4_old', type: 'psicodeportivo', category: 'Psicología', name: 'Resiliencia en el Deporte', unit: 'pts', desc: 'Capacidad de sobreponerse a situaciones adversas', imagenProtocolo: '/img/tests/resiliencia_ires.png', protocol: 'Cuestionario de resiliencia', rangoMin: 0, rangoMax: 50 },
-  { id: 'psi5_old', type: 'psicodeportivo', category: 'Psicología', name: 'Atención y Concentración', unit: 'seg', desc: 'Mide la atención selectiva y concentración', imagenProtocolo: '/img/tests/atencion_concentracion.png', protocol: 'Prueba cognitiva cronometrada', rangoMin: 0, rangoMax: 100 },
 
-  { id: 'soc1_old', type: 'sociodeportivo', category: 'Sociología', name: 'Cohesión de Equipo (GEQ)', unit: 'pts', desc: 'Cuestionario del Ambiente de Grupo', imagenProtocolo: '/img/tests/cohesion_equipo.png', protocol: 'Evalúa la cohesión social y de tarea.', rangoMin: 18, rangoMax: 162 },
-  { id: 'soc2_old', type: 'sociodeportivo', category: 'Sociología', name: 'Escala de Deporte Limpio', unit: 'pts', desc: 'Actitudes hacia el Fair Play', imagenProtocolo: '/img/tests/deporte_limpio.png', protocol: 'Cuestionario de actitudes.', rangoMin: 0, rangoMax: 50 },
-  { id: 'soc3_old', type: 'sociodeportivo', category: 'Sociología', name: 'Habilidades Sociales', unit: 'pts', desc: 'Asertividad y comunicación en el deporte', imagenProtocolo: '/img/tests/cohesion_equipo.png', protocol: 'Evaluación de habilidades interpersonales.', rangoMin: 0, rangoMax: 100 },
-  { id: 'soc4_old', type: 'sociodeportivo', category: 'Sociología', name: 'Liderazgo Percibido', unit: 'pts', desc: 'Percepción de roles de liderazgo en el equipo', imagenProtocolo: '/img/tests/cohesion_equipo.png', protocol: 'Cuestionario de liderazgo deportivo.', rangoMin: 0, rangoMax: 100 },
-  { id: 'soc5_old', type: 'sociodeportivo', category: 'Sociología', name: 'Satisfacción con el Entrenador', unit: 'pts', desc: 'Percepción sobre el cuerpo técnico', imagenProtocolo: '/img/tests/bienestar_general.png', protocol: 'Cuestionario de satisfacción', rangoMin: 0, rangoMax: 50 },
 
   { id: 'psi1', type: 'psicosocial', category: 'Afrontamiento', name: 'Inventario de Habilidades de Afrontamiento (ACSI-28)', unit: 'pts', desc: 'Evalúa cómo el jugador maneja la presión y la adversidad', imagenProtocolo: '/img/tests/acsi28_afrontamiento.png', protocol: 'Responder cuestionario en escala de 1 a 5.', rangoMin: 0, rangoMax: 30, isQuestionnaire: true, questions: [
     { id: 'q1', text: 'Mantengo la calma cuando cometo un error.', dimension: 'Afrontamiento' },
@@ -739,8 +728,6 @@ const Tests = () => {
         t8:       [5,    6,    7,    7,    8],       // Pase a portería (pts)
         psi1:     [18,   20,   22,   23,   25],     // Autoconfianza
         psi2:     [35,   38,   40,   42,   44],     // CSAI
-        soc1_old: [90,   95,   100,  105,  108],    // GEQ Cohesión
-        soc2_old: [28,   30,   32,   33,   35],     // Fair Play
       };
 
       players.forEach((player, pIdx) => {
@@ -1086,6 +1073,7 @@ const Tests = () => {
                     let graficaUrl = null;
                     const element = document.getElementById('grafica-rendimiento-jugador');
                     if (element) {
+                      const html2canvas = (await import('html2canvas')).default;
                       const canvas = await html2canvas(element, { scale: 2, backgroundColor: null });
                       graficaUrl = canvas.toDataURL('image/png');
                     }
@@ -1273,7 +1261,8 @@ const Tests = () => {
                                 let graficaUrl = null;
                                 const element = document.getElementById('grafica-rendimiento-jugador');
                                 if (element) {
-                                  const canvas = await html2canvas(element, { scale: 2, backgroundColor: null });
+                                  const html2canvas = (await import('html2canvas')).default;
+                      const canvas = await html2canvas(element, { scale: 2, backgroundColor: null });
                                   graficaUrl = canvas.toDataURL('image/png');
                                 }
                                 await generatePlayerTestReport(getPlayerById(histSelectedPlayer), tests, historyData, activeTeam, graficaUrl);
@@ -1433,7 +1422,8 @@ const Tests = () => {
                             const cardElement = e.currentTarget.closest('.hist-chart-card');
                             if (!cardElement) return;
                             try {
-                              const canvas = await html2canvas(cardElement, { scale: 2, backgroundColor: '#FFFFFF' });
+                              const html2canvas = (await import('html2canvas')).default;
+                      const canvas = await html2canvas(cardElement, { scale: 2, backgroundColor: '#FFFFFF' });
                               const imgData = canvas.toDataURL('image/png');
                               const downloadAnchor = document.createElement('a');
                               downloadAnchor.setAttribute("href", imgData);

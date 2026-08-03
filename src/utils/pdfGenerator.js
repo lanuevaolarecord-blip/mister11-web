@@ -1,8 +1,12 @@
-﻿import { jsPDF } from 'jspdf';
-import autoTable from 'jspdf-autotable';
 import { downloadPDF } from './download.js';
 import { db, auth } from '../firebaseConfig';
 import { doc, getDoc } from 'firebase/firestore';
+
+const getJsPDF = async () => {
+  const { jsPDF } = await import('jspdf');
+  await import('jspdf-autotable');
+  return jsPDF;
+};
 
 // Configuración de colores corporativos
 const THEME_COLOR = [27, 58, 45]; // #1B3A2D
@@ -144,6 +148,7 @@ const addFooter = (doc) => {
 export const generatePlanificacionPDF = async (macroInfo, microcycles, activeTeam = null) => {
   window.dispatchEvent(new CustomEvent('m11-loading', { detail: { show: true, message: 'Generando PDF...' } }));
   await new Promise(r => setTimeout(r, 150));
+  const jsPDF = await getJsPDF();
   const doc = new jsPDF({ orientation: 'landscape' });
   const pageW = doc.internal.pageSize.getWidth(); // 297mm landscape
 
@@ -296,6 +301,7 @@ export const generatePlanificacionPDF = async (macroInfo, microcycles, activeTea
 export const generateTestsReport = async (tests, players, historyData, activeTeam = null) => {
   window.dispatchEvent(new CustomEvent('m11-loading', { detail: { show: true, message: 'Generando PDF...' } }));
   await new Promise(r => setTimeout(r, 150));
+  const jsPDF = await getJsPDF();
   const doc = new jsPDF({ orientation: 'landscape' });
   const pageW = doc.internal.pageSize.getWidth();
 
@@ -453,6 +459,7 @@ export const generateTestsReport = async (tests, players, historyData, activeTea
 export const generatePlayerTestReport = async (player, tests, historyData, activeTeam = null, graficaDataUrl = null) => {
   window.dispatchEvent(new CustomEvent('m11-loading', { detail: { show: true, message: 'Generando PDF...' } }));
   await new Promise(r => setTimeout(r, 150));
+  const jsPDF = await getJsPDF();
   const doc = new jsPDF();
   const pageW = doc.internal.pageSize.getWidth();
 
@@ -679,6 +686,7 @@ export const generateSessionPDF = async (session, activeTeam = null, pizarras = 
   window.dispatchEvent(new CustomEvent('m11-loading', { detail: { show: true, message: 'Generando PDF de Sesión...' } }));
   await new Promise(r => setTimeout(r, 150));
   try {
+    const jsPDF = await getJsPDF();
     const doc = new jsPDF();
     const pageW = doc.internal.pageSize.getWidth();
     const pageH = doc.internal.pageSize.getHeight();
@@ -973,6 +981,7 @@ export const generateSessionPDF = async (session, activeTeam = null, pizarras = 
 export const generateSeasonReport = async (team, players, matches) => {
   window.dispatchEvent(new CustomEvent('m11-loading', { detail: { show: true, message: 'Generando PDF...' } }));
   await new Promise(r => setTimeout(r, 150));
+  const jsPDF = await getJsPDF();
   const doc = new jsPDF();
   const teamName = team?.nombre || 'Equipo';
   const season = team?.temporada || new Date().getFullYear();
@@ -1051,6 +1060,7 @@ export const generateSeasonReport = async (team, players, matches) => {
 export const generateMatchConvocation = async (match, players, activeTeam = null) => {
   window.dispatchEvent(new CustomEvent('m11-loading', { detail: { show: true, message: 'Generando PDF...' } }));
   await new Promise(r => setTimeout(r, 150));
+  const jsPDF = await getJsPDF();
   const doc = new jsPDF();
   const matchName = match.rival ? `Partido vs ${match.rival}` : (match.nombre || match.title || 'Partido Oficial');
   await addHeader(doc, 'HOJA DE CONVOCATORIA', matchName, activeTeam);
@@ -1099,6 +1109,7 @@ export const generateMatchConvocation = async (match, players, activeTeam = null
 export const generateExpediente = async (player, activeTeam = null) => {
   window.dispatchEvent(new CustomEvent('m11-loading', { detail: { show: true, message: 'Generando PDF...' } }));
   await new Promise(r => setTimeout(r, 150));
+  const jsPDF = await getJsPDF();
   const doc = new jsPDF();
   await addHeader(doc, 'EXPEDIENTE DEPORTIVO', `${player.name || player.nombre}`, activeTeam);
 
@@ -1157,6 +1168,7 @@ export const generateExercisesReport = async (exercises, activeTeam = null) => {
   window.dispatchEvent(new CustomEvent('m11-loading', { detail: { show: true, message: 'Generando PDF...' } }));
   await new Promise(r => setTimeout(r, 150));
   try {
+    const jsPDF = await getJsPDF();
     const doc = new jsPDF();
     const teamName = activeTeam?.nombre || 'Míster 11';
     await addHeader(doc, 'BIBLIOTECA DE EJERCICIOS', `Equipo: ${teamName}`, activeTeam);
@@ -1197,6 +1209,7 @@ export const generatePostMatchReportPDF = async (match, players, activeTeam = nu
   window.dispatchEvent(new CustomEvent('m11-loading', { detail: { show: true, message: 'Generando PDF...' } }));
   await new Promise(r => setTimeout(r, 150));
   try {
+    const jsPDF = await getJsPDF();
     const doc = new jsPDF();
     const pageW = doc.internal.pageSize.getWidth();
     const pageH = doc.internal.pageSize.getHeight();
@@ -1411,6 +1424,7 @@ export const generateExercisePDF = async (exercise, activeTeam = null) => {
   window.dispatchEvent(new CustomEvent('m11-loading', { detail: { show: true, message: 'Generando PDF del Ejercicio...' } }));
   await new Promise(r => setTimeout(r, 150));
   try {
+    const jsPDF = await getJsPDF();
     const doc = new jsPDF();
     const pageW = doc.internal.pageSize.getWidth();
     
@@ -1484,6 +1498,7 @@ export const generateWeeklyReportPDF = async (weeklyData, activeTeam = null) => 
   window.dispatchEvent(new CustomEvent('m11-loading', { detail: { show: true, message: 'Generando Informe Semanal...' } }));
   await new Promise(r => setTimeout(r, 150));
   try {
+    const jsPDF = await getJsPDF();
     const doc = new jsPDF();
     const pageW = doc.internal.pageSize.getWidth();
     const pageH = doc.internal.pageSize.getHeight();

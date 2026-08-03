@@ -7,9 +7,6 @@ import { useTheme } from '../context/ThemeContext';
 import { usePlan } from '../hooks/usePlan';
 import UpgradeModal from '../components/UpgradeModal';
 import { Save, FileText } from 'lucide-react';
-import html2canvas from 'html2canvas';
-import { jsPDF } from 'jspdf';
-import autoTable from 'jspdf-autotable';
 import { downloadPDF } from '../utils/download';
 import { APP_VERSION } from '../constants/appVersion';
 import { exportMonthlyPlan } from '../utils/exportMonthlyPlan';
@@ -35,7 +32,18 @@ const getMonthLabel = (date) => {
   return labels[date.getMonth()];
 };
 
-const generateMicrocycles = (startDate = '2025-09-01', sessionDuration = 90, trainingDays = [0, 2, 4]) => {
+const getDefaultSeasonDates = () => {
+  const now = new Date();
+  const month = now.getMonth(); // 0 = Ene ... 6 = Jul
+  const year = now.getFullYear();
+  const startYear = month < 7 ? year - 1 : year;
+  return {
+    startDate: `${startYear}-09-01`,
+    endDate: `${startYear + 1}-06-15`
+  };
+};
+
+const generateMicrocycles = (startDate = getDefaultSeasonDates().startDate, sessionDuration = 90, trainingDays = [0, 2, 4]) => {
   const baseDate = new Date(startDate + 'T00:00:00');
   return Array.from({ length: 40 }, (_, i) => {
     // Calcular la fecha de inicio de cada microciclo (1 microciclo = 1 semana)
@@ -115,9 +123,10 @@ const Planificacion = () => {
   const competBg = darkMode ? 'rgba(255, 255, 255, 0.1)' : '#FDF3DC';
 
 
+  const defaultDates = getDefaultSeasonDates();
   const [macroInfo, setMacroInfo] = useState({
-    startDate: '2025-09-01',
-    endDate: '2026-06-15',
+    startDate: defaultDates.startDate,
+    endDate: defaultDates.endDate,
     category: activeTeam?.categoria || activeTeam?.category || 'Infantil A',
     objective: 'Adapteremos al equipo en la parte técnica y táctica, mediante trabajos de posición y finalización.',
     trainer: user?.displayName || 'Míster',
@@ -269,6 +278,8 @@ const Planificacion = () => {
     showToast('Generando PDF...', 'info');
 
     try {
+      const { jsPDF } = await import('jspdf');
+      await import('jspdf-autotable');
       const isLandscape = activeTab === 'macrociclo' || (activeTab === 'mesociclo' && selectedMesoItem);
       const doc = new jsPDF(isLandscape ? 'l' : 'p', 'mm', 'a4');
       const pdfWidth = doc.internal.pageSize.getWidth();

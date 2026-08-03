@@ -1,8 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { db } from '../firebaseConfig';
-import { collection, addDoc } from 'firebase/firestore';
-import jsPDF from 'jspdf';
 import { Shield, PenTool, Check, Share2, Download } from 'lucide-react';
 import './ConsentimientoFirma.css';
 
@@ -150,7 +148,8 @@ const ConsentimientoFirma = () => {
       // 1. Convertir firma del canvas a imagen base64
       const signatureDataUrl = canvasRef.current.toDataURL('image/png');
 
-      // 2. Crear documento PDF con jsPDF
+      // 2. Crear documento PDF con jsPDF (carga diferida)
+      const { default: jsPDF } = await import('jspdf');
       const doc = new jsPDF({
         orientation: 'portrait',
         unit: 'mm',

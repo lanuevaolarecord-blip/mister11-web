@@ -69,7 +69,7 @@
 .livestats-timer-block {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
 }
 
 .livestats-timer-digits {
@@ -105,7 +105,7 @@
   letter-spacing: 0.5px;
 }
 
-/* Botón Play/Pause del cronómetro */
+/* Botón Play/Pausa del cronómetro */
 .livestats-toggle-timer-btn {
   display: inline-flex;
   align-items: center;
@@ -143,7 +143,32 @@
   transform: scale(1.03);
 }
 
-/* Bloque Marcador */
+/* Botón Reinicio del cronómetro (Dorado institucional #D4A843 con fondo circular sutil) */
+.livestats-reset-timer-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: rgba(212, 168, 67, 0.2);
+  color: #D4A843;
+  border: 1.5px solid #D4A843;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  outline: none;
+  padding: 0;
+  box-shadow: 0 0 8px rgba(212, 168, 67, 0.25);
+}
+
+.livestats-reset-timer-btn:hover {
+  background: #D4A843;
+  color: #0E1A14;
+  transform: scale(1.08) rotate(45deg);
+  box-shadow: 0 0 12px rgba(212, 168, 67, 0.5);
+}
+
+/* Bloque Marcador y Botones de Gol */
 .livestats-score-box {
   display: flex;
   align-items: center;
@@ -151,8 +176,14 @@
   background: rgba(0, 0, 0, 0.35);
   border: 1px solid rgba(212, 168, 67, 0.4);
   border-radius: 12px;
-  padding: 6px 16px;
+  padding: 6px 14px;
   box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.livestats-score-display {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .livestats-score-num {
@@ -166,6 +197,29 @@
   font-size: 16px;
   font-weight: 800;
   color: #D4A843;
+}
+
+.livestats-goal-btn {
+  background: rgba(76, 175, 125, 0.22);
+  border: 1px solid #4CAF7D;
+  color: #4CAF7D;
+  border-radius: 8px;
+  padding: 3px 8px;
+  font-size: 11px;
+  font-weight: 900;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  outline: none;
+}
+
+.livestats-goal-btn:hover {
+  background: #4CAF7D;
+  color: #0E1A14;
+  transform: scale(1.08);
+}
+
+.livestats-goal-btn:active {
+  transform: scale(0.95);
 }
 
 /* Selector de Mitad */
@@ -422,7 +476,7 @@
 }
 
 .theme-light .livestats-btn-label {
-  color: #0F172A; /* Negro/azul marino profundo sobre fondo claro */
+  color: #0F172A;
 }
 
 .theme-light .livestats-btn-label-sub {

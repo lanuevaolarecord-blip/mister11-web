@@ -3,11 +3,10 @@
  * ─────────────────────────────────────────────────────────────────────────────
  * Módulo de captura de estadísticas en vivo durante el partido.
  *
- * CORRECCIONES Y CAUSA RAÍZ:
- *  • Causa Raíz de permisos: Los partidos no existen en la colección raíz matches/,
- *    sino anidados bajo la ruta del equipo: ${teamPath}/matches/${matchId}/liveStats/${eventId}.
- *  • Se actualizó useLiveStats para usar la ruta del equipo real.
- *  • Se añadió el botón de reinicio (resetTimer) que devuelve el tiempo a 00:00.
+ * MEJORAS:
+ *  1. Botón de reinicio del cronómetro en dorado circular (#D4A843).
+ *  2. Botones de gol "+1" a cada lado del marcador, sincronizados con Match Day.
+ *  3. Verificación de alcance de reglas Firestore recursivas {allPaths=**}.
  * ─────────────────────────────────────────────────────────────────────────────
  */
 
@@ -37,6 +36,8 @@ const TEXTS = {
   'live.timer.start':          { es: '▶ INICIAR',                        en: '▶ START' },
   'live.timer.pause':          { es: '❚❚ PAUSAR',                        en: '❚❚ PAUSE' },
   'live.timer.reset':          { es: 'Reiniciar cronómetro',             en: 'Reset timer' },
+  'live.goal.for':             { es: '+1 Gol propio',                    en: '+1 Own Goal' },
+  'live.goal.against':         { es: '+1 Gol rival',                     en: '+1 Rival Goal' },
   'live.cat.shots':            { es: '⚽ Remates',                       en: '⚽ Shots' },
   'live.cat.possession':       { es: '🔄 Defensa / Posesión',           en: '🔄 Defense / Possession' },
   'live.cat.fouls':            { es: '⚡ Faltas / Transiciones',         en: '⚡ Fouls / Transitions' },
@@ -120,6 +121,8 @@ const LiveStats = ({
   matchId,
   matchData,
   language,
+  onAddGoalFor,
+  onAddGoalAgainst,
 }) => {
   const isEn = language === 'English (EN)';
   const tx = useCallback(
@@ -201,8 +204,8 @@ const LiveStats = ({
     );
   }
 
-  const goalsFor     = matchData?.golesLocal  ?? matchData?.golesPropio ?? 0;
-  const goalsAgainst = matchData?.golesVisita ?? matchData?.golesRival  ?? 0;
+  const goalsFor     = matchData?.goalsFor     ?? matchData?.golesLocal  ?? matchData?.golesPropio ?? 0;
+  const goalsAgainst = matchData?.goalsAgainst ?? matchData?.golesVisita ?? matchData?.golesRival  ?? 0;
 
   return (
     <div
@@ -232,7 +235,7 @@ const LiveStats = ({
             {isRunning ? tx('live.timer.pause') : tx('live.timer.start')}
           </button>
 
-          {/* Botón de Reinicio del Cronómetro */}
+          {/* Botón de Reinicio del Cronómetro (Dorado #D4A843 circular) */}
           <button
             type="button"
             onClick={resetTimer}
@@ -246,11 +249,35 @@ const LiveStats = ({
           </button>
         </div>
 
-        {/* Marcador */}
+        {/* Marcador con botones de Gol +1 */}
         <div className="livestats-score-box">
-          <span className="livestats-score-num">{goalsFor}</span>
-          <span className="livestats-score-dash">-</span>
-          <span className="livestats-score-num">{goalsAgainst}</span>
+          {onAddGoalFor && (
+            <button
+              type="button"
+              onClick={onAddGoalFor}
+              className="livestats-goal-btn"
+              title={tx('live.goal.for')}
+            >
+              +1
+            </button>
+          )}
+
+          <div className="livestats-score-display">
+            <span className="livestats-score-num">{goalsFor}</span>
+            <span className="livestats-score-dash">-</span>
+            <span className="livestats-score-num">{goalsAgainst}</span>
+          </div>
+
+          {onAddGoalAgainst && (
+            <button
+              type="button"
+              onClick={onAddGoalAgainst}
+              className="livestats-goal-btn"
+              title={tx('live.goal.against')}
+            >
+              +1
+            </button>
+          )}
         </div>
 
         {/* Selector de Mitad */}

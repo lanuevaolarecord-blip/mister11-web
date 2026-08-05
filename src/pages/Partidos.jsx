@@ -1224,6 +1224,8 @@ const Partidos = () => {
                   matchId={matchData?.id || null}
                   matchData={matchData}
                   language={settings?.language || 'Español (ES)'}
+                  onAddGoalFor={() => addEvent('gol_local', 'Equipo', 'Gol Propio', currentMinute)}
+                  onAddGoalAgainst={() => addEvent('gol_rival', 'Rival', 'Gol del Rival', currentMinute)}
                 />
               </div>
             )}

@@ -43,14 +43,9 @@ service cloud.firestore {
           );
         }
 
-        // Resto de subcolecciones de los equipos personales (sessions, matches, planning, etc.)
-        match /{subcollection}/{docId} {
+        // Resto de subcolecciones y sub-subcolecciones a cualquier profundidad (matches/{matchId}/liveStats, sessions, planning, etc.)
+        match /{subcollection}/{allPaths=**} {
           allow read, write: if (isOwner(userId) || isDevEmail()) && subcollection != 'players';
-
-          // Sub-subcolecciones a cualquier profundidad (ej. matches/{matchId}/liveStats/{eventId})
-          match /{allPaths=**} {
-            allow read, write: if isOwner(userId) || isDevEmail();
-          }
         }
       }
 
@@ -89,22 +84,13 @@ service cloud.firestore {
           get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('clubRole', '') in ['owner', 'admin']
         );
 
-        // Subcollections dentro de equipos de club
-        match /{subcollection}/{docId} {
+        // Subcolecciones a cualquier profundidad dentro de equipos de club (ej. matches/{matchId}/liveStats)
+        match /{subcollection}/{allPaths=**} {
           allow read: if isAuth();
           allow write: if isAuth() && (
             isDevEmail() ||
             get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('clubRole', '') in ['owner', 'admin', 'coach']
           );
-
-          // Sub-subcolecciones a cualquier profundidad dentro de equipos de club
-          match /{allPaths=**} {
-            allow read: if isAuth();
-            allow write: if isAuth() && (
-              isDevEmail() ||
-              get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('clubRole', '') in ['owner', 'admin', 'coach']
-            );
-          }
         }
       }
 

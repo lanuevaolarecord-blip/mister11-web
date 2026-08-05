@@ -1220,11 +1220,8 @@ const Partidos = () => {
             {editTab === 'LIVE-STATS' && (
               <div className="tab-pane" style={{ padding: 0 }}>
                 <LiveStats
+                  teamId={activeTeamId}
                   matchId={matchData?.id || null}
-                  matchSeconds={matchSeconds}
-                  isRunning={isTimerRunning}
-                  currentMinute={currentMinute}
-                  formatMatchTime={formatTime}
                   matchData={matchData}
                   language={settings?.language || 'Español (ES)'}
                 />

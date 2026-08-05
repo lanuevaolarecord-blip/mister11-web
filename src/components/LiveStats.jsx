@@ -3,13 +3,11 @@
  * ─────────────────────────────────────────────────────────────────────────────
  * Módulo de captura de estadísticas en vivo durante el partido.
  *
- * CORRECCIONES REALIZADAS:
- *  1. Respeto al ThemeContext (modo claro y modo oscuro) independientemente
- *     de si está en pantalla completa o modo normal.
- *  2. Botón de Play/Pausa del cronómetro (reutiliza toggleTimer de MatchContext).
- *  3. Contador de eventos en tiempo real (events.length vía onSnapshot).
- *  4. Lógica de Pantalla Completa desacoplada del tema.
- *  5. Swipe/scroll horizontal por carrusel en móvil (touch-action: pan-x).
+ * CORRECCIONES Y CAUSA RAÍZ:
+ *  • Causa Raíz de permisos: Los partidos no existen en la colección raíz matches/,
+ *    sino anidados bajo la ruta del equipo: ${teamPath}/matches/${matchId}/liveStats/${eventId}.
+ *  • Se actualizó useLiveStats para usar la ruta del equipo real.
+ *  • Se añadió el botón de reinicio (resetTimer) que devuelve el tiempo a 00:00.
  * ─────────────────────────────────────────────────────────────────────────────
  */
 
@@ -38,6 +36,7 @@ const TEXTS = {
   'live.fullscreen.exit':      { es: 'Salir',                            en: 'Exit' },
   'live.timer.start':          { es: '▶ INICIAR',                        en: '▶ START' },
   'live.timer.pause':          { es: '❚❚ PAUSAR',                        en: '❚❚ PAUSE' },
+  'live.timer.reset':          { es: 'Reiniciar cronómetro',             en: 'Reset timer' },
   'live.cat.shots':            { es: '⚽ Remates',                       en: '⚽ Shots' },
   'live.cat.possession':       { es: '🔄 Defensa / Posesión',           en: '🔄 Defense / Possession' },
   'live.cat.fouls':            { es: '⚡ Faltas / Transiciones',         en: '⚡ Fouls / Transitions' },
@@ -117,6 +116,7 @@ const BUTTON_GROUPS = [
 ];
 
 const LiveStats = ({
+  teamId,
   matchId,
   matchData,
   language,
@@ -127,12 +127,12 @@ const LiveStats = ({
     [isEn]
   );
 
-  // ── Obtenemos darkMode de ThemeContext y tiempo de MatchContext ────────
   const { darkMode } = useTheme();
   const {
     matchSeconds,
     isRunning,
     toggleTimer,
+    resetTimer,
     currentMinute,
     formatMatchTime,
   } = useMatch();
@@ -142,7 +142,7 @@ const LiveStats = ({
   const [currentHalf, setCurrentHalf] = useState(1);
 
   const { events, saving, addLiveEvent, countByType } =
-    useLiveStats(matchId, currentMinute, currentHalf);
+    useLiveStats(teamId, matchId, currentMinute, currentHalf);
 
   const [flashType, setFlashType] = useState(null);
 
@@ -209,9 +209,9 @@ const LiveStats = ({
       ref={containerRef}
       className={`livestats-container ${darkMode ? 'theme-dark' : 'theme-light'} ${isFullscreen ? 'livestats-fullscreen' : ''}`}
     >
-      {/* ── 1. Cabecera fija con cronómetro, play/pausa y marcador ────── */}
+      {/* ── 1. Cabecera fija con cronómetro, play/pausa, reset y marcador ────── */}
       <header className="livestats-header">
-        {/* Cronómetro y control de Play/Pausa */}
+        {/* Cronómetro y control de Play/Pausa/Reset */}
         <div className="livestats-timer-block">
           <span className={`livestats-timer-digits ${isRunning ? 'running' : 'paused'}`}>
             {formatMatchTime(matchSeconds)}
@@ -230,6 +230,19 @@ const LiveStats = ({
             className={`livestats-toggle-timer-btn ${isRunning ? 'btn-pause' : 'btn-play'}`}
           >
             {isRunning ? tx('live.timer.pause') : tx('live.timer.start')}
+          </button>
+
+          {/* Botón de Reinicio del Cronómetro */}
+          <button
+            type="button"
+            onClick={resetTimer}
+            className="livestats-reset-timer-btn"
+            title={tx('live.timer.reset')}
+          >
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+              <path d="M21.5 2v6h-6M2.5 22v-6h6"/>
+              <path d="M2 11.5a10 10 0 0 1 18.8-4.3L21.5 8M22 12.5a10 10 0 0 1-18.8 4.3L2.5 16"/>
+            </svg>
           </button>
         </div>
 

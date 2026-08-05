@@ -1217,18 +1217,16 @@ const Partidos = () => {
             )}
 
             {/* PESTAÑA: LIVE-STATS */}
-            {editTab === 'LIVE-STATS' && (
-              <div className="tab-pane" style={{ padding: 0 }}>
-                <LiveStats
-                  teamId={activeTeamId}
-                  matchId={matchData?.id || null}
-                  matchData={matchData}
-                  language={settings?.language || 'Español (ES)'}
-                  onAddGoalFor={() => addEvent('gol_local', 'Equipo', 'Gol Propio', currentMinute)}
-                  onAddGoalAgainst={() => addEvent('gol_rival', 'Rival', 'Gol del Rival', currentMinute)}
-                />
-              </div>
-            )}
+            <div className="tab-pane" style={{ padding: 0, display: editTab === 'LIVE-STATS' ? 'block' : 'none' }}>
+              <LiveStats
+                teamId={activeTeamId}
+                matchId={matchData?.id || null}
+                matchData={matchData}
+                language={settings?.language || 'Español (ES)'}
+                onAddGoalFor={() => addEvent('gol_local', 'Equipo', 'Gol Propio', currentMinute)}
+                onAddGoalAgainst={() => addEvent('gol_rival', 'Rival', 'Gol del Rival', currentMinute)}
+              />
+            </div>
 
             {/* PESTAÑA: POST-PARTIDO */}
             {editTab === 'POST-PARTIDO' && (

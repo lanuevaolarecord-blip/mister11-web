@@ -72,10 +72,9 @@ export const useLiveStats = (teamId, matchId, currentMinute, currentHalf = 1) =>
       (snap) => {
         if (snap && snap.docs) {
           const docs = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
-          // Solo sobrescribe si hay documentos persistidos en Firestore
-          if (docs.length > 0) {
-            setEvents(docs);
-          }
+          setEvents(docs);
+        } else {
+          setEvents([]);
         }
         setLoading(false);
       },

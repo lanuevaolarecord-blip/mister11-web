@@ -80,16 +80,17 @@ export const SvgDonut = ({
             />
           )}
 
-          {/* Porcentaje en el centro como elemento <text> del SVG */}
+          {/* Porcentaje en el centro como elemento <text> del SVG con dy="0.35em" */}
           <text
             x={center}
             y={center}
+            dy="0.35em"
             textAnchor="middle"
-            dominantBaseline="central"
             fill={textColor}
-            fontSize="21"
+            fontSize="20"
             fontWeight="900"
-            fontFamily="system-ui, -apple-system, sans-serif"
+            fontFamily="system-ui, -apple-system, Roboto, sans-serif"
+            style={{ fill: textColor }}
           >
             {total > 0 ? `${pct1}%` : '0%'}
           </text>

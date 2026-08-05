@@ -2,8 +2,12 @@
  * matchPdfReport.js
  * ─────────────────────────────────────────────────────────────────────────────
  * Generador de Informes PDF de Partido (Post-Partido Total & Live Stats).
- * Incluye captura visual con html2canvas de las gráficas SVG (donus, barras) +
- * tablas de datos estructuradas, cuestionario guiado, alineaciones y cronología.
+ *
+ * MEJORAS DE CALIDAD Y LIMPIEZA PROFESIONAL:
+ *  • Eliminación total de emoticonos/emojis Unicode no soportados por fuentes de jsPDF
+ *    (evita caracteres corruptos como Ø=ÜÊ, Ø<ß¯, Ø=ßâ, etc.).
+ *  • Captura impecable de html2canvas con clonado en modo claro (fondo blanco #FFFFFF y
+ *    texto oscuro #0F172A) para visualización nítida y profesional en el PDF.
  * ─────────────────────────────────────────────────────────────────────────────
  */
 
@@ -18,28 +22,28 @@ const getPdfLibs = async () => {
   return { jsPDF, autoTable, html2canvas };
 };
 
-// Nombres legibles de eventos para la cronología
+// Nombres legibles en texto plano (sin caracteres emojis para evitar corrupción en PDF)
 const EVENT_NAMES = {
-  shot_on_target_own:   '🟢 Tiro a puerta (Propio)',
-  shot_on_target_rival: '🔴 Tiro a puerta (Rival)',
-  shot_off_target_own:  '⬜ Tiro fuera (Propio)',
-  shot_off_target_rival: '🔲 Tiro fuera (Rival)',
-  recovery:             '↑ Recuperación de balón',
-  loss:                 '↓ Pérdida de balón',
-  duel_won:             '✊ Duelo ganado',
-  duel_lost:            '🤜 Duelo perdido',
-  foul_favor:           '✅ Falta a favor',
-  foul_against:         '❌ Falta en contra',
-  counter_not_cut:      '⚡ Contra no cortada',
-  player_no_finish:     '😤 Jugador no finaliza',
-  card_own:             '🟨 Tarjeta recibida (Propia)',
-  card_rival:           '🟥 Tarjeta provocada (Rival)',
-  corner_favor:         '🚩 Córner a favor',
-  corner_against:       '⛳ Córner en contra',
-  offside_own:          '🏃 Fuera de juego (Propio)',
-  offside_rival:       '🏃‍♂️ Fuera de juego (Rival)',
-  gol_local:            '⚽ GOL PROPIO',
-  gol_rival:            '⚽ GOL RIVAL',
+  shot_on_target_own:   'Tiro a puerta (Propio)',
+  shot_on_target_rival: 'Tiro a puerta (Rival)',
+  shot_off_target_own:  'Tiro fuera (Propio)',
+  shot_off_target_rival: 'Tiro fuera (Rival)',
+  recovery:             'Recuperacion de balon',
+  loss:                 'Perdida de balon',
+  duel_won:             'Duelo ganado',
+  duel_lost:            'Duelo perdido',
+  foul_favor:           'Falta a favor',
+  foul_against:         'Falta en contra',
+  counter_not_cut:      'Contra no cortada',
+  player_no_finish:     'Jugador no finaliza',
+  card_own:             'Tarjeta recibida (Propia)',
+  card_rival:           'Tarjeta provocada (Rival)',
+  corner_favor:         'Corner a favor',
+  corner_against:       'Corner en contra',
+  offside_own:          'Fuera de juego (Propio)',
+  offside_rival:        'Fuera de juego (Rival)',
+  gol_local:            'GOL PROPIO',
+  gol_rival:            'GOL RIVAL',
 };
 
 export const generateMatchPdfReport = async ({
@@ -105,7 +109,7 @@ export const generateMatchPdfReport = async ({
 
     doc.setFontSize(9);
     doc.setTextColor(100, 116, 139);
-    doc.text(`MVP: ${matchData?.mvp || 'N/A'} | Valoración Equipo: ${matchData?.teamRating || 5}/10 | Formación: ${matchData?.lineup || '4-3-3'}`, 20, y + 24);
+    doc.text(`MVP: ${matchData?.mvp || 'N/A'} | Valoracion Equipo: ${matchData?.teamRating || 5}/10 | Formacion: ${matchData?.lineup || '4-3-3'}`, 20, y + 24);
 
     y += 38;
 
@@ -127,7 +131,7 @@ export const generateMatchPdfReport = async ({
         cardsText = matchData.tarjetasList
           .map((t) => {
             const p = players.find((pl) => pl.id === t.jugadorId);
-            const tipo = t.tipo === 'amarilla' ? '🟨 Amarilla' : '🟥 Roja';
+            const tipo = t.tipo === 'amarilla' ? 'Amarilla' : 'Roja';
             return `${tipo} - ${p ? (p.name || p.nombre) : 'Jugador'} (${t.minuto}')`;
           })
           .join(', ');
@@ -137,7 +141,7 @@ export const generateMatchPdfReport = async ({
       doc.setFontSize(11);
       doc.setFont('helvetica', 'bold');
       doc.setTextColor(...colorPrimary);
-      doc.text('⚽ GOLEADORES, ASISTENCIAS Y TARJETAS', 14, y);
+      doc.text('GOLEADORES, ASISTENCIAS Y TARJETAS', 14, y);
       y += 6;
 
       const highlightsTable = [
@@ -156,7 +160,7 @@ export const generateMatchPdfReport = async ({
       y = (doc.lastAutoTable ? doc.lastAutoTable.finalY : y + 20) + 10;
     }
 
-    // ── 4. CAPTURA VISUAL DE LAS GRÁFICAS SVG CON HTML2CANVAS ─────────────
+    // ── 4. CAPTURA VISUAL DE LAS GRÁFICAS CON HTML2CANVAS ─────────────────
     const chartContainerId = mode === 'POST-MATCH' 
       ? 'livestats-charts-container-post' 
       : 'livestats-charts-container-live';
@@ -164,7 +168,27 @@ export const generateMatchPdfReport = async ({
 
     if (chartElement) {
       try {
-        const canvas = await html2canvas(chartElement, { scale: 2, backgroundColor: null, useCORS: true });
+        const canvas = await html2canvas(chartElement, {
+          scale: 2,
+          backgroundColor: '#FFFFFF',
+          useCORS: true,
+          onclone: (clonedDoc) => {
+            const container = clonedDoc.getElementById(chartContainerId) || clonedDoc.querySelector('.livestats-summary-grid');
+            if (container) {
+              container.style.background = '#FFFFFF';
+              container.style.color = '#0F172A';
+              const textNodes = container.querySelectorAll('span, p, h4, div, text');
+              textNodes.forEach((node) => {
+                if (node.tagName === 'text') {
+                  node.setAttribute('fill', '#0F172A');
+                } else if (!node.style.color || node.style.color.includes('255')) {
+                  node.style.color = '#0F172A';
+                }
+              });
+            }
+          },
+        });
+
         const imgData = canvas.toDataURL('image/png');
         const imgW = pageW - 28;
         const imgH = (canvas.height * imgW) / canvas.width;
@@ -177,7 +201,7 @@ export const generateMatchPdfReport = async ({
         doc.setFontSize(11);
         doc.setFont('helvetica', 'bold');
         doc.setTextColor(...colorPrimary);
-        doc.text('📊 RESUMEN Y GRÁFICAS TÁCTICAS EN IMAGEN', 14, y);
+        doc.text('RESUMEN Y GRÁFICAS TÁCTICAS EN IMAGEN', 14, y);
         y += 6;
 
         doc.addImage(imgData, 'PNG', 14, y, imgW, Math.min(imgH, 120));
@@ -196,7 +220,7 @@ export const generateMatchPdfReport = async ({
     doc.setFontSize(11);
     doc.setFont('helvetica', 'bold');
     doc.setTextColor(...colorPrimary);
-    doc.text('🎯 TABLA DE EFICIENCIA TÁCTICA Y COMPARATIVA', 14, y);
+    doc.text('TABLA DE EFICIENCIA TÁCTICA Y COMPARATIVA', 14, y);
     y += 6;
 
     const countOf = (t) => events.filter((e) => e.type === t).length;
@@ -216,10 +240,10 @@ export const generateMatchPdfReport = async ({
     const possPct = totalPoss > 0 ? Math.round((rec / totalPoss) * 100) : 0;
 
     const effData = [
-      ['Métrica Táctica', 'Eventos Positivos', 'Eventos Negativos', '% Eficiencia'],
-      ['Duelos individuales', `${duelsWon} Ganados`, `${duelsLost} Perdidos`, `${duelsPct}% Éxito`],
-      ['Precisión de Tiro', `${shotsOn} a Puerta`, `${shotsOff} Fuera`, `${shotsPct}% Puerta`],
-      ['Balance de Balón', `${rec} Recuperaciones`, `${loss} Pérdidas`, `${possPct}% Retención`],
+      ['Metrica Tactica', 'Eventos Positivos', 'Eventos Negativos', '% Eficiencia'],
+      ['Duelos individuales', `${duelsWon} Ganados`, `${duelsLost} Perdidos`, `${duelsPct}% Exito`],
+      ['Precision de Tiro', `${shotsOn} a Puerta`, `${shotsOff} Fuera`, `${shotsPct}% Puerta`],
+      ['Balance de Balon', `${rec} Recuperaciones`, `${loss} Perdidas`, `${possPct}% Retencion`],
     ];
 
     autoTable(doc, {
@@ -243,13 +267,13 @@ export const generateMatchPdfReport = async ({
       doc.setFontSize(11);
       doc.setFont('helvetica', 'bold');
       doc.setTextColor(...colorPrimary);
-      doc.text('📝 NOTAS TÁCTICAS Y CUESTIONARIO DEL ENTRENADOR', 14, y);
+      doc.text('NOTAS TÁCTICAS Y CUESTIONARIO DEL ENTRENADOR', 14, y);
       y += 6;
 
       const questionsList = [
-        { label: 'Notas Tácticas Generales', text: matchData.notes || 'Sin notas registradas' },
-        { label: 'Aspectos Tácticos Clave', text: matchData.postMatchAnswers?.tactical || 'Sin respuesta' },
-        { label: 'Aspectos Físicos y Mentales', text: matchData.postMatchAnswers?.physical || 'Sin respuesta' },
+        { label: 'Notas Tacticas Generales', text: matchData.notes || 'Sin notas registradas' },
+        { label: 'Aspectos Tacticos Clave', text: matchData.postMatchAnswers?.tactical || 'Sin respuesta' },
+        { label: 'Aspectos Fisicos y Mentales', text: matchData.postMatchAnswers?.physical || 'Sin respuesta' },
         { label: 'Puntos de Mejora para Entrenamientos', text: matchData.postMatchAnswers?.improvement || 'Sin respuesta' },
         { label: 'Jugadores Destacados y MVP', text: matchData.postMatchAnswers?.highlights || 'Sin respuesta' },
       ];
@@ -275,7 +299,7 @@ export const generateMatchPdfReport = async ({
     doc.setTextColor(255, 255, 255);
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(13);
-    doc.text('📜 CRONOLOGÍA DETALLADA DE EVENTOS', 14, 13);
+    doc.text('CRONOLOGÍA DETALLADA DE EVENTOS', 14, 13);
 
     const sortedEvents = [...events].sort((a, b) => {
       if (a.half !== b.half) return a.half - b.half;

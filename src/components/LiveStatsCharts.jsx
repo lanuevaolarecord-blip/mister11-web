@@ -3,10 +3,10 @@
  * ─────────────────────────────────────────────────────────────────────────────
  * Componente de visualización de estadísticas en tiempo real con SVG puro.
  *
- * MEJORAS DE CONTRASTE (WCAG AAA):
- *  • Detección síncrona de ThemeContext (useTheme) con soporte de prop darkMode.
- *  • Colores de alto contraste garantizados para modo claro (#0F172A) y modo oscuro (#F8FAFC).
- *  • Donut SVG con pista visible en ambos temas (#CBD5E1 en modo claro).
+ * MEJORAS DE CONTRASTE Y CAPTURA HTML2CANVAS:
+ *  • Texto del porcentaje inyectado como elemento <text> nativo del SVG para garantizar
+ *    su visibilidad en capturas PDF (html2canvas) y en todas las pantallas.
+ *  • Alto contraste (WCAG AAA) en títulos y etiquetas (#0F172A en modo claro, #FFFFFF en oscuro).
  * ─────────────────────────────────────────────────────────────────────────────
  */
 
@@ -38,9 +38,9 @@ export const SvgDonut = ({
   const offset = circumference - (pct1 / 100) * circumference;
 
   // Colores de alto contraste según tema
-  const bgTrack = darkMode ? 'rgba(255,255,255,0.12)' : '#CBD5E1';
+  const bgTrack = darkMode ? 'rgba(255,255,255,0.15)' : '#CBD5E1';
   const textColor = darkMode ? '#FFFFFF' : '#0F172A';
-  const subTextColor = darkMode ? '#CBD5E1' : '#334155';
+  const subTextColor = darkMode ? '#E2E8F0' : '#334155';
 
   return (
     <div style={{
@@ -59,7 +59,7 @@ export const SvgDonut = ({
             cx={center}
             cy={center}
             r={radius}
-            fill="transparent"
+            fill="none"
             stroke={total > 0 ? color2 : bgTrack}
             strokeWidth={strokeWidth}
           />
@@ -69,7 +69,7 @@ export const SvgDonut = ({
               cx={center}
               cy={center}
               r={radius}
-              fill="transparent"
+              fill="none"
               stroke={color1}
               strokeWidth={strokeWidth}
               strokeDasharray={circumference}
@@ -79,23 +79,25 @@ export const SvgDonut = ({
               style={{ transition: 'stroke-dashoffset 0.5s ease-in-out' }}
             />
           )}
-        </svg>
 
-        {/* Porcentaje en el centro */}
-        <div style={{
-          position: 'absolute',
-          top: 0, left: 0, right: 0, bottom: 0,
-          display: 'flex', flexDirection: 'column',
-          alignItems: 'center', justifyContent: 'center',
-        }}>
-          <span style={{ fontSize: '22px', fontWeight: 900, color: textColor, lineHeight: 1 }}>
+          {/* Porcentaje en el centro como elemento <text> del SVG */}
+          <text
+            x={center}
+            y={center}
+            textAnchor="middle"
+            dominantBaseline="central"
+            fill={textColor}
+            fontSize="21"
+            fontWeight="900"
+            fontFamily="system-ui, -apple-system, sans-serif"
+          >
             {total > 0 ? `${pct1}%` : '0%'}
-          </span>
-        </div>
+          </text>
+        </svg>
       </div>
 
       {/* Título de métrica */}
-      <span style={{ fontSize: '12px', fontWeight: 800, color: textColor, textAlign: 'center' }}>
+      <span style={{ fontSize: '12.5px', fontWeight: 900, color: textColor, textAlign: 'center' }}>
         {title}
       </span>
 
@@ -114,9 +116,8 @@ export const SvgComparisonBars = ({ events, darkMode: darkModeProp }) => {
   const themeContext = useTheme();
   const darkMode = darkModeProp !== undefined ? darkModeProp : (themeContext?.darkMode ?? false);
 
-  const textColor = darkMode ? '#FFFFFF' : '#0F172A';
-  const labelColor = darkMode ? '#E2E8F0' : '#1E293B';
-  const bgBar = darkMode ? 'rgba(255,255,255,0.12)' : '#CBD5E1';
+  const labelColor = darkMode ? '#FFFFFF' : '#0F172A';
+  const bgBar = darkMode ? 'rgba(255,255,255,0.15)' : '#CBD5E1';
 
   const metrics = [
     {
@@ -151,9 +152,9 @@ export const SvgComparisonBars = ({ events, darkMode: darkModeProp }) => {
         return (
           <div key={m.title} style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', fontWeight: 800 }}>
-              <span style={{ color: '#4CAF7D' }}>{m.own} (Propio)</span>
-              <span style={{ color: labelColor, fontWeight: 900 }}>{m.title}</span>
-              <span style={{ color: '#EF4444' }}>{m.rival} (Rival)</span>
+              <span style={{ color: '#4CAF7D', fontWeight: 900 }}>{m.own} (Propio)</span>
+              <span style={{ color: labelColor, fontWeight: 900, fontSize: '12.5px' }}>{m.title}</span>
+              <span style={{ color: '#EF4444', fontWeight: 900 }}>{m.rival} (Rival)</span>
             </div>
 
             {/* Barra bicolor comparativa */}
@@ -187,9 +188,10 @@ export const HalfBreakdown = ({ events, darkMode: darkModeProp }) => {
   const themeContext = useTheme();
   const darkMode = darkModeProp !== undefined ? darkModeProp : (themeContext?.darkMode ?? false);
 
-  const labelColor = darkMode ? '#CBD5E1' : '#334155';
-  const cardBg = darkMode ? 'rgba(255,255,255,0.04)' : '#F1F5F9';
-  const borderColor = darkMode ? 'rgba(255,255,255,0.1)' : '#CBD5E1';
+  const labelColor = darkMode ? '#FFFFFF' : '#0F172A';
+  const subLabelColor = darkMode ? '#CBD5E1' : '#334155';
+  const cardBg = darkMode ? 'rgba(255,255,255,0.06)' : '#F1F5F9';
+  const borderColor = darkMode ? 'rgba(255,255,255,0.12)' : '#CBD5E1';
 
   const t1Events = events.filter((e) => e.half === 1);
   const t2Events = events.filter((e) => e.half === 2);
@@ -220,10 +222,10 @@ export const HalfBreakdown = ({ events, darkMode: darkModeProp }) => {
           flexDirection: 'column',
           gap: '4px',
         }}>
-          <span style={{ fontSize: '11px', fontWeight: 800, color: labelColor }}>{item.label}</span>
+          <span style={{ fontSize: '11px', fontWeight: 900, color: labelColor }}>{item.label}</span>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', fontWeight: 900 }}>
             <span style={{ color: '#D4A843' }}>1T: {item.t1}</span>
-            <span style={{ color: labelColor }}>/</span>
+            <span style={{ color: subLabelColor }}>/</span>
             <span style={{ color: '#4CAF7D' }}>2T: {item.t2}</span>
           </div>
         </div>

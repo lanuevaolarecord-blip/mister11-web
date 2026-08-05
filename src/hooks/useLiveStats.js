@@ -6,14 +6,6 @@
  * ESTRUCTURA FIRESTORE REAL:
  *   Los partidos pertenecen al equipo activo, guardados en:
  *   ${teamPath}/matches/${matchId}/liveStats/${eventId}
- *
- * ESQUEMA DE DATOS DE CADA EVENTO:
- *   {
- *     type: string,          // Tipo de evento
- *     half: 1 | 2,           // Mitad del partido (1ª o 2ª)
- *     minute: number,        // Minuto en que ocurrió el evento
- *     timestamp: serverTimestamp()
- *   }
  * ─────────────────────────────────────────────────────────────────────────────
  */
 
@@ -60,18 +52,15 @@ export const useLiveStats = (teamId, matchId, currentMinute, currentHalf = 1) =>
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
 
-  // Obtener ruta base del equipo (ej: users/{uid}/teams/{teamId} o clubs/{clubId}/teams/{teamId})
   const teamPath = teamId ? getTeamPath(teamId) : (user ? getTeamPath() : null);
+  const fullCollectionPath = (teamPath && matchId) ? `${teamPath}/matches/${matchId}/liveStats` : null;
 
-  // ── Escuchar eventos en tiempo real con onSnapshot en la ruta correcta ──
+  // ── Escuchar eventos en tiempo real con onSnapshot ────────────────────────
   useEffect(() => {
-    if (!matchId || !teamPath) {
+    if (!fullCollectionPath) {
       setEvents([]);
       return;
     }
-
-    const fullCollectionPath = `${teamPath}/matches/${matchId}/liveStats`;
-    console.log('[useLiveStats] Escuchando en ruta:', fullCollectionPath, 'matchId:', matchId);
 
     setLoading(true);
     const colRef = collection(db, fullCollectionPath);
@@ -90,19 +79,17 @@ export const useLiveStats = (teamId, matchId, currentMinute, currentHalf = 1) =>
     );
 
     return () => unsubscribe();
-  }, [teamPath, matchId]);
+  }, [fullCollectionPath]);
 
-  // ── Añadir un evento (addDoc en la subcolección del partido del equipo) ──
+  // ── Añadir un evento (addDoc) ─────────────────────────────────────────────
   const addLiveEvent = useCallback(
     async (type) => {
-      if (!matchId || !teamPath) {
-        console.warn('[useLiveStats] No hay matchId o teamPath activo. matchId:', matchId, 'teamPath:', teamPath);
+      if (!fullCollectionPath) {
+        console.warn('[useLiveStats] Imposible guardar. fullCollectionPath es nulo.', { teamPath, matchId });
         return null;
       }
       setSaving(true);
-      const fullCollectionPath = `${teamPath}/matches/${matchId}/liveStats`;
       try {
-        console.log('[useLiveStats] Escribiendo evento en:', fullCollectionPath, 'tipo:', type);
         const colRef = collection(db, fullCollectionPath);
         const docRef = await addDoc(colRef, {
           type,
@@ -118,10 +105,10 @@ export const useLiveStats = (teamId, matchId, currentMinute, currentHalf = 1) =>
         setSaving(false);
       }
     },
-    [teamPath, matchId, currentMinute, currentHalf]
+    [fullCollectionPath, teamPath, matchId, currentMinute, currentHalf]
   );
 
-  // ── Conteo por tipo para el badge de cada botón ──────────────────────────
+  // ── Conteo por tipo ───────────────────────────────────────────────────────
   const countByType = useCallback(
     (type) => events.filter((e) => e.type === type).length,
     [events]

@@ -13,6 +13,7 @@ import { useMatchEvents } from '../hooks/useMatchEvents';
 import CustomFormationModal from '../components/CustomFormationModal';
 import FormationSelector from '../components/FormationSelector';
 import LiveStats from '../components/LiveStats';
+import { useTheme } from '../context/ThemeContext';
 import { useLiveStats } from '../hooks/useLiveStats';
 import { SvgDonut, SvgComparisonBars, HalfBreakdown } from '../components/LiveStatsCharts';
 import './Partidos.css';
@@ -80,6 +81,7 @@ const Partidos = () => {
   const { players, loading: loadingPlayers } = usePlayers(activeTeamId);
   const { settings } = useSettings(activeTeamId);
   const { activeTeam } = useTeams();
+  const { darkMode } = useTheme();
   
   const [viewMode, setViewMode] = useState('LIST'); // 'LIST' or 'EDIT'
   const [filterMode, setFilterMode] = useState('Todos'); // 'Todos', 'Pendientes', 'Terminados'
@@ -1535,7 +1537,7 @@ const Partidos = () => {
                               label2="Perd"
                               color1="#4CAF7D"
                               color2="#EF4444"
-                              darkMode={settings?.darkMode}
+                              darkMode={darkMode}
                             />
                             <SvgDonut
                               title="Remates"
@@ -1545,7 +1547,7 @@ const Partidos = () => {
                               label2="Fuera"
                               color1="#0D9488"
                               color2="#F97316"
-                              darkMode={settings?.darkMode}
+                              darkMode={darkMode}
                             />
                             <SvgDonut
                               title="Balón"
@@ -1555,7 +1557,7 @@ const Partidos = () => {
                               label2="Pérd"
                               color1="#3B82F6"
                               color2="#E11D48"
-                              darkMode={settings?.darkMode}
+                              darkMode={darkMode}
                             />
                           </div>
                         </div>
@@ -1565,7 +1567,7 @@ const Partidos = () => {
                           <div className="livestats-category-title" style={{ color: '#D4A843' }}>
                             <span>⚔️ Comparativa Propio vs Rival</span>
                           </div>
-                          <SvgComparisonBars events={liveEvents || []} darkMode={settings?.darkMode} />
+                          <SvgComparisonBars events={liveEvents || []} darkMode={darkMode} />
                         </div>
                       </div>
 
@@ -1574,7 +1576,7 @@ const Partidos = () => {
                         <div className="livestats-category-title" style={{ color: '#F97316' }}>
                           <span>⏱️ Desglose por Mitades (1T vs 2T)</span>
                         </div>
-                        <HalfBreakdown events={liveEvents || []} darkMode={settings?.darkMode} />
+                        <HalfBreakdown events={liveEvents || []} darkMode={darkMode} />
                       </div>
                     </div>
                     {/* Tarjeta 6: Cuestionario de Análisis */}

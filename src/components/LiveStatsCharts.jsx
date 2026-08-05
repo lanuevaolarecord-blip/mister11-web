@@ -3,14 +3,15 @@
  * ─────────────────────────────────────────────────────────────────────────────
  * Componente de visualización de estadísticas en tiempo real con SVG puro.
  *
- * INCLUYE:
- *  1. Gráficas de Dona SVG (Duelos ganados/perdidos, Tiros a puerta/fuera, Recuperaciones/Pérdidas)
- *  2. Comparativa Propio vs Rival (Barras comparativas horizontales)
- *  3. Desglose por Mitades (1T: X eventos / 2T: Y eventos)
+ * MEJORAS DE CONTRASTE (WCAG AAA):
+ *  • Detección síncrona de ThemeContext (useTheme) con soporte de prop darkMode.
+ *  • Colores de alto contraste garantizados para modo claro (#0F172A) y modo oscuro (#F8FAFC).
+ *  • Donut SVG con pista visible en ambos temas (#CBD5E1 en modo claro).
  * ─────────────────────────────────────────────────────────────────────────────
  */
 
 import React from 'react';
+import { useTheme } from '../context/ThemeContext';
 
 // ── 1. SVG Donut Chart (Gráfica de Eficiencia) ────────────────────────────────
 export const SvgDonut = ({
@@ -21,8 +22,11 @@ export const SvgDonut = ({
   title,
   color1 = '#4CAF7D',
   color2 = '#EF4444',
-  darkMode,
+  darkMode: darkModeProp,
 }) => {
+  const themeContext = useTheme();
+  const darkMode = darkModeProp !== undefined ? darkModeProp : (themeContext?.darkMode ?? false);
+
   const total = value1 + value2;
   const pct1 = total > 0 ? Math.round((value1 / total) * 100) : 0;
 
@@ -33,9 +37,10 @@ export const SvgDonut = ({
   const circumference = 2 * Math.PI * radius;
   const offset = circumference - (pct1 / 100) * circumference;
 
-  const bgTrack = darkMode ? 'rgba(255,255,255,0.08)' : '#E2E8F0';
-  const textColor = darkMode ? '#F8FAFC' : '#0F172A';
-  const subTextColor = darkMode ? '#94A3B8' : '#64748B';
+  // Colores de alto contraste según tema
+  const bgTrack = darkMode ? 'rgba(255,255,255,0.12)' : '#CBD5E1';
+  const textColor = darkMode ? '#FFFFFF' : '#0F172A';
+  const subTextColor = darkMode ? '#CBD5E1' : '#334155';
 
   return (
     <div style={{
@@ -83,7 +88,7 @@ export const SvgDonut = ({
           display: 'flex', flexDirection: 'column',
           alignItems: 'center', justifyContent: 'center',
         }}>
-          <span style={{ fontSize: '20px', fontWeight: 900, color: textColor, lineHeight: 1 }}>
+          <span style={{ fontSize: '22px', fontWeight: 900, color: textColor, lineHeight: 1 }}>
             {total > 0 ? `${pct1}%` : '0%'}
           </span>
         </div>
@@ -95,9 +100,9 @@ export const SvgDonut = ({
       </span>
 
       {/* Leyenda */}
-      <div style={{ display: 'flex', gap: '6px', fontSize: '10.5px', color: subTextColor, fontWeight: 700 }}>
+      <div style={{ display: 'flex', gap: '6px', fontSize: '11px', color: subTextColor, fontWeight: 800 }}>
         <span style={{ color: color1 }}>{value1} {label1}</span>
-        <span>/</span>
+        <span style={{ color: subTextColor }}>/</span>
         <span style={{ color: color2 }}>{value2} {label2}</span>
       </div>
     </div>
@@ -105,9 +110,13 @@ export const SvgDonut = ({
 };
 
 // ── 2. Comparativa Propio vs Rival (Barras Horizontales) ──────────────────────
-export const SvgComparisonBars = ({ events, darkMode }) => {
-  const textColor = darkMode ? '#F8FAFC' : '#0F172A';
-  const subTextColor = darkMode ? '#94A3B8' : '#64748B';
+export const SvgComparisonBars = ({ events, darkMode: darkModeProp }) => {
+  const themeContext = useTheme();
+  const darkMode = darkModeProp !== undefined ? darkModeProp : (themeContext?.darkMode ?? false);
+
+  const textColor = darkMode ? '#FFFFFF' : '#0F172A';
+  const labelColor = darkMode ? '#E2E8F0' : '#1E293B';
+  const bgBar = darkMode ? 'rgba(255,255,255,0.12)' : '#CBD5E1';
 
   const metrics = [
     {
@@ -140,20 +149,20 @@ export const SvgComparisonBars = ({ events, darkMode }) => {
         const rivalPct = total > 0 ? (m.rival / total) * 100 : 50;
 
         return (
-          <div key={m.title} style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', fontWeight: 700 }}>
+          <div key={m.title} style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', fontWeight: 800 }}>
               <span style={{ color: '#4CAF7D' }}>{m.own} (Propio)</span>
-              <span style={{ color: textColor, fontWeight: 800 }}>{m.title}</span>
+              <span style={{ color: labelColor, fontWeight: 900 }}>{m.title}</span>
               <span style={{ color: '#EF4444' }}>{m.rival} (Rival)</span>
             </div>
 
             {/* Barra bicolor comparativa */}
             <div style={{
-              height: '10px',
+              height: '11px',
               borderRadius: '6px',
               overflow: 'hidden',
               display: 'flex',
-              background: darkMode ? 'rgba(255,255,255,0.08)' : '#E2E8F0',
+              background: bgBar,
             }}>
               <div style={{
                 width: `${ownPct}%`,
@@ -174,10 +183,13 @@ export const SvgComparisonBars = ({ events, darkMode }) => {
 };
 
 // ── 3. Desglose por Mitades (1T: X / 2T: Y) ──────────────────────────────────
-export const HalfBreakdown = ({ events, darkMode }) => {
-  const subTextColor = darkMode ? '#94A3B8' : '#64748B';
-  const cardBg = darkMode ? 'rgba(255,255,255,0.03)' : '#F1F5F9';
-  const borderColor = darkMode ? 'rgba(255,255,255,0.08)' : '#E2E8F0';
+export const HalfBreakdown = ({ events, darkMode: darkModeProp }) => {
+  const themeContext = useTheme();
+  const darkMode = darkModeProp !== undefined ? darkModeProp : (themeContext?.darkMode ?? false);
+
+  const labelColor = darkMode ? '#CBD5E1' : '#334155';
+  const cardBg = darkMode ? 'rgba(255,255,255,0.04)' : '#F1F5F9';
+  const borderColor = darkMode ? 'rgba(255,255,255,0.1)' : '#CBD5E1';
 
   const t1Events = events.filter((e) => e.half === 1);
   const t2Events = events.filter((e) => e.half === 2);
@@ -208,10 +220,10 @@ export const HalfBreakdown = ({ events, darkMode }) => {
           flexDirection: 'column',
           gap: '4px',
         }}>
-          <span style={{ fontSize: '11px', fontWeight: 700, color: subTextColor }}>{item.label}</span>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '12px', fontWeight: 800 }}>
+          <span style={{ fontSize: '11px', fontWeight: 800, color: labelColor }}>{item.label}</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', fontWeight: 900 }}>
             <span style={{ color: '#D4A843' }}>1T: {item.t1}</span>
-            <span style={{ color: subTextColor }}>/</span>
+            <span style={{ color: labelColor }}>/</span>
             <span style={{ color: '#4CAF7D' }}>2T: {item.t2}</span>
           </div>
         </div>

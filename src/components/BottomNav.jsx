@@ -1,25 +1,27 @@
 import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-
-const MAIN_ITEMS = [
-  { ruta: '/',              icono: '🏠', label: 'Inicio' },
-  { ruta: '/pizarra',       icono: '📋', label: 'Pizarra' },
-  { ruta: '/equipo',        icono: '👥', label: 'Equipo' },
-  { ruta: '/ia-generadora', icono: '✨', label: 'IA' },
-];
-
-const MORE_ITEMS = [
-  { ruta: '/planificacion', icono: '📅', label: 'Planificación' },
-  { ruta: '/sesiones',      icono: '📝', label: 'Sesiones' },
-  { ruta: '/partidos',      icono: '⚽', label: 'Partidos' },
-  { ruta: '/tests',         icono: '📊', label: 'Tests' },
-  { ruta: '/admin',         icono: '⚙️', label: 'Ajustes' },
-];
+import { useTranslation } from '../hooks/useTranslation';
 
 const BottomNav = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const [showMore, setShowMore] = useState(false);
+  const { t } = useTranslation();
+
+  const MAIN_ITEMS = [
+    { ruta: '/',              icono: '🏠', labelKey: 'bottomnav.home' },
+    { ruta: '/pizarra',       icono: '📋', labelKey: 'bottomnav.pizarra' },
+    { ruta: '/equipo',        icono: '👥', labelKey: 'bottomnav.equipo' },
+    { ruta: '/ia-generadora', icono: '✨', labelKey: 'bottomnav.ia' },
+  ];
+
+  const MORE_ITEMS = [
+    { ruta: '/planificacion', icono: '📅', labelKey: 'bottomnav.planificacion' },
+    { ruta: '/sesiones',      icono: '📝', labelKey: 'bottomnav.sesiones' },
+    { ruta: '/partidos',      icono: '⚽', labelKey: 'bottomnav.partidos' },
+    { ruta: '/tests',         icono: '📊', labelKey: 'bottomnav.tests' },
+    { ruta: '/admin',         icono: '⚙️', labelKey: 'bottomnav.ajustes' },
+  ];
 
   const handleNavigate = (ruta) => {
     setShowMore(false);
@@ -45,7 +47,7 @@ const BottomNav = () => {
               onClick={() => handleNavigate(item.ruta)}
             >
               <span className="bottom-nav-icon">{item.icono}</span>
-              <span>{item.label}</span>
+              <span>{t(item.labelKey)}</span>
             </div>
           );
         })}
@@ -55,7 +57,7 @@ const BottomNav = () => {
           onClick={() => setShowMore(true)}
         >
           <span className="bottom-nav-icon">☰</span>
-          <span>Más</span>
+          <span>{t('bottomnav.more')}</span>
         </div>
       </nav>
 
@@ -72,7 +74,7 @@ const BottomNav = () => {
             <div className="bottom-sheet-drag-handle" />
             <button className="bottom-sheet-close" onClick={() => setShowMore(false)}>✕</button>
           </div>
-          <div className="bottom-sheet-title">MÁS MÓDULOS</div>
+          <div className="bottom-sheet-title">{t('bottomnav.moreModules')}</div>
           <div className="bottom-sheet-grid">
             {MORE_ITEMS.map((item) => {
               const activo = location.pathname === item.ruta ||
@@ -85,7 +87,7 @@ const BottomNav = () => {
                   onClick={() => handleNavigate(item.ruta)}
                 >
                   <span className="bottom-sheet-icon">{item.icono}</span>
-                  <span className="bottom-sheet-label">{item.label}</span>
+                  <span className="bottom-sheet-label">{t(item.labelKey)}</span>
                 </div>
               );
             })}
@@ -97,3 +99,4 @@ const BottomNav = () => {
 };
 
 export default BottomNav;
+

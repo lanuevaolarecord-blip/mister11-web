@@ -10,6 +10,7 @@ import { Save, FileText } from 'lucide-react';
 import { downloadPDF } from '../utils/download';
 import { APP_VERSION } from '../constants/appVersion';
 import { exportMonthlyPlan } from '../utils/exportMonthlyPlan';
+import { useTranslation } from '../hooks/useTranslation';
 import '../styles/planificacion.css';
 
 // --- CONSTANTS ---
@@ -110,6 +111,7 @@ const Planificacion = () => {
   const { activeTeam } = useTeams();
   const { darkMode } = useTheme();
   const { isProActive } = usePlan();
+  const { t } = useTranslation();
   const [upgradeModal, setUpgradeModal] = useState({ open: false, message: '' });
 
   // Colores adaptativos de contraste dorado/verde según el modo de tema
@@ -840,17 +842,17 @@ const Planificacion = () => {
       {/* ── TAB BAR ───────────────────────────────────────── */}
       <div className="plan-tab-bar">
         {[
-          { id: 'macrociclo', label: 'MACROCICLO (PLANTILLA)' },
-          { id: 'mesociclo',  label: 'MESOCICLO' },
-          { id: 'microciclo', label: 'MICROCICLO SEMANAL' },
-          { id: 'objetivos',  label: 'OBJETIVOS' },
+          { id: 'macrociclo', labelKey: 'plan.tab.macrociclo' },
+          { id: 'mesociclo',  labelKey: 'plan.tab.mesociclo' },
+          { id: 'microciclo', labelKey: 'plan.tab.microciclo' },
+          { id: 'objetivos',  labelKey: 'plan.tab.objetivos' },
         ].map(tab => (
           <button
             key={tab.id}
             className={`plan-tab-btn ${activeTab === tab.id ? 'active' : ''}`}
             onClick={() => setActiveTab(tab.id)}
           >
-            {tab.label}
+            {t(tab.labelKey)}
           </button>
         ))}
       </div>

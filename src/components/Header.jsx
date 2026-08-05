@@ -4,6 +4,7 @@ import { useTeams } from '../hooks/useTeams';
 import { ChevronDown, Sun, Moon, Bell, Settings, Shield } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
 import { useMatch } from '../context/MatchContext';
+import { useTranslation } from '../hooks/useTranslation';
 
 const Header = ({ onToggleNotif }) => {
   const location = useLocation();
@@ -11,19 +12,20 @@ const Header = ({ onToggleNotif }) => {
   const { teams, activeTeam, selectTeam } = useTeams();
   const { darkMode, toggleTheme } = useTheme();
   const { isRunning, matchSeconds, formatMatchTime } = useMatch();
-  
+  const { t } = useTranslation();
+
   const getPageTitle = () => {
     switch(location.pathname) {
-      case '/': return 'DASHBOARD';
-      case '/pizarra': return 'PIZARRA TÁCTICA';
-      case '/equipo': return 'MI EQUIPO';
-      case '/sesiones': return 'SESIONES';
-      case '/planificacion': return 'PLANIFICACIÓN';
-      case '/tests': return 'TESTS';
-      case '/partidos': return 'PARTIDOS';
-      case '/ia-generadora': return 'IA GENERADORA';
-      case '/admin': return 'ADMINISTRACIÓN';
-      default: return 'MISTER 11';
+      case '/': return t('page.dashboard');
+      case '/pizarra': return t('page.pizarra');
+      case '/equipo': return t('page.equipo');
+      case '/sesiones': return t('page.sesiones');
+      case '/planificacion': return t('page.planificacion');
+      case '/tests': return t('page.tests');
+      case '/partidos': return t('page.partidos');
+      case '/ia-generadora': return t('page.ia');
+      case '/admin': return t('page.admin');
+      default: return t('page.default');
     }
   };
 

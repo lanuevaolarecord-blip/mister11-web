@@ -7,6 +7,7 @@ import { isDeveloperEmail } from '../config/admins';
 import { normalizeText } from '../utils/normalizeInput';
 import { useTeams } from '../hooks/useTeams';
 import { useSettings } from '../hooks/useSettings';
+import { useTranslation } from '../hooks/useTranslation';
 import { useExercises } from '../hooks/useExercises';
 import { usePlayers } from '../hooks/usePlayers';
 import { useSessions } from '../hooks/useSessions';
@@ -52,6 +53,7 @@ import './AdminPanel.css';
 const AdminPanel = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const { t: tr } = useTranslation();
   const [activeTab, setActiveTab] = useState(location.state?.activeTab || 'equipos');
 
   useEffect(() => {
@@ -533,33 +535,33 @@ const AdminPanel = () => {
           className={`admin-nav-item ${activeTab === 'equipos' ? 'active' : ''}`}
           onClick={() => setActiveTab('equipos')}
         >
-          <Users size={20} /> <span>Equipos</span>
+          <Users size={20} /> <span>{tr('admin.tab.equipos')}</span>
         </button>
         {isClubMember && (
           <button 
             className={`admin-nav-item ${activeTab === 'club' ? 'active' : ''}`}
             onClick={() => setActiveTab('club')}
           >
-            <Shield size={20} /> <span>Mi Club</span>
+            <Shield size={20} /> <span>{tr('admin.tab.club')}</span>
           </button>
         )}
         <button 
           className={`admin-nav-item ${activeTab === 'ejercicios' ? 'active' : ''}`}
           onClick={() => setActiveTab('ejercicios')}
         >
-          <Dumbbell size={20} /> <span>Ejercicios</span>
+          <Dumbbell size={20} /> <span>{tr('admin.tab.ejercicios')}</span>
         </button>
         <button 
           className={`admin-nav-item ${activeTab === 'exportar' ? 'active' : ''}`}
           onClick={() => setActiveTab('exportar')}
         >
-          <FileText size={20} /> <span>Informes PDF</span>
+          <FileText size={20} /> <span>{tr('admin.tab.exportar')}</span>
         </button>
         <button 
           className={`admin-nav-item ${activeTab === 'ajustes' ? 'active' : ''}`}
           onClick={() => setActiveTab('ajustes')}
         >
-          <Settings size={20} /> <span>Ajustes</span>
+          <Settings size={20} /> <span>{tr('admin.tab.ajustes')}</span>
         </button>
       </div>
 
@@ -567,7 +569,7 @@ const AdminPanel = () => {
         {activeTab === 'equipos' && (
           <div className="admin-section">
             <header className="section-header">
-              <h2>Gestión de Equipos</h2>
+              <h2>{tr('admin.section.equipos')}</h2>
               <p>Crea y gestiona tus plantillas para cada temporada.</p>
             </header>
 

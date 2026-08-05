@@ -70,6 +70,67 @@ export const translations = {
     'tests.resources.teamChat': 'Chat de Equipo',
     'tests.resources.seasonReport': 'Informe de Temporada',
     'tests.resources.myTeam': 'Mi Equipo',
+
+    // ── Header page titles ───────────────────────────────────
+    'page.dashboard': 'DASHBOARD',
+    'page.pizarra': 'PIZARRA TÁCTICA',
+    'page.equipo': 'MI EQUIPO',
+    'page.sesiones': 'SESIONES',
+    'page.planificacion': 'PLANIFICACIÓN',
+    'page.tests': 'TESTS',
+    'page.partidos': 'PARTIDOS',
+    'page.ia': 'IA GENERADORA',
+    'page.admin': 'ADMINISTRACIÓN',
+    'page.default': 'MISTER 11',
+
+    // ── BottomNav labels ─────────────────────────────────────
+    'bottomnav.home': 'Inicio',
+    'bottomnav.pizarra': 'Pizarra',
+    'bottomnav.equipo': 'Equipo',
+    'bottomnav.ia': 'IA',
+    'bottomnav.planificacion': 'Planif.',
+    'bottomnav.sesiones': 'Sesiones',
+    'bottomnav.partidos': 'Partidos',
+    'bottomnav.tests': 'Tests',
+    'bottomnav.ajustes': 'Ajustes',
+    'bottomnav.more': 'Más',
+    'bottomnav.moreModules': 'MÁS MÓDULOS',
+
+    // ── Sesiones tabs ─────────────────────────────────────────
+    'sesiones.tab.sessions': 'SESIONES',
+    'sesiones.tab.captures': 'CAPTURAS',
+    'sesiones.tab.animations': 'ANIMACIONES',
+    'sesiones.title': 'Entrenamiento',
+    'sesiones.newSession': '+ Nueva Sesión',
+    'sesiones.exportICS': '📥 Exportar ICS',
+
+    // ── MiEquipo player detail tabs ───────────────────────────
+    'equipo.tab.general': 'GENERAL',
+    'equipo.tab.physical': 'FÍSICO',
+    'equipo.tab.health': 'SALUD',
+    'equipo.tab.plans': 'PLANES',
+    'equipo.tab.stats': 'ESTS.',
+
+    // ── Planificacion tabs ────────────────────────────────────
+    'plan.tab.macrociclo': 'MACROCICLO (PLANTILLA)',
+    'plan.tab.mesociclo': 'MESOCICLO',
+    'plan.tab.microciclo': 'MICROCICLO SEMANAL',
+    'plan.tab.objetivos': 'OBJETIVOS',
+
+    // ── Tests tabs ────────────────────────────────────────────
+    'tests.tab.fisicos': 'FÍSICOS',
+    'tests.tab.psicosociales': 'PSICOSOCIALES',
+    'tests.tab.prevencion': 'PREVENCIÓN',
+    'tests.tab.historial': 'HISTORIAL POR JUGADOR',
+    'tests.tab.comparativa': 'COMPARATIVA EQUIPO',
+
+    // ── AdminPanel sidebar tabs ───────────────────────────────
+    'admin.tab.equipos': 'Equipos',
+    'admin.tab.club': 'Mi Club',
+    'admin.tab.ejercicios': 'Ejercicios',
+    'admin.tab.exportar': 'Informes PDF',
+    'admin.tab.ajustes': 'Ajustes',
+    'admin.section.equipos': 'Gestión de Equipos',
   },
   'English (EN)': {
     'nav.dashboard': 'DASHBOARD',
@@ -142,6 +203,67 @@ export const translations = {
     'tests.resources.teamChat': 'Team Chat',
     'tests.resources.seasonReport': 'Season Report',
     'tests.resources.myTeam': 'My Team',
+
+    // ── Header page titles ───────────────────────────────────
+    'page.dashboard': 'DASHBOARD',
+    'page.pizarra': 'TACTICAL BOARD',
+    'page.equipo': 'MY TEAM',
+    'page.sesiones': 'SESSIONS',
+    'page.planificacion': 'PLANNING',
+    'page.tests': 'TESTS',
+    'page.partidos': 'MATCHES',
+    'page.ia': 'AI GENERATOR',
+    'page.admin': 'ADMINISTRATION',
+    'page.default': 'MISTER 11',
+
+    // ── BottomNav labels ─────────────────────────────────────
+    'bottomnav.home': 'Home',
+    'bottomnav.pizarra': 'Board',
+    'bottomnav.equipo': 'Team',
+    'bottomnav.ia': 'AI',
+    'bottomnav.planificacion': 'Plan.',
+    'bottomnav.sesiones': 'Sessions',
+    'bottomnav.partidos': 'Matches',
+    'bottomnav.tests': 'Tests',
+    'bottomnav.ajustes': 'Settings',
+    'bottomnav.more': 'More',
+    'bottomnav.moreModules': 'MORE MODULES',
+
+    // ── Sesiones tabs ─────────────────────────────────────────
+    'sesiones.tab.sessions': 'SESSIONS',
+    'sesiones.tab.captures': 'CAPTURES',
+    'sesiones.tab.animations': 'ANIMATIONS',
+    'sesiones.title': 'Training',
+    'sesiones.newSession': '+ New Session',
+    'sesiones.exportICS': '📥 Export ICS',
+
+    // ── MiEquipo player detail tabs ───────────────────────────
+    'equipo.tab.general': 'GENERAL',
+    'equipo.tab.physical': 'PHYSICAL',
+    'equipo.tab.health': 'HEALTH',
+    'equipo.tab.plans': 'PLANS',
+    'equipo.tab.stats': 'STATS',
+
+    // ── Planificacion tabs ────────────────────────────────────
+    'plan.tab.macrociclo': 'MACROCYCLE (TEMPLATE)',
+    'plan.tab.mesociclo': 'MESOCYCLE',
+    'plan.tab.microciclo': 'WEEKLY MICROCYCLE',
+    'plan.tab.objetivos': 'OBJECTIVES',
+
+    // ── Tests tabs ────────────────────────────────────────────
+    'tests.tab.fisicos': 'PHYSICAL',
+    'tests.tab.psicosociales': 'PSYCHOSOCIAL',
+    'tests.tab.prevencion': 'PREVENTION',
+    'tests.tab.historial': 'PLAYER HISTORY',
+    'tests.tab.comparativa': 'TEAM COMPARISON',
+
+    // ── AdminPanel sidebar tabs ───────────────────────────────
+    'admin.tab.equipos': 'Teams',
+    'admin.tab.club': 'My Club',
+    'admin.tab.ejercicios': 'Exercises',
+    'admin.tab.exportar': 'PDF Reports',
+    'admin.tab.ajustes': 'Settings',
+    'admin.section.equipos': 'Team Management',
   }
 };
 

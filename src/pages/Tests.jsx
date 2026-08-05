@@ -6,6 +6,7 @@ import { useTeams } from '../hooks/useTeams';
 import { usePlan } from '../hooks/usePlan';
 import { t } from '../i18n/translations';
 import { useSettings } from '../hooks/useSettings';
+import { useTranslation } from '../hooks/useTranslation';
 import UpgradeModal from '../components/UpgradeModal';
 import { generateTestsReport, generatePlayerTestReport } from '../utils/pdfGenerator';
 import { downloadCSV } from '../utils/downloadCSV.js';
@@ -206,6 +207,7 @@ const Tests = () => {
   const { activeTeam } = useTeams();
   const { isPro, isProActive } = usePlan();
   const { players, loading: loadingPlayers } = usePlayers(activeTeamId);
+  const { t: tr } = useTranslation();
   const [historyData, setHistoryData] = useState({});
   const [activeTab, setActiveTab] = useState('FÍSICOS');
   const [tests, setTests] = useState([]);
@@ -863,13 +865,19 @@ const Tests = () => {
         </div>
 
         <div className="tests-tabs">
-          {['FÍSICOS', 'PSICOSOCIALES', 'PREVENCIÓN', 'HISTORIAL POR JUGADOR', 'COMPARATIVA EQUIPO'].map(tab => (
+          {[
+            { key: 'FÍSICOS',                labelKey: 'tests.tab.fisicos' },
+            { key: 'PSICOSOCIALES',          labelKey: 'tests.tab.psicosociales' },
+            { key: 'PREVENCIÓN',            labelKey: 'tests.tab.prevencion' },
+            { key: 'HISTORIAL POR JUGADOR',  labelKey: 'tests.tab.historial' },
+            { key: 'COMPARATIVA EQUIPO',     labelKey: 'tests.tab.comparativa' },
+          ].map(tab => (
             <button 
-              key={tab} 
-              className={`tests-tab ${activeTab === tab ? 'active' : ''}`}
-              onClick={() => setActiveTab(tab)}
+              key={tab.key} 
+              className={`tests-tab ${activeTab === tab.key ? 'active' : ''}`}
+              onClick={() => setActiveTab(tab.key)}
             >
-              {tab}
+              {tr(tab.labelKey)}
             </button>
           ))}
         </div>

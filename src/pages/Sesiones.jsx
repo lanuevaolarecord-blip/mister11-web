@@ -15,6 +15,7 @@ import { useExercises } from '../hooks/useExercises';
 import { downloadJSON, downloadImage } from '../utils/download.js';
 import { generateGoogleCalendarUrl, generateICSContent, downloadICSFile } from '../utils/calendarHelper';
 import { normalizeText } from '../utils/normalizeInput';
+import { useTranslation } from '../hooks/useTranslation';
 import {
   DndContext,
   closestCenter,
@@ -43,6 +44,7 @@ const Sesiones = () => {
   const { sessions, addSession, updateSession, removeSession, loading: loadingSessions } = useSessions(activeTeamId);
   const { players, loading: loadingPlayers } = usePlayers(activeTeamId);
   const { captures, loading: loadingCaptures, removeCapture } = useCaptures(activeTeamId);
+  const { t } = useTranslation();
   const { exercises, loading: loadingExercises, removeExercise } = useExercises(activeTeamId);
   const pizarras = (exercises || []).filter(e => e.type === 'pizarra');
 
@@ -756,11 +758,11 @@ const Sesiones = () => {
     <div className="page-wrapper">
       <header className="page-header">
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', flexWrap: 'wrap', gap: '16px' }}>
-          <h1 className="page-title" style={{ margin: 0 }}>Entrenamiento</h1>
+          <h1 className="page-title" style={{ margin: 0 }}>{t('sesiones.title')}</h1>
           <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
-            <button className={`tab-switcher ${activeTab === 'sessions' ? 'active' : ''}`} onClick={() => setActiveTab('sessions')}>SESIONES</button>
-            <button className={`tab-switcher ${activeTab === 'captures' ? 'active' : ''}`} onClick={() => setActiveTab('captures')}>CAPTURAS</button>
-            <button className={`tab-switcher ${activeTab === 'animations' ? 'active' : ''}`} onClick={() => setActiveTab('animations')}>ANIMACIONES</button>
+            <button className={`tab-switcher ${activeTab === 'sessions' ? 'active' : ''}`} onClick={() => setActiveTab('sessions')}>{t('sesiones.tab.sessions')}</button>
+            <button className={`tab-switcher ${activeTab === 'captures' ? 'active' : ''}`} onClick={() => setActiveTab('captures')}>{t('sesiones.tab.captures')}</button>
+            <button className={`tab-switcher ${activeTab === 'animations' ? 'active' : ''}`} onClick={() => setActiveTab('animations')}>{t('sesiones.tab.animations')}</button>
             <div style={{ width: '1px', height: '24px', background: 'var(--border-light)', margin: '0 8px' }} />
             {activeTab === 'sessions' && sessions.length > 0 && (
               <button 
@@ -768,10 +770,10 @@ const Sesiones = () => {
                 onClick={handleExportAllSessionsICS}
                 style={{ padding: '8px 16px', minHeight: '44px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '6px', fontWeight: 'bold' }}
               >
-                📥 Exportar ICS
+                {t('sesiones.exportICS')}
               </button>
             )}
-            <button className="btn-primary-new" onClick={handleCreateNew}>+ Nueva Sesión</button>
+            <button className="btn-primary-new" onClick={handleCreateNew}>{t('sesiones.newSession')}</button>
           </div>
         </div>
 

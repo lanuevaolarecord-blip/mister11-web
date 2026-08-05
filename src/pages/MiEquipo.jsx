@@ -12,6 +12,7 @@ import { storage } from '../firebaseConfig';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import PlayerHealthTab from '../components/PlayerHealthTab';
 import PlayerPlansTab from '../components/PlayerPlansTab';
+import { useTranslation } from '../hooks/useTranslation';
 import './MiEquipo.css';
 
 const POSITIONS = ['TODOS', 'POR', 'DEF', 'LTD', 'LTI', 'MCD', 'MC', 'MCO', 'EXT', 'DEL'];
@@ -47,6 +48,7 @@ const MiEquipo = () => {
   const { activeTeam } = useTeams();
   const { isPro, limits, isProActive } = usePlan();
   const { players, loading, addPlayer, updatePlayer, removePlayer } = usePlayers(activeTeamId);
+  const { t } = useTranslation();
   const [filter, setFilter] = useState('TODOS');
   const [selectedPlayer, setSelectedPlayer] = useState(null);
   const [activeTab, setActiveTab] = useState('GENERAL');
@@ -477,23 +479,29 @@ const MiEquipo = () => {
           </div>
 
           <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0 16px', borderBottom: '1px solid var(--border-light)', marginBottom: '16px', overflowX: 'auto' }}>
-            {['GENERAL', 'FÍSICO', 'SALUD', 'PLANES', 'ESTS.'].map(tab => (
+            {[
+              { key: 'GENERAL',  labelKey: 'equipo.tab.general' },
+              { key: 'FÍSICO',   labelKey: 'equipo.tab.physical' },
+              { key: 'SALUD',    labelKey: 'equipo.tab.health' },
+              { key: 'PLANES',   labelKey: 'equipo.tab.plans' },
+              { key: 'ESTS.',    labelKey: 'equipo.tab.stats' },
+            ].map(tab => (
               <button 
-                key={tab} 
+                key={tab.key} 
                 style={{
                   background: 'none',
                   border: 'none',
-                  borderBottom: activeTab === tab ? '3px solid var(--accent-green)' : '3px solid transparent',
+                  borderBottom: activeTab === tab.key ? '3px solid var(--accent-green)' : '3px solid transparent',
                   padding: '12px 8px',
                   fontSize: '11px',
                   fontWeight: 'bold',
-                  color: activeTab === tab ? 'var(--accent-green)' : 'var(--text-secondary)',
+                  color: activeTab === tab.key ? 'var(--accent-green)' : 'var(--text-secondary)',
                   cursor: 'pointer',
                   whiteSpace: 'nowrap'
                 }}
-                onClick={() => setActiveTab(tab)}
+                onClick={() => setActiveTab(tab.key)}
               >
-                {tab}
+                {t(tab.labelKey)}
               </button>
             ))}
           </div>

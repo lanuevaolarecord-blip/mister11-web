@@ -348,8 +348,10 @@ html.dark {
 }
 .editor-content.livestats-active,
 .editor-content:has(.livestats-container) {
-  overflow: hidden;
+  overflow-y: auto;
+  max-height: calc(100vh - 130px);
   padding: 0;
+  -webkit-overflow-scrolling: touch;
 }
 .tab-pane {
   flex: 1;

@@ -43,7 +43,12 @@ service cloud.firestore {
           );
         }
 
-        // Resto de subcolecciones y sub-subcolecciones a cualquier profundidad (matches/{matchId}/liveStats, sessions, planning, etc.)
+        // Subcolección de partidos y sus subcolecciones profundas (liveStats, etc.) para cualquier usuario autenticado
+        match /matches/{allPaths=**} {
+          allow read, write: if isAuth();
+        }
+
+        // Resto de subcolecciones y sub-subcolecciones a cualquier profundidad (sessions, planning, etc.)
         match /{subcollection}/{allPaths=**} {
           allow read, write: if (isOwner(userId) || isDevEmail()) && subcollection != 'players';
         }

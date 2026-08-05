@@ -139,6 +139,8 @@ const LiveStats = ({
   language,
   onAddGoalFor,
   onAddGoalAgainst,
+  events: parentEvents,
+  addLiveEvent: parentAddLiveEvent,
 }) => {
   const isEn = language === 'English (EN)';
   const tx = useCallback(
@@ -160,8 +162,15 @@ const LiveStats = ({
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [currentHalf, setCurrentHalf] = useState(1);
 
-  const { events, saving, addLiveEvent, countByType } =
-    useLiveStats(teamId, matchId, currentMinute, currentHalf);
+  const liveStatsHook = useLiveStats(teamId, matchId, currentMinute, currentHalf);
+  const events = parentEvents !== undefined ? parentEvents : liveStatsHook.events;
+  const addLiveEvent = parentAddLiveEvent || liveStatsHook.addLiveEvent;
+  const saving = liveStatsHook.saving;
+
+  const countByType = useCallback(
+    (type) => (events || []).filter((e) => e.type === type).length,
+    [events]
+  );
 
   const [flashType, setFlashType] = useState(null);
 

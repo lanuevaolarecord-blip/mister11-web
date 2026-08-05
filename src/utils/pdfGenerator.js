@@ -1,10 +1,10 @@
 import { downloadPDF } from './download.js';
 import { db, auth } from '../firebaseConfig';
 import { doc, getDoc } from 'firebase/firestore';
+import autoTable from 'jspdf-autotable';
 
 const getJsPDF = async () => {
   const { jsPDF } = await import('jspdf');
-  await import('jspdf-autotable');
   return jsPDF;
 };
 

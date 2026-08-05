@@ -2,7 +2,7 @@
  * matchPdfReport.js
  * ─────────────────────────────────────────────────────────────────────────────
  * Generador de Informe PDF Completo de Partido (Fase 3a).
- * Lazy loading de jsPDF e html2canvas.
+ * Lazy loading de jsPDF e html2canvas / jspdf-autotable (Soporte ESM Vite).
  *
  * SECCIONES:
  *  1. Encabezado: Equipo, Rival, Fecha, Marcador Final, MVP.
@@ -15,10 +15,11 @@
 
 import { savePdfUniversal } from './pdfGenerator';
 
-const getJsPDF = async () => {
+const getPdfLibs = async () => {
   const { jsPDF } = await import('jspdf');
-  await import('jspdf-autotable');
-  return jsPDF;
+  const autoTableMod = await import('jspdf-autotable');
+  const autoTable = autoTableMod.default || autoTableMod;
+  return { jsPDF, autoTable };
 };
 
 // Nombres legibles de eventos para la cronología en el PDF
@@ -50,7 +51,7 @@ export const generateMatchPdfReport = async ({
   matchData = {},
   events = [],
 }) => {
-  const jsPDF = await getJsPDF();
+  const { jsPDF, autoTable } = await getPdfLibs();
   const doc = new jsPDF('p', 'mm', 'a4');
   const pageW = doc.internal.pageSize.getWidth();
 
@@ -135,7 +136,7 @@ export const generateMatchPdfReport = async ({
     ['Balance de Balón', `${rec} Recuperaciones`, `${loss} Pérdidas`, `${possPct}% Retención`],
   ];
 
-  doc.autoTable({
+  autoTable(doc, {
     startY: y,
     head: [effData[0]],
     body: effData.slice(1),
@@ -144,7 +145,7 @@ export const generateMatchPdfReport = async ({
     styles: { fontSize: 9.5, cellPadding: 4 },
   });
 
-  y = doc.lastAutoTable.finalY + 12;
+  y = (doc.lastAutoTable ? doc.lastAutoTable.finalY : y + 30) + 12;
 
   // ── SECCIÓN 3: COMPARATIVA PROPIO VS RIVAL ───────────────────────────────
   doc.setFontSize(12);
@@ -161,7 +162,7 @@ export const generateMatchPdfReport = async ({
     ['Fueras de Juego', countOf('offside_own'), countOf('offside_rival'), '-'],
   ];
 
-  doc.autoTable({
+  autoTable(doc, {
     startY: y,
     head: [compData[0]],
     body: compData.slice(1),
@@ -170,7 +171,7 @@ export const generateMatchPdfReport = async ({
     styles: { fontSize: 9.5, cellPadding: 4 },
   });
 
-  y = doc.lastAutoTable.finalY + 12;
+  y = (doc.lastAutoTable ? doc.lastAutoTable.finalY : y + 30) + 12;
 
   // ── SECCIÓN 4: DESGLOSE POR MITADES (1T vs 2T) ───────────────────────────
   doc.setFontSize(12);
@@ -191,7 +192,7 @@ export const generateMatchPdfReport = async ({
     ['Faltas Cometidas', getHCount(t1, ['foul_against']), getHCount(t2, ['foul_against']), countOf('foul_against')],
   ];
 
-  doc.autoTable({
+  autoTable(doc, {
     startY: y,
     head: [halfData[0]],
     body: halfData.slice(1),
@@ -227,7 +228,7 @@ export const generateMatchPdfReport = async ({
     timelineRows.push(['-', '-', '-', 'No hay eventos en vivo registrados']);
   }
 
-  doc.autoTable({
+  autoTable(doc, {
     startY: 26,
     head: [['#', 'Minuto', 'Mitad', 'Evento Registrado']],
     body: timelineRows,

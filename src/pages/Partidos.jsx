@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, useCallback } from 'react';
+import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { useMatch } from '../context/MatchContext';
 import { useMatches } from '../hooks/useMatches';
 import { usePlayers } from '../hooks/usePlayers';
@@ -189,10 +189,42 @@ const Partidos = () => {
   const currentMinute = ctxCurrentMinute;
   const { events: liveEvents, addLiveEvent } = useLiveStats(activeTeamId, matchData?.id || null, ctxCurrentMinute || 0, 1);
 
+  const handleAddLiveEvent = useCallback(async (type) => {
+    const newEvt = {
+      id: 'evt_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5),
+      type,
+      half: 1,
+      minute: ctxCurrentMinute || 1,
+      timestamp: new Date().toISOString(),
+    };
+
+    setMatchData(prev => ({
+      ...prev,
+      liveStatsEvents: [...(prev.liveStatsEvents || []), newEvt]
+    }));
+
+    if (addLiveEvent) {
+      await addLiveEvent(type);
+    }
+  }, [addLiveEvent, ctxCurrentMinute]);
+
+  const effectiveLiveEvents = useMemo(() => {
+    const fromFirestore = liveEvents || [];
+    const fromMatchData = matchData?.liveStatsEvents || [];
+    const map = new Map();
+    [...fromMatchData, ...fromFirestore].forEach(item => {
+      if (item && item.type) {
+        const key = item.id || `${item.type}_${item.minute}_${item.half}_${item.timestamp || ''}`;
+        map.set(key, item);
+      }
+    });
+    return Array.from(map.values());
+  }, [liveEvents, matchData?.liveStatsEvents]);
+
   const handleTriggerEvent = (type) => {
     if (type === 'gol_rival') {
       addEvent('gol_rival', 'Rival', 'Gol del Rival', currentMinute);
-      if (addLiveEvent) addLiveEvent('shot_on_target_rival');
+      if (handleAddLiveEvent) handleAddLiveEvent('shot_on_target_rival');
     } else {
       setPendingEventType(type);
       setShowEventPlayerSelector(true);
@@ -203,11 +235,11 @@ const Partidos = () => {
     const player = players.find(p => p.id === playerId);
     if (!player) return;
     addEvent(pendingEventType, playerId, player.name, currentMinute);
-    if (addLiveEvent) {
+    if (handleAddLiveEvent) {
       if (pendingEventType === 'gol_local') {
-        addLiveEvent('shot_on_target_own');
+        handleAddLiveEvent('shot_on_target_own');
       } else if (pendingEventType === 'amarilla' || pendingEventType === 'roja') {
-        addLiveEvent('card_own');
+        handleAddLiveEvent('card_own');
       }
     }
     setPendingEventType(null);
@@ -345,7 +377,7 @@ const Partidos = () => {
         mode: 'POST-MATCH',
         teamName: activeTeam?.name || 'Mi Equipo',
         matchData,
-        events: liveEvents || [],
+        events: effectiveLiveEvents || [],
         players: players || [],
       });
     } catch (err) {
@@ -1247,8 +1279,8 @@ const Partidos = () => {
                 teamId={activeTeamId}
                 matchId={matchData?.id || null}
                 matchData={matchData}
-                events={liveEvents}
-                addLiveEvent={addLiveEvent}
+                events={effectiveLiveEvents}
+                addLiveEvent={handleAddLiveEvent}
                 language={settings?.language || 'Español (ES)'}
                 onAddGoalFor={() => addEvent('gol_local', 'Equipo', 'Gol Propio', currentMinute)}
                 onAddGoalAgainst={() => addEvent('gol_rival', 'Rival', 'Gol del Rival', currentMinute)}
@@ -1543,8 +1575,8 @@ const Partidos = () => {
                           <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-around', gap: '12px', width: '100%' }}>
                             <SvgDonut
                               title="Duelos"
-                              value1={(liveEvents || []).filter(e => e.type === 'duel_won').length}
-                              value2={(liveEvents || []).filter(e => e.type === 'duel_lost').length}
+                              value1={(effectiveLiveEvents || []).filter(e => e.type === 'duel_won').length}
+                              value2={(effectiveLiveEvents || []).filter(e => e.type === 'duel_lost').length}
                               label1="Gan"
                               label2="Perd"
                               color1="#4CAF7D"
@@ -1553,8 +1585,8 @@ const Partidos = () => {
                             />
                             <SvgDonut
                               title="Remates"
-                              value1={(liveEvents || []).filter(e => e.type === 'shot_on_target_own').length}
-                              value2={(liveEvents || []).filter(e => e.type === 'shot_off_target_own').length}
+                              value1={(effectiveLiveEvents || []).filter(e => e.type === 'shot_on_target_own').length}
+                              value2={(effectiveLiveEvents || []).filter(e => e.type === 'shot_off_target_own').length}
                               label1="Puerta"
                               label2="Fuera"
                               color1="#0D9488"
@@ -1563,8 +1595,8 @@ const Partidos = () => {
                             />
                             <SvgDonut
                               title="Balón"
-                              value1={(liveEvents || []).filter(e => e.type === 'recovery').length}
-                              value2={(liveEvents || []).filter(e => e.type === 'loss').length}
+                              value1={(effectiveLiveEvents || []).filter(e => e.type === 'recovery').length}
+                              value2={(effectiveLiveEvents || []).filter(e => e.type === 'loss').length}
                               label1="Recup"
                               label2="Pérd"
                               color1="#3B82F6"
@@ -1579,7 +1611,7 @@ const Partidos = () => {
                           <div className="livestats-category-title" style={{ color: '#D4A843' }}>
                             <span>⚔️ Comparativa Propio vs Rival</span>
                           </div>
-                          <SvgComparisonBars events={liveEvents || []} darkMode={darkMode} />
+                          <SvgComparisonBars events={effectiveLiveEvents || []} darkMode={darkMode} />
                         </div>
                       </div>
 
@@ -1588,7 +1620,7 @@ const Partidos = () => {
                         <div className="livestats-category-title" style={{ color: '#F97316' }}>
                           <span>⏱️ Desglose por Mitades (1T vs 2T)</span>
                         </div>
-                        <HalfBreakdown events={liveEvents || []} darkMode={darkMode} />
+                        <HalfBreakdown events={effectiveLiveEvents || []} darkMode={darkMode} />
                       </div>
                     </div>
                     {/* Tarjeta 6: Cuestionario de Análisis */}

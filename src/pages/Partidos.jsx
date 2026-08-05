@@ -12,6 +12,7 @@ import { useCustomFormations } from '../hooks/useCustomFormations';
 import { useMatchEvents } from '../hooks/useMatchEvents';
 import CustomFormationModal from '../components/CustomFormationModal';
 import FormationSelector from '../components/FormationSelector';
+import LiveStats from '../components/LiveStats';
 import './Partidos.css';
 import { normalizeText } from '../utils/normalizeInput';
 
@@ -712,13 +713,15 @@ const Partidos = () => {
       {viewMode === 'EDIT' && (
         <div className="partidos-editor-container">
           <div className="editor-tabs mt-4 flex flex-row flex-nowrap overflow-x-auto whitespace-nowrap">
-            {['PRE-PARTIDO', 'CONVOCATORIA', 'ALINEACIÓN', 'MATCH-DAY', 'POST-PARTIDO'].map(tab => (
+            {['PRE-PARTIDO', 'CONVOCATORIA', 'ALINEACIÓN', 'MATCH-DAY', 'LIVE-STATS', 'POST-PARTIDO'].map(tab => (
               <button 
                 key={tab} 
                 className={`e-tab ${editTab === tab ? 'active' : ''}`}
                 onClick={() => handleTabChange(tab)}
               >
-                {tab}
+                {tab === 'LIVE-STATS'
+                  ? (settings?.language === 'English (EN)' ? 'LIVE STATS' : 'LIVE STATS')
+                  : tab}
               </button>
             ))}
           </div>
@@ -1210,6 +1213,21 @@ const Partidos = () => {
                     </div>
                   )}
                 </div>
+              </div>
+            )}
+
+            {/* PESTAÑA: LIVE-STATS */}
+            {editTab === 'LIVE-STATS' && (
+              <div className="tab-pane" style={{ padding: 0 }}>
+                <LiveStats
+                  matchId={matchData?.id || null}
+                  matchSeconds={matchSeconds}
+                  isRunning={isTimerRunning}
+                  currentMinute={currentMinute}
+                  formatMatchTime={formatTime}
+                  matchData={matchData}
+                  language={settings?.language || 'Español (ES)'}
+                />
               </div>
             )}
 

@@ -131,6 +131,9 @@ export const translations = {
     'admin.tab.exportar': 'Informes PDF',
     'admin.tab.ajustes': 'Ajustes',
     'admin.section.equipos': 'Gestión de Equipos',
+
+    // ── Live Stats (módulo de captura en vivo) ───────────────────────
+    'nav.partidos.livestats': 'LIVE STATS',
   },
   'English (EN)': {
     'nav.dashboard': 'DASHBOARD',

@@ -3,28 +3,28 @@
  * ─────────────────────────────────────────────────────────────────────────────
  * Módulo de captura de estadísticas en vivo durante el partido.
  *
- * MEJORAS DE DISEÑO VISUAL:
- *  1. Header separado del scroll con flexbox layout (eliminada superposición).
- *  2. Colores con alto contraste WCAG sobre fondo verde institucional #172D21.
- *  3. Botón de Pantalla Completa nativo con listener de eventos fullscreen.
- *  4. Layout de cuadrícula responsiva (2x2 de categorías en pantallas grandes/fullscreen,
- *     4 columnas para 4 botones / 3 columnas para 6 botones en cada categoría).
+ * CORRECCIONES REALIZADAS:
+ *  1. Respeto al ThemeContext (modo claro y modo oscuro) independientemente
+ *     de si está en pantalla completa o modo normal.
+ *  2. Botón de Play/Pausa del cronómetro (reutiliza toggleTimer de MatchContext).
+ *  3. Contador de eventos en tiempo real (events.length vía onSnapshot).
+ *  4. Lógica de Pantalla Completa desacoplada del tema.
+ *  5. Swipe/scroll horizontal por carrusel en móvil (touch-action: pan-x).
  * ─────────────────────────────────────────────────────────────────────────────
  */
 
 import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { useLiveStats } from '../hooks/useLiveStats';
+import { useTheme } from '../context/ThemeContext';
+import { useMatch } from '../context/MatchContext';
 import './LiveStats.css';
 
-// ── Paleta institucional ──────────────────────────────────────────────────────
+// ── Paleta de acentos por categoría ──────────────────────────────────────────
 const C = {
-  green:       '#4CAF7D',
-  greenDark:   '#172D21',
-  gold:        '#D4A843',
-  red:         '#EF4444',
-  blue:        '#3B82F6',
-  orange:      '#F97316',
-  teal:        '#14B8A6',
+  green:  '#4CAF7D',
+  gold:   '#D4A843',
+  orange: '#F97316',
+  teal:   '#0D9488',
 };
 
 // ── Textos bilingüe ───────────────────────────────────────────────────────────
@@ -36,6 +36,8 @@ const TEXTS = {
   'live.totalEvents':          { es: 'eventos capturados',               en: 'events captured' },
   'live.fullscreen.enter':     { es: 'Pantalla completa',                en: 'Fullscreen' },
   'live.fullscreen.exit':      { es: 'Salir',                            en: 'Exit' },
+  'live.timer.start':          { es: '▶ INICIAR',                        en: '▶ START' },
+  'live.timer.pause':          { es: '❚❚ PAUSAR',                        en: '❚❚ PAUSE' },
   'live.cat.shots':            { es: '⚽ Remates',                       en: '⚽ Shots' },
   'live.cat.possession':       { es: '🔄 Defensa / Posesión',           en: '🔄 Defense / Possession' },
   'live.cat.fouls':            { es: '⚡ Faltas / Transiciones',         en: '⚡ Fouls / Transitions' },
@@ -116,15 +118,24 @@ const BUTTON_GROUPS = [
 
 const LiveStats = ({
   matchId,
-  matchSeconds,
-  isRunning,
-  currentMinute,
-  formatMatchTime,
   matchData,
   language,
 }) => {
   const isEn = language === 'English (EN)';
-  const tx = (key) => (TEXTS[key] ? (isEn ? TEXTS[key].en : TEXTS[key].es) : key);
+  const tx = useCallback(
+    (key) => (TEXTS[key] ? (isEn ? TEXTS[key].en : TEXTS[key].es) : key),
+    [isEn]
+  );
+
+  // ── Obtenemos darkMode de ThemeContext y tiempo de MatchContext ────────
+  const { darkMode } = useTheme();
+  const {
+    matchSeconds,
+    isRunning,
+    toggleTimer,
+    currentMinute,
+    formatMatchTime,
+  } = useMatch();
 
   const containerRef = useRef(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
@@ -183,7 +194,7 @@ const LiveStats = ({
         justifyContent: 'center', padding: '64px 24px', gap: '16px', textAlign: 'center',
       }}>
         <span style={{ fontSize: '48px' }}>📊</span>
-        <p style={{ color: '#94A3B8', fontSize: '15px', maxWidth: '340px', lineHeight: 1.6 }}>
+        <p style={{ color: darkMode ? '#94A3B8' : '#64748B', fontSize: '15px', maxWidth: '340px', lineHeight: 1.6 }}>
           {tx('live.noMatch')}
         </p>
       </div>
@@ -196,24 +207,30 @@ const LiveStats = ({
   return (
     <div
       ref={containerRef}
-      className={`livestats-container ${isFullscreen ? 'livestats-fullscreen' : ''}`}
+      className={`livestats-container ${darkMode ? 'theme-dark' : 'theme-light'} ${isFullscreen ? 'livestats-fullscreen' : ''}`}
     >
-      {/* ── 1. Cabecera fija (Sin superposición, flex child dedicado) ──── */}
+      {/* ── 1. Cabecera fija con cronómetro, play/pausa y marcador ────── */}
       <header className="livestats-header">
-        {/* Cronómetro */}
+        {/* Cronómetro y control de Play/Pausa */}
         <div className="livestats-timer-block">
           <span className={`livestats-timer-digits ${isRunning ? 'running' : 'paused'}`}>
             {formatMatchTime(matchSeconds)}
           </span>
+
           <div className="livestats-timer-meta">
             <span className="livestats-minute-label">
               {tx('live.minute')} {currentMinute}'
             </span>
-            <span className={`livestats-status-badge ${isRunning ? 'running' : 'paused'}`}>
-              <span className={`livestats-status-dot ${isRunning ? 'running' : 'paused'}`} />
-              {isRunning ? 'LIVE' : 'PAUSED'}
-            </span>
           </div>
+
+          {/* Botón de Play / Pausa */}
+          <button
+            type="button"
+            onClick={toggleTimer}
+            className={`livestats-toggle-timer-btn ${isRunning ? 'btn-pause' : 'btn-play'}`}
+          >
+            {isRunning ? tx('live.timer.pause') : tx('live.timer.start')}
+          </button>
         </div>
 
         {/* Marcador */}
@@ -229,6 +246,7 @@ const LiveStats = ({
           {[1, 2].map((h) => (
             <button
               key={h}
+              type="button"
               onClick={() => setCurrentHalf(h)}
               className={`livestats-half-btn ${currentHalf === h ? 'active' : 'inactive'}`}
             >
@@ -237,13 +255,14 @@ const LiveStats = ({
           ))}
         </div>
 
-        {/* Contador total + Botón Pantalla Completa */}
+        {/* Contador total de eventos en tiempo real + Botón Pantalla Completa */}
         <div className="livestats-header-actions">
           <span className="livestats-total-count">
             <strong>{events.length}</strong> {tx('live.totalEvents')}
           </span>
 
           <button
+            type="button"
             onClick={toggleFullscreen}
             className="livestats-fullscreen-btn"
             title={isFullscreen ? tx('live.fullscreen.exit') : tx('live.fullscreen.enter')}
@@ -281,7 +300,7 @@ const LiveStats = ({
                 <span>{tx(group.catKey)}</span>
               </div>
 
-              {/* Cuadrícula de botones de esta categoría */}
+              {/* Cuadrícula de botones de esta categoría (Swipe en móvil) */}
               <div className={`livestats-buttons-grid ${group.colsClass}`}>
                 {group.buttons.map(({ type, labelKey, icon }) => {
                   const count = countByType(type);
@@ -292,14 +311,21 @@ const LiveStats = ({
                   return (
                     <button
                       key={type}
+                      type="button"
                       id={`livestats-btn-${type}`}
                       onClick={() => handlePress(type)}
                       disabled={saving}
                       className={`livestats-btn ${isFlashing ? 'flashing' : ''}`}
                       style={{
-                        borderColor: isFlashing ? group.color : 'rgba(255,255,255,0.12)',
-                        background: isFlashing ? `${group.color}25` : 'rgba(255,255,255,0.04)',
-                        boxShadow: isFlashing ? `0 0 14px ${group.color}55` : 'none',
+                        borderColor: isFlashing
+                          ? group.color
+                          : undefined,
+                        background: isFlashing
+                          ? `${group.color}25`
+                          : undefined,
+                        boxShadow: isFlashing
+                          ? `0 0 14px ${group.color}55`
+                          : undefined,
                       }}
                     >
                       {/* Ícono */}

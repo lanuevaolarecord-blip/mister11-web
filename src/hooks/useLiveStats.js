@@ -2,41 +2,16 @@
  * useLiveStats.js
  * ─────────────────────────────────────────────────────────────────────────────
  * Hook de Firestore para el módulo Live Stats de Míster 11.
+ * Usa firestore-proxy para garantizar compatibilidad con modo invitado / proxy.
  *
  * ESQUEMA DE DATOS:
  *   matches/{matchId}/liveStats/{eventId}
  *   {
- *     type: string,          // Tipo de evento (ver EVENT_TYPES abajo)
- *     half: 1 | 2,           // Mitad del partido
+ *     type: string,          // Tipo de evento
+ *     half: 1 | 2,           // Mitad del partido (1ª o 2ª)
  *     minute: number,        // Minuto en que ocurrió el evento
  *     timestamp: serverTimestamp()
  *   }
- *
- * TIPOS DE EVENTO:
- *   - shot_on_target_own     → Tiro a puerta del equipo propio
- *   - shot_on_target_rival   → Tiro a puerta del rival
- *   - shot_off_target_own    → Tiro fuera del equipo propio
- *   - shot_off_target_rival  → Tiro fuera del rival
- *   - card_own               → Tarjeta del equipo propio
- *   - card_rival             → Tarjeta del rival
- *   - foul_favor             → Falta a favor del equipo propio
- *   - foul_against           → Falta en contra del equipo propio
- *   - duel_won               → Duelo ganado
- *   - duel_lost              → Duelo perdido
- *   - player_no_finish       → Jugador no finaliza: ocasión clara sin remate
- *   - counter_not_cut        → Contra no cortada: contraataque rival que llegó a zona de peligro
- *   - corner_favor           → Córner a favor
- *   - corner_against         → Córner en contra
- *   - offside_own            → Fuera de juego del equipo propio
- *   - offside_rival          → Fuera de juego del rival
- *   - recovery               → Recuperación de balón
- *   - loss                   → Pérdida de balón
- *
- * CONCURRENCIA:
- *   Cada evento se guarda como documento independiente (addDoc) con ID
- *   auto-generado por Firestore. Varios analistas/pestañas pueden escribir
- *   simultáneamente sin riesgo de sobrescritura, porque cada addDoc genera
- *   un nuevo documento en lugar de actualizar uno existente.
  * ─────────────────────────────────────────────────────────────────────────────
  */
 
@@ -47,9 +22,7 @@ import {
   addDoc,
   onSnapshot,
   serverTimestamp,
-  query,
-  orderBy,
-} from 'firebase/firestore';
+} from '../firebase/firestore-proxy';
 
 export const EVENT_TYPES = [
   'shot_on_target_own',
@@ -82,7 +55,7 @@ export const useLiveStats = (matchId, currentMinute, currentHalf = 1) => {
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
 
-  // ── Escuchar eventos en tiempo real ──────────────────────────────────────
+  // ── Escuchar eventos en tiempo real con onSnapshot ──────────────────────
   useEffect(() => {
     if (!matchId) {
       setEvents([]);
@@ -91,10 +64,9 @@ export const useLiveStats = (matchId, currentMinute, currentHalf = 1) => {
 
     setLoading(true);
     const colRef = collection(db, 'matches', matchId, 'liveStats');
-    const q = query(colRef, orderBy('timestamp', 'asc'));
 
     const unsubscribe = onSnapshot(
-      q,
+      colRef,
       (snap) => {
         const docs = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
         setEvents(docs);
@@ -109,15 +81,7 @@ export const useLiveStats = (matchId, currentMinute, currentHalf = 1) => {
     return () => unsubscribe();
   }, [matchId]);
 
-  // ── Añadir un evento ─────────────────────────────────────────────────────
-  /**
-   * Escribe un documento nuevo en matches/{matchId}/liveStats/.
-   * El ID es auto-generado por Firestore (addDoc), por lo que múltiples
-   * analistas pueden escribir simultáneamente sin conflictos.
-   *
-   * @param {string} type - Tipo de evento (ver EVENT_TYPES)
-   * @returns {string|null} ID del documento creado, o null si falla
-   */
+  // ── Añadir un evento (addDoc con ID autogenerado) ────────────────────────
   const addLiveEvent = useCallback(
     async (type) => {
       if (!matchId) {
@@ -130,7 +94,7 @@ export const useLiveStats = (matchId, currentMinute, currentHalf = 1) => {
         const docRef = await addDoc(colRef, {
           type,
           half: currentHalf,
-          minute: currentMinute,
+          minute: currentMinute || 1,
           timestamp: serverTimestamp(),
         });
         return docRef.id;
@@ -144,7 +108,7 @@ export const useLiveStats = (matchId, currentMinute, currentHalf = 1) => {
     [matchId, currentMinute, currentHalf]
   );
 
-  // ── Conteo por tipo (para mostrar el contador en cada botón) ─────────────
+  // ── Conteo por tipo para el badge de cada botón ──────────────────────────
   const countByType = useCallback(
     (type) => events.filter((e) => e.type === type).length,
     [events]

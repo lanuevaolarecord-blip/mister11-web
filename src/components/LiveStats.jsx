@@ -220,13 +220,13 @@ const LiveStats = ({
 
   const handlePress = useCallback(
     async (type) => {
-      const id = await addLiveEvent(type);
+      const id = await addLiveEvent(type, currentHalf);
       if (id) {
         setFlashType(type);
         setTimeout(() => setFlashType(null), 650);
       }
     },
-    [addLiveEvent]
+    [addLiveEvent, currentHalf]
   );
 
   if (!matchId) {

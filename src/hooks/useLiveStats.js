@@ -89,12 +89,13 @@ export const useLiveStats = (teamId, matchId, currentMinute, currentHalf = 1) =>
 
   // ── Añadir un evento (Incremento inmediato optimista + Persistencia) ──────
   const addLiveEvent = useCallback(
-    async (type) => {
+    async (type, explicitHalf = null) => {
+      const targetHalf = explicitHalf !== null && explicitHalf !== undefined ? explicitHalf : currentHalf;
       const newId = 'evt_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5);
       const localDoc = {
         id: newId,
         type,
-        half: currentHalf,
+        half: targetHalf,
         minute: currentMinute || 1,
         timestamp: new Date().toISOString(),
       };
@@ -109,7 +110,7 @@ export const useLiveStats = (teamId, matchId, currentMinute, currentHalf = 1) =>
           const colRef = collection(db, fullCollectionPath);
           const docRef = await addDoc(colRef, {
             type,
-            half: currentHalf,
+            half: targetHalf,
             minute: currentMinute || 1,
             timestamp: serverTimestamp(),
           });

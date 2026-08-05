@@ -189,36 +189,17 @@ const Partidos = () => {
   const currentMinute = ctxCurrentMinute;
   const { events: liveEvents, addLiveEvent } = useLiveStats(activeTeamId, matchData?.id || null, ctxCurrentMinute || 0, 1);
 
-  const handleAddLiveEvent = useCallback(async (type) => {
-    const newEvt = {
-      id: 'evt_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5),
-      type,
-      half: 1,
-      minute: ctxCurrentMinute || 1,
-      timestamp: new Date().toISOString(),
-    };
-
-    setMatchData(prev => ({
-      ...prev,
-      liveStatsEvents: [...(prev.liveStatsEvents || []), newEvt]
-    }));
-
+  const handleAddLiveEvent = useCallback(async (type, explicitHalf) => {
     if (addLiveEvent) {
-      await addLiveEvent(type);
+      return await addLiveEvent(type, explicitHalf);
     }
-  }, [addLiveEvent, ctxCurrentMinute]);
+  }, [addLiveEvent]);
 
   const effectiveLiveEvents = useMemo(() => {
-    const fromFirestore = liveEvents || [];
-    const fromMatchData = matchData?.liveStatsEvents || [];
-    const map = new Map();
-    [...fromMatchData, ...fromFirestore].forEach(item => {
-      if (item && item.type) {
-        const key = item.id || `${item.type}_${item.minute}_${item.half}_${item.timestamp || ''}`;
-        map.set(key, item);
-      }
-    });
-    return Array.from(map.values());
+    if (liveEvents && liveEvents.length > 0) {
+      return liveEvents;
+    }
+    return matchData?.liveStatsEvents || [];
   }, [liveEvents, matchData?.liveStatsEvents]);
 
   const handleTriggerEvent = (type) => {

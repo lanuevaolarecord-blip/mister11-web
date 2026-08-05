@@ -1,0 +1,376 @@
+/* =========================================================
+   LIVESTATS.CSS — Módulo de captura de estadísticas en vivo
+========================================================= */
+
+.livestats-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  width: 100%;
+  flex: 1;
+  overflow: hidden;
+  background: var(--partidos-panel-bg, #0e1a14);
+  color: #F8FAFC;
+  position: relative;
+}
+
+/* Modo pantalla completa nativo y fallback */
+.livestats-container:fullscreen,
+.livestats-container:-webkit-full-screen,
+.livestats-container.livestats-fullscreen {
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  z-index: 99999 !important;
+  background: #0B1712 !important;
+  padding: 0 !important;
+  margin: 0 !important;
+}
+
+/* ── Cabecera fija (Header) ────────────────────────────────────────── */
+.livestats-header {
+  flex-shrink: 0;
+  z-index: 20;
+  background: #172D21;
+  border-bottom: 1px solid rgba(212, 168, 67, 0.3);
+  padding: 12px 18px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.35);
+}
+
+/* Bloque Cronómetro */
+.livestats-timer-block {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.livestats-timer-digits {
+  font-size: 30px;
+  font-weight: 900;
+  font-family: 'JetBrains Mono', 'Courier New', monospace;
+  letter-spacing: 1.5px;
+  line-height: 1;
+  transition: color 0.3s ease, text-shadow 0.3s ease;
+}
+
+.livestats-timer-digits.running {
+  color: #4CAF7D;
+  text-shadow: 0 0 14px rgba(76, 175, 125, 0.5);
+}
+
+.livestats-timer-digits.paused {
+  color: #FFFFFF;
+  text-shadow: 0 0 8px rgba(255, 255, 255, 0.2);
+}
+
+.livestats-timer-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.livestats-minute-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: #E2E8F0;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.livestats-status-badge {
+  font-size: 10.5px;
+  font-weight: 800;
+  padding: 2px 8px;
+  border-radius: 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  letter-spacing: 0.5px;
+}
+
+.livestats-status-badge.running {
+  background: rgba(76, 175, 125, 0.2);
+  border: 1px solid #4CAF7D;
+  color: #4CAF7D;
+}
+
+.livestats-status-badge.paused {
+  background: rgba(212, 168, 67, 0.2);
+  border: 1px solid #D4A843;
+  color: #D4A843;
+}
+
+.livestats-status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+}
+
+.livestats-status-dot.running {
+  background: #4CAF7D;
+  box-shadow: 0 0 8px #4CAF7D;
+  animation: livestats-pulse 1.5s ease-in-out infinite;
+}
+
+.livestats-status-dot.paused {
+  background: #D4A843;
+}
+
+@keyframes livestats-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.3; transform: scale(0.85); }
+}
+
+/* Bloque Marcador */
+.livestats-score-box {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: rgba(0, 0, 0, 0.35);
+  border: 1px solid rgba(212, 168, 67, 0.4);
+  border-radius: 12px;
+  padding: 6px 16px;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.livestats-score-num {
+  font-size: 24px;
+  font-weight: 900;
+  color: #FFFFFF;
+  line-height: 1;
+}
+
+.livestats-score-dash {
+  font-size: 16px;
+  font-weight: 800;
+  color: #D4A843;
+}
+
+/* Selector de Mitad */
+.livestats-half-selector {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.livestats-half-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #E2E8F0;
+}
+
+.livestats-half-btn {
+  padding: 5px 14px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.livestats-half-btn.active {
+  background: #D4A843;
+  color: #0E1A14;
+  border: 1px solid #D4A843;
+  box-shadow: 0 2px 8px rgba(212, 168, 67, 0.3);
+}
+
+.livestats-half-btn.inactive {
+  background: rgba(255, 255, 255, 0.08);
+  color: #FFFFFF;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.livestats-half-btn.inactive:hover {
+  background: rgba(255, 255, 255, 0.15);
+  border-color: rgba(255, 255, 255, 0.35);
+}
+
+/* Total eventos y Botón Fullscreen */
+.livestats-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.livestats-total-count {
+  font-size: 13px;
+  color: #CBD5E1;
+  font-weight: 600;
+}
+
+.livestats-total-count strong {
+  color: #4CAF7D;
+  font-size: 16px;
+  font-weight: 900;
+}
+
+.livestats-fullscreen-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(212, 168, 67, 0.15);
+  border: 1px solid #D4A843;
+  color: #D4A843;
+  border-radius: 8px;
+  padding: 6px 12px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.livestats-fullscreen-btn:hover {
+  background: #D4A843;
+  color: #0E1A14;
+}
+
+/* ── Cuerpo desplazable (Scrollable Body) ───────────────────────── */
+.livestats-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px 16px 60px 16px;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Grid principal de categorías */
+.livestats-categories-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 18px;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+@media (min-width: 900px) {
+  .livestats-categories-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+  }
+}
+
+/* Tarjeta de Categoría */
+.livestats-category-card {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.2);
+}
+
+.livestats-category-title {
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  margin-bottom: 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+/* Grid de botones de eventos */
+.livestats-buttons-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+}
+
+@media (min-width: 550px) {
+  .livestats-buttons-grid.cols-4 {
+    grid-template-columns: repeat(4, 1fr);
+  }
+  .livestats-buttons-grid.cols-6 {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+/* Botón individual de evento */
+.livestats-btn {
+  position: relative;
+  min-height: 74px;
+  border-radius: 12px;
+  border: 2px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.04);
+  color: #FFFFFF;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 10px 6px;
+  transition: all 0.15s ease;
+  user-select: none;
+  touch-action: manipulation;
+  outline: none;
+}
+
+.livestats-btn:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.09);
+  border-color: rgba(255, 255, 255, 0.3);
+  transform: translateY(-1px);
+}
+
+.livestats-btn:active:not(:disabled) {
+  transform: scale(0.96);
+}
+
+.livestats-btn.flashing {
+  transform: scale(0.96);
+}
+
+.livestats-btn-icon {
+  font-size: 22px;
+  line-height: 1;
+}
+
+.livestats-btn-label {
+  font-size: 11.5px;
+  font-weight: 700;
+  text-align: center;
+  color: #F1F5F9;
+  line-height: 1.25;
+}
+
+.livestats-btn-label-sub {
+  font-size: 10px;
+  opacity: 0.75;
+  display: block;
+  font-weight: 500;
+}
+
+.livestats-btn-count {
+  position: absolute;
+  top: 6px;
+  right: 8px;
+  font-size: 14px;
+  font-weight: 900;
+  border-radius: 6px;
+  padding: 1px 5px;
+  background: rgba(0, 0, 0, 0.5);
+  line-height: 1.2;
+}
+
+.livestats-flash-msg {
+  position: absolute;
+  bottom: 4px;
+  right: 6px;
+  font-size: 9.5px;
+  font-weight: 800;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+}

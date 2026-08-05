@@ -726,7 +726,7 @@ const Partidos = () => {
             ))}
           </div>
 
-          <div className="editor-content">
+          <div className={`editor-content ${editTab === 'LIVE-STATS' ? 'livestats-active' : ''}`}>
             {/* PESTAÑA: PRE-PARTIDO */}
             {editTab === 'PRE-PARTIDO' && (
               <div className="tab-pane pre-partido-container">

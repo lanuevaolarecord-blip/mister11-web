@@ -346,6 +346,11 @@ html.dark {
   overflow: hidden;
   padding: 20px 30px 10px 30px;
 }
+.editor-content.livestats-active,
+.editor-content:has(.livestats-container) {
+  overflow: hidden;
+  padding: 0;
+}
 .tab-pane {
   flex: 1;
   display: flex;

@@ -3,10 +3,12 @@
  * ─────────────────────────────────────────────────────────────────────────────
  * Módulo de captura de estadísticas en vivo durante el partido.
  *
- * MEJORAS:
- *  1. Botón de reinicio del cronómetro en dorado circular (#D4A843).
- *  2. Botones de gol "+1" a cada lado del marcador, sincronizados con Match Day.
- *  3. Verificación de alcance de reglas Firestore recursivas {allPaths=**}.
+ * FASE 2:
+ *  • Integración de gráficas SVG en tiempo real en la sección "Resumen en Vivo"
+ *    ubicada debajo de la matriz de botones de captura.
+ *  • Donuts de Eficiencia (% Duelos ganados/perdidos, Remates puerta/fuera, Balón).
+ *  • Comparativa Propio vs Rival (Barras comparativas de métricas).
+ *  • Desglose por Mitades (1T vs 2T).
  * ─────────────────────────────────────────────────────────────────────────────
  */
 
@@ -14,6 +16,7 @@ import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { useLiveStats } from '../hooks/useLiveStats';
 import { useTheme } from '../context/ThemeContext';
 import { useMatch } from '../context/MatchContext';
+import { SvgDonut, SvgComparisonBars, HalfBreakdown } from './LiveStatsCharts';
 import './LiveStats.css';
 
 // ── Paleta de acentos por categoría ──────────────────────────────────────────
@@ -38,6 +41,19 @@ const TEXTS = {
   'live.timer.reset':          { es: 'Reiniciar cronómetro',             en: 'Reset timer' },
   'live.goal.for':             { es: '+1 Gol propio',                    en: '+1 Own Goal' },
   'live.goal.against':         { es: '+1 Gol rival',                     en: '+1 Rival Goal' },
+  'live.summary.title':        { es: 'Resumen en Vivo',                   en: 'Live Summary' },
+  'live.summary.efficiency':   { es: 'Eficiencia Táctica (% Éxito)',      en: 'Tactical Efficiency (% Success)' },
+  'live.summary.comparison':   { es: 'Comparativa Propio vs Rival',       en: 'Own vs Rival Comparison' },
+  'live.summary.halves':       { es: 'Desglose por Mitades (1T vs 2T)',    en: 'Half Breakdown (1st vs 2nd)' },
+  'live.donut.duels':          { es: 'Duelos',                            en: 'Duels' },
+  'live.donut.shots':          { es: 'Remates',                           en: 'Shots' },
+  'live.donut.possession':     { es: 'Balón',                             en: 'Possession' },
+  'live.label.won':            { es: 'Gan',                               en: 'Won' },
+  'live.label.lost':           { es: 'Perd',                              en: 'Lost' },
+  'live.label.onTarget':       { es: 'Puerta',                            en: 'On' },
+  'live.label.offTarget':      { es: 'Fuera',                             en: 'Off' },
+  'live.label.recovery':       { es: 'Recup',                             en: 'Rec' },
+  'live.label.loss':           { es: 'Pérd',                              en: 'Loss' },
   'live.cat.shots':            { es: '⚽ Remates',                       en: '⚽ Shots' },
   'live.cat.possession':       { es: '🔄 Defensa / Posesión',           en: '🔄 Defense / Possession' },
   'live.cat.fouls':            { es: '⚡ Faltas / Transiciones',         en: '⚡ Fouls / Transitions' },
@@ -405,6 +421,87 @@ const LiveStats = ({
             </section>
           ))}
         </div>
+
+        {/* ── 3. Sección Resumen en Vivo (Gráficas SVG en tiempo real) ── */}
+        <section style={{ marginTop: '28px', maxWidth: '1400px', margin: '28px auto 0' }}>
+          <div style={{
+            fontSize: '14px',
+            fontWeight: 900,
+            letterSpacing: '0.8px',
+            textTransform: 'uppercase',
+            marginBottom: '16px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+            color: darkMode ? '#D4A843' : '#1B3A2D',
+          }}>
+            <span>📈</span>
+            <span>{tx('live.summary.title')}</span>
+          </div>
+
+          <div className="livestats-summary-grid">
+            {/* Tarjeta 1: Gráficas de Eficiencia (Donuts SVG) */}
+            <div className="livestats-category-card">
+              <div className="livestats-category-title" style={{ color: C.green }}>
+                <span>🎯 {tx('live.summary.efficiency')}</span>
+              </div>
+              <div style={{
+                display: 'flex',
+                flexWrap: 'wrap',
+                justifyContent: 'space-around',
+                gap: '12px',
+                width: '100%',
+              }}>
+                <SvgDonut
+                  title={tx('live.donut.duels')}
+                  value1={countByType('duel_won')}
+                  value2={countByType('duel_lost')}
+                  label1={tx('live.label.won')}
+                  label2={tx('live.label.lost')}
+                  color1="#4CAF7D"
+                  color2="#EF4444"
+                  darkMode={darkMode}
+                />
+                <SvgDonut
+                  title={tx('live.donut.shots')}
+                  value1={countByType('shot_on_target_own')}
+                  value2={countByType('shot_off_target_own')}
+                  label1={tx('live.label.onTarget')}
+                  label2={tx('live.label.offTarget')}
+                  color1="#0D9488"
+                  color2="#F97316"
+                  darkMode={darkMode}
+                />
+                <SvgDonut
+                  title={tx('live.donut.possession')}
+                  value1={countByType('recovery')}
+                  value2={countByType('loss')}
+                  label1={tx('live.label.recovery')}
+                  label2={tx('live.label.loss')}
+                  color1="#3B82F6"
+                  color2="#E11D48"
+                  darkMode={darkMode}
+                />
+              </div>
+            </div>
+
+            {/* Tarjeta 2: Comparativa Propio vs Rival (Barras comparativas) */}
+            <div className="livestats-category-card">
+              <div className="livestats-category-title" style={{ color: C.gold }}>
+                <span>⚔️ {tx('live.summary.comparison')}</span>
+              </div>
+              <SvgComparisonBars events={events} darkMode={darkMode} />
+            </div>
+          </div>
+
+          {/* Tarjeta 3: Desglose por Mitades (1T vs 2T) */}
+          <div className="livestats-category-card" style={{ marginTop: '18px' }}>
+            <div className="livestats-category-title" style={{ color: C.orange }}>
+              <span>⏱️ {tx('live.summary.halves')}</span>
+            </div>
+            <HalfBreakdown events={events} darkMode={darkMode} />
+          </div>
+        </section>
       </main>
     </div>
   );

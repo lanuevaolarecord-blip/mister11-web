@@ -143,7 +143,7 @@
   transform: scale(1.03);
 }
 
-/* Botón Reinicio del cronómetro (Dorado institucional #D4A843 con fondo circular sutil) */
+/* Botón Reinicio del cronómetro */
 .livestats-reset-timer-btn {
   display: inline-flex;
   align-items: center;
@@ -310,7 +310,8 @@
 }
 
 /* Grid principal de categorías */
-.livestats-categories-grid {
+.livestats-categories-grid,
+.livestats-summary-grid {
   display: grid;
   grid-template-columns: 1fr;
   gap: 18px;
@@ -319,7 +320,8 @@
 }
 
 @media (min-width: 900px) {
-  .livestats-categories-grid {
+  .livestats-categories-grid,
+  .livestats-summary-grid {
     grid-template-columns: repeat(2, 1fr);
     gap: 20px;
   }

@@ -13,6 +13,8 @@ import { useMatchEvents } from '../hooks/useMatchEvents';
 import CustomFormationModal from '../components/CustomFormationModal';
 import FormationSelector from '../components/FormationSelector';
 import LiveStats from '../components/LiveStats';
+import { MultiMatchAnalysis } from '../components/MultiMatchAnalysis';
+import { t } from '../i18n/translations';
 import { useTheme } from '../context/ThemeContext';
 import { useLiveStats } from '../hooks/useLiveStats';
 import { SvgDonut, SvgComparisonBars, HalfBreakdown } from '../components/LiveStatsCharts';
@@ -84,6 +86,7 @@ const Partidos = () => {
   const { darkMode } = useTheme();
   
   const [viewMode, setViewMode] = useState('LIST'); // 'LIST' or 'EDIT'
+  const [mainTab, setMainTab] = useState('LIST'); // 'LIST' or 'ANALISIS'
   const [filterMode, setFilterMode] = useState('Todos'); // 'Todos', 'Pendientes', 'Terminados'
   const [isSaving, setIsSaving] = useState(false);
   
@@ -695,57 +698,84 @@ const Partidos = () => {
       </header>
 
       {viewMode === 'LIST' && (
-        <div className="partidos-list-container">
-          {matches.length === 0 ? (
-            <div style={{textAlign: 'center', marginTop: '40px', color: 'var(--partidos-text-muted)'}}>
-              <h2>No hay partidos registrados</h2>
-              <p>Comienza añadiendo un nuevo partido.</p>
+        <>
+          <div className="list-filters px-4" style={{ margin: '16px auto 0', maxWidth: '1400px' }}>
+            <button 
+              className={`filter-tab ${mainTab === 'LIST' ? 'active' : ''}`}
+              onClick={() => setMainTab('LIST')}
+              style={{ minHeight: '44px', fontWeight: 'bold' }}
+            >
+              📋 {t('partidos.tab.lista', settings?.language)}
+            </button>
+            <button 
+              className={`filter-tab ${mainTab === 'ANALISIS' ? 'active' : ''}`}
+              onClick={() => setMainTab('ANALISIS')}
+              style={{ minHeight: '44px', fontWeight: 'bold' }}
+            >
+              {t('partidos.tab.analisis', settings?.language)}
+            </button>
+          </div>
+
+          {mainTab === 'LIST' ? (
+            <div className="partidos-list-container">
+              {matches.length === 0 ? (
+                <div style={{textAlign: 'center', marginTop: '40px', color: 'var(--partidos-text-muted)'}}>
+                  <h2>No hay partidos registrados</h2>
+                  <p>Comienza añadiendo un nuevo partido.</p>
+                </div>
+              ) : (
+                <>
+                  <div className="list-filters">
+                    <button className={`filter-tab ${filterMode === 'Todos' ? 'active' : ''}`} onClick={() => setFilterMode('Todos')}>Todos</button>
+                    <button className={`filter-tab ${filterMode === 'Pendientes' ? 'active' : ''}`} onClick={() => setFilterMode('Pendientes')}>Pendientes</button>
+                    <button className={`filter-tab ${filterMode === 'Terminados' ? 'active' : ''}`} onClick={() => setFilterMode('Terminados')}>Terminados</button>
+                  </div>
+                  
+                  <div className="matches-grid">
+                    {filteredMatches.map(m => (
+                      <div key={m.id} className="match-card" onClick={() => handleEditMatch(m)}>
+                        <div className="mc-header">
+                          <span className={`status-badge ${m.status?.toLowerCase()}`}>{m.status}</span>
+                          <span className="mc-date">{m.date ? m.date.split('-').reverse().join('/') : '--/--/--'} - {m.time || '--:--'}</span>
+                        </div>
+                        
+                        <div className="mc-body">
+                          <div className="team-local">
+                            {/* Dummy Escudo */}
+                            <div style={{width: '32px', height: '32px', borderRadius: '50%', background: 'var(--partidos-border)'}}></div>
+                            <span className="t-name">{m.type === 'Local' ? 'Míster11 FC' : m.rival}</span>
+                          </div>
+                          <div className="mc-score">
+                            {m.status === 'Terminado' ? (
+                              <span>{m.type === 'Local' ? m.goalsFor : m.goalsAgainst} - {m.type === 'Local' ? m.goalsAgainst : m.goalsFor}</span>
+                            ) : (
+                              <span className="vs">VS</span>
+                            )}
+                          </div>
+                          <div className="team-visit">
+                            <span className="t-name">{m.type === 'Visitante' ? 'Míster11 FC' : m.rival}</span>
+                            <div style={{width: '32px', height: '32px', borderRadius: '50%', background: 'var(--partidos-border)'}}></div>
+                          </div>
+                        </div>
+                        
+                        <div className="mc-footer">
+                          <span>📍 {m.location || 'Sin ubicación'}</span>
+                          <span>🛡️ Formación: {m.lineup || '4-3-3'}</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </>
+              )}
             </div>
           ) : (
-            <>
-              <div className="list-filters">
-                <button className={`filter-tab ${filterMode === 'Todos' ? 'active' : ''}`} onClick={() => setFilterMode('Todos')}>Todos</button>
-                <button className={`filter-tab ${filterMode === 'Pendientes' ? 'active' : ''}`} onClick={() => setFilterMode('Pendientes')}>Pendientes</button>
-                <button className={`filter-tab ${filterMode === 'Terminados' ? 'active' : ''}`} onClick={() => setFilterMode('Terminados')}>Terminados</button>
-              </div>
-              
-              <div className="matches-grid">
-                {filteredMatches.map(m => (
-                  <div key={m.id} className="match-card" onClick={() => handleEditMatch(m)}>
-                    <div className="mc-header">
-                      <span className={`status-badge ${m.status?.toLowerCase()}`}>{m.status}</span>
-                      <span className="mc-date">{m.date ? m.date.split('-').reverse().join('/') : '--/--/--'} - {m.time || '--:--'}</span>
-                    </div>
-                    
-                    <div className="mc-body">
-                      <div className="team-local">
-                        {/* Dummy Escudo */}
-                        <div style={{width: '32px', height: '32px', borderRadius: '50%', background: 'var(--partidos-border)'}}></div>
-                        <span className="t-name">{m.type === 'Local' ? 'Míster11 FC' : m.rival}</span>
-                      </div>
-                      <div className="mc-score">
-                        {m.status === 'Terminado' ? (
-                          <span>{m.type === 'Local' ? m.goalsFor : m.goalsAgainst} - {m.type === 'Local' ? m.goalsAgainst : m.goalsFor}</span>
-                        ) : (
-                          <span className="vs">VS</span>
-                        )}
-                      </div>
-                      <div className="team-visit">
-                        <span className="t-name">{m.type === 'Visitante' ? 'Míster11 FC' : m.rival}</span>
-                        <div style={{width: '32px', height: '32px', borderRadius: '50%', background: 'var(--partidos-border)'}}></div>
-                      </div>
-                    </div>
-                    
-                    <div className="mc-footer">
-                      <span>📍 {m.location || 'Sin ubicación'}</span>
-                      <span>🛡️ Formación: {m.lineup || '4-3-3'}</span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </>
+            <MultiMatchAnalysis
+              matches={matches}
+              teamId={activeTeamId}
+              language={settings?.language}
+            />
           )}
-        </div>
+        </>
       )}
 
       {viewMode === 'EDIT' && (

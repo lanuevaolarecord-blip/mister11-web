@@ -199,12 +199,13 @@ const LiveStats = ({
     try {
       const { generateMatchPdfReport } = await import('../utils/matchPdfReport');
       await generateMatchPdfReport({
+        mode: 'LIVE-STATS',
         teamName: 'Mi Equipo',
         matchData,
         events,
       });
     } catch (err) {
-      console.error("Error al exportar informe PDF de partido:", err);
+      console.error("Error al exportar informe PDF de Live Stats:", err);
     }
   }, [matchData, events]);
 
@@ -468,7 +469,7 @@ const LiveStats = ({
             <span>{tx('live.summary.title')}</span>
           </div>
 
-          <div className="livestats-summary-grid">
+          <div className="livestats-summary-grid" id="livestats-charts-container-live">
             {/* Tarjeta 1: Gráficas de Eficiencia (Donuts SVG) */}
             <div className="livestats-category-card">
               <div className="livestats-category-title" style={{ color: C.green }}>

@@ -334,9 +334,11 @@ const Partidos = () => {
     try {
       const { generateMatchPdfReport } = await import('../utils/matchPdfReport');
       await generateMatchPdfReport({
+        mode: 'POST-MATCH',
         teamName: activeTeam?.name || 'Mi Equipo',
         matchData,
         events: liveEvents || [],
+        players: players || [],
       });
     } catch (err) {
       console.error("Error al generar el informe PDF de partido:", err);
@@ -1522,7 +1524,7 @@ const Partidos = () => {
                         </button>
                       </div>
 
-                      <div className="livestats-summary-grid">
+                      <div className="livestats-summary-grid" id="livestats-charts-container-post">
                         {/* Tarjeta 1: Eficiencia Táctica */}
                         <div className="livestats-category-card">
                           <div className="livestats-category-title" style={{ color: '#4CAF7D' }}>

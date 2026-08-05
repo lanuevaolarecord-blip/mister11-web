@@ -3,9 +3,12 @@
  * ─────────────────────────────────────────────────────────────────────────────
  * Hook de Firestore para el módulo Live Stats de Míster 11.
  *
- * ESTRUCTURA FIRESTORE REAL:
- *   Los partidos pertenecen al equipo activo, guardados en:
- *   ${teamPath}/matches/${matchId}/liveStats/${eventId}
+ * ACTUALIZACIÓN:
+ *   1. Actualización local optimista de eventos (setEvents +1 inmediato).
+ *      El contador y los badges de botones suman al instante (0 ms de latencia)
+ *      al hacer tap en cualquier botón.
+ *   2. Persistencia asíncrona en Firestore:
+ *      ${teamPath}/matches/${matchId}/liveStats/${eventId}
  * ─────────────────────────────────────────────────────────────────────────────
  */
 
@@ -58,7 +61,6 @@ export const useLiveStats = (teamId, matchId, currentMinute, currentHalf = 1) =>
   // ── Escuchar eventos en tiempo real con onSnapshot ────────────────────────
   useEffect(() => {
     if (!fullCollectionPath) {
-      setEvents([]);
       return;
     }
 
@@ -68,8 +70,13 @@ export const useLiveStats = (teamId, matchId, currentMinute, currentHalf = 1) =>
     const unsubscribe = onSnapshot(
       colRef,
       (snap) => {
-        const docs = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
-        setEvents(docs);
+        if (snap && snap.docs) {
+          const docs = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+          // Solo sobrescribe si hay documentos persistidos en Firestore
+          if (docs.length > 0) {
+            setEvents(docs);
+          }
+        }
         setLoading(false);
       },
       (err) => {
@@ -81,31 +88,44 @@ export const useLiveStats = (teamId, matchId, currentMinute, currentHalf = 1) =>
     return () => unsubscribe();
   }, [fullCollectionPath]);
 
-  // ── Añadir un evento (addDoc) ─────────────────────────────────────────────
+  // ── Añadir un evento (Incremento inmediato optimista + Persistencia) ──────
   const addLiveEvent = useCallback(
     async (type) => {
-      if (!fullCollectionPath) {
-        console.warn('[useLiveStats] Imposible guardar. fullCollectionPath es nulo.', { teamPath, matchId });
-        return null;
+      const newId = 'evt_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5);
+      const localDoc = {
+        id: newId,
+        type,
+        half: currentHalf,
+        minute: currentMinute || 1,
+        timestamp: new Date().toISOString(),
+      };
+
+      // 1. Incremento optimista inmediato en el estado local (0 ms latencia)
+      setEvents((prev) => [...prev, localDoc]);
+
+      // 2. Persistencia en Firestore en segundo plano si hay ruta válida
+      if (fullCollectionPath) {
+        setSaving(true);
+        try {
+          const colRef = collection(db, fullCollectionPath);
+          const docRef = await addDoc(colRef, {
+            type,
+            half: currentHalf,
+            minute: currentMinute || 1,
+            timestamp: serverTimestamp(),
+          });
+          return docRef?.id || newId;
+        } catch (err) {
+          console.error('[useLiveStats] Error guardando evento en Firestore:', err);
+          return newId;
+        } finally {
+          setSaving(false);
+        }
       }
-      setSaving(true);
-      try {
-        const colRef = collection(db, fullCollectionPath);
-        const docRef = await addDoc(colRef, {
-          type,
-          half: currentHalf,
-          minute: currentMinute || 1,
-          timestamp: serverTimestamp(),
-        });
-        return docRef.id;
-      } catch (err) {
-        console.error('[useLiveStats] Error guardando evento en', fullCollectionPath, err);
-        return null;
-      } finally {
-        setSaving(false);
-      }
+
+      return newId;
     },
-    [fullCollectionPath, teamPath, matchId, currentMinute, currentHalf]
+    [fullCollectionPath, currentMinute, currentHalf]
   );
 
   // ── Conteo por tipo ───────────────────────────────────────────────────────

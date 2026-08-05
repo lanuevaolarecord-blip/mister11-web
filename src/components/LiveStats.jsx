@@ -195,6 +195,19 @@ const LiveStats = ({
     }
   }, []);
 
+  const handleExportPdf = useCallback(async () => {
+    try {
+      const { generateMatchPdfReport } = await import('../utils/matchPdfReport');
+      await generateMatchPdfReport({
+        teamName: 'Mi Equipo',
+        matchData,
+        events,
+      });
+    } catch (err) {
+      console.error("Error al exportar informe PDF de partido:", err);
+    }
+  }, [matchData, events]);
+
   const handlePress = useCallback(
     async (type) => {
       const id = await addLiveEvent(type);
@@ -311,11 +324,27 @@ const LiveStats = ({
           ))}
         </div>
 
-        {/* Contador total de eventos en tiempo real + Botón Pantalla Completa */}
+        {/* Contador total de eventos en tiempo real + Botón Pantalla Completa + Botón PDF */}
         <div className="livestats-header-actions">
           <span className="livestats-total-count">
             <strong>{events.length}</strong> {tx('live.totalEvents')}
           </span>
+
+          <button
+            type="button"
+            onClick={handleExportPdf}
+            className="livestats-fullscreen-btn"
+            style={{ background: '#D4A843', color: '#0E1A14', border: 'none', fontWeight: 800 }}
+            title={tx('live.exportPdf')}
+          >
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+              <polyline points="14 2 14 8 20 8"/>
+              <line x1="12" y1="18" x2="12" y2="12"/>
+              <polyline points="9 15 12 18 15 15"/>
+            </svg>
+            <span>PDF</span>
+          </button>
 
           <button
             type="button"

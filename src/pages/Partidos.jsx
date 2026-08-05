@@ -13,6 +13,8 @@ import { useMatchEvents } from '../hooks/useMatchEvents';
 import CustomFormationModal from '../components/CustomFormationModal';
 import FormationSelector from '../components/FormationSelector';
 import LiveStats from '../components/LiveStats';
+import { useLiveStats } from '../hooks/useLiveStats';
+import { SvgDonut, SvgComparisonBars, HalfBreakdown } from '../components/LiveStatsCharts';
 import './Partidos.css';
 import { normalizeText } from '../utils/normalizeInput';
 
@@ -86,6 +88,7 @@ const Partidos = () => {
   // Edit State
   const [editTab, setEditTab] = useState('PRE-PARTIDO');
   const [matchData, setMatchData] = useState({});
+  const { events: liveEvents } = useLiveStats(activeTeamId, matchData?.id || null, 0, 1);
   const [calledPlayers, setCalledPlayers] = useState([]); // Array of IDs
   const [draggingIdx, setDraggingIdx] = useState(null);
   const pitchRef = useRef(null);
@@ -321,12 +324,22 @@ const Partidos = () => {
     }));
   };
 
-  const handleExportPDF = () => {
-    if (!matchData.id) {
+  const handleExportPDF = async () => {
+    if (!matchData?.id) {
       alert("Guarde el partido antes de exportar el PDF.");
       return;
     }
-    generatePostMatchReportPDF(matchData, players, activeTeam);
+    try {
+      const { generateMatchPdfReport } = await import('../utils/matchPdfReport');
+      await generateMatchPdfReport({
+        teamName: activeTeam?.name || 'Mi Equipo',
+        matchData,
+        events: liveEvents || [],
+      });
+    } catch (err) {
+      console.error("Error al generar el informe PDF de partido:", err);
+      generatePostMatchReportPDF(matchData, players, activeTeam);
+    }
   };
 
   const reportQuestions = [
@@ -1480,6 +1493,90 @@ const Partidos = () => {
 
                   {/* Secciones de ancho completo abajo */}
                   <div className="post-partido-full-width-card" style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                    {/* Tarjeta Resumen del Partido (Gráficas Fase 3a) */}
+                    <div className="post-match-card">
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px', marginBottom: '16px' }}>
+                        <h4 className="card-section-title" style={{ margin: 0 }}>
+                          📈 Resumen del Partido
+                        </h4>
+                        <button
+                          type="button"
+                          onClick={handleExportPDF}
+                          style={{
+                            background: '#D4A843',
+                            color: '#0E1A14',
+                            border: 'none',
+                            fontWeight: '800',
+                            padding: '8px 16px',
+                            borderRadius: '8px',
+                            cursor: 'pointer',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '6px',
+                            fontSize: '12px'
+                          }}
+                        >
+                          📄 Descargar Informe PDF
+                        </button>
+                      </div>
+
+                      <div className="livestats-summary-grid">
+                        {/* Tarjeta 1: Eficiencia Táctica */}
+                        <div className="livestats-category-card">
+                          <div className="livestats-category-title" style={{ color: '#4CAF7D' }}>
+                            <span>🎯 Eficiencia Táctica (% Éxito)</span>
+                          </div>
+                          <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-around', gap: '12px', width: '100%' }}>
+                            <SvgDonut
+                              title="Duelos"
+                              value1={(liveEvents || []).filter(e => e.type === 'duel_won').length}
+                              value2={(liveEvents || []).filter(e => e.type === 'duel_lost').length}
+                              label1="Gan"
+                              label2="Perd"
+                              color1="#4CAF7D"
+                              color2="#EF4444"
+                              darkMode={settings?.darkMode}
+                            />
+                            <SvgDonut
+                              title="Remates"
+                              value1={(liveEvents || []).filter(e => e.type === 'shot_on_target_own').length}
+                              value2={(liveEvents || []).filter(e => e.type === 'shot_off_target_own').length}
+                              label1="Puerta"
+                              label2="Fuera"
+                              color1="#0D9488"
+                              color2="#F97316"
+                              darkMode={settings?.darkMode}
+                            />
+                            <SvgDonut
+                              title="Balón"
+                              value1={(liveEvents || []).filter(e => e.type === 'recovery').length}
+                              value2={(liveEvents || []).filter(e => e.type === 'loss').length}
+                              label1="Recup"
+                              label2="Pérd"
+                              color1="#3B82F6"
+                              color2="#E11D48"
+                              darkMode={settings?.darkMode}
+                            />
+                          </div>
+                        </div>
+
+                        {/* Tarjeta 2: Comparativa Propio vs Rival */}
+                        <div className="livestats-category-card">
+                          <div className="livestats-category-title" style={{ color: '#D4A843' }}>
+                            <span>⚔️ Comparativa Propio vs Rival</span>
+                          </div>
+                          <SvgComparisonBars events={liveEvents || []} darkMode={settings?.darkMode} />
+                        </div>
+                      </div>
+
+                      {/* Tarjeta 3: Desglose por Mitades */}
+                      <div className="livestats-category-card" style={{ marginTop: '18px' }}>
+                        <div className="livestats-category-title" style={{ color: '#F97316' }}>
+                          <span>⏱️ Desglose por Mitades (1T vs 2T)</span>
+                        </div>
+                        <HalfBreakdown events={liveEvents || []} darkMode={settings?.darkMode} />
+                      </div>
+                    </div>
                     {/* Tarjeta 6: Cuestionario de Análisis */}
                     <div className="post-match-card">
                       <h4 className="card-section-title">📋 Cuestionario de Informe de Partido</h4>

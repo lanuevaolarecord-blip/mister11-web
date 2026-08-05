@@ -90,7 +90,6 @@ const Partidos = () => {
   // Edit State
   const [editTab, setEditTab] = useState('PRE-PARTIDO');
   const [matchData, setMatchData] = useState({});
-  const { events: liveEvents } = useLiveStats(activeTeamId, matchData?.id || null, 0, 1);
   const [calledPlayers, setCalledPlayers] = useState([]); // Array of IDs
   const [draggingIdx, setDraggingIdx] = useState(null);
   const pitchRef = useRef(null);
@@ -188,10 +187,12 @@ const Partidos = () => {
   const handleTimerAdjust = adjustTimer;
 
   const currentMinute = ctxCurrentMinute;
+  const { events: liveEvents, addLiveEvent } = useLiveStats(activeTeamId, matchData?.id || null, ctxCurrentMinute || 0, 1);
 
   const handleTriggerEvent = (type) => {
     if (type === 'gol_rival') {
       addEvent('gol_rival', 'Rival', 'Gol del Rival', currentMinute);
+      if (addLiveEvent) addLiveEvent('shot_on_target_rival');
     } else {
       setPendingEventType(type);
       setShowEventPlayerSelector(true);
@@ -202,6 +203,13 @@ const Partidos = () => {
     const player = players.find(p => p.id === playerId);
     if (!player) return;
     addEvent(pendingEventType, playerId, player.name, currentMinute);
+    if (addLiveEvent) {
+      if (pendingEventType === 'gol_local') {
+        addLiveEvent('shot_on_target_own');
+      } else if (pendingEventType === 'amarilla' || pendingEventType === 'roja') {
+        addLiveEvent('card_own');
+      }
+    }
     setPendingEventType(null);
     setShowEventPlayerSelector(false);
   };

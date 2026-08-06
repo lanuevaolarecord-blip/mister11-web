@@ -19,6 +19,8 @@ import {
   collection,
   addDoc,
   onSnapshot,
+  getDocs,
+  writeBatch,
   serverTimestamp,
 } from '../firebase/firestore-proxy';
 
@@ -60,6 +62,9 @@ export const useLiveStats = (teamId, matchId, currentMinute, currentHalf = 1) =>
 
   // ── Escuchar eventos en tiempo real con onSnapshot ────────────────────────
   useEffect(() => {
+    // Resetear inmediatamente el estado local al cambiar de partido o ruta
+    setEvents([]);
+
     if (!fullCollectionPath) {
       return;
     }
@@ -128,11 +133,34 @@ export const useLiveStats = (teamId, matchId, currentMinute, currentHalf = 1) =>
     [fullCollectionPath, currentMinute, currentHalf]
   );
 
+  // ── Reiniciar todos los eventos del partido (Reset a 0) ───────────────────
+  const resetLiveStats = useCallback(async () => {
+    setEvents([]);
+    if (fullCollectionPath) {
+      setSaving(true);
+      try {
+        const colRef = collection(db, fullCollectionPath);
+        const snap = await getDocs(colRef);
+        if (snap && snap.docs && snap.docs.length > 0) {
+          const batch = writeBatch(db);
+          snap.docs.forEach((d) => {
+            batch.delete(d.ref);
+          });
+          await batch.commit();
+        }
+      } catch (err) {
+        console.error('[useLiveStats] Error reseteando eventos:', err);
+      } finally {
+        setSaving(false);
+      }
+    }
+  }, [fullCollectionPath]);
+
   // ── Conteo por tipo ───────────────────────────────────────────────────────
   const countByType = useCallback(
     (type) => events.filter((e) => e.type === type).length,
     [events]
   );
 
-  return { events, loading, saving, addLiveEvent, countByType };
+  return { events, loading, saving, addLiveEvent, resetLiveStats, countByType };
 };

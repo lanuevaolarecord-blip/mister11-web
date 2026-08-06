@@ -1965,3 +1965,29 @@ html.dark .alin-player-item span.slot-role {
   margin-top: -2px !important;
 }
 
+/* =========================================================
+   PROTECCIÓN DE PADDING Y MÁRGENES RESPONSIVE/MOBILE (ISSUE 5)
+========================================================= */
+@media (max-width: 640px) {
+  .partidos-page {
+    padding: 12px 12px 24px !important;
+  }
+  .partidos-list-container,
+  .partidos-editor-container,
+  .post-partido-container {
+    padding: 12px !important;
+    box-sizing: border-box !important;
+  }
+  .match-card,
+  .post-match-card {
+    padding: 14px !important;
+  }
+  .matches-grid {
+    grid-template-columns: 1fr !important;
+    gap: 12px !important;
+  }
+  .multi-match-container {
+    padding: 14px 12px 32px !important;
+  }
+}
+

@@ -190,7 +190,21 @@ const Partidos = () => {
   const handleTimerAdjust = adjustTimer;
 
   const currentMinute = ctxCurrentMinute;
-  const { events: liveEvents, addLiveEvent } = useLiveStats(activeTeamId, matchData?.id || null, ctxCurrentMinute || 0, 1);
+  const { events: liveEvents, addLiveEvent, resetLiveStats } = useLiveStats(activeTeamId, matchData?.id || null, ctxCurrentMinute || 0, 1);
+
+  const handleFinishMatch = useCallback(async () => {
+    if (!matchData.id) return;
+    if (isRunning) {
+      toggleTimer();
+    }
+    const updated = { ...matchData, status: 'Terminado' };
+    setMatchData(updated);
+    try {
+      await updateMatch(matchData.id, updated);
+    } catch (err) {
+      console.error("Error al finalizar partido:", err);
+    }
+  }, [matchData, isRunning, toggleTimer, updateMatch]);
 
   const handleAddLiveEvent = useCallback(async (type, explicitHalf) => {
     if (addLiveEvent) {
@@ -682,6 +696,15 @@ const Partidos = () => {
               </>
             ) : (
               <>
+                {matchData.id && matchData.status !== 'Terminado' && (
+                  <button 
+                    className="btn-success flex-1 md:flex-initial px-3 py-2 text-xs md:text-sm" 
+                    onClick={handleFinishMatch} 
+                    style={{ minHeight: '40px', background: '#10B981', color: '#FFFFFF', fontWeight: 'bold' }}
+                  >
+                    🏁 FINALIZAR PARTIDO
+                  </button>
+                )}
                 {matchData.id && (
                   <button className="btn-danger flex-1 md:flex-initial px-3 py-2 text-xs md:text-sm" onClick={handleDeleteMatch} disabled={isSaving} style={{ minHeight: '40px' }}>
                     <TrashIcon /> ELIMINAR
@@ -769,11 +792,13 @@ const Partidos = () => {
               )}
             </div>
           ) : (
-            <MultiMatchAnalysis
-              matches={matches}
-              teamId={activeTeamId}
-              language={settings?.language}
-            />
+            <div className="partidos-list-container" style={{ padding: 0 }}>
+              <MultiMatchAnalysis
+                matches={matches}
+                teamId={activeTeamId}
+                language={settings?.language}
+              />
+            </div>
           )}
         </>
       )}
@@ -1292,9 +1317,11 @@ const Partidos = () => {
                 matchData={matchData}
                 events={effectiveLiveEvents}
                 addLiveEvent={handleAddLiveEvent}
+                resetLiveStats={resetLiveStats}
                 language={settings?.language || 'Español (ES)'}
                 onAddGoalFor={() => addEvent('gol_local', 'Equipo', 'Gol Propio', currentMinute)}
                 onAddGoalAgainst={() => addEvent('gol_rival', 'Rival', 'Gol del Rival', currentMinute)}
+                onFinishMatch={handleFinishMatch}
               />
             </div>
 

@@ -44,16 +44,23 @@ export const MultiMatchAnalysis = ({ matches = [], teamId, language = 'Español 
         }
 
         try {
-          const colRef = collection(db, 'teams', teamId, 'matches', mId, 'liveEvents');
+          const colRef = collection(db, 'teams', teamId, 'matches', mId, 'liveStats');
           const snap = await getDocs(colRef);
           if (snap && snap.docs && snap.docs.length > 0) {
             newCache[mId] = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
           } else {
-            const matchObj = matches.find((m) => m.id === mId);
-            newCache[mId] = matchObj?.liveStatsEvents || matchObj?.events || [];
+            // Intentar con subcolección alternativa 'liveEvents'
+            const altColRef = collection(db, 'teams', teamId, 'matches', mId, 'liveEvents');
+            const altSnap = await getDocs(altColRef);
+            if (altSnap && altSnap.docs && altSnap.docs.length > 0) {
+              newCache[mId] = altSnap.docs.map((d) => ({ id: d.id, ...d.data() }));
+            } else {
+              const matchObj = matches.find((m) => m.id === mId);
+              newCache[mId] = matchObj?.liveStatsEvents || matchObj?.events || [];
+            }
           }
         } catch (err) {
-          console.error('[MultiMatchAnalysis] Error cargando liveEvents de', mId, err);
+          console.error('[MultiMatchAnalysis] Error cargando liveStats de', mId, err);
           const matchObj = matches.find((m) => m.id === mId);
           newCache[mId] = matchObj?.liveStatsEvents || matchObj?.events || [];
         }

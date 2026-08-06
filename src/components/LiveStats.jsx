@@ -141,6 +141,9 @@ const LiveStats = ({
   onAddGoalAgainst,
   events: parentEvents,
   addLiveEvent: parentAddLiveEvent,
+  resetLiveStats: parentResetLiveStats,
+  onResetEvents,
+  onFinishMatch,
 }) => {
   const isEn = language === 'English (EN)';
   const tx = useCallback(
@@ -161,10 +164,12 @@ const LiveStats = ({
   const containerRef = useRef(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [currentHalf, setCurrentHalf] = useState(1);
+  const [showResetModal, setShowResetModal] = useState(false);
 
   const liveStatsHook = useLiveStats(teamId, matchId, currentMinute, currentHalf);
   const events = parentEvents !== undefined ? parentEvents : liveStatsHook.events;
   const addLiveEvent = parentAddLiveEvent || liveStatsHook.addLiveEvent;
+  const resetLiveStats = parentResetLiveStats || liveStatsHook.resetLiveStats;
   const saving = liveStatsHook.saving;
 
   const countByType = useCallback(
@@ -339,6 +344,28 @@ const LiveStats = ({
           <span className="livestats-total-count">
             <strong>{events.length}</strong> {tx('live.totalEvents')}
           </span>
+
+          <button
+            type="button"
+            onClick={() => setShowResetModal(true)}
+            className="livestats-fullscreen-btn"
+            style={{ background: 'rgba(239, 68, 68, 0.15)', color: '#EF4444', border: '1px solid rgba(239, 68, 68, 0.3)', fontWeight: 800 }}
+            title="Reiniciar Captura / Eventos"
+          >
+            <span>🔄 REINICIAR</span>
+          </button>
+
+          {onFinishMatch && matchData?.status !== 'Terminado' && (
+            <button
+              type="button"
+              onClick={onFinishMatch}
+              className="livestats-fullscreen-btn"
+              style={{ background: '#10B981', color: '#FFFFFF', border: 'none', fontWeight: 800 }}
+              title="Finalizar Partido"
+            >
+              <span>🏁 FINALIZAR</span>
+            </button>
+          )}
 
           <button
             type="button"
@@ -541,6 +568,41 @@ const LiveStats = ({
             <HalfBreakdown events={events} darkMode={darkMode} />
           </div>
         </section>
+
+        {/* Modal de confirmación para reiniciar captura/eventos */}
+        {showResetModal && (
+          <div className="event-selector-overlay" onClick={() => setShowResetModal(false)} style={{ zIndex: 99999 }}>
+            <div className="event-selector-modal" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '420px', textAlign: 'center', padding: '24px', borderRadius: '16px' }}>
+              <div style={{ fontSize: '36px', marginBottom: '8px' }}>⚠️</div>
+              <h3 style={{ fontSize: '18px', fontWeight: 900, color: darkMode ? '#F8FAFC' : '#0F172A', marginBottom: '12px' }}>
+                ¿Reiniciar eventos de este partido?
+              </h3>
+              <p style={{ fontSize: '13px', color: darkMode ? '#94A3B8' : '#64748B', marginBottom: '20px', lineHeight: 1.5 }}>
+                Se eliminarán permanentemente todas las estadísticas grabadas en vivo para este partido y todos los contadores volverán a 0.
+              </p>
+              <div style={{ display: 'flex', gap: '12px', justifyContent: 'center' }}>
+                <button
+                  type="button"
+                  onClick={() => setShowResetModal(false)}
+                  style={{ minHeight: '44px', padding: '0 20px', borderRadius: '8px', border: '1px solid var(--partidos-border)', background: 'var(--partidos-input-bg)', color: 'var(--partidos-text-primary)', fontWeight: 700, cursor: 'pointer' }}
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="button"
+                  onClick={async () => {
+                    setShowResetModal(false);
+                    if (resetLiveStats) await resetLiveStats();
+                    if (onResetEvents) onResetEvents();
+                  }}
+                  style={{ minHeight: '44px', padding: '0 20px', borderRadius: '8px', border: 'none', background: '#EF4444', color: '#FFFFFF', fontWeight: 800, cursor: 'pointer' }}
+                >
+                  Sí, Reiniciar Conteo
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </main>
     </div>
   );

@@ -194,7 +194,7 @@ const Partidos = () => {
 
   const handleFinishMatch = useCallback(async () => {
     if (!matchData.id) return;
-    if (isRunning) {
+    if (isTimerRunning) {
       toggleTimer();
     }
     const updated = { ...matchData, status: 'Terminado' };
@@ -204,7 +204,7 @@ const Partidos = () => {
     } catch (err) {
       console.error("Error al finalizar partido:", err);
     }
-  }, [matchData, isRunning, toggleTimer, updateMatch]);
+  }, [matchData, isTimerRunning, toggleTimer, updateMatch]);
 
   const handleAddLiveEvent = useCallback(async (type, explicitHalf) => {
     if (addLiveEvent) {

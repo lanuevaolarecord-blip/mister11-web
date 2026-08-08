@@ -613,22 +613,23 @@ html.dark {
   display: flex;
   justify-content: center;
   align-items: center;
-  padding: 12px 6px;
+  padding: 8px 0;
   perspective: 1000px;
-  perspective-origin: 50% 50%;
+  perspective-origin: 50% 40%;
   overflow: hidden;
   box-sizing: border-box;
   position: relative;
+  margin: 0 auto;
 }
 
 .alin-pitch-container-3d {
   position: relative;
-  width: min(100%, calc(64vh * 68 / 105));
+  width: min(100%, calc(62vh * 68 / 105));
   aspect-ratio: 68 / 105;
   height: auto;
-  max-height: 64vh;
+  max-height: 62vh;
   transform-origin: center center;
-  transform: perspective(1000px) rotateX(16deg) scale(0.92);
+  transform: perspective(1000px) translateY(-32px) rotateX(12deg) scale(0.92);
   transform-style: preserve-3d;
   border-radius: 12px;
   border: 3px solid rgba(255, 255, 255, 0.55);
@@ -648,6 +649,7 @@ html.dark {
   user-select: none;
   touch-action: none;
   flex-shrink: 0;
+  margin: 0 auto;
 }
 
 /* Líneas de juego profesionales en vertical */
@@ -735,7 +737,7 @@ html.dark {
 /* Ficha de Jugador 3D FIFA/UEFA (-20% Tamaño) */
 .pitch-player-3d {
   position: absolute;
-  transform: translate(-50%, -50%) rotateX(-16deg);
+  transform: translate(-50%, -50%) rotateX(-12deg);
   transform-origin: bottom center;
   transition: transform 0.15s ease-out, filter 0.2s ease;
   cursor: grab;
@@ -746,7 +748,7 @@ html.dark {
 
 .pitch-player-3d:active {
   cursor: grabbing;
-  transform: translate(-50%, -60%) rotateX(-16deg) scale(1.1);
+  transform: translate(-50%, -60%) rotateX(-12deg) scale(1.1);
   filter: drop-shadow(0 14px 22px rgba(0, 0, 0, 0.85));
   z-index: 99 !important;
 }

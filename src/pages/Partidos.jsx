@@ -810,8 +810,8 @@ const Partidos = () => {
       )}
 
       {viewMode === 'EDIT' && (
-        <div className="partidos-editor-container px-4 sm:px-6 md:px-8 py-2">
-          <div className="editor-tabs mt-4 flex flex-row flex-nowrap overflow-x-auto whitespace-nowrap px-4 sm:px-6 md:px-8">
+        <div className="partidos-editor-container p-4 sm:p-6 lg:p-8">
+          <div className="editor-tabs mt-2 flex flex-row flex-nowrap overflow-x-auto whitespace-nowrap scrollbar-none px-4 sm:px-6 lg:px-8">
             {['PRE-PARTIDO', 'CONVOCATORIA', 'ALINEACIÓN', 'MATCH-DAY', 'LIVE-STATS', 'POST-PARTIDO'].map(tab => (
               <button 
                 key={tab} 
@@ -828,7 +828,7 @@ const Partidos = () => {
           <div className={`editor-content ${editTab === 'LIVE-STATS' ? 'livestats-active' : ''}`}>
             {/* PESTAÑA: PRE-PARTIDO */}
             {editTab === 'PRE-PARTIDO' && (
-              <div className="tab-pane pre-partido-container p-4 sm:p-6 md:p-8 space-y-6 max-w-7xl mx-auto">
+              <div className="tab-pane pre-partido-container p-4 sm:p-6 lg:p-8 space-y-6 max-w-7xl mx-auto pl-4 sm:pl-6 lg:pl-8">
                 <h3 className="section-title">Datos Generales del Encuentro</h3>
                 <div className="form-grid grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
                   <div className="form-group full">

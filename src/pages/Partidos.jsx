@@ -949,7 +949,7 @@ const Partidos = () => {
             {/* PESTAÑA: ALINEACIÓN */}
             {editTab === 'ALINEACIÓN' && (
               <div className="tab-pane alineacion-layout w-full flex flex-col md:flex-row gap-4 h-auto md:max-h-[85vh] overflow-hidden">
-                <div className="alin-sidebar w-full md:w-[320px] max-h-[70vh] overflow-y-auto pr-2 flex-shrink-0">
+                <div className="alin-sidebar w-full md:w-[260px] max-w-[270px] max-h-[75vh] overflow-y-auto pr-2 flex-shrink-0">
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                     <FormationSelector
                       activeFormation={matchData.lineup || '4-3-3'}
@@ -1064,7 +1064,7 @@ const Partidos = () => {
                   )}
                 </div>
 
-                <div className="alin-pitch-wrapper-3d w-full h-auto max-h-[75vh] flex-1 flex items-center justify-center px-4 sm:px-6 py-2">
+                <div className="alin-pitch-wrapper-3d w-full h-[75vh] flex-1 flex items-center justify-center p-2 relative overflow-hidden">
                   <div 
                     className="alin-pitch-container-3d" 
                     ref={pitchRef} 

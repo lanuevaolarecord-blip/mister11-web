@@ -96,10 +96,14 @@ const Partidos = () => {
   const [calledPlayers, setCalledPlayers] = useState([]);
   const [draggingIdx, setDraggingIdx] = useState(null);
   const pitchRef = useRef(null);
-  const [isDesktop, setIsDesktop] = useState(typeof window !== 'undefined' ? window.innerWidth >= 768 : true);
+  const [isDesktop, setIsDesktop] = useState(
+    typeof window !== 'undefined' ? (window.innerWidth >= 500 || window.innerWidth > window.innerHeight) : true
+  );
 
   useEffect(() => {
-    const handleResize = () => setIsDesktop(window.innerWidth >= 768);
+    const handleResize = () => {
+      setIsDesktop(window.innerWidth >= 500 || window.innerWidth > window.innerHeight);
+    };
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);

@@ -1117,9 +1117,9 @@ const Partidos = () => {
                       
                       let topPos, leftPos;
                       if (isDesktop) {
-                        // Mapeo HORIZONTAL NATIVO: Clampear top entre 18% y 78% para evitar desborde inferior
+                        // Mapeo HORIZONTAL NATIVO: Clampear top entre 16% y 74% para holgura de fichas
                         const rawTop = parseFloat(pos.top);
-                        const clampedTop = rawTop > 78 ? 78 : rawTop < 18 ? 18 : rawTop;
+                        const clampedTop = rawTop > 74 ? 74 : rawTop < 16 ? 16 : rawTop;
                         topPos = customPos ? customPos.top : `${clampedTop}%`;
                         leftPos = customPos ? customPos.left : pos.left;
                       } else {

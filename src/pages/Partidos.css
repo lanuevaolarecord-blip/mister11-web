@@ -758,8 +758,8 @@ html.dark {
    * El ancho se deriva del aspect-ratio 105:68.
    * Esto garantiza que el campo NUNCA sea más alto que el espacio.
    */
-  max-height: calc(100vh - 260px);
-  width: min(96%, calc((100vh - 260px) * 105 / 68));
+  max-height: calc((100vh - 260px) * 0.9);
+  width: min(96%, calc((100vh - 260px) * 0.9 * 105 / 68));
   aspect-ratio: 105 / 68;
   height: auto;
   max-width: 100%;

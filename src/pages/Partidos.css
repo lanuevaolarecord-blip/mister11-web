@@ -427,18 +427,18 @@ html.dark {
 
 .editor-content:has(.alineacion-layout) {
   overflow: visible;
-  padding: 16px 16px 24px 16px;
+  padding: 12px;
 }
 
 @media (min-width: 640px) {
   .editor-content:has(.alineacion-layout) {
-    padding: 20px 24px 30px 24px;
+    padding: 16px;
   }
 }
 
 @media (min-width: 1024px) {
   .editor-content:has(.alineacion-layout) {
-    padding: 20px 32px 36px 32px;
+    padding: 20px;
   }
 }
 .editor-content.livestats-active,
@@ -625,9 +625,10 @@ html.dark {
   display: flex;
   flex-direction: row;
   gap: 16px;
+  width: 100%;
   height: 100%;
-  max-height: 100%;
-  overflow: hidden;
+  min-height: 500px;
+  overflow: visible;
   align-items: stretch;
 }
 
@@ -698,23 +699,18 @@ html.dark {
 }
 
 /* =========================================================
-   3D PERSPECTIVE TERRENO DE JUEGO & FICHAS FIFA/UEFA 3D (OPTIMIZADO)
+   TERRENO DE JUEGO HORIZONTAL (centrado con flexbox puro)
 ========================================================= */
 .alin-pitch-wrapper-3d {
-  width: 100%;
-  max-width: 100%;
-  height: 100%;
   flex: 1;
+  width: 100%;
   display: flex;
   justify-content: center;
   align-items: center;
   padding: 16px;
-  perspective: 1000px;
-  perspective-origin: 50% 50%;
   overflow: visible;
   box-sizing: border-box;
   position: relative;
-  margin: 0;
 }
 
 .alin-pitch-container-3d {
@@ -724,8 +720,7 @@ html.dark {
   height: auto;
   max-height: 50vh;
   transform-origin: center center;
-  transform: perspective(1000px) translateY(0px) rotateX(0deg) scale(0.92);
-  transform-style: preserve-3d;
+  transform: none;
   border-radius: 12px;
   border: 3px solid rgba(255, 255, 255, 0.55);
   box-shadow: 
@@ -748,17 +743,17 @@ html.dark {
 }
 
 /* =========================================================
-   3D PERSPECTIVE TERRENO DE JUEGO HORIZONTAL NATIVO (DESKTOP)
+   TERRENO DE JUEGO HORIZONTAL NATIVO (DESKTOP / TABLET)
 ========================================================= */
 .alin-pitch-container-h3d {
   position: relative;
-  width: min(94%, calc(46vh * 105 / 68));
+  /* La anchura = max available, la altura queda definida por aspect-ratio */
+  width: min(100%, calc(65vh * 105 / 68));
   aspect-ratio: 105 / 68;
   height: auto;
-  max-height: 46vh;
+  max-width: 100%;
   transform-origin: center center;
-  transform: perspective(1000px) translateY(0px) rotateX(0deg) scale(0.95);
-  transform-style: preserve-3d;
+  transform: none;
   border-radius: 12px;
   border: 3.5px solid rgba(255, 255, 255, 0.75);
   box-shadow: 
@@ -949,19 +944,19 @@ html.dark {
 /* Ficha de Jugador 3D FIFA/UEFA (-20% Tamaño) */
 .pitch-player-3d {
   position: absolute;
-  transform: translate(-50%, -50%) rotateX(-12deg);
-  transform-origin: bottom center;
+  transform: translate(-50%, -50%);
+  transform-origin: center center;
   transition: transform 0.15s ease-out, filter 0.2s ease;
   cursor: grab;
   user-select: none;
   touch-action: none;
-  filter: drop-shadow(0 6px 12px rgba(0, 0, 0, 0.7));
+  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.6));
 }
 
 .pitch-player-3d:active {
   cursor: grabbing;
-  transform: translate(-50%, -60%) rotateX(-12deg) scale(1.1);
-  filter: drop-shadow(0 14px 22px rgba(0, 0, 0, 0.85));
+  transform: translate(-50%, -60%) scale(1.08);
+  filter: drop-shadow(0 10px 18px rgba(0, 0, 0, 0.85));
   z-index: 99 !important;
 }
 

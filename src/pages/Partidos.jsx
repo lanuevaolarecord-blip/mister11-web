@@ -96,13 +96,12 @@ const Partidos = () => {
   const [calledPlayers, setCalledPlayers] = useState([]);
   const [draggingIdx, setDraggingIdx] = useState(null);
   const pitchRef = useRef(null);
-  const [isDesktop, setIsDesktop] = useState(
-    typeof window !== 'undefined' ? (window.innerWidth >= 500 || window.innerWidth > window.innerHeight) : true
-  );
+  // En desktop y tablet landscape siempre horizontal
+  const [isDesktop, setIsDesktop] = useState(true);
 
   useEffect(() => {
     const handleResize = () => {
-      setIsDesktop(window.innerWidth >= 500 || window.innerWidth > window.innerHeight);
+      setIsDesktop(true); // Siempre horizontal en este layout
     };
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
@@ -959,8 +958,8 @@ const Partidos = () => {
 
             {/* PESTAÑA: ALINEACIÓN */}
             {editTab === 'ALINEACIÓN' && (
-              <div className="tab-pane alineacion-layout w-full flex flex-col md:flex-row gap-5 h-auto md:max-h-[85vh] overflow-hidden p-2 md:p-4">
-                <div className="alin-sidebar w-full md:w-[350px] max-w-[380px] max-h-[78vh] overflow-y-auto px-4 py-3 flex-shrink-0">
+              <div className="tab-pane alineacion-layout" style={{ display: 'flex', flexDirection: 'row', gap: '16px', width: '100%', height: '100%', minHeight: '500px', overflow: 'visible', padding: '8px' }}>
+                <div className="alin-sidebar" style={{ width: '300px', minWidth: '260px', maxWidth: '320px', overflowY: 'auto', flexShrink: 0, paddingRight: '4px', height: '100%' }}>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                     <FormationSelector
                       activeFormation={matchData.lineup || '4-3-3'}
@@ -1075,64 +1074,47 @@ const Partidos = () => {
                   )}
                 </div>
 
-                <div className="alin-pitch-wrapper-3d w-full flex-1 h-full flex items-center justify-center relative overflow-visible p-4 m-0">
+                <div
+                  style={{
+                    flex: 1,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    padding: '16px',
+                    overflow: 'visible',
+                    position: 'relative',
+                  }}
+                >
                   <div 
-                    className={isDesktop ? "alin-pitch-container-h3d" : "alin-pitch-container-3d"}
+                    className="alin-pitch-container-h3d"
                     ref={pitchRef} 
                     onPointerMove={handlePitchPointerMove} 
                     onTouchMove={handlePitchPointerMove} 
                     style={{ touchAction: 'none' }}
                   >
-                    {isDesktop ? (
-                      /* Terreno de juego HORIZONTAL NATIVO 3D (Desktop / Tablet Landscape) */
-                      <div className="pitch-h-outer">
-                        <div className="pitch-h-center-line"></div>
-                        <div className="pitch-h-center-circle"></div>
-                        <div className="pitch-h-spot-center"></div>
-                        
-                        {/* Portería e Inclinación Propia (Izquierda) */}
-                        <div className="pitch-h-penalty-left"></div>
-                        <div className="pitch-h-goal-left"></div>
-                        
-                        {/* Portería e Inclinación Rival (Derecha) */}
-                        <div className="pitch-h-penalty-right"></div>
-                        <div className="pitch-h-goal-right"></div>
-                      </div>
-                    ) : (
-                      /* Terreno de juego VERTICAL 3D (Móvil Portrait) */
-                      <div className="pitch-v-outer">
-                        <div className="pitch-v-center-line"></div>
-                        <div className="pitch-v-center-circle"></div>
-                        <div className="pitch-v-spot-center"></div>
-                        
-                        <div className="pitch-v-penalty-top"></div>
-                        <div className="pitch-v-goal-top"></div>
-                        
-                        <div className="pitch-v-penalty-bottom"></div>
-                        <div className="pitch-v-goal-bottom"></div>
-                      </div>
-                    )}
+                    {/* Terreno de juego HORIZONTAL NATIVO */}
+                    <div className="pitch-h-outer">
+                      <div className="pitch-h-center-line"></div>
+                      <div className="pitch-h-center-circle"></div>
+                      <div className="pitch-h-spot-center"></div>
+                      <div className="pitch-h-penalty-left"></div>
+                      <div className="pitch-h-goal-left"></div>
+                      <div className="pitch-h-penalty-right"></div>
+                      <div className="pitch-h-goal-right"></div>
+                    </div>
                     
-                    {/* Fichas de Jugadores 3D FIFA/Biwenger con Fotos Reales */}
+                    {/* Fichas de Jugadores — posiciones directas de formaciones.js (ya en horizontal) */}
                     {getFormationPositions(matchData.lineup || '4-3-3').map((pos, idx) => {
                       const pid = calledPlayers[idx];
                       const player = pid ? players.find(p => p.id === pid) : null;
                       const customPos = matchData.customPositions && matchData.customPositions[idx];
                       
-                      let topPos, leftPos;
-                      if (isDesktop) {
-                        // Mapeo HORIZONTAL NATIVO: Clampear top entre 16% y 70% para holgura simétrica de fichas
-                        const rawTop = parseFloat(pos.top);
-                        const clampedTop = rawTop > 70 ? 70 : rawTop < 16 ? 16 : rawTop;
-                        topPos = customPos ? customPos.top : `${clampedTop}%`;
-                        leftPos = customPos ? customPos.left : pos.left;
-                      } else {
-                        // Mapeo VERTICAL: POR Abajo (86%), DEL Arriba (14%)
-                        const rawTop = 100 - parseFloat(pos.left);
-                        const adjustedTop = rawTop > 88 ? 86 : rawTop < 12 ? 14 : rawTop;
-                        topPos = customPos ? customPos.top : `${adjustedTop}%`;
-                        leftPos = customPos ? customPos.left : pos.top;
-                      }
+                      // Las posiciones en formaciones.js ya son HORIZONTALES: left=X, top=Y
+                      // Solo clampear top para que las fichas no salgan del campo
+                      const rawTop = parseFloat(customPos ? customPos.top : pos.top);
+                      const clampedTop = Math.min(Math.max(rawTop, 12), 82);
+                      const topPos = `${clampedTop}%`;
+                      const leftPos = customPos ? customPos.left : pos.left;
 
                       const posLabel = getSlotPosition(idx);
                       const isSelected = selectedSlotIdx === idx;

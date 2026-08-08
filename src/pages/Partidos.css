@@ -703,34 +703,36 @@ html.dark {
 .alin-pitch-wrapper-3d {
   width: 100%;
   max-width: 100%;
-  height: 100%;
+  height: 65vh;
+  min-height: 450px;
+  max-height: 65vh;
   display: flex;
   justify-content: center;
   align-items: center;
-  padding: 0;
+  padding: 8px;
   perspective: 1000px;
   perspective-origin: 50% 50%;
-  overflow: visible;
+  overflow: hidden;
   box-sizing: border-box;
   position: relative;
-  margin: 0 auto;
+  margin: auto;
 }
 
 .alin-pitch-container-3d {
   position: relative;
-  width: min(100%, calc(58vh * 68 / 105));
+  width: min(100%, calc(54vh * 68 / 105));
   aspect-ratio: 68 / 105;
   height: auto;
-  max-height: 58vh;
+  max-height: 54vh;
   transform-origin: center center;
-  transform: perspective(1000px) translateY(-12px) rotateX(6deg) scale(0.92);
+  transform: perspective(1000px) translateY(0px) rotateX(0deg) scale(0.92);
   transform-style: preserve-3d;
   border-radius: 12px;
   border: 3px solid rgba(255, 255, 255, 0.55);
   box-shadow: 
-    0 20px 50px rgba(0, 0, 0, 0.75),
-    0 8px 20px rgba(0, 0, 0, 0.5),
-    inset 0 0 40px rgba(0, 0, 0, 0.35);
+    0 15px 40px rgba(0, 0, 0, 0.75),
+    0 6px 15px rgba(0, 0, 0, 0.5),
+    inset 0 0 35px rgba(0, 0, 0, 0.35);
   background-color: #1b4d24;
   background-image: repeating-linear-gradient(
     180deg,
@@ -743,7 +745,7 @@ html.dark {
   user-select: none;
   touch-action: none;
   flex-shrink: 0;
-  margin: 0 auto;
+  margin: auto;
 }
 
 /* =========================================================
@@ -751,17 +753,17 @@ html.dark {
 ========================================================= */
 .alin-pitch-container-h3d {
   position: relative;
-  width: min(98%, calc(52vh * 105 / 68));
+  width: min(94%, calc(48vh * 105 / 68));
   aspect-ratio: 105 / 68;
   height: auto;
-  max-height: 52vh;
+  max-height: 48vh;
   transform-origin: center center;
-  transform: perspective(1200px) translateY(-18px) rotateX(4deg) scale(0.96);
+  transform: perspective(1000px) translateY(0px) rotateX(0deg) scale(0.95);
   transform-style: preserve-3d;
   border-radius: 12px;
   border: 3.5px solid rgba(255, 255, 255, 0.75);
   box-shadow: 
-    0 18px 45px rgba(0, 0, 0, 0.75),
+    0 16px 40px rgba(0, 0, 0, 0.75),
     0 6px 15px rgba(0, 0, 0, 0.5),
     inset 0 0 35px rgba(0, 0, 0, 0.35);
   background-color: #1b4d24;
@@ -776,7 +778,7 @@ html.dark {
   user-select: none;
   touch-action: none;
   flex-shrink: 0;
-  margin: 0 auto;
+  margin: auto;
 }
 
 /* Líneas del campo horizontal */

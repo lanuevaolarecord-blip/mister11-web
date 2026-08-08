@@ -93,9 +93,15 @@ const Partidos = () => {
   // Edit State
   const [editTab, setEditTab] = useState('PRE-PARTIDO');
   const [matchData, setMatchData] = useState({});
-  const [calledPlayers, setCalledPlayers] = useState([]); // Array of IDs
   const [draggingIdx, setDraggingIdx] = useState(null);
   const pitchRef = useRef(null);
+  const [isDesktop, setIsDesktop] = useState(typeof window !== 'undefined' ? window.innerWidth >= 768 : true);
+
+  useEffect(() => {
+    const handleResize = () => setIsDesktop(window.innerWidth >= 768);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   const [selectedSlotIdx, setSelectedSlotIdx] = useState(null);
   const dragStartPosRef = useRef({ x: 0, y: 0 });
@@ -804,8 +810,8 @@ const Partidos = () => {
       )}
 
       {viewMode === 'EDIT' && (
-        <div className="partidos-editor-container">
-          <div className="editor-tabs mt-4 flex flex-row flex-nowrap overflow-x-auto whitespace-nowrap">
+        <div className="partidos-editor-container px-4 sm:px-6 md:px-8 py-2">
+          <div className="editor-tabs mt-4 flex flex-row flex-nowrap overflow-x-auto whitespace-nowrap px-4 sm:px-6 md:px-8">
             {['PRE-PARTIDO', 'CONVOCATORIA', 'ALINEACIÓN', 'MATCH-DAY', 'LIVE-STATS', 'POST-PARTIDO'].map(tab => (
               <button 
                 key={tab} 
@@ -1066,24 +1072,41 @@ const Partidos = () => {
 
                 <div className="alin-pitch-wrapper-3d w-full h-[75vh] flex-1 flex items-center justify-center p-2 relative overflow-hidden">
                   <div 
-                    className="alin-pitch-container-3d" 
+                    className={isDesktop ? "alin-pitch-container-h3d" : "alin-pitch-container-3d"}
                     ref={pitchRef} 
                     onPointerMove={handlePitchPointerMove} 
                     onTouchMove={handlePitchPointerMove} 
                     style={{ touchAction: 'none' }}
                   >
-                    {/* Terreno de juego vertical 3D */}
-                    <div className="pitch-v-outer">
-                      <div className="pitch-v-center-line"></div>
-                      <div className="pitch-v-center-circle"></div>
-                      <div className="pitch-v-spot-center"></div>
-                      
-                      <div className="pitch-v-penalty-top"></div>
-                      <div className="pitch-v-goal-top"></div>
-                      
-                      <div className="pitch-v-penalty-bottom"></div>
-                      <div className="pitch-v-goal-bottom"></div>
-                    </div>
+                    {isDesktop ? (
+                      /* Terreno de juego HORIZONTAL NATIVO 3D (Desktop / Tablet Landscape) */
+                      <div className="pitch-h-outer">
+                        <div className="pitch-h-center-line"></div>
+                        <div className="pitch-h-center-circle"></div>
+                        <div className="pitch-h-spot-center"></div>
+                        
+                        {/* Portería e Inclinación Propia (Izquierda) */}
+                        <div className="pitch-h-penalty-left"></div>
+                        <div className="pitch-h-goal-left"></div>
+                        
+                        {/* Portería e Inclinación Rival (Derecha) */}
+                        <div className="pitch-h-penalty-right"></div>
+                        <div className="pitch-h-goal-right"></div>
+                      </div>
+                    ) : (
+                      /* Terreno de juego VERTICAL 3D (Móvil Portrait) */
+                      <div className="pitch-v-outer">
+                        <div className="pitch-v-center-line"></div>
+                        <div className="pitch-v-center-circle"></div>
+                        <div className="pitch-v-spot-center"></div>
+                        
+                        <div className="pitch-v-penalty-top"></div>
+                        <div className="pitch-v-goal-top"></div>
+                        
+                        <div className="pitch-v-penalty-bottom"></div>
+                        <div className="pitch-v-goal-bottom"></div>
+                      </div>
+                    )}
                     
                     {/* Fichas de Jugadores 3D FIFA/Biwenger con Fotos Reales */}
                     {getFormationPositions(matchData.lineup || '4-3-3').map((pos, idx) => {
@@ -1091,10 +1114,19 @@ const Partidos = () => {
                       const player = pid ? players.find(p => p.id === pid) : null;
                       const customPos = matchData.customPositions && matchData.customPositions[idx];
                       
-                      const rawTop = 100 - parseFloat(pos.left);
-                      const adjustedTop = rawTop > 88 ? 86 : rawTop < 12 ? 14 : rawTop;
-                      const topPos = customPos ? customPos.top : `${adjustedTop}%`;
-                      const leftPos = customPos ? customPos.left : pos.top;
+                      let topPos, leftPos;
+                      if (isDesktop) {
+                        // Mapeo HORIZONTAL NATIVO: POR a la Izquierda (10%), DEL a la Derecha (90%)
+                        topPos = customPos ? customPos.top : pos.top;
+                        leftPos = customPos ? customPos.left : pos.left;
+                      } else {
+                        // Mapeo VERTICAL: POR Abajo (86%), DEL Arriba (14%)
+                        const rawTop = 100 - parseFloat(pos.left);
+                        const adjustedTop = rawTop > 88 ? 86 : rawTop < 12 ? 14 : rawTop;
+                        topPos = customPos ? customPos.top : `${adjustedTop}%`;
+                        leftPos = customPos ? customPos.left : pos.top;
+                      }
+
                       const posLabel = getSlotPosition(idx);
                       const isSelected = selectedSlotIdx === idx;
                       const photoUrl = player ? (player.avatarUrl || player.photoUrl || player.photo || player.photoPreview) : null;

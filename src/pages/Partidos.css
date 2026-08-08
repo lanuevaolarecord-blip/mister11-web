@@ -652,6 +652,123 @@ html.dark {
   margin: 0 auto;
 }
 
+/* =========================================================
+   3D PERSPECTIVE TERRENO DE JUEGO HORIZONTAL NATIVO (DESKTOP)
+========================================================= */
+.alin-pitch-container-h3d {
+  position: relative;
+  width: min(100%, calc(70vh * 105 / 68));
+  aspect-ratio: 105 / 68;
+  height: auto;
+  max-height: 70vh;
+  transform-origin: center center;
+  transform: perspective(1200px) rotateX(14deg) scale(0.96);
+  transform-style: preserve-3d;
+  border-radius: 12px;
+  border: 3.5px solid rgba(255, 255, 255, 0.65);
+  box-shadow: 
+    0 25px 60px rgba(0, 0, 0, 0.75),
+    0 10px 25px rgba(0, 0, 0, 0.5),
+    inset 0 0 45px rgba(0, 0, 0, 0.35);
+  background-color: #1b4d24;
+  background-image: repeating-linear-gradient(
+    90deg,
+    #1b4d24,
+    #1b4d24 8.33%,
+    #235f2d 8.33%,
+    #235f2d 16.66%
+  );
+  overflow: visible;
+  user-select: none;
+  touch-action: none;
+  flex-shrink: 0;
+  margin: 0 auto;
+}
+
+/* Líneas del campo horizontal */
+.pitch-h-outer {
+  position: absolute;
+  top: 12px;
+  bottom: 12px;
+  left: 12px;
+  right: 12px;
+  border: 1.5px solid rgba(255, 255, 255, 0.75);
+  pointer-events: none;
+}
+
+.pitch-h-center-line {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  width: 1.5px;
+  background: rgba(255, 255, 255, 0.75);
+}
+
+.pitch-h-center-circle {
+  position: absolute;
+  height: 32%;
+  aspect-ratio: 1;
+  border: 1.5px solid rgba(255, 255, 255, 0.75);
+  border-radius: 50%;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.pitch-h-spot-center {
+  position: absolute;
+  width: 6px;
+  height: 6px;
+  background-color: rgba(255, 255, 255, 0.95);
+  border-radius: 50%;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+}
+
+/* Portería Propia (Izquierda) */
+.pitch-h-penalty-left {
+  position: absolute;
+  left: 0;
+  top: 18%;
+  width: 16.5%;
+  height: 64%;
+  border: 1.5px solid rgba(255, 255, 255, 0.75);
+  border-left: none;
+}
+
+.pitch-h-goal-left {
+  position: absolute;
+  left: 0;
+  top: 35%;
+  width: 6.5%;
+  height: 30%;
+  border: 1.5px solid rgba(255, 255, 255, 0.75);
+  border-left: none;
+}
+
+/* Portería Rival (Derecha) */
+.pitch-h-penalty-right {
+  position: absolute;
+  right: 0;
+  top: 18%;
+  width: 16.5%;
+  height: 64%;
+  border: 1.5px solid rgba(255, 255, 255, 0.75);
+  border-right: none;
+}
+
+.pitch-h-goal-right {
+  position: absolute;
+  right: 0;
+  top: 35%;
+  width: 6.5%;
+  height: 30%;
+  border: 1.5px solid rgba(255, 255, 255, 0.75);
+  border-right: none;
+}
+
 /* Líneas de juego profesionales en vertical */
 .pitch-v-outer {
   position: absolute;

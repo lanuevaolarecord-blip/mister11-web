@@ -603,7 +603,7 @@ html.dark {
 }
 
 /* =========================================================
-   3D PERSPECTIVE TERRENO DE JUEGO & FICHAS FIFA/UEFA 3D (MAXIMIZADO)
+   3D PERSPECTIVE TERRENO DE JUEGO & FICHAS FIFA/UEFA 3D (OPTIMIZADO)
 ========================================================= */
 .alin-pitch-wrapper-3d {
   width: 100%;
@@ -613,8 +613,8 @@ html.dark {
   display: flex;
   justify-content: center;
   align-items: center;
-  padding: 8px;
-  perspective: 1200px;
+  padding: 12px 6px;
+  perspective: 1000px;
   perspective-origin: 50% 50%;
   overflow: hidden;
   box-sizing: border-box;
@@ -623,19 +623,19 @@ html.dark {
 
 .alin-pitch-container-3d {
   position: relative;
-  width: min(100%, calc(74vh * 68 / 105));
+  width: min(100%, calc(64vh * 68 / 105));
   aspect-ratio: 68 / 105;
   height: auto;
-  max-height: 74vh;
+  max-height: 64vh;
   transform-origin: center center;
-  transform: perspective(1200px) rotateX(15deg) scale(1.02);
+  transform: perspective(1000px) rotateX(16deg) scale(0.92);
   transform-style: preserve-3d;
   border-radius: 12px;
   border: 3px solid rgba(255, 255, 255, 0.55);
   box-shadow: 
-    0 25px 60px rgba(0, 0, 0, 0.75),
-    0 10px 25px rgba(0, 0, 0, 0.5),
-    inset 0 0 50px rgba(0, 0, 0, 0.35);
+    0 20px 50px rgba(0, 0, 0, 0.75),
+    0 8px 20px rgba(0, 0, 0, 0.5),
+    inset 0 0 40px rgba(0, 0, 0, 0.35);
   background-color: #1b4d24;
   background-image: repeating-linear-gradient(
     180deg,
@@ -683,8 +683,8 @@ html.dark {
 
 .pitch-v-spot-center {
   position: absolute;
-  width: 7px;
-  height: 7px;
+  width: 6px;
+  height: 6px;
   background-color: rgba(255, 255, 255, 0.95);
   border-radius: 50%;
   left: 50%;
@@ -732,64 +732,64 @@ html.dark {
   border-bottom: none;
 }
 
-/* Ficha de Jugador 3D FIFA/UEFA (+25% Escala) */
+/* Ficha de Jugador 3D FIFA/UEFA (-20% Tamaño) */
 .pitch-player-3d {
   position: absolute;
-  transform: translate(-50%, -50%) rotateX(-15deg);
+  transform: translate(-50%, -50%) rotateX(-16deg);
   transform-origin: bottom center;
   transition: transform 0.15s ease-out, filter 0.2s ease;
   cursor: grab;
   user-select: none;
   touch-action: none;
-  filter: drop-shadow(0 10px 16px rgba(0, 0, 0, 0.75));
+  filter: drop-shadow(0 6px 12px rgba(0, 0, 0, 0.7));
 }
 
 .pitch-player-3d:active {
   cursor: grabbing;
-  transform: translate(-50%, -60%) rotateX(-15deg) scale(1.12);
-  filter: drop-shadow(0 20px 28px rgba(0, 0, 0, 0.9));
+  transform: translate(-50%, -60%) rotateX(-16deg) scale(1.1);
+  filter: drop-shadow(0 14px 22px rgba(0, 0, 0, 0.85));
   z-index: 99 !important;
 }
 
 .pitch-player-3d.selected-swap .futu-card-frame {
   border-color: #22C55E !important;
-  box-shadow: 0 0 0 3.5px rgba(34, 197, 94, 0.8), 0 10px 25px rgba(0,0,0,0.6) !important;
+  box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.8), 0 8px 20px rgba(0,0,0,0.6) !important;
 }
 
-/* Estilo Cromo FIFA / UEFA Agrandado */
+/* Estilo Cromo FIFA / UEFA Reducido un 20% */
 .futu-card-badge {
   display: flex;
   flex-direction: column;
   align-items: center;
   position: relative;
-  width: 64px;
+  width: 48px;
 }
 
 @media (min-width: 640px) {
   .futu-card-badge {
-    width: 76px;
+    width: 58px;
   }
 }
 
 .futu-card-frame {
   width: 100%;
-  height: 72px;
+  height: 56px;
   background: linear-gradient(135deg, #FFF5D0 0%, #D4A843 50%, #8C6207 100%);
-  border: 2.5px solid #FFF8DC;
-  border-radius: 10px 10px 20px 20px;
-  box-shadow: 0 6px 14px rgba(0,0,0,0.6), inset 0 1.5px 3px rgba(255,255,255,0.9);
+  border: 2px solid #FFF8DC;
+  border-radius: 8px 8px 16px 16px;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.5), inset 0 1px 2px rgba(255,255,255,0.9);
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: flex-start;
-  padding: 3px;
+  padding: 2px;
   position: relative;
   overflow: hidden;
 }
 
 @media (min-width: 640px) {
   .futu-card-frame {
-    height: 84px;
+    height: 66px;
   }
 }
 
@@ -799,50 +799,50 @@ html.dark {
 }
 
 .futu-card-photo {
-  width: 48px;
-  height: 48px;
+  width: 36px;
+  height: 36px;
   border-radius: 50%;
   object-fit: cover;
-  border: 2px solid #FFFFFF;
-  box-shadow: 0 3px 8px rgba(0,0,0,0.5);
+  border: 1.5px solid #FFFFFF;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.5);
   background: #1B3A2D;
 }
 
 @media (min-width: 640px) {
   .futu-card-photo {
-    width: 58px;
-    height: 58px;
+    width: 44px;
+    height: 44px;
   }
 }
 
 .futu-card-initials {
-  width: 48px;
-  height: 48px;
+  width: 36px;
+  height: 36px;
   border-radius: 50%;
   background: #1B3A2D;
   color: #D4A843;
-  font-size: 18px;
+  font-size: 14px;
   font-weight: 900;
   display: flex;
   align-items: center;
   justify-content: center;
-  border: 2px solid #D4A843;
-  box-shadow: 0 3px 8px rgba(0,0,0,0.5);
+  border: 1.5px solid #D4A843;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.5);
 }
 
 @media (min-width: 640px) {
   .futu-card-initials {
-    width: 58px;
-    height: 58px;
-    font-size: 22px;
+    width: 44px;
+    height: 44px;
+    font-size: 16px;
   }
 }
 
 .futu-card-number {
   position: absolute;
   top: 2px;
-  left: 4px;
-  font-size: 12px;
+  left: 3px;
+  font-size: 10px;
   font-weight: 900;
   color: #1B3A2D;
   text-shadow: 0 1px 2px rgba(255,255,255,0.9);
@@ -850,47 +850,47 @@ html.dark {
 
 @media (min-width: 640px) {
   .futu-card-number {
-    font-size: 14px;
-    top: 3px;
-    left: 5px;
+    font-size: 11px;
+    top: 2px;
+    left: 4px;
   }
 }
 
 .futu-card-pos {
   position: absolute;
-  bottom: 3px;
-  right: 4px;
-  font-size: 9px;
+  bottom: 2px;
+  right: 3px;
+  font-size: 8px;
   font-weight: 900;
   background: #1B3A2D;
   color: #FFF5D0;
-  padding: 1px 4px;
-  border-radius: 4px;
+  padding: 1px 3px;
+  border-radius: 3px;
 }
 
 .futu-card-banner {
-  margin-top: -3px;
+  margin-top: -2px;
   background: rgba(11, 23, 18, 0.95);
   border: 1px solid rgba(212, 168, 67, 0.85);
-  border-radius: 6px;
-  padding: 3px 6px;
+  border-radius: 5px;
+  padding: 2px 4px;
   color: #FFFFFF;
-  font-size: 11px;
+  font-size: 9px;
   font-weight: 800;
   text-align: center;
   white-space: nowrap;
-  max-width: 105px;
+  max-width: 82px;
   overflow: hidden;
   text-overflow: ellipsis;
-  box-shadow: 0 4px 10px rgba(0,0,0,0.7);
+  box-shadow: 0 3px 8px rgba(0,0,0,0.7);
   backdrop-filter: blur(4px);
 }
 
 @media (min-width: 640px) {
   .futu-card-banner {
-    font-size: 13px;
-    max-width: 120px;
-    padding: 3px 8px;
+    font-size: 10px;
+    max-width: 95px;
+    padding: 2px 5px;
   }
 }
 

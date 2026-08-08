@@ -1091,7 +1091,9 @@ const Partidos = () => {
                       const player = pid ? players.find(p => p.id === pid) : null;
                       const customPos = matchData.customPositions && matchData.customPositions[idx];
                       
-                      const topPos = customPos ? customPos.top : `${100 - parseFloat(pos.left)}%`;
+                      const rawTop = 100 - parseFloat(pos.left);
+                      const adjustedTop = rawTop > 88 ? 86 : rawTop < 12 ? 14 : rawTop;
+                      const topPos = customPos ? customPos.top : `${adjustedTop}%`;
                       const leftPos = customPos ? customPos.left : pos.top;
                       const posLabel = getSlotPosition(idx);
                       const isSelected = selectedSlotIdx === idx;

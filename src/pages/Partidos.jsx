@@ -93,6 +93,7 @@ const Partidos = () => {
   // Edit State
   const [editTab, setEditTab] = useState('PRE-PARTIDO');
   const [matchData, setMatchData] = useState({});
+  const [calledPlayers, setCalledPlayers] = useState([]);
   const [draggingIdx, setDraggingIdx] = useState(null);
   const pitchRef = useRef(null);
   const [isDesktop, setIsDesktop] = useState(typeof window !== 'undefined' ? window.innerWidth >= 768 : true);

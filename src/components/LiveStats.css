@@ -56,7 +56,10 @@
   z-index: 20;
   background: #172D21; /* Mantiene verde institucional elegante en ambos temas */
   border-bottom: 1px solid rgba(212, 168, 67, 0.35);
-  padding: 10px 16px;
+  padding-top: max(12px, env(safe-area-inset-top));
+  padding-bottom: 10px;
+  padding-left: max(16px, env(safe-area-inset-left));
+  padding-right: max(16px, env(safe-area-inset-right));
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -312,7 +315,15 @@
 }
 
 /* Grid principal de categorías */
-.livestats-categories-grid,
+.livestats-categories-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 16px;
+  max-width: 1400px;
+  margin: 0 auto;
+  width: 100%;
+}
+
 .livestats-summary-grid {
   display: grid;
   grid-template-columns: 1fr;
@@ -322,7 +333,6 @@
 }
 
 @media (min-width: 900px) {
-  .livestats-categories-grid,
   .livestats-summary-grid {
     grid-template-columns: repeat(2, 1fr);
     gap: 20px;

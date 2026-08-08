@@ -1853,7 +1853,7 @@ html.dark .alin-player-item span.slot-role {
   background: var(--partidos-danger-bg);
 }
 
-/* Ajustes Responsive para móvil en vertical */
+/* Ajustes Responsive para móvil en vertical y landscape */
 @media (max-width: 767px) {
   .alineacion-layout {
     flex-direction: column !important;
@@ -1861,58 +1861,74 @@ html.dark .alin-player-item span.slot-role {
     align-items: center !important;
     height: auto !important;
     max-height: none !important;
-    gap: 24px !important;
+    gap: 16px !important;
   }
   .alin-sidebar {
     width: 100% !important;
     min-width: 100% !important;
     height: auto !important;
-    max-height: none !important;
-    overflow-y: visible !important;
+    max-height: 60vh !important;
+    overflow-y: auto !important;
+    padding-right: 4px !important;
   }
   .alin-pitch-wrapper {
     width: 100% !important;
-    max-width: 400px !important;
+    max-width: 100% !important;
     margin: 0 auto !important;
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;
-    padding: 16px !important;
-    aspect-ratio: 4 / 3 !important;
+    padding: 0 16px !important;
+    max-height: 65vh !important;
     height: auto !important;
   }
   .alin-pitch-container {
-    width: 100% !important;
+    width: min(100%, calc(65vh * 105 / 68)) !important;
     height: auto !important;
     aspect-ratio: 105 / 68 !important;
-    max-height: 100% !important;
+    max-height: 65vh !important;
     max-width: 100% !important;
   }
 }
 
-/* Ajustes Responsive y Tablet Horizontal (>= 70% Ancho Campo) */
-@media (min-width: 768px) {
+/* Ajustes Responsive y Tablet / Móvil Landscape (>= 768px o landscape) */
+@media (min-width: 768px), (max-height: 550px) and (orientation: landscape) {
   .alineacion-layout {
-    display: flex;
-    flex-direction: row;
-    align-items: stretch;
-    height: calc(100vh - 220px);
-    max-height: calc(100vh - 220px);
-    overflow: hidden;
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: flex-start !important;
+    height: auto !important;
+    max-height: 85vh !important;
+    overflow: hidden !important;
+    gap: 16px !important;
   }
   .alin-sidebar {
-    width: 28%;
-    min-width: 250px;
-    max-width: 320px;
+    width: 30% !important;
+    min-width: 260px !important;
+    max-width: 320px !important;
+    max-height: 70vh !important;
+    overflow-y: auto !important;
+    padding-right: 8px !important;
+    flex-shrink: 0 !important;
   }
   .alin-pitch-wrapper {
-    flex: 1;
-    width: 72%;
-    height: 100%;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    overflow: hidden;
+    flex: 1 !important;
+    width: 70% !important;
+    height: auto !important;
+    max-height: 75vh !important;
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+    padding: 0 24px !important;
+    overflow: hidden !important;
+    box-sizing: border-box !important;
+  }
+  .alin-pitch-container {
+    max-height: 75vh !important;
+    width: min(100%, calc(75vh * 105 / 68)) !important;
+    height: auto !important;
+    aspect-ratio: 105 / 68 !important;
+    object-fit: contain !important;
   }
 }
 

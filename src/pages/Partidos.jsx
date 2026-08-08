@@ -822,9 +822,9 @@ const Partidos = () => {
           <div className={`editor-content ${editTab === 'LIVE-STATS' ? 'livestats-active' : ''}`}>
             {/* PESTAÑA: PRE-PARTIDO */}
             {editTab === 'PRE-PARTIDO' && (
-              <div className="tab-pane pre-partido-container">
+              <div className="tab-pane pre-partido-container p-4 sm:p-6 md:p-8 space-y-6 max-w-7xl mx-auto">
                 <h3 className="section-title">Datos Generales del Encuentro</h3>
-                <div className="form-grid">
+                <div className="form-grid grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
                   <div className="form-group full">
                     <label>Equipo Rival</label>
                     <input type="text" className="partidos-input" value={matchData.rival} onChange={e => setMatchData({...matchData, rival: e.target.value})} onBlur={e => setMatchData(prev => ({...prev, rival: normalizeText(e.target.value)}))} placeholder="Ej. fomento castellon" />
@@ -948,8 +948,8 @@ const Partidos = () => {
 
             {/* PESTAÑA: ALINEACIÓN */}
             {editTab === 'ALINEACIÓN' && (
-              <div className="tab-pane alineacion-layout">
-                <div className="alin-sidebar">
+              <div className="tab-pane alineacion-layout w-full flex flex-col md:flex-row gap-4 h-auto md:max-h-[85vh] overflow-hidden">
+                <div className="alin-sidebar w-full md:w-[320px] max-h-[70vh] overflow-y-auto pr-2 flex-shrink-0">
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                     <FormationSelector
                       activeFormation={matchData.lineup || '4-3-3'}
@@ -1064,7 +1064,7 @@ const Partidos = () => {
                   )}
                 </div>
 
-                <div className="alin-pitch-wrapper w-full max-w-[400px] mx-auto flex items-center justify-center p-4 aspect-[4/3]">
+                <div className="alin-pitch-wrapper w-full h-auto max-h-[75vh] flex-1 flex items-center justify-center px-4 sm:px-6 py-2">
                   <div className="alin-pitch-container" ref={pitchRef} onPointerMove={handlePitchPointerMove} onTouchMove={handlePitchPointerMove} style={{touchAction: 'none'}}>
                     <div className="pitch-outer-line">
                       <div className="pitch-line pitch-center-line"></div>

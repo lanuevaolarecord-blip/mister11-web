@@ -78,17 +78,16 @@
   scroll-behavior: smooth;
 }
 
-html, body {
-  overflow-x: hidden;
+html, body, #root, .app-container, .app-layout {
+  overflow-x: hidden !important;
   width: 100%;
+  max-width: 100vw;
+  box-sizing: border-box;
   margin: 0;
   padding: 0;
 }
 
 html, body, #root {
-  margin: 0;
-  padding: 0;
-  width: 100%;
   height: 100%;
   background-color: var(--bg-primary);
 }
@@ -98,7 +97,8 @@ html, body, #root {
   height: 100dvh;
   display: flex;
   flex-direction: column;
-  overflow: hidden;
+  overflow-x: hidden !important;
+  overflow-y: hidden;
 }
 
 /* En móvil, eliminar scroll fijado y asegurar ancho correcto */

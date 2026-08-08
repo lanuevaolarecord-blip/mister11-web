@@ -1117,8 +1117,10 @@ const Partidos = () => {
                       
                       let topPos, leftPos;
                       if (isDesktop) {
-                        // Mapeo HORIZONTAL NATIVO: POR a la Izquierda (10%), DEL a la Derecha (90%)
-                        topPos = customPos ? customPos.top : pos.top;
+                        // Mapeo HORIZONTAL NATIVO: Clampear top entre 18% y 78% para evitar desborde inferior
+                        const rawTop = parseFloat(pos.top);
+                        const clampedTop = rawTop > 78 ? 78 : rawTop < 18 ? 18 : rawTop;
+                        topPos = customPos ? customPos.top : `${clampedTop}%`;
                         leftPos = customPos ? customPos.left : pos.left;
                       } else {
                         // Mapeo VERTICAL: POR Abajo (86%), DEL Arriba (14%)

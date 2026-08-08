@@ -714,18 +714,18 @@ html.dark {
   justify-content: center;
   align-items: center;
   padding: 12px;
-  overflow: hidden;
+  overflow: visible;
   box-sizing: border-box;
   position: relative;
 }
 
 .alin-pitch-container-3d {
   position: relative;
-  width: min(100%, calc(100% * 68 / 105));
+  /* Vertical: usa ancho derivado de 54vh para llenar sin scroll */
+  max-height: 54vh;
+  width: min(96%, calc(54vh * 68 / 105));
   aspect-ratio: 68 / 105;
   height: auto;
-  max-height: 100%;
-  transform-origin: center center;
   transform: none;
   border-radius: 12px;
   border: 3px solid rgba(255, 255, 255, 0.55);
@@ -754,14 +754,14 @@ html.dark {
 .alin-pitch-container-h3d {
   position: relative;
   /*
-   * max-height: 100% hace que el campo llene el alto disponible.
-   * width usa aspect-ratio 105/68 para mantener proporciones.
-   * min() garantiza que nunca se desborde horizontalmente.
+   * Estrategia: fijar max-height al espacio disponible del viewport.
+   * El ancho se deriva del aspect-ratio 105:68.
+   * Esto garantiza que el campo NUNCA sea más alto que el espacio.
    */
-  height: 100%;
-  max-height: 100%;
-  width: auto;
+  max-height: calc(100vh - 260px);
+  width: min(96%, calc((100vh - 260px) * 105 / 68));
   aspect-ratio: 105 / 68;
+  height: auto;
   max-width: 100%;
   transform: none;
   border-radius: 12px;
@@ -781,7 +781,7 @@ html.dark {
   overflow: visible;
   user-select: none;
   touch-action: none;
-  flex-shrink: 1;
+  flex-shrink: 0;
   margin: 0 auto;
 }
 

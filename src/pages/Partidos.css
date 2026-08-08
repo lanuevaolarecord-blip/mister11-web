@@ -426,19 +426,19 @@ html.dark {
 }
 
 .editor-content:has(.alineacion-layout) {
-  overflow: hidden;
-  padding: 16px 16px 8px 16px;
+  overflow: visible;
+  padding: 16px 16px 24px 16px;
 }
 
 @media (min-width: 640px) {
   .editor-content:has(.alineacion-layout) {
-    padding: 20px 24px 10px 24px;
+    padding: 20px 24px 30px 24px;
   }
 }
 
 @media (min-width: 1024px) {
   .editor-content:has(.alineacion-layout) {
-    padding: 20px 32px 10px 32px;
+    padding: 20px 32px 36px 32px;
   }
 }
 .editor-content.livestats-active,
@@ -704,15 +704,15 @@ html.dark {
   width: 100%;
   max-width: 100%;
   height: 65vh;
-  min-height: 450px;
+  min-height: 420px;
   max-height: 65vh;
   display: flex;
   justify-content: center;
   align-items: center;
-  padding: 8px;
+  padding: 8px 16px 40px 16px;
   perspective: 1000px;
   perspective-origin: 50% 50%;
-  overflow: hidden;
+  overflow: visible;
   box-sizing: border-box;
   position: relative;
   margin: auto;
@@ -720,10 +720,10 @@ html.dark {
 
 .alin-pitch-container-3d {
   position: relative;
-  width: min(100%, calc(54vh * 68 / 105));
+  width: min(100%, calc(50vh * 68 / 105));
   aspect-ratio: 68 / 105;
   height: auto;
-  max-height: 54vh;
+  max-height: 50vh;
   transform-origin: center center;
   transform: perspective(1000px) translateY(0px) rotateX(0deg) scale(0.92);
   transform-style: preserve-3d;
@@ -753,10 +753,10 @@ html.dark {
 ========================================================= */
 .alin-pitch-container-h3d {
   position: relative;
-  width: min(94%, calc(48vh * 105 / 68));
+  width: min(92%, calc(42vh * 105 / 68));
   aspect-ratio: 105 / 68;
   height: auto;
-  max-height: 48vh;
+  max-height: 42vh;
   transform-origin: center center;
   transform: perspective(1000px) translateY(0px) rotateX(0deg) scale(0.95);
   transform-style: preserve-3d;

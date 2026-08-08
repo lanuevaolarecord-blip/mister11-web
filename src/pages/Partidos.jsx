@@ -1071,7 +1071,7 @@ const Partidos = () => {
                   )}
                 </div>
 
-                <div className="alin-pitch-wrapper-3d w-full flex-1 h-[65vh] min-h-[450px] flex items-center justify-center relative overflow-hidden p-2 my-auto mx-auto">
+                <div className="alin-pitch-wrapper-3d w-full flex-1 h-[60vh] min-h-[400px] flex items-center justify-center relative overflow-visible p-2 pb-10 my-auto mx-auto">
                   <div 
                     className={isDesktop ? "alin-pitch-container-h3d" : "alin-pitch-container-3d"}
                     ref={pitchRef} 
@@ -1117,9 +1117,9 @@ const Partidos = () => {
                       
                       let topPos, leftPos;
                       if (isDesktop) {
-                        // Mapeo HORIZONTAL NATIVO: Clampear top entre 16% y 72% para holgura de fichas
+                        // Mapeo HORIZONTAL NATIVO: Clampear top entre 16% y 66% para que las fichas e insignias no cuelguen abajo
                         const rawTop = parseFloat(pos.top);
-                        const clampedTop = rawTop > 72 ? 72 : rawTop < 16 ? 16 : rawTop;
+                        const clampedTop = rawTop > 66 ? 66 : rawTop < 16 ? 16 : rawTop;
                         topPos = customPos ? customPos.top : `${clampedTop}%`;
                         leftPos = customPos ? customPos.left : pos.left;
                       } else {

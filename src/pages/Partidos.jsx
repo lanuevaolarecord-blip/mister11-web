@@ -1064,56 +1064,73 @@ const Partidos = () => {
                   )}
                 </div>
 
-                <div className="alin-pitch-wrapper w-full h-auto max-h-[75vh] flex-1 flex items-center justify-center px-4 sm:px-6 py-2">
-                  <div className="alin-pitch-container" ref={pitchRef} onPointerMove={handlePitchPointerMove} onTouchMove={handlePitchPointerMove} style={{touchAction: 'none'}}>
-                    <div className="pitch-outer-line">
-                      <div className="pitch-line pitch-center-line"></div>
-                      <div className="pitch-circle pitch-center-circle"></div>
-                      <div className="pitch-spot-center"></div>
+                <div className="alin-pitch-wrapper-3d w-full h-auto max-h-[75vh] flex-1 flex items-center justify-center px-4 sm:px-6 py-2">
+                  <div 
+                    className="alin-pitch-container-3d" 
+                    ref={pitchRef} 
+                    onPointerMove={handlePitchPointerMove} 
+                    onTouchMove={handlePitchPointerMove} 
+                    style={{ touchAction: 'none' }}
+                  >
+                    {/* Terreno de juego vertical 3D */}
+                    <div className="pitch-v-outer">
+                      <div className="pitch-v-center-line"></div>
+                      <div className="pitch-v-center-circle"></div>
+                      <div className="pitch-v-spot-center"></div>
                       
-                      <div className="pitch-penalty-left"></div>
-                      <div className="pitch-penalty-right"></div>
+                      <div className="pitch-v-penalty-top"></div>
+                      <div className="pitch-v-goal-top"></div>
                       
-                      <div className="pitch-goal-left"></div>
-                      <div className="pitch-goal-right"></div>
-                      
-                      <div className="pitch-spot-left"></div>
-                      <div className="pitch-spot-right"></div>
-                      
-                      <div className="pitch-arc-left"></div>
-                      <div className="pitch-arc-right"></div>
-                      
-                      <div className="pitch-corner top-left"></div>
-                      <div className="pitch-corner top-right"></div>
-                      <div className="pitch-corner bottom-left"></div>
-                      <div className="pitch-corner bottom-right"></div>
+                      <div className="pitch-v-penalty-bottom"></div>
+                      <div className="pitch-v-goal-bottom"></div>
                     </div>
                     
+                    {/* Fichas de Jugadores 3D FIFA/Biwenger con Fotos Reales */}
                     {getFormationPositions(matchData.lineup || '4-3-3').map((pos, idx) => {
                       const pid = calledPlayers[idx];
                       const player = pid ? players.find(p => p.id === pid) : null;
                       const customPos = matchData.customPositions && matchData.customPositions[idx];
-                      const topPos = customPos ? customPos.top : pos.top;
-                      const leftPos = customPos ? customPos.left : pos.left;
+                      
+                      const topPos = customPos ? customPos.top : `${100 - parseFloat(pos.left)}%`;
+                      const leftPos = customPos ? customPos.left : pos.top;
                       const posLabel = getSlotPosition(idx);
                       const isSelected = selectedSlotIdx === idx;
+                      const photoUrl = player ? (player.avatarUrl || player.photoUrl || player.photo || player.photoPreview) : null;
                       
                       return (
                         <div 
                           key={idx} 
-                          className={`pitch-player ${player ? '' : 'empty-slot'} ${isSelected ? 'selected-swap' : ''}`}
-                          style={{ top: topPos, left: leftPos, transform: 'translate(-50%, -50%)', zIndex: draggingIdx === idx ? 20 : isSelected ? 15 : 10 }}
-                          title={player ? `Jugador: ${player.name}\nDorsal: ${player.number}\nPosición: ${player.position}` : 'Slot Vacío'}
+                          className={`pitch-player-3d ${player ? '' : 'empty-slot'} ${isSelected ? 'selected-swap' : ''}`}
+                          style={{ 
+                            top: topPos, 
+                            left: leftPos, 
+                            zIndex: draggingIdx === idx ? 99 : isSelected ? 30 : 10 
+                          }}
+                          title={player ? `Jugador: ${player.name}\nDorsal: ${player.number || '-'}\nPosición: ${player.position || posLabel}` : 'Slot Vacío'}
+                          onPointerDown={(e) => handleDragStart(e, idx)}
+                          onTouchStart={(e) => handleDragStart(e, idx)}
                         >
-                          <div 
-                            className="pp-circle-wrapper"
-                            onPointerDown={(e) => handleDragStart(e, idx)}
-                            onTouchStart={(e) => handleDragStart(e, idx)}
-                          >
-                            <div className="pp-circle">
-                              {player ? player.number : idx + 1}
+                          <div className="futu-card-badge">
+                            <div className={`futu-card-frame ${player ? '' : 'empty-slot'}`}>
+                              {player ? (
+                                photoUrl ? (
+                                  <img src={photoUrl} alt={player.name} className="futu-card-photo" />
+                                ) : (
+                                  <div className="futu-card-initials">
+                                    {player.number || (player.name ? player.name.charAt(0).toUpperCase() : idx + 1)}
+                                  </div>
+                                )
+                              ) : (
+                                <div className="futu-card-initials empty">
+                                  {idx + 1}
+                                </div>
+                              )}
+                              <span className="futu-card-number">{player?.number || idx + 1}</span>
+                              <span className="futu-card-pos">{posLabel}</span>
                             </div>
-                            <span className="pp-badge">{posLabel}</span>
+                            <div className="futu-card-banner">
+                              {player ? `${player.number ? player.number + ' - ' : ''}${player.name}` : `Slot ${idx + 1}`}
+                            </div>
                           </div>
                         </div>
                       );

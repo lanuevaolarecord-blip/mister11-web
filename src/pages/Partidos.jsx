@@ -421,6 +421,7 @@ const Partidos = () => {
         events: effectiveLiveEvents || [],
         players: players || [],
         lineupImage: lineupImageBase64,
+        language: getEffectiveLanguage(settings?.language),
       });
     } catch (err) {
       console.error("Error al generar el informe PDF de partido:", err);
@@ -2086,9 +2087,9 @@ const Partidos = () => {
                   <div className={`futu-card-frame ${player ? '' : 'empty-slot'}`}>
                     {player ? (
                       photoUrl ? (
-                        <img src={photoUrl} alt={player.name} className="futu-card-photo" />
+                        <img src={photoUrl} alt={player.name} className="futu-card-photo" crossOrigin="anonymous" />
                       ) : (
-                        <div className="futu-card-initials">
+                        <div className="futu-card-initials" style={{ background: '#1B3A2D', color: '#D4A843', display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%', height: '100%', borderRadius: '50%', fontWeight: 'bold', fontSize: '15px' }}>
                           {player.number || (player.name ? player.name.charAt(0).toUpperCase() : idx + 1)}
                         </div>
                       )

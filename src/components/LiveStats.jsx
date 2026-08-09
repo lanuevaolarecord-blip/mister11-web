@@ -17,6 +17,7 @@ import { useLiveStats } from '../hooks/useLiveStats';
 import { useTheme } from '../context/ThemeContext';
 import { useMatch } from '../context/MatchContext';
 import { SvgDonut, SvgComparisonBars, HalfBreakdown } from './LiveStatsCharts';
+import { getEffectiveLanguage } from '../i18n/translations';
 import './LiveStats.css';
 
 // ── Paleta de acentos por categoría ──────────────────────────────────────────
@@ -217,6 +218,7 @@ const LiveStats = ({
         teamName: 'Mi Equipo',
         matchData,
         events,
+        language: getEffectiveLanguage(),
       });
     } catch (err) {
       console.error("Error al exportar informe PDF de Live Stats:", err);

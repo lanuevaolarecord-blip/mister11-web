@@ -1,17 +1,5 @@
-/**
- * matchPdfReport.js
- * ─────────────────────────────────────────────────────────────────────────────
- * Generador de Informes PDF de Partido (Post-Partido Total & Live Stats).
- *
- * MEJORAS DE CALIDAD Y LIMPIEZA PROFESIONAL:
- *  • Eliminación total de emoticonos/emojis Unicode no soportados por fuentes de jsPDF
- *    (evita caracteres corruptos como Ø=ÜÊ, Ø<ß¯, Ø=ßâ, etc.).
- *  • Captura impecable de html2canvas con clonado en modo claro (fondo blanco #FFFFFF y
- *    texto oscuro #0F172A) para visualización nítida y profesional en el PDF.
- * ─────────────────────────────────────────────────────────────────────────────
- */
-
 import { savePdfUniversal } from './pdfGenerator';
+import { getEffectiveLanguage } from '../i18n/translations';
 
 const getPdfLibs = async () => {
   const { jsPDF } = await import('jspdf');
@@ -23,7 +11,7 @@ const getPdfLibs = async () => {
 };
 
 // Nombres legibles en texto plano (sin caracteres emojis para evitar corrupción en PDF)
-const EVENT_NAMES = {
+const EVENT_NAMES_ES = {
   shot_on_target_own:   'Tiro a puerta (Propio)',
   shot_on_target_rival: 'Tiro a puerta (Rival)',
   shot_off_target_own:  'Tiro fuera (Propio)',
@@ -46,6 +34,29 @@ const EVENT_NAMES = {
   gol_rival:            'GOL RIVAL',
 };
 
+const EVENT_NAMES_EN = {
+  shot_on_target_own:   'Shot on target (Own)',
+  shot_on_target_rival: 'Shot on target (Opponent)',
+  shot_off_target_own:  'Shot off target (Own)',
+  shot_off_target_rival: 'Shot off target (Opponent)',
+  recovery:             'Ball Recovery',
+  loss:                 'Ball Loss',
+  duel_won:             'Duel Won',
+  duel_lost:            'Duel Lost',
+  foul_favor:           'Foul in Favor',
+  foul_against:         'Foul Against',
+  counter_not_cut:      'Counter-attack not cut',
+  player_no_finish:     'Player did not finish',
+  card_own:             'Card received (Own)',
+  card_rival:           'Card forced (Opponent)',
+  corner_favor:         'Corner in Favor',
+  corner_against:       'Corner Against',
+  offside_own:          'Offside (Own)',
+  offside_rival:        'Offside (Opponent)',
+  gol_local:            'OWN GOAL',
+  gol_rival:            'OPPONENT GOAL',
+};
+
 export const generateMatchPdfReport = async ({
   mode = 'POST-MATCH', // 'POST-MATCH' or 'LIVE-STATS'
   teamName = 'Mi Equipo',
@@ -53,8 +64,14 @@ export const generateMatchPdfReport = async ({
   events = [],
   players = [],
   lineupImage = null,
+  language = null,
 }) => {
-  window.dispatchEvent(new CustomEvent('m11-loading', { detail: { show: true, message: 'Generando Informe PDF...' } }));
+  const effLang = getEffectiveLanguage(language || matchData?.language);
+  const isEn = effLang === 'English (EN)';
+
+  window.dispatchEvent(new CustomEvent('m11-loading', { 
+    detail: { show: true, message: isEn ? 'Generating PDF Report...' : 'Generando Informe PDF...' } 
+  }));
   await new Promise((r) => setTimeout(r, 100));
 
   try {
@@ -67,8 +84,8 @@ export const generateMatchPdfReport = async ({
     const colorAccent  = [212, 168, 67];  // #D4A843 (Dorado)
 
     const titleText = mode === 'POST-MATCH' 
-      ? 'INFORME TOTAL POST-PARTIDO' 
-      : 'INFORME DE ESTADÍSTICAS EN VIVO';
+      ? (isEn ? 'FULL POST-MATCH REPORT' : 'INFORME TOTAL POST-PARTIDO')
+      : (isEn ? 'LIVE STATS REPORT' : 'INFORME DE ESTADÍSTICAS EN VIVO');
 
     // ── 1. ENCABEZADO DE MARCA ─────────────────────────────────────────────
     doc.setFillColor(...colorPrimary);
@@ -84,8 +101,9 @@ export const generateMatchPdfReport = async ({
     doc.setFontSize(9.5);
     doc.setFont('helvetica', 'normal');
     doc.setTextColor(226, 232, 240);
-    const fechaStr = matchData?.date ? new Date(matchData.date).toLocaleDateString('es-ES') : new Date().toLocaleDateString('es-ES');
-    doc.text(`Fecha: ${fechaStr} | ${teamName} vs ${matchData?.rival || 'Rival'}`, 14, 26);
+    const dateLoc = isEn ? 'en-US' : 'es-ES';
+    const fechaStr = matchData?.date ? new Date(matchData.date).toLocaleDateString(dateLoc) : new Date().toLocaleDateString(dateLoc);
+    doc.text(`${isEn ? 'Date' : 'Fecha'}: ${fechaStr} | ${teamName} vs ${matchData?.rival || (isEn ? 'Opponent' : 'Rival')}`, 14, 26);
 
     let y = 46;
 
@@ -95,7 +113,7 @@ export const generateMatchPdfReport = async ({
     doc.setDrawColor(226, 232, 240);
     doc.roundedRect(14, y, pageW - 28, 30, 3, 3, 'S');
 
-    const rivalName = matchData?.rival || 'Rival';
+    const rivalName = matchData?.rival || (isEn ? 'Opponent' : 'Rival');
     const goalsFor = matchData?.goalsFor ?? matchData?.golesLocal ?? 0;
     const goalsAgainst = matchData?.goalsAgainst ?? matchData?.golesVisita ?? 0;
 
@@ -110,7 +128,9 @@ export const generateMatchPdfReport = async ({
 
     doc.setFontSize(9);
     doc.setTextColor(100, 116, 139);
-    doc.text(`MVP: ${matchData?.mvp || 'N/A'} | Valoracion Equipo: ${matchData?.teamRating || 5}/10 | Formacion: ${matchData?.lineup || '4-3-3'}`, 20, y + 24);
+    const ratingLabel = isEn ? 'Team Rating' : 'Valoracion Equipo';
+    const formationLabel = isEn ? 'Formation' : 'Formacion';
+    doc.text(`MVP: ${matchData?.mvp || 'N/A'} | ${ratingLabel}: ${matchData?.teamRating || 5}/10 | ${formationLabel}: ${matchData?.lineup || '4-3-3'}`, 20, y + 24);
 
     y += 38;
 
@@ -121,33 +141,33 @@ export const generateMatchPdfReport = async ({
         scorersText = matchData.goleadoresList
           .map((g) => {
             const p = players.find((pl) => pl.id === g.jugadorId);
-            return `${p ? (p.name || p.nombre) : 'Jugador'} (${g.minuto}')`;
+            return `${p ? (p.name || p.nombre) : (isEn ? 'Player' : 'Jugador')} (${g.minuto}')`;
           })
           .join(', ');
       }
-      if (!scorersText) scorersText = 'Sin registros';
+      if (!scorersText) scorersText = isEn ? 'No records' : 'Sin registros';
 
       let cardsText = '';
       if (matchData.tarjetasList && matchData.tarjetasList.length > 0) {
         cardsText = matchData.tarjetasList
           .map((t) => {
             const p = players.find((pl) => pl.id === t.jugadorId);
-            const tipo = t.tipo === 'amarilla' ? 'Amarilla' : 'Roja';
-            return `${tipo} - ${p ? (p.name || p.nombre) : 'Jugador'} (${t.minuto}')`;
+            const tipo = t.tipo === 'amarilla' ? (isEn ? 'Yellow' : 'Amarilla') : (isEn ? 'Red' : 'Roja');
+            return `${tipo} - ${p ? (p.name || p.nombre) : (isEn ? 'Player' : 'Jugador')} (${t.minuto}')`;
           })
           .join(', ');
       }
-      if (!cardsText) cardsText = 'Ninguna';
+      if (!cardsText) cardsText = isEn ? 'None' : 'Ninguna';
 
       doc.setFontSize(11);
       doc.setFont('helvetica', 'bold');
       doc.setTextColor(...colorPrimary);
-      doc.text('GOLEADORES, ASISTENCIAS Y TARJETAS', 14, y);
+      doc.text(isEn ? 'SCORERS, ASSISTS AND CARDS' : 'GOLEADORES, ASISTENCIAS Y TARJETAS', 14, y);
       y += 6;
 
       const highlightsTable = [
-        ['Goleadores / Asistencias', scorersText],
-        ['Tarjetas Sancionadas', cardsText],
+        [isEn ? 'Scorers / Assists' : 'Goleadores / Asistencias', scorersText],
+        [isEn ? 'Cards Issued' : 'Tarjetas Sancionadas', cardsText],
       ];
 
       autoTable(doc, {
@@ -169,7 +189,7 @@ export const generateMatchPdfReport = async ({
         doc.setFontSize(11);
         doc.setFont('helvetica', 'bold');
         doc.setTextColor(...colorPrimary);
-        doc.text('ALINEACIÓN TÁCTICA INICIAL', 14, y);
+        doc.text(isEn ? 'INITIAL TACTICAL LINEUP' : 'ALINEACIÓN TÁCTICA INICIAL', 14, y);
         y += 6;
         const pitchW = 110;
         const pitchH = (68 / 105) * pitchW;
@@ -193,31 +213,8 @@ export const generateMatchPdfReport = async ({
       try {
         const canvas = await html2canvas(chartElement, {
           scale: 2,
-          backgroundColor: '#FFFFFF',
+          backgroundColor: null,
           useCORS: true,
-          onclone: (clonedDoc) => {
-            const container = clonedDoc.getElementById(chartContainerId) || clonedDoc.querySelector('.livestats-summary-grid');
-            if (container) {
-              container.style.background = '#FFFFFF';
-              container.style.color = '#0F172A';
-              
-              // Asegurar que las figuras SVG Donut preserven sus colores e inline styles
-              const svgCircles = container.querySelectorAll('circle');
-              svgCircles.forEach((circle) => {
-                const strokeAttr = circle.getAttribute('stroke');
-                if (strokeAttr) {
-                  circle.style.stroke = strokeAttr;
-                }
-              });
-
-              const textNodes = container.querySelectorAll('span, p, h4, div');
-              textNodes.forEach((node) => {
-                if (!node.style.color || node.style.color.includes('255')) {
-                  node.style.color = '#0F172A';
-                }
-              });
-            }
-          },
         });
 
         const imgData = canvas.toDataURL('image/png');
@@ -232,7 +229,7 @@ export const generateMatchPdfReport = async ({
         doc.setFontSize(11);
         doc.setFont('helvetica', 'bold');
         doc.setTextColor(...colorPrimary);
-        doc.text('RESUMEN Y GRÁFICAS TÁCTICAS EN IMAGEN', 14, y);
+        doc.text(isEn ? 'TACTICAL SUMMARY AND CHARTS IMAGE' : 'RESUMEN Y GRÁFICAS TÁCTICAS EN IMAGEN', 14, y);
         y += 6;
 
         doc.addImage(imgData, 'PNG', 14, y, imgW, Math.min(imgH, 120));
@@ -251,7 +248,7 @@ export const generateMatchPdfReport = async ({
     doc.setFontSize(11);
     doc.setFont('helvetica', 'bold');
     doc.setTextColor(...colorPrimary);
-    doc.text('TABLA DE EFICIENCIA TÁCTICA Y COMPARATIVA', 14, y);
+    doc.text(isEn ? 'TACTICAL EFFICIENCY AND COMPARISON TABLE' : 'TABLA DE EFICIENCIA TÁCTICA Y COMPARATIVA', 14, y);
     y += 6;
 
     const countOf = (t) => events.filter((e) => e.type === t).length;
@@ -270,7 +267,12 @@ export const generateMatchPdfReport = async ({
     const totalPoss = rec + loss;
     const possPct = totalPoss > 0 ? Math.round((rec / totalPoss) * 100) : 0;
 
-    const effData = [
+    const effData = isEn ? [
+      ['Tactical Metric', 'Positive Events', 'Negative Events', '% Efficiency'],
+      ['Individual Duels', `${duelsWon} Won`, `${duelsLost} Lost`, `${duelsPct}% Success`],
+      ['Shots Accuracy', `${shotsOn} On Target`, `${shotsOff} Off Target`, `${shotsPct}% On Target`],
+      ['Ball Balance', `${rec} Recoveries`, `${loss} Losses`, `${possPct}% Retention`],
+    ] : [
       ['Metrica Tactica', 'Eventos Positivos', 'Eventos Negativos', '% Eficiencia'],
       ['Duelos individuales', `${duelsWon} Ganados`, `${duelsLost} Perdidos`, `${duelsPct}% Exito`],
       ['Precision de Tiro', `${shotsOn} a Puerta`, `${shotsOff} Fuera`, `${shotsPct}% Puerta`],
@@ -298,10 +300,16 @@ export const generateMatchPdfReport = async ({
       doc.setFontSize(11);
       doc.setFont('helvetica', 'bold');
       doc.setTextColor(...colorPrimary);
-      doc.text('NOTAS TÁCTICAS Y CUESTIONARIO DEL ENTRENADOR', 14, y);
+      doc.text(isEn ? 'TACTICAL NOTES AND COACH QUESTIONNAIRE' : 'NOTAS TÁCTICAS Y CUESTIONARIO DEL ENTRENADOR', 14, y);
       y += 6;
 
-      const questionsList = [
+      const questionsList = isEn ? [
+        { label: 'General Tactical Notes', text: matchData.notes || 'No notes recorded' },
+        { label: 'Key Tactical Aspects', text: matchData.postMatchAnswers?.tactical || 'No answer' },
+        { label: 'Physical and Mental Aspects', text: matchData.postMatchAnswers?.physical || 'No answer' },
+        { label: 'Training Improvement Points', text: matchData.postMatchAnswers?.improvement || 'No answer' },
+        { label: 'Highlighted Players and MVP', text: matchData.postMatchAnswers?.highlights || 'No answer' },
+      ] : [
         { label: 'Notas Tacticas Generales', text: matchData.notes || 'Sin notas registradas' },
         { label: 'Aspectos Tacticos Clave', text: matchData.postMatchAnswers?.tactical || 'Sin respuesta' },
         { label: 'Aspectos Fisicos y Mentales', text: matchData.postMatchAnswers?.physical || 'Sin respuesta' },
@@ -330,27 +338,28 @@ export const generateMatchPdfReport = async ({
     doc.setTextColor(255, 255, 255);
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(13);
-    doc.text('CRONOLOGÍA DETALLADA DE EVENTOS', 14, 13);
+    doc.text(isEn ? 'DETAILED TIMELINE OF EVENTS' : 'CRONOLOGÍA DETALLADA DE EVENTOS', 14, 13);
 
     const sortedEvents = [...events].sort((a, b) => {
       if (a.half !== b.half) return a.half - b.half;
       return (a.minute || 0) - (b.minute || 0);
     });
 
+    const eventDict = isEn ? EVENT_NAMES_EN : EVENT_NAMES_ES;
     const timelineRows = sortedEvents.map((e, idx) => [
       `${idx + 1}`,
       `${e.minute || 1}'`,
-      `${e.half === 1 ? '1T' : '2T'}`,
-      EVENT_NAMES[e.type] || e.type,
+      `${e.half === 1 ? (isEn ? '1st Half' : '1T') : (isEn ? '2nd Half' : '2T')}`,
+      eventDict[e.type] || e.type,
     ]);
 
     if (timelineRows.length === 0) {
-      timelineRows.push(['-', '-', '-', 'No hay eventos registrados en vivo']);
+      timelineRows.push(['-', '-', '-', isEn ? 'No live events recorded' : 'No hay eventos registrados en vivo']);
     }
 
     autoTable(doc, {
       startY: 26,
-      head: [['#', 'Minuto', 'Mitad', 'Evento Registrado']],
+      head: [isEn ? ['#', 'Minute', 'Half', 'Registered Event'] : ['#', 'Minuto', 'Mitad', 'Evento Registrado']],
       body: timelineRows,
       theme: 'striped',
       headStyles: { fillColor: colorPrimary, textColor: [255, 255, 255], fontStyle: 'bold' },
@@ -358,12 +367,12 @@ export const generateMatchPdfReport = async ({
     });
 
     // Guardar PDF
-    const safeTitle = (matchData?.rival || 'Partido').replace(/[^a-zA-Z0-9]/g, '_');
-    const filename = `${mode === 'POST-MATCH' ? 'Informe_Total_PostPartido' : 'Informe_LiveStats'}_${safeTitle}_${Date.now()}.pdf`;
+    const safeTitle = (matchData?.rival || (isEn ? 'Match' : 'Partido')).replace(/[^a-zA-Z0-9]/g, '_');
+    const filename = `${mode === 'POST-MATCH' ? (isEn ? 'PostMatch_FullReport' : 'Informe_Total_PostPartido') : (isEn ? 'LiveStats_Report' : 'Informe_LiveStats')}_${safeTitle}_${Date.now()}.pdf`;
     await savePdfUniversal(doc, filename);
   } catch (err) {
     console.error('Error al generar el informe PDF:', err);
-    alert('Error al generar el PDF del informe. Intenta nuevamente.');
+    alert(isEn ? 'Error generating PDF report. Please try again.' : 'Error al generar el PDF del informe. Intenta nuevamente.');
   } finally {
     window.dispatchEvent(new CustomEvent('m11-loading', { detail: { show: false } }));
   }

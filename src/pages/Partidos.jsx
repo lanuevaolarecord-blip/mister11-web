@@ -1201,30 +1201,28 @@ const Partidos = () => {
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '15px', marginBottom: '12px' }}>
                   <h3 className="section-title" style={{ margin: 0 }}>⏱️ Panel de Control - Día del Partido</h3>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                    {matchData.status !== 'Terminado' && (
-                      <button 
-                        type="button"
-                        onClick={handleFinishMatch}
-                        style={{ 
-                          display: 'flex', 
-                          alignItems: 'center', 
-                          gap: '6px', 
-                          padding: '10px 16px', 
-                          minHeight: '44px',
-                          cursor: 'pointer',
-                          border: 'none',
-                          borderRadius: '8px',
-                          background: '#22C55E',
-                          color: '#FFFFFF',
-                          fontFamily: 'var(--font-heading)',
-                          fontWeight: 'bold',
-                          fontSize: '12px',
-                          boxShadow: '0 2px 8px rgba(34, 197, 94, 0.4)'
-                        }}
-                      >
-                        🏁 Finalizar Partido
-                      </button>
-                    )}
+                    <button 
+                      type="button"
+                      onClick={handleFinishMatch}
+                      style={{ 
+                        display: 'flex', 
+                        alignItems: 'center', 
+                        gap: '6px', 
+                        padding: '10px 16px', 
+                        minHeight: '44px',
+                        cursor: 'pointer',
+                        border: 'none',
+                        borderRadius: '8px',
+                        background: matchData.status === 'Terminado' ? '#15803D' : '#22C55E',
+                        color: '#FFFFFF',
+                        fontFamily: 'var(--font-heading)',
+                        fontWeight: 'bold',
+                        fontSize: '12px',
+                        boxShadow: '0 2px 8px rgba(34, 197, 94, 0.4)'
+                      }}
+                    >
+                      {matchData.status === 'Terminado' ? '✓ Partido Terminado' : '🏁 Finalizar Partido'}
+                    </button>
                     <button 
                       type="button"
                       className="btn-outline-dark" 
@@ -1429,34 +1427,28 @@ const Partidos = () => {
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px', marginBottom: '16px' }}>
                   <h3 className="section-title" style={{ margin: 0 }}>📊 Informe Post-Partido y Análisis</h3>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                    {matchData.status !== 'Terminado' ? (
-                      <button 
-                        type="button"
-                        onClick={handleFinishMatch}
-                        style={{ 
-                          display: 'flex', 
-                          alignItems: 'center', 
-                          gap: '6px', 
-                          padding: '10px 16px', 
-                          minHeight: '44px',
-                          cursor: 'pointer',
-                          border: 'none',
-                          borderRadius: '8px',
-                          background: '#22C55E',
-                          color: '#FFFFFF',
-                          fontFamily: 'var(--font-heading)',
-                          fontWeight: 'bold',
-                          fontSize: '12px',
-                          boxShadow: '0 2px 8px rgba(34, 197, 94, 0.4)'
-                        }}
-                      >
-                        🏁 Finalizar Partido
-                      </button>
-                    ) : (
-                      <span style={{ fontSize: '12px', fontWeight: 'bold', color: '#22C55E', padding: '6px 12px', background: 'rgba(34,197,94,0.1)', borderRadius: '6px' }}>
-                        ✓ Partido Terminado
-                      </span>
-                    )}
+                    <button 
+                      type="button"
+                      onClick={handleFinishMatch}
+                      style={{ 
+                        display: 'flex', 
+                        alignItems: 'center', 
+                        gap: '6px', 
+                        padding: '10px 16px', 
+                        minHeight: '44px',
+                        cursor: 'pointer',
+                        border: 'none',
+                        borderRadius: '8px',
+                        background: matchData.status === 'Terminado' ? '#15803D' : '#22C55E',
+                        color: '#FFFFFF',
+                        fontFamily: 'var(--font-heading)',
+                        fontWeight: 'bold',
+                        fontSize: '12px',
+                        boxShadow: '0 2px 8px rgba(34, 197, 94, 0.4)'
+                      }}
+                    >
+                      {matchData.status === 'Terminado' ? '✓ Partido Terminado' : '🏁 Finalizar Partido'}
+                    </button>
                     <button 
                       type="button"
                       className="btn-save-match"
@@ -1547,7 +1539,6 @@ const Partidos = () => {
                       <button 
                         type="button"
                         className="btn-add-row" 
-                        style={{ minHeight: '48px', width: '100%', marginTop: '10px', color: '#1B3A2D', borderColor: '#1B3A2D', border: '1.5px dashed', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold', background: 'transparent' }} 
                         onClick={() =>
                           setMatchData({...matchData, goleadoresList: [...(matchData.goleadoresList || []), {jugadorId:'',minuto:''}]})
                         }
@@ -1617,7 +1608,6 @@ const Partidos = () => {
                       <button 
                         type="button"
                         className="btn-add-row" 
-                        style={{ minHeight: '48px', width: '100%', marginTop: '10px', color: '#1B3A2D', borderColor: '#1B3A2D', border: '1.5px dashed', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold', background: 'transparent' }} 
                         onClick={() =>
                           setMatchData({...matchData, tarjetasList: [...(matchData.tarjetasList || []), {jugadorId:'',tipo:'amarilla',minuto:''}]})
                         }
@@ -1653,7 +1643,7 @@ const Partidos = () => {
                         <div style={{ display: 'flex', flexDirection: 'column' }}>
                           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
                             <label className="input-label-caps" style={{ fontSize: '11px', fontWeight: '700', color: 'var(--partidos-text-muted)' }}>VALORACIÓN DEL EQUIPO</label>
-                            <span style={{ fontSize: '15px', fontWeight: 'bold', color: '#1B3A2D' }}>{matchData.teamRating || 5} / 10</span>
+                            <span style={{ fontSize: '15px', fontWeight: 'bold', color: 'var(--partidos-accent)' }}>{matchData.teamRating || 5} / 10</span>
                           </div>
                           <input 
                             type="range" 
@@ -1662,7 +1652,7 @@ const Partidos = () => {
                             step="1"
                             value={matchData.teamRating || 5} 
                             onChange={e => setMatchData({...matchData, teamRating: parseInt(e.target.value) || 5})}
-                            style={{ width: '100%', cursor: 'pointer', height: '8px', borderRadius: '4px', background: '#e5e7eb' }}
+                            style={{ width: '100%', cursor: 'pointer', height: '8px', borderRadius: '4px', background: 'var(--partidos-border)' }}
                           />
                         </div>
                       </div>

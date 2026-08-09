@@ -355,15 +355,15 @@ const LiveStats = ({
             <span>🔄 REINICIAR</span>
           </button>
 
-          {onFinishMatch && matchData?.status !== 'Terminado' && (
+          {onFinishMatch && (
             <button
               type="button"
               onClick={onFinishMatch}
               className="livestats-fullscreen-btn"
-              style={{ background: '#10B981', color: '#FFFFFF', border: 'none', fontWeight: 800 }}
+              style={{ background: matchData?.status === 'Terminado' ? '#15803D' : '#10B981', color: '#FFFFFF', border: 'none', fontWeight: 800 }}
               title="Finalizar Partido"
             >
-              <span>🏁 FINALIZAR</span>
+              <span>{matchData?.status === 'Terminado' ? '✓ TERMINADO' : '🏁 FINALIZAR'}</span>
             </button>
           )}
 

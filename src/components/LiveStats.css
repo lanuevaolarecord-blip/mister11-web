@@ -38,8 +38,10 @@
   width: 100vw !important;
   height: 100vh !important;
   z-index: 99999 !important;
-  padding: 0 !important;
+  padding: max(8px, env(safe-area-inset-top)) max(12px, env(safe-area-inset-right)) max(8px, env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-left)) !important;
   margin: 0 !important;
+  box-sizing: border-box !important;
+  overflow-y: auto !important;
 }
 
 .livestats-container.livestats-fullscreen.theme-dark {

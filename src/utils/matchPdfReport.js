@@ -52,6 +52,7 @@ export const generateMatchPdfReport = async ({
   matchData = {},
   events = [],
   players = [],
+  lineupImage = null,
 }) => {
   window.dispatchEvent(new CustomEvent('m11-loading', { detail: { show: true, message: 'Generando Informe PDF...' } }));
   await new Promise((r) => setTimeout(r, 100));
@@ -158,6 +159,28 @@ export const generateMatchPdfReport = async ({
       });
 
       y = (doc.lastAutoTable ? doc.lastAutoTable.finalY : y + 20) + 10;
+
+      // ── ALINEACIÓN TÁCTICA INICIAL (IMAGEN) ──
+      if (lineupImage) {
+        if (y + 75 > pageH - 20) {
+          doc.addPage();
+          y = 20;
+        }
+        doc.setFontSize(11);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(...colorPrimary);
+        doc.text('ALINEACIÓN TÁCTICA INICIAL', 14, y);
+        y += 6;
+        const pitchW = 110;
+        const pitchH = (68 / 105) * pitchW;
+        const pitchX = (pageW - pitchW) / 2;
+        try {
+          doc.addImage(lineupImage, 'PNG', pitchX, y, pitchW, pitchH);
+          y += pitchH + 10;
+        } catch (e) {
+          console.error("Error al incluir gráfico de alineación:", e);
+        }
+      }
     }
 
     // ── 4. CAPTURA VISUAL DE LAS GRÁFICAS CON HTML2CANVAS ─────────────────

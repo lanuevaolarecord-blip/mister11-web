@@ -21,6 +21,27 @@ import { SvgDonut, SvgComparisonBars, HalfBreakdown } from '../components/LiveSt
 import './Partidos.css';
 import { normalizeText } from '../utils/normalizeInput';
 
+// Auxiliar para determinar idioma efectivo (manual o idioma del sistema)
+const getEffectiveLanguage = (settingsObj) => {
+  if (settingsObj?.language === 'English (EN)') return 'English (EN)';
+  if (settingsObj?.language === 'Español (ES)') return 'Español (ES)';
+  const sysLang = typeof navigator !== 'undefined' ? (navigator.language || navigator.userLanguage) : '';
+  if (sysLang && sysLang.toLowerCase().startsWith('en')) {
+    return 'English (EN)';
+  }
+  return 'Español (ES)';
+};
+
+// Pestañas con traducción automática
+const TABS_CONFIG = [
+  { id: 'PRE-PARTIDO',   es: 'PRE-PARTIDO',      en: 'PRE-MATCH' },
+  { id: 'CONVOCATORIA',  es: 'CONVOCATORIA',      en: 'SQUAD' },
+  { id: 'ALINEACIÓN',    es: 'ALINEACIÓN',         en: 'LINEUP' },
+  { id: 'MATCH-DAY',     es: 'DÍA DEL PARTIDO',   en: 'MATCH-DAY' },
+  { id: 'LIVE-STATS',    es: 'ESTADÍSTICAS',      en: 'LIVE STATS' },
+  { id: 'POST-PARTIDO',  es: 'POST-PARTIDO',      en: 'POST-MATCH' },
+];
+
 // Auxiliar para determinar la zona general de una posición táctica
 const getGeneralZone = (pos) => {
   if (['POR'].includes(pos)) return 'POR';
@@ -379,6 +400,18 @@ const Partidos = () => {
       alert("Guarde el partido antes de exportar el PDF.");
       return;
     }
+    let lineupImageBase64 = null;
+    try {
+      const pitchElem = document.getElementById('export-pitch-container') || document.querySelector('.alin-pitch-container-h3d');
+      if (pitchElem) {
+        const { default: html2canvas } = await import('html2canvas');
+        const canvas = await html2canvas(pitchElem, { scale: 2, useCORS: true, backgroundColor: null });
+        lineupImageBase64 = canvas.toDataURL('image/png');
+      }
+    } catch (e) {
+      console.error("Error al capturar alineación táctica para el PDF:", e);
+    }
+
     try {
       const { generateMatchPdfReport } = await import('../utils/matchPdfReport');
       await generateMatchPdfReport({
@@ -387,10 +420,11 @@ const Partidos = () => {
         matchData,
         events: effectiveLiveEvents || [],
         players: players || [],
+        lineupImage: lineupImageBase64,
       });
     } catch (err) {
       console.error("Error al generar el informe PDF de partido:", err);
-      generatePostMatchReportPDF(matchData, players, activeTeam);
+      generatePostMatchReportPDF(matchData, players, activeTeam, lineupImageBase64);
     }
   };
 
@@ -816,15 +850,13 @@ const Partidos = () => {
       {viewMode === 'EDIT' && (
         <div className="partidos-editor-container p-4 sm:p-6 lg:p-8">
           <div className="editor-tabs mt-2 flex flex-row flex-nowrap overflow-x-auto whitespace-nowrap scrollbar-none px-4 sm:px-6 lg:px-8">
-            {['PRE-PARTIDO', 'CONVOCATORIA', 'ALINEACIÓN', 'MATCH-DAY', 'LIVE-STATS', 'POST-PARTIDO'].map(tab => (
+            {TABS_CONFIG.map(tabObj => (
               <button 
-                key={tab} 
-                className={`e-tab ${editTab === tab ? 'active' : ''}`}
-                onClick={() => handleTabChange(tab)}
+                key={tabObj.id} 
+                className={`e-tab ${editTab === tabObj.id ? 'active' : ''}`}
+                onClick={() => handleTabChange(tabObj.id)}
               >
-                {tab === 'LIVE-STATS'
-                  ? (settings?.language === 'English (EN)' ? 'LIVE STATS' : 'LIVE STATS')
-                  : tab}
+                {getEffectiveLanguage(settings) === 'English (EN)' ? tabObj.en : tabObj.es}
               </button>
             ))}
           </div>
@@ -1110,9 +1142,9 @@ const Partidos = () => {
                       const customPos = matchData.customPositions && matchData.customPositions[idx];
                       
                       // Las posiciones en formaciones.js ya son HORIZONTALES: left=X, top=Y
-                      // Solo clampear top para que las fichas no salgan del campo
+                      // Clampear top entre 5% y 92% para que el usuario pueda llevar jugadores hasta las dos líneas de banda
                       const rawTop = parseFloat(customPos ? customPos.top : pos.top);
-                      const clampedTop = Math.min(Math.max(rawTop, 12), 82);
+                      const clampedTop = Math.min(Math.max(rawTop, 5), 92);
                       const topPos = `${clampedTop}%`;
                       const leftPos = customPos ? customPos.left : pos.left;
 
@@ -1166,30 +1198,56 @@ const Partidos = () => {
             {/* PESTAÑA: MATCH-DAY */}
             {editTab === 'MATCH-DAY' && (
               <div className="tab-pane match-day-container" ref={matchDayRef}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '15px', marginBottom: '8px' }}>
-                  <h3 className="section-title" style={{ margin: 0 }}>⏱️ Panel de Control - Match Day</h3>
-                  <button 
-                    type="button"
-                    className="btn-outline-dark" 
-                    onClick={toggleFullscreen}
-                    style={{ 
-                      display: 'flex', 
-                      alignItems: 'center', 
-                      gap: '8px', 
-                      padding: '10px 16px', 
-                      minHeight: '44px',
-                      cursor: 'pointer',
-                      border: '1px solid var(--partidos-border)',
-                      borderRadius: '8px',
-                      background: 'var(--partidos-input-bg)',
-                      color: 'var(--partidos-text-primary)',
-                      fontFamily: 'var(--font-heading)',
-                      fontWeight: 'bold',
-                      fontSize: '12px'
-                    }}
-                  >
-                    {isFullscreen ? '🗗 Salir Pantalla Completa' : '📺 Pantalla Completa'}
-                  </button>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '15px', marginBottom: '12px' }}>
+                  <h3 className="section-title" style={{ margin: 0 }}>⏱️ Panel de Control - Día del Partido</h3>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    {matchData.status !== 'Terminado' && (
+                      <button 
+                        type="button"
+                        onClick={handleFinishMatch}
+                        style={{ 
+                          display: 'flex', 
+                          alignItems: 'center', 
+                          gap: '6px', 
+                          padding: '10px 16px', 
+                          minHeight: '44px',
+                          cursor: 'pointer',
+                          border: 'none',
+                          borderRadius: '8px',
+                          background: '#22C55E',
+                          color: '#FFFFFF',
+                          fontFamily: 'var(--font-heading)',
+                          fontWeight: 'bold',
+                          fontSize: '12px',
+                          boxShadow: '0 2px 8px rgba(34, 197, 94, 0.4)'
+                        }}
+                      >
+                        🏁 Finalizar Partido
+                      </button>
+                    )}
+                    <button 
+                      type="button"
+                      className="btn-outline-dark" 
+                      onClick={toggleFullscreen}
+                      style={{ 
+                        display: 'flex', 
+                        alignItems: 'center', 
+                        gap: '8px', 
+                        padding: '10px 16px', 
+                        minHeight: '44px',
+                        cursor: 'pointer',
+                        border: '1px solid var(--partidos-border)',
+                        borderRadius: '8px',
+                        background: 'var(--partidos-input-bg)',
+                        color: 'var(--partidos-text-primary)',
+                        fontFamily: 'var(--font-heading)',
+                        fontWeight: 'bold',
+                        fontSize: '12px'
+                      }}
+                    >
+                      {isFullscreen ? '🗗 Salir Pantalla Completa' : '📺 Pantalla Completa'}
+                    </button>
+                  </div>
                 </div>
                 
                 <div className="match-day-grid">
@@ -1368,6 +1426,47 @@ const Partidos = () => {
             {/* PESTAÑA: POST-PARTIDO */}
             {editTab === 'POST-PARTIDO' && (
               <div className="tab-pane post-partido-container">
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px', marginBottom: '16px' }}>
+                  <h3 className="section-title" style={{ margin: 0 }}>📊 Informe Post-Partido y Análisis</h3>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    {matchData.status !== 'Terminado' ? (
+                      <button 
+                        type="button"
+                        onClick={handleFinishMatch}
+                        style={{ 
+                          display: 'flex', 
+                          alignItems: 'center', 
+                          gap: '6px', 
+                          padding: '10px 16px', 
+                          minHeight: '44px',
+                          cursor: 'pointer',
+                          border: 'none',
+                          borderRadius: '8px',
+                          background: '#22C55E',
+                          color: '#FFFFFF',
+                          fontFamily: 'var(--font-heading)',
+                          fontWeight: 'bold',
+                          fontSize: '12px',
+                          boxShadow: '0 2px 8px rgba(34, 197, 94, 0.4)'
+                        }}
+                      >
+                        🏁 Finalizar Partido
+                      </button>
+                    ) : (
+                      <span style={{ fontSize: '12px', fontWeight: 'bold', color: '#22C55E', padding: '6px 12px', background: 'rgba(34,197,94,0.1)', borderRadius: '6px' }}>
+                        ✓ Partido Terminado
+                      </span>
+                    )}
+                    <button 
+                      type="button"
+                      className="btn-save-match"
+                      onClick={handleExportPDF}
+                      style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '10px 16px', borderRadius: '8px', cursor: 'pointer', minHeight: '44px' }}
+                    >
+                      📄 Exportar PDF
+                    </button>
+                  </div>
+                </div>
                 <div className="post-partido-grid-layout">
                   {/* Columna Izquierda: Marcador, Goleadores, Tarjetas */}
                   <div className="post-partido-left-col">
@@ -1956,6 +2055,68 @@ const Partidos = () => {
           }
         }}
       />
+
+      {/* Contenedor oculto para captura en alta resolución del terreno de juego y alineación para el PDF */}
+      <div 
+        id="export-pitch-container" 
+        style={{ 
+          position: 'fixed', 
+          left: '-9999px', 
+          top: '-9999px', 
+          width: '700px', 
+          height: '453px', 
+          zIndex: -9999,
+          pointerEvents: 'none'
+        }}
+      >
+        <div className="alin-pitch-container-h3d" style={{ width: '100%', height: '100%', transform: 'none', margin: 0 }}>
+          <div className="pitch-h-outer">
+            <div className="pitch-h-center-line"></div>
+            <div className="pitch-h-center-circle"></div>
+            <div className="pitch-h-spot-center"></div>
+            <div className="pitch-h-penalty-left"></div>
+            <div className="pitch-h-goal-left"></div>
+            <div className="pitch-h-penalty-right"></div>
+            <div className="pitch-h-goal-right"></div>
+          </div>
+          {getFormationPositions(matchData.lineup || '4-3-3').map((pos, idx) => {
+            const pid = calledPlayers[idx];
+            const player = pid ? players.find(p => p.id === pid) : null;
+            const customPos = matchData.customPositions && matchData.customPositions[idx];
+            const rawTop = parseFloat(customPos ? customPos.top : pos.top);
+            const clampedTop = Math.min(Math.max(rawTop, 5), 92);
+            const topPos = `${clampedTop}%`;
+            const leftPos = customPos ? customPos.left : pos.left;
+            const posLabel = getSlotPosition(idx);
+            const photoUrl = player ? (player.avatarUrl || player.photoUrl || player.photo || player.photoPreview) : null;
+            
+            return (
+              <div key={idx} className={`pitch-player-3d ${player ? '' : 'empty-slot'}`} style={{ top: topPos, left: leftPos }}>
+                <div className="futu-card-badge">
+                  <div className={`futu-card-frame ${player ? '' : 'empty-slot'}`}>
+                    {player ? (
+                      photoUrl ? (
+                        <img src={photoUrl} alt={player.name} className="futu-card-photo" />
+                      ) : (
+                        <div className="futu-card-initials">
+                          {player.number || (player.name ? player.name.charAt(0).toUpperCase() : idx + 1)}
+                        </div>
+                      )
+                    ) : (
+                      <div className="futu-card-initials empty">{idx + 1}</div>
+                    )}
+                    <span className="futu-card-number">{player?.number || idx + 1}</span>
+                    <span className="futu-card-pos">{posLabel}</span>
+                  </div>
+                  <div className="futu-card-banner">
+                    {player ? `${player.number ? player.number + ' - ' : ''}${player.name}` : `Slot ${idx + 1}`}
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
 
     </div>
   );

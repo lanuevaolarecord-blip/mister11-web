@@ -1,0 +1,64 @@
+================================================================================
+FICHA DE PUBLICACIÓN EN GOOGLE PLAY STORE — MÍSTER 11 (v1.1.14 / versionCode 33)
+================================================================================
+
+1. NOMBRE DE LA APLICACIÓN (Máx. 30 caracteres)
+--------------------------------------------------------------------------------
+Míster 11
+
+2. DESCRIPCIÓN CORTA (Máx. 80 caracteres)
+--------------------------------------------------------------------------------
+Pizarra táctica, gestión de plantilla, entrenamientos y Match-Day en tu bolsillo.
+
+3. DESCRIPCIÓN COMPLETA (Máx. 4.000 caracteres)
+--------------------------------------------------------------------------------
+Míster 11 es la herramienta integral definitiva diseñada por y para entrenadores de fútbol, directores técnicos y cuerpos profesionales. Olvídate del papel y centraliza la gestión táctica, física y operativa de tu equipo desde tu dispositivo Android o tablet.
+
+Tanto si diriges en categorías de formación como en el fútbol senior competitivo, Míster 11 te ofrece un ecosistema completo para optimizar el rendimiento de tu plantilla semana a semana.
+
+🔥 FUNCIONALIDADES DESTACADAS DE MÍSTER 11:
+
+📋 PIZARRA TÁCTICA & ANIMADOR 2D/3D
+• Diseña jugadas de estrategia, saques de esquina, faltas y transiciones con un lienzo interactivo ultra fluido.
+• Biblioteca completa de material deportivo (conos, picas, mini-porterías, vallas y balones).
+• Crea animaciones cuadro a cuadro (fotogramas) para explicar conceptos tácticos de forma clara a tus jugadores.
+• Exportación directa de animaciones y esquemas a MP4 e imagen HD.
+
+📊 GESTIÓN DE PLANTILLA & JUGADORES
+• Ficha individual de cada futbolista con datos físicos, estadísticos y expediente deportivo.
+• Control atómico de convocatorias, minutos jugados, goles, asistencias y tarjetas.
+• Seguimiento de lesiones y disponibilidad del cuerpo médico.
+
+⏱️ MODO MATCH-DAY EN TIEMPO REAL
+• Cronómetro del partido sincronizado en tiempo real.
+• Registro instantáneo de goles, cambios, tarjetas y notas de campo durante el encuentro.
+• Cambio rápido entre la vista del cronómetro y la Pizarra Táctica sin perder el tiempo ni la sesión de juego.
+
+📅 PLANIFICACIÓN ESTRATÉGICA & MACROCICLO
+• Estructuración del macrociclo y mesociclos por fases competitivas (Pretemporada, Competición, Transición).
+• Cálculo dinámico de cargas de trabajo y semanas de entrenamiento.
+• Generador e historial de sesiones de entrenamiento personalizadas.
+
+📈 TESTS FÍSICOS & RENDIMIENTO
+• Evaluación científica con baterías de tests físicos (Sprint 10m/30m, T-Test, CMJ, Conducción de balón, Pase a portería).
+• Cuestionarios de psicología deportiva (ACSI-28) y percepción del esfuerzo (RPE / Wellness).
+• Gráficas radar e informes visuales de evolución individual y colectiva.
+
+🤖 ASISTENTE DE IA GENERADORA DE EJERCICIOS
+• Generador de ejercicios tácticos y físicos impulsado por Inteligencia Artificial.
+• Adapta las tareas según la edad, categoría, objetivo técnico y número de jugadores disponibles.
+
+📁 EXPORTACIÓN DE INFORMES EN PDF
+• Genera dossiers profesionales en PDF para tu directiva, cuerpo técnico o jugadores.
+• Exportación de convocatorias, actas de partido e informes semanales.
+
+4. DATOS DE CONTACTO & ASISTENCIA
+--------------------------------------------------------------------------------
+• Correo electrónico de soporte: lanuevaolarecord@gmail.com
+• Sitio Web Oficial: https://www.mister11.app
+• URL de la Política de Privacidad: https://www.mister11.app/consentimiento
+
+5. CATEGORÍA & AUDIENCIA OBJETIVO
+--------------------------------------------------------------------------------
+• Categoría: Deportes / Herramientas Deportivas
+• Clasificación de contenido: Para todos los públicos (PEGI 3)

@@ -1205,7 +1205,7 @@ export const generateExercisesReport = async (exercises, activeTeam = null) => {
 /**
  * INFORME POST-PARTIDO - Completo con cuestionario e imágenes
  */
-export const generatePostMatchReportPDF = async (match, players, activeTeam = null) => {
+export const generatePostMatchReportPDF = async (match, players, activeTeam = null, lineupImage = null) => {
   window.dispatchEvent(new CustomEvent('m11-loading', { detail: { show: true, message: 'Generando PDF...' } }));
   await new Promise(r => setTimeout(r, 150));
   try {
@@ -1287,13 +1287,38 @@ export const generatePostMatchReportPDF = async (match, players, activeTeam = nu
     doc.text(splitCards, 15, currentY);
     
     currentY += (splitCards.length * 5) + 6;
+
+    // Imagen de Alineación Inicial (Táctica)
+    if (lineupImage) {
+      if (currentY > pageH - 80) {
+        doc.addPage();
+        currentY = 48;
+      }
+      doc.setFont(undefined, 'bold');
+      doc.setFontSize(11);
+      doc.text('Alineación Táctica Inicial', 15, currentY);
+      currentY += 6;
+      const pitchW = 110;
+      const pitchH = (68 / 105) * pitchW;
+      const pitchX = (pageW - pitchW) / 2;
+      try {
+        doc.addImage(lineupImage, 'PNG', pitchX, currentY, pitchW, pitchH);
+        currentY += pitchH + 10;
+      } catch (e) {
+        console.error("Error al añadir gráfico de alineación al PDF:", e);
+      }
+    }
     
     // Alineación si hay convocados
     const convocados = players.filter(p => match.convocados?.includes(p.id));
     if (convocados.length > 0) {
+      if (currentY > pageH - 45) {
+        doc.addPage();
+        currentY = 48;
+      }
       doc.setFont(undefined, 'bold');
       doc.setFontSize(11);
-      doc.text('Convocados y Alineación', 15, currentY);
+      doc.text('Convocados y Lista de Titulares', 15, currentY);
       currentY += 5;
       
       const tableBody = convocados.map((p, i) => [

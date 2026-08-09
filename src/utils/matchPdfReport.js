@@ -200,11 +200,19 @@ export const generateMatchPdfReport = async ({
             if (container) {
               container.style.background = '#FFFFFF';
               container.style.color = '#0F172A';
-              const textNodes = container.querySelectorAll('span, p, h4, div, text');
+              
+              // Asegurar que las figuras SVG Donut preserven sus colores e inline styles
+              const svgCircles = container.querySelectorAll('circle');
+              svgCircles.forEach((circle) => {
+                const strokeAttr = circle.getAttribute('stroke');
+                if (strokeAttr) {
+                  circle.style.stroke = strokeAttr;
+                }
+              });
+
+              const textNodes = container.querySelectorAll('span, p, h4, div');
               textNodes.forEach((node) => {
-                if (node.tagName === 'text') {
-                  node.setAttribute('fill', '#0F172A');
-                } else if (!node.style.color || node.style.color.includes('255')) {
+                if (!node.style.color || node.style.color.includes('255')) {
                   node.style.color = '#0F172A';
                 }
               });

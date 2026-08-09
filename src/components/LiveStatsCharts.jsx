@@ -53,7 +53,7 @@ export const SvgDonut = ({
       minWidth: '120px',
     }}>
       <div style={{ position: 'relative', width: size, height: size }}>
-        <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
+        <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} style={{ display: 'block', overflow: 'visible' }}>
           {/* Pista base */}
           <circle
             cx={center}
@@ -62,6 +62,11 @@ export const SvgDonut = ({
             fill="none"
             stroke={total > 0 ? color2 : bgTrack}
             strokeWidth={strokeWidth}
+            style={{
+              stroke: total > 0 ? color2 : bgTrack,
+              strokeWidth: `${strokeWidth}px`,
+              fill: 'none'
+            }}
           />
           {/* Arco primario */}
           {total > 0 && (
@@ -72,11 +77,17 @@ export const SvgDonut = ({
               fill="none"
               stroke={color1}
               strokeWidth={strokeWidth}
-              strokeDasharray={circumference}
+              strokeDasharray={`${circumference} ${circumference}`}
               strokeDashoffset={offset}
               strokeLinecap="round"
               transform={`rotate(-90 ${center} ${center})`}
-              style={{ transition: 'stroke-dashoffset 0.5s ease-in-out' }}
+              style={{
+                stroke: color1,
+                strokeWidth: `${strokeWidth}px`,
+                strokeDasharray: `${circumference} ${circumference}`,
+                strokeDashoffset: `${offset}`,
+                fill: 'none'
+              }}
             />
           )}
 
@@ -90,7 +101,7 @@ export const SvgDonut = ({
             fontSize="20"
             fontWeight="900"
             fontFamily="system-ui, -apple-system, Roboto, sans-serif"
-            style={{ fill: textColor }}
+            style={{ fill: textColor, fontSize: '20px', fontWeight: '900' }}
           >
             {total > 0 ? `${pct1}%` : '0%'}
           </text>

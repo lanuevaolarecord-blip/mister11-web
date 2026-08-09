@@ -336,9 +336,27 @@ export const translations = {
   }
 };
 
-export const t = (key, language = 'Español (ES)', replacements = {}) => {
-  const lang = translations[language] || translations['Español (ES)'];
-  let text = lang[key] || key;
+/**
+ * Obtiene el idioma efectivo comprobando los ajustes del usuario
+ * y como fallback el idioma del sistema del navegador/dispositivo.
+ */
+export const getEffectiveLanguage = (languageStr) => {
+  if (languageStr === 'English (EN)') return 'English (EN)';
+  if (languageStr === 'Español (ES)') return 'Español (ES)';
+
+  const sysLang = typeof navigator !== 'undefined' ? (navigator.language || navigator.userLanguage || '') : '';
+  if (sysLang && sysLang.toLowerCase().startsWith('en')) {
+    return 'English (EN)';
+  }
+  return 'Español (ES)';
+};
+
+export const t = (key, language, replacements = {}) => {
+  const effLang = getEffectiveLanguage(language);
+  const isEn = effLang === 'English (EN)';
+  
+  const targetDict = isEn ? translations['English (EN)'] : translations['Español (ES)'];
+  let text = targetDict[key] || (translations['English (EN)'][key]) || (translations['Español (ES)'][key]) || key;
   
   Object.keys(replacements).forEach(r => {
     text = text.replace(`{${r}}`, replacements[r]);

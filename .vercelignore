@@ -6,3 +6,13 @@ dist/
 node_modules/
 public/mister11.apk
 mister11.apk
+
+mister11_registro_digital/
+mister11_google_play_assets/
+*.zip
+INFORME_*.md
+INFORME_*.txt
+INFORME_*.pdf
+DIARIO_*.md
+PLAN_*.md
+PLAY_STORE_FICHA.md

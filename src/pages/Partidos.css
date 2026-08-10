@@ -1739,6 +1739,142 @@ html.dark select option {
 }
 
 /* =========================================================
+   ALINEACIÓN — MÓVIL PORTRAIT (< 767px)
+   Estrategia: campo arriba (full width, compacto) + lista 2 columnas abajo
+========================================================= */
+@media (max-width: 767px) {
+  /* Contenedor: columna vertical, el campo arriba */
+  .alineacion-layout,
+  .tab-pane.alineacion-layout {
+    flex-direction: column !important;
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    gap: 8px !important;
+    padding: 8px !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+    -webkit-overflow-scrolling: touch !important;
+  }
+
+  /* SIDEBAR (lista de jugadores) — aparece PRIMERO en DOM pero va ABAJO */
+  .alin-sidebar {
+    order: 2 !important;
+    width: 100% !important;
+    min-width: 100% !important;
+    max-width: 100% !important;
+    height: auto !important;
+    max-height: none !important;
+    overflow-y: visible !important;
+    overflow-x: hidden !important;
+    padding: 0 !important;
+    box-sizing: border-box !important;
+    flex-shrink: 0 !important;
+  }
+
+  /* XI Titular en grid de 2 columnas */
+  .alin-sidebar > div:nth-child(2) > div {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    gap: 4px !important;
+  }
+
+  /* Suplentes en grid de 2 columnas */
+  .alin-sidebar > div:nth-child(3) > div {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    gap: 4px !important;
+  }
+
+  /* Items de jugador compactos */
+  .alin-player-item {
+    padding: 7px 8px !important;
+    min-height: 40px !important;
+    gap: 5px !important;
+    font-size: 11px !important;
+  }
+  .alin-player-item .slot-num {
+    font-size: 12px !important;
+    min-width: 14px !important;
+  }
+  .alin-player-item .slot-name {
+    font-size: 10px !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    max-width: 60px !important;
+  }
+  .alin-player-item .slot-role {
+    font-size: 8px !important;
+    padding: 2px 4px !important;
+  }
+
+  /* Panel del CAMPO — va arriba con order */
+  .alineacion-layout > div:last-child {
+    order: 1 !important;
+    width: 100% !important;
+    flex: none !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 4px !important;
+    overflow: visible !important;
+    min-height: 160px !important;
+  }
+
+  /* Campo horizontal compacto — proporción 105:68 */
+  .alin-pitch-container-h3d {
+    width: min(100%, calc(165px * 105 / 68)) !important;
+    max-width: 100% !important;
+    height: 165px !important;
+    max-height: 165px !important;
+    aspect-ratio: unset !important;
+    border-radius: 8px !important;
+    border-width: 2px !important;
+    transform: none !important;
+  }
+
+  /* Fichas de jugador pequeñas pero tocables (mín 28px) */
+  .alin-pitch-container-h3d .pitch-player .pp-circle,
+  .pitch-player .pp-circle {
+    width: 26px !important;
+    height: 26px !important;
+    font-size: 9px !important;
+  }
+  .alin-pitch-container-h3d .pitch-player .pp-name,
+  .pitch-player .pp-name {
+    font-size: 6px !important;
+    max-width: 32px !important;
+  }
+
+  /* Selector de formación scrollable */
+  .alin-sidebar > div:first-child {
+    overflow-x: auto !important;
+    padding-bottom: 4px !important;
+    -webkit-overflow-scrolling: touch !important;
+  }
+
+  /* Botón restablecer compacto */
+  .btn-reset-layout {
+    font-size: 11px !important;
+    padding: 6px 8px !important;
+    min-height: 36px !important;
+  }
+
+  /* Editor sin padding extra */
+  .editor-content:has(.alineacion-layout) {
+    padding: 4px !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    max-height: calc(100dvh - 220px) !important;
+  }
+}
+
+
+
+/* =========================================================
    ESTILOS DE MODAL Y REPORTE POST-PARTIDO
 ========================================================= */
 .modal-overlay {
@@ -2438,45 +2574,7 @@ html.dark .alin-player-item span.slot-role {
   background: var(--partidos-danger-bg);
 }
 
-/* Ajustes Responsive para móvil en vertical y landscape */
-@media (max-width: 767px) {
-  .alineacion-layout {
-    flex-direction: column !important;
-    overflow-y: auto !important;
-    align-items: center !important;
-    height: auto !important;
-    max-height: none !important;
-    gap: 16px !important;
-    padding: 12px !important;
-  }
-  .alin-sidebar {
-    width: 100% !important;
-    min-width: 100% !important;
-    height: auto !important;
-    max-height: 65vh !important;
-    overflow-y: auto !important;
-    padding: 12px 16px !important;
-    box-sizing: border-box !important;
-  }
-  .alin-pitch-wrapper {
-    width: 100% !important;
-    max-width: 100% !important;
-    margin: 0 auto !important;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    padding: 0 16px !important;
-    max-height: 65vh !important;
-    height: auto !important;
-  }
-  .alin-pitch-container {
-    width: min(100%, calc(65vh * 105 / 68)) !important;
-    height: auto !important;
-    aspect-ratio: 105 / 68 !important;
-    max-height: 65vh !important;
-    max-width: 100% !important;
-  }
-}
+/* Ajustes Responsive para móvil en vertical y landscape — sustituido por el bloque de arriba */
 
 /* Ajustes Responsive y Tablet / Móvil Landscape (>= 768px o landscape) */
 @media (min-width: 768px), (max-height: 550px) and (orientation: landscape) {
@@ -2520,15 +2618,18 @@ html.dark .alin-player-item span.slot-role {
   padding: 6px; /* Aumenta el área de contacto táctil */
 }
 
-.pitch-player .pp-circle {
-  width: 48px !important;
-  height: 48px !important;
-  font-size: 16px !important;
-  font-weight: 900 !important;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+/* Fichas grandes SOLO en desktop (>= 768px) */
+@media (min-width: 768px) {
+  .pitch-player .pp-circle {
+    width: 48px !important;
+    height: 48px !important;
+    font-size: 16px !important;
+    font-weight: 900 !important;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+  }
 }
 
 /* Tooltip elegante al pasar/pulsar sobre jugadores */
@@ -2545,7 +2646,7 @@ html.dark .alin-player-item span.slot-role {
   box-shadow: 0 0 0 4px rgba(34, 197, 94, 0.4) !important;
 }
 
-/* Escalado compacto para la mini-pizarra en alineación */
+/* Escalado compacto para la mini-pizarra en alineación (campo vertical) */
 .alin-pitch-container .pp-circle-wrapper {
   padding: 2px !important;
 }
@@ -2562,6 +2663,33 @@ html.dark .alin-player-item span.slot-role {
   padding: 1px 3px !important;
   margin-top: -2px !important;
 }
+
+/* ─── MÓVIL: fichas PEQUEÑAS en el campo horizontal de alineación ─── */
+@media (max-width: 767px) {
+  /* Escalar TODA la tarjeta FIFA al 48% — mantiene el diseño intacto */
+  .alin-pitch-container-h3d .pitch-player-3d {
+    transform: translate(-50%, -50%) scale(0.48) !important;
+    transform-origin: center center !important;
+  }
+  .alin-pitch-container-h3d .pitch-player-3d:active {
+    transform: translate(-50%, -60%) scale(0.52) !important;
+  }
+  /* Ocultar banner de nombre en móvil (ilegible a 48% y ocupa mucho espacio) */
+  .alin-pitch-container-h3d .futu-card-banner {
+    display: none !important;
+  }
+  /* Campo más alto para que los jugadores de arriba y abajo no se corten */
+  .alin-pitch-container-h3d {
+    height: 240px !important;
+    max-height: 240px !important;
+    width: min(100%, calc(240px * 105 / 68)) !important;
+    max-width: 98vw !important;
+  }
+  .alineacion-layout > div:last-child {
+    min-height: 250px !important;
+  }
+}
+
 
 /* =========================================================
    PROTECCIÓN DE PADDING Y MÁRGENES RESPONSIVE/MOBILE (ISSUE 5)

@@ -1018,8 +1018,8 @@ const Partidos = () => {
 
             {/* PESTAÑA: ALINEACIÓN */}
             {editTab === 'ALINEACIÓN' && (
-              <div className="tab-pane alineacion-layout" style={{ display: 'flex', flexDirection: 'row', gap: '16px', width: '100%', height: '100%', minHeight: '500px', overflow: 'visible', padding: '8px' }}>
-                <div className="alin-sidebar" style={{ width: '300px', minWidth: '260px', maxWidth: '320px', overflowY: 'auto', flexShrink: 0, paddingRight: '4px', height: '100%' }}>
+              <div className="tab-pane alineacion-layout">
+                <div className="alin-sidebar">
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                     <FormationSelector
                       activeFormation={matchData.lineup || '4-3-3'}

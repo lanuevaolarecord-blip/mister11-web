@@ -46,3 +46,6 @@ android/app/build/
 Mister11.apk
 *.apk
 android/app/build/
+
+mister11_registro_digital/
+*.zip

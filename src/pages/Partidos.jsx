@@ -404,8 +404,35 @@ const Partidos = () => {
     try {
       const pitchElem = document.getElementById('export-pitch-container') || document.querySelector('.alin-pitch-container-h3d');
       if (pitchElem) {
+        // Pre-convertir imágenes externas a Base64 data URLs para asegurar que html2canvas las renderice sin fallos CORS
+        const images = pitchElem.querySelectorAll('img');
+        const loadPromises = Array.from(images).map((img) => {
+          return new Promise((resolve) => {
+            if (!img.src || img.src.startsWith('data:image')) return resolve();
+            const tempImg = new Image();
+            tempImg.crossOrigin = 'anonymous';
+            tempImg.onload = () => {
+              try {
+                const canvas = document.createElement('canvas');
+                canvas.width = tempImg.naturalWidth || tempImg.width || 100;
+                canvas.height = tempImg.naturalHeight || tempImg.height || 100;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(tempImg, 0, 0);
+                img.src = canvas.toDataURL('image/png');
+              } catch (e) {
+                console.warn('CORS convert warning:', e);
+              }
+              resolve();
+            };
+            tempImg.onerror = () => resolve();
+            tempImg.src = img.src;
+          });
+        });
+        await Promise.all(loadPromises);
+        await new Promise((r) => setTimeout(r, 120));
+
         const { default: html2canvas } = await import('html2canvas');
-        const canvas = await html2canvas(pitchElem, { scale: 2, useCORS: true, backgroundColor: null });
+        const canvas = await html2canvas(pitchElem, { scale: 2, useCORS: true, allowTaint: true, backgroundColor: null });
         lineupImageBase64 = canvas.toDataURL('image/png');
       }
     } catch (e) {
@@ -2047,20 +2074,23 @@ const Partidos = () => {
         }}
       />
 
-      {/* Contenedor oculto para captura en alta resolución del terreno de juego y alineación para el PDF */}
+      {/* Contenedor oculto para captura en alta resolución del terreno de juego, alineación y suplentes para el PDF */}
       <div 
         id="export-pitch-container" 
         style={{ 
           position: 'fixed', 
           left: '-9999px', 
           top: '-9999px', 
-          width: '700px', 
-          height: '453px', 
+          width: '720px', 
+          background: '#0B1812',
+          padding: '16px',
+          borderRadius: '12px',
           zIndex: -9999,
-          pointerEvents: 'none'
+          pointerEvents: 'none',
+          boxSizing: 'border-box'
         }}
       >
-        <div className="alin-pitch-container-h3d" style={{ width: '100%', height: '100%', transform: 'none', margin: 0 }}>
+        <div className="alin-pitch-container-h3d" style={{ width: '100%', height: '453px', transform: 'none', margin: 0 }}>
           <div className="pitch-h-outer">
             <div className="pitch-h-center-line"></div>
             <div className="pitch-h-center-circle"></div>
@@ -2106,6 +2136,57 @@ const Partidos = () => {
               </div>
             );
           })}
+        </div>
+
+        {/* Bloque de Suplentes / Relevos en la imagen exportada */}
+        <div style={{
+          marginTop: '16px',
+          background: '#172D21',
+          border: '1.5px solid #D4A843',
+          borderRadius: '10px',
+          padding: '12px 16px',
+          color: '#FFFFFF',
+          fontFamily: 'system-ui, -apple-system, sans-serif'
+        }}>
+          <div style={{ fontSize: '13px', fontWeight: '800', color: '#D4A843', marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+            🔄 Convocados Suplentes ({calledPlayers.length > 11 ? calledPlayers.length - 11 : 0})
+          </div>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+            {calledPlayers.slice(11).length > 0 ? (
+              calledPlayers.slice(11).map((pid, sIdx) => {
+                const player = players.find(p => p.id === pid);
+                if (!player) return null;
+                const photoUrl = player.avatarUrl || player.photoUrl || player.photo || player.photoPreview;
+                return (
+                  <div key={sIdx} style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    background: 'rgba(255,255,255,0.08)',
+                    padding: '5px 12px',
+                    borderRadius: '20px',
+                    border: '1px solid rgba(212, 168, 67, 0.4)'
+                  }}>
+                    {photoUrl ? (
+                      <img src={photoUrl} alt={player.name} style={{ width: '22px', height: '22px', borderRadius: '50%', objectFit: 'cover' }} crossOrigin="anonymous" />
+                    ) : (
+                      <div style={{ width: '22px', height: '22px', borderRadius: '50%', background: '#D4A843', color: '#172D21', fontWeight: 'bold', fontSize: '11px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        {player.number || (player.name ? player.name.charAt(0).toUpperCase() : '?')}
+                      </div>
+                    )}
+                    <span style={{ fontSize: '12px', fontWeight: '700', color: '#FFFFFF' }}>
+                      {player.number ? `${player.number}. ` : ''}{player.name}
+                    </span>
+                    <span style={{ fontSize: '10px', color: '#D4A843', fontWeight: '800', background: 'rgba(212,168,67,0.2)', padding: '1px 5px', borderRadius: '4px' }}>
+                      {player.position || 'SUP'}
+                    </span>
+                  </div>
+                );
+              })
+            ) : (
+              <span style={{ fontSize: '12px', color: '#94A3B8', fontStyle: 'italic' }}>Sin suplentes convocados</span>
+            )}
+          </div>
         </div>
       </div>
 

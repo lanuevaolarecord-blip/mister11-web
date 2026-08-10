@@ -180,19 +180,19 @@ export const generateMatchPdfReport = async ({
 
       y = (doc.lastAutoTable ? doc.lastAutoTable.finalY : y + 20) + 10;
 
-      // ── ALINEACIÓN TÁCTICA INICIAL (IMAGEN) ──
+      // ── ALINEACIÓN TÁCTICA INICIAL Y SUPLENTES (IMAGEN) ──
       if (lineupImage) {
-        if (y + 75 > pageH - 20) {
+        if (y + 105 > pageH - 20) {
           doc.addPage();
           y = 20;
         }
         doc.setFontSize(11);
         doc.setFont('helvetica', 'bold');
         doc.setTextColor(...colorPrimary);
-        doc.text(isEn ? 'INITIAL TACTICAL LINEUP' : 'ALINEACIÓN TÁCTICA INICIAL', 14, y);
+        doc.text(isEn ? 'INITIAL TACTICAL LINEUP & SUBSTITUTES' : 'ALINEACIÓN TÁCTICA INICIAL Y SUPLENTES', 14, y);
         y += 6;
-        const pitchW = 110;
-        const pitchH = (68 / 105) * pitchW;
+        const pitchW = 145;
+        const pitchH = (530 / 720) * pitchW;
         const pitchX = (pageW - pitchW) / 2;
         try {
           doc.addImage(lineupImage, 'PNG', pitchX, y, pitchW, pitchH);

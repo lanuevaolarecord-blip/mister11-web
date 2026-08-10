@@ -32,15 +32,15 @@ export const SvgDonut = ({
 
   const size = 110;
   const strokeWidth = 12;
+  const center = size / 2;
+  const radius = center - strokeWidth / 2 - 1;
+  const circumference = 2 * Math.PI * radius;
+  const offset = circumference - (pct1 / 100) * circumference;
 
   // Colores de alto contraste según tema
   const bgTrack = darkMode ? 'rgba(255,255,255,0.15)' : '#CBD5E1';
   const textColor = darkMode ? '#FFFFFF' : '#0F172A';
   const subTextColor = darkMode ? '#E2E8F0' : '#334155';
-
-  const conicBg = total > 0
-    ? `conic-gradient(${color1} 0% ${pct1}%, ${color2} ${pct1}% 100%)`
-    : bgTrack;
 
   return (
     <div style={{
@@ -52,37 +52,60 @@ export const SvgDonut = ({
       flex: '1 1 120px',
       minWidth: '120px',
     }}>
-      <div 
-        style={{ 
-          position: 'relative', 
-          width: size, 
-          height: size,
-          borderRadius: '50%',
-          background: conicBg,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          boxShadow: '0 4px 12px rgba(0,0,0,0.15)'
-        }}
-      >
-        {/* Anillo interior (Máscara de Donut) */}
-        <div
-          style={{
-            width: size - strokeWidth * 2,
-            height: size - strokeWidth * 2,
-            borderRadius: '50%',
-            background: darkMode ? '#0E1A14' : '#FFFFFF',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            color: textColor,
-            fontSize: '20px',
-            fontWeight: '900',
-            fontFamily: 'system-ui, -apple-system, Roboto, sans-serif',
-          }}
-        >
-          {total > 0 ? `${pct1}%` : '0%'}
-        </div>
+      <div style={{ position: 'relative', width: size, height: size }}>
+        <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} style={{ display: 'block', overflow: 'visible' }}>
+          {/* Pista base (color2 o track vacía) */}
+          <circle
+            cx={center}
+            cy={center}
+            r={radius}
+            fill="none"
+            stroke={total > 0 ? color2 : bgTrack}
+            strokeWidth={strokeWidth}
+            style={{
+              stroke: total > 0 ? color2 : bgTrack,
+              strokeWidth: `${strokeWidth}px`,
+              fill: 'none'
+            }}
+          />
+          {/* Arco primario (color1) */}
+          {total > 0 && (
+            <circle
+              cx={center}
+              cy={center}
+              r={radius}
+              fill="none"
+              stroke={color1}
+              strokeWidth={strokeWidth}
+              strokeDasharray={`${circumference} ${circumference}`}
+              strokeDashoffset={offset}
+              strokeLinecap="round"
+              transform={`rotate(-90 ${center} ${center})`}
+              style={{
+                stroke: color1,
+                strokeWidth: `${strokeWidth}px`,
+                strokeDasharray: `${circumference} ${circumference}`,
+                strokeDashoffset: `${offset}`,
+                fill: 'none'
+              }}
+            />
+          )}
+
+          {/* Porcentaje en el centro como elemento <text> del SVG */}
+          <text
+            x={center}
+            y={center}
+            dy="0.35em"
+            textAnchor="middle"
+            fill={textColor}
+            fontSize="20"
+            fontWeight="900"
+            fontFamily="system-ui, -apple-system, Roboto, sans-serif"
+            style={{ fill: textColor, fontSize: '20px', fontWeight: '900' }}
+          >
+            {total > 0 ? `${pct1}%` : '0%'}
+          </text>
+        </svg>
       </div>
 
       {/* Título de métrica */}

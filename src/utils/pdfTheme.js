@@ -10,6 +10,9 @@
  * 4. Capturas html2canvas desacopladas de estilos oscuros activos.
  */
 
+import { ref as storageRef, getBlob } from 'firebase/storage';
+import { storage } from '../firebaseConfig';
+
 export const PDF_COLORS = {
   primary: [23, 45, 33],     // #172D21 Verde Institucional Míster11
   accent: [212, 168, 67],    // #D4A843 Dorado Acento
@@ -92,11 +95,31 @@ export const imageUrlToBase64 = async (url, fallbackInitials = 'M11', isAvatar =
     return url;
   }
 
-  // 2. Si es una URL remota HTTP / HTTPS
-  if (typeof url === 'string' && url.startsWith('http')) {
-    // A. Intento principal: fetch blob con nocache (evita taining de caché en Firebase Storage)
+  // 2. Si es una URL remota HTTP / HTTPS o gs://
+  if (typeof url === 'string' && (url.startsWith('http') || url.startsWith('gs://'))) {
+    // A. Intento principal: Usar getBlob del SDK de Firebase Storage (resuelve 100% de problemas CORS)
+    if (url.includes('firebasestorage') || url.startsWith('gs://')) {
+      try {
+        const fileRef = storageRef(storage, url);
+        const blob = await getBlob(fileRef);
+        const base64 = await new Promise((resolve) => {
+          const reader = new FileReader();
+          reader.onloadend = () => resolve(reader.result);
+          reader.onerror = () => resolve(null);
+          reader.readAsDataURL(blob);
+        });
+        if (base64) {
+          console.log('[pdfTheme] ✅ Imagen cargada desde Firebase Storage con getBlob SDK');
+          return base64;
+        }
+      } catch (sdkErr) {
+        console.warn('[pdfTheme] getBlob de Firebase SDK falló, intentando fetch:', sdkErr);
+      }
+    }
+
+    // B. Intento secundario: fetch blob con nocache (evita taining de caché en Firebase Storage)
     try {
-      const cleanUrl = url.includes('firebasestorage.googleapis.com')
+      const cleanUrl = url.includes('firebasestorage')
         ? (url.includes('?') ? `${url}&nocache=${Date.now()}` : `${url}?nocache=${Date.now()}`)
         : url;
       const res = await fetch(cleanUrl);

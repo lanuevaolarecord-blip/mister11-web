@@ -774,8 +774,20 @@ export const generateSessionPDF = async (session, activeTeam = null, pizarras = 
         const descLines = doc.splitTextToSize(rawDesc, pageW - 45);
         const textH = descLines.length * 4.8;
 
-        // Pre-cargar la imagen del bloque si existe
-        const blockImgSrc = b.imageUrl || b.imagenProtocolo || b.image || b.photo || b.previewUrl;
+        // Pre-cargar la imagen del bloque si existe directamente o mediante capturas vinculadas
+        let blockImgSrc = b.imageUrl || b.imagenProtocolo || b.image || b.photo || b.previewUrl;
+        
+        // Si no tiene imagen directa, buscar en la lista de capturas vinculadas por id, índice o título
+        if (!blockImgSrc && captures && captures.length > 0) {
+          const matchedCap = captures.find(c =>
+            (c.sessionId === session.id && (c.blockId === b.id || c.blockIndex === bi)) ||
+            (c.title && b.name && c.title.toLowerCase().trim() === b.name.toLowerCase().trim())
+          );
+          if (matchedCap) {
+            blockImgSrc = matchedCap.dataUrl || matchedCap.url || matchedCap.imageUrl || matchedCap.thumbnail || matchedCap.imageData;
+          }
+        }
+
         let imgBase64 = null;
         if (blockImgSrc) {
           try {

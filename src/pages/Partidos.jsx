@@ -473,7 +473,7 @@ const Partidos = () => {
       }
       
       const newCalled = [...calledPlayers];
-      while (newCalled.length < 18) {
+      while (newCalled.length < 23) {
         newCalled.push(undefined);
       }
 
@@ -699,7 +699,7 @@ const Partidos = () => {
     if (calledPlayers.includes(id)) {
       setCalledPlayers(calledPlayers.filter(p => p !== id));
     } else {
-      if (calledPlayers.length >= 18) return alert("Máximo 18 convocados permitidos.");
+      if (calledPlayers.length >= 23) return alert("Máximo 23 convocados permitidos.");
       setCalledPlayers([...calledPlayers, id]);
     }
   };
@@ -996,7 +996,7 @@ const Partidos = () => {
               <div className="tab-pane">
                 <div className="conv-header">
                   <h3>Selección de Jugadores</h3>
-                  <div className="conv-count">{calledPlayers.length} / 18 Convocados</div>
+                  <div className="conv-count">{calledPlayers.length} / 23 Convocados</div>
                 </div>
                 <div className="players-checklist">
                   {players.map(p => {

@@ -443,7 +443,7 @@ const Partidos = () => {
       const { generateMatchPdfReport } = await import('../utils/matchPdfReport');
       await generateMatchPdfReport({
         mode: 'POST-MATCH',
-        teamName: activeTeam?.name || 'Mi Equipo',
+        teamName: activeTeam?.nombre || activeTeam?.name || 'Mi Equipo',
         matchData,
         events: effectiveLiveEvents || [],
         players: players || [],
@@ -612,7 +612,7 @@ const Partidos = () => {
     const startDate = parseMatchDateTime(matchData.date, matchData.time);
     const endDate = new Date(startDate.getTime() + 90 * 60 * 1000);
     const url = generateGoogleCalendarUrl({
-      title: `PARTIDO: ${activeTeam?.nombre || 'Míster11 FC'} vs ${matchData.rival}`,
+      title: `PARTIDO: ${activeTeam?.nombre || 'Mi Equipo'} vs ${matchData.rival}`,
       description: `Partido de fútbol. Alineación prevista: ${matchData.lineup || '4-3-3'}.`,
       location: matchData.location || '',
       startDate,
@@ -630,7 +630,7 @@ const Partidos = () => {
     const endDate = new Date(startDate.getTime() + 90 * 60 * 1000);
     const icsContent = generateICSContent([{
       id: matchData.id || `match-${Date.now()}`,
-      title: `PARTIDO: ${activeTeam?.nombre || 'Míster11 FC'} vs ${matchData.rival}`,
+      title: `PARTIDO: ${activeTeam?.nombre || 'Mi Equipo'} vs ${matchData.rival}`,
       description: `Partido de fútbol. Alineación prevista: ${matchData.lineup || '4-3-3'}.`,
       location: matchData.location || '',
       startDate,
@@ -646,7 +646,7 @@ const Partidos = () => {
       const endDate = new Date(startDate.getTime() + 90 * 60 * 1000);
       return {
         id: m.id,
-        title: `PARTIDO: ${activeTeam?.nombre || 'Míster11 FC'} vs ${m.rival}`,
+        title: `PARTIDO: ${activeTeam?.nombre || 'Mi Equipo'} vs ${m.rival}`,
         description: `Partido de fútbol. Alineación prevista: ${m.lineup || '4-3-3'}. Estado: ${m.status}.`,
         location: m.location || '',
         startDate,
@@ -838,7 +838,7 @@ const Partidos = () => {
                           <div className="team-local">
                             {/* Dummy Escudo */}
                             <div style={{width: '32px', height: '32px', borderRadius: '50%', background: 'var(--partidos-border)'}}></div>
-                            <span className="t-name">{m.type === 'Local' ? 'Míster11 FC' : m.rival}</span>
+                            <span className="t-name">{m.type === 'Local' ? (activeTeam?.nombre || 'Mi Equipo') : m.rival}</span>
                           </div>
                           <div className="mc-score">
                             {m.status === 'Terminado' ? (
@@ -848,7 +848,7 @@ const Partidos = () => {
                             )}
                           </div>
                           <div className="team-visit">
-                            <span className="t-name">{m.type === 'Visitante' ? 'Míster11 FC' : m.rival}</span>
+                            <span className="t-name">{m.type === 'Visitante' ? (activeTeam?.nombre || 'Mi Equipo') : m.rival}</span>
                             <div style={{width: '32px', height: '32px', borderRadius: '50%', background: 'var(--partidos-border)'}}></div>
                           </div>
                         </div>
@@ -1298,7 +1298,7 @@ const Partidos = () => {
 
                     <div className="live-scoreboard">
                       <div className="scoreboard-teams">
-                        <div className="scoreboard-team">{activeTeam?.nombre || 'Míster11 FC'}</div>
+                        <div className="scoreboard-team">{activeTeam?.nombre || 'Mi Equipo'}</div>
                         <div className="scoreboard-score">
                           {matchData.goalsFor || 0} - {matchData.goalsAgainst || 0}
                         </div>
@@ -1956,7 +1956,7 @@ const Partidos = () => {
             <div className="modal-body" style={{ textAlign: 'left' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--partidos-player-card-bg)', padding: '16px', borderRadius: '12px', marginBottom: '20px' }}>
                 <div>
-                  <h3 style={{ margin: '0 0 4px 0', fontSize: '1.2rem', fontWeight: '800' }}>{activeTeam?.nombre || 'Míster 11 FC'} vs {matchData.rival}</h3>
+                  <h3 style={{ margin: '0 0 4px 0', fontSize: '1.2rem', fontWeight: '800' }}>{activeTeam?.nombre || 'Mi Equipo'} vs {matchData.rival}</h3>
                   <span style={{ fontSize: '12px', color: 'var(--partidos-text-muted)' }}>{matchData.date} | {matchData.time} | {matchData.location}</span>
                 </div>
                 <div style={{ fontSize: '1.8rem', fontWeight: '800', color: 'var(--partidos-accent)' }}>

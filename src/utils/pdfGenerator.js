@@ -28,8 +28,8 @@ export const savePdfUniversal = async (doc, filename) => {
   }
 };
 
-const getImageBase64 = async (url, fallbackInitials = 'M11') => {
-  return await imageUrlToBase64(url, fallbackInitials);
+const getImageBase64 = async (url, fallbackInitials = 'M11', isAvatar = false) => {
+  return await imageUrlToBase64(url, fallbackInitials, isAvatar);
 };
 
 const addHeader = async (doc, title, subtitle, activeTeam = null) => {

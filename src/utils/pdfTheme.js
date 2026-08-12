@@ -27,13 +27,53 @@ export const PDF_COLORS = {
  * @param {string} url - URL remota
  * @param {string} fallbackInitials - Iniciales para el avatar de fallback si falla la imagen
  */
-export const imageUrlToBase64 = async (url, fallbackInitials = 'M11') => {
-  if (url) {
-    // 1. Intentar convertir cualquier imagen (data:URL o HTTP URL) a PNG nativo mediante Canvas
+const generateInitialsAvatar = (fallbackInitials) => {
+  try {
+    const safeInitials = (fallbackInitials || 'M11').substring(0, 2).toUpperCase();
+    const canvas = document.createElement('canvas');
+    canvas.width = 120;
+    canvas.height = 120;
+    const ctx = canvas.getContext('2d');
+    
+    ctx.fillStyle = '#172D21';
+    ctx.beginPath();
+    ctx.arc(60, 60, 60, 0, 2 * Math.PI);
+    ctx.fill();
+
+    ctx.strokeStyle = '#D4A843';
+    ctx.lineWidth = 4;
+    ctx.beginPath();
+    ctx.arc(60, 60, 56, 0, 2 * Math.PI);
+    ctx.stroke();
+
+    ctx.fillStyle = '#FFFFFF';
+    ctx.font = 'bold 44px Arial, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(safeInitials, 60, 62);
+
+    return canvas.toDataURL('image/png');
+  } catch (e) {
+    return null;
+  }
+};
+
+/**
+ * Convierte una URL remota (Firebase Storage / Web) o DataURL a Base64 data URL PNG nativo.
+ * @param {string} url - URL remota o DataURL
+ * @param {string} fallbackInitials - Iniciales para el avatar de fallback si falla la imagen
+ * @param {boolean} isAvatar - Si es true, genera un avatar con iniciales si falla. Si es false (diagramas/capturas), devuelve null.
+ */
+export const imageUrlToBase64 = async (url, fallbackInitials = 'M11', isAvatar = false) => {
+  if (!url) {
+    return isAvatar ? generateInitialsAvatar(fallbackInitials) : null;
+  }
+
+  // 1. Si la URL ya es una cadena DataURL (data:image/...)
+  if (typeof url === 'string' && url.startsWith('data:image')) {
     try {
       const pngBase64 = await new Promise((resolve) => {
         const img = new Image();
-        img.crossOrigin = 'anonymous';
         img.onload = () => {
           try {
             const canvas = document.createElement('canvas');
@@ -42,21 +82,24 @@ export const imageUrlToBase64 = async (url, fallbackInitials = 'M11') => {
             const ctx = canvas.getContext('2d');
             ctx.drawImage(img, 0, 0);
             resolve(canvas.toDataURL('image/png'));
-          } catch (e) {
-            resolve(null);
-          }
+          } catch (e) { resolve(null); }
         };
         img.onerror = () => resolve(null);
         img.src = url;
       });
       if (pngBase64) return pngBase64;
-    } catch (e) {
-      console.warn('[pdfTheme] Conversión de imagen a PNG en Canvas falló:', e);
-    }
+    } catch (e) {}
+    return url;
+  }
 
-    // 2. Fallback mediante fetch blob (útil para URLs con CORS estricto)
+  // 2. Si es una URL remota HTTP / HTTPS
+  if (typeof url === 'string' && url.startsWith('http')) {
+    // A. Intento principal: fetch blob con nocache (evita taining de caché en Firebase Storage)
     try {
-      const res = await fetch(url, { mode: 'cors' });
+      const cleanUrl = url.includes('firebasestorage.googleapis.com')
+        ? (url.includes('?') ? `${url}&nocache=${Date.now()}` : `${url}?nocache=${Date.now()}`)
+        : url;
+      const res = await fetch(cleanUrl);
       if (res.ok) {
         const blob = await res.blob();
         const base64 = await new Promise((resolve) => {
@@ -71,45 +114,36 @@ export const imageUrlToBase64 = async (url, fallbackInitials = 'M11') => {
       console.warn('[pdfTheme] Fetch blob de imagen falló:', e);
     }
 
-    // 3. Si la URL ya era una cadena DataURL, devolverla como último recurso
-    if (typeof url === 'string' && url.startsWith('data:image')) {
-      return url;
+    // B. Intento secundario: Canvas con Image Element
+    try {
+      const pngBase64 = await new Promise((resolve) => {
+        const img = new Image();
+        img.crossOrigin = 'anonymous';
+        img.onload = () => {
+          try {
+            const canvas = document.createElement('canvas');
+            canvas.width = img.naturalWidth || img.width || 300;
+            canvas.height = img.naturalHeight || img.height || 300;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0);
+            resolve(canvas.toDataURL('image/png'));
+          } catch (e) { resolve(null); }
+        };
+        img.onerror = () => resolve(null);
+        img.src = url;
+      });
+      if (pngBase64) return pngBase64;
+    } catch (e) {
+      console.warn('[pdfTheme] Conversión de imagen a PNG en Canvas falló:', e);
     }
   }
 
-  // 4. Fallback visual: generar PNG con iniciales usando Canvas nativo
-  try {
-    const safeInitials = (fallbackInitials || 'M11').substring(0, 2).toUpperCase();
-    const canvas = document.createElement('canvas');
-    canvas.width = 120;
-    canvas.height = 120;
-    const ctx = canvas.getContext('2d');
-    
-    // Fondo verde institucional
-    ctx.fillStyle = '#172D21';
-    ctx.beginPath();
-    ctx.arc(60, 60, 60, 0, 2 * Math.PI);
-    ctx.fill();
-
-    // Borde dorado
-    ctx.strokeStyle = '#D4A843';
-    ctx.lineWidth = 4;
-    ctx.beginPath();
-    ctx.arc(60, 60, 56, 0, 2 * Math.PI);
-    ctx.stroke();
-
-    // Iniciales en blanco
-    ctx.fillStyle = '#FFFFFF';
-    ctx.font = 'bold 44px Arial, sans-serif';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText(safeInitials, 60, 62);
-
-    return canvas.toDataURL('image/png');
-  } catch (e) {
-    // Fallback de emergencia: PNG transparente 1x1
-    return 'data:image/png;base64,iVBORw0KGgoAAAANSU5EUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==';
+  // 3. Fallback: ÚNICAMENTE generar avatar con iniciales si se solicitó explícitamente para avatares
+  if (isAvatar) {
+    return generateInitialsAvatar(fallbackInitials);
   }
+
+  return null;
 };
 
 /**

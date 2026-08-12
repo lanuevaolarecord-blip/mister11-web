@@ -26,6 +26,10 @@ const EVENT_NAMES_ES = {
   player_no_finish:     'Jugador no finaliza',
   card_own:             'Tarjeta recibida (Propia)',
   card_rival:           'Tarjeta provocada (Rival)',
+  card_yellow_own:      'Tarjeta Amarilla (Propia)',
+  card_red_own:         'Tarjeta Roja (Propia)',
+  card_yellow_rival:    'Tarjeta Amarilla (Rival)',
+  card_red_rival:       'Tarjeta Roja (Rival)',
   corner_favor:         'Corner a favor',
   corner_against:       'Corner en contra',
   offside_own:          'Fuera de juego (Propio)',
@@ -49,6 +53,10 @@ const EVENT_NAMES_EN = {
   player_no_finish:     'Player did not finish',
   card_own:             'Card received (Own)',
   card_rival:           'Card forced (Opponent)',
+  card_yellow_own:      'Yellow Card (Own)',
+  card_red_own:         'Red Card (Own)',
+  card_yellow_rival:    'Yellow Card (Opponent)',
+  card_red_rival:       'Red Card (Opponent)',
   corner_favor:         'Corner in Favor',
   corner_against:       'Corner Against',
   offside_own:          'Offside (Own)',
@@ -328,6 +336,43 @@ export const generateMatchPdfReport = async ({
       });
 
       y = (doc.lastAutoTable ? doc.lastAutoTable.finalY : y + 40) + 8;
+
+      // ── 6b. FOTOGRAFÍAS REGISTRADAS POST-PARTIDO ──
+      const postImages = matchData.postMatchImages || (matchData.postMatchPhoto ? [matchData.postMatchPhoto] : []);
+      if (postImages.length > 0) {
+        if (y + 55 > pageH - 20) {
+          doc.addPage();
+          y = 20;
+        }
+        doc.setFontSize(11);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(...colorPrimary);
+        doc.text(isEn ? 'POST-MATCH PHOTOGRAPHS' : 'FOTOGRAFÍAS REGISTRADAS DEL POST-PARTIDO', 14, y);
+        y += 6;
+
+        for (let img of postImages) {
+          if (!img) continue;
+          try {
+            if (y + 65 > pageH - 20) {
+              doc.addPage();
+              y = 20;
+            }
+            doc.addImage(img, 'JPEG', 14, y, 95, 60);
+            y += 65;
+          } catch (errImg) {
+            try {
+              if (y + 65 > pageH - 20) {
+                doc.addPage();
+                y = 20;
+              }
+              doc.addImage(img, 'PNG', 14, y, 95, 60);
+              y += 65;
+            } catch (e) {
+              console.warn('Could not add post-match image to PDF:', e);
+            }
+          }
+        }
+      }
     }
 
     // ── 7. CRONOLOGÍA DE EVENTOS EN VIVO ──────────────────────────────────

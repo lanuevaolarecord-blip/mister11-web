@@ -151,6 +151,7 @@ const Partidos = () => {
     resetTimer: resetTimerCtx,
     adjustTimer,
     setActiveMatchId,
+    clearActiveMatch,
     currentMinute: ctxCurrentMinute,
     formatMatchTime,
   } = useMatch();
@@ -187,10 +188,13 @@ const Partidos = () => {
     }
   };
 
+  const { matchId: activeMatchIdCtx } = useMatch();
+
   const handleTabChange = useCallback(async (tab) => {
     setEditTab(tab);
     if (matchData.id) {
       try {
+        localStorage.setItem(`mister11_last_edit_tab_${matchData.id}`, tab);
         await updateMatch(matchData.id, { ...matchData, convocados: calledPlayers });
       } catch (err) {
         console.error("Error auto-saving match on tab change:", err);
@@ -212,6 +216,26 @@ const Partidos = () => {
       setActiveMatchId(matchData.id);
     }
   }, [matchData.id, setActiveMatchId]);
+
+  // Restaurar automáticamente el partido activo al volver al módulo Partidos desde otro módulo
+  useEffect(() => {
+    if (activeMatchIdCtx && matches && matches.length > 0 && !matchData?.id) {
+      const activeMatch = matches.find(m => m.id === activeMatchIdCtx);
+      if (activeMatch) {
+        setMatchData({
+          postMatchAnswers: { tactical: '', physical: '', improvement: '', highlights: '' },
+          postMatchImages: [],
+          goleadoresList: [],
+          tarjetasList: [],
+          ...activeMatch
+        });
+        setCalledPlayers(activeMatch.convocados || []);
+        const savedTab = localStorage.getItem(`mister11_last_edit_tab_${activeMatchIdCtx}`);
+        if (savedTab) setEditTab(savedTab);
+        setViewMode('EDIT');
+      }
+    }
+  }, [activeMatchIdCtx, matches, matchData?.id]);
 
   // formatTime usa la función del contexto
   const formatTime = formatMatchTime;
@@ -695,6 +719,13 @@ const Partidos = () => {
     setViewMode('EDIT');
   };
 
+  const handleCloseMatch = () => {
+    setMatchData({});
+    setCalledPlayers([]);
+    clearActiveMatch();
+    setViewMode('LIST');
+  };
+
   const togglePlayerCall = (id) => {
     if (calledPlayers.includes(id)) {
       setCalledPlayers(calledPlayers.filter(p => p !== id));
@@ -782,7 +813,7 @@ const Partidos = () => {
                     <TrashIcon /> ELIMINAR
                   </button>
                 )}
-                <button className="btn-outline-dark flex-1 md:flex-initial px-3 py-2 text-xs md:text-sm" onClick={() => setViewMode('LIST')} style={{ minHeight: '40px' }}>CANCELAR</button>
+                <button className="btn-outline-dark flex-1 md:flex-initial px-3 py-2 text-xs md:text-sm" onClick={handleCloseMatch} style={{ minHeight: '40px' }}>CANCELAR</button>
                 <button className="btn-primary-dark flex-1 md:flex-initial px-3 py-2 text-xs md:text-sm" onClick={handleSaveMatch} disabled={isSaving} style={{ minHeight: '40px' }}>
                   {isSaving ? 'GUARDANDO...' : 'GUARDAR PARTIDO'}
                 </button>

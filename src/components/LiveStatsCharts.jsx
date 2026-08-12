@@ -144,8 +144,8 @@ export const SvgComparisonBars = ({ events, darkMode: darkModeProp }) => {
     },
     {
       title: 'Tarjetas',
-      own: events.filter((e) => e.type === 'card_own').length,
-      rival: events.filter((e) => e.type === 'card_rival').length,
+      own: events.filter((e) => e.type === 'card_own' || e.type === 'card_yellow_own' || e.type === 'card_red_own').length,
+      rival: events.filter((e) => e.type === 'card_rival' || e.type === 'card_yellow_rival' || e.type === 'card_red_rival').length,
     },
     {
       title: 'Fueras de juego',

@@ -31,6 +31,10 @@ export const EVENT_TYPES = [
   'shot_off_target_rival',
   'card_own',
   'card_rival',
+  'card_yellow_own',
+  'card_red_own',
+  'card_yellow_rival',
+  'card_red_rival',
   'foul_favor',
   'foul_against',
   'duel_won',
@@ -53,7 +57,20 @@ export const EVENT_TYPES = [
  */
 export const useLiveStats = (teamId, matchId, currentMinute, currentHalf = 1) => {
   const { user, getTeamPath } = useAuth();
-  const [events, setEvents] = useState([]);
+  
+  const cacheKey = matchId ? `mister11_livestats_${matchId}` : null;
+
+  // Inicializar estado local desde localStorage para respuesta instantánea (0ms)
+  const [events, setEvents] = useState(() => {
+    if (cacheKey) {
+      try {
+        const stored = localStorage.getItem(cacheKey);
+        if (stored) return JSON.parse(stored);
+      } catch (_) {}
+    }
+    return [];
+  });
+
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
 
@@ -62,8 +79,21 @@ export const useLiveStats = (teamId, matchId, currentMinute, currentHalf = 1) =>
 
   // ── Escuchar eventos en tiempo real con onSnapshot ────────────────────────
   useEffect(() => {
-    // Resetear inmediatamente el estado local al cambiar de partido o ruta
-    setEvents([]);
+    if (!matchId) {
+      setEvents([]);
+      return;
+    }
+
+    // Cargar caché local de forma síncrona si existe
+    if (cacheKey) {
+      try {
+        const stored = localStorage.getItem(cacheKey);
+        if (stored) {
+          const parsed = JSON.parse(stored);
+          if (parsed.length > 0) setEvents(parsed);
+        }
+      } catch (_) {}
+    }
 
     if (!fullCollectionPath) {
       return;
@@ -78,8 +108,9 @@ export const useLiveStats = (teamId, matchId, currentMinute, currentHalf = 1) =>
         if (snap && snap.docs) {
           const docs = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
           setEvents(docs);
-        } else {
-          setEvents([]);
+          if (cacheKey) {
+            try { localStorage.setItem(cacheKey, JSON.stringify(docs)); } catch (_) {}
+          }
         }
         setLoading(false);
       },
@@ -90,7 +121,7 @@ export const useLiveStats = (teamId, matchId, currentMinute, currentHalf = 1) =>
     );
 
     return () => unsubscribe();
-  }, [fullCollectionPath]);
+  }, [fullCollectionPath, matchId, cacheKey]);
 
   // ── Añadir un evento (Incremento inmediato optimista + Persistencia) ──────
   const addLiveEvent = useCallback(
@@ -105,8 +136,14 @@ export const useLiveStats = (teamId, matchId, currentMinute, currentHalf = 1) =>
         timestamp: new Date().toISOString(),
       };
 
-      // 1. Incremento optimista inmediato en el estado local (0 ms latencia)
-      setEvents((prev) => [...prev, localDoc]);
+      // 1. Incremento optimista inmediato en el estado local y localStorage (0 ms latencia)
+      setEvents((prev) => {
+        const next = [...prev, localDoc];
+        if (cacheKey) {
+          try { localStorage.setItem(cacheKey, JSON.stringify(next)); } catch (_) {}
+        }
+        return next;
+      });
 
       // 2. Persistencia en Firestore en segundo plano si hay ruta válida
       if (fullCollectionPath) {
@@ -130,12 +167,15 @@ export const useLiveStats = (teamId, matchId, currentMinute, currentHalf = 1) =>
 
       return newId;
     },
-    [fullCollectionPath, currentMinute, currentHalf]
+    [fullCollectionPath, currentMinute, currentHalf, cacheKey]
   );
 
   // ── Reiniciar todos los eventos del partido (Reset a 0) ───────────────────
   const resetLiveStats = useCallback(async () => {
     setEvents([]);
+    if (cacheKey) {
+      try { localStorage.removeItem(cacheKey); } catch (_) {}
+    }
     if (fullCollectionPath) {
       setSaving(true);
       try {
@@ -154,7 +194,7 @@ export const useLiveStats = (teamId, matchId, currentMinute, currentHalf = 1) =>
         setSaving(false);
       }
     }
-  }, [fullCollectionPath]);
+  }, [fullCollectionPath, cacheKey]);
 
   // ── Conteo por tipo ───────────────────────────────────────────────────────
   const countByType = useCallback(

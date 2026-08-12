@@ -34,12 +34,12 @@ const getEffectiveLanguage = (settingsObj) => {
 
 // Pestañas con traducción automática
 const TABS_CONFIG = [
-  { id: 'PRE-PARTIDO',   es: 'PRE-PARTIDO',      en: 'PRE-MATCH' },
-  { id: 'CONVOCATORIA',  es: 'CONVOCATORIA',      en: 'SQUAD' },
-  { id: 'ALINEACIÓN',    es: 'ALINEACIÓN',         en: 'LINEUP' },
-  { id: 'MATCH-DAY',     es: 'DÍA DEL PARTIDO',   en: 'MATCH-DAY' },
-  { id: 'LIVE-STATS',    es: 'ESTADÍSTICAS',      en: 'LIVE STATS' },
-  { id: 'POST-PARTIDO',  es: 'POST-PARTIDO',      en: 'POST-MATCH' },
+  { id: 'PRE-PARTIDO', es: 'PRE-PARTIDO', en: 'PRE-MATCH' },
+  { id: 'CONVOCATORIA', es: 'CONVOCATORIA', en: 'SQUAD' },
+  { id: 'ALINEACIÓN', es: 'ALINEACIÓN', en: 'LINEUP' },
+  { id: 'MATCH-DAY', es: 'DÍA DEL PARTIDO', en: 'MATCH-DAY' },
+  { id: 'LIVE-STATS', es: 'ESTADÍSTICAS', en: 'LIVE STATS' },
+  { id: 'POST-PARTIDO', es: 'POST-PARTIDO', en: 'POST-MATCH' },
 ];
 
 // Auxiliar para determinar la zona general de una posición táctica
@@ -105,12 +105,12 @@ const Partidos = () => {
   const { settings } = useSettings(activeTeamId);
   const { activeTeam } = useTeams();
   const { darkMode } = useTheme();
-  
+
   const [viewMode, setViewMode] = useState('LIST'); // 'LIST' or 'EDIT'
   const [mainTab, setMainTab] = useState('LIST'); // 'LIST' or 'ANALISIS'
   const [filterMode, setFilterMode] = useState('Todos'); // 'Todos', 'Pendientes', 'Terminados'
   const [isSaving, setIsSaving] = useState(false);
-  
+
   // Edit State
   const [editTab, setEditTab] = useState('PRE-PARTIDO');
   const [matchData, setMatchData] = useState({});
@@ -151,7 +151,6 @@ const Partidos = () => {
     resetTimer: resetTimerCtx,
     adjustTimer,
     setActiveMatchId,
-    clearActiveMatch,
     currentMinute: ctxCurrentMinute,
     formatMatchTime,
   } = useMatch();
@@ -160,7 +159,7 @@ const Partidos = () => {
   const [subInId, setSubInId] = useState('');
   const [pendingEventType, setPendingEventType] = useState(null); // 'amarilla' | 'roja' | 'lesion' | 'gol_local'
   const [showEventPlayerSelector, setShowEventPlayerSelector] = useState(false);
-  
+
   const [isFullscreen, setIsFullscreen] = useState(false);
   const matchDayRef = useRef(null);
 
@@ -360,7 +359,7 @@ const Partidos = () => {
   const handleImageUpload = (e) => {
     const files = Array.from(e.target.files);
     if (!files.length) return;
-    
+
     files.forEach(file => {
       const reader = new FileReader();
       reader.readAsDataURL(file);
@@ -371,7 +370,7 @@ const Partidos = () => {
           const canvas = document.createElement('canvas');
           let width = img.width;
           let height = img.height;
-          
+
           const MAX_WIDTH = 800;
           const MAX_HEIGHT = 800;
           if (width > height) {
@@ -385,14 +384,14 @@ const Partidos = () => {
               height = MAX_HEIGHT;
             }
           }
-          
+
           canvas.width = width;
           canvas.height = height;
           const ctx = canvas.getContext('2d');
           ctx.drawImage(img, 0, 0, width, height);
-          
+
           const compressedBase64 = canvas.toDataURL('image/jpeg', 0.6);
-          
+
           setMatchData(prev => ({
             ...prev,
             postMatchImages: [...(prev.postMatchImages || []), compressedBase64]
@@ -426,45 +425,24 @@ const Partidos = () => {
     }
     let lineupImageBase64 = null;
     try {
+      const { imageUrlToBase64, generateMatchPdfReport } = await import('../utils/matchPdfReport');
       const pitchElem = document.getElementById('export-pitch-container') || document.querySelector('.alin-pitch-container-h3d');
       if (pitchElem) {
-        // Pre-convertir imágenes externas a Base64 data URLs para asegurar que html2canvas las renderice sin fallos CORS
-        const images = pitchElem.querySelectorAll('img');
-        const loadPromises = Array.from(images).map((img) => {
-          return new Promise((resolve) => {
-            if (!img.src || img.src.startsWith('data:image')) return resolve();
-            const tempImg = new Image();
-            tempImg.crossOrigin = 'anonymous';
-            tempImg.onload = () => {
-              try {
-                const canvas = document.createElement('canvas');
-                canvas.width = tempImg.naturalWidth || tempImg.width || 100;
-                canvas.height = tempImg.naturalHeight || tempImg.height || 100;
-                const ctx = canvas.getContext('2d');
-                ctx.drawImage(tempImg, 0, 0);
-                img.src = canvas.toDataURL('image/png');
-              } catch (e) {
-                console.warn('CORS convert warning:', e);
-              }
-              resolve();
-            };
-            tempImg.onerror = () => resolve();
-            tempImg.src = img.src;
-          });
-        });
-        await Promise.all(loadPromises);
-        await new Promise((r) => setTimeout(r, 120));
+        // Pre-convertir avatares y fotos de jugadores a Base64 data URLs con imageUrlToBase64
+        const images = Array.from(pitchElem.querySelectorAll('img'));
+        await Promise.all(images.map(async (img) => {
+          if (img.src && !img.src.startsWith('data:image')) {
+            const b64 = await imageUrlToBase64(img.src);
+            if (b64) img.src = b64;
+          }
+        }));
+        await new Promise((r) => setTimeout(r, 200));
 
         const { default: html2canvas } = await import('html2canvas');
-        const canvas = await html2canvas(pitchElem, { scale: 2, useCORS: true, allowTaint: true, backgroundColor: null });
+        const canvas = await html2canvas(pitchElem, { scale: 2, useCORS: true, allowTaint: true, backgroundColor: '#0B1812' });
         lineupImageBase64 = canvas.toDataURL('image/png');
       }
-    } catch (e) {
-      console.error("Error al capturar alineación táctica para el PDF:", e);
-    }
 
-    try {
-      const { generateMatchPdfReport } = await import('../utils/matchPdfReport');
       await generateMatchPdfReport({
         mode: 'POST-MATCH',
         teamName: activeTeam?.nombre || activeTeam?.name || 'Mi Equipo',
@@ -474,9 +452,8 @@ const Partidos = () => {
         lineupImage: lineupImageBase64,
         language: getEffectiveLanguage(settings?.language),
       });
-    } catch (err) {
-      console.error("Error al generar el informe PDF de partido:", err);
-      generatePostMatchReportPDF(matchData, players, activeTeam, lineupImageBase64);
+    } catch (e) {
+      console.error("Error al exportar el PDF del partido:", e);
     }
   };
 
@@ -495,7 +472,7 @@ const Partidos = () => {
         setSelectedSlotIdx(null);
         return;
       }
-      
+
       const newCalled = [...calledPlayers];
       while (newCalled.length < 23) {
         newCalled.push(undefined);
@@ -504,7 +481,7 @@ const Partidos = () => {
       const temp = newCalled[selectedSlotIdx];
       newCalled[selectedSlotIdx] = newCalled[idx];
       newCalled[idx] = temp;
-      
+
       const cleanedCalled = newCalled.map(item => item === undefined ? null : item);
       while (cleanedCalled.length > 0 && cleanedCalled[cleanedCalled.length - 1] === null) {
         cleanedCalled.pop();
@@ -598,20 +575,20 @@ const Partidos = () => {
   const handlePitchPointerMove = (e) => {
     if (draggingIdx === null || !pitchRef.current) return;
     const rect = pitchRef.current.getBoundingClientRect();
-    
+
     let clientX = e.clientX;
     let clientY = e.clientY;
     if (e.touches && e.touches.length > 0) {
       clientX = e.touches[0].clientX;
       clientY = e.touches[0].clientY;
     }
-    
+
     const dist = Math.hypot(clientX - dragStartPosRef.current.x, clientY - dragStartPosRef.current.y);
     draggedDistanceRef.current = dist;
-    
+
     const xRel = Math.max(0, Math.min(100, ((clientX - rect.left) / rect.width) * 100));
     const yRel = Math.max(0, Math.min(100, ((clientY - rect.top) / rect.height) * 100));
-    
+
     setMatchData(prev => ({
       ...prev,
       customPositions: {
@@ -701,29 +678,22 @@ const Partidos = () => {
       tarjetasList: []
     };
     setMatchData(newMatch);
-    setCalledPlayers([]); 
+    setCalledPlayers([]);
     setEditTab('PRE-PARTIDO');
     setViewMode('EDIT');
   };
 
   const handleEditMatch = (match) => {
-    setMatchData({ 
+    setMatchData({
       postMatchAnswers: { tactical: '', physical: '', improvement: '', highlights: '' },
       postMatchImages: [],
       goleadoresList: [],
       tarjetasList: [],
-      ...match 
+      ...match
     });
     setCalledPlayers(match.convocados || []);
     setEditTab('PRE-PARTIDO');
     setViewMode('EDIT');
-  };
-
-  const handleCloseMatch = () => {
-    setMatchData({});
-    setCalledPlayers([]);
-    clearActiveMatch();
-    setViewMode('LIST');
   };
 
   const togglePlayerCall = (id) => {
@@ -767,7 +737,7 @@ const Partidos = () => {
   const filteredMatches = matches.filter(m => {
     if (filterMode === 'Pendientes') return m.status === 'Pendiente';
     if (filterMode === 'Terminados') return m.status === 'Terminado';
-    return true; 
+    return true;
   }).sort((a, b) => {
     if (!a.date) return 1;
     if (!b.date) return -1;
@@ -775,7 +745,7 @@ const Partidos = () => {
   });
 
   if (loadingMatches || loadingPlayers) {
-    return <div style={{padding: '24px', color: 'var(--partidos-text-primary)'}}>Cargando datos...</div>;
+    return <div style={{ padding: '24px', color: 'var(--partidos-text-primary)' }}>Cargando datos...</div>;
   }
 
   return (
@@ -787,8 +757,8 @@ const Partidos = () => {
             {viewMode === 'LIST' ? (
               <>
                 {matches.length > 0 && (
-                  <button 
-                    className="btn-outline-dark flex-1 md:flex-initial px-3 py-2 text-xs md:text-sm" 
+                  <button
+                    className="btn-outline-dark flex-1 md:flex-initial px-3 py-2 text-xs md:text-sm"
                     onClick={handleExportAllMatchesICS}
                     style={{ minHeight: '40px', fontWeight: 'bold' }}
                   >
@@ -800,9 +770,9 @@ const Partidos = () => {
             ) : (
               <>
                 {matchData.id && matchData.status !== 'Terminado' && (
-                  <button 
-                    className="btn-success flex-1 md:flex-initial px-3 py-2 text-xs md:text-sm" 
-                    onClick={handleFinishMatch} 
+                  <button
+                    className="btn-success flex-1 md:flex-initial px-3 py-2 text-xs md:text-sm"
+                    onClick={handleFinishMatch}
                     style={{ minHeight: '40px', background: '#10B981', color: '#FFFFFF', fontWeight: 'bold' }}
                   >
                     🏁 FINALIZAR PARTIDO
@@ -813,7 +783,7 @@ const Partidos = () => {
                     <TrashIcon /> ELIMINAR
                   </button>
                 )}
-                <button className="btn-outline-dark flex-1 md:flex-initial px-3 py-2 text-xs md:text-sm" onClick={handleCloseMatch} style={{ minHeight: '40px' }}>CANCELAR</button>
+                <button className="btn-outline-dark flex-1 md:flex-initial px-3 py-2 text-xs md:text-sm" onClick={() => setViewMode('LIST')} style={{ minHeight: '40px' }}>CANCELAR</button>
                 <button className="btn-primary-dark flex-1 md:flex-initial px-3 py-2 text-xs md:text-sm" onClick={handleSaveMatch} disabled={isSaving} style={{ minHeight: '40px' }}>
                   {isSaving ? 'GUARDANDO...' : 'GUARDAR PARTIDO'}
                 </button>
@@ -826,14 +796,14 @@ const Partidos = () => {
       {viewMode === 'LIST' && (
         <>
           <div className="list-filters px-4" style={{ margin: '16px auto 0', maxWidth: '1400px' }}>
-            <button 
+            <button
               className={`filter-tab ${mainTab === 'LIST' ? 'active' : ''}`}
               onClick={() => setMainTab('LIST')}
               style={{ minHeight: '44px', fontWeight: 'bold' }}
             >
               📋 {t('partidos.tab.lista', settings?.language)}
             </button>
-            <button 
+            <button
               className={`filter-tab ${mainTab === 'ANALISIS' ? 'active' : ''}`}
               onClick={() => setMainTab('ANALISIS')}
               style={{ minHeight: '44px', fontWeight: 'bold' }}
@@ -845,7 +815,7 @@ const Partidos = () => {
           {mainTab === 'LIST' ? (
             <div className="partidos-list-container">
               {matches.length === 0 ? (
-                <div style={{textAlign: 'center', marginTop: '40px', color: 'var(--partidos-text-muted)'}}>
+                <div style={{ textAlign: 'center', marginTop: '40px', color: 'var(--partidos-text-muted)' }}>
                   <h2>No hay partidos registrados</h2>
                   <p>Comienza añadiendo un nuevo partido.</p>
                 </div>
@@ -856,7 +826,7 @@ const Partidos = () => {
                     <button className={`filter-tab ${filterMode === 'Pendientes' ? 'active' : ''}`} onClick={() => setFilterMode('Pendientes')}>Pendientes</button>
                     <button className={`filter-tab ${filterMode === 'Terminados' ? 'active' : ''}`} onClick={() => setFilterMode('Terminados')}>Terminados</button>
                   </div>
-                  
+
                   <div className="matches-grid">
                     {filteredMatches.map(m => (
                       <div key={m.id} className="match-card" onClick={() => handleEditMatch(m)}>
@@ -864,11 +834,11 @@ const Partidos = () => {
                           <span className={`status-badge ${m.status?.toLowerCase()}`}>{m.status}</span>
                           <span className="mc-date">{m.date ? m.date.split('-').reverse().join('/') : '--/--/--'} - {m.time || '--:--'}</span>
                         </div>
-                        
+
                         <div className="mc-body">
                           <div className="team-local">
                             {/* Dummy Escudo */}
-                            <div style={{width: '32px', height: '32px', borderRadius: '50%', background: 'var(--partidos-border)'}}></div>
+                            <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: 'var(--partidos-border)' }}></div>
                             <span className="t-name">{m.type === 'Local' ? (activeTeam?.nombre || 'Mi Equipo') : m.rival}</span>
                           </div>
                           <div className="mc-score">
@@ -880,10 +850,10 @@ const Partidos = () => {
                           </div>
                           <div className="team-visit">
                             <span className="t-name">{m.type === 'Visitante' ? (activeTeam?.nombre || 'Mi Equipo') : m.rival}</span>
-                            <div style={{width: '32px', height: '32px', borderRadius: '50%', background: 'var(--partidos-border)'}}></div>
+                            <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: 'var(--partidos-border)' }}></div>
                           </div>
                         </div>
-                        
+
                         <div className="mc-footer">
                           <span>📍 {m.location || 'Sin ubicación'}</span>
                           <span>🛡️ Formación: {m.lineup || '4-3-3'}</span>
@@ -910,8 +880,8 @@ const Partidos = () => {
         <div className="partidos-editor-container p-4 sm:p-6 lg:p-8">
           <div className="editor-tabs mt-2 flex flex-row flex-nowrap overflow-x-auto whitespace-nowrap scrollbar-none px-4 sm:px-6 lg:px-8">
             {TABS_CONFIG.map(tabObj => (
-              <button 
-                key={tabObj.id} 
+              <button
+                key={tabObj.id}
                 className={`e-tab ${editTab === tabObj.id ? 'active' : ''}`}
                 onClick={() => handleTabChange(tabObj.id)}
               >
@@ -928,39 +898,39 @@ const Partidos = () => {
                 <div className="form-grid grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
                   <div className="form-group full">
                     <label>Equipo Rival</label>
-                    <input type="text" className="partidos-input" value={matchData.rival} onChange={e => setMatchData({...matchData, rival: e.target.value})} onBlur={e => setMatchData(prev => ({...prev, rival: normalizeText(e.target.value)}))} placeholder="Ej. fomento castellon" />
+                    <input type="text" className="partidos-input" value={matchData.rival} onChange={e => setMatchData({ ...matchData, rival: e.target.value })} onBlur={e => setMatchData(prev => ({ ...prev, rival: normalizeText(e.target.value) }))} placeholder="Ej. fomento castellon" />
                   </div>
                   <div className="form-group quarter">
                     <label>Fecha</label>
-                    <input type="date" className="partidos-input" value={matchData.date} onChange={e => setMatchData({...matchData, date: e.target.value})} />
+                    <input type="date" className="partidos-input" value={matchData.date} onChange={e => setMatchData({ ...matchData, date: e.target.value })} />
                   </div>
                   <div className="form-group quarter">
                     <label>Hora</label>
-                    <input type="time" className="partidos-input" value={matchData.time} onChange={e => setMatchData({...matchData, time: e.target.value})} />
+                    <input type="time" className="partidos-input" value={matchData.time} onChange={e => setMatchData({ ...matchData, time: e.target.value })} />
                   </div>
                   <div className="form-group quarter">
                     <label>Local / Visitante</label>
-                    <select className="partidos-input" value={matchData.type} onChange={e => setMatchData({...matchData, type: e.target.value})}>
+                    <select className="partidos-input" value={matchData.type} onChange={e => setMatchData({ ...matchData, type: e.target.value })}>
                       <option value="Local">Local</option>
                       <option value="Visitante">Visitante</option>
                     </select>
                   </div>
                   <div className="form-group quarter">
                     <label>Estado</label>
-                    <select className="partidos-input" value={matchData.status} onChange={e => setMatchData({...matchData, status: e.target.value})}>
+                    <select className="partidos-input" value={matchData.status} onChange={e => setMatchData({ ...matchData, status: e.target.value })}>
                       <option value="Pendiente">Pendiente</option>
                       <option value="Terminado">Terminado</option>
                     </select>
                   </div>
                   <div className="form-group half">
                     <label>Estadio / Lugar</label>
-                    <input type="text" className="partidos-input" value={matchData.location} onChange={e => setMatchData({...matchData, location: e.target.value})} onBlur={e => setMatchData(prev => ({...prev, location: normalizeText(e.target.value)}))} placeholder="Ej. facsa castellon c.d" />
+                    <input type="text" className="partidos-input" value={matchData.location} onChange={e => setMatchData({ ...matchData, location: e.target.value })} onBlur={e => setMatchData(prev => ({ ...prev, location: normalizeText(e.target.value) }))} placeholder="Ej. facsa castellon c.d" />
                   </div>
                   <div className="form-group full" style={{ marginTop: '16px' }}>
                     <label>Sincronización de Calendario</label>
                     <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
-                      <button 
-                        type="button" 
+                      <button
+                        type="button"
                         onClick={handleAddToGoogleCalendar}
                         style={{
                           backgroundColor: '#1B3A2D',
@@ -980,8 +950,8 @@ const Partidos = () => {
                       >
                         📅 Google Calendar
                       </button>
-                      <button 
-                        type="button" 
+                      <button
+                        type="button"
                         onClick={handleExportICS}
                         style={{
                           backgroundColor: '#4CAF7D',
@@ -1092,17 +1062,17 @@ const Partidos = () => {
 
                   {/* XI Titular - en una sola columna para nombre completo */}
                   <div>
-                    <h4 style={{margin: '8px 0'}}>XI Titular <span style={{fontSize:'12px', fontWeight:'normal', color:'var(--partidos-text-muted)'}}>({calledPlayers.slice(0,11).filter(Boolean).length}/11)</span></h4>
+                    <h4 style={{ margin: '8px 0' }}>XI Titular <span style={{ fontSize: '12px', fontWeight: 'normal', color: 'var(--partidos-text-muted)' }}>({calledPlayers.slice(0, 11).filter(Boolean).length}/11)</span></h4>
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '6px' }}>
                       {Array.from({ length: 11 }).map((_, idx) => {
                         const pid = calledPlayers[idx];
                         const player = pid ? players.find(p => p.id === pid) : null;
                         const posName = getSlotPosition(idx);
                         const isSelected = selectedSlotIdx === idx;
-                        
+
                         return (
-                          <div 
-                            key={`starter-${idx}`} 
+                          <div
+                            key={`starter-${idx}`}
                             className={`alin-player-item ${player ? '' : 'empty-slot'} ${isSelected ? 'selected-swap' : ''}`}
                             onClick={() => handleSlotClick(idx)}
                             style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: '10px 14px', gap: '10px', cursor: 'pointer', minWidth: 0 }}
@@ -1120,17 +1090,17 @@ const Partidos = () => {
 
                   {/* Suplentes - en una sola columna para nombre completo */}
                   <div>
-                    <h4 style={{margin: '8px 0'}}>Suplentes <span style={{fontSize:'12px', fontWeight:'normal', color:'var(--partidos-text-muted)'}}>({calledPlayers.slice(11).filter(Boolean).length}/7)</span></h4>
+                    <h4 style={{ margin: '8px 0' }}>Suplentes <span style={{ fontSize: '12px', fontWeight: 'normal', color: 'var(--partidos-text-muted)' }}>({calledPlayers.slice(11).filter(Boolean).length}/7)</span></h4>
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '6px' }}>
                       {Array.from({ length: 7 }).map((_, subIdx) => {
                         const idx = 11 + subIdx;
                         const pid = calledPlayers[idx];
                         const player = pid ? players.find(p => p.id === pid) : null;
                         const isSelected = selectedSlotIdx === idx;
-                        
+
                         return (
-                          <div 
-                            key={`sub-${idx}`} 
+                          <div
+                            key={`sub-${idx}`}
                             className={`alin-player-item ${player ? '' : 'empty-slot'} ${isSelected ? 'selected-swap' : ''}`}
                             onClick={() => handleSlotClick(idx)}
                             style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: '10px 14px', gap: '10px', cursor: 'pointer', minWidth: 0 }}
@@ -1151,9 +1121,9 @@ const Partidos = () => {
                       <h5>Asignar Posición</h5>
                       <div className="pos-badges-grid">
                         {['POR', 'LTD', 'DEF', 'LTI', 'MCD', 'MC', 'MCO', 'EXT', 'DEL'].map(posName => (
-                          <button 
-                            key={posName} 
-                            type="button" 
+                          <button
+                            key={posName}
+                            type="button"
                             className={`pos-badge-btn ${getSlotPosition(selectedSlotIdx) === posName ? 'active' : ''}`}
                             onClick={() => handleAssignPosition(selectedSlotIdx, posName)}
                           >
@@ -1176,11 +1146,11 @@ const Partidos = () => {
                     position: 'relative',
                   }}
                 >
-                  <div 
+                  <div
                     className="alin-pitch-container-h3d"
-                    ref={pitchRef} 
-                    onPointerMove={handlePitchPointerMove} 
-                    onTouchMove={handlePitchPointerMove} 
+                    ref={pitchRef}
+                    onPointerMove={handlePitchPointerMove}
+                    onTouchMove={handlePitchPointerMove}
                     style={{ touchAction: 'none' }}
                   >
                     {/* Terreno de juego HORIZONTAL NATIVO */}
@@ -1193,13 +1163,13 @@ const Partidos = () => {
                       <div className="pitch-h-penalty-right"></div>
                       <div className="pitch-h-goal-right"></div>
                     </div>
-                    
+
                     {/* Fichas de Jugadores — posiciones directas de formaciones.js (ya en horizontal) */}
                     {getFormationPositions(matchData.lineup || '4-3-3').map((pos, idx) => {
                       const pid = calledPlayers[idx];
                       const player = pid ? players.find(p => p.id === pid) : null;
                       const customPos = matchData.customPositions && matchData.customPositions[idx];
-                      
+
                       // Las posiciones en formaciones.js ya son HORIZONTALES: left=X, top=Y
                       // Clampear top entre 5% y 92% para que el usuario pueda llevar jugadores hasta las dos líneas de banda
                       const rawTop = parseFloat(customPos ? customPos.top : pos.top);
@@ -1210,15 +1180,15 @@ const Partidos = () => {
                       const posLabel = getSlotPosition(idx);
                       const isSelected = selectedSlotIdx === idx;
                       const photoUrl = player ? (player.avatarUrl || player.photoUrl || player.photo || player.photoPreview) : null;
-                      
+
                       return (
-                        <div 
-                          key={idx} 
+                        <div
+                          key={idx}
                           className={`pitch-player-3d ${player ? '' : 'empty-slot'} ${isSelected ? 'selected-swap' : ''}`}
-                          style={{ 
-                            top: topPos, 
-                            left: leftPos, 
-                            zIndex: draggingIdx === idx ? 99 : isSelected ? 30 : 10 
+                          style={{
+                            top: topPos,
+                            left: leftPos,
+                            zIndex: draggingIdx === idx ? 99 : isSelected ? 30 : 10
                           }}
                           title={player ? `Jugador: ${player.name}\nDorsal: ${player.number || '-'}\nPosición: ${player.position || posLabel}` : 'Slot Vacío'}
                           onPointerDown={(e) => handleDragStart(e, idx)}
@@ -1260,14 +1230,14 @@ const Partidos = () => {
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '15px', marginBottom: '12px' }}>
                   <h3 className="section-title" style={{ margin: 0 }}>⏱️ Panel de Control - Día del Partido</h3>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                    <button 
+                    <button
                       type="button"
                       onClick={handleFinishMatch}
-                      style={{ 
-                        display: 'flex', 
-                        alignItems: 'center', 
-                        gap: '6px', 
-                        padding: '10px 16px', 
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '6px',
+                        padding: '10px 16px',
                         minHeight: '44px',
                         cursor: 'pointer',
                         border: 'none',
@@ -1282,15 +1252,15 @@ const Partidos = () => {
                     >
                       {matchData.status === 'Terminado' ? '✓ Partido Terminado' : '🏁 Finalizar Partido'}
                     </button>
-                    <button 
+                    <button
                       type="button"
-                      className="btn-outline-dark" 
+                      className="btn-outline-dark"
                       onClick={toggleFullscreen}
-                      style={{ 
-                        display: 'flex', 
-                        alignItems: 'center', 
-                        gap: '8px', 
-                        padding: '10px 16px', 
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                        padding: '10px 16px',
                         minHeight: '44px',
                         cursor: 'pointer',
                         border: '1px solid var(--partidos-border)',
@@ -1306,14 +1276,14 @@ const Partidos = () => {
                     </button>
                   </div>
                 </div>
-                
+
                 <div className="match-day-grid">
                   {/* Cronómetro y Marcador */}
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
                     <div className="timer-card">
                       <span className="timer-display">{formatTime(matchSeconds)}</span>
                       <div className="timer-controls">
-                        <button 
+                        <button
                           className={`timer-btn ${isTimerRunning ? 'pause' : 'start'}`}
                           onClick={handleTimerToggle}
                         >
@@ -1349,9 +1319,9 @@ const Partidos = () => {
                       <div className="sub-selectors">
                         <div>
                           <label className="input-label-caps" style={{ fontSize: '11px' }}>Sale (Titular)</label>
-                          <select 
-                            className="partidos-input" 
-                            value={subOutId} 
+                          <select
+                            className="partidos-input"
+                            value={subOutId}
                             onChange={e => setSubOutId(e.target.value)}
                           >
                             <option value="">Seleccionar...</option>
@@ -1363,9 +1333,9 @@ const Partidos = () => {
                         </div>
                         <div>
                           <label className="input-label-caps" style={{ fontSize: '11px' }}>Entra (Suplente)</label>
-                          <select 
-                            className="partidos-input" 
-                            value={subInId} 
+                          <select
+                            className="partidos-input"
+                            value={subInId}
                             onChange={e => setSubInId(e.target.value)}
                           >
                             <option value="">Seleccionar...</option>
@@ -1376,9 +1346,9 @@ const Partidos = () => {
                           </select>
                         </div>
                       </div>
-                      <button 
-                        className="btn-success-green-allcaps" 
-                        style={{ width: '100%', minHeight: '48px' }} 
+                      <button
+                        className="btn-success-green-allcaps"
+                        style={{ width: '100%', minHeight: '48px' }}
                         onClick={handleMakeSubstitution}
                       >
                         🔄 Confirmar Sustitución
@@ -1432,21 +1402,21 @@ const Partidos = () => {
                       <div className="event-selector-modal" onClick={e => e.stopPropagation()}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                           <h4 className="event-selector-title">
-                            {pendingEventType === 'gol_local' ? '⚽ Seleccionar Goleador' : 
-                             pendingEventType === 'amarilla' ? '🟨 Tarjeta Amarilla' :
-                             pendingEventType === 'roja' ? '🟥 Tarjeta Roja' : '🩺 Registrar Lesión'}
+                            {pendingEventType === 'gol_local' ? '⚽ Seleccionar Goleador' :
+                              pendingEventType === 'amarilla' ? '🟨 Tarjeta Amarilla' :
+                                pendingEventType === 'roja' ? '🟥 Tarjeta Roja' : '🩺 Registrar Lesión'}
                           </h4>
-                          <button 
+                          <button
                             onClick={() => setShowEventPlayerSelector(false)}
                             style={{ background: 'none', border: 'none', fontSize: '18px', cursor: 'pointer', color: 'var(--partidos-text-primary)' }}
                           >✕</button>
                         </div>
-                        
+
                         <div className="event-selector-list">
                           {calledPlayers.slice(0, 11).map(id => {
                             const p = players.find(pl => pl.id === id);
                             return p ? (
-                              <button 
+                              <button
                                 key={id}
                                 className="event-selector-item"
                                 type="button"
@@ -1486,14 +1456,14 @@ const Partidos = () => {
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px', marginBottom: '16px' }}>
                   <h3 className="section-title" style={{ margin: 0 }}>📊 Informe Post-Partido y Análisis</h3>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                    <button 
+                    <button
                       type="button"
                       onClick={handleFinishMatch}
-                      style={{ 
-                        display: 'flex', 
-                        alignItems: 'center', 
-                        gap: '6px', 
-                        padding: '10px 16px', 
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '6px',
+                        padding: '10px 16px',
                         minHeight: '44px',
                         cursor: 'pointer',
                         border: 'none',
@@ -1508,7 +1478,7 @@ const Partidos = () => {
                     >
                       {matchData.status === 'Terminado' ? '✓ Partido Terminado' : '🏁 Finalizar Partido'}
                     </button>
-                    <button 
+                    <button
                       type="button"
                       className="btn-save-match"
                       onClick={handleExportPDF}
@@ -1527,23 +1497,23 @@ const Partidos = () => {
                       <div className="score-inputs-container" style={{ display: 'flex', alignItems: 'center', gap: '15px', justifyContent: 'center', marginTop: '10px' }}>
                         <div className="score-box" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
                           <label className="input-label-caps" style={{ fontSize: '11px', fontWeight: '700', marginBottom: '6px', color: 'var(--partidos-text-muted)' }}>{getLangText('post.goalsFor')}</label>
-                          <input 
-                            type="number" 
-                            className="partidos-input text-center text-2xl" 
+                          <input
+                            type="number"
+                            className="partidos-input text-center text-2xl"
                             style={{ minHeight: '48px', fontSize: '20px', width: '80px', textAlign: 'center', borderRadius: '8px', border: '1px solid var(--partidos-border)', background: 'var(--partidos-input-bg)', color: 'var(--partidos-text-primary)' }}
-                            value={matchData.goalsFor || 0} 
-                            onChange={e => setMatchData({...matchData, goalsFor: parseInt(e.target.value) || 0})} 
+                            value={matchData.goalsFor || 0}
+                            onChange={e => setMatchData({ ...matchData, goalsFor: parseInt(e.target.value) || 0 })}
                           />
                         </div>
                         <div className="score-divider" style={{ fontSize: '24px', fontWeight: 'bold', color: 'var(--partidos-text-primary)' }}>-</div>
                         <div className="score-box" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
                           <label className="input-label-caps" style={{ fontSize: '11px', fontWeight: '700', marginBottom: '6px', color: 'var(--partidos-text-muted)' }}>{getLangText('post.goalsAgainst')}</label>
-                          <input 
-                            type="number" 
-                            className="partidos-input text-center text-2xl" 
+                          <input
+                            type="number"
+                            className="partidos-input text-center text-2xl"
                             style={{ minHeight: '48px', fontSize: '20px', width: '80px', textAlign: 'center', borderRadius: '8px', border: '1px solid var(--partidos-border)', background: 'var(--partidos-input-bg)', color: 'var(--partidos-text-primary)' }}
-                            value={matchData.goalsAgainst || 0} 
-                            onChange={e => setMatchData({...matchData, goalsAgainst: parseInt(e.target.value) || 0})} 
+                            value={matchData.goalsAgainst || 0}
+                            onChange={e => setMatchData({ ...matchData, goalsAgainst: parseInt(e.target.value) || 0 })}
                           />
                         </div>
                       </div>
@@ -1560,8 +1530,8 @@ const Partidos = () => {
                               style={{ minHeight: '48px', flex: 1, padding: '0 8px', borderRadius: '8px', border: '1px solid var(--partidos-border)', background: 'var(--partidos-input-bg)', color: 'var(--partidos-text-primary)' }}
                               onChange={e => {
                                 const list = [...(matchData.goleadoresList || [])];
-                                list[idx] = {...list[idx], jugadorId: e.target.value};
-                                setMatchData({...matchData, goleadoresList: list});
+                                list[idx] = { ...list[idx], jugadorId: e.target.value };
+                                setMatchData({ ...matchData, goleadoresList: list });
                               }}
                             >
                               <option value="">Jugador...</option>
@@ -1579,8 +1549,8 @@ const Partidos = () => {
                               value={g.minuto || ''}
                               onChange={e => {
                                 const list = [...(matchData.goleadoresList || [])];
-                                list[idx] = {...list[idx], minuto: e.target.value};
-                                setMatchData({...matchData, goleadoresList: list});
+                                list[idx] = { ...list[idx], minuto: e.target.value };
+                                setMatchData({ ...matchData, goleadoresList: list });
                               }}
                             />
                             <button
@@ -1588,18 +1558,18 @@ const Partidos = () => {
                               className="btn-remove-row"
                               style={{ width: '48px', height: '48px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#EF4444', color: '#FFF', border: 'none', borderRadius: '8px', cursor: 'pointer', fontSize: '16px' }}
                               onClick={() => {
-                                const list = (matchData.goleadoresList || []).filter((_,i) => i !== idx);
-                                setMatchData({...matchData, goleadoresList: list});
+                                const list = (matchData.goleadoresList || []).filter((_, i) => i !== idx);
+                                setMatchData({ ...matchData, goleadoresList: list });
                               }}
                             >✕</button>
                           </div>
                         ))}
                       </div>
-                      <button 
+                      <button
                         type="button"
-                        className="btn-add-row" 
+                        className="btn-add-row"
                         onClick={() =>
-                          setMatchData({...matchData, goleadoresList: [...(matchData.goleadoresList || []), {jugadorId:'',minuto:''}]})
+                          setMatchData({ ...matchData, goleadoresList: [...(matchData.goleadoresList || []), { jugadorId: '', minuto: '' }] })
                         }
                       >
                         + Añadir Goleador
@@ -1617,8 +1587,8 @@ const Partidos = () => {
                               style={{ minHeight: '48px', width: '120px', padding: '0 8px', borderRadius: '8px', border: '1px solid var(--partidos-border)', background: 'var(--partidos-input-bg)', color: 'var(--partidos-text-primary)' }}
                               onChange={e => {
                                 const list = [...(matchData.tarjetasList || [])];
-                                list[idx] = {...list[idx], tipo: e.target.value};
-                                setMatchData({...matchData, tarjetasList: list});
+                                list[idx] = { ...list[idx], tipo: e.target.value };
+                                setMatchData({ ...matchData, tarjetasList: list });
                               }}
                             >
                               <option value="amarilla">🟨 Amarilla</option>
@@ -1629,8 +1599,8 @@ const Partidos = () => {
                               style={{ minHeight: '48px', flex: 1, padding: '0 8px', borderRadius: '8px', border: '1px solid var(--partidos-border)', background: 'var(--partidos-input-bg)', color: 'var(--partidos-text-primary)' }}
                               onChange={e => {
                                 const list = [...(matchData.tarjetasList || [])];
-                                list[idx] = {...list[idx], jugadorId: e.target.value};
-                                setMatchData({...matchData, tarjetasList: list});
+                                list[idx] = { ...list[idx], jugadorId: e.target.value };
+                                setMatchData({ ...matchData, tarjetasList: list });
                               }}
                             >
                               <option value="">Jugador...</option>
@@ -1648,8 +1618,8 @@ const Partidos = () => {
                               value={t.minuto || ''}
                               onChange={e => {
                                 const list = [...(matchData.tarjetasList || [])];
-                                list[idx] = {...list[idx], minuto: e.target.value};
-                                setMatchData({...matchData, tarjetasList: list});
+                                list[idx] = { ...list[idx], minuto: e.target.value };
+                                setMatchData({ ...matchData, tarjetasList: list });
                               }}
                             />
                             <button
@@ -1657,18 +1627,18 @@ const Partidos = () => {
                               className="btn-remove-row"
                               style={{ width: '48px', height: '48px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#EF4444', color: '#FFF', border: 'none', borderRadius: '8px', cursor: 'pointer', fontSize: '16px' }}
                               onClick={() => {
-                                const list = (matchData.tarjetasList || []).filter((_,i) => i !== idx);
-                                setMatchData({...matchData, tarjetasList: list});
+                                const list = (matchData.tarjetasList || []).filter((_, i) => i !== idx);
+                                setMatchData({ ...matchData, tarjetasList: list });
                               }}
                             >✕</button>
                           </div>
                         ))}
                       </div>
-                      <button 
+                      <button
                         type="button"
-                        className="btn-add-row" 
+                        className="btn-add-row"
                         onClick={() =>
-                          setMatchData({...matchData, tarjetasList: [...(matchData.tarjetasList || []), {jugadorId:'',tipo:'amarilla',minuto:''}]})
+                          setMatchData({ ...matchData, tarjetasList: [...(matchData.tarjetasList || []), { jugadorId: '', tipo: 'amarilla', minuto: '' }] })
                         }
                       >
                         + Añadir Tarjeta
@@ -1684,10 +1654,10 @@ const Partidos = () => {
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '15px', marginTop: '10px' }}>
                         <div className="mvp-selection-box" style={{ display: 'flex', flexDirection: 'column' }}>
                           <label className="input-label-caps" style={{ fontSize: '11px', fontWeight: '700', marginBottom: '6px', color: 'var(--partidos-text-muted)' }}>{getLangText('post.mvp')}</label>
-                          <select 
+                          <select
                             className="partidos-input"
                             value={matchData.mvp || ''}
-                            onChange={e => setMatchData({...matchData, mvp: e.target.value})}
+                            onChange={e => setMatchData({ ...matchData, mvp: e.target.value })}
                             style={{ minHeight: '48px', padding: '0 8px', borderRadius: '8px', border: '1px solid var(--partidos-border)', background: 'var(--partidos-input-bg)', color: 'var(--partidos-text-primary)' }}
                           >
                             <option value="">{getLangText('post.mvpSelect')}</option>
@@ -1704,13 +1674,13 @@ const Partidos = () => {
                             <label className="input-label-caps" style={{ fontSize: '11px', fontWeight: '700', color: 'var(--partidos-text-muted)' }}>VALORACIÓN DEL EQUIPO</label>
                             <span style={{ fontSize: '15px', fontWeight: 'bold', color: 'var(--partidos-accent)' }}>{matchData.teamRating || 5} / 10</span>
                           </div>
-                          <input 
-                            type="range" 
-                            min="1" 
-                            max="10" 
+                          <input
+                            type="range"
+                            min="1"
+                            max="10"
                             step="1"
-                            value={matchData.teamRating || 5} 
-                            onChange={e => setMatchData({...matchData, teamRating: parseInt(e.target.value) || 5})}
+                            value={matchData.teamRating || 5}
+                            onChange={e => setMatchData({ ...matchData, teamRating: parseInt(e.target.value) || 5 })}
                             style={{ width: '100%', cursor: 'pointer', height: '8px', borderRadius: '4px', background: 'var(--partidos-border)' }}
                           />
                         </div>
@@ -1722,10 +1692,10 @@ const Partidos = () => {
                       <h4 className="card-section-title">📝 Notas Tácticas</h4>
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginTop: '10px' }}>
                         <label className="input-label-caps" style={{ fontSize: '11px', fontWeight: '700', color: 'var(--partidos-text-muted)' }}>{getLangText('post.notes')}</label>
-                        <textarea 
-                          className="partidos-input textarea-tall" 
-                          value={matchData.notes || ''} 
-                          onChange={e => setMatchData({...matchData, notes: e.target.value})}
+                        <textarea
+                          className="partidos-input textarea-tall"
+                          value={matchData.notes || ''}
+                          onChange={e => setMatchData({ ...matchData, notes: e.target.value })}
                           placeholder={getLangText('post.notesPlaceholder')}
                           rows={5}
                           style={{ minHeight: '120px', width: '100%', padding: '8px', borderRadius: '8px', border: '1px solid var(--partidos-border)', background: 'var(--partidos-input-bg)', color: 'var(--partidos-text-primary)', boxSizing: 'border-box' }}
@@ -1882,8 +1852,8 @@ const Partidos = () => {
                           style={{ display: 'none' }}
                           onChange={handleImageUpload}
                         />
-                        <label 
-                          htmlFor="post-match-photo-upload" 
+                        <label
+                          htmlFor="post-match-photo-upload"
                           className="btn-primary-blue-allcaps"
                           style={{
                             display: 'inline-flex',
@@ -1983,7 +1953,7 @@ const Partidos = () => {
               <h2 style={{ margin: '0', fontSize: '1.4rem', fontFamily: 'var(--font-heading)' }}>{getLangText('post.previewTitle')}</h2>
               <button className="btn-close" onClick={() => setShowReportPreview(false)} style={{ background: 'none', border: 'none', fontSize: '20px', cursor: 'pointer', color: 'var(--partidos-text-primary)' }}>✕</button>
             </div>
-            
+
             <div className="modal-body" style={{ textAlign: 'left' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--partidos-player-card-bg)', padding: '16px', borderRadius: '12px', marginBottom: '20px' }}>
                 <div>
@@ -2005,9 +1975,9 @@ const Partidos = () => {
                   <p style={{ margin: '0', fontWeight: '700', fontSize: '15px' }}>
                     {matchData.goleadoresList && matchData.goleadoresList.length > 0
                       ? matchData.goleadoresList.map(g => {
-                          const p = players.find(pl => pl.id === g.jugadorId);
-                          return `${p ? p.name : 'Jugador'} (${g.minuto}')`;
-                        }).join(', ')
+                        const p = players.find(pl => pl.id === g.jugadorId);
+                        return `${p ? p.name : 'Jugador'} (${g.minuto}')`;
+                      }).join(', ')
                       : '-'}
                   </p>
                 </div>
@@ -2016,10 +1986,10 @@ const Partidos = () => {
                   <p style={{ margin: '0', fontWeight: '700', fontSize: '15px' }}>
                     {matchData.tarjetasList && matchData.tarjetasList.length > 0
                       ? matchData.tarjetasList.map(t => {
-                          const p = players.find(pl => pl.id === t.jugadorId);
-                          const emoji = t.tipo === 'amarilla' ? '🟨' : '🟥';
-                          return `${emoji} ${p ? p.name : 'Jugador'} (${t.minuto}')`;
-                        }).join(', ')
+                        const p = players.find(pl => pl.id === t.jugadorId);
+                        const emoji = t.tipo === 'amarilla' ? '🟨' : '🟥';
+                        return `${emoji} ${p ? p.name : 'Jugador'} (${t.minuto}')`;
+                      }).join(', ')
                       : '-'}
                   </p>
                 </div>
@@ -2106,13 +2076,13 @@ const Partidos = () => {
       />
 
       {/* Contenedor oculto para captura en alta resolución del terreno de juego, alineación y suplentes para el PDF */}
-      <div 
-        id="export-pitch-container" 
-        style={{ 
-          position: 'fixed', 
-          left: '-9999px', 
-          top: '-9999px', 
-          width: '720px', 
+      <div
+        id="export-pitch-container"
+        style={{
+          position: 'fixed',
+          left: '-9999px',
+          top: '-9999px',
+          width: '720px',
           background: '#0B1812',
           padding: '16px',
           borderRadius: '12px',
@@ -2141,7 +2111,7 @@ const Partidos = () => {
             const leftPos = customPos ? customPos.left : pos.left;
             const posLabel = getSlotPosition(idx);
             const photoUrl = player ? (player.avatarUrl || player.photoUrl || player.photo || player.photoPreview) : null;
-            
+
             return (
               <div key={idx} className={`pitch-player-3d ${player ? '' : 'empty-slot'}`} style={{ top: topPos, left: leftPos }}>
                 <div className="futu-card-badge">

@@ -22,69 +22,69 @@ import './LiveStats.css';
 
 // ── Paleta de acentos por categoría ──────────────────────────────────────────
 const C = {
-  green:  '#4CAF7D',
-  gold:   '#D4A843',
+  green: '#4CAF7D',
+  gold: '#D4A843',
   orange: '#F97316',
-  teal:   '#0D9488',
+  teal: '#0D9488',
 };
 
 // ── Textos bilingüe ───────────────────────────────────────────────────────────
 const TEXTS = {
-  'live.title':                { es: 'Live Stats',                       en: 'Live Stats' },
-  'live.noMatch':              { es: 'Inicia un partido en Match Day para capturar estadísticas en vivo', en: 'Start a match in Match Day to capture live statistics' },
-  'live.half':                 { es: 'Mitad',                            en: 'Half' },
-  'live.minute':               { es: 'Min',                              en: 'Min' },
-  'live.totalEvents':          { es: 'eventos capturados',               en: 'events captured' },
-  'live.fullscreen.enter':     { es: 'Pantalla completa',                en: 'Fullscreen' },
-  'live.fullscreen.exit':      { es: 'Salir',                            en: 'Exit' },
-  'live.timer.start':          { es: '▶ INICIAR',                        en: '▶ START' },
-  'live.timer.pause':          { es: '❚❚ PAUSAR',                        en: '❚❚ PAUSE' },
-  'live.timer.reset':          { es: 'Reiniciar cronómetro',             en: 'Reset timer' },
-  'live.goal.for':             { es: '+1 Gol propio',                    en: '+1 Own Goal' },
-  'live.goal.against':         { es: '+1 Gol rival',                     en: '+1 Rival Goal' },
-  'live.summary.title':        { es: 'Resumen en Vivo',                   en: 'Live Summary' },
-  'live.summary.efficiency':   { es: 'Eficiencia Táctica (% Éxito)',      en: 'Tactical Efficiency (% Success)' },
-  'live.summary.comparison':   { es: 'Comparativa Propio vs Rival',       en: 'Own vs Rival Comparison' },
-  'live.summary.halves':       { es: 'Desglose por Mitades (1T vs 2T)',    en: 'Half Breakdown (1st vs 2nd)' },
-  'live.donut.duels':          { es: 'Duelos',                            en: 'Duels' },
-  'live.donut.shots':          { es: 'Remates',                           en: 'Shots' },
-  'live.donut.possession':     { es: 'Balón',                             en: 'Possession' },
-  'live.label.won':            { es: 'Gan',                               en: 'Won' },
-  'live.label.lost':           { es: 'Perd',                              en: 'Lost' },
-  'live.label.onTarget':       { es: 'Puerta',                            en: 'On' },
-  'live.label.offTarget':      { es: 'Fuera',                             en: 'Off' },
-  'live.label.recovery':       { es: 'Recup',                             en: 'Rec' },
-  'live.label.loss':           { es: 'Pérd',                              en: 'Loss' },
-  'live.cat.shots':            { es: '⚽ Remates',                       en: '⚽ Shots' },
-  'live.cat.possession':       { es: '🔄 Defensa / Posesión',           en: '🔄 Defense / Possession' },
-  'live.cat.fouls':            { es: '⚡ Faltas / Transiciones',         en: '⚡ Fouls / Transitions' },
-  'live.cat.discipline':       { es: '🟨 Disciplina / Balón parado',    en: '🟨 Discipline / Set Pieces' },
-  'live.btn.shot_on_own':      { es: 'Tiro a puerta\n(Propio)',          en: 'Shot on Target\n(Own)' },
-  'live.btn.shot_on_rival':    { es: 'Tiro a puerta\n(Rival)',           en: 'Shot on Target\n(Rival)' },
-  'live.btn.shot_off_own':     { es: 'Tiro fuera\n(Propio)',             en: 'Shot off Target\n(Own)' },
-  'live.btn.shot_off_rival':   { es: 'Tiro fuera\n(Rival)',              en: 'Shot off Target\n(Rival)' },
-  'live.btn.recovery':         { es: 'Recuperación',                     en: 'Recovery' },
-  'live.btn.loss':             { es: 'Pérdida',                          en: 'Ball Loss' },
-  'live.btn.duel_won':         { es: 'Duelo ganado',                     en: 'Duel Won' },
-  'live.btn.duel_lost':        { es: 'Duelo perdido',                    en: 'Duel Lost' },
-  'live.btn.foul_favor':       { es: 'Falta a favor',                    en: 'Foul in Favor' },
-  'live.btn.foul_against':     { es: 'Falta en contra',                  en: 'Foul Against' },
-  'live.btn.counter_not_cut':  { es: 'Contra no\ncortada',               en: 'Counter Not\nCut' },
-  'live.btn.player_no_finish': { es: 'Jugador no\nfinaliza',             en: 'Player No\nFinish' },
-  'live.btn.card_own':         { es: 'Tarjeta (Propia)',                 en: 'Card (Own)' },
-  'live.btn.card_rival':       { es: 'Tarjeta (Rival)',                  en: 'Card (Rival)' },
-  'live.btn.card_yellow_own':  { es: 'Amarilla\n(Propia)',               en: 'Yellow Card\n(Own)' },
-  'live.btn.card_red_own':     { es: 'Roja\n(Propia)',                   en: 'Red Card\n(Own)' },
-  'live.btn.card_yellow_rival':{ es: 'Amarilla\n(Rival)',                en: 'Yellow Card\n(Rival)' },
-  'live.btn.card_red_rival':   { es: 'Roja\n(Rival)',                    en: 'Red Card\n(Rival)' },
-  'live.btn.corner_favor':     { es: 'Córner\na favor',                  en: 'Corner\nIn Favor' },
-  'live.btn.corner_against':   { es: 'Córner\nen contra',                en: 'Corner\nAgainst' },
-  'live.btn.offside_own':      { es: 'Fuera de juego\n(Propio)',         en: 'Offside\n(Own)' },
-  'live.btn.offside_rival':    { es: 'Fuera de juego\n(Rival)',          en: 'Offside\n(Rival)' },
-  'live.half.select':          { es: 'Mitad:',                           en: 'Half:' },
-  'live.half.1':               { es: '1ª Mitad',                         en: '1st Half' },
-  'live.half.2':               { es: '2ª Mitad',                         en: '2nd Half' },
-  'live.feedback.saved':       { es: '¡Guardado!',                       en: 'Saved!' },
+  'live.title': { es: 'Live Stats', en: 'Live Stats' },
+  'live.noMatch': { es: 'Inicia un partido en Match Day para capturar estadísticas en vivo', en: 'Start a match in Match Day to capture live statistics' },
+  'live.half': { es: 'Mitad', en: 'Half' },
+  'live.minute': { es: 'Min', en: 'Min' },
+  'live.totalEvents': { es: 'eventos capturados', en: 'events captured' },
+  'live.fullscreen.enter': { es: 'Pantalla completa', en: 'Fullscreen' },
+  'live.fullscreen.exit': { es: 'Salir', en: 'Exit' },
+  'live.timer.start': { es: '▶ INICIAR', en: '▶ START' },
+  'live.timer.pause': { es: '❚❚ PAUSAR', en: '❚❚ PAUSE' },
+  'live.timer.reset': { es: 'Reiniciar cronómetro', en: 'Reset timer' },
+  'live.goal.for': { es: '+1 Gol propio', en: '+1 Own Goal' },
+  'live.goal.against': { es: '+1 Gol rival', en: '+1 Rival Goal' },
+  'live.summary.title': { es: 'Resumen en Vivo', en: 'Live Summary' },
+  'live.summary.efficiency': { es: 'Eficiencia Táctica (% Éxito)', en: 'Tactical Efficiency (% Success)' },
+  'live.summary.comparison': { es: 'Comparativa Propio vs Rival', en: 'Own vs Rival Comparison' },
+  'live.summary.halves': { es: 'Desglose por Mitades (1T vs 2T)', en: 'Half Breakdown (1st vs 2nd)' },
+  'live.donut.duels': { es: 'Duelos', en: 'Duels' },
+  'live.donut.shots': { es: 'Remates', en: 'Shots' },
+  'live.donut.possession': { es: 'Balón', en: 'Possession' },
+  'live.label.won': { es: 'Gan', en: 'Won' },
+  'live.label.lost': { es: 'Perd', en: 'Lost' },
+  'live.label.onTarget': { es: 'Puerta', en: 'On' },
+  'live.label.offTarget': { es: 'Fuera', en: 'Off' },
+  'live.label.recovery': { es: 'Recup', en: 'Rec' },
+  'live.label.loss': { es: 'Pérd', en: 'Loss' },
+  'live.cat.shots': { es: '⚽ Remates', en: '⚽ Shots' },
+  'live.cat.possession': { es: '🔄 Defensa / Posesión', en: '🔄 Defense / Possession' },
+  'live.cat.fouls': { es: '⚡ Faltas / Transiciones', en: '⚡ Fouls / Transitions' },
+  'live.cat.discipline': { es: '🟨 Disciplina / Balón parado', en: '🟨 Discipline / Set Pieces' },
+  'live.btn.shot_on_own': { es: 'Tiro a puerta\n(Propio)', en: 'Shot on Target\n(Own)' },
+  'live.btn.shot_on_rival': { es: 'Tiro a puerta\n(Rival)', en: 'Shot on Target\n(Rival)' },
+  'live.btn.shot_off_own': { es: 'Tiro fuera\n(Propio)', en: 'Shot off Target\n(Own)' },
+  'live.btn.shot_off_rival': { es: 'Tiro fuera\n(Rival)', en: 'Shot off Target\n(Rival)' },
+  'live.btn.recovery': { es: 'Recuperación', en: 'Recovery' },
+  'live.btn.loss': { es: 'Pérdida', en: 'Ball Loss' },
+  'live.btn.duel_won': { es: 'Duelo ganado', en: 'Duel Won' },
+  'live.btn.duel_lost': { es: 'Duelo perdido', en: 'Duel Lost' },
+  'live.btn.foul_favor': { es: 'Falta a favor', en: 'Foul in Favor' },
+  'live.btn.foul_against': { es: 'Falta en contra', en: 'Foul Against' },
+  'live.btn.counter_not_cut': { es: 'Contra no\ncortada', en: 'Counter Not\nCut' },
+  'live.btn.player_no_finish': { es: 'Jugador no\nfinaliza', en: 'Player No\nFinish' },
+  'live.btn.card_own': { es: 'Tarjeta (Propia)', en: 'Card (Own)' },
+  'live.btn.card_rival': { es: 'Tarjeta (Rival)', en: 'Card (Rival)' },
+  'live.btn.card_yellow_own': { es: 'Amarilla\n(Propia)', en: 'Yellow Card\n(Own)' },
+  'live.btn.card_red_own': { es: 'Roja\n(Propia)', en: 'Red Card\n(Own)' },
+  'live.btn.card_yellow_rival': { es: 'Amarilla\n(Rival)', en: 'Yellow Card\n(Rival)' },
+  'live.btn.card_red_rival': { es: 'Roja\n(Rival)', en: 'Red Card\n(Rival)' },
+  'live.btn.corner_favor': { es: 'Córner\na favor', en: 'Corner\nIn Favor' },
+  'live.btn.corner_against': { es: 'Córner\nen contra', en: 'Corner\nAgainst' },
+  'live.btn.offside_own': { es: 'Fuera de juego\n(Propio)', en: 'Offside\n(Own)' },
+  'live.btn.offside_rival': { es: 'Fuera de juego\n(Rival)', en: 'Offside\n(Rival)' },
+  'live.half.select': { es: 'Mitad:', en: 'Half:' },
+  'live.half.1': { es: '1ª Mitad', en: '1st Half' },
+  'live.half.2': { es: '2ª Mitad', en: '2nd Half' },
+  'live.feedback.saved': { es: '¡Guardado!', en: 'Saved!' },
 };
 
 // ── Grupos de botones ────────────────────────────────────────────────────────
@@ -94,10 +94,10 @@ const BUTTON_GROUPS = [
     color: C.green,
     colsClass: 'cols-4',
     buttons: [
-      { type: 'shot_on_target_own',   labelKey: 'live.btn.shot_on_own',      icon: '🟢' },
-      { type: 'shot_on_target_rival', labelKey: 'live.btn.shot_on_rival',     icon: '🔴' },
-      { type: 'shot_off_target_own',  labelKey: 'live.btn.shot_off_own',      icon: '⬜' },
-      { type: 'shot_off_target_rival',labelKey: 'live.btn.shot_off_rival',    icon: '🔲' },
+      { type: 'shot_on_target_own', labelKey: 'live.btn.shot_on_own', icon: '🟢' },
+      { type: 'shot_on_target_rival', labelKey: 'live.btn.shot_on_rival', icon: '🔴' },
+      { type: 'shot_off_target_own', labelKey: 'live.btn.shot_off_own', icon: '⬜' },
+      { type: 'shot_off_target_rival', labelKey: 'live.btn.shot_off_rival', icon: '🔲' },
     ],
   },
   {
@@ -105,10 +105,10 @@ const BUTTON_GROUPS = [
     color: C.teal,
     colsClass: 'cols-4',
     buttons: [
-      { type: 'recovery',   labelKey: 'live.btn.recovery',   icon: '↑' },
-      { type: 'loss',       labelKey: 'live.btn.loss',        icon: '↓' },
-      { type: 'duel_won',   labelKey: 'live.btn.duel_won',   icon: '✊' },
-      { type: 'duel_lost',  labelKey: 'live.btn.duel_lost',  icon: '🤜' },
+      { type: 'recovery', labelKey: 'live.btn.recovery', icon: '↑' },
+      { type: 'loss', labelKey: 'live.btn.loss', icon: '↓' },
+      { type: 'duel_won', labelKey: 'live.btn.duel_won', icon: '✊' },
+      { type: 'duel_lost', labelKey: 'live.btn.duel_lost', icon: '🤜' },
     ],
   },
   {
@@ -116,10 +116,10 @@ const BUTTON_GROUPS = [
     color: C.orange,
     colsClass: 'cols-4',
     buttons: [
-      { type: 'foul_favor',        labelKey: 'live.btn.foul_favor',        icon: '✅' },
-      { type: 'foul_against',      labelKey: 'live.btn.foul_against',      icon: '❌' },
-      { type: 'counter_not_cut',   labelKey: 'live.btn.counter_not_cut',   icon: '⚡' },
-      { type: 'player_no_finish',  labelKey: 'live.btn.player_no_finish',  icon: '😤' },
+      { type: 'foul_favor', labelKey: 'live.btn.foul_favor', icon: '✅' },
+      { type: 'foul_against', labelKey: 'live.btn.foul_against', icon: '❌' },
+      { type: 'counter_not_cut', labelKey: 'live.btn.counter_not_cut', icon: '⚡' },
+      { type: 'player_no_finish', labelKey: 'live.btn.player_no_finish', icon: '😤' },
     ],
   },
   {
@@ -127,14 +127,14 @@ const BUTTON_GROUPS = [
     color: C.gold,
     colsClass: 'cols-4',
     buttons: [
-      { type: 'card_yellow_own',   labelKey: 'live.btn.card_yellow_own',   icon: '🟨' },
-      { type: 'card_red_own',      labelKey: 'live.btn.card_red_own',      icon: '🟥' },
+      { type: 'card_yellow_own', labelKey: 'live.btn.card_yellow_own', icon: '🟨' },
+      { type: 'card_red_own', labelKey: 'live.btn.card_red_own', icon: '🟥' },
       { type: 'card_yellow_rival', labelKey: 'live.btn.card_yellow_rival', icon: '🟨' },
-      { type: 'card_red_rival',    labelKey: 'live.btn.card_red_rival',    icon: '🟥' },
-      { type: 'corner_favor',      labelKey: 'live.btn.corner_favor',      icon: '🚩' },
-      { type: 'corner_against',    labelKey: 'live.btn.corner_against',    icon: '⛳' },
-      { type: 'offside_own',       labelKey: 'live.btn.offside_own',       icon: '🏃' },
-      { type: 'offside_rival',     labelKey: 'live.btn.offside_rival',     icon: '🏃‍♂️' },
+      { type: 'card_red_rival', labelKey: 'live.btn.card_red_rival', icon: '🟥' },
+      { type: 'corner_favor', labelKey: 'live.btn.corner_favor', icon: '🚩' },
+      { type: 'corner_against', labelKey: 'live.btn.corner_against', icon: '⛳' },
+      { type: 'offside_own', labelKey: 'live.btn.offside_own', icon: '🏃' },
+      { type: 'offside_rival', labelKey: 'live.btn.offside_rival', icon: '🏃‍♂️' },
     ],
   },
 ];
@@ -231,35 +231,15 @@ const LiveStats = ({
     }
   }, [matchData, events]);
 
-  const [cardSelectorTarget, setCardSelectorTarget] = useState(null); // 'card_own' | 'card_rival' | null
-
   const handlePress = useCallback(
-    async (type, extraData = {}) => {
-      if (type === 'card_own' || type === 'card_rival') {
-        setCardSelectorTarget(type);
-        return;
-      }
-      const id = await addLiveEvent(type, currentHalf, extraData);
+    async (type) => {
+      const id = await addLiveEvent(type, currentHalf);
       if (id) {
         setFlashType(type);
         setTimeout(() => setFlashType(null), 650);
       }
     },
     [addLiveEvent, currentHalf]
-  );
-
-  const confirmCardSelection = useCallback(
-    async (cardType) => {
-      if (!cardSelectorTarget) return;
-      const targetType = cardSelectorTarget;
-      setCardSelectorTarget(null);
-      const id = await addLiveEvent(targetType, currentHalf, { cardType });
-      if (id) {
-        setFlashType(targetType);
-        setTimeout(() => setFlashType(null), 650);
-      }
-    },
-    [addLiveEvent, currentHalf, cardSelectorTarget]
   );
 
   if (!matchId) {
@@ -276,8 +256,8 @@ const LiveStats = ({
     );
   }
 
-  const goalsFor     = matchData?.goalsFor     ?? matchData?.golesLocal  ?? matchData?.golesPropio ?? 0;
-  const goalsAgainst = matchData?.goalsAgainst ?? matchData?.golesVisita ?? matchData?.golesRival  ?? 0;
+  const goalsFor = matchData?.goalsFor ?? matchData?.golesLocal ?? matchData?.golesPropio ?? 0;
+  const goalsAgainst = matchData?.goalsAgainst ?? matchData?.golesVisita ?? matchData?.golesRival ?? 0;
 
   return (
     <div
@@ -315,8 +295,8 @@ const LiveStats = ({
             title={tx('live.timer.reset')}
           >
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-              <path d="M21.5 2v6h-6M2.5 22v-6h6"/>
-              <path d="M2 11.5a10 10 0 0 1 18.8-4.3L21.5 8M22 12.5a10 10 0 0 1-18.8 4.3L2.5 16"/>
+              <path d="M21.5 2v6h-6M2.5 22v-6h6" />
+              <path d="M2 11.5a10 10 0 0 1 18.8-4.3L21.5 8M22 12.5a10 10 0 0 1-18.8 4.3L2.5 16" />
             </svg>
           </button>
         </div>
@@ -403,10 +383,10 @@ const LiveStats = ({
             title={tx('live.exportPdf')}
           >
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-              <polyline points="14 2 14 8 20 8"/>
-              <line x1="12" y1="18" x2="12" y2="12"/>
-              <polyline points="9 15 12 18 15 15"/>
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+              <polyline points="14 2 14 8 20 8" />
+              <line x1="12" y1="18" x2="12" y2="12" />
+              <polyline points="9 15 12 18 15 15" />
             </svg>
             <span>PDF</span>
           </button>
@@ -626,97 +606,6 @@ const LiveStats = ({
                   style={{ minHeight: '44px', padding: '0 20px', borderRadius: '8px', border: 'none', background: '#EF4444', color: '#FFFFFF', fontWeight: 800, cursor: 'pointer' }}
                 >
                   Sí, Reiniciar Conteo
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
-        {/* Modal Selector de Tarjeta (Amarilla vs Roja) */}
-        {cardSelectorTarget && (
-          <div 
-            className="event-selector-overlay"
-            onClick={() => setCardSelectorTarget(null)}
-            style={{ zIndex: 99999 }}
-          >
-            <div 
-              className="event-selector-modal"
-              onClick={(e) => e.stopPropagation()}
-              style={{
-                background: darkMode ? '#1E293B' : '#FFFFFF',
-                border: `2px solid ${C.gold}`,
-                borderRadius: '16px',
-                padding: '24px',
-                maxWidth: '380px',
-                width: '100%',
-                textAlign: 'center',
-                boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.3)'
-              }}
-            >
-              <h3 style={{ margin: '0 0 8px 0', fontSize: '18px', fontWeight: 900, color: darkMode ? '#F8FAFC' : '#0F172A' }}>
-                🟨🟥 Registrar Tarjeta
-              </h3>
-              <p style={{ margin: '0 0 20px 0', fontSize: '13.5px', color: darkMode ? '#94A3B8' : '#64748B', lineHeight: 1.4 }}>
-                Selecciona la sanción para <strong>{cardSelectorTarget === 'card_own' ? (matchData?.teamName || 'Equipo Propio') : (matchData?.rival || 'Equipo Rival')}</strong>:
-              </p>
-
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                <button
-                  type="button"
-                  onClick={() => confirmCardSelection('yellow')}
-                  style={{
-                    background: '#EAB308',
-                    color: '#000000',
-                    fontWeight: '900',
-                    fontSize: '15px',
-                    padding: '14px 20px',
-                    borderRadius: '10px',
-                    border: 'none',
-                    cursor: 'pointer',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px',
-                    boxShadow: '0 4px 6px -1px rgba(234, 179, 8, 0.4)',
-                    minHeight: '48px'
-                  }}
-                >
-                  <span style={{ fontSize: '20px' }}>🟨</span>
-                  TARJETA AMARILLA
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => confirmCardSelection('red')}
-                  style={{
-                    background: '#EF4444',
-                    color: '#FFFFFF',
-                    fontWeight: '900',
-                    fontSize: '15px',
-                    padding: '14px 20px',
-                    borderRadius: '10px',
-                    border: 'none',
-                    cursor: 'pointer',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px',
-                    boxShadow: '0 4px 6px -1px rgba(239, 68, 68, 0.4)',
-                    minHeight: '48px'
-                  }}
-                >
-                  <span style={{ fontSize: '20px' }}>🟥</span>
-                  TARJETA ROJA
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => setCardSelectorTarget(null)}
-                  style={{
-                    background: 'transparent',
-                    color: darkMode ? '#94A3B8' : '#64748B',
-                    fontWeight: '600',
-                    fontSize: '13px',
-                    padding: '8px',
-                    border: 'none',
-                    cursor: 'pointer',
-                    marginTop: '4px'
-                  }}
-                >
-                  Cancelar
                 </button>
               </div>
             </div>

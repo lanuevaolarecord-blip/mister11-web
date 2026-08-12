@@ -57,7 +57,7 @@ export const EVENT_TYPES = [
  */
 export const useLiveStats = (teamId, matchId, currentMinute, currentHalf = 1) => {
   const { user, getTeamPath } = useAuth();
-  
+
   const cacheKey = matchId ? `mister11_livestats_${matchId}` : null;
 
   // Inicializar estado local desde localStorage para respuesta instantánea (0ms)
@@ -66,7 +66,7 @@ export const useLiveStats = (teamId, matchId, currentMinute, currentHalf = 1) =>
       try {
         const stored = localStorage.getItem(cacheKey);
         if (stored) return JSON.parse(stored);
-      } catch (_) {}
+      } catch (_) { }
     }
     return [];
   });
@@ -92,7 +92,7 @@ export const useLiveStats = (teamId, matchId, currentMinute, currentHalf = 1) =>
           const parsed = JSON.parse(stored);
           if (parsed.length > 0) setEvents(parsed);
         }
-      } catch (_) {}
+      } catch (_) { }
     }
 
     if (!fullCollectionPath) {
@@ -109,7 +109,7 @@ export const useLiveStats = (teamId, matchId, currentMinute, currentHalf = 1) =>
           const docs = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
           setEvents(docs);
           if (cacheKey) {
-            try { localStorage.setItem(cacheKey, JSON.stringify(docs)); } catch (_) {}
+            try { localStorage.setItem(cacheKey, JSON.stringify(docs)); } catch (_) { }
           }
         }
         setLoading(false);
@@ -125,24 +125,22 @@ export const useLiveStats = (teamId, matchId, currentMinute, currentHalf = 1) =>
 
   // ── Añadir un evento (Incremento inmediato optimista + Persistencia) ──────
   const addLiveEvent = useCallback(
-    async (type, explicitHalf = null, extraData = {}) => {
+    async (type, explicitHalf = null) => {
       const targetHalf = explicitHalf !== null && explicitHalf !== undefined ? explicitHalf : currentHalf;
       const newId = 'evt_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5);
-      const payload = typeof extraData === 'object' && extraData !== null ? extraData : {};
       const localDoc = {
         id: newId,
         type,
         half: targetHalf,
         minute: currentMinute || 1,
         timestamp: new Date().toISOString(),
-        ...payload,
       };
 
       // 1. Incremento optimista inmediato en el estado local y localStorage (0 ms latencia)
       setEvents((prev) => {
         const next = [...prev, localDoc];
         if (cacheKey) {
-          try { localStorage.setItem(cacheKey, JSON.stringify(next)); } catch (_) {}
+          try { localStorage.setItem(cacheKey, JSON.stringify(next)); } catch (_) { }
         }
         return next;
       });
@@ -157,7 +155,6 @@ export const useLiveStats = (teamId, matchId, currentMinute, currentHalf = 1) =>
             half: targetHalf,
             minute: currentMinute || 1,
             timestamp: serverTimestamp(),
-            ...payload,
           });
           return docRef?.id || newId;
         } catch (err) {
@@ -177,7 +174,7 @@ export const useLiveStats = (teamId, matchId, currentMinute, currentHalf = 1) =>
   const resetLiveStats = useCallback(async () => {
     setEvents([]);
     if (cacheKey) {
-      try { localStorage.removeItem(cacheKey); } catch (_) {}
+      try { localStorage.removeItem(cacheKey); } catch (_) { }
     }
     if (fullCollectionPath) {
       setSaving(true);

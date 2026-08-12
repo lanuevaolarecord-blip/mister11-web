@@ -131,62 +131,26 @@ export const SvgComparisonBars = ({ events, darkMode: darkModeProp }) => {
   const labelColor = darkMode ? '#FFFFFF' : '#0F172A';
   const bgBar = darkMode ? 'rgba(255,255,255,0.15)' : '#CBD5E1';
 
-  const getCardBreakdownText = (list, isOwnTeam) => {
-    let yellow = 0;
-    let red = 0;
-    let generic = 0;
-
-    (list || []).forEach((e) => {
-      const matchOwn = e.type === 'card_own' || e.type === 'card_yellow_own' || e.type === 'card_red_own';
-      const matchRival = e.type === 'card_rival' || e.type === 'card_yellow_rival' || e.type === 'card_red_rival';
-
-      if ((isOwnTeam && matchOwn) || (!isOwnTeam && matchRival)) {
-        if (e.cardType === 'yellow' || e.type === 'card_yellow_own' || e.type === 'card_yellow_rival') {
-          yellow++;
-        } else if (e.cardType === 'red' || e.type === 'card_red_own' || e.type === 'card_red_rival') {
-          red++;
-        } else {
-          generic++;
-        }
-      }
-    });
-
-    const parts = [];
-    if (yellow > 0) parts.push(`${yellow} amarillas`);
-    if (red > 0) parts.push(`${red} ${red === 1 ? 'roja' : 'rojas'}`);
-    if (generic > 0 && parts.length === 0) parts.push(`${generic} genéricas`);
-    if (parts.length === 0) return '0';
-    return parts.join(', ');
-  };
-
   const metrics = [
     {
       title: 'Tiros a puerta',
       own: events.filter((e) => e.type === 'shot_on_target_own').length,
       rival: events.filter((e) => e.type === 'shot_on_target_rival').length,
-      ownText: `${events.filter((e) => e.type === 'shot_on_target_own').length}`,
-      rivalText: `${events.filter((e) => e.type === 'shot_on_target_rival').length}`,
     },
     {
       title: 'Córners',
       own: events.filter((e) => e.type === 'corner_favor').length,
       rival: events.filter((e) => e.type === 'corner_against').length,
-      ownText: `${events.filter((e) => e.type === 'corner_favor').length}`,
-      rivalText: `${events.filter((e) => e.type === 'corner_against').length}`,
     },
     {
       title: 'Tarjetas',
       own: events.filter((e) => e.type === 'card_own' || e.type === 'card_yellow_own' || e.type === 'card_red_own').length,
       rival: events.filter((e) => e.type === 'card_rival' || e.type === 'card_yellow_rival' || e.type === 'card_red_rival').length,
-      ownText: `${events.filter((e) => e.type === 'card_own' || e.type === 'card_yellow_own' || e.type === 'card_red_own').length} (${getCardBreakdownText(events, true)})`,
-      rivalText: `${events.filter((e) => e.type === 'card_rival' || e.type === 'card_yellow_rival' || e.type === 'card_red_rival').length} (${getCardBreakdownText(events, false)})`,
     },
     {
       title: 'Fueras de juego',
       own: events.filter((e) => e.type === 'offside_own').length,
       rival: events.filter((e) => e.type === 'offside_rival').length,
-      ownText: `${events.filter((e) => e.type === 'offside_own').length}`,
-      rivalText: `${events.filter((e) => e.type === 'offside_rival').length}`,
     },
   ];
 
@@ -200,9 +164,9 @@ export const SvgComparisonBars = ({ events, darkMode: darkModeProp }) => {
         return (
           <div key={m.title} style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', fontWeight: 800 }}>
-              <span style={{ color: '#4CAF7D', fontWeight: 900 }}>Propias: {m.ownText}</span>
+              <span style={{ color: '#4CAF7D', fontWeight: 900 }}>{m.own} (Propio)</span>
               <span style={{ color: labelColor, fontWeight: 900, fontSize: '12.5px' }}>{m.title}</span>
-              <span style={{ color: '#EF4444', fontWeight: 900 }}>Rival: {m.rivalText}</span>
+              <span style={{ color: '#EF4444', fontWeight: 900 }}>{m.rival} (Rival)</span>
             </div>
 
             {/* Barra bicolor comparativa */}

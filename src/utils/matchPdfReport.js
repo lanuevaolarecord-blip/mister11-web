@@ -1,6 +1,45 @@
 import { savePdfUniversal } from './pdfGenerator';
 import { getEffectiveLanguage } from '../i18n/translations';
 
+export const imageUrlToBase64 = async (url) => {
+  if (!url) return null;
+  if (typeof url === 'string' && url.startsWith('data:image')) return url;
+
+  try {
+    const res = await fetch(url, { mode: 'cors' });
+    if (res.ok) {
+      const blob = await res.blob();
+      return new Promise((resolve) => {
+        const reader = new FileReader();
+        reader.onloadend = () => resolve(reader.result);
+        reader.onerror = () => resolve(null);
+        reader.readAsDataURL(blob);
+      });
+    }
+  } catch (e) {
+    console.warn('[imageUrlToBase64] Fetch failed, fallback to Image():', e);
+  }
+
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = () => {
+      try {
+        const canvas = document.createElement('canvas');
+        canvas.width = img.naturalWidth || img.width || 120;
+        canvas.height = img.naturalHeight || img.height || 120;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0);
+        resolve(canvas.toDataURL('image/png'));
+      } catch (err) {
+        resolve(null);
+      }
+    };
+    img.onerror = () => resolve(null);
+    img.src = url;
+  });
+};
+
 const getPdfLibs = async () => {
   const { jsPDF } = await import('jspdf');
   const autoTableMod = await import('jspdf-autotable');
@@ -12,57 +51,57 @@ const getPdfLibs = async () => {
 
 // Nombres legibles en texto plano (sin caracteres emojis para evitar corrupción en PDF)
 const EVENT_NAMES_ES = {
-  shot_on_target_own:   'Tiro a puerta (Propio)',
+  shot_on_target_own: 'Tiro a puerta (Propio)',
   shot_on_target_rival: 'Tiro a puerta (Rival)',
-  shot_off_target_own:  'Tiro fuera (Propio)',
+  shot_off_target_own: 'Tiro fuera (Propio)',
   shot_off_target_rival: 'Tiro fuera (Rival)',
-  recovery:             'Recuperacion de balon',
-  loss:                 'Perdida de balon',
-  duel_won:             'Duelo ganado',
-  duel_lost:            'Duelo perdido',
-  foul_favor:           'Falta a favor',
-  foul_against:         'Falta en contra',
-  counter_not_cut:      'Contra no cortada',
-  player_no_finish:     'Jugador no finaliza',
-  card_own:             'Tarjeta recibida (Propia)',
-  card_rival:           'Tarjeta provocada (Rival)',
-  card_yellow_own:      'Tarjeta Amarilla (Propia)',
-  card_red_own:         'Tarjeta Roja (Propia)',
-  card_yellow_rival:    'Tarjeta Amarilla (Rival)',
-  card_red_rival:       'Tarjeta Roja (Rival)',
-  corner_favor:         'Corner a favor',
-  corner_against:       'Corner en contra',
-  offside_own:          'Fuera de juego (Propio)',
-  offside_rival:        'Fuera de juego (Rival)',
-  gol_local:            'GOL PROPIO',
-  gol_rival:            'GOL RIVAL',
+  recovery: 'Recuperacion de balon',
+  loss: 'Perdida de balon',
+  duel_won: 'Duelo ganado',
+  duel_lost: 'Duelo perdido',
+  foul_favor: 'Falta a favor',
+  foul_against: 'Falta en contra',
+  counter_not_cut: 'Contra no cortada',
+  player_no_finish: 'Jugador no finaliza',
+  card_own: 'Tarjeta recibida (Propia)',
+  card_rival: 'Tarjeta provocada (Rival)',
+  card_yellow_own: 'Tarjeta Amarilla (Propia)',
+  card_red_own: 'Tarjeta Roja (Propia)',
+  card_yellow_rival: 'Tarjeta Amarilla (Rival)',
+  card_red_rival: 'Tarjeta Roja (Rival)',
+  corner_favor: 'Corner a favor',
+  corner_against: 'Corner en contra',
+  offside_own: 'Fuera de juego (Propio)',
+  offside_rival: 'Fuera de juego (Rival)',
+  gol_local: 'GOL PROPIO',
+  gol_rival: 'GOL RIVAL',
 };
 
 const EVENT_NAMES_EN = {
-  shot_on_target_own:   'Shot on target (Own)',
+  shot_on_target_own: 'Shot on target (Own)',
   shot_on_target_rival: 'Shot on target (Opponent)',
-  shot_off_target_own:  'Shot off target (Own)',
+  shot_off_target_own: 'Shot off target (Own)',
   shot_off_target_rival: 'Shot off target (Opponent)',
-  recovery:             'Ball Recovery',
-  loss:                 'Ball Loss',
-  duel_won:             'Duel Won',
-  duel_lost:            'Duel Lost',
-  foul_favor:           'Foul in Favor',
-  foul_against:         'Foul Against',
-  counter_not_cut:      'Counter-attack not cut',
-  player_no_finish:     'Player did not finish',
-  card_own:             'Card received (Own)',
-  card_rival:           'Card forced (Opponent)',
-  card_yellow_own:      'Yellow Card (Own)',
-  card_red_own:         'Red Card (Own)',
-  card_yellow_rival:    'Yellow Card (Opponent)',
-  card_red_rival:       'Red Card (Opponent)',
-  corner_favor:         'Corner in Favor',
-  corner_against:       'Corner Against',
-  offside_own:          'Offside (Own)',
-  offside_rival:        'Offside (Opponent)',
-  gol_local:            'OWN GOAL',
-  gol_rival:            'OPPONENT GOAL',
+  recovery: 'Ball Recovery',
+  loss: 'Ball Loss',
+  duel_won: 'Duel Won',
+  duel_lost: 'Duel Lost',
+  foul_favor: 'Foul in Favor',
+  foul_against: 'Foul Against',
+  counter_not_cut: 'Counter-attack not cut',
+  player_no_finish: 'Player did not finish',
+  card_own: 'Card received (Own)',
+  card_rival: 'Card forced (Opponent)',
+  card_yellow_own: 'Yellow Card (Own)',
+  card_red_own: 'Red Card (Own)',
+  card_yellow_rival: 'Yellow Card (Opponent)',
+  card_red_rival: 'Red Card (Opponent)',
+  corner_favor: 'Corner in Favor',
+  corner_against: 'Corner Against',
+  offside_own: 'Offside (Own)',
+  offside_rival: 'Offside (Opponent)',
+  gol_local: 'OWN GOAL',
+  gol_rival: 'OPPONENT GOAL',
 };
 
 export const generateMatchPdfReport = async ({
@@ -77,8 +116,8 @@ export const generateMatchPdfReport = async ({
   const effLang = getEffectiveLanguage(language || matchData?.language);
   const isEn = effLang === 'English (EN)';
 
-  window.dispatchEvent(new CustomEvent('m11-loading', { 
-    detail: { show: true, message: isEn ? 'Generating PDF Report...' : 'Generando Informe PDF...' } 
+  window.dispatchEvent(new CustomEvent('m11-loading', {
+    detail: { show: true, message: isEn ? 'Generating PDF Report...' : 'Generando Informe PDF...' }
   }));
   await new Promise((r) => setTimeout(r, 100));
 
@@ -89,9 +128,9 @@ export const generateMatchPdfReport = async ({
     const pageH = doc.internal.pageSize.getHeight();
 
     const colorPrimary = [23, 45, 33];    // #172D21 (Verde institucional)
-    const colorAccent  = [212, 168, 67];  // #D4A843 (Dorado)
+    const colorAccent = [212, 168, 67];  // #D4A843 (Dorado)
 
-    const titleText = mode === 'POST-MATCH' 
+    const titleText = mode === 'POST-MATCH'
       ? (isEn ? 'FULL POST-MATCH REPORT' : 'INFORME TOTAL POST-PARTIDO')
       : (isEn ? 'LIVE STATS REPORT' : 'INFORME DE ESTADÍSTICAS EN VIVO');
 
@@ -182,8 +221,8 @@ export const generateMatchPdfReport = async ({
         startY: y,
         body: highlightsTable,
         theme: 'grid',
-        styles: { fontSize: 9, cellPadding: 3.5 },
-        columnStyles: { 0: { fontStyle: 'bold', fillColor: [241, 245, 249], width: 55 } },
+        styles: { fontSize: 9, cellPadding: 3.5, textColor: [15, 23, 42] },
+        columnStyles: { 0: { fontStyle: 'bold', fillColor: [241, 245, 249], width: 55, textColor: colorPrimary } },
       });
 
       y = (doc.lastAutoTable ? doc.lastAutoTable.finalY : y + 20) + 10;
@@ -212,20 +251,66 @@ export const generateMatchPdfReport = async ({
     }
 
     // ── 4. CAPTURA VISUAL DE LAS GRÁFICAS CON HTML2CANVAS ─────────────────
-    const chartContainerId = mode === 'POST-MATCH' 
-      ? 'livestats-charts-container-post' 
+    const chartContainerId = mode === 'POST-MATCH'
+      ? 'livestats-charts-container-post'
       : 'livestats-charts-container-live';
     const chartElement = document.getElementById(chartContainerId) || document.querySelector('.livestats-summary-grid');
 
     if (chartElement) {
       try {
-        const canvas = await html2canvas(chartElement, {
+        // Clonar el contenedor para forzar un tema claro con máximo contraste en el PDF (evita texto blanco sobre blanco)
+        const clone = chartElement.cloneNode(true);
+        clone.style.position = 'fixed';
+        clone.style.left = '-9999px';
+        clone.style.top = '-9999px';
+        clone.style.width = `${chartElement.offsetWidth || 850}px`;
+        clone.style.background = '#FFFFFF';
+        clone.style.color = '#0F172A';
+        clone.style.padding = '20px';
+        clone.style.borderRadius = '12px';
+        clone.style.zIndex = '-99999';
+        document.body.appendChild(clone);
+
+        // Pre-convertir cualquier imagen en las gráficas a Base64
+        const chartImgs = Array.from(clone.querySelectorAll('img'));
+        await Promise.all(chartImgs.map(async (img) => {
+          if (img.src && !img.src.startsWith('data:image')) {
+            const b64 = await imageUrlToBase64(img.src);
+            if (b64) img.src = b64;
+          }
+        }));
+
+        // Forzar legibilidad y alto contraste sobre fondo blanco en todos los nodos descendientes
+        const allNodes = clone.querySelectorAll('*');
+        allNodes.forEach((node) => {
+          const comp = window.getComputedStyle(node);
+          if (comp.color.includes('255, 255, 255') || comp.color.includes('248, 250, 252') || comp.color.includes('226, 232, 240')) {
+            node.style.color = '#0F172A';
+          }
+          if (node.tagName === 'SVG' || node.tagName === 'text' || node.tagName === 'path') {
+            const fill = node.getAttribute('fill');
+            if (fill === '#FFFFFF' || fill === '#ffffff' || fill === '#fff' || fill === '#CBD5E1') {
+              node.setAttribute('fill', '#0F172A');
+            }
+          }
+          if (node.classList && node.classList.contains('livestats-category-card')) {
+            node.style.background = '#F8FAFC';
+            node.style.border = '1px solid #E2E8F0';
+          }
+        });
+
+        await new Promise((r) => setTimeout(r, 150));
+
+        const canvas = await html2canvas(clone, {
           scale: 2,
-          backgroundColor: null,
+          backgroundColor: '#FFFFFF',
           useCORS: true,
+          allowTaint: true,
         });
 
         const imgData = canvas.toDataURL('image/png');
+        document.body.removeChild(clone);
+
         const imgW = pageW - 28;
         const imgH = (canvas.height * imgW) / canvas.width;
 
@@ -240,8 +325,8 @@ export const generateMatchPdfReport = async ({
         doc.text(isEn ? 'TACTICAL SUMMARY AND CHARTS IMAGE' : 'RESUMEN Y GRÁFICAS TÁCTICAS EN IMAGEN', 14, y);
         y += 6;
 
-        doc.addImage(imgData, 'PNG', 14, y, imgW, Math.min(imgH, 120));
-        y += Math.min(imgH, 120) + 10;
+        doc.addImage(imgData, 'PNG', 14, y, imgW, Math.min(imgH, 130));
+        y += Math.min(imgH, 130) + 10;
       } catch (e) {
         console.warn('No se pudo capturar html2canvas de las gráficas:', e);
       }
@@ -275,49 +360,16 @@ export const generateMatchPdfReport = async ({
     const totalPoss = rec + loss;
     const possPct = totalPoss > 0 ? Math.round((rec / totalPoss) * 100) : 0;
 
-    const getTeamCardsSummary = (isOwn) => {
-      let yellow = 0;
-      let red = 0;
-      let gen = 0;
-      (events || []).forEach((e) => {
-        const isTarget = isOwn
-          ? (e.type === 'card_own' || e.type === 'card_yellow_own' || e.type === 'card_red_own')
-          : (e.type === 'card_rival' || e.type === 'card_yellow_rival' || e.type === 'card_red_rival');
-
-        if (isTarget) {
-          if (e.cardType === 'yellow' || e.type === 'card_yellow_own' || e.type === 'card_yellow_rival') {
-            yellow++;
-          } else if (e.cardType === 'red' || e.type === 'card_red_own' || e.type === 'card_red_rival') {
-            red++;
-          } else {
-            gen++;
-          }
-        }
-      });
-      const parts = [];
-      if (yellow > 0) parts.push(`${yellow} ${isEn ? 'yellow' : 'amarilla(s)'}`);
-      if (red > 0) parts.push(`${red} ${isEn ? 'red' : 'roja(s)'}`);
-      if (gen > 0 && parts.length === 0) parts.push(`${gen} ${isEn ? 'card(s)' : 'tarjeta(s)'}`);
-      if (parts.length === 0) return isEn ? 'None' : 'Ninguna';
-      return parts.join(', ');
-    };
-
-    const cardOwnSummary = getTeamCardsSummary(true);
-    const cardRivalSummary = getTeamCardsSummary(false);
-    const totalCardsCount = events.filter((e) => e.type.includes('card')).length;
-
     const effData = isEn ? [
-      ['Tactical Metric', 'Positive / Own', 'Negative / Opponent', '% / Breakdown'],
+      ['Tactical Metric', 'Positive Events', 'Negative Events', '% Efficiency'],
       ['Individual Duels', `${duelsWon} Won`, `${duelsLost} Lost`, `${duelsPct}% Success`],
       ['Shots Accuracy', `${shotsOn} On Target`, `${shotsOff} Off Target`, `${shotsPct}% On Target`],
       ['Ball Balance', `${rec} Recoveries`, `${loss} Losses`, `${possPct}% Retention`],
-      ['Discipline & Cards', `Own: ${cardOwnSummary}`, `Opponent: ${cardRivalSummary}`, `Total Cards: ${totalCardsCount}`],
     ] : [
-      ['Metrica Tactica', 'Eventos Propios', 'Eventos Rival', '% / Desglose'],
+      ['Metrica Tactica', 'Eventos Positivos', 'Eventos Negativos', '% Eficiencia'],
       ['Duelos individuales', `${duelsWon} Ganados`, `${duelsLost} Perdidos`, `${duelsPct}% Exito`],
       ['Precision de Tiro', `${shotsOn} a Puerta`, `${shotsOff} Fuera`, `${shotsPct}% Puerta`],
       ['Balance de Balon', `${rec} Recuperaciones`, `${loss} Perdidas`, `${possPct}% Retencion`],
-      ['Disciplina y Tarjetas', `Propio: ${cardOwnSummary}`, `Rival: ${cardRivalSummary}`, `Total Tarjetas: ${totalCardsCount}`],
     ];
 
     autoTable(doc, {
@@ -370,9 +422,20 @@ export const generateMatchPdfReport = async ({
 
       y = (doc.lastAutoTable ? doc.lastAutoTable.finalY : y + 40) + 8;
 
-      // ── 6b. FOTOGRAFÍAS REGISTRADAS POST-PARTIDO ──
-      const postImages = matchData.postMatchImages || (matchData.postMatchPhoto ? [matchData.postMatchPhoto] : []);
-      if (postImages.length > 0) {
+      // ── 6b. FOTOGRAFÍAS REGISTRADAS POST-PARTIDO (EVIDENCIA FOTOGRÁFICA) ──
+      const rawPostImages = matchData.postMatchImages || (matchData.postMatchPhoto ? [matchData.postMatchPhoto] : []);
+      const postImagesB64 = [];
+      for (let imgUrl of rawPostImages) {
+        if (!imgUrl) continue;
+        if (typeof imgUrl === 'string' && imgUrl.startsWith('data:image')) {
+          postImagesB64.push(imgUrl);
+        } else {
+          const b64 = await imageUrlToBase64(imgUrl);
+          if (b64) postImagesB64.push(b64);
+        }
+      }
+
+      if (postImagesB64.length > 0) {
         if (y + 55 > pageH - 20) {
           doc.addPage();
           y = 20;
@@ -383,23 +446,23 @@ export const generateMatchPdfReport = async ({
         doc.text(isEn ? 'POST-MATCH PHOTOGRAPHS' : 'FOTOGRAFÍAS REGISTRADAS DEL POST-PARTIDO', 14, y);
         y += 6;
 
-        for (let img of postImages) {
-          if (!img) continue;
+        for (let imgB64 of postImagesB64) {
+          if (!imgB64) continue;
           try {
-            if (y + 65 > pageH - 20) {
+            if (y + 70 > pageH - 20) {
               doc.addPage();
               y = 20;
             }
-            doc.addImage(img, 'JPEG', 14, y, 95, 60);
-            y += 65;
+            doc.addImage(imgB64, 'JPEG', 14, y, 100, 65);
+            y += 72;
           } catch (errImg) {
             try {
-              if (y + 65 > pageH - 20) {
+              if (y + 70 > pageH - 20) {
                 doc.addPage();
                 y = 20;
               }
-              doc.addImage(img, 'PNG', 14, y, 95, 60);
-              y += 65;
+              doc.addImage(imgB64, 'PNG', 14, y, 100, 65);
+              y += 72;
             } catch (e) {
               console.warn('Could not add post-match image to PDF:', e);
             }

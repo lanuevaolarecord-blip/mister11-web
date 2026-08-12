@@ -740,7 +740,12 @@ export const generateSessionPDF = async (session, activeTeam = null, pizarras = 
           doc.setDrawColor(...THEME_COLOR);
           doc.setLineWidth(0.4);
           doc.roundedRect(14, currentY - 1, pageW - 28, 72, 3, 3, 'FD');
-          doc.addImage(imgBase64, 'PNG', 16, currentY + 1, pageW - 32, 68);
+          try {
+            const fmt = imgBase64.includes('jpeg') || imgBase64.includes('jpg') ? 'JPEG' : 'PNG';
+            doc.addImage(imgBase64, fmt, 16, currentY + 1, pageW - 32, 68);
+          } catch (imgErr) {
+            console.warn('Error renderizando diagrama principal:', imgErr);
+          }
           currentY += 76;
         }
       } catch (e) {
@@ -839,7 +844,12 @@ export const generateSessionPDF = async (session, activeTeam = null, pizarras = 
           doc.setDrawColor(200, 210, 205);
           doc.setLineWidth(0.3);
           doc.roundedRect(20, imgY, pageW - 40, imgH, 2, 2, 'S');
-          doc.addImage(imgBase64, 'PNG', 21, imgY + 1, pageW - 42, imgH - 2);
+          try {
+            const fmt = imgBase64.includes('jpeg') || imgBase64.includes('jpg') ? 'JPEG' : 'PNG';
+            doc.addImage(imgBase64, fmt, 21, imgY + 1, pageW - 42, imgH - 2);
+          } catch (imgErr) {
+            console.warn('Error al renderizar imagen en bloque:', imgErr);
+          }
         }
 
         currentY += totalBlockH + 6;
@@ -889,7 +899,12 @@ export const generateSessionPDF = async (session, activeTeam = null, pizarras = 
         doc.setDrawColor(...THEME_COLOR);
         doc.setLineWidth(0.3);
         doc.roundedRect(capImgX - 1, capRowY - 1, capImgW + 2, capImgH + 13, 2, 2, 'S');
-        doc.addImage(b64, 'PNG', capImgX, capRowY, capImgW, capImgH);
+        try {
+          const fmt = b64.includes('jpeg') || b64.includes('jpg') ? 'JPEG' : 'PNG';
+          doc.addImage(b64, fmt, capImgX, capRowY, capImgW, capImgH);
+        } catch (imgErr) {
+          console.warn('Error renderizando captura:', imgErr);
+        }
 
         doc.setFontSize(7.5);
         doc.setFont(undefined, 'normal');

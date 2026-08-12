@@ -28,12 +28,33 @@ export const PDF_COLORS = {
  * @param {string} fallbackInitials - Iniciales para el avatar de fallback si falla la imagen
  */
 export const imageUrlToBase64 = async (url, fallbackInitials = 'M11') => {
-  if (typeof url === 'string' && url.startsWith('data:image')) {
-    return url;
-  }
-
   if (url) {
-    // 1. Intento por fetch blob (CORS-safe)
+    // 1. Intentar convertir cualquier imagen (data:URL o HTTP URL) a PNG nativo mediante Canvas
+    try {
+      const pngBase64 = await new Promise((resolve) => {
+        const img = new Image();
+        img.crossOrigin = 'anonymous';
+        img.onload = () => {
+          try {
+            const canvas = document.createElement('canvas');
+            canvas.width = img.naturalWidth || img.width || 300;
+            canvas.height = img.naturalHeight || img.height || 300;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0);
+            resolve(canvas.toDataURL('image/png'));
+          } catch (e) {
+            resolve(null);
+          }
+        };
+        img.onerror = () => resolve(null);
+        img.src = url;
+      });
+      if (pngBase64) return pngBase64;
+    } catch (e) {
+      console.warn('[pdfTheme] Conversión de imagen a PNG en Canvas falló:', e);
+    }
+
+    // 2. Fallback mediante fetch blob (útil para URLs con CORS estricto)
     try {
       const res = await fetch(url, { mode: 'cors' });
       if (res.ok) {
@@ -47,43 +68,48 @@ export const imageUrlToBase64 = async (url, fallbackInitials = 'M11') => {
         if (base64) return base64;
       }
     } catch (e) {
-      console.warn('[pdfTheme] Fetch image blob failed, attempting Image() element:', e);
+      console.warn('[pdfTheme] Fetch blob de imagen falló:', e);
     }
 
-    // 2. Fallback por elemento Image con crossOrigin
-    try {
-      const base64 = await new Promise((resolve) => {
-        const img = new Image();
-        img.crossOrigin = 'anonymous';
-        img.onload = () => {
-          try {
-            const canvas = document.createElement('canvas');
-            canvas.width = img.naturalWidth || img.width || 120;
-            canvas.height = img.naturalHeight || img.height || 120;
-            const ctx = canvas.getContext('2d');
-            ctx.drawImage(img, 0, 0);
-            resolve(canvas.toDataURL('image/png'));
-          } catch (err) {
-            resolve(null);
-          }
-        };
-        img.onerror = () => resolve(null);
-        img.src = url;
-      });
-      if (base64) return base64;
-    } catch (err) {
-      console.warn('[pdfTheme] Image() element conversion failed:', err);
+    // 3. Si la URL ya era una cadena DataURL, devolverla como último recurso
+    if (typeof url === 'string' && url.startsWith('data:image')) {
+      return url;
     }
   }
 
-  // 3. Generar avatar SVG Base64 de fallback limpio si no hay foto o falla la carga
-  const safeInitials = (fallbackInitials || 'M11').substring(0, 2).toUpperCase();
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="120" height="120" viewBox="0 0 120 120">
-    <rect width="120" height="120" rx="60" fill="#172D21"/>
-    <circle cx="60" cy="60" r="56" fill="none" stroke="#D4A843" stroke-width="4"/>
-    <text x="60" y="72" font-family="Arial, sans-serif" font-size="44" font-weight="bold" fill="#FFFFFF" text-anchor="middle">${safeInitials}</text>
-  </svg>`;
-  return `data:image/svg+xml;base64,${btoa(svg)}`;
+  // 4. Fallback visual: generar PNG con iniciales usando Canvas nativo
+  try {
+    const safeInitials = (fallbackInitials || 'M11').substring(0, 2).toUpperCase();
+    const canvas = document.createElement('canvas');
+    canvas.width = 120;
+    canvas.height = 120;
+    const ctx = canvas.getContext('2d');
+    
+    // Fondo verde institucional
+    ctx.fillStyle = '#172D21';
+    ctx.beginPath();
+    ctx.arc(60, 60, 60, 0, 2 * Math.PI);
+    ctx.fill();
+
+    // Borde dorado
+    ctx.strokeStyle = '#D4A843';
+    ctx.lineWidth = 4;
+    ctx.beginPath();
+    ctx.arc(60, 60, 56, 0, 2 * Math.PI);
+    ctx.stroke();
+
+    // Iniciales en blanco
+    ctx.fillStyle = '#FFFFFF';
+    ctx.font = 'bold 44px Arial, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(safeInitials, 60, 62);
+
+    return canvas.toDataURL('image/png');
+  } catch (e) {
+    // Fallback de emergencia: PNG transparente 1x1
+    return 'data:image/png;base64,iVBORw0KGgoAAAANSU5EUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==';
+  }
 };
 
 /**

@@ -95,73 +95,90 @@ export const imageUrlToBase64 = async (url, fallbackInitials = 'M11', isAvatar =
     return url;
   }
 
+  // Helper: promise que se resuelve en null tras N ms (evita cuelgues indefinidos)
+  const withTimeout = (promise, ms = 5000) =>
+    Promise.race([promise, new Promise((resolve) => setTimeout(() => resolve(null), ms))]);
+
   // 2. Si es una URL remota HTTP / HTTPS o gs://
   if (typeof url === 'string' && (url.startsWith('http') || url.startsWith('gs://'))) {
-    // A. Intento principal: Usar getBlob del SDK de Firebase Storage (resuelve 100% de problemas CORS)
+
+    // A. Firebase Storage SDK getBlob — más fiable, no tiene CORS; timeout 5s
     if (url.includes('firebasestorage') || url.startsWith('gs://')) {
       try {
-        const fileRef = storageRef(storage, url);
-        const blob = await getBlob(fileRef);
-        const base64 = await new Promise((resolve) => {
-          const reader = new FileReader();
-          reader.onloadend = () => resolve(reader.result);
-          reader.onerror = () => resolve(null);
-          reader.readAsDataURL(blob);
-        });
+        const base64 = await withTimeout(
+          (async () => {
+            const fileRef = storageRef(storage, url);
+            const blob = await getBlob(fileRef);
+            return await new Promise((resolve) => {
+              const reader = new FileReader();
+              reader.onloadend = () => resolve(reader.result);
+              reader.onerror = () => resolve(null);
+              reader.readAsDataURL(blob);
+            });
+          })(),
+          5000
+        );
         if (base64) {
-          console.log('[pdfTheme] ✅ Imagen cargada desde Firebase Storage con getBlob SDK');
+          console.log('[pdfTheme] ✅ Imagen descargada via getBlob SDK');
           return base64;
         }
       } catch (sdkErr) {
-        console.warn('[pdfTheme] getBlob de Firebase SDK falló, intentando fetch:', sdkErr);
+        console.warn('[pdfTheme] getBlob falló:', sdkErr);
       }
     }
 
-    // B. Intento secundario: fetch blob con nocache (evita taining de caché en Firebase Storage)
+    // B. fetch blob con nocache — timeout 5s
     try {
       const cleanUrl = url.includes('firebasestorage')
         ? (url.includes('?') ? `${url}&nocache=${Date.now()}` : `${url}?nocache=${Date.now()}`)
         : url;
-      const res = await fetch(cleanUrl);
-      if (res.ok) {
-        const blob = await res.blob();
-        const base64 = await new Promise((resolve) => {
-          const reader = new FileReader();
-          reader.onloadend = () => resolve(reader.result);
-          reader.onerror = () => resolve(null);
-          reader.readAsDataURL(blob);
-        });
-        if (base64) return base64;
-      }
+      const base64 = await withTimeout(
+        (async () => {
+          const res = await fetch(cleanUrl);
+          if (!res.ok) return null;
+          const blob = await res.blob();
+          return await new Promise((resolve) => {
+            const reader = new FileReader();
+            reader.onloadend = () => resolve(reader.result);
+            reader.onerror = () => resolve(null);
+            reader.readAsDataURL(blob);
+          });
+        })(),
+        5000
+      );
+      if (base64) return base64;
     } catch (e) {
-      console.warn('[pdfTheme] Fetch blob de imagen falló:', e);
+      console.warn('[pdfTheme] fetch blob falló:', e);
     }
 
-    // B. Intento secundario: Canvas con Image Element
+    // C. Image element + Canvas — timeout 5s
     try {
-      const pngBase64 = await new Promise((resolve) => {
-        const img = new Image();
-        img.crossOrigin = 'anonymous';
-        img.onload = () => {
-          try {
-            const canvas = document.createElement('canvas');
-            canvas.width = img.naturalWidth || img.width || 300;
-            canvas.height = img.naturalHeight || img.height || 300;
-            const ctx = canvas.getContext('2d');
-            ctx.drawImage(img, 0, 0);
-            resolve(canvas.toDataURL('image/png'));
-          } catch (e) { resolve(null); }
-        };
-        img.onerror = () => resolve(null);
-        img.src = url;
-      });
+      const pngBase64 = await withTimeout(
+        new Promise((resolve) => {
+          const img = new Image();
+          img.crossOrigin = 'anonymous';
+          img.onload = () => {
+            try {
+              const canvas = document.createElement('canvas');
+              canvas.width = img.naturalWidth || img.width || 300;
+              canvas.height = img.naturalHeight || img.height || 300;
+              const ctx = canvas.getContext('2d');
+              ctx.drawImage(img, 0, 0);
+              resolve(canvas.toDataURL('image/png'));
+            } catch (e) { resolve(null); }
+          };
+          img.onerror = () => resolve(null);
+          img.src = url;
+        }),
+        5000
+      );
       if (pngBase64) return pngBase64;
     } catch (e) {
-      console.warn('[pdfTheme] Conversión de imagen a PNG en Canvas falló:', e);
+      console.warn('[pdfTheme] Image/Canvas falló:', e);
     }
   }
 
-  // 3. Fallback: ÚNICAMENTE generar avatar con iniciales si se solicitó explícitamente para avatares
+  // 3. Fallback avatar con iniciales solo para avatares de jugador
   if (isAvatar) {
     return generateInitialsAvatar(fallbackInitials);
   }

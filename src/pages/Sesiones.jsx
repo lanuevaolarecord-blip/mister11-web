@@ -1178,13 +1178,21 @@ const Sesiones = () => {
 
       {/* Custom Dialog Modal (Glassmorphism Premium) */}
       {modalConfig.isOpen && (
-        <div className="custom-modal-backdrop">
-          <div className="custom-modal-card">
+        <div 
+          className="custom-modal-backdrop" 
+          onClick={() => modalConfig.isConfirm && modalConfig.onConfirm(false)}
+        >
+          <div 
+            className="custom-modal-card" 
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="custom-modal-icon">⚠️</div>
             <h3 className="custom-modal-title">{modalConfig.title}</h3>
             <p className="custom-modal-message">{modalConfig.message}</p>
             <div className="custom-modal-actions">
               {modalConfig.isConfirm && (
                 <button 
+                  type="button"
                   className="btn-modal-cancel" 
                   onClick={() => modalConfig.onConfirm(false)}
                 >
@@ -1192,10 +1200,11 @@ const Sesiones = () => {
                 </button>
               )}
               <button 
+                type="button"
                 className="btn-modal-confirm" 
                 onClick={() => modalConfig.onConfirm(true)}
               >
-                ACEPTAR
+                {modalConfig.isConfirm ? 'ACEPTAR' : 'ENTENDIDO'}
               </button>
             </div>
           </div>

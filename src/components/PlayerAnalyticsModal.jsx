@@ -188,6 +188,7 @@ const PlayerAnalyticsModal = ({ player, tests, historyData, onClose, onExportPDF
 
       const { jsPDF } = await import('jspdf');
       const html2canvas = (await import('html2canvas')).default;
+      const { drawPdfHeader, drawPdfFooter, captureElementHighContrast } = await import('../utils/pdfTheme');
 
       const doc = new jsPDF('p', 'mm', 'a4');
       const pdfWidth = doc.internal.pageSize.getWidth();
@@ -196,58 +197,43 @@ const PlayerAnalyticsModal = ({ player, tests, historyData, onClose, onExportPDF
       const capturarGrafica = async (elementId) => {
         const element = document.getElementById(elementId);
         if (!element) return null;
-        
-        // Ajustar temporalmente los estilos para capturar sin recorte
-        const origOverflow = element.style.overflow;
-        element.style.overflow = 'visible';
-        
-        const canvas = await html2canvas(element, { 
-          scale: 2,
-          useCORS: true,
-          backgroundColor: '#FAFAF7',
-          windowWidth: element.scrollWidth,
-          windowHeight: element.scrollHeight
-        });
-        
-        element.style.overflow = origOverflow;
+        const base64 = await captureElementHighContrast(html2canvas, element, 2);
+        if (!base64) return null;
         return {
-          img: canvas.toDataURL('image/png'),
-          w: canvas.width,
-          h: canvas.height
+          img: base64,
+          w: element.offsetWidth || 800,
+          h: element.offsetHeight || 400
         };
       };
 
-      let yPos = 10;
-
-      // 1. Cabecera (opcional, dibujada manual o capturada)
-      doc.setFillColor(27, 58, 45);
-      doc.rect(0, 0, pdfWidth, 25, 'F');
-      doc.setTextColor(255, 255, 255);
-      doc.setFontSize(16);
-      doc.setFont(undefined, 'bold');
-      doc.text(`Informe de Jugador: ${player.name}`, 15, 12);
-      doc.setFontSize(10);
-      doc.setTextColor(200, 200, 200);
-      doc.text(`#${player.number} · ${player.position}`, 15, 19);
-      yPos = 30;
+      drawPdfHeader(doc, `INFORME INDIVIDUAL: ${player.name}`, `#${player.number || '-'} · ${player.position || 'Jugador'}`, pdfWidth);
+      let yPos = 44;
 
       // 2. Radar y Stats
       const radarData = await capturarGrafica('player-radar-stats');
       if (radarData) {
-        const imgHeight = (radarData.h * pdfWidth) / radarData.w;
-        doc.addImage(radarData.img, 'PNG', 0, yPos, pdfWidth, imgHeight);
+        const imgHeight = (radarData.h * (pdfWidth - 24)) / radarData.w;
+        doc.addImage(radarData.img, 'PNG', 12, yPos, pdfWidth - 24, imgHeight);
         yPos += imgHeight + 10;
       }
 
       // 3. Evolución
       const evoData = await capturarGrafica('player-evolution-charts');
       if (evoData) {
-        const imgHeight = (evoData.h * pdfWidth) / evoData.w;
+        const imgHeight = (evoData.h * (pdfWidth - 24)) / evoData.w;
         if (yPos + imgHeight > pdfHeight - 20) {
           doc.addPage();
-          yPos = 10;
+          yPos = 44;
+          drawPdfHeader(doc, `INFORME INDIVIDUAL: ${player.name}`, `Evolución de Rendimiento`, pdfWidth);
         }
-        doc.addImage(evoData.img, 'PNG', 0, yPos, pdfWidth, imgHeight);
+        doc.addImage(evoData.img, 'PNG', 12, yPos, pdfWidth - 24, imgHeight);
+      }
+
+      // Pie de página unificado
+      const totalPages = doc.internal.getNumberOfPages();
+      for (let i = 1; i <= totalPages; i++) {
+        doc.setPage(i);
+        drawPdfFooter(doc, pdfWidth, pdfHeight, i, totalPages);
       }
 
       // Restaurar botones

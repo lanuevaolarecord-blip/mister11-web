@@ -1,7 +1,9 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { db } from '../firebaseConfig';
-import { Shield, PenTool, Check, Share2, Download } from 'lucide-react';
+import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { Shield, Check, Download, Share2, Sparkles, FileText, Lock } from 'lucide-react';
+import { drawPdfFooter } from '../utils/pdfTheme';
 import './ConsentimientoFirma.css';
 
 const ConsentimientoFirma = () => {
@@ -223,9 +225,15 @@ const ConsentimientoFirma = () => {
       doc.rect(15, 195, 60, 30); // Caja alrededor de la firma
 
       doc.setFontSize(8);
-      doc.setTextColor(150, 150, 150);
+      doc.setTextColor(100, 100, 100);
       doc.text('Firma del Padre/Madre/Tutor', 15, 230);
-      doc.text('Documento de Consentimiento Digital Generado por Míster11.', 15, 280);
+
+      // Pie de página unificado
+      const totalPages = doc.internal.getNumberOfPages();
+      for (let i = 1; i <= totalPages; i++) {
+        doc.setPage(i);
+        drawPdfFooter(doc, 210, 297, i, totalPages);
+      }
 
       // 3. Convertir PDF a Blob para compartir / descargar
       const pdfBlob = doc.output('blob');

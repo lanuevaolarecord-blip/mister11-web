@@ -1,23 +1,11 @@
 import { downloadPDF } from './download.js';
+import { PDF_COLORS, imageUrlToBase64, drawPdfHeader, drawPdfFooter } from './pdfTheme';
 
-const THEME_COLOR = [27, 58, 45];
-const ACCENT_COLOR = [212, 168, 67];
+const THEME_COLOR = PDF_COLORS.primary;
+const ACCENT_COLOR = PDF_COLORS.accent;
 
 const getImageBase64 = async (url) => {
-  if (!url) return null;
-  if (url.startsWith('data:')) return url;
-  try {
-    const response = await fetch(url);
-    const blob = await response.blob();
-    return new Promise((resolve) => {
-      const reader = new FileReader();
-      reader.onloadend = () => resolve(reader.result);
-      reader.onerror = () => resolve(null);
-      reader.readAsDataURL(blob);
-    });
-  } catch (e) {
-    return null;
-  }
+  return await imageUrlToBase64(url, 'M11');
 };
 
 export const generateGlobalTeamReport = async (players, tests, evaluaciones, activeTeam = null) => {
@@ -29,27 +17,10 @@ export const generateGlobalTeamReport = async (players, tests, evaluaciones, act
   const pageW = doc.internal.pageSize.getWidth();
   const pageH = doc.internal.pageSize.getHeight();
 
-  // 1. Cabecera
-  doc.setFillColor(27, 58, 45);
-  doc.rect(0, 0, pageW, 45, 'F');
-  
-  const mr11LogoData = await getImageBase64('/logo_mister11.png');
-  if (mr11LogoData) {
-    doc.addImage(mr11LogoData, 'PNG', 15, 6, 16, 16);
-  }
-  doc.setTextColor(212, 168, 67);
-  doc.setFontSize(16);
-  doc.setFont(undefined, 'bold');
-  doc.text('MÍSTER11', 35, 17);
+  // 1. Cabecera unificada
+  drawPdfHeader(doc, 'INFORME GLOBAL DE RENDIMIENTO', `Equipo: ${activeTeam?.nombre || 'General'} | Fecha: ${new Date().toLocaleDateString()}`, pageW);
 
-  doc.setTextColor(255, 255, 255);
-  doc.setFontSize(16);
-  doc.text('INFORME GLOBAL DE RENDIMIENTO', pageW / 2, 32, { align: 'center' });
-  doc.setFontSize(10);
-  doc.setTextColor(200, 200, 200);
-  doc.text(`Equipo: ${activeTeam?.nombre || 'General'} | Fecha: ${new Date().toLocaleDateString()}`, pageW / 2, 40, { align: 'center' });
-
-  let yPos = 55;
+  let yPos = 48;
 
   // 2. Procesar datos
   if (!players || players.length === 0) {
@@ -201,6 +172,12 @@ export const generateGlobalTeamReport = async (players, tests, evaluaciones, act
     headStyles: { fillColor: THEME_COLOR, textColor: 255 },
     alternateRowStyles: { fillColor: [245, 245, 245] },
   });
+
+  const totalPages = doc.internal.getNumberOfPages();
+  for (let i = 1; i <= totalPages; i++) {
+    doc.setPage(i);
+    drawPdfFooter(doc, pageW, pageH, i, totalPages);
+  }
 
   save(doc, `Informe_Global_${activeTeam?.nombre?.replace(/\s+/g, '_') || 'Equipo'}.pdf`);
 };

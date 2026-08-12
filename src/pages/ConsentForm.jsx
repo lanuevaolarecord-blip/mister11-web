@@ -2,6 +2,8 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Shield, PenTool, Check, Download, Info } from 'lucide-react';
 import SignatureCanvas from '../components/SignatureCanvas';
+import { getEffectiveLanguage } from '../i18n/translations';
+import { drawPdfFooter } from '../utils/pdfTheme';
 import '../styles/consent.css';
 
 const ConsentForm = () => {
@@ -214,11 +216,12 @@ const ConsentForm = () => {
       doc.setLineWidth(0.2);
       doc.rect(15, startY + (stepY * 10) + 60, 50, 20);
 
-      // Pie de página legal
-      doc.setFont('helvetica', 'italic');
-      doc.setFontSize(7.5);
-      doc.setTextColor(150, 150, 150);
-      doc.text('Míster11 - El banquillo en tu bolsillo · Consentimiento Parental 100% Privado (Sin registros en servidor).', 15, 285);
+      // Pie de página legal unificado
+      const totalPages = doc.internal.getNumberOfPages();
+      for (let i = 1; i <= totalPages; i++) {
+        doc.setPage(i);
+        drawPdfFooter(doc, 210, 297, i, totalPages);
+      }
 
       // Generar descarga automática del PDF
       const filename = `Consentimiento_Parental_${playerName.replace(/\s+/g, '_')}.pdf`;

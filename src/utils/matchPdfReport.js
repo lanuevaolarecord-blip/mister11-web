@@ -1,5 +1,6 @@
 import { savePdfUniversal } from './pdfGenerator';
 import { getEffectiveLanguage } from '../i18n/translations';
+import { drawPdfFooter } from './pdfTheme';
 
 export const imageUrlToBase64 = async (url) => {
   if (!url) return null;
@@ -506,6 +507,13 @@ export const generateMatchPdfReport = async ({
       headStyles: { fillColor: colorPrimary, textColor: [255, 255, 255], fontStyle: 'bold' },
       styles: { fontSize: 8.5, cellPadding: 3 },
     });
+
+    // Pie de página unificado en todas las páginas
+    const totalPages = doc.internal.getNumberOfPages();
+    for (let i = 1; i <= totalPages; i++) {
+      doc.setPage(i);
+      drawPdfFooter(doc, pageW, pageH, i, totalPages);
+    }
 
     // Guardar PDF
     const safeTitle = (matchData?.rival || (isEn ? 'Match' : 'Partido')).replace(/[^a-zA-Z0-9]/g, '_');

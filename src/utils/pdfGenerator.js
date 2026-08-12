@@ -2,21 +2,21 @@ import { downloadPDF } from './download.js';
 import { db, auth } from '../firebaseConfig';
 import { doc, getDoc } from 'firebase/firestore';
 import autoTable from 'jspdf-autotable';
+import { PDF_COLORS, imageUrlToBase64, drawPdfHeader, drawPdfFooter } from './pdfTheme';
 
 const getJsPDF = async () => {
   const { jsPDF } = await import('jspdf');
   return jsPDF;
 };
 
-// Configuración de colores corporativos
-const THEME_COLOR = [27, 58, 45]; // #1B3A2D
-const ACCENT_COLOR = [212, 168, 67]; // #D4A843
-const TEXT_COLOR = [255, 255, 255]; // #FFFFFF
+// Configuración de colores corporativos unificados
+const THEME_COLOR = PDF_COLORS.primary;
+const ACCENT_COLOR = PDF_COLORS.accent;
+const TEXT_COLOR = [255, 255, 255];
+const TEXT_DARK = PDF_COLORS.textDark;
 
 /**
  * savePdfUniversal – guarda el PDF correctamente en Web Y en APK Android.
- * En Android (Capacitor) usa Filesystem → carpeta Descargas.
- * En web usa el método clásico blob + <a download>.
  */
 export const savePdfUniversal = async (doc, filename) => {
   try {
@@ -28,45 +28,31 @@ export const savePdfUniversal = async (doc, filename) => {
   }
 };
 
-const getImageBase64 = async (url) => {
-  if (!url) return null;
-  if (url.startsWith('data:')) {
-    return url;
-  }
-  try {
-    const response = await fetch(url);
-    const blob = await response.blob();
-    return new Promise((resolve) => {
-      const reader = new FileReader();
-      reader.onloadend = () => resolve(reader.result);
-      reader.onerror = () => resolve(null);
-      reader.readAsDataURL(blob);
-    });
-  } catch (e) {
-    console.error("Error al obtener base64 de la imagen:", url, e);
-    return null;
-  }
+const getImageBase64 = async (url, fallbackInitials = 'M11') => {
+  return await imageUrlToBase64(url, fallbackInitials);
 };
 
 const addHeader = async (doc, title, subtitle, activeTeam = null) => {
   const pageW = doc.internal.pageSize.getWidth();
   
   doc.setFillColor(...THEME_COLOR);
-  doc.rect(0, 0, pageW, 40, 'F');
+  doc.rect(0, 0, pageW, 38, 'F');
+  doc.setFillColor(...ACCENT_COLOR);
+  doc.rect(0, 36, pageW, 2, 'F');
   
   // Logotipo oficial de Míster11 a la izquierda
   const mr11LogoData = await getImageBase64('/logo_mister11.png');
   if (mr11LogoData) {
-    doc.addImage(mr11LogoData, 'PNG', 15, 5, 18, 18);
+    doc.addImage(mr11LogoData, 'PNG', 14, 5, 18, 18);
     doc.setTextColor(...TEXT_COLOR);
     doc.setFontSize(16);
     doc.setFont(undefined, 'bold');
-    doc.text('MÍSTER11', 37, 16);
+    doc.text('MÍSTER11', 36, 16);
   } else {
     doc.setTextColor(...TEXT_COLOR);
-    doc.setFontSize(20);
+    doc.setFontSize(18);
     doc.setFont(undefined, 'bold');
-    doc.text('MÍSTER11', 15, 18);
+    doc.text('MÍSTER11', 14, 18);
   }
   
   // Escudo del equipo a la derecha
@@ -75,7 +61,7 @@ const addHeader = async (doc, title, subtitle, activeTeam = null) => {
     const textX = pageW - 24;
     
     if (activeTeam.escudo) {
-      const logoData = await getImageBase64(activeTeam.escudo);
+      const logoData = await getImageBase64(activeTeam.escudo, (activeTeam.nombre || 'E'));
       if (logoData) {
         doc.addImage(logoData, 'PNG', shieldX, 5, 18, 18);
       } else {
@@ -98,20 +84,20 @@ const addHeader = async (doc, title, subtitle, activeTeam = null) => {
     doc.setFontSize(8);
     doc.setTextColor(255, 255, 255);
     doc.setFont(undefined, 'normal');
-    doc.text(activeTeam.nombre || '', textX, 33, { align: 'center' });
+    doc.text((activeTeam.nombre || '').slice(0, 18), textX, 32, { align: 'center' });
   }
 
   // Título y subtítulo centrados
   doc.setTextColor(...ACCENT_COLOR);
   doc.setFontSize(12);
   doc.setFont(undefined, 'bold');
-  doc.text(title, pageW / 2, 26, { align: 'center' });
+  doc.text(title.toUpperCase(), pageW / 2, 22, { align: 'center' });
   
   if (subtitle) {
-    doc.setTextColor(200, 200, 200);
+    doc.setTextColor(226, 232, 240);
     doc.setFontSize(8.5);
     doc.setFont(undefined, 'normal');
-    doc.text(subtitle, pageW / 2, 32, { align: 'center' });
+    doc.text(subtitle, pageW / 2, 30, { align: 'center' });
   }
 };
 
@@ -119,24 +105,9 @@ const addFooter = (doc) => {
   const pageCount = doc.internal.getNumberOfPages();
   const pageW = doc.internal.pageSize.getWidth();
   const pageH = doc.internal.pageSize.getHeight();
-  const generatedDate = new Date().toLocaleDateString('es-ES', { day: '2-digit', month: 'long', year: 'numeric' });
   for (let i = 1; i <= pageCount; i++) {
     doc.setPage(i);
-    // Línea separadora dorada
-    doc.setFillColor(...ACCENT_COLOR);
-    doc.rect(0, pageH - 12, pageW, 0.5, 'F');
-    // Texto del pie — marca izquierda
-    doc.setFontSize(7.5);
-    doc.setFont(undefined, 'bold');
-    doc.setTextColor(...THEME_COLOR);
-    doc.text('MISTER11', 15, pageH - 6);
-    doc.setFont(undefined, 'normal');
-    doc.setTextColor(150, 150, 150);
-    doc.text(' · El banquillo en tu bolsillo · Generado: ' + generatedDate, 31, pageH - 6);
-    // Número de página — derecha
-    doc.setFont(undefined, 'bold');
-    doc.setTextColor(...THEME_COLOR);
-    doc.text(`${i} / ${pageCount}`, pageW - 15, pageH - 6, { align: 'right' });
+    drawPdfFooter(doc, pageW, pageH, i, pageCount);
   }
 };
 
@@ -1111,41 +1082,60 @@ export const generateExpediente = async (player, activeTeam = null) => {
   await new Promise(r => setTimeout(r, 150));
   const jsPDF = await getJsPDF();
   const doc = new jsPDF();
-  await addHeader(doc, 'EXPEDIENTE DEPORTIVO', `${player.name || player.nombre}`, activeTeam);
+  const pageW = doc.internal.pageSize.getWidth();
 
-  doc.setTextColor(45, 45, 45);
+  await addHeader(doc, 'EXPEDIENTE DEPORTIVO', `${player.name || player.nombre || 'Jugador'}`, activeTeam);
+
+  // Pre-cargar avatar Base64 del jugador con fallback SVG de iniciales
+  const playerAvatarData = await imageUrlToBase64(player.avatarUrl || player.photoPreview, player.name || player.nombre);
+  if (playerAvatarData) {
+    try {
+      doc.setFillColor(248, 250, 252);
+      doc.roundedRect(pageW - 48, 46, 34, 34, 3, 3, 'F');
+      doc.setDrawColor(226, 232, 240);
+      doc.roundedRect(pageW - 48, 46, 34, 34, 3, 3, 'S');
+      doc.addImage(playerAvatarData, 'PNG', pageW - 46, 48, 30, 30);
+    } catch (e) {
+      console.warn('[generateExpediente] Error renderizando avatar del jugador:', e);
+    }
+  }
+
+  doc.setTextColor(...TEXT_DARK);
   doc.setFontSize(12);
   doc.setFont(undefined, 'bold');
-  doc.text('Datos Personales', 15, 50);
+  doc.text('Datos Personales del Jugador', 15, 50);
   
   doc.setFont(undefined, 'normal');
-  doc.text(`Dorsal: ${player.number || player.dorsal || '-'}`, 15, 60);
-  doc.text(`Posición: ${player.position || player.posicion || '-'}`, 80, 60);
-  doc.text(`Categoría: ${activeTeam?.categoria || player.category || '-'}`, 140, 60);
+  doc.setFontSize(10);
+  doc.text(`Nombre: ${player.name || player.nombre || '-'}`, 15, 58);
+  doc.text(`Dorsal: #${player.number || player.dorsal || '-'}`, 15, 66);
+  doc.text(`Posición: ${player.position || player.posicion || '-'}`, 80, 66);
+  doc.text(`Categoría: ${activeTeam?.categoria || player.category || '-'}`, 15, 74);
   
-  doc.text(`Pierna: ${player.foot || '-'}`, 15, 68);
-  doc.text(`Altura: ${player.height ? player.height + ' cm' : '-'}`, 80, 68);
-  doc.text(`Peso: ${player.weight ? player.weight + ' kg' : '-'}`, 140, 68);
+  doc.text(`Pierna: ${player.foot || '-'}`, 80, 74);
+  doc.text(`Altura: ${player.height ? player.height + ' cm' : '-'}`, 15, 82);
+  doc.text(`Peso: ${player.weight ? player.weight + ' kg' : '-'}`, 80, 82);
   
   // Estado médico
   doc.setFont(undefined, 'bold');
-  doc.text('Estado Médico Actual:', 15, 85);
+  doc.text('Estado Médico Actual:', 15, 94);
   doc.setFont(undefined, 'normal');
-  if (player.injuries) {
-    doc.setTextColor(200, 0, 0);
-    doc.text(`LESIONADO - ${player.injuryType || 'No especificado'}`, 65, 85);
+  if (player.injuries || player.currentStatus === 'injured') {
+    doc.setTextColor(220, 38, 38);
+    doc.text(`LESIONADO - ${player.injuryType || player.medicalObservations || 'No especificado'}`, 65, 94);
   } else {
-    doc.setTextColor(0, 150, 0);
-    doc.text('APTO', 65, 85);
+    doc.setTextColor(34, 197, 94);
+    doc.text('APTO / DISPONIBLE', 65, 94);
   }
 
-  doc.setTextColor(45, 45, 45);
+  doc.setTextColor(...TEXT_DARK);
   doc.setFont(undefined, 'bold');
-  doc.text('Resumen de Rendimiento', 15, 105);
+  doc.setFontSize(12);
+  doc.text('Resumen de Rendimiento de la Temporada', 15, 108);
   doc.setFont(undefined, 'normal');
   
   autoTable(doc, {
-    startY: 110,
+    startY: 114,
     head: [['Partidos', 'Minutos', 'Goles', 'Asistencias', 'Tarjetas']],
     body: [[
       player.partidosJugados || 0,
@@ -1154,8 +1144,9 @@ export const generateExpediente = async (player, activeTeam = null) => {
       player.asistencias || 0,
       (player.tarjetasAmarillas || 0) + 'A / ' + (player.tarjetasRojas || 0) + 'R'
     ]],
-    headStyles: { fillColor: THEME_COLOR, textColor: [255,255,255], fontStyle: 'bold' },
-    bodyStyles: { textColor: [45,45,45] },
+    headStyles: { fillColor: THEME_COLOR, textColor: [255,255,255], fontStyle: 'bold', halign: 'center' },
+    bodyStyles: { textColor: [15,23,42], halign: 'center', fontSize: 10 },
+    theme: 'grid'
   });
 
   addFooter(doc);

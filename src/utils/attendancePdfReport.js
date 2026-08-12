@@ -1,5 +1,6 @@
 import { savePdfUniversal } from './pdfGenerator';
 import { getEffectiveLanguage } from '../i18n/translations';
+import { drawPdfFooter } from './pdfTheme';
 
 const getPdfLibs = async () => {
   const { jsPDF } = await import('jspdf');
@@ -157,6 +158,13 @@ export const generateAttendancePdfReport = async ({
         styles: { fontSize: 8.5, cellPadding: 3, textColor: [185, 28, 28] },
         columnStyles: { 0: { fontStyle: 'bold', width: 70 } },
       });
+    }
+
+    // Pie de página unificado en todas las páginas
+    const totalPages = doc.internal.getNumberOfPages();
+    for (let i = 1; i <= totalPages; i++) {
+      doc.setPage(i);
+      drawPdfFooter(doc, pageW, pageH, i, totalPages);
     }
 
     const pdfName = `control_asistencia_${teamName.replace(/\s+/g, '_').toLowerCase()}_${new Date().toISOString().split('T')[0]}.pdf`;

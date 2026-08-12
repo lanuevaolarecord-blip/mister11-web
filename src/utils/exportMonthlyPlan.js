@@ -1,3 +1,5 @@
+import { PDF_COLORS, drawPdfHeader, drawPdfFooter } from './pdfTheme';
+
 export const exportMonthlyPlan = async (mesocycle, macroInfo, activeTeam, appVersion) => {
   if (!mesocycle) return;
 
@@ -14,64 +16,15 @@ export const exportMonthlyPlan = async (mesocycle, macroInfo, activeTeam, appVer
   const pdfWidth = doc.internal.pageSize.getWidth();
   const pdfHeight = doc.internal.pageSize.getHeight();
 
-  // Paleta de colores Míster11
-  const cDark = [27, 58, 45]; // Verde Institucional (#1B3A2D)
-  const cGold = [212, 168, 67]; // Dorado (#D4A843)
-  const cBeige = [245, 240, 232]; // Beige claro (#F5F0E8)
-  const cText = [45, 45, 45]; // Texto oscuro
- 
-  // Encabezado
-  const drawHeader = (titleSub) => {
-    // Banner superior verde
-    doc.setFillColor(cDark[0], cDark[1], cDark[2]);
-    doc.rect(0, 0, pdfWidth, 24, 'F');
-    
-    // Línea divisoria dorada
-    doc.setFillColor(cGold[0], cGold[1], cGold[2]);
-    doc.rect(0, 24, pdfWidth, 1.5, 'F');
+  // Paleta de colores Míster11 unificada
+  const cDark = PDF_COLORS.primary;
+  const cGold = PDF_COLORS.accent;
+  const cBeige = PDF_COLORS.bgLight;
+  const cText = PDF_COLORS.textDark;
 
-    // Título Principal
-    doc.setTextColor(255, 255, 255);
-    doc.setFont('Helvetica', 'bold');
-    doc.setFontSize(14);
-    doc.text('MÍSTER 11 - PLANIFICACIÓN MENSUAL', 12, 11);
+  drawPdfHeader(doc, `PLANIFICACIÓN MENSUAL — ${mesocycle.month.toUpperCase()}`, `Mesociclo ${mesoNumStr} | ${activeTeam?.nombre || 'Mi Equipo'}`, pdfWidth);
 
-    // Subtítulo
-    doc.setFont('Helvetica', 'normal');
-    doc.setFontSize(9);
-    doc.setTextColor(210, 225, 215);
-    doc.text(titleSub.toUpperCase(), 12, 17);
-
-    // Nombre de equipo
-    doc.setFont('Helvetica', 'bold');
-    doc.setTextColor(255, 255, 255);
-    doc.setFontSize(10);
-    const teamName = (activeTeam?.nombre || activeTeam?.name || 'MI EQUIPO').toUpperCase();
-    doc.text(teamName, pdfWidth - 12, 11, { align: 'right' });
-
-    // Versión y Fecha
-    doc.setFont('Helvetica', 'normal');
-    doc.setFontSize(8);
-    doc.setTextColor(210, 225, 215);
-    const todayStr = new Date().toLocaleDateString('es-ES');
-    doc.text(`Fecha: ${todayStr} | Versión: ${appVersion}`, pdfWidth - 12, 17, { align: 'right' });
-  };
-
-  // Pie de página
-  const drawFooter = (pageNum, totalPages) => {
-    doc.setFillColor(cDark[0], cDark[1], cDark[2]);
-    doc.rect(0, pdfHeight - 10, pdfWidth, 10, 'F');
-    
-    doc.setTextColor(255, 255, 255);
-    doc.setFontSize(8);
-    doc.setFont('Helvetica', 'normal');
-    doc.text('Míster 11 - El banquillo en tu bolsillo', 12, pdfHeight - 4);
-    doc.text(`Página ${pageNum} de ${totalPages}`, pdfWidth - 12, pdfHeight - 4, { align: 'right' });
-  };
-
-  drawHeader(`Mesociclo ${mesoNumStr} (${mesocycle.month.toUpperCase()})`);
-
-  let yPos = 32;
+  let yPos = 44;
 
   // Bloque de Resumen del Mesociclo
   doc.setFillColor(cBeige[0], cBeige[1], cBeige[2]);
@@ -205,7 +158,7 @@ export const exportMonthlyPlan = async (mesocycle, macroInfo, activeTeam, appVer
   const totalPages = doc.internal.getNumberOfPages();
   for (let i = 1; i <= totalPages; i++) {
     doc.setPage(i);
-    drawFooter(i, totalPages);
+    drawPdfFooter(doc, pdfWidth, pdfHeight, i, totalPages);
   }
 
   // Descarga del PDF

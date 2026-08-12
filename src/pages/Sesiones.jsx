@@ -409,15 +409,109 @@ const Sesiones = () => {
   };
 
   // --- EDIT MODE FUNCTIONS ---
+
+  /**
+   * Convierte un dataURL Base64 a un objeto Blob
+   */
+  const dataURLtoBlob = (dataurl) => {
+    if (!dataurl || typeof dataurl !== 'string' || !dataurl.startsWith('data:')) return null;
+    try {
+      const arr = dataurl.split(',');
+      const mimeMatch = arr[0].match(/:(.*?);/);
+      const mime = mimeMatch ? mimeMatch[1] : 'image/png';
+      const bstr = atob(arr[1]);
+      let n = bstr.length;
+      const u8arr = new Uint8Array(n);
+      while (n--) {
+        u8arr[n] = bstr.charCodeAt(n);
+      }
+      return new Blob([u8arr], { type: mime });
+    } catch (e) {
+      console.error('[Sesiones] Error convirtiendo dataURL a Blob:', e);
+      return null;
+    }
+  };
+
+  /**
+   * Procesa la imagen o captura adjunta a un bloque:
+   * - Si ya es una URL pública HTTPS/HTTP, la mantiene.
+   * - Si es un objeto File/Blob o una cadena base64 nueva, la sube a Firebase Storage y devuelve la URL pública.
+   */
+  const processBlockImage = async (block, index, sessionId) => {
+    // Buscar la imagen en cualquiera de los nombres de campos posibles
+    const rawImg = block.imageUrl || block.imagenProtocolo || block.image || block.photo || block.previewUrl || block.canvasData || null;
+    const rawFile = block.file || block.imageFile || block.blob || null;
+
+    // Si ya es una URL pública HTTPS/HTTP, la devolvemos intacta
+    if (typeof rawImg === 'string' && rawImg.startsWith('http')) {
+      console.log(`[Sesiones] Bloque ${index + 1} conserva URL existente:`, rawImg);
+      return rawImg;
+    }
+
+    // Identificar el Blob o File que debe subirse
+    let blobToUpload = null;
+    if (rawFile && (rawFile instanceof File || rawFile instanceof Blob)) {
+      blobToUpload = rawFile;
+    } else if (typeof rawImg === 'string' && rawImg.startsWith('data:')) {
+      blobToUpload = dataURLtoBlob(rawImg);
+    }
+
+    if (!blobToUpload) {
+      return null;
+    }
+
+    // Subir a Firebase Storage
+    try {
+      const teamPath = getTeamPath(activeTeamId);
+      const sid = sessionId || editData?.id || `session_${Date.now()}`;
+      const ext = blobToUpload.type?.includes('jpeg') ? 'jpg' : 'png';
+      const storagePath = `teams/${activeTeamId || 'default'}/sessions/${sid}/block_${index}_${Date.now()}.${ext}`;
+      const storageRef = ref(storage, storagePath);
+
+      await uploadBytesResumable(storageRef, blobToUpload);
+      const downloadUrl = await getDownloadURL(storageRef);
+      console.log(`[Sesiones] ✅ Imagen subida exitosamente para Bloque ${index + 1}:`, downloadUrl);
+      return downloadUrl;
+    } catch (err) {
+      console.error(`[Sesiones] ❌ Error subiendo imagen de Bloque ${index + 1} a Storage:`, err);
+      return null;
+    }
+  };
+
   const handleSaveSession = async () => {
     const title = (editData?.title || '').trim();
     if (!title) {
       await showAlert('Validación', 'El título de la sesión es obligatorio.');
       return;
     }
-    
+
     setIsSaving(true);
     try {
+      const rawBlocks = editData.blocks || [];
+      const sessionId = editData.id || null;
+
+      // ── Paso 1: Procesar y subir todas las imágenes de los bloques en paralelo ──
+      const updatedBlocks = await Promise.all(
+        rawBlocks.map(async (b, idx) => {
+          const imageUrl = await processBlockImage(b, idx, sessionId);
+          return {
+            id: b.id || `${Date.now()}_${idx}`,
+            name: b.name || b.nombre || `Bloque ${idx + 1}`,
+            duration: Number(b.duration || b.duracion) || 15,
+            type: b.type || b.tipo || 'Táctica',
+            description: b.description || b.descripcion || '',
+            // Guardar explícitamente tanto en imageUrl como en imagenProtocolo para máxima compatibilidad
+            imageUrl: imageUrl || null,
+            imagenProtocolo: imageUrl || null,
+            // Eliminar objetos local File/Blob que Firestore rechaza
+            file: null,
+            imageFile: null,
+            blob: null
+          };
+        })
+      );
+
+      // ── Paso 2: Construir el payload con bloques actualizados ──
       const sessionPayload = {
         title,
         date: editData.date || new Date().toISOString().split('T')[0],
@@ -430,15 +524,10 @@ const Sesiones = () => {
         objectives: editData.objectives || '',
         materials: editData.materials || '',
         linkedPizarraId: editData.linkedPizarraId || '',
-        blocks: (editData.blocks || []).map((b, idx) => ({
-          id: b.id || `${Date.now()}_${idx}`,
-          name: b.name || b.nombre || `Bloque ${idx + 1}`,
-          duration: Number(b.duration || b.duracion) || 15,
-          type: b.type || b.tipo || 'Táctica',
-          description: b.description || b.descripcion || ''
-        }))
+        blocks: updatedBlocks
       };
 
+      // ── Paso 3: Guardar en Firestore ──
       if (editData.id) {
         await updateSession(editData.id, sessionPayload);
         showToast('Sesión actualizada exitosamente', 'success');
@@ -456,6 +545,7 @@ const Sesiones = () => {
       showToast(error?.message || 'Error al guardar la sesión', 'error');
       await showAlert('Error', error?.message || 'Error al guardar la sesión en la base de datos.');
     } finally {
+      // SIEMPRE liberar el estado de carga
       setIsSaving(false);
     }
   };
@@ -993,15 +1083,28 @@ const Sesiones = () => {
                     if (blocks.length === 0) {
                       return <p className="empty-blocks-text">No hay bloques definidos.</p>;
                     }
-                    return blocks.map((b, i) => (
-                      <div key={b.id || i} className="block-item-mini">
-                        <span className="b-num">{i + 1}</span>
-                        <div className="b-info">
-                          <strong>{b.name || b.nombre || 'Bloque'}</strong>
-                          <span>{b.duration || b.duracion || 0} min · {b.type || b.tipo || ''}</span>
+                    return blocks.map((b, i) => {
+                      const blockImg = b.imageUrl || b.imagenProtocolo || b.image || b.photo || b.previewUrl;
+                      return (
+                        <div key={b.id || i} className="block-item-mini" style={{ display: 'flex', flexDirection: 'column', gap: '8px', padding: '12px', borderRadius: '10px', background: 'var(--bg-card)', border: '1px solid var(--border-light)', marginBottom: '8px' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                            <span className="b-num" style={{ minWidth: '24px', height: '24px', borderRadius: '50%', background: 'var(--accent-gold, #c9a84c)', color: '#000', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold', fontSize: '12px' }}>{i + 1}</span>
+                            <div className="b-info" style={{ flex: 1 }}>
+                              <strong style={{ display: 'block', fontSize: '14px' }}>{b.name || b.nombre || 'Bloque'}</strong>
+                              <span style={{ fontSize: '12px', opacity: 0.7 }}>{b.duration || b.duracion || 0} min · {b.type || b.tipo || ''}</span>
+                            </div>
+                          </div>
+                          {(b.description || b.descripcion) && (
+                            <p style={{ fontSize: '12px', opacity: 0.85, margin: '2px 0 0 0', whiteSpace: 'pre-wrap' }}>{b.description || b.descripcion}</p>
+                          )}
+                          {blockImg && (
+                            <div style={{ marginTop: '6px', borderRadius: '8px', overflow: 'hidden', border: '1px solid var(--border-light)', backgroundColor: '#f8fafc', padding: '4px', textAlign: 'center' }}>
+                              <img src={blockImg} alt={b.name || 'Diagrama'} style={{ width: '100%', maxHeight: '200px', objectFit: 'contain', borderRadius: '6px' }} />
+                            </div>
+                          )}
                         </div>
-                      </div>
-                    ));
+                      );
+                    });
                   })()}
                 </div>
                 

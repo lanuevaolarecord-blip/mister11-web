@@ -797,21 +797,13 @@ export const generateSessionPDF = async (session, activeTeam = null, pizarras = 
         doc.text(descLines, 28, currentY + 13);
         currentY += blockH + 2;
 
-        // Imagen del bloque con diseno mejorado
-        if (b.imagenProtocolo) {
+        // Imagen del bloque — URL de Storage (post-corrección) o Base64 legacy
+        // getImageBase64 -> imageUrlToBase64 ya maneja CORS, data-URLs y fallback SVG
+        const blockImg = b.imageUrl || b.imagenProtocolo || b.image || b.photo || b.previewUrl;
+        if (blockImg) {
           if (currentY + 65 > pageH - 25) { doc.addPage(); currentY = 20; }
           try {
-            let imgData = b.imagenProtocolo;
-            // Si la imagen es una URL remota, intentamos buscar en la lista de capturas
-            // para obtener el base64 local (evitando bloqueos de CORS)
-            if (b.imagenProtocolo.startsWith('http') && captures && captures.length > 0) {
-              const matchedCap = captures.find(c => c.url === b.imagenProtocolo || c.thumbnail === b.imagenProtocolo);
-              if (matchedCap && matchedCap.thumbnail) {
-                imgData = matchedCap.thumbnail;
-              }
-            }
-
-            const imgBase64 = await getImageBase64(imgData);
+            const imgBase64 = await getImageBase64(blockImg, b.name || 'img');
             if (imgBase64) {
               doc.setDrawColor(200, 210, 205);
               doc.setLineWidth(0.3);

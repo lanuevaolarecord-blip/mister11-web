@@ -63,6 +63,7 @@ const BlockEditor = ({ block, index, handleUpdateBlock, handleDeleteBlock, handl
           
           const base64Url = canvas.toDataURL('image/jpeg', 0.7);
           handleUpdateBlock(block.id, 'imagenProtocolo', base64Url);
+          handleUpdateBlock(block.id, 'imageUrl', base64Url);
           window.dispatchEvent(new CustomEvent('m11-loading', { detail: { show: false } }));
         };
         img.onerror = () => {
@@ -158,34 +159,45 @@ const BlockEditor = ({ block, index, handleUpdateBlock, handleDeleteBlock, handl
           ></textarea>
         </div>
 
-        {/* Módulo de Subir Imagen / Diagrama */}
-        <div className="form-group full">
-          <label>Imagen / Diagrama del Ejercicio</label>
-          {block.imagenProtocolo && (
-            <div style={{ position: 'relative', marginBottom: '10px' }}>
-              <img src={block.imagenProtocolo} alt="Diagrama del ejercicio" style={{ width: '100%', maxHeight: '200px', objectFit: 'contain', borderRadius: '8px', border: '1px solid #e2e8f0', backgroundColor: '#f8fafc' }} />
-              <button 
-                onClick={() => handleUpdateBlock(block.id, 'imagenProtocolo', null)}
-                style={{ position: 'absolute', top: 5, right: 5, backgroundColor: 'rgba(255,0,0,0.8)', color: 'white', border: 'none', borderRadius: '50%', width: '30px', height: '30px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-              >✕</button>
-            </div>
-          )}
-          <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
-            <input 
-              type="file" 
-              accept="image/png, image/jpeg, image/webp" 
-              style={{ display: 'none' }} 
-              ref={fileInputRef}
-              onChange={handleImageUpload}
-            />
-            <button className="btn-outline" onClick={() => fileInputRef.current?.click()}>
-              📸 Subir Imagen
-            </button>
-            <button className="btn-outline" onClick={() => setShowCaptureModal(true)}>
-              🖼️ Seleccionar Captura
-            </button>
-          </div>
-        </div>
+          {/* Módulo de Subir Imagen / Diagrama */}
+          {(() => {
+            const blockImg = block.imageUrl || block.imagenProtocolo || block.image || block.photo || block.previewUrl;
+            return (
+              <div className="form-group full">
+                <label>Imagen / Diagrama del Ejercicio</label>
+                {blockImg && (
+                  <div style={{ position: 'relative', marginBottom: '10px' }}>
+                    <img src={blockImg} alt="Diagrama del ejercicio" style={{ width: '100%', maxHeight: '200px', objectFit: 'contain', borderRadius: '8px', border: '1px solid #e2e8f0', backgroundColor: '#f8fafc' }} />
+                    <button 
+                      onClick={() => {
+                        handleUpdateBlock(block.id, 'imagenProtocolo', null);
+                        handleUpdateBlock(block.id, 'imageUrl', null);
+                        handleUpdateBlock(block.id, 'image', null);
+                        handleUpdateBlock(block.id, 'photo', null);
+                        handleUpdateBlock(block.id, 'previewUrl', null);
+                      }}
+                      style={{ position: 'absolute', top: 5, right: 5, backgroundColor: 'rgba(255,0,0,0.8)', color: 'white', border: 'none', borderRadius: '50%', width: '30px', height: '30px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                    >✕</button>
+                  </div>
+                )}
+                <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+                  <input 
+                    type="file" 
+                    accept="image/png, image/jpeg, image/webp" 
+                    style={{ display: 'none' }} 
+                    ref={fileInputRef}
+                    onChange={handleImageUpload}
+                  />
+                  <button className="btn-outline" onClick={() => fileInputRef.current?.click()}>
+                    📸 Subir Imagen
+                  </button>
+                  <button className="btn-outline" onClick={() => setShowCaptureModal(true)}>
+                    🖼️ Seleccionar Captura
+                  </button>
+                </div>
+              </div>
+            );
+          })()}
       </div>
 
       {showCaptureModal && (
@@ -203,7 +215,9 @@ const BlockEditor = ({ block, index, handleUpdateBlock, handleDeleteBlock, handl
                       key={cap.id} 
                       style={{ cursor: 'pointer', border: '2px solid transparent', borderRadius: '8px', overflow: 'hidden' }}
                         onClick={() => {
-                          handleUpdateBlock(block.id, 'imagenProtocolo', cap.thumbnail || cap.url);
+                          const capUrl = cap.thumbnail || cap.url;
+                          handleUpdateBlock(block.id, 'imagenProtocolo', capUrl);
+                          handleUpdateBlock(block.id, 'imageUrl', capUrl);
                           setShowCaptureModal(false);
                         }}
                     >

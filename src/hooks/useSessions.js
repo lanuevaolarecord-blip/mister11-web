@@ -3,6 +3,21 @@ import { useAuth } from '../context/AuthContext';
 import { subscribeToCollection, addDocument, updateDocument, deleteDocument, createNotification } from '../firebase/db';
 import { scheduleSessionReminder, cancelSessionReminder, requestNotificationPermission } from './useLocalNotifications';
 
+export const sanitizeForFirestore = (obj) => {
+  if (obj === undefined || obj === null) return null;
+  if (Array.isArray(obj)) return obj.map(sanitizeForFirestore);
+  if (typeof obj === 'object' && !(obj instanceof Date)) {
+    const cleaned = {};
+    for (const [key, value] of Object.entries(obj)) {
+      if (value !== undefined) {
+        cleaned[key] = sanitizeForFirestore(value);
+      }
+    }
+    return cleaned;
+  }
+  return obj;
+};
+
 export const useSessions = (teamId) => {
   const { user, getTeamPath } = useAuth();
   const [sessions, setSessions] = useState([]);
@@ -26,43 +41,51 @@ export const useSessions = (teamId) => {
   }, [user?.uid, teamId, getTeamPath]);
 
   const addSession = async (sessionData) => {
-    if (!user || !teamId) return;
+    if (!user || !teamId) {
+      throw new Error('No hay usuario o equipo activo para guardar la sesión.');
+    }
     const path = getTeamPath(teamId);
-    const docId = await addDocument(`${path}/sessions`, {
-      ...sessionData
-    });
+    const cleanedData = sanitizeForFirestore(sessionData);
+    const docId = await addDocument(`${path}/sessions`, cleanedData);
 
-    await createNotification('success', `Nueva sesión creada: ${sessionData.title}`);
+    // Notificaciones en segundo plano (no bloqueantes)
+    createNotification('success', `Nueva sesión creada: ${sessionData.title || 'Sesión'}`).catch(() => {});
 
-    // Programar recordatorio local (Android nativo) si las notificaciones están habilitadas
     const notifEnabled = localStorage.getItem('mister11_notifications_enabled') !== 'false';
     if (notifEnabled && docId) {
-      await requestNotificationPermission();
-      await scheduleSessionReminder({ ...sessionData, id: docId });
+      requestNotificationPermission()
+        .then(() => scheduleSessionReminder({ ...cleanedData, id: docId }))
+        .catch(err => console.warn('[useSessions] Non-blocking reminder error:', err));
     }
 
     return docId;
   };
 
   const updateSession = async (id, sessionData) => {
-    if (!user || !teamId) return;
+    if (!user || !teamId) {
+      throw new Error('No hay usuario o equipo activo para actualizar la sesión.');
+    }
     const path = getTeamPath(teamId);
-    // Reprogramar recordatorio si cambió la fecha/hora
+    const cleanedData = sanitizeForFirestore(sessionData);
+
     if (sessionData.date || sessionData.time) {
       const existing = sessions.find(s => s.id === id) || {};
-      const updated = { ...existing, ...sessionData, id };
-      await cancelSessionReminder(id);
+      const updated = { ...existing, ...cleanedData, id };
+      cancelSessionReminder(id).catch(() => {});
       const notifEnabled = localStorage.getItem('mister11_notifications_enabled') !== 'false';
-      if (notifEnabled) await scheduleSessionReminder(updated);
+      if (notifEnabled) {
+        scheduleSessionReminder(updated).catch(err => console.warn('[useSessions] Non-blocking reminder error:', err));
+      }
     }
-    return await updateDocument(`${path}/sessions`, id, sessionData);
+
+    await updateDocument(`${path}/sessions`, id, cleanedData);
+    return id;
   };
 
   const removeSession = async (id) => {
     if (!user || !teamId) return;
     const path = getTeamPath(teamId);
-    // Cancelar recordatorio al eliminar sesión
-    await cancelSessionReminder(id);
+    cancelSessionReminder(id).catch(() => {});
     return await deleteDocument(`${path}/sessions`, id);
   };
 

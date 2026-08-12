@@ -410,22 +410,51 @@ const Sesiones = () => {
 
   // --- EDIT MODE FUNCTIONS ---
   const handleSaveSession = async () => {
-    if (!(editData.title || '').trim()) {
-      await showAlert('Validación', 'El título es obligatorio');
+    const title = (editData?.title || '').trim();
+    if (!title) {
+      await showAlert('Validación', 'El título de la sesión es obligatorio.');
       return;
     }
     
     setIsSaving(true);
     try {
+      const sessionPayload = {
+        title,
+        date: editData.date || new Date().toISOString().split('T')[0],
+        time: editData.time || '18:00',
+        category: editData.category || 'Táctica',
+        intensity: editData.intensity || 'Media',
+        duration: Number(editData.duration) || 90,
+        players: Array.isArray(editData.players) ? editData.players : [],
+        files: Array.isArray(editData.files) ? editData.files : [],
+        objectives: editData.objectives || '',
+        materials: editData.materials || '',
+        linkedPizarraId: editData.linkedPizarraId || '',
+        blocks: (editData.blocks || []).map((b, idx) => ({
+          id: b.id || `${Date.now()}_${idx}`,
+          name: b.name || b.nombre || `Bloque ${idx + 1}`,
+          duration: Number(b.duration || b.duracion) || 15,
+          type: b.type || b.tipo || 'Táctica',
+          description: b.description || b.descripcion || ''
+        }))
+      };
+
       if (editData.id) {
-        await updateSession(editData.id, editData);
+        await updateSession(editData.id, sessionPayload);
+        showToast('Sesión actualizada exitosamente', 'success');
+        setSelectedSession({ ...sessionPayload, id: editData.id });
       } else {
-        await addSession(editData);
+        const newId = await addSession(sessionPayload);
+        showToast('Sesión guardada exitosamente', 'success');
+        if (newId) {
+          setSelectedSession({ ...sessionPayload, id: newId });
+        }
       }
       setViewMode('list');
-      setSelectedSession(editData);
     } catch (error) {
-      await showAlert("Error", "Error al guardar sesión.");
+      console.error('[Sesiones] Error al guardar sesión:', error);
+      showToast(error?.message || 'Error al guardar la sesión', 'error');
+      await showAlert('Error', error?.message || 'Error al guardar la sesión en la base de datos.');
     } finally {
       setIsSaving(false);
     }

@@ -231,15 +231,35 @@ const LiveStats = ({
     }
   }, [matchData, events]);
 
+  const [cardSelectorTarget, setCardSelectorTarget] = useState(null); // 'card_own' | 'card_rival' | null
+
   const handlePress = useCallback(
-    async (type) => {
-      const id = await addLiveEvent(type, currentHalf);
+    async (type, extraData = {}) => {
+      if (type === 'card_own' || type === 'card_rival') {
+        setCardSelectorTarget(type);
+        return;
+      }
+      const id = await addLiveEvent(type, currentHalf, extraData);
       if (id) {
         setFlashType(type);
         setTimeout(() => setFlashType(null), 650);
       }
     },
     [addLiveEvent, currentHalf]
+  );
+
+  const confirmCardSelection = useCallback(
+    async (cardType) => {
+      if (!cardSelectorTarget) return;
+      const targetType = cardSelectorTarget;
+      setCardSelectorTarget(null);
+      const id = await addLiveEvent(targetType, currentHalf, { cardType });
+      if (id) {
+        setFlashType(targetType);
+        setTimeout(() => setFlashType(null), 650);
+      }
+    },
+    [addLiveEvent, currentHalf, cardSelectorTarget]
   );
 
   if (!matchId) {
@@ -606,6 +626,97 @@ const LiveStats = ({
                   style={{ minHeight: '44px', padding: '0 20px', borderRadius: '8px', border: 'none', background: '#EF4444', color: '#FFFFFF', fontWeight: 800, cursor: 'pointer' }}
                 >
                   Sí, Reiniciar Conteo
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+        {/* Modal Selector de Tarjeta (Amarilla vs Roja) */}
+        {cardSelectorTarget && (
+          <div 
+            className="event-selector-overlay"
+            onClick={() => setCardSelectorTarget(null)}
+            style={{ zIndex: 99999 }}
+          >
+            <div 
+              className="event-selector-modal"
+              onClick={(e) => e.stopPropagation()}
+              style={{
+                background: darkMode ? '#1E293B' : '#FFFFFF',
+                border: `2px solid ${C.gold}`,
+                borderRadius: '16px',
+                padding: '24px',
+                maxWidth: '380px',
+                width: '100%',
+                textAlign: 'center',
+                boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.3)'
+              }}
+            >
+              <h3 style={{ margin: '0 0 8px 0', fontSize: '18px', fontWeight: 900, color: darkMode ? '#F8FAFC' : '#0F172A' }}>
+                🟨🟥 Registrar Tarjeta
+              </h3>
+              <p style={{ margin: '0 0 20px 0', fontSize: '13.5px', color: darkMode ? '#94A3B8' : '#64748B', lineHeight: 1.4 }}>
+                Selecciona la sanción para <strong>{cardSelectorTarget === 'card_own' ? (matchData?.teamName || 'Equipo Propio') : (matchData?.rival || 'Equipo Rival')}</strong>:
+              </p>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                <button
+                  type="button"
+                  onClick={() => confirmCardSelection('yellow')}
+                  style={{
+                    background: '#EAB308',
+                    color: '#000000',
+                    fontWeight: '900',
+                    fontSize: '15px',
+                    padding: '14px 20px',
+                    borderRadius: '10px',
+                    border: 'none',
+                    cursor: 'pointer',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px',
+                    boxShadow: '0 4px 6px -1px rgba(234, 179, 8, 0.4)',
+                    minHeight: '48px'
+                  }}
+                >
+                  <span style={{ fontSize: '20px' }}>🟨</span>
+                  TARJETA AMARILLA
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => confirmCardSelection('red')}
+                  style={{
+                    background: '#EF4444',
+                    color: '#FFFFFF',
+                    fontWeight: '900',
+                    fontSize: '15px',
+                    padding: '14px 20px',
+                    borderRadius: '10px',
+                    border: 'none',
+                    cursor: 'pointer',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px',
+                    boxShadow: '0 4px 6px -1px rgba(239, 68, 68, 0.4)',
+                    minHeight: '48px'
+                  }}
+                >
+                  <span style={{ fontSize: '20px' }}>🟥</span>
+                  TARJETA ROJA
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setCardSelectorTarget(null)}
+                  style={{
+                    background: 'transparent',
+                    color: darkMode ? '#94A3B8' : '#64748B',
+                    fontWeight: '600',
+                    fontSize: '13px',
+                    padding: '8px',
+                    border: 'none',
+                    cursor: 'pointer',
+                    marginTop: '4px'
+                  }}
+                >
+                  Cancelar
                 </button>
               </div>
             </div>

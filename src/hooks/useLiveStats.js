@@ -125,15 +125,17 @@ export const useLiveStats = (teamId, matchId, currentMinute, currentHalf = 1) =>
 
   // ── Añadir un evento (Incremento inmediato optimista + Persistencia) ──────
   const addLiveEvent = useCallback(
-    async (type, explicitHalf = null) => {
+    async (type, explicitHalf = null, extraData = {}) => {
       const targetHalf = explicitHalf !== null && explicitHalf !== undefined ? explicitHalf : currentHalf;
       const newId = 'evt_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5);
+      const payload = typeof extraData === 'object' && extraData !== null ? extraData : {};
       const localDoc = {
         id: newId,
         type,
         half: targetHalf,
         minute: currentMinute || 1,
         timestamp: new Date().toISOString(),
+        ...payload,
       };
 
       // 1. Incremento optimista inmediato en el estado local y localStorage (0 ms latencia)
@@ -155,6 +157,7 @@ export const useLiveStats = (teamId, matchId, currentMinute, currentHalf = 1) =>
             half: targetHalf,
             minute: currentMinute || 1,
             timestamp: serverTimestamp(),
+            ...payload,
           });
           return docRef?.id || newId;
         } catch (err) {

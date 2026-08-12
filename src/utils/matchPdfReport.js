@@ -275,16 +275,49 @@ export const generateMatchPdfReport = async ({
     const totalPoss = rec + loss;
     const possPct = totalPoss > 0 ? Math.round((rec / totalPoss) * 100) : 0;
 
+    const getTeamCardsSummary = (isOwn) => {
+      let yellow = 0;
+      let red = 0;
+      let gen = 0;
+      (events || []).forEach((e) => {
+        const isTarget = isOwn
+          ? (e.type === 'card_own' || e.type === 'card_yellow_own' || e.type === 'card_red_own')
+          : (e.type === 'card_rival' || e.type === 'card_yellow_rival' || e.type === 'card_red_rival');
+
+        if (isTarget) {
+          if (e.cardType === 'yellow' || e.type === 'card_yellow_own' || e.type === 'card_yellow_rival') {
+            yellow++;
+          } else if (e.cardType === 'red' || e.type === 'card_red_own' || e.type === 'card_red_rival') {
+            red++;
+          } else {
+            gen++;
+          }
+        }
+      });
+      const parts = [];
+      if (yellow > 0) parts.push(`${yellow} ${isEn ? 'yellow' : 'amarilla(s)'}`);
+      if (red > 0) parts.push(`${red} ${isEn ? 'red' : 'roja(s)'}`);
+      if (gen > 0 && parts.length === 0) parts.push(`${gen} ${isEn ? 'card(s)' : 'tarjeta(s)'}`);
+      if (parts.length === 0) return isEn ? 'None' : 'Ninguna';
+      return parts.join(', ');
+    };
+
+    const cardOwnSummary = getTeamCardsSummary(true);
+    const cardRivalSummary = getTeamCardsSummary(false);
+    const totalCardsCount = events.filter((e) => e.type.includes('card')).length;
+
     const effData = isEn ? [
-      ['Tactical Metric', 'Positive Events', 'Negative Events', '% Efficiency'],
+      ['Tactical Metric', 'Positive / Own', 'Negative / Opponent', '% / Breakdown'],
       ['Individual Duels', `${duelsWon} Won`, `${duelsLost} Lost`, `${duelsPct}% Success`],
       ['Shots Accuracy', `${shotsOn} On Target`, `${shotsOff} Off Target`, `${shotsPct}% On Target`],
       ['Ball Balance', `${rec} Recoveries`, `${loss} Losses`, `${possPct}% Retention`],
+      ['Discipline & Cards', `Own: ${cardOwnSummary}`, `Opponent: ${cardRivalSummary}`, `Total Cards: ${totalCardsCount}`],
     ] : [
-      ['Metrica Tactica', 'Eventos Positivos', 'Eventos Negativos', '% Eficiencia'],
+      ['Metrica Tactica', 'Eventos Propios', 'Eventos Rival', '% / Desglose'],
       ['Duelos individuales', `${duelsWon} Ganados`, `${duelsLost} Perdidos`, `${duelsPct}% Exito`],
       ['Precision de Tiro', `${shotsOn} a Puerta`, `${shotsOff} Fuera`, `${shotsPct}% Puerta`],
       ['Balance de Balon', `${rec} Recuperaciones`, `${loss} Perdidas`, `${possPct}% Retencion`],
+      ['Disciplina y Tarjetas', `Propio: ${cardOwnSummary}`, `Rival: ${cardRivalSummary}`, `Total Tarjetas: ${totalCardsCount}`],
     ];
 
     autoTable(doc, {

@@ -105,6 +105,8 @@ export const translations = {
     'sesiones.exportICS': '📥 Exportar ICS',
 
     // ── MiEquipo player detail tabs ───────────────────────────
+    'equipo.tab.squad': 'PLANTILLA',
+    'equipo.tab.attendance': 'ASISTENCIA',
     'equipo.tab.general': 'GENERAL',
     'equipo.tab.physical': 'FÍSICO',
     'equipo.tab.health': 'SALUD',
@@ -274,6 +276,8 @@ export const translations = {
     'sesiones.exportICS': '📥 Export ICS',
 
     // ── MiEquipo player detail tabs ───────────────────────────
+    'equipo.tab.squad': 'SQUAD',
+    'equipo.tab.attendance': 'ATTENDANCE',
     'equipo.tab.general': 'GENERAL',
     'equipo.tab.physical': 'PHYSICAL',
     'equipo.tab.health': 'HEALTH',

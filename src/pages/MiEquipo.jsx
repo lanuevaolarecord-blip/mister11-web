@@ -12,6 +12,8 @@ import { storage } from '../firebaseConfig';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import PlayerHealthTab from '../components/PlayerHealthTab';
 import PlayerPlansTab from '../components/PlayerPlansTab';
+import { TeamAttendanceTab } from '../components/TeamAttendanceTab';
+import { PlayerAttendanceSubTab } from '../components/PlayerAttendanceSubTab';
 import { useTranslation } from '../hooks/useTranslation';
 import './MiEquipo.css';
 
@@ -49,6 +51,7 @@ const MiEquipo = () => {
   const { isPro, limits, isProActive } = usePlan();
   const { players, loading, addPlayer, updatePlayer, removePlayer } = usePlayers(activeTeamId);
   const { t } = useTranslation();
+  const [mainTeamTab, setMainTeamTab] = useState('squad'); // 'squad' | 'attendance'
   const [filter, setFilter] = useState('TODOS');
   const [selectedPlayer, setSelectedPlayer] = useState(null);
   const [activeTab, setActiveTab] = useState('GENERAL');
@@ -198,20 +201,47 @@ const MiEquipo = () => {
           <h1 className="page-title">Mi Equipo</h1>
           <p className="page-subtitle">{players.length} jugadores en la plantilla</p>
         </div>
-        <div className="filter-chips" style={{ display: 'flex', gap: '8px', overflowX: 'auto', paddingBottom: '8px' }}>
-          {POSITIONS.map(pos => (
-            <button 
-              key={pos} 
-              className={`chip ${filter === pos ? 'active' : ''}`}
-              onClick={() => setFilter(pos)}
-            >
-              {pos}
-            </button>
-          ))}
+
+        {/* Selector de Pestañas a Nivel de Equipo */}
+        <div style={{ display: 'flex', gap: '8px', marginBottom: '16px', borderBottom: '2px solid var(--border-color)', paddingBottom: '8px', overflowX: 'auto' }}>
+          <button 
+            type="button"
+            className={`chip ${mainTeamTab === 'squad' ? 'active' : ''}`}
+            style={{ fontWeight: '800', minHeight: '44px', padding: '0 18px', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '6px' }}
+            onClick={() => setMainTeamTab('squad')}
+          >
+            <span>👥</span>
+            <span>{t('equipo.tab.squad') || 'Plantilla'}</span>
+          </button>
+          <button 
+            type="button"
+            className={`chip ${mainTeamTab === 'attendance' ? 'active' : ''}`}
+            style={{ fontWeight: '800', minHeight: '44px', padding: '0 18px', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '6px' }}
+            onClick={() => setMainTeamTab('attendance')}
+          >
+            <span>📋</span>
+            <span>{t('equipo.tab.attendance') || 'Control de Asistencia'}</span>
+          </button>
         </div>
+
+        {mainTeamTab === 'squad' && (
+          <div className="filter-chips" style={{ display: 'flex', gap: '8px', overflowX: 'auto', paddingBottom: '8px' }}>
+            {POSITIONS.map(pos => (
+              <button 
+                key={pos} 
+                className={`chip ${filter === pos ? 'active' : ''}`}
+                onClick={() => setFilter(pos)}
+              >
+                {pos}
+              </button>
+            ))}
+          </div>
+        )}
       </header>
 
-      {players.length === 0 ? (
+      {mainTeamTab === 'attendance' ? (
+        <TeamAttendanceTab players={players} activeTeam={activeTeam} />
+      ) : players.length === 0 ? (
         <div className="empty-team-state">
           <div className="empty-icon">⚽</div>
           <h2>Tu plantilla está vacía</h2>
@@ -480,11 +510,12 @@ const MiEquipo = () => {
 
           <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0 16px', borderBottom: '1px solid var(--border-light)', marginBottom: '16px', overflowX: 'auto' }}>
             {[
-              { key: 'GENERAL',  labelKey: 'equipo.tab.general' },
-              { key: 'FÍSICO',   labelKey: 'equipo.tab.physical' },
-              { key: 'SALUD',    labelKey: 'equipo.tab.health' },
-              { key: 'PLANES',   labelKey: 'equipo.tab.plans' },
-              { key: 'ESTS.',    labelKey: 'equipo.tab.stats' },
+              { key: 'GENERAL',    labelKey: 'equipo.tab.general' },
+              { key: 'FÍSICO',     labelKey: 'equipo.tab.physical' },
+              { key: 'SALUD',      labelKey: 'equipo.tab.health' },
+              { key: 'PLANES',     labelKey: 'equipo.tab.plans' },
+              { key: 'ESTS.',      labelKey: 'equipo.tab.stats' },
+              { key: 'ASISTENCIA', labelKey: 'equipo.tab.attendance' },
             ].map(tab => (
               <button 
                 key={tab.key} 
@@ -597,6 +628,10 @@ const MiEquipo = () => {
                   <div className="stat-card"><span>Minutos</span> <strong>0</strong></div>
                 </div>
               </div>
+            )}
+
+            {activeTab === 'ASISTENCIA' && (
+              <PlayerAttendanceSubTab playerId={selectedPlayer.id} />
             )}
           </div>
         </div>

@@ -96,13 +96,13 @@ export const imageUrlToBase64 = async (url, fallbackInitials = 'M11', isAvatar =
   }
 
   // Helper: promise que se resuelve en null tras N ms (evita cuelgues indefinidos)
-  const withTimeout = (promise, ms = 5000) =>
+  const withTimeout = (promise, ms = 2500) =>
     Promise.race([promise, new Promise((resolve) => setTimeout(() => resolve(null), ms))]);
 
   // 2. Si es una URL remota HTTP / HTTPS o gs://
   if (typeof url === 'string' && (url.startsWith('http') || url.startsWith('gs://'))) {
 
-    // A. Firebase Storage SDK getBlob — más fiable, no tiene CORS; timeout 5s
+    // A. Firebase Storage SDK getBlob — más fiable, no tiene CORS; timeout 2.5s
     if (url.includes('firebasestorage') || url.startsWith('gs://')) {
       try {
         const base64 = await withTimeout(
@@ -116,7 +116,7 @@ export const imageUrlToBase64 = async (url, fallbackInitials = 'M11', isAvatar =
               reader.readAsDataURL(blob);
             });
           })(),
-          5000
+          2500
         );
         if (base64) {
           console.log('[pdfTheme] ✅ Imagen descargada via getBlob SDK');
@@ -127,14 +127,14 @@ export const imageUrlToBase64 = async (url, fallbackInitials = 'M11', isAvatar =
       }
     }
 
-    // B. fetch blob con nocache — timeout 5s
+    // B. fetch blob con nocache — timeout 2.5s
     try {
       const cleanUrl = url.includes('firebasestorage')
         ? (url.includes('?') ? `${url}&nocache=${Date.now()}` : `${url}?nocache=${Date.now()}`)
         : url;
       const base64 = await withTimeout(
         (async () => {
-          const res = await fetch(cleanUrl);
+          const res = await fetch(cleanUrl, { mode: 'cors' });
           if (!res.ok) return null;
           const blob = await res.blob();
           return await new Promise((resolve) => {
@@ -144,14 +144,14 @@ export const imageUrlToBase64 = async (url, fallbackInitials = 'M11', isAvatar =
             reader.readAsDataURL(blob);
           });
         })(),
-        5000
+        2500
       );
       if (base64) return base64;
     } catch (e) {
       console.warn('[pdfTheme] fetch blob falló:', e);
     }
 
-    // C. Image element + Canvas — timeout 5s
+    // C. Image element + Canvas — timeout 2.5s
     try {
       const pngBase64 = await withTimeout(
         new Promise((resolve) => {
@@ -170,7 +170,7 @@ export const imageUrlToBase64 = async (url, fallbackInitials = 'M11', isAvatar =
           img.onerror = () => resolve(null);
           img.src = url;
         }),
-        5000
+        2500
       );
       if (pngBase64) return pngBase64;
     } catch (e) {

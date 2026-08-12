@@ -696,7 +696,7 @@ export const generateSessionPDF = async (session, activeTeam = null, pizarras = 
 
     let currentY = meta2Y + 34;
 
-    // ─── DIAGRAMA TÁCTICO PRINCIPAL ───────────────────────────────────────────
+    // ─── PRECARGA PARALELA Y ASÍNCRONA DE IMÁGENES ────────────────────────────
     let sessionDiagram = null;
     const blocks = session.blocks || session.bloques || [];
 
@@ -704,53 +704,48 @@ export const generateSessionPDF = async (session, activeTeam = null, pizarras = 
       const found = (pizarras || []).find(p => p.id === session.linkedPizarraId);
       if (found && found.thumbnail) {
         sessionDiagram = found.thumbnail;
-      } else {
-        try {
-          const { getDoc: fsGetDoc, doc: fsDoc } = await import('firebase/firestore');
-          const { db: fsDb, auth: fsAuth } = await import('../firebaseConfig');
-          const user = fsAuth.currentUser;
-          if (user && activeTeam?.id) {
-            const pizarraRef = fsDoc(fsDb, 'users', user.uid, 'teams', activeTeam.id, 'pizarras', session.linkedPizarraId);
-            const pizarraSnap = await fsGetDoc(pizarraRef);
-            if (pizarraSnap.exists() && pizarraSnap.data().thumbnail) {
-              sessionDiagram = pizarraSnap.data().thumbnail;
-            }
-          }
-        } catch (err) {
-          console.warn('No se pudo recuperar la pizarra desde Firestore:', err);
-        }
       }
     }
-
-    // Fallback al diagrama del primer bloque que tenga imagen
     if (!sessionDiagram) {
-      const firstBlockWithImg = blocks.find(b => b.imageUrl || b.imagenProtocolo || b.image || b.photo || b.previewUrl);
-      if (firstBlockWithImg) {
-        sessionDiagram = firstBlockWithImg.imageUrl || firstBlockWithImg.imagenProtocolo || firstBlockWithImg.image || firstBlockWithImg.photo || firstBlockWithImg.previewUrl;
+      const firstWithImg = blocks.find(b => b.imageUrl || b.imagenProtocolo || b.image || b.photo || b.previewUrl);
+      if (firstWithImg) {
+        sessionDiagram = firstWithImg.imageUrl || firstWithImg.imagenProtocolo || firstWithImg.image || firstWithImg.photo || firstWithImg.previewUrl;
       }
     }
 
-    if (sessionDiagram) {
-      try {
-        const imgBase64 = await getImageBase64(sessionDiagram, 'Diagrama Principal');
-        if (imgBase64) {
-          if (currentY + 80 > pageH - 20) { doc.addPage(); currentY = 20; }
-          currentY = drawSectionHeader(doc, currentY, 'DIAGRAMA TÁCTICO PRINCIPAL', pageW);
-          doc.setFillColor(248, 250, 248);
-          doc.setDrawColor(...THEME_COLOR);
-          doc.setLineWidth(0.4);
-          doc.roundedRect(14, currentY - 1, pageW - 28, 72, 3, 3, 'FD');
-          try {
-            const fmt = imgBase64.includes('jpeg') || imgBase64.includes('jpg') ? 'JPEG' : 'PNG';
-            doc.addImage(imgBase64, fmt, 16, currentY + 1, pageW - 32, 68);
-          } catch (imgErr) {
-            console.warn('Error renderizando diagrama principal:', imgErr);
+    // Pre-cargar en paralelo todas las imágenes para máxima velocidad (evita demoras en descarga)
+    const [sessionDiagramBase64, ...resolvedBlockImages] = await Promise.all([
+      sessionDiagram ? getImageBase64(sessionDiagram, 'Diagrama Principal', false) : Promise.resolve(null),
+      ...blocks.map(async (b, bi) => {
+        let blockImgSrc = b.imageUrl || b.imagenProtocolo || b.image || b.photo || b.previewUrl;
+        if (!blockImgSrc && captures && captures.length > 0) {
+          const matchedCap = captures.find(c =>
+            (c.sessionId === session.id && (c.blockId === b.id || c.blockIndex === bi)) ||
+            (c.title && b.name && c.title.toLowerCase().trim() === b.name.toLowerCase().trim())
+          );
+          if (matchedCap) {
+            blockImgSrc = matchedCap.dataUrl || matchedCap.url || matchedCap.imageUrl || matchedCap.thumbnail || matchedCap.imageData;
           }
-          currentY += 76;
         }
-      } catch (e) {
-        console.warn('No se pudo cargar el diagrama principal:', e);
+        return blockImgSrc ? await getImageBase64(blockImgSrc, b.name || `Bloque ${bi + 1}`, false) : null;
+      })
+    ]);
+
+    // ─── DIAGRAMA TÁCTICO PRINCIPAL ───────────────────────────────────────────
+    if (sessionDiagramBase64) {
+      if (currentY + 80 > pageH - 20) { doc.addPage(); currentY = 20; }
+      currentY = drawSectionHeader(doc, currentY, 'DIAGRAMA TÁCTICO PRINCIPAL', pageW);
+      doc.setFillColor(248, 250, 248);
+      doc.setDrawColor(...THEME_COLOR);
+      doc.setLineWidth(0.4);
+      doc.roundedRect(14, currentY - 1, pageW - 28, 72, 3, 3, 'FD');
+      try {
+        const fmt = sessionDiagramBase64.includes('jpeg') || sessionDiagramBase64.includes('jpg') ? 'JPEG' : 'PNG';
+        doc.addImage(sessionDiagramBase64, fmt, 16, currentY + 1, pageW - 32, 68);
+      } catch (imgErr) {
+        console.warn('Error renderizando diagrama principal:', imgErr);
       }
+      currentY += 76;
     }
 
     // ─── BLOQUES DE LA SESIÓN ─────────────────────────────────────────────────
@@ -770,44 +765,28 @@ export const generateSessionPDF = async (session, activeTeam = null, pizarras = 
 
       for (let bi = 0; bi < blocks.length; bi++) {
         const b = blocks[bi];
-        const rawDesc = b.description || b.descripcion || 'Sin descripción';
-        const descLines = doc.splitTextToSize(rawDesc, pageW - 45);
-        const textH = descLines.length * 4.8;
-
-        // Pre-cargar la imagen del bloque si existe directamente o mediante capturas vinculadas
-        let blockImgSrc = b.imageUrl || b.imagenProtocolo || b.image || b.photo || b.previewUrl;
-        
-        // Si no tiene imagen directa, buscar en la lista de capturas vinculadas por id, índice o título
-        if (!blockImgSrc && captures && captures.length > 0) {
-          const matchedCap = captures.find(c =>
-            (c.sessionId === session.id && (c.blockId === b.id || c.blockIndex === bi)) ||
-            (c.title && b.name && c.title.toLowerCase().trim() === b.name.toLowerCase().trim())
-          );
-          if (matchedCap) {
-            blockImgSrc = matchedCap.dataUrl || matchedCap.url || matchedCap.imageUrl || matchedCap.thumbnail || matchedCap.imageData;
-          }
-        }
-
-        let imgBase64 = null;
-        if (blockImgSrc) {
-          try {
-            imgBase64 = await getImageBase64(blockImgSrc, b.name || `Bloque ${bi + 1}`);
-          } catch (e) {
-            console.warn(`No se pudo cargar imagen para el bloque ${bi + 1}:`, e);
-          }
-        }
-
+        const imgBase64 = resolvedBlockImages[bi];
         const hasImg = Boolean(imgBase64);
-        const imgH = hasImg ? 54 : 0;
-        const totalBlockH = 14 + textH + (hasImg ? imgH + 8 : 0) + 4;
 
-        // Salto de página limpio si el bloque completo no cabe
+        const rawDesc = b.description || b.descripcion || 'Sin descripción';
+        // Si hay imagen: Columna Texto 60% (ancho 105mm). Si no hay imagen: Ancho 100% (ancho 165mm)
+        const textMaxW = hasImg ? (pageW - 95) : (pageW - 45);
+        const descLines = doc.splitTextToSize(rawDesc, textMaxW);
+        const textH = descLines.length * 4.6;
+
+        const imgW = hasImg ? 58 : 0;
+        const imgH = hasImg ? 38 : 0;
+        
+        // Calcular altura total de la tarjeta del bloque (mínimo 44mm si tiene imagen)
+        const totalBlockH = hasImg ? Math.max(14 + textH + 4, 46) : (14 + textH + 6);
+
+        // Control estricto de salto de página (Evita cortar un bloque a la mitad)
         if (currentY + totalBlockH > pageH - 20) {
           doc.addPage();
           currentY = 20;
         }
 
-        // Fondo del Bloque
+        // Fondo y Borde de la Tarjeta del Bloque
         const bg = blockColors[bi % blockColors.length];
         doc.setFillColor(...bg);
         doc.setDrawColor(215, 222, 218);
@@ -844,21 +823,22 @@ export const generateSessionPDF = async (session, activeTeam = null, pizarras = 
         doc.setLineWidth(0.2);
         doc.line(22, currentY + 12, pageW - 22, currentY + 12);
 
-        // Descripción del Bloque
+        // Descripción del Bloque (Columna Izquierda 60% o 100%)
         doc.setFont(undefined, 'normal');
         doc.setFontSize(8.5);
         doc.setTextColor(50, 60, 55);
         doc.text(descLines, 22, currentY + 17);
 
-        // Renderizar Imagen dentro de la misma tarjeta del bloque
+        // Columna Derecha (40%): Renderizar Captura / Imagen del Ejercicio
         if (hasImg) {
-          const imgY = currentY + 16 + textH + 2;
+          const imgX = pageW - 75;
+          const imgY = currentY + 6;
           doc.setDrawColor(200, 210, 205);
           doc.setLineWidth(0.3);
-          doc.roundedRect(20, imgY, pageW - 40, imgH, 2, 2, 'S');
+          doc.roundedRect(imgX, imgY, imgW, imgH, 2, 2, 'S');
           try {
             const fmt = imgBase64.includes('jpeg') || imgBase64.includes('jpg') ? 'JPEG' : 'PNG';
-            doc.addImage(imgBase64, fmt, 21, imgY + 1, pageW - 42, imgH - 2);
+            doc.addImage(imgBase64, fmt, imgX + 1, imgY + 1, imgW - 2, imgH - 2);
           } catch (imgErr) {
             console.warn('Error al renderizar imagen en bloque:', imgErr);
           }

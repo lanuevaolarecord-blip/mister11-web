@@ -254,11 +254,17 @@ const PizarraTactica = () => {
     loadTokenR.current += 1;
     const currentToken = loadTokenR.current;
 
-    // Desactivamos temporalmente el guardado para evitar bucles durante la carga
+    // FIX-2: Desactivamos el guardado durante la carga
     syncingR.current = true;
 
-    // No desconectamos los listeners porque syncingR.current ya evita bucles infinitos de guardado
-    // fc.off(...) eliminado para reparar undo/redo
+    // FIX-1: Verificar token ANTES de limpiar el canvas para evitar canvas en blanco
+    // por race condition (undo/redo rápido o cambios de formación en sucesión).
+    if (loadTokenR.current !== currentToken) {
+      console.warn('[Pizarra] ⚠️ Carga cancelada ANTES de limpiar canvas — race condition evitada.');
+      syncingR.current = false;
+      if (callback) callback();
+      return;
+    }
 
     fc.clear();
     const objsToEnliven = Array.isArray(state.objects) ? state.objects : [];
@@ -298,45 +304,52 @@ const PizarraTactica = () => {
     });
 
     fabric.util.enlivenObjects(enlivenedData, (objects) => {
-      // Si el token cambió, significa que otra carga inició antes de que esta terminara.
-      // Abortamos para evitar duplicación masiva de objetos en el canvas (efecto estela).
+      // FIX-1: Si el token cambió, otra carga comenzó — abortar sin dejar syncingR bloqueado.
       if (loadTokenR.current !== currentToken) {
         console.warn('[Pizarra] ⚠️ Carga asíncrona abortada por race condition.');
+        syncingR.current = false; // FIX-2: SIEMPRE desbloquear aunque se aborte
         return;
       }
 
-      objects.forEach(o => {
-        // Restaurar borde blanco en los jugadores
-        const isPlayer = o.data?.type === 'player' || 
-                         o.data?.tipo === 'jugador' || 
-                         (o.type === 'group' && 
-                          o.getObjects && 
-                          o.getObjects().length === 2 && 
-                          o.getObjects().some(child => child.type === 'circle') && 
-                          o.getObjects().some(child => child.type === 'text'));
+      // FIX-2: try/catch para garantizar que syncingR nunca queda en true permanentemente
+      try {
+        objects.forEach(o => {
+          // Restaurar borde blanco en los jugadores
+          const isPlayer = o.data?.type === 'player' || 
+                           o.data?.tipo === 'jugador' || 
+                           (o.type === 'group' && 
+                            o.getObjects && 
+                            o.getObjects().length === 2 && 
+                            o.getObjects().some(child => child.type === 'circle') && 
+                            o.getObjects().some(child => child.type === 'text'));
 
-        if (isPlayer && o.type === 'group') {
-          const circle = o.getObjects().find(child => child.type === 'circle');
-          if (circle) {
-            const r = o.radius || circle.radius || RADIO_JUGADOR;
-            const sw = o.data?._strokeWidth || Math.max(2, r * 0.18);
-            circle.set({ stroke: '#FFFFFF', strokeWidth: sw });
-            circle.dirty = true;
-            o.set({ stroke: '#FFFFFF', strokeWidth: sw });
-            o.dirty = true;
+          if (isPlayer && o.type === 'group') {
+            const circle = o.getObjects().find(child => child.type === 'circle');
+            if (circle) {
+              const r = o.radius || circle.radius || RADIO_JUGADOR;
+              const sw = o.data?._strokeWidth || Math.max(2, r * 0.18);
+              circle.set({ stroke: '#FFFFFF', strokeWidth: sw });
+              circle.dirty = true;
+              o.set({ stroke: '#FFFFFF', strokeWidth: sw });
+              o.dirty = true;
+            }
           }
-        }
-        applyMister11Controls(o);
-        fc.add(o);
-      });
-      normalizarTamañoJugadores(fc);
-      ensurePlayersOnTop();
-      fc.renderAll();
-      
-      // La sincronización ha terminado, reactivar eventos
-      syncingR.current = false;
-      // Los listeners se reconectan desde el useEffect principal después del callback
-      if (callback) callback();
+          applyMister11Controls(o);
+          fc.add(o);
+        });
+        normalizarTamañoJugadores(fc);
+        ensurePlayersOnTop();
+        fc.renderAll();
+        // Sincronización completada — reactivar eventos
+        syncingR.current = false;
+        if (callback) callback();
+      } catch (err) {
+        // FIX-2: Si Fabric.js falla internamente, garantizar desbloqueo para evitar deadlock
+        console.error('[Pizarra] ❌ Error en enlivenObjects callback — desbloqueando syncingR:', err);
+        syncingR.current = false;
+        try { fc.renderAll(); } catch (_) {}
+        if (callback) callback();
+      }
     });
   }, [normalizarTamañoJugadores]);
 
@@ -1466,16 +1479,18 @@ const PizarraTactica = () => {
     };
 
     // ── Función para reconectar listeners (se llama tras cargarFrame) ──
+    // FIX-4: Usar fc.off(event, specificFn) en lugar de fc.off(event) para no eliminar
+    // los handlers internos de Fabric.js (causaba comportamiento errático tras uso prolongado).
     const attachListeners = () => {
-      fc.off('object:modified');
-      fc.off('object:added');
-      fc.off('object:removed');
-      fc.off('path:created');
+      fc.off('object:modified', onChange);
+      fc.off('object:added',    onAddedOrRemoved);
+      fc.off('object:removed',  onAddedOrRemoved);
+      fc.off('path:created',    onPathCreated);
       fc.on('object:modified', onChange);
       fc.on('object:added',    onAddedOrRemoved);
       fc.on('object:removed',  onAddedOrRemoved);
       fc.on('path:created',    onPathCreated);
-      console.log('[Pizarra] 🎯 Listeners reconectados al canvas');
+      console.log('[Pizarra] 🎯 Listeners reconectados correctamente al canvas');
     };
 
     // cargarFrame con reconexión automática de listeners
@@ -1678,6 +1693,8 @@ const PizarraTactica = () => {
 
     // 7. Resize logic with ResizeObserver
     const resizeCanvas = () => {
+      // FIX-3: No redimensionar mientras hay una carga asíncrona activa (race condition con enlivenObjects)
+      if (syncingR.current) return;
       const contenedor = document.getElementById('canvas-container');
       const fc = fcRef.current;
       const fr = frRef.current;

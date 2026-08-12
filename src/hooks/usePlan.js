@@ -7,21 +7,21 @@ import { DEVELOPER_EMAILS } from '../config/admins';
 export const LIMITS = {
   FREE: {
     TEAMS: 1,
-    PLAYERS: 15,
+    PLAYERS: 23,
     SESSIONS: 10,
     PDF_EXPORT: false,
     IA_GENERATIONS: 5,
   },
   PRO: {
     TEAMS: 3,
-    PLAYERS: 66, // 66 total distribuibles entre los 3 equipos del plan PRO
+    PLAYERS: 23,
     SESSIONS: 1000,
     PDF_EXPORT: true,
     IA_GENERATIONS: 1000,
   },
   CLUB: {
-    TEAMS: 100,
-    PLAYERS: 1000,
+    TEAMS: 40,
+    PLAYERS: 23,
     SESSIONS: 1000,
     PDF_EXPORT: true,
     IA_GENERATIONS: 1000,

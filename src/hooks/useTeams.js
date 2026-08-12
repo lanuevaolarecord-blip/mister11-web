@@ -14,7 +14,8 @@ import {
   getDoc,
   getDocs,
   writeBatch,
-  serverTimestamp 
+  serverTimestamp,
+  increment
 } from 'firebase/firestore';
 
 export const useTeams = () => {
@@ -52,6 +53,13 @@ export const useTeams = () => {
       ...additionalFields,
       createdAt: serverTimestamp()
     });
+
+    if (sourceType !== 'club' && user?.uid) {
+      try {
+        const userRef = doc(db, 'users', user.uid);
+        await updateDoc(userRef, { teamCount: increment(1) }).catch(() => {});
+      } catch (e) {}
+    }
 
     if (sourceType === 'club' && cId) {
       try {

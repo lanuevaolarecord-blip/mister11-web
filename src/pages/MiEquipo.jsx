@@ -118,7 +118,7 @@ const MiEquipo = () => {
   // -- CRUD Actions --
   const handleOpenForm = (player = null) => {
     if (!player && players.length >= limits.PLAYERS) {
-      setUpgradeModal({ open: true, message: `Has alcanzado el límite de ${limits.PLAYERS} jugadores por equipo en tu plan actual.` });
+      setUpgradeModal({ open: true, message: `Plantilla completa: máximo ${limits.PLAYERS} jugadores.` });
       return;
     }
     if (player) {

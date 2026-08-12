@@ -271,18 +271,15 @@ const AdminPanel = () => {
   const handleAddTeam = async () => {
     if (!newTeam.nombre) return;
     
-    if (newTeamSource === 'personal') {
-      const hasPersonalPro = isDeveloper || userProfile?.plan === 'pro' || dbPlan === 'pro';
-      const personalTeamsLimit = hasPersonalPro ? 3 : 1;
-      const personalTeamsCount = teams.filter(t => t.source === 'personal' || !t.source).length;
-      
-      if (personalTeamsCount >= personalTeamsLimit) {
-        setUpgradeModal({ 
-          open: true, 
-          message: `Has alcanzado el límite de ${personalTeamsLimit} equipo(s) personal(es) en tu plan individual. Contrata un plan Pro para crear más.` 
-        });
-        return;
-      }
+    const personalTeamsCount = teams.filter(t => t.source === 'personal' || !t.source).length;
+    const teamLimit = limits.TEAMS;
+    
+    if (personalTeamsCount >= teamLimit) {
+      setUpgradeModal({ 
+        open: true, 
+        message: `Has alcanzado el límite de ${teamLimit} equipos de tu plan actual.` 
+      });
+      return;
     }
     
     await addTeam(newTeam, newTeamSource);

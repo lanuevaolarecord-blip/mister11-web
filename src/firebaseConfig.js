@@ -81,7 +81,8 @@ const signInWithGoogle = async () => {
       await initUserDocument(userCred.user.uid, userCred.user.email, userCred.user.displayName);
       return userCred;
     } catch (nativeErr) {
-      console.warn("[signInWithGoogle] Autenticación nativa rechazada o falló. Reintentando con flujo Web:", nativeErr);
+      console.error("[signInWithGoogle] Error en autenticación nativa Google:", nativeErr);
+      throw nativeErr;
     }
   }
 

@@ -19,19 +19,26 @@ const Login = () => {
     setIsLoading(true);
     setError('');
     try {
+      console.log('[Login] Iniciando flujo Google Sign-In...');
       await signInWithGoogle();
     } catch (err) {
-      console.error('Error signing in with Google', err);
-      if (err.code === 'auth/unauthorized-domain') {
+      console.error('[Login] Error completo Google Sign-In:', {
+        code: err?.code,
+        message: err?.message,
+        stack: err?.stack,
+        raw: err
+      });
+      if (err?.code === 'auth/unauthorized-domain') {
         const msg = 'Dominio no autorizado en Firebase Console.';
         setError(msg);
         showToast(msg, 'error');
-      } else if (err.code === 'auth/popup-closed-by-user' || err.code === 'auth/cancelled-popup-request') {
+      } else if (err?.code === 'auth/popup-closed-by-user' || err?.code === 'auth/cancelled-popup-request' || err?.message?.includes('12501') || err?.message?.includes('canceled')) {
         showToast('Inicio de sesión cancelado por el usuario', 'info');
       } else {
-        const friendlyMsg = 'No se pudo iniciar sesión con Google. Por favor, verifica tu conexión e inténtalo de nuevo.';
-        setError(friendlyMsg);
-        showToast(friendlyMsg, 'error');
+        const realErrorMsg = err?.message || err?.code || String(err);
+        const detailedMsg = `Error Google Sign-In: ${realErrorMsg}`;
+        setError(detailedMsg);
+        showToast(detailedMsg, 'error');
       }
     } finally {
       setIsLoading(false);

@@ -104,24 +104,65 @@ const Sesiones = () => {
   const [shareModal, setShareModal] = useState({ open: false, session: null, shareUrl: '', shareId: '', loading: false, copied: false });
   const [importModal, setImportModal] = useState({ open: false, activeTab: 'link', inputVal: '', loading: false, previewSession: null, file: null, error: '' });
 
-  // Manejador para compartir sesión
+  // Manejador para compartir sesión (Web Share API + Clipboard Fallback)
   const handleShareSession = async (sessionToShare) => {
     if (!sessionToShare) return;
-    try {
-      setShareModal({ open: true, session: sessionToShare, shareUrl: '', shareId: '', loading: true, copied: false });
-      const { shareId, shareUrl } = await shareSessionToFirestore(sessionToShare, user, activeTeam);
-      setShareModal({ open: true, session: sessionToShare, shareUrl, shareId, loading: false, copied: false });
-    } catch (err) {
-      console.error('Error al compartir sesión:', err);
-      showAlert('Error', 'No se pudo generar el enlace para compartir la sesión.');
-      setShareModal(prev => ({ ...prev, open: false, loading: false }));
+
+    const sessionId = sessionToShare.id || sessionToShare.shareId || `ses_${Date.now()}`;
+    const baseUrl = window?.location?.origin || 'https://mister11.app';
+    const shareUrl = `${baseUrl}/shared/session/${sessionId}`;
+    const sessionTitle = sessionToShare.title || sessionToShare.nombre || sessionToShare.titulo || 'Sesión de Entrenamiento';
+
+    // Registro en Firestore silencioso en segundo plano
+    shareSessionToFirestore({ ...sessionToShare, id: sessionId }, user, activeTeam).catch((err) => {
+      console.warn('[handleShareSession] Registro silencioso en Firestore:', err);
+    });
+
+    // 1. Web Share API nativo si está disponible
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: `${sessionTitle} - Míster11`,
+          text: `Te comparto esta sesión de entrenamiento: ${sessionTitle}`,
+          url: shareUrl,
+        });
+        return; // Compartido exitosamente mediante diálogo nativo
+      } catch (err) {
+        if (err.name === 'AbortError') {
+          // El usuario canceló el menú compartir nativo -> ignorar sin alertas de error
+          return;
+        }
+        console.warn('[handleShareSession] Falló Web Share API, reintentando con portapapeles:', err);
+      }
     }
+
+    // 2. Fallback a Portapapeles (navigator.clipboard)
+    try {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        await navigator.clipboard.writeText(shareUrl);
+        showToast('¡Enlace copiado al portapapeles!', 'success');
+        return;
+      }
+    } catch (clipErr) {
+      console.warn('[handleShareSession] Falló el portapapeles:', clipErr);
+    }
+
+    // 3. Fallback modal interactivo
+    setShareModal({
+      open: true,
+      session: sessionToShare,
+      shareUrl,
+      shareId: sessionId,
+      loading: false,
+      copied: false,
+    });
   };
 
   const handleCopyShareUrl = () => {
     if (!shareModal.shareUrl) return;
     navigator.clipboard.writeText(shareModal.shareUrl);
     setShareModal(prev => ({ ...prev, copied: true }));
+    showToast('¡Enlace copiado al portapapeles!', 'success');
     setTimeout(() => setShareModal(prev => ({ ...prev, copied: false })), 2000);
   };
 
@@ -394,11 +435,39 @@ const Sesiones = () => {
     setViewMode('edit');
   };
 
-  const handleEditSession = (session) => {
+  const handleEditSession = (sessionToEdit) => {
+    if (!sessionToEdit) return;
+
+    // Mapeo completo de todos los atributos de la sesión para precargar el editor
+    const mappedBlocks = (sessionToEdit.blocks || sessionToEdit.bloques || []).map((b, idx) => ({
+      id: b.id || `block_${idx}_${Date.now()}`,
+      name: b.name || b.nombre || b.titulo || `Bloque ${idx + 1}`,
+      duration: Number(b.duration || b.duracion || b.tiempo) || 15,
+      type: b.type || b.tipo || 'Táctica',
+      description: b.description || b.descripcion || '',
+      imageUrl: b.imageUrl || b.imagenProtocolo || b.image || b.photo || b.previewUrl || null,
+      imagenProtocolo: b.imageUrl || b.imagenProtocolo || b.image || b.photo || b.previewUrl || null,
+    }));
+
     setEditData({ 
-      linkedPizarraId: '',
-      ...session 
-    }); 
+      id: sessionToEdit.id,
+      title: sessionToEdit.title || sessionToEdit.nombre || sessionToEdit.titulo || '',
+      date: sessionToEdit.date || sessionToEdit.fecha || new Date().toISOString().split('T')[0],
+      time: sessionToEdit.time || sessionToEdit.hora || '18:00',
+      duration: Number(sessionToEdit.duration || sessionToEdit.duracion) || 90,
+      category: sessionToEdit.category || sessionToEdit.categoria || 'General',
+      intensity: sessionToEdit.intensity || sessionToEdit.intensidad || 'Media',
+      materials: sessionToEdit.materials || sessionToEdit.material || '',
+      objectives: sessionToEdit.objectives || sessionToEdit.objetivo || '',
+      players: Array.isArray(sessionToEdit.players) ? sessionToEdit.players : (Array.isArray(sessionToEdit.convocados) ? sessionToEdit.convocados : []),
+      files: Array.isArray(sessionToEdit.files) ? sessionToEdit.files : [],
+      blocks: mappedBlocks,
+      linkedPizarraId: sessionToEdit.linkedPizarraId || '',
+      ...sessionToEdit 
+    });
+
+    // Cerrar el modal de detalle para que la vista de edición sea visible de inmediato
+    setSelectedSession(null);
     setViewMode('edit');
   };
 

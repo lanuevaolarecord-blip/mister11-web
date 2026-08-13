@@ -445,49 +445,70 @@ const Sesiones = () => {
     if (e && typeof e.stopPropagation === 'function') {
       e.stopPropagation();
     }
-    const sess = sessionToEdit || selectedSession;
-    if (!sess) {
+    
+    // Detectar si sessionToEdit es en realidad un evento SyntheticEvent (ej: al pasar onClick={handleEditSession})
+    let sess = sessionToEdit;
+    if (sess && (sess.nativeEvent || sess._reactName || (sess.target && sess.preventDefault))) {
+      sess = selectedSession;
+    }
+    if (!sess) sess = selectedSession;
+
+    if (!sess || typeof sess !== 'object') {
       console.warn('[handleEditSession] No se proporcionó una sesión válida.');
       showToast('Error: No se encontró la sesión a editar', 'error');
       return;
     }
 
     try {
-      console.log('[handleEditSession] Abriendo editor para sesión:', sess.id, sess.title || sess.nombre);
+      console.log('[handleEditSession] Preparando edición para sesión ID:', sess.id, sess.title || sess.nombre);
+      
       const rawBlocks = sess.blocks || sess.bloques || [];
       const mappedBlocks = Array.isArray(rawBlocks)
-        ? rawBlocks.map((b, idx) => {
-            const blockImg = b.imageUrl || b.imagenProtocolo || b.image || b.photo || b.previewUrl || b.canvasData || null;
-            return {
-              id: b.id || `block_${idx}_${Date.now()}`,
-              name: b.name || b.nombre || b.titulo || `Bloque ${idx + 1}`,
-              duration: Number(b.duration || b.duracion || b.tiempo) || 15,
-              type: b.type || b.tipo || 'Táctica',
-              description: b.description || b.descripcion || '',
-              imageUrl: blockImg,
-              imagenProtocolo: blockImg,
-            };
-          })
+        ? rawBlocks
+            .filter(b => b && typeof b === 'object')
+            .map((b, idx) => {
+              let blockImg = b.imageUrl || b.imagenProtocolo || b.image || b.photo || b.previewUrl || b.canvasData || b.boardCapture || b.pizarraUrl || null;
+              
+              // Sanitizar imagen: asegurar que sea una string válida (DataURL o URL HTTPS) y no un objeto File/Blob
+              if (blockImg && typeof blockImg !== 'string') {
+                if (typeof blockImg === 'object') {
+                  blockImg = blockImg.url || blockImg.dataUrl || blockImg.src || null;
+                } else {
+                  blockImg = null;
+                }
+              }
+
+              return {
+                id: b.id || `block_${idx}_${Date.now()}`,
+                name: String(b.name || b.nombre || b.titulo || `Bloque ${idx + 1}`),
+                duration: Number(b.duration || b.duracion || b.tiempo) || 15,
+                type: String(b.type || b.tipo || 'Táctica'),
+                description: String(b.description || b.descripcion || ''),
+                imageUrl: blockImg,
+                imagenProtocolo: blockImg,
+              };
+            })
         : [];
 
       const cleanEditData = {
-        id: sess.id,
-        title: sess.title || sess.nombre || sess.titulo || '',
-        date: sess.date || sess.fecha || new Date().toISOString().split('T')[0],
-        time: sess.time || sess.hora || '18:00',
+        id: sess.id || null,
+        title: String(sess.title || sess.nombre || sess.titulo || ''),
+        date: String(sess.date || sess.fecha || new Date().toISOString().split('T')[0]),
+        time: String(sess.time || sess.hora || '18:00'),
         duration: Number(sess.duration || sess.duracion) || 90,
-        category: sess.category || sess.categoria || 'General',
-        intensity: sess.intensity || sess.intensidad || 'Media',
-        materials: sess.materials || sess.material || '',
-        objectives: sess.objectives || sess.objetivo || '',
+        category: String(sess.category || sess.categoria || 'General'),
+        intensity: String(sess.intensity || sess.intensidad || 'Media'),
+        materials: String(sess.materials || sess.material || ''),
+        objectives: String(sess.objectives || sess.objetivo || ''),
         players: Array.isArray(sess.players) ? sess.players : (Array.isArray(sess.convocados) ? sess.convocados : []),
         files: Array.isArray(sess.files) ? sess.files : [],
         blocks: mappedBlocks.length > 0 ? mappedBlocks : [
-          { id: Date.now(), name: 'Calentamiento', duration: 15, type: 'Física', description: '' }
+          { id: Date.now(), name: 'Calentamiento', duration: 15, type: 'Física', description: '', imageUrl: null, imagenProtocolo: null }
         ],
-        linkedPizarraId: sess.linkedPizarraId || '',
+        linkedPizarraId: String(sess.linkedPizarraId || ''),
       };
 
+      console.log('[handleEditSession] EditData precargado exitosamente:', cleanEditData);
       setEditData(cleanEditData);
       setSelectedSession(null);
       setViewMode('edit');
@@ -495,8 +516,8 @@ const Sesiones = () => {
         window.scrollTo({ top: 0, behavior: 'smooth' });
       }, 50);
     } catch (err) {
-      console.error('[handleEditSession] Error crítico:', err);
-      showToast('Error al abrir el formulario de edición', 'error');
+      console.error('[handleEditSession] Error al abrir formulario de edición:', err);
+      showToast(`Error al abrir editor: ${err.message || err}`, 'error');
     }
   };
 

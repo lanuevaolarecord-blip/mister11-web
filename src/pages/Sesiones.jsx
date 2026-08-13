@@ -98,6 +98,7 @@ const Sesiones = () => {
   const [selectedSession, setSelectedSession] = useState(null);
   const [selectedCapture, setSelectedCapture] = useState(null);
   const [selectedAnimation, setSelectedAnimation] = useState(null);
+  const [editData, setEditData] = useState(null);
   const [showLiveField, setShowLiveField] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);

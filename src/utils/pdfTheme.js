@@ -81,14 +81,17 @@ export const imageUrlToBase64 = async (url, fallbackInitials = 'M11', isAvatar =
     try {
       const convertedPng = await new Promise((resolve) => {
         const img = new Image();
+        img.crossOrigin = 'anonymous';
         img.onload = () => {
           try {
             const canvas = document.createElement('canvas');
-            canvas.width = img.naturalWidth || img.width || 400;
-            canvas.height = img.naturalHeight || img.height || 220;
+            canvas.width = img.naturalWidth || img.width || 600;
+            canvas.height = img.naturalHeight || img.height || 350;
             const ctx = canvas.getContext('2d');
-            ctx.drawImage(img, 0, 0);
-            resolve(canvas.toDataURL('image/png'));
+            ctx.fillStyle = '#FFFFFF';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+            resolve(canvas.toDataURL('image/png', 1.0));
           } catch (e) {
             resolve(url);
           }
@@ -103,7 +106,7 @@ export const imageUrlToBase64 = async (url, fallbackInitials = 'M11', isAvatar =
   }
 
   // Helper: promise que se resuelve en null tras N ms (evita cuelgues indefinidos)
-  const withTimeout = (promise, ms = 3000) =>
+  const withTimeout = (promise, ms = 7000) =>
     Promise.race([promise, new Promise((resolve) => setTimeout(() => resolve(null), ms))]);
 
   // 2. Si es una URL remota HTTP / HTTPS o gs://
@@ -114,7 +117,13 @@ export const imageUrlToBase64 = async (url, fallbackInitials = 'M11', isAvatar =
       try {
         const base64 = await withTimeout(
           (async () => {
-            const fileRef = storageRef(storage, url);
+            let fileRef;
+            if (url.startsWith('gs://')) {
+              fileRef = storageRef(storage, url);
+            } else {
+              try { fileRef = storageRef(storage, url); } catch (e) { fileRef = null; }
+            }
+            if (!fileRef) return null;
             const blob = await getBlob(fileRef);
             return await new Promise((resolve) => {
               const reader = new FileReader();
@@ -123,7 +132,7 @@ export const imageUrlToBase64 = async (url, fallbackInitials = 'M11', isAvatar =
               reader.readAsDataURL(blob);
             });
           })(),
-          3000
+          7000
         );
         if (base64) {
           return base64;
@@ -150,7 +159,7 @@ export const imageUrlToBase64 = async (url, fallbackInitials = 'M11', isAvatar =
             reader.readAsDataURL(blob);
           });
         })(),
-        3000
+        7000
       );
       if (base64) return base64;
     } catch (e) {
@@ -166,17 +175,19 @@ export const imageUrlToBase64 = async (url, fallbackInitials = 'M11', isAvatar =
           img.onload = () => {
             try {
               const canvas = document.createElement('canvas');
-              canvas.width = img.naturalWidth || img.width || 400;
-              canvas.height = img.naturalHeight || img.height || 220;
+              canvas.width = img.naturalWidth || img.width || 600;
+              canvas.height = img.naturalHeight || img.height || 350;
               const ctx = canvas.getContext('2d');
-              ctx.drawImage(img, 0, 0);
-              resolve(canvas.toDataURL('image/png'));
+              ctx.fillStyle = '#FFFFFF';
+              ctx.fillRect(0, 0, canvas.width, canvas.height);
+              ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+              resolve(canvas.toDataURL('image/png', 1.0));
             } catch (e) { resolve(null); }
           };
           img.onerror = () => resolve(null);
           img.src = url;
         }),
-        3000
+        7000
       );
       if (pngBase64) return pngBase64;
     } catch (e) {

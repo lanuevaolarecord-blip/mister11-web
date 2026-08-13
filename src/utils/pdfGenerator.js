@@ -866,20 +866,45 @@ export const generateSessionPDF = async (session, activeTeam = null, pizarras = 
         doc.text(descLines, 22, currentY + 17);
 
         // 2. Imagen / Captura del Ejercicio (Directamente DEBAJO de la descripción, centrada)
-        if (hasImg) {
+        if (renderImg) {
           const imgX = (pageW - imgW) / 2;
           const imgY = currentY + 17 + textH + 3;
 
+          // Marco contenedor blanco con borde suave
           doc.setFillColor(255, 255, 255);
           doc.setDrawColor(200, 210, 205);
           doc.setLineWidth(0.3);
           doc.roundedRect(imgX, imgY, imgW, imgH, 2, 2, 'FD');
 
-          try {
-            const fmt = imgBase64.includes('jpeg') || imgBase64.includes('jpg') ? 'JPEG' : 'PNG';
-            doc.addImage(imgBase64, fmt, imgX + 1, imgY + 1, imgW - 2, imgH - 2);
-          } catch (imgErr) {
-            console.warn('Error al renderizar imagen en bloque:', imgErr);
+          let drawnSuccess = false;
+          if (hasImg) {
+            try {
+              const isJpeg = imgBase64.includes('jpeg') || imgBase64.includes('jpg');
+              const fmt = isJpeg ? 'JPEG' : 'PNG';
+              doc.addImage(imgBase64, fmt, imgX + 1, imgY + 1, imgW - 2, imgH - 2);
+              drawnSuccess = true;
+            } catch (imgErr) {
+              console.warn('Error al renderizar imagen en bloque:', imgErr);
+            }
+          }
+
+          // Si la imagen falló o no estuvo disponible, renderizar Placeholder visual con texto estandarizado
+          if (!drawnSuccess) {
+            doc.setFillColor(245, 247, 246);
+            doc.rect(imgX + 1, imgY + 1, imgW - 2, imgH - 2, 'F');
+            doc.setDrawColor(190, 202, 196);
+            doc.setLineWidth(0.3);
+            doc.rect(imgX + 4, imgY + 4, imgW - 8, imgH - 8, 'D');
+
+            doc.setFontSize(9.5);
+            doc.setFont(undefined, 'bold');
+            doc.setTextColor(80, 100, 90);
+            doc.text('Imagen del ejercicio', pageW / 2, imgY + (imgH / 2) - 2, { align: 'center' });
+
+            doc.setFontSize(7.5);
+            doc.setFont(undefined, 'italic');
+            doc.setTextColor(130, 145, 138);
+            doc.text('Diagrama táctico de la sesión', pageW / 2, imgY + (imgH / 2) + 4, { align: 'center' });
           }
         }
 

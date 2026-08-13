@@ -27,6 +27,7 @@ const IAGeneradora      = lazy(() => import('./pages/IAGeneradora'));
 const AdminPanel        = lazy(() => import('./pages/AdminPanel'));
 const Instalar          = lazy(() => import('./pages/Instalar'));
 const SharedPlan        = lazy(() => import('./pages/SharedPlan'));
+const SharedSession     = lazy(() => import('./pages/SharedSession'));
 const AcceptInvitation  = lazy(() => import('./pages/AcceptInvitation'));
 const ConsentimientoFirma = lazy(() => import('./pages/ConsentimientoFirma'));
 const ConsentForm       = lazy(() => import('./pages/ConsentForm'));
@@ -205,6 +206,11 @@ function App() {
           <Route 
             path="/shared/plan/:planId" 
             element={<SharedPlan />} 
+          />
+
+          <Route 
+            path="/shared/session/:shareId" 
+            element={<SharedSession />} 
           />
 
           <Route 

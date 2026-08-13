@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { generateSessionPDF } from '../utils/pdfGenerator';
 import { useSessions } from '../hooks/useSessions';
 import { usePlayers } from '../hooks/usePlayers';
@@ -14,6 +15,8 @@ import { useCaptures } from '../hooks/useCaptures';
 import { useExercises } from '../hooks/useExercises';
 import { downloadJSON, downloadImage } from '../utils/download.js';
 import { generateGoogleCalendarUrl, generateICSContent, downloadICSFile } from '../utils/calendarHelper';
+import { shareSessionToFirestore, getSharedSession, exportSessionToJSONFile, exportSessionToICSFile, parseSessionFile } from '../utils/sessionSharing';
+import { Share2, Link as LinkIcon, Download, Upload, Copy, Check, Calendar, ArrowRight } from 'lucide-react';
 import { normalizeText } from '../utils/normalizeInput';
 import { useTranslation } from '../hooks/useTranslation';
 import {
@@ -97,8 +100,112 @@ const Sesiones = () => {
   const [isSaving, setIsSaving] = useState(false);
   const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
   
-  // Edit mode state
-  const [editData, setEditData] = useState(null);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [shareModal, setShareModal] = useState({ open: false, session: null, shareUrl: '', shareId: '', loading: false, copied: false });
+  const [importModal, setImportModal] = useState({ open: false, activeTab: 'link', inputVal: '', loading: false, previewSession: null, file: null, error: '' });
+
+  // Manejador para compartir sesión
+  const handleShareSession = async (sessionToShare) => {
+    if (!sessionToShare) return;
+    try {
+      setShareModal({ open: true, session: sessionToShare, shareUrl: '', shareId: '', loading: true, copied: false });
+      const { shareId, shareUrl } = await shareSessionToFirestore(sessionToShare, user, activeTeam);
+      setShareModal({ open: true, session: sessionToShare, shareUrl, shareId, loading: false, copied: false });
+    } catch (err) {
+      console.error('Error al compartir sesión:', err);
+      showAlert('Error', 'No se pudo generar el enlace para compartir la sesión.');
+      setShareModal(prev => ({ ...prev, open: false, loading: false }));
+    }
+  };
+
+  const handleCopyShareUrl = () => {
+    if (!shareModal.shareUrl) return;
+    navigator.clipboard.writeText(shareModal.shareUrl);
+    setShareModal(prev => ({ ...prev, copied: true }));
+    setTimeout(() => setShareModal(prev => ({ ...prev, copied: false })), 2000);
+  };
+
+  // Auto-detectar importShareId en los parámetros de la URL
+  useEffect(() => {
+    const shareIdParam = searchParams.get('importShareId');
+    if (shareIdParam) {
+      setImportModal({ open: true, activeTab: 'link', inputVal: shareIdParam, loading: true, previewSession: null, file: null, error: '' });
+      getSharedSession(shareIdParam).then(data => {
+        if (data) {
+          setImportModal(prev => ({ ...prev, loading: false, previewSession: data }));
+        } else {
+          setImportModal(prev => ({ ...prev, loading: false, error: 'No se encontró ninguna sesión compartida con ese enlace.' }));
+        }
+      }).catch(() => {
+        setImportModal(prev => ({ ...prev, loading: false, error: 'Error al cargar la sesión compartida.' }));
+      });
+      setSearchParams({}, { replace: true });
+    }
+  }, [searchParams, setSearchParams]);
+
+  // Manejador de búsqueda/previa por link o ID en el modal de importación
+  const handleFetchSharePreview = async () => {
+    const queryVal = importModal.inputVal.trim();
+    if (!queryVal) {
+      setImportModal(prev => ({ ...prev, error: 'Por favor, introduce un enlace o código de compartir válido.' }));
+      return;
+    }
+    const shareIdMatch = queryVal.match(/m11_ses_[a-zA-Z0-9_]+/);
+    const targetId = shareIdMatch ? shareIdMatch[0] : queryVal;
+
+    try {
+      setImportModal(prev => ({ ...prev, loading: true, error: '', previewSession: null }));
+      const data = await getSharedSession(targetId);
+      if (data) {
+        setImportModal(prev => ({ ...prev, loading: false, previewSession: data }));
+      } else {
+        setImportModal(prev => ({ ...prev, loading: false, error: 'No se encontró la sesión compartida. Verifica el enlace.' }));
+      }
+    } catch (err) {
+      setImportModal(prev => ({ ...prev, loading: false, error: 'Error al consultar la sesión compartida.' }));
+    }
+  };
+
+  // Manejador para procesar archivo .m11session / .json cargado
+  const handleSessionFileUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      setImportModal(prev => ({ ...prev, loading: true, error: '', file, previewSession: null }));
+      const parsed = await parseSessionFile(file);
+      setImportModal(prev => ({ ...prev, loading: false, previewSession: parsed }));
+    } catch (err) {
+      setImportModal(prev => ({ ...prev, loading: false, error: err.message || 'Error al leer el archivo.' }));
+    }
+  };
+
+  // Manejador para confirmar la importación a la lista de sesiones del equipo activo
+  const handleConfirmImportSession = async () => {
+    if (!importModal.previewSession) return;
+    try {
+      setImportModal(prev => ({ ...prev, loading: true }));
+      const s = importModal.previewSession;
+      const sessionPayload = {
+        title: s.title || s.nombre || 'Sesión Importada',
+        category: s.category || s.categoria || 'Táctica',
+        duration: Number(s.duration || s.duracion || 90),
+        intensity: s.intensity || s.intensidad || 'Media',
+        materials: s.materials || s.material || '',
+        objectives: s.objectives || s.objetivo || '',
+        date: new Date().toISOString().split('T')[0],
+        time: '18:00',
+        blocks: s.blocks || s.bloques || [],
+        importedAt: new Date().toISOString(),
+      };
+      await addSession(sessionPayload);
+      showToast('¡Sesión importada con éxito en tu equipo!', 'success');
+      setImportModal({ open: false, activeTab: 'link', inputVal: '', loading: false, previewSession: null, file: null, error: '' });
+    } catch (err) {
+      console.error('Error al importar la sesión:', err);
+      showAlert('Error', 'No se pudo guardar la sesión importada en tu equipo.');
+      setImportModal(prev => ({ ...prev, loading: false }));
+    }
+  };
   const [pdfPreview, setPdfPreview] = useState(null);
   const fileInputRef = useRef(null);
   const [uploadProgress, setUploadProgress] = useState(0);
@@ -883,6 +990,13 @@ const Sesiones = () => {
             <button className={`tab-switcher ${activeTab === 'captures' ? 'active' : ''}`} onClick={() => setActiveTab('captures')}>{t('sesiones.tab.captures')}</button>
             <button className={`tab-switcher ${activeTab === 'animations' ? 'active' : ''}`} onClick={() => setActiveTab('animations')}>{t('sesiones.tab.animations')}</button>
             <div style={{ width: '1px', height: '24px', background: 'var(--border-light)', margin: '0 8px' }} />
+            <button
+              className="btn-outline-gold"
+              onClick={() => setImportModal({ open: true, activeTab: 'link', inputVal: '', loading: false, previewSession: null, file: null, error: '' })}
+              style={{ padding: '8px 16px', minHeight: '44px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '6px', fontWeight: 'bold' }}
+            >
+              📥 Importar Sesión
+            </button>
             {activeTab === 'sessions' && sessions.length > 0 && (
               <button 
                 className="btn-outline-gold" 
@@ -953,7 +1067,16 @@ const Sesiones = () => {
                       <span style={{ background: 'var(--accent-green-light)', color: 'var(--accent-green)', padding: '4px 12px', borderRadius: '16px', fontSize: '12px', fontWeight: 'bold' }}>{time}</span>
                       <span style={{ fontSize: '13px', color: 'var(--text-secondary)', fontWeight: 'bold' }}>{duration} min</span>
                     </div>
-                    <div style={{ color: 'var(--text-secondary)', fontWeight: 'bold', fontSize: '18px' }}>⋮</div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <button
+                        type="button"
+                        onClick={(e) => { e.stopPropagation(); handleShareSession(session); }}
+                        style={{ background: 'rgba(212, 168, 67, 0.15)', border: '1px solid var(--accent-gold)', color: 'var(--accent-gold)', padding: '4px 10px', borderRadius: '12px', fontSize: '12px', fontWeight: 'bold', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px' }}
+                        title="Compartir sesión con otro entrenador"
+                      >
+                        <Share2 size={13} /> Compartir
+                      </button>
+                    </div>
                   </div>
                   
                   <div style={{ padding: '16px', flex: 1, display: 'flex', flexDirection: 'column' }}>
@@ -1133,6 +1256,13 @@ const Sesiones = () => {
                   >
                     {isGeneratingPDF ? '⏳ Generando informe...' : '📄 Exportar a PDF'}
                   </button>
+                  <button 
+                    className="btn-outline-gold full-width" 
+                    style={{ marginBottom: '10px', minHeight: '44px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', fontWeight: 'bold' }} 
+                    onClick={() => handleShareSession(selectedSession)}
+                  >
+                    <Share2 size={16} /> 🔗 Compartir / Transferir Sesión
+                  </button>
                   <div style={{ display: 'flex', gap: '10px', marginBottom: '10px' }}>
                     <button 
                       className="btn-outline" 
@@ -1307,6 +1437,181 @@ const Sesiones = () => {
         onClose={() => setUpgradeModal({ ...upgradeModal, open: false })}
         message={upgradeModal.message}
       />
+
+      {/* MODAL COMPARTIR SESIÓN */}
+      {shareModal.open && (
+        <div className="modal-overlay-pdf" onClick={() => setShareModal(prev => ({ ...prev, open: false }))}>
+          <div className="modal-content-pdf" style={{ maxWidth: '540px', height: 'auto', padding: '24px' }} onClick={e => e.stopPropagation()}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+              <h3 style={{ margin: 0, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <Share2 size={20} color="var(--accent-gold)" /> Compartir Sesión de Entrenamiento
+              </h3>
+              <button className="btn-close-pdf" onClick={() => setShareModal(prev => ({ ...prev, open: false }))}>✕</button>
+            </div>
+
+            {shareModal.loading ? (
+              <div style={{ textAlign: 'center', padding: '30px 0', color: 'var(--text-secondary)' }}>
+                <div style={{ width: '36px', height: '36px', border: '3px solid var(--accent-gold-light)', borderTopColor: 'var(--accent-gold)', borderRadius: '50%', animation: 'spin 1s linear infinite', margin: '0 auto 12px auto' }} />
+                <p>Generando enlace público y preparando datos...</p>
+              </div>
+            ) : (
+              <div>
+                <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', marginBottom: '16px' }}>
+                  Cualquier entrenador o usuario con este enlace podrá ver los ejercicios y clonar la sesión directamente a su equipo.
+                </p>
+
+                <div style={{ background: 'var(--bg-app)', border: '1px solid var(--border-light)', borderRadius: '10px', padding: '12px', display: 'flex', gap: '8px', alignItems: 'center', marginBottom: '20px' }}>
+                  <input
+                    type="text"
+                    readOnly
+                    value={shareModal.shareUrl}
+                    style={{ flex: 1, background: 'transparent', border: 'none', color: 'var(--text-primary)', fontSize: '0.88rem', fontWeight: 'bold', outline: 'none' }}
+                  />
+                  <button
+                    className="btn-primary-new"
+                    style={{ minHeight: '38px', padding: '0 14px', fontSize: '0.85rem', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+                    onClick={handleCopyShareUrl}
+                  >
+                    {shareModal.copied ? <Check size={16} /> : <Copy size={16} />}
+                    {shareModal.copied ? '¡Copiado!' : 'Copiar Link'}
+                  </button>
+                </div>
+
+                <div style={{ borderTop: '1px solid var(--border-light)', paddingTop: '16px' }}>
+                  <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', fontWeight: 'bold', textTransform: 'uppercase' }}>Otras Opciones de Exportación / Transferencia:</span>
+                  <div style={{ display: 'flex', gap: '10px', marginTop: '10px' }}>
+                    <button
+                      className="btn-outline-gold"
+                      style={{ flex: 1, minHeight: '40px', fontSize: '0.85rem', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}
+                      onClick={() => exportSessionToJSONFile(shareModal.session, activeTeam?.nombre)}
+                    >
+                      <Download size={15} /> Archivo (.m11session)
+                    </button>
+                    <button
+                      className="btn-outline-gold"
+                      style={{ flex: 1, minHeight: '40px', fontSize: '0.85rem', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}
+                      onClick={() => exportSessionToICSFile(shareModal.session)}
+                    >
+                      <Calendar size={15} /> iCalendar (.ics)
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* MODAL IMPORTAR SESIÓN */}
+      {importModal.open && (
+        <div className="modal-overlay-pdf" onClick={() => setImportModal(prev => ({ ...prev, open: false }))}>
+          <div className="modal-content-pdf" style={{ maxWidth: '600px', height: 'auto', padding: '24px', maxHeight: '90vh', overflowY: 'auto' }} onClick={e => e.stopPropagation()}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+              <h3 style={{ margin: 0, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <Download size={20} color="var(--accent-gold)" /> Importar / Transferir Sesión
+              </h3>
+              <button className="btn-close-pdf" onClick={() => setImportModal(prev => ({ ...prev, open: false }))}>✕</button>
+            </div>
+
+            {/* Pestañas de Importación */}
+            <div style={{ display: 'flex', gap: '10px', marginBottom: '20px', borderBottom: '1px solid var(--border-light)', paddingBottom: '10px' }}>
+              <button
+                className={`tab-switcher ${importModal.activeTab === 'link' ? 'active' : ''}`}
+                onClick={() => setImportModal(prev => ({ ...prev, activeTab: 'link', error: '' }))}
+              >
+                🔗 Por Enlace / Código
+              </button>
+              <button
+                className={`tab-switcher ${importModal.activeTab === 'file' ? 'active' : ''}`}
+                onClick={() => setImportModal(prev => ({ ...prev, activeTab: 'file', error: '' }))}
+              >
+                📁 Por Archivo (.m11session / .json)
+              </button>
+            </div>
+
+            {importModal.activeTab === 'link' ? (
+              <div>
+                <p style={{ color: 'var(--text-secondary)', fontSize: '0.88rem', marginBottom: '12px' }}>
+                  Pega el enlace web o código de compartir que te haya enviado otro entrenador:
+                </p>
+                <div style={{ display: 'flex', gap: '8px', marginBottom: '16px' }}>
+                  <input
+                    type="text"
+                    placeholder="Ej: https://www.mister11.app/shared/session/m11_ses_..."
+                    value={importModal.inputVal}
+                    onChange={e => setImportModal(prev => ({ ...prev, inputVal: e.target.value }))}
+                    style={{ flex: 1, padding: '10px 14px', background: 'var(--bg-app)', border: '1px solid var(--border-light)', borderRadius: '8px', color: 'var(--text-primary)', outline: 'none' }}
+                  />
+                  <button
+                    className="btn-primary-new"
+                    disabled={importModal.loading}
+                    onClick={handleFetchSharePreview}
+                  >
+                    {importModal.loading ? 'Buscando...' : 'Buscar Sesión'}
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div style={{ marginBottom: '20px' }}>
+                <p style={{ color: 'var(--text-secondary)', fontSize: '0.88rem', marginBottom: '12px' }}>
+                  Selecciona un archivo <code>.m11session</code> o <code>.json</code> exportado de Míster11:
+                </p>
+                <input
+                  type="file"
+                  accept=".m11session,.json"
+                  onChange={handleSessionFileUpload}
+                  style={{ display: 'block', width: '100%', padding: '12px', background: 'var(--bg-app)', border: '1px dashed var(--accent-gold)', borderRadius: '8px', color: 'var(--text-primary)', cursor: 'pointer' }}
+                />
+              </div>
+            )}
+
+            {/* Alerta de Error */}
+            {importModal.error && (
+              <div style={{ background: 'rgba(220, 38, 38, 0.15)', border: '1px solid #dc2626', color: '#f87171', padding: '10px 14px', borderRadius: '8px', fontSize: '0.88rem', marginBottom: '16px' }}>
+                ⚠️ {importModal.error}
+              </div>
+            )}
+
+            {/* Vista Previa de la Sesión Encontrada */}
+            {importModal.previewSession && (
+              <div style={{ background: 'var(--bg-app)', border: '1px solid var(--border-light)', borderRadius: '12px', padding: '16px', marginBottom: '20px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '10px' }}>
+                  <div>
+                    <span style={{ fontSize: '0.75rem', background: 'rgba(212, 168, 67, 0.2)', color: 'var(--accent-gold)', padding: '2px 8px', borderRadius: '10px', fontWeight: 'bold' }}>
+                      Sesión Encontrada
+                    </span>
+                    <h4 style={{ margin: '6px 0 0 0', fontSize: '1.1rem', color: 'var(--text-primary)' }}>
+                      {importModal.previewSession.title}
+                    </h4>
+                  </div>
+                  <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', fontWeight: 'bold' }}>
+                    {importModal.previewSession.duration} min
+                  </span>
+                </div>
+
+                <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', margin: '0 0 10px 0' }}>
+                  Categoría: <strong>{importModal.previewSession.category}</strong> • Carga: <strong>{importModal.previewSession.intensity}</strong> • Bloques: <strong>{(importModal.previewSession.blocks || []).length} ejercicios</strong>
+                </p>
+
+                {importModal.previewSession.objectives && (
+                  <p style={{ fontSize: '0.85rem', color: 'var(--text-primary)', background: 'var(--bg-card)', padding: '8px 12px', borderRadius: '6px', margin: 0 }}>
+                    🎯 <em>{importModal.previewSession.objectives}</em>
+                  </p>
+                )}
+
+                <button
+                  className="btn-primary-new full-width"
+                  style={{ marginTop: '16px', minHeight: '44px', fontWeight: 'bold', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
+                  disabled={importModal.loading}
+                  onClick={handleConfirmImportSession}
+                >
+                  <Download size={18} /> Importar a mi Equipo ({activeTeam?.nombre || 'Equipo Activo'})
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Custom Dialog Modal (Glassmorphism Premium) */}
       {modalConfig.isOpen && (

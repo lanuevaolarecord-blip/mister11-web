@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { generateSessionPDF } from '../utils/pdfGenerator';
+import LiveFieldSession from '../components/LiveFieldSession';
 import { useSessions } from '../hooks/useSessions';
 import { usePlayers } from '../hooks/usePlayers';
 import { useAuth } from '../context/AuthContext';
@@ -97,6 +98,7 @@ const Sesiones = () => {
   const [selectedSession, setSelectedSession] = useState(null);
   const [selectedCapture, setSelectedCapture] = useState(null);
   const [selectedAnimation, setSelectedAnimation] = useState(null);
+  const [showLiveField, setShowLiveField] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
   
@@ -108,15 +110,22 @@ const Sesiones = () => {
   const handleShareSession = async (sessionToShare) => {
     if (!sessionToShare) return;
 
-    const sessionId = sessionToShare.id || sessionToShare.shareId || `ses_${Date.now()}`;
-    const baseUrl = window?.location?.origin || 'https://mister11.app';
-    const shareUrl = `${baseUrl}/shared/session/${sessionId}`;
-    const sessionTitle = sessionToShare.title || sessionToShare.nombre || sessionToShare.titulo || 'Sesión de Entrenamiento';
+    let shareUrl = '';
+    let shareId = '';
 
-    // Registro en Firestore silencioso en segundo plano
-    shareSessionToFirestore({ ...sessionToShare, id: sessionId }, user, activeTeam).catch((err) => {
-      console.warn('[handleShareSession] Registro silencioso en Firestore:', err);
-    });
+    try {
+      // Guardar de forma AWAIT en Firestore antes de generar la URL para asegurar que la sesión exista públicamente de inmediato
+      const result = await shareSessionToFirestore(sessionToShare, user, activeTeam);
+      shareUrl = result.shareUrl;
+      shareId = result.shareId;
+    } catch (err) {
+      console.warn('[handleShareSession] Error al guardar en Firestore:', err);
+      shareId = sessionToShare.id || `ses_${Date.now()}`;
+      const baseUrl = window?.location?.origin || 'https://www.mister11.app';
+      shareUrl = `${baseUrl}/shared/session/${shareId}`;
+    }
+
+    const sessionTitle = sessionToShare.title || sessionToShare.nombre || sessionToShare.titulo || 'Sesión de Entrenamiento';
 
     // 1. Web Share API nativo si está disponible
     if (navigator.share) {
@@ -126,17 +135,16 @@ const Sesiones = () => {
           text: `Te comparto esta sesión de entrenamiento: ${sessionTitle}`,
           url: shareUrl,
         });
-        return; // Compartido exitosamente mediante diálogo nativo
+        return;
       } catch (err) {
         if (err.name === 'AbortError') {
-          // El usuario canceló el menú compartir nativo -> ignorar sin alertas de error
           return;
         }
         console.warn('[handleShareSession] Falló Web Share API, reintentando con portapapeles:', err);
       }
     }
 
-    // 2. Fallback a Portapapeles (navigator.clipboard)
+    // 2. Fallback a Portapapeles
     try {
       if (navigator.clipboard && navigator.clipboard.writeText) {
         await navigator.clipboard.writeText(shareUrl);
@@ -152,7 +160,7 @@ const Sesiones = () => {
       open: true,
       session: sessionToShare,
       shareUrl,
-      shareId: sessionId,
+      shareId,
       loading: false,
       copied: false,
     });
@@ -1061,6 +1069,20 @@ const Sesiones = () => {
             <div style={{ width: '1px', height: '24px', background: 'var(--border-light)', margin: '0 8px' }} />
             <button
               className="btn-outline-gold"
+              onClick={() => {
+                if (sessions.length > 0) {
+                  setSelectedSession(sessions[0]);
+                  setShowLiveField(true);
+                } else {
+                  showToast('No hay sesiones disponibles.', 'info');
+                }
+              }}
+              style={{ padding: '8px 16px', minHeight: '44px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '6px', fontWeight: 'bold' }}
+            >
+              ⏱️ Modo Campo
+            </button>
+            <button
+              className="btn-outline-gold"
               onClick={() => setImportModal({ open: true, activeTab: 'link', inputVal: '', loading: false, previewSession: null, file: null, error: '' })}
               style={{ padding: '8px 16px', minHeight: '44px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '6px', fontWeight: 'bold' }}
             >
@@ -1301,6 +1323,13 @@ const Sesiones = () => {
                 </div>
                 
                 <div className="preview-actions">
+                  <button
+                    className="btn-primary full-width"
+                    style={{ marginBottom: '10px', backgroundColor: '#22c55e', color: '#000', fontWeight: '800', border: 'none', minHeight: '44px' }}
+                    onClick={() => setShowLiveField(true)}
+                  >
+                    ⏱️ Iniciar Modo Campo (Cronómetro & Voz)
+                  </button>
                   <button 
                     className="btn-primary full-width" 
                     style={{marginBottom: '10px'}} 
@@ -1680,6 +1709,14 @@ const Sesiones = () => {
             )}
           </div>
         </div>
+      )}
+
+      {/* MODAL MODO CAMPO DE ENTRENAMIENTO EN VIVO */}
+      {showLiveField && (
+        <LiveFieldSession
+          session={selectedSession || (sessions.length > 0 ? sessions[0] : null)}
+          onClose={() => setShowLiveField(false)}
+        />
       )}
 
       {/* Custom Dialog Modal (Glassmorphism Premium) */}

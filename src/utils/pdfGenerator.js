@@ -769,18 +769,18 @@ export const generateSessionPDF = async (session, activeTeam = null, pizarras = 
         const hasImg = Boolean(imgBase64);
 
         const rawDesc = b.description || b.descripcion || 'Sin descripción';
-        // Si hay imagen: Columna Texto 60% (ancho 105mm). Si no hay imagen: Ancho 100% (ancho 165mm)
-        const textMaxW = hasImg ? (pageW - 95) : (pageW - 45);
+        // Texto a todo el ancho (100% de la tarjeta)
+        const textMaxW = pageW - 44;
         const descLines = doc.splitTextToSize(rawDesc, textMaxW);
         const textH = descLines.length * 4.6;
 
-        const imgW = hasImg ? 58 : 0;
-        const imgH = hasImg ? 38 : 0;
+        const imgW = hasImg ? 124 : 0;
+        const imgH = hasImg ? 64 : 0;
         
-        // Calcular altura total de la tarjeta del bloque (mínimo 44mm si tiene imagen)
-        const totalBlockH = hasImg ? Math.max(14 + textH + 4, 46) : (14 + textH + 6);
+        // Calcular altura total del bloque (Header + Texto + Imagen centrada debajo)
+        const totalBlockH = hasImg ? (16 + textH + imgH + 10) : (16 + textH + 6);
 
-        // Control estricto de salto de página (Evita cortar un bloque a la mitad)
+        // Control estricto de salto de página (Evita cortar el bloque o la imagen a la mitad)
         if (currentY + totalBlockH > pageH - 20) {
           doc.addPage();
           currentY = 20;
@@ -823,19 +823,22 @@ export const generateSessionPDF = async (session, activeTeam = null, pizarras = 
         doc.setLineWidth(0.2);
         doc.line(22, currentY + 12, pageW - 22, currentY + 12);
 
-        // Descripción del Bloque (Columna Izquierda 60% o 100%)
+        // 1. Descripción del Bloque (Texto arriba a todo el ancho)
         doc.setFont(undefined, 'normal');
         doc.setFontSize(8.5);
         doc.setTextColor(50, 60, 55);
         doc.text(descLines, 22, currentY + 17);
 
-        // Columna Derecha (40%): Renderizar Captura / Imagen del Ejercicio
+        // 2. Imagen / Captura del Ejercicio (Directamente DEBAJO de la descripción, centrada)
         if (hasImg) {
-          const imgX = pageW - 75;
-          const imgY = currentY + 6;
+          const imgX = (pageW - imgW) / 2;
+          const imgY = currentY + 17 + textH + 3;
+
+          doc.setFillColor(255, 255, 255);
           doc.setDrawColor(200, 210, 205);
           doc.setLineWidth(0.3);
-          doc.roundedRect(imgX, imgY, imgW, imgH, 2, 2, 'S');
+          doc.roundedRect(imgX, imgY, imgW, imgH, 2, 2, 'FD');
+
           try {
             const fmt = imgBase64.includes('jpeg') || imgBase64.includes('jpg') ? 'JPEG' : 'PNG';
             doc.addImage(imgBase64, fmt, imgX + 1, imgY + 1, imgW - 2, imgH - 2);

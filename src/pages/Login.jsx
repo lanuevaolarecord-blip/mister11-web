@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { signInWithGoogle } from '../firebaseConfig';
 import { useAuth } from '../context/AuthContext';
 import { usePWA } from '../hooks/usePWA';
+import { showToast } from '../utils/toast';
 import './Login.css';
 
 const Login = () => {
@@ -22,9 +23,15 @@ const Login = () => {
     } catch (err) {
       console.error('Error signing in with Google', err);
       if (err.code === 'auth/unauthorized-domain') {
-        setError('Dominio no autorizado en Firebase Console.');
-      } else if (err.code !== 'auth/popup-closed-by-user' && err.code !== 'auth/cancelled-popup-request') {
-        setError(`Error: ${err.message}`);
+        const msg = 'Dominio no autorizado en Firebase Console.';
+        setError(msg);
+        showToast(msg, 'error');
+      } else if (err.code === 'auth/popup-closed-by-user' || err.code === 'auth/cancelled-popup-request') {
+        showToast('Inicio de sesión cancelado por el usuario', 'info');
+      } else {
+        const friendlyMsg = 'No se pudo iniciar sesión con Google. Por favor, verifica tu conexión e inténtalo de nuevo.';
+        setError(friendlyMsg);
+        showToast(friendlyMsg, 'error');
       }
     } finally {
       setIsLoading(false);

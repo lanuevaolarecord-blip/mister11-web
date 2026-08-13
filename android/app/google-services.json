@@ -83,6 +83,14 @@
           }
         },
         {
+          "client_id": "954668402587-nbp4h5og9pgjchuof2on6fc8pmeo3ifa.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.mister11.app",
+            "certificate_hash": "f9df87b0bb0c4a8be790281f2f38b97fe9192600"
+          }
+        },
+        {
           "client_id": "954668402587-im73oik073ds12jvkfn0diasvdmkb9qc.apps.googleusercontent.com",
           "client_type": 3
         }

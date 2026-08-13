@@ -57,26 +57,32 @@ const initUserDocument = async (uid, email, displayName) => {
 
 const signInWithGoogle = async () => {
   if (Capacitor.isNativePlatform()) {
-    // IMPORTANTE: Cargamos el plugin dinámicamente para evitar errores en web
-    const { FirebaseAuthentication } = await import(
-      "@capacitor-firebase/authentication"
-    );
+    try {
+      // IMPORTANTE: Cargamos el plugin dinámicamente para evitar errores en web
+      const { FirebaseAuthentication } = await import(
+        "@capacitor-firebase/authentication"
+      );
 
-    // Ejecutar login nativo
-    const result = await FirebaseAuthentication.signInWithGoogle();
+      // Ejecutar login nativo
+      const result = await FirebaseAuthentication.signInWithGoogle();
 
-    // Verificamos si tenemos el idToken (crucial para Firebase)
-    const idToken = result.credential?.idToken || result.user?.idToken;
+      // Verificamos si tenemos el idToken (crucial para Firebase)
+      const idToken = result.credential?.idToken || result.user?.idToken;
 
-    if (!idToken) {
-      throw new Error("No se obtuvo el ID Token de Google Nativo.");
+      if (!idToken) {
+        throw new Error("No se obtuvo el ID Token de Google Nativo.");
+      }
+
+      // Crear la credencial para el SDK de JS
+      const credential = GoogleAuthProvider.credential(idToken);
+
+      // Autenticar en el SDK de JS para que Firestore funcione
+      const userCred = await signInWithCredential(auth, credential);
+      await initUserDocument(userCred.user.uid, userCred.user.email, userCred.user.displayName);
+      return userCred;
+    } catch (nativeErr) {
+      console.warn("[signInWithGoogle] Autenticación nativa rechazada o falló. Reintentando con flujo Web:", nativeErr);
     }
-
-    // Crear la credencial para el SDK de JS
-    const credential = GoogleAuthProvider.credential(idToken);
-
-    // Autenticar en el SDK de JS para que Firestore funcione
-    return await signInWithCredential(auth, credential);
   }
 
   // Flujo Web (Popup -> Redirect)

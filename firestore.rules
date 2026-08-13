@@ -145,17 +145,14 @@ service cloud.firestore {
 
     // ── Planes compartidos (SharedPlan) y Sesiones compartidas (SharedSession) ──
     match /sharedPlans/{planId} {
-      // Públicos en lectura (links compartidos sin login)
-      allow read: if true;
-      // Solo usuarios autenticados pueden crear/actualizar
-      allow create, update: if isAuth();
+      // Públicos en lectura y escritura para permitir compartir planes mediante enlace
+      allow read, create, update: if true;
       allow delete: if isAuth();
     }
 
     match /sharedSessions/{shareId} {
-      // Públicos en lectura para poder importar mediante enlace sin bloquear
-      allow read: if true;
-      allow create, update: if isAuth();
+      // Públicos en lectura y escritura para permitir compartir e importar mediante enlace sin requerir auth previo
+      allow read, create, update: if true;
       allow delete: if isAuth();
     }
 

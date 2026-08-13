@@ -36,21 +36,23 @@ export const sanitizeSessionPayload = (session, teamName = 'Míster11 Team') => 
 export const shareSessionToFirestore = async (session, user, team) => {
   if (!session) throw new Error('No hay datos de sesión para compartir.');
   
-  const shareId = session.shareId || session.id || `m11_ses_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
+  const shareId = session.shareCode || session.shareId || session.id || `m11_ses_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
   const payload = {
     ...sanitizeSessionPayload(session, team?.nombre || team?.name || 'Míster11 Team'),
     shareId,
+    shareCode: shareId,
     id: shareId,
     sharedByEmail: user?.email || 'entrenador@mister11.app',
     sharedByName: user?.displayName || user?.email?.split('@')[0] || 'Entrenador Míster11',
   };
 
   const shareRef = doc(db, 'sharedSessions', shareId);
-  await setDoc(shareRef, payload);
+  await setDoc(shareRef, payload, { merge: true });
 
   const origin = window?.location?.origin || 'https://www.mister11.app';
   return {
     shareId,
+    shareCode: shareId,
     shareUrl: `${origin}/shared/session/${shareId}`,
     importUrl: `${origin}/sesiones?importShareId=${shareId}`,
   };

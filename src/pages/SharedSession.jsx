@@ -29,7 +29,7 @@ const SharedSession = () => {
         if (data) {
           setSession(data);
         } else {
-          setError('La sesión solicitada no existe o el enlace ha caducado.');
+          setError('Esta sesión no está disponible para compartir o el enlace ha caducado. Pide al entrenador que vuelva a pulsar "Compartir" para publicar el enlace.');
         }
       } catch (err) {
         console.error('Error al cargar la sesión compartida:', err);

@@ -441,45 +441,63 @@ const Sesiones = () => {
     setViewMode('edit');
   };
 
-  const handleEditSession = (sessionToEdit) => {
-    if (!sessionToEdit) return;
+  const handleEditSession = (sessionToEdit, e) => {
+    if (e && typeof e.stopPropagation === 'function') {
+      e.stopPropagation();
+    }
+    const sess = sessionToEdit || selectedSession;
+    if (!sess) {
+      console.warn('[handleEditSession] No se proporcionó una sesión válida.');
+      showToast('Error: No se encontró la sesión a editar', 'error');
+      return;
+    }
 
-    // Mapeo completo de todos los atributos de la sesión para precargar el editor
-    const mappedBlocks = (sessionToEdit.blocks || sessionToEdit.bloques || []).map((b, idx) => {
-      const blockImg = b.imageUrl || b.imagenProtocolo || b.image || b.photo || b.previewUrl || b.canvasData || null;
-      return {
-        id: b.id || `block_${idx}_${Date.now()}`,
-        name: b.name || b.nombre || b.titulo || `Bloque ${idx + 1}`,
-        duration: Number(b.duration || b.duracion || b.tiempo) || 15,
-        type: b.type || b.tipo || 'Táctica',
-        description: b.description || b.descripcion || '',
-        imageUrl: blockImg,
-        imagenProtocolo: blockImg,
+    try {
+      console.log('[handleEditSession] Abriendo editor para sesión:', sess.id, sess.title || sess.nombre);
+      const rawBlocks = sess.blocks || sess.bloques || [];
+      const mappedBlocks = Array.isArray(rawBlocks)
+        ? rawBlocks.map((b, idx) => {
+            const blockImg = b.imageUrl || b.imagenProtocolo || b.image || b.photo || b.previewUrl || b.canvasData || null;
+            return {
+              id: b.id || `block_${idx}_${Date.now()}`,
+              name: b.name || b.nombre || b.titulo || `Bloque ${idx + 1}`,
+              duration: Number(b.duration || b.duracion || b.tiempo) || 15,
+              type: b.type || b.tipo || 'Táctica',
+              description: b.description || b.descripcion || '',
+              imageUrl: blockImg,
+              imagenProtocolo: blockImg,
+            };
+          })
+        : [];
+
+      const cleanEditData = {
+        id: sess.id,
+        title: sess.title || sess.nombre || sess.titulo || '',
+        date: sess.date || sess.fecha || new Date().toISOString().split('T')[0],
+        time: sess.time || sess.hora || '18:00',
+        duration: Number(sess.duration || sess.duracion) || 90,
+        category: sess.category || sess.categoria || 'General',
+        intensity: sess.intensity || sess.intensidad || 'Media',
+        materials: sess.materials || sess.material || '',
+        objectives: sess.objectives || sess.objetivo || '',
+        players: Array.isArray(sess.players) ? sess.players : (Array.isArray(sess.convocados) ? sess.convocados : []),
+        files: Array.isArray(sess.files) ? sess.files : [],
+        blocks: mappedBlocks.length > 0 ? mappedBlocks : [
+          { id: Date.now(), name: 'Calentamiento', duration: 15, type: 'Física', description: '' }
+        ],
+        linkedPizarraId: sess.linkedPizarraId || '',
       };
-    });
 
-    setEditData({ 
-      id: sessionToEdit.id,
-      title: sessionToEdit.title || sessionToEdit.nombre || sessionToEdit.titulo || '',
-      date: sessionToEdit.date || sessionToEdit.fecha || new Date().toISOString().split('T')[0],
-      time: sessionToEdit.time || sessionToEdit.hora || '18:00',
-      duration: Number(sessionToEdit.duration || sessionToEdit.duracion) || 90,
-      category: sessionToEdit.category || sessionToEdit.categoria || 'General',
-      intensity: sessionToEdit.intensity || sessionToEdit.intensidad || 'Media',
-      materials: sessionToEdit.materials || sessionToEdit.material || '',
-      objectives: sessionToEdit.objectives || sessionToEdit.objetivo || '',
-      players: Array.isArray(sessionToEdit.players) ? sessionToEdit.players : (Array.isArray(sessionToEdit.convocados) ? sessionToEdit.convocados : []),
-      files: Array.isArray(sessionToEdit.files) ? sessionToEdit.files : [],
-      blocks: mappedBlocks.length > 0 ? mappedBlocks : [
-        { id: Date.now(), name: 'Calentamiento', duration: 15, type: 'Física', description: '' }
-      ],
-      linkedPizarraId: sessionToEdit.linkedPizarraId || '',
-    });
-
-    // Cerrar el modal de detalle y cambiar inmediatamente a modo edición
-    setSelectedSession(null);
-    setViewMode('edit');
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+      setEditData(cleanEditData);
+      setSelectedSession(null);
+      setViewMode('edit');
+      setTimeout(() => {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }, 50);
+    } catch (err) {
+      console.error('[handleEditSession] Error crítico:', err);
+      showToast('Error al abrir el formulario de edición', 'error');
+    }
   };
 
   const handleDeleteSession = async (id) => {
@@ -1388,7 +1406,14 @@ const Sesiones = () => {
                       📥 ICS
                     </button>
                   </div>
-                  <button className="btn-outline-gold full-width" style={{marginBottom: '10px'}} onClick={() => handleEditSession(selectedSession)}>✏️ Editar Sesión</button>
+                  <button 
+                    type="button"
+                    className="btn-outline-gold full-width" 
+                    style={{ marginBottom: '10px', minHeight: '44px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', fontWeight: 'bold' }} 
+                    onClick={(e) => handleEditSession(selectedSession, e)}
+                  >
+                    ✏️ Editar Sesión
+                  </button>
                   <button className="btn-text-error full-width" onClick={() => handleDeleteSession(selectedSession.id)}>Eliminar Sesión</button>
                 </div>
               </div>

@@ -646,7 +646,58 @@ const drawSectionHeader = (doc, y, title, pageW) => {
 };
 
 /**
- * SESIONES - Ficha individual profesional con capturas de pizarra
+ * Pre-carga y convierte todas las imágenes de los bloques de la sesión a Base64 dataURL (PNG nativo).
+ * Esto evita bloqueos de CORS y garantiza que jsPDF inserte las imágenes de las pizarras tácticas.
+ */
+export const preloadSessionImages = async (session, pizarras = [], captures = []) => {
+  const blocks = session.blocks || session.bloques || [];
+  
+  const updatedBlocks = await Promise.all(
+    blocks.map(async (b, bi) => {
+      let rawImg = b.imageUrl || b.imagenProtocolo || b.image || b.photo || b.previewUrl || b.canvasData || b.boardCapture || b.pizarraUrl;
+      
+      // Buscar en capturas vinculadas si no tiene imagen directa
+      if (!rawImg && Array.isArray(captures) && captures.length > 0) {
+        const matchedCap = captures.find(c =>
+          (c.sessionId === session.id && (c.blockId === b.id || c.blockIndex === bi)) ||
+          (c.title && b.name && c.title.toLowerCase().trim() === b.name.toLowerCase().trim())
+        );
+        if (matchedCap) {
+          rawImg = matchedCap.dataUrl || matchedCap.url || matchedCap.imageUrl || matchedCap.thumbnail || matchedCap.imageData;
+        }
+      }
+
+      // Buscar en la pizarra vinculada a la sesión
+      if (!rawImg && session.linkedPizarraId && Array.isArray(pizarras)) {
+        const linkedPiz = pizarras.find(p => p.id === session.linkedPizarraId);
+        if (linkedPiz && linkedPiz.thumbnail) {
+          rawImg = linkedPiz.thumbnail;
+        }
+      }
+
+      let base64 = null;
+      if (rawImg) {
+        base64 = await imageUrlToBase64(rawImg, b.name || `Bloque ${bi + 1}`, false);
+      }
+
+      return {
+        ...b,
+        imageUrl: base64 || rawImg || null,
+        imagenProtocolo: base64 || rawImg || null,
+        resolvedBase64: base64 || null,
+        hadImageSource: Boolean(rawImg)
+      };
+    })
+  );
+
+  return {
+    ...session,
+    blocks: updatedBlocks
+  };
+};
+
+/**
+ * Exporta la Ficha Técnica Completa de la Sesión a PDF usando jsPDF nativo y layout profesional
  * @param {Object} session - Sesión a exportar
  * @param {Object} activeTeam - Equipo activo
  * @param {Array} pizarras - Ejercicios tipo pizarra
@@ -696,40 +747,23 @@ export const generateSessionPDF = async (session, activeTeam = null, pizarras = 
 
     let currentY = meta2Y + 34;
 
-    // ─── PRECARGA PARALELA Y ASÍNCRONA DE IMÁGENES ────────────────────────────
-    let sessionDiagram = null;
-    const blocks = session.blocks || session.bloques || [];
+    // ─── PRECARGA EXHAUSTIVA DE IMÁGENES ──────────────────────────────────────
+    const preloadedSession = await preloadSessionImages(session, pizarras, captures);
+    const blocks = preloadedSession.blocks || [];
 
+    let sessionDiagramBase64 = null;
     if (session.linkedPizarraId) {
       const found = (pizarras || []).find(p => p.id === session.linkedPizarraId);
       if (found && found.thumbnail) {
-        sessionDiagram = found.thumbnail;
+        sessionDiagramBase64 = await imageUrlToBase64(found.thumbnail, 'Diagrama Principal', false);
       }
     }
-    if (!sessionDiagram) {
-      const firstWithImg = blocks.find(b => b.imageUrl || b.imagenProtocolo || b.image || b.photo || b.previewUrl);
+    if (!sessionDiagramBase64) {
+      const firstWithImg = blocks.find(b => b.resolvedBase64);
       if (firstWithImg) {
-        sessionDiagram = firstWithImg.imageUrl || firstWithImg.imagenProtocolo || firstWithImg.image || firstWithImg.photo || firstWithImg.previewUrl;
+        sessionDiagramBase64 = firstWithImg.resolvedBase64;
       }
     }
-
-    // Pre-cargar en paralelo todas las imágenes para máxima velocidad (evita demoras en descarga)
-    const [sessionDiagramBase64, ...resolvedBlockImages] = await Promise.all([
-      sessionDiagram ? getImageBase64(sessionDiagram, 'Diagrama Principal', false) : Promise.resolve(null),
-      ...blocks.map(async (b, bi) => {
-        let blockImgSrc = b.imageUrl || b.imagenProtocolo || b.image || b.photo || b.previewUrl;
-        if (!blockImgSrc && captures && captures.length > 0) {
-          const matchedCap = captures.find(c =>
-            (c.sessionId === session.id && (c.blockId === b.id || c.blockIndex === bi)) ||
-            (c.title && b.name && c.title.toLowerCase().trim() === b.name.toLowerCase().trim())
-          );
-          if (matchedCap) {
-            blockImgSrc = matchedCap.dataUrl || matchedCap.url || matchedCap.imageUrl || matchedCap.thumbnail || matchedCap.imageData;
-          }
-        }
-        return blockImgSrc ? await getImageBase64(blockImgSrc, b.name || `Bloque ${bi + 1}`, false) : null;
-      })
-    ]);
 
     // ─── DIAGRAMA TÁCTICO PRINCIPAL ───────────────────────────────────────────
     if (sessionDiagramBase64) {
@@ -765,8 +799,9 @@ export const generateSessionPDF = async (session, activeTeam = null, pizarras = 
 
       for (let bi = 0; bi < blocks.length; bi++) {
         const b = blocks[bi];
-        const imgBase64 = resolvedBlockImages[bi];
+        const imgBase64 = b.resolvedBase64;
         const hasImg = Boolean(imgBase64);
+        const hadSource = Boolean(b.hadImageSource);
 
         const rawDesc = b.description || b.descripcion || 'Sin descripción';
         // Texto a todo el ancho (100% de la tarjeta)
@@ -774,11 +809,12 @@ export const generateSessionPDF = async (session, activeTeam = null, pizarras = 
         const descLines = doc.splitTextToSize(rawDesc, textMaxW);
         const textH = descLines.length * 4.6;
 
-        const imgW = hasImg ? 124 : 0;
-        const imgH = hasImg ? 64 : 0;
+        const renderImg = hasImg || hadSource;
+        const imgW = renderImg ? 124 : 0;
+        const imgH = renderImg ? 64 : 0;
         
         // Calcular altura total del bloque (Header + Texto + Imagen centrada debajo)
-        const totalBlockH = hasImg ? (16 + textH + imgH + 10) : (16 + textH + 6);
+        const totalBlockH = renderImg ? (16 + textH + imgH + 10) : (16 + textH + 6);
 
         // Control estricto de salto de página (Evita cortar el bloque o la imagen a la mitad)
         if (currentY + totalBlockH > pageH - 20) {
@@ -805,11 +841,11 @@ export const generateSessionPDF = async (session, activeTeam = null, pizarras = 
         doc.setTextColor(...THEME_COLOR);
         doc.setFontSize(10.5);
         doc.setFont(undefined, 'bold');
-        doc.text(b.name || b.titulo || `Bloque ${bi + 1}`, 30, currentY + 8.5);
+        doc.text(b.name || b.nombre || b.titulo || `Bloque ${bi + 1}`, 30, currentY + 8.5);
 
         // Etiquetas (Tipo y Duración)
         const typeTag = b.type || b.tipo || 'General';
-        const durTag = `${b.duration || b.tiempo || 0} min`;
+        const durTag = `${b.duration || b.duracion || b.tiempo || 0} min`;
         doc.setFontSize(8);
         doc.setFont(undefined, 'normal');
         doc.setTextColor(80, 100, 90);

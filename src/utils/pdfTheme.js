@@ -72,19 +72,44 @@ export const imageUrlToBase64 = async (url, fallbackInitials = 'M11', isAvatar =
     return isAvatar ? generateInitialsAvatar(fallbackInitials) : null;
   }
 
-  // 1. Si la URL ya es una cadena DataURL (data:image/...) se devuelve directamente
-  if (typeof url === 'string' && url.startsWith('data:image')) {
-    return url;
+  // 1. Si la URL ya es una cadena DataURL (data:...)
+  if (typeof url === 'string' && url.startsWith('data:')) {
+    if (url.startsWith('data:image/png') || url.startsWith('data:image/jpeg') || url.startsWith('data:image/jpg')) {
+      return url;
+    }
+    // Convertir WebP / SVG u otros data URLs a PNG nativo mediante Canvas para asegurar compatibilidad con jsPDF
+    try {
+      const convertedPng = await new Promise((resolve) => {
+        const img = new Image();
+        img.onload = () => {
+          try {
+            const canvas = document.createElement('canvas');
+            canvas.width = img.naturalWidth || img.width || 400;
+            canvas.height = img.naturalHeight || img.height || 220;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0);
+            resolve(canvas.toDataURL('image/png'));
+          } catch (e) {
+            resolve(url);
+          }
+        };
+        img.onerror = () => resolve(url);
+        img.src = url;
+      });
+      if (convertedPng) return convertedPng;
+    } catch (e) {
+      return url;
+    }
   }
 
   // Helper: promise que se resuelve en null tras N ms (evita cuelgues indefinidos)
-  const withTimeout = (promise, ms = 2500) =>
+  const withTimeout = (promise, ms = 3000) =>
     Promise.race([promise, new Promise((resolve) => setTimeout(() => resolve(null), ms))]);
 
   // 2. Si es una URL remota HTTP / HTTPS o gs://
   if (typeof url === 'string' && (url.startsWith('http') || url.startsWith('gs://'))) {
 
-    // A. Firebase Storage SDK getBlob — más fiable, no tiene CORS; timeout 2.5s
+    // A. Firebase Storage SDK getBlob
     if (url.includes('firebasestorage') || url.startsWith('gs://')) {
       try {
         const base64 = await withTimeout(
@@ -98,10 +123,9 @@ export const imageUrlToBase64 = async (url, fallbackInitials = 'M11', isAvatar =
               reader.readAsDataURL(blob);
             });
           })(),
-          2500
+          3000
         );
         if (base64) {
-          console.log('[pdfTheme] ✅ Imagen descargada via getBlob SDK');
           return base64;
         }
       } catch (sdkErr) {
@@ -109,7 +133,7 @@ export const imageUrlToBase64 = async (url, fallbackInitials = 'M11', isAvatar =
       }
     }
 
-    // B. fetch blob con nocache — timeout 2.5s
+    // B. fetch blob con nocache
     try {
       const cleanUrl = url.includes('firebasestorage')
         ? (url.includes('?') ? `${url}&nocache=${Date.now()}` : `${url}?nocache=${Date.now()}`)
@@ -126,14 +150,14 @@ export const imageUrlToBase64 = async (url, fallbackInitials = 'M11', isAvatar =
             reader.readAsDataURL(blob);
           });
         })(),
-        2500
+        3000
       );
       if (base64) return base64;
     } catch (e) {
       console.warn('[pdfTheme] fetch blob falló:', e);
     }
 
-    // C. Image element + Canvas — timeout 2.5s
+    // C. Image element + Canvas
     try {
       const pngBase64 = await withTimeout(
         new Promise((resolve) => {
@@ -142,8 +166,8 @@ export const imageUrlToBase64 = async (url, fallbackInitials = 'M11', isAvatar =
           img.onload = () => {
             try {
               const canvas = document.createElement('canvas');
-              canvas.width = img.naturalWidth || img.width || 300;
-              canvas.height = img.naturalHeight || img.height || 300;
+              canvas.width = img.naturalWidth || img.width || 400;
+              canvas.height = img.naturalHeight || img.height || 220;
               const ctx = canvas.getContext('2d');
               ctx.drawImage(img, 0, 0);
               resolve(canvas.toDataURL('image/png'));
@@ -152,7 +176,7 @@ export const imageUrlToBase64 = async (url, fallbackInitials = 'M11', isAvatar =
           img.onerror = () => resolve(null);
           img.src = url;
         }),
-        2500
+        3000
       );
       if (pngBase64) return pngBase64;
     } catch (e) {

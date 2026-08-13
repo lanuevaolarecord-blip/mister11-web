@@ -199,16 +199,14 @@ const Sesiones = () => {
       setImportModal(prev => ({ ...prev, error: 'Por favor, introduce un enlace o código de compartir válido.' }));
       return;
     }
-    const shareIdMatch = queryVal.match(/m11_ses_[a-zA-Z0-9_]+/);
-    const targetId = shareIdMatch ? shareIdMatch[0] : queryVal;
 
     try {
       setImportModal(prev => ({ ...prev, loading: true, error: '', previewSession: null }));
-      const data = await getSharedSession(targetId);
+      const data = await getSharedSession(queryVal);
       if (data) {
         setImportModal(prev => ({ ...prev, loading: false, previewSession: data }));
       } else {
-        setImportModal(prev => ({ ...prev, loading: false, error: 'No se encontró la sesión compartida. Verifica el enlace.' }));
+        setImportModal(prev => ({ ...prev, loading: false, error: 'No se encontró la sesión compartida. Verifica el enlace o código.' }));
       }
     } catch (err) {
       setImportModal(prev => ({ ...prev, loading: false, error: 'Error al consultar la sesión compartida.' }));
@@ -446,7 +444,7 @@ const Sesiones = () => {
   const handleEditSession = (sessionToEdit) => {
     if (!sessionToEdit) return;
 
-    // Mapeo completo de todos los atributos de la sesión para precargar el editor
+    // Mapeo completo de todos los atributos de la sesión para precargar el editor sin sobreescrituras desestructuradas
     const mappedBlocks = (sessionToEdit.blocks || sessionToEdit.bloques || []).map((b, idx) => ({
       id: b.id || `block_${idx}_${Date.now()}`,
       name: b.name || b.nombre || b.titulo || `Bloque ${idx + 1}`,
@@ -469,14 +467,16 @@ const Sesiones = () => {
       objectives: sessionToEdit.objectives || sessionToEdit.objetivo || '',
       players: Array.isArray(sessionToEdit.players) ? sessionToEdit.players : (Array.isArray(sessionToEdit.convocados) ? sessionToEdit.convocados : []),
       files: Array.isArray(sessionToEdit.files) ? sessionToEdit.files : [],
-      blocks: mappedBlocks,
+      blocks: mappedBlocks.length > 0 ? mappedBlocks : [
+        { id: Date.now(), name: 'Calentamiento', duration: 15, type: 'Física', description: '' }
+      ],
       linkedPizarraId: sessionToEdit.linkedPizarraId || '',
-      ...sessionToEdit 
     });
 
-    // Cerrar el modal de detalle para que la vista de edición sea visible de inmediato
+    // Cerrar el modal de detalle y cambiar inmediatamente a modo edición
     setSelectedSession(null);
     setViewMode('edit');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handleDeleteSession = async (id) => {

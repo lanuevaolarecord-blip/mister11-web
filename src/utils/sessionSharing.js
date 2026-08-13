@@ -59,12 +59,29 @@ export const shareSessionToFirestore = async (session, user, team) => {
 /**
  * Obtiene los datos de una sesión compartida desde Firestore.
  */
-export const getSharedSession = async (shareId) => {
+export const getSharedSession = async (rawInput) => {
+  if (!rawInput) return null;
+  let shareId = String(rawInput).trim();
+
+  // Sanitizar si el usuario pega una URL completa web o deep link
+  if (shareId.includes('/shared/session/')) {
+    shareId = shareId.split('/shared/session/').pop().split('?')[0].split('#')[0];
+  } else if (shareId.includes('importShareId=')) {
+    shareId = shareId.split('importShareId=').pop().split('&')[0].split('#')[0];
+  } else if (shareId.includes('/')) {
+    shareId = shareId.split('/').pop().split('?')[0].split('#')[0];
+  }
+  shareId = shareId.trim();
   if (!shareId) return null;
-  const shareRef = doc(db, 'sharedSessions', shareId);
-  const snap = await getDoc(shareRef);
-  if (snap.exists()) {
-    return { id: snap.id, ...snap.data() };
+
+  try {
+    const shareRef = doc(db, 'sharedSessions', shareId);
+    const snap = await getDoc(shareRef);
+    if (snap.exists()) {
+      return { id: snap.id, ...snap.data() };
+    }
+  } catch (err) {
+    console.warn('[getSharedSession] Error consultando Firestore:', err);
   }
   return null;
 };

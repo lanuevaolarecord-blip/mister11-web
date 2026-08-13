@@ -72,26 +72,8 @@ export const imageUrlToBase64 = async (url, fallbackInitials = 'M11', isAvatar =
     return isAvatar ? generateInitialsAvatar(fallbackInitials) : null;
   }
 
-  // 1. Si la URL ya es una cadena DataURL (data:image/...)
+  // 1. Si la URL ya es una cadena DataURL (data:image/...) se devuelve directamente
   if (typeof url === 'string' && url.startsWith('data:image')) {
-    try {
-      const pngBase64 = await new Promise((resolve) => {
-        const img = new Image();
-        img.onload = () => {
-          try {
-            const canvas = document.createElement('canvas');
-            canvas.width = img.naturalWidth || img.width || 300;
-            canvas.height = img.naturalHeight || img.height || 300;
-            const ctx = canvas.getContext('2d');
-            ctx.drawImage(img, 0, 0);
-            resolve(canvas.toDataURL('image/png'));
-          } catch (e) { resolve(null); }
-        };
-        img.onerror = () => resolve(null);
-        img.src = url;
-      });
-      if (pngBase64) return pngBase64;
-    } catch (e) {}
     return url;
   }
 

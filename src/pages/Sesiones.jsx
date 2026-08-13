@@ -444,16 +444,19 @@ const Sesiones = () => {
   const handleEditSession = (sessionToEdit) => {
     if (!sessionToEdit) return;
 
-    // Mapeo completo de todos los atributos de la sesión para precargar el editor sin sobreescrituras desestructuradas
-    const mappedBlocks = (sessionToEdit.blocks || sessionToEdit.bloques || []).map((b, idx) => ({
-      id: b.id || `block_${idx}_${Date.now()}`,
-      name: b.name || b.nombre || b.titulo || `Bloque ${idx + 1}`,
-      duration: Number(b.duration || b.duracion || b.tiempo) || 15,
-      type: b.type || b.tipo || 'Táctica',
-      description: b.description || b.descripcion || '',
-      imageUrl: b.imageUrl || b.imagenProtocolo || b.image || b.photo || b.previewUrl || null,
-      imagenProtocolo: b.imageUrl || b.imagenProtocolo || b.image || b.photo || b.previewUrl || null,
-    }));
+    // Mapeo completo de todos los atributos de la sesión para precargar el editor
+    const mappedBlocks = (sessionToEdit.blocks || sessionToEdit.bloques || []).map((b, idx) => {
+      const blockImg = b.imageUrl || b.imagenProtocolo || b.image || b.photo || b.previewUrl || b.canvasData || null;
+      return {
+        id: b.id || `block_${idx}_${Date.now()}`,
+        name: b.name || b.nombre || b.titulo || `Bloque ${idx + 1}`,
+        duration: Number(b.duration || b.duracion || b.tiempo) || 15,
+        type: b.type || b.tipo || 'Táctica',
+        description: b.description || b.descripcion || '',
+        imageUrl: blockImg,
+        imagenProtocolo: blockImg,
+      };
+    });
 
     setEditData({ 
       id: sessionToEdit.id,
@@ -1159,6 +1162,14 @@ const Sesiones = () => {
                       <span style={{ fontSize: '13px', color: 'var(--text-secondary)', fontWeight: 'bold' }}>{duration} min</span>
                     </div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <button
+                        type="button"
+                        onClick={(e) => { e.stopPropagation(); handleEditSession(session); }}
+                        style={{ background: 'rgba(255, 255, 255, 0.08)', border: '1px solid var(--border-light)', color: 'var(--text-primary)', padding: '4px 10px', borderRadius: '12px', fontSize: '12px', fontWeight: 'bold', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px' }}
+                        title="Editar esta sesión"
+                      >
+                        ✏️ Editar
+                      </button>
                       <button
                         type="button"
                         onClick={(e) => { e.stopPropagation(); handleShareSession(session); }}

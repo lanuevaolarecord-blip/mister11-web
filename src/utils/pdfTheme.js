@@ -67,135 +67,146 @@ const generateInitialsAvatar = (fallbackInitials) => {
  * @param {string} fallbackInitials - Iniciales para el avatar de fallback si falla la imagen
  * @param {boolean} isAvatar - Si es true, genera un avatar con iniciales si falla. Si es false (diagramas/capturas), devuelve null.
  */
+// Helper: convierte cualquier Blob a DataURL
+const blobToDataURL = (blob) => {
+  return new Promise((resolve) => {
+    const reader = new FileReader();
+    reader.onloadend = () => resolve(reader.result);
+    reader.onerror = () => resolve(null);
+    reader.readAsDataURL(blob);
+  });
+};
+
+// Helper: dibuja cualquier objeto de imagen (WebP, DataURL, URL) en Canvas 2D con fondo blanco y devuelve data:image/png
+const convertImageToPngViaCanvas = (srcUrl) => {
+  return new Promise((resolve) => {
+    const img = new Image();
+    // Solo aplicar crossOrigin si la URL empieza por http o // (evitar errores de origin en DataURLs)
+    if (typeof srcUrl === 'string' && (srcUrl.startsWith('http') || srcUrl.startsWith('//'))) {
+      img.crossOrigin = 'anonymous';
+    }
+    img.onload = () => {
+      try {
+        const canvas = document.createElement('canvas');
+        const w = img.naturalWidth || img.width || 600;
+        const h = img.naturalHeight || img.height || 350;
+        canvas.width = w;
+        canvas.height = h;
+        const ctx = canvas.getContext('2d');
+        ctx.fillStyle = '#FFFFFF';
+        ctx.fillRect(0, 0, w, h);
+        ctx.drawImage(img, 0, 0, w, h);
+        const pngDataUrl = canvas.toDataURL('image/png', 1.0);
+        resolve(pngDataUrl);
+      } catch (e) {
+        console.warn('[convertImageToPngViaCanvas] Canvas error:', e);
+        resolve(null);
+      }
+    };
+    img.onerror = (err) => {
+      console.warn('[convertImageToPngViaCanvas] Image load error:', err);
+      resolve(null);
+    };
+    img.src = srcUrl;
+  });
+};
+
 export const imageUrlToBase64 = async (url, fallbackInitials = 'M11', isAvatar = false) => {
   if (!url) {
     return isAvatar ? generateInitialsAvatar(fallbackInitials) : null;
   }
 
+  // Normalizar URLs relativas (/img/..., img/..., assets/...) a URLs absolutas con origin
+  let targetUrl = url;
+  if (typeof targetUrl === 'string' && !targetUrl.startsWith('data:') && !targetUrl.startsWith('http') && !targetUrl.startsWith('gs://')) {
+    const origin = typeof window !== 'undefined' && window.location ? window.location.origin : 'https://www.mister11.app';
+    const cleanPath = targetUrl.startsWith('/') ? targetUrl : `/${targetUrl}`;
+    targetUrl = `${origin}${cleanPath}`;
+  }
+
   // 1. Si la URL ya es una cadena DataURL (data:...)
-  if (typeof url === 'string' && url.startsWith('data:')) {
-    if (url.startsWith('data:image/png') || url.startsWith('data:image/jpeg') || url.startsWith('data:image/jpg')) {
-      return url;
+  if (typeof targetUrl === 'string' && targetUrl.startsWith('data:')) {
+    if (targetUrl.startsWith('data:image/png') || targetUrl.startsWith('data:image/jpeg') || targetUrl.startsWith('data:image/jpg')) {
+      return targetUrl;
     }
-    // Convertir WebP / SVG u otros data URLs a PNG nativo mediante Canvas para asegurar compatibilidad con jsPDF
+    // Si es WebP, SVG u otro formato DataURL, convertir a PNG mediante Canvas 2D
     try {
-      const convertedPng = await new Promise((resolve) => {
-        const img = new Image();
-        img.crossOrigin = 'anonymous';
-        img.onload = () => {
-          try {
-            const canvas = document.createElement('canvas');
-            canvas.width = img.naturalWidth || img.width || 600;
-            canvas.height = img.naturalHeight || img.height || 350;
-            const ctx = canvas.getContext('2d');
-            ctx.fillStyle = '#FFFFFF';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-            resolve(canvas.toDataURL('image/png', 1.0));
-          } catch (e) {
-            resolve(url);
-          }
-        };
-        img.onerror = () => resolve(url);
-        img.src = url;
-      });
-      if (convertedPng) return convertedPng;
+      const convertedPng = await convertImageToPngViaCanvas(targetUrl);
+      if (convertedPng && convertedPng.startsWith('data:image/png')) {
+        return convertedPng;
+      }
     } catch (e) {
-      return url;
+      console.warn('[imageUrlToBase64] Error convirtiendo DataURL WebP/SVG:', e);
     }
   }
 
-  // Helper: promise que se resuelve en null tras N ms (evita cuelgues indefinidos)
+  // Timeout helper (7000ms)
   const withTimeout = (promise, ms = 7000) =>
     Promise.race([promise, new Promise((resolve) => setTimeout(() => resolve(null), ms))]);
 
-  // 2. Si es una URL remota HTTP / HTTPS o gs://
-  if (typeof url === 'string' && (url.startsWith('http') || url.startsWith('gs://'))) {
+  // 2. Si es una URL remota HTTP / HTTPS / gs://
+  if (typeof targetUrl === 'string' && (targetUrl.startsWith('http') || targetUrl.startsWith('gs://'))) {
 
     // A. Firebase Storage SDK getBlob
-    if (url.includes('firebasestorage') || url.startsWith('gs://')) {
+    if (targetUrl.includes('firebasestorage') || targetUrl.startsWith('gs://')) {
       try {
         const base64 = await withTimeout(
           (async () => {
-            let fileRef;
-            if (url.startsWith('gs://')) {
-              fileRef = storageRef(storage, url);
+            let fileRef = null;
+            if (targetUrl.startsWith('gs://')) {
+              fileRef = storageRef(storage, targetUrl);
             } else {
-              try { fileRef = storageRef(storage, url); } catch (e) { fileRef = null; }
+              try { fileRef = storageRef(storage, targetUrl); } catch (e) { fileRef = null; }
             }
             if (!fileRef) return null;
             const blob = await getBlob(fileRef);
-            return await new Promise((resolve) => {
-              const reader = new FileReader();
-              reader.onloadend = () => resolve(reader.result);
-              reader.onerror = () => resolve(null);
-              reader.readAsDataURL(blob);
-            });
+            return await blobToDataURL(blob);
           })(),
           7000
         );
         if (base64) {
+          if (base64.startsWith('data:image/webp')) {
+            const png = await convertImageToPngViaCanvas(base64);
+            return png || base64;
+          }
           return base64;
         }
       } catch (sdkErr) {
-        console.warn('[pdfTheme] getBlob falló:', sdkErr);
+        console.warn('[pdfTheme] Firebase Storage getBlob falló:', sdkErr);
       }
     }
 
-    // B. fetch blob con nocache
+    // B. Direct Fetch con Blob -> DataURL
     try {
-      const cleanUrl = url.includes('firebasestorage')
-        ? (url.includes('?') ? `${url}&nocache=${Date.now()}` : `${url}?nocache=${Date.now()}`)
-        : url;
       const base64 = await withTimeout(
         (async () => {
-          const res = await fetch(cleanUrl, { mode: 'cors' });
+          const res = await fetch(targetUrl, { mode: 'cors', cache: 'force-cache' });
           if (!res.ok) return null;
           const blob = await res.blob();
-          return await new Promise((resolve) => {
-            const reader = new FileReader();
-            reader.onloadend = () => resolve(reader.result);
-            reader.onerror = () => resolve(null);
-            reader.readAsDataURL(blob);
-          });
+          return await blobToDataURL(blob);
         })(),
         7000
       );
-      if (base64) return base64;
+      if (base64) {
+        if (base64.startsWith('data:image/webp')) {
+          const png = await convertImageToPngViaCanvas(base64);
+          return png || base64;
+        }
+        return base64;
+      }
     } catch (e) {
       console.warn('[pdfTheme] fetch blob falló:', e);
     }
 
-    // C. Image element + Canvas
+    // C. Carga en elemento Image + Canvas con crossOrigin='anonymous'
     try {
-      const pngBase64 = await withTimeout(
-        new Promise((resolve) => {
-          const img = new Image();
-          img.crossOrigin = 'anonymous';
-          img.onload = () => {
-            try {
-              const canvas = document.createElement('canvas');
-              canvas.width = img.naturalWidth || img.width || 600;
-              canvas.height = img.naturalHeight || img.height || 350;
-              const ctx = canvas.getContext('2d');
-              ctx.fillStyle = '#FFFFFF';
-              ctx.fillRect(0, 0, canvas.width, canvas.height);
-              ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-              resolve(canvas.toDataURL('image/png', 1.0));
-            } catch (e) { resolve(null); }
-          };
-          img.onerror = () => resolve(null);
-          img.src = url;
-        }),
-        7000
-      );
+      const pngBase64 = await withTimeout(convertImageToPngViaCanvas(targetUrl), 7000);
       if (pngBase64) return pngBase64;
     } catch (e) {
       console.warn('[pdfTheme] Image/Canvas falló:', e);
     }
   }
 
-  // 3. Fallback avatar con iniciales solo para avatares de jugador
   if (isAvatar) {
     return generateInitialsAvatar(fallbackInitials);
   }

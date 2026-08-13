@@ -649,13 +649,28 @@ const drawSectionHeader = (doc, y, title, pageW) => {
  * Pre-carga y convierte todas las imágenes de los bloques de la sesión a Base64 dataURL (PNG nativo).
  * Esto evita bloqueos de CORS y garantiza que jsPDF inserte las imágenes de las pizarras tácticas.
  */
-export const preloadSessionImages = async (session, pizarras = [], captures = []) => {
+export const preloadSessionImages = async (session, pizarras = [], captures = [], exercises = []) => {
   const blocks = session.blocks || session.bloques || [];
   
   const updatedBlocks = await Promise.all(
     blocks.map(async (b, bi) => {
       let rawImg = b.imageUrl || b.imagenProtocolo || b.image || b.photo || b.previewUrl || b.canvasData || b.boardCapture || b.pizarraUrl;
       
+      // Buscar en pizarras / ejercicios por id o coincidencia de título
+      if (!rawImg) {
+        const pool = [...(pizarras || []), ...(exercises || [])];
+        const matchedEx = pool.find(e =>
+          (b.exerciseId && e.id === b.exerciseId) ||
+          (b.pizarraId && e.id === b.pizarraId) ||
+          (e.id === b.id) ||
+          (e.title && b.name && e.title.toLowerCase().trim() === b.name.toLowerCase().trim()) ||
+          (e.nombre && b.name && e.nombre.toLowerCase().trim() === b.name.toLowerCase().trim())
+        );
+        if (matchedEx) {
+          rawImg = matchedEx.imageUrl || matchedEx.imagenProtocolo || matchedEx.thumbnail || matchedEx.image || matchedEx.previewUrl || matchedEx.dataUrl;
+        }
+      }
+
       // Buscar en capturas vinculadas si no tiene imagen directa
       if (!rawImg && Array.isArray(captures) && captures.length > 0) {
         const matchedCap = captures.find(c =>
@@ -682,9 +697,9 @@ export const preloadSessionImages = async (session, pizarras = [], captures = []
 
       return {
         ...b,
-        imageUrl: base64 || rawImg || null,
-        imagenProtocolo: base64 || rawImg || null,
-        resolvedBase64: base64 || null,
+        imageUrl: base64 || (typeof rawImg === 'string' ? rawImg : null),
+        imagenProtocolo: base64 || (typeof rawImg === 'string' ? rawImg : null),
+        resolvedBase64: base64 || (typeof rawImg === 'string' ? rawImg : null),
         hadImageSource: Boolean(rawImg)
       };
     })
@@ -704,7 +719,7 @@ export const preloadSessionImages = async (session, pizarras = [], captures = []
  * @param {Array} captures - Capturas de la pizarra táctica
  * @param {Array} players - Lista de jugadores del equipo
  */
-export const generateSessionPDF = async (session, activeTeam = null, pizarras = [], captures = [], players = []) => {
+export const generateSessionPDF = async (session, activeTeam = null, pizarras = [], captures = [], players = [], exercises = []) => {
   window.dispatchEvent(new CustomEvent('m11-loading', { detail: { show: true, message: 'Generando PDF de Sesión...' } }));
   await new Promise(r => setTimeout(r, 150));
   try {
@@ -748,7 +763,7 @@ export const generateSessionPDF = async (session, activeTeam = null, pizarras = 
     let currentY = meta2Y + 34;
 
     // ─── PRECARGA EXHAUSTIVA DE IMÁGENES ──────────────────────────────────────
-    const preloadedSession = await preloadSessionImages(session, pizarras, captures);
+    const preloadedSession = await preloadSessionImages(session, pizarras, captures, exercises);
     const blocks = preloadedSession.blocks || [];
 
     let sessionDiagramBase64 = null;

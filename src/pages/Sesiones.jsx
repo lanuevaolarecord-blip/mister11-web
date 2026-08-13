@@ -1393,7 +1393,7 @@ const Sesiones = () => {
                       setIsGeneratingPDF(true);
                       setTimeout(async () => {
                         try {
-                          await generateSessionPDF(selectedSession, activeTeam, pizarras, captures, players);
+                          await generateSessionPDF(selectedSession, activeTeam, pizarras, captures, players, exercises);
                         } catch(err) {
                           console.error(err);
                           await showAlert("Error", "Error al generar el PDF");

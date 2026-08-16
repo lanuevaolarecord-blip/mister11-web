@@ -39,7 +39,8 @@ import { showToast } from '../utils/toast';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { useTeamMembers } from '../hooks/useTeamMembers';
-import { storage, db } from '../firebaseConfig';
+import { storage, db, auth } from '../firebaseConfig';
+import { updateProfile } from 'firebase/auth';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { collection, getDocs, doc, getDoc, setDoc, updateDoc, serverTimestamp, arrayUnion, onSnapshot } from 'firebase/firestore';
 import { getFunctions, httpsCallable } from 'firebase/functions';
@@ -225,19 +226,23 @@ const AdminPanel = () => {
   const [prefData, setPrefData] = useState({ notifications: true, language: 'Español (ES)' });
   const { deferredPrompt, isInstalled, installApp } = usePWA();
 
-  // Sync state when settings load
+  // Sync state when settings or user/team load
   useEffect(() => {
+    const currentName = userProfile?.displayName || user?.displayName || settings?.profileName || '';
+    const currentRoleLabel = permissions?.roleInfo?.label || settings?.specialty || 'Primer Entrenador';
+    
+    setProfileData({ 
+      profileName: currentName, 
+      specialty: currentRoleLabel 
+    });
+    
     if (settings) {
-      setProfileData({ 
-        profileName: settings.profileName || '', 
-        specialty: settings.specialty || 'Primer Entrenador' 
-      });
       setPrefData({ 
         notifications: settings.notifications ?? true, 
         language: settings.language || 'Español (ES)' 
       });
     }
-  }, [settings]);
+  }, [settings, user, userProfile, permissions?.roleInfo?.label]);
 
   // Cargar tests y evaluaciones del equipo activo
   useEffect(() => {
@@ -338,18 +343,54 @@ const AdminPanel = () => {
   const handleSaveProfile = async () => {
     try {
       await saveSettings({ ...settings, ...profileData });
-      if (profileData.specialty && switchMyRole && STAFF_ROLES) {
-        const matched = Object.values(STAFF_ROLES).find(
-          r => r.label.toLowerCase() === profileData.specialty.toLowerCase() || 
-               r.id.toLowerCase() === profileData.specialty.toLowerCase() ||
-               r.aliases?.includes(profileData.specialty.toLowerCase())
-        );
-        if (matched) {
-          await switchMyRole(matched.id);
+      
+      const matched = Object.values(STAFF_ROLES || {}).find(
+        r => r.label.toLowerCase() === (profileData.specialty || '').toLowerCase() || 
+             r.id.toLowerCase() === (profileData.specialty || '').toLowerCase() ||
+             r.aliases?.includes((profileData.specialty || '').toLowerCase())
+      );
+      const roleId = matched ? matched.id : 'admin';
+
+      if (user?.uid) {
+        // 1. Actualizar Auth Profile si hay cambio de nombre
+        if (auth?.currentUser && profileData.profileName) {
+          try {
+            await updateProfile(auth.currentUser, { displayName: profileData.profileName });
+          } catch (_) {}
+        }
+
+        // 2. Actualizar Documento users/{userId}
+        try {
+          await setDoc(doc(db, 'users', user.uid), {
+            displayName: profileData.profileName,
+            nombre: profileData.profileName,
+            specialty: profileData.specialty,
+            role: roleId,
+            updatedAt: serverTimestamp()
+          }, { merge: true });
+        } catch (_) {}
+
+        // 3. Sincronizar en el equipo activo (members subcolección y array)
+        if (activeTeam?.id) {
+          const teamPath = getTeamPath(activeTeam.id);
+          try {
+            await setDoc(doc(db, `${teamPath}/members`, user.uid), {
+              uid: user.uid,
+              displayName: profileData.profileName,
+              email: user.email,
+              role: roleId,
+              updatedAt: serverTimestamp()
+            }, { merge: true });
+          } catch (_) {}
         }
       }
-      showToast("Perfil guardado y rol sincronizado.", "success");
+
+      if (switchMyRole && roleId) {
+        await switchMyRole(roleId);
+      }
+      showToast("Perfil de entrenador sincronizado en todo el sistema.", "success");
     } catch (e) {
+      console.error('[AdminPanel] Error al guardar perfil:', e);
       showToast("Error al guardar perfil.", "error");
     }
   };

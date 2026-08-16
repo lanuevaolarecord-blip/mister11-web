@@ -99,11 +99,11 @@ const TrashIcon = () => (
 );
 
 const Partidos = () => {
-  const { activeTeamId } = useAuth();
-  const { matches, loading: loadingMatches, addMatch, updateMatch, removeMatch } = useMatches(activeTeamId);
-  const { players, loading: loadingPlayers } = usePlayers(activeTeamId);
-  const { settings } = useSettings(activeTeamId);
   const { activeTeam } = useTeams();
+  const effectiveTeamId = activeTeam?.id || null;
+  const { matches, loading: loadingMatches, addMatch, updateMatch, removeMatch } = useMatches(effectiveTeamId);
+  const { players, loading: loadingPlayers } = usePlayers(effectiveTeamId);
+  const { settings } = useSettings(effectiveTeamId);
   const { darkMode } = useTheme();
 
   const [viewMode, setViewMode] = useState('LIST'); // 'LIST' or 'EDIT'
@@ -244,34 +244,44 @@ const Partidos = () => {
   const handleTimerAdjust = adjustTimer;
 
   const currentMinute = ctxCurrentMinute;
-  const { events: liveEvents, addLiveEvent, resetLiveStats } = useLiveStats(activeTeamId, matchData?.id || null, ctxCurrentMinute || 0, 1);
+  const { events: liveEvents, addLiveEvent, resetLiveStats } = useLiveStats(effectiveTeamId, matchData?.id || null, ctxCurrentMinute || 0, 1);
+
+  const effectiveLiveEvents = useMemo(() => {
+    if (liveEvents && liveEvents.length > 0) {
+      return liveEvents;
+    }
+    if (matchData?.liveStatsEvents && matchData.liveStatsEvents.length > 0) {
+      return matchData.liveStatsEvents;
+    }
+    if (matchData?.events && matchData.events.length > 0) {
+      return matchData.events;
+    }
+    return [];
+  }, [liveEvents, matchData?.liveStatsEvents, matchData?.events]);
 
   const handleFinishMatch = useCallback(async () => {
     if (!matchData.id) return;
     if (isTimerRunning) {
       toggleTimer();
     }
-    const updated = { ...matchData, status: 'Terminado' };
+    const updated = { 
+      ...matchData, 
+      status: 'Terminado',
+      liveStatsEvents: effectiveLiveEvents && effectiveLiveEvents.length > 0 ? effectiveLiveEvents : (matchData.liveStatsEvents || [])
+    };
     setMatchData(updated);
     try {
       await updateMatch(matchData.id, updated);
     } catch (err) {
       console.error("Error al finalizar partido:", err);
     }
-  }, [matchData, isTimerRunning, toggleTimer, updateMatch]);
+  }, [matchData, isTimerRunning, toggleTimer, updateMatch, effectiveLiveEvents]);
 
   const handleAddLiveEvent = useCallback(async (type, explicitHalf) => {
     if (addLiveEvent) {
       return await addLiveEvent(type, explicitHalf);
     }
   }, [addLiveEvent]);
-
-  const effectiveLiveEvents = useMemo(() => {
-    if (liveEvents && liveEvents.length > 0) {
-      return liveEvents;
-    }
-    return matchData?.liveStatsEvents || [];
-  }, [liveEvents, matchData?.liveStatsEvents]);
 
   const handleTriggerEvent = (type) => {
     if (type === 'gol_rival') {
@@ -689,6 +699,7 @@ const Partidos = () => {
       postMatchImages: [],
       goleadoresList: [],
       tarjetasList: [],
+      liveStatsEvents: match.liveStatsEvents || match.events || [],
       ...match
     });
     setCalledPlayers(match.convocados || []);
@@ -709,7 +720,11 @@ const Partidos = () => {
     if (!matchData.rival) return alert("El nombre del rival es obligatorio.");
     setIsSaving(true);
     try {
-      const dataToSave = { ...matchData, convocados: calledPlayers };
+      const dataToSave = { 
+        ...matchData, 
+        convocados: calledPlayers,
+        liveStatsEvents: effectiveLiveEvents && effectiveLiveEvents.length > 0 ? effectiveLiveEvents : (matchData.liveStatsEvents || [])
+      };
       if (matchData.id) await updateMatch(matchData.id, dataToSave);
       else await addMatch(dataToSave);
       setViewMode('LIST');

@@ -174,7 +174,11 @@ const LiveStats = ({
   const [showResetModal, setShowResetModal] = useState(false);
 
   const liveStatsHook = useLiveStats(teamId, matchId, currentMinute, currentHalf);
-  const events = parentEvents !== undefined ? parentEvents : liveStatsHook.events;
+  const events = (parentEvents && parentEvents.length > 0)
+    ? parentEvents
+    : ((liveStatsHook.events && liveStatsHook.events.length > 0)
+        ? liveStatsHook.events
+        : (matchData?.liveStatsEvents || matchData?.events || []));
   const addLiveEvent = parentAddLiveEvent || liveStatsHook.addLiveEvent;
   const resetLiveStats = parentResetLiveStats || liveStatsHook.resetLiveStats;
   const saving = liveStatsHook.saving;

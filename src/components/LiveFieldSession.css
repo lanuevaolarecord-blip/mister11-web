@@ -11,23 +11,22 @@
   color: #f1f5f9;
   display: flex;
   flex-direction: column;
-  overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
+  overflow: hidden; /* El contenedor modal NO scrollea; el contenido interno sí */
   font-family: var(--font-body, system-ui, -apple-system, sans-serif);
 }
 
-/* CABECERA MODO CAMPO */
+/* CABECERA MODO CAMPO (FIJA EN LA PARTE SUPERIOR) */
 .live-field-header {
+  flex-shrink: 0;
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 12px 16px;
   background-color: #122415;
   border-bottom: 1.5px solid #1b3d22;
-  position: sticky;
-  top: 0;
-  z-index: 10;
   gap: 10px;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .btn-field-back {
@@ -95,23 +94,25 @@
   color: #ef4444;
 }
 
-/* NAVEGACIÓN TÁCTIL DE BLOQUES DE ENTRENAMIENTO (HORIZONTAL SCROLL) */
+/* NAVEGACIÓN TÁCTIL DE BLOQUES (FIJA JUSTO DEBAJO DE LA CABECERA) */
 .live-blocks-nav {
+  flex-shrink: 0;
   display: flex;
   flex-direction: row;
   flex-wrap: nowrap;
-  gap: 10px;
+  align-items: center;
+  gap: 12px;
   overflow-x: auto;
   overflow-y: hidden;
   padding: 12px 16px;
   background-color: #0f1c11;
-  border-bottom: 1px solid #1a331c;
+  border-bottom: 1.5px solid #1a331c;
   -webkit-overflow-scrolling: touch;
   scrollbar-width: thin;
   scrollbar-color: var(--accent-gold, #d4a843) #0f1c11;
-  position: sticky;
-  top: 72px;
-  z-index: 9;
+  width: 100%;
+  box-sizing: border-box;
+  min-height: 72px;
 }
 
 .live-blocks-nav::-webkit-scrollbar {
@@ -128,11 +129,11 @@
 }
 
 .block-tab-btn {
-  display: flex;
+  display: inline-flex;
   flex-direction: row;
   align-items: center;
   gap: 10px;
-  padding: 10px 16px;
+  padding: 8px 16px;
   background: #142817;
   border: 1.5px solid #1e3c23;
   border-radius: 14px;
@@ -140,8 +141,9 @@
   cursor: pointer;
   white-space: nowrap;
   min-height: 48px;
+  height: 48px;
   flex-shrink: 0;
-  min-width: max-content;
+  box-sizing: border-box;
   transition: all 0.2s ease;
 }
 
@@ -149,7 +151,7 @@
   background: #1b3d22;
   border-color: var(--accent-gold, #d4a843);
   color: #ffffff;
-  box-shadow: 0 4px 12px rgba(212, 168, 67, 0.25);
+  box-shadow: 0 4px 12px rgba(212, 168, 67, 0.3);
 }
 
 .tab-num {
@@ -185,6 +187,9 @@
 /* CONTENIDO PRINCIPAL CON SCROLL VERTICAL FLUIDO */
 .live-field-content {
   flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 20px;

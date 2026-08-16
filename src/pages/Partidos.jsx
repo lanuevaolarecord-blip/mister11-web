@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
+import { useLocation } from 'react-router-dom';
 import { useMatch } from '../context/MatchContext';
 import { useMatches } from '../hooks/useMatches';
 import { usePlayers } from '../hooks/usePlayers';
@@ -99,6 +100,7 @@ const TrashIcon = () => (
 );
 
 const Partidos = () => {
+  const location = useLocation();
   const { activeTeam } = useTeams();
   const activeTeamId = activeTeam?.id || null;
   const effectiveTeamId = activeTeamId;
@@ -210,32 +212,24 @@ const Partidos = () => {
     return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
   }, []);
 
-  // Registrar el partido activo en el contexto global al abrirlo
+  // Registrar el partido activo en el contexto global al abrirlo si tiene ID
   useEffect(() => {
-    if (matchData.id) {
+    if (matchData?.id) {
       setActiveMatchId(matchData.id);
     }
-  }, [matchData.id, setActiveMatchId]);
+  }, [matchData?.id, setActiveMatchId]);
 
-  // Restaurar automáticamente el partido activo al volver al módulo Partidos desde otro módulo
+  // Manejar navegación directa a un partido si viene desde location.state
   useEffect(() => {
-    if (activeMatchIdCtx && matches && matches.length > 0 && !matchData?.id) {
-      const activeMatch = matches.find(m => m.id === activeMatchIdCtx);
-      if (activeMatch) {
-        setMatchData({
-          postMatchAnswers: { tactical: '', physical: '', improvement: '', highlights: '' },
-          postMatchImages: [],
-          goleadoresList: [],
-          tarjetasList: [],
-          ...activeMatch
-        });
-        setCalledPlayers(activeMatch.convocados || []);
-        const savedTab = localStorage.getItem(`mister11_last_edit_tab_${activeMatchIdCtx}`);
-        if (savedTab) setEditTab(savedTab);
-        setViewMode('EDIT');
+    if (location.state?.matchId && matches && matches.length > 0) {
+      const targetMatch = matches.find(m => m.id === location.state.matchId);
+      if (targetMatch) {
+        handleEditMatch(targetMatch);
       }
+    } else if (location.state?.mode === 'create') {
+      handleNewMatch();
     }
-  }, [activeMatchIdCtx, matches, matchData?.id]);
+  }, [location.state, matches]);
 
   // formatTime usa la función del contexto
   const formatTime = formatMatchTime;
@@ -669,11 +663,19 @@ const Partidos = () => {
     downloadICSFile(`calendario_partidos_${activeTeam?.nombre?.replace(/\s+/g, '_') || 'equipo'}.ics`, icsContent);
   };
 
+  const handleCancel = () => {
+    setActiveMatchId(null);
+    setMatchData({});
+    setCalledPlayers([]);
+    setViewMode('LIST');
+  };
+
   const handleNewMatch = () => {
+    setActiveMatchId(null);
     const newMatch = {
       rival: '',
-      date: '',
-      time: '',
+      date: new Date().toISOString().split('T')[0],
+      time: '18:00',
       location: '',
       type: 'Local',
       status: 'Pendiente',
@@ -683,6 +685,7 @@ const Partidos = () => {
       events: [],
       titulares: [],
       suplentes: [],
+      convocados: [],
       postMatchAnswers: { tactical: '', physical: '', improvement: '', highlights: '' },
       postMatchImages: [],
       goleadoresList: [],
@@ -695,6 +698,8 @@ const Partidos = () => {
   };
 
   const handleEditMatch = (match) => {
+    if (!match) return;
+    setActiveMatchId(match.id);
     setMatchData({
       postMatchAnswers: { tactical: '', physical: '', improvement: '', highlights: '' },
       postMatchImages: [],
@@ -704,7 +709,9 @@ const Partidos = () => {
       ...match
     });
     setCalledPlayers(match.convocados || []);
-    setEditTab('PRE-PARTIDO');
+    const savedTab = localStorage.getItem(`mister11_last_edit_tab_${match.id}`);
+    if (savedTab) setEditTab(savedTab);
+    else setEditTab('PRE-PARTIDO');
     setViewMode('EDIT');
   };
 
@@ -718,7 +725,7 @@ const Partidos = () => {
   };
 
   const handleSaveMatch = async () => {
-    if (!matchData.rival) return alert("El nombre del rival es obligatorio.");
+    if (!matchData.rival || !matchData.rival.trim()) return alert("El nombre del rival es obligatorio.");
     setIsSaving(true);
     try {
       const dataToSave = { 
@@ -726,10 +733,15 @@ const Partidos = () => {
         convocados: calledPlayers,
         liveStatsEvents: effectiveLiveEvents && effectiveLiveEvents.length > 0 ? effectiveLiveEvents : (matchData.liveStatsEvents || [])
       };
-      if (matchData.id) await updateMatch(matchData.id, dataToSave);
-      else await addMatch(dataToSave);
-      setViewMode('LIST');
+      if (matchData.id) {
+        await updateMatch(matchData.id, dataToSave);
+      } else {
+        const newId = await addMatch(dataToSave);
+        if (newId) setActiveMatchId(newId);
+      }
+      handleCancel();
     } catch (error) {
+      console.error(error);
       alert("Error al guardar el partido.");
     } finally {
       setIsSaving(false);
@@ -742,8 +754,9 @@ const Partidos = () => {
     setIsSaving(true);
     try {
       await removeMatch(matchData.id);
-      setViewMode('LIST');
+      handleCancel();
     } catch (error) {
+      console.error(error);
       alert("Error al eliminar el partido.");
     } finally {
       setIsSaving(false);
@@ -799,7 +812,7 @@ const Partidos = () => {
                     <TrashIcon /> ELIMINAR
                   </button>
                 )}
-                <button className="btn-outline-dark flex-1 md:flex-initial px-3 py-2 text-xs md:text-sm" onClick={() => setViewMode('LIST')} style={{ minHeight: '40px' }}>CANCELAR</button>
+                <button className="btn-outline-dark flex-1 md:flex-initial px-3 py-2 text-xs md:text-sm" onClick={handleCancel} style={{ minHeight: '40px' }}>CANCELAR</button>
                 <button className="btn-primary-dark flex-1 md:flex-initial px-3 py-2 text-xs md:text-sm" onClick={handleSaveMatch} disabled={isSaving} style={{ minHeight: '40px' }}>
                   {isSaving ? 'GUARDANDO...' : 'GUARDAR PARTIDO'}
                 </button>

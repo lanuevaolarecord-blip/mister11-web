@@ -29,6 +29,7 @@ const Instalar          = lazy(() => import('./pages/Instalar'));
 const SharedPlan        = lazy(() => import('./pages/SharedPlan'));
 const SharedSession     = lazy(() => import('./pages/SharedSession'));
 const AcceptInvitation  = lazy(() => import('./pages/AcceptInvitation'));
+const JoinTeam          = lazy(() => import('./pages/JoinTeam'));
 const ConsentimientoFirma = lazy(() => import('./pages/ConsentimientoFirma'));
 const ConsentForm       = lazy(() => import('./pages/ConsentForm'));
 const DemoMode          = lazy(() => import('./pages/DemoMode'));
@@ -221,6 +222,16 @@ function App() {
           <Route 
             path="/accept-invitation" 
             element={<AcceptInvitation />} 
+          />
+
+          <Route 
+            path="/join-team/:token" 
+            element={<JoinTeam />} 
+          />
+
+          <Route 
+            path="/join-team" 
+            element={<JoinTeam />} 
           />
 
           <Route 

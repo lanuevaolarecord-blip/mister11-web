@@ -45,14 +45,32 @@ export const useTeams = () => {
     }
     
     const additionalFields = sourceType === 'club' 
-      ? { assignedCoaches: [user.uid], source: 'club' } 
-      : { source: 'personal' };
+      ? { assignedCoaches: [user.uid], source: 'club', ownerUid: user.uid } 
+      : { source: 'personal', ownerUid: user.uid, ownerEmail: user.email, ownerName: user.displayName || user.email };
 
     const docRef = await addDoc(colRef, {
       ...teamData,
       ...additionalFields,
       createdAt: serverTimestamp()
     });
+
+    // Registrar al creador como Primer Entrenador en la subcolección members
+    try {
+      const teamPath = sourceType === 'club' && cId
+        ? `clubs/${cId}/teams/${docRef.id}`
+        : `users/${user.uid}/teams/${docRef.id}`;
+      
+      const { setDoc } = await import('firebase/firestore');
+      await setDoc(doc(db, `${teamPath}/members`, user.uid), {
+        uid: user.uid,
+        email: user.email || '',
+        displayName: user.displayName || 'Primer Entrenador',
+        role: 'first_coach',
+        joinedAt: new Date().toISOString()
+      });
+    } catch (memberErr) {
+      console.warn('[useTeams] Error registrando owner en members:', memberErr);
+    }
 
     if (sourceType !== 'club' && user?.uid) {
       try {

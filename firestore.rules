@@ -167,6 +167,13 @@ service cloud.firestore {
       );
     }
 
+    // ── Invitaciones de Cuerpo Técnico (Staff Invitations) ─────────────────────
+    match /staff_invitations/{invitationId} {
+      allow read: if true;
+      allow create, update: if isAuth();
+      allow delete: if isAuth();
+    }
+
     // ── Notificaciones ────────────────────────────────────────────────────────
     match /notifications/{notifId} {
       allow read, write: if isAuth() && (

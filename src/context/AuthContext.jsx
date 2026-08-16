@@ -16,6 +16,8 @@ export const AuthProvider = ({ children }) => {
   const [personalTeamsLoaded, setPersonalTeamsLoaded] = useState(false);
   const [clubTeams, setClubTeams] = useState([]);
   const [clubTeamsLoaded, setClubTeamsLoaded] = useState(false);
+  const [sharedTeams, setSharedTeams] = useState([]);
+  const [sharedTeamsLoaded, setSharedTeamsLoaded] = useState(false);
 
   // Ref para saber si estamos en modo invitado sin depender del estado (evita loops)
   const isGuestRef = React.useRef(false);
@@ -43,6 +45,8 @@ export const AuthProvider = ({ children }) => {
         setPersonalTeamsLoaded(false);
         setClubTeams([]);
         setClubTeamsLoaded(false);
+        setSharedTeams([]);
+        setSharedTeamsLoaded(false);
         setUserProfile(null);
         setClub(null);
         setLoading(false);
@@ -206,7 +210,68 @@ export const AuthProvider = ({ children }) => {
     return () => unsubClub();
   }, [user, userProfile, club]);
 
-  // Combinar ambas listas de equipos de forma reactiva
+  // Escuchar equipos compartidos (donde el usuario es miembro del cuerpo técnico)
+  useEffect(() => {
+    if (!user || user.uid === 'invitado-local') {
+      setSharedTeams([]);
+      setSharedTeamsLoaded(true);
+      return;
+    }
+
+    const q = query(collection(db, 'users', user.uid, 'shared_teams'));
+    const unsubShared = onSnapshot(q, async (snapshot) => {
+      const teamPointers = snapshot.docs.map(docSnap => ({
+        id: docSnap.id,
+        ...docSnap.data()
+      }));
+
+      // Para cada puntero de equipo compartido, obtener o escuchar los datos actualizados del equipo
+      const loadedSharedTeams = await Promise.all(
+        teamPointers.map(async (pointer) => {
+          try {
+            const tRef = doc(db, pointer.teamPath || `teams/${pointer.id}`);
+            const tSnap = await getDoc(tRef);
+            if (tSnap.exists()) {
+              return {
+                id: tSnap.id,
+                ...tSnap.data(),
+                teamPath: pointer.teamPath,
+                staffRole: pointer.role || 'assistant_coach',
+                source: 'shared'
+              };
+            }
+            return {
+              id: pointer.id,
+              nombre: pointer.teamName || 'Equipo Compartido',
+              name: pointer.teamName || 'Equipo Compartido',
+              teamPath: pointer.teamPath,
+              staffRole: pointer.role || 'assistant_coach',
+              source: 'shared'
+            };
+          } catch (e) {
+            return {
+              id: pointer.id,
+              nombre: pointer.teamName || 'Equipo Compartido',
+              name: pointer.teamName || 'Equipo Compartido',
+              teamPath: pointer.teamPath,
+              staffRole: pointer.role || 'assistant_coach',
+              source: 'shared'
+            };
+          }
+        })
+      );
+
+      setSharedTeams(loadedSharedTeams);
+      setSharedTeamsLoaded(true);
+    }, (err) => {
+      console.warn("Error loading shared teams:", err);
+      setSharedTeamsLoaded(true);
+    });
+
+    return () => unsubShared();
+  }, [user]);
+
+  // Combinar todas las listas de equipos de forma reactiva
   const teams = useMemo(() => {
     if (user && user.uid === 'invitado-local') {
       return [{
@@ -222,8 +287,8 @@ export const AuthProvider = ({ children }) => {
         escudo: ''
       }];
     }
-    return [...personalTeams, ...clubTeams];
-  }, [user, personalTeams, clubTeams]);
+    return [...personalTeams, ...clubTeams, ...sharedTeams];
+  }, [user, personalTeams, clubTeams, sharedTeams]);
 
   // Selección de equipo activo y creación de equipo por defecto
   useEffect(() => {
@@ -234,12 +299,12 @@ export const AuthProvider = ({ children }) => {
       return;
     }
 
-    // Esperar a que terminen de cargar ambos
-    if (!personalTeamsLoaded || !clubTeamsLoaded) {
+    // Esperar a que terminen de cargar todos
+    if (!personalTeamsLoaded || !clubTeamsLoaded || !sharedTeamsLoaded) {
       return;
     }
 
-    const combinedTeams = [...personalTeams, ...clubTeams];
+    const combinedTeams = [...personalTeams, ...clubTeams, ...sharedTeams];
 
     if (combinedTeams.length > 0) {
       const savedTeamId = localStorage.getItem('mister11_active_team');
@@ -251,7 +316,7 @@ export const AuthProvider = ({ children }) => {
       }
       setLoading(false);
     } else {
-      // Si el usuario no tiene ningún equipo (ni personal ni de club), creamos uno por defecto
+      // Si el usuario no tiene ningún equipo (ni personal ni de club ni compartido), creamos uno por defecto
       const creatingKey = `mister11_creating_team_${user.uid}`;
       if (!localStorage.getItem(creatingKey)) {
         localStorage.setItem(creatingKey, 'true');
@@ -263,6 +328,8 @@ export const AuthProvider = ({ children }) => {
               categoria: 'General',
               temporada: '2025-26',
               source: 'personal',
+              ownerUid: user.uid,
+              ownerEmail: user.email,
               createdAt: serverTimestamp()
             });
             
@@ -284,7 +351,7 @@ export const AuthProvider = ({ children }) => {
         setLoading(false);
       }
     }
-  }, [user, personalTeamsLoaded, clubTeamsLoaded, personalTeams, clubTeams]);
+  }, [user, personalTeamsLoaded, clubTeamsLoaded, sharedTeamsLoaded, personalTeams, clubTeams, sharedTeams]);
 
   // Determinar de forma dinámica el modo actual (retrocompatibilidad)
   const currentMode = useMemo(() => {
@@ -315,14 +382,22 @@ export const AuthProvider = ({ children }) => {
     const tId = teamId || activeTeamId;
     if (!tId) return '';
     
-    // Buscar el equipo en la lista unificada
-    const team = [...personalTeams, ...clubTeams].find(t => t.id === tId);
-    if (team?.source === 'club') {
+    // 1. Buscar en sharedTeams
+    const sharedTeam = sharedTeams.find(t => t.id === tId);
+    if (sharedTeam?.teamPath) {
+      return sharedTeam.teamPath;
+    }
+
+    // 2. Buscar en clubTeams
+    const clubTeam = clubTeams.find(t => t.id === tId);
+    if (clubTeam) {
       const cId = userProfile?.clubId || localStorage.getItem('mister11_club_id');
       return `clubs/${cId}/teams/${tId}`;
     }
+
+    // 3. Por defecto, equipo personal
     return `users/${user.uid}/teams/${tId}`;
-  }, [user, userProfile, activeTeamId, personalTeams, clubTeams]);
+  }, [user, userProfile, activeTeamId, sharedTeams, clubTeams]);
 
   // Función centralizada para iniciar sesión en Modo Invitado
   const loginAsGuest = useCallback(async () => {

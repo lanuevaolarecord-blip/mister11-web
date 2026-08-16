@@ -14,6 +14,7 @@ import PlayerHealthTab from '../components/PlayerHealthTab';
 import PlayerPlansTab from '../components/PlayerPlansTab';
 import { TeamAttendanceTab } from '../components/TeamAttendanceTab';
 import { PlayerAttendanceSubTab } from '../components/PlayerAttendanceSubTab';
+import { TeamStaffTab } from '../components/TeamStaffTab';
 import { useTranslation } from '../hooks/useTranslation';
 import './MiEquipo.css';
 
@@ -222,6 +223,15 @@ const MiEquipo = () => {
             <span>📋</span>
             <span>{t('equipo.tab.attendance') || 'Control de Asistencia'}</span>
           </button>
+          <button 
+            type="button"
+            className={`chip ${mainTeamTab === 'staff' ? 'active' : ''}`}
+            style={{ fontWeight: '800', minHeight: '44px', padding: '0 18px', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '6px' }}
+            onClick={() => setMainTeamTab('staff')}
+          >
+            <span>🛡️</span>
+            <span>Cuerpo Técnico</span>
+          </button>
         </div>
 
         {mainTeamTab === 'squad' && (
@@ -239,7 +249,9 @@ const MiEquipo = () => {
         )}
       </header>
 
-      {mainTeamTab === 'attendance' ? (
+      {mainTeamTab === 'staff' ? (
+        <TeamStaffTab activeTeam={activeTeam} />
+      ) : mainTeamTab === 'attendance' ? (
         <TeamAttendanceTab players={players} activeTeam={activeTeam} />
       ) : players.length === 0 ? (
         <div className="empty-team-state">

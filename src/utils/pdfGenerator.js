@@ -841,7 +841,6 @@ export const generateSessionPDF = async (session, activeTeam = null, pizarras = 
         const b = blocks[bi];
         const imgBase64 = b.resolvedBase64;
         const hasImg = Boolean(imgBase64);
-        const hadSource = Boolean(b.hadImageSource);
 
         const rawDesc = b.description || b.descripcion || 'Sin descripción';
         // Texto a todo el ancho (100% de la tarjeta)
@@ -849,12 +848,11 @@ export const generateSessionPDF = async (session, activeTeam = null, pizarras = 
         const descLines = doc.splitTextToSize(rawDesc, textMaxW);
         const textH = descLines.length * 4.6;
 
-        const renderImg = hasImg || hadSource;
-        const imgW = renderImg ? 124 : 0;
-        const imgH = renderImg ? 64 : 0;
+        const imgW = hasImg ? 124 : 0;
+        const imgH = hasImg ? 64 : 0;
         
-        // Calcular altura total del bloque (Header + Texto + Imagen centrada debajo)
-        const totalBlockH = renderImg ? (16 + textH + imgH + 10) : (16 + textH + 6);
+        // Calcular altura total del bloque: Header (16) + Texto (textH) + Imagen centrada (si existe)
+        const totalBlockH = hasImg ? (16 + textH + imgH + 10) : (16 + textH + 6);
 
         // Control estricto de salto de página (Evita cortar el bloque o la imagen a la mitad)
         if (currentY + totalBlockH > pageH - 20) {
@@ -899,14 +897,14 @@ export const generateSessionPDF = async (session, activeTeam = null, pizarras = 
         doc.setLineWidth(0.2);
         doc.line(22, currentY + 12, pageW - 22, currentY + 12);
 
-        // 1. Descripción del Bloque (Texto arriba a todo el ancho)
+        // 1. Descripción del Bloque (Texto arriba a todo el ancho, alto contraste #1a2e1a)
         doc.setFont(undefined, 'normal');
         doc.setFontSize(8.5);
-        doc.setTextColor(50, 60, 55);
+        doc.setTextColor(26, 46, 26); // #1a2e1a para máximo contraste
         doc.text(descLines, 22, currentY + 17);
 
         // 2. Imagen / Captura del Ejercicio (Directamente DEBAJO de la descripción, centrada)
-        if (renderImg) {
+        if (hasImg) {
           const imgX = (pageW - imgW) / 2;
           const imgY = currentY + 17 + textH + 3;
 
@@ -916,35 +914,12 @@ export const generateSessionPDF = async (session, activeTeam = null, pizarras = 
           doc.setLineWidth(0.3);
           doc.roundedRect(imgX, imgY, imgW, imgH, 2, 2, 'FD');
 
-          let drawnSuccess = false;
-          if (hasImg) {
-            try {
-              const isJpeg = imgBase64.includes('jpeg') || imgBase64.includes('jpg');
-              const fmt = isJpeg ? 'JPEG' : 'PNG';
-              doc.addImage(imgBase64, fmt, imgX + 1, imgY + 1, imgW - 2, imgH - 2);
-              drawnSuccess = true;
-            } catch (imgErr) {
-              console.warn('Error al renderizar imagen en bloque:', imgErr);
-            }
-          }
-
-          // Si la imagen falló o no estuvo disponible, renderizar Placeholder visual con texto estandarizado
-          if (!drawnSuccess) {
-            doc.setFillColor(245, 247, 246);
-            doc.rect(imgX + 1, imgY + 1, imgW - 2, imgH - 2, 'F');
-            doc.setDrawColor(190, 202, 196);
-            doc.setLineWidth(0.3);
-            doc.rect(imgX + 4, imgY + 4, imgW - 8, imgH - 8, 'D');
-
-            doc.setFontSize(9.5);
-            doc.setFont(undefined, 'bold');
-            doc.setTextColor(80, 100, 90);
-            doc.text('Imagen del ejercicio', pageW / 2, imgY + (imgH / 2) - 2, { align: 'center' });
-
-            doc.setFontSize(7.5);
-            doc.setFont(undefined, 'italic');
-            doc.setTextColor(130, 145, 138);
-            doc.text('Diagrama táctico de la sesión', pageW / 2, imgY + (imgH / 2) + 4, { align: 'center' });
+          try {
+            const isJpeg = imgBase64.includes('jpeg') || imgBase64.includes('jpg');
+            const fmt = isJpeg ? 'JPEG' : 'PNG';
+            doc.addImage(imgBase64, fmt, imgX + 1, imgY + 1, imgW - 2, imgH - 2);
+          } catch (imgErr) {
+            console.warn('Error al renderizar imagen en bloque:', imgErr);
           }
         }
 

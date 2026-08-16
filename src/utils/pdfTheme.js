@@ -78,6 +78,15 @@ export const blobToDataURL = (blob) => {
 };
 
 /**
+ * Convierte una URL a Base64 usando fetch -> blob -> FileReader
+ * Con fallback a proxy serverless para evitar cualquier bloqueo de CORS.
+ */
+export const convertImageToBase64 = async (url) => {
+  if (!url) return null;
+  return await preloadImageToDataURL(url);
+};
+
+/**
  * Función robusta y ultra-rápida de precarga con Proxy Serverless + fetch + blob
  * Convierte cualquier URL remota a dataURL antes de renderizar o pasar a jsPDF / html2canvas.
  */

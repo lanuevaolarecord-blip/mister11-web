@@ -646,67 +646,92 @@ const drawSectionHeader = (doc, y, title, pageW) => {
 };
 
 /**
- * Pre-carga y convierte todas las imágenes de los bloques de la sesión a Base64 dataURL (PNG nativo).
+ * Pre-carga y convierte todas las imágenes de los bloques y diagramas de la sesión a Base64 dataURL (PNG nativo).
  * Esto evita bloqueos de CORS y garantiza que jsPDF inserte las imágenes de las pizarras tácticas.
  */
 export const preloadSessionImages = async (session, pizarras = [], captures = [], exercises = []) => {
   const blocks = session.blocks || session.bloques || [];
-  
-  const updatedBlocks = await Promise.all(
-    blocks.map(async (b, bi) => {
-      let rawImg = b.imageUrl || b.imagenProtocolo || b.image || b.photo || b.previewUrl || b.canvasData || b.boardCapture || b.pizarraUrl;
-      
-      // Buscar en pizarras / ejercicios por id o coincidencia de título
-      if (!rawImg) {
-        const pool = [...(pizarras || []), ...(exercises || [])];
-        const matchedEx = pool.find(e =>
-          (b.exerciseId && e.id === b.exerciseId) ||
-          (b.pizarraId && e.id === b.pizarraId) ||
-          (e.id === b.id) ||
-          (e.title && b.name && e.title.toLowerCase().trim() === b.name.toLowerCase().trim()) ||
-          (e.nombre && b.name && e.nombre.toLowerCase().trim() === b.name.toLowerCase().trim())
-        );
-        if (matchedEx) {
-          rawImg = matchedEx.imageUrl || matchedEx.imagenProtocolo || matchedEx.thumbnail || matchedEx.image || matchedEx.previewUrl || matchedEx.dataUrl;
-        }
-      }
+  const totalItems = blocks.length + (session.mainDiagramUrl || session.linkedPizarraId ? 1 : 0);
+  let processedCount = 0;
 
-      // Buscar en capturas vinculadas si no tiene imagen directa
-      if (!rawImg && Array.isArray(captures) && captures.length > 0) {
-        const matchedCap = captures.find(c =>
-          (c.sessionId === session.id && (c.blockId === b.id || c.blockIndex === bi)) ||
-          (c.title && b.name && c.title.toLowerCase().trim() === b.name.toLowerCase().trim())
-        );
-        if (matchedCap) {
-          rawImg = matchedCap.dataUrl || matchedCap.url || matchedCap.imageUrl || matchedCap.thumbnail || matchedCap.imageData;
-        }
-      }
+  // Precargar diagrama principal de la sesión si existe
+  let mainDiagramBase64 = null;
+  const rawMainDiagram = session.mainDiagramUrl || session.diagramUrl || session.diagram;
+  if (rawMainDiagram) {
+    try {
+      mainDiagramBase64 = await imageUrlToBase64(rawMainDiagram, 'Diagrama Principal', false);
+    } catch (e) {
+      console.warn('[preloadSessionImages] Error cargando diagrama principal:', e);
+    }
+  }
 
-      // Buscar en la pizarra vinculada a la sesión
-      if (!rawImg && session.linkedPizarraId && Array.isArray(pizarras)) {
-        const linkedPiz = pizarras.find(p => p.id === session.linkedPizarraId);
-        if (linkedPiz && linkedPiz.thumbnail) {
-          rawImg = linkedPiz.thumbnail;
-        }
-      }
+  const updatedBlocks = [];
+  for (let bi = 0; bi < blocks.length; bi++) {
+    const b = blocks[bi];
+    processedCount++;
+    window.dispatchEvent(new CustomEvent('m11-loading', {
+      detail: { show: true, message: `Cargando imágenes de sesión (${processedCount}/${totalItems})...` }
+    }));
 
-      let base64 = null;
-      if (rawImg) {
-        base64 = await imageUrlToBase64(rawImg, b.name || `Bloque ${bi + 1}`, false);
-      }
+    let rawImg = b.imageUrl || b.boardCaptureUrl || b.boardCapture || b.imagenProtocolo || b.image || b.photo || b.previewUrl || b.canvasData || b.pizarraUrl;
 
-      return {
-        ...b,
-        imageUrl: base64 || (typeof rawImg === 'string' ? rawImg : null),
-        imagenProtocolo: base64 || (typeof rawImg === 'string' ? rawImg : null),
-        resolvedBase64: base64 || (typeof rawImg === 'string' ? rawImg : null),
-        hadImageSource: Boolean(rawImg)
-      };
-    })
-  );
+    // Si attachments es un array de URLs
+    if (!rawImg && Array.isArray(b.attachments) && b.attachments.length > 0) {
+      rawImg = b.attachments[0];
+    }
+
+    // Buscar en pizarras / ejercicios por id o coincidencia de título
+    if (!rawImg) {
+      const pool = [...(pizarras || []), ...(exercises || [])];
+      const matchedEx = pool.find(e =>
+        (b.exerciseId && e.id === b.exerciseId) ||
+        (b.pizarraId && e.id === b.pizarraId) ||
+        (e.id === b.id) ||
+        (e.title && b.name && e.title.toLowerCase().trim() === b.name.toLowerCase().trim()) ||
+        (e.nombre && b.name && e.nombre.toLowerCase().trim() === b.name.toLowerCase().trim())
+      );
+      if (matchedEx) {
+        rawImg = matchedEx.imageUrl || matchedEx.boardCaptureUrl || matchedEx.imagenProtocolo || matchedEx.thumbnail || matchedEx.image || matchedEx.previewUrl || matchedEx.dataUrl;
+      }
+    }
+
+    // Buscar en capturas vinculadas si no tiene imagen directa
+    if (!rawImg && Array.isArray(captures) && captures.length > 0) {
+      const matchedCap = captures.find(c =>
+        (c.sessionId === session.id && (c.blockId === b.id || c.blockIndex === bi)) ||
+        (c.title && b.name && c.title.toLowerCase().trim() === b.name.toLowerCase().trim())
+      );
+      if (matchedCap) {
+        rawImg = matchedCap.dataUrl || matchedCap.url || matchedCap.imageUrl || matchedCap.thumbnail || matchedCap.imageData;
+      }
+    }
+
+    // Buscar en la pizarra vinculada a la sesión
+    if (!rawImg && session.linkedPizarraId && Array.isArray(pizarras)) {
+      const linkedPiz = pizarras.find(p => p.id === session.linkedPizarraId);
+      if (linkedPiz && linkedPiz.thumbnail) {
+        rawImg = linkedPiz.thumbnail;
+      }
+    }
+
+    let base64 = null;
+    if (rawImg) {
+      base64 = await imageUrlToBase64(rawImg, b.name || `Bloque ${bi + 1}`, false);
+    }
+
+    updatedBlocks.push({
+      ...b,
+      imageUrl: base64 || (typeof rawImg === 'string' ? rawImg : null),
+      boardCaptureUrl: base64 || (typeof rawImg === 'string' ? rawImg : null),
+      imagenProtocolo: base64 || (typeof rawImg === 'string' ? rawImg : null),
+      resolvedBase64: base64 || (typeof rawImg === 'string' ? rawImg : null),
+      hadImageSource: Boolean(rawImg)
+    });
+  }
 
   return {
     ...session,
+    mainDiagramBase64,
     blocks: updatedBlocks
   };
 };
@@ -766,8 +791,8 @@ export const generateSessionPDF = async (session, activeTeam = null, pizarras = 
     const preloadedSession = await preloadSessionImages(session, pizarras, captures, exercises);
     const blocks = preloadedSession.blocks || [];
 
-    let sessionDiagramBase64 = null;
-    if (session.linkedPizarraId) {
+    let sessionDiagramBase64 = preloadedSession.mainDiagramBase64 || null;
+    if (!sessionDiagramBase64 && session.linkedPizarraId) {
       const found = (pizarras || []).find(p => p.id === session.linkedPizarraId);
       if (found && found.thumbnail) {
         sessionDiagramBase64 = await imageUrlToBase64(found.thumbnail, 'Diagrama Principal', false);

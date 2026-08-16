@@ -215,7 +215,8 @@ const BlockEditor = ({ block, index, handleUpdateBlock, handleDeleteBlock, handl
                       key={cap.id} 
                       style={{ cursor: 'pointer', border: '2px solid transparent', borderRadius: '8px', overflow: 'hidden' }}
                         onClick={() => {
-                          const capUrl = cap.thumbnail || cap.url;
+                          const capUrl = cap.thumbnail || cap.url || cap.dataUrl || cap.imageUrl;
+                          handleUpdateBlock(block.id, 'boardCaptureUrl', capUrl);
                           handleUpdateBlock(block.id, 'imagenProtocolo', capUrl);
                           handleUpdateBlock(block.id, 'imageUrl', capUrl);
                           setShowCaptureModal(false);

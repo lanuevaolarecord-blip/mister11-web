@@ -10,7 +10,7 @@ import { Capacitor } from '@capacitor/core';
 // ─── Referencias de diseño ──────────────────────────────────────────────────
 const CANVAS_REF_WIDTH = 380;
 const CANVAS_REF_HEIGHT = 520;
-const RADIO_JUGADOR = (typeof window !== 'undefined' && (window.innerWidth < 768 || window.innerHeight < 768)) ? 16 : 12;
+const RADIO_JUGADOR = (typeof window !== 'undefined' && (window.innerWidth < 768 || window.innerHeight < 768)) ? 13.5 : 10.2;
 
 // ─── Make fabric global BEFORE library imports use it ───────────────────────
 if (typeof window !== 'undefined') {
@@ -1084,7 +1084,7 @@ const PizarraTactica = () => {
     const fr = frRef.current;
     if (!fc || !fr) return null;
     
-    const targetRadius = Math.max(10, Math.min(18, Math.round(fc.width * 0.025)));
+    const targetRadius = Math.max(8.5, Math.min(15.5, Math.round(fc.width * 0.021)));
     const { color = '#4CAF7D', label = '1', type = 'local', radius = targetRadius } = options;
     
     // Obtener coordenadas relativas al CAMPO REAL

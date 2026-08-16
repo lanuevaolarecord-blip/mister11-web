@@ -38,6 +38,7 @@ import { usePWA } from '../hooks/usePWA';
 import { showToast } from '../utils/toast';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
+import { useTeamMembers } from '../hooks/useTeamMembers';
 import { storage, db } from '../firebaseConfig';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { collection, getDocs, doc, getDoc, setDoc, updateDoc, serverTimestamp, arrayUnion, onSnapshot } from 'firebase/firestore';
@@ -217,6 +218,7 @@ const AdminPanel = () => {
   }, [user, isAdmin]);
   
   const { settings, saveSettings, loading: loadingSettings } = useSettings(activeTeam?.id);
+  const { permissions, switchMyRole, STAFF_ROLES, inviteMember } = useTeamMembers(activeTeam?.id);
   const { darkMode, toggleTheme } = useTheme();
   const [profileData, setProfileData] = useState({ profileName: '', specialty: 'Primer Entrenador' });
   const [teamEditData, setTeamEditData] = useState({ nombre: '', categoria: '', temporada: '', colorLocal: '#1B3A2D', colorVisitante: '#4CAF7D' });
@@ -336,7 +338,17 @@ const AdminPanel = () => {
   const handleSaveProfile = async () => {
     try {
       await saveSettings({ ...settings, ...profileData });
-      showToast("Perfil guardado correctamente.", "success");
+      if (profileData.specialty && switchMyRole && STAFF_ROLES) {
+        const matched = Object.values(STAFF_ROLES).find(
+          r => r.label.toLowerCase() === profileData.specialty.toLowerCase() || 
+               r.id.toLowerCase() === profileData.specialty.toLowerCase() ||
+               r.aliases?.includes(profileData.specialty.toLowerCase())
+        );
+        if (matched) {
+          await switchMyRole(matched.id);
+        }
+      }
+      showToast("Perfil guardado y rol sincronizado.", "success");
     } catch (e) {
       showToast("Error al guardar perfil.", "error");
     }
@@ -822,14 +834,14 @@ const AdminPanel = () => {
                 </div>
               </div>
 
-              {/* CONFIGURACIÓN DE CUENTA */}
+              {/* CONFIGURACIÓN DE CUENTA Y CUERPO TÉCNICO */}
               <div className="settings-card">
                 <div className="card-header-icon">
                   <Users size={20} />
                   <h3>Perfil del Entrenador</h3>
                 </div>
-                <div className="settings-form">
-                  <div className="form-group">
+                <div className="settings-form" style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                  <div className="form-group" style={{ margin: 0 }}>
                     <label>Nombre Completo</label>
                     <input 
                       type="text" 
@@ -838,20 +850,79 @@ const AdminPanel = () => {
                       onChange={(e) => setProfileData({...profileData, profileName: e.target.value})} 
                     />
                   </div>
-                  <div className="form-group">
-                    <label>Especialidad / Cargo</label>
+                  <div className="form-group" style={{ margin: 0 }}>
+                    <label>Rol / Especialidad en el Equipo</label>
                     <select 
                       className="admin-select-input"
                       value={profileData.specialty}
                       onChange={(e) => setProfileData({...profileData, specialty: e.target.value})}
                     >
-                      <option>Primer Entrenador</option>
-                      <option>Asistente Técnico</option>
-                      <option>Preparador Físico</option>
-                      <option>Analista</option>
+                      <option value="Primer Entrenador">👑 Primer Entrenador (Admin)</option>
+                      <option value="Segundo Entrenador">🟢 Segundo Entrenador</option>
+                      <option value="Preparador Físico">🏋️‍♂️ Preparador Físico</option>
+                      <option value="Ayudante / 3er Entrenador">🔵 Ayudante / 3er Entrenador</option>
+                      <option value="Fisioterapeuta / Médico">🔴 Fisioterapeuta / Médico</option>
+                      <option value="Analista Táctico">🟣 Analista Táctico</option>
+                      <option value="Jugador">⚪ Jugador</option>
                     </select>
                   </div>
-                  <button className="btn-save-settings" onClick={handleSaveProfile}>{t('btn.save', settings.language)} Perfil</button>
+                  <button className="btn-save-settings" onClick={handleSaveProfile}>{t('btn.save', settings.language)} Perfil y Rol</button>
+
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '8px', borderTop: '1px solid var(--border-color)', paddingTop: '12px' }}>
+                    <button
+                      onClick={async () => {
+                        if (!activeTeam) {
+                          showToast('Selecciona un equipo primero.', 'info');
+                          return;
+                        }
+                        const inv = await inviteMember(user?.email || 'entrenador@mister11.com', 'coach');
+                        if (inv?.inviteUrl) {
+                          navigator.clipboard.writeText(inv.inviteUrl);
+                          showToast('¡Enlace de invitación de cuerpo técnico copiado!', 'success');
+                        }
+                      }}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '8px',
+                        width: '100%',
+                        minHeight: '38px',
+                        background: '#1B3A2D',
+                        color: '#FFFFFF',
+                        fontWeight: '700',
+                        fontSize: '0.8rem',
+                        borderRadius: '8px',
+                        border: '1px solid var(--accent-green, #4CAF7D)',
+                        cursor: 'pointer',
+                        padding: '6px 12px'
+                      }}
+                    >
+                      🔗 Copiar Link para Invitar Entrenadores
+                    </button>
+
+                    <button
+                      onClick={() => navigate('/equipo', { state: { initialTab: 'staff' } })}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '8px',
+                        width: '100%',
+                        minHeight: '38px',
+                        background: 'transparent',
+                        color: 'var(--accent-green, #4CAF7D)',
+                        fontWeight: '700',
+                        fontSize: '0.8rem',
+                        borderRadius: '8px',
+                        border: '1px solid var(--border-color)',
+                        cursor: 'pointer',
+                        padding: '6px 12px'
+                      }}
+                    >
+                      🛡️ Ver y Gestionar Todo el Cuerpo Técnico
+                    </button>
+                  </div>
                 </div>
               </div>
 

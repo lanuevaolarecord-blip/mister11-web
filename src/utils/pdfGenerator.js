@@ -651,8 +651,10 @@ const drawSectionHeader = (doc, y, title, pageW) => {
  */
 export const preloadSessionImages = async (session, pizarras = [], captures = [], exercises = []) => {
   const blocks = session.blocks || session.bloques || [];
-  const totalItems = blocks.length + (session.mainDiagramUrl || session.linkedPizarraId ? 1 : 0);
-  let processedCount = 0;
+
+  window.dispatchEvent(new CustomEvent('m11-loading', {
+    detail: { show: true, message: `Procesando diagramas e imágenes...` }
+  }));
 
   // Precargar diagrama principal de la sesión si existe
   let mainDiagramBase64 = null;
@@ -665,69 +667,65 @@ export const preloadSessionImages = async (session, pizarras = [], captures = []
     }
   }
 
-  const updatedBlocks = [];
-  for (let bi = 0; bi < blocks.length; bi++) {
-    const b = blocks[bi];
-    processedCount++;
-    window.dispatchEvent(new CustomEvent('m11-loading', {
-      detail: { show: true, message: `Cargando imágenes de sesión (${processedCount}/${totalItems})...` }
-    }));
+  // Precargar todos los bloques concurrentemente en paralelo
+  const updatedBlocks = await Promise.all(
+    blocks.map(async (b, bi) => {
+      let rawImg = b.imageUrl || b.boardCaptureUrl || b.boardCapture || b.imagenProtocolo || b.image || b.photo || b.previewUrl || b.canvasData || b.pizarraUrl;
 
-    let rawImg = b.imageUrl || b.boardCaptureUrl || b.boardCapture || b.imagenProtocolo || b.image || b.photo || b.previewUrl || b.canvasData || b.pizarraUrl;
-
-    // Si attachments es un array de URLs
-    if (!rawImg && Array.isArray(b.attachments) && b.attachments.length > 0) {
-      rawImg = b.attachments[0];
-    }
-
-    // Buscar en pizarras / ejercicios por id o coincidencia de título
-    if (!rawImg) {
-      const pool = [...(pizarras || []), ...(exercises || [])];
-      const matchedEx = pool.find(e =>
-        (b.exerciseId && e.id === b.exerciseId) ||
-        (b.pizarraId && e.id === b.pizarraId) ||
-        (e.id === b.id) ||
-        (e.title && b.name && e.title.toLowerCase().trim() === b.name.toLowerCase().trim()) ||
-        (e.nombre && b.name && e.nombre.toLowerCase().trim() === b.name.toLowerCase().trim())
-      );
-      if (matchedEx) {
-        rawImg = matchedEx.imageUrl || matchedEx.boardCaptureUrl || matchedEx.imagenProtocolo || matchedEx.thumbnail || matchedEx.image || matchedEx.previewUrl || matchedEx.dataUrl;
+      // Si attachments es un array de URLs
+      if (!rawImg && Array.isArray(b.attachments) && b.attachments.length > 0) {
+        rawImg = b.attachments[0];
       }
-    }
 
-    // Buscar en capturas vinculadas si no tiene imagen directa
-    if (!rawImg && Array.isArray(captures) && captures.length > 0) {
-      const matchedCap = captures.find(c =>
-        (c.sessionId === session.id && (c.blockId === b.id || c.blockIndex === bi)) ||
-        (c.title && b.name && c.title.toLowerCase().trim() === b.name.toLowerCase().trim())
-      );
-      if (matchedCap) {
-        rawImg = matchedCap.dataUrl || matchedCap.url || matchedCap.imageUrl || matchedCap.thumbnail || matchedCap.imageData;
+      // Buscar en pizarras / ejercicios por id o coincidencia de título
+      if (!rawImg) {
+        const pool = [...(pizarras || []), ...(exercises || [])];
+        const matchedEx = pool.find(e =>
+          (b.exerciseId && e.id === b.exerciseId) ||
+          (b.pizarraId && e.id === b.pizarraId) ||
+          (e.id === b.id) ||
+          (e.title && b.name && e.title.toLowerCase().trim() === b.name.toLowerCase().trim()) ||
+          (e.nombre && b.name && e.nombre.toLowerCase().trim() === b.name.toLowerCase().trim())
+        );
+        if (matchedEx) {
+          rawImg = matchedEx.imageUrl || matchedEx.boardCaptureUrl || matchedEx.imagenProtocolo || matchedEx.thumbnail || matchedEx.image || matchedEx.previewUrl || matchedEx.dataUrl;
+        }
       }
-    }
 
-    // Buscar en la pizarra vinculada a la sesión
-    if (!rawImg && session.linkedPizarraId && Array.isArray(pizarras)) {
-      const linkedPiz = pizarras.find(p => p.id === session.linkedPizarraId);
-      if (linkedPiz && linkedPiz.thumbnail) {
-        rawImg = linkedPiz.thumbnail;
+      // Buscar en capturas vinculadas si no tiene imagen directa
+      if (!rawImg && Array.isArray(captures) && captures.length > 0) {
+        const matchedCap = captures.find(c =>
+          (c.sessionId === session.id && (c.blockId === b.id || c.blockIndex === bi)) ||
+          (c.title && b.name && c.title.toLowerCase().trim() === b.name.toLowerCase().trim())
+        );
+        if (matchedCap) {
+          rawImg = matchedCap.dataUrl || matchedCap.url || matchedCap.imageUrl || matchedCap.thumbnail || matchedCap.imageData;
+        }
       }
-    }
 
-    let base64 = null;
-    if (rawImg) {
-      base64 = await imageUrlToBase64(rawImg, b.name || `Bloque ${bi + 1}`, false);
-    }
+      // Buscar en la pizarra vinculada a la sesión
+      if (!rawImg && session.linkedPizarraId && Array.isArray(pizarras)) {
+        const linkedPiz = pizarras.find(p => p.id === session.linkedPizarraId);
+        if (linkedPiz && linkedPiz.thumbnail) {
+          rawImg = linkedPiz.thumbnail;
+        }
+      }
 
-    updatedBlocks.push({
-      ...b,
-      imageUrl: base64 || (typeof rawImg === 'string' ? rawImg : null),
-      boardCaptureUrl: base64 || (typeof rawImg === 'string' ? rawImg : null),
-      imagenProtocolo: base64 || (typeof rawImg === 'string' ? rawImg : null),
-      resolvedBase64: base64 || (typeof rawImg === 'string' ? rawImg : null),
-      hadImageSource: Boolean(rawImg)
-    });
-  }
+      let base64 = null;
+      if (rawImg) {
+        base64 = await imageUrlToBase64(rawImg, b.name || `Bloque ${bi + 1}`, false);
+      }
+
+      return {
+        ...b,
+        imageUrl: base64 || (typeof rawImg === 'string' ? rawImg : null),
+        boardCaptureUrl: base64 || (typeof rawImg === 'string' ? rawImg : null),
+        imagenProtocolo: base64 || (typeof rawImg === 'string' ? rawImg : null),
+        resolvedBase64: base64 || (typeof rawImg === 'string' ? rawImg : null),
+        hadImageSource: Boolean(rawImg)
+      };
+    })
+  );
 
   return {
     ...session,

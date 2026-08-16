@@ -174,18 +174,20 @@ export const TeamStaffTab = ({ activeTeam }) => {
               </div>
 
               {/* Acciones de administración de rol */}
-              {permissions.canManageStaff && !isOwner && !isSelf && (
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderTop: '1px solid var(--border-color)', paddingTop: '12px', marginTop: '10px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderTop: '1px solid var(--border-color)', paddingTop: '12px', marginTop: '10px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Cambiar Rol:</span>
                   <select
-                    value={member.role || 'assistant_coach'}
+                    value={member.role || (isOwner ? 'admin' : 'assistant')}
                     onChange={(e) => updateMemberRole(member.uid || member.id, e.target.value)}
                     style={{
-                      background: 'rgba(0,0,0,0.3)',
+                      background: 'rgba(0,0,0,0.4)',
                       border: '1px solid var(--border-color)',
                       color: 'var(--text-primary)',
                       padding: '6px 10px',
                       borderRadius: '6px',
-                      fontSize: '0.8rem'
+                      fontSize: '0.8rem',
+                      fontWeight: '600'
                     }}
                   >
                     {Object.values(STAFF_ROLES).map(r => (
@@ -194,7 +196,9 @@ export const TeamStaffTab = ({ activeTeam }) => {
                       </option>
                     ))}
                   </select>
+                </div>
 
+                {!isSelf && permissions.canManageStaff && (
                   <button
                     onClick={() => {
                       if (window.confirm(`¿Estás seguro de eliminar a ${member.displayName || member.email} del cuerpo técnico?`)) {
@@ -216,8 +220,8 @@ export const TeamStaffTab = ({ activeTeam }) => {
                   >
                     <Trash2 size={14} /> Quitar
                   </button>
-                </div>
-              )}
+                )}
+              </div>
             </div>
           );
         })}

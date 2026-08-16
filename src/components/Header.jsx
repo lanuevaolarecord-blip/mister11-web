@@ -11,7 +11,7 @@ const Header = ({ onToggleNotif }) => {
   const location = useLocation();
   const navigate = useNavigate();
   const { teams, activeTeam, selectTeam } = useTeams();
-  const { permissions } = useTeamMembers(activeTeam?.id);
+  const { permissions, switchMyRole, STAFF_ROLES } = useTeamMembers(activeTeam?.id);
   const { darkMode, toggleTheme } = useTheme();
   const { isRunning, matchSeconds, formatMatchTime } = useMatch();
   const { t } = useTranslation();
@@ -94,27 +94,45 @@ const Header = ({ onToggleNotif }) => {
           </div>
         )}
 
-        {/* Badge de Rol en el Cuerpo Técnico */}
+        {/* Selector interactivo de Rol en el Cuerpo Técnico */}
         {permissions?.roleInfo && (
           <div 
-            title={`Rol en el equipo: ${permissions.roleInfo.label}\n${permissions.roleInfo.description}`}
+            title={`Rol activo: ${permissions.roleInfo.label}. Haz clic para cambiar de rol.`}
             style={{
               display: 'inline-flex',
               alignItems: 'center',
-              gap: '4px',
-              padding: '4px 10px',
               borderRadius: '16px',
-              fontSize: '0.72rem',
-              fontWeight: '700',
-              background: `${permissions.roleInfo.color}15`,
-              color: permissions.roleInfo.color,
-              border: `1px solid ${permissions.roleInfo.color}40`,
-              whiteSpace: 'nowrap',
-              cursor: 'default',
-              userSelect: 'none'
+              background: `${permissions.roleInfo.color}20`,
+              border: `1px solid ${permissions.roleInfo.color}60`,
+              padding: '2px 6px',
+              cursor: 'pointer'
             }}
           >
-            <span>{permissions.roleInfo.badge}</span>
+            <select
+              value={permissions.role}
+              onChange={(e) => switchMyRole(e.target.value)}
+              aria-label="Cambiar mi rol en el equipo"
+              style={{
+                background: 'transparent',
+                border: 'none',
+                color: permissions.roleInfo.color,
+                fontSize: '0.72rem',
+                fontWeight: '700',
+                cursor: 'pointer',
+                outline: 'none',
+                padding: '2px 4px'
+              }}
+            >
+              {STAFF_ROLES && Object.values(STAFF_ROLES).map(r => (
+                <option 
+                  key={r.id} 
+                  value={r.id} 
+                  style={{ background: '#121C16', color: '#FFFFFF', fontSize: '0.85rem' }}
+                >
+                  {r.badge}
+                </option>
+              ))}
+            </select>
           </div>
         )}
 

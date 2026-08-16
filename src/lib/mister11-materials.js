@@ -774,7 +774,7 @@ export async function placeMaterialOnCanvas(canvas, itemId, x, y, color) {
     fabric.loadSVGFromString(svgString, (objects, options) => {
       const group = fabric.util.groupSVGElements(objects, options);
 
-      const scale = item.defaultSize / Math.max(group.width, group.height);
+      const scale = (item.defaultSize * 0.85) / Math.max(group.width, group.height);
       group.scale(scale);
       group.set({
         left: x,

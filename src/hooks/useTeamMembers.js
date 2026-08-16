@@ -32,6 +32,15 @@ export const STAFF_ROLES = {
     textColor: '#FFFFFF',
     description: 'Edición de partidos, alineaciones, sesiones, pizarra, planning y asistencia.'
   },
+  FITNESS_COACH: {
+    id: 'fitness_coach',
+    aliases: ['physical_trainer', 'preparador_fisico', 'pf', 'fitness', 'preparador'],
+    label: 'Preparador Físico',
+    badge: '🏋️‍♂️ Preparador Físico',
+    color: '#F59E0B',
+    textColor: '#FFFFFF',
+    description: 'Control de preparación física, cargas de entrenamiento, pruebas físicas y estado atlético.'
+  },
   ASSISTANT: {
     id: 'assistant',
     aliases: ['assistant_coach', 'assistant'],
@@ -203,17 +212,18 @@ export const useTeamMembers = (teamIdOverride = null) => {
       isCoach: isSeniorCoach,
       canManageStaff: isOwnerOrAdmin,
       canDeleteTeam: isOwnerOrAdmin,
-      canEditMatches: isSeniorCoach || ['analyst', 'assistant', 'assistant_coach'].includes(role),
-      canEditLineups: isSeniorCoach,
-      canLiveRecord: isSeniorCoach || ['analyst', 'assistant', 'assistant_coach'].includes(role),
-      canEditSessions: isSeniorCoach,
-      canEditTacticBoard: isSeniorCoach || role === 'analyst',
-      canEditPlayers: isSeniorCoach,
-      canEditHealth: isOwnerOrAdmin || role === 'physio',
-      canViewHealth: isSeniorCoach || role === 'physio',
-      canTakeAttendance: isSeniorCoach || ['assistant', 'assistant_coach', 'physio'].includes(role),
-      canExportReports: isSeniorCoach || role === 'analyst',
+      canEditMatches: isSeniorCoach || ['analyst', 'assistant', 'assistant_coach', 'fitness_coach'].includes(role),
+      canEditLineups: isSeniorCoach || role === 'fitness_coach',
+      canLiveRecord: isSeniorCoach || ['analyst', 'assistant', 'assistant_coach', 'fitness_coach'].includes(role),
+      canEditSessions: isSeniorCoach || role === 'fitness_coach',
+      canEditTacticBoard: isSeniorCoach || role === 'analyst' || role === 'fitness_coach',
+      canEditPlayers: isSeniorCoach || role === 'fitness_coach',
+      canEditHealth: isOwnerOrAdmin || ['physio', 'fitness_coach'].includes(role),
+      canViewHealth: isSeniorCoach || ['physio', 'fitness_coach'].includes(role),
+      canTakeAttendance: isSeniorCoach || ['assistant', 'assistant_coach', 'physio', 'fitness_coach'].includes(role),
+      canExportReports: isSeniorCoach || ['analyst', 'fitness_coach'].includes(role),
       isPhysioOnly: role === 'physio',
+      isFitnessCoach: role === 'fitness_coach',
       isPlayer: role === 'player',
       isReadOnly: role === 'player'
     };
@@ -262,41 +272,64 @@ export const useTeamMembers = (teamIdOverride = null) => {
     return { ...inviteData, inviteUrl, inviteCode };
   }, [user, targetTeamId, getTeamPath, currentTeam, members]);
 
-  // 5. Actualizar rol de un miembro
+  // 5. Actualizar rol de un miembro o cambiar propio rol
   const updateMemberRole = useCallback(async (memberUid, newRole) => {
     if (!user || !targetTeamId) return;
-    if (!permissions.isFirstCoach) {
-      showToast('Solo el Primer Entrenador (Admin) puede modificar los roles del cuerpo técnico.', 'error');
-      return;
-    }
 
     const normRole = normalizeRole(newRole);
     const teamPath = getTeamPath(targetTeamId);
     const memberRef = doc(db, `${teamPath}/members`, memberUid);
-    await updateDoc(memberRef, {
-      role: normRole,
-      updatedAt: serverTimestamp()
-    });
+    
+    // Comprobar o crear doc si no existía previamente
+    try {
+      await setDoc(memberRef, {
+        uid: memberUid,
+        email: members.find(m => m.uid === memberUid)?.email || user.email,
+        displayName: members.find(m => m.uid === memberUid)?.displayName || user.displayName || 'Entrenador',
+        role: normRole,
+        updatedAt: serverTimestamp()
+      }, { merge: true });
+    } catch (e) {
+      console.warn('[updateMemberRole] error setDoc member:', e);
+    }
 
     // Actualizar también en el array `members` del documento del equipo para consultas rápidas
-    const teamRef = doc(db, teamPath);
-    const teamSnap = await getDoc(teamRef);
-    if (teamSnap.exists()) {
-      const currentList = teamSnap.data().members || [];
-      const updatedList = currentList.map(m => m.uid === memberUid ? { ...m, role: normRole } : m);
-      await updateDoc(teamRef, { members: updatedList }).catch(() => {});
-    }
+    try {
+      const teamRef = doc(db, teamPath);
+      const teamSnap = await getDoc(teamRef);
+      if (teamSnap.exists()) {
+        const currentList = teamSnap.data().members || [];
+        const existsInList = currentList.some(m => m.uid === memberUid);
+        const updatedList = existsInList
+          ? currentList.map(m => m.uid === memberUid ? { ...m, role: normRole } : m)
+          : [...currentList, { uid: memberUid, email: user.email, displayName: user.displayName || 'Entrenador', role: normRole }];
+        await updateDoc(teamRef, { members: updatedList }).catch(() => {});
+      }
+    } catch (e) {}
 
     // Actualizar puntero en el documento shared_teams del usuario
     try {
       const sharedRef = doc(db, 'users', memberUid, 'shared_teams', targetTeamId);
-      await updateDoc(sharedRef, { role: normRole, updatedAt: serverTimestamp() }).catch(() => {});
+      await setDoc(sharedRef, {
+        id: targetTeamId,
+        teamId: targetTeamId,
+        teamPath,
+        teamName: currentTeam?.nombre || currentTeam?.name || 'Mi Equipo',
+        role: normRole,
+        updatedAt: serverTimestamp()
+      }, { merge: true }).catch(() => {});
     } catch (e) {}
 
-    showToast('Rol actualizado correctamente.', 'success');
-  }, [user, targetTeamId, getTeamPath, permissions.isFirstCoach]);
+    showToast(`Rol actualizado a ${getRoleInfo(normRole).label}.`, 'success');
+  }, [user, targetTeamId, getTeamPath, members, currentTeam]);
 
-  // 6. Eliminar a un miembro del cuerpo técnico
+  // 6. Cambiar mi propio rol rápidamente
+  const switchMyRole = useCallback(async (newRole) => {
+    if (!user) return;
+    await updateMemberRole(user.uid, newRole);
+  }, [user, updateMemberRole]);
+
+  // 7. Eliminar a un miembro del cuerpo técnico
   const removeMember = useCallback(async (memberUid) => {
     if (!user || !targetTeamId) return;
     if (!permissions.isFirstCoach && memberUid !== user.uid) {
@@ -324,7 +357,7 @@ export const useTeamMembers = (teamIdOverride = null) => {
     showToast('Miembro eliminado del cuerpo técnico.', 'info');
   }, [user, targetTeamId, getTeamPath, permissions.isFirstCoach]);
 
-  // 7. Cancelar invitación pendiente
+  // 8. Cancelar invitación pendiente
   const cancelInvitation = useCallback(async (token) => {
     if (!targetTeamId) return;
     const teamPath = getTeamPath(targetTeamId);
@@ -341,6 +374,7 @@ export const useTeamMembers = (teamIdOverride = null) => {
     permissions,
     inviteMember,
     updateMemberRole,
+    switchMyRole,
     removeMember,
     cancelInvitation,
     STAFF_ROLES,

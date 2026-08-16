@@ -78,14 +78,24 @@ const blobToDataURL = (blob) => {
 };
 
 // Helper: dibuja cualquier objeto de imagen (WebP, DataURL, URL) en Canvas 2D con fondo blanco y devuelve data:image/png
-const convertImageToPngViaCanvas = (srcUrl) => {
+const convertImageToPngViaCanvas = (srcUrl, timeoutMs = 2500) => {
   return new Promise((resolve) => {
+    let resolved = false;
+    const timer = setTimeout(() => {
+      if (!resolved) {
+        resolved = true;
+        resolve(null);
+      }
+    }, timeoutMs);
+
     const img = new Image();
-    // Solo aplicar crossOrigin si la URL empieza por http o // (evitar errores de origin en DataURLs)
     if (typeof srcUrl === 'string' && (srcUrl.startsWith('http') || srcUrl.startsWith('//'))) {
       img.crossOrigin = 'anonymous';
     }
     img.onload = () => {
+      if (resolved) return;
+      resolved = true;
+      clearTimeout(timer);
       try {
         const canvas = document.createElement('canvas');
         const w = img.naturalWidth || img.width || 600;
@@ -96,15 +106,17 @@ const convertImageToPngViaCanvas = (srcUrl) => {
         ctx.fillStyle = '#FFFFFF';
         ctx.fillRect(0, 0, w, h);
         ctx.drawImage(img, 0, 0, w, h);
-        const pngDataUrl = canvas.toDataURL('image/png', 1.0);
+        const pngDataUrl = canvas.toDataURL('image/png', 0.95);
         resolve(pngDataUrl);
       } catch (e) {
         console.warn('[convertImageToPngViaCanvas] Canvas error:', e);
         resolve(null);
       }
     };
-    img.onerror = (err) => {
-      console.warn('[convertImageToPngViaCanvas] Image load error:', err);
+    img.onerror = () => {
+      if (resolved) return;
+      resolved = true;
+      clearTimeout(timer);
       resolve(null);
     };
     img.src = srcUrl;
@@ -131,7 +143,7 @@ export const imageUrlToBase64 = async (url, fallbackInitials = 'M11', isAvatar =
     }
     // Si es WebP, SVG u otro formato DataURL, convertir a PNG mediante Canvas 2D
     try {
-      const convertedPng = await convertImageToPngViaCanvas(targetUrl);
+      const convertedPng = await convertImageToPngViaCanvas(targetUrl, 1500);
       if (convertedPng && convertedPng.startsWith('data:image/png')) {
         return convertedPng;
       }
@@ -140,14 +152,20 @@ export const imageUrlToBase64 = async (url, fallbackInitials = 'M11', isAvatar =
     }
   }
 
-  // Timeout helper (7000ms)
-  const withTimeout = (promise, ms = 7000) =>
+  // Timeout helper (2500ms)
+  const withTimeout = (promise, ms = 2500) =>
     Promise.race([promise, new Promise((resolve) => setTimeout(() => resolve(null), ms))]);
 
   // 2. Si es una URL remota HTTP / HTTPS / gs://
   if (typeof targetUrl === 'string' && (targetUrl.startsWith('http') || targetUrl.startsWith('gs://'))) {
 
-    // A. Firebase Storage SDK getBlob
+    // A. Intentar Canvas 2D directo (la vía más rápida)
+    try {
+      const canvasResult = await convertImageToPngViaCanvas(targetUrl, 2500);
+      if (canvasResult) return canvasResult;
+    } catch (e) {}
+
+    // B. Firebase Storage SDK getBlob
     if (targetUrl.includes('firebasestorage') || targetUrl.startsWith('gs://')) {
       try {
         const base64 = await withTimeout(
@@ -162,11 +180,11 @@ export const imageUrlToBase64 = async (url, fallbackInitials = 'M11', isAvatar =
             const blob = await getBlob(fileRef);
             return await blobToDataURL(blob);
           })(),
-          7000
+          2500
         );
         if (base64) {
           if (base64.startsWith('data:image/webp')) {
-            const png = await convertImageToPngViaCanvas(base64);
+            const png = await convertImageToPngViaCanvas(base64, 1500);
             return png || base64;
           }
           return base64;
@@ -176,7 +194,7 @@ export const imageUrlToBase64 = async (url, fallbackInitials = 'M11', isAvatar =
       }
     }
 
-    // B. Direct Fetch con Blob -> DataURL
+    // C. Direct Fetch con Blob -> DataURL
     try {
       const base64 = await withTimeout(
         (async () => {
@@ -185,26 +203,16 @@ export const imageUrlToBase64 = async (url, fallbackInitials = 'M11', isAvatar =
           const blob = await res.blob();
           return await blobToDataURL(blob);
         })(),
-        7000
+        2500
       );
       if (base64) {
         if (base64.startsWith('data:image/webp')) {
-          const png = await convertImageToPngViaCanvas(base64);
+          const png = await convertImageToPngViaCanvas(base64, 1500);
           return png || base64;
         }
         return base64;
       }
-    } catch (e) {
-      console.warn('[pdfTheme] fetch blob falló:', e);
-    }
-
-    // C. Carga en elemento Image + Canvas con crossOrigin='anonymous'
-    try {
-      const pngBase64 = await withTimeout(convertImageToPngViaCanvas(targetUrl), 7000);
-      if (pngBase64) return pngBase64;
-    } catch (e) {
-      console.warn('[pdfTheme] Image/Canvas falló:', e);
-    }
+    } catch (e) {}
   }
 
   if (isAvatar) {

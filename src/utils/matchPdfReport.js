@@ -1,45 +1,6 @@
 import { savePdfUniversal } from './pdfGenerator';
 import { getEffectiveLanguage } from '../i18n/translations';
-import { drawPdfFooter } from './pdfTheme';
-
-export const imageUrlToBase64 = async (url) => {
-  if (!url) return null;
-  if (typeof url === 'string' && url.startsWith('data:image')) return url;
-
-  try {
-    const res = await fetch(url, { mode: 'cors' });
-    if (res.ok) {
-      const blob = await res.blob();
-      return new Promise((resolve) => {
-        const reader = new FileReader();
-        reader.onloadend = () => resolve(reader.result);
-        reader.onerror = () => resolve(null);
-        reader.readAsDataURL(blob);
-      });
-    }
-  } catch (e) {
-    console.warn('[imageUrlToBase64] Fetch failed, fallback to Image():', e);
-  }
-
-  return new Promise((resolve) => {
-    const img = new Image();
-    img.crossOrigin = 'anonymous';
-    img.onload = () => {
-      try {
-        const canvas = document.createElement('canvas');
-        canvas.width = img.naturalWidth || img.width || 120;
-        canvas.height = img.naturalHeight || img.height || 120;
-        const ctx = canvas.getContext('2d');
-        ctx.drawImage(img, 0, 0);
-        resolve(canvas.toDataURL('image/png'));
-      } catch (err) {
-        resolve(null);
-      }
-    };
-    img.onerror = () => resolve(null);
-    img.src = url;
-  });
-};
+import { drawPdfFooter, imageUrlToBase64 } from './pdfTheme';
 
 const getPdfLibs = async () => {
   const { jsPDF } = await import('jspdf');

@@ -68,13 +68,69 @@ const generateInitialsAvatar = (fallbackInitials) => {
  * @param {boolean} isAvatar - Si es true, genera un avatar con iniciales si falla. Si es false (diagramas/capturas), devuelve null.
  */
 // Helper: convierte cualquier Blob a DataURL
-const blobToDataURL = (blob) => {
+export const blobToDataURL = (blob) => {
   return new Promise((resolve) => {
     const reader = new FileReader();
     reader.onloadend = () => resolve(reader.result);
     reader.onerror = () => resolve(null);
     reader.readAsDataURL(blob);
   });
+};
+
+/**
+ * Función robusta de precarga con fetch + blob + Firebase Storage SDK
+ * Convierte cualquier URL remota a dataURL antes de renderizar o pasar a jsPDF / html2canvas.
+ */
+export const preloadImageToDataURL = async (url) => {
+  if (!url) return null;
+  if (typeof url === 'string' && url.startsWith('data:')) {
+    return url;
+  }
+
+  // Normalizar URLs relativas
+  let targetUrl = url;
+  if (typeof targetUrl === 'string' && !targetUrl.startsWith('data:') && !targetUrl.startsWith('http') && !targetUrl.startsWith('gs://')) {
+    const origin = typeof window !== 'undefined' && window.location ? window.location.origin : 'https://www.mister11.app';
+    const cleanPath = targetUrl.startsWith('/') ? targetUrl : `/${targetUrl}`;
+    targetUrl = `${origin}${cleanPath}`;
+  }
+
+  // 1. Intentar Firebase Storage SDK getBlob si es URL de storage
+  if (typeof targetUrl === 'string' && (targetUrl.includes('firebasestorage') || targetUrl.startsWith('gs://'))) {
+    try {
+      let fileRef = null;
+      if (targetUrl.startsWith('gs://')) {
+        fileRef = storageRef(storage, targetUrl);
+      } else {
+        try { fileRef = storageRef(storage, targetUrl); } catch (_) {}
+      }
+      if (fileRef) {
+        const blob = await getBlob(fileRef);
+        if (blob) {
+          const b64 = await blobToDataURL(blob);
+          if (b64) return b64;
+        }
+      }
+    } catch (_) {}
+  }
+
+  // 2. Intentar fetch estándar con mode: 'cors'
+  try {
+    const response = await fetch(targetUrl, { mode: 'cors' });
+    if (response.ok) {
+      const blob = await response.blob();
+      const b64 = await blobToDataURL(blob);
+      if (b64) return b64;
+    }
+  } catch (_) {}
+
+  // 3. Fallback Canvas 2D
+  try {
+    const canvasB64 = await convertImageToPngViaCanvas(targetUrl, 2000);
+    if (canvasB64) return canvasB64;
+  } catch (_) {}
+
+  return null;
 };
 
 // Helper: dibuja cualquier objeto de imagen (WebP, DataURL, URL) en Canvas 2D con fondo blanco y devuelve data:image/png

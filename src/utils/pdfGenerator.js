@@ -2,7 +2,7 @@ import { downloadPDF } from './download.js';
 import { db, auth } from '../firebaseConfig';
 import { doc, getDoc } from 'firebase/firestore';
 import autoTable from 'jspdf-autotable';
-import { PDF_COLORS, imageUrlToBase64, drawPdfHeader, drawPdfFooter } from './pdfTheme';
+import { PDF_COLORS, imageUrlToBase64, preloadImageToDataURL, drawPdfHeader, drawPdfFooter } from './pdfTheme';
 
 const getJsPDF = async () => {
   const { jsPDF } = await import('jspdf');
@@ -661,7 +661,7 @@ export const preloadSessionImages = async (session, pizarras = [], captures = []
   const rawMainDiagram = session.mainDiagramUrl || session.diagramUrl || session.diagram || session.thumbnail || session.boardCaptureUrl || session.imageUrl || session.image;
   if (rawMainDiagram) {
     try {
-      mainDiagramBase64 = await imageUrlToBase64(rawMainDiagram, 'Diagrama Principal', false);
+      mainDiagramBase64 = await preloadImageToDataURL(rawMainDiagram);
     } catch (e) {
       console.warn('[preloadSessionImages] Error cargando diagrama principal:', e);
     }
@@ -713,12 +713,13 @@ export const preloadSessionImages = async (session, pizarras = [], captures = []
 
       let base64 = null;
       if (rawImg) {
-        base64 = await imageUrlToBase64(rawImg, b.name || `Bloque ${bi + 1}`, false);
+        base64 = await preloadImageToDataURL(rawImg);
       }
 
       return {
         ...b,
         imageUrl: base64 || (typeof rawImg === 'string' ? rawImg : null),
+        boardCapture: base64 || (typeof rawImg === 'string' ? rawImg : null),
         boardCaptureUrl: base64 || (typeof rawImg === 'string' ? rawImg : null),
         imagenProtocolo: base64 || (typeof rawImg === 'string' ? rawImg : null),
         resolvedBase64: base64 || (typeof rawImg === 'string' ? rawImg : null),

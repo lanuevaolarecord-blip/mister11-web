@@ -3,60 +3,77 @@ import { useParams, useSearchParams, useNavigate } from 'react-router-dom';
 import { doc, getDoc, setDoc, updateDoc, serverTimestamp, arrayUnion } from 'firebase/firestore';
 import { db, signInWithGoogle } from '../firebaseConfig';
 import { useAuth } from '../context/AuthContext';
-import { STAFF_ROLES } from '../hooks/useTeamMembers';
-import { Shield, CheckCircle, AlertCircle, Users, ArrowRight, Loader } from 'lucide-react';
+import { STAFF_ROLES, normalizeRole, getRoleInfo } from '../hooks/useTeamMembers';
+import { Shield, CheckCircle, AlertCircle, Users, ArrowRight, Loader, KeyRound } from 'lucide-react';
 import './Login.css';
 
 const JoinTeam = () => {
-  const { token: routeToken } = useParams();
+  const { token: routeToken, code: routeCode } = useParams();
   const [searchParams] = useSearchParams();
-  const token = routeToken || searchParams.get('token');
+  const token = routeToken || routeCode || searchParams.get('token') || searchParams.get('code');
   
   const navigate = useNavigate();
-  const { user, changeActiveTeam, loginAsGuest } = useAuth();
+  const { user, changeActiveTeam } = useAuth();
 
-  const [loading, setLoading] = useState(true);
+  const [inputCode, setInputCode] = useState('');
+  const [loading, setLoading] = useState(Boolean(token));
   const [error, setError] = useState(null);
   const [invitation, setInvitation] = useState(null);
+  const [activeToken, setActiveToken] = useState(token || '');
   const [accepting, setAccepting] = useState(false);
   const [success, setSuccess] = useState(false);
 
-  useEffect(() => {
-    if (!token) {
-      setError('Enlace de invitación no válido o incompleto.');
-      setLoading(false);
-      return;
-    }
+  const lookupInvitation = async (codeToLookup) => {
+    if (!codeToLookup) return;
+    setLoading(true);
+    setError(null);
+    try {
+      // 1. Intentar buscar por token o código exacto
+      let invRef = doc(db, 'staff_invitations', codeToLookup);
+      let invSnap = await getDoc(invRef);
 
-    const fetchInvitation = async () => {
-      try {
-        const invRef = doc(db, 'staff_invitations', token);
-        const invSnap = await getDoc(invRef);
-
-        if (!invSnap.exists()) {
-          setError('Esta invitación no existe, ha expirado o ya fue utilizada.');
-          setLoading(false);
-          return;
-        }
-
-        const data = invSnap.data();
-        if (data.status !== 'pending') {
-          setError('Esta invitación ya ha sido aceptada o cancelada.');
-          setLoading(false);
-          return;
-        }
-
-        setInvitation(data);
-      } catch (err) {
-        console.error('[JoinTeam] Error al cargar invitación:', err);
-        setError('Error al consultar la invitación. Verifica tu conexión de red.');
-      } finally {
-        setLoading(false);
+      // Si no existe, intentar en mayúsculas (por si es un código de 6 dígitos)
+      if (!invSnap.exists() && codeToLookup.length <= 8) {
+        invRef = doc(db, 'staff_invitations', codeToLookup.toUpperCase());
+        invSnap = await getDoc(invRef);
       }
-    };
 
-    fetchInvitation();
+      if (!invSnap.exists()) {
+        setError('Esta invitación no existe, ha expirado o el código es incorrecto.');
+        setLoading(false);
+        return;
+      }
+
+      const data = invSnap.data();
+      if (data.status !== 'pending') {
+        setError('Esta invitación ya ha sido aceptada o cancelada.');
+        setLoading(false);
+        return;
+      }
+
+      setInvitation(data);
+      setActiveToken(codeToLookup);
+    } catch (err) {
+      console.error('[JoinTeam] Error al cargar invitación:', err);
+      setError('Error al consultar la invitación. Verifica tu conexión.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (token) {
+      lookupInvitation(token);
+    } else {
+      setLoading(false);
+    }
   }, [token]);
+
+  const handleManualCodeSubmit = (e) => {
+    e.preventDefault();
+    if (!inputCode.trim()) return;
+    lookupInvitation(inputCode.trim());
+  };
 
   const handleGoogleLogin = async () => {
     try {
@@ -77,6 +94,7 @@ const JoinTeam = () => {
 
     try {
       const { teamId, teamPath, teamName, role } = invitation;
+      const cleanRole = normalizeRole(role);
 
       // 1. Guardar miembro en la subcolección members del equipo
       const memberRef = doc(db, `${teamPath}/members`, user.uid);
@@ -84,11 +102,11 @@ const JoinTeam = () => {
         uid: user.uid,
         email: user.email || '',
         displayName: user.displayName || 'Entrenador Colaborador',
-        role: role || 'assistant_coach',
+        role: cleanRole,
         joinedAt: new Date().toISOString()
       }, { merge: true });
 
-      // 2. Registrar en array members del doc del equipo para queries
+      // 2. Registrar en array members del doc del equipo para queries rápidas
       try {
         const teamRef = doc(db, teamPath);
         await updateDoc(teamRef, {
@@ -96,7 +114,7 @@ const JoinTeam = () => {
             uid: user.uid,
             email: user.email || '',
             displayName: user.displayName || 'Entrenador Colaborador',
-            role: role || 'assistant_coach',
+            role: cleanRole,
             joinedAt: new Date().toISOString()
           })
         });
@@ -111,13 +129,13 @@ const JoinTeam = () => {
         teamId,
         teamPath,
         teamName: teamName || 'Equipo',
-        role: role || 'assistant_coach',
+        role: cleanRole,
         joinedAt: new Date().toISOString(),
         updatedAt: serverTimestamp()
       }, { merge: true });
 
-      // 4. Marcar invitación como aceptada
-      await updateDoc(doc(db, 'staff_invitations', token), {
+      // 4. Marcar invitación como aceptada en Firestore
+      await updateDoc(doc(db, 'staff_invitations', activeToken), {
         status: 'accepted',
         acceptedByUid: user.uid,
         acceptedByEmail: user.email || '',
@@ -138,7 +156,7 @@ const JoinTeam = () => {
     }
   };
 
-  const roleInfo = invitation?.role ? STAFF_ROLES[invitation.role.toUpperCase()] || { label: invitation.role, badge: 'Cuerpo Técnico', color: '#10B981' } : null;
+  const roleInfo = invitation?.role ? getRoleInfo(invitation.role) : null;
 
   return (
     <div className="login-page">
@@ -160,8 +178,8 @@ const JoinTeam = () => {
               </div>
               <h3 style={{ color: 'var(--text-primary)', marginBottom: '8px', fontSize: '1.2rem' }}>Invitación no disponible</h3>
               <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', marginBottom: '20px', lineHeight: '1.4' }}>{error}</p>
-              <button className="btn-primary full-width" onClick={() => navigate('/login')}>
-                Ir al Inicio
+              <button className="btn-primary full-width" onClick={() => { setError(null); setInvitation(null); }}>
+                Probar con otro código
               </button>
             </div>
           ) : success ? (
@@ -173,6 +191,41 @@ const JoinTeam = () => {
               <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', marginBottom: '15px' }}>
                 Cargando tu panel técnico de <strong>{invitation.teamName}</strong>...
               </p>
+            </div>
+          ) : !invitation ? (
+            <div>
+              <div style={{ background: 'rgba(212, 168, 67, 0.15)', color: '#D4A843', width: '56px', height: '56px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 15px' }}>
+                <KeyRound size={28} />
+              </div>
+              <h2 style={{ fontSize: '1.3rem', marginBottom: '6px', color: 'var(--text-primary)' }}>Unirse a un Equipo</h2>
+              <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', marginBottom: '20px' }}>
+                Introduce el código de 6 dígitos proporcionado por tu Primer Entrenador:
+              </p>
+
+              <form onSubmit={handleManualCodeSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                <input
+                  type="text"
+                  maxLength={12}
+                  value={inputCode}
+                  onChange={e => setInputCode(e.target.value.toUpperCase())}
+                  placeholder="Ej: ABC123"
+                  style={{
+                    textAlign: 'center',
+                    fontSize: '1.4rem',
+                    letterSpacing: '3px',
+                    fontWeight: 'bold',
+                    padding: '12px',
+                    borderRadius: '8px',
+                    border: '1px solid var(--border-color)',
+                    background: 'rgba(0,0,0,0.3)',
+                    color: 'var(--text-primary)'
+                  }}
+                  required
+                />
+                <button type="submit" className="btn-primary full-width" style={{ minHeight: '46px', fontSize: '0.95rem' }}>
+                  Buscar Invitación
+                </button>
+              </form>
             </div>
           ) : (
             <div>
@@ -249,7 +302,7 @@ const JoinTeam = () => {
                   </button>
                   <button
                     className="btn-outline full-width"
-                    onClick={() => navigate(`/login?returnUrl=/join-team/${token}`)}
+                    onClick={() => navigate(`/login?returnUrl=/join-team/${activeToken}`)}
                     style={{ minHeight: '42px', fontSize: '0.85rem' }}
                   >
                     Entrar con Email / Contraseña

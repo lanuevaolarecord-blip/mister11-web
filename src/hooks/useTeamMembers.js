@@ -14,41 +14,78 @@ import {
 } from 'firebase/firestore';
 
 export const STAFF_ROLES = {
-  FIRST_COACH: {
-    id: 'first_coach',
-    label: 'Primer Entrenador',
+  ADMIN: {
+    id: 'admin',
+    aliases: ['first_coach', 'owner', 'admin'],
+    label: 'Primer Entrenador (Admin)',
     badge: '👑 Primer Entrenador',
     color: '#D4A843',
-    description: 'Control total: gestión del equipo, miembros, partidos, sesiones y táctica.'
+    textColor: '#FFFFFF',
+    description: 'Control total: gestión del equipo, miembros, partidos, sesiones, salud y táctica.'
   },
-  SECOND_COACH: {
-    id: 'second_coach',
+  COACH: {
+    id: 'coach',
+    aliases: ['second_coach', 'coach'],
     label: 'Segundo Entrenador',
-    badge: '🥈 Segundo Entrenador',
-    color: '#3B82F6',
+    badge: '🟢 Segundo Entrenador',
+    color: '#10B981',
+    textColor: '#FFFFFF',
     description: 'Edición de partidos, alineaciones, sesiones, pizarra, planning y asistencia.'
   },
-  ASSISTANT_COACH: {
-    id: 'assistant_coach',
+  ASSISTANT: {
+    id: 'assistant',
+    aliases: ['assistant_coach', 'assistant'],
     label: 'Ayudante / 3er Entrenador',
-    badge: '📋 Ayudante',
-    color: '#10B981',
+    badge: '🔵 Ayudante',
+    color: '#3B82F6',
+    textColor: '#FFFFFF',
     description: 'Registro de Live Stats, control de asistencia y apoyo en sesiones.'
   },
   PHYSIO: {
     id: 'physio',
+    aliases: ['medical', 'physio'],
     label: 'Fisioterapeuta / Médico',
-    badge: '🩺 Fisioterapeuta',
+    badge: '🔴 Fisioterapeuta',
     color: '#EF4444',
-    description: 'Acceso y edición de salud, lesiones, tests físicos/wellness y asistencia.'
+    textColor: '#FFFFFF',
+    description: 'Acceso y edición de historial médico, lesiones, tests físicos/wellness y asistencia.'
   },
   ANALYST: {
     id: 'analyst',
+    aliases: ['scout', 'analyst'],
     label: 'Analista Táctico',
-    badge: '📊 Analista',
+    badge: '🟣 Analista',
     color: '#8B5CF6',
+    textColor: '#FFFFFF',
     description: 'Registro y análisis de Live Stats en tiempo real, informes y analíticas.'
+  },
+  PLAYER: {
+    id: 'player',
+    aliases: ['jugador', 'player'],
+    label: 'Jugador',
+    badge: '⚪ Jugador',
+    color: '#94A3B8',
+    textColor: '#FFFFFF',
+    description: 'Acceso de solo lectura a su ficha individual, sesiones y calendario.'
   }
+};
+
+export const normalizeRole = (role) => {
+  if (!role) return 'admin';
+  const r = role.toLowerCase().trim();
+  for (const roleKey of Object.keys(STAFF_ROLES)) {
+    const info = STAFF_ROLES[roleKey];
+    if (info.id === r || info.aliases.includes(r)) {
+      return info.id;
+    }
+  }
+  return 'coach';
+};
+
+export const getRoleInfo = (role) => {
+  const norm = normalizeRole(role);
+  const found = Object.values(STAFF_ROLES).find(r => r.id === norm);
+  return found || STAFF_ROLES.ADMIN;
 };
 
 export const useTeamMembers = (teamIdOverride = null) => {
@@ -80,17 +117,19 @@ export const useTeamMembers = (teamIdOverride = null) => {
       const list = snapshot.docs.map(d => ({
         id: d.id,
         uid: d.id,
-        ...d.data()
+        ...d.data(),
+        normalizedRole: normalizeRole(d.data().role)
       }));
 
-      // Si la subcolección está vacía pero el equipo tiene ownerUid o members array en el doc principal
+      // Si la subcolección está vacía pero el equipo tiene ownerUid en el doc principal
       if (list.length === 0 && currentTeam) {
         const fallbackOwner = {
           id: currentTeam.ownerUid || user.uid,
           uid: currentTeam.ownerUid || user.uid,
           email: currentTeam.ownerEmail || user.email || '',
           displayName: currentTeam.ownerName || user.displayName || 'Primer Entrenador',
-          role: 'first_coach',
+          role: 'admin',
+          normalizedRole: 'admin',
           joinedAt: currentTeam.createdAt || new Date().toISOString()
         };
         setMembers([fallbackOwner]);
@@ -107,7 +146,8 @@ export const useTeamMembers = (teamIdOverride = null) => {
           uid: user.uid,
           email: user.email,
           displayName: user.displayName || 'Entrenador',
-          role: 'first_coach'
+          role: 'admin',
+          normalizedRole: 'admin'
         }]);
       }
       setLoading(false);
@@ -142,32 +182,45 @@ export const useTeamMembers = (teamIdOverride = null) => {
 
   // 3. Determinar el rol del usuario actual en el equipo
   const currentUserRole = useMemo(() => {
-    if (!user) return null;
+    if (!user) return 'admin';
     const member = members.find(m => m.uid === user.uid || m.id === user.uid);
-    if (member) return member.role || 'first_coach';
-    if (currentTeam?.ownerUid === user.uid) return 'first_coach';
-    return 'first_coach'; // default si es el creador
+    if (member) return normalizeRole(member.role);
+    if (currentTeam?.ownerUid === user.uid) return 'admin';
+    return 'admin'; // default si es el creador
   }, [user, members, currentTeam]);
 
-  // Permisos según el rol
+  // Permisos granulares según el rol
   const permissions = useMemo(() => {
     const role = currentUserRole;
+    const isOwnerOrAdmin = ['admin', 'first_coach', 'owner'].includes(role);
+    const isSeniorCoach = isOwnerOrAdmin || ['coach', 'second_coach'].includes(role);
+
     return {
-      isFirstCoach: role === 'first_coach',
-      canManageStaff: role === 'first_coach',
-      canEditMatches: ['first_coach', 'second_coach', 'analyst', 'assistant_coach'].includes(role),
-      canLiveRecord: ['first_coach', 'second_coach', 'analyst', 'assistant_coach'].includes(role),
-      canEditSessions: ['first_coach', 'second_coach'].includes(role),
-      canEditTacticBoard: ['first_coach', 'second_coach', 'analyst'].includes(role),
-      canEditPlayers: ['first_coach', 'second_coach'].includes(role),
-      canEditHealth: ['first_coach', 'physio', 'second_coach'].includes(role),
-      canTakeAttendance: ['first_coach', 'second_coach', 'assistant_coach', 'physio'].includes(role),
-      canExportReports: ['first_coach', 'second_coach', 'analyst'].includes(role)
+      role,
+      roleInfo: getRoleInfo(role),
+      isAdmin: isOwnerOrAdmin,
+      isFirstCoach: isOwnerOrAdmin,
+      isCoach: isSeniorCoach,
+      canManageStaff: isOwnerOrAdmin,
+      canDeleteTeam: isOwnerOrAdmin,
+      canEditMatches: isSeniorCoach || ['analyst', 'assistant', 'assistant_coach'].includes(role),
+      canEditLineups: isSeniorCoach,
+      canLiveRecord: isSeniorCoach || ['analyst', 'assistant', 'assistant_coach'].includes(role),
+      canEditSessions: isSeniorCoach,
+      canEditTacticBoard: isSeniorCoach || role === 'analyst',
+      canEditPlayers: isSeniorCoach,
+      canEditHealth: isOwnerOrAdmin || role === 'physio',
+      canViewHealth: isSeniorCoach || role === 'physio',
+      canTakeAttendance: isSeniorCoach || ['assistant', 'assistant_coach', 'physio'].includes(role),
+      canExportReports: isSeniorCoach || role === 'analyst',
+      isPhysioOnly: role === 'physio',
+      isPlayer: role === 'player',
+      isReadOnly: role === 'player'
     };
   }, [currentUserRole]);
 
   // 4. Crear invitación para un nuevo miembro del cuerpo técnico
-  const inviteMember = useCallback(async (email, role = 'assistant_coach') => {
+  const inviteMember = useCallback(async (email, role = 'coach') => {
     if (!user || !targetTeamId) return null;
     const emailClean = email.trim().toLowerCase();
 
@@ -177,12 +230,15 @@ export const useTeamMembers = (teamIdOverride = null) => {
       return null;
     }
 
-    const token = `staff_${Date.now()}_${Math.random().toString(36).substr(2, 8)}`;
+    const randomSuffix = Math.random().toString(36).substring(2, 8).toUpperCase();
+    const inviteCode = randomSuffix;
+    const token = `staff_${Date.now()}_${inviteCode.toLowerCase()}`;
     const teamPath = getTeamPath(targetTeamId);
 
     const inviteData = {
       id: token,
       token,
+      inviteCode,
       teamId: targetTeamId,
       teamPath,
       teamName: currentTeam?.nombre || currentTeam?.name || 'Mi Equipo',
@@ -190,7 +246,7 @@ export const useTeamMembers = (teamIdOverride = null) => {
       invitedByUid: user.uid,
       invitedByName: user.displayName || user.email,
       email: emailClean,
-      role,
+      role: normalizeRole(role),
       status: 'pending',
       createdAt: new Date().toISOString(),
       expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString() // 7 días
@@ -199,24 +255,26 @@ export const useTeamMembers = (teamIdOverride = null) => {
     // Guardar en subcolección del equipo y en colección global de invitaciones de staff
     await setDoc(doc(db, `${teamPath}/staff_invitations`, token), inviteData);
     await setDoc(doc(db, 'staff_invitations', token), inviteData);
+    await setDoc(doc(db, 'staff_invitations', inviteCode), inviteData);
 
     const inviteUrl = `${window.location.origin}/join-team/${token}`;
-    showToast('Enlace de invitación generado con éxito.', 'success');
-    return { ...inviteData, inviteUrl };
+    showToast('Enlace y código de invitación generados con éxito.', 'success');
+    return { ...inviteData, inviteUrl, inviteCode };
   }, [user, targetTeamId, getTeamPath, currentTeam, members]);
 
   // 5. Actualizar rol de un miembro
   const updateMemberRole = useCallback(async (memberUid, newRole) => {
     if (!user || !targetTeamId) return;
     if (!permissions.isFirstCoach) {
-      showToast('Solo el Primer Entrenador puede modificar los roles del cuerpo técnico.', 'error');
+      showToast('Solo el Primer Entrenador (Admin) puede modificar los roles del cuerpo técnico.', 'error');
       return;
     }
 
+    const normRole = normalizeRole(newRole);
     const teamPath = getTeamPath(targetTeamId);
     const memberRef = doc(db, `${teamPath}/members`, memberUid);
     await updateDoc(memberRef, {
-      role: newRole,
+      role: normRole,
       updatedAt: serverTimestamp()
     });
 
@@ -225,9 +283,15 @@ export const useTeamMembers = (teamIdOverride = null) => {
     const teamSnap = await getDoc(teamRef);
     if (teamSnap.exists()) {
       const currentList = teamSnap.data().members || [];
-      const updatedList = currentList.map(m => m.uid === memberUid ? { ...m, role: newRole } : m);
+      const updatedList = currentList.map(m => m.uid === memberUid ? { ...m, role: normRole } : m);
       await updateDoc(teamRef, { members: updatedList }).catch(() => {});
     }
+
+    // Actualizar puntero en el documento shared_teams del usuario
+    try {
+      const sharedRef = doc(db, 'users', memberUid, 'shared_teams', targetTeamId);
+      await updateDoc(sharedRef, { role: normRole, updatedAt: serverTimestamp() }).catch(() => {});
+    } catch (e) {}
 
     showToast('Rol actualizado correctamente.', 'success');
   }, [user, targetTeamId, getTeamPath, permissions.isFirstCoach]);
@@ -236,7 +300,7 @@ export const useTeamMembers = (teamIdOverride = null) => {
   const removeMember = useCallback(async (memberUid) => {
     if (!user || !targetTeamId) return;
     if (!permissions.isFirstCoach && memberUid !== user.uid) {
-      showToast('Solo el Primer Entrenador puede eliminar miembros del equipo.', 'error');
+      showToast('Solo el Primer Entrenador (Admin) puede eliminar miembros del equipo.', 'error');
       return;
     }
 
@@ -251,6 +315,11 @@ export const useTeamMembers = (teamIdOverride = null) => {
       const updatedList = currentList.filter(m => m.uid !== memberUid);
       await updateDoc(teamRef, { members: updatedList }).catch(() => {});
     }
+
+    // Eliminar de shared_teams del usuario
+    try {
+      await deleteDoc(doc(db, 'users', memberUid, 'shared_teams', targetTeamId)).catch(() => {});
+    } catch (e) {}
 
     showToast('Miembro eliminado del cuerpo técnico.', 'info');
   }, [user, targetTeamId, getTeamPath, permissions.isFirstCoach]);
@@ -274,6 +343,8 @@ export const useTeamMembers = (teamIdOverride = null) => {
     updateMemberRole,
     removeMember,
     cancelInvitation,
-    STAFF_ROLES
+    STAFF_ROLES,
+    getRoleInfo,
+    normalizeRole
   };
 };

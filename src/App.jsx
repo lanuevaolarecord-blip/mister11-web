@@ -235,6 +235,16 @@ function App() {
           />
 
           <Route 
+            path="/join/:teamId/:code" 
+            element={<JoinTeam />} 
+          />
+
+          <Route 
+            path="/join/:code" 
+            element={<JoinTeam />} 
+          />
+
+          <Route 
             path="/shared/consentimiento" 
             element={<ConsentimientoFirma />} 
           />

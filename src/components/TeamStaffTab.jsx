@@ -23,7 +23,9 @@ export const TeamStaffTab = ({ activeTeam }) => {
   const [selectedRole, setSelectedRole] = useState('second_coach');
   const [isInviting, setIsInviting] = useState(false);
   const [generatedLink, setGeneratedLink] = useState('');
+  const [generatedCode, setGeneratedCode] = useState('');
   const [copied, setCopied] = useState(false);
+  const [copiedCode, setCopiedCode] = useState(false);
 
   const handleSendInvite = async (e) => {
     e.preventDefault();
@@ -34,6 +36,7 @@ export const TeamStaffTab = ({ activeTeam }) => {
       const res = await inviteMember(inviteEmail, selectedRole);
       if (res?.inviteUrl) {
         setGeneratedLink(res.inviteUrl);
+        setGeneratedCode(res.inviteCode || '');
         setInviteEmail('');
       }
     } catch (err) {
@@ -49,6 +52,14 @@ export const TeamStaffTab = ({ activeTeam }) => {
     setCopied(true);
     showToast('Enlace copiado al portapapeles.', 'success');
     setTimeout(() => setCopied(false), 2500);
+  };
+
+  const handleCopyCode = () => {
+    if (!generatedCode) return;
+    navigator.clipboard.writeText(generatedCode);
+    setCopiedCode(true);
+    showToast('Código de 6 dígitos copiado.', 'success');
+    setTimeout(() => setCopiedCode(false), 2500);
   };
 
   return (
@@ -352,7 +363,7 @@ export const TeamStaffTab = ({ activeTeam }) => {
                   Copia y envía este enlace al miembro del cuerpo técnico para que se una al equipo:
                 </p>
 
-                <div style={{ display: 'flex', gap: '8px', marginBottom: '20px' }}>
+                <div style={{ display: 'flex', gap: '8px', marginBottom: '14px' }}>
                   <input
                     type="text"
                     readOnly
@@ -364,6 +375,28 @@ export const TeamStaffTab = ({ activeTeam }) => {
                     {copied ? 'Copiado' : 'Copiar'}
                   </button>
                 </div>
+
+                {generatedCode && (
+                  <div style={{
+                    background: 'rgba(212, 168, 67, 0.1)',
+                    border: '1px solid rgba(212, 168, 67, 0.3)',
+                    borderRadius: '8px',
+                    padding: '12px',
+                    marginBottom: '16px',
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center'
+                  }}>
+                    <div style={{ textAlign: 'left' }}>
+                      <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', display: 'block' }}>Código de 6 dígitos:</span>
+                      <strong style={{ fontSize: '1.25rem', color: 'var(--accent-gold, #D4A843)', letterSpacing: '2px' }}>{generatedCode}</strong>
+                    </div>
+                    <button className="btn-outline" onClick={handleCopyCode} style={{ padding: '6px 12px', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      {copiedCode ? <Check size={14} /> : <Copy size={14} />}
+                      {copiedCode ? 'Copiado' : 'Copiar'}
+                    </button>
+                  </div>
+                )}
 
                 <button className="btn-outline full-width" onClick={() => setIsInviteModalOpen(false)}>
                   Cerrar

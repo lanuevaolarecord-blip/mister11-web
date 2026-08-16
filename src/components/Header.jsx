@@ -1,6 +1,7 @@
 import React from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useTeams } from '../hooks/useTeams';
+import { useTeamMembers } from '../hooks/useTeamMembers';
 import { ChevronDown, Sun, Moon, Bell, Settings, Shield } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
 import { useMatch } from '../context/MatchContext';
@@ -10,6 +11,7 @@ const Header = ({ onToggleNotif }) => {
   const location = useLocation();
   const navigate = useNavigate();
   const { teams, activeTeam, selectTeam } = useTeams();
+  const { permissions } = useTeamMembers(activeTeam?.id);
   const { darkMode, toggleTheme } = useTheme();
   const { isRunning, matchSeconds, formatMatchTime } = useMatch();
   const { t } = useTranslation();
@@ -89,6 +91,30 @@ const Header = ({ onToggleNotif }) => {
                 );
               })}
             </select>
+          </div>
+        )}
+
+        {/* Badge de Rol en el Cuerpo Técnico */}
+        {permissions?.roleInfo && (
+          <div 
+            title={`Rol en el equipo: ${permissions.roleInfo.label}\n${permissions.roleInfo.description}`}
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '4px',
+              padding: '4px 10px',
+              borderRadius: '16px',
+              fontSize: '0.72rem',
+              fontWeight: '700',
+              background: `${permissions.roleInfo.color}15`,
+              color: permissions.roleInfo.color,
+              border: `1px solid ${permissions.roleInfo.color}40`,
+              whiteSpace: 'nowrap',
+              cursor: 'default',
+              userSelect: 'none'
+            }}
+          >
+            <span>{permissions.roleInfo.badge}</span>
           </div>
         )}
 

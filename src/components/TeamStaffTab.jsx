@@ -16,7 +16,7 @@ export const TeamStaffTab = ({ activeTeam }) => {
     updateMemberRole,
     removeMember,
     cancelInvitation
-  } = useTeamMembers();
+  } = useTeamMembers(activeTeam?.id);
 
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
   const [inviteEmail, setInviteEmail] = useState('');
@@ -27,9 +27,30 @@ export const TeamStaffTab = ({ activeTeam }) => {
   const [copied, setCopied] = useState(false);
   const [copiedCode, setCopiedCode] = useState(false);
 
+  const copyToClipboard = async (text) => {
+    try {
+      if (navigator?.clipboard?.writeText) {
+        await navigator.clipboard.writeText(text);
+        return true;
+      }
+    } catch (_) {}
+    try {
+      const textarea = document.createElement('textarea');
+      textarea.value = text;
+      textarea.style.position = 'fixed';
+      textarea.style.opacity = '0';
+      document.body.appendChild(textarea);
+      textarea.select();
+      document.execCommand('copy');
+      document.body.removeChild(textarea);
+      return true;
+    } catch (_) {
+      return false;
+    }
+  };
+
   const handleSendInvite = async (e) => {
-    e.preventDefault();
-    if (!inviteEmail) return;
+    if (e && e.preventDefault) e.preventDefault();
 
     setIsInviting(true);
     try {
@@ -46,20 +67,39 @@ export const TeamStaffTab = ({ activeTeam }) => {
     }
   };
 
-  const handleCopyLink = () => {
+  const handleCopyLink = async () => {
     if (!generatedLink) return;
-    navigator.clipboard.writeText(generatedLink);
-    setCopied(true);
-    showToast('Enlace copiado al portapapeles.', 'success');
-    setTimeout(() => setCopied(false), 2500);
+    const ok = await copyToClipboard(generatedLink);
+    if (ok) {
+      setCopied(true);
+      showToast('Enlace copiado al portapapeles.', 'success');
+      setTimeout(() => setCopied(false), 2500);
+    }
   };
 
-  const handleCopyCode = () => {
+  const handleShareNative = async () => {
+    if (!generatedLink) return;
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: `Únete al Cuerpo Técnico de ${activeTeam?.nombre || 'Mi Equipo'} - Míster11`,
+          text: `¡Hola! Únete al cuerpo técnico de ${activeTeam?.nombre || 'Mi Equipo'} en Míster11 con este enlace:\n${generatedLink}\nCódigo de acceso: ${generatedCode}`,
+          url: generatedLink
+        });
+      } catch (_) {}
+    } else {
+      handleCopyLink();
+    }
+  };
+
+  const handleCopyCode = async () => {
     if (!generatedCode) return;
-    navigator.clipboard.writeText(generatedCode);
-    setCopiedCode(true);
-    showToast('Código de 6 dígitos copiado.', 'success');
-    setTimeout(() => setCopiedCode(false), 2500);
+    const ok = await copyToClipboard(generatedCode);
+    if (ok) {
+      setCopiedCode(true);
+      showToast('Código de 6 dígitos copiado.', 'success');
+      setTimeout(() => setCopiedCode(false), 2500);
+    }
   };
 
   return (
@@ -353,7 +393,7 @@ export const TeamStaffTab = ({ activeTeam }) => {
                     Cancelar
                   </button>
                   <button type="submit" className="btn-primary" disabled={isInviting}>
-                    {isInviting ? 'Generando...' : 'Generar Invitación'}
+                    {isInviting ? 'Generando...' : (inviteEmail ? 'Enviar Invitación' : '⚡ Generar Enlace / Código')}
                   </button>
                 </div>
               </form>
@@ -377,6 +417,17 @@ export const TeamStaffTab = ({ activeTeam }) => {
                   <button className="btn-primary" onClick={handleCopyLink} style={{ display: 'flex', alignItems: 'center', gap: '6px', whiteSpace: 'nowrap' }}>
                     {copied ? <Check size={16} /> : <Copy size={16} />}
                     {copied ? 'Copiado' : 'Copiar'}
+                  </button>
+                </div>
+
+                <div style={{ display: 'flex', gap: '8px', marginBottom: '16px' }}>
+                  <button
+                    type="button"
+                    className="btn-primary full-width"
+                    onClick={handleShareNative}
+                    style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', background: '#2E7D5C', fontWeight: 'bold' }}
+                  >
+                    📲 Compartir Enlace (WhatsApp / Apps)
                   </button>
                 </div>
 

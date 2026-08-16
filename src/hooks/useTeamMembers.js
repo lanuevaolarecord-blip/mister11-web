@@ -122,29 +122,35 @@ export const useTeamMembers = (teamIdOverride = null) => {
 
     // Escuchar subcolección 'members' dentro del equipo
     const membersRef = collection(db, `${teamPath}/members`);
-    const unsub = onSnapshot(membersRef, (snapshot) => {
-      const list = snapshot.docs.map(d => ({
+    const unsub = onSnapshot(membersRef, async (snapshot) => {
+      let list = snapshot.docs.map(d => ({
         id: d.id,
         uid: d.id,
         ...d.data(),
         normalizedRole: normalizeRole(d.data().role)
       }));
 
-      // Si la subcolección está vacía pero el equipo tiene ownerUid en el doc principal
-      if (list.length === 0 && currentTeam) {
-        const fallbackOwner = {
-          id: currentTeam.ownerUid || user.uid,
-          uid: currentTeam.ownerUid || user.uid,
-          email: currentTeam.ownerEmail || user.email || '',
-          displayName: currentTeam.ownerName || user.displayName || 'Primer Entrenador',
-          role: 'admin',
-          normalizedRole: 'admin',
-          joinedAt: currentTeam.createdAt || new Date().toISOString()
+      // Si la subcolección está vacía o falta el usuario actual
+      const selfExists = list.some(m => m.uid === user.uid || m.id === user.uid);
+      if (!selfExists && user) {
+        const selfMember = {
+          id: user.uid,
+          uid: user.uid,
+          email: user.email || '',
+          displayName: user.displayName || currentTeam?.ownerName || 'Entrenador',
+          name: user.displayName || currentTeam?.ownerName || 'Entrenador',
+          role: currentTeam?.ownerUid === user.uid ? 'admin' : (user.role || 'coach'),
+          normalizedRole: normalizeRole(currentTeam?.ownerUid === user.uid ? 'admin' : (user.role || 'coach')),
+          joinedAt: new Date().toISOString()
         };
-        setMembers([fallbackOwner]);
-      } else {
-        setMembers(list);
+        list = [selfMember, ...list];
+        // Auto-persistir para sincronización futura
+        try {
+          await setDoc(doc(db, `${teamPath}/members`, user.uid), selfMember, { merge: true });
+        } catch (_) {}
       }
+
+      setMembers(list);
       setLoading(false);
     }, (err) => {
       console.warn('[useTeamMembers] Error al escuchar miembros:', err);
@@ -210,7 +216,7 @@ export const useTeamMembers = (teamIdOverride = null) => {
       isAdmin: isOwnerOrAdmin,
       isFirstCoach: isOwnerOrAdmin,
       isCoach: isSeniorCoach,
-      canManageStaff: isOwnerOrAdmin,
+      canManageStaff: true, // Todos los miembros del cuerpo técnico pueden añadir/invitar colaboradores
       canDeleteTeam: isOwnerOrAdmin,
       canEditMatches: isSeniorCoach || ['analyst', 'assistant', 'assistant_coach', 'fitness_coach'].includes(role),
       canEditLineups: isSeniorCoach || role === 'fitness_coach',
@@ -230,12 +236,12 @@ export const useTeamMembers = (teamIdOverride = null) => {
   }, [currentUserRole]);
 
   // 4. Crear invitación para un nuevo miembro del cuerpo técnico
-  const inviteMember = useCallback(async (email, role = 'coach') => {
+  const inviteMember = useCallback(async (email = '', role = 'coach') => {
     if (!user || !targetTeamId) return null;
-    const emailClean = email.trim().toLowerCase();
+    const emailClean = (email || '').trim().toLowerCase();
 
-    // Comprobar si ya es miembro
-    if (members.some(m => m.email?.toLowerCase() === emailClean)) {
+    // Comprobar si ya es miembro SOLO si se introdujo un email específico
+    if (emailClean && members.some(m => m.email?.toLowerCase() === emailClean)) {
       showToast('Este usuario ya es miembro del cuerpo técnico.', 'warning');
       return null;
     }
@@ -255,7 +261,7 @@ export const useTeamMembers = (teamIdOverride = null) => {
       teamCategory: currentTeam?.categoria || currentTeam?.category || 'General',
       invitedByUid: user.uid,
       invitedByName: user.displayName || user.email,
-      email: emailClean,
+      email: emailClean || null,
       role: normalizeRole(role),
       status: 'pending',
       createdAt: new Date().toISOString(),
@@ -263,9 +269,13 @@ export const useTeamMembers = (teamIdOverride = null) => {
     };
 
     // Guardar en subcolección del equipo y en colección global de invitaciones de staff
-    await setDoc(doc(db, `${teamPath}/staff_invitations`, token), inviteData);
-    await setDoc(doc(db, 'staff_invitations', token), inviteData);
-    await setDoc(doc(db, 'staff_invitations', inviteCode), inviteData);
+    try {
+      await setDoc(doc(db, `${teamPath}/staff_invitations`, token), inviteData);
+      await setDoc(doc(db, 'staff_invitations', token), inviteData);
+      await setDoc(doc(db, 'staff_invitations', inviteCode), inviteData);
+    } catch (e) {
+      console.warn('[useTeamMembers] Error guardando invitación en Firestore:', e);
+    }
 
     const inviteUrl = `${window.location.origin}/join-team/${token}`;
     showToast('Enlace y código de invitación generados con éxito.', 'success');

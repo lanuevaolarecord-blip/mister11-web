@@ -658,7 +658,7 @@ export const preloadSessionImages = async (session, pizarras = [], captures = []
 
   // Precargar diagrama principal de la sesión si existe
   let mainDiagramBase64 = null;
-  const rawMainDiagram = session.mainDiagramUrl || session.diagramUrl || session.diagram;
+  const rawMainDiagram = session.mainDiagramUrl || session.diagramUrl || session.diagram || session.thumbnail || session.boardCaptureUrl || session.imageUrl || session.image;
   if (rawMainDiagram) {
     try {
       mainDiagramBase64 = await imageUrlToBase64(rawMainDiagram, 'Diagrama Principal', false);
@@ -670,7 +670,7 @@ export const preloadSessionImages = async (session, pizarras = [], captures = []
   // Precargar todos los bloques concurrentemente en paralelo
   const updatedBlocks = await Promise.all(
     blocks.map(async (b, bi) => {
-      let rawImg = b.imageUrl || b.boardCaptureUrl || b.boardCapture || b.imagenProtocolo || b.image || b.photo || b.previewUrl || b.canvasData || b.pizarraUrl;
+      let rawImg = b.imageUrl || b.boardCaptureUrl || b.boardCapture || b.imagenProtocolo || b.image || b.photo || b.previewUrl || b.thumbnail || b.canvasData || b.dataUrl || b.pizarraUrl || b.img || b.diagram;
 
       // Si attachments es un array de URLs
       if (!rawImg && Array.isArray(b.attachments) && b.attachments.length > 0) {
@@ -704,10 +704,10 @@ export const preloadSessionImages = async (session, pizarras = [], captures = []
       }
 
       // Buscar en la pizarra vinculada a la sesión
-      if (!rawImg && session.linkedPizarraId && Array.isArray(pizarras)) {
-        const linkedPiz = pizarras.find(p => p.id === session.linkedPizarraId);
-        if (linkedPiz && linkedPiz.thumbnail) {
-          rawImg = linkedPiz.thumbnail;
+      if (!rawImg && (session.linkedPizarraId || session.pizarraId) && Array.isArray(pizarras)) {
+        const linkedPiz = pizarras.find(p => p.id === (session.linkedPizarraId || session.pizarraId));
+        if (linkedPiz && (linkedPiz.thumbnail || linkedPiz.imageUrl || linkedPiz.boardCaptureUrl)) {
+          rawImg = linkedPiz.thumbnail || linkedPiz.imageUrl || linkedPiz.boardCaptureUrl;
         }
       }
 
@@ -722,7 +722,7 @@ export const preloadSessionImages = async (session, pizarras = [], captures = []
         boardCaptureUrl: base64 || (typeof rawImg === 'string' ? rawImg : null),
         imagenProtocolo: base64 || (typeof rawImg === 'string' ? rawImg : null),
         resolvedBase64: base64 || (typeof rawImg === 'string' ? rawImg : null),
-        hadImageSource: Boolean(rawImg)
+        hadImageSource: Boolean(rawImg || base64)
       };
     })
   );
@@ -790,10 +790,11 @@ export const generateSessionPDF = async (session, activeTeam = null, pizarras = 
     const blocks = preloadedSession.blocks || [];
 
     let sessionDiagramBase64 = preloadedSession.mainDiagramBase64 || null;
-    if (!sessionDiagramBase64 && session.linkedPizarraId) {
-      const found = (pizarras || []).find(p => p.id === session.linkedPizarraId);
-      if (found && found.thumbnail) {
-        sessionDiagramBase64 = await imageUrlToBase64(found.thumbnail, 'Diagrama Principal', false);
+    if (!sessionDiagramBase64 && (session.linkedPizarraId || session.pizarraId)) {
+      const targetPizId = session.linkedPizarraId || session.pizarraId;
+      const found = (pizarras || []).find(p => p.id === targetPizId);
+      if (found && (found.thumbnail || found.imageUrl || found.boardCaptureUrl)) {
+        sessionDiagramBase64 = await imageUrlToBase64(found.thumbnail || found.imageUrl || found.boardCaptureUrl, 'Diagrama Principal', false);
       }
     }
     if (!sessionDiagramBase64) {

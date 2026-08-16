@@ -911,15 +911,51 @@ const AdminPanel = () => {
 
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '8px', borderTop: '1px solid var(--border-color)', paddingTop: '12px' }}>
                     <button
+                      type="button"
                       onClick={async () => {
                         if (!activeTeam) {
                           showToast('Selecciona un equipo primero.', 'info');
                           return;
                         }
-                        const inv = await inviteMember(user?.email || 'entrenador@mister11.com', 'coach');
-                        if (inv?.inviteUrl) {
-                          navigator.clipboard.writeText(inv.inviteUrl);
-                          showToast('¡Enlace de invitación de cuerpo técnico copiado!', 'success');
+                        try {
+                          const inv = await inviteMember('', 'second_coach');
+                          if (inv?.inviteUrl) {
+                            let copiedOk = false;
+                            try {
+                              if (navigator?.clipboard?.writeText) {
+                                await navigator.clipboard.writeText(inv.inviteUrl);
+                                copiedOk = true;
+                              }
+                            } catch (_) {}
+                            if (!copiedOk) {
+                              try {
+                                const ta = document.createElement('textarea');
+                                ta.value = inv.inviteUrl;
+                                ta.style.position = 'fixed';
+                                ta.style.opacity = '0';
+                                document.body.appendChild(ta);
+                                ta.select();
+                                document.execCommand('copy');
+                                document.body.removeChild(ta);
+                                copiedOk = true;
+                              } catch (_) {}
+                            }
+
+                            if (navigator.share) {
+                              try {
+                                await navigator.share({
+                                  title: `Únete al Cuerpo Técnico de ${activeTeam.nombre || 'Mi Equipo'} - Míster11`,
+                                  text: `¡Hola! Únete al cuerpo técnico del equipo ${activeTeam.nombre || 'Mi Equipo'} en Míster11 con este enlace:\n${inv.inviteUrl}\nO usa el código: ${inv.inviteCode}`,
+                                  url: inv.inviteUrl
+                                });
+                              } catch (_) {}
+                            }
+
+                            showToast(`¡Enlace copiado! Código: ${inv.inviteCode}`, 'success');
+                          }
+                        } catch (err) {
+                          console.error(err);
+                          showToast('Error al generar enlace de invitación.', 'error');
                         }
                       }}
                       style={{
@@ -939,7 +975,7 @@ const AdminPanel = () => {
                         padding: '6px 12px'
                       }}
                     >
-                      🔗 Copiar Link para Invitar Entrenadores
+                      🔗 Copiar / Compartir Link para Invitar Entrenadores
                     </button>
 
                     <button

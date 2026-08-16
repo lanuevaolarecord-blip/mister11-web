@@ -100,7 +100,8 @@ const TrashIcon = () => (
 
 const Partidos = () => {
   const { activeTeam } = useTeams();
-  const effectiveTeamId = activeTeam?.id || null;
+  const activeTeamId = activeTeam?.id || null;
+  const effectiveTeamId = activeTeamId;
   const { matches, loading: loadingMatches, addMatch, updateMatch, removeMatch } = useMatches(effectiveTeamId);
   const { players, loading: loadingPlayers } = usePlayers(effectiveTeamId);
   const { settings } = useSettings(effectiveTeamId);

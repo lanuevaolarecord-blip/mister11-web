@@ -78,7 +78,7 @@ export const blobToDataURL = (blob) => {
 };
 
 /**
- * Función robusta de precarga con fetch + blob + Firebase Storage SDK
+ * Función robusta y ultra-rápida de precarga con Proxy Serverless + fetch + blob
  * Convierte cualquier URL remota a dataURL antes de renderizar o pasar a jsPDF / html2canvas.
  */
 export const preloadImageToDataURL = async (url) => {
@@ -95,28 +95,30 @@ export const preloadImageToDataURL = async (url) => {
     targetUrl = `${origin}${cleanPath}`;
   }
 
-  // 1. Intentar Firebase Storage SDK getBlob si es URL de storage
-  if (typeof targetUrl === 'string' && (targetUrl.includes('firebasestorage') || targetUrl.startsWith('gs://'))) {
+  // 1. Intentar Proxy Serverless (/api/proxy-image) — Evita 100% los bloqueos de CORS
+  if (typeof targetUrl === 'string' && (targetUrl.includes('firebasestorage') || targetUrl.startsWith('http'))) {
     try {
-      let fileRef = null;
-      if (targetUrl.startsWith('gs://')) {
-        fileRef = storageRef(storage, targetUrl);
-      } else {
-        try { fileRef = storageRef(storage, targetUrl); } catch (_) {}
-      }
-      if (fileRef) {
-        const blob = await getBlob(fileRef);
-        if (blob) {
-          const b64 = await blobToDataURL(blob);
-          if (b64) return b64;
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), 2000);
+      const proxyRes = await fetch(`/api/proxy-image?url=${encodeURIComponent(targetUrl)}`, {
+        signal: controller.signal
+      });
+      clearTimeout(timer);
+      if (proxyRes.ok) {
+        const data = await proxyRes.json();
+        if (data && data.dataUrl) {
+          return data.dataUrl;
         }
       }
     } catch (_) {}
   }
 
-  // 2. Intentar fetch estándar con mode: 'cors'
+  // 2. Intentar fetch directo con mode: 'cors'
   try {
-    const response = await fetch(targetUrl, { mode: 'cors' });
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 1200);
+    const response = await fetch(targetUrl, { mode: 'cors', signal: controller.signal });
+    clearTimeout(timer);
     if (response.ok) {
       const blob = await response.blob();
       const b64 = await blobToDataURL(blob);
@@ -126,7 +128,7 @@ export const preloadImageToDataURL = async (url) => {
 
   // 3. Fallback Canvas 2D
   try {
-    const canvasB64 = await convertImageToPngViaCanvas(targetUrl, 2000);
+    const canvasB64 = await convertImageToPngViaCanvas(targetUrl, 1000);
     if (canvasB64) return canvasB64;
   } catch (_) {}
 

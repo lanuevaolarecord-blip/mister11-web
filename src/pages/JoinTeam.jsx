@@ -80,8 +80,11 @@ const JoinTeam = () => {
       setLoading(true);
       await signInWithGoogle();
     } catch (err) {
-      console.error('[JoinTeam] Error login Google:', err);
-      setError('Fallo al iniciar sesión con Google.');
+      console.error('=== ERROR GOOGLE SIGN-IN [JoinTeam] ===');
+      console.error('Error code:', err?.code);
+      console.error('Error message:', err?.message);
+      console.error('Error details:', JSON.stringify(err, null, 2));
+      setError(err?.message || 'Fallo al iniciar sesión con Google.');
     } finally {
       setLoading(false);
     }

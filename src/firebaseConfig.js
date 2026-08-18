@@ -58,31 +58,96 @@ const initUserDocument = async (uid, email, displayName) => {
 const signInWithGoogle = async () => {
   if (Capacitor.isNativePlatform()) {
     try {
-      // IMPORTANTE: Cargamos el plugin dinámicamente para evitar errores en web
+      // Cargamos el plugin de Capacitor Firebase Authentication
       const { FirebaseAuthentication } = await import(
         "@capacitor-firebase/authentication"
       );
 
-      // Ejecutar login nativo
-      const result = await FirebaseAuthentication.signInWithGoogle();
+      let result = null;
+      let nativeErr = null;
 
-      // Verificamos si tenemos el idToken (crucial para Firebase)
-      const idToken = result.credential?.idToken || result.user?.idToken;
+      // 1. Intentar primero con flujo clásico (GoogleSignInClient - startActivityForResult)
+      try {
+        result = await FirebaseAuthentication.signInWithGoogle({
+          useCredentialManager: false,
+        });
+      } catch (err1) {
+        console.warn("[signInWithGoogle] Intento legacy con useCredentialManager:false falló:", err1);
+        nativeErr = err1;
 
-      if (!idToken) {
-        throw new Error("No se obtuvo el ID Token de Google Nativo.");
+        const errMsg1 = err1?.message || String(err1);
+        const isUserCancel =
+          errMsg1.toLowerCase().includes("cancel") ||
+          errMsg1.toLowerCase().includes("cancelled") ||
+          err1?.code === "12501" ||
+          errMsg1.toLowerCase().includes("sign_in_cancelled");
+
+        if (isUserCancel) {
+          throw new Error("Inicio de sesión cancelado por el usuario.");
+        }
+
+        // 2. Si falló por otra razón, probar con CredentialManager (flujo moderno Android 14+)
+        try {
+          result = await FirebaseAuthentication.signInWithGoogle({
+            useCredentialManager: true,
+          });
+        } catch (err2) {
+          console.warn("[signInWithGoogle] Intento con CredentialManager también falló:", err2);
+          const errMsg2 = err2?.message || String(err2);
+          if (
+            errMsg2.toLowerCase().includes("cancel") ||
+            errMsg2.toLowerCase().includes("cancelled") ||
+            err2?.code === "12501" ||
+            errMsg2.toLowerCase().includes("sign_in_cancelled")
+          ) {
+            throw new Error("Inicio de sesión cancelado por el usuario.");
+          }
+          throw err2 || err1;
+        }
       }
 
-      // Crear la credencial para el SDK de JS
-      const credential = GoogleAuthProvider.credential(idToken);
+      // 3. Extraer el ID Token de todas las estructuras posibles de respuesta
+      let idToken =
+        result?.credential?.idToken ||
+        result?.user?.idToken ||
+        result?.idToken ||
+        result?.credential?.accessToken;
 
-      // Autenticar en el SDK de JS para que Firestore funcione
+      // Si aún no tenemos el idToken pero hay un usuario autenticado nativamente
+      if (!idToken) {
+        try {
+          const tokenRes = await FirebaseAuthentication.getIdToken({ forceRefresh: true });
+          if (tokenRes?.token) {
+            idToken = tokenRes.token;
+          }
+        } catch (tokenErr) {
+          console.warn("[signInWithGoogle] No se pudo obtener token vía getIdToken:", tokenErr);
+        }
+      }
+
+      if (!idToken) {
+        throw new Error("No se pudo obtener la credencial de autenticación de Google. Verifica tu conexión o cuenta Google.");
+      }
+
+      // 4. Crear la credencial para sincronizar con el SDK Web de Firebase JS
+      const credential = GoogleAuthProvider.credential(idToken);
       const userCred = await signInWithCredential(auth, credential);
+
+      // 5. Inicializar o verificar documento de usuario en Firestore
       await initUserDocument(userCred.user.uid, userCred.user.email, userCred.user.displayName);
       return userCred;
-    } catch (nativeErr) {
-      console.error("[signInWithGoogle] Error en autenticación nativa Google:", nativeErr);
-      throw nativeErr;
+    } catch (err) {
+      console.error("[signInWithGoogle] Error definitivo en autenticación nativa:", err);
+      const errMsg = err?.message || String(err);
+      if (
+        errMsg.toLowerCase().includes("cancel") ||
+        errMsg.toLowerCase().includes("cancelled") ||
+        err?.code === "12501" ||
+        errMsg.toLowerCase().includes("sign_in_cancelled")
+      ) {
+        throw new Error("Inicio de sesión cancelado por el usuario.");
+      }
+      throw err;
     }
   }
 

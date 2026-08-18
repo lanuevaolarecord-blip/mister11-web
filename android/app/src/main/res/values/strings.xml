@@ -4,4 +4,5 @@
     <string name="title_activity_main">Míster11</string>
     <string name="package_name">com.mister11.app</string>
     <string name="custom_url_scheme">com.mister11.app</string>
+    <string name="default_web_client_id">954668402587-im73oik073ds12jvkfn0diasvdmkb9qc.apps.googleusercontent.com</string>
 </resources>

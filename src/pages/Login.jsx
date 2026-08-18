@@ -22,24 +22,26 @@ const Login = () => {
       console.log('[Login] Iniciando flujo Google Sign-In...');
       await signInWithGoogle();
     } catch (err) {
-      console.error('[Login] Error completo Google Sign-In:', {
-        code: err?.code,
-        message: err?.message,
-        stack: err?.stack,
-        raw: err
-      });
-      if (err?.code === 'auth/unauthorized-domain') {
-        const msg = 'Dominio no autorizado en Firebase Console.';
-        setError(msg);
-        showToast(msg, 'error');
-      } else if (err?.code === 'auth/popup-closed-by-user' || err?.code === 'auth/cancelled-popup-request' || err?.message?.includes('12501') || err?.message?.includes('canceled')) {
+      console.error('=== ERROR GOOGLE SIGN-IN ===');
+      console.error('Error code:', err?.code);
+      console.error('Error message:', err?.message);
+
+      const isCanceled = err?.message?.toLowerCase().includes('cancel') || err?.code === 'auth/popup-closed-by-user';
+      if (isCanceled) {
         showToast('Inicio de sesión cancelado por el usuario', 'info');
-      } else {
-        const realErrorMsg = err?.message || err?.code || String(err);
-        const detailedMsg = `Error Google Sign-In: ${realErrorMsg}`;
-        setError(detailedMsg);
-        showToast(detailedMsg, 'error');
+        return;
       }
+
+      const errorMessage = err?.code === 'auth/invalid-credential' 
+        ? 'Credenciales inválidas. Verifica configuración de OAuth.'
+        : err?.code === 'auth/network-request-failed'
+        ? 'Error de red. Verifica tu conexión.'
+        : err?.code === 'auth/unauthorized-domain'
+        ? 'Dominio no autorizado en Firebase Console.'
+        : err?.message || 'Error desconocido al iniciar sesión';
+
+      setError(errorMessage);
+      showToast(errorMessage, 'error');
     } finally {
       setIsLoading(false);
     }

@@ -63,8 +63,11 @@ const AcceptInvitation = () => {
       setLoading(true);
       await signInWithGoogle();
     } catch (err) {
-      console.error('Error in Google Login:', err);
-      setError('Fallo al iniciar sesión con Google.');
+      console.error('=== ERROR GOOGLE SIGN-IN [AcceptInvitation] ===');
+      console.error('Error code:', err?.code);
+      console.error('Error message:', err?.message);
+      console.error('Error details:', JSON.stringify(err, null, 2));
+      setError(err?.message || 'Fallo al iniciar sesión con Google.');
       setLoading(false);
     }
   };

@@ -79,7 +79,6 @@ export const blobToDataURL = (blob) => {
 
 /**
  * Convierte una URL a Base64 usando fetch -> blob -> FileReader
- * Con fallback a proxy serverless para evitar cualquier bloqueo de CORS.
  */
 export const convertImageToBase64 = async (url) => {
   if (!url) return null;
@@ -87,8 +86,8 @@ export const convertImageToBase64 = async (url) => {
 };
 
 /**
- * Función robusta y ultra-rápida de precarga con Proxy Serverless + fetch + blob
- * Convierte cualquier URL remota a dataURL antes de renderizar o pasar a jsPDF / html2canvas.
+ * Función de precarga directa de imágenes a Base64 usando fetch + blob + FileReader
+ * Convierte cualquier URL remota a dataURL antes de pasar a jsPDF / html2canvas.
  */
 export const preloadImageToDataURL = async (url) => {
   if (!url) return null;
@@ -104,28 +103,10 @@ export const preloadImageToDataURL = async (url) => {
     targetUrl = `${origin}${cleanPath}`;
   }
 
-  // 1. Intentar Proxy Serverless (/api/proxy-image) — Evita 100% los bloqueos de CORS
-  if (typeof targetUrl === 'string' && (targetUrl.includes('firebasestorage') || targetUrl.startsWith('http'))) {
-    try {
-      const controller = new AbortController();
-      const timer = setTimeout(() => controller.abort(), 2000);
-      const proxyRes = await fetch(`/api/proxy-image?url=${encodeURIComponent(targetUrl)}`, {
-        signal: controller.signal
-      });
-      clearTimeout(timer);
-      if (proxyRes.ok) {
-        const data = await proxyRes.json();
-        if (data && data.dataUrl) {
-          return data.dataUrl;
-        }
-      }
-    } catch (_) {}
-  }
-
-  // 2. Intentar fetch directo con mode: 'cors'
+  // 1. Fetch directo con mode: 'cors' -> blob -> Base64 DataURL
   try {
     const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), 1200);
+    const timer = setTimeout(() => controller.abort(), 3000);
     const response = await fetch(targetUrl, { mode: 'cors', signal: controller.signal });
     clearTimeout(timer);
     if (response.ok) {
@@ -135,9 +116,9 @@ export const preloadImageToDataURL = async (url) => {
     }
   } catch (_) {}
 
-  // 3. Fallback Canvas 2D
+  // 2. Fallback Canvas 2D
   try {
-    const canvasB64 = await convertImageToPngViaCanvas(targetUrl, 1000);
+    const canvasB64 = await convertImageToPngViaCanvas(targetUrl, 1500);
     if (canvasB64) return canvasB64;
   } catch (_) {}
 

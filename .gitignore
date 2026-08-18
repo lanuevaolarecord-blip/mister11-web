@@ -30,22 +30,24 @@ dist-ssr
 
 .vercel
 
-# Android APKs
+# Android APKs & AABs
 public/mister11.apk
+public/mister11.aab
 public/*.apk
+public/*.aab
 public_hosting/*.apk
+public_hosting/*.aab
 public_hosting/**/*.apk
+public_hosting/**/*.aab
 android/app/build/
 
 # Firebase
 .firebase/
 
-
-
-# APKs generados
+# APKs / AABs generados
 Mister11.apk
 *.apk
-android/app/build/
+*.aab
 
 mister11_registro_digital/
 *.zip

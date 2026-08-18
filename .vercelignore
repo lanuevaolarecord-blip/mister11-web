@@ -5,7 +5,11 @@ android/
 dist/
 node_modules/
 public/mister11.apk
+public/mister11.aab
+public/*.apk
+public/*.aab
 mister11.apk
+mister11.aab
 
 mister11_registro_digital/
 mister11_google_play_assets/

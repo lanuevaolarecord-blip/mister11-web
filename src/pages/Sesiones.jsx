@@ -38,8 +38,8 @@ import {
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import './Sesiones.css';
-
 import BlockEditor from '../components/BlockEditor';
+import { ImageModal } from '../components/SessionImageViewer/ImageModal';
 
 const Sesiones = () => {
   const { user, activeTeamId, getTeamPath } = useAuth();
@@ -1503,25 +1503,19 @@ const Sesiones = () => {
         </div>
       )}
 
-      {/* MODAL VISTA CAPTURA */}
+      {/* MODAL VISTA CAPTURA PROFESIONAL (PANTALLA COMPLETA + ANOTACIONES + ZOOM) */}
       {selectedCapture && (
-        <div className="modal-overlay-capture" onClick={() => setSelectedCapture(null)}>
-          <div className="modal-content-capture" onClick={e => e.stopPropagation()}>
-            <div className="modal-header-capture">
-              <h3>{selectedCapture.title || selectedCapture.name || 'Captura Táctica'}</h3>
-              <button className="btn-close-pdf" onClick={() => setSelectedCapture(null)}>✕</button>
-            </div>
-            <div className="modal-body-capture">
-              <img src={selectedCapture.url || selectedCapture.thumbnail} alt="Pizarra" />
-              <div className="capture-actions-float">
-                 <button className="btn-primary" onClick={() => {
-                   downloadImage(selectedCapture.url || selectedCapture.thumbnail, "mister11_pizarra.png");
-                 }}>DESCARGAR</button>
-                 <button className="btn-text-error" onClick={() => handleDeleteCapture(selectedCapture)} style={{marginLeft: '10px'}}>ELIMINAR</button>
-              </div>
-            </div>
-          </div>
-        </div>
+        <ImageModal
+          isOpen={!!selectedCapture}
+          onClose={() => setSelectedCapture(null)}
+          images={captures.map(c => c.url || c.thumbnail).filter(Boolean)}
+          initialIndex={Math.max(0, captures.findIndex(c => c.id === selectedCapture.id))}
+          exercisesData={captures.map(c => ({
+            name: c.title || c.name || 'Captura de Pizarra Táctica',
+            type: 'Pizarra Táctica',
+            description: c.description || 'Captura exportada desde la Pizarra Táctica de Míster11.'
+          }))}
+        />
       )}
 
       {/* MODAL DESCARGANDO MP4 */}

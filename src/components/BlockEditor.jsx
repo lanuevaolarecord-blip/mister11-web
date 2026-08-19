@@ -4,10 +4,12 @@ import { CSS } from '@dnd-kit/utilities';
 import { uploadImageFile } from '../utils/uploadImage';
 import { auth } from '../firebaseConfig';
 import { useCaptures } from '../hooks/useCaptures';
+import { ImageModal } from './SessionImageViewer/ImageModal';
 
 const BlockEditor = ({ block, index, handleUpdateBlock, handleDeleteBlock, handleDuplicateBlock, teamId, sessionId }) => {
   const fileInputRef = useRef(null);
   const [showCaptureModal, setShowCaptureModal] = useState(false);
+  const [showViewerModal, setShowViewerModal] = useState(false);
   const { captures } = useCaptures(teamId);
 
   const {
@@ -167,7 +169,21 @@ const BlockEditor = ({ block, index, handleUpdateBlock, handleDeleteBlock, handl
                 <label>Imagen / Diagrama del Ejercicio</label>
                 {blockImg && (
                   <div style={{ position: 'relative', marginBottom: '10px' }}>
-                    <img src={blockImg} alt="Diagrama del ejercicio" style={{ width: '100%', maxHeight: '200px', objectFit: 'contain', borderRadius: '8px', border: '1px solid #e2e8f0', backgroundColor: '#f8fafc' }} />
+                    <img 
+                      src={blockImg} 
+                      alt="Diagrama del ejercicio" 
+                      onClick={() => setShowViewerModal(true)}
+                      style={{ width: '100%', maxHeight: '200px', objectFit: 'contain', borderRadius: '8px', border: '1px solid #e2e8f0', backgroundColor: '#f8fafc', cursor: 'zoom-in' }} 
+                    />
+                    <div style={{ position: 'absolute', bottom: 8, left: 8, display: 'flex', gap: '6px' }}>
+                      <button
+                        type="button"
+                        onClick={() => setShowViewerModal(true)}
+                        style={{ background: 'rgba(0,0,0,0.75)', color: '#FFF', border: '1px solid #D4A843', borderRadius: '6px', padding: '4px 8px', fontSize: '11px', fontWeight: 'bold', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px' }}
+                      >
+                        🔍 Ver / Anotar
+                      </button>
+                    </div>
                     <button 
                       onClick={() => {
                         handleUpdateBlock(block.id, 'imagenProtocolo', null);
@@ -179,6 +195,20 @@ const BlockEditor = ({ block, index, handleUpdateBlock, handleDeleteBlock, handl
                       style={{ position: 'absolute', top: 5, right: 5, backgroundColor: 'rgba(255,0,0,0.8)', color: 'white', border: 'none', borderRadius: '50%', width: '30px', height: '30px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                     >✕</button>
                   </div>
+                )}
+                {showViewerModal && blockImg && (
+                  <ImageModal
+                    isOpen={showViewerModal}
+                    onClose={() => setShowViewerModal(false)}
+                    images={[blockImg]}
+                    initialIndex={0}
+                    exercisesData={[{
+                      name: block.name || 'Ejercicio',
+                      type: block.type || 'Táctico',
+                      duration: block.duration || 15,
+                      description: block.description || ''
+                    }]}
+                  />
                 )}
                 <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
                   <input 

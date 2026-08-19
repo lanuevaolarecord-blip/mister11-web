@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Play, Pause, RotateCcw, Volume2, VolumeX, ChevronLeft, ChevronRight, Split, Check, X, Maximize2 } from 'lucide-react';
+import { ImageModal } from './SessionImageViewer/ImageModal';
 import './LiveFieldSession.css';
 
 const LiveFieldSession = ({ session, onClose }) => {
@@ -12,6 +13,11 @@ const LiveFieldSession = ({ session, onClose }) => {
   const [currentSplit, setCurrentSplit] = useState(1); // Serie actual (1..splitCount)
   const [splitModalOpen, setSplitModalOpen] = useState(false);
   const [tempSplitInput, setTempSplitInput] = useState('3');
+  const [showViewer, setShowViewer] = useState(false);
+
+  // Extraer todas las imágenes y datos de ejercicios de los bloques para el visor
+  const sessionImages = blocks.map(b => b.imageUrl || b.imagenProtocolo || b.image || b.photo || b.previewUrl).filter(Boolean);
+  const sessionExercises = blocks.filter(b => b.imageUrl || b.imagenProtocolo || b.image || b.photo || b.previewUrl);
 
   // Estado del Cronómetro (en segundos)
   const totalBlockMinutes = Number(activeBlock?.duration || activeBlock?.duracion || activeBlock?.tiempo) || 15;
@@ -209,8 +215,35 @@ const LiveFieldSession = ({ session, onClose }) => {
           )}
 
           {blockImg ? (
-            <div className="exercise-img-wrapper">
+            <div className="exercise-img-wrapper" style={{ position: 'relative', cursor: 'zoom-in' }} onClick={() => setShowViewer(true)}>
               <img src={blockImg} alt={activeBlock?.name || 'Diagrama'} />
+              <button
+                type="button"
+                className="btn-maximize-exercise-img"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setShowViewer(true);
+                }}
+                style={{
+                  position: 'absolute',
+                  top: 10,
+                  right: 10,
+                  background: 'rgba(0,0,0,0.75)',
+                  color: '#FFFFFF',
+                  border: '1px solid #D4A843',
+                  borderRadius: '8px',
+                  padding: '6px 10px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  fontSize: '12px',
+                  fontWeight: 'bold',
+                  cursor: 'pointer'
+                }}
+              >
+                <Maximize2 size={16} />
+                <span>Pantalla Completa</span>
+              </button>
             </div>
           ) : (
             <div className="exercise-img-empty">
@@ -219,6 +252,17 @@ const LiveFieldSession = ({ session, onClose }) => {
           )}
         </div>
       </div>
+
+      {/* MODAL DEL VISOR PROFESIONAL DE PANTALLA COMPLETA */}
+      {showViewer && sessionImages.length > 0 && (
+        <ImageModal
+          isOpen={showViewer}
+          onClose={() => setShowViewer(false)}
+          images={sessionImages}
+          initialIndex={Math.max(0, sessionImages.indexOf(blockImg))}
+          exercisesData={sessionExercises}
+        />
+      )}
 
       {/* MODAL PARA DIVIDIR TIEMPO EN SERIES (INTERVAL SPLITTER) */}
       {splitModalOpen && (

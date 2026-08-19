@@ -64,16 +64,14 @@ const signInWithGoogle = async () => {
       );
 
       let result = null;
-      let nativeErr = null;
 
-      // 1. Intentar primero con flujo clásico (GoogleSignInClient - startActivityForResult)
+      // 1. Intentar primero con flujo clásico nativo (GoogleSignInClient)
       try {
         result = await FirebaseAuthentication.signInWithGoogle({
           useCredentialManager: false,
         });
       } catch (err1) {
-        console.warn("[signInWithGoogle] Intento legacy con useCredentialManager:false falló:", err1);
-        nativeErr = err1;
+        console.warn("[signInWithGoogle] Intento nativo legacy falló:", err1);
 
         const errMsg1 = err1?.message || String(err1);
         const isUserCancel =
@@ -86,13 +84,13 @@ const signInWithGoogle = async () => {
           throw new Error("Inicio de sesión cancelado por el usuario.");
         }
 
-        // 2. Si falló por otra razón, probar con CredentialManager (flujo moderno Android 14+)
+        // 2. Probar con CredentialManager (Android 14+)
         try {
           result = await FirebaseAuthentication.signInWithGoogle({
             useCredentialManager: true,
           });
         } catch (err2) {
-          console.warn("[signInWithGoogle] Intento con CredentialManager también falló:", err2);
+          console.warn("[signInWithGoogle] Intento nativo CredentialManager falló:", err2);
           const errMsg2 = err2?.message || String(err2);
           if (
             errMsg2.toLowerCase().includes("cancel") ||
@@ -126,7 +124,7 @@ const signInWithGoogle = async () => {
       }
 
       if (!idToken) {
-        throw new Error("No se pudo obtener la credencial de autenticación de Google. Verifica tu conexión o cuenta Google.");
+        throw new Error("No se obtuvo idToken nativo.");
       }
 
       // 4. Crear la credencial para sincronizar con el SDK Web de Firebase JS
@@ -136,25 +134,38 @@ const signInWithGoogle = async () => {
       // 5. Inicializar o verificar documento de usuario en Firestore
       await initUserDocument(userCred.user.uid, userCred.user.email, userCred.user.displayName);
       return userCred;
-    } catch (err) {
-      console.error("[signInWithGoogle] Error definitivo en autenticación nativa:", err);
-      const errMsg = err?.message || String(err);
-      if (
+    } catch (nativeErr) {
+      console.warn("[signInWithGoogle] Error en flujo nativo. Evaluando fallback web...", nativeErr);
+      
+      const errMsg = nativeErr?.message || String(nativeErr);
+      const isUserCancel =
         errMsg.toLowerCase().includes("cancel") ||
         errMsg.toLowerCase().includes("cancelled") ||
-        err?.code === "12501" ||
-        errMsg.toLowerCase().includes("sign_in_cancelled")
-      ) {
+        nativeErr?.code === "12501" ||
+        errMsg.toLowerCase().includes("sign_in_cancelled");
+
+      if (isUserCancel) {
         throw new Error("Inicio de sesión cancelado por el usuario.");
       }
-      throw err;
+
+      // ═══ FALLBACK WEB AUTOMÁTICO ═══
+      // Si el plugin nativo falla (por incompatibilidad de Google Play Services o SHA-1),
+      // recurrimos al flujo web de Firebase que funciona al 100%.
+      console.log("[signInWithGoogle] Ejecutando Fallback Web de Firebase...");
+      try {
+        const webResult = await signInWithPopup(auth, googleProvider);
+        await initUserDocument(webResult.user.uid, webResult.user.email, webResult.user.displayName);
+        return webResult;
+      } catch (popupErr) {
+        console.warn("[signInWithGoogle] Popup web bloqueado o falló, intentando redirect:", popupErr);
+        return await signInWithRedirect(auth, googleProvider);
+      }
     }
   }
 
-  // Flujo Web (Popup -> Redirect)
+  // Flujo Web puro para navegadores de escritorio / PWA
   try {
     const result = await signInWithPopup(auth, googleProvider);
-    // Inicializar documento de usuario en Firestore (solo si es nuevo)
     await initUserDocument(result.user.uid, result.user.email, result.user.displayName);
     return result;
   } catch (error) {

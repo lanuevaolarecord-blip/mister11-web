@@ -5,12 +5,12 @@
         <item name="android:windowNoTitle">true</item>
         <item name="android:windowContentOverlay">@null</item>
         <item name="android:windowLayoutInDisplayCutoutMode">shortEdges</item>
-        <item name="android:statusBarColor">#1a2e1a</item>
-        <item name="android:navigationBarColor">#1a2e1a</item>
+        <item name="android:statusBarColor">#1B3A2D</item>
+        <item name="android:navigationBarColor">#1B3A2D</item>
         <item name="android:windowLightStatusBar">false</item>
         <item name="android:windowLightNavigationBar">false</item>
-        <item name="colorPrimary">#1a2e1a</item>
-        <item name="colorPrimaryDark">#1a2e1a</item>
+        <item name="colorPrimary">#1B3A2D</item>
+        <item name="colorPrimaryDark">#1B3A2D</item>
         <item name="colorAccent">#c9a84c</item>
     </style>
     <style name="AppTheme.NoActionBar" parent="AppTheme">
@@ -24,7 +24,7 @@
         <item name="android:windowLayoutInDisplayCutoutMode">
             shortEdges
         </item>
-        <item name="android:statusBarColor">#1a2e1a</item>
-        <item name="android:navigationBarColor">#1a2e1a</item>
+        <item name="android:statusBarColor">#1B3A2D</item>
+        <item name="android:navigationBarColor">#1B3A2D</item>
     </style>
 </resources>

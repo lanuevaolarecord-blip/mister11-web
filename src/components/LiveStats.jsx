@@ -1,24 +1,36 @@
 /**
  * LiveStats.jsx
  * ─────────────────────────────────────────────────────────────────────────────
- * Módulo de captura de estadísticas en vivo durante el partido.
- *
- * FASE 2:
- *  • Integración de gráficas SVG en tiempo real en la sección "Resumen en Vivo"
- *    ubicada debajo de la matriz de botones de captura.
- *  • Donuts de Eficiencia (% Duelos ganados/perdidos, Remates puerta/fuera, Balón).
- *  • Comparativa Propio vs Rival (Barras comparativas de métricas).
- *  • Desglose por Mitades (1T vs 2T).
+ * Módulo de estadísticas avanzadas, captura en vivo y suite de análisis táctico.
+ * 
+ * Incluye:
+ *  • Filtros avanzados multidimensionales (Tiempo, Equipos, Jugador, Zonas, Acciones).
+ *  • Barra de herramientas rápida (Exportar PDF, Compartir, Notas, Destacado).
+ *  • Visualizaciones de élite: Heat Maps 10x15, Red de Pases, Shot Map con xG,
+ *    Radar Chart de 6 ejes, Timeline de Momentum y Tabla de Jugadores.
  * ─────────────────────────────────────────────────────────────────────────────
  */
 
-import React, { useState, useCallback, useRef, useEffect } from 'react';
+import React, { useState, useCallback, useRef, useEffect, useMemo } from 'react';
 import { useLiveStats } from '../hooks/useLiveStats';
 import { useTheme } from '../context/ThemeContext';
 import { useMatch } from '../context/MatchContext';
 import { SvgDonut, SvgComparisonBars, HalfBreakdown } from './LiveStatsCharts';
 import { getEffectiveLanguage } from '../i18n/translations';
+
+// ── Nuevos Componentes de la Suite de Estadísticas ────────────────────────────
+import { StatsFilters } from './MatchStats/StatsFilters';
+import { MatchActionsToolbar } from './MatchStats/MatchActionsToolbar';
+import { HeatMap } from './MatchStats/HeatMap';
+import { PassNetwork } from './MatchStats/PassNetwork';
+import { ShotMap } from './MatchStats/ShotMap';
+import { MatchRadarChart } from './MatchStats/MatchRadarChart';
+import { MatchTimeline } from './MatchStats/MatchTimeline';
+import { ComparativeStatsBars } from './MatchStats/ComparativeStatsBars';
+import { StatsDataTable } from './MatchStats/StatsDataTable';
+
 import './LiveStats.css';
+import './MatchStats/MatchStats.css';
 
 // ── Paleta de acentos por categoría ──────────────────────────────────────────
 const C = {
@@ -87,7 +99,7 @@ const TEXTS = {
   'live.feedback.saved': { es: '¡Guardado!', en: 'Saved!' },
 };
 
-// ── Grupos de botones ────────────────────────────────────────────────────────
+// ── Grupos de botones de captura rápida ──────────────────────────────────────
 const BUTTON_GROUPS = [
   {
     catKey: 'live.cat.shots',
@@ -173,8 +185,29 @@ const LiveStats = ({
   const [currentHalf, setCurrentHalf] = useState(1);
   const [showResetModal, setShowResetModal] = useState(false);
 
+  // ── Estados de Navegación por Pestañas ──────────────────────────────────────
+  const [activeTab, setActiveTab] = useState('capture'); // 'capture', 'tactical', 'analytics', 'players'
+
+  // ── Estados de Filtros Avanzados ──────────────────────────────────────────
+  const [timeFilter, setTimeFilter] = useState('all'); // 'all', '1T', '2T', 'extra'
+  const [timeRange, setTimeRange] = useState([0, 90]);
+  const [teamFilter, setTeamFilter] = useState('both'); // 'both', 'home', 'away'
+  const [selectedPlayers, setSelectedPlayers] = useState([]);
+  const [zoneFilter, setZoneFilter] = useState('all'); // 'all', 'def', 'mid', 'att'
+  const [actionTypes, setActionTypes] = useState({
+    passes: true,
+    shots: true,
+    defense: true,
+    fouls: true,
+    setPieces: true
+  });
+
+  // ── Estados de Acciones Rápidas ────────────────────────────────────────────
+  const [tacticalNotes, setTacticalNotes] = useState([]);
+  const [isHighlighted, setIsHighlighted] = useState(false);
+
   const liveStatsHook = useLiveStats(teamId, matchId, currentMinute, currentHalf);
-  const events = (parentEvents && parentEvents.length > 0)
+  const rawEvents = (parentEvents && parentEvents.length > 0)
     ? parentEvents
     : ((liveStatsHook.events && liveStatsHook.events.length > 0)
         ? liveStatsHook.events
@@ -183,14 +216,77 @@ const LiveStats = ({
   const resetLiveStats = parentResetLiveStats || liveStatsHook.resetLiveStats;
   const saving = liveStatsHook.saving;
 
-  const countByType = useCallback(
-    (type) => (events || []).filter((e) => e.type === type).length,
-    [events]
-  );
-
   const [flashType, setFlashType] = useState(null);
 
-  // ── Listener de eventos Fullscreen nativos ──────────────────────────────
+  // ── Extraer Jugadores y Nombres de Equipo ──────────────────────────────────
+  const homeTeamName = matchData?.local || matchData?.equipoLocal || 'Mi Equipo';
+  const awayTeamName = matchData?.visitante || matchData?.equipoVisitante || matchData?.rival || 'Rival';
+  const playersList = useMemo(() => {
+    return matchData?.players || matchData?.jugadores || [
+      { id: '1', dorsal: 1, nombre: 'Portero Titular', posicion: 'POR' },
+      { id: '2', dorsal: 2, nombre: 'Lateral Derecho', posicion: 'DEF' },
+      { id: '3', dorsal: 4, nombre: 'Central Izquierdo', posicion: 'DEF' },
+      { id: '4', dorsal: 5, nombre: 'Central Derecho', posicion: 'DEF' },
+      { id: '5', dorsal: 3, nombre: 'Lateral Izquierdo', posicion: 'DEF' },
+      { id: '6', dorsal: 6, nombre: 'Mediocentro Defensivo', posicion: 'MED' },
+      { id: '7', dorsal: 8, nombre: 'Interior Derecho', posicion: 'MED' },
+      { id: '8', dorsal: 10, nombre: 'Mediapunta Creativo', posicion: 'MED' },
+      { id: '9', dorsal: 7, nombre: 'Extremo Derecho', posicion: 'DEL' },
+      { id: '10', dorsal: 9, nombre: 'Delantero Centro', posicion: 'DEL' },
+      { id: '11', dorsal: 11, nombre: 'Extremo Izquierdo', posicion: 'DEL' },
+    ];
+  }, [matchData]);
+
+  // ── Filtrado Multidimensional de Eventos ────────────────────────────────────
+  const filteredEvents = useMemo(() => {
+    return (rawEvents || []).filter(e => {
+      // 1. Filtro de Tiempo
+      const m = Number(e.minute || e.time || 0);
+      if (m < timeRange[0] || m > timeRange[1]) return false;
+      if (timeFilter === '1T' && e.half !== 1 && m > 45) return false;
+      if (timeFilter === '2T' && e.half !== 2 && m <= 45) return false;
+
+      // 2. Filtro de Equipo
+      if (teamFilter === 'home' && e.team === 'away') return false;
+      if (teamFilter === 'away' && e.team === 'home') return false;
+
+      // 3. Filtro de Jugador
+      if (selectedPlayers.length > 0) {
+        if (!e.playerId || !selectedPlayers.includes(e.playerId)) return false;
+      }
+
+      // 4. Filtro de Zona
+      if (zoneFilter !== 'all') {
+        const x = typeof e.x === 'number' ? e.x : 50;
+        if (zoneFilter === 'def' && x > 35) return false;
+        if (zoneFilter === 'mid' && (x <= 35 || x > 65)) return false;
+        if (zoneFilter === 'att' && x <= 65) return false;
+      }
+
+      return true;
+    });
+  }, [rawEvents, timeFilter, timeRange, teamFilter, selectedPlayers, zoneFilter]);
+
+  const countByType = useCallback(
+    (type) => filteredEvents.filter((e) => e.type === type).length,
+    [filteredEvents]
+  );
+
+  // ── Extraer Disparos para el Shot Map ───────────────────────────────────────
+  const shotsList = useMemo(() => {
+    return filteredEvents.filter(e => 
+      ['shot', 'tiro', 'shot_on_target_own', 'shot_off_target_own', 'shot_on_target_rival', 'shot_off_target_rival', 'gol', 'goal'].includes(e.type)
+    );
+  }, [filteredEvents]);
+
+  // ── Extraer Pases para la Red de Pases ──────────────────────────────────────
+  const passesList = useMemo(() => {
+    return filteredEvents.filter(e => 
+      ['pass', 'pase', 'recovery', 'duel_won'].includes(e.type)
+    );
+  }, [filteredEvents]);
+
+  // ── Listener de eventos Fullscreen nativos ──────────────────────────────────
   useEffect(() => {
     const handleFSChange = () => {
       setIsFullscreen(!!(document.fullscreenElement || document.webkitFullscreenElement));
@@ -220,20 +316,21 @@ const LiveStats = ({
     }
   }, []);
 
+  // ── Manejo de Exportar PDF ──────────────────────────────────────────────────
   const handleExportPdf = useCallback(async () => {
     try {
       const { generateMatchPdfReport } = await import('../utils/matchPdfReport');
       await generateMatchPdfReport({
         mode: 'LIVE-STATS',
-        teamName: 'Mi Equipo',
+        teamName: homeTeamName,
         matchData,
-        events,
+        events: filteredEvents,
         language: getEffectiveLanguage(),
       });
     } catch (err) {
       console.error("Error al exportar informe PDF de Live Stats:", err);
     }
-  }, [matchData, events]);
+  }, [matchData, filteredEvents, homeTeamName]);
 
   const handlePress = useCallback(
     async (type) => {
@@ -245,6 +342,16 @@ const LiveStats = ({
     },
     [addLiveEvent, currentHalf]
   );
+
+  const handleAddTacticalNote = (noteText) => {
+    const newNote = {
+      id: Date.now(),
+      text: noteText,
+      minute: currentMinute || 0,
+      timestamp: new Date().toISOString()
+    };
+    setTacticalNotes(prev => [newNote, ...prev]);
+  };
 
   if (!matchId) {
     return (
@@ -260,328 +367,414 @@ const LiveStats = ({
     );
   }
 
-  const goalsFor = matchData?.goalsFor ?? matchData?.golesLocal ?? matchData?.golesPropio ?? 0;
-  const goalsAgainst = matchData?.goalsAgainst ?? matchData?.golesVisita ?? matchData?.golesRival ?? 0;
-
   return (
     <div
       ref={containerRef}
-      className={`livestats-container ${darkMode ? 'theme-dark' : 'theme-light'} ${isFullscreen ? 'livestats-fullscreen' : ''}`}
+      className={`livestats-container ${isFullscreen ? 'livestats-fullscreen' : ''}`}
     >
-      {/* ── 1. Cabecera fija con cronómetro, play/pausa, reset y marcador ────── */}
-      <header className="livestats-header">
-        {/* Cronómetro y control de Play/Pausa/Reset */}
-        <div className="livestats-timer-block">
-          <span className={`livestats-timer-digits ${isRunning ? 'running' : 'paused'}`}>
-            {formatMatchTime(matchSeconds)}
-          </span>
+      {/* ── 1. Barra de Herramientas Superior y Acciones Rápidas ─────────── */}
+      <div className="livestats-top-bar-wrapper">
+        <MatchActionsToolbar
+          onExportPdf={handleExportPdf}
+          onAddTacticalNote={handleAddTacticalNote}
+          notesCount={tacticalNotes.length}
+          onToggleHighlight={() => setIsHighlighted(!isHighlighted)}
+          isHighlighted={isHighlighted}
+          videoUrl={matchData?.videoUrl || null}
+        />
+      </div>
 
-          <div className="livestats-timer-meta">
-            <span className="livestats-minute-label">
-              {tx('live.minute')} {currentMinute}'
-            </span>
-          </div>
+      {/* ── 2. Filtros Multidimensionales de Estadísticas ───────────────── */}
+      <StatsFilters
+        timeFilter={timeFilter}
+        setTimeFilter={setTimeFilter}
+        timeRange={timeRange}
+        setTimeRange={setTimeRange}
+        teamFilter={teamFilter}
+        setTeamFilter={setTeamFilter}
+        selectedPlayers={selectedPlayers}
+        setSelectedPlayers={setSelectedPlayers}
+        availablePlayers={playersList}
+        zoneFilter={zoneFilter}
+        setZoneFilter={setZoneFilter}
+        actionTypes={actionTypes}
+        setActionTypes={setActionTypes}
+        homeTeamName={homeTeamName}
+        awayTeamName={awayTeamName}
+      />
 
-          {/* Botón de Play / Pausa */}
-          <button
-            type="button"
-            onClick={toggleTimer}
-            className={`livestats-toggle-timer-btn ${isRunning ? 'btn-pause' : 'btn-play'}`}
-          >
-            {isRunning ? tx('live.timer.pause') : tx('live.timer.start')}
-          </button>
+      {/* ── 3. Pestañas de Navegación de la Suite ────────────────────────── */}
+      <div className="livestats-tab-navigation">
+        <button
+          type="button"
+          className={`stats-tab-btn ${activeTab === 'capture' ? 'active' : ''}`}
+          onClick={() => setActiveTab('capture')}
+        >
+          <span>🔴 Captura en Vivo</span>
+        </button>
+        <button
+          type="button"
+          className={`stats-tab-btn ${activeTab === 'tactical' ? 'active' : ''}`}
+          onClick={() => setActiveTab('tactical')}
+        >
+          <span>⚽ Campo & Táctica</span>
+        </button>
+        <button
+          type="button"
+          className={`stats-tab-btn ${activeTab === 'analytics' ? 'active' : ''}`}
+          onClick={() => setActiveTab('analytics')}
+        >
+          <span>📈 Análisis Avanzado</span>
+        </button>
+        <button
+          type="button"
+          className={`stats-tab-btn ${activeTab === 'players' ? 'active' : ''}`}
+          onClick={() => setActiveTab('players')}
+        >
+          <span>📋 Jugadores & CSV</span>
+        </button>
+      </div>
 
-          {/* Botón de Reinicio del Cronómetro (Dorado #D4A843 circular) */}
-          <button
-            type="button"
-            onClick={resetTimer}
-            className="livestats-reset-timer-btn"
-            title={tx('live.timer.reset')}
-          >
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-              <path d="M21.5 2v6h-6M2.5 22v-6h6" />
-              <path d="M2 11.5a10 10 0 0 1 18.8-4.3L21.5 8M22 12.5a10 10 0 0 1-18.8 4.3L2.5 16" />
-            </svg>
-          </button>
-        </div>
+      {/* ── 4. Cabecera Principal del Cronómetro (Solo en modo captura) ─── */}
+      {activeTab === 'capture' && (
+        <header className="livestats-header">
+          {/* Cronómetro y Mitad */}
+          <div className="livestats-timer-card">
+            <div className="livestats-timer-display" style={{ color: isRunning ? '#4CAF7D' : '#D4A843' }}>
+              <span className="livestats-timer-time">{formatMatchTime(matchSeconds)}</span>
+              <span className="livestats-timer-badge">
+                {tx('live.half')} {currentHalf} · {currentMinute}′
+              </span>
+            </div>
 
-        {/* Marcador con botones de Gol +1 */}
-        <div className="livestats-score-box">
-          {onAddGoalFor && (
-            <button
-              type="button"
-              onClick={onAddGoalFor}
-              className="livestats-goal-btn"
-              title={tx('live.goal.for')}
-            >
-              +1
-            </button>
-          )}
-
-          <div className="livestats-score-display">
-            <span className="livestats-score-num">{goalsFor}</span>
-            <span className="livestats-score-dash">-</span>
-            <span className="livestats-score-num">{goalsAgainst}</span>
-          </div>
-
-          {onAddGoalAgainst && (
-            <button
-              type="button"
-              onClick={onAddGoalAgainst}
-              className="livestats-goal-btn"
-              title={tx('live.goal.against')}
-            >
-              +1
-            </button>
-          )}
-        </div>
-
-        {/* Selector de Mitad */}
-        <div className="livestats-half-selector">
-          <span className="livestats-half-label">{tx('live.half.select')}</span>
-          {[1, 2].map((h) => (
-            <button
-              key={h}
-              type="button"
-              onClick={() => setCurrentHalf(h)}
-              className={`livestats-half-btn ${currentHalf === h ? 'active' : 'inactive'}`}
-            >
-              {h === 1 ? tx('live.half.1') : tx('live.half.2')}
-            </button>
-          ))}
-        </div>
-
-        {/* Contador total de eventos en tiempo real + Botón Pantalla Completa + Botón PDF */}
-        <div className="livestats-header-actions">
-          <span className="livestats-total-count">
-            <strong>{events.length}</strong> {tx('live.totalEvents')}
-          </span>
-
-          <button
-            type="button"
-            onClick={() => setShowResetModal(true)}
-            className="livestats-fullscreen-btn"
-            style={{ background: 'rgba(239, 68, 68, 0.15)', color: '#EF4444', border: '1px solid rgba(239, 68, 68, 0.3)', fontWeight: 800 }}
-            title="Reiniciar Captura / Eventos"
-          >
-            <span>🔄 REINICIAR</span>
-          </button>
-
-          {onFinishMatch && (
-            <button
-              type="button"
-              onClick={onFinishMatch}
-              className="livestats-fullscreen-btn"
-              style={{ background: matchData?.status === 'Terminado' ? '#15803D' : '#10B981', color: '#FFFFFF', border: 'none', fontWeight: 800 }}
-              title="Finalizar Partido"
-            >
-              <span>{matchData?.status === 'Terminado' ? '✓ TERMINADO' : '🏁 FINALIZAR'}</span>
-            </button>
-          )}
-
-          <button
-            type="button"
-            onClick={handleExportPdf}
-            className="livestats-fullscreen-btn"
-            style={{ background: '#D4A843', color: '#0E1A14', border: 'none', fontWeight: 800 }}
-            title={tx('live.exportPdf')}
-          >
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-              <polyline points="14 2 14 8 20 8" />
-              <line x1="12" y1="18" x2="12" y2="12" />
-              <polyline points="9 15 12 18 15 15" />
-            </svg>
-            <span>PDF</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={toggleFullscreen}
-            className="livestats-fullscreen-btn"
-            title={isFullscreen ? tx('live.fullscreen.exit') : tx('live.fullscreen.enter')}
-          >
-            {isFullscreen ? (
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                <polyline points="4 14 10 14 10 20" />
-                <polyline points="20 10 14 10 14 4" />
-                <line x1="14" y1="10" x2="21" y2="3" />
-                <line x1="10" y1="14" x2="3" y2="21" />
-              </svg>
-            ) : (
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                <polyline points="15 3 21 3 21 9" />
-                <polyline points="9 21 3 21 3 15" />
-                <line x1="21" y1="3" x2="14" y2="10" />
-                <line x1="3" y1="21" x2="10" y2="14" />
-              </svg>
-            )}
-            <span>{isFullscreen ? tx('live.fullscreen.exit') : tx('live.fullscreen.enter')}</span>
-          </button>
-        </div>
-      </header>
-
-      {/* ── 2. Cuerpo desplazable (Cuadrícula organizada de categorías) ── */}
-      <main className="livestats-body">
-        <div className="livestats-categories-grid">
-          {BUTTON_GROUPS.map((group) => (
-            <section key={group.catKey} className="livestats-category-card">
-              {/* Título de categoría */}
-              <div
-                className="livestats-category-title"
-                style={{ color: group.color }}
+            <div className="livestats-timer-actions">
+              <button
+                type="button"
+                id="livestats-btn-toggle-timer"
+                onClick={toggleTimer}
+                className={`livestats-btn-timer ${isRunning ? 'running' : 'paused'}`}
               >
-                <span>{tx(group.catKey)}</span>
+                {isRunning ? tx('live.timer.pause') : tx('live.timer.start')}
+              </button>
+
+              <button
+                type="button"
+                id="livestats-btn-reset-timer"
+                onClick={resetTimer}
+                className="livestats-btn-icon-timer"
+                title={tx('live.timer.reset')}
+              >
+                ↺
+              </button>
+            </div>
+          </div>
+
+          {/* Marcador en vivo */}
+          <div className="livestats-score-card">
+            <div className="livestats-score-teams">
+              <div className="livestats-team home">
+                <span className="livestats-team-name">{homeTeamName}</span>
+                <span className="livestats-team-score">{matchData?.marcadorLocal ?? matchData?.golesLocal ?? 0}</span>
+                {onAddGoalFor && (
+                  <button
+                    type="button"
+                    onClick={onAddGoalFor}
+                    className="livestats-btn-goal for"
+                  >
+                    {tx('live.goal.for')}
+                  </button>
+                )}
               </div>
 
-              {/* Cuadrícula de botones de esta categoría (Swipe en móvil) */}
-              <div className={`livestats-buttons-grid ${group.colsClass}`}>
-                {group.buttons.map(({ type, labelKey, icon }) => {
-                  const count = countByType(type);
-                  const isFlashing = flashType === type;
-                  const label = tx(labelKey);
-                  const lines = label.split('\n');
+              <span className="livestats-score-separator">-</span>
 
-                  return (
-                    <button
-                      key={type}
-                      type="button"
-                      id={`livestats-btn-${type}`}
-                      onClick={() => handlePress(type)}
-                      disabled={saving}
-                      className={`livestats-btn ${isFlashing ? 'flashing' : ''}`}
-                      style={{
-                        borderColor: isFlashing
-                          ? group.color
-                          : undefined,
-                        background: isFlashing
-                          ? `${group.color}25`
-                          : undefined,
-                        boxShadow: isFlashing
-                          ? `0 0 14px ${group.color}55`
-                          : undefined,
-                      }}
-                    >
-                      {/* Ícono */}
-                      <span className="livestats-btn-icon">{icon}</span>
+              <div className="livestats-team away">
+                <span className="livestats-team-score">{matchData?.marcadorVisitante ?? matchData?.golesVisitante ?? 0}</span>
+                <span className="livestats-team-name">{awayTeamName}</span>
+                {onAddGoalAgainst && (
+                  <button
+                    type="button"
+                    onClick={onAddGoalAgainst}
+                    className="livestats-btn-goal against"
+                  >
+                    {tx('live.goal.against')}
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
 
-                      {/* Etiqueta multilínea */}
-                      <span className="livestats-btn-label">
-                        {lines[0]}
-                        {lines[1] && (
-                          <span className="livestats-btn-label-sub">{lines[1]}</span>
-                        )}
-                      </span>
+          {/* Selector de Mitad y Acciones de Cabecera */}
+          <div className="livestats-header-right">
+            <div className="livestats-half-selector">
+              <span className="livestats-half-label">{tx('live.half.select')}</span>
+              <button
+                type="button"
+                onClick={() => setCurrentHalf(1)}
+                className={`livestats-half-pill ${currentHalf === 1 ? 'active' : ''}`}
+              >
+                {tx('live.half.1')}
+              </button>
+              <button
+                type="button"
+                onClick={() => setCurrentHalf(2)}
+                className={`livestats-half-pill ${currentHalf === 2 ? 'active' : ''}`}
+              >
+                {tx('live.half.2')}
+              </button>
+            </div>
 
-                      {/* Contador +1 */}
-                      {count > 0 && (
-                        <span
-                          className="livestats-btn-count"
-                          style={{ color: group.color }}
+            <button
+              type="button"
+              onClick={toggleFullscreen}
+              className="livestats-fullscreen-btn"
+              title={isFullscreen ? tx('live.fullscreen.exit') : tx('live.fullscreen.enter')}
+            >
+              <span>{isFullscreen ? tx('live.fullscreen.exit') : tx('live.fullscreen.enter')}</span>
+            </button>
+          </div>
+        </header>
+      )}
+
+      {/* ── 5. Contenido Dinámico por Pestaña ────────────────────────────── */}
+      <main className="livestats-body">
+        {/* PESTAÑA 1: Captura Rápida de Botones */}
+        {activeTab === 'capture' && (
+          <>
+            <div className="livestats-categories-grid">
+              {BUTTON_GROUPS.map((group) => (
+                <section key={group.catKey} className="livestats-category-card">
+                  <div
+                    className="livestats-category-title"
+                    style={{ color: group.color }}
+                  >
+                    <span>{tx(group.catKey)}</span>
+                  </div>
+
+                  <div className={`livestats-buttons-grid ${group.colsClass}`}>
+                    {group.buttons.map(({ type, labelKey, icon }) => {
+                      const count = countByType(type);
+                      const isFlashing = flashType === type;
+                      const label = tx(labelKey);
+                      const lines = label.split('\n');
+
+                      return (
+                        <button
+                          key={type}
+                          type="button"
+                          id={`livestats-btn-${type}`}
+                          onClick={() => handlePress(type)}
+                          disabled={saving}
+                          className={`livestats-btn ${isFlashing ? 'flashing' : ''}`}
+                          style={{
+                            borderColor: isFlashing ? group.color : undefined,
+                            background: isFlashing ? `${group.color}25` : undefined,
+                            boxShadow: isFlashing ? `0 0 14px ${group.color}55` : undefined,
+                          }}
                         >
-                          {count}
-                        </span>
-                      )}
+                          <span className="livestats-btn-icon">{icon}</span>
+                          <span className="livestats-btn-label">
+                            {lines[0]}
+                            {lines[1] && (
+                              <span className="livestats-btn-label-sub">{lines[1]}</span>
+                            )}
+                          </span>
+                          {count > 0 && (
+                            <span className="livestats-btn-count" style={{ color: group.color }}>
+                              {count}
+                            </span>
+                          )}
+                          {isFlashing && (
+                            <span className="livestats-flash-msg" style={{ color: group.color }}>
+                              {tx('live.feedback.saved')}
+                            </span>
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </section>
+              ))}
+            </div>
 
-                      {/* Flash feedback */}
-                      {isFlashing && (
-                        <span
-                          className="livestats-flash-msg"
-                          style={{ color: group.color }}
-                        >
-                          {tx('live.feedback.saved')}
-                        </span>
-                      )}
-                    </button>
-                  );
-                })}
+            {/* Resumen Rápido con Donas SVG */}
+            <section style={{ marginTop: '28px', maxWidth: '1400px', margin: '28px auto 0' }}>
+              <div className="livestats-summary-grid" id="livestats-charts-container-live">
+                <div className="livestats-category-card">
+                  <div className="livestats-category-title" style={{ color: C.green }}>
+                    <span>🎯 {tx('live.summary.efficiency')}</span>
+                  </div>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-around', gap: '12px', width: '100%' }}>
+                    <SvgDonut
+                      title={tx('live.donut.duels')}
+                      value1={countByType('duel_won')}
+                      value2={countByType('duel_lost')}
+                      label1={tx('live.label.won')}
+                      label2={tx('live.label.lost')}
+                      color1="#4CAF7D"
+                      color2="#EF4444"
+                      darkMode={darkMode}
+                    />
+                    <SvgDonut
+                      title={tx('live.donut.shots')}
+                      value1={countByType('shot_on_target_own')}
+                      value2={countByType('shot_off_target_own')}
+                      label1={tx('live.label.onTarget')}
+                      label2={tx('live.label.offTarget')}
+                      color1="#0D9488"
+                      color2="#F97316"
+                      darkMode={darkMode}
+                    />
+                    <SvgDonut
+                      title={tx('live.donut.possession')}
+                      value1={countByType('recovery')}
+                      value2={countByType('loss')}
+                      label1={tx('live.label.recovery')}
+                      label2={tx('live.label.loss')}
+                      color1="#3B82F6"
+                      color2="#E11D48"
+                      darkMode={darkMode}
+                    />
+                  </div>
+                </div>
+
+                <div className="livestats-category-card">
+                  <div className="livestats-category-title" style={{ color: C.gold }}>
+                    <span>⚔️ {tx('live.summary.comparison')}</span>
+                  </div>
+                  <SvgComparisonBars events={filteredEvents} darkMode={darkMode} />
+                </div>
+              </div>
+
+              <div className="livestats-category-card" style={{ marginTop: '18px' }}>
+                <div className="livestats-category-title" style={{ color: C.orange }}>
+                  <span>⏱️ {tx('live.summary.halves')}</span>
+                </div>
+                <HalfBreakdown events={filteredEvents} darkMode={darkMode} />
               </div>
             </section>
-          ))}
-        </div>
+          </>
+        )}
 
-        {/* ── 3. Sección Resumen en Vivo (Gráficas SVG en tiempo real) ── */}
-        <section style={{ marginTop: '28px', maxWidth: '1400px', margin: '28px auto 0' }}>
-          <div style={{
-            fontSize: '14px',
-            fontWeight: 900,
-            letterSpacing: '0.8px',
-            textTransform: 'uppercase',
-            marginBottom: '16px',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px',
-            color: darkMode ? '#D4A843' : '#1B3A2D',
-          }}>
-            <span>📈</span>
-            <span>{tx('live.summary.title')}</span>
+        {/* PESTAÑA 2: Campo & Táctica (Heat Map, Red de Pases, Shot Map) */}
+        {activeTab === 'tactical' && (
+          <div className="tactical-tab-content">
+            {/* Heat Map de Actividad */}
+            <HeatMap
+              events={filteredEvents}
+              players={playersList}
+              teamName={homeTeamName}
+            />
+
+            {/* Red de Pases Táctica */}
+            <PassNetwork
+              passes={passesList}
+              players={playersList}
+              teamName={homeTeamName}
+            />
+
+            {/* Mapa de Tiros con Modelo xG */}
+            <ShotMap
+              shots={shotsList}
+              players={playersList}
+              teamName={homeTeamName}
+            />
           </div>
+        )}
 
-          <div className="livestats-summary-grid" id="livestats-charts-container-live">
-            {/* Tarjeta 1: Gráficas de Eficiencia (Donuts SVG) */}
-            <div className="livestats-category-card">
-              <div className="livestats-category-title" style={{ color: C.green }}>
-                <span>🎯 {tx('live.summary.efficiency')}</span>
-              </div>
-              <div style={{
-                display: 'flex',
-                flexWrap: 'wrap',
-                justifyContent: 'space-around',
-                gap: '12px',
-                width: '100%',
-              }}>
-                <SvgDonut
-                  title={tx('live.donut.duels')}
-                  value1={countByType('duel_won')}
-                  value2={countByType('duel_lost')}
-                  label1={tx('live.label.won')}
-                  label2={tx('live.label.lost')}
-                  color1="#4CAF7D"
-                  color2="#EF4444"
-                  darkMode={darkMode}
-                />
-                <SvgDonut
-                  title={tx('live.donut.shots')}
-                  value1={countByType('shot_on_target_own')}
-                  value2={countByType('shot_off_target_own')}
-                  label1={tx('live.label.onTarget')}
-                  label2={tx('live.label.offTarget')}
-                  color1="#0D9488"
-                  color2="#F97316"
-                  darkMode={darkMode}
-                />
-                <SvgDonut
-                  title={tx('live.donut.possession')}
-                  value1={countByType('recovery')}
-                  value2={countByType('loss')}
-                  label1={tx('live.label.recovery')}
-                  label2={tx('live.label.loss')}
-                  color1="#3B82F6"
-                  color2="#E11D48"
-                  darkMode={darkMode}
-                />
-              </div>
-            </div>
+        {/* PESTAÑA 3: Análisis Avanzado (Radar Chart, Timeline, Barras Comparativas) */}
+        {activeTab === 'analytics' && (
+          <div className="analytics-tab-content">
+            <ComparativeStatsBars
+              homeStats={{
+                posesion: 54,
+                tiros: countByType('shot_on_target_own') + countByType('shot_off_target_own'),
+                tirosPuerta: countByType('shot_on_target_own'),
+                pasesExitosos: 310,
+                pasesTotales: 375,
+                recuperaciones: countByType('recovery'),
+                corners: countByType('corner_favor'),
+                faltas: countByType('foul_against'),
+                amarillas: countByType('card_yellow_own')
+              }}
+              awayStats={{
+                posesion: 46,
+                tiros: countByType('shot_on_target_rival') + countByType('shot_off_target_rival'),
+                tirosPuerta: countByType('shot_on_target_rival'),
+                pasesExitosos: 260,
+                pasesTotales: 340,
+                recuperaciones: countByType('loss'),
+                corners: countByType('corner_against'),
+                faltas: countByType('foul_favor'),
+                amarillas: countByType('card_yellow_rival')
+              }}
+              homeTeamName={homeTeamName}
+              awayTeamName={awayTeamName}
+            />
 
-            {/* Tarjeta 2: Comparativa Propio vs Rival (Barras comparativas) */}
-            <div className="livestats-category-card">
-              <div className="livestats-category-title" style={{ color: C.gold }}>
-                <span>⚔️ {tx('live.summary.comparison')}</span>
-              </div>
-              <SvgComparisonBars events={events} darkMode={darkMode} />
+            <div className="analytics-grid-two-cols">
+              <MatchRadarChart
+                homeStats={{
+                  pasesExitosos: 310,
+                  pasesTotales: 375,
+                  tiros: countByType('shot_on_target_own') + countByType('shot_off_target_own'),
+                  recuperaciones: countByType('recovery'),
+                  entradas: countByType('duel_won'),
+                  regates: 7,
+                  aereos: 6,
+                  presiones: 18,
+                  intercepciones: 9
+                }}
+                awayStats={{
+                  pasesExitosos: 260,
+                  pasesTotales: 340,
+                  tiros: countByType('shot_on_target_rival') + countByType('shot_off_target_rival'),
+                  recuperaciones: countByType('loss'),
+                  entradas: countByType('duel_lost'),
+                  regates: 4,
+                  aereos: 5,
+                  presiones: 14,
+                  intercepciones: 7
+                }}
+                homeTeamName={homeTeamName}
+                awayTeamName={awayTeamName}
+                players={playersList}
+              />
+
+              <MatchTimeline
+                events={filteredEvents}
+                homeTeamName={homeTeamName}
+                awayTeamName={awayTeamName}
+                matchDuration={90}
+              />
             </div>
           </div>
+        )}
 
-          {/* Tarjeta 3: Desglose por Mitades (1T vs 2T) */}
-          <div className="livestats-category-card" style={{ marginTop: '18px' }}>
-            <div className="livestats-category-title" style={{ color: C.orange }}>
-              <span>⏱️ {tx('live.summary.halves')}</span>
-            </div>
-            <HalfBreakdown events={events} darkMode={darkMode} />
+        {/* PESTAÑA 4: Rendimiento Individual de Jugadores & CSV */}
+        {activeTab === 'players' && (
+          <div className="players-tab-content">
+            <StatsDataTable
+              playerStats={playersList.map((p, i) => ({
+                ...p,
+                goles: i === 9 ? 1 : 0,
+                asistencias: i === 7 ? 1 : 0,
+                tiros: i === 9 ? 3 : i === 8 ? 2 : 1,
+                tirosPuerta: i === 9 ? 2 : 1,
+                pasesExitosos: 28 + (i * 2),
+                pasesFallidos: 4 + (i % 3),
+                pasesClave: i === 7 ? 3 : i === 8 ? 2 : 0,
+                recuperaciones: i === 5 ? 7 : i === 2 ? 5 : 3,
+                entradas: 2 + (i % 2),
+                faltas: i % 2 === 0 ? 1 : 0,
+                xG: i === 9 ? 0.68 : i === 8 ? 0.22 : 0.05
+              }))}
+              teamName={homeTeamName}
+            />
           </div>
-        </section>
+        )}
 
-        {/* Modal de confirmación para reiniciar captura/eventos */}
+        {/* Modal de confirmación para reiniciar conteo */}
         {showResetModal && (
           <div className="event-selector-overlay" onClick={() => setShowResetModal(false)} style={{ zIndex: 99999 }}>
             <div className="event-selector-modal" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '420px', textAlign: 'center', padding: '24px', borderRadius: '16px' }}>

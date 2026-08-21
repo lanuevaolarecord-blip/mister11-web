@@ -680,7 +680,16 @@ const LiveStats = ({
 
             <div className="livestats-categories-grid">
               {BUTTON_GROUPS.map((group) => (
-                <section key={group.catKey} className="livestats-category-card">
+                <section
+                  key={group.catKey}
+                  className="livestats-category-card"
+                  style={{
+                    backgroundColor: darkMode ? '#122415' : '#FFFFFF',
+                    borderColor: darkMode ? 'rgba(212, 168, 67, 0.35)' : '#CBD5E1',
+                    borderWidth: '1.5px',
+                    borderStyle: 'solid'
+                  }}
+                >
                   <div
                     className="livestats-category-title"
                     style={{ color: group.color }}
@@ -704,20 +713,39 @@ const LiveStats = ({
                           disabled={saving}
                           className={`livestats-btn ${isFlashing ? 'flashing' : ''}`}
                           style={{
-                            borderColor: isFlashing ? group.color : undefined,
-                            background: isFlashing ? `${group.color}25` : undefined,
+                            backgroundColor: isFlashing
+                              ? `${group.color}25`
+                              : darkMode ? 'rgba(255, 255, 255, 0.08)' : '#F8FAFC',
+                            borderColor: isFlashing
+                              ? group.color
+                              : darkMode ? 'rgba(255, 255, 255, 0.25)' : '#CBD5E1',
                             boxShadow: isFlashing ? `0 0 14px ${group.color}55` : undefined,
                           }}
                         >
                           <span className="livestats-btn-icon">{icon}</span>
-                          <span className="livestats-btn-label">
+                          <span
+                            className="livestats-btn-label"
+                            style={{ color: darkMode ? '#FFFFFF' : '#0F172A', fontWeight: 800 }}
+                          >
                             {lines[0]}
                             {lines[1] && (
-                              <span className="livestats-btn-label-sub">{lines[1]}</span>
+                              <span
+                                className="livestats-btn-label-sub"
+                                style={{ color: darkMode ? '#E2E8F0' : '#475569', fontWeight: 700 }}
+                              >
+                                {lines[1]}
+                              </span>
                             )}
                           </span>
                           {count > 0 && (
-                            <span className="livestats-btn-count" style={{ color: group.color }}>
+                            <span
+                              className="livestats-btn-count"
+                              style={{
+                                color: group.color,
+                                backgroundColor: darkMode ? '#000000' : '#FFFFFF',
+                                borderColor: darkMode ? group.color : '#CBD5E1'
+                              }}
+                            >
                               {count}
                             </span>
                           )}
@@ -737,7 +765,15 @@ const LiveStats = ({
             {/* Resumen Rápido con Donas SVG */}
             <section style={{ marginTop: '28px', maxWidth: '1400px', margin: '28px auto 0' }}>
               <div className="livestats-summary-grid" id="livestats-charts-container-live">
-                <div className="livestats-category-card">
+                <div
+                  className="livestats-category-card"
+                  style={{
+                    backgroundColor: darkMode ? '#122415' : '#FFFFFF',
+                    borderColor: darkMode ? 'rgba(212, 168, 67, 0.35)' : '#CBD5E1',
+                    borderWidth: '1.5px',
+                    borderStyle: 'solid'
+                  }}
+                >
                   <div className="livestats-category-title" style={{ color: C.green }}>
                     <span>🎯 {tx('live.summary.efficiency')}</span>
                   </div>
@@ -775,7 +811,15 @@ const LiveStats = ({
                   </div>
                 </div>
 
-                <div className="livestats-category-card">
+                <div
+                  className="livestats-category-card"
+                  style={{
+                    backgroundColor: darkMode ? '#122415' : '#FFFFFF',
+                    borderColor: darkMode ? 'rgba(212, 168, 67, 0.35)' : '#CBD5E1',
+                    borderWidth: '1.5px',
+                    borderStyle: 'solid'
+                  }}
+                >
                   <div className="livestats-category-title" style={{ color: C.gold }}>
                     <span>⚔️ {tx('live.summary.comparison')}</span>
                   </div>
@@ -783,7 +827,16 @@ const LiveStats = ({
                 </div>
               </div>
 
-              <div className="livestats-category-card" style={{ marginTop: '18px' }}>
+              <div
+                className="livestats-category-card"
+                style={{
+                  marginTop: '18px',
+                  backgroundColor: darkMode ? '#122415' : '#FFFFFF',
+                  borderColor: darkMode ? 'rgba(212, 168, 67, 0.35)' : '#CBD5E1',
+                  borderWidth: '1.5px',
+                  borderStyle: 'solid'
+                }}
+              >
                 <div className="livestats-category-title" style={{ color: C.orange }}>
                   <span>⏱️ {tx('live.summary.halves')}</span>
                 </div>

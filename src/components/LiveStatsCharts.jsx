@@ -25,7 +25,7 @@ export const SvgDonut = ({
   darkMode: darkModeProp,
 }) => {
   const themeContext = useTheme();
-  const darkMode = darkModeProp !== undefined ? darkModeProp : (themeContext?.darkMode ?? false);
+  const darkMode = darkModeProp !== undefined ? darkModeProp : (themeContext?.darkMode ?? true);
 
   const total = value1 + value2;
   const pct1 = total > 0 ? Math.round((value1 / total) * 100) : 0;
@@ -126,7 +126,7 @@ export const SvgDonut = ({
 // ── 2. Comparativa Propio vs Rival (Barras Horizontales) ──────────────────────
 export const SvgComparisonBars = ({ events, darkMode: darkModeProp }) => {
   const themeContext = useTheme();
-  const darkMode = darkModeProp !== undefined ? darkModeProp : (themeContext?.darkMode ?? false);
+  const darkMode = darkModeProp !== undefined ? darkModeProp : (themeContext?.darkMode ?? true);
 
   const labelColor = darkMode ? '#FFFFFF' : '#0F172A';
   const bgBar = darkMode ? 'rgba(255,255,255,0.15)' : '#CBD5E1';
@@ -198,7 +198,7 @@ export const SvgComparisonBars = ({ events, darkMode: darkModeProp }) => {
 // ── 3. Desglose por Mitades (1T: X / 2T: Y) ──────────────────────────────────
 export const HalfBreakdown = ({ events, darkMode: darkModeProp }) => {
   const themeContext = useTheme();
-  const darkMode = darkModeProp !== undefined ? darkModeProp : (themeContext?.darkMode ?? false);
+  const darkMode = darkModeProp !== undefined ? darkModeProp : (themeContext?.darkMode ?? true);
 
   const labelColor = darkMode ? '#FFFFFF' : '#0F172A';
   const subLabelColor = darkMode ? '#CBD5E1' : '#334155';

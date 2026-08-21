@@ -52,6 +52,19 @@
   background: #F1F5F9 !important;
 }
 
+.livestats-fullscreen .livestats-top-bar-wrapper,
+.livestats-fullscreen .stats-filters-container,
+.livestats-fullscreen .livestats-tab-navigation {
+  display: none !important;
+}
+
+.livestats-fullscreen .livestats-header {
+  margin-bottom: 12px;
+  position: sticky;
+  top: 0;
+  z-index: 50;
+}
+
 /* ── Cabecera fija Estadio (Header) ─────────────────────────────────── */
 .livestats-header {
   flex-shrink: 0;

@@ -475,71 +475,77 @@ const LiveStats = ({
       ref={containerRef}
       className={`livestats-container ${isFullscreen ? 'livestats-fullscreen' : ''}`}
     >
-      {/* ── 1. Barra de Herramientas Superior y Acciones Rápidas ─────────── */}
-      <div className="livestats-top-bar-wrapper">
-        <MatchActionsToolbar
-          onExportPdf={handleExportPdf}
-          onAddTacticalNote={handleAddTacticalNote}
-          notesCount={tacticalNotes.length}
-          onToggleHighlight={() => setIsHighlighted(!isHighlighted)}
-          isHighlighted={isHighlighted}
-          videoUrl={matchData?.videoUrl || null}
+      {/* ── 1. Barra de Herramientas Superior y Acciones Rápidas (Solo en vista normal) ─── */}
+      {!isFullscreen && (
+        <div className="livestats-top-bar-wrapper">
+          <MatchActionsToolbar
+            onExportPdf={handleExportPdf}
+            onAddTacticalNote={handleAddTacticalNote}
+            notesCount={tacticalNotes.length}
+            onToggleHighlight={() => setIsHighlighted(!isHighlighted)}
+            isHighlighted={isHighlighted}
+            videoUrl={matchData?.videoUrl || null}
+          />
+        </div>
+      )}
+
+      {/* ── 2. Filtros Multidimensionales de Estadísticas (Solo en vista normal) ─── */}
+      {!isFullscreen && (
+        <StatsFilters
+          timeFilter={timeFilter}
+          setTimeFilter={setTimeFilter}
+          timeRange={timeRange}
+          setTimeRange={setTimeRange}
+          teamFilter={teamFilter}
+          setTeamFilter={setTeamFilter}
+          selectedPlayers={selectedPlayers}
+          setSelectedPlayers={setSelectedPlayers}
+          availablePlayers={playersList}
+          zoneFilter={zoneFilter}
+          setZoneFilter={setZoneFilter}
+          actionTypes={actionTypes}
+          setActionTypes={setActionTypes}
+          homeTeamName={homeTeamName}
+          awayTeamName={awayTeamName}
         />
-      </div>
+      )}
 
-      {/* ── 2. Filtros Multidimensionales de Estadísticas ───────────────── */}
-      <StatsFilters
-        timeFilter={timeFilter}
-        setTimeFilter={setTimeFilter}
-        timeRange={timeRange}
-        setTimeRange={setTimeRange}
-        teamFilter={teamFilter}
-        setTeamFilter={setTeamFilter}
-        selectedPlayers={selectedPlayers}
-        setSelectedPlayers={setSelectedPlayers}
-        availablePlayers={playersList}
-        zoneFilter={zoneFilter}
-        setZoneFilter={setZoneFilter}
-        actionTypes={actionTypes}
-        setActionTypes={setActionTypes}
-        homeTeamName={homeTeamName}
-        awayTeamName={awayTeamName}
-      />
+      {/* ── 3. Pestañas de Navegación de la Suite (Solo en vista normal) ─── */}
+      {!isFullscreen && (
+        <div className="livestats-tab-navigation">
+          <button
+            type="button"
+            className={`stats-tab-btn ${activeTab === 'capture' ? 'active' : ''}`}
+            onClick={() => setActiveTab('capture')}
+          >
+            <span>🔴 Captura en Vivo</span>
+          </button>
+          <button
+            type="button"
+            className={`stats-tab-btn ${activeTab === 'tactical' ? 'active' : ''}`}
+            onClick={() => setActiveTab('tactical')}
+          >
+            <span>⚽ Campo & Táctica</span>
+          </button>
+          <button
+            type="button"
+            className={`stats-tab-btn ${activeTab === 'analytics' ? 'active' : ''}`}
+            onClick={() => setActiveTab('analytics')}
+          >
+            <span>📈 Análisis Avanzado</span>
+          </button>
+          <button
+            type="button"
+            className={`stats-tab-btn ${activeTab === 'players' ? 'active' : ''}`}
+            onClick={() => setActiveTab('players')}
+          >
+            <span>📋 Jugadores & CSV</span>
+          </button>
+        </div>
+      )}
 
-      {/* ── 3. Pestañas de Navegación de la Suite ────────────────────────── */}
-      <div className="livestats-tab-navigation">
-        <button
-          type="button"
-          className={`stats-tab-btn ${activeTab === 'capture' ? 'active' : ''}`}
-          onClick={() => setActiveTab('capture')}
-        >
-          <span>🔴 Captura en Vivo</span>
-        </button>
-        <button
-          type="button"
-          className={`stats-tab-btn ${activeTab === 'tactical' ? 'active' : ''}`}
-          onClick={() => setActiveTab('tactical')}
-        >
-          <span>⚽ Campo & Táctica</span>
-        </button>
-        <button
-          type="button"
-          className={`stats-tab-btn ${activeTab === 'analytics' ? 'active' : ''}`}
-          onClick={() => setActiveTab('analytics')}
-        >
-          <span>📈 Análisis Avanzado</span>
-        </button>
-        <button
-          type="button"
-          className={`stats-tab-btn ${activeTab === 'players' ? 'active' : ''}`}
-          onClick={() => setActiveTab('players')}
-        >
-          <span>📋 Jugadores & CSV</span>
-        </button>
-      </div>
-
-      {/* ── 4. Cabecera Principal del Cronómetro (Solo en modo captura) ─── */}
-      {activeTab === 'capture' && (
+      {/* ── 4. Cabecera Principal del Cronómetro (Modo captura y pantalla completa) ─── */}
+      {(activeTab === 'capture' || isFullscreen) && (
         <header className="livestats-header">
           {/* Cronómetro y Mitad */}
           <div className="livestats-timer-card">
@@ -641,8 +647,8 @@ const LiveStats = ({
 
       {/* ── 5. Contenido Dinámico por Pestaña ────────────────────────────── */}
       <main className="livestats-body">
-        {/* PESTAÑA 1: Captura Rápida de Botones */}
-        {activeTab === 'capture' && (
+        {/* PESTAÑA 1: Captura Rápida de Botones (o Modo Pantalla Completa) */}
+        {(activeTab === 'capture' || isFullscreen) && (
           <>
             {/* Selector Táctico de Sector / Banda de la Jugada */}
             <div className="livestats-sector-bar">

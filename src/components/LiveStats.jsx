@@ -473,7 +473,7 @@ const LiveStats = ({
   return (
     <div
       ref={containerRef}
-      className={`livestats-container ${isFullscreen ? 'livestats-fullscreen' : ''}`}
+      className={`livestats-container ${darkMode ? 'theme-dark dark' : 'theme-light light'} ${isFullscreen ? 'livestats-fullscreen' : ''}`}
     >
       {/* ── 1. Barra de Herramientas Superior y Acciones Rápidas (Solo en vista normal) ─── */}
       {!isFullscreen && (

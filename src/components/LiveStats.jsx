@@ -207,13 +207,56 @@ const LiveStats = ({
   const [isHighlighted, setIsHighlighted] = useState(false);
 
   const liveStatsHook = useLiveStats(teamId, matchId, currentMinute, currentHalf);
-  const rawEvents = (parentEvents && parentEvents.length > 0)
-    ? parentEvents
-    : ((liveStatsHook.events && liveStatsHook.events.length > 0)
-        ? liveStatsHook.events
-        : (matchData?.liveStatsEvents || matchData?.events || []));
-  const addLiveEvent = parentAddLiveEvent || liveStatsHook.addLiveEvent;
-  const resetLiveStats = parentResetLiveStats || liveStatsHook.resetLiveStats;
+
+  // ── Estado local para reflejo INMEDIATO (optimista) de eventos capturados ──
+  // Problema: parentEvents viene de Firestore (async). Al pulsar un botón
+  // addLiveEvent escribe en Firestore pero parentEvents no se actualiza al instante.
+  // Solución: guardamos eventos locales y los fusionamos con los externos.
+  const [localEvents, setLocalEvents] = useState([]);
+
+  // Resetear localEvents cuando cambia el partido
+  useEffect(() => {
+    setLocalEvents([]);
+  }, [matchId]);
+
+  // La fuente de verdad es: parentEvents ∪ localEvents (deduplicados por id)
+  const rawEvents = useMemo(() => {
+    const base = (parentEvents && parentEvents.length > 0)
+      ? parentEvents
+      : ((liveStatsHook.events && liveStatsHook.events.length > 0)
+          ? liveStatsHook.events
+          : (matchData?.liveStatsEvents || matchData?.events || []));
+    if (localEvents.length === 0) return base;
+    // Fusionar: local first para que aparezca de inmediato, sin duplicados por id
+    const baseIds = new Set(base.map(e => e.id));
+    const unique = localEvents.filter(e => !baseIds.has(e.id));
+    return [...base, ...unique];
+  }, [parentEvents, liveStatsHook.events, matchData, localEvents]);
+
+  // addLiveEvent envuelto: añade al estado local ANTES de escribir en Firestore
+  const innerAddLiveEvent = useCallback(async (type, explicitHalf = null) => {
+    const targetHalf = explicitHalf !== null ? explicitHalf : currentHalf;
+    const tempId = 'local_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5);
+    const localDoc = { id: tempId, type, half: targetHalf, minute: currentMinute || 1, timestamp: new Date().toISOString() };
+    setLocalEvents(prev => [...prev, localDoc]);
+    const hook = parentAddLiveEvent || liveStatsHook.addLiveEvent;
+    if (hook) {
+      const realId = await hook(type, explicitHalf);
+      // Reemplazar el id temporal por el real cuando Firestore responde
+      if (realId && realId !== tempId) {
+        setLocalEvents(prev => prev.filter(e => e.id !== tempId));
+      }
+      return realId;
+    }
+    return tempId;
+  }, [parentAddLiveEvent, liveStatsHook.addLiveEvent, currentHalf, currentMinute]);
+
+  const addLiveEvent = innerAddLiveEvent;
+  const resetLiveStats = useCallback(async () => {
+    setLocalEvents([]);
+    const hook = parentResetLiveStats || liveStatsHook.resetLiveStats;
+    if (hook) await hook();
+  }, [parentResetLiveStats, liveStatsHook.resetLiveStats]);
   const saving = liveStatsHook.saving;
 
   const [flashType, setFlashType] = useState(null);
@@ -469,12 +512,12 @@ const LiveStats = ({
             </div>
           </div>
 
-          {/* Marcador en vivo */}
+          {/* Marcador en vivo — usa goalsFor/goalsAgainst (campos reales de useMatchEvents) */}
           <div className="livestats-score-card">
             <div className="livestats-score-teams">
               <div className="livestats-team home">
                 <span className="livestats-team-name">{homeTeamName}</span>
-                <span className="livestats-team-score">{matchData?.marcadorLocal ?? matchData?.golesLocal ?? 0}</span>
+                <span className="livestats-team-score">{matchData?.goalsFor ?? matchData?.marcadorLocal ?? 0}</span>
                 {onAddGoalFor && (
                   <button
                     type="button"
@@ -489,7 +532,7 @@ const LiveStats = ({
               <span className="livestats-score-separator">-</span>
 
               <div className="livestats-team away">
-                <span className="livestats-team-score">{matchData?.marcadorVisitante ?? matchData?.golesVisitante ?? 0}</span>
+                <span className="livestats-team-score">{matchData?.goalsAgainst ?? matchData?.marcadorVisitante ?? 0}</span>
                 <span className="livestats-team-name">{awayTeamName}</span>
                 {onAddGoalAgainst && (
                   <button
@@ -683,30 +726,55 @@ const LiveStats = ({
         )}
 
         {/* PESTAÑA 3: Análisis Avanzado (Radar Chart, Timeline, Barras Comparativas) */}
-        {activeTab === 'analytics' && (
+        {activeTab === 'analytics' && (() => {
+          // ── Calcular TODOS los stats desde eventos reales ──────────────────
+          const recHome   = countByType('recovery');
+          const lossHome  = countByType('loss');
+          const totalPossEvents = recHome + lossHome;
+          // Posesión: proporción recuperaciones / (recuperaciones + pérdidas)
+          const posHome = totalPossEvents > 0 ? Math.round((recHome / totalPossEvents) * 100) : 50;
+          const posAway = 100 - posHome;
+
+          const tirosHome   = countByType('shot_on_target_own') + countByType('shot_off_target_own');
+          const tirosAway   = countByType('shot_on_target_rival') + countByType('shot_off_target_rival');
+          const duelsWon    = countByType('duel_won');
+          const duelsLost   = countByType('duel_lost');
+          const cornHome    = countByType('corner_favor');
+          const cornAway    = countByType('corner_against');
+          const faultsBy    = countByType('foul_against');
+          const faultsOpp   = countByType('foul_favor');
+          const yellHome    = countByType('card_yellow_own');
+          const yellAway    = countByType('card_yellow_rival');
+          const redHome     = countByType('card_red_own');
+          const redAway     = countByType('card_red_rival');
+          // Pases proxy: recuperaciones + duelos ganados ≈ pases exitosos propios
+          const pasesExHome = recHome + duelsWon;
+          const pasesExAway = lossHome + duelsLost;
+
+          return (
           <div className="analytics-tab-content">
             <ComparativeStatsBars
               homeStats={{
-                posesion: 54,
-                tiros: countByType('shot_on_target_own') + countByType('shot_off_target_own'),
+                posesion: posHome,
+                tiros: tirosHome,
                 tirosPuerta: countByType('shot_on_target_own'),
-                pasesExitosos: 310,
-                pasesTotales: 375,
-                recuperaciones: countByType('recovery'),
-                corners: countByType('corner_favor'),
-                faltas: countByType('foul_against'),
-                amarillas: countByType('card_yellow_own')
+                pasesExitosos: pasesExHome,
+                pasesTotales: pasesExHome + faultsBy,
+                recuperaciones: recHome,
+                corners: cornHome,
+                faltas: faultsBy,
+                amarillas: yellHome
               }}
               awayStats={{
-                posesion: 46,
-                tiros: countByType('shot_on_target_rival') + countByType('shot_off_target_rival'),
+                posesion: posAway,
+                tiros: tirosAway,
                 tirosPuerta: countByType('shot_on_target_rival'),
-                pasesExitosos: 260,
-                pasesTotales: 340,
-                recuperaciones: countByType('loss'),
-                corners: countByType('corner_against'),
-                faltas: countByType('foul_favor'),
-                amarillas: countByType('card_yellow_rival')
+                pasesExitosos: pasesExAway,
+                pasesTotales: pasesExAway + faultsOpp,
+                recuperaciones: lossHome,
+                corners: cornAway,
+                faltas: faultsOpp,
+                amarillas: yellAway
               }}
               homeTeamName={homeTeamName}
               awayTeamName={awayTeamName}
@@ -715,26 +783,26 @@ const LiveStats = ({
             <div className="analytics-grid-two-cols">
               <MatchRadarChart
                 homeStats={{
-                  pasesExitosos: 310,
-                  pasesTotales: 375,
-                  tiros: countByType('shot_on_target_own') + countByType('shot_off_target_own'),
-                  recuperaciones: countByType('recovery'),
-                  entradas: countByType('duel_won'),
-                  regates: 7,
-                  aereos: 6,
-                  presiones: 18,
-                  intercepciones: 9
+                  pasesExitosos: pasesExHome,
+                  pasesTotales: Math.max(pasesExHome, 1),
+                  tiros: tirosHome,
+                  recuperaciones: recHome,
+                  entradas: duelsWon,
+                  regates: cornHome,
+                  aereos: yellHome + redHome,
+                  presiones: faultsBy,
+                  intercepciones: countByType('offside_rival')
                 }}
                 awayStats={{
-                  pasesExitosos: 260,
-                  pasesTotales: 340,
-                  tiros: countByType('shot_on_target_rival') + countByType('shot_off_target_rival'),
-                  recuperaciones: countByType('loss'),
-                  entradas: countByType('duel_lost'),
-                  regates: 4,
-                  aereos: 5,
-                  presiones: 14,
-                  intercepciones: 7
+                  pasesExitosos: pasesExAway,
+                  pasesTotales: Math.max(pasesExAway, 1),
+                  tiros: tirosAway,
+                  recuperaciones: lossHome,
+                  entradas: duelsLost,
+                  regates: cornAway,
+                  aereos: yellAway + redAway,
+                  presiones: faultsOpp,
+                  intercepciones: countByType('offside_own')
                 }}
                 homeTeamName={homeTeamName}
                 awayTeamName={awayTeamName}
@@ -749,26 +817,32 @@ const LiveStats = ({
               />
             </div>
           </div>
-        )}
+          );
+        })()}
 
-        {/* PESTAÑA 4: Rendimiento Individual de Jugadores & CSV */}
+        {/* PESTAÑA 4: Rendimiento Individual de Jugadores & CSV — derivado de eventos reales */}
         {activeTab === 'players' && (
           <div className="players-tab-content">
             <StatsDataTable
-              playerStats={playersList.map((p, i) => ({
-                ...p,
-                goles: i === 9 ? 1 : 0,
-                asistencias: i === 7 ? 1 : 0,
-                tiros: i === 9 ? 3 : i === 8 ? 2 : 1,
-                tirosPuerta: i === 9 ? 2 : 1,
-                pasesExitosos: 28 + (i * 2),
-                pasesFallidos: 4 + (i % 3),
-                pasesClave: i === 7 ? 3 : i === 8 ? 2 : 0,
-                recuperaciones: i === 5 ? 7 : i === 2 ? 5 : 3,
-                entradas: 2 + (i % 2),
-                faltas: i % 2 === 0 ? 1 : 0,
-                xG: i === 9 ? 0.68 : i === 8 ? 0.22 : 0.05
-              }))}
+              playerStats={playersList.map((p) => {
+                const pid = p.id;
+                const evsByPlayer = filteredEvents.filter(e => e.playerId === pid || e.fromPlayerId === pid);
+                const countP = (t) => evsByPlayer.filter(e => e.type === t).length;
+                return {
+                  ...p,
+                  goles: filteredEvents.filter(e => (e.type === 'gol_local' || e.type === 'goal') && e.playerId === pid).length,
+                  asistencias: filteredEvents.filter(e => e.asistenciaId === pid).length,
+                  tiros: countP('shot_on_target_own') + countP('shot_off_target_own'),
+                  tirosPuerta: countP('shot_on_target_own'),
+                  pasesExitosos: countP('recovery') + countP('duel_won'),
+                  pasesFallidos: countP('loss'),
+                  pasesClave: countP('duel_won'),
+                  recuperaciones: countP('recovery'),
+                  entradas: countP('duel_won') + countP('duel_lost'),
+                  faltas: countP('foul_against'),
+                  xG: parseFloat(((countP('shot_on_target_own') * 0.35) + (countP('shot_off_target_own') * 0.05)).toFixed(2))
+                };
+              })}
               teamName={homeTeamName}
             />
           </div>

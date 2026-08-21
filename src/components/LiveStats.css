@@ -52,11 +52,10 @@
   background: #F1F5F9 !important;
 }
 
-/* ── Cabecera fija (Header) ────────────────────────────────────────── */
+/* ── Cabecera fija (Header) ───────────────────────────────────────── */
 .livestats-header {
   flex-shrink: 0;
   z-index: 20;
-  background: #172D21; /* Mantiene verde institucional elegante en ambos temas */
   border-bottom: 1px solid rgba(212, 168, 67, 0.35);
   padding-top: max(12px, env(safe-area-inset-top));
   padding-bottom: 10px;
@@ -68,8 +67,22 @@
   flex-wrap: wrap;
   gap: 10px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.35);
+}
+
+/* Modo oscuro: verde institucional profundo */
+.theme-dark .livestats-header {
+  background: #172D21;
   color: #F8FAFC;
 }
+
+/* Modo claro: blanco con borde dorado sutil */
+.theme-light .livestats-header {
+  background: #FFFFFF;
+  color: #0F172A;
+  border-bottom: 1px solid rgba(212, 168, 67, 0.4);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+}
+
 
 /* Bloque Cronómetro */
 .livestats-timer-block {
@@ -106,10 +119,18 @@
 .livestats-minute-label {
   font-size: 11px;
   font-weight: 700;
-  color: #E2E8F0;
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
+
+.theme-dark .livestats-minute-label {
+  color: #E2E8F0;
+}
+
+.theme-light .livestats-minute-label {
+  color: #374151;
+}
+
 
 /* Botón Play/Pausa del cronómetro */
 .livestats-toggle-timer-btn {
@@ -174,17 +195,26 @@
   box-shadow: 0 0 12px rgba(212, 168, 67, 0.5);
 }
 
-/* Bloque Marcador y Botones de Gol */
+/* Bloque Marcador y Score — adaptativo claro/oscuro */
 .livestats-score-box {
   display: flex;
   align-items: center;
   gap: 10px;
-  background: rgba(0, 0, 0, 0.35);
-  border: 1px solid rgba(212, 168, 67, 0.4);
   border-radius: 12px;
   padding: 6px 14px;
-  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
 }
+
+.theme-dark .livestats-score-box {
+  background: rgba(0, 0, 0, 0.35);
+  border: 1px solid rgba(212, 168, 67, 0.4);
+}
+
+.theme-light .livestats-score-box {
+  background: #F1F5F9;
+  border: 1px solid rgba(212, 168, 67, 0.5);
+}
+
 
 .livestats-score-display {
   display: flex;
@@ -238,8 +268,11 @@
 .livestats-half-label {
   font-size: 12px;
   font-weight: 600;
-  color: #E2E8F0;
 }
+
+.theme-dark .livestats-half-label { color: #E2E8F0; }
+.theme-light .livestats-half-label { color: #374151; }
+
 
 .livestats-half-btn {
   padding: 5px 12px;
@@ -258,15 +291,30 @@
 }
 
 .livestats-half-btn.inactive {
-  background: rgba(255, 255, 255, 0.08);
-  color: #FFFFFF;
   border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
-.livestats-half-btn.inactive:hover {
+.theme-dark .livestats-half-btn.inactive {
+  background: rgba(255, 255, 255, 0.08);
+  color: #FFFFFF;
+}
+
+.theme-light .livestats-half-btn.inactive {
+  background: #F1F5F9;
+  color: #1E293B;
+  border-color: #CBD5E1;
+}
+
+.theme-dark .livestats-half-btn.inactive:hover {
   background: rgba(255, 255, 255, 0.15);
   border-color: rgba(255, 255, 255, 0.35);
 }
+
+.theme-light .livestats-half-btn.inactive:hover {
+  background: #E2E8F0;
+  border-color: #94A3B8;
+}
+
 
 /* Total eventos y Botón Fullscreen */
 .livestats-header-actions {
@@ -277,15 +325,18 @@
 
 .livestats-total-count {
   font-size: 13px;
-  color: #CBD5E1;
   font-weight: 600;
 }
 
+.theme-dark .livestats-total-count { color: #CBD5E1; }
+.theme-light .livestats-total-count { color: #374151; }
+
 .livestats-total-count strong {
-  color: #4CAF7D;
   font-size: 16px;
   font-weight: 900;
+  color: #4CAF7D;
 }
+
 
 .livestats-fullscreen-btn {
   display: flex;

@@ -1,5 +1,21 @@
-import React, { useState, useMemo } from 'react';
-import { Share2, Info, ArrowRight } from 'lucide-react';
+import React, { useState, useMemo, useRef, useCallback } from 'react';
+import { Share2, Maximize2, Minimize2, Users } from 'lucide-react';
+
+const ZONE_MAP = {
+  shot_on_target_own:    { x: 88, y: 50 },
+  shot_off_target_own:   { x: 80, y: 45 },
+  shot_on_target_rival:  { x: 12, y: 50 },
+  shot_off_target_rival: { x: 20, y: 55 },
+  recovery:              { x: 55, y: 48 },
+  loss:                  { x: 45, y: 52 },
+  duel_won:              { x: 58, y: 45 },
+  duel_lost:             { x: 42, y: 55 },
+  foul_favor:            { x: 62, y: 50 },
+  foul_against:          { x: 38, y: 50 },
+  corner_favor:          { x: 99, y: 5  },
+  corner_against:        { x: 1,  y: 95 },
+  pass:                  { x: 50, y: 50 }
+};
 
 export const PassNetwork = ({
   passes = [],
@@ -8,6 +24,23 @@ export const PassNetwork = ({
 }) => {
   const [selectedNode, setSelectedNode] = useState(null);
   const [selectedEdge, setSelectedEdge] = useState(null);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const wrapperRef = useRef(null);
+
+  const toggleFullscreen = useCallback(() => {
+    if (!wrapperRef.current) return;
+    if (!document.fullscreenElement) {
+      wrapperRef.current.requestFullscreen?.().catch(() => {});
+    } else {
+      document.exitFullscreen?.().catch(() => {});
+    }
+  }, []);
+
+  React.useEffect(() => {
+    const handler = () => setIsFullscreen(!!document.fullscreenElement);
+    document.addEventListener('fullscreenchange', handler);
+    return () => document.removeEventListener('fullscreenchange', handler);
+  }, []);
 
   // 1. Calcular posición promedio (centroide) y volumen de toques de cada jugador
   const playerNodes = useMemo(() => {
@@ -38,8 +71,9 @@ export const PassNetwork = ({
     passes.forEach(pass => {
       const pId = pass.playerId || pass.fromPlayerId;
       if (pId && map[pId]) {
-        const px = typeof pass.x === 'number' ? pass.x : 50;
-        const py = typeof pass.y === 'number' ? pass.y : 50;
+        const fallback = ZONE_MAP[pass.type] || { x: 50, y: 50 };
+        const px = typeof pass.x === 'number' ? pass.x : fallback.x;
+        const py = typeof pass.y === 'number' ? pass.y : fallback.y;
         map[pId].xSum += px;
         map[pId].ySum += py;
         map[pId].touchCount += 1;
@@ -91,16 +125,47 @@ export const PassNetwork = ({
   }, [passEdges]);
 
   return (
-    <div className="pass-network-container">
+    <div
+      ref={wrapperRef}
+      className="pass-network-container"
+      style={isFullscreen ? {
+        background: '#0b1712',
+        padding: '20px',
+        overflowY: 'auto',
+        height: '100vh',
+        boxSizing: 'border-box'
+      } : {}}
+    >
       {/* Header de la red de pases */}
       <div className="pass-network-header">
         <div className="pass-network-title">
           <Share2 size={20} className="network-icon" />
           <h3>Red de Pases Táctica ({teamName})</h3>
         </div>
-        <div className="pass-network-summary">
-          <span>Pases analizados: <strong>{passes.length}</strong></span>
-          <span>Conexiones activas: <strong>{passEdges.length}</strong></span>
+        <div className="pass-network-summary" style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <span>Pases: <strong>{passes.length}</strong></span>
+          <span>Conexiones: <strong>{passEdges.length}</strong></span>
+          <button
+            type="button"
+            className="mode-pill"
+            onClick={toggleFullscreen}
+            style={{
+              gap: '6px',
+              display: 'flex',
+              alignItems: 'center',
+              background: 'rgba(255,255,255,0.08)',
+              border: '1px solid rgba(255,255,255,0.2)',
+              color: '#FFF',
+              borderRadius: '8px',
+              padding: '6px 12px',
+              cursor: 'pointer',
+              fontSize: '12px',
+              fontWeight: 700
+            }}
+          >
+            {isFullscreen ? <Minimize2 size={14} /> : <Maximize2 size={14} />}
+            {isFullscreen ? 'Salir' : '⛶ Pantalla completa'}
+          </button>
         </div>
       </div>
 
@@ -247,3 +312,4 @@ export const PassNetwork = ({
     </div>
   );
 };
+

@@ -48,9 +48,9 @@
 }
 
 :root {
-  --sat: env(safe-area-inset-top, 0px);
+  --sat: max(env(safe-area-inset-top, 0px), 38px);
   --sar: env(safe-area-inset-right, 0px);
-  --sab: env(safe-area-inset-bottom, 0px);
+  --sab: max(env(safe-area-inset-bottom, 0px), 12px);
   --sal: env(safe-area-inset-left, 0px);
 }
 
@@ -697,11 +697,12 @@ input::placeholder, textarea::placeholder {
 }
 
 .header {
-  padding-left: 54px !important; /* Always space for hamburger */
-  min-height: calc(60px + env(safe-area-inset-top, 0px)) !important;
+  padding-left: calc(54px + var(--sal)) !important; /* Always space for hamburger */
+  min-height: calc(56px + var(--sat)) !important;
   height: auto !important;
-  padding-top: calc(10px + env(safe-area-inset-top, 0px)) !important;
+  padding-top: calc(8px + var(--sat)) !important;
   padding-bottom: 10px !important;
+  padding-right: calc(16px + var(--sar)) !important;
   box-sizing: border-box !important;
   transition: all 0.2s;
 }
@@ -928,11 +929,11 @@ button, .nav-item, input, select, .icon-btn, .topbar-btn, .tool-icon-btn {
   /* Header en móvil limpio y adaptado al notch/cámara */
   .header {
     height: auto !important;
-    min-height: calc(56px + max(env(safe-area-inset-top, 0px), 12px)) !important;
-    padding-top: calc(10px + max(env(safe-area-inset-top, 0px), 12px)) !important;
-    padding-bottom: 10px !important;
-    padding-left: 16px !important;
-    padding-right: 16px !important;
+    min-height: calc(56px + var(--sat)) !important;
+    padding-top: calc(8px + var(--sat)) !important;
+    padding-bottom: 12px !important;
+    padding-left: calc(16px + var(--sal)) !important;
+    padding-right: calc(16px + var(--sar)) !important;
     box-sizing: border-box !important;
     display: flex !important;
     flex-direction: row !important;

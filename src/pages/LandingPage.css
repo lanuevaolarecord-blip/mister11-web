@@ -688,3 +688,67 @@
   }
 }
 
+
+/* === NUEVOS ESTILOS v1.1.23 === */
+
+/* Nav Links */
+.landing-nav-links { display: flex; gap: 28px; align-items: center; }
+.landing-nav-links a { color: var(--text-muted-gray); text-decoration: none; font-size: 0.9rem; font-weight: 600; transition: color 0.2s; }
+.landing-nav-links a:hover { color: var(--text-white); }
+@media (max-width: 768px) { .landing-nav-links { display: none; } }
+
+/* Three-plan grid */
+.pricing-card-container.three-plans { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 24px; max-width: 1160px; margin: 40px auto 0; }
+@media (max-width: 1024px) { .pricing-card-container.three-plans { grid-template-columns: 1fr 1fr; } }
+@media (max-width: 680px) { .pricing-card-container.three-plans { grid-template-columns: 1fr; } }
+
+/* Plan card variants */
+.pricing-card.free-plan { border-color: #CBD5E1; border-width: 2px; }
+.pricing-card.popular-plan { border-color: var(--success-green); border-width: 2px; box-shadow: 0 20px 40px -8px rgba(46,125,92,0.2); transform: translateY(-6px); }
+.pricing-card.club-plan { border-color: var(--accent-gold); border-width: 2px; }
+.pricing-plan-header { text-align: center; margin-bottom: 24px; padding-bottom: 24px; border-bottom: 1px solid #E2E8F0; }
+
+/* Plan tier labels */
+.plan-tier-label { display: inline-block; font-size: 0.7rem; font-weight: 900; letter-spacing: 1.5px; padding: 3px 12px; border-radius: 20px; margin-bottom: 10px; text-transform: uppercase; }
+.plan-tier-label.free { background: #E2E8F0; color: #475569; }
+.plan-tier-label.pro { background: rgba(46,125,92,0.12); color: var(--success-green); border: 1px solid rgba(46,125,92,0.3); }
+.plan-tier-label.club { background: rgba(212,168,67,0.12); color: #a07c20; border: 1px solid rgba(212,168,67,0.3); }
+.pricing-badge.gold { background: var(--accent-gold); color: #000; }
+
+/* Feature unavailable */
+.pricing-features-list li.feature-unavailable { color: #94A3B8; }
+.pricing-features-list li.feature-unavailable svg { color: #CBD5E1; }
+
+/* Features grid 4 cols */
+@media (min-width: 1100px) { .features-grid { grid-template-columns: repeat(4, 1fr); } }
+
+/* Comparison Table */
+.landing-comparison { padding: 80px 5% 100px; background-color: #FFFFFF; color: #0F172A; }
+.landing-comparison .section-title { color: #0F172A; }
+.landing-comparison .section-subtitle { color: #475569; }
+.comparison-table-wrapper { max-width: 1100px; margin: 0 auto; overflow-x: auto; border-radius: 16px; box-shadow: 0 4px 24px rgba(0,0,0,0.08); }
+.comparison-table { width: 100%; border-collapse: collapse; font-size: 0.9rem; background: #fff; }
+.comparison-table thead tr { background: #1B3A2D; color: #fff; }
+.comparison-table thead th { padding: 20px 18px; text-align: center; font-weight: 700; font-size: 0.85rem; }
+.comparison-table thead th.col-feature { text-align: left; width: 42%; }
+.th-plan-label { display: block; font-size: 0.7rem; font-weight: 900; letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 4px; }
+.th-plan-label.free { color: #94A3B8; }
+.th-plan-label.pro { color: #4CAF7D; }
+.th-plan-label.club { color: var(--accent-gold); }
+.th-plan-price { display: block; font-size: 1.1rem; font-weight: 800; color: #fff; }
+.comparison-table .popular-col { background: rgba(76,175,125,0.06); }
+.comparison-table thead .popular-col { background: #2E7D5C; }
+.category-row td { background: #F1F5F9; color: #64748B; font-size: 0.75rem; font-weight: 800; letter-spacing: 1.2px; text-transform: uppercase; padding: 10px 18px; border-top: 2px solid #E2E8F0; }
+.feature-row { border-bottom: 1px solid #F1F5F9; transition: background 0.15s; }
+.feature-row:hover { background: #F8FAFC; }
+.feat-name { padding: 14px 18px; color: #334155; font-size: 0.88rem; }
+.feat-cell { padding: 14px 18px; text-align: center; vertical-align: middle; }
+.cell-check { display: inline-flex; align-items: center; justify-content: center; color: var(--success-green); }
+.cell-x { display: inline-flex; align-items: center; justify-content: center; color: #CBD5E1; }
+.cell-text { font-size: 0.82rem; font-weight: 600; color: #334155; background: #EFF6FF; padding: 3px 10px; border-radius: 12px; display: inline-block; white-space: nowrap; }
+.cta-row td { padding: 24px 18px; text-align: center; background: #F8FAFC; border-top: 2px solid #E2E8F0; }
+.cta-row .popular-col { background: rgba(76,175,125,0.08); }
+.table-cta { min-height: 44px; padding: 0 20px; font-size: 0.85rem; width: 100%; max-width: 160px; cursor: pointer; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; border-radius: 8px; display: inline-flex; align-items: center; justify-content: center; transition: all 0.2s; }
+.table-cta.btn-outline-landing { min-height: 44px; padding: 0 20px; color: #475569; border: 2px solid #CBD5E1; background: transparent; }
+.table-cta.btn-verde-exito, .table-cta.btn-azul-primario { min-height: 44px; padding: 0 20px; border: none; }
+@media (max-width: 640px) { .comparison-table { font-size: 0.8rem; } .feat-name { padding: 12px 10px; } .feat-cell { padding: 12px 8px; } }

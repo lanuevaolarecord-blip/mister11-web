@@ -152,29 +152,16 @@ export const PassNetwork = ({
           <Share2 size={20} className="network-icon" />
           <h3>Red de Pases Táctica ({teamName})</h3>
         </div>
-        <div className="pass-network-summary" style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+        <div className="pass-network-summary" style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
           <span>Pases: <strong>{passes.length}</strong></span>
           <span>Conexiones: <strong>{passEdges.length}</strong></span>
           <button
             type="button"
-            className="mode-pill"
+            className="btn-fullscreen-match-card"
             onClick={toggleFullscreen}
-            style={{
-              gap: '6px',
-              display: 'flex',
-              alignItems: 'center',
-              background: 'rgba(255,255,255,0.08)',
-              border: '1px solid rgba(255,255,255,0.2)',
-              color: '#FFF',
-              borderRadius: '8px',
-              padding: '6px 12px',
-              cursor: 'pointer',
-              fontSize: '12px',
-              fontWeight: 700
-            }}
           >
-            {isFullscreen ? <Minimize2 size={14} /> : <Maximize2 size={14} />}
-            {isFullscreen ? 'Salir' : '⛶ Pantalla completa'}
+            {isFullscreen ? <Minimize2 size={16} /> : <Maximize2 size={16} />}
+            <span>{isFullscreen ? 'Salir' : 'Pantalla Completa'}</span>
           </button>
         </div>
       </div>
@@ -189,9 +176,20 @@ export const PassNetwork = ({
           alignItems: 'center',
           justifyContent: 'center',
           width: '100%',
-          overflow: 'hidden'
-        } : {}}
+          overflow: 'hidden',
+          position: 'relative'
+        } : { position: 'relative' }}
       >
+        {/* Botón flotante directo en la esquina del campo */}
+        <button
+          type="button"
+          className="btn-floating-pitch-fullscreen"
+          onClick={toggleFullscreen}
+          title={isFullscreen ? 'Salir de Pantalla Completa' : 'Ver en Pantalla Completa'}
+        >
+          {isFullscreen ? <Minimize2 size={18} /> : <Maximize2 size={18} />}
+        </button>
+
         <svg
           viewBox="0 0 100 100"
           className="network-svg"

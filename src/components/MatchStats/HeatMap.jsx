@@ -151,10 +151,13 @@ export const HeatMap = ({
             </div>
           )}
 
-          <button type="button" className="mode-pill" onClick={toggleFullscreen}
-            style={{gap:'6px',display:'flex',alignItems:'center'}}>
-            {isFullscreen ? <Minimize2 size={14}/> : <Maximize2 size={14}/>}
-            {isFullscreen ? 'Salir' : '⛶ Pantalla completa'}
+          <button
+            type="button"
+            className="btn-fullscreen-match-card"
+            onClick={toggleFullscreen}
+          >
+            {isFullscreen ? <Minimize2 size={16} /> : <Maximize2 size={16} />}
+            <span>{isFullscreen ? 'Salir' : 'Pantalla Completa'}</span>
           </button>
         </div>
       </div>
@@ -169,9 +172,20 @@ export const HeatMap = ({
           alignItems: 'center',
           justifyContent: 'center',
           width: '100%',
-          overflow: 'hidden'
-        } : {}}
+          overflow: 'hidden',
+          position: 'relative'
+        } : { position: 'relative' }}
       >
+        {/* Botón flotante directo en la esquina del campo */}
+        <button
+          type="button"
+          className="btn-floating-pitch-fullscreen"
+          onClick={toggleFullscreen}
+          title={isFullscreen ? 'Salir de Pantalla Completa' : 'Ver en Pantalla Completa'}
+        >
+          {isFullscreen ? <Minimize2 size={18} /> : <Maximize2 size={18} />}
+        </button>
+
         <div style={{ position: 'relative', width: '100%', height: isFullscreen ? '100%' : 'auto', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <svg
             viewBox="0 0 105 68"

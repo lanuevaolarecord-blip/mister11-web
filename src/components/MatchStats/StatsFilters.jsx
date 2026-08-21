@@ -56,54 +56,34 @@ export const StatsFilters = ({
 
   return (
     <div className="stats-filters-container">
-      {/* ── 1. Filtros de Tiempo ────────────────────────────────────────── */}
+      {/* ── 1. Filtros de Tiempo Coherentes por Mitades ─────────────────── */}
       <div className="filter-group">
         <div className="filter-label">
           <Clock size={16} className="filter-icon" />
           <span>TIEMPO</span>
         </div>
         <div className="filter-btn-group">
-          {['all', '1T', '2T', 'extra'].map(t => (
+          {[
+            { id: 'all', label: 'Todo', range: [0, 90] },
+            { id: '1T', label: '1T (1′-45′)', range: [1, 45] },
+            { id: '2T', label: '2T (46′-90′)', range: [46, 90] },
+            { id: 'extra', label: 'Prórroga', range: [91, 120] }
+          ].map(t => (
             <button
-              key={t}
+              key={t.id}
               type="button"
-              className={`filter-pill-btn ${timeFilter === t ? 'active' : ''}`}
-              onClick={() => setTimeFilter(t)}
+              className={`filter-pill-btn ${timeFilter === t.id ? 'active' : ''}`}
+              onClick={() => {
+                setTimeFilter(t.id);
+                setTimeRange(t.range);
+              }}
             >
-              {t === 'all' ? 'Todo' : t === 'extra' ? 'Prórroga' : t}
+              {t.label}
             </button>
           ))}
         </div>
-        
-        {/* Selector de Rango de Minutos */}
-        <div className="time-range-slider-wrapper">
-          <span className="time-range-text">{timeRange[0]}′ - {timeRange[1]}′</span>
-          <div className="time-range-inputs">
-            <input
-              type="range"
-              min="0"
-              max="90"
-              value={timeRange[0]}
-              onChange={(e) => {
-                const val = Math.min(Number(e.target.value), timeRange[1] - 5);
-                setTimeRange([val, timeRange[1]]);
-              }}
-              className="range-input"
-              aria-label="Minuto inicial"
-            />
-            <input
-              type="range"
-              min="0"
-              max="90"
-              value={timeRange[1]}
-              onChange={(e) => {
-                const val = Math.max(Number(e.target.value), timeRange[0] + 5);
-                setTimeRange([timeRange[0], val]);
-              }}
-              className="range-input"
-              aria-label="Minuto final"
-            />
-          </div>
+        <div className="time-range-summary-badge">
+          <span>Tramo activo: <strong>{timeRange[0]}′ a {timeRange[1]}′</strong></span>
         </div>
       </div>
 
@@ -113,7 +93,7 @@ export const StatsFilters = ({
           <Users size={16} className="filter-icon" />
           <span>EQUIPO</span>
         </div>
-        <div className="filter-btn-group">
+        <div className="filter-btn-group team-btn-group">
           <button
             type="button"
             className={`filter-pill-btn ${teamFilter === 'both' ? 'active' : ''}`}
@@ -127,7 +107,7 @@ export const StatsFilters = ({
             onClick={() => setTeamFilter('home')}
             title={homeTeamName}
           >
-            {homeTeamName.length > 12 ? `${homeTeamName.substring(0, 10)}...` : homeTeamName}
+            {homeTeamName}
           </button>
           <button
             type="button"
@@ -135,7 +115,7 @@ export const StatsFilters = ({
             onClick={() => setTeamFilter('away')}
             title={awayTeamName}
           >
-            {awayTeamName.length > 12 ? `${awayTeamName.substring(0, 10)}...` : awayTeamName}
+            {awayTeamName}
           </button>
         </div>
       </div>

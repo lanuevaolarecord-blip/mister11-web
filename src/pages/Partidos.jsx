@@ -1469,6 +1469,8 @@ const Partidos = () => {
                 teamId={activeTeamId}
                 matchId={matchData?.id || null}
                 matchData={matchData}
+                players={players}
+                calledPlayers={calledPlayers}
                 events={effectiveLiveEvents}
                 addLiveEvent={handleAddLiveEvent}
                 resetLiveStats={resetLiveStats}

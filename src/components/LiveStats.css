@@ -52,236 +52,312 @@
   background: #F1F5F9 !important;
 }
 
-/* ── Cabecera fija (Header) ───────────────────────────────────────── */
+/* ── Cabecera fija Estadio (Header) ─────────────────────────────────── */
 .livestats-header {
   flex-shrink: 0;
   z-index: 20;
-  border-bottom: 1px solid rgba(212, 168, 67, 0.35);
-  padding-top: max(12px, env(safe-area-inset-top));
-  padding-bottom: 10px;
-  padding-left: max(16px, env(safe-area-inset-left));
-  padding-right: max(16px, env(safe-area-inset-right));
+  background: #172D21 !important; /* Siempre verde institucional oscuro */
+  border-bottom: 1.5px solid rgba(212, 168, 67, 0.45);
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 14px;
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.4);
+  color: #FFFFFF;
+  border-radius: 12px;
+  margin-bottom: 16px;
+}
+
+/* ── Tarjeta Cronómetro ────────────────────────────────────────────── */
+.livestats-timer-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  background: #0E1C14;
+  border: 1px solid rgba(212, 168, 67, 0.35);
+  border-radius: 10px;
+  padding: 8px 14px;
+}
+
+.livestats-timer-display {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.livestats-timer-time {
+  font-size: 26px;
+  font-weight: 900;
+  font-family: 'JetBrains Mono', monospace, 'Courier New';
+  line-height: 1;
+  letter-spacing: 1px;
+}
+
+.livestats-timer-badge {
+  font-size: 11px;
+  font-weight: 700;
+  color: #D4A843;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.livestats-timer-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.livestats-btn-timer {
+  padding: 6px 14px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 800;
+  cursor: pointer;
+  border: none;
+  transition: all 0.15s ease;
+  min-height: 36px;
+  text-transform: uppercase;
+}
+
+.livestats-btn-timer.running {
+  background: rgba(239, 68, 68, 0.2);
+  color: #EF4444;
+  border: 1px solid #EF4444;
+}
+
+.livestats-btn-timer.paused {
+  background: #4CAF7D;
+  color: #0E1A14;
+}
+
+.livestats-btn-timer:hover {
+  transform: scale(1.04);
+}
+
+.livestats-btn-icon-timer {
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #FFFFFF;
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+
+.livestats-btn-icon-timer:hover {
+  transform: rotate(45deg);
+  border-color: #D4A843;
+  color: #D4A843;
+}
+
+/* ── Tarjeta Marcador en Vivo ───────────────────────────────────────── */
+.livestats-score-card {
+  display: flex;
+  align-items: center;
+  background: #0E1C14;
+  border: 1.5px solid rgba(212, 168, 67, 0.4);
+  border-radius: 10px;
+  padding: 6px 16px;
+}
+
+.livestats-score-teams {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.livestats-team {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.livestats-team-name {
+  font-size: 13px;
+  font-weight: 700;
+  color: #E2E8F0;
+  max-width: 140px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.livestats-team-score {
+  font-size: 24px;
+  font-weight: 900;
+  color: #FFFFFF;
+  background: rgba(0, 0, 0, 0.4);
+  border: 1px solid rgba(212, 168, 67, 0.5);
+  border-radius: 6px;
+  padding: 2px 10px;
+  min-width: 32px;
+  text-align: center;
+}
+
+.livestats-score-separator {
+  font-size: 20px;
+  font-weight: 900;
+  color: #D4A843;
+}
+
+.livestats-btn-goal {
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 800;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: transform 0.15s;
+}
+
+.livestats-btn-goal.for {
+  background: rgba(76, 175, 125, 0.25);
+  border-color: #4CAF7D;
+  color: #4CAF7D;
+}
+
+.livestats-btn-goal.against {
+  background: rgba(239, 68, 68, 0.25);
+  border-color: #EF4444;
+  color: #EF4444;
+}
+
+.livestats-btn-goal:hover {
+  transform: scale(1.08);
+}
+
+/* ── Acciones de Cabecera y Selector de Mitad ────────────────────────── */
+.livestats-header-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.livestats-half-selector {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.livestats-half-label {
+  font-size: 12px;
+  font-weight: 700;
+  color: #D4A843;
+}
+
+.livestats-half-pill {
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.08);
+  color: #E2E8F0;
+  transition: all 0.15s ease;
+}
+
+.livestats-half-pill.active {
+  background: #D4A843;
+  color: #000000;
+  border-color: #D4A843;
+  font-weight: 900;
+}
+
+.livestats-fullscreen-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(212, 168, 67, 0.15);
+  border: 1px solid #D4A843;
+  color: #D4A843;
+  border-radius: 8px;
+  padding: 8px 14px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.livestats-fullscreen-btn:hover {
+  background: #D4A843;
+  color: #000000;
+}
+
+/* ── Selector Táctico de Sector / Banda ─────────────────────────────── */
+.livestats-sector-bar {
   display: flex;
   align-items: center;
   justify-content: space-between;
   flex-wrap: wrap;
   gap: 10px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.35);
+  background: var(--bg-card, #FFFFFF);
+  border: 1px solid var(--border-color, #D4A843);
+  border-radius: 10px;
+  padding: 10px 16px;
+  margin-bottom: 16px;
 }
 
-/* Modo oscuro: verde institucional profundo */
-.theme-dark .livestats-header {
+.dark .livestats-sector-bar {
   background: #172D21;
-  color: #F8FAFC;
 }
 
-/* Modo claro: blanco con borde dorado sutil */
-.theme-light .livestats-header {
-  background: #FFFFFF;
-  color: #0F172A;
-  border-bottom: 1px solid rgba(212, 168, 67, 0.4);
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-}
-
-
-/* Bloque Cronómetro */
-.livestats-timer-block {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.livestats-timer-digits {
-  font-size: 28px;
-  font-weight: 900;
-  font-family: 'JetBrains Mono', 'Courier New', monospace;
-  letter-spacing: 1.5px;
-  line-height: 1;
-  transition: color 0.3s ease, text-shadow 0.3s ease;
-}
-
-.livestats-timer-digits.running {
-  color: #4CAF7D;
-  text-shadow: 0 0 14px rgba(76, 175, 125, 0.5);
-}
-
-.livestats-timer-digits.paused {
-  color: #FFFFFF;
-  text-shadow: 0 0 8px rgba(255, 255, 255, 0.2);
-}
-
-.livestats-timer-meta {
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-}
-
-.livestats-minute-label {
-  font-size: 11px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
-.theme-dark .livestats-minute-label {
-  color: #E2E8F0;
-}
-
-.theme-light .livestats-minute-label {
-  color: #374151;
-}
-
-
-/* Botón Play/Pausa del cronómetro */
-.livestats-toggle-timer-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 6px 14px;
-  border-radius: 20px;
-  font-size: 12px;
+.sector-bar-title {
+  font-size: 13px;
   font-weight: 800;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  outline: none;
-  border: 1.5px solid transparent;
+  color: var(--accent-gold, #D4A843);
 }
 
-.livestats-toggle-timer-btn.btn-play {
-  background: #4CAF7D;
-  color: #0E1A14;
-  border-color: #4CAF7D;
-  box-shadow: 0 0 12px rgba(76, 175, 125, 0.4);
-}
-
-.livestats-toggle-timer-btn.btn-play:hover {
-  background: #3B9B67;
-  transform: scale(1.03);
-}
-
-.livestats-toggle-timer-btn.btn-pause {
-  background: rgba(212, 168, 67, 0.25);
-  color: #FCD34D;
-  border-color: #D4A843;
-}
-
-.livestats-toggle-timer-btn.btn-pause:hover {
-  background: rgba(212, 168, 67, 0.4);
-  transform: scale(1.03);
-}
-
-/* Botón Reinicio del cronómetro */
-.livestats-reset-timer-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  background: rgba(212, 168, 67, 0.2);
-  color: #D4A843;
-  border: 1.5px solid #D4A843;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  outline: none;
-  padding: 0;
-  box-shadow: 0 0 8px rgba(212, 168, 67, 0.25);
-}
-
-.livestats-reset-timer-btn:hover {
-  background: #D4A843;
-  color: #0E1A14;
-  transform: scale(1.08) rotate(45deg);
-  box-shadow: 0 0 12px rgba(212, 168, 67, 0.5);
-}
-
-/* Bloque Marcador y Score — adaptativo claro/oscuro */
-.livestats-score-box {
+.sector-bar-pills {
   display: flex;
-  align-items: center;
-  gap: 10px;
-  border-radius: 12px;
-  padding: 6px 14px;
-  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-.theme-dark .livestats-score-box {
-  background: rgba(0, 0, 0, 0.35);
-  border: 1px solid rgba(212, 168, 67, 0.4);
-}
-
-.theme-light .livestats-score-box {
-  background: #F1F5F9;
-  border: 1px solid rgba(212, 168, 67, 0.5);
-}
-
-
-.livestats-score-display {
-  display: flex;
-  align-items: center;
   gap: 8px;
+  flex-wrap: wrap;
 }
 
-.livestats-score-num {
-  font-size: 24px;
-  font-weight: 900;
-  color: #FFFFFF;
-  line-height: 1;
-}
-
-.livestats-score-dash {
-  font-size: 16px;
-  font-weight: 800;
-  color: #D4A843;
-}
-
-.livestats-goal-btn {
-  background: rgba(76, 175, 125, 0.22);
-  border: 1px solid #4CAF7D;
-  color: #4CAF7D;
+.sector-pill {
+  min-height: 38px;
+  padding: 6px 14px;
   border-radius: 8px;
-  padding: 3px 8px;
-  font-size: 11px;
-  font-weight: 900;
+  border: 1px solid rgba(0, 0, 0, 0.15);
+  background: var(--input-bg, #F1F5F9);
+  color: var(--text-primary, #1B3A2D);
+  font-size: 12px;
+  font-weight: 700;
   cursor: pointer;
   transition: all 0.15s ease;
-  outline: none;
 }
 
-.livestats-goal-btn:hover {
-  background: #4CAF7D;
-  color: #0E1A14;
-  transform: scale(1.08);
+.dark .sector-pill {
+  border-color: rgba(255, 255, 255, 0.2);
+  background: #0E1C14;
+  color: #FFFFFF;
 }
 
-.livestats-goal-btn:active {
-  transform: scale(0.95);
+.sector-pill:hover {
+  border-color: var(--accent-gold, #D4A843);
+  transform: translateY(-1px);
 }
 
-/* Selector de Mitad */
-.livestats-half-selector {
-  display: flex;
-  align-items: center;
-  gap: 8px;
+.sector-pill.active {
+  background: var(--primary, #1B3A2D) !important;
+  color: #FFFFFF !important;
+  border-color: var(--accent-gold, #D4A843) !important;
+  box-shadow: 0 2px 8px rgba(27, 58, 45, 0.35);
 }
 
-.livestats-half-label {
-  font-size: 12px;
-  font-weight: 600;
+.dark .sector-pill.active {
+  background: #D4A843 !important;
+  color: #000000 !important;
 }
 
-.theme-dark .livestats-half-label { color: #E2E8F0; }
-.theme-light .livestats-half-label { color: #374151; }
-
-
-.livestats-half-btn {
-  padding: 5px 12px;
-  border-radius: 20px;
-  font-size: 12px;
-  font-weight: 800;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
 
 .livestats-half-btn.active {
   background: #D4A843;

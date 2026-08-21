@@ -155,6 +155,8 @@ const LiveStats = ({
   teamId,
   matchId,
   matchData,
+  players,
+  calledPlayers,
   language,
   onAddGoalFor,
   onAddGoalAgainst,
@@ -233,52 +235,62 @@ const LiveStats = ({
     return [...base, ...unique];
   }, [parentEvents, liveStatsHook.events, matchData, localEvents]);
 
-  // addLiveEvent envuelto: añade al estado local ANTES de escribir en Firestore
-  const innerAddLiveEvent = useCallback(async (type, explicitHalf = null) => {
-    const targetHalf = explicitHalf !== null ? explicitHalf : currentHalf;
-    const tempId = 'local_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5);
-    const localDoc = { id: tempId, type, half: targetHalf, minute: currentMinute || 1, timestamp: new Date().toISOString() };
-    setLocalEvents(prev => [...prev, localDoc]);
-    const hook = parentAddLiveEvent || liveStatsHook.addLiveEvent;
-    if (hook) {
-      const realId = await hook(type, explicitHalf);
-      // Reemplazar el id temporal por el real cuando Firestore responde
-      if (realId && realId !== tempId) {
-        setLocalEvents(prev => prev.filter(e => e.id !== tempId));
-      }
-      return realId;
-    }
-    return tempId;
-  }, [parentAddLiveEvent, liveStatsHook.addLiveEvent, currentHalf, currentMinute]);
-
-  const addLiveEvent = innerAddLiveEvent;
-  const resetLiveStats = useCallback(async () => {
-    setLocalEvents([]);
-    const hook = parentResetLiveStats || liveStatsHook.resetLiveStats;
-    if (hook) await hook();
-  }, [parentResetLiveStats, liveStatsHook.resetLiveStats]);
   const saving = liveStatsHook.saving;
 
   const [flashType, setFlashType] = useState(null);
+  const [selectedSector, setSelectedSector] = useState('center'); // 'left' | 'center' | 'right'
 
-  // ── Extraer Jugadores y Nombres de Equipo ──────────────────────────────────
+  // ── Extraer Jugadores Reales y Nombres de Equipo ────────────────────────────
   const homeTeamName = matchData?.local || matchData?.equipoLocal || 'Mi Equipo';
   const awayTeamName = matchData?.visitante || matchData?.equipoVisitante || matchData?.rival || 'Rival';
+
   const playersList = useMemo(() => {
-    return matchData?.players || matchData?.jugadores || [
-      { id: '1', dorsal: 1, nombre: 'Portero Titular', posicion: 'POR' },
-      { id: '2', dorsal: 2, nombre: 'Lateral Derecho', posicion: 'DEF' },
-      { id: '3', dorsal: 4, nombre: 'Central Izquierdo', posicion: 'DEF' },
-      { id: '4', dorsal: 5, nombre: 'Central Derecho', posicion: 'DEF' },
-      { id: '5', dorsal: 3, nombre: 'Lateral Izquierdo', posicion: 'DEF' },
-      { id: '6', dorsal: 6, nombre: 'Mediocentro Defensivo', posicion: 'MED' },
-      { id: '7', dorsal: 8, nombre: 'Interior Derecho', posicion: 'MED' },
-      { id: '8', dorsal: 10, nombre: 'Mediapunta Creativo', posicion: 'MED' },
-      { id: '9', dorsal: 7, nombre: 'Extremo Derecho', posicion: 'DEL' },
-      { id: '10', dorsal: 9, nombre: 'Delantero Centro', posicion: 'DEL' },
-      { id: '11', dorsal: 11, nombre: 'Extremo Izquierdo', posicion: 'DEL' },
+    // 1. Priorizar jugadores de la alineación / convocatoria real
+    const rawList = (calledPlayers && calledPlayers.length > 0)
+      ? calledPlayers
+      : (players && players.length > 0)
+        ? players
+        : (matchData?.players || matchData?.jugadores || matchData?.convocados || []);
+
+    if (rawList.length > 0) {
+      return rawList.map((p, idx) => {
+        // Si p es un ID de convocado y existe el array de players
+        if (typeof p === 'string' && players && players.length > 0) {
+          const found = players.find(x => x.id === p);
+          if (found) {
+            return {
+              id: found.id,
+              dorsal: found.dorsal || found.number || (idx + 1),
+              nombre: found.nombre || found.name || `Jugador ${idx + 1}`,
+              posicion: found.posicion || found.position || 'JUG'
+            };
+          }
+        }
+        return {
+          id: p.id || String(p.dorsal || idx + 1),
+          dorsal: p.dorsal || p.number || (idx + 1),
+          nombre: p.nombre || p.name || `Jugador ${p.dorsal || idx + 1}`,
+          posicion: p.posicion || p.position || 'JUG'
+        };
+      });
+    }
+
+    // Fallback táctico genérico solo si el equipo no tiene ningún jugador cargado
+    return [
+      { id: '1', dorsal: 1, nombre: 'Portero', posicion: 'POR' },
+      { id: '2', dorsal: 2, nombre: 'Lateral Der.', posicion: 'DEF' },
+      { id: '3', dorsal: 4, nombre: 'Central Izq.', posicion: 'DEF' },
+      { id: '4', dorsal: 5, nombre: 'Central Der.', posicion: 'DEF' },
+      { id: '5', dorsal: 3, nombre: 'Lateral Izq.', posicion: 'DEF' },
+      { id: '6', dorsal: 6, nombre: 'Pivote', posicion: 'MED' },
+      { id: '7', dorsal: 8, nombre: 'Interior Der.', posicion: 'MED' },
+      { id: '8', dorsal: 10, nombre: 'Mediapunta', posicion: 'MED' },
+      { id: '9', dorsal: 7, nombre: 'Extremo Der.', posicion: 'DEL' },
+      { id: '10', dorsal: 9, nombre: 'Delantero', posicion: 'DEL' },
+      { id: '11', dorsal: 11, nombre: 'Extremo Izq.', posicion: 'DEL' },
     ];
-  }, [matchData]);
+  }, [players, calledPlayers, matchData]);
+
 
   // ── Filtrado Multidimensional de Eventos ────────────────────────────────────
   const filteredEvents = useMemo(() => {
@@ -375,6 +387,53 @@ const LiveStats = ({
     }
   }, [matchData, filteredEvents, homeTeamName]);
 
+  // addLiveEvent envuelto: añade al estado local con sector y coordenadas
+  const innerAddLiveEvent = useCallback(async (type, explicitHalf = null, customCoords = null) => {
+    const targetHalf = explicitHalf !== null ? explicitHalf : currentHalf;
+    const tempId = 'local_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5);
+
+    // Calcular x, y según tipo de evento y sector seleccionado
+    const yCoord = customCoords?.y ?? (selectedSector === 'left' ? 20 : selectedSector === 'right' ? 80 : 50);
+    const xMap = {
+      shot_on_target_own: 88, shot_off_target_own: 80,
+      shot_on_target_rival: 12, shot_off_target_rival: 20,
+      recovery: 55, loss: 45, duel_won: 58, duel_lost: 42,
+      foul_favor: 62, foul_against: 38, counter_not_cut: 30,
+      corner_favor: 98, corner_against: 2,
+      card_yellow_own: 40, card_red_own: 38
+    };
+    const xCoord = customCoords?.x ?? (xMap[type] || 50);
+
+    const localDoc = {
+      id: tempId,
+      type,
+      half: targetHalf,
+      minute: currentMinute || 1,
+      sector: selectedSector,
+      x: xCoord,
+      y: yCoord,
+      timestamp: new Date().toISOString()
+    };
+
+    setLocalEvents(prev => [...prev, localDoc]);
+    const hook = parentAddLiveEvent || liveStatsHook.addLiveEvent;
+    if (hook) {
+      const realId = await hook(type, explicitHalf, { sector: selectedSector, x: xCoord, y: yCoord });
+      if (realId && realId !== tempId) {
+        setLocalEvents(prev => prev.filter(e => e.id !== tempId));
+      }
+      return realId;
+    }
+    return tempId;
+  }, [parentAddLiveEvent, liveStatsHook.addLiveEvent, currentHalf, currentMinute, selectedSector]);
+
+  const addLiveEvent = innerAddLiveEvent;
+  const resetLiveStats = useCallback(async () => {
+    setLocalEvents([]);
+    const hook = parentResetLiveStats || liveStatsHook.resetLiveStats;
+    if (hook) await hook();
+  }, [parentResetLiveStats, liveStatsHook.resetLiveStats]);
+
   const handlePress = useCallback(
     async (type) => {
       const id = await addLiveEvent(type, currentHalf);
@@ -385,6 +444,7 @@ const LiveStats = ({
     },
     [addLiveEvent, currentHalf]
   );
+
 
   const handleAddTacticalNote = (noteText) => {
     const newNote = {
@@ -584,6 +644,34 @@ const LiveStats = ({
         {/* PESTAÑA 1: Captura Rápida de Botones */}
         {activeTab === 'capture' && (
           <>
+            {/* Selector Táctico de Sector / Banda de la Jugada */}
+            <div className="livestats-sector-bar">
+              <span className="sector-bar-title">📍 Sector de la Jugada:</span>
+              <div className="sector-bar-pills">
+                <button
+                  type="button"
+                  className={`sector-pill ${selectedSector === 'left' ? 'active' : ''}`}
+                  onClick={() => setSelectedSector('left')}
+                >
+                  ⬅️ Banda Izquierda
+                </button>
+                <button
+                  type="button"
+                  className={`sector-pill ${selectedSector === 'center' ? 'active' : ''}`}
+                  onClick={() => setSelectedSector('center')}
+                >
+                  ⏺️ Centro / Pasillo Central
+                </button>
+                <button
+                  type="button"
+                  className={`sector-pill ${selectedSector === 'right' ? 'active' : ''}`}
+                  onClick={() => setSelectedSector('right')}
+                >
+                  ➡️ Banda Derecha
+                </button>
+              </div>
+            </div>
+
             <div className="livestats-categories-grid">
               {BUTTON_GROUPS.map((group) => (
                 <section key={group.catKey} className="livestats-category-card">

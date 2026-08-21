@@ -1,5 +1,5 @@
-import React, { useState, useMemo } from 'react';
-import { Target, Trophy, Percent, Crosshair, X } from 'lucide-react';
+import React, { useState, useMemo, useRef, useCallback } from 'react';
+import { Target, Trophy, Percent, Crosshair, X, Maximize2, Minimize2 } from 'lucide-react';
 
 export const ShotMap = ({
   shots = [],
@@ -7,13 +7,33 @@ export const ShotMap = ({
   players = []
 }) => {
   const [selectedShot, setSelectedShot] = useState(null);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const wrapperRef = useRef(null);
+
+  const toggleFullscreen = useCallback(() => {
+    if (!wrapperRef.current) return;
+    if (!document.fullscreenElement) {
+      wrapperRef.current.requestFullscreen?.().catch(() => {});
+    } else {
+      document.exitFullscreen?.().catch(() => {});
+    }
+  }, []);
+
+  React.useEffect(() => {
+    const handler = () => setIsFullscreen(!!document.fullscreenElement);
+    document.addEventListener('fullscreenchange', handler);
+    return () => document.removeEventListener('fullscreenchange', handler);
+  }, []);
 
   // Calcular modelo de xG (Expected Goals) para cada tiro
   // Basado en distancia euclidean a la portería objetivo (x: 100, y: 50) y ángulo de visión
   const shotsWithXG = useMemo(() => {
     return shots.map((shot, idx) => {
+      let y = typeof shot.y === 'number' ? shot.y : 50;
+      if (shot.sector === 'left') y = 25;
+      else if (shot.sector === 'right') y = 75;
+
       const x = typeof shot.x === 'number' ? shot.x : 75;
-      const y = typeof shot.y === 'number' ? shot.y : 50;
 
       // Distancia en metros (asumiendo campo 105x68m)
       const dx = ((100 - x) / 100) * 105;
@@ -26,10 +46,8 @@ export const ShotMap = ({
       const angleDeg = Math.max(0, (angle * 180) / Math.PI);
 
       // Modelo de regresión logística estándar para fútbol
-      // xG aumenta exponencialmente cerca de portería y con mayor ángulo
       let xGValue = 1 / (1 + Math.exp(-(-0.13 * dist + 0.05 * angleDeg - 0.6)));
 
-      // Modificadores según tipo de acción (cabeza, penalti, etc.)
       if (shot.bodyPart === 'head' || shot.bodyPart === 'cabeza') xGValue *= 0.65;
       if (shot.isPenalty || shot.type === 'penalti') xGValue = 0.76;
       if (shot.outcome === 'goal' || shot.type === 'gol') {
@@ -85,9 +103,60 @@ export const ShotMap = ({
   };
 
   return (
-    <div className="shot-map-container">
+    <div
+      ref={wrapperRef}
+      className="shot-map-container"
+      style={isFullscreen ? {
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        width: '100vw',
+        height: '100vh',
+        maxHeight: '100vh',
+        background: '#0b1712',
+        padding: '12px 16px',
+        overflow: 'hidden',
+        display: 'flex',
+        flexDirection: 'column',
+        zIndex: 999999,
+        boxSizing: 'border-box'
+      } : {}}
+    >
+      {/* Header del Shot Map */}
+      <div className="shot-map-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexShrink: 0, marginBottom: '12px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <Target size={20} color="#D4A843" />
+          <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 700, color: '#FFFFFF' }}>
+            Mapa de Tiros y Modelo xG ({teamName})
+          </h3>
+        </div>
+        <button
+          type="button"
+          className="mode-pill"
+          onClick={toggleFullscreen}
+          style={{
+            gap: '6px',
+            display: 'flex',
+            alignItems: 'center',
+            background: 'rgba(255,255,255,0.08)',
+            border: '1px solid rgba(255,255,255,0.2)',
+            color: '#FFF',
+            borderRadius: '8px',
+            padding: '6px 12px',
+            cursor: 'pointer',
+            fontSize: '12px',
+            fontWeight: 700
+          }}
+        >
+          {isFullscreen ? <Minimize2 size={14} /> : <Maximize2 size={14} />}
+          {isFullscreen ? 'Salir' : '⛶ Pantalla completa'}
+        </button>
+      </div>
+
       {/* Tarjetas KPI de Tiros & xG */}
-      <div className="shot-kpi-grid">
+      <div className="shot-kpi-grid" style={{ flexShrink: 0, marginBottom: isFullscreen ? '8px' : '16px' }}>
         <div className="shot-kpi-card">
           <div className="kpi-icon-box gold">
             <Trophy size={18} />
@@ -129,11 +198,31 @@ export const ShotMap = ({
         </div>
       </div>
 
-      {/* Medio Campo Ofensivo SVG con Tiros */}
-      <div className="field-shot-canvas">
-        <svg viewBox="0 0 100 80" className="half-pitch-svg" preserveAspectRatio="none">
+      {/* Medio Campo Ofensivo SVG con Tiros (Zero-scroll) */}
+      <div
+        className="field-shot-canvas"
+        style={isFullscreen ? {
+          flex: 1,
+          minHeight: 0,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          width: '100%',
+          overflow: 'hidden'
+        } : {}}
+      >
+        <svg
+          viewBox="0 0 100 80"
+          className="half-pitch-svg"
+          preserveAspectRatio="none"
+          style={isFullscreen ? { maxHeight: 'calc(100vh - 200px)', width: 'auto', maxWidth: '100%', objectFit: 'contain' } : {}}
+        >
           {/* Fondo del campo */}
           <rect x="0" y="0" width="100" height="80" fill="#1b4d2e" />
+
+          {/* Pasillos Verticales (Banda Izquierda, Centro, Banda Derecha) */}
+          <line x1="33" y1="4" x2="33" y2="76" stroke="rgba(212,168,67,0.25)" strokeWidth="0.6" strokeDasharray="2 2" />
+          <line x1="67" y1="4" x2="67" y2="76" stroke="rgba(212,168,67,0.25)" strokeWidth="0.6" strokeDasharray="2 2" />
 
           {/* Línea de medio campo */}
           <line x1="0" y1="4" x2="100" y2="4" stroke="rgba(255,255,255,0.4)" strokeWidth="0.8" />

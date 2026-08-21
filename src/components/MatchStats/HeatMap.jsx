@@ -1,8 +1,7 @@
 import React, { useState, useMemo, useRef, useCallback } from 'react';
-import { Flame, Maximize2, Minimize2 } from 'lucide-react';
+import { Flame, Maximize2, Minimize2, Eye } from 'lucide-react';
 
 // ── Mapa semántico: tipo de evento → zona estimada (0–100) ──────────────────
-// Permite que los botones de captura se reflejen en el mapa sin coordenadas
 const ZONE_MAP = {
   shot_on_target_own:    { x: 88, y: 50 },
   shot_off_target_own:   { x: 80, y: 45 },
@@ -73,9 +72,15 @@ export const HeatMap = ({
     let total = 0;
 
     filteredEvents.forEach(e => {
-      const fallback = ZONE_MAP[e.type] || { x: 50, y: 50 };
-      const x = typeof e.x === 'number' ? Math.max(0, Math.min(100, e.x)) : fallback.x;
-      const y = typeof e.y === 'number' ? Math.max(0, Math.min(100, e.y)) : fallback.y;
+      // Usar coordenadas explícitas o fallback por tipo y sector
+      let fallbackY = 50;
+      if (e.sector === 'left') fallbackY = 20;
+      else if (e.sector === 'right') fallbackY = 80;
+      else if (ZONE_MAP[e.type]) fallbackY = ZONE_MAP[e.type].y;
+
+      const fallbackX = ZONE_MAP[e.type]?.x ?? 50;
+      const x = typeof e.x === 'number' ? Math.max(0, Math.min(100, e.x)) : fallbackX;
+      const y = typeof e.y === 'number' ? Math.max(0, Math.min(100, e.y)) : fallbackY;
 
       const col = Math.min(COLS - 1, Math.floor((x / 100) * COLS));
       const row = Math.min(ROWS - 1, Math.floor((y / 100) * ROWS));
@@ -88,30 +93,44 @@ export const HeatMap = ({
     return { grid: matrix, maxCount: max || 1, totalCount: total };
   }, [filteredEvents]);
 
-
   const getCellColor = (count) => {
     if (count === 0) return 'rgba(255, 255, 255, 0.02)';
     const ratio = count / maxCount;
-    if (ratio < 0.25) return `rgba(74, 222, 128, ${0.3 + ratio * 0.6})`;
-    if (ratio < 0.55) return `rgba(250, 204, 21, ${0.4 + ratio * 0.5})`;
-    if (ratio < 0.8)  return `rgba(251, 146, 60, ${0.5 + ratio * 0.4})`;
-    return `rgba(239, 68, 68, ${0.6 + ratio * 0.4})`;
+    if (ratio < 0.25) return `rgba(74, 222, 128, ${0.35 + ratio * 0.6})`;
+    if (ratio < 0.55) return `rgba(250, 204, 21, ${0.45 + ratio * 0.5})`;
+    if (ratio < 0.8)  return `rgba(251, 146, 60, ${0.55 + ratio * 0.4})`;
+    return `rgba(239, 68, 68, ${0.65 + ratio * 0.35})`;
   };
 
   const hasEvents = totalCount > 0;
 
-
   return (
     <div
       ref={wrapperRef}
-      className="heat-map-container"
-      style={isFullscreen ? { background: '#0b1712', padding: '20px', overflowY: 'auto', height: '100vh', boxSizing: 'border-box' } : {}}
+      className={`heat-map-container ${isFullscreen ? 'heat-map-fullscreen-active' : ''}`}
+      style={isFullscreen ? {
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        width: '100vw',
+        height: '100vh',
+        maxHeight: '100vh',
+        background: '#0b1712',
+        padding: '12px 16px',
+        overflow: 'hidden',
+        display: 'flex',
+        flexDirection: 'column',
+        zIndex: 999999,
+        boxSizing: 'border-box'
+      } : {}}
     >
-      {/* Header */}
-      <div className="heat-map-header">
+      {/* Header del Mapa de Calor */}
+      <div className="heat-map-header" style={{ flexShrink: 0, marginBottom: isFullscreen ? '8px' : '16px' }}>
         <div className="heat-map-title">
           <Flame size={20} className="flame-icon" />
-          <h3>Mapa de Calor Táctico</h3>
+          <h3>Mapa de Calor Táctico ({teamName})</h3>
         </div>
 
         <div className="heat-map-controls">
@@ -140,67 +159,98 @@ export const HeatMap = ({
         </div>
       </div>
 
-      {/* Campo SVG con rejilla */}
-      <div className="field-heatmap-wrapper">
-        <svg viewBox="0 0 105 68" className="football-pitch-svg" preserveAspectRatio="none">
-          <rect x="0" y="0" width="105" height="68" fill="#1b4d2e" />
-          {Array.from({ length: 9 }).map((_, i) => (
-            <rect key={i} x={i*(105/9)} y="0" width={105/9} height="68"
-              fill={i%2===0?'rgba(0,0,0,0.06)':'rgba(255,255,255,0.02)'} />
-          ))}
-          <rect x="3" y="3" width="99" height="62" fill="none" stroke="rgba(255,255,255,0.5)" strokeWidth="0.8" />
-          <line x1="52.5" y1="3" x2="52.5" y2="65" stroke="rgba(255,255,255,0.5)" strokeWidth="0.8" />
-          <circle cx="52.5" cy="34" r="9.15" fill="none" stroke="rgba(255,255,255,0.5)" strokeWidth="0.8" />
-          <circle cx="52.5" cy="34" r="0.8" fill="rgba(255,255,255,0.7)" />
-          <rect x="3" y="14" width="16.5" height="40" fill="none" stroke="rgba(255,255,255,0.5)" strokeWidth="0.8" />
-          <rect x="3" y="24.5" width="5.5" height="19" fill="none" stroke="rgba(255,255,255,0.5)" strokeWidth="0.8" />
-          <circle cx="14" cy="34" r="0.8" fill="rgba(255,255,255,0.7)" />
-          <rect x="85.5" y="14" width="16.5" height="40" fill="none" stroke="rgba(255,255,255,0.5)" strokeWidth="0.8" />
-          <rect x="96.5" y="24.5" width="5.5" height="19" fill="none" stroke="rgba(255,255,255,0.5)" strokeWidth="0.8" />
-          <circle cx="91" cy="34" r="0.8" fill="rgba(255,255,255,0.7)" />
-          {/* Etiquetas de zona */}
-          <text x="17" y="7.5" textAnchor="middle" fill="rgba(255,255,255,0.45)" fontSize="3.5" fontWeight="bold">DEFENSA</text>
-          <text x="52.5" y="7.5" textAnchor="middle" fill="rgba(255,255,255,0.45)" fontSize="3.5" fontWeight="bold">MEDIO</text>
-          <text x="88" y="7.5" textAnchor="middle" fill="rgba(255,255,255,0.45)" fontSize="3.5" fontWeight="bold">ATAQUE</text>
-        </svg>
+      {/* Campo SVG con rejilla superpuesta (Zero-scroll en Fullscreen) */}
+      <div
+        className="field-heatmap-wrapper"
+        style={isFullscreen ? {
+          flex: 1,
+          minHeight: 0,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          width: '100%',
+          overflow: 'hidden'
+        } : {}}
+      >
+        <div style={{ position: 'relative', width: '100%', height: isFullscreen ? '100%' : 'auto', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <svg
+            viewBox="0 0 105 68"
+            className="football-pitch-svg"
+            preserveAspectRatio="none"
+            style={isFullscreen ? { maxHeight: 'calc(100vh - 120px)', width: 'auto', maxWidth: '100%', objectFit: 'contain' } : {}}
+          >
+            <rect x="0" y="0" width="105" height="68" fill="#1b4d2e" />
+            {Array.from({ length: 9 }).map((_, i) => (
+              <rect key={i} x={i*(105/9)} y="0" width={105/9} height="68"
+                fill={i%2===0?'rgba(0,0,0,0.06)':'rgba(255,255,255,0.02)'} />
+            ))}
+            
+            {/* Líneas perimetrales y de fútbol */}
+            <rect x="3" y="3" width="99" height="62" fill="none" stroke="rgba(255,255,255,0.5)" strokeWidth="0.8" />
+            <line x1="52.5" y1="3" x2="52.5" y2="65" stroke="rgba(255,255,255,0.5)" strokeWidth="0.8" />
+            <circle cx="52.5" cy="34" r="9.15" fill="none" stroke="rgba(255,255,255,0.5)" strokeWidth="0.8" />
+            <circle cx="52.5" cy="34" r="0.8" fill="rgba(255,255,255,0.7)" />
 
-        {/* Celdas interactivas de calor */}
-        <div 
-          className="heatmap-grid" 
-          style={{ 
-            gridTemplateColumns: `repeat(${COLS}, 1fr)`,
-            gridTemplateRows: `repeat(${ROWS}, 1fr)`
-          }}
-        >
-          {grid.map((row, rIdx) => 
-            row.map((count, cIdx) => {
-              const pct = totalCount > 0 ? ((count / totalCount) * 100).toFixed(1) : 0;
-              return (
-                <div
-                  key={`${rIdx}-${cIdx}`}
-                  className="heatmap-cell"
-                  style={{
-                    backgroundColor: getCellColor(count)
-                  }}
-                  onMouseEnter={() => setHoveredCell({ row: rIdx, col: cIdx, count, pct })}
-                  onMouseLeave={() => setHoveredCell(null)}
-                />
-              );
-            })
+            {/* Áreas penales */}
+            <rect x="3" y="14" width="16.5" height="40" fill="none" stroke="rgba(255,255,255,0.5)" strokeWidth="0.8" />
+            <rect x="3" y="24.5" width="5.5" height="19" fill="none" stroke="rgba(255,255,255,0.5)" strokeWidth="0.8" />
+            <circle cx="14" cy="34" r="0.8" fill="rgba(255,255,255,0.7)" />
+            <rect x="85.5" y="14" width="16.5" height="40" fill="none" stroke="rgba(255,255,255,0.5)" strokeWidth="0.8" />
+            <rect x="96.5" y="24.5" width="5.5" height="19" fill="none" stroke="rgba(255,255,255,0.5)" strokeWidth="0.8" />
+            <circle cx="91" cy="34" r="0.8" fill="rgba(255,255,255,0.7)" />
+
+            {/* Pasillos Tácticos Horizontales (Bandas y Centro) */}
+            <line x1="3" y1="22.6" x2="102" y2="22.6" stroke="rgba(212,168,67,0.25)" strokeWidth="0.5" strokeDasharray="2 2" />
+            <line x1="3" y1="45.3" x2="102" y2="45.3" stroke="rgba(212,168,67,0.25)" strokeWidth="0.5" strokeDasharray="2 2" />
+
+            {/* Etiquetas de Sector y Zonas */}
+            <text x="52.5" y="13" textAnchor="middle" fill="rgba(212,168,67,0.4)" fontSize="2.8" fontWeight="bold">⬅️ BANDA IZQUIERDA</text>
+            <text x="52.5" y="34.8" textAnchor="middle" fill="rgba(212,168,67,0.4)" fontSize="2.8" fontWeight="bold">⏺️ PASILLO CENTRAL</text>
+            <text x="52.5" y="57" textAnchor="middle" fill="rgba(212,168,67,0.4)" fontSize="2.8" fontWeight="bold">➡️ BANDA DERECHA</text>
+
+            <text x="17" y="6.5" textAnchor="middle" fill="rgba(255,255,255,0.5)" fontSize="3.2" fontWeight="bold">DEFENSA</text>
+            <text x="52.5" y="6.5" textAnchor="middle" fill="rgba(255,255,255,0.5)" fontSize="3.2" fontWeight="bold">MEDIO</text>
+            <text x="88" y="6.5" textAnchor="middle" fill="rgba(255,255,255,0.5)" fontSize="3.2" fontWeight="bold">ATAQUE</text>
+          </svg>
+
+          {/* Celdas interactivas de calor */}
+          <div 
+            className="heatmap-grid" 
+            style={{ 
+              gridTemplateColumns: `repeat(${COLS}, 1fr)`,
+              gridTemplateRows: `repeat(${ROWS}, 1fr)`
+            }}
+          >
+            {grid.map((row, rIdx) => 
+              row.map((count, cIdx) => {
+                const pct = totalCount > 0 ? ((count / totalCount) * 100).toFixed(1) : 0;
+                return (
+                  <div
+                    key={`${rIdx}-${cIdx}`}
+                    className="heatmap-cell"
+                    style={{
+                      backgroundColor: getCellColor(count)
+                    }}
+                    onMouseEnter={() => setHoveredCell({ row: rIdx, col: cIdx, count, pct })}
+                    onMouseLeave={() => setHoveredCell(null)}
+                  />
+                );
+              })
+            )}
+          </div>
+
+          {/* Tooltip flotante */}
+          {hoveredCell && (
+            <div className="heatmap-tooltip">
+              <div className="tooltip-title">Sector [{hoveredCell.col + 1}, {hoveredCell.row + 1}]</div>
+              <div className="tooltip-value">{hoveredCell.count} acción(es) ({hoveredCell.pct}%)</div>
+            </div>
           )}
         </div>
-
-        {/* Tooltip flotante */}
-        {hoveredCell && (
-          <div className="heatmap-tooltip">
-            <div className="tooltip-title">Sector [{hoveredCell.col + 1}, {hoveredCell.row + 1}]</div>
-            <div className="tooltip-value">{hoveredCell.count} acción(es) ({hoveredCell.pct}%)</div>
-          </div>
-        )}
       </div>
 
       {/* Leyenda de Intensidad */}
-      <div className="heatmap-legend">
+      <div className="heatmap-legend" style={{ flexShrink: 0, marginTop: isFullscreen ? '6px' : '14px' }}>
         <div className="legend-scale">
           <span className="legend-label">Baja actividad</span>
           <div className="legend-gradient-bar" />
@@ -211,22 +261,24 @@ export const HeatMap = ({
         </div>
       </div>
 
-      {/* Panel informativo: cómo se capturan los datos por zona */}
-      <div className="heatmap-zone-info">
-        <p className="zone-info-title">📍 <strong>¿Cómo se ubican los eventos en el mapa?</strong></p>
-        <p className="zone-info-desc">
-          Cada botón de captura registra una <strong>zona estimada</strong> según el tipo de acción.
-          Si capturas posición exacta en campo (modo avanzado), se usa la coordenada real.
-        </p>
-        <div className="zone-info-grid">
-          <div className="zone-info-item"><span className="zone-dot" style={{background:'#EF4444'}}/><div><strong>Zona Ofensiva</strong><span>Tiros a puerta, Córners a favor, Fuera de juego rival</span></div></div>
-          <div className="zone-info-item"><span className="zone-dot" style={{background:'#D4A843'}}/><div><strong>Zona Media</strong><span>Recuperaciones, Pérdidas, Duelos, Faltas</span></div></div>
-          <div className="zone-info-item"><span className="zone-dot" style={{background:'#3B82F6'}}/><div><strong>Zona Defensiva</strong><span>Tiros rivales, Córners en contra, Tarjetas propias</span></div></div>
+      {/* Panel explicativo de sectores (oculto en fullscreen para evitar scroll) */}
+      {!isFullscreen && (
+        <div className="heatmap-zone-info">
+          <p className="zone-info-title">📍 <strong>Mapeo de Zonas y Bandas del Campo</strong></p>
+          <p className="zone-info-desc">
+            Cada botón de captura registra automáticamente el tercio (Defensa, Medio, Ataque) y el <strong>sector activo</strong> (Banda Izquierda, Centro, Banda Derecha) seleccionado en la barra de captura.
+          </p>
+          <div className="zone-info-grid">
+            <div className="zone-info-item"><span className="zone-dot" style={{background:'#EF4444'}}/><div><strong>Ataque</strong><span>Tiros a puerta, Córners a favor, Fuera de juego</span></div></div>
+            <div className="zone-info-item"><span className="zone-dot" style={{background:'#D4A843'}}/><div><strong>Medio</strong><span>Recuperaciones, Pérdidas, Duelos, Faltas</span></div></div>
+            <div className="zone-info-item"><span className="zone-dot" style={{background:'#3B82F6'}}/><div><strong>Defensa</strong><span>Tiros rivales, Córners en contra, Tarjetas</span></div></div>
+          </div>
+          {!hasEvents && (
+            <p className="zone-info-empty">⬆️ Pulsa botones en <strong>"Captura en Vivo"</strong> para poblar el mapa.</p>
+          )}
         </div>
-        {!hasEvents && (
-          <p className="zone-info-empty">⬆️ Pulsa botones en <strong>"Captura en Vivo"</strong> para poblar el mapa.</p>
-        )}
-      </div>
+      )}
     </div>
   );
 };
+

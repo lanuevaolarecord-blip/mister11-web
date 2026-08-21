@@ -129,15 +129,25 @@ export const PassNetwork = ({
       ref={wrapperRef}
       className="pass-network-container"
       style={isFullscreen ? {
-        background: '#0b1712',
-        padding: '20px',
-        overflowY: 'auto',
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        width: '100vw',
         height: '100vh',
+        maxHeight: '100vh',
+        background: '#0b1712',
+        padding: '12px 16px',
+        overflow: 'hidden',
+        display: 'flex',
+        flexDirection: 'column',
+        zIndex: 999999,
         boxSizing: 'border-box'
       } : {}}
     >
       {/* Header de la red de pases */}
-      <div className="pass-network-header">
+      <div className="pass-network-header" style={{ flexShrink: 0, marginBottom: isFullscreen ? '8px' : '16px' }}>
         <div className="pass-network-title">
           <Share2 size={20} className="network-icon" />
           <h3>Red de Pases Táctica ({teamName})</h3>
@@ -169,9 +179,25 @@ export const PassNetwork = ({
         </div>
       </div>
 
-      {/* Campo SVG con Nodos y Aristas */}
-      <div className="field-network-canvas">
-        <svg viewBox="0 0 100 100" className="network-svg" preserveAspectRatio="none">
+      {/* Campo SVG con Nodos y Aristas (Zero-scroll) */}
+      <div
+        className="field-network-canvas"
+        style={isFullscreen ? {
+          flex: 1,
+          minHeight: 0,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          width: '100%',
+          overflow: 'hidden'
+        } : {}}
+      >
+        <svg
+          viewBox="0 0 100 100"
+          className="network-svg"
+          preserveAspectRatio="none"
+          style={isFullscreen ? { maxHeight: 'calc(100vh - 120px)', width: 'auto', maxWidth: '100%', objectFit: 'contain' } : {}}
+        >
           {/* Fondo del campo */}
           <rect x="0" y="0" width="100" height="100" fill="#153e24" />
 
@@ -180,6 +206,10 @@ export const PassNetwork = ({
           <line x1="50" y1="4" x2="50" y2="96" stroke="rgba(255,255,255,0.4)" strokeWidth="0.8" />
           <circle cx="50" cy="50" r="14" fill="none" stroke="rgba(255,255,255,0.4)" strokeWidth="0.8" />
           <circle cx="50" cy="50" r="1" fill="rgba(255,255,255,0.7)" />
+
+          {/* Pasillos Tácticos Horizontales (Bandas y Centro) */}
+          <line x1="3" y1="33" x2="97" y2="33" stroke="rgba(212,168,67,0.25)" strokeWidth="0.6" strokeDasharray="2 2" />
+          <line x1="3" y1="67" x2="97" y2="67" stroke="rgba(212,168,67,0.25)" strokeWidth="0.6" strokeDasharray="2 2" />
 
           {/* Áreas penales */}
           <rect x="3" y="24" width="16" height="52" fill="none" stroke="rgba(255,255,255,0.4)" strokeWidth="0.8" />

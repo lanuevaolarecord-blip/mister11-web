@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import { 
   X, 
   ZoomIn, 
@@ -24,6 +25,7 @@ import { AnnotationLayer } from './AnnotationLayer';
 import { TacticalGridOverlay } from './TacticalGridOverlay';
 import { PresentationMode } from './PresentationMode';
 import { SplitViewLayout } from './SplitViewLayout';
+import './SessionImageViewer.css';
 
 export const ImageModal = ({
   isOpen = false,
@@ -279,7 +281,9 @@ export const ImageModal = ({
     </div>
   );
 
-  return (
+  if (!isOpen) return null;
+
+  const modalNode = (
     <div 
       ref={modalRef}
       className={`session-image-viewer-modal ${isDarkTheme ? 'theme-dark' : 'theme-light'}`}
@@ -545,4 +549,8 @@ export const ImageModal = ({
       )}
     </div>
   );
+
+  return typeof document !== 'undefined'
+    ? createPortal(modalNode, document.body)
+    : modalNode;
 };

@@ -265,24 +265,24 @@ export const PassNetwork = ({
               >
                 {/* Sombra de selección */}
                 {isSelected && (
-                  <circle r={nodeRadius + 2.5} fill="none" stroke="#D4A843" strokeWidth="1.5" />
+                  <circle r={nodeRadius + 2.5} fill="none" stroke="#D4A843" strokeWidth="1.8" />
                 )}
                 
-                {/* Círculo base del jugador */}
+                {/* Círculo base del jugador con alto contraste */}
                 <circle
                   r={nodeRadius}
-                  fill="#1B3A2D"
-                  stroke="#FFFFFF"
-                  strokeWidth="1"
+                  fill={isSelected ? '#D4A843' : '#0E1C14'}
+                  stroke={isSelected ? '#FFFFFF' : '#D4A843'}
+                  strokeWidth="1.2"
                 />
 
                 {/* Dorsal */}
                 <text
                   textAnchor="middle"
                   dy="0.35em"
-                  fill="#FFFFFF"
-                  fontSize="3.2"
-                  fontWeight="bold"
+                  fill={isSelected ? '#000000' : '#FFFFFF'}
+                  fontSize="3.4"
+                  fontWeight="900"
                 >
                   {node.dorsal}
                 </text>

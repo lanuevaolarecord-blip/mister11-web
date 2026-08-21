@@ -377,42 +377,102 @@
 .radar-title h3,
 .timeline-title h3,
 .comparative-title h3,
-.table-title h3 {
+.table-title h3,
+.shot-map-header h3 {
   margin: 0;
   font-size: 16px;
-  font-weight: 700;
+  font-weight: 800;
   color: var(--text-primary, #1B3A2D);
 }
 
+.heat-map-fullscreen-active .heat-map-title h3,
+.pass-network-fullscreen-active .pass-network-title h3,
+.shot-map-fullscreen-active .shot-map-header h3,
 .dark .heat-map-title h3,
 .dark .pass-network-title h3,
 .dark .radar-title h3,
 .dark .timeline-title h3,
 .dark .comparative-title h3,
-.dark .table-title h3 {
-  color: #FFFFFF;
+.dark .table-title h3,
+.dark .shot-map-header h3,
+.theme-dark .heat-map-title h3,
+.theme-dark .pass-network-title h3,
+.theme-dark .shot-map-header h3 {
+  color: #FFFFFF !important;
+}
+
+.flame-icon, .network-icon {
+  color: #D4A843 !important;
 }
 
 .heat-mode-pills {
   display: flex;
   gap: 6px;
+  flex-wrap: wrap;
 }
 
 .mode-pill, .mode-btn {
   padding: 6px 12px;
   font-size: 12px;
-  font-weight: 600;
-  border-radius: 6px;
-  border: 1px solid rgba(0,0,0,0.1);
+  font-weight: 700;
+  border-radius: 8px;
+  border: 1px solid rgba(0,0,0,0.15);
   background: var(--input-bg, #FFF);
-  color: inherit;
+  color: #0F172A;
   cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.heat-map-fullscreen-active .mode-pill,
+.pass-network-fullscreen-active .mode-pill,
+.shot-map-fullscreen-active .mode-pill,
+.dark .mode-pill,
+.theme-dark .mode-pill {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.25);
+  color: #FFFFFF;
+}
+
+.mode-pill:hover, .mode-btn:hover {
+  border-color: var(--accent-gold, #D4A843);
 }
 
 .mode-pill.active, .mode-btn.active {
-  background: var(--accent-gold, #D4A843);
-  color: #000;
-  border-color: var(--accent-gold, #D4A843);
+  background: var(--accent-gold, #D4A843) !important;
+  color: #000000 !important;
+  border-color: var(--accent-gold, #D4A843) !important;
+  font-weight: 800 !important;
+}
+
+.player-filter-select-wrapper {
+  display: flex;
+  align-items: center;
+}
+
+.player-filter-select {
+  padding: 6px 12px;
+  border-radius: 8px;
+  border: 1.5px solid var(--accent-gold, #D4A843);
+  background: #FFFFFF;
+  color: #0F172A;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  min-height: 38px;
+}
+
+.heat-map-fullscreen-active .player-filter-select,
+.pass-network-fullscreen-active .player-filter-select,
+.shot-map-fullscreen-active .player-filter-select,
+.dark .player-filter-select,
+.theme-dark .player-filter-select {
+  background: #0E1C14;
+  color: #FFFFFF;
+}
+
+.player-filter-select option {
+  background: #0E1C14;
+  color: #FFFFFF;
 }
 
 /* Botones de Pantalla Completa para Análisis Táctico */
@@ -498,7 +558,7 @@
 }
 
 .heatmap-cell:hover {
-  outline: 1px solid #FFF;
+  outline: 2px solid #FFF;
   z-index: 10;
 }
 
@@ -507,13 +567,15 @@
   bottom: 12px;
   left: 50%;
   transform: translateX(-50%);
-  background: rgba(0, 0, 0, 0.85);
+  background: rgba(14, 28, 20, 0.95);
   color: #FFF;
+  border: 1px solid #D4A843;
   padding: 6px 14px;
-  border-radius: 6px;
+  border-radius: 8px;
   font-size: 12px;
   pointer-events: none;
-  z-index: 20;
+  z-index: 40;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.5);
 }
 
 .heatmap-legend {
@@ -524,22 +586,146 @@
   gap: 12px;
   margin-top: 14px;
   font-size: 12px;
+  color: #F8FAFC !important;
+  padding: 8px 12px;
+  background: rgba(0, 0, 0, 0.35);
+  border: 1px solid rgba(212, 168, 67, 0.3);
+  border-radius: 8px;
+}
+
+.theme-light:not(.heat-map-fullscreen-active) .heatmap-legend {
+  background: #F1F5F9;
+  border-color: #CBD5E1;
+  color: #0F172A !important;
 }
 
 .legend-scale {
   display: flex;
   align-items: center;
   gap: 8px;
+  font-weight: 700;
+  color: inherit;
+}
+
+.legend-label {
+  color: inherit;
 }
 
 .legend-gradient-bar {
   width: 120px;
   height: 8px;
   border-radius: 4px;
-  background: linear-gradient(to right, rgba(74,222,128,0.5), rgba(250,204,21,0.7), rgba(239,68,68,0.9));
+  background: linear-gradient(to right, rgba(74,222,128,0.7), rgba(250,204,21,0.85), rgba(239,68,68,1));
+  box-shadow: 0 0 6px rgba(0,0,0,0.3);
+}
+
+.total-actions-badge {
+  font-weight: 600;
+  color: inherit;
+}
+
+.total-actions-badge strong {
+  color: #D4A843;
+}
+
+/* ── 3. RED DE PASES: LEYENDA Y TARJETAS ─────────────────────────────────── */
+.pass-network-legend {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 12px;
+  padding: 8px 14px;
+  background: rgba(0, 0, 0, 0.35);
+  border: 1px solid rgba(212, 168, 67, 0.3);
+  border-radius: 8px;
+  font-size: 12px;
+  color: #F8FAFC !important;
+}
+
+.theme-light:not(.pass-network-fullscreen-active) .pass-network-legend {
+  background: #F1F5F9;
+  border-color: #CBD5E1;
+  color: #0F172A !important;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: inherit;
+  font-weight: 700;
+}
+
+.legend-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.legend-dot.green { background: #4CAF7D; box-shadow: 0 0 6px rgba(76, 175, 125, 0.6); }
+.legend-dot.gold { background: #D4A843; box-shadow: 0 0 6px rgba(212, 168, 67, 0.6); }
+.legend-dot.red { background: #EF4444; box-shadow: 0 0 6px rgba(239, 68, 68, 0.6); }
+
+.legend-line.thick {
+  width: 20px;
+  height: 4px;
+  background: #D4A843;
+  border-radius: 2px;
+  display: inline-block;
 }
 
 /* ── 4. SHOT MAP & KPI CARDS ─────────────────────────────────────────────── */
+.shot-map-legend {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 12px;
+  padding: 8px 14px;
+  background: rgba(0, 0, 0, 0.35);
+  border: 1px solid rgba(212, 168, 67, 0.3);
+  border-radius: 8px;
+  font-size: 12px;
+  color: #F8FAFC !important;
+}
+
+.theme-light:not(.shot-map-fullscreen-active) .shot-map-legend {
+  background: #F1F5F9;
+  border-color: #CBD5E1;
+  color: #0F172A !important;
+}
+
+.legend-outcomes {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  color: inherit;
+  font-weight: 700;
+}
+
+.legend-xg-size {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: inherit;
+  font-weight: 700;
+}
+
+.legend-xg-size .dot {
+  background: #D4A843;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.legend-xg-size .dot.small { width: 6px; height: 6px; }
+.legend-xg-size .dot.medium { width: 10px; height: 10px; }
+.legend-xg-size .dot.large { width: 14px; height: 14px; }
+
 .shot-kpi-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
@@ -552,12 +738,15 @@
   align-items: center;
   gap: 12px;
   padding: 12px 14px;
-  background: var(--bg-primary, #F5F0E8);
+  background: #0E1C14;
+  border: 1px solid rgba(212, 168, 67, 0.4);
   border-radius: 8px;
 }
 
-.dark .shot-kpi-card {
-  background: #252525;
+.theme-light:not(.shot-map-fullscreen-active) .shot-kpi-card {
+  background: #FFFFFF;
+  border: 1px solid #CBD5E1;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
 }
 
 .kpi-icon-box {
@@ -578,29 +767,38 @@
   display: block;
   font-size: 18px;
   font-weight: 800;
-  font-family: var(--font-numbers, sans-serif);
+  color: #FFFFFF;
+}
+
+.theme-light:not(.shot-map-fullscreen-active) .kpi-value {
+  color: #0F172A;
 }
 
 .kpi-label {
   font-size: 11px;
-  color: var(--text-muted, #1B3A2D);
-  font-weight: 600;
+  color: #D4A843;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.theme-light:not(.shot-map-fullscreen-active) .kpi-label {
+  color: #475569;
 }
 
 .shot-detail-card,
 .network-info-card {
   position: absolute;
-  top: 12px;
+  top: 60px;
   right: 12px;
-  background: rgba(17, 27, 33, 0.95);
+  background: rgba(14, 28, 20, 0.96);
   color: #FFF;
-  border: 1px solid var(--accent-gold, #D4A843);
-  border-radius: 8px;
+  border: 1.5px solid var(--accent-gold, #D4A843);
+  border-radius: 10px;
   padding: 12px 14px;
   font-size: 12px;
-  min-width: 200px;
-  z-index: 30;
-  box-shadow: 0 6px 20px rgba(0,0,0,0.4);
+  min-width: 220px;
+  z-index: 32;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.5);
 }
 
 .detail-card-header,
@@ -609,12 +807,15 @@
   justify-content: space-between;
   align-items: center;
   margin-bottom: 8px;
-  border-bottom: 1px solid rgba(255,255,255,0.1);
-  padding-bottom: 4px;
+  border-bottom: 1px solid rgba(255,255,255,0.15);
+  padding-bottom: 6px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #D4A843;
 }
 
 .outcome-pill {
-  padding: 2px 8px;
+  padding: 3px 8px;
   border-radius: 4px;
   font-weight: bold;
   font-size: 11px;

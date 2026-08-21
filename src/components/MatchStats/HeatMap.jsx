@@ -214,17 +214,17 @@ export const HeatMap = ({
             <circle cx="91" cy="34" r="0.8" fill="rgba(255,255,255,0.7)" />
 
             {/* Pasillos Tácticos Horizontales (Bandas y Centro) */}
-            <line x1="3" y1="22.6" x2="102" y2="22.6" stroke="rgba(212,168,67,0.25)" strokeWidth="0.5" strokeDasharray="2 2" />
-            <line x1="3" y1="45.3" x2="102" y2="45.3" stroke="rgba(212,168,67,0.25)" strokeWidth="0.5" strokeDasharray="2 2" />
+            <line x1="3" y1="22.6" x2="102" y2="22.6" stroke="rgba(212,168,67,0.4)" strokeWidth="0.6" strokeDasharray="2 2" />
+            <line x1="3" y1="45.3" x2="102" y2="45.3" stroke="rgba(212,168,67,0.4)" strokeWidth="0.6" strokeDasharray="2 2" />
 
-            {/* Etiquetas de Sector y Zonas */}
-            <text x="52.5" y="13" textAnchor="middle" fill="rgba(212,168,67,0.4)" fontSize="2.8" fontWeight="bold">⬅️ BANDA IZQUIERDA</text>
-            <text x="52.5" y="34.8" textAnchor="middle" fill="rgba(212,168,67,0.4)" fontSize="2.8" fontWeight="bold">⏺️ PASILLO CENTRAL</text>
-            <text x="52.5" y="57" textAnchor="middle" fill="rgba(212,168,67,0.4)" fontSize="2.8" fontWeight="bold">➡️ BANDA DERECHA</text>
+            {/* Etiquetas de Sector y Zonas con Contraste Máximo */}
+            <text x="52.5" y="13" textAnchor="middle" fill="#FFFFFF" stroke="#000000" strokeWidth="0.35" fontSize="3.2" fontWeight="900" style={{ paintOrder: 'stroke fill' }}>⬅️ BANDA IZQUIERDA</text>
+            <text x="52.5" y="34.8" textAnchor="middle" fill="#FFFFFF" stroke="#000000" strokeWidth="0.35" fontSize="3.2" fontWeight="900" style={{ paintOrder: 'stroke fill' }}>⏺️ PASILLO CENTRAL</text>
+            <text x="52.5" y="57" textAnchor="middle" fill="#FFFFFF" stroke="#000000" strokeWidth="0.35" fontSize="3.2" fontWeight="900" style={{ paintOrder: 'stroke fill' }}>➡️ BANDA DERECHA</text>
 
-            <text x="17" y="6.5" textAnchor="middle" fill="rgba(255,255,255,0.5)" fontSize="3.2" fontWeight="bold">DEFENSA</text>
-            <text x="52.5" y="6.5" textAnchor="middle" fill="rgba(255,255,255,0.5)" fontSize="3.2" fontWeight="bold">MEDIO</text>
-            <text x="88" y="6.5" textAnchor="middle" fill="rgba(255,255,255,0.5)" fontSize="3.2" fontWeight="bold">ATAQUE</text>
+            <text x="17" y="7" textAnchor="middle" fill="#FFFFFF" stroke="#000000" strokeWidth="0.35" fontSize="3.6" fontWeight="900" style={{ paintOrder: 'stroke fill' }}>DEFENSA</text>
+            <text x="52.5" y="7" textAnchor="middle" fill="#FFFFFF" stroke="#000000" strokeWidth="0.35" fontSize="3.6" fontWeight="900" style={{ paintOrder: 'stroke fill' }}>MEDIO</text>
+            <text x="88" y="7" textAnchor="middle" fill="#FFFFFF" stroke="#000000" strokeWidth="0.35" fontSize="3.6" fontWeight="900" style={{ paintOrder: 'stroke fill' }}>ATAQUE</text>
           </svg>
 
           {/* Celdas interactivas de calor */}

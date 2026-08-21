@@ -191,38 +191,82 @@ export const PassNetwork = ({
         </button>
 
         <svg
-          viewBox="0 0 100 100"
+          viewBox="0 0 105 68"
           className="network-svg"
           preserveAspectRatio="none"
           style={isFullscreen ? { maxHeight: 'calc(100vh - 120px)', width: 'auto', maxWidth: '100%', objectFit: 'contain' } : {}}
         >
-          {/* Fondo del campo */}
-          <rect x="0" y="0" width="100" height="100" fill="#153e24" />
+          {/* Fondo del campo con césped estadio */}
+          <rect x="0" y="0" width="105" height="68" fill="#153e24" />
 
-          {/* Líneas de fútbol base */}
-          <rect x="3" y="4" width="94" height="92" fill="none" stroke="rgba(255,255,255,0.4)" strokeWidth="0.8" />
-          <line x1="50" y1="4" x2="50" y2="96" stroke="rgba(255,255,255,0.4)" strokeWidth="0.8" />
-          <circle cx="50" cy="50" r="14" fill="none" stroke="rgba(255,255,255,0.4)" strokeWidth="0.8" />
-          <circle cx="50" cy="50" r="1" fill="rgba(255,255,255,0.7)" />
+          {/* Franjas de corte de césped profesional */}
+          {Array.from({ length: 9 }).map((_, i) => (
+            <rect
+              key={i}
+              x={i * (105 / 9)}
+              y="0"
+              width={105 / 9}
+              height="68"
+              fill={i % 2 === 0 ? 'rgba(0, 0, 0, 0.06)' : 'rgba(255, 255, 255, 0.02)'}
+            />
+          ))}
+
+          {/* Líneas de fútbol reglamentarias */}
+          {/* Línea perimetral */}
+          <rect x="3" y="3" width="99" height="62" fill="none" stroke="rgba(255, 255, 255, 0.55)" strokeWidth="0.8" />
+          
+          {/* Línea divisoria central */}
+          <line x1="52.5" y1="3" x2="52.5" y2="65" stroke="rgba(255, 255, 255, 0.55)" strokeWidth="0.8" />
+          
+          {/* Círculo central y punto de saque */}
+          <circle cx="52.5" cy="34" r="9.15" fill="none" stroke="rgba(255, 255, 255, 0.55)" strokeWidth="0.8" />
+          <circle cx="52.5" cy="34" r="0.8" fill="rgba(255, 255, 255, 0.85)" />
+
+          {/* Porterías */}
+          <rect x="0.5" y="30.34" width="2.5" height="7.32" fill="rgba(255, 255, 255, 0.15)" stroke="rgba(255, 255, 255, 0.7)" strokeWidth="0.8" />
+          <rect x="102" y="30.34" width="2.5" height="7.32" fill="rgba(255, 255, 255, 0.15)" stroke="rgba(255, 255, 255, 0.7)" strokeWidth="0.8" />
+
+          {/* Áreas Grandes (16.5m x 40m) */}
+          <rect x="3" y="14" width="16.5" height="40" fill="none" stroke="rgba(255, 255, 255, 0.55)" strokeWidth="0.8" />
+          <rect x="85.5" y="14" width="16.5" height="40" fill="none" stroke="rgba(255, 255, 255, 0.55)" strokeWidth="0.8" />
+
+          {/* Áreas Pequeñas (5.5m x 19m) */}
+          <rect x="3" y="24.5" width="5.5" height="19" fill="none" stroke="rgba(255, 255, 255, 0.55)" strokeWidth="0.8" />
+          <rect x="96.5" y="24.5" width="5.5" height="19" fill="none" stroke="rgba(255, 255, 255, 0.55)" strokeWidth="0.8" />
+
+          {/* Puntos de penalti a 11m */}
+          <circle cx="14" cy="34" r="0.8" fill="rgba(255, 255, 255, 0.85)" />
+          <circle cx="91" cy="34" r="0.8" fill="rgba(255, 255, 255, 0.85)" />
+
+          {/* Semicírculos de área (arcos de penalti) */}
+          <path d="M 19.5 27.5 A 9.15 9.15 0 0 1 19.5 40.5" fill="none" stroke="rgba(255, 255, 255, 0.55)" strokeWidth="0.8" />
+          <path d="M 85.5 27.5 A 9.15 9.15 0 0 0 85.5 40.5" fill="none" stroke="rgba(255, 255, 255, 0.55)" strokeWidth="0.8" />
+
+          {/* Arcos de Córner */}
+          <path d="M 3 5 A 2 2 0 0 0 5 3" fill="none" stroke="rgba(255, 255, 255, 0.55)" strokeWidth="0.8" />
+          <path d="M 3 63 A 2 2 0 0 1 5 65" fill="none" stroke="rgba(255, 255, 255, 0.55)" strokeWidth="0.8" />
+          <path d="M 99 3 A 2 2 0 0 0 102 5" fill="none" stroke="rgba(255, 255, 255, 0.55)" strokeWidth="0.8" />
+          <path d="M 99 65 A 2 2 0 0 1 102 63" fill="none" stroke="rgba(255, 255, 255, 0.55)" strokeWidth="0.8" />
 
           {/* Pasillos Tácticos Horizontales (Bandas y Centro) */}
-          <line x1="3" y1="33" x2="97" y2="33" stroke="rgba(212,168,67,0.25)" strokeWidth="0.6" strokeDasharray="2 2" />
-          <line x1="3" y1="67" x2="97" y2="67" stroke="rgba(212,168,67,0.25)" strokeWidth="0.6" strokeDasharray="2 2" />
+          <line x1="3" y1="22.6" x2="102" y2="22.6" stroke="rgba(212, 168, 67, 0.35)" strokeWidth="0.6" strokeDasharray="2 2" />
+          <line x1="3" y1="45.3" x2="102" y2="45.3" stroke="rgba(212, 168, 67, 0.35)" strokeWidth="0.6" strokeDasharray="2 2" />
 
-          {/* Áreas penales */}
-          <rect x="3" y="24" width="16" height="52" fill="none" stroke="rgba(255,255,255,0.4)" strokeWidth="0.8" />
-          <rect x="81" y="24" width="16" height="52" fill="none" stroke="rgba(255,255,255,0.4)" strokeWidth="0.8" />
-
-          {/* 1. Dibujar Aristas (Líneas de Pase) */}
+          {/* 1. Dibujar Aristas (Líneas de Pase) escaladas a 105x68 */}
           {passEdges.map(edge => {
             const nodeFrom = playerNodes.find(n => n.id === edge.from);
             const nodeTo = playerNodes.find(n => n.id === edge.to);
             if (!nodeFrom || !nodeTo) return null;
 
             const isSelected = selectedEdge?.id === edge.id;
-            const strokeWidth = Math.max(1.2, (edge.count / maxPassCount) * 5);
+            const strokeWidth = Math.max(0.8, (edge.count / maxPassCount) * 3.5);
             const accuracy = edge.count > 0 ? Math.round((edge.successfulCount / edge.count) * 100) : 100;
             const strokeColor = accuracy >= 80 ? '#4CAF7D' : accuracy >= 60 ? '#D4A843' : '#EF4444';
+
+            const fromX = 3 + (nodeFrom.x / 100) * 99;
+            const fromY = 3 + (nodeFrom.y / 100) * 62;
+            const toX = 3 + (nodeTo.x / 100) * 99;
+            const toY = 3 + (nodeTo.y / 100) * 62;
 
             return (
               <g 
@@ -234,28 +278,30 @@ export const PassNetwork = ({
                 style={{ cursor: 'pointer' }}
               >
                 <line
-                  x1={nodeFrom.x}
-                  y1={nodeFrom.y}
-                  x2={nodeTo.x}
-                  y2={nodeTo.y}
+                  x1={fromX}
+                  y1={fromY}
+                  x2={toX}
+                  y2={toY}
                   stroke={strokeColor}
-                  strokeWidth={isSelected ? strokeWidth + 2 : strokeWidth}
-                  strokeOpacity={isSelected ? 1 : 0.75}
-                  strokeDasharray={accuracy < 60 ? '3 2' : 'none'}
+                  strokeWidth={isSelected ? strokeWidth + 1.5 : strokeWidth}
+                  strokeOpacity={isSelected ? 1 : 0.8}
+                  strokeDasharray={accuracy < 60 ? '2.5 1.5' : 'none'}
                 />
               </g>
             );
           })}
 
-          {/* 2. Dibujar Nodos (Jugadores) */}
+          {/* 2. Dibujar Nodos (Jugadores) escalados a 105x68 */}
           {playerNodes.map(node => {
             const isSelected = selectedNode?.id === node.id;
-            const nodeRadius = Math.max(3.5, Math.min(6.5, 3.5 + (node.touchCount / (passes.length || 1)) * 12));
+            const nodeRadius = Math.max(2.4, Math.min(4.2, 2.4 + (node.touchCount / (passes.length || 1)) * 6));
+            const posX = 3 + (node.x / 100) * 99;
+            const posY = 3 + (node.y / 100) * 62;
 
             return (
               <g
                 key={node.id}
-                transform={`translate(${node.x}, ${node.y})`}
+                transform={`translate(${posX}, ${posY})`}
                 onClick={() => {
                   setSelectedNode(node);
                   setSelectedEdge(null);
@@ -265,7 +311,7 @@ export const PassNetwork = ({
               >
                 {/* Sombra de selección */}
                 {isSelected && (
-                  <circle r={nodeRadius + 2.5} fill="none" stroke="#D4A843" strokeWidth="1.8" />
+                  <circle r={nodeRadius + 1.8} fill="none" stroke="#D4A843" strokeWidth="1.2" />
                 )}
                 
                 {/* Círculo base del jugador con alto contraste */}
@@ -273,7 +319,7 @@ export const PassNetwork = ({
                   r={nodeRadius}
                   fill={isSelected ? '#D4A843' : '#0E1C14'}
                   stroke={isSelected ? '#FFFFFF' : '#D4A843'}
-                  strokeWidth="1.2"
+                  strokeWidth="0.9"
                 />
 
                 {/* Dorsal */}
@@ -281,7 +327,7 @@ export const PassNetwork = ({
                   textAnchor="middle"
                   dy="0.35em"
                   fill={isSelected ? '#000000' : '#FFFFFF'}
-                  fontSize="3.4"
+                  fontSize="2.4"
                   fontWeight="900"
                 >
                   {node.dorsal}

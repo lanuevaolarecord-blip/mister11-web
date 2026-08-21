@@ -209,47 +209,69 @@ export const ShotMap = ({
           {isFullscreen ? <Minimize2 size={18} /> : <Maximize2 size={18} />}
         </button>
         <svg
-          viewBox="0 0 100 80"
+          viewBox="0 0 68 55"
           className="half-pitch-svg"
           preserveAspectRatio="none"
           style={isFullscreen ? { maxHeight: 'calc(100vh - 200px)', width: 'auto', maxWidth: '100%', objectFit: 'contain' } : {}}
         >
           {/* Fondo del campo */}
-          <rect x="0" y="0" width="100" height="80" fill="#1b4d2e" />
+          <rect x="0" y="0" width="68" height="55" fill="#1b4d2e" />
+
+          {/* Franjas de césped estadio */}
+          {Array.from({ length: 6 }).map((_, i) => (
+            <rect
+              key={i}
+              x="0"
+              y={i * (55 / 6)}
+              width="68"
+              height={55 / 6}
+              fill={i % 2 === 0 ? 'rgba(0, 0, 0, 0.06)' : 'rgba(255, 255, 255, 0.02)'}
+            />
+          ))}
 
           {/* Pasillos Verticales (Banda Izquierda, Centro, Banda Derecha) */}
-          <line x1="33" y1="4" x2="33" y2="76" stroke="rgba(212,168,67,0.25)" strokeWidth="0.6" strokeDasharray="2 2" />
-          <line x1="67" y1="4" x2="67" y2="76" stroke="rgba(212,168,67,0.25)" strokeWidth="0.6" strokeDasharray="2 2" />
+          <line x1="22.6" y1="3" x2="22.6" y2="52" stroke="rgba(212,168,67,0.3)" strokeWidth="0.6" strokeDasharray="2 2" />
+          <line x1="45.3" y1="3" x2="45.3" y2="52" stroke="rgba(212,168,67,0.3)" strokeWidth="0.6" strokeDasharray="2 2" />
 
           {/* Línea de medio campo */}
-          <line x1="0" y1="4" x2="100" y2="4" stroke="rgba(255,255,255,0.4)" strokeWidth="0.8" />
-          <circle cx="50" cy="4" r="14" fill="none" stroke="rgba(255,255,255,0.4)" strokeWidth="0.8" />
+          <line x1="3" y1="3" x2="65" y2="3" stroke="rgba(255,255,255,0.55)" strokeWidth="0.8" />
+          {/* Semicírculo central */}
+          <path d="M 24.85 3 A 9.15 9.15 0 0 0 43.15 3" fill="none" stroke="rgba(255,255,255,0.55)" strokeWidth="0.8" />
+          <circle cx="34" cy="3" r="0.8" fill="rgba(255,255,255,0.85)" />
 
-          {/* Líneas laterales y fondo */}
-          <line x1="3" y1="4" x2="3" y2="76" stroke="rgba(255,255,255,0.4)" strokeWidth="0.8" />
-          <line x1="97" y1="4" x2="97" y2="76" stroke="rgba(255,255,255,0.4)" strokeWidth="0.8" />
-          <line x1="3" y1="76" x2="97" y2="76" stroke="rgba(255,255,255,0.4)" strokeWidth="0.8" />
+          {/* Líneas laterales y línea de fondo */}
+          <line x1="3" y1="3" x2="3" y2="52" stroke="rgba(255,255,255,0.55)" strokeWidth="0.8" />
+          <line x1="65" y1="3" x2="65" y2="52" stroke="rgba(255,255,255,0.55)" strokeWidth="0.8" />
+          <line x1="3" y1="52" x2="65" y2="52" stroke="rgba(255,255,255,0.55)" strokeWidth="0.8" />
 
-          {/* Área grande */}
-          <rect x="22" y="46" width="56" height="30" fill="none" stroke="rgba(255,255,255,0.5)" strokeWidth="0.8" />
+          {/* Arcos de Córner inferiores */}
+          <path d="M 3 50 A 2 2 0 0 0 5 52" fill="none" stroke="rgba(255,255,255,0.55)" strokeWidth="0.8" />
+          <path d="M 63 52 A 2 2 0 0 0 65 50" fill="none" stroke="rgba(255,255,255,0.55)" strokeWidth="0.8" />
 
-          {/* Área pequeña */}
-          <rect x="36" y="66" width="28" height="10" fill="none" stroke="rgba(255,255,255,0.5)" strokeWidth="0.8" />
+          {/* Área grande (40m x 16.5m) */}
+          <rect x="14" y="35.5" width="40" height="16.5" fill="none" stroke="rgba(255,255,255,0.55)" strokeWidth="0.8" />
 
-          {/* Punto de penalti */}
-          <circle cx="50" cy="56" r="0.8" fill="rgba(255,255,255,0.8)" />
+          {/* Área pequeña (19m x 5.5m) */}
+          <rect x="24.5" y="46.5" width="19" height="5.5" fill="none" stroke="rgba(255,255,255,0.55)" strokeWidth="0.8" />
+
+          {/* Punto de penalti a 11m de la línea de fondo */}
+          <circle cx="34" cy="41" r="0.8" fill="rgba(255,255,255,0.85)" />
+
+          {/* Semicírculo del área grande (arco de penalti) */}
+          <path d="M 27.5 35.5 A 9.15 9.15 0 0 1 40.5 35.5" fill="none" stroke="rgba(255,255,255,0.55)" strokeWidth="0.8" />
 
           {/* Portería */}
-          <rect x="42" y="76" width="16" height="3" fill="#D4A843" stroke="#FFFFFF" strokeWidth="0.6" />
+          <rect x="30.34" y="52" width="7.32" height="2.2" fill="rgba(255,255,255,0.2)" stroke="#D4A843" strokeWidth="0.7" />
 
           {/* Renderizado de Marcadores de Tiro */}
           {shotsWithXG.map(shot => {
-            // Mapear coordenadas (x: 50..100 -> Y visual hacia la portería de abajo)
-            const posX = Math.max(8, Math.min(92, shot.y)); // Y del dato corresponde al eje horizontal del medio campo
-            const posY = Math.max(8, Math.min(74, ((shot.x - 40) / 60) * 70)); // X del dato corresponde a cercanía a portería
+            // Mapear coordenadas a 68x55
+            const posX = Math.max(5, Math.min(63, 3 + (shot.y / 100) * 62));
+            const rawY = typeof shot.x === 'number' ? shot.x : 75;
+            const posY = Math.max(5, Math.min(50, 3 + (Math.max(0, rawY - 45) / 55) * 48));
 
             const badge = getOutcomeBadge(shot);
-            const radius = Math.max(3.2, Math.min(7.5, 2.5 + shot.xG * 6));
+            const radius = Math.max(1.8, Math.min(4.2, 1.6 + shot.xG * 3.5));
             const isSelected = selectedShot?.id === shot.id;
 
             return (
@@ -262,7 +284,7 @@ export const ShotMap = ({
               >
                 {/* Halo de selección */}
                 {isSelected && (
-                  <circle r={radius + 3} fill="none" stroke="#FFFFFF" strokeWidth="1.5" />
+                  <circle r={radius + 1.8} fill="none" stroke="#FFFFFF" strokeWidth="1.2" />
                 )}
 
                 {/* Círculo con tamaño = xG */}
@@ -270,17 +292,33 @@ export const ShotMap = ({
                   r={radius}
                   fill={badge.color}
                   stroke="#FFFFFF"
-                  strokeWidth="1"
-                  fillOpacity="0.85"
+                  strokeWidth="0.8"
+                  fillOpacity="0.9"
                 />
 
-                {/* Símbolo central */}
+                {/* Indicador especial de Gol */}
+                {badge.isGoal && (
+                  <circle
+                    r={radius + 0.9}
+                    fill="none"
+                    stroke="#D4A843"
+                    strokeWidth="0.8"
+                    strokeDasharray="1.5 1.5"
+                  />
+                )}
+
+                {/* Valor de xG sobre el tiro */}
                 <text
                   textAnchor="middle"
                   dy="0.35em"
-                  fontSize={radius > 5 ? '3.5' : '2.8'}
+                  fill="#FFFFFF"
+                  stroke="#000000"
+                  strokeWidth="0.25"
+                  fontSize="1.8"
+                  fontWeight="900"
+                  style={{ paintOrder: 'stroke fill' }}
                 >
-                  {badge.icon}
+                  {badge.isGoal ? '⚽' : shot.xG.toFixed(2)}
                 </text>
               </g>
             );

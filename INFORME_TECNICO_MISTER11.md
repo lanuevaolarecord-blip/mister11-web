@@ -1,12 +1,3 @@
-# 📘 INFORME TÉCNICO OFICIAL DE ARQUITECTURA Y SISTEMA — MÍSTER 11 (v1.1.15)
-
-**Nombre del Proyecto:** Míster 11 (Míster11 FC)  
-**Título Comercial:** Míster 11 - Plataforma Integral de Gestión Táctica y Analítica Deportiva  
-**Versión del Software:** v1.1.15 (versionCode: 34 / 33)  
-**Autor y Titular de Derechos:** Jhojan Stiven Caicedo Quiñones  
-**Entorno de Ejecución:** PWA, Web App, Capacitor 8.3 (Android / iOS), Cloud Firestore, Stripe  
-
----
 
 ## 1. 🎯 ¿QUÉ ES MÍSTER 11, PARA QUÉ FUE CREADO Y QUÉ PROBLEMAS SOLUCIONA?
 

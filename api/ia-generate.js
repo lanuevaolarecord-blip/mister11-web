@@ -37,50 +37,53 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: 'El prompt supera el límite de 8.000 caracteres.' });
   }
 
-  // ── Llamar a la API de Groq desde el servidor ─────────────────────────────────
-  try {
-    const groqResponse = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${GROQ_API_KEY}`,
-      },
-      body: JSON.stringify({
-        model: 'qwen-3.6-27b',
-        messages: [
-          {
-            role: 'system',
-            content: 'Eres un experto en metodología del fútbol formativo. Respondes siempre en español.',
-          },
-          {
-            role: 'user',
-            content: prompt,
-          },
-        ],
-        max_tokens: 1024,
-        temperature: 0.7,
-      }),
-    });
+  // ── Llamar a la API de Groq desde el servidor con fallback de modelos ────────
+  const MODELS = ['llama-3.3-70b-versatile', 'llama-3.1-8b-instant', 'mixtral-8x7b-32768'];
+  let lastErrorMsg = '';
 
-    if (!groqResponse.ok) {
-      const errorData = await groqResponse.json().catch(() => ({}));
-      const errorMsg = errorData?.error?.message || `Error HTTP ${groqResponse.status} de Groq`;
-      console.error('[ia-generate] Error de Groq:', errorMsg);
-      return res.status(groqResponse.status).json({ error: errorMsg });
+  for (const model of MODELS) {
+    try {
+      const groqResponse = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${GROQ_API_KEY}`,
+        },
+        body: JSON.stringify({
+          model: model,
+          messages: [
+            {
+              role: 'system',
+              content: 'Eres un experto en metodología del fútbol formativo y profesional. Respondes siempre en español con explicaciones claras, estructura limpia y formato Markdown profesional.',
+            },
+            {
+              role: 'user',
+              content: prompt,
+            },
+          ],
+          max_tokens: 1500,
+          temperature: 0.7,
+        }),
+      });
+
+      if (!groqResponse.ok) {
+        const errorData = await groqResponse.json().catch(() => ({}));
+        lastErrorMsg = errorData?.error?.message || `Error HTTP ${groqResponse.status} de Groq`;
+        console.warn(`[ia-generate] Modelo ${model} falló:`, lastErrorMsg);
+        continue;
+      }
+
+      const data = await groqResponse.json();
+      const text = data?.choices?.[0]?.message?.content;
+
+      if (text) {
+        return res.status(200).json({ result: text });
+      }
+    } catch (modelErr) {
+      console.warn(`[ia-generate] Excepción con modelo ${model}:`, modelErr);
+      lastErrorMsg = modelErr?.message || String(modelErr);
     }
-
-    const data = await groqResponse.json();
-    const text = data?.choices?.[0]?.message?.content;
-
-    if (!text) {
-      return res.status(502).json({ error: 'Respuesta vacía de la IA. Intenta de nuevo.' });
-    }
-
-    // ── Devolver solo el texto generado al cliente ─────────────────────────────
-    return res.status(200).json({ result: text });
-
-  } catch (err) {
-    console.error('[ia-generate] Error inesperado:', err);
-    return res.status(500).json({ error: 'Error interno del servidor. Intenta de nuevo.' });
   }
+
+  return res.status(502).json({ error: lastErrorMsg || 'No se pudo conectar con los modelos de IA de Groq.' });
 }

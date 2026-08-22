@@ -6,6 +6,7 @@ import { usePlan } from '../hooks/usePlan';
 import { useIAUsage } from '../hooks/useIAUsage';
 import UpgradeModal from '../components/UpgradeModal';
 import { useCaptures } from '../hooks/useCaptures';
+import { Capacitor } from '@capacitor/core';
 import { generateExercisePDF } from '../utils/pdfGenerator';
 import './IAGeneradora.css';
 
@@ -123,7 +124,11 @@ const IAGeneradora = () => {
   // La clave de Groq NUNCA llega al cliente — vive en las env vars de Vercel.
   const callGroq = async (promptTexto) => {
     try {
-      const response = await fetch('/api/ia-generate', {
+      const endpoint = Capacitor.isNativePlatform()
+        ? 'https://www.mister11.app/api/ia-generate'
+        : '/api/ia-generate';
+
+      const response = await fetch(endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ prompt: promptTexto }),

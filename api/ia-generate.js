@@ -38,7 +38,7 @@ export default async function handler(req, res) {
   }
 
   // ── Llamar a la API de Groq desde el servidor con fallback de modelos ────────
-  const MODELS = ['llama-3.3-70b-versatile', 'llama-3.1-8b-instant', 'mixtral-8x7b-32768'];
+  const MODELS = ['qwen/qwen3.6-27b', 'openai/gpt-oss-120b', 'groq/compound', 'groq/compound-mini'];
   let lastErrorMsg = '';
 
   for (const model of MODELS) {

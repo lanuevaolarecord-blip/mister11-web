@@ -124,7 +124,7 @@ const signInWithGoogle = async () => {
       }
 
       if (!idToken) {
-        throw new Error("No se obtuvo idToken nativo.");
+        throw new Error("No se pudo obtener el token de autenticación de Google.");
       }
 
       // 4. Crear la credencial para sincronizar con el SDK Web de Firebase JS
@@ -135,31 +135,19 @@ const signInWithGoogle = async () => {
       await initUserDocument(userCred.user.uid, userCred.user.email, userCred.user.displayName);
       return userCred;
     } catch (nativeErr) {
-      console.warn("[signInWithGoogle] Error en flujo nativo. Evaluando fallback web...", nativeErr);
-      
+      console.error("[signInWithGoogle] Error en autenticación nativa:", nativeErr);
       const errMsg = nativeErr?.message || String(nativeErr);
-      const isUserCancel =
+      if (
         errMsg.toLowerCase().includes("cancel") ||
         errMsg.toLowerCase().includes("cancelled") ||
         nativeErr?.code === "12501" ||
-        errMsg.toLowerCase().includes("sign_in_cancelled");
-
-      if (isUserCancel) {
+        errMsg.toLowerCase().includes("sign_in_cancelled")
+      ) {
         throw new Error("Inicio de sesión cancelado por el usuario.");
       }
-
-      // ═══ FALLBACK WEB AUTOMÁTICO ═══
-      // Si el plugin nativo falla (por incompatibilidad de Google Play Services o SHA-1),
-      // recurrimos al flujo web de Firebase que funciona al 100%.
-      console.log("[signInWithGoogle] Ejecutando Fallback Web de Firebase...");
-      try {
-        const webResult = await signInWithPopup(auth, googleProvider);
-        await initUserDocument(webResult.user.uid, webResult.user.email, webResult.user.displayName);
-        return webResult;
-      } catch (popupErr) {
-        console.warn("[signInWithGoogle] Popup web bloqueado o falló, intentando redirect:", popupErr);
-        return await signInWithRedirect(auth, googleProvider);
-      }
+      throw new Error(
+        errMsg || "Error al autenticar con Google. Por favor, verifica tu conexión e intenta de nuevo."
+      );
     }
   }
 

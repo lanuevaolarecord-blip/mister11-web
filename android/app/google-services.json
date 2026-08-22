@@ -43,14 +43,6 @@
       },
       "oauth_client": [
         {
-          "client_id": "954668402587-nbp4h5og9pgjchuof2on6fc8pmeo3ifa.apps.googleusercontent.com",
-          "client_type": 1,
-          "android_info": {
-            "package_name": "com.mister11.app",
-            "certificate_hash": "f9df87b0bb0c4a8be790281f2f38b97fe9192600"
-          }
-        },
-        {
           "client_id": "954668402587-4k5j67sldmjgtm653ncfeac7h2fb15ju.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
@@ -64,6 +56,14 @@
           "android_info": {
             "package_name": "com.mister11.app",
             "certificate_hash": "76c8766f61c7b4d1efba4d73cd05aa717c110a4e"
+          }
+        },
+        {
+          "client_id": "954668402587-nbp4h5og9pgjchuof2on6fc8pmeo3ifa.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.mister11.app",
+            "certificate_hash": "f9df87b0bb0c4a8be790281f2f38b97fe9192600"
           }
         },
         {

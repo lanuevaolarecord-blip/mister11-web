@@ -1,9 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useTeamMembers, STAFF_ROLES } from '../hooks/useTeamMembers';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { showToast } from '../utils/toast';
-import { Shield, UserPlus, Trash2, Mail, Copy, Check, Clock, Users, Award } from 'lucide-react';
+import { ensureTeamCode } from '../utils/teamCode';
+import { collection, onSnapshot, query, doc, updateDoc, setDoc, addDoc, serverTimestamp, deleteDoc } from 'firebase/firestore';
+import { db } from '../firebaseConfig';
+import { Shield, UserPlus, Trash2, Mail, Copy, Check, Clock, Users, Award, KeyRound, Share2, CheckCircle2, XCircle } from 'lucide-react';
 
 export const TeamStaffTab = ({ activeTeam }) => {
   const { user } = useAuth();
@@ -104,6 +107,142 @@ export const TeamStaffTab = ({ activeTeam }) => {
     }
   };
 
+  const { getTeamPath } = useAuth();
+  const [teamCode, setTeamCode] = useState(activeTeam?.teamCode || '');
+  const [joinRequests, setJoinRequests] = useState([]);
+  const [copiedTeamCode, setCopiedTeamCode] = useState(false);
+  const [processingId, setProcessingId] = useState(null);
+
+  const teamPath = activeTeam?.teamPath || (activeTeam?.id ? getTeamPath(activeTeam.id) : null);
+
+  useEffect(() => {
+    if (!activeTeam?.id || !teamPath) return;
+    ensureTeamCode(activeTeam.id, teamPath, activeTeam.nombre || activeTeam.name, user?.uid)
+      .then(code => {
+        if (code) setTeamCode(code);
+      })
+      .catch(console.error);
+  }, [activeTeam?.id, teamPath, user?.uid]);
+
+  // Escuchar solicitudes de jugadores pendientes en tiempo real
+  useEffect(() => {
+    if (!teamPath) return;
+    const reqsRef = collection(db, `${teamPath}/joinRequests`);
+    const unsub = onSnapshot(reqsRef, (snap) => {
+      const all = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      const pending = all.filter(r => r.status === 'pending');
+      setJoinRequests(pending);
+    }, (err) => {
+      console.warn('[TeamStaffTab] Error cargando solicitudes:', err);
+    });
+    return () => unsub();
+  }, [teamPath]);
+
+  const handleApproveRequest = async (request) => {
+    if (!request || !teamPath) return;
+    setProcessingId(request.id);
+    try {
+      // 1. Crear la ficha del jugador en la plantilla
+      const playersColRef = collection(db, `${teamPath}/players`);
+      const newPlayerRef = await addDoc(playersColRef, {
+        name: request.playerName,
+        fechaNacimiento: request.birthDate,
+        position: request.position || 'MC',
+        number: request.jerseyNumber || '',
+        requesterUid: request.requesterUid,
+        requesterEmail: request.requesterEmail || '',
+        currentStatus: 'active',
+        category: activeTeam?.categoria || activeTeam?.category || 'General',
+        createdAt: serverTimestamp(),
+      });
+
+      // 2. Registrar el rol en memberRoles del equipo
+      const teamDocRef = doc(db, teamPath);
+      await setDoc(teamDocRef, {
+        memberRoles: {
+          [request.requesterUid]: 'player'
+        }
+      }, { merge: true });
+
+      // 3. Crear puntero en shared_teams del usuario
+      const userSharedTeamRef = doc(db, `users/${request.requesterUid}/shared_teams`, activeTeam.id);
+      await setDoc(userSharedTeamRef, {
+        teamId: activeTeam.id,
+        teamPath,
+        teamName: activeTeam.nombre || activeTeam.name || 'Mi Equipo',
+        role: 'player',
+        playerId: newPlayerRef.id,
+        joinedAt: serverTimestamp(),
+      });
+
+      // 4. Actualizar estado de la solicitud a 'approved'
+      const reqDocRef = doc(db, `${teamPath}/joinRequests`, request.id);
+      await updateDoc(reqDocRef, { status: 'approved', approvedAt: serverTimestamp(), playerId: newPlayerRef.id });
+
+      // 5. Actualizar solicitud en el perfil del usuario
+      try {
+        const userReqRef = doc(db, `users/${request.requesterUid}/join_requests`, request.id);
+        await updateDoc(userReqRef, { status: 'approved', approvedAt: serverTimestamp(), playerId: newPlayerRef.id });
+      } catch (_) {}
+
+      showToast(`¡Jugador ${request.playerName} aprobado e incorporado a la plantilla!`, 'success');
+    } catch (err) {
+      console.error('Error al aprobar solicitud:', err);
+      showToast('Error al aprobar solicitud: ' + (err.message || 'Desconocido'), 'error');
+    } finally {
+      setProcessingId(null);
+    }
+  };
+
+  const handleRejectRequest = async (request) => {
+    if (!request || !teamPath) return;
+    if (!window.confirm(`¿Rechazar la solicitud de ${request.playerName}?`)) return;
+    setProcessingId(request.id);
+    try {
+      const reqDocRef = doc(db, `${teamPath}/joinRequests`, request.id);
+      await updateDoc(reqDocRef, { status: 'rejected', rejectedAt: serverTimestamp() });
+
+      try {
+        const userReqRef = doc(db, `users/${request.requesterUid}/join_requests`, request.id);
+        await updateDoc(userReqRef, { status: 'rejected', rejectedAt: serverTimestamp() });
+      } catch (_) {}
+
+      showToast('Solicitud rechazada.', 'info');
+    } catch (err) {
+      console.error('Error al rechazar solicitud:', err);
+      showToast('Error al rechazar solicitud.', 'error');
+    } finally {
+      setProcessingId(null);
+    }
+  };
+
+  const handleCopyTeamCode = async () => {
+    if (!teamCode) return;
+    const ok = await copyToClipboard(teamCode);
+    if (ok) {
+      setCopiedTeamCode(true);
+      showToast('Código de equipo copiado al portapapeles.', 'success');
+      setTimeout(() => setCopiedTeamCode(false), 2500);
+    }
+  };
+
+  const handleShareTeamLink = async () => {
+    if (!teamCode) return;
+    const shareUrl = `${window.location.origin}/join-team?code=${teamCode}`;
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: `Únete a ${activeTeam?.nombre || 'nuestro equipo'} en Míster11`,
+          text: `¡Hola! Únete al equipo ${activeTeam?.nombre || 'Mi Equipo'} en Míster11 con este código: ${teamCode}\nEnlace directo: ${shareUrl}`,
+          url: shareUrl
+        });
+      } catch (_) {}
+    } else {
+      await copyToClipboard(shareUrl);
+      showToast('Enlace de invitación de jugadores copiado.', 'success');
+    }
+  };
+
   const textColorPrimary = darkMode ? '#FFFFFF' : '#0F172A';
   const textColorSecondary = darkMode ? '#CBD5E1' : '#475569';
   const cardBackgroundColor = darkMode ? '#1A2E26' : '#FFFFFF';
@@ -112,7 +251,174 @@ export const TeamStaffTab = ({ activeTeam }) => {
 
   return (
     <div className="team-staff-tab" style={{ padding: '10px 0' }}>
-      {/* Cabecera y botón invitar */}
+      {/* TARJETA DE CÓDIGO DE EQUIPO Y PORTAL DE JUGADORES */}
+      <div style={{
+        background: darkMode ? 'linear-gradient(135deg, rgba(16, 185, 129, 0.15) 0%, rgba(27, 58, 45, 0.6) 100%)' : 'linear-gradient(135deg, #ECFDF5 0%, #D1FAE5 100%)',
+        border: `1.5px solid ${darkMode ? 'rgba(16, 185, 129, 0.3)' : '#A7F3D0'}`,
+        borderRadius: '14px',
+        padding: '18px 20px',
+        marginBottom: '24px',
+        boxShadow: '0 4px 16px rgba(0,0,0,0.1)'
+      }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '14px' }}>
+          <div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#10B981', fontWeight: 800, fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+              <KeyRound size={18} /> Código Único para Jugadores y Familias
+            </div>
+            <h4 style={{ margin: '4px 0 2px 0', fontSize: '1.25rem', color: textColorPrimary, fontWeight: 900, fontFamily: 'monospace', letterSpacing: '2px' }}>
+              {teamCode || 'Generando código...'}
+            </h4>
+            <p style={{ margin: 0, fontSize: '0.8rem', color: textColorSecondary }}>
+              Comparte este código para que los jugadores o sus padres se unan desde el Portal del Jugador (/join-team).
+            </p>
+          </div>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <button
+              className="btn-outline"
+              onClick={handleCopyTeamCode}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                padding: '8px 14px',
+                fontSize: '0.85rem',
+                fontWeight: 700,
+                minHeight: '44px'
+              }}
+            >
+              {copiedTeamCode ? <Check size={16} color="#10B981" /> : <Copy size={16} />}
+              {copiedTeamCode ? 'Copiado' : 'Copiar Código'}
+            </button>
+
+            <button
+              className="btn-primary"
+              onClick={handleShareTeamLink}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                padding: '8px 14px',
+                fontSize: '0.85rem',
+                fontWeight: 700,
+                minHeight: '44px',
+                background: '#10B981'
+              }}
+            >
+              <Share2 size={16} /> Compartir Enlace
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* SECCIÓN DE SOLICITUDES PENDIENTES DE JUGADORES */}
+      {joinRequests.length > 0 && (
+        <div style={{
+          background: darkMode ? 'rgba(234, 179, 8, 0.08)' : '#FEFCE8',
+          border: `1.5px solid ${darkMode ? 'rgba(234, 179, 8, 0.3)' : '#FDE047'}`,
+          borderRadius: '14px',
+          padding: '18px 20px',
+          marginBottom: '24px'
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '14px' }}>
+            <Clock size={20} color="#EAB308" />
+            <h4 style={{ margin: 0, fontSize: '1.05rem', color: textColorPrimary, fontWeight: 800 }}>
+              Solicitudes de Ingreso de Jugadores ({joinRequests.length})
+            </h4>
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '12px' }}>
+            {joinRequests.map((req) => (
+              <div
+                key={req.id}
+                style={{
+                  background: cardBackgroundColor,
+                  border: `1px solid ${borderColorVal}`,
+                  borderRadius: '10px',
+                  padding: '14px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  justifyContent: 'space-between',
+                  gap: '10px'
+                }}
+              >
+                <div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span style={{ fontWeight: 800, fontSize: '1rem', color: textColorPrimary }}>
+                      {req.playerName}
+                    </span>
+                    <span style={{
+                      background: 'rgba(16, 185, 129, 0.15)',
+                      color: '#10B981',
+                      fontSize: '0.75rem',
+                      fontWeight: 700,
+                      padding: '2px 8px',
+                      borderRadius: '12px'
+                    }}>
+                      {req.position} {req.jerseyNumber ? `· #${req.jerseyNumber}` : ''}
+                    </span>
+                  </div>
+                  <div style={{ fontSize: '0.8rem', color: textColorSecondary, marginTop: '4px' }}>
+                    📅 Nacimiento: <strong>{req.birthDate}</strong>
+                  </div>
+                  <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '2px' }}>
+                    👤 Solicitante: {req.requesterName} ({req.requesterEmail || 'Email'})
+                  </div>
+                </div>
+
+                <div style={{ display: 'flex', gap: '8px', borderTop: `1px solid ${darkMode ? 'rgba(255,255,255,0.08)' : '#F1F5F9'}`, paddingTop: '10px' }}>
+                  <button
+                    onClick={() => handleApproveRequest(req)}
+                    disabled={processingId === req.id}
+                    style={{
+                      flex: 1,
+                      minHeight: '44px',
+                      background: '#10B981',
+                      color: '#ffffff',
+                      border: 'none',
+                      borderRadius: '8px',
+                      fontSize: '0.85rem',
+                      fontWeight: 700,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '6px',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    <CheckCircle2 size={16} />
+                    {processingId === req.id ? 'Aprobando...' : 'Aprobar'}
+                  </button>
+
+                  <button
+                    onClick={() => handleRejectRequest(req)}
+                    disabled={processingId === req.id}
+                    style={{
+                      minHeight: '44px',
+                      background: 'rgba(239, 68, 68, 0.15)',
+                      color: '#EF4444',
+                      border: 'none',
+                      borderRadius: '8px',
+                      padding: '0 14px',
+                      fontSize: '0.85rem',
+                      fontWeight: 700,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '4px',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    <XCircle size={16} /> Rechazar
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Cabecera y botón invitar staff */}
       <div style={{
         display: 'flex',
         justifyContent: 'space-between',
@@ -138,10 +444,10 @@ export const TeamStaffTab = ({ activeTeam }) => {
               setGeneratedLink('');
               setIsInviteModalOpen(true);
             }}
-            style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 16px', fontWeight: 'bold' }}
+            style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 16px', fontWeight: 'bold', minHeight: '44px' }}
           >
             <UserPlus size={18} />
-            Invitar Miembro
+            Invitar Staff
           </button>
         )}
       </div>

@@ -9,6 +9,10 @@ import {
   setPersistence,
   browserLocalPersistence,
   signInAnonymously,
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
+  sendPasswordResetEmail,
+  updateProfile,
 } from "firebase/auth";
 import { getFirestore, initializeFirestore, persistentLocalCache, persistentMultipleTabManager, doc, getDoc, setDoc, serverTimestamp } from "firebase/firestore";
 import { getStorage } from "firebase/storage";
@@ -40,7 +44,7 @@ setPersistence(auth, browserLocalPersistence).catch(console.error);
  * Inicializa el documento de usuario en Firestore si es la primera vez que entra.
  * Registra el trialStartDate en base de datos para evitar que se pueda bypassear.
  */
-const initUserDocument = async (uid, email, displayName) => {
+const initUserDocument = async (uid, email, displayName, defaultRole = 'coach') => {
   const userRef = doc(db, 'users', uid);
   const userSnap = await getDoc(userRef);
   if (!userSnap.exists()) {
@@ -48,11 +52,31 @@ const initUserDocument = async (uid, email, displayName) => {
     await setDoc(userRef, {
       email: email || '',
       displayName: displayName || '',
+      role: defaultRole,
       plan: 'trial',
       trialStartDate: serverTimestamp(),
       createdAt: serverTimestamp(),
     });
   }
+};
+
+const registerWithEmail = async (email, password, displayName, role = 'coach') => {
+  const result = await createUserWithEmailAndPassword(auth, email, password);
+  if (displayName && result.user) {
+    try {
+      await updateProfile(result.user, { displayName });
+    } catch (_) {}
+  }
+  await initUserDocument(result.user.uid, result.user.email, displayName || '', role);
+  return result;
+};
+
+const signInWithEmail = async (email, password) => {
+  return await signInWithEmailAndPassword(auth, email, password);
+};
+
+const resetPassword = async (email) => {
+  return await sendPasswordResetEmail(auth, email);
 };
 
 const WEB_CLIENT_ID = "954668402587-im73oik073ds12jvkfn0diasvdmkb9qc.apps.googleusercontent.com";
@@ -155,9 +179,13 @@ export {
   signInWithPopup,
   signInWithRedirect,
   signInWithGoogle,
+  signInWithEmail,
+  registerWithEmail,
+  resetPassword,
   signInAnonymously,
   signOut,
   storage,
   initUserDocument
 };
+
 

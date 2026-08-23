@@ -33,6 +33,7 @@ const JoinTeam          = lazy(() => import('./pages/JoinTeam'));
 const ConsentimientoFirma = lazy(() => import('./pages/ConsentimientoFirma'));
 const ConsentForm       = lazy(() => import('./pages/ConsentForm'));
 const DemoMode          = lazy(() => import('./pages/DemoMode'));
+const PlayerDashboard   = lazy(() => import('./pages/PlayerDashboard'));
 
 import './App.css';
 
@@ -43,6 +44,7 @@ function compareVersions(remote, local) {
   for (let i = 0; i < Math.max(r.length, l.length); i++) {
     const ri = r[i] || 0;
     const li = l[i] || 0;
+    if (ri > li) return 1;
     if (ri > li) return 1;
     if (ri < li) return -1;
   }
@@ -55,7 +57,7 @@ function RedirectToRoot() {
 }
 
 function App() {
-  const { user, loading } = useAuth();
+  const { user, loading, isPlayer } = useAuth();
   const [showUpdate, setShowUpdate] = useState(false);
   const [updateData, setUpdateData] = useState({ version: '', url: '' });
 
@@ -194,10 +196,21 @@ function App() {
         <Routes>
           <Route 
             path="/" 
-            element={user ? <Layout /> : <LandingPage />}
+            element={
+              user ? (
+                isPlayer ? <ErrorBoundary><PlayerDashboard /></ErrorBoundary> : <Layout />
+              ) : (
+                <LandingPage />
+              )
+            }
           >
-            <Route index element={<ErrorBoundary><Dashboard /></ErrorBoundary>} />
+            <Route index element={<ErrorBoundary>{isPlayer ? <PlayerDashboard /> : <Dashboard />}</ErrorBoundary>} />
           </Route>
+
+          <Route 
+            path="/player-dashboard" 
+            element={user ? <ErrorBoundary><PlayerDashboard /></ErrorBoundary> : <Navigate to="/login" replace />} 
+          />
 
           <Route 
             path="/login" 
@@ -262,7 +275,13 @@ function App() {
 
           <Route 
             path="/*" 
-            element={user ? <Layout /> : <Navigate to="/login" replace />}
+            element={
+              user ? (
+                isPlayer ? <ErrorBoundary><PlayerDashboard /></ErrorBoundary> : <Layout />
+              ) : (
+                <Navigate to="/login" replace />
+              )
+            }
           >
             <Route path="dashboard" element={<RedirectToRoot />} />
             <Route path="pricing" element={<Navigate to="/admin" state={{ activeTab: 'ajustes' }} replace />} />

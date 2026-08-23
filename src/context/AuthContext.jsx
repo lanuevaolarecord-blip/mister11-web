@@ -461,12 +461,30 @@ export const AuthProvider = ({ children }) => {
     }
   }, [user]);
 
+  const activeTeam = useMemo(() => {
+    return teams.find(t => t.id === activeTeamId) || teams[0] || null;
+  }, [teams, activeTeamId]);
+
+  const isPlayer = useMemo(() => {
+    if (!user) return false;
+    if (activeTeam?.staffRole === 'player') return true;
+    if (activeTeam?.memberRoles?.[user.uid] === 'player') return true;
+    if (userProfile?.role === 'player') {
+      if (!activeTeam || activeTeam?.staffRole === 'player' || activeTeam?.memberRoles?.[user.uid] === 'player') {
+        return true;
+      }
+    }
+    return false;
+  }, [user, activeTeam, userProfile]);
+
   const value = useMemo(() => ({
     user, 
     loading, 
     activeTeamId, 
+    activeTeam,
     changeActiveTeam, 
     teams,
+    isPlayer,
     loginAsGuest,
     logout,
     refreshTeam,
@@ -478,7 +496,7 @@ export const AuthProvider = ({ children }) => {
     userProfile,
     currentMode,
     toggleMode
-  }), [user, loading, activeTeamId, changeActiveTeam, teams, loginAsGuest, logout, refreshTeam, userProfile, club, getTeamPath, currentMode, toggleMode]);
+  }), [user, loading, activeTeamId, activeTeam, changeActiveTeam, teams, isPlayer, loginAsGuest, logout, refreshTeam, userProfile, club, getTeamPath, currentMode, toggleMode]);
 
   return (
     <AuthContext.Provider value={value}>

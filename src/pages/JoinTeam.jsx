@@ -1,319 +1,520 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useSearchParams, useNavigate } from 'react-router-dom';
-import { doc, getDoc, setDoc, updateDoc, serverTimestamp, arrayUnion } from 'firebase/firestore';
-import { db, signInWithGoogle } from '../firebaseConfig';
+import { useSearchParams, useNavigate, Link } from 'react-router-dom';
+import { doc, getDoc, setDoc, addDoc, collection, serverTimestamp, onSnapshot, query, where } from 'firebase/firestore';
+import { db, signInWithGoogle, signInWithEmail, registerWithEmail } from '../firebaseConfig';
 import { useAuth } from '../context/AuthContext';
-import { STAFF_ROLES, normalizeRole, getRoleInfo } from '../hooks/useTeamMembers';
-import { Shield, CheckCircle, AlertCircle, Users, ArrowRight, Loader, KeyRound } from 'lucide-react';
+import { getTeamByCode } from '../utils/teamCode';
+import { showToast } from '../utils/toast';
+import { Shield, CheckCircle, AlertCircle, Users, ArrowRight, Loader, KeyRound, Mail, Lock, User, Calendar, Shirt } from 'lucide-react';
 import './Login.css';
 
+const POSITIONS = ['POR', 'DEF', 'LTD', 'LTI', 'MCD', 'MC', 'MCO', 'EXT', 'DEL'];
+
 const JoinTeam = () => {
-  const { token: routeToken, code: routeCode } = useParams();
   const [searchParams] = useSearchParams();
-  const token = routeToken || routeCode || searchParams.get('token') || searchParams.get('code');
+  const codeParam = searchParams.get('code') || searchParams.get('token') || '';
   
   const navigate = useNavigate();
-  const { user, changeActiveTeam } = useAuth();
+  const { user } = useAuth();
 
-  const [inputCode, setInputCode] = useState('');
-  const [loading, setLoading] = useState(Boolean(token));
-  const [error, setError] = useState(null);
-  const [invitation, setInvitation] = useState(null);
-  const [activeToken, setActiveToken] = useState(token || '');
-  const [accepting, setAccepting] = useState(false);
-  const [success, setSuccess] = useState(false);
+  // Estados del flujo
+  const [step, setStep] = useState(1); // 1: Auth (si no logueado), 2: Código, 3: Datos del Jugador, 4: Enviado / Pendiente
+  const [inputCode, setInputCode] = useState(codeParam.toUpperCase());
+  const [teamData, setTeamData] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [myExistingRequest, setMyExistingRequest] = useState(null);
 
-  const lookupInvitation = async (codeToLookup) => {
-    if (!codeToLookup) return;
-    setLoading(true);
-    setError(null);
-    try {
-      // 1. Intentar buscar por token o código exacto
-      let invRef = doc(db, 'staff_invitations', codeToLookup);
-      let invSnap = await getDoc(invRef);
+  // Formulario Auth rápido si no está logueado
+  const [authTab, setAuthTab] = useState('login'); // 'login' | 'register'
+  const [authEmail, setAuthEmail] = useState('');
+  const [authPassword, setAuthPassword] = useState('');
+  const [authName, setAuthName] = useState('');
 
-      // Si no existe, intentar en mayúsculas (por si es un código de 6 dígitos)
-      if (!invSnap.exists() && codeToLookup.length <= 8) {
-        invRef = doc(db, 'staff_invitations', codeToLookup.toUpperCase());
-        invSnap = await getDoc(invRef);
-      }
+  // Formulario del jugador
+  const [playerName, setPlayerName] = useState('');
+  const [birthDate, setBirthDate] = useState('');
+  const [position, setPosition] = useState('MC');
+  const [jerseyNumber, setJerseyNumber] = useState('');
+  const [submitting, setSubmitting] = useState(false);
 
-      if (!invSnap.exists()) {
-        setError('Esta invitación no existe, ha expirado o el código es incorrecto.');
-        setLoading(false);
-        return;
-      }
-
-      const data = invSnap.data();
-      if (data.status !== 'pending') {
-        setError('Esta invitación ya ha sido aceptada o cancelada.');
-        setLoading(false);
-        return;
-      }
-
-      setInvitation(data);
-      setActiveToken(codeToLookup);
-    } catch (err) {
-      console.error('[JoinTeam] Error al cargar invitación:', err);
-      setError('Error al consultar la invitación. Verifica tu conexión.');
-    } finally {
-      setLoading(false);
-    }
-  };
-
+  // Auto-verificar código si viene por URL
   useEffect(() => {
-    if (token) {
-      lookupInvitation(token);
-    } else {
-      setLoading(false);
+    if (codeParam) {
+      handleVerifyCode(codeParam);
     }
-  }, [token]);
+  }, [codeParam]);
 
-  const handleManualCodeSubmit = (e) => {
-    e.preventDefault();
-    if (!inputCode.trim()) return;
-    lookupInvitation(inputCode.trim());
-  };
+  // Escuchar si el usuario ya tiene solicitudes pendientes
+  useEffect(() => {
+    if (!user || user.uid === 'invitado-local') return;
 
-  const handleGoogleLogin = async () => {
+    const q = query(collection(db, 'users', user.uid, 'join_requests'));
+    const unsub = onSnapshot(q, (snap) => {
+      if (!snap.empty) {
+        const reqs = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        const pending = reqs.find(r => r.status === 'pending');
+        const approved = reqs.find(r => r.status === 'approved');
+        if (approved) {
+          showToast('¡Tu solicitud ha sido aprobada!', 'success');
+          navigate('/');
+        } else if (pending) {
+          setMyExistingRequest(pending);
+        }
+      }
+    });
+
+    return () => unsub();
+  }, [user, navigate]);
+
+  const handleVerifyCode = async (codeToVerify) => {
+    const code = (codeToVerify || inputCode).trim().toUpperCase();
+    if (!code) {
+      setError('Por favor ingresa un código de equipo válido (ej. M11-ABC123).');
+      return;
+    }
+
+    setLoading(true);
+    setError('');
     try {
-      setLoading(true);
-      await signInWithGoogle();
+      const data = await getTeamByCode(code);
+      if (!data) {
+        setError('Código de equipo no encontrado. Verifica que esté bien escrito o solicita el código actualizado a tu entrenador.');
+        setTeamData(null);
+      } else {
+        setTeamData(data);
+        setInputCode(code);
+        setStep(3); // Avanzar a datos del jugador
+      }
     } catch (err) {
-      console.error('=== ERROR GOOGLE SIGN-IN [JoinTeam] ===');
-      console.error('Error code:', err?.code);
-      console.error('Error message:', err?.message);
-      console.error('Error details:', JSON.stringify(err, null, 2));
-      setError(err?.message || 'Fallo al iniciar sesión con Google.');
+      console.error('[JoinTeam] Error verificando código:', err);
+      setError('Error al consultar el equipo. Verifica tu conexión.');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleAccept = async () => {
-    if (!user || !invitation) return;
-    setAccepting(true);
-    setError(null);
-
+  const handleGoogleAuth = async () => {
+    setLoading(true);
+    setError('');
     try {
-      const { teamId, teamPath, teamName, role } = invitation;
-      const cleanRole = normalizeRole(role);
+      await signInWithGoogle();
+      showToast('Sesión iniciada con Google', 'success');
+    } catch (err) {
+      setError(err?.message || 'Error al iniciar sesión con Google.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
-      // 1. Guardar miembro en la subcolección members del equipo
-      const memberRef = doc(db, `${teamPath}/members`, user.uid);
-      await setDoc(memberRef, {
-        uid: user.uid,
-        email: user.email || '',
-        displayName: user.displayName || 'Entrenador Colaborador',
-        role: cleanRole,
-        joinedAt: new Date().toISOString()
-      }, { merge: true });
+  const handleEmailAuth = async (e) => {
+    e.preventDefault();
+    if (!authEmail.trim() || !authPassword) {
+      setError('Completa el correo y la contraseña.');
+      return;
+    }
 
-      // 2. Registrar en array members del doc del equipo para queries rápidas
-      try {
-        const teamRef = doc(db, teamPath);
-        await updateDoc(teamRef, {
-          members: arrayUnion({
-            uid: user.uid,
-            email: user.email || '',
-            displayName: user.displayName || 'Entrenador Colaborador',
-            role: cleanRole,
-            joinedAt: new Date().toISOString()
-          })
-        });
-      } catch (e) {
-        console.warn('[JoinTeam] No se pudo actualizar array en doc raíz de equipo:', e);
+    setLoading(true);
+    setError('');
+    try {
+      if (authTab === 'register') {
+        if (authPassword.length < 6) {
+          setError('La contraseña debe tener al menos 6 caracteres.');
+          setLoading(false);
+          return;
+        }
+        await registerWithEmail(authEmail.trim(), authPassword, authName.trim(), 'player');
+        showToast('Cuenta creada exitosamente', 'success');
+      } else {
+        await signInWithEmail(authEmail.trim(), authPassword);
+        showToast('Bienvenido a Míster11', 'success');
       }
+    } catch (err) {
+      console.error('[JoinTeam] Error Auth:', err);
+      setError(err.message || 'Error en la autenticación.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
-      // 3. Guardar puntero en el perfil del usuario para que aparezca en su lista de equipos
-      const sharedTeamRef = doc(db, 'users', user.uid, 'shared_teams', teamId);
-      await setDoc(sharedTeamRef, {
-        id: teamId,
+  const handleSubmitPlayerRequest = async (e) => {
+    e.preventDefault();
+    if (!user) {
+      setError('Debes iniciar sesión primero para enviar la solicitud.');
+      return;
+    }
+    if (!teamData) {
+      setError('No se ha seleccionado un equipo válido.');
+      return;
+    }
+    if (!playerName.trim() || !birthDate) {
+      setError('Ingresa el nombre del jugador y su fecha de nacimiento.');
+      return;
+    }
+
+    setSubmitting(true);
+    setError('');
+    try {
+      const { teamId, teamPath, teamName } = teamData;
+      const requestId = `${teamId}_${user.uid}`;
+
+      const requestPayload = {
+        id: requestId,
         teamId,
         teamPath,
-        teamName: teamName || 'Equipo',
-        role: cleanRole,
-        joinedAt: new Date().toISOString(),
-        updatedAt: serverTimestamp()
-      }, { merge: true });
+        teamName: teamName || 'Mi Equipo',
+        playerName: playerName.trim(),
+        birthDate,
+        position,
+        jerseyNumber: jerseyNumber.trim() || 'S/N',
+        requesterUid: user.uid,
+        requesterEmail: user.email || '',
+        requesterName: user.displayName || playerName.trim(),
+        status: 'pending',
+        createdAt: serverTimestamp(),
+      };
 
-      // 4. Marcar invitación como aceptada en Firestore
-      await updateDoc(doc(db, 'staff_invitations', activeToken), {
-        status: 'accepted',
-        acceptedByUid: user.uid,
-        acceptedByEmail: user.email || '',
-        acceptedAt: new Date().toISOString()
-      }).catch(() => {});
+      // 1. Guardar en subcolección del equipo
+      const teamReqRef = doc(db, `${teamPath}/joinRequests`, requestId);
+      await setDoc(teamReqRef, requestPayload);
 
-      // 5. Cambiar equipo activo y redirigir
-      changeActiveTeam(teamId);
-      setSuccess(true);
-      setTimeout(() => {
-        navigate('/equipo');
-      }, 1500);
+      // 2. Guardar en el perfil del usuario para seguimiento
+      const userReqRef = doc(db, `users/${user.uid}/join_requests`, requestId);
+      await setDoc(userReqRef, requestPayload);
 
+      setMyExistingRequest(requestPayload);
+      setStep(4);
+      showToast('¡Solicitud enviada al entrenador!', 'success');
     } catch (err) {
-      console.error('[JoinTeam] Error al aceptar invitación:', err);
-      setError('Error al unirse al equipo. Inténtalo de nuevo.');
-      setAccepting(false);
+      console.error('[JoinTeam] Error enviando solicitud:', err);
+      setError('Error al enviar la solicitud: ' + (err.message || 'Error desconocido'));
+    } finally {
+      setSubmitting(false);
     }
   };
-
-  const roleInfo = invitation?.role ? getRoleInfo(invitation.role) : null;
 
   return (
     <div className="login-page">
-      <div className="login-container" style={{ maxWidth: '440px' }}>
+      <div className="login-container">
         <div className="login-logo">
-          <img src="/logo_mister11.png" alt="Míster 11" width="120" />
+          <img src="/logo_mister11.png" alt="Míster11" width="120"/>
         </div>
 
-        <div className="login-card" style={{ textAlign: 'center' }}>
-          {loading ? (
-            <div style={{ padding: '40px 20px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '15px' }}>
-              <Loader className="spinner" size={36} color="var(--primary-color)" />
-              <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>Verificando invitación de equipo...</p>
-            </div>
-          ) : error ? (
-            <div style={{ padding: '20px 0' }}>
-              <div style={{ background: 'rgba(239, 68, 68, 0.1)', color: '#EF4444', width: '56px', height: '56px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 15px' }}>
-                <AlertCircle size={32} />
+        <div className="login-card">
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', marginBottom: '8px', color: '#10B981' }}>
+            <Users size={24} />
+            <h2 style={{ margin: 0 }}>Portal del Jugador</h2>
+          </div>
+          <p className="login-subtitle">
+            Únete al equipo de tu entrenador para consultar tus entrenamientos, partidos, asistencia y estadísticas.
+          </p>
+
+          {error && <div className="login-error">{error}</div>}
+
+          {/* ESTADO: SOLICITUD YA ENVIADA (PENDIENTE DE APROBACIÓN) */}
+          {myExistingRequest && myExistingRequest.status === 'pending' && (
+            <div style={{
+              background: 'rgba(16, 185, 129, 0.08)',
+              border: '1px solid rgba(16, 185, 129, 0.3)',
+              borderRadius: '12px',
+              padding: '20px',
+              textAlign: 'center'
+            }}>
+              <div style={{
+                width: '50px',
+                height: '50px',
+                borderRadius: '50%',
+                background: 'rgba(16, 185, 129, 0.2)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                margin: '0 auto 12px auto',
+                color: '#10B981'
+              }}>
+                <Loader size={26} className="spin" style={{ animation: 'spin 2s linear infinite' }} />
               </div>
-              <h3 style={{ color: 'var(--text-primary)', marginBottom: '8px', fontSize: '1.2rem' }}>Invitación no disponible</h3>
-              <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', marginBottom: '20px', lineHeight: '1.4' }}>{error}</p>
-              <button className="btn-primary full-width" onClick={() => { setError(null); setInvitation(null); }}>
-                Probar con otro código
+              <h3 style={{ color: '#ffffff', margin: '0 0 6px 0', fontSize: '1.2rem' }}>
+                Solicitud Pendiente de Aprobación
+              </h3>
+              <p style={{ fontSize: '13px', color: 'var(--text-secondary)', lineHeight: '1.5', margin: '0 0 16px 0' }}>
+                Has solicitado ingresar a <strong>{myExistingRequest.teamName}</strong> para el jugador <strong>{myExistingRequest.playerName}</strong>. Tu entrenador revisará la solicitud y te dará acceso muy pronto.
+              </p>
+              <div style={{
+                background: 'rgba(0,0,0,0.3)',
+                padding: '10px 14px',
+                borderRadius: '8px',
+                fontSize: '12px',
+                color: 'var(--text-muted)',
+                marginBottom: '16px',
+                textAlign: 'left'
+              }}>
+                <div>• Posición: <strong>{myExistingRequest.position}</strong></div>
+                <div>• Dorsal: <strong>{myExistingRequest.jerseyNumber}</strong></div>
+                <div>• Estado: <span style={{ color: '#F59E0B', fontWeight: 'bold' }}>En espera del entrenador</span></div>
+              </div>
+              <button 
+                className="btn-guest" 
+                onClick={() => window.location.reload()}
+                style={{ width: '100%' }}
+              >
+                Comprobar Estado
               </button>
             </div>
-          ) : success ? (
-            <div style={{ padding: '20px 0' }}>
-              <div style={{ background: 'rgba(16, 185, 129, 0.1)', color: '#10B981', width: '56px', height: '56px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 15px' }}>
-                <CheckCircle size={32} />
-              </div>
-              <h3 style={{ color: 'var(--text-primary)', marginBottom: '8px', fontSize: '1.2rem' }}>¡Te has unido al equipo!</h3>
-              <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', marginBottom: '15px' }}>
-                Cargando tu panel técnico de <strong>{invitation.teamName}</strong>...
-              </p>
-            </div>
-          ) : !invitation ? (
-            <div>
-              <div style={{ background: 'rgba(212, 168, 67, 0.15)', color: '#D4A843', width: '56px', height: '56px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 15px' }}>
-                <KeyRound size={28} />
-              </div>
-              <h2 style={{ fontSize: '1.3rem', marginBottom: '6px', color: 'var(--text-primary)' }}>Unirse a un Equipo</h2>
-              <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', marginBottom: '20px' }}>
-                Introduce el código de 6 dígitos proporcionado por tu Primer Entrenador:
-              </p>
+          )}
 
-              <form onSubmit={handleManualCodeSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-                <input
-                  type="text"
-                  maxLength={12}
-                  value={inputCode}
-                  onChange={e => setInputCode(e.target.value.toUpperCase())}
-                  placeholder="Ej: ABC123"
-                  style={{
-                    textAlign: 'center',
-                    fontSize: '1.4rem',
-                    letterSpacing: '3px',
-                    fontWeight: 'bold',
-                    padding: '12px',
-                    borderRadius: '8px',
-                    border: '1px solid var(--border-color)',
-                    background: 'rgba(0,0,0,0.3)',
-                    color: 'var(--text-primary)'
-                  }}
-                  required
-                />
-                <button type="submit" className="btn-primary full-width" style={{ minHeight: '46px', fontSize: '0.95rem' }}>
-                  Buscar Invitación
+          {/* PASO 1: NO AUTENTICADO -> INICIAR SESIÓN O REGISTRO */}
+          {!user && !myExistingRequest && (
+            <div className="join-auth-step">
+              <div className="auth-mode-tabs">
+                <button
+                  type="button"
+                  className={`auth-tab-btn ${authTab === 'login' ? 'active' : ''}`}
+                  onClick={() => setAuthTab('login')}
+                >
+                  Ya tengo cuenta
+                </button>
+                <button
+                  type="button"
+                  className={`auth-tab-btn ${authTab === 'register' ? 'active' : ''}`}
+                  onClick={() => setAuthTab('register')}
+                >
+                  Crear cuenta nueva
+                </button>
+              </div>
+
+              <button 
+                className="btn-google" 
+                onClick={handleGoogleAuth}
+                disabled={loading}
+                style={{ marginBottom: '14px' }}
+              >
+                <svg width="20" height="20" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+                  <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+                  <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
+                  <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+                </svg>
+                Continuar con Google
+              </button>
+
+              <div className="divider-auth">
+                <span>o con correo electrónico</span>
+              </div>
+
+              <form onSubmit={handleEmailAuth} className="email-auth-form">
+                {authTab === 'register' && (
+                  <div className="input-group-auth">
+                    <label>Tu Nombre y Apellidos (Padre / Tutor / Jugador)</label>
+                    <div className="input-with-icon">
+                      <User size={18} />
+                      <input 
+                        type="text" 
+                        placeholder="Ej. Juan Pérez"
+                        value={authName}
+                        onChange={(e) => setAuthName(e.target.value)}
+                        required
+                      />
+                    </div>
+                  </div>
+                )}
+
+                <div className="input-group-auth">
+                  <label>Correo Electrónico</label>
+                  <div className="input-with-icon">
+                    <Mail size={18} />
+                    <input 
+                      type="email" 
+                      placeholder="padre@email.com"
+                      value={authEmail}
+                      onChange={(e) => setAuthEmail(e.target.value)}
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div className="input-group-auth">
+                  <label>Contraseña</label>
+                  <div className="input-with-icon">
+                    <Lock size={18} />
+                    <input 
+                      type="password" 
+                      placeholder="Mínimo 6 caracteres"
+                      value={authPassword}
+                      onChange={(e) => setAuthPassword(e.target.value)}
+                      required
+                    />
+                  </div>
+                </div>
+
+                <button type="submit" className="btn-submit-auth" disabled={loading}>
+                  {loading ? 'Procesando...' : (authTab === 'register' ? 'CREAR CUENTA Y CONTINUAR' : 'INICIAR SESIÓN Y CONTINUAR')}
+                  <ArrowRight size={18} />
                 </button>
               </form>
             </div>
-          ) : (
-            <div>
-              <div style={{ background: 'rgba(212, 168, 67, 0.15)', color: '#D4A843', width: '56px', height: '56px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 15px' }}>
-                <Shield size={30} />
-              </div>
+          )}
 
-              <h2 style={{ fontSize: '1.3rem', marginBottom: '6px', color: 'var(--text-primary)' }}>Invitación al Cuerpo Técnico</h2>
-              <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', marginBottom: '18px' }}>
-                Has sido invitado a colaborar en el equipo:
-              </p>
-
-              {/* Tarjeta del equipo */}
+          {/* PASO 2: LOGUEADO -> INTRODUCIR O VALIDAR CÓDIGO */}
+          {user && !myExistingRequest && !teamData && (
+            <div className="join-code-step">
               <div style={{
-                background: 'rgba(255,255,255,0.04)',
+                background: 'rgba(0,0,0,0.25)',
                 border: '1px solid var(--border-color)',
                 borderRadius: '10px',
-                padding: '16px',
+                padding: '14px',
                 marginBottom: '20px',
+                fontSize: '13px',
                 textAlign: 'left'
               }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '10px' }}>
-                  <Users size={20} color="#10B981" />
-                  <span style={{ fontWeight: 'bold', fontSize: '1.05rem', color: 'var(--text-primary)' }}>
-                    {invitation.teamName}
-                  </span>
-                </div>
+                <span style={{ color: 'var(--text-muted)' }}>Sesión activa:</span>{' '}
+                <strong style={{ color: '#ffffff' }}>{user.displayName || user.email}</strong>
+              </div>
 
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid var(--border-color)', paddingTop: '10px', marginTop: '6px' }}>
-                  <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Rol asignado:</span>
-                  <span style={{
-                    fontSize: '0.75rem',
-                    fontWeight: 'bold',
-                    padding: '4px 10px',
-                    borderRadius: '20px',
-                    background: `${roleInfo?.color || '#10B981'}20`,
-                    color: roleInfo?.color || '#10B981',
-                    border: `1px solid ${roleInfo?.color || '#10B981'}50`
-                  }}>
-                    {roleInfo?.badge || roleInfo?.label || invitation.role}
-                  </span>
+              <div className="input-group-auth" style={{ marginBottom: '16px' }}>
+                <label>Código del Equipo</label>
+                <div className="input-with-icon">
+                  <KeyRound size={18} />
+                  <input 
+                    type="text" 
+                    placeholder="M11-XXXXXX"
+                    value={inputCode}
+                    onChange={(e) => setInputCode(e.target.value.toUpperCase())}
+                    style={{ textTransform: 'uppercase', letterSpacing: '2px', fontWeight: 'bold', fontSize: '16px' }}
+                  />
                 </div>
               </div>
 
-              {user ? (
-                <div>
-                  <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '14px' }}>
-                    Conectado como: <strong>{user.email}</strong>
-                  </p>
-                  <button
-                    className="btn-primary full-width"
-                    onClick={handleAccept}
-                    disabled={accepting}
-                    style={{ minHeight: '46px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', fontSize: '0.95rem' }}
-                  >
-                    {accepting ? 'Uniendo al equipo...' : (
-                      <>
-                        Aceptar y Entrar al Equipo <ArrowRight size={18} />
-                      </>
-                    )}
-                  </button>
-                </div>
-              ) : (
-                <div>
-                  <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '14px' }}>
-                    Inicia sesión para aceptar la invitación y acceder:
-                  </p>
-                  <button
-                    className="btn-google full-width"
-                    onClick={handleGoogleLogin}
-                    style={{ minHeight: '46px', marginBottom: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px' }}
-                  >
-                    Continuar con Google
-                  </button>
-                  <button
-                    className="btn-outline full-width"
-                    onClick={() => navigate(`/login?returnUrl=/join-team/${activeToken}`)}
-                    style={{ minHeight: '42px', fontSize: '0.85rem' }}
-                  >
-                    Entrar con Email / Contraseña
-                  </button>
-                </div>
-              )}
+              <button 
+                type="button" 
+                className="btn-submit-auth"
+                onClick={() => handleVerifyCode(inputCode)}
+                disabled={loading || !inputCode.trim()}
+              >
+                {loading ? 'Buscando equipo...' : 'BUSCAR EQUIPO'}
+                <ArrowRight size={18} />
+              </button>
             </div>
           )}
+
+          {/* PASO 3: EQUIPO ENCONTRADO -> COMPLETAR DATOS DEL JUGADOR */}
+          {user && !myExistingRequest && teamData && (
+            <form onSubmit={handleSubmitPlayerRequest} className="join-player-form">
+              <div style={{
+                background: 'rgba(16, 185, 129, 0.12)',
+                border: '1px solid rgba(16, 185, 129, 0.3)',
+                borderRadius: '10px',
+                padding: '12px 14px',
+                marginBottom: '18px',
+                textAlign: 'left'
+              }}>
+                <div style={{ fontSize: '11px', textTransform: 'uppercase', color: '#10B981', fontWeight: 'bold' }}>
+                  ⚽ Equipo Encontrado
+                </div>
+                <div style={{ fontSize: '16px', fontWeight: 'bold', color: '#ffffff', marginTop: '2px' }}>
+                  {teamData.teamName}
+                </div>
+                <div style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: '2px' }}>
+                  Código: <strong style={{ color: '#ffffff' }}>{inputCode}</strong>
+                </div>
+              </div>
+
+              <div className="input-group-auth">
+                <label>Nombre Completo del Jugador / Jugadora *</label>
+                <div className="input-with-icon">
+                  <User size={18} />
+                  <input 
+                    type="text" 
+                    placeholder="Ej. Mateo Caicedo"
+                    value={playerName}
+                    onChange={(e) => setPlayerName(e.target.value)}
+                    required
+                  />
+                </div>
+              </div>
+
+              <div className="input-group-auth">
+                <label>Fecha de Nacimiento *</label>
+                <div className="input-with-icon">
+                  <Calendar size={18} />
+                  <input 
+                    type="date" 
+                    value={birthDate}
+                    onChange={(e) => setBirthDate(e.target.value)}
+                    required
+                  />
+                </div>
+              </div>
+
+              <div className="input-group-auth">
+                <label>Posición Habitual</label>
+                <select 
+                  value={position}
+                  onChange={(e) => setPosition(e.target.value)}
+                  style={{
+                    width: '100%',
+                    minHeight: '48px',
+                    padding: '12px 14px',
+                    background: 'rgba(0, 0, 0, 0.3)',
+                    border: '1px solid var(--border-color, rgba(255, 255, 255, 0.1))',
+                    borderRadius: '8px',
+                    color: 'var(--text-primary, #ffffff)',
+                    fontSize: '14px',
+                    boxSizing: 'border-box'
+                  }}
+                >
+                  {POSITIONS.map(pos => (
+                    <option key={pos} value={pos} style={{ background: '#121814', color: '#ffffff' }}>
+                      {pos}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="input-group-auth" style={{ marginBottom: '18px' }}>
+                <label>Dorsal Preferido (Opcional)</label>
+                <div className="input-with-icon">
+                  <Shirt size={18} />
+                  <input 
+                    type="text" 
+                    placeholder="Ej. 10"
+                    value={jerseyNumber}
+                    onChange={(e) => setJerseyNumber(e.target.value)}
+                  />
+                </div>
+              </div>
+
+              <button 
+                type="submit" 
+                className="btn-submit-auth"
+                disabled={submitting}
+              >
+                {submitting ? 'Enviando solicitud...' : 'ENVIAR SOLICITUD AL ENTRENADOR'}
+                <ArrowRight size={18} />
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setTeamData(null)}
+                style={{
+                  marginTop: '10px',
+                  background: 'transparent',
+                  border: 'none',
+                  color: 'var(--text-muted)',
+                  fontSize: '12px',
+                  cursor: 'pointer',
+                  textDecoration: 'underline'
+                }}
+              >
+                Elegir otro código de equipo
+              </button>
+            </form>
+          )}
+
+          <div className="login-footer">
+            <Link to="/login" style={{ color: 'var(--text-secondary)', fontSize: '12px' }}>
+              ← Volver al inicio de sesión
+            </Link>
+          </div>
         </div>
       </div>
     </div>

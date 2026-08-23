@@ -15,7 +15,8 @@ import {
   getDocs,
   writeBatch,
   serverTimestamp,
-  increment
+  increment,
+  setDoc
 } from 'firebase/firestore';
 
 export const useTeams = () => {
@@ -60,7 +61,6 @@ export const useTeams = () => {
         ? `clubs/${cId}/teams/${docRef.id}`
         : `users/${user.uid}/teams/${docRef.id}`;
       
-      const { setDoc } = await import('firebase/firestore');
       await setDoc(doc(db, `${teamPath}/members`, user.uid), {
         uid: user.uid,
         email: user.email || '',

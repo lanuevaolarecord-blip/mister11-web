@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useMemo, useCallback } from 'react';
 import { auth, db, initUserDocument } from '../firebaseConfig';
-import { onAuthStateChanged, signInAnonymously } from 'firebase/auth';
+import { onAuthStateChanged, signInAnonymously, signInWithEmailAndPassword, signOut } from 'firebase/auth';
 import { collection, query, onSnapshot, addDoc, serverTimestamp, getDocs, doc, getDoc } from 'firebase/firestore';
 import { seedInitialData } from '../utils/seedData';
 
@@ -407,7 +407,6 @@ export const AuthProvider = ({ children }) => {
     } catch (anonErr) {
       console.warn("Fallo Inicio Anónimo, intentando cuenta de invitado dedicada...", anonErr);
       try {
-        const { signInWithEmailAndPassword } = await import('firebase/auth');
         await signInWithEmailAndPassword(auth, "invitado@mister11.app", "mister11guest");
       } catch (emailErr) {
         console.warn("Fallo cuenta dedicada, iniciando Modo Invitado Local Autónomo...", emailErr);
@@ -451,7 +450,6 @@ export const AuthProvider = ({ children }) => {
         setActiveTeamId(null);
         setPersonalTeams([]);
       } else {
-        const { signOut } = await import('firebase/auth');
         await signOut(auth);
       }
     } catch (err) {

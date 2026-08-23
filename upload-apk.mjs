@@ -102,7 +102,7 @@ async function main() {
       ...currentData,
       latestApkVersion: APP_VERSION,
       appVersion:       APP_VERSION,
-      versionCode:      36,
+      versionCode:      55,
       apkDownloadUrl:   downloadURL,
       apkUrl:           downloadURL,
       apkUpdatedAt:     new Date().toISOString(),

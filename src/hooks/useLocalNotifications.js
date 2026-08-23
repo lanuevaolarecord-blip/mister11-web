@@ -1,4 +1,5 @@
 import { Capacitor } from '@capacitor/core';
+import { LocalNotifications } from '@capacitor/local-notifications';
 
 /**
  * useLocalNotifications
@@ -8,19 +9,8 @@ import { Capacitor } from '@capacitor/core';
  * En entorno web devuelve stubs vacíos (no disponible en PWA sin service worker dedicado).
  */
 
-let LocalNotifications = null;
-
-// Carga dinámica solo en contexto nativo
 const getPlugin = async () => {
   if (!Capacitor.isNativePlatform()) return null;
-  if (!LocalNotifications) {
-    try {
-      const mod = await import('@capacitor/local-notifications');
-      LocalNotifications = mod.LocalNotifications;
-    } catch (e) {
-      console.warn('[LocalNotifications] Plugin no disponible:', e.message);
-    }
-  }
   return LocalNotifications;
 };
 

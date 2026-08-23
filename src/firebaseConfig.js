@@ -55,63 +55,33 @@ const initUserDocument = async (uid, email, displayName) => {
   }
 };
 
+const WEB_CLIENT_ID = "954668402587-im73oik073ds12jvkfn0diasvdmkb9qc.apps.googleusercontent.com";
+
 const signInWithGoogle = async () => {
   if (Capacitor.isNativePlatform()) {
     try {
-      // Cargamos el plugin de Capacitor Firebase Authentication
+      console.log("=== INICIANDO GOOGLE SIGN-IN NATIVO ===");
+      console.log("Web Client ID (Audiencia):", WEB_CLIENT_ID);
+      console.log("Package:", "com.mister11.app");
+
       const { FirebaseAuthentication } = await import(
         "@capacitor-firebase/authentication"
       );
 
-      let result = null;
+      // Usar flujo nativo de Credential Manager directamente con Web Client ID
+      const result = await FirebaseAuthentication.signInWithGoogle({
+        useCredentialManager: true,
+      });
 
-      // 1. Intentar primero con flujo clásico nativo (GoogleSignInClient)
-      try {
-        result = await FirebaseAuthentication.signInWithGoogle({
-          useCredentialManager: false,
-        });
-      } catch (err1) {
-        console.warn("[signInWithGoogle] Intento nativo legacy falló:", err1);
+      console.log("✅ Respuesta nativa recibida:", JSON.stringify(result));
 
-        const errMsg1 = err1?.message || String(err1);
-        const isUserCancel =
-          errMsg1.toLowerCase().includes("cancel") ||
-          errMsg1.toLowerCase().includes("cancelled") ||
-          err1?.code === "12501" ||
-          errMsg1.toLowerCase().includes("sign_in_cancelled");
-
-        if (isUserCancel) {
-          throw new Error("Inicio de sesión cancelado por el usuario.");
-        }
-
-        // 2. Probar con CredentialManager (Android 14+)
-        try {
-          result = await FirebaseAuthentication.signInWithGoogle({
-            useCredentialManager: true,
-          });
-        } catch (err2) {
-          console.warn("[signInWithGoogle] Intento nativo CredentialManager falló:", err2);
-          const errMsg2 = err2?.message || String(err2);
-          if (
-            errMsg2.toLowerCase().includes("cancel") ||
-            errMsg2.toLowerCase().includes("cancelled") ||
-            err2?.code === "12501" ||
-            errMsg2.toLowerCase().includes("sign_in_cancelled")
-          ) {
-            throw new Error("Inicio de sesión cancelado por el usuario.");
-          }
-          throw err2 || err1;
-        }
-      }
-
-      // 3. Extraer el ID Token de todas las estructuras posibles de respuesta
+      // Extraer el ID Token
       let idToken =
         result?.credential?.idToken ||
         result?.user?.idToken ||
         result?.idToken ||
         result?.credential?.accessToken;
 
-      // Si aún no tenemos el idToken pero hay un usuario autenticado nativamente
       if (!idToken) {
         try {
           const tokenRes = await FirebaseAuthentication.getIdToken({ forceRefresh: true });
@@ -124,14 +94,14 @@ const signInWithGoogle = async () => {
       }
 
       if (!idToken) {
-        throw new Error("No se pudo obtener el token de autenticación de Google.");
+        throw new Error("No se recibió token de autenticación de Google.");
       }
 
-      // 4. Crear la credencial para sincronizar con el SDK Web de Firebase JS
+      console.log("Intercambiando token con Firebase Auth...");
       const credential = GoogleAuthProvider.credential(idToken);
       const userCred = await signInWithCredential(auth, credential);
 
-      // 5. Inicializar o verificar documento de usuario en Firestore
+      console.log("✅ Firebase Auth exitoso:", userCred.user.email);
       await initUserDocument(userCred.user.uid, userCred.user.email, userCred.user.displayName);
       return userCred;
     } catch (nativeErr) {
@@ -143,6 +113,12 @@ const signInWithGoogle = async () => {
         nativeErr?.code === "12501" ||
         errMsg.toLowerCase().includes("sign_in_cancelled")
       ) {
+        throw new Error("Inicio de sesión cancelado por el usuario.");
+      }
+      alert(`ERROR LOGIN GOOGLE:\n\n${errMsg}\n\nVerifica:\n- Web Client ID configurado\n- Firma SHA-1 en Firebase Console`);
+      throw nativeErr;
+    }
+  }
         throw new Error("Inicio de sesión cancelado por el usuario.");
       }
       throw new Error(

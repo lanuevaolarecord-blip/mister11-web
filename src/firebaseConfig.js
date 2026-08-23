@@ -1,3 +1,12 @@
+// ============================================================
+// IMPORT ESTÁTICO — CRÍTICO para Capacitor Android.
+// NO usar await import() dinámico para plugins nativos:
+// causa el error "Failed to fetch dynamically imported module"
+// en el WebView porque Vite genera un chunk separado que
+// el WebView de Android no puede cargar desde localhost.
+// ============================================================
+import { FirebaseAuthentication } from "@capacitor-firebase/authentication";
+
 import { initializeApp } from "firebase/app";
 import {
   getAuth,
@@ -48,7 +57,6 @@ const initUserDocument = async (uid, email, displayName, defaultRole = 'coach') 
   const userRef = doc(db, 'users', uid);
   const userSnap = await getDoc(userRef);
   if (!userSnap.exists()) {
-    // Primera vez que entra este usuario → crear documento con trial de 7 días
     await setDoc(userRef, {
       email: email || '',
       displayName: displayName || '',
@@ -82,52 +90,52 @@ const resetPassword = async (email) => {
 const WEB_CLIENT_ID = "954668402587-im73oik073ds12jvkfn0diasvdmkb9qc.apps.googleusercontent.com";
 
 const signInWithGoogle = async () => {
+  // ─── FLUJO NATIVO (APK / Play Store) ───────────────────────────────────
   if (Capacitor.isNativePlatform()) {
     try {
-      console.log("=== INICIANDO GOOGLE SIGN-IN NATIVO ===");
-      console.log("Web Client ID (Audiencia):", WEB_CLIENT_ID);
-      console.log("Package:", "com.mister11.app");
-
-      const { FirebaseAuthentication } = await import(
-        "@capacitor-firebase/authentication"
-      );
+      console.log("=== GOOGLE SIGN-IN NATIVO — Plugin estático ===");
 
       let result;
-      // Intento 1: Credential Manager nativo moderno con librerías empaquetadas
+
+      // Intento 1: Credential Manager moderno (Android 9+)
       try {
         result = await FirebaseAuthentication.signInWithGoogle({
           useCredentialManager: true,
         });
+        console.log("✅ Credential Manager OK");
       } catch (credErr) {
-        console.warn("Intento Credential Manager no completado, activando GoogleSignInClient clásico...", credErr);
-        // Intento 2: GoogleSignInClient directo
+        console.warn("Credential Manager falló, probando GoogleSignInClient clásico:", credErr?.message || credErr);
+        // Intento 2: GoogleSignInClient legacy
         result = await FirebaseAuthentication.signInWithGoogle({
           useCredentialManager: false,
         });
+        console.log("✅ GoogleSignInClient OK");
       }
 
-      console.log("✅ Respuesta nativa recibida:", JSON.stringify(result));
+      console.log("Respuesta nativa:", JSON.stringify(result));
 
-      // Extraer el ID Token
+      // Extraer ID Token del resultado
       let idToken =
         result?.credential?.idToken ||
         result?.user?.idToken ||
         result?.idToken ||
         result?.credential?.accessToken;
 
+      // Si no llegó el token en el resultado, pedirlo explícitamente
       if (!idToken) {
         try {
           const tokenRes = await FirebaseAuthentication.getIdToken({ forceRefresh: true });
           if (tokenRes?.token) {
             idToken = tokenRes.token;
+            console.log("✅ Token obtenido vía getIdToken");
           }
         } catch (tokenErr) {
-          console.warn("[signInWithGoogle] No se pudo obtener token vía getIdToken:", tokenErr);
+          console.warn("getIdToken también falló:", tokenErr?.message || tokenErr);
         }
       }
 
+      // Intercambiar token con Firebase Web SDK
       if (idToken) {
-        console.log("Intercambiando token con Firebase Auth...");
         const credential = GoogleAuthProvider.credential(idToken);
         const userCred = await signInWithCredential(auth, credential);
         console.log("✅ Firebase Auth exitoso:", userCred.user.email);
@@ -135,26 +143,38 @@ const signInWithGoogle = async () => {
         return userCred;
       }
 
+      // Sin token pero con usuario ya autenticado en el plugin
       if (result?.user?.uid) {
+        console.log("✅ Usuario autenticado sin intercambio de token");
         await initUserDocument(result.user.uid, result.user.email, result.user.displayName);
         return result;
       }
+
+      // Si llegamos aquí sin resultado útil, forzamos el fallback web
+      console.warn("Sin token ni usuario en respuesta nativa → fallback web");
+
     } catch (nativeErr) {
-      console.warn("[signInWithGoogle] Error en intento nativo:", nativeErr);
-      const errMsg = nativeErr?.message || String(nativeErr);
+      const errMsg = nativeErr?.message || String(nativeErr || "");
+      console.warn("[signInWithGoogle] Error nativo:", errMsg);
+
+      // Cancelación voluntaria del usuario → no hacer fallback
       if (
-        errMsg.toLowerCase().includes("cancel") ||
-        errMsg.toLowerCase().includes("cancelled") ||
+        errMsg.includes("cancel") ||
+        errMsg.includes("cancelled") ||
         nativeErr?.code === "12501" ||
-        errMsg.toLowerCase().includes("sign_in_cancelled")
+        errMsg.includes("sign_in_cancelled")
       ) {
         throw new Error("Inicio de sesión cancelado por el usuario.");
       }
-      console.log("Activando fallback web transparente ante fallo nativo...");
+
+      // Cualquier otro error nativo (error 10, DEVELOPER_ERROR, etc.)
+      // → caemos al flujo web como fallback silencioso
+      console.log("Activando fallback web seguro...");
     }
   }
 
-  // Flujo Web puro o Fallback seguro para cualquier error nativo (como error 10)
+  // ─── FLUJO WEB (navegador / fallback desde fallo nativo) ───────────────
+  console.log("Usando flujo Firebase Web Auth (Popup / Redirect)");
   try {
     const result = await signInWithPopup(auth, googleProvider);
     await initUserDocument(result.user.uid, result.user.email, result.user.displayName);
@@ -164,6 +184,7 @@ const signInWithGoogle = async () => {
       error.code === "auth/popup-blocked" ||
       error.code === "auth/cancelled-popup-request"
     ) {
+      console.log("Popup bloqueado → usando Redirect");
       return await signInWithRedirect(auth, googleProvider);
     }
     throw error;
@@ -185,5 +206,3 @@ export {
   storage,
   initUserDocument
 };
-
-

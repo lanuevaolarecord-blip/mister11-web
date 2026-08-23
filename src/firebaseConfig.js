@@ -68,12 +68,19 @@ const signInWithGoogle = async () => {
         "@capacitor-firebase/authentication"
       );
 
-      // Usar GoogleSignInClient directo (useCredentialManager: false)
-      // Esto abre el selector nativo de cuentas de Google Play Services de inmediato
-      // y entrega el idToken directamente sin fallos de Credential Manager.
-      const result = await FirebaseAuthentication.signInWithGoogle({
-        useCredentialManager: false,
-      });
+      let result;
+      // Intento 1: Credential Manager nativo moderno con librerías empaquetadas
+      try {
+        result = await FirebaseAuthentication.signInWithGoogle({
+          useCredentialManager: true,
+        });
+      } catch (credErr) {
+        console.warn("Intento Credential Manager no completado, activando GoogleSignInClient clásico...", credErr);
+        // Intento 2: GoogleSignInClient directo
+        result = await FirebaseAuthentication.signInWithGoogle({
+          useCredentialManager: false,
+        });
+      }
 
       console.log("✅ Respuesta nativa recibida:", JSON.stringify(result));
 
@@ -96,6 +103,10 @@ const signInWithGoogle = async () => {
       }
 
       if (!idToken) {
+        if (result?.user?.uid) {
+          await initUserDocument(result.user.uid, result.user.email, result.user.displayName);
+          return result;
+        }
         throw new Error("No se recibió token de autenticación de Google.");
       }
 
@@ -117,7 +128,6 @@ const signInWithGoogle = async () => {
       ) {
         throw new Error("Inicio de sesión cancelado por el usuario.");
       }
-      alert(`ERROR LOGIN GOOGLE:\n\n${errMsg}\n\nSi estás en un emulador de desarrollo, asegúrate de tener una cuenta de Google agregada en Ajustes de Android.`);
       throw nativeErr;
     }
   }

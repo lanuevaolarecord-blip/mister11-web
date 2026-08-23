@@ -29,5 +29,13 @@ public class MainActivity extends BridgeActivity {
       controller.setAppearanceLightStatusBars(false); 
       controller.setAppearanceLightNavigationBars(false);
     }
+
+    // Habilitar soporte para ventanas emergentes de autenticación OAuth en el WebView
+    if (this.bridge != null && this.bridge.getWebView() != null) {
+      this.bridge.getWebView().getSettings().setSupportMultipleWindows(true);
+      this.bridge.getWebView().getSettings().setJavaScriptCanOpenWindowsAutomatically(true);
+      this.bridge.getWebView().getSettings().setDomStorageEnabled(true);
+      this.bridge.getWebView().getSettings().setDatabaseEnabled(true);
+    }
   }
 }

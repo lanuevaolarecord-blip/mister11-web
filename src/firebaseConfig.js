@@ -90,91 +90,86 @@ const resetPassword = async (email) => {
 const WEB_CLIENT_ID = "954668402587-im73oik073ds12jvkfn0diasvdmkb9qc.apps.googleusercontent.com";
 
 const signInWithGoogle = async () => {
-  // ─── FLUJO NATIVO (APK / Play Store) ───────────────────────────────────
+  // ─── FLUJO 100% NATIVO (Android APK / Google Play Store) ───────────────
   if (Capacitor.isNativePlatform()) {
+    console.log("=== GOOGLE SIGN-IN 100% NATIVO ===");
     try {
-      console.log("=== GOOGLE SIGN-IN NATIVO — Plugin estático ===");
-
       let result;
 
-      // Intento 1: Credential Manager moderno (Android 9+)
+      // 1. Iniciar selector nativo de Google en Android
       try {
         result = await FirebaseAuthentication.signInWithGoogle({
           useCredentialManager: true,
         });
-        console.log("✅ Credential Manager OK");
-      } catch (credErr) {
-        console.warn("Credential Manager falló, probando GoogleSignInClient clásico:", credErr?.message || credErr);
-        // Intento 2: GoogleSignInClient legacy
+      } catch (cmErr) {
+        console.warn("[signInWithGoogle] Reintentando con cliente estándar:", cmErr?.message || cmErr);
         result = await FirebaseAuthentication.signInWithGoogle({
           useCredentialManager: false,
         });
-        console.log("✅ GoogleSignInClient OK");
       }
 
-      console.log("Respuesta nativa:", JSON.stringify(result));
+      console.log("✅ Selector nativo completado:", JSON.stringify(result));
 
-      // Extraer ID Token del resultado
+      // 2. Extraer ID Token devuelto por Google
       let idToken =
         result?.credential?.idToken ||
         result?.user?.idToken ||
         result?.idToken ||
         result?.credential?.accessToken;
 
-      // Si no llegó el token en el resultado, pedirlo explícitamente
       if (!idToken) {
         try {
           const tokenRes = await FirebaseAuthentication.getIdToken({ forceRefresh: true });
           if (tokenRes?.token) {
             idToken = tokenRes.token;
-            console.log("✅ Token obtenido vía getIdToken");
           }
-        } catch (tokenErr) {
-          console.warn("getIdToken también falló:", tokenErr?.message || tokenErr);
+        } catch (tokErr) {
+          console.warn("[signInWithGoogle] getIdToken:", tokErr?.message || tokErr);
         }
       }
 
-      // Intercambiar token con Firebase Web SDK
+      // 3. Autenticar en Firebase JS SDK dentro de la app
       if (idToken) {
         const credential = GoogleAuthProvider.credential(idToken);
         const userCred = await signInWithCredential(auth, credential);
-        console.log("✅ Firebase Auth exitoso:", userCred.user.email);
-        await initUserDocument(userCred.user.uid, userCred.user.email, userCred.user.displayName);
+        console.log("✅ Sesión iniciada con éxito:", userCred.user.email);
+        await initUserDocument(userCred.user.uid, userCred.user.email, userCred.user.displayName || '');
         return userCred;
       }
 
-      // Sin token pero con usuario ya autenticado en el plugin
+      // 4. Si el plugin ya autenticó al usuario en la capa nativa
       if (result?.user?.uid) {
-        console.log("✅ Usuario autenticado sin intercambio de token");
-        await initUserDocument(result.user.uid, result.user.email, result.user.displayName);
+        console.log("✅ Usuario nativo verificado:", result.user.email);
+        await initUserDocument(result.user.uid, result.user.email || '', result.user.displayName || '');
         return result;
       }
 
-      // Si llegamos aquí sin resultado útil, forzamos el fallback web
-      console.warn("Sin token ni usuario en respuesta nativa → fallback web");
-
+      throw new Error("No se pudo obtener el token de autenticación de Google.");
     } catch (nativeErr) {
+      console.error("[signInWithGoogle] Error en login nativo:", nativeErr);
       const errMsg = nativeErr?.message || String(nativeErr || "");
-      console.warn("[signInWithGoogle] Error nativo:", errMsg);
 
-      // Cancelación voluntaria del usuario → no hacer fallback
+      // Si el usuario simplemente cerró el selector de cuentas
       if (
-        errMsg.includes("cancel") ||
-        errMsg.includes("cancelled") ||
+        errMsg.toLowerCase().includes("cancel") ||
+        errMsg.toLowerCase().includes("cancelled") ||
         nativeErr?.code === "12501" ||
-        errMsg.includes("sign_in_cancelled")
+        errMsg.toLowerCase().includes("sign_in_cancelled")
       ) {
         throw new Error("Inicio de sesión cancelado por el usuario.");
       }
 
-      // Cualquier otro error nativo (error 10, DEVELOPER_ERROR, etc.)
-      // → caemos al flujo web como fallback silencioso
-      console.log("Activando fallback web seguro...");
+      // Si es error 10 u otro error de servicios de Google
+      if (errMsg.includes("10:") || errMsg === "10" || nativeErr?.code === "10") {
+        throw new Error("Error de sincronización con Google Play (Código 10). Verifica tu conexión o entra con Email/Contraseña.");
+      }
+
+      throw new Error(errMsg || "Error al iniciar sesión con Google.");
     }
   }
 
-  // ─── FLUJO WEB (navegador / fallback desde fallo nativo) ───────────────
-  console.log("Usando flujo Firebase Web Auth (Popup / Redirect)");
+  // ─── FLUJO EXCLUSIVO PARA NAVEGADOR WEB DE ESCRITORIO (PC / Mac) ────────
+  console.log("Usando flujo Firebase Web Auth Popup para navegador");
   try {
     const result = await signInWithPopup(auth, googleProvider);
     await initUserDocument(result.user.uid, result.user.email, result.user.displayName);
@@ -184,7 +179,6 @@ const signInWithGoogle = async () => {
       error.code === "auth/popup-blocked" ||
       error.code === "auth/cancelled-popup-request"
     ) {
-      console.log("Popup bloqueado → usando Redirect");
       return await signInWithRedirect(auth, googleProvider);
     }
     throw error;

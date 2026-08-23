@@ -68,10 +68,19 @@ const signInWithGoogle = async () => {
         "@capacitor-firebase/authentication"
       );
 
-      // Usar flujo nativo de Credential Manager directamente con Web Client ID
-      const result = await FirebaseAuthentication.signInWithGoogle({
-        useCredentialManager: true,
-      });
+      let result;
+      // Intento 1: Credential Manager (Flujo nativo moderno Android 14+)
+      try {
+        result = await FirebaseAuthentication.signInWithGoogle({
+          useCredentialManager: true,
+        });
+      } catch (credErr) {
+        console.warn("Credential Manager no disponible o sin credenciales previas. Pasando a selector nativo estándar (GoogleSignInClient)...", credErr);
+        // Intento 2: Google Sign-In clásico (Abre directamente el selector de cuentas de Google Play Services)
+        result = await FirebaseAuthentication.signInWithGoogle({
+          useCredentialManager: false,
+        });
+      }
 
       console.log("✅ Respuesta nativa recibida:", JSON.stringify(result));
 
@@ -115,7 +124,7 @@ const signInWithGoogle = async () => {
       ) {
         throw new Error("Inicio de sesión cancelado por el usuario.");
       }
-      alert(`ERROR LOGIN GOOGLE:\n\n${errMsg}\n\nVerifica:\n- Web Client ID configurado\n- Firma SHA-1 en Firebase Console`);
+      alert(`ERROR LOGIN GOOGLE:\n\n${errMsg}\n\nSi estás en un emulador de desarrollo, asegúrate de tener una cuenta de Google agregada en Ajustes de Android.`);
       throw nativeErr;
     }
   }

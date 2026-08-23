@@ -119,13 +119,6 @@ const signInWithGoogle = async () => {
       throw nativeErr;
     }
   }
-        throw new Error("Inicio de sesión cancelado por el usuario.");
-      }
-      throw new Error(
-        errMsg || "Error al autenticar con Google. Por favor, verifica tu conexión e intenta de nuevo."
-      );
-    }
-  }
 
   // Flujo Web puro para navegadores de escritorio / PWA
   try {

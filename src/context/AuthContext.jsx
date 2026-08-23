@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useMemo, useCallback } from 'react';
 import { auth, db, initUserDocument } from '../firebaseConfig';
-import { onAuthStateChanged, signInAnonymously, signInWithEmailAndPassword, signOut } from 'firebase/auth';
+import { onAuthStateChanged, signInAnonymously, signInWithEmailAndPassword, signOut, getRedirectResult } from 'firebase/auth';
 import { collection, query, onSnapshot, addDoc, serverTimestamp, getDocs, doc, getDoc } from 'firebase/firestore';
 import { seedInitialData } from '../utils/seedData';
 
@@ -23,6 +23,20 @@ export const AuthProvider = ({ children }) => {
   const isGuestRef = React.useRef(false);
 
   useEffect(() => {
+    // Procesar credenciales de retorno si el usuario viene de un flujo OAuth Redirect
+    getRedirectResult(auth).then(async (result) => {
+      if (result && result.user) {
+        console.log("✅ getRedirectResult exitoso:", result.user.email);
+        try {
+          await initUserDocument(result.user.uid, result.user.email, result.user.displayName || '');
+        } catch (e) {
+          console.warn("[AuthContext] Error en initUserDocument post-redirect:", e);
+        }
+      }
+    }).catch((err) => {
+      console.warn("[AuthContext] getRedirectResult:", err?.message || err);
+    });
+
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       if (currentUser) {
         isGuestRef.current = false;

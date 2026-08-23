@@ -38,13 +38,18 @@ const Login = () => {
         return;
       }
 
-      const errorMessage = err?.code === 'auth/invalid-credential' 
+      const rawMsg = err?.message || String(err || '');
+      const isCode10 = rawMsg.includes('10:') || rawMsg === '10' || err?.code === '10';
+
+      const errorMessage = isCode10
+        ? 'Error de sincronización de Google Play (Código 10). Reintenta o entra con Email y Contraseña.'
+        : err?.code === 'auth/invalid-credential' 
         ? 'Credenciales inválidas. Verifica tu cuenta.'
         : err?.code === 'auth/network-request-failed'
         ? 'Error de red. Verifica tu conexión.'
         : err?.code === 'auth/unauthorized-domain'
         ? 'Dominio no autorizado en Firebase Console.'
-        : err?.message || 'Error al iniciar sesión con Google';
+        : rawMsg || 'Error al iniciar sesión con Google';
 
       setError(errorMessage);
       showToast(errorMessage, 'error');

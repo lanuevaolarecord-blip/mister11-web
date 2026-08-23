@@ -126,23 +126,21 @@ const signInWithGoogle = async () => {
         }
       }
 
-      if (!idToken) {
-        if (result?.user?.uid) {
-          await initUserDocument(result.user.uid, result.user.email, result.user.displayName);
-          return result;
-        }
-        throw new Error("No se recibió token de autenticación de Google.");
+      if (idToken) {
+        console.log("Intercambiando token con Firebase Auth...");
+        const credential = GoogleAuthProvider.credential(idToken);
+        const userCred = await signInWithCredential(auth, credential);
+        console.log("✅ Firebase Auth exitoso:", userCred.user.email);
+        await initUserDocument(userCred.user.uid, userCred.user.email, userCred.user.displayName);
+        return userCred;
       }
 
-      console.log("Intercambiando token con Firebase Auth...");
-      const credential = GoogleAuthProvider.credential(idToken);
-      const userCred = await signInWithCredential(auth, credential);
-
-      console.log("✅ Firebase Auth exitoso:", userCred.user.email);
-      await initUserDocument(userCred.user.uid, userCred.user.email, userCred.user.displayName);
-      return userCred;
+      if (result?.user?.uid) {
+        await initUserDocument(result.user.uid, result.user.email, result.user.displayName);
+        return result;
+      }
     } catch (nativeErr) {
-      console.error("[signInWithGoogle] Error en autenticación nativa:", nativeErr);
+      console.warn("[signInWithGoogle] Error en intento nativo:", nativeErr);
       const errMsg = nativeErr?.message || String(nativeErr);
       if (
         errMsg.toLowerCase().includes("cancel") ||
@@ -152,11 +150,11 @@ const signInWithGoogle = async () => {
       ) {
         throw new Error("Inicio de sesión cancelado por el usuario.");
       }
-      throw nativeErr;
+      console.log("Activando fallback web transparente ante fallo nativo...");
     }
   }
 
-  // Flujo Web puro para navegadores de escritorio / PWA
+  // Flujo Web puro o Fallback seguro para cualquier error nativo (como error 10)
   try {
     const result = await signInWithPopup(auth, googleProvider);
     await initUserDocument(result.user.uid, result.user.email, result.user.displayName);

@@ -68,19 +68,12 @@ const signInWithGoogle = async () => {
         "@capacitor-firebase/authentication"
       );
 
-      let result;
-      // Intento 1: Credential Manager (Flujo nativo moderno Android 14+)
-      try {
-        result = await FirebaseAuthentication.signInWithGoogle({
-          useCredentialManager: true,
-        });
-      } catch (credErr) {
-        console.warn("Credential Manager no disponible o sin credenciales previas. Pasando a selector nativo estándar (GoogleSignInClient)...", credErr);
-        // Intento 2: Google Sign-In clásico (Abre directamente el selector de cuentas de Google Play Services)
-        result = await FirebaseAuthentication.signInWithGoogle({
-          useCredentialManager: false,
-        });
-      }
+      // Usar GoogleSignInClient directo (useCredentialManager: false)
+      // Esto abre el selector nativo de cuentas de Google Play Services de inmediato
+      // y entrega el idToken directamente sin fallos de Credential Manager.
+      const result = await FirebaseAuthentication.signInWithGoogle({
+        useCredentialManager: false,
+      });
 
       console.log("✅ Respuesta nativa recibida:", JSON.stringify(result));
 

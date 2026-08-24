@@ -40,12 +40,9 @@ service cloud.firestore {
           (get(/databases/$(database)/documents/users/$(userId)).data.get('plan', 'free') == 'free' && get(/databases/$(database)/documents/users/$(userId)).data.get('teamCount', 0) < 1)
         );
 
-        // Límite universal de 23 jugadores por plantilla para TODOS los planes (Free, Pro, Club)
+        // Jugadores del equipo y todas sus subcolecciones (wellness, tests, asistencias, etc.)
         match /players/{playerId} {
-          allow read, update, delete: if isAuth();
-          allow create: if (isOwner(userId) || isDevEmail()) && (
-            get(/databases/$(database)/documents/users/$(userId)/teams/$(teamId)).data.get('playerCount', 0) < 23
-          );
+          allow read, write: if isAuth();
 
           // Subcolecciones del jugador (wellness, tests, asistencias, etc.)
           match /{allPlayerSubPaths=**} {

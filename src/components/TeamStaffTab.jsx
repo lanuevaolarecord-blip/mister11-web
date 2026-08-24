@@ -146,19 +146,43 @@ export const TeamStaffTab = ({ activeTeam }) => {
     if (!request || !teamPath) return;
     setProcessingId(request.id);
     try {
-      // 1. Crear la ficha del jugador en la plantilla
+      // 1. Comprobar si ya existe una ficha para este jugador o usuario en la plantilla
       const playersColRef = collection(db, `${teamPath}/players`);
-      const newPlayerRef = await addDoc(playersColRef, {
-        name: request.playerName,
-        fechaNacimiento: request.birthDate,
-        position: request.position || 'MC',
-        number: request.jerseyNumber || '',
-        requesterUid: request.requesterUid,
-        requesterEmail: request.requesterEmail || '',
-        currentStatus: 'active',
-        category: activeTeam?.categoria || activeTeam?.category || 'General',
-        createdAt: serverTimestamp(),
+      const pSnap = await getDocs(playersColRef);
+      const existingPlayerDoc = pSnap.docs.find(d => {
+        const pData = d.data();
+        return (request.requesterUid && (pData.requesterUid === request.requesterUid || pData.playerUid === request.requesterUid || pData.userId === request.requesterUid)) ||
+               (request.requesterEmail && pData.email && pData.email.toLowerCase() === request.requesterEmail.toLowerCase()) ||
+               (request.playerName && pData.name && pData.name.trim().toLowerCase() === request.playerName.trim().toLowerCase());
       });
+
+      let assignedPlayerId;
+      if (existingPlayerDoc) {
+        assignedPlayerId = existingPlayerDoc.id;
+        await updateDoc(doc(db, `${teamPath}/players`, assignedPlayerId), {
+          name: request.playerName,
+          fechaNacimiento: request.birthDate || existingPlayerDoc.data().fechaNacimiento || '',
+          position: request.position || existingPlayerDoc.data().position || 'MC',
+          number: request.jerseyNumber || existingPlayerDoc.data().number || '',
+          requesterUid: request.requesterUid,
+          requesterEmail: request.requesterEmail || '',
+          currentStatus: 'active',
+          updatedAt: serverTimestamp(),
+        });
+      } else {
+        const newPlayerRef = await addDoc(playersColRef, {
+          name: request.playerName,
+          fechaNacimiento: request.birthDate,
+          position: request.position || 'MC',
+          number: request.jerseyNumber || '',
+          requesterUid: request.requesterUid,
+          requesterEmail: request.requesterEmail || '',
+          currentStatus: 'active',
+          category: activeTeam?.categoria || activeTeam?.category || 'General',
+          createdAt: serverTimestamp(),
+        });
+        assignedPlayerId = newPlayerRef.id;
+      }
 
       // 2. Registrar el rol en memberRoles del equipo
       const teamDocRef = doc(db, teamPath);
@@ -175,13 +199,13 @@ export const TeamStaffTab = ({ activeTeam }) => {
         teamPath,
         teamName: activeTeam.nombre || activeTeam.name || 'Mi Equipo',
         role: 'player',
-        playerId: newPlayerRef.id,
+        playerId: assignedPlayerId,
         joinedAt: serverTimestamp(),
       });
 
       // 4. Actualizar estado de la solicitud a 'approved'
       const reqDocRef = doc(db, `${teamPath}/joinRequests`, request.id);
-      await updateDoc(reqDocRef, { status: 'approved', approvedAt: serverTimestamp(), playerId: newPlayerRef.id });
+      await updateDoc(reqDocRef, { status: 'approved', approvedAt: serverTimestamp(), playerId: assignedPlayerId });
 
       // 5. Actualizar solicitud en el perfil del usuario
       try {

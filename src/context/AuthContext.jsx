@@ -489,15 +489,34 @@ export const AuthProvider = ({ children }) => {
     return teams.find(t => t.id === activeTeamId) || teams[0] || null;
   }, [teams, activeTeamId]);
 
+  const isCoach = useMemo(() => {
+    if (!user) return false;
+    if (activeMode === 'coach') return true;
+    if (activeMode === 'player') return false;
+    if (userProfile?.role === 'coach' || userProfile?.role === 'admin') return true;
+    if (personalTeams.length > 0 || (clubTeams.length > 0 && userProfile?.clubRole !== 'player')) return true;
+    return false;
+  }, [user, activeMode, userProfile, personalTeams.length, clubTeams.length]);
+
   const isPlayer = useMemo(() => {
     if (!user) return false;
     if (activeMode === 'player') return true;
     if (activeMode === 'coach') return false;
-    if (userProfile?.role === 'player') return true;
+    if (userProfile?.role === 'player' || userProfile?.role === 'parent') return true;
     if (activeTeam?.staffRole === 'player' || activeTeam?.role === 'player') return true;
-    if (activeTeam?.memberRoles?.[user.uid] === 'player') return true;
+    if (activeTeam?.memberRoles?.[user.uid] === 'player' || activeTeam?.memberRoles?.[user.uid] === 'parent') return true;
+    // Si no tiene equipos personales y tiene equipos compartidos de jugador
+    if (personalTeams.length === 0 && sharedTeams.some(t => t.staffRole === 'player' || t.role === 'player')) return true;
     return false;
-  }, [user, activeTeam, userProfile, activeMode]);
+  }, [user, activeTeam, userProfile, activeMode, personalTeams.length, sharedTeams]);
+
+  const isHybrid = useMemo(() => {
+    if (!user) return false;
+    if (userProfile?.role === 'hybrid') return true;
+    const hasCoachTeam = personalTeams.length > 0 || clubTeams.length > 0;
+    const hasPlayerTeam = sharedTeams.some(t => t.staffRole === 'player' || t.role === 'player') || userProfile?.role === 'player';
+    return hasCoachTeam && hasPlayerTeam;
+  }, [user, userProfile, personalTeams.length, clubTeams.length, sharedTeams]);
 
   const value = useMemo(() => ({
     user, 
@@ -507,6 +526,8 @@ export const AuthProvider = ({ children }) => {
     changeActiveTeam, 
     teams,
     isPlayer,
+    isCoach,
+    isHybrid,
     switchMode,
     activeMode,
     loginAsGuest,
@@ -518,7 +539,7 @@ export const AuthProvider = ({ children }) => {
     club,
     getTeamPath,
     userProfile,
-  }), [user, loading, activeTeamId, activeTeam, changeActiveTeam, teams, isPlayer, switchMode, activeMode, loginAsGuest, logout, refreshTeam, userProfile, club, getTeamPath]);
+  }), [user, loading, activeTeamId, activeTeam, changeActiveTeam, teams, isPlayer, isCoach, isHybrid, switchMode, activeMode, loginAsGuest, logout, refreshTeam, userProfile, club, getTeamPath]);
 
   return (
     <AuthContext.Provider value={value}>

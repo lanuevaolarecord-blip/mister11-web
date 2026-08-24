@@ -84,7 +84,49 @@ const JoinTeam = () => {
       } else {
         setTeamData(data);
         setInputCode(code);
-        setStep(3); // Avanzar a datos del jugador
+
+        // Si el usuario ya está autenticado, comprobar si ya existe en la plantilla
+        if (user && user.uid !== 'invitado-local') {
+          try {
+            const playersColRef = collection(db, `${data.teamPath}/players`);
+            const pSnap = await getDocs(playersColRef);
+            const existingPlayer = pSnap.docs.find(d => {
+              const pData = d.data();
+              return pData.requesterUid === user.uid ||
+                     pData.playerUid === user.uid ||
+                     pData.userId === user.uid ||
+                     pData.uid === user.uid ||
+                     (pData.email && user.email && pData.email.toLowerCase() === user.email.toLowerCase()) ||
+                     pData.linkedParents?.includes(user.uid);
+            });
+
+            if (existingPlayer) {
+              // Ya existe en la plantilla -> Vincular puntero y redirigir sin duplicar
+              const userSharedTeamRef = doc(db, `users/${user.uid}/shared_teams`, data.teamId);
+              await setDoc(userSharedTeamRef, {
+                teamId: data.teamId,
+                teamPath: data.teamPath,
+                teamName: data.teamName || 'Mi Equipo',
+                role: 'player',
+                playerId: existingPlayer.id,
+                joinedAt: serverTimestamp(),
+              }, { merge: true });
+
+              localStorage.setItem('mister11_active_mode', 'player');
+              try {
+                await setDoc(doc(db, 'users', user.uid), { role: 'player' }, { merge: true });
+              } catch (_) {}
+
+              showToast(`¡Ya formas parte de este equipo como ${existingPlayer.data().name}!`, 'success');
+              navigate('/player-dashboard');
+              return;
+            }
+          } catch (e) {
+            console.warn('[JoinTeam] Error comprobando jugador existente:', e);
+          }
+        }
+
+        setStep(3); // Avanzar a datos del jugador solo si no existe
       }
     } catch (err) {
       console.error('[JoinTeam] Error verificando código:', err);

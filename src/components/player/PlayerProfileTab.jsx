@@ -2,13 +2,14 @@ import React, { useState, useEffect, useRef } from 'react';
 import { doc, getDoc, setDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../../firebaseConfig';
 import { useAuth } from '../../context/AuthContext';
+import { isDeveloperEmail } from '../../config/admins';
 import { showToast } from '../../utils/toast';
 import { User, Heart, Shield, Lock, CheckCircle, AlertCircle, LogOut, FileSignature, Sparkles, Smile, Frown, Meh, Activity } from 'lucide-react';
 
 const BODY_ZONES = ['Ninguna', 'Gemelo Izquierdo', 'Gemelo Derecho', 'Cuádriceps', 'Isquiotibiales', 'Rodilla', 'Tobillo', 'Espalda / Lumbar', 'Aductor', 'Hombro'];
 
 export const PlayerProfileTab = ({ player, team, teamPath }) => {
-  const { user, logout, switchMode } = useAuth();
+  const { user, logout, switchMode, userProfile } = useAuth();
 
   // Estados de Wellness
   const todayStr = new Date().toISOString().split('T')[0];
@@ -118,51 +119,56 @@ export const PlayerProfileTab = ({ player, team, teamPath }) => {
   // Enviar Check-in de Bienestar
   const handleSubmitWellness = async (e) => {
     e.preventDefault();
-    if (!teamPath || !player?.id) {
-      showToast('No se encontró el equipo o ficha del jugador.', 'error');
+    if (!teamPath) {
+      showToast('No se encontró el equipo activo.', 'error');
       return;
     }
+
+    const effectivePlayerId = (player?.id && player.id !== 'player-self') ? player.id : (user?.uid || 'player-self');
 
     setSavingWellness(true);
     try {
       const wellnessPayload = {
         ...wellnessData,
         date: todayStr,
-        playerName: player.name || user?.displayName || 'Jugador',
-        playerId: player.id,
-        playerNumber: player.number || '',
+        playerName: player?.name || user?.displayName || 'Jugador',
+        playerId: effectivePlayerId,
+        playerNumber: player?.number || '',
         updatedAt: serverTimestamp(),
       };
 
       // 1. Guardar en subcolección del jugador
-      const wDocRef = doc(db, `${teamPath}/players/${player.id}/wellness`, todayStr);
+      const wDocRef = doc(db, `${teamPath}/players/${effectivePlayerId}/wellness`, todayStr);
       await setDoc(wDocRef, wellnessPayload, { merge: true });
 
-      // 2. Guardar en colección de wellness general del equipo (para que el míster lo vea en tiempo real)
+      // 2. Guardar en colección de wellness general del equipo (para que el cuerpo técnico lo vea)
       try {
-        const teamWellnessRef = doc(db, `${teamPath}/wellness`, `${player.id}_${todayStr}`);
+        const teamWellnessRef = doc(db, `${teamPath}/wellness`, `${effectivePlayerId}_${todayStr}`);
         await setDoc(teamWellnessRef, wellnessPayload, { merge: true });
       } catch (teamErr) {
         console.warn('Advertencia guardando en team wellness:', teamErr);
       }
 
       // 3. Si el consentimiento aún no estaba activo, auto-activarlo al enviar
-      if (!consents.health) {
-        try {
-          const playerDocRef = doc(db, `${teamPath}/players`, player.id);
-          await updateDoc(playerDocRef, {
-            'consents.health': true,
-            'consents.updatedAt': serverTimestamp()
-          });
-          setConsents(prev => ({ ...prev, health: true }));
-        } catch (_) {}
-      }
+      try {
+        const playerDocRef = doc(db, `${teamPath}/players`, effectivePlayerId);
+        await setDoc(playerDocRef, {
+          name: player?.name || user?.displayName || 'Jugador',
+          requesterUid: user?.uid || '',
+          consents: {
+            ...consents,
+            health: true,
+            updatedAt: serverTimestamp()
+          }
+        }, { merge: true });
+        setConsents(prev => ({ ...prev, health: true }));
+      } catch (_) {}
 
       setWellnessSubmitted(true);
       showToast('¡Check-in de bienestar guardado correctamente!', 'success');
     } catch (err) {
       console.error('Error guardando wellness:', err);
-      showToast('Error al guardar bienestar. Inténtalo de nuevo.', 'error');
+      showToast('Error al guardar bienestar: ' + (err.message || 'Error de conexión'), 'error');
     } finally {
       setSavingWellness(false);
     }
@@ -170,11 +176,13 @@ export const PlayerProfileTab = ({ player, team, teamPath }) => {
 
   // Guardar Consentimiento Parental Granular
   const handleSaveConsent = async () => {
-    if (!teamPath || !player?.id) return;
+    if (!teamPath) return;
     if (!parentName.trim()) {
       showToast('Escribe el nombre del padre/tutor.', 'error');
       return;
     }
+
+    const effectivePlayerId = (player?.id && player.id !== 'player-self') ? player.id : (user?.uid || 'player-self');
 
     let signatureUrl = consents.signatureUrl || '';
     if (canvasRef.current && hasDrawn) {
@@ -193,8 +201,8 @@ export const PlayerProfileTab = ({ player, team, teamPath }) => {
         signatureUrl,
       };
 
-      const playerDocRef = doc(db, `${teamPath}/players`, player.id);
-      await updateDoc(playerDocRef, { consents: updatedConsents });
+      const playerDocRef = doc(db, `${teamPath}/players`, effectivePlayerId);
+      await setDoc(playerDocRef, { consents: updatedConsents }, { merge: true });
 
       setConsents(updatedConsents);
       setIsConsentModalOpen(false);
@@ -401,29 +409,31 @@ export const PlayerProfileTab = ({ player, team, teamPath }) => {
         </button>
       </div>
 
-      {/* ACCIONES Y CAMBIO DE MODO */}
+      {/* ACCIONES Y CAMBIO DE MODO (SOLO PARA DESARROLLADORES Y CUENTAS CON ROL ENTRENADOR/ADMIN) */}
       <div style={{ marginTop: '24px', paddingBottom: '30px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
-        <button
-          onClick={() => {
-            switchMode('coach');
-            window.location.href = '/';
-          }}
-          className="btn-outline"
-          style={{
-            width: '100%',
-            minHeight: '48px',
-            borderColor: '#3B82F6',
-            color: '#60A5FA',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: '8px',
-            fontWeight: 700,
-            background: 'rgba(59, 130, 246, 0.08)'
-          }}
-        >
-          <User size={18} /> Cambiar a Modo Entrenador
-        </button>
+        {(isDeveloperEmail(user?.email) || userProfile?.role === 'coach' || userProfile?.role === 'admin' || user?.email === 'lanuevaolarecord@gmail.com' || user?.email === 'jhocatv@gmail.com') && (
+          <button
+            onClick={() => {
+              switchMode('coach');
+              window.location.href = '/';
+            }}
+            className="btn-outline"
+            style={{
+              width: '100%',
+              minHeight: '48px',
+              borderColor: '#3B82F6',
+              color: '#60A5FA',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '8px',
+              fontWeight: 700,
+              background: 'rgba(59, 130, 246, 0.08)'
+            }}
+          >
+            <User size={18} /> Cambiar a Modo Entrenador (Dev / Coach)
+          </button>
+        )}
 
         <button
           onClick={logout}

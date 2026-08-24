@@ -46,67 +46,103 @@ const PlayerDashboard = () => {
 
   // 1. Escuchar la plantilla y resolver la ficha real del jugador
   useEffect(() => {
-    if (!user || !cleanPath) {
+    if (!user) {
       setLoading(false);
       return;
     }
 
-    const playersRef = collection(db, `${cleanPath}/players`);
-    const q = query(playersRef);
+    let isMounted = true;
+    let unsubRoster = null;
 
-    const unsub = onSnapshot(q, async (snap) => {
-      const allPlayers = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-      setRosterPlayers(allPlayers);
+    const resolveAndListen = async () => {
+      let effectivePath = cleanPath;
+      let targetPlayerId = null;
 
-      // Comprobar si en shared_teams del usuario hay un playerId específico asignado
-      let linkedPlayerIdFromShared = null;
-      try {
-        if (activeTeam?.id) {
+      // 1.1 Consultar índice determinista por email si existe
+      if (user.email) {
+        try {
+          const emailNorm = user.email.trim().toLowerCase();
+          const idSnap = await getDoc(doc(db, 'playerIdentityByEmail', emailNorm));
+          if (idSnap.exists()) {
+            const idData = idSnap.data();
+            if (idData.teamPath) {
+              effectivePath = idData.teamPath.replace(/^\/+|\/+$/g, '');
+              targetPlayerId = idData.playerId;
+            }
+          }
+        } catch (_) {}
+      }
+
+      // 1.2 Si no encontró por email, consultar en shared_teams
+      if (!targetPlayerId && activeTeam?.id) {
+        try {
           const stSnap = await getDoc(doc(db, `users/${user.uid}/shared_teams`, activeTeam.id));
           if (stSnap.exists() && stSnap.data().playerId) {
-            linkedPlayerIdFromShared = stSnap.data().playerId;
+            targetPlayerId = stSnap.data().playerId;
+            if (stSnap.data().teamPath) {
+              effectivePath = stSnap.data().teamPath.replace(/^\/+|\/+$/g, '');
+            }
           }
-        }
-      } catch (_) {}
+        } catch (_) {}
+      }
 
-      // Buscar si el usuario ya tenía una ficha activa, o buscar por coincidencia de cuenta/padre
-      setPlayer((prevPlayer) => {
-        if (prevPlayer?.id && prevPlayer.id !== 'player-self') {
-          const updated = allPlayers.find(p => p.id === prevPlayer.id);
-          if (updated) return updated;
-        }
+      if (!effectivePath) {
+        if (isMounted) setLoading(false);
+        return;
+      }
 
+      const playersRef = collection(db, `${effectivePath}/players`);
+      const q = query(playersRef);
+
+      unsubRoster = onSnapshot(q, (snap) => {
+        if (!isMounted) return;
+        const allPlayers = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        setRosterPlayers(allPlayers);
+
+        // Buscar la ficha exacta por prioridad:
+        // 1. targetPlayerId (de playerIdentityByEmail o shared_teams)
+        // 2. Email coincidente
+        // 3. UID coincidente
+        // 4. Nombre coincidente
         const found = allPlayers.find(p => 
-          (linkedPlayerIdFromShared && p.id === linkedPlayerIdFromShared) ||
+          (targetPlayerId && p.id === targetPlayerId) ||
+          (p.email && user.email && p.email.trim().toLowerCase() === user.email.trim().toLowerCase()) ||
+          (p.requesterEmail && user.email && p.requesterEmail.trim().toLowerCase() === user.email.trim().toLowerCase()) ||
           p.requesterUid === user.uid || 
           p.playerUid === user.uid || 
           p.userId === user.uid ||
           p.uid === user.uid ||
-          (p.email && user.email && p.email.toLowerCase() === user.email.toLowerCase()) ||
           p.linkedParents?.includes(user.uid) ||
           (user.displayName && p.name && normalizeStr(p.name) === normalizeStr(user.displayName))
         );
 
-        if (found) return found;
-
-        // Si no hay ficha exacta asignada aún, construir con los datos reales del usuario logueado (NUNCA Marc García)
-        return {
-          id: user.uid,
-          name: user.displayName || user.email?.split('@')[0] || 'Jugador Míster11',
-          email: user.email || '',
-          position: 'MC',
-          number: '-',
-          category: activeTeam?.categoria || activeTeam?.category || 'General',
-          consents: { basic: true, attendance: true, health: true, tests: true }
-        };
+        if (found) {
+          setPlayer(found);
+        } else {
+          // Si no hay ficha exacta asignada aún, construir con los datos reales del usuario logueado (NUNCA Marc García)
+          setPlayer({
+            id: user.uid,
+            name: user.displayName || user.email?.split('@')[0] || 'Jugador Míster11',
+            email: user.email || '',
+            position: 'MC',
+            number: '-',
+            category: activeTeam?.categoria || activeTeam?.category || 'General',
+            consents: { basic: true, attendance: true, health: true, tests: true }
+          });
+        }
+        setLoading(false);
+      }, (err) => {
+        console.warn('[PlayerDashboard] Error cargando jugador:', err);
+        if (isMounted) setLoading(false);
       });
-      setLoading(false);
-    }, (err) => {
-      console.warn('[PlayerDashboard] Error cargando jugador:', err);
-      setLoading(false);
-    });
+    };
 
-    return () => unsub();
+    resolveAndListen();
+
+    return () => {
+      isMounted = false;
+      if (unsubRoster) unsubRoster();
+    };
   }, [user, cleanPath, activeTeam?.id]);
 
   // 2. Determinar si es vista de padre
@@ -296,8 +332,8 @@ const PlayerDashboard = () => {
         </div>
       </header>
 
-      {/* Si hay varios jugadores en la plantilla y el usuario desea cambiar la vista de ficha */}
-      {rosterPlayers.length > 1 && (
+      {/* Indicador de Ficha Activa Vinculada */}
+      {player && (
         <div style={{
           padding: '6px 16px',
           background: darkMode ? 'rgba(0,0,0,0.2)' : '#F1F5F9',
@@ -307,31 +343,25 @@ const PlayerDashboard = () => {
           justifyContent: 'space-between',
           fontSize: '0.76rem'
         }}>
-          <span style={{ color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '4px' }}>
+          <span style={{ color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '4px', fontWeight: 600 }}>
             <Users size={13} /> Ficha activa:
           </span>
-          <select
-            value={player?.id || ''}
-            onChange={(e) => {
-              const selected = rosterPlayers.find(p => p.id === e.target.value);
-              if (selected) setPlayer(selected);
-            }}
-            style={{
-              background: 'transparent',
-              border: 'none',
-              color: 'var(--accent-green, #10B981)',
-              fontWeight: '700',
-              fontSize: '0.78rem',
-              cursor: 'pointer',
-              outline: 'none'
-            }}
-          >
-            {rosterPlayers.map(p => (
-              <option key={p.id} value={p.id} style={{ background: darkMode ? '#111B21' : '#FFFFFF', color: darkMode ? '#FFF' : '#000' }}>
-                {p.name} ({p.position || 'MC'} #{p.number || '-'})
-              </option>
-            ))}
-          </select>
+          <span style={{
+            color: 'var(--accent-green, #10B981)',
+            fontWeight: 800,
+            fontSize: '0.82rem',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px'
+          }}>
+            {player.avatarUrl && (
+              <img src={player.avatarUrl} alt={player.name} style={{ width: '18px', height: '18px', borderRadius: '50%', objectFit: 'cover' }} />
+            )}
+            <span>{player.name}</span>
+            <span style={{ background: 'rgba(16, 185, 129, 0.15)', padding: '1px 6px', borderRadius: '8px', fontSize: '0.74rem' }}>
+              {player.position || 'MC'} #{player.number || '-'}
+            </span>
+          </span>
         </div>
       )}
 

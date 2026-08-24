@@ -341,7 +341,7 @@ export const AuthProvider = ({ children }) => {
     return () => unsubShared();
   }, [user]);
 
-  // Combinar todas las listas de equipos de forma reactiva
+  // Combinar todas las listas de equipos de forma reactiva (Dando prioridad a sharedTeams para jugadores)
   const teams = useMemo(() => {
     if (user && user.uid === 'invitado-local') {
       return [{
@@ -357,8 +357,12 @@ export const AuthProvider = ({ children }) => {
         escudo: ''
       }];
     }
-    return [...personalTeams, ...clubTeams, ...sharedTeams];
-  }, [user, personalTeams, clubTeams, sharedTeams]);
+    // Si el usuario es jugador o tiene equipos compartidos, los compartidos van primero
+    if (userProfile?.role === 'player' || currentMode === 'player') {
+      if (sharedTeams.length > 0) return [...sharedTeams, ...clubTeams];
+    }
+    return [...sharedTeams, ...clubTeams, ...personalTeams];
+  }, [user, personalTeams, clubTeams, sharedTeams, userProfile?.role, currentMode]);
 
   // Selección de equipo activo y creación de equipo por defecto
   useEffect(() => {
@@ -374,10 +378,17 @@ export const AuthProvider = ({ children }) => {
       return;
     }
 
-    const combinedTeams = [...personalTeams, ...clubTeams, ...sharedTeams];
+    // Si tiene equipos compartidos (ej. asignado por su entrenador), priorizarlos siempre
+    let combinedTeams = [];
+    if (userProfile?.role === 'player' || currentMode === 'player' || sharedTeams.length > 0) {
+      combinedTeams = [...sharedTeams, ...clubTeams, ...personalTeams];
+    } else {
+      combinedTeams = [...personalTeams, ...clubTeams, ...sharedTeams];
+    }
 
     if (combinedTeams.length > 0) {
       const savedTeamId = localStorage.getItem('mister11_active_team');
+      // Si el equipo guardado existe en la lista y no es un equipo personal huérfano cuando es jugador
       if (savedTeamId && combinedTeams.some(t => t.id === savedTeamId)) {
         setActiveTeamId(savedTeamId);
       } else {
@@ -387,7 +398,7 @@ export const AuthProvider = ({ children }) => {
       setLoading(false);
     } else {
       // Si es un jugador y no tiene equipos, no crear equipo falso
-      if (userProfile?.role === 'player') {
+      if (userProfile?.role === 'player' || currentMode === 'player') {
         setActiveTeamId(null);
         setLoading(false);
         return;

@@ -79,6 +79,31 @@ const MiEquipo = () => {
   const [consentChecked, setConsentChecked] = useState(false);
 
 
+  // Sincronizar deterministamente los índices de identidad por email para jugadores existentes
+  React.useEffect(() => {
+    if (!players || players.length === 0 || !activeTeam?.id) return;
+    const teamPathStr = getTeamPath(activeTeam.id);
+    const tName = activeTeam.nombre || activeTeam.name || 'Mi Equipo';
+
+    players.forEach(async (p) => {
+      const rawEmail = p.email || p.requesterEmail;
+      if (rawEmail && p.id) {
+        const emailNorm = rawEmail.trim().toLowerCase();
+        try {
+          await setDoc(doc(db, 'playerIdentityByEmail', emailNorm), {
+            email: rawEmail,
+            emailNorm,
+            teamId: activeTeam.id,
+            teamPath: teamPathStr,
+            playerId: p.id,
+            teamName: tName,
+            updatedAt: serverTimestamp()
+          }, { merge: true });
+        } catch (_) {}
+      }
+    });
+  }, [players, activeTeam?.id, getTeamPath]);
+
   const filteredPlayers = filter === 'TODOS' 
     ? players 
     : players.filter(p => p.position === filter);
@@ -170,7 +195,8 @@ const MiEquipo = () => {
 
       // If there is a new photo to upload
       if (editData.photoFile && savedPlayerId) {
-        const fileRef = ref(storage, `players/${getTeamPath()}/${savedPlayerId}/avatar`);
+        const teamPathClean = getTeamPath(activeTeam?.id).replace(/^\/+|\/+$/g, '');
+        const fileRef = ref(storage, `${teamPathClean}/players/${savedPlayerId}/avatar.webp`);
         await uploadBytes(fileRef, editData.photoFile);
         const avatarUrl = await getDownloadURL(fileRef);
         await updatePlayer(savedPlayerId, { avatarUrl });

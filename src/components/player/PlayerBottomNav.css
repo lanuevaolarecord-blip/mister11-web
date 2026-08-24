@@ -59,7 +59,7 @@
 }
 
 .player-nav-item.active {
-  color: #10B981;
+  color: #10B981 !important;
 }
 
 .player-nav-item.active .player-nav-icon-wrapper {
@@ -76,13 +76,31 @@
   box-shadow: 0 0 8px #10B981;
 }
 
+/* ── MODO CLARO COMPATIBILIDAD ── */
+.theme-light .player-bottom-nav,
+[data-theme="light"] .player-bottom-nav {
+  background: #FFFFFF;
+  border-top-color: #E2E8F0;
+  box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.06);
+}
+
+.theme-light .player-nav-item,
+[data-theme="light"] .player-nav-item {
+  color: #64748B;
+}
+
+.theme-light .player-nav-item.active,
+[data-theme="light"] .player-nav-item.active {
+  color: #059669 !important;
+}
+
 @media (min-width: 768px) {
   .player-bottom-nav {
     max-width: 480px;
     left: 50%;
     transform: translateX(-50%);
     border-radius: 20px 20px 0 0;
-    border-left: 1px solid var(--border-color);
-    border-right: 1px solid var(--border-color);
+    border-left: 1px solid var(--border-color, rgba(255, 255, 255, 0.1));
+    border-right: 1px solid var(--border-color, rgba(255, 255, 255, 0.1));
   }
 }

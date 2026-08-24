@@ -1,3 +1,8 @@
+/**
+ * src/components/player/PlayerChatTab.jsx
+ * Míster11 — Canal Directo y Chat 1:1 en Tiempo Real (Míster ↔ Jugador/Padre)
+ */
+
 import React, { useState, useEffect, useRef } from 'react';
 import { 
   collection, 
@@ -7,8 +12,7 @@ import {
   addDoc, 
   serverTimestamp, 
   doc, 
-  setDoc,
-  updateDoc 
+  setDoc 
 } from 'firebase/firestore';
 import { db } from '../../firebaseConfig';
 import { useAuth } from '../../context/AuthContext';
@@ -17,15 +21,11 @@ import {
   Send, 
   Shield, 
   User, 
-  Clock, 
-  Sparkles, 
-  CheckCheck,
-  Flame,
-  AlertCircle
+  CheckCheck
 } from 'lucide-react';
 import './PlayerChatTab.css';
 
-const QUICK_REPLIES = [
+const PLAYER_QUICK_REPLIES = [
   '🏃 Llego 10 min tarde',
   '🩺 Tengo molestia muscular',
   '❓ Míster, ¿puedo hablar contigo?',
@@ -33,7 +33,14 @@ const QUICK_REPLIES = [
   '🚗 Necesito transporte para el desplazamiento'
 ];
 
-export const PlayerChatTab = ({ teamPath, player, team, isParentView = false }) => {
+const COACH_QUICK_REPLIES = [
+  '👍 Recibido, nos vemos en el campo',
+  '⏰ Acuérdate de llegar 15 min antes',
+  '🩺 Descansa y avísame si persiste el dolor',
+  '📋 Convocatoria confirmada, ¡a por todas!'
+];
+
+export const PlayerChatTab = ({ teamPath, player, team, isParentView = false, isCoachView = false }) => {
   const { user } = useAuth();
   const [messages, setMessages] = useState([]);
   const [inputText, setInputText] = useState('');
@@ -43,6 +50,7 @@ export const PlayerChatTab = ({ teamPath, player, team, isParentView = false }) 
 
   const effectivePlayerId = player?.id || 'player-self';
   const cleanPath = teamPath ? teamPath.replace(/^\/+|\/+$/g, '') : '';
+  const quickReplies = isCoachView ? COACH_QUICK_REPLIES : PLAYER_QUICK_REPLIES;
 
   // 1. Escuchar mensajes del hilo 1:1 en tiempo real
   useEffect(() => {
@@ -69,10 +77,10 @@ export const PlayerChatTab = ({ teamPath, player, team, isParentView = false }) 
     return () => unsub();
   }, [cleanPath, effectivePlayerId]);
 
-  // Auto-scroll al final al recibir mensajes
+  // Auto-scroll al fondo al recibir o enviar mensajes
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
+  }, [messages, sending]);
 
   const handleSendMessage = async (textToSend) => {
     const text = (textToSend || inputText).trim();
@@ -80,10 +88,13 @@ export const PlayerChatTab = ({ teamPath, player, team, isParentView = false }) 
 
     setSending(true);
     try {
-      const senderRole = isParentView ? 'parent' : 'player';
-      const senderName = isParentView 
-        ? `${user.displayName || 'Padre'} (Padre de ${player?.name || 'Jugador'})`
-        : (user.displayName || player?.name || 'Jugador');
+      const isCoach = isCoachView || user.uid === team?.coachUid;
+      const senderRole = isCoach ? 'coach' : isParentView ? 'parent' : 'player';
+      const senderName = isCoach
+        ? `${user.displayName || 'Cuerpo Técnico'}`
+        : isParentView 
+          ? `${user.displayName || 'Padre'} (Padre de ${player?.name || 'Jugador'})`
+          : (user.displayName || player?.name || 'Jugador');
 
       const threadCol = collection(db, `${cleanPath}/threads/${effectivePlayerId}/messages`);
       await addDoc(threadCol, {
@@ -95,7 +106,7 @@ export const PlayerChatTab = ({ teamPath, player, team, isParentView = false }) 
         readBy: [user.uid]
       });
 
-      // Actualizar resumen del hilo para el panel del entrenador
+      // Actualizar resumen del hilo para notificaciones e historial
       const threadMetaDoc = doc(db, `${cleanPath}/threads`, effectivePlayerId);
       await setDoc(threadMetaDoc, {
         playerId: effectivePlayerId,
@@ -104,7 +115,8 @@ export const PlayerChatTab = ({ teamPath, player, team, isParentView = false }) 
         lastSender: senderName,
         lastSenderRole: senderRole,
         updatedAt: serverTimestamp(),
-        unreadByCoach: true
+        unreadByCoach: !isCoach,
+        unreadByPlayer: isCoach
       }, { merge: true });
 
       setInputText('');
@@ -125,21 +137,23 @@ export const PlayerChatTab = ({ teamPath, player, team, isParentView = false }) 
       {/* Cabecera del Chat */}
       <div className="player-chat-header">
         <div className="chat-coach-avatar">
-          <Shield size={24} color="#D4A843" />
+          {isCoachView ? <User size={22} color="#10B981" /> : <Shield size={22} color="#D4A843" />}
         </div>
         <div className="chat-header-info">
-          <h3 className="chat-title">Canal Directo con el Cuerpo Técnico</h3>
+          <h3 className="chat-title">
+            {isCoachView ? `Canal con ${player?.name || 'Jugador'}` : 'Canal Directo con el Cuerpo Técnico'}
+          </h3>
           <p className="chat-subtitle">
             {team?.nombre || 'Mi Equipo'} · Mensajes privados y confidenciales
           </p>
         </div>
       </div>
 
-      {/* Caja de Respuestas Rápidas */}
+      {/* Píldoras de Respuestas Rápidas */}
       <div className="quick-replies-section">
         <span className="quick-replies-title">⚡ Mensajes rápidos:</span>
         <div className="quick-replies-list">
-          {QUICK_REPLIES.map((reply, i) => (
+          {quickReplies.map((reply, i) => (
             <button
               key={i}
               type="button"
@@ -153,15 +167,17 @@ export const PlayerChatTab = ({ teamPath, player, team, isParentView = false }) 
         </div>
       </div>
 
-      {/* Ventana de Conversación */}
+      {/* Ventana de Mensajes con Scroll */}
       <div className="chat-messages-container">
         {loading ? (
-          <div className="chat-loading">Cargando conversación...</div>
+          <div className="chat-empty-state">
+            <p>Cargando conversación...</p>
+          </div>
         ) : messages.length === 0 ? (
           <div className="chat-empty-state">
-            <MessageSquare size={36} color="var(--text-secondary)" />
+            <MessageSquare size={36} color="var(--text-muted)" />
             <p>Aún no hay mensajes en este canal.</p>
-            <span>Escribe al entrenador o usa uno de los mensajes rápidos.</span>
+            <span>Escribe un mensaje o pulsa una de las opciones rápidas arriba.</span>
           </div>
         ) : (
           messages.map((msg) => {
@@ -192,7 +208,7 @@ export const PlayerChatTab = ({ teamPath, player, team, isParentView = false }) 
         <div ref={messagesEndRef} />
       </div>
 
-      {/* Input de Mensaje */}
+      {/* Formulario Inferior Fijo de Envío */}
       <form 
         className="chat-input-form"
         onSubmit={(e) => {
@@ -203,10 +219,11 @@ export const PlayerChatTab = ({ teamPath, player, team, isParentView = false }) 
         <input
           type="text"
           className="chat-text-input"
-          placeholder="Escribe un mensaje al míster..."
+          placeholder={isCoachView ? "Escribe una respuesta al jugador..." : "Escribe un mensaje al míster..."}
           value={inputText}
           onChange={(e) => setInputText(e.target.value)}
           disabled={sending}
+          autoComplete="off"
         />
         <button
           type="submit"

@@ -15,9 +15,9 @@ import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import PlayerHealthTab from '../components/PlayerHealthTab';
 import PlayerPlansTab from '../components/PlayerPlansTab';
 import { TeamAttendanceTab } from '../components/TeamAttendanceTab';
-import { PlayerAttendanceSubTab } from '../components/PlayerAttendanceSubTab';
 import { TeamStaffTab } from '../components/TeamStaffTab';
 import { PlayerTabs } from '../components/player/PlayerTabs';
+import { PlayerChatTab } from '../components/player/PlayerChatTab';
 import { MessageSquare, FileText, Pencil, X, UserPlus, Share2 } from 'lucide-react';
 import { useTranslation } from '../hooks/useTranslation';
 import './MiEquipo.css';
@@ -686,6 +686,17 @@ const MiEquipo = () => {
                     </div>
                   </div>
                 </div>
+              </div>
+            )}
+
+            {activeTab === 'CHAT' && (
+              <div style={{ marginTop: '12px' }}>
+                <PlayerChatTab 
+                  teamPath={getTeamPath(activeTeam?.id)} 
+                  player={selectedPlayer} 
+                  team={activeTeam} 
+                  isCoachView={true} 
+                />
               </div>
             )}
 

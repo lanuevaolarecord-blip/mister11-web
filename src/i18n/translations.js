@@ -172,12 +172,14 @@ export const translations = {
 
     // ── Pestañas Perfil de Jugador ────────────────────────────────────
     'player.tab.general': 'GENERAL',
+    'player.tab.chat': 'CHAT',
     'player.tab.physical': 'FÍSICO',
     'player.tab.health': 'SALUD',
     'player.tab.plans': 'PLANES',
     'player.tab.stats': 'STATS',
     'player.tab.attendance': 'ASISTENCIA',
     'equipo.tab.general': 'GENERAL',
+    'equipo.tab.chat': 'CHAT',
     'equipo.tab.physical': 'FÍSICO',
     'equipo.tab.health': 'SALUD',
     'equipo.tab.plans': 'PLANES',
@@ -187,12 +189,14 @@ export const translations = {
   'English (EN)': {
     // ── Player Profile Tabs ───────────────────────────────────────────
     'player.tab.general': 'GENERAL',
+    'player.tab.chat': 'CHAT',
     'player.tab.physical': 'PHYSICAL',
     'player.tab.health': 'HEALTH',
     'player.tab.plans': 'PLANS',
     'player.tab.stats': 'STATS',
     'player.tab.attendance': 'ATTENDANCE',
     'equipo.tab.general': 'GENERAL',
+    'equipo.tab.chat': 'CHAT',
     'equipo.tab.physical': 'PHYSICAL',
     'equipo.tab.health': 'HEALTH',
     'equipo.tab.plans': 'PLANS',

@@ -1,31 +1,35 @@
 /* =============================================================
-   PlayerChatTab.css — Canal Directo Míster ↔ Jugador/Padre
+   PlayerChatTab.css — Canal Directo Míster ↔ Jugador/Padre (Chat Real)
    ============================================================= */
 
 .player-chat-tab {
   display: flex;
   flex-direction: column;
-  height: calc(100vh - 160px);
-  min-height: 520px;
-  gap: 12px;
+  height: calc(100dvh - 175px);
+  min-height: 480px;
+  max-height: 780px;
+  gap: 10px;
+  box-sizing: border-box;
+  position: relative;
 }
 
 .player-chat-header {
   display: flex;
   align-items: center;
   gap: 12px;
-  background: var(--bg-card, #1B3A2D);
-  border: 1px solid var(--border-color, rgba(255, 255, 255, 0.08));
+  background: var(--bg-card, #121A15);
+  border: 1.5px solid var(--border-color, rgba(255, 255, 255, 0.1));
   border-radius: 14px;
-  padding: 12px 16px;
+  padding: 10px 14px;
+  flex-shrink: 0;
 }
 
 .chat-coach-avatar {
   background: rgba(212, 168, 67, 0.15);
-  border: 1px solid rgba(212, 168, 67, 0.3);
+  border: 1px solid rgba(212, 168, 67, 0.35);
   border-radius: 10px;
-  width: 42px;
-  height: 42px;
+  width: 40px;
+  height: 40px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -34,29 +38,31 @@
 
 .chat-title {
   margin: 0 0 2px 0;
-  font-size: 0.98rem;
+  font-size: 0.95rem;
   font-weight: 800;
   color: var(--text-primary, #FFFFFF);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
 }
 
 .chat-subtitle {
   margin: 0;
-  font-size: 0.76rem;
-  color: var(--text-secondary, #A3B5AD);
+  font-size: 0.75rem;
+  color: var(--text-secondary, #94A3B8);
 }
 
 /* Quick replies */
 .quick-replies-section {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 4px;
   width: 100%;
+  flex-shrink: 0;
 }
 
 .quick-replies-title {
   font-size: 0.72rem;
   font-weight: 800;
-  color: var(--text-secondary, #A3B5AD);
+  color: var(--text-secondary, #94A3B8);
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
@@ -67,7 +73,7 @@
   align-items: center;
   gap: 8px;
   overflow-x: auto;
-  padding: 4px 2px 8px 2px;
+  padding: 2px 2px 6px 2px;
   scrollbar-width: none;
   -webkit-overflow-scrolling: touch;
   width: 100%;
@@ -80,16 +86,16 @@
 .quick-reply-pill {
   flex-shrink: 0;
   white-space: nowrap;
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.18);
   color: var(--text-primary, #FFFFFF);
-  font-size: 0.8rem;
+  font-size: 0.78rem;
   font-weight: 600;
-  padding: 8px 14px;
+  padding: 6px 12px;
   border-radius: 20px;
   cursor: pointer;
   transition: all 0.15s ease;
-  min-height: 40px;
+  min-height: 36px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -97,7 +103,7 @@
 }
 
 .quick-reply-pill:hover {
-  background: rgba(16, 185, 129, 0.2);
+  background: rgba(16, 185, 129, 0.25);
   border-color: #10B981;
   color: #10B981;
 }
@@ -105,14 +111,16 @@
 /* Messages viewport */
 .chat-messages-container {
   flex: 1;
-  background: rgba(0, 0, 0, 0.25);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(0, 0, 0, 0.35);
+  border: 1px solid var(--border-color, rgba(255, 255, 255, 0.1));
   border-radius: 14px;
-  padding: 16px;
+  padding: 14px;
   overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 10px;
+  min-height: 200px;
 }
 
 .chat-empty-state {
@@ -122,8 +130,8 @@
   flex-direction: column;
   align-items: center;
   gap: 8px;
-  color: var(--text-secondary, #A3B5AD);
-  padding: 30px 16px;
+  color: var(--text-secondary, #94A3B8);
+  padding: 24px 16px;
 }
 
 .chat-empty-state p {
@@ -134,14 +142,14 @@
 }
 
 .chat-empty-state span {
-  font-size: 0.8rem;
+  font-size: 0.78rem;
 }
 
 /* Bubble */
 .chat-bubble-wrapper {
   display: flex;
   flex-direction: column;
-  max-width: 82%;
+  max-width: 85%;
 }
 
 .chat-bubble-wrapper.mine {
@@ -164,10 +172,11 @@
 }
 
 .chat-bubble {
-  padding: 10px 14px;
+  padding: 8px 12px;
   border-radius: 14px;
   position: relative;
   word-break: break-word;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
 }
 
 .chat-bubble-wrapper.mine .chat-bubble {
@@ -177,14 +186,14 @@
 }
 
 .chat-bubble-wrapper.coach .chat-bubble {
-  background: #1B3A2D;
+  background: #1E293B;
   border: 1.5px solid rgba(212, 168, 67, 0.4);
   color: #FFFFFF;
   border-bottom-left-radius: 4px;
 }
 
 .chat-bubble-wrapper.theirs .chat-bubble {
-  background: rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.12);
   color: #FFFFFF;
   border-bottom-left-radius: 4px;
 }
@@ -192,37 +201,45 @@
 .chat-bubble-text {
   margin: 0;
   font-size: 0.88rem;
-  line-height: 1.4;
+  line-height: 1.35;
 }
 
 .chat-bubble-time {
   display: block;
   font-size: 0.65rem;
-  opacity: 0.75;
+  opacity: 0.8;
   text-align: right;
-  margin-top: 4px;
+  margin-top: 3px;
 }
 
-/* Input bar */
+/* Input bar SIEMPRE VISIBLE Y ADAPTADA */
 .chat-input-form {
   display: flex;
   gap: 8px;
+  width: 100%;
+  flex-shrink: 0;
+  padding-top: 4px;
+  position: sticky;
+  bottom: 0;
+  z-index: 20;
 }
 
 .chat-text-input {
   flex: 1;
-  background: rgba(0, 0, 0, 0.35);
-  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: rgba(0, 0, 0, 0.45);
+  border: 1.5px solid rgba(255, 255, 255, 0.2);
   border-radius: 12px;
-  padding: 0 16px;
+  padding: 0 14px;
   color: var(--text-primary, #FFFFFF);
   font-size: 0.88rem;
   min-height: 48px; /* Touch target ≥48dp */
   outline: none;
+  box-sizing: border-box;
 }
 
 .chat-text-input:focus {
   border-color: #10B981;
+  background: rgba(0, 0, 0, 0.6);
 }
 
 .chat-send-btn {
@@ -236,12 +253,14 @@
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: background 0.15s;
+  transition: all 0.15s ease;
   flex-shrink: 0;
+  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
 }
 
 .chat-send-btn:hover:not(:disabled) {
   background: #059669;
+  transform: scale(1.03);
 }
 
 .chat-send-btn:disabled {
@@ -260,6 +279,11 @@
 .theme-light .chat-title,
 [data-theme="light"] .chat-title {
   color: #0F172A;
+}
+
+.theme-light .chat-subtitle,
+[data-theme="light"] .chat-subtitle {
+  color: #475569;
 }
 
 .theme-light .chat-messages-container,
@@ -288,6 +312,12 @@
   background: #FFFFFF;
   border-color: #CBD5E1;
   color: #0F172A;
+}
+
+.theme-light .chat-text-input:focus,
+[data-theme="light"] .chat-text-input:focus {
+  background: #FFFFFF;
+  border-color: #10B981;
 }
 
 .theme-light .chat-bubble-wrapper.coach .chat-bubble,

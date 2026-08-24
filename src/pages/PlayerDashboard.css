@@ -2,7 +2,8 @@
    PORTAL DEL JUGADOR - ESTILOS GAMING / HUD (ANDROID FIRST)
    ============================================================================== */
 
-.player-dashboard-root {
+.player-dashboard-root,
+.player-dashboard-layout {
   min-height: 100vh;
   min-height: 100dvh;
   overflow-y: auto;
@@ -12,30 +13,35 @@
   box-sizing: border-box;
   padding-bottom: calc(95px + env(safe-area-inset-bottom, 20px));
   transition: background-color 0.3s ease, color 0.3s ease;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif !important;
 }
 
 /* TEMA OSCURO (GAMING HUD) */
-.player-dashboard-root.theme-dark {
+.player-dashboard-root.theme-dark,
+.player-dashboard-layout.theme-dark,
+[data-theme="dark"] .player-dashboard-layout {
   --bg-primary: #0B120E;
   --bg-card: #121A15;
-  --text-primary: #ffffff;
-  --text-secondary: #94a3b8;
-  --text-muted: #64748b;
-  --border-color: rgba(255, 255, 255, 0.08);
+  --text-primary: #FFFFFF;
+  --text-secondary: #CBD5E1;
+  --text-muted: #94A3B8;
+  --border-color: rgba(255, 255, 255, 0.12);
   background: radial-gradient(ellipse at 50% 0%, #13241A 0%, #0B120E 60%, #050806 100%);
-  color: #ffffff;
+  color: #FFFFFF;
 }
 
 /* TEMA CLARO (INSTITUCIONAL LIMPIO) */
-.player-dashboard-root.theme-light {
-  --bg-primary: #F5F0E8;
+.player-dashboard-root.theme-light,
+.player-dashboard-layout.theme-light,
+[data-theme="light"] .player-dashboard-layout {
+  --bg-primary: #F8FAFC;
   --bg-card: #FFFFFF;
-  --text-primary: #1B3A2D;
-  --text-secondary: #475569;
-  --text-muted: #64748b;
-  --border-color: rgba(27, 58, 45, 0.12);
-  background: #F5F0E8;
-  color: #1B3A2D;
+  --text-primary: #0F172A;
+  --text-secondary: #334155;
+  --text-muted: #64748B;
+  --border-color: #E2E8F0;
+  background: #F8FAFC;
+  color: #0F172A;
 }
 
 .player-loading-screen {
@@ -511,32 +517,64 @@
 }
 
 /* AGENDA & RSVP */
+.schedule-month-selector,
 .month-picker-bar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  justify-content: space-between !important;
   background: var(--bg-card, #121814);
-  border: 1px solid var(--border-color);
-  border-radius: 10px;
-  padding: 8px 12px;
+  border: 1.5px solid var(--border-color, rgba(255, 255, 255, 0.12));
+  border-radius: 12px;
+  padding: 8px 14px;
+  margin-bottom: 16px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .month-nav-btn {
-  background: transparent;
-  border: none;
-  color: var(--text-secondary);
-  padding: 6px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--border-color, rgba(255, 255, 255, 0.1));
+  color: var(--text-primary, #FFFFFF);
+  width: 42px;
+  height: 42px;
+  border-radius: 8px;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
+  transition: all 0.15s ease;
+  flex-shrink: 0;
 }
 
+.month-nav-btn:hover {
+  background: rgba(16, 185, 129, 0.2);
+  border-color: #10B981;
+  color: #10B981;
+}
+
+.month-display-label,
 .month-label {
   font-weight: 800;
-  font-size: 13px;
+  font-size: 0.95rem;
   letter-spacing: 1px;
-  color: #10B981;
+  color: var(--text-primary, #FFFFFF) !important;
+  text-align: center;
+  flex: 1;
+}
+
+.theme-light .month-display-label,
+.theme-light .month-label,
+[data-theme="light"] .month-display-label {
+  color: #0F172A !important;
+}
+
+.theme-light .month-nav-btn,
+[data-theme="light"] .month-nav-btn {
+  background: #F1F5F9;
+  border-color: #CBD5E1;
+  color: #0F172A;
 }
 
 .events-cards-list {

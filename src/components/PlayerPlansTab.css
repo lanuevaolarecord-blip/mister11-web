@@ -12,7 +12,14 @@
 
 .plans-header h3 {
   margin: 0;
-  color: #1B3A2D;
+  color: var(--text-primary, #1B3A2D);
+  font-size: 1.25rem;
+  font-weight: 800;
+}
+
+html.dark .plans-header h3,
+.dark .plans-header h3 {
+  color: #FFFFFF !important;
 }
 
 .empty-plans {
@@ -21,9 +28,10 @@
   align-items: center;
   justify-content: center;
   padding: 40px;
-  background: #F8FAFC;
+  background: var(--bg-card, #F8FAFC);
+  border: 1px solid var(--border-light, #E2E8F0);
   border-radius: 12px;
-  color: #64748B;
+  color: var(--text-secondary, #64748B);
   gap: 10px;
 }
 
@@ -34,13 +42,20 @@
 }
 
 .plan-card {
-  background: white;
+  background: var(--bg-card, white);
   border-radius: 12px;
   padding: 20px;
-  border: 1px solid #E2E8F0;
+  border: 1px solid var(--border-light, #E2E8F0);
   display: flex;
   flex-direction: column;
   gap: 15px;
+  box-shadow: var(--shadow-card, 0 2px 8px rgba(0,0,0,0.05));
+}
+
+html.dark .plan-card,
+.dark .plan-card {
+  background: #15241D !important;
+  border: 1.5px solid rgba(255, 255, 255, 0.12) !important;
 }
 
 .plan-card-header {
@@ -51,8 +66,14 @@
 
 .plan-card-header h4 {
   margin: 0 0 5px 0;
-  color: #0F172A;
+  color: var(--text-primary, #0F172A);
   font-size: 1.1rem;
+  font-weight: 800;
+}
+
+html.dark .plan-card-header h4,
+.dark .plan-card-header h4 {
+  color: #FFFFFF !important;
 }
 
 .plan-badge {
@@ -72,6 +93,12 @@
   color: #047857;
 }
 
+html.dark .plan-badge.individual,
+.dark .plan-badge.individual {
+  background: rgba(16, 185, 129, 0.2);
+  color: #34D399;
+}
+
 .btn-delete-plan {
   background: none;
   border: none;
@@ -83,7 +110,7 @@
 }
 
 .btn-delete-plan:hover {
-  background: #FEE2E2;
+  background: rgba(239, 68, 68, 0.15);
 }
 
 .plan-exercises {
@@ -96,9 +123,16 @@
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 10px;
-  background: #F8FAFC;
+  padding: 12px;
+  background: var(--bg-app, #F8FAFC);
+  border: 1px solid var(--border-light, #E2E8F0);
   border-radius: 8px;
+}
+
+html.dark .plan-exercise-item,
+.dark .plan-exercise-item {
+  background: #0E1712 !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
 }
 
 .btn-check-exercise {
@@ -121,13 +155,24 @@
 }
 
 .ex-details strong {
-  color: #1E293B;
+  color: var(--text-primary, #1E293B);
   font-size: 0.95rem;
+  font-weight: 700;
+}
+
+html.dark .ex-details strong,
+.dark .ex-details strong {
+  color: #F8FAFC !important;
 }
 
 .ex-details span {
-  color: #64748B;
+  color: var(--text-secondary, #64748B);
   font-size: 0.8rem;
+}
+
+html.dark .ex-details span,
+.dark .ex-details span {
+  color: #94A3B8 !important;
 }
 
 .plan-card-header-actions {
@@ -139,7 +184,7 @@
 .btn-share-plan {
   background: none;
   border: none;
-  color: #1B3A2D;
+  color: var(--text-primary, #1B3A2D);
   cursor: pointer;
   padding: 4px;
   border-radius: 4px;
@@ -149,7 +194,13 @@
   justify-content: center;
 }
 
-.btn-share-plan:hover {
-  background: #e8f5ee;
+html.dark .btn-share-plan,
+.dark .btn-share-plan {
+  color: #34D399 !important;
 }
+
+.btn-share-plan:hover {
+  background: rgba(16, 185, 129, 0.15);
+}
+
 

@@ -158,6 +158,24 @@ export const PlayerScheduleTab = ({ player, team, teamPath, isParentView = false
     return null;
   };
 
+  // Si hay eventos y el mes seleccionado no tiene, pero otros sí, autocalibrar al mes con eventos más cercano en la primera carga
+  useEffect(() => {
+    if (events.length > 0) {
+      const thisMonthEvents = events.filter(e => {
+        const p = parseEventDate(e.date || e.fecha);
+        return p && p.month === selectedMonth.getMonth() && p.year === selectedMonth.getFullYear();
+      });
+      if (thisMonthEvents.length === 0) {
+        // Encontrar el evento más próximo o más reciente
+        const firstEvent = events[0];
+        const pFirst = parseEventDate(firstEvent.date || firstEvent.fecha);
+        if (pFirst) {
+          setSelectedMonth(new Date(pFirst.year, pFirst.month, 1));
+        }
+      }
+    }
+  }, [events.length]);
+
   const filteredEvents = events.filter(e => {
     const parsed = parseEventDate(e.date || e.fecha);
     if (!parsed) return false;
@@ -165,7 +183,6 @@ export const PlayerScheduleTab = ({ player, team, teamPath, isParentView = false
   });
 
   const displayEvents = filteredEvents.length > 0 ? filteredEvents : events;
-  const isShowingAllUpcoming = filteredEvents.length === 0 && events.length > 0;
 
   const prevMonth = () => {
     setSelectedMonth(prev => new Date(prev.getFullYear(), prev.getMonth() - 1, 1));
@@ -192,25 +209,6 @@ export const PlayerScheduleTab = ({ player, team, teamPath, isParentView = false
           <ChevronRight size={20} />
         </button>
       </div>
-
-      {/* Listado de Eventos con RSVP */}
-      {isShowingAllUpcoming && (
-        <div style={{
-          background: 'rgba(212, 168, 67, 0.12)',
-          border: '1px solid rgba(212, 168, 67, 0.3)',
-          borderRadius: '12px',
-          padding: '10px 14px',
-          marginBottom: '16px',
-          fontSize: '0.82rem',
-          color: '#D4A843',
-          fontWeight: '700',
-          textAlign: 'center',
-          fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-          lineHeight: '1.4'
-        }}>
-          📌 Sin eventos en {monthYearLabel} · Mostrando todas las convocatorias y sesiones del equipo:
-        </div>
-      )}
 
       {displayEvents.length > 0 ? (
         <div className="events-cards-list">

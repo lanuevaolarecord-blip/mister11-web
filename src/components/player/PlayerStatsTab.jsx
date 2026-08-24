@@ -227,16 +227,18 @@ export const PlayerStatsTab = ({ player, team, teamPath, isParentView = false, o
 
   const overallTPI = Math.round(radarMetrics.reduce((s, m) => s + m.value, 0) / radarMetrics.length);
 
-  const size = 260;
-  const center = size / 2;
-  const radius = 95;
+  const svgWidth = 340;
+  const svgHeight = 290;
+  const centerX = svgWidth / 2;
+  const centerY = svgHeight / 2;
+  const radius = 80;
   const angleStep = (Math.PI * 2) / radarMetrics.length;
 
   const polygonPoints = radarMetrics.map((m, i) => {
     const angle = i * angleStep - Math.PI / 2;
     const r = (m.value / 100) * radius;
-    const x = center + r * Math.cos(angle);
-    const y = center + r * Math.sin(angle);
+    const x = centerX + r * Math.cos(angle);
+    const y = centerY + r * Math.sin(angle);
     return `${x},${y}`;
   }).join(' ');
 
@@ -349,13 +351,13 @@ export const PlayerStatsTab = ({ player, team, teamPath, isParentView = false, o
           </span>
         </div>
 
-        <div style={{ position: 'relative', width: `${size}px`, height: `${size}px`, margin: '10px auto' }}>
-          <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
+        <div style={{ position: 'relative', width: '100%', maxWidth: `${svgWidth}px`, height: `${svgHeight}px`, margin: '10px auto' }}>
+          <svg width="100%" height="100%" viewBox={`0 0 ${svgWidth} ${svgHeight}`} style={{ overflow: 'visible' }}>
             {gridLevels.map((lvl, idx) => (
               <circle
                 key={idx}
-                cx={center}
-                cy={center}
+                cx={centerX}
+                cy={centerY}
                 r={radius * lvl}
                 fill="none"
                 stroke={darkMode ? "rgba(255, 255, 255, 0.12)" : "rgba(27, 58, 45, 0.15)"}
@@ -365,13 +367,13 @@ export const PlayerStatsTab = ({ player, team, teamPath, isParentView = false, o
 
             {radarMetrics.map((_, i) => {
               const angle = i * angleStep - Math.PI / 2;
-              const x = center + radius * Math.cos(angle);
-              const y = center + radius * Math.sin(angle);
+              const x = centerX + radius * Math.cos(angle);
+              const y = centerY + radius * Math.sin(angle);
               return (
                 <line
                   key={i}
-                  x1={center}
-                  y1={center}
+                  x1={centerX}
+                  y1={centerY}
                   x2={x}
                   y2={y}
                   stroke={darkMode ? "rgba(255, 255, 255, 0.15)" : "rgba(27, 58, 45, 0.18)"}
@@ -389,8 +391,8 @@ export const PlayerStatsTab = ({ player, team, teamPath, isParentView = false, o
             {radarMetrics.map((m, i) => {
               const angle = i * angleStep - Math.PI / 2;
               const r = (m.value / 100) * radius;
-              const x = center + r * Math.cos(angle);
-              const y = center + r * Math.sin(angle);
+              const x = centerX + r * Math.cos(angle);
+              const y = centerY + r * Math.sin(angle);
               return (
                 <circle
                   key={i}
@@ -406,15 +408,17 @@ export const PlayerStatsTab = ({ player, team, teamPath, isParentView = false, o
 
             {radarMetrics.map((m, i) => {
               const angle = i * angleStep - Math.PI / 2;
-              const labelRadius = radius + 20;
-              const x = center + labelRadius * Math.cos(angle);
-              const y = center + labelRadius * Math.sin(angle);
+              const cosVal = Math.cos(angle);
+              const anchor = cosVal > 0.25 ? 'start' : (cosVal < -0.25 ? 'end' : 'middle');
+              const labelRadius = radius + (anchor === 'middle' ? 20 : 12);
+              const x = centerX + labelRadius * cosVal;
+              const y = centerY + labelRadius * Math.sin(angle);
               return (
                 <text
                   key={i}
                   x={x}
                   y={y}
-                  textAnchor="middle"
+                  textAnchor={anchor}
                   dominantBaseline="central"
                   fill={darkMode ? "#cbd5e1" : "#1B3A2D"}
                   fontSize="11"

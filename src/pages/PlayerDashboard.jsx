@@ -12,8 +12,10 @@ import { PlayerChatTab } from '../components/player/PlayerChatTab';
 import { PlayerAutonomousTestsTab } from '../components/player/PlayerAutonomousTestsTab';
 import { PlayerStatsTab } from '../components/player/PlayerStatsTab';
 import { PlayerProfileTab } from '../components/player/PlayerProfileTab';
-import { Shield, Loader, Sun, Moon, LogOut, HeartHandshake, UserCheck } from 'lucide-react';
+import { Shield, Loader, Sun, Moon, LogOut, HeartHandshake, UserCheck, Users } from 'lucide-react';
 import './PlayerDashboard.css';
+
+const normalizeStr = (str) => (str || '').toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
 
 const PlayerDashboard = () => {
   const { user, activeTeam, getTeamPath, changeActiveTeam, teams, logout } = useAuth();
@@ -21,6 +23,7 @@ const PlayerDashboard = () => {
 
   const [activeTab, setActiveTab] = useState('home'); // 'home' | 'schedule' | 'achievements' | 'chat' | 'tests' | 'stats' | 'profile'
   const [player, setPlayer] = useState(null);
+  const [rosterPlayers, setRosterPlayers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [hasUnreadMessages, setHasUnreadMessages] = useState(false);
 
@@ -38,7 +41,7 @@ const PlayerDashboard = () => {
     }
   };
 
-  // 1. Escuchar la ficha del jugador vinculada a este usuario (o a este padre)
+  // 1. Escuchar la plantilla y resolver la ficha real del jugador
   useEffect(() => {
     if (!user || !cleanPath) {
       setLoading(false);
@@ -48,45 +51,57 @@ const PlayerDashboard = () => {
     const playersRef = collection(db, `${cleanPath}/players`);
     const q = query(playersRef);
 
-    const unsub = onSnapshot(q, (snap) => {
+    const unsub = onSnapshot(q, async (snap) => {
       const allPlayers = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-      
-      // Buscar si el usuario es el propio jugador O es un padre vinculado en linkedParents
+      setRosterPlayers(allPlayers);
+
+      // Comprobar si en shared_teams del usuario hay un playerId específico asignado
+      let linkedPlayerIdFromShared = null;
+      try {
+        if (activeTeam?.id) {
+          const stSnap = await getDoc(doc(db, `users/${user.uid}/shared_teams`, activeTeam.id));
+          if (stSnap.exists() && stSnap.data().playerId) {
+            linkedPlayerIdFromShared = stSnap.data().playerId;
+          }
+        }
+      } catch (_) {}
+
+      // Buscar si el usuario es el propio jugador O es un padre vinculado
       const found = allPlayers.find(p => 
+        (linkedPlayerIdFromShared && p.id === linkedPlayerIdFromShared) ||
         p.requesterUid === user.uid || 
         p.playerUid === user.uid || 
-        p.email === user.email ||
-        p.linkedParents?.includes(user.uid)
+        p.userId === user.uid ||
+        p.uid === user.uid ||
+        (p.email && user.email && p.email.toLowerCase() === user.email.toLowerCase()) ||
+        p.linkedParents?.includes(user.uid) ||
+        (user.displayName && p.name && normalizeStr(p.name) === normalizeStr(user.displayName))
       );
 
       if (found) {
         setPlayer(found);
+      } else if (allPlayers.length > 0) {
+        // Si no hay coincidencia exacta de cuenta pero hay jugadores reales en la plantilla,
+        // usar el primer jugador de la plantilla real del equipo
+        setPlayer(allPlayers[0]);
       } else {
         setPlayer({
           id: 'player-self',
           name: user.displayName || 'Jugador Míster11',
           position: 'MC',
           number: '11',
-          category: activeTeam?.categoria || 'Juvenil',
+          category: activeTeam?.categoria || activeTeam?.category || 'General',
           consents: { basic: true, attendance: true, health: true, tests: true }
         });
       }
       setLoading(false);
     }, (err) => {
       console.warn('[PlayerDashboard] Error cargando jugador:', err);
-      setPlayer({
-        id: 'player-self',
-        name: user.displayName || 'Jugador',
-        position: 'MC',
-        number: '11',
-        category: activeTeam?.categoria || 'Juvenil',
-        consents: { basic: true, attendance: true, health: false, tests: false }
-      });
       setLoading(false);
     });
 
     return () => unsub();
-  }, [user, cleanPath]);
+  }, [user, cleanPath, activeTeam?.id]);
 
   // 2. Determinar si es vista de padre
   const isParentView = (
@@ -107,7 +122,6 @@ const PlayerDashboard = () => {
       if (snap.exists()) {
         const data = snap.data();
         const lastSenderUid = data.lastSenderUid;
-        // Si el último mensaje no lo mandó el usuario y no está marcado como leído
         if (lastSenderUid && lastSenderUid !== user?.uid && !data.readBy?.includes(user?.uid)) {
           setHasUnreadMessages(true);
         } else {
@@ -123,15 +137,15 @@ const PlayerDashboard = () => {
     return (
       <div className="player-loading-screen">
         <Loader size={36} className="spin" style={{ color: '#10B981', animation: 'spin 1.5s linear infinite' }} />
-        <p>Cargando tu portal de jugador...</p>
+        <p style={{ marginTop: '14px', fontWeight: 600, color: 'var(--text-secondary)' }}>Cargando tu portal de jugador...</p>
       </div>
     );
   }
 
   return (
-    <div className={`player-dashboard-root ${darkMode ? 'theme-dark' : 'theme-light'}`}>
+    <div className={`player-dashboard-layout ${darkMode ? 'theme-dark' : 'theme-light'}`}>
       
-      {/* BANNER FIJO: VISTA DE PADRE / TUTOR LEGAL (FASE 1) */}
+      {/* Banner de Vista de Padre */}
       {isParentView && (
         <div style={{
           background: 'linear-gradient(90deg, #1B3A2D 0%, #2E7D5C 100%)',
@@ -155,7 +169,7 @@ const PlayerDashboard = () => {
             </span>
           </div>
           <span style={{ fontSize: '0.72rem', background: 'rgba(212, 168, 67, 0.2)', color: '#D4A843', padding: '2px 8px', borderRadius: '10px' }}>
-            {player?.position} #{player?.number || '11'}
+            {player?.position || 'MC'} #{player?.number || '11'}
           </span>
         </div>
       )}
@@ -193,21 +207,59 @@ const PlayerDashboard = () => {
             <LogOut size={18} color="#EF4444" />
           </button>
 
-          {teams.length > 1 && (
-            <select
-              value={activeTeam?.id || ''}
-              onChange={(e) => changeActiveTeam(e.target.value)}
-              className="player-team-select"
-            >
-              {teams.map(t => (
-                <option key={t.id} value={t.id}>
-                  {t.nombre || t.name || 'Equipo'}
-                </option>
-              ))}
-            </select>
-          )}
+          {/* Selector de Equipo */}
+          <select
+            value={activeTeam?.id || ''}
+            onChange={(e) => changeActiveTeam(e.target.value)}
+            className="player-team-select"
+          >
+            {teams.map(t => (
+              <option key={t.id} value={t.id}>
+                {t.nombre || t.name || 'Mi Equipo'}
+              </option>
+            ))}
+          </select>
         </div>
       </header>
+
+      {/* Si hay varios jugadores en la plantilla y el usuario desea cambiar la vista de ficha */}
+      {rosterPlayers.length > 1 && (
+        <div style={{
+          padding: '6px 16px',
+          background: darkMode ? 'rgba(0,0,0,0.2)' : '#F1F5F9',
+          borderBottom: '1px solid var(--border-color, rgba(255,255,255,0.06))',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          fontSize: '0.76rem'
+        }}>
+          <span style={{ color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '4px' }}>
+            <Users size={13} /> Ficha activa:
+          </span>
+          <select
+            value={player?.id || ''}
+            onChange={(e) => {
+              const selected = rosterPlayers.find(p => p.id === e.target.value);
+              if (selected) setPlayer(selected);
+            }}
+            style={{
+              background: 'transparent',
+              border: 'none',
+              color: 'var(--accent-green, #10B981)',
+              fontWeight: '700',
+              fontSize: '0.78rem',
+              cursor: 'pointer',
+              outline: 'none'
+            }}
+          >
+            {rosterPlayers.map(p => (
+              <option key={p.id} value={p.id} style={{ background: darkMode ? '#111B21' : '#FFFFFF', color: darkMode ? '#FFF' : '#000' }}>
+                {p.name} ({p.position || 'MC'} #{p.number || '-'})
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
 
       {/* Contenido principal según pestaña activa */}
       <main className="player-main-viewport">
@@ -278,12 +330,14 @@ const PlayerDashboard = () => {
         )}
       </main>
 
-      {/* Navegación Inferior (Android First) */}
-      <PlayerBottomNav 
-        activeTab={activeTab} 
+      {/* Barra de Navegación Inferior (Bottom Navigation) */}
+      <PlayerBottomNav
+        activeTab={activeTab}
         onTabChange={setActiveTab}
+        isParentView={isParentView}
         hasUnreadMessages={hasUnreadMessages}
       />
+
     </div>
   );
 };

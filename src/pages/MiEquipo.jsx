@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { usePlayers } from '../hooks/usePlayers';
 import { useAuth } from '../context/AuthContext';
 import { useTeams } from '../hooks/useTeams';
@@ -9,6 +9,7 @@ import UpgradeModal from '../components/UpgradeModal';
 import { calcularEdad } from '../utils/calcularEdad';
 import { generateExpediente } from '../utils/pdfGenerator';
 import { normalizeText } from '../utils/normalizeInput';
+import { normalizeEmail } from '../utils/normalizeEmail';
 import { storage, db } from '../firebaseConfig';
 import { doc, setDoc, deleteDoc, serverTimestamp } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
@@ -80,8 +81,8 @@ const MiEquipo = () => {
 
 
   // Sincronizar deterministamente los índices de identidad por email para jugadores existentes
-  React.useEffect(() => {
-    if (!players || players.length === 0 || !activeTeam?.id) return;
+  useEffect(() => {
+    if (!players || players.length === 0 || !activeTeam?.id || typeof getTeamPath !== 'function') return;
     const teamPathStr = getTeamPath(activeTeam.id);
     const tName = activeTeam.nombre || activeTeam.name || 'Mi Equipo';
 

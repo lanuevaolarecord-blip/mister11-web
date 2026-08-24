@@ -135,7 +135,7 @@ export default defineConfig(({ mode }) => {
     build: {
       outDir: 'dist',
       assetsDir: 'assets',
-      sourcemap: false,
+      sourcemap: true,
       rollupOptions: {
         output: {
           manualChunks: (id) => {

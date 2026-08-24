@@ -180,7 +180,7 @@
   margin: 0 0 4px 0;
   font-size: 1.4rem;
   font-weight: 800;
-  color: #ffffff;
+  color: var(--text-primary, #ffffff);
 }
 
 .tab-subtitle {
@@ -195,10 +195,11 @@
   display: flex;
   align-items: center;
   gap: 14px;
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: var(--bg-card, #121A15);
+  border: 1px solid var(--border-color, rgba(255, 255, 255, 0.08));
   border-radius: 14px;
   padding: 14px 16px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.15);
 }
 
 .player-avatar-badge {
@@ -235,7 +236,7 @@
   margin: 2px 0 2px 0;
   font-size: 1.25rem;
   font-weight: 800;
-  color: #ffffff;
+  color: var(--text-primary, #ffffff);
 }
 
 .player-status-sub {
@@ -252,12 +253,23 @@
   padding: 18px 20px;
   position: relative;
   overflow: hidden;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+}
+
+.player-dashboard-root.theme-light .hud-card {
+  box-shadow: 0 4px 16px rgba(27, 58, 45, 0.08);
 }
 
 .next-event-hud {
   border-color: rgba(16, 185, 129, 0.35);
+}
+
+.player-dashboard-root.theme-dark .next-event-hud {
   background: linear-gradient(145deg, #13241A 0%, #0E1812 100%);
+}
+
+.player-dashboard-root.theme-light .next-event-hud {
+  background: linear-gradient(145deg, #FFFFFF 0%, #F0FDF4 100%);
 }
 
 .hud-card-glow {
@@ -304,7 +316,7 @@
   margin: 0 0 12px 0;
   font-size: 1.3rem;
   font-weight: 800;
-  color: #ffffff;
+  color: var(--text-primary, #ffffff);
 }
 
 .hud-meta-grid {
@@ -319,7 +331,7 @@
   align-items: center;
   gap: 8px;
   font-size: 13px;
-  color: var(--text-secondary, #cbd5e1);
+  color: var(--text-secondary, #94a3b8);
 }
 
 .hud-meta-item.full-width {
@@ -413,7 +425,7 @@
 .stat-number {
   font-size: 1.4rem;
   font-weight: 900;
-  color: #ffffff;
+  color: var(--text-primary, #ffffff);
   margin: 1px 0;
 }
 
@@ -445,6 +457,20 @@
   border-left: 3px solid #10B981;
   border-radius: 10px;
   padding: 14px;
+}
+
+.ann-title {
+  margin: 0 0 6px 0;
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: var(--text-primary, #ffffff);
+}
+
+.ann-message {
+  margin: 0;
+  font-size: 13px;
+  color: var(--text-secondary, #94a3b8);
+  line-height: 1.4;
 }
 
 .ann-header {
@@ -550,14 +576,14 @@
   margin: 0 0 8px 0;
   font-size: 1.15rem;
   font-weight: 800;
-  color: #ffffff;
+  color: var(--text-primary, #ffffff);
 }
 
 .event-meta-info {
   display: flex;
   gap: 14px;
   font-size: 12px;
-  color: var(--text-secondary);
+  color: var(--text-secondary, #94a3b8);
   margin-bottom: 14px;
 }
 
@@ -576,7 +602,7 @@
   display: block;
   font-size: 12px;
   font-weight: 700;
-  color: var(--text-muted);
+  color: var(--text-secondary, #94a3b8);
   margin-bottom: 10px;
 }
 
@@ -614,13 +640,13 @@
 
 .schedule-empty-box h4 {
   margin: 4px 0;
-  color: #ffffff;
+  color: var(--text-primary, #ffffff);
 }
 
 .schedule-empty-box p {
   margin: 0;
   font-size: 13px;
-  color: var(--text-muted);
+  color: var(--text-secondary, #94a3b8);
 }
 
 /* STATS TAB */
@@ -662,7 +688,7 @@
 .metric-number {
   font-size: 1.3rem;
   font-weight: 900;
-  color: #ffffff;
+  color: var(--text-primary, #ffffff);
 }
 
 .metric-number.mono {
@@ -672,7 +698,7 @@
 .metric-label {
   font-size: 10px;
   font-weight: 700;
-  color: var(--text-muted);
+  color: var(--text-secondary, #94a3b8);
   letter-spacing: 0.5px;
 }
 
@@ -724,7 +750,7 @@
   margin: 0 0 6px 0;
   font-size: 1rem;
   font-weight: 800;
-  color: #ffffff;
+  color: var(--text-primary, #ffffff);
 }
 
 .test-score-row {
@@ -737,7 +763,7 @@
 .test-score-value {
   font-size: 1.4rem;
   font-weight: 900;
-  color: #ffffff;
+  color: var(--text-primary, #ffffff);
 }
 
 .test-score-unit {
@@ -747,7 +773,7 @@
 
 .test-score-date {
   font-size: 11px;
-  color: var(--text-muted);
+  color: var(--text-secondary);
   margin-left: 6px;
 }
 
@@ -790,7 +816,7 @@
 .gating-overlay-card h4 {
   margin: 0 0 6px 0;
   font-size: 1.15rem;
-  color: #ffffff;
+  color: var(--text-primary, #ffffff);
 }
 
 .gating-overlay-card p {
@@ -837,7 +863,7 @@
   margin: 0 0 4px 0;
   font-size: 1.3rem;
   font-weight: 800;
-  color: #ffffff;
+  color: var(--text-primary, #ffffff);
 }
 
 .profile-role-tag {
@@ -862,7 +888,7 @@
 }
 
 .meta-tag strong {
-  color: #ffffff;
+  color: var(--text-primary, #ffffff);
 }
 
 /* WELLNESS FORM */
@@ -888,7 +914,7 @@
 .locked-wellness-box h4 {
   margin: 0;
   font-size: 1.1rem;
-  color: #ffffff;
+  color: var(--text-primary, #ffffff);
 }
 
 .locked-wellness-box p {

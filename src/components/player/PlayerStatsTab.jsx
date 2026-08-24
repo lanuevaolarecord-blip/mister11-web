@@ -2,12 +2,14 @@ import React, { useState, useEffect } from 'react';
 import { collection, onSnapshot, query, doc, getDoc } from 'firebase/firestore';
 import { db } from '../../firebaseConfig';
 import { useAuth } from '../../context/AuthContext';
+import { useTheme } from '../../context/ThemeContext';
 import { usePlan } from '../../hooks/usePlan';
 import UpgradeModal from '../UpgradeModal';
 import { Trophy, Zap, Activity, Award, Star, Lock, TrendingUp, Sparkles, ChevronRight } from 'lucide-react';
 
 export const PlayerStatsTab = ({ player, team, teamPath }) => {
   const { user } = useAuth();
+  const { darkMode } = useTheme();
   const { isPro, isProActive } = usePlan();
 
   const [testResults, setTestResults] = useState([]);
@@ -197,7 +199,7 @@ export const PlayerStatsTab = ({ player, team, teamPath }) => {
                 cy={center}
                 r={radius * lvl}
                 fill="none"
-                stroke="rgba(255, 255, 255, 0.08)"
+                stroke={darkMode ? "rgba(255, 255, 255, 0.12)" : "rgba(27, 58, 45, 0.15)"}
                 strokeDasharray={idx === 3 ? 'none' : '3,3'}
               />
             ))}
@@ -214,7 +216,7 @@ export const PlayerStatsTab = ({ player, team, teamPath }) => {
                   y1={center}
                   x2={x}
                   y2={y}
-                  stroke="rgba(255, 255, 255, 0.12)"
+                  stroke={darkMode ? "rgba(255, 255, 255, 0.15)" : "rgba(27, 58, 45, 0.18)"}
                 />
               );
             })}
@@ -222,7 +224,7 @@ export const PlayerStatsTab = ({ player, team, teamPath }) => {
             {/* Polígono de datos */}
             <polygon
               points={polygonPoints}
-              fill="rgba(16, 185, 129, 0.3)"
+              fill={darkMode ? "rgba(16, 185, 129, 0.35)" : "rgba(16, 185, 129, 0.25)"}
               stroke="#10B981"
               strokeWidth="2.5"
             />
@@ -240,7 +242,7 @@ export const PlayerStatsTab = ({ player, team, teamPath }) => {
                   cy={y}
                   r="4"
                   fill="#10B981"
-                  stroke="#ffffff"
+                  stroke={darkMode ? "#ffffff" : "#1B3A2D"}
                   strokeWidth="1.5"
                 />
               );
@@ -259,9 +261,9 @@ export const PlayerStatsTab = ({ player, team, teamPath }) => {
                   y={y}
                   textAnchor="middle"
                   dominantBaseline="central"
-                  fill="#94a3b8"
+                  fill={darkMode ? "#cbd5e1" : "#1B3A2D"}
                   fontSize="11"
-                  fontWeight="700"
+                  fontWeight="800"
                 >
                   {m.label} ({m.value})
                 </text>

@@ -6,16 +6,19 @@ import { useTheme } from '../context/ThemeContext';
 import { PlayerBottomNav } from '../components/player/PlayerBottomNav';
 import { PlayerHomeTab } from '../components/player/PlayerHomeTab';
 import { PlayerScheduleTab } from '../components/player/PlayerScheduleTab';
+import { PlayerAutonomousTestsTab } from '../components/player/PlayerAutonomousTestsTab';
 import { PlayerStatsTab } from '../components/player/PlayerStatsTab';
+import { PlayerPlansPortalTab } from '../components/player/PlayerPlansPortalTab';
 import { PlayerProfileTab } from '../components/player/PlayerProfileTab';
-import { Shield, Loader, AlertCircle } from 'lucide-react';
+import { Shield, Loader, AlertCircle, Sun, Moon, Target, User } from 'lucide-react';
 import './PlayerDashboard.css';
 
 const PlayerDashboard = () => {
   const { user, activeTeam, getTeamPath, changeActiveTeam, teams } = useAuth();
-  const { darkMode } = useTheme();
+  const { darkMode, toggleTheme } = useTheme();
 
-  const [activeTab, setActiveTab] = useState('home'); // 'home' | 'schedule' | 'stats' | 'profile'
+  const [activeTab, setActiveTab] = useState('home'); // 'home' | 'schedule' | 'tests' | 'stats' | 'profile'
+  const [profileSubTab, setProfileSubTab] = useState('profile'); // 'profile' | 'plans'
   const [player, setPlayer] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -76,7 +79,7 @@ const PlayerDashboard = () => {
   }
 
   return (
-    <div className="player-dashboard-root">
+    <div className={`player-dashboard-root ${darkMode ? 'theme-dark' : 'theme-light'}`}>
       {/* Barra superior ligera para móvil */}
       <header className="player-topbar">
         <div className="player-topbar-brand">
@@ -84,19 +87,32 @@ const PlayerDashboard = () => {
           <span className="player-portal-badge">PORTAL JUGADOR</span>
         </div>
 
-        {teams.length > 1 && (
-          <select
-            value={activeTeam?.id || ''}
-            onChange={(e) => changeActiveTeam(e.target.value)}
-            className="player-team-select"
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          {/* Botón de Modo Claro / Modo Oscuro */}
+          <button 
+            type="button" 
+            className="player-theme-btn" 
+            onClick={toggleTheme}
+            aria-label={darkMode ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'}
+            title={darkMode ? 'Modo Claro' : 'Modo Oscuro'}
           >
-            {teams.map(t => (
-              <option key={t.id} value={t.id}>
-                {t.nombre || t.name || 'Equipo'}
-              </option>
-            ))}
-          </select>
-        )}
+            {darkMode ? <Sun size={18} color="#F59E0B" /> : <Moon size={18} color="#1B3A2D" />}
+          </button>
+
+          {teams.length > 1 && (
+            <select
+              value={activeTeam?.id || ''}
+              onChange={(e) => changeActiveTeam(e.target.value)}
+              className="player-team-select"
+            >
+              {teams.map(t => (
+                <option key={t.id} value={t.id}>
+                  {t.nombre || t.name || 'Equipo'}
+                </option>
+              ))}
+            </select>
+          )}
+        </div>
       </header>
 
       {/* Contenido principal según pestaña activa */}
@@ -118,6 +134,14 @@ const PlayerDashboard = () => {
           />
         )}
 
+        {activeTab === 'tests' && (
+          <PlayerAutonomousTestsTab
+            player={player}
+            team={activeTeam}
+            teamPath={teamPath}
+          />
+        )}
+
         {activeTab === 'stats' && (
           <PlayerStatsTab
             player={player}
@@ -127,15 +151,43 @@ const PlayerDashboard = () => {
         )}
 
         {activeTab === 'profile' && (
-          <PlayerProfileTab
-            player={player}
-            team={activeTeam}
-            teamPath={teamPath}
-          />
+          <div>
+            {/* Sub-selector de Perfil vs Plan de Mejora */}
+            <div className="player-subnav-pills">
+              <button
+                type="button"
+                className={`player-subnav-pill ${profileSubTab === 'profile' ? 'active' : ''}`}
+                onClick={() => setProfileSubTab('profile')}
+              >
+                <User size={15} /> Ficha & Bienestar
+              </button>
+              <button
+                type="button"
+                className={`player-subnav-pill ${profileSubTab === 'plans' ? 'active' : ''}`}
+                onClick={() => setProfileSubTab('plans')}
+              >
+                <Target size={15} /> Plan de Mejora
+              </button>
+            </div>
+
+            {profileSubTab === 'profile' ? (
+              <PlayerProfileTab
+                player={player}
+                team={activeTeam}
+                teamPath={teamPath}
+              />
+            ) : (
+              <PlayerPlansPortalTab
+                player={player}
+                team={activeTeam}
+                teamPath={teamPath}
+              />
+            )}
+          </div>
         )}
       </main>
 
-      {/* Navegación Inferior (Android First) */}
+      {/* Navegación Inferior (Android First con 5 pestañas) */}
       <PlayerBottomNav activeTab={activeTab} onTabChange={setActiveTab} />
     </div>
   );

@@ -4,17 +4,43 @@
 
 .player-dashboard-root {
   min-height: 100vh;
-  background-color: var(--bg-primary, #0B120E);
-  background: radial-gradient(ellipse at 50% 0%, #13241A 0%, #0B120E 60%, #050806 100%);
-  color: var(--text-primary, #ffffff);
+  min-height: 100dvh;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
   display: flex;
   flex-direction: column;
   box-sizing: border-box;
-  padding-bottom: calc(74px + env(safe-area-inset-bottom, 0px));
+  padding-bottom: calc(95px + env(safe-area-inset-bottom, 20px));
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* TEMA OSCURO (GAMING HUD) */
+.player-dashboard-root.theme-dark {
+  --bg-primary: #0B120E;
+  --bg-card: #121A15;
+  --text-primary: #ffffff;
+  --text-secondary: #94a3b8;
+  --text-muted: #64748b;
+  --border-color: rgba(255, 255, 255, 0.08);
+  background: radial-gradient(ellipse at 50% 0%, #13241A 0%, #0B120E 60%, #050806 100%);
+  color: #ffffff;
+}
+
+/* TEMA CLARO (INSTITUCIONAL LIMPIO) */
+.player-dashboard-root.theme-light {
+  --bg-primary: #F5F0E8;
+  --bg-card: #FFFFFF;
+  --text-primary: #1B3A2D;
+  --text-secondary: #475569;
+  --text-muted: #64748b;
+  --border-color: rgba(27, 58, 45, 0.12);
+  background: #F5F0E8;
+  color: #1B3A2D;
 }
 
 .player-loading-screen {
   min-height: 100vh;
+  min-height: 100dvh;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -30,12 +56,63 @@
   align-items: center;
   justify-content: space-between;
   padding: calc(12px + max(env(safe-area-inset-top, 0px), 8px)) 16px 12px 16px;
-  background: rgba(18, 24, 20, 0.85);
+  background: var(--bg-card, #121814);
   border-bottom: 1px solid var(--border-color, rgba(255, 255, 255, 0.08));
   backdrop-filter: blur(10px);
   position: sticky;
   top: 0;
   z-index: 100;
+}
+
+.player-theme-btn {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border-color, rgba(255, 255, 255, 0.1));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.player-theme-btn:active {
+  transform: scale(0.92);
+}
+
+.player-subnav-pills {
+  display: flex;
+  background: rgba(0, 0, 0, 0.2);
+  border: 1px solid var(--border-color, rgba(255, 255, 255, 0.08));
+  border-radius: 12px;
+  padding: 4px;
+  gap: 4px;
+  margin-bottom: 16px;
+}
+
+.player-subnav-pill {
+  flex: 1;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  border: none;
+  background: transparent;
+  color: var(--text-secondary, #94a3b8);
+  font-size: 13px;
+  font-weight: 700;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.player-subnav-pill.active {
+  background: #10B981;
+  color: #0B120E;
+  font-weight: 800;
+  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
 }
 
 .player-topbar-brand {

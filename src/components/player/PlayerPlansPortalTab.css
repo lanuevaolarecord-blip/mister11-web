@@ -1,0 +1,239 @@
+/* ==============================================================================
+   ESTILOS: PLANES INDIVIDUALES DEL JUGADOR
+   ============================================================================== */
+
+.player-plans-portal-tab {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.plan-summary-card {
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.12) 0%, rgba(18, 26, 21, 0.95) 100%);
+  border-color: rgba(16, 185, 129, 0.3);
+}
+
+.plan-count-badge {
+  font-size: 11px;
+  font-weight: 800;
+  color: #10B981;
+  background: rgba(16, 185, 129, 0.15);
+  padding: 3px 8px;
+  border-radius: 6px;
+}
+
+.plan-stats-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.plan-stat-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  background: rgba(0, 0, 0, 0.25);
+  padding: 10px 6px;
+  border-radius: 10px;
+}
+
+.plan-stat-item .stat-value {
+  font-size: 1.15rem;
+  font-weight: 900;
+  color: var(--text-primary, #ffffff);
+}
+
+.plan-stat-item .stat-label {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--text-secondary, #94a3b8);
+  margin-top: 2px;
+  text-transform: uppercase;
+}
+
+.empty-plans-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 36px 20px;
+  gap: 10px;
+}
+
+.empty-plans-card h3 {
+  margin: 4px 0 0 0;
+  font-size: 1.25rem;
+  color: var(--text-primary, #ffffff);
+}
+
+.empty-plans-card p {
+  margin: 0;
+  font-size: 13px;
+  color: var(--text-secondary, #94a3b8);
+  line-height: 1.5;
+  max-width: 400px;
+}
+
+.plans-list-container {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.player-plan-item-card {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.plan-item-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.plan-type-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 800;
+  color: #10B981;
+  background: rgba(16, 185, 129, 0.12);
+  padding: 3px 8px;
+  border-radius: 6px;
+}
+
+.plan-date-tag {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-secondary, #94a3b8);
+}
+
+.plan-item-title {
+  margin: 2px 0 0 0;
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: var(--text-primary, #ffffff);
+}
+
+.plan-item-desc {
+  margin: 0;
+  font-size: 13px;
+  color: var(--text-secondary, #cbd5e1);
+  line-height: 1.4;
+}
+
+.coach-feedback-box {
+  background: rgba(16, 185, 129, 0.06);
+  border-left: 3px solid #10B981;
+  border-radius: 8px;
+  padding: 10px 14px;
+  margin-top: 4px;
+}
+
+.feedback-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 800;
+  color: #10B981;
+  text-transform: uppercase;
+  margin-bottom: 4px;
+}
+
+.feedback-text {
+  margin: 0;
+  font-size: 13px;
+  font-style: italic;
+  color: var(--text-primary, #ffffff);
+}
+
+.plan-exercises-section {
+  border-top: 1px solid var(--border-color, rgba(255, 255, 255, 0.08));
+  padding-top: 12px;
+  margin-top: 6px;
+}
+
+.exercises-header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.exercises-title {
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--text-secondary, #94a3b8);
+  text-transform: uppercase;
+}
+
+.exercises-counter {
+  font-size: 11px;
+  font-weight: 800;
+  color: #10B981;
+}
+
+.exercises-checklist {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.exercise-check-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--border-color, rgba(255, 255, 255, 0.08));
+  border-radius: 10px;
+  padding: 10px 12px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.exercise-check-row:hover {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.exercise-check-row.done {
+  background: rgba(16, 185, 129, 0.1);
+  border-color: rgba(16, 185, 129, 0.35);
+}
+
+.check-btn {
+  background: transparent;
+  border: none;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.exercise-info {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+.exercise-name {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-primary, #ffffff);
+}
+
+.exercise-check-row.done .exercise-name {
+  text-decoration: line-through;
+  color: var(--text-secondary, #94a3b8);
+}
+
+.exercise-meta {
+  font-size: 11px;
+  color: var(--text-secondary, #94a3b8);
+  margin-top: 1px;
+}

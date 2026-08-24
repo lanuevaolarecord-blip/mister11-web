@@ -1,12 +1,13 @@
 import React from 'react';
-import { Home, Calendar, BarChart2, User } from 'lucide-react';
+import { Home, Calendar, Brain, BarChart2, User } from 'lucide-react';
 import './PlayerBottomNav.css';
 
 export const PlayerBottomNav = ({ activeTab, onTabChange }) => {
   const tabs = [
     { id: 'home', label: 'Inicio', icon: Home },
     { id: 'schedule', label: 'Agenda', icon: Calendar },
-    { id: 'stats', label: 'Mis Stats', icon: BarChart2 },
+    { id: 'tests', label: 'Tests', icon: Brain },
+    { id: 'stats', label: 'Stats', icon: BarChart2 },
     { id: 'profile', label: 'Perfil', icon: User },
   ];
 

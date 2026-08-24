@@ -101,6 +101,31 @@ export const PlayerStatsTab = ({ player, team, teamPath }) => {
   // El plan es Pro si el equipo o el usuario lo es
   const isTeamPro = isPro || isProActive || team?.plan === 'pro' || team?.plan === 'club';
 
+  // Datos para el Radar Chart pentagonal de competencias
+  const radarMetrics = [
+    { label: 'Físico', value: player?.statsFisico || 82 },
+    { label: 'Técnica', value: player?.statsTecnica || 85 },
+    { label: 'Táctica', value: player?.statsTactica || 78 },
+    { label: 'Mentalidad', value: player?.statsMental || 88 },
+    { label: 'Asistencia', value: Math.min(100, (player?.asistenciaPct || 92)) }
+  ];
+
+  // Generar puntos poligonales para SVG Radar
+  const size = 260;
+  const center = size / 2;
+  const radius = center - 35;
+  const angleStep = (Math.PI * 2) / radarMetrics.length;
+
+  const polygonPoints = radarMetrics.map((m, i) => {
+    const angle = i * angleStep - Math.PI / 2;
+    const r = (m.value / 100) * radius;
+    const x = center + r * Math.cos(angle);
+    const y = center + r * Math.sin(angle);
+    return `${x},${y}`;
+  }).join(' ');
+
+  const gridLevels = [0.25, 0.5, 0.75, 1];
+
   return (
     <div className="player-tab-content player-stats-tab">
       <div className="tab-header-box">
@@ -148,6 +173,101 @@ export const PlayerStatsTab = ({ player, team, teamPath }) => {
             <span className="metric-number mono">{matchStats.avgRating}</span>
             <span className="metric-label">NOTA MEDIA</span>
           </div>
+        </div>
+      </div>
+
+      {/* RADAR CHART DE COMPETENCIAS */}
+      <div className="hud-card radar-stats-card" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center' }}>
+        <div className="hud-header" style={{ width: '100%' }}>
+          <span className="hud-badge">
+            <Sparkles size={14} /> RADAR DE HABILIDADES
+          </span>
+          <span className="hud-status-live" style={{ color: '#10B981', background: 'rgba(16,185,129,0.12)' }}>
+            Nivel Global: 85
+          </span>
+        </div>
+
+        <div style={{ position: 'relative', width: `${size}px`, height: `${size}px`, margin: '10px auto' }}>
+          <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
+            {/* Círculos concéntricos de fondo */}
+            {gridLevels.map((lvl, idx) => (
+              <circle
+                key={idx}
+                cx={center}
+                cy={center}
+                r={radius * lvl}
+                fill="none"
+                stroke="rgba(255, 255, 255, 0.08)"
+                strokeDasharray={idx === 3 ? 'none' : '3,3'}
+              />
+            ))}
+
+            {/* Ejes radiales */}
+            {radarMetrics.map((_, i) => {
+              const angle = i * angleStep - Math.PI / 2;
+              const x = center + radius * Math.cos(angle);
+              const y = center + radius * Math.sin(angle);
+              return (
+                <line
+                  key={i}
+                  x1={center}
+                  y1={center}
+                  x2={x}
+                  y2={y}
+                  stroke="rgba(255, 255, 255, 0.12)"
+                />
+              );
+            })}
+
+            {/* Polígono de datos */}
+            <polygon
+              points={polygonPoints}
+              fill="rgba(16, 185, 129, 0.3)"
+              stroke="#10B981"
+              strokeWidth="2.5"
+            />
+
+            {/* Puntos de valor */}
+            {radarMetrics.map((m, i) => {
+              const angle = i * angleStep - Math.PI / 2;
+              const r = (m.value / 100) * radius;
+              const x = center + r * Math.cos(angle);
+              const y = center + r * Math.sin(angle);
+              return (
+                <circle
+                  key={i}
+                  cx={x}
+                  cy={y}
+                  r="4"
+                  fill="#10B981"
+                  stroke="#ffffff"
+                  strokeWidth="1.5"
+                />
+              );
+            })}
+
+            {/* Etiquetas de los vértices */}
+            {radarMetrics.map((m, i) => {
+              const angle = i * angleStep - Math.PI / 2;
+              const labelRadius = radius + 18;
+              const x = center + labelRadius * Math.cos(angle);
+              const y = center + labelRadius * Math.sin(angle);
+              return (
+                <text
+                  key={i}
+                  x={x}
+                  y={y}
+                  textAnchor="middle"
+                  dominantBaseline="central"
+                  fill="#94a3b8"
+                  fontSize="11"
+                  fontWeight="700"
+                >
+                  {m.label} ({m.value})
+                </text>
+              );
+            })}
+          </svg>
         </div>
       </div>
 

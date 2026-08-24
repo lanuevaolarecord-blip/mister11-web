@@ -1,0 +1,130 @@
+/* =============================================================
+   PlayerStatsTab.css — Estadísticas Oficiales y Radar
+   ============================================================= */
+
+.player-stats-tab {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding-bottom: 24px;
+}
+
+/* Tarjeta Resumen Temporada */
+.player-season-summary-card {
+  background: var(--bg-card, #1B3A2D);
+  border: 1.5px solid var(--border-color, rgba(255, 255, 255, 0.1));
+  border-radius: 16px;
+  padding: 16px 18px;
+  margin-bottom: 8px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08);
+}
+
+.summary-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 14px;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.summary-title-badge {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.82rem;
+  font-weight: 800;
+  color: var(--text-primary, #FFFFFF);
+  letter-spacing: 0.5px;
+}
+
+.summary-sync-tag {
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: #10B981;
+  background: rgba(16, 185, 129, 0.12);
+  padding: 3px 8px;
+  border-radius: 10px;
+}
+
+/* Cuadrícula de 4 Métricas (2x2 en móvil / 4 cols en desktop) */
+.summary-metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+}
+
+@media (min-width: 600px) {
+  .summary-metrics-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+.summary-metric-box {
+  background: rgba(0, 0, 0, 0.25);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 12px;
+  padding: 12px 10px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 80px;
+}
+
+.metric-label {
+  font-size: 0.68rem;
+  font-weight: 800;
+  color: var(--text-secondary, #A3B5AD);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 4px;
+}
+
+.metric-value {
+  font-size: 1.25rem;
+  font-weight: 900;
+  line-height: 1.2;
+  margin-bottom: 2px;
+}
+
+.metric-value.green {
+  color: #10B981;
+}
+
+.metric-value.gold {
+  color: #F59E0B;
+}
+
+.metric-value.white {
+  color: var(--text-primary, #FFFFFF);
+}
+
+.metric-sub {
+  font-size: 0.68rem;
+  color: var(--text-secondary, #A3B5AD);
+}
+
+/* ── MODO CLARO COMPATIBILIDAD ── */
+.theme-light .player-season-summary-card,
+[data-theme="light"] .player-season-summary-card {
+  background: #FFFFFF;
+  border-color: #E2E8F0;
+}
+
+.theme-light .summary-title-badge,
+[data-theme="light"] .summary-title-badge {
+  color: #0F172A;
+}
+
+.theme-light .summary-metric-box,
+[data-theme="light"] .summary-metric-box {
+  background: #F8FAFC;
+  border-color: #E2E8F0;
+}
+
+.theme-light .metric-value.white,
+[data-theme="light"] .metric-value.white {
+  color: #0F172A;
+}

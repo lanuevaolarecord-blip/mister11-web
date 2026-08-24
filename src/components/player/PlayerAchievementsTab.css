@@ -69,7 +69,7 @@
   margin: 0 0 4px 0;
   font-size: 1.2rem;
   font-weight: 800;
-  color: #FFFFFF;
+  color: var(--text-primary, #FFFFFF);
 }
 
 .achievements-hero-subtitle {
@@ -97,7 +97,7 @@
 .stat-num {
   font-size: 1rem;
   font-weight: 900;
-  color: #FFFFFF;
+  color: var(--text-primary, #FFFFFF);
 }
 
 .stat-num.xp-gold {
@@ -120,10 +120,14 @@
 /* Tier filters */
 .achievements-tier-filters {
   display: flex;
+  flex-direction: row;
+  align-items: center;
   gap: 8px;
   overflow-x: auto;
-  padding-bottom: 4px;
+  padding: 4px 2px 8px 2px;
   scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+  width: 100%;
 }
 
 .achievements-tier-filters::-webkit-scrollbar {
@@ -131,25 +135,27 @@
 }
 
 .tier-filter-btn {
+  flex-shrink: 0;
+  white-space: nowrap;
   background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.12);
   color: var(--text-secondary, #A3B5AD);
   padding: 8px 14px;
   border-radius: 20px;
   font-size: 0.82rem;
   font-weight: 700;
   cursor: pointer;
-  white-space: nowrap;
   transition: all 0.2s;
   min-height: 40px;
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 6px;
 }
 
 .tier-filter-btn:hover {
   background: rgba(255, 255, 255, 0.1);
-  color: #FFFFFF;
+  color: var(--text-primary, #FFFFFF);
 }
 
 .tier-filter-btn.active {
@@ -162,18 +168,20 @@
 .tier-filter-btn.tier-bronze.active {
   background: #CD7F32;
   border-color: #CD7F32;
+  color: #FFFFFF;
   box-shadow: 0 4px 12px rgba(205, 127, 50, 0.3);
 }
 
 .tier-filter-btn.tier-silver.active {
   background: #78909C;
   border-color: #78909C;
+  color: #FFFFFF;
   box-shadow: 0 4px 12px rgba(120, 144, 156, 0.3);
 }
 
 .tier-filter-btn.tier-gold.active {
   background: #C9A84C;
-  color: #000;
+  color: #000000;
   border-color: #C9A84C;
   box-shadow: 0 4px 12px rgba(201, 168, 76, 0.3);
 }
@@ -206,7 +214,7 @@
 }
 
 .achievement-card.locked {
-  opacity: 0.88;
+  opacity: 0.9;
 }
 
 .ach-card-top {
@@ -250,7 +258,7 @@
   margin: 0 0 4px 0;
   font-size: 1rem;
   font-weight: 800;
-  color: #FFFFFF;
+  color: var(--text-primary, #FFFFFF);
 }
 
 .ach-desc {
@@ -314,4 +322,58 @@
   padding: 6px 8px;
   border-radius: 8px;
   text-align: center;
+}
+
+/* ── MODO CLARO ── */
+.theme-light .achievements-hero-card,
+[data-theme="light"] .achievements-hero-card {
+  background: #FFFFFF;
+  border-color: #E2E8F0;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.05);
+}
+
+.theme-light .achievements-hero-title,
+[data-theme="light"] .achievements-hero-title {
+  color: #0F172A;
+}
+
+.theme-light .achievements-stats-pill,
+[data-theme="light"] .achievements-stats-pill {
+  background: #F1F5F9;
+  border-color: #E2E8F0;
+}
+
+.theme-light .stat-num,
+[data-theme="light"] .stat-num {
+  color: #0F172A;
+}
+
+.theme-light .tier-filter-btn,
+[data-theme="light"] .tier-filter-btn {
+  background: #FFFFFF;
+  border-color: #CBD5E1;
+  color: #475569;
+}
+
+.theme-light .achievement-card,
+[data-theme="light"] .achievement-card {
+  background: #FFFFFF;
+  border-color: #E2E8F0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.theme-light .ach-icon-box,
+[data-theme="light"] .ach-icon-box {
+  background: #F1F5F9;
+  border-color: #E2E8F0;
+}
+
+.theme-light .ach-name,
+[data-theme="light"] .ach-name {
+  color: #0F172A;
+}
+
+.theme-light .ach-progress-bar-bg,
+[data-theme="light"] .ach-progress-bar-bg {
+  background: #E2E8F0;
 }

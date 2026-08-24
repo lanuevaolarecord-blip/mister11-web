@@ -198,13 +198,15 @@ export const PlayerScheduleTab = ({ player, team, teamPath, isParentView = false
         <div style={{
           background: 'rgba(212, 168, 67, 0.12)',
           border: '1px solid rgba(212, 168, 67, 0.3)',
-          borderRadius: '10px',
-          padding: '8px 12px',
-          marginBottom: '14px',
-          fontSize: '12px',
+          borderRadius: '12px',
+          padding: '10px 14px',
+          marginBottom: '16px',
+          fontSize: '0.82rem',
           color: '#D4A843',
           fontWeight: '700',
-          textAlign: 'center'
+          textAlign: 'center',
+          fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+          lineHeight: '1.4'
         }}>
           📌 Sin eventos en {monthYearLabel} · Mostrando todas las convocatorias y sesiones del equipo:
         </div>

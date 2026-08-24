@@ -7,6 +7,7 @@ import { usePlan } from '../../hooks/usePlan';
 import { GraficaEvolucion } from '../GraficasTest';
 import { calculatePlayerMatchStats } from '../../utils/playerMatchStats';
 import UpgradeModal from '../UpgradeModal';
+import './PlayerStatsTab.css';
 import { 
   Trophy, 
   Zap, 

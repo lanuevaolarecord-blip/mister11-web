@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { db, auth } from '../firebaseConfig';
 import { collection, addDoc, onSnapshot, doc, getDoc, setDoc, updateDoc, increment, getDocs, writeBatch, Timestamp } from 'firebase/firestore';
-import { STRIPE_PRICE_IDS } from '../config/stripe';
+import { PLANS, calcularDesgloseIVA } from '../config/plans';
 import { useAuth } from '../context/AuthContext';
 import './UpgradeModal.css';
 
@@ -10,7 +10,7 @@ import './UpgradeModal.css';
  * La extensión escucha la colección `customers/{uid}/checkout_sessions`
  * y retorna la URL de pago cuando está lista.
  */
-const createStripeCheckoutSession = async (uid, priceId, successUrl, cancelUrl, teamId) => {
+const createStripeCheckoutSession = async (uid, priceId, successUrl, cancelUrl, teamId, planId, billingCycle) => {
   const sessionRef = await addDoc(
     collection(db, 'customers', uid, 'checkout_sessions'),
     {
@@ -20,6 +20,9 @@ const createStripeCheckoutSession = async (uid, priceId, successUrl, cancelUrl, 
       allow_promotion_codes: true,
       billing_address_collection: 'auto',
       metadata: {
+        uid: uid,
+        planId: planId || 'pro',
+        ciclo: billingCycle || 'season',
         teamId: teamId || ''
       }
     }
@@ -29,6 +32,7 @@ const createStripeCheckoutSession = async (uid, priceId, successUrl, cancelUrl, 
 
 const UpgradeModal = ({ isOpen, onClose, message, urgency = false, isSuccessState = false }) => {
   const { activeTeamId } = useAuth();
+  const [billingCycle, setBillingCycle] = useState('season'); // 'season' | 'monthly'
   const [loadingPlan, setLoadingPlan] = useState(null);
   const [stripeError, setStripeError] = useState(null);
   const [statusMsg, setStatusMsg] = useState('');
@@ -58,7 +62,7 @@ const UpgradeModal = ({ isOpen, onClose, message, urgency = false, isSuccessStat
       const isBetaCode = codeStr === 'BETA2026';
 
       if (isBetaCode) {
-        durationDays = 90; // Código especial BETA2026 otorga 90 días
+        durationDays = 90; // Código especial BETA2026 otorga 90 días PRO
       } else {
         // Consultar en Firestore para otros códigos
         const codeRef = doc(db, 'promoCodes', codeStr);
@@ -159,7 +163,7 @@ const UpgradeModal = ({ isOpen, onClose, message, urgency = false, isSuccessStat
               margin: '0 auto 20px',
               padding: '0 10px'
             }}>
-              Procesando tu suscripción... Stripe está confirmando el pago. Tu cuenta se actualizará a PRO automáticamente en unos instantes. Puedes cerrar esta ventana.
+              Procesando tu suscripción... Stripe está confirmando el pago. Tu cuenta se actualizará automáticamente en unos instantes. Puedes cerrar esta ventana.
             </p>
           </div>
           <div className="upgrade-modal-footer" style={{ borderTop: 'none', paddingTop: 0, marginTop: 0 }}>
@@ -172,16 +176,21 @@ const UpgradeModal = ({ isOpen, onClose, message, urgency = false, isSuccessStat
     );
   }
 
-  const handleSubscribe = async (priceId, planName) => {
-    setLoadingPlan(planName);
-    setStripeError(null);
-    setStatusMsg('Preparando sesión de pago...');
+  const handleSubscribe = async (planKey) => {
+    const plan = PLANS[planKey];
+    if (!plan) return;
 
-    // Validate price ID
+    const priceId = billingCycle === 'season' ? plan.stripePriceIds.season : plan.stripePriceIds.monthly;
+    const planName = `${plan.nombre} (${billingCycle === 'season' ? 'Temporada' : 'Mensual'})`;
+
+    setLoadingPlan(planKey);
+    setStripeError(null);
+    setStatusMsg('Preparando sesión de pago segura...');
+
     if (!priceId || priceId === 'undefined') {
       setStripeError({
         type: 'config',
-        message: `El precio del Plan ${planName} no está configurado. Verifica la variable VITE_STRIPE_PRICE_${planName.toUpperCase()} en Vercel.`,
+        message: `El precio para ${planName} no está configurado en Stripe Sandbox.`,
       });
       setLoadingPlan(null);
       setStatusMsg('');
@@ -206,13 +215,11 @@ const UpgradeModal = ({ isOpen, onClose, message, urgency = false, isSuccessStat
     }
 
     try {
-      console.log('Llamando a createCheckoutSession con priceId:', priceId, 'y teamId:', activeTeamId);
-      setStatusMsg('Creando sesión en Stripe...');
+      setStatusMsg('Conectando con Stripe Checkout...');
 
-      // Guardar el plan elegido en localStorage ANTES de salir a Stripe
-      // Esto permite actualizar el plan al regresar aunque no haya webhook configurado
-      const planTypeName = planName.toLowerCase(); // 'pro' o 'club'
-      localStorage.setItem('mister11_pending_plan', planTypeName);
+      // Guardar el plan y ciclo elegido en localStorage
+      localStorage.setItem('mister11_pending_plan', planKey);
+      localStorage.setItem('mister11_pending_cycle', billingCycle);
       localStorage.setItem('mister11_pending_plan_teamId', activeTeamId || '');
 
       const sessionRef = await createStripeCheckoutSession(
@@ -220,19 +227,18 @@ const UpgradeModal = ({ isOpen, onClose, message, urgency = false, isSuccessStat
         priceId,
         `${window.location.origin}/dashboard?payment=success`,
         `${window.location.origin}/pricing`,
-        activeTeamId
+        activeTeamId,
+        planKey,
+        billingCycle
       );
-      console.log('Resultado (documento creado):', sessionRef.id);
 
       setStatusMsg('Esperando confirmación de Stripe...');
 
-      // Listen for the extension to populate the URL (or error)
       unsubscribeRef.current = onSnapshot(sessionRef, (snap) => {
         if (!snap.exists()) return;
         const data = snap.data();
 
         if (data?.error) {
-          // Stripe extension returned an error
           if (unsubscribeRef.current) unsubscribeRef.current();
           if (timeoutRef.current) clearTimeout(timeoutRef.current);
           setStripeError({
@@ -246,40 +252,25 @@ const UpgradeModal = ({ isOpen, onClose, message, urgency = false, isSuccessStat
         }
 
         if (data?.url) {
-          // Got the Stripe Checkout URL — redirect
           if (unsubscribeRef.current) unsubscribeRef.current();
           if (timeoutRef.current) clearTimeout(timeoutRef.current);
           window.location.assign(data.url);
         }
-      }, (err) => {
-        // Firestore listener error (usually permissions)
-        setStripeError({
-          type: 'firestore',
-          message: err.message,
-          code: err.code,
-        });
-        setLoadingPlan(null);
-        setStatusMsg('');
       });
 
-      // Timeout after 30 seconds
       timeoutRef.current = setTimeout(() => {
         if (unsubscribeRef.current) unsubscribeRef.current();
-        setStripeError({
-          type: 'timeout',
-          message: 'El tiempo de espera agotó (30s). Verifica que la extensión de Stripe está activa en Firebase.',
-        });
         setLoadingPlan(null);
         setStatusMsg('');
-      }, 30000);
+        setStripeError({
+          type: 'timeout',
+          message: 'Tiempo de espera agotado al conectar con Stripe. Revisa tu conexión o inténtalo de nuevo.',
+        });
+      }, 20000);
 
-    } catch (error) {
-      console.error('[Stripe Checkout]', error);
-      setStripeError({
-        type: error.code === 'permission-denied' ? 'permissions' : 'unknown',
-        message: error.message,
-        code: error.code,
-      });
+    } catch (err) {
+      console.error('Error al iniciar suscripción:', err);
+      setStripeError({ type: 'generic', message: err.message || 'Error inesperado.' });
       setLoadingPlan(null);
       setStatusMsg('');
     }
@@ -287,56 +278,17 @@ const UpgradeModal = ({ isOpen, onClose, message, urgency = false, isSuccessStat
 
   const getErrorHelp = (error) => {
     if (!error) return null;
-    if (error.type === 'permissions' || error.code === 'permission-denied') {
+    if (error.type === 'config') {
       return (
         <div style={{ marginTop: '8px', padding: '8px 10px', background: 'rgba(255,255,255,0.04)', borderRadius: '6px', fontSize: '0.78rem', color: 'var(--text-secondary)' }}>
-          💡 <strong>Solución:</strong> Las reglas de Firestore no permiten escribir en{' '}
-          <code style={{ background: 'rgba(255,255,255,0.06)', padding: '1px 4px', borderRadius: '3px' }}>
-            customers/{'{'}uid{'}'}/checkout_sessions
-          </code>.{' '}
-          Hay que actualizar las reglas en Firebase Console o con{' '}
-          <code style={{ background: 'rgba(255,255,255,0.06)', padding: '1px 4px', borderRadius: '3px' }}>firebase deploy --only firestore:rules</code>.
-        </div>
-      );
-    }
-    if (error.type === 'timeout') {
-      return (
-        <div style={{ marginTop: '8px', padding: '8px 10px', background: 'rgba(255,255,255,0.04)', borderRadius: '6px', fontSize: '0.78rem', color: 'var(--text-secondary)' }}>
-          💡 La extensión "Run Payments with Stripe" puede no estar activa o configurada en Firebase.
-          Ve a <a href="https://console.firebase.google.com/project/mister11/extensions" target="_blank" rel="noopener noreferrer" style={{ color: '#4CAF7D' }}>Firebase Extensions</a> para verificarla.
-        </div>
-      );
-    }
-    if (error.type === 'stripe') {
-      return (
-        <div style={{ marginTop: '8px', padding: '8px 10px', background: 'rgba(255,255,255,0.04)', borderRadius: '6px', fontSize: '0.78rem', color: 'var(--text-secondary)' }}>
-          💡 Error de Stripe. Verifica que el Price ID existe en tu{' '}
-          <a href="https://dashboard.stripe.com/test/products" target="_blank" rel="noopener noreferrer" style={{ color: '#4CAF7D' }}>
-            dashboard de Stripe (modo test)
-          </a>.
+          💡 Revisa los IDs de precios en <code>src/config/plans.js</code>.
         </div>
       );
     }
     return null;
   };
 
-  const proBenefits = [
-    { icon: '🛡️', text: 'Hasta 3 equipos y 22 jugadores/equipo' },
-    { icon: '📄', text: 'Exportación de informes en PDF/CSV' },
-    { icon: '🤖', text: 'Generación ilimitada con IA' },
-    { icon: '🎨', text: 'Pizarra táctica (exportar PNG/MP4)' },
-    { icon: '📊', text: 'Tests y evaluaciones avanzadas' },
-    { icon: '🔓', text: 'Acceso completo sin restricciones' },
-  ];
-
-  const clubBenefits = [
-    { icon: '✅', text: 'Todo lo del Plan PRO incluido' },
-    { icon: '👥', text: 'Licencia multi-entrenador (varios usuarios)' },
-    { icon: '📈', text: 'Informes consolidados de todo el club' },
-    { icon: '⚡', text: 'Soporte prioritario 24/7' },
-    { icon: '🔧', text: 'Acceso beta a nuevas funciones' },
-    { icon: '🏅', text: 'Panel administrativo del club' },
-  ];
+  const payablePlans = ['pro', 'club_starter', 'club_pro', 'club_premium'];
 
   return (
     <div className="modal-overlay" onClick={onClose}>
@@ -347,10 +299,36 @@ const UpgradeModal = ({ isOpen, onClose, message, urgency = false, isSuccessStat
           <button className="upgrade-close-x" onClick={onClose} aria-label="Cerrar">✕</button>
           {urgency && <div className="upgrade-urgency-pill">⏰ ¡PRUEBA POR VENCER!</div>}
           <div className="upgrade-crown-anim">👑</div>
-          <h2 className="upgrade-title">Desbloquea Míster11 PRO</h2>
+          <h2 className="upgrade-title">Desbloquea Míster11</h2>
           <p className="upgrade-subtitle">
-            {message || 'Lleva la gestión de tu equipo al siguiente nivel con funciones ilimitadas.'}
+            {message || 'Herramientas de nivel profesional adaptadas a la realidad del fútbol formativo y amateur.'}
           </p>
+
+          {/* Selector de Ciclo de Facturación (Mensual vs Temporada) */}
+          <div className="billing-toggle-container">
+            <button
+              type="button"
+              className={`billing-toggle-btn ${billingCycle === 'monthly' ? 'active' : ''}`}
+              onClick={() => setBillingCycle('monthly')}
+            >
+              📅 Mensual
+            </button>
+            <button
+              type="button"
+              className={`billing-toggle-btn ${billingCycle === 'season' ? 'active' : ''}`}
+              onClick={() => setBillingCycle('season')}
+            >
+              🏆 Plan Temporada (10 Meses)
+              <span className="billing-save-badge">🎁 Julio & Agosto GRATIS</span>
+            </button>
+          </div>
+
+          <div className="upgrade-tax-notice">
+            <span>✅ Todos los precios tienen el <strong>IVA (21%) incluido</strong></span>
+            {billingCycle === 'season' && (
+              <span className="upgrade-season-hint"> · ⚽ Cobro de 10 meses de competición</span>
+            )}
+          </div>
         </div>
 
         {/* Status message while loading */}
@@ -381,14 +359,9 @@ const UpgradeModal = ({ isOpen, onClose, message, urgency = false, isSuccessStat
             lineHeight: '1.5'
           }}>
             <div style={{ color: '#ef4444', fontWeight: 'bold', marginBottom: '6px' }}>
-              ⚠️ {stripeError.type === 'config' ? 'Error de configuración' :
-                   stripeError.type === 'auth' ? 'No autenticado' :
-                   stripeError.type === 'permissions' ? 'Error de permisos Firestore' :
-                   stripeError.type === 'timeout' ? 'Tiempo de espera agotado' :
-                   'Error al iniciar el pago'}
+              ⚠️ Error al procesar el pago
             </div>
             <div style={{ color: 'var(--text-secondary)', marginBottom: '4px' }}>
-              {stripeError.code && <><strong>Código:</strong> {stripeError.code}<br /></>}
               <strong>Detalle:</strong> {stripeError.message}
             </div>
             {getErrorHelp(stripeError)}
@@ -402,82 +375,87 @@ const UpgradeModal = ({ isOpen, onClose, message, urgency = false, isSuccessStat
           </div>
         )}
 
-        {/* Plans Grid */}
-        <div className="upgrade-plans-grid">
+        {/* Plans Grid (4 Planes de pago) */}
+        <div className="upgrade-plans-grid-4">
+          {payablePlans.map((planKey) => {
+            const plan = PLANS[planKey];
+            const isSeason = billingCycle === 'season';
+            const price = isSeason ? plan.precioTemporada : plan.precioMes;
+            const periodLabel = isSeason ? '/temporada (10m)' : '/mes';
+            const taxBreakdown = calcularDesgloseIVA(price);
 
-          {/* PRO PLAN */}
-          <div className="upgrade-plan-card upgrade-plan-pro">
-            <div className="upgrade-plan-badge badge-popular">⭐ MÁS POPULAR</div>
-            <div className="upgrade-plan-icon">🚀</div>
-            <h3 className="upgrade-plan-name">Plan PRO</h3>
-            <div className="upgrade-plan-price">
-              <span className="price-amount">7,99€</span>
-              <span className="price-period">/mes</span>
-            </div>
-            <p style={{ margin: '0 0 12px 0', fontSize: '11px', color: 'var(--text-secondary)', textAlign: 'center' }}>IVA incluido · Cancela cuando quieras</p>
-            <ul className="upgrade-benefits-list">
-              {proBenefits.map((b, i) => (
-                <li key={i} className="upgrade-benefit-row">
-                  <span className="benefit-emoji">{b.icon}</span>
-                  <span>{b.text}</span>
-                </li>
-              ))}
-            </ul>
-            <button
-              id="btn-subscribe-pro"
-              className="upgrade-subscribe-btn btn-pro"
-              disabled={loadingPlan !== null}
-              onClick={() => handleSubscribe(STRIPE_PRICE_IDS.pro, 'Pro')}
-            >
-              {loadingPlan === 'Pro' ? '⏳ Procesando...' : 'EMPEZAR CON PRO'}
-            </button>
-          </div>
+            return (
+              <div
+                key={planKey}
+                className={`upgrade-plan-card upgrade-plan-${planKey} ${plan.badge ? 'has-badge' : ''}`}
+              >
+                {plan.badge && (
+                  <div className={`upgrade-plan-badge badge-${planKey}`}>
+                    ⭐ {plan.badge}
+                  </div>
+                )}
 
-          {/* CLUB PLAN */}
-          <div className="upgrade-plan-card upgrade-plan-club">
-            <div className="upgrade-plan-badge badge-club">🏆 PARA CLUBS</div>
-            <div className="upgrade-plan-icon">🏟️</div>
-            <h3 className="upgrade-plan-name">Plan CLUB</h3>
-            <div className="upgrade-plan-price">
-              <span className="price-amount">39,99€</span>
-              <span className="price-period">/mes</span>
-            </div>
-            <ul className="upgrade-benefits-list">
-              {clubBenefits.map((b, i) => (
-                <li key={i} className="upgrade-benefit-row">
-                  <span className="benefit-emoji">{b.icon}</span>
-                  <span>{b.text}</span>
-                </li>
-              ))}
-            </ul>
-            <button
-              id="btn-subscribe-club"
-              className="upgrade-subscribe-btn btn-club"
-              disabled={loadingPlan !== null}
-              onClick={() => handleSubscribe(STRIPE_PRICE_IDS.club, 'Club')}
-            >
-              {loadingPlan === 'Club' ? '⏳ Procesando...' : 'EMPEZAR CON CLUB'}
-            </button>
-          </div>
+                <div className="upgrade-plan-header-box">
+                  <h3 className="upgrade-plan-name">{plan.nombre}</h3>
+                  <p className="upgrade-plan-tagline">{plan.tagline}</p>
+                </div>
+
+                <div className="upgrade-plan-price">
+                  <span className="price-amount">{price} €</span>
+                  <span className="price-period">{periodLabel}</span>
+                </div>
+
+                {/* Desglose de IVA */}
+                <div className="upgrade-price-breakdown">
+                  <span>Base: {taxBreakdown.base.toFixed(2)} €</span>
+                  <span> + IVA (21%): {taxBreakdown.iva.toFixed(2)} €</span>
+                </div>
+
+                {/* Coste por entrenador en planes de club */}
+                {isSeason && plan.costePorEntrenadorMesTemporada && (
+                  <div className="upgrade-coach-cost-pill">
+                    💡 Solo <strong>{plan.costePorEntrenadorMesTemporada}</strong> / entrenador / mes
+                  </div>
+                )}
+
+                <div className="upgrade-plan-limits-summary">
+                  <div className="limit-pill">🛡️ <strong>{plan.teamLimit}</strong> {plan.teamLimit === 1 ? 'equipo' : 'equipos'}</div>
+                  <div className="limit-pill">👥 <strong>{plan.staffLimit === Infinity ? 'Staff Ilimitado' : `${plan.staffLimit} staff/eq`}</strong></div>
+                  <div className="limit-pill">🏃 <strong>23</strong> jug./eq</div>
+                </div>
+
+                <ul className="upgrade-benefits-list">
+                  {plan.features.slice(2).map((feat, i) => (
+                    <li key={i} className="upgrade-benefit-row">
+                      <span className="benefit-emoji">✓</span>
+                      <span>{feat}</span>
+                    </li>
+                  ))}
+                </ul>
+
+                <button
+                  id={`btn-subscribe-${planKey}`}
+                  className={`upgrade-subscribe-btn btn-${planKey}`}
+                  disabled={loadingPlan !== null}
+                  onClick={() => handleSubscribe(planKey)}
+                >
+                  {loadingPlan === planKey ? '⏳ Procesando...' : `ELEGIR ${plan.nombre.toUpperCase()}`}
+                </button>
+              </div>
+            );
+          })}
         </div>
 
-        {/* Canjear Código Beta */}
-        <div className="upgrade-promo-section" style={{
-          margin: '20px',
-          padding: '16px',
-          background: 'rgba(255,255,255,0.03)',
-          borderRadius: '12px',
-          border: '1px dashed var(--border-color)',
-          textAlign: 'center'
-        }}>
-          <h4 style={{ margin: '0 0 8px 0', fontSize: '0.9rem', color: 'var(--text-primary)' }}>🔑 ¿Tienes un código de prueba beta?</h4>
+        {/* Canjear Código Beta / Promocional */}
+        <div className="upgrade-promo-section">
+          <h4 style={{ margin: '0 0 8px 0', fontSize: '0.9rem', color: 'var(--text-primary)' }}>🔑 ¿Tienes un código promocional o de prueba beta?</h4>
           <p style={{ margin: '0 0 12px 0', fontSize: '0.78rem', color: 'var(--text-secondary)' }}>
-            Introduce tu código de acceso para desbloquear instantáneamente el Plan PRO de la fase beta.
+            Introduce tu código (ej. <strong>BETA2026</strong>) para activar el acceso inmediatamente.
           </p>
           <div style={{ display: 'flex', gap: '8px', maxWidth: '360px', margin: '0 auto' }}>
             <input 
               type="text" 
-              placeholder="Código beta (ej. BETA2026)" 
+              placeholder="Código (ej. BETA2026)" 
               value={promoCode}
               onChange={e => setPromoCode(e.target.value.toUpperCase())}
               disabled={redeeming}
@@ -486,7 +464,7 @@ const UpgradeModal = ({ isOpen, onClose, message, urgency = false, isSuccessStat
                 padding: '0 12px',
                 height: '38px',
                 borderRadius: '6px',
-                border: '1px solid var(--border-color)',
+                border: '1px solid var(--border-color, rgba(255,255,255,0.15))',
                 backgroundColor: 'rgba(0,0,0,0.2)',
                 color: '#fff',
                 fontSize: '0.82rem',
@@ -500,7 +478,7 @@ const UpgradeModal = ({ isOpen, onClose, message, urgency = false, isSuccessStat
                 padding: '0 16px',
                 height: '38px',
                 borderRadius: '6px',
-                backgroundColor: 'var(--accent-green, #4CAF7D)',
+                backgroundColor: '#10B981',
                 color: '#fff',
                 fontWeight: 'bold',
                 fontSize: '0.82rem',
@@ -515,7 +493,7 @@ const UpgradeModal = ({ isOpen, onClose, message, urgency = false, isSuccessStat
             <div style={{
               marginTop: '10px',
               fontSize: '0.8rem',
-              color: promoMessage.type === 'success' ? '#4CAF7D' : '#ef4444',
+              color: promoMessage.type === 'success' ? '#10B981' : '#ef4444',
               fontWeight: '600'
             }}>
               {promoMessage.text}
@@ -525,9 +503,9 @@ const UpgradeModal = ({ isOpen, onClose, message, urgency = false, isSuccessStat
 
         {/* Footer */}
         <div className="upgrade-modal-footer">
-          <p className="upgrade-guarantee">🔒 Pago seguro con Stripe · Cancela en cualquier momento · Sin permanencia</p>
+          <p className="upgrade-guarantee">🔒 Pago seguro procesado por Stripe · IVA incluido · Cancela en cualquier momento</p>
           <button className="upgrade-later-link" onClick={onClose}>
-            Continuar con plan gratuito
+            Continuar con Plan Gratuito (1 equipo / 1 staff)
           </button>
         </div>
       </div>

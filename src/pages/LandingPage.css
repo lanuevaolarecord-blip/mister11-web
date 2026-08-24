@@ -433,24 +433,96 @@
   color: #475569;
 }
 
-.pricing-card-container {
-  display: flex;
-  justify-content: center;
-  gap: 30px;
-  flex-wrap: wrap;
-  margin-top: 40px;
+.landing-billing-toggle {
+  display: inline-flex;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 30px;
+  padding: 4px;
+  gap: 6px;
+  margin: 20px auto 30px;
+}
+
+.landing-billing-toggle .toggle-option {
+  background: transparent;
+  border: none;
+  color: var(--text-muted-gray);
+  font-size: 0.9rem;
+  font-weight: 700;
+  padding: 10px 20px;
+  border-radius: 24px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.2s;
+  min-height: 44px;
+}
+
+.landing-billing-toggle .toggle-option.selected {
+  background: var(--success-green);
+  color: #fff;
+  box-shadow: 0 4px 14px rgba(46, 125, 92, 0.4);
+}
+
+.landing-billing-toggle .save-tag {
+  background: var(--accent-gold);
+  color: #000;
+  font-size: 0.7rem;
+  font-weight: 900;
+  padding: 2px 8px;
+  border-radius: 12px;
+  text-transform: uppercase;
+}
+
+.landing-pricing-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 20px;
+  max-width: 1400px;
+  margin: 0 auto;
 }
 
 .pricing-card {
   background: #FFFFFF;
-  border: 2px solid var(--accent-gold);
   border-radius: 16px;
-  padding: 40px;
-  width: 100%;
-  max-width: 480px;
+  padding: 28px 20px;
+  display: flex;
+  flex-direction: column;
   box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.03);
   position: relative;
+  transition: transform 0.2s, box-shadow 0.2s;
 }
+
+.pricing-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 16px 32px rgba(0, 0, 0, 0.12);
+}
+
+.pricing-card.popular-plan {
+  border: 2px solid var(--success-green);
+  transform: scale(1.02);
+}
+
+.pricing-card.popular-plan:hover {
+  transform: scale(1.02) translateY(-4px);
+}
+
+.plan-tier-label {
+  display: inline-block;
+  font-size: 0.72rem;
+  font-weight: 800;
+  padding: 4px 10px;
+  border-radius: 8px;
+  letter-spacing: 0.5px;
+  margin-bottom: 8px;
+}
+
+.plan-tier-label.free { background: #E2E8F0; color: #475569; }
+.plan-tier-label.pro { background: #DBEAFE; color: #1E40AF; }
+.plan-tier-label.club { background: #D1FAE5; color: #065F46; }
+.plan-tier-label.club-pro { background: #10B981; color: #FFFFFF; }
+.plan-tier-label.premium { background: #EDE9FE; color: #5B21B6; }
 
 .pricing-badge {
   position: absolute;

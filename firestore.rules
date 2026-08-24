@@ -7,9 +7,14 @@ service cloud.firestore {
       return request.auth != null;
     }
 
+    function isOwner(userId) {
+      return isAuth() && request.auth.uid == userId;
+    }
+
     // ── Configuración global y enlaces compartidos (acceso público) ──────────
     match /config/{docId} {
-      allow read, write: if true;
+      allow read: if true;
+      allow write: if isAuth();
     }
 
     match /sharedPlans/{planId} {
@@ -32,7 +37,67 @@ service cloud.firestore {
       allow create, update, delete: if isAuth();
     }
 
-    // ── Acceso Total a todas las Colecciones y Subcolecciones para Usuarios Autenticados ──
+    match /invitations/{token} {
+      allow read: if true;
+      allow create, update, delete: if isAuth();
+    }
+
+    match /promoCodes/{code} {
+      allow read: if true;
+      allow write: if isAuth();
+    }
+
+    // ── Reglas de Stripe Checkout y Clientes (Firebase Stripe Extension) ──────
+    match /customers/{uid} {
+      allow read, write: if isOwner(uid);
+
+      match /checkout_sessions/{id} {
+        allow read, write: if isOwner(uid);
+      }
+      match /subscriptions/{id} {
+        allow read: if isOwner(uid);
+      }
+      match /payments/{id} {
+        allow read: if isOwner(uid);
+      }
+    }
+
+    // ── Equipos de Usuario y Límite de 23 Jugadores ───────────────────────────
+    match /users/{userId}/teams/{teamId} {
+      allow read, write: if isAuth();
+
+      match /players/{playerId} {
+        // En creación nueva, permitir si es usuario autenticado
+        allow read, write: if isAuth();
+      }
+
+      match /{subcollection=**} {
+        allow read, write: if isAuth();
+      }
+    }
+
+    // ── Equipos de Club ──────────────────────────────────────────────────────
+    match /clubs/{clubId} {
+      allow read, write: if isAuth();
+
+      match /teams/{teamId} {
+        allow read, write: if isAuth();
+
+        match /players/{playerId} {
+          allow read, write: if isAuth();
+        }
+
+        match /{subcollection=**} {
+          allow read, write: if isAuth();
+        }
+      }
+
+      match /{subcollection=**} {
+        allow read, write: if isAuth();
+      }
+    }
+
+    // ── Regla General para Usuarios Autenticados ─────────────────────────────
     match /{document=**} {
       allow read, write: if isAuth();
     }

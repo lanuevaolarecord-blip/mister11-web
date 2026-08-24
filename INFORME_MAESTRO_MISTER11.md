@@ -1,582 +1,559 @@
-# MÍSTER11 — INFORME MAESTRO DE PRODUCTO, COMPETITIVIDAD Y LANZAMIENTO
-**Auditoría Técnica Integral, Análisis Competitivo de Mercado y Estrategia Go-To-Market**
-
-* **Producto:** Míster11 (Plataforma Integral de Gestión y Metodología para Entrenadores y Cuerpos Técnicos de Fútbol)
-* **Versión del Software:** `1.1.45` | **Android Build (`versionCode`):** `60`
-* **Dominio Web de Producción:** [https://www.mister11.app](https://www.mister11.app) | **Hosting Alternativo:** [https://mister11.web.app](https://mister11.web.app)
-* **Identificador de Paquete Android:** `com.mister11.app`
-* **Fecha de Emisión:** 24 de Agosto de 2026
-* **Perfiles Responsables:** Product Management Senior, Auditoría Técnica de Software y Dirección de Marketing Deportivo
+# 📋 INFORME MAESTRO — MÍSTER11
+## Auditoría de Producto, Competitividad y Estrategia de Lanzamiento
+**Fecha de generación:** 24 de agosto de 2026
+**Versión auditada:** `1.1.45` (versionCode `60`)
+**Preparado para:** Fundadores / Inversores / Equipo de producto
 
 ---
 
-## ÍNDICE GENERAL DEL INFORME
+## 1. 🏟️ IDENTIDAD DEL PROYECTO
 
-1. [SECCIÓN 1: QUÉ ES MÍSTER11 (IDENTIDAD TOTAL)](#sección-1-qué-es-míster11-identidad-total)
-   - 1.1. Definición, Misión, Visión y Propuesta de Valor
-   - 1.2. Segmentación de Usuarios Objetivo
-   - 1.3. Arquitectura Técnica de Software y Datos
-   - 1.4. Estado Actual de Despliegue y Distribución
-2. [SECCIÓN 2: INVENTARIO MAESTRO DE MÓDULOS Y HERRAMIENTAS](#sección-2-inventario-maestro-de-módulos-y-herramientas)
-   - 2.1. Tabla Maestra de Módulos Operativos y en Roadmap
-   - 2.2. Herramientas y Servicios Transversales del Sistema
-3. [SECCIÓN 3: FICHA TÉCNICA Y OPERATIVA POR MÓDULO](#sección-3-ficha-técnica-y-operativa-por-módulo)
-   - 3.1. Pizarra Táctica Digital Animada (2D / Fabric.js / Video MP4)
-   - 3.2. Constructor de Sesiones y Modo Campo (Voz y Cronómetro)
-   - 3.3. Partidos y Live Stats (HeatMaps, PassNetwork, xG, ShotMap)
-   - 3.4. Estadísticas Avanzadas de Rendimiento (Multi-Match)
-   - 3.5. Batería de Tests Físicos y Psicosociales Validados
-   - 3.6. Mi Equipo, Asistencia y Gestión Biométrica
-   - 3.7. IA Generadora Metodológica (Groq Cloud / Serverless)
-   - 3.8. Planificación de Temporada y Control de Cargas
-   - 3.9. Motor de Informes e Informes PDF Profesionales
-   - 3.10. Consentimientos Digitales Parentales (RGPD / LOPDGDD)
-   - 3.11. Modo Club y Estructura Organizacional Multiequipo
-   - 3.12. Portal del Jugador (Dossier 6 Pestañas y Check-in Wellness)
-   - 3.13. Autenticación, Seguridad y Onboarding
-4. [SECCIÓN 4: MODELO DE NEGOCIO, MONETIZACIÓN Y PAGOS](#sección-4-modelo-de-negocio-monetización-y-pagos)
-   - 4.1. Estructura de Planes y Precios (Free, Pro, Club)
-   - 4.2. Flujo Transaccional Stripe y Webhooks
-   - 4.3. Estrategia de Paywalls y Modales de Conversión
-   - 4.4. Economía Unitaria (Coste IA vs Ingreso por Usuario)
-   - 4.5. Roadmap de Monetización Secundaria
-5. [SECCIÓN 5: LOGROS, HITOS Y MADUREZ TÉCNICA](#sección-5-logros-hitos-y-madurez-técnica)
-   - 5.1. Cronología de Hitos de Ingeniería y Producto
-   - 5.2. Resolución de Retos Complejos del Codebase
-   - 5.3. Métricas Clave de Producto
-6. [SECCIÓN 6: RANKING PONDERADO DE MÓDULOS](#sección-6-ranking-ponderado-de-módulos)
-   - 6.1. Matriz de Puntuación Multicriterio (0 - 100)
-   - 6.2. Top 3 Argumentos de Venta de Míster11
-7. [SECCIÓN 7: ANÁLISIS COMPARATIVO DE COMPETENCIA DIRECTA](#sección-7-análisis-comparativo-de-competencia-directa)
-   - 7.1. Matriz Comparativa de 10 Competidores vs Míster11 (12 Dimensiones)
-   - 7.2. Desglose Individual de Competidores y Tarifas
-   - 7.3. Matriz DAFO / SWOT de Míster11
-   - 7.4. Océano Azul y Ventajas Competitivas Definitivas
-8. [SECCIÓN 8: OBJETIVOS ESTRATÉGICOS Y MÉTRICAS CLAVE (KPIs)](#sección-8-objetivos-estratégicos-y-métricas-clave-kpis)
-   - 8.1. Objetivos a Corto Plazo (0 - 3 meses)
-   - 8.2. Objetivos a Medio Plazo (3 - 6 meses)
-   - 8.3. Objetivos a Largo Plazo (6 - 12 meses)
-   - 8.4. Cuadro de Mando de KPIs
-9. [SECCIÓN 9: PLAN DE ACCIÓN GO-TO-MARKET Y MARKETING EN REDES SOCIALES](#sección-9-plan-de-acción-go-to-market-y-marketing-en-redes-sociales)
-   - 9.1. Estrategia Multicanal (TikTok, Reels, YouTube Shorts, Comunidades)
-   - 9.2. Calendario de Contenidos de 30 Días (Día por Día: Hook, Guion y CTA)
-   - 9.3. 10 Hooks Virales de Alto Impacto
-   - 9.4. Segmentación de Hashtags
-   - 9.5. Embudo de Adquisición y Conversión
-   - 9.6. Optimización ASO para Google Play Store
-   - 9.7. Rutina Semanal de Seguimiento y Crecimiento
-10. [SECCIÓN 10: CONCLUSIONES EJECUTIVAS Y SIGUIENTES PASOS](#sección-10-conclusiones-ejecutivas-y-siguientes-pasos)
-    - 10.1. Resumen Ejecutivo
-    - 10.2. Prioridades del Siguiente Sprint
+| Campo | Valor |
+|---|---|
+| **Nombre del producto** | Míster11 |
+| **Descripción** | Plataforma SaaS de gestión integral para entrenadores y cuerpos técnicos de fútbol formativo (Sub-6 a Sub-18) y fútbol amateur |
+| **Versión web (`package.json`)** | `1.1.45` |
+| **Bundle ID Android** | `com.mister11.app` |
+| **versionCode Android** | `60` |
+| **URL de producción** | https://www.mister11.app |
+| **Firebase Project ID** | `mister11` |
+| **Dominio verificado** | `mister11.app` (marca verificada en Google) |
+| **Fase Play Store** | Prueba cerrada (Internal Testing) |
+| **Target de mercado** | Entrenadores fútbol formativo Sub-6 a Sub-18 y fútbol amateur hispanohablante |
+| **Monetización** | Free / Pro (7,99 €/mes) / Club (39,99 €/mes) + Trial 7 días |
 
 ---
 
-## SECCIÓN 1. QUÉ ES MÍSTER11 (IDENTIDAD TOTAL)
+## 2. ⚙️ STACK TECNOLÓGICO
 
-### 1.1. Definición, Misión, Visión y Propuesta de Valor
+### Frontend Web
+| Tecnología | Versión | Rol |
+|---|---|---|
+| React | 18.x | Framework UI principal |
+| React Router DOM | 6.x | Enrutamiento SPA |
+| Vite | 8.x | Bundler / Dev server |
+| vite-plugin-pwa | — | Service Worker / PWA offline |
+| Fabric.js | 5.3.0 | Canvas interactivo para pizarra táctica |
+| jsPDF + jspdf-autotable | 4.x | Generación de informes PDF |
+| html2canvas | 1.4.1 | Captura de canvas a PNG / MP4 |
+| Groq SDK | — | LLM para IA generadora de ejercicios |
+| DOMPurify | — | Sanitización XSS de outputs de IA |
+| @dnd-kit | 6.x | Drag & drop en sesiones y convocatorias |
+| browser-image-compression | 2.0.2 | Compresión de imágenes de jugadores |
+| lucide-react | — | Iconografía vectorial |
+| Recharts | — | Gráficas de datos y estadísticas |
 
-* **Definición:** **Míster11** es una plataforma tecnológica *SaaS* (Software as a Service) y aplicación móvil nativa/PWA diseñada específicamente para digitalizar y profesionalizar el trabajo diario de entrenadores, preparadores físicos, analistas tácticos y directores deportivos en el fútbol base (categorías formativas Sub-6 a Sub-18) y en el fútbol amateur/semi-profesional.
-* **Misión:** Democratizar el acceso a herramientas metodológicas, de análisis táctico, control de fatiga y gestión de plantillas de élite, poniéndolas en la palma de la mano de cualquier entrenador del mundo a un coste accesible, eliminando el uso de libretas de papel, hojas de cálculo dispersas y chats de mensajería caóticos.
-* **Visión:** Convertirse en el sistema operativo estándar para academias, escuelas de fútbol formativo y cuerpos técnicos en España y Latinoamérica, conectando en un único ecosistema colaborativo la planificación técnica, la toma de datos en partido en vivo y la interacción directa con el jugador y sus familias bajo riguroso cumplimiento legal.
-* **Propuesta de Valor:** *"La suite de fútbol más completa y accesible del mercado: pizarra táctica animada, IA generadora de ejercicios, control de cargas y live stats en vivo conectadas directamente con el portal del jugador por menos de lo que cuesta un café a la semana."*
+### Backend / Servicios Cloud
+| Tecnología | Versión / Rol |
+|---|---|
+| Firebase JS SDK | 12.x |
+| Cloud Firestore | Base de datos principal + caché offline persistente |
+| Firebase Authentication | Email/Password + Google OAuth + Anónimo |
+| Firebase Storage | Imágenes, avatares, escudos de equipos |
+| Firebase Hosting | Despliegue web de producción |
+| Firebase Extensions | Run Payments with Stripe (extensión oficial) |
+| Stripe | Checkout + Webhooks para suscripciones Pro/Club |
+| Groq API | LLM (LLaMA 3 / Mixtral) para generación de ejercicios |
+| Vercel Serverless | Funciones serverless (`/api/ia-generate`) |
 
-```
-                ┌────────────────────────────────────────────────────────┐
-                │                   MÍSTER 11 ECOSYSTEM                  │
-                ├────────────────────────────────────────────────────────┤
-                │                                                        │
-    ┌───────────┴───────────┐                              ┌─────────────┴───────────┐
-    │    CUERPO TÉCNICO     │                              │   JUGADOR & FAMILIAS    │
-    │  (Entrenador / Staff) │                              │    (Portal Autogestión) │
-    ├───────────────────────┤                              ├─────────────────────────┤
-    │ • Pizarra Animada MP4 │       FIREBASE CLOUD         │ • Ficha 6 Pestañas      │
-    │ • Constructor Sesiones│   ──────────────────────►    │ • Check-in Wellness     │
-    │ • Modo Campo (Voz/Cron│       Sincronización         │ • Tests Autónomos       │
-    │ • Live Stats & xG     │          en Vivo             │ • Asistencia & Racha    │
-    │ • Control Cargas (RPE)│   ◄─────────────────────     │ • Firma RGPD Parental   │
-    │ • IA Generadora Groq  │                              │ • Planes de Mejora      │
-    └───────────────────────┘                              └─────────────────────────┘
-```
-
-### 1.2. Segmentación de Usuarios Objetivo
-
-1. **Entrenador Principal de Fútbol Base (Sub-6 a Sub-18):** Necesita estructurar sus entrenamientos rápidamente, exportar fichas PDF para la directiva, controlar asistencias y protegerse legalmente con consentimientos parentales.
-2. **Cuerpo Técnico Multidisciplinar (Entrenador, Segundo, Preparador Físico, Fisio):** Requieren compartir la gestión del equipo con permisos diferenciados, evaluar cargas físicas (RPE/Wellness) y registrar lesiones con historial clínico.
-3. **Coordinadores y Directores de Club/Academia:** Necesitan supervisar desde un panel administrativo central hasta 40 equipos, estandarizar la metodología y unificar los informes de evaluación.
-4. **Jugadores y Padres/Tutores Legales:** Acceden a su portal autónomo para revisar convocatorias, realizar check-in de descanso/dolores musculares, firmar autorizaciones RGPD y consultar su evolución deportiva.
-
-### 1.3. Arquitectura Técnica de Software y Datos
-
-* **Frontend Web:** React 19 + Vite 8.0, arquitectura basada en componentes funcionales modulares, estilos con CSS Variables y diseño responsivo adaptado para dispositivos Android y pantallas táctiles (Touch Targets $\ge 48\times 48\,\text{dp}$).
-* **Empaquetado Móvil Nativo:** Capacitor 8.3 (Android SDK 34 / Java JDK 21), generando aplicaciones optimizadas `.apk` y paquetes de distribución comercial `.aab` para Google Play Store.
-* **Backend Serverless & Base de Datos:** Google Firebase Cloud:
-  * **Firebase Authentication:** Gestión de identidades con Email/Password y Google Sign-In nativo (`@capacitor/firebase-authentication`).
-  * **Cloud Firestore:** Base de datos NoSQL documental en tiempo real estructurada con sincronización `onSnapshot` y reglas de seguridad desplegadas.
-  * **Firebase Storage:** Almacenamiento seguro de medios, avatares de jugadores, escudos de equipo y firmas vectoriales.
-  * **Vercel Serverless Functions (`/api/ia-generate.js`):** Endpoint backend seguro con rate-limiting y proxy cifrado para modelos LLM de Groq Cloud (`qwen/qwen3.6-27b`, `openai/gpt-oss-120b`).
-* **Pasarela de Pagos:** Stripe Billing + Stripe Checkout con sincronización de suscripciones mediante webhook y metadatos de usuario.
-* **Motor Gráfico y Renderizado:** Fabric.js para el motor vectorial de la pizarra táctica 2D, RecordRTC / Canvas Stream para exportación de animaciones a video MP4, jsPDF y html2canvas para generación de informes PDF profesionales.
-
-### 1.4. Estado Actual de Despliegue y Distribución
-
-* **Web App (Producción):** Activa y operativa al 100% en `https://www.mister11.app` con service worker PWA para funcionamiento offline.
-* **Android Google Play Store:** Versión `1.1.45` (Build `60`) compilada en formato `.aab` (Bundle Release firmado de 19.5 MB) en fase de prueba cerrada / distribución para testers y producción.
+### Android Nativo (Capacitor)
+| Tecnología | Versión |
+|---|---|
+| Capacitor | 8.x |
+| @capacitor-firebase/authentication | — (Google Sign-In nativo Android) |
+| @capacitor/local-notifications | — |
+| @capacitor/share | — |
+| @capacitor/filesystem | — |
+| @capacitor/status-bar | — |
+| minSdkVersion | 24 (Android 7.0) |
+| targetSdkVersion | 34 (Android 14) |
+| Keystore | `mister11.keystore` (firma v1 + v2) |
 
 ---
 
-## SECCIÓN 2. INVENTARIO MAESTRO DE MÓDULOS Y HERRAMIENTAS
+## 3. 📱 MÓDULOS Y FUNCIONALIDADES
 
-### 2.1. Tabla Maestra de Módulos
+### 3.1 Rutas activas del router (`App.jsx`)
 
-| ID | Nombre del Módulo | Ruta / Acceso en App | Estado | Plan Mínimo | Firestore Collections | Librerías Clave |
-| :--- | :--- | :--- | :---: | :---: | :--- | :--- |
-| **M01** | **Pizarra Táctica 2D** | `/pizarra` | **OPERATIVO** | Free / Pro | `pizarras`, `exercises` | `fabric.js`, `RecordRTC` |
-| **M02** | **Gestor de Sesiones** | `/sesiones` | **OPERATIVO** | Free / Pro | `sessions`, `exercises` | `lucide-react`, `dnd-kit` |
-| **M03** | **Modo Campo (Live Coach)** | `/sesiones` (Modal) | **OPERATIVO** | Pro | `sessions` | `Web Speech API`, `Audio` |
-| **M04** | **Partidos & Live Stats** | `/partidos` | **OPERATIVO** | Free / Pro | `matches`, `events` | `html2canvas`, `jsPDF` |
-| **M05** | **Analítica Avanzada (xG/Radar)** | `/partidos/stats` | **OPERATIVO** | Pro | `matches`, `stats` | `Recharts`, `Canvas` |
-| **M06** | **Batería de Tests Físicos** | `/tests` | **OPERATIVO** | Free / Pro | `evaluaciones`, `test_results`| `Recharts` |
-| **M07** | **Plantilla & Mi Equipo** | `/equipo` | **OPERATIVO** | Free | `players`, `attendance` | `calcularEdad.js`, `Storage` |
-| **M08** | **IA Generadora Metodológica** | `/ia-generadora` | **OPERATIVO** | Free / Pro | `users/{uid}` (cuotas) | `Groq Cloud API` |
-| **M09** | **Planificación & Cargas** | `/planificacion` | **OPERATIVO** | Pro | `planificacion`, `config` | `calendarHelper.js` |
-| **M10** | **Motor de Informes PDF** | Botones de Export | **OPERATIVO** | Pro | Todas las colecciones | `jspdf`, `autotable` |
-| **M11** | **Consentimientos RGPD** | `/consentimientos` | **OPERATIVO** | Pro | `players/{id}/consents` | `SignaturePad`, `Canvas` |
-| **M12** | **Modo Club Multiequipo** | `/club` | **OPERATIVO** | Club | `clubs/{id}`, `members` | Firebase Security Rules |
-| **M13** | **Portal del Jugador** | `/portal-jugador` | **OPERATIVO** | Free (con equipo) | `players`, `wellness` | Sincronización Tiempo Real |
-| **M14** | **Autenticación & Licencias** | `/login`, `/admin` | **OPERATIVO** | Público | `users`, `customers` | `Stripe SDK`, `Firebase Auth` |
-| **M15** | **Editor Táctico 3D** | `/pizarra/3d` | **ROADMAP** | Pro / Club | `pizarras_3d` | Three.js / WebGL |
-| **M16** | **Integración GPS Catapult/Wimu**| `/gps-import` | **ROADMAP** | Club | `gps_raw_metrics` | CSV Parser Stream |
+| Ruta | Módulo | Archivo | Tamaño | Plan |
+|---|---|---|---|---|
+| `/` | Landing Page | `LandingPage.jsx` | 26 KB | Público |
+| `/dashboard` | Dashboard principal | `Dashboard.jsx` | 38 KB | Free |
+| `/pizarra` | Pizarra Táctica | `PizarraTactica.jsx` | 135 KB | Free/Pro |
+| `/equipo` | Mi Equipo | `MiEquipo.jsx` | 50 KB | Free |
+| `/sesiones` | Sesiones de entrenamiento | `Sesiones.jsx` | 90 KB | Free (max 10)/Pro |
+| `/planificacion` | Planificación de temporada | `Planificacion.jsx` | 69 KB | Pro |
+| `/tests` | Tests físicos y psicológicos | `Tests.jsx` | 112 KB | Pro |
+| `/partidos` | Partidos y Live Stats | `Partidos.jsx` | 115 KB | Pro |
+| `/ia` | IA Generadora de ejercicios | `IAGeneradora.jsx` | 31 KB | Free (5 gen.)/Pro |
+| `/player` | Portal del Jugador | `PlayerDashboard.jsx` | — | Pro |
+| `/admin` | Panel de administración | `AdminPanel.jsx` | 84 KB | Dev Only |
+| `/demo` | Modo demo público | `DemoMode.jsx` | 14 KB | Público |
+| `/login` | Autenticación | `Login.jsx` | — | Público |
+| `/join-team` | Unirse a equipo | `JoinTeam.jsx` | 20 KB | Público |
+| `/accept-invitation` | Aceptar invitación | `AcceptInvitation.jsx` | 14 KB | Público |
+| `/shared-session/:id` | Sesión compartida pública | `SharedSession.jsx` | — | Público |
+| `/shared-plan/:id` | Plan compartido público | `SharedPlan.jsx` | — | Público |
+| `/consentimiento` | Formulario RGPD | `ConsentForm.jsx` | 24 KB | Público |
+| `/consentimiento-firma` | Firma consentimiento | `ConsentimientoFirma.jsx` | 17 KB | Público |
+| `/instalar` | Instrucciones de instalación PWA | `Instalar.jsx` | — | Público |
 
-### 2.2. Herramientas y Servicios Transversales
+### 3.2 Hooks de datos (`src/hooks/` — 23 archivos)
 
-1. **Generador PDF Unificado (`pdfGenerator.js`, `pdfTheme.js`):** Paleta institucional de alto contraste (Azul Míster11 `#1B3A2D`, Verde Campo `#10B981`, Dorado `#D4A843`), paginación automática, encabezados con escudo oficial del club y sellado RGPD.
-2. **Sistema de Enlaces Compartidos (`sharedPlans`, `sharedSessions`):** Permite al entrenador compartir un ejercicio o una sesión completa mediante enlace público accesible desde cualquier navegador sin obligar al destinatario a registrarse.
-3. **Internacionalización y Localización (`useTranslation.js`):** Soporte bilingüe completo (Español / Inglés) con detección automática del navegador.
-4. **PWA y Caché Offline (`vite-plugin-pwa`, `useOfflineStatus.js`):** Service Worker con estrategia *Stale-While-Revalidate* y almacenamiento local `localStorage` para garantizar la continuidad del servicio ante pérdidas de cobertura en campos de fútbol.
-5. **Sistema de Notificaciones (`@capacitor/local-notifications`):** Avisos locales programados de entrenamientos, alertas médicas automáticas y recordatorios de check-in diario de bienestar.
+| Hook | Función |
+|---|---|
+| `useTeams.js` | Gestión de equipos, cambio de equipo activo |
+| `usePlayers.js` | Jugadores del equipo activo |
+| `useSessions.js` | Sesiones de entrenamiento (Firestore) |
+| `useExercises.js` | Biblioteca de ejercicios del entrenador |
+| `useCaptures.js` | Capturas de la pizarra táctica |
+| `usePlan.js` | Lógica central de planes Free/Pro/Club + límites |
+| `useMatches.js` | Partidos del equipo |
+| `useMatchEvents.js` | Eventos en tiempo real de partido |
+| `useLiveStats.js` | Estadísticas live del partido (Firestore onSnapshot) |
+| `useAttendance.js` | Control de asistencia a sesiones y partidos |
+| `useIAUsage.js` | Límites y contador de uso de la IA |
+| `useHealthAlerts.js` | Alertas automáticas de salud del jugador |
+| `useLocalNotifications.js` | Notificaciones locales (Capacitor) |
+| `useNotifications.js` | Notificaciones in-app |
+| `usePWA.js` | Detección de instalación PWA |
+| `useOfflineStatus.js` | Detección de estado offline/online |
+| `useTranslation.js` | Sistema i18n ES/EN |
+| `useSettings.js` | Configuración de usuario |
+| `useCustomFormations.js` | Formaciones personalizadas de pizarra |
+| `usePlayerPlans.js` | Planes de mejora asignados al jugador |
+| `usePlayerSeasonStats.js` | Estadísticas acumuladas de temporada del jugador |
+| `useTeamMembers.js` | Miembros del equipo y roles del cuerpo técnico |
+| `useClub.js` | Datos del club (modo Club multi-equipo) |
 
----
+### 3.3 Utilidades de documentos (`src/utils/` — 19 archivos)
 
-## SECCIÓN 3. DETALLE DE CADA MÓDULO (FICHA INDIVIDUAL)
+| Utilidad | Función |
+|---|---|
+| `pdfGenerator.js` (73 KB) | PDF de sesión completa: bloques, ejercicios, imágenes |
+| `pdfTheme.js` (12 KB) | Tema visual PDF + conversión imagen→PNG universal |
+| `matchPdfReport.js` (20 KB) | Informe PDF del partido con estadísticas individuales |
+| `attendancePdfReport.js` (6 KB) | Informe PDF de asistencia mensual |
+| `exportMonthlyPlan.js` (6 KB) | PDF del plan mensual de planificación |
+| `teamReportGenerator.js` (7 KB) | Informe consolidado del equipo |
+| `sessionSharing.js` (7 KB) | Lógica de compartir sesión/plan por enlace público |
+| `downloadCSV.js` (2 KB) | Exportación CSV de estadísticas de equipo |
+| `download.js` (8 KB) | Descarga de archivos (APK, PDF, MP4) |
+| `calcularEdad.js` (3 KB) | Cálculo de edad desde fecha de nacimiento |
+| `formaciones.js` (5 KB) | Definiciones de formaciones tácticas predefinidas |
+| `playerMatchStats.js` (7 KB) | Cálculo de estadísticas agregadas por jugador |
+| `normalizeInput.js` | Normalización NFC para acentos en PDFs |
+| `seedData.js` (6 KB) | Datos de muestra para modo demo |
+| `calendarHelper.js` (3 KB) | Utilidades para el calendario de planificación |
+| `teamCode.js` (3 KB) | Generación y validación de códigos de equipo |
+| `uploadImage.js` | Compresión y subida de imágenes a Firebase Storage |
+| `toast.js` | Sistema de notificaciones toast |
 
-### 3.1. Pizarra Táctica 2D (`PizarraTactica.jsx`)
-* **Qué hace y dolor que resuelve:** Sustituye a las pizarras imantadas tradicionales y a los complejos programas de escritorio. Permite al entrenador dibujar jugadas, transiciones, saques de esquina y ejercicios dinámicos mediante animación por fotogramas clave (*Keyframes*) en menos de 2 minutos.
-* **Funcionalidades reales:**
-  * Dibujo vectorial de jugadores (locales, visitantes, porteros, comodines), balones, conos, picas, vallas, porterías y flechas tácticas curvas y rectas.
-  * Línea de tiempo con creación y duplicación de *frames*, interpolación visual fluida de trayectorias y velocidad de reproducción regulable.
-  * Exportación directa a imagen PNG de alta resolución y grabación de video MP4/WebM para proyectar en el vestuario o enviar por WhatsApp.
-  * Biblioteca de ejercicios guardados con categorización por fase del juego (Ataque, Defensa, Transición Ofensiva/Defensiva, ABP).
-* **Flujo de uso:** El entrenador selecciona el tipo de campo (fútbol 11, fútbol 7, medio campo o área) $\rightarrow$ Ubica las fichas y materiales $\rightarrow$ Pulsa "+ Frame" $\rightarrow$ Desplaza a los jugadores al punto de desmarque o presión $\rightarrow$ Presiona "Play" para previsualizar $\rightarrow$ Exporta en video o añade directo a una sesión.
-* **Colecciones Firestore:** `users/{uid}/teams/{teamId}/pizarras`, `exercises`.
-* **Plan y Paywall:** Plan Free (pizarra básica estática) | Plan Pro (animaciones multinivel, fotogramas ilimitados y exportación a video).
+### 3.4 Componentes principales (`src/components/`)
 
-### 3.2. Constructor de Sesiones y Modo Campo (`Sesiones.jsx`, `LiveFieldSession.jsx`)
-* **Qué hace y dolor que resuelve:** Elimina el papel mojado y la improvisación en el césped. Permite estructurar sesiones completas divididas en Calentamiento, Parte Principal y Vuelta a la Calma, controlando la carga física teórica y ejecutando el entrenamiento en vivo con cronómetro interactivo guiado por voz.
-* **Funcionalidades reales:**
-  * Creación modular de ejercicios con tiempo estimado, número de jugadores, espacio requerido, intensidad de carga y consignas tácticas.
-  * *Modo Campo:* Interfaz de alto contraste y pantalla siempre activa (*Wake Lock*) que lee mediante sintetizador de voz (*Text-to-Speech*) las consignas de cada ejercicio y avisa de los cambios de bloque y descansos.
-  * Exportación de la ficha de sesión a PDF profesional con gráficos tácticos incrustados para entrega a directores deportivos.
-* **Colecciones Firestore:** `users/{uid}/teams/{teamId}/sessions`.
-* **Plan:** Free (hasta 10 sesiones) | Pro (sesiones ilimitadas y Modo Campo guiado por voz).
+| Componente | Rol |
+|---|---|
+| `LiveStats.jsx` (46 KB) | Estadísticas en vivo del partido multi-dispositivo |
+| `MultiMatchAnalysis.jsx` (31 KB) | Análisis de tendencias de múltiples partidos |
+| `PlayerAnalyticsModal.jsx` (19 KB) | Análisis avanzado individual del jugador |
+| `TeamAttendanceTab.jsx` (32 KB) | Control de asistencia del equipo |
+| `TeamStaffTab.jsx` (34 KB) | Gestión del cuerpo técnico y roles |
+| `BlockEditor.jsx` (11 KB) | Editor de bloques de sesión de entrenamiento |
+| `ExerciseLibrary.jsx` (9 KB) | Biblioteca de ejercicios con filtros |
+| `UpgradeModal.jsx` (21 KB) | Modal de conversión Free→Pro/Club (Stripe) |
+| `InviteCoachModal.jsx` (7 KB) | Invitación de entrenador colaborador |
+| `CustomFormationModal.jsx` (8 KB) | Creador de formaciones personalizadas |
+| `AssignPlanModal.jsx` (8 KB) | Asignación de planes de mejora a jugadores |
+| `SignatureCanvas.jsx` (4 KB) | Firma digital táctil para consentimientos RGPD |
+| `LiveFieldSession.jsx` (12 KB) | Modo Campo: control en tiempo real del entrenamiento |
+| `RPETestModal.jsx` (3 KB) | Test RPE post-sesión por jugador |
+| `WellnessTestModal.jsx` (2 KB) | Check-in diario de bienestar del jugador |
+| `ErrorBoundary.jsx` (4 KB) | Captura global de errores React |
 
-### 3.3. Partidos y Live Stats (`Partidos.jsx`, `LiveStats.jsx`)
-* **Qué hace y dolor que resuelve:** Transforma el móvil del entrenador o analista en un centro de comando estadístico durante el partido. Registra eventos en vivo al tocar sobre el campo y calcula métricas profesionales sin retrasos.
-* **Funcionalidades reales:**
-  * Registro cronológico de goles, asistencias, tiros a puerta/fuera, faltas, tarjetas, fueras de juego, recuperaciones y pérdidas.
-  * Mapa interactivo de disparos con cálculo de **Goles Esperados (xG - Expected Goals)** según la distancia y ángulo del tiro.
-  * Mapa de Calor (*HeatMap*) táctico de zonas de intervención y red de pases (*Pass Network*) con conexiones más frecuentes.
-  * Cronómetro de partido con control de cambios y cálculo exacto de minutos reales disputados por cada futbolista.
-* **Colecciones Firestore:** `users/{uid}/teams/{teamId}/matches`, `events`.
-* **Plan:** Free (marcador y eventos básicos) | Pro (HeatMaps, xG ShotMap, PassNetwork y actas PDF completas).
+### 3.5 Portal del Jugador (`src/components/player/` — 10 archivos)
 
-### 3.4. Estadísticas Avanzadas de Rendimiento (`MultiMatchAnalysis.jsx`)
-* **Qué hace y dolor que resuelve:** Permite comparar el rendimiento a lo largo de 5, 10 o toda la temporada de partidos para detectar patrones de juego, minutos por gol, eficacia de presión y regularidad de la plantilla.
-* **Funcionalidades reales:**
-  * Radar Charts de rendimiento colectivo e individual.
-  * Gráficas evolutivas de tiros recibidos vs realizados, posesión estimada y notas medias de jugadores otorgadas por el cuerpo técnico.
-* **Plan:** Pro / Club.
-
-### 3.5. Batería de Tests Físicos y Psicosociales Validados (`Tests.jsx`)
-* **Qué hace y dolor que resuelve:** Míster11 es la **única plataforma del mercado amateur** que integra tests psicológicos validados científicamente junto a evaluaciones antropométricas y físicas tradicionales.
-* **Batería de Tests implementados:**
-  1. *Físicos:* Test de Cooper (resistencia aeróbica), Sprint 30m (velocidad), Salto Vertical Sargent Test (potencia tren inferior), Course-Navette / Yo-Yo Test (VO2 máx).
-  2. *Psicosociales & Bienestar:* **GEQ** (Cuestionario de Cohesión Grupal), **MTQ-10** (Fortaleza Mental y Resiliencia), **ACSI-28** (Afrontamiento del Estrés en Competición), **RPE Borg CR-10** (Percepción Subjetiva del Esfuerzo) y **Wellness Questionnaire** diario.
-* **Colecciones Firestore:** `evaluaciones`, `test_results`.
-* **Plan:** Free (tests físicos básicos) | Pro (toda la batería psicológica, radar comparativo y evolución longitudinal).
-
-### 3.6. Mi Equipo, Asistencia y Gestión Biométrica (`MiEquipo.jsx`, `TeamAttendanceTab.jsx`)
-* **Qué hace y dolor que resuelve:** Ficha integral 360° del jugador. Centraliza datos biográficos, categoría, pie dominante, historial médico/lesiones, cálculo automático de edad y control estricto de asistencia.
-* **Funcionalidades reales:**
-  * Control de asistencia en un tap: Presente, Ausente, Justificado, Retraso, Lesionado.
-  * Algoritmo de índice de asistencia con detección automática de jugadores en estado de riesgo ($< 70\%$).
-  * Historial clínico de lesiones: diagnóstico, zona muscular afectada, fecha de recaída y alta médica.
-* **Plan:** Free (hasta 23 jugadores en 1 equipo) | Pro (3 equipos) | Club (hasta 40 equipos).
-
-### 3.7. IA Generadora Metodológica (`IAGeneradora.jsx`, `api/ia-generate.js`)
-* **Qué hace y dolor que resuelve:** Asistente técnico inteligente para cuando el entrenador dispone de poco tiempo antes del entrenamiento. Diseña tareas de entrenamiento a medida según el objetivo táctico, número de jugadores disponibles, espacio y categoría.
-* **Modos de Generación:**
-  * Tarea Específica (Rondos, Posesiones, Oleadas, Juegos de Posición).
-  * Sesión Completa Estructurada (3 bloques progresivos).
-  * Ejercicios de Prevención de Lesiones y Readaptación Física.
-  * Plan de Balón Parado (Córners defensivos/ofensivos y faltas frontales).
-* **Plan:** Free (5 generaciones/mes) | Pro / Club (Generaciones Ilimitadas).
-
-### 3.8. Planificación de Temporada y Control de Cargas (`Planificacion.jsx`)
-* **Qué hace y dolor que resuelve:** Permite la periodización táctica y el control de microciclos estructurados (Pretemporada, Competición, Descanso) evitando el sobreentrenamiento mediante el cálculo de la carga acumulada (Ratio Agudo:Crónico - ACWR).
-* **Plan:** Pro / Club.
-
-### 3.9. Motor de Informes e Informes PDF Profesionales (`pdfGenerator.js`)
-* **Qué hace:** Genera con un solo clic documentos oficiales listos para imprimir o enviar:
-  * Expediente Completo del Jugador (Ficha, biometría, notas, minutos, goles e historial médico).
-  * Ficha Técnica de Partido con alineaciones y estadísticas xG.
-  * Informe Mensual de Asistencia y Disciplina.
-  * Memoria de Sesión de Entrenamiento con diagramas tácticos incrustados.
-* **Plan:** Pro / Club.
-
-### 3.10. Consentimientos Digitales Parentales (`ConsentForm.jsx`, `ConsentimientoFirma.jsx`)
-* **Qué hace y dolor que resuelve:** Cumple de manera 100% estricta con el **RGPD (Reglamento UE 2016/679)** y la **LOPDGDD 3/2018** para el tratamiento de datos de menores de edad en el deporte, incluyendo el tratamiento reforzado de datos de salud (Art. 9).
-* **Funcionalidades:** Firma digital sobre pantalla táctil capturada en formato vectorial, almacenamiento cifrado, revocación de consentimientos y exportación de certificado de autorización parental con validez jurídica.
-* **Plan:** Pro / Club.
-
-### 3.11. Modo Club y Estructura Organizacional Multiequipo (`ClubManagement.jsx`, `TeamStaffTab.jsx`)
-* **Qué hace:** Permite a directores deportivos y coordinadores de academia gestionar toda su estructura: hasta 40 equipos, asignación de roles (Propietario, Administrador, Entrenador, Preparador Físico, Fisio) y supervisión del cumplimiento metodológico global.
-* **Plan:** Club (39.99 €/mes).
-
-### 3.12. Portal del Jugador (`PlayerDashboard.jsx`, `PlayerProfileTab.jsx`)
-* **Qué hace:** Entorno web y móvil exclusivo para los jugadores de la plantilla donde pueden visualizar sus estadísticas individuales, realizar el check-in diario de bienestar y consultar los planes de mejora técnica asignados por el míster.
-* **Estructura de 6 Pestañas:**
-  1. `GENERAL`: Foto, dorsal, pie hábil, edad y KPIs de temporada (⚽ Goles, ⏱️ Minutos, 🏟️ Partidos).
-  2. `FÍSICO`: Altura, peso e Índice de Masa Corporal (IMC) autocalculado.
-  3. `SALUD`: Formulario de Wellness diario y estado de lesiones en tiempo real.
-  4. `PLANES`: Tareas de entrenamiento individualizado asignadas por el entrenador.
-  5. `ESTS.`: 4 KPIs HUD, disciplina (🟨/🟥), nota media ⭐ e historial completo partido a partido.
-  6. `ASISTENCIA`: % de asistencia global, racha y desglose de sesiones.
-* **Plan:** Gratuito e ilimitado para todos los jugadores vinculados a un equipo en Míster11.
-
-### 3.13. Autenticación, Seguridad y Onboarding (`AuthContext.jsx`, `firestore.rules`)
-* **Qué hace:** Inicio de sesión seguro con Google OAuth o credenciales cifradas, modo Demo interactivo instantáneo sin registro previo para evaluación de producto y reglas de seguridad en Firebase Cloud de alta disponibilidad.
+| Componente | Pestaña | Función |
+|---|---|---|
+| `PlayerHomeTab.jsx` (11 KB) | 🏠 GENERAL | Perfil, dorsal, posición, resumen de temporada |
+| `PlayerProfileTab.jsx` (41 KB) | 💪 FÍSICO | Altura, peso, IMC, historial físico completo |
+| `PlayerStatsTab.jsx` (18 KB) | 📊 ESTADÍSTICAS | Goles, asistencias, minutos, tarjetas, nota media |
+| `PlayerPlansPortalTab.jsx` (8 KB) | 📋 PLANES | Planes de mejora asignados por el entrenador |
+| `PlayerScheduleTab.jsx` (10 KB) | 📅 AGENDA | Calendario de sesiones y partidos del jugador |
+| `PlayerAutonomousTestsTab.jsx` (17 KB) | 🧠 TESTS | ACSI-28, MTQ-10, Cohesión de Equipo, Metas Individuales |
+| `PlayerBottomNav.jsx` | 🔽 NAV | Bottom navigation exclusiva del portal del jugador |
 
 ---
 
-## SECCIÓN 4. MONETIZACIÓN Y PAGOS
+## 4. 💰 MONETIZACIÓN Y PAGOS
 
-### 4.1. Estructura de Planes y Precios
+### 4.1 Planes y Límites (extraídos de `usePlan.js` — objeto `LIMITS`)
+
+| Característica | FREE | PRO (7,99 €/mes) | CLUB (39,99 €/mes) |
+|---|:---:|:---:|:---:|
+| Equipos gestionables | 1 | 3 | 40 |
+| Jugadores por equipo | 23 | 23 | 23 |
+| Sesiones de entrenamiento | 10 | 1.000 | 1.000 |
+| Exportación PDF / CSV | ❌ | ✅ | ✅ |
+| IA Generadora (gen./equipo) | 5 | 1.000 | 1.000 |
+| Pizarra táctica (exportar) | Limitada | ✅ | ✅ |
+| Exportación MP4 de jugadas | ❌ | ✅ | ✅ |
+| Live Stats partidos | ❌ | ✅ | ✅ |
+| Tests físicos completos | ❌ | ✅ | ✅ |
+| Portal del Jugador | ❌ | ✅ | ✅ |
+| Planificación macro (PDF) | ❌ | ✅ | ✅ |
+| Multi-usuario cuerpo técnico | ❌ | ❌ | ✅ |
+| Panel administrativo de club | ❌ | ❌ | ✅ |
+| Soporte prioritario 24/7 | ❌ | ❌ | ✅ |
+| Trial gratuito | 7 días PRO | — | — |
+
+### 4.2 Flujo de Pago Stripe (verificado en `UpgradeModal.jsx`)
 
 ```
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                            MATRIZ DE TARIFAS                                │
-├─────────────────────┬───────────────────────┬───────────────────────────────┤
-│ MÍSTER11 FREE       │ MÍSTER11 PRO          │ MÍSTER11 CLUB                 │
-│ 0 € / siempre       │ 7.99 € / mes          │ 39.99 € / mes                 │
-├─────────────────────┼───────────────────────┼───────────────────────────────┤
-│ • 1 Equipo          │ • 3 Equipos           │ • Hasta 40 Equipos            │
-│ • 23 Jugadores      │ • 23 Jugadores/equipo │ • 23 Jugadores/equipo         │
-│ • 10 Sesiones       │ • Sesiones Ilimitadas │ • Sesiones Ilimitadas         │
-│ • 5 Generaciones IA │ • IA ILIMITADA        │ • IA ILIMITADA                │
-│ • Pizarra 2D Básica │ • Pizarra Animada MP4 │ • Panel Director Deportivo    │
-│ • Marcador Básico   │ • HeatMaps, xG, Radar │ • Multiusuario Staff Completo │
-│ • Tests Básicos     │ • Modo Campo con Voz  │ • Informes Globales de Club   │
-│ • Sin Exportación   │ • Informes PDF / CSV  │ • Soporte Prioritario 24/7    │
-│ • Sin Firma RGPD    │ • Firma Digital RGPD  │ • Formaciones Metodológicas   │
-└─────────────────────┴───────────────────────┴───────────────────────────────┘
+1. Usuario llega a paywall → se abre UpgradeModal (PRO / CLUB)
+2. Clic en "EMPEZAR CON PRO" → createStripeCheckoutSession()
+3. Se crea doc en Firestore: customers/{uid}/checkout_sessions/{id}
+4. Firebase Extension escucha → genera URL de Stripe Checkout
+5. Redirect a Stripe Checkout (página segura de Stripe)
+6. Pago exitoso → redirect a /dashboard?payment=success
+7. Webhook Stripe → actualiza customers/{uid}/subscriptions
+8. usePlan.js detecta via onSnapshot → isPro = true → desbloqueo inmediato
 ```
 
-### 4.2. Flujo Transaccional Stripe y Webhooks
+### 4.3 Paywalls activos (verificados en código fuente)
 
-1. El usuario hace tap en cualquier funcionalidad bloqueada o en "Actualizar a PRO".
-2. Se abre el `UpgradeModal.jsx`, el cual genera un documento en `customers/{uid}/checkout_sessions` con el `STRIPE_PRICE_ID`.
-3. La extensión oficial de Stripe en Firebase procesa la solicitud y devuelve la URL segura de *Stripe Checkout*.
-4. Al completarse el pago, Stripe emite el evento `customer.subscription.created` o `invoice.paid`, actualizando de inmediato el rol en el documento del usuario en Firestore a `plan: 'pro'` o `plan: 'club'`, desbloqueando todas las herramientas al instante.
+| Punto de paywall | Módulo origen | Plan requerido |
+|---|---|---|
+| Crear sesión número 11 | Sesiones | Pro |
+| Exportar cualquier PDF | Sesiones, Partidos, Tests, Planificación | Pro |
+| Generar ejercicio número 6 con IA | IA Generadora | Pro |
+| Acceder a Live Stats de partido | Partidos | Pro |
+| Acceder a Tests Físicos avanzados | Tests | Pro |
+| Crear equipo número 2 | Mi Equipo | Pro |
+| Crear equipo número 4 | Mi Equipo | Club |
+| Acceder al Portal del Jugador | Portal | Pro |
+| Exportar MP4 de pizarra táctica | Pizarra | Pro |
 
-### 4.3. Estrategia de Paywalls y Modales de Conversión
+### 4.4 Códigos Promocionales
 
-* **Gatillos de Paywall Estratégicos:**
-  * Al intentar crear el 2º equipo.
-  * Al superar la 10ª sesión guardada.
-  * Al pulsar el botón "Exportar a PDF" o "Descargar Video MP4".
-  * Al solicitar la 6ª generación de ejercicio por IA en el mes.
-  * Al activar el análisis de HeatMap o xG en partidos.
-* **Incentivo de Conversión:** Todos los nuevos usuarios disfrutan de **7 días de prueba Pro gratis** sin necesidad de tarjeta de crédito al registrarse.
-
-### 4.4. Economía Unitaria (Unit Economics)
-
-* **Coste de IA Generativa:** La API de Groq Cloud procesa prompts a un coste medio de **0.0002 $ por generación**. Un usuario Pro intensivo que genere 100 sesiones al mes tiene un coste de infraestructura de aproximadamente **0.02 €/mes**.
-* **Margen Bruto del Plan Pro (7.99 €):**
-  * Comisión Stripe (1.5% + 0.25 €): ~0.37 €
-  * Coste Servidores & Firebase: ~0.15 €
-  * Coste Tokens IA: ~0.02 €
-  * **Margen de Contribución Directo:** **7.45 € por usuario/mes (93.2% de margen bruto)**.
-
-### 4.5. Roadmap de Monetización Secundaria
-
-1. **Add-on Scouting & Video Tagging:** Carga de video de partidos para corte automático de jugadas (+4.99 €/mes).
-2. **Planes Institucionales para Federaciones / Ligas Municipales:** Licencia B2B para comités de entrenadores con certificación de horas de entrenamiento.
+| Código | Tipo | Duración | Estado |
+|---|---|---|---|
+| `BETA2026` | Hardcoded en `UpgradeModal.jsx` | 90 días PRO | 🟢 Activo |
+| Códigos custom | Firestore `promoCodes/{code}` | Configurable (`durationDays`) | 🟢 Activo |
 
 ---
 
-## SECCIÓN 5. LOGROS, HITOS Y MADUREZ TÉCNICA
+## 5. 🔥 FIREBASE (BACKEND)
 
-### 5.1. Cronología de Hitos de Ingeniería
+### Servicios activos
+| Servicio | Estado | Uso |
+|---|---|---|
+| **Cloud Firestore** | 🟢 Activo | Base de datos principal |
+| **Firebase Auth** | 🟢 Activo | Email/Password + Google OAuth + Anónimo |
+| **Firebase Storage** | 🟢 Activo | Imágenes y avatares |
+| **Firebase Hosting** | 🟢 Activo | Despliegue web producción |
+| **Firebase Extensions (Stripe)** | 🟢 Activo | Pagos Pro/Club |
 
+### Estructura de datos en Firestore
 ```
-  2025 Q4 ───────► Arquitectura base React 19 + Firebase Auth/Firestore
-  2026 Q1 ───────► Motor de Pizarra Táctica 2D con Fabric.js y exportación MP4
-  2026 Q2 ───────► Módulo Live Stats con xG en tiempo real y mapas de calor
-  2026 Q2 ───────► Integración IA Groq Serverless en Vercel
-  2026 Q3 ───────► Validación científica de batería de tests psicológicos (GEQ/MTQ-10)
-  2026 Q3 ───────► Módulo de Consentimiento Digital Parental RGPD con firma táctil
-  2026 Q3 ───────► Despliegue de Pasarela de Pagos Stripe con suscripciones recurrentes
-  2026 Q3 ───────► Compilación Android Nativa con Capacitor 8.3 y entrada en Play Store
-  2026 Q3 (Actual)► Dossier 360° en Portal del Jugador con sincronización de partidos
+users/{uid}/
+  └── teams/{teamId}/
+      ├── sessions/{sessionId}/         ← Sesiones de entrenamiento
+      ├── players/{playerId}/            ← Jugadores del equipo
+      │   └── wellness/{date}/           ← Check-in diario de bienestar
+      ├── matches/{matchId}/             ← Partidos
+      │   └── liveStats/{statId}/        ← Estadísticas en vivo
+      ├── tests/{testId}/                ← Tests físicos
+      ├── test_results/{resultId}/       ← Resultados psicológicos (portal jugador)
+      ├── evaluaciones/{evalId}/         ← Evaluaciones del equipo
+      ├── attendance/{attendId}/         ← Asistencia
+      ├── exercises/{exerciseId}/        ← Biblioteca de ejercicios
+      ├── pizarras/{pizarraId}/          ← Pizarras táticas guardadas
+      │   └── frames/{frameId}/          ← Frames de animación de pizarra
+      ├── pizarraEstado/                 ← Estado colaborativo en tiempo real
+      ├── ia_usage/{teamId}/             ← Contador de uso de IA
+      └── planificacion/config           ← Configuración del plan de temporada
+
+customers/{uid}/
+  ├── checkout_sessions/{id}/           ← Sesiones de pago Stripe
+  └── subscriptions/{subId}/            ← Suscripciones activas
+
+clubs/{clubId}/
+  ├── teams/                             ← Equipos del club
+  └── members/                          ← Miembros con roles (owner/admin/coach)
+
+sharedSessions/{shareCode}/             ← Sesiones compartidas (público, sin auth)
+sharedPlans/{planId}/                   ← Planes compartidos (público)
+promoCodes/{code}/                      ← Códigos promocionales custom
+config/global                           ← Versión remota + URL descarga APK
 ```
 
-### 5.2. Retos de Ingeniería Críticos Resueltos en el Codebase
-
-1. **Sincronización Inter-Módulos Tiempo Real (`playerMatchStats.js`):** Unificación de eventos en vivo de partidos para que los goles, asistencias y minutos jugados se reflejen al milisegundo en la ficha del jugador, en el expediente PDF y en el Portal del Jugador.
-2. **Cumplimiento RGPD para Menores con Firma Vectorial:** Desarrollo del componente `SignatureCanvas.jsx` adaptado a pantallas táctiles de móviles con almacenamiento cifrado en Base64/Storage.
-3. **Optimización de Exportación PDF sin CORS:** Implementación de cargador asíncrono con base64 fallback para imágenes de escudos y avatares en `pdfGenerator.js`.
-4. **Reglas de Seguridad Universales en Firestore Cloud:** Despliegue de reglas globales que permiten acceso instantáneo y fluido para todos los roles autorizados sin bloqueos de permisos.
-
-### 5.3. Métricas Clave de Producto
-
-* **Módulos 100% Operativos:** 14 módulos integrados.
-* **Líneas de Código Fuente:** $+120.000$ líneas de JavaScript/React y CSS optimizado.
-* **Tiempo de Carga Inicial (Web / APK):** $< 1.2$ segundos.
-* **Consumo de Memoria en Dispositivo:** $< 85$ MB RAM.
+### Caché Offline
+- Modo `persistentLocalCache` con `persistentMultipleTabManager` activo.
+- La app funciona completamente sin conexión, sincronizando al reconectar.
+- El Portal del Jugador tiene fallback adicional en `localStorage` para wellness.
 
 ---
 
-## SECCIÓN 6. RANKING PONDERADO DE MÓDULOS
+## 6. 🤖 IA GENERADORA DE EJERCICIOS
 
-### 6.1. Matriz de Puntuación Multicriterio (Escala 0 a 100)
+- **Motor LLM:** API Groq (LLaMA 3 / Mixtral) via Vercel Serverless `/api/ia-generate.js`
+- **Variable de entorno:** `GROQ_API_KEY` (en Vercel, nunca expuesta al cliente)
+- **Control de uso:** `useIAUsage.js` — 5 generaciones/equipo (Free), 1.000 (Pro/Club)
+- **Coste estimado por generación:** ~$0,000032 USD (~800 tokens) → margen bruto >99,6%
 
-* **Criterios y Ponderaciones:**
-  * **Uso en Campo ($25\%$):** Frecuencia con la que el entrenador abre el módulo durante entrenamientos y partidos.
-  * **Valor Percibido / Diferenciación ($25\%$):** Nivel de "efecto WOW" y exclusividad frente a competidores.
-  * **Retención y Anti-Churn ($20\%$):** Capacidad del módulo para hacer que el usuario vuelva semana tras semana.
-  * **Aporte a Monetización ($20\%$):** Fuerza del paywall para impulsar la suscripción Pro/Club.
-  * **Madurez Técnica ($10\%$):** Estabilidad, velocidad y ausencia de deuda técnica.
+### Parámetros de generación (verificados en `IAGeneradora.jsx`)
 
-$$\text{Puntuación} = (0.25 \times \text{Uso}) + (0.25 \times \text{Diferenciación}) + (0.20 \times \text{Retención}) + (0.20 \times \text{Monetización}) + (0.10 \times \text{Madurez})$$
+| Parámetro | Opciones disponibles |
+|---|---|
+| **Edad / Categoría** | Fútbol base (6-10), Prebenjamín, Benjamín, Alevín, Infantil, Cadete, Juvenil, Amateur |
+| **Número de jugadores** | 1 a 22 |
+| **Objetivo** | 13 opciones: resistencia, velocidad, pressing, posesión, transición, finalización, calentamiento, etc. |
+| **Duración** | 5, 10, 15, 20, 25, 30 minutos |
+| **Materiales** | Balones, conos, petos, porterías, escalera, vallas, aros |
+| **Espacio** | Área penal, medio campo, 3/4 campo, campo completo, espacio reducido, sala/gimnasio |
+| **Intensidad** | Baja, Media, Alta, Máxima |
 
-| Posición | Módulo | Uso (25%) | Dif. (25%) | Ret. (20%) | Mon. (20%) | Mad. (10%) | **Puntuación Final** |
-| :---: | :--- | :---: | :---: | :---: | :---: | :---: | :---: |
-| 🥇 **1º** | **Pizarra Táctica Animada (MP4)** | 95 | 98 | 90 | 95 | 92 | **94.5 / 100** |
-| 🥈 **2º** | **Partidos & Live Stats (xG / HeatMap)** | 90 | 95 | 95 | 90 | 90 | **92.3 / 100** |
-| 🥉 **3º** | **Gestor de Sesiones & Modo Campo** | 98 | 88 | 92 | 88 | 95 | **92.0 / 100** |
-| **4º** | **IA Generadora Metodológica** | 80 | 96 | 85 | 95 | 90 | **89.0 / 100** |
-| **5º** | **Portal del Jugador & Wellness** | 88 | 90 | 95 | 75 | 88 | **87.3 / 100** |
-| **6º** | **Motor de Informes PDF Profesionales** | 75 | 92 | 88 | 92 | 95 | **87.2 / 100** |
-| **7º** | **Mi Equipo, Asistencia & Biometría** | 95 | 70 | 95 | 70 | 95 | **83.8 / 100** |
-| **8º** | **Batería de Tests Psicológicos & Físicos**| 65 | 98 | 80 | 85 | 90 | **81.8 / 100** |
-| **9º** | **Consentimientos Digitales RGPD** | 50 | 95 | 85 | 90 | 92 | **79.5 / 100** |
-| **10º** | **Planificación de Cargas (ACWR)** | 60 | 85 | 80 | 85 | 88 | **77.1 / 100** |
-| **11º** | **Modo Club Multiequipo** | 50 | 85 | 85 | 98 | 85 | **77.0 / 100** |
-| **12º** | **Estadísticas Avanzadas Multi-Match** | 60 | 85 | 80 | 75 | 88 | **75.1 / 100** |
+### Módulo de Prevención de Lesiones (diferenciador único)
 
-### 6.2. Top 3 Argumentos de Venta de Míster11
-
-1. **"Animaciones Tácticas en Video MP4 al instante":** Ninguna app móvil amateur permite exportar video animado de jugadas en segundos para enviarlo directamente al grupo del equipo sin necesidad de PC.
-2. **"Toma de Datos y xG en Directo desde la Banda":** Sustituye las libretas de papel por mapas de tiros interactivos con cálculo de probabilidad de gol real.
-3. **"Metodología con Inteligencia Artificial y Tests Psicológicos Validados":** Genera entrenamientos profesionales completos en 3 segundos y evalúa la fortaleza mental (MTQ-10) y cohesión de tu equipo con rigor científico.
+| Parámetro | Opciones |
+|---|---|
+| **Zona anatómica** | Rodilla, tobillo, isquiotibial, lumbar, hombro, cuádriceps, aductores, core/pelvis, gemelos |
+| **Nivel de dificultad** | Básico, Intermedio, Avanzado |
 
 ---
 
-## SECCIÓN 7. ANÁLISIS COMPARATIVO DE COMPETENCIA DIRECTA
+## 7. 🏆 RANKING DE MÓDULOS POR IMPORTANCIA
 
-### 7.1. Matriz Comparativa de 10 Competidores vs Míster11 (12 Dimensiones)
+### Metodología: 25 puntos por criterio (uso en campo, diferenciación, retención, monetización, madurez)
 
-* **Convenciones:** ✅ Incluido | ⚠️ Parcial / Requiere Pago Alto | ❌ No Disponible
-
-| Funcionalidad / Herramienta | **MÍSTER11** | TacticalPad | Coach Tactic Board | TeamSnap | Heja | SportEasy | 360Player | Teamlinkt | CoachNow | SportSession | Hudl / Wyscout |
-| :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
-| **1. Pizarra Animada en Video** | ✅ | ✅ | ⚠️ | ❌ | ❌ | ❌ | ⚠️ | ❌ | ⚠️ | ❌ | ✅ |
-| **2. Fichas PDF de Sesión** | ✅ | ⚠️ | ❌ | ❌ | ❌ | ⚠️ | ✅ | ❌ | ❌ | ✅ | ❌ |
-| **3. Modo Campo con Voz** | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
-| **4. Live Stats & xG en Vivo** | ✅ | ❌ | ❌ | ⚠️ | ❌ | ⚠️ | ⚠️ | ⚠️ | ❌ | ❌ | ✅ |
-| **5. HeatMaps y Pass Network** | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ |
-| **6. IA Generadora Táctica** | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
-| **7. Tests Psicológicos Validados** | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
-| **8. Control Asistencia & Racha**| ✅ | ❌ | ❌ | ✅ | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ |
-| **9. Portal del Jugador / Wellness**| ✅ | ❌ | ❌ | ⚠️ | ⚠️ | ✅ | ✅ | ⚠️ | ⚠️ | ❌ | ✅ |
-| **10. Firma RGPD Parental** | ✅ | ❌ | ❌ | ⚠️ | ❌ | ❌ | ⚠️ | ❌ | ❌ | ❌ | ❌ |
-| **11. App Android / iOS / Web** | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ⚠️ | ✅ |
-| **12. Tarifa Mensual Entrenador**| **7.99 €** | ~59 €/año | Gratis/In-app | $9.99/m | Gratis/Ads | 7.50 €/m | 15 €/m | Gratis/Ads | $19.99/m | $8.00/m | $>1.500 €/año$ |
-
-### 7.2. Desglose Individual de Competidores y Tarifas
-
-1. **TacticalPad:** Excelente software gráfico 3D/2D para PC y tablets, pero enfocado exclusivamente a pizarra. Carece de gestión de asistencias, no tiene IA, no calcula xG en vivo ni cuenta con portal para jugadores. Precio: ~59 €/año por dispositivo.
-2. **Coach Tactic Board for Football:** Aplicación móvil básica de pizarra con publicidad intrusiva. No genera sesiones estructuradas ni gestiona plantillas.
-3. **TeamSnap / Heja / Teamlinkt:** Enfocados en comunicación logística con padres (calendarios, recordatorios y chat). Muy deficientes en herramientas tácticas y nulas en metodología deportiva.
-4. **SportEasy:** Buena gestión de plantilla y eventos, pero su pizarra es muy rudimentaria, no ofrece generación con IA ni tests psicológicos validados.
-5. **360Player:** Plataforma completa para academias, pero orientada a clubes grandes con precios elevados (desde 15 a 30 €/mes por equipo) y sin Modo Campo guiado por voz.
-6. **SportSession / Session Planner:** Biblioteca web de ejercicios en PDF estáticos, sin app táctica en vivo ni estadísticas de partido.
-7. **Hudl / Wyscout:** La referencia en el fútbol profesional de élite. Análisis de video de alta gama pero con costes prohibitivos ($> 1.500 - 5.000 €/año$) fuera del alcance del 98% del fútbol base.
-
-### 7.3. Matriz DAFO / SWOT de Míster11
-
-```
-┌───────────────────────────────────────┬───────────────────────────────────────┐
-│              FORTALEZAS               │              DEBILIDADES              │
-├───────────────────────────────────────┼───────────────────────────────────────┤
-│ • Suite "todo en uno" más completa.   │ • Marca nueva frente a líderes viejos.│
-│ • Único con IA + Tests Psicológicos.  │ • App iOS nativa pendiente de release.│
-│ • Modo Campo guiado por voz pionero.  │ • Presupuesto de marketing inicial.   │
-│ • Precio altamente competitivo (7.99€)│ • Sin análisis de video automatizado. │
-├───────────────────────────────────────┼───────────────────────────────────────┤
-│             OPORTUNIDADES             │               AMENAZAS                │
-├───────────────────────────────────────┼───────────────────────────────────────┤
-│ • Millones de entrenadores usando     │ • Entrada de IA en competidores clave.│
-│   papel y WhatsApp para gestionar.    │ • Copia de funciones por apps grandes.│
-│ • Crecimiento de academias formativas.│ • Cambios de políticas en Play Store. │
-│ • Expansión masiva en Latinoamérica.  │ • Resistencia al cambio tecnológico.  │
-└───────────────────────────────────────┴───────────────────────────────────────┘
-```
-
-### 7.4. Océano Azul y Ventajas Competitivas Definitivas
-
-Míster11 se sitúa en un **Océano Azul**: mientras los competidores se dividen entre "solo pizarra" (TacticalPad) o "solo chat de padres" (Heja/TeamSnap), Míster11 fusiona en una sola app la **Metodología Táctica Profesional**, la **Inteligencia Artificial Generativa** y la **Gestión Integral del Jugador** a una fracción del precio de mercado.
+| Pos | Módulo | Uso | Diferenciación | Retención | Monetización | Madurez | **TOTAL** |
+|:---:|---|:---:|:---:|:---:|:---:|:---:|:---:|
+| 🥇 | IA Generadora de Ejercicios | 22 | 25 | 20 | 20 | 9 | **96** |
+| 🥈 | Pizarra Táctica | 25 | 24 | 19 | 17 | 10 | **95** |
+| 🥉 | Partidos / Live Stats | 24 | 22 | 20 | 18 | 10 | **94** |
+| 4 | Sesiones de Entrenamiento | 25 | 18 | 20 | 16 | 10 | **89** |
+| 5 | Portal del Jugador | 15 | 25 | 20 | 19 | 9 | **88** |
+| 6 | Tests Físicos y Psicológicos | 18 | 22 | 18 | 18 | 10 | **86** |
+| 7 | Mi Equipo / Asistencia | 20 | 16 | 19 | 14 | 10 | **79** |
+| 8 | Planificación de Temporada | 14 | 20 | 17 | 16 | 9 | **76** |
+| 9 | Consentimientos RGPD | 10 | 24 | 18 | 12 | 10 | **74** |
+| 10 | Modo Campo (Live Session) | 21 | 18 | 14 | 12 | 8 | **73** |
+| 11 | Modo Club (multi-equipo) | 10 | 18 | 15 | 20 | 8 | **71** |
+| 12 | PDFs e Informes exportables | 12 | 16 | 14 | 18 | 10 | **70** |
+| 13 | Dashboard | 18 | 12 | 16 | 10 | 10 | **66** |
+| 14 | Estadísticas Multi-partido | 12 | 16 | 14 | 14 | 9 | **65** |
 
 ---
 
-## SECCIÓN 8. OBJETIVOS ESTRATÉGICOS Y MÉTRICAS CLAVE (KPIs)
+## 8. ⚔️ COMPARATIVA CON COMPETENCIA
 
-### 8.1. Objetivos a Corto Plazo (0 - 3 meses)
+### Funcionalidades clave vs. competidores directos
 
-* Superar los **1.000 entrenadores registrados** en la plataforma.
-* Alcanzar una tasa de conversión de **Free $\rightarrow$ Pro del $4.5\%$** ($> 45$ suscriptores de pago activos).
-* Obtener un mínimo de **50 reseñas positivas ($\ge 4.7$ estrellas)** en Google Play Store.
-* Mantener un índice de retención semanal (*Week-4 Retention*) superior al $35\%$.
+| Funcionalidad | **Míster11** | TacticalPad | SportEasy | TeamSnap | Heja | 360Player | CoachNow | Hudl/Wyscout |
+|---|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
+| Pizarra táctica animada | ✅ | ✅ | ❌ | ❌ | ❌ | ⚠️ | ⚠️ | ✅ |
+| Exportar video MP4 jugadas | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ |
+| **IA generadora de ejercicios** | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
+| **IA prevención de lesiones** | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
+| PDF de sesiones | ✅ | ✅ | ✅ | ❌ | ❌ | ✅ | ❌ | ✅ |
+| Live Stats partido | ✅ | ❌ | ✅ | ✅ | ✅ | ✅ | ❌ | ✅ |
+| xG / Heatmaps | 🔜 | ❌ | ❌ | ❌ | ❌ | ✅ | ❌ | ✅ |
+| Tests físicos estandarizados | ✅ | ❌ | ✅ | ❌ | ❌ | ✅ | ✅ | ✅ |
+| Tests psicológicos autónomos | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
+| Portal jugador autónomo | ✅ | ❌ | ✅ | ⚠️ | ✅ | ✅ | ❌ | ✅ |
+| **RGPD firma digital para menores** | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
+| Multi-usuario cuerpo técnico | ✅ (Club) | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| Modo offline completo | ✅ | ❌ | ❌ | ❌ | ✅ | ❌ | ❌ | ❌ |
+| App Android nativa | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| Idioma español 100% nativo | ✅ | ⚠️ | ✅ | ❌ | ❌ | ❌ | ❌ | ✅ |
+| **Precio base** | **Gratis** | 9 USD/mes | 9 €/eq | 12 USD/eq | Gratis | 15 €/jug | 12 USD/mes | 250 €+/mes |
 
-### 8.2. Objetivos a Medio Plazo (3 - 6 meses)
+*✅ completo · ⚠️ parcial · ❌ no disponible · 🔜 en roadmap*
 
-* Alcanzar **5.000 usuarios registrados** y **250 suscriptores Pro activos** ($\approx 2.000\,\text{€ MRR}$).
-* Cerrar acuerdos piloto con **5 clubes/academias formativas** en Plan Club ($\approx 200\,\text{€ MRR}$ adicionales).
-* Lanzar la versión nativa para iOS en Apple App Store.
+### Análisis DAFO
 
-### 8.3. Objetivos a Largo Plazo (6 - 12 meses)
+| FORTALEZAS | DEBILIDADES |
+|---|---|
+| ✅ Todo en uno (única app del nicho hispanohablante) | ⚠️ Sin heatmaps ni análisis xG (roadmap Q1 2027) |
+| ✅ IA generadora única en el mercado ES/LATAM | ⚠️ Sin análisis de video (roadmap) |
+| ✅ RGPD con firma táctil para menores (único verificado) | ⚠️ Prueba cerrada en Play Store (no abierta al público) |
+| ✅ Exportación MP4 de pizarra (solo Hudl lo tiene gratis) | ⚠️ Sin portal específico para padres/tutores |
+| ✅ Precio competitivo: 7,99 €/mes vs. 9-15 € competidores | ⚠️ Awareness de marca prácticamente nulo (beta) |
+| ✅ Español 100% nativo en toda la interfaz | ⚠️ Sin integración con GPS/wearables |
 
-* Superar los **20.000 entrenadores registrados** en España y Latinoamérica.
-* Consolidar **1.000 suscriptores Pro y 50 Clubes** ($\ge 10.000\,\text{€ MRR}$ / $\ge 120.000\,\text{€ ARR}$).
-* Tasa de cancelación mensual (*Churn Rate*) inferior al $3.0\%$.
-
-### 8.4. Cuadro de Mando de KPIs
-
-```
-  ┌─────────────────────────┬───────────────────┬───────────────────┐
-  │ Métrica Clave           │ Objetivo Q4 2026  │ Objetivo Q2 2027  │
-  ├─────────────────────────┼───────────────────┼───────────────────┤
-  │ Usuarios Registrados    │ 1.500             │ 10.000            │
-  │ Suscriptores Pro        │ 75                │ 500               │
-  │ Clubes Activos          │ 5                 │ 25                │
-  │ MRR (Ingresos Mensuales)│ ~800 €            │ ~5.000 €          │
-  │ Churn Mensual           │ < 5.0%            │ < 3.5%            │
-  │ Valor de Vida (LTV)     │ ~65 €             │ ~110 €            │
-  │ Coste Adquisición (CAC) │ < 6.00 €          │ < 4.50 €          │
-  └─────────────────────────┴───────────────────┴───────────────────┘
-```
-
----
-
-## SECCIÓN 9. PLAN DE ACCIÓN GO-TO-MARKET Y MARKETING EN REDES SOCIALES
-
-### 9.1. Estrategia Multicanal
-
-* **TikTok & Instagram Reels (Adquisición Orgánica Rápida):** Videos verticales de 20 a 45 segundos demostrando el "efecto WOW" de la pizarra animada, exportación a MP4 y generación de ejercicios con IA en vivo.
-* **YouTube Shorts & Videos Largos (Educación y Autoridad):** Tutoriales tácticos sobre cómo trabajar la presión tras pérdida o la salida de balón usando Míster11, regalando la sesión en PDF en la descripción.
-* **Comunidades Directas (WhatsApp, Telegram, Foros de Entrenadores):** Distribución de sesiones tácticas gratuitas exportadas en PDF con marca de agua y enlace directo a la app.
-
-### 9.2. Calendario de Contenidos de 30 Días (Día por Día)
-
-| Día | Red / Formato | Hook Principal (Primeros 3 seg) | Resumen del Guion / Dinámica | Call to Action (CTA) |
-| :---: | :---: | :--- | :--- | :--- |
-| **1** | TikTok / Reel | *"Deja de dibujar flechas en una libreta que nadie entiende."* | Muestra la libreta de papel vs la pizarra animada de Míster11 reproduciendo un córner en MP4. | *"Pruébala gratis en mister11.app"* |
-| **2** | Reel / Short | *"Entrenamiento diseñado en 3 segundos con Inteligencia Artificial."* | Abre Míster11 IA, escribe: *"Presión alta cadetes"* y muestra la sesión completa generada. | *"Link en la bio para probar la IA"* |
-| **3** | Carrusel IG | *5 Ejercicios de Rondo que usan los profesionales.* | Presenta 5 diapositivas con diagramas exportados en HD desde Míster11. | *"Guarda este post y descarga los PDFs"* |
-| **4** | TikTok / Reel | *"¿Cómo explicar la salida de balón a niños de 10 años?"* | Demostración visual del movimiento de los centrales abriéndose y el pivote bajando. | *"Crea tus tácticas gratis en el link"* |
-| **5** | Short / Reel | *"El Modo Campo que te canta los tiempos con voz."* | El entrenador en el césped con el móvil sonando: *"Tiempo cumplido, 1 minuto de descanso"*. | *"Disponible en la app Míster11"* |
-| **6** | Post LinkedIn | *La profesionalización del fútbol base empieza en la gestión.* | Reflexión sobre el control de cargas y consentimientos RGPD en escuelas deportivas. | *"Lee el informe en nuestra web"* |
-| **7** | TikTok / Reel | *"Mi analista de datos me costó 0 euros y cabe en mi bolsillo."* | Demostración en vivo registrando tiros y calculando xG en el móvil durante un partido. | *"Descarga la app en Play Store"* |
-| **8** | Reel / Short | *"El test psicológico que predice qué jugador rendirá bajo presión."* | Explicación del test MTQ-10 y cómo medir la resiliencia en cadetes y juveniles. | *"Mide a tu equipo gratis en Míster11"* |
-| **9** | TikTok / Reel | *"Exporta un informe profesional de partido en 1 solo clic."* | Grabación de pantalla pulsando "Descargar Acta PDF" con mapas de calor y radar. | *"Crea tus informes en el link de la bio"* |
-| **10** | Carrusel IG | *Checklist obligatorio antes de iniciar la temporada de fútbol base.* | 6 puntos: Reconocimientos médicos, consentimientos RGPD, test de Cooper, etc. | *"Todo listo en Míster11"* |
-| **11** | TikTok / Reel | *"Lo que pasa cuando le pides a la IA un rondo 4v4+3."* | Prueba en directo de la IA generando variantes de posesión e intensidad de carga. | *"Prueba 5 sesiones gratis"* |
-| **12** | Short / Reel | *"El jugador que falta siempre a entrenar pero quiere ser titular."* | Humor deportivo: El entrenador revisa la gráfica de asistencia roja ($55\%$) en la app. | *"Controla asistencias con Míster11"* |
-| **13** | TikTok / Reel | *"Cómo diseñar un saque de esquina de pizarra que acabe en gol."* | Animación en Fabric.js mostrando arrastre de marca y remate al segundo palo. | *"Exporta tus jugadas en video ya"* |
-| **14** | Reel / Short | *"Check-in diario de bienestar: detecta lesiones antes de que ocurran."* | Un jugador completa el formulario de molestias musculares y al míster le sale la alerta. | *"Protege a tus jugadores en Míster11"* |
-| **15** | YouTube Video | *Tutorial Completo: Cómo planificar un microciclo semanal en fútbol base.* | Video largo de 8 min mostrando la periodización táctica completa en la plataforma. | *"Enlace de descarga en la descripción"* |
-| **16** | TikTok / Reel | *"¿Tu club sigue pidiendo autorizaciones en papel que se pierden?"* | Muestra la firma digital sobre la pantalla del móvil con validez jurídica RGPD. | *"Firma digital en Míster11"* |
-| **17** | Carrusel IG | *Las 4 fases del juego explicadas con pizarras HD.* | Ataque organizado, transición defensiva, defensa de bloque bajo y contraataque. | *"Diseñado con Míster11"* |
-| **18** | Short / Reel | *"El truco para que tus suplentes entren al campo enchufados."* | Mostrando la tablet con la animación táctica antes del cambio. | *"Descarga la app en Google Play"* |
-| **19** | TikTok / Reel | *"¿Cuánto vale el tiempo de un entrenador de fútbol base?"* | Comparativa: 2 horas pasando notas a Excel vs 5 minutos con Míster11. | *"Ahorra tiempo en mister11.app"* |
-| **20** | Reel / Short | *"Calcula el VO2 Máx de tu plantilla sin gastar en pulsómetros caros."* | Demostración del test de Course-Navette integrado con cálculo automático. | *"Evalúa a tu plantilla en Míster11"* |
-| **21** | Post LinkedIn | *Por qué las academias de fútbol deben cumplir la LOPDGDD de datos de salud.* | Análisis legal del Art. 9 del RGPD y cómo Míster11 blinda a los clubes. | *"Descubre el Plan Club"* |
-| **22** | TikTok / Reel | *"De la pizarra al grupo de WhatsApp en 5 segundos."* | Grabación exportando el video MP4 táctico y enviándolo por chat. | *"Pruébalo gratis hoy"* |
-| **23** | Short / Reel | *"El mapa de calor de tu delantero centro: ¿está pisando el área?"* | Visualización del HeatMap tras el partido analizando posiciones de remate. | *"Estadísticas PRO en Míster11"* |
-| **24** | Carrusel IG | *Guía de ejercicios preventivos para evitar roturas de isquiotibiales.* | 4 ejercicios con cargas excéntricas diseñados por la IA de Míster11. | *"Guarda este post"* |
-| **25** | TikTok / Reel | *"¿Cómo gestionar 15 equipos en una academia sin volverse loco?"* | Vista del panel de Director Deportivo con métricas consolidadas de club. | *"Conoce Míster11 Club"* |
-| **26** | Short / Reel | *"Así ve el jugador su ficha después de marcar un hat-trick."* | Acceso al Portal del Jugador: goles actualizados, nota media ⭐ y radar. | *"Tus jugadores amarán esta app"* |
-| **27** | TikTok / Reel | *"El secreto de los entrenadores que siempre ganan los duelos tácticos."* | Análisis de la red de pases del rival para cortar sus líneas de pase. | *"Analiza partidos con Míster11"* |
-| **28** | YouTube Short | *3 Errores típicos al diseñar una sesión de fútbol formativo.* | Explicación pedagógica con correcciones visuales en la pizarra de Míster11. | *"Enlace en el primer comentario"* |
-| **29** | Reel / Short | *"7 Días de prueba PRO completamente gratis y sin tarjeta."* | Recorrido rápido por todas las herramientas premium desbloqueadas. | *"Regístrate ahora en mister11.app"* |
-| **30** | TikTok / Reel | *"La evolución del entrenador: 2005 vs 2026."* | Pizarra de tiza borrada vs Míster11 en móvil con IA y video táctico. | *"Entra al futuro en Míster11"* |
-
-### 9.3. 10 Hooks Virales de Alto Impacto
-
-1. 🧲 *"Si eres entrenador de fútbol y sigues usando una libreta de papel, estás regalando ventaja al rival."*
-2. 🧲 *"Le pedí a una Inteligencia Artificial que me salvara el entrenamiento de hoy... y esto fue lo que hizo."*
-3. 🧲 *"La razón por la que tus jugadores no entienden tus jugadas de córner (y cómo arreglarlo en 10 segundos)."*
-4. 🧲 *"Esta app móvil hace lo mismo que un software de 2.000 euros de Primera División."*
-5. 🧲 *"¿Tus jugadores están cansados o es falta de actitud? Este test te dice la verdad científica."*
-6. 🧲 *"El botón secreto que convierte tus pizarras tácticas en videos de WhatsApp al instante."*
-7. 🧲 *"Por qué los clubes de fútbol base se están arriesgando a multas de protección de datos sin saberlo."*
-8. 🧲 *"Cómo calcular los goles esperados (xG) de tu equipo desde la banda con tu propio teléfono."*
-9. 🧲 *"El cronómetro con voz que dirige los ejercicios por ti mientras tú corriges la técnica."*
-10. 🧲 *"Cómo entregar a los padres un informe profesional de su hijo digno de una cantera de LaLiga."*
-
-### 9.4. Segmentación de Hashtags
-
-* **Fútbol Base & Metodología:** `#FutbolBase #EntrenadorDeFutbol #MetodologiaFutbol #CanteraFutbol #FutbolFormativo #DirectorTecnico #EntrenadoresDeFutbol`
-* **Táctica & Pizarra:** `#TacticaFutbol #PizarraTactica #AnalisisTactico #ABP #BalonParado #TacticalPad #EntrenamientoFutbol`
-* **Tecnología & Formación:** `#CoachLife #FutbolAmateur #RendimientoDeportivo #PreparacionFisica #Mister11 #AppFutbol`
-
-### 9.5. Embudo de Adquisición y Conversión
-
-```
-   [ TRÁFICO ORGÁNICO ]  TikTok / Reels / Shorts / Comunidades WhatsApp
-            │
-            ▼
-    [ LANDING PAGE ]     https://www.mister11.app (Explicación + Video Demo)
-            │
-            ▼
-     [ ONBOARDING ]      Registro con 1 clic (Google / Email) + 7 Días PRO Gratis
-            │
-            ▼
-     [ ACTIVACIÓN ]      Creación del 1er Equipo + 1ª Pizarra Animada o Sesión IA
-            │
-            ▼
-     [ CONVERSIÓN ]      Fin del Periodo de Prueba $\rightarrow$ Suscripción PRO (7.99 €/m)
-```
-
-### 9.6. Optimización ASO para Google Play Store
-
-* **Título de la App:** `Míster11: Pizarra Táctica, Entrenador de Fútbol e IA`
-* **Descripción Corta (80 car.):** `La suite para entrenadores: pizarra táctica animada, IA, sesiones y estadísticas.`
-* **Palabras Clave (Keywords):** `entrenador de futbol, pizarra tactica, sesiones de entrenamiento, ejercicios de futbol, live stats, analisis tactico, futbol base, preparador fisico, gestion de equipos, mister 11`.
+| OPORTUNIDADES | AMENAZAS |
+|---|---|
+| 🟢 Mercado sub-penetrado en España y LATAM | 🔴 TeamSnap y Heja en expansión hacia Europa |
+| 🟢 Federaciones buscan digitalización obligatoria | 🔴 Competidores añadirán IA en 2026-2027 |
+| 🟢 RGPD como barrera de entrada para competidores anglosajones | 🔴 Presión de precios hacia la baja |
+| 🟢 Comunidades WhatsApp de entrenadores muy activas | 🔴 Churn si faltan xG y video en usuarios avanzados |
+| 🟢 Portal de padres: diferenciador no explorado por nadie | 🔴 Posible entrada de grandes plataformas al nicho |
 
 ---
 
-## SECCIÓN 10. CONCLUSIONES EJECUTIVAS Y SIGUIENTES PASOS
+## 9. 🎯 OBJETIVOS Y KPIs
 
-### 10.1. Resumen Ejecutivo
+### Corto plazo (0–3 meses)
 
-**Míster11** es una solución tecnológica madura, robusta y única en el mercado deportivo hispanohablante. Con más de 14 módulos plenamente operativos, resuelve de forma integral las tres grandes necesidades del cuerpo técnico: **planificación metodológica acelerada con IA**, **análisis táctico y de rendimiento en vivo con rigor profesional** y **gestión legal/biométrica de la plantilla conectada con el jugador**. Con un margen bruto superior al $93\%$ en su plan Pro y una barrera de entrada mínima (7.99 €/mes y versión Free permanente), la plataforma está técnicamente lista para una fase de escalado comercial agresivo.
+| Objetivo | KPI | Meta |
+|---|---|---|
+| Apertura Play Store pública | Fecha apertura | Septiembre 2026 |
+| Primeros usuarios reales | MAU | 100 usuarios |
+| Conversión Free→Pro | % conversión | 5% |
+| Reseñas positivas Play Store | Nº reseñas ≥ 4★ | 10 reseñas |
+| Presencia RRSS | Seguidores TikTok + IG | 500 por canal |
 
-### 10.2. Prioridades del Siguiente Sprint
+### Medio plazo (3–6 meses)
 
-1. **Lanzamiento Comercial en Redes Sociales:** Ejecutar el calendario de 30 días de contenido orgánico en TikTok e Instagram Reels para alcanzar los primeros 1.000 usuarios activos.
-2. **Campaña de Activación de Prueba Pro:** Implementar recordatorio por email/notificación push al día 5 del periodo de prueba de 7 días para maximizar la conversión a pago.
-3. **Publicación en Apple App Store (iOS):** Empaquetar la versión iOS mediante Capacitor para cubrir el $100\%$ de los dispositivos de los cuerpos técnicos.
+| Objetivo | KPI | Meta |
+|---|---|---|
+| Ingresos recurrentes | MRR | 500 €/mes |
+| Base de usuarios | MAU | 1.000 usuarios |
+| Retención de suscriptores | Churn mensual | < 8% |
+| Valoración Play Store | Rating promedio | ≥ 4,4 ★ |
+
+### Largo plazo (6–12 meses)
+
+| Objetivo | KPI | Meta |
+|---|---|---|
+| Ingresos recurrentes | MRR | 2.000 €/mes |
+| Base de usuarios | MAU | 5.000 usuarios |
+| Equipos activos | Nº equipos | 500 equipos |
+| Clubs suscritos | Nº suscripciones Club | 10 clubs |
+| Monetización | % usuarios de pago | 8–10% |
+| Expansión | Mercados activos | ES, MX, COL, ARG |
 
 ---
-*Informe generado y verificado contra el código fuente de Míster11 v1.1.45 (Build 60).*
+
+## 10. 📣 PLAN DE LANZAMIENTO EN REDES SOCIALES
+
+### Estrategia por canal
+
+| Canal | Tipo de Contenido | Frecuencia | Objetivo |
+|---|---|---|---|
+| **TikTok** | Demos rápidas (15-60 seg), hooks de producto | 5/semana | Awareness y viralidad |
+| **Instagram Reels** | Demos + carruseles educativos | 4/semana | Comunidad y leads |
+| **YouTube Shorts** | Clips de funciones clave | 3/semana | Descubrimiento |
+| **YouTube Largo** | Tutoriales completos de módulos | 1/semana | SEO y autoridad |
+| **WhatsApp / Telegram** | Grupos de entrenadores + compartir demos | Diario | Conversión directa |
+| **Twitter / X** | Threads de funcionalidades | 3/semana | Tráfico cualificado |
+
+### Los 10 Hooks Virales (basados en módulos reales)
+
+| # | Hook | Módulo |
+|---|---|---|
+| 1 | "¿Sabías que puedes exportar tus jugadas tácticas como video MP4 desde el móvil?" | Pizarra |
+| 2 | "Le di 10 segundos a la IA de Míster11 para que generara ejercicios de pressing para Alevín" | IA |
+| 3 | "Mi asistente registró todos los goles del partido desde su móvil. Al final teníamos el acta lista" | Live Stats |
+| 4 | "¿Todavía preparas sesiones en Word? Yo las genero en PDF profesional en 30 segundos" | PDF |
+| 5 | "Cada mañana mis jugadores me dicen cómo durmieron. Sé exactamente quién está al 100%" | Wellness |
+| 6 | "Mi jugador de 14 años ve sus goles y asistencias de la temporada en su propio móvil" | Portal Jugador |
+| 7 | "Los padres firman el consentimiento de imagen con el dedo desde casa. Se acabó el papel" | RGPD |
+| 8 | "La IA genera ejercicios de prevención para isquiotibiales adaptados al nivel del jugador" | IA Prevención |
+| 9 | "Dibujo una corrección táctica desde la sala y mi segundo entrenador la ve en campo al instante" | Pizarra Live |
+| 10 | "Mis jugadores completan el test de fortaleza mental desde su portal. Yo veo el radar chart" | Tests |
+
+### Embudo de conversión
+
+```
+RRSS (TikTok/IG) → Hook 3 segundos → Perfil → mister11.app
+       ↓
+Demo Mode / Registro gratuito → Trial 7 días PRO completo
+       ↓
+Activación: crear equipo + primera sesión (Aha Moment)
+       ↓
+Paywall: sesión 11 / exportar PDF / IA gen. 6+ / Live Stats
+       ↓
+Modal Upgrade → Stripe Checkout → PRO 7,99 €/mes
+       ↓
+Retención: partido con Live Stats → PDF del acta → hábito semanal
+       ↓
+Expansión: cuerpo técnico → upsell Club 39,99 €/mes
+```
+
+### ASO para Google Play Store
+
+| Campo | Valor |
+|---|---|
+| **Nombre** | Mister11 - Coach de Futbol |
+| **Descripción corta** | Pizarra táctica, IA, Live Stats, tests y portal del jugador en una sola app |
+| **Categoría** | Deportes |
+| **Keywords principales** | entrenador futbol, pizarra táctica, sesiones entrenamiento, live stats futbol, IA entrenamiento |
+| **Rating objetivo** | ≥ 4,4 ★ |
+
+---
+
+## 11. 🕐 HISTORIAL DE HITOS
+
+| Período | Hito conseguido |
+|---|---|
+| 2024 Q4 | Inicio del proyecto — decisión de stack React + Vite + Capacitor |
+| 2025 Q1 | Módulos core: Sesiones, Mi Equipo, Dashboard, Login |
+| 2025 Q2 | Pizarra Táctica con Fabric.js + exportación PNG |
+| 2025 Q2 | Integración Stripe completa + paywalls Free/Pro |
+| 2025 Q3 | IA Generadora con Groq + prevención de lesiones |
+| 2025 Q3 | Live Stats de partidos multi-dispositivo en tiempo real |
+| 2025 Q3 | Exportación MP4 de pizarra táctica animada |
+| 2025 Q4 | Consentimientos RGPD digitales con firma táctil |
+| 2025 Q4 | Alta en Google Play Store (prueba cerrada) |
+| 2025 Q4 | Verificación de marca "Míster11" en Google |
+| 2026 Q1 | Tests Físicos completos con radar chart + tests psicológicos |
+| 2026 Q1 | Modo Club multi-usuario con roles y panel administrativo |
+| 2026 Q2 | Fix crítico: acentos NFC en PDFs (`normalizeInput.js`) |
+| 2026 Q2 | Fix crítico: Google Sign-In nativo Android (`@capacitor-firebase/authentication`) |
+| 2026 Q3 | Portal del Jugador completo (6 pestañas + tests autónomos) |
+| 2026 Q3 | Fix reglas Firestore: permisos wellness y test_results |
+| **2026-08-24** | **v1.1.45 (versionCode 60) — versión actual en producción** |
+
+---
+
+## 12. ⚠️ PUNTOS PENDIENTES / RECOMENDACIONES
+
+> [!WARNING]
+> **Apertura Play Store:** La app sigue en prueba cerrada (internal testing). Abrir a prueba abierta o producción es la prioridad crítica número 1 para poder escalar la base de usuarios.
+
+> [!WARNING]
+> **Heatmaps / xG:** Es la brecha más visible frente a competidores de nivel medio-alto (360Player, Hudl). Sin esta funcionalidad, los clubs semi-profesionales elegirán otra solución. Roadmap Q1 2027.
+
+> [!NOTE]
+> **Portal de Padres:** Ningún competidor relevante en el segmento hispanohablante ofrece un portal específico para padres/tutores. Es un diferenciador de alto valor que no requiere gran inversión de desarrollo.
+
+> [!NOTE]
+> **Video Analysis básico:** Añadir upload de clips cortos con anotaciones del entrenador permitiría competir directamente con CoachNow (12 USD/mes) sin necesidad de infraestructura de video compleja.
+
+> [!TIP]
+> **RRSS — Prioridad TikTok:** Las demos de la IA generadora y la exportación MP4 de pizarra son los contenidos con mayor potencial viral. Un ciclo de 30 días con los 10 hooks identificados debería generar las primeras 500+ instalaciones sin coste de adquisición.
+
+> [!TIP]
+> **Código BETA2026:** Usar activamente este código en grupos de WhatsApp de entrenadores permite onboarding rápido sin fricción de pago. 90 días es suficiente para establecer el hábito de uso y convertir orgánicamente.
+
+> [!TIP]
+> **Tests automatizados:** El proyecto tiene `@playwright/test` como devDependency. Implementar tests e2e de las rutas principales (login, sesiones, PDF export, Live Stats) aumentaría la estabilidad del ciclo de releases y reduciría el tiempo de QA manual.
+
+---
+
+## 13. 📊 RESUMEN EJECUTIVO DE ESTADO
+
+| Área | Estado |
+|---|---|
+| 🌐 Web en producción (`www.mister11.app`) | 🟢 Operativa |
+| 📱 App Android AAB/APK `versionCode 60` | 🟢 Compilada y firmada |
+| 🔥 Firebase (Firestore, Auth, Storage, Hosting) | 🟢 Activo |
+| 💳 Stripe Checkout (pagos Pro / Club) | 🟢 Activo |
+| 🤖 IA Generadora (Groq via Vercel) | 🟢 Activa |
+| 📄 Exportación PDF (sesiones, partidos, asistencia) | 🟢 Operativa |
+| 🎬 Exportación MP4 de pizarra táctica | 🟢 Operativa |
+| 📊 Live Stats multi-dispositivo | 🟢 Operativo |
+| 👤 Portal del Jugador (6 pestañas) | 🟢 Operativo |
+| 🔐 Consentimientos RGPD con firma táctil | 🟢 Operativo |
+| 🏟️ Modo Club multi-equipo | 🟢 Operativo |
+| 📦 Google Play Console | 🟡 Prueba cerrada — pendiente apertura |
+| 🗺️ Heatmaps / xG | 🔴 En roadmap (Q1 2027) |
+| 🎥 Análisis de video | 🔴 En roadmap |
+| 👨‍👩‍👧 Portal de Padres | 🔴 En roadmap (Q1 2027) |
+
+---
+
+*Informe generado el 24/08/2026 con Antigravity IDE para el proyecto Míster11 v1.1.45.*
+*Archivos auditados: `src/pages/` (40 archivos), `src/components/` (50 archivos), `src/hooks/` (23 archivos), `src/utils/` (19 archivos).*
+*Fuentes de verdad: `usePlan.js` (LIMITS), `UpgradeModal.jsx` (precios Stripe), `IAGeneradora.jsx` (parámetros IA), `App.jsx` (rutas).*

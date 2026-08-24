@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useTeamMembers, STAFF_ROLES } from '../hooks/useTeamMembers';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
+import { usePlan } from '../hooks/usePlan';
+import UpgradeModal from './UpgradeModal';
 import { showToast } from '../utils/toast';
 import { ensureTeamCode } from '../utils/teamCode';
 import { collection, onSnapshot, query, doc, updateDoc, setDoc, addDoc, serverTimestamp, deleteDoc } from 'firebase/firestore';
@@ -11,6 +13,7 @@ import { Shield, UserPlus, Trash2, Mail, Copy, Check, Clock, Users, Award, KeyRo
 export const TeamStaffTab = ({ activeTeam }) => {
   const { user } = useAuth();
   const { darkMode } = useTheme();
+  const { canInviteStaff, limits } = usePlan();
   const {
     members,
     loading,
@@ -24,6 +27,7 @@ export const TeamStaffTab = ({ activeTeam }) => {
   } = useTeamMembers(activeTeam?.id);
 
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
+  const [isUpgradeModalOpen, setIsUpgradeModalOpen] = useState(false);
   const [inviteEmail, setInviteEmail] = useState('');
   const [selectedRole, setSelectedRole] = useState('second_coach');
   const [isInviting, setIsInviting] = useState(false);
@@ -441,13 +445,17 @@ export const TeamStaffTab = ({ activeTeam }) => {
           <button
             className="btn-primary"
             onClick={() => {
+              if (!canInviteStaff(members.length)) {
+                setIsUpgradeModalOpen(true);
+                return;
+              }
               setGeneratedLink('');
               setIsInviteModalOpen(true);
             }}
             style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 16px', fontWeight: 'bold', minHeight: '44px' }}
           >
             <UserPlus size={18} />
-            Invitar Staff
+            Invitar Staff ({members.length}/{limits.staffLimit === Infinity ? '∞' : limits.staffLimit})
           </button>
         )}
       </div>
@@ -814,6 +822,13 @@ export const TeamStaffTab = ({ activeTeam }) => {
           </div>
         </div>
       )}
+
+      {/* Modal de Upgrade cuando se supera el límite de staff */}
+      <UpgradeModal
+        isOpen={isUpgradeModalOpen}
+        onClose={() => setIsUpgradeModalOpen(false)}
+        message={`Has alcanzado el límite de ${limits.staffLimit === 1 ? '1 entrenador' : `${limits.staffLimit} miembros de staff`} de tu plan actual. Elige un Plan Club para colaborar con más entrenadores y especialistas.`}
+      />
     </div>
   );
 };

@@ -3,33 +3,65 @@ import { useAuth } from '../context/AuthContext';
 import { db } from '../firebaseConfig';
 import { doc, onSnapshot, collection } from 'firebase/firestore';
 import { DEVELOPER_EMAILS } from '../config/admins';
+import { PLANS, getPlanById, findPlanByPriceId } from '../config/plans';
 
+/**
+ * Objeto de límites heredado para compatibilidad.
+ * Mapea directamente desde la fuente única de verdad src/config/plans.js.
+ */
 export const LIMITS = {
   FREE: {
-    TEAMS: 1,
-    PLAYERS: 23,
-    SESSIONS: 10,
-    PDF_EXPORT: false,
-    IA_GENERATIONS: 5,
+    TEAMS: PLANS.free.teamLimit,
+    STAFF: PLANS.free.staffLimit,
+    PLAYERS: PLANS.free.playerLimit,
+    SESSIONS: PLANS.free.sessionLimit,
+    PDF_EXPORT: PLANS.free.pdfExport,
+    IA_GENERATIONS: PLANS.free.iaLimit,
   },
   PRO: {
-    TEAMS: 3,
-    PLAYERS: 23,
-    SESSIONS: 1000,
-    PDF_EXPORT: true,
-    IA_GENERATIONS: 1000,
+    TEAMS: PLANS.pro.teamLimit,
+    STAFF: PLANS.pro.staffLimit,
+    PLAYERS: PLANS.pro.playerLimit,
+    SESSIONS: PLANS.pro.sessionLimit,
+    PDF_EXPORT: PLANS.pro.pdfExport,
+    IA_GENERATIONS: PLANS.pro.iaLimit,
   },
+  CLUB_STARTER: {
+    TEAMS: PLANS.club_starter.teamLimit,
+    STAFF: PLANS.club_starter.staffLimit,
+    PLAYERS: PLANS.club_starter.playerLimit,
+    SESSIONS: PLANS.club_starter.sessionLimit,
+    PDF_EXPORT: PLANS.club_starter.pdfExport,
+    IA_GENERATIONS: PLANS.club_starter.iaLimit,
+  },
+  CLUB_PRO: {
+    TEAMS: PLANS.club_pro.teamLimit,
+    STAFF: PLANS.club_pro.staffLimit,
+    PLAYERS: PLANS.club_pro.playerLimit,
+    SESSIONS: PLANS.club_pro.sessionLimit,
+    PDF_EXPORT: PLANS.club_pro.pdfExport,
+    IA_GENERATIONS: PLANS.club_pro.iaLimit,
+  },
+  CLUB_PREMIUM: {
+    TEAMS: PLANS.club_premium.teamLimit,
+    STAFF: PLANS.club_premium.staffLimit,
+    PLAYERS: PLANS.club_premium.playerLimit,
+    SESSIONS: PLANS.club_premium.sessionLimit,
+    PDF_EXPORT: PLANS.club_premium.pdfExport,
+    IA_GENERATIONS: PLANS.club_premium.iaLimit,
+  },
+  // Legacy alias: 'CLUB' mapea a CLUB_PREMIUM (grandfathered)
   CLUB: {
-    TEAMS: 40,
-    PLAYERS: 23,
-    SESSIONS: 1000,
-    PDF_EXPORT: true,
-    IA_GENERATIONS: 1000,
+    TEAMS: PLANS.club_premium.teamLimit,
+    STAFF: PLANS.club_premium.staffLimit,
+    PLAYERS: PLANS.club_premium.playerLimit,
+    SESSIONS: PLANS.club_premium.sessionLimit,
+    PDF_EXPORT: PLANS.club_premium.pdfExport,
+    IA_GENERATIONS: PLANS.club_premium.iaLimit,
   }
 };
 
-// Importado desde src/config/admins.js (fuente única de verdad)
-export { DEVELOPER_EMAILS };
+export { DEVELOPER_EMAILS, PLANS, getPlanById };
 
 const getCookie = (name) => {
   if (typeof document === 'undefined') return null;
@@ -57,7 +89,6 @@ export const usePlan = () => {
   const [loading, setLoading] = useState(true);
 
   // Simulated plan toggle — SOLO para emails de desarrollador verificados.
-  // La comprobación se hace contra el token de Firebase (no localStorage).
   const [simulatedPlan, setSimulatedPlan] = useState('');
 
   useEffect(() => {
@@ -76,18 +107,16 @@ export const usePlan = () => {
       setDbProExpiration(null);
       setStripeActivePlan('free');
       setStripeProExpiration(null);
-      
-      // Intentar leer desde localStorage o Cookies para evitar bypass fácil (ALTO-06)
+
       let localStart = localStorage.getItem('mister11_trial_start');
       let cookieStart = getCookie('mister11_trial_start');
-      
+
       let finalStart = localStart || cookieStart;
       if (!finalStart) {
         finalStart = String(Date.now());
         localStorage.setItem('mister11_trial_start', finalStart);
-        setCookie('mister11_trial_start', finalStart, 365); // Expira en 1 año
+        setCookie('mister11_trial_start', finalStart, 365);
       } else {
-        // Sincronizar
         if (!localStart) localStorage.setItem('mister11_trial_start', finalStart);
         if (!cookieStart) setCookie('mister11_trial_start', finalStart, 365);
       }
@@ -138,19 +167,32 @@ export const usePlan = () => {
     const subsRef = collection(db, 'customers', user.uid, 'subscriptions');
     const unsubSubs = onSnapshot(subsRef, (snapshot) => {
       const activeSub = snapshot.docs
-        .map(doc => ({ id: doc.id, ...doc.data() }))
+        .map(docSnap => ({ id: docSnap.id, ...docSnap.data() }))
         .find(sub => sub.status === 'active' || sub.status === 'trialing');
 
       if (activeSub) {
         let planType = 'pro';
-        if (activeSub.role === 'club' || (activeSub.metadata && activeSub.metadata.plan === 'club')) {
-          planType = 'club';
-        } else if (activeSub.items && activeSub.items[0]) {
+
+        // 1. Intentar resolver por Price ID exacto de Stripe
+        if (activeSub.items && activeSub.items[0]) {
           const priceId = activeSub.items[0].price?.id;
-          if (priceId && priceId.includes('club')) {
-            planType = 'club';
+          const matched = findPlanByPriceId(priceId);
+          if (matched) {
+            planType = matched.planId;
+          } else if (priceId && priceId.includes('club')) {
+            planType = 'club_pro';
           }
         }
+
+        // 2. Fallbacks de metadata/roles
+        if (planType === 'pro' || !planType) {
+          if (activeSub.metadata?.plan) {
+            planType = activeSub.metadata.plan;
+          } else if (activeSub.role && activeSub.role !== 'pro') {
+            planType = activeSub.role;
+          }
+        }
+
         setStripeActivePlan(planType);
         setStripeProExpiration(activeSub.current_period_end || null);
       } else {
@@ -167,9 +209,9 @@ export const usePlan = () => {
     };
   }, [user, activeTeamId, teams]);
 
+  const isDeveloper = user && user.email && DEVELOPER_EMAILS.includes(user.email.toLowerCase());
+
   const toggleSimulatedPlan = () => {
-    // Solo disponible para desarrolladores. No se persiste en localStorage
-    // para evitar que usuarios normales lo manipulen.
     if (!isDeveloper) return;
     setSimulatedPlan(prev => (prev === 'free' ? '' : 'free'));
   };
@@ -181,7 +223,7 @@ export const usePlan = () => {
 
   const now = new Date();
 
-  // --- Trial calculation (now based on Firestore date, tamper-proof) ---
+  // --- Trial calculation ---
   const trialStart = dbTrialStartDate || now;
   const msPassed = now - trialStart;
   const hoursPassed = Math.floor(msPassed / (60 * 60 * 1000));
@@ -190,51 +232,91 @@ export const usePlan = () => {
   const trialHoursRemaining = Math.max(0, 7 * 24 - hoursPassed);
   const isTrialExpired = trialDaysRemaining <= 0;
 
-  // --- Real PRO plan ---
-  const isDeveloper = user && user.email && DEVELOPER_EMAILS.includes(user.email.toLowerCase());
-  
   // Combine Firestore team plan expiration with active Stripe subscription expiration
   const activeExpiration = dbProExpiration || stripeProExpiration;
   const isRealExpired = activeExpiration && (typeof activeExpiration.toDate === 'function' ? activeExpiration.toDate() : new Date(activeExpiration)) < now;
-  
+
   const activeTeam = teams?.find(t => t.id === activeTeamId) || null;
   const isActiveTeamClub = activeTeam?.source === 'club';
-
   const isClubActive = isClubMember && club && club.status === 'active';
-  
+
   // Lógica del plan individual del usuario
-  const currentPlan = dbPlan === 'pro' || dbPlan === 'club' ? dbPlan : stripeActivePlan;
-  const isRealPro = (currentPlan === 'pro' || currentPlan === 'club') && !isRealExpired;
-  const isOnTrial = (dbPlan === 'trial') && !isTrialExpired && !isRealPro;
+  const rawCurrentPlan = dbPlan !== 'free' && dbPlan !== 'trial' ? dbPlan : stripeActivePlan;
+  const resolvedPlanDef = getPlanById(rawCurrentPlan);
+  const currentPlanId = resolvedPlanDef.id;
 
-  // isPro depende de si es un equipo del club (entonces depende de isClubActive) o personal (depende del plan individual)
-  const isPro = isDeveloper || (isActiveTeamClub ? isClubActive : (isRealPro || isOnTrial));
+  const isRealPaidPro = (currentPlanId !== 'free') && !isRealExpired;
+  const isOnTrial = (dbPlan === 'trial') && !isTrialExpired && !isRealPaidPro;
 
-  // isRealPaidPro = true si hay una suscripción de pago real en el contexto activo
-  const isRealPaidPro = isDeveloper || (isActiveTeamClub ? isClubActive : isRealPro);
+  // isPro si es desarrollador, equipo de club activo, plan de pago activo o trial
+  const isPro = isDeveloper || (isActiveTeamClub ? isClubActive : (isRealPaidPro || isOnTrial));
 
-  // Developers always have full PRO access — simulation is UI-only for testing UX
-  // isSimulatingFree = developer is deliberately testing free-plan UI (doesn't remove access)
+  // isSimulatingFree: testing UX
   const isSimulatingFree = isDeveloper && simulatedPlan === 'free';
 
-  // Límites según el tipo de equipo activo
-  const isClub = isDeveloper || (isActiveTeamClub && isClubActive);
-  const currentLimits = isClub ? LIMITS.CLUB : (isPro ? LIMITS.PRO : LIMITS.FREE);
+  // Determinación del plan efectivo
+  let effectivePlanId = 'free';
+  if (isDeveloper) {
+    effectivePlanId = isSimulatingFree ? 'free' : 'club_premium';
+  } else if (isActiveTeamClub && isClubActive) {
+    // Si el club tiene un plan específico (ej: club_starter, club_pro, club_premium)
+    effectivePlanId = club?.plan ? getPlanById(club.plan).id : 'club_pro';
+  } else if (isRealPaidPro) {
+    effectivePlanId = currentPlanId;
+  } else if (isOnTrial) {
+    effectivePlanId = 'pro';
+  }
 
-  // isProActive: for legacy compatibility — same as isPro
-  const isProActive = isPro;
+  const activePlanDef = isSimulatingFree ? PLANS.free : getPlanById(effectivePlanId);
+  const isClub = isDeveloper || (activePlanDef.id.startsWith('club') && (isActiveTeamClub ? isClubActive : isRealPaidPro));
 
-  const effectivePlan = isClub ? 'club' : (isPro ? 'pro' : 'free');
+  // Helpers de validación de límites
+  const canCreateTeam = (currentTeamsCount) => {
+    if (isDeveloper && !isSimulatingFree) return true;
+    return (currentTeamsCount || 0) < activePlanDef.teamLimit;
+  };
+
+  const canCreateSession = (currentSessionsCount) => {
+    if (isDeveloper && !isSimulatingFree) return true;
+    return (currentSessionsCount || 0) < activePlanDef.sessionLimit;
+  };
+
+  const canInviteStaff = (currentStaffCount) => {
+    if (isDeveloper && !isSimulatingFree) return true;
+    if (activePlanDef.staffLimit === Infinity) return true;
+    return (currentStaffCount || 0) < activePlanDef.staffLimit;
+  };
+
+  const hasFeature = (featureKey) => {
+    if (isDeveloper && !isSimulatingFree) return true;
+    return Boolean(activePlanDef[featureKey]);
+  };
+
+  const limits = {
+    TEAMS: activePlanDef.teamLimit,
+    STAFF: activePlanDef.staffLimit,
+    PLAYERS: activePlanDef.playerLimit,
+    SESSIONS: activePlanDef.sessionLimit,
+    PDF_EXPORT: activePlanDef.pdfExport,
+    IA_GENERATIONS: activePlanDef.iaLimit,
+    teamLimit: activePlanDef.teamLimit,
+    staffLimit: activePlanDef.staffLimit,
+    playerLimit: activePlanDef.playerLimit,
+    sessionLimit: activePlanDef.sessionLimit,
+    iaLimit: activePlanDef.iaLimit,
+  };
 
   return {
-    plan: isPro ? (effectivePlan !== 'free' ? effectivePlan : 'pro') : 'free',
+    plan: effectivePlanId,
+    planDetails: activePlanDef,
     isPro,
+    isClub,
     isDeveloper,
     isSimulatingFree,
-    limits: currentLimits,
+    limits,
     loading,
     proExpiration: activeExpiration?.toDate ? activeExpiration.toDate() : (activeExpiration ? new Date(activeExpiration) : null),
-    isExpired: isDeveloper ? false : (isTrialExpired && !isRealPro && !isClubActive),
+    isExpired: isDeveloper ? false : (isTrialExpired && !isRealPaidPro && !isClubActive),
     simulatedPlan,
     toggleSimulatedPlan,
     trialDaysRemaining,
@@ -242,11 +324,16 @@ export const usePlan = () => {
     resetTrial,
     isOnTrial,
     isTrialExpired,
-    dbPlan: currentPlan,
-    isProActive,
+    dbPlan: currentPlanId,
+    isProActive: isPro,
     isRealPaidPro,
     isClubMember,
     clubRole,
-    isClubActive
+    isClubActive,
+    // Helpers granulares
+    canCreateTeam,
+    canCreateSession,
+    canInviteStaff,
+    hasFeature
   };
 };

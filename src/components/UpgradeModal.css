@@ -1,32 +1,33 @@
 /* =============================================================
-   UpgradeModal.css — Premium redesign
+   UpgradeModal.css — Planes Temporada + Mensual con IVA Incluido
    ============================================================= */
 
 /* Wrapper */
 .upgrade-modal-wrapper {
   position: relative;
-  background: var(--bg-card, #1a2332);
+  background: var(--bg-card, #131b26);
   border-radius: 20px;
-  max-width: 680px;
-  width: 95vw;
-  max-height: 92vh;
+  max-width: 1100px;
+  width: 96vw;
+  max-height: 94vh;
   overflow-y: auto;
-  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.6);
   display: flex;
   flex-direction: column;
   animation: upgradeSlideIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 @keyframes upgradeSlideIn {
-  from { opacity: 0; transform: scale(0.88) translateY(24px); }
+  from { opacity: 0; transform: scale(0.92) translateY(20px); }
   to   { opacity: 1; transform: scale(1) translateY(0); }
 }
 
 /* Header */
 .upgrade-modal-header {
   position: relative;
-  background: linear-gradient(135deg, #0e1f18 0%, #1B3A2D 50%, #2e5a43 100%);
-  padding: 36px 28px 28px;
+  background: linear-gradient(135deg, #091811 0%, #153225 50%, #1c4533 100%);
+  padding: 32px 24px 24px;
   text-align: center;
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
 }
@@ -60,232 +61,366 @@
   color: #fff;
   font-size: 0.72rem;
   font-weight: 800;
-  padding: 5px 14px;
+  padding: 4px 12px;
   border-radius: 20px;
-  letter-spacing: 1.2px;
-  margin-bottom: 14px;
+  letter-spacing: 1px;
+  margin-bottom: 10px;
   animation: urgencyPulse 1.5s ease-in-out infinite;
 }
 
 @keyframes urgencyPulse {
   0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(229, 62, 62, 0.5); }
-  50%       { opacity: 0.85; box-shadow: 0 0 0 8px rgba(229, 62, 62, 0); }
+  50%       { opacity: 0.85; box-shadow: 0 0 0 6px rgba(229, 62, 62, 0); }
 }
 
 .upgrade-crown-anim {
-  font-size: 52px;
+  font-size: 40px;
   display: block;
-  margin-bottom: 14px;
+  margin-bottom: 8px;
   animation: crownFloat 2.5s ease-in-out infinite;
-  filter: drop-shadow(0 4px 12px rgba(212, 168, 67, 0.5));
 }
 
 @keyframes crownFloat {
-  0%, 100% { transform: translateY(0) rotate(-3deg); }
-  50%       { transform: translateY(-8px) rotate(3deg); }
+  0%, 100% { transform: translateY(0) rotate(-2deg); }
+  50%       { transform: translateY(-6px) rotate(2deg); }
 }
 
 .upgrade-title {
-  font-size: 1.65rem;
+  font-size: 1.6rem;
   font-weight: 900;
   color: #ffffff;
-  margin: 0 0 10px;
+  margin: 0 0 6px;
   font-family: var(--font-heading, 'Outfit', sans-serif);
   letter-spacing: -0.5px;
 }
 
 .upgrade-subtitle {
   font-size: 0.88rem;
-  color: rgba(255, 255, 255, 0.72);
-  margin: 0 auto;
-  max-width: 420px;
-  line-height: 1.55;
+  color: rgba(255, 255, 255, 0.78);
+  margin: 0 auto 16px;
+  max-width: 620px;
+  line-height: 1.4;
 }
 
-/* Plans grid */
-.upgrade-plans-grid {
+/* Billing Toggle (Mensual vs Temporada) */
+.billing-toggle-container {
+  display: inline-flex;
+  background: rgba(0, 0, 0, 0.35);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 30px;
+  padding: 4px;
+  gap: 4px;
+  margin: 0 auto 12px;
+  max-width: 100%;
+}
+
+.billing-toggle-btn {
+  background: transparent;
+  border: none;
+  color: rgba(255, 255, 255, 0.75);
+  font-size: 0.84rem;
+  font-weight: 700;
+  padding: 8px 16px;
+  border-radius: 24px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.2s ease;
+  min-height: 38px;
+}
+
+.billing-toggle-btn.active {
+  background: #10B981;
+  color: #ffffff;
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
+}
+
+.billing-save-badge {
+  background: #F59E0B;
+  color: #000;
+  font-size: 0.68rem;
+  font-weight: 800;
+  padding: 2px 8px;
+  border-radius: 12px;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+}
+
+.upgrade-tax-notice {
+  font-size: 0.78rem;
+  color: rgba(255, 255, 255, 0.85);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.upgrade-season-hint {
+  color: #FBBF24;
+  font-weight: 600;
+}
+
+/* 4 Plans Grid */
+.upgrade-plans-grid-4 {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  border-bottom: 1px solid var(--border-color, rgba(255,255,255,0.08));
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  padding: 24px 20px;
 }
 
-@media (max-width: 520px) {
-  .upgrade-plans-grid {
-    grid-template-columns: 1fr;
+@media (max-width: 1024px) {
+  .upgrade-plans-grid-4 {
+    grid-template-columns: repeat(2, 1fr);
   }
 }
 
-/* Plan card */
+@media (max-width: 640px) {
+  .upgrade-plans-grid-4 {
+    grid-template-columns: 1fr;
+    padding: 16px 12px;
+  }
+}
+
+/* Plan Card */
 .upgrade-plan-card {
-  padding: 24px 20px 20px;
+  position: relative;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  padding: 20px 16px;
   display: flex;
   flex-direction: column;
-  gap: 0;
-  border-right: 1px solid var(--border-color, rgba(255,255,255,0.08));
+  transition: transform 0.2s, border-color 0.2s, box-shadow 0.2s;
 }
 
-.upgrade-plan-card:last-child {
-  border-right: none;
+.upgrade-plan-card:hover {
+  transform: translateY(-3px);
+  border-color: rgba(255, 255, 255, 0.2);
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.3);
 }
 
-.upgrade-plan-pro {
-  background: var(--bg-card, #1a2332);
+.upgrade-plan-card.has-badge {
+  border-color: rgba(16, 185, 129, 0.4);
+  background: linear-gradient(180deg, rgba(16, 185, 129, 0.06) 0%, rgba(255, 255, 255, 0.02) 100%);
 }
 
-.upgrade-plan-club {
-  background: linear-gradient(160deg, rgba(46,125,92,0.07) 0%, rgba(0,75,135,0.04) 100%);
-}
-
-/* Badge */
 .upgrade-plan-badge {
-  display: inline-block;
+  position: absolute;
+  top: -11px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #10B981;
+  color: #fff;
   font-size: 0.68rem;
-  font-weight: 900;
-  padding: 4px 10px;
-  border-radius: 20px;
-  letter-spacing: 0.8px;
+  font-weight: 800;
+  padding: 3px 10px;
+  border-radius: 12px;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.4);
+}
+
+.badge-club_premium {
+  background: #8B5CF6;
+  box-shadow: 0 2px 8px rgba(139, 92, 246, 0.4);
+}
+
+.upgrade-plan-header-box {
   margin-bottom: 12px;
-  width: fit-content;
-}
-
-.badge-popular {
-  background: rgba(0, 75, 135, 0.18);
-  color: #4fa3e8;
-  border: 1px solid rgba(79, 163, 232, 0.3);
-}
-
-.badge-club {
-  background: linear-gradient(135deg, rgba(212,168,67,0.15), rgba(184,134,11,0.1));
-  color: #D4A843;
-  border: 1px solid rgba(212,168,67,0.35);
-}
-
-.upgrade-plan-icon {
-  font-size: 34px;
-  margin-bottom: 8px;
+  text-align: center;
 }
 
 .upgrade-plan-name {
-  font-size: 1.1rem;
+  font-size: 1.18rem;
   font-weight: 800;
-  color: var(--text-primary, #fff);
-  margin: 0 0 10px;
-  font-family: var(--font-heading, 'Outfit', sans-serif);
+  color: #fff;
+  margin: 0 0 4px;
 }
 
+.upgrade-plan-tagline {
+  font-size: 0.72rem;
+  color: var(--text-secondary, #94A3B8);
+  margin: 0;
+  min-height: 28px;
+  line-height: 1.3;
+}
+
+/* Price block */
 .upgrade-plan-price {
-  display: flex;
-  align-items: baseline;
-  gap: 4px;
-  margin-bottom: 18px;
+  text-align: center;
+  margin-bottom: 4px;
 }
 
 .price-amount {
-  font-size: 2.1rem;
+  font-size: 1.75rem;
   font-weight: 900;
-  color: var(--text-primary, #fff);
-  font-family: var(--font-heading, 'Outfit', sans-serif);
-  line-height: 1;
+  color: #fff;
 }
 
 .price-period {
-  font-size: 0.85rem;
-  color: var(--text-secondary, rgba(255,255,255,0.55));
+  font-size: 0.78rem;
+  color: var(--text-secondary, #94A3B8);
+  margin-left: 3px;
+}
+
+.upgrade-price-breakdown {
+  font-size: 0.68rem;
+  color: rgba(255, 255, 255, 0.5);
+  text-align: center;
+  margin-bottom: 12px;
+}
+
+.upgrade-coach-cost-pill {
+  background: rgba(245, 158, 11, 0.12);
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  color: #FBBF24;
+  font-size: 0.72rem;
+  padding: 4px 8px;
+  border-radius: 8px;
+  text-align: center;
+  margin-bottom: 12px;
+}
+
+/* Limits summary */
+.upgrade-plan-limits-summary {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  background: rgba(0, 0, 0, 0.2);
+  padding: 8px 10px;
+  border-radius: 8px;
+  margin-bottom: 14px;
+}
+
+.limit-pill {
+  font-size: 0.74rem;
+  color: #E2E8F0;
 }
 
 /* Benefits list */
 .upgrade-benefits-list {
   list-style: none;
   padding: 0;
-  margin: 0 0 20px;
-  flex: 1;
+  margin: 0 0 18px 0;
+  flex-grow: 1;
   display: flex;
   flex-direction: column;
-  gap: 7px;
+  gap: 8px;
 }
 
 .upgrade-benefit-row {
   display: flex;
   align-items: flex-start;
-  gap: 9px;
-  font-size: 0.8rem;
-  color: var(--text-secondary, rgba(255,255,255,0.65));
-  line-height: 1.4;
+  gap: 8px;
+  font-size: 0.74rem;
+  line-height: 1.35;
+  color: rgba(255, 255, 255, 0.85);
 }
 
 .benefit-emoji {
-  font-size: 13px;
+  color: #10B981;
+  font-weight: bold;
+  font-size: 0.8rem;
+  line-height: 1;
   flex-shrink: 0;
-  margin-top: 1px;
 }
 
 /* Subscribe buttons */
 .upgrade-subscribe-btn {
   width: 100%;
-  min-height: 48px;
-  border: none;
+  padding: 10px 14px;
   border-radius: 10px;
-  font-weight: 800;
   font-size: 0.82rem;
-  letter-spacing: 0.7px;
-  cursor: pointer;
-  transition: all 0.22s cubic-bezier(0.34, 1.56, 0.64, 1);
+  font-weight: 800;
   text-transform: uppercase;
-  margin-top: auto;
-}
-
-.upgrade-subscribe-btn:disabled {
-  opacity: 0.55;
-  cursor: not-allowed;
-  transform: none !important;
+  letter-spacing: 0.6px;
+  cursor: pointer;
+  border: none;
+  transition: all 0.2s ease;
+  min-height: 42px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .btn-pro {
-  background: linear-gradient(135deg, #1B3A2D, #2e5a43);
+  background: #004b87;
   color: #fff;
-  box-shadow: 0 4px 16px rgba(27,58,45,0.3);
 }
 
-.btn-pro:hover:not(:disabled) {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 24px rgba(27,58,45,0.45);
+.btn-pro:hover {
+  background: #003a6a;
 }
 
-.btn-club {
-  background: linear-gradient(135deg, #2E7D5C, #1B5E42);
+.btn-club_starter {
+  background: #1B3A2D;
   color: #fff;
-  box-shadow: 0 4px 16px rgba(46,125,92,0.3);
+  border: 1px solid rgba(16, 185, 129, 0.4);
 }
 
-.btn-club:hover:not(:disabled) {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 24px rgba(46,125,92,0.45);
+.btn-club_starter:hover {
+  background: #244d3c;
+}
+
+.btn-club_pro {
+  background: #10B981;
+  color: #fff;
+  box-shadow: 0 4px 14px rgba(16, 185, 129, 0.35);
+}
+
+.btn-club_pro:hover {
+  background: #059669;
+  box-shadow: 0 6px 18px rgba(16, 185, 129, 0.45);
+}
+
+.btn-club_premium {
+  background: #8B5CF6;
+  color: #fff;
+  box-shadow: 0 4px 14px rgba(139, 92, 246, 0.35);
+}
+
+.btn-club_premium:hover {
+  background: #7C3AED;
+}
+
+/* Promo Code Box */
+.upgrade-promo-section {
+  margin: 0 20px 20px;
+  padding: 16px;
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: 12px;
+  border: 1px dashed rgba(255, 255, 255, 0.15);
+  text-align: center;
 }
 
 /* Footer */
 .upgrade-modal-footer {
-  padding: 16px 24px;
+  padding: 16px 20px 20px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
   text-align: center;
-  background: rgba(0, 0, 0, 0.08);
 }
 
 .upgrade-guarantee {
-  font-size: 0.76rem;
-  color: var(--text-secondary, rgba(255,255,255,0.45));
+  font-size: 0.74rem;
+  color: var(--text-secondary, #94A3B8);
   margin: 0 0 10px;
 }
 
 .upgrade-later-link {
-  background: transparent;
+  background: none;
   border: none;
-  color: var(--text-secondary, rgba(255,255,255,0.45));
-  font-size: 0.82rem;
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 0.76rem;
   cursor: pointer;
   text-decoration: underline;
-  padding: 4px 8px;
-  transition: color 0.2s;
+  padding: 6px;
+  min-height: 48px;
+  display: inline-flex;
+  align-items: center;
 }
 
 .upgrade-later-link:hover {
-  color: var(--text-primary, #fff);
+  color: #fff;
 }

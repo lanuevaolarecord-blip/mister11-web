@@ -11,7 +11,7 @@ import { generateExpediente } from '../utils/pdfGenerator';
 import { normalizeText } from '../utils/normalizeInput';
 import { normalizeEmail } from '../utils/normalizeEmail';
 import { storage, db } from '../firebaseConfig';
-import { doc, setDoc, deleteDoc, serverTimestamp } from 'firebase/firestore';
+import { collection, onSnapshot, doc, setDoc, deleteDoc, serverTimestamp } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { showToast } from '../utils/toast';
 import { sendChatNotification } from '../hooks/useLocalNotifications';

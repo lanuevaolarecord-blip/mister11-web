@@ -11,12 +11,13 @@ const STATUS_TAGS = {
   injured:   { label: 'Lesionado',  color: '#3B82F6', bg: 'rgba(59, 130, 246, 0.15)', icon: '🚑' },
 };
 
-export const PlayerAttendanceSubTab = ({ playerId }) => {
+export const PlayerAttendanceSubTab = ({ playerId, teamId }) => {
   const { activeTeamId } = useAuth();
+  const effectiveTeamId = teamId || activeTeamId;
   const { language } = useTranslation();
   const isEn = language === 'en' || language === 'English (EN)';
 
-  const { getPlayerStats, loading } = useAttendance(activeTeamId);
+  const { getPlayerStats, loading } = useAttendance(effectiveTeamId);
   const stats = getPlayerStats(playerId);
 
   if (loading) {

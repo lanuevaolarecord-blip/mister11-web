@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { updateDocument } from '../firebase/db';
+import { db } from '../firebaseConfig';
+import { doc, setDoc } from 'firebase/firestore';
 
-const PlayerHealthTab = ({ player, teamId }) => {
-  const { user } = useAuth();
+const PlayerHealthTab = ({ player, teamId, teamPath }) => {
+  const { user, getTeamPath } = useAuth();
   const [status, setStatus] = useState(player?.currentStatus || 'active');
   const [observations, setObservations] = useState(player?.medicalObservations || '');
   const [isSaving, setIsSaving] = useState(false);
@@ -11,6 +12,9 @@ const PlayerHealthTab = ({ player, teamId }) => {
   // Modal states for new injury
   const [showInjuryModal, setShowInjuryModal] = useState(false);
   const [newInjury, setNewInjury] = useState({ type: '', bodyZone: '', date: '', notes: '' });
+
+  const effectivePath = teamPath || (teamId ? getTeamPath(teamId) : null) || (user ? `users/${user.uid}/teams/${teamId}` : '');
+  const effectivePlayerId = player?.id || user?.uid;
 
   const getStatusColor = (s) => {
     switch (s) {
@@ -33,23 +37,26 @@ const PlayerHealthTab = ({ player, teamId }) => {
   };
 
   const saveHealthData = async () => {
+    if (!effectivePath || !effectivePlayerId) return;
     setIsSaving(true);
     try {
-      await updateDocument(`users/${user.uid}/teams/${teamId}/players`, player.id, {
+      const playerRef = doc(db, `${effectivePath}/players`, effectivePlayerId);
+      await setDoc(playerRef, {
         currentStatus: status,
         medicalObservations: observations,
         lastUpdated: new Date()
-      });
+      }, { merge: true });
       alert('Datos de salud guardados');
     } catch (error) {
       console.error(error);
-      alert('Error al guardar datos de salud');
+      alert('Error al guardar datos de salud: ' + (error.message || ''));
     } finally {
       setIsSaving(false);
     }
   };
 
   const handleAddInjury = async () => {
+    if (!effectivePath || !effectivePlayerId) return;
     if (!newInjury.type || !newInjury.bodyZone || !newInjury.date) {
       alert("Completa los campos obligatorios");
       return;
@@ -61,23 +68,26 @@ const PlayerHealthTab = ({ player, teamId }) => {
       timestamp: new Date()
     };
     
-    const updatedHistory = [...(player.injuryHistory || []), injuryEntry];
+    const updatedHistory = [...(player?.injuryHistory || []), injuryEntry];
     
     try {
-      await updateDocument(`users/${user.uid}/teams/${teamId}/players`, player.id, {
+      const playerRef = doc(db, `${effectivePath}/players`, effectivePlayerId);
+      await setDoc(playerRef, {
         injuryHistory: updatedHistory,
         currentStatus: 'injured'
-      });
+      }, { merge: true });
       setStatus('injured');
       setShowInjuryModal(false);
       setNewInjury({ type: '', bodyZone: '', date: '', notes: '' });
     } catch (error) {
       console.error("Error adding injury", error);
+      alert('Error al registrar lesión: ' + (error.message || ''));
     }
   };
 
   const handleRecoverInjury = async (injuryId) => {
-    const updatedHistory = (player.injuryHistory || []).map(inj => {
+    if (!effectivePath || !effectivePlayerId) return;
+    const updatedHistory = (player?.injuryHistory || []).map(inj => {
       if (inj.id === injuryId) {
         return { ...inj, recoveryDate: new Date() };
       }
@@ -85,9 +95,10 @@ const PlayerHealthTab = ({ player, teamId }) => {
     });
 
     try {
-      await updateDocument(`users/${user.uid}/teams/${teamId}/players`, player.id, {
+      const playerRef = doc(db, `${effectivePath}/players`, effectivePlayerId);
+      await setDoc(playerRef, {
         injuryHistory: updatedHistory
-      });
+      }, { merge: true });
     } catch (error) {
       console.error("Error recovering injury", error);
     }
@@ -104,7 +115,7 @@ const PlayerHealthTab = ({ player, teamId }) => {
             style={{ 
               width: '100%', 
               padding: '10px', 
-              borderRadius: '8px',
+              borderRadius: '8px', 
               border: `2px solid ${getStatusColor(status)}`,
               backgroundColor: 'var(--input-bg)',
               color: 'var(--text-primary)',
@@ -140,7 +151,7 @@ const PlayerHealthTab = ({ player, teamId }) => {
           <button className="btn-secondary" onClick={() => setShowInjuryModal(true)} style={{ padding: '6px 12px', fontSize: '0.8rem' }}>+ Registrar Lesión</button>
         </div>
 
-        {(!player.injuryHistory || player.injuryHistory.length === 0) ? (
+        {(!player?.injuryHistory || player.injuryHistory.length === 0) ? (
           <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', textAlign: 'center', padding: '20px 0', border: '1px dashed var(--border-color)', borderRadius: '8px' }}>
             No hay lesiones registradas.
           </p>

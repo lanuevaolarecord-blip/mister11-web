@@ -174,39 +174,11 @@ const PlayerDashboard = () => {
         )}
 
         {activeTab === 'profile' && (
-          <div>
-            {/* Sub-selector de Perfil vs Plan de Mejora */}
-            <div className="player-subnav-pills">
-              <button
-                type="button"
-                className={`player-subnav-pill ${profileSubTab === 'profile' ? 'active' : ''}`}
-                onClick={() => setProfileSubTab('profile')}
-              >
-                <User size={15} /> Ficha & Bienestar
-              </button>
-              <button
-                type="button"
-                className={`player-subnav-pill ${profileSubTab === 'plans' ? 'active' : ''}`}
-                onClick={() => setProfileSubTab('plans')}
-              >
-                <Target size={15} /> Plan de Mejora
-              </button>
-            </div>
-
-            {profileSubTab === 'profile' ? (
-              <PlayerProfileTab
-                player={player}
-                team={activeTeam}
-                teamPath={teamPath}
-              />
-            ) : (
-              <PlayerPlansPortalTab
-                player={player}
-                team={activeTeam}
-                teamPath={teamPath}
-              />
-            )}
-          </div>
+          <PlayerProfileTab
+            player={player}
+            team={activeTeam}
+            teamPath={teamPath}
+          />
         )}
       </main>
 

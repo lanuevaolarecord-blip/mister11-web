@@ -83,6 +83,70 @@ export const scheduleSessionReminder = async (session) => {
 };
 
 /**
+ * Envía una notificación inmediata de nuevo mensaje de chat.
+ * Compatible con Android nativo (Capacitor) y navegadores web (Notification API).
+ *
+ * @param {Object} params - { title, body, senderName, extra }
+ */
+export const sendChatNotification = async ({ title, body, senderName, extra = {} }) => {
+  const finalTitle = title || (senderName ? `💬 Mensaje de ${senderName}` : '💬 Nuevo mensaje en Míster11');
+  const finalBody = body || 'Tienes un nuevo mensaje sin leer.';
+
+  // 1. Android Nativo (Capacitor)
+  const plugin = await getPlugin();
+  if (plugin) {
+    try {
+      const numericId = Math.floor(Math.random() * 1000000) + 1;
+      await plugin.schedule({
+        notifications: [
+          {
+            id: numericId,
+            title: finalTitle,
+            body: finalBody,
+            schedule: { at: new Date(Date.now() + 100) },
+            sound: 'default',
+            smallIcon: 'ic_stat_icon_config_sample',
+            iconColor: '#10B981',
+            extra
+          }
+        ]
+      });
+      return;
+    } catch (err) {
+      console.warn('[LocalNotifications] Error enviando notificación de chat en Android:', err);
+    }
+  }
+
+  // 2. Navegador Web (Notification API)
+  if (typeof window !== 'undefined' && 'Notification' in window) {
+    try {
+      if (Notification.permission === 'granted') {
+        new Notification(finalTitle, {
+          body: finalBody,
+          icon: '/logo_mister11.png',
+          badge: '/logo_mister11.png',
+          tag: 'mister11-chat',
+          data: extra
+        });
+      } else if (Notification.permission === 'default') {
+        Notification.requestPermission().then(perm => {
+          if (perm === 'granted') {
+            new Notification(finalTitle, {
+              body: finalBody,
+              icon: '/logo_mister11.png',
+              tag: 'mister11-chat',
+              data: extra
+            });
+          }
+        });
+      }
+    } catch (webErr) {
+      console.warn('[LocalNotifications] Error enviando notificación web:', webErr);
+    }
+  }
+};
+
+/**
  * Cancela el recordatorio de una sesión (p.ej. si se elimina).
  * @param {string} sessionId
  */
@@ -98,3 +162,5 @@ export const cancelSessionReminder = async (sessionId) => {
     console.warn('[LocalNotifications] Error al cancelar recordatorio:', e);
   }
 };
+
+

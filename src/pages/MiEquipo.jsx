@@ -14,6 +14,7 @@ import { storage, db } from '../firebaseConfig';
 import { doc, setDoc, deleteDoc, serverTimestamp } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { showToast } from '../utils/toast';
+import { sendChatNotification } from '../hooks/useLocalNotifications';
 import PlayerHealthTab from '../components/PlayerHealthTab';
 import PlayerPlansTab from '../components/PlayerPlansTab';
 import { TeamAttendanceTab } from '../components/TeamAttendanceTab';
@@ -104,6 +105,46 @@ const MiEquipo = () => {
       }
     });
   }, [players, activeTeam?.id, getTeamPath]);
+
+  // Escuchar mensajes no leídos del chat de todos los jugadores para el entrenador
+  const [unreadThreads, setUnreadThreads] = useState({});
+  const lastCoachNotifiedMsgRef = React.useRef({});
+
+  useEffect(() => {
+    if (!activeTeam?.id || typeof getTeamPath !== 'function' || !user) return;
+    const teamPathStr = getTeamPath(activeTeam.id);
+    if (!teamPathStr) return;
+
+    const cleanP = teamPathStr.replace(/^\/+|\/+$/g, '');
+    const threadsCol = collection(db, `${cleanP}/threads`);
+    const unsub = onSnapshot(threadsCol, (snap) => {
+      const unreadMap = {};
+      snap.docs.forEach((d) => {
+        const data = d.data();
+        const pId = d.id;
+        const isUnread = data.unreadByCoach === true && data.lastSenderUid !== user.uid;
+        if (isUnread) {
+          unreadMap[pId] = true;
+          // Si es un mensaje nuevo, notificar al míster
+          if (data.lastMessage && lastCoachNotifiedMsgRef.current[pId] !== data.lastMessage) {
+            lastCoachNotifiedMsgRef.current[pId] = data.lastMessage;
+            sendChatNotification({
+              title: `💬 Mensaje de ${data.playerName || 'Jugador'}`,
+              body: data.lastMessage,
+              senderName: data.playerName || 'Jugador',
+              extra: { playerId: pId }
+            });
+            showToast(`💬 Mensaje de ${data.playerName || 'Jugador'}: "${data.lastMessage}"`, 'info');
+          }
+        }
+      });
+      setUnreadThreads(unreadMap);
+    }, (err) => {
+      console.warn('[MiEquipo] Error escuchando hilos de chat:', err);
+    });
+
+    return () => unsub();
+  }, [activeTeam?.id, getTeamPath, user]);
 
   const filteredPlayers = filter === 'TODOS' 
     ? players 
@@ -417,6 +458,27 @@ const MiEquipo = () => {
                     {player.email || player.requesterEmail || 'Sin cuenta vinculada'}
                   </span>
                 </div>
+
+                {unreadThreads[player.id] && (
+                  <div style={{
+                    position: 'absolute',
+                    top: '8px',
+                    left: '8px',
+                    background: '#10B981',
+                    color: '#FFFFFF',
+                    borderRadius: '12px',
+                    padding: '2px 8px',
+                    fontSize: '10px',
+                    fontWeight: '800',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '4px',
+                    boxShadow: '0 2px 8px rgba(16, 185, 129, 0.4)',
+                    animation: 'pulse 2s infinite'
+                  }}>
+                    💬 Mensaje
+                  </div>
+                )}
 
                 {(player.currentStatus === 'injured' || player.currentStatus === 'recovery') && <div style={{ position: 'absolute', top: '8px', right: '8px', background: 'var(--bg-card)', borderRadius: '50%', padding: '4px', boxShadow: 'var(--shadow-card)' }} title={player.currentStatus === 'injured' ? "Lesionado" : "En recuperación"}>🚑</div>}
               </div>

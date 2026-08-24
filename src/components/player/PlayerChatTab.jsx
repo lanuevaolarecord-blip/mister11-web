@@ -112,10 +112,12 @@ export const PlayerChatTab = ({ teamPath, player, team, isParentView = false, is
         playerName: player?.name || 'Jugador',
         lastMessage: text,
         lastSender: senderName,
+        lastSenderUid: user.uid,
         lastSenderRole: senderRole,
         updatedAt: serverTimestamp(),
         unreadByCoach: !isCoachSender,
-        unreadByPlayer: isCoachSender
+        unreadByPlayer: isCoachSender,
+        readBy: [user.uid]
       }, { merge: true });
 
       setInputText('');

@@ -15,6 +15,8 @@ import { PlayerStatsTab } from '../components/player/PlayerStatsTab';
 import { PlayerProfileTab } from '../components/player/PlayerProfileTab';
 import { Shield, Loader, Sun, Moon, LogOut, HeartHandshake, UserCheck, Users, Bell, KeyRound, ArrowRight } from 'lucide-react';
 import { usePushNotifications } from '../hooks/usePushNotifications';
+import { sendChatNotification } from '../hooks/useLocalNotifications';
+import { showToast } from '../utils/toast';
 import './PlayerDashboard.css';
 
 const normalizeStr = (str) => (str || '').toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
@@ -155,7 +157,8 @@ const PlayerDashboard = () => {
   // 3. Hook de logros deportivos en tiempo real
   const { achievements, closestAchievement, loading: loadingAchievements } = useAchievements(cleanPath, player?.id, isParentView);
 
-  // 4. Escuchar si hay mensajes no leídos en el hilo 1:1
+  // 4. Escuchar si hay mensajes no leídos en el hilo 1:1 y emitir notificación
+  const lastNotifiedMsgRef = React.useRef(null);
   useEffect(() => {
     if (!cleanPath || !player?.id) return;
 
@@ -164,16 +167,26 @@ const PlayerDashboard = () => {
       if (snap.exists()) {
         const data = snap.data();
         const lastSenderUid = data.lastSenderUid;
-        if (lastSenderUid && lastSenderUid !== user?.uid && !data.readBy?.includes(user?.uid)) {
-          setHasUnreadMessages(true);
-        } else {
-          setHasUnreadMessages(false);
+        const isUnread = lastSenderUid && lastSenderUid !== user?.uid && !data.readBy?.includes(user?.uid);
+        setHasUnreadMessages(!!isUnread);
+
+        if (isUnread && data.lastMessage && lastNotifiedMsgRef.current !== data.lastMessage) {
+          lastNotifiedMsgRef.current = data.lastMessage;
+          if (activeTab !== 'chat') {
+            sendChatNotification({
+              title: `💬 Mensaje de tu Míster (${activeTeam?.nombre || 'Equipo'})`,
+              body: data.lastMessage,
+              senderName: 'Míster',
+              extra: { tab: 'chat', playerId: player.id }
+            });
+            showToast(`💬 Nuevo mensaje del Míster: "${data.lastMessage}"`, 'info');
+          }
         }
       }
     });
 
     return () => unsub();
-  }, [cleanPath, player?.id, user?.uid]);
+  }, [cleanPath, player?.id, user?.uid, activeTab, activeTeam?.nombre]);
 
   // Hook de notificaciones push con deep links
   const { showPrompt, checkPromptEligibility, acceptNotifications, dismissNotifications } = usePushNotifications(setActiveTab);

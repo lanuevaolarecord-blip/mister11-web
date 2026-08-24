@@ -1152,5 +1152,64 @@
   }
 }
 
+/* =============================================================
+   CONTRASTE UNIVERSAL DE ALTO RENDIMIENTO (MODO CLARO & OSCURO)
+   ============================================================= */
+.dark .event-selector-modal,
+html.dark .event-selector-modal {
+  background: #1E1E1E !important;
+  border: 1.5px solid #333333 !important;
+}
 
+.dark .event-selector-title,
+html.dark .event-selector-title {
+  color: #F5F0E8 !important;
+}
 
+.dark .event-selector-item,
+html.dark .event-selector-item {
+  background: #2A2A2A !important;
+  border: 1px solid #3E3E3E !important;
+  color: #FFFFFF !important;
+}
+
+.dark .event-selector-item:hover,
+html.dark .event-selector-item:hover {
+  background: #384F42 !important;
+  border-color: #4CAF7D !important;
+  color: #FFFFFF !important;
+}
+
+html:not(.dark) .event-selector-item,
+html.light .event-selector-item {
+  background: #FFFFFF !important;
+  border: 1px solid #D1D5DB !important;
+  color: #0F172A !important;
+}
+
+html:not(.dark) .event-selector-item:hover,
+html.light .event-selector-item:hover {
+  background: #EAF1ED !important;
+  border-color: #10B981 !important;
+  color: #1B3A2D !important;
+}
+
+/* Badges y selects en modo oscuro */
+.dark select,
+html.dark select {
+  background-color: #1E1E1E !important;
+  color: #FFFFFF !important;
+  border-color: #444444 !important;
+}
+
+.dark select option,
+html.dark select option {
+  background-color: #1E1E1E !important;
+  color: #FFFFFF !important;
+}
+
+html:not(.dark) select option,
+html.light select option {
+  background-color: #FFFFFF !important;
+  color: #0F172A !important;
+}

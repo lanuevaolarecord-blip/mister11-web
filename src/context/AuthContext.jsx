@@ -20,6 +20,7 @@ export const AuthProvider = ({ children }) => {
   const [clubTeamsLoaded, setClubTeamsLoaded] = useState(false);
   const [sharedTeams, setSharedTeams] = useState([]);
   const [sharedTeamsLoaded, setSharedTeamsLoaded] = useState(false);
+  const [activeMode, setActiveModeState] = useState(() => localStorage.getItem('mister11_active_mode') || null);
 
   // Ref para saber si estamos en modo invitado sin depender del estado (evita loops)
   const isGuestRef = React.useRef(false);
@@ -358,11 +359,11 @@ export const AuthProvider = ({ children }) => {
       }];
     }
     // Si el usuario es jugador o tiene equipos compartidos, los compartidos van primero
-    if (userProfile?.role === 'player' || currentMode === 'player') {
+    if (userProfile?.role === 'player' || activeMode === 'player') {
       if (sharedTeams.length > 0) return [...sharedTeams, ...clubTeams];
     }
     return [...sharedTeams, ...clubTeams, ...personalTeams];
-  }, [user, personalTeams, clubTeams, sharedTeams, userProfile?.role, currentMode]);
+  }, [user, personalTeams, clubTeams, sharedTeams, userProfile?.role, activeMode]);
 
   // Selección de equipo activo y creación de equipo por defecto
   useEffect(() => {
@@ -380,7 +381,7 @@ export const AuthProvider = ({ children }) => {
 
     // Si tiene equipos compartidos (ej. asignado por su entrenador), priorizarlos siempre
     let combinedTeams = [];
-    if (userProfile?.role === 'player' || currentMode === 'player' || sharedTeams.length > 0) {
+    if (userProfile?.role === 'player' || activeMode === 'player' || sharedTeams.length > 0) {
       combinedTeams = [...sharedTeams, ...clubTeams, ...personalTeams];
     } else {
       combinedTeams = [...personalTeams, ...clubTeams, ...sharedTeams];
@@ -398,7 +399,7 @@ export const AuthProvider = ({ children }) => {
       setLoading(false);
     } else {
       // Si es un jugador y no tiene equipos, no crear equipo falso
-      if (userProfile?.role === 'player' || currentMode === 'player') {
+      if (userProfile?.role === 'player' || activeMode === 'player') {
         setActiveTeamId(null);
         setLoading(false);
         return;
@@ -543,8 +544,6 @@ export const AuthProvider = ({ children }) => {
       setLoading(false);
     }
   }, [user]);
-
-  const [activeMode, setActiveModeState] = useState(() => localStorage.getItem('mister11_active_mode') || null);
 
   const switchMode = useCallback((mode) => {
     if (mode === 'player' || mode === 'coach') {

@@ -108,27 +108,41 @@
 }
 
 /* ─── MODO CLARO COMPATIBILIDAD ─── */
+html.light .player-tab-card,
+html:not(.dark) .player-tab-card,
+body.light .player-tab-card,
 .theme-light .player-tab-card,
 [data-theme="light"] .player-tab-card {
   background: #F1F5F9;
   border-color: #CBD5E1;
-  color: #475569;
+  color: #334155;
+  font-weight: 700;
 }
 
+html.light .player-tab-card:hover:not(.active),
+html:not(.dark) .player-tab-card:hover:not(.active),
+body.light .player-tab-card:hover:not(.active),
 .theme-light .player-tab-card:hover:not(.active),
 [data-theme="light"] .player-tab-card:hover:not(.active) {
   background: #E2E8F0;
   color: #0F172A;
 }
 
+html.light .player-tab-card.active,
+html:not(.dark) .player-tab-card.active,
+body.light .player-tab-card.active,
 .theme-light .player-tab-card.active,
 [data-theme="light"] .player-tab-card.active {
-  background: rgba(76, 175, 125, 0.16);
-  border-color: #1E6649;
-  color: #1E6649;
+  background: rgba(16, 185, 129, 0.14);
+  border: 1.5px solid #059669;
+  color: #047857;
+  font-weight: 800;
 }
 
+html.light .player-tab-active-indicator,
+html:not(.dark) .player-tab-active-indicator,
+body.light .player-tab-active-indicator,
 .theme-light .player-tab-active-indicator,
 [data-theme="light"] .player-tab-active-indicator {
-  background: #1E6649;
+  background: #047857;
 }

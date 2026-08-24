@@ -174,7 +174,7 @@ export const PlayerChatTab = ({ teamPath, player, team, isParentView = false, is
           </div>
         ) : messages.length === 0 ? (
           <div className="chat-empty-state">
-            <MessageSquare size={36} color="var(--text-muted)" />
+            <MessageSquare size={38} className="chat-empty-icon" style={{ color: 'var(--accent-green, #10B981)' }} />
             <p>Aún no hay mensajes en este canal.</p>
             <span>Escribe un mensaje o pulsa una de las opciones rápidas arriba.</span>
           </div>

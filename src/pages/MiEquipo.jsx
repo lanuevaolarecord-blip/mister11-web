@@ -365,10 +365,28 @@ const MiEquipo = () => {
                   </div>
                 </div>
 
-                {/* Email / Estado de Vinculación */}
-                <div style={{ margin: '0 12px 10px 12px', padding: '4px 8px', borderRadius: '6px', background: (player.email || player.requesterEmail) ? 'rgba(16, 185, 129, 0.1)' : 'rgba(148, 163, 184, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px', overflow: 'hidden' }}>
-                  <Mail size={11} color={(player.email || player.requesterEmail) ? '#10B981' : '#94A3B8'} />
-                  <span style={{ fontSize: '10.5px', fontWeight: 600, color: (player.email || player.requesterEmail) ? '#10B981' : '#94A3B8', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                {/* Email / Estado de Vinculación con Alto Contraste */}
+                <div style={{
+                  margin: '0 12px 10px 12px',
+                  padding: '4px 8px',
+                  borderRadius: '6px',
+                  background: (player.email || player.requesterEmail) ? 'rgba(16, 185, 129, 0.14)' : 'rgba(100, 116, 139, 0.12)',
+                  border: (player.email || player.requesterEmail) ? '1px solid rgba(16, 185, 129, 0.35)' : '1px solid rgba(100, 116, 139, 0.25)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '5px',
+                  overflow: 'hidden'
+                }}>
+                  <Mail size={12} color={(player.email || player.requesterEmail) ? '#059669' : '#475569'} />
+                  <span style={{
+                    fontSize: '11px',
+                    fontWeight: 700,
+                    color: (player.email || player.requesterEmail) ? '#047857' : '#475569',
+                    whiteSpace: 'nowrap',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis'
+                  }}>
                     {player.email || player.requesterEmail || 'Sin cuenta vinculada'}
                   </span>
                 </div>

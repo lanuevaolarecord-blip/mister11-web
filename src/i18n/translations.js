@@ -169,8 +169,35 @@ export const translations = {
 
     // ── Live Stats (módulo de captura en vivo) ───────────────────────
     'nav.partidos.livestats': 'LIVE STATS',
+
+    // ── Pestañas Perfil de Jugador ────────────────────────────────────
+    'player.tab.general': 'GENERAL',
+    'player.tab.physical': 'FÍSICO',
+    'player.tab.health': 'SALUD',
+    'player.tab.plans': 'PLANES',
+    'player.tab.stats': 'STATS',
+    'player.tab.attendance': 'ASISTENCIA',
+    'equipo.tab.general': 'GENERAL',
+    'equipo.tab.physical': 'FÍSICO',
+    'equipo.tab.health': 'SALUD',
+    'equipo.tab.plans': 'PLANES',
+    'equipo.tab.stats': 'STATS',
+    'equipo.tab.attendance': 'ASISTENCIA',
   },
   'English (EN)': {
+    // ── Player Profile Tabs ───────────────────────────────────────────
+    'player.tab.general': 'GENERAL',
+    'player.tab.physical': 'PHYSICAL',
+    'player.tab.health': 'HEALTH',
+    'player.tab.plans': 'PLANS',
+    'player.tab.stats': 'STATS',
+    'player.tab.attendance': 'ATTENDANCE',
+    'equipo.tab.general': 'GENERAL',
+    'equipo.tab.physical': 'PHYSICAL',
+    'equipo.tab.health': 'HEALTH',
+    'equipo.tab.plans': 'PLANS',
+    'equipo.tab.stats': 'STATS',
+    'equipo.tab.attendance': 'ATTENDANCE',
     'nav.dashboard': 'DASHBOARD',
     'nav.pizarra': 'TACTICAL BOARD',
     'nav.equipo': 'MY TEAM',

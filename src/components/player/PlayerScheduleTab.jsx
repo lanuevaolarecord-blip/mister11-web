@@ -3,7 +3,21 @@ import { collection, onSnapshot, doc, setDoc, serverTimestamp } from 'firebase/f
 import { db } from '../../firebaseConfig';
 import { useAuth } from '../../context/AuthContext';
 import { showToast } from '../../utils/toast';
-import { Calendar as CalendarIcon, Clock, MapPin, CheckCircle, XCircle, AlertTriangle, HelpCircle, ChevronLeft, ChevronRight } from 'lucide-react';
+import { 
+  Calendar as CalendarIcon, 
+  Clock, 
+  MapPin, 
+  CheckCircle, 
+  XCircle, 
+  AlertTriangle, 
+  HelpCircle, 
+  ChevronLeft, 
+  ChevronRight,
+  ShieldCheck,
+  Award,
+  Sparkles,
+  Trophy
+} from 'lucide-react';
 
 const RSVP_OPTIONS = [
   { id: 'going', label: 'Iré', color: '#10B981', bg: 'rgba(16, 185, 129, 0.15)', icon: CheckCircle },
@@ -12,19 +26,22 @@ const RSVP_OPTIONS = [
   { id: 'justified', label: 'Justificado', color: '#3B82F6', bg: 'rgba(59, 130, 246, 0.15)', icon: HelpCircle },
 ];
 
-export const PlayerScheduleTab = ({ player, team, teamPath }) => {
+export const PlayerScheduleTab = ({ player, team, teamPath, isParentView = false }) => {
   const { user } = useAuth();
   const [events, setEvents] = useState([]);
   const [rsvps, setRsvps] = useState({});
   const [selectedMonth, setSelectedMonth] = useState(new Date());
   const [savingEventId, setSavingEventId] = useState(null);
 
-  // Escuchar eventos (sesiones y partidos)
+  const effectivePlayerId = player?.id || user?.uid;
+  const cleanPath = teamPath ? teamPath.replace(/^\/+|\/+$/g, '') : '';
+
+  // Escuchar eventos (sesiones y partidos) en tiempo real con onSnapshot
   useEffect(() => {
-    if (!teamPath) return;
+    if (!cleanPath) return;
 
     // 1. Escuchar sesiones
-    const sessionsRef = collection(db, `${teamPath}/sessions`);
+    const sessionsRef = collection(db, `${cleanPath}/sessions`);
     const unsubSessions = onSnapshot(sessionsRef, (snap) => {
       const sessions = snap.docs.map(d => ({
         id: d.id,
@@ -38,7 +55,7 @@ export const PlayerScheduleTab = ({ player, team, teamPath }) => {
       }));
 
       // 2. Escuchar partidos
-      const matchesRef = collection(db, `${teamPath}/matches`);
+      const matchesRef = collection(db, `${cleanPath}/matches`);
       const unsubMatches = onSnapshot(matchesRef, (snapM) => {
         const matches = snapM.docs.map(d => ({
           id: d.id,
@@ -64,41 +81,40 @@ export const PlayerScheduleTab = ({ player, team, teamPath }) => {
     });
 
     return () => unsubSessions();
-  }, [teamPath]);
+  }, [cleanPath]);
 
   // Escuchar RSVPs guardados en attendance
   useEffect(() => {
-    if (!teamPath) return;
+    if (!cleanPath) return;
 
-    const attRef = collection(db, `${teamPath}/attendance`);
+    const attRef = collection(db, `${cleanPath}/attendance`);
     const unsubAtt = onSnapshot(attRef, (snap) => {
       const rsvpMap = {};
       snap.docs.forEach(docSnap => {
         const data = docSnap.data();
         const eventId = docSnap.id;
-        const playerId = player?.id || user?.uid;
-        if (data.playerRsvp && data.playerRsvp[playerId]) {
-          rsvpMap[eventId] = data.playerRsvp[playerId];
+        if (data.playerRsvp && data.playerRsvp[effectivePlayerId]) {
+          rsvpMap[eventId] = data.playerRsvp[effectivePlayerId];
         }
       });
       setRsvps(rsvpMap);
     });
 
     return () => unsubAtt();
-  }, [teamPath, player?.id, user?.uid]);
+  }, [cleanPath, effectivePlayerId]);
 
   const handleRsvp = async (eventId, optionId) => {
-    if (!teamPath || !eventId) return;
-    const playerId = player?.id || user?.uid;
+    if (!cleanPath || !eventId) return;
     setSavingEventId(eventId);
 
     try {
-      const attDocRef = doc(db, `${teamPath}/attendance`, eventId);
+      const attDocRef = doc(db, `${cleanPath}/attendance`, eventId);
       await setDoc(attDocRef, {
         playerRsvp: {
-          [playerId]: {
+          [effectivePlayerId]: {
             status: optionId,
             playerName: player?.name || user?.displayName || 'Jugador',
+            respondedBy: isParentView ? 'parent' : 'player',
             updatedAt: serverTimestamp(),
           }
         }
@@ -119,7 +135,6 @@ export const PlayerScheduleTab = ({ player, team, teamPath }) => {
     }
   };
 
-  // Función ultra-robusta para parsear fechas de sesiones, partidos y planning
   const parseEventDate = (rawDate) => {
     if (!rawDate) return null;
     if (typeof rawDate === 'string') {
@@ -143,40 +158,36 @@ export const PlayerScheduleTab = ({ player, team, teamPath }) => {
     return null;
   };
 
-  // Filtrar eventos del mes seleccionado
   const filteredEvents = events.filter(e => {
     const parsed = parseEventDate(e.date || e.fecha);
     if (!parsed) return false;
     return parsed.month === selectedMonth.getMonth() && parsed.year === selectedMonth.getFullYear();
   });
 
-  const monthYearLabel = selectedMonth.toLocaleDateString('es-ES', { month: 'long', year: 'numeric' });
-
-  const nextMonth = () => {
-    setSelectedMonth(new Date(selectedMonth.getFullYear(), selectedMonth.getMonth() + 1, 1));
-  };
-
-  const prevMonth = () => {
-    setSelectedMonth(new Date(selectedMonth.getFullYear(), selectedMonth.getMonth() - 1, 1));
-  };
-
-  // Eventos a mostrar: si el mes no tiene eventos pero hay otros en la temporada, permitir ver próximos
   const displayEvents = filteredEvents.length > 0 ? filteredEvents : events;
   const isShowingAllUpcoming = filteredEvents.length === 0 && events.length > 0;
 
+  const prevMonth = () => {
+    setSelectedMonth(prev => new Date(prev.getFullYear(), prev.getMonth() - 1, 1));
+  };
+
+  const nextMonth = () => {
+    setSelectedMonth(prev => new Date(prev.getFullYear(), prev.getMonth() + 1, 1));
+  };
+
+  const monthYearLabel = selectedMonth.toLocaleDateString('es-ES', { month: 'long', year: 'numeric' });
+
   return (
     <div className="player-tab-content player-schedule-tab">
-      <div className="tab-header-box">
-        <h2 className="tab-title">Agenda y Convocatorias</h2>
-        <p className="tab-subtitle">Confirma tu asistencia a los próximos entrenamientos y partidos.</p>
-      </div>
-
+      
       {/* Selector de Mes */}
-      <div className="month-picker-bar">
+      <div className="schedule-month-selector">
         <button className="month-nav-btn" onClick={prevMonth} aria-label="Mes anterior">
           <ChevronLeft size={20} />
         </button>
-        <span className="month-label">{monthYearLabel.toUpperCase()}</span>
+        <span className="month-display-label">
+          {monthYearLabel.toUpperCase()}
+        </span>
         <button className="month-nav-btn" onClick={nextMonth} aria-label="Mes siguiente">
           <ChevronRight size={20} />
         </button>
@@ -209,6 +220,16 @@ export const PlayerScheduleTab = ({ player, team, teamPath }) => {
               ? parsed.dateObj.toLocaleDateString('es-ES', { weekday: 'short', day: 'numeric', month: 'short' }) 
               : (evt.date || 'Fecha');
 
+            // LÓGICA DE PRIVACIDAD DE CONVOCATORIA (FASE 2)
+            const isFinished = evt.status === 'finalizado' || evt.estado === 'finalizado';
+            const isCalled = evt.convocados?.includes(effectivePlayerId) || 
+                             evt.titulares?.includes(effectivePlayerId) || 
+                             evt.suplentes?.includes(effectivePlayerId);
+            const isStarter = evt.titulares?.includes(effectivePlayerId);
+            const isSub = evt.suplentes?.includes(effectivePlayerId);
+            const isReserva = evt.reservas?.includes(effectivePlayerId);
+            const playerStats = evt.playerStats?.[effectivePlayerId];
+
             return (
               <div key={evt.id} className={`event-card-item ${isMatch ? 'match-card' : 'session-card'}`}>
                 <div className="event-card-top">
@@ -227,9 +248,86 @@ export const PlayerScheduleTab = ({ player, team, teamPath }) => {
                   <span><MapPin size={14} /> {evt.location}</span>
                 </div>
 
+                {/* SECCIÓN DE ESTADO DE CONVOCATORIA PARA PARTIDOS */}
+                {isMatch && (
+                  <div className="callup-status-box" style={{
+                    margin: '12px 0',
+                    padding: '10px 12px',
+                    borderRadius: '10px',
+                    background: isCalled 
+                      ? 'rgba(16, 185, 129, 0.12)' 
+                      : isReserva 
+                      ? 'rgba(245, 158, 11, 0.12)' 
+                      : 'rgba(255, 255, 255, 0.05)',
+                    border: `1px solid ${isCalled ? 'rgba(16, 185, 129, 0.35)' : isReserva ? 'rgba(245, 158, 11, 0.35)' : 'rgba(255, 255, 255, 0.1)'}`
+                  }}>
+                    {!isFinished ? (
+                      // ANTES DEL PARTIDO: PRIVACIDAD TOTAL (Solo Convocado / Reserva / No Convocado)
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        {isCalled ? (
+                          <>
+                            <ShieldCheck size={18} color="#10B981" />
+                            <div>
+                              <strong style={{ color: '#10B981', fontSize: '0.88rem', display: 'block' }}>
+                                ¡Convocado para el partido!
+                              </strong>
+                              <span style={{ fontSize: '0.74rem', color: 'var(--text-secondary)' }}>
+                                Has sido convocado por el cuerpo técnico. ¡Da el 100% en el campo!
+                              </span>
+                            </div>
+                          </>
+                        ) : isReserva ? (
+                          <>
+                            <AlertTriangle size={18} color="#F59E0B" />
+                            <div>
+                              <strong style={{ color: '#F59E0B', fontSize: '0.88rem', display: 'block' }}>
+                                Reserva / Convocatoria en espera
+                              </strong>
+                              <span style={{ fontSize: '0.74rem', color: 'var(--text-secondary)' }}>
+                                Mantente atento por si se produce alguna vacante de última hora.
+                              </span>
+                            </div>
+                          </>
+                        ) : (
+                          <>
+                            <HelpCircle size={18} color="var(--text-secondary)" />
+                            <div>
+                              <strong style={{ color: 'var(--text-secondary)', fontSize: '0.88rem', display: 'block' }}>
+                                No convocado para esta jornada
+                              </strong>
+                              <span style={{ fontSize: '0.74rem', color: 'var(--text-muted)' }}>
+                                ¡Mucho ánimo y a seguir dándolo todo en los entrenamientos!
+                              </span>
+                            </div>
+                          </>
+                        )}
+                      </div>
+                    ) : (
+                      // TRAS EL PARTIDO: DATOS COMPLETOS
+                      <div>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                          <span style={{ fontSize: '0.82rem', fontWeight: 800, color: '#FFFFFF' }}>
+                            {isStarter ? '⭐ Titular' : isSub ? '🔄 Suplente' : isCalled ? '📋 Convocado' : 'Sin minutos'}
+                          </span>
+                          <span style={{ fontSize: '0.75rem', color: 'var(--accent-gold)' }}>
+                            ⏱️ {playerStats?.minutesPlayed || 0} min jugados
+                          </span>
+                        </div>
+                        {playerStats?.coachRating && (
+                          <div style={{ fontSize: '0.78rem', color: '#10B981', fontWeight: 700 }}>
+                            Nota del Míster: {playerStats.coachRating} / 10
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                )}
+
                 {/* BOTONES RSVP */}
                 <div className="rsvp-section">
-                  <span className="rsvp-prompt">¿Asistirás a esta sesión?</span>
+                  <span className="rsvp-prompt">
+                    {isParentView ? `¿Asistirá ${player?.name || 'tu hijo'} a este evento?` : '¿Asistirás a esta sesión?'}
+                  </span>
                   <div className="rsvp-buttons-grid">
                     {RSVP_OPTIONS.map((opt) => {
                       const isSelected = currentRsvp === opt.id;
@@ -243,7 +341,8 @@ export const PlayerScheduleTab = ({ player, team, teamPath }) => {
                           style={{
                             borderColor: isSelected ? opt.color : 'var(--border-color)',
                             backgroundColor: isSelected ? opt.bg : 'transparent',
-                            color: isSelected ? opt.color : 'var(--text-secondary)'
+                            color: isSelected ? opt.color : 'var(--text-secondary)',
+                            minHeight: '44px'
                           }}
                           onClick={() => handleRsvp(evt.id, opt.id)}
                           disabled={savingEventId === evt.id}
@@ -269,3 +368,5 @@ export const PlayerScheduleTab = ({ player, team, teamPath }) => {
     </div>
   );
 };
+
+export default PlayerScheduleTab;

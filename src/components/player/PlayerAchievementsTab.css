@@ -1,0 +1,317 @@
+/* =============================================================
+   PlayerAchievementsTab.css — Vitrina de Logros Deportivos
+   Paleta: Bronce #CD7F32 | Plata #B0BEC5 | Oro #C9A84C | Base #1B3A2D
+   ============================================================= */
+
+.player-achievements-tab {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding-bottom: 24px;
+}
+
+.achievements-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  color: var(--text-secondary);
+}
+
+.achievements-spinner {
+  width: 36px;
+  height: 36px;
+  border: 3px solid rgba(201, 168, 76, 0.2);
+  border-top-color: #C9A84C;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 12px;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Hero card */
+.achievements-hero-card {
+  background: linear-gradient(135deg, rgba(27, 58, 45, 0.8) 0%, rgba(17, 27, 33, 0.95) 100%);
+  border: 1px solid rgba(201, 168, 76, 0.35);
+  border-radius: 16px;
+  padding: 18px 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 16px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+}
+
+.achievements-hero-left {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.achievements-trophy-badge {
+  background: rgba(201, 168, 76, 0.15);
+  border: 1.5px solid rgba(201, 168, 76, 0.4);
+  border-radius: 14px;
+  width: 52px;
+  height: 52px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.achievements-hero-title {
+  margin: 0 0 4px 0;
+  font-size: 1.2rem;
+  font-weight: 800;
+  color: #FFFFFF;
+}
+
+.achievements-hero-subtitle {
+  margin: 0;
+  font-size: 0.8rem;
+  color: var(--text-secondary, #A3B5AD);
+}
+
+.achievements-stats-pill {
+  display: flex;
+  align-items: center;
+  background: rgba(0, 0, 0, 0.35);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  padding: 8px 14px;
+  gap: 14px;
+}
+
+.stat-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.stat-num {
+  font-size: 1rem;
+  font-weight: 900;
+  color: #FFFFFF;
+}
+
+.stat-num.xp-gold {
+  color: #FBBF24;
+}
+
+.stat-lbl {
+  font-size: 0.68rem;
+  color: var(--text-secondary, #A3B5AD);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.stat-divider {
+  width: 1px;
+  height: 24px;
+  background: rgba(255, 255, 255, 0.15);
+}
+
+/* Tier filters */
+.achievements-tier-filters {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+  scrollbar-width: none;
+}
+
+.achievements-tier-filters::-webkit-scrollbar {
+  display: none;
+}
+
+.tier-filter-btn {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: var(--text-secondary, #A3B5AD);
+  padding: 8px 14px;
+  border-radius: 20px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s;
+  min-height: 40px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.tier-filter-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #FFFFFF;
+}
+
+.tier-filter-btn.active {
+  background: #10B981;
+  color: #FFFFFF;
+  border-color: #10B981;
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+}
+
+.tier-filter-btn.tier-bronze.active {
+  background: #CD7F32;
+  border-color: #CD7F32;
+  box-shadow: 0 4px 12px rgba(205, 127, 50, 0.3);
+}
+
+.tier-filter-btn.tier-silver.active {
+  background: #78909C;
+  border-color: #78909C;
+  box-shadow: 0 4px 12px rgba(120, 144, 156, 0.3);
+}
+
+.tier-filter-btn.tier-gold.active {
+  background: #C9A84C;
+  color: #000;
+  border-color: #C9A84C;
+  box-shadow: 0 4px 12px rgba(201, 168, 76, 0.3);
+}
+
+/* Grid */
+.achievements-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 14px;
+}
+
+/* Card */
+.achievement-card {
+  background: var(--tier-bg, rgba(255, 255, 255, 0.03));
+  border: 1.5px solid var(--tier-border, rgba(255, 255, 255, 0.1));
+  border-radius: 16px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 12px;
+  transition: transform 0.2s, box-shadow 0.2s;
+  position: relative;
+  overflow: hidden;
+}
+
+.achievement-card.unlocked {
+  border-color: var(--tier-color);
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.25);
+}
+
+.achievement-card.locked {
+  opacity: 0.88;
+}
+
+.ach-card-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.ach-icon-box {
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ach-tier-badge {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.72rem;
+  font-weight: 800;
+  color: var(--tier-color);
+  background: rgba(0, 0, 0, 0.25);
+  padding: 4px 8px;
+  border-radius: 10px;
+}
+
+.ach-xp-tag {
+  color: #FBBF24;
+}
+
+.ach-card-body {
+  flex: 1;
+}
+
+.ach-name {
+  margin: 0 0 4px 0;
+  font-size: 1rem;
+  font-weight: 800;
+  color: #FFFFFF;
+}
+
+.ach-desc {
+  margin: 0;
+  font-size: 0.78rem;
+  color: var(--text-secondary, #A3B5AD);
+  line-height: 1.35;
+}
+
+.ach-card-footer {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.ach-progress-header {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.72rem;
+  color: var(--text-secondary, #A3B5AD);
+}
+
+.ach-progress-bar-bg {
+  background: rgba(0, 0, 0, 0.4);
+  height: 6px;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.ach-progress-bar-fill {
+  height: 100%;
+  border-radius: 4px;
+  transition: width 0.4s ease;
+}
+
+.ach-status-row {
+  display: flex;
+  justify-content: flex-end;
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.ach-status-unlocked {
+  color: #10B981;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.ach-status-locked {
+  color: var(--text-secondary, #94A3B8);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.ach-inactive-notice {
+  font-size: 0.72rem;
+  color: var(--text-secondary, #94A3B8);
+  background: rgba(0, 0, 0, 0.25);
+  padding: 6px 8px;
+  border-radius: 8px;
+  text-align: center;
+}

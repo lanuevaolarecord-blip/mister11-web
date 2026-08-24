@@ -3,11 +3,13 @@ import { collection, query, onSnapshot, orderBy, limit, doc, getDoc } from 'fire
 import { db } from '../../firebaseConfig';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
+import { useAchievements } from '../../hooks/useAchievements';
 import { Calendar, Clock, MapPin, Trophy, Flame, Bell, CheckCircle2, ChevronRight, Activity } from 'lucide-react';
 
-export const PlayerHomeTab = ({ player, team, teamPath, onNavigateTab }) => {
+export const PlayerHomeTab = ({ player, team, teamPath, onNavigateTab, isParentView = false }) => {
   const { user } = useAuth();
   const { darkMode } = useTheme();
+  const { closestAchievement } = useAchievements(teamPath, player?.id, isParentView);
 
   const [nextEvent, setNextEvent] = useState(null);
   const [announcements, setAnnouncements] = useState([]);
@@ -262,6 +264,42 @@ export const PlayerHomeTab = ({ player, team, teamPath, onNavigateTab }) => {
           </div>
         </div>
       </div>
+
+      {/* WIDGET LOGRO MÁS CERCANO (≥ 60% PROGRESO) */}
+      {closestAchievement && (
+        <div 
+          className="hud-card closest-achievement-card"
+          style={{
+            background: 'linear-gradient(135deg, rgba(27, 58, 45, 0.6) 0%, rgba(201, 168, 76, 0.1) 100%)',
+            border: '1.5px solid rgba(201, 168, 76, 0.4)',
+            borderRadius: '14px',
+            padding: '14px 16px',
+            marginBottom: '16px',
+            cursor: 'pointer'
+          }}
+          onClick={() => onNavigateTab('achievements')}
+        >
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <span style={{ fontSize: '1.2rem' }}>{closestAchievement.tierInfo?.icon || '🏆'}</span>
+              <div>
+                <span style={{ fontSize: '0.7rem', color: '#D4A843', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                  ¡Logro casi conseguido! ({closestAchievement.tierInfo?.name})
+                </span>
+                <h4 style={{ margin: 0, fontSize: '0.95rem', color: '#FFFFFF', fontWeight: 800 }}>
+                  {closestAchievement.name}
+                </h4>
+              </div>
+            </div>
+            <span style={{ fontSize: '0.82rem', fontWeight: 900, color: '#D4A843' }}>
+              {closestAchievement.progress} / {closestAchievement.target}
+            </span>
+          </div>
+          <div style={{ background: 'rgba(0, 0, 0, 0.4)', height: '6px', borderRadius: '4px', overflow: 'hidden' }}>
+            <div style={{ width: `${closestAchievement.percent}%`, height: '100%', background: '#D4A843', borderRadius: '4px' }} />
+          </div>
+        </div>
+      )}
 
       {/* MURO DE ANUNCIOS DEL ENTRENADOR */}
       <div className="player-announcements-section">

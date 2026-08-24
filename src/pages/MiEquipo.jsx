@@ -17,6 +17,8 @@ import PlayerPlansTab from '../components/PlayerPlansTab';
 import { TeamAttendanceTab } from '../components/TeamAttendanceTab';
 import { PlayerAttendanceSubTab } from '../components/PlayerAttendanceSubTab';
 import { TeamStaffTab } from '../components/TeamStaffTab';
+import { PlayerTabs } from '../components/player/PlayerTabs';
+import { MessageSquare, FileText, Pencil, X, UserPlus, Share2 } from 'lucide-react';
 import { useTranslation } from '../hooks/useTranslation';
 import './MiEquipo.css';
 
@@ -497,10 +499,36 @@ const MiEquipo = () => {
       {/* SIDEBAR DETALLE JUGADOR */}
       {selectedPlayer && (
         <div className={`player-sidebar ${selectedPlayer ? 'open' : ''} h-[calc(100vh-56px)] max-h-[calc(100vh-56px)] overflow-y-auto overscroll-contain pb-20`} style={{ background: 'var(--bg-app)', borderLeft: '1px solid var(--border-light)' }}>
-          <div style={{ position: 'relative', padding: '24px 24px 0 24px', textAlign: 'center' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', position: 'absolute', top: '16px', left: '16px', right: '16px' }}>
-              <button style={{ background: 'none', border: 'none', fontSize: '20px', color: 'var(--text-secondary)', cursor: 'pointer' }} onClick={() => setSelectedPlayer(null)}>✕</button>
-              <div style={{ display: 'flex', gap: '8px' }}>
+          <div style={{ position: 'relative', padding: '16px 16px 0 16px', textAlign: 'center', paddingTop: 'max(16px, env(safe-area-inset-top, 16px))' }}>
+            <div style={{ 
+              display: 'flex', 
+              justifyContent: 'space-between', 
+              alignItems: 'center', 
+              flexWrap: 'wrap', 
+              gap: '8px', 
+              marginBottom: '12px' 
+            }}>
+              <button 
+                type="button"
+                style={{ 
+                  background: 'rgba(255, 255, 255, 0.08)', 
+                  border: 'none', 
+                  borderRadius: '10px',
+                  width: '44px',
+                  height: '44px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: 'var(--text-secondary)', 
+                  cursor: 'pointer' 
+                }} 
+                onClick={() => setSelectedPlayer(null)}
+                aria-label="Cerrar ficha"
+              >
+                <X size={20} />
+              </button>
+
+              <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
                 <button 
                   className="btn-edit-icon" 
                   onClick={() => {
@@ -510,9 +538,18 @@ const MiEquipo = () => {
                     window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(whatsappMsg)}`, '_blank');
                   }}
                   title="Compartir link de Consentimiento Digital por WhatsApp"
-                  style={{ background: '#25D366', color: '#FFF' }}
+                  style={{ 
+                    background: '#25D366', 
+                    color: '#FFF', 
+                    width: '44px', 
+                    height: '44px', 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    justifyContent: 'center',
+                    borderRadius: '10px'
+                  }}
                 >
-                  💬
+                  <MessageSquare size={18} />
                 </button>
                 <button 
                   className="btn-edit-icon" 
@@ -537,51 +574,48 @@ const MiEquipo = () => {
                     }
                   }} 
                   title="Exportar Expediente"
+                  style={{
+                    width: '44px', 
+                    height: '44px', 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    justifyContent: 'center',
+                    borderRadius: '10px'
+                  }}
                 >
-                  📄
+                  <FileText size={18} />
                 </button>
-                <button className="btn-edit-icon" onClick={() => handleOpenForm(selectedPlayer)}>✏️</button>
+                <button 
+                  className="btn-edit-icon" 
+                  onClick={() => handleOpenForm(selectedPlayer)}
+                  title="Editar ficha"
+                  style={{
+                    width: '44px', 
+                    height: '44px', 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    justifyContent: 'center',
+                    borderRadius: '10px'
+                  }}
+                >
+                  <Pencil size={18} />
+                </button>
               </div>
             </div>
             
-            <div style={{ width: '100px', height: '100px', margin: '20px auto 12px auto', borderRadius: '50%', background: !selectedPlayer.avatarUrl ? stringToColor(selectedPlayer.id || selectedPlayer.name) : '#FFF', border: '4px solid var(--bg-card)', boxShadow: '0 0 0 2px var(--accent-gold)', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              {selectedPlayer.avatarUrl ? <img src={selectedPlayer.avatarUrl} alt={selectedPlayer.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <span style={{ color: '#FFF', fontSize: '32px', fontWeight: 'bold' }}>{getInitials(selectedPlayer.name)}</span>}
+            <div style={{ width: '90px', height: '90px', margin: '8px auto 10px auto', borderRadius: '50%', background: !selectedPlayer.avatarUrl ? stringToColor(selectedPlayer.id || selectedPlayer.name) : '#FFF', border: '3px solid var(--bg-card)', boxShadow: '0 0 0 2px var(--accent-gold)', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              {selectedPlayer.avatarUrl ? <img src={selectedPlayer.avatarUrl} alt={selectedPlayer.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <span style={{ color: '#FFF', fontSize: '30px', fontWeight: 'bold' }}>{getInitials(selectedPlayer.name)}</span>}
             </div>
             
-            <h2 style={{ margin: '0 0 4px 0', fontSize: '20px', fontFamily: 'var(--font-heading)', color: 'var(--text-primary)' }}>{selectedPlayer.name}</h2>
-            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px', fontSize: '18px', fontWeight: 'bold', color: 'var(--text-primary)', marginBottom: '24px' }}>
-              <span>{selectedPlayer.number}</span>
-              <span className="capitalize" style={{ fontSize: '14px', fontWeight: 'normal', color: 'var(--text-secondary)' }}>{selectedPlayer.position}</span>
+            <h2 style={{ margin: '0 0 4px 0', fontSize: '19px', fontFamily: 'var(--font-heading)', color: 'var(--text-primary)', fontWeight: 800 }}>{selectedPlayer.name}</h2>
+            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px', fontSize: '16px', fontWeight: 'bold', color: 'var(--text-primary)', marginBottom: '16px' }}>
+              <span style={{ color: 'var(--accent-gold)' }}>#{selectedPlayer.number || '11'}</span>
+              <span className="capitalize" style={{ fontSize: '13px', fontWeight: 'bold', background: 'var(--accent-green-light)', color: 'var(--accent-green)', padding: '2px 8px', borderRadius: '12px' }}>{selectedPlayer.position}</span>
             </div>
           </div>
 
-          <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0 16px', borderBottom: '1px solid var(--border-light)', marginBottom: '16px', overflowX: 'auto' }}>
-            {[
-              { key: 'GENERAL',    labelKey: 'equipo.tab.general' },
-              { key: 'FÍSICO',     labelKey: 'equipo.tab.physical' },
-              { key: 'SALUD',      labelKey: 'equipo.tab.health' },
-              { key: 'PLANES',     labelKey: 'equipo.tab.plans' },
-              { key: 'ESTS.',      labelKey: 'equipo.tab.stats' },
-              { key: 'ASISTENCIA', labelKey: 'equipo.tab.attendance' },
-            ].map(tab => (
-              <button 
-                key={tab.key} 
-                style={{
-                  background: 'none',
-                  border: 'none',
-                  borderBottom: activeTab === tab.key ? '3px solid var(--accent-green)' : '3px solid transparent',
-                  padding: '12px 8px',
-                  fontSize: '11px',
-                  fontWeight: 'bold',
-                  color: activeTab === tab.key ? 'var(--accent-green)' : 'var(--text-secondary)',
-                  cursor: 'pointer',
-                  whiteSpace: 'nowrap'
-                }}
-                onClick={() => setActiveTab(tab.key)}
-              >
-                {t(tab.labelKey)}
-              </button>
-            ))}
+          <div style={{ padding: '0 16px' }}>
+            <PlayerTabs activeTab={activeTab} onTabChange={setActiveTab} />
           </div>
 
           <div className="sidebar-body" style={{ padding: '0 24px 24px 24px' }}>

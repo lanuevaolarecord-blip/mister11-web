@@ -10,6 +10,7 @@ import { calcularEdad } from '../../utils/calcularEdad';
 import PlayerHealthTab from '../PlayerHealthTab';
 import { PlayerPlansPortalTab } from './PlayerPlansPortalTab';
 import { PlayerAttendanceSubTab } from '../PlayerAttendanceSubTab';
+import { PlayerTabs } from './PlayerTabs';
 import { 
   User, 
   Heart, 
@@ -310,47 +311,8 @@ export const PlayerProfileTab = ({ player, team, teamPath }) => {
         </div>
       </div>
 
-      {/* 2. BARRA DE SUB-PESTAÑAS (GENERAL | FÍSICO | SALUD | PLANES | ESTS. | ASISTENCIA) */}
-      <div style={{
-        display: 'flex',
-        justifyContent: 'space-between',
-        borderBottom: '1px solid var(--border-color)',
-        marginBottom: '16px',
-        overflowX: 'auto',
-        WebkitOverflowScrolling: 'touch',
-        scrollbarWidth: 'none'
-      }}>
-        {[
-          { key: 'GENERAL',    label: 'GENERAL',    icon: '👤' },
-          { key: 'FÍSICO',     label: 'FÍSICO',     icon: '⚡' },
-          { key: 'SALUD',      label: 'SALUD',      icon: '❤️' },
-          { key: 'PLANES',     label: 'PLANES',     icon: '🎯' },
-          { key: 'ESTS.',      label: 'ESTS.',      icon: '📊' },
-          { key: 'ASISTENCIA', label: 'ASISTENCIA', icon: '📅' },
-        ].map(tab => (
-          <button
-            key={tab.key}
-            type="button"
-            style={{
-              background: 'none',
-              border: 'none',
-              borderBottom: activeSubTab === tab.key ? '3px solid var(--accent-green)' : '3px solid transparent',
-              padding: '12px 10px',
-              fontSize: '11.5px',
-              fontWeight: '800',
-              color: activeSubTab === tab.key ? 'var(--accent-green)' : 'var(--text-secondary)',
-              cursor: 'pointer',
-              whiteSpace: 'nowrap',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '4px'
-            }}
-            onClick={() => setActiveSubTab(tab.key)}
-          >
-            <span>{tab.icon}</span> {tab.label}
-          </button>
-        ))}
-      </div>
+      {/* 2. BARRA DE SUB-PESTAÑAS RESPONSIVE HÍBRIDA */}
+      <PlayerTabs activeTab={activeSubTab} onTabChange={setActiveSubTab} />
 
       {/* 3. CONTENIDO DE LAS SUB-PESTAÑAS */}
       

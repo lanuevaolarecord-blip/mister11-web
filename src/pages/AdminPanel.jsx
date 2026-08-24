@@ -38,11 +38,10 @@ import { usePWA } from '../hooks/usePWA';
 import { showToast } from '../utils/toast';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
-import { useTeamMembers } from '../hooks/useTeamMembers';
 import { storage, db, auth } from '../firebaseConfig';
-import { updateProfile } from 'firebase/auth';
+import { updateProfile, deleteUser } from 'firebase/auth';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
-import { collection, getDocs, doc, getDoc, setDoc, updateDoc, serverTimestamp, arrayUnion, onSnapshot } from 'firebase/firestore';
+import { collection, getDocs, doc, getDoc, setDoc, updateDoc, deleteDoc, serverTimestamp, arrayUnion, onSnapshot } from 'firebase/firestore';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 import imageCompression from 'browser-image-compression';
 import EscudoEquipo from '../components/EscudoEquipo';
@@ -81,6 +80,44 @@ const AdminPanel = () => {
   const [upgradeModal, setUpgradeModal] = useState({ open: false, message: '' });
   const [newTeamSource, setNewTeamSource] = useState('personal');
   const [loadingPortal, setLoadingPortal] = useState(false);
+
+  // Estados para Eliminación de Cuenta de Entrenador (RGPD)
+  const [isDeleteCoachModalOpen, setIsDeleteCoachModalOpen] = useState(false);
+  const [deleteCoachConfirmText, setDeleteCoachConfirmText] = useState('');
+  const [isDeletingCoach, setIsDeletingCoach] = useState(false);
+
+  const handleDeleteCoachAccount = async () => {
+    if (!user) return;
+    setIsDeletingCoach(true);
+    try {
+      // 1. Limpiar datos y equipos del entrenador en Firestore
+      try {
+        const personalTeamsSnap = await getDocs(collection(db, 'users', user.uid, 'teams'));
+        for (const tDoc of personalTeamsSnap.docs) {
+          await deleteDoc(tDoc.ref);
+        }
+        await deleteDoc(doc(db, 'users', user.uid));
+      } catch (_) {}
+
+      // 2. Eliminar cuenta de autenticación
+      if (auth.currentUser) {
+        await deleteUser(auth.currentUser);
+      }
+
+      showToast('Tu cuenta de entrenador y datos han sido eliminados correctamente.', 'info');
+      window.location.href = '/';
+    } catch (err) {
+      console.error('Error al eliminar cuenta de entrenador:', err);
+      if (err.code === 'auth/requires-recent-login') {
+        alert('Por motivos de seguridad, debes cerrar sesión e iniciarla de nuevo antes de eliminar tu cuenta.');
+      } else {
+        alert('No se pudo eliminar la cuenta. Por favor contáctanos o reintenta tras reiniciar sesión.');
+      }
+    } finally {
+      setIsDeletingCoach(false);
+      setIsDeleteCoachModalOpen(false);
+    }
+  };
 
 
 
@@ -999,6 +1036,29 @@ const AdminPanel = () => {
                     >
                       🛡️ Ver y Gestionar Todo el Cuerpo Técnico
                     </button>
+
+                    {/* ZONA DE PELIGRO / ELIMINAR CUENTA (RGPD) */}
+                    <div style={{ marginTop: '12px', paddingTop: '12px', borderTop: '1px solid rgba(239, 68, 68, 0.2)', textAlign: 'center' }}>
+                      <button
+                        type="button"
+                        onClick={() => setIsDeleteCoachModalOpen(true)}
+                        style={{
+                          background: 'none',
+                          border: 'none',
+                          color: '#EF4444',
+                          fontSize: '12px',
+                          fontWeight: 700,
+                          cursor: 'pointer',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '6px',
+                          padding: '6px 8px'
+                        }}
+                      >
+                        <Trash2 size={14} color="#EF4444" />
+                        <span>Eliminar mi Cuenta de Entrenador y Equipos</span>
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -1765,6 +1825,72 @@ const AdminPanel = () => {
           </div>
         </div>
       )}
+
+      {/* Modal de Eliminación de Cuenta de Entrenador (RGPD) */}
+      {isDeleteCoachModalOpen && (
+        <div className="modal-overlay" onClick={() => setIsDeleteCoachModalOpen(false)}>
+          <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: '440px', padding: '24px' }}>
+            <div style={{ textAlign: 'center', marginBottom: '16px' }}>
+              <div style={{ width: '56px', height: '56px', borderRadius: '50%', background: 'rgba(239, 68, 68, 0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 12px auto' }}>
+                <Trash2 size={28} color="#EF4444" />
+              </div>
+              <h3 style={{ margin: '0 0 8px 0', fontSize: '1.2rem', color: '#EF4444', fontWeight: 800 }}>¿Eliminar tu cuenta de Entrenador?</h3>
+              <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--text-secondary)', lineHeight: '1.5' }}>
+                Esta acción eliminará de forma <strong>permanente e irreversible</strong> tu usuario de entrenador, tus equipos personales, sesiones, partidos y datos en Míster11.
+              </p>
+            </div>
+
+            <div style={{ background: 'var(--bg-app)', padding: '12px', borderRadius: '10px', marginBottom: '16px', fontSize: '0.82rem', color: 'var(--text-primary)' }}>
+              <span>Escribe <strong>ELIMINAR</strong> para confirmar:</span>
+              <input
+                type="text"
+                value={deleteCoachConfirmText}
+                onChange={e => setDeleteCoachConfirmText(e.target.value)}
+                placeholder="ELIMINAR"
+                style={{
+                  width: '100%',
+                  marginTop: '8px',
+                  padding: '10px',
+                  borderRadius: '8px',
+                  border: '1px solid var(--border-color)',
+                  fontWeight: 700,
+                  textAlign: 'center',
+                  textTransform: 'uppercase'
+                }}
+              />
+            </div>
+
+            <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
+              <button
+                type="button"
+                className="btn-secondary"
+                onClick={() => setIsDeleteCoachModalOpen(false)}
+                disabled={isDeletingCoach}
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                disabled={deleteCoachConfirmText.trim().toUpperCase() !== 'ELIMINAR' || isDeletingCoach}
+                onClick={handleDeleteCoachAccount}
+                style={{
+                  background: '#EF4444',
+                  color: '#FFFFFF',
+                  border: 'none',
+                  borderRadius: '8px',
+                  padding: '10px 18px',
+                  fontWeight: 800,
+                  cursor: deleteCoachConfirmText.trim().toUpperCase() === 'ELIMINAR' ? 'pointer' : 'not-allowed',
+                  opacity: deleteCoachConfirmText.trim().toUpperCase() === 'ELIMINAR' ? 1 : 0.5
+                }}
+              >
+                {isDeletingCoach ? 'Eliminando...' : 'Sí, Eliminar Todo'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <UpgradeModal isOpen={upgradeModal.open} onClose={() => setUpgradeModal({ ...upgradeModal, open: false })} message={upgradeModal.message} />
     </div>
   );

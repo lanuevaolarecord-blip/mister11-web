@@ -9,9 +9,10 @@ import UpgradeModal from '../components/UpgradeModal';
 import { calcularEdad } from '../utils/calcularEdad';
 import { generateExpediente } from '../utils/pdfGenerator';
 import { normalizeText } from '../utils/normalizeInput';
-import imageCompression from 'browser-image-compression';
-import { storage } from '../firebaseConfig';
+import { storage, db } from '../firebaseConfig';
+import { doc, setDoc, deleteDoc, serverTimestamp } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { showToast } from '../utils/toast';
 import PlayerHealthTab from '../components/PlayerHealthTab';
 import PlayerPlansTab from '../components/PlayerPlansTab';
 import { TeamAttendanceTab } from '../components/TeamAttendanceTab';
@@ -19,7 +20,7 @@ import { PlayerAttendanceSubTab } from '../components/PlayerAttendanceSubTab';
 import { TeamStaffTab } from '../components/TeamStaffTab';
 import { PlayerTabs } from '../components/player/PlayerTabs';
 import { PlayerChatTab } from '../components/player/PlayerChatTab';
-import { MessageSquare, FileText, Pencil, X, UserPlus, Share2 } from 'lucide-react';
+import { MessageSquare, FileText, Pencil, X, UserPlus, Share2, Mail, Trash2 } from 'lucide-react';
 import { useTranslation } from '../hooks/useTranslation';
 import './MiEquipo.css';
 
@@ -213,14 +214,37 @@ const MiEquipo = () => {
   };
 
   const handleDeletePlayer = async (id) => {
-    if (window.confirm("¿Seguro que deseas eliminar a este jugador?")) {
+    const playerToDelete = players.find(p => p.id === id) || (selectedPlayer?.id === id ? selectedPlayer : null);
+    const pName = playerToDelete?.name || 'este jugador';
+    if (window.confirm(`¿Seguro que deseas eliminar a ${pName} del equipo? Se cancelará su acceso vinculado.`)) {
       try {
         await removePlayer(id);
+        
+        // Limpiar índices deterministas y accesos compartidos
+        const rawEmail = playerToDelete?.email || playerToDelete?.requesterEmail;
+        const playerUid = playerToDelete?.requesterUid || playerToDelete?.playerUid || playerToDelete?.userId;
+        
+        if (rawEmail) {
+          try {
+            await deleteDoc(doc(db, 'playerIdentityByEmail', rawEmail.trim().toLowerCase()));
+          } catch (_) {}
+        }
+        if (playerUid) {
+          try {
+            if (activeTeam?.id) {
+              await deleteDoc(doc(db, `users/${playerUid}/shared_teams`, activeTeam.id));
+            }
+            await deleteDoc(doc(db, 'playerIdentity', playerUid));
+          } catch (_) {}
+        }
+
         if (selectedPlayer?.id === id) {
           setSelectedPlayer(null);
         }
         setIsFormOpen(false);
+        showToast(`Jugador ${pName} eliminado del equipo`, 'success');
       } catch (error) {
+        console.error('Error al eliminar jugador:', error);
         alert("Error al eliminar jugador.");
       }
     }
@@ -326,7 +350,7 @@ const MiEquipo = () => {
                   )}
                 </div>
 
-                <div style={{ background: 'var(--bg-app)', margin: '0 12px 12px 12px', padding: '8px', borderRadius: '8px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div style={{ background: 'var(--bg-app)', margin: '0 12px 6px 12px', padding: '8px', borderRadius: '8px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <div style={{ display: 'flex', flexDirection: 'column' }}>
                     <span style={{ fontSize: '10px', color: 'var(--text-secondary)' }}>Pos</span>
                     <strong style={{ fontSize: '12px', color: 'var(--text-primary)' }}>{player.position}</strong>
@@ -340,6 +364,15 @@ const MiEquipo = () => {
                     <strong style={{ fontSize: '12px', color: 'var(--text-primary)' }}>{player.height || '--'}</strong>
                   </div>
                 </div>
+
+                {/* Email / Estado de Vinculación */}
+                <div style={{ margin: '0 12px 10px 12px', padding: '4px 8px', borderRadius: '6px', background: (player.email || player.requesterEmail) ? 'rgba(16, 185, 129, 0.1)' : 'rgba(148, 163, 184, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px', overflow: 'hidden' }}>
+                  <Mail size={11} color={(player.email || player.requesterEmail) ? '#10B981' : '#94A3B8'} />
+                  <span style={{ fontSize: '10.5px', fontWeight: 600, color: (player.email || player.requesterEmail) ? '#10B981' : '#94A3B8', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                    {player.email || player.requesterEmail || 'Sin cuenta vinculada'}
+                  </span>
+                </div>
+
                 {(player.currentStatus === 'injured' || player.currentStatus === 'recovery') && <div style={{ position: 'absolute', top: '8px', right: '8px', background: 'var(--bg-card)', borderRadius: '50%', padding: '4px', boxShadow: 'var(--shadow-card)' }} title={player.currentStatus === 'injured' ? "Lesionado" : "En recuperación"}>🚑</div>}
               </div>
             );
@@ -727,6 +760,22 @@ const MiEquipo = () => {
                   <strong style={{ fontSize: '13px', color: 'var(--text-primary)' }}>{calcularEdad(selectedPlayer.fechaNacimiento || selectedPlayer.birthDate || selectedPlayer.age).text}</strong>
                 </div>
 
+                {/* Cuenta de Acceso / Email Vinculado */}
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: '12px', borderBottom: '1px dashed var(--border-light)' }}>
+                  <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>Cuenta Vinculada</span>
+                  <div style={{ textAlign: 'right' }}>
+                    {(selectedPlayer.email || selectedPlayer.requesterEmail) ? (
+                      <span style={{ color: '#10B981', fontWeight: 'bold', fontSize: '12px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                        <Mail size={13} /> {selectedPlayer.email || selectedPlayer.requesterEmail}
+                      </span>
+                    ) : (
+                      <span style={{ color: '#94A3B8', fontSize: '11px' }}>
+                        Sin cuenta (editar ficha para añadir)
+                      </span>
+                    )}
+                  </div>
+                </div>
+
                 <button
                   onClick={() => setIsConsentModalOpen(true)}
                   style={{
@@ -742,13 +791,37 @@ const MiEquipo = () => {
                     alignItems: 'center',
                     justifyContent: 'center',
                     gap: '8px',
-                    marginTop: '12px',
+                    marginTop: '8px',
                     boxShadow: 'var(--shadow-card)',
                     minHeight: '48px',
                     width: '100%'
                   }}
                 >
                   <span>📄</span> Compartir Consentimiento Parental
+                </button>
+
+                <button
+                  onClick={() => handleDeletePlayer(selectedPlayer.id)}
+                  style={{
+                    background: 'rgba(239, 68, 68, 0.1)',
+                    color: '#EF4444',
+                    border: '1px solid rgba(239, 68, 68, 0.3)',
+                    borderRadius: '8px',
+                    padding: '10px',
+                    fontSize: '12px',
+                    fontWeight: 'bold',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '6px',
+                    marginTop: '4px',
+                    width: '100%',
+                    minHeight: '44px'
+                  }}
+                >
+                  <Trash2 size={16} />
+                  <span>Eliminar a {selectedPlayer.name} del Equipo</span>
                 </button>
                 
                 {/* Fake Radial Chart matching the image */}

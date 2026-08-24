@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
-import { db } from '../../firebaseConfig';
+import { doc, getDoc, setDoc, deleteDoc, serverTimestamp } from 'firebase/firestore';
+import { deleteUser } from 'firebase/auth';
+import { db, auth } from '../../firebaseConfig';
 import { useAuth } from '../../context/AuthContext';
 import { isDeveloperEmail } from '../../config/admins';
 import { showToast } from '../../utils/toast';
@@ -24,7 +25,10 @@ import {
   Flame,
   Calendar,
   Clock,
-  Target
+  Target,
+  Mail,
+  Trash2,
+  AlertTriangle
 } from 'lucide-react';
 
 const BODY_ZONES = ['Ninguna', 'Gemelo Izquierdo', 'Gemelo Derecho', 'Cuádriceps', 'Isquiotibiales', 'Rodilla', 'Tobillo', 'Espalda / Lumbar', 'Aductor', 'Hombro'];
@@ -78,6 +82,47 @@ export const PlayerProfileTab = ({ player, team, teamPath }) => {
   const [signConsentHealth, setSignConsentHealth] = useState(consents.health || false);
   const [signConsentTests, setSignConsentTests] = useState(consents.tests || false);
   const [savingConsent, setSavingConsent] = useState(false);
+
+  // Estados de Eliminación de Cuenta (RGPD)
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [deleteConfirmText, setDeleteConfirmText] = useState('');
+  const [isDeletingAccount, setIsDeletingAccount] = useState(false);
+
+  const handleDeleteMyAccount = async () => {
+    if (!user) return;
+    setIsDeletingAccount(true);
+    try {
+      // 1. Limpiar datos del usuario en Firestore
+      const rawEmail = user.email;
+      if (rawEmail) {
+        try {
+          await deleteDoc(doc(db, 'playerIdentityByEmail', rawEmail.trim().toLowerCase()));
+        } catch (_) {}
+      }
+      try {
+        await deleteDoc(doc(db, 'playerIdentity', user.uid));
+        await deleteDoc(doc(db, 'users', user.uid));
+      } catch (_) {}
+
+      // 2. Eliminar cuenta de autenticación
+      if (auth.currentUser) {
+        await deleteUser(auth.currentUser);
+      }
+
+      showToast('Tu cuenta ha sido eliminada correctamente.', 'info');
+      window.location.href = '/';
+    } catch (err) {
+      console.error('Error al eliminar cuenta:', err);
+      if (err.code === 'auth/requires-recent-login') {
+        alert('Por motivos de seguridad, debes cerrar sesión e iniciarla de nuevo antes de eliminar tu cuenta.');
+      } else {
+        alert('No se pudo eliminar la cuenta. Por favor contáctanos o reintenta tras reiniciar sesión.');
+      }
+    } finally {
+      setIsDeletingAccount(false);
+      setIsDeleteModalOpen(false);
+    }
+  };
 
   // Canvas de Firma
   const canvasRef = useRef(null);
@@ -354,11 +399,19 @@ export const PlayerProfileTab = ({ player, team, teamPath }) => {
               </span>
             </div>
 
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: '10px', borderBottom: '1px dashed var(--border-color)' }}>
               <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>Edad</span>
               <strong style={{ fontSize: '13px', color: 'var(--text-primary)' }}>
                 {calcularEdad(player?.fechaNacimiento || player?.birthDate || player?.age).text}
               </strong>
+            </div>
+
+            {/* Cuenta Vinculada */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>Cuenta de Acceso</span>
+              <span style={{ color: '#10B981', fontWeight: 'bold', fontSize: '12px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                <Mail size={13} /> {user?.email || player?.email || 'Cuenta de Jugador'}
+              </span>
             </div>
           </div>
 
@@ -707,8 +760,8 @@ export const PlayerProfileTab = ({ player, team, teamPath }) => {
           style={{
             width: '100%',
             minHeight: '48px',
-            borderColor: '#EF4444',
-            color: '#EF4444',
+            borderColor: 'var(--border-color, #CBD5E1)',
+            color: 'var(--text-primary)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
@@ -718,7 +771,95 @@ export const PlayerProfileTab = ({ player, team, teamPath }) => {
         >
           Cerrar Sesión
         </button>
+
+        {/* ZONA DE PRIVACIDAD / ELIMINAR CUENTA (RGPD) */}
+        <div style={{ marginTop: '16px', paddingTop: '16px', borderTop: '1px solid rgba(239, 68, 68, 0.2)', width: '100%', textAlign: 'center' }}>
+          <button
+            type="button"
+            onClick={() => setIsDeleteModalOpen(true)}
+            style={{
+              background: 'none',
+              border: 'none',
+              color: '#EF4444',
+              fontSize: '12px',
+              fontWeight: 700,
+              cursor: 'pointer',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '6px',
+              padding: '8px'
+            }}
+          >
+            <Trash2 size={14} color="#EF4444" />
+            <span>Eliminar mi Cuenta y Datos Definitivamente</span>
+          </button>
+        </div>
       </div>
+
+      {/* MODAL DE ELIMINACIÓN DE CUENTA (RGPD) */}
+      {isDeleteModalOpen && (
+        <div className="modal-overlay" onClick={() => setIsDeleteModalOpen(false)}>
+          <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: '440px', padding: '24px' }}>
+            <div style={{ textAlign: 'center', marginBottom: '16px' }}>
+              <div style={{ width: '56px', height: '56px', borderRadius: '50%', background: 'rgba(239, 68, 68, 0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 12px auto' }}>
+                <AlertTriangle size={28} color="#EF4444" />
+              </div>
+              <h3 style={{ margin: '0 0 8px 0', fontSize: '1.2rem', color: '#EF4444', fontWeight: 800 }}>¿Eliminar tu cuenta?</h3>
+              <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--text-secondary)', lineHeight: '1.5' }}>
+                Esta acción es <strong>permanente e irreversible</strong>. Se eliminará tu acceso de usuario, tu historial deportivo, consentimientos y perfil en Míster11.
+              </p>
+            </div>
+
+            <div style={{ background: 'var(--bg-app)', padding: '12px', borderRadius: '10px', marginBottom: '16px', fontSize: '0.82rem', color: 'var(--text-primary)' }}>
+              <span>Escribe <strong>ELIMINAR</strong> para confirmar:</span>
+              <input
+                type="text"
+                value={deleteConfirmText}
+                onChange={e => setDeleteConfirmText(e.target.value)}
+                placeholder="ELIMINAR"
+                style={{
+                  width: '100%',
+                  marginTop: '8px',
+                  padding: '10px',
+                  borderRadius: '8px',
+                  border: '1px solid var(--border-color)',
+                  fontWeight: 700,
+                  textAlign: 'center',
+                  textTransform: 'uppercase'
+                }}
+              />
+            </div>
+
+            <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
+              <button
+                type="button"
+                className="btn-secondary"
+                onClick={() => setIsDeleteModalOpen(false)}
+                disabled={isDeletingAccount}
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                disabled={deleteConfirmText.trim().toUpperCase() !== 'ELIMINAR' || isDeletingAccount}
+                onClick={handleDeleteMyAccount}
+                style={{
+                  background: '#EF4444',
+                  color: '#FFFFFF',
+                  border: 'none',
+                  borderRadius: '8px',
+                  padding: '10px 18px',
+                  fontWeight: 800,
+                  cursor: deleteConfirmText.trim().toUpperCase() === 'ELIMINAR' ? 'pointer' : 'not-allowed',
+                  opacity: deleteConfirmText.trim().toUpperCase() === 'ELIMINAR' ? 1 : 0.5
+                }}
+              >
+                {isDeletingAccount ? 'Eliminando...' : 'Sí, Eliminar Cuenta'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* MODAL DE FIRMA DE CONSENTIMIENTO PARENTAL RGPD */}
       {isConsentModalOpen && (

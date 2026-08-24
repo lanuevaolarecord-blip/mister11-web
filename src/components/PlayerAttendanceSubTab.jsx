@@ -12,13 +12,23 @@ const STATUS_TAGS = {
 };
 
 export const PlayerAttendanceSubTab = ({ playerId, teamId }) => {
-  const { activeTeamId } = useAuth();
-  const effectiveTeamId = teamId || activeTeamId;
+  const { activeTeam, currentTeamId } = useAuth();
+  const effectiveTeamId = teamId || activeTeam?.id || currentTeamId;
   const { language } = useTranslation();
   const isEn = language === 'en' || language === 'English (EN)';
 
   const { getPlayerStats, loading } = useAttendance(effectiveTeamId);
-  const stats = getPlayerStats(playerId);
+  const stats = (typeof getPlayerStats === 'function' ? getPlayerStats(playerId) : null) || {
+    pct: 100,
+    streak: 0,
+    present: 0,
+    absent: 0,
+    justified: 0,
+    late: 0,
+    injured: 0,
+    total: 0,
+    history: []
+  };
 
   if (loading) {
     return <div style={{ padding: '20px', textAlign: 'center', color: 'var(--text-secondary)' }}>Cargando asistencia...</div>;

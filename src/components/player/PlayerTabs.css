@@ -1,45 +1,25 @@
 /* =============================================================
-   PlayerTabs.css — Sistema Responsive Híbrido (3x2 Móvil / Inline Desktop)
+   PlayerTabs.css — Sistema de Pestañas Scrollable Ergonómico
    Paleta Míster11: Base #1B3A2D | Acción #4CAF7D | Texto #FFFFFF / #A3B5AD
    ============================================================= */
 
 .player-tabs-navigation {
   width: 100%;
-  margin-bottom: 20px;
+  margin-bottom: 16px;
   box-sizing: border-box;
   user-select: none;
-  scrollbar-width: none;
-  -ms-overflow-style: none;
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  gap: 8px !important;
+  overflow-x: auto !important;
+  -webkit-overflow-scrolling: touch !important;
+  scrollbar-width: none !important;
+  padding: 4px 4px 8px 4px !important;
 }
 
 .player-tabs-navigation::-webkit-scrollbar {
-  display: none;
-}
-
-/* ─── VISTA MÓVIL (<768px): GRID 3 COLUMNAS X 2 FILAS (SIN SCROLL) ─── */
-@media (max-width: 767px) {
-  .player-tabs-navigation {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    grid-template-rows: auto auto;
-    gap: 8px;
-    padding: 0 4px;
-  }
-}
-
-/* ─── VISTA DESKTOP / TABLET (≥768px): INLINE HORIZONTAL ─── */
-@media (min-width: 768px) {
-  .player-tabs-navigation {
-    display: flex;
-    flex-direction: row;
-    align-items: stretch;
-    justify-content: space-between;
-    gap: 8px;
-    background: rgba(27, 58, 45, 0.25);
-    padding: 6px;
-    border-radius: 14px;
-    border: 1px solid rgba(255, 255, 255, 0.08);
-  }
+  display: none !important;
 }
 
 /* ─── TAB CARD BASE ─── */
@@ -49,42 +29,43 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 5px;
-  min-height: 56px; /* Garantiza touch target ergonómico ≥48x48dp */
-  padding: 8px 6px 10px 6px;
+  gap: 4px;
+  min-height: 52px; /* Touch target ergonómico ≥48dp */
+  min-width: 76px;  /* Evita que los textos se monten o se trunquen */
+  padding: 8px 12px;
   border-radius: 12px;
   cursor: pointer;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  background: rgba(27, 58, 45, 0.35);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(27, 58, 45, 0.4);
   color: var(--text-secondary, #A3B5AD);
   outline: none;
   transition: transform 150ms ease, background 150ms ease, border-color 150ms ease, color 150ms ease;
   box-sizing: border-box;
   -webkit-tap-highlight-color: transparent;
-  flex: 1;
+  flex: 0 0 auto; /* No encoger las pestañas */
 }
 
 /* Hover e interacción táctil */
 .player-tab-card:hover:not(.active) {
-  background: rgba(27, 58, 45, 0.6);
-  border-color: rgba(255, 255, 255, 0.16);
+  background: rgba(27, 58, 45, 0.7);
+  border-color: rgba(255, 255, 255, 0.2);
   color: #FFFFFF;
 }
 
 .player-tab-card:active {
-  transform: scale(0.98);
+  transform: scale(0.96);
 }
 
 .player-tab-card:focus-visible {
   box-shadow: 0 0 0 2px #4CAF7D;
 }
 
-/* ─── TAB CARD ACTIVA (Alto contraste para campo / sol) ─── */
+/* ─── TAB CARD ACTIVA ─── */
 .player-tab-card.active {
-  background: rgba(76, 175, 125, 0.18);
+  background: rgba(76, 175, 125, 0.22);
   border: 1.5px solid #4CAF7D;
   color: #4CAF7D;
-  box-shadow: 0 4px 14px rgba(76, 175, 125, 0.2);
+  box-shadow: 0 4px 12px rgba(76, 175, 125, 0.25);
 }
 
 /* ─── ICONO Y ETIQUETA ─── */
@@ -105,10 +86,10 @@
 }
 
 .player-tab-label {
-  font-size: 11.5px;
+  font-size: 11px;
   font-weight: 800;
   text-transform: uppercase;
-  letter-spacing: 0.3px;
+  letter-spacing: 0.4px;
   line-height: 1.1;
   text-align: center;
   white-space: nowrap;
@@ -130,24 +111,24 @@
 .theme-light .player-tab-card,
 [data-theme="light"] .player-tab-card {
   background: #F1F5F9;
-  border-color: #E2E8F0;
-  color: #64748B;
+  border-color: #CBD5E1;
+  color: #475569;
 }
 
 .theme-light .player-tab-card:hover:not(.active),
 [data-theme="light"] .player-tab-card:hover:not(.active) {
   background: #E2E8F0;
-  color: #1E293B;
+  color: #0F172A;
 }
 
 .theme-light .player-tab-card.active,
 [data-theme="light"] .player-tab-card.active {
-  background: rgba(76, 175, 125, 0.14);
-  border-color: #2E7D5C;
+  background: rgba(76, 175, 125, 0.16);
+  border-color: #1E6649;
   color: #1E6649;
 }
 
 .theme-light .player-tab-active-indicator,
 [data-theme="light"] .player-tab-active-indicator {
-  background: #2E7D5C;
+  background: #1E6649;
 }

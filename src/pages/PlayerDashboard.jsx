@@ -67,34 +67,35 @@ const PlayerDashboard = () => {
         }
       } catch (_) {}
 
-      // Buscar si el usuario es el propio jugador O es un padre vinculado
-      const found = allPlayers.find(p => 
-        (linkedPlayerIdFromShared && p.id === linkedPlayerIdFromShared) ||
-        p.requesterUid === user.uid || 
-        p.playerUid === user.uid || 
-        p.userId === user.uid ||
-        p.uid === user.uid ||
-        (p.email && user.email && p.email.toLowerCase() === user.email.toLowerCase()) ||
-        p.linkedParents?.includes(user.uid) ||
-        (user.displayName && p.name && normalizeStr(p.name) === normalizeStr(user.displayName))
-      );
+      // Buscar si el usuario ya tenía una ficha activa, o buscar por coincidencia de cuenta/padre
+      setPlayer((prevPlayer) => {
+        if (prevPlayer?.id && prevPlayer.id !== 'player-self') {
+          const updated = allPlayers.find(p => p.id === prevPlayer.id);
+          if (updated) return updated;
+        }
 
-      if (found) {
-        setPlayer(found);
-      } else if (allPlayers.length > 0) {
-        // Si no hay coincidencia exacta de cuenta pero hay jugadores reales en la plantilla,
-        // usar el primer jugador de la plantilla real del equipo
-        setPlayer(allPlayers[0]);
-      } else {
-        setPlayer({
+        const found = allPlayers.find(p => 
+          (linkedPlayerIdFromShared && p.id === linkedPlayerIdFromShared) ||
+          p.requesterUid === user.uid || 
+          p.playerUid === user.uid || 
+          p.userId === user.uid ||
+          p.uid === user.uid ||
+          (p.email && user.email && p.email.toLowerCase() === user.email.toLowerCase()) ||
+          p.linkedParents?.includes(user.uid) ||
+          (user.displayName && p.name && normalizeStr(p.name) === normalizeStr(user.displayName))
+        );
+
+        if (found) return found;
+        if (allPlayers.length > 0) return allPlayers[0];
+        return {
           id: 'player-self',
           name: user.displayName || 'Jugador Míster11',
           position: 'MC',
           number: '11',
           category: activeTeam?.categoria || activeTeam?.category || 'General',
           consents: { basic: true, attendance: true, health: true, tests: true }
-        });
-      }
+        };
+      });
       setLoading(false);
     }, (err) => {
       console.warn('[PlayerDashboard] Error cargando jugador:', err);

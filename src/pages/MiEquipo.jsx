@@ -15,6 +15,7 @@ import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import PlayerHealthTab from '../components/PlayerHealthTab';
 import PlayerPlansTab from '../components/PlayerPlansTab';
 import { TeamAttendanceTab } from '../components/TeamAttendanceTab';
+import { PlayerAttendanceSubTab } from '../components/PlayerAttendanceSubTab';
 import { TeamStaffTab } from '../components/TeamStaffTab';
 import { PlayerTabs } from '../components/player/PlayerTabs';
 import { PlayerChatTab } from '../components/player/PlayerChatTab';
@@ -172,9 +173,15 @@ const MiEquipo = () => {
         await uploadBytes(fileRef, editData.photoFile);
         const avatarUrl = await getDownloadURL(fileRef);
         await updatePlayer(savedPlayerId, { avatarUrl });
+        playerDataToSave.avatarUrl = avatarUrl;
       } else if (editData.avatarUrl === '') {
         // If photo was explicitly removed
         await updatePlayer(savedPlayerId, { avatarUrl: '' });
+        playerDataToSave.avatarUrl = '';
+      }
+
+      if (selectedPlayer && selectedPlayer.id === savedPlayerId) {
+        setSelectedPlayer({ ...selectedPlayer, ...playerDataToSave });
       }
 
       setIsFormOpen(false);
@@ -321,13 +328,15 @@ const MiEquipo = () => {
         </div>
       )}
 
-      {/* FAB - Añadir Jugador */}
-      <button className="fab" onClick={() => handleOpenForm(null)}>
-        <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-          <line x1="12" y1="5" x2="12" y2="19"></line>
-          <line x1="5" y1="12" x2="19" y2="12"></line>
-        </svg>
-      </button>
+      {/* FAB - Añadir Jugador (Oculto cuando la ficha del jugador o formulario está abierto) */}
+      {!selectedPlayer && !isFormOpen && (
+        <button className="fab" onClick={() => handleOpenForm(null)} aria-label="Añadir jugador">
+          <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <line x1="12" y1="5" x2="12" y2="19"></line>
+            <line x1="5" y1="12" x2="19" y2="12"></line>
+          </svg>
+        </button>
+      )}
 
       {/* MODAL FORMULARIO JUGADOR */}
       {isFormOpen && (
@@ -504,23 +513,24 @@ const MiEquipo = () => {
               display: 'flex', 
               justifyContent: 'space-between', 
               alignItems: 'center', 
-              flexWrap: 'wrap', 
               gap: '8px', 
-              marginBottom: '12px' 
+              marginBottom: '12px',
+              width: '100%'
             }}>
               <button 
                 type="button"
                 style={{ 
                   background: 'rgba(255, 255, 255, 0.08)', 
-                  border: 'none', 
+                  border: '1px solid var(--border-light, rgba(255, 255, 255, 0.1))', 
                   borderRadius: '10px',
-                  width: '44px',
-                  height: '44px',
+                  width: '42px',
+                  height: '42px',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
                   color: 'var(--text-secondary)', 
-                  cursor: 'pointer' 
+                  cursor: 'pointer',
+                  flexShrink: 0
                 }} 
                 onClick={() => setSelectedPlayer(null)}
                 aria-label="Cerrar ficha"
@@ -528,7 +538,26 @@ const MiEquipo = () => {
                 <X size={20} />
               </button>
 
-              <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+              <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+                <button 
+                  className="btn-edit-icon" 
+                  onClick={() => setActiveTab('CHAT')}
+                  title="Abrir Chat con el Jugador"
+                  style={{ 
+                    background: activeTab === 'CHAT' ? '#10B981' : 'rgba(16, 185, 129, 0.15)', 
+                    color: activeTab === 'CHAT' ? '#FFFFFF' : '#10B981', 
+                    border: '1px solid rgba(16, 185, 129, 0.3)',
+                    width: '42px', 
+                    height: '42px', 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    justifyContent: 'center',
+                    borderRadius: '10px',
+                    cursor: 'pointer'
+                  }}
+                >
+                  <MessageSquare size={18} />
+                </button>
                 <button 
                   className="btn-edit-icon" 
                   onClick={() => {
@@ -843,7 +872,7 @@ const MiEquipo = () => {
             )}
 
             {activeTab === 'ASISTENCIA' && (
-              <PlayerAttendanceSubTab playerId={selectedPlayer.id} />
+              <PlayerAttendanceSubTab playerId={selectedPlayer.id} teamId={activeTeam?.id} />
             )}
           </div>
         </div>

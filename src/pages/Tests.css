@@ -29,7 +29,7 @@
   flex-shrink: 0;
 }
 
-.header-actions {
+.tests-page-actions {
   display: flex;
   align-items: center;
   gap: 8px;
@@ -48,13 +48,17 @@
     font-size: 1.1rem;
     width: 100%;
   }
-  .header-actions {
+  .tests-page-actions {
     width: 100%;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
     justify-content: flex-start;
   }
-  .header-actions .btn-outline {
-    font-size: 12px;
-    padding: 8px 10px !important;
+  .tests-page-actions .btn-outline {
+    font-size: 11px;
+    padding: 6px 10px !important;
+    min-height: 38px !important;
   }
 }
 
@@ -488,14 +492,73 @@
 }
 
 @media (max-width: 768px) {
+  .tests-page {
+    padding: 12px !important;
+    overflow-y: auto !important;
+  }
+
+  .tests-tabs {
+    gap: 6px !important;
+    padding-bottom: 8px !important;
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+  }
+
+  .tests-tab {
+    font-size: 11.5px !important;
+    padding: 6px 12px !important;
+    border-radius: 8px !important;
+    flex-shrink: 0 !important;
+  }
+
   .tab-registro, .tab-historial {
-    flex-direction: column;
+    flex-direction: column !important;
+    gap: 14px !important;
+    height: auto !important;
+    overflow: visible !important;
   }
+
   .reg-sidebar, .hist-sidebar {
-    width: 100%;
-    height: 150px;
-    flex-shrink: 0;
+    width: 100% !important;
+    height: auto !important;
+    max-height: none !important;
+    padding: 12px !important;
+    flex-shrink: 0 !important;
   }
+
+  .hist-sidebar .player-list {
+    display: flex !important;
+    flex-direction: row !important;
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    gap: 8px !important;
+    padding-bottom: 6px !important;
+    max-height: none !important;
+  }
+
+  .hist-sidebar .player-select-item {
+    flex-shrink: 0 !important;
+    padding: 6px 10px !important;
+    font-size: 12px !important;
+    border-radius: 20px !important;
+    white-space: nowrap !important;
+  }
+
+  .hist-main {
+    width: 100% !important;
+    overflow: visible !important;
+  }
+
+  #grafica-rendimiento-jugador {
+    flex-direction: column !important;
+    gap: 16px !important;
+    padding: 12px !important;
+  }
+
+  #grafica-rendimiento-jugador > div {
+    width: 100% !important;
+  }
+
   /* Estándar global de modales elásticos en Tests */
   .modal-content.large, .modal-content {
     height: calc(100dvh - 56px) !important;

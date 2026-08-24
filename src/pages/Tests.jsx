@@ -820,7 +820,7 @@ const Tests = () => {
       <header className="tests-header">
         <div className="header-top">
           <h1>EVALUACIÓN Y TESTS</h1>
-          <div className="header-actions">
+          <div className="tests-page-actions">
             <button
               className="btn-outline"
               style={{

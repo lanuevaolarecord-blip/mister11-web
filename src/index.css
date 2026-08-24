@@ -927,18 +927,23 @@ button, .nav-item, input, select, .icon-btn, .topbar-btn, .tool-icon-btn {
   }
 
   /* Header en móvil limpio y adaptado al notch/cámara */
+  /* Header en móvil limpio, horizontal y adaptado al notch */
   .header {
-    height: auto !important;
-    min-height: calc(56px + var(--sat)) !important;
-    padding-top: calc(8px + var(--sat)) !important;
-    padding-bottom: 12px !important;
-    padding-left: calc(16px + var(--sal)) !important;
-    padding-right: calc(16px + var(--sar)) !important;
+    height: 56px !important;
+    min-height: 56px !important;
+    max-height: 56px !important;
+    padding: 0 12px !important;
     box-sizing: border-box !important;
     display: flex !important;
     flex-direction: row !important;
+    flex-wrap: nowrap !important;
     justify-content: space-between !important;
     align-items: center !important;
+    position: relative !important;
+    gap: 8px !important;
+    background-color: var(--primary, #1B3A2D) !important;
+    border-bottom: 1px solid rgba(212, 168, 67, 0.2) !important;
+    z-index: 1000 !important;
   }
 
   .header-title {
@@ -948,84 +953,59 @@ button, .nav-item, input, select, .icon-btn, .topbar-btn, .tool-icon-btn {
   .header-title-container {
     order: 1 !important;
     display: flex !important;
+    flex-direction: row !important;
+    flex-wrap: nowrap !important;
     align-items: center !important;
-    gap: 8px !important;
-  }
-
-  .header-central-shield-container {
-    order: 2 !important;
-    position: relative !important;
-    top: unset !important;
-    left: unset !important;
-    transform: unset !important;
-    width: auto !important;
-    height: auto !important;
-    box-shadow: none !important;
-    border: none !important;
-    background: transparent !important;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-  }
-
-  .header-central-shield-container img {
-    width: 36px !important;
-    height: 36px !important;
-    border-radius: 50% !important;
-  }
-
-  .header {
-    padding: 0 8px !important;
-    gap: 6px !important;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: space-between !important;
-  }
-
-  .header-title-container {
     gap: 6px !important;
     flex: 1 1 auto !important;
     min-width: 0 !important;
     overflow: hidden !important;
-    display: flex !important;
-    align-items: center !important;
   }
 
-  .header-title-container .header-title {
-    display: none !important; /* En móvil dejamos espacio para equipo y acciones */
+  .header-central-shield-container {
+    display: none !important; /* En móvil dejamos todo el espacio horizontal para equipo y acciones */
   }
 
   .header-actions {
-    order: 3 !important;
+    order: 2 !important;
     display: flex !important;
+    flex-direction: row !important;
+    flex-wrap: nowrap !important;
     align-items: center !important;
-    gap: 4px !important;
+    gap: 6px !important;
     flex-shrink: 0 !important;
     margin-left: auto !important;
   }
 
   .header-actions .icon-btn {
-    padding: 4px !important;
-    min-width: 32px !important;
-    min-height: 32px !important;
-    width: 32px !important;
-    height: 32px !important;
-    display: flex !important;
+    padding: 6px !important;
+    min-width: 34px !important;
+    min-height: 34px !important;
+    width: 34px !important;
+    height: 34px !important;
+    display: inline-flex !important;
     align-items: center !important;
     justify-content: center !important;
     flex-shrink: 0 !important;
+    border-radius: 8px !important;
+    background: rgba(255, 255, 255, 0.05) !important;
+    border: 1px solid rgba(212, 168, 67, 0.15) !important;
   }
 
   /* Reducir el switcher de equipo en móvil */
   .team-switcher-header-v2 {
-    padding: 3px 6px !important;
-    max-width: 100px !important;
+    padding: 4px 8px !important;
+    max-width: 110px !important;
     flex-shrink: 1 !important;
+    border-radius: 12px !important;
+    background: rgba(212, 168, 67, 0.15) !important;
+    border: 1px solid rgba(212, 168, 67, 0.3) !important;
   }
   
   .team-name-span {
-    max-width: 60px !important;
-    font-size: 10px !important;
+    max-width: 65px !important;
+    font-size: 10.5px !important;
+    font-weight: 700 !important;
     flex-shrink: 1 !important;
     white-space: nowrap !important;
     overflow: hidden !important;

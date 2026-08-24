@@ -113,6 +113,7 @@ const Header = ({ onToggleNotif }) => {
         {/* Selector interactivo de Rol en el Cuerpo Técnico */}
         {permissions?.roleInfo && (
           <div 
+            className="header-staff-role-switcher"
             title={`Rol activo: ${permissions.roleInfo.label}. Haz clic para cambiar de rol.`}
             style={{
               display: 'inline-flex',

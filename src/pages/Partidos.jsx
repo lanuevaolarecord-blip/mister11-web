@@ -782,7 +782,7 @@ const Partidos = () => {
       <header className="partidos-header">
         <div className="header-top w-full flex flex-col items-center space-y-3 md:flex-row md:justify-between px-4">
           <h1 className="whitespace-normal text-xl font-bold block text-center">GESTIÓN DE PARTIDOS</h1>
-          <div className="header-actions flex flex-row gap-2 w-full justify-center md:w-auto">
+          <div className="partidos-page-actions flex flex-row gap-2 w-full justify-center md:w-auto">
             {viewMode === 'LIST' ? (
               <>
                 {matches.length > 0 && (

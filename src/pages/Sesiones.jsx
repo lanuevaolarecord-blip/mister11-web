@@ -911,7 +911,7 @@ const Sesiones = () => {
               <button className="btn-icon-back" onClick={() => setViewMode('list')}>← Volver</button>
               <h1>{editData.title || 'Nueva Sesión'}</h1>
             </div>
-            <div className="header-actions">
+            <div className="sesiones-page-actions">
               <button className="btn-outline" onClick={() => setViewMode('list')}>Cancelar</button>
               <button className="btn-primary" onClick={handleSaveSession} disabled={isSaving}>
                 {isSaving ? 'Guardando...' : 'Guardar Sesión'}

@@ -192,7 +192,7 @@ html.dark select option {
 }
 .btn-danger:hover { opacity: 0.8; }
 
-.header-actions {
+.partidos-page-actions {
   display: flex;
   gap: 12px;
 }

@@ -1,8 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { usePlayers } from '../hooks/usePlayers';
 import { useAuth } from '../context/AuthContext';
 import { useTeams } from '../hooks/useTeams';
 import { usePlan } from '../hooks/usePlan';
+import { usePlayerSeasonStats } from '../hooks/usePlayerSeasonStats';
+import { calculatePlayerMatchStats } from '../utils/playerMatchStats';
 import UpgradeModal from '../components/UpgradeModal';
 import { calcularEdad } from '../utils/calcularEdad';
 import { generateExpediente } from '../utils/pdfGenerator';
@@ -51,12 +53,17 @@ const MiEquipo = () => {
   const { activeTeam } = useTeams();
   const { isPro, limits, isProActive } = usePlan();
   const { players, loading, addPlayer, updatePlayer, removePlayer } = usePlayers(activeTeamId);
+  const { matches, allPlayersStats } = usePlayerSeasonStats(activeTeamId);
   const { t } = useTranslation();
   const [mainTeamTab, setMainTeamTab] = useState('squad'); // 'squad' | 'attendance'
   const [filter, setFilter] = useState('TODOS');
   const [selectedPlayer, setSelectedPlayer] = useState(null);
   const [activeTab, setActiveTab] = useState('GENERAL');
   const [upgradeModal, setUpgradeModal] = useState({ open: false, message: '' });
+
+  // Estadísticas sincronizadas con el módulo de Partidos
+  const playersStatsMap = useMemo(() => allPlayersStats(players), [players, allPlayersStats]);
+  const playerSeasonStats = useMemo(() => calculatePlayerMatchStats(selectedPlayer?.id, matches), [selectedPlayer?.id, matches]);
   
   // Modal / Form state
   const [isFormOpen, setIsFormOpen] = useState(false);
@@ -262,35 +269,53 @@ const MiEquipo = () => {
         </div>
       ) : (
         <div className="grid-8-cols">
-          {filteredPlayers.map(player => (
-            <div key={player.id} className="card-base" style={{ padding: '0', cursor: 'pointer', textAlign: 'center', position: 'relative', overflow: 'hidden' }} onClick={() => setSelectedPlayer(player)}>
-              <div style={{ background: 'var(--accent-green-light)', height: '60px', width: '100%' }}></div>
-              <div style={{ position: 'relative', marginTop: '-30px', marginBottom: '12px' }}>
-                <div style={{ width: '60px', height: '60px', borderRadius: '50%', background: !player.avatarUrl ? stringToColor(player.id || player.name) : '#FFF', margin: '0 auto', border: '3px solid var(--bg-card)', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  {player.avatarUrl ? <img src={player.avatarUrl} alt={player.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <span style={{ color: '#FFF', fontSize: '20px', fontWeight: 'bold' }}>{getInitials(player.name)}</span>}
+          {filteredPlayers.map(player => {
+            const pStats = playersStatsMap[player.id] || { goals: 0, matchesPlayed: 0 };
+            return (
+              <div key={player.id} className="card-base" style={{ padding: '0', cursor: 'pointer', textAlign: 'center', position: 'relative', overflow: 'hidden' }} onClick={() => setSelectedPlayer(player)}>
+                <div style={{ background: 'var(--accent-green-light)', height: '60px', width: '100%' }}></div>
+                <div style={{ position: 'relative', marginTop: '-30px', marginBottom: '12px' }}>
+                  <div style={{ width: '60px', height: '60px', borderRadius: '50%', background: !player.avatarUrl ? stringToColor(player.id || player.name) : '#FFF', margin: '0 auto', border: '3px solid var(--bg-card)', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    {player.avatarUrl ? <img src={player.avatarUrl} alt={player.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <span style={{ color: '#FFF', fontSize: '20px', fontWeight: 'bold' }}>{getInitials(player.name)}</span>}
+                  </div>
+                  <div style={{ position: 'absolute', bottom: '0', right: 'calc(50% - 30px)', background: 'var(--accent-gold)', color: '#FFF', borderRadius: '50%', width: '22px', height: '22px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '10px', fontWeight: 'bold', border: '2px solid var(--bg-card)' }}>
+                    {player.number}
+                  </div>
                 </div>
-                <div style={{ position: 'absolute', bottom: '0', right: 'calc(50% - 30px)', background: 'var(--accent-gold)', color: '#FFF', borderRadius: '50%', width: '22px', height: '22px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '10px', fontWeight: 'bold', border: '2px solid var(--bg-card)' }}>
-                  {player.number}
+                <h3 style={{ margin: '0 0 16px 0', fontSize: '15px', color: 'var(--text-primary)', fontFamily: 'var(--font-heading)' }}>{player.name}</h3>
+                
+                {/* Badges de Rendimiento en Partidos */}
+                <div style={{ display: 'flex', justifyContent: 'center', gap: '6px', marginBottom: '8px' }}>
+                  {pStats.goals > 0 && (
+                    <span style={{ background: 'rgba(16, 185, 129, 0.15)', color: '#10B981', border: '1px solid rgba(16, 185, 129, 0.3)', borderRadius: '12px', padding: '2px 8px', fontSize: '10.5px', fontWeight: '800' }}>
+                      ⚽ {pStats.goals}
+                    </span>
+                  )}
+                  {pStats.matchesPlayed > 0 && (
+                    <span style={{ background: 'rgba(212, 168, 67, 0.15)', color: 'var(--accent-gold)', border: '1px solid rgba(212, 168, 67, 0.3)', borderRadius: '12px', padding: '2px 8px', fontSize: '10.5px', fontWeight: '800' }}>
+                      🏟️ {pStats.matchesPlayed} PJ
+                    </span>
+                  )}
                 </div>
+
+                <div style={{ background: 'var(--bg-app)', margin: '0 12px 12px 12px', padding: '8px', borderRadius: '8px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div style={{ display: 'flex', flexDirection: 'column' }}>
+                    <span style={{ fontSize: '10px', color: 'var(--text-secondary)' }}>Pos</span>
+                    <strong style={{ fontSize: '12px', color: 'var(--text-primary)' }}>{player.position}</strong>
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column' }}>
+                    <span style={{ fontSize: '10px', color: 'var(--text-secondary)' }}>Edad</span>
+                    <strong style={{ fontSize: '12px', color: 'var(--text-primary)' }}>{calcularEdad(player.fechaNacimiento || player.birthDate || player.age).text}</strong>
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column' }}>
+                    <span style={{ fontSize: '10px', color: 'var(--text-secondary)' }}>Alt</span>
+                    <strong style={{ fontSize: '12px', color: 'var(--text-primary)' }}>{player.height || '--'}</strong>
+                  </div>
+                </div>
+                {(player.currentStatus === 'injured' || player.currentStatus === 'recovery') && <div style={{ position: 'absolute', top: '8px', right: '8px', background: 'var(--bg-card)', borderRadius: '50%', padding: '4px', boxShadow: 'var(--shadow-card)' }} title={player.currentStatus === 'injured' ? "Lesionado" : "En recuperación"}>🚑</div>}
               </div>
-              <h3 style={{ margin: '0 0 16px 0', fontSize: '15px', color: 'var(--text-primary)', fontFamily: 'var(--font-heading)' }}>{player.name}</h3>
-              <div style={{ background: 'var(--bg-app)', margin: '0 12px 12px 12px', padding: '8px', borderRadius: '8px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <div style={{ display: 'flex', flexDirection: 'column' }}>
-                  <span style={{ fontSize: '10px', color: 'var(--text-secondary)' }}>Pos</span>
-                  <strong style={{ fontSize: '12px', color: 'var(--text-primary)' }}>{player.position}</strong>
-                </div>
-                <div style={{ display: 'flex', flexDirection: 'column' }}>
-                  <span style={{ fontSize: '10px', color: 'var(--text-secondary)' }}>Edad</span>
-                  <strong style={{ fontSize: '12px', color: 'var(--text-primary)' }}>{calcularEdad(player.fechaNacimiento || player.birthDate || player.age).text}</strong>
-                </div>
-                <div style={{ display: 'flex', flexDirection: 'column' }}>
-                  <span style={{ fontSize: '10px', color: 'var(--text-secondary)' }}>Alt</span>
-                  <strong style={{ fontSize: '12px', color: 'var(--text-primary)' }}>{player.height || '--'}</strong>
-                </div>
-              </div>
-              {(player.currentStatus === 'injured' || player.currentStatus === 'recovery') && <div style={{ position: 'absolute', top: '8px', right: '8px', background: 'var(--bg-card)', borderRadius: '50%', padding: '4px', boxShadow: 'var(--shadow-card)' }} title={player.currentStatus === 'injured' ? "Lesionado" : "En recuperación"}>🚑</div>}
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
 
@@ -498,7 +523,17 @@ const MiEquipo = () => {
                         message: "La exportación del expediente del jugador es una función PRO. Sube de nivel para usarla." 
                       });
                     } else {
-                      generateExpediente(selectedPlayer, activeTeam);
+                      generateExpediente({
+                        ...selectedPlayer,
+                        ...playerSeasonStats,
+                        goles: playerSeasonStats.goals,
+                        asistencias: playerSeasonStats.assists,
+                        partidosJugados: playerSeasonStats.matchesPlayed,
+                        minutosTemporada: playerSeasonStats.minutesPlayed,
+                        tarjetasAmarillas: playerSeasonStats.yellowCards,
+                        tarjetasRojas: playerSeasonStats.redCards,
+                        matchHistory: playerSeasonStats.matchHistory
+                      }, activeTeam);
                     }
                   }} 
                   title="Exportar Expediente"
@@ -552,6 +587,22 @@ const MiEquipo = () => {
           <div className="sidebar-body" style={{ padding: '0 24px 24px 24px' }}>
             {activeTab === 'GENERAL' && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                {/* Resumen Rápido de Temporada Sincronizado */}
+                <div style={{ background: 'var(--bg-app)', padding: '12px', borderRadius: '10px', display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px', textAlign: 'center', border: '1px solid var(--border-light)' }}>
+                  <div>
+                    <span style={{ fontSize: '10px', color: 'var(--text-secondary)', textTransform: 'uppercase', fontWeight: 'bold' }}>Goles</span>
+                    <div style={{ fontSize: '16px', fontWeight: '900', color: 'var(--accent-green)' }}>⚽ {playerSeasonStats.goals}</div>
+                  </div>
+                  <div>
+                    <span style={{ fontSize: '10px', color: 'var(--text-secondary)', textTransform: 'uppercase', fontWeight: 'bold' }}>Minutos</span>
+                    <div style={{ fontSize: '16px', fontWeight: '900', color: 'var(--text-primary)' }}>{playerSeasonStats.minutesPlayed}'</div>
+                  </div>
+                  <div>
+                    <span style={{ fontSize: '10px', color: 'var(--text-secondary)', textTransform: 'uppercase', fontWeight: 'bold' }}>Partidos</span>
+                    <div style={{ fontSize: '16px', fontWeight: '900', color: 'var(--accent-gold)' }}>{playerSeasonStats.matchesPlayed} PJ</div>
+                  </div>
+                </div>
+
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: '12px', borderBottom: '1px dashed var(--border-light)' }}>
                   <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>Categoría</span>
                   <strong className="capitalize" style={{ fontSize: '13px', color: 'var(--text-primary)' }}>{activeTeam?.categoria || selectedPlayer.category}</strong>
@@ -632,12 +683,116 @@ const MiEquipo = () => {
             )}
 
             {activeTab === 'ESTS.' && (
-              <div className="tab-pane">
+              <div className="tab-pane" style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                {/* 4 Tarjetas HUD Principales Sincronizadas */}
                 <div className="stats-grid">
-                  <div className="stat-card"><span>Partidos</span> <strong>0</strong></div>
-                  <div className="stat-card"><span>Goles</span> <strong>0</strong></div>
-                  <div className="stat-card"><span>Asist.</span> <strong>0</strong></div>
-                  <div className="stat-card"><span>Minutos</span> <strong>0</strong></div>
+                  <div className="stat-card" style={{ borderLeft: '4px solid var(--accent-green)' }}>
+                    <span style={{ fontSize: '11px', color: 'var(--text-secondary)', textTransform: 'uppercase', fontWeight: 'bold' }}>Partidos</span>
+                    <strong style={{ fontSize: '20px', color: 'var(--text-primary)' }}>{playerSeasonStats.matchesPlayed}</strong>
+                    <small style={{ fontSize: '10px', color: 'var(--text-secondary)' }}>
+                      {playerSeasonStats.starts} tit. · {playerSeasonStats.subAppearances} sup.
+                    </small>
+                  </div>
+
+                  <div className="stat-card" style={{ borderLeft: '4px solid #10B981' }}>
+                    <span style={{ fontSize: '11px', color: 'var(--text-secondary)', textTransform: 'uppercase', fontWeight: 'bold' }}>Goles</span>
+                    <strong style={{ fontSize: '20px', color: '#10B981' }}>⚽ {playerSeasonStats.goals}</strong>
+                    <small style={{ fontSize: '10px', color: 'var(--text-secondary)' }}>Temporada</small>
+                  </div>
+
+                  <div className="stat-card" style={{ borderLeft: '4px solid #3B82F6' }}>
+                    <span style={{ fontSize: '11px', color: 'var(--text-secondary)', textTransform: 'uppercase', fontWeight: 'bold' }}>Asistencias</span>
+                    <strong style={{ fontSize: '20px', color: '#3B82F6' }}>👟 {playerSeasonStats.assists}</strong>
+                    <small style={{ fontSize: '10px', color: 'var(--text-secondary)' }}>Pases de gol</small>
+                  </div>
+
+                  <div className="stat-card" style={{ borderLeft: '4px solid #F59E0B' }}>
+                    <span style={{ fontSize: '11px', color: 'var(--text-secondary)', textTransform: 'uppercase', fontWeight: 'bold' }}>Minutos</span>
+                    <strong style={{ fontSize: '20px', color: '#F59E0B' }}>⏱️ {playerSeasonStats.minutesPlayed}'</strong>
+                    <small style={{ fontSize: '10px', color: 'var(--text-secondary)' }}>En campo</small>
+                  </div>
+                </div>
+
+                {/* Disciplina y Nota Media */}
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                  <div style={{ background: 'var(--bg-card)', padding: '12px', borderRadius: '10px', border: '1px solid var(--border-light)', textAlign: 'center' }}>
+                    <span style={{ fontSize: '11px', color: 'var(--text-secondary)', fontWeight: 'bold' }}>TARJETAS</span>
+                    <div style={{ fontSize: '15px', fontWeight: '800', marginTop: '4px', color: 'var(--text-primary)' }}>
+                      🟨 {playerSeasonStats.yellowCards} · 🟥 {playerSeasonStats.redCards}
+                    </div>
+                  </div>
+
+                  <div style={{ background: 'var(--bg-card)', padding: '12px', borderRadius: '10px', border: '1px solid var(--border-light)', textAlign: 'center' }}>
+                    <span style={{ fontSize: '11px', color: 'var(--text-secondary)', fontWeight: 'bold' }}>NOTA MEDIA</span>
+                    <div style={{ fontSize: '15px', fontWeight: '800', marginTop: '4px', color: '#D4A843' }}>
+                      ⭐ {playerSeasonStats.avgRating}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Historial Detallado de Partidos Disputados */}
+                <div style={{ marginTop: '4px' }}>
+                  <h4 style={{ margin: '0 0 10px 0', fontSize: '13px', fontWeight: '800', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <span>📋</span> Historial de Partidos ({playerSeasonStats.matchHistory.length})
+                  </h4>
+
+                  {playerSeasonStats.matchHistory.length > 0 ? (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                      {playerSeasonStats.matchHistory.map((mItem, idx) => (
+                        <div key={idx} style={{ 
+                          background: 'var(--bg-card)', 
+                          border: '1px solid var(--border-light)', 
+                          borderRadius: '10px', 
+                          padding: '10px 12px',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          gap: '6px'
+                        }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <span style={{ fontSize: '13px', fontWeight: '800', color: 'var(--text-primary)' }}>
+                              vs {mItem.rival}
+                            </span>
+                            <span style={{ 
+                              fontSize: '11px', 
+                              fontWeight: '700', 
+                              padding: '2px 8px', 
+                              borderRadius: '12px',
+                              background: 'rgba(27, 58, 45, 0.08)',
+                              color: 'var(--text-primary)'
+                            }}>
+                              {mItem.result} ({mItem.type})
+                            </span>
+                          </div>
+
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '11px', color: 'var(--text-secondary)' }}>
+                            <span>📅 {mItem.date} · {mItem.isTitular ? 'Titular' : 'Suplente'} ({mItem.minutesPlayed}')</span>
+                            <div style={{ display: 'flex', gap: '6px', fontWeight: '800' }}>
+                              {mItem.goals > 0 && <span style={{ color: '#10B981' }}>⚽ {mItem.goals}</span>}
+                              {mItem.assists > 0 && <span style={{ color: '#3B82F6' }}>👟 {mItem.assists}</span>}
+                              {mItem.yellowCards > 0 && <span>🟨</span>}
+                              {mItem.redCards > 0 && <span>🟥</span>}
+                              {mItem.rating !== '-' && <span style={{ color: '#D4A843' }}>⭐ {mItem.rating}</span>}
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div style={{ 
+                      background: 'var(--bg-card)', 
+                      border: '1px dashed var(--border-light)', 
+                      borderRadius: '10px', 
+                      padding: '20px', 
+                      textAlign: 'center',
+                      color: 'var(--text-secondary)',
+                      fontSize: '12px'
+                    }}>
+                      <p style={{ margin: 0, fontWeight: '700' }}>Sin partidos registrados con este jugador</p>
+                      <p style={{ margin: '4px 0 0 0', fontSize: '11px' }}>
+                        Los goles, alineaciones y minutos registrados en el módulo <strong>Partidos</strong> se sincronizarán aquí automáticamente.
+                      </p>
+                    </div>
+                  )}
                 </div>
               </div>
             )}

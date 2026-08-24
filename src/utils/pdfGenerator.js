@@ -1250,16 +1250,44 @@ export const generateExpediente = async (player, activeTeam = null) => {
     startY: 114,
     head: [['Partidos', 'Minutos', 'Goles', 'Asistencias', 'Tarjetas']],
     body: [[
-      player.partidosJugados || 0,
-      player.minutosTemporada || 0,
-      player.goles || 0,
-      player.asistencias || 0,
-      (player.tarjetasAmarillas || 0) + 'A / ' + (player.tarjetasRojas || 0) + 'R'
+      player.partidosJugados || player.matchesPlayed || 0,
+      player.minutosTemporada || player.minutesPlayed || 0,
+      player.goles || player.goals || 0,
+      player.asistencias || player.assists || 0,
+      (player.tarjetasAmarillas || player.yellowCards || 0) + 'A / ' + (player.tarjetasRojas || player.redCards || 0) + 'R'
     ]],
     headStyles: { fillColor: THEME_COLOR, textColor: [255,255,255], fontStyle: 'bold', halign: 'center' },
     bodyStyles: { textColor: [15,23,42], halign: 'center', fontSize: 10 },
     theme: 'grid'
   });
+
+  if (player.matchHistory && player.matchHistory.length > 0) {
+    const nextY = (doc.lastAutoTable ? doc.lastAutoTable.finalY : 130) + 10;
+    doc.setFont(undefined, 'bold');
+    doc.setFontSize(11);
+    doc.text('Detalle de Partidos Disputados', 15, nextY);
+    doc.setFont(undefined, 'normal');
+
+    const historyRows = player.matchHistory.map(m => [
+      m.date || '-',
+      `vs ${m.rival || 'Rival'} (${m.type || '-'})`,
+      m.result || '-',
+      m.isTitular ? 'Titular' : 'Suplente',
+      `${m.minutesPlayed || 0}'`,
+      m.goals || 0,
+      m.assists || 0,
+      m.rating !== '-' ? m.rating : '-'
+    ]);
+
+    autoTable(doc, {
+      startY: nextY + 4,
+      head: [['Fecha', 'Partido', 'Resultado', 'Rol', 'Min', 'Goles', 'Asist', 'Nota']],
+      body: historyRows,
+      headStyles: { fillColor: [43, 62, 53], textColor: [255,255,255], fontStyle: 'bold', halign: 'center', fontSize: 8.5 },
+      bodyStyles: { textColor: [15,23,42], halign: 'center', fontSize: 8.5 },
+      theme: 'striped'
+    });
+  }
 
   addFooter(doc);
   const safeName = (player.name || player.nombre || 'Jugador').replace(/\s+/g,'_');

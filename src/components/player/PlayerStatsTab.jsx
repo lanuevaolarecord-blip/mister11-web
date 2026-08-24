@@ -5,6 +5,7 @@ import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
 import { usePlan } from '../../hooks/usePlan';
 import { GraficaEvolucion } from '../GraficasTest';
+import { calculatePlayerMatchStats } from '../../utils/playerMatchStats';
 import UpgradeModal from '../UpgradeModal';
 import { 
   Trophy, 
@@ -106,44 +107,24 @@ export const PlayerStatsTab = ({ player, team, teamPath }) => {
     return () => unsubWellness();
   }, [teamPath, player?.id]);
 
-  // 3. Escuchar estadísticas en partidos reales
+  // 3. Escuchar estadísticas en partidos reales sincronizadas
   useEffect(() => {
     if (!teamPath || !player?.id) return;
 
     const matchesRef = collection(db, `${teamPath}/matches`);
     const unsubMatches = onSnapshot(matchesRef, (snap) => {
-      let totalMins = 0;
-      let totalGoals = 0;
-      let totalAssists = 0;
-      let playedCount = 0;
-      let ratings = [];
-
-      snap.docs.forEach(d => {
-        const m = d.data();
-        if (m.playerStats && m.playerStats[player.id]) {
-          const s = m.playerStats[player.id];
-          const mins = Number(s.minutesPlayed || s.minutos || 0);
-          totalMins += mins;
-          if (mins > 0) playedCount++;
-          totalGoals += Number(s.goals || s.goles || 0);
-          totalAssists += Number(s.assists || s.asistencias || 0);
-          if (s.rating || s.nota) {
-            ratings.push(Number(s.rating || s.nota));
-          }
-        }
-      });
-
-      const avg = ratings.length > 0
-        ? (ratings.reduce((a,b) => a+b, 0) / ratings.length).toFixed(1)
-        : (player?.notaMedia || '8.2');
+      const allMatches = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      const pStats = calculatePlayerMatchStats(player.id, allMatches);
 
       setMatchStats({
-        minutes: totalMins || player?.minutosJugados || 450,
-        goals: totalGoals || player?.goles || 3,
-        assists: totalAssists || player?.asistencias || 2,
-        matchesCount: playedCount || 5,
-        avgRating: avg
+        minutes: pStats.minutesPlayed,
+        goals: pStats.goals,
+        assists: pStats.assists,
+        matchesCount: pStats.matchesPlayed,
+        avgRating: pStats.avgRating !== '-' ? pStats.avgRating : (player?.notaMedia || '8.2')
       });
+    }, (err) => {
+      console.warn('Error al cargar partidos en PlayerStatsTab:', err);
     });
 
     return () => unsubMatches();

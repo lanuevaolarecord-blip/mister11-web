@@ -12,38 +12,105 @@ export const PlayerHomeTab = ({ player, team, teamPath, onNavigateTab }) => {
   const [nextEvent, setNextEvent] = useState(null);
   const [announcements, setAnnouncements] = useState([]);
   const [attendanceStats, setAttendanceStats] = useState({ streak: 0, percentage: 100, total: 0, attended: 0 });
+  const [seasonPerformance, setSeasonPerformance] = useState({ goals: 0, minutes: 0, matches: 0 });
   const [loading, setLoading] = useState(true);
 
-  // 1. Escuchar próxima sesión / partido
+  // 1. Escuchar próxima sesión Y próximo partido
   useEffect(() => {
     if (!teamPath) return;
 
-    // Escuchar sesiones programadas
+    const parseDateSafe = (dStr) => {
+      if (!dStr) return null;
+      if (typeof dStr === 'string') return new Date(dStr.split('T')[0]);
+      if (dStr.toDate) return dStr.toDate();
+      if (dStr instanceof Date) return dStr;
+      return null;
+    };
+
+    // Escuchar sesiones
     const sessionsRef = collection(db, `${teamPath}/sessions`);
-    const unsubSessions = onSnapshot(sessionsRef, (snap) => {
-      const all = snap.docs.map(d => ({ id: d.id, type: 'training', ...d.data() }));
-      const now = new Date();
-      
-      // Filtrar futuras
-      const upcoming = all.filter(s => {
-        if (!s.fecha) return true;
-        const d = new Date(s.fecha);
-        return d >= new Date(now.setHours(0,0,0,0));
+    const unsubSessions = onSnapshot(sessionsRef, (snapS) => {
+      const sessions = snapS.docs.map(d => ({
+        id: d.id,
+        type: 'session',
+        title: d.data().titulo || d.data().title || 'Entrenamiento Táctico',
+        date: d.data().fecha || d.data().date,
+        time: d.data().hora || d.data().time || '18:30',
+        duration: d.data().duracion || 90,
+        location: d.data().lugar || d.data().location || 'Campo de Entrenamiento',
+        ...d.data()
+      }));
+
+      // Escuchar partidos
+      const matchesRef = collection(db, `${teamPath}/matches`);
+      const unsubMatches = onSnapshot(matchesRef, (snapM) => {
+        const matches = snapM.docs.map(d => ({
+          id: d.id,
+          type: 'match',
+          title: `🏆 Partido vs ${d.data().rival || d.data().opponent || 'Rival'}`,
+          date: d.data().fecha || d.data().date,
+          time: d.data().hora || d.data().time || '11:00',
+          duration: 90,
+          location: d.data().lugar || (d.data().isHome ? 'Campo Local' : 'Campo Visitante'),
+          ...d.data()
+        }));
+
+        // Calcular estadísticas de rendimiento del jugador en partidos
+        if (player?.id) {
+          let goals = 0;
+          let mins = 0;
+          let pCount = 0;
+          matches.forEach(m => {
+            const goleadores = m.goleadoresList || [];
+            const events = m.events || [];
+            const pStats = m.playerStats?.[player.id];
+            
+            const gCount = goleadores.filter(g => String(g.jugadorId) === String(player.id)).length ||
+                           events.filter(e => (e.type === 'gol_local' || e.type === 'gol') && (String(e.playerId) === String(player.id) || String(e.jugadorId) === String(player.id))).length ||
+                           (pStats?.goals || 0);
+            
+            const isTitular = m.titulares?.includes(player.id) || m.alineacion?.titulares?.includes(player.id);
+            const mPlayed = pStats?.minutesPlayed || (isTitular ? 90 : 0);
+            
+            if (isTitular || mPlayed > 0 || gCount > 0) {
+              pCount++;
+              goals += gCount;
+              mins += mPlayed;
+            }
+          });
+
+          setSeasonPerformance({ goals, minutes: mins, matches: pCount });
+        }
+
+        const now = new Date();
+        now.setHours(0, 0, 0, 0);
+
+        const allUpcoming = [...sessions, ...matches].filter(evt => {
+          const d = parseDateSafe(evt.date);
+          return d && d >= now;
+        });
+
+        allUpcoming.sort((a, b) => (parseDateSafe(a.date) || 0) - (parseDateSafe(b.date) || 0));
+
+        if (allUpcoming.length > 0) {
+          setNextEvent(allUpcoming[0]);
+        } else if (sessions.length > 0 || matches.length > 0) {
+          setNextEvent(sessions[0] || matches[0]);
+        }
+        setLoading(false);
+      }, (err) => {
+        console.warn('Error cargando partidos en Home:', err);
+        setLoading(false);
       });
 
-      // Ordenar por fecha más cercana
-      upcoming.sort((a, b) => new Date(a.fecha || 0) - new Date(b.fecha || 0));
-      if (upcoming.length > 0) {
-        setNextEvent(upcoming[0]);
-      }
-      setLoading(false);
+      return () => unsubMatches();
     }, (err) => {
-      console.warn('Error cargando próxima sesión:', err);
+      console.warn('Error cargando sesiones en Home:', err);
       setLoading(false);
     });
 
     return () => unsubSessions();
-  }, [teamPath]);
+  }, [teamPath, player?.id]);
 
   // 2. Escuchar anuncios del equipo
   useEffect(() => {
@@ -171,7 +238,7 @@ export const PlayerHomeTab = ({ player, team, teamPath, onNavigateTab }) => {
         )}
       </div>
 
-      {/* MÉTRICAS RÁPIDAS (ASISTENCIA & RACHA) */}
+      {/* MÉTRICAS RÁPIDAS (ASISTENCIA, RACHA Y PARTIDOS) */}
       <div className="player-metrics-row">
         <div className="hud-stat-card">
           <div className="stat-icon-wrap gold">
@@ -189,9 +256,9 @@ export const PlayerHomeTab = ({ player, team, teamPath, onNavigateTab }) => {
             <Trophy size={20} />
           </div>
           <div className="stat-content">
-            <span className="stat-label">% DE ASISTENCIA</span>
-            <span className="stat-number mono">{attendanceStats.percentage}%</span>
-            <span className="stat-sub">{attendanceStats.attended} de {attendanceStats.total || attendanceStats.attended} convocatorias</span>
+            <span className="stat-label">GOLES EN PARTIDOS</span>
+            <span className="stat-number mono">{seasonPerformance.goals} ⚽</span>
+            <span className="stat-sub">{seasonPerformance.matches} partidos disputados ({seasonPerformance.minutes}')</span>
           </div>
         </div>
       </div>

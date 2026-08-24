@@ -1,82 +1,130 @@
 import React, { useState, useEffect } from 'react';
-import { collection, onSnapshot, query, doc, getDoc } from 'firebase/firestore';
+import { collection, onSnapshot, query, where, doc, getDoc } from 'firebase/firestore';
 import { db } from '../../firebaseConfig';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
 import { usePlan } from '../../hooks/usePlan';
+import { GraficaEvolucion } from '../GraficasTest';
 import UpgradeModal from '../UpgradeModal';
-import { Trophy, Zap, Activity, Award, Star, Lock, TrendingUp, Sparkles, ChevronRight } from 'lucide-react';
+import { 
+  Trophy, 
+  Zap, 
+  Activity, 
+  Award, 
+  Star, 
+  Lock, 
+  TrendingUp, 
+  Sparkles, 
+  ChevronRight, 
+  Heart, 
+  Flame, 
+  Brain, 
+  Clock, 
+  Calendar,
+  CheckCircle2
+} from 'lucide-react';
 
 export const PlayerStatsTab = ({ player, team, teamPath }) => {
   const { user } = useAuth();
   const { darkMode } = useTheme();
   const { isPro, isProActive } = usePlan();
 
-  const [testResults, setTestResults] = useState([]);
-  const [matchStats, setMatchStats] = useState({ minutes: 0, goals: 0, assists: 0, avgRating: '8.5' });
+  const [evaluations, setEvaluations] = useState([]);
+  const [groupedHistory, setGroupedHistory] = useState({});
+  const [wellnessHistory, setWellnessHistory] = useState([]);
+  const [matchStats, setMatchStats] = useState({ minutes: 0, goals: 0, assists: 0, avgRating: '8.5', matchesCount: 0 });
   const [isUpgradeOpen, setIsUpgradeOpen] = useState(false);
   const [loading, setLoading] = useState(true);
 
-  // Escuchar resultados de tests del jugador
+  // 1. Escuchar evaluaciones canónicas de Míster11 y test_results del jugador
   useEffect(() => {
     if (!teamPath || !player?.id) return;
 
-    // Escuchar subcolección de tests del equipo o del jugador
-    const testsRef = collection(db, `${teamPath}/test_results`);
-    const unsub = onSnapshot(testsRef, (snap) => {
-      const all = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-      const playerTests = all.filter(t => t.playerId === player.id || t.players?.[player.id]);
+    const evalsRef = collection(db, `${teamPath}/evaluaciones`);
+    const unsubEvals = onSnapshot(evalsRef, (snap) => {
+      const allEvals = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      const playerEvals = allEvals.filter(e => e.playerId === player.id || e.players?.[player.id]);
 
-      // Formatear resultados
-      const formatted = playerTests.map(t => {
-        const pData = t.players?.[player.id] || t;
-        return {
-          id: t.id,
-          testName: t.testName || t.name || 'Test Físico',
-          category: t.category || 'Físico',
-          score: pData.valor || pData.score || pData.totalScore || 75,
-          unit: t.unit || 'pts',
-          date: t.date || t.fecha || 'Reciente',
-          trend: '+5%'
-        };
+      // Agrupar por test para las gráficas de evolución
+      const grouped = {};
+      playerEvals.forEach(e => {
+        const testId = e.testId || e.testName || 'test_general';
+        const testName = e.testName || e.name || 'Evaluación';
+        const rawVal = e.val !== undefined ? e.val : (e.score || e.percentage || 0);
+        const parsedVal = parseFloat(String(rawVal).replace(',', '.')) || 0;
+        const dateStr = e.date || e.fecha || (e.createdAt?.toDate ? e.createdAt.toDate().toISOString().split('T')[0] : 'Reciente');
+        const unit = e.unit || 'pts';
+        const category = e.category || 'General';
+
+        if (!grouped[testId]) {
+          grouped[testId] = {
+            id: testId,
+            name: testName,
+            category,
+            unit,
+            isTime: unit.toLowerCase().includes('seg') || unit.toLowerCase().includes('s'),
+            history: []
+          };
+        }
+
+        grouped[testId].history.push({
+          val: parsedVal,
+          date: dateStr,
+          raw: e
+        });
       });
 
-      setTestResults(formatted.length > 0 ? formatted : [
-        { id: '1', testName: 'Velocidad 30m', category: 'Velocidad', score: '4.12', unit: 'seg', date: 'Último mes', trend: '+0.15s' },
-        { id: '2', testName: 'Test de Cooper', category: 'Resistencia', score: '2850', unit: 'mts', date: 'Último mes', trend: '+120m' },
-        { id: '3', testName: 'Salto Vertical (CMJ)', category: 'Potencia', score: '42.5', unit: 'cm', date: 'Hace 2 meses', trend: '+3cm' },
-      ]);
+      // Ordenar historial cronológicamente
+      Object.keys(grouped).forEach(k => {
+        grouped[k].history.sort((a, b) => new Date(a.date) - new Date(b.date));
+      });
+
+      setGroupedHistory(grouped);
+      setEvaluations(playerEvals);
       setLoading(false);
     }, (err) => {
-      console.warn('Error cargando tests:', err);
-      // Datos mock por defecto
-      setTestResults([
-        { id: '1', testName: 'Velocidad 30m', category: 'Velocidad', score: '4.12', unit: 'seg', date: 'Último mes', trend: '+0.15s' },
-        { id: '2', testName: 'Test de Cooper', category: 'Resistencia', score: '2850', unit: 'mts', date: 'Último mes', trend: '+120m' },
-        { id: '3', testName: 'Salto Vertical (CMJ)', category: 'Potencia', score: '42.5', unit: 'cm', date: 'Hace 2 meses', trend: '+3cm' },
-      ]);
+      console.warn('Error al cargar evaluaciones:', err);
       setLoading(false);
     });
 
-    return () => unsub();
+    return () => unsubEvals();
   }, [teamPath, player?.id]);
 
-  // Escuchar estadísticas en partidos
+  // 2. Escuchar histórico de Wellness / Bienestar
+  useEffect(() => {
+    if (!teamPath || !player?.id) return;
+
+    const wellnessRef = collection(db, `${teamPath}/players/${player.id}/wellness`);
+    const unsubWellness = onSnapshot(wellnessRef, (snap) => {
+      const wList = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      wList.sort((a, b) => new Date(b.date || 0) - new Date(a.date || 0));
+      setWellnessHistory(wList.slice(0, 7)); // Últimos 7 check-ins
+    }, (err) => {
+      console.warn('Error cargando wellness history:', err);
+    });
+
+    return () => unsubWellness();
+  }, [teamPath, player?.id]);
+
+  // 3. Escuchar estadísticas en partidos reales
   useEffect(() => {
     if (!teamPath || !player?.id) return;
 
     const matchesRef = collection(db, `${teamPath}/matches`);
-    const unsub = onSnapshot(matchesRef, (snap) => {
+    const unsubMatches = onSnapshot(matchesRef, (snap) => {
       let totalMins = 0;
       let totalGoals = 0;
       let totalAssists = 0;
+      let playedCount = 0;
       let ratings = [];
 
       snap.docs.forEach(d => {
         const m = d.data();
         if (m.playerStats && m.playerStats[player.id]) {
           const s = m.playerStats[player.id];
-          totalMins += Number(s.minutesPlayed || s.minutos || 0);
+          const mins = Number(s.minutesPlayed || s.minutos || 0);
+          totalMins += mins;
+          if (mins > 0) playedCount++;
           totalGoals += Number(s.goals || s.goles || 0);
           totalAssists += Number(s.assists || s.asistencias || 0);
           if (s.rating || s.nota) {
@@ -93,29 +141,61 @@ export const PlayerStatsTab = ({ player, team, teamPath }) => {
         minutes: totalMins || player?.minutosJugados || 450,
         goals: totalGoals || player?.goles || 3,
         assists: totalAssists || player?.asistencias || 2,
+        matchesCount: playedCount || 5,
         avgRating: avg
       });
     });
 
-    return () => unsub();
+    return () => unsubMatches();
   }, [teamPath, player?.id]);
 
-  // El plan es Pro si el equipo o el usuario lo es
   const isTeamPro = isPro || isProActive || team?.plan === 'pro' || team?.plan === 'club';
 
-  // Datos para el Radar Chart pentagonal de competencias
+  // 4. Calcular métricas del Radar de Habilidades (Dinámicas según evaluaciones reales)
+  let avgFisico = player?.statsFisico || 82;
+  let avgTecnica = player?.statsTecnica || 85;
+  let avgTactica = player?.statsTactica || 78;
+  let avgMental = player?.statsMental || 88;
+  let avgAsistencia = Math.min(100, (player?.asistenciaPct || 92));
+
+  // Si hay evaluaciones en el historial, recalcular dinámicamente
+  const historyKeys = Object.keys(groupedHistory);
+  if (historyKeys.length > 0) {
+    let sumMental = 0;
+    let countMental = 0;
+    let sumFisico = 0;
+    let countFisico = 0;
+
+    historyKeys.forEach(k => {
+      const item = groupedHistory[k];
+      const lastVal = item.history[item.history.length - 1]?.val || 0;
+      if (item.category?.toLowerCase().includes('mental') || item.category?.toLowerCase().includes('afrontamiento') || item.category?.toLowerCase().includes('cohesión') || item.category?.toLowerCase().includes('psico')) {
+        sumMental += lastVal;
+        countMental++;
+      } else {
+        sumFisico += lastVal;
+        countFisico++;
+      }
+    });
+
+    if (countMental > 0) avgMental = Math.min(99, Math.round(sumMental / countMental * 3));
+    if (countFisico > 0) avgFisico = Math.min(99, Math.max(60, Math.round(sumFisico / countFisico)));
+  }
+
   const radarMetrics = [
-    { label: 'Físico', value: player?.statsFisico || 82 },
-    { label: 'Técnica', value: player?.statsTecnica || 85 },
-    { label: 'Táctica', value: player?.statsTactica || 78 },
-    { label: 'Mentalidad', value: player?.statsMental || 88 },
-    { label: 'Asistencia', value: Math.min(100, (player?.asistenciaPct || 92)) }
+    { label: 'Físico', value: avgFisico },
+    { label: 'Técnica', value: avgTecnica },
+    { label: 'Táctica', value: avgTactica },
+    { label: 'Mentalidad', value: avgMental },
+    { label: 'Asistencia', value: avgAsistencia }
   ];
 
-  // Generar puntos poligonales para SVG Radar
+  const overallTPI = Math.round(radarMetrics.reduce((acc, m) => acc + m.value, 0) / radarMetrics.length);
+
+  // SVG Radar setup
   const size = 260;
   const center = size / 2;
-  const radius = center - 35;
+  const radius = center - 38;
   const angleStep = (Math.PI * 2) / radarMetrics.length;
 
   const polygonPoints = radarMetrics.map((m, i) => {
@@ -128,11 +208,20 @@ export const PlayerStatsTab = ({ player, team, teamPath }) => {
 
   const gridLevels = [0.25, 0.5, 0.75, 1];
 
+  // Cálculo de promedio de bienestar semanal
+  const avgSleep = wellnessHistory.length > 0
+    ? (wellnessHistory.reduce((a, b) => a + (Number(b.sleep) || 3), 0) / wellnessHistory.length).toFixed(1)
+    : '4.2';
+  const avgMood = wellnessHistory.length > 0
+    ? (wellnessHistory.reduce((a, b) => a + (Number(b.mood) || 3), 0) / wellnessHistory.length).toFixed(1)
+    : '4.5';
+  const hasDiscomfortActive = wellnessHistory.length > 0 && wellnessHistory[0]?.hasDiscomfort;
+
   return (
     <div className="player-tab-content player-stats-tab">
       <div className="tab-header-box">
         <h2 className="tab-title">Rendimiento y Estadísticas</h2>
-        <p className="tab-subtitle">Seguimiento de tu progresión física, minutos y valoraciones en el campo.</p>
+        <p className="tab-subtitle">Seguimiento de tu progresión física, minutos, valoraciones y evolución en tests.</p>
       </div>
 
       {/* MÉTRICAS GAMING / HUD DE PARTIDOS */}
@@ -179,13 +268,13 @@ export const PlayerStatsTab = ({ player, team, teamPath }) => {
       </div>
 
       {/* RADAR CHART DE COMPETENCIAS */}
-      <div className="hud-card radar-stats-card" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center' }}>
+      <div className="hud-card radar-stats-card" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', marginBottom: '20px' }}>
         <div className="hud-header" style={{ width: '100%' }}>
           <span className="hud-badge">
             <Sparkles size={14} /> RADAR DE HABILIDADES
           </span>
           <span className="hud-status-live" style={{ color: '#10B981', background: 'rgba(16,185,129,0.12)' }}>
-            Nivel Global: 85
+            Nivel Global: {overallTPI}
           </span>
         </div>
 
@@ -251,7 +340,7 @@ export const PlayerStatsTab = ({ player, team, teamPath }) => {
             {/* Etiquetas de los vértices */}
             {radarMetrics.map((m, i) => {
               const angle = i * angleStep - Math.PI / 2;
-              const labelRadius = radius + 18;
+              const labelRadius = radius + 20;
               const x = center + labelRadius * Math.cos(angle);
               const y = center + labelRadius * Math.sin(angle);
               return (
@@ -273,52 +362,101 @@ export const PlayerStatsTab = ({ player, team, teamPath }) => {
         </div>
       </div>
 
-      {/* SECCIÓN DE TESTS FÍSICOS Y EVOLUCIÓN */}
+      {/* TARJETA DE ESTADO DE BIENESTAR Y CARGA */}
+      <div className="hud-card" style={{ marginBottom: '24px', padding: '16px' }}>
+        <div className="hud-header">
+          <span className="hud-badge" style={{ color: '#EC4899', borderColor: 'rgba(236, 72, 153, 0.3)' }}>
+            <Heart size={14} /> BIENESTAR Y RECUPERACIÓN SEMANAL
+          </span>
+          <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>
+            Últimos 7 días
+          </span>
+        </div>
+
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '12px', marginTop: '12px' }}>
+          <div style={{ background: darkMode ? 'rgba(255,255,255,0.03)' : 'rgba(27,58,45,0.04)', padding: '12px', borderRadius: '10px', textAlign: 'center' }}>
+            <span style={{ fontSize: '11px', color: 'var(--text-secondary)', fontWeight: 'bold' }}>CALIDAD SUEÑO</span>
+            <div style={{ fontSize: '20px', fontWeight: '800', color: '#10B981', marginTop: '4px' }}>{avgSleep} / 5 ⭐</div>
+          </div>
+
+          <div style={{ background: darkMode ? 'rgba(255,255,255,0.03)' : 'rgba(27,58,45,0.04)', padding: '12px', borderRadius: '10px', textAlign: 'center' }}>
+            <span style={{ fontSize: '11px', color: 'var(--text-secondary)', fontWeight: 'bold' }}>ENERGÍA / ÁNIMO</span>
+            <div style={{ fontSize: '20px', fontWeight: '800', color: '#F59E0B', marginTop: '4px' }}>{avgMood} / 5 ⚡</div>
+          </div>
+
+          <div style={{ background: darkMode ? 'rgba(255,255,255,0.03)' : 'rgba(27,58,45,0.04)', padding: '12px', borderRadius: '10px', textAlign: 'center' }}>
+            <span style={{ fontSize: '11px', color: 'var(--text-secondary)', fontWeight: 'bold' }}>ESTADO MUSCULAR</span>
+            <div style={{ fontSize: '14px', fontWeight: '800', color: hasDiscomfortActive ? '#EF4444' : '#10B981', marginTop: '6px' }}>
+              {hasDiscomfortActive ? '⚠️ Molestia activa' : '✅ 100% Disponible'}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* SECCIÓN DE GRÁFICAS DE EVOLUCIÓN POR TEST */}
       <div className="player-tests-section">
-        <div className="section-title-row">
+        <div className="section-title-row" style={{ marginBottom: '14px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <Award size={20} color="#10B981" />
-            <h3 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 800 }}>Tests Físicos y Progresión</h3>
+            <h3 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 800 }}>Evolución Temporal de Tests</h3>
           </div>
         </div>
 
-        <div className="tests-cards-container" style={{ position: 'relative' }}>
-          {testResults.map((t, idx) => (
-            <div key={t.id} className="test-stat-card">
-              <div className="test-card-top">
-                <span className="test-cat-tag">{t.category}</span>
-                <span className="test-trend-tag positive"><TrendingUp size={12} /> {t.trend}</span>
-              </div>
-              <h4 className="test-card-name">{t.testName}</h4>
-              <div className="test-score-row">
-                <span className="test-score-value mono">{t.score}</span>
-                <span className="test-score-unit">{t.unit}</span>
-                <span className="test-score-date">· {t.date}</span>
-              </div>
-              <div className="test-progress-bar">
-                <div className="test-progress-fill" style={{ width: `${Math.min(100, (idx + 1) * 30)}%` }} />
-              </div>
-            </div>
-          ))}
+        {historyKeys.length > 0 ? (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            {historyKeys.map(k => {
+              const testItem = groupedHistory[k];
+              const historyData = testItem.history;
+              const firstVal = historyData[0]?.val || 0;
+              const lastVal = historyData[historyData.length - 1]?.val || 0;
+              const diff = lastVal - firstVal;
+              const isTime = testItem.isTime;
+              const improved = isTime ? diff < 0 : diff > 0;
+              const pctDiff = firstVal > 0 ? Math.abs((diff / firstVal) * 100).toFixed(1) : '0';
 
-          {/* GATING POR PLAN (SI NO ES PRO) */}
-          {!isTeamPro && (
-            <div className="gating-overlay-card">
-              <div className="gating-badge">
-                <Sparkles size={14} /> PLAN PRO
-              </div>
-              <h4>Desbloquea el Análisis Profesional</h4>
-              <p>Accede a comparativas de rendimiento, percentiles del equipo e informes de evolución física avanzada.</p>
-              <button 
-                className="btn-primary" 
-                onClick={() => setIsUpgradeOpen(true)}
-                style={{ background: '#10B981', minHeight: '44px', fontWeight: 800 }}
-              >
-                Ver Ventajas del Plan Pro <ChevronRight size={16} />
-              </button>
-            </div>
-          )}
-        </div>
+              return (
+                <div key={k} className="hud-card" style={{ padding: '16px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+                    <div>
+                      <span style={{ fontSize: '10.5px', textTransform: 'uppercase', fontWeight: 'bold', color: 'var(--accent-green, #10B981)' }}>
+                        {testItem.category}
+                      </span>
+                      <h4 style={{ margin: '2px 0 0 0', fontSize: '1rem', fontWeight: '800', color: 'var(--text-primary)' }}>
+                        {testItem.name} <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>({testItem.unit})</span>
+                      </h4>
+                    </div>
+
+                    <div style={{ textAlign: 'right' }}>
+                      <div style={{ fontSize: '1.1rem', fontWeight: '900', color: 'var(--text-primary)' }}>
+                        {lastVal} {testItem.unit}
+                      </div>
+                      {historyData.length > 1 && diff !== 0 && (
+                        <span style={{ 
+                          fontSize: '11px', 
+                          fontWeight: '800', 
+                          color: improved ? '#10B981' : '#EF4444' 
+                        }}>
+                          {improved ? '▲' : '▼'} {pctDiff}%
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Curva gráfica SVG de evolución en el tiempo */}
+                  <GraficaEvolucion data={historyData} isTime={isTime} />
+                </div>
+              );
+            })}
+          </div>
+        ) : (
+          <div className="hud-card" style={{ padding: '24px', textAlign: 'center' }}>
+            <Activity size={36} color="#10B981" style={{ margin: '0 auto 12px auto', opacity: 0.8 }} />
+            <h4 style={{ margin: '0 0 6px 0', fontSize: '1rem', fontWeight: '800' }}>Sin evaluaciones registradas aún</h4>
+            <p style={{ margin: 0, fontSize: '13px', color: 'var(--text-secondary)' }}>
+              Realiza los tests en la pestaña <strong>Tests</strong> o espera a que tu entrenador registre tus mediciones para ver tus gráficas de progresión.
+            </p>
+          </div>
+        )}
       </div>
 
       {isUpgradeOpen && (
@@ -331,3 +469,4 @@ export const PlayerStatsTab = ({ player, team, teamPath }) => {
     </div>
   );
 };
+

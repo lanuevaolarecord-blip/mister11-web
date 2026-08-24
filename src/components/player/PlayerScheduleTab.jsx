@@ -119,6 +119,37 @@ export const PlayerScheduleTab = ({ player, team, teamPath }) => {
     }
   };
 
+  // Función ultra-robusta para parsear fechas de sesiones, partidos y planning
+  const parseEventDate = (rawDate) => {
+    if (!rawDate) return null;
+    if (typeof rawDate === 'string') {
+      if (rawDate.includes('-')) {
+        const clean = rawDate.split('T')[0];
+        const [y, m, d] = clean.split('-').map(n => parseInt(n, 10));
+        return { year: y, month: m - 1, day: d, dateObj: new Date(y, m - 1, d), str: clean };
+      }
+      if (rawDate.includes('/')) {
+        const [d, m, y] = rawDate.split('/').map(n => parseInt(n, 10));
+        return { year: y, month: m - 1, day: d, dateObj: new Date(y, m - 1, d), str: `${y}-${String(m).padStart(2,'0')}-${String(d).padStart(2,'0')}` };
+      }
+    }
+    if (rawDate?.toDate) {
+      const dObj = rawDate.toDate();
+      return { year: dObj.getFullYear(), month: dObj.getMonth(), day: dObj.getDate(), dateObj: dObj, str: dObj.toISOString().split('T')[0] };
+    }
+    if (rawDate instanceof Date) {
+      return { year: rawDate.getFullYear(), month: rawDate.getMonth(), day: rawDate.getDate(), dateObj: rawDate, str: rawDate.toISOString().split('T')[0] };
+    }
+    return null;
+  };
+
+  // Filtrar eventos del mes seleccionado
+  const filteredEvents = events.filter(e => {
+    const parsed = parseEventDate(e.date || e.fecha);
+    if (!parsed) return false;
+    return parsed.month === selectedMonth.getMonth() && parsed.year === selectedMonth.getFullYear();
+  });
+
   const monthYearLabel = selectedMonth.toLocaleDateString('es-ES', { month: 'long', year: 'numeric' });
 
   const nextMonth = () => {
@@ -129,12 +160,9 @@ export const PlayerScheduleTab = ({ player, team, teamPath }) => {
     setSelectedMonth(new Date(selectedMonth.getFullYear(), selectedMonth.getMonth() - 1, 1));
   };
 
-  // Filtrar eventos del mes seleccionado
-  const filteredEvents = events.filter(e => {
-    if (!e.date) return false;
-    const d = new Date(e.date);
-    return d.getMonth() === selectedMonth.getMonth() && d.getFullYear() === selectedMonth.getFullYear();
-  });
+  // Eventos a mostrar: si el mes no tiene eventos pero hay otros en la temporada, permitir ver próximos
+  const displayEvents = filteredEvents.length > 0 ? filteredEvents : events;
+  const isShowingAllUpcoming = filteredEvents.length === 0 && events.length > 0;
 
   return (
     <div className="player-tab-content player-schedule-tab">
@@ -155,11 +183,31 @@ export const PlayerScheduleTab = ({ player, team, teamPath }) => {
       </div>
 
       {/* Listado de Eventos con RSVP */}
-      {filteredEvents.length > 0 ? (
+      {isShowingAllUpcoming && (
+        <div style={{
+          background: 'rgba(212, 168, 67, 0.12)',
+          border: '1px solid rgba(212, 168, 67, 0.3)',
+          borderRadius: '10px',
+          padding: '8px 12px',
+          marginBottom: '14px',
+          fontSize: '12px',
+          color: '#D4A843',
+          fontWeight: '700',
+          textAlign: 'center'
+        }}>
+          📌 Sin eventos en {monthYearLabel} · Mostrando todas las convocatorias y sesiones del equipo:
+        </div>
+      )}
+
+      {displayEvents.length > 0 ? (
         <div className="events-cards-list">
-          {filteredEvents.map((evt) => {
+          {displayEvents.map((evt) => {
             const currentRsvp = rsvps[evt.id]?.status;
             const isMatch = evt.type === 'match';
+            const parsed = parseEventDate(evt.date || evt.fecha);
+            const dateDisplay = parsed?.dateObj 
+              ? parsed.dateObj.toLocaleDateString('es-ES', { weekday: 'short', day: 'numeric', month: 'short' }) 
+              : (evt.date || 'Fecha');
 
             return (
               <div key={evt.id} className={`event-card-item ${isMatch ? 'match-card' : 'session-card'}`}>
@@ -168,7 +216,7 @@ export const PlayerScheduleTab = ({ player, team, teamPath }) => {
                     {isMatch ? '🏆 PARTIDO' : '⚽ ENTRENAMIENTO'}
                   </div>
                   <div className="event-date-pill">
-                    {evt.date ? new Date(evt.date).toLocaleDateString('es-ES', { weekday: 'short', day: 'numeric', month: 'short' }) : 'Fecha'}
+                    {dateDisplay}
                   </div>
                 </div>
 
@@ -214,8 +262,8 @@ export const PlayerScheduleTab = ({ player, team, teamPath }) => {
       ) : (
         <div className="schedule-empty-box">
           <CalendarIcon size={36} color="var(--text-muted)" />
-          <h4>No hay eventos en este mes</h4>
-          <p>Tu entrenador aún no ha programado sesiones o partidos para este período.</p>
+          <h4>No hay eventos programados</h4>
+          <p>Tu entrenador aún no ha programado sesiones o partidos en el calendario.</p>
         </div>
       )}
     </div>

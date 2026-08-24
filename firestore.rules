@@ -14,6 +14,7 @@ service cloud.firestore {
         'mister11.app@gmail.com',
         'lanuevaolarecord@gmail.com',
         'jhocao111294@gmail.com',
+        'jhocatv@gmail.com',
         'lavozdelformador@gmail.com'
       ];
     }
@@ -45,6 +46,11 @@ service cloud.firestore {
           allow create: if (isOwner(userId) || isDevEmail()) && (
             get(/databases/$(database)/documents/users/$(userId)/teams/$(teamId)).data.get('playerCount', 0) < 23
           );
+
+          // Subcolecciones del jugador (wellness, tests, asistencias, etc.)
+          match /{allPlayerSubPaths=**} {
+            allow read, write: if isAuth();
+          }
         }
 
         // Subcolección de partidos y sus subcolecciones profundas (liveStats, etc.) para cualquier usuario autenticado
@@ -52,7 +58,7 @@ service cloud.firestore {
           allow read, write: if isAuth();
         }
 
-        // Resto de subcolecciones y sub-subcolecciones a cualquier profundidad (sessions, planning, etc.)
+        // Resto de subcolecciones y sub-subcolecciones a cualquier profundidad (sessions, planning, evaluaciones, test_results, etc.)
         match /{subcollection}/{allPaths=**} {
           allow read, write: if isAuth() && subcollection != 'players';
         }
@@ -90,16 +96,22 @@ service cloud.firestore {
         allow read: if isAuth();
         allow write: if isAuth() && (
           isDevEmail() ||
-          get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('clubRole', '') in ['owner', 'admin']
+          get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('clubRole', '') in ['owner', 'admin', 'coach']
         );
 
-        // Subcolecciones a cualquier profundidad dentro de equipos de club (ej. matches/{matchId}/liveStats)
+        // Subcolecciones de jugadores en equipos de club
+        match /players/{playerId} {
+          allow read, update, delete: if isAuth();
+          allow create: if isAuth();
+
+          match /{allPlayerSubPaths=**} {
+            allow read, write: if isAuth();
+          }
+        }
+
+        // Subcolecciones a cualquier profundidad dentro de equipos de club (ej. matches/{matchId}/liveStats, sessions, test_results, evaluaciones, etc.)
         match /{subcollection}/{allPaths=**} {
-          allow read: if isAuth();
-          allow write: if isAuth() && (
-            isDevEmail() ||
-            get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('clubRole', '') in ['owner', 'admin', 'coach']
-          );
+          allow read, write: if isAuth();
         }
       }
 

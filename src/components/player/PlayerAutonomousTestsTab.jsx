@@ -253,10 +253,43 @@ export const PlayerAutonomousTestsTab = ({ player, team, teamPath }) => {
         createdAt: serverTimestamp()
       };
 
-      // Guardar en subcolección del equipo
+      // 1. Guardar en subcolección test_results del equipo
       await addDoc(collection(db, `${teamPath}/test_results`), testPayload);
 
-      // Guardar en subcolección directa del jugador
+      // 2. Guardar en la colección CANÓNICA de evaluaciones de Míster11 (para que el módulo Tests del entrenador y las gráficas lo lean)
+      try {
+        await addDoc(collection(db, `${teamPath}/evaluaciones`), {
+          testId: selectedTest.id,
+          testName: selectedTest.name,
+          playerId: player.id,
+          playerName: player.name || user?.displayName || 'Jugador',
+          playerNumber: player.number || '',
+          val: totalScore,
+          percentage,
+          score: totalScore,
+          date: todayStr,
+          type: 'psicosocial',
+          category: selectedTest.category,
+          unit: 'pts',
+          completedBy: 'player',
+          createdAt: serverTimestamp()
+        });
+
+        // Asegurar que el test esté registrado en el catálogo del equipo si no existía
+        await setDoc(doc(db, `${teamPath}/tests`, selectedTest.id), {
+          id: selectedTest.id,
+          name: selectedTest.name,
+          category: 'psicosocial',
+          unit: 'pts',
+          maxScore: selectedTest.maxScore,
+          description: selectedTest.desc,
+          isAutonomous: true
+        }, { merge: true });
+      } catch (evalErr) {
+        console.warn('Advertencia guardando en evaluaciones:', evalErr);
+      }
+
+      // 3. Guardar en subcolección directa del jugador
       try {
         await addDoc(collection(db, `${teamPath}/players/${player.id}/test_results`), testPayload);
       } catch (_) {}

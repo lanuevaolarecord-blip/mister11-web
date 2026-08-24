@@ -118,27 +118,51 @@ export const PlayerProfileTab = ({ player, team, teamPath }) => {
   // Enviar Check-in de Bienestar
   const handleSubmitWellness = async (e) => {
     e.preventDefault();
-    if (!teamPath || !player?.id) return;
-    if (!consents.health) {
-      showToast('Se requiere consentimiento de salud para registrar el bienestar.', 'error');
+    if (!teamPath || !player?.id) {
+      showToast('No se encontró el equipo o ficha del jugador.', 'error');
       return;
     }
 
     setSavingWellness(true);
     try {
-      const wDocRef = doc(db, `${teamPath}/players/${player.id}/wellness`, todayStr);
-      await setDoc(wDocRef, {
+      const wellnessPayload = {
         ...wellnessData,
         date: todayStr,
-        playerName: player.name || 'Jugador',
+        playerName: player.name || user?.displayName || 'Jugador',
         playerId: player.id,
-        createdAt: serverTimestamp(),
-      });
+        playerNumber: player.number || '',
+        updatedAt: serverTimestamp(),
+      };
+
+      // 1. Guardar en subcolección del jugador
+      const wDocRef = doc(db, `${teamPath}/players/${player.id}/wellness`, todayStr);
+      await setDoc(wDocRef, wellnessPayload, { merge: true });
+
+      // 2. Guardar en colección de wellness general del equipo (para que el míster lo vea en tiempo real)
+      try {
+        const teamWellnessRef = doc(db, `${teamPath}/wellness`, `${player.id}_${todayStr}`);
+        await setDoc(teamWellnessRef, wellnessPayload, { merge: true });
+      } catch (teamErr) {
+        console.warn('Advertencia guardando en team wellness:', teamErr);
+      }
+
+      // 3. Si el consentimiento aún no estaba activo, auto-activarlo al enviar
+      if (!consents.health) {
+        try {
+          const playerDocRef = doc(db, `${teamPath}/players`, player.id);
+          await updateDoc(playerDocRef, {
+            'consents.health': true,
+            'consents.updatedAt': serverTimestamp()
+          });
+          setConsents(prev => ({ ...prev, health: true }));
+        } catch (_) {}
+      }
+
       setWellnessSubmitted(true);
-      showToast('¡Check-in de bienestar guardado!', 'success');
+      showToast('¡Check-in de bienestar guardado correctamente!', 'success');
     } catch (err) {
       console.error('Error guardando wellness:', err);
-      showToast('Error al guardar bienestar.', 'error');
+      showToast('Error al guardar bienestar. Inténtalo de nuevo.', 'error');
     } finally {
       setSavingWellness(false);
     }

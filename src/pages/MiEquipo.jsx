@@ -568,17 +568,19 @@ const MiEquipo = () => {
                   }}
                   title="Compartir link de Consentimiento Digital por WhatsApp"
                   style={{ 
-                    background: '#25D366', 
-                    color: '#FFF', 
-                    width: '44px', 
-                    height: '44px', 
+                    background: 'rgba(37, 211, 102, 0.15)', 
+                    color: '#25D366', 
+                    border: '1px solid rgba(37, 211, 102, 0.3)',
+                    width: '42px', 
+                    height: '42px', 
                     display: 'flex', 
                     alignItems: 'center', 
                     justifyContent: 'center',
-                    borderRadius: '10px'
+                    borderRadius: '10px',
+                    cursor: 'pointer'
                   }}
                 >
-                  <MessageSquare size={18} />
+                  <Share2 size={18} />
                 </button>
                 <button 
                   className="btn-edit-icon" 
@@ -604,12 +606,16 @@ const MiEquipo = () => {
                   }} 
                   title="Exportar Expediente"
                   style={{
-                    width: '44px', 
-                    height: '44px', 
+                    background: 'rgba(255, 255, 255, 0.08)',
+                    border: '1px solid var(--border-light, rgba(255, 255, 255, 0.1))',
+                    color: 'var(--text-secondary)',
+                    width: '42px', 
+                    height: '42px', 
                     display: 'flex', 
                     alignItems: 'center', 
                     justifyContent: 'center',
-                    borderRadius: '10px'
+                    borderRadius: '10px',
+                    cursor: 'pointer'
                   }}
                 >
                   <FileText size={18} />
@@ -619,12 +625,16 @@ const MiEquipo = () => {
                   onClick={() => handleOpenForm(selectedPlayer)}
                   title="Editar ficha"
                   style={{
-                    width: '44px', 
-                    height: '44px', 
+                    background: 'rgba(255, 255, 255, 0.08)',
+                    border: '1px solid var(--border-light, rgba(255, 255, 255, 0.1))',
+                    color: 'var(--text-secondary)',
+                    width: '42px', 
+                    height: '42px', 
                     display: 'flex', 
                     alignItems: 'center', 
                     justifyContent: 'center',
-                    borderRadius: '10px'
+                    borderRadius: '10px',
+                    cursor: 'pointer'
                   }}
                 >
                   <Pencil size={18} />

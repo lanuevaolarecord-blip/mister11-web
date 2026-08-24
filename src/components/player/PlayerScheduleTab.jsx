@@ -158,31 +158,13 @@ export const PlayerScheduleTab = ({ player, team, teamPath, isParentView = false
     return null;
   };
 
-  // Si hay eventos y el mes seleccionado no tiene, pero otros sí, autocalibrar al mes con eventos más cercano en la primera carga
-  useEffect(() => {
-    if (events.length > 0) {
-      const thisMonthEvents = events.filter(e => {
-        const p = parseEventDate(e.date || e.fecha);
-        return p && p.month === selectedMonth.getMonth() && p.year === selectedMonth.getFullYear();
-      });
-      if (thisMonthEvents.length === 0) {
-        // Encontrar el evento más próximo o más reciente
-        const firstEvent = events[0];
-        const pFirst = parseEventDate(firstEvent.date || firstEvent.fecha);
-        if (pFirst) {
-          setSelectedMonth(new Date(pFirst.year, pFirst.month, 1));
-        }
-      }
-    }
-  }, [events.length]);
-
   const filteredEvents = events.filter(e => {
     const parsed = parseEventDate(e.date || e.fecha);
     if (!parsed) return false;
     return parsed.month === selectedMonth.getMonth() && parsed.year === selectedMonth.getFullYear();
   });
 
-  const displayEvents = filteredEvents.length > 0 ? filteredEvents : events;
+  const displayEvents = filteredEvents;
 
   const prevMonth = () => {
     setSelectedMonth(prev => new Date(prev.getFullYear(), prev.getMonth() - 1, 1));
@@ -192,6 +174,11 @@ export const PlayerScheduleTab = ({ player, team, teamPath, isParentView = false
     setSelectedMonth(prev => new Date(prev.getFullYear(), prev.getMonth() + 1, 1));
   };
 
+  const goToCurrentMonth = () => {
+    setSelectedMonth(new Date());
+  };
+
+  const isCurrentMonth = selectedMonth.getMonth() === new Date().getMonth() && selectedMonth.getFullYear() === new Date().getFullYear();
   const monthYearLabel = selectedMonth.toLocaleDateString('es-ES', { month: 'long', year: 'numeric' });
 
   return (
@@ -202,9 +189,29 @@ export const PlayerScheduleTab = ({ player, team, teamPath, isParentView = false
         <button className="month-nav-btn" onClick={prevMonth} aria-label="Mes anterior">
           <ChevronLeft size={20} />
         </button>
-        <span className="month-display-label">
-          {monthYearLabel.toUpperCase()}
-        </span>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+          <span className="month-display-label">
+            {monthYearLabel.toUpperCase()}
+          </span>
+          {!isCurrentMonth && (
+            <button 
+              type="button" 
+              onClick={goToCurrentMonth}
+              style={{
+                background: 'none',
+                border: 'none',
+                color: '#10B981',
+                fontSize: '0.72rem',
+                fontWeight: 700,
+                cursor: 'pointer',
+                padding: '2px 6px',
+                marginTop: '2px'
+              }}
+            >
+              • Volver al mes actual •
+            </button>
+          )}
+        </div>
         <button className="month-nav-btn" onClick={nextMonth} aria-label="Mes siguiente">
           <ChevronRight size={20} />
         </button>

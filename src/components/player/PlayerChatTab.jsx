@@ -20,8 +20,7 @@ import {
   MessageSquare, 
   Send, 
   Shield, 
-  User, 
-  CheckCheck
+  User
 } from 'lucide-react';
 import './PlayerChatTab.css';
 
@@ -88,12 +87,12 @@ export const PlayerChatTab = ({ teamPath, player, team, isParentView = false, is
 
     setSending(true);
     try {
-      const isCoach = isCoachView || user.uid === team?.coachUid;
-      const senderRole = isCoach ? 'coach' : isParentView ? 'parent' : 'player';
-      const senderName = isCoach
-        ? `${user.displayName || 'Cuerpo Técnico'}`
+      const isCoachSender = isCoachView;
+      const senderRole = isCoachSender ? 'coach' : isParentView ? 'parent' : 'player';
+      const senderName = isCoachSender
+        ? (user.displayName || 'Cuerpo Técnico')
         : isParentView 
-          ? `${user.displayName || 'Padre'} (Padre de ${player?.name || 'Jugador'})`
+          ? `${user.displayName || 'Padre'} (Tutor)`
           : (user.displayName || player?.name || 'Jugador');
 
       const threadCol = collection(db, `${cleanPath}/threads/${effectivePlayerId}/messages`);
@@ -115,8 +114,8 @@ export const PlayerChatTab = ({ teamPath, player, team, isParentView = false, is
         lastSender: senderName,
         lastSenderRole: senderRole,
         updatedAt: serverTimestamp(),
-        unreadByCoach: !isCoach,
-        unreadByPlayer: isCoach
+        unreadByCoach: !isCoachSender,
+        unreadByPlayer: isCoachSender
       }, { merge: true });
 
       setInputText('');
@@ -181,8 +180,9 @@ export const PlayerChatTab = ({ teamPath, player, team, isParentView = false, is
           </div>
         ) : (
           messages.map((msg) => {
-            const isMe = msg.senderUid === user?.uid;
-            const isCoach = msg.senderRole === 'coach' || msg.senderRole === 'admin';
+            const isCoachSender = msg.senderRole === 'coach' || msg.senderRole === 'admin';
+            // En vista de entrenador: mis mensajes son los enviados como coach; en vista de jugador: mis mensajes son los enviados como player/parent
+            const isMine = isCoachView ? isCoachSender : !isCoachSender;
             const timeStr = msg.createdAt?.toDate 
               ? msg.createdAt.toDate().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
               : 'Ahora';
@@ -190,11 +190,11 @@ export const PlayerChatTab = ({ teamPath, player, team, isParentView = false, is
             return (
               <div 
                 key={msg.id} 
-                className={`chat-bubble-wrapper ${isMe ? 'mine' : isCoach ? 'coach' : 'theirs'}`}
+                className={`chat-bubble-wrapper ${isMine ? 'mine' : isCoachSender ? 'coach' : 'theirs'}`}
               >
-                {!isMe && (
+                {!isMine && (
                   <span className="chat-sender-tag">
-                    {isCoach ? '👑 Cuerpo Técnico' : msg.senderName}
+                    {isCoachSender ? '👑 Cuerpo Técnico' : (msg.senderName || '👤 Jugador')}
                   </span>
                 )}
                 <div className="chat-bubble">
@@ -219,7 +219,7 @@ export const PlayerChatTab = ({ teamPath, player, team, isParentView = false, is
         <input
           type="text"
           className="chat-text-input"
-          placeholder={isCoachView ? "Escribe una respuesta al jugador..." : "Escribe un mensaje al míster..."}
+          placeholder={isCoachView ? `Escribe una respuesta a ${player?.name || 'este jugador'}...` : "Escribe un mensaje al míster..."}
           value={inputText}
           onChange={(e) => setInputText(e.target.value)}
           disabled={sending}

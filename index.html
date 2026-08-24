@@ -62,37 +62,13 @@
             });
           }
         } else {
-          // Registrar Service Worker en la web con auto-update inmediato
+          // Registrar Service Worker en la web
           window.addEventListener('load', () => {
             navigator.serviceWorker.register('/sw.js')
               .then((registration) => {
                 console.log('[SW] Service Worker registrado.');
-                // Forzar comprobación de nueva versión de inmediato
-                registration.update();
-
-                // Si se encuentra una nueva versión instalándose
-                registration.addEventListener('updatefound', () => {
-                  const newWorker = registration.installing;
-                  if (newWorker) {
-                    newWorker.addEventListener('statechange', () => {
-                      if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                        console.log('[SW] Nueva versión instalada. Activando...');
-                      }
-                    });
-                  }
-                });
               })
               .catch((err) => console.warn('[SW] Error al registrar Service Worker:', err));
-
-            // Cuando el nuevo Service Worker toma el control, recargar para servir el nuevo código
-            let refreshing = false;
-            navigator.serviceWorker.addEventListener('controllerchange', () => {
-              if (!refreshing) {
-                refreshing = true;
-                console.log('[SW] Controlador actualizado. Recargando página...');
-                window.location.reload();
-              }
-            });
           });
         }
       }

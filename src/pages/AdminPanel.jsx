@@ -47,9 +47,8 @@ import { getFunctions, httpsCallable } from 'firebase/functions';
 import imageCompression from 'browser-image-compression';
 import EscudoEquipo from '../components/EscudoEquipo';
 import RedeemCode from '../components/RedeemCode';
-import ExerciseLibrary from '../components/ExerciseLibrary';
-import UpgradeModal from '../components/UpgradeModal';
 import ClubManagement from '../components/ClubManagement';
+import { normalizeEmail } from '../utils/normalizeEmail';
 import './AdminPanel.css';
 
 const AdminPanel = () => {
@@ -57,6 +56,7 @@ const AdminPanel = () => {
   const location = useLocation();
   const { t: tr } = useTranslation();
   const [activeTab, setActiveTab] = useState(location.state?.activeTab || 'equipos');
+  const [backfilling, setBackfilling] = useState(false);
 
   useEffect(() => {
     if (location.state?.activeTab) {
@@ -1492,6 +1492,77 @@ const AdminPanel = () => {
                           }}
                         >
                           <Users size={16} /> Cambiar a Portal del Jugador (Modo Dev)
+                        </button>
+
+                        {/* Botón de blindaje de identidades existentes */}
+                        <button
+                          onClick={async () => {
+                            if (!window.confirm("¿Deseas blindar y generar los índices deterministas de identidad para todos los jugadores existentes?")) return;
+                            setBackfilling(true);
+                            try {
+                              let count = 0;
+                              for (const t of teams) {
+                                const path = getTeamPath(t.id);
+                                if (!path) continue;
+                                const pSnap = await getDocs(collection(db, `${path}/players`));
+                                for (const pDoc of pSnap.docs) {
+                                  const p = pDoc.data();
+                                  const rawEmail = p.email || p.requesterEmail;
+                                  const emailNorm = normalizeEmail(rawEmail);
+                                  const uid = p.requesterUid || p.playerUid || p.userId || p.uid || null;
+
+                                  if (emailNorm) {
+                                    await setDoc(doc(db, 'playerIdentityByEmail', emailNorm), {
+                                      uid,
+                                      playerId: pDoc.id,
+                                      teamId: t.id,
+                                      teamPath: path,
+                                      createdAt: serverTimestamp(),
+                                    }, { merge: true });
+                                    count++;
+                                  }
+
+                                  if (uid) {
+                                    try {
+                                      await setDoc(doc(db, 'playerIdentity', uid), {
+                                        email: rawEmail || '',
+                                        emailNorm: emailNorm || '',
+                                        teamId: t.id,
+                                        playerId: pDoc.id,
+                                        createdAt: serverTimestamp(),
+                                      });
+                                    } catch (_) {}
+                                  }
+                                }
+                              }
+                              showToast(`¡Blindaje completado! ${count} identidades indexadas exitosamente.`, 'success');
+                            } catch (err) {
+                              console.error("Error en backfill de identidades:", err);
+                              showToast("Error al indexar identidades: " + err.message, "error");
+                            } finally {
+                              setBackfilling(false);
+                            }
+                          }}
+                          disabled={backfilling}
+                          style={{
+                            minHeight: '48px',
+                            textTransform: 'uppercase',
+                            borderRadius: '8px',
+                            fontWeight: 'bold',
+                            letterSpacing: '0.5px',
+                            fontSize: '0.82rem',
+                            cursor: 'pointer',
+                            transition: 'all 0.2s ease',
+                            border: '1.5px solid #3B82F6',
+                            backgroundColor: 'rgba(59, 130, 246, 0.12)',
+                            color: '#3B82F6',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: '8px'
+                          }}
+                        >
+                          <Shield size={16} /> {backfilling ? 'Blindando identidades...' : '🛡️ Blindar identidades existentes'}
                         </button>
 
                         {/* Botón de simulación */}

@@ -12,7 +12,8 @@ import { PlayerChatTab } from '../components/player/PlayerChatTab';
 import { PlayerAutonomousTestsTab } from '../components/player/PlayerAutonomousTestsTab';
 import { PlayerStatsTab } from '../components/player/PlayerStatsTab';
 import { PlayerProfileTab } from '../components/player/PlayerProfileTab';
-import { Shield, Loader, Sun, Moon, LogOut, HeartHandshake, UserCheck, Users } from 'lucide-react';
+import { Shield, Loader, Sun, Moon, LogOut, HeartHandshake, UserCheck, Users, Bell } from 'lucide-react';
+import { usePushNotifications } from '../hooks/usePushNotifications';
 import './PlayerDashboard.css';
 
 const normalizeStr = (str) => (str || '').toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
@@ -133,6 +134,15 @@ const PlayerDashboard = () => {
     return () => unsub();
   }, [cleanPath, player?.id, user?.uid]);
 
+  // Hook de notificaciones push con deep links
+  const { showPrompt, checkPromptEligibility, acceptNotifications, dismissNotifications } = usePushNotifications(setActiveTab);
+
+  useEffect(() => {
+    if (activeTab === 'schedule' || activeTab === 'achievements') {
+      checkPromptEligibility();
+    }
+  }, [activeTab, checkPromptEligibility]);
+
   if (loading) {
     return (
       <div className="player-loading-screen">
@@ -145,6 +155,65 @@ const PlayerDashboard = () => {
   return (
     <div className={`player-dashboard-layout ${darkMode ? 'theme-dark' : 'theme-light'}`}>
       
+      {/* Banner Contextual de Permiso de Notificaciones */}
+      {showPrompt && (
+        <div style={{
+          background: 'linear-gradient(135deg, #1B3A2D 0%, #0F172A 100%)',
+          borderBottom: '2px solid #10B981',
+          padding: '12px 16px',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '8px',
+          color: '#FFFFFF',
+          fontSize: '0.82rem',
+          zIndex: 1200,
+          boxShadow: '0 4px 12px rgba(0,0,0,0.3)'
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <Bell size={18} color="#10B981" />
+            <span style={{ fontWeight: 700 }}>
+              ¿Deseas activar avisos de convocatorias y partidos?
+            </span>
+          </div>
+          <p style={{ margin: 0, fontSize: '0.75rem', color: '#94A3B8', lineHeight: 1.4 }}>
+            Recibe al instante las convocatorias oficiales del míster y recordatorios 2h antes de cada entreno.
+          </p>
+          <div style={{ display: 'flex', gap: '8px', marginTop: '4px' }}>
+            <button
+              onClick={acceptNotifications}
+              style={{
+                flex: 1,
+                minHeight: '36px',
+                background: '#10B981',
+                border: 'none',
+                borderRadius: '6px',
+                color: '#FFFFFF',
+                fontWeight: 700,
+                fontSize: '0.78rem',
+                cursor: 'pointer'
+              }}
+            >
+              ACTIVAR AVISOS
+            </button>
+            <button
+              onClick={dismissNotifications}
+              style={{
+                padding: '0 12px',
+                minHeight: '36px',
+                background: 'rgba(255,255,255,0.08)',
+                border: '1px solid rgba(255,255,255,0.15)',
+                borderRadius: '6px',
+                color: '#94A3B8',
+                fontSize: '0.75rem',
+                cursor: 'pointer'
+              }}
+            >
+              Más tarde
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Banner de Vista de Padre */}
       {isParentView && (
         <div style={{

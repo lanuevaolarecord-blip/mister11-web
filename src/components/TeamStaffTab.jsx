@@ -6,9 +6,10 @@ import { usePlan } from '../hooks/usePlan';
 import UpgradeModal from './UpgradeModal';
 import { showToast } from '../utils/toast';
 import { ensureTeamCode } from '../utils/teamCode';
-import { collection, onSnapshot, query, doc, updateDoc, setDoc, addDoc, serverTimestamp, deleteDoc } from 'firebase/firestore';
+import { collection, onSnapshot, query, doc, updateDoc, setDoc, addDoc, serverTimestamp, deleteDoc, getDocs } from 'firebase/firestore';
 import { db } from '../firebaseConfig';
 import { Shield, UserPlus, Trash2, Mail, Copy, Check, Clock, Users, Award, KeyRound, Share2, CheckCircle2, XCircle } from 'lucide-react';
+import { normalizeEmail } from '../utils/normalizeEmail';
 
 export const TeamStaffTab = ({ activeTeam }) => {
   const { user } = useAuth();
@@ -203,14 +204,40 @@ export const TeamStaffTab = ({ activeTeam }) => {
         joinedAt: serverTimestamp(),
       });
 
-      // 4. Actualizar estado de la solicitud a 'approved'
+      // 4. Registrar índices deterministas de identidad única (Server-Side)
+      const rawEmail = request.requesterEmail || request.email || '';
+      const emailNorm = normalizeEmail(rawEmail);
+      if (request.requesterUid) {
+        try {
+          await setDoc(doc(db, 'playerIdentity', request.requesterUid), {
+            email: rawEmail,
+            emailNorm,
+            teamId: activeTeam.id,
+            playerId: assignedPlayerId,
+            createdAt: serverTimestamp(),
+          }, { merge: true });
+        } catch (_) {}
+      }
+      if (emailNorm) {
+        try {
+          await setDoc(doc(db, 'playerIdentityByEmail', emailNorm), {
+            uid: request.requesterUid || null,
+            playerId: assignedPlayerId,
+            teamId: activeTeam.id,
+            teamPath,
+            createdAt: serverTimestamp(),
+          }, { merge: true });
+        } catch (_) {}
+      }
+
+      // 5. Actualizar estado de la solicitud a 'approved'
       const reqDocRef = doc(db, `${teamPath}/joinRequests`, request.id);
       await updateDoc(reqDocRef, { status: 'approved', approvedAt: serverTimestamp(), playerId: assignedPlayerId });
 
-      // 5. Actualizar solicitud en el perfil del usuario
+      // 6. Actualizar solicitud en el perfil del usuario
       try {
         const userReqRef = doc(db, `users/${request.requesterUid}/join_requests`, request.id);
-        await updateDoc(userReqRef, { status: 'approved', approvedAt: serverTimestamp(), playerId: newPlayerRef.id });
+        await updateDoc(userReqRef, { status: 'approved', approvedAt: serverTimestamp(), playerId: assignedPlayerId });
       } catch (_) {}
 
       showToast(`¡Jugador ${request.playerName} aprobado e incorporado a la plantilla!`, 'success');

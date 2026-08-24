@@ -10,6 +10,8 @@ import './Login.css';
 
 const POSITIONS = ['POR', 'DEF', 'LTD', 'LTI', 'MCD', 'MC', 'MCO', 'EXT', 'DEL'];
 
+import { normalizeEmail } from '../utils/normalizeEmail';
+
 const JoinTeam = () => {
   const [searchParams] = useSearchParams();
   const codeParam = searchParams.get('code') || searchParams.get('token') || '';
@@ -85,23 +87,50 @@ const JoinTeam = () => {
         setTeamData(data);
         setInputCode(code);
 
-        // Si el usuario ya está autenticado, comprobar si ya existe en la plantilla
+        // Comprobación de identidad server-side por email determinista
         if (user && user.uid !== 'invitado-local') {
+          const emailNorm = normalizeEmail(user.email);
           try {
+            // 1. Consultar índice determinista global
+            if (emailNorm) {
+              const identityDoc = await getDoc(doc(db, 'playerIdentityByEmail', emailNorm));
+              if (identityDoc.exists()) {
+                const idData = identityDoc.data();
+                if (idData.teamId === data.teamId && idData.playerId) {
+                  // Ya tiene ficha en este equipo -> asociar shared_teams y entrar al portal
+                  await setDoc(doc(db, `users/${user.uid}/shared_teams`, data.teamId), {
+                    teamId: data.teamId,
+                    teamPath: data.teamPath,
+                    teamName: data.teamName || 'Mi Equipo',
+                    role: 'player',
+                    playerId: idData.playerId,
+                    joinedAt: serverTimestamp(),
+                  }, { merge: true });
+
+                  localStorage.setItem('mister11_active_mode', 'player');
+                  showToast('¡Ya formas parte de este equipo! Cargando tu portal...', 'success');
+                  navigate('/player-dashboard');
+                  return;
+                }
+              }
+            }
+
+            // 2. Fallback: consultar plantilla de este equipo
             const playersColRef = collection(db, `${data.teamPath}/players`);
             const pSnap = await getDocs(playersColRef);
             const existingPlayer = pSnap.docs.find(d => {
               const pData = d.data();
+              const pEmailNorm = normalizeEmail(pData.email);
               return pData.requesterUid === user.uid ||
                      pData.playerUid === user.uid ||
                      pData.userId === user.uid ||
                      pData.uid === user.uid ||
-                     (pData.email && user.email && pData.email.toLowerCase() === user.email.toLowerCase()) ||
+                     (emailNorm && pEmailNorm && pEmailNorm === emailNorm) ||
                      pData.linkedParents?.includes(user.uid);
             });
 
             if (existingPlayer) {
-              // Ya existe en la plantilla -> Vincular puntero y redirigir sin duplicar
+              // Ya existe en la plantilla -> Vincular puntero e índice determinista
               const userSharedTeamRef = doc(db, `users/${user.uid}/shared_teams`, data.teamId);
               await setDoc(userSharedTeamRef, {
                 teamId: data.teamId,
@@ -111,6 +140,18 @@ const JoinTeam = () => {
                 playerId: existingPlayer.id,
                 joinedAt: serverTimestamp(),
               }, { merge: true });
+
+              if (emailNorm) {
+                try {
+                  await setDoc(doc(db, 'playerIdentityByEmail', emailNorm), {
+                    uid: user.uid,
+                    playerId: existingPlayer.id,
+                    teamId: data.teamId,
+                    teamPath: data.teamPath,
+                    createdAt: serverTimestamp(),
+                  }, { merge: true });
+                } catch (_) {}
+              }
 
               localStorage.setItem('mister11_active_mode', 'player');
               try {

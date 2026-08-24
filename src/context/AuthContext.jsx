@@ -4,6 +4,8 @@ import { onAuthStateChanged, signInAnonymously, signInWithEmailAndPassword, sign
 import { collection, query, onSnapshot, addDoc, serverTimestamp, getDocs, doc, getDoc } from 'firebase/firestore';
 import { seedInitialData } from '../utils/seedData';
 
+import { normalizeEmail } from '../utils/normalizeEmail';
+
 const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
@@ -48,6 +50,30 @@ export const AuthProvider = ({ children }) => {
           await initUserDocument(currentUser.uid, currentUser.email, currentUser.displayName || (currentUser.isAnonymous ? 'Entrenador Invitado' : ''));
         } catch (err) {
           console.error('[AuthContext] Error inicializando documento de usuario:', err);
+        }
+
+        // Registrar identidad determinista playerIdentity/{uid} (create-only)
+        if (currentUser.email && currentUser.uid !== 'invitado-local') {
+          try {
+            const emailNorm = normalizeEmail(currentUser.email);
+            await setDoc(doc(db, 'playerIdentity', currentUser.uid), {
+              email: currentUser.email,
+              emailNorm,
+              createdAt: serverTimestamp(),
+            });
+          } catch (_) {
+            // Ignorado por diseño si ya existe (regla create-only)
+          }
+
+          // Restaurar preferencia de modo si existe en Firestore
+          try {
+            const prefSnap = await getDoc(doc(db, `users/${currentUser.uid}/prefs`, 'lastMode'));
+            if (prefSnap.exists() && prefSnap.data().mode) {
+              const savedMode = prefSnap.data().mode;
+              localStorage.setItem('mister11_active_mode', savedMode);
+              setActiveModeState(savedMode);
+            }
+          } catch (_) {}
         }
       } else {
         // Si estamos en modo invitado, preservar el estado local
@@ -479,11 +505,17 @@ export const AuthProvider = ({ children }) => {
     if (mode === 'player' || mode === 'coach') {
       localStorage.setItem('mister11_active_mode', mode);
       setActiveModeState(mode);
+      if (user && user.uid !== 'invitado-local') {
+        setDoc(doc(db, `users/${user.uid}/prefs`, 'lastMode'), { mode, updatedAt: serverTimestamp() }, { merge: true }).catch(() => {});
+      }
     } else {
       localStorage.removeItem('mister11_active_mode');
       setActiveModeState(null);
+      if (user && user.uid !== 'invitado-local') {
+        setDoc(doc(db, `users/${user.uid}/prefs`, 'lastMode'), { mode: null, updatedAt: serverTimestamp() }, { merge: true }).catch(() => {});
+      }
     }
-  }, []);
+  }, [user]);
 
   const activeTeam = useMemo(() => {
     return teams.find(t => t.id === activeTeamId) || teams[0] || null;

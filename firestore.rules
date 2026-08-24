@@ -11,6 +11,37 @@ service cloud.firestore {
       return isAuth() && request.auth.uid == userId;
     }
 
+    // ── PARTE A: BLINDAJE TOTAL DE IDENTIDAD DETERMINISTA ────────────────────
+    match /playerIdentity/{uid} {
+      allow read: if isAuth() && request.auth.uid == uid;
+      allow create: if isAuth() && request.auth.uid == uid;
+      allow update, delete: if false;
+    }
+
+    match /playerIdentityByEmail/{emailNorm} {
+      allow read: if isAuth();
+      allow create: if isAuth();
+      allow update: if isAuth() && resource.data.uid == null;
+      allow delete: if false;
+    }
+
+    // ── PARTE B: TOKENS DE NOTIFICACIONES PUSH Y PREFERENCIAS ─────────────────
+    match /users/{userId}/pushTokens/{tokenId} {
+      allow read, write: if isOwner(userId);
+    }
+
+    match /users/{userId}/prefs/{prefDoc} {
+      allow read, write: if isOwner(userId);
+    }
+
+    match /users/{userId}/join_requests/{reqId} {
+      allow read, write: if isOwner(userId);
+    }
+
+    match /users/{userId}/shared_teams/{teamId} {
+      allow read, write: if isOwner(userId) || isAuth();
+    }
+
     // ── Configuración global y enlaces compartidos (acceso público) ──────────
     match /config/{docId} {
       allow read: if true;
@@ -62,12 +93,11 @@ service cloud.firestore {
       }
     }
 
-    // ── Equipos de Usuario y Límite de 23 Jugadores ───────────────────────────
+    // ── Equipos de Usuario y Límite de Jugadores ──────────────────────────────
     match /users/{userId}/teams/{teamId} {
       allow read, write: if isAuth();
 
       match /players/{playerId} {
-        // En creación nueva, permitir si es usuario autenticado
         allow read, write: if isAuth();
       }
 

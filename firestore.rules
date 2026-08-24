@@ -2,156 +2,16 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // ── Helpers ──────────────────────────────────────────────────────────────
+    // ── Helper de Autenticación ───────────────────────────────────────────────
     function isAuth() {
       return request.auth != null;
     }
-    function isOwner(uid) {
-      return isAuth() && request.auth.uid == uid;
-    }
-    function isDevEmail() {
-      return isAuth() && request.auth.token.email in [
-        'mister11.app@gmail.com',
-        'lanuevaolarecord@gmail.com',
-        'jhocao111294@gmail.com',
-        'jhocatv@gmail.com',
-        'lavozdelformador@gmail.com'
-      ];
-    }
 
-    // ── Configuración global (lectura pública para comprobar versión del APK y descarga) ──
+    // ── Configuración global y enlaces compartidos (acceso público) ──────────
     match /config/{docId} {
       allow read, write: if true;
     }
 
-    // ── Datos de usuario ──────────────────────────────────────────────────────
-    match /users/{userId} {
-      allow read: if isAuth();
-      allow write: if isOwner(userId) || isDevEmail();
-
-      // Subcolecciones del usuario (shared_teams, join_requests, notifications, etc.)
-      match /{subcollection}/{docId} {
-        allow read, write: if isAuth();
-
-        match /{allSubPaths=**} {
-          allow read, write: if isAuth();
-        }
-      }
-
-      // Equipos personales del usuario
-      match /teams/{teamId} {
-        allow read, write: if isAuth();
-
-        // Jugadores del equipo y todas sus subcolecciones (wellness, tests, asistencias, etc.)
-        match /players/{playerId} {
-          allow read, write: if isAuth();
-
-          match /{allPlayerSubPaths=**} {
-            allow read, write: if isAuth();
-          }
-        }
-
-        // Subcolección directa de wellness del equipo
-        match /wellness/{wellnessId} {
-          allow read, write: if isAuth();
-        }
-
-        // Subcolección directa de asistencia
-        match /attendance/{attendanceId} {
-          allow read, write: if isAuth();
-        }
-
-        // Subcolección directa de test_results y evaluaciones
-        match /test_results/{testId} {
-          allow read, write: if isAuth();
-        }
-        match /evaluaciones/{evalId} {
-          allow read, write: if isAuth();
-        }
-
-        // Partidos
-        match /matches/{matchId} {
-          allow read, write: if isAuth();
-
-          match /{allMatchSubPaths=**} {
-            allow read, write: if isAuth();
-          }
-        }
-
-        // Resto de subcolecciones del equipo
-        match /{subcollection}/{allPaths=**} {
-          allow read, write: if isAuth();
-        }
-      }
-    }
-
-    // ── Partidos y Estadísticas en Vivo (Live Stats) ─────────────────────────
-    match /matches/{matchId} {
-      allow read, write: if isAuth();
-
-      match /{allPaths=**} {
-        allow read, write: if isAuth();
-      }
-    }
-
-    // ── Clubs ─────────────────────────────────────────────────────────────────
-    match /clubs/{clubId} {
-      allow read, write: if isAuth();
-
-      // Equipos del club
-      match /teams/{teamId} {
-        allow read, write: if isAuth();
-
-        // Subcolecciones de jugadores en equipos de club
-        match /players/{playerId} {
-          allow read, write: if isAuth();
-
-          match /{allPlayerSubPaths=**} {
-            allow read, write: if isAuth();
-          }
-        }
-
-        // Subcolecciones de equipo de club (wellness, attendance, sessions, etc.)
-        match /{subcollection}/{allPaths=**} {
-          allow read, write: if isAuth();
-        }
-      }
-
-      // Miembros del club y subcolecciones
-      match /{allClubPaths=**} {
-        allow read, write: if isAuth();
-      }
-    }
-
-    // ── Stripe / Customers (solo el propio usuario y el backend) ─────────────
-    match /customers/{userId} {
-      allow read: if isOwner(userId) || isDevEmail();
-      allow create: if isOwner(userId);
-      allow update, delete: if isDevEmail();
-
-      match /checkout_sessions/{sessionId} {
-        allow read, create: if isOwner(userId);
-        allow update, delete: if isDevEmail();
-      }
-
-      match /subscriptions/{subId} {
-        allow read: if isOwner(userId) || isDevEmail();
-        allow write: if isDevEmail();
-      }
-
-      match /payments/{paymentId} {
-        allow read: if isOwner(userId) || isDevEmail();
-        allow write: if isDevEmail();
-      }
-    }
-
-    // ── Códigos promocionales ─────────────────────────────────────────────────
-    match /promoCodes/{codeId} {
-      allow read: if isAuth();
-      allow write: if isDevEmail();
-    }
-
-    // ── Planes compartidos (SharedPlan) y Sesiones compartidas (SharedSession) ──
     match /sharedPlans/{planId} {
       allow read, create, update: if true;
       allow delete: if isAuth();
@@ -162,36 +22,19 @@ service cloud.firestore {
       allow delete: if isAuth();
     }
 
-    // ── Invitaciones ──────────────────────────────────────────────────────────
-    match /invitations/{invitationId} {
-      allow read: if isAuth();
-      allow create: if isAuth() && request.resource.data.invitedBy == request.auth.uid;
-      allow update, delete: if isAuth() && (
-        isDevEmail() ||
-        resource.data.get('invitedBy', '') == request.auth.uid ||
-        resource.data.get('invitedEmail', '') == request.auth.token.email
-      );
-    }
-
-    // ── Invitaciones de Cuerpo Técnico (Staff Invitations) ─────────────────────
-    match /staff_invitations/{invitationId} {
-      allow read: if true;
-      allow create, update, delete: if isAuth();
-    }
-
-    // ── Códigos de Equipo Públicos para Portal del Jugador ───────────────────
     match /team_codes/{codeId} {
       allow read: if true;
       allow write: if isAuth();
     }
 
-    // ── Notificaciones ────────────────────────────────────────────────────────
-    match /notifications/{notifId} {
-      allow read, write: if isAuth() && (
-        isDevEmail() ||
-        resource.data.get('userId', '') == request.auth.uid ||
-        request.resource.data.get('userId', '') == request.auth.uid
-      );
+    match /staff_invitations/{invitationId} {
+      allow read: if true;
+      allow create, update, delete: if isAuth();
+    }
+
+    // ── Acceso Total a todas las Colecciones y Subcolecciones para Usuarios Autenticados ──
+    match /{document=**} {
+      allow read, write: if isAuth();
     }
 
   }

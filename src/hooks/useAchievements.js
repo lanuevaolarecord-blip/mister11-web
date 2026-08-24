@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { collection, doc, onSnapshot, setDoc, serverTimestamp, increment } from 'firebase/firestore';
 import { db } from '../firebaseConfig';
 import { ACHIEVEMENTS_CATALOG, ACHIEVEMENT_TIERS, DEFAULT_SEASON_SETTINGS } from '../config/achievements';
@@ -14,6 +14,10 @@ export const useAchievements = (teamPath, playerId, isParentView = false) => {
   const [testResults, setTestResults] = useState([]);
   const [loading, setLoading] = useState(true);
 
+  // Registro en memoria de logros ya notificados en esta sesión para evitar bucles de toasts
+  const notifiedAchievementsRef = useRef(new Set());
+  const initialLoadCompletedRef = useRef(false);
+
   // 1. Escuchar logros desbloqueados guardados en Firestore
   useEffect(() => {
     if (!teamPath || !playerId) {
@@ -27,8 +31,12 @@ export const useAchievements = (teamPath, playerId, isParentView = false) => {
       const stateMap = {};
       snap.docs.forEach(d => {
         stateMap[d.id] = { id: d.id, ...d.data() };
+        if (d.data().unlocked) {
+          notifiedAchievementsRef.current.add(d.id);
+        }
       });
       setUnlockedState(stateMap);
+      initialLoadCompletedRef.current = true;
       setLoading(false);
     }, (err) => {
       console.warn('[useAchievements] Error escuchando logros:', err);
@@ -153,7 +161,8 @@ export const useAchievements = (teamPath, playerId, isParentView = false) => {
       } else if (ach.id === 'weekly_committed') {
         progress = Math.min(target, wellnessThisWeek.length > 0 ? 1 : 0);
       } else if (ach.id === 'weekly_attentive') {
-        progress = 1; // Visitó el portal
+        // Consultar próximas convocatorias
+        progress = (sessions.length > 0 || matches.length > 0) ? 1 : 0;
       } else if (ach.id === 'biweekly_iron') {
         progress = attendanceRecords.filter(a => a.players?.[playerId] === true || a.presentes?.includes(playerId)).length;
       } else if (ach.id === 'biweekly_self_care') {
@@ -198,12 +207,18 @@ export const useAchievements = (teamPath, playerId, isParentView = false) => {
     });
   }, [sessions, matches, attendanceRecords, wellnessRecords, testResults, unlockedState, playerId, seasonSettings]);
 
-  // 5. Guardar automáticamente los logros recién desbloqueados
+  // 5. Guardar logros recién desbloqueados con control estricto de notificación única
   useEffect(() => {
-    if (!teamPath || !playerId || isParentView) return;
+    if (!teamPath || !playerId || isParentView || !initialLoadCompletedRef.current) return;
 
     computedAchievements.forEach(async (ach) => {
-      if (ach.isUnlocked && !unlockedState[ach.id]?.unlocked) {
+      const alreadyStored = unlockedState[ach.id]?.unlocked === true;
+      const alreadyNotified = notifiedAchievementsRef.current.has(ach.id);
+
+      if (ach.isUnlocked && !alreadyStored && !alreadyNotified) {
+        // Bloquear notificación inmediata en memoria
+        notifiedAchievementsRef.current.add(ach.id);
+
         try {
           const cleanPath = teamPath.replace(/^\/+|\/+$/g, '');
           const achRef = doc(db, `${cleanPath}/players/${playerId}/achievements`, ach.id);
@@ -214,7 +229,7 @@ export const useAchievements = (teamPath, playerId, isParentView = false) => {
             lastProgress: ach.progress
           }, { merge: true });
 
-          // Notificación y feedback háptico en móvil
+          // Notificación única
           showToast(`🏆 ¡Logro desbloqueado: ${ach.name}! (+${ach.xp} XP)`, 'success');
           if (ach.tier === 'GOLD' && navigator?.vibrate) {
             navigator.vibrate([100, 50, 100]);
@@ -226,7 +241,7 @@ export const useAchievements = (teamPath, playerId, isParentView = false) => {
     });
   }, [computedAchievements, unlockedState, teamPath, playerId, isParentView]);
 
-  // Logro más cercano a completarse (≥ 70% y < 100%)
+  // Logro más cercano a completarse (≥ 60% y < 100%)
   const closestAchievement = useMemo(() => {
     const pending = computedAchievements.filter(a => !a.isUnlocked && a.isActive && a.percent >= 60);
     pending.sort((a, b) => b.percent - a.percent);

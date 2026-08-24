@@ -96,7 +96,7 @@ const PlayerDashboard = () => {
   );
 
   // 3. Hook de logros deportivos en tiempo real
-  const { achievements, loading: loadingAchievements } = useAchievements(cleanPath, player?.id, isParentView);
+  const { achievements, closestAchievement, loading: loadingAchievements } = useAchievements(cleanPath, player?.id, isParentView);
 
   // 4. Escuchar si hay mensajes no leídos en el hilo 1:1
   useEffect(() => {
@@ -218,6 +218,7 @@ const PlayerDashboard = () => {
             teamPath={cleanPath}
             onNavigateTab={setActiveTab}
             isParentView={isParentView}
+            closestAchievement={closestAchievement}
           />
         )}
 

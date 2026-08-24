@@ -6,10 +6,9 @@ import { useTheme } from '../../context/ThemeContext';
 import { useAchievements } from '../../hooks/useAchievements';
 import { Calendar, Clock, MapPin, Trophy, Flame, Bell, CheckCircle2, ChevronRight, Activity } from 'lucide-react';
 
-export const PlayerHomeTab = ({ player, team, teamPath, onNavigateTab, isParentView = false }) => {
+export const PlayerHomeTab = ({ player, team, teamPath, onNavigateTab, isParentView = false, closestAchievement = null }) => {
   const { user } = useAuth();
   const { darkMode } = useTheme();
-  const { closestAchievement } = useAchievements(teamPath, player?.id, isParentView);
 
   const [nextEvent, setNextEvent] = useState(null);
   const [announcements, setAnnouncements] = useState([]);

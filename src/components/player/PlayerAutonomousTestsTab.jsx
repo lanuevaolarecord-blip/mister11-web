@@ -163,17 +163,16 @@ export const PlayerAutonomousTestsTab = ({ player, team, teamPath }) => {
     const loadTestHistory = async () => {
       try {
         const testsColRef = collection(db, `${teamPath}/test_results`);
-        const q = query(testsColRef, where('playerId', '==', player.id), orderBy('date', 'desc'));
+        const q = query(testsColRef, where('playerId', '==', player.id));
         const snap = await getDocs(q);
         
+        const docs = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        docs.sort((a, b) => new Date(b.date || b.timestamp || 0) - new Date(a.date || a.timestamp || 0));
+
         const historyMap = {};
-        snap.docs.forEach(docSnap => {
-          const data = docSnap.data();
+        docs.forEach(data => {
           if (data.testId && !historyMap[data.testId]) {
-            historyMap[data.testId] = {
-              id: docSnap.id,
-              ...data
-            };
+            historyMap[data.testId] = data;
           }
         });
         setHistory(historyMap);

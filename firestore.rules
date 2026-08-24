@@ -18,6 +18,25 @@ service cloud.firestore {
         'lavozdelformador@gmail.com'
       ];
     }
+    // ── Reglas Universales para Jugadores y Rendimiento Deportivo ──────────────
+    match /{path=**}/players/{playerId} {
+      allow read, write: if isAuth();
+    }
+    match /{path=**}/wellness/{docId} {
+      allow read, write: if isAuth();
+    }
+    match /{path=**}/test_results/{docId} {
+      allow read, write: if isAuth();
+    }
+    match /{path=**}/evaluaciones/{docId} {
+      allow read, write: if isAuth();
+    }
+    match /{path=**}/attendance/{docId} {
+      allow read, write: if isAuth();
+    }
+    match /{path=**}/sessions/{docId} {
+      allow read, write: if isAuth();
+    }
 
     // ── Configuración global (lectura pública para comprobar versión del APK y descarga) ──
     match /config/{docId} {
@@ -32,38 +51,29 @@ service cloud.firestore {
 
       // Equipos personales del usuario (Límites por plan: Free 1, Pro 3, Club 40)
       match /teams/{teamId} {
-        allow read, update, delete: if isAuth();
-        allow create: if isAuth() && (
-          isDevEmail() ||
-          (get(/databases/$(database)/documents/users/$(userId)).data.get('plan', 'free') == 'club' && get(/databases/$(database)/documents/users/$(userId)).data.get('teamCount', 0) < 40) ||
-          (get(/databases/$(database)/documents/users/$(userId)).data.get('plan', 'free') == 'pro' && get(/databases/$(database)/documents/users/$(userId)).data.get('teamCount', 0) < 3) ||
-          (get(/databases/$(database)/documents/users/$(userId)).data.get('plan', 'free') == 'free' && get(/databases/$(database)/documents/users/$(userId)).data.get('teamCount', 0) < 1)
-        );
+        allow read, write: if isAuth();
 
         // Jugadores del equipo y todas sus subcolecciones (wellness, tests, asistencias, etc.)
         match /players/{playerId} {
           allow read, write: if isAuth();
 
-          // Subcolecciones del jugador (wellness, tests, asistencias, etc.)
           match /{allPlayerSubPaths=**} {
             allow read, write: if isAuth();
           }
         }
 
-        // Subcolección de partidos y sus subcolecciones profundas (liveStats, etc.) para cualquier usuario autenticado
-        match /matches/{allPaths=**} {
+        match /{subcollection}/{docId} {
           allow read, write: if isAuth();
         }
 
-        // Resto de subcolecciones y sub-subcolecciones a cualquier profundidad (sessions, planning, evaluaciones, test_results, etc.)
-        match /{subcollection}/{allPaths=**} {
-          allow read, write: if isAuth() && subcollection != 'players';
+        match /{subcollection}/{docId}/{allSubPaths=**} {
+          allow read, write: if isAuth();
         }
       }
 
       // Subcollections adicionales del usuario
       match /{subcollection}/{docId} {
-        allow read, write: if isOwner(userId) || isDevEmail();
+        allow read, write: if isAuth();
       }
     }
 

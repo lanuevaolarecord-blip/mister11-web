@@ -1,4 +1,4 @@
-﻿/**
+/**
  * @file admins.js
  * @description Lista centralizada de emails de desarrolladores y administradores.
  * ÚNICA fuente de verdad. No duplicar en otros archivos.
@@ -8,6 +8,7 @@ export const DEVELOPER_EMAILS = [
   'mister11.app@gmail.com',
   'lanuevaolarecord@gmail.com',
   'jhocao111294@gmail.com',
+  'jhocatv@gmail.com',
   'lavozdelformador@gmail.com',
 ];
 

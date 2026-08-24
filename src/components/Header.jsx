@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { useTeams } from '../hooks/useTeams';
 import { useTeamMembers } from '../hooks/useTeamMembers';
 import { useAuth } from '../context/AuthContext';
+import { isDeveloperEmail } from '../config/admins';
 import { ChevronDown, Sun, Moon, Bell, Settings, Shield, LogOut, User } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
 import { useMatch } from '../context/MatchContext';
@@ -11,7 +12,8 @@ import { useTranslation } from '../hooks/useTranslation';
 const Header = ({ onToggleNotif }) => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { user, logout } = useAuth();
+  const { user, logout, switchMode } = useAuth();
+  const isDev = isDeveloperEmail(user?.email);
   const { teams, activeTeam, selectTeam } = useTeams();
   const { permissions, switchMyRole, STAFF_ROLES } = useTeamMembers(activeTeam?.id);
   const { darkMode, toggleTheme } = useTheme();
@@ -183,6 +185,34 @@ const Header = ({ onToggleNotif }) => {
             {formatMatchTime(matchSeconds)}
           </button>
         )}
+        {/* Botón exclusivo para cuentas de desarrollador para probar el Portal de Jugador */}
+        {isDev && (
+          <button
+            onClick={() => {
+              switchMode('player');
+              window.location.href = '/';
+            }}
+            title="Cambiar a Portal Jugador (Modo Dev)"
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '4px',
+              background: 'rgba(16, 185, 129, 0.15)',
+              color: '#10B981',
+              border: '1px solid rgba(16, 185, 129, 0.4)',
+              borderRadius: '14px',
+              padding: '4px 8px',
+              fontSize: '0.72rem',
+              fontWeight: '800',
+              cursor: 'pointer',
+              whiteSpace: 'nowrap',
+              flexShrink: 0
+            }}
+          >
+            <User size={13} /> Jugador
+          </button>
+        )}
+
         <button className="icon-btn theme-toggle" title="Cambiar Tema" onClick={toggleTheme}>
           {darkMode ? <Sun size={19} color="var(--accent-gold)" /> : <Moon size={19} color="var(--accent-gold)" />}
         </button>

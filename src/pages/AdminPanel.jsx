@@ -64,7 +64,7 @@ const AdminPanel = () => {
     }
   }, [location.state?.activeTab]);
 
-  const { user, getTeamPath, clubId, clubRole, isClubMember, club, userProfile } = useAuth();
+  const { user, getTeamPath, clubId, clubRole, isClubMember, club, userProfile, switchMode } = useAuth();
   const isAdmin = isDeveloperEmail(user?.email);
   const { teams, activeTeam, addTeam, deleteTeam, selectTeam, updateTeam } = useTeams();
   const { exercises, removeExercise, addExercise } = useExercises(activeTeam?.id);
@@ -1466,6 +1466,33 @@ const AdminPanel = () => {
                             🛡️ Licencia de Desarrollador — Acceso Ilimitado de Por Vida
                           </div>
                         )}
+
+                        {/* Botón para cambiar a modo jugador */}
+                        <button
+                          onClick={() => {
+                            switchMode('player');
+                            window.location.href = '/';
+                          }}
+                          style={{
+                            minHeight: '48px',
+                            textTransform: 'uppercase',
+                            borderRadius: '8px',
+                            fontWeight: 'bold',
+                            letterSpacing: '0.5px',
+                            fontSize: '0.82rem',
+                            cursor: 'pointer',
+                            transition: 'all 0.2s ease',
+                            border: '1.5px solid #10B981',
+                            backgroundColor: 'rgba(16, 185, 129, 0.15)',
+                            color: '#10B981',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: '8px'
+                          }}
+                        >
+                          <Users size={16} /> Cambiar a Portal del Jugador (Modo Dev)
+                        </button>
 
                         {/* Botón de simulación */}
                         <button

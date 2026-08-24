@@ -87,28 +87,91 @@ const LandingPage = () => {
         </button>
       </header>
 
-      {/* Hero */}
+      {/* Hero Section */}
       <section className="landing-hero">
-        <div className="hero-content">
-          <div className="hero-pill">⚽ LA PLATAFORMA INTEGRAL PARA EL FÚTBOL BASE Y AMATEUR</div>
+        <div className="landing-hero-content">
+          <div className="badge-promo">
+            <span className="badge-icon">⚽</span>
+            <span className="badge-text">EL CEREBRO DIGITAL DEL ENTRENADOR</span>
+          </div>
           <h1 className="hero-title">
-            Planifica, dirige y analiza como un <span className="hero-highlight">cuerpo técnico profesional</span>.
+            Lleva tu metodología de entrenamiento al <span className="highlight-text">nivel profesional</span>
           </h1>
-          <p className="hero-desc">
-            Pizarra táctica animada con video MP4, diseñador de sesiones con PDF, IA generativa para entrenamientos y prevención de lesiones, Live Stats en directo y portal del jugador con firma RGPD.
+          <p className="hero-description">
+            La herramienta definitiva para entrenadores de fútbol base y amateur. Pizarra táctica, periodización completa de microciclos, tests psicosociales validados y generación con Inteligencia Artificial.
           </p>
           <div className="hero-actions">
-            <button className="btn-azul-primario hero-cta-btn" onClick={handleStart}>
-              EMPEZAR GRATIS AHORA
+            <button className="btn-azul-primario hero-cta" onClick={handleStart}>
+              EMPEZAR AHORA <ArrowRight size={16} />
             </button>
-            <a href="#pricing" className="hero-secondary-btn">
-              Ver Planes y Precios
+            <a href="#pricing" className="btn-outline-landing hero-secondary">
+              VER CARACTERÍSTICAS
             </a>
           </div>
-          <div className="hero-guarantees">
-            <span>🛡️ Precios con IVA incluido</span>
-            <span>🏆 Temporada 10 Meses (Julio y Agosto gratis)</span>
-            <span>📱 100% Optimizado para Smartphone</span>
+          <div className="hero-trust">
+            <span className="trust-item"><Check size={14} /> 7 días de prueba total</span>
+            <span className="trust-item"><Check size={14} /> Sin tarjeta de crédito</span>
+            <span className="trust-item"><Check size={14} /> Multi-dispositivo</span>
+          </div>
+        </div>
+        
+        {/* Mockup / Canvas Preview de la Pizarra */}
+        <div className="landing-hero-preview">
+          <div className="preview-field-container">
+            <div className="preview-field-header">
+              <div className="preview-dot red"></div>
+              <div className="preview-dot yellow"></div>
+              <div className="preview-dot green"></div>
+              <span className="preview-title">Pizarra Táctica Míster11 · Vista Previa</span>
+            </div>
+            <div className="preview-field-canvas">
+              {/* Football Field Markings SVG */}
+              <svg className="field-markings-svg" viewBox="0 0 120 80" xmlns="http://www.w3.org/2000/svg">
+                <defs>
+                  <marker id="arrow" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                    <path d="M 0 2 L 8 5 L 0 8 z" fill="var(--accent-gold)" />
+                  </marker>
+                </defs>
+                {/* Boundary */}
+                <rect x="5" y="5" width="110" height="70" fill="none" stroke="rgba(255,255,255,0.4)" strokeWidth="0.8" />
+                {/* Halfway line */}
+                <line x1="60" y1="5" x2="60" y2="75" stroke="rgba(255,255,255,0.4)" strokeWidth="0.8" />
+                {/* Center circle */}
+                <circle cx="60" cy="40" r="12" fill="none" stroke="rgba(255,255,255,0.4)" strokeWidth="0.8" />
+                {/* Center spot */}
+                <circle cx="60" cy="40" r="1" fill="rgba(255,255,255,0.8)" />
+                
+                {/* Left Penalty Area */}
+                <rect x="5" y="20" width="18" height="40" fill="none" stroke="rgba(255,255,255,0.4)" strokeWidth="0.8" />
+                {/* Left Goal Area */}
+                <rect x="5" y="29" width="6" height="22" fill="none" stroke="rgba(255,255,255,0.4)" strokeWidth="0.8" />
+                {/* Left Penalty Spot */}
+                <circle cx="17" cy="40" r="0.8" fill="rgba(255,255,255,0.8)" />
+                {/* Left Penalty Arc */}
+                <path d="M 23 32 A 10 10 0 0 1 23 48" fill="none" stroke="rgba(255,255,255,0.4)" strokeWidth="0.8" />
+                {/* Left Goal */}
+                <rect x="1.5" y="33" width="3.5" height="14" fill="none" stroke="rgba(255,255,255,0.4)" strokeWidth="0.8" />
+
+                {/* Right Penalty Area */}
+                <rect x="97" y="20" width="18" height="40" fill="none" stroke="rgba(255,255,255,0.4)" strokeWidth="0.8" />
+                {/* Right Goal Area */}
+                <rect x="109" y="29" width="6" height="22" fill="none" stroke="rgba(255,255,255,0.4)" strokeWidth="0.8" />
+                {/* Right Penalty Spot */}
+                <circle cx="103" cy="40" r="0.8" fill="rgba(255,255,255,0.8)" />
+                {/* Right Penalty Arc */}
+                <path d="M 97 32 A 10 10 0 0 0 97 48" fill="none" stroke="rgba(255,255,255,0.4)" strokeWidth="0.8" />
+                {/* Right Goal */}
+                <rect x="115" y="33" width="3.5" height="14" fill="none" stroke="rgba(255,255,255,0.4)" strokeWidth="0.8" />
+                
+                {/* Tactical Arrow */}
+                <path d="M 54 28 Q 66 38 76 40" fill="none" stroke="var(--accent-gold)" strokeWidth="1.2" strokeDasharray="3,3" markerEnd="url(#arrow)" />
+              </svg>
+
+              <div className="player-node p-blue p1" style={{ top: '35%', left: '45%' }}>10</div>
+              <div className="player-node p-blue p2" style={{ top: '65%', left: '50%' }}>8</div>
+              <div className="player-node p-red p3" style={{ top: '50%', left: '65%' }}>4</div>
+              <div className="ball-node" style={{ top: '52%', left: '55%' }}>⚽</div>
+            </div>
           </div>
         </div>
       </section>

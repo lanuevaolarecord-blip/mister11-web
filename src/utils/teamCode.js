@@ -1,4 +1,4 @@
-import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
+import { doc, getDoc, setDoc, serverTimestamp, collectionGroup, query, where, getDocs } from 'firebase/firestore';
 import { db } from '../firebaseConfig';
 
 /**
@@ -64,19 +64,51 @@ export const ensureTeamCode = async (teamId, teamPath, teamName, coachUid) => {
   }
 };
 
+
+
 /**
  * Busca los datos de un equipo a partir de su código M11-XXXXXX
  */
 export const getTeamByCode = async (code) => {
   if (!code) return null;
-  const cleanCode = code.trim().toUpperCase();
+  let cleanCode = code.trim().toUpperCase().replace(/\s+/g, '');
+  if (!cleanCode.startsWith('M11-') && cleanCode.length === 6) {
+    cleanCode = `M11-${cleanCode}`;
+  }
 
   try {
+    // 1. Búsqueda directa en índice público team_codes
     const indexRef = doc(db, 'team_codes', cleanCode);
     const indexSnap = await getDoc(indexRef);
     if (indexSnap.exists()) {
       return indexSnap.data();
     }
+
+    // 2. Fallback: buscar en colección global de equipos si no estaba indexado
+    const teamsQuery = query(collectionGroup(db, 'teams'), where('teamCode', '==', cleanCode));
+    const teamsSnap = await getDocs(teamsQuery);
+    if (!teamsSnap.empty) {
+      const teamDoc = teamsSnap.docs[0];
+      const data = teamDoc.data();
+      const teamPath = teamDoc.ref.path;
+      const teamData = {
+        teamId: teamDoc.id,
+        teamPath,
+        teamName: data.nombre || data.name || 'Mi Equipo',
+        coachUid: data.ownerId || '',
+        createdAt: serverTimestamp(),
+      };
+
+      // Auto-indexar para futuras consultas rápidas
+      try {
+        await setDoc(indexRef, teamData, { merge: true });
+      } catch (idxErr) {
+        console.warn('[getTeamByCode] No se pudo auto-indexar:', idxErr);
+      }
+
+      return teamData;
+    }
+
     return null;
   } catch (err) {
     console.error('[getTeamByCode] Error al consultar código de equipo:', err);

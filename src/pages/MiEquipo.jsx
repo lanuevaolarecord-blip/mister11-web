@@ -184,6 +184,25 @@ const MiEquipo = () => {
         setSelectedPlayer({ ...selectedPlayer, ...playerDataToSave });
       }
 
+      // ─── VINCULACIÓN DETERMINISTA AUTOMÁTICA POR EMAIL ───────────────────
+      const rawEmail = editData.email || editData.requesterEmail || '';
+      const emailNorm = rawEmail ? rawEmail.trim().toLowerCase() : '';
+      if (emailNorm && savedPlayerId && activeTeam?.id) {
+        try {
+          await setDoc(doc(db, 'playerIdentityByEmail', emailNorm), {
+            email: rawEmail,
+            emailNorm,
+            teamId: activeTeam.id,
+            teamPath: getTeamPath(activeTeam.id),
+            playerId: savedPlayerId,
+            teamName: activeTeam.nombre || activeTeam.name || 'Mi Equipo',
+            updatedAt: serverTimestamp()
+          }, { merge: true });
+        } catch (err) {
+          console.warn('[MiEquipo] Error guardando playerIdentityByEmail:', err);
+        }
+      }
+
       setIsFormOpen(false);
     } catch (error) {
       console.error('Error al guardar jugador:', error);
@@ -454,6 +473,21 @@ const MiEquipo = () => {
                     <option value="Izquierdo">Izquierdo</option>
                     <option value="Ambidiestro">Ambidiestro</option>
                   </select>
+                </div>
+              </div>
+
+              <div className="form-row-team" style={{ marginTop: '8px' }}>
+                <div className="form-group-team" style={{ width: '100%' }}>
+                  <label>Email de Acceso del Jugador / Familia (Opcional)</label>
+                  <input 
+                    type="email" 
+                    placeholder="ejemplo@correo.com (para vincular su portal automáticamente)"
+                    value={editData.email || editData.requesterEmail || ''} 
+                    onChange={e => setEditData({ ...editData, email: e.target.value })} 
+                  />
+                  <span style={{ fontSize: '11px', color: 'var(--text-secondary, #64748B)', marginTop: '2px', display: 'block' }}>
+                    Al ingresar este correo, el jugador accederá automáticamente a esta ficha al iniciar sesión.
+                  </span>
                 </div>
               </div>
               

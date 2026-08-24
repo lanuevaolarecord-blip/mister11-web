@@ -250,13 +250,43 @@ export const AuthProvider = ({ children }) => {
     return () => unsubClub();
   }, [user, userProfile, club]);
 
-  // Escuchar equipos compartidos (donde el usuario es miembro del cuerpo técnico)
+  // Escuchar equipos compartidos (donde el usuario es miembro del cuerpo técnico o jugador)
   useEffect(() => {
     if (!user || user.uid === 'invitado-local') {
       setSharedTeams([]);
       setSharedTeamsLoaded(true);
       return;
     }
+
+    // Comprobación de auto-vinculación determinista por email si no tiene equipos compartidos
+    const checkEmailIdentity = async () => {
+      if (!user.email) return;
+      try {
+        const emailNorm = user.email.trim().toLowerCase();
+        const idSnap = await getDoc(doc(db, 'playerIdentityByEmail', emailNorm));
+        if (idSnap.exists()) {
+          const idData = idSnap.data();
+          if (idData.teamId && idData.teamPath) {
+            const userSharedRef = doc(db, `users/${user.uid}/shared_teams`, idData.teamId);
+            const userSharedSnap = await getDoc(userSharedRef);
+            if (!userSharedSnap.exists()) {
+              await setDoc(userSharedRef, {
+                teamId: idData.teamId,
+                teamPath: idData.teamPath,
+                teamName: idData.teamName || 'Mi Equipo',
+                role: 'player',
+                playerId: idData.playerId || '',
+                joinedAt: serverTimestamp()
+              });
+            }
+          }
+        }
+      } catch (err) {
+        console.warn('[AuthContext] Auto-link email identity error:', err);
+      }
+    };
+
+    checkEmailIdentity();
 
     const q = query(collection(db, 'users', user.uid, 'shared_teams'));
     const unsubShared = onSnapshot(q, async (snapshot) => {
@@ -276,7 +306,7 @@ export const AuthProvider = ({ children }) => {
                 id: tSnap.id,
                 ...tSnap.data(),
                 teamPath: pointer.teamPath,
-                staffRole: pointer.role || 'assistant_coach',
+                staffRole: pointer.role || 'player',
                 source: 'shared'
               };
             }
@@ -285,7 +315,7 @@ export const AuthProvider = ({ children }) => {
               nombre: pointer.teamName || 'Equipo Compartido',
               name: pointer.teamName || 'Equipo Compartido',
               teamPath: pointer.teamPath,
-              staffRole: pointer.role || 'assistant_coach',
+              staffRole: pointer.role || 'player',
               source: 'shared'
             };
           } catch (e) {
@@ -294,7 +324,7 @@ export const AuthProvider = ({ children }) => {
               nombre: pointer.teamName || 'Equipo Compartido',
               name: pointer.teamName || 'Equipo Compartido',
               teamPath: pointer.teamPath,
-              staffRole: pointer.role || 'assistant_coach',
+              staffRole: pointer.role || 'player',
               source: 'shared'
             };
           }
@@ -356,7 +386,14 @@ export const AuthProvider = ({ children }) => {
       }
       setLoading(false);
     } else {
-      // Si el usuario no tiene ningún equipo (ni personal ni de club ni compartido), creamos uno por defecto
+      // Si es un jugador y no tiene equipos, no crear equipo falso
+      if (userProfile?.role === 'player') {
+        setActiveTeamId(null);
+        setLoading(false);
+        return;
+      }
+
+      // Si el usuario es entrenador y no tiene ningún equipo, creamos su equipo personal limpio
       const creatingKey = `mister11_creating_team_${user.uid}`;
       if (!localStorage.getItem(creatingKey)) {
         localStorage.setItem(creatingKey, 'true');
@@ -375,11 +412,8 @@ export const AuthProvider = ({ children }) => {
             
             localStorage.setItem('mister11_active_team', docRef.id);
             setActiveTeamId(docRef.id);
-            
-            // Inyectar datos iniciales
-            await seedInitialData(docRef.id, user.uid, `users/${user.uid}/teams/${docRef.id}`);
           } catch (err) {
-            console.error("Error al crear equipo por defecto para nuevo usuario:", err);
+            console.error("Error al crear equipo por defecto para nuevo entrenador:", err);
           } finally {
             localStorage.removeItem(creatingKey);
             setLoading(false);
@@ -391,7 +425,7 @@ export const AuthProvider = ({ children }) => {
         setLoading(false);
       }
     }
-  }, [user, personalTeamsLoaded, clubTeamsLoaded, sharedTeamsLoaded, personalTeams, clubTeams, sharedTeams]);
+  }, [user, userProfile?.role, personalTeamsLoaded, clubTeamsLoaded, sharedTeamsLoaded, personalTeams, clubTeams, sharedTeams]);
 
   // Determinar de forma dinámica el modo actual (retrocompatibilidad)
   const currentMode = useMemo(() => {

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { collection, query, onSnapshot, doc, getDoc } from 'firebase/firestore';
 import { db } from '../firebaseConfig';
 import { useAuth } from '../context/AuthContext';
@@ -12,13 +13,14 @@ import { PlayerChatTab } from '../components/player/PlayerChatTab';
 import { PlayerAutonomousTestsTab } from '../components/player/PlayerAutonomousTestsTab';
 import { PlayerStatsTab } from '../components/player/PlayerStatsTab';
 import { PlayerProfileTab } from '../components/player/PlayerProfileTab';
-import { Shield, Loader, Sun, Moon, LogOut, HeartHandshake, UserCheck, Users, Bell } from 'lucide-react';
+import { Shield, Loader, Sun, Moon, LogOut, HeartHandshake, UserCheck, Users, Bell, KeyRound, ArrowRight } from 'lucide-react';
 import { usePushNotifications } from '../hooks/usePushNotifications';
 import './PlayerDashboard.css';
 
 const normalizeStr = (str) => (str || '').toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
 
 const PlayerDashboard = () => {
+  const navigate = useNavigate();
   const { user, activeTeam, getTeamPath, changeActiveTeam, teams, logout } = useAuth();
   const { darkMode, toggleTheme } = useTheme();
 
@@ -86,12 +88,14 @@ const PlayerDashboard = () => {
         );
 
         if (found) return found;
-        if (allPlayers.length > 0) return allPlayers[0];
+
+        // Si no hay ficha exacta asignada aún, construir con los datos reales del usuario logueado (NUNCA Marc García)
         return {
-          id: 'player-self',
-          name: user.displayName || 'Jugador Míster11',
+          id: user.uid,
+          name: user.displayName || user.email?.split('@')[0] || 'Jugador Míster11',
+          email: user.email || '',
           position: 'MC',
-          number: '11',
+          number: '-',
           category: activeTeam?.categoria || activeTeam?.category || 'General',
           consents: { basic: true, attendance: true, health: true, tests: true }
         };
@@ -333,6 +337,52 @@ const PlayerDashboard = () => {
 
       {/* Contenido principal según pestaña activa */}
       <main className="player-main-viewport">
+        {!activeTeam && (
+          <div style={{
+            margin: '16px',
+            padding: '24px 18px',
+            background: darkMode ? 'rgba(27, 58, 45, 0.45)' : '#FFFFFF',
+            border: '1.5px dashed #10B981',
+            borderRadius: '16px',
+            textAlign: 'center',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            gap: '12px',
+            boxShadow: '0 4px 16px rgba(0,0,0,0.1)'
+          }}>
+            <span style={{ fontSize: '36px' }}>⚽</span>
+            <h3 style={{ margin: 0, fontSize: '1.15rem', fontWeight: 800, color: 'var(--text-primary)' }}>
+              ¡Hola, {user?.displayName?.split(' ')[0] || user?.email?.split('@')[0] || 'Crack'}! 👋
+            </h3>
+            <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--text-secondary)', lineHeight: '1.4', maxWidth: '340px' }}>
+              Aún no estás vinculado a ningún equipo. Pídele el código de acceso a tu entrenador o pulsa a continuación para unirte a tu plantilla.
+            </p>
+            <button
+              type="button"
+              onClick={() => navigate('/join')}
+              style={{
+                background: 'linear-gradient(135deg, #10B981 0%, #059669 100%)',
+                color: '#FFFFFF',
+                border: 'none',
+                padding: '12px 24px',
+                borderRadius: '12px',
+                fontWeight: 800,
+                fontSize: '0.9rem',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                boxShadow: '0 4px 14px rgba(16, 185, 129, 0.3)'
+              }}
+            >
+              <KeyRound size={18} />
+              <span>Unirme a un Equipo con Código</span>
+              <ArrowRight size={16} />
+            </button>
+          </div>
+        )}
+
         {activeTab === 'home' && (
           <PlayerHomeTab
             player={player}

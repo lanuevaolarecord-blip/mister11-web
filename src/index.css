@@ -974,27 +974,58 @@ button, .nav-item, input, select, .icon-btn, .topbar-btn, .tool-icon-btn {
     border-radius: 50% !important;
   }
 
+  .header {
+    padding: 0 8px !important;
+    gap: 6px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+  }
+
+  .header-title-container {
+    gap: 6px !important;
+    flex: 1 1 auto !important;
+    min-width: 0 !important;
+    overflow: hidden !important;
+    display: flex !important;
+    align-items: center !important;
+  }
+
+  .header-title-container .header-title {
+    display: none !important; /* En móvil dejamos espacio para equipo y acciones */
+  }
+
   .header-actions {
     order: 3 !important;
     display: flex !important;
     align-items: center !important;
-    gap: 12px !important; /* Mantiene space-x-3 (12px) de separación */
+    gap: 4px !important;
+    flex-shrink: 0 !important;
+    margin-left: auto !important;
   }
 
   .header-actions .icon-btn {
-    padding: 6px !important;
-    min-width: 36px !important;
-    min-height: 36px !important;
+    padding: 4px !important;
+    min-width: 32px !important;
+    min-height: 32px !important;
+    width: 32px !important;
+    height: 32px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    flex-shrink: 0 !important;
   }
 
   /* Reducir el switcher de equipo en móvil */
   .team-switcher-header-v2 {
-    padding: 4px 10px 4px 8px !important;
+    padding: 3px 6px !important;
+    max-width: 100px !important;
+    flex-shrink: 1 !important;
   }
   
   .team-name-span {
-    max-width: 120px !important; /* Ampliado para evitar cortar a JUVEN... */
-    font-size: 11px !important;
+    max-width: 60px !important;
+    font-size: 10px !important;
     flex-shrink: 1 !important;
     white-space: nowrap !important;
     overflow: hidden !important;

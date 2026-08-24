@@ -10,11 +10,11 @@ import { PlayerAutonomousTestsTab } from '../components/player/PlayerAutonomousT
 import { PlayerStatsTab } from '../components/player/PlayerStatsTab';
 import { PlayerPlansPortalTab } from '../components/player/PlayerPlansPortalTab';
 import { PlayerProfileTab } from '../components/player/PlayerProfileTab';
-import { Shield, Loader, AlertCircle, Sun, Moon, Target, User } from 'lucide-react';
+import { Shield, Loader, AlertCircle, Sun, Moon, Target, User, LogOut } from 'lucide-react';
 import './PlayerDashboard.css';
 
 const PlayerDashboard = () => {
-  const { user, activeTeam, getTeamPath, changeActiveTeam, teams } = useAuth();
+  const { user, activeTeam, getTeamPath, changeActiveTeam, teams, logout } = useAuth();
   const { darkMode, toggleTheme } = useTheme();
 
   const [activeTab, setActiveTab] = useState('home'); // 'home' | 'schedule' | 'tests' | 'stats' | 'profile'
@@ -23,6 +23,17 @@ const PlayerDashboard = () => {
   const [loading, setLoading] = useState(true);
 
   const teamPath = activeTeam?.teamPath || (activeTeam?.id ? getTeamPath(activeTeam.id) : null);
+
+  const handleLogout = async () => {
+    if (window.confirm('¿Deseas cerrar sesión o cambiar de cuenta?')) {
+      try {
+        await logout();
+        window.location.href = '/';
+      } catch (err) {
+        console.error('Error al cerrar sesión:', err);
+      }
+    }
+  };
 
   // Escuchar la ficha del jugador vinculada a este usuario
   useEffect(() => {
@@ -87,7 +98,7 @@ const PlayerDashboard = () => {
           <span className="player-portal-badge">PORTAL JUGADOR</span>
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
           {/* Botón de Modo Claro / Modo Oscuro */}
           <button 
             type="button" 
@@ -97,6 +108,18 @@ const PlayerDashboard = () => {
             title={darkMode ? 'Modo Claro' : 'Modo Oscuro'}
           >
             {darkMode ? <Sun size={18} color="#F59E0B" /> : <Moon size={18} color="#1B3A2D" />}
+          </button>
+
+          {/* Botón de Cerrar Sesión / Cambiar Cuenta */}
+          <button 
+            type="button" 
+            className="player-theme-btn" 
+            onClick={handleLogout}
+            aria-label="Cerrar Sesión o Cambiar Cuenta"
+            title="Cerrar Sesión o Cambiar Cuenta"
+            style={{ color: '#EF4444' }}
+          >
+            <LogOut size={18} color="#EF4444" />
           </button>
 
           {teams.length > 1 && (

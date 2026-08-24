@@ -1,8 +1,9 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useTeams } from '../hooks/useTeams';
 import { useTeamMembers } from '../hooks/useTeamMembers';
-import { ChevronDown, Sun, Moon, Bell, Settings, Shield } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
+import { ChevronDown, Sun, Moon, Bell, Settings, Shield, LogOut, User } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
 import { useMatch } from '../context/MatchContext';
 import { useTranslation } from '../hooks/useTranslation';
@@ -10,11 +11,24 @@ import { useTranslation } from '../hooks/useTranslation';
 const Header = ({ onToggleNotif }) => {
   const location = useLocation();
   const navigate = useNavigate();
+  const { user, logout } = useAuth();
   const { teams, activeTeam, selectTeam } = useTeams();
   const { permissions, switchMyRole, STAFF_ROLES } = useTeamMembers(activeTeam?.id);
   const { darkMode, toggleTheme } = useTheme();
   const { isRunning, matchSeconds, formatMatchTime } = useMatch();
   const { t } = useTranslation();
+  const [showUserMenu, setShowUserMenu] = useState(false);
+
+  const handleLogout = async () => {
+    if (window.confirm('¿Deseas cerrar sesión o cambiar de cuenta?')) {
+      try {
+        await logout();
+        navigate('/');
+      } catch (err) {
+        console.error('Error al cerrar sesión:', err);
+      }
+    }
+  };
 
   const getPageTitle = () => {
     switch(location.pathname) {
@@ -170,13 +184,21 @@ const Header = ({ onToggleNotif }) => {
           </button>
         )}
         <button className="icon-btn theme-toggle" title="Cambiar Tema" onClick={toggleTheme}>
-          {darkMode ? <Sun size={20} color="var(--accent-gold)" /> : <Moon size={20} color="var(--accent-gold)" />}
+          {darkMode ? <Sun size={19} color="var(--accent-gold)" /> : <Moon size={19} color="var(--accent-gold)" />}
         </button>
         <button className="icon-btn" title="Notificaciones" onClick={onToggleNotif}>
-          <Bell size={20} color="var(--accent-gold)" />
+          <Bell size={19} color="var(--accent-gold)" />
         </button>
-        <button className="icon-btn" title="Ajustes" onClick={() => navigate('/admin')}>
-          <Settings size={20} color="var(--accent-gold)" />
+        <button className="icon-btn" title="Ajustes y Configuración" onClick={() => navigate('/admin')}>
+          <Settings size={19} color="var(--accent-gold)" />
+        </button>
+        <button 
+          className="icon-btn" 
+          title="Cerrar Sesión / Cambiar Cuenta" 
+          onClick={handleLogout}
+          style={{ color: '#EF4444' }}
+        >
+          <LogOut size={19} color="#EF4444" />
         </button>
       </div>
     </header>

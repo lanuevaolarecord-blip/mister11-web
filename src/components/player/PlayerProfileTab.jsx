@@ -8,7 +8,7 @@ import { User, Heart, Shield, Lock, CheckCircle, AlertCircle, LogOut, FileSignat
 const BODY_ZONES = ['Ninguna', 'Gemelo Izquierdo', 'Gemelo Derecho', 'Cuádriceps', 'Isquiotibiales', 'Rodilla', 'Tobillo', 'Espalda / Lumbar', 'Aductor', 'Hombro'];
 
 export const PlayerProfileTab = ({ player, team, teamPath }) => {
-  const { user, logout } = useAuth();
+  const { user, logout, switchMode } = useAuth();
 
   // Estados de Wellness
   const todayStr = new Date().toISOString().split('T')[0];
@@ -377,8 +377,30 @@ export const PlayerProfileTab = ({ player, team, teamPath }) => {
         </button>
       </div>
 
-      {/* CERRAR SESIÓN */}
-      <div style={{ marginTop: '24px', paddingBottom: '30px' }}>
+      {/* ACCIONES Y CAMBIO DE MODO */}
+      <div style={{ marginTop: '24px', paddingBottom: '30px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+        <button
+          onClick={() => {
+            switchMode('coach');
+            window.location.href = '/';
+          }}
+          className="btn-outline"
+          style={{
+            width: '100%',
+            minHeight: '48px',
+            borderColor: '#3B82F6',
+            color: '#60A5FA',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '8px',
+            fontWeight: 700,
+            background: 'rgba(59, 130, 246, 0.08)'
+          }}
+        >
+          <User size={18} /> Cambiar a Modo Entrenador
+        </button>
+
         <button
           onClick={logout}
           className="btn-outline"

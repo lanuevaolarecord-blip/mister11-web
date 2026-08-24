@@ -18,7 +18,7 @@ import { useAuth } from '../context/AuthContext';
 import { t } from '../i18n/translations';
 
 const Sidebar = ({ isOpen, onClose }) => {
-  const { teams, activeTeamId, changeActiveTeam, logout } = useAuth();
+  const { teams, activeTeamId, changeActiveTeam, logout, switchMode } = useAuth();
   const { settings } = useSettings(activeTeamId);
   const navItems = [
     { path: '/', label: t('nav.dashboard', settings.language), icon: LayoutDashboard },
@@ -81,6 +81,18 @@ const Sidebar = ({ isOpen, onClose }) => {
             <span className="user-role">{settings.specialty || 'Entrenador'}</span>
           </div>
         </div>
+        <button 
+          onClick={() => {
+            switchMode('player');
+            if (onClose) onClose();
+            window.location.href = '/';
+          }} 
+          className="btn-logout-sidebar"
+          style={{ background: 'rgba(16, 185, 129, 0.15)', color: '#10B981', borderColor: 'rgba(16, 185, 129, 0.3)' }}
+        >
+          <Users size={14} /> Modo / Portal Jugador
+        </button>
+
         <button 
           onClick={handleLogout} 
           className="btn-logout-sidebar"

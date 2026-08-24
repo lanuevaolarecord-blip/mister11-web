@@ -182,6 +182,12 @@ const JoinTeam = () => {
       const userReqRef = doc(db, `users/${user.uid}/join_requests`, requestId);
       await setDoc(userReqRef, requestPayload);
 
+      // 3. Activar Modo Jugador permanentemente
+      localStorage.setItem('mister11_active_mode', 'player');
+      try {
+        await setDoc(doc(db, 'users', user.uid), { role: 'player' }, { merge: true });
+      } catch (_) {}
+
       setMyExistingRequest(requestPayload);
       setStep(4);
       showToast('¡Solicitud enviada al entrenador!', 'success');

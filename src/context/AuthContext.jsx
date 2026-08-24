@@ -473,21 +473,31 @@ export const AuthProvider = ({ children }) => {
     }
   }, [user]);
 
+  const [activeMode, setActiveModeState] = useState(() => localStorage.getItem('mister11_active_mode') || null);
+
+  const switchMode = useCallback((mode) => {
+    if (mode === 'player' || mode === 'coach') {
+      localStorage.setItem('mister11_active_mode', mode);
+      setActiveModeState(mode);
+    } else {
+      localStorage.removeItem('mister11_active_mode');
+      setActiveModeState(null);
+    }
+  }, []);
+
   const activeTeam = useMemo(() => {
     return teams.find(t => t.id === activeTeamId) || teams[0] || null;
   }, [teams, activeTeamId]);
 
   const isPlayer = useMemo(() => {
     if (!user) return false;
-    if (activeTeam?.staffRole === 'player') return true;
+    if (activeMode === 'player') return true;
+    if (activeMode === 'coach') return false;
+    if (userProfile?.role === 'player') return true;
+    if (activeTeam?.staffRole === 'player' || activeTeam?.role === 'player') return true;
     if (activeTeam?.memberRoles?.[user.uid] === 'player') return true;
-    if (userProfile?.role === 'player') {
-      if (!activeTeam || activeTeam?.staffRole === 'player' || activeTeam?.memberRoles?.[user.uid] === 'player') {
-        return true;
-      }
-    }
     return false;
-  }, [user, activeTeam, userProfile]);
+  }, [user, activeTeam, userProfile, activeMode]);
 
   const value = useMemo(() => ({
     user, 
@@ -497,6 +507,8 @@ export const AuthProvider = ({ children }) => {
     changeActiveTeam, 
     teams,
     isPlayer,
+    switchMode,
+    activeMode,
     loginAsGuest,
     logout,
     refreshTeam,
@@ -506,9 +518,7 @@ export const AuthProvider = ({ children }) => {
     club,
     getTeamPath,
     userProfile,
-    currentMode,
-    toggleMode
-  }), [user, loading, activeTeamId, activeTeam, changeActiveTeam, teams, isPlayer, loginAsGuest, logout, refreshTeam, userProfile, club, getTeamPath, currentMode, toggleMode]);
+  }), [user, loading, activeTeamId, activeTeam, changeActiveTeam, teams, isPlayer, switchMode, activeMode, loginAsGuest, logout, refreshTeam, userProfile, club, getTeamPath]);
 
   return (
     <AuthContext.Provider value={value}>

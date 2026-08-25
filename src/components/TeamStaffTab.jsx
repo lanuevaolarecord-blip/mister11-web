@@ -115,6 +115,8 @@ export const TeamStaffTab = ({ activeTeam }) => {
   const { getTeamPath } = useAuth();
   const [teamCode, setTeamCode] = useState(activeTeam?.teamCode || '');
   const [joinRequests, setJoinRequests] = useState([]);
+  const [rosterPlayers, setRosterPlayers] = useState([]);
+  const [parentPlayerSelection, setParentPlayerSelection] = useState({});
   const [copiedTeamCode, setCopiedTeamCode] = useState(false);
   const [processingId, setProcessingId] = useState(null);
 
@@ -129,7 +131,21 @@ export const TeamStaffTab = ({ activeTeam }) => {
       .catch(console.error);
   }, [activeTeam?.id, teamPath, user?.uid]);
 
-  // Escuchar solicitudes de jugadores pendientes en tiempo real
+  // Escuchar jugadores de la plantilla para vinculación rápida
+  useEffect(() => {
+    if (!teamPath) return;
+    const pRef = collection(db, `${teamPath}/players`);
+    const unsub = onSnapshot(pRef, (snap) => {
+      const all = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      all.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+      setRosterPlayers(all);
+    }, (err) => {
+      console.warn('[TeamStaffTab] Error cargando plantilla para vinculación:', err);
+    });
+    return () => unsub();
+  }, [teamPath]);
+
+  // Escuchar solicitudes de ingreso pendientes en tiempo real
   useEffect(() => {
     if (!teamPath) return;
     const reqsRef = collection(db, `${teamPath}/joinRequests`);
@@ -147,100 +163,172 @@ export const TeamStaffTab = ({ activeTeam }) => {
     if (!request || !teamPath) return;
     setProcessingId(request.id);
     try {
-      // 1. Comprobar si ya existe una ficha para este jugador o usuario en la plantilla
+      const isParent = request.requesterRole === 'parent';
       const playersColRef = collection(db, `${teamPath}/players`);
-      const pSnap = await getDocs(playersColRef);
-      const existingPlayerDoc = pSnap.docs.find(d => {
-        const pData = d.data();
-        return (request.requesterUid && (pData.requesterUid === request.requesterUid || pData.playerUid === request.requesterUid || pData.userId === request.requesterUid)) ||
-               (request.requesterEmail && pData.email && pData.email.toLowerCase() === request.requesterEmail.toLowerCase()) ||
-               (request.playerName && pData.name && pData.name.trim().toLowerCase() === request.playerName.trim().toLowerCase());
-      });
 
-      let assignedPlayerId;
-      if (existingPlayerDoc) {
-        assignedPlayerId = existingPlayerDoc.id;
-        await updateDoc(doc(db, `${teamPath}/players`, assignedPlayerId), {
-          name: request.playerName,
-          fechaNacimiento: request.birthDate || existingPlayerDoc.data().fechaNacimiento || '',
-          position: request.position || existingPlayerDoc.data().position || 'MC',
-          number: request.jerseyNumber || existingPlayerDoc.data().number || '',
-          requesterUid: request.requesterUid,
-          requesterEmail: request.requesterEmail || '',
-          currentStatus: 'active',
-          updatedAt: serverTimestamp(),
-        });
-      } else {
-        const newPlayerRef = await addDoc(playersColRef, {
-          name: request.playerName,
-          fechaNacimiento: request.birthDate,
-          position: request.position || 'MC',
-          number: request.jerseyNumber || '',
-          requesterUid: request.requesterUid,
-          requesterEmail: request.requesterEmail || '',
-          currentStatus: 'active',
-          category: activeTeam?.categoria || activeTeam?.category || 'General',
-          createdAt: serverTimestamp(),
-        });
-        assignedPlayerId = newPlayerRef.id;
-      }
+      if (isParent) {
+        // FLUJO PADRE / TUTOR: VINCULAR A JUGADOR
+        let targetPlayerId = parentPlayerSelection[request.id];
 
-      // 2. Registrar el rol en memberRoles del equipo
-      const teamDocRef = doc(db, teamPath);
-      await setDoc(teamDocRef, {
-        memberRoles: {
-          [request.requesterUid]: 'player'
+        // Si no seleccionó manualmente, intentar autovincular por coincidencia de nombre
+        if (!targetPlayerId) {
+          const autoMatched = rosterPlayers.find(p => 
+            p.name && request.childName && p.name.trim().toLowerCase() === request.childName.trim().toLowerCase()
+          );
+          if (autoMatched) {
+            targetPlayerId = autoMatched.id;
+          }
         }
-      }, { merge: true });
 
-      // 3. Crear puntero en shared_teams del usuario
-      const userSharedTeamRef = doc(db, `users/${request.requesterUid}/shared_teams`, activeTeam.id);
-      await setDoc(userSharedTeamRef, {
-        teamId: activeTeam.id,
-        teamPath,
-        teamName: activeTeam.nombre || activeTeam.name || 'Mi Equipo',
-        role: 'player',
-        playerId: assignedPlayerId,
-        joinedAt: serverTimestamp(),
-      });
+        let assignedPlayerId = targetPlayerId;
 
-      // 4. Registrar índices deterministas de identidad única (Server-Side)
-      const rawEmail = request.requesterEmail || request.email || '';
-      const emailNorm = normalizeEmail(rawEmail);
-      if (request.requesterUid) {
+        if (targetPlayerId && targetPlayerId !== '__NEW__') {
+          // Vincular UID del padre en el array linkedParents del jugador
+          const playerDocRef = doc(db, `${teamPath}/players`, targetPlayerId);
+          const currentP = rosterPlayers.find(p => p.id === targetPlayerId);
+          const currentParents = currentP?.linkedParents || [];
+          const updatedParents = Array.from(new Set([...currentParents, request.requesterUid]));
+
+          await updateDoc(playerDocRef, {
+            linkedParents: updatedParents,
+            updatedAt: serverTimestamp()
+          });
+        } else {
+          // Crear nueva ficha para el hijo si no existe
+          const newPlayerRef = await addDoc(playersColRef, {
+            name: request.childName || 'Jugador/a',
+            fechaNacimiento: request.childBirthDate || '',
+            position: 'MC',
+            number: '',
+            linkedParents: [request.requesterUid],
+            currentStatus: 'active',
+            category: activeTeam?.categoria || activeTeam?.category || 'General',
+            createdAt: serverTimestamp()
+          });
+          assignedPlayerId = newPlayerRef.id;
+        }
+
+        // 1. Asignar rol 'parent' en memberRoles del equipo
+        const teamDocRef = doc(db, teamPath);
+        await setDoc(teamDocRef, {
+          memberRoles: {
+            [request.requesterUid]: 'parent'
+          }
+        }, { merge: true });
+
+        // 2. Crear puntero en shared_teams del padre
+        const userSharedTeamRef = doc(db, `users/${request.requesterUid}/shared_teams`, activeTeam.id);
+        await setDoc(userSharedTeamRef, {
+          teamId: activeTeam.id,
+          teamPath,
+          teamName: activeTeam.nombre || activeTeam.name || 'Mi Equipo',
+          role: 'parent',
+          playerId: assignedPlayerId,
+          joinedAt: serverTimestamp(),
+        });
+
+        // 3. Actualizar solicitud a approved
+        const reqDocRef = doc(db, `${teamPath}/joinRequests`, request.id);
+        await updateDoc(reqDocRef, { status: 'approved', approvedAt: serverTimestamp(), playerId: assignedPlayerId, role: 'parent' });
         try {
-          await setDoc(doc(db, 'playerIdentity', request.requesterUid), {
-            email: rawEmail,
-            emailNorm,
-            teamId: activeTeam.id,
-            playerId: assignedPlayerId,
-            createdAt: serverTimestamp(),
-          }, { merge: true });
+          const userReqRef = doc(db, `users/${request.requesterUid}/join_requests`, request.id);
+          await updateDoc(userReqRef, { status: 'approved', approvedAt: serverTimestamp(), playerId: assignedPlayerId, role: 'parent' });
         } catch (_) {}
-      }
-      if (emailNorm) {
+
+        showToast(`¡Padre/Tutor ${request.requesterName} vinculado al jugador correctamente!`, 'success');
+      } else {
+        // FLUJO JUGADOR: CREAR / VINCULAR FICHA
+        const pSnap = await getDocs(playersColRef);
+        const existingPlayerDoc = pSnap.docs.find(d => {
+          const pData = d.data();
+          return (request.requesterUid && (pData.requesterUid === request.requesterUid || pData.playerUid === request.requesterUid || pData.userId === request.requesterUid)) ||
+                 (request.requesterEmail && pData.email && pData.email.toLowerCase() === request.requesterEmail.toLowerCase()) ||
+                 (request.playerName && pData.name && pData.name.trim().toLowerCase() === request.playerName.trim().toLowerCase());
+        });
+
+        let assignedPlayerId;
+        if (existingPlayerDoc) {
+          assignedPlayerId = existingPlayerDoc.id;
+          await updateDoc(doc(db, `${teamPath}/players`, assignedPlayerId), {
+            name: request.playerName,
+            fechaNacimiento: request.birthDate || existingPlayerDoc.data().fechaNacimiento || '',
+            position: request.position || existingPlayerDoc.data().position || 'MC',
+            number: request.jerseyNumber || existingPlayerDoc.data().number || '',
+            requesterUid: request.requesterUid,
+            requesterEmail: request.requesterEmail || '',
+            currentStatus: 'active',
+            updatedAt: serverTimestamp(),
+          });
+        } else {
+          const newPlayerRef = await addDoc(playersColRef, {
+            name: request.playerName,
+            fechaNacimiento: request.birthDate,
+            position: request.position || 'MC',
+            number: request.jerseyNumber || '',
+            requesterUid: request.requesterUid,
+            requesterEmail: request.requesterEmail || '',
+            currentStatus: 'active',
+            category: activeTeam?.categoria || activeTeam?.category || 'General',
+            createdAt: serverTimestamp(),
+          });
+          assignedPlayerId = newPlayerRef.id;
+        }
+
+        // 1. Registrar el rol 'player' en memberRoles del equipo
+        const teamDocRef = doc(db, teamPath);
+        await setDoc(teamDocRef, {
+          memberRoles: {
+            [request.requesterUid]: 'player'
+          }
+        }, { merge: true });
+
+        // 2. Crear puntero en shared_teams del usuario
+        const userSharedTeamRef = doc(db, `users/${request.requesterUid}/shared_teams`, activeTeam.id);
+        await setDoc(userSharedTeamRef, {
+          teamId: activeTeam.id,
+          teamPath,
+          teamName: activeTeam.nombre || activeTeam.name || 'Mi Equipo',
+          role: 'player',
+          playerId: assignedPlayerId,
+          joinedAt: serverTimestamp(),
+        });
+
+        // 3. Registrar índices deterministas de identidad única (Server-Side)
+        const rawEmail = request.requesterEmail || request.email || '';
+        const emailNorm = normalizeEmail(rawEmail);
+        if (request.requesterUid) {
+          try {
+            await setDoc(doc(db, 'playerIdentity', request.requesterUid), {
+              email: rawEmail,
+              emailNorm,
+              teamId: activeTeam.id,
+              playerId: assignedPlayerId,
+              createdAt: serverTimestamp(),
+            }, { merge: true });
+          } catch (_) {}
+        }
+        if (emailNorm) {
+          try {
+            await setDoc(doc(db, 'playerIdentityByEmail', emailNorm), {
+              uid: request.requesterUid || null,
+              playerId: assignedPlayerId,
+              teamId: activeTeam.id,
+              teamPath,
+              createdAt: serverTimestamp(),
+            }, { merge: true });
+          } catch (_) {}
+        }
+
+        // 4. Actualizar estado de la solicitud a 'approved'
+        const reqDocRef = doc(db, `${teamPath}/joinRequests`, request.id);
+        await updateDoc(reqDocRef, { status: 'approved', approvedAt: serverTimestamp(), playerId: assignedPlayerId });
         try {
-          await setDoc(doc(db, 'playerIdentityByEmail', emailNorm), {
-            uid: request.requesterUid || null,
-            playerId: assignedPlayerId,
-            teamId: activeTeam.id,
-            teamPath,
-            createdAt: serverTimestamp(),
-          }, { merge: true });
+          const userReqRef = doc(db, `users/${request.requesterUid}/join_requests`, request.id);
+          await updateDoc(userReqRef, { status: 'approved', approvedAt: serverTimestamp(), playerId: assignedPlayerId });
         } catch (_) {}
+
+        showToast(`¡Jugador ${request.playerName} aprobado e incorporado a la plantilla!`, 'success');
       }
-
-      // 5. Actualizar estado de la solicitud a 'approved'
-      const reqDocRef = doc(db, `${teamPath}/joinRequests`, request.id);
-      await updateDoc(reqDocRef, { status: 'approved', approvedAt: serverTimestamp(), playerId: assignedPlayerId });
-
-      // 6. Actualizar solicitud en el perfil del usuario
-      try {
-        const userReqRef = doc(db, `users/${request.requesterUid}/join_requests`, request.id);
-        await updateDoc(userReqRef, { status: 'approved', approvedAt: serverTimestamp(), playerId: assignedPlayerId });
-      } catch (_) {}
-
-      showToast(`¡Jugador ${request.playerName} aprobado e incorporado a la plantilla!`, 'success');
     } catch (err) {
       console.error('Error al aprobar solicitud:', err);
       showToast('Error al aprobar solicitud: ' + (err.message || 'Desconocido'), 'error');
@@ -251,7 +339,8 @@ export const TeamStaffTab = ({ activeTeam }) => {
 
   const handleRejectRequest = async (request) => {
     if (!request || !teamPath) return;
-    if (!window.confirm(`¿Rechazar la solicitud de ${request.playerName}?`)) return;
+    const nameToDisplay = request.playerName || request.childName || request.requesterName || 'la solicitud';
+    if (!window.confirm(`¿Rechazar la solicitud de ${nameToDisplay}?`)) return;
     setProcessingId(request.id);
     try {
       const reqDocRef = doc(db, `${teamPath}/joinRequests`, request.id);
@@ -308,8 +397,8 @@ export const TeamStaffTab = ({ activeTeam }) => {
     <div className="team-staff-tab" style={{ padding: '10px 0' }}>
       {/* TARJETA DE CÓDIGO DE EQUIPO Y PORTAL DE JUGADORES */}
       <div style={{
-        background: darkMode ? 'linear-gradient(135deg, rgba(16, 185, 129, 0.15) 0%, rgba(27, 58, 45, 0.6) 100%)' : 'linear-gradient(135deg, #ECFDF5 0%, #D1FAE5 100%)',
-        border: `1.5px solid ${darkMode ? 'rgba(16, 185, 129, 0.3)' : '#A7F3D0'}`,
+        background: darkMode ? 'linear-gradient(135deg, rgba(76, 175, 125, 0.15) 0%, rgba(27, 58, 45, 0.6) 100%)' : 'linear-gradient(135deg, #ECFDF5 0%, #D1FAE5 100%)',
+        border: `1.5px solid ${darkMode ? 'rgba(76, 175, 125, 0.3)' : '#A7F3D0'}`,
         borderRadius: '14px',
         padding: '18px 20px',
         marginBottom: '24px',
@@ -317,14 +406,14 @@ export const TeamStaffTab = ({ activeTeam }) => {
       }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '14px' }}>
           <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#10B981', fontWeight: 800, fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#4CAF7D', fontWeight: 800, fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
               <KeyRound size={18} /> Código Único para Jugadores y Familias
             </div>
             <h4 style={{ margin: '4px 0 2px 0', fontSize: '1.25rem', color: textColorPrimary, fontWeight: 900, fontFamily: 'monospace', letterSpacing: '2px' }}>
               {teamCode || 'Generando código...'}
             </h4>
             <p style={{ margin: 0, fontSize: '0.8rem', color: textColorSecondary }}>
-              Comparte este código para que los jugadores o sus padres se unan desde el Portal del Jugador (/join-team).
+              Comparte este código para que los jugadores o sus padres se unan desde el Portal (/join-team).
             </p>
           </div>
 
@@ -342,7 +431,7 @@ export const TeamStaffTab = ({ activeTeam }) => {
                 minHeight: '44px'
               }}
             >
-              {copiedTeamCode ? <Check size={16} color="#10B981" /> : <Copy size={16} />}
+              {copiedTeamCode ? <Check size={16} color="#4CAF7D" /> : <Copy size={16} />}
               {copiedTeamCode ? 'Copiado' : 'Copiar Código'}
             </button>
 
@@ -357,7 +446,7 @@ export const TeamStaffTab = ({ activeTeam }) => {
                 fontSize: '0.85rem',
                 fontWeight: 700,
                 minHeight: '44px',
-                background: '#10B981'
+                background: '#4CAF7D'
               }}
             >
               <Share2 size={16} /> Compartir Enlace
@@ -366,109 +455,140 @@ export const TeamStaffTab = ({ activeTeam }) => {
         </div>
       </div>
 
-      {/* SECCIÓN DE SOLICITUDES PENDIENTES DE JUGADORES */}
+      {/* SECCIÓN DE SOLICITUDES PENDIENTES */}
       {joinRequests.length > 0 && (
         <div style={{
-          background: darkMode ? 'rgba(234, 179, 8, 0.08)' : '#FEFCE8',
-          border: `1.5px solid ${darkMode ? 'rgba(234, 179, 8, 0.3)' : '#FDE047'}`,
+          background: darkMode ? 'rgba(201, 168, 76, 0.08)' : '#FEFCE8',
+          border: `1.5px solid ${darkMode ? 'rgba(201, 168, 76, 0.3)' : '#FDE047'}`,
           borderRadius: '14px',
           padding: '18px 20px',
           marginBottom: '24px'
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '14px' }}>
-            <Clock size={20} color="#EAB308" />
+            <Clock size={20} color="#C9A84C" />
             <h4 style={{ margin: 0, fontSize: '1.05rem', color: textColorPrimary, fontWeight: 800 }}>
-              Solicitudes de Ingreso de Jugadores ({joinRequests.length})
+              Solicitudes de Ingreso Pendientes ({joinRequests.length})
             </h4>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '12px' }}>
-            {joinRequests.map((req) => (
-              <div
-                key={req.id}
-                style={{
-                  background: cardBackgroundColor,
-                  border: `1px solid ${borderColorVal}`,
-                  borderRadius: '10px',
-                  padding: '14px',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  justifyContent: 'space-between',
-                  gap: '10px'
-                }}
-              >
-                <div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <span style={{ fontWeight: 800, fontSize: '1rem', color: textColorPrimary }}>
-                      {req.playerName}
-                    </span>
-                    <span style={{
-                      background: 'rgba(16, 185, 129, 0.15)',
-                      color: '#10B981',
-                      fontSize: '0.75rem',
-                      fontWeight: 700,
-                      padding: '2px 8px',
-                      borderRadius: '12px'
-                    }}>
-                      {req.position} {req.jerseyNumber ? `· #${req.jerseyNumber}` : ''}
-                    </span>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '14px' }}>
+            {joinRequests.map((req) => {
+              const isParent = req.requesterRole === 'parent';
+              return (
+                <div
+                  key={req.id}
+                  style={{
+                    background: cardBackgroundColor,
+                    border: `1px solid ${borderColorVal}`,
+                    borderRadius: '10px',
+                    padding: '14px',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    justifyContent: 'space-between',
+                    gap: '12px'
+                  }}
+                >
+                  <div>
+                    {/* Header de la tarjeta con Badge de Rol */}
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                      <span style={{ fontWeight: 800, fontSize: '1rem', color: textColorPrimary }}>
+                        {isParent ? (req.childName || 'Hijo/a') : (req.playerName || 'Jugador')}
+                      </span>
+                      <span style={{
+                        background: isParent ? 'rgba(201, 168, 76, 0.15)' : 'rgba(76, 175, 125, 0.15)',
+                        color: isParent ? '#C9A84C' : '#4CAF7D',
+                        fontSize: '0.75rem',
+                        fontWeight: 800,
+                        padding: '3px 8px',
+                        borderRadius: '12px'
+                      }}>
+                        {isParent ? '👨👦 Padre / Tutor' : `⚽ Jugador ${req.position || 'MC'}`}
+                      </span>
+                    </div>
+
+                    <div style={{ fontSize: '0.8rem', color: textColorSecondary, marginTop: '4px' }}>
+                      📅 Nacimiento: <strong>{isParent ? req.childBirthDate : req.birthDate}</strong>
+                    </div>
+                    <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '2px' }}>
+                      👤 Solicitante: <strong>{req.requesterName}</strong> ({req.requesterEmail || 'Email'})
+                    </div>
+
+                    {/* Selector de Vinculación para Padres */}
+                    {isParent && (
+                      <div style={{ marginTop: '10px', background: darkMode ? 'rgba(0,0,0,0.25)' : '#F8FAFC', padding: '8px 10px', borderRadius: '8px', border: `1px dashed ${borderColorVal}` }}>
+                        <label style={{ display: 'block', fontSize: '11px', fontWeight: '800', color: textColorSecondary, marginBottom: '4px' }}>
+                          Vincular a ficha de la plantilla:
+                        </label>
+                        <select
+                          value={parentPlayerSelection[req.id] || (rosterPlayers.find(p => p.name?.trim().toLowerCase() === req.childName?.trim().toLowerCase())?.id || '')}
+                          onChange={(e) => setParentPlayerSelection({ ...parentPlayerSelection, [req.id]: e.target.value })}
+                          style={{
+                            width: '100%',
+                            padding: '6px 8px',
+                            fontSize: '12px',
+                            background: inputBgColor,
+                            color: textColorPrimary,
+                            border: `1px solid ${borderColorVal}`,
+                            borderRadius: '6px'
+                          }}
+                        >
+                          <option value="">-- Autodetectar por nombre --</option>
+                          {rosterPlayers.map(p => (
+                            <option key={p.id} value={p.id}>
+                              {p.name} {p.number ? `(#${p.number})` : ''} - {p.position || 'Jugador'}
+                            </option>
+                          ))}
+                          <option value="__NEW__">+ Crear nueva ficha para {req.childName}</option>
+                        </select>
+                      </div>
+                    )}
                   </div>
-                  <div style={{ fontSize: '0.8rem', color: textColorSecondary, marginTop: '4px' }}>
-                    📅 Nacimiento: <strong>{req.birthDate}</strong>
-                  </div>
-                  <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '2px' }}>
-                    👤 Solicitante: {req.requesterName} ({req.requesterEmail || 'Email'})
+
+                  <div style={{ display: 'flex', gap: '8px', borderTop: `1px solid ${darkMode ? 'rgba(255,255,255,0.08)' : '#F1F5F9'}`, paddingTop: '10px' }}>
+                    <button
+                      onClick={() => handleApproveRequest(req)}
+                      disabled={processingId === req.id}
+                      style={{
+                        flex: 1,
+                        minHeight: '44px',
+                        background: '#4CAF7D',
+                        color: '#ffffff',
+                        border: 'none',
+                        borderRadius: '8px',
+                        fontSize: '0.85rem',
+                        fontWeight: 700,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '6px',
+                        cursor: 'pointer'
+                      }}
+                    >
+                      <CheckCircle2 size={16} />
+                      {processingId === req.id ? 'Aprobando...' : 'Aprobar'}
+                    </button>
+
+                    <button
+                      onClick={() => handleRejectRequest(req)}
+                      disabled={processingId === req.id}
+                      style={{
+                        padding: '0 14px',
+                        minHeight: '44px',
+                        background: 'transparent',
+                        color: '#EF4444',
+                        border: `1px solid ${darkMode ? 'rgba(239, 68, 68, 0.4)' : '#FCA5A5'}`,
+                        borderRadius: '8px',
+                        fontSize: '0.85rem',
+                        fontWeight: 700,
+                        cursor: 'pointer'
+                      }}
+                    >
+                      Rechazar
+                    </button>
                   </div>
                 </div>
-
-                <div style={{ display: 'flex', gap: '8px', borderTop: `1px solid ${darkMode ? 'rgba(255,255,255,0.08)' : '#F1F5F9'}`, paddingTop: '10px' }}>
-                  <button
-                    onClick={() => handleApproveRequest(req)}
-                    disabled={processingId === req.id}
-                    style={{
-                      flex: 1,
-                      minHeight: '44px',
-                      background: '#10B981',
-                      color: '#ffffff',
-                      border: 'none',
-                      borderRadius: '8px',
-                      fontSize: '0.85rem',
-                      fontWeight: 700,
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      gap: '6px',
-                      cursor: 'pointer'
-                    }}
-                  >
-                    <CheckCircle2 size={16} />
-                    {processingId === req.id ? 'Aprobando...' : 'Aprobar'}
-                  </button>
-
-                  <button
-                    onClick={() => handleRejectRequest(req)}
-                    disabled={processingId === req.id}
-                    style={{
-                      minHeight: '44px',
-                      background: 'rgba(239, 68, 68, 0.15)',
-                      color: '#EF4444',
-                      border: 'none',
-                      borderRadius: '8px',
-                      padding: '0 14px',
-                      fontSize: '0.85rem',
-                      fontWeight: 700,
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      gap: '4px',
-                      cursor: 'pointer'
-                    }}
-                  >
-                    <XCircle size={16} /> Rechazar
-                  </button>
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       )}

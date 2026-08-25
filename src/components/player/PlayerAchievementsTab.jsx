@@ -86,7 +86,8 @@ export const PlayerAchievementsTab = ({ achievements, loading, isParentView = fa
           <div className="stat-divider" />
           <div className="stat-box">
             <span className="stat-num xp-gold">✨ {totalXP} XP</span>
-            <span className="stat-lbl">Experiencia</span>
+            <span className="stat-lbl" style={{ fontWeight: 800 }}>XP de Logros</span>
+            <span style={{ fontSize: '9px', color: '#94A3B8', marginTop: '2px', display: 'block' }}>Ganada desbloqueando retos</span>
           </div>
         </div>
       </div>

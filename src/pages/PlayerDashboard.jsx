@@ -46,7 +46,9 @@ const PlayerDashboard = () => {
     }
   };
 
-  // 1. Escuchar la plantilla y resolver la ficha real del jugador
+  const [selectedChildId, setSelectedChildId] = useState(null);
+
+  // 1. Escuchar la plantilla y resolver la ficha real del jugador o hijos del padre
   useEffect(() => {
     if (!user) {
       setLoading(false);
@@ -101,27 +103,40 @@ const PlayerDashboard = () => {
         const allPlayers = snap.docs.map(d => ({ id: d.id, ...d.data() }));
         setRosterPlayers(allPlayers);
 
-        // Buscar la ficha exacta por prioridad:
-        // 1. targetPlayerId (de playerIdentityByEmail o shared_teams)
-        // 2. Email coincidente
-        // 3. UID coincidente
-        // 4. Nombre coincidente
-        const found = allPlayers.find(p => 
-          (targetPlayerId && p.id === targetPlayerId) ||
-          (p.email && user.email && p.email.trim().toLowerCase() === user.email.trim().toLowerCase()) ||
-          (p.requesterEmail && user.email && p.requesterEmail.trim().toLowerCase() === user.email.trim().toLowerCase()) ||
-          p.requesterUid === user.uid || 
-          p.playerUid === user.uid || 
-          p.userId === user.uid ||
-          p.uid === user.uid ||
-          p.linkedParents?.includes(user.uid) ||
-          (user.displayName && p.name && normalizeStr(p.name) === normalizeStr(user.displayName))
+        // Detectar si el usuario es padre con hijos vinculados
+        const isParentRole = (
+          activeTeam?.memberRoles?.[user.uid] === 'parent' ||
+          allPlayers.some(p => p.linkedParents?.includes(user.uid))
         );
+
+        let found = null;
+
+        if (isParentRole) {
+          const children = allPlayers.filter(p => p.linkedParents?.includes(user.uid) || (targetPlayerId && p.id === targetPlayerId));
+          if (children.length > 0) {
+            found = children.find(c => c.id === selectedChildId) || children[0];
+          }
+        }
+
+        if (!found) {
+          // Buscar la ficha de jugador por prioridad
+          found = allPlayers.find(p => 
+            (targetPlayerId && p.id === targetPlayerId) ||
+            (p.email && user.email && p.email.trim().toLowerCase() === user.email.trim().toLowerCase()) ||
+            (p.requesterEmail && user.email && p.requesterEmail.trim().toLowerCase() === user.email.trim().toLowerCase()) ||
+            p.requesterUid === user.uid || 
+            p.playerUid === user.uid || 
+            p.userId === user.uid ||
+            p.uid === user.uid ||
+            p.linkedParents?.includes(user.uid) ||
+            (user.displayName && p.name && normalizeStr(p.name) === normalizeStr(user.displayName))
+          );
+        }
 
         if (found) {
           setPlayer(found);
         } else {
-          // Si no hay ficha exacta asignada aún, construir con los datos reales del usuario logueado (NUNCA Marc García)
+          // Si no hay ficha asignada aún, construir perfil seguro del usuario logueado
           setPlayer({
             id: user.uid,
             name: user.displayName || user.email?.split('@')[0] || 'Jugador Míster11',
@@ -145,12 +160,16 @@ const PlayerDashboard = () => {
       isMounted = false;
       if (unsubRoster) unsubRoster();
     };
-  }, [user, cleanPath, activeTeam?.id]);
+  }, [user, cleanPath, activeTeam?.id, selectedChildId]);
+
+  // Lista de hijos vinculados para padres
+  const myChildren = rosterPlayers.filter(p => p.linkedParents?.includes(user?.uid) || p.requesterUid === user?.uid);
 
   // 2. Determinar si es vista de padre
   const isParentView = (
     activeTeam?.memberRoles?.[user?.uid] === 'parent' || 
     player?.linkedParents?.includes(user?.uid) ||
+    myChildren.length > 0 ||
     false
   );
 
@@ -272,11 +291,13 @@ const PlayerDashboard = () => {
       {isParentView && (
         <div style={{
           background: 'linear-gradient(90deg, #1B3A2D 0%, #2E7D5C 100%)',
-          borderBottom: '1.5px solid #D4A843',
+          borderBottom: '1.5px solid #C9A84C',
           padding: '8px 16px',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
+          flexWrap: 'wrap',
+          gap: '8px',
           color: '#FFFFFF',
           fontSize: '0.82rem',
           fontWeight: 700,
@@ -286,14 +307,40 @@ const PlayerDashboard = () => {
           boxShadow: '0 2px 8px rgba(0,0,0,0.2)'
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <UserCheck size={18} color="#D4A843" />
+            <UserCheck size={18} color="#C9A84C" />
             <span>
-              👨 <strong>Vista de Padre / Tutor</strong> · Hijo: <span style={{ color: '#D4A843' }}>{player?.name || 'Jugador'}</span>
+              👨 <strong>Vista de Padre</strong> — <span style={{ color: '#C9A84C' }}>{player?.name || 'Hijo/a'}</span>
             </span>
           </div>
-          <span style={{ fontSize: '0.72rem', background: 'rgba(212, 168, 67, 0.2)', color: '#D4A843', padding: '2px 8px', borderRadius: '10px' }}>
-            {player?.position || 'MC'} #{player?.number || '11'}
-          </span>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+            {myChildren.length > 1 && (
+              <select
+                value={player?.id || ''}
+                onChange={(e) => setSelectedChildId(e.target.value)}
+                style={{
+                  background: 'rgba(0,0,0,0.4)',
+                  color: '#C9A84C',
+                  border: '1px solid #C9A84C',
+                  borderRadius: '6px',
+                  padding: '3px 8px',
+                  fontSize: '0.75rem',
+                  fontWeight: 'bold',
+                  outline: 'none',
+                  cursor: 'pointer'
+                }}
+              >
+                {myChildren.map(c => (
+                  <option key={c.id} value={c.id} style={{ background: '#1B3A2D', color: '#FFFFFF' }}>
+                    ⚽ {c.name} (#{c.number || '-'})
+                  </option>
+                ))}
+              </select>
+            )}
+            <span style={{ fontSize: '0.72rem', background: 'rgba(201, 168, 76, 0.2)', color: '#C9A84C', padding: '2px 8px', borderRadius: '10px' }}>
+              {player?.position || 'MC'} #{player?.number || '11'}
+            </span>
+          </div>
         </div>
       )}
 

@@ -415,11 +415,15 @@ export const PlayerProfileTab = ({ player, team, teamPath }) => {
             </div>
           </div>
 
-          {/* Dorsal Radial Chart */}
+          {/* Dorsal Radial Chart con Leyenda Visible */}
           <div style={{ marginTop: '16px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-            <div style={{ position: 'relative', width: '110px', height: '110px', borderRadius: '50%', background: 'conic-gradient(var(--accent-green) 70%, var(--accent-gold) 70% 90%, var(--border-color) 90% 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <div style={{ width: '84px', height: '84px', borderRadius: '50%', background: 'var(--bg-card)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <span style={{ fontSize: '26px', fontWeight: '900', fontFamily: 'var(--font-heading)', color: 'var(--text-primary)' }}>{playerNumber}</span>
+            <div 
+              style={{ position: 'relative', width: '110px', height: '110px', borderRadius: '50%', background: 'conic-gradient(var(--accent-green) 70%, var(--accent-gold) 70% 90%, var(--border-color) 90% 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'default' }}
+              title={`Dorsal Oficial del Jugador: #${playerNumber}`}
+            >
+              <div style={{ width: '84px', height: '84px', borderRadius: '50%', background: 'var(--bg-card)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+                <span style={{ fontSize: '24px', fontWeight: '900', fontFamily: 'var(--font-heading)', color: 'var(--text-primary)', lineHeight: 1 }}>{playerNumber}</span>
+                <span style={{ fontSize: '9px', fontWeight: '800', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.5px', marginTop: '2px' }}>DORSAL</span>
               </div>
             </div>
           </div>
@@ -613,7 +617,7 @@ export const PlayerProfileTab = ({ player, team, teamPath }) => {
         </div>
       </div>
 
-      {/* 5. ACCIONES Y CAMBIO DE MODO (DEV/COACH ONLY) */}
+      {/* 5. ACCIONES Y CAMBIO DE MODO */}
       <div style={{ marginTop: '20px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
         {(isDeveloperEmail(user?.email) || userProfile?.role === 'coach' || userProfile?.role === 'admin' || user?.email === 'lanuevaolarecord@gmail.com' || user?.email === 'jhocatv@gmail.com') && (
           <button
@@ -636,7 +640,7 @@ export const PlayerProfileTab = ({ player, team, teamPath }) => {
               background: 'rgba(59, 130, 246, 0.08)'
             }}
           >
-            <User size={18} /> Cambiar a Modo Entrenador (Dev / Coach)
+            <User size={18} /> Cambiar a Modo Entrenador
           </button>
         )}
 

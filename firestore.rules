@@ -93,11 +93,21 @@ service cloud.firestore {
       }
     }
 
-    // ── Equipos de Usuario y Límite de Jugadores ──────────────────────────────
+    // ── Equipos de Usuario y Gestión de Jugadores / Familias ──────────────────
     match /users/{userId}/teams/{teamId} {
       allow read, write: if isAuth();
 
       match /players/{playerId} {
+        allow read: if isAuth();
+        allow write: if isAuth();
+
+        match /{subcollection=**} {
+          allow read, write: if isAuth();
+        }
+      }
+
+      match /joinRequests/{reqId} {
+        allow create: if isAuth();
         allow read, write: if isAuth();
       }
 
@@ -114,6 +124,15 @@ service cloud.firestore {
         allow read, write: if isAuth();
 
         match /players/{playerId} {
+          allow read, write: if isAuth();
+
+          match /{subcollection=**} {
+            allow read, write: if isAuth();
+          }
+        }
+
+        match /joinRequests/{reqId} {
+          allow create: if isAuth();
           allow read, write: if isAuth();
         }
 

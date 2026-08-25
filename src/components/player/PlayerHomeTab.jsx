@@ -6,6 +6,9 @@ import { useTheme } from '../../context/ThemeContext';
 import { useAchievements } from '../../hooks/useAchievements';
 import { Calendar, Clock, MapPin, Trophy, Flame, Bell, CheckCircle2, ChevronRight, Activity } from 'lucide-react';
 
+import { calculatePlayerMatchStats } from '../../utils/playerMatchStats';
+import { pluralize } from '../../utils/pluralize';
+
 export const PlayerHomeTab = ({ player, team, teamPath, onNavigateTab, isParentView = false, closestAchievement = null }) => {
   const { user } = useAuth();
   const { darkMode } = useTheme();
@@ -45,42 +48,27 @@ export const PlayerHomeTab = ({ player, team, teamPath, onNavigateTab, isParentV
       // Escuchar partidos
       const matchesRef = collection(db, `${teamPath}/matches`);
       const unsubMatches = onSnapshot(matchesRef, (snapM) => {
-        const matches = snapM.docs.map(d => ({
+        const rawMatches = snapM.docs.map(d => ({ id: d.id, ...d.data() }));
+
+        const matches = rawMatches.map(d => ({
           id: d.id,
           type: 'match',
-          title: `🏆 Partido vs ${d.data().rival || d.data().opponent || 'Rival'}`,
-          date: d.data().fecha || d.data().date,
-          time: d.data().hora || d.data().time || '11:00',
+          title: `🏆 Partido vs ${d.rival || d.opponent || 'Rival'}`,
+          date: d.fecha || d.date,
+          time: d.hora || d.time || '11:00',
           duration: 90,
-          location: d.data().lugar || (d.data().isHome ? 'Campo Local' : 'Campo Visitante'),
-          ...d.data()
+          location: d.lugar || (d.isHome ? 'Campo Local' : 'Campo Visitante'),
+          ...d
         }));
 
-        // Calcular estadísticas de rendimiento del jugador en partidos
+        // Calcular estadísticas canónicas sincronizadas con PlayerStatsTab
         if (player?.id) {
-          let goals = 0;
-          let mins = 0;
-          let pCount = 0;
-          matches.forEach(m => {
-            const goleadores = m.goleadoresList || [];
-            const events = m.events || [];
-            const pStats = m.playerStats?.[player.id];
-            
-            const gCount = goleadores.filter(g => String(g.jugadorId) === String(player.id)).length ||
-                           events.filter(e => (e.type === 'gol_local' || e.type === 'gol') && (String(e.playerId) === String(player.id) || String(e.jugadorId) === String(player.id))).length ||
-                           (pStats?.goals || 0);
-            
-            const isTitular = m.titulares?.includes(player.id) || m.alineacion?.titulares?.includes(player.id);
-            const mPlayed = pStats?.minutesPlayed || (isTitular ? 90 : 0);
-            
-            if (isTitular || mPlayed > 0 || gCount > 0) {
-              pCount++;
-              goals += gCount;
-              mins += mPlayed;
-            }
+          const stats = calculatePlayerMatchStats(player.id, rawMatches);
+          setSeasonPerformance({
+            goals: stats.goals || 0,
+            minutes: stats.minutesPlayed || 0,
+            matches: stats.matchesPlayed || 0
           });
-
-          setSeasonPerformance({ goals, minutes: mins, matches: pCount });
         }
 
         const now = new Date();
@@ -248,7 +236,7 @@ export const PlayerHomeTab = ({ player, team, teamPath, onNavigateTab, isParentV
           <div className="stat-content">
             <span className="stat-label">RACHA DE ASISTENCIA</span>
             <span className="stat-number mono">{attendanceStats.streak}</span>
-            <span className="stat-sub">sesiones consecutivas</span>
+            <span className="stat-sub">{pluralize(attendanceStats.streak, 'sesión consecutiva', 'sesiones consecutivas', false)}</span>
           </div>
         </div>
 
@@ -259,7 +247,7 @@ export const PlayerHomeTab = ({ player, team, teamPath, onNavigateTab, isParentV
           <div className="stat-content">
             <span className="stat-label">GOLES EN PARTIDOS</span>
             <span className="stat-number mono">{seasonPerformance.goals} ⚽</span>
-            <span className="stat-sub">{seasonPerformance.matches} partidos disputados ({seasonPerformance.minutes}')</span>
+            <span className="stat-sub">{seasonPerformance.goals} {pluralize(seasonPerformance.goals, 'gol', 'goles', false)} en {pluralize(seasonPerformance.matches, 'partido', 'partidos')} ({seasonPerformance.minutes}')</span>
           </div>
         </div>
       </div>

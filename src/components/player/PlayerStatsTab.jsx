@@ -410,65 +410,82 @@ export const PlayerStatsTab = ({ player, team, teamPath, isParentView = false, o
             <span className="hud-badge" style={{ color: '#4CAF7D', borderColor: 'rgba(76, 175, 125, 0.3)' }}>
               <Users size={14} /> TÚ VS PROMEDIO DEL EQUIPO
             </span>
-            <span style={{ fontSize: '0.75rem', color: darkMode ? '#CBD5E1' : '#475569', fontWeight: 600 }}>
+            <span style={{ fontSize: '0.75rem', color: darkMode ? '#94A3B8' : '#475569', fontWeight: 600 }}>
               🔒 Datos agregados y anónimos (RGPD)
             </span>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '12px' }}>
-            {/* Asistencia */}
-            <div style={{ background: darkMode ? 'rgba(0,0,0,0.5)' : '#F8FAFC', padding: '12px', borderRadius: '12px', border: '1px solid var(--border-light)' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', fontWeight: 800, color: darkMode ? '#F8FAFC' : '#0F172A', marginBottom: '4px' }}>
-                <span>Asistencia</span>
-                <span style={{ color: '#4CAF7D' }}>{teamComparison.myAttendancePct}% vs {teamComparison.avgAttendancePct}%</span>
-              </div>
-              <div style={{ background: 'rgba(128,128,128,0.2)', height: '6px', borderRadius: '4px', overflow: 'hidden' }}>
-                <div style={{ width: `${Math.max(teamComparison.myAttendancePct > 0 ? teamComparison.myAttendancePct : (teamComparison.hasAttendanceData ? 0 : 50), 4)}%`, height: '100%', background: '#4CAF7D', borderRadius: '4px' }} />
-              </div>
-              <span style={{ 
-                fontSize: '0.72rem', 
-                color: !teamComparison.hasAttendanceData ? (darkMode ? '#94A3B8' : '#64748B') : (teamComparison.myAttendancePct > teamComparison.avgAttendancePct ? '#4CAF7D' : (teamComparison.myAttendancePct === teamComparison.avgAttendancePct ? (darkMode ? '#CBD5E1' : '#475569') : '#C9A84C')), 
-                marginTop: '4px', 
-                display: 'block', 
-                fontWeight: 800 
-              }}>
-                {!teamComparison.hasAttendanceData 
-                  ? '● Sin sesiones registradas aún' 
-                  : (teamComparison.myAttendancePct > teamComparison.avgAttendancePct 
-                      ? '▲ Por encima de la media' 
-                      : (teamComparison.myAttendancePct === teamComparison.avgAttendancePct 
-                          ? '● En la media de la plantilla' 
-                          : '▼ Por debajo de la media'))}
-              </span>
+          {(teamComparison.sampleSize < 3 || (!teamComparison.hasAttendanceData && !teamComparison.hasMatchData) || (teamComparison.avgAttendancePct === 0 && teamComparison.avgMinutes === 0 && teamComparison.myAttendancePct === 0 && teamComparison.myMinutes === 0)) ? (
+            <div style={{
+              background: darkMode ? 'rgba(0,0,0,0.4)' : '#F8FAFC',
+              border: `1px dashed ${darkMode ? 'rgba(255,255,255,0.15)' : '#CBD5E1'}`,
+              borderRadius: '12px',
+              padding: '16px',
+              textAlign: 'center'
+            }}>
+              <p style={{ margin: 0, fontSize: '0.85rem', fontWeight: 800, color: darkMode ? '#FFFFFF' : '#0F172A' }}>
+                ● Aún sin datos suficientes del equipo
+              </p>
+              <p style={{ margin: '4px 0 0 0', fontSize: '0.75rem', color: darkMode ? '#94A3B8' : '#64748B' }}>
+                Las métricas comparativas se activarán automáticamente cuando el míster registre asistencias o partidos en la plantilla.
+              </p>
             </div>
+          ) : (
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '12px' }}>
+              {/* Asistencia */}
+              <div style={{ background: darkMode ? 'rgba(0,0,0,0.5)' : '#F8FAFC', padding: '12px', borderRadius: '12px', border: '1px solid var(--border-light)' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', fontWeight: 800, color: darkMode ? '#FFFFFF' : '#0F172A', marginBottom: '4px' }}>
+                  <span>Asistencia</span>
+                  <span style={{ color: '#4CAF7D' }}>{teamComparison.myAttendancePct}% <span style={{ color: darkMode ? '#94A3B8' : '#64748B', fontWeight: 'normal' }}>vs</span> <span style={{ color: '#C9A84C' }}>{teamComparison.avgAttendancePct}%</span></span>
+                </div>
+                <div style={{ background: 'rgba(128,128,128,0.2)', height: '6px', borderRadius: '4px', overflow: 'hidden' }}>
+                  <div style={{ width: `${Math.max(teamComparison.myAttendancePct > 0 ? teamComparison.myAttendancePct : (teamComparison.hasAttendanceData ? 0 : 0), 0)}%`, height: '100%', background: '#4CAF7D', borderRadius: '4px' }} />
+                </div>
+                <span style={{ 
+                  fontSize: '0.72rem', 
+                  color: !teamComparison.hasAttendanceData ? (darkMode ? '#94A3B8' : '#64748B') : (teamComparison.myAttendancePct > teamComparison.avgAttendancePct ? '#4CAF7D' : (teamComparison.myAttendancePct === teamComparison.avgAttendancePct ? (darkMode ? '#94A3B8' : '#475569') : '#C9A84C')), 
+                  marginTop: '4px', 
+                  display: 'block', 
+                  fontWeight: 800 
+                }}>
+                  {!teamComparison.hasAttendanceData 
+                    ? '● Sin sesiones registradas aún' 
+                    : (teamComparison.myAttendancePct > teamComparison.avgAttendancePct 
+                        ? '▲ Por encima de la media' 
+                        : (teamComparison.myAttendancePct === teamComparison.avgAttendancePct 
+                            ? '● En la media de la plantilla' 
+                            : '▼ Por debajo de la media'))}
+                </span>
+              </div>
 
-            {/* Minutos */}
-            <div style={{ background: darkMode ? 'rgba(0,0,0,0.5)' : '#F8FAFC', padding: '12px', borderRadius: '12px', border: '1px solid var(--border-light)' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', fontWeight: 800, color: darkMode ? '#F8FAFC' : '#0F172A', marginBottom: '4px' }}>
-                <span>Minutos</span>
-                <span style={{ color: '#C9A84C' }}>{teamComparison.myMinutes}' vs {teamComparison.avgMinutes}'</span>
+              {/* Minutos */}
+              <div style={{ background: darkMode ? 'rgba(0,0,0,0.5)' : '#F8FAFC', padding: '12px', borderRadius: '12px', border: '1px solid var(--border-light)' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', fontWeight: 800, color: darkMode ? '#FFFFFF' : '#0F172A', marginBottom: '4px' }}>
+                  <span>Minutos</span>
+                  <span style={{ color: '#4CAF7D' }}>{teamComparison.myMinutes}' <span style={{ color: darkMode ? '#94A3B8' : '#64748B', fontWeight: 'normal' }}>vs</span> <span style={{ color: '#C9A84C' }}>{teamComparison.avgMinutes}'</span></span>
+                </div>
+                <div style={{ background: 'rgba(128,128,128,0.2)', height: '6px', borderRadius: '4px', overflow: 'hidden' }}>
+                  <div style={{ 
+                    width: `${teamComparison.avgMinutes > 0 ? Math.min(100, Math.max(5, (teamComparison.myMinutes / (teamComparison.avgMinutes * 1.5)) * 100)) : (teamComparison.myMinutes > 0 ? 100 : 0)}%`, 
+                    height: '100%', 
+                    background: '#C9A84C', 
+                    borderRadius: '4px' 
+                  }} />
+                </div>
+                <span style={{ 
+                  fontSize: '0.72rem', 
+                  color: !teamComparison.hasMatchData ? (darkMode ? '#94A3B8' : '#64748B') : (teamComparison.myMinutes > teamComparison.avgMinutes ? '#4CAF7D' : (teamComparison.myMinutes === teamComparison.avgMinutes ? (darkMode ? '#94A3B8' : '#475569') : '#C9A84C')), 
+                  marginTop: '4px', 
+                  display: 'block', 
+                  fontWeight: 800 
+                }}>
+                  {!teamComparison.hasMatchData
+                    ? '● Sin partidos disputados aún'
+                    : `Media de la plantilla: ${teamComparison.avgMinutes}'`}
+                </span>
               </div>
-              <div style={{ background: 'rgba(128,128,128,0.2)', height: '6px', borderRadius: '4px', overflow: 'hidden' }}>
-                <div style={{ 
-                  width: `${teamComparison.avgMinutes > 0 ? Math.min(100, Math.max(10, (teamComparison.myMinutes / (teamComparison.avgMinutes * 1.5)) * 100)) : (teamComparison.myMinutes > 0 ? 100 : 0)}%`, 
-                  height: '100%', 
-                  background: '#C9A84C', 
-                  borderRadius: '4px' 
-                }} />
-              </div>
-              <span style={{ 
-                fontSize: '0.72rem', 
-                color: !teamComparison.hasMatchData ? (darkMode ? '#94A3B8' : '#64748B') : (teamComparison.myMinutes > teamComparison.avgMinutes ? '#4CAF7D' : (teamComparison.myMinutes === teamComparison.avgMinutes ? (darkMode ? '#CBD5E1' : '#475569') : '#C9A84C')), 
-                marginTop: '4px', 
-                display: 'block', 
-                fontWeight: 800 
-              }}>
-                {!teamComparison.hasMatchData
-                  ? '● Sin partidos disputados aún'
-                  : `Media de la plantilla: ${teamComparison.avgMinutes}'`}
-              </span>
             </div>
-          </div>
+          )}
         </div>
       )}
 

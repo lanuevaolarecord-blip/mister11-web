@@ -61,12 +61,6 @@
     min-width: unset !important;
     padding: 8px 4px !important;
   }
-  .player-tab-card:nth-child(4) {
-    grid-column: span 1;
-  }
-  .player-tab-card:nth-child(5) {
-    grid-column: span 2;
-  }
 }
 
 /* Hover e interacción táctil */

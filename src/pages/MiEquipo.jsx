@@ -1098,6 +1098,17 @@ const MiEquipo = () => {
             {activeTab === 'ASISTENCIA' && (
               <PlayerAttendanceSubTab playerId={selectedPlayer.id} teamId={activeTeam?.id} />
             )}
+
+            {activeTab === 'CHAT' && (
+              <div style={{ marginTop: '-8px' }}>
+                <PlayerChatTab 
+                  teamPath={teamPath}
+                  player={selectedPlayer}
+                  team={activeTeam}
+                  isCoachView={true}
+                />
+              </div>
+            )}
           </div>
         </div>
       )}

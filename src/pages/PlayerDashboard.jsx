@@ -23,7 +23,7 @@ const normalizeStr = (str) => (str || '').toLowerCase().normalize("NFD").replace
 
 const PlayerDashboard = () => {
   const navigate = useNavigate();
-  const { user, activeTeam, getTeamPath, changeActiveTeam, teams, logout } = useAuth();
+  const { user, userProfile, activeTeam, getTeamPath, changeActiveTeam, teams, logout } = useAuth();
   const { darkMode, toggleTheme } = useTheme();
 
   const [activeTab, setActiveTab] = useState('home'); // 'home' | 'schedule' | 'achievements' | 'chat' | 'tests' | 'stats' | 'profile'
@@ -31,9 +31,17 @@ const PlayerDashboard = () => {
   const [rosterPlayers, setRosterPlayers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [hasUnreadMessages, setHasUnreadMessages] = useState(false);
+  const [selectedChildId, setSelectedChildId] = useState(null);
 
   const teamPath = activeTeam?.teamPath || (activeTeam?.id ? getTeamPath(activeTeam.id) : null);
   const cleanPath = teamPath ? teamPath.replace(/^\/+|\/+$/g, '') : '';
+
+  // Determinar estrictamente si la cuenta actual tiene rol de padre/tutor
+  const isParentRole = Boolean(
+    userProfile?.role === 'parent' ||
+    activeTeam?.memberRoles?.[user?.uid] === 'parent' ||
+    activeTeam?.staffRole === 'parent'
+  );
 
   const handleLogout = async () => {
     if (window.confirm('¿Deseas cerrar sesión o cambiar de cuenta?')) {
@@ -45,8 +53,6 @@ const PlayerDashboard = () => {
       }
     }
   };
-
-  const [selectedChildId, setSelectedChildId] = useState(null);
 
   // 1. Escuchar la plantilla y resolver la ficha real del jugador o hijos del padre
   useEffect(() => {
@@ -103,23 +109,16 @@ const PlayerDashboard = () => {
         const allPlayers = snap.docs.map(d => ({ id: d.id, ...d.data() }));
         setRosterPlayers(allPlayers);
 
-        // Detectar si el usuario es padre con hijos vinculados
-        const isParentRole = (
-          activeTeam?.memberRoles?.[user.uid] === 'parent' ||
-          allPlayers.some(p => p.linkedParents?.includes(user.uid))
-        );
-
         let found = null;
 
         if (isParentRole) {
-          const children = allPlayers.filter(p => p.linkedParents?.includes(user.uid) || (targetPlayerId && p.id === targetPlayerId));
+          // PADRE: Resolver entre los hijos vinculados
+          const children = allPlayers.filter(p => Array.isArray(p.linkedParents) && p.linkedParents.includes(user.uid) || (targetPlayerId && p.id === targetPlayerId));
           if (children.length > 0) {
             found = children.find(c => c.id === selectedChildId) || children[0];
           }
-        }
-
-        if (!found) {
-          // Buscar la ficha de jugador por prioridad
+        } else {
+          // JUGADOR: Buscar su propia ficha
           found = allPlayers.find(p => 
             (targetPlayerId && p.id === targetPlayerId) ||
             (p.email && user.email && p.email.trim().toLowerCase() === user.email.trim().toLowerCase()) ||
@@ -128,7 +127,6 @@ const PlayerDashboard = () => {
             p.playerUid === user.uid || 
             p.userId === user.uid ||
             p.uid === user.uid ||
-            p.linkedParents?.includes(user.uid) ||
             (user.displayName && p.name && normalizeStr(p.name) === normalizeStr(user.displayName))
           );
         }
@@ -160,17 +158,16 @@ const PlayerDashboard = () => {
       isMounted = false;
       if (unsubRoster) unsubRoster();
     };
-  }, [user, cleanPath, activeTeam?.id, selectedChildId]);
+  }, [user, cleanPath, activeTeam?.id, selectedChildId, isParentRole]);
 
   // Lista de hijos vinculados para padres
-  const myChildren = rosterPlayers.filter(p => p.linkedParents?.includes(user?.uid) || p.requesterUid === user?.uid);
+  const myChildren = isParentRole
+    ? rosterPlayers.filter(p => Array.isArray(p.linkedParents) && p.linkedParents.includes(user?.uid))
+    : [];
 
   // 2. Determinar si es vista de padre
-  const isParentView = (
-    activeTeam?.memberRoles?.[user?.uid] === 'parent' || 
-    player?.linkedParents?.includes(user?.uid) ||
-    myChildren.length > 0 ||
-    false
+  const isParentView = Boolean(
+    isParentRole && (myChildren.length > 0 || player?.linkedParents?.includes(user?.uid))
   );
 
   // 3. Hook de logros deportivos en tiempo real

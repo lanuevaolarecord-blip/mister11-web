@@ -534,6 +534,7 @@ const PlayerDashboard = () => {
             team={activeTeam}
             teamPath={cleanPath}
             isParentView={isParentView}
+            achievements={achievements}
             onNavigateTests={() => setActiveTab('tests')}
           />
         )}

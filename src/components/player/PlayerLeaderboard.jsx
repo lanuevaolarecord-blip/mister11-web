@@ -26,6 +26,7 @@ export const PlayerLeaderboard = ({
   matches = [], 
   attendance = [], 
   currentPlayerId = null,
+  myAchievements = [],
   team = null,
   darkMode = true 
 }) => {
@@ -78,25 +79,55 @@ export const PlayerLeaderboard = ({
       const totalGoals = pMatchStats.goals || 0;
       const totalAssists = pMatchStats.assists || 0;
 
-      // C) Logros reales (desbloqueados en la ficha del jugador)
-      const achievementsCount = Array.isArray(p.achievements) ? p.achievements.length : (Array.isArray(p.logros) ? p.logros.length : 0);
+      // C) Logros reales (desbloqueados en la vitrina del jugador o calculados por hitos deportivos)
+      let achievementsCount = 0;
+      let achievementsXP = 0;
 
-      // D) Cálculo de XP por pilares reales
-      const attendanceXP = myTotalCalls > 0 ? Math.round(attendancePct * 5) : 0; // Hasta 500 XP con 100% asistencia
-      const matchesXP = Math.round((totalMatches * 40) + (totalMinutes * 0.5) + (totalGoals * 50) + (totalAssists * 25));
-      const achievementsXP = achievementsCount * 50;
+      if (isCurrent && Array.isArray(myAchievements) && myAchievements.length > 0) {
+        const unlockedList = myAchievements.filter(a => a.isUnlocked);
+        achievementsCount = unlockedList.length;
+        achievementsXP = unlockedList.reduce((sum, a) => sum + (a.xp || 0), 0);
+      } else if (Array.isArray(p.achievements) && p.achievements.length > 0) {
+        achievementsCount = p.achievements.length;
+        achievementsXP = achievementsCount * 50;
+      } else if (Array.isArray(p.logros) && p.logros.length > 0) {
+        achievementsCount = p.logros.length;
+        achievementsXP = achievementsCount * 50;
+      } else {
+        // Cálculo dinámico por hitos de rendimiento reales de cada compañero
+        let computedCount = 0;
+        if (myPresents >= 1) computedCount++; // Check-in / Siempre atento
+        if (myPresents >= 2) computedCount++; // Semana perfecta
+        if (myPresents >= 4) computedCount++; // Jugador de hierro
+        if (myPresents >= 8) computedCount++; // Espíritu de capitán
+        if (totalMatches >= 1) computedCount++; // Convocatoria / Debut
+        if (totalMatches >= 5) computedCount++; // Compromiso
+        if (totalGoals >= 1) computedCount++; // Primer gol
+        if (totalGoals >= 5) computedCount++; // Goleador
+        if (totalAssists >= 1) computedCount++; // Asistente
+        if (totalAssists >= 5) computedCount++; // Motor del equipo
+        achievementsCount = computedCount;
+        achievementsXP = achievementsCount * 50;
+      }
+
+      // D) Cálculo de XP por pilares reales basados en porcentaje
+      const attendanceXP = myTotalCalls > 0 ? attendancePct : 0; // 0 a 100 XP según % de asistencia
+      
+      const maxSquadMinutes = matches.length > 0 ? Math.max(matches.length * 90, 1) : 1;
+      const matchesPct = matches.length > 0 ? Math.min(100, Math.round((totalMinutes / maxSquadMinutes) * 100)) : 0;
+      const matchesXP = matches.length > 0 ? matchesPct : 0; // 0 a 100 XP según % de partidos/minutos
 
       // Puntuación Total Power Score Real
       const totalXP = attendanceXP + matchesXP + achievementsXP;
 
       // Determinación de Rango / Nivel Gaming Real
       let tier = { name: 'BRONCE', color: '#CD7F32', icon: '🥉', minXP: 0 };
-      if (totalXP >= 1500) {
-        tier = { name: 'DIAMANTE', color: '#60A5FA', icon: '💎', minXP: 1500 };
-      } else if (totalXP >= 1000) {
-        tier = { name: 'ORO', color: '#C9A84C', icon: '🥇', minXP: 1000 };
-      } else if (totalXP >= 400) {
-        tier = { name: 'PLATA', color: '#94A3B8', icon: '🥈', minXP: 400 };
+      if (totalXP >= 500) {
+        tier = { name: 'DIAMANTE', color: '#60A5FA', icon: '💎', minXP: 500 };
+      } else if (totalXP >= 300) {
+        tier = { name: 'ORO', color: '#C9A84C', icon: '🥇', minXP: 300 };
+      } else if (totalXP >= 150) {
+        tier = { name: 'PLATA', color: '#94A3B8', icon: '🥈', minXP: 150 };
       }
 
       return {
@@ -120,7 +151,7 @@ export const PlayerLeaderboard = ({
         isCurrent: String(pId) === String(currentPlayerId)
       };
     });
-  }, [players, matches, attendance, currentPlayerId, isAnonymous]);
+  }, [players, matches, attendance, currentPlayerId, myAchievements, isAnonymous]);
 
   // 2. Ordenar según el filtro activo
   const sortedPlayers = useMemo(() => {

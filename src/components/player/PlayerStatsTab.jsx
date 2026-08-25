@@ -30,7 +30,7 @@ import {
 
 import { PlayerLeaderboard } from './PlayerLeaderboard';
 
-export const PlayerStatsTab = ({ player, team, teamPath, isParentView = false, onNavigateTests }) => {
+export const PlayerStatsTab = ({ player, team, teamPath, isParentView = false, achievements = [], onNavigateTests }) => {
   const { user } = useAuth();
   const { darkMode } = useTheme();
   const { isPro, isProActive } = usePlan();
@@ -208,22 +208,49 @@ export const PlayerStatsTab = ({ player, team, teamPath, isParentView = false, o
 
     // Minutos calculados con el motor unificado calculatePlayerMatchStats para cada jugador
     let totalMinutesSquad = 0;
+    let maxMinutesSquad = 0;
     allPlayers.forEach(p => {
       const pStats = calculatePlayerMatchStats(p.id, allTeamMatches);
       totalMinutesSquad += pStats.minutesPlayed;
+      if (pStats.minutesPlayed > maxMinutesSquad) {
+        maxMinutesSquad = pStats.minutesPlayed;
+      }
     });
 
     const avgMinutesPerPlayer = allPlayers.length > 0 
       ? Math.round(totalMinutesSquad / allPlayers.length) 
       : 0;
 
+    // Base de minutos posibles: partidos disputados * 90 o el máximo jugador
+    const basePossibleMinutes = Math.max(allTeamMatches.length * 90, maxMinutesSquad, 1);
+
+    // Porcentajes y Puntos XP (Escala 0 a 100 XP según porcentaje)
+    const myAttendanceXP = myAttendancePct; // Ej: 100% = 100 XP
+    const avgAttendanceXP = avgAttendancePct;
+
+    const myMatchPct = allTeamMatches.length > 0
+      ? Math.min(100, Math.round((playerMatchStats.minutesPlayed / basePossibleMinutes) * 100))
+      : 0;
+    const myMatchXP = myMatchPct;
+
+    const avgMatchPct = allTeamMatches.length > 0
+      ? Math.min(100, Math.round((avgMinutesPerPlayer / basePossibleMinutes) * 100))
+      : 0;
+    const avgMatchXP = avgMatchPct;
+
     return {
       hasAttendanceData,
       hasMatchData: allTeamMatches.length > 0,
       myAttendancePct,
       avgAttendancePct,
+      myAttendanceXP,
+      avgAttendanceXP,
       myMinutes: playerMatchStats.minutesPlayed,
       avgMinutes: avgMinutesPerPlayer,
+      myMatchPct,
+      avgMatchPct,
+      myMatchXP,
+      avgMatchXP,
       sampleSize: allPlayers.length
     };
   }, [allPlayers, allAttendance, allTeamMatches, effectivePlayerId, playerMatchStats, player]);
@@ -403,6 +430,7 @@ export const PlayerStatsTab = ({ player, team, teamPath, isParentView = false, o
         matches={allTeamMatches}
         attendance={allAttendance}
         currentPlayerId={effectivePlayerId}
+        myAchievements={achievements}
         team={team}
         darkMode={darkMode}
       />
@@ -442,41 +470,53 @@ export const PlayerStatsTab = ({ player, team, teamPath, isParentView = false, o
             </div>
           ) : (
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '12px' }}>
-              {/* Asistencia */}
+              {/* Asistencia con XP */}
               <div style={{ background: darkMode ? 'rgba(0,0,0,0.5)' : '#F8FAFC', padding: '12px', borderRadius: '12px', border: '1px solid var(--border-light)' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', fontWeight: 800, color: darkMode ? '#FFFFFF' : '#0F172A', marginBottom: '4px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.8rem', fontWeight: 800, color: darkMode ? '#FFFFFF' : '#0F172A', marginBottom: '6px' }}>
                   <span>Asistencia</span>
-                  <span style={{ color: '#4CAF7D' }}>{teamComparison.myAttendancePct}% <span style={{ color: darkMode ? '#94A3B8' : '#64748B', fontWeight: 'normal' }}>vs</span> <span style={{ color: '#C9A84C' }}>{teamComparison.avgAttendancePct}%</span></span>
+                  <span style={{ color: '#C9A84C', fontSize: '0.72rem', background: 'rgba(201,168,76,0.15)', padding: '2px 6px', borderRadius: '6px' }}>
+                    +{teamComparison.myAttendanceXP} XP
+                  </span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.78rem', fontWeight: 800, marginBottom: '4px' }}>
+                  <span style={{ color: '#4CAF7D' }}>Tú: {teamComparison.myAttendancePct}%</span>
+                  <span style={{ color: darkMode ? '#94A3B8' : '#64748B' }}>Media: <span style={{ color: '#C9A84C' }}>{teamComparison.avgAttendancePct}%</span></span>
                 </div>
                 <div style={{ background: 'rgba(128,128,128,0.2)', height: '6px', borderRadius: '4px', overflow: 'hidden' }}>
-                  <div style={{ width: `${Math.max(teamComparison.myAttendancePct > 0 ? teamComparison.myAttendancePct : (teamComparison.hasAttendanceData ? 0 : 0), 0)}%`, height: '100%', background: '#4CAF7D', borderRadius: '4px' }} />
+                  <div style={{ width: `${Math.max(teamComparison.myAttendancePct > 0 ? teamComparison.myAttendancePct : 0, 0)}%`, height: '100%', background: '#4CAF7D', borderRadius: '4px' }} />
                 </div>
                 <span style={{ 
                   fontSize: '0.72rem', 
                   color: !teamComparison.hasAttendanceData ? (darkMode ? '#94A3B8' : '#64748B') : (teamComparison.myAttendancePct > teamComparison.avgAttendancePct ? '#4CAF7D' : (teamComparison.myAttendancePct === teamComparison.avgAttendancePct ? (darkMode ? '#94A3B8' : '#475569') : '#C9A84C')), 
-                  marginTop: '4px', 
+                  marginTop: '6px', 
                   display: 'block', 
                   fontWeight: 800 
                 }}>
                   {!teamComparison.hasAttendanceData 
                     ? '● Sin sesiones registradas aún' 
                     : (teamComparison.myAttendancePct > teamComparison.avgAttendancePct 
-                        ? '▲ Por encima de la media' 
+                        ? `▲ +${teamComparison.myAttendanceXP} XP (Por encima de la media)` 
                         : (teamComparison.myAttendancePct === teamComparison.avgAttendancePct 
-                            ? '● En la media de la plantilla' 
-                            : '▼ Por debajo de la media'))}
+                            ? `● +${teamComparison.myAttendanceXP} XP (En la media)` 
+                            : `▼ +${teamComparison.myAttendanceXP} XP (Por debajo de la media)`))}
                 </span>
               </div>
 
-              {/* Minutos */}
+              {/* Minutos y Partidos con XP */}
               <div style={{ background: darkMode ? 'rgba(0,0,0,0.5)' : '#F8FAFC', padding: '12px', borderRadius: '12px', border: '1px solid var(--border-light)' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', fontWeight: 800, color: darkMode ? '#FFFFFF' : '#0F172A', marginBottom: '4px' }}>
-                  <span>Minutos</span>
-                  <span style={{ color: '#4CAF7D' }}>{teamComparison.myMinutes}' <span style={{ color: darkMode ? '#94A3B8' : '#64748B', fontWeight: 'normal' }}>vs</span> <span style={{ color: '#C9A84C' }}>{teamComparison.avgMinutes}'</span></span>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.8rem', fontWeight: 800, color: darkMode ? '#FFFFFF' : '#0F172A', marginBottom: '6px' }}>
+                  <span>Partidos / Minutos</span>
+                  <span style={{ color: '#C9A84C', fontSize: '0.72rem', background: 'rgba(201,168,76,0.15)', padding: '2px 6px', borderRadius: '6px' }}>
+                    +{teamComparison.myMatchXP} XP
+                  </span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.78rem', fontWeight: 800, marginBottom: '4px' }}>
+                  <span style={{ color: '#4CAF7D' }}>Tú: {teamComparison.myMinutes}' ({teamComparison.myMatchPct}%)</span>
+                  <span style={{ color: darkMode ? '#94A3B8' : '#64748B' }}>Media: <span style={{ color: '#C9A84C' }}>{teamComparison.avgMinutes}' ({teamComparison.avgMatchPct}%)</span></span>
                 </div>
                 <div style={{ background: 'rgba(128,128,128,0.2)', height: '6px', borderRadius: '4px', overflow: 'hidden' }}>
                   <div style={{ 
-                    width: `${teamComparison.avgMinutes > 0 ? Math.min(100, Math.max(5, (teamComparison.myMinutes / (teamComparison.avgMinutes * 1.5)) * 100)) : (teamComparison.myMinutes > 0 ? 100 : 0)}%`, 
+                    width: `${Math.min(100, Math.max(0, teamComparison.myMatchPct))}%`, 
                     height: '100%', 
                     background: '#C9A84C', 
                     borderRadius: '4px' 
@@ -484,14 +524,14 @@ export const PlayerStatsTab = ({ player, team, teamPath, isParentView = false, o
                 </div>
                 <span style={{ 
                   fontSize: '0.72rem', 
-                  color: !teamComparison.hasMatchData ? (darkMode ? '#94A3B8' : '#64748B') : (teamComparison.myMinutes > teamComparison.avgMinutes ? '#4CAF7D' : (teamComparison.myMinutes === teamComparison.avgMinutes ? (darkMode ? '#94A3B8' : '#475569') : '#C9A84C')), 
-                  marginTop: '4px', 
+                  color: !teamComparison.hasMatchData ? (darkMode ? '#94A3B8' : '#64748B') : (teamComparison.myMatchXP > teamComparison.avgMatchXP ? '#4CAF7D' : (teamComparison.myMatchXP === teamComparison.avgMatchXP ? (darkMode ? '#94A3B8' : '#475569') : '#C9A84C')), 
+                  marginTop: '6px', 
                   display: 'block', 
                   fontWeight: 800 
                 }}>
                   {!teamComparison.hasMatchData
                     ? '● Sin partidos disputados aún'
-                    : `Media de la plantilla: ${teamComparison.avgMinutes}'`}
+                    : `+${teamComparison.myMatchXP} XP según tu ${teamComparison.myMatchPct}% de participación`}
                 </span>
               </div>
             </div>

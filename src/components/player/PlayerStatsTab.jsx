@@ -201,9 +201,17 @@ export const PlayerStatsTab = ({ player, team, teamPath, isParentView = false, a
         });
       });
 
-      // Ordenación cronológica ascendente estricta por timestamp
+      // Ordenación cronológica y consolidación por fecha evaluada (1 punto real por día)
       Object.keys(grouped).forEach(k => {
-        grouped[k].history.sort((a, b) => a.ts - b.ts);
+        const sorted = grouped[k].history.sort((a, b) => a.ts - b.ts);
+        
+        // Agrupar por fecha para que no aparezcan puntos duplicados del mismo día
+        const dateMap = new Map();
+        sorted.forEach(entry => {
+          dateMap.set(entry.date, entry);
+        });
+
+        grouped[k].history = Array.from(dateMap.values());
       });
 
       setGroupedHistory(grouped);

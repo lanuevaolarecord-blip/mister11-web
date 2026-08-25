@@ -283,9 +283,10 @@ export const PlayerLeaderboard = ({
         {/* TOP 2 (PLATA) */}
         {top2 && (
           <div className={`podium-column silver ${top2.isCurrent ? 'is-me' : ''}`}>
-            <div className="podium-avatar-wrap">
-              <div className="podium-medal-badge silver">🥈 2º</div>
+            <div className="podium-avatar-container">
+              <div className="crown-spacer" />
               <div className="podium-dorsal">#{top2.dorsal}</div>
+              <div className="podium-medal-pill silver">🥈 2º</div>
             </div>
             <span className="podium-player-name">{top2.firstName}</span>
             <span className="podium-stat-val">
@@ -303,10 +304,10 @@ export const PlayerLeaderboard = ({
         {/* TOP 1 (ORO) */}
         {top1 && (
           <div className={`podium-column gold ${top1.isCurrent ? 'is-me' : ''}`}>
-            <div className="podium-avatar-wrap">
+            <div className="podium-avatar-container">
               <div className="crown-icon">👑</div>
-              <div className="podium-medal-badge gold">🥇 1º</div>
               <div className="podium-dorsal gold-ring">#{top1.dorsal}</div>
+              <div className="podium-medal-pill gold">🥇 1º</div>
             </div>
             <span className="podium-player-name gold-name">{top1.firstName}</span>
             <span className="podium-stat-val gold-stat">
@@ -324,9 +325,10 @@ export const PlayerLeaderboard = ({
         {/* TOP 3 (BRONCE) */}
         {top3 && (
           <div className={`podium-column bronze ${top3.isCurrent ? 'is-me' : ''}`}>
-            <div className="podium-avatar-wrap">
-              <div className="podium-medal-badge bronze">🥉 3º</div>
+            <div className="podium-avatar-container">
+              <div className="crown-spacer" />
               <div className="podium-dorsal">#{top3.dorsal}</div>
+              <div className="podium-medal-pill bronze">🥉 3º</div>
             </div>
             <span className="podium-player-name">{top3.firstName}</span>
             <span className="podium-stat-val">

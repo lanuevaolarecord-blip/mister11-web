@@ -12,7 +12,6 @@ import './PlayerTabs.css';
 
 export const PLAYER_TABS = [
   { id: 'GENERAL', labelKey: 'player.tab.general', defaultLabel: 'GENERAL', icon: User },
-  { id: 'CHAT', labelKey: 'player.tab.chat', defaultLabel: 'CHAT', icon: MessageSquare },
   { id: 'FÍSICO', labelKey: 'player.tab.physical', defaultLabel: 'FÍSICO', icon: Zap },
   { id: 'SALUD', labelKey: 'player.tab.health', defaultLabel: 'SALUD', icon: HeartPulse },
   { id: 'PLANES', labelKey: 'player.tab.plans', defaultLabel: 'PLANES', icon: ClipboardList },

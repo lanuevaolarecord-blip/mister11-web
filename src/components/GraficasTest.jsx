@@ -18,30 +18,60 @@ export const SvgLineChart = ({ data, isTime, width = 320, height = 200 }) => {
   const textMain = darkMode ? '#FFFFFF' : '#0F172A';
   const gridLineColor = darkMode ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.08)';
 
-  // Single data point: show stat card fallback
+  // Caso de 1 sola evaluación: renderizar gráfico con punto focal y línea de referencia
   if (data.length === 1) {
     const entry = data[0];
-    const displayDate = (entry.date || '').split('-').reverse().slice(0, 2).join('/');
+    const rawDate = String(entry.displayDate || entry.date || '');
+    let displayDate = rawDate;
+    if (rawDate.includes('-')) {
+      const parts = rawDate.split('T')[0].split('-');
+      if (parts.length >= 3) displayDate = `${parts[2]}/${parts[1]}`;
+    }
+
     return (
       <div style={{
-        width: '100%', height,
+        width: '100%',
         background: bgCard,
         border: `1px solid ${borderCard}`,
         borderRadius: 12,
-        display: 'flex', flexDirection: 'column',
-        alignItems: 'center', justifyContent: 'center', gap: 8,
-        padding: '16px', boxSizing: 'border-box'
+        padding: '16px 12px 12px',
+        boxSizing: 'border-box'
       }}>
-        <div style={{ fontSize: 36, fontWeight: 800, color: COLOR_GREEN, lineHeight: 1 }}>
-          {entry.val} {isTime ? 's' : ''}
-        </div>
-        <div style={{ fontSize: 12, color: textMuted, fontWeight: 600 }}>Primera evaluación · {displayDate}</div>
-        <div style={{
-          marginTop: 4, padding: '4px 12px', borderRadius: 20,
-          background: 'rgba(201, 168, 76, 0.2)', color: COLOR_ACCENT, fontSize: 11, fontWeight: 700
-        }}>
-          Registra más resultados para ver la evolución
-        </div>
+        <svg
+          viewBox={`0 0 ${width} ${height}`}
+          width="100%"
+          height={height}
+          style={{ display: 'block' }}
+        >
+          {/* Ejes y rejilla base */}
+          <line x1={40} y1={height / 2} x2={width - 20} y2={height / 2}
+            stroke={gridLineColor} strokeWidth={1} strokeDasharray="3,3" />
+          
+          <line x1={40} y1={height - 35} x2={width - 20} y2={height - 35}
+            stroke={gridLineColor} strokeWidth={1} />
+
+          {/* Línea horizontal de referencia */}
+          <line x1={width / 2 - 40} y1={height / 2} x2={width / 2 + 40} y2={height / 2}
+            stroke={COLOR_GREEN} strokeWidth={2} strokeDasharray="4,4" opacity={0.6} />
+
+          {/* Halo y Punto central */}
+          <circle cx={width / 2} cy={height / 2} r={14} fill={COLOR_GREEN} fillOpacity={0.15} />
+          <circle cx={width / 2} cy={height / 2} r={6} fill={COLOR_GREEN} stroke={darkMode ? '#111B21' : '#FFFFFF'} strokeWidth={2.5} />
+
+          {/* Valor superior */}
+          <text x={width / 2} y={height / 2 - 18} textAnchor="middle" fontSize={13} fontWeight="900" fill={COLOR_GREEN}>
+            {entry.val} {isTime ? 's' : 'pts'}
+          </text>
+
+          {/* Fecha en el eje X */}
+          <text x={width / 2} y={height - 18} textAnchor="middle" fontSize={10.5} fontWeight="700" fill={textMuted}>
+            {displayDate}
+          </text>
+
+          <text x={width / 2} y={height - 4} textAnchor="middle" fontSize={9.5} fontWeight="600" fill={COLOR_ACCENT}>
+            Evaluación inicial registrada
+          </text>
+        </svg>
       </div>
     );
   }

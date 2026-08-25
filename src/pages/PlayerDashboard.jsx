@@ -13,7 +13,8 @@ import { PlayerChatTab } from '../components/player/PlayerChatTab';
 import { PlayerAutonomousTestsTab } from '../components/player/PlayerAutonomousTestsTab';
 import { PlayerStatsTab } from '../components/player/PlayerStatsTab';
 import { PlayerProfileTab } from '../components/player/PlayerProfileTab';
-import { Shield, Loader, Sun, Moon, LogOut, HeartHandshake, UserCheck, Users, Bell, KeyRound, ArrowRight } from 'lucide-react';
+import { Shield, Sun, Moon, LogOut, CheckCircle2, ChevronRight, Users, Bell, AlertTriangle, Settings } from 'lucide-react';
+import { PlayerSettingsModal } from '../components/player/PlayerSettingsModal';
 import { usePushNotifications } from '../hooks/usePushNotifications';
 import { sendChatNotification } from '../hooks/useLocalNotifications';
 import { showToast } from '../utils/toast';
@@ -32,6 +33,7 @@ const PlayerDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [hasUnreadMessages, setHasUnreadMessages] = useState(false);
   const [selectedChildId, setSelectedChildId] = useState(null);
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
   const teamPath = activeTeam?.teamPath || (activeTeam?.id ? getTeamPath(activeTeam.id) : null);
   const cleanPath = teamPath ? teamPath.replace(/^\/+|\/+$/g, '') : '';
@@ -371,6 +373,18 @@ const PlayerDashboard = () => {
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+          {/* Botón de Configuración y Ajustes */}
+          <button 
+            type="button" 
+            className="player-theme-btn" 
+            onClick={() => setIsSettingsOpen(true)}
+            aria-label="Configuración y Ajustes"
+            title="Configuración y Ajustes"
+            style={{ color: '#4CAF7D' }}
+          >
+            <Settings size={18} color="#4CAF7D" />
+          </button>
+
           {/* Botón de Modo Claro / Modo Oscuro */}
           <button 
             type="button" 
@@ -564,6 +578,13 @@ const PlayerDashboard = () => {
         onTabChange={setActiveTab}
         isParentView={isParentView}
         hasUnreadMessages={hasUnreadMessages}
+      />
+
+      {/* Modal de Configuración y Preferencias del Jugador / Familia */}
+      <PlayerSettingsModal
+        isOpen={isSettingsOpen}
+        onClose={() => setIsSettingsOpen(false)}
+        player={player}
       />
 
     </div>

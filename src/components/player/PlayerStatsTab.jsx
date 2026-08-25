@@ -31,8 +31,10 @@ import {
 } from 'lucide-react';
 
 import { PlayerLeaderboard } from './PlayerLeaderboard';
+import { useTranslation } from '../../hooks/useTranslation';
 
 export const PlayerStatsTab = ({ player, team, teamPath, isParentView = false, achievements = [], onNavigateTests }) => {
+  const { t, isEn } = useTranslation();
   const { user } = useAuth();
   const { darkMode } = useTheme();
   const { isPro, isProActive } = usePlan();
@@ -428,29 +430,29 @@ export const PlayerStatsTab = ({ player, team, teamPath, isParentView = false, a
           </div>
 
           <div className="summary-metric-box">
-            <span className="metric-label">ASISTENCIAS</span>
+            <span className="metric-label">{t('player.stats.assists')}</span>
             <div className="metric-value gold">👟 {playerMatchStats.assists}</div>
-            <span className="metric-sub">pases de gol</span>
+            <span className="metric-sub">{isEn ? 'key passes' : 'pases de gol'}</span>
           </div>
 
           <div className="summary-metric-box">
-            <span className="metric-label">MINUTOS</span>
+            <span className="metric-label">{t('player.stats.minutesPlayed')}</span>
             <div className="metric-value white">⏱️ {playerMatchStats.minutesPlayed}'</div>
-            <span className="metric-sub">en competición</span>
+            <span className="metric-sub">{isEn ? 'in competition' : 'en competición'}</span>
           </div>
         </div>
 
         {/* Fila secundaria: Tarjetas y Nota Media */}
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginTop: '12px' }}>
           <div style={{ background: darkMode ? 'rgba(0,0,0,0.3)' : 'rgba(255,255,255,0.7)', padding: '10px', borderRadius: '10px', textAlign: 'center', border: '1px solid var(--border-light)' }}>
-            <span style={{ fontSize: '11px', color: 'var(--text-secondary)', fontWeight: 'bold' }}>TARJETAS</span>
+            <span style={{ fontSize: '11px', color: 'var(--text-secondary)', fontWeight: 'bold' }}>{t('player.stats.cards')}</span>
             <div style={{ fontSize: '16px', fontWeight: '800', marginTop: '3px', color: 'var(--text-primary)' }}>
               🟨 {playerMatchStats.yellowCards} · 🟥 {playerMatchStats.redCards}
             </div>
           </div>
 
           <div style={{ background: darkMode ? 'rgba(0,0,0,0.3)' : 'rgba(255,255,255,0.7)', padding: '10px', borderRadius: '10px', textAlign: 'center', border: '1px solid var(--border-light)' }}>
-            <span style={{ fontSize: '11px', color: 'var(--text-secondary)', fontWeight: 'bold' }}>NOTA MEDIA</span>
+            <span style={{ fontSize: '11px', color: 'var(--text-secondary)', fontWeight: 'bold' }}>{t('player.stats.avgRating')}</span>
             <div style={{ fontSize: '16px', fontWeight: '800', marginTop: '3px', color: '#C9A84C' }}>
               ⭐ {playerMatchStats.avgRating}
             </div>
@@ -462,10 +464,10 @@ export const PlayerStatsTab = ({ player, team, teamPath, isParentView = false, a
       <div className="hud-card" style={{ marginBottom: '20px', padding: '16px' }}>
         <div className="hud-header" style={{ marginBottom: '12px' }}>
           <span className="hud-badge" style={{ color: '#4CAF7D', borderColor: 'rgba(76, 175, 125, 0.3)' }}>
-            <Calendar size={14} /> HISTORIAL DE PARTIDOS DISPUTADOS ({playerMatchStats.matchHistory.length})
+            <Calendar size={14} /> {t('player.stats.matchHistory')} ({playerMatchStats.matchHistory.length})
           </span>
           <span style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>
-            Sincronizado con actas del Míster
+            {t('player.stats.matchHistorySync')}
           </span>
         </div>
 
@@ -493,12 +495,12 @@ export const PlayerStatsTab = ({ player, team, teamPath, isParentView = false, a
                     background: 'rgba(76, 175, 125, 0.15)',
                     color: '#4CAF7D'
                   }}>
-                    {mItem.result} ({mItem.type || 'Oficial'})
+                    {mItem.result} ({mItem.type || (isEn ? 'Official' : 'Oficial')})
                   </span>
                 </div>
 
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '11.5px', color: 'var(--text-secondary)' }}>
-                  <span>📅 {mItem.date} · {mItem.isTitular ? 'Titular' : 'Suplente'} ({mItem.minutesPlayed}')</span>
+                  <span>📅 {mItem.date} · {mItem.isTitular ? (isEn ? 'Starter' : 'Titular') : (isEn ? 'Substitute' : 'Suplente')} ({mItem.minutesPlayed}')</span>
                   <div style={{ display: 'flex', gap: '6px', fontWeight: '800' }}>
                     {mItem.goals > 0 && <span style={{ color: '#4CAF7D' }}>⚽ {mItem.goals}</span>}
                     {mItem.assists > 0 && <span style={{ color: '#3B82F6' }}>👟 {mItem.assists}</span>}
@@ -512,9 +514,9 @@ export const PlayerStatsTab = ({ player, team, teamPath, isParentView = false, a
           </div>
         ) : (
           <div style={{ padding: '20px', textAlign: 'center', color: 'var(--text-secondary)', fontSize: '12px' }}>
-            <p style={{ margin: 0, fontWeight: '700' }}>Sin partidos registrados aún esta temporada</p>
+            <p style={{ margin: 0, fontWeight: '700' }}>{t('player.stats.noMatchesYet')}</p>
             <p style={{ margin: '4px 0 0 0', fontSize: '11px' }}>
-              Tus minutos, goles y convocatorias aparecerán aquí automáticamente tras cada jornada.
+              {t('player.stats.noMatchesDesc')}
             </p>
           </div>
         )}
@@ -543,10 +545,10 @@ export const PlayerStatsTab = ({ player, team, teamPath, isParentView = false, a
           <div className="hud-header" style={{ marginBottom: '12px', flexWrap: 'wrap', gap: '8px' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
               <span className="hud-badge" style={{ color: '#4CAF7D', borderColor: 'rgba(76, 175, 125, 0.3)' }}>
-                <Users size={14} /> TÚ VS PROMEDIO DEL EQUIPO
+                <Users size={14} /> {t('player.stats.vsTeamTitle')}
               </span>
               <span style={{ fontSize: '0.75rem', color: darkMode ? '#94A3B8' : '#475569', fontWeight: 600 }}>
-                🔒 Datos anónimos (RGPD)
+                {t('player.stats.anonymousRgpd')}
               </span>
             </div>
             <button 
@@ -566,7 +568,7 @@ export const PlayerStatsTab = ({ player, team, teamPath, isParentView = false, a
                 gap: '5px'
               }}
             >
-              <HelpCircle size={13} /> {showComparisonHelp ? 'Ocultar info' : '¿Cómo se mide?'}
+              <HelpCircle size={13} /> {showComparisonHelp ? (isEn ? 'Hide info' : 'Ocultar info') : t('player.stats.howIsMeasured')}
             </button>
           </div>
 
@@ -684,10 +686,10 @@ export const PlayerStatsTab = ({ player, team, teamPath, isParentView = false, a
         <div className="hud-header" style={{ width: '100%', flexWrap: 'wrap', gap: '8px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <span className="hud-badge">
-              <Sparkles size={14} /> RADAR DE HABILIDADES
+              <Sparkles size={14} /> {t('player.stats.radarTitle')}
             </span>
             <span className="hud-status-live" style={{ color: '#4CAF7D', background: 'rgba(76,175,125,0.12)' }}>
-              Nivel Global: {overallTPI}
+              {isEn ? `Overall Level: ${overallTPI}` : `Nivel Global: ${overallTPI}`}
             </span>
           </div>
           <button 
@@ -707,7 +709,7 @@ export const PlayerStatsTab = ({ player, team, teamPath, isParentView = false, a
               gap: '5px'
             }}
           >
-            <HelpCircle size={13} /> {showRadarHelp ? 'Ocultar guía' : '¿Cómo se mide cada eje?'}
+            <HelpCircle size={13} /> {showRadarHelp ? (isEn ? 'Hide guide' : 'Ocultar guía') : t('player.stats.howAxesMeasured')}
           </button>
         </div>
 
@@ -726,14 +728,14 @@ export const PlayerStatsTab = ({ player, team, teamPath, isParentView = false, a
             lineHeight: '1.5'
           }}>
             <strong style={{ color: '#C9A84C', display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '6px' }}>
-              <Info size={14} /> Fuente de información de cada dimensión (0 a 100):
+              <Info size={14} /> {isEn ? 'Data source for each dimension (0 to 100):' : 'Fuente de información de cada dimensión (0 a 100):'}
             </strong>
             <ul style={{ margin: 0, paddingLeft: '18px' }}>
-              <li><strong>Asistencia ({rawAsistencia}):</strong> Porcentaje real de asistencia a entrenamientos y citaciones.</li>
-              <li><strong>Mental ({rawMental}):</strong> Cuestionarios psicológicos (ACSI-28, MTQ-10, resiliencia) completados en el portal o valoración del entrenador.</li>
-              <li><strong>Físico ({rawFisico}):</strong> Tests de resistencia, velocidad y fuerza o nota física asignada por el cuerpo técnico.</li>
-              <li><strong>Técnica ({rawTecnica}):</strong> Control, pase, regate y finalización evaluados por el entrenador.</li>
-              <li><strong>Táctica ({rawTactica}):</strong> Posicionamiento, toma de decisiones y lectura de juego evaluados por el míster.</li>
+              <li><strong>{isEn ? 'Attendance' : 'Asistencia'} ({rawAsistencia}):</strong> {isEn ? 'Real attendance rate from training sessions and call-ups.' : 'Porcentaje real de asistencia a entrenamientos y citaciones.'}</li>
+              <li><strong>{isEn ? 'Mental' : 'Mental'} ({rawMental}):</strong> {isEn ? 'Psychological questionnaires (ACSI-28, MTQ-10, resilience) completed in portal or coach rating.' : 'Cuestionarios psicológicos (ACSI-28, MTQ-10, resiliencia) completados en el portal o valoración del entrenador.'}</li>
+              <li><strong>{isEn ? 'Physical' : 'Físico'} ({rawFisico}):</strong> {isEn ? 'Fitness tests (endurance, speed, power) or coach physical grade.' : 'Tests de resistencia, velocidad y fuerza o nota física asignada por el cuerpo técnico.'}</li>
+              <li><strong>{isEn ? 'Technical' : 'Técnica'} ({rawTecnica}):</strong> {isEn ? 'Ball control, passing, dribbling and finishing evaluated by coach.' : 'Control, pase, regate y finalización evaluados por el entrenador.'}</li>
+              <li><strong>{isEn ? 'Tactical' : 'Táctica'} ({rawTactica}):</strong> {isEn ? 'Positioning, decision making and game reading evaluated by coach.' : 'Posicionamiento, toma de decisiones y lectura de juego evaluados por el míster.'}</li>
             </ul>
           </div>
         )}
@@ -836,10 +838,10 @@ export const PlayerStatsTab = ({ player, team, teamPath, isParentView = false, a
           }}>
             <div style={{ flex: 1, minWidth: '200px' }}>
               <div style={{ fontWeight: 800, fontSize: '0.78rem', color: '#F59E0B' }}>
-                💡 Áreas pendientes de medición ({zeroMetrics.map(z => z.label).join(', ')})
+                💡 {isEn ? 'Areas pending measurement' : 'Áreas pendientes de medición'} ({zeroMetrics.map(z => z.label).join(', ')})
               </div>
               <p style={{ margin: '2px 0 0 0', fontSize: '0.72rem', color: darkMode ? '#94A3B8' : '#64748B' }}>
-                El área <strong>Mental</strong> se activa completando los cuestionarios en la pestaña <strong>Tests</strong>. Las áreas <strong>Física, Técnica y Táctica</strong> se actualizan cuando tu entrenador registra tus pruebas y valoraciones periódicas.
+                {t('player.stats.areasInZeroDesc')}
               </p>
             </div>
             {onNavigateTests && (
@@ -858,7 +860,7 @@ export const PlayerStatsTab = ({ player, team, teamPath, isParentView = false, a
                   whiteSpace: 'nowrap'
                 }}
               >
-                Ir a Cuestionarios
+                {t('player.stats.goToTests')}
               </button>
             )}
           </div>
@@ -869,28 +871,28 @@ export const PlayerStatsTab = ({ player, team, teamPath, isParentView = false, a
       <div className="hud-card" style={{ marginBottom: '24px', padding: '16px' }}>
         <div className="hud-header">
           <span className="hud-badge" style={{ color: '#EC4899', borderColor: 'rgba(236, 72, 153, 0.3)' }}>
-            <Heart size={14} /> BIENESTAR Y RECUPERACIÓN SEMANAL
+            <Heart size={14} /> {isEn ? 'WEEKLY WELLNESS & RECOVERY' : 'BIENESTAR Y RECUPERACIÓN SEMANAL'}
           </span>
           <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>
-            Últimos 7 días
+            {isEn ? 'Last 7 days' : 'Últimos 7 días'}
           </span>
         </div>
 
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '12px', marginTop: '12px' }}>
           <div style={{ background: darkMode ? 'rgba(255,255,255,0.03)' : 'rgba(27,58,45,0.04)', padding: '12px', borderRadius: '10px', textAlign: 'center' }}>
-            <span style={{ fontSize: '11px', color: 'var(--text-secondary)', fontWeight: 'bold' }}>CALIDAD SUEÑO</span>
+            <span style={{ fontSize: '11px', color: 'var(--text-secondary)', fontWeight: 'bold' }}>{isEn ? 'SLEEP QUALITY' : 'CALIDAD SUEÑO'}</span>
             <div style={{ fontSize: '20px', fontWeight: '800', color: '#10B981', marginTop: '4px' }}>{avgSleep} / 5 ⭐</div>
           </div>
 
           <div style={{ background: darkMode ? 'rgba(255,255,255,0.03)' : 'rgba(27,58,45,0.04)', padding: '12px', borderRadius: '10px', textAlign: 'center' }}>
-            <span style={{ fontSize: '11px', color: 'var(--text-secondary)', fontWeight: 'bold' }}>ENERGÍA / ÁNIMO</span>
+            <span style={{ fontSize: '11px', color: 'var(--text-secondary)', fontWeight: 'bold' }}>{isEn ? 'ENERGY / MOOD' : 'ENERGÍA / ÁNIMO'}</span>
             <div style={{ fontSize: '20px', fontWeight: '800', color: '#F59E0B', marginTop: '4px' }}>{avgMood} / 5 ⚡</div>
           </div>
 
           <div style={{ background: darkMode ? 'rgba(255,255,255,0.03)' : 'rgba(27,58,45,0.04)', padding: '12px', borderRadius: '10px', textAlign: 'center' }}>
-            <span style={{ fontSize: '11px', color: 'var(--text-secondary)', fontWeight: 'bold' }}>ESTADO MUSCULAR</span>
+            <span style={{ fontSize: '11px', color: 'var(--text-secondary)', fontWeight: 'bold' }}>{isEn ? 'MUSCLE STATUS' : 'ESTADO MUSCULAR'}</span>
             <div style={{ fontSize: '14px', fontWeight: '800', color: hasDiscomfortActive ? '#EF4444' : '#10B981', marginTop: '6px' }}>
-              {hasDiscomfortActive ? '⚠️ Molestia activa' : '✅ 100% Disponible'}
+              {hasDiscomfortActive ? (isEn ? '⚠️ Active discomfort' : '⚠️ Molestia activa') : (isEn ? '✅ 100% Available' : '✅ 100% Disponible')}
             </div>
           </div>
         </div>
@@ -901,16 +903,16 @@ export const PlayerStatsTab = ({ player, team, teamPath, isParentView = false, a
         <div className="section-title-row" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <Award size={20} color="#10B981" />
-            <h3 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 800 }}>Evolución Temporal de Tests</h3>
+            <h3 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 800 }}>{t('player.stats.evolutionTitle')}</h3>
           </div>
           {onNavigateTests && (
             <button
               type="button"
-              className="btn-outline"
-              style={{ fontSize: '0.8rem', padding: '6px 12px', display: 'flex', alignItems: 'center', gap: '4px' }}
               onClick={onNavigateTests}
+              className="btn-link-action"
+              style={{ minHeight: '44px', display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.82rem', fontWeight: 800, color: '#10B981', background: 'none', border: 'none', cursor: 'pointer' }}
             >
-              Hacer test <ChevronRight size={14} />
+              {t('player.stats.makeTest')} <ChevronRight size={14} />
             </button>
           )}
         </div>

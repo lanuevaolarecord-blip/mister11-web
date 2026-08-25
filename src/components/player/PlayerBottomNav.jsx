@@ -1,15 +1,16 @@
-import React from 'react';
-import { Home, Calendar, Trophy, MessageSquare, BarChart2, User } from 'lucide-react';
+import { useTranslation } from '../../hooks/useTranslation';
 import './PlayerBottomNav.css';
 
 export const PlayerBottomNav = ({ activeTab, onTabChange, hasUnreadMessages = false }) => {
+  const { t } = useTranslation();
+
   const tabs = [
-    { id: 'home', label: 'Inicio', icon: Home },
-    { id: 'schedule', label: 'Agenda', icon: Calendar },
-    { id: 'achievements', label: 'Logros', icon: Trophy },
-    { id: 'chat', label: 'Míster', icon: MessageSquare, hasBadge: hasUnreadMessages },
-    { id: 'stats', label: 'Stats', icon: BarChart2 },
-    { id: 'profile', label: 'Ficha', icon: User },
+    { id: 'home', label: t('player.nav.home'), icon: Home },
+    { id: 'schedule', label: t('player.nav.schedule'), icon: Calendar },
+    { id: 'achievements', label: t('player.nav.achievements'), icon: Trophy },
+    { id: 'chat', label: t('player.nav.chat'), icon: MessageSquare, hasBadge: hasUnreadMessages },
+    { id: 'stats', label: t('player.nav.stats'), icon: BarChart2 },
+    { id: 'profile', label: t('player.nav.profile'), icon: User },
   ];
 
   return (

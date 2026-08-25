@@ -12,6 +12,7 @@ import PlayerHealthTab from '../PlayerHealthTab';
 import { PlayerPlansPortalTab } from './PlayerPlansPortalTab';
 import { PlayerAttendanceSubTab } from '../PlayerAttendanceSubTab';
 import { PlayerTabs } from './PlayerTabs';
+import { useTranslation } from '../../hooks/useTranslation';
 import { 
   User, 
   Heart, 
@@ -53,6 +54,8 @@ const getInitials = (name) => {
 export const PlayerProfileTab = ({ player, team, teamPath }) => {
   const { user, logout, switchMode, userProfile, activeTeamId } = useAuth();
   const [activeSubTab, setActiveSubTab] = useState('GENERAL'); // 'GENERAL' | 'FÍSICO' | 'SALUD' | 'PLANES' | 'ESTS.' | 'ASISTENCIA'
+
+  const { t, isEn } = useTranslation();
 
   // Estadísticas sincronizadas de partidos
   const effectiveTeamId = team?.id || activeTeamId;
@@ -367,50 +370,57 @@ export const PlayerProfileTab = ({ player, team, teamPath }) => {
           {/* Resumen Rápido Sincronizado */}
           <div style={{ background: 'var(--bg-card)', padding: '14px', borderRadius: '12px', display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px', textAlign: 'center', border: '1px solid var(--border-color)' }}>
             <div>
-              <span style={{ fontSize: '10px', color: 'var(--text-secondary)', textTransform: 'uppercase', fontWeight: 'bold' }}>Goles</span>
+              <span style={{ fontSize: '10px', color: 'var(--text-secondary)', textTransform: 'uppercase', fontWeight: 'bold' }}>{t('player.profile.goals')}</span>
               <div style={{ fontSize: '18px', fontWeight: '900', color: 'var(--accent-green)' }}>⚽ {playerSeasonStats.goals}</div>
             </div>
             <div>
-              <span style={{ fontSize: '10px', color: 'var(--text-secondary)', textTransform: 'uppercase', fontWeight: 'bold' }}>Minutos</span>
+              <span style={{ fontSize: '10px', color: 'var(--text-secondary)', textTransform: 'uppercase', fontWeight: 'bold' }}>{t('player.profile.minutes')}</span>
               <div style={{ fontSize: '18px', fontWeight: '900', color: 'var(--text-primary)' }}>{playerSeasonStats.minutesPlayed}'</div>
             </div>
             <div>
-              <span style={{ fontSize: '10px', color: 'var(--text-secondary)', textTransform: 'uppercase', fontWeight: 'bold' }}>Partidos</span>
-              <div style={{ fontSize: '18px', fontWeight: '900', color: 'var(--accent-gold)' }}>{playerSeasonStats.matchesPlayed} PJ</div>
+              <span style={{ fontSize: '10px', color: 'var(--text-secondary)', textTransform: 'uppercase', fontWeight: 'bold' }}>{t('player.profile.matches')}</span>
+              <div style={{ fontSize: '18px', fontWeight: '900', color: 'var(--accent-gold)' }}>{playerSeasonStats.matchesPlayed} {isEn ? 'MP' : 'PJ'}</div>
             </div>
           </div>
 
           {/* Tabla de Atributos del Jugador */}
           <div style={{ background: 'var(--bg-card)', padding: '16px', borderRadius: '12px', border: '1px solid var(--border-color)', display: 'flex', flexDirection: 'column', gap: '12px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: '10px', borderBottom: '1px dashed var(--border-color)' }}>
-              <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>Categoría</span>
-              <strong style={{ fontSize: '13px', color: 'var(--text-primary)' }}>{team?.categoria || team?.category || player?.category || 'Juvenil'}</strong>
+              <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>{t('player.profile.category')}</span>
+              <strong style={{ fontSize: '13px', color: 'var(--text-primary)' }}>{team?.categoria || team?.category || player?.category || (isEn ? 'Youth' : 'Juvenil')}</strong>
             </div>
 
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: '10px', borderBottom: '1px dashed var(--border-color)' }}>
-              <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>Pie dominante</span>
-              <strong style={{ fontSize: '13px', color: 'var(--text-primary)' }}>{player?.foot || 'Derecho'}</strong>
+              <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>{t('player.profile.foot')}</span>
+              <strong style={{ fontSize: '13px', color: 'var(--text-primary)' }}>
+                {player?.foot === 'Derecho' || player?.foot === 'Right' ? (isEn ? 'Right' : 'Derecho') :
+                 player?.foot === 'Izquierdo' || player?.foot === 'Left' ? (isEn ? 'Left' : 'Izquierdo') :
+                 player?.foot === 'Ambidiestro' || player?.foot === 'Both' ? (isEn ? 'Both' : 'Ambidiestro') : (player?.foot || (isEn ? 'Right' : 'Derecho'))}
+              </strong>
             </div>
 
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: '10px', borderBottom: '1px dashed var(--border-color)' }}>
-              <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>Posición Principal</span>
+              <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>{t('player.profile.position')}</span>
               <span style={{ background: 'var(--accent-green-light)', color: 'var(--accent-green)', padding: '3px 10px', borderRadius: '14px', fontSize: '12px', fontWeight: 'bold' }}>
                 {playerPosition}
               </span>
             </div>
 
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: '10px', borderBottom: '1px dashed var(--border-color)' }}>
-              <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>Edad</span>
+              <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>{t('player.profile.age')}</span>
               <strong style={{ fontSize: '13px', color: 'var(--text-primary)' }}>
-                {calcularEdad(player?.fechaNacimiento || player?.birthDate || player?.age).text}
+                {(() => {
+                  const calc = calcularEdad(player?.fechaNacimiento || player?.birthDate || player?.age);
+                  return calc.years ? `${calc.years} ${isEn ? 'years old' : 'años'}` : calc.text;
+                })()}
               </strong>
             </div>
 
             {/* Cuenta Vinculada */}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>Cuenta de Acceso</span>
+              <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>{t('player.profile.account')}</span>
               <span style={{ color: '#10B981', fontWeight: 'bold', fontSize: '12px', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                <Mail size={13} /> {user?.email || player?.email || 'Cuenta de Jugador'}
+                <Mail size={13} /> {user?.email || player?.email || (isEn ? 'Player Account' : 'Cuenta de Jugador')}
               </span>
             </div>
           </div>
@@ -419,11 +429,11 @@ export const PlayerProfileTab = ({ player, team, teamPath }) => {
           <div style={{ marginTop: '16px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
             <div 
               style={{ position: 'relative', width: '110px', height: '110px', borderRadius: '50%', background: 'conic-gradient(var(--accent-green) 70%, var(--accent-gold) 70% 90%, var(--border-color) 90% 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'default' }}
-              title={`Dorsal Oficial del Jugador: #${playerNumber}`}
+              title={`#${playerNumber}`}
             >
               <div style={{ width: '84px', height: '84px', borderRadius: '50%', background: 'var(--bg-card)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
                 <span style={{ fontSize: '24px', fontWeight: '900', fontFamily: 'var(--font-heading)', color: 'var(--text-primary)', lineHeight: 1 }}>{playerNumber}</span>
-                <span style={{ fontSize: '9px', fontWeight: '800', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.5px', marginTop: '2px' }}>DORSAL</span>
+                <span style={{ fontSize: '9px', fontWeight: '800', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.5px', marginTop: '2px' }}>{t('player.profile.dorsal')}</span>
               </div>
             </div>
           </div>
@@ -438,28 +448,28 @@ export const PlayerProfileTab = ({ player, team, teamPath }) => {
               <div style={{ fontSize: '20px', fontWeight: '900', color: 'var(--text-primary)' }}>
                 {player?.height || '--'} <span style={{ fontSize: '12px', fontWeight: 'bold', color: 'var(--text-secondary)' }}>cm</span>
               </div>
-              <span style={{ fontSize: '11px', color: 'var(--text-secondary)', textTransform: 'uppercase', fontWeight: 'bold' }}>Altura</span>
+              <span style={{ fontSize: '11px', color: 'var(--text-secondary)', textTransform: 'uppercase', fontWeight: 'bold' }}>{t('player.profile.height')}</span>
             </div>
 
             <div style={{ background: 'var(--bg-card)', padding: '16px 8px', borderRadius: '12px', border: '1px solid var(--border-color)', textAlign: 'center' }}>
               <div style={{ fontSize: '20px', fontWeight: '900', color: 'var(--text-primary)' }}>
                 {player?.weight || '--'} <span style={{ fontSize: '12px', fontWeight: 'bold', color: 'var(--text-secondary)' }}>kg</span>
               </div>
-              <span style={{ fontSize: '11px', color: 'var(--text-secondary)', textTransform: 'uppercase', fontWeight: 'bold' }}>Peso</span>
+              <span style={{ fontSize: '11px', color: 'var(--text-secondary)', textTransform: 'uppercase', fontWeight: 'bold' }}>{t('player.profile.weight')}</span>
             </div>
 
             <div style={{ background: 'var(--bg-card)', padding: '16px 8px', borderRadius: '12px', border: '1px solid var(--border-color)', textAlign: 'center' }}>
               <div style={{ fontSize: '20px', fontWeight: '900', color: 'var(--accent-green)' }}>
                 {(player?.weight && player?.height) ? (player.weight / Math.pow(player.height/100, 2)).toFixed(1) : '--'}
               </div>
-              <span style={{ fontSize: '11px', color: 'var(--text-secondary)', textTransform: 'uppercase', fontWeight: 'bold' }}>IMC</span>
+              <span style={{ fontSize: '11px', color: 'var(--text-secondary)', textTransform: 'uppercase', fontWeight: 'bold' }}>{t('player.profile.bmi')}</span>
             </div>
           </div>
 
           <div style={{ background: 'var(--bg-card)', padding: '16px', borderRadius: '12px', border: '1px solid var(--border-color)' }}>
-            <h4 style={{ margin: '0 0 8px 0', fontSize: '13px', fontWeight: '800', color: 'var(--text-primary)' }}>📊 Composición Corporal</h4>
+            <h4 style={{ margin: '0 0 8px 0', fontSize: '13px', fontWeight: '800', color: 'var(--text-primary)' }}>{t('player.profile.bodyComp')}</h4>
             <p style={{ margin: 0, fontSize: '12px', color: 'var(--text-secondary)', lineHeight: '1.5' }}>
-              Los parámetros antropométricos son supervisados periódicamente por el cuerpo técnico para optimizar tu rendimiento y plan de preparación física.
+              {t('player.profile.bodyCompDesc')}
             </p>
           </div>
         </div>
@@ -472,7 +482,7 @@ export const PlayerProfileTab = ({ player, team, teamPath }) => {
           <div className="hud-card wellness-card">
             <div className="hud-header">
               <div className="hud-badge">
-                <Heart size={15} color="#EF4444" /> CHECK-IN DIARIO DE BIENESTAR
+                <Heart size={15} color="#EF4444" /> {t('player.profile.wellnessCheckin')}
               </div>
               <span className="hud-status-live" style={{ color: '#34D399' }}>{todayStr}</span>
             </div>
@@ -481,13 +491,13 @@ export const PlayerProfileTab = ({ player, team, teamPath }) => {
               {wellnessSubmitted && (
                 <div className="wellness-success-banner">
                   <CheckCircle size={18} color="#10B981" />
-                  <span>¡Ya has enviado tu check-in de hoy! Puedes actualizarlo si cambian tus sensaciones.</span>
+                  <span>{t('player.profile.wellnessSent')}</span>
                 </div>
               )}
 
               {/* Pregunta 1: Sueño / Descanso */}
               <div className="wellness-question-group">
-                <label>1. ¿Cómo dormiste y qué tal descansaste? (1 = Muy mal, 5 = Excelente)</label>
+                <label>{t('player.profile.sleepQuestion')}</label>
                 <div className="scale-selector-row">
                   {[1, 2, 3, 4, 5].map((val) => (
                     <button
@@ -504,27 +514,27 @@ export const PlayerProfileTab = ({ player, team, teamPath }) => {
 
               {/* Pregunta 2: Molestias Físicas */}
               <div className="wellness-question-group">
-                <label>2. ¿Tienes alguna molestia o dolor muscular?</label>
+                <label>{t('player.profile.discomfortQuestion')}</label>
                 <div className="discomfort-toggle-row">
                   <button
                     type="button"
                     className={`discomfort-pill ${!wellnessData.hasDiscomfort ? 'active no-pain' : ''}`}
                     onClick={() => setWellnessData(prev => ({ ...prev, hasDiscomfort: false, discomfortZone: 'Ninguna' }))}
                   >
-                    🟢 Sin molestias
+                    {t('player.profile.noDiscomfort')}
                   </button>
                   <button
                     type="button"
                     className={`discomfort-pill ${wellnessData.hasDiscomfort ? 'active with-pain' : ''}`}
                     onClick={() => setWellnessData(prev => ({ ...prev, hasDiscomfort: true }))}
                   >
-                    🟡 Tengo molestias
+                    {t('player.profile.hasDiscomfort')}
                   </button>
                 </div>
 
                 {wellnessData.hasDiscomfort && (
                   <div style={{ marginTop: '10px' }}>
-                    <label style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Zona de la molestia:</label>
+                    <label style={{ fontSize: '12px', color: 'var(--text-muted)' }}>{t('player.profile.discomfortZone')}</label>
                     <select
                       value={wellnessData.discomfortZone}
                       onChange={(e) => setWellnessData(prev => ({ ...prev, discomfortZone: e.target.value }))}
@@ -540,7 +550,7 @@ export const PlayerProfileTab = ({ player, team, teamPath }) => {
 
               {/* Pregunta 3: Ánimo / Energía */}
               <div className="wellness-question-group">
-                <label>3. ¿Nivel de ánimo y energía hoy? (1 = Bajo, 5 = A tope)</label>
+                <label>{t('player.profile.moodQuestion')}</label>
                 <div className="scale-selector-row">
                   {[1, 2, 3, 4, 5].map((val) => (
                     <button
@@ -561,7 +571,7 @@ export const PlayerProfileTab = ({ player, team, teamPath }) => {
                 disabled={savingWellness}
                 style={{ background: '#10B981', minHeight: '48px', fontWeight: 800 }}
               >
-                {savingWellness ? 'Guardando...' : (wellnessSubmitted ? 'ACTUALIZAR CHECK-IN' : 'ENVIAR CHECK-IN DIARIO')}
+                {savingWellness ? (isEn ? 'Saving...' : 'Guardando...') : (wellnessSubmitted ? (isEn ? 'UPDATE CHECK-IN' : 'ACTUALIZAR CHECK-IN') : (isEn ? 'SAVE HEALTH CHECK-IN' : 'ENVIAR CHECK-IN DIARIO'))}
               </button>
             </form>
           </div>
@@ -592,7 +602,7 @@ export const PlayerProfileTab = ({ player, team, teamPath }) => {
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <Shield size={18} color="#10B981" />
-            <span style={{ fontSize: '13px', fontWeight: '800', color: 'var(--text-primary)' }}>Consentimientos Parentales (RGPD)</span>
+            <span style={{ fontSize: '13px', fontWeight: '800', color: 'var(--text-primary)' }}>{t('player.profile.consentStatus')}</span>
           </div>
           <button
             type="button"
@@ -612,7 +622,7 @@ export const PlayerProfileTab = ({ player, team, teamPath }) => {
               gap: '4px'
             }}
           >
-            <FileSignature size={14} /> Firmar / Editar
+            <FileSignature size={14} /> {t('player.profile.signConsent')}
           </button>
         </div>
       </div>
@@ -640,7 +650,7 @@ export const PlayerProfileTab = ({ player, team, teamPath }) => {
               background: 'rgba(59, 130, 246, 0.08)'
             }}
           >
-            <User size={18} /> Cambiar a Modo Entrenador
+            <User size={18} /> {t('player.profile.switchToCoach')}
           </button>
         )}
 
@@ -660,7 +670,7 @@ export const PlayerProfileTab = ({ player, team, teamPath }) => {
             fontWeight: 700
           }}
         >
-          Cerrar Sesión
+          {t('player.profile.logout')}
         </button>
 
         {/* ZONA DE PRIVACIDAD / ELIMINAR CUENTA (RGPD) */}
@@ -673,16 +683,17 @@ export const PlayerProfileTab = ({ player, team, teamPath }) => {
               border: 'none',
               color: '#EF4444',
               fontSize: '12px',
-              fontWeight: 700,
+              fontWeight: '700',
               cursor: 'pointer',
               display: 'inline-flex',
               alignItems: 'center',
               gap: '6px',
-              padding: '8px'
+              padding: '10px',
+              minHeight: '44px'
             }}
           >
-            <Trash2 size={14} color="#EF4444" />
-            <span>Eliminar mi Cuenta y Datos Definitivamente</span>
+            <Trash2 size={15} color="#EF4444" />
+            <span>{t('player.profile.deleteAccount')}</span>
           </button>
         </div>
       </div>

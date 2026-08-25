@@ -190,7 +190,16 @@ export const translations = {
     'admin.theme.dark': 'Modo Oscuro',
     'admin.notif.title': 'Notificaciones',
 
-    // ── PORTAL DEL JUGADOR (PLAYER APP) ─────────────────────
+    // ── PORTAL DEL JUGADOR — PESTAÑAS (PLAYER TABS) ─────────
+    'player.tab.general': 'GENERAL',
+    'player.tab.chat': 'CHAT',
+    'player.tab.physical': 'FÍSICO',
+    'player.tab.health': 'SALUD',
+    'player.tab.plans': 'PLANES',
+    'player.tab.attendance': 'ASISTENCIA',
+    'player.tab.settings': 'AJUSTES',
+
+    // ── PORTAL DEL JUGADOR — BARRA INFERIOR (BOTTOM NAV) ────
     'player.nav.home': 'Inicio',
     'player.nav.schedule': 'Agenda',
     'player.nav.achievements': 'Logros',
@@ -199,16 +208,22 @@ export const translations = {
     'player.nav.stats': 'Stats',
     'player.nav.profile': 'Ficha',
 
-    // Player Home Tab
+    // ── PORTAL DEL JUGADOR — INICIO (HOME TAB) ──────────────
     'player.home.nextMatch': 'Próxima Convocatoria',
-    'player.home.streak': 'Racha Actual',
-    'player.home.goals': 'Goles',
+    'player.home.streak': 'Racha de Asistencia',
+    'player.home.goals': 'Goles en Partidos',
     'player.home.closestAchievement': 'Próximo Reto',
-    'player.home.announcements': 'Muro de Comunicados',
-    'player.home.rsvpPrompt': '¿Asistirás a esta cita?',
+    'player.home.announcements': 'Comunicados del Equipo',
+    'player.home.rsvpPrompt': '¿Asistirás a esta sesión?',
     'player.home.viewDetails': 'Ver Detalles',
+    'player.home.greeting': '¡Hola, {name}! 👋',
+    'player.home.subtitle': 'Todo listo para tu próximo entrenamiento.',
+    'player.home.noUpcoming': 'No hay entrenamientos programados para los próximos días.',
+    'player.home.viewSchedule': 'Ver Calendario Completo',
+    'player.home.streakSub': '{count} consecutivas',
+    'player.home.goalsSub': '{goals} en {matches} ({minutes}\')',
 
-    // Player Schedule Tab
+    // ── PORTAL DEL JUGADOR — AGENDA (SCHEDULE TAB) ──────────
     'player.schedule.title': 'Agenda del Equipo',
     'player.schedule.training': 'ENTRENAMIENTO',
     'player.schedule.match': 'PARTIDO',
@@ -219,9 +234,27 @@ export const translations = {
     'player.schedule.rsvpConfirmed': 'Asistencia confirmada: "{status}"',
     'player.schedule.noEvents': 'No hay eventos programados para este mes.',
     'player.schedule.backToCurrentMonth': 'Volver al mes actual',
+    'player.schedule.emptyDesc': 'Tu entrenador aún no ha programado sesiones o partidos en este mes.',
+    'player.schedule.calledUp': '¡Convocado para el partido!',
+    'player.schedule.calledUpDesc': 'Has sido convocado por el cuerpo técnico. ¡Da el 100% en el campo!',
+    'player.schedule.reserve': 'Reserva / Convocatoria en espera',
+    'player.schedule.reserveDesc': 'Mantente atento por si se produce alguna vacante de última hora.',
+    'player.schedule.notCalled': 'No convocado para esta jornada',
+    'player.schedule.notCalledDesc': '¡Mucho ánimo y a seguir dándolo todo en los entrenamientos!',
+    'player.schedule.starter': '⭐ Titular',
+    'player.schedule.substitute': '🔄 Suplente',
+    'player.schedule.calledBadge': '📋 Convocado',
+    'player.schedule.noMinutes': 'Sin minutos',
+    'player.schedule.minPlayed': 'min jugados',
+    'player.schedule.coachRating': 'Nota del Míster',
+    'player.schedule.promptSelf': '¿Asistirás a esta sesión?',
+    'player.schedule.promptParent': '¿Asistirá {name} a este evento?',
 
-    // Player Achievements Tab
-    'player.achievements.title': 'Vitrina de Logros',
+    // ── PORTAL DEL JUGADOR — LOGROS (ACHIEVEMENTS TAB) ──────
+    'player.achievements.title': 'Tus Logros Deportivos',
+    'player.achievements.titleParent': 'Logros de {name}',
+    'player.achievements.season': 'Temporada 2026-27 · Fútbol Formativo',
+    'player.achievements.unlocked': 'Desbloqueados',
     'player.achievements.xpTitle': 'XP de Logros',
     'player.achievements.xpSubtitle': 'Ganada desbloqueando retos',
     'player.achievements.filterAll': 'Todos',
@@ -231,46 +264,102 @@ export const translations = {
     'player.achievements.bronzeBadge': '25 XP · Reto Semanal',
     'player.achievements.silverBadge': '50 XP · Reto Quincenal',
     'player.achievements.goldBadge': '100 XP · Hito de Temporada (Máximo)',
+    'player.achievements.completed': '¡Completado!',
+    'player.achievements.inProgress': '{percent}% completado',
+    'player.achievements.noSessions': '⏸️ Sin sesiones programadas esta semana',
 
-    // Player Chat Tab
+    // ── PORTAL DEL JUGADOR — CHAT (CHAT TAB) ────────────────
     'player.chat.title': 'Chat con el Míster',
     'player.chat.placeholder': 'Escribe un mensaje al entrenador...',
+    'player.chat.send': 'Enviar',
+    'player.chat.quickTitle': 'Mensajes Rápidos:',
     'player.chat.quickMsg.late': 'Llegaré 5 minutos tarde.',
     'player.chat.quickMsg.injury': 'Tengo una molestia muscular y no podré entrenar al 100%.',
     'player.chat.quickMsg.study': 'No podré asistir por motivos de estudio/exámenes.',
     'player.chat.quickMsg.ready': '¡Listo para el partido del fin de semana!',
 
-    // Player Stats Tab
+    // ── PORTAL DEL JUGADOR — ESTADÍSTICAS (STATS TAB) ───────
     'player.stats.title': 'Estadísticas & Rendimiento',
     'player.stats.globalXpTitle': 'XP Global',
     'player.stats.globalXpSubtitle': 'Asistencia + minutos + logros',
-    'player.stats.officialMatches': 'Partidos Oficiales',
-    'player.stats.minutesPlayed': 'Minutos Jugados',
-    'player.stats.avgRating': 'Nota Media',
+    'player.stats.officialMatches': 'PARTIDOS',
+    'player.stats.minutesPlayed': 'MINUTOS',
+    'player.stats.goals': 'GOLES',
+    'player.stats.assists': 'ASISTENCIAS',
+    'player.stats.cards': 'TARJETAS',
+    'player.stats.avgRating': 'NOTA MEDIA',
+    'player.stats.matchHistory': 'HISTORIAL DE PARTIDOS DISPUTADOS',
+    'player.stats.matchHistorySync': 'Sincronizado con actas del Míster',
+    'player.stats.noMatchesYet': 'Sin partidos registrados aún esta temporada',
+    'player.stats.noMatchesDesc': 'Tus minutos, goles y convocatorias aparecerán aquí automáticamente tras cada jornada.',
     'player.stats.leaderboardTitle': 'Leaderboard de Plantilla',
     'player.stats.leaderboardSubtitle': 'Puntuación y compromiso en el vestuario',
-    'player.stats.vsTeamTitle': 'Tú vs Promedio del Equipo',
+    'player.stats.vsTeamTitle': 'TÚ VS PROMEDIO DEL EQUIPO',
+    'player.stats.anonymousRgpd': '🔒 Datos anónimos (RGPD)',
     'player.stats.howIsMeasured': '¿Cómo se mide?',
     'player.stats.howIsMeasuredDesc': 'Las asistencias y minutos se extraen de las actas oficiales del cuerpo técnico en estricto cumplimiento del RGPD.',
-    'player.stats.radarTitle': 'Radar de Habilidades 360°',
+    'player.stats.radarTitle': 'RADAR DE HABILIDADES',
+    'player.stats.radarLevel': 'Nivel Global: {level}',
     'player.stats.howAxesMeasured': '¿Cómo se mide cada eje?',
     'player.stats.areasInZero': 'Áreas pendientes de medición',
     'player.stats.areasInZeroDesc': 'El área Mental se activa completando cuestionarios en la pestaña Tests. Las áreas Física, Técnica y Táctica se actualizan con las evaluaciones de tu entrenador.',
     'player.stats.goToTests': 'Ir a Cuestionarios',
     'player.stats.wellnessTitle': 'Bienestar Semanal (Wellness)',
     'player.stats.evolutionTitle': 'Evolución Temporal de Tests',
+    'player.stats.makeTest': 'Hacer test',
 
-    // Player Profile Tab
+    // ── PORTAL DEL JUGADOR — FICHA Y PERFIL (PROFILE TAB) ───
     'player.profile.dorsal': 'DORSAL',
     'player.profile.general': 'GENERAL',
     'player.profile.physical': 'FÍSICO',
     'player.profile.health': 'SALUD',
     'player.profile.plans': 'PLANES',
     'player.profile.attendance': 'ASISTENCIA',
+    'player.profile.goals': 'Goles',
+    'player.profile.minutes': 'Minutos',
+    'player.profile.matches': 'Partidos',
+    'player.profile.category': 'Categoría',
+    'player.profile.foot': 'Pie dominante',
+    'player.profile.position': 'Posición Principal',
+    'player.profile.age': 'Edad',
+    'player.profile.account': 'Cuenta de Acceso',
+    'player.profile.years': 'años',
+    'player.profile.height': 'Altura',
+    'player.profile.weight': 'Peso',
+    'player.profile.bmi': 'IMC',
+    'player.profile.bodyComp': '📊 Composición Corporal',
+    'player.profile.bodyCompDesc': 'Los parámetros antropométricos son supervisados periódicamente por el cuerpo técnico para optimizar tu rendimiento y plan de preparación física.',
+    'player.profile.wellnessCheckin': 'CHECK-IN DIARIO DE BIENESTAR',
+    'player.profile.wellnessSent': '¡Ya has enviado tu check-in de hoy! Puedes actualizarlo si cambian tus sensaciones.',
+    'player.profile.sleepQuestion': '1. ¿Cómo dormiste y qué tal descansaste? (1 = Muy mal, 5 = Excelente)',
+    'player.profile.discomfortQuestion': '2. ¿Tienes alguna molestia o dolor muscular?',
+    'player.profile.noDiscomfort': '🟢 Sin molestias',
+    'player.profile.hasDiscomfort': '🟡 Tengo molestias',
+    'player.profile.moodQuestion': '3. ¿Nivel de ánimo y energía hoy? (1 = Bajo, 5 = A tope)',
+    'player.profile.discomfortZone': 'Zona de la molestia:',
+    'player.profile.sendWellness': 'Guardar Check-in de Salud',
+    'player.profile.consentStatus': 'Estado de Consentimiento Parental',
+    'player.profile.consentSigned': 'Firmado y Válido',
+    'player.profile.consentPending': 'Pendiente de Firma',
+    'player.profile.signConsent': 'Firmar / Editar Consentimiento',
     'player.profile.switchToCoach': 'Cambiar a Modo Entrenador',
     'player.profile.logout': 'Cerrar Sesión',
-    'player.profile.deleteAccount': 'Eliminar Cuenta (RGPD)',
-    'player.profile.parentBadge': 'Vista Familiar / Tutor'
+    'player.profile.deleteAccount': 'Eliminar Cuenta y Datos (RGPD)',
+    'player.profile.parentBadge': 'Vista Familiar / Tutor',
+    'player.profile.activeCard': 'Ficha activa:',
+
+    // ── MODAL DE CONFIGURACIÓN DEL JUGADOR / PADRE ──────────
+    'player.settings.modalTitle': 'Configuración y Preferencias',
+    'player.settings.language': 'Idioma de la Aplicación',
+    'player.settings.theme': 'Modo Oscuro',
+    'player.settings.notifications': 'Recordatorios de Sesión',
+    'player.settings.notificationsDesc': 'Recibe notificaciones 1h antes de entrenamientos y partidos.',
+    'player.settings.installApp': 'Instalar Aplicación (PWA)',
+    'player.settings.installAppDesc': 'Añade Míster11 a tu pantalla de inicio para acceso rápido sin descargas.',
+    'player.settings.sessionTitle': 'Sesión y Cuenta',
+    'player.settings.switchModeTitle': 'Rol y Permisos',
+    'player.settings.dangerZone': 'Zona de Privacidad (RGPD)',
+    'player.settings.deleteAccountDesc': 'Elimina permanentemente tu usuario y desvincula tus datos personales.'
   },
 
   'English (EN)': {
@@ -464,7 +553,16 @@ export const translations = {
     'admin.theme.dark': 'Dark Mode',
     'admin.notif.title': 'Notifications',
 
-    // ── PLAYER APP ──────────────────────────────────────────
+    // ── PLAYER APP — SUB-TABS (PLAYER TABS) ─────────────────
+    'player.tab.general': 'GENERAL',
+    'player.tab.chat': 'CHAT',
+    'player.tab.physical': 'PHYSICAL',
+    'player.tab.health': 'HEALTH',
+    'player.tab.plans': 'PLANS',
+    'player.tab.attendance': 'ATTENDANCE',
+    'player.tab.settings': 'SETTINGS',
+
+    // ── PLAYER APP — BOTTOM NAVIGATION ──────────────────────
     'player.nav.home': 'Home',
     'player.nav.schedule': 'Schedule',
     'player.nav.achievements': 'Achievements',
@@ -473,16 +571,22 @@ export const translations = {
     'player.nav.stats': 'Stats',
     'player.nav.profile': 'Profile',
 
-    // Player Home Tab
+    // ── PLAYER APP — HOME TAB ───────────────────────────────
     'player.home.nextMatch': 'Next Call-up',
-    'player.home.streak': 'Current Streak',
-    'player.home.goals': 'Goals',
+    'player.home.streak': 'Attendance Streak',
+    'player.home.goals': 'Match Goals',
     'player.home.closestAchievement': 'Next Challenge',
-    'player.home.announcements': 'Notice Board',
-    'player.home.rsvpPrompt': 'Will you attend this event?',
+    'player.home.announcements': 'Team Notice Board',
+    'player.home.rsvpPrompt': 'Will you attend this session?',
     'player.home.viewDetails': 'View Details',
+    'player.home.greeting': 'Hello, {name}! 👋',
+    'player.home.subtitle': 'Everything set for your next training.',
+    'player.home.noUpcoming': 'No training sessions scheduled for the coming days.',
+    'player.home.viewSchedule': 'View Full Schedule',
+    'player.home.streakSub': '{count} in a row',
+    'player.home.goalsSub': '{goals} in {matches} ({minutes}\')',
 
-    // Player Schedule Tab
+    // ── PLAYER APP — SCHEDULE TAB ───────────────────────────
     'player.schedule.title': 'Team Schedule',
     'player.schedule.training': 'TRAINING',
     'player.schedule.match': 'MATCH',
@@ -493,9 +597,27 @@ export const translations = {
     'player.schedule.rsvpConfirmed': 'Attendance confirmed: "{status}"',
     'player.schedule.noEvents': 'No events scheduled for this month.',
     'player.schedule.backToCurrentMonth': 'Back to current month',
+    'player.schedule.emptyDesc': 'Your coach has not scheduled sessions or matches for this month yet.',
+    'player.schedule.calledUp': 'Called up for the match!',
+    'player.schedule.calledUpDesc': 'You have been selected by the coaching staff. Give 100% on the pitch!',
+    'player.schedule.reserve': 'Standby / Reserve list',
+    'player.schedule.reserveDesc': 'Stay tuned in case of last minute updates.',
+    'player.schedule.notCalled': 'Not called up for this match',
+    'player.schedule.notCalledDesc': 'Keep working hard in training sessions!',
+    'player.schedule.starter': '⭐ Starter',
+    'player.schedule.substitute': '🔄 Substitute',
+    'player.schedule.calledBadge': '📋 Called up',
+    'player.schedule.noMinutes': 'No minutes',
+    'player.schedule.minPlayed': 'min played',
+    'player.schedule.coachRating': 'Coach Rating',
+    'player.schedule.promptSelf': 'Will you attend this session?',
+    'player.schedule.promptParent': 'Will {name} attend this event?',
 
-    // Player Achievements Tab
-    'player.achievements.title': 'Trophy Cabinet',
+    // ── PLAYER APP — ACHIEVEMENTS TAB ───────────────────────
+    'player.achievements.title': 'Your Sporting Achievements',
+    'player.achievements.titleParent': 'Achievements of {name}',
+    'player.achievements.season': 'Season 2026-27 · Youth Football',
+    'player.achievements.unlocked': 'Unlocked',
     'player.achievements.xpTitle': 'Achievement XP',
     'player.achievements.xpSubtitle': 'Earned by completing challenges',
     'player.achievements.filterAll': 'All',
@@ -505,46 +627,102 @@ export const translations = {
     'player.achievements.bronzeBadge': '25 XP · Weekly Challenge',
     'player.achievements.silverBadge': '50 XP · Bi-weekly Challenge',
     'player.achievements.goldBadge': '100 XP · Season Milestone (Max)',
+    'player.achievements.completed': 'Completed!',
+    'player.achievements.inProgress': '{percent}% completed',
+    'player.achievements.noSessions': '⏸️ No sessions scheduled this week',
 
-    // Player Chat Tab
+    // ── PLAYER APP — CHAT TAB ───────────────────────────────
     'player.chat.title': 'Chat with Coach',
     'player.chat.placeholder': 'Type a message to your coach...',
+    'player.chat.send': 'Send',
+    'player.chat.quickTitle': 'Quick Messages:',
     'player.chat.quickMsg.late': 'I will be 5 minutes late.',
     'player.chat.quickMsg.injury': 'I have a muscle discomfort and cannot train at 100%.',
     'player.chat.quickMsg.study': 'I cannot attend due to study / exam commitments.',
     'player.chat.quickMsg.ready': 'Ready for this weekend match!',
 
-    // Player Stats Tab
+    // ── PLAYER APP — STATS TAB ──────────────────────────────
     'player.stats.title': 'Stats & Performance',
     'player.stats.globalXpTitle': 'Global XP',
     'player.stats.globalXpSubtitle': 'Attendance + minutes + achievements',
-    'player.stats.officialMatches': 'Official Matches',
-    'player.stats.minutesPlayed': 'Minutes Played',
-    'player.stats.avgRating': 'Average Rating',
+    'player.stats.officialMatches': 'MATCHES',
+    'player.stats.minutesPlayed': 'MINUTES',
+    'player.stats.goals': 'GOALS',
+    'player.stats.assists': 'ASSISTS',
+    'player.stats.cards': 'CARDS',
+    'player.stats.avgRating': 'AVG RATING',
+    'player.stats.matchHistory': 'OFFICIAL MATCH HISTORY',
+    'player.stats.matchHistorySync': 'Synced with coach match sheets',
+    'player.stats.noMatchesYet': 'No matches recorded yet this season',
+    'player.stats.noMatchesDesc': 'Your minutes, goals, and call-ups will appear here automatically after each match.',
     'player.stats.leaderboardTitle': 'Squad Leaderboard',
     'player.stats.leaderboardSubtitle': 'Score and commitment in the locker room',
-    'player.stats.vsTeamTitle': 'You vs Team Average',
+    'player.stats.vsTeamTitle': 'YOU VS TEAM AVERAGE',
+    'player.stats.anonymousRgpd': '🔒 Anonymous data (GDPR)',
     'player.stats.howIsMeasured': 'How is this measured?',
     'player.stats.howIsMeasuredDesc': 'Attendance and minutes are extracted from official match sheets in strict compliance with GDPR.',
-    'player.stats.radarTitle': '360° Skills Radar',
+    'player.stats.radarTitle': 'SKILLS RADAR',
+    'player.stats.radarLevel': 'Global Level: {level}',
     'player.stats.howAxesMeasured': 'How is each axis measured?',
     'player.stats.areasInZero': 'Areas pending measurement',
     'player.stats.areasInZeroDesc': 'The Mental area is activated by completing questionnaires in the Tests tab. Physical, Technical, and Tactical areas are updated with coach evaluations.',
-    'player.stats.goToTests': 'Go to Tests',
+    'player.stats.goToTests': 'Go to Questionnaires',
     'player.stats.wellnessTitle': 'Weekly Wellness',
     'player.stats.evolutionTitle': 'Test Evolution Over Time',
+    'player.stats.makeTest': 'Take test',
 
-    // Player Profile Tab
+    // ── PLAYER APP — PROFILE TAB ────────────────────────────
     'player.profile.dorsal': 'SQUAD NUMBER',
     'player.profile.general': 'GENERAL',
     'player.profile.physical': 'PHYSICAL',
     'player.profile.health': 'HEALTH',
     'player.profile.plans': 'PLANS',
     'player.profile.attendance': 'ATTENDANCE',
+    'player.profile.goals': 'Goals',
+    'player.profile.minutes': 'Minutes',
+    'player.profile.matches': 'Matches',
+    'player.profile.category': 'Category',
+    'player.profile.foot': 'Dominant foot',
+    'player.profile.position': 'Main Position',
+    'player.profile.age': 'Age',
+    'player.profile.account': 'Access Account',
+    'player.profile.years': 'years old',
+    'player.profile.height': 'Height',
+    'player.profile.weight': 'Weight',
+    'player.profile.bmi': 'BMI',
+    'player.profile.bodyComp': '📊 Body Composition',
+    'player.profile.bodyCompDesc': 'Anthropometric parameters are monitored periodically by the coaching staff to optimize your fitness plan.',
+    'player.profile.wellnessCheckin': 'DAILY WELLNESS CHECK-IN',
+    'player.profile.wellnessSent': 'You have already submitted today\'s check-in! You can update it if your feelings change.',
+    'player.profile.sleepQuestion': '1. How did you sleep and recover? (1 = Very poor, 5 = Excellent)',
+    'player.profile.discomfortQuestion': '2. Do you have any discomfort or muscle pain?',
+    'player.profile.noDiscomfort': '🟢 No discomfort',
+    'player.profile.hasDiscomfort': '🟡 I have discomfort',
+    'player.profile.moodQuestion': '3. Mood and energy level today? (1 = Low, 5 = Peak)',
+    'player.profile.discomfortZone': 'Discomfort zone:',
+    'player.profile.sendWellness': 'Save Health Check-in',
+    'player.profile.consentStatus': 'Parental Consent Status',
+    'player.profile.consentSigned': 'Signed and Valid',
+    'player.profile.consentPending': 'Pending Signature',
+    'player.profile.signConsent': 'Sign / Edit Consent',
     'player.profile.switchToCoach': 'Switch to Coach Mode',
     'player.profile.logout': 'Log Out',
-    'player.profile.deleteAccount': 'Delete Account (GDPR)',
-    'player.profile.parentBadge': 'Family / Guardian View'
+    'player.profile.deleteAccount': 'Delete Account & Data (GDPR)',
+    'player.profile.parentBadge': 'Family / Guardian View',
+    'player.profile.activeCard': 'Active Player:',
+
+    // ── PLAYER APP — SETTINGS MODAL ─────────────────────────
+    'player.settings.modalTitle': 'Settings & Preferences',
+    'player.settings.language': 'App Language',
+    'player.settings.theme': 'Dark Mode',
+    'player.settings.notifications': 'Session Reminders',
+    'player.settings.notificationsDesc': 'Receive reminders 1 hour before training and matches.',
+    'player.settings.installApp': 'Install App (PWA)',
+    'player.settings.installAppDesc': 'Add Mister11 to your home screen for fast native access.',
+    'player.settings.sessionTitle': 'Session & Account',
+    'player.settings.switchModeTitle': 'Role & Permissions',
+    'player.settings.dangerZone': 'Privacy Zone (GDPR)',
+    'player.settings.deleteAccountDesc': 'Permanently delete your profile and personal records.'
   }
 };
 
@@ -565,12 +743,12 @@ export const getEffectiveLanguage = (languageStr) => {
   return 'Español (ES)';
 };
 
-export const t = (key, language, replacements = {}) => {
+export const t = (key, language, replacements = {}, fallback = null) => {
   const effLang = getEffectiveLanguage(language);
   const isEn = effLang === 'English (EN)';
   
   const targetDict = isEn ? translations['English (EN)'] : translations['Español (ES)'];
-  let text = targetDict?.[key] || translations['English (EN)']?.[key] || translations['Español (ES)']?.[key] || key;
+  let text = targetDict?.[key] || translations['English (EN)']?.[key] || translations['Español (ES)']?.[key] || fallback || key;
   
   if (typeof text === 'string') {
     Object.keys(replacements).forEach(r => {

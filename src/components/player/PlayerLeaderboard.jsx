@@ -25,9 +25,14 @@ export const PlayerLeaderboard = ({
   matches = [], 
   attendance = [], 
   currentPlayerId = null,
+  team = null,
   darkMode = true 
 }) => {
   const [activeFilter, setActiveFilter] = useState('GLOBAL'); // 'GLOBAL' | 'ATTENDANCE' | 'MATCHES' | 'ACHIEVEMENTS'
+
+  // Si el míster ha desactivado el ranking para su equipo
+  const isLeaderboardDisabled = team?.hideLeaderboard === true || team?.settings?.hideLeaderboard === true;
+  const isAnonymous = team?.leaderboardAnonymous === true || team?.settings?.leaderboardAnonymous === true;
 
   // 1. Cálculo de Puntuaciones y XP de cada jugador de la plantilla
   const rankedPlayers = useMemo(() => {
@@ -35,9 +40,12 @@ export const PlayerLeaderboard = ({
 
     return players.map((p) => {
       const pId = String(p.id);
+      const isCurrent = String(pId) === String(currentPlayerId);
 
-      // Nombre de pila + Dorsal (RGPD: sin apellidos completos)
-      const firstName = (p.name || p.nombre || 'Jugador').trim().split(' ')[0];
+      // Nombre de pila + Dorsal (RGPD: sin apellidos completos; anonimizado si el míster lo configuró)
+      const firstName = isAnonymous && !isCurrent 
+        ? 'Compañero' 
+        : (p.name || p.nombre || 'Jugador').trim().split(' ')[0];
       const dorsal = p.dorsal || p.number || p.numero || '11';
       const displayName = `#${dorsal} ${firstName}`;
 
@@ -152,7 +160,7 @@ export const PlayerLeaderboard = ({
   const top2 = sortedPlayers[1];
   const top3 = sortedPlayers[2];
 
-  if (players.length === 0) return null;
+  if (players.length === 0 || isLeaderboardDisabled) return null;
 
   return (
     <div className="player-leaderboard-container">

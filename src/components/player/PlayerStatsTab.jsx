@@ -385,6 +385,7 @@ export const PlayerStatsTab = ({ player, team, teamPath, isParentView = false, o
         matches={allTeamMatches}
         attendance={allAttendance}
         currentPlayerId={effectivePlayerId}
+        team={team}
         darkMode={darkMode}
       />
 

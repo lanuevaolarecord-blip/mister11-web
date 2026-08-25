@@ -25,7 +25,9 @@ import {
   Calendar,
   CheckCircle2,
   Users,
-  ShieldCheck
+  ShieldCheck,
+  HelpCircle,
+  Info
 } from 'lucide-react';
 
 import { PlayerLeaderboard } from './PlayerLeaderboard';
@@ -59,20 +61,41 @@ export const PlayerStatsTab = ({ player, team, teamPath, isParentView = false, a
   const cleanPath = teamPath ? teamPath.replace(/^\/+|\/+$/g, '') : '';
   const effectivePlayerId = player?.id || 'player-self';
 
-  // 1. Escuchar evaluaciones canónicas de Míster11 y test_results del jugador
+  const [showComparisonHelp, setShowComparisonHelp] = useState(false);
+  const [showRadarHelp, setShowRadarHelp] = useState(false);
+
+  // 1. Escuchar evaluaciones canónicas de Míster11 y test_results de múltiples fuentes
   useEffect(() => {
     if (!cleanPath || !effectivePlayerId) return;
 
-    const evalsRef = collection(db, `${cleanPath}/evaluaciones`);
-    const unsubEvals = onSnapshot(evalsRef, (snap) => {
-      const allEvals = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-      const playerEvals = allEvals.filter(e => e.playerId === effectivePlayerId || e.players?.[effectivePlayerId]);
+    let evalsList = [];
+    let testResultsList = [];
+    let playerDirectTests = [];
+
+    const rebuildEvaluations = () => {
+      const allCombined = [...evalsList, ...testResultsList, ...playerDirectTests];
+      const seen = new Set();
+      const uniqueEvals = [];
+
+      allCombined.forEach(e => {
+        const key = e.id || `${e.testId}_${e.date}_${e.val || e.score}`;
+        if (!seen.has(key)) {
+          seen.add(key);
+          uniqueEvals.push(e);
+        }
+      });
+
+      const playerEvals = uniqueEvals.filter(e => 
+        String(e.playerId) === String(effectivePlayerId) || 
+        String(e.player?.id) === String(effectivePlayerId) || 
+        e.players?.[effectivePlayerId]
+      );
 
       const grouped = {};
       playerEvals.forEach(e => {
         const testId = e.testId || e.testName || 'test_general';
         const testName = e.testName || e.name || 'Evaluación';
-        const rawVal = e.val !== undefined ? e.val : (e.score || e.percentage || 0);
+        const rawVal = e.val !== undefined ? e.val : (e.score !== undefined ? e.score : (e.percentage || 0));
         const parsedVal = parseFloat(String(rawVal).replace(',', '.')) || 0;
         const dateStr = e.date || e.fecha || (e.createdAt?.toDate ? e.createdAt.toDate().toISOString().split('T')[0] : 'Reciente');
         const unit = e.unit || 'pts';
@@ -103,12 +126,28 @@ export const PlayerStatsTab = ({ player, team, teamPath, isParentView = false, a
       setGroupedHistory(grouped);
       setEvaluations(playerEvals);
       setLoading(false);
-    }, (err) => {
-      console.warn('Error al cargar evaluaciones:', err);
-      setLoading(false);
-    });
+    };
 
-    return () => unsubEvals();
+    const unsubEvals = onSnapshot(collection(db, `${cleanPath}/evaluaciones`), (snap) => {
+      evalsList = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      rebuildEvaluations();
+    }, () => setLoading(false));
+
+    const unsubTestResults = onSnapshot(collection(db, `${cleanPath}/test_results`), (snap) => {
+      testResultsList = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      rebuildEvaluations();
+    }, () => {});
+
+    const unsubPlayerDirect = onSnapshot(collection(db, `${cleanPath}/players/${effectivePlayerId}/test_results`), (snap) => {
+      playerDirectTests = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      rebuildEvaluations();
+    }, () => {});
+
+    return () => {
+      unsubEvals();
+      unsubTestResults();
+      unsubPlayerDirect();
+    };
   }, [cleanPath, effectivePlayerId]);
 
   // 2. Escuchar histórico de Wellness / Bienestar
@@ -266,12 +305,67 @@ export const PlayerStatsTab = ({ player, team, teamPath, isParentView = false, a
 
   const hasDiscomfortActive = wellnessHistory[0]?.hasDiscomfort;
 
-  // Radar points con datos reales de la ficha o actas
-  const rawFisico = player?.statsFisico || player?.evaluacion?.fisico || player?.fisico || 0;
-  const rawTecnica = player?.statsTecnica || player?.evaluacion?.tecnica || player?.tecnica || 0;
-  const rawTactica = player?.statsTactica || player?.evaluacion?.tactica || player?.tactica || 0;
-  const rawMental = player?.statsMental || player?.evaluacion?.mental || player?.mental || 0;
-  const rawAsistencia = teamComparison?.myAttendancePct || 0;
+  // Radar points con datos 100% reales de tests completados, evaluaciones y asistencia
+  const mentalEvals = evaluations.filter(e => 
+    e.type === 'psicosocial' || 
+    e.category?.toLowerCase().includes('mental') || 
+    e.category?.toLowerCase().includes('psico') || 
+    e.category?.toLowerCase().includes('presión') || 
+    e.category?.toLowerCase().includes('cohesión') || 
+    e.category?.toLowerCase().includes('afrontamiento') || 
+    e.category?.toLowerCase().includes('resiliencia') || 
+    e.testId?.startsWith('psi_') || 
+    e.testId?.startsWith('soc_')
+  );
+  const avgMentalTests = mentalEvals.length > 0 
+    ? Math.round(mentalEvals.reduce((s, e) => {
+        if (e.percentage !== undefined && e.percentage !== null) return s + Number(e.percentage);
+        if (e.score && e.maxScore) return s + (Number(e.score) / Number(e.maxScore)) * 100;
+        return s + (Number(e.val) || Number(e.score) || 0);
+      }, 0) / mentalEvals.length) 
+    : 0;
+  const rawMentalFicha = Number(player?.statsMental) || Number(player?.evaluacion?.mental) || Number(player?.mental) || 0;
+  const rawMental = Math.min(100, Math.max(avgMentalTests, rawMentalFicha));
+
+  const fisicoEvals = evaluations.filter(e => 
+    e.type === 'fisico' || 
+    e.category?.toLowerCase().includes('físic') || 
+    e.category?.toLowerCase().includes('resistencia') || 
+    e.category?.toLowerCase().includes('velocidad') || 
+    e.category?.toLowerCase().includes('fuerza')
+  );
+  const avgFisicoTests = fisicoEvals.length > 0 
+    ? Math.round(fisicoEvals.reduce((s, e) => s + (e.percentage !== undefined ? Number(e.percentage) : Number(e.val) || Number(e.score) || 0), 0) / fisicoEvals.length) 
+    : 0;
+  const rawFisicoFicha = Number(player?.statsFisico) || Number(player?.evaluacion?.fisico) || Number(player?.fisico) || 0;
+  const rawFisico = Math.min(100, Math.max(avgFisicoTests, rawFisicoFicha));
+
+  const tecnicaEvals = evaluations.filter(e => 
+    e.type === 'tecnico' || 
+    e.category?.toLowerCase().includes('técnic') || 
+    e.category?.toLowerCase().includes('pase') || 
+    e.category?.toLowerCase().includes('control') || 
+    e.category?.toLowerCase().includes('regate')
+  );
+  const avgTecnicaTests = tecnicaEvals.length > 0 
+    ? Math.round(tecnicaEvals.reduce((s, e) => s + (e.percentage !== undefined ? Number(e.percentage) : Number(e.val) || Number(e.score) || 0), 0) / tecnicaEvals.length) 
+    : 0;
+  const rawTecnicaFicha = Number(player?.statsTecnica) || Number(player?.evaluacion?.tecnica) || Number(player?.tecnica) || 0;
+  const rawTecnica = Math.min(100, Math.max(avgTecnicaTests, rawTecnicaFicha));
+
+  const tacticaEvals = evaluations.filter(e => 
+    e.type === 'tactico' || 
+    e.category?.toLowerCase().includes('táctic') || 
+    e.category?.toLowerCase().includes('posicion') || 
+    e.category?.toLowerCase().includes('decision')
+  );
+  const avgTacticaTests = tacticaEvals.length > 0 
+    ? Math.round(tacticaEvals.reduce((s, e) => s + (e.percentage !== undefined ? Number(e.percentage) : Number(e.val) || Number(e.score) || 0), 0) / tacticaEvals.length) 
+    : 0;
+  const rawTacticaFicha = Number(player?.statsTactica) || Number(player?.evaluacion?.tactica) || Number(player?.tactica) || 0;
+  const rawTactica = Math.min(100, Math.max(avgTacticaTests, rawTacticaFicha));
+
+  const rawAsistencia = Math.min(100, teamComparison?.myAttendancePct || 0);
 
   const hasAnyEvaluation = rawFisico > 0 || rawTecnica > 0 || rawTactica > 0 || rawMental > 0;
 
@@ -283,8 +377,10 @@ export const PlayerStatsTab = ({ player, team, teamPath, isParentView = false, a
     { label: 'ASISTENCIA', value: rawAsistencia }
   ];
 
+  const zeroMetrics = radarMetrics.filter(m => m.value === 0);
+
   const overallTPI = hasAnyEvaluation || rawAsistencia > 0
-    ? Math.round(radarMetrics.reduce((s, m) => s + m.value, 0) / radarMetrics.filter(m => m.value > 0).length || 1)
+    ? Math.round(radarMetrics.reduce((s, m) => s + m.value, 0) / (radarMetrics.filter(m => m.value > 0).length || 1))
     : 0;
 
   const svgWidth = 340;
@@ -444,14 +540,58 @@ export const PlayerStatsTab = ({ player, team, teamPath, isParentView = false, a
           padding: '16px 18px',
           marginBottom: '20px'
         }}>
-          <div className="hud-header" style={{ marginBottom: '12px' }}>
-            <span className="hud-badge" style={{ color: '#4CAF7D', borderColor: 'rgba(76, 175, 125, 0.3)' }}>
-              <Users size={14} /> TÚ VS PROMEDIO DEL EQUIPO
-            </span>
-            <span style={{ fontSize: '0.75rem', color: darkMode ? '#94A3B8' : '#475569', fontWeight: 600 }}>
-              🔒 Datos agregados y anónimos (RGPD)
-            </span>
+          <div className="hud-header" style={{ marginBottom: '12px', flexWrap: 'wrap', gap: '8px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <span className="hud-badge" style={{ color: '#4CAF7D', borderColor: 'rgba(76, 175, 125, 0.3)' }}>
+                <Users size={14} /> TÚ VS PROMEDIO DEL EQUIPO
+              </span>
+              <span style={{ fontSize: '0.75rem', color: darkMode ? '#94A3B8' : '#475569', fontWeight: 600 }}>
+                🔒 Datos anónimos (RGPD)
+              </span>
+            </div>
+            <button 
+              type="button" 
+              onClick={() => setShowComparisonHelp(!showComparisonHelp)}
+              style={{
+                background: showComparisonHelp ? 'rgba(76, 175, 125, 0.2)' : 'rgba(255, 255, 255, 0.06)',
+                border: '1px solid rgba(76, 175, 125, 0.35)',
+                color: '#4CAF7D',
+                borderRadius: '8px',
+                padding: '4px 10px',
+                fontSize: '0.72rem',
+                fontWeight: 800,
+                cursor: 'pointer',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '5px'
+              }}
+            >
+              <HelpCircle size={13} /> {showComparisonHelp ? 'Ocultar info' : '¿Cómo se mide?'}
+            </button>
           </div>
+
+          {/* Guía explicativa desplegable */}
+          {showComparisonHelp && (
+            <div style={{
+              background: darkMode ? 'rgba(0, 0, 0, 0.4)' : 'rgba(76, 175, 125, 0.08)',
+              border: '1px solid rgba(76, 175, 125, 0.3)',
+              borderRadius: '12px',
+              padding: '12px 14px',
+              marginBottom: '14px',
+              fontSize: '0.76rem',
+              color: darkMode ? '#cbd5e1' : '#1e293b',
+              lineHeight: '1.5'
+            }}>
+              <strong style={{ color: '#4CAF7D', display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '6px' }}>
+                <Info size={14} /> ¿De dónde provienen los datos y puntos XP de esta tabla?
+              </strong>
+              <ul style={{ margin: 0, paddingLeft: '18px' }}>
+                <li><strong>Asistencia:</strong> Proviene de los registros oficiales de asistencia que toma el entrenador en cada sesión. Otorga <strong>+{teamComparison.myAttendanceXP} XP</strong> directos según tu porcentaje.</li>
+                <li><strong>Partidos / Minutos:</strong> Proviene de las actas de partido y convocatorias del míster. Otorga <strong>+{teamComparison.myMatchXP} XP</strong> proporcionales a tus minutos jugados sobre el total del equipo.</li>
+                <li><strong>Media de la plantilla:</strong> Promedio agregado real del vestuario para comparar tu regularidad deportiva sin juicios negativos.</li>
+              </ul>
+            </div>
+          )}
 
           {(teamComparison.sampleSize < 3 || (!teamComparison.hasAttendanceData && !teamComparison.hasMatchData) || (teamComparison.avgAttendancePct === 0 && teamComparison.avgMinutes === 0 && teamComparison.myAttendancePct === 0 && teamComparison.myMinutes === 0)) ? (
             <div style={{
@@ -541,14 +681,62 @@ export const PlayerStatsTab = ({ player, team, teamPath, isParentView = false, a
 
       {/* 5. RADAR CHART DE COMPETENCIAS */}
       <div className="hud-card radar-stats-card" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', marginBottom: '20px' }}>
-        <div className="hud-header" style={{ width: '100%' }}>
-          <span className="hud-badge">
-            <Sparkles size={14} /> RADAR DE HABILIDADES
-          </span>
-          <span className="hud-status-live" style={{ color: '#4CAF7D', background: 'rgba(76,175,125,0.12)' }}>
-            Nivel Global: {overallTPI}
-          </span>
+        <div className="hud-header" style={{ width: '100%', flexWrap: 'wrap', gap: '8px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <span className="hud-badge">
+              <Sparkles size={14} /> RADAR DE HABILIDADES
+            </span>
+            <span className="hud-status-live" style={{ color: '#4CAF7D', background: 'rgba(76,175,125,0.12)' }}>
+              Nivel Global: {overallTPI}
+            </span>
+          </div>
+          <button 
+            type="button" 
+            onClick={() => setShowRadarHelp(!showRadarHelp)}
+            style={{
+              background: showRadarHelp ? 'rgba(201, 168, 76, 0.2)' : 'rgba(255, 255, 255, 0.06)',
+              border: '1px solid rgba(201, 168, 76, 0.35)',
+              color: '#C9A84C',
+              borderRadius: '8px',
+              padding: '4px 10px',
+              fontSize: '0.72rem',
+              fontWeight: 800,
+              cursor: 'pointer',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '5px'
+            }}
+          >
+            <HelpCircle size={13} /> {showRadarHelp ? 'Ocultar guía' : '¿Cómo se mide cada eje?'}
+          </button>
         </div>
+
+        {/* Guía explicativa del Radar */}
+        {showRadarHelp && (
+          <div style={{
+            width: '100%',
+            background: darkMode ? 'rgba(0, 0, 0, 0.4)' : 'rgba(201, 168, 76, 0.08)',
+            border: '1px solid rgba(201, 168, 76, 0.3)',
+            borderRadius: '12px',
+            padding: '12px 14px',
+            margin: '10px 0',
+            fontSize: '0.76rem',
+            color: darkMode ? '#cbd5e1' : '#1e293b',
+            textAlign: 'left',
+            lineHeight: '1.5'
+          }}>
+            <strong style={{ color: '#C9A84C', display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '6px' }}>
+              <Info size={14} /> Fuente de información de cada dimensión (0 a 100):
+            </strong>
+            <ul style={{ margin: 0, paddingLeft: '18px' }}>
+              <li><strong>Asistencia ({rawAsistencia}):</strong> Porcentaje real de asistencia a entrenamientos y citaciones.</li>
+              <li><strong>Mental ({rawMental}):</strong> Cuestionarios psicológicos (ACSI-28, MTQ-10, resiliencia) completados en el portal o valoración del entrenador.</li>
+              <li><strong>Físico ({rawFisico}):</strong> Tests de resistencia, velocidad y fuerza o nota física asignada por el cuerpo técnico.</li>
+              <li><strong>Técnica ({rawTecnica}):</strong> Control, pase, regate y finalización evaluados por el entrenador.</li>
+              <li><strong>Táctica ({rawTactica}):</strong> Posicionamiento, toma de decisiones y lectura de juego evaluados por el míster.</li>
+            </ul>
+          </div>
+        )}
 
         <div style={{ position: 'relative', width: '100%', maxWidth: `${svgWidth}px`, height: `${svgHeight}px`, margin: '10px auto' }}>
           <svg width="100%" height="100%" viewBox={`0 0 ${svgWidth} ${svgHeight}`} style={{ overflow: 'visible' }}>
@@ -629,6 +817,52 @@ export const PlayerStatsTab = ({ player, team, teamPath, isParentView = false, a
             })}
           </svg>
         </div>
+
+        {/* Banner motivacional cuando hay áreas en 0 */}
+        {zeroMetrics.length > 0 && (
+          <div style={{
+            width: '100%',
+            background: darkMode ? 'rgba(245, 158, 11, 0.08)' : 'rgba(245, 158, 11, 0.06)',
+            border: '1px solid rgba(245, 158, 11, 0.3)',
+            borderRadius: '12px',
+            padding: '12px 14px',
+            marginTop: '8px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            flexWrap: 'wrap',
+            gap: '10px',
+            textAlign: 'left'
+          }}>
+            <div style={{ flex: 1, minWidth: '200px' }}>
+              <div style={{ fontWeight: 800, fontSize: '0.78rem', color: '#F59E0B' }}>
+                💡 Áreas pendientes de medición ({zeroMetrics.map(z => z.label).join(', ')})
+              </div>
+              <p style={{ margin: '2px 0 0 0', fontSize: '0.72rem', color: darkMode ? '#94A3B8' : '#64748B' }}>
+                El área <strong>Mental</strong> se activa completando los cuestionarios en la pestaña <strong>Tests</strong>. Las áreas <strong>Física, Técnica y Táctica</strong> se actualizan cuando tu entrenador registra tus pruebas y valoraciones periódicas.
+              </p>
+            </div>
+            {onNavigateTests && (
+              <button
+                type="button"
+                onClick={onNavigateTests}
+                style={{
+                  background: '#F59E0B',
+                  color: '#000000',
+                  border: 'none',
+                  borderRadius: '8px',
+                  padding: '7px 14px',
+                  fontSize: '0.75rem',
+                  fontWeight: 800,
+                  cursor: 'pointer',
+                  whiteSpace: 'nowrap'
+                }}
+              >
+                Ir a Cuestionarios
+              </button>
+            )}
+          </div>
+        )}
       </div>
 
       {/* TARJETA DE ESTADO DE BIENESTAR Y CARGA */}

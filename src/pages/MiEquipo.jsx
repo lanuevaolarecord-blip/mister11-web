@@ -67,6 +67,8 @@ const MiEquipo = () => {
   const [activeTab, setActiveTab] = useState('GENERAL');
   const [upgradeModal, setUpgradeModal] = useState({ open: false, message: '' });
 
+  const teamPath = activeTeam?.teamPath || (activeTeamId && getTeamPath ? getTeamPath(activeTeamId) : (user?.uid && activeTeamId ? `users/${user.uid}/teams/${activeTeamId}` : ''));
+
   // Estadísticas sincronizadas con el módulo de Partidos
   const playersStatsMap = useMemo(() => allPlayersStats(players), [players, allPlayersStats]);
   const playerSeasonStats = useMemo(() => calculatePlayerMatchStats(selectedPlayer?.id, matches), [selectedPlayer?.id, matches]);

@@ -40,7 +40,7 @@ const COACH_QUICK_REPLIES = [
 ];
 
 export const PlayerChatTab = ({ teamPath, player, team, isParentView = false, isCoachView = false }) => {
-  const { user } = useAuth();
+  const { user, getTeamPath } = useAuth();
   const [messages, setMessages] = useState([]);
   const [inputText, setInputText] = useState('');
   const [sending, setSending] = useState(false);
@@ -48,33 +48,43 @@ export const PlayerChatTab = ({ teamPath, player, team, isParentView = false, is
   const messagesEndRef = useRef(null);
 
   const effectivePlayerId = player?.id || 'player-self';
-  const cleanPath = teamPath ? teamPath.replace(/^\/+|\/+$/g, '') : '';
+  
+  // Resolver una ruta segura de colección para Firestore
+  const resolvedPath = teamPath || (team?.id && getTeamPath ? getTeamPath(team.id) : (user?.uid && team?.id ? `users/${user.uid}/teams/${team.id}` : ''));
+  const cleanPath = resolvedPath ? resolvedPath.replace(/^\/+|\/+$/g, '') : '';
+  const isValidPath = cleanPath.length > 0 && cleanPath.split('/').length % 2 === 0;
+
   const quickReplies = isCoachView ? COACH_QUICK_REPLIES : PLAYER_QUICK_REPLIES;
 
   // 1. Escuchar mensajes del hilo 1:1 en tiempo real
   useEffect(() => {
-    if (!cleanPath || !effectivePlayerId) {
+    if (!isValidPath || !effectivePlayerId) {
       setLoading(false);
       return;
     }
 
-    const threadRef = collection(db, `${cleanPath}/threads/${effectivePlayerId}/messages`);
-    const q = query(threadRef, orderBy('createdAt', 'asc'));
+    try {
+      const threadRef = collection(db, `${cleanPath}/threads/${effectivePlayerId}/messages`);
+      const q = query(threadRef, orderBy('createdAt', 'asc'));
 
-    const unsub = onSnapshot(q, (snap) => {
-      const msgs = snap.docs.map(d => ({
-        id: d.id,
-        ...d.data()
-      }));
-      setMessages(msgs);
-      setLoading(false);
-    }, (err) => {
-      console.warn('[PlayerChatTab] Error escuchando mensajes:', err);
-      setLoading(false);
-    });
+      const unsub = onSnapshot(q, (snap) => {
+        const msgs = snap.docs.map(d => ({
+          id: d.id,
+          ...d.data()
+        }));
+        setMessages(msgs);
+        setLoading(false);
+      }, (err) => {
+        console.warn('[PlayerChatTab] Error escuchando mensajes:', err);
+        setLoading(false);
+      });
 
-    return () => unsub();
-  }, [cleanPath, effectivePlayerId]);
+      return () => unsub();
+    } catch (e) {
+      console.warn('[PlayerChatTab] Error iniciando listener de Firestore:', e);
+      setLoading(false);
+    }
+  }, [cleanPath, isValidPath, effectivePlayerId]);
 
   // Auto-scroll al fondo al recibir o enviar mensajes
   useEffect(() => {
@@ -83,7 +93,7 @@ export const PlayerChatTab = ({ teamPath, player, team, isParentView = false, is
 
   const handleSendMessage = async (textToSend) => {
     const text = (textToSend || inputText).trim();
-    if (!text || !cleanPath || !effectivePlayerId || !user) return;
+    if (!text || !isValidPath || !effectivePlayerId || !user) return;
 
     setSending(true);
     try {

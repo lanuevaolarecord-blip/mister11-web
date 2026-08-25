@@ -1,19 +1,12 @@
-#!/usr/bin/env node
-/**
- * scripts/check-i18n.js
- * Puerta de calidad permanente de Internacionalización (i18n) para Míster11.
- * Valida paridad exacta al 100% entre traducciones 'Español (ES)' y 'English (EN)'.
- */
-
-import { readFileSync } from 'fs';
-import { resolve, dirname } from 'path';
+import { readFileSync, readdirSync, statSync } from 'fs';
+import { resolve, dirname, join } from 'path';
 import { fileURLToPath } from 'url';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 const translationsFilePath = resolve(__dirname, '../src/i18n/translations.js');
-const translationsFileContent = readFileSync(translationsFilePath, 'utf-8');
+const srcDirPath = resolve(__dirname, '../src');
 
 // Extraer dinámicamente el objeto de traducciones
 async function loadTranslations() {
@@ -51,8 +44,53 @@ function getValueByPath(obj, path) {
   return curr;
 }
 
+function getAllFiles(dir, exts = ['.js', '.jsx']) {
+  let files = [];
+  const items = readdirSync(dir);
+  for (const item of items) {
+    const fullPath = join(dir, item);
+    const stat = statSync(fullPath);
+    if (stat.isDirectory()) {
+      files = files.concat(getAllFiles(fullPath, exts));
+    } else if (exts.some(ext => item.endsWith(ext))) {
+      files.push(fullPath);
+    }
+  }
+  return files;
+}
+
+function extractUsedKeysFromCode() {
+  const files = getAllFiles(srcDirPath);
+  const usedKeys = new Map(); // key -> [files]
+  
+  // Regex para t('key'), tr('key'), labelKey: 'key', nameKey: 'key', descKey: 'key', periodKey: 'key'
+  const regexes = [
+    /\b(?:t|tr)\(\s*['"]([a-zA-Z0-9_.-]+)['"]/g,
+    /\b(?:labelKey|nameKey|descKey|periodKey)\s*:\s*['"]([a-zA-Z0-9_.-]+)['"]/g
+  ];
+
+  for (const file of files) {
+    if (file === translationsFilePath) continue;
+    const content = readFileSync(file, 'utf-8');
+    for (const regex of regexes) {
+      let match;
+      while ((match = regex.exec(content)) !== null) {
+        const key = match[1];
+        // Filtrar strings que claramente no son claves i18n
+        if (key.includes('.') || key.startsWith('nav.') || key.startsWith('btn.') || key.startsWith('common.')) {
+          if (!usedKeys.has(key)) {
+            usedKeys.set(key, []);
+          }
+          usedKeys.get(key).push(file.replace(srcDirPath, 'src'));
+        }
+      }
+    }
+  }
+  return usedKeys;
+}
+
 async function runCheck() {
-  console.log('🔍 [i18n-check] Verificando paridad simétrica de traducciones en Míster11...');
+  console.log('🔍 [i18n-check] Verificando paridad simétrica y uso de claves en Míster11...');
   
   const translations = await loadTranslations();
   
@@ -103,17 +141,36 @@ async function runCheck() {
     }
   }
 
+  // Comprobación de claves utilizadas en código que faltan en el diccionario
+  const usedKeys = extractUsedKeysFromCode();
+  const missingInDictionary = [];
+  for (const [key, files] of usedKeys.entries()) {
+    if (!esSet.has(key)) {
+      missingInDictionary.push({ key, files: Array.from(new Set(files)) });
+    }
+  }
+
+  if (missingInDictionary.length > 0) {
+    console.error(`\n❌ Se encontraron ${missingInDictionary.length} claves utilizadas en el código que NO existen en translations.js:`);
+    missingInDictionary.forEach(({ key, files }) => {
+      console.error(`   - "${key}" (en: ${files.join(', ')})`);
+    });
+    hasErrors = true;
+  }
+
   console.log(`\n📊 Resumen de Auditoría i18n:`);
   console.log(`   - Claves en Español (ES): ${esKeys.length}`);
   console.log(`   - Claves en Inglés (EN):  ${enKeys.length}`);
-  console.log(`   - Paridad simétrica:     ${esKeys.length === enKeys.length && !hasErrors ? '100% PERFECTA ✅' : 'DESIGUAL ❌'}`);
+  console.log(`   - Claves utilizadas en código: ${usedKeys.size}`);
+  console.log(`   - Claves faltantes en código:  ${missingInDictionary.length}`);
+  console.log(`   - Paridad simétrica:     ${esKeys.length === enKeys.length && !hasErrors ? '100% PERFECTA ✅' : 'CON ERRORES ❌'}`);
   console.log(`   - Variables interpoladas:${placeholderMismatches === 0 ? ' Consistentes ✅' : ` ${placeholderMismatches} advertencias ⚠️`}`);
 
   if (hasErrors) {
     console.error('\n❌ La verificación de i18n ha fallado. Revisa las claves faltantes arriba.\n');
     process.exit(1);
   } else {
-    console.log('\n✨ ¡Paridad i18n 100% verificada con éxito! Ninguna clave huérfana.\n');
+    console.log('\n✨ ¡Paridad i18n 100% verificada con éxito! Cero claves huérfanas en el código.\n');
     process.exit(0);
   }
 }
@@ -122,3 +179,4 @@ runCheck().catch(err => {
   console.error('Error ejecutando check-i18n:', err);
   process.exit(1);
 });
+

@@ -49,6 +49,7 @@ import EscudoEquipo from '../components/EscudoEquipo';
 import RedeemCode from '../components/RedeemCode';
 import ClubManagement from '../components/ClubManagement';
 import UpgradeModal from '../components/UpgradeModal';
+import ExerciseLibrary from '../components/ExerciseLibrary';
 import { normalizeEmail } from '../utils/normalizeEmail';
 import './AdminPanel.css';
 

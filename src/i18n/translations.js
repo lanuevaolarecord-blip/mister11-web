@@ -210,6 +210,7 @@ export const translations = {
     // ── Pestañas de Módulos del Entrenador ──────────────────
     'equipo.tab.squad': 'Plantilla',
     'equipo.tab.attendance': 'Asistencia',
+    'equipo.tab.staff': 'Cuerpo Técnico',
     'partidos.tab.lista': 'Partidos',
     'partidos.tab.analisis': 'Análisis',
     'plan.tab.macrociclo': 'Macrociclo',
@@ -775,6 +776,7 @@ export const translations = {
     // ── Coach Module Tabs ───────────────────────────────────
     'equipo.tab.squad': 'Squad',
     'equipo.tab.attendance': 'Attendance',
+    'equipo.tab.staff': 'Coaching Staff',
     'partidos.tab.lista': 'Matches',
     'partidos.tab.analisis': 'Analysis',
     'plan.tab.macrociclo': 'Macrocycle',
@@ -1140,10 +1142,7 @@ export const getEffectiveLanguage = (languageStr) => {
     if (saved === 'Español (ES)' || saved === 'es') return 'Español (ES)';
   } catch (_) {}
 
-  const sysLang = typeof navigator !== 'undefined' ? (navigator.language || navigator.userLanguage || '') : '';
-  if (sysLang && sysLang.toLowerCase().startsWith('en')) {
-    return 'English (EN)';
-  }
+  // Por defecto en Míster11 es Español (ES) a menos que el usuario seleccione Inglés
   return 'Español (ES)';
 };
 

@@ -285,19 +285,23 @@ export const PlayerLeaderboard = ({
       {/* PODIO TOP 3 ESTILO ESPORTS */}
       <div className="leaderboard-podium-section">
         {top2 && (
-          <div className="podium-pillar rank-2">
+          <div className={`podium-column rank-2 ${top2.isCurrent ? 'is-me' : ''}`}>
             <div className="podium-avatar-container">
               <div className="crown-spacer" />
-              <div className="podium-avatar-circle" style={{ borderColor: '#B0BEC5' }}>
-                <span className="player-dorsal-tag">#{top2.dorsal}</span>
+              <div className="podium-dorsal silver-ring">
+                {top2.photoUrl ? (
+                  <img src={top2.photoUrl} alt={top2.firstName} className="podium-avatar-img" />
+                ) : (
+                  <span>#{top2.dorsal}</span>
+                )}
               </div>
               <div className="podium-medal-pill silver">
                 <span>🥈 2º</span>
               </div>
             </div>
-            <div className="podium-info">
-              <span className="player-podium-name">{top2.firstName}</span>
-              <span className="player-podium-val">
+            <div className="podium-info-box">
+              <span className="podium-player-name">{top2.firstName}</span>
+              <span className="podium-stat-val">
                 {activeFilter === 'ATTENDANCE' ? `${top2.attendancePct}%` :
                  activeFilter === 'MATCHES' ? `${top2.totalMinutes}'` :
                  activeFilter === 'ACHIEVEMENTS' ? `${top2.achievementsCount} 🏆` :
@@ -311,19 +315,23 @@ export const PlayerLeaderboard = ({
         )}
 
         {top1 && (
-          <div className="podium-pillar rank-1">
+          <div className={`podium-column rank-1 ${top1.isCurrent ? 'is-me' : ''}`}>
             <div className="podium-avatar-container">
               <span className="crown-icon">👑</span>
-              <div className="podium-avatar-circle gold-halo" style={{ borderColor: '#C9A84C' }}>
-                <span className="player-dorsal-tag">#{top1.dorsal}</span>
+              <div className="podium-dorsal gold-ring">
+                {top1.photoUrl ? (
+                  <img src={top1.photoUrl} alt={top1.firstName} className="podium-avatar-img" />
+                ) : (
+                  <span>#{top1.dorsal}</span>
+                )}
               </div>
               <div className="podium-medal-pill gold">
                 <span>🥇 1º</span>
               </div>
             </div>
-            <div className="podium-info">
-              <span className="player-podium-name">{top1.firstName}</span>
-              <span className="player-podium-val gold">
+            <div className="podium-info-box">
+              <span className="podium-player-name gold-name">{top1.firstName}</span>
+              <span className="podium-stat-val gold-stat">
                 {activeFilter === 'ATTENDANCE' ? `${top1.attendancePct}%` :
                  activeFilter === 'MATCHES' ? `${top1.totalMinutes}'` :
                  activeFilter === 'ACHIEVEMENTS' ? `${top1.achievementsCount} 🏆` :
@@ -337,19 +345,23 @@ export const PlayerLeaderboard = ({
         )}
 
         {top3 && (
-          <div className="podium-pillar rank-3">
+          <div className={`podium-column rank-3 ${top3.isCurrent ? 'is-me' : ''}`}>
             <div className="podium-avatar-container">
               <div className="crown-spacer" />
-              <div className="podium-avatar-circle" style={{ borderColor: '#CD7F32' }}>
-                <span className="player-dorsal-tag">#{top3.dorsal}</span>
+              <div className="podium-dorsal bronze-ring">
+                {top3.photoUrl ? (
+                  <img src={top3.photoUrl} alt={top3.firstName} className="podium-avatar-img" />
+                ) : (
+                  <span>#{top3.dorsal}</span>
+                )}
               </div>
               <div className="podium-medal-pill bronze">
                 <span>🥉 3º</span>
               </div>
             </div>
-            <div className="podium-info">
-              <span className="player-podium-name">{top3.firstName}</span>
-              <span className="player-podium-val">
+            <div className="podium-info-box">
+              <span className="podium-player-name">{top3.firstName}</span>
+              <span className="podium-stat-val">
                 {activeFilter === 'ATTENDANCE' ? `${top3.attendancePct}%` :
                  activeFilter === 'MATCHES' ? `${top3.totalMinutes}'` :
                  activeFilter === 'ACHIEVEMENTS' ? `${top3.achievementsCount} 🏆` :

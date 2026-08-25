@@ -260,6 +260,38 @@ export const resolveTestImage = (t) => {
   return '/img/tests/bienestar_general.png';
 };
 
+// Clasificación estricta e infalible de pruebas psicosociales vs físicas
+export const isPsychosocialTest = (t) => {
+  if (!t) return false;
+  const idStr = (t.id || '').toLowerCase();
+  const nameStr = (t.name || t.nombre || '').toLowerCase();
+  const catStr = (t.category || t.categoria || '').toLowerCase();
+  const typeStr = (t.type || '').toLowerCase();
+
+  const psychoTypes = ['psicodeportivo', 'psicosocial', 'sociodeportivo', 'socioemocional', 'psicologico'];
+  if (psychoTypes.includes(typeStr)) return true;
+  if (t.isQuestionnaire || (Array.isArray(t.questions) && t.questions.length > 0) || t.isAutonomous) return true;
+
+  const psychoKeywords = [
+    'psi', 'soc', 'acsi', 'goal', 'meta', 'mtq', 'ires', 'geq', 'eced', 'gets', 'cwms', 'mhc',
+    'afrontamiento', 'resiliencia', 'cohesión', 'cohesion', 'bienestar', 'ansiedad',
+    'concentración', 'concentracion', 'empatía', 'empatia', 'conflicto', 'limpio'
+  ];
+  return psychoKeywords.some(kw => idStr.includes(kw) || nameStr.includes(kw) || catStr.includes(kw));
+};
+
+export const isPhysicalTest = (t) => {
+  if (!t) return false;
+  if (isPsychosocialTest(t)) return false;
+  const typeStr = (t.type || '').toLowerCase();
+  if (typeStr === 'fisico') return true;
+  const idStr = (t.id || '').toLowerCase();
+  const nameStr = (t.name || t.nombre || '').toLowerCase();
+  const catStr = (t.category || t.categoria || '').toLowerCase();
+  const physKeywords = ['resistencia', 'velocidad', 'agilidad', 'fuerza', 'técnica', 'tecnica', 'cooper', 'sprint', 'salto', 'cmj', 't_test', 't-test', 'navette', 'conos', 'pase'];
+  return physKeywords.some(kw => idStr.includes(kw) || nameStr.includes(kw) || catStr.includes(kw)) || typeStr === '' || !t.type;
+};
+
 const Tests = () => {
   const navigate = useNavigate();
   const { user, activeTeamId, getTeamPath } = useAuth();
@@ -983,18 +1015,18 @@ const Tests = () => {
 
         <div className="tests-tabs">
           {[
-            { key: 'FÍSICOS',                labelKey: 'tests.tab.fisicos' },
-            { key: 'PSICOSOCIALES',          labelKey: 'tests.tab.psicosociales' },
-            { key: 'PREVENCIÓN',            labelKey: 'tests.tab.prevencion' },
-            { key: 'HISTORIAL POR JUGADOR',  labelKey: 'tests.tab.historial' },
-            { key: 'COMPARATIVA EQUIPO',     labelKey: 'tests.tab.comparativa' },
+            { key: 'FÍSICOS',                labelKey: 'tests.tab.fisicos',      fallback: 'Tests Físicos' },
+            { key: 'PSICOSOCIALES',          labelKey: 'tests.tab.psicosociales', fallback: 'Psicosociales' },
+            { key: 'PREVENCIÓN',            labelKey: 'tests.tab.prevencion',    fallback: 'Prevención y Salud' },
+            { key: 'HISTORIAL POR JUGADOR',  labelKey: 'tests.tab.historial',     fallback: 'Historial' },
+            { key: 'COMPARATIVA EQUIPO',     labelKey: 'tests.tab.comparativa',   fallback: 'Comparativa' },
           ].map(tab => (
             <button 
               key={tab.key} 
               className={`tests-tab ${activeTab === tab.key ? 'active' : ''}`}
               onClick={() => setActiveTab(tab.key)}
             >
-              {tr(tab.labelKey)}
+              {tr(tab.labelKey, {}, tab.fallback)}
             </button>
           ))}
         </div>
@@ -1011,10 +1043,8 @@ const Tests = () => {
             
             <div className="grid-3-cols">
               {tests.filter(t => {
-                if (activeTab === 'FÍSICOS') return (t.type === 'fisico' || !t.type) && (!DEFAULT_IDS.includes(t.id) || ['t1','t3','t4','t5','t6','t7','t8'].includes(t.id));
-                if (activeTab === 'PSICOSOCIALES') return [
-                  'psicodeportivo','psicosocial','sociodeportivo','socioemocional'
-                ].includes(t.type) && (!DEFAULT_IDS.includes(t.id) || ['psi1','psi2','psi3','soc1','soc2','psi_acsi28','psi_ires','psi_gets','soc_cwms','soc_eced','soc_edl'].includes(t.id));
+                if (activeTab === 'FÍSICOS') return isPhysicalTest(t);
+                if (activeTab === 'PSICOSOCIALES') return isPsychosocialTest(t);
                 return false;
               }).map(t => (
                 <div key={t.id} className="card-base" style={{ padding: '0', cursor: 'pointer', display: 'flex', flexDirection: 'column' }} onClick={() => setSelectedTestDetail(t)}>

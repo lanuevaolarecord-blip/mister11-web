@@ -359,7 +359,7 @@ const MiEquipo = () => {
             onClick={() => setMainTeamTab('staff')}
           >
             <span>🛡️</span>
-            <span>Cuerpo Técnico</span>
+            <span>{t('equipo.tab.staff') || 'Cuerpo Técnico'}</span>
           </button>
         </div>
 

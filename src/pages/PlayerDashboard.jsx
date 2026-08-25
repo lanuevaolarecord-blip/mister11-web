@@ -372,7 +372,7 @@ const PlayerDashboard = () => {
           </span>
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+        <div className="player-topbar-actions">
           {/* Botón de Configuración y Ajustes */}
           <button 
             type="button" 

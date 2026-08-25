@@ -1,3 +1,5 @@
+import React from 'react';
+import { Home, Calendar, Trophy, MessageSquare, BarChart2, User } from 'lucide-react';
 import { useTranslation } from '../../hooks/useTranslation';
 import './PlayerBottomNav.css';
 

@@ -1,5 +1,5 @@
 /* ==============================================================================
-   ESTILOS: PLANES INDIVIDUALES DEL JUGADOR
+   ESTILOS: PLANES INDIVIDUALES DEL JUGADOR CON GUÍA TÉCNICA DIGITAL
    ============================================================================== */
 
 .player-plans-portal-tab {
@@ -9,15 +9,15 @@
 }
 
 .plan-summary-card {
-  background: linear-gradient(135deg, rgba(16, 185, 129, 0.12) 0%, rgba(18, 26, 21, 0.95) 100%);
-  border-color: rgba(16, 185, 129, 0.3);
+  background: linear-gradient(135deg, rgba(76, 175, 125, 0.12) 0%, rgba(18, 26, 21, 0.95) 100%);
+  border-color: rgba(76, 175, 125, 0.3);
 }
 
 .plan-count-badge {
   font-size: 11px;
   font-weight: 800;
-  color: #10B981;
-  background: rgba(16, 185, 129, 0.15);
+  color: #4CAF7D;
+  background: rgba(76, 175, 125, 0.15);
   padding: 3px 8px;
   border-radius: 6px;
 }
@@ -65,6 +65,7 @@
 .empty-plans-card h3 {
   margin: 4px 0 0 0;
   font-size: 1.25rem;
+  font-weight: 800;
   color: var(--text-primary, #ffffff);
 }
 
@@ -85,7 +86,7 @@
 .player-plan-item-card {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 12px;
 }
 
 .plan-item-top {
@@ -100,22 +101,25 @@
   gap: 6px;
   font-size: 11px;
   font-weight: 800;
-  color: #10B981;
-  background: rgba(16, 185, 129, 0.12);
-  padding: 3px 8px;
-  border-radius: 6px;
+  color: #4CAF7D;
+  background: rgba(76, 175, 125, 0.12);
+  padding: 4px 10px;
+  border-radius: 8px;
 }
 
 .plan-date-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
   font-size: 11px;
   font-weight: 700;
   color: var(--text-secondary, #94a3b8);
 }
 
 .plan-item-title {
-  margin: 2px 0 0 0;
+  margin: 0;
   font-size: 1.15rem;
-  font-weight: 800;
+  font-weight: 900;
   color: var(--text-primary, #ffffff);
 }
 
@@ -127,11 +131,10 @@
 }
 
 .coach-feedback-box {
-  background: rgba(16, 185, 129, 0.06);
-  border-left: 3px solid #10B981;
+  background: rgba(76, 175, 125, 0.08);
+  border-left: 3px solid #4CAF7D;
   border-radius: 8px;
   padding: 10px 14px;
-  margin-top: 4px;
 }
 
 .feedback-title {
@@ -140,7 +143,7 @@
   gap: 6px;
   font-size: 11px;
   font-weight: 800;
-  color: #10B981;
+  color: #4CAF7D;
   text-transform: uppercase;
   margin-bottom: 4px;
 }
@@ -154,8 +157,7 @@
 
 .plan-exercises-section {
   border-top: 1px solid var(--border-color, rgba(255, 255, 255, 0.08));
-  padding-top: 12px;
-  margin-top: 6px;
+  padding-top: 14px;
 }
 
 .exercises-header-row {
@@ -170,39 +172,52 @@
   font-weight: 800;
   color: var(--text-secondary, #94a3b8);
   text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
 .exercises-counter {
-  font-size: 11px;
+  font-size: 11.5px;
   font-weight: 800;
-  color: #10B981;
+  color: #4CAF7D;
 }
 
 .exercises-checklist {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 10px;
+}
+
+.exercise-card-wrapper {
+  display: flex;
+  flex-direction: column;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid var(--border-light, rgba(255, 255, 255, 0.1));
 }
 
 .exercise-check-row {
   display: flex;
   align-items: center;
   gap: 12px;
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid var(--border-color, rgba(255, 255, 255, 0.08));
-  border-radius: 10px;
-  padding: 10px 12px;
+  background: var(--bg-card, rgba(255, 255, 255, 0.03));
+  padding: 12px;
   cursor: pointer;
   transition: all 0.15s ease;
+  min-height: 52px;
+}
+
+html.dark .exercise-check-row,
+.dark .exercise-check-row {
+  background: #111B15 !important;
 }
 
 .exercise-check-row:hover {
-  background: rgba(255, 255, 255, 0.06);
+  background: rgba(76, 175, 125, 0.06);
 }
 
 .exercise-check-row.done {
-  background: rgba(16, 185, 129, 0.1);
-  border-color: rgba(16, 185, 129, 0.35);
+  background: rgba(76, 175, 125, 0.12) !important;
+  border-left: 4px solid #4CAF7D;
 }
 
 .check-btn {
@@ -213,49 +228,182 @@
   align-items: center;
   justify-content: center;
   cursor: pointer;
+  min-width: 28px;
 }
 
-.exercise-info {
+.exercise-info-block {
   display: flex;
   flex-direction: column;
   flex: 1;
+  gap: 3px;
 }
 
-.exercise-name {
-  font-size: 13px;
-  font-weight: 700;
+.exercise-name-txt {
+  font-size: 13.5px;
+  font-weight: 800;
   color: var(--text-primary, #ffffff);
 }
 
-.exercise-check-row.done .exercise-name {
+.exercise-check-row.done .exercise-name-txt {
   text-decoration: line-through;
-  color: var(--text-secondary, #94a3b8);
+  opacity: 0.8;
 }
 
-.exercise-meta {
+.exercise-badges-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.exercise-dos-pill {
   font-size: 11px;
+  font-weight: 700;
+  color: #C9A84C;
+  background: rgba(201, 168, 76, 0.12);
+  padding: 2px 6px;
+  border-radius: 6px;
+}
+
+.exercise-cat-pill {
+  font-size: 10.5px;
+  font-weight: 600;
   color: var(--text-secondary, #94a3b8);
-  margin-top: 1px;
 }
 
-/* HIGH CONTRAST EN MODO CLARO */
-.player-dashboard-root.theme-light .plan-stat-item {
-  background: rgba(27, 58, 45, 0.05);
-  border: 1px solid rgba(27, 58, 45, 0.08);
+.btn-guide-toggle {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: rgba(76, 175, 125, 0.1);
+  border: 1px solid rgba(76, 175, 125, 0.25);
+  color: #4CAF7D;
+  padding: 6px 10px;
+  border-radius: 8px;
+  font-size: 11.5px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  min-height: 48px;
+  touch-action: manipulation;
 }
 
-.player-dashboard-root.theme-light .exercise-check-row {
-  background: #FFFFFF;
-  border-color: rgba(27, 58, 45, 0.12);
-  box-shadow: 0 2px 6px rgba(27, 58, 45, 0.04);
+.btn-guide-toggle:hover,
+.btn-guide-toggle.open {
+  background: #4CAF7D;
+  color: #FFFFFF;
 }
 
-.player-dashboard-root.theme-light .exercise-check-row.done {
-  background: rgba(16, 185, 129, 0.12);
-  border-color: rgba(16, 185, 129, 0.4);
+/* Panel Desplegable de la Guía Digital */
+.exercise-digital-guide-panel {
+  background: rgba(0, 0, 0, 0.35);
+  border-top: 1px dashed rgba(76, 175, 125, 0.25);
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
 }
 
-.player-dashboard-root.theme-light .coach-feedback-box {
-  background: rgba(16, 185, 129, 0.08);
+html.dark .exercise-digital-guide-panel,
+.dark .exercise-digital-guide-panel {
+  background: #0D1611 !important;
 }
+
+.guide-section-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 800;
+  color: #4CAF7D;
+  text-transform: uppercase;
+  margin-bottom: 6px;
+}
+
+.guide-steps-list {
+  margin: 0;
+  padding-left: 20px;
+  font-size: 12.5px;
+  color: var(--text-primary, #ffffff);
+  line-height: 1.5;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.guide-tips-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-top: 4px;
+}
+
+@media (max-width: 600px) {
+  .guide-tips-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.guide-tip-box {
+  padding: 10px 12px;
+  border-radius: 8px;
+  font-size: 11.5px;
+  line-height: 1.4;
+}
+
+.guide-tip-box.posture {
+  background: rgba(201, 168, 76, 0.08);
+  border-left: 3px solid #C9A84C;
+}
+
+.guide-tip-box.prevention {
+  background: rgba(76, 175, 125, 0.08);
+  border-left: 3px solid #4CAF7D;
+}
+
+.tip-box-title {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-weight: 800;
+  margin-bottom: 2px;
+}
+
+.guide-tip-box.posture .tip-box-title {
+  color: #C9A84C;
+}
+
+.guide-tip-box.prevention .tip-box-title {
+  color: #4CAF7D;
+}
+
+.guide-tip-box p {
+  margin: 0;
+  color: var(--text-primary, #ffffff);
+}
+
+/* Modo Claro High Contrast */
+.theme-light .exercise-check-row,
+html:not(.dark) .exercise-check-row {
+  background: #FFFFFF !important;
+  border-color: #E2E8F0 !important;
+}
+
+.theme-light .exercise-name-txt,
+html:not(.dark) .exercise-name-txt {
+  color: #0F172A !important;
+}
+
+.theme-light .guide-steps-list,
+html:not(.dark) .guide-steps-list,
+.theme-light .guide-tip-box p,
+html:not(.dark) .guide-tip-box p {
+  color: #1E293B !important;
+}
+
+.theme-light .exercise-digital-guide-panel,
+html:not(.dark) .exercise-digital-guide-panel {
+  background: #F8FAFC !important;
+}
+
 

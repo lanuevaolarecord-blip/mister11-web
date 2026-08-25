@@ -13,6 +13,7 @@ import { usePlayers } from '../hooks/usePlayers';
 import { useSessions } from '../hooks/useSessions';
 import { useMatches } from '../hooks/useMatches';
 import { usePlan } from '../hooks/usePlan';
+import { useTeamMembers } from '../hooks/useTeamMembers';
 import { requestNotificationPermission } from '../hooks/useLocalNotifications';
 import { 
   Users, 
@@ -53,7 +54,7 @@ import './AdminPanel.css';
 const AdminPanel = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { t: tr } = useTranslation();
+  const { t: tr, setLanguage: setGlobalLanguage, language: currentGlobalLanguage } = useTranslation();
   const [activeTab, setActiveTab] = useState(location.state?.activeTab || 'equipos');
   const [backfilling, setBackfilling] = useState(false);
 
@@ -441,8 +442,6 @@ const AdminPanel = () => {
       showToast("Error al actualizar identidad del equipo.", "error");
     }
   };
-
-  const { setLanguage: setGlobalLanguage, language: currentGlobalLanguage } = useTranslation();
 
   const toggleSetting = async (key, val = null) => {
     const newValue = val !== null ? val : !prefData[key];

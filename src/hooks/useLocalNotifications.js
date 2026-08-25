@@ -15,19 +15,89 @@ const getPlugin = async () => {
 };
 
 /**
+ * Reproduce un tono de notificación armónico audible en el dispositivo.
+ * Usa Web Audio API (compatible con todos los móviles Android, iOS y navegadores).
+ */
+export const playNotificationSound = () => {
+  try {
+    const AudioContext = window.AudioContext || window.webkitAudioContext;
+    if (!AudioContext) return;
+    const ctx = new AudioContext();
+
+    // Tono doble agradable estilo mensajería (D5: 587.33Hz -> A5: 880Hz)
+    const now = ctx.currentTime;
+
+    const osc1 = ctx.createOscillator();
+    const gain1 = ctx.createGain();
+    osc1.type = 'sine';
+    osc1.frequency.setValueAtTime(587.33, now);
+    gain1.gain.setValueAtTime(0.25, now);
+    gain1.gain.exponentialRampToValueAtTime(0.01, now + 0.12);
+    osc1.connect(gain1);
+    gain1.connect(ctx.destination);
+    osc1.start(now);
+    osc1.stop(now + 0.12);
+
+    const osc2 = ctx.createOscillator();
+    const gain2 = ctx.createGain();
+    osc2.type = 'sine';
+    osc2.frequency.setValueAtTime(880, now + 0.1);
+    gain2.gain.setValueAtTime(0.3, now + 0.1);
+    gain2.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
+    osc2.connect(gain2);
+    gain2.connect(ctx.destination);
+    osc2.start(now + 0.1);
+    osc2.stop(now + 0.35);
+
+    // Vibración háptica en dispositivos móviles compatibles
+    if (typeof navigator !== 'undefined' && navigator.vibrate) {
+      navigator.vibrate([100, 50, 100]);
+    }
+  } catch (e) {
+    console.warn('[LocalNotifications] Error reproduciendo tono sonoro:', e);
+  }
+};
+
+/**
  * Solicita permisos de notificación al usuario (solo la primera vez).
+ * Registra también el canal de notificaciones con sonido en Android.
  * @returns {boolean} true si se concedieron
  */
 export const requestNotificationPermission = async () => {
   const plugin = await getPlugin();
-  if (!plugin) return false;
-  try {
-    const { display } = await plugin.requestPermissions();
-    return display === 'granted';
-  } catch (e) {
-    console.warn('[LocalNotifications] Error al solicitar permisos:', e);
-    return false;
+  if (plugin) {
+    try {
+      // Crear canal de alta prioridad con sonido en Android
+      await plugin.createChannel({
+        id: 'mister11_chat_channel',
+        name: 'Mensajes y Avisos Míster11',
+        description: 'Notificaciones con sonido de mensajes de chat y convocatorias',
+        importance: 5, // MAX importance (pantalla y sonido)
+        visibility: 1, // PUBLIC
+        sound: 'default',
+        vibration: true,
+        lights: true,
+        lightColor: '#10B981'
+      });
+
+      const { display } = await plugin.requestPermissions();
+      return display === 'granted';
+    } catch (e) {
+      console.warn('[LocalNotifications] Error al solicitar permisos:', e);
+      return false;
+    }
   }
+
+  // Web Notification API
+  if (typeof window !== 'undefined' && 'Notification' in window) {
+    try {
+      const perm = await Notification.requestPermission();
+      return perm === 'granted';
+    } catch (_) {
+      return false;
+    }
+  }
+  return false;
 };
 
 /**
@@ -68,6 +138,7 @@ export const scheduleSessionReminder = async (session) => {
           title: '⚽ Sesión en 1 hora — Míster11',
           body: title || 'Tienes una sesión de entrenamiento próxima.',
           schedule: { at: notifDate },
+          channelId: 'mister11_chat_channel',
           sound: 'default',
           smallIcon: 'ic_stat_icon_config_sample',
           iconColor: '#4CAF7D',
@@ -83,7 +154,7 @@ export const scheduleSessionReminder = async (session) => {
 };
 
 /**
- * Envía una notificación inmediata de nuevo mensaje de chat.
+ * Envía una notificación inmediata de nuevo mensaje de chat con sonido y vibración.
  * Compatible con Android nativo (Capacitor) y navegadores web (Notification API).
  *
  * @param {Object} params - { title, body, senderName, extra }
@@ -92,7 +163,10 @@ export const sendChatNotification = async ({ title, body, senderName, extra = {}
   const finalTitle = title || (senderName ? `💬 Mensaje de ${senderName}` : '💬 Nuevo mensaje en Míster11');
   const finalBody = body || 'Tienes un nuevo mensaje sin leer.';
 
-  // 1. Android Nativo (Capacitor)
+  // 1. Reproducir siempre tono audible en el móvil
+  playNotificationSound();
+
+  // 2. Android Nativo (Capacitor Local Notifications)
   const plugin = await getPlugin();
   if (plugin) {
     try {
@@ -104,6 +178,7 @@ export const sendChatNotification = async ({ title, body, senderName, extra = {}
             title: finalTitle,
             body: finalBody,
             schedule: { at: new Date(Date.now() + 100) },
+            channelId: 'mister11_chat_channel',
             sound: 'default',
             smallIcon: 'ic_stat_icon_config_sample',
             iconColor: '#10B981',
@@ -117,7 +192,7 @@ export const sendChatNotification = async ({ title, body, senderName, extra = {}
     }
   }
 
-  // 2. Navegador Web (Notification API)
+  // 3. Navegador Web (Notification API)
   if (typeof window !== 'undefined' && 'Notification' in window) {
     try {
       if (Notification.permission === 'granted') {

@@ -5,6 +5,7 @@ import Header from './Header';
 import NotificationsPanel from './NotificationsPanel';
 import { useSettings } from '../hooks/useSettings';
 import { useOfflineStatus } from '../hooks/useOfflineStatus';
+import { useCoachChatNotifications } from '../hooks/useCoachChatNotifications';
 import BottomNav from './BottomNav';
 
 const Layout = () => {
@@ -13,6 +14,9 @@ const Layout = () => {
   const { settings } = useSettings();
   const { isOffline } = useOfflineStatus();
   const [isDismissed, setIsDismissed] = useState(false);
+
+  // Escuchar mensajes entrantes para el entrenador y alertar con sonido y notificación en el móvil
+  useCoachChatNotifications();
 
   useEffect(() => {
     setIsDismissed(false);

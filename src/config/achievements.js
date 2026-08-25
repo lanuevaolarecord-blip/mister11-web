@@ -38,7 +38,7 @@ export const ACHIEVEMENT_TIERS = {
 };
 
 export const ACHIEVEMENTS_CATALOG = [
-  // ─── TIER BRONCE (Semanal) ────────────────────────────────────────────────
+  // ─── TIER BRONCE (Semanal - 50 XP cada uno) ──────────────────────────────
   {
     id: 'weekly_perfect_week',
     tier: 'BRONZE',
@@ -46,7 +46,7 @@ export const ACHIEVEMENTS_CATALOG = [
     desc: 'Asiste al 100% de las sesiones de entrenamiento programadas esta semana.',
     category: 'attendance',
     icon: 'Flame',
-    targetType: 'dynamic_sessions', // Lee del total de sesiones programadas en la semana
+    targetType: 'dynamic_sessions',
     defaultTarget: 2,
     xp: 50
   },
@@ -59,7 +59,7 @@ export const ACHIEVEMENTS_CATALOG = [
     icon: 'HeartPulse',
     targetType: 'dynamic_sessions',
     defaultTarget: 2,
-    xp: 35
+    xp: 50
   },
   {
     id: 'weekly_scholar',
@@ -70,7 +70,7 @@ export const ACHIEVEMENTS_CATALOG = [
     icon: 'Brain',
     targetType: 'fixed',
     defaultTarget: 1,
-    xp: 40
+    xp: 50
   },
   {
     id: 'weekly_committed',
@@ -81,7 +81,7 @@ export const ACHIEVEMENTS_CATALOG = [
     icon: 'ClipboardCheck',
     targetType: 'fixed',
     defaultTarget: 1,
-    xp: 45
+    xp: 50
   },
   {
     id: 'weekly_attentive',
@@ -92,10 +92,10 @@ export const ACHIEVEMENTS_CATALOG = [
     icon: 'Calendar',
     targetType: 'fixed',
     defaultTarget: 1,
-    xp: 25
+    xp: 50
   },
 
-  // ─── TIER PLATA (Quincenal / 14 días) ──────────────────────────────────────
+  // ─── TIER PLATA (Quincenal / 14 días - 100 XP cada uno) ───────────────────
   {
     id: 'biweekly_iron',
     tier: 'SILVER',
@@ -116,7 +116,7 @@ export const ACHIEVEMENTS_CATALOG = [
     icon: 'Activity',
     targetType: 'fixed',
     defaultTarget: 6,
-    xp: 90
+    xp: 100
   },
   {
     id: 'biweekly_strong_mind',
@@ -127,7 +127,7 @@ export const ACHIEVEMENTS_CATALOG = [
     icon: 'Zap',
     targetType: 'fixed',
     defaultTarget: 3,
-    xp: 110
+    xp: 100
   },
   {
     id: 'biweekly_fit',
@@ -138,7 +138,7 @@ export const ACHIEVEMENTS_CATALOG = [
     icon: 'TrendingUp',
     targetType: 'fixed',
     defaultTarget: 1,
-    xp: 120
+    xp: 100
   },
   {
     id: 'biweekly_teammate',
@@ -149,10 +149,10 @@ export const ACHIEVEMENTS_CATALOG = [
     icon: 'Users',
     targetType: 'fixed',
     defaultTarget: 4,
-    xp: 80
+    xp: 100
   },
 
-  // ─── TIER ORO (Temporada 10 Meses) ─────────────────────────────────────────
+  // ─── TIER ORO (Temporada 10 Meses - 250 XP cada uno) ──────────────────────
   {
     id: 'season_veteran',
     tier: 'GOLD',
@@ -160,9 +160,9 @@ export const ACHIEVEMENTS_CATALOG = [
     desc: 'Participa o acude convocado al menos al 80% de los partidos del año.',
     category: 'matches',
     icon: 'Trophy',
-    targetType: 'dynamic_matches_pct', // 80% de los partidos programados
+    targetType: 'dynamic_matches_pct',
     defaultTarget: 18,
-    xp: 300
+    xp: 250
   },
   {
     id: 'season_scorer',
@@ -195,7 +195,7 @@ export const ACHIEVEMENTS_CATALOG = [
     icon: 'Flame',
     targetType: 'fixed',
     defaultTarget: 21,
-    xp: 350
+    xp: 250
   },
   {
     id: 'season_analyst',
@@ -206,7 +206,7 @@ export const ACHIEVEMENTS_CATALOG = [
     icon: 'Award',
     targetType: 'fixed',
     defaultTarget: 4,
-    xp: 300
+    xp: 250
   },
   {
     id: 'season_captain',
@@ -217,7 +217,7 @@ export const ACHIEVEMENTS_CATALOG = [
     icon: 'Star',
     targetType: 'fixed',
     defaultTarget: 8,
-    xp: 400
+    xp: 250
   }
 ];
 

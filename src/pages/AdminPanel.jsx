@@ -48,6 +48,7 @@ import imageCompression from 'browser-image-compression';
 import EscudoEquipo from '../components/EscudoEquipo';
 import RedeemCode from '../components/RedeemCode';
 import ClubManagement from '../components/ClubManagement';
+import UpgradeModal from '../components/UpgradeModal';
 import { normalizeEmail } from '../utils/normalizeEmail';
 import './AdminPanel.css';
 

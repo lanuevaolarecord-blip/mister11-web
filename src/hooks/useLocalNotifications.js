@@ -23,6 +23,9 @@ export const playNotificationSound = () => {
     const AudioContext = window.AudioContext || window.webkitAudioContext;
     if (!AudioContext) return;
     const ctx = new AudioContext();
+    if (ctx.state === 'suspended') {
+      ctx.resume().catch(() => {});
+    }
 
     // Tono doble agradable estilo mensajería (D5: 587.33Hz -> A5: 880Hz)
     const now = ctx.currentTime;
@@ -49,12 +52,14 @@ export const playNotificationSound = () => {
     osc2.start(now + 0.1);
     osc2.stop(now + 0.35);
 
-    // Vibración háptica en dispositivos móviles compatibles
-    if (typeof navigator !== 'undefined' && navigator.vibrate) {
-      navigator.vibrate([100, 50, 100]);
-    }
-  } catch (e) {
-    console.warn('[LocalNotifications] Error reproduciendo tono sonoro:', e);
+    // Vibración háptica en dispositivos móviles compatibles protegida por try/catch
+    try {
+      if (typeof navigator !== 'undefined' && navigator.vibrate) {
+        navigator.vibrate([100, 50, 100]);
+      }
+    } catch (_) {}
+  } catch (_) {
+    // Silenciar restricciones de interacción del navegador
   }
 };
 

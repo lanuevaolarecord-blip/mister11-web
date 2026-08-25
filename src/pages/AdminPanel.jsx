@@ -442,10 +442,15 @@ const AdminPanel = () => {
     }
   };
 
+  const { setLanguage: setGlobalLanguage, language: currentGlobalLanguage } = useTranslation();
+
   const toggleSetting = async (key, val = null) => {
     const newValue = val !== null ? val : !prefData[key];
     const updatedPrefs = { ...prefData, [key]: newValue };
     setPrefData(updatedPrefs);
+    if (key === 'language') {
+      setGlobalLanguage(newValue);
+    }
     await saveSettings({ ...settings, ...updatedPrefs });
   };
 

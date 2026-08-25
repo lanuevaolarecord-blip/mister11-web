@@ -573,7 +573,7 @@ const Dashboard = () => {
                       ? 'Tienes acceso completo a todas las funciones. Gracias por ser parte de Míster11 PRO.'
                       : isTrialExpired
                         ? '🔒 Tu prueba gratuita ha finalizado. Suscríbete para recuperar el acceso PRO.'
-                        : 'Límites activos: 1 equipo, 15 jugadores, 10 sesiones y sin exportación PDF.'}
+                        : 'Límites activos: 1 equipo, 23 jugadores, 10 sesiones y 5 generaciones de IA al mes.'}
               </p>
             </div>
           </div>

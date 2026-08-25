@@ -1,18 +1,12 @@
-import { useAuth } from '../context/AuthContext';
-import { useSettings } from './useSettings';
-import { t as tFn, getEffectiveLanguage } from '../i18n/translations';
+import { useLanguage } from '../context/LanguageContext';
 
 /**
  * Hook centralizado de internacionalización.
- * Lee el idioma guardado en Firestore para el equipo activo (o sistema)
- * y retorna la función t() y el idioma actual.
+ * Reacciona inmediatamente al cambio de idioma global en caliente.
  */
 export const useTranslation = () => {
-  const { activeTeamId } = useAuth();
-  const { settings } = useSettings(activeTeamId);
-  const language = getEffectiveLanguage(settings?.language);
-
-  const t = (key, replacements = {}) => tFn(key, language, replacements);
-
-  return { t, language };
+  const { t, language, isEn, locale, setLanguage, formatDate, formatNumber } = useLanguage();
+  return { t, language, isEn, locale, setLanguage, formatDate, formatNumber };
 };
+
+export default useTranslation;

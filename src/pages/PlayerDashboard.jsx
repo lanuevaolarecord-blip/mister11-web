@@ -35,6 +35,11 @@ const PlayerDashboard = () => {
 
   const teamPath = activeTeam?.teamPath || (activeTeam?.id ? getTeamPath(activeTeam.id) : null);
   const cleanPath = teamPath ? teamPath.replace(/^\/+|\/+$/g, '') : '';
+  const [resolvedTeamPath, setResolvedTeamPath] = useState(cleanPath);
+
+  useEffect(() => {
+    if (cleanPath) setResolvedTeamPath(cleanPath);
+  }, [cleanPath]);
 
   // Determinar estrictamente si la cuenta actual tiene rol de padre/tutor
   const isParentRole = Boolean(
@@ -94,6 +99,10 @@ const PlayerDashboard = () => {
             }
           }
         } catch (_) {}
+      }
+
+      if (effectivePath && isMounted) {
+        setResolvedTeamPath(effectivePath);
       }
 
       if (!effectivePath) {
@@ -485,7 +494,7 @@ const PlayerDashboard = () => {
           <PlayerHomeTab
             player={player}
             team={activeTeam}
-            teamPath={cleanPath}
+            teamPath={resolvedTeamPath || cleanPath}
             onNavigateTab={setActiveTab}
             isParentView={isParentView}
             closestAchievement={closestAchievement}
@@ -496,7 +505,7 @@ const PlayerDashboard = () => {
           <PlayerScheduleTab
             player={player}
             team={activeTeam}
-            teamPath={cleanPath}
+            teamPath={resolvedTeamPath || cleanPath}
             isParentView={isParentView}
           />
         )}
@@ -514,7 +523,7 @@ const PlayerDashboard = () => {
           <PlayerChatTab
             player={player}
             team={activeTeam}
-            teamPath={cleanPath}
+            teamPath={resolvedTeamPath || cleanPath}
             isParentView={isParentView}
           />
         )}
@@ -523,7 +532,7 @@ const PlayerDashboard = () => {
           <PlayerAutonomousTestsTab
             player={player}
             team={activeTeam}
-            teamPath={cleanPath}
+            teamPath={resolvedTeamPath || cleanPath}
             isParentView={isParentView}
           />
         )}
@@ -532,7 +541,7 @@ const PlayerDashboard = () => {
           <PlayerStatsTab
             player={player}
             team={activeTeam}
-            teamPath={cleanPath}
+            teamPath={resolvedTeamPath || cleanPath}
             isParentView={isParentView}
             achievements={achievements}
             onNavigateTests={() => setActiveTab('tests')}
@@ -543,7 +552,7 @@ const PlayerDashboard = () => {
           <PlayerProfileTab
             player={player}
             team={activeTeam}
-            teamPath={cleanPath}
+            teamPath={resolvedTeamPath || cleanPath}
             isParentView={isParentView}
           />
         )}

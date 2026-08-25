@@ -19,6 +19,7 @@ import {
   HelpCircle
 } from 'lucide-react';
 import { ACHIEVEMENT_TIERS } from '../../config/achievements';
+import { useTranslation } from '../../hooks/useTranslation';
 import './PlayerAchievementsTab.css';
 
 const ICON_MAP = {
@@ -39,6 +40,7 @@ const ICON_MAP = {
 };
 
 export const PlayerAchievementsTab = ({ achievements, loading, isParentView = false, playerName = '' }) => {
+  const { t, isEn } = useTranslation();
   const [selectedTier, setSelectedTier] = useState('ALL'); // 'ALL' | 'BRONZE' | 'SILVER' | 'GOLD'
 
   if (loading) {

@@ -3,6 +3,7 @@ import { collection, query, onSnapshot, orderBy, limit, doc, getDoc } from 'fire
 import { db } from '../../firebaseConfig';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
+import { useTranslation } from '../../hooks/useTranslation';
 import { useAchievements } from '../../hooks/useAchievements';
 import { Calendar, Clock, MapPin, Trophy, Flame, Bell, CheckCircle2, ChevronRight, Activity } from 'lucide-react';
 
@@ -12,6 +13,7 @@ import { pluralize } from '../../utils/pluralize';
 export const PlayerHomeTab = ({ player, team, teamPath, onNavigateTab, isParentView = false, closestAchievement = null }) => {
   const { user } = useAuth();
   const { darkMode } = useTheme();
+  const { t, locale, isEn, formatDate } = useTranslation();
 
   const [nextEvent, setNextEvent] = useState(null);
   const [announcements, setAnnouncements] = useState([]);

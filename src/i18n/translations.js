@@ -1,5 +1,6 @@
 export const translations = {
   'Español (ES)': {
+    // ── Navegación General ──────────────────────────────────
     'nav.dashboard': 'DASHBOARD',
     'nav.pizarra': 'PIZARRA TÁCTICA',
     'nav.equipo': 'MI EQUIPO',
@@ -7,11 +8,23 @@ export const translations = {
     'nav.planificacion': 'PLANIFICACIÓN',
     'nav.tests': 'TESTS',
     'nav.partidos': 'PARTIDOS',
-    'nav.ia': 'IA GENERATOR',
+    'nav.ia': 'IA GENERADORA',
     'nav.admin': 'ADMINISTRACIÓN',
+
+    // ── Botones y Acciones ──────────────────────────────────
     'btn.save': 'GUARDAR',
     'btn.delete': 'ELIMINAR',
     'btn.add': 'AÑADIR',
+    'btn.cancel': 'CANCELAR',
+    'btn.confirm': 'CONFIRMAR',
+    'btn.edit': 'EDITAR',
+    'btn.close': 'CERRAR',
+    'btn.export': 'EXPORTAR PDF',
+    'btn.back': 'VOLVER',
+    'btn.filter': 'FILTRAR',
+    'btn.search': 'BUSCAR',
+
+    // ── Dashboard Entrenador ────────────────────────────────
     'dashboard.welcome': 'Hola, {name}',
     'dashboard.activity': 'Esta es la actividad de tu equipo ({club}) para esta semana.',
     'dashboard.today': 'Hoy',
@@ -24,7 +37,7 @@ export const translations = {
     'dashboard.stats.matches': 'Partidos',
     'dashboard.stats.noRival': 'Sin rival',
     'dashboard.estimatedWorkload': 'Carga de Trabajo Estimada',
-    'dashboard.teamWorkloadIndex': 'Team Workload Index',
+    'dashboard.teamWorkloadIndex': 'Índice de Carga del Equipo',
     'dashboard.period.session': 'Esta sesión',
     'dashboard.period.week': 'Esta semana',
     'dashboard.period.micro': 'Este microciclo',
@@ -37,7 +50,8 @@ export const translations = {
     'dashboard.saveDashboard': 'GUARDAR DASHBOARD',
     'session.untitled': 'Sin título',
     'dashboard.workload.week': 'Sem',
-    // Days of the week
+
+    // ── Días de la semana ───────────────────────────────────
     'day.Lun': 'Lun',
     'day.Mar': 'Mar',
     'day.Mié': 'Mié',
@@ -45,13 +59,15 @@ export const translations = {
     'day.Vie': 'Vie',
     'day.Sáb': 'Sáb',
     'day.Dom': 'Dom',
-    // Blocks
+
+    // ── Bloques de Entrenamiento ───────────────────────────
     'block.warmup': 'Calent.',
     'block.technical': 'Técnica',
     'block.tactical': 'Táctica',
     'block.abp': 'ABP',
     'block.physical': 'Físico',
-    // Months for macrocycle chart
+
+    // ── Meses ───────────────────────────────────────────────
     'month.Sep': 'Sep',
     'month.Oct': 'Oct',
     'month.Nov': 'Nov',
@@ -62,16 +78,10 @@ export const translations = {
     'month.Abr': 'Abr',
     'month.May': 'May',
     'month.Jun': 'Jun',
-    // Tests resources widget
-    'tests.resources.title': 'Recursos y Herramientas',
-    'tests.resources.tacticalLibrary': 'Biblioteca Táctica',
-    'tests.resources.drillDatabase': 'Base de Datos de Ejercicios',
-    'tests.resources.tacticalTest': 'Evaluación Táctica',
-    'tests.resources.teamChat': 'Chat de Equipo',
-    'tests.resources.seasonReport': 'Informe de Temporada',
-    'tests.resources.myTeam': 'Mi Equipo',
+    'month.Jul': 'Jul',
+    'month.Ago': 'Ago',
 
-    // ── Header page titles ───────────────────────────────────
+    // ── Header Titles ───────────────────────────────────────
     'page.dashboard': 'DASHBOARD',
     'page.pizarra': 'PIZARRA TÁCTICA',
     'page.equipo': 'MI EQUIPO',
@@ -83,7 +93,7 @@ export const translations = {
     'page.admin': 'ADMINISTRACIÓN',
     'page.default': 'MISTER 11',
 
-    // ── BottomNav labels ─────────────────────────────────────
+    // ── BottomNav ───────────────────────────────────────────
     'bottomnav.home': 'Inicio',
     'bottomnav.pizarra': 'Pizarra',
     'bottomnav.equipo': 'Equipo',
@@ -96,7 +106,7 @@ export const translations = {
     'bottomnav.more': 'Más',
     'bottomnav.moreModules': 'MÁS MÓDULOS',
 
-    // ── Sesiones tabs ─────────────────────────────────────────
+    // ── Sesiones ────────────────────────────────────────────
     'sesiones.tab.sessions': 'SESIONES',
     'sesiones.tab.captures': 'CAPTURAS',
     'sesiones.tab.animations': 'ANIMACIONES',
@@ -104,37 +114,39 @@ export const translations = {
     'sesiones.newSession': '+ Nueva Sesión',
     'sesiones.exportICS': '📥 Exportar ICS',
 
-    // ── MiEquipo player detail tabs ───────────────────────────
+    // ── Mi Equipo ───────────────────────────────────────────
     'equipo.tab.squad': 'PLANTILLA',
     'equipo.tab.attendance': 'ASISTENCIA',
+    'equipo.tab.staff': 'STAFF',
+    'equipo.tab.requests': 'SOLICITUDES',
+    'equipo.tab.code': 'CÓDIGO',
     'equipo.tab.general': 'GENERAL',
     'equipo.tab.physical': 'FÍSICO',
     'equipo.tab.health': 'SALUD',
     'equipo.tab.plans': 'PLANES',
     'equipo.tab.stats': 'ESTS.',
 
-    // ── Planificacion tabs ────────────────────────────────────
+    // ── Planificación ───────────────────────────────────────
     'plan.tab.macrociclo': 'MACROCICLO (PLANTILLA)',
     'plan.tab.mesociclo': 'MESOCICLO',
     'plan.tab.microciclo': 'MICROCICLO SEMANAL',
     'plan.tab.objetivos': 'OBJETIVOS',
 
-    // ── Tests tabs ────────────────────────────────────────────
+    // ── Tests ───────────────────────────────────────────────
     'tests.tab.fisicos': 'FÍSICOS',
     'tests.tab.psicosociales': 'PSICOSOCIALES',
     'tests.tab.prevencion': 'PREVENCIÓN',
     'tests.tab.historial': 'HISTORIAL POR JUGADOR',
     'tests.tab.comparativa': 'COMPARATIVA EQUIPO',
+    'tests.resources.title': 'Recursos y Herramientas',
+    'tests.resources.tacticalLibrary': 'Biblioteca Táctica',
+    'tests.resources.drillDatabase': 'Base de Datos de Ejercicios',
+    'tests.resources.tacticalTest': 'Evaluación Táctica',
+    'tests.resources.teamChat': 'Chat de Equipo',
+    'tests.resources.seasonReport': 'Informe de Temporada',
+    'tests.resources.myTeam': 'Mi Equipo',
 
-    // ── AdminPanel sidebar tabs ───────────────────────────────
-    'admin.tab.equipos': 'Equipos',
-    'admin.tab.club': 'Mi Club',
-    'admin.tab.ejercicios': 'Ejercicios',
-    'admin.tab.exportar': 'Informes PDF',
-    'admin.tab.ajustes': 'Ajustes',
-    'admin.section.equipos': 'Gestión de Equipos',
-
-    // ── Análisis Multi-Partido ────────────────────────────────
+    // ── Partidos y Análisis ─────────────────────────────────
     'partidos.tab.lista': 'LISTA DE PARTIDOS',
     'partidos.tab.analisis': '📊 ANÁLISIS MULTI-PARTIDO',
     'analisis.title': 'Análisis Multi-Partido y Comparativa',
@@ -149,59 +161,120 @@ export const translations = {
     'analisis.mode.title': 'Modo de visualización:',
     'analisis.mode.totals': 'Valores Totales Acumulados',
     'analisis.mode.averages': 'Promedio por Partido',
-    'analisis.kpi.shots': 'Tiros a Puerta Promedio',
+    'analisis.kpi.shots': 'Promedio Tiros a Puerta',
     'analisis.kpi.duels': '% Duelos Ganados',
     'analisis.kpi.recoveries': 'Recuperaciones vs Pérdidas',
-    'analisis.kpi.counters': 'Eficacia en Contras / Transiciones',
-    'analisis.chart.trend': '📈 Evolución y Tendencia Partido a Partido',
+    'analisis.kpi.counters': 'Efectividad en Contraataque',
+    'analisis.chart.trend': '📈 Tendencia y Evolución Partido a Partido',
     'analisis.chart.bars': '📊 Comparativa Directa entre Partidos',
-    'analisis.chart.radar': '🕸️ Perfil Táctico Global Promedio (Radar)',
+    'analisis.chart.radar': '🕸️ Perfil Táctico Global (Radar)',
     'analisis.table.title': '📋 Desglose Detallado por Partido',
     'analisis.table.match': 'Partido',
     'analisis.table.result': 'Resultado',
-    'analisis.table.shots': 'Tiros (P/R)',
-    'analisis.table.duels': 'Duelos %',
-    'analisis.table.recLoss': 'Rec / Pér',
+    'analisis.table.shots': 'Tiros (F/C)',
+    'analisis.table.duels': '% Duelos',
+    'analisis.table.recLoss': 'Rec / Pérd',
     'analisis.table.fouls': 'Faltas (F/C)',
     'analisis.table.cards': 'Tarjetas',
-    'analisis.noMatchesSelected': 'Por favor selecciona al menos 2 partidos para iniciar la comparativa.',
+    'analisis.noMatchesSelected': 'Por favor, selecciona al menos 2 partidos para iniciar la comparativa.',
     'analisis.loadingData': 'Cargando eventos de los partidos seleccionados...',
 
-    // ── Live Stats (módulo de captura en vivo) ───────────────────────
-    'nav.partidos.livestats': 'LIVE STATS',
+    // ── AdminPanel ──────────────────────────────────────────
+    'admin.tab.equipos': 'Equipos',
+    'admin.tab.club': 'Mi Club',
+    'admin.tab.ejercicios': 'Ejercicios',
+    'admin.tab.exportar': 'Informes PDF',
+    'admin.tab.ajustes': 'Ajustes',
+    'admin.section.equipos': 'Gestión de Equipos',
+    'admin.lang.title': 'Idioma del Sistema',
+    'admin.theme.dark': 'Modo Oscuro',
+    'admin.notif.title': 'Notificaciones',
 
-    // ── Pestañas Perfil de Jugador ────────────────────────────────────
-    'player.tab.general': 'GENERAL',
-    'player.tab.chat': 'CHAT',
-    'player.tab.physical': 'FÍSICO',
-    'player.tab.health': 'SALUD',
-    'player.tab.plans': 'PLANES',
-    'player.tab.stats': 'STATS',
-    'player.tab.attendance': 'ASISTENCIA',
-    'equipo.tab.general': 'GENERAL',
-    'equipo.tab.chat': 'CHAT',
-    'equipo.tab.physical': 'FÍSICO',
-    'equipo.tab.health': 'SALUD',
-    'equipo.tab.plans': 'PLANES',
-    'equipo.tab.stats': 'STATS',
-    'equipo.tab.attendance': 'ASISTENCIA',
+    // ── PORTAL DEL JUGADOR (PLAYER APP) ─────────────────────
+    'player.nav.home': 'Inicio',
+    'player.nav.schedule': 'Agenda',
+    'player.nav.achievements': 'Logros',
+    'player.nav.chat': 'Míster',
+    'player.nav.tests': 'Tests',
+    'player.nav.stats': 'Stats',
+    'player.nav.profile': 'Ficha',
+
+    // Player Home Tab
+    'player.home.nextMatch': 'Próxima Convocatoria',
+    'player.home.streak': 'Racha Actual',
+    'player.home.goals': 'Goles',
+    'player.home.closestAchievement': 'Próximo Reto',
+    'player.home.announcements': 'Muro de Comunicados',
+    'player.home.rsvpPrompt': '¿Asistirás a esta cita?',
+    'player.home.viewDetails': 'Ver Detalles',
+
+    // Player Schedule Tab
+    'player.schedule.title': 'Agenda del Equipo',
+    'player.schedule.training': 'ENTRENAMIENTO',
+    'player.schedule.match': 'PARTIDO',
+    'player.schedule.rsvpGoing': 'Iré',
+    'player.schedule.rsvpNotGoing': 'No iré',
+    'player.schedule.rsvpLate': 'Llegaré tarde',
+    'player.schedule.rsvpJustified': 'Justificado',
+    'player.schedule.rsvpConfirmed': 'Asistencia confirmada: "{status}"',
+    'player.schedule.noEvents': 'No hay eventos programados para este mes.',
+    'player.schedule.backToCurrentMonth': 'Volver al mes actual',
+
+    // Player Achievements Tab
+    'player.achievements.title': 'Vitrina de Logros',
+    'player.achievements.xpTitle': 'XP de Logros',
+    'player.achievements.xpSubtitle': 'Ganada desbloqueando retos',
+    'player.achievements.filterAll': 'Todos',
+    'player.achievements.filterWeekly': 'Semanales (Bronce)',
+    'player.achievements.filterBiweekly': 'Quincenales (Plata)',
+    'player.achievements.filterSeason': 'Temporada (Oro)',
+    'player.achievements.bronzeBadge': '25 XP · Reto Semanal',
+    'player.achievements.silverBadge': '50 XP · Reto Quincenal',
+    'player.achievements.goldBadge': '100 XP · Hito de Temporada (Máximo)',
+
+    // Player Chat Tab
+    'player.chat.title': 'Chat con el Míster',
+    'player.chat.placeholder': 'Escribe un mensaje al entrenador...',
+    'player.chat.quickMsg.late': 'Llegaré 5 minutos tarde.',
+    'player.chat.quickMsg.injury': 'Tengo una molestia muscular y no podré entrenar al 100%.',
+    'player.chat.quickMsg.study': 'No podré asistir por motivos de estudio/exámenes.',
+    'player.chat.quickMsg.ready': '¡Listo para el partido del fin de semana!',
+
+    // Player Stats Tab
+    'player.stats.title': 'Estadísticas & Rendimiento',
+    'player.stats.globalXpTitle': 'XP Global',
+    'player.stats.globalXpSubtitle': 'Asistencia + minutos + logros',
+    'player.stats.officialMatches': 'Partidos Oficiales',
+    'player.stats.minutesPlayed': 'Minutos Jugados',
+    'player.stats.avgRating': 'Nota Media',
+    'player.stats.leaderboardTitle': 'Leaderboard de Plantilla',
+    'player.stats.leaderboardSubtitle': 'Puntuación y compromiso en el vestuario',
+    'player.stats.vsTeamTitle': 'Tú vs Promedio del Equipo',
+    'player.stats.howIsMeasured': '¿Cómo se mide?',
+    'player.stats.howIsMeasuredDesc': 'Las asistencias y minutos se extraen de las actas oficiales del cuerpo técnico en estricto cumplimiento del RGPD.',
+    'player.stats.radarTitle': 'Radar de Habilidades 360°',
+    'player.stats.howAxesMeasured': '¿Cómo se mide cada eje?',
+    'player.stats.areasInZero': 'Áreas pendientes de medición',
+    'player.stats.areasInZeroDesc': 'El área Mental se activa completando cuestionarios en la pestaña Tests. Las áreas Física, Técnica y Táctica se actualizan con las evaluaciones de tu entrenador.',
+    'player.stats.goToTests': 'Ir a Cuestionarios',
+    'player.stats.wellnessTitle': 'Bienestar Semanal (Wellness)',
+    'player.stats.evolutionTitle': 'Evolución Temporal de Tests',
+
+    // Player Profile Tab
+    'player.profile.dorsal': 'DORSAL',
+    'player.profile.general': 'GENERAL',
+    'player.profile.physical': 'FÍSICO',
+    'player.profile.health': 'SALUD',
+    'player.profile.plans': 'PLANES',
+    'player.profile.attendance': 'ASISTENCIA',
+    'player.profile.switchToCoach': 'Cambiar a Modo Entrenador',
+    'player.profile.logout': 'Cerrar Sesión',
+    'player.profile.deleteAccount': 'Eliminar Cuenta (RGPD)',
+    'player.profile.parentBadge': 'Vista Familiar / Tutor'
   },
+
   'English (EN)': {
-    // ── Player Profile Tabs ───────────────────────────────────────────
-    'player.tab.general': 'GENERAL',
-    'player.tab.chat': 'CHAT',
-    'player.tab.physical': 'PHYSICAL',
-    'player.tab.health': 'HEALTH',
-    'player.tab.plans': 'PLANS',
-    'player.tab.stats': 'STATS',
-    'player.tab.attendance': 'ATTENDANCE',
-    'equipo.tab.general': 'GENERAL',
-    'equipo.tab.chat': 'CHAT',
-    'equipo.tab.physical': 'PHYSICAL',
-    'equipo.tab.health': 'HEALTH',
-    'equipo.tab.plans': 'PLANS',
-    'equipo.tab.stats': 'STATS',
-    'equipo.tab.attendance': 'ATTENDANCE',
+    // ── General Navigation ──────────────────────────────────
     'nav.dashboard': 'DASHBOARD',
     'nav.pizarra': 'TACTICAL BOARD',
     'nav.equipo': 'MY TEAM',
@@ -211,20 +284,32 @@ export const translations = {
     'nav.partidos': 'MATCHES',
     'nav.ia': 'AI GENERATOR',
     'nav.admin': 'ADMINISTRATION',
+
+    // ── Buttons and Actions ─────────────────────────────────
     'btn.save': 'SAVE',
     'btn.delete': 'DELETE',
     'btn.add': 'ADD',
+    'btn.cancel': 'CANCEL',
+    'btn.confirm': 'CONFIRM',
+    'btn.edit': 'EDIT',
+    'btn.close': 'CLOSE',
+    'btn.export': 'EXPORT PDF',
+    'btn.back': 'BACK',
+    'btn.filter': 'FILTER',
+    'btn.search': 'SEARCH',
+
+    // ── Coach Dashboard ─────────────────────────────────────
     'dashboard.welcome': 'Hello, {name}',
-    'dashboard.activity': "This is your team's ({club}) activity for this week.",
+    'dashboard.activity': 'Here is your team activity ({club}) for this week.',
     'dashboard.today': 'Today',
     'dashboard.devAccess': 'Developer Access - Mister11 PRO',
-    'dashboard.devDesc': 'Your account has permanent lifetime access with all limits removed.',
+    'dashboard.devDesc': 'Your account has lifetime access with all limits removed.',
     'dashboard.devUnlimited': '✔ UNLIMITED DEVELOPER',
     'dashboard.stats.players': 'Players',
     'dashboard.stats.sessions': 'Sessions',
     'dashboard.stats.rival': 'Next Opponent',
     'dashboard.stats.matches': 'Matches',
-    'dashboard.stats.noRival': 'No Opponent',
+    'dashboard.stats.noRival': 'No opponent',
     'dashboard.estimatedWorkload': 'Estimated Workload',
     'dashboard.teamWorkloadIndex': 'Team Workload Index',
     'dashboard.period.session': 'This session',
@@ -239,7 +324,8 @@ export const translations = {
     'dashboard.saveDashboard': 'SAVE DASHBOARD',
     'session.untitled': 'Untitled',
     'dashboard.workload.week': 'Wk',
-    // Days of the week
+
+    // ── Days of the week ────────────────────────────────────
     'day.Lun': 'Mon',
     'day.Mar': 'Tue',
     'day.Mié': 'Wed',
@@ -247,13 +333,15 @@ export const translations = {
     'day.Vie': 'Fri',
     'day.Sáb': 'Sat',
     'day.Dom': 'Sun',
-    // Blocks
+
+    // ── Training Blocks ─────────────────────────────────────
     'block.warmup': 'Warm-up',
     'block.technical': 'Technical',
-    'block.tactical': 'Tactics',
+    'block.tactical': 'Tactical',
     'block.abp': 'Set Pieces',
     'block.physical': 'Physical',
-    // Months for macrocycle chart
+
+    // ── Months ──────────────────────────────────────────────
     'month.Sep': 'Sep',
     'month.Oct': 'Oct',
     'month.Nov': 'Nov',
@@ -264,16 +352,10 @@ export const translations = {
     'month.Abr': 'Apr',
     'month.May': 'May',
     'month.Jun': 'Jun',
-    // Tests resources widget
-    'tests.resources.title': 'Resources & Tools',
-    'tests.resources.tacticalLibrary': 'Tactical Board',
-    'tests.resources.drillDatabase': 'Drills Database',
-    'tests.resources.tacticalTest': 'Tactical Evaluation',
-    'tests.resources.teamChat': 'Team Chat',
-    'tests.resources.seasonReport': 'Season Report',
-    'tests.resources.myTeam': 'My Team',
+    'month.Jul': 'Jul',
+    'month.Ago': 'Aug',
 
-    // ── Header page titles ───────────────────────────────────
+    // ── Header Titles ───────────────────────────────────────
     'page.dashboard': 'DASHBOARD',
     'page.pizarra': 'TACTICAL BOARD',
     'page.equipo': 'MY TEAM',
@@ -285,7 +367,7 @@ export const translations = {
     'page.admin': 'ADMINISTRATION',
     'page.default': 'MISTER 11',
 
-    // ── BottomNav labels ─────────────────────────────────────
+    // ── BottomNav ───────────────────────────────────────────
     'bottomnav.home': 'Home',
     'bottomnav.pizarra': 'Board',
     'bottomnav.equipo': 'Team',
@@ -298,7 +380,7 @@ export const translations = {
     'bottomnav.more': 'More',
     'bottomnav.moreModules': 'MORE MODULES',
 
-    // ── Sesiones tabs ─────────────────────────────────────────
+    // ── Sessions ────────────────────────────────────────────
     'sesiones.tab.sessions': 'SESSIONS',
     'sesiones.tab.captures': 'CAPTURES',
     'sesiones.tab.animations': 'ANIMATIONS',
@@ -306,37 +388,39 @@ export const translations = {
     'sesiones.newSession': '+ New Session',
     'sesiones.exportICS': '📥 Export ICS',
 
-    // ── MiEquipo player detail tabs ───────────────────────────
+    // ── My Team ─────────────────────────────────────────────
     'equipo.tab.squad': 'SQUAD',
     'equipo.tab.attendance': 'ATTENDANCE',
+    'equipo.tab.staff': 'STAFF',
+    'equipo.tab.requests': 'REQUESTS',
+    'equipo.tab.code': 'CODE',
     'equipo.tab.general': 'GENERAL',
     'equipo.tab.physical': 'PHYSICAL',
     'equipo.tab.health': 'HEALTH',
     'equipo.tab.plans': 'PLANS',
     'equipo.tab.stats': 'STATS',
 
-    // ── Planificacion tabs ────────────────────────────────────
-    'plan.tab.macrociclo': 'MACROCYCLE (TEMPLATE)',
+    // ── Planning ────────────────────────────────────────────
+    'plan.tab.macrociclo': 'MACROCYCLE (SQUAD)',
     'plan.tab.mesociclo': 'MESOCYCLE',
     'plan.tab.microciclo': 'WEEKLY MICROCYCLE',
-    'plan.tab.objetivos': 'OBJECTIVES',
+    'plan.tab.objetivos': 'GOALS',
 
-    // ── Tests tabs ────────────────────────────────────────────
+    // ── Tests ───────────────────────────────────────────────
     'tests.tab.fisicos': 'PHYSICAL',
     'tests.tab.psicosociales': 'PSYCHOSOCIAL',
     'tests.tab.prevencion': 'PREVENTION',
     'tests.tab.historial': 'PLAYER HISTORY',
     'tests.tab.comparativa': 'TEAM COMPARISON',
+    'tests.resources.title': 'Resources and Tools',
+    'tests.resources.tacticalLibrary': 'Tactical Library',
+    'tests.resources.drillDatabase': 'Drill Database',
+    'tests.resources.tacticalTest': 'Tactical Evaluation',
+    'tests.resources.teamChat': 'Team Chat',
+    'tests.resources.seasonReport': 'Season Report',
+    'tests.resources.myTeam': 'My Team',
 
-    // ── AdminPanel sidebar tabs ───────────────────────────────
-    'admin.tab.equipos': 'Teams',
-    'admin.tab.club': 'My Club',
-    'admin.tab.ejercicios': 'Exercises',
-    'admin.tab.exportar': 'PDF Reports',
-    'admin.tab.ajustes': 'Settings',
-    'admin.section.equipos': 'Team Management',
-
-    // ── Multi-Match Analysis ──────────────────────────────────
+    // ── Matches and Analysis ────────────────────────────────
     'partidos.tab.lista': 'MATCH LIST',
     'partidos.tab.analisis': '📊 MULTI-MATCH ANALYSIS',
     'analisis.title': 'Multi-Match Analysis & Comparison',
@@ -346,9 +430,9 @@ export const translations = {
     'analisis.shortcuts.title': 'Quick selection:',
     'analisis.shortcuts.last3': 'Last 3 matches',
     'analisis.shortcuts.last5': 'Last 5 matches',
-    'analisis.shortcuts.allSeason': 'Season Matches',
+    'analisis.shortcuts.allSeason': 'All Season Matches',
     'analisis.shortcuts.clear': 'Clear selection',
-    'analisis.mode.title': 'Display Mode:',
+    'analisis.mode.title': 'Display mode:',
     'analisis.mode.totals': 'Cumulative Totals',
     'analisis.mode.averages': 'Average per Match',
     'analisis.kpi.shots': 'Avg Shots on Target',
@@ -368,16 +452,111 @@ export const translations = {
     'analisis.table.cards': 'Cards',
     'analisis.noMatchesSelected': 'Please select at least 2 matches to start comparison.',
     'analisis.loadingData': 'Loading events for selected matches...',
+
+    // ── AdminPanel ──────────────────────────────────────────
+    'admin.tab.equipos': 'Teams',
+    'admin.tab.club': 'My Club',
+    'admin.tab.ejercicios': 'Drills',
+    'admin.tab.exportar': 'PDF Reports',
+    'admin.tab.ajustes': 'Settings',
+    'admin.section.equipos': 'Team Management',
+    'admin.lang.title': 'System Language',
+    'admin.theme.dark': 'Dark Mode',
+    'admin.notif.title': 'Notifications',
+
+    // ── PLAYER APP ──────────────────────────────────────────
+    'player.nav.home': 'Home',
+    'player.nav.schedule': 'Schedule',
+    'player.nav.achievements': 'Achievements',
+    'player.nav.chat': 'Coach',
+    'player.nav.tests': 'Tests',
+    'player.nav.stats': 'Stats',
+    'player.nav.profile': 'Profile',
+
+    // Player Home Tab
+    'player.home.nextMatch': 'Next Call-up',
+    'player.home.streak': 'Current Streak',
+    'player.home.goals': 'Goals',
+    'player.home.closestAchievement': 'Next Challenge',
+    'player.home.announcements': 'Notice Board',
+    'player.home.rsvpPrompt': 'Will you attend this event?',
+    'player.home.viewDetails': 'View Details',
+
+    // Player Schedule Tab
+    'player.schedule.title': 'Team Schedule',
+    'player.schedule.training': 'TRAINING',
+    'player.schedule.match': 'MATCH',
+    'player.schedule.rsvpGoing': 'Going',
+    'player.schedule.rsvpNotGoing': 'Not going',
+    'player.schedule.rsvpLate': 'Arriving late',
+    'player.schedule.rsvpJustified': 'Excused',
+    'player.schedule.rsvpConfirmed': 'Attendance confirmed: "{status}"',
+    'player.schedule.noEvents': 'No events scheduled for this month.',
+    'player.schedule.backToCurrentMonth': 'Back to current month',
+
+    // Player Achievements Tab
+    'player.achievements.title': 'Trophy Cabinet',
+    'player.achievements.xpTitle': 'Achievement XP',
+    'player.achievements.xpSubtitle': 'Earned by completing challenges',
+    'player.achievements.filterAll': 'All',
+    'player.achievements.filterWeekly': 'Weekly (Bronze)',
+    'player.achievements.filterBiweekly': 'Bi-weekly (Silver)',
+    'player.achievements.filterSeason': 'Season (Gold)',
+    'player.achievements.bronzeBadge': '25 XP · Weekly Challenge',
+    'player.achievements.silverBadge': '50 XP · Bi-weekly Challenge',
+    'player.achievements.goldBadge': '100 XP · Season Milestone (Max)',
+
+    // Player Chat Tab
+    'player.chat.title': 'Chat with Coach',
+    'player.chat.placeholder': 'Type a message to your coach...',
+    'player.chat.quickMsg.late': 'I will be 5 minutes late.',
+    'player.chat.quickMsg.injury': 'I have a muscle discomfort and cannot train at 100%.',
+    'player.chat.quickMsg.study': 'I cannot attend due to study / exam commitments.',
+    'player.chat.quickMsg.ready': 'Ready for this weekend match!',
+
+    // Player Stats Tab
+    'player.stats.title': 'Stats & Performance',
+    'player.stats.globalXpTitle': 'Global XP',
+    'player.stats.globalXpSubtitle': 'Attendance + minutes + achievements',
+    'player.stats.officialMatches': 'Official Matches',
+    'player.stats.minutesPlayed': 'Minutes Played',
+    'player.stats.avgRating': 'Average Rating',
+    'player.stats.leaderboardTitle': 'Squad Leaderboard',
+    'player.stats.leaderboardSubtitle': 'Score and commitment in the locker room',
+    'player.stats.vsTeamTitle': 'You vs Team Average',
+    'player.stats.howIsMeasured': 'How is this measured?',
+    'player.stats.howIsMeasuredDesc': 'Attendance and minutes are extracted from official match sheets in strict compliance with GDPR.',
+    'player.stats.radarTitle': '360° Skills Radar',
+    'player.stats.howAxesMeasured': 'How is each axis measured?',
+    'player.stats.areasInZero': 'Areas pending measurement',
+    'player.stats.areasInZeroDesc': 'The Mental area is activated by completing questionnaires in the Tests tab. Physical, Technical, and Tactical areas are updated with coach evaluations.',
+    'player.stats.goToTests': 'Go to Tests',
+    'player.stats.wellnessTitle': 'Weekly Wellness',
+    'player.stats.evolutionTitle': 'Test Evolution Over Time',
+
+    // Player Profile Tab
+    'player.profile.dorsal': 'SQUAD NUMBER',
+    'player.profile.general': 'GENERAL',
+    'player.profile.physical': 'PHYSICAL',
+    'player.profile.health': 'HEALTH',
+    'player.profile.plans': 'PLANS',
+    'player.profile.attendance': 'ATTENDANCE',
+    'player.profile.switchToCoach': 'Switch to Coach Mode',
+    'player.profile.logout': 'Log Out',
+    'player.profile.deleteAccount': 'Delete Account (GDPR)',
+    'player.profile.parentBadge': 'Family / Guardian View'
   }
 };
 
-/**
- * Obtiene el idioma efectivo comprobando los ajustes del usuario
- * y como fallback el idioma del sistema del navegador/dispositivo.
- */
 export const getEffectiveLanguage = (languageStr) => {
-  if (languageStr === 'English (EN)') return 'English (EN)';
-  if (languageStr === 'Español (ES)') return 'Español (ES)';
+  if (languageStr === 'English (EN)' || languageStr === 'en') return 'English (EN)';
+  if (languageStr === 'Español (ES)' || languageStr === 'es') return 'Español (ES)';
+
+  try {
+    const saved = localStorage.getItem('mister11_language') || localStorage.getItem('language');
+    if (saved === 'English (EN)' || saved === 'en') return 'English (EN)';
+    if (saved === 'Español (ES)' || saved === 'es') return 'Español (ES)';
+  } catch (_) {}
 
   const sysLang = typeof navigator !== 'undefined' ? (navigator.language || navigator.userLanguage || '') : '';
   if (sysLang && sysLang.toLowerCase().startsWith('en')) {
@@ -391,11 +570,15 @@ export const t = (key, language, replacements = {}) => {
   const isEn = effLang === 'English (EN)';
   
   const targetDict = isEn ? translations['English (EN)'] : translations['Español (ES)'];
-  let text = targetDict[key] || (translations['English (EN)'][key]) || (translations['Español (ES)'][key]) || key;
+  let text = targetDict?.[key] || translations['English (EN)']?.[key] || translations['Español (ES)']?.[key] || key;
   
-  Object.keys(replacements).forEach(r => {
-    text = text.replace(`{${r}}`, replacements[r]);
-  });
+  if (typeof text === 'string') {
+    Object.keys(replacements).forEach(r => {
+      text = text.replace(new RegExp(`\\{${r}\\}`, 'g'), replacements[r]);
+    });
+  }
   
   return text;
 };
+
+export default translations;

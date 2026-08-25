@@ -18,19 +18,23 @@ if (Capacitor.isNativePlatform()) {
 }
 
 
+import { LanguageProvider } from './context/LanguageContext.jsx'
+
 createRoot(document.getElementById('root')).render(
   <StrictMode>
     <ThemeProvider>
       <AuthProvider>
-        <TeamProvider>
-          <PizarraProvider>
-            <MatchProvider>
-              <BrowserRouter>
-                <App />
-              </BrowserRouter>
-            </MatchProvider>
-          </PizarraProvider>
-        </TeamProvider>
+        <LanguageProvider>
+          <TeamProvider>
+            <PizarraProvider>
+              <MatchProvider>
+                <BrowserRouter>
+                  <App />
+                </BrowserRouter>
+              </MatchProvider>
+            </PizarraProvider>
+          </TeamProvider>
+        </LanguageProvider>
       </AuthProvider>
     </ThemeProvider>
   </StrictMode>,

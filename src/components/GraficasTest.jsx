@@ -39,7 +39,10 @@ export const SvgLineChart = ({ data, isTime, width = 320, height = 200 }) => {
   const vals = data.map(d => d.val);
   const minVal = Math.min(...vals);
   const maxVal = Math.max(...vals);
-  const range  = maxVal - minVal || 1;
+  const isFlat = minVal === maxVal;
+  const effectiveMin = isFlat ? Math.max(0, minVal - (minVal > 0 ? 2 : 0)) : minVal;
+  const effectiveMax = isFlat ? maxVal + 2 : maxVal;
+  const range  = effectiveMax - effectiveMin || 1;
 
   const pad = { top: 14, right: 14, bottom: 30, left: 38 };
   const cW  = width  - pad.left - pad.right;
@@ -47,7 +50,7 @@ export const SvgLineChart = ({ data, isTime, width = 320, height = 200 }) => {
 
   const xOf = i => pad.left + (i / (data.length - 1)) * cW;
   const yOf = v => {
-    const pct = (v - minVal) / range;
+    const pct = (v - effectiveMin) / range;
     return isTime
       ? pad.top + pct * cH          // lower = better (reversed)
       : pad.top + (1 - pct) * cH;   // higher = better (normal)
@@ -61,7 +64,7 @@ export const SvgLineChart = ({ data, isTime, width = 320, height = 200 }) => {
 
   // Y-axis grid lines (3 ticks)
   const yTicks = [0, 50, 100].map(pct => {
-    const v = minVal + (range * pct / 100);
+    const v = effectiveMin + (range * pct / 100);
     return { y: yOf(v), label: Math.round(v) };
   });
 

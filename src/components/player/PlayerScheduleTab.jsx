@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { collection, onSnapshot, doc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../../firebaseConfig';
 import { useAuth } from '../../context/AuthContext';
+import { useTranslation } from '../../hooks/useTranslation';
 import { showToast } from '../../utils/toast';
 import { 
   Calendar as CalendarIcon, 
@@ -13,77 +14,88 @@ import {
   HelpCircle, 
   ChevronLeft, 
   ChevronRight,
-  ShieldCheck,
-  Award,
-  Sparkles,
-  Trophy
+  ShieldCheck
 } from 'lucide-react';
-
-const RSVP_OPTIONS = [
-  { id: 'going', label: 'Iré', color: '#10B981', bg: 'rgba(16, 185, 129, 0.15)', icon: CheckCircle },
-  { id: 'not_going', label: 'No iré', color: '#EF4444', bg: 'rgba(239, 68, 68, 0.15)', icon: XCircle },
-  { id: 'late', label: 'Llegaré tarde', color: '#F59E0B', bg: 'rgba(245, 158, 11, 0.15)', icon: AlertTriangle },
-  { id: 'justified', label: 'Justificado', color: '#3B82F6', bg: 'rgba(59, 130, 246, 0.15)', icon: HelpCircle },
-];
 
 export const PlayerScheduleTab = ({ player, team, teamPath, isParentView = false }) => {
   const { user } = useAuth();
+  const { t, locale, isEn } = useTranslation();
   const [events, setEvents] = useState([]);
   const [rsvps, setRsvps] = useState({});
   const [selectedMonth, setSelectedMonth] = useState(new Date());
   const [savingEventId, setSavingEventId] = useState(null);
 
+  const RSVP_OPTIONS = [
+    { id: 'going', label: t('player.schedule.rsvpGoing'), color: '#10B981', bg: 'rgba(16, 185, 129, 0.15)', icon: CheckCircle },
+    { id: 'not_going', label: t('player.schedule.rsvpNotGoing'), color: '#EF4444', bg: 'rgba(239, 68, 68, 0.15)', icon: XCircle },
+    { id: 'late', label: t('player.schedule.rsvpLate'), color: '#F59E0B', bg: 'rgba(245, 158, 11, 0.15)', icon: AlertTriangle },
+    { id: 'justified', label: t('player.schedule.rsvpJustified'), color: '#3B82F6', bg: 'rgba(59, 130, 246, 0.15)', icon: HelpCircle },
+  ];
+
   const effectivePlayerId = player?.id || user?.uid;
   const cleanPath = teamPath ? teamPath.replace(/^\/+|\/+$/g, '') : '';
 
-  // Escuchar eventos (sesiones y partidos) en tiempo real con onSnapshot
+  // Escuchar eventos (sesiones y partidos) del equipo de forma reactiva y aislada
   useEffect(() => {
     if (!cleanPath) return;
 
-    // 1. Escuchar sesiones
+    // 1. Escuchar sesiones de entrenamiento
     const sessionsRef = collection(db, `${cleanPath}/sessions`);
     const unsubSessions = onSnapshot(sessionsRef, (snap) => {
-      const sessions = snap.docs.map(d => ({
-        id: d.id,
-        type: 'session',
-        title: d.data().titulo || d.data().title || 'Entrenamiento',
-        date: d.data().fecha || d.data().date,
-        time: d.data().hora || d.data().time || '18:30',
-        duration: d.data().duracion || 90,
-        location: d.data().lugar || d.data().location || 'Campo Municipal',
-        ...d.data()
-      }));
+      const sessions = snap.docs.map(d => {
+        const data = d.data() || {};
+        return {
+          ...data,
+          id: d.id,
+          type: 'session',
+          title: data.titulo || data.title || data.nombre || data.name || t('player.schedule.training'),
+          date: data.fecha || data.date || data.dia || data.sessionDate || data.createdAt,
+          time: data.hora || data.time || data.startTime || '18:30',
+          duration: data.duracion || data.duration || 90,
+          location: data.lugar || data.location || 'Campo Municipal',
+        };
+      });
 
-      // 2. Escuchar partidos
+      // 2. Escuchar partidos oficiales y amistosos
       const matchesRef = collection(db, `${cleanPath}/matches`);
       const unsubMatches = onSnapshot(matchesRef, (snapM) => {
-        const matches = snapM.docs.map(d => ({
-          id: d.id,
-          type: 'match',
-          title: `vs ${d.data().rival || d.data().opponent || 'Rival'}`,
-          date: d.data().fecha || d.data().date,
-          time: d.data().hora || d.data().time || '11:00',
-          duration: 90,
-          location: d.data().lugar || (d.data().isHome ? 'Campo Local' : 'Campo Visitante'),
-          ...d.data()
-        }));
+        const matches = snapM.docs.map(d => {
+          const data = d.data() || {};
+          const rivalName = data.rival || data.opponent || data.rivalName || 'Rival';
+          const isHome = data.isHome !== false;
+          return {
+            ...data,
+            id: d.id,
+            type: 'match',
+            title: data.titulo || data.title || (isHome ? `vs ${rivalName}` : `@ ${rivalName}`),
+            date: data.fecha || data.date || data.dia || data.matchDate || data.createdAt,
+            time: data.hora || data.time || data.startTime || '11:00',
+            duration: data.duracion || 90,
+            location: data.lugar || data.location || (isHome ? 'Campo Local' : 'Campo Visitante'),
+          };
+        });
 
         const combined = [...sessions, ...matches];
-        combined.sort((a, b) => new Date(a.date || 0) - new Date(b.date || 0));
+        combined.sort((a, b) => {
+          const dateA = new Date(a.date || 0).getTime() || 0;
+          const dateB = new Date(b.date || 0).getTime() || 0;
+          return dateA - dateB;
+        });
         setEvents(combined);
       }, (err) => {
+        console.warn('Error cargando partidos:', err);
         setEvents(sessions);
       });
 
       return () => unsubMatches();
     }, (err) => {
-      console.warn('Error cargando eventos de agenda:', err);
+      console.warn('Error cargando sesiones:', err);
     });
 
     return () => unsubSessions();
-  }, [cleanPath]);
+  }, [cleanPath, t]);
 
-  // Escuchar RSVPs guardados en attendance
+  // Escuchar RSVPs guardados en attendance para el jugador activo
   useEffect(() => {
     if (!cleanPath) return;
 
@@ -91,7 +103,7 @@ export const PlayerScheduleTab = ({ player, team, teamPath, isParentView = false
     const unsubAtt = onSnapshot(attRef, (snap) => {
       const rsvpMap = {};
       snap.docs.forEach(docSnap => {
-        const data = docSnap.data();
+        const data = docSnap.data() || {};
         const eventId = docSnap.id;
         if (data.playerRsvp && data.playerRsvp[effectivePlayerId]) {
           rsvpMap[eventId] = data.playerRsvp[effectivePlayerId];
@@ -125,8 +137,8 @@ export const PlayerScheduleTab = ({ player, team, teamPath, isParentView = false
         [eventId]: { status: optionId }
       }));
 
-      const optLabel = RSVP_OPTIONS.find(o => o.id === optionId)?.label;
-      showToast(`Asistencia confirmada: "${optLabel}"`, 'success');
+      const optLabel = RSVP_OPTIONS.find(o => o.id === optionId)?.label || optionId;
+      showToast(t('player.schedule.rsvpConfirmed', { status: optLabel }), 'success');
     } catch (err) {
       console.error('Error guardando RSVP:', err);
       showToast('Error al guardar asistencia.', 'error');
@@ -137,23 +149,42 @@ export const PlayerScheduleTab = ({ player, team, teamPath, isParentView = false
 
   const parseEventDate = (rawDate) => {
     if (!rawDate) return null;
+    if (typeof rawDate === 'number') {
+      const dObj = new Date(rawDate);
+      return { year: dObj.getFullYear(), month: dObj.getMonth(), day: dObj.getDate(), dateObj: dObj };
+    }
+    if (rawDate?.toDate && typeof rawDate.toDate === 'function') {
+      const dObj = rawDate.toDate();
+      return { year: dObj.getFullYear(), month: dObj.getMonth(), day: dObj.getDate(), dateObj: dObj };
+    }
+    if (rawDate?.seconds) {
+      const dObj = new Date(rawDate.seconds * 1000);
+      return { year: dObj.getFullYear(), month: dObj.getMonth(), day: dObj.getDate(), dateObj: dObj };
+    }
+    if (rawDate instanceof Date) {
+      return { year: rawDate.getFullYear(), month: rawDate.getMonth(), day: rawDate.getDate(), dateObj: rawDate };
+    }
     if (typeof rawDate === 'string') {
       if (rawDate.includes('-')) {
         const clean = rawDate.split('T')[0];
-        const [y, m, d] = clean.split('-').map(n => parseInt(n, 10));
-        return { year: y, month: m - 1, day: d, dateObj: new Date(y, m - 1, d), str: clean };
+        const parts = clean.split('-').map(n => parseInt(n, 10));
+        if (parts.length === 3) {
+          const [y, m, d] = parts;
+          return { year: y, month: m - 1, day: d, dateObj: new Date(y, m - 1, d) };
+        }
       }
       if (rawDate.includes('/')) {
-        const [d, m, y] = rawDate.split('/').map(n => parseInt(n, 10));
-        return { year: y, month: m - 1, day: d, dateObj: new Date(y, m - 1, d), str: `${y}-${String(m).padStart(2,'0')}-${String(d).padStart(2,'0')}` };
+        const clean = rawDate.split('T')[0];
+        const parts = clean.split('/').map(n => parseInt(n, 10));
+        if (parts.length === 3) {
+          const [d, m, y] = parts;
+          return { year: y, month: m - 1, day: d, dateObj: new Date(y, m - 1, d) };
+        }
       }
-    }
-    if (rawDate?.toDate) {
-      const dObj = rawDate.toDate();
-      return { year: dObj.getFullYear(), month: dObj.getMonth(), day: dObj.getDate(), dateObj: dObj, str: dObj.toISOString().split('T')[0] };
-    }
-    if (rawDate instanceof Date) {
-      return { year: rawDate.getFullYear(), month: rawDate.getMonth(), day: rawDate.getDate(), dateObj: rawDate, str: rawDate.toISOString().split('T')[0] };
+      const fallbackDate = new Date(rawDate);
+      if (!isNaN(fallbackDate.getTime())) {
+        return { year: fallbackDate.getFullYear(), month: fallbackDate.getMonth(), day: fallbackDate.getDate(), dateObj: fallbackDate };
+      }
     }
     return null;
   };
@@ -163,8 +194,6 @@ export const PlayerScheduleTab = ({ player, team, teamPath, isParentView = false
     if (!parsed) return false;
     return parsed.month === selectedMonth.getMonth() && parsed.year === selectedMonth.getFullYear();
   });
-
-  const displayEvents = filteredEvents;
 
   const prevMonth = () => {
     setSelectedMonth(prev => new Date(prev.getFullYear(), prev.getMonth() - 1, 1));
@@ -179,14 +208,14 @@ export const PlayerScheduleTab = ({ player, team, teamPath, isParentView = false
   };
 
   const isCurrentMonth = selectedMonth.getMonth() === new Date().getMonth() && selectedMonth.getFullYear() === new Date().getFullYear();
-  const monthYearLabel = selectedMonth.toLocaleDateString('es-ES', { month: 'long', year: 'numeric' });
+  const monthYearLabel = selectedMonth.toLocaleDateString(locale || 'es-ES', { month: 'long', year: 'numeric' });
 
   return (
     <div className="player-tab-content player-schedule-tab">
       
       {/* Selector de Mes */}
       <div className="schedule-month-selector">
-        <button className="month-nav-btn" onClick={prevMonth} aria-label="Mes anterior">
+        <button className="month-nav-btn" onClick={prevMonth} aria-label={isEn ? 'Previous month' : 'Mes anterior'}>
           <ChevronLeft size={20} />
         </button>
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
@@ -201,33 +230,33 @@ export const PlayerScheduleTab = ({ player, team, teamPath, isParentView = false
                 background: 'none',
                 border: 'none',
                 color: '#10B981',
-                fontSize: '0.72rem',
+                fontSize: '0.75rem',
                 fontWeight: 700,
                 cursor: 'pointer',
-                padding: '2px 6px',
-                marginTop: '2px'
+                padding: '4px 8px',
+                marginTop: '2px',
+                minHeight: '28px'
               }}
             >
-              • Volver al mes actual •
+              • {t('player.schedule.backToCurrentMonth')} •
             </button>
           )}
         </div>
-        <button className="month-nav-btn" onClick={nextMonth} aria-label="Mes siguiente">
+        <button className="month-nav-btn" onClick={nextMonth} aria-label={isEn ? 'Next month' : 'Mes siguiente'}>
           <ChevronRight size={20} />
         </button>
       </div>
 
-      {displayEvents.length > 0 ? (
+      {filteredEvents.length > 0 ? (
         <div className="events-cards-list">
-          {displayEvents.map((evt) => {
+          {filteredEvents.map((evt) => {
             const currentRsvp = rsvps[evt.id]?.status;
             const isMatch = evt.type === 'match';
             const parsed = parseEventDate(evt.date || evt.fecha);
             const dateDisplay = parsed?.dateObj 
-              ? parsed.dateObj.toLocaleDateString('es-ES', { weekday: 'short', day: 'numeric', month: 'short' }) 
+              ? parsed.dateObj.toLocaleDateString(locale || 'es-ES', { weekday: 'short', day: 'numeric', month: 'short' }) 
               : (evt.date || 'Fecha');
 
-            // LÓGICA DE PRIVACIDAD DE CONVOCATORIA (FASE 2)
             const isFinished = evt.status === 'finalizado' || evt.estado === 'finalizado';
             const isCalled = evt.convocados?.includes(effectivePlayerId) || 
                              evt.titulares?.includes(effectivePlayerId) || 
@@ -241,7 +270,7 @@ export const PlayerScheduleTab = ({ player, team, teamPath, isParentView = false
               <div key={evt.id} className={`event-card-item ${isMatch ? 'match-card' : 'session-card'}`}>
                 <div className="event-card-top">
                   <div className="event-type-badge">
-                    {isMatch ? '🏆 PARTIDO' : '⚽ ENTRENAMIENTO'}
+                    {isMatch ? `🏆 ${t('player.schedule.match')}` : `⚽ ${t('player.schedule.training')}`}
                   </div>
                   <div className="event-date-pill">
                     {dateDisplay}
@@ -269,17 +298,16 @@ export const PlayerScheduleTab = ({ player, team, teamPath, isParentView = false
                     border: `1px solid ${isCalled ? 'rgba(16, 185, 129, 0.35)' : isReserva ? 'rgba(245, 158, 11, 0.35)' : 'rgba(255, 255, 255, 0.1)'}`
                   }}>
                     {!isFinished ? (
-                      // ANTES DEL PARTIDO: PRIVACIDAD TOTAL (Solo Convocado / Reserva / No Convocado)
                       <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                         {isCalled ? (
                           <>
                             <ShieldCheck size={18} color="#10B981" />
                             <div>
                               <strong style={{ color: '#10B981', fontSize: '0.88rem', display: 'block' }}>
-                                ¡Convocado para el partido!
+                                {isEn ? 'Called up for the match!' : '¡Convocado para el partido!'}
                               </strong>
                               <span style={{ fontSize: '0.74rem', color: 'var(--text-secondary)' }}>
-                                Has sido convocado por el cuerpo técnico. ¡Da el 100% en el campo!
+                                {isEn ? 'You have been selected by the coaching staff.' : 'Has sido convocado por el cuerpo técnico. ¡Da el 100% en el campo!'}
                               </span>
                             </div>
                           </>
@@ -288,10 +316,10 @@ export const PlayerScheduleTab = ({ player, team, teamPath, isParentView = false
                             <AlertTriangle size={18} color="#F59E0B" />
                             <div>
                               <strong style={{ color: '#F59E0B', fontSize: '0.88rem', display: 'block' }}>
-                                Reserva / Convocatoria en espera
+                                {isEn ? 'Standby / Reserve list' : 'Reserva / Convocatoria en espera'}
                               </strong>
                               <span style={{ fontSize: '0.74rem', color: 'var(--text-secondary)' }}>
-                                Mantente atento por si se produce alguna vacante de última hora.
+                                {isEn ? 'Stay tuned in case of last minute updates.' : 'Mantente atento por si se produce alguna vacante de última hora.'}
                               </span>
                             </div>
                           </>
@@ -300,29 +328,28 @@ export const PlayerScheduleTab = ({ player, team, teamPath, isParentView = false
                             <HelpCircle size={18} color="var(--text-secondary)" />
                             <div>
                               <strong style={{ color: 'var(--text-secondary)', fontSize: '0.88rem', display: 'block' }}>
-                                No convocado para esta jornada
+                                {isEn ? 'Not called up for this match' : 'No convocado para esta jornada'}
                               </strong>
                               <span style={{ fontSize: '0.74rem', color: 'var(--text-muted)' }}>
-                                ¡Mucho ánimo y a seguir dándolo todo en los entrenamientos!
+                                {isEn ? 'Keep working hard in training!' : '¡Mucho ánimo y a seguir dándolo todo en los entrenamientos!'}
                               </span>
                             </div>
                           </>
                         )}
                       </div>
                     ) : (
-                      // TRAS EL PARTIDO: DATOS COMPLETOS
                       <div>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
                           <span style={{ fontSize: '0.82rem', fontWeight: 800, color: '#FFFFFF' }}>
-                            {isStarter ? '⭐ Titular' : isSub ? '🔄 Suplente' : isCalled ? '📋 Convocado' : 'Sin minutos'}
+                            {isStarter ? (isEn ? '⭐ Starter' : '⭐ Titular') : isSub ? (isEn ? '🔄 Substitute' : '🔄 Suplente') : isCalled ? (isEn ? '📋 Called up' : '📋 Convocado') : (isEn ? 'No minutes' : 'Sin minutos')}
                           </span>
                           <span style={{ fontSize: '0.75rem', color: 'var(--accent-gold)' }}>
-                            ⏱️ {playerStats?.minutesPlayed || 0} min jugados
+                            ⏱️ {playerStats?.minutesPlayed || 0} min {isEn ? 'played' : 'jugados'}
                           </span>
                         </div>
                         {playerStats?.coachRating && (
                           <div style={{ fontSize: '0.78rem', color: '#10B981', fontWeight: 700 }}>
-                            Nota del Míster: {playerStats.coachRating} / 10
+                            {isEn ? 'Coach Rating:' : 'Nota del Míster:'} {playerStats.coachRating} / 10
                           </div>
                         )}
                       </div>
@@ -330,12 +357,14 @@ export const PlayerScheduleTab = ({ player, team, teamPath, isParentView = false
                   </div>
                 )}
 
-                {/* BOTONES RSVP */}
+                {/* BOTONES RSVP CON TOUCH TARGETS >= 48px */}
                 <div className="rsvp-section">
-                  <span className="rsvp-prompt">
-                    {isParentView ? `¿Asistirá ${player?.name || 'tu hijo'} a este evento?` : '¿Asistirás a esta sesión?'}
+                  <span className="rsvp-prompt" style={{ fontSize: '0.85rem', fontWeight: 700, marginBottom: '8px', display: 'block' }}>
+                    {isParentView 
+                      ? (isEn ? `Will ${player?.name || 'your child'} attend?` : `¿Asistirá ${player?.name || 'tu hijo'} a este evento?`) 
+                      : (isEn ? 'Will you attend this event?' : '¿Asistirás a esta sesión?')}
                   </span>
-                  <div className="rsvp-buttons-grid">
+                  <div className="rsvp-buttons-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '8px' }}>
                     {RSVP_OPTIONS.map((opt) => {
                       const isSelected = currentRsvp === opt.id;
                       const Icon = opt.icon;
@@ -349,12 +378,21 @@ export const PlayerScheduleTab = ({ player, team, teamPath, isParentView = false
                             borderColor: isSelected ? opt.color : 'var(--border-color)',
                             backgroundColor: isSelected ? opt.bg : 'transparent',
                             color: isSelected ? opt.color : 'var(--text-secondary)',
-                            minHeight: '44px'
+                            minHeight: '48px',
+                            minWidth: '48px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: '6px',
+                            borderRadius: '10px',
+                            fontWeight: 700,
+                            cursor: 'pointer',
+                            transition: 'all 0.2s ease'
                           }}
                           onClick={() => handleRsvp(evt.id, opt.id)}
                           disabled={savingEventId === evt.id}
                         >
-                          <Icon size={16} color={isSelected ? opt.color : 'currentColor'} />
+                          <Icon size={18} color={isSelected ? opt.color : 'currentColor'} />
                           <span>{opt.label}</span>
                         </button>
                       );
@@ -366,10 +404,12 @@ export const PlayerScheduleTab = ({ player, team, teamPath, isParentView = false
           })}
         </div>
       ) : (
-        <div className="schedule-empty-box">
-          <CalendarIcon size={36} color="var(--text-muted)" />
-          <h4>No hay eventos programados</h4>
-          <p>Tu entrenador aún no ha programado sesiones o partidos en el calendario.</p>
+        <div className="schedule-empty-box" style={{ padding: '32px 16px', textAlign: 'center' }}>
+          <CalendarIcon size={40} color="var(--text-muted)" style={{ margin: '0 auto 12px auto', opacity: 0.7 }} />
+          <h4 style={{ margin: '0 0 6px 0', fontSize: '1rem', fontWeight: 800 }}>{t('player.schedule.noEvents')}</h4>
+          <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
+            {isEn ? 'Your coach has not scheduled sessions or matches for this month yet.' : 'Tu entrenador aún no ha programado sesiones o partidos en este mes.'}
+          </p>
         </div>
       )}
     </div>

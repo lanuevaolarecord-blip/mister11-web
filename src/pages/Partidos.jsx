@@ -1170,9 +1170,10 @@ const Partidos = () => {
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    padding: '16px',
+                    padding: '16px 16px 40px 16px',
                     overflow: 'visible',
                     position: 'relative',
+                    minHeight: 'fit-content'
                   }}
                 >
                   <div
@@ -1200,11 +1201,13 @@ const Partidos = () => {
                       const customPos = matchData.customPositions && matchData.customPositions[idx];
 
                       // Las posiciones en formaciones.js ya son HORIZONTALES: left=X, top=Y
-                      // Clampear top entre 5% y 92% para que el usuario pueda llevar jugadores hasta las dos líneas de banda
+                      // Clampear top entre 8% y 88% para proteger márgenes superior e inferior
                       const rawTop = parseFloat(customPos ? customPos.top : pos.top);
-                      const clampedTop = Math.min(Math.max(rawTop, 5), 92);
+                      const clampedTop = Math.min(Math.max(rawTop, 8), 88);
                       const topPos = `${clampedTop}%`;
-                      const leftPos = customPos ? customPos.left : pos.left;
+                      const rawLeft = parseFloat(customPos ? customPos.left : pos.left);
+                      const clampedLeft = Math.min(Math.max(rawLeft, 6), 92);
+                      const leftPos = `${clampedLeft}%`;
 
                       const posLabel = getSlotPosition(idx);
                       const isSelected = selectedSlotIdx === idx;
@@ -1217,7 +1220,7 @@ const Partidos = () => {
                           style={{
                             top: topPos,
                             left: leftPos,
-                            zIndex: draggingIdx === idx ? 99 : isSelected ? 30 : 10
+                            zIndex: draggingIdx === idx ? 99 : isSelected ? 30 : Math.round(clampedTop)
                           }}
                           title={player ? `Jugador: ${player.name}\nDorsal: ${player.number || '-'}\nPosición: ${player.position || posLabel}` : 'Slot Vacío'}
                           onPointerDown={(e) => handleDragStart(e, idx)}

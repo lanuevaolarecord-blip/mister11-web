@@ -200,6 +200,66 @@ const DEFAULT_TESTS = [
 
 const DEFAULT_IDS = DEFAULT_TESTS.map(t => t.id);
 
+// Mapeo inteligente y determinista de imágenes para pruebas y cuestionarios
+export const resolveTestImage = (t) => {
+  if (t?.imagenProtocolo && typeof t.imagenProtocolo === 'string' && t.imagenProtocolo.trim()) {
+    return t.imagenProtocolo;
+  }
+  const idStr = (t?.id || '').toLowerCase();
+  const nameStr = (t?.name || t?.nombre || '').toLowerCase();
+  const catStr = (t?.category || t?.categoria || '').toLowerCase();
+
+  if (idStr.includes('acsi') || nameStr.includes('acsi') || nameStr.includes('afrontamiento')) {
+    return '/img/tests/acsi28_afrontamiento.png';
+  }
+  if (idStr.includes('goal') || idStr.includes('meta') || nameStr.includes('meta') || nameStr.includes('establecimiento')) {
+    return '/img/tests/establecimiento_metas.png';
+  }
+  if (idStr.includes('mtq') || idStr.includes('ires') || nameStr.includes('resiliencia') || nameStr.includes('fortaleza') || catStr.includes('resiliencia')) {
+    return '/img/tests/resiliencia_ires.png';
+  }
+  if (idStr.includes('geq') || idStr.includes('eced') || idStr.includes('gets') || nameStr.includes('cohesión') || nameStr.includes('cohesion') || nameStr.includes('clima') || catStr.includes('cohesión') || catStr.includes('cohesion') || catStr.includes('equipo')) {
+    return '/img/tests/cohesion_equipo.png';
+  }
+  if (idStr.includes('mhc') || idStr.includes('cwms') || nameStr.includes('emocional') || nameStr.includes('bienestar') || catStr.includes('bienestar')) {
+    return '/img/tests/bienestar_mental.png';
+  }
+  if (nameStr.includes('ansiedad') || catStr.includes('ansiedad')) {
+    return '/img/tests/ansiedad_competitiva.png';
+  }
+  if (nameStr.includes('atención') || nameStr.includes('concentración') || nameStr.includes('concentracion') || nameStr.includes('atencion')) {
+    return '/img/tests/atencion_concentracion.png';
+  }
+  if (idStr.includes('edl') || nameStr.includes('limpio') || nameStr.includes('deporte limpio')) {
+    return '/img/tests/deporte_limpio.png';
+  }
+  if (idStr.includes('cooper') || nameStr.includes('cooper')) {
+    return '/img/tests/cooper.png';
+  }
+  if (idStr.includes('sprint_10') || nameStr.includes('10m') || nameStr.includes('10 m')) {
+    return '/img/tests/sprint_10m.png';
+  }
+  if (idStr.includes('sprint') || nameStr.includes('sprint') || nameStr.includes('velocidad') || nameStr.includes('30m')) {
+    return '/img/tests/sprint_30m.png';
+  }
+  if (idStr.includes('cmj') || nameStr.includes('salto') || nameStr.includes('cmj') || nameStr.includes('fuerza')) {
+    return '/img/tests/salto_cmj.png';
+  }
+  if (idStr.includes('t_test') || idStr.includes('agilidad') || nameStr.includes('agilidad') || nameStr.includes('t-test') || nameStr.includes('t test')) {
+    return '/img/tests/t_test.png';
+  }
+  if (nameStr.includes('cono') || nameStr.includes('conducción') || nameStr.includes('conduccion')) {
+    return '/img/tests/conduccion_conos.png';
+  }
+  if (nameStr.includes('pase') || nameStr.includes('portería') || nameStr.includes('porteria')) {
+    return '/img/tests/pase_porteria.png';
+  }
+  if (nameStr.includes('rpe') || idStr.includes('rpe')) {
+    return '/img/tests/rpe_scale.png';
+  }
+  return '/img/tests/bienestar_general.png';
+};
+
 const Tests = () => {
   const navigate = useNavigate();
   const { user, activeTeamId, getTeamPath } = useAuth();
@@ -300,20 +360,14 @@ const Tests = () => {
           setHeatSelectedTest(DEFAULT_TESTS[0].id);
         }
       } else {
-        // Build a lookup map of DEFAULT_TESTS images by id
-        const defaultImgMap = {};
-        DEFAULT_TESTS.forEach(dt => {
-          if (dt.imagenProtocolo) defaultImgMap[dt.id] = dt.imagenProtocolo;
-        });
-
         const loadedTests = [];
         snapshot.forEach(doc => {
           const data = doc.data();
-          // Inject imagenProtocolo from DEFAULT_TESTS if not already set in Firestore
-          if (!data.imagenProtocolo && defaultImgMap[doc.id]) {
-            data.imagenProtocolo = defaultImgMap[doc.id];
+          const testObj = { ...data, id: doc.id };
+          if (!testObj.imagenProtocolo) {
+            testObj.imagenProtocolo = resolveTestImage(testObj);
           }
-          loadedTests.push({ ...data, id: doc.id });
+          loadedTests.push(testObj);
         });
         setTests(loadedTests);
         if (loadedTests.length > 0) {
@@ -965,20 +1019,39 @@ const Tests = () => {
               }).map(t => (
                 <div key={t.id} className="card-base" style={{ padding: '0', cursor: 'pointer', display: 'flex', flexDirection: 'column' }} onClick={() => setSelectedTestDetail(t)}>
                   <div style={{ position: 'relative', height: '190px', background: '#fdfcf8', borderTopLeftRadius: '12px', borderTopRightRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', borderBottom: '1px solid var(--border-light)', overflow: 'hidden' }}>
-                    {/* Ilustración del test */}
-                    {t.imagenProtocolo && !imageErrors[t.id] ? (
+                    {/* Ilustración del test con resolución automática */}
+                    {!imageErrors[t.id] ? (
                       <img
-                        src={t.imagenProtocolo}
+                        src={resolveTestImage(t)}
                         alt={t.name}
                         style={{ width: '100%', height: '100%', objectFit: 'contain', objectPosition: 'center', padding: '10px' }}
                         onError={() => setImageErrors(prev => ({ ...prev, [t.id]: true }))}
                       />
                     ) : (
-                      /* Fallback SVG si no hay imagen o si falló al cargar */
-                      <svg viewBox="0 0 24 24" width="48" height="48" stroke="var(--text-secondary)" strokeWidth="1.5" fill="none"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                      /* Fallback estético deportivo sin iconos rotos ni relojes vacíos */
+                      <div style={{
+                        width: '100%',
+                        height: '100%',
+                        background: 'linear-gradient(135deg, #1B3A2D 0%, #255340 100%)',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        color: '#FFFFFF',
+                        padding: '16px',
+                        textAlign: 'center',
+                        gap: '6px'
+                      }}>
+                        <span style={{ fontSize: '32px' }}>🧠</span>
+                        <span style={{ fontSize: '13px', fontWeight: '800', color: 'var(--accent-gold, #D4A843)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                          {t.category || 'Evaluación'}
+                        </span>
+                        <span style={{ fontSize: '11px', color: 'rgba(255,255,255,0.85)', fontWeight: '600' }}>
+                          {t.name}
+                        </span>
+                      </div>
                     )}
 
-                    
                     <div style={{ position: 'absolute', top: '12px', left: '12px', display: 'flex', gap: '8px' }}>
                       <span style={{ background: 'var(--accent-green)', color: '#FFF', padding: '4px 8px', borderRadius: '4px', fontSize: '10px', fontWeight: 'bold', textTransform: 'uppercase' }}>{t.category}</span>
                       <span style={{ background: 'var(--bg-card)', color: 'var(--text-primary)', border: '1px solid var(--border-light)', padding: '4px 8px', borderRadius: '4px', fontSize: '10px', fontWeight: 'bold' }}>Medida: {t.unit}</span>

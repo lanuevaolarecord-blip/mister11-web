@@ -8,28 +8,10 @@
   margin-bottom: 16px;
   box-sizing: border-box;
   user-select: none;
-  display: flex !important;
-  flex-direction: row !important;
-  align-items: center !important;
-  gap: 8px !important;
-  overflow-x: auto !important;
-  scroll-snap-type: x mandatory !important;
-  -webkit-overflow-scrolling: touch !important;
-  scrollbar-width: none !important;
-  padding: 4px 4px 8px 4px !important;
-}
-
-.player-tabs-navigation::-webkit-scrollbar {
-  display: none !important;
-}
-
-@media (max-width: 480px) {
-  .player-tabs-navigation {
-    display: grid !important;
-    grid-template-columns: repeat(3, 1fr) !important;
-    gap: 6px !important;
-    overflow-x: visible !important;
-  }
+  display: grid !important;
+  grid-template-columns: repeat(3, 1fr) !important;
+  gap: 6px !important;
+  padding: 4px 0 !important;
 }
 
 /* ─── TAB CARD BASE ─── */
@@ -40,9 +22,8 @@
   align-items: center;
   justify-content: center;
   gap: 4px;
-  min-height: 52px; /* Touch target ergonómico ≥48dp */
-  min-width: 68px;  /* Evita que los textos se monten o se trunquen */
-  padding: 8px 10px;
+  min-height: 48px; /* Touch target ergonómico ≥48dp */
+  padding: 8px 4px;
   border-radius: 12px;
   cursor: pointer;
   border: 1px solid rgba(255, 255, 255, 0.1);
@@ -52,15 +33,7 @@
   transition: transform 150ms ease, background 150ms ease, border-color 150ms ease, color 150ms ease;
   box-sizing: border-box;
   -webkit-tap-highlight-color: transparent;
-  flex: 1 0 auto;
-  scroll-snap-align: start;
-}
-
-@media (max-width: 480px) {
-  .player-tab-card {
-    min-width: unset !important;
-    padding: 8px 4px !important;
-  }
+  width: 100%;
 }
 
 /* Hover e interacción táctil */

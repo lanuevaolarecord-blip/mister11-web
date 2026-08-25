@@ -6,9 +6,7 @@
 .player-chat-tab {
   display: flex;
   flex-direction: column;
-  height: calc(100dvh - 175px);
-  min-height: 480px;
-  max-height: 780px;
+  width: 100%;
   gap: 10px;
   box-sizing: border-box;
   position: relative;
@@ -20,7 +18,7 @@
   align-items: center;
   gap: 12px;
   border-radius: 14px;
-  padding: 10px 14px;
+  padding: 8px 12px;
   flex-shrink: 0;
   transition: all 0.2s ease;
 }
@@ -106,15 +104,15 @@
 
 /* ── CONTENEDOR DE MENSAJES ── */
 .chat-messages-container {
-  flex: 1;
   border-radius: 14px;
-  padding: 14px;
+  padding: 12px;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  min-height: 200px;
+  gap: 10px;
+  min-height: 220px;
+  max-height: 380px;
   box-sizing: border-box;
 }
 
@@ -159,18 +157,17 @@
 }
 
 .chat-sender-tag {
-  font-size: 0.7rem;
-  font-weight: 800;
-  margin-bottom: 3px;
-  padding-left: 4px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  margin-bottom: 2px;
+  padding: 0 4px;
 }
 
 .chat-bubble {
+  border-radius: 16px;
   padding: 10px 14px;
-  border-radius: 14px;
-  position: relative;
   word-break: break-word;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  position: relative;
 }
 
 .chat-bubble-wrapper.mine .chat-bubble {
@@ -201,10 +198,9 @@
   gap: 8px;
   width: 100%;
   flex-shrink: 0;
-  padding-top: 4px;
-  position: sticky;
-  bottom: 0;
-  z-index: 20;
+  padding: 6px 0 0 0;
+  position: relative;
+  box-sizing: border-box;
 }
 
 .chat-text-input {

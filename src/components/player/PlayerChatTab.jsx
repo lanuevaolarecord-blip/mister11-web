@@ -145,20 +145,22 @@ export const PlayerChatTab = ({ teamPath, player, team, isParentView = false, is
   return (
     <div className="player-tab-content player-chat-tab">
       
-      {/* Cabecera del Chat */}
-      <div className="player-chat-header">
-        <div className="chat-coach-avatar">
-          {isCoachView ? <User size={22} color="#10B981" /> : <Shield size={22} color="#D4A843" />}
+      {/* Cabecera del Chat (solo en portal jugador/familia) */}
+      {!isCoachView && (
+        <div className="player-chat-header">
+          <div className="chat-coach-avatar">
+            <Shield size={22} color="#D4A843" />
+          </div>
+          <div className="chat-header-info">
+            <h3 className="chat-title">
+              Canal Directo con el Cuerpo Técnico
+            </h3>
+            <p className="chat-subtitle">
+              {team?.nombre || 'Mi Equipo'} · Mensajes privados y confidenciales
+            </p>
+          </div>
         </div>
-        <div className="chat-header-info">
-          <h3 className="chat-title">
-            {isCoachView ? `Canal con ${player?.name || 'Jugador'}` : 'Canal Directo con el Cuerpo Técnico'}
-          </h3>
-          <p className="chat-subtitle">
-            {team?.nombre || 'Mi Equipo'} · Mensajes privados y confidenciales
-          </p>
-        </div>
-      </div>
+      )}
 
       {/* Píldoras de Respuestas Rápidas */}
       <div className="quick-replies-section">

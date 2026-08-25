@@ -165,9 +165,20 @@ const PlayerDashboard = () => {
     ? rosterPlayers.filter(p => Array.isArray(p.linkedParents) && p.linkedParents.includes(user?.uid))
     : [];
 
-  // 2. Determinar si es vista de padre
+  // Si la ficha cargada le pertenece directamente al usuario logueado, es 100% vista de JUGADOR
+  const isMyOwnPlayerCard = Boolean(
+    player && (
+      (player.requesterUid && player.requesterUid === user?.uid) ||
+      (player.playerUid && player.playerUid === user?.uid) ||
+      (player.userId && player.userId === user?.uid) ||
+      (player.email && user?.email && player.email.trim().toLowerCase() === user?.email.trim().toLowerCase()) ||
+      (player.requesterEmail && user?.email && player.requesterEmail.trim().toLowerCase() === user?.email.trim().toLowerCase())
+    )
+  );
+
+  // 2. Determinar si es vista de padre (solo si NO es su propia ficha de jugador y tiene rol parent)
   const isParentView = Boolean(
-    isParentRole && (myChildren.length > 0 || player?.linkedParents?.includes(user?.uid))
+    !isMyOwnPlayerCard && isParentRole && (myChildren.length > 0 || (player?.linkedParents && player.linkedParents.includes(user?.uid)))
   );
 
   // 3. Hook de logros deportivos en tiempo real

@@ -228,27 +228,37 @@ export const PlayerStatsTab = ({ player, team, teamPath, isParentView = false, o
     };
   }, [allPlayers, allAttendance, allTeamMatches, effectivePlayerId, playerMatchStats, player]);
 
-  // 5. Radar de Habilidades dinámico
+  // 5. Radar de Habilidades 100% Real (Evaluado por el Míster o Asistencia)
   const avgSleep = wellnessHistory.length > 0 
-    ? (wellnessHistory.reduce((s, w) => s + (w.sleep || 4), 0) / wellnessHistory.length).toFixed(1)
-    : '4.2';
+    ? (wellnessHistory.reduce((s, w) => s + (Number(w.sleep) || 0), 0) / wellnessHistory.length).toFixed(1)
+    : '--';
 
   const avgMood = wellnessHistory.length > 0 
-    ? (wellnessHistory.reduce((s, w) => s + (w.mood || 4), 0) / wellnessHistory.length).toFixed(1)
-    : '4.5';
+    ? (wellnessHistory.reduce((s, w) => s + (Number(w.mood) || 0), 0) / wellnessHistory.length).toFixed(1)
+    : '--';
 
   const hasDiscomfortActive = wellnessHistory[0]?.hasDiscomfort;
 
-  // Radar points
+  // Radar points con datos reales de la ficha o actas
+  const rawFisico = player?.statsFisico || player?.evaluacion?.fisico || player?.fisico || 0;
+  const rawTecnica = player?.statsTecnica || player?.evaluacion?.tecnica || player?.tecnica || 0;
+  const rawTactica = player?.statsTactica || player?.evaluacion?.tactica || player?.tactica || 0;
+  const rawMental = player?.statsMental || player?.evaluacion?.mental || player?.mental || 0;
+  const rawAsistencia = teamComparison?.myAttendancePct || 0;
+
+  const hasAnyEvaluation = rawFisico > 0 || rawTecnica > 0 || rawTactica > 0 || rawMental > 0;
+
   const radarMetrics = [
-    { label: 'FÍSICO', value: player?.statsFisico || 82 },
-    { label: 'TÉCNICA', value: player?.statsTecnica || 85 },
-    { label: 'TÁCTICA', value: player?.statsTactica || 78 },
-    { label: 'MENTAL', value: player?.statsMental || 88 },
-    { label: 'ASISTENCIA', value: teamComparison?.myAttendancePct || 92 }
+    { label: 'FÍSICO', value: rawFisico },
+    { label: 'TÉCNICA', value: rawTecnica },
+    { label: 'TÁCTICA', value: rawTactica },
+    { label: 'MENTAL', value: rawMental },
+    { label: 'ASISTENCIA', value: rawAsistencia }
   ];
 
-  const overallTPI = Math.round(radarMetrics.reduce((s, m) => s + m.value, 0) / radarMetrics.length);
+  const overallTPI = hasAnyEvaluation || rawAsistencia > 0
+    ? Math.round(radarMetrics.reduce((s, m) => s + m.value, 0) / radarMetrics.filter(m => m.value > 0).length || 1)
+    : 0;
 
   const svgWidth = 340;
   const svgHeight = 290;
@@ -259,7 +269,7 @@ export const PlayerStatsTab = ({ player, team, teamPath, isParentView = false, o
 
   const polygonPoints = radarMetrics.map((m, i) => {
     const angle = i * angleStep - Math.PI / 2;
-    const r = (m.value / 100) * radius;
+    const r = (Math.max(m.value, 5) / 100) * radius;
     const x = centerX + r * Math.cos(angle);
     const y = centerY + r * Math.sin(angle);
     return `${x},${y}`;

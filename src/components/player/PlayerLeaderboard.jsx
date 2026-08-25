@@ -13,12 +13,13 @@ import {
   TrendingUp,
   Shield
 } from 'lucide-react';
+import { calculatePlayerMatchStats } from '../../utils/playerMatchStats';
 import './PlayerLeaderboard.css';
 
 /**
  * PlayerLeaderboard.jsx
  * Sistema de Clasificación y Rendimiento Gaming para jugadores de Míster11.
- * Gamificación positiva (XP, Rango, Podio) respetando privacidad y RGPD.
+ * Gamificación basada 100% en datos reales del entrenador (minutos, asistencia, actas oficiales).
  */
 export const PlayerLeaderboard = ({ 
   players = [], 
@@ -46,75 +47,56 @@ export const PlayerLeaderboard = ({
       const firstName = isAnonymous && !isCurrent 
         ? 'Compañero' 
         : (p.name || p.nombre || 'Jugador').trim().split(' ')[0];
-      const dorsal = p.dorsal || p.number || p.numero || '11';
-      const displayName = `#${dorsal} ${firstName}`;
+      const dorsal = p.dorsal || p.number || p.numero || '-';
+      const displayName = dorsal !== '-' ? `#${dorsal} ${firstName}` : firstName;
 
-      // A) Asistencia real
+      // A) Asistencia 100% Real
       let myPresents = 0;
       let myTotalCalls = 0;
-      attendance.forEach(att => {
-        myTotalCalls++;
-        const isPresent = (
-          (att.records && (att.records[pId]?.status === 'present' || att.records[pId]?.status === 'late' || att.records[pId] === true)) ||
-          (att.players && (att.players[pId] === true || att.players[pId] === 'presente' || att.players[pId]?.status === 'present')) ||
-          (Array.isArray(att.presentes) && att.presentes.some(id => String(id) === pId)) ||
-          (Array.isArray(att.presentPlayers) && att.presentPlayers.some(id => String(id) === pId))
-        );
-        if (isPresent) {
-          myPresents++;
-        }
-      });
+      if (Array.isArray(attendance) && attendance.length > 0) {
+        attendance.forEach(att => {
+          myTotalCalls++;
+          const isPresent = (
+            (att.records && (att.records[pId]?.status === 'present' || att.records[pId]?.status === 'late' || att.records[pId] === true)) ||
+            (att.players && (att.players[pId] === true || att.players[pId] === 'presente' || att.players[pId]?.status === 'present')) ||
+            (Array.isArray(att.presentes) && att.presentes.some(id => String(id) === pId)) ||
+            (Array.isArray(att.presentPlayers) && att.presentPlayers.some(id => String(id) === pId))
+          );
+          if (isPresent) {
+            myPresents++;
+          }
+        });
+      }
       const attendancePct = myTotalCalls > 0 
         ? Math.round((myPresents / myTotalCalls) * 100) 
-        : (p.asistenciaPct !== undefined ? p.asistenciaPct : 90);
+        : 0;
 
-      // B) Partidos, minutos, goles y asistencias
-      let totalMatches = 0;
-      let totalMinutes = 0;
-      let totalGoals = 0;
-      let totalAssists = 0;
+      // B) Partidos, minutos, goles y asistencias 100% reales desde actas del míster
+      const pMatchStats = calculatePlayerMatchStats(pId, matches || []);
+      const totalMatches = pMatchStats.matchesPlayed || 0;
+      const totalMinutes = pMatchStats.minutesPlayed || 0;
+      const totalGoals = pMatchStats.goals || 0;
+      const totalAssists = pMatchStats.assists || 0;
 
-      matches.forEach(m => {
-        const isTitular = (m.titulares || m.alineacion?.titulares || []).some(id => String(id) === pId);
-        const isSuplente = (m.suplentes || m.alineacion?.suplentes || []).some(id => String(id) === pId);
-        const isConvocado = (m.convocados || m.convocatoria || []).some(id => String(id) === pId);
+      // C) Logros reales (desbloqueados en la ficha del jugador)
+      const achievementsCount = Array.isArray(p.achievements) ? p.achievements.length : (Array.isArray(p.logros) ? p.logros.length : 0);
 
-        if (isTitular || isSuplente || isConvocado) {
-          totalMatches++;
-        }
+      // D) Cálculo de XP por pilares reales
+      const attendanceXP = myTotalCalls > 0 ? Math.round(attendancePct * 5) : 0; // Hasta 500 XP con 100% asistencia
+      const matchesXP = Math.round((totalMatches * 40) + (totalMinutes * 0.5) + (totalGoals * 50) + (totalAssists * 25));
+      const achievementsXP = achievementsCount * 50;
 
-        const pStats = m.playerStats?.[pId];
-        if (pStats) {
-          totalMinutes += (pStats.minutesPlayed || 0);
-          totalGoals += (pStats.goals || 0);
-          totalAssists += (pStats.assists || 0);
-        } else if (isTitular) {
-          totalMinutes += parseInt(m.duration || 90, 10);
-        }
-
-        const gList = m.goleadoresList || [];
-        totalGoals += gList.filter(g => String(g.jugadorId) === pId).length;
-      });
-
-      // C) Logros
-      const achievementsCount = (p.achievements || p.logros || []).length || Math.min(6, Math.floor(totalMatches * 1.2) + 1);
-
-      // D) Cálculo de XP por pilares
-      const attendanceXP = Math.round(attendancePct * 10); // Hasta 1000 XP
-      const matchesXP = Math.round((totalMatches * 30) + (totalMinutes * 0.5) + (totalGoals * 35) + (totalAssists * 20));
-      const achievementsXP = Math.round(achievementsCount * 50);
-
-      // Puntuación Total Power Score
+      // Puntuación Total Power Score Real
       const totalXP = attendanceXP + matchesXP + achievementsXP;
 
-      // Determinación de Rango / Nivel Gaming
+      // Determinación de Rango / Nivel Gaming Real
       let tier = { name: 'BRONCE', color: '#CD7F32', icon: '🥉', minXP: 0 };
       if (totalXP >= 1500) {
         tier = { name: 'DIAMANTE', color: '#60A5FA', icon: '💎', minXP: 1500 };
       } else if (totalXP >= 1000) {
         tier = { name: 'ORO', color: '#C9A84C', icon: '🥇', minXP: 1000 };
-      } else if (totalXP >= 500) {
-        tier = { name: 'PLATA', color: '#94A3B8', icon: '🥈', minXP: 500 };
+      } else if (totalXP >= 400) {
+        tier = { name: 'PLATA', color: '#94A3B8', icon: '🥈', minXP: 400 };
       }
 
       return {
@@ -138,7 +120,7 @@ export const PlayerLeaderboard = ({
         isCurrent: String(pId) === String(currentPlayerId)
       };
     });
-  }, [players, matches, attendance, currentPlayerId]);
+  }, [players, matches, attendance, currentPlayerId, isAnonymous]);
 
   // 2. Ordenar según el filtro activo
   const sortedPlayers = useMemo(() => {

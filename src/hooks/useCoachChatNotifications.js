@@ -64,6 +64,13 @@ export const useCoachChatNotifications = () => {
           showToast(`💬 Mensaje de ${playerName}: "${msgText}"`, 'info');
         }
       });
+
+      // Limpiar de la memoria de notificaciones los hilos que ya fueron leídos
+      allThreads.forEach(t => {
+        if (!t.unreadByCoach && lastProcessedMsgRef.current[t.id]) {
+          delete lastProcessedMsgRef.current[t.id];
+        }
+      });
     }, (err) => {
       console.warn('[CoachChatNotifications] Error escuchando hilos:', err);
     });

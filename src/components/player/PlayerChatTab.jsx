@@ -12,10 +12,13 @@ import {
   addDoc, 
   serverTimestamp, 
   doc, 
-  setDoc 
+  setDoc,
+  updateDoc,
+  arrayUnion
 } from 'firebase/firestore';
 import { db } from '../../firebaseConfig';
 import { useAuth } from '../../context/AuthContext';
+import { clearDeliveredChatNotifications } from '../../hooks/useLocalNotifications';
 import { 
   MessageSquare, 
   Send, 
@@ -85,6 +88,31 @@ export const PlayerChatTab = ({ teamPath, player, team, isParentView = false, is
       setLoading(false);
     }
   }, [cleanPath, isValidPath, effectivePlayerId]);
+
+  // 2. Marcar automáticamente como leídos los mensajes al entrar o recibir nuevos en la conversación activa
+  useEffect(() => {
+    if (!isValidPath || !effectivePlayerId || !user?.uid) return;
+
+    const markAsRead = async () => {
+      try {
+        const threadMetaDoc = doc(db, `${cleanPath}/threads`, effectivePlayerId);
+        const updatePayload = {
+          readBy: arrayUnion(user.uid)
+        };
+        if (isCoachView) {
+          updatePayload.unreadByCoach = false;
+        } else {
+          updatePayload.unreadByPlayer = false;
+        }
+        await updateDoc(threadMetaDoc, updatePayload).catch(() => {});
+        clearDeliveredChatNotifications();
+      } catch (err) {
+        console.warn('[PlayerChatTab] Error marcando mensajes como leídos:', err);
+      }
+    };
+
+    markAsRead();
+  }, [cleanPath, isValidPath, effectivePlayerId, isCoachView, user?.uid, messages.length]);
 
   // Auto-scroll al fondo al recibir o enviar mensajes
   useEffect(() => {

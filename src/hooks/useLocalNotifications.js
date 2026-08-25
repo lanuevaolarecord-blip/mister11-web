@@ -243,4 +243,19 @@ export const cancelSessionReminder = async (sessionId) => {
   }
 };
 
+/**
+ * Limpia y retira las notificaciones entregadas de chat en la barra de estado de Android y en el sistema.
+ */
+export const clearDeliveredChatNotifications = async () => {
+  const plugin = await getPlugin();
+  if (!plugin) return;
+  try {
+    if (typeof plugin.removeAllDeliveredNotifications === 'function') {
+      await plugin.removeAllDeliveredNotifications();
+    }
+  } catch (e) {
+    console.warn('[LocalNotifications] Error al limpiar notificaciones entregadas:', e);
+  }
+};
+
 

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { collection, query, onSnapshot, doc, getDoc } from 'firebase/firestore';
+import { collection, query, onSnapshot, doc, getDoc, updateDoc, arrayUnion } from 'firebase/firestore';
 import { db } from '../firebaseConfig';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
@@ -16,7 +16,7 @@ import { PlayerProfileTab } from '../components/player/PlayerProfileTab';
 import { Shield, Sun, Moon, LogOut, CheckCircle2, ChevronRight, Users, Bell, AlertTriangle, Settings, Loader } from 'lucide-react';
 import { PlayerSettingsModal } from '../components/player/PlayerSettingsModal';
 import { usePushNotifications } from '../hooks/usePushNotifications';
-import { sendChatNotification } from '../hooks/useLocalNotifications';
+import { sendChatNotification, clearDeliveredChatNotifications } from '../hooks/useLocalNotifications';
 import { showToast } from '../utils/toast';
 import './PlayerDashboard.css';
 
@@ -205,12 +205,22 @@ const PlayerDashboard = () => {
       if (snap.exists()) {
         const data = snap.data();
         const lastSenderUid = data.lastSenderUid;
-        const isUnread = lastSenderUid && lastSenderUid !== user?.uid && !data.readBy?.includes(user?.uid);
-        setHasUnreadMessages(!!isUnread);
+        const isUnread = lastSenderUid && lastSenderUid !== user?.uid && !data.readBy?.includes(user?.uid) && data.unreadByPlayer === true;
+        
+        if (activeTab === 'chat') {
+          setHasUnreadMessages(false);
+          if (isUnread && user?.uid) {
+            updateDoc(threadMetaRef, {
+              unreadByPlayer: false,
+              readBy: arrayUnion(user.uid)
+            }).catch(() => {});
+            clearDeliveredChatNotifications();
+          }
+        } else {
+          setHasUnreadMessages(!!isUnread);
 
-        if (isUnread && data.lastMessage && lastNotifiedMsgRef.current !== data.lastMessage) {
-          lastNotifiedMsgRef.current = data.lastMessage;
-          if (activeTab !== 'chat') {
+          if (isUnread && data.lastMessage && lastNotifiedMsgRef.current !== data.lastMessage) {
+            lastNotifiedMsgRef.current = data.lastMessage;
             sendChatNotification({
               title: `💬 Mensaje de tu Míster (${activeTeam?.nombre || 'Equipo'})`,
               body: data.lastMessage,

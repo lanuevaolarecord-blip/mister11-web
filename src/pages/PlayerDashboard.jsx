@@ -13,7 +13,7 @@ import { PlayerChatTab } from '../components/player/PlayerChatTab';
 import { PlayerAutonomousTestsTab } from '../components/player/PlayerAutonomousTestsTab';
 import { PlayerStatsTab } from '../components/player/PlayerStatsTab';
 import { PlayerProfileTab } from '../components/player/PlayerProfileTab';
-import { Shield, Sun, Moon, LogOut, CheckCircle2, ChevronRight, Users, Bell, AlertTriangle, Settings } from 'lucide-react';
+import { Shield, Sun, Moon, LogOut, CheckCircle2, ChevronRight, Users, Bell, AlertTriangle, Settings, Loader } from 'lucide-react';
 import { PlayerSettingsModal } from '../components/player/PlayerSettingsModal';
 import { usePushNotifications } from '../hooks/usePushNotifications';
 import { sendChatNotification } from '../hooks/useLocalNotifications';

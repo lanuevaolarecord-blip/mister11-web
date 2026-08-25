@@ -163,17 +163,22 @@ export const TeamStaffTab = ({ activeTeam }) => {
     if (!request || !teamPath) return;
     setProcessingId(request.id);
     try {
-      const isParent = request.requesterRole === 'parent';
+      const isParent = request.requesterRole === 'parent' || !!request.childName;
       const playersColRef = collection(db, `${teamPath}/players`);
+      const requesterUid = request.requesterUid || '';
+      const requesterEmail = request.requesterEmail || request.email || '';
+      const requesterName = request.requesterName || 'Solicitante';
 
       if (isParent) {
         // FLUJO PADRE / TUTOR: VINCULAR A JUGADOR
         let targetPlayerId = parentPlayerSelection[request.id];
+        const childName = (request.childName || request.playerName || requesterName).trim();
+        const childBirthDate = request.childBirthDate || request.birthDate || '';
 
         // Si no seleccionó manualmente, intentar autovincular por coincidencia de nombre
         if (!targetPlayerId) {
           const autoMatched = rosterPlayers.find(p => 
-            p.name && request.childName && p.name.trim().toLowerCase() === request.childName.trim().toLowerCase()
+            p.name && childName && p.name.trim().toLowerCase() === childName.toLowerCase()
           );
           if (autoMatched) {
             targetPlayerId = autoMatched.id;
@@ -186,8 +191,8 @@ export const TeamStaffTab = ({ activeTeam }) => {
           // Vincular UID del padre en el array linkedParents del jugador
           const playerDocRef = doc(db, `${teamPath}/players`, targetPlayerId);
           const currentP = rosterPlayers.find(p => p.id === targetPlayerId);
-          const currentParents = currentP?.linkedParents || [];
-          const updatedParents = Array.from(new Set([...currentParents, request.requesterUid]));
+          const currentParents = Array.isArray(currentP?.linkedParents) ? currentP.linkedParents : [];
+          const updatedParents = requesterUid ? Array.from(new Set([...currentParents, requesterUid])) : currentParents;
 
           await updateDoc(playerDocRef, {
             linkedParents: updatedParents,
@@ -196,11 +201,11 @@ export const TeamStaffTab = ({ activeTeam }) => {
         } else {
           // Crear nueva ficha para el hijo si no existe
           const newPlayerRef = await addDoc(playersColRef, {
-            name: request.childName || 'Jugador/a',
-            fechaNacimiento: request.childBirthDate || '',
-            position: 'MC',
-            number: '',
-            linkedParents: [request.requesterUid],
+            name: childName || 'Jugador/a',
+            fechaNacimiento: childBirthDate || '',
+            position: request.position || 'MC',
+            number: request.jerseyNumber || '',
+            linkedParents: requesterUid ? [requesterUid] : [],
             currentStatus: 'active',
             category: activeTeam?.categoria || activeTeam?.category || 'General',
             createdAt: serverTimestamp()
@@ -209,64 +214,73 @@ export const TeamStaffTab = ({ activeTeam }) => {
         }
 
         // 1. Asignar rol 'parent' en memberRoles del equipo
-        const teamDocRef = doc(db, teamPath);
-        await setDoc(teamDocRef, {
-          memberRoles: {
-            [request.requesterUid]: 'parent'
-          }
-        }, { merge: true });
+        if (requesterUid) {
+          const teamDocRef = doc(db, teamPath);
+          await setDoc(teamDocRef, {
+            memberRoles: {
+              [requesterUid]: 'parent'
+            }
+          }, { merge: true });
 
-        // 2. Crear puntero en shared_teams del padre
-        const userSharedTeamRef = doc(db, `users/${request.requesterUid}/shared_teams`, activeTeam.id);
-        await setDoc(userSharedTeamRef, {
-          teamId: activeTeam.id,
-          teamPath,
-          teamName: activeTeam.nombre || activeTeam.name || 'Mi Equipo',
-          role: 'parent',
-          playerId: assignedPlayerId,
-          joinedAt: serverTimestamp(),
-        });
+          // 2. Crear puntero en shared_teams del padre
+          const userSharedTeamRef = doc(db, `users/${requesterUid}/shared_teams`, activeTeam.id);
+          await setDoc(userSharedTeamRef, {
+            teamId: activeTeam.id,
+            teamPath,
+            teamName: activeTeam.nombre || activeTeam.name || 'Mi Equipo',
+            role: 'parent',
+            playerId: assignedPlayerId,
+            joinedAt: serverTimestamp(),
+          });
+        }
 
         // 3. Actualizar solicitud a approved
         const reqDocRef = doc(db, `${teamPath}/joinRequests`, request.id);
         await updateDoc(reqDocRef, { status: 'approved', approvedAt: serverTimestamp(), playerId: assignedPlayerId, role: 'parent' });
-        try {
-          const userReqRef = doc(db, `users/${request.requesterUid}/join_requests`, request.id);
-          await updateDoc(userReqRef, { status: 'approved', approvedAt: serverTimestamp(), playerId: assignedPlayerId, role: 'parent' });
-        } catch (_) {}
+        if (requesterUid) {
+          try {
+            const userReqRef = doc(db, `users/${requesterUid}/join_requests`, request.id);
+            await updateDoc(userReqRef, { status: 'approved', approvedAt: serverTimestamp(), playerId: assignedPlayerId, role: 'parent' });
+          } catch (_) {}
+        }
 
-        showToast(`¡Padre/Tutor ${request.requesterName} vinculado al jugador correctamente!`, 'success');
+        showToast(`¡Padre/Tutor ${requesterName} vinculado al jugador correctamente!`, 'success');
       } else {
         // FLUJO JUGADOR: CREAR / VINCULAR FICHA
+        const playerName = (request.playerName || request.childName || requesterName || 'Jugador').trim();
+        const birthDate = request.birthDate || request.childBirthDate || '';
+        const position = request.position || 'MC';
+        const jerseyNumber = request.jerseyNumber || '';
+
         const pSnap = await getDocs(playersColRef);
         const existingPlayerDoc = pSnap.docs.find(d => {
           const pData = d.data();
-          return (request.requesterUid && (pData.requesterUid === request.requesterUid || pData.playerUid === request.requesterUid || pData.userId === request.requesterUid)) ||
-                 (request.requesterEmail && pData.email && pData.email.toLowerCase() === request.requesterEmail.toLowerCase()) ||
-                 (request.playerName && pData.name && pData.name.trim().toLowerCase() === request.playerName.trim().toLowerCase());
+          return (requesterUid && (pData.requesterUid === requesterUid || pData.playerUid === requesterUid || pData.userId === requesterUid)) ||
+                 (requesterEmail && pData.email && pData.email.toLowerCase() === requesterEmail.toLowerCase()) ||
+                 (playerName && pData.name && pData.name.trim().toLowerCase() === playerName.toLowerCase());
         });
 
         let assignedPlayerId;
         if (existingPlayerDoc) {
           assignedPlayerId = existingPlayerDoc.id;
           await updateDoc(doc(db, `${teamPath}/players`, assignedPlayerId), {
-            name: request.playerName,
-            fechaNacimiento: request.birthDate || existingPlayerDoc.data().fechaNacimiento || '',
-            position: request.position || existingPlayerDoc.data().position || 'MC',
-            number: request.jerseyNumber || existingPlayerDoc.data().number || '',
-            requesterUid: request.requesterUid,
-            requesterEmail: request.requesterEmail || '',
+            name: playerName,
+            fechaNacimiento: birthDate || existingPlayerDoc.data().fechaNacimiento || '',
+            position: position || existingPlayerDoc.data().position || 'MC',
+            number: jerseyNumber || existingPlayerDoc.data().number || '',
+            requesterUid: requesterUid || existingPlayerDoc.data().requesterUid || '',
+            requesterEmail: requesterEmail || existingPlayerDoc.data().requesterEmail || '',
             currentStatus: 'active',
             updatedAt: serverTimestamp(),
           });
         } else {
           const newPlayerRef = await addDoc(playersColRef, {
-            name: request.playerName,
-            fechaNacimiento: request.birthDate,
-            position: request.position || 'MC',
-            number: request.jerseyNumber || '',
-            requesterUid: request.requesterUid,
-            requesterEmail: request.requesterEmail || '',
+            name: playerName,
+            fechaNacimiento: birthDate,
+            position: position,
+            number: jerseyNumber,
+            requesterUid: requesterUid,
+            requesterEmail: requesterEmail,
             currentStatus: 'active',
             category: activeTeam?.categoria || activeTeam?.category || 'General',
             createdAt: serverTimestamp(),
@@ -275,31 +289,32 @@ export const TeamStaffTab = ({ activeTeam }) => {
         }
 
         // 1. Registrar el rol 'player' en memberRoles del equipo
-        const teamDocRef = doc(db, teamPath);
-        await setDoc(teamDocRef, {
-          memberRoles: {
-            [request.requesterUid]: 'player'
-          }
-        }, { merge: true });
+        if (requesterUid) {
+          const teamDocRef = doc(db, teamPath);
+          await setDoc(teamDocRef, {
+            memberRoles: {
+              [requesterUid]: 'player'
+            }
+          }, { merge: true });
 
-        // 2. Crear puntero en shared_teams del usuario
-        const userSharedTeamRef = doc(db, `users/${request.requesterUid}/shared_teams`, activeTeam.id);
-        await setDoc(userSharedTeamRef, {
-          teamId: activeTeam.id,
-          teamPath,
-          teamName: activeTeam.nombre || activeTeam.name || 'Mi Equipo',
-          role: 'player',
-          playerId: assignedPlayerId,
-          joinedAt: serverTimestamp(),
-        });
+          // 2. Crear puntero en shared_teams del usuario
+          const userSharedTeamRef = doc(db, `users/${requesterUid}/shared_teams`, activeTeam.id);
+          await setDoc(userSharedTeamRef, {
+            teamId: activeTeam.id,
+            teamPath,
+            teamName: activeTeam.nombre || activeTeam.name || 'Mi Equipo',
+            role: 'player',
+            playerId: assignedPlayerId,
+            joinedAt: serverTimestamp(),
+          });
+        }
 
         // 3. Registrar índices deterministas de identidad única (Server-Side)
-        const rawEmail = request.requesterEmail || request.email || '';
-        const emailNorm = normalizeEmail(rawEmail);
-        if (request.requesterUid) {
+        const emailNorm = normalizeEmail(requesterEmail);
+        if (requesterUid) {
           try {
-            await setDoc(doc(db, 'playerIdentity', request.requesterUid), {
-              email: rawEmail,
+            await setDoc(doc(db, 'playerIdentity', requesterUid), {
+              email: requesterEmail,
               emailNorm,
               teamId: activeTeam.id,
               playerId: assignedPlayerId,
@@ -310,7 +325,7 @@ export const TeamStaffTab = ({ activeTeam }) => {
         if (emailNorm) {
           try {
             await setDoc(doc(db, 'playerIdentityByEmail', emailNorm), {
-              uid: request.requesterUid || null,
+              uid: requesterUid || null,
               playerId: assignedPlayerId,
               teamId: activeTeam.id,
               teamPath,
@@ -322,12 +337,14 @@ export const TeamStaffTab = ({ activeTeam }) => {
         // 4. Actualizar estado de la solicitud a 'approved'
         const reqDocRef = doc(db, `${teamPath}/joinRequests`, request.id);
         await updateDoc(reqDocRef, { status: 'approved', approvedAt: serverTimestamp(), playerId: assignedPlayerId });
-        try {
-          const userReqRef = doc(db, `users/${request.requesterUid}/join_requests`, request.id);
-          await updateDoc(userReqRef, { status: 'approved', approvedAt: serverTimestamp(), playerId: assignedPlayerId });
-        } catch (_) {}
+        if (requesterUid) {
+          try {
+            const userReqRef = doc(db, `users/${requesterUid}/join_requests`, request.id);
+            await updateDoc(userReqRef, { status: 'approved', approvedAt: serverTimestamp(), playerId: assignedPlayerId });
+          } catch (_) {}
+        }
 
-        showToast(`¡Jugador ${request.playerName} aprobado e incorporado a la plantilla!`, 'success');
+        showToast(`¡Jugador ${playerName} aprobado e incorporado a la plantilla!`, 'success');
       }
     } catch (err) {
       console.error('Error al aprobar solicitud:', err);
@@ -492,7 +509,7 @@ export const TeamStaffTab = ({ activeTeam }) => {
                     {/* Header de la tarjeta con Badge de Rol */}
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
                       <span style={{ fontWeight: 800, fontSize: '1rem', color: textColorPrimary }}>
-                        {isParent ? (req.childName || 'Hijo/a') : (req.playerName || 'Jugador')}
+                        {req.playerName || req.childName || req.requesterName || 'Solicitante'}
                       </span>
                       <span style={{
                         background: isParent ? 'rgba(201, 168, 76, 0.15)' : 'rgba(76, 175, 125, 0.15)',
@@ -507,10 +524,10 @@ export const TeamStaffTab = ({ activeTeam }) => {
                     </div>
 
                     <div style={{ fontSize: '0.8rem', color: textColorSecondary, marginTop: '4px' }}>
-                      📅 Nacimiento: <strong>{isParent ? req.childBirthDate : req.birthDate}</strong>
+                      📅 Nacimiento: <strong>{req.birthDate || req.childBirthDate || 'No especificada'}</strong>
                     </div>
                     <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '2px' }}>
-                      👤 Solicitante: <strong>{req.requesterName}</strong> ({req.requesterEmail || 'Email'})
+                      👤 Solicitante: <strong>{req.requesterName || 'Usuario'}</strong> ({req.requesterEmail || req.email || 'Email'})
                     </div>
 
                     {/* Selector de Vinculación para Padres */}

@@ -14,6 +14,7 @@ import {
   Shield
 } from 'lucide-react';
 import { calculatePlayerMatchStats } from '../../utils/playerMatchStats';
+import { useTranslation } from '../../hooks/useTranslation';
 import './PlayerLeaderboard.css';
 
 /**
@@ -30,6 +31,7 @@ export const PlayerLeaderboard = ({
   team = null,
   darkMode = true 
 }) => {
+  const { t, isEn } = useTranslation();
   const [activeFilter, setActiveFilter] = useState('GLOBAL'); // 'GLOBAL' | 'ATTENDANCE' | 'MATCHES' | 'ACHIEVEMENTS'
 
   // Si el míster ha desactivado el ranking para su equipo
@@ -189,14 +191,14 @@ export const PlayerLeaderboard = ({
         <div className="leaderboard-title-group">
           <div className="leaderboard-badge">
             <Trophy size={16} color="#C9A84C" />
-            <span>TABLA DE RENDIMIENTO DEL EQUIPO</span>
+            <span>{t('player.leaderboard.title')}</span>
           </div>
           <span className="leaderboard-rgpd-tag">
-            <Shield size={12} /> Datos de equipo protegidos
+            <Shield size={12} /> {t('player.leaderboard.protectedData')}
           </span>
         </div>
         <p className="leaderboard-subtitle">
-          Suma puntos XP con tu asistencia a entrenamientos, minutos jugados y retos completados.
+          {t('player.leaderboard.subtitle')}
         </p>
       </div>
 
@@ -209,18 +211,20 @@ export const PlayerLeaderboard = ({
             </div>
             <div className="my-rank-details">
               <div className="my-rank-name">
-                <span>Tu Posición: <strong>{currentRankInfo.displayName}</strong></span>
+                <span>{t('player.leaderboard.yourRank')} <strong>{currentRankInfo.displayName}</strong></span>
                 <span className="tier-tag" style={{ color: currentRankInfo.tier.color, borderColor: `${currentRankInfo.tier.color}40` }}>
-                  {currentRankInfo.tier.icon} Rango {currentRankInfo.tier.name}
+                  {currentRankInfo.tier.icon} {t('player.leaderboard.tierTag', { tier: currentRankInfo.tier.nameKey ? t(currentRankInfo.tier.nameKey, {}, currentRankInfo.tier.name) : currentRankInfo.tier.name })}
                 </span>
               </div>
               <div className="my-rank-xp-bar-wrap">
                 <div className="my-rank-xp-info">
-                  <span><strong>{currentRankInfo.totalXP} XP</strong> acumulados</span>
+                  <span><strong>{currentRankInfo.totalXP} XP</strong> {t('player.leaderboard.accumulatedXP', { xp: '' }).trim()}</span>
                   {playerAbove ? (
-                    <span className="xp-diff-text">¡A solo <strong>{xpToNextRank} XP</strong> del Top #{currentRankInfo.rank - 1}!</span>
+                    <span className="xp-diff-text">
+                      {t('player.leaderboard.xpDiff', { xp: xpToNextRank, rank: currentRankInfo.rank - 1 })}
+                    </span>
                   ) : (
-                    <span className="xp-diff-text gold">👑 ¡Liderando la clasificación del equipo!</span>
+                    <span className="xp-diff-text gold">{t('player.leaderboard.leadingTeam')}</span>
                   )}
                 </div>
                 <div className="xp-bar-track">
@@ -247,7 +251,7 @@ export const PlayerLeaderboard = ({
           className={`filter-btn ${activeFilter === 'GLOBAL' ? 'active' : ''}`}
           onClick={() => setActiveFilter('GLOBAL')}
         >
-          <Sparkles size={16} /> Global XP
+          <Sparkles size={16} /> {t('player.leaderboard.tabGlobal')}
         </button>
         <button
           type="button"
@@ -256,7 +260,7 @@ export const PlayerLeaderboard = ({
           className={`filter-btn ${activeFilter === 'ATTENDANCE' ? 'active' : ''}`}
           onClick={() => setActiveFilter('ATTENDANCE')}
         >
-          <CalendarCheck size={16} /> Asistencia
+          <CalendarCheck size={16} /> {t('player.leaderboard.tabAttendance')}
         </button>
         <button
           type="button"
@@ -265,7 +269,7 @@ export const PlayerLeaderboard = ({
           className={`filter-btn ${activeFilter === 'MATCHES' ? 'active' : ''}`}
           onClick={() => setActiveFilter('MATCHES')}
         >
-          <Timer size={16} /> Partidos y Minutos
+          <Timer size={16} /> {t('player.leaderboard.tabMatches')}
         </button>
         <button
           type="button"
@@ -274,69 +278,84 @@ export const PlayerLeaderboard = ({
           className={`filter-btn ${activeFilter === 'ACHIEVEMENTS' ? 'active' : ''}`}
           onClick={() => setActiveFilter('ACHIEVEMENTS')}
         >
-          <Award size={16} /> Logros
+          <Award size={16} /> {t('player.leaderboard.tabAchievements')}
         </button>
       </div>
 
-      {/* PODIO TOP 3 VISUAL */}
-      <div className="podium-section">
-        {/* TOP 2 (PLATA) */}
+      {/* PODIO TOP 3 ESTILO ESPORTS */}
+      <div className="leaderboard-podium-section">
         {top2 && (
-          <div className={`podium-column silver ${top2.isCurrent ? 'is-me' : ''}`}>
+          <div className="podium-pillar rank-2">
             <div className="podium-avatar-container">
               <div className="crown-spacer" />
-              <div className="podium-dorsal">#{top2.dorsal}</div>
-              <div className="podium-medal-pill silver">🥈 2º</div>
+              <div className="podium-avatar-circle" style={{ borderColor: '#B0BEC5' }}>
+                <span className="player-dorsal-tag">#{top2.dorsal}</span>
+              </div>
+              <div className="podium-medal-pill silver">
+                <span>🥈 2º</span>
+              </div>
             </div>
-            <span className="podium-player-name">{top2.firstName}</span>
-            <span className="podium-stat-val">
-              {activeFilter === 'ATTENDANCE' ? `${top2.attendancePct}%` : 
-               activeFilter === 'MATCHES' ? `${top2.totalMinutes}'` : 
-               activeFilter === 'ACHIEVEMENTS' ? `${top2.achievementsCount} 🎖️` : 
-               `${top2.totalXP} XP`}
-            </span>
+            <div className="podium-info">
+              <span className="player-podium-name">{top2.firstName}</span>
+              <span className="player-podium-val">
+                {activeFilter === 'ATTENDANCE' ? `${top2.attendancePct}%` :
+                 activeFilter === 'MATCHES' ? `${top2.totalMinutes}'` :
+                 activeFilter === 'ACHIEVEMENTS' ? `${top2.achievementsCount} 🏆` :
+                 `${top2.totalXP} XP`}
+              </span>
+            </div>
             <div className="podium-pedestal p-2">
               <span>2</span>
             </div>
           </div>
         )}
 
-        {/* TOP 1 (ORO) */}
         {top1 && (
-          <div className={`podium-column gold ${top1.isCurrent ? 'is-me' : ''}`}>
+          <div className="podium-pillar rank-1">
             <div className="podium-avatar-container">
-              <div className="crown-icon">👑</div>
-              <div className="podium-dorsal gold-ring">#{top1.dorsal}</div>
-              <div className="podium-medal-pill gold">🥇 1º</div>
+              <span className="crown-icon">👑</span>
+              <div className="podium-avatar-circle gold-halo" style={{ borderColor: '#C9A84C' }}>
+                <span className="player-dorsal-tag">#{top1.dorsal}</span>
+              </div>
+              <div className="podium-medal-pill gold">
+                <span>🥇 1º</span>
+              </div>
             </div>
-            <span className="podium-player-name gold-name">{top1.firstName}</span>
-            <span className="podium-stat-val gold-stat">
-              {activeFilter === 'ATTENDANCE' ? `${top1.attendancePct}%` : 
-               activeFilter === 'MATCHES' ? `${top1.totalMinutes}'` : 
-               activeFilter === 'ACHIEVEMENTS' ? `${top1.achievementsCount} 🎖️` : 
-               `${top1.totalXP} XP`}
-            </span>
+            <div className="podium-info">
+              <span className="player-podium-name">{top1.firstName}</span>
+              <span className="player-podium-val gold">
+                {activeFilter === 'ATTENDANCE' ? `${top1.attendancePct}%` :
+                 activeFilter === 'MATCHES' ? `${top1.totalMinutes}'` :
+                 activeFilter === 'ACHIEVEMENTS' ? `${top1.achievementsCount} 🏆` :
+                 `${top1.totalXP} XP`}
+              </span>
+            </div>
             <div className="podium-pedestal p-1">
               <span>1</span>
             </div>
           </div>
         )}
 
-        {/* TOP 3 (BRONCE) */}
         {top3 && (
-          <div className={`podium-column bronze ${top3.isCurrent ? 'is-me' : ''}`}>
+          <div className="podium-pillar rank-3">
             <div className="podium-avatar-container">
               <div className="crown-spacer" />
-              <div className="podium-dorsal">#{top3.dorsal}</div>
-              <div className="podium-medal-pill bronze">🥉 3º</div>
+              <div className="podium-avatar-circle" style={{ borderColor: '#CD7F32' }}>
+                <span className="player-dorsal-tag">#{top3.dorsal}</span>
+              </div>
+              <div className="podium-medal-pill bronze">
+                <span>🥉 3º</span>
+              </div>
             </div>
-            <span className="podium-player-name">{top3.firstName}</span>
-            <span className="podium-stat-val">
-              {activeFilter === 'ATTENDANCE' ? `${top3.attendancePct}%` : 
-               activeFilter === 'MATCHES' ? `${top3.totalMinutes}'` : 
-               activeFilter === 'ACHIEVEMENTS' ? `${top3.achievementsCount} 🎖️` : 
-               `${top3.totalXP} XP`}
-            </span>
+            <div className="podium-info">
+              <span className="player-podium-name">{top3.firstName}</span>
+              <span className="player-podium-val">
+                {activeFilter === 'ATTENDANCE' ? `${top3.attendancePct}%` :
+                 activeFilter === 'MATCHES' ? `${top3.totalMinutes}'` :
+                 activeFilter === 'ACHIEVEMENTS' ? `${top3.achievementsCount} 🏆` :
+                 `${top3.totalXP} XP`}
+              </span>
+            </div>
             <div className="podium-pedestal p-3">
               <span>3</span>
             </div>
@@ -347,13 +366,13 @@ export const PlayerLeaderboard = ({
       {/* LISTA COMPLETA DE CLASIFICACIÓN */}
       <div className="leaderboard-full-list">
         <div className="list-table-header">
-          <span className="col-pos">PUESTO</span>
-          <span className="col-player">COMPAÑERO</span>
+          <span className="col-pos">{t('player.leaderboard.colRank')}</span>
+          <span className="col-player">{t('player.leaderboard.colPlayer')}</span>
           <span className="col-metric">
-            {activeFilter === 'ATTENDANCE' ? 'ASISTENCIA' : 
-             activeFilter === 'MATCHES' ? 'MINUTOS' : 
-             activeFilter === 'ACHIEVEMENTS' ? 'LOGROS' : 
-             'XP TOTAL'}
+            {activeFilter === 'ATTENDANCE' ? t('player.leaderboard.tabAttendance').toUpperCase() : 
+             activeFilter === 'MATCHES' ? t('player.stats.minutesPlayed') : 
+             activeFilter === 'ACHIEVEMENTS' ? t('player.leaderboard.tabAchievements').toUpperCase() : 
+             t('player.leaderboard.colXP')}
           </span>
         </div>
 
@@ -382,9 +401,11 @@ export const PlayerLeaderboard = ({
                 <div className="player-meta-info">
                   <div className="name-row">
                     <span className="player-name-txt">{p.displayName}</span>
-                    {p.isCurrent && <span className="is-you-chip">TÚ</span>}
+                    {p.isCurrent && <span className="is-you-chip">{t('player.leaderboard.youChip')}</span>}
                   </div>
-                  <span className="position-txt">{p.position} · {p.tier.name}</span>
+                  <span className="position-txt">
+                    {p.position} · {p.tier.nameKey ? t(p.tier.nameKey, {}, p.tier.name) : p.tier.name}
+                  </span>
                 </div>
               </div>
 
@@ -393,10 +414,14 @@ export const PlayerLeaderboard = ({
                   <span className="main-metric-val green">{p.attendancePct}%</span>
                 )}
                 {activeFilter === 'MATCHES' && (
-                  <span className="main-metric-val">{p.totalMinutes}' <small>({p.totalMatches} PJ)</small></span>
+                  <span className="main-metric-val">
+                    {p.totalMinutes}' <small>({p.totalMatches} {t('player.leaderboard.matchesPlayedShort')})</small>
+                  </span>
                 )}
                 {activeFilter === 'ACHIEVEMENTS' && (
-                  <span className="main-metric-val gold">{p.achievementsCount} <small>retos</small></span>
+                  <span className="main-metric-val gold">
+                    {p.achievementsCount} <small>{t('player.leaderboard.challenges')}</small>
+                  </span>
                 )}
                 {activeFilter === 'GLOBAL' && (
                   <div className="xp-metric-box">
@@ -416,9 +441,9 @@ export const PlayerLeaderboard = ({
           <Flame size={20} color="#4CAF7D" />
         </div>
         <div className="footer-text-wrap">
-          <h4>¡Cada sesión suma para el equipo!</h4>
+          <h4>{t('player.leaderboard.footerTitle')}</h4>
           <p>
-            El compromiso en los entrenamientos y el juego en equipo son el camino para subir de rango en Míster11.
+            {t('player.leaderboard.footerDesc')}
           </p>
         </div>
       </div>

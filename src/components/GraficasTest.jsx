@@ -1,5 +1,6 @@
 import React from 'react';
 import { useTheme } from '../context/ThemeContext';
+import { useTranslation } from '../hooks/useTranslation';
 
 // Colores institucionales
 const COLOR_PRIMARY = '#1B3A2D';
@@ -9,6 +10,7 @@ const COLOR_GREEN   = '#4CAF7D';
 // ── SVG Line Chart puro adaptativo a Modo Oscuro y Claro ──────────────────
 export const SvgLineChart = ({ data, isTime, width = 320, height = 200 }) => {
   const { darkMode } = useTheme();
+  const { t } = useTranslation();
 
   if (!data || data.length === 0) return null;
 
@@ -69,7 +71,7 @@ export const SvgLineChart = ({ data, isTime, width = 320, height = 200 }) => {
           </text>
 
           <text x={width / 2} y={height - 4} textAnchor="middle" fontSize={9.5} fontWeight="600" fill={COLOR_ACCENT}>
-            Evaluación inicial registrada
+            {t('test.initialEvaluationRegistered')}
           </text>
         </svg>
       </div>

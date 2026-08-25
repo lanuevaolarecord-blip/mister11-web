@@ -500,34 +500,40 @@ export const PlayerStatsTab = ({ player, team, teamPath, isParentView = false, a
         <div className="summary-header">
           <div className="summary-title-badge">
             <Trophy size={16} color="#C9A84C" />
-            <span>ESTADÍSTICAS OFICIALES 2026-27</span>
+            <span>{t('player.stats.officialSummaryTitle')}</span>
           </div>
-          <span className="summary-sync-tag">⚡ En tiempo real</span>
+          <span className="summary-sync-tag">{t('player.stats.realTime')}</span>
         </div>
 
         <div className="summary-metrics-grid">
           <div className="summary-metric-box">
-            <span className="metric-label">PARTIDOS</span>
+            <span className="metric-label">{t('player.stats.officialMatches')}</span>
             <div className="metric-value white">{playerMatchStats.matchesPlayed}</div>
-            <span className="metric-sub">{playerMatchStats.starts} tit. · {playerMatchStats.subAppearances} sup.</span>
+            <span className="metric-sub">
+              {t('player.stats.startsAndSubs', { starts: playerMatchStats.starts, subs: playerMatchStats.subAppearances })}
+            </span>
           </div>
 
           <div className="summary-metric-box">
-            <span className="metric-label">GOLES</span>
+            <span className="metric-label">{t('player.stats.goals')}</span>
             <div className="metric-value green">⚽ {playerMatchStats.goals}</div>
-            <span className="metric-sub">en {playerMatchStats.matchesPlayed} partidos</span>
+            <span className="metric-sub">
+              {playerMatchStats.matchesPlayed === 1 
+                ? t('player.stats.inMatch', { count: playerMatchStats.matchesPlayed }) 
+                : t('player.stats.inMatches', { count: playerMatchStats.matchesPlayed })}
+            </span>
           </div>
 
           <div className="summary-metric-box">
             <span className="metric-label">{t('player.stats.assists')}</span>
             <div className="metric-value gold">👟 {playerMatchStats.assists}</div>
-            <span className="metric-sub">{isEn ? 'key passes' : 'pases de gol'}</span>
+            <span className="metric-sub">{t('player.stats.keyPasses')}</span>
           </div>
 
           <div className="summary-metric-box">
             <span className="metric-label">{t('player.stats.minutesPlayed')}</span>
             <div className="metric-value white">⏱️ {playerMatchStats.minutesPlayed}'</div>
-            <span className="metric-sub">{isEn ? 'in competition' : 'en competición'}</span>
+            <span className="metric-sub">{t('player.stats.inCompetition')}</span>
           </div>
         </div>
 
@@ -584,12 +590,12 @@ export const PlayerStatsTab = ({ player, team, teamPath, isParentView = false, a
                     background: 'rgba(76, 175, 125, 0.15)',
                     color: '#4CAF7D'
                   }}>
-                    {mItem.result} ({mItem.type || (isEn ? 'Official' : 'Oficial')})
+                    {mItem.result} ({mItem.type || t('player.stats.officialMatch')})
                   </span>
                 </div>
 
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '11.5px', color: 'var(--text-secondary)' }}>
-                  <span>📅 {mItem.date} · {mItem.isTitular ? (isEn ? 'Starter' : 'Titular') : (isEn ? 'Substitute' : 'Suplente')} ({mItem.minutesPlayed}')</span>
+                  <span>📅 {mItem.date} · {mItem.isTitular ? t('common.starter') : t('common.substitute')} ({mItem.minutesPlayed}')</span>
                   <div style={{ display: 'flex', gap: '6px', fontWeight: '800' }}>
                     {mItem.goals > 0 && <span style={{ color: '#4CAF7D' }}>⚽ {mItem.goals}</span>}
                     {mItem.assists > 0 && <span style={{ color: '#3B82F6' }}>👟 {mItem.assists}</span>}
@@ -657,7 +663,7 @@ export const PlayerStatsTab = ({ player, team, teamPath, isParentView = false, a
                 gap: '5px'
               }}
             >
-              <HelpCircle size={13} /> {showComparisonHelp ? (isEn ? 'Hide info' : 'Ocultar info') : t('player.stats.howIsMeasured')}
+              <HelpCircle size={13} /> {showComparisonHelp ? t('player.stats.hideInfo') : t('player.stats.howIsMeasured')}
             </button>
           </div>
 
@@ -674,12 +680,12 @@ export const PlayerStatsTab = ({ player, team, teamPath, isParentView = false, a
               lineHeight: '1.5'
             }}>
               <strong style={{ color: '#4CAF7D', display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '6px' }}>
-                <Info size={14} /> ¿De dónde provienen los datos y puntos XP de esta tabla?
+                <Info size={14} /> {t('player.stats.sourceInfoTitle')}
               </strong>
               <ul style={{ margin: 0, paddingLeft: '18px' }}>
-                <li><strong>Asistencia:</strong> Proviene de los registros oficiales de asistencia que toma el entrenador en cada sesión. Otorga <strong>+{teamComparison.myAttendanceXP} XP</strong> directos según tu porcentaje.</li>
-                <li><strong>Partidos / Minutos:</strong> Proviene de las actas de partido y convocatorias del míster. Otorga <strong>+{teamComparison.myMatchXP} XP</strong> proporcionales a tus minutos jugados sobre el total del equipo.</li>
-                <li><strong>Media de la plantilla:</strong> Promedio agregado real del vestuario para comparar tu regularidad deportiva sin juicios negativos.</li>
+                <li>{t('player.stats.sourceAttendance', { xp: teamComparison.myAttendanceXP })}</li>
+                <li>{t('player.stats.sourceMatches', { xp: teamComparison.myMatchXP })}</li>
+                <li>{t('player.stats.sourceAverage')}</li>
               </ul>
             </div>
           )}
@@ -693,10 +699,10 @@ export const PlayerStatsTab = ({ player, team, teamPath, isParentView = false, a
               textAlign: 'center'
             }}>
               <p style={{ margin: 0, fontSize: '0.85rem', fontWeight: 800, color: darkMode ? '#FFFFFF' : '#0F172A' }}>
-                ● Aún sin datos suficientes del equipo
+                {t('player.stats.noTeamDataYet')}
               </p>
               <p style={{ margin: '4px 0 0 0', fontSize: '0.75rem', color: darkMode ? '#94A3B8' : '#64748B' }}>
-                Las métricas comparativas se activarán automáticamente cuando el míster registre asistencias o partidos en la plantilla.
+                {t('player.stats.noTeamDataDesc')}
               </p>
             </div>
           ) : (
@@ -704,14 +710,14 @@ export const PlayerStatsTab = ({ player, team, teamPath, isParentView = false, a
               {/* Asistencia con XP */}
               <div style={{ background: darkMode ? 'rgba(0,0,0,0.5)' : '#F8FAFC', padding: '12px', borderRadius: '12px', border: '1px solid var(--border-light)' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.8rem', fontWeight: 800, color: darkMode ? '#FFFFFF' : '#0F172A', marginBottom: '6px' }}>
-                  <span>Asistencia</span>
+                  <span>{t('player.leaderboard.tabAttendance')}</span>
                   <span style={{ color: '#C9A84C', fontSize: '0.72rem', background: 'rgba(201,168,76,0.15)', padding: '2px 6px', borderRadius: '6px' }}>
                     +{teamComparison.myAttendanceXP} XP
                   </span>
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.78rem', fontWeight: 800, marginBottom: '4px' }}>
-                  <span style={{ color: '#4CAF7D' }}>Tú: {teamComparison.myAttendancePct}%</span>
-                  <span style={{ color: darkMode ? '#94A3B8' : '#64748B' }}>Media: <span style={{ color: '#C9A84C' }}>{teamComparison.avgAttendancePct}%</span></span>
+                  <span style={{ color: '#4CAF7D' }}>{t('player.stats.you')} {teamComparison.myAttendancePct}%</span>
+                  <span style={{ color: darkMode ? '#94A3B8' : '#64748B' }}>{t('player.stats.average')} <span style={{ color: '#C9A84C' }}>{teamComparison.avgAttendancePct}%</span></span>
                 </div>
                 <div style={{ background: 'rgba(128,128,128,0.2)', height: '6px', borderRadius: '4px', overflow: 'hidden' }}>
                   <div style={{ width: `${Math.max(teamComparison.myAttendancePct > 0 ? teamComparison.myAttendancePct : 0, 0)}%`, height: '100%', background: '#4CAF7D', borderRadius: '4px' }} />
@@ -724,26 +730,26 @@ export const PlayerStatsTab = ({ player, team, teamPath, isParentView = false, a
                   fontWeight: 800 
                 }}>
                   {!teamComparison.hasAttendanceData 
-                    ? '● Sin sesiones registradas aún' 
+                    ? t('player.stats.noAttRecorded') 
                     : (teamComparison.myAttendancePct > teamComparison.avgAttendancePct 
-                        ? `▲ +${teamComparison.myAttendanceXP} XP (Por encima de la media)` 
+                        ? t('player.stats.aboveAvg', { xp: teamComparison.myAttendanceXP }) 
                         : (teamComparison.myAttendancePct === teamComparison.avgAttendancePct 
-                            ? `● +${teamComparison.myAttendanceXP} XP (En la media)` 
-                            : `▼ +${teamComparison.myAttendanceXP} XP (Por debajo de la media)`))}
+                            ? t('player.stats.onAvg', { xp: teamComparison.myAttendanceXP }) 
+                            : t('player.stats.belowAvg', { xp: teamComparison.myAttendanceXP })))}
                 </span>
               </div>
 
               {/* Minutos y Partidos con XP */}
               <div style={{ background: darkMode ? 'rgba(0,0,0,0.5)' : '#F8FAFC', padding: '12px', borderRadius: '12px', border: '1px solid var(--border-light)' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.8rem', fontWeight: 800, color: darkMode ? '#FFFFFF' : '#0F172A', marginBottom: '6px' }}>
-                  <span>Partidos / Minutos</span>
+                  <span>{t('player.leaderboard.tabMatches')}</span>
                   <span style={{ color: '#C9A84C', fontSize: '0.72rem', background: 'rgba(201,168,76,0.15)', padding: '2px 6px', borderRadius: '6px' }}>
                     +{teamComparison.myMatchXP} XP
                   </span>
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.78rem', fontWeight: 800, marginBottom: '4px' }}>
-                  <span style={{ color: '#4CAF7D' }}>Tú: {teamComparison.myMinutes}' ({teamComparison.myMatchPct}%)</span>
-                  <span style={{ color: darkMode ? '#94A3B8' : '#64748B' }}>Media: <span style={{ color: '#C9A84C' }}>{teamComparison.avgMinutes}' ({teamComparison.avgMatchPct}%)</span></span>
+                  <span style={{ color: '#4CAF7D' }}>{t('player.stats.you')} {teamComparison.myMinutes}' ({teamComparison.myMatchPct}%)</span>
+                  <span style={{ color: darkMode ? '#94A3B8' : '#64748B' }}>{t('player.stats.average')} <span style={{ color: '#C9A84C' }}>{teamComparison.avgMinutes}' ({teamComparison.avgMatchPct}%)</span></span>
                 </div>
                 <div style={{ background: 'rgba(128,128,128,0.2)', height: '6px', borderRadius: '4px', overflow: 'hidden' }}>
                   <div style={{ 
@@ -761,8 +767,8 @@ export const PlayerStatsTab = ({ player, team, teamPath, isParentView = false, a
                   fontWeight: 800 
                 }}>
                   {!teamComparison.hasMatchData
-                    ? '● Sin partidos disputados aún'
-                    : `+${teamComparison.myMatchXP} XP según tu ${teamComparison.myMatchPct}% de participación`}
+                    ? t('player.stats.noMatchesRecorded')
+                    : t('player.stats.xpByParticipation', { xp: teamComparison.myMatchXP, pct: teamComparison.myMatchPct })}
                 </span>
               </div>
             </div>
@@ -778,7 +784,7 @@ export const PlayerStatsTab = ({ player, team, teamPath, isParentView = false, a
               <Sparkles size={14} /> {t('player.stats.radarTitle')}
             </span>
             <span className="hud-status-live" style={{ color: '#4CAF7D', background: 'rgba(76,175,125,0.12)' }}>
-              {isEn ? `Overall Level: ${overallTPI}` : `Nivel Global: ${overallTPI}`}
+              {t('player.stats.radarLevel', { level: overallTPI })}
             </span>
           </div>
           <button 
@@ -798,7 +804,7 @@ export const PlayerStatsTab = ({ player, team, teamPath, isParentView = false, a
               gap: '5px'
             }}
           >
-            <HelpCircle size={13} /> {showRadarHelp ? (isEn ? 'Hide guide' : 'Ocultar guía') : t('player.stats.howAxesMeasured')}
+            <HelpCircle size={13} /> {showRadarHelp ? t('player.stats.hideGuide') : t('player.stats.howAxesMeasured')}
           </button>
         </div>
 
@@ -817,14 +823,14 @@ export const PlayerStatsTab = ({ player, team, teamPath, isParentView = false, a
             lineHeight: '1.5'
           }}>
             <strong style={{ color: '#C9A84C', display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '6px' }}>
-              <Info size={14} /> {isEn ? 'Data source for each dimension (0 to 100):' : 'Fuente de información de cada dimensión (0 a 100):'}
+              <Info size={14} /> {t('player.stats.radarGuideTitle')}
             </strong>
             <ul style={{ margin: 0, paddingLeft: '18px' }}>
-              <li><strong>{isEn ? 'Attendance' : 'Asistencia'} ({rawAsistencia}):</strong> {isEn ? 'Real attendance rate from training sessions and call-ups.' : 'Porcentaje real de asistencia a entrenamientos y citaciones.'}</li>
-              <li><strong>{isEn ? 'Mental' : 'Mental'} ({rawMental}):</strong> {isEn ? 'Psychological questionnaires (ACSI-28, MTQ-10, resilience) completed in portal or coach rating.' : 'Cuestionarios psicológicos (ACSI-28, MTQ-10, resiliencia) completados en el portal o valoración del entrenador.'}</li>
-              <li><strong>{isEn ? 'Physical' : 'Físico'} ({rawFisico}):</strong> {isEn ? 'Fitness tests (endurance, speed, power) or coach physical grade.' : 'Tests de resistencia, velocidad y fuerza o nota física asignada por el cuerpo técnico.'}</li>
-              <li><strong>{isEn ? 'Technical' : 'Técnica'} ({rawTecnica}):</strong> {isEn ? 'Ball control, passing, dribbling and finishing evaluated by coach.' : 'Control, pase, regate y finalización evaluados por el entrenador.'}</li>
-              <li><strong>{isEn ? 'Tactical' : 'Táctica'} ({rawTactica}):</strong> {isEn ? 'Positioning, decision making and game reading evaluated by coach.' : 'Posicionamiento, toma de decisiones y lectura de juego evaluados por el míster.'}</li>
+              <li><strong>{t('player.leaderboard.tabAttendance')} ({rawAsistencia}):</strong> {t('player.stats.radarAtt')}</li>
+              <li><strong>Mental ({rawMental}):</strong> {t('player.stats.radarMental')}</li>
+              <li><strong>{t('player.tab.physical')} ({rawFisico}):</strong> {t('player.stats.radarPhys')}</li>
+              <li><strong>{isEn ? 'Technical' : 'Técnica'} ({rawTecnica}):</strong> {t('player.stats.radarTech')}</li>
+              <li><strong>{isEn ? 'Tactical' : 'Táctica'} ({rawTactica}):</strong> {t('player.stats.radarTact')}</li>
             </ul>
           </div>
         )}
@@ -1054,9 +1060,9 @@ export const PlayerStatsTab = ({ player, team, teamPath, isParentView = false, a
         ) : (
           <div className="hud-card" style={{ padding: '24px', textAlign: 'center' }}>
             <Activity size={36} color="#10B981" style={{ margin: '0 auto 12px auto', opacity: 0.8 }} />
-            <h4 style={{ margin: '0 0 6px 0', fontSize: '1rem', fontWeight: '800' }}>Sin evaluaciones registradas aún</h4>
+            <h4 style={{ margin: '0 0 6px 0', fontSize: '1rem', fontWeight: '800' }}>{t('player.stats.noEvalsYet')}</h4>
             <p style={{ margin: 0, fontSize: '13px', color: 'var(--text-secondary)' }}>
-              Realiza los tests en la pestaña <strong>Tests</strong> o espera a que tu entrenador registre tus mediciones para ver tus gráficas de progresión.
+              {t('player.stats.noEvalsDesc')}
             </p>
           </div>
         )}
@@ -1066,7 +1072,7 @@ export const PlayerStatsTab = ({ player, team, teamPath, isParentView = false, a
         <UpgradeModal
           isOpen={isUpgradeOpen}
           onClose={() => setIsUpgradeOpen(false)}
-          message="El análisis avanzado de rendimiento está disponible para equipos con Plan PRO o CLUB."
+          message={t('paywall.freeLimitMsg')}
         />
       )}
     </div>

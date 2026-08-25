@@ -19,6 +19,7 @@ import {
   Target, 
   Lock 
 } from 'lucide-react';
+import { useTranslation } from '../../hooks/useTranslation';
 import './PlayerAutonomousTestsTab.css';
 
 // Catálogo de Tests Autónomos Validados que el jugador puede realizar individualmente
@@ -145,6 +146,7 @@ export const AUTONOMOUS_TESTS = [
 
 export const PlayerAutonomousTestsTab = ({ player, team, teamPath }) => {
   const { user } = useAuth();
+  const { t, isEn, formatDate } = useTranslation();
 
   const [selectedTest, setSelectedTest] = useState(null);
   const [currentQuestionIdx, setCurrentQuestionIdx] = useState(0);
@@ -205,78 +207,49 @@ export const PlayerAutonomousTestsTab = ({ player, team, teamPath }) => {
   };
 
   const handleSaveTest = async () => {
-    if (!selectedTest || !teamPath || !player?.id) return;
-    
-    // Verificar que todas las preguntas tengan respuesta
-    const allAnswered = selectedTest.questions.every(q => answers[q.id] !== undefined);
-    if (!allAnswered) {
-      showToast('Por favor responde todas las preguntas del test.', 'error');
-      return;
-    }
+    if (!selectedTest || !player?.id || !teamPath) return;
 
-    setSaving(true);
     try {
-      // 1. Calcular puntuación total y por dimensiones
-      let totalScore = 0;
-      const dimensionScores = {};
-
-      selectedTest.questions.forEach(q => {
-        const val = answers[q.id] || 0;
-        totalScore += val;
-        dimensionScores[q.dimension] = (dimensionScores[q.dimension] || 0) + val;
-      });
-
+      setSaving(true);
+      const totalScore = Object.values(answers).reduce((sum, val) => sum + Number(val || 0), 0);
       const percentage = Math.round((totalScore / selectedTest.maxScore) * 100);
-      const todayStr = new Date().toISOString().split('T')[0];
+      const now = new Date();
+      const dateStr = now.toISOString().slice(0, 10);
 
       const testPayload = {
         testId: selectedTest.id,
         testName: selectedTest.name,
+        shortName: selectedTest.shortName,
         category: selectedTest.category,
-        type: 'psicosocial',
         playerId: player.id,
-        playerName: player.name || user?.displayName || 'Jugador',
-        playerNumber: player.number || '',
+        playerName: player.nombre || player.name || 'Jugador',
         score: totalScore,
         maxScore: selectedTest.maxScore,
         percentage,
-        dimensionScores,
         answers,
-        completedBy: 'player',
-        requesterUid: user?.uid || '',
-        date: todayStr,
-        createdAt: serverTimestamp()
+        date: dateStr,
+        timestamp: serverTimestamp(),
+        isAutonomous: true,
+        source: 'player_portal'
       };
 
-      // 1. Guardar en subcolección test_results del equipo
+      // 1. Guardar en colección de resultados del equipo
       await addDoc(collection(db, `${teamPath}/test_results`), testPayload);
 
-      // 2. Guardar en la colección CANÓNICA de evaluaciones de Míster11 (para que el módulo Tests del entrenador y las gráficas lo lean)
+      // 2. Sincronizar con colección de evaluaciones para que impacte en la ficha y radar
       try {
-        await addDoc(collection(db, `${teamPath}/evaluaciones`), {
-          testId: selectedTest.id,
-          testName: selectedTest.name,
+        const evalDocId = `auto_${selectedTest.id}_${player.id}`;
+        await setDoc(doc(db, `${teamPath}/evaluaciones`, evalDocId), {
           playerId: player.id,
-          playerName: player.name || user?.displayName || 'Jugador',
-          playerNumber: player.number || '',
-          val: totalScore,
-          percentage,
-          score: totalScore,
-          date: todayStr,
-          type: 'psicosocial',
-          category: selectedTest.category,
-          unit: 'pts',
-          completedBy: 'player',
-          createdAt: serverTimestamp()
-        });
-
-        // Asegurar que el test esté registrado en el catálogo del equipo si no existía
-        await setDoc(doc(db, `${teamPath}/tests`, selectedTest.id), {
-          id: selectedTest.id,
-          name: selectedTest.name,
-          category: 'psicosocial',
-          unit: 'pts',
-          maxScore: selectedTest.maxScore,
+          tipo: 'psicologico_auto',
+          testId: selectedTest.id,
+          nombre: selectedTest.name,
+          categoria: selectedTest.category,
+          nota: percentage,
+          puntuacionTotal: totalScore,
+          puntuacionMaxima: selectedTest.maxScore,
+          fecha: dateStr,
+          fechaActualizacion: serverTimestamp(),
           description: selectedTest.desc,
           isAutonomous: true
         }, { merge: true });
@@ -284,22 +257,17 @@ export const PlayerAutonomousTestsTab = ({ player, team, teamPath }) => {
         console.warn('Advertencia guardando en evaluaciones:', evalErr);
       }
 
-      // 3. Guardar en subcolección directa del jugador
-      try {
-        await addDoc(collection(db, `${teamPath}/players/${player.id}/test_results`), testPayload);
-      } catch (_) {}
-
       // Actualizar estado local
       setHistory(prev => ({
         ...prev,
         [selectedTest.id]: testPayload
       }));
 
-      showToast(`¡Test ${selectedTest.shortName} completado con éxito! (${percentage}%)`, 'success');
+      showToast(t('test.completedSuccess', { name: selectedTest.shortName, pct: percentage }), 'success');
       setSelectedTest(null);
     } catch (err) {
       console.error('[PlayerAutonomousTestsTab] Error guardando test:', err);
-      showToast('Error al guardar el test. Inténtalo de nuevo.', 'error');
+      showToast(t('test.errorSaving'), 'error');
     } finally {
       setSaving(false);
     }
@@ -318,7 +286,7 @@ export const PlayerAutonomousTestsTab = ({ player, team, teamPath }) => {
           onClick={() => setSelectedTest(null)}
           type="button"
         >
-          <ArrowLeft size={16} /> Volver al catálogo de tests
+          <ArrowLeft size={16} /> {t('test.backToCatalog')}
         </button>
 
         <div className="test-runner-card">
@@ -327,7 +295,7 @@ export const PlayerAutonomousTestsTab = ({ player, team, teamPath }) => {
               {selectedTest.category}
             </span>
             <span className="test-runner-step">
-              Pregunta {currentQuestionIdx + 1} de {selectedTest.questions.length}
+              {t('test.question')} {currentQuestionIdx + 1} {t('test.of')} {selectedTest.questions.length}
             </span>
           </div>
 
@@ -339,7 +307,7 @@ export const PlayerAutonomousTestsTab = ({ player, team, teamPath }) => {
           </div>
 
           <div className="test-question-box">
-            <span className="test-question-dimension">Dimensión: {currentQ.dimension}</span>
+            <span className="test-question-dimension">{t('test.dimension')}: {currentQ.dimension}</span>
             <h3 className="test-question-text">{currentQ.text}</h3>
           </div>
 
@@ -368,7 +336,7 @@ export const PlayerAutonomousTestsTab = ({ player, team, teamPath }) => {
               onClick={handlePreviousQuestion}
               disabled={currentQuestionIdx === 0}
             >
-              Anterior
+              {t('test.previous')}
             </button>
 
             {isCompleted && (
@@ -379,7 +347,7 @@ export const PlayerAutonomousTestsTab = ({ player, team, teamPath }) => {
                 disabled={saving}
                 style={{ backgroundColor: selectedTest.color }}
               >
-                {saving ? 'Guardando...' : 'FINALIZAR Y ENVIAR AL MÍSTER'}
+                {saving ? t('test.saving') : t('test.finishAndSend')}
               </button>
             )}
           </div>
@@ -394,10 +362,10 @@ export const PlayerAutonomousTestsTab = ({ player, team, teamPath }) => {
       <div className="tab-header-box">
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
           <Brain size={22} color="#10B981" />
-          <h2 className="tab-title">Tests & Autoevaluaciones</h2>
+          <h2 className="tab-title">{t('test.tabTitle')}</h2>
         </div>
         <p className="tab-subtitle">
-          Completa estos cuestionarios desde tu móvil para potenciar tu mentalidad, concentración y cohesión con el equipo.
+          {t('test.tabSubtitle')}
         </p>
       </div>
 
@@ -414,7 +382,7 @@ export const PlayerAutonomousTestsTab = ({ player, team, teamPath }) => {
                 </div>
                 <div className="auto-test-meta-badge">
                   <span>⏱️ {test.timeMinutes} min</span>
-                  <span>{test.questions.length} preguntas</span>
+                  <span>{t('test.questionsCount', { count: test.questions.length })}</span>
                 </div>
               </div>
 
@@ -425,15 +393,15 @@ export const PlayerAutonomousTestsTab = ({ player, team, teamPath }) => {
                 <div className="auto-test-last-result">
                   <div className="result-score-chip">
                     <Award size={14} color="#10B981" />
-                    <span>Último resultado: <strong>{lastResult.percentage}%</strong></span>
-                    <span className="result-date">({lastResult.date})</span>
+                    <span>{t('test.lastResult')}: <strong>{lastResult.percentage}%</strong></span>
+                    <span className="result-date">({lastResult.date ? formatDate(lastResult.date) : ''})</span>
                   </div>
                   <button
                     type="button"
                     className="btn-retake-test"
                     onClick={() => handleStartTest(test)}
                   >
-                    <RotateCcw size={14} /> Repetir Test
+                    <RotateCcw size={14} /> {t('test.repeatTest')}
                   </button>
                 </div>
               ) : (
@@ -443,7 +411,7 @@ export const PlayerAutonomousTestsTab = ({ player, team, teamPath }) => {
                   onClick={() => handleStartTest(test)}
                   style={{ borderColor: test.color, color: test.color }}
                 >
-                  <span>Comenzar Test</span>
+                  <span>{t('test.startTest')}</span>
                   <ChevronRight size={16} />
                 </button>
               )}

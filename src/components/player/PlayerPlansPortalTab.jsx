@@ -22,6 +22,7 @@ import {
   Zap,
   Info
 } from 'lucide-react';
+import { useTranslation } from '../../hooks/useTranslation';
 import './PlayerPlansPortalTab.css';
 
 // Catálogo enriquecido de Ejercicios Preventivos y de Preparación Física de Míster11
@@ -137,6 +138,7 @@ const formatSafeDate = (dateVal) => {
 
 export const PlayerPlansPortalTab = ({ player, team, teamPath }) => {
   const { user } = useAuth();
+  const { t, isEn, formatDate } = useTranslation();
   const [plans, setPlans] = useState([]);
   const [teamExercises, setTeamExercises] = useState([]);
   const [expandedGuides, setExpandedGuides] = useState({});
@@ -207,11 +209,11 @@ export const PlayerPlansPortalTab = ({ player, team, teamPath }) => {
       await updateDoc(planDocRef, { exercises: updatedExercises });
 
       if (!isDoneToday) {
-        showToast('¡Ejercicio completado hoy! +10 XP para tu Ranking', 'success');
+        showToast(t('player.plans.completedExercise') + ' (+10 XP)', 'success');
       }
     } catch (err) {
       console.error('Error actualizando ejercicio:', err);
-      showToast('Error al actualizar ejercicio', 'error');
+      showToast('Error', 'error');
     }
   };
 
@@ -259,6 +261,17 @@ export const PlayerPlansPortalTab = ({ player, team, teamPath }) => {
     };
   };
 
+  const formatSafeDate = (d) => {
+    if (!d) return isEn ? 'Active' : 'Activo';
+    try {
+      if (d.toDate) return formatDate(d.toDate());
+      if (d.seconds) return formatDate(new Date(d.seconds * 1000));
+      return formatDate(d);
+    } catch (_) {
+      return isEn ? 'Active' : 'Activo';
+    }
+  };
+
   return (
     <div className="player-tab-content player-plans-portal-tab">
       
@@ -266,10 +279,10 @@ export const PlayerPlansPortalTab = ({ player, team, teamPath }) => {
       <div className="tab-header-box">
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
           <Target size={22} color="#4CAF7D" />
-          <h2 className="tab-title">Plan de Mejora y Prevención Individual</h2>
+          <h2 className="tab-title">{t('player.plans.title')}</h2>
         </div>
         <p className="tab-subtitle">
-          Tareas técnicas, prevención de lesiones y rutinas personalizadas asignadas por tu cuerpo técnico.
+          {t('player.plans.subtitle')}
         </p>
       </div>
 
@@ -277,40 +290,40 @@ export const PlayerPlansPortalTab = ({ player, team, teamPath }) => {
       <div className="hud-card plan-summary-card">
         <div className="hud-header">
           <span className="hud-badge" style={{ color: '#4CAF7D', borderColor: 'rgba(76, 175, 125, 0.3)' }}>
-            <TrendingUp size={14} /> EVOLUCIÓN Y CONSTANCIA
+            <TrendingUp size={14} /> {isEn ? 'PROGRESSION & HABIT' : 'EVOLUCIÓN Y CONSTANCIA'}
           </span>
           <span className="plan-count-badge">
-            {plans.length} {plans.length === 1 ? 'Plan Activo' : 'Planes Activos'}
+            {plans.length} {plans.length === 1 ? (isEn ? 'Active Plan' : 'Plan Activo') : (isEn ? 'Active Plans' : 'Planes Activos')}
           </span>
         </div>
 
         <div className="plan-stats-row">
           <div className="plan-stat-item">
             <span className="stat-value">{player?.position || player?.posicion || 'MC'}</span>
-            <span className="stat-label">Posición</span>
+            <span className="stat-label">{t('player.profile.position')}</span>
           </div>
           <div className="plan-stat-item">
-            <span className="stat-value">{player?.category || team?.categoria || 'Juvenil'}</span>
-            <span className="stat-label">Categoría</span>
+            <span className="stat-value">{player?.category || team?.categoria || (isEn ? 'Youth' : 'Juvenil')}</span>
+            <span className="stat-label">{t('player.profile.category')}</span>
           </div>
           <div className="plan-stat-item">
-            <span className="stat-value" style={{ color: '#4CAF7D' }}>Activo</span>
-            <span className="stat-label">Seguimiento</span>
+            <span className="stat-value" style={{ color: '#4CAF7D' }}>{isEn ? 'Active' : 'Activo'}</span>
+            <span className="stat-label">{isEn ? 'Monitoring' : 'Seguimiento'}</span>
           </div>
         </div>
       </div>
 
       {/* LISTADO DE PLANES Y RUTINAS */}
       {loading ? (
-        <div className="plans-loading">Cargando tus planes de entrenamiento...</div>
+        <div className="plans-loading">{isEn ? 'Loading training plans...' : 'Cargando tus planes de entrenamiento...'}</div>
       ) : plans.length === 0 ? (
         <div className="hud-card empty-plans-card">
           <div className="empty-icon-wrap">
             <Award size={32} color="#C9A84C" />
           </div>
-          <h3>¡Todo al día con tu preparación!</h3>
+          <h3>{isEn ? 'Up to date with your preparation!' : '¡Todo al día con tu preparación!'}</h3>
           <p>
-            Tu entrenador aún no ha asignado un plan específico para hoy. Mantén tus rutinas preventivas y sigue sumando en cada sesión.
+            {t('player.plans.noPlans')}
           </p>
         </div>
       ) : (
@@ -326,14 +339,14 @@ export const PlayerPlansPortalTab = ({ player, team, teamPath }) => {
                 {/* Cabecera del Plan */}
                 <div className="plan-item-top">
                   <div className="plan-type-pill">
-                    <Dumbbell size={14} /> {plan.type || plan.reason || 'Rutina Técnica y Preventiva'}
+                    <Dumbbell size={14} /> {plan.type || plan.reason || (isEn ? 'Technical Routine' : 'Rutina Técnica y Preventiva')}
                   </div>
                   <span className="plan-date-tag">
                     <Calendar size={12} /> {formattedDate}
                   </span>
                 </div>
 
-                <h3 className="plan-item-title">{plan.title || plan.name || 'Plan de Desarrollo Individual'}</h3>
+                <h3 className="plan-item-title">{plan.title || plan.name || (isEn ? 'Individual Training Plan' : 'Plan de Desarrollo Individual')}</h3>
                 
                 {plan.description && (
                   <p className="plan-item-desc">{plan.description}</p>
@@ -344,7 +357,7 @@ export const PlayerPlansPortalTab = ({ player, team, teamPath }) => {
                   <div className="coach-feedback-box">
                     <div className="feedback-title">
                       <MessageSquare size={14} color="#4CAF7D" />
-                      <span>Instrucciones del Míster:</span>
+                      <span>{isEn ? 'Coach Instructions:' : 'Instrucciones del Míster:'}</span>
                     </div>
                     <p className="feedback-text">"{plan.coachNotes}"</p>
                   </div>
@@ -354,8 +367,10 @@ export const PlayerPlansPortalTab = ({ player, team, teamPath }) => {
                 {exercises.length > 0 && (
                   <div className="plan-exercises-section">
                     <div className="exercises-header-row">
-                      <span className="exercises-title">Ejercicios para Hoy:</span>
-                      <span className="exercises-counter">{completedCount} / {exercises.length} hechos</span>
+                      <span className="exercises-title">{isEn ? "Today's Exercises:" : "Ejercicios para Hoy:"}</span>
+                      <span className="exercises-counter">
+                        {completedCount} / {exercises.length} {isEn ? 'done' : 'hechos'}
+                      </span>
                     </div>
 
                     <div className="exercises-checklist">
@@ -374,7 +389,7 @@ export const PlayerPlansPortalTab = ({ player, team, teamPath }) => {
                                 type="button" 
                                 className="check-btn"
                                 onClick={() => toggleExerciseDay(plan.id, idx)}
-                                title={isDone ? "Marcar como pendiente" : "Marcar como completado"}
+                                title={isDone ? (isEn ? "Mark as pending" : "Marcar como pendiente") : t('player.plans.completeExercise')}
                               >
                                 {isDone ? (
                                   <CheckCircle2 size={22} color="#4CAF7D" />
@@ -393,16 +408,16 @@ export const PlayerPlansPortalTab = ({ player, team, teamPath }) => {
 
                               {/* Botón para desplegar Guía Digital */}
                               <button 
-                                type="button"
+                                type="button" 
                                 className={`btn-guide-toggle ${isGuideOpen ? 'open' : ''}`}
                                 onClick={(e) => {
                                   e.stopPropagation();
                                   toggleGuide(plan.id, idx);
                                 }}
-                                title="Ver guía de ejecución técnica"
+                                title={isEn ? "View technical guide" : "Ver guía de ejecución técnica"}
                               >
                                 <BookOpen size={15} />
-                                <span>Guía</span>
+                                <span>{isEn ? 'Guide' : 'Guía'}</span>
                                 {isGuideOpen ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
                               </button>
                             </div>
@@ -414,7 +429,7 @@ export const PlayerPlansPortalTab = ({ player, team, teamPath }) => {
                                 <div className="guide-section">
                                   <div className="guide-section-title">
                                     <Zap size={14} color="#4CAF7D" />
-                                    <span>Ejecución Paso a Paso:</span>
+                                    <span>{t('player.plans.stepByStep')}:</span>
                                   </div>
                                   <ol className="guide-steps-list">
                                     {details.steps.map((step, sIdx) => (
@@ -427,7 +442,7 @@ export const PlayerPlansPortalTab = ({ player, team, teamPath }) => {
                                   <div className="guide-tip-box posture">
                                     <div className="tip-box-title">
                                       <Info size={13} color="#C9A84C" />
-                                      <span>Clave Postural:</span>
+                                      <span>{t('player.plans.posturalKey')}:</span>
                                     </div>
                                     <p>{details.postureTips}</p>
                                   </div>
@@ -435,7 +450,7 @@ export const PlayerPlansPortalTab = ({ player, team, teamPath }) => {
                                   <div className="guide-tip-box prevention">
                                     <div className="tip-box-title">
                                       <ShieldCheck size={13} color="#4CAF7D" />
-                                      <span>Prevención:</span>
+                                      <span>{t('player.plans.prevention')}:</span>
                                     </div>
                                     <p>{details.preventionValue}</p>
                                   </div>

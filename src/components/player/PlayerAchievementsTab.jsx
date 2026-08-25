@@ -15,8 +15,7 @@ import {
   ClipboardCheck, 
   Calendar,
   Lock,
-  CheckCircle2,
-  HelpCircle
+  CheckCircle2
 } from 'lucide-react';
 import { ACHIEVEMENT_TIERS } from '../../config/achievements';
 import { useTranslation } from '../../hooks/useTranslation';
@@ -39,7 +38,7 @@ const ICON_MAP = {
   Trophy
 };
 
-export const PlayerAchievementsTab = ({ achievements, loading, isParentView = false, playerName = '' }) => {
+export const PlayerAchievementsTab = ({ achievements = [], loading, isParentView = false, playerName = '' }) => {
   const { t, isEn } = useTranslation();
   const [selectedTier, setSelectedTier] = useState('ALL'); // 'ALL' | 'BRONZE' | 'SILVER' | 'GOLD'
 
@@ -47,7 +46,7 @@ export const PlayerAchievementsTab = ({ achievements, loading, isParentView = fa
     return (
       <div className="achievements-loading">
         <div className="achievements-spinner" />
-        <p>Cargando vitrina de logros...</p>
+        <p>{t('player.achievements.loading')}</p>
       </div>
     );
   }
@@ -73,23 +72,27 @@ export const PlayerAchievementsTab = ({ achievements, loading, isParentView = fa
           </div>
           <div>
             <h3 className="achievements-hero-title">
-              {isParentView ? `Logros de ${playerName}` : 'Tus Logros Deportivos'}
+              {isParentView 
+                ? t('player.achievements.titleParent', { name: playerName }) 
+                : t('player.achievements.title')}
             </h3>
             <p className="achievements-hero-subtitle">
-              Temporada 2026-27 · Fútbol Formativo
+              {t('player.achievements.season')}
             </p>
           </div>
         </div>
         <div className="achievements-stats-pill">
           <div className="stat-box">
             <span className="stat-num">{unlockedCount} / {achievements.length}</span>
-            <span className="stat-lbl">Desbloqueados</span>
+            <span className="stat-lbl">{t('player.achievements.unlocked')}</span>
           </div>
           <div className="stat-divider" />
           <div className="stat-box">
             <span className="stat-num xp-gold">✨ {totalXP} XP</span>
-            <span className="stat-lbl" style={{ fontWeight: 800 }}>XP de Logros</span>
-            <span style={{ fontSize: '9px', color: '#94A3B8', marginTop: '2px', display: 'block' }}>Ganada desbloqueando retos</span>
+            <span className="stat-lbl" style={{ fontWeight: 800 }}>{t('player.achievements.xpTitle')}</span>
+            <span style={{ fontSize: '9px', color: '#94A3B8', marginTop: '2px', display: 'block' }}>
+              {t('player.achievements.xpSubtitle')}
+            </span>
           </div>
         </div>
       </div>
@@ -101,10 +104,11 @@ export const PlayerAchievementsTab = ({ achievements, loading, isParentView = fa
           className={`tier-filter-btn ${selectedTier === 'ALL' ? 'active' : ''}`}
           onClick={() => setSelectedTier('ALL')}
         >
-          🏆 Todos ({achievements.length})
+          🏆 {t('player.achievements.filterAll', { count: achievements.length })}
         </button>
         {Object.entries(ACHIEVEMENT_TIERS).map(([key, tier]) => {
           const count = achievements.filter(a => a.tier === key).length;
+          const tierLabel = tier.nameKey ? t(tier.nameKey, {}, tier.name) : tier.name;
           return (
             <button
               key={key}
@@ -112,7 +116,7 @@ export const PlayerAchievementsTab = ({ achievements, loading, isParentView = fa
               className={`tier-filter-btn tier-${key.toLowerCase()} ${selectedTier === key ? 'active' : ''}`}
               onClick={() => setSelectedTier(key)}
             >
-              <span>{tier.icon}</span> {tier.name} ({count})
+              <span>{tier.icon}</span> {tierLabel} ({count})
             </button>
           );
         })}
@@ -122,8 +126,12 @@ export const PlayerAchievementsTab = ({ achievements, loading, isParentView = fa
       <div className="achievements-grid">
         {filteredAchievements.map((ach) => {
           const IconComp = ICON_MAP[ach.icon] || Trophy;
-          const tier = ach.tierInfo;
+          const tier = ach.tierInfo || ACHIEVEMENT_TIERS[ach.tier] || ACHIEVEMENT_TIERS.BRONZE;
           const isUnlocked = ach.isUnlocked;
+          const achName = ach.nameKey ? t(ach.nameKey, {}, ach.name) : ach.name;
+          const achDesc = ach.descKey ? t(ach.descKey, {}, ach.desc) : ach.desc;
+          const tierLabel = tier.nameKey ? t(tier.nameKey, {}, tier.name) : tier.name;
+          const periodLabel = tier.periodKey ? t(tier.periodKey, {}, tier.periodLabel) : tier.periodLabel;
 
           return (
             <div 
@@ -140,25 +148,25 @@ export const PlayerAchievementsTab = ({ achievements, loading, isParentView = fa
                   <IconComp size={24} color={isUnlocked ? tier.color : '#94A3B8'} />
                 </div>
                 <div className="ach-tier-badge">
-                  <span>{tier.icon} {tier.name}</span>
+                  <span>{tier.icon} {tierLabel}</span>
                   <span className="ach-xp-tag">+{ach.xp} XP</span>
                 </div>
               </div>
 
               <div className="ach-card-body">
-                <h4 className="ach-name">{ach.name}</h4>
-                <p className="ach-desc">{ach.desc}</p>
+                <h4 className="ach-name">{achName}</h4>
+                <p className="ach-desc">{achDesc}</p>
               </div>
 
               <div className="ach-card-footer">
                 {!ach.isActive ? (
                   <div className="ach-inactive-notice">
-                    <span>⏸️ Sin sesiones programadas esta semana</span>
+                    <span>{t('player.achievements.noSessions')}</span>
                   </div>
                 ) : (
                   <>
                     <div className="ach-progress-header">
-                      <span className="ach-period-tag">{tier.periodLabel}</span>
+                      <span className="ach-period-tag">{periodLabel}</span>
                       <span className="ach-progress-numbers">
                         {ach.progress} / {ach.target}
                       </span>
@@ -178,11 +186,11 @@ export const PlayerAchievementsTab = ({ achievements, loading, isParentView = fa
                 <div className="ach-status-row">
                   {isUnlocked ? (
                     <span className="ach-status-unlocked">
-                      <CheckCircle2 size={14} color="#10B981" /> ¡Completado!
+                      <CheckCircle2 size={14} color="#10B981" /> {t('player.achievements.completed')}
                     </span>
                   ) : (
                     <span className="ach-status-locked">
-                      <Lock size={13} /> {ach.percent}% completado
+                      <Lock size={13} /> {t('player.achievements.inProgress', { percent: ach.percent })}
                     </span>
                   )}
                 </div>

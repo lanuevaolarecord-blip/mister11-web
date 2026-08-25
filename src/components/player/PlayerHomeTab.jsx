@@ -170,13 +170,13 @@ export const PlayerHomeTab = ({ player, team, teamPath, onNavigateTab, isParentV
         </div>
         <div className="player-header-text">
           <span className="player-team-pill">
-            ⚽ {team?.nombre || team?.name || 'Mi Equipo'} · {player?.position || 'Jugador'}
+            ⚽ {team?.nombre || team?.name || t('nav.equipo')} · {player?.position || (isEn ? 'Player' : 'Jugador')}
           </span>
           <h2 className="player-greeting">
-            ¡Hola, {player?.name?.split(' ')[0] || user?.displayName?.split(' ')[0] || 'Crack'}! 👋
+            {t('player.home.greeting', { name: player?.name?.split(' ')[0] || user?.displayName?.split(' ')[0] || (isEn ? 'Star' : 'Crack') })}
           </h2>
           <p className="player-status-sub">
-            Todo listo para tu próximo entrenamiento.
+            {t('player.home.subtitle')}
           </p>
         </div>
       </div>
@@ -186,21 +186,21 @@ export const PlayerHomeTab = ({ player, team, teamPath, onNavigateTab, isParentV
         <div className="hud-card-glow" />
         <div className="hud-header">
           <div className="hud-badge">
-            <Activity size={14} /> PRÓXIMA CONVOCATORIA
+            <Activity size={14} /> {t('player.home.nextEventBadge')}
           </div>
-          <span className="hud-status-live">PROGRAMADO</span>
+          <span className="hud-status-live">{t('player.home.scheduled')}</span>
         </div>
 
         {nextEvent ? (
           <div className="hud-body">
             <h3 className="hud-event-title">
-              {nextEvent.titulo || nextEvent.title || 'Entrenamiento Táctico'}
+              {nextEvent.titulo || nextEvent.title || (nextEvent.type === 'match' ? t('player.schedule.match') : t('player.schedule.training'))}
             </h3>
 
             <div className="hud-meta-grid">
               <div className="hud-meta-item">
                 <Calendar size={16} className="hud-icon" />
-                <span>{nextEvent.fecha ? new Date(nextEvent.fecha).toLocaleDateString('es-ES', { weekday: 'short', day: 'numeric', month: 'short' }) : 'Próximamente'}</span>
+                <span>{nextEvent.fecha ? formatDate(nextEvent.fecha, { weekday: 'short', day: 'numeric', month: 'short' }) : t('player.home.soon')}</span>
               </div>
               <div className="hud-meta-item">
                 <Clock size={16} className="hud-icon" />
@@ -208,7 +208,7 @@ export const PlayerHomeTab = ({ player, team, teamPath, onNavigateTab, isParentV
               </div>
               <div className="hud-meta-item full-width">
                 <MapPin size={16} className="hud-icon" />
-                <span>{nextEvent.lugar || nextEvent.location || 'Campo de Entrenamiento'}</span>
+                <span>{nextEvent.lugar || nextEvent.location || (isEn ? 'Training Ground' : 'Campo de Entrenamiento')}</span>
               </div>
             </div>
 
@@ -216,14 +216,14 @@ export const PlayerHomeTab = ({ player, team, teamPath, onNavigateTab, isParentV
               className="hud-action-btn"
               onClick={() => onNavigateTab('schedule')}
             >
-              Confirmar Asistencia (RSVP) <ChevronRight size={16} />
+              {t('player.home.rsvpBtn')} <ChevronRight size={16} />
             </button>
           </div>
         ) : (
           <div className="hud-empty">
-            <p>No hay entrenamientos programados para los próximos días.</p>
+            <p>{t('player.home.noUpcoming')}</p>
             <button className="hud-action-btn" onClick={() => onNavigateTab('schedule')}>
-              Ver Calendario Completo <ChevronRight size={16} />
+              {t('player.home.viewSchedule')} <ChevronRight size={16} />
             </button>
           </div>
         )}
@@ -236,9 +236,13 @@ export const PlayerHomeTab = ({ player, team, teamPath, onNavigateTab, isParentV
             <Flame size={20} />
           </div>
           <div className="stat-content">
-            <span className="stat-label">RACHA DE ASISTENCIA</span>
+            <span className="stat-label">{t('player.home.streak')}</span>
             <span className="stat-number mono">{attendanceStats.streak}</span>
-            <span className="stat-sub">{pluralize(attendanceStats.streak, 'sesión consecutiva', 'sesiones consecutivas', false)}</span>
+            <span className="stat-sub">
+              {attendanceStats.streak === 1 
+                ? t('player.home.streakSession', { count: attendanceStats.streak }) 
+                : t('player.home.streakSessions', { count: attendanceStats.streak })}
+            </span>
           </div>
         </div>
 
@@ -247,9 +251,17 @@ export const PlayerHomeTab = ({ player, team, teamPath, onNavigateTab, isParentV
             <Trophy size={20} />
           </div>
           <div className="stat-content">
-            <span className="stat-label">GOLES EN PARTIDOS</span>
+            <span className="stat-label">{t('player.home.goals')}</span>
             <span className="stat-number mono">{seasonPerformance.goals} ⚽</span>
-            <span className="stat-sub">{seasonPerformance.goals} {pluralize(seasonPerformance.goals, 'gol', 'goles', false)} en {pluralize(seasonPerformance.matches, 'partido', 'partidos')} ({seasonPerformance.minutes}')</span>
+            <span className="stat-sub">
+              {t('player.home.goalsSummary', {
+                goals: seasonPerformance.goals,
+                matches: seasonPerformance.matches === 1 
+                  ? (isEn ? '1 match' : '1 partido') 
+                  : (isEn ? `${seasonPerformance.matches} matches` : `${seasonPerformance.matches} partidos`),
+                minutes: seasonPerformance.minutes
+              })}
+            </span>
           </div>
         </div>
       </div>
@@ -273,10 +285,16 @@ export const PlayerHomeTab = ({ player, team, teamPath, onNavigateTab, isParentV
               <span style={{ fontSize: '1.2rem' }}>{closestAchievement.tierInfo?.icon || '🏆'}</span>
               <div>
                 <span style={{ fontSize: '0.7rem', color: '#D4A843', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                  ¡Logro casi conseguido! ({closestAchievement.tierInfo?.name})
+                  {closestAchievement.tier === 'GOLD' 
+                    ? t('player.home.almostGold') 
+                    : (closestAchievement.tier === 'SILVER' 
+                        ? t('player.home.almostSilver') 
+                        : (closestAchievement.tier === 'BRONZE' 
+                            ? t('player.home.almostBronze') 
+                            : t('player.home.nextChallenge')))}
                 </span>
                 <h4 style={{ margin: 0, fontSize: '0.95rem', color: '#FFFFFF', fontWeight: 800 }}>
-                  {closestAchievement.name}
+                  {closestAchievement.nameKey ? t(closestAchievement.nameKey, {}, closestAchievement.name) : closestAchievement.name}
                 </h4>
               </div>
             </div>
@@ -295,7 +313,7 @@ export const PlayerHomeTab = ({ player, team, teamPath, onNavigateTab, isParentV
         <div className="section-title-row">
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <Bell size={18} color="#10B981" />
-            <h3 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 800 }}>Comunicados del Equipo</h3>
+            <h3 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 800 }}>{t('player.home.announcements')}</h3>
           </div>
         </div>
 
@@ -304,9 +322,9 @@ export const PlayerHomeTab = ({ player, team, teamPath, onNavigateTab, isParentV
             {announcements.map((ann) => (
               <div key={ann.id} className="announcement-item">
                 <div className="ann-header">
-                  <span className="ann-author">⚽ {ann.authorName || 'Cuerpo Técnico'}</span>
+                  <span className="ann-author">⚽ {ann.authorName || (isEn ? 'Coaching Staff' : 'Cuerpo Técnico')}</span>
                   <span className="ann-date">
-                    {ann.createdAt?.seconds ? new Date(ann.createdAt.seconds * 1000).toLocaleDateString() : 'Reciente'}
+                    {ann.createdAt?.seconds ? formatDate(ann.createdAt.seconds * 1000) : (isEn ? 'Recent' : 'Reciente')}
                   </span>
                 </div>
                 <h4 className="ann-title">{ann.title}</h4>
@@ -316,10 +334,12 @@ export const PlayerHomeTab = ({ player, team, teamPath, onNavigateTab, isParentV
           </div>
         ) : (
           <div className="announcements-empty">
-            <p>No hay avisos recientes del entrenador.</p>
+            <p>{t('player.home.noAnnouncements')}</p>
           </div>
         )}
       </div>
     </div>
   );
 };
+
+export default PlayerHomeTab;

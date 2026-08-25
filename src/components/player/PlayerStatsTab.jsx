@@ -166,56 +166,64 @@ export const PlayerStatsTab = ({ player, team, teamPath, isParentView = false, o
 
   // 4. Comparativa Privada con Promedios del Equipo (FASE 4)
   const teamComparison = useMemo(() => {
-    if (allPlayers.length < 2) return null;
+    if (allPlayers.length === 0) return null;
 
     let totalPresents = 0;
-    let totalCalls = 0;
+    let totalEligibleCalls = 0;
     let myPresents = 0;
-    let myCalls = 0;
+    let myEligibleCalls = 0;
 
-    allAttendance.forEach(att => {
-      allPlayers.forEach(p => {
-        totalCalls++;
-        if (att.players?.[p.id] === true || att.presentes?.includes(p.id) || att.presentPlayers?.includes(p.id)) {
-          totalPresents++;
-        }
+    const hasAttendanceData = allAttendance.length > 0;
+
+    if (hasAttendanceData) {
+      allAttendance.forEach(att => {
+        allPlayers.forEach(p => {
+          const pId = String(p.id);
+          // Verificar si estuvo presente o con retraso justificado
+          const isPresent = (
+            (att.records && (att.records[pId]?.status === 'present' || att.records[pId]?.status === 'late' || att.records[pId] === true)) ||
+            (att.players && (att.players[pId] === true || att.players[pId] === 'presente' || att.players[pId]?.status === 'present')) ||
+            (Array.isArray(att.presentes) && att.presentes.some(id => String(id) === pId)) ||
+            (Array.isArray(att.presentPlayers) && att.presentPlayers.some(id => String(id) === pId))
+          );
+
+          totalEligibleCalls++;
+          if (isPresent) totalPresents++;
+
+          if (String(pId) === String(effectivePlayerId)) {
+            myEligibleCalls++;
+            if (isPresent) myPresents++;
+          }
+        });
       });
-      if (att.players?.[effectivePlayerId] === true || att.presentes?.includes(effectivePlayerId) || att.presentPlayers?.includes(effectivePlayerId)) {
-        myPresents++;
-      }
-      myCalls++;
+    }
+
+    const avgAttendancePct = totalEligibleCalls > 0 
+      ? Math.round((totalPresents / totalEligibleCalls) * 100) 
+      : 0;
+
+    const myAttendancePct = myEligibleCalls > 0 
+      ? Math.round((myPresents / myEligibleCalls) * 100) 
+      : (player?.asistenciaPct !== undefined ? player.asistenciaPct : (hasAttendanceData ? 0 : 0));
+
+    // Minutos calculados con el motor unificado calculatePlayerMatchStats para cada jugador
+    let totalMinutesSquad = 0;
+    allPlayers.forEach(p => {
+      const pStats = calculatePlayerMatchStats(p.id, allTeamMatches);
+      totalMinutesSquad += pStats.minutesPlayed;
     });
 
-    const avgAttendancePct = totalCalls > 0 ? Math.round((totalPresents / totalCalls) * 100) : 85;
-    const myAttendancePct = myCalls > 0 ? Math.round((myPresents / myCalls) * 100) : (player?.asistenciaPct || 90);
-
-    let totalMinutes = 0;
-    allTeamMatches.forEach(m => {
-      allPlayers.forEach(p => {
-        const stats = m.playerStats?.[p.id];
-        totalMinutes += (stats?.minutesPlayed || (m.titulares?.includes(p.id) ? 90 : 0));
-      });
-    });
-    const avgMinutesPerPlayer = allPlayers.length > 0 ? Math.round(totalMinutes / allPlayers.length) : 0;
-
-    let totalGoals = 0;
-    allTeamMatches.forEach(m => {
-      allPlayers.forEach(p => {
-        const stats = m.playerStats?.[p.id];
-        const gList = m.goleadoresList || [];
-        const gCount = (stats?.goals || 0) + gList.filter(g => String(g.jugadorId) === String(p.id)).length;
-        totalGoals += gCount;
-      });
-    });
-    const avgGoalsPerPlayer = allPlayers.length > 0 ? (totalGoals / allPlayers.length).toFixed(1) : '0.0';
+    const avgMinutesPerPlayer = allPlayers.length > 0 
+      ? Math.round(totalMinutesSquad / allPlayers.length) 
+      : 0;
 
     return {
+      hasAttendanceData,
+      hasMatchData: allTeamMatches.length > 0,
       myAttendancePct,
       avgAttendancePct,
       myMinutes: playerMatchStats.minutesPlayed,
       avgMinutes: avgMinutesPerPlayer,
-      myGoals: playerMatchStats.goals,
-      avgGoals: avgGoalsPerPlayer,
       sampleSize: allPlayers.length
     };
   }, [allPlayers, allAttendance, allTeamMatches, effectivePlayerId, playerMatchStats, player]);
@@ -415,10 +423,22 @@ export const PlayerStatsTab = ({ player, team, teamPath, isParentView = false, o
                 <span style={{ color: '#4CAF7D' }}>{teamComparison.myAttendancePct}% vs {teamComparison.avgAttendancePct}%</span>
               </div>
               <div style={{ background: 'rgba(128,128,128,0.2)', height: '6px', borderRadius: '4px', overflow: 'hidden' }}>
-                <div style={{ width: `${teamComparison.myAttendancePct}%`, height: '100%', background: '#4CAF7D', borderRadius: '4px' }} />
+                <div style={{ width: `${Math.max(teamComparison.myAttendancePct > 0 ? teamComparison.myAttendancePct : (teamComparison.hasAttendanceData ? 0 : 50), 4)}%`, height: '100%', background: '#4CAF7D', borderRadius: '4px' }} />
               </div>
-              <span style={{ fontSize: '0.72rem', color: teamComparison.myAttendancePct >= teamComparison.avgAttendancePct ? '#4CAF7D' : '#C9A84C', marginTop: '4px', display: 'block', fontWeight: 800 }}>
-                {teamComparison.myAttendancePct >= teamComparison.avgAttendancePct ? '▲ Por encima de la media' : '▼ En la media del grupo'}
+              <span style={{ 
+                fontSize: '0.72rem', 
+                color: !teamComparison.hasAttendanceData ? (darkMode ? '#94A3B8' : '#64748B') : (teamComparison.myAttendancePct > teamComparison.avgAttendancePct ? '#4CAF7D' : (teamComparison.myAttendancePct === teamComparison.avgAttendancePct ? (darkMode ? '#CBD5E1' : '#475569') : '#C9A84C')), 
+                marginTop: '4px', 
+                display: 'block', 
+                fontWeight: 800 
+              }}>
+                {!teamComparison.hasAttendanceData 
+                  ? '● Sin sesiones registradas aún' 
+                  : (teamComparison.myAttendancePct > teamComparison.avgAttendancePct 
+                      ? '▲ Por encima de la media' 
+                      : (teamComparison.myAttendancePct === teamComparison.avgAttendancePct 
+                          ? '● En la media de la plantilla' 
+                          : '▼ Por debajo de la media'))}
               </span>
             </div>
 
@@ -430,14 +450,22 @@ export const PlayerStatsTab = ({ player, team, teamPath, isParentView = false, o
               </div>
               <div style={{ background: 'rgba(128,128,128,0.2)', height: '6px', borderRadius: '4px', overflow: 'hidden' }}>
                 <div style={{ 
-                  width: `${teamComparison.avgMinutes > 0 ? Math.min(100, (teamComparison.myMinutes / (teamComparison.avgMinutes * 1.5)) * 100) : 50}%`, 
+                  width: `${teamComparison.avgMinutes > 0 ? Math.min(100, Math.max(10, (teamComparison.myMinutes / (teamComparison.avgMinutes * 1.5)) * 100)) : (teamComparison.myMinutes > 0 ? 100 : 0)}%`, 
                   height: '100%', 
                   background: '#C9A84C', 
                   borderRadius: '4px' 
                 }} />
               </div>
-              <span style={{ fontSize: '0.72rem', color: darkMode ? '#CBD5E1' : '#64748B', marginTop: '4px', display: 'block', fontWeight: 600 }}>
-                Media de la plantilla: {teamComparison.avgMinutes}'
+              <span style={{ 
+                fontSize: '0.72rem', 
+                color: !teamComparison.hasMatchData ? (darkMode ? '#94A3B8' : '#64748B') : (teamComparison.myMinutes > teamComparison.avgMinutes ? '#4CAF7D' : (teamComparison.myMinutes === teamComparison.avgMinutes ? (darkMode ? '#CBD5E1' : '#475569') : '#C9A84C')), 
+                marginTop: '4px', 
+                display: 'block', 
+                fontWeight: 800 
+              }}>
+                {!teamComparison.hasMatchData
+                  ? '● Sin partidos disputados aún'
+                  : `Media de la plantilla: ${teamComparison.avgMinutes}'`}
               </span>
             </div>
           </div>

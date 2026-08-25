@@ -54,13 +54,19 @@ export const PlayerLeaderboard = ({
       let myTotalCalls = 0;
       attendance.forEach(att => {
         myTotalCalls++;
-        if (att.players?.[pId] === true || att.presentes?.includes(pId) || att.presentPlayers?.includes(pId)) {
+        const isPresent = (
+          (att.records && (att.records[pId]?.status === 'present' || att.records[pId]?.status === 'late' || att.records[pId] === true)) ||
+          (att.players && (att.players[pId] === true || att.players[pId] === 'presente' || att.players[pId]?.status === 'present')) ||
+          (Array.isArray(att.presentes) && att.presentes.some(id => String(id) === pId)) ||
+          (Array.isArray(att.presentPlayers) && att.presentPlayers.some(id => String(id) === pId))
+        );
+        if (isPresent) {
           myPresents++;
         }
       });
       const attendancePct = myTotalCalls > 0 
         ? Math.round((myPresents / myTotalCalls) * 100) 
-        : (p.asistenciaPct || 85);
+        : (p.asistenciaPct !== undefined ? p.asistenciaPct : 90);
 
       // B) Partidos, minutos, goles y asistencias
       let totalMatches = 0;

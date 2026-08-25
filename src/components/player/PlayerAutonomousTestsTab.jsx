@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { collection, query, where, orderBy, getDocs, addDoc, doc, setDoc, serverTimestamp } from 'firebase/firestore';
+import { collection, query, where, orderBy, getDocs, addDoc, doc, setDoc, serverTimestamp, onSnapshot } from 'firebase/firestore';
 import { db } from '../../firebaseConfig';
 import { useAuth } from '../../context/AuthContext';
 import { showToast } from '../../utils/toast';
@@ -153,37 +153,33 @@ export const PlayerAutonomousTestsTab = ({ player, team, teamPath }) => {
   const [history, setHistory] = useState({});
   const [loadingHistory, setLoadingHistory] = useState(true);
 
-  // Cargar historial de tests completados por este jugador
+  // Cargar historial de tests completados por este jugador en tiempo real
   useEffect(() => {
     if (!teamPath || !player?.id) {
       setLoadingHistory(false);
       return;
     }
 
-    const loadTestHistory = async () => {
-      try {
-        const testsColRef = collection(db, `${teamPath}/test_results`);
-        const q = query(testsColRef, where('playerId', '==', player.id));
-        const snap = await getDocs(q);
-        
-        const docs = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-        docs.sort((a, b) => new Date(b.date || b.timestamp || 0) - new Date(a.date || a.timestamp || 0));
+    const testsColRef = collection(db, `${teamPath}/test_results`);
+    const q = query(testsColRef, where('playerId', '==', player.id));
+    const unsubscribe = onSnapshot(q, (snap) => {
+      const docs = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      docs.sort((a, b) => new Date(b.date || b.timestamp || 0) - new Date(a.date || a.timestamp || 0));
 
-        const historyMap = {};
-        docs.forEach(data => {
-          if (data.testId && !historyMap[data.testId]) {
-            historyMap[data.testId] = data;
-          }
-        });
-        setHistory(historyMap);
-      } catch (err) {
-        console.warn('[PlayerAutonomousTestsTab] Error cargando historial de tests:', err);
-      } finally {
-        setLoadingHistory(false);
-      }
-    };
+      const historyMap = {};
+      docs.forEach(data => {
+        if (data.testId && !historyMap[data.testId]) {
+          historyMap[data.testId] = data;
+        }
+      });
+      setHistory(historyMap);
+      setLoadingHistory(false);
+    }, (err) => {
+      console.warn('[PlayerAutonomousTestsTab] Error escuchando historial de tests:', err);
+      setLoadingHistory(false);
+    });
 
-    loadTestHistory();
+    return () => unsubscribe();
   }, [teamPath, player?.id]);
 
   const handleStartTest = (test) => {

@@ -66,6 +66,76 @@ export const PlayerStatsTab = ({ player, team, teamPath, isParentView = false, a
   const [showComparisonHelp, setShowComparisonHelp] = useState(false);
   const [showRadarHelp, setShowRadarHelp] = useState(false);
 
+  // Catálogo canónico de pruebas físicas y cuestionarios para enriquecer datos de Firestore
+  const CANONICAL_TESTS_MAP = useMemo(() => ({
+    't1': { name: isEn ? 'Cooper Test' : 'Test de Cooper', category: isEn ? 'Physical · Endurance' : 'Físico · Resistencia', unit: 'm', isTime: false },
+    't2': { name: isEn ? 'Beep Test (Course Navette)' : 'Course Navette', category: isEn ? 'Physical · Endurance' : 'Físico · Resistencia', unit: 'nivel', isTime: false },
+    't3': { name: isEn ? '10m Sprint' : 'Sprint 10m', category: isEn ? 'Physical · Speed' : 'Físico · Velocidad', unit: 'seg', isTime: true },
+    't4': { name: isEn ? '30m Sprint' : 'Sprint 30m', category: isEn ? 'Physical · Speed' : 'Físico · Velocidad', unit: 'seg', isTime: true },
+    't5': { name: isEn ? 'T-Test Agility' : 'T-Test (Agilidad)', category: isEn ? 'Physical · Agility' : 'Físico · Agilidad', unit: 'seg', isTime: true },
+    't6': { name: isEn ? 'CMJ Jump' : 'Salto CMJ', category: isEn ? 'Physical · Power' : 'Físico · Fuerza', unit: 'cm', isTime: false },
+    't7': { name: isEn ? 'Cone Dribbling' : 'Conducción conos', category: isEn ? 'Technical · Ball Control' : 'Técnica · Control', unit: 'seg', isTime: true },
+    't8': { name: isEn ? 'Goal Shooting' : 'Pase a portería', category: isEn ? 'Technical · Accuracy' : 'Técnica · Precisión', unit: 'pts', isTime: false },
+    'psi1': { name: isEn ? 'ACSI-28 Coping Skills' : 'ACSI-28 (Afrontamiento)', category: isEn ? 'Mental · Pressure' : 'Mental · Presión', unit: 'pts', isTime: false },
+    'psi2': { name: isEn ? 'MTQ-10 Mental Toughness' : 'MTQ-10 (Fortaleza Mental)', category: isEn ? 'Mental · Resilience' : 'Mental · Resiliencia', unit: 'pts', isTime: false },
+    'psi3': { name: isEn ? 'Goal Setting Scale' : 'Establecimiento de Metas', category: isEn ? 'Mental · Goals' : 'Mental · Objetivos', unit: 'pts', isTime: false },
+    'psi4': { name: isEn ? 'Leadership & Communication' : 'Liderazgo y Comunicación', category: isEn ? 'Mental · Leadership' : 'Mental · Liderazgo', unit: 'pts', isTime: false },
+    'soc1': { name: isEn ? 'GEQ Team Cohesion' : 'GEQ (Cohesión de Equipo)', category: isEn ? 'Social · Cohesion' : 'Social · Cohesión', unit: 'pts', isTime: false },
+    'soc2': { name: isEn ? 'MHC-SF Mental Well-being' : 'Escala Bienestar Mental', category: isEn ? 'Mental · Well-being' : 'Mental · Bienestar', unit: 'pts', isTime: false },
+    'soc3': { name: isEn ? 'Emotional Awareness' : 'Autoconciencia Emocional', category: isEn ? 'Mental · Emotions' : 'Mental · Emociones', unit: 'pts', isTime: false },
+    'psi_acsi28_auto': { name: isEn ? 'ACSI-28 Coping Skills' : 'ACSI-28 (Afrontamiento)', category: isEn ? 'Mental · Pressure' : 'Mental · Presión', unit: 'pts', isTime: false },
+    'psi_mtq10_auto': { name: isEn ? 'MTQ-10 Mental Toughness' : 'MTQ-10 (Fortaleza Mental)', category: isEn ? 'Mental · Resilience' : 'Mental · Resiliencia', unit: 'pts', isTime: false },
+    'soc_geq_auto': { name: isEn ? 'GEQ Team Cohesion' : 'GEQ (Cohesión de Equipo)', category: isEn ? 'Social · Cohesion' : 'Social · Cohesión', unit: 'pts', isTime: false },
+    'psi_metas_auto': { name: isEn ? 'Goal Setting Scale' : 'Establecimiento de Metas', category: isEn ? 'Mental · Goals' : 'Mental · Objetivos', unit: 'pts', isTime: false },
+  }), [isEn]);
+
+  // Función segura para parsear y normalizar fechas y timestamps
+  const parseSafeDate = (d, rawItem) => {
+    let ts = 0;
+    let isoDate = '';
+
+    if (rawItem?.timestamp?.toDate) {
+      const dt = rawItem.timestamp.toDate();
+      ts = dt.getTime();
+      isoDate = dt.toISOString().split('T')[0];
+    } else if (rawItem?.createdAt?.toDate) {
+      const dt = rawItem.createdAt.toDate();
+      ts = dt.getTime();
+      isoDate = dt.toISOString().split('T')[0];
+    } else if (typeof d === 'string' && d.trim()) {
+      const cleanStr = d.trim();
+      if (cleanStr.includes('/')) {
+        const parts = cleanStr.split('/');
+        if (parts.length === 3) {
+          const y = parts[2].length === 4 ? parts[2] : `20${parts[2]}`;
+          const m = parts[1].padStart(2, '0');
+          const day = parts[0].padStart(2, '0');
+          isoDate = `${y}-${m}-${day}`;
+          const dt = new Date(`${isoDate}T12:00:00Z`);
+          ts = isNaN(dt.getTime()) ? Date.now() : dt.getTime();
+        } else {
+          isoDate = cleanStr;
+          ts = Date.now();
+        }
+      } else {
+        isoDate = cleanStr.split('T')[0];
+        const dt = new Date(cleanStr);
+        ts = isNaN(dt.getTime()) ? Date.now() : dt.getTime();
+      }
+    } else if (d instanceof Date) {
+      ts = d.getTime();
+      isoDate = d.toISOString().split('T')[0];
+    } else {
+      ts = Date.now();
+      isoDate = new Date().toISOString().split('T')[0];
+    }
+
+    const parts = isoDate.split('-');
+    const displayDate = parts.length === 3 ? `${parts[2]}/${parts[1]}` : isoDate;
+
+    return { ts, isoDate, displayDate };
+  };
+
   // 1. Escuchar evaluaciones canónicas de Míster11 y test_results de múltiples fuentes
   useEffect(() => {
     if (!cleanPath || !effectivePlayerId) return;
@@ -80,28 +150,36 @@ export const PlayerStatsTab = ({ player, team, teamPath, isParentView = false, a
       const uniqueEvals = [];
 
       allCombined.forEach(e => {
-        const key = e.id || `${e.testId}_${e.date}_${e.val || e.score}`;
+        // Clave unívoca considerando playerId, testId, fecha y valor
+        const pId = String(e.playerId || e.jugadorId || e.player?.id || '');
+        const key = e.id ? `${e.id}_${pId}` : `${pId}_${e.testId}_${e.date}_${e.val || e.score}`;
         if (!seen.has(key)) {
           seen.add(key);
           uniqueEvals.push(e);
         }
       });
 
-      const playerEvals = uniqueEvals.filter(e => 
-        String(e.playerId) === String(effectivePlayerId) || 
-        String(e.player?.id) === String(effectivePlayerId) || 
-        e.players?.[effectivePlayerId]
-      );
+      // Filtrar únicamente los tests que pertenezcan a este jugador (soporta playerId y jugadorId)
+      const playerEvals = uniqueEvals.filter(e => {
+        const pId = String(e.playerId || e.jugadorId || e.player?.id || '');
+        return pId === String(effectivePlayerId) || e.players?.[effectivePlayerId];
+      });
 
       const grouped = {};
       playerEvals.forEach(e => {
-        const testId = e.testId || e.testName || 'test_general';
-        const testName = e.testName || e.name || 'Evaluación';
+        const testId = String(e.testId || e.testName || 'test_general');
+        const canonical = CANONICAL_TESTS_MAP[testId] || {};
+        const testName = e.testName || canonical.name || e.name || (isEn ? 'Evaluation' : 'Evaluación');
+        const unit = e.unit || canonical.unit || 'pts';
+        const category = e.category || canonical.category || (isEn ? 'General' : 'General');
+        const isTime = canonical.isTime !== undefined 
+          ? canonical.isTime 
+          : (unit.toLowerCase().includes('seg') || unit.toLowerCase().includes('s'));
+
         const rawVal = e.val !== undefined ? e.val : (e.score !== undefined ? e.score : (e.percentage || 0));
         const parsedVal = parseFloat(String(rawVal).replace(',', '.')) || 0;
-        const dateStr = e.date || e.fecha || (e.createdAt?.toDate ? e.createdAt.toDate().toISOString().split('T')[0] : 'Reciente');
-        const unit = e.unit || 'pts';
-        const category = e.category || 'General';
+        const rawDate = e.date || e.fecha;
+        const { ts, isoDate, displayDate } = parseSafeDate(rawDate, e);
 
         if (!grouped[testId]) {
           grouped[testId] = {
@@ -109,20 +187,23 @@ export const PlayerStatsTab = ({ player, team, teamPath, isParentView = false, a
             name: testName,
             category,
             unit,
-            isTime: unit.toLowerCase().includes('seg') || unit.toLowerCase().includes('s'),
+            isTime,
             history: []
           };
         }
 
         grouped[testId].history.push({
           val: parsedVal,
-          date: dateStr,
+          date: isoDate,
+          displayDate,
+          ts,
           raw: e
         });
       });
 
+      // Ordenación cronológica ascendente estricta por timestamp
       Object.keys(grouped).forEach(k => {
-        grouped[k].history.sort((a, b) => new Date(a.date) - new Date(b.date));
+        grouped[k].history.sort((a, b) => a.ts - b.ts);
       });
 
       setGroupedHistory(grouped);
@@ -150,7 +231,7 @@ export const PlayerStatsTab = ({ player, team, teamPath, isParentView = false, a
       unsubTestResults();
       unsubPlayerDirect();
     };
-  }, [cleanPath, effectivePlayerId]);
+  }, [cleanPath, effectivePlayerId, CANONICAL_TESTS_MAP, isEn]);
 
   // 2. Escuchar histórico de Wellness / Bienestar
   useEffect(() => {

@@ -571,6 +571,69 @@ const Tests = () => {
     }
   };
 
+  const handleResetPlayerTests = async (jugadorId) => {
+    if (!user || !activeTeamId || !jugadorId) return;
+    const playerObj = getPlayerById(jugadorId);
+    const playerName = playerObj?.name || 'este jugador';
+
+    const confirmReset = await showConfirm(
+      '🔄 Renovar cuestionarios y tests',
+      `¿Deseas renovar y reiniciar los cuestionarios mentales y tests de "${playerName}"?\n\nSe limpiarán las respuestas y evaluaciones previas para que el futbolista pueda realizar una nueva batería de tests desde cero en su portal de jugador.`
+    );
+    if (!confirmReset) return;
+
+    setLoading(true);
+    try {
+      if (user.uid === 'invitado-local') {
+        const localEvals = JSON.parse(localStorage.getItem('mister11_local_evaluaciones') || '[]');
+        const filtered = localEvals.filter(item => String(item.jugadorId) !== String(jugadorId) && String(item.playerId) !== String(jugadorId));
+        localStorage.setItem('mister11_local_evaluaciones', JSON.stringify(filtered));
+        await loadEvaluations();
+        await showAlert('Éxito', `Tests renovados correctamente para ${playerName}.`);
+        return;
+      }
+
+      const batch = writeBatch(db);
+
+      // 1. Borrar de evaluaciones del equipo
+      const evalsRef = collection(db, getTeamPath(), 'evaluaciones');
+      const q1 = query(evalsRef, where('jugadorId', '==', jugadorId));
+      const snap1 = await getDocs(q1);
+      snap1.forEach(d => batch.delete(d.ref));
+
+      const q2 = query(evalsRef, where('playerId', '==', jugadorId));
+      const snap2 = await getDocs(q2);
+      snap2.forEach(d => batch.delete(d.ref));
+
+      // 2. Borrar de test_results del equipo
+      const resultsRef = collection(db, getTeamPath(), 'test_results');
+      const q3 = query(resultsRef, where('playerId', '==', jugadorId));
+      const snap3 = await getDocs(q3);
+      snap3.forEach(d => batch.delete(d.ref));
+
+      // 3. Borrar de subcolección directa del jugador
+      const directResultsRef = collection(db, getTeamPath(), 'players', jugadorId, 'test_results');
+      const snap4 = await getDocs(directResultsRef);
+      snap4.forEach(d => batch.delete(d.ref));
+
+      // 4. Actualizar flag en la ficha del jugador
+      const playerDocRef = doc(db, getTeamPath(), 'players', jugadorId);
+      batch.update(playerDocRef, {
+        testsResetAt: serverTimestamp(),
+        testsResetBy: user.email || user.uid
+      });
+
+      await batch.commit();
+      await loadEvaluations();
+      await showAlert('Éxito', `✅ Tests y cuestionarios psicológicos renovados con éxito para ${playerName}. El jugador ya puede volver a realizarlos.`);
+    } catch (err) {
+      console.error('Error renovando tests del jugador:', err);
+      await showAlert('Error', 'No se pudieron renovar los tests del jugador.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
 
   const handleDeleteTest = async (testId, testName) => {
     if (!user || !activeTeamId) return;
@@ -1282,6 +1345,28 @@ const Tests = () => {
                           >
                             📄 Resumen Técnico
                           </button>
+
+                          <button
+                            type="button"
+                            style={{
+                              background: 'rgba(239, 68, 68, 0.12)',
+                              color: '#EF4444',
+                              border: '1px solid rgba(239, 68, 68, 0.35)',
+                              borderRadius: 8,
+                              padding: '9px 18px',
+                              fontWeight: 700,
+                              fontSize: 12.5,
+                              cursor: 'pointer',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              gap: 6
+                            }}
+                            onClick={() => handleResetPlayerTests(histSelectedPlayer)}
+                            title="Renovar cuestionarios y limpiar evaluaciones anteriores para una nueva prueba limpia"
+                          >
+                            🔄 Renovar Cuestionarios y Tests
+                          </button>
                         </div>
                       </div>
 
@@ -1880,6 +1965,10 @@ const Tests = () => {
           tests={tests}
           historyData={historyData}
           onClose={() => setAnalyticsPlayer(null)}
+          onResetPlayerTests={async (pId) => {
+            await handleResetPlayerTests(pId);
+            setAnalyticsPlayer(null);
+          }}
           onExportPDF={(player) => {
             if (!isPro) {
               setUpgradeModal({ open: true, message: 'La exportación de informes individuales es una función PRO.' });

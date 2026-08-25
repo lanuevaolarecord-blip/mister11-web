@@ -128,7 +128,7 @@ const MiniLineChart = ({ data, isTime }) => (
 
 
 // ── Modal principal ──────────────────────────────────────────────────────────
-const PlayerAnalyticsModal = ({ player, tests, historyData, onClose, onExportPDF, onDeleteLastEval, onDeleteAllEvals }) => {
+const PlayerAnalyticsModal = ({ player, tests, historyData, onClose, onExportPDF, onDeleteLastEval, onDeleteAllEvals, onResetPlayerTests }) => {
   const contentRef = useRef(null);
 
   if (!player) return null;
@@ -294,7 +294,29 @@ const PlayerAnalyticsModal = ({ player, tests, historyData, onClose, onExportPDF
               </p>
             </div>
           </div>
-          <div style={{ display: 'flex', gap: 12 }}>
+          <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+            {onResetPlayerTests && (
+              <button
+                type="button"
+                onClick={() => onResetPlayerTests(player.id)}
+                style={{
+                  background: 'rgba(239, 68, 68, 0.15)',
+                  color: '#EF4444',
+                  border: '1px solid rgba(239, 68, 68, 0.4)',
+                  borderRadius: 8,
+                  padding: '9px 14px',
+                  fontWeight: 700,
+                  fontSize: 12.5,
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 6
+                }}
+                title="Renovar cuestionarios y limpiar evaluaciones para una nueva prueba"
+              >
+                🔄 Renovar Tests
+              </button>
+            )}
             <button
               onClick={handleExport}
               style={{

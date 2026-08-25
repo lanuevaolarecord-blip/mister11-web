@@ -66,7 +66,12 @@ export const SvgLineChart = ({ data, isTime, width = 320, height = 200 }) => {
       : pad.top + (1 - pct) * cH;   // higher = better (normal)
   };
 
-  const pts = data.map((d, i) => ({ x: xOf(i), y: yOf(Number(d.val) || 0), val: d.val, date: d.date }));
+  const pts = data.map((d, i) => ({ 
+    x: xOf(i), 
+    y: yOf(Number(d.val) || 0), 
+    val: d.val, 
+    date: d.displayDate || d.date 
+  }));
   const pathD = pts.map((p, i) => `${i === 0 ? 'M' : 'L'}${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' ');
 
   // Fill area under line
@@ -116,7 +121,15 @@ export const SvgLineChart = ({ data, isTime, width = 320, height = 200 }) => {
         {pts.map((p, i) => {
           const show = data.length <= 5 || i === 0 || i === data.length - 1
             || i % Math.ceil(data.length / 4) === 0;
-          const dateStr = (p.date || '').split('-').reverse().slice(0, 2).join('/');
+          
+          let dateStr = String(p.date || '');
+          if (dateStr.includes('-')) {
+            const parts = dateStr.split('T')[0].split('-');
+            if (parts.length >= 3) {
+              dateStr = `${parts[2]}/${parts[1]}`;
+            }
+          }
+
           return show ? (
             <text key={i} x={p.x} y={height - 6}
               textAnchor="middle" fontSize={10} fontWeight="700" fill={textMuted}>

@@ -3,9 +3,12 @@ import { useAuth } from '../context/AuthContext';
 import { subscribeToCollection, setDocument, deleteDocument, addDocument } from '../firebase/db';
 import { sanitizeForFirestore } from './useSessions';
 import { 
+  calculatePlayerAttendanceStats,
+  getPendingEvents
+} from '../utils/attendanceStatsHelper';
+import { 
   calculateAttendanceMetrics, 
   calculateSquadAveragePct,
-  calculatePlayerAttendanceOnSchedule,
   getMicrocycleDateRange,
   determineCallupRecommendation,
   toDateKey
@@ -147,6 +150,7 @@ export const useAttendance = (teamId) => {
     if (!playerId) {
       return {
         pct: null,
+        percentage: null,
         hasData: false,
         status: 'no_data',
         streak: 0,
@@ -158,66 +162,22 @@ export const useAttendance = (teamId) => {
         noRecord: 0,
         suspended: 0,
         total: 0,
+        scheduledPast: 0,
         history: [],
+        timeline: [],
+        eventDetails: [],
         callupGuidance: determineCallupRecommendation(null, thresholds)
       };
     }
 
-    // Usar el motor unificado de asistencia sobre programado
-    const scheduleStats = calculatePlayerAttendanceOnSchedule(playerId, {
-      sessions,
-      matches,
+    return calculatePlayerAttendanceStats(
+      playerId,
       attendanceRecords,
-      dateRange,
-      thresholds
-    });
-
-    // Calcular racha a partir de registros verificados por el staff
-    const history = [];
-    attendanceRecords.forEach((record) => {
-      const rec = record.records && record.records[playerId];
-      if (rec) {
-        history.push({
-          id: record.id,
-          sessionTitle: record.sessionTitle,
-          date: record.date,
-          type: record.type,
-          status: rec.status || 'present',
-          lateMinutes: rec.lateMinutes || 0
-        });
-      }
-    });
-
-    const reversedHistory = [...history].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-    let streak = 0;
-    for (const h of reversedHistory) {
-      if (h.status === 'present' || h.status === 'late') {
-        streak++;
-      } else if (h.status === 'justified' || h.status === 'injured') {
-        continue;
-      } else if (h.status === 'absent') {
-        break;
-      }
-    }
-
-    return {
-      pct: scheduleStats.pct,
-      hasData: scheduleStats.hasData,
-      status: scheduleStats.status,
-      streak,
-      present: scheduleStats.attended - scheduleStats.late,
-      absent: scheduleStats.absent,
-      justified: scheduleStats.justified,
-      late: scheduleStats.late,
-      injured: scheduleStats.injured,
-      noRecord: scheduleStats.noRecord,
-      suspended: scheduleStats.suspended,
-      scheduledPast: scheduleStats.scheduledPast,
-      total: scheduleStats.scheduledPast || history.length,
-      history: reversedHistory,
-      eventDetails: scheduleStats.eventDetails,
-      callupGuidance: scheduleStats.callupGuidance
-    };
+      matches,
+      thresholds,
+      sessions,
+      dateRange
+    );
   };
 
   /**
@@ -246,10 +206,11 @@ export const useAttendance = (teamId) => {
       let eligible = 0;
 
       entries.forEach((r) => {
-        if (r.status === 'present' || r.status === 'late') {
+        const s = typeof r === 'object' ? r.status : r;
+        if (s === 'present' || s === 'presente' || s === 'late' || s === 'tarde') {
           attended++;
           eligible++;
-        } else if (r.status === 'absent' || r.status === 'justified') {
+        } else if (s === 'absent' || s === 'ausente' || s === 'justified' || s === 'justificado') {
           eligible++;
         }
       });
@@ -276,7 +237,8 @@ export const useAttendance = (teamId) => {
     removeAttendance,
     getPlayerStats,
     getTeamSquadStats,
-    getAttendanceTrend
+    getAttendanceTrend,
+    getPendingEvents: () => getPendingEvents(sessions, matches, attendanceRecords)
   };
 };
 

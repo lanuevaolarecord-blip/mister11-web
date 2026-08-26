@@ -92,28 +92,28 @@ export const PlayerAttendanceSubTab = ({ playerId, teamId }) => {
       </div>
 
       {/* Desglose de Contadores sobre Programado */}
-      <div style={{ display: 'grid', gridTemplateColumns: `repeat(${stats.noRecord > 0 ? 6 : 5}, 1fr)`, gap: '6px', textAlign: 'center' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: `repeat(${(stats.noRecord || 0) > 0 ? 6 : 5}, 1fr)`, gap: '6px', textAlign: 'center' }}>
         <div style={{ background: 'rgba(34, 197, 94, 0.1)', padding: '8px 4px', borderRadius: '8px', border: '1px solid #22C55E' }}>
-          <div style={{ fontSize: '14px', fontWeight: '800', color: '#22C55E' }}>{stats.present}</div>
+          <div style={{ fontSize: '14px', fontWeight: '800', color: '#22C55E' }}>{stats.present ?? 0}</div>
           <div style={{ fontSize: '9px', color: '#22C55E', fontWeight: '700' }}>{isEn ? 'Pres.' : 'Pres.'}</div>
         </div>
         <div style={{ background: 'rgba(239, 68, 68, 0.1)', padding: '8px 4px', borderRadius: '8px', border: '1px solid #EF4444' }}>
-          <div style={{ fontSize: '14px', fontWeight: '800', color: '#EF4444' }}>{stats.absent}</div>
+          <div style={{ fontSize: '14px', fontWeight: '800', color: '#EF4444' }}>{stats.absent ?? 0}</div>
           <div style={{ fontSize: '9px', color: '#EF4444', fontWeight: '700' }}>{isEn ? 'Abs.' : 'Aus.'}</div>
         </div>
         <div style={{ background: 'rgba(234, 179, 8, 0.1)', padding: '8px 4px', borderRadius: '8px', border: '1px solid #EAB308' }}>
-          <div style={{ fontSize: '14px', fontWeight: '800', color: '#EAB308' }}>{stats.justified}</div>
+          <div style={{ fontSize: '14px', fontWeight: '800', color: '#EAB308' }}>{stats.justified ?? 0}</div>
           <div style={{ fontSize: '9px', color: '#EAB308', fontWeight: '700' }}>{isEn ? 'Exc.' : 'Just.'}</div>
         </div>
         <div style={{ background: 'rgba(249, 115, 22, 0.1)', padding: '8px 4px', borderRadius: '8px', border: '1px solid #F97316' }}>
-          <div style={{ fontSize: '14px', fontWeight: '800', color: '#F97316' }}>{stats.late}</div>
+          <div style={{ fontSize: '14px', fontWeight: '800', color: '#F97316' }}>{stats.late ?? 0}</div>
           <div style={{ fontSize: '9px', color: '#F97316', fontWeight: '700' }}>{isEn ? 'Late' : 'Tard.'}</div>
         </div>
         <div style={{ background: 'rgba(59, 130, 246, 0.1)', padding: '8px 4px', borderRadius: '8px', border: '1px solid #3B82F6' }}>
-          <div style={{ fontSize: '14px', fontWeight: '800', color: '#3B82F6' }}>{stats.injured}</div>
+          <div style={{ fontSize: '14px', fontWeight: '800', color: '#3B82F6' }}>{stats.injured ?? 0}</div>
           <div style={{ fontSize: '9px', color: '#3B82F6', fontWeight: '700' }}>{isEn ? 'Inj.' : 'Les.'}</div>
         </div>
-        {stats.noRecord > 0 && (
+        {(stats.noRecord || 0) > 0 && (
           <div style={{ background: 'rgba(148, 163, 184, 0.1)', padding: '8px 4px', borderRadius: '8px', border: '1px solid #94A3B8' }}>
             <div style={{ fontSize: '14px', fontWeight: '800', color: '#94A3B8' }}>{stats.noRecord}</div>
             <div style={{ fontSize: '9px', color: '#94A3B8', fontWeight: '700' }}>{isEn ? 'No Rec.' : 'Sin Reg.'}</div>

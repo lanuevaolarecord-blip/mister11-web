@@ -14,6 +14,7 @@ import {
   isEventPast, 
   toDateKey 
 } from '../utils/attendanceMath';
+import { getPendingEvents } from '../utils/attendanceStatsHelper';
 import { doc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../firebaseConfig';
 
@@ -96,19 +97,8 @@ export const TeamAttendanceTab = ({ players = [], activeTeam = null }) => {
 
   // Sesiones pasadas sin registro de asistencia (Fase 3: Alerta permanente)
   const pastSessionsWithoutRecord = useMemo(() => {
-    return (sessions || []).filter((s) => {
-      const sDate = toDateKey(s.date || s.fecha);
-      if (!sDate) return false;
-      const isPast = isEventPast(sDate, s.time || s.hora || '23:59');
-      if (!isPast) return false;
-      const isSusp = s.isSuspended === true || s.status === 'suspended' || s.estado === 'suspendida';
-      if (isSusp) return false;
-      const attDoc = (attendanceRecords || []).find(
-        (r) => r.sessionId === s.id || r.id === s.id || r.sessionId === `session_${s.id}` || r.date === sDate
-      );
-      return !attDoc || !attDoc.records || Object.keys(attDoc.records).length === 0;
-    });
-  }, [sessions, attendanceRecords]);
+    return getPendingEvents(sessions, matches, attendanceRecords);
+  }, [sessions, matches, attendanceRecords]);
 
   // Inicializar selector con el evento más reciente si existe
   useEffect(() => {
@@ -126,12 +116,14 @@ export const TeamAttendanceTab = ({ players = [], activeTeam = null }) => {
   useEffect(() => {
     if (!selectedSessionId) return;
 
+    const cleanId = String(selectedSessionId).replace(/^session_/, '').replace(/^match_/, '');
+
     const existingRecord = (attendanceRecords || []).find(
-      (r) => r.sessionId === selectedSessionId || r.id === selectedSessionId
+      (r) => r.sessionId === selectedSessionId || r.id === selectedSessionId || r.id === cleanId || r.sessionId === cleanId || r.sessionId === `session_${cleanId}`
     );
 
     const rawSessionObj = (sessions || []).find(
-      (s) => s.id === selectedSessionId || `session_${s.id}` === selectedSessionId
+      (s) => s.id === selectedSessionId || s.id === cleanId || `session_${s.id}` === selectedSessionId
     );
 
     setIsCurrentSessionSuspended(Boolean(existingRecord?.isSuspended || rawSessionObj?.isSuspended));
@@ -1067,11 +1059,11 @@ export const TeamAttendanceTab = ({ players = [], activeTeam = null }) => {
 
                       <td style={{ padding: '10px', textAlign: 'center' }}>
                         <div style={{ display: 'flex', justifyContent: 'center', gap: '6px', fontSize: '11px', fontWeight: '700' }}>
-                          <span style={{ color: '#22C55E' }} title={isEn ? 'Present' : 'Presente'}>{item.present}P</span>
-                          <span style={{ color: '#F97316' }} title={isEn ? 'Late' : 'Tarde'}>{item.late}T</span>
-                          <span style={{ color: '#EAB308' }} title={isEn ? 'Justified' : 'Justificado'}>{item.justified}J</span>
-                          <span style={{ color: '#EF4444' }} title={isEn ? 'Absent' : 'Ausente'}>{item.absent}A</span>
-                          {item.noRecord > 0 && (
+                          <span style={{ color: '#22C55E' }} title={isEn ? 'Present' : 'Presente'}>{item.present ?? 0}P</span>
+                          <span style={{ color: '#F97316' }} title={isEn ? 'Late' : 'Tarde'}>{item.late ?? 0}T</span>
+                          <span style={{ color: '#EAB308' }} title={isEn ? 'Justified' : 'Justificado'}>{item.justified ?? 0}J</span>
+                          <span style={{ color: '#EF4444' }} title={isEn ? 'Absent' : 'Ausente'}>{item.absent ?? 0}A</span>
+                          {(item.noRecord ?? 0) > 0 && (
                             <span style={{ color: '#94A3B8' }} title={isEn ? 'No staff record' : 'Sin registro del staff'}>{item.noRecord}SR</span>
                           )}
                         </div>
@@ -1198,11 +1190,11 @@ export const TeamAttendanceTab = ({ players = [], activeTeam = null }) => {
                           </div>
                         </div>
                       </td>
-                      <td style={{ padding: '10px', textAlign: 'center', fontWeight: '700' }}>{item.present}</td>
-                      <td style={{ padding: '10px', textAlign: 'center', fontWeight: '700', color: item.absent > 0 ? '#EF4444' : 'inherit' }}>{item.absent}</td>
-                      <td style={{ padding: '10px', textAlign: 'center', fontWeight: '700' }}>{item.justified}</td>
-                      <td style={{ padding: '10px', textAlign: 'center', fontWeight: '700' }}>{item.late}</td>
-                      <td style={{ padding: '10px', textAlign: 'center', fontWeight: '700' }}>{item.injured}</td>
+                      <td style={{ padding: '10px', textAlign: 'center', fontWeight: '700' }}>{item.present ?? 0}</td>
+                      <td style={{ padding: '10px', textAlign: 'center', fontWeight: '700', color: (item.absent || 0) > 0 ? '#EF4444' : 'inherit' }}>{item.absent ?? 0}</td>
+                      <td style={{ padding: '10px', textAlign: 'center', fontWeight: '700' }}>{item.justified ?? 0}</td>
+                      <td style={{ padding: '10px', textAlign: 'center', fontWeight: '700' }}>{item.late ?? 0}</td>
+                      <td style={{ padding: '10px', textAlign: 'center', fontWeight: '700' }}>{item.injured ?? 0}</td>
                       <td style={{ padding: '10px', textAlign: 'center' }}>
                         {hasData ? (
                           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>

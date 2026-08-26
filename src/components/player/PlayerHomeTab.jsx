@@ -127,10 +127,11 @@ export const PlayerHomeTab = ({ player, team, teamPath, onNavigateTab, isParentV
 
     let attendanceDocs = [];
     let matchDocs = [];
+    let sessionDocs = [];
 
     const recalculateAttendance = () => {
       const customXpTable = team?.settings?.achievementTargets || team?.achievementTargets || {};
-      const stats = calculatePlayerAttendanceStats(player.id, attendanceDocs, matchDocs, customXpTable);
+      const stats = calculatePlayerAttendanceStats(player.id, attendanceDocs, matchDocs, customXpTable, sessionDocs);
       setAttendanceStats({
         streak: stats.streak,
         maxStreak: stats.maxStreak,
@@ -161,9 +162,18 @@ export const PlayerHomeTab = ({ player, team, teamPath, onNavigateTab, isParentV
       console.warn('Error cargando partidos para asistencia:', err);
     });
 
+    const sessionRef = collection(db, `${teamPath}/sessions`);
+    const unsubSessions = onSnapshot(sessionRef, (snap) => {
+      sessionDocs = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      recalculateAttendance();
+    }, (err) => {
+      console.warn('Error cargando sesiones para asistencia:', err);
+    });
+
     return () => {
       unsubAtt();
       unsubMatches();
+      unsubSessions();
     };
   }, [teamPath, player?.id, team]);
 

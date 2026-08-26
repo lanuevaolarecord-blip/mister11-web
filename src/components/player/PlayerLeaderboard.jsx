@@ -27,6 +27,7 @@ export const PlayerLeaderboard = ({
   players = [], 
   matches = [], 
   attendance = [], 
+  sessions = [],
   currentPlayerId = null,
   myAchievements = [],
   team = null,
@@ -56,7 +57,7 @@ export const PlayerLeaderboard = ({
       const displayName = dorsal !== '-' ? `#${dorsal} ${firstName}` : firstName;
 
       // A) Asistencia y XP Diferenciado 100% Real
-      const attStats = calculatePlayerAttendanceStats(pId, attendance || [], matches || [], customXpTable);
+      const attStats = calculatePlayerAttendanceStats(pId, attendance || [], matches || [], customXpTable, sessions || []);
       const attendancePct = attStats.percentage;
       const attendanceXP = attStats.attendanceXP;
 

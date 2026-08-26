@@ -27,7 +27,12 @@
  *    - Si el denominador es 0, retorna 100% si no hubo faltas, o 0% si no hay datos.
  */
 
-import { calculateAttendanceMetrics, calculatePlayerAttendanceOnSchedule } from './attendanceMath.js';
+import { 
+  calculateAttendanceMetrics, 
+  calculatePlayerAttendanceOnSchedule,
+  toDateKey,
+  isEventPast
+} from './attendanceMath.js';
 
 export const DEFAULT_XP_TABLE = {
   xpPresente: 10,
@@ -188,68 +193,190 @@ export const extractPlayerVerifiedTimeline = (playerId, attendanceList = [], mat
 };
 
 /**
+ * Calcula la lista de eventos pasados pendientes de registro de asistencia por el staff.
+ * Alimenta tanto la alerta permanente como el estado "SR" del asistente.
+ *
+ * @param {Array} sessions
+ * @param {Array} matches
+ * @param {Array} attendanceRecords
+ * @returns {Array} Sesiones y partidos pasados sin registro oficial
+ */
+export const getPendingEvents = (sessions = [], matches = [], attendanceRecords = []) => {
+  const attMap = new Map();
+  (attendanceRecords || []).forEach((att) => {
+    if (!att) return;
+    if (att.id) {
+      const rawId = String(att.id);
+      attMap.set(rawId, att);
+      const clean = rawId.replace(/^session_/, '').replace(/^match_/, '');
+      attMap.set(clean, att);
+      attMap.set(`session_${clean}`, att);
+      attMap.set(`match_${clean}`, att);
+    }
+    if (att.sessionId) {
+      const rawSId = String(att.sessionId);
+      attMap.set(rawSId, att);
+      const clean = rawSId.replace(/^session_/, '').replace(/^match_/, '');
+      attMap.set(clean, att);
+      attMap.set(`session_${clean}`, att);
+      attMap.set(`match_${clean}`, att);
+    }
+  });
+
+  const now = new Date();
+
+  const pendingSessions = (sessions || []).filter((s) => {
+    if (!s) return false;
+    const sDate = toDateKey(s.date || s.fecha);
+    if (!sDate) return false;
+    const isPast = isEventPast(sDate, s.time || s.hora || '23:59', now);
+    if (!isPast) return false;
+    const isSusp = s.isSuspended === true || s.status === 'suspended' || s.estado === 'suspendida';
+    if (isSusp) return false;
+
+    const cleanSId = String(s.id || '').replace(/^session_/, '');
+    const attDoc = attMap.get(cleanSId) || attMap.get(`session_${cleanSId}`) || attMap.get(s.id);
+    const hasRecords = Boolean(attDoc?.records && Object.keys(attDoc.records).length > 0);
+    const isDocSuspended = Boolean(attDoc?.isSuspended);
+
+    return !isDocSuspended && !hasRecords;
+  });
+
+  return pendingSessions;
+};
+
+/**
+ * Obtiene los contadores de asistencia 0/NaN-safe para un jugador sobre eventos programados.
+ */
+export const getCounts = (
+  playerId,
+  { sessions = [], matches = [], attendanceRecords = [], dateRange = null, thresholds = {} } = {}
+) => {
+  return calculatePlayerAttendanceOnSchedule(playerId, {
+    sessions,
+    matches,
+    attendanceRecords,
+    dateRange,
+    thresholds
+  });
+};
+
+/**
+ * Obtiene el % real de asistencia seguro: (P+T) / (scheduledPast - J - L - S).
+ * Retorna null si no hay datos/eventos evaluables (para render '—').
+ */
+export const getRealPct = (counts) => {
+  if (!counts || !counts.hasData || counts.pct === null || counts.pct === undefined || isNaN(counts.pct)) {
+    return null;
+  }
+  return Number.isFinite(counts.pct) ? counts.pct : null;
+};
+
+/**
+ * Calcula la racha actual y máxima a partir de un timeline de eventos verificados.
+ */
+export const getStreak = (timeline = []) => {
+  let currentStreak = 0;
+  let maxStreak = 0;
+
+  (timeline || []).forEach((event) => {
+    if (event.status === 'pendiente' || event.status === 'no_record') {
+      return;
+    }
+
+    if (event.status === 'presente' || event.status === 'tarde' || event.status === 'present' || event.status === 'late') {
+      currentStreak++;
+    } else if (event.status === 'justificado' || event.status === 'lesionado' || event.status === 'suspended' || event.status === 'justified' || event.status === 'injured') {
+      // PAUSA la racha: no incrementa ni reinicia
+      return;
+    } else if (event.status === 'ausente' || event.status === 'absent') {
+      currentStreak = 0; // ROMPE la racha
+    }
+
+    if (currentStreak > maxStreak) {
+      maxStreak = currentStreak;
+    }
+  });
+
+  return { streak: currentStreak, maxStreak };
+};
+
+/**
+ * Extrae los estados por evento para un jugador.
+ */
+export const getEventStatuses = (playerId, { sessions = [], matches = [], attendanceRecords = [], dateRange = null } = {}) => {
+  const stats = calculatePlayerAttendanceOnSchedule(playerId, {
+    sessions,
+    matches,
+    attendanceRecords,
+    dateRange
+  });
+  return stats.eventDetails || [];
+};
+
+/**
  * Calcula las estadísticas completas de asistencia, rachas y XP para un jugador
  *
  * @param {string} playerId
  * @param {Array} attendanceList
  * @param {Array} matchesList
  * @param {Object} customXpTable
- * @returns {Object} { streak, maxStreak, percentage, totalVerified, attended, justified, absent, injured, pendingCount, attendanceXP, timeline }
+ * @param {Array} sessionsList
+ * @param {Object|null} dateRange
+ * @returns {Object} { streak, maxStreak, percentage, pct, hasData, status, totalVerified, present, late, justified, injured, absent, noRecord, suspended, scheduledPast, eligible, attended, attendanceXP, timeline, eventDetails, callupGuidance }
  */
 export const calculatePlayerAttendanceStats = (
   playerId,
   attendanceList = [],
   matchesList = [],
   customXpTable = {},
-  sessionsList = []
+  sessionsList = [],
+  dateRange = null
 ) => {
   const xpTable = { ...DEFAULT_XP_TABLE, ...customXpTable };
-  const timeline = extractPlayerVerifiedTimeline(playerId, attendanceList, matchesList);
+  const pid = String(playerId);
+
+  // 1. Obtener conteo canónico sobre programado
+  const scheduleStats = calculatePlayerAttendanceOnSchedule(pid, {
+    sessions: sessionsList,
+    matches: matchesList,
+    attendanceRecords: attendanceList,
+    dateRange,
+    thresholds: customXpTable
+  });
+
+  // 2. Extraer timeline ordenado cronológicamente para racha y XP
+  const timeline = extractPlayerVerifiedTimeline(pid, attendanceList, matchesList);
 
   let currentStreak = 0;
   let maxStreak = 0;
-  let attended = 0;
-  let late = 0;
-  let justified = 0;
-  let injured = 0;
-  let absent = 0;
-  let pendingCount = 0;
   let totalAttendanceXP = 0;
 
-  timeline.forEach(event => {
+  timeline.forEach((event) => {
     if (event.status === 'pendiente') {
-      pendingCount++;
-      return; // Los eventos pendientes no suman ni rompen racha ni aportan XP
+      return;
     }
 
     switch (event.status) {
       case 'presente':
-        attended++;
         currentStreak++;
         totalAttendanceXP += Number(xpTable.xpPresente ?? 10);
         break;
 
       case 'tarde':
-        late++;
-        attended++;
         currentStreak++;
         totalAttendanceXP += Number(xpTable.xpTarde ?? 5);
         break;
 
       case 'justificado':
-        justified++;
-        // PAUSA la racha: no incrementa currentStreak, pero NO la reinicia
         totalAttendanceXP += Number(xpTable.xpJustificado ?? 2);
         break;
 
       case 'lesionado':
-        injured++;
-        // PAUSA la racha: no rompe
         totalAttendanceXP += Number(xpTable.xpLesionado ?? 2);
         break;
 
       case 'ausente':
-        absent++;
         currentStreak = 0; // ROMPE la racha
         totalAttendanceXP += Number(xpTable.xpAusente ?? 0);
         break;
@@ -263,40 +390,45 @@ export const calculatePlayerAttendanceStats = (
     }
   });
 
-  const totalVerified = attended + justified + injured + absent;
+  // Asegurar que todos los valores numéricos son enteros finitos
+  const present = Number.isFinite(scheduleStats.present) ? scheduleStats.present : 0;
+  const late = Number.isFinite(scheduleStats.late) ? scheduleStats.late : 0;
+  const justified = Number.isFinite(scheduleStats.justified) ? scheduleStats.justified : 0;
+  const injured = Number.isFinite(scheduleStats.injured) ? scheduleStats.injured : 0;
+  const absent = Number.isFinite(scheduleStats.absent) ? scheduleStats.absent : 0;
+  const noRecord = Number.isFinite(scheduleStats.noRecord) ? scheduleStats.noRecord : 0;
+  const suspended = Number.isFinite(scheduleStats.suspended) ? scheduleStats.suspended : 0;
+  const scheduledPast = Number.isFinite(scheduleStats.scheduledPast) ? scheduleStats.scheduledPast : 0;
+  const attended = Number.isFinite(scheduleStats.attended) ? scheduleStats.attended : (present + late);
+  const eligible = Number.isFinite(scheduleStats.eligible) ? scheduleStats.eligible : 0;
 
-  // Cálculo de % de asistencia real sobre programado (Fase 1)
-  const effectiveSessions = sessionsList && sessionsList.length > 0
-    ? sessionsList
-    : (attendanceList || []).filter(a => a && a.type !== 'match');
-
-  const scheduleStats = calculatePlayerAttendanceOnSchedule(playerId, {
-    sessions: effectiveSessions,
-    matches: matchesList,
-    attendanceRecords: attendanceList,
-    thresholds: customXpTable
-  });
+  const pct = scheduleStats.hasData && Number.isFinite(scheduleStats.pct) ? scheduleStats.pct : null;
+  const hasData = Boolean(scheduleStats.hasData && pct !== null);
 
   return {
     streak: currentStreak,
     maxStreak,
-    percentage: scheduleStats.pct,
-    pct: scheduleStats.pct,
-    hasData: scheduleStats.hasData,
-    status: scheduleStats.status,
-    totalVerified,
-    attended,
+    percentage: pct,
+    pct,
+    hasData,
+    status: scheduleStats.status || (hasData ? (pct < 70 ? 'risk' : 'optimal') : 'no_data'),
+    totalVerified: present + late + justified + injured + absent,
+    present,
     late,
     justified,
     injured,
     absent,
-    noRecord: scheduleStats.noRecord,
-    suspended: scheduleStats.suspended,
-    scheduledPast: scheduleStats.scheduledPast,
-    pendingCount,
+    noRecord,
+    suspended,
+    scheduledPast,
+    eligible,
+    attended,
+    total: scheduledPast,
+    pendingCount: noRecord,
     attendanceXP: totalAttendanceXP,
-    hasPendingEvents: pendingCount > 0,
+    hasPendingEvents: noRecord > 0,
     timeline,
+    eventDetails: scheduleStats.eventDetails || [],
     callupGuidance: scheduleStats.callupGuidance
   };
 };

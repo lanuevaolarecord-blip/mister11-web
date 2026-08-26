@@ -85,7 +85,7 @@ export const isEventPast = (dateStr, timeStr = '23:59', referenceNow = new Date(
  * @param {number} params.noRecord
  * @param {number} params.suspended
  * @param {number} params.scheduledPast
- * @returns {Object} { pct: number|null, attended: number, scheduledPast: number, noRecord: number, justified: number, injured: number, suspended: number, absent: number, eligible: number, hasData: boolean, status: 'no_data'|'optimal'|'risk', labelKey: string }
+ * @returns {Object} { pct: number|null, present: number, late: number, attended: number, scheduledPast: number, noRecord: number, justified: number, injured: number, suspended: number, absent: number, eligible: number, hasData: boolean, status: 'no_data'|'optimal'|'risk', labelKey: string }
  */
 export const calculateAttendanceMetrics = ({
   present = 0,
@@ -97,18 +97,18 @@ export const calculateAttendanceMetrics = ({
   suspended = 0,
   scheduledPast = 0
 } = {}) => {
-  const p = Number(present) || 0;
-  const l = Number(late) || 0;
-  const j = Number(justified) || 0;
-  const inj = Number(injured) || 0;
-  const a = Number(absent) || 0;
-  const nr = Number(noRecord) || 0;
-  const susp = Number(suspended) || 0;
+  const p = Number.isFinite(Number(present)) ? Number(present) : 0;
+  const l = Number.isFinite(Number(late)) ? Number(late) : 0;
+  const j = Number.isFinite(Number(justified)) ? Number(justified) : 0;
+  const inj = Number.isFinite(Number(injured)) ? Number(injured) : 0;
+  const a = Number.isFinite(Number(absent)) ? Number(absent) : 0;
+  const nr = Number.isFinite(Number(noRecord)) ? Number(noRecord) : 0;
+  const susp = Number.isFinite(Number(suspended)) ? Number(suspended) : 0;
 
   const attended = p + l;
   // Denominador total de eventos pasados programados
   const totalPast = scheduledPast > 0 ? scheduledPast : (p + l + j + inj + a + nr + susp);
-  const eligible = totalPast - j - inj - susp;
+  const eligible = Math.max(0, totalPast - j - inj - susp);
 
   // 1. Caso: 0 eventos pasados programados o sin eventos evaluables
   if (totalPast === 0 || eligible <= 0) {
@@ -116,6 +116,8 @@ export const calculateAttendanceMetrics = ({
       // Si todos los eventos fueron justificados o lesionados (100% justificado)
       return {
         pct: 100,
+        present: p,
+        late: l,
         attended,
         scheduledPast: totalPast,
         noRecord: nr,
@@ -132,13 +134,15 @@ export const calculateAttendanceMetrics = ({
 
     return {
       pct: null,
+      present: p,
+      late: l,
       attended: 0,
-      scheduledPast: 0,
-      noRecord: 0,
-      justified: 0,
-      injured: 0,
-      suspended: 0,
-      absent: 0,
+      scheduledPast: totalPast,
+      noRecord: nr,
+      justified: j,
+      injured: inj,
+      suspended: susp,
+      absent: a,
       eligible: 0,
       hasData: false,
       status: 'no_data',
@@ -153,6 +157,8 @@ export const calculateAttendanceMetrics = ({
 
   return {
     pct,
+    present: p,
+    late: l,
     attended,
     scheduledPast: totalPast,
     noRecord: nr,
@@ -176,7 +182,7 @@ export const calculateAttendanceMetrics = ({
  */
 export const calculateSquadAveragePct = (squadStatsList = []) => {
   const validPlayers = (squadStatsList || []).filter(
-    (s) => s && s.hasData && typeof s.pct === 'number' && !isNaN(s.pct)
+    (s) => s && s.hasData && typeof s.pct === 'number' && Number.isFinite(s.pct)
   );
 
   if (validPlayers.length === 0) return 0;
@@ -196,7 +202,7 @@ export const determineCallupRecommendation = (pct, thresholds = {}) => {
   const convocMin = Number(thresholds?.convocMinPct ?? 80);
   const dudaMin = Number(thresholds?.dudaMinPct ?? 50);
 
-  if (pct === null || pct === undefined || isNaN(pct)) {
+  if (pct === null || pct === undefined || isNaN(pct) || !Number.isFinite(pct)) {
     return {
       recommendation: 'no_data',
       label: 'Sin sesiones en ventana',
@@ -300,15 +306,14 @@ export const getMicrocycleDateRange = ({ matches = [], sessions = [], targetDate
       nextMatch,
       previousMatch,
       title: `Microciclo vs ${nextMatch.rival || nextMatch.opponent || 'Rival'} (${startDateStr} al ${nextMatchDateStr})`,
-      titleEn: `Microcycle vs ${nextMatch.rival || nextMatch.opponent || 'Opponent'} (${startDateStr} to ${nextMatchDateStr})`
+      titleEn: `Microcycle vs ${nextMatch.rival || nextMatch.opponent || 'Rival'} (${startDateStr} to ${nextMatchDateStr})`
     };
   }
 
-  // 2. Si no hay partido próximo en 7 días, tomar la semana actual de lunes a domingo
-  const curr = new Date(refDate);
-  const day = curr.getDay();
-  const diffToMonday = curr.getDate() - day + (day === 0 ? -6 : 1);
-  const monday = new Date(curr.setDate(diffToMonday));
+  // 2. Si no hay partido en 7 días, usar la semana en curso (Lunes a Domingo)
+  const day = refDate.getDay();
+  const diffToMonday = refDate.getDate() - day + (day === 0 ? -6 : 1);
+  const monday = new Date(refDate.setDate(diffToMonday));
   const sunday = new Date(monday);
   sunday.setDate(monday.getDate() + 6);
 
@@ -321,7 +326,7 @@ export const getMicrocycleDateRange = ({ matches = [], sessions = [], targetDate
     endDate: endStr,
     nextMatch: null,
     previousMatch: null,
-    title: `Semana Actual (${startStr} al ${endStr})`,
+    title: `Semana en Curso (${startStr} al ${endStr})`,
     titleEn: `Current Week (${startStr} to ${endStr})`
   };
 };
@@ -345,7 +350,8 @@ export const calculatePlayerAttendanceOnSchedule = (
     matches = [],
     attendanceRecords = [],
     dateRange = null,
-    thresholds = {}
+    thresholds = {},
+    player = null
   } = {}
 ) => {
   const pid = String(playerId);
@@ -362,13 +368,29 @@ export const calculatePlayerAttendanceOnSchedule = (
 
   const eventDetails = [];
 
-  // Indexar attendance por sessionId / id / date
+  // Indexar attendance exhaustivamente por múltiples claves para enlace 100% fiable
   const attMap = new Map();
   (attendanceRecords || []).forEach((att) => {
-    if (att.id) attMap.set(att.id, att);
-    if (att.sessionId) attMap.set(att.sessionId, att);
-    if (att.sessionId) attMap.set(`session_${att.sessionId}`, att);
-    if (att.date) attMap.set(`date_${att.date}`, att);
+    if (!att) return;
+    if (att.id) {
+      const rawId = String(att.id);
+      attMap.set(rawId, att);
+      const clean = rawId.replace(/^session_/, '').replace(/^match_/, '');
+      attMap.set(clean, att);
+      attMap.set(`session_${clean}`, att);
+      attMap.set(`match_${clean}`, att);
+    }
+    if (att.sessionId) {
+      const rawSId = String(att.sessionId);
+      attMap.set(rawSId, att);
+      const clean = rawSId.replace(/^session_/, '').replace(/^match_/, '');
+      attMap.set(clean, att);
+      attMap.set(`session_${clean}`, att);
+      attMap.set(`match_${clean}`, att);
+    }
+    if (att.date && !attMap.has(`date_${att.date}`)) {
+      attMap.set(`date_${att.date}`, att);
+    }
   });
 
   // 1. Evaluar Sesiones de entrenamiento
@@ -385,10 +407,9 @@ export const calculatePlayerAttendanceOnSchedule = (
     const isPast = isEventPast(sDate, s.time || s.hora || '23:59', now);
     if (!isPast) return;
 
-    scheduledPast++;
-
     // Verificar si la sesión fue suspendida (Lluvia/Fuerza Mayor)
-    const attDoc = attMap.get(s.id) || attMap.get(`session_${s.id}`) || attMap.get(`date_${sDate}`);
+    const cleanSId = String(s.id || '').replace(/^session_/, '');
+    const attDoc = attMap.get(cleanSId) || attMap.get(`session_${cleanSId}`) || attMap.get(s.id) || (sDate ? attMap.get(`date_${sDate}`) : null);
     const isSuspended = s.isSuspended === true || s.status === 'suspended' || s.estado === 'suspendida' || attDoc?.isSuspended === true;
 
     if (isSuspended) {
@@ -406,8 +427,11 @@ export const calculatePlayerAttendanceOnSchedule = (
       return;
     }
 
-    // Buscar registro de asistencia del staff
-    const staffRecord = attDoc?.records?.[pid] || attDoc?.players?.[pid];
+    scheduledPast++;
+
+    // Buscar registro de asistencia del staff (records[pid])
+    const hasStaffRecords = Boolean(attDoc?.records && Object.keys(attDoc.records).length > 0);
+    const staffRecord = attDoc?.records?.[pid] ?? attDoc?.players?.[pid];
     let status = null;
 
     if (staffRecord !== undefined && staffRecord !== null) {
@@ -416,6 +440,9 @@ export const calculatePlayerAttendanceOnSchedule = (
       else if (typeof staffRecord === 'boolean') status = staffRecord ? 'present' : 'absent';
     } else if (Array.isArray(attDoc?.presentes) && attDoc.presentes.some((id) => String(id) === pid)) {
       status = 'present';
+    } else if (hasStaffRecords) {
+      // La sesión fue registrada por el staff pero este jugador no tiene registro explícito -> default ausente
+      status = 'absent';
     }
 
     if (!status) {
@@ -478,9 +505,10 @@ export const calculatePlayerAttendanceOnSchedule = (
 
     scheduledPast++;
 
+    const cleanMId = String(m.id || '').replace(/^match_/, '');
     const acta = m.actaOficial;
     const actaActual = acta?.actual?.[pid];
-    const attDoc = attMap.get(m.id) || attMap.get(`match_${m.id}`);
+    const attDoc = attMap.get(cleanMId) || attMap.get(`match_${cleanMId}`) || attMap.get(m.id);
     const staffRecord = actaActual || attDoc?.records?.[pid];
 
     if (!staffRecord) {
@@ -529,7 +557,22 @@ export const calculatePlayerAttendanceOnSchedule = (
     scheduledPast
   });
 
-  const callupGuidance = determineCallupRecommendation(metrics.pct, thresholds);
+  let callupGuidance = determineCallupRecommendation(metrics.pct, thresholds);
+
+  // Salvaguarda innegociable de justicia: Jugador suspendido disciplinariamente
+  if (player?.isSuspended === true || player?.status === 'suspended' || player?.estado === 'suspendido') {
+    callupGuidance = {
+      recommendation: 'no_convocar',
+      label: 'Sancionado / Suspendido',
+      labelEn: 'Suspended / Sanctioned',
+      color: '#EF4444',
+      bg: 'rgba(239, 68, 68, 0.12)',
+      border: 'rgba(239, 68, 68, 0.4)',
+      badge: '🚫',
+      isSuspended: true,
+      suspensionReason: player.suspensionReason || player.motivoSuspension || ''
+    };
+  }
 
   return {
     ...metrics,

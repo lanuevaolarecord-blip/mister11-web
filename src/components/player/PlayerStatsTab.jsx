@@ -47,6 +47,7 @@ export const PlayerStatsTab = ({ player, team, teamPath, isParentView = false, a
   const [wellnessHistory, setWellnessHistory] = useState([]);
   const [allTeamMatches, setAllTeamMatches] = useState([]);
   const [allAttendance, setAllAttendance] = useState([]);
+  const [allSessions, setAllSessions] = useState([]);
   const [allPlayers, setAllPlayers] = useState([]);
   const [playerMatchStats, setPlayerMatchStats] = useState({
     matchesPlayed: 0,
@@ -286,6 +287,10 @@ export const PlayerStatsTab = ({ player, team, teamPath, isParentView = false, a
       setAllAttendance(snap.docs.map(d => ({ id: d.id, ...d.data() })));
     });
 
+    const unsubSessions = onSnapshot(collection(db, `${cleanPath}/sessions`), (snap) => {
+      setAllSessions(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+    });
+
     const unsubPlayers = onSnapshot(collection(db, `${cleanPath}/players`), (snap) => {
       setAllPlayers(snap.docs.map(d => ({ id: d.id, ...d.data() })));
     });
@@ -293,6 +298,7 @@ export const PlayerStatsTab = ({ player, team, teamPath, isParentView = false, a
     return () => {
       unsubMatches();
       unsubAtt();
+      unsubSessions();
       unsubPlayers();
     };
   }, [cleanPath, effectivePlayerId, player?.notaMedia]);
@@ -306,7 +312,7 @@ export const PlayerStatsTab = ({ player, team, teamPath, isParentView = false, a
     const hasMatchData = allTeamMatches.length > 0;
 
     // Calcular estadísticas de asistencia reales para todos los compañeros
-    const squadAttList = allPlayers.map(p => calculatePlayerAttendanceStats(p.id, allAttendance, allTeamMatches, customXpTable));
+    const squadAttList = allPlayers.map(p => calculatePlayerAttendanceStats(p.id, allAttendance, allTeamMatches, customXpTable, allSessions));
     const avgAttendancePct = calculateSquadAveragePct(squadAttList.map(s => ({ pct: s.percentage, hasData: s.hasData })));
 
     const validSquadXP = squadAttList.filter(s => s.hasData);
@@ -314,7 +320,7 @@ export const PlayerStatsTab = ({ player, team, teamPath, isParentView = false, a
       ? Math.round(validSquadXP.reduce((acc, s) => acc + s.attendanceXP, 0) / validSquadXP.length)
       : 0;
 
-    const myAtt = calculatePlayerAttendanceStats(effectivePlayerId, allAttendance, allTeamMatches, customXpTable);
+    const myAtt = calculatePlayerAttendanceStats(effectivePlayerId, allAttendance, allTeamMatches, customXpTable, allSessions);
     const myAttendancePct = myAtt.hasData ? myAtt.percentage : null;
     const myAttendanceXP = myAtt.attendanceXP;
 
@@ -612,6 +618,7 @@ export const PlayerStatsTab = ({ player, team, teamPath, isParentView = false, a
         players={allPlayers}
         matches={allTeamMatches}
         attendance={allAttendance}
+        sessions={allSessions}
         currentPlayerId={effectivePlayerId}
         myAchievements={achievements}
         team={team}

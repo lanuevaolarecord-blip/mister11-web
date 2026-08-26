@@ -107,40 +107,58 @@ export const useAchievements = (teamPath, playerId, isParentView = false) => {
       return sDate && sDate >= weekStartStr;
     });
 
-    // Asistencias del jugador en la semana
+    // Asistencias del jugador en la semana — SOLO desde registros del míster (records[])
+    // NUNCA desde playerRsvp para evitar auto-aprobar sin verificación del staff.
     const attendedThisWeek = attendanceRecords.filter(a => {
       const aDate = a.fecha || a.date;
-      const isPresent = a.players?.[playerId] === true || a.presentes?.includes(playerId);
-      return aDate && aDate >= weekStartStr && isPresent;
+      if (!aDate || aDate < weekStartStr) return false;
+      // Leer SOLO el campo `records` escrito por el staff
+      const staffRecord = a.records?.[String(playerId)];
+      if (!staffRecord) return false; // sin registro del míster → pendiente
+      return staffRecord.status === 'present' ||
+             staffRecord.status === 'presente' ||
+             staffRecord.status === 'late' ||
+             staffRecord.status === 'tarde';
     });
 
     // Check-ins de wellness en la semana
     const wellnessThisWeek = wellnessRecords.filter(w => w.id >= weekStartStr);
 
-    // Goles y asistencias acumuladas en partidos
+    // ── FUENTE DE VERDAD: goles/assists/partidos SOLO desde actas cerradas ──
     let totalGoals = 0;
     let totalAssists = 0;
-    let matchesWithMinutesOrCalled = 0;
+    let matchesWithMinutesOrCalled = 0; // solo actas cerradas con minutos > 0
 
     matches.forEach(m => {
-      const pStats = m.playerStats?.[playerId];
-      const goleadores = m.goleadoresList || [];
-      const events = m.events || [];
-      const isCalled = m.convocados?.includes(playerId) || m.titulares?.includes(playerId) || m.suplentes?.includes(playerId);
+      const pid = String(playerId);
+      const acta = m.actaOficial;
+      const actaClosed = acta?.closed === true;
+      const actaActual = acta?.actual?.[pid];
 
-      const gCount = (pStats?.goals || 0) +
-        goleadores.filter(g => String(g.jugadorId) === String(playerId)).length +
-        events.filter(e => (e.type === 'gol' || e.type === 'gol_local') && String(e.playerId) === String(playerId)).length;
+      // Goles y asistencias (desde listas o eventos, independiente del acta)
+      const goleadores = Array.isArray(m.goleadoresList) ? m.goleadoresList : [];
+      const events = Array.isArray(m.events) ? m.events : [];
+      const pStats = m.playerStats?.[pid];
 
-      const aCount = (pStats?.assists || 0) +
-        events.filter(e => e.type === 'asistencia' && String(e.playerId) === String(playerId)).length;
+      const gCount = goleadores.length > 0
+        ? goleadores.filter(g => String(g.jugadorId) === pid).length
+        : events.filter(e => (e.type === 'gol' || e.type === 'gol_local') && (String(e.playerId) === pid || String(e.jugadorId) === pid)).length
+          + (pStats?.goals || 0);
+
+      const aCount = goleadores.length > 0
+        ? goleadores.filter(g => String(g.asistenciaId) === pid).length
+        : events.filter(e => String(e.asistenciaId) === pid).length
+          + (pStats?.assists || 0);
 
       totalGoals += gCount;
       totalAssists += aCount;
 
-      if (isCalled || (pStats?.minutesPlayed || 0) > 0) {
+      // Partidos jugados: SOLO si acta cerrada con minutos > 0
+      if (actaClosed && actaActual && (actaActual.minutes || 0) > 0) {
         matchesWithMinutesOrCalled++;
       }
+      // Si acta NO cerrada: el jugador aparece como convocado/participante pero
+      // NO se cuenta como partido jugado hasta que el staff cierre el acta.
     });
 
     return ACHIEVEMENTS_CATALOG.map(ach => {
@@ -164,7 +182,15 @@ export const useAchievements = (teamPath, playerId, isParentView = false) => {
         // Consultar próximas convocatorias
         progress = (sessions.length > 0 || matches.length > 0) ? 1 : 0;
       } else if (ach.id === 'biweekly_iron') {
-        progress = attendanceRecords.filter(a => a.players?.[playerId] === true || a.presentes?.includes(playerId)).length;
+        // SOLO registros verificados por el míster (records[playerId]), nunca playerRsvp
+        progress = attendanceRecords.filter(a => {
+          const staffRecord = a.records?.[String(playerId)];
+          if (!staffRecord) return false;
+          return staffRecord.status === 'present' ||
+                 staffRecord.status === 'presente' ||
+                 staffRecord.status === 'late' ||
+                 staffRecord.status === 'tarde';
+        }).length;
       } else if (ach.id === 'biweekly_self_care') {
         progress = wellnessRecords.length;
       } else if (ach.id === 'biweekly_strong_mind') {
@@ -172,7 +198,8 @@ export const useAchievements = (teamPath, playerId, isParentView = false) => {
       } else if (ach.id === 'biweekly_fit') {
         progress = testResults.length > 0 ? 1 : 0;
       } else if (ach.id === 'biweekly_teammate') {
-        progress = attendanceRecords.length;
+        // Solo contar sesiones donde el míster dejó algún registro (no sesiones sin pase de lista)
+        progress = attendanceRecords.filter(a => a.records && Object.keys(a.records).length > 0).length;
       } else if (ach.id === 'season_veteran') {
         target = Math.max(5, Math.round((matches.length || 20) * ((seasonSettings.veteranPct || 80) / 100)));
         progress = matchesWithMinutesOrCalled;
@@ -187,7 +214,12 @@ export const useAchievements = (teamPath, playerId, isParentView = false) => {
       } else if (ach.id === 'season_analyst') {
         progress = Math.min(target, testResults.length);
       } else if (ach.id === 'season_captain') {
-        progress = Math.min(target, attendanceRecords.length);
+        // Solo sesiones con registro verificado del míster
+        progress = Math.min(target, attendanceRecords.filter(a => {
+          const staffRecord = a.records?.[String(playerId)];
+          return staffRecord && (staffRecord.status === 'present' || staffRecord.status === 'presente' ||
+                                 staffRecord.status === 'late' || staffRecord.status === 'tarde');
+        }).length);
       }
 
       const percent = target > 0 ? Math.min(100, Math.round((progress / target) * 100)) : 0;

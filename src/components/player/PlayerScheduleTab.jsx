@@ -266,6 +266,12 @@ export const PlayerScheduleTab = ({ player, team, teamPath, isParentView = false
             const isReserva = evt.reservas?.includes(effectivePlayerId);
             const playerStats = evt.playerStats?.[effectivePlayerId];
 
+            // — Acta oficial cerrada
+            const actaClosed = evt.actaOficial?.closed === true;
+            const actaActualData = evt.actaOficial?.actual?.[effectivePlayerId];
+            const officialMinutes = actaClosed && actaActualData ? (actaActualData.minutes ?? null) : null;
+            const officialStatus = actaClosed && actaActualData ? actaActualData.status : null;
+
             return (
               <div key={evt.id} className={`event-card-item ${isMatch ? 'match-card' : 'session-card'}`}>
                 <div className="event-card-top">
@@ -357,47 +363,79 @@ export const PlayerScheduleTab = ({ player, team, teamPath, isParentView = false
                   </div>
                 )}
 
-                {/* BOTONES RSVP CON TOUCH TARGETS >= 48px */}
+                {/* BOTONES RSVP — Bloqueados si el acta está cerrada */}
                 <div className="rsvp-section">
-                  <span className="rsvp-prompt" style={{ fontSize: '0.85rem', fontWeight: 700, marginBottom: '8px', display: 'block' }}>
-                    {isParentView 
-                      ? (isEn ? `Will ${player?.name || 'your child'} attend?` : `¿Asistirá ${player?.name || 'tu hijo'} a este evento?`) 
-                      : (isEn ? 'Will you attend this event?' : '¿Asistirás a esta sesión?')}
-                  </span>
-                  <div className="rsvp-buttons-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '8px' }}>
-                    {RSVP_OPTIONS.map((opt) => {
-                      const isSelected = currentRsvp === opt.id;
-                      const Icon = opt.icon;
-
-                      return (
-                        <button
-                          key={opt.id}
-                          type="button"
-                          className={`rsvp-btn ${isSelected ? 'selected' : ''}`}
-                          style={{
-                            borderColor: isSelected ? opt.color : 'var(--border-color)',
-                            backgroundColor: isSelected ? opt.bg : 'transparent',
-                            color: isSelected ? opt.color : 'var(--text-secondary)',
-                            minHeight: '48px',
-                            minWidth: '48px',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            gap: '6px',
-                            borderRadius: '10px',
-                            fontWeight: 700,
-                            cursor: 'pointer',
-                            transition: 'all 0.2s ease'
-                          }}
-                          onClick={() => handleRsvp(evt.id, opt.id)}
-                          disabled={savingEventId === evt.id}
-                        >
-                          <Icon size={18} color={isSelected ? opt.color : 'currentColor'} />
-                          <span>{opt.label}</span>
-                        </button>
-                      );
-                    })}
-                  </div>
+                  {actaClosed ? (
+                    // Acta cerrada: mostrar estado oficial, sin edición
+                    <div style={{
+                      padding: '10px 12px',
+                      borderRadius: '10px',
+                      background: 'rgba(16,185,129,0.08)',
+                      border: '1px solid rgba(16,185,129,0.25)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                    }}>
+                      <span style={{ fontSize: '18px' }}>📋</span>
+                      <div>
+                        <div style={{ fontSize: '0.82rem', fontWeight: 800, color: '#10B981' }}>
+                          {isEn ? 'Official match sheet closed' : 'Acta oficial cerrada'}
+                        </div>
+                        <div style={{ fontSize: '0.74rem', color: 'var(--text-secondary)', marginTop: '2px' }}>
+                          {officialMinutes !== null
+                            ? (isEn ? `Official minutes: ${officialMinutes}'` : `Minutos oficiales: ${officialMinutes}'`)
+                            : (isEn ? 'Did not play (DNP)' : 'No jugaste en este partido')}
+                          {officialStatus && (
+                            <span style={{ marginLeft: '6px', opacity: 0.7 }}>
+                              &middot; {officialStatus}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    // Acta abierta: mostrar RSVP normal
+                    <>
+                      <span className="rsvp-prompt" style={{ fontSize: '0.85rem', fontWeight: 700, marginBottom: '8px', display: 'block' }}>
+                        {isParentView 
+                          ? (isEn ? `Will ${player?.name || 'your child'} attend?` : `¿Asistirá ${player?.name || 'tu hijo'} a este evento?`) 
+                          : (isEn ? 'Will you attend this event?' : '¿Asistirás a esta sesión?')}
+                      </span>
+                      <div className="rsvp-buttons-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '8px' }}>
+                        {RSVP_OPTIONS.map((opt) => {
+                          const isSelected = currentRsvp === opt.id;
+                          const Icon = opt.icon;
+                          return (
+                            <button
+                              key={opt.id}
+                              type="button"
+                              className={`rsvp-btn ${isSelected ? 'selected' : ''}`}
+                              style={{
+                                borderColor: isSelected ? opt.color : 'var(--border-color)',
+                                backgroundColor: isSelected ? opt.bg : 'transparent',
+                                color: isSelected ? opt.color : 'var(--text-secondary)',
+                                minHeight: '56px',
+                                minWidth: '56px',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                gap: '6px',
+                                borderRadius: '10px',
+                                fontWeight: 700,
+                                cursor: 'pointer',
+                                transition: 'all 0.2s ease'
+                              }}
+                              onClick={() => handleRsvp(evt.id, opt.id)}
+                              disabled={savingEventId === evt.id}
+                            >
+                              <Icon size={18} color={isSelected ? opt.color : 'currentColor'} />
+                              <span>{opt.label}</span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </>
+                  )}
                 </div>
               </div>
             );

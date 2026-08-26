@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
+import ActaOficialPanel from '../components/ActaOficialPanel';
 import { useLocation } from 'react-router-dom';
 import { useMatch } from '../context/MatchContext';
 import { useMatches } from '../hooks/useMatches';
@@ -40,6 +41,7 @@ const TABS_CONFIG = [
   { id: 'ALINEACIÓN', es: 'ALINEACIÓN', en: 'LINEUP' },
   { id: 'MATCH-DAY', es: 'DÍA DEL PARTIDO', en: 'MATCH-DAY' },
   { id: 'LIVE-STATS', es: 'ESTADÍSTICAS', en: 'LIVE STATS' },
+  { id: 'ACTA', es: '📋 ACTA OFICIAL', en: '📋 MATCH SHEET' },
   { id: 'POST-PARTIDO', es: 'POST-PARTIDO', en: 'POST-MATCH' },
 ];
 
@@ -1483,6 +1485,16 @@ const Partidos = () => {
                 onFinishMatch={handleFinishMatch}
               />
             </div>
+
+            {/* PESTAÑA: ACTA OFICIAL */}
+            {editTab === 'ACTA' && (
+              <ActaOficialPanel
+                matchId={matchData?.id || null}
+                matchData={matchData}
+                players={players}
+                calledPlayers={calledPlayers}
+              />
+            )}
 
             {/* PESTAÑA: POST-PARTIDO */}
             {editTab === 'POST-PARTIDO' && (

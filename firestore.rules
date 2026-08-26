@@ -111,6 +111,23 @@ service cloud.firestore {
         allow read, write: if isAuth();
       }
 
+      // ── Partidos: protección del campo actaOficial ──────────────────────────
+      // Un jugador SOLO puede escribir `playerRsvp` (su propia clave).
+      // La sub-estructura `actaOficial` (pase de lista, minutos, closed) es
+      // EXCLUSIVA del staff. Se detecta si el request toca actaOficial:
+      //   • Si el diff de campos incluye `actaOficial.*` → require owner.
+      //   • Si solo escribe `playerRsvp.*`               → cualquier auth.
+      match /matches/{matchId} {
+        allow read: if isAuth();
+
+        // Staff (dueño del equipo) puede escribir todo
+        allow write: if isOwner(userId);
+
+        // Jugador autenticado puede escribir solo si NO toca actaOficial
+        allow update: if isAuth()
+          && !('actaOficial' in request.resource.data.diff(resource.data).affectedKeys());
+      }
+
       match /{subcollection=**} {
         allow read, write: if isAuth();
       }

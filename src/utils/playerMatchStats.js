@@ -1,6 +1,10 @@
 /**
  * Utilidad unificada para el cálculo y sincronización de estadísticas de partidos
  * de jugadores en todo el ecosistema de Míster11 (MiEquipo, Portal Jugador, Informes PDF, LiveStats).
+ *
+ * FUENTE DE VERDAD:
+ *  - Si match.actaOficial?.closed === true → usa SOLO actaOficial.actual[playerId].minutes
+ *  - Si acta NO cerrada → minutos en null (pendientes), no alimentan logros/stats
  */
 
 export const calculatePlayerMatchStats = (playerId, matches = []) => {
@@ -32,118 +36,113 @@ export const calculatePlayerMatchStats = (playerId, matches = []) => {
 
   matches.forEach(m => {
     if (!m) return;
-    const defaultDuration = parseInt(m.duration || m.duracion || 90, 10);
+
+    const pid = String(playerId);
 
     // 1. Detección de alineación y participación
-    const titularesList = Array.isArray(m.titulares) 
-      ? m.titulares 
+    const titularesList = Array.isArray(m.titulares)
+      ? m.titulares
       : (m.alineacion?.titulares || []);
-    const suplentesList = Array.isArray(m.suplentes) 
-      ? m.suplentes 
+    const suplentesList = Array.isArray(m.suplentes)
+      ? m.suplentes
       : (m.alineacion?.suplentes || []);
-    const convocadosList = Array.isArray(m.convocados) 
-      ? m.convocados 
+    const convocadosList = Array.isArray(m.convocados)
+      ? m.convocados
       : (m.convocatoria || []);
 
-    const isTitular = titularesList.some(id => String(id) === String(playerId));
-    const isSuplente = suplentesList.some(id => String(id) === String(playerId));
-    const isConvocado = convocadosList.some(id => String(id) === String(playerId));
+    const isTitular = titularesList.some(id => String(id) === pid);
+    const isSuplente = suplentesList.some(id => String(id) === pid);
+    const isConvocado = convocadosList.some(id => String(id) === pid);
 
-    // 2. Detección de eventos del jugador en este partido
+    if (!isTitular && !isSuplente && !isConvocado) return;
+
+    // Helpers de eventos
     const allEvents = Array.isArray(m.events) ? m.events : [];
     const goleadoresList = Array.isArray(m.goleadoresList) ? m.goleadoresList : [];
     const tarjetasList = Array.isArray(m.tarjetasList) ? m.tarjetasList : [];
+    const pStats = m.playerStats?.[playerId] || m.playerStats?.[pid];
 
-    // Goles en este partido
-    let goalsInMatch = 0;
-    if (goleadoresList.length > 0) {
-      goalsInMatch = goleadoresList.filter(g => String(g.jugadorId) === String(playerId)).length;
-    } else {
-      goalsInMatch = allEvents.filter(e => 
-        (e.type === 'gol_local' || e.type === 'gol' || e.isGoal) && 
-        (String(e.playerId) === String(playerId) || String(e.jugadorId) === String(playerId))
-      ).length;
-    }
+    const calcGoals = () => {
+      let g = goleadoresList.length > 0
+        ? goleadoresList.filter(g2 => String(g2.jugadorId) === pid).length
+        : allEvents.filter(e =>
+            (e.type === 'gol_local' || e.type === 'gol' || e.isGoal) &&
+            (String(e.playerId) === pid || String(e.jugadorId) === pid)
+          ).length;
+      if (pStats && typeof pStats.goals === 'number' && g === 0) g = pStats.goals || pStats.goles || 0;
+      return g;
+    };
+    const calcAssists = () => {
+      let a = goleadoresList.length > 0
+        ? goleadoresList.filter(g2 => String(g2.asistenciaId) === pid).length
+        : allEvents.filter(e => String(e.asistenciaId) === pid).length;
+      if (pStats && typeof pStats.assists === 'number' && a === 0) a = pStats.assists || pStats.asistencias || 0;
+      return a;
+    };
+    const calcYellows = () => {
+      let y = tarjetasList.length > 0
+        ? tarjetasList.filter(t => String(t.jugadorId) === pid && t.tipo === 'amarilla').length
+        : allEvents.filter(e => e.type === 'amarilla' && (String(e.playerId) === pid || String(e.jugadorId) === pid)).length;
+      if (pStats && typeof pStats.yellowCards === 'number' && y === 0) y = pStats.yellowCards;
+      return y;
+    };
+    const calcReds = () => {
+      let r = tarjetasList.length > 0
+        ? tarjetasList.filter(t => String(t.jugadorId) === pid && t.tipo === 'roja').length
+        : allEvents.filter(e => e.type === 'roja' && (String(e.playerId) === pid || String(e.jugadorId) === pid)).length;
+      if (pStats && typeof pStats.redCards === 'number' && r === 0) r = pStats.redCards;
+      return r;
+    };
+    const calcRating = () => {
+      if (pStats && (pStats.rating || pStats.nota)) return Number(pStats.rating || pStats.nota);
+      const raw = m.ratings?.[playerId] || m.playerRatings?.[playerId] || m.notas?.[playerId];
+      return raw ? Number(raw) : null;
+    };
 
-    // Si además hay playerStats explícitos en el match
-    const pStats = m.playerStats?.[playerId] || m.playerStats?.[String(playerId)];
-    if (pStats && typeof pStats.goals === 'number' && goalsInMatch === 0) {
-      goalsInMatch = pStats.goals || pStats.goles || 0;
-    }
+    // ── CAPA DE VERDAD: Acta Oficial Cerrada ─────────────────────────
+    const acta = m.actaOficial;
+    const actaClosed = acta?.closed === true;
+    const actaActual = acta?.actual?.[pid] || acta?.actual?.[String(playerId)] || null;
 
-    // Asistencias en este partido
-    let assistsInMatch = 0;
-    if (goleadoresList.length > 0) {
-      assistsInMatch = goleadoresList.filter(g => String(g.asistenciaId) === String(playerId)).length;
-    } else {
-      assistsInMatch = allEvents.filter(e => 
-        String(e.asistenciaId) === String(playerId)
-      ).length;
-    }
-    if (pStats && typeof pStats.assists === 'number' && assistsInMatch === 0) {
-      assistsInMatch = pStats.assists || pStats.asistencias || 0;
-    }
-
-    // Tarjetas en este partido
-    let yellowCardsInMatch = 0;
-    let redCardsInMatch = 0;
-    if (tarjetasList.length > 0) {
-      yellowCardsInMatch = tarjetasList.filter(t => String(t.jugadorId) === String(playerId) && t.tipo === 'amarilla').length;
-      redCardsInMatch = tarjetasList.filter(t => String(t.jugadorId) === String(playerId) && t.tipo === 'roja').length;
-    } else {
-      yellowCardsInMatch = allEvents.filter(e => e.type === 'amarilla' && (String(e.playerId) === String(playerId) || String(e.jugadorId) === String(playerId))).length;
-      redCardsInMatch = allEvents.filter(e => e.type === 'roja' && (String(e.playerId) === String(playerId) || String(e.jugadorId) === String(playerId))).length;
-    }
-
-    if (pStats) {
-      if (typeof pStats.yellowCards === 'number' && yellowCardsInMatch === 0) yellowCardsInMatch = pStats.yellowCards;
-      if (typeof pStats.redCards === 'number' && redCardsInMatch === 0) redCardsInMatch = pStats.redCards;
-    }
-
-    // 3. Minutos jugados en este partido
-    let minutesInMatch = 0;
-    let didPlay = false;
-
-    if (pStats && (pStats.minutesPlayed !== undefined || pStats.minutos !== undefined)) {
-      minutesInMatch = Number(pStats.minutesPlayed || pStats.minutos || 0);
-      didPlay = minutesInMatch > 0 || isTitular;
-    } else if (isTitular) {
-      didPlay = true;
-      // Comprobar si fue sustituido
-      const subOutEvent = allEvents.find(e => 
-        (e.type === 'cambio' || e.type === 'sustitucion') && 
-        (String(e.subOutId) === String(playerId) || String(e.jugadorSaleId) === String(playerId))
-      );
-      if (subOutEvent) {
-        minutesInMatch = parseInt(subOutEvent.minute || subOutEvent.minuto || defaultDuration, 10);
-      } else {
-        minutesInMatch = defaultDuration;
+    if (actaClosed && actaActual) {
+      const minutesInMatch = typeof actaActual.minutes === 'number' ? actaActual.minutes : 0;
+      const status = actaActual.status || '';
+      // Solo cuenta como partido jugado si tuvo minutos positivos o fue marcado como presente
+      const didPlay = minutesInMatch > 0 || status === 'presente';
+      if (!didPlay) {
+        // No jugó (ausente / justificado / lesionado / DNP sin override) → solo goles/tarjetas
+        totalGoals += calcGoals();
+        totalAssists += calcAssists();
+        totalYellows += calcYellows();
+        totalReds += calcReds();
+        matchHistory.push({
+          matchId: m.id,
+          date: m.date || m.fecha || 'Reciente',
+          rival: m.rival || m.opponent || 'Rival',
+          type: m.type || (m.isHome ? 'Local' : 'Visitante'),
+          goalsFor: m.goalsFor ?? m.golesLocal ?? 0,
+          goalsAgainst: m.goalsAgainst ?? m.golesVisita ?? 0,
+          result: `${m.goalsFor ?? 0} - ${m.goalsAgainst ?? 0}`,
+          isTitular,
+          isSuplente: !isTitular,
+          minutesPlayed: 0,
+          minuteSource: actaActual.minuteSource || 'acta',
+          actaClosed: true,
+          goals: calcGoals(),
+          assists: calcAssists(),
+          yellowCards: calcYellows(),
+          redCards: calcReds(),
+          rating: '-'
+        });
+        return;
       }
-    } else if (isSuplente) {
-      // Comprobar si entró al campo
-      const subInEvent = allEvents.find(e => 
-        (e.type === 'cambio' || e.type === 'sustitucion') && 
-        (String(e.subInId) === String(playerId) || String(e.jugadorEntraId) === String(playerId))
-      );
-      if (subInEvent) {
-        didPlay = true;
-        const entryMinute = parseInt(subInEvent.minute || subInEvent.minuto || 0, 10);
-        minutesInMatch = Math.max(1, defaultDuration - entryMinute);
-      }
-    } else if (isConvocado && (goalsInMatch > 0 || assistsInMatch > 0 || yellowCardsInMatch > 0 || redCardsInMatch > 0)) {
-      didPlay = true;
-      minutesInMatch = defaultDuration;
-    }
 
-    // 4. Valoración del partido
-    let ratingInMatch = null;
-    if (pStats && (pStats.rating || pStats.nota)) {
-      ratingInMatch = Number(pStats.rating || pStats.nota);
-    } else if (m.ratings?.[playerId] || m.playerRatings?.[playerId] || m.notas?.[playerId]) {
-      ratingInMatch = Number(m.ratings?.[playerId] || m.playerRatings?.[playerId] || m.notas?.[playerId]);
-    }
+      const goalsInMatch = calcGoals();
+      const assistsInMatch = calcAssists();
+      const yellowCardsInMatch = calcYellows();
+      const redCardsInMatch = calcReds();
+      const ratingInMatch = calcRating();
 
-    if (didPlay) {
       matchesPlayed += 1;
       if (isTitular) starts += 1;
       else subAppearances += 1;
@@ -152,9 +151,7 @@ export const calculatePlayerMatchStats = (playerId, matches = []) => {
       totalAssists += assistsInMatch;
       totalYellows += yellowCardsInMatch;
       totalReds += redCardsInMatch;
-      if (ratingInMatch && !isNaN(ratingInMatch)) {
-        ratings.push(ratingInMatch);
-      }
+      if (ratingInMatch && !isNaN(ratingInMatch)) ratings.push(ratingInMatch);
 
       matchHistory.push({
         matchId: m.id,
@@ -167,13 +164,47 @@ export const calculatePlayerMatchStats = (playerId, matches = []) => {
         isTitular,
         isSuplente: !isTitular,
         minutesPlayed: minutesInMatch,
+        minuteSource: actaActual.minuteSource || 'acta',
+        actaClosed: true,
         goals: goalsInMatch,
         assists: assistsInMatch,
         yellowCards: yellowCardsInMatch,
         redCards: redCardsInMatch,
         rating: ratingInMatch ? ratingInMatch.toFixed(1) : '-'
       });
+      return; // procesado desde acta oficial → stop
     }
+
+    // ── Acta NO cerrada: solo goles/tarjetas explícitos, minutos = null ──
+    const goalsInMatch = calcGoals();
+    const assistsInMatch = calcAssists();
+    const yellowCardsInMatch = calcYellows();
+    const redCardsInMatch = calcReds();
+    const ratingInMatch = calcRating();
+
+    totalGoals += goalsInMatch;
+    totalAssists += assistsInMatch;
+    totalYellows += yellowCardsInMatch;
+    totalReds += redCardsInMatch;
+
+    matchHistory.push({
+      matchId: m.id,
+      date: m.date || m.fecha || 'Reciente',
+      rival: m.rival || m.opponent || 'Rival',
+      type: m.type || (m.isHome ? 'Local' : 'Visitante'),
+      goalsFor: m.goalsFor ?? m.golesLocal ?? 0,
+      goalsAgainst: m.goalsAgainst ?? m.golesVisita ?? 0,
+      result: `${m.goalsFor ?? 0} - ${m.goalsAgainst ?? 0}`,
+      isTitular,
+      isSuplente: !isTitular,
+      minutesPlayed: null, // ⏳ pendiente de acta oficial
+      actaClosed: false,
+      goals: goalsInMatch,
+      assists: assistsInMatch,
+      yellowCards: yellowCardsInMatch,
+      redCards: redCardsInMatch,
+      rating: ratingInMatch ? ratingInMatch.toFixed(1) : '-'
+    });
   });
 
   // Ordenar historial por fecha descendente

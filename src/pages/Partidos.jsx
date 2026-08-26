@@ -105,6 +105,7 @@ const TrashIcon = () => (
 
 const Partidos = () => {
   const location = useLocation();
+  const { user } = useAuth();
   const { activeTeam } = useTeams();
   const activeTeamId = activeTeam?.id || null;
   const effectiveTeamId = activeTeamId;

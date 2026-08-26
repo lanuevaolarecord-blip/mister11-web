@@ -22,6 +22,7 @@ import { useLiveStats } from '../hooks/useLiveStats';
 import { SvgDonut, SvgComparisonBars, HalfBreakdown } from '../components/LiveStatsCharts';
 import './Partidos.css';
 import { normalizeText } from '../utils/normalizeInput';
+import { normalizeLineup, applyLineupChange, formatMatchDateSafe } from '../utils/lineupEngine';
 
 // Auxiliar para determinar idioma efectivo (manual o idioma del sistema)
 const getEffectiveLanguage = (settingsObj) => {
@@ -55,10 +56,10 @@ const getGeneralZone = (pos) => {
 };
 
 // Distribuidor inteligente de jugadores según posiciones naturales
-const alignStartersByPosition = (calledIds, players, positionsList) => {
+const alignStartersByPosition = (calledIds = [], players = [], positionsList = []) => {
   const startersIds = calledIds.slice(0, 11).filter(Boolean);
-  const subsIds = calledIds.slice(11);
-  const starters = startersIds.map(id => players.find(p => p.id === id)).filter(Boolean);
+  const subsIds = Array.from({ length: 7 }, (_, i) => calledIds[11 + i] || null);
+  const starters = startersIds.map(id => players.find(p => p && p.id === id)).filter(Boolean);
   const assigned = Array(11).fill(null);
   const unassigned = [...starters];
 
@@ -471,49 +472,54 @@ const Partidos = () => {
     { key: 'highlights', label: getLangText('post.highlights'), question: getLangText('post.highlightsQ') }
   ];
 
-  const handleSlotClick = (idx) => {
+  const handleSlotClick = async (idx) => {
     if (selectedSlotIdx === null) {
       setSelectedSlotIdx(idx);
-    } else {
-      if (selectedSlotIdx === idx) {
-        setSelectedSlotIdx(null);
-        return;
-      }
+      return;
+    }
 
-      const newCalled = [...calledPlayers];
-      while (newCalled.length < 23) {
-        newCalled.push(undefined);
-      }
-
-      const temp = newCalled[selectedSlotIdx];
-      newCalled[selectedSlotIdx] = newCalled[idx];
-      newCalled[idx] = temp;
-
-      const cleanedCalled = newCalled.map(item => item === undefined ? null : item);
-      while (cleanedCalled.length > 0 && cleanedCalled[cleanedCalled.length - 1] === null) {
-        cleanedCalled.pop();
-      }
-
-      setCalledPlayers(cleanedCalled);
-
-      // Swap coordinates if custom positions exist
-      const newCustomPos = { ...(matchData.customPositions || {}) };
-      const posA = newCustomPos[selectedSlotIdx];
-      const posB = newCustomPos[idx];
-
-      if (posA) newCustomPos[idx] = posA;
-      else delete newCustomPos[idx];
-
-      if (posB) newCustomPos[selectedSlotIdx] = posB;
-      else delete newCustomPos[selectedSlotIdx];
-
-      setMatchData(prev => ({
-        ...prev,
-        convocados: cleanedCalled,
-        customPositions: newCustomPos
-      }));
-
+    if (selectedSlotIdx === idx) {
       setSelectedSlotIdx(null);
+      return;
+    }
+
+    const currentTitulares = Array.from({ length: 11 }, (_, i) => calledPlayers[i] || null);
+    const currentSuplentes = Array.from({ length: 7 }, (_, i) => calledPlayers[11 + i] || null);
+
+    const updatedLineup = applyLineupChange(
+      {
+        titulares: currentTitulares,
+        suplentes: currentSuplentes,
+        customPositions: matchData.customPositions || {}
+      },
+      { fromIdx: selectedSlotIdx, toIdx: idx }
+    );
+
+    const nextCalled = [...updatedLineup.titulares, ...updatedLineup.suplentes];
+    setCalledPlayers(nextCalled);
+
+    setMatchData(prev => ({
+      ...prev,
+      titulares: updatedLineup.titulares,
+      suplentes: updatedLineup.suplentes,
+      convocados: updatedLineup.convocados,
+      customPositions: updatedLineup.customPositions
+    }));
+
+    setSelectedSlotIdx(null);
+
+    // Persistencia inmediata si el partido ya existe en Firestore
+    if (matchData.id) {
+      try {
+        await updateMatch(matchData.id, {
+          titulares: updatedLineup.titulares,
+          suplentes: updatedLineup.suplentes,
+          convocados: updatedLineup.convocados,
+          customPositions: updatedLineup.customPositions
+        });
+      } catch (err) {
+        console.warn('[handleSlotClick] Error auto-guardando alineación:', err);
+      }
     }
   };
 
@@ -674,6 +680,7 @@ const Partidos = () => {
 
   const handleNewMatch = () => {
     setActiveMatchId(null);
+    const norm = normalizeLineup([], [], []);
     const newMatch = {
       rival: '',
       date: new Date().toISOString().split('T')[0],
@@ -685,16 +692,16 @@ const Partidos = () => {
       goalsAgainst: 0,
       lineup: '4-3-3',
       events: [],
-      titulares: [],
-      suplentes: [],
-      convocados: [],
+      titulares: norm.titulares,
+      suplentes: norm.suplentes,
+      convocados: norm.convocados,
       postMatchAnswers: { tactical: '', physical: '', improvement: '', highlights: '' },
       postMatchImages: [],
       goleadoresList: [],
       tarjetasList: []
     };
     setMatchData(newMatch);
-    setCalledPlayers([]);
+    setCalledPlayers([...norm.titulares, ...norm.suplentes]);
     setEditTab('PRE-PARTIDO');
     setViewMode('EDIT');
   };
@@ -702,15 +709,19 @@ const Partidos = () => {
   const handleEditMatch = (match) => {
     if (!match) return;
     setActiveMatchId(match.id);
+    const norm = normalizeLineup(match.titulares, match.suplentes, match.convocados);
     setMatchData({
       postMatchAnswers: { tactical: '', physical: '', improvement: '', highlights: '' },
       postMatchImages: [],
       goleadoresList: [],
       tarjetasList: [],
       liveStatsEvents: match.liveStatsEvents || match.events || [],
-      ...match
+      ...match,
+      titulares: norm.titulares,
+      suplentes: norm.suplentes,
+      convocados: norm.convocados
     });
-    setCalledPlayers(match.convocados || []);
+    setCalledPlayers([...norm.titulares, ...norm.suplentes]);
     const savedTab = localStorage.getItem(`mister11_last_edit_tab_${match.id}`);
     if (savedTab) setEditTab(savedTab);
     else setEditTab('PRE-PARTIDO');
@@ -718,11 +729,44 @@ const Partidos = () => {
   };
 
   const togglePlayerCall = (id) => {
-    if (calledPlayers.includes(id)) {
-      setCalledPlayers(calledPlayers.filter(p => p !== id));
+    const isCurrentlyCalled = calledPlayers.some(p => p === id);
+    if (isCurrentlyCalled) {
+      // Liberar el slot asignando null
+      const updated = calledPlayers.map(p => (p === id ? null : p));
+      const titulares = updated.slice(0, 11);
+      const suplentes = updated.slice(11, 18);
+      const convocados = [...titulares.filter(Boolean), ...suplentes.filter(Boolean)];
+      setCalledPlayers(updated);
+      setMatchData(prev => ({
+        ...prev,
+        titulares,
+        suplentes,
+        convocados
+      }));
     } else {
-      if (calledPlayers.length >= 23) return alert("Máximo 23 convocados permitidos.");
-      setCalledPlayers([...calledPlayers, id]);
+      const activeCount = calledPlayers.filter(Boolean).length;
+      if (activeCount >= 23) return alert("Máximo 23 convocados permitidos.");
+
+      const updated = [...calledPlayers];
+      while (updated.length < 18) {
+        updated.push(null);
+      }
+      const firstEmptyIdx = updated.findIndex(p => !p);
+      if (firstEmptyIdx !== -1 && firstEmptyIdx < 18) {
+        updated[firstEmptyIdx] = id;
+      } else {
+        updated.push(id);
+      }
+      const titulares = updated.slice(0, 11);
+      const suplentes = updated.slice(11, 18);
+      const convocados = [...titulares.filter(Boolean), ...suplentes.filter(Boolean)];
+      setCalledPlayers(updated);
+      setMatchData(prev => ({
+        ...prev,
+        titulares,
+        suplentes,
+        convocados
+      }));
     }
   };
 
@@ -730,9 +774,16 @@ const Partidos = () => {
     if (!matchData.rival || !matchData.rival.trim()) return alert("El nombre del rival es obligatorio.");
     setIsSaving(true);
     try {
+      const norm = normalizeLineup(
+        calledPlayers.slice(0, 11),
+        calledPlayers.slice(11, 18),
+        calledPlayers.filter(Boolean)
+      );
       const dataToSave = { 
         ...matchData, 
-        convocados: calledPlayers,
+        titulares: norm.titulares,
+        suplentes: norm.suplentes,
+        convocados: norm.convocados,
         liveStatsEvents: effectiveLiveEvents && effectiveLiveEvents.length > 0 ? effectiveLiveEvents : (matchData.liveStatsEvents || [])
       };
       if (matchData.id) {
@@ -858,13 +909,13 @@ const Partidos = () => {
                     <button className={`filter-tab ${filterMode === 'Terminados' ? 'active' : ''}`} onClick={() => setFilterMode('Terminados')}>Terminados</button>
                   </div>
 
-                  <div className="matches-grid">
-                    {filteredMatches.map(m => (
-                      <div key={m.id} className="match-card" onClick={() => handleEditMatch(m)}>
-                        <div className="mc-header">
-                          <span className={`status-badge ${m.status?.toLowerCase()}`}>{m.status}</span>
-                          <span className="mc-date">{m.date ? m.date.split('-').reverse().join('/') : '--/--/--'} - {m.time || '--:--'}</span>
-                        </div>
+                    <div className="matches-grid">
+                      {filteredMatches.map(m => (
+                        <div key={m.id} className="match-card" onClick={() => handleEditMatch(m)}>
+                          <div className="mc-header">
+                            <span className={`status-badge ${m.status?.toLowerCase()}`}>{m.status}</span>
+                            <span className="mc-date">{formatMatchDateSafe(m, settings?.language)}</span>
+                          </div>
 
                         <div className="mc-body">
                           <div className="team-local">
@@ -1097,9 +1148,10 @@ const Partidos = () => {
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '6px' }}>
                       {Array.from({ length: 11 }).map((_, idx) => {
                         const pid = calledPlayers[idx];
-                        const player = pid ? players.find(p => p.id === pid) : null;
+                        const player = pid ? (players.find(p => p && p.id === pid) || null) : null;
                         const posName = getSlotPosition(idx);
                         const isSelected = selectedSlotIdx === idx;
+                        const isEn = getEffectiveLanguage(settings) === 'English (EN)';
 
                         return (
                           <div
@@ -1109,8 +1161,8 @@ const Partidos = () => {
                             style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: '10px 14px', gap: '10px', cursor: 'pointer', minWidth: 0 }}
                           >
                             <div style={{ display: 'flex', alignItems: 'center', gap: '10px', minWidth: 0, flex: 1 }}>
-                              <span className="slot-num" style={{ fontSize: '14px', fontWeight: '900', color: 'var(--partidos-gold)', minWidth: '20px' }}>{player ? player.number : '-'}</span>
-                              <span className="slot-name" style={{ fontSize: '13px', fontWeight: '700', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1, minWidth: 0 }}>{player ? player.name : 'Vacío'}</span>
+                              <span className="slot-num" style={{ fontSize: '14px', fontWeight: '900', color: 'var(--partidos-gold)', minWidth: '20px' }}>{player ? (player.number ?? '-') : '-'}</span>
+                              <span className="slot-name" style={{ fontSize: '13px', fontWeight: '700', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1, minWidth: 0 }}>{player ? (player.name || (isEn ? 'Player' : 'Jugador')) : (isEn ? 'Empty' : 'Vacío')}</span>
                             </div>
                             <span className="slot-role" style={{ fontSize: '10px', padding: '3px 8px', borderRadius: '4px', background: 'rgba(0,0,0,0.06)', color: 'var(--partidos-text-muted)', fontWeight: '800' }}>{posName}</span>
                           </div>
@@ -1121,13 +1173,14 @@ const Partidos = () => {
 
                   {/* Suplentes - en una sola columna para nombre completo */}
                   <div>
-                    <h4 style={{ margin: '8px 0' }}>Suplentes <span style={{ fontSize: '12px', fontWeight: 'normal', color: 'var(--partidos-text-muted)' }}>({calledPlayers.slice(11).filter(Boolean).length}/7)</span></h4>
+                    <h4 style={{ margin: '8px 0' }}>Suplentes <span style={{ fontSize: '12px', fontWeight: 'normal', color: 'var(--partidos-text-muted)' }}>({calledPlayers.slice(11, 18).filter(Boolean).length}/7)</span></h4>
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '6px' }}>
                       {Array.from({ length: 7 }).map((_, subIdx) => {
                         const idx = 11 + subIdx;
                         const pid = calledPlayers[idx];
-                        const player = pid ? players.find(p => p.id === pid) : null;
+                        const player = pid ? (players.find(p => p && p.id === pid) || null) : null;
                         const isSelected = selectedSlotIdx === idx;
+                        const isEn = getEffectiveLanguage(settings) === 'English (EN)';
 
                         return (
                           <div
@@ -1137,8 +1190,8 @@ const Partidos = () => {
                             style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: '10px 14px', gap: '10px', cursor: 'pointer', minWidth: 0 }}
                           >
                             <div style={{ display: 'flex', alignItems: 'center', gap: '10px', minWidth: 0, flex: 1 }}>
-                              <span className="slot-num" style={{ fontSize: '14px', fontWeight: '900', color: 'var(--partidos-gold)', minWidth: '20px' }}>{player ? player.number : '-'}</span>
-                              <span className="slot-name" style={{ fontSize: '13px', fontWeight: '700', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1, minWidth: 0 }}>{player ? player.name : 'Vacío'}</span>
+                              <span className="slot-num" style={{ fontSize: '14px', fontWeight: '900', color: 'var(--partidos-gold)', minWidth: '20px' }}>{player ? (player.number ?? '-') : '-'}</span>
+                              <span className="slot-name" style={{ fontSize: '13px', fontWeight: '700', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1, minWidth: 0 }}>{player ? (player.name || (isEn ? 'Player' : 'Jugador')) : (isEn ? 'Empty' : 'Vacío')}</span>
                             </div>
                             <span className="slot-role" style={{ fontSize: '10px', padding: '3px 8px', borderRadius: '4px', background: 'rgba(212,168,67,0.1)', color: 'var(--partidos-gold)', fontWeight: '800' }}>SUP</span>
                           </div>
@@ -1167,12 +1220,13 @@ const Partidos = () => {
                 </div>
 
                 <div
+                  className="alin-pitch-wrapper"
                   style={{
                     flex: 1,
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    padding: '16px 16px 40px 16px',
+                    padding: '12px',
                     overflow: 'visible',
                     position: 'relative',
                     minHeight: 'fit-content'
@@ -1199,8 +1253,9 @@ const Partidos = () => {
                     {/* Fichas de Jugadores — posiciones directas de formaciones.js (ya en horizontal) */}
                     {getFormationPositions(matchData.lineup || '4-3-3').map((pos, idx) => {
                       const pid = calledPlayers[idx];
-                      const player = pid ? players.find(p => p.id === pid) : null;
+                      const player = pid ? (players.find(p => p && p.id === pid) || null) : null;
                       const customPos = matchData.customPositions && matchData.customPositions[idx];
+                      const isEn = getEffectiveLanguage(settings) === 'English (EN)';
 
                       // Las posiciones en formaciones.js ya son HORIZONTALES: left=X, top=Y
                       // Clampear top entre 8% y 88% para proteger márgenes superior e inferior
@@ -1224,7 +1279,7 @@ const Partidos = () => {
                             left: leftPos,
                             zIndex: draggingIdx === idx ? 99 : isSelected ? 30 : Math.round(clampedTop)
                           }}
-                          title={player ? `Jugador: ${player.name}\nDorsal: ${player.number || '-'}\nPosición: ${player.position || posLabel}` : 'Slot Vacío'}
+                          title={player ? `Jugador: ${player.name}\nDorsal: ${player.number ?? '-'}\nPosición: ${player.position || posLabel}` : (isEn ? 'Empty Slot' : 'Slot Vacío')}
                           onPointerDown={(e) => handleDragStart(e, idx)}
                           onTouchStart={(e) => handleDragStart(e, idx)}
                         >
@@ -1243,11 +1298,11 @@ const Partidos = () => {
                                   {idx + 1}
                                 </div>
                               )}
-                              <span className="futu-card-number">{player?.number || idx + 1}</span>
+                              <span className="futu-card-number">{player?.number ?? (idx + 1)}</span>
                               <span className="futu-card-pos">{posLabel}</span>
                             </div>
                             <div className="futu-card-banner">
-                              {player ? `${player.number ? player.number + ' - ' : ''}${player.name}` : `Slot ${idx + 1}`}
+                              {player ? `${player.number !== undefined && player.number !== null ? player.number + ' - ' : ''}${player.name || (isEn ? 'Player' : 'Jugador')}` : `Slot ${idx + 1}`}
                             </div>
                           </div>
                         </div>
@@ -1359,9 +1414,10 @@ const Partidos = () => {
                             onChange={e => setSubOutId(e.target.value)}
                           >
                             <option value="">Seleccionar...</option>
-                            {calledPlayers.slice(0, 11).map(id => {
-                              const p = players.find(pl => pl.id === id);
-                              return p ? <option key={id} value={id}>{p.name}</option> : null;
+                            {calledPlayers.slice(0, 11).map((id, idx) => {
+                              if (!id) return null;
+                              const p = players.find(pl => pl && pl.id === id);
+                              return p ? <option key={`${id}-${idx}`} value={id}>{p.number ? `#${p.number} ` : ''}{p.name}</option> : null;
                             })}
                           </select>
                         </div>
@@ -1373,9 +1429,10 @@ const Partidos = () => {
                             onChange={e => setSubInId(e.target.value)}
                           >
                             <option value="">Seleccionar...</option>
-                            {calledPlayers.slice(11).map(id => {
-                              const p = players.find(pl => pl.id === id);
-                              return p ? <option key={id} value={id}>{p.name}</option> : null;
+                            {calledPlayers.slice(11, 18).map((id, idx) => {
+                              if (!id) return null;
+                              const p = players.find(pl => pl && pl.id === id);
+                              return p ? <option key={`${id}-${idx}`} value={id}>{p.number ? `#${p.number} ` : ''}{p.name}</option> : null;
                             })}
                           </select>
                         </div>
@@ -1447,16 +1504,17 @@ const Partidos = () => {
                         </div>
 
                         <div className="event-selector-list">
-                          {calledPlayers.slice(0, 11).map(id => {
-                            const p = players.find(pl => pl.id === id);
+                          {calledPlayers.slice(0, 11).map((id, idx) => {
+                            if (!id) return null;
+                            const p = players.find(pl => pl && pl.id === id);
                             return p ? (
                               <button
-                                key={id}
+                                key={`${id}-${idx}`}
                                 className="event-selector-item"
                                 type="button"
                                 onClick={() => handleSelectEventPlayer(id)}
                               >
-                                {p.number} - {p.name}
+                                {p.number ? `${p.number} - ` : ''}{p.name}
                               </button>
                             ) : null;
                           })}

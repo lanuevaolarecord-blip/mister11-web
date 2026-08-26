@@ -830,15 +830,14 @@ html.dark select option {
 .alin-pitch-container-h3d {
   position: relative;
   /*
-   * Estrategia: fijar max-height al espacio disponible del viewport.
-   * El ancho se deriva del aspect-ratio 105:68.
-   * Esto garantiza que el campo NUNCA sea más alto que el espacio.
+   * Estrategia FASE 2: aspect-ratio nativo 105:68, contain scaling, centrado sin cortes
    */
-  max-height: calc((100vh - 280px) * 0.85);
-  width: min(96%, calc((100vh - 280px) * 0.85 * 105 / 68));
   aspect-ratio: 105 / 68;
+  width: 100%;
+  max-width: min(100%, calc((100vh - 220px) * 105 / 68));
+  max-height: calc(100vh - 220px);
+  min-height: 280px;
   height: auto;
-  max-width: 100%;
   transform: none;
   border-radius: 12px;
   border: 3.5px solid rgba(255, 255, 255, 0.75);
@@ -858,7 +857,7 @@ html.dark select option {
   user-select: none;
   touch-action: none;
   flex-shrink: 0;
-  margin: 0 auto 36px auto;
+  margin: auto;
 }
 
 /* Líneas del campo horizontal */
@@ -2689,12 +2688,15 @@ html.dark .alin-player-item span.slot-role {
   .alin-pitch-container-h3d .futu-card-banner {
     display: none !important;
   }
-  /* Campo más alto para que los jugadores de arriba y abajo no se corten */
+  /* Campo completo con aspect-ratio y centrado sin cortes */
   .alin-pitch-container-h3d {
-    height: 240px !important;
-    max-height: 240px !important;
-    width: min(100%, calc(240px * 105 / 68)) !important;
-    max-width: 98vw !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    height: auto !important;
+    min-height: 220px !important;
+    max-height: 320px !important;
+    aspect-ratio: 105 / 68 !important;
+    margin: auto !important;
   }
   .alineacion-layout > div:last-child {
     min-height: 250px !important;

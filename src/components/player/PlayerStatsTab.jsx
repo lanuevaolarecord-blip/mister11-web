@@ -7,6 +7,7 @@ import { usePlan } from '../../hooks/usePlan';
 import { GraficaEvolucion } from '../GraficasTest';
 import { calculatePlayerMatchStats } from '../../utils/playerMatchStats';
 import { calculatePlayerAttendanceStats } from '../../utils/attendanceStatsHelper';
+import { calculateSquadAveragePct } from '../../utils/attendanceMath';
 import { DEFAULT_SEASON_SETTINGS } from '../../config/achievements';
 import UpgradeModal from '../UpgradeModal';
 import './PlayerStatsTab.css';
@@ -305,27 +306,17 @@ export const PlayerStatsTab = ({ player, team, teamPath, isParentView = false, a
     const hasMatchData = allTeamMatches.length > 0;
 
     // Calcular estadísticas de asistencia reales para todos los compañeros
-    let totalSquadAttendanceXP = 0;
-    let totalSquadAttendancePct = 0;
-    let validSquadCount = 0;
+    const squadAttList = allPlayers.map(p => calculatePlayerAttendanceStats(p.id, allAttendance, allTeamMatches, customXpTable));
+    const avgAttendancePct = calculateSquadAveragePct(squadAttList.map(s => ({ pct: s.percentage, hasData: s.hasData })));
 
-    allPlayers.forEach(p => {
-      const pAtt = calculatePlayerAttendanceStats(p.id, allAttendance, allTeamMatches, customXpTable);
-      totalSquadAttendanceXP += pAtt.attendanceXP;
-      totalSquadAttendancePct += pAtt.percentage;
-      validSquadCount++;
-    });
+    const validSquadXP = squadAttList.filter(s => s.hasData);
+    const avgAttendanceXP = validSquadXP.length > 0
+      ? Math.round(validSquadXP.reduce((acc, s) => acc + s.attendanceXP, 0) / validSquadXP.length)
+      : 0;
 
     const myAtt = calculatePlayerAttendanceStats(effectivePlayerId, allAttendance, allTeamMatches, customXpTable);
-    const myAttendancePct = myAtt.percentage;
+    const myAttendancePct = myAtt.hasData ? myAtt.percentage : null;
     const myAttendanceXP = myAtt.attendanceXP;
-
-    const avgAttendancePct = validSquadCount > 0 
-      ? Math.round(totalSquadAttendancePct / validSquadCount) 
-      : 0;
-    const avgAttendanceXP = validSquadCount > 0 
-      ? Math.round(totalSquadAttendanceXP / validSquadCount) 
-      : 0;
 
     // Minutos calculados con el motor unificado calculatePlayerMatchStats para cada jugador
     let totalMinutesSquad = 0;
@@ -715,20 +706,20 @@ export const PlayerStatsTab = ({ player, team, teamPath, isParentView = false, a
                   </span>
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.78rem', fontWeight: 800, marginBottom: '4px' }}>
-                  <span style={{ color: '#4CAF7D' }}>{t('player.stats.you')} {teamComparison.myAttendancePct}%</span>
+                  <span style={{ color: '#4CAF7D' }}>{t('player.stats.you')} {teamComparison.myAttendancePct !== null ? `${teamComparison.myAttendancePct}%` : '—'}</span>
                   <span style={{ color: darkMode ? '#94A3B8' : '#64748B' }}>{t('player.stats.average')} <span style={{ color: '#C9A84C' }}>{teamComparison.avgAttendancePct}%</span></span>
                 </div>
                 <div style={{ background: 'rgba(128,128,128,0.2)', height: '6px', borderRadius: '4px', overflow: 'hidden' }}>
-                  <div style={{ width: `${Math.max(teamComparison.myAttendancePct > 0 ? teamComparison.myAttendancePct : 0, 0)}%`, height: '100%', background: '#4CAF7D', borderRadius: '4px' }} />
+                  <div style={{ width: `${Math.max(teamComparison.myAttendancePct !== null && teamComparison.myAttendancePct > 0 ? teamComparison.myAttendancePct : 0, 0)}%`, height: '100%', background: '#4CAF7D', borderRadius: '4px' }} />
                 </div>
                 <span style={{ 
                   fontSize: '0.72rem', 
-                  color: !teamComparison.hasAttendanceData ? (darkMode ? '#94A3B8' : '#64748B') : (teamComparison.myAttendancePct > teamComparison.avgAttendancePct ? '#4CAF7D' : (teamComparison.myAttendancePct === teamComparison.avgAttendancePct ? (darkMode ? '#94A3B8' : '#475569') : '#C9A84C')), 
+                  color: !teamComparison.hasAttendanceData || teamComparison.myAttendancePct === null ? (darkMode ? '#94A3B8' : '#64748B') : (teamComparison.myAttendancePct > teamComparison.avgAttendancePct ? '#4CAF7D' : (teamComparison.myAttendancePct === teamComparison.avgAttendancePct ? (darkMode ? '#94A3B8' : '#475569') : '#C9A84C')), 
                   marginTop: '6px', 
                   display: 'block', 
                   fontWeight: 800 
                 }}>
-                  {!teamComparison.hasAttendanceData 
+                  {!teamComparison.hasAttendanceData || teamComparison.myAttendancePct === null
                     ? t('player.stats.noAttRecorded') 
                     : (teamComparison.myAttendancePct > teamComparison.avgAttendancePct 
                         ? t('player.stats.aboveAvg', { xp: teamComparison.myAttendanceXP }) 

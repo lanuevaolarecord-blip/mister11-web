@@ -6,6 +6,10 @@ import { useAuth } from '../context/AuthContext';
 import { useTranslation } from '../hooks/useTranslation';
 import { showToast } from '../utils/toast';
 import { generateAttendancePdfReport } from '../utils/attendancePdfReport';
+import { calculateAllPlayerMinutes } from '../utils/minutesEngine';
+import { calculateSquadAveragePct } from '../utils/attendanceMath';
+import { doc, updateDoc, serverTimestamp } from 'firebase/firestore';
+import { db } from '../firebaseConfig';
 
 const STATUS_CONFIG = {
   present:   { label: 'Presente',   labelEn: 'Present',   color: '#22C55E', bg: 'rgba(34, 197, 94, 0.12)', border: '#22C55E', icon: '✅' },
@@ -21,7 +25,7 @@ const getInitials = (name) => {
 };
 
 export const TeamAttendanceTab = ({ players = [], activeTeam = null }) => {
-  const { user, activeTeamId } = useAuth();
+  const { user, activeTeamId, getTeamPath } = useAuth();
   const { t, language } = useTranslation();
   const isEn = language === 'en' || language === 'English (EN)';
 
@@ -66,6 +70,11 @@ export const TeamAttendanceTab = ({ players = [], activeTeam = null }) => {
     }))
   ].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
+  const selectedMatch = selectedSessionType === 'match'
+    ? (matches || []).find((m) => `match_${m.id}` === selectedSessionId || m.id === selectedSessionId || `match_${m.id}` === selectedSessionId)
+    : null;
+  const isMatchActaClosed = selectedMatch?.actaOficial?.closed === true;
+
   // Inicializar selector con el evento más reciente si existe
   useEffect(() => {
     if (!selectedSessionId && availableEvents.length > 0) {
@@ -85,10 +94,29 @@ export const TeamAttendanceTab = ({ players = [], activeTeam = null }) => {
       (r) => r.sessionId === selectedSessionId || r.id === selectedSessionId
     );
 
-    if (existingRecord && existingRecord.records) {
+    if (existingRecord && existingRecord.records && Object.keys(existingRecord.records).length > 0) {
       setRecordsMap(existingRecord.records);
       if (existingRecord.date) setSelectedSessionDate(existingRecord.date);
       if (existingRecord.sessionTitle) setSelectedSessionTitle(existingRecord.sessionTitle);
+    } else if (selectedMatch && selectedMatch.actaOficial?.actual && Object.keys(selectedMatch.actaOficial.actual).length > 0) {
+      // Cargar desde acta oficial del partido
+      const STATUS_FROM_ACTA = {
+        presente: 'present',
+        tarde: 'late',
+        justificado: 'justified',
+        ausente: 'absent',
+        lesionado: 'injured'
+      };
+      const mapFromActa = {};
+      Object.entries(selectedMatch.actaOficial.actual).forEach(([pid, d]) => {
+        mapFromActa[pid] = {
+          status: STATUS_FROM_ACTA[d.status] || d.status || 'present',
+          lateMinutes: d.lateMin || 0
+        };
+      });
+      setRecordsMap(mapFromActa);
+      if (selectedMatch.date) setSelectedSessionDate(selectedMatch.date);
+      if (selectedMatch.rival) setSelectedSessionTitle(`🏆 [Partido] vs ${selectedMatch.rival}`);
     } else {
       // Default: todos presentes si no hay registro previo
       const defaultMap = {};
@@ -100,7 +128,7 @@ export const TeamAttendanceTab = ({ players = [], activeTeam = null }) => {
       });
       setRecordsMap(defaultMap);
     }
-  }, [selectedSessionId, attendanceRecords, players]);
+  }, [selectedSessionId, attendanceRecords, players, selectedMatch]);
 
   const handleSelectEvent = (eventId) => {
     if (!eventId) return;
@@ -177,6 +205,104 @@ export const TeamAttendanceTab = ({ players = [], activeTeam = null }) => {
     }
   };
 
+  const handleSaveAndCloseMatchActa = async () => {
+    if (!selectedMatch) return;
+    setIsSaving(true);
+    try {
+      // 1. Guardar asistencia
+      await saveAttendance(selectedSessionId, {
+        sessionTitle: selectedSessionTitle,
+        date: selectedSessionDate,
+        type: 'match',
+        records: recordsMap
+      });
+
+      // 2. Calcular minutos reales con el motor de minutos
+      const duration = parseInt(selectedMatch.duration || selectedMatch.duracion || 90, 10);
+      const overrides = {};
+      Object.entries(selectedMatch.actaOficial?.actual || {}).forEach(([pid, d]) => {
+        if (d.minutesOverride !== undefined && d.minutesOverride !== null) {
+          overrides[pid] = d.minutesOverride;
+        }
+      });
+
+      const minutesMap = calculateAllPlayerMinutes(selectedMatch, overrides);
+
+      const STATUS_TO_ACTA = {
+        present: 'presente',
+        late: 'tarde',
+        justified: 'justificado',
+        absent: 'ausente',
+        injured: 'lesionado'
+      };
+
+      const finalActual = { ...(selectedMatch.actaOficial?.actual || {}) };
+
+      // Aplicar estados actuales de recordsMap
+      Object.entries(recordsMap).forEach(([pid, r]) => {
+        const existing = finalActual[pid] || {};
+        const minData = minutesMap[pid] || { minutes: 0, source: 'dnp' };
+        finalActual[pid] = {
+          ...existing,
+          status: STATUS_TO_ACTA[r.status] || r.status || 'presente',
+          lateMin: r.lateMinutes || null,
+          minutes: minData.minutes,
+          minuteSource: minData.source,
+          at: new Date().toISOString(),
+          by: user.uid
+        };
+      });
+
+      // Asegurar todos los convocados
+      Object.entries(minutesMap).forEach(([pid, { minutes, source }]) => {
+        if (!finalActual[pid]) {
+          finalActual[pid] = {
+            status: source === 'not_called' ? 'ausente' : (source === 'dnp' ? 'convocado_no_jugó' : 'presente'),
+            minutes,
+            minuteSource: source,
+            at: new Date().toISOString(),
+            by: user.uid
+          };
+        }
+      });
+
+      const path = getTeamPath(activeTeamId);
+      const matchDocRef = doc(db, `${path}/matches`, selectedMatch.id);
+      await updateDoc(matchDocRef, {
+        'actaOficial.actual': finalActual,
+        'actaOficial.closed': true,
+        'actaOficial.closedAt': serverTimestamp(),
+        'actaOficial.closedBy': user.uid,
+        'actaOficial.closedByName': user.displayName || 'Staff',
+        'actaOficial.totalDuration': duration
+      });
+
+      showToast(isEn ? 'Match sheet closed and minutes saved' : 'Acta oficial cerrada y minutos reales guardados', 'success');
+    } catch (err) {
+      console.error('Error cerrando acta:', err);
+      showToast(isEn ? 'Error closing match sheet' : 'Error al cerrar el acta oficial', 'error');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleReopenMatchActa = async () => {
+    if (!selectedMatch) return;
+    try {
+      const path = getTeamPath(activeTeamId);
+      const matchDocRef = doc(db, `${path}/matches`, selectedMatch.id);
+      await updateDoc(matchDocRef, {
+        'actaOficial.closed': false,
+        'actaOficial.reopenedAt': serverTimestamp(),
+        'actaOficial.reopenedBy': user.uid
+      });
+      showToast(isEn ? 'Match sheet reopened for editing' : 'Acta oficial reabierta para edición', 'info');
+    } catch (err) {
+      console.error('Error reabriendo acta:', err);
+      showToast(isEn ? 'Error reopening match sheet' : 'Error al reabrir el acta', 'error');
+    }
+  };
+
   const handleExportPDF = async () => {
     const squadStats = getTeamSquadStats(players);
     const teamName = activeTeam?.nombre || activeTeam?.name || 'Mi Equipo';
@@ -190,17 +316,29 @@ export const TeamAttendanceTab = ({ players = [], activeTeam = null }) => {
 
   const squadStats = getTeamSquadStats(players);
   const trendData = getAttendanceTrend();
+  const squadAvgPct = calculateSquadAveragePct(squadStats);
 
   // Ordenar tabla de resumen
   const sortedSquadStats = [...squadStats].sort((a, b) => {
-    if (sortOrder === 'pct-desc') return b.pct - a.pct;
-    if (sortOrder === 'pct-asc') return a.pct - b.pct;
+    if (sortOrder === 'pct-desc') {
+      if (!a.hasData && !b.hasData) return 0;
+      if (!a.hasData) return 1;
+      if (!b.hasData) return -1;
+      return (b.pct ?? 0) - (a.pct ?? 0);
+    }
+    if (sortOrder === 'pct-asc') {
+      if (!a.hasData && !b.hasData) return 0;
+      if (!a.hasData) return 1;
+      if (!b.hasData) return -1;
+      return (a.pct ?? 0) - (b.pct ?? 0);
+    }
     if (sortOrder === 'name') return (a.player?.name || '').localeCompare(b.player?.name || '');
     if (sortOrder === 'number') return (Number(a.player?.number) || 0) - (Number(b.player?.number) || 0);
     return 0;
   });
 
-  const lowAttendersCount = squadStats.filter((s) => s.pct < threshold).length;
+  // Excluir jugadores sin datos de la alerta de riesgo
+  const lowAttendersCount = squadStats.filter((s) => s.hasData && typeof s.pct === 'number' && s.pct < threshold).length;
 
   return (
     <div className="attendance-tab-wrapper" style={{ padding: '4px 0 24px 0' }}>
@@ -338,7 +476,21 @@ export const TeamAttendanceTab = ({ players = [], activeTeam = null }) => {
               </div>
             )}
 
-            <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', alignItems: 'center' }}>
+              {selectedSessionType === 'match' && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginRight: '6px' }}>
+                  {isMatchActaClosed ? (
+                    <span style={{ padding: '6px 12px', borderRadius: '8px', background: 'rgba(16, 185, 129, 0.15)', color: '#10B981', fontWeight: '800', fontSize: '12px' }}>
+                      📋 {isEn ? 'Official Match Sheet Closed' : 'Acta Oficial Cerrada'}
+                    </span>
+                  ) : (
+                    <span style={{ padding: '6px 12px', borderRadius: '8px', background: 'rgba(245, 158, 11, 0.15)', color: '#F59E0B', fontWeight: '800', fontSize: '12px' }}>
+                      ⏳ {isEn ? 'Match Sheet Open' : 'Acta Abierta'}
+                    </span>
+                  )}
+                </div>
+              )}
+
               <button
                 type="button"
                 onClick={handleMarkAllPresent}
@@ -374,8 +526,53 @@ export const TeamAttendanceTab = ({ players = [], activeTeam = null }) => {
                   boxShadow: '0 4px 12px rgba(34, 197, 94, 0.3)'
                 }}
               >
-                {isSaving ? 'Guardando...' : '💾 Guardar Asistencia'}
+                {isSaving ? (isEn ? 'Saving...' : 'Guardando...') : `💾 ${isEn ? 'Save Attendance' : 'Guardar Asistencia'}`}
               </button>
+
+              {selectedSessionType === 'match' && (
+                !isMatchActaClosed ? (
+                  <button
+                    type="button"
+                    onClick={handleSaveAndCloseMatchActa}
+                    disabled={isSaving}
+                    style={{
+                      minHeight: '44px',
+                      padding: '0 18px',
+                      borderRadius: '10px',
+                      border: 'none',
+                      background: '#3B82F6',
+                      color: '#FFFFFF',
+                      fontWeight: '800',
+                      fontSize: '13px',
+                      cursor: 'pointer',
+                      boxShadow: '0 4px 12px rgba(59, 130, 246, 0.3)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '6px'
+                    }}
+                  >
+                    🔒 {isEn ? 'Save & Close Match Sheet' : 'Guardar y Cerrar Acta'}
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={handleReopenMatchActa}
+                    style={{
+                      minHeight: '44px',
+                      padding: '0 16px',
+                      borderRadius: '10px',
+                      border: '1.5px solid #F59E0B',
+                      background: 'transparent',
+                      color: '#F59E0B',
+                      fontWeight: '800',
+                      fontSize: '12px',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    🔓 {isEn ? 'Reopen Match Sheet' : 'Reabrir Acta'}
+                  </button>
+                )
+              )}
             </div>
           </div>
 
@@ -572,7 +769,8 @@ export const TeamAttendanceTab = ({ players = [], activeTeam = null }) => {
               <tbody>
                 {sortedSquadStats.map((item) => {
                   const p = item.player;
-                  const isBelowThreshold = item.pct < threshold;
+                  const hasData = item.hasData && typeof item.pct === 'number';
+                  const isBelowThreshold = hasData && item.pct < threshold;
 
                   return (
                     <tr
@@ -599,21 +797,29 @@ export const TeamAttendanceTab = ({ players = [], activeTeam = null }) => {
                       <td style={{ padding: '10px', textAlign: 'center', fontWeight: '700' }}>{item.late}</td>
                       <td style={{ padding: '10px', textAlign: 'center', fontWeight: '700' }}>{item.injured}</td>
                       <td style={{ padding: '10px', textAlign: 'center' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
-                          <div style={{ width: '60px', height: '8px', background: 'var(--border-color)', borderRadius: '4px', overflow: 'hidden' }}>
-                            <div style={{ width: `${item.pct}%`, height: '100%', background: isBelowThreshold ? '#EF4444' : '#22C55E' }}></div>
+                        {hasData ? (
+                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
+                            <div style={{ width: '60px', height: '8px', background: 'var(--border-color)', borderRadius: '4px', overflow: 'hidden' }}>
+                              <div style={{ width: `${item.pct}%`, height: '100%', background: isBelowThreshold ? '#EF4444' : '#22C55E' }}></div>
+                            </div>
+                            <span style={{ fontWeight: '800', color: isBelowThreshold ? '#EF4444' : 'var(--text-primary)' }}>{item.pct}%</span>
                           </div>
-                          <span style={{ fontWeight: '800', color: isBelowThreshold ? '#EF4444' : 'var(--text-primary)' }}>{item.pct}%</span>
-                        </div>
+                        ) : (
+                          <span style={{ color: 'var(--text-secondary)', fontWeight: '700' }}>—</span>
+                        )}
                       </td>
                       <td style={{ padding: '10px', textAlign: 'center' }}>
-                        {isBelowThreshold ? (
+                        {!hasData ? (
+                          <span style={{ background: 'rgba(148, 163, 184, 0.15)', color: '#94A3B8', padding: '4px 8px', borderRadius: '6px', fontSize: '11px', fontWeight: '800' }}>
+                            ⚪ {isEn ? 'No data' : 'Sin datos'}
+                          </span>
+                        ) : isBelowThreshold ? (
                           <span style={{ background: 'rgba(239, 68, 68, 0.15)', color: '#EF4444', padding: '4px 8px', borderRadius: '6px', fontSize: '11px', fontWeight: '800' }}>
-                            ⚠️ {isEn ? 'Riesgo' : 'Riesgo'}
+                            ⚠️ {isEn ? 'Risk' : 'Riesgo'}
                           </span>
                         ) : (
                           <span style={{ background: 'rgba(34, 197, 94, 0.15)', color: '#22C55E', padding: '4px 8px', borderRadius: '6px', fontSize: '11px', fontWeight: '800' }}>
-                            ✓ {isEn ? 'Óptimo' : 'Óptimo'}
+                            ✓ {isEn ? 'Optimal' : 'Óptimo'}
                           </span>
                         )}
                       </td>

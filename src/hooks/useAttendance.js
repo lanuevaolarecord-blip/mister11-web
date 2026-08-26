@@ -2,6 +2,9 @@ import { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { subscribeToCollection, setDocument, deleteDocument, addDocument } from '../firebase/db';
 import { sanitizeForFirestore } from './useSessions';
+import { calculateAttendanceMetrics } from '../utils/attendanceMath';
+import { doc, updateDoc } from 'firebase/firestore';
+import { db } from '../firebaseConfig';
 
 export const useAttendance = (teamId) => {
   const { user, getTeamPath } = useAuth();
@@ -33,6 +36,7 @@ export const useAttendance = (teamId) => {
 
   /**
    * Guarda o actualiza un registro de asistencia para una sesión o partido.
+   * Si es un partido, actualiza también matches/{matchId}.actaOficial.actual para coherencia total.
    * @param {string} docId - ID de la sesión/partido o id personalizado
    * @param {Object} payload - { sessionTitle, date, type, records: { [playerId]: { status, lateMinutes } } }
    */
@@ -52,6 +56,41 @@ export const useAttendance = (teamId) => {
     } else {
       await addDocument(`${path}/attendance`, cleaned);
     }
+
+    // Si el evento es un partido, sincronizar con matches/{id}.actaOficial.actual
+    const isMatch = payload.type === 'match' || (typeof docId === 'string' && docId.startsWith('match_'));
+    if (isMatch) {
+      try {
+        const cleanMatchId = docId.replace(/^match_/, '');
+        const matchDocRef = doc(db, `${path}/matches`, cleanMatchId);
+        const STATUS_MAP = {
+          present: 'presente',
+          late: 'tarde',
+          justified: 'justificado',
+          absent: 'ausente',
+          injured: 'lesionado'
+        };
+
+        const actaActualUpdates = {};
+        Object.entries(payload.records || {}).forEach(([pid, data]) => {
+          const rawStatus = typeof data === 'object' ? data.status : data;
+          const status = STATUS_MAP[rawStatus] || rawStatus || 'presente';
+          const lateMin = typeof data === 'object' ? data.lateMinutes : null;
+          actaActualUpdates[`actaOficial.actual.${pid}`] = {
+            status,
+            at: new Date().toISOString(),
+            by: user.uid,
+            ...(lateMin ? { lateMin } : {})
+          };
+        });
+
+        if (Object.keys(actaActualUpdates).length > 0) {
+          await updateDoc(matchDocRef, actaActualUpdates);
+        }
+      } catch (err) {
+        console.warn('[useAttendance] No se pudo sincronizar automáticamente con match.actaOficial:', err);
+      }
+    }
   };
 
   /**
@@ -64,12 +103,14 @@ export const useAttendance = (teamId) => {
   };
 
   /**
-   * Calcula estadísticas individuales para un jugador específico.
+   * Calcula estadísticas individuales para un jugador específico con la fórmula oficial compartida.
    */
   const getPlayerStats = (playerId) => {
     if (!playerId || attendanceRecords.length === 0) {
       return {
-        pct: 100,
+        pct: null,
+        hasData: false,
+        status: 'no_data',
         streak: 0,
         present: 0,
         absent: 0,
@@ -111,23 +152,32 @@ export const useAttendance = (teamId) => {
       }
     });
 
-    const attendedCount = present + late;
-    const eligibleTotal = present + late + absent + justified;
-    const pct = eligibleTotal > 0 ? Math.round((attendedCount / eligibleTotal) * 100) : 100;
+    const metrics = calculateAttendanceMetrics({
+      present,
+      late,
+      justified,
+      injured,
+      absent
+    });
 
     // Racha de asistencias consecutivas (ordenando por fecha descendente)
     const reversedHistory = [...history].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
     let streak = 0;
     for (const h of reversedHistory) {
-      if (h.status === 'present' || h.status === 'late' || h.status === 'justified') {
+      if (h.status === 'present' || h.status === 'late') {
         streak++;
+      } else if (h.status === 'justified' || h.status === 'injured') {
+        // Pausa la racha
+        continue;
       } else if (h.status === 'absent') {
         break;
       }
     }
 
     return {
-      pct,
+      pct: metrics.pct,
+      hasData: metrics.hasData,
+      status: metrics.status,
       streak,
       present,
       absent,

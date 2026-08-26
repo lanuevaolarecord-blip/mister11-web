@@ -1,6 +1,7 @@
 import { savePdfUniversal } from './pdfGenerator';
 import { getEffectiveLanguage } from '../i18n/translations';
 import { drawPdfFooter } from './pdfTheme';
+import { calculateSquadAveragePct } from './attendanceMath';
 
 const getPdfLibs = async () => {
   const { jsPDF } = await import('jspdf');
@@ -60,10 +61,8 @@ export const generateAttendancePdfReport = async ({
     doc.roundedRect(14, y, pageW - 28, 26, 3, 3, 'S');
 
     const totalSquad = squadStats.length;
-    const avgPct = totalSquad > 0
-      ? Math.round(squadStats.reduce((acc, s) => acc + s.pct, 0) / totalSquad)
-      : 100;
-    const lowAttenders = squadStats.filter((s) => s.pct < threshold);
+    const avgPct = calculateSquadAveragePct(squadStats);
+    const lowAttenders = squadStats.filter((s) => s.hasData && typeof s.pct === 'number' && s.pct < threshold);
 
     doc.setTextColor(...colorPrimary);
     doc.setFont('helvetica', 'bold');
@@ -92,7 +91,13 @@ export const generateAttendancePdfReport = async ({
       ? [['#', 'Player Name', 'Pos', 'Present', 'Absent', 'Justified', 'Late', 'Injured', '% Att.']]
       : [['#', 'Jugador', 'Pos', 'Presente', 'Ausente', 'Justif.', 'Tarde', 'Lesion.', '% Asist.']];
 
-    const sortedStats = [...squadStats].sort((a, b) => b.pct - a.pct);
+    const sortedStats = [...squadStats].sort((a, b) => {
+      if (!a.hasData && !b.hasData) return 0;
+      if (!a.hasData) return 1;
+      if (!b.hasData) return -1;
+      return (b.pct ?? 0) - (a.pct ?? 0);
+    });
+
     const tableBody = sortedStats.map((s) => [
       s.player?.number || '-',
       s.player?.name || 'Jugador',
@@ -102,7 +107,7 @@ export const generateAttendancePdfReport = async ({
       s.justified,
       s.late,
       s.injured,
-      `${s.pct}%${s.pct < threshold ? ' ⚠️' : ''}`
+      s.hasData && typeof s.pct === 'number' ? `${s.pct}%${s.pct < threshold ? ' ⚠️' : ''}` : (isEn ? 'No data' : 'Sin datos')
     ]);
 
     autoTable(doc, {

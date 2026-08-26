@@ -26,7 +26,9 @@ export const PlayerAttendanceSubTab = ({ playerId, teamId }) => {
 
   const { getPlayerStats, loading } = useAttendance(effectiveTeamId);
   const stats = (typeof getPlayerStats === 'function' ? getPlayerStats(playerId) : null) || {
-    pct: 100,
+    pct: null,
+    hasData: false,
+    status: 'no_data',
     streak: 0,
     present: 0,
     absent: 0,
@@ -41,7 +43,8 @@ export const PlayerAttendanceSubTab = ({ playerId, teamId }) => {
     return <div style={{ padding: '20px', textAlign: 'center', color: 'var(--text-secondary)' }}>{isEn ? 'Loading attendance...' : 'Cargando asistencia...'}</div>;
   }
 
-  const isAtRisk = stats.pct < 70;
+  const hasData = stats.hasData && typeof stats.pct === 'number';
+  const isAtRisk = hasData && stats.pct < 70;
 
   return (
     <div className="player-attendance-subtab" style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
@@ -59,11 +62,11 @@ export const PlayerAttendanceSubTab = ({ playerId, teamId }) => {
           <div style={{ fontSize: '11px', fontWeight: '800', color: 'var(--text-secondary)', textTransform: 'uppercase' }}>
             {t('player.attendance.rate')}
           </div>
-          <div style={{ fontSize: '24px', fontWeight: '900', color: isAtRisk ? '#EF4444' : '#22C55E', margin: '4px 0' }}>
-            {stats.pct}%
+          <div style={{ fontSize: '24px', fontWeight: '900', color: hasData ? (isAtRisk ? '#EF4444' : '#22C55E') : 'var(--text-secondary)', margin: '4px 0' }}>
+            {hasData ? `${stats.pct}%` : '—'}
           </div>
-          <div style={{ fontSize: '10px', color: 'var(--text-secondary)' }}>
-            {isAtRisk ? (isEn ? '⚠️ Below 70%' : '⚠️ Bajo el 70%') : (isEn ? '✓ Optimal' : '✓ Óptimo')}
+          <div style={{ fontSize: '10px', color: 'var(--text-secondary)', fontWeight: '700' }}>
+            {!hasData ? (isEn ? '⚪ No data' : '⚪ Sin datos') : isAtRisk ? (isEn ? '⚠️ Below 70%' : '⚠️ Bajo el 70%') : (isEn ? '✓ Optimal' : '✓ Óptimo')}
           </div>
         </div>
 

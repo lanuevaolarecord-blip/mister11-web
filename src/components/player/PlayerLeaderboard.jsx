@@ -409,7 +409,7 @@ export const PlayerLeaderboard = ({
 
               <div className="col-metric metric-cell">
                 {activeFilter === 'ATTENDANCE' && (
-                  <span className="main-metric-val green">{p.attendancePct}%</span>
+                  <span className="main-metric-val green">{p.attendancePct !== null ? `${p.attendancePct}%` : '—'}</span>
                 )}
                 {activeFilter === 'MATCHES' && (
                   <span className="main-metric-val">

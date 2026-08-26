@@ -37,6 +37,9 @@ export const translations = {
     'common.injured': 'Lesionado',
     'common.official': 'Oficial',
     'common.friendly': 'Amistoso',
+    'common.noData': 'Sin datos',
+    'common.optimal': 'Óptimo',
+    'common.risk': 'Riesgo',
 
     // ── Dashboard Entrenador ────────────────────────────────
     'dashboard.welcome': 'Hola, {name}',
@@ -606,6 +609,9 @@ export const translations = {
     'common.injured': 'Injured',
     'common.official': 'Official',
     'common.friendly': 'Friendly',
+    'common.noData': 'No data',
+    'common.optimal': 'Optimal',
+    'common.risk': 'Risk',
 
     // ── Coach Dashboard ─────────────────────────────────────
     'dashboard.welcome': 'Hello, {name}',

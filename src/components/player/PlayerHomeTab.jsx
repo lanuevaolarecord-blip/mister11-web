@@ -18,7 +18,7 @@ export const PlayerHomeTab = ({ player, team, teamPath, onNavigateTab, isParentV
 
   const [nextEvent, setNextEvent] = useState(null);
   const [announcements, setAnnouncements] = useState([]);
-  const [attendanceStats, setAttendanceStats] = useState({ streak: 0, percentage: 100, total: 0, attended: 0 });
+  const [attendanceStats, setAttendanceStats] = useState({ streak: 0, percentage: null, hasData: false, total: 0, attended: 0 });
   const [seasonPerformance, setSeasonPerformance] = useState({ goals: 0, minutes: 0, matches: 0 });
   const [loading, setLoading] = useState(true);
 
@@ -135,6 +135,9 @@ export const PlayerHomeTab = ({ player, team, teamPath, onNavigateTab, isParentV
         streak: stats.streak,
         maxStreak: stats.maxStreak,
         percentage: stats.percentage,
+        pct: stats.pct,
+        hasData: stats.hasData,
+        status: stats.status,
         total: stats.totalVerified,
         attended: stats.attended,
         attendanceXP: stats.attendanceXP,

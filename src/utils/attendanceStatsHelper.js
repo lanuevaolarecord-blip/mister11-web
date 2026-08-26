@@ -27,6 +27,8 @@
  *    - Si el denominador es 0, retorna 100% si no hubo faltas, o 0% si no hay datos.
  */
 
+import { calculateAttendanceMetrics } from './attendanceMath';
+
 export const DEFAULT_XP_TABLE = {
   xpPresente: 10,
   xpTarde: 5,
@@ -261,16 +263,21 @@ export const calculatePlayerAttendanceStats = (
   });
 
   const totalVerified = attended + justified + injured + absent;
-  const effectiveDenominator = totalVerified - justified - injured;
-
-  const percentage = effectiveDenominator > 0
-    ? Math.min(100, Math.round((attended / effectiveDenominator) * 100))
-    : (totalVerified > 0 ? 100 : 0);
+  const metrics = calculateAttendanceMetrics({
+    present: attended - late,
+    late,
+    justified,
+    injured,
+    absent
+  });
 
   return {
     streak: currentStreak,
     maxStreak,
-    percentage,
+    percentage: metrics.pct,
+    pct: metrics.pct,
+    hasData: metrics.hasData,
+    status: metrics.status,
     totalVerified,
     attended,
     late,

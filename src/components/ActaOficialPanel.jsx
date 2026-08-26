@@ -38,6 +38,11 @@ const MINUTE_SOURCE_LABEL = {
   titular_subout: '🔄 Sustituido',
   sub_in:         '🔄 Entró',
   dnp:            '🪑 No entró',
+  absent:         '❌ Ausente',
+  justified:      '📋 Justificado',
+  injured:        '🩺 Lesionado (0\')',
+  injured_played: '🩺 Lesionado (jugó)',
+  late_adjusted:  '⚠️ Tarde (ajustado)',
   not_called:     '—',
 };
 
@@ -328,16 +333,6 @@ const ActaOficialPanel = ({ matchId, matchData, players = [], calledPlayers = []
           const isStarter = titularesSet.has(pid);
           const isSub = rawSuplentes.includes(pid);
 
-          // Cálculo en vivo del motor de minutos
-          const computedMin = calculateMinutesFromEvents(
-            pid,
-            effectiveEvents,
-            rawTitulares,
-            rawSuplentes,
-            duration,
-            actual?.minutesOverride ?? null
-          );
-
           // Determinación del estado efectivo
           let status = actual?.status;
           if (!status) {
@@ -360,6 +355,18 @@ const ActaOficialPanel = ({ matchId, matchData, players = [], calledPlayers = []
               }
             }
           }
+
+          // Cálculo en vivo del motor de minutos con estado y retraso
+          const computedMin = calculateMinutesFromEvents(
+            pid,
+            effectiveEvents,
+            rawTitulares,
+            rawSuplentes,
+            duration,
+            actual?.minutesOverride ?? null,
+            status,
+            actual?.lateMin ?? null
+          );
 
           const currentStatus = STATUS_OPTIONS.find(s => s.id === status);
           const displayMinutes = isClosed && actual?.minutes !== undefined && actual?.minutes !== null

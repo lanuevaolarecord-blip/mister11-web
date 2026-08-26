@@ -2,23 +2,29 @@
  * src/utils/minutesEngine.js
  * Míster11 — Motor de Minutos Reales (Capa de Verdad)
  *
- * Calcula los minutos jugados por un jugador a partir de los EVENTOS del partido.
+ * Calcula los minutos jugados por un jugador a partir de los EVENTOS del partido
+ * y del ESTADO DE ASISTENCIA oficial del acta.
  * NUNCA asigna minutos por convocatoria.
  *
  * Reglas oficiales:
- *  1. Titular SIN evento de salida       → minutes = totalDuration
- *  2. Titular CON salida en minuto X     → minutes = X
- *  3. Suplente CON entrada en minuto Y   → minutes = totalDuration - Y
- *  4. Suplente SIN entrada               → minutes = 0 (DNP)
- *  5. minutesOverride del míster         → SIEMPRE prevalece sobre el motor
+ *  1. Ausente o Justificado               → minutes = 0 (nunca hereda 90' por estar en alineación)
+ *  2. Lesionado                           → minutos según sustitución; si no entró = 0
+ *  3. Tarde                               → minutos según entrada (o total - lateMin si fue titular)
+ *  4. Titular Presente SIN salida         → minutes = totalDuration
+ *  5. Titular Presente CON salida en min X → minutes = X
+ *  6. Suplente Presente CON entrada en min Y → minutes = totalDuration - Y
+ *  7. Suplente Presente SIN entrada       → minutes = 0 (DNP)
+ *  8. minutesOverride del míster          → SIEMPRE prevalece sobre el motor
  *
- * @param {string} playerId        - ID del jugador
- * @param {Array}  allEvents       - Todos los eventos del partido (cambios, goles, tarjetas…)
- * @param {Array}  titulares       - Lista de IDs titulares (primeros 11)
- * @param {Array}  suplentes       - Lista de IDs suplentes (banco)
- * @param {number} totalDuration   - Duración total del partido en minutos (defecto 90)
+ * @param {string} playerId             - ID del jugador
+ * @param {Array}  allEvents            - Todos los eventos del partido (cambios, goles, tarjetas…)
+ * @param {Array}  titulares            - Lista de IDs titulares (primeros 11)
+ * @param {Array}  suplentes            - Lista de IDs suplentes (banco)
+ * @param {number} totalDuration        - Duración total del partido en minutos (defecto 90)
  * @param {number|null} minutesOverride - Si el míster editó manualmente los minutos
- * @returns {{ minutes: number, source: 'override'|'titular_full'|'titular_subout'|'sub_in'|'dnp'|'not_called' }}
+ * @param {string|null} attendanceStatus - Estado oficial ('presente', 'ausente', 'tarde', 'justificado', 'lesionado')
+ * @param {number|null} lateMin         - Minutos de retraso si status === 'tarde'
+ * @returns {{ minutes: number, source: string }}
  */
 export const calculateMinutesFromEvents = (
   playerId,
@@ -26,12 +32,14 @@ export const calculateMinutesFromEvents = (
   titulares = [],
   suplentes = [],
   totalDuration = 90,
-  minutesOverride = null
+  minutesOverride = null,
+  attendanceStatus = null,
+  lateMin = null
 ) => {
   const pid = String(playerId);
   const duration = parseInt(totalDuration, 10) || 90;
 
-  // Regla 5: override manual siempre gana
+  // Regla 8: override manual siempre gana
   if (minutesOverride !== null && minutesOverride !== undefined && !isNaN(Number(minutesOverride))) {
     return { minutes: Math.max(0, parseInt(minutesOverride, 10)), source: 'override' };
   }
@@ -44,35 +52,83 @@ export const calculateMinutesFromEvents = (
     return { minutes: 0, source: 'not_called' };
   }
 
+  // Normalizar estado de asistencia si existe
+  const normStatus = attendanceStatus ? String(attendanceStatus).toLowerCase().trim() : null;
+
+  // Regla 1: Ausente o Justificado → 0 minutos absoluto
+  if (normStatus === 'ausente' || normStatus === 'absent' || normStatus === 'not_going') {
+    return { minutes: 0, source: 'absent' };
+  }
+  if (normStatus === 'justificado' || normStatus === 'justified') {
+    return { minutes: 0, source: 'justified' };
+  }
+
   // Eventos de cambio normalizados (soporte para varios alias de campo)
-  const subEvents = allEvents.filter(e =>
-    e.type === 'cambio' || e.type === 'sustitucion' || e.type === 'substitution'
+  const subEvents = (allEvents || []).filter(e =>
+    e && (e.type === 'cambio' || e.type === 'sustitucion' || e.type === 'substitution')
   );
 
+  const subOutEvent = subEvents.find(e =>
+    String(e.subOutId || e.jugadorSaleId || e.playerOutId || '') === pid
+  );
+  const subInEvent = subEvents.find(e =>
+    String(e.subInId || e.jugadorEntraId || e.playerInId || '') === pid
+  );
+
+  // Regla 2: Lesionado
+  if (normStatus === 'lesionado' || normStatus === 'injured') {
+    if (subInEvent) {
+      const entryMin = parseInt(subInEvent.minute || subInEvent.minuto || 0, 10);
+      const exitMin = subOutEvent ? parseInt(subOutEvent.minute || subOutEvent.minuto || duration, 10) : duration;
+      return { minutes: Math.max(0, exitMin - entryMin), source: 'injured_played' };
+    }
+    if (isTitular) {
+      if (subOutEvent) {
+        const exitMin = parseInt(subOutEvent.minute || subOutEvent.minuto || duration, 10);
+        return { minutes: Math.max(0, exitMin), source: 'injured_played' };
+      }
+      return { minutes: 0, source: 'injured' };
+    }
+    return { minutes: 0, source: 'injured' };
+  }
+
+  // Regla 3: Tarde
+  if (normStatus === 'tarde' || normStatus === 'late') {
+    if (subInEvent) {
+      const entryMin = parseInt(subInEvent.minute || subInEvent.minuto || 0, 10);
+      const exitMin = subOutEvent ? parseInt(subOutEvent.minute || subOutEvent.minuto || duration, 10) : duration;
+      return { minutes: Math.max(0, exitMin - entryMin), source: 'sub_in' };
+    }
+    if (isTitular) {
+      const lMin = parseInt(lateMin || 0, 10);
+      if (subOutEvent) {
+        const exitMin = parseInt(subOutEvent.minute || subOutEvent.minuto || duration, 10);
+        return { minutes: Math.max(0, exitMin - lMin), source: 'late_adjusted' };
+      }
+      return { minutes: Math.max(0, duration - lMin), source: 'late_adjusted' };
+    }
+    return { minutes: 0, source: 'dnp' };
+  }
+
+  // Reglas 4, 5, 6, 7: Presente (o por defecto)
   if (isTitular) {
-    // ¿Fue sustituido?
-    const subOutEvent = subEvents.find(e =>
-      String(e.subOutId || e.jugadorSaleId || e.playerOutId || '') === pid
-    );
     if (subOutEvent) {
       const min = parseInt(subOutEvent.minute || subOutEvent.minuto || duration, 10);
       return { minutes: Math.max(0, min), source: 'titular_subout' };
     }
-    // Titular que jugó todo
     return { minutes: duration, source: 'titular_full' };
   }
 
-  // Suplente: ¿entró al campo?
-  const subInEvent = subEvents.find(e =>
-    String(e.subInId || e.jugadorEntraId || e.playerInId || '') === pid
-  );
-  if (subInEvent) {
-    const entryMin = parseInt(subInEvent.minute || subInEvent.minuto || 0, 10);
-    return { minutes: Math.max(0, duration - entryMin), source: 'sub_in' };
+  if (isSuplente) {
+    if (subInEvent) {
+      const entryMin = parseInt(subInEvent.minute || subInEvent.minuto || 0, 10);
+      const exitMin = subOutEvent ? parseInt(subOutEvent.minute || subOutEvent.minuto || duration, 10) : duration;
+      return { minutes: Math.max(0, exitMin - entryMin), source: 'sub_in' };
+    }
+    return { minutes: 0, source: 'dnp' };
   }
 
-  // Suplente que no entró (DNP: Did Not Play)
-  return { minutes: 0, source: 'dnp' };
+  return { minutes: 0, source: 'not_called' };
 };
 
 /**
@@ -100,7 +156,7 @@ export const isMatchStartedOrFinished = (match) => {
  * Regla de Oro:
  *  - En partido iniciado/terminado: jugadores en alineación (titulares y suplentes) son PRESENTE automáticos.
  *  - Si no están en alineación pero hay RSVP -> se mapea el RSVP.
- *  - Minutos calculados con el minutesEngine a partir de eventos de cambios.
+ *  - Minutos calculados con el minutesEngine a partir de eventos de cambios y estado.
  *  - NUNCA sobreescribe ediciones manuales del míster si preserveManual es true.
  *
  * @param {Object} match
@@ -108,7 +164,7 @@ export const isMatchStartedOrFinished = (match) => {
  * @param {Object} rsvpMap
  * @param {string} userId
  * @param {Object} options
- * @returns {Object} { [playerId]: { status, minutes, minuteSource, source, at, by } }
+ * @returns {Object} { [playerId]: { status, minutes, minuteSource, source, at, by, lateMin?, minutesOverride? } }
  */
 export const buildSmartMatchSheetActual = (
   match = {},
@@ -156,19 +212,13 @@ export const buildSmartMatchSheetActual = (
 
   allPlayerIds.forEach(pid => {
     const existing = result[pid] || {};
-    const isManual = options.preserveManual && (existing.source === 'manual' || (existing.status && existing.source !== 'auto' && existing.source !== 'auto_prefill' && existing.source !== 'rsvp_prefill'));
+    const isManual = options.preserveManual && (
+      existing.source === 'manual' ||
+      (existing.status && existing.source !== 'auto' && existing.source !== 'auto_prefill' && existing.source !== 'rsvp_prefill')
+    );
     const manualMinutesOverride = existing.minutesOverride !== undefined && existing.minutesOverride !== null
       ? existing.minutesOverride
       : null;
-
-    const minutesCalc = calculateMinutesFromEvents(
-      pid,
-      allEvents,
-      titulares,
-      suplentes,
-      duration,
-      manualMinutesOverride
-    );
 
     let status = existing.status;
 
@@ -196,6 +246,17 @@ export const buildSmartMatchSheetActual = (
       }
     }
 
+    const minutesCalc = calculateMinutesFromEvents(
+      pid,
+      allEvents,
+      titulares,
+      suplentes,
+      duration,
+      manualMinutesOverride,
+      status,
+      existing.lateMin
+    );
+
     result[pid] = {
       ...existing,
       status: status || 'sin_registro',
@@ -212,11 +273,18 @@ export const buildSmartMatchSheetActual = (
 
 /**
  * Calcula los minutos de TODOS los jugadores de un partido de una sola vez.
- * @param {Object} match   - Documento del partido (titulares, suplentes, events, duration)
- * @param {Object} overrides - { [playerId]: minutesOverride } (del acta oficial)
+ * @param {Object} match      - Documento del partido (titulares, suplentes, events, duration)
+ * @param {Object} overrides  - { [playerId]: minutesOverride } (del acta oficial)
+ * @param {Object} statusMap  - { [playerId]: status } (estado oficial)
+ * @param {Object} lateMinMap - { [playerId]: lateMin } (minutos de retraso si status === 'tarde')
  * @returns {Object} { [playerId]: { minutes, source } }
  */
-export const calculateAllPlayerMinutes = (match = {}, overrides = {}) => {
+export const calculateAllPlayerMinutes = (
+  match = {},
+  overrides = {},
+  statusMap = {},
+  lateMinMap = {}
+) => {
   const rawTitulares = Array.isArray(match.titulares)
     ? match.titulares
     : (match.alineacion?.titulares || []);
@@ -234,6 +302,7 @@ export const calculateAllPlayerMinutes = (match = {}, overrides = {}) => {
   const allPlayers = [...new Set([
     ...titulares,
     ...suplentes,
+    ...Object.keys(statusMap || {})
   ])];
 
   const result = {};
@@ -244,10 +313,10 @@ export const calculateAllPlayerMinutes = (match = {}, overrides = {}) => {
       titulares,
       suplentes,
       duration,
-      overrides[pid] ?? null
+      overrides[pid] ?? null,
+      statusMap[pid] ?? null,
+      lateMinMap[pid] ?? null
     );
   });
   return result;
 };
-
-

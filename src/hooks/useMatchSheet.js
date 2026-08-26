@@ -20,7 +20,7 @@ import {
 } from 'firebase/firestore';
 import { db } from '../firebaseConfig';
 import { useAuth } from '../context/AuthContext';
-import { calculateAllPlayerMinutes, buildSmartMatchSheetActual } from '../utils/minutesEngine';
+import { calculateAllPlayerMinutes, buildSmartMatchSheetActual, calculateMinutesFromEvents } from '../utils/minutesEngine';
 import { showToast } from '../utils/toast';
 
 /**
@@ -156,9 +156,32 @@ export const useMatchSheet = (teamPath, matchId, matchData, players = []) => {
     try {
       const matchDocRef = doc(db, `${cleanPath}/matches`, matchId);
       const existing = sheet?.actual?.[playerId] || {};
+      const duration = parseInt(matchData?.duration || matchData?.duracion || 90, 10);
+      const rawTitulares = Array.isArray(matchData?.titulares) ? matchData.titulares : (matchData?.alineacion?.titulares || []);
+      const rawSuplentes = Array.isArray(matchData?.suplentes) ? matchData.suplentes : (matchData?.alineacion?.suplentes || []);
+      const allEvents = Array.isArray(matchData?.liveStatsEvents) && matchData.liveStatsEvents.length > 0
+        ? matchData.liveStatsEvents
+        : (Array.isArray(matchData?.events) ? matchData.events : []);
+
+      const effectiveOverride = minutesOverride !== null ? minutesOverride : (existing.minutesOverride ?? null);
+      const effectiveLateMin = lateMin !== null ? lateMin : (existing.lateMin ?? null);
+
+      const minutesCalc = calculateMinutesFromEvents(
+        playerId,
+        allEvents,
+        rawTitulares,
+        rawSuplentes,
+        duration,
+        effectiveOverride,
+        status,
+        effectiveLateMin
+      );
+
       const payload = {
         ...existing,
         status,
+        minutes: minutesCalc.minutes,
+        minuteSource: minutesCalc.source,
         source: 'manual',
         at: new Date().toISOString(),
         by: user.uid,

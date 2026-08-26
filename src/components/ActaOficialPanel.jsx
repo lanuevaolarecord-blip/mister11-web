@@ -14,6 +14,7 @@ import React, { useMemo, useState } from 'react';
 import { useMatchSheet } from '../hooks/useMatchSheet';
 import { useAuth } from '../context/AuthContext';
 import { useTeams } from '../hooks/useTeams';
+import { calculateMinutesFromEvents, isMatchStartedOrFinished } from '../utils/minutesEngine';
 
 const RSVP_LABELS = {
   going:       { label: 'Irá',            emoji: '✅', color: '#10B981' },
@@ -23,11 +24,12 @@ const RSVP_LABELS = {
 };
 
 const STATUS_OPTIONS = [
-  { id: 'presente',           label: 'Presente',   emoji: '✅', color: '#10B981', bg: 'rgba(16,185,129,0.15)' },
-  { id: 'ausente',            label: 'Ausente',    emoji: '❌', color: '#EF4444', bg: 'rgba(239,68,68,0.15)'  },
-  { id: 'tarde',              label: 'Tarde',      emoji: '⚠️', color: '#F59E0B', bg: 'rgba(245,158,11,0.15)' },
-  { id: 'justificado',        label: 'Justificado',emoji: '📋', color: '#3B82F6', bg: 'rgba(59,130,246,0.15)' },
-  { id: 'lesionado',          label: 'Lesionado',  emoji: '🤕', color: '#A855F7', bg: 'rgba(168,85,247,0.15)' },
+  { id: 'presente',     label: 'Presente',     emoji: '✅', color: '#10B981', bg: 'rgba(16,185,129,0.15)' },
+  { id: 'ausente',      label: 'Ausente',      emoji: '❌', color: '#EF4444', bg: 'rgba(239,68,68,0.15)'  },
+  { id: 'tarde',        label: 'Tarde',        emoji: '⚠️', color: '#F59E0B', bg: 'rgba(245,158,11,0.15)' },
+  { id: 'justificado',  label: 'Justificado',  emoji: '📋', color: '#3B82F6', bg: 'rgba(59,130,246,0.15)' },
+  { id: 'lesionado',    label: 'Lesionado',    emoji: '🩺', color: '#A855F7', bg: 'rgba(168,85,247,0.15)' },
+  { id: 'sin_registro', label: 'Sin registro', emoji: '🔘', color: '#6B7280', bg: 'rgba(107,114,128,0.15)' },
 ];
 
 const MINUTE_SOURCE_LABEL = {
@@ -56,6 +58,7 @@ const ActaOficialPanel = ({ matchId, matchData, players = [], calledPlayers = []
     getPlayerActual,
     getPlayerRsvp,
     getDiscrepancies,
+    smartPrefill,
     prefillFromRsvp,
     updatePlayerStatus,
     updateMinutesOverride,
@@ -65,6 +68,8 @@ const ActaOficialPanel = ({ matchId, matchData, players = [], calledPlayers = []
 
   const [closingInProgress, setClosingInProgress] = useState(false);
   const [expandedPlayer, setExpandedPlayer] = useState(null);
+
+  const isStartedOrDone = useMemo(() => isMatchStartedOrFinished(matchData), [matchData]);
 
   // Jugadores del acta: convocados (titulares + suplentes)
   const convocadosIds = useMemo(() => {
@@ -81,11 +86,31 @@ const ActaOficialPanel = ({ matchId, matchData, players = [], calledPlayers = []
     [convocadosIds, players]
   );
 
-  const titularesSet = useMemo(() => new Set(
-    (Array.isArray(matchData?.titulares) ? matchData.titulares : []).map(String)
-  ), [matchData?.titulares]);
+  const rawTitulares = useMemo(() =>
+    (Array.isArray(matchData?.titulares) ? matchData.titulares : []).filter(Boolean).map(String),
+    [matchData?.titulares]
+  );
 
-  // Contadores RSVP
+  const rawSuplentes = useMemo(() =>
+    (Array.isArray(matchData?.suplentes) ? matchData.suplentes : []).filter(Boolean).map(String),
+    [matchData?.suplentes]
+  );
+
+  const titularesSet = useMemo(() => new Set(rawTitulares), [rawTitulares]);
+
+  const effectiveEvents = useMemo(() => {
+    if (Array.isArray(matchData?.liveStatsEvents) && matchData.liveStatsEvents.length > 0) {
+      return matchData.liveStatsEvents;
+    }
+    if (Array.isArray(matchData?.events) && matchData.events.length > 0) {
+      return matchData.events;
+    }
+    return [];
+  }, [matchData?.liveStatsEvents, matchData?.events]);
+
+  const duration = parseInt(matchData?.duration || matchData?.duracion || 90, 10);
+
+  // Contadores RSVP (para partidos futuros)
   const rsvpCounts = useMemo(() => {
     const rsvp = sheet?.rsvp || {};
     const counts = { going: 0, not_going: 0, late: 0, justified: 0, noReply: 0 };
@@ -101,10 +126,43 @@ const ActaOficialPanel = ({ matchId, matchData, players = [], calledPlayers = []
     return counts;
   }, [sheet?.rsvp, convocadosIds]);
 
+  // Contadores de Asistencia / Verificación (para partidos iniciados o terminados)
+  const attendanceCounts = useMemo(() => {
+    const counts = {
+      presente: 0,
+      ausente: 0,
+      tarde: 0,
+      justificado: 0,
+      lesionado: 0,
+      sin_registro: 0,
+    };
+    convocadosIds.forEach(pid => {
+      const idStr = String(pid);
+      const actual = sheet?.actual?.[idStr];
+      const status = actual?.status;
+      if (status && counts[status] !== undefined) {
+        counts[status]++;
+      } else if (!status) {
+        if (titularesSet.has(idStr) || rawSuplentes.includes(idStr)) {
+          counts.presente++;
+        } else {
+          counts.sin_registro++;
+        }
+      } else {
+        counts.sin_registro++;
+      }
+    });
+    return counts;
+  }, [sheet?.actual, convocadosIds, titularesSet, rawSuplentes]);
+
   const discrepancies = useMemo(() => getDiscrepancies(), [sheet]);
-  const duration = parseInt(matchData?.duration || 90, 10);
 
   // ── Handlers ─────────────────────────────────────────────
+  const handleSmartPrefill = async () => {
+    try { await smartPrefill(); }
+    catch { /* toast handled in hook */ }
+  };
+
   const handlePrefill = async () => {
     try { await prefillFromRsvp(); }
     catch { /* toast handled in hook */ }
@@ -163,14 +221,19 @@ const ActaOficialPanel = ({ matchId, matchData, players = [], calledPlayers = []
           <p style={styles.subtitle}>
             {isClosed
               ? `Cerrada por ${sheet?.closedBy ? 'Staff' : '—'}. Minutos oficiales registrados.`
-              : 'Verifica la asistencia y los minutos antes de cerrar el acta.'}
+              : isStartedOrDone
+                ? 'Verifica la asistencia real y minutos de los jugadores antes de cerrar el acta.'
+                : 'Planificación de convocatoria y confirmación de asistencia previa (RSVP).'}
           </p>
         </div>
         <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
           {!isClosed && (
             <>
+              <button style={styles.btnPrimary} onClick={handleSmartPrefill}>
+                ⚡ Prellenado inteligente
+              </button>
               <button style={styles.btnSecondary} onClick={handlePrefill}>
-                ⚡ Prellenar desde RSVP
+                📅 Prellenar desde RSVP
               </button>
               <button
                 style={{ ...styles.btnClose, opacity: closingInProgress ? 0.7 : 1 }}
@@ -189,28 +252,72 @@ const ActaOficialPanel = ({ matchId, matchData, players = [], calledPlayers = []
         </div>
       </div>
 
-      {/* ── RSVP Summary bar ─────────────────────────── */}
-      <div style={styles.rsvpBar}>
-        {Object.entries(RSVP_LABELS).map(([key, info]) => (
-          <div key={key} style={{ ...styles.rsvpBadge, borderColor: info.color }}>
-            <span style={{ fontSize: '18px' }}>{info.emoji}</span>
-            <span style={{ fontWeight: '700', color: info.color }}>{rsvpCounts[key]}</span>
-            <span style={{ fontSize: '11px', color: 'var(--partidos-text-muted)' }}>{info.label}</span>
+      {/* ── Resumen de Asistencia / RSVP Bar ─────────────── */}
+      {isStartedOrDone ? (
+        /* Modo Verificación de Asistencia Real */
+        <div style={styles.rsvpBar}>
+          <div style={{ ...styles.rsvpBadge, borderColor: '#10B981' }}>
+            <span style={{ fontSize: '18px' }}>✅</span>
+            <span style={{ fontWeight: '700', color: '#10B981' }}>{attendanceCounts.presente}</span>
+            <span style={{ fontSize: '11px', color: 'var(--partidos-text-muted)' }}>Presentes</span>
           </div>
-        ))}
-        <div style={{ ...styles.rsvpBadge, borderColor: '#6B7280' }}>
-          <span style={{ fontSize: '18px' }}>🔘</span>
-          <span style={{ fontWeight: '700', color: '#6B7280' }}>{rsvpCounts.noReply}</span>
-          <span style={{ fontSize: '11px', color: 'var(--partidos-text-muted)' }}>Sin respuesta</span>
-        </div>
-        {discrepancies.length > 0 && (
-          <div style={{ ...styles.rsvpBadge, borderColor: '#F59E0B', background: 'rgba(245,158,11,0.1)' }}>
+          <div style={{ ...styles.rsvpBadge, borderColor: '#EF4444' }}>
+            <span style={{ fontSize: '18px' }}>❌</span>
+            <span style={{ fontWeight: '700', color: '#EF4444' }}>{attendanceCounts.ausente}</span>
+            <span style={{ fontSize: '11px', color: 'var(--partidos-text-muted)' }}>Ausentes</span>
+          </div>
+          <div style={{ ...styles.rsvpBadge, borderColor: '#F59E0B' }}>
             <span style={{ fontSize: '18px' }}>⚠️</span>
-            <span style={{ fontWeight: '700', color: '#F59E0B' }}>{discrepancies.length}</span>
-            <span style={{ fontSize: '11px', color: '#F59E0B' }}>Discrepancias</span>
+            <span style={{ fontWeight: '700', color: '#F59E0B' }}>{attendanceCounts.tarde}</span>
+            <span style={{ fontSize: '11px', color: 'var(--partidos-text-muted)' }}>Tarde</span>
           </div>
-        )}
-      </div>
+          <div style={{ ...styles.rsvpBadge, borderColor: '#3B82F6' }}>
+            <span style={{ fontSize: '18px' }}>📋</span>
+            <span style={{ fontWeight: '700', color: '#3B82F6' }}>{attendanceCounts.justificado}</span>
+            <span style={{ fontSize: '11px', color: 'var(--partidos-text-muted)' }}>Justificados</span>
+          </div>
+          <div style={{ ...styles.rsvpBadge, borderColor: '#A855F7' }}>
+            <span style={{ fontSize: '18px' }}>🩺</span>
+            <span style={{ fontWeight: '700', color: '#A855F7' }}>{attendanceCounts.lesionado}</span>
+            <span style={{ fontSize: '11px', color: 'var(--partidos-text-muted)' }}>Lesionados</span>
+          </div>
+          <div style={{ ...styles.rsvpBadge, borderColor: '#6B7280' }}>
+            <span style={{ fontSize: '18px' }}>🔘</span>
+            <span style={{ fontWeight: '700', color: '#6B7280' }}>{attendanceCounts.sin_registro}</span>
+            <span style={{ fontSize: '11px', color: 'var(--partidos-text-muted)' }}>Sin registro</span>
+          </div>
+          {discrepancies.length > 0 && (
+            <div style={{ ...styles.rsvpBadge, borderColor: '#F59E0B', background: 'rgba(245,158,11,0.1)' }}>
+              <span style={{ fontSize: '18px' }}>⚠️</span>
+              <span style={{ fontWeight: '700', color: '#F59E0B' }}>{discrepancies.length}</span>
+              <span style={{ fontSize: '11px', color: '#F59E0B' }}>Discrepancias</span>
+            </div>
+          )}
+        </div>
+      ) : (
+        /* Modo RSVP (Partido Futuro) */
+        <div style={styles.rsvpBar}>
+          {Object.entries(RSVP_LABELS).map(([key, info]) => (
+            <div key={key} style={{ ...styles.rsvpBadge, borderColor: info.color }}>
+              <span style={{ fontSize: '18px' }}>{info.emoji}</span>
+              <span style={{ fontWeight: '700', color: info.color }}>{rsvpCounts[key]}</span>
+              <span style={{ fontSize: '11px', color: 'var(--partidos-text-muted)' }}>{info.label}</span>
+            </div>
+          ))}
+          <div style={{ ...styles.rsvpBadge, borderColor: '#6B7280' }}>
+            <span style={{ fontSize: '18px' }}>🔘</span>
+            <span style={{ fontWeight: '700', color: '#6B7280' }}>{rsvpCounts.noReply}</span>
+            <span style={{ fontSize: '11px', color: 'var(--partidos-text-muted)' }}>Sin respuesta</span>
+          </div>
+          {discrepancies.length > 0 && (
+            <div style={{ ...styles.rsvpBadge, borderColor: '#F59E0B', background: 'rgba(245,158,11,0.1)' }}>
+              <span style={{ fontSize: '18px' }}>⚠️</span>
+              <span style={{ fontWeight: '700', color: '#F59E0B' }}>{discrepancies.length}</span>
+              <span style={{ fontSize: '11px', color: '#F59E0B' }}>Discrepancias</span>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* ── Player List ───────────────────────────────── */}
       <div style={styles.playerList}>
@@ -219,10 +326,49 @@ const ActaOficialPanel = ({ matchId, matchData, players = [], calledPlayers = []
           const rsvp  = getPlayerRsvp(pid);
           const actual = getPlayerActual(pid);
           const isStarter = titularesSet.has(pid);
-          const status = actual?.status || null;
+          const isSub = rawSuplentes.includes(pid);
+
+          // Cálculo en vivo del motor de minutos
+          const computedMin = calculateMinutesFromEvents(
+            pid,
+            effectiveEvents,
+            rawTitulares,
+            rawSuplentes,
+            duration,
+            actual?.minutesOverride ?? null
+          );
+
+          // Determinación del estado efectivo
+          let status = actual?.status;
+          if (!status) {
+            if (isStartedOrDone) {
+              if (isStarter || isSub) status = 'presente';
+              else if (rsvp?.status) {
+                const MAP = { going: 'presente', not_going: 'ausente', late: 'tarde', justified: 'justificado' };
+                status = MAP[rsvp.status] || 'sin_registro';
+              } else {
+                status = 'sin_registro';
+              }
+            } else {
+              if (rsvp?.status) {
+                const MAP = { going: 'presente', not_going: 'ausente', late: 'tarde', justified: 'justificado' };
+                status = MAP[rsvp.status] || 'sin_registro';
+              } else if (isStarter || isSub) {
+                status = 'presente';
+              } else {
+                status = 'sin_registro';
+              }
+            }
+          }
+
           const currentStatus = STATUS_OPTIONS.find(s => s.id === status);
-          const minuteSource = actual?.minuteSource;
-          const minutesDisplay = actual?.minutes ?? '—';
+          const displayMinutes = isClosed && actual?.minutes !== undefined && actual?.minutes !== null
+            ? actual.minutes
+            : (actual?.minutesOverride !== undefined && actual?.minutesOverride !== null
+                ? actual.minutesOverride
+                : computedMin.minutes);
+
+          const minuteSource = actual?.minuteSource || computedMin.source;
           const isExpanded = expandedPlayer === pid;
           const rsvpInfo = rsvp ? RSVP_LABELS[rsvp.status] : null;
 
@@ -247,36 +393,45 @@ const ActaOficialPanel = ({ matchId, matchData, players = [], calledPlayers = []
                   </div>
                 </div>
 
-                {/* RSVP del jugador */}
+                {/* RSVP previo / Respuesta del jugador */}
                 <div style={styles.rsvpCell}>
-                  {rsvpInfo ? (
-                    <span title={`RSVP: ${rsvpInfo.label}`} style={{ fontSize: '18px' }}>{rsvpInfo.emoji}</span>
+                  {isStartedOrDone ? (
+                    <span
+                      title={`RSVP previo: ${rsvpInfo ? rsvpInfo.label : 'Sin respuesta'}`}
+                      style={{ fontSize: '11px', color: 'var(--partidos-text-muted)', display: 'inline-flex', alignItems: 'center', gap: '3px' }}
+                    >
+                      <span style={{ fontSize: '13px' }}>{rsvpInfo ? rsvpInfo.emoji : '🔘'}</span>
+                    </span>
                   ) : (
-                    <span style={{ fontSize: '14px', color: '#6B7280' }}>🔘</span>
+                    rsvpInfo ? (
+                      <span title={`RSVP: ${rsvpInfo.label}`} style={{ fontSize: '18px' }}>{rsvpInfo.emoji}</span>
+                    ) : (
+                      <span style={{ fontSize: '14px', color: '#6B7280' }}>🔘</span>
+                    )
                   )}
                 </div>
 
-                {/* Status actual (míster) */}
+                {/* Status actual de asistencia */}
                 <div style={styles.statusCell}>
-                  {currentStatus ? (
+                  {currentStatus && currentStatus.id !== 'sin_registro' ? (
                     <span style={{ ...styles.statusChip, background: currentStatus.bg, color: currentStatus.color, border: `1px solid ${currentStatus.color}` }}>
                       {currentStatus.emoji} {currentStatus.label}
                     </span>
                   ) : (
-                    <span style={styles.statusChipEmpty}>Sin asignar</span>
+                    <span style={styles.statusChipEmpty}>Sin registro</span>
                   )}
                 </div>
 
-                {/* Minutos */}
+                {/* Minutos jugados en vivo */}
                 <div style={styles.minutesCell}>
                   <span style={styles.minutesValue}>
-                    {isClosed && minutesDisplay !== '—' ? `${minutesDisplay}'` : (actual ? `${minutesDisplay}'` : '—')}
+                    {displayMinutes !== null && displayMinutes !== undefined ? `${displayMinutes}'` : '0\''}
                   </span>
-                  {minuteSource && (
-                    <span style={styles.minuteSourceLabel}>
-                      {MINUTE_SOURCE_LABEL[minuteSource] || minuteSource}
-                    </span>
-                  )}
+                  <span style={styles.minuteSourceLabel}>
+                    {actual?.minutesOverride !== undefined && actual?.minutesOverride !== null
+                      ? '✏️ Manual'
+                      : `Auto (${MINUTE_SOURCE_LABEL[minuteSource] || minuteSource})`}
+                  </span>
                 </div>
 
                 {/* Expand chevron */}
@@ -317,7 +472,7 @@ const ActaOficialPanel = ({ matchId, matchData, players = [], calledPlayers = []
                         type="number"
                         min="0"
                         max={duration}
-                        placeholder={`Auto (max ${duration})`}
+                        placeholder={`Auto (${computedMin.minutes}')`}
                         defaultValue={actual?.minutesOverride ?? ''}
                         onBlur={(e) => handleMinutesChange(pid, e.target.value)}
                         style={styles.minutesInput}
@@ -325,17 +480,17 @@ const ActaOficialPanel = ({ matchId, matchData, players = [], calledPlayers = []
                     </div>
                     {minuteSource && (
                       <div style={{ fontSize: '12px', color: 'var(--partidos-text-muted)', marginTop: '18px' }}>
-                        Motor: {MINUTE_SOURCE_LABEL[minuteSource] || minuteSource}
+                        Cálculo del motor: {MINUTE_SOURCE_LABEL[minuteSource] || minuteSource} ({computedMin.minutes}')
                       </div>
                     )}
                     {/* Discrepancia */}
-                    {rsvp && actual?.status && (() => {
+                    {rsvp && status && (() => {
                       const MAP = { going: 'presente', not_going: 'ausente', late: 'tarde', justified: 'justificado' };
                       const expected = MAP[rsvp.status];
-                      if (expected && actual.status !== expected) {
+                      if (expected && status !== expected) {
                         return (
                           <div style={styles.discrepancyChip}>
-                            ⚠️ Discrepancia: RSVP dijo "{RSVP_LABELS[rsvp.status]?.label}" pero marcaste "{currentStatus?.label}"
+                            ⚠️ Discrepancia: RSVP previo dijo "{RSVP_LABELS[rsvp.status]?.label}" pero verificaste "{currentStatus?.label}"
                           </div>
                         );
                       }
@@ -421,6 +576,19 @@ const styles = {
     fontSize: '13px',
     color: 'var(--partidos-text-muted)',
     margin: 0,
+  },
+  btnPrimary: {
+    padding: '10px 18px',
+    borderRadius: '8px',
+    border: 'none',
+    background: '#1565C0',
+    color: '#FFFFFF',
+    fontWeight: '800',
+    cursor: 'pointer',
+    fontSize: '13px',
+    minHeight: '44px',
+    boxShadow: '0 4px 10px rgba(21, 101, 192, 0.3)',
+    transition: 'all 0.2s',
   },
   btnSecondary: {
     padding: '10px 18px',

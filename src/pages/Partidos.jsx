@@ -23,6 +23,7 @@ import { SvgDonut, SvgComparisonBars, HalfBreakdown } from '../components/LiveSt
 import './Partidos.css';
 import { normalizeText } from '../utils/normalizeInput';
 import { normalizeLineup, applyLineupChange, formatMatchDateSafe } from '../utils/lineupEngine';
+import { buildSmartMatchSheetActual } from '../utils/minutesEngine';
 
 // Auxiliar para determinar idioma efectivo (manual o idioma del sistema)
 const getEffectiveLanguage = (settingsObj) => {
@@ -262,10 +263,49 @@ const Partidos = () => {
     if (isTimerRunning) {
       toggleTimer();
     }
+    const allEvents = effectiveLiveEvents && effectiveLiveEvents.length > 0
+      ? effectiveLiveEvents
+      : (matchData.liveStatsEvents || matchData.events || []);
+    const duration = parseInt(matchData.duration || matchData.duracion || 90, 10);
+    const currentActual = matchData.actaOficial?.actual || {};
+    const rsvpMap = matchData.playerRsvp || {};
+
+    const norm = normalizeLineup(
+      calledPlayers.slice(0, 11),
+      calledPlayers.slice(11, 18),
+      calledPlayers.filter(Boolean)
+    );
+
+    const smartActual = buildSmartMatchSheetActual(
+      {
+        ...matchData,
+        status: 'Terminado',
+        titulares: norm.titulares,
+        suplentes: norm.suplentes,
+        convocados: norm.convocados,
+        liveStatsEvents: allEvents,
+        events: allEvents,
+        duration
+      },
+      currentActual,
+      rsvpMap,
+      user?.uid || 'staff',
+      { preserveManual: true }
+    );
+
     const updated = { 
       ...matchData, 
       status: 'Terminado',
-      liveStatsEvents: effectiveLiveEvents && effectiveLiveEvents.length > 0 ? effectiveLiveEvents : (matchData.liveStatsEvents || [])
+      titulares: norm.titulares,
+      suplentes: norm.suplentes,
+      convocados: norm.convocados,
+      liveStatsEvents: allEvents,
+      actaOficial: {
+        ...(matchData.actaOficial || {}),
+        actual: smartActual,
+        closed: matchData.actaOficial?.closed || false,
+        totalDuration: duration
+      }
     };
     setMatchData(updated);
     try {
@@ -273,7 +313,7 @@ const Partidos = () => {
     } catch (err) {
       console.error("Error al finalizar partido:", err);
     }
-  }, [matchData, isTimerRunning, toggleTimer, updateMatch, effectiveLiveEvents]);
+  }, [matchData, isTimerRunning, toggleTimer, updateMatch, effectiveLiveEvents, calledPlayers, user]);
 
   const handleAddLiveEvent = useCallback(async (type, explicitHalf) => {
     if (addLiveEvent) {

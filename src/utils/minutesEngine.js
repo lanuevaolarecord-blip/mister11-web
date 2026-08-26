@@ -76,24 +76,164 @@ export const calculateMinutesFromEvents = (
 };
 
 /**
+ * Determina si un partido ya inició o finalizó (vs partido en el futuro).
+ * @param {Object} match
+ * @returns {boolean}
+ */
+export const isMatchStartedOrFinished = (match) => {
+  if (!match) return false;
+  if (match.status === 'Terminado' || match.status === 'En juego') return true;
+  if (match.date) {
+    const timeStr = match.time || '00:00';
+    const [y, m, d] = String(match.date).split('-').map(Number);
+    const [hh, mm] = String(timeStr).split(':').map(Number);
+    if (!isNaN(y) && !isNaN(m) && !isNaN(d)) {
+      const matchDate = new Date(y, m - 1, d, hh || 0, mm || 0);
+      if (new Date() >= matchDate) return true;
+    }
+  }
+  return false;
+};
+
+/**
+ * Construye el mapa `actaOficial.actual` de forma inteligente.
+ * Regla de Oro:
+ *  - En partido iniciado/terminado: jugadores en alineación (titulares y suplentes) son PRESENTE automáticos.
+ *  - Si no están en alineación pero hay RSVP -> se mapea el RSVP.
+ *  - Minutos calculados con el minutesEngine a partir de eventos de cambios.
+ *  - NUNCA sobreescribe ediciones manuales del míster si preserveManual es true.
+ *
+ * @param {Object} match
+ * @param {Object} currentActual
+ * @param {Object} rsvpMap
+ * @param {string} userId
+ * @param {Object} options
+ * @returns {Object} { [playerId]: { status, minutes, minuteSource, source, at, by } }
+ */
+export const buildSmartMatchSheetActual = (
+  match = {},
+  currentActual = {},
+  rsvpMap = {},
+  userId = 'staff',
+  options = { preserveManual: true }
+) => {
+  const rawTitulares = Array.isArray(match.titulares)
+    ? match.titulares
+    : (match.alineacion?.titulares || []);
+  const rawSuplentes = Array.isArray(match.suplentes)
+    ? match.suplentes
+    : (match.alineacion?.suplentes || []);
+  const rawConvocados = Array.isArray(match.convocados)
+    ? match.convocados
+    : (match.alineacion?.convocados || []);
+
+  const titulares = rawTitulares.filter(Boolean).map(String);
+  const suplentes = rawSuplentes.filter(Boolean).map(String);
+  const convocados = rawConvocados.filter(Boolean).map(String);
+
+  const allEvents = Array.isArray(match.liveStatsEvents) && match.liveStatsEvents.length > 0
+    ? match.liveStatsEvents
+    : (Array.isArray(match.events) ? match.events : []);
+  const duration = parseInt(match.duration || match.duracion || 90, 10);
+  const isStartedOrDone = isMatchStartedOrFinished(match);
+
+  const allPlayerIds = [...new Set([
+    ...titulares,
+    ...suplentes,
+    ...convocados,
+    ...Object.keys(rsvpMap || {}),
+    ...Object.keys(currentActual || {})
+  ])].filter(Boolean);
+
+  const RSVP_TO_STATUS = {
+    going: 'presente',
+    not_going: 'ausente',
+    late: 'tarde',
+    justified: 'justificado'
+  };
+
+  const result = { ...(currentActual || {}) };
+
+  allPlayerIds.forEach(pid => {
+    const existing = result[pid] || {};
+    const isManual = options.preserveManual && (existing.source === 'manual' || (existing.status && existing.source !== 'auto' && existing.source !== 'auto_prefill' && existing.source !== 'rsvp_prefill'));
+    const manualMinutesOverride = existing.minutesOverride !== undefined && existing.minutesOverride !== null
+      ? existing.minutesOverride
+      : null;
+
+    const minutesCalc = calculateMinutesFromEvents(
+      pid,
+      allEvents,
+      titulares,
+      suplentes,
+      duration,
+      manualMinutesOverride
+    );
+
+    let status = existing.status;
+
+    if (!isManual || !status) {
+      const isInLineup = titulares.includes(pid) || suplentes.includes(pid);
+      const rsvp = rsvpMap?.[pid];
+      const rsvpStatus = rsvp?.status ? RSVP_TO_STATUS[rsvp.status] : null;
+
+      if (isStartedOrDone) {
+        if (isInLineup) {
+          status = 'presente';
+        } else if (rsvpStatus) {
+          status = rsvpStatus;
+        } else {
+          status = 'sin_registro';
+        }
+      } else {
+        if (rsvpStatus) {
+          status = rsvpStatus;
+        } else if (isInLineup) {
+          status = 'presente';
+        } else {
+          status = 'sin_registro';
+        }
+      }
+    }
+
+    result[pid] = {
+      ...existing,
+      status: status || 'sin_registro',
+      minutes: minutesCalc.minutes,
+      minuteSource: minutesCalc.source,
+      source: isManual ? 'manual' : 'auto',
+      at: existing.at || new Date().toISOString(),
+      by: existing.by || userId || 'staff',
+    };
+  });
+
+  return result;
+};
+
+/**
  * Calcula los minutos de TODOS los jugadores de un partido de una sola vez.
  * @param {Object} match   - Documento del partido (titulares, suplentes, events, duration)
  * @param {Object} overrides - { [playerId]: minutesOverride } (del acta oficial)
  * @returns {Object} { [playerId]: { minutes, source } }
  */
-export const calculateAllPlayerMinutes = (match, overrides = {}) => {
-  const titulares = Array.isArray(match.titulares)
+export const calculateAllPlayerMinutes = (match = {}, overrides = {}) => {
+  const rawTitulares = Array.isArray(match.titulares)
     ? match.titulares
     : (match.alineacion?.titulares || []);
-  const suplentes = Array.isArray(match.suplentes)
+  const rawSuplentes = Array.isArray(match.suplentes)
     ? match.suplentes
     : (match.alineacion?.suplentes || []);
-  const allEvents = Array.isArray(match.events) ? match.events : [];
+
+  const titulares = rawTitulares.filter(Boolean).map(String);
+  const suplentes = rawSuplentes.filter(Boolean).map(String);
+  const allEvents = Array.isArray(match.liveStatsEvents) && match.liveStatsEvents.length > 0
+    ? match.liveStatsEvents
+    : (Array.isArray(match.events) ? match.events : []);
   const duration = parseInt(match.duration || match.duracion || 90, 10);
 
   const allPlayers = [...new Set([
-    ...titulares.map(String),
-    ...suplentes.map(String),
+    ...titulares,
+    ...suplentes,
   ])];
 
   const result = {};
@@ -109,3 +249,5 @@ export const calculateAllPlayerMinutes = (match, overrides = {}) => {
   });
   return result;
 };
+
+

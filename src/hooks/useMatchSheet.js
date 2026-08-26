@@ -20,7 +20,7 @@ import {
 } from 'firebase/firestore';
 import { db } from '../firebaseConfig';
 import { useAuth } from '../context/AuthContext';
-import { calculateAllPlayerMinutes } from '../utils/minutesEngine';
+import { calculateAllPlayerMinutes, buildSmartMatchSheetActual } from '../utils/minutesEngine';
 import { showToast } from '../utils/toast';
 
 /**
@@ -67,6 +67,34 @@ export const useMatchSheet = (teamPath, matchId, matchData, players = []) => {
   }, [cleanPath, matchId, isValid]);
 
   /**
+   * Prellenado Inteligente del Acta Oficial.
+   * - En partido iniciado o terminado: alineación = PRESENTE + minutos calculados por events.
+   * - No sobreescribe modificaciones manuales del míster (source === 'manual').
+   * - No depende de que haya RSVP de los jugadores.
+   */
+  const smartPrefill = async () => {
+    if (!isValid || !user || sheet?.closed) return;
+    try {
+      const smartActual = buildSmartMatchSheetActual(
+        matchData,
+        sheet?.actual || {},
+        sheet?.rsvp || {},
+        user.uid,
+        { preserveManual: true }
+      );
+      const matchDocRef = doc(db, `${cleanPath}/matches`, matchId);
+      await updateDoc(matchDocRef, {
+        'actaOficial.actual': smartActual,
+      });
+      showToast('⚡ Acta prellenada inteligentemente desde alineación y eventos.', 'success');
+    } catch (err) {
+      console.error('[useMatchSheet] Error en prellenado inteligente:', err);
+      showToast('❌ Error en prellenado inteligente.', 'error');
+      throw err;
+    }
+  };
+
+  /**
    * Prellenar el `actual` desde el RSVP actual.
    * going → presente | not_going → ausente | late → tarde | justified → justificado
    * No sobreescribe entradas ya confirmadas por el míster (preserva cambios manuales).
@@ -85,10 +113,11 @@ export const useMatchSheet = (teamPath, matchId, matchData, players = []) => {
 
     const updates = {};
     Object.entries(rsvpMap).forEach(([pid, rsvpData]) => {
-      if (!currentActual[pid]) {
+      if (!currentActual[pid] || currentActual[pid].source !== 'manual') {
         const status = RSVP_TO_STATUS[rsvpData.status] || null;
         if (status) {
           updates[`actaOficial.actual.${pid}`] = {
+            ...(currentActual[pid] || {}),
             status,
             at: new Date().toISOString(),
             by: user.uid,
@@ -98,13 +127,18 @@ export const useMatchSheet = (teamPath, matchId, matchData, players = []) => {
       }
     });
 
-    if (Object.keys(updates).length === 0) return;
+    if (Object.keys(updates).length === 0) {
+      showToast('No hay respuestas RSVP pendientes para prellenar.', 'info');
+      return;
+    }
 
     try {
       const matchDocRef = doc(db, `${cleanPath}/matches`, matchId);
       await updateDoc(matchDocRef, updates);
+      showToast('✅ Estados prellenados desde RSVP.', 'success');
     } catch (err) {
       console.error('[useMatchSheet] Error prellenando desde RSVP:', err);
+      showToast('❌ Error al prellenar desde RSVP.', 'error');
       throw err;
     }
   };
@@ -113,7 +147,7 @@ export const useMatchSheet = (teamPath, matchId, matchData, players = []) => {
    * Actualizar el estado de asistencia de un jugador en el acta.
    * Solo el staff puede llamar a esta función.
    * @param {string} playerId
-   * @param {'presente'|'ausente'|'tarde'|'justificado'|'lesionado'} status
+   * @param {'presente'|'ausente'|'tarde'|'justificado'|'lesionado'|'sin_registro'} status
    * @param {number} [lateMin]         - Minutos de retraso (si status === 'tarde')
    * @param {number|null} [minutesOverride] - Override manual de minutos jugados
    */
@@ -121,8 +155,11 @@ export const useMatchSheet = (teamPath, matchId, matchData, players = []) => {
     if (!isValid || !user || sheet?.closed) return;
     try {
       const matchDocRef = doc(db, `${cleanPath}/matches`, matchId);
+      const existing = sheet?.actual?.[playerId] || {};
       const payload = {
+        ...existing,
         status,
+        source: 'manual',
         at: new Date().toISOString(),
         by: user.uid,
       };
@@ -145,10 +182,18 @@ export const useMatchSheet = (teamPath, matchId, matchData, players = []) => {
     if (!isValid || !user || sheet?.closed) return;
     try {
       const matchDocRef = doc(db, `${cleanPath}/matches`, matchId);
-      await updateDoc(matchDocRef, {
-        [`actaOficial.actual.${playerId}.minutesOverride`]: minutes === '' ? null : parseInt(minutes, 10),
+      const parsed = minutes === '' || minutes === null ? null : parseInt(minutes, 10);
+      const existing = sheet?.actual?.[playerId] || {};
+      const updates = {
+        [`actaOficial.actual.${playerId}.minutesOverride`]: parsed,
         [`actaOficial.actual.${playerId}.by`]: user.uid,
-      });
+        [`actaOficial.actual.${playerId}.source`]: 'manual',
+      };
+      if (parsed !== null) {
+        updates[`actaOficial.actual.${playerId}.minutes`] = parsed;
+        updates[`actaOficial.actual.${playerId}.minuteSource`] = 'override';
+      }
+      await updateDoc(matchDocRef, updates);
     } catch (err) {
       console.error('[useMatchSheet] Error actualizando override de minutos:', err);
       throw err;
@@ -168,37 +213,13 @@ export const useMatchSheet = (teamPath, matchId, matchData, players = []) => {
       const duration = parseInt(matchData?.duration || matchData?.duracion || 90, 10);
       const currentActual = sheet?.actual || {};
 
-      // Construir mapa de overrides desde el actual del míster
-      const overrides = {};
-      Object.entries(currentActual).forEach(([pid, data]) => {
-        if (data.minutesOverride !== undefined && data.minutesOverride !== null) {
-          overrides[pid] = data.minutesOverride;
-        }
-      });
-
-      // Calcular minutos reales con el motor
-      const minutesMap = calculateAllPlayerMinutes(matchData, overrides);
-
-      // Construir el `actual` final con minutos reales y status
-      const finalActual = { ...currentActual };
-      Object.entries(minutesMap).forEach(([pid, { minutes, source }]) => {
-        const existing = finalActual[pid] || {};
-        // Determinar status si no fue definido por el míster
-        let status = existing.status;
-        if (!status) {
-          if (source === 'not_called') status = 'ausente';
-          else if (source === 'dnp') status = 'convocado_no_jugó';
-          else status = 'presente';
-        }
-        finalActual[pid] = {
-          ...existing,
-          status,
-          minutes,
-          minuteSource: source,
-          at: existing.at || new Date().toISOString(),
-          by: existing.by || user.uid,
-        };
-      });
+      const finalActual = buildSmartMatchSheetActual(
+        matchData,
+        currentActual,
+        sheet?.rsvp || {},
+        user.uid,
+        { preserveManual: true }
+      );
 
       const matchDocRef = doc(db, `${cleanPath}/matches`, matchId);
       await updateDoc(matchDocRef, {
@@ -266,6 +287,7 @@ export const useMatchSheet = (teamPath, matchId, matchData, players = []) => {
     getPlayerActual,
     getPlayerRsvp,
     getDiscrepancies,
+    smartPrefill,
     prefillFromRsvp,
     updatePlayerStatus,
     updateMinutesOverride,

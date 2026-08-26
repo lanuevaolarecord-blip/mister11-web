@@ -188,9 +188,18 @@ export const PlayerAchievementsTab = ({ achievements = [], loading, isParentView
                     <span className="ach-status-unlocked">
                       <CheckCircle2 size={14} color="#10B981" /> {t('player.achievements.completed')}
                     </span>
+                  ) : ach.isPendingActa ? (
+                    <span className="ach-status-pending" style={{ color: '#F59E0B', display: 'flex', alignItems: 'center', gap: '4px', fontSize: '11px', fontWeight: '800' }}>
+                      ⏳ {t('player.achievements.pendingActa')}
+                    </span>
                   ) : (
                     <span className="ach-status-locked">
                       <Lock size={13} /> {t('player.achievements.inProgress', { percent: ach.percent })}
+                    </span>
+                  )}
+                  {ach.isRsvpIntentionOnly && (
+                    <span style={{ fontSize: '10px', color: '#94A3B8', fontStyle: 'italic', marginLeft: 'auto' }}>
+                      {t('player.achievements.intentionOnlyNote')}
                     </span>
                   )}
                 </div>

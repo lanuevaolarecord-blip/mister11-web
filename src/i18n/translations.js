@@ -333,6 +333,8 @@ export const translations = {
     'player.achievements.goldBadge': '100 XP · Hito de Temporada (Máximo)',
     'player.achievements.completed': '¡Completado!',
     'player.achievements.inProgress': '{percent}% completado',
+    'player.achievements.pendingActa': 'Pendiente de acta',
+    'player.achievements.intentionOnlyNote': '(Reto de intención)',
     'player.achievements.noSessions': '⏸️ Sin sesiones programadas esta semana',
     'player.achievements.loading': 'Cargando vitrina de logros...',
 
@@ -422,6 +424,7 @@ export const translations = {
     'player.stats.inCompetition': 'en competición',
     'player.stats.matchHistory': 'HISTORIAL DE PARTIDOS DISPUTADOS',
     'player.stats.matchHistorySync': 'Sincronizado con actas del Míster',
+    'player.stats.pendingActaShort': 'Pendiente de acta',
     'player.stats.noMatchesYet': 'Sin partidos registrados aún esta temporada',
     'player.stats.noMatchesDesc': 'Tus minutos, goles y convocatorias aparecerán aquí automáticamente tras cada jornada.',
     'player.stats.leaderboardTitle': 'Leaderboard de Plantilla',
@@ -899,6 +902,8 @@ export const translations = {
     'player.achievements.goldBadge': '100 XP · Season Milestone (Max)',
     'player.achievements.completed': 'Completed!',
     'player.achievements.inProgress': '{percent}% completed',
+    'player.achievements.pendingActa': 'Pending match sheet',
+    'player.achievements.intentionOnlyNote': '(Intention challenge)',
     'player.achievements.noSessions': '⏸️ No sessions scheduled this week',
     'player.achievements.loading': 'Loading achievements showcase...',
 
@@ -988,6 +993,7 @@ export const translations = {
     'player.stats.inCompetition': 'in competition',
     'player.stats.matchHistory': 'OFFICIAL MATCH HISTORY',
     'player.stats.matchHistorySync': 'Synced with coach match sheets',
+    'player.stats.pendingActaShort': 'Pending match sheet',
     'player.stats.noMatchesYet': 'No matches recorded yet this season',
     'player.stats.noMatchesDesc': 'Your minutes, goals, and call-ups will appear here automatically after each match.',
     'player.stats.leaderboardTitle': 'Squad Leaderboard',

@@ -107,6 +107,19 @@ export const useAchievements = (teamPath, playerId, isParentView = false) => {
       return sDate && sDate >= weekStartStr;
     });
 
+    // Detectar si hay eventos con RSVP del jugador pero pendientes de verificación por el míster
+    const pendingSessionsThisWeek = sessionsThisWeek.filter(s => {
+      const hasRsvp = Boolean(s.playerRsvp?.[String(playerId)]);
+      const hasStaff = Boolean(s.records?.[String(playerId)]);
+      return hasRsvp && !hasStaff;
+    });
+
+    const pendingMatches = matches.filter(m => {
+      const isCalledOrRsvp = (m.convocados || []).includes(playerId) || Boolean(m.playerRsvp?.[String(playerId)]);
+      const isClosed = m.actaOficial?.closed === true;
+      return isCalledOrRsvp && !isClosed;
+    });
+
     // Asistencias del jugador en la semana — SOLO desde registros del míster (records[])
     // NUNCA desde playerRsvp para evitar auto-aprobar sin verificación del staff.
     const attendedThisWeek = attendanceRecords.filter(a => {
@@ -165,11 +178,15 @@ export const useAchievements = (teamPath, playerId, isParentView = false) => {
       let progress = 0;
       let target = ach.defaultTarget;
       let isActive = true;
+      let isPendingActa = false;
 
       if (ach.id === 'weekly_perfect_week') {
         target = Math.max(1, sessionsThisWeek.length || ach.defaultTarget);
         progress = attendedThisWeek.length;
         if (sessionsThisWeek.length === 0) isActive = false;
+        if (pendingSessionsThisWeek.length > 0 && progress < target) {
+          isPendingActa = true;
+        }
       } else if (ach.id === 'weekly_wellness') {
         target = Math.max(1, sessionsThisWeek.length || ach.defaultTarget);
         progress = wellnessThisWeek.length;
@@ -191,6 +208,9 @@ export const useAchievements = (teamPath, playerId, isParentView = false) => {
                  staffRecord.status === 'late' ||
                  staffRecord.status === 'tarde';
         }).length;
+        if (pendingSessionsThisWeek.length > 0 && progress < target) {
+          isPendingActa = true;
+        }
       } else if (ach.id === 'biweekly_self_care') {
         progress = wellnessRecords.length;
       } else if (ach.id === 'biweekly_strong_mind') {
@@ -198,11 +218,16 @@ export const useAchievements = (teamPath, playerId, isParentView = false) => {
       } else if (ach.id === 'biweekly_fit') {
         progress = testResults.length > 0 ? 1 : 0;
       } else if (ach.id === 'biweekly_teammate') {
-        // Solo contar sesiones donde el míster dejó algún registro (no sesiones sin pase de lista)
-        progress = attendanceRecords.filter(a => a.records && Object.keys(a.records).length > 0).length;
+        // Único reto basado en intención/RSVP previo a eventos
+        const rsvpInSessions = attendanceRecords.filter(a => Boolean(a.playerRsvp?.[String(playerId)])).length;
+        const rsvpInMatches = matches.filter(m => Boolean(m.playerRsvp?.[String(playerId)])).length;
+        progress = rsvpInSessions + rsvpInMatches;
       } else if (ach.id === 'season_veteran') {
         target = Math.max(5, Math.round((matches.length || 20) * ((seasonSettings.veteranPct || 80) / 100)));
         progress = matchesWithMinutesOrCalled;
+        if (pendingMatches.length > 0 && progress < target) {
+          isPendingActa = true;
+        }
       } else if (ach.id === 'season_scorer') {
         target = seasonSettings.seasonGoals || 10;
         progress = totalGoals;
@@ -220,12 +245,15 @@ export const useAchievements = (teamPath, playerId, isParentView = false) => {
           return staffRecord && (staffRecord.status === 'present' || staffRecord.status === 'presente' ||
                                  staffRecord.status === 'late' || staffRecord.status === 'tarde');
         }).length);
+        if (pendingSessionsThisWeek.length > 0 && progress < target) {
+          isPendingActa = true;
+        }
       }
 
       const percent = target > 0 ? Math.min(100, Math.round((progress / target) * 100)) : 0;
-      const isStoredUnlocked = unlockedState[ach.id]?.unlocked === true;
       const isEligible = progress >= target && isActive;
-      const isUnlocked = isStoredUnlocked || isEligible;
+      // Si se reabre un acta y progress baja del objetivo, no se mantiene desbloqueado
+      const isUnlocked = isEligible;
 
       return {
         ...ach,
@@ -233,6 +261,7 @@ export const useAchievements = (teamPath, playerId, isParentView = false) => {
         target,
         percent,
         isActive,
+        isPendingActa,
         isUnlocked,
         tierInfo: ACHIEVEMENT_TIERS[ach.tier] || ACHIEVEMENT_TIERS.BRONZE
       };

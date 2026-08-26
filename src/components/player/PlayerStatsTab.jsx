@@ -6,6 +6,8 @@ import { useTheme } from '../../context/ThemeContext';
 import { usePlan } from '../../hooks/usePlan';
 import { GraficaEvolucion } from '../GraficasTest';
 import { calculatePlayerMatchStats } from '../../utils/playerMatchStats';
+import { calculatePlayerAttendanceStats } from '../../utils/attendanceStatsHelper';
+import { DEFAULT_SEASON_SETTINGS } from '../../config/achievements';
 import UpgradeModal from '../UpgradeModal';
 import './PlayerStatsTab.css';
 import { 
@@ -298,43 +300,32 @@ export const PlayerStatsTab = ({ player, team, teamPath, isParentView = false, a
   const teamComparison = useMemo(() => {
     if (allPlayers.length === 0) return null;
 
-    let totalPresents = 0;
-    let totalEligibleCalls = 0;
-    let myPresents = 0;
-    let myEligibleCalls = 0;
-
+    const customXpTable = team?.settings?.achievementTargets || team?.achievementTargets || {};
     const hasAttendanceData = allAttendance.length > 0;
+    const hasMatchData = allTeamMatches.length > 0;
 
-    if (hasAttendanceData) {
-      allAttendance.forEach(att => {
-        allPlayers.forEach(p => {
-          const pId = String(p.id);
-          // Verificar si estuvo presente o con retraso justificado
-          const isPresent = (
-            (att.records && (att.records[pId]?.status === 'present' || att.records[pId]?.status === 'late' || att.records[pId] === true)) ||
-            (att.players && (att.players[pId] === true || att.players[pId] === 'presente' || att.players[pId]?.status === 'present')) ||
-            (Array.isArray(att.presentes) && att.presentes.some(id => String(id) === pId)) ||
-            (Array.isArray(att.presentPlayers) && att.presentPlayers.some(id => String(id) === pId))
-          );
+    // Calcular estadísticas de asistencia reales para todos los compañeros
+    let totalSquadAttendanceXP = 0;
+    let totalSquadAttendancePct = 0;
+    let validSquadCount = 0;
 
-          totalEligibleCalls++;
-          if (isPresent) totalPresents++;
+    allPlayers.forEach(p => {
+      const pAtt = calculatePlayerAttendanceStats(p.id, allAttendance, allTeamMatches, customXpTable);
+      totalSquadAttendanceXP += pAtt.attendanceXP;
+      totalSquadAttendancePct += pAtt.percentage;
+      validSquadCount++;
+    });
 
-          if (String(pId) === String(effectivePlayerId)) {
-            myEligibleCalls++;
-            if (isPresent) myPresents++;
-          }
-        });
-      });
-    }
+    const myAtt = calculatePlayerAttendanceStats(effectivePlayerId, allAttendance, allTeamMatches, customXpTable);
+    const myAttendancePct = myAtt.percentage;
+    const myAttendanceXP = myAtt.attendanceXP;
 
-    const avgAttendancePct = totalEligibleCalls > 0 
-      ? Math.round((totalPresents / totalEligibleCalls) * 100) 
+    const avgAttendancePct = validSquadCount > 0 
+      ? Math.round(totalSquadAttendancePct / validSquadCount) 
       : 0;
-
-    const myAttendancePct = myEligibleCalls > 0 
-      ? Math.round((myPresents / myEligibleCalls) * 100) 
-      : (player?.asistenciaPct !== undefined ? player.asistenciaPct : (hasAttendanceData ? 0 : 0));
+    const avgAttendanceXP = validSquadCount > 0 
+      ? Math.round(totalSquadAttendanceXP / validSquadCount) 
+      : 0;
 
     // Minutos calculados con el motor unificado calculatePlayerMatchStats para cada jugador
     let totalMinutesSquad = 0;
@@ -354,23 +345,19 @@ export const PlayerStatsTab = ({ player, team, teamPath, isParentView = false, a
     // Base de minutos posibles: partidos disputados * 90 o el máximo jugador
     const basePossibleMinutes = Math.max(allTeamMatches.length * 90, maxMinutesSquad, 1);
 
-    // Porcentajes y Puntos XP (Escala 0 a 100 XP según porcentaje)
-    const myAttendanceXP = myAttendancePct; // Ej: 100% = 100 XP
-    const avgAttendanceXP = avgAttendancePct;
-
     const myMatchPct = allTeamMatches.length > 0
       ? Math.min(100, Math.round((playerMatchStats.minutesPlayed / basePossibleMinutes) * 100))
       : 0;
-    const myMatchXP = myMatchPct;
+    const myMatchXP = Math.round(playerMatchStats.minutesPlayed * 0.2) + (playerMatchStats.goals * 10) + (playerMatchStats.assists * 5);
 
     const avgMatchPct = allTeamMatches.length > 0
       ? Math.min(100, Math.round((avgMinutesPerPlayer / basePossibleMinutes) * 100))
       : 0;
-    const avgMatchXP = avgMatchPct;
+    const avgMatchXP = Math.round(avgMinutesPerPlayer * 0.2);
 
     return {
       hasAttendanceData,
-      hasMatchData: allTeamMatches.length > 0,
+      hasMatchData,
       myAttendancePct,
       avgAttendancePct,
       myAttendanceXP,
@@ -383,7 +370,7 @@ export const PlayerStatsTab = ({ player, team, teamPath, isParentView = false, a
       avgMatchXP,
       sampleSize: allPlayers.length
     };
-  }, [allPlayers, allAttendance, allTeamMatches, effectivePlayerId, playerMatchStats, player]);
+  }, [allPlayers, allAttendance, allTeamMatches, effectivePlayerId, playerMatchStats, team]);
 
   // 5. Radar de Habilidades 100% Real (Evaluado por el Míster o Asistencia)
   const avgSleep = wellnessHistory.length > 0 
@@ -594,8 +581,20 @@ export const PlayerStatsTab = ({ player, team, teamPath, isParentView = false, a
                   </span>
                 </div>
 
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '11.5px', color: 'var(--text-secondary)' }}>
-                  <span>📅 {mItem.date} · {mItem.isTitular ? t('common.starter') : t('common.substitute')} ({mItem.minutesPlayed}')</span>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '11.5px', color: 'var(--text-secondary)', flexWrap: 'wrap', gap: '6px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <span>📅 {mItem.date}</span>
+                    <span>&middot;</span>
+                    {mItem.actaClosed ? (
+                      <span style={{ color: '#10B981', fontWeight: '700' }}>
+                        📋 {mItem.isTitular ? t('common.starter') : t('common.substitute')} ({mItem.minutesPlayed}')
+                      </span>
+                    ) : (
+                      <span style={{ color: '#F59E0B', fontWeight: '700' }}>
+                        ⏳ {t('player.stats.pendingActaShort')}
+                      </span>
+                    )}
+                  </div>
                   <div style={{ display: 'flex', gap: '6px', fontWeight: '800' }}>
                     {mItem.goals > 0 && <span style={{ color: '#4CAF7D' }}>⚽ {mItem.goals}</span>}
                     {mItem.assists > 0 && <span style={{ color: '#3B82F6' }}>👟 {mItem.assists}</span>}

@@ -8,6 +8,7 @@ import { useAchievements } from '../../hooks/useAchievements';
 import { Calendar, Clock, MapPin, Trophy, Flame, Bell, CheckCircle2, ChevronRight, Activity } from 'lucide-react';
 
 import { calculatePlayerMatchStats } from '../../utils/playerMatchStats';
+import { calculatePlayerAttendanceStats } from '../../utils/attendanceStatsHelper';
 import { pluralize } from '../../utils/pluralize';
 
 export const PlayerHomeTab = ({ player, team, teamPath, onNavigateTab, isParentView = false, closestAchievement = null }) => {
@@ -120,46 +121,48 @@ export const PlayerHomeTab = ({ player, team, teamPath, onNavigateTab, isParentV
     return () => unsubAnn();
   }, [teamPath]);
 
-  // 3. Escuchar estadísticas de asistencia del jugador
+  // 3. Escuchar estadísticas de asistencia del jugador (fuente de verdad oficial)
   useEffect(() => {
     if (!teamPath || !player?.id) return;
 
+    let attendanceDocs = [];
+    let matchDocs = [];
+
+    const recalculateAttendance = () => {
+      const customXpTable = team?.settings?.achievementTargets || team?.achievementTargets || {};
+      const stats = calculatePlayerAttendanceStats(player.id, attendanceDocs, matchDocs, customXpTable);
+      setAttendanceStats({
+        streak: stats.streak,
+        maxStreak: stats.maxStreak,
+        percentage: stats.percentage,
+        total: stats.totalVerified,
+        attended: stats.attended,
+        attendanceXP: stats.attendanceXP,
+        hasPendingEvents: stats.hasPendingEvents
+      });
+    };
+
     const attRef = collection(db, `${teamPath}/attendance`);
     const unsubAtt = onSnapshot(attRef, (snap) => {
-      let attended = 0;
-      let total = 0;
-      let streak = 0;
-      let currentStreakCount = 0;
-
-      const records = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-      records.sort((a, b) => new Date(b.date || b.fecha || 0) - new Date(a.date || a.fecha || 0));
-
-      records.forEach((rec, idx) => {
-        const isPresent = rec.presentPlayers?.includes(player.id) || rec.players?.[player.id]?.present;
-        if (rec.presentPlayers || rec.players) {
-          total++;
-          if (isPresent) {
-            attended++;
-            if (idx === streak) {
-              streak++;
-            }
-          }
-        }
-      });
-
-      const percentage = total > 0 ? Math.round((attended / total) * 100) : 100;
-      setAttendanceStats({
-        streak: streak || (attended > 0 ? attended : 0),
-        percentage,
-        total,
-        attended
-      });
+      attendanceDocs = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      recalculateAttendance();
     }, (err) => {
       console.warn('Error cargando asistencia:', err);
     });
 
-    return () => unsubAtt();
-  }, [teamPath, player?.id]);
+    const matchRef = collection(db, `${teamPath}/matches`);
+    const unsubMatches = onSnapshot(matchRef, (snap) => {
+      matchDocs = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      recalculateAttendance();
+    }, (err) => {
+      console.warn('Error cargando partidos para asistencia:', err);
+    });
+
+    return () => {
+      unsubAtt();
+      unsubMatches();
+    };
+  }, [teamPath, player?.id, team]);
 
   return (
     <div className="player-tab-content player-home-tab">

@@ -14,6 +14,7 @@ import {
   Shield
 } from 'lucide-react';
 import { calculatePlayerMatchStats } from '../../utils/playerMatchStats';
+import { calculatePlayerAttendanceStats, calculatePlayerGlobalXP } from '../../utils/attendanceStatsHelper';
 import { useTranslation } from '../../hooks/useTranslation';
 import './PlayerLeaderboard.css';
 
@@ -37,6 +38,7 @@ export const PlayerLeaderboard = ({
   // Si el míster ha desactivado el ranking para su equipo
   const isLeaderboardDisabled = team?.hideLeaderboard === true || team?.settings?.hideLeaderboard === true;
   const isAnonymous = team?.leaderboardAnonymous === true || team?.settings?.leaderboardAnonymous === true;
+  const customXpTable = team?.settings?.achievementTargets || team?.achievementTargets || {};
 
   // 1. Cálculo de Puntuaciones y XP de cada jugador de la plantilla
   const rankedPlayers = useMemo(() => {
@@ -53,26 +55,10 @@ export const PlayerLeaderboard = ({
       const dorsal = p.dorsal || p.number || p.numero || '-';
       const displayName = dorsal !== '-' ? `#${dorsal} ${firstName}` : firstName;
 
-      // A) Asistencia 100% Real
-      let myPresents = 0;
-      let myTotalCalls = 0;
-      if (Array.isArray(attendance) && attendance.length > 0) {
-        attendance.forEach(att => {
-          myTotalCalls++;
-          const isPresent = (
-            (att.records && (att.records[pId]?.status === 'present' || att.records[pId]?.status === 'late' || att.records[pId] === true)) ||
-            (att.players && (att.players[pId] === true || att.players[pId] === 'presente' || att.players[pId]?.status === 'present')) ||
-            (Array.isArray(att.presentes) && att.presentes.some(id => String(id) === pId)) ||
-            (Array.isArray(att.presentPlayers) && att.presentPlayers.some(id => String(id) === pId))
-          );
-          if (isPresent) {
-            myPresents++;
-          }
-        });
-      }
-      const attendancePct = myTotalCalls > 0 
-        ? Math.round((myPresents / myTotalCalls) * 100) 
-        : 0;
+      // A) Asistencia y XP Diferenciado 100% Real
+      const attStats = calculatePlayerAttendanceStats(pId, attendance || [], matches || [], customXpTable);
+      const attendancePct = attStats.percentage;
+      const attendanceXP = attStats.attendanceXP;
 
       // B) Partidos, minutos, goles y asistencias 100% reales desde actas del míster
       const pMatchStats = calculatePlayerMatchStats(pId, matches || []);
@@ -98,10 +84,10 @@ export const PlayerLeaderboard = ({
       } else {
         // Cálculo dinámico por hitos de rendimiento reales de cada compañero
         let computedCount = 0;
-        if (myPresents >= 1) computedCount++; // Check-in / Siempre atento
-        if (myPresents >= 2) computedCount++; // Semana perfecta
-        if (myPresents >= 4) computedCount++; // Jugador de hierro
-        if (myPresents >= 8) computedCount++; // Espíritu de capitán
+        if (attStats.attended >= 1) computedCount++; // Check-in / Siempre atento
+        if (attStats.attended >= 2) computedCount++; // Semana perfecta
+        if (attStats.attended >= 4) computedCount++; // Jugador de hierro
+        if (attStats.attended >= 8) computedCount++; // Espíritu de capitán
         if (totalMatches >= 1) computedCount++; // Convocatoria / Debut
         if (totalMatches >= 5) computedCount++; // Compromiso
         if (totalGoals >= 1) computedCount++; // Primer gol
@@ -112,15 +98,15 @@ export const PlayerLeaderboard = ({
         achievementsXP = achievementsCount * 50;
       }
 
-      // D) Cálculo de XP por pilares reales basados en porcentaje
-      const attendanceXP = myTotalCalls > 0 ? attendancePct : 0; // 0 a 100 XP según % de asistencia
-      
-      const maxSquadMinutes = matches.length > 0 ? Math.max(matches.length * 90, 1) : 1;
-      const matchesPct = matches.length > 0 ? Math.min(100, Math.round((totalMinutes / maxSquadMinutes) * 100)) : 0;
-      const matchesXP = matches.length > 0 ? matchesPct : 0; // 0 a 100 XP según % de partidos/minutos
+      // D) Cálculo de Global XP con fórmula unificada
+      const xpBreakdown = calculatePlayerGlobalXP({
+        attendanceXP,
+        playerMatchStats: pMatchStats,
+        achievementsXP
+      });
 
-      // Puntuación Total Power Score Real
-      const totalXP = attendanceXP + matchesXP + achievementsXP;
+      const totalXP = xpBreakdown.totalXP;
+      const matchesXP = xpBreakdown.matchXP;
 
       // Determinación de Rango / Nivel Gaming Real
       let tier = { name: 'BRONCE', color: '#CD7F32', icon: '🥉', minXP: 0 };
@@ -153,7 +139,7 @@ export const PlayerLeaderboard = ({
         isCurrent: String(pId) === String(currentPlayerId)
       };
     });
-  }, [players, matches, attendance, currentPlayerId, myAchievements, isAnonymous]);
+  }, [players, matches, attendance, currentPlayerId, myAchievements, isAnonymous, customXpTable]);
 
   // 2. Ordenar según el filtro activo
   const sortedPlayers = useMemo(() => {

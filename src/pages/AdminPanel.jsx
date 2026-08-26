@@ -264,6 +264,15 @@ const AdminPanel = () => {
   const [profileData, setProfileData] = useState({ profileName: '', specialty: 'Primer Entrenador' });
   const [teamEditData, setTeamEditData] = useState({ nombre: '', categoria: '', temporada: '', colorLocal: '#1B3A2D', colorVisitante: '#4CAF7D' });
   const [prefData, setPrefData] = useState({ notifications: true, language: 'Español (ES)' });
+  const [gamificationData, setGamificationData] = useState({
+    xpPresente: 10,
+    xpTarde: 5,
+    xpJustificado: 2,
+    xpAusente: 0,
+    veteranPct: 80,
+    seasonGoals: 10,
+    seasonAssists: 10
+  });
   const { deferredPrompt, isInstalled, installApp } = usePWA();
 
   // Sync state when settings or user/team load
@@ -280,6 +289,16 @@ const AdminPanel = () => {
       setPrefData({ 
         notifications: settings.notifications ?? true, 
         language: settings.language || 'Español (ES)' 
+      });
+      const tg = settings.achievementTargets || {};
+      setGamificationData({
+        xpPresente: Number(tg.xpPresente ?? 10),
+        xpTarde: Number(tg.xpTarde ?? 5),
+        xpJustificado: Number(tg.xpJustificado ?? 2),
+        xpAusente: Number(tg.xpAusente ?? 0),
+        veteranPct: Number(tg.veteranPct ?? 80),
+        seasonGoals: Number(tg.seasonGoals ?? 10),
+        seasonAssists: Number(tg.seasonAssists ?? 10)
       });
     }
   }, [settings, user, userProfile, permissions?.roleInfo?.label]);
@@ -442,6 +461,21 @@ const AdminPanel = () => {
       showToast("Identidad del equipo actualizada correctamente.", "success");
     } catch (e) {
       showToast("Error al actualizar identidad del equipo.", "error");
+    }
+  };
+
+  const handleSaveGamification = async () => {
+    try {
+      await saveSettings({
+        ...settings,
+        achievementTargets: {
+          ...settings?.achievementTargets,
+          ...gamificationData
+        }
+      });
+      showToast("Tabla de XP y objetivos de temporada guardados con éxito.", "success");
+    } catch (e) {
+      showToast("Error al guardar configuración de XP.", "error");
     }
   };
 
@@ -1148,6 +1182,89 @@ const AdminPanel = () => {
                   </div>
                   <button className="btn-save-settings" onClick={handleUpdateTeamInfo} disabled={!activeTeam}>
                     {t('btn.save', settings.language)} Identidad
+                  </button>
+                </div>
+              </div>
+
+              {/* TEMPORADA Y OBJETIVOS DE GAMIFICACIÓN (XP) */}
+              <div className="settings-card">
+                <div className="card-header-icon">
+                  <Trophy size={20} color="#C9A84C" />
+                  <h3>Temporada y Tabla de XP Diferenciada</h3>
+                </div>
+                <div className="settings-form">
+                  <p style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', margin: '0 0 12px 0' }}>
+                    Configura los puntos de XP que suma cada jugador por estado de asistencia confirmado y los objetivos de temporada del equipo.
+                  </p>
+                  
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '10px', marginBottom: '14px' }}>
+                    <div className="form-group" style={{ margin: 0 }}>
+                      <label style={{ fontSize: '0.78rem', color: '#10B981', fontWeight: 800 }}>✅ XP Presente</label>
+                      <input 
+                        type="number" 
+                        min="0"
+                        max="100"
+                        value={gamificationData.xpPresente} 
+                        onChange={(e) => setGamificationData({...gamificationData, xpPresente: parseInt(e.target.value, 10) || 0})}
+                      />
+                    </div>
+                    <div className="form-group" style={{ margin: 0 }}>
+                      <label style={{ fontSize: '0.78rem', color: '#F59E0B', fontWeight: 800 }}>⚠️ XP Tarde</label>
+                      <input 
+                        type="number" 
+                        min="0"
+                        max="100"
+                        value={gamificationData.xpTarde} 
+                        onChange={(e) => setGamificationData({...gamificationData, xpTarde: parseInt(e.target.value, 10) || 0})}
+                      />
+                    </div>
+                    <div className="form-group" style={{ margin: 0 }}>
+                      <label style={{ fontSize: '0.78rem', color: '#3B82F6', fontWeight: 800 }}>📋 XP Justificado</label>
+                      <input 
+                        type="number" 
+                        min="0"
+                        max="100"
+                        value={gamificationData.xpJustificado} 
+                        onChange={(e) => setGamificationData({...gamificationData, xpJustificado: parseInt(e.target.value, 10) || 0})}
+                      />
+                    </div>
+                    <div className="form-group" style={{ margin: 0 }}>
+                      <label style={{ fontSize: '0.78rem', color: '#EF4444', fontWeight: 800 }}>❌ XP Ausente</label>
+                      <input 
+                        type="number" 
+                        min="0"
+                        max="100"
+                        value={gamificationData.xpAusente} 
+                        onChange={(e) => setGamificationData({...gamificationData, xpAusente: parseInt(e.target.value, 10) || 0})}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="form-row-dual" style={{ marginBottom: '14px' }}>
+                    <div className="form-group" style={{ margin: 0 }}>
+                      <label style={{ fontSize: '0.78rem' }}>🎯 % Partidos Veterano</label>
+                      <input 
+                        type="number" 
+                        min="10"
+                        max="100"
+                        value={gamificationData.veteranPct} 
+                        onChange={(e) => setGamificationData({...gamificationData, veteranPct: parseInt(e.target.value, 10) || 80})}
+                      />
+                    </div>
+                    <div className="form-group" style={{ margin: 0 }}>
+                      <label style={{ fontSize: '0.78rem' }}>⚽ Objetivo Goles Temporada</label>
+                      <input 
+                        type="number" 
+                        min="1"
+                        max="100"
+                        value={gamificationData.seasonGoals} 
+                        onChange={(e) => setGamificationData({...gamificationData, seasonGoals: parseInt(e.target.value, 10) || 10})}
+                      />
+                    </div>
+                  </div>
+
+                  <button className="btn-save-settings" onClick={handleSaveGamification}>
+                    {t('btn.save', settings.language)} Configuración de XP
                   </button>
                 </div>
               </div>

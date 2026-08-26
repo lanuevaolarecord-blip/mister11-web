@@ -169,13 +169,14 @@ export const ACHIEVEMENTS_CATALOG = [
     tier: 'SILVER',
     name: 'Compromiso con el Grupo',
     nameKey: 'ach.biweekly_teammate.name',
-    desc: 'Confirma tu asistencia (RSVP) a todos los eventos con antelación.',
+    desc: 'Confirma tu asistencia (RSVP) a todos los eventos con antelación (único reto basado en intención).',
     descKey: 'ach.biweekly_teammate.desc',
     category: 'attendance',
     icon: 'Users',
     targetType: 'fixed',
     defaultTarget: 4,
-    xp: 50
+    xp: 50,
+    isRsvpIntentionOnly: true
   },
 
   // ─── TIER ORO (Temporada 10 Meses - Máximo 100 XP cada uno) ───────────────
@@ -184,7 +185,7 @@ export const ACHIEVEMENTS_CATALOG = [
     tier: 'GOLD',
     name: 'Veterano de la Temporada',
     nameKey: 'ach.season_veteran.name',
-    desc: 'Participa o acude convocado al menos al 80% de los partidos del año.',
+    desc: 'Participa con minutos verificados en al menos el 80% de los partidos oficiales del año.',
     descKey: 'ach.season_veteran.desc',
     category: 'matches',
     icon: 'Trophy',
@@ -249,7 +250,7 @@ export const ACHIEVEMENTS_CATALOG = [
     tier: 'GOLD',
     name: 'Espíritu de Capitán',
     nameKey: 'ach.season_captain.name',
-    desc: '100% de asistencia a entrenamientos y partidos durante un mes completo.',
+    desc: '100% de asistencia verificada por el entrenador a entrenamientos y partidos durante un mes completo.',
     descKey: 'ach.season_captain.desc',
     category: 'attendance',
     icon: 'Star',
@@ -269,5 +270,10 @@ export const DEFAULT_SEASON_SETTINGS = {
   veteranPct: 80,
   seasonGoals: 10,
   seasonAssists: 10,
-  wellnessStreakDays: 21
+  wellnessStreakDays: 21,
+  xpPresente: 10,
+  xpTarde: 5,
+  xpJustificado: 2,
+  xpAusente: 0,
+  xpLesionado: 2
 };

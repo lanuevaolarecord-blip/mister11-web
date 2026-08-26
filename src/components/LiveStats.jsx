@@ -252,25 +252,41 @@ const LiveStats = ({
         ? players
         : (matchData?.players || matchData?.jugadores || matchData?.convocados || []);
 
-    if (rawList.length > 0) {
-      return rawList.map((p, idx) => {
-        // Si p es un ID de convocado y existe el array de players
-        if (typeof p === 'string' && players && players.length > 0) {
-          const found = players.find(x => x.id === p);
+    const validList = Array.isArray(rawList) ? rawList.filter(Boolean) : [];
+
+    if (validList.length > 0) {
+      return validList.map((p, idx) => {
+        // Si p es un ID de convocado (string/number) y existe el array de players
+        if ((typeof p === 'string' || typeof p === 'number') && Array.isArray(players) && players.length > 0) {
+          const found = players.find(x => x && String(x.id) === String(p));
           if (found) {
             return {
-              id: found.id,
+              id: String(found.id),
               dorsal: found.dorsal || found.number || (idx + 1),
               nombre: found.nombre || found.name || `Jugador ${idx + 1}`,
               posicion: found.posicion || found.position || 'JUG'
             };
           }
+          return {
+            id: String(p),
+            dorsal: idx + 1,
+            nombre: `Jugador ${idx + 1}`,
+            posicion: 'JUG'
+          };
+        }
+        if (p && typeof p === 'object') {
+          return {
+            id: String(p.id || p.dorsal || idx + 1),
+            dorsal: p.dorsal || p.number || (idx + 1),
+            nombre: p.nombre || p.name || `Jugador ${p.dorsal || idx + 1}`,
+            posicion: p.posicion || p.position || 'JUG'
+          };
         }
         return {
-          id: p.id || String(p.dorsal || idx + 1),
-          dorsal: p.dorsal || p.number || (idx + 1),
-          nombre: p.nombre || p.name || `Jugador ${p.dorsal || idx + 1}`,
-          posicion: p.posicion || p.position || 'JUG'
+          id: String(idx + 1),
+          dorsal: idx + 1,
+          nombre: `Jugador ${idx + 1}`,
+          posicion: 'JUG'
         };
       });
     }

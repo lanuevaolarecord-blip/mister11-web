@@ -1680,8 +1680,8 @@ const Partidos = () => {
                               }}
                             >
                               <option value="">Jugador...</option>
-                              {calledPlayers.map(id => {
-                                const p = players.find(pl => pl.id === id);
+                              {calledPlayers.filter(Boolean).map(id => {
+                                const p = players.find(pl => pl && pl.id === id);
                                 return p ? <option key={id} value={id}>{p.name}</option> : null;
                               })}
                             </select>
@@ -1749,8 +1749,8 @@ const Partidos = () => {
                               }}
                             >
                               <option value="">Jugador...</option>
-                              {calledPlayers.map(id => {
-                                const p = players.find(pl => pl.id === id);
+                              {calledPlayers.filter(Boolean).map(id => {
+                                const p = players.find(pl => pl && pl.id === id);
                                 return p ? <option key={id} value={id}>{p.name}</option> : null;
                               })}
                             </select>
@@ -1806,8 +1806,8 @@ const Partidos = () => {
                             style={{ minHeight: '48px', padding: '0 8px', borderRadius: '8px', border: '1px solid var(--partidos-border)', background: 'var(--partidos-input-bg)', color: 'var(--partidos-text-primary)' }}
                           >
                             <option value="">{getLangText('post.mvpSelect')}</option>
-                            {calledPlayers.map(id => {
-                              const p = players.find(pl => pl.id === id);
+                            {calledPlayers.filter(Boolean).map(id => {
+                              const p = players.find(pl => pl && pl.id === id);
                               return p ? <option key={id} value={p.name}>{p.name}</option> : null;
                             })}
                           </select>

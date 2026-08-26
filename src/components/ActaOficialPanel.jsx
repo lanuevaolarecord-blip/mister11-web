@@ -365,7 +365,8 @@ const ActaOficialPanel = ({ matchId, matchData, players = [], calledPlayers = []
             duration,
             actual?.minutesOverride ?? null,
             status,
-            actual?.lateMin ?? null
+            actual?.lateMin ?? null,
+            matchData?.tarjetasList || []
           );
 
           const currentStatus = STATUS_OPTIONS.find(s => s.id === status);

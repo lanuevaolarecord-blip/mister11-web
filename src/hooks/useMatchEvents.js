@@ -106,8 +106,10 @@ export const useMatchEvents = (matchData, setMatchData, players, updateMatch) =>
       type: 'sustitucion',
       playerOutId: subOutId,
       playerOutName: playerOut.name,
+      subOutId: subOutId,
       playerInId: subInId,
       playerInName: playerIn.name,
+      subInId: subInId,
       minute: parseInt(minute, 10) || 1,
       timestamp: new Date().toISOString()
     };

@@ -91,8 +91,8 @@ export const PlayerAttendanceSubTab = ({ playerId, teamId }) => {
         </div>
       </div>
 
-      {/* Desglose de Contadores */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '6px', textAlign: 'center' }}>
+      {/* Desglose de Contadores sobre Programado */}
+      <div style={{ display: 'grid', gridTemplateColumns: `repeat(${stats.noRecord > 0 ? 6 : 5}, 1fr)`, gap: '6px', textAlign: 'center' }}>
         <div style={{ background: 'rgba(34, 197, 94, 0.1)', padding: '8px 4px', borderRadius: '8px', border: '1px solid #22C55E' }}>
           <div style={{ fontSize: '14px', fontWeight: '800', color: '#22C55E' }}>{stats.present}</div>
           <div style={{ fontSize: '9px', color: '#22C55E', fontWeight: '700' }}>{isEn ? 'Pres.' : 'Pres.'}</div>
@@ -113,10 +113,26 @@ export const PlayerAttendanceSubTab = ({ playerId, teamId }) => {
           <div style={{ fontSize: '14px', fontWeight: '800', color: '#3B82F6' }}>{stats.injured}</div>
           <div style={{ fontSize: '9px', color: '#3B82F6', fontWeight: '700' }}>{isEn ? 'Inj.' : 'Les.'}</div>
         </div>
+        {stats.noRecord > 0 && (
+          <div style={{ background: 'rgba(148, 163, 184, 0.1)', padding: '8px 4px', borderRadius: '8px', border: '1px solid #94A3B8' }}>
+            <div style={{ fontSize: '14px', fontWeight: '800', color: '#94A3B8' }}>{stats.noRecord}</div>
+            <div style={{ fontSize: '9px', color: '#94A3B8', fontWeight: '700' }}>{isEn ? 'No Rec.' : 'Sin Reg.'}</div>
+          </div>
+        )}
+      </div>
+
+      {/* Nota de Metodología sobre Programado */}
+      <div style={{ padding: '8px 12px', borderRadius: '8px', background: 'var(--bg-app)', border: '1px solid var(--border-color)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+        <span style={{ fontSize: '14px' }}>ℹ️</span>
+        <span style={{ fontSize: '10px', color: 'var(--text-secondary)' }}>
+          {isEn
+            ? 'Attendance rate is calculated over all scheduled training sessions and matches.'
+            : 'El % de asistencia se calcula sobre el total de sesiones y partidos programados.'}
+        </span>
       </div>
 
       {/* Historial Cronológico de Sesiones */}
-      <div style={{ marginTop: '8px' }}>
+      <div style={{ marginTop: '4px' }}>
         <div style={{ fontSize: '12px', fontWeight: '800', color: 'var(--text-primary)', marginBottom: '10px', textTransform: 'uppercase' }}>
           📜 {t('player.attendance.monthlyTitle')}
         </div>

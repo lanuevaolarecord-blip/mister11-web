@@ -27,7 +27,7 @@
  *    - Si el denominador es 0, retorna 100% si no hubo faltas, o 0% si no hay datos.
  */
 
-import { calculateAttendanceMetrics } from './attendanceMath';
+import { calculateAttendanceMetrics, calculatePlayerAttendanceOnSchedule } from './attendanceMath.js';
 
 export const DEFAULT_XP_TABLE = {
   xpPresente: 10,
@@ -200,7 +200,8 @@ export const calculatePlayerAttendanceStats = (
   playerId,
   attendanceList = [],
   matchesList = [],
-  customXpTable = {}
+  customXpTable = {},
+  sessionsList = []
 ) => {
   const xpTable = { ...DEFAULT_XP_TABLE, ...customXpTable };
   const timeline = extractPlayerVerifiedTimeline(playerId, attendanceList, matchesList);
@@ -263,31 +264,40 @@ export const calculatePlayerAttendanceStats = (
   });
 
   const totalVerified = attended + justified + injured + absent;
-  const metrics = calculateAttendanceMetrics({
-    present: attended - late,
-    late,
-    justified,
-    injured,
-    absent
+
+  // Cálculo de % de asistencia real sobre programado (Fase 1)
+  const effectiveSessions = sessionsList && sessionsList.length > 0
+    ? sessionsList
+    : (attendanceList || []).filter(a => a && a.type !== 'match');
+
+  const scheduleStats = calculatePlayerAttendanceOnSchedule(playerId, {
+    sessions: effectiveSessions,
+    matches: matchesList,
+    attendanceRecords: attendanceList,
+    thresholds: customXpTable
   });
 
   return {
     streak: currentStreak,
     maxStreak,
-    percentage: metrics.pct,
-    pct: metrics.pct,
-    hasData: metrics.hasData,
-    status: metrics.status,
+    percentage: scheduleStats.pct,
+    pct: scheduleStats.pct,
+    hasData: scheduleStats.hasData,
+    status: scheduleStats.status,
     totalVerified,
     attended,
     late,
     justified,
     injured,
     absent,
+    noRecord: scheduleStats.noRecord,
+    suspended: scheduleStats.suspended,
+    scheduledPast: scheduleStats.scheduledPast,
     pendingCount,
     attendanceXP: totalAttendanceXP,
     hasPendingEvents: pendingCount > 0,
-    timeline
+    timeline,
+    callupGuidance: scheduleStats.callupGuidance
   };
 };
 

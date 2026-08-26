@@ -311,6 +311,8 @@ export const translations = {
     'player.schedule.promptSelf': '¿Asistirás a esta sesión?',
     'player.schedule.promptParent': '¿Asistirá {name} a este evento?',
     'player.schedule.pendingVerification': 'Pendiente de verificación',
+    'player.attendance.rate': 'Índice de Asistencia',
+    'player.attendance.monthlyTitle': 'Historial de Asistencias',
 
     // ── PORTAL DEL JUGADOR — LOGROS (ACHIEVEMENTS TAB) ──────
     'player.achievements.title': 'Tus Logros Deportivos',
@@ -884,6 +886,8 @@ export const translations = {
     'player.schedule.promptSelf': 'Will you attend this session?',
     'player.schedule.promptParent': 'Will {name} attend this event?',
     'player.schedule.pendingVerification': 'Pending verification',
+    'player.attendance.rate': 'Attendance Rate',
+    'player.attendance.monthlyTitle': 'Attendance History',
 
     // ── PLAYER APP — ACHIEVEMENTS TAB ───────────────────────
     'player.achievements.title': 'Your Sporting Achievements',

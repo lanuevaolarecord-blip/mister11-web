@@ -22,6 +22,7 @@ export const PlayerScheduleTab = ({ player, team, teamPath, isParentView = false
   const { t, locale, isEn } = useTranslation();
   const [events, setEvents] = useState([]);
   const [rsvps, setRsvps] = useState({});
+  const [officialRecords, setOfficialRecords] = useState({});
   const [selectedMonth, setSelectedMonth] = useState(new Date());
   const [savingEventId, setSavingEventId] = useState(null);
 
@@ -31,6 +32,14 @@ export const PlayerScheduleTab = ({ player, team, teamPath, isParentView = false
     { id: 'late', label: t('player.schedule.rsvpLate'), color: '#F59E0B', bg: 'rgba(245, 158, 11, 0.15)', icon: AlertTriangle },
     { id: 'justified', label: t('player.schedule.rsvpJustified'), color: '#3B82F6', bg: 'rgba(59, 130, 246, 0.15)', icon: HelpCircle },
   ];
+
+  const OFFICIAL_STATUS_CONFIG = {
+    present:   { label: 'Presente',   labelEn: 'Present',   color: '#10B981', bg: 'rgba(16, 185, 129, 0.12)', icon: '✅' },
+    late:      { label: 'Tarde',      labelEn: 'Late',      color: '#F59E0B', bg: 'rgba(245, 158, 11, 0.12)', icon: '⏱️' },
+    justified: { label: 'Justificado',labelEn: 'Justified', color: '#3B82F6', bg: 'rgba(59, 130, 246, 0.12)', icon: '📝' },
+    absent:    { label: 'Ausente',    labelEn: 'Absent',    color: '#EF4444', bg: 'rgba(239, 68, 68, 0.12)', icon: '❌' },
+    injured:   { label: 'Lesionado',  labelEn: 'Injured',   color: '#3B82F6', bg: 'rgba(59, 130, 246, 0.12)', icon: '🚑' },
+  };
 
   const effectivePlayerId = player?.id || user?.uid;
   const cleanPath = teamPath ? teamPath.replace(/^\/+|\/+$/g, '') : '';
@@ -95,21 +104,26 @@ export const PlayerScheduleTab = ({ player, team, teamPath, isParentView = false
     return () => unsubSessions();
   }, [cleanPath, t]);
 
-  // Escuchar RSVPs guardados en attendance para el jugador activo
+  // Escuchar RSVPs y registros oficiales guardados en attendance para el jugador activo
   useEffect(() => {
     if (!cleanPath) return;
 
     const attRef = collection(db, `${cleanPath}/attendance`);
     const unsubAtt = onSnapshot(attRef, (snap) => {
       const rsvpMap = {};
+      const officialMap = {};
       snap.docs.forEach(docSnap => {
         const data = docSnap.data() || {};
         const eventId = docSnap.id;
         if (data.playerRsvp && data.playerRsvp[effectivePlayerId]) {
           rsvpMap[eventId] = data.playerRsvp[effectivePlayerId];
         }
+        if (data.records && data.records[effectivePlayerId]) {
+          officialMap[eventId] = data.records[effectivePlayerId];
+        }
       });
       setRsvps(rsvpMap);
+      setOfficialRecords(officialMap);
     });
 
     return () => unsubAtt();
@@ -363,78 +377,182 @@ export const PlayerScheduleTab = ({ player, team, teamPath, isParentView = false
                   </div>
                 )}
 
-                {/* BOTONES RSVP — Bloqueados si el acta está cerrada */}
+                {/* SECCIÓN DE ASISTENCIA / RSVP */}
                 <div className="rsvp-section">
-                  {actaClosed ? (
-                    // Acta cerrada: mostrar estado oficial, sin edición
-                    <div style={{
-                      padding: '10px 12px',
-                      borderRadius: '10px',
-                      background: 'rgba(16,185,129,0.08)',
-                      border: '1px solid rgba(16,185,129,0.25)',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '8px',
-                    }}>
-                      <span style={{ fontSize: '18px' }}>📋</span>
-                      <div>
-                        <div style={{ fontSize: '0.82rem', fontWeight: 800, color: '#10B981' }}>
-                          {isEn ? 'Official match sheet closed' : 'Acta oficial cerrada'}
-                        </div>
-                        <div style={{ fontSize: '0.74rem', color: 'var(--text-secondary)', marginTop: '2px' }}>
-                          {officialMinutes !== null
-                            ? (isEn ? `Official minutes: ${officialMinutes}'` : `Minutos oficiales: ${officialMinutes}'`)
-                            : (isEn ? 'Did not play (DNP)' : 'No jugaste en este partido')}
-                          {officialStatus && (
-                            <span style={{ marginLeft: '6px', opacity: 0.7 }}>
-                              &middot; {officialStatus}
-                            </span>
-                          )}
+                  {isMatch ? (
+                    actaClosed ? (
+                      // Acta cerrada: mostrar estado oficial de partido, sin edición
+                      <div style={{
+                        padding: '10px 12px',
+                        borderRadius: '10px',
+                        background: 'rgba(16,185,129,0.08)',
+                        border: '1px solid rgba(16,185,129,0.25)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                      }}>
+                        <span style={{ fontSize: '18px' }}>📋</span>
+                        <div>
+                          <div style={{ fontSize: '0.82rem', fontWeight: 800, color: '#10B981' }}>
+                            {isEn ? 'Official match sheet closed' : 'Acta oficial cerrada'}
+                          </div>
+                          <div style={{ fontSize: '0.74rem', color: 'var(--text-secondary)', marginTop: '2px' }}>
+                            {officialMinutes !== null
+                              ? (isEn ? `Official minutes: ${officialMinutes}'` : `Minutos oficiales: ${officialMinutes}'`)
+                              : (isEn ? 'Did not play (DNP)' : 'No jugaste en este partido')}
+                            {officialStatus && (
+                              <span style={{ marginLeft: '6px', opacity: 0.7 }}>
+                                &middot; {officialStatus}
+                              </span>
+                            )}
+                          </div>
                         </div>
                       </div>
-                    </div>
+                    ) : (
+                      // Acta abierta: mostrar RSVP normal
+                      <>
+                        <span className="rsvp-prompt" style={{ fontSize: '0.85rem', fontWeight: 700, marginBottom: '8px', display: 'block' }}>
+                          {isParentView 
+                            ? (isEn ? `Will ${player?.name || 'your child'} attend?` : `¿Asistirá ${player?.name || 'tu hijo'} a este evento?`) 
+                            : (isEn ? 'Will you attend this event?' : '¿Asistirás a esta sesión?')}
+                        </span>
+                        <div className="rsvp-buttons-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '8px' }}>
+                          {RSVP_OPTIONS.map((opt) => {
+                            const isSelected = currentRsvp === opt.id;
+                            const Icon = opt.icon;
+                            return (
+                              <button
+                                key={opt.id}
+                                type="button"
+                                className={`rsvp-btn ${isSelected ? 'selected' : ''}`}
+                                style={{
+                                  borderColor: isSelected ? opt.color : 'var(--border-color)',
+                                  backgroundColor: isSelected ? opt.bg : 'transparent',
+                                  color: isSelected ? opt.color : 'var(--text-secondary)',
+                                  minHeight: '56px',
+                                  minWidth: '56px',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  gap: '6px',
+                                  borderRadius: '10px',
+                                  fontWeight: 700,
+                                  cursor: 'pointer',
+                                  transition: 'all 0.2s ease'
+                                }}
+                                onClick={() => handleRsvp(evt.id, opt.id)}
+                                disabled={savingEventId === evt.id}
+                              >
+                                <Icon size={18} color={isSelected ? opt.color : 'currentColor'} />
+                                <span>{opt.label}</span>
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </>
+                    )
                   ) : (
-                    // Acta abierta: mostrar RSVP normal
-                    <>
-                      <span className="rsvp-prompt" style={{ fontSize: '0.85rem', fontWeight: 700, marginBottom: '8px', display: 'block' }}>
-                        {isParentView 
-                          ? (isEn ? `Will ${player?.name || 'your child'} attend?` : `¿Asistirá ${player?.name || 'tu hijo'} a este evento?`) 
-                          : (isEn ? 'Will you attend this event?' : '¿Asistirás a esta sesión?')}
-                      </span>
-                      <div className="rsvp-buttons-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '8px' }}>
-                        {RSVP_OPTIONS.map((opt) => {
-                          const isSelected = currentRsvp === opt.id;
-                          const Icon = opt.icon;
-                          return (
-                            <button
-                              key={opt.id}
-                              type="button"
-                              className={`rsvp-btn ${isSelected ? 'selected' : ''}`}
-                              style={{
-                                borderColor: isSelected ? opt.color : 'var(--border-color)',
-                                backgroundColor: isSelected ? opt.bg : 'transparent',
-                                color: isSelected ? opt.color : 'var(--text-secondary)',
-                                minHeight: '56px',
-                                minWidth: '56px',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                gap: '6px',
-                                borderRadius: '10px',
-                                fontWeight: 700,
-                                cursor: 'pointer',
-                                transition: 'all 0.2s ease'
-                              }}
-                              onClick={() => handleRsvp(evt.id, opt.id)}
-                              disabled={savingEventId === evt.id}
-                            >
-                              <Icon size={18} color={isSelected ? opt.color : 'currentColor'} />
-                              <span>{opt.label}</span>
-                            </button>
-                          );
-                        })}
-                      </div>
-                    </>
+                    // Sesión de entrenamiento
+                    (() => {
+                      const todayDateOnly = new Date();
+                      todayDateOnly.setHours(0, 0, 0, 0);
+                      const isPast = parsed?.dateObj ? parsed.dateObj.getTime() < todayDateOnly.getTime() : false;
+                      const staffRecord = officialRecords[evt.id];
+
+                      if (staffRecord) {
+                        const rawStatus = staffRecord.status || 'present';
+                        const cfg = OFFICIAL_STATUS_CONFIG[rawStatus] || OFFICIAL_STATUS_CONFIG.present;
+                        return (
+                          <div style={{
+                            padding: '10px 14px',
+                            borderRadius: '10px',
+                            background: cfg.bg,
+                            border: `1px solid ${cfg.color}40`,
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '10px',
+                          }}>
+                            <span style={{ fontSize: '20px' }}>{cfg.icon}</span>
+                            <div>
+                              <div style={{ fontSize: '0.85rem', fontWeight: 800, color: cfg.color }}>
+                                {isEn ? cfg.labelEn : cfg.label} {rawStatus === 'late' && staffRecord.lateMinutes ? `(${staffRecord.lateMinutes} min)` : ''}
+                              </div>
+                              <div style={{ fontSize: '0.74rem', color: 'var(--text-secondary)', marginTop: '2px' }}>
+                                {isEn ? 'Official attendance recorded by coaching staff' : 'Asistencia oficial registrada por el cuerpo técnico'}
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      }
+
+                      if (isPast) {
+                        return (
+                          <div style={{
+                            padding: '10px 14px',
+                            borderRadius: '10px',
+                            background: 'rgba(245, 158, 11, 0.08)',
+                            border: '1px solid rgba(245, 158, 11, 0.25)',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '10px',
+                          }}>
+                            <span style={{ fontSize: '20px' }}>⏳</span>
+                            <div>
+                              <div style={{ fontSize: '0.85rem', fontWeight: 800, color: '#F59E0B' }}>
+                                {t('player.schedule.pendingVerification')}
+                              </div>
+                              <div style={{ fontSize: '0.74rem', color: 'var(--text-secondary)', marginTop: '2px' }}>
+                                {isEn ? 'Session held, pending coach verification' : 'Sesión realizada, pendiente de verificación del cuerpo técnico'}
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      }
+
+                      // Sesión futura o de hoy sin registro aún: permitir RSVP
+                      return (
+                        <>
+                          <span className="rsvp-prompt" style={{ fontSize: '0.85rem', fontWeight: 700, marginBottom: '8px', display: 'block' }}>
+                            {isParentView 
+                              ? (isEn ? `Will ${player?.name || 'your child'} attend?` : `¿Asistirá ${player?.name || 'tu hijo'} a este entrenamiento?`) 
+                              : (isEn ? 'Will you attend this training session?' : '¿Asistirás a este entrenamiento?')}
+                          </span>
+                          <div className="rsvp-buttons-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '8px' }}>
+                            {RSVP_OPTIONS.map((opt) => {
+                              const isSelected = currentRsvp === opt.id;
+                              const Icon = opt.icon;
+                              return (
+                                <button
+                                  key={opt.id}
+                                  type="button"
+                                  className={`rsvp-btn ${isSelected ? 'selected' : ''}`}
+                                  style={{
+                                    borderColor: isSelected ? opt.color : 'var(--border-color)',
+                                    backgroundColor: isSelected ? opt.bg : 'transparent',
+                                    color: isSelected ? opt.color : 'var(--text-secondary)',
+                                    minHeight: '56px',
+                                    minWidth: '56px',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    gap: '6px',
+                                    borderRadius: '10px',
+                                    fontWeight: 700,
+                                    cursor: 'pointer',
+                                    transition: 'all 0.2s ease'
+                                  }}
+                                  onClick={() => handleRsvp(evt.id, opt.id)}
+                                  disabled={savingEventId === evt.id}
+                                >
+                                  <Icon size={18} color={isSelected ? opt.color : 'currentColor'} />
+                                  <span>{opt.label}</span>
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </>
+                      );
+                    })()
                   )}
                 </div>
               </div>

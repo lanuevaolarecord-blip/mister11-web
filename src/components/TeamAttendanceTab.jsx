@@ -340,6 +340,13 @@ export const TeamAttendanceTab = ({ players = [], activeTeam = null }) => {
   // Excluir jugadores sin datos de la alerta de riesgo
   const lowAttendersCount = squadStats.filter((s) => s.hasData && typeof s.pct === 'number' && s.pct < threshold).length;
 
+  const todayStr = new Date().toISOString().split('T')[0];
+  const isSessionFuture = selectedSessionDate > todayStr;
+  const currentEventRecord = attendanceRecords.find(
+    (r) => r.sessionId === selectedSessionId || r.id === selectedSessionId
+  );
+  const hasStaffRecord = !!(currentEventRecord && currentEventRecord.records && Object.keys(currentEventRecord.records).length > 0);
+
   return (
     <div className="attendance-tab-wrapper" style={{ padding: '4px 0 24px 0' }}>
       {/* Sub-Navegación Control de Asistencia */}
@@ -477,7 +484,7 @@ export const TeamAttendanceTab = ({ players = [], activeTeam = null }) => {
             )}
 
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', alignItems: 'center' }}>
-              {selectedSessionType === 'match' && (
+              {selectedSessionType === 'match' ? (
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginRight: '6px' }}>
                   {isMatchActaClosed ? (
                     <span style={{ padding: '6px 12px', borderRadius: '8px', background: 'rgba(16, 185, 129, 0.15)', color: '#10B981', fontWeight: '800', fontSize: '12px' }}>
@@ -486,6 +493,22 @@ export const TeamAttendanceTab = ({ players = [], activeTeam = null }) => {
                   ) : (
                     <span style={{ padding: '6px 12px', borderRadius: '8px', background: 'rgba(245, 158, 11, 0.15)', color: '#F59E0B', fontWeight: '800', fontSize: '12px' }}>
                       ⏳ {isEn ? 'Match Sheet Open' : 'Acta Abierta'}
+                    </span>
+                  )}
+                </div>
+              ) : (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginRight: '6px' }}>
+                  {isSessionFuture ? (
+                    <span style={{ padding: '6px 12px', borderRadius: '8px', background: 'rgba(59, 130, 246, 0.15)', color: '#3B82F6', fontWeight: '800', fontSize: '12px' }}>
+                      🕐 {isEn ? 'Future session' : 'Sesión futura'}
+                    </span>
+                  ) : hasStaffRecord ? (
+                    <span style={{ padding: '6px 12px', borderRadius: '8px', background: 'rgba(16, 185, 129, 0.15)', color: '#10B981', fontWeight: '800', fontSize: '12px' }}>
+                      ✅ {isEn ? 'Official record saved' : 'Registro oficial guardado'}
+                    </span>
+                  ) : (
+                    <span style={{ padding: '6px 12px', borderRadius: '8px', background: 'rgba(245, 158, 11, 0.15)', color: '#F59E0B', fontWeight: '800', fontSize: '12px' }}>
+                      ⏳ {isEn ? 'Pending registration' : 'Pendiente de registro'}
                     </span>
                   )}
                 </div>
@@ -574,6 +597,14 @@ export const TeamAttendanceTab = ({ players = [], activeTeam = null }) => {
                 )
               )}
             </div>
+
+            {selectedSessionType !== 'match' && (
+              <div style={{ width: '100%', textAlign: 'right', marginTop: '4px' }}>
+                <span style={{ fontSize: '11px', color: 'var(--text-secondary)', fontStyle: 'italic' }}>
+                  ℹ️ {isEn ? 'You can update attendance anytime; updates instantly' : 'Puedes corregir el pase de lista; se refleja al instante'}
+                </span>
+              </div>
+            )}
           </div>
 
           {/* Checklist de Jugadores */}

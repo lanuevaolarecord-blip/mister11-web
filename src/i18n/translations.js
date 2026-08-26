@@ -310,6 +310,7 @@ export const translations = {
     'player.schedule.coachRating': 'Nota del Míster',
     'player.schedule.promptSelf': '¿Asistirás a esta sesión?',
     'player.schedule.promptParent': '¿Asistirá {name} a este evento?',
+    'player.schedule.pendingVerification': 'Pendiente de verificación',
 
     // ── PORTAL DEL JUGADOR — LOGROS (ACHIEVEMENTS TAB) ──────
     'player.achievements.title': 'Tus Logros Deportivos',
@@ -882,6 +883,7 @@ export const translations = {
     'player.schedule.coachRating': 'Coach Rating',
     'player.schedule.promptSelf': 'Will you attend this session?',
     'player.schedule.promptParent': 'Will {name} attend this event?',
+    'player.schedule.pendingVerification': 'Pending verification',
 
     // ── PLAYER APP — ACHIEVEMENTS TAB ───────────────────────
     'player.achievements.title': 'Your Sporting Achievements',

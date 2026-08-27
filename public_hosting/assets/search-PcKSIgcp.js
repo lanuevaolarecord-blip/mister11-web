@@ -1,0 +1,2 @@
+import{X as e}from"./index-D8xAi4jE.js";var t=e(`search`,[[`path`,{d:`m21 21-4.34-4.34`,key:`14j7rj`}],[`circle`,{cx:`11`,cy:`11`,r:`8`,key:`4ej97u`}]]);export{t};
+//# sourceMappingURL=search-PcKSIgcp.js.map

@@ -1,0 +1,2 @@
+var e=(e,n=`success`)=>{let r=document.getElementById(`m11-toast-container`)||t(),i=document.createElement(`div`);i.className=`m11-toast m11-toast-${n}`,i.innerText=e,r.appendChild(i),requestAnimationFrame(()=>{i.classList.add(`m11-toast-show`)}),setTimeout(()=>{i.classList.remove(`m11-toast-show`),i.addEventListener(`transitionend`,()=>{i.remove(),r.childNodes.length===0&&r.remove()})},3e3)},t=()=>{let e=document.createElement(`div`);return e.id=`m11-toast-container`,document.body.appendChild(e),e};export{e as t};
+//# sourceMappingURL=toast-DvG9Vzj3.js.map

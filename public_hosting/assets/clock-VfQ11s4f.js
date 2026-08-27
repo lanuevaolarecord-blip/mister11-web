@@ -1,0 +1,2 @@
+import{X as e}from"./index-D8xAi4jE.js";var t=e(`clock`,[[`circle`,{cx:`12`,cy:`12`,r:`10`,key:`1mglay`}],[`path`,{d:`M12 6v6l4 2`,key:`mmk7yg`}]]);export{t};
+//# sourceMappingURL=clock-VfQ11s4f.js.map

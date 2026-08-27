@@ -18,7 +18,7 @@ import TestDetail from './TestDetail';
 import PlayerAnalyticsModal, { SvgRadar } from '../components/PlayerAnalyticsModal';
 import { calculatePlayerPerformanceScores } from '../utils/testScoreEngine';
 import { db } from '../firebaseConfig';
-import { collection, addDoc, getDocs, query, where, orderBy, serverTimestamp, writeBatch, doc, deleteDoc } from '../firebase/firestore-proxy';
+import { collection, addDoc, getDocs, query, where, orderBy, serverTimestamp, writeBatch, doc, deleteDoc, onSnapshot } from '../firebase/firestore-proxy';
 import WellnessTestModal from '../components/WellnessTestModal';
 import RPETestModal from '../components/RPETestModal';
 import './Tests.css';

@@ -1,6 +1,7 @@
 import React, { useRef } from 'react';
 import { SvgLineChart } from './GraficasTest';
 import { downloadPDF } from '../utils/download';
+import { calculatePlayerPerformanceScores } from '../utils/testScoreEngine';
 
 // ── Colores institucionales ──────────────────────────────────────────────────
 const C_DARK    = '#1B3A2D';
@@ -10,12 +11,12 @@ const C_GREEN   = '#4CAF7D';
 const C_TEXT    = '#2D2D2D';
 const C_BORDER  = '#E0DACA';
 
-// ── SVG Radar Chart (sin ResponsiveContainer, siempre visible) ──────────────
+// ── SVG Radar Chart (Pentagonal 5 Ejes / Dinámico) ──────────────
 export const SvgRadar = ({ data, size = 320 }) => {
   if (!data || data.length === 0) return null;
   const cx = size / 2;
   const cy = size / 2;
-  const r  = size * 0.38;
+  const r  = size * 0.35;
   const n  = data.length;
   const hasData = data.some(d => d.value > 0);
 
@@ -53,7 +54,7 @@ export const SvgRadar = ({ data, size = 320 }) => {
   // Data polygon
   const dataPoints = data.map((d, i) => {
     const a  = angleOf(i);
-    const rr = r * Math.min(1, (d.value || 0) / 100);
+    const rr = r * Math.min(1, Math.max(5, (d.value || 0)) / 100);
     return { x: cx + rr * Math.cos(a), y: cy + rr * Math.sin(a) };
   });
   const polyStr = dataPoints.map(p => `${p.x},${p.y}`).join(' ');
@@ -66,30 +67,32 @@ export const SvgRadar = ({ data, size = 320 }) => {
     const ly = cy + labelR * Math.sin(a);
 
     let textAnchor = 'middle';
-    if (Math.cos(a) > 0.1) textAnchor = 'start';
-    else if (Math.cos(a) < -0.1) textAnchor = 'end';
+    if (Math.cos(a) > 0.2) textAnchor = 'start';
+    else if (Math.cos(a) < -0.2) textAnchor = 'end';
+
+    const labelText = d.subject || d.label || `Eje ${i+1}`;
 
     return (
-      <g key={d.subject}>
+      <g key={labelText + i}>
         <text
           x={lx}
-          y={ly}
+          y={ly - 4}
           textAnchor={textAnchor}
           dominantBaseline="middle"
           fill={C_DARK}
-          style={{ fontSize: 12, fontWeight: 800, fontFamily: 'Outfit, sans-serif' }}
+          style={{ fontSize: 11, fontWeight: 800, fontFamily: 'Outfit, sans-serif' }}
         >
-          {d.subject}
+          {labelText}
         </text>
         <text
           x={lx}
-          y={ly + 12}
+          y={ly + 8}
           textAnchor={textAnchor}
           dominantBaseline="middle"
-          fill="#7A7065"
-          style={{ fontSize: 10, fontWeight: 500, fontFamily: 'Outfit, sans-serif' }}
+          fill="#D4A843"
+          style={{ fontSize: 10, fontWeight: 800, fontFamily: 'Outfit, sans-serif' }}
         >
-          {d.value || 0}
+          ({d.value || 0})
         </text>
       </g>
     );
@@ -128,46 +131,32 @@ const MiniLineChart = ({ data, isTime }) => (
 
 
 // ── Modal principal ──────────────────────────────────────────────────────────
-const PlayerAnalyticsModal = ({ player, tests, historyData, onClose, onExportPDF, onDeleteLastEval, onDeleteAllEvals, onResetPlayerTests }) => {
+const PlayerAnalyticsModal = ({
+  player,
+  tests = [],
+  historyData = {},
+  onClose,
+  onExportPDF,
+  onDeleteLastEval,
+  onDeleteAllEvals,
+  onResetPlayerTests,
+  activeTeam = {}
+}) => {
   const contentRef = useRef(null);
 
   if (!player) return null;
 
-  // Calcular stats para el radar
-  let fis = 0, tec = 0, psi = 0, soc = 0, countFis = 0, countTec = 0, countPsi = 0, countSoc = 0;
-  let totalTests = 0;
-
-  tests.forEach(t => {
-    const h = historyData[player.id]?.[t.id] || [];
-    if (h.length === 0) return;
-    totalTests++;
-    const val = h[h.length - 1].val || 0;
-    let norm = 0;
-    if (t.unit === 'seg')   norm = Math.max(0, 100 - val * 8);
-    else if (t.unit === 'cm')    norm = Math.min(100, val * 2.5);
-    else if (t.unit === 'nivel') norm = Math.min(100, val * 10);
-    else if (t.unit === 'm')     norm = Math.min(100, val / 28);
-    else                         norm = Math.min(100, val * 4);
-
-
-    if (t.type === 'fisico' && t.category !== 'Técnica') { fis += norm; countFis++; }
-    if (t.type === 'fisico' && t.category === 'Técnica') { tec += norm; countTec++; }
-    if (t.type === 'psicosocial' || t.type === 'psicodeportivo') { psi += norm; countPsi++; }
-    if (t.type === 'socioemocional' || t.type === 'sociodeportivo') { soc += norm; countSoc++; }
+  // ── Cálculo canónico unificado de los 5 ejes deportivos ──────────
+  const playerEvals = [];
+  Object.entries(historyData[player?.id] || {}).forEach(([testId, hList]) => {
+    if (hList && hList.length > 0) {
+      const last = hList[hList.length - 1];
+      playerEvals.push({ testId, val: last.val, date: last.date, ...(last.raw || {}) });
+    }
   });
 
-  fis = countFis > 0 ? Math.round(fis / countFis) : 0;
-  tec = countTec > 0 ? Math.round(tec / countTec) : 0;
-  psi = countPsi > 0 ? Math.round(psi / countPsi) : 0;
-  soc = countSoc > 0 ? Math.round(soc / countSoc) : 0;
-  const overall = totalTests > 0 ? Math.round((fis + tec + psi + soc) / 4) : 0;
-
-  const radarData = [
-    { subject: 'FÍS', value: fis },
-    { subject: 'TÉC', value: tec },
-    { subject: 'PSI', value: psi },
-    { subject: 'SOC', value: soc },
-  ];
+  const scores = calculatePlayerPerformanceScores(playerEvals, player);
+  const { fis, tec, psi, soc, tactica, asistencia, overall, testCount: totalTests, radarData5: radarData } = scores;
 
   const initials = (player.name || '').split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
 

@@ -71,7 +71,6 @@ export const PlayerStatsTab = ({ player, team, teamPath, isParentView = false, a
 
   const [showComparisonHelp, setShowComparisonHelp] = useState(false);
   const [showRadarHelp, setShowRadarHelp] = useState(false);
-  const [radarViewMode, setRadarViewMode] = useState('mister11'); // 'mister11' | '5ejes'
 
   // Catálogo canónico de pruebas físicas y cuestionarios para enriquecer datos de Firestore
   const CANONICAL_TESTS_MAP = useMemo(() => ({
@@ -743,7 +742,7 @@ export const PlayerStatsTab = ({ player, team, teamPath, isParentView = false, a
         </div>
       )}
 
-      {/* 5. RADAR CHART DE COMPETENCIAS */}
+      {/* 5. RADAR CHART DE COMPETENCIAS (5 EJES CANÓNICOS) */}
       <div className="hud-card radar-stats-card" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', marginBottom: '20px' }}>
         <div className="hud-header" style={{ width: '100%', flexWrap: 'wrap', gap: '8px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -753,42 +752,6 @@ export const PlayerStatsTab = ({ player, team, teamPath, isParentView = false, a
             <span className="hud-status-live" style={{ color: '#4CAF7D', background: 'rgba(76,175,125,0.12)' }}>
               {t('player.stats.radarLevel', { level: overallTPI })}
             </span>
-          </div>
-
-          {/* Selector de Modo de Radar */}
-          <div style={{ display: 'flex', gap: '4px', background: darkMode ? 'rgba(255,255,255,0.06)' : '#E2E8F0', padding: '3px', borderRadius: '8px' }}>
-            <button
-              type="button"
-              onClick={() => setRadarViewMode('mister11')}
-              style={{
-                background: radarViewMode === 'mister11' ? '#10B981' : 'transparent',
-                color: radarViewMode === 'mister11' ? '#FFFFFF' : 'var(--text-secondary)',
-                border: 'none',
-                padding: '4px 10px',
-                borderRadius: '6px',
-                fontSize: '0.72rem',
-                fontWeight: 800,
-                cursor: 'pointer'
-              }}
-            >
-              💎 {isEn ? 'Míster11 (4 Axes)' : 'Míster11 (4 Ejes)'}
-            </button>
-            <button
-              type="button"
-              onClick={() => setRadarViewMode('5ejes')}
-              style={{
-                background: radarViewMode === '5ejes' ? '#10B981' : 'transparent',
-                color: radarViewMode === '5ejes' ? '#FFFFFF' : 'var(--text-secondary)',
-                border: 'none',
-                padding: '4px 10px',
-                borderRadius: '6px',
-                fontSize: '0.72rem',
-                fontWeight: 800,
-                cursor: 'pointer'
-              }}
-            >
-              🕸️ {isEn ? 'Integral (5 Axes)' : 'Integral (5 Ejes)'}
-            </button>
           </div>
 
           <button 
@@ -832,117 +795,113 @@ export const PlayerStatsTab = ({ player, team, teamPath, isParentView = false, a
             <ul style={{ margin: 0, paddingLeft: '18px' }}>
               <li><strong>{t('player.tab.physical')} ({rawFisico}):</strong> {t('player.stats.radarPhys')}</li>
               <li><strong>{isEn ? 'Technical' : 'Técnica'} ({rawTecnica}):</strong> {t('player.stats.radarTech')}</li>
-              <li><strong>Mental / Psicodeportivo ({rawMental}):</strong> {t('player.stats.radarMental')}</li>
-              <li><strong>Socioemocional ({scores.soc}):</strong> {isEn ? 'Social cohesion and well-being' : 'Cohesión grupal y bienestar emocional'}</li>
+              <li><strong>{isEn ? 'Tactical' : 'Táctica'} ({rawTactica}):</strong> {t('player.stats.radarTact')}</li>
+              <li><strong>Mental ({rawMental}):</strong> {t('player.stats.radarMental')}</li>
               <li><strong>{t('player.leaderboard.tabAttendance')} ({rawAsistencia}):</strong> {t('player.stats.radarAtt')}</li>
             </ul>
           </div>
         )}
 
-        {/* CONTENIDO DEL RADAR SEGÚN MODO */}
-        {radarViewMode === 'mister11' ? (
-          <div style={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '16px 0 10px 0' }}>
-            <SvgRadar data={scores.radarData4} size={250} />
-            <div style={{ display: 'flex', justifyContent: 'center', flexWrap: 'wrap', gap: '10px', marginTop: '12px' }}>
-              {scores.stats4.map((s, idx) => (
-                <span 
-                  key={idx}
-                  style={{
-                    background: darkMode ? 'rgba(255,255,255,0.06)' : '#F1F5F9',
-                    border: '1px solid var(--border-light)',
-                    borderRadius: '8px',
-                    padding: '4px 10px',
-                    fontSize: '0.75rem',
-                    fontWeight: 800,
-                    color: s.value !== '-' ? '#10B981' : 'var(--text-secondary)'
-                  }}
-                >
-                  {s.label}: {s.value}
-                </span>
-              ))}
-            </div>
-          </div>
-        ) : (
-          <div style={{ position: 'relative', width: '100%', maxWidth: `${svgWidth}px`, height: `${svgHeight}px`, margin: '10px auto' }}>
-            <svg width="100%" height="100%" viewBox={`0 0 ${svgWidth} ${svgHeight}`} style={{ overflow: 'visible' }}>
-              {gridLevels.map((lvl, idx) => (
-                <circle
-                  key={idx}
-                  cx={centerX}
-                  cy={centerY}
-                  r={radius * lvl}
-                  fill="none"
-                  stroke={darkMode ? "rgba(255, 255, 255, 0.12)" : "rgba(27, 58, 45, 0.15)"}
-                  strokeDasharray={idx === 3 ? 'none' : '3,3'}
-                />
-              ))}
-
-              {radarMetrics.map((_, i) => {
-                const angle = i * angleStep - Math.PI / 2;
-                const x = centerX + radius * Math.cos(angle);
-                const y = centerY + radius * Math.sin(angle);
-                return (
-                  <line
-                    key={i}
-                    x1={centerX}
-                    y1={centerY}
-                    x2={x}
-                    y2={y}
-                    stroke={darkMode ? "rgba(255, 255, 255, 0.15)" : "rgba(27, 58, 45, 0.18)"}
-                  />
-                );
-              })}
-
-              <polygon
-                points={polygonPoints}
-                fill={darkMode ? "rgba(16, 185, 129, 0.35)" : "rgba(16, 185, 129, 0.25)"}
-                stroke="#10B981"
-                strokeWidth="2.5"
+        {/* GRÁFICA PENTAGONAL DE 5 EJES */}
+        <div style={{ position: 'relative', width: '100%', maxWidth: `${svgWidth}px`, height: `${svgHeight}px`, margin: '10px auto' }}>
+          <svg width="100%" height="100%" viewBox={`0 0 ${svgWidth} ${svgHeight}`} style={{ overflow: 'visible' }}>
+            {gridLevels.map((lvl, idx) => (
+              <circle
+                key={idx}
+                cx={centerX}
+                cy={centerY}
+                r={radius * lvl}
+                fill="none"
+                stroke={darkMode ? "rgba(255, 255, 255, 0.12)" : "rgba(27, 58, 45, 0.15)"}
+                strokeDasharray={idx === 3 ? 'none' : '3,3'}
               />
+            ))}
 
-              {radarMetrics.map((m, i) => {
-                const angle = i * angleStep - Math.PI / 2;
-                const r = (m.value / 100) * radius;
-                const x = centerX + r * Math.cos(angle);
-                const y = centerY + r * Math.sin(angle);
-                return (
-                  <circle
-                    key={i}
-                    cx={x}
-                    cy={y}
-                    r="4"
-                    fill="#10B981"
-                    stroke={darkMode ? "#ffffff" : "#1B3A2D"}
-                    strokeWidth="1.5"
-                  />
-                );
-              })}
+            {radarMetrics.map((_, i) => {
+              const angle = i * angleStep - Math.PI / 2;
+              const x = centerX + radius * Math.cos(angle);
+              const y = centerY + radius * Math.sin(angle);
+              return (
+                <line
+                  key={i}
+                  x1={centerX}
+                  y1={centerY}
+                  x2={x}
+                  y2={y}
+                  stroke={darkMode ? "rgba(255, 255, 255, 0.15)" : "rgba(27, 58, 45, 0.18)"}
+                />
+              );
+            })}
 
-              {radarMetrics.map((m, i) => {
-                const angle = i * angleStep - Math.PI / 2;
-                const cosVal = Math.cos(angle);
-                const anchor = cosVal > 0.25 ? 'start' : (cosVal < -0.25 ? 'end' : 'middle');
-                const labelRadius = radius + (anchor === 'middle' ? 20 : 12);
-                const x = centerX + labelRadius * cosVal;
-                const y = centerY + labelRadius * Math.sin(angle);
-                return (
-                  <text
-                    key={i}
-                    x={x}
-                    y={y}
-                    textAnchor={anchor}
-                    dominantBaseline="central"
-                    fill={darkMode ? "#cbd5e1" : "#1B3A2D"}
-                    fontSize="11"
-                    fontWeight="800"
-                  >
-                    {m.label} ({m.value})
-                  </text>
-                );
-              })}
-            </svg>
-          </div>
-        )}
+            <polygon
+              points={polygonPoints}
+              fill={darkMode ? "rgba(16, 185, 129, 0.35)" : "rgba(16, 185, 129, 0.25)"}
+              stroke="#10B981"
+              strokeWidth="2.5"
+            />
+
+            {radarMetrics.map((m, i) => {
+              const angle = i * angleStep - Math.PI / 2;
+              const r = (m.value / 100) * radius;
+              const x = centerX + r * Math.cos(angle);
+              const y = centerY + r * Math.sin(angle);
+              return (
+                <circle
+                  key={i}
+                  cx={x}
+                  cy={y}
+                  r="4"
+                  fill="#10B981"
+                  stroke={darkMode ? "#ffffff" : "#1B3A2D"}
+                  strokeWidth="1.5"
+                />
+              );
+            })}
+
+            {radarMetrics.map((m, i) => {
+              const angle = i * angleStep - Math.PI / 2;
+              const cosVal = Math.cos(angle);
+              const anchor = cosVal > 0.25 ? 'start' : (cosVal < -0.25 ? 'end' : 'middle');
+              const labelRadius = radius + (anchor === 'middle' ? 20 : 12);
+              const x = centerX + labelRadius * cosVal;
+              const y = centerY + labelRadius * Math.sin(angle);
+              return (
+                <text
+                  key={i}
+                  x={x}
+                  y={y}
+                  textAnchor={anchor}
+                  dominantBaseline="central"
+                  fill={darkMode ? "#cbd5e1" : "#1B3A2D"}
+                  fontSize="11"
+                  fontWeight="800"
+                >
+                  {m.label} ({m.value})
+                </text>
+              );
+            })}
+          </svg>
+        </div>
+
+        {/* 5 Badges de Rendimiento Deportivo */}
+        <div style={{ display: 'flex', justifyContent: 'center', flexWrap: 'wrap', gap: '8px', marginTop: '6px' }}>
+          {radarMetrics.map((m, idx) => (
+            <span 
+              key={idx}
+              style={{
+                background: darkMode ? 'rgba(255,255,255,0.06)' : '#F1F5F9',
+                border: '1px solid var(--border-light)',
+                borderRadius: '8px',
+                padding: '4px 10px',
+                fontSize: '0.74rem',
+                fontWeight: 800,
+                color: m.value > 0 ? '#10B981' : 'var(--text-secondary)'
+              }}
+            >
+              {m.label}: {m.value}
+            </span>
+          ))}
+        </div>
 
         {/* Banner motivacional cuando hay áreas en 0 */}
         {zeroMetrics.length > 0 && (

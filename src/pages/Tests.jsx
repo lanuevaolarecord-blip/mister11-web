@@ -1292,7 +1292,7 @@ const Tests = () => {
                 });
 
                 const scores = calculatePlayerPerformanceScores(playerEvals, player);
-                const { fis, tec, psi, soc, overall, testCount, stats4: stats, radarData4: radarData } = scores;
+                const { fis, tec, psi, soc, tactica, asistencia, overall, testCount, stats4: stats, radarData5: radarData } = scores;
 
                 return (
                   <div id="grafica-rendimiento-jugador" style={{ display: 'flex', flexWrap: 'wrap', gap: 24, alignItems: 'stretch', marginBottom: 24 }}>
@@ -1301,7 +1301,7 @@ const Tests = () => {
                       <LegendCard
                         player={player}
                         overall={overall || '-'}
-                        position="POS"
+                        position={player?.position || player?.posicion || 'MC'}
                         streak={testCount}
                         type="elite"
                         stats={stats}

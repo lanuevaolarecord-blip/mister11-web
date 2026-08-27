@@ -246,18 +246,19 @@ export const calculatePlayerPerformanceScores = (evaluations = [], player = {}, 
       { label: 'MENTAL', value: psi },
       { label: 'ASISTENCIA', value: asistencia }
     ],
-    radarData4: [
-      { subject: 'FÍS', value: fis },
-      { subject: 'TÉC', value: tec },
-      { subject: 'PSI', value: psi },
-      { subject: 'SOC', value: soc }
-    ],
     radarData5: [
-      { label: 'FÍSICO', value: fis },
-      { label: 'TÉCNICA', value: tec },
-      { label: 'TÁCTICA', value: tactica },
-      { label: 'MENTAL', value: psi },
-      { label: 'ASISTENCIA', value: asistencia }
+      { subject: 'FÍSICO', label: 'FÍSICO', value: fis },
+      { subject: 'TÉCNICA', label: 'TÉCNICA', value: tec },
+      { subject: 'TÁCTICA', label: 'TÁCTICA', value: tactica },
+      { subject: 'MENTAL', label: 'MENTAL', value: psi },
+      { subject: 'ASISTENCIA', label: 'ASISTENCIA', value: asistencia }
+    ],
+    radarData: [
+      { subject: 'FÍSICO', label: 'FÍSICO', value: fis },
+      { subject: 'TÉCNICA', label: 'TÉCNICA', value: tec },
+      { subject: 'TÁCTICA', label: 'TÁCTICA', value: tactica },
+      { subject: 'MENTAL', label: 'MENTAL', value: psi },
+      { subject: 'ASISTENCIA', label: 'ASISTENCIA', value: asistencia }
     ]
   };
 };

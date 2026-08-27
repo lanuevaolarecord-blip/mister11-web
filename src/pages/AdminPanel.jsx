@@ -52,6 +52,7 @@ import UpgradeModal from '../components/UpgradeModal';
 import ExerciseLibrary from '../components/ExerciseLibrary';
 import { normalizeEmail } from '../utils/normalizeEmail';
 import { normalizeAttendanceDatabase, checkAttendanceConsistency } from '../utils/attendanceStatsHelper';
+import { sanitizeAllMatchesDatabase } from '../utils/sanitizeMatchData';
 import './AdminPanel.css';
 
 const AdminPanel = () => {
@@ -61,6 +62,7 @@ const AdminPanel = () => {
   const [activeTab, setActiveTab] = useState(location.state?.activeTab || 'equipos');
   const [backfilling, setBackfilling] = useState(false);
   const [normalizingAttendance, setNormalizingAttendance] = useState(false);
+  const [sanitizingMatches, setSanitizingMatches] = useState(false);
 
   useEffect(() => {
     if (location.state?.activeTab) {
@@ -1729,6 +1731,58 @@ const AdminPanel = () => {
                           }}
                         >
                           <CheckCircle size={16} /> {normalizingAttendance ? 'Reparando datos...' : '⚡ Reparar y normalizar asistencia'}
+                        </button>
+
+                        {/* Botón de saneado defensivo y anti-crash de partidos */}
+                        <button
+                          onClick={async () => {
+                            if (!window.confirm("¿Deseas sanear, validar y reparar todos los documentos de partidos (eliminando incompatibilidades legacy y aislando datos inválidos)?")) return;
+                            setSanitizingMatches(true);
+                            try {
+                              let totalProcessed = 0;
+                              let totalRepaired = 0;
+                              for (const t of teams) {
+                                const path = getTeamPath(t.id);
+                                if (!path) continue;
+                                const res = await sanitizeAllMatchesDatabase(path, {
+                                  db,
+                                  getDocs,
+                                  updateDoc,
+                                  doc,
+                                  collection,
+                                  serverTimestamp
+                                }, players);
+                                totalProcessed += (res.totalMatches || 0);
+                                totalRepaired += (res.repairedMatches || 0);
+                              }
+                              showToast(`¡Saneado de partidos completado! ${totalProcessed} partidos analizados, ${totalRepaired} documentos legacy o inconsistentes reparados.`, 'success');
+                            } catch (err) {
+                              console.error("Error al sanear partidos:", err);
+                              showToast("Error al sanear partidos: " + err.message, "error");
+                            } finally {
+                              setSanitizingMatches(false);
+                            }
+                          }}
+                          disabled={sanitizingMatches}
+                          style={{
+                            minHeight: '48px',
+                            textTransform: 'uppercase',
+                            borderRadius: '8px',
+                            fontWeight: 'bold',
+                            letterSpacing: '0.5px',
+                            fontSize: '0.82rem',
+                            cursor: 'pointer',
+                            transition: 'all 0.2s ease',
+                            border: '1.5px solid #F59E0B',
+                            backgroundColor: 'rgba(245, 158, 11, 0.12)',
+                            color: '#F59E0B',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: '8px'
+                          }}
+                        >
+                          <Sparkles size={16} /> {sanitizingMatches ? 'Saneando partidos...' : '🧹 Sanear y reparar todos los partidos'}
                         </button>
 
                         {/* Botón de blindaje de identidades existentes */}

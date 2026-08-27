@@ -22,10 +22,12 @@ import { useLiveStats } from '../hooks/useLiveStats';
 import { SvgDonut, SvgComparisonBars, HalfBreakdown } from '../components/LiveStatsCharts';
 import PlayerAvatar from '../components/PlayerAvatar';
 import MatchStatsBlock from '../components/MatchStatsBlock';
+import MatchErrorBoundary from '../components/MatchErrorBoundary';
 import './Partidos.css';
 import { normalizeText } from '../utils/normalizeInput';
 import { normalizeLineup, applyLineupChange, formatMatchDateSafe } from '../utils/lineupEngine';
 import { buildSmartMatchSheetActual, getEffectiveMatchDuration, isMatchLocked } from '../utils/minutesEngine';
+import { sanitizeMatchData } from '../utils/sanitizeMatchData';
 
 export const normalizeCapitalize = (str) => {
   if (!str || typeof str !== 'string') return '';
@@ -827,55 +829,87 @@ const Partidos = () => {
     setViewMode('LIST');
   };
 
+  const [showWarningsDetail, setShowWarningsDetail] = useState(false);
+  const [cleansingInProgress, setCleansingInProgress] = useState(false);
+
   const handleNewMatch = () => {
     setActiveMatchId(null);
-    const norm = normalizeLineup([], [], []);
-    const newMatch = {
+    const defaultMatch = {
       rival: '',
       date: new Date().toISOString().split('T')[0],
       time: '18:00',
       location: '',
       type: 'Local',
       status: 'Pendiente',
+      duration: 90,
+      durationType: 'completo',
       goalsFor: 0,
       goalsAgainst: 0,
       lineup: '4-3-3',
       events: [],
-      titulares: norm.titulares,
-      suplentes: norm.suplentes,
-      convocados: norm.convocados,
-      postMatchAnswers: { tactical: '', physical: '', improvement: '', highlights: '' },
-      postMatchImages: [],
-      goleadoresList: [],
-      tarjetasList: []
-    };
-    setMatchData(newMatch);
-    setCalledPlayers([...norm.titulares, ...norm.suplentes]);
-    setEditTab('PRE-PARTIDO');
-    setViewMode('EDIT');
-  };
-
-  const handleEditMatch = (match) => {
-    if (!match) return;
-    setActiveMatchId(match.id);
-    syncMatchState(match.id, match);
-    const norm = normalizeLineup(match.titulares, match.suplentes, match.convocados);
-    setMatchData({
+      liveStatsEvents: [],
+      titulares: Array(11).fill(null),
+      suplentes: Array(7).fill(null),
+      convocados: [],
       postMatchAnswers: { tactical: '', physical: '', improvement: '', highlights: '' },
       postMatchImages: [],
       goleadoresList: [],
       tarjetasList: [],
-      liveStatsEvents: match.liveStatsEvents || match.events || [],
-      ...match,
-      titulares: norm.titulares,
-      suplentes: norm.suplentes,
-      convocados: norm.convocados
-    });
-    setCalledPlayers([...norm.titulares, ...norm.suplentes]);
-    const savedTab = localStorage.getItem(`mister11_last_edit_tab_${match.id}`);
+      actaOficial: { closed: false, actual: {}, rsvp: {}, warnings: [] },
+      warnings: []
+    };
+    const { sanitizedMatch } = sanitizeMatchData(defaultMatch, players);
+    setMatchData(sanitizedMatch);
+    setCalledPlayers([...sanitizedMatch.titulares, ...sanitizedMatch.suplentes]);
+    setEditTab('PRE-PARTIDO');
+    setViewMode('EDIT');
+  };
+
+  const handleEditMatch = (rawMatch) => {
+    if (!rawMatch) return;
+    const { sanitizedMatch } = sanitizeMatchData(rawMatch, players);
+    setActiveMatchId(sanitizedMatch.id);
+    syncMatchState(sanitizedMatch.id, sanitizedMatch);
+    setMatchData(sanitizedMatch);
+    setCalledPlayers([...sanitizedMatch.titulares, ...sanitizedMatch.suplentes]);
+    const savedTab = localStorage.getItem(`mister11_last_edit_tab_${sanitizedMatch.id}`);
     if (savedTab) setEditTab(savedTab);
     else setEditTab('PRE-PARTIDO');
     setViewMode('EDIT');
+  };
+
+  const handleRepairAndOpenMatch = async () => {
+    if (!matchData?.id) return;
+    try {
+      const { sanitizedMatch } = sanitizeMatchData(matchData, players);
+      setMatchData(sanitizedMatch);
+      setCalledPlayers([...sanitizedMatch.titulares, ...sanitizedMatch.suplentes]);
+      if (updateMatch && matchData.id) {
+        await updateMatch(matchData.id, sanitizedMatch);
+      }
+      showToast('✅ Partido reparado y persistido con éxito.', 'success');
+    } catch (err) {
+      console.error('Error reparando partido:', err);
+      showToast('❌ Error al reparar el partido.', 'error');
+    }
+  };
+
+  const handleCleanseMatchEvents = async () => {
+    if (!matchData?.id) return;
+    setCleansingInProgress(true);
+    try {
+      const { sanitizedMatch, warnings } = sanitizeMatchData(matchData, players);
+      setMatchData(sanitizedMatch);
+      if (updateMatch) {
+        await updateMatch(matchData.id, sanitizedMatch);
+      }
+      showToast(`🧹 Bitácora depurada con éxito. ${warnings.length} registros saneados.`, 'success');
+    } catch (err) {
+      console.error('Error depurando bitácora:', err);
+      showToast('❌ Error al depurar la bitácora.', 'error');
+    } finally {
+      setCleansingInProgress(false);
+    }
   };
 
   const togglePlayerCall = (id) => {
@@ -1060,39 +1094,43 @@ const Partidos = () => {
                   </div>
 
                     <div className="matches-grid">
-                      {filteredMatches.map(m => (
-                        <div key={m.id} className="match-card" onClick={() => handleEditMatch(m)}>
-                          <div className="mc-header">
-                            <span className={`status-badge ${m.status?.toLowerCase()}`}>{m.status}</span>
-                            <span className="mc-date">{formatMatchDateSafe(m, settings?.language)}</span>
-                          </div>
+                      {filteredMatches.map(m => {
+                        const localScore = m.type === 'Local' ? (m.goalsFor ?? 0) : (m.goalsAgainst ?? 0);
+                        const visitScore = m.type === 'Local' ? (m.goalsAgainst ?? 0) : (m.goalsFor ?? 0);
+                        const isFinishedCard = m.status === 'Terminado' || m.status === 'Finalizado';
+                        return (
+                          <div key={m.id || Math.random()} className="match-card" onClick={() => handleEditMatch(m)}>
+                            <div className="mc-header">
+                              <span className={`status-badge ${(m.status || 'Pendiente').toLowerCase()}`}>{m.status || 'Pendiente'}</span>
+                              <span className="mc-date">{formatMatchDateSafe(m, settings?.language)}</span>
+                            </div>
 
-                        <div className="mc-body">
-                          <div className="team-local">
-                            {/* Dummy Escudo */}
-                            <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: 'var(--partidos-border)' }}></div>
-                            <span className="t-name">{m.type === 'Local' ? (activeTeam?.nombre || 'Mi Equipo') : m.rival}</span>
-                          </div>
-                          <div className="mc-score">
-                            {m.status === 'Terminado' ? (
-                              <span>{m.type === 'Local' ? m.goalsFor : m.goalsAgainst} - {m.type === 'Local' ? m.goalsAgainst : m.goalsFor}</span>
-                            ) : (
-                              <span className="vs">VS</span>
-                            )}
-                          </div>
-                          <div className="team-visit">
-                            <span className="t-name">{m.type === 'Visitante' ? (activeTeam?.nombre || 'Mi Equipo') : m.rival}</span>
-                            <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: 'var(--partidos-border)' }}></div>
-                          </div>
-                        </div>
+                            <div className="mc-body">
+                              <div className="team-local">
+                                <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: 'var(--partidos-border)' }}></div>
+                                <span className="t-name">{m.type === 'Local' ? (activeTeam?.nombre || 'Mi Equipo') : (m.rival || 'Rival')}</span>
+                              </div>
+                              <div className="mc-score">
+                                {isFinishedCard ? (
+                                  <span>{localScore} - {visitScore}</span>
+                                ) : (
+                                  <span className="vs">VS</span>
+                                )}
+                              </div>
+                              <div className="team-visit">
+                                <span className="t-name">{m.type === 'Visitante' ? (activeTeam?.nombre || 'Mi Equipo') : (m.rival || 'Rival')}</span>
+                                <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: 'var(--partidos-border)' }}></div>
+                              </div>
+                            </div>
 
-                        <div className="mc-footer">
-                          <span>📍 {m.location || 'Sin ubicación'}</span>
-                          <span>🛡️ Formación: {m.lineup || '4-3-3'}</span>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
+                            <div className="mc-footer">
+                              <span>📍 {m.location || 'Sin ubicación'}</span>
+                              <span>🛡️ Formación: {m.lineup || '4-3-3'}</span>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
                 </>
               )}
             </div>
@@ -1109,8 +1147,57 @@ const Partidos = () => {
       )}
 
       {viewMode === 'EDIT' && (
-        <div className="partidos-editor-container p-4 sm:p-6 lg:p-8">
-          <div className="editor-tabs mt-2 flex flex-row flex-nowrap overflow-x-auto whitespace-nowrap scrollbar-none px-4 sm:px-6 lg:px-8">
+        <MatchErrorBoundary
+          matchData={matchData}
+          onBackToList={() => setViewMode('LIST')}
+          onRepairAndOpen={handleRepairAndOpenMatch}
+        >
+          <div className="partidos-editor-container p-4 sm:p-6 lg:p-8">
+            {/* Banner de Advertencias si el partido contiene datos anómalos saneados */}
+            {matchData?.warnings && matchData.warnings.length > 0 && (
+              <div style={{
+                background: 'rgba(245, 158, 11, 0.12)',
+                border: '1.5px solid #F59E0B',
+                borderRadius: '10px',
+                padding: '12px 16px',
+                marginBottom: '16px',
+                color: '#FDE68A',
+                fontSize: '13px'
+              }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontWeight: '700' }}>
+                    <span style={{ fontSize: '16px' }}>⚠️</span>
+                    <span>Este partido contenía {matchData.warnings.length} anomalías o datos legacy que fueron aislados automáticamente.</span>
+                  </div>
+                  <div style={{ display: 'flex', gap: '8px' }}>
+                    <button
+                      type="button"
+                      onClick={() => setShowWarningsDetail(prev => !prev)}
+                      style={{ background: 'transparent', border: '1px solid #F59E0B', color: '#F59E0B', padding: '4px 10px', borderRadius: '6px', cursor: 'pointer', fontSize: '12px', fontWeight: '700' }}
+                    >
+                      {showWarningsDetail ? 'Ocultar detalles' : 'Ver lista'}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleCleanseMatchEvents}
+                      disabled={cleansingInProgress}
+                      style={{ background: '#F59E0B', border: 'none', color: '#000000', padding: '4px 10px', borderRadius: '6px', cursor: 'pointer', fontSize: '12px', fontWeight: '800' }}
+                    >
+                      {cleansingInProgress ? 'Depurando...' : '🧹 Depurar bitácora'}
+                    </button>
+                  </div>
+                </div>
+                {showWarningsDetail && (
+                  <ul style={{ margin: '8px 0 0 18px', padding: 0, fontSize: '12px', color: '#FCD34D' }}>
+                    {matchData.warnings.map((w, idx) => (
+                      <li key={idx} style={{ marginTop: '3px' }}>{w}</li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            )}
+
+            <div className="editor-tabs mt-2 flex flex-row flex-nowrap overflow-x-auto whitespace-nowrap scrollbar-none px-4 sm:px-6 lg:px-8">
             {TABS_CONFIG.map(tabObj => (
               <button
                 key={tabObj.id}
@@ -2128,7 +2215,8 @@ const Partidos = () => {
             )}
           </div>
         </div>
-      )}
+      </MatchErrorBoundary>
+    )}
 
       {/* MODAL DE VISTA PREVIA DEL INFORME */}
       {showReportPreview && (

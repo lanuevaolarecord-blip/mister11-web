@@ -668,8 +668,27 @@ const ActaOficialPanel = ({ matchId, matchData, players = [], calledPlayers = []
               const pid = String(player.id);
               const actual = getPlayerActual(pid);
               if (!actual) return null;
-              const statusInfo = STATUS_OPTIONS.find(s => s.id === actual.status);
-              const minVal = actual.minutes !== undefined && actual.minutes !== null ? actual.minutes : 0;
+              const status = actual.status || 'sin_registro';
+              const statusInfo = STATUS_OPTIONS.find(s => s.id === status);
+
+              const computedMin = calculateMinutesFromEvents(
+                pid,
+                effectiveEvents,
+                initialTitulares,
+                initialSuplentes,
+                duration,
+                actual?.minutesOverride ?? null,
+                status,
+                actual?.lateMin ?? null,
+                matchData?.tarjetasList || []
+              );
+
+              const minVal = (actual?.minutesOverride !== undefined && actual?.minutesOverride !== null)
+                ? actual.minutesOverride
+                : (computedMin?.minutes !== undefined && computedMin?.minutes !== null
+                    ? computedMin.minutes
+                    : (typeof actual?.minutes === 'number' ? actual.minutes : 0));
+
               return (
                 <div key={pid} style={styles.summaryCard}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
@@ -849,7 +868,7 @@ const styles = {
   container: {
     width: '100%',
     maxWidth: 'none',
-    padding: '0',
+    padding: '4px 6px 20px',
     margin: '0',
     fontFamily: 'var(--font-body, system-ui)',
     boxSizing: 'border-box',
@@ -857,11 +876,13 @@ const styles = {
   header: {
     display: 'flex',
     justifyContent: 'space-between',
-    alignItems: 'flex-start',
+    alignItems: 'center',
     flexWrap: 'wrap',
     gap: '12px',
     marginBottom: '20px',
     width: '100%',
+    padding: '0 2px',
+    boxSizing: 'border-box',
   },
   title: {
     fontSize: '20px',
@@ -959,9 +980,10 @@ const styles = {
   playerList: {
     display: 'flex',
     flexDirection: 'column',
-    gap: '8px',
+    gap: '10px',
     width: '100%',
     marginBottom: '24px',
+    boxSizing: 'border-box',
   },
   playerCard: {
     background: 'var(--partidos-player-card-bg)',
@@ -973,7 +995,7 @@ const styles = {
     boxSizing: 'border-box',
   },
   playerCardClosed: {
-    opacity: 0.9,
+    opacity: 0.95,
     cursor: 'default',
   },
   playerRow: {
@@ -981,7 +1003,7 @@ const styles = {
     gridTemplateColumns: 'minmax(200px, 2fr) 90px 70px minmax(150px, 1.2fr) minmax(130px, 1fr) 30px',
     alignItems: 'center',
     gap: '12px',
-    padding: '12px 18px',
+    padding: '14px 20px',
     cursor: 'pointer',
     width: '100%',
     boxSizing: 'border-box',

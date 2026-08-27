@@ -1,252 +1,571 @@
-.legend-card-wrapper {
-  width: 250px;
-  height: 380px;
+/* ═══════════════════════════════════════════════════════════════════════════
+   MÍSTER 11 — TARJETA LEGEND CARD OFICIAL (ESTILO FUT / EA FC 24)
+   Adaptación perfecta a Modo Claro (Mármol + Joya Dorada + Seda Blanca) 
+   y Modo Oscuro (Obsidiana + Pirámides 3D Oro/Carbón).
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.fut-legend-card-container {
+  width: 270px;
+  height: 400px;
   perspective: 1000px;
   margin: 0 auto;
-  cursor: pointer;
   position: relative;
-  overflow: visible;
+  user-select: none;
+  font-family: 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  filter: drop-shadow(0 14px 28px rgba(0, 0, 0, 0.22));
+  transition: transform 0.35s cubic-bezier(0.2, 0.8, 0.2, 1), filter 0.35s ease;
 }
 
-.legend-card-inner {
+.fut-legend-card-container:hover {
+  transform: translateY(-8px) rotateX(4deg) rotateY(-2deg) scale(1.02);
+  filter: drop-shadow(0 20px 36px rgba(212, 168, 67, 0.35));
+}
+
+/* ── Escudo FUT con forma curvada y punta inferior ─────────────────────── */
+.fut-card-shield {
   width: 100%;
   height: 100%;
-  border-radius: 14px;
-  background: var(--bg-card, #FFFFFF);
-  border: 2px solid var(--border-color, #D4A843);
-  display: flex;
-  flex-direction: column;
-  padding: 12px 14px;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
   position: relative;
-  overflow: visible;
-}
-
-.legend-card-wrapper:hover .legend-card-inner {
-  transform: translateY(-5px);
-  box-shadow: 0 12px 24px rgba(212, 168, 67, 0.2);
-}
-
-/* Card Types */
-.card-type-starter .legend-card-inner {
-  border-color: var(--primary, #1B3A2D);
-}
-
-.card-type-pro .legend-card-inner {
-  border-color: var(--accent, #4CAF7D);
-}
-
-.card-type-elite .legend-card-inner {
-  border: 3px solid #D4A843;
-  background: linear-gradient(135deg, #FFFDF8 0%, #FAF8F3 50%, #F5F0E8 100%);
-  box-shadow: 0 8px 24px rgba(212, 168, 67, 0.25), inset 0 0 16px rgba(212, 168, 67, 0.1);
-}
-
-.dark .card-type-elite .legend-card-inner {
-  border: 3px solid #4CAF7D;
-  background: linear-gradient(135deg, #141A17 0%, #0D1410 100%);
-  box-shadow: 0 8px 24px rgba(76, 175, 125, 0.2), inset 0 0 16px rgba(76, 175, 125, 0.1);
-}
-
-/* FUT Header Layout */
-.card-header-new {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  height: 130px;
-  position: relative;
-  width: 100%;
-  margin-top: 20px;
-  overflow: visible;
-}
-
-.card-header-left, .card-header-right {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  flex: 1;
-  gap: 2px;
-}
-
-.card-header-val {
-  font-family: var(--font-numbers, 'Bebas Neue', sans-serif);
-  font-size: 1.8rem;
-  font-weight: 700;
-  line-height: 1;
-  color: var(--text-primary, #1B3A2D);
-}
-
-.card-header-label {
-  font-size: 0.8rem;
-  color: var(--text-secondary, #2D2D2D);
-  font-weight: 800;
-}
-
-.card-star {
-  font-size: 1.2rem;
-  color: var(--gold, #D4A843);
-}
-
-.card-avatar-wrapper {
-  position: relative;
-  width: 110px;
-  height: 120px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  flex-shrink: 0;
-  overflow: visible;
-}
-
-.card-avatar-circle {
-  width: 84px;
-  height: 84px;
-  border-radius: 50%;
-  border: 3px solid var(--gold, #D4A843);
-  background: var(--bg-primary, #F5F0E8);
+  border-radius: 20px 20px 36px 36px;
+  clip-path: polygon(
+    0% 5%,
+    15% 5%,
+    20% 0%,
+    32% 0%,
+    37% 5%,
+    63% 5%,
+    68% 0%,
+    80% 0%,
+    85% 5%,
+    100% 5%,
+    100% 88%,
+    50% 100%,
+    0% 88%
+  );
   overflow: hidden;
   display: flex;
+  flex-direction: column;
+  background: #000;
+}
+
+/* ── Marco Metálico Dorado (Doble Borde) ────────────────────────────────── */
+.fut-card-border-gold {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  z-index: 5;
+  box-shadow: inset 0 0 0 4px #D4A843, inset 0 0 0 6px rgba(255, 255, 255, 0.5), inset 0 0 14px rgba(0, 0, 0, 0.4);
+}
+
+.mode-dark .fut-card-border-gold {
+  box-shadow: inset 0 0 0 4px #C99E38, inset 0 0 0 6px #1A1A1A, inset 0 0 16px rgba(212, 168, 67, 0.4);
+}
+
+/* ── Capa de Fondo (Base) ──────────────────────────────────────────────── */
+.fut-card-bg-layer {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   1. MODO CLARO: Mármol Blanco + Prisma Joya 3D Oro + Seda Blanca
+   ═══════════════════════════════════════════════════════════════════════════ */
+.fut-light-bg {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  background: #FFFFFF;
+  background-image: 
+    radial-gradient(circle at 10% 15%, rgba(212, 168, 67, 0.15) 0%, transparent 40%),
+    linear-gradient(135deg, #FDFCFA 0%, #F5EFEB 50%, #ECE4DA 100%);
+  overflow: hidden;
+}
+
+/* Textura Mármol con vetas finas doradas y grises */
+.marble-texture {
+  position: absolute;
+  inset: 0;
+  opacity: 0.85;
+  background-image: 
+    radial-gradient(ellipse at 20% 30%, rgba(212, 168, 67, 0.2) 0%, transparent 60%),
+    linear-gradient(65deg, transparent 45%, rgba(200, 180, 150, 0.25) 50%, transparent 55%),
+    linear-gradient(125deg, transparent 35%, rgba(180, 160, 130, 0.18) 40%, transparent 45%);
+}
+
+/* Joya 3D Dorada Geométrica Multifacetada (Lado Derecho) */
+.prism-cluster-light {
+  position: absolute;
+  right: -20px;
+  top: 15px;
+  width: 220px;
+  height: 220px;
+  transform: rotate(-15deg);
+  opacity: 0.95;
+}
+
+.gold-gem-facet {
+  position: absolute;
+  border: 1px solid rgba(255, 255, 255, 0.6);
+}
+
+.facet-1 {
+  width: 120px;
+  height: 120px;
+  top: 30px;
+  right: 20px;
+  background: linear-gradient(135deg, #FDE68A 0%, #D4A843 50%, #B48220 100%);
+  clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%);
+  box-shadow: 0 4px 15px rgba(212, 168, 67, 0.4);
+}
+
+.facet-2 {
+  width: 90px;
+  height: 110px;
+  top: 10px;
+  right: 70px;
+  background: linear-gradient(180deg, #FFF6D1 0%, #ECC94B 60%, #976B12 100%);
+  clip-path: polygon(100% 0%, 100% 100%, 0% 50%);
+}
+
+.facet-3 {
+  width: 100px;
+  height: 90px;
+  top: 80px;
+  right: 15px;
+  background: linear-gradient(90deg, #ECC94B 0%, #D69E2E 50%, #744210 100%);
+  clip-path: polygon(0% 0%, 100% 30%, 60% 100%);
+}
+
+.facet-4 {
+  width: 80px;
+  height: 80px;
+  top: 25px;
+  right: 35px;
+  background: linear-gradient(45deg, #FEFCBF 0%, #F6E05E 70%, #B7791F 100%);
+  clip-path: polygon(30% 0%, 100% 70%, 0% 100%);
+  opacity: 0.9;
+}
+
+/* Drapeado Blanco de Seda en la mitad inferior */
+.white-silk-drape {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 52%;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.4) 0%, rgba(255, 255, 255, 0.92) 25%, #FFFFFF 60%, #F9F7F2 100%);
+  clip-path: polygon(0% 16%, 35% 8%, 70% 18%, 100% 10%, 100% 100%, 0% 100%);
+  box-shadow: 0 -8px 20px rgba(0, 0, 0, 0.05);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   2. MODO OSCURO: Carbón + Pirámides 3D Flotantes Oro/Obsidiana
+   ═══════════════════════════════════════════════════════════════════════════ */
+.fut-dark-bg {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  background: #0F1412;
+  background-image: 
+    radial-gradient(circle at 80% 20%, rgba(212, 168, 67, 0.25) 0%, transparent 50%),
+    linear-gradient(160deg, #18201B 0%, #0D120F 50%, #060907 100%);
+  overflow: hidden;
+}
+
+/* Trama Carbon Weave */
+.carbon-texture {
+  position: absolute;
+  inset: 0;
+  opacity: 0.35;
+  background: 
+    linear-gradient(27deg, #151515 5px, transparent 5px) 0 5px,
+    linear-gradient(207deg, #151515 5px, transparent 5px) 10px 0px,
+    linear-gradient(27deg, #222 5px, transparent 5px) 0px 10px,
+    linear-gradient(207deg, #222 5px, transparent 5px) 10px 5px,
+    linear-gradient(90deg, #1b1b1b 10px, transparent 10px),
+    linear-gradient(#1d1d1d 25%, #1a1a1a 25%, #1a1a1a 50%, transparent 50%, transparent 75%, #242424 75%, #242424);
+  background-size: 20px 20px;
+}
+
+/* Cluster de Pirámides 3D Flotantes Oro y Carbón */
+.prism-cluster-dark {
+  position: absolute;
+  right: -10px;
+  top: 10px;
+  width: 220px;
+  height: 240px;
+}
+
+.prism-gold-facet {
+  position: absolute;
+  width: 105px;
+  height: 105px;
+  bottom: 25px;
+  left: 10px;
+  background: linear-gradient(135deg, #FFF2A3 0%, #D4A843 45%, #845B0A 100%);
+  clip-path: polygon(50% 0%, 100% 70%, 0% 100%);
+  border: 1px solid rgba(255, 235, 140, 0.7);
+  box-shadow: 0 0 20px rgba(212, 168, 67, 0.4);
+}
+
+.prism-carbon-facet {
+  position: absolute;
+  width: 130px;
+  height: 130px;
+  top: 20px;
+  right: 15px;
+  background: linear-gradient(160deg, #2A332C 0%, #151C17 60%, #0A0D0B 100%);
+  clip-path: polygon(40% 0%, 100% 45%, 50% 100%, 0% 60%);
+  border: 1.5px solid #D4A843;
+}
+
+.prism-dark-facet {
+  position: absolute;
+  width: 100px;
+  height: 100px;
+  top: 0px;
+  left: 20px;
+  background: linear-gradient(180deg, #1C231E 0%, #0D110E 100%);
+  clip-path: polygon(50% 0%, 100% 80%, 20% 100%);
+  border: 1px solid rgba(212, 168, 67, 0.5);
+}
+
+.dark-silk-gradient {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 50%;
+  background: linear-gradient(180deg, transparent 0%, rgba(10, 14, 12, 0.75) 25%, #0A0E0C 70%, #060907 100%);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   3. SECCIÓN SUPERIOR: RATING, POSICIÓN Y DORSAL (TOP-LEFT)
+   ═══════════════════════════════════════════════════════════════════════════ */
+.fut-card-top-info {
+  position: absolute;
+  top: 24px;
+  left: 18px;
+  z-index: 4;
+}
+
+.fut-rating-stack {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+}
+
+.fut-overall-number {
+  font-family: 'Bebas Neue', 'Outfit', sans-serif;
+  font-size: 2.7rem;
+  line-height: 0.9;
+  font-weight: 900;
+  letter-spacing: -0.5px;
+}
+
+.mode-light .fut-overall-number {
+  color: #2F2410;
+  text-shadow: 0 1px 1px rgba(255, 255, 255, 0.8);
+}
+
+.mode-dark .fut-overall-number {
+  color: #F8E7A2;
+  text-shadow: 0 2px 8px rgba(212, 168, 67, 0.6);
+}
+
+.fut-position-text {
+  font-size: 0.95rem;
+  font-weight: 900;
+  letter-spacing: 0.5px;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.mode-light .fut-position-text {
+  color: #4A3A1C;
+}
+
+.mode-dark .fut-position-text {
+  color: #ECC94B;
+}
+
+.fut-dorsal-pill {
+  font-size: 0.7rem;
+  font-weight: 800;
+  padding: 1px 5px;
+  border-radius: 4px;
+  margin-top: 3px;
+}
+
+.mode-light .fut-dorsal-pill {
+  background: rgba(212, 168, 67, 0.18);
+  color: #5C481E;
+}
+
+.mode-dark .fut-dorsal-pill {
+  background: rgba(212, 168, 67, 0.25);
+  color: #FFF;
+}
+
+.fut-shield-icon {
+  margin-top: 4px;
+}
+
+.mode-light .fut-shield-icon {
+  color: #C99E38;
+}
+
+.mode-dark .fut-shield-icon {
+  color: #ECC94B;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   4. FOTO / AVATAR CENTRAL DEL JUGADOR
+   ═══════════════════════════════════════════════════════════════════════════ */
+.fut-player-avatar-stage {
+  position: absolute;
+  top: 32px;
+  left: 50%;
+  transform: translateX(-35%);
+  width: 140px;
+  height: 140px;
+  display: flex;
   align-items: center;
   justify-content: center;
+  z-index: 3;
+}
+
+.card-crown-svg {
+  position: absolute;
+  top: -20px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 38px;
+  height: 26px;
+  z-index: 4;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.25));
+}
+
+.fut-avatar-glow {
+  position: absolute;
+  width: 125px;
+  height: 125px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(212, 168, 67, 0.45) 0%, transparent 70%);
   z-index: 1;
-  box-shadow: 0 4px 8px rgba(0,0,0,0.12);
+}
+
+.fut-avatar-frame {
+  width: 104px;
+  height: 104px;
+  border-radius: 50%;
+  border: 3px solid #D4A843;
+  overflow: hidden;
+  background: #FFF;
   position: relative;
+  z-index: 2;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.22);
 }
 
-.dark .card-avatar-circle {
-  border-color: var(--border-color, #4CAF7D);
+.mode-dark .fut-avatar-frame {
+  border-color: #ECC94B;
+  background: #141A17;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.5);
 }
 
-.card-avatar-img {
+.fut-player-img {
   width: 100%;
   height: 100%;
   object-fit: cover;
 }
 
-.avatar-placeholder {
-  font-size: 2.2rem;
-  font-family: var(--font-title, Georgia, serif);
-  color: var(--text-primary, #1B3A2D);
-  font-weight: bold;
-}
-
-/* Body */
-.card-body {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  text-align: center;
-  margin-top: 5px;
-}
-
-.card-name {
-  font-family: var(--font-title, Georgia, serif);
-  font-size: 1.15rem;
-  margin: 5px 0;
-  color: var(--text-primary, #1B3A2D);
-  text-transform: uppercase;
-  letter-spacing: 1px;
-  font-weight: 800;
-}
-
-.card-divider {
-  width: 90%;
-  height: 1.5px;
-  background: rgba(27, 58, 45, 0.15);
-  margin: 6px 0;
-}
-
-.dark .card-divider {
-  background: rgba(255, 255, 255, 0.15);
-}
-
-/* 2x2 Stats Grid of Pill Buttons */
-.card-stats-grid-new {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 8px 12px;
+.fut-player-fallback {
   width: 100%;
-  padding: 4px 5px;
-}
-
-.stat-pill-btn {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  background: linear-gradient(135deg, #EADCB8 0%, #D4A843 100%);
-  border: 1px solid #1B3A2D;
-  border-radius: 20px;
-  padding: 4px 10px;
-  color: #1B3A2D;
-  font-weight: 800;
-  font-size: 0.75rem;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.06);
-  transition: transform 0.1s;
-}
-
-.dark .stat-pill-btn {
-  background: linear-gradient(135deg, #1A2E22 0%, #2D6A4F 100%);
-  border-color: #4CAF7D;
-  color: #FFF;
-}
-
-.stat-pill-btn:hover {
-  transform: scale(1.04);
-}
-
-.stat-pill-label {
-  font-family: var(--font-body, sans-serif);
-}
-
-.stat-pill-icon {
-  display: flex;
-  align-items: center;
-  background: #1B3A2D;
-  color: #D4A843;
-  padding: 3px;
-  border-radius: 50%;
-  margin-left: 4px;
-}
-
-.dark .stat-pill-icon {
-  background: #000;
-  color: #4CAF7D;
-}
-
-/* Footer */
-.card-footer {
-  margin-top: auto;
-  width: 100%;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.progress-container {
-  width: 100%;
-  height: 5px;
-  background: var(--bg-primary, #F5F0E8);
-  border-radius: 3px;
-  overflow: hidden;
-}
-
-.dark .progress-container {
-  background: rgba(255, 255, 255, 0.1);
-}
-
-.progress-bar-fill {
   height: 100%;
-  background: var(--accent, #4CAF7D);
-  transition: width 0.5s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #F5F0E8 0%, #D4A843 100%);
+  color: #1B3A2D;
+  font-size: 2.5rem;
+  font-weight: 900;
+  font-family: Georgia, serif;
 }
 
-.streak-info {
+.mode-dark .fut-player-fallback {
+  background: linear-gradient(135deg, #1B3A2D 0%, #0D1410 100%);
+  color: #ECC94B;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   5. SECCIÓN INFERIOR: NOMBRE, STATS Y MARCA (BOTTOM HALF)
+   ═══════════════════════════════════════════════════════════════════════════ */
+.fut-card-bottom-info {
+  position: absolute;
+  bottom: 12px;
+  left: 0;
+  right: 0;
+  z-index: 4;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 0 16px;
+}
+
+.fut-name-ribbon {
+  width: 100%;
+  text-align: center;
+  margin-bottom: 3px;
+}
+
+.fut-player-name {
+  margin: 0;
+  font-size: 1.12rem;
+  font-weight: 900;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 220px;
+  margin: 0 auto;
+}
+
+.mode-light .fut-player-name {
+  color: #261D0C;
+}
+
+.mode-dark .fut-player-name {
+  color: #FFF0B8;
+  text-shadow: 0 1px 6px rgba(212, 168, 67, 0.4);
+}
+
+.fut-card-divider {
+  width: 82%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent 0%, #D4A843 50%, transparent 100%);
+  margin: 4px 0 6px 0;
+  opacity: 0.8;
+}
+
+.fut-card-divider.subtle {
+  opacity: 0.4;
+  margin: 4px 0;
+}
+
+/* Fila de 5 Estadísticas Clave */
+.fut-stats-row {
+  display: flex;
+  justify-content: space-around;
+  width: 100%;
+  padding: 2px 4px;
+}
+
+.fut-stat-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+}
+
+.fut-stat-label {
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+}
+
+.mode-light .fut-stat-label {
+  color: #554425;
+}
+
+.mode-dark .fut-stat-label {
+  color: #E2C068;
+}
+
+.fut-stat-val {
+  font-family: 'Bebas Neue', 'Outfit', sans-serif;
+  font-size: 1.25rem;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.mode-light .fut-stat-val {
+  color: #241A06;
+}
+
+.mode-dark .fut-stat-val {
+  color: #FFFFFF;
+}
+
+/* Pie de Tarjeta */
+.fut-card-footer {
   display: flex;
   justify-content: space-between;
-  font-family: var(--font-body, sans-serif);
-  font-size: 0.75rem;
-  color: var(--text-secondary, #2D2D2D);
-  font-weight: bold;
+  align-items: center;
+  width: 82%;
+  margin-top: 2px;
+}
+
+.fut-brand-tag {
+  display: flex;
+  flex-direction: column;
+  line-height: 1;
+}
+
+.brand-m11 {
+  font-size: 0.62rem;
+  font-weight: 900;
+  letter-spacing: 1px;
+  color: #C99E38;
+}
+
+.brand-sub {
+  font-size: 0.46rem;
+  letter-spacing: 0.5px;
+  opacity: 0.7;
+  color: #8C7030;
+}
+
+.mode-dark .brand-sub {
+  color: #D4A843;
+}
+
+.fut-streak-badge {
+  font-size: 0.65rem;
+  font-weight: 800;
+  color: #D97706;
+  background: rgba(217, 119, 6, 0.12);
+  padding: 2px 6px;
+  border-radius: 6px;
+  border: 1px solid rgba(217, 119, 6, 0.3);
+}
+
+/* Brillo Refractivo */
+.fut-card-sheen {
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: linear-gradient(
+    60deg,
+    transparent 42%,
+    rgba(255, 255, 255, 0.15) 45%,
+    rgba(255, 255, 255, 0.28) 48%,
+    transparent 52%
+  );
+  pointer-events: none;
+  z-index: 6;
+  opacity: 0;
+  transition: opacity 0.4s ease, transform 0.6s ease;
+  transform: translateY(-20px);
+}
+
+.fut-legend-card-container:hover .fut-card-sheen {
+  opacity: 1;
+  transform: translateY(20px);
 }

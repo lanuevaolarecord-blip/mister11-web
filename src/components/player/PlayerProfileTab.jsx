@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { doc, getDoc, setDoc, deleteDoc, serverTimestamp } from 'firebase/firestore';
+import { doc, getDoc, setDoc, deleteDoc, serverTimestamp, collection, onSnapshot } from 'firebase/firestore';
 import { deleteUser } from 'firebase/auth';
 import { db, auth } from '../../firebaseConfig';
 import { useAuth } from '../../context/AuthContext';
@@ -7,12 +7,13 @@ import { isDeveloperEmail } from '../../config/admins';
 import { showToast } from '../../utils/toast';
 import { usePlayerSeasonStats } from '../../hooks/usePlayerSeasonStats';
 import { calculatePlayerMatchStats } from '../../utils/playerMatchStats';
+import { calculatePlayerPerformanceScores } from '../../utils/testScoreEngine';
 import { calcularEdad } from '../../utils/calcularEdad';
 import PlayerHealthTab from '../PlayerHealthTab';
 import { PlayerPlansPortalTab } from './PlayerPlansPortalTab';
 import { PlayerAttendanceSubTab } from '../PlayerAttendanceSubTab';
 import { PlayerTabs } from './PlayerTabs';
-import { PlayerPerformanceBanner } from './PlayerPerformanceBanner';
+import LegendCard from '../LegendCard';
 import { useTranslation } from '../../hooks/useTranslation';
 import { 
   User, 
@@ -62,6 +63,56 @@ export const PlayerProfileTab = ({ player, team, teamPath, onNavigateTab }) => {
   const effectiveTeamId = team?.id || activeTeamId;
   const { matches } = usePlayerSeasonStats(effectiveTeamId);
   const playerSeasonStats = useMemo(() => calculatePlayerMatchStats(player?.id, matches), [player?.id, matches]);
+
+  // Evaluaciones y tests en tiempo real 100% sincronizados con Míster11
+  const [evaluations, setEvaluations] = useState([]);
+  const effectivePlayerId = player?.id || 'player-self';
+  const cleanTeamPath = (teamPath || (effectiveTeamId ? `equipos/${effectiveTeamId}` : '')).replace(/^\/+|\/+$/g, '');
+
+  useEffect(() => {
+    if (!cleanTeamPath || !effectivePlayerId) return;
+
+    let evalsList = [];
+    let testResultsList = [];
+
+    const rebuildData = () => {
+      const allCombined = [...evalsList, ...testResultsList];
+      const seen = new Set();
+      const unique = [];
+
+      allCombined.forEach(item => {
+        const pId = String(item.playerId || item.jugadorId || '');
+        if (pId === String(effectivePlayerId)) {
+          const key = item.id || `${item.testId}_${item.date || item.fecha}_${item.val || item.score}`;
+          if (!seen.has(key)) {
+            seen.add(key);
+            unique.push(item);
+          }
+        }
+      });
+
+      setEvaluations(unique);
+    };
+
+    const unsubEvals = onSnapshot(collection(db, `${cleanTeamPath}/evaluaciones`), (snap) => {
+      evalsList = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      rebuildData();
+    }, () => {});
+
+    const unsubResults = onSnapshot(collection(db, `${cleanTeamPath}/test_results`), (snap) => {
+      testResultsList = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      rebuildData();
+    }, () => {});
+
+    return () => {
+      unsubEvals();
+      unsubResults();
+    };
+  }, [cleanTeamPath, effectivePlayerId]);
+
+  const performanceScores = useMemo(() => {
+    return calculatePlayerPerformanceScores(evaluations, player);
+  }, [evaluations, player]);
 
   // Estados de Wellness
   const todayStr = new Date().toISOString().split('T')[0];
@@ -132,8 +183,6 @@ export const PlayerProfileTab = ({ player, team, teamPath, onNavigateTab }) => {
   const canvasRef = useRef(null);
   const isDrawing = useRef(false);
   const [hasDrawn, setHasDrawn] = useState(false);
-
-  const cleanTeamPath = teamPath ? teamPath.replace(/^\/+|\/+$/g, '') : '';
 
   // 1. Cargar Wellness del día si ya se envió
   useEffect(() => {
@@ -316,13 +365,17 @@ export const PlayerProfileTab = ({ player, team, teamPath, onNavigateTab }) => {
   return (
     <div className="player-tab-content player-profile-tab" style={{ paddingBottom: '30px' }}>
       
-      {/* 1. HERO BANNER DE RENDIMIENTO (LEGEND CARD + TACTICAL PITCH RADAR) */}
-      <PlayerPerformanceBanner
-        player={player}
-        teamPath={cleanTeamPath || teamPath}
-        onNavigateTab={onNavigateTab}
-        onOpenSummary={() => setActiveSubTab('FÍSICO')}
-      />
+      {/* 1. TARJETA LEGEND CARD EXCLUSIVA (SIN BANNER TÁCTICO) */}
+      <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '20px', width: '100%' }}>
+        <LegendCard
+          player={player}
+          overall={performanceScores.overall || '-'}
+          position={player?.position || player?.posicion || 'MC'}
+          streak={performanceScores.testCount}
+          type="elite"
+          stats={performanceScores.stats4}
+        />
+      </div>
 
       {/* 2. BARRA DE SUB-PESTAÑAS RESPONSIVE HÍBRIDA */}
       <PlayerTabs activeTab={activeSubTab} onTabChange={setActiveSubTab} />

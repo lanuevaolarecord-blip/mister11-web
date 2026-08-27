@@ -77,7 +77,7 @@ const LegendCard = ({ player, stats, overall, position, streak, type = "gold" })
           </div>
 
           <div className="card-header-right">
-            <span className="card-header-val">PE</span>
+            <span className="card-header-val">{player?.number ? `#${player.number}` : (position || 'POS')}</span>
             <ShieldSvg />
             <span className="card-star">★</span>
           </div>

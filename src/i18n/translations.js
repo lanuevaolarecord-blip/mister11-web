@@ -571,7 +571,30 @@ export const translations = {
     'player.settings.sessionTitle': 'Sesión y Cuenta',
     'player.settings.switchModeTitle': 'Rol y Permisos',
     'player.settings.dangerZone': 'Zona de Privacidad (RGPD)',
-    'player.settings.deleteAccountDesc': 'Elimina permanentemente tu usuario y desvincula tus datos personales.'
+    'player.settings.deleteAccountDesc': 'Elimina permanentemente tu usuario y desvincula tus datos personales.',
+
+    // ── GRÁFICA DE EVOLUCIÓN DE ASISTENCIA MULTILÍNEA ───────
+    'attendance.chart.title': 'Evolución de Asistencia General del Equipo',
+    'attendance.chart.guide.title': '¿Cómo interpretar esta gráfica?',
+    'attendance.chart.guide.step1': '1. Cada punto es un entreno o partido: ordenados cronológicamente.',
+    'attendance.chart.guide.step2': '2. La línea verde es tu asistencia: por encima del 70% vas bien.',
+    'attendance.chart.guide.step3': '3. Si la roja sube mientras la verde baja: hay un problema de compromiso a corregir.',
+    'attendance.chart.guide.step4': '4. Toca cualquier punto para ver el detalle y abrir su registro.',
+    'attendance.chart.guide.example': 'Actualmente tu equipo promedia un {avg}% de asistencia en los {count} eventos disputados.',
+    'attendance.chart.legend.attendance': 'Asistencia Real (P+T)',
+    'attendance.chart.legend.attendance.desc': 'Jugadores que estuvieron (presentes + tardes). Cuanto más alta, mejor.',
+    'attendance.chart.legend.absent': 'Ausentes',
+    'attendance.chart.legend.absent.desc': 'Faltas sin avisar. Debe tender a cero.',
+    'attendance.chart.legend.late': 'Tardes',
+    'attendance.chart.legend.late.desc': 'Llegadas tarde. Vigila si sube varias semanas seguidas.',
+    'attendance.chart.legend.justified': 'Justificados',
+    'attendance.chart.legend.justified.desc': 'Avisos justificados. No castiga el % principal.',
+    'attendance.chart.legend.threshold70': 'Umbral de alerta (70%): por debajo, riesgo de convocatoria.',
+    'attendance.chart.legend.official': 'Oficial (acta o sesión cerrada)',
+    'attendance.chart.legend.provisional': 'Provisional (acta o sesión abierta)',
+    'attendance.chart.openRegister': 'Abrir Registro de Asistencia',
+    'attendance.chart.summaryStats': 'Resumen del Evento Seleccionado',
+    'attendance.chart.noData': 'Aún no hay sesiones ni partidos registrados.'
   },
 
   'English (EN)': {
@@ -1146,7 +1169,30 @@ export const translations = {
     'player.settings.sessionTitle': 'Session & Account',
     'player.settings.switchModeTitle': 'Role & Permissions',
     'player.settings.dangerZone': 'Privacy Zone (GDPR)',
-    'player.settings.deleteAccountDesc': 'Permanently delete your profile and personal records.'
+    'player.settings.deleteAccountDesc': 'Permanently delete your profile and personal records.',
+
+    // ── TEAM ATTENDANCE MULTILINE EVOLUTION CHART ───────────
+    'attendance.chart.title': 'Team Attendance Evolution',
+    'attendance.chart.guide.title': 'How to interpret this chart?',
+    'attendance.chart.guide.step1': '1. Each point is a training or match: ordered chronologically.',
+    'attendance.chart.guide.step2': '2. The green line is your attendance: above 70% you are on track.',
+    'attendance.chart.guide.step3': '3. If red rises while green drops: there is a commitment issue to address.',
+    'attendance.chart.guide.step4': '4. Tap any point to view details and open its register directly.',
+    'attendance.chart.guide.example': 'Currently your team averages {avg}% attendance across {count} recorded events.',
+    'attendance.chart.legend.attendance': 'Actual Attendance (P+L)',
+    'attendance.chart.legend.attendance.desc': 'Players who attended (present + late). The higher, the better.',
+    'attendance.chart.legend.absent': 'Absent',
+    'attendance.chart.legend.absent.desc': 'Unexcused absences. Should aim for zero.',
+    'attendance.chart.legend.late': 'Late',
+    'attendance.chart.legend.late.desc': 'Late arrivals. Watch if it rises over several weeks.',
+    'attendance.chart.legend.justified': 'Justified',
+    'attendance.chart.legend.justified.desc': 'Justified notices. Does not penalize the main %.',
+    'attendance.chart.legend.threshold70': 'Alert threshold (70%): below this, callup risk.',
+    'attendance.chart.legend.official': 'Official (closed sheet/session)',
+    'attendance.chart.legend.provisional': 'Provisional (open sheet/session)',
+    'attendance.chart.openRegister': 'Open Attendance Register',
+    'attendance.chart.summaryStats': 'Selected Event Summary',
+    'attendance.chart.noData': 'No attendance sessions or matches recorded yet.'
   }
 };
 

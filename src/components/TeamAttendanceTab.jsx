@@ -63,6 +63,45 @@ export const TeamAttendanceTab = ({ players = [], activeTeam = null }) => {
   const [callupWindow, setCallupWindow] = useState('microcycle'); // 'microcycle' | 'week' | 'biweekly' | 'season'
   const [hoveredTrendPoint, setHoveredTrendPoint] = useState(null);
 
+  // ── Estados de Series y Guía de la Gráfica de Evolución ──
+  const [visibleSeries, setVisibleSeries] = useState(() => {
+    try {
+      const saved = localStorage.getItem('mister11_attendance_chart_series');
+      if (saved) {
+        return { attendance: true, absent: true, late: false, justified: false, ...JSON.parse(saved) };
+      }
+    } catch (_) {}
+    return { attendance: true, absent: true, late: false, justified: false };
+  });
+
+  const [showChartGuide, setShowChartGuide] = useState(() => {
+    try {
+      const saved = localStorage.getItem('mister11_attendance_chart_guide');
+      if (saved !== null) return JSON.parse(saved);
+    } catch (_) {}
+    return true; // Abierto por defecto para facilitar el aprendizaje
+  });
+
+  const toggleSeries = (seriesKey) => {
+    setVisibleSeries(prev => {
+      const next = { ...prev, [seriesKey]: !prev[seriesKey] };
+      try {
+        localStorage.setItem('mister11_attendance_chart_series', JSON.stringify(next));
+      } catch (_) {}
+      return next;
+    });
+  };
+
+  const toggleChartGuide = () => {
+    setShowChartGuide(prev => {
+      const next = !prev;
+      try {
+        localStorage.setItem('mister11_attendance_chart_guide', JSON.stringify(next));
+      } catch (_) {}
+      return next;
+    });
+  };
+
   // Map { playerId: { status: 'present'|'absent'|'justified'|'late'|'injured', lateMinutes: 0 } }
   const [recordsMap, setRecordsMap] = useState({});
   const [isSaving, setIsSaving] = useState(false);
@@ -1299,64 +1338,287 @@ export const TeamAttendanceTab = ({ players = [], activeTeam = null }) => {
         </div>
       )}
 
-      {/* ── SUB-VISTA 4: EVOLUCIÓN GRÁFICA SVG DE ASISTENCIA (Cero Fantasmas / Fuente Única) ── */}
+      {/* ── SUB-VISTA 4: EVOLUCIÓN GRÁFICA SVG DE ASISTENCIA MULTILÍNEA (Fuente Única) ── */}
       {activeSubView === 'chart' && (
         <div style={{ background: 'var(--bg-card)', padding: '24px', borderRadius: '16px', border: '1px solid var(--border-color)' }}>
+          {/* Cabecera Principal con Botón de Guía */}
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px', marginBottom: '16px' }}>
-            <div style={{ fontSize: '14px', fontWeight: '800', color: 'var(--text-primary)' }}>
-              📈 {isEn ? 'Team Attendance Evolution' : 'Evolución de Asistencia General del Equipo'}
+            <div style={{ fontSize: '15px', fontWeight: '800', color: 'var(--text-primary)' }}>
+              📈 {t('attendance.chart.title') || (isEn ? 'Team Attendance Evolution' : 'Evolución de Asistencia General del Equipo')}
             </div>
-            <div style={{ display: 'flex', gap: '12px', alignItems: 'center', fontSize: '11px', fontWeight: '700' }}>
-              <span style={{ display: 'flex', alignItems: 'center', gap: '4px', color: '#22C55E' }}>
-                <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#22C55E' }}></span>
-                {isEn ? 'Official (Closed)' : 'Oficial (Cerrado)'}
+            
+            <button
+              type="button"
+              onClick={toggleChartGuide}
+              style={{
+                background: 'rgba(34, 197, 94, 0.12)',
+                color: '#22C55E',
+                border: '1.5px solid rgba(34, 197, 94, 0.35)',
+                padding: '6px 14px',
+                borderRadius: '8px',
+                fontSize: '12px',
+                fontWeight: '800',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                transition: 'all 0.2s ease'
+              }}
+            >
+              💡 {t('attendance.chart.guide.title') || (isEn ? 'How to read this chart?' : '¿Cómo interpretar esta gráfica?')} {showChartGuide ? '▲' : '▼'}
+            </button>
+          </div>
+
+          {/* ── FASE 3: GUÍA "¿CÓMO INTERPRETAR ESTA GRÁFICA?" (COLAPSABLE) ── */}
+          {showChartGuide && (
+            <div style={{
+              marginBottom: '20px',
+              background: 'rgba(34, 197, 94, 0.04)',
+              border: '1.5px solid rgba(34, 197, 94, 0.25)',
+              borderRadius: '14px',
+              padding: '16px 20px',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '12px'
+            }}>
+              <div style={{ fontSize: '13px', fontWeight: '800', color: '#22C55E', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span>📖</span>
+                <span>{isEn ? 'Guide for Coaches (Simple Terms)' : 'Guía de Interpretación para el Cuerpo Técnico'}</span>
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '10px' }}>
+                <div style={{ background: 'var(--bg-app)', padding: '10px 14px', borderRadius: '10px', border: '1px solid var(--border-color)', fontSize: '11.5px', lineHeight: '1.4' }}>
+                  <strong style={{ color: 'var(--text-primary)', display: 'block', marginBottom: '2px' }}>📌 {isEn ? '1. Timeline & Events' : '1. Puntos y Cronología'}</strong>
+                  <span style={{ color: 'var(--text-secondary)' }}>{t('attendance.chart.guide.step1') || 'Cada punto es un entreno o partido: ordenados cronológicamente.'}</span>
+                </div>
+                <div style={{ background: 'var(--bg-app)', padding: '10px 14px', borderRadius: '10px', border: '1px solid var(--border-color)', fontSize: '11.5px', lineHeight: '1.4' }}>
+                  <strong style={{ color: '#22C55E', display: 'block', marginBottom: '2px' }}>🟢 {isEn ? '2. Green Line' : '2. Línea Verde'}</strong>
+                  <span style={{ color: 'var(--text-secondary)' }}>{t('attendance.chart.guide.step2') || 'La línea verde es tu asistencia: por encima del 70% vas bien.'}</span>
+                </div>
+                <div style={{ background: 'var(--bg-app)', padding: '10px 14px', borderRadius: '10px', border: '1px solid var(--border-color)', fontSize: '11.5px', lineHeight: '1.4' }}>
+                  <strong style={{ color: '#EF4444', display: 'block', marginBottom: '2px' }}>⚠️ {isEn ? '3. Warning Cross' : '3. Cruce de Alerta'}</strong>
+                  <span style={{ color: 'var(--text-secondary)' }}>{t('attendance.chart.guide.step3') || 'Si la roja sube mientras la verde baja: problema de compromiso a corregir.'}</span>
+                </div>
+                <div style={{ background: 'var(--bg-app)', padding: '10px 14px', borderRadius: '10px', border: '1px solid var(--border-color)', fontSize: '11.5px', lineHeight: '1.4' }}>
+                  <strong style={{ color: 'var(--accent-gold)', display: 'block', marginBottom: '2px' }}>👆 {isEn ? '4. Interactive Detail' : '4. Toca para Detalle'}</strong>
+                  <span style={{ color: 'var(--text-secondary)' }}>{t('attendance.chart.guide.step4') || 'Toca cualquier punto para ver el desglose y abrir su registro.'}</span>
+                </div>
+              </div>
+              <div style={{ fontSize: '11.5px', color: '#22C55E', fontStyle: 'italic', borderTop: '1px solid rgba(34, 197, 94, 0.15)', paddingTop: '8px' }}>
+                💡 {t('attendance.chart.guide.example', { avg: teamAveragePct, count: trendData.length }) || `Actualmente tu equipo promedia un ${teamAveragePct}% de asistencia en los ${trendData.length} eventos disputados.`}
+              </div>
+            </div>
+          )}
+
+          {/* ── FASE 2: LEYENDA EXPLICATIVA CON TOGGLES INTERACTIVOS ── */}
+          <div style={{
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '12px',
+            marginBottom: '20px',
+            padding: '16px',
+            background: 'var(--bg-app)',
+            borderRadius: '12px',
+            border: '1px solid var(--border-color)'
+          }}>
+            <div style={{ fontSize: '11.5px', fontWeight: '800', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+              {isEn ? 'Series Filters & Explanations (Click to Show/Hide)' : 'Series de la Gráfica y Explicación (Pulsa para Mostrar/Ocultar)'}
+            </div>
+            
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(230px, 1fr))', gap: '10px' }}>
+              {/* 1. Asistencia Real (Verde) */}
+              <div
+                onClick={() => toggleSeries('attendance')}
+                style={{
+                  display: 'flex',
+                  alignItems: 'flex-start',
+                  gap: '10px',
+                  padding: '10px 12px',
+                  borderRadius: '8px',
+                  cursor: 'pointer',
+                  background: visibleSeries.attendance ? 'rgba(34, 197, 94, 0.12)' : 'transparent',
+                  border: `1.5px solid ${visibleSeries.attendance ? '#22C55E' : 'var(--border-color)'}`,
+                  transition: 'all 0.2s ease',
+                  opacity: visibleSeries.attendance ? 1 : 0.45
+                }}
+              >
+                <input type="checkbox" checked={visibleSeries.attendance} onChange={() => {}} style={{ marginTop: '3px', cursor: 'pointer', accentColor: '#22C55E' }} />
+                <div>
+                  <div style={{ fontSize: '12.5px', fontWeight: '800', color: '#22C55E' }}>
+                    🟢 {t('attendance.chart.legend.attendance') || 'Asistencia Real (P+T)'}
+                  </div>
+                  <div style={{ fontSize: '11px', color: 'var(--text-secondary)', marginTop: '2px', lineHeight: '1.3' }}>
+                    {t('attendance.chart.legend.attendance.desc') || 'Jugadores que estuvieron (presentes + tardes). Cuanto más alta, mejor.'}
+                  </div>
+                </div>
+              </div>
+
+              {/* 2. Ausentes (Rojo) */}
+              <div
+                onClick={() => toggleSeries('absent')}
+                style={{
+                  display: 'flex',
+                  alignItems: 'flex-start',
+                  gap: '10px',
+                  padding: '10px 12px',
+                  borderRadius: '8px',
+                  cursor: 'pointer',
+                  background: visibleSeries.absent ? 'rgba(239, 68, 68, 0.12)' : 'transparent',
+                  border: `1.5px solid ${visibleSeries.absent ? '#EF4444' : 'var(--border-color)'}`,
+                  transition: 'all 0.2s ease',
+                  opacity: visibleSeries.absent ? 1 : 0.45
+                }}
+              >
+                <input type="checkbox" checked={visibleSeries.absent} onChange={() => {}} style={{ marginTop: '3px', cursor: 'pointer', accentColor: '#EF4444' }} />
+                <div>
+                  <div style={{ fontSize: '12.5px', fontWeight: '800', color: '#EF4444' }}>
+                    🔴 {t('attendance.chart.legend.absent') || 'Ausentes'}
+                  </div>
+                  <div style={{ fontSize: '11px', color: 'var(--text-secondary)', marginTop: '2px', lineHeight: '1.3' }}>
+                    {t('attendance.chart.legend.absent.desc') || 'Faltas sin avisar. Debe tender a cero.'}
+                  </div>
+                </div>
+              </div>
+
+              {/* 3. Tardes (Naranja) */}
+              <div
+                onClick={() => toggleSeries('late')}
+                style={{
+                  display: 'flex',
+                  alignItems: 'flex-start',
+                  gap: '10px',
+                  padding: '10px 12px',
+                  borderRadius: '8px',
+                  cursor: 'pointer',
+                  background: visibleSeries.late ? 'rgba(249, 115, 22, 0.12)' : 'transparent',
+                  border: `1.5px solid ${visibleSeries.late ? '#F97316' : 'var(--border-color)'}`,
+                  transition: 'all 0.2s ease',
+                  opacity: visibleSeries.late ? 1 : 0.45
+                }}
+              >
+                <input type="checkbox" checked={visibleSeries.late} onChange={() => {}} style={{ marginTop: '3px', cursor: 'pointer', accentColor: '#F97316' }} />
+                <div>
+                  <div style={{ fontSize: '12.5px', fontWeight: '800', color: '#F97316' }}>
+                    🟠 {t('attendance.chart.legend.late') || 'Tardes'}
+                  </div>
+                  <div style={{ fontSize: '11px', color: 'var(--text-secondary)', marginTop: '2px', lineHeight: '1.3' }}>
+                    {t('attendance.chart.legend.late.desc') || 'Llegadas tarde. Vigila si sube varias semanas seguidas.'}
+                  </div>
+                </div>
+              </div>
+
+              {/* 4. Justificados (Azul) */}
+              <div
+                onClick={() => toggleSeries('justified')}
+                style={{
+                  display: 'flex',
+                  alignItems: 'flex-start',
+                  gap: '10px',
+                  padding: '10px 12px',
+                  borderRadius: '8px',
+                  cursor: 'pointer',
+                  background: visibleSeries.justified ? 'rgba(59, 130, 246, 0.12)' : 'transparent',
+                  border: `1.5px solid ${visibleSeries.justified ? '#3B82F6' : 'var(--border-color)'}`,
+                  transition: 'all 0.2s ease',
+                  opacity: visibleSeries.justified ? 1 : 0.45
+                }}
+              >
+                <input type="checkbox" checked={visibleSeries.justified} onChange={() => {}} style={{ marginTop: '3px', cursor: 'pointer', accentColor: '#3B82F6' }} />
+                <div>
+                  <div style={{ fontSize: '12.5px', fontWeight: '800', color: '#3B82F6' }}>
+                    🔵 {t('attendance.chart.legend.justified') || 'Justificados'}
+                  </div>
+                  <div style={{ fontSize: '11px', color: 'var(--text-secondary)', marginTop: '2px', lineHeight: '1.3' }}>
+                    {t('attendance.chart.legend.justified.desc') || 'Avisos justificados. No castiga el % principal.'}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Umbrales y Estados de Puntos */}
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '14px', alignItems: 'center', fontSize: '11.5px', borderTop: '1px solid var(--border-color)', paddingTop: '10px', marginTop: '4px' }}>
+              <span style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#EF4444', fontWeight: '700' }}>
+                <span style={{ width: '16px', height: '0', borderTop: '2px dashed #EF4444' }}></span>
+                {t('attendance.chart.legend.threshold70') || 'Umbral de alerta (70%): por debajo, riesgo de convocatoria.'}
               </span>
-              <span style={{ display: 'flex', alignItems: 'center', gap: '4px', color: '#F59E0B' }}>
-                <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#F59E0B' }}></span>
-                {isEn ? 'Provisional (Open)' : 'Provisional (Abierto)'}
+              <span style={{ display: 'flex', alignItems: 'center', gap: '5px', color: '#22C55E', fontWeight: '700', marginLeft: 'auto' }}>
+                <span style={{ width: '9px', height: '9px', borderRadius: '50%', background: '#22C55E' }}></span>
+                {t('attendance.chart.legend.official') || 'Oficial (Cerrado)'}
+              </span>
+              <span style={{ display: 'flex', alignItems: 'center', gap: '5px', color: '#F59E0B', fontWeight: '700' }}>
+                <span style={{ width: '9px', height: '9px', borderRadius: '50%', background: '#F59E0B' }}></span>
+                {t('attendance.chart.legend.provisional') || 'Provisional (Abierto)'}
               </span>
             </div>
           </div>
 
           {trendData.length === 0 ? (
             <div style={{ textAlign: 'center', padding: '40px', color: 'var(--text-secondary)' }}>
-              {isEn ? 'No attendance sessions recorded yet.' : 'Aún no hay sesiones de asistencia registradas.'}
+              {t('attendance.chart.noData') || (isEn ? 'No attendance sessions recorded yet.' : 'Aún no hay sesiones ni partidos registrados.')}
             </div>
           ) : (
             <>
+              {/* ── FASE 1: RENDERIZADO MULTILÍNEA SVG ── */}
               <div style={{ width: '100%', overflowX: 'auto', paddingBottom: '10px' }}>
                 <div style={{ minWidth: '540px', height: '240px', position: 'relative' }}>
-                  <svg viewBox="0 0 540 200" style={{ width: '100%', height: '100%', overflow: 'visible' }}>
+                  <svg viewBox="0 0 540 210" style={{ width: '100%', height: '100%', overflow: 'visible' }}>
                     {/* Líneas horizontales de guía (50%, 70%, 100%) */}
                     <line x1="40" y1="20" x2="510" y2="20" stroke="var(--border-color)" strokeDasharray="4" opacity="0.6" />
                     <text x="8" y="24" fill="var(--text-secondary)" fontSize="10" fontWeight="700">100%</text>
 
-                    <line x1="40" y1="65" x2="510" y2="65" stroke="rgba(239, 68, 68, 0.3)" strokeDasharray="4" />
-                    <text x="8" y="69" fill="#EF4444" fontSize="10" fontWeight="700">70%</text>
+                    <line x1="40" y1="65" x2="510" y2="65" stroke="rgba(239, 68, 68, 0.45)" strokeDasharray="4" strokeWidth="1.5" />
+                    <text x="8" y="69" fill="#EF4444" fontSize="10" fontWeight="800">70% ⚠️</text>
 
                     <line x1="40" y1="110" x2="510" y2="110" stroke="var(--border-color)" strokeDasharray="4" opacity="0.6" />
                     <text x="8" y="114" fill="var(--text-secondary)" fontSize="10" fontWeight="700">50%</text>
 
-                    {/* Puntos y línea de tendencia */}
                     {(() => {
                       const stepX = trendData.length > 1 ? 460 / (trendData.length - 1) : 0;
+                      const getY = (pctVal) => 170 - (Math.max(0, Math.min(100, pctVal ?? 0)) / 100) * 150;
+
                       const points = trendData.map((d, i) => {
                         const x = trendData.length === 1 ? 270 : 45 + i * stepX;
-                        // Mapeo: 100% -> y=20, 0% -> y=170
-                        const y = 170 - ((d.pct ?? 0) / 100) * 150;
-                        return { x, y, ...d };
+                        return {
+                          x,
+                          yAtt: getY(d.pct),
+                          yAbs: getY(d.pctAbsent),
+                          yLate: getY(d.pctLate),
+                          yJust: getY(d.pctJustified),
+                          ...d
+                        };
                       });
 
-                      const pathStr = points.reduce((acc, p, i) => `${acc} ${i === 0 ? 'M' : 'L'} ${p.x} ${p.y}`, '');
+                      const pathAtt = points.reduce((acc, p, i) => `${acc} ${i === 0 ? 'M' : 'L'} ${p.x} ${p.yAtt}`, '');
+                      const pathAbs = points.reduce((acc, p, i) => `${acc} ${i === 0 ? 'M' : 'L'} ${p.x} ${p.yAbs}`, '');
+                      const pathLate = points.reduce((acc, p, i) => `${acc} ${i === 0 ? 'M' : 'L'} ${p.x} ${p.yLate}`, '');
+                      const pathJust = points.reduce((acc, p, i) => `${acc} ${i === 0 ? 'M' : 'L'} ${p.x} ${p.yJust}`, '');
 
                       return (
                         <g>
-                          {points.length > 1 && (
-                            <path d={pathStr} fill="none" stroke="#22C55E" strokeWidth="2.5" strokeDasharray="3 1" />
+                          {/* Línea 4: Justificados (Azul) */}
+                          {visibleSeries.justified && points.length > 1 && (
+                            <path d={pathJust} fill="none" stroke="#3B82F6" strokeWidth="2.2" strokeDasharray="3 2" opacity="0.85" />
                           )}
+
+                          {/* Línea 3: Tardes (Naranja) */}
+                          {visibleSeries.late && points.length > 1 && (
+                            <path d={pathLate} fill="none" stroke="#F97316" strokeWidth="2.2" opacity="0.85" />
+                          )}
+
+                          {/* Línea 2: Ausentes (Rojo) */}
+                          {visibleSeries.absent && points.length > 1 && (
+                            <path d={pathAbs} fill="none" stroke="#EF4444" strokeWidth="2.4" strokeDasharray="4 2" opacity="0.9" />
+                          )}
+
+                          {/* Línea 1: Asistencia Real (Verde Principal) */}
+                          {visibleSeries.attendance && points.length > 1 && (
+                            <path d={pathAtt} fill="none" stroke="#22C55E" strokeWidth="3.2" />
+                          )}
+
+                          {/* Puntos y Nodos Interactivos */}
                           {points.map((p, i) => {
                             const isHovered = hoveredTrendPoint?.id === p.id;
                             const pointColor = p.isProvisional ? '#F59E0B' : '#22C55E';
+
                             return (
                               <g
                                 key={i}
@@ -1368,38 +1630,54 @@ export const TeamAttendanceTab = ({ players = [], activeTeam = null }) => {
                                 onMouseEnter={() => setHoveredTrendPoint(p)}
                                 onMouseLeave={() => setHoveredTrendPoint(null)}
                               >
-                                {/* Círculo de toque amplio */}
-                                <circle cx={p.x} cy={p.y} r="18" fill="transparent" />
+                                {/* Área de toque generosa (Android Touch Target 48x48) */}
+                                <circle cx={p.x} cy={p.yAtt} r="22" fill="transparent" />
 
-                                {/* Halo al pasar ratón */}
+                                {/* Halo de selección */}
                                 {isHovered && (
-                                  <circle cx={p.x} cy={p.y} r="12" fill={pointColor} opacity="0.25" />
+                                  <circle cx={p.x} cy={p.yAtt} r="14" fill={pointColor} opacity="0.25" />
                                 )}
 
-                                <circle
-                                  cx={p.x}
-                                  cy={p.y}
-                                  r={isHovered ? "8" : "6"}
-                                  fill={pointColor}
-                                  stroke="var(--bg-card)"
-                                  strokeWidth="2.5"
-                                  style={{ transition: 'r 0.2s ease' }}
-                                />
+                                {/* Puntos de series secundarias si están activas */}
+                                {visibleSeries.justified && (
+                                  <circle cx={p.x} cy={p.yJust} r="4" fill="#3B82F6" stroke="var(--bg-card)" strokeWidth="1.5" />
+                                )}
+                                {visibleSeries.late && (
+                                  <circle cx={p.x} cy={p.yLate} r="4" fill="#F97316" stroke="var(--bg-card)" strokeWidth="1.5" />
+                                )}
+                                {visibleSeries.absent && (
+                                  <circle cx={p.x} cy={p.yAbs} r="4.5" fill="#EF4444" stroke="var(--bg-card)" strokeWidth="1.5" />
+                                )}
 
+                                {/* Punto Principal de Asistencia */}
+                                {visibleSeries.attendance && (
+                                  <>
+                                    <circle
+                                      cx={p.x}
+                                      cy={p.yAtt}
+                                      r={isHovered ? "8" : "6"}
+                                      fill={pointColor}
+                                      stroke="var(--bg-card)"
+                                      strokeWidth="2.5"
+                                      style={{ transition: 'r 0.2s ease' }}
+                                    />
+                                    <text
+                                      x={p.x}
+                                      y={p.yAtt - 12}
+                                      fill={pointColor}
+                                      fontSize="11.5"
+                                      fontWeight="900"
+                                      textAnchor="middle"
+                                    >
+                                      {p.pct}%{p.isProvisional ? '*' : ''}
+                                    </text>
+                                  </>
+                                )}
+
+                                {/* Etiqueta de Fecha en el Eje X */}
                                 <text
                                   x={p.x}
-                                  y={p.y - 12}
-                                  fill={pointColor}
-                                  fontSize="11.5"
-                                  fontWeight="900"
-                                  textAnchor="middle"
-                                >
-                                  {p.pct}%{p.isProvisional ? '*' : ''}
-                                </text>
-
-                                <text
-                                  x={p.x}
-                                  y="190"
+                                  y="198"
                                   fill="var(--text-secondary)"
                                   fontSize="10"
                                   fontWeight="700"
@@ -1417,7 +1695,7 @@ export const TeamAttendanceTab = ({ players = [], activeTeam = null }) => {
                 </div>
               </div>
 
-              {/* Tarjeta de Desglose y Acceso Rápido al Registro */}
+              {/* ── FASE 4: TARJETA DE DETALLE POR PUNTO AMPLIADA ── */}
               {(() => {
                 const activePoint = hoveredTrendPoint || trendData[trendData.length - 1];
                 if (!activePoint) return null;
@@ -1426,18 +1704,19 @@ export const TeamAttendanceTab = ({ players = [], activeTeam = null }) => {
                 return (
                   <div style={{
                     marginTop: '16px',
-                    padding: '16px',
-                    borderRadius: '12px',
+                    padding: '18px',
+                    borderRadius: '14px',
                     background: 'var(--bg-app)',
                     border: '1px solid var(--border-color)',
                     display: 'flex',
                     flexDirection: 'column',
-                    gap: '10px'
+                    gap: '14px'
                   }}>
+                    {/* Cabecera del Evento Seleccionado */}
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <span style={{ fontSize: '16px' }}>{activePoint.type === 'match' ? '🏆' : '⚽'}</span>
-                        <strong style={{ fontSize: '13.5px', color: 'var(--text-primary)' }}>
+                        <span style={{ fontSize: '18px' }}>{activePoint.type === 'match' ? '🏆' : '⚽'}</span>
+                        <strong style={{ fontSize: '14px', color: 'var(--text-primary)' }}>
                           {activePoint.title}
                         </strong>
                         <span style={{
@@ -1461,22 +1740,53 @@ export const TeamAttendanceTab = ({ players = [], activeTeam = null }) => {
                           setActiveSubView('register');
                         }}
                         style={{
-                          padding: '6px 14px',
+                          padding: '8px 16px',
                           borderRadius: '8px',
-                          background: 'var(--accent-green)',
+                          background: '#22C55E',
                           color: '#FFFFFF',
                           border: 'none',
                           fontWeight: '800',
-                          fontSize: '11.5px',
-                          cursor: 'pointer'
+                          fontSize: '12px',
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '6px',
+                          boxShadow: '0 4px 10px rgba(34,197,94,0.25)'
                         }}
                       >
-                        📋 {isEn ? 'Open Session Register' : 'Abrir Registro de Asistencia'}
+                        📋 {t('attendance.chart.openRegister') || (isEn ? 'Open Attendance Register' : 'Abrir Registro de Asistencia')}
                       </button>
                     </div>
 
-                    {/* Desglose detallado P / T / J / A / L / SR */}
-                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', fontSize: '12px', fontWeight: '700' }}>
+                    {/* Resumen de las 4 Series para este Evento */}
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '8px' }}>
+                      <div style={{ padding: '8px 12px', borderRadius: '8px', background: 'rgba(34, 197, 94, 0.1)', border: '1px solid rgba(34, 197, 94, 0.2)' }}>
+                        <div style={{ fontSize: '10.5px', color: '#22C55E', fontWeight: '800' }}>🟢 {t('attendance.chart.legend.attendance') || 'ASISTENCIA REAL'}</div>
+                        <div style={{ fontSize: '16px', fontWeight: '900', color: '#22C55E' }}>{activePoint.pct}%</div>
+                        <div style={{ fontSize: '10.5px', color: 'var(--text-secondary)' }}>{(b.present ?? 0) + (b.late ?? 0)} / {b.eligible ?? 0} jug.</div>
+                      </div>
+
+                      <div style={{ padding: '8px 12px', borderRadius: '8px', background: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.2)' }}>
+                        <div style={{ fontSize: '10.5px', color: '#EF4444', fontWeight: '800' }}>🔴 {t('attendance.chart.legend.absent') || 'AUSENTES'}</div>
+                        <div style={{ fontSize: '16px', fontWeight: '900', color: '#EF4444' }}>{activePoint.pctAbsent ?? 0}%</div>
+                        <div style={{ fontSize: '10.5px', color: 'var(--text-secondary)' }}>{b.absent ?? 0} faltas</div>
+                      </div>
+
+                      <div style={{ padding: '8px 12px', borderRadius: '8px', background: 'rgba(249, 115, 22, 0.1)', border: '1px solid rgba(249, 115, 22, 0.2)' }}>
+                        <div style={{ fontSize: '10.5px', color: '#F97316', fontWeight: '800' }}>🟠 {t('attendance.chart.legend.late') || 'TARDES'}</div>
+                        <div style={{ fontSize: '16px', fontWeight: '900', color: '#F97316' }}>{activePoint.pctLate ?? 0}%</div>
+                        <div style={{ fontSize: '10.5px', color: 'var(--text-secondary)' }}>{b.late ?? 0} retrasos</div>
+                      </div>
+
+                      <div style={{ padding: '8px 12px', borderRadius: '8px', background: 'rgba(59, 130, 246, 0.1)', border: '1px solid rgba(59, 130, 246, 0.2)' }}>
+                        <div style={{ fontSize: '10.5px', color: '#3B82F6', fontWeight: '800' }}>🔵 {t('attendance.chart.legend.justified') || 'JUSTIFICADOS'}</div>
+                        <div style={{ fontSize: '16px', fontWeight: '900', color: '#3B82F6' }}>{activePoint.pctJustified ?? 0}%</div>
+                        <div style={{ fontSize: '10.5px', color: 'var(--text-secondary)' }}>{b.justified ?? 0} avisos</div>
+                      </div>
+                    </div>
+
+                    {/* Desglose Completo de Estados (P / T / J / A / L / SR) */}
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', fontSize: '11.5px', fontWeight: '700', borderTop: '1px solid var(--border-color)', paddingTop: '10px' }}>
                       <span style={{ padding: '4px 10px', borderRadius: '6px', background: 'rgba(34, 197, 94, 0.1)', color: '#22C55E' }}>
                         🟢 {isEn ? 'Present' : 'Presentes'}: <strong>{b.present ?? 0}</strong>
                       </span>
@@ -1494,9 +1804,6 @@ export const TeamAttendanceTab = ({ players = [], activeTeam = null }) => {
                       </span>
                       <span style={{ padding: '4px 10px', borderRadius: '6px', background: 'rgba(148, 163, 184, 0.1)', color: 'var(--text-secondary)' }}>
                         ⚪ {isEn ? 'No Record' : 'Sin Registro'}: <strong>{b.noRecord ?? 0}</strong>
-                      </span>
-                      <span style={{ padding: '4px 10px', borderRadius: '6px', background: 'rgba(212, 168, 67, 0.15)', color: 'var(--accent-gold)', marginLeft: 'auto' }}>
-                        🎯 {isEn ? 'Attendance' : 'Asistencia'}: <strong>{activePoint.pct}%</strong>
                       </span>
                     </div>
                   </div>

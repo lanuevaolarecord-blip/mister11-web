@@ -668,6 +668,9 @@ export const getEventAttendanceStats = (event, { attendanceRecords = [], players
     const eligible = Math.max(0, totalScheduled - justified - injured);
     const attended = present + late;
     const pct = eligible > 0 ? Math.round((attended / eligible) * 100) : (absent === 0 && noRecord === 0 ? 100 : 0);
+    const pctAbsent = eligible > 0 ? Math.round((absent / eligible) * 100) : 0;
+    const pctLate = eligible > 0 ? Math.round((late / eligible) * 100) : 0;
+    const pctJustified = totalScheduled > 0 ? Math.round((justified / totalScheduled) * 100) : 0;
 
     return {
       id: `match_${cleanMId}`,
@@ -676,6 +679,9 @@ export const getEventAttendanceStats = (event, { attendanceRecords = [], players
       date: dateKey,
       formattedDate: dateKey ? new Date(dateKey + 'T12:00:00').toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit' }) : 'Partido',
       pct,
+      pctAbsent,
+      pctLate,
+      pctJustified,
       isProvisional: !isClosed,
       isSuspended: false,
       type: 'match',
@@ -748,6 +754,9 @@ export const getEventAttendanceStats = (event, { attendanceRecords = [], players
     const pct = hasStaffRecord
       ? (eligible > 0 ? Math.round((attended / eligible) * 100) : (absent === 0 && noRecord === 0 ? 100 : 0))
       : 100;
+    const pctAbsent = hasStaffRecord && eligible > 0 ? Math.round((absent / eligible) * 100) : 0;
+    const pctLate = hasStaffRecord && eligible > 0 ? Math.round((late / eligible) * 100) : 0;
+    const pctJustified = hasStaffRecord && totalScheduled > 0 ? Math.round((justified / totalScheduled) * 100) : 0;
 
     return {
       id: `session_${cleanSId}`,
@@ -756,6 +765,9 @@ export const getEventAttendanceStats = (event, { attendanceRecords = [], players
       date: dateKey,
       formattedDate: dateKey ? new Date(dateKey + 'T12:00:00').toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit' }) : 'Sesión',
       pct,
+      pctAbsent,
+      pctLate,
+      pctJustified,
       isProvisional: !hasStaffRecord,
       isSuspended: Boolean(isSuspended || attDoc?.isSuspended),
       type: 'session',

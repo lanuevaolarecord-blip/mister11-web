@@ -61,6 +61,7 @@ export const TeamAttendanceTab = ({ players = [], activeTeam = null }) => {
 
   // Selector de ventana para el asistente de convocatoria
   const [callupWindow, setCallupWindow] = useState('microcycle'); // 'microcycle' | 'week' | 'biweekly' | 'season'
+  const [hoveredTrendPoint, setHoveredTrendPoint] = useState(null);
 
   // Map { playerId: { status: 'present'|'absent'|'justified'|'late'|'injured', lateMinutes: 0 } }
   const [recordsMap, setRecordsMap] = useState({});
@@ -401,8 +402,8 @@ export const TeamAttendanceTab = ({ players = [], activeTeam = null }) => {
   }, [players, getTeamSquadStats]);
 
   const trendData = useMemo(() => {
-    return getAttendanceTrend();
-  }, [attendanceRecords, getAttendanceTrend]);
+    return getAttendanceTrend(players);
+  }, [players, getAttendanceTrend]);
 
   const teamAveragePct = useMemo(() => {
     return calculateSquadAveragePct(squadStats);
@@ -1298,7 +1299,7 @@ export const TeamAttendanceTab = ({ players = [], activeTeam = null }) => {
         </div>
       )}
 
-      {/* ── SUB-VISTA 4: EVOLUCIÓN GRÁFICA SVG DE ASISTENCIA ── */}
+      {/* ── SUB-VISTA 4: EVOLUCIÓN GRÁFICA SVG DE ASISTENCIA (Cero Fantasmas / Fuente Única) ── */}
       {activeSubView === 'chart' && (
         <div style={{ background: 'var(--bg-card)', padding: '24px', borderRadius: '16px', border: '1px solid var(--border-color)' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px', marginBottom: '16px' }}>
@@ -1322,54 +1323,186 @@ export const TeamAttendanceTab = ({ players = [], activeTeam = null }) => {
               {isEn ? 'No attendance sessions recorded yet.' : 'Aún no hay sesiones de asistencia registradas.'}
             </div>
           ) : (
-            <div style={{ width: '100%', overflowX: 'auto' }}>
-              <div style={{ minWidth: '500px', height: '240px', position: 'relative' }}>
-                <svg viewBox="0 0 500 200" style={{ width: '100%', height: '100%' }}>
-                  {/* Líneas horizontales de guía (50%, 75%, 100%) */}
-                  <line x1="40" y1="20" x2="480" y2="20" stroke="var(--border-color)" strokeDasharray="4" />
-                  <text x="10" y="24" fill="var(--text-secondary)" fontSize="10">100%</text>
+            <>
+              <div style={{ width: '100%', overflowX: 'auto', paddingBottom: '10px' }}>
+                <div style={{ minWidth: '540px', height: '240px', position: 'relative' }}>
+                  <svg viewBox="0 0 540 200" style={{ width: '100%', height: '100%', overflow: 'visible' }}>
+                    {/* Líneas horizontales de guía (50%, 70%, 100%) */}
+                    <line x1="40" y1="20" x2="510" y2="20" stroke="var(--border-color)" strokeDasharray="4" opacity="0.6" />
+                    <text x="8" y="24" fill="var(--text-secondary)" fontSize="10" fontWeight="700">100%</text>
 
-                  <line x1="40" y1="70" x2="480" y2="70" stroke="rgba(239, 68, 68, 0.3)" strokeDasharray="4" />
-                  <text x="10" y="74" fill="#EF4444" fontSize="10">70%</text>
+                    <line x1="40" y1="65" x2="510" y2="65" stroke="rgba(239, 68, 68, 0.3)" strokeDasharray="4" />
+                    <text x="8" y="69" fill="#EF4444" fontSize="10" fontWeight="700">70%</text>
 
-                  <line x1="40" y1="120" x2="480" y2="120" stroke="var(--border-color)" strokeDasharray="4" />
-                  <text x="10" y="124" fill="var(--text-secondary)" fontSize="10">50%</text>
+                    <line x1="40" y1="110" x2="510" y2="110" stroke="var(--border-color)" strokeDasharray="4" opacity="0.6" />
+                    <text x="8" y="114" fill="var(--text-secondary)" fontSize="10" fontWeight="700">50%</text>
 
-                  {/* Puntos y línea de tendencia */}
-                  {(() => {
-                    const stepX = trendData.length > 1 ? 440 / (trendData.length - 1) : 0;
-                    const points = trendData.map((d, i) => {
-                      const x = 40 + i * stepX;
-                      // Mapeo: 100% -> y=20, 0% -> y=170
-                      const y = 170 - ((d.pct ?? 0) / 100) * 150;
-                      return { x, y, ...d };
-                    });
+                    {/* Puntos y línea de tendencia */}
+                    {(() => {
+                      const stepX = trendData.length > 1 ? 460 / (trendData.length - 1) : 0;
+                      const points = trendData.map((d, i) => {
+                        const x = trendData.length === 1 ? 270 : 45 + i * stepX;
+                        // Mapeo: 100% -> y=20, 0% -> y=170
+                        const y = 170 - ((d.pct ?? 0) / 100) * 150;
+                        return { x, y, ...d };
+                      });
 
-                    const pathStr = points.reduce((acc, p, i) => `${acc} ${i === 0 ? 'M' : 'L'} ${p.x} ${p.y}`, '');
+                      const pathStr = points.reduce((acc, p, i) => `${acc} ${i === 0 ? 'M' : 'L'} ${p.x} ${p.y}`, '');
 
-                    return (
-                      <g>
-                        <path d={pathStr} fill="none" stroke="#22C55E" strokeWidth="2.5" strokeDasharray="3 1" />
-                        {points.map((p, i) => {
-                          const pointColor = p.isProvisional ? '#F59E0B' : '#22C55E';
-                          return (
-                            <g key={i}>
-                              <circle cx={p.x} cy={p.y} r="6" fill={pointColor} stroke="var(--bg-card)" strokeWidth="2" />
-                              <text x={p.x} y={p.y - 10} fill={pointColor} fontSize="11" fontWeight="bold" textAnchor="middle">
-                                {p.pct}% {p.isProvisional ? '*' : ''}
-                              </text>
-                              <text x={p.x} y="190" fill="var(--text-secondary)" fontSize="9" textAnchor="middle">
-                                {p.formattedDate}
-                              </text>
-                            </g>
-                          );
-                        })}
-                      </g>
-                    );
-                  })()}
-                </svg>
+                      return (
+                        <g>
+                          {points.length > 1 && (
+                            <path d={pathStr} fill="none" stroke="#22C55E" strokeWidth="2.5" strokeDasharray="3 1" />
+                          )}
+                          {points.map((p, i) => {
+                            const isHovered = hoveredTrendPoint?.id === p.id;
+                            const pointColor = p.isProvisional ? '#F59E0B' : '#22C55E';
+                            return (
+                              <g
+                                key={i}
+                                style={{ cursor: 'pointer' }}
+                                onClick={() => {
+                                  handleSelectEvent(p.id);
+                                  setActiveSubView('register');
+                                }}
+                                onMouseEnter={() => setHoveredTrendPoint(p)}
+                                onMouseLeave={() => setHoveredTrendPoint(null)}
+                              >
+                                {/* Círculo de toque amplio */}
+                                <circle cx={p.x} cy={p.y} r="18" fill="transparent" />
+
+                                {/* Halo al pasar ratón */}
+                                {isHovered && (
+                                  <circle cx={p.x} cy={p.y} r="12" fill={pointColor} opacity="0.25" />
+                                )}
+
+                                <circle
+                                  cx={p.x}
+                                  cy={p.y}
+                                  r={isHovered ? "8" : "6"}
+                                  fill={pointColor}
+                                  stroke="var(--bg-card)"
+                                  strokeWidth="2.5"
+                                  style={{ transition: 'r 0.2s ease' }}
+                                />
+
+                                <text
+                                  x={p.x}
+                                  y={p.y - 12}
+                                  fill={pointColor}
+                                  fontSize="11.5"
+                                  fontWeight="900"
+                                  textAnchor="middle"
+                                >
+                                  {p.pct}%{p.isProvisional ? '*' : ''}
+                                </text>
+
+                                <text
+                                  x={p.x}
+                                  y="190"
+                                  fill="var(--text-secondary)"
+                                  fontSize="10"
+                                  fontWeight="700"
+                                  textAnchor="middle"
+                                >
+                                  {p.formattedDate}
+                                </text>
+                              </g>
+                            );
+                          })}
+                        </g>
+                      );
+                    })()}
+                  </svg>
+                </div>
               </div>
-            </div>
+
+              {/* Tarjeta de Desglose y Acceso Rápido al Registro */}
+              {(() => {
+                const activePoint = hoveredTrendPoint || trendData[trendData.length - 1];
+                if (!activePoint) return null;
+                const b = activePoint.breakdown || {};
+
+                return (
+                  <div style={{
+                    marginTop: '16px',
+                    padding: '16px',
+                    borderRadius: '12px',
+                    background: 'var(--bg-app)',
+                    border: '1px solid var(--border-color)',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '10px'
+                  }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <span style={{ fontSize: '16px' }}>{activePoint.type === 'match' ? '🏆' : '⚽'}</span>
+                        <strong style={{ fontSize: '13.5px', color: 'var(--text-primary)' }}>
+                          {activePoint.title}
+                        </strong>
+                        <span style={{
+                          fontSize: '11px',
+                          padding: '2px 8px',
+                          borderRadius: '12px',
+                          fontWeight: '800',
+                          background: activePoint.isProvisional ? 'rgba(245, 158, 11, 0.15)' : 'rgba(34, 197, 94, 0.15)',
+                          color: activePoint.isProvisional ? '#F59E0B' : '#22C55E'
+                        }}>
+                          {activePoint.isProvisional
+                            ? (isEn ? '⏳ Provisional (Open)' : '⏳ Provisional (Acta / Registro abierto)')
+                            : (isEn ? '✅ Official (Closed)' : '✅ Oficial (Cerrado)')}
+                        </span>
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          handleSelectEvent(activePoint.id);
+                          setActiveSubView('register');
+                        }}
+                        style={{
+                          padding: '6px 14px',
+                          borderRadius: '8px',
+                          background: 'var(--accent-green)',
+                          color: '#FFFFFF',
+                          border: 'none',
+                          fontWeight: '800',
+                          fontSize: '11.5px',
+                          cursor: 'pointer'
+                        }}
+                      >
+                        📋 {isEn ? 'Open Session Register' : 'Abrir Registro de Asistencia'}
+                      </button>
+                    </div>
+
+                    {/* Desglose detallado P / T / J / A / L / SR */}
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', fontSize: '12px', fontWeight: '700' }}>
+                      <span style={{ padding: '4px 10px', borderRadius: '6px', background: 'rgba(34, 197, 94, 0.1)', color: '#22C55E' }}>
+                        🟢 {isEn ? 'Present' : 'Presentes'}: <strong>{b.present ?? 0}</strong>
+                      </span>
+                      <span style={{ padding: '4px 10px', borderRadius: '6px', background: 'rgba(245, 158, 11, 0.1)', color: '#F59E0B' }}>
+                        🟡 {isEn ? 'Late' : 'Tardes'}: <strong>{b.late ?? 0}</strong>
+                      </span>
+                      <span style={{ padding: '4px 10px', borderRadius: '6px', background: 'rgba(59, 130, 246, 0.1)', color: '#3B82F6' }}>
+                        🔵 {isEn ? 'Justified' : 'Justificados'}: <strong>{b.justified ?? 0}</strong>
+                      </span>
+                      <span style={{ padding: '4px 10px', borderRadius: '6px', background: 'rgba(239, 68, 68, 0.1)', color: '#EF4444' }}>
+                        🔴 {isEn ? 'Absent' : 'Ausentes'}: <strong>{b.absent ?? 0}</strong>
+                      </span>
+                      <span style={{ padding: '4px 10px', borderRadius: '6px', background: 'rgba(168, 85, 247, 0.1)', color: '#A855F7' }}>
+                        🟣 {isEn ? 'Injured' : 'Lesionados'}: <strong>{b.injured ?? 0}</strong>
+                      </span>
+                      <span style={{ padding: '4px 10px', borderRadius: '6px', background: 'rgba(148, 163, 184, 0.1)', color: 'var(--text-secondary)' }}>
+                        ⚪ {isEn ? 'No Record' : 'Sin Registro'}: <strong>{b.noRecord ?? 0}</strong>
+                      </span>
+                      <span style={{ padding: '4px 10px', borderRadius: '6px', background: 'rgba(212, 168, 67, 0.15)', color: 'var(--accent-gold)', marginLeft: 'auto' }}>
+                        🎯 {isEn ? 'Attendance' : 'Asistencia'}: <strong>{activePoint.pct}%</strong>
+                      </span>
+                    </div>
+                  </div>
+                );
+              })()}
+            </>
           )}
         </div>
       )}

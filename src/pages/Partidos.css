@@ -342,21 +342,18 @@ html.dark select option {
   box-shadow: 0 4px 15px rgba(0,0,0,0.03);
   padding: 16px;
   box-sizing: border-box;
-  /* Limitar al viewport para no requerir scroll */
-  max-height: calc(100vh - 140px);
+  min-height: calc(100vh - 140px);
 }
 
 @media (min-width: 640px) {
   .partidos-editor-container {
     padding: 24px;
-    max-height: calc(100vh - 140px);
   }
 }
 
 @media (min-width: 1024px) {
   .partidos-editor-container {
     padding: 24px;
-    max-height: calc(100vh - 140px);
   }
 }
 
@@ -830,13 +827,13 @@ html.dark select option {
 .alin-pitch-container-h3d {
   position: relative;
   /*
-   * Estrategia FASE 2: aspect-ratio nativo 105:68, contain scaling, centrado sin cortes
+   * Aspect ratio nativo 105:68 con escalado seguro para desktop
    */
   aspect-ratio: 105 / 68;
   width: 100%;
-  max-width: min(100%, calc((100vh - 220px) * 105 / 68));
-  max-height: calc(100vh - 220px);
-  min-height: 280px;
+  max-width: min(100%, calc((100vh - 280px) * 105 / 68));
+  max-height: calc(100vh - 280px);
+  min-height: 260px;
   height: auto;
   transform: none;
   border-radius: 12px;

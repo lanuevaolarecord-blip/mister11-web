@@ -4,7 +4,8 @@ import { subscribeToCollection, setDocument, deleteDocument, addDocument } from 
 import { sanitizeForFirestore } from './useSessions';
 import { 
   calculatePlayerAttendanceStats,
-  getPendingEvents
+  getPendingEvents,
+  getTeamAttendanceTrend
 } from '../utils/attendanceStatsHelper';
 import { 
   calculateAttendanceMetrics, 
@@ -194,110 +195,16 @@ export const useAttendance = (teamId) => {
   };
 
   /**
-   * Calcula la evolución porcentual media de asistencia del equipo por sesión/partido.
+   * Calcula la evolución porcentual media de asistencia del equipo por sesión/partido (Fuente Única).
    * Puntos de eventos con acta abierta / sin cerrar se marcan como provisionales (ámbar).
    */
-  const getAttendanceTrend = () => {
-    const allEvents = [];
-    const attMap = new Map();
-
-    (attendanceRecords || []).forEach((att) => {
-      if (!att) return;
-      if (att.id) {
-        const rawId = String(att.id);
-        attMap.set(rawId, att);
-        const clean = rawId.replace(/^session_/, '').replace(/^match_/, '');
-        attMap.set(clean, att);
-      }
-      if (att.sessionId) {
-        const rawSId = String(att.sessionId);
-        attMap.set(rawSId, att);
-        const clean = rawSId.replace(/^session_/, '').replace(/^match_/, '');
-        attMap.set(clean, att);
-      }
+  const getAttendanceTrend = (teamPlayers = []) => {
+    return getTeamAttendanceTrend({
+      sessions,
+      matches,
+      attendanceRecords,
+      players: teamPlayers
     });
-
-    const now = new Date();
-
-    (sessions || []).forEach((s) => {
-      if (!s) return;
-      const sDate = toDateKey(s.date || s.fecha);
-      if (!sDate || !isEventPast(sDate, s.time || s.hora || '23:59', now)) return;
-      if (s.isSuspended === true || s.status === 'suspended' || s.estado === 'suspendida') return;
-
-      const cleanId = String(s.id).replace(/^session_/, '');
-      const attDoc = attMap.get(cleanId) || attMap.get(s.id);
-      const recs = attDoc?.records || {};
-      const entries = Object.values(recs);
-
-      let attended = 0;
-      let eligible = 0;
-      const isProvisional = !attDoc || entries.length === 0;
-
-      entries.forEach((r) => {
-        const status = typeof r === 'object' ? r.status : r;
-        const sLower = String(status || '').toLowerCase().trim();
-        if (sLower === 'present' || sLower === 'presente' || sLower === 'late' || sLower === 'tarde') {
-          attended++;
-          eligible++;
-        } else if (sLower === 'absent' || sLower === 'ausente') {
-          eligible++;
-        }
-      });
-
-      const pct = eligible > 0 ? Math.round((attended / eligible) * 100) : (isProvisional ? 0 : 100);
-
-      allEvents.push({
-        id: `session_${s.id}`,
-        title: s.title || s.titulo || 'Sesión',
-        date: sDate,
-        formattedDate: sDate ? new Date(sDate).toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit' }) : 'Sesión',
-        pct,
-        isProvisional,
-        type: 'session'
-      });
-    });
-
-    (matches || []).forEach((m) => {
-      if (!m) return;
-      const mDate = toDateKey(m.date || m.fecha);
-      if (!mDate || !isEventPast(mDate, m.time || m.hora || '23:59', now)) return;
-
-      const cleanId = String(m.id).replace(/^match_/, '');
-      const isClosed = m.actaOficial?.closed === true;
-      const actual = m.actaOficial?.actual || attMap.get(cleanId)?.records || {};
-      const entries = Object.values(actual);
-
-      let attended = 0;
-      let eligible = 0;
-      const isProvisional = !isClosed;
-
-      entries.forEach((r) => {
-        const status = typeof r === 'object' ? r.status : r;
-        const sLower = String(status || '').toLowerCase().trim();
-        if (sLower === 'present' || sLower === 'presente' || sLower === 'late' || sLower === 'tarde' || sLower === 'titular_full' || sLower === 'titular_subout' || sLower === 'sub_in') {
-          attended++;
-          eligible++;
-        } else if (sLower === 'absent' || sLower === 'ausente' || sLower === 'convocado_no_jugó') {
-          eligible++;
-        }
-      });
-
-      const pct = eligible > 0 ? Math.round((attended / eligible) * 100) : (isProvisional ? 0 : 100);
-
-      allEvents.push({
-        id: `match_${m.id}`,
-        title: `vs ${m.rival || m.opponent || 'Rival'}`,
-        date: mDate,
-        formattedDate: mDate ? new Date(mDate).toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit' }) : 'Partido',
-        pct,
-        isProvisional,
-        type: 'match'
-      });
-    });
-
-    allEvents.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-    return allEvents;
   };
 
   return {

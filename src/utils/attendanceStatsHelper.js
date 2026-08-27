@@ -551,9 +551,285 @@ export const getPlayerAttendance = (
 };
 
 /**
- * Fase 5: Auto-test de Coherencia (Entrenador vs Asistente vs Portal del Jugador)
- * Compara para cada jugador que Resumen(temporada), Asistente(ventana=temporada) y Portal(temporada)
- * devuelvan exactamente los mismos números.
+ * Obtiene las estadísticas oficiales y desgloses de asistencia para un evento específico (Sesión o Partido).
+ * Fórmula Canónica: % = (Presentes + Tardes) / (Programados − Justificados − Lesionados) * 100
+ *
+ * @param {Object} event - Objeto de Sesión o Partido
+ * @param {Object} context - { attendanceRecords, players }
+ * @returns {Object} { id, rawId, title, date, formattedDate, pct, isProvisional, isSuspended, type, breakdown }
+ */
+export const getEventAttendanceStats = (event, { attendanceRecords = [], players = [] } = {}) => {
+  if (!event) return null;
+  if (event.isDemo === true || event.isSeed === true || event.mock === true) return null;
+
+  const rawDate = event.date || event.fecha || event.sessionDate || event.matchDate;
+  const dateKey = toDateKey(rawDate);
+  const now = new Date();
+
+  // Indexar mapa rápido de attendanceRecords
+  const attMap = new Map();
+  (attendanceRecords || []).forEach((att) => {
+    if (!att) return;
+    if (att.id) {
+      const rawId = String(att.id);
+      attMap.set(rawId, att);
+      const clean = rawId.replace(/^session_/, '').replace(/^match_/, '');
+      attMap.set(clean, att);
+      attMap.set(`session_${clean}`, att);
+      attMap.set(`match_${clean}`, att);
+    }
+    if (att.sessionId) {
+      const rawSId = String(att.sessionId);
+      attMap.set(rawSId, att);
+      const clean = rawSId.replace(/^session_/, '').replace(/^match_/, '');
+      attMap.set(clean, att);
+      attMap.set(`session_${clean}`, att);
+      attMap.set(`match_${clean}`, att);
+    }
+  });
+
+  const isMatch = Boolean(
+    event.type === 'match' ||
+    event.rival ||
+    event.opponent ||
+    event.actaOficial !== undefined ||
+    String(event.id || '').startsWith('match_')
+  );
+
+  if (isMatch) {
+    // ── PARTIDO ──
+    const cleanMId = String(event.id || '').replace(/^match_/, '');
+    const isClosed = event.actaOficial?.closed === true;
+    const attDoc = attMap.get(cleanMId) || attMap.get(`match_${cleanMId}`) || attMap.get(event.id);
+    const actual = event.actaOficial?.actual || attDoc?.records || {};
+
+    const rawConvocados = event.convocados || [
+      ...(event.titulares || []),
+      ...(event.suplentes || []),
+      ...(event.alineacion?.titulares || []),
+      ...(event.alineacion?.suplentes || [])
+    ].filter(Boolean);
+
+    const convocadosIds = Array.isArray(rawConvocados) && rawConvocados.length > 0
+      ? Array.from(new Set(rawConvocados.map(String)))
+      : (players || []).map(p => String(p.id));
+
+    const totalScheduled = convocadosIds.length > 0 ? convocadosIds.length : Math.max(1, (players || []).length);
+
+    let present = 0;
+    let late = 0;
+    let justified = 0;
+    let injured = 0;
+    let absent = 0;
+    let noRecord = 0;
+
+    const hasAnyActual = Object.keys(actual).length > 0;
+
+    if (isClosed && hasAnyActual) {
+      convocadosIds.forEach((pid) => {
+        const item = actual[pid];
+        if (!item) {
+          noRecord++;
+          return;
+        }
+        const rawStatus = typeof item === 'object' ? item.status : item;
+        const norm = normalizeEventStatus(rawStatus);
+        if (norm === 'presente') present++;
+        else if (norm === 'tarde') late++;
+        else if (norm === 'justificado') justified++;
+        else if (norm === 'lesionado') injured++;
+        else if (norm === 'ausente') absent++;
+        else noRecord++;
+      });
+    } else {
+      // Acta abierta: provisional
+      if (hasAnyActual) {
+        convocadosIds.forEach((pid) => {
+          const item = actual[pid];
+          if (!item) {
+            noRecord++;
+            return;
+          }
+          const rawStatus = typeof item === 'object' ? item.status : item;
+          const norm = normalizeEventStatus(rawStatus);
+          if (norm === 'presente') present++;
+          else if (norm === 'tarde') late++;
+          else if (norm === 'justificado') justified++;
+          else if (norm === 'lesionado') injured++;
+          else if (norm === 'ausente') absent++;
+          else noRecord++;
+        });
+      } else {
+        // Sin registro aún: 100% provisional
+        present = totalScheduled;
+      }
+    }
+
+    const eligible = Math.max(0, totalScheduled - justified - injured);
+    const attended = present + late;
+    const pct = eligible > 0 ? Math.round((attended / eligible) * 100) : (absent === 0 && noRecord === 0 ? 100 : 0);
+
+    return {
+      id: `match_${cleanMId}`,
+      rawId: cleanMId,
+      title: `🏆 [Partido] vs ${event.rival || event.opponent || 'Rival'}`,
+      date: dateKey,
+      formattedDate: dateKey ? new Date(dateKey + 'T12:00:00').toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit' }) : 'Partido',
+      pct,
+      isProvisional: !isClosed,
+      isSuspended: false,
+      type: 'match',
+      breakdown: {
+        present,
+        late,
+        justified,
+        injured,
+        absent,
+        noRecord,
+        scheduled: totalScheduled,
+        eligible
+      }
+    };
+  } else {
+    // ── SESIÓN DE ENTRENAMIENTO ──
+    const cleanSId = String(event.id || '').replace(/^session_/, '');
+    const isSuspended = event.isSuspended === true || event.status === 'suspended' || event.estado === 'suspendida';
+    const attDoc = attMap.get(cleanSId) || attMap.get(`session_${cleanSId}`) || attMap.get(event.id);
+    const records = attDoc?.records || {};
+    const hasStaffRecord = Boolean(attDoc && Object.keys(records).length > 0);
+
+    const teamPlayers = Array.isArray(players) && players.length > 0 ? players : [];
+    const totalScheduled = teamPlayers.length > 0 ? teamPlayers.length : Object.keys(records).length || 1;
+
+    let present = 0;
+    let late = 0;
+    let justified = 0;
+    let injured = 0;
+    let absent = 0;
+    let noRecord = 0;
+
+    if (hasStaffRecord) {
+      if (teamPlayers.length > 0) {
+        teamPlayers.forEach((p) => {
+          const rec = records[p.id];
+          if (!rec) {
+            noRecord++;
+            return;
+          }
+          const rawStatus = typeof rec === 'object' ? rec.status : rec;
+          const norm = normalizeEventStatus(rawStatus);
+          if (norm === 'presente') present++;
+          else if (norm === 'tarde') late++;
+          else if (norm === 'justificado') justified++;
+          else if (norm === 'lesionado') injured++;
+          else if (norm === 'ausente') absent++;
+          else noRecord++;
+        });
+      } else {
+        Object.values(records).forEach((rec) => {
+          const rawStatus = typeof rec === 'object' ? rec.status : rec;
+          const norm = normalizeEventStatus(rawStatus);
+          if (norm === 'presente') present++;
+          else if (norm === 'tarde') late++;
+          else if (norm === 'justificado') justified++;
+          else if (norm === 'lesionado') injured++;
+          else if (norm === 'ausente') absent++;
+          else noRecord++;
+        });
+      }
+    } else {
+      // Sesión sin registro del staff
+      noRecord = totalScheduled;
+    }
+
+    const eligible = Math.max(0, totalScheduled - justified - injured);
+    const attended = present + late;
+    // Si no hay registro del staff, provisional es 100% (o 0 si se requiere registro explícito, pero marcado con isProvisional: true)
+    const pct = hasStaffRecord
+      ? (eligible > 0 ? Math.round((attended / eligible) * 100) : (absent === 0 && noRecord === 0 ? 100 : 0))
+      : 100;
+
+    return {
+      id: `session_${cleanSId}`,
+      rawId: cleanSId,
+      title: `⚽ [Sesión] ${event.title || event.titulo || 'Entrenamiento'}`,
+      date: dateKey,
+      formattedDate: dateKey ? new Date(dateKey + 'T12:00:00').toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit' }) : 'Sesión',
+      pct,
+      isProvisional: !hasStaffRecord,
+      isSuspended: Boolean(isSuspended || attDoc?.isSuspended),
+      type: 'session',
+      breakdown: {
+        present,
+        late,
+        justified,
+        injured,
+        absent,
+        noRecord,
+        scheduled: totalScheduled,
+        eligible
+      }
+    };
+  }
+};
+
+/**
+ * Calcula la serie temporal de evolución de asistencia del equipo (Cero datos fantasma).
+ * Renderiza EXACTAMENTE la misma lista de eventos que el selector de "Registro por Sesión"
+ * ordenados cronológicamente por fecha ascendente.
+ *
+ * @param {Object} params
+ * @param {Array} params.sessions
+ * @param {Array} params.matches
+ * @param {Array} params.attendanceRecords
+ * @param {Array} params.players
+ * @returns {Array} Array de eventos con % oficial, desglose y flag isProvisional
+ */
+export const getTeamAttendanceTrend = ({
+  sessions = [],
+  matches = [],
+  attendanceRecords = [],
+  players = []
+} = {}) => {
+  const now = new Date();
+  const eventsList = [];
+
+  // 1. Filtrar sesiones reales (no demo, no seed, no suspendidas, fecha pasada/hoy)
+  (sessions || []).forEach((s) => {
+    if (!s) return;
+    if (s.isDemo === true || s.isSeed === true || s.mock === true) return;
+    const dateKey = toDateKey(s.date || s.fecha);
+    if (!dateKey || !isEventPast(dateKey, s.time || s.hora || '23:59', now)) return;
+    if (s.isSuspended === true || s.status === 'suspended' || s.estado === 'suspendida') return;
+
+    const stats = getEventAttendanceStats(s, { attendanceRecords, players });
+    if (stats) eventsList.push(stats);
+  });
+
+  // 2. Filtrar partidos reales (no demo, no seed, fecha pasada/hoy)
+  (matches || []).forEach((m) => {
+    if (!m) return;
+    if (m.isDemo === true || m.isSeed === true || m.mock === true) return;
+    const dateKey = toDateKey(m.date || m.fecha);
+    if (!dateKey || !isEventPast(dateKey, m.time || m.hora || '23:59', now)) return;
+
+    const stats = getEventAttendanceStats(m, { attendanceRecords, players });
+    if (stats) eventsList.push(stats);
+  });
+
+  // 3. Ordenar estrictamente cronológico ASC (del evento más antiguo al más reciente)
+  eventsList.sort((a, b) => {
+    const da = a.date ? new Date(a.date).getTime() : 0;
+    const db = b.date ? new Date(b.date).getTime() : 0;
+    return da - db;
+  });
+
+  return eventsList;
+};
+
+/**
+ * Fase 3 & 5: Auto-test de Coherencia Integral (Entrenador vs Asistente vs Portal vs Gráfica)
+ * Compara para cada jugador y para cada evento que todos los cálculos converjan al 100% con 0 divergencias.
  */
 export const checkAttendanceConsistency = ({
   players = [],
@@ -565,6 +841,7 @@ export const checkAttendanceConsistency = ({
 } = {}) => {
   const divergences = [];
 
+  // A) Verificar coherencia por jugador (Resumen vs Asistente vs Portal)
   (players || []).forEach((p) => {
     const pid = String(p.id);
     const pName = p.name || p.nombre || pid;
@@ -626,6 +903,7 @@ export const checkAttendanceConsistency = ({
 
     if (diffs.length > 0) {
       divergences.push({
+        type: 'player',
         playerId: pid,
         playerName: pName,
         diffs
@@ -634,15 +912,42 @@ export const checkAttendanceConsistency = ({
     }
   });
 
+  // B) Verificar coherencia de eventos en la gráfica de evolución
+  const trendEvents = getTeamAttendanceTrend({
+    sessions,
+    matches,
+    attendanceRecords,
+    players
+  });
+
+  trendEvents.forEach((ev) => {
+    const single = getEventAttendanceStats(
+      ev.type === 'match'
+        ? (matches || []).find(m => String(m.id).replace(/^match_/, '') === ev.rawId)
+        : (sessions || []).find(s => String(s.id).replace(/^session_/, '') === ev.rawId),
+      { attendanceRecords, players }
+    );
+
+    if (single && single.pct !== ev.pct) {
+      divergences.push({
+        type: 'event_trend',
+        eventId: ev.id,
+        title: ev.title,
+        diffs: [{ field: 'pct', trend: ev.pct, single: single.pct }]
+      });
+    }
+  });
+
   if (divergences.length === 0) {
-    console.log(`[checkAttendanceConsistency] ✅ 0 divergencias detectadas en ${players.length} jugadores auditados. Coherencia 100% total.`);
+    console.log(`[checkAttendanceConsistency] ✅ 0 divergencias detectadas en ${players.length} jugadores y ${trendEvents.length} eventos auditados. Coherencia 100% total.`);
   }
 
   return {
     divergences,
     count: divergences.length,
     isConsistent: divergences.length === 0,
-    totalPlayersChecked: (players || []).length
+    totalPlayersChecked: (players || []).length,
+    totalEventsChecked: trendEvents.length
   };
 };
 

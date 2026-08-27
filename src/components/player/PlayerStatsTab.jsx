@@ -169,13 +169,21 @@ export const PlayerStatsTab = ({ player, team, teamPath, isParentView = false, a
         return pId === String(effectivePlayerId) || e.players?.[effectivePlayerId];
       });
 
+      const enrichedEvals = [];
       const grouped = {};
       playerEvals.forEach(e => {
         const testId = String(e.testId || e.testName || 'test_general');
         const canonical = CANONICAL_TESTS_MAP[testId] || {};
         const testName = e.testName || canonical.name || e.name || (isEn ? 'Evaluation' : 'Evaluación');
         const unit = e.unit || canonical.unit || 'pts';
-        const category = e.category || canonical.category || (isEn ? 'General' : 'General');
+        const rawCat = String(e.category || canonical.category || (isEn ? 'General' : 'General'));
+        const category = rawCat;
+        const type = e.type || canonical.type || (
+          rawCat.toLowerCase().includes('físic') || rawCat.toLowerCase().includes('resistencia') || rawCat.toLowerCase().includes('velocidad') || rawCat.toLowerCase().includes('fuerza') || rawCat.toLowerCase().includes('agilidad') || testId.startsWith('t1') || testId.startsWith('t2') || testId.startsWith('t3') || testId.startsWith('t4') || testId.startsWith('t5') || testId.startsWith('t6') ? 'fisico' :
+          rawCat.toLowerCase().includes('técnic') || rawCat.toLowerCase().includes('pase') || rawCat.toLowerCase().includes('control') || rawCat.toLowerCase().includes('regate') || testId.startsWith('t7') || testId.startsWith('t8') ? 'tecnico' :
+          rawCat.toLowerCase().includes('táctic') || rawCat.toLowerCase().includes('posicion') || rawCat.toLowerCase().includes('decision') ? 'tactico' :
+          rawCat.toLowerCase().includes('psico') || rawCat.toLowerCase().includes('mental') || rawCat.toLowerCase().includes('socio') || rawCat.toLowerCase().includes('bienestar') || rawCat.toLowerCase().includes('cohesión') || testId.startsWith('psi') || testId.startsWith('soc') ? 'psicosocial' : 'general'
+        );
         const isTime = canonical.isTime !== undefined 
           ? canonical.isTime 
           : (unit.toLowerCase().includes('seg') || unit.toLowerCase().includes('s'));
@@ -185,11 +193,30 @@ export const PlayerStatsTab = ({ player, team, teamPath, isParentView = false, a
         const rawDate = e.date || e.fecha;
         const { ts, isoDate, displayDate } = parseSafeDate(rawDate, e);
 
+        const enrichedItem = {
+          ...e,
+          testId,
+          testName,
+          category,
+          type,
+          unit,
+          isTime,
+          val: parsedVal,
+          score: e.score !== undefined ? Number(e.score) : parsedVal,
+          percentage: e.percentage !== undefined ? Number(e.percentage) : undefined,
+          date: isoDate,
+          displayDate,
+          ts
+        };
+
+        enrichedEvals.push(enrichedItem);
+
         if (!grouped[testId]) {
           grouped[testId] = {
             id: testId,
             name: testName,
             category,
+            type,
             unit,
             isTime,
             history: []
@@ -201,7 +228,7 @@ export const PlayerStatsTab = ({ player, team, teamPath, isParentView = false, a
           date: isoDate,
           displayDate,
           ts,
-          raw: e
+          raw: enrichedItem
         });
       });
 
@@ -219,7 +246,7 @@ export const PlayerStatsTab = ({ player, team, teamPath, isParentView = false, a
       });
 
       setGroupedHistory(grouped);
-      setEvaluations(playerEvals);
+      setEvaluations(enrichedEvals);
       setLoading(false);
     };
 
@@ -380,50 +407,84 @@ export const PlayerStatsTab = ({ player, team, teamPath, isParentView = false, a
 
   const hasDiscomfortActive = wellnessHistory[0]?.hasDiscomfort;
 
+  // Función para normalizar cualquier test a una escala estándar de 0 a 100
+  const normalizeTestScore = (e) => {
+    if (e.percentage !== undefined && e.percentage !== null && !isNaN(Number(e.percentage))) {
+      return Math.min(100, Math.max(0, Math.round(Number(e.percentage))));
+    }
+    if (e.score !== undefined && e.maxScore && Number(e.maxScore) > 0) {
+      return Math.min(100, Math.max(0, Math.round((Number(e.score) / Number(e.maxScore)) * 100)));
+    }
+    const num = parseFloat(String(e.val !== undefined ? e.val : e.score).replace(',', '.')) || 0;
+    const id = String(e.testId || '').toLowerCase();
+    const u = String(e.unit || '').toLowerCase();
+
+    // Normalizaciones fisiológicas y técnicas canónicas
+    if (id === 't1' || id.includes('cooper')) return Math.min(99, Math.max(15, Math.round((num / 3000) * 100)));
+    if (id === 't2' || id.includes('navette') || id.includes('beep')) return Math.min(99, Math.max(15, Math.round((num / 13) * 100)));
+    if (id === 't3' || id.includes('sprint_10') || id.includes('sprint10')) return Math.min(99, Math.max(15, Math.round(100 - (num - 1.4) * 45)));
+    if (id === 't4' || id.includes('sprint_30') || id.includes('sprint30')) return Math.min(99, Math.max(15, Math.round(100 - (num - 3.6) * 28)));
+    if (id === 't5' || id.includes('t_test') || id.includes('ttest')) return Math.min(99, Math.max(15, Math.round(100 - (num - 8.5) * 10)));
+    if (id === 't6' || id.includes('cmj') || id.includes('salto')) return Math.min(99, Math.max(15, Math.round((num / 50) * 100)));
+    if (id === 't7' || id.includes('conos') || id.includes('dribbling')) return Math.min(99, Math.max(15, Math.round(100 - (num - 7.0) * 8)));
+    if (id === 't8' || id.includes('porteria') || id.includes('pase')) return Math.min(99, Math.max(15, num <= 10 ? Math.round(num * 10) : Math.round(num)));
+
+    if (u.includes('seg') || u === 's') return Math.min(99, Math.max(15, Math.round(100 - (num * 5))));
+    if (u === 'cm') return Math.min(99, Math.max(15, Math.round((num / 50) * 100)));
+    if (u === 'm') return Math.min(99, Math.max(15, Math.round((num / (num > 500 ? 3000 : 50)) * 100)));
+    if (u === 'nivel') return Math.min(99, Math.max(15, Math.round((num / 13) * 100)));
+    if (num <= 10 && num > 0) return Math.min(99, Math.max(15, Math.round(num * 10)));
+    if (num <= 100 && num > 0) return Math.min(99, Math.max(0, Math.round(num)));
+    return Math.min(99, Math.max(15, 75));
+  };
+
   // Radar points con datos 100% reales de tests completados, evaluaciones y asistencia
   const mentalEvals = evaluations.filter(e => 
     e.type === 'psicosocial' || 
+    e.type === 'psicodeportivo' || 
+    e.type === 'sociodeportivo' || 
+    e.type === 'socioemocional' || 
+    e.testId?.startsWith('psi') || 
+    e.testId?.startsWith('soc') || 
     e.category?.toLowerCase().includes('mental') || 
     e.category?.toLowerCase().includes('psico') || 
     e.category?.toLowerCase().includes('presión') || 
     e.category?.toLowerCase().includes('cohesión') || 
     e.category?.toLowerCase().includes('afrontamiento') || 
-    e.category?.toLowerCase().includes('resiliencia') || 
-    e.testId?.startsWith('psi_') || 
-    e.testId?.startsWith('soc_')
+    e.category?.toLowerCase().includes('resiliencia')
   );
   const avgMentalTests = mentalEvals.length > 0 
-    ? Math.round(mentalEvals.reduce((s, e) => {
-        if (e.percentage !== undefined && e.percentage !== null) return s + Number(e.percentage);
-        if (e.score && e.maxScore) return s + (Number(e.score) / Number(e.maxScore)) * 100;
-        return s + (Number(e.val) || Number(e.score) || 0);
-      }, 0) / mentalEvals.length) 
+    ? Math.round(mentalEvals.reduce((s, e) => s + normalizeTestScore(e), 0) / mentalEvals.length) 
     : 0;
   const rawMentalFicha = Number(player?.statsMental) || Number(player?.evaluacion?.mental) || Number(player?.mental) || 0;
   const rawMental = Math.min(100, Math.max(avgMentalTests, rawMentalFicha));
 
   const fisicoEvals = evaluations.filter(e => 
     e.type === 'fisico' || 
+    e.testId === 't1' || e.testId === 't2' || e.testId === 't3' || e.testId === 't4' || e.testId === 't5' || e.testId === 't6' ||
     e.category?.toLowerCase().includes('físic') || 
     e.category?.toLowerCase().includes('resistencia') || 
     e.category?.toLowerCase().includes('velocidad') || 
-    e.category?.toLowerCase().includes('fuerza')
+    e.category?.toLowerCase().includes('fuerza') ||
+    e.category?.toLowerCase().includes('agilidad')
   );
   const avgFisicoTests = fisicoEvals.length > 0 
-    ? Math.round(fisicoEvals.reduce((s, e) => s + (e.percentage !== undefined ? Number(e.percentage) : Number(e.val) || Number(e.score) || 0), 0) / fisicoEvals.length) 
+    ? Math.round(fisicoEvals.reduce((s, e) => s + normalizeTestScore(e), 0) / fisicoEvals.length) 
     : 0;
   const rawFisicoFicha = Number(player?.statsFisico) || Number(player?.evaluacion?.fisico) || Number(player?.fisico) || 0;
   const rawFisico = Math.min(100, Math.max(avgFisicoTests, rawFisicoFicha));
 
   const tecnicaEvals = evaluations.filter(e => 
     e.type === 'tecnico' || 
+    e.testId === 't7' || e.testId === 't8' ||
     e.category?.toLowerCase().includes('técnic') || 
     e.category?.toLowerCase().includes('pase') || 
     e.category?.toLowerCase().includes('control') || 
-    e.category?.toLowerCase().includes('regate')
+    e.category?.toLowerCase().includes('regate') ||
+    e.category?.toLowerCase().includes('tiro')
   );
   const avgTecnicaTests = tecnicaEvals.length > 0 
-    ? Math.round(tecnicaEvals.reduce((s, e) => s + (e.percentage !== undefined ? Number(e.percentage) : Number(e.val) || Number(e.score) || 0), 0) / tecnicaEvals.length) 
+    ? Math.round(tecnicaEvals.reduce((s, e) => s + normalizeTestScore(e), 0) / tecnicaEvals.length) 
     : 0;
   const rawTecnicaFicha = Number(player?.statsTecnica) || Number(player?.evaluacion?.tecnica) || Number(player?.tecnica) || 0;
   const rawTecnica = Math.min(100, Math.max(avgTecnicaTests, rawTecnicaFicha));
@@ -432,15 +493,24 @@ export const PlayerStatsTab = ({ player, team, teamPath, isParentView = false, a
     e.type === 'tactico' || 
     e.category?.toLowerCase().includes('táctic') || 
     e.category?.toLowerCase().includes('posicion') || 
-    e.category?.toLowerCase().includes('decision')
+    e.category?.toLowerCase().includes('decision') ||
+    e.category?.toLowerCase().includes('visión')
   );
   const avgTacticaTests = tacticaEvals.length > 0 
-    ? Math.round(tacticaEvals.reduce((s, e) => s + (e.percentage !== undefined ? Number(e.percentage) : Number(e.val) || Number(e.score) || 0), 0) / tacticaEvals.length) 
+    ? Math.round(tacticaEvals.reduce((s, e) => s + normalizeTestScore(e), 0) / tacticaEvals.length) 
     : 0;
   const rawTacticaFicha = Number(player?.statsTactica) || Number(player?.evaluacion?.tactica) || Number(player?.tactica) || 0;
-  const rawTactica = Math.min(100, Math.max(avgTacticaTests, rawTacticaFicha));
+  const matchTacticalRating = playerMatchStats?.avgRating && !isNaN(Number(playerMatchStats.avgRating)) && Number(playerMatchStats.avgRating) > 0
+    ? Math.min(100, Math.round(Number(playerMatchStats.avgRating) * 10)) 
+    : 0;
+  const rawTactica = Math.min(100, Math.max(avgTacticaTests, rawTacticaFicha, matchTacticalRating));
 
-  const rawAsistencia = Math.min(100, teamComparison?.myAttendancePct || 0);
+  const rawAsistencia = Math.min(
+    100,
+    teamComparison?.myAttendancePct !== null && teamComparison?.myAttendancePct !== undefined
+      ? teamComparison.myAttendancePct
+      : (player?.attendancePct ? Number(player.attendancePct) : (allAttendance.length > 0 ? 80 : (playerMatchStats.matchesPlayed > 0 ? 100 : 0)))
+  );
 
   const hasAnyEvaluation = rawFisico > 0 || rawTecnica > 0 || rawTactica > 0 || rawMental > 0;
 

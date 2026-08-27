@@ -97,7 +97,7 @@ const ActaOficialPanel = ({ matchId, matchData, players = [], calledPlayers = []
 
   const convocadosPlayers = useMemo(() =>
     convocadosIds
-      .map(id => players.find(p => String(p.id) === String(id)))
+      .map(id => (players || []).find(p => p && String(p.id) === String(id)))
       .filter(Boolean),
     [convocadosIds, players]
   );

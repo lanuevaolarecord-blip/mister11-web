@@ -32,17 +32,19 @@ export const normalizeLineup = (rawTitulares = [], rawSuplentes = [], rawConvoca
   // 1. Si se pasan titulares explícitos
   if (Array.isArray(rawTitulares) && rawTitulares.length > 0) {
     rawTitulares.slice(0, 11).forEach((id, idx) => {
-      if (id && typeof id === 'string' && !seen.has(id)) {
-        titulares[idx] = id;
-        seen.add(id);
+      const idStr = (id !== null && id !== undefined) ? String(id).trim() : '';
+      if (idStr && !seen.has(idStr)) {
+        titulares[idx] = idStr;
+        seen.add(idStr);
       }
     });
   } else if (Array.isArray(rawConvocados) && rawConvocados.length > 0) {
     // Fallback: usar los primeros 11 de convocados
     rawConvocados.slice(0, 11).forEach((id, idx) => {
-      if (id && typeof id === 'string' && !seen.has(id)) {
-        titulares[idx] = id;
-        seen.add(id);
+      const idStr = (id !== null && id !== undefined) ? String(id).trim() : '';
+      if (idStr && !seen.has(idStr)) {
+        titulares[idx] = idStr;
+        seen.add(idStr);
       }
     });
   }
@@ -50,17 +52,19 @@ export const normalizeLineup = (rawTitulares = [], rawSuplentes = [], rawConvoca
   // 2. Si se pasan suplentes explícitos
   if (Array.isArray(rawSuplentes) && rawSuplentes.length > 0) {
     rawSuplentes.slice(0, 7).forEach((id, idx) => {
-      if (id && typeof id === 'string' && !seen.has(id)) {
-        suplentes[idx] = id;
-        seen.add(id);
+      const idStr = (id !== null && id !== undefined) ? String(id).trim() : '';
+      if (idStr && !seen.has(idStr)) {
+        suplentes[idx] = idStr;
+        seen.add(idStr);
       }
     });
   } else if (Array.isArray(rawConvocados) && rawConvocados.length > 11) {
     // Fallback: usar del 11 al 17 de convocados
     rawConvocados.slice(11, 18).forEach((id, idx) => {
-      if (id && typeof id === 'string' && !seen.has(id)) {
-        suplentes[idx] = id;
-        seen.add(id);
+      const idStr = (id !== null && id !== undefined) ? String(id).trim() : '';
+      if (idStr && !seen.has(idStr)) {
+        suplentes[idx] = idStr;
+        seen.add(idStr);
       }
     });
   }

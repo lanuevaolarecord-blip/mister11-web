@@ -55,14 +55,16 @@ export const useMatchSheet = (teamPath, matchId, matchData, players = []) => {
       if (snap.exists()) {
         const data = snap.data();
         setSheet({
-          rsvp:       data.playerRsvp  || {},
-          actual:     data.actaOficial?.actual     || {},
-          closed:     data.actaOficial?.closed     || false,
-          closedAt:   data.actaOficial?.closedAt   || null,
-          closedBy:   data.actaOficial?.closedBy   || null,
+          rsvp:               data.playerRsvp  || {},
+          actual:             data.actaOficial?.actual             || {},
+          closed:             data.actaOficial?.closed             || false,
+          closedWithWarnings: data.actaOficial?.closedWithWarnings || false,
+          warnings:           data.actaOficial?.warnings           || [],
+          closedAt:           data.actaOficial?.closedAt           || null,
+          closedBy:           data.actaOficial?.closedBy           || null,
         });
       } else {
-        setSheet({ rsvp: {}, actual: {}, closed: false, closedAt: null, closedBy: null });
+        setSheet({ rsvp: {}, actual: {}, closed: false, closedWithWarnings: false, warnings: [], closedAt: null, closedBy: null });
       }
       setLoading(false);
     }, (err) => {

@@ -232,11 +232,12 @@ const LiveStats = ({
       : ((liveStatsHook.events && liveStatsHook.events.length > 0)
           ? liveStatsHook.events
           : (matchData?.liveStatsEvents || matchData?.events || []));
-    if (localEvents.length === 0) return base;
+    const cleanBase = Array.isArray(base) ? base.filter(Boolean) : [];
+    if (localEvents.length === 0) return cleanBase;
     // Fusionar: local first para que aparezca de inmediato, sin duplicados por id
-    const baseIds = new Set(base.map(e => e.id));
-    const unique = localEvents.filter(e => !baseIds.has(e.id));
-    return [...base, ...unique];
+    const baseIds = new Set(cleanBase.map(e => e?.id || `evt_${e?.minute}_${e?.type}`).filter(Boolean));
+    const unique = localEvents.filter(e => e && !baseIds.has(e?.id));
+    return [...cleanBase, ...unique];
   }, [parentEvents, liveStatsHook.events, matchData, localEvents]);
 
   const saving = liveStatsHook.saving;
@@ -315,6 +316,7 @@ const LiveStats = ({
   // ── Filtrado Multidimensional de Eventos ────────────────────────────────────
   const filteredEvents = useMemo(() => {
     return (rawEvents || []).filter(e => {
+      if (!e) return false;
       // 1. Filtro de Tiempo
       const m = Number(e.minute || e.time || 0);
       if (m < timeRange[0] || m > timeRange[1]) return false;
@@ -343,21 +345,21 @@ const LiveStats = ({
   }, [rawEvents, timeFilter, timeRange, teamFilter, selectedPlayers, zoneFilter]);
 
   const countByType = useCallback(
-    (type) => filteredEvents.filter((e) => e.type === type).length,
+    (type) => filteredEvents.filter((e) => e && e.type === type).length,
     [filteredEvents]
   );
 
   // ── Extraer Disparos para el Shot Map ───────────────────────────────────────
   const shotsList = useMemo(() => {
-    return filteredEvents.filter(e => 
-      ['shot', 'tiro', 'shot_on_target_own', 'shot_off_target_own', 'shot_on_target_rival', 'shot_off_target_rival', 'gol', 'goal'].includes(e.type)
+    return (filteredEvents || []).filter(e => 
+      e && ['shot', 'tiro', 'shot_on_target_own', 'shot_off_target_own', 'shot_on_target_rival', 'shot_off_target_rival', 'gol', 'goal', 'gol_local', 'gol_rival'].includes(e.type)
     );
   }, [filteredEvents]);
 
   // ── Extraer Pases para la Red de Pases ──────────────────────────────────────
   const passesList = useMemo(() => {
-    return filteredEvents.filter(e => 
-      ['pass', 'pase', 'recovery', 'duel_won'].includes(e.type)
+    return (filteredEvents || []).filter(e => 
+      e && ['pass', 'pase', 'recovery', 'duel_won'].includes(e.type)
     );
   }, [filteredEvents]);
 

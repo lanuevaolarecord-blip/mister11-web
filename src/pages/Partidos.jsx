@@ -280,32 +280,32 @@ const Partidos = () => {
 
   // Derivados 100% canónicos desde events
   const derivedGoalsFor = useMemo(() => {
-    return (matchData.events || []).filter(e => e.isValid !== false && (e.type === 'gol_local' || e.type === 'goal_own')).length;
+    return (matchData.events || []).filter(e => e && e.isValid !== false && (e.type === 'gol_local' || e.type === 'goal_own')).length;
   }, [matchData.events]);
 
   const derivedGoalsAgainst = useMemo(() => {
-    return (matchData.events || []).filter(e => e.isValid !== false && (e.type === 'gol_rival' || e.type === 'goal_rival')).length;
+    return (matchData.events || []).filter(e => e && e.isValid !== false && (e.type === 'gol_rival' || e.type === 'goal_rival')).length;
   }, [matchData.events]);
 
   const derivedGoleadores = useMemo(() => {
     return (matchData.events || [])
-      .filter(e => e.isValid !== false && e.type === 'gol_local')
+      .filter(e => e && e.isValid !== false && e.type === 'gol_local')
       .map(e => ({
         jugadorId: e.playerId,
-        nombre: e.playerName || players.find(p => p.id === e.playerId)?.name || 'Jugador',
-        minuto: String(e.minute),
+        nombre: e.playerName || (players || []).find(p => p && String(p.id) === String(e.playerId))?.name || 'Jugador',
+        minuto: String(e.minute || 0),
         asistenciaId: e.asistenciaId || ''
       }));
   }, [matchData.events, players]);
 
   const derivedTarjetas = useMemo(() => {
     return (matchData.events || [])
-      .filter(e => e.isValid !== false && (e.type === 'amarilla' || e.type === 'roja'))
+      .filter(e => e && e.isValid !== false && (e.type === 'amarilla' || e.type === 'roja'))
       .map(e => ({
         jugadorId: e.playerId,
-        nombre: e.playerName || players.find(p => p.id === e.playerId)?.name || 'Jugador',
+        nombre: e.playerName || (players || []).find(p => p && String(p.id) === String(e.playerId))?.name || 'Jugador',
         tipo: e.type,
-        minuto: String(e.minute)
+        minuto: String(e.minute || 0)
       }));
   }, [matchData.events, players]);
 
@@ -1671,19 +1671,20 @@ const Partidos = () => {
                           <p style={{ margin: '15px 0', fontSize: '14px', color: 'var(--partidos-text-muted)', fontStyle: 'italic', textAlign: 'center' }}>No se han registrado eventos en este partido.</p>
                         ) : (
                           [...matchData.events].reverse().map((ev, idx) => {
+                            if (!ev) return null;
                             const originalIdx = matchData.events.length - 1 - idx;
                             let icon = '⚡';
                             let desc = '';
-                            if (ev.type === 'gol_local') { icon = '⚽'; desc = `¡GOL! ${ev.playerName} anota para el equipo.`; }
+                            if (ev.type === 'gol_local') { icon = '⚽'; desc = `¡GOL! ${ev.playerName || 'Jugador'} anota para el equipo.`; }
                             else if (ev.type === 'gol_rival') { icon = '⚽'; desc = `Gol de ${matchData.rival || 'Rival'}.`; }
-                            else if (ev.type === 'amarilla') { icon = '🟨'; desc = `Tarjeta Amarilla para ${ev.playerName}.`; }
-                            else if (ev.type === 'roja') { icon = '🟥'; desc = `Tarjeta Roja para ${ev.playerName}.`; }
-                            else if (ev.type === 'lesion') { icon = '🩺'; desc = `Lesión de ${ev.playerName}.`; }
-                            else if (ev.type === 'sustitucion') { icon = '🔄'; desc = `Cambio: Sale ${ev.playerOutName} y entra ${ev.playerInName}.`; }
+                            else if (ev.type === 'amarilla') { icon = '🟨'; desc = `Tarjeta Amarilla para ${ev.playerName || 'Jugador'}.`; }
+                            else if (ev.type === 'roja') { icon = '🟥'; desc = `Tarjeta Roja para ${ev.playerName || 'Jugador'}.`; }
+                            else if (ev.type === 'lesion') { icon = '🩺'; desc = `Lesión de ${ev.playerName || 'Jugador'}.`; }
+                            else if (ev.type === 'sustitucion' || ev.type === 'cambio') { icon = '🔄'; desc = `Cambio: Sale ${ev.playerOutName || 'Jugador'} y entra ${ev.playerInName || 'Jugador'}.`; }
 
                             return (
                               <div key={idx} className="event-log-item">
-                                <span className="event-log-time">Min. {ev.minute}'</span>
+                                <span className="event-log-time">Min. {ev.minute || 0}'</span>
                                 <span style={{ fontSize: '18px' }}>{icon}</span>
                                 <span className="event-log-desc">{desc}</span>
                                 <button className="event-log-remove" onClick={() => handleRemoveEvent(originalIdx)} title="Eliminar evento">✕</button>

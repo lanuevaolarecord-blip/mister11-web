@@ -476,3 +476,244 @@ export const calculatePlayerGlobalXP = ({
     achievementsXP
   };
 };
+
+/**
+ * API canónica única requerida por el estándar de Míster11:
+ * getPlayerAttendance(playerId, { from, to, sessions, matches, attendanceRecords, thresholds })
+ * Retorna contadores y porcentajes NaN-safe garantizados.
+ */
+export const getPlayerAttendance = (
+  playerId,
+  {
+    from = null,
+    to = null,
+    sessions = [],
+    matches = [],
+    attendanceRecords = [],
+    thresholds = {}
+  } = {}
+) => {
+  const dateRange = (from || to) ? { startDate: from, endDate: to } : null;
+  const stats = calculatePlayerAttendanceStats(
+    playerId,
+    attendanceRecords,
+    matches,
+    thresholds,
+    sessions,
+    dateRange
+  );
+
+  return {
+    presente: stats.present,
+    tarde: stats.late,
+    justificado: stats.justified,
+    ausente: stats.absent,
+    lesionado: stats.injured,
+    sinRegistro: stats.noRecord,
+    suspendido: stats.suspended,
+    scheduledPast: stats.scheduledPast,
+    eligible: stats.eligible,
+    attended: stats.attended,
+    pct: stats.pct,
+    percentage: stats.percentage,
+    streak: stats.streak,
+    maxStreak: stats.maxStreak,
+    hasData: stats.hasData,
+    status: stats.status,
+    timeline: stats.timeline,
+    eventDetails: stats.eventDetails,
+    callupGuidance: stats.callupGuidance
+  };
+};
+
+/**
+ * Fase 5: Auto-test de Coherencia (Entrenador vs Asistente vs Portal del Jugador)
+ * Compara para cada jugador que Resumen(temporada), Asistente(ventana=temporada) y Portal(temporada)
+ * devuelvan exactamente los mismos números.
+ */
+export const checkAttendanceConsistency = ({
+  players = [],
+  sessions = [],
+  matches = [],
+  attendanceRecords = [],
+  seasonRange = null,
+  thresholds = {}
+} = {}) => {
+  const divergences = [];
+
+  (players || []).forEach((p) => {
+    const pid = String(p.id);
+    const pName = p.name || p.nombre || pid;
+
+    // 1. Resumen de plantilla (Temporada)
+    const resumen = calculatePlayerAttendanceStats(
+      pid,
+      attendanceRecords,
+      matches,
+      thresholds,
+      sessions,
+      seasonRange
+    );
+
+    // 2. Asistente de convocatoria con ventana de temporada
+    const asistente = calculatePlayerAttendanceOnSchedule(pid, {
+      sessions,
+      matches,
+      attendanceRecords,
+      dateRange: seasonRange,
+      thresholds,
+      player: p
+    });
+
+    // 3. Portal del jugador (getPlayerAttendance)
+    const portal = getPlayerAttendance(pid, {
+      from: seasonRange?.startDate || null,
+      to: seasonRange?.endDate || null,
+      sessions,
+      matches,
+      attendanceRecords,
+      thresholds
+    });
+
+    // Verificar igualdad estricta campo a campo
+    const fields = ['present', 'late', 'justified', 'injured', 'absent', 'noRecord', 'scheduledPast', 'pct'];
+    const diffs = [];
+
+    fields.forEach((f) => {
+      const vResumen = resumen[f];
+      const vAsistente = asistente[f];
+      const vPortal = f === 'present' ? portal.presente :
+                      f === 'late' ? portal.tarde :
+                      f === 'justified' ? portal.justificado :
+                      f === 'injured' ? portal.lesionado :
+                      f === 'absent' ? portal.ausente :
+                      f === 'noRecord' ? portal.sinRegistro :
+                      portal[f];
+
+      if (vResumen !== vAsistente || vResumen !== vPortal) {
+        diffs.push({
+          field: f,
+          resumen: vResumen,
+          asistente: vAsistente,
+          portal: vPortal
+        });
+      }
+    });
+
+    if (diffs.length > 0) {
+      divergences.push({
+        playerId: pid,
+        playerName: pName,
+        diffs
+      });
+      console.warn(`[checkAttendanceConsistency] ⚠️ Divergencia detectada para ${pName} (${pid}):`, diffs);
+    }
+  });
+
+  if (divergences.length === 0) {
+    console.log(`[checkAttendanceConsistency] ✅ 0 divergencias detectadas en ${players.length} jugadores auditados. Coherencia 100% total.`);
+  }
+
+  return {
+    divergences,
+    count: divergences.length,
+    isConsistent: divergences.length === 0,
+    totalPlayersChecked: (players || []).length
+  };
+};
+
+/**
+ * Fase 1: Migración / Normalización de Asistencia en Firestore
+ * Copia el valor del míster a la fuente canónica para eventos pasados sin tocar campos legacy.
+ */
+export const normalizeAttendanceDatabase = async (teamPath, { db, getDocs, updateDoc, setDoc, doc, collection, serverTimestamp }) => {
+  if (!teamPath || !db) throw new Error('Parámetros de Firestore no válidos');
+
+  let normalizedCount = 0;
+  const cleanPath = teamPath.replace(/^\/+|\/+$/g, '');
+
+  // 1. Normalizar sesiones en attendance/{eventId}
+  const attSnap = await getDocs(collection(db, `${cleanPath}/attendance`));
+  for (const attDoc of attSnap.docs) {
+    const data = attDoc.data();
+    let needsUpdate = false;
+    const records = { ...(data.records || {}) };
+
+    // Si tiene campos legacy como players, presentes o presentPlayers, canonizar a records
+    if (data.players && typeof data.players === 'object') {
+      Object.entries(data.players).forEach(([pid, pVal]) => {
+        if (!records[pid]) {
+          const rawStatus = typeof pVal === 'object' ? pVal.status : (pVal === true ? 'present' : (pVal === false ? 'absent' : pVal));
+          const norm = normalizeEventStatus(rawStatus) || 'presente';
+          records[pid] = { status: norm, lateMin: typeof pVal === 'object' ? pVal.lateMin : null };
+          needsUpdate = true;
+        }
+      });
+    }
+
+    if (Array.isArray(data.presentes)) {
+      data.presentes.forEach((pid) => {
+        if (!records[String(pid)]) {
+          records[String(pid)] = { status: 'presente' };
+          needsUpdate = true;
+        }
+      });
+    }
+
+    if (Array.isArray(data.presentPlayers)) {
+      data.presentPlayers.forEach((pid) => {
+        if (!records[String(pid)]) {
+          records[String(pid)] = { status: 'presente' };
+          needsUpdate = true;
+        }
+      });
+    }
+
+    if (needsUpdate) {
+      await updateDoc(doc(db, `${cleanPath}/attendance`, attDoc.id), {
+        records,
+        updatedAt: serverTimestamp ? serverTimestamp() : new Date().toISOString()
+      });
+      normalizedCount++;
+    }
+  }
+
+  // 2. Normalizar partidos en matches/{id}.actaOficial.actual
+  const matchesSnap = await getDocs(collection(db, `${cleanPath}/matches`));
+  for (const mDoc of matchesSnap.docs) {
+    const mData = mDoc.data();
+    const acta = mData.actaOficial;
+    const actaActual = acta?.actual || {};
+    let needsMatchUpdate = false;
+    const updatedActual = { ...actaActual };
+
+    // Si hay registros en attendance correspondientes a este partido, asegurar que actaOficial los tiene
+    const cleanId = mDoc.id.replace(/^match_/, '');
+    const matchAttDoc = attSnap.docs.find(d => d.id === mDoc.id || d.id === `match_${cleanId}` || d.id === cleanId);
+    if (matchAttDoc) {
+      const matchRecords = matchAttDoc.data()?.records || {};
+      Object.entries(matchRecords).forEach(([pid, rec]) => {
+        if (!updatedActual[pid]) {
+          const rawStatus = typeof rec === 'object' ? rec.status : rec;
+          const norm = normalizeEventStatus(rawStatus) || 'presente';
+          updatedActual[pid] = {
+            status: norm,
+            at: new Date().toISOString(),
+            ...(typeof rec === 'object' && rec.lateMinutes ? { lateMin: rec.lateMinutes } : {})
+          };
+          needsMatchUpdate = true;
+        }
+      });
+    }
+
+    if (needsMatchUpdate) {
+      await updateDoc(doc(db, `${cleanPath}/matches`, mDoc.id), {
+        'actaOficial.actual': updatedActual,
+        updatedAt: serverTimestamp ? serverTimestamp() : new Date().toISOString()
+      });
+      normalizedCount++;
+    }
+  }
+
+  return { normalizedCount };
+};

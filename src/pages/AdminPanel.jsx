@@ -51,6 +51,7 @@ import ClubManagement from '../components/ClubManagement';
 import UpgradeModal from '../components/UpgradeModal';
 import ExerciseLibrary from '../components/ExerciseLibrary';
 import { normalizeEmail } from '../utils/normalizeEmail';
+import { normalizeAttendanceDatabase, checkAttendanceConsistency } from '../utils/attendanceStatsHelper';
 import './AdminPanel.css';
 
 const AdminPanel = () => {
@@ -59,6 +60,7 @@ const AdminPanel = () => {
   const { t: tr, setLanguage: setGlobalLanguage, language: currentGlobalLanguage } = useTranslation();
   const [activeTab, setActiveTab] = useState(location.state?.activeTab || 'equipos');
   const [backfilling, setBackfilling] = useState(false);
+  const [normalizingAttendance, setNormalizingAttendance] = useState(false);
 
   useEffect(() => {
     if (location.state?.activeTab) {
@@ -1675,6 +1677,56 @@ const AdminPanel = () => {
                           }}
                         >
                           <Users size={16} /> Cambiar a Portal del Jugador (Modo Dev)
+                        </button>
+
+                        <button
+                          onClick={async () => {
+                            if (!window.confirm("¿Deseas normalizar los datos de asistencia de todos tus equipos hacia la fuente canónica?")) return;
+                            setNormalizingAttendance(true);
+                            try {
+                              let totalUpdated = 0;
+                              for (const t of teams) {
+                                const path = getTeamPath(t.id);
+                                if (!path) continue;
+                                const res = await normalizeAttendanceDatabase(path, {
+                                  db,
+                                  getDocs,
+                                  updateDoc,
+                                  setDoc,
+                                  doc,
+                                  collection,
+                                  serverTimestamp
+                                });
+                                totalUpdated += (res.normalizedCount || 0);
+                              }
+                              showToast(`¡Normalización completada! ${totalUpdated} eventos sincronizados con fuente canónica.`, 'success');
+                            } catch (err) {
+                              console.error("Error al normalizar asistencia:", err);
+                              showToast("Error al normalizar asistencia: " + err.message, "error");
+                            } finally {
+                              setNormalizingAttendance(false);
+                            }
+                          }}
+                          disabled={normalizingAttendance}
+                          style={{
+                            minHeight: '48px',
+                            textTransform: 'uppercase',
+                            borderRadius: '8px',
+                            fontWeight: 'bold',
+                            letterSpacing: '0.5px',
+                            fontSize: '0.82rem',
+                            cursor: 'pointer',
+                            transition: 'all 0.2s ease',
+                            border: '1.5px solid #10B981',
+                            backgroundColor: 'rgba(16, 185, 129, 0.12)',
+                            color: '#10B981',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: '8px'
+                          }}
+                        >
+                          <CheckCircle size={16} /> {normalizingAttendance ? 'Normalizando datos...' : '⚡ Normalizar datos de asistencia'}
                         </button>
 
                         {/* Botón de blindaje de identidades existentes */}

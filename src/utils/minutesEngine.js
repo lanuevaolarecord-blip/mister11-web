@@ -38,6 +38,20 @@ export const getEffectiveMatchDuration = (match = {}) => {
 };
 
 /**
+ * Determina si el partido está bloqueado contra modificaciones en vivo
+ * (Partido terminado o Acta Oficial cerrada).
+ * @param {Object} match
+ * @returns {boolean}
+ */
+export const isMatchLocked = (match = {}) => {
+  if (!match) return false;
+  const status = String(match.status || '').toLowerCase();
+  const isFinished = status === 'terminado' || status === 'finalizado';
+  const isClosed = match.actaOficial?.closed === true;
+  return isFinished || isClosed;
+};
+
+/**
  * Extrae y fusiona la lista canónica de eventos de un partido (events + liveStatsEvents).
  * Elimina duplicados por id o firma y ordena por minuto ascendente.
  * @param {Object} match

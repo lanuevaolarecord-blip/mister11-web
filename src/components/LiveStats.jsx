@@ -17,6 +17,9 @@ import { useTheme } from '../context/ThemeContext';
 import { useMatch } from '../context/MatchContext';
 import { SvgDonut, SvgComparisonBars, HalfBreakdown } from './LiveStatsCharts';
 import { getEffectiveLanguage } from '../i18n/translations';
+import { isMatchLocked } from '../utils/minutesEngine';
+import { showToast } from '../utils/toast';
+import MatchStatsBlock from './MatchStatsBlock';
 
 // ── Nuevos Componentes de la Suite de Estadísticas ────────────────────────────
 import { StatsFilters } from './MatchStats/StatsFilters';
@@ -182,7 +185,8 @@ const LiveStats = ({
     formatMatchTime,
   } = useMatch();
 
-  const isMatchFinished = matchData?.status === 'Terminado' || matchData?.status === 'Finalizado';
+  const isLocked = isMatchLocked(matchData);
+  const isMatchFinished = isLocked;
   const displayHalf = isMatchFinished ? 2 : (matchSeconds < 2700 ? 1 : 2);
   const displaySeconds = isMatchFinished && Number.isFinite(matchData?.finalSeconds) ? matchData.finalSeconds : matchSeconds;
 
@@ -215,9 +219,6 @@ const LiveStats = ({
   const liveStatsHook = useLiveStats(teamId, matchId, currentMinute, currentHalf);
 
   // ── Estado local para reflejo INMEDIATO (optimista) de eventos capturados ──
-  // Problema: parentEvents viene de Firestore (async). Al pulsar un botón
-  // addLiveEvent escribe en Firestore pero parentEvents no se actualiza al instante.
-  // Solución: guardamos eventos locales y los fusionamos con los externos.
   const [localEvents, setLocalEvents] = useState([]);
 
   // Resetear localEvents cuando cambia el partido
@@ -234,7 +235,6 @@ const LiveStats = ({
           : (matchData?.liveStatsEvents || matchData?.events || []));
     const cleanBase = Array.isArray(base) ? base.filter(Boolean) : [];
     if (localEvents.length === 0) return cleanBase;
-    // Fusionar: local first para que aparezca de inmediato, sin duplicados por id
     const baseIds = new Set(cleanBase.map(e => e?.id || `evt_${e?.minute}_${e?.type}`).filter(Boolean));
     const unique = localEvents.filter(e => e && !baseIds.has(e?.id));
     return [...cleanBase, ...unique];
@@ -250,7 +250,6 @@ const LiveStats = ({
   const awayTeamName = matchData?.visitante || matchData?.equipoVisitante || matchData?.rival || 'Rival';
 
   const playersList = useMemo(() => {
-    // 1. Priorizar jugadores de la alineación / convocatoria real
     const rawList = (calledPlayers && calledPlayers.length > 0)
       ? calledPlayers
       : (players && players.length > 0)
@@ -261,7 +260,6 @@ const LiveStats = ({
 
     if (validList.length > 0) {
       return validList.map((p, idx) => {
-        // Si p es un ID de convocado (string/number) y existe el array de players
         if ((typeof p === 'string' || typeof p === 'number') && Array.isArray(players) && players.length > 0) {
           const found = players.find(x => x && String(x.id) === String(p));
           if (found) {
@@ -296,7 +294,6 @@ const LiveStats = ({
       });
     }
 
-    // Fallback táctico genérico solo si el equipo no tiene ningún jugador cargado
     return [
       { id: '1', dorsal: 1, nombre: 'Portero', posicion: 'POR' },
       { id: '2', dorsal: 2, nombre: 'Lateral Der.', posicion: 'DEF' },
@@ -376,22 +373,14 @@ const LiveStats = ({
     };
   }, []);
 
-  const toggleFullscreen = useCallback(() => {
-    if (!containerRef.current) return;
-    if (!document.fullscreenElement && !document.webkitFullscreenElement) {
-      if (containerRef.current.requestFullscreen) {
-        containerRef.current.requestFullscreen().catch(err => console.error(err));
-      } else if (containerRef.current.webkitRequestFullscreen) {
-        containerRef.current.webkitRequestFullscreen();
-      }
+  const toggleFullscreen = () => {
+    const elem = containerRef.current || document.documentElement;
+    if (!document.fullscreenElement) {
+      elem.requestFullscreen().catch(() => {});
     } else {
-      if (document.exitFullscreen) {
-        document.exitFullscreen().catch(err => console.error(err));
-      } else if (document.webkitExitFullscreen) {
-        document.webkitExitFullscreen();
-      }
+      document.exitFullscreen().catch(() => {});
     }
-  }, []);
+  };
 
   // ── Manejo de Exportar PDF ──────────────────────────────────────────────────
   const handleExportPdf = useCallback(async () => {
@@ -409,21 +398,16 @@ const LiveStats = ({
     }
   }, [matchData, filteredEvents, homeTeamName]);
 
-  // addLiveEvent envuelto: añade al estado local con sector y coordenadas
-  const innerAddLiveEvent = useCallback(async (type, explicitHalf = null, customCoords = null) => {
+  const innerAddLiveEvent = useCallback(async (type, explicitHalf = null, customCoords = {}) => {
+    if (isMatchLocked(matchData)) {
+      showToast('⚠️ Partido finalizado — usa Reabrir Acta para corregir.', 'warning');
+      return null;
+    }
+    const tempId = `local_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`;
     const targetHalf = explicitHalf !== null ? explicitHalf : currentHalf;
-    const tempId = 'local_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5);
 
-    // Calcular x, y según tipo de evento y sector seleccionado
-    const yCoord = customCoords?.y ?? (selectedSector === 'left' ? 20 : selectedSector === 'right' ? 80 : 50);
-    const xMap = {
-      shot_on_target_own: 88, shot_off_target_own: 80,
-      shot_on_target_rival: 12, shot_off_target_rival: 20,
-      recovery: 55, loss: 45, duel_won: 58, duel_lost: 42,
-      foul_favor: 62, foul_against: 38, counter_not_cut: 30,
-      corner_favor: 98, corner_against: 2,
-      card_yellow_own: 40, card_red_own: 38
-    };
+    const xMap = { left: 20, center: 50, right: 80 };
+    const yCoord = customCoords?.y ?? (targetHalf === 1 ? 30 : 70);
     const xCoord = customCoords?.x ?? (xMap[type] || 50);
 
     const localDoc = {
@@ -447,24 +431,32 @@ const LiveStats = ({
       return realId;
     }
     return tempId;
-  }, [parentAddLiveEvent, liveStatsHook.addLiveEvent, currentHalf, currentMinute, selectedSector]);
+  }, [parentAddLiveEvent, liveStatsHook.addLiveEvent, currentHalf, currentMinute, selectedSector, matchData]);
 
   const addLiveEvent = innerAddLiveEvent;
   const resetLiveStats = useCallback(async () => {
+    if (isMatchLocked(matchData)) {
+      showToast('⚠️ Partido finalizado — usa Reabrir Acta para corregir.', 'warning');
+      return;
+    }
     setLocalEvents([]);
     const hook = parentResetLiveStats || liveStatsHook.resetLiveStats;
     if (hook) await hook();
-  }, [parentResetLiveStats, liveStatsHook.resetLiveStats]);
+  }, [parentResetLiveStats, liveStatsHook.resetLiveStats, matchData]);
 
   const handlePress = useCallback(
     async (type) => {
+      if (isMatchLocked(matchData)) {
+        showToast('⚠️ Partido finalizado — usa Reabrir Acta para corregir.', 'warning');
+        return;
+      }
       const id = await addLiveEvent(type, currentHalf);
       if (id) {
         setFlashType(type);
         setTimeout(() => setFlashType(null), 650);
       }
     },
-    [addLiveEvent, currentHalf]
+    [addLiveEvent, currentHalf, matchData]
   );
 
 
@@ -476,6 +468,10 @@ const LiveStats = ({
       timestamp: new Date().toISOString()
     };
     setTacticalNotes(prev => [newNote, ...prev]);
+  };
+
+  const handleToggleHighlight = () => {
+    setIsHighlighted(prev => !prev);
   };
 
   if (!matchId) {
@@ -495,24 +491,81 @@ const LiveStats = ({
   return (
     <div
       ref={containerRef}
-      className={`livestats-container ${darkMode ? 'theme-dark dark' : 'theme-light light'} ${isFullscreen ? 'livestats-fullscreen' : ''}`}
+      className={`livestats-container ${darkMode ? 'dark-theme' : 'light-theme'} ${isFullscreen ? 'fullscreen-mode' : ''}`}
+      style={{
+        backgroundColor: darkMode ? '#0B1317' : '#F1F5F9',
+        color: darkMode ? '#FFFFFF' : '#0F172A',
+      }}
     >
-      {/* ── 1. Barra de Herramientas Superior y Acciones Rápidas (Solo en vista normal) ─── */}
-      {!isFullscreen && (
-        <div className="livestats-top-bar-wrapper">
-          <MatchActionsToolbar
-            onExportPdf={handleExportPdf}
-            onAddTacticalNote={handleAddTacticalNote}
-            notesCount={tacticalNotes.length}
-            onToggleHighlight={() => setIsHighlighted(!isHighlighted)}
-            isHighlighted={isHighlighted}
-            videoUrl={matchData?.videoUrl || null}
-          />
+      {/* Aviso Banner de Partido Bloqueado / Histórico Inmutable */}
+      {isLocked && (
+        <div style={{
+          background: 'rgba(239, 68, 68, 0.12)',
+          border: '1.5px solid rgba(239, 68, 68, 0.4)',
+          color: '#FCA5A5',
+          padding: '10px 16px',
+          borderRadius: '10px',
+          fontSize: '13px',
+          fontWeight: '700',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: '10px',
+          margin: '12px 16px 0',
+          boxShadow: '0 2px 8px rgba(0,0,0,0.2)'
+        }}>
+          <span>🔒</span>
+          <span>{isEn ? 'Match finished — Controls locked (Immutable historical record. Reopen match sheet to edit)' : 'Partido finalizado — Controles bloqueados (Registro histórico inmutable. Reabre el acta para editar)'}</span>
         </div>
       )}
 
-      {/* ── 2. Filtros Multidimensionales de Estadísticas (Solo en vista normal) ─── */}
-      {!isFullscreen && (
+      {/* ── 1. Barra de Navegación por Pestañas de LiveStats ────────────────── */}
+      <nav className="livestats-nav-tabs">
+        <button
+          type="button"
+          className={`livestats-tab-btn ${activeTab === 'capture' ? 'active' : ''}`}
+          onClick={() => setActiveTab('capture')}
+        >
+          🎮 {tx('live.tab.capture')}
+        </button>
+        <button
+          type="button"
+          className={`livestats-tab-btn ${activeTab === 'tactical' ? 'active' : ''}`}
+          onClick={() => setActiveTab('tactical')}
+        >
+          🗺️ {tx('live.tab.tactical')}
+        </button>
+        <button
+          type="button"
+          className={`livestats-tab-btn ${activeTab === 'analytics' ? 'active' : ''}`}
+          onClick={() => setActiveTab('analytics')}
+        >
+          📊 {tx('live.tab.analytics')}
+        </button>
+        <button
+          type="button"
+          className={`livestats-tab-btn ${activeTab === 'players' ? 'active' : ''}`}
+          onClick={() => setActiveTab('players')}
+        >
+          👤 {tx('live.tab.players')}
+        </button>
+      </nav>
+
+      {/* ── 2. Barra de Herramientas Rápida ─────────────────────────────────── */}
+      <MatchActionsToolbar
+        matchData={matchData}
+        teamName={homeTeamName}
+        events={filteredEvents}
+        players={playersList}
+        tacticalNotes={tacticalNotes}
+        onAddTacticalNote={handleAddTacticalNote}
+        isHighlighted={isHighlighted}
+        onToggleHighlight={handleToggleHighlight}
+        language={language}
+      />
+
+      {/* ── 3. Panel Desplegable de Filtros Avanzados ───────────────────────── */}
+      {activeTab !== 'capture' && (
         <StatsFilters
           timeFilter={timeFilter}
           setTimeFilter={setTimeFilter}
@@ -522,48 +575,15 @@ const LiveStats = ({
           setTeamFilter={setTeamFilter}
           selectedPlayers={selectedPlayers}
           setSelectedPlayers={setSelectedPlayers}
-          availablePlayers={playersList}
           zoneFilter={zoneFilter}
           setZoneFilter={setZoneFilter}
           actionTypes={actionTypes}
           setActionTypes={setActionTypes}
+          players={playersList}
           homeTeamName={homeTeamName}
           awayTeamName={awayTeamName}
+          language={language}
         />
-      )}
-
-      {/* ── 3. Pestañas de Navegación de la Suite (Solo en vista normal) ─── */}
-      {!isFullscreen && (
-        <div className="livestats-tab-navigation">
-          <button
-            type="button"
-            className={`stats-tab-btn ${activeTab === 'capture' ? 'active' : ''}`}
-            onClick={() => setActiveTab('capture')}
-          >
-            <span>🔴 Captura en Vivo</span>
-          </button>
-          <button
-            type="button"
-            className={`stats-tab-btn ${activeTab === 'tactical' ? 'active' : ''}`}
-            onClick={() => setActiveTab('tactical')}
-          >
-            <span>⚽ Campo & Táctica</span>
-          </button>
-          <button
-            type="button"
-            className={`stats-tab-btn ${activeTab === 'analytics' ? 'active' : ''}`}
-            onClick={() => setActiveTab('analytics')}
-          >
-            <span>📈 Análisis Avanzado</span>
-          </button>
-          <button
-            type="button"
-            className={`stats-tab-btn ${activeTab === 'players' ? 'active' : ''}`}
-            onClick={() => setActiveTab('players')}
-          >
-            <span>📋 Jugadores & CSV</span>
-          </button>
-        </div>
       )}
 
       {/* ── 4. Cabecera Principal del Cronómetro (Modo captura y pantalla completa) ─── */}
@@ -590,7 +610,7 @@ const LiveStats = ({
                 id="livestats-btn-toggle-timer"
                 onClick={isMatchFinished ? undefined : toggleTimer}
                 disabled={isMatchFinished}
-                title={isMatchFinished ? (isEn ? 'Match finished' : 'Partido finalizado') : (isRunning ? tx('live.timer.pause') : tx('live.timer.start'))}
+                title={isMatchFinished ? (isEn ? 'Match finished — Reopen match sheet to edit' : 'Partido finalizado — usa Reabrir Acta para corregir') : (isRunning ? tx('live.timer.pause') : tx('live.timer.start'))}
                 className={`livestats-btn-timer ${isMatchFinished ? 'paused' : (isRunning ? 'running' : 'paused')}`}
                 style={isMatchFinished ? { opacity: 0.5, cursor: 'not-allowed' } : {}}
               >
@@ -605,7 +625,7 @@ const LiveStats = ({
                 onClick={isMatchFinished ? undefined : resetTimer}
                 disabled={isMatchFinished}
                 className="livestats-btn-icon-timer"
-                title={isMatchFinished ? (isEn ? 'Match finished' : 'Partido finalizado') : tx('live.timer.reset')}
+                title={isMatchFinished ? (isEn ? 'Match finished — Reopen match sheet to edit' : 'Partido finalizado — usa Reabrir Acta para corregir') : tx('live.timer.reset')}
                 style={isMatchFinished ? { opacity: 0.5, cursor: 'not-allowed' } : {}}
               >
                 ↺
@@ -613,7 +633,7 @@ const LiveStats = ({
             </div>
           </div>
 
-          {/* Marcador en vivo — usa goalsFor/goalsAgainst (campos reales de useMatchEvents) */}
+          {/* Marcador en vivo */}
           <div className="livestats-score-card">
             <div className="livestats-score-teams">
               <div className="livestats-team home">
@@ -622,8 +642,11 @@ const LiveStats = ({
                 {onAddGoalFor && (
                   <button
                     type="button"
-                    onClick={onAddGoalFor}
+                    onClick={isLocked ? undefined : onAddGoalFor}
+                    disabled={isLocked}
+                    title={isLocked ? (isEn ? 'Match finished — Reopen match sheet to edit' : 'Partido finalizado — usa Reabrir Acta para corregir') : tx('live.goal.for')}
                     className="livestats-btn-goal for"
+                    style={isLocked ? { opacity: 0.5, cursor: 'not-allowed' } : {}}
                   >
                     {tx('live.goal.for')}
                   </button>
@@ -638,8 +661,11 @@ const LiveStats = ({
                 {onAddGoalAgainst && (
                   <button
                     type="button"
-                    onClick={onAddGoalAgainst}
+                    onClick={isLocked ? undefined : onAddGoalAgainst}
+                    disabled={isLocked}
+                    title={isLocked ? (isEn ? 'Match finished — Reopen match sheet to edit' : 'Partido finalizado — usa Reabrir Acta para corregir') : tx('live.goal.against')}
                     className="livestats-btn-goal against"
+                    style={isLocked ? { opacity: 0.5, cursor: 'not-allowed' } : {}}
                   >
                     {tx('live.goal.against')}
                   </button>
@@ -654,15 +680,21 @@ const LiveStats = ({
               <span className="livestats-half-label">{tx('live.half.select')}</span>
               <button
                 type="button"
-                onClick={() => setCurrentHalf(1)}
+                onClick={isLocked ? undefined : () => setCurrentHalf(1)}
+                disabled={isLocked}
+                title={isLocked ? (isEn ? 'Match finished — Reopen match sheet to edit' : 'Partido finalizado — usa Reabrir Acta para corregir') : undefined}
                 className={`livestats-half-pill ${currentHalf === 1 ? 'active' : ''}`}
+                style={isLocked ? { opacity: 0.6, cursor: 'not-allowed' } : {}}
               >
                 {tx('live.half.1')}
               </button>
               <button
                 type="button"
-                onClick={() => setCurrentHalf(2)}
+                onClick={isLocked ? undefined : () => setCurrentHalf(2)}
+                disabled={isLocked}
+                title={isLocked ? (isEn ? 'Match finished — Reopen match sheet to edit' : 'Partido finalizado — usa Reabrir Acta para corregir') : undefined}
                 className={`livestats-half-pill ${currentHalf === 2 ? 'active' : ''}`}
+                style={isLocked ? { opacity: 0.6, cursor: 'not-allowed' } : {}}
               >
                 {tx('live.half.2')}
               </button>
@@ -682,31 +714,40 @@ const LiveStats = ({
 
       {/* ── 5. Contenido Dinámico por Pestaña ────────────────────────────── */}
       <main className="livestats-body">
-        {/* PESTAÑA 1: Captura Rápida de Botones (o Modo Pantalla Completa) */}
+        {/* PESTAÑA 1: Captura Rápida */}
         {(activeTab === 'capture' || isFullscreen) && (
           <>
-            {/* Selector Táctico de Sector / Banda de la Jugada */}
+            {/* Selector Táctico de Sector */}
             <div className="livestats-sector-bar">
               <span className="sector-bar-title">📍 Sector de la Jugada:</span>
               <div className="sector-bar-pills">
                 <button
                   type="button"
                   className={`sector-pill ${selectedSector === 'left' ? 'active' : ''}`}
-                  onClick={() => setSelectedSector('left')}
+                  onClick={isLocked ? undefined : () => setSelectedSector('left')}
+                  disabled={isLocked}
+                  title={isLocked ? (isEn ? 'Match finished — Reopen match sheet to edit' : 'Partido finalizado — usa Reabrir Acta para corregir') : undefined}
+                  style={isLocked ? { opacity: 0.6, cursor: 'not-allowed' } : {}}
                 >
                   ⬅️ Banda Izquierda
                 </button>
                 <button
                   type="button"
                   className={`sector-pill ${selectedSector === 'center' ? 'active' : ''}`}
-                  onClick={() => setSelectedSector('center')}
+                  onClick={isLocked ? undefined : () => setSelectedSector('center')}
+                  disabled={isLocked}
+                  title={isLocked ? (isEn ? 'Match finished — Reopen match sheet to edit' : 'Partido finalizado — usa Reabrir Acta para corregir') : undefined}
+                  style={isLocked ? { opacity: 0.6, cursor: 'not-allowed' } : {}}
                 >
                   ⏺️ Centro / Pasillo Central
                 </button>
                 <button
                   type="button"
                   className={`sector-pill ${selectedSector === 'right' ? 'active' : ''}`}
-                  onClick={() => setSelectedSector('right')}
+                  onClick={isLocked ? undefined : () => setSelectedSector('right')}
+                  disabled={isLocked}
+                  title={isLocked ? (isEn ? 'Match finished — Reopen match sheet to edit' : 'Partido finalizado — usa Reabrir Acta para corregir') : undefined}
+                  style={isLocked ? { opacity: 0.6, cursor: 'not-allowed' } : {}}
                 >
                   ➡️ Banda Derecha
                 </button>
@@ -725,10 +766,7 @@ const LiveStats = ({
                     borderStyle: 'solid'
                   }}
                 >
-                  <div
-                    className="livestats-category-title"
-                    style={{ color: group.color }}
-                  >
+                  <div className="livestats-category-title" style={{ color: group.color }}>
                     <span>{tx(group.catKey)}</span>
                   </div>
 
@@ -744,8 +782,9 @@ const LiveStats = ({
                           key={type}
                           type="button"
                           id={`livestats-btn-${type}`}
-                          onClick={() => handlePress(type)}
-                          disabled={saving}
+                          onClick={isLocked ? undefined : () => handlePress(type)}
+                          disabled={saving || isLocked}
+                          title={isLocked ? (isEn ? 'Match finished — Reopen match sheet to edit' : 'Partido finalizado — usa Reabrir Acta para corregir') : undefined}
                           className={`livestats-btn ${isFlashing ? 'flashing' : ''}`}
                           style={{
                             backgroundColor: isFlashing
@@ -755,6 +794,8 @@ const LiveStats = ({
                               ? group.color
                               : darkMode ? 'rgba(255, 255, 255, 0.25)' : '#CBD5E1',
                             boxShadow: isFlashing ? `0 0 14px ${group.color}55` : undefined,
+                            opacity: isLocked ? 0.6 : 1,
+                            cursor: isLocked ? 'not-allowed' : 'pointer'
                           }}
                         >
                           <span className="livestats-btn-icon">{icon}</span>
@@ -797,86 +838,17 @@ const LiveStats = ({
               ))}
             </div>
 
-            {/* Resumen Rápido con Donas SVG */}
+            {/* Resumen Rápido con Donas SVG Reutilizable */}
             <section style={{ marginTop: '28px', maxWidth: '1400px', margin: '28px auto 0' }}>
-              <div className="livestats-summary-grid" id="livestats-charts-container-live">
-                <div
-                  className="livestats-category-card"
-                  style={{
-                    backgroundColor: darkMode ? '#122415' : '#FFFFFF',
-                    borderColor: darkMode ? 'rgba(212, 168, 67, 0.35)' : '#CBD5E1',
-                    borderWidth: '1.5px',
-                    borderStyle: 'solid'
-                  }}
-                >
-                  <div className="livestats-category-title" style={{ color: C.green }}>
-                    <span>🎯 {tx('live.summary.efficiency')}</span>
-                  </div>
-                  <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-around', gap: '12px', width: '100%' }}>
-                    <SvgDonut
-                      title={tx('live.donut.duels')}
-                      value1={countByType('duel_won')}
-                      value2={countByType('duel_lost')}
-                      label1={tx('live.label.won')}
-                      label2={tx('live.label.lost')}
-                      color1="#4CAF7D"
-                      color2="#EF4444"
-                      darkMode={darkMode}
-                    />
-                    <SvgDonut
-                      title={tx('live.donut.shots')}
-                      value1={countByType('shot_on_target_own')}
-                      value2={countByType('shot_off_target_own')}
-                      label1={tx('live.label.onTarget')}
-                      label2={tx('live.label.offTarget')}
-                      color1="#0D9488"
-                      color2="#F97316"
-                      darkMode={darkMode}
-                    />
-                    <SvgDonut
-                      title={tx('live.donut.possession')}
-                      value1={countByType('recovery')}
-                      value2={countByType('loss')}
-                      label1={tx('live.label.recovery')}
-                      label2={tx('live.label.loss')}
-                      color1="#3B82F6"
-                      color2="#E11D48"
-                      darkMode={darkMode}
-                    />
-                  </div>
-                </div>
-
-                <div
-                  className="livestats-category-card"
-                  style={{
-                    backgroundColor: darkMode ? '#122415' : '#FFFFFF',
-                    borderColor: darkMode ? 'rgba(212, 168, 67, 0.35)' : '#CBD5E1',
-                    borderWidth: '1.5px',
-                    borderStyle: 'solid'
-                  }}
-                >
-                  <div className="livestats-category-title" style={{ color: C.gold }}>
-                    <span>⚔️ {tx('live.summary.comparison')}</span>
-                  </div>
-                  <SvgComparisonBars events={filteredEvents} darkMode={darkMode} />
-                </div>
-              </div>
-
-              <div
-                className="livestats-category-card"
-                style={{
-                  marginTop: '18px',
-                  backgroundColor: darkMode ? '#122415' : '#FFFFFF',
-                  borderColor: darkMode ? 'rgba(212, 168, 67, 0.35)' : '#CBD5E1',
-                  borderWidth: '1.5px',
-                  borderStyle: 'solid'
-                }}
-              >
-                <div className="livestats-category-title" style={{ color: C.orange }}>
-                  <span>⏱️ {tx('live.summary.halves')}</span>
-                </div>
-                <HalfBreakdown events={filteredEvents} darkMode={darkMode} />
-              </div>
+              <MatchStatsBlock
+                matchData={matchData}
+                events={filteredEvents}
+                language={language}
+                showDonuts={true}
+                showComparison={true}
+                showHalves={true}
+                showDetailedTables={true}
+              />
             </section>
           </>
         )}

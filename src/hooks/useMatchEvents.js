@@ -1,4 +1,6 @@
 import { useCallback } from 'react';
+import { isMatchLocked } from '../utils/minutesEngine';
+import { showToast } from '../utils/toast';
 
 /**
  * useMatchEvents.js
@@ -12,6 +14,10 @@ import { useCallback } from 'react';
  */
 export const useMatchEvents = (matchData, setMatchData, players = [], updateMatch) => {
   const addEvent = useCallback((type, playerId, playerName, minute, additional = {}) => {
+    if (isMatchLocked(matchData)) {
+      showToast('⚠️ Partido finalizado. Reabre el acta para registrar eventos.', 'warning');
+      return;
+    }
     const minInt = Math.max(1, parseInt(minute, 10) || 1);
     const newEvent = {
       id: `evt_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
@@ -134,6 +140,10 @@ export const useMatchEvents = (matchData, setMatchData, players = [], updateMatc
   }, [setMatchData, updateMatch]);
 
   const makeSubstitution = useCallback((subOutId, subInId, minute) => {
+    if (isMatchLocked(matchData)) {
+      return { success: false, reason: 'El partido está finalizado. Reabre el acta para realizar sustituciones.' };
+    }
+
     if (!subOutId || !subInId) {
       return { success: false, reason: 'Debes seleccionar tanto al jugador que sale como al que entra.' };
     }

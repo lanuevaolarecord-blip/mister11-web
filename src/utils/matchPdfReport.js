@@ -345,6 +345,70 @@ export const generateMatchPdfReport = async ({
 
     y = (doc.lastAutoTable ? doc.lastAutoTable.finalY : y + 30) + 8;
 
+    // ── 5b. TABLA COMPARATIVA DIRECTA (EQUIPO VS RIVAL) ─────────────────────
+    if (y > pageH - 70) {
+      doc.addPage();
+      y = 20;
+    }
+
+    doc.setFontSize(11);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(...colorPrimary);
+    doc.text(isEn ? 'HEAD-TO-HEAD STATISTICAL COMPARISON' : 'COMPARATIVA ESTADÍSTICA PROPIO VS RIVAL', 14, y);
+    y += 6;
+
+    const shotsOnRival = countOf('shot_on_target_rival');
+    const shotsOffRival = countOf('shot_off_target_rival');
+    const cornersFavor = countOf('corner_favor');
+    const cornersAgainst = countOf('corner_against');
+    const foulsFavor = countOf('foul_favor');
+    const foulsAgainst = countOf('foul_against');
+    const offsidesOwn = countOf('offside_own');
+    const offsidesRival = countOf('offside_rival');
+    const yellowOwn = countOf('card_yellow_own') + countOf('amarilla');
+    const yellowRival = countOf('card_yellow_rival');
+    const redOwn = countOf('card_red_own') + countOf('roja');
+    const redRival = countOf('card_red_rival');
+
+    const homeTeam = matchData.local || teamName || (isEn ? 'Our Team' : 'Mi Equipo');
+    const awayTeam = matchData.visitante || matchData.rival || (isEn ? 'Opponent' : 'Rival');
+
+    const compData = isEn ? [
+      ['Comparative Metric', homeTeam, awayTeam],
+      ['Total Shots', `${shotsOn + shotsOff}`, `${shotsOnRival + shotsOffRival}`],
+      ['Shots on Target', `${shotsOn}`, `${shotsOnRival}`],
+      ['Shots off Target', `${shotsOff}`, `${shotsOffRival}`],
+      ['Corner Kicks', `${cornersFavor}`, `${cornersAgainst}`],
+      ['Fouls', `${foulsAgainst}`, `${foulsFavor}`],
+      ['Offsides', `${offsidesOwn}`, `${offsidesRival}`],
+      ['Yellow Cards', `${yellowOwn}`, `${yellowRival}`],
+      ['Red Cards', `${redOwn}`, `${redRival}`],
+      ['Estimated Possession', `${possPct}%`, `${100 - possPct}%`],
+    ] : [
+      ['Metrica Comparativa', homeTeam, awayTeam],
+      ['Tiros Totales', `${shotsOn + shotsOff}`, `${shotsOnRival + shotsOffRival}`],
+      ['Tiros a Puerta', `${shotsOn}`, `${shotsOnRival}`],
+      ['Tiros Fuera', `${shotsOff}`, `${shotsOffRival}`],
+      ['Corners', `${cornersFavor}`, `${cornersAgainst}`],
+      ['Faltas cometidas', `${foulsAgainst}`, `${foulsFavor}`],
+      ['Fueras de Juego', `${offsidesOwn}`, `${offsidesRival}`],
+      ['Tarjetas Amarillas', `${yellowOwn}`, `${yellowRival}`],
+      ['Tarjetas Rojas', `${redOwn}`, `${redRival}`],
+      ['Posesion Estimada', `${possPct}%`, `${100 - possPct}%`],
+    ];
+
+    autoTable(doc, {
+      startY: y,
+      head: [compData[0]],
+      body: compData.slice(1),
+      theme: 'striped',
+      headStyles: { fillColor: colorPrimary, textColor: [255, 255, 255], fontStyle: 'bold' },
+      styles: { fontSize: 8.5, cellPadding: 3 },
+      columnStyles: { 0: { fontStyle: 'bold', width: 65 } },
+    });
+
+    y = (doc.lastAutoTable ? doc.lastAutoTable.finalY : y + 45) + 8;
+
     // ── 6. NOTAS TÁCTICAS Y CUESTIONARIO POST-PARTIDO (Solo en POST-MATCH) ─
     if (mode === 'POST-MATCH') {
       if (y > pageH - 60) {

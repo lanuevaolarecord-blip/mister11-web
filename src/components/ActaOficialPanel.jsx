@@ -22,6 +22,7 @@ import {
   getEffectiveMatchDuration
 } from '../utils/minutesEngine';
 import PlayerAvatar from './PlayerAvatar';
+import MatchStatsBlock from './MatchStatsBlock';
 
 const RSVP_LABELS = {
   going:       { label: 'Irá',            emoji: '✅', color: '#10B981' },
@@ -227,9 +228,27 @@ const ActaOficialPanel = ({ matchId, matchData, players = [], calledPlayers = []
   };
 
   const handleReopen = async () => {
-    if (!window.confirm('¿Reabrir el acta? El acta volverá a ser editable. Los minutos quedarán en estado "borrador".')) return;
-    try { await reopenMatchSheet(); }
-    catch { /* handled in hook */ }
+    const reason = window.prompt('¿Motivo de reapertura del acta? (opcional):', 'Corrección solicitada por el cuerpo técnico');
+    if (reason === null) return; // cancelado por el usuario
+    try {
+      await reopenMatchSheet(reason);
+    } catch { /* handled in hook */ }
+  };
+
+  const handleExportActaPDF = async () => {
+    try {
+      const { generateMatchPdfReport } = await import('../utils/matchPdfReport');
+      await generateMatchPdfReport({
+        mode: 'POST-MATCH',
+        teamName: activeTeam?.nombre || activeTeam?.name || 'Mi Equipo',
+        matchData,
+        events: effectiveEvents || [],
+        players: players || [],
+        language: 'Español (ES)',
+      });
+    } catch (e) {
+      console.error('Error exportando PDF del acta:', e);
+    }
   };
 
   if (!matchId) {
@@ -270,6 +289,13 @@ const ActaOficialPanel = ({ matchId, matchData, players = [], calledPlayers = []
           </p>
         </div>
         <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+          <button
+            style={{ ...styles.btnSecondary, background: 'rgba(59, 130, 246, 0.15)', borderColor: '#3B82F6', color: '#60A5FA', display: 'flex', alignItems: 'center', gap: '6px' }}
+            onClick={handleExportActaPDF}
+            title="Descarga el acta oficial y estadísticas completas en PDF"
+          >
+            📄 Exportar PDF
+          </button>
           {!isClosed && (
             <>
               <button style={styles.btnPrimary} onClick={handleSmartPrefill} title="Calcula minutos reales según sustituciones y eventos">
@@ -591,6 +617,22 @@ const ActaOficialPanel = ({ matchId, matchData, players = [], calledPlayers = []
           </div>
         </div>
       )}
+
+      {/* ── Estadísticas Oficiales del Encuentro (Suite en Vivo) ── */}
+      <div style={{ marginTop: '24px' }}>
+        <h4 style={{ margin: '0 0 16px', fontSize: '15px', fontWeight: '800', color: 'var(--partidos-accent)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+          📊 Estadísticas Oficiales del Encuentro
+        </h4>
+        <MatchStatsBlock
+          matchData={matchData}
+          events={effectiveEvents}
+          language="Español (ES)"
+          showDonuts={true}
+          showComparison={true}
+          showHalves={true}
+          showDetailedTables={true}
+        />
+      </div>
 
       {/* ── Modal de Advertencias de Coherencia al Cerrar ── */}
       {showWarningsModal && (

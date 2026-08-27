@@ -21,10 +21,11 @@ import { useTheme } from '../context/ThemeContext';
 import { useLiveStats } from '../hooks/useLiveStats';
 import { SvgDonut, SvgComparisonBars, HalfBreakdown } from '../components/LiveStatsCharts';
 import PlayerAvatar from '../components/PlayerAvatar';
+import MatchStatsBlock from '../components/MatchStatsBlock';
 import './Partidos.css';
 import { normalizeText } from '../utils/normalizeInput';
 import { normalizeLineup, applyLineupChange, formatMatchDateSafe } from '../utils/lineupEngine';
-import { buildSmartMatchSheetActual, getEffectiveMatchDuration } from '../utils/minutesEngine';
+import { buildSmartMatchSheetActual, getEffectiveMatchDuration, isMatchLocked } from '../utils/minutesEngine';
 
 export const normalizeCapitalize = (str) => {
   if (!str || typeof str !== 'string') return '';
@@ -255,7 +256,7 @@ const Partidos = () => {
   // formatTime usa la función del contexto
   const formatTime = formatMatchTime;
 
-  const isMatchFinished = matchData.status === 'Terminado' || matchData.status === 'Finalizado';
+  const isMatchFinished = isMatchLocked(matchData);
   const isEnLanguage = getEffectiveLanguage(settings) === 'English (EN)';
 
   const handleTimerToggle = isMatchFinished ? () => {} : toggleTimer;
@@ -1991,61 +1992,16 @@ const Partidos = () => {
                         </button>
                       </div>
 
-                      <div className="livestats-summary-grid" id="livestats-charts-container-post">
-                        {/* Tarjeta 1: Eficiencia Táctica */}
-                        <div className="livestats-category-card">
-                          <div className="livestats-category-title" style={{ color: '#4CAF7D' }}>
-                            <span>🎯 Eficiencia Táctica (% Éxito)</span>
-                          </div>
-                          <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-around', gap: '12px', width: '100%' }}>
-                            <SvgDonut
-                              title="Duelos"
-                              value1={(effectiveLiveEvents || []).filter(e => e.type === 'duel_won').length}
-                              value2={(effectiveLiveEvents || []).filter(e => e.type === 'duel_lost').length}
-                              label1="Gan"
-                              label2="Perd"
-                              color1="#4CAF7D"
-                              color2="#EF4444"
-                              darkMode={darkMode}
-                            />
-                            <SvgDonut
-                              title="Remates"
-                              value1={(effectiveLiveEvents || []).filter(e => e.type === 'shot_on_target_own').length}
-                              value2={(effectiveLiveEvents || []).filter(e => e.type === 'shot_off_target_own').length}
-                              label1="Puerta"
-                              label2="Fuera"
-                              color1="#0D9488"
-                              color2="#F97316"
-                              darkMode={darkMode}
-                            />
-                            <SvgDonut
-                              title="Balón"
-                              value1={(effectiveLiveEvents || []).filter(e => e.type === 'recovery').length}
-                              value2={(effectiveLiveEvents || []).filter(e => e.type === 'loss').length}
-                              label1="Recup"
-                              label2="Pérd"
-                              color1="#3B82F6"
-                              color2="#E11D48"
-                              darkMode={darkMode}
-                            />
-                          </div>
-                        </div>
-
-                        {/* Tarjeta 2: Comparativa Propio vs Rival */}
-                        <div className="livestats-category-card">
-                          <div className="livestats-category-title" style={{ color: '#D4A843' }}>
-                            <span>⚔️ Comparativa Propio vs Rival</span>
-                          </div>
-                          <SvgComparisonBars events={effectiveLiveEvents || []} darkMode={darkMode} />
-                        </div>
-                      </div>
-
-                      {/* Tarjeta 3: Desglose por Mitades */}
-                      <div className="livestats-category-card" style={{ marginTop: '18px' }}>
-                        <div className="livestats-category-title" style={{ color: '#F97316' }}>
-                          <span>⏱️ Desglose por Mitades (1T vs 2T)</span>
-                        </div>
-                        <HalfBreakdown events={effectiveLiveEvents || []} darkMode={darkMode} />
+                      <div style={{ marginTop: '16px' }}>
+                        <MatchStatsBlock
+                          matchData={matchData}
+                          events={effectiveLiveEvents || []}
+                          language={settings?.language || 'Español (ES)'}
+                          showDonuts={true}
+                          showComparison={true}
+                          showHalves={true}
+                          showDetailedTables={true}
+                        />
                       </div>
                     </div>
                     {/* Tarjeta 6: Cuestionario de Análisis */}

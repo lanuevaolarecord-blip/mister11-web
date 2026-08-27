@@ -330,21 +330,25 @@ export const useMatchSheet = (teamPath, matchId, matchData, players = []) => {
   };
 
   /**
-   * REABRIR EL ACTA (solo admin).
-   * Resetea closed a false para permitir correcciones.
+   * REABRIR EL ACTA / PARTIDO (solo admin / staff).
+   * Resetea closed a false, registra trazabilidad y permite correcciones en todas las pestañas.
    */
-  const reopenMatchSheet = async () => {
+  const reopenMatchSheet = async (motivo = '') => {
     if (!isValid || !user) return;
     try {
       const matchDocRef = doc(db, `${cleanPath}/matches`, matchId);
       await updateDoc(matchDocRef, {
         'actaOficial.closed': false,
+        'actaOficial.closedWithWarnings': false,
         'actaOficial.reopenedAt': serverTimestamp(),
         'actaOficial.reopenedBy': user.uid,
+        'actaOficial.reopenReason': motivo || 'Reapertura para corrección autorizada por el cuerpo técnico',
+        status: 'Pendiente',
       });
-      showToast('🔓 Acta reabierta. Puedes corregir y volver a cerrar.', 'info');
+      showToast('🔓 Acta y partido reabiertos para correcciones.', 'info');
     } catch (err) {
       console.error('[useMatchSheet] Error reabriendo acta:', err);
+      showToast('❌ Error al reabrir el acta.', 'error');
       throw err;
     }
   };

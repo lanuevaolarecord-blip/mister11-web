@@ -570,6 +570,33 @@ const ActaOficialPanel = ({ matchId, matchData, players = [], calledPlayers = []
         </div>
       )}
 
+      {/* ── Encabezado de Tabla Canónica ───────────────── */}
+      <div
+        style={{
+          display: 'grid',
+          gridTemplateColumns: 'minmax(200px, 2fr) 90px 70px minmax(150px, 1.2fr) minmax(130px, 1fr) 30px',
+          alignItems: 'center',
+          gap: '12px',
+          padding: '8px 18px',
+          fontSize: '11px',
+          fontWeight: '800',
+          textTransform: 'uppercase',
+          color: 'var(--partidos-text-muted)',
+          letterSpacing: '0.05em',
+          borderBottom: '1.5px solid var(--partidos-border)',
+          marginBottom: '8px',
+          width: '100%',
+          boxSizing: 'border-box'
+        }}
+      >
+        <div>{isEn ? 'Player' : 'Jugador'}</div>
+        <div style={{ textAlign: 'center' }}>{isEn ? 'Role' : 'Rol'}</div>
+        <div style={{ textAlign: 'center' }}>RSVP</div>
+        <div style={{ textAlign: 'center' }}>{isEn ? 'Official Status' : 'Asistencia Oficial'}</div>
+        <div style={{ textAlign: 'right' }}>{isEn ? 'Played Mins' : 'Minutos Reales'}</div>
+        <div></div>
+      </div>
+
       {/* ── Player List ───────────────────────────────── */}
       <div style={styles.playerList}>
         {convocadosPlayers.map((player) => {
@@ -645,6 +672,11 @@ const ActaOficialPanel = ({ matchId, matchData, players = [], calledPlayers = []
                   </div>
                 </div>
 
+                {/* Rol */}
+                <div style={{ textAlign: 'center', fontSize: '11px', fontWeight: '800', color: isStarter ? 'var(--partidos-accent)' : 'var(--partidos-text-muted)' }}>
+                  {isStarter ? (isEn ? 'Starter' : 'Titular') : (isEn ? 'Sub' : 'Suplente')}
+                </div>
+
                 {/* RSVP previo / Respuesta del jugador */}
                 <div style={styles.rsvpCell}>
                   {isStartedOrDone ? (
@@ -652,7 +684,7 @@ const ActaOficialPanel = ({ matchId, matchData, players = [], calledPlayers = []
                       title={`RSVP previo: ${rsvpInfo ? rsvpInfo.label : 'Sin respuesta'}`}
                       style={{ fontSize: '11px', color: 'var(--partidos-text-muted)', display: 'inline-flex', alignItems: 'center', gap: '3px' }}
                     >
-                      <span style={{ fontSize: '13px' }}>{rsvpInfo ? rsvpInfo.emoji : '🔘'}</span>
+                      <span style={{ fontSize: '14px' }}>{rsvpInfo ? rsvpInfo.emoji : '🔘'}</span>
                     </span>
                   ) : (
                     rsvpInfo ? (
@@ -688,7 +720,7 @@ const ActaOficialPanel = ({ matchId, matchData, players = [], calledPlayers = []
 
                 {/* Expand chevron */}
                 {!isClosed && (
-                  <span style={{ fontSize: '16px', color: 'var(--partidos-text-muted)', transition: 'transform 0.2s', transform: isExpanded ? 'rotate(90deg)' : 'none' }}>›</span>
+                  <span style={{ fontSize: '16px', color: 'var(--partidos-text-muted)', transition: 'transform 0.2s', transform: isExpanded ? 'rotate(90deg)' : 'none', textAlign: 'center' }}>›</span>
                 )}
               </div>
 
@@ -762,7 +794,7 @@ const ActaOficialPanel = ({ matchId, matchData, players = [], calledPlayers = []
           <h4 style={{ margin: '0 0 16px', fontSize: '14px', fontWeight: '800', color: '#10B981', textTransform: 'uppercase' }}>
             ✅ Resumen Oficial del Acta
           </h4>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(170px, 1fr))', gap: '10px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '12px', width: '100%' }}>
             {convocadosPlayers.map(player => {
               const pid = String(player.id);
               const actual = getPlayerActual(pid);
@@ -946,10 +978,12 @@ const ActaOficialPanel = ({ matchId, matchData, players = [], calledPlayers = []
 // ─────────────────────────────────────────────────────────────
 const styles = {
   container: {
-    padding: '20px',
-    maxWidth: '900px',
-    margin: '0 auto',
+    width: '100%',
+    maxWidth: 'none',
+    padding: '0',
+    margin: '0',
     fontFamily: 'var(--font-body, system-ui)',
+    boxSizing: 'border-box',
   },
   header: {
     display: 'flex',
@@ -958,6 +992,7 @@ const styles = {
     flexWrap: 'wrap',
     gap: '12px',
     marginBottom: '20px',
+    width: '100%',
   },
   title: {
     fontSize: '20px',
@@ -1033,26 +1068,30 @@ const styles = {
     transition: 'all 0.2s',
   },
   rsvpBar: {
-    display: 'flex',
-    gap: '10px',
-    flexWrap: 'wrap',
+    display: 'grid',
+    gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))',
+    gap: '12px',
+    width: '100%',
     marginBottom: '20px',
   },
   rsvpBadge: {
     display: 'flex',
     flexDirection: 'column',
     alignItems: 'center',
+    justifyContent: 'center',
     gap: '2px',
-    padding: '10px 14px',
+    padding: '12px 14px',
     borderRadius: '12px',
     border: '1px solid',
     background: 'var(--partidos-player-card-bg)',
-    minWidth: '64px',
+    minWidth: '0',
+    textAlign: 'center',
   },
   playerList: {
     display: 'flex',
     flexDirection: 'column',
     gap: '8px',
+    width: '100%',
     marginBottom: '24px',
   },
   playerCard: {
@@ -1061,44 +1100,41 @@ const styles = {
     border: '1px solid var(--partidos-border)',
     overflow: 'hidden',
     transition: 'all 0.2s',
+    width: '100%',
+    boxSizing: 'border-box',
   },
   playerCardClosed: {
-    opacity: 0.85,
+    opacity: 0.9,
     cursor: 'default',
   },
   playerRow: {
     display: 'grid',
-    gridTemplateColumns: '1fr 40px minmax(110px,auto) 80px 20px',
+    gridTemplateColumns: 'minmax(200px, 2fr) 90px 70px minmax(150px, 1.2fr) minmax(130px, 1fr) 30px',
     alignItems: 'center',
-    gap: '10px',
-    padding: '12px 16px',
+    gap: '12px',
+    padding: '12px 18px',
     cursor: 'pointer',
+    width: '100%',
+    boxSizing: 'border-box',
   },
   playerInfo: {
     display: 'flex',
     alignItems: 'center',
-    gap: '10px',
-  },
-  avatarCircle: {
-    width: '36px',
-    height: '36px',
-    borderRadius: '50%',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    color: '#FFFFFF',
-    fontWeight: '800',
-    fontSize: '14px',
-    flexShrink: 0,
+    gap: '12px',
+    minWidth: 0,
   },
   playerName: {
     fontWeight: '700',
     fontSize: '14px',
     color: 'var(--partidos-text-primary)',
+    whiteSpace: 'nowrap',
+    overflow: 'hidden',
+    textOverflow: 'ellipsis',
   },
   playerMeta: {
     fontSize: '11px',
     color: 'var(--partidos-text-muted)',
+    marginTop: '2px',
   },
   rsvpCell: {
     textAlign: 'center',
@@ -1109,9 +1145,11 @@ const styles = {
   statusChip: {
     fontSize: '11px',
     fontWeight: '700',
-    padding: '3px 8px',
+    padding: '4px 10px',
     borderRadius: '6px',
-    display: 'inline-block',
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: '4px',
     whiteSpace: 'nowrap',
   },
   statusChipEmpty: {
@@ -1133,36 +1171,44 @@ const styles = {
     fontSize: '10px',
     color: 'var(--partidos-text-muted)',
     display: 'block',
+    marginTop: '2px',
   },
   expandedEditor: {
-    padding: '12px 16px',
+    padding: '16px 20px',
     borderTop: '1px solid var(--partidos-border)',
-    background: 'rgba(0,0,0,0.06)',
+    background: 'rgba(0,0,0,0.04)',
+    width: '100%',
+    boxSizing: 'border-box',
   },
   editorLabel: {
     fontSize: '11px',
     fontWeight: '700',
     textTransform: 'uppercase',
     color: 'var(--partidos-text-muted)',
-    marginBottom: '6px',
+    marginBottom: '8px',
   },
   statusGrid: {
     display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fill, minmax(110px,1fr))',
-    gap: '6px',
+    gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))',
+    gap: '8px',
+    width: '100%',
   },
   statusBtn: {
-    padding: '8px 10px',
+    padding: '8px 12px',
     borderRadius: '8px',
     fontWeight: '700',
     fontSize: '12px',
     cursor: 'pointer',
     textAlign: 'center',
     transition: 'all 0.15s',
-    minHeight: '40px',
+    minHeight: '42px',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: '6px',
   },
   minutesInput: {
-    width: '100px',
+    width: '120px',
     padding: '8px 12px',
     borderRadius: '8px',
     border: '1px solid var(--partidos-border)',
@@ -1177,26 +1223,30 @@ const styles = {
     color: '#F59E0B',
     background: 'rgba(245,158,11,0.1)',
     border: '1px solid rgba(245,158,11,0.3)',
-    padding: '4px 10px',
+    padding: '6px 12px',
     borderRadius: '6px',
-    marginTop: '18px',
+    marginTop: '12px',
   },
   summaryBox: {
     background: 'rgba(16,185,129,0.07)',
     border: '1px solid rgba(16,185,129,0.3)',
     borderRadius: '12px',
-    padding: '16px',
-    marginTop: '8px',
+    padding: '20px',
+    marginTop: '16px',
+    width: '100%',
+    boxSizing: 'border-box',
   },
   summaryCard: {
     background: 'var(--partidos-player-card-bg)',
     borderRadius: '8px',
-    padding: '10px 12px',
+    padding: '12px 14px',
     border: '1px solid var(--partidos-border)',
+    boxSizing: 'border-box',
   },
   emptyState: {
     padding: '40px 24px',
     textAlign: 'center',
+    width: '100%',
   },
 };
 

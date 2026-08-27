@@ -332,22 +332,23 @@ html.dark select option {
    VISTA DE EDICIÓN (EDITOR CONTAINER)
 ========================================================= */
 .partidos-editor-container {
-  flex: 1;
-  background: var(--partidos-panel-bg);
-  border-radius: 16px;
   display: flex;
   flex-direction: column;
+  background: var(--partidos-panel-bg);
+  border-radius: 12px;
   overflow: hidden;
   border: 1px solid var(--partidos-border);
   box-shadow: 0 4px 15px rgba(0,0,0,0.03);
   padding: 16px;
   box-sizing: border-box;
   min-height: calc(100vh - 140px);
+  width: 100%;
+  max-width: none;
 }
 
 @media (min-width: 640px) {
   .partidos-editor-container {
-    padding: 24px;
+    padding: 20px;
   }
 }
 
@@ -360,24 +361,29 @@ html.dark select option {
 .editor-tabs {
   display: flex;
   background: var(--partidos-panel-bg);
-  padding: 0 16px;
-  border-bottom: 1px solid var(--partidos-border);
+  padding: 0 8px;
+  border-bottom: 2px solid var(--partidos-border);
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
   scrollbar-width: none;
   flex-wrap: nowrap;
+  width: 100%;
+  box-sizing: border-box;
 }
 .editor-tabs::-webkit-scrollbar { display: none; }
 
 @media (min-width: 640px) {
   .editor-tabs {
-    padding: 0 24px;
+    padding: 0 12px;
   }
 }
 
 @media (min-width: 1024px) {
   .editor-tabs {
-    padding: 0 32px;
+    padding: 0;
+    justify-content: space-between;
+    gap: 4px;
+    width: 100%;
   }
 }
 
@@ -387,7 +393,7 @@ html.dark select option {
   font-family: var(--font-body);
   font-weight: 800;
   color: var(--partidos-text-muted);
-  padding: 16px 20px;
+  padding: 16px 14px;
   cursor: pointer;
   position: relative;
   text-transform: uppercase;
@@ -395,13 +401,26 @@ html.dark select option {
   transition: color 0.2s;
   white-space: nowrap;
   flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
+
+@media (min-width: 1024px) {
+  .e-tab {
+    flex: 1;
+    text-align: center;
+    justify-content: center;
+    padding: 16px 8px;
+  }
+}
+
 .e-tab:hover { color: var(--partidos-text-primary); }
 .e-tab.active { color: var(--partidos-text-primary); }
 .e-tab.active::after {
   content: '';
   position: absolute;
-  bottom: -1px; left: 0; width: 100%; height: 3px;
+  bottom: -2px; left: 0; width: 100%; height: 3px;
   background: var(--partidos-accent);
   border-radius: 3px 3px 0 0;
 }
@@ -409,7 +428,7 @@ html.dark select option {
 /* MÓVIL: tabs más compactos */
 @media (max-width: 600px) {
   .editor-tabs {
-    padding: 0 12px;
+    padding: 0 4px;
   }
   .e-tab {
     padding: 14px 10px;
@@ -419,23 +438,25 @@ html.dark select option {
 
 .editor-content {
   flex: 1;
-  padding: 20px 24px;
+  padding: 16px 0 0 0;
   overflow-y: auto;
   display: flex;
   flex-direction: column;
   min-height: 0;
   box-sizing: border-box;
+  width: 100%;
+  max-width: none;
 }
 
 @media (min-width: 640px) {
   .editor-content {
-    padding: 24px 32px;
+    padding: 20px 0 0 0;
   }
 }
 
 @media (min-width: 1024px) {
   .editor-content {
-    padding: 24px 36px;
+    padding: 24px 0 0 0;
   }
 }
 
@@ -639,8 +660,9 @@ html.dark select option {
 
 .players-checklist {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 16px;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 14px;
+  width: 100%;
 }
 
 .player-card {
@@ -2087,9 +2109,10 @@ html.dark .post-match-card {
   width: 100%;
 }
 
-@media (min-width: 768px) {
+@media (min-width: 1024px) {
   .post-partido-grid-layout {
     grid-template-columns: 1fr 1fr;
+    gap: 24px;
   }
   .post-partido-full-width-card {
     grid-column: 1 / -1;
@@ -2101,6 +2124,7 @@ html.dark .post-match-card {
   display: flex;
   flex-direction: column;
   gap: 20px;
+  width: 100%;
 }
 
 .goleador-row select,
@@ -2116,6 +2140,7 @@ html.dark .post-match-card {
   display: flex;
   flex-direction: column;
   gap: 24px;
+  width: 100%;
 }
 
 .match-day-container:fullscreen {
@@ -2131,11 +2156,13 @@ html.dark .post-match-card {
   display: grid;
   grid-template-columns: 1fr;
   gap: 20px;
+  width: 100%;
 }
 
-@media (min-width: 768px) {
+@media (min-width: 1024px) {
   .match-day-grid {
     grid-template-columns: 1fr 1fr;
+    gap: 24px;
   }
 }
 

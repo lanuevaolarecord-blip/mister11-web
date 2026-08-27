@@ -1152,8 +1152,8 @@ const Partidos = () => {
           onBackToList={() => setViewMode('LIST')}
           onRepairAndOpen={handleRepairAndOpenMatch}
         >
-          <div className="partidos-editor-container p-4 sm:p-6 lg:p-8">
-            <div className="editor-tabs mt-2 flex flex-row flex-nowrap overflow-x-auto whitespace-nowrap scrollbar-none px-4 sm:px-6 lg:px-8">
+          <div className="partidos-editor-container">
+            <div className="editor-tabs">
             {TABS_CONFIG.map(tabObj => (
               <button
                 key={tabObj.id}
@@ -1168,7 +1168,7 @@ const Partidos = () => {
           <div className={`editor-content ${editTab === 'LIVE-STATS' ? 'livestats-active' : ''}`}>
             {/* PESTAÑA: PRE-PARTIDO */}
             {editTab === 'PRE-PARTIDO' && (
-              <div className="tab-pane pre-partido-container p-4 sm:p-6 lg:p-8 space-y-6 max-w-7xl mx-auto pl-4 sm:pl-6 lg:pl-8">
+              <div className="tab-pane pre-partido-container">
                 <h3 className="section-title">Datos Generales del Encuentro</h3>
                 <div className="form-grid grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
                   <div className="form-group full">

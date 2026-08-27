@@ -495,7 +495,7 @@ const LiveStats = ({
   return (
     <div
       ref={containerRef}
-      className={`livestats-container ${darkMode ? 'dark-theme' : 'light-theme'} ${isFullscreen ? 'fullscreen-mode' : ''}`}
+      className={`livestats-container ${darkMode ? 'dark-theme dark theme-dark' : 'light-theme theme-light'} ${isFullscreen ? 'fullscreen-mode' : ''}`}
       style={{
         backgroundColor: darkMode ? '#0B1317' : '#F1F5F9',
         color: darkMode ? '#FFFFFF' : '#0F172A',

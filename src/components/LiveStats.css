@@ -757,7 +757,7 @@
   text-transform: uppercase;
 }
 
-/* ── PESTAÑAS DE NAVEGACIÓN TÁCTICA (Estilo Estadio Premium) ─────────────── */
+/* ── PESTAÑAS DE NAVEGACIÓN TÁCTICA (Adaptable Modo Claro / Oscuro) ─────── */
 .livestats-tab-navigation,
 .livestats-nav-tabs {
   display: flex;
@@ -769,14 +769,15 @@
   padding-bottom: 0;
 }
 
+/* ── MODO CLARO (Default / .light-theme / .theme-light) ── */
 .stats-tab-btn,
 .livestats-tab-btn {
   min-height: 42px;
   padding: 8px 18px;
   border-radius: 8px;
-  border: 1.5px solid rgba(212, 168, 67, 0.45);
-  background: #181c18;
-  color: #FFFFFF;
+  border: 1.5px solid #CBD5E1;
+  background: #FFFFFF;
+  color: #1B3A2D;
   font-size: 13.5px;
   font-weight: 700;
   cursor: pointer;
@@ -785,20 +786,65 @@
   gap: 8px;
   transition: all 0.2s ease;
   box-sizing: border-box;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
 .stats-tab-btn:hover,
 .livestats-tab-btn:hover {
-  border-color: #D4A843;
-  background: #232a23;
+  border-color: #1B3A2D;
+  background: #F1F5F9;
+  color: #1B3A2D;
   transform: translateY(-1px);
 }
 
 .stats-tab-btn.active,
 .livestats-tab-btn.active {
-  background: #0f291e !important;
+  background: #1B3A2D !important;
   color: #FFFFFF !important;
-  border-color: #22c55e !important;
+  border-color: #22C55E !important;
+  box-shadow: 0 4px 12px rgba(27, 58, 45, 0.25);
+}
+
+/* ── MODO OSCURO (.dark-theme / .dark / .theme-dark / html.dark) ── */
+.dark-theme .stats-tab-btn,
+.dark-theme .livestats-tab-btn,
+.dark .stats-tab-btn,
+.dark .livestats-tab-btn,
+.theme-dark .stats-tab-btn,
+.theme-dark .livestats-tab-btn,
+html.dark .stats-tab-btn,
+html.dark .livestats-tab-btn {
+  background: #181C18;
+  color: #F8FAFC;
+  border: 1.5px solid rgba(212, 168, 67, 0.45);
+  box-shadow: none;
+}
+
+.dark-theme .stats-tab-btn:hover,
+.dark-theme .livestats-tab-btn:hover,
+.dark .stats-tab-btn:hover,
+.dark .livestats-tab-btn:hover,
+.theme-dark .stats-tab-btn:hover,
+.theme-dark .livestats-tab-btn:hover,
+html.dark .stats-tab-btn:hover,
+html.dark .livestats-tab-btn:hover {
+  border-color: #D4A843;
+  background: #232A23;
+  color: #FFFFFF;
+  transform: translateY(-1px);
+}
+
+.dark-theme .stats-tab-btn.active,
+.dark-theme .livestats-tab-btn.active,
+.dark .stats-tab-btn.active,
+.dark .livestats-tab-btn.active,
+.theme-dark .stats-tab-btn.active,
+.theme-dark .livestats-tab-btn.active,
+html.dark .stats-tab-btn.active,
+html.dark .livestats-tab-btn.active {
+  background: #0F291E !important;
+  color: #FFFFFF !important;
+  border-color: #22C55E !important;
   box-shadow: 0 0 12px rgba(34, 197, 94, 0.28);
 }
 

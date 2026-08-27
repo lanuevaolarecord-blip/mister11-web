@@ -441,8 +441,10 @@ html.dark select option {
 
 .editor-content:has(.alineacion-layout) {
   overflow-y: auto;
-  overflow-x: hidden;
-  padding: 16px 20px 48px 20px;
+  overflow-x: auto;
+  padding: 16px 20px 60px 20px;
+  min-height: 100%;
+  box-sizing: border-box;
 }
 
 /* =========================================================
@@ -831,9 +833,9 @@ html.dark select option {
    */
   aspect-ratio: 105 / 68;
   width: 100%;
-  max-width: min(100%, calc((100vh - 280px) * 105 / 68));
-  max-height: calc(100vh - 280px);
-  min-height: 260px;
+  max-width: min(100%, calc((100vh - 340px) * 105 / 68));
+  max-height: calc(100vh - 340px);
+  min-height: 250px;
   height: auto;
   transform: none;
   border-radius: 12px;

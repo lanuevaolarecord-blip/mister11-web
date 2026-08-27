@@ -97,6 +97,70 @@ export const getUnifiedMatchEvents = (match = {}) => {
  * @param {Array}  allEvents            - Todos los eventos del partido
  * @param {Array}  titulares            - Lista de IDs titulares
  * @param {Array}  suplentes            - Lista de IDs suplentes
+/**
+ * Reconstruye la alineación inicial real (minuto 0) deduciendo las sustituciones
+ * registradas en la bitácora del encuentro.
+ * 
+ * Si hubo cambios durante el partido y el array `match.titulares` refleja el 11 final,
+ * esta función devuelve con precisión quiénes comenzaron en el campo y quiénes en el banquillo.
+ * 
+ * @param {Array} titulares - Array de IDs de titulares (pueden ser iniciales o finales)
+ * @param {Array} suplentes - Array de IDs de suplentes
+ * @param {Array} events    - Eventos de bitácora
+ * @returns {{ initialTitulares: Array<string>, initialSuplentes: Array<string> }}
+ */
+export const getStartingXI = (titulares = [], suplentes = [], events = []) => {
+  const currentTitulares = (titulares || []).filter(Boolean).map(String);
+  const currentSuplentes = (suplentes || []).filter(Boolean).map(String);
+
+  const subEvents = (events || []).filter(e => {
+    if (!e || e.isValid === false) return false;
+    const type = String(e.type || '').toLowerCase();
+    return type === 'sustitucion' || type === 'cambio' || type === 'sub';
+  }).sort((a, b) => (parseInt(a.minute || a.minuto || 0, 10) - parseInt(b.minute || b.minuto || 0, 10)));
+
+  if (subEvents.length === 0) {
+    return {
+      initialTitulares: currentTitulares,
+      initialSuplentes: currentSuplentes
+    };
+  }
+
+  const subbedInPlayers = new Set();
+  const subbedOutStarters = new Set();
+
+  subEvents.forEach(e => {
+    const pIn = String(e.playerInId || e.subInId || e.jugadorEntraId || e.inId || '');
+    const pOut = String(e.playerOutId || e.subOutId || e.jugadorSaleId || e.outId || '');
+    if (pIn) subbedInPlayers.add(pIn);
+    if (pOut && !subbedInPlayers.has(pOut)) {
+      subbedOutStarters.add(pOut);
+    }
+  });
+
+  const starters = new Set(currentTitulares);
+  subbedInPlayers.forEach(pIn => starters.delete(pIn));
+  subbedOutStarters.forEach(pOut => starters.add(pOut));
+
+  const initialTitulares = Array.from(starters);
+  const bench = new Set([...currentSuplentes, ...subbedInPlayers]);
+  initialTitulares.forEach(p => bench.delete(p));
+  const initialSuplentes = Array.from(bench);
+
+  return {
+    initialTitulares,
+    initialSuplentes
+  };
+};
+
+/**
+ * Calcula los minutos jugados por un jugador a partir de los EVENTOS del partido,
+ * SUSTITUCIONES, EXPULSIONES, PRÓRROGAS y ESTADO DE ASISTENCIA.
+ *
+ * @param {string} playerId             - ID del jugador
+ * @param {Array}  allEvents            - Todos los eventos del partido
+ * @param {Array}  titulares            - Lista de IDs titulares
+ * @param {Array}  suplentes            - Lista de IDs suplentes
  * @param {number} totalDuration        - Duración total o efectiva del partido en minutos
  * @param {number|null} minutesOverride - Si el míster editó manualmente los minutos
  * @param {string|null} attendanceStatus - Estado oficial ('presente', 'ausente', 'tarde', 'justificado', 'lesionado')
@@ -131,11 +195,17 @@ export const calculateMinutesFromEvents = (
     };
   }
 
-  const isTitular = (titulares || []).some(id => id && String(id) === pid);
-  const isSuplente = (suplentes || []).some(id => id && String(id) === pid);
+  // Reconstruir XI inicial canónico usando los eventos de sustitución
+  const { initialTitulares, initialSuplentes } = getStartingXI(titulares, suplentes, allEvents);
+
+  const isTitular = (initialTitulares || []).some(id => id && String(id) === pid);
+  const isSuplente = (initialSuplentes || []).some(id => id && String(id) === pid);
 
   if (!isTitular && !isSuplente) {
-    return { minutes: 0, source: 'not_called', detail: 'No convocado', eventsUsed: [] };
+    const isInRawCalled = (titulares || []).concat(suplentes || []).some(id => id && String(id) === pid);
+    if (!isInRawCalled) {
+      return { minutes: 0, source: 'not_called', detail: 'No convocado', eventsUsed: [] };
+    }
   }
 
   // Normalizar estado de asistencia
@@ -515,7 +585,9 @@ export const detectMatchEventDivergences = (matchData = {}, sheetActual = {}, pl
  * @returns {{ cleansedEvents: Array, removedCount: number, details: Array }}
  */
 export const cleanseImpossibleMatchEvents = (events = [], initialStarters = [], matchDuration = 90) => {
-  const onPitch = new Set((initialStarters || []).filter(Boolean).map(String));
+  // Reconstruir quiénes eran verdaderamente los titulares al minuto 0
+  const { initialTitulares } = getStartingXI(initialStarters, [], events);
+  const onPitch = new Set((initialTitulares || []).filter(Boolean).map(String));
   let removedCount = 0;
   const details = [];
 
@@ -537,8 +609,8 @@ export const cleanseImpossibleMatchEvents = (events = [], initialStarters = [], 
 
     // 2. Sustituciones duplicadas o imposibles
     if (e.type === 'cambio' || e.type === 'sustitucion') {
-      const pIn = String(e.playerInId || e.subInId || '');
-      const pOut = String(e.playerOutId || e.subOutId || '');
+      const pIn = String(e.playerInId || e.subInId || e.jugadorEntraId || e.inId || '');
+      const pOut = String(e.playerOutId || e.subOutId || e.jugadorSaleId || e.outId || '');
 
       if (pIn && onPitch.has(pIn)) {
         removedCount++;

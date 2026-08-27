@@ -1486,10 +1486,11 @@ const Partidos = () => {
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    padding: '12px',
+                    padding: '24px 20px 60px 20px',
                     overflow: 'visible',
                     position: 'relative',
-                    minHeight: 'fit-content'
+                    minHeight: 'fit-content',
+                    boxSizing: 'border-box'
                   }}
                 >
                   <div
@@ -1518,12 +1519,12 @@ const Partidos = () => {
                       const isEn = getEffectiveLanguage(settings) === 'English (EN)';
 
                       // Las posiciones en formaciones.js ya son HORIZONTALES: left=X, top=Y
-                      // Clampear top entre 8% y 88% para proteger márgenes superior e inferior
+                      // Clampear top entre 12% y 84% para proteger márgenes superior e inferior sin desbordes
                       const rawTop = parseFloat(customPos ? customPos.top : pos.top);
-                      const clampedTop = Math.min(Math.max(rawTop, 8), 88);
+                      const clampedTop = Math.min(Math.max(rawTop, 12), 84);
                       const topPos = `${clampedTop}%`;
                       const rawLeft = parseFloat(customPos ? customPos.left : pos.left);
-                      const clampedLeft = Math.min(Math.max(rawLeft, 6), 92);
+                      const clampedLeft = Math.min(Math.max(rawLeft, 8), 90);
                       const leftPos = `${clampedLeft}%`;
 
                       const posLabel = getSlotPosition(idx);

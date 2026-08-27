@@ -19,7 +19,8 @@ import {
   isMatchStartedOrFinished,
   detectMatchEventDivergences,
   getUnifiedMatchEvents,
-  getEffectiveMatchDuration
+  getEffectiveMatchDuration,
+  getStartingXI
 } from '../utils/minutesEngine';
 import PlayerAvatar from './PlayerAvatar';
 import MatchStatsBlock from './MatchStatsBlock';
@@ -113,11 +114,16 @@ const ActaOficialPanel = ({ matchId, matchData, players = [], calledPlayers = []
     [matchData?.suplentes]
   );
 
-  const titularesSet = useMemo(() => new Set(rawTitulares), [rawTitulares]);
-
   const effectiveEvents = useMemo(() => {
     return getUnifiedMatchEvents(matchData);
   }, [matchData]);
+
+  const { initialTitulares, initialSuplentes } = useMemo(() => {
+    return getStartingXI(rawTitulares, rawSuplentes, effectiveEvents);
+  }, [rawTitulares, rawSuplentes, effectiveEvents]);
+
+  const initialTitularesSet = useMemo(() => new Set(initialTitulares), [initialTitulares]);
+  const initialSuplentesSet = useMemo(() => new Set(initialSuplentes), [initialSuplentes]);
 
   const duration = getEffectiveMatchDuration(matchData);
 
@@ -154,7 +160,7 @@ const ActaOficialPanel = ({ matchId, matchData, players = [], calledPlayers = []
       if (status && counts[status] !== undefined) {
         counts[status]++;
       } else if (!status) {
-        if (titularesSet.has(idStr) || rawSuplentes.includes(idStr)) {
+        if (initialTitularesSet.has(idStr) || initialSuplentesSet.has(idStr)) {
           counts.presente++;
         } else {
           counts.sin_registro++;
@@ -164,7 +170,7 @@ const ActaOficialPanel = ({ matchId, matchData, players = [], calledPlayers = []
       }
     });
     return counts;
-  }, [sheet?.actual, convocadosIds, titularesSet, rawSuplentes]);
+  }, [sheet?.actual, convocadosIds, initialTitularesSet, initialSuplentesSet]);
 
   const discrepancies = useMemo(() => getDiscrepancies(), [sheet]);
 
@@ -372,15 +378,28 @@ const ActaOficialPanel = ({ matchId, matchData, players = [], calledPlayers = []
           )}
         </div>
       ) : (
-        /* Modo RSVP (Partido Futuro) */
+        /* Modo Pre-partido RSVP */
         <div style={styles.rsvpBar}>
-          {Object.entries(RSVP_LABELS).map(([key, info]) => (
-            <div key={key} style={{ ...styles.rsvpBadge, borderColor: info.color }}>
-              <span style={{ fontSize: '18px' }}>{info.emoji}</span>
-              <span style={{ fontWeight: '700', color: info.color }}>{rsvpCounts[key]}</span>
-              <span style={{ fontSize: '11px', color: 'var(--partidos-text-muted)' }}>{info.label}</span>
-            </div>
-          ))}
+          <div style={{ ...styles.rsvpBadge, borderColor: '#10B981' }}>
+            <span style={{ fontSize: '18px' }}>✅</span>
+            <span style={{ fontWeight: '700', color: '#10B981' }}>{rsvpCounts.going}</span>
+            <span style={{ fontSize: '11px', color: 'var(--partidos-text-muted)' }}>Confirmados</span>
+          </div>
+          <div style={{ ...styles.rsvpBadge, borderColor: '#EF4444' }}>
+            <span style={{ fontSize: '18px' }}>❌</span>
+            <span style={{ fontWeight: '700', color: '#EF4444' }}>{rsvpCounts.not_going}</span>
+            <span style={{ fontSize: '11px', color: 'var(--partidos-text-muted)' }}>No irán</span>
+          </div>
+          <div style={{ ...styles.rsvpBadge, borderColor: '#F59E0B' }}>
+            <span style={{ fontSize: '18px' }}>⚠️</span>
+            <span style={{ fontWeight: '700', color: '#F59E0B' }}>{rsvpCounts.late}</span>
+            <span style={{ fontSize: '11px', color: 'var(--partidos-text-muted)' }}>Tarde</span>
+          </div>
+          <div style={{ ...styles.rsvpBadge, borderColor: '#3B82F6' }}>
+            <span style={{ fontSize: '18px' }}>📋</span>
+            <span style={{ fontWeight: '700', color: '#3B82F6' }}>{rsvpCounts.justificado}</span>
+            <span style={{ fontSize: '11px', color: 'var(--partidos-text-muted)' }}>Justificados</span>
+          </div>
           <div style={{ ...styles.rsvpBadge, borderColor: '#6B7280' }}>
             <span style={{ fontSize: '18px' }}>🔘</span>
             <span style={{ fontWeight: '700', color: '#6B7280' }}>{rsvpCounts.noReply}</span>
@@ -402,8 +421,8 @@ const ActaOficialPanel = ({ matchId, matchData, players = [], calledPlayers = []
           const pid = String(player.id);
           const rsvp  = getPlayerRsvp(pid);
           const actual = getPlayerActual(pid);
-          const isStarter = titularesSet.has(pid);
-          const isSub = rawSuplentes.includes(pid);
+          const isStarter = initialTitularesSet.has(pid);
+          const isSub = initialSuplentesSet.has(pid);
 
           // Determinación del estado efectivo
           let status = actual?.status;
@@ -432,8 +451,8 @@ const ActaOficialPanel = ({ matchId, matchData, players = [], calledPlayers = []
           const computedMin = calculateMinutesFromEvents(
             pid,
             effectiveEvents,
-            rawTitulares,
-            rawSuplentes,
+            initialTitulares,
+            initialSuplentes,
             duration,
             actual?.minutesOverride ?? null,
             status,
@@ -508,7 +527,7 @@ const ActaOficialPanel = ({ matchId, matchData, players = [], calledPlayers = []
                   <span style={styles.minuteSourceLabel}>
                     {actual?.minutesOverride !== undefined && actual?.minutesOverride !== null
                       ? '✏️ Manual'
-                      : `Auto (${MINUTE_SOURCE_LABEL[minuteSource] || minuteSource})`}
+                      : `Auto (${actual?.detail || computedMin.detail || MINUTE_SOURCE_LABEL[minuteSource] || minuteSource})`}
                   </span>
                 </div>
 

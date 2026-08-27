@@ -105,6 +105,11 @@ export const sanitizeMatchData = (rawMatch = {}, players = []) => {
       const evtMin = Math.max(1, parseInt(e.minute || e.minuto || e.time || 1, 10) || 1);
       const evtType = String(e.type || e.tipo || 'accion').trim();
       const evtId = e.id ? String(e.id) : `evt_${idx}_${Date.now()}`;
+      const subOut = e.subOutId ? String(e.subOutId) : (e.playerOutId ? String(e.playerOutId) : (e.jugadorSaleId ? String(e.jugadorSaleId) : (e.outId ? String(e.outId) : null)));
+      const subIn = e.subInId ? String(e.subInId) : (e.playerInId ? String(e.playerInId) : (e.jugadorEntraId ? String(e.jugadorEntraId) : (e.inId ? String(e.inId) : null)));
+      const playerOutName = String(e.playerOutName || e.subOutName || e.jugadorSaleNombre || '').trim();
+      const playerInName = String(e.playerInName || e.subInName || e.jugadorEntraNombre || '').trim();
+
       return {
         ...e,
         id: evtId,
@@ -112,6 +117,12 @@ export const sanitizeMatchData = (rawMatch = {}, players = []) => {
         minute: evtMin,
         playerId: e.playerId ? String(e.playerId) : (e.jugadorId ? String(e.jugadorId) : null),
         playerName: String(e.playerName || e.nombre || e.jugadorNombre || '').trim(),
+        subOutId: subOut,
+        playerOutId: subOut,
+        playerOutName,
+        subInId: subIn,
+        playerInId: subIn,
+        playerInName,
         timestamp: e.timestamp || new Date().toISOString(),
         isValid: e.isValid !== false
       };

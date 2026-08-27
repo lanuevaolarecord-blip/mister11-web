@@ -14,7 +14,7 @@ import {
   isEventPast, 
   toDateKey 
 } from '../utils/attendanceMath';
-import { getPendingEvents } from '../utils/attendanceStatsHelper';
+import { getPendingEvents, getUnclosedAttendanceEvents } from '../utils/attendanceStatsHelper';
 import { doc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../firebaseConfig';
 
@@ -95,9 +95,9 @@ export const TeamAttendanceTab = ({ players = [], activeTeam = null }) => {
     : null;
   const isMatchActaClosed = selectedMatch?.actaOficial?.closed === true;
 
-  // Sesiones pasadas sin registro de asistencia (Fase 3: Alerta permanente)
-  const pastSessionsWithoutRecord = useMemo(() => {
-    return getPendingEvents(sessions, matches, attendanceRecords);
+  // Eventos pasados sin registro o con acta abierta (Fase 3: Alerta permanente unificada)
+  const unclosedEvents = useMemo(() => {
+    return getUnclosedAttendanceEvents(sessions, matches, attendanceRecords);
   }, [sessions, matches, attendanceRecords]);
 
   // Inicializar selector con el evento más reciente si existe
@@ -129,7 +129,17 @@ export const TeamAttendanceTab = ({ players = [], activeTeam = null }) => {
     setIsCurrentSessionSuspended(Boolean(existingRecord?.isSuspended || rawSessionObj?.isSuspended));
 
     if (existingRecord && existingRecord.records && Object.keys(existingRecord.records).length > 0) {
-      setRecordsMap(existingRecord.records);
+      // Fusionar asegurando que TODOS los jugadores de la plantilla están presentes
+      const merged = { ...existingRecord.records };
+      (players || []).forEach((p) => {
+        if (!merged[p.id]) {
+          merged[p.id] = {
+            status: p.currentStatus === 'injured' ? 'injured' : 'present',
+            lateMinutes: 0
+          };
+        }
+      });
+      setRecordsMap(merged);
       if (existingRecord.date) setSelectedSessionDate(existingRecord.date);
       if (existingRecord.sessionTitle) setSelectedSessionTitle(existingRecord.sessionTitle);
     } else if (selectedMatch && selectedMatch.actaOficial?.actual && Object.keys(selectedMatch.actaOficial.actual).length > 0) {
@@ -147,6 +157,14 @@ export const TeamAttendanceTab = ({ players = [], activeTeam = null }) => {
           status: STATUS_FROM_ACTA[d.status] || d.status || 'present',
           lateMinutes: d.lateMin || 0
         };
+      });
+      (players || []).forEach((p) => {
+        if (!mapFromActa[p.id]) {
+          mapFromActa[p.id] = {
+            status: p.currentStatus === 'injured' ? 'injured' : 'present',
+            lateMinutes: 0
+          };
+        }
       });
       setRecordsMap(mapFromActa);
       if (selectedMatch.date) setSelectedSessionDate(selectedMatch.date);
@@ -229,12 +247,23 @@ export const TeamAttendanceTab = ({ players = [], activeTeam = null }) => {
 
     setIsSaving(true);
     try {
+      // Asegurar que TODOS los jugadores de la plantilla están explícitamente en el mapa
+      const fullRecords = { ...recordsMap };
+      (players || []).forEach((p) => {
+        if (!fullRecords[p.id]) {
+          fullRecords[p.id] = {
+            status: p.currentStatus === 'injured' ? 'injured' : 'present',
+            lateMinutes: 0
+          };
+        }
+      });
+
       await saveAttendance(selectedSessionId, {
         sessionTitle: selectedSessionTitle,
         date: selectedSessionDate,
         type: selectedSessionType,
         isSuspended: isCurrentSessionSuspended,
-        records: recordsMap
+        records: fullRecords
       });
 
       showToast(
@@ -409,55 +438,81 @@ export const TeamAttendanceTab = ({ players = [], activeTeam = null }) => {
   return (
     <div className="attendance-tab-wrapper" style={{ padding: '4px 0 24px 0' }}>
       
-      {/* ⚠️ BANNER PERMANENTE DE SESIONES PASADAS SIN REGISTRO (Fase 3: Salvaguarda de Justicia) */}
-      {pastSessionsWithoutRecord.length > 0 && (
+      {/* ⚠️ BANNER UNIFICADO DE SESIONES Y PARTIDOS PENDIENTES (Fase 3: Alertas Unificadas) */}
+      {unclosedEvents.totalCount > 0 && (
         <div style={{
           background: 'rgba(245, 158, 11, 0.12)',
-          border: '1px solid rgba(245, 158, 11, 0.4)',
-          borderRadius: '12px',
-          padding: '12px 16px',
-          marginBottom: '16px',
+          border: '1.5px solid rgba(245, 158, 11, 0.4)',
+          borderRadius: '14px',
+          padding: '14px 18px',
+          marginBottom: '20px',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          gap: '12px',
+          gap: '14px',
           flexWrap: 'wrap'
         }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <span style={{ fontSize: '20px' }}>⚠️</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <span style={{ fontSize: '24px' }}>⚠️</span>
             <div>
-              <strong style={{ color: '#F59E0B', fontSize: '13px', display: 'block' }}>
+              <strong style={{ color: '#F59E0B', fontSize: '13.5px', display: 'block' }}>
                 {isEn
-                  ? `${pastSessionsWithoutRecord.length} past session${pastSessionsWithoutRecord.length > 1 ? 's' : ''} without attendance record`
-                  : `Tienes ${pastSessionsWithoutRecord.length} sesión${pastSessionsWithoutRecord.length > 1 ? 'es' : ''} pasada${pastSessionsWithoutRecord.length > 1 ? 's' : ''} sin registro de asistencia`}
+                  ? `You have ${unclosedEvents.pendingSessions.length} unrecorded session${unclosedEvents.pendingSessions.length !== 1 ? 's' : ''} and ${unclosedEvents.openMatches.length} match${unclosedEvents.openMatches.length !== 1 ? 'es' : ''} with open match sheet.`
+                  : `Tienes ${unclosedEvents.pendingSessions.length} sesión${unclosedEvents.pendingSessions.length !== 1 ? 'es' : ''} sin registrar y ${unclosedEvents.openMatches.length} partido${unclosedEvents.openMatches.length !== 1 ? 's' : ''} con acta abierta.`}
               </strong>
-              <span style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>
+              <span style={{ fontSize: '11.5px', color: 'var(--text-secondary)' }}>
                 {isEn
-                  ? 'Unrecorded sessions count against player attendance until completed.'
-                  : 'Las sesiones sin registrar penalizan el % real de convocatoria hasta que las completes.'}
+                  ? 'Complete attendance and close match sheets to finalize official attendance % and player minutes.'
+                  : 'Completa y cierra para oficializar los % de asistencia y los minutos de los jugadores.'}
               </span>
             </div>
           </div>
-          <button
-            type="button"
-            onClick={() => {
-              const firstPending = pastSessionsWithoutRecord[0];
-              handleSelectEvent(`session_${firstPending.id}`);
-              setActiveSubView('register');
-            }}
-            style={{
-              padding: '6px 14px',
-              borderRadius: '8px',
-              background: '#F59E0B',
-              color: '#000000',
-              fontWeight: '800',
-              fontSize: '12px',
-              border: 'none',
-              cursor: 'pointer'
-            }}
-          >
-            {isEn ? 'Complete Attendance' : 'Completar lista'}
-          </button>
+          <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+            {unclosedEvents.pendingSessions.length > 0 && (
+              <button
+                type="button"
+                onClick={() => {
+                  const firstPending = unclosedEvents.pendingSessions[0];
+                  handleSelectEvent(`session_${firstPending.id}`);
+                  setActiveSubView('register');
+                }}
+                style={{
+                  padding: '8px 14px',
+                  borderRadius: '8px',
+                  background: '#F59E0B',
+                  color: '#000000',
+                  fontWeight: '800',
+                  fontSize: '12px',
+                  border: 'none',
+                  cursor: 'pointer'
+                }}
+              >
+                📋 {isEn ? 'Complete Session' : 'Completar Sesión'}
+              </button>
+            )}
+            {unclosedEvents.openMatches.length > 0 && (
+              <button
+                type="button"
+                onClick={() => {
+                  const firstMatch = unclosedEvents.openMatches[0];
+                  handleSelectEvent(`match_${firstMatch.id}`);
+                  setActiveSubView('register');
+                }}
+                style={{
+                  padding: '8px 14px',
+                  borderRadius: '8px',
+                  background: '#3B82F6',
+                  color: '#FFFFFF',
+                  fontWeight: '800',
+                  fontSize: '12px',
+                  border: 'none',
+                  cursor: 'pointer'
+                }}
+              >
+                🏆 {isEn ? 'Close Match Sheet' : 'Cerrar Acta Partido'}
+              </button>
+            )}
+          </div>
         </div>
       )}
 
@@ -1161,6 +1216,7 @@ export const TeamAttendanceTab = ({ players = [], activeTeam = null }) => {
                   <th style={{ padding: '10px', textAlign: 'center', color: '#EAB308' }}>Justif.</th>
                   <th style={{ padding: '10px', textAlign: 'center', color: '#F97316' }}>Tarde</th>
                   <th style={{ padding: '10px', textAlign: 'center', color: '#3B82F6' }}>Lesion.</th>
+                  <th style={{ padding: '10px', textAlign: 'center', color: '#94A3B8' }} title={isEn ? 'Scheduled past events without staff record' : 'Eventos programados pasados sin registro del staff'}>SR</th>
                   <th style={{ padding: '10px', textAlign: 'center', color: 'var(--text-primary)' }}>% Asistencia</th>
                   <th style={{ padding: '10px', textAlign: 'center', color: 'var(--text-primary)' }}>Estado</th>
                 </tr>
@@ -1195,6 +1251,7 @@ export const TeamAttendanceTab = ({ players = [], activeTeam = null }) => {
                       <td style={{ padding: '10px', textAlign: 'center', fontWeight: '700' }}>{item.justified ?? 0}</td>
                       <td style={{ padding: '10px', textAlign: 'center', fontWeight: '700' }}>{item.late ?? 0}</td>
                       <td style={{ padding: '10px', textAlign: 'center', fontWeight: '700' }}>{item.injured ?? 0}</td>
+                      <td style={{ padding: '10px', textAlign: 'center', fontWeight: '700', color: (item.noRecord || 0) > 0 ? '#94A3B8' : 'inherit' }} title={isEn ? 'Scheduled without staff record' : 'Programados sin registro del staff'}>{item.noRecord ?? 0}</td>
                       <td style={{ padding: '10px', textAlign: 'center' }}>
                         {hasData ? (
                           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
@@ -1228,14 +1285,36 @@ export const TeamAttendanceTab = ({ players = [], activeTeam = null }) => {
               </tbody>
             </table>
           </div>
+
+          {/* Nota de Metodología y Salvaguarda de Información (Fase 4) */}
+          <div style={{ marginTop: '16px', padding: '12px 16px', borderRadius: '10px', background: 'var(--bg-app)', border: '1px solid var(--border-color)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <span style={{ fontSize: '16px' }}>ℹ️</span>
+            <p style={{ margin: 0, fontSize: '11px', color: 'var(--text-secondary)', lineHeight: '1.4' }}>
+              {isEn
+                ? 'Coach rate guides call-ups based on scheduled events; player portal displays closed match reports only.'
+                : 'El % del míster orienta la convocatoria sobre eventos programados; el portal del jugador muestra exclusivamente actas cerradas.'}
+            </p>
+          </div>
         </div>
       )}
 
       {/* ── SUB-VISTA 4: EVOLUCIÓN GRÁFICA SVG DE ASISTENCIA ── */}
       {activeSubView === 'chart' && (
         <div style={{ background: 'var(--bg-card)', padding: '24px', borderRadius: '16px', border: '1px solid var(--border-color)' }}>
-          <div style={{ fontSize: '14px', fontWeight: '800', color: 'var(--text-primary)', marginBottom: '16px' }}>
-            📈 {isEn ? 'Team Attendance Evolution' : 'Evolución de Asistencia General del Equipo'}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px', marginBottom: '16px' }}>
+            <div style={{ fontSize: '14px', fontWeight: '800', color: 'var(--text-primary)' }}>
+              📈 {isEn ? 'Team Attendance Evolution' : 'Evolución de Asistencia General del Equipo'}
+            </div>
+            <div style={{ display: 'flex', gap: '12px', alignItems: 'center', fontSize: '11px', fontWeight: '700' }}>
+              <span style={{ display: 'flex', alignItems: 'center', gap: '4px', color: '#22C55E' }}>
+                <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#22C55E' }}></span>
+                {isEn ? 'Official (Closed)' : 'Oficial (Cerrado)'}
+              </span>
+              <span style={{ display: 'flex', alignItems: 'center', gap: '4px', color: '#F59E0B' }}>
+                <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#F59E0B' }}></span>
+                {isEn ? 'Provisional (Open)' : 'Provisional (Abierto)'}
+              </span>
+            </div>
           </div>
 
           {trendData.length === 0 ? (
@@ -1262,7 +1341,7 @@ export const TeamAttendanceTab = ({ players = [], activeTeam = null }) => {
                     const points = trendData.map((d, i) => {
                       const x = 40 + i * stepX;
                       // Mapeo: 100% -> y=20, 0% -> y=170
-                      const y = 170 - (d.pct / 100) * 150;
+                      const y = 170 - ((d.pct ?? 0) / 100) * 150;
                       return { x, y, ...d };
                     });
 
@@ -1270,18 +1349,21 @@ export const TeamAttendanceTab = ({ players = [], activeTeam = null }) => {
 
                     return (
                       <g>
-                        <path d={pathStr} fill="none" stroke="#22C55E" strokeWidth="3" />
-                        {points.map((p, i) => (
-                          <g key={i}>
-                            <circle cx={p.x} cy={p.y} r="6" fill="#22C55E" stroke="var(--bg-card)" strokeWidth="2" />
-                            <text x={p.x} y={p.y - 10} fill="var(--text-primary)" fontSize="11" fontWeight="bold" textAnchor="middle">
-                              {p.pct}%
-                            </text>
-                            <text x={p.x} y="190" fill="var(--text-secondary)" fontSize="9" textAnchor="middle">
-                              {p.formattedDate}
-                            </text>
-                          </g>
-                        ))}
+                        <path d={pathStr} fill="none" stroke="#22C55E" strokeWidth="2.5" strokeDasharray="3 1" />
+                        {points.map((p, i) => {
+                          const pointColor = p.isProvisional ? '#F59E0B' : '#22C55E';
+                          return (
+                            <g key={i}>
+                              <circle cx={p.x} cy={p.y} r="6" fill={pointColor} stroke="var(--bg-card)" strokeWidth="2" />
+                              <text x={p.x} y={p.y - 10} fill={pointColor} fontSize="11" fontWeight="bold" textAnchor="middle">
+                                {p.pct}% {p.isProvisional ? '*' : ''}
+                              </text>
+                              <text x={p.x} y="190" fill="var(--text-secondary)" fontSize="9" textAnchor="middle">
+                                {p.formattedDate}
+                              </text>
+                            </g>
+                          );
+                        })}
                       </g>
                     );
                   })()}

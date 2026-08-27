@@ -1681,10 +1681,11 @@ const AdminPanel = () => {
 
                         <button
                           onClick={async () => {
-                            if (!window.confirm("¿Deseas normalizar los datos de asistencia de todos tus equipos hacia la fuente canónica?")) return;
+                            if (!window.confirm("¿Deseas reparar y normalizar los datos de asistencia de todos tus equipos hacia la fuente canónica?")) return;
                             setNormalizingAttendance(true);
                             try {
                               let totalUpdated = 0;
+                              let totalRepairedKeys = 0;
                               for (const t of teams) {
                                 const path = getTeamPath(t.id);
                                 if (!path) continue;
@@ -1698,8 +1699,9 @@ const AdminPanel = () => {
                                   serverTimestamp
                                 });
                                 totalUpdated += (res.normalizedCount || 0);
+                                totalRepairedKeys += (res.repairedKeysCount || 0);
                               }
-                              showToast(`¡Normalización completada! ${totalUpdated} eventos sincronizados con fuente canónica.`, 'success');
+                              showToast(`¡Normalización y reparación completadas! ${totalUpdated} eventos sincronizados y ${totalRepairedKeys} claves de jugadores reparadas.`, 'success');
                             } catch (err) {
                               console.error("Error al normalizar asistencia:", err);
                               showToast("Error al normalizar asistencia: " + err.message, "error");
@@ -1726,7 +1728,7 @@ const AdminPanel = () => {
                             gap: '8px'
                           }}
                         >
-                          <CheckCircle size={16} /> {normalizingAttendance ? 'Normalizando datos...' : '⚡ Normalizar datos de asistencia'}
+                          <CheckCircle size={16} /> {normalizingAttendance ? 'Reparando datos...' : '⚡ Reparar y normalizar asistencia'}
                         </button>
 
                         {/* Botón de blindaje de identidades existentes */}

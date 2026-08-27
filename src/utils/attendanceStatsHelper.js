@@ -193,15 +193,15 @@ export const extractPlayerVerifiedTimeline = (playerId, attendanceList = [], mat
 };
 
 /**
- * Calcula la lista de eventos pasados pendientes de registro de asistencia por el staff.
- * Alimenta tanto la alerta permanente como el estado "SR" del asistente.
+ * Calcula la lista completa de eventos pasados pendientes de registro o cierre (sesiones y actas de partidos).
+ * Alimenta tanto la alerta permanente unificada como el estado "SR" del asistente y resumen.
  *
  * @param {Array} sessions
  * @param {Array} matches
  * @param {Array} attendanceRecords
- * @returns {Array} Sesiones y partidos pasados sin registro oficial
+ * @returns {Object} { pendingSessions, openMatches, totalCount }
  */
-export const getPendingEvents = (sessions = [], matches = [], attendanceRecords = []) => {
+export const getUnclosedAttendanceEvents = (sessions = [], matches = [], attendanceRecords = []) => {
   const attMap = new Map();
   (attendanceRecords || []).forEach((att) => {
     if (!att) return;
@@ -225,6 +225,7 @@ export const getPendingEvents = (sessions = [], matches = [], attendanceRecords 
 
   const now = new Date();
 
+  // 1. Sesiones pasadas sin registro oficial del staff
   const pendingSessions = (sessions || []).filter((s) => {
     if (!s) return false;
     const sDate = toDateKey(s.date || s.fecha);
@@ -242,6 +243,29 @@ export const getPendingEvents = (sessions = [], matches = [], attendanceRecords 
     return !isDocSuspended && !hasRecords;
   });
 
+  // 2. Partidos pasados con acta abierta (no cerrada)
+  const openMatches = (matches || []).filter((m) => {
+    if (!m) return false;
+    const mDate = toDateKey(m.date || m.fecha);
+    if (!mDate) return false;
+    const isPast = isEventPast(mDate, m.time || m.hora || '23:59', now);
+    if (!isPast) return false;
+    const isClosed = m.actaOficial?.closed === true;
+    return !isClosed;
+  });
+
+  return {
+    pendingSessions,
+    openMatches,
+    totalCount: pendingSessions.length + openMatches.length
+  };
+};
+
+/**
+ * Mantiene compatibilidad regresiva retornando las sesiones pasadas sin registro
+ */
+export const getPendingEvents = (sessions = [], matches = [], attendanceRecords = []) => {
+  const { pendingSessions } = getUnclosedAttendanceEvents(sessions, matches, attendanceRecords);
   return pendingSessions;
 };
 
@@ -623,23 +647,29 @@ export const checkAttendanceConsistency = ({
 };
 
 /**
- * Fase 1: Migración / Normalización de Asistencia en Firestore
- * Copia el valor del míster a la fuente canónica para eventos pasados sin tocar campos legacy.
+ * Fase 1: Migración / Normalización y Reparación Completa de Asistencia en Firestore
+ * 1. Copia el valor del míster a la fuente canónica para eventos pasados sin tocar campos legacy.
+ * 2. Repara la omisión de claves en records cuando se guardó asistencia para toda la plantilla.
  */
-export const normalizeAttendanceDatabase = async (teamPath, { db, getDocs, updateDoc, setDoc, doc, collection, serverTimestamp }) => {
+export const repairAttendanceRecords = async (teamPath, { db, getDocs, updateDoc, setDoc, doc, collection, serverTimestamp }) => {
   if (!teamPath || !db) throw new Error('Parámetros de Firestore no válidos');
 
   let normalizedCount = 0;
+  let repairedKeysCount = 0;
   const cleanPath = teamPath.replace(/^\/+|\/+$/g, '');
 
-  // 1. Normalizar sesiones en attendance/{eventId}
+  // 0. Obtener lista completa de jugadores de la plantilla
+  const playersSnap = await getDocs(collection(db, `${cleanPath}/players`));
+  const teamPlayerIds = playersSnap.docs.map(d => d.id);
+
+  // 1. Normalizar y reparar sesiones en attendance/{eventId}
   const attSnap = await getDocs(collection(db, `${cleanPath}/attendance`));
   for (const attDoc of attSnap.docs) {
     const data = attDoc.data();
     let needsUpdate = false;
     const records = { ...(data.records || {}) };
 
-    // Si tiene campos legacy como players, presentes o presentPlayers, canonizar a records
+    // A) Canonizar campos legacy como players, presentes o presentPlayers a records
     if (data.players && typeof data.players === 'object') {
       Object.entries(data.players).forEach(([pid, pVal]) => {
         if (!records[pid]) {
@@ -669,6 +699,28 @@ export const normalizeAttendanceDatabase = async (teamPath, { db, getDocs, updat
       });
     }
 
+    // B) Reparación: si el registro tiene jugadores guardados, asegurar que TODOS los jugadores de la plantilla están presentes
+    const existingPids = Object.keys(records);
+    if (existingPids.length > 0) {
+      // Verificar si la sesión fue guardada con todos presentes (o casi todos presentes)
+      const presentCount = existingPids.filter(id => {
+        const s = records[id]?.status || records[id];
+        return s === 'present' || s === 'presente';
+      }).length;
+      const isAllPresentSession = presentCount === existingPids.length;
+
+      teamPlayerIds.forEach(pid => {
+        if (!records[pid]) {
+          records[pid] = {
+            status: isAllPresentSession ? 'presente' : 'ausente',
+            lateMin: 0
+          };
+          needsUpdate = true;
+          repairedKeysCount++;
+        }
+      });
+    }
+
     if (needsUpdate) {
       await updateDoc(doc(db, `${cleanPath}/attendance`, attDoc.id), {
         records,
@@ -678,7 +730,7 @@ export const normalizeAttendanceDatabase = async (teamPath, { db, getDocs, updat
     }
   }
 
-  // 2. Normalizar partidos en matches/{id}.actaOficial.actual
+  // 2. Normalizar y reparar partidos en matches/{id}.actaOficial.actual
   const matchesSnap = await getDocs(collection(db, `${cleanPath}/matches`));
   for (const mDoc of matchesSnap.docs) {
     const mData = mDoc.data();
@@ -687,7 +739,7 @@ export const normalizeAttendanceDatabase = async (teamPath, { db, getDocs, updat
     let needsMatchUpdate = false;
     const updatedActual = { ...actaActual };
 
-    // Si hay registros en attendance correspondientes a este partido, asegurar que actaOficial los tiene
+    // Sincronizar desde attendance si existe registro correspondiente
     const cleanId = mDoc.id.replace(/^match_/, '');
     const matchAttDoc = attSnap.docs.find(d => d.id === mDoc.id || d.id === `match_${cleanId}` || d.id === cleanId);
     if (matchAttDoc) {
@@ -706,6 +758,28 @@ export const normalizeAttendanceDatabase = async (teamPath, { db, getDocs, updat
       });
     }
 
+    // Asegurar que todos los convocados/titulares/suplentes tienen clave en actaOficial.actual
+    const allCalled = [
+      ...(mData.convocados || []),
+      ...(mData.titulares || []),
+      ...(mData.suplentes || []),
+      ...(mData.alineacion?.titulares || []),
+      ...(mData.alineacion?.suplentes || [])
+    ];
+    allCalled.forEach(pId => {
+      const pidStr = String(pId);
+      if (!updatedActual[pidStr]) {
+        updatedActual[pidStr] = {
+          status: 'ausente',
+          minutes: 0,
+          minuteSource: 'acta',
+          at: new Date().toISOString()
+        };
+        needsMatchUpdate = true;
+        repairedKeysCount++;
+      }
+    });
+
     if (needsMatchUpdate) {
       await updateDoc(doc(db, `${cleanPath}/matches`, mDoc.id), {
         'actaOficial.actual': updatedActual,
@@ -715,5 +789,8 @@ export const normalizeAttendanceDatabase = async (teamPath, { db, getDocs, updat
     }
   }
 
-  return { normalizedCount };
+  return { normalizedCount, repairedKeysCount };
 };
+
+export const normalizeAttendanceDatabase = repairAttendanceRecords;
+

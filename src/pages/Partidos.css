@@ -361,7 +361,7 @@ html.dark select option {
 .editor-tabs {
   display: flex;
   background: var(--partidos-panel-bg);
-  padding: 0 8px;
+  padding: 0 16px;
   border-bottom: 2px solid var(--partidos-border);
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
@@ -378,15 +378,15 @@ html.dark select option {
 
 @media (min-width: 640px) {
   .editor-tabs {
-    padding: 0 12px;
+    padding: 0 20px;
   }
 }
 
 @media (min-width: 1024px) {
   .editor-tabs {
-    padding: 0;
+    padding: 0 28px;
     justify-content: space-between;
-    gap: 4px;
+    gap: 8px;
     width: 100%;
   }
 }
@@ -415,7 +415,7 @@ html.dark select option {
     flex: 1;
     text-align: center;
     justify-content: center;
-    padding: 16px 8px;
+    padding: 16px 10px;
   }
 }
 
@@ -432,7 +432,7 @@ html.dark select option {
 /* MÓVIL: tabs más compactos */
 @media (max-width: 600px) {
   .editor-tabs {
-    padding: 0 4px;
+    padding: 0 8px;
   }
   .e-tab {
     padding: 14px 10px;
@@ -442,7 +442,7 @@ html.dark select option {
 
 .editor-content {
   flex: 1;
-  padding: 16px;
+  padding: 20px 16px;
   overflow-y: auto;
   display: flex;
   flex-direction: column;
@@ -454,13 +454,13 @@ html.dark select option {
 
 @media (min-width: 640px) {
   .editor-content {
-    padding: 20px;
+    padding: 24px 20px;
   }
 }
 
 @media (min-width: 1024px) {
   .editor-content {
-    padding: 24px;
+    padding: 28px 32px;
   }
 }
 

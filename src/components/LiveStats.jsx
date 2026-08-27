@@ -101,9 +101,9 @@ const TEXTS = {
   'live.half.2': { es: '2ª Mitad', en: '2nd Half' },
   'live.feedback.saved': { es: '¡Guardado!', en: 'Saved!' },
   'live.tab.capture': { es: 'Captura en Vivo', en: 'Live Capture' },
-  'live.tab.tactical': { es: 'Suite Táctica', en: 'Tactical Suite' },
-  'live.tab.analytics': { es: 'Analítica', en: 'Analytics' },
-  'live.tab.players': { es: 'Rendimiento Jugadores', en: 'Player Performance' },
+  'live.tab.tactical': { es: 'Campo & Táctica', en: 'Field & Tactics' },
+  'live.tab.analytics': { es: 'Análisis Avanzado', en: 'Advanced Analysis' },
+  'live.tab.players': { es: 'Jugadores & CSV', en: 'Players & CSV' },
 };
 
 // ── Grupos de botones de captura rápida ──────────────────────────────────────
@@ -524,34 +524,34 @@ const LiveStats = ({
       )}
 
       {/* ── 1. Barra de Navegación por Pestañas de LiveStats ────────────────── */}
-      <nav className="livestats-nav-tabs">
+      <nav className="livestats-tab-navigation">
         <button
           type="button"
-          className={`livestats-tab-btn ${activeTab === 'capture' ? 'active' : ''}`}
+          className={`stats-tab-btn ${activeTab === 'capture' ? 'active' : ''}`}
           onClick={() => setActiveTab('capture')}
         >
-          🎮 {tx('live.tab.capture')}
+          🔴 {tx('live.tab.capture')}
         </button>
         <button
           type="button"
-          className={`livestats-tab-btn ${activeTab === 'tactical' ? 'active' : ''}`}
+          className={`stats-tab-btn ${activeTab === 'tactical' ? 'active' : ''}`}
           onClick={() => setActiveTab('tactical')}
         >
-          🗺️ {tx('live.tab.tactical')}
+          ⚽ {tx('live.tab.tactical')}
         </button>
         <button
           type="button"
-          className={`livestats-tab-btn ${activeTab === 'analytics' ? 'active' : ''}`}
+          className={`stats-tab-btn ${activeTab === 'analytics' ? 'active' : ''}`}
           onClick={() => setActiveTab('analytics')}
         >
-          📊 {tx('live.tab.analytics')}
+          📈 {tx('live.tab.analytics')}
         </button>
         <button
           type="button"
-          className={`livestats-tab-btn ${activeTab === 'players' ? 'active' : ''}`}
+          className={`stats-tab-btn ${activeTab === 'players' ? 'active' : ''}`}
           onClick={() => setActiveTab('players')}
         >
-          👤 {tx('live.tab.players')}
+          📋 {tx('live.tab.players')}
         </button>
       </nav>
 

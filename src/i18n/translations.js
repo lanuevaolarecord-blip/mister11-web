@@ -610,9 +610,9 @@ export const translations = {
 
     // ── LIVESTATS SUBTABS ──────────────────────────────────
     'live.tab.capture': 'Captura en Vivo',
-    'live.tab.tactical': 'Suite Táctica',
-    'live.tab.analytics': 'Analítica',
-    'live.tab.players': 'Rendimiento Jugadores'
+    'live.tab.tactical': 'Campo & Táctica',
+    'live.tab.analytics': 'Análisis Avanzado',
+    'live.tab.players': 'Jugadores & CSV'
   },
 
   'English (EN)': {
@@ -1226,9 +1226,9 @@ export const translations = {
 
     // ── LIVESTATS SUBTABS ──────────────────────────────────
     'live.tab.capture': 'Live Capture',
-    'live.tab.tactical': 'Tactical Suite',
-    'live.tab.analytics': 'Analytics',
-    'live.tab.players': 'Player Performance'
+    'live.tab.tactical': 'Field & Tactics',
+    'live.tab.analytics': 'Advanced Analysis',
+    'live.tab.players': 'Players & CSV'
   }
 };
 

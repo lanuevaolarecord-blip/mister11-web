@@ -757,48 +757,49 @@
   text-transform: uppercase;
 }
 
-/* ── PESTAÑAS DE NAVEGACIÓN TÁCTICA ─────────────────────────────────────── */
-.livestats-tab-navigation {
+/* ── PESTAÑAS DE NAVEGACIÓN TÁCTICA (Estilo Estadio Premium) ─────────────── */
+.livestats-tab-navigation,
+.livestats-nav-tabs {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
-  margin-bottom: 20px;
-  border-bottom: 1px solid var(--border-color, #D4A843);
-  padding-bottom: 12px;
+  gap: 10px;
+  margin: 14px 0 20px;
+  align-items: center;
+  border-bottom: none;
+  padding-bottom: 0;
 }
 
-.stats-tab-btn {
-  min-height: 44px;
+.stats-tab-btn,
+.livestats-tab-btn {
+  min-height: 42px;
   padding: 8px 18px;
   border-radius: 8px;
-  border: 1px solid rgba(0, 0, 0, 0.1);
-  background: var(--bg-card, #FFFFFF);
-  color: var(--text-primary, #1B3A2D);
-  font-size: 13px;
+  border: 1.5px solid rgba(212, 168, 67, 0.45);
+  background: #181c18;
+  color: #FFFFFF;
+  font-size: 13.5px;
   font-weight: 700;
   cursor: pointer;
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
   transition: all 0.2s ease;
+  box-sizing: border-box;
 }
 
-.dark .stats-tab-btn {
-  background: #1E1E1E;
-  color: #FFFFFF;
-  border-color: rgba(255, 255, 255, 0.15);
-}
-
-.stats-tab-btn:hover {
-  border-color: var(--accent-gold, #D4A843);
+.stats-tab-btn:hover,
+.livestats-tab-btn:hover {
+  border-color: #D4A843;
+  background: #232a23;
   transform: translateY(-1px);
 }
 
-.stats-tab-btn.active {
-  background: var(--primary, #1B3A2D) !important;
+.stats-tab-btn.active,
+.livestats-tab-btn.active {
+  background: #0f291e !important;
   color: #FFFFFF !important;
-  border-color: var(--accent-gold, #D4A843) !important;
-  box-shadow: 0 4px 12px rgba(27, 58, 45, 0.25);
+  border-color: #22c55e !important;
+  box-shadow: 0 0 12px rgba(34, 197, 94, 0.28);
 }
 
 .analytics-grid-two-cols {

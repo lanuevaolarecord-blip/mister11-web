@@ -1153,50 +1153,6 @@ const Partidos = () => {
           onRepairAndOpen={handleRepairAndOpenMatch}
         >
           <div className="partidos-editor-container p-4 sm:p-6 lg:p-8">
-            {/* Banner de Advertencias si el partido contiene datos anómalos saneados */}
-            {matchData?.warnings && matchData.warnings.length > 0 && (
-              <div style={{
-                background: 'rgba(245, 158, 11, 0.12)',
-                border: '1.5px solid #F59E0B',
-                borderRadius: '10px',
-                padding: '12px 16px',
-                marginBottom: '16px',
-                color: '#FDE68A',
-                fontSize: '13px'
-              }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontWeight: '700' }}>
-                    <span style={{ fontSize: '16px' }}>⚠️</span>
-                    <span>Este partido contenía {matchData.warnings.length} anomalías o datos legacy que fueron aislados automáticamente.</span>
-                  </div>
-                  <div style={{ display: 'flex', gap: '8px' }}>
-                    <button
-                      type="button"
-                      onClick={() => setShowWarningsDetail(prev => !prev)}
-                      style={{ background: 'transparent', border: '1px solid #F59E0B', color: '#F59E0B', padding: '4px 10px', borderRadius: '6px', cursor: 'pointer', fontSize: '12px', fontWeight: '700' }}
-                    >
-                      {showWarningsDetail ? 'Ocultar detalles' : 'Ver lista'}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={handleCleanseMatchEvents}
-                      disabled={cleansingInProgress}
-                      style={{ background: '#F59E0B', border: 'none', color: '#000000', padding: '4px 10px', borderRadius: '6px', cursor: 'pointer', fontSize: '12px', fontWeight: '800' }}
-                    >
-                      {cleansingInProgress ? 'Depurando...' : '🧹 Depurar bitácora'}
-                    </button>
-                  </div>
-                </div>
-                {showWarningsDetail && (
-                  <ul style={{ margin: '8px 0 0 18px', padding: 0, fontSize: '12px', color: '#FCD34D' }}>
-                    {matchData.warnings.map((w, idx) => (
-                      <li key={idx} style={{ marginTop: '3px' }}>{w}</li>
-                    ))}
-                  </ul>
-                )}
-              </div>
-            )}
-
             <div className="editor-tabs mt-2 flex flex-row flex-nowrap overflow-x-auto whitespace-nowrap scrollbar-none px-4 sm:px-6 lg:px-8">
             {TABS_CONFIG.map(tabObj => (
               <button
@@ -1754,7 +1710,29 @@ const Partidos = () => {
                   {/* Bitácora de Eventos */}
                   <div className="post-partido-full-width-card" style={{ gridColumn: '1 / -1' }}>
                     <div className="events-log-card">
-                      <h4 className="card-section-title" style={{ margin: 0 }}>📋 Bitácora del Partido (Tiempo Real)</h4>
+                      <h4 className="card-section-title" style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <span>📋 {getEffectiveLanguage(settings) === 'English (EN)' ? 'Match Event Log (Real Time)' : 'Bitácora del Partido (Tiempo Real)'}</span>
+                        {matchData?.warnings && matchData.warnings.length > 0 && !matchData.warningsResolved && (
+                          <span
+                            style={{
+                              background: 'rgba(245, 158, 11, 0.2)',
+                              color: '#F59E0B',
+                              border: '1px solid rgba(245, 158, 11, 0.4)',
+                              padding: '2px 8px',
+                              borderRadius: '12px',
+                              fontSize: '11px',
+                              fontWeight: '800',
+                              cursor: 'pointer'
+                            }}
+                            onClick={() => handleTabChange('acta')}
+                            title={getEffectiveLanguage(settings) === 'English (EN)'
+                              ? `${matchData.warnings.length} anomalies detected (click to view and resolve in Official Sheet)`
+                              : `${matchData.warnings.length} anomalías detectadas (clic para ver y resolver en Acta Oficial)`}
+                          >
+                            ⚠️ {matchData.warnings.length}
+                          </span>
+                        )}
+                      </h4>
                       <div className="events-log-list">
                         {(!matchData.events || matchData.events.length === 0) ? (
                           <p style={{ margin: '15px 0', fontSize: '14px', color: 'var(--partidos-text-muted)', fontStyle: 'italic', textAlign: 'center' }}>No se han registrado eventos en este partido.</p>

@@ -594,7 +594,19 @@ export const translations = {
     'attendance.chart.legend.provisional': 'Provisional (acta o sesión abierta)',
     'attendance.chart.openRegister': 'Abrir Registro de Asistencia',
     'attendance.chart.summaryStats': 'Resumen del Evento Seleccionado',
-    'attendance.chart.noData': 'Aún no hay sesiones ni partidos registrados.'
+    'attendance.chart.noData': 'Aún no hay sesiones ni partidos registrados.',
+
+    // ── MATCH DATA WARNINGS & CLEANSING ────────────────────
+    'matches.warnings.bannerTitle': 'Este partido contenía {count} anomalías o datos legacy aislados automáticamente.',
+    'matches.warnings.showDetails': 'Ver lista',
+    'matches.warnings.hideDetails': 'Ocultar detalles',
+    'matches.warnings.cleanseBtn': 'Depurar bitácora',
+    'matches.warnings.cleansing': 'Depurando...',
+    'matches.warnings.resolvedSuccess': '✔ {count} anomalía(s) resuelta(s) y acta sincronizada.',
+    'matches.warnings.auditNote': 'Bitácora depurada el {date}: {count} anomalías aisladas y resueltas.',
+    'matches.warnings.auditShow': 'Ver detalle',
+    'matches.warnings.auditHide': 'Ocultar auditoría',
+    'matches.warnings.chipTooltip': '{count} anomalías detectadas en bitácora (clic para ver y resolver en Acta Oficial)'
   },
 
   'English (EN)': {
@@ -1192,7 +1204,19 @@ export const translations = {
     'attendance.chart.legend.provisional': 'Provisional (open sheet/session)',
     'attendance.chart.openRegister': 'Open Attendance Register',
     'attendance.chart.summaryStats': 'Selected Event Summary',
-    'attendance.chart.noData': 'No attendance sessions or matches recorded yet.'
+    'attendance.chart.noData': 'No attendance sessions or matches recorded yet.',
+
+    // ── MATCH DATA WARNINGS & CLEANSING ────────────────────
+    'matches.warnings.bannerTitle': 'This match contained {count} isolated log anomalies or legacy data.',
+    'matches.warnings.showDetails': 'View list',
+    'matches.warnings.hideDetails': 'Hide details',
+    'matches.warnings.cleanseBtn': 'Cleanse & Resolve',
+    'matches.warnings.cleansing': 'Resolving...',
+    'matches.warnings.resolvedSuccess': '✔ {count} anomaly/anomalies resolved and match sheet synchronized.',
+    'matches.warnings.auditNote': 'Log cleansed on {date}: {count} anomalies isolated and resolved.',
+    'matches.warnings.auditShow': 'View details',
+    'matches.warnings.auditHide': 'Hide audit',
+    'matches.warnings.chipTooltip': '{count} anomalies detected in log (click to view and resolve in Official Sheet)'
   }
 };
 

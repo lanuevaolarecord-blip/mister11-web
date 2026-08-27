@@ -239,6 +239,7 @@ export const useMatchSheet = (teamPath, matchId, matchData, players = []) => {
         { preserveManual: false }
       );
 
+      const nowIso = new Date().toISOString();
       const matchDocRef = doc(db, `${cleanPath}/matches`, matchId);
       await updateDoc(matchDocRef, {
         events: cleansedEvents,
@@ -247,10 +248,16 @@ export const useMatchSheet = (teamPath, matchId, matchData, players = []) => {
         goalsAgainst: derivedGoalsAgainst,
         'actaOficial.actual': updatedActual,
         'actaOficial.totalDuration': duration,
+        warningsResolved: true,
+        warningsResolvedAt: serverTimestamp(),
+        cleanedAt: nowIso,
+        cleanedBy: user.uid,
+        cleanedByName: user.displayName || 'Staff',
         updatedAt: serverTimestamp(),
       });
 
-      showToast(`🧹 Se depuraron ${removedCount} evento(s) imposible(s) y se recalculó el acta.`, 'success');
+      const count = removedCount > 0 ? removedCount : (matchData?.warnings?.length || 1);
+      showToast(`✔ ${count} anomalía(s) resuelta(s) y acta sincronizada.`, 'success');
       return { removedCount, details };
     } catch (err) {
       console.error('[useMatchSheet] Error depurando bitácora:', err);

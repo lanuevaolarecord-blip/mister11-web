@@ -22,6 +22,7 @@ import {
   getEffectiveMatchDuration,
   getStartingXI
 } from '../utils/minutesEngine';
+import { useTranslation } from '../hooks/useTranslation';
 import PlayerAvatar from './PlayerAvatar';
 import MatchStatsBlock from './MatchStatsBlock';
 
@@ -61,6 +62,8 @@ const MINUTE_SOURCE_LABEL = {
 const ActaOficialPanel = ({ matchId, matchData, players = [], calledPlayers = [], onNavigateTab }) => {
   const { user, getTeamPath } = useAuth();
   const { activeTeam } = useTeams();
+  const { t, language } = useTranslation();
+  const isEn = language === 'English (EN)';
   const activeTeamId = activeTeam?.id || null;
 
   const teamPath = activeTeamId ? getTeamPath(activeTeamId) : '';
@@ -86,6 +89,27 @@ const ActaOficialPanel = ({ matchId, matchData, players = [], calledPlayers = []
   const [expandedPlayer, setExpandedPlayer] = useState(null);
   const [showWarningsModal, setShowWarningsModal] = useState(false);
   const [warningsList, setWarningsList] = useState([]);
+
+  // Estado de colapso persistido para la alerta de anomalías
+  const [isWarningsCollapsed, setIsWarningsCollapsed] = useState(() => {
+    try {
+      const saved = localStorage.getItem(`mister11_warnings_collapsed_${matchId}`);
+      if (saved !== null) return JSON.parse(saved);
+    } catch (_) {}
+    return true; // Colapsado a modo compacto por defecto
+  });
+
+  const [showAuditDetail, setShowAuditDetail] = useState(false);
+
+  const toggleWarningsCollapse = () => {
+    setIsWarningsCollapsed(prev => {
+      const next = !prev;
+      try {
+        localStorage.setItem(`mister11_warnings_collapsed_${matchId}`, JSON.stringify(next));
+      } catch (_) {}
+      return next;
+    });
+  };
 
   const isStartedOrDone = useMemo(() => isMatchStartedOrFinished(matchData), [matchData]);
 
@@ -334,6 +358,137 @@ const ActaOficialPanel = ({ matchId, matchData, players = [], calledPlayers = []
           )}
         </div>
       </div>
+
+      {/* ── ALERTA COMPACTA DE ANOMALÍAS CONTEXTUAL (Solo si hay anomalías y no están resueltas) ── */}
+      {matchData?.warnings && matchData.warnings.length > 0 && !matchData.warningsResolved && (
+        <div style={{
+          background: 'rgba(245, 158, 11, 0.12)',
+          border: '1.5px solid #F59E0B',
+          borderRadius: '10px',
+          padding: '12px 16px',
+          marginBottom: '16px',
+          color: '#FDE68A',
+          fontSize: '13px'
+        }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontWeight: '700' }}>
+              <span style={{ fontSize: '16px' }}>⚠️</span>
+              <span>
+                {t('matches.warnings.bannerTitle', language, { count: matchData.warnings.length }) ||
+                  (isEn
+                    ? `This match contained ${matchData.warnings.length} isolated log anomalies or legacy data.`
+                    : `Este partido contenía ${matchData.warnings.length} anomalías o datos legacy aislados automáticamente.`)}
+              </span>
+            </div>
+            <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+              <button
+                type="button"
+                onClick={toggleWarningsCollapse}
+                style={{
+                  background: 'transparent',
+                  border: '1px solid #F59E0B',
+                  color: '#F59E0B',
+                  padding: '4px 10px',
+                  borderRadius: '6px',
+                  cursor: 'pointer',
+                  fontSize: '12px',
+                  fontWeight: '700'
+                }}
+              >
+                {isWarningsCollapsed
+                  ? (t('matches.warnings.showDetails', language) || (isEn ? 'View list' : 'Ver lista'))
+                  : (t('matches.warnings.hideDetails', language) || (isEn ? 'Hide details' : 'Ocultar detalles'))}
+              </button>
+              <button
+                type="button"
+                onClick={handleCleanse}
+                disabled={cleansingInProgress}
+                style={{
+                  background: '#F59E0B',
+                  border: 'none',
+                  color: '#000000',
+                  padding: '4px 12px',
+                  borderRadius: '6px',
+                  cursor: 'pointer',
+                  fontSize: '12px',
+                  fontWeight: '800',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '4px'
+                }}
+              >
+                {cleansingInProgress
+                  ? (t('matches.warnings.cleansing', language) || (isEn ? 'Resolving...' : 'Depurando...'))
+                  : `🧹 ${t('matches.warnings.cleanseBtn', language) || (isEn ? 'Cleanse & Resolve' : 'Depurar bitácora')}`}
+              </button>
+            </div>
+          </div>
+          {!isWarningsCollapsed && (
+            <ul style={{ margin: '8px 0 0 18px', padding: 0, fontSize: '12px', color: '#FCD34D' }}>
+              {matchData.warnings.map((w, idx) => (
+                <li key={idx} style={{ marginTop: '3px' }}>{w}</li>
+              ))}
+            </ul>
+          )}
+        </div>
+      )}
+
+      {/* ── NOTA DISCRETA DE AUDITORÍA (Tras la limpieza exitosa) ── */}
+      {matchData?.warningsResolved && matchData?.warnings && matchData.warnings.length > 0 && (
+        <div style={{
+          background: 'rgba(59, 130, 246, 0.06)',
+          border: '1px solid rgba(59, 130, 246, 0.2)',
+          borderRadius: '8px',
+          padding: '8px 12px',
+          marginBottom: '14px',
+          fontSize: '11.5px',
+          color: '#93C5FD',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          flexWrap: 'wrap',
+          gap: '6px'
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <span>ℹ️</span>
+            <span>
+              {t('matches.warnings.auditNote', language, {
+                date: matchData.cleanedAt ? new Date(matchData.cleanedAt).toLocaleDateString() : (isEn ? 'recent audit' : 'auditoría reciente'),
+                count: matchData.warnings.length
+              }) ||
+                (isEn
+                  ? `Log cleansed on ${matchData.cleanedAt ? new Date(matchData.cleanedAt).toLocaleDateString() : 'recent audit'}: ${matchData.warnings.length} anomalies isolated and resolved.`
+                  : `Bitácora depurada el ${matchData.cleanedAt ? new Date(matchData.cleanedAt).toLocaleDateString() : 'auditoría reciente'}: ${matchData.warnings.length} anomalías aisladas y resueltas.`)}
+            </span>
+          </div>
+          <button
+            type="button"
+            onClick={() => setShowAuditDetail(prev => !prev)}
+            style={{
+              background: 'transparent',
+              border: 'none',
+              color: '#60A5FA',
+              cursor: 'pointer',
+              fontSize: '11px',
+              textDecoration: 'underline',
+              padding: 0
+            }}
+          >
+            {showAuditDetail
+              ? (t('matches.warnings.auditHide', language) || (isEn ? 'Hide audit' : 'Ocultar auditoría'))
+              : (t('matches.warnings.auditShow', language) || (isEn ? 'View details' : 'Ver detalle'))}
+          </button>
+          {showAuditDetail && (
+            <div style={{ width: '100%', marginTop: '6px', borderTop: '1px solid rgba(59, 130, 246, 0.15)', paddingTop: '6px' }}>
+              <ul style={{ margin: '0 0 0 16px', padding: 0, fontSize: '11px', color: '#BFDBFE' }}>
+                {matchData.warnings.map((w, idx) => (
+                  <li key={idx} style={{ marginTop: '2px' }}>{w}</li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* ── Resumen de Asistencia / RSVP Bar ─────────────── */}
       {isStartedOrDone ? (

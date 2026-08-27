@@ -14,7 +14,12 @@ import React, { useMemo, useState } from 'react';
 import { useMatchSheet } from '../hooks/useMatchSheet';
 import { useAuth } from '../context/AuthContext';
 import { useTeams } from '../hooks/useTeams';
-import { calculateMinutesFromEvents, isMatchStartedOrFinished } from '../utils/minutesEngine';
+import {
+  calculateMinutesFromEvents,
+  isMatchStartedOrFinished,
+  detectMatchEventDivergences,
+  getUnifiedMatchEvents
+} from '../utils/minutesEngine';
 import PlayerAvatar from './PlayerAvatar';
 
 const RSVP_LABELS = {
@@ -50,7 +55,7 @@ const MINUTE_SOURCE_LABEL = {
 // ─────────────────────────────────────────────────────────────
 // Component
 // ─────────────────────────────────────────────────────────────
-const ActaOficialPanel = ({ matchId, matchData, players = [], calledPlayers = [] }) => {
+const ActaOficialPanel = ({ matchId, matchData, players = [], calledPlayers = [], onNavigateTab }) => {
   const { user, getTeamPath } = useAuth();
   const { activeTeam } = useTeams();
   const activeTeamId = activeTeam?.id || null;
@@ -70,9 +75,11 @@ const ActaOficialPanel = ({ matchId, matchData, players = [], calledPlayers = []
     updateMinutesOverride,
     closeMatchSheet,
     reopenMatchSheet,
+    cleanseEvents,
   } = useMatchSheet(teamPath, matchId, matchData, players);
 
   const [closingInProgress, setClosingInProgress] = useState(false);
+  const [cleansingInProgress, setCleansingInProgress] = useState(false);
   const [expandedPlayer, setExpandedPlayer] = useState(null);
   const [showWarningsModal, setShowWarningsModal] = useState(false);
   const [warningsList, setWarningsList] = useState([]);
@@ -107,14 +114,8 @@ const ActaOficialPanel = ({ matchId, matchData, players = [], calledPlayers = []
   const titularesSet = useMemo(() => new Set(rawTitulares), [rawTitulares]);
 
   const effectiveEvents = useMemo(() => {
-    if (Array.isArray(matchData?.liveStatsEvents) && matchData.liveStatsEvents.length > 0) {
-      return matchData.liveStatsEvents;
-    }
-    if (Array.isArray(matchData?.events) && matchData.events.length > 0) {
-      return matchData.events;
-    }
-    return [];
-  }, [matchData?.liveStatsEvents, matchData?.events]);
+    return getUnifiedMatchEvents(matchData);
+  }, [matchData]);
 
   const duration = parseInt(matchData?.duration || matchData?.duracion || 90, 10);
 
@@ -176,6 +177,16 @@ const ActaOficialPanel = ({ matchId, matchData, players = [], calledPlayers = []
     catch { /* toast handled in hook */ }
   };
 
+  const handleCleanse = async () => {
+    if (!window.confirm('¿Depurar la bitácora? Se invalidarán sustituciones duplicadas o imposibles y se recalcularán acta, minutos y marcadores.')) return;
+    setCleansingInProgress(true);
+    try {
+      await cleanseEvents();
+    } finally {
+      setCleansingInProgress(false);
+    }
+  };
+
   const handleStatusChange = async (pid, status) => {
     try { await updatePlayerStatus(pid, status); }
     catch { /* toast handled in hook */ }
@@ -189,25 +200,7 @@ const ActaOficialPanel = ({ matchId, matchData, players = [], calledPlayers = []
   };
 
   const performDivergenceCheck = () => {
-    const warnings = [];
-
-    // 1. Jugadores sin registro de asistencia
-    if (attendanceCounts.sin_registro > 0) {
-      warnings.push(`Hay ${attendanceCounts.sin_registro} jugador(es) marcados como "Sin registro".`);
-    }
-
-    // 2. Discrepancia de goles entre bitácora y marcador
-    const goalsForEvents = (effectiveEvents || []).filter(e => e.type === 'gol_local' || e.type === 'goal_own').length;
-    const goalsAgainstEvents = (effectiveEvents || []).filter(e => e.type === 'gol_rival' || e.type === 'goal_rival').length;
-
-    if (matchData.goalsFor !== undefined && matchData.goalsFor !== null && matchData.goalsFor !== goalsForEvents) {
-      warnings.push(`Goles propios: el marcador indica ${matchData.goalsFor} pero hay ${goalsForEvents} gol(es) registrados en la bitácora.`);
-    }
-    if (matchData.goalsAgainst !== undefined && matchData.goalsAgainst !== null && matchData.goalsAgainst !== goalsAgainstEvents) {
-      warnings.push(`Goles rival: el marcador indica ${matchData.goalsAgainst} pero hay ${goalsAgainstEvents} gol(es) registrados en la bitácora.`);
-    }
-
-    return warnings;
+    return detectMatchEventDivergences(matchData, sheet?.actual || {}, players);
   };
 
   const executeCloseActa = async () => {
@@ -274,8 +267,16 @@ const ActaOficialPanel = ({ matchId, matchData, players = [], calledPlayers = []
         <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
           {!isClosed && (
             <>
-              <button style={styles.btnPrimary} onClick={handleSmartPrefill}>
+              <button style={styles.btnPrimary} onClick={handleSmartPrefill} title="Calcula minutos reales según sustituciones y eventos">
                 ⚡ Prellenado inteligente
+              </button>
+              <button
+                style={{ ...styles.btnSecondary, background: 'rgba(245, 158, 11, 0.15)', borderColor: '#F59E0B', color: '#F59E0B' }}
+                onClick={handleCleanse}
+                disabled={cleansingInProgress}
+                title="Depura sustituciones duplicadas o imposibles de la bitácora"
+              >
+                {cleansingInProgress ? 'Depurando...' : '🧹 Depurar bitácora'}
               </button>
               <button style={styles.btnSecondary} onClick={handlePrefill}>
                 📅 Prellenar desde RSVP
@@ -524,9 +525,9 @@ const ActaOficialPanel = ({ matchId, matchData, players = [], calledPlayers = []
                         style={styles.minutesInput}
                       />
                     </div>
-                    {minuteSource && (
-                      <div style={{ fontSize: '12px', color: 'var(--partidos-text-muted)', marginTop: '18px' }}>
-                        Cálculo del motor: {MINUTE_SOURCE_LABEL[minuteSource] || minuteSource} ({computedMin.minutes}')
+                    {(actual?.detail || minuteSource) && (
+                      <div style={{ fontSize: '12px', color: '#93C5FD', marginTop: '14px', background: 'rgba(59, 130, 246, 0.1)', padding: '6px 10px', borderRadius: '6px' }}>
+                        💡 <strong>Cálculo del motor:</strong> {actual?.detail || `${MINUTE_SOURCE_LABEL[minuteSource] || minuteSource} (${computedMin.minutes}')`}
                       </div>
                     )}
                     {/* Discrepancia */}
@@ -594,7 +595,7 @@ const ActaOficialPanel = ({ matchId, matchData, players = [], calledPlayers = []
           left: 0,
           right: 0,
           bottom: 0,
-          background: 'rgba(0,0,0,0.7)',
+          background: 'rgba(0,0,0,0.75)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
@@ -605,59 +606,112 @@ const ActaOficialPanel = ({ matchId, matchData, players = [], calledPlayers = []
             background: 'var(--partidos-card-bg, #1B3A2D)',
             border: '2px solid #F59E0B',
             borderRadius: '16px',
-            maxWidth: '520px',
+            maxWidth: '560px',
             width: '100%',
             padding: '24px',
             boxShadow: '0 20px 40px rgba(0,0,0,0.6)'
           }}>
-            <h3 style={{ margin: '0 0 12px', fontSize: '16px', color: '#F59E0B', display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <h3 style={{ margin: '0 0 12px', fontSize: '17px', color: '#F59E0B', display: 'flex', alignItems: 'center', gap: '8px' }}>
               ⚠️ Divergencias Detectadas antes de Cerrar
             </h3>
             <p style={{ fontSize: '13px', color: 'var(--partidos-text-primary)', marginBottom: '16px', lineHeight: 1.4 }}>
-              Se han detectado las siguientes alertas de coherencia en el acta oficial:
+              Se han detectado las siguientes incongruencias en el acta oficial o en la bitácora del partido:
             </p>
-            <div style={{ background: 'rgba(0,0,0,0.25)', borderRadius: '8px', padding: '12px', marginBottom: '20px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-              {warningsList.map((warn, i) => (
-                <div key={i} style={{ fontSize: '12px', color: '#FCD34D', display: 'flex', gap: '8px', alignItems: 'flex-start' }}>
-                  <span>•</span>
-                  <span>{warn}</span>
-                </div>
-              ))}
+
+            <div style={{ background: 'rgba(0,0,0,0.25)', borderRadius: '10px', padding: '12px', marginBottom: '20px', display: 'flex', flexDirection: 'column', gap: '10px', maxHeight: '280px', overflowY: 'auto' }}>
+              {warningsList.map((warn, i) => {
+                const msg = typeof warn === 'string' ? warn : warn.message;
+                const tab = typeof warn === 'object' ? warn.tabTarget : null;
+
+                return (
+                  <div key={i} style={{ fontSize: '12px', color: '#FCD34D', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '10px', borderBottom: '1px solid rgba(255,255,255,0.08)', paddingBottom: '8px' }}>
+                    <div style={{ display: 'flex', gap: '8px', alignItems: 'flex-start', flex: 1 }}>
+                      <span>⚠️</span>
+                      <span style={{ lineHeight: 1.35 }}>{msg}</span>
+                    </div>
+                    {tab && onNavigateTab && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setShowWarningsModal(false);
+                          onNavigateTab(tab);
+                        }}
+                        style={{
+                          background: 'rgba(245, 158, 11, 0.2)',
+                          border: '1px solid #F59E0B',
+                          color: '#FCD34D',
+                          borderRadius: '6px',
+                          padding: '4px 8px',
+                          fontSize: '11px',
+                          fontWeight: '700',
+                          cursor: 'pointer',
+                          whiteSpace: 'nowrap'
+                        }}
+                      >
+                        🔍 Corregir en {tab}
+                      </button>
+                    )}
+                  </div>
+                );
+              })}
             </div>
-            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
+
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
               <button
                 type="button"
-                onClick={() => setShowWarningsModal(false)}
+                onClick={async () => {
+                  await handleSmartPrefill();
+                  setShowWarningsModal(false);
+                }}
                 style={{
-                  padding: '10px 16px',
+                  padding: '8px 12px',
                   borderRadius: '8px',
-                  border: '1px solid var(--partidos-border)',
-                  background: 'transparent',
-                  color: 'var(--partidos-text-primary)',
+                  border: '1px solid #3B82F6',
+                  background: 'rgba(59, 130, 246, 0.15)',
+                  color: '#93C5FD',
                   fontWeight: '700',
                   cursor: 'pointer',
-                  minHeight: '44px'
+                  fontSize: '12px'
                 }}
               >
-                Revisar y Corregir
+                ⚡ Recalcular con eventos
               </button>
-              <button
-                type="button"
-                onClick={executeCloseActa}
-                disabled={closingInProgress}
-                style={{
-                  padding: '10px 18px',
-                  borderRadius: '8px',
-                  border: 'none',
-                  background: '#F59E0B',
-                  color: '#000000',
-                  fontWeight: '800',
-                  cursor: 'pointer',
-                  minHeight: '44px'
-                }}
-              >
-                {closingInProgress ? 'Cerrando...' : 'Confirmar Cierre de Todas Formas'}
-              </button>
+
+              <div style={{ display: 'flex', gap: '10px' }}>
+                <button
+                  type="button"
+                  onClick={() => setShowWarningsModal(false)}
+                  style={{
+                    padding: '10px 16px',
+                    borderRadius: '8px',
+                    border: '1px solid var(--partidos-border)',
+                    background: 'transparent',
+                    color: 'var(--partidos-text-primary)',
+                    fontWeight: '700',
+                    cursor: 'pointer',
+                    minHeight: '44px'
+                  }}
+                >
+                  Revisar
+                </button>
+                <button
+                  type="button"
+                  onClick={executeCloseActa}
+                  disabled={closingInProgress}
+                  style={{
+                    padding: '10px 18px',
+                    borderRadius: '8px',
+                    border: 'none',
+                    background: '#F59E0B',
+                    color: '#000000',
+                    fontWeight: '800',
+                    cursor: 'pointer',
+                    minHeight: '44px'
+                  }}
+                >
+                  {closingInProgress ? 'Cerrando...' : 'Cerrar de todas formas'}
+                </button>
+              </div>
             </div>
           </div>
         </div>

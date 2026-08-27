@@ -173,6 +173,8 @@ const Partidos = () => {
     resetTimer: resetTimerCtx,
     adjustTimer,
     setActiveMatchId,
+    finishMatch,
+    syncMatchState,
     currentMinute: ctxCurrentMinute,
     formatMatchTime,
   } = useMatch();
@@ -253,9 +255,12 @@ const Partidos = () => {
   // formatTime usa la función del contexto
   const formatTime = formatMatchTime;
 
-  const handleTimerToggle = toggleTimer;
-  const handleTimerReset = resetTimerCtx;
-  const handleTimerAdjust = adjustTimer;
+  const isMatchFinished = matchData.status === 'Terminado' || matchData.status === 'Finalizado';
+  const isEnLanguage = getEffectiveLanguage(settings) === 'English (EN)';
+
+  const handleTimerToggle = isMatchFinished ? () => {} : toggleTimer;
+  const handleTimerReset = isMatchFinished ? () => {} : resetTimerCtx;
+  const handleTimerAdjust = isMatchFinished ? () => {} : adjustTimer;
 
   const currentMinute = ctxCurrentMinute;
   const { events: liveEvents, addLiveEvent, resetLiveStats } = useLiveStats(effectiveTeamId, matchData?.id || null, ctxCurrentMinute || 0, 1);
@@ -275,16 +280,16 @@ const Partidos = () => {
 
   // Derivados 100% canónicos desde events
   const derivedGoalsFor = useMemo(() => {
-    return (matchData.events || []).filter(e => e.type === 'gol_local' || e.type === 'goal_own').length;
+    return (matchData.events || []).filter(e => e.isValid !== false && (e.type === 'gol_local' || e.type === 'goal_own')).length;
   }, [matchData.events]);
 
   const derivedGoalsAgainst = useMemo(() => {
-    return (matchData.events || []).filter(e => e.type === 'gol_rival' || e.type === 'goal_rival').length;
+    return (matchData.events || []).filter(e => e.isValid !== false && (e.type === 'gol_rival' || e.type === 'goal_rival')).length;
   }, [matchData.events]);
 
   const derivedGoleadores = useMemo(() => {
     return (matchData.events || [])
-      .filter(e => e.type === 'gol_local')
+      .filter(e => e.isValid !== false && e.type === 'gol_local')
       .map(e => ({
         jugadorId: e.playerId,
         nombre: e.playerName || players.find(p => p.id === e.playerId)?.name || 'Jugador',
@@ -295,7 +300,7 @@ const Partidos = () => {
 
   const derivedTarjetas = useMemo(() => {
     return (matchData.events || [])
-      .filter(e => e.type === 'amarilla' || e.type === 'roja')
+      .filter(e => e.isValid !== false && (e.type === 'amarilla' || e.type === 'roja'))
       .map(e => ({
         jugadorId: e.playerId,
         nombre: e.playerName || players.find(p => p.id === e.playerId)?.name || 'Jugador',
@@ -303,9 +308,6 @@ const Partidos = () => {
         minuto: String(e.minute)
       }));
   }, [matchData.events, players]);
-
-  const isMatchFinished = matchData.status === 'Terminado' || matchData.status === 'Finalizado';
-  const isEnLanguage = getEffectiveLanguage(settings) === 'English (EN)';
 
   const matchHalfLabel = isMatchFinished
     ? (isEnLanguage ? 'Finished' : 'Finalizado')
@@ -315,9 +317,10 @@ const Partidos = () => {
 
   const handleFinishMatch = useCallback(async () => {
     if (!matchData.id) return;
-    if (isTimerRunning) {
-      toggleTimer();
-    }
+    const finalSec = Number.isFinite(matchSeconds) ? matchSeconds : (matchData.finalSeconds || 0);
+    finishMatch(finalSec);
+    const finalClockStr = formatMatchTime(finalSec);
+
     const allEvents = effectiveLiveEvents && effectiveLiveEvents.length > 0
       ? effectiveLiveEvents
       : (matchData.liveStatsEvents || matchData.events || []);
@@ -351,6 +354,9 @@ const Partidos = () => {
     const updated = { 
       ...matchData, 
       status: 'Terminado',
+      finalClock: finalClockStr,
+      finalSeconds: finalSec,
+      elapsedSeconds: finalSec,
       titulares: norm.titulares,
       suplentes: norm.suplentes,
       convocados: norm.convocados,
@@ -372,7 +378,7 @@ const Partidos = () => {
     } catch (err) {
       console.error("Error al finalizar partido:", err);
     }
-  }, [matchData, isTimerRunning, toggleTimer, updateMatch, effectiveLiveEvents, calledPlayers, user, derivedGoalsFor, derivedGoalsAgainst, derivedGoleadores, derivedTarjetas]);
+  }, [matchData, matchSeconds, finishMatch, formatMatchTime, updateMatch, effectiveLiveEvents, calledPlayers, user, derivedGoalsFor, derivedGoalsAgainst, derivedGoleadores, derivedTarjetas]);
 
   const handleAddLiveEvent = useCallback(async (type, explicitHalf) => {
     if (addLiveEvent) {
@@ -825,6 +831,7 @@ const Partidos = () => {
   const handleEditMatch = (match) => {
     if (!match) return;
     setActiveMatchId(match.id);
+    syncMatchState(match.id, match);
     const norm = normalizeLineup(match.titulares, match.suplentes, match.convocados);
     setMatchData({
       postMatchAnswers: { tactical: '', physical: '', improvement: '', highlights: '' },
@@ -1728,6 +1735,7 @@ const Partidos = () => {
                 matchData={matchData}
                 players={players}
                 calledPlayers={calledPlayers}
+                onNavigateTab={handleTabChange}
               />
             )}
 

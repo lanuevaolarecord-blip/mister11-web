@@ -182,9 +182,13 @@ const LiveStats = ({
     formatMatchTime,
   } = useMatch();
 
+  const isMatchFinished = matchData?.status === 'Terminado' || matchData?.status === 'Finalizado';
+  const displayHalf = isMatchFinished ? 2 : (matchSeconds < 2700 ? 1 : 2);
+  const displaySeconds = isMatchFinished && Number.isFinite(matchData?.finalSeconds) ? matchData.finalSeconds : matchSeconds;
+
   const containerRef = useRef(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
-  const [currentHalf, setCurrentHalf] = useState(1);
+  const [currentHalf, setCurrentHalf] = useState(displayHalf);
   const [showResetModal, setShowResetModal] = useState(false);
 
   // ── Estados de Navegación por Pestañas ──────────────────────────────────────
@@ -565,29 +569,42 @@ const LiveStats = ({
         <header className="livestats-header">
           {/* Cronómetro y Mitad */}
           <div className="livestats-timer-card">
-            <div className="livestats-timer-display" style={{ color: isRunning ? '#4CAF7D' : '#D4A843' }}>
-              <span className="livestats-timer-time">{formatMatchTime(matchSeconds)}</span>
-              <span className="livestats-timer-badge">
-                {tx('live.half')} {currentHalf} · {currentMinute}′
-              </span>
+            <div className="livestats-timer-display" style={{ color: isMatchFinished ? '#94A3B8' : (isRunning ? '#4CAF7D' : '#D4A843') }}>
+              <span className="livestats-timer-time">{formatMatchTime(displaySeconds)}</span>
+              {isMatchFinished ? (
+                <span className="livestats-timer-badge" style={{ background: '#15803D', color: '#FFFFFF', fontWeight: '800' }}>
+                  ⏹️ {isEn ? 'FINAL' : 'FINAL'}
+                </span>
+              ) : (
+                <span className="livestats-timer-badge">
+                  {tx('live.half')} {displayHalf} · {currentMinute}′
+                </span>
+              )}
             </div>
 
             <div className="livestats-timer-actions">
               <button
                 type="button"
                 id="livestats-btn-toggle-timer"
-                onClick={toggleTimer}
-                className={`livestats-btn-timer ${isRunning ? 'running' : 'paused'}`}
+                onClick={isMatchFinished ? undefined : toggleTimer}
+                disabled={isMatchFinished}
+                title={isMatchFinished ? (isEn ? 'Match finished' : 'Partido finalizado') : (isRunning ? tx('live.timer.pause') : tx('live.timer.start'))}
+                className={`livestats-btn-timer ${isMatchFinished ? 'paused' : (isRunning ? 'running' : 'paused')}`}
+                style={isMatchFinished ? { opacity: 0.5, cursor: 'not-allowed' } : {}}
               >
-                {isRunning ? tx('live.timer.pause') : tx('live.timer.start')}
+                {isMatchFinished
+                  ? (isEn ? 'Finished' : 'Finalizado')
+                  : (isRunning ? tx('live.timer.pause') : tx('live.timer.start'))}
               </button>
 
               <button
                 type="button"
                 id="livestats-btn-reset-timer"
-                onClick={resetTimer}
+                onClick={isMatchFinished ? undefined : resetTimer}
+                disabled={isMatchFinished}
                 className="livestats-btn-icon-timer"
-                title={tx('live.timer.reset')}
+                title={isMatchFinished ? (isEn ? 'Match finished' : 'Partido finalizado') : tx('live.timer.reset')}
+                style={isMatchFinished ? { opacity: 0.5, cursor: 'not-allowed' } : {}}
               >
                 ↺
               </button>

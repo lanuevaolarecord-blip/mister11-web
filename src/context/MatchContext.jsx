@@ -153,9 +153,67 @@ export const MatchProvider = ({ children }) => {
     });
   }, []);
 
+  /** Sincroniza el estado del partido con Firestore (si está terminado, congela el reloj de inmediato) */
+  const syncMatchState = useCallback((matchId, { status, finalSeconds, finalClock, elapsedSeconds } = {}) => {
+    const isTerminado = status === 'Terminado' || status === 'Finalizado';
+    if (isTerminado) {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
+      const fixedSec = Number.isFinite(finalSeconds)
+        ? finalSeconds
+        : (typeof finalClock === 'string' && finalClock.includes(':')
+            ? (parseInt(finalClock.split(':')[0], 10) * 60 + parseInt(finalClock.split(':')[1], 10))
+            : (Number.isFinite(elapsedSeconds) ? elapsedSeconds : null));
+
+      setPersistedState((prev) => {
+        const sec = fixedSec !== null ? fixedSec : (prev.matchSeconds || prev.offsetSeconds || 0);
+        return {
+          ...prev,
+          matchId,
+          isFinished: true,
+          isRunning: false,
+          startTimestamp: null,
+          offsetSeconds: sec,
+          matchSeconds: sec,
+        };
+      });
+    } else {
+      setPersistedState((prev) => {
+        if (prev.matchId === matchId && !prev.isFinished) return prev;
+        return {
+          ...prev,
+          matchId,
+          isFinished: false,
+        };
+      });
+    }
+  }, []);
+
+  /** Finaliza el partido y congela el cronómetro permanentemente */
+  const finishMatch = useCallback((finalSeconds) => {
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+      intervalRef.current = null;
+    }
+    setPersistedState((prev) => {
+      const sec = Number.isFinite(finalSeconds) ? finalSeconds : recalcSeconds(prev);
+      return {
+        ...prev,
+        isFinished: true,
+        isRunning: false,
+        startTimestamp: null,
+        offsetSeconds: sec,
+        matchSeconds: sec,
+      };
+    });
+  }, []);
+
   /** Toggle inicio/pausa */
   const toggleTimer = useCallback(() => {
     setPersistedState((prev) => {
+      if (prev.isFinished) return prev; // Bloqueado si el partido está terminado
       if (prev.isRunning) {
         const currentSeconds = recalcSeconds(prev);
         return {
@@ -177,18 +235,22 @@ export const MatchProvider = ({ children }) => {
 
   /** Resetea el cronómetro completamente */
   const resetTimer = useCallback(() => {
-    setPersistedState((prev) => ({
-      ...prev,
-      isRunning: false,
-      startTimestamp: null,
-      offsetSeconds: 0,
-      matchSeconds: 0,
-    }));
+    setPersistedState((prev) => {
+      if (prev.isFinished) return prev; // Bloqueado si el partido está terminado
+      return {
+        ...prev,
+        isRunning: false,
+        startTimestamp: null,
+        offsetSeconds: 0,
+        matchSeconds: 0,
+      };
+    });
   }, []);
 
   /** Ajuste manual de tiempo (+/- segundos) */
   const adjustTimer = useCallback((deltaSeconds) => {
     setPersistedState((prev) => {
+      if (prev.isFinished) return prev; // Bloqueado si el partido está terminado
       const currentSeconds = recalcSeconds(prev);
       const newOffset = Math.max(0, currentSeconds + deltaSeconds);
       return {
@@ -213,7 +275,10 @@ export const MatchProvider = ({ children }) => {
     matchId: persistedState.matchId,
     matchSeconds: persistedState.matchSeconds,
     isRunning: persistedState.isRunning,
+    isFinished: Boolean(persistedState.isFinished),
     setActiveMatchId,
+    syncMatchState,
+    finishMatch,
     toggleTimer,
     resetTimer,
     adjustTimer,

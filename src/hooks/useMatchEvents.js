@@ -36,12 +36,12 @@ export const useMatchEvents = (matchData, setMatchData, players = [], updateMatc
       });
 
       // Marcador DERIVADO de los eventos de gol
-      const derivedGoalsFor = updatedEvents.filter(e => e.type === 'gol_local' || e.type === 'goal_own').length;
-      const derivedGoalsAgainst = updatedEvents.filter(e => e.type === 'gol_rival' || e.type === 'goal_rival').length;
+      const derivedGoalsFor = updatedEvents.filter(e => e.isValid !== false && (e.type === 'gol_local' || e.type === 'goal_own')).length;
+      const derivedGoalsAgainst = updatedEvents.filter(e => e.isValid !== false && (e.type === 'gol_rival' || e.type === 'goal_rival')).length;
 
       // Goleadores y tarjetas derivados
       const updatedGoleadores = updatedEvents
-        .filter(e => e.type === 'gol_local' && e.playerId)
+        .filter(e => e.isValid !== false && e.type === 'gol_local' && e.playerId)
         .map(e => ({
           jugadorId: e.playerId,
           nombre: e.playerName,
@@ -50,7 +50,7 @@ export const useMatchEvents = (matchData, setMatchData, players = [], updateMatc
         }));
 
       const updatedTarjetas = updatedEvents
-        .filter(e => (e.type === 'amarilla' || e.type === 'roja') && e.playerId)
+        .filter(e => e.isValid !== false && (e.type === 'amarilla' || e.type === 'roja') && e.playerId)
         .map(e => ({
           jugadorId: e.playerId,
           nombre: e.playerName,
@@ -93,11 +93,11 @@ export const useMatchEvents = (matchData, setMatchData, players = [], updateMatc
       });
 
       // Marcador DERIVADO
-      const derivedGoalsFor = updatedEvents.filter(e => e.type === 'gol_local' || e.type === 'goal_own').length;
-      const derivedGoalsAgainst = updatedEvents.filter(e => e.type === 'gol_rival' || e.type === 'goal_rival').length;
+      const derivedGoalsFor = updatedEvents.filter(e => e.isValid !== false && (e.type === 'gol_local' || e.type === 'goal_own')).length;
+      const derivedGoalsAgainst = updatedEvents.filter(e => e.isValid !== false && (e.type === 'gol_rival' || e.type === 'goal_rival')).length;
 
       const updatedGoleadores = updatedEvents
-        .filter(e => e.type === 'gol_local' && e.playerId)
+        .filter(e => e.isValid !== false && e.type === 'gol_local' && e.playerId)
         .map(e => ({
           jugadorId: e.playerId,
           nombre: e.playerName,
@@ -106,7 +106,7 @@ export const useMatchEvents = (matchData, setMatchData, players = [], updateMatc
         }));
 
       const updatedTarjetas = updatedEvents
-        .filter(e => (e.type === 'amarilla' || e.type === 'roja') && e.playerId)
+        .filter(e => e.isValid !== false && (e.type === 'amarilla' || e.type === 'roja') && e.playerId)
         .map(e => ({
           jugadorId: e.playerId,
           nombre: e.playerName,

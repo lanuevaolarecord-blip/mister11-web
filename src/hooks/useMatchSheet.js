@@ -20,7 +20,13 @@ import {
 } from 'firebase/firestore';
 import { db } from '../firebaseConfig';
 import { useAuth } from '../context/AuthContext';
-import { calculateAllPlayerMinutes, buildSmartMatchSheetActual, calculateMinutesFromEvents } from '../utils/minutesEngine';
+import {
+  calculateAllPlayerMinutes,
+  buildSmartMatchSheetActual,
+  calculateMinutesFromEvents,
+  getUnifiedMatchEvents,
+  cleanseImpossibleMatchEvents
+} from '../utils/minutesEngine';
 import { showToast } from '../utils/toast';
 
 /**
@@ -159,9 +165,7 @@ export const useMatchSheet = (teamPath, matchId, matchData, players = []) => {
       const duration = parseInt(matchData?.duration || matchData?.duracion || 90, 10);
       const rawTitulares = Array.isArray(matchData?.titulares) ? matchData.titulares : (matchData?.alineacion?.titulares || []);
       const rawSuplentes = Array.isArray(matchData?.suplentes) ? matchData.suplentes : (matchData?.alineacion?.suplentes || []);
-      const allEvents = Array.isArray(matchData?.liveStatsEvents) && matchData.liveStatsEvents.length > 0
-        ? matchData.liveStatsEvents
-        : (Array.isArray(matchData?.events) ? matchData.events : []);
+      const allEvents = getUnifiedMatchEvents(matchData);
 
       const effectiveOverride = minutesOverride !== null ? minutesOverride : (existing.minutesOverride ?? null);
       const effectiveLateMin = lateMin !== null ? lateMin : (existing.lateMin ?? null);
@@ -182,6 +186,7 @@ export const useMatchSheet = (teamPath, matchId, matchData, players = []) => {
         status,
         minutes: minutesCalc.minutes,
         minuteSource: minutesCalc.source,
+        detail: minutesCalc.detail,
         source: 'manual',
         at: new Date().toISOString(),
         by: user.uid,
@@ -194,6 +199,49 @@ export const useMatchSheet = (teamPath, matchId, matchData, players = []) => {
       });
     } catch (err) {
       console.error('[useMatchSheet] Error actualizando estado:', err);
+      throw err;
+    }
+  };
+
+  /**
+   * Depura eventos imposibles y duplicados de la bitácora, recalculando el acta y marcador.
+   */
+  const cleanseEvents = async () => {
+    if (!isValid || !user || sheet?.closed) return { removedCount: 0 };
+    try {
+      const rawTitulares = Array.isArray(matchData?.titulares) ? matchData.titulares : (matchData?.alineacion?.titulares || []);
+      const events = Array.isArray(matchData?.events) ? matchData.events : [];
+      const { cleansedEvents, removedCount, details } = cleanseImpossibleMatchEvents(events, rawTitulares);
+
+      if (removedCount === 0) {
+        showToast('✅ No se detectaron sustituciones imposibles ni eventos duplicados.', 'info');
+        return { removedCount: 0, details: [] };
+      }
+
+      const derivedGoalsFor = cleansedEvents.filter(e => e.isValid !== false && (e.type === 'gol_local' || e.type === 'goal_own')).length;
+      const derivedGoalsAgainst = cleansedEvents.filter(e => e.isValid !== false && (e.type === 'gol_rival' || e.type === 'goal_rival')).length;
+
+      const smartActual = buildSmartMatchSheetActual(
+        { ...matchData, events: cleansedEvents },
+        sheet?.actual || {},
+        sheet?.rsvp || {},
+        user.uid,
+        { preserveManual: false }
+      );
+
+      const matchDocRef = doc(db, `${cleanPath}/matches`, matchId);
+      await updateDoc(matchDocRef, {
+        events: cleansedEvents,
+        goalsFor: derivedGoalsFor,
+        goalsAgainst: derivedGoalsAgainst,
+        'actaOficial.actual': smartActual,
+      });
+
+      showToast(`🧹 Se depuraron ${removedCount} evento(s) imposible(s) y se recalculó el acta.`, 'success');
+      return { removedCount, details };
+    } catch (err) {
+      console.error('[useMatchSheet] Error depurando bitácora:', err);
+      showToast('❌ Error al depurar bitácora.', 'error');
       throw err;
     }
   };
@@ -316,5 +364,6 @@ export const useMatchSheet = (teamPath, matchId, matchData, players = []) => {
     updateMinutesOverride,
     closeMatchSheet,
     reopenMatchSheet,
+    cleanseEvents,
   };
 };

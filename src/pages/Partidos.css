@@ -68,7 +68,7 @@ html.dark select option {
   flex-direction: column;
   min-height: 100%;
   background-color: var(--partidos-bg);
-  padding: 20px;
+  padding: 16px;
   overflow-x: hidden;
   box-sizing: border-box;
   color: var(--partidos-text-primary);
@@ -77,13 +77,13 @@ html.dark select option {
 
 @media (min-width: 640px) {
   .partidos-page {
-    padding: 24px;
+    padding: 20px;
   }
 }
 
 @media (min-width: 1024px) {
   .partidos-page {
-    padding: 32px;
+    padding: 24px 32px;
   }
 }
 
@@ -91,23 +91,23 @@ html.dark select option {
    HEADER & ACCIONES
 ========================================================= */
 .partidos-header {
-  margin-bottom: 24px;
+  margin-bottom: 20px;
   flex-shrink: 0;
-  padding-left: 16px;
-  padding-right: 16px;
+  padding-left: 0;
+  padding-right: 0;
 }
 
 @media (min-width: 640px) {
   .partidos-header {
-    padding-left: 24px;
-    padding-right: 24px;
+    padding-left: 0;
+    padding-right: 0;
   }
 }
 
 @media (min-width: 1024px) {
   .partidos-header {
-    padding-left: 32px;
-    padding-right: 32px;
+    padding-left: 0;
+    padding-right: 0;
   }
 }
 

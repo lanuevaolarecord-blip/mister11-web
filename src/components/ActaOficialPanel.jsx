@@ -512,11 +512,11 @@ const ActaOficialPanel = ({ matchId, matchData, players = [], calledPlayers = []
           );
 
           const currentStatus = STATUS_OPTIONS.find(s => s.id === status);
-          const displayMinutes = isClosed && actual?.minutes !== undefined && actual?.minutes !== null
-            ? actual.minutes
-            : (actual?.minutesOverride !== undefined && actual?.minutesOverride !== null
-                ? actual.minutesOverride
-                : computedMin.minutes);
+          const displayMinutes = (actual?.minutesOverride !== undefined && actual?.minutesOverride !== null)
+            ? actual.minutesOverride
+            : (computedMin?.minutes !== undefined && computedMin?.minutes !== null
+                ? computedMin.minutes
+                : (typeof actual?.minutes === 'number' ? actual.minutes : 0));
 
           const minuteSource = actual?.minuteSource || computedMin.source;
           const isExpanded = expandedPlayer === pid;

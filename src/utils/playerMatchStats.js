@@ -1,3 +1,5 @@
+import { calculateMinutesFromEvents, getUnifiedMatchEvents, getEffectiveMatchDuration } from './minutesEngine';
+
 /**
  * Utilidad unificada para el cálculo y sincronización de estadísticas de partidos
  * de jugadores en todo el ecosistema de Míster11 (MiEquipo, Portal Jugador, Informes PDF, LiveStats).
@@ -23,6 +25,7 @@ export const calculatePlayerMatchStats = (playerId, matches = []) => {
     };
   }
 
+  const pid = String(playerId);
   let matchesPlayed = 0;
   let starts = 0;
   let subAppearances = 0;
@@ -34,27 +37,25 @@ export const calculatePlayerMatchStats = (playerId, matches = []) => {
   const ratings = [];
   const matchHistory = [];
 
-  matches.forEach(m => {
+  (matches || []).forEach(m => {
     if (!m) return;
 
-    const pid = String(playerId);
-
-    // 1. Detección de alineación y participación
+    // Detectar convocatoria y rol del jugador
     const titularesList = Array.isArray(m.titulares)
-      ? m.titulares
-      : (m.alineacion?.titulares || []);
+      ? m.titulares.map(String)
+      : (m.alineacion?.titulares || []).map(String);
     const suplentesList = Array.isArray(m.suplentes)
-      ? m.suplentes
-      : (m.alineacion?.suplentes || []);
+      ? m.suplentes.map(String)
+      : (m.alineacion?.suplentes || []).map(String);
     const convocadosList = Array.isArray(m.convocados)
-      ? m.convocados
-      : (m.convocatoria || []);
+      ? m.convocados.map(String)
+      : (m.convocatoria || []).map(String);
 
-    const isTitular = titularesList.some(id => String(id) === pid);
-    const isSuplente = suplentesList.some(id => String(id) === pid);
-    const isConvocado = convocadosList.some(id => String(id) === pid);
+    const isTitular = titularesList.includes(pid);
+    const isSuplente = suplentesList.includes(pid);
+    const isConvocado = convocadosList.includes(pid);
 
-    if (!isTitular && !isSuplente && !isConvocado) return;
+    if (!isTitular && !isSuplente && !isConvocado && !m.actaOficial?.actual?.[pid]) return;
 
     // Helpers de eventos
     const allEvents = Array.isArray(m.events) ? m.events : [];
@@ -105,10 +106,27 @@ export const calculatePlayerMatchStats = (playerId, matches = []) => {
     const actaActual = acta?.actual?.[pid] || acta?.actual?.[String(playerId)] || null;
 
     if (actaClosed && actaActual) {
-      const minutesInMatch = typeof actaActual.minutes === 'number' ? actaActual.minutes : 0;
+      let minutesInMatch = 0;
+      if (actaActual.minutesOverride !== undefined && actaActual.minutesOverride !== null) {
+        minutesInMatch = parseInt(actaActual.minutesOverride, 10) || 0;
+      } else {
+        const computed = calculateMinutesFromEvents(
+          pid,
+          getUnifiedMatchEvents(m),
+          m.titulares,
+          m.suplentes,
+          getEffectiveMatchDuration(m),
+          actaActual.minutesOverride ?? null,
+          actaActual.status,
+          actaActual.lateMin ?? null,
+          m.tarjetasList || []
+        );
+        minutesInMatch = computed.minutes;
+      }
+
       const status = actaActual.status || '';
       // Solo cuenta como partido jugado si tuvo minutos positivos o fue marcado como presente
-      const didPlay = minutesInMatch > 0 || status === 'presente';
+      const didPlay = minutesInMatch > 0 || (status === 'presente' && (isTitular || isSuplente));
       if (!didPlay) {
         // No jugó (ausente / justificado / lesionado / DNP sin override) → solo goles/tarjetas
         totalGoals += calcGoals();

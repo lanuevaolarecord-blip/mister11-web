@@ -17,15 +17,23 @@ export const PlayerAttendanceSubTab = ({ playerId, teamId }) => {
   const { t, isEn, formatDate } = useTranslation();
 
   const STATUS_TAGS = {
-    present:   { label: t('common.present'),   color: '#22C55E', bg: 'rgba(34, 197, 94, 0.15)', icon: '✅' },
-    absent:    { label: t('common.absent'),    color: '#EF4444', bg: 'rgba(239, 68, 68, 0.15)', icon: '❌' },
-    justified: { label: t('common.excused'),   color: '#EAB308', bg: 'rgba(234, 179, 8, 0.15)', icon: '📝' },
-    late:      { label: isEn ? 'Late' : 'Tarde', color: '#F97316', bg: 'rgba(249, 115, 22, 0.15)', icon: '⏱️' },
-    injured:   { label: t('common.injured'),   color: '#3B82F6', bg: 'rgba(59, 130, 246, 0.15)', icon: '🚑' },
+    present:      { label: t('common.present') || (isEn ? 'Present' : 'Presente'),   color: '#22C55E', bg: 'rgba(34, 197, 94, 0.15)', icon: '✅' },
+    presente:     { label: t('common.present') || (isEn ? 'Present' : 'Presente'),   color: '#22C55E', bg: 'rgba(34, 197, 94, 0.15)', icon: '✅' },
+    absent:       { label: t('common.absent') || (isEn ? 'Absent' : 'Ausente'),     color: '#EF4444', bg: 'rgba(239, 68, 68, 0.15)', icon: '❌' },
+    ausente:      { label: t('common.absent') || (isEn ? 'Absent' : 'Ausente'),     color: '#EF4444', bg: 'rgba(239, 68, 68, 0.15)', icon: '❌' },
+    justified:    { label: t('common.excused') || (isEn ? 'Justified' : 'Justificada'), color: '#EAB308', bg: 'rgba(234, 179, 8, 0.15)', icon: '📝' },
+    justificado:  { label: t('common.excused') || (isEn ? 'Justified' : 'Justificada'), color: '#EAB308', bg: 'rgba(234, 179, 8, 0.15)', icon: '📝' },
+    late:         { label: isEn ? 'Late' : 'Tarde', color: '#F97316', bg: 'rgba(249, 115, 22, 0.15)', icon: '⏱️' },
+    tarde:        { label: isEn ? 'Late' : 'Tarde', color: '#F97316', bg: 'rgba(249, 115, 22, 0.15)', icon: '⏱️' },
+    injured:      { label: t('common.injured') || (isEn ? 'Injured' : 'Lesionado'), color: '#3B82F6', bg: 'rgba(59, 130, 246, 0.15)', icon: '🚑' },
+    lesionado:    { label: t('common.injured') || (isEn ? 'Injured' : 'Lesionado'), color: '#3B82F6', bg: 'rgba(59, 130, 246, 0.15)', icon: '🚑' },
+    no_record:    { label: isEn ? 'No Record' : 'Sin Registro', color: '#94A3B8', bg: 'rgba(148, 163, 184, 0.15)', icon: '🔘' },
+    sin_registro: { label: isEn ? 'No Record' : 'Sin Registro', color: '#94A3B8', bg: 'rgba(148, 163, 184, 0.15)', icon: '🔘' },
   };
 
   const { getPlayerStats, loading } = useAttendance(effectiveTeamId);
-  const stats = (typeof getPlayerStats === 'function' ? getPlayerStats(playerId) : null) || {
+  const rawStats = typeof getPlayerStats === 'function' ? getPlayerStats(playerId) : null;
+  const stats = rawStats || {
     pct: null,
     hasData: false,
     status: 'no_data',
@@ -45,6 +53,11 @@ export const PlayerAttendanceSubTab = ({ playerId, teamId }) => {
 
   const hasData = stats.hasData && typeof stats.pct === 'number';
   const isAtRisk = hasData && stats.pct < 70;
+  const historyList = Array.isArray(stats.history)
+    ? stats.history
+    : (Array.isArray(stats.eventDetails)
+        ? stats.eventDetails
+        : (Array.isArray(stats.timeline) ? stats.timeline : []));
 
   return (
     <div className="player-attendance-subtab" style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
@@ -83,10 +96,10 @@ export const PlayerAttendanceSubTab = ({ playerId, teamId }) => {
             🔥 {t('player.home.streak')}
           </div>
           <div style={{ fontSize: '24px', fontWeight: '900', color: 'var(--accent-gold)', margin: '4px 0' }}>
-            {stats.streak}
+            {stats.streak || 0}
           </div>
           <div style={{ fontSize: '10px', color: 'var(--text-secondary)' }}>
-            {stats.streak === 1 ? t('player.home.streakSession', { count: stats.streak }) : t('player.home.streakSessions', { count: stats.streak })}
+            {stats.streak === 1 ? t('player.home.streakSession', { count: stats.streak }) : t('player.home.streakSessions', { count: stats.streak || 0 })}
           </div>
         </div>
       </div>
@@ -137,17 +150,19 @@ export const PlayerAttendanceSubTab = ({ playerId, teamId }) => {
           📜 {t('player.attendance.monthlyTitle')}
         </div>
 
-        {stats.history.length === 0 ? (
+        {historyList.length === 0 ? (
           <div style={{ fontSize: '12px', color: 'var(--text-secondary)', fontStyle: 'italic', padding: '12px', background: 'var(--bg-app)', borderRadius: '8px' }}>
             {isEn ? 'No attendance records logged for this player yet.' : 'No hay asistencias registradas aún para este jugador.'}
           </div>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', maxHeight: '280px', overflowY: 'auto' }}>
-            {stats.history.map((h, i) => {
+            {historyList.map((h, i) => {
               const tag = STATUS_TAGS[h.status] || STATUS_TAGS.present;
+              const title = h.sessionTitle || h.title || (isEn ? 'Training session' : 'Sesión de entrenamiento');
+              const lateMinutes = h.lateMinutes || h.lateMin || null;
               return (
                 <div
-                  key={i}
+                  key={h.id || i}
                   style={{
                     display: 'flex',
                     alignItems: 'center',
@@ -160,8 +175,8 @@ export const PlayerAttendanceSubTab = ({ playerId, teamId }) => {
                   }}
                 >
                   <div>
-                    <div style={{ fontWeight: '700', color: 'var(--text-primary)' }}>{h.sessionTitle}</div>
-                    <div style={{ fontSize: '10px', color: 'var(--text-secondary)' }}>{h.date ? formatDate(h.date) : ''}</div>
+                    <div style={{ fontWeight: '700', color: 'var(--text-primary)' }}>{title}</div>
+                    <div style={{ fontSize: '10px', color: 'var(--text-secondary)' }}>{h.date ? (typeof formatDate === 'function' ? formatDate(h.date) : h.date) : ''}</div>
                   </div>
 
                   <span
@@ -178,7 +193,7 @@ export const PlayerAttendanceSubTab = ({ playerId, teamId }) => {
                     }}
                   >
                     <span>{tag.icon}</span>
-                    <span>{tag.label}{h.status === 'late' && h.lateMinutes ? ` (${h.lateMinutes}m)` : ''}</span>
+                    <span>{tag.label}{(h.status === 'late' || h.status === 'tarde') && lateMinutes ? ` (${lateMinutes}m)` : ''}</span>
                   </span>
                 </div>
               );

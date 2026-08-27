@@ -451,6 +451,14 @@ export const calculatePlayerAttendanceStats = (
     pendingCount: noRecord,
     attendanceXP: totalAttendanceXP,
     hasPendingEvents: noRecord > 0,
+    history: (scheduleStats.eventDetails || timeline || []).map(e => ({
+      id: e.id,
+      sessionTitle: e.title || e.sessionTitle || 'Sesión',
+      date: e.date,
+      status: e.status || 'presente',
+      lateMinutes: e.lateMin || e.lateMinutes || null,
+      type: e.type || 'session'
+    })),
     timeline,
     eventDetails: scheduleStats.eventDetails || [],
     callupGuidance: scheduleStats.callupGuidance

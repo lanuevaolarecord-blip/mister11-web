@@ -578,6 +578,7 @@ const PlayerDashboard = () => {
             team={activeTeam}
             teamPath={resolvedTeamPath || cleanPath}
             isParentView={isParentView}
+            onNavigateTab={setActiveTab}
           />
         )}
       </main>

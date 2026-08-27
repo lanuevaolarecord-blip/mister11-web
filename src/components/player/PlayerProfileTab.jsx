@@ -12,6 +12,7 @@ import PlayerHealthTab from '../PlayerHealthTab';
 import { PlayerPlansPortalTab } from './PlayerPlansPortalTab';
 import { PlayerAttendanceSubTab } from '../PlayerAttendanceSubTab';
 import { PlayerTabs } from './PlayerTabs';
+import { PlayerPerformanceBanner } from './PlayerPerformanceBanner';
 import { useTranslation } from '../../hooks/useTranslation';
 import { 
   User, 
@@ -51,7 +52,7 @@ const getInitials = (name) => {
   return name.substring(0, 2).toUpperCase();
 };
 
-export const PlayerProfileTab = ({ player, team, teamPath }) => {
+export const PlayerProfileTab = ({ player, team, teamPath, onNavigateTab }) => {
   const { user, logout, switchMode, userProfile, activeTeamId } = useAuth();
   const [activeSubTab, setActiveSubTab] = useState('GENERAL'); // 'GENERAL' | 'FÍSICO' | 'SALUD' | 'PLANES' | 'ESTS.' | 'ASISTENCIA'
 
@@ -315,49 +316,13 @@ export const PlayerProfileTab = ({ player, team, teamPath }) => {
   return (
     <div className="player-tab-content player-profile-tab" style={{ paddingBottom: '30px' }}>
       
-      {/* 1. CABECERA FICHA DEL JUGADOR (IDÉNTICA A MI EQUIPO) */}
-      <div style={{
-        background: 'var(--bg-card)',
-        borderRadius: '16px',
-        padding: '24px 20px 16px 20px',
-        textAlign: 'center',
-        border: '1px solid var(--border-color)',
-        boxShadow: '0 4px 12px rgba(0,0,0,0.05)',
-        position: 'relative',
-        marginBottom: '16px'
-      }}>
-        {/* Avatar / Foto */}
-        <div style={{
-          width: '90px',
-          height: '90px',
-          margin: '0 auto 12px auto',
-          borderRadius: '50%',
-          background: !player?.avatarUrl ? stringToColor(player?.id || playerName) : '#FFF',
-          border: '3px solid var(--accent-gold)',
-          overflow: 'hidden',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          boxShadow: '0 4px 10px rgba(0,0,0,0.1)'
-        }}>
-          {player?.avatarUrl ? (
-            <img src={player.avatarUrl} alt={playerName} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-          ) : (
-            <span style={{ color: '#FFF', fontSize: '28px', fontWeight: 'bold' }}>{getInitials(playerName)}</span>
-          )}
-        </div>
-
-        <h2 style={{ margin: '0 0 4px 0', fontSize: '20px', fontWeight: '900', color: 'var(--text-primary)', fontFamily: 'var(--font-heading)' }}>
-          {playerName}
-        </h2>
-        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px', fontSize: '16px', fontWeight: 'bold', color: 'var(--text-primary)', marginBottom: '8px' }}>
-          <span style={{ color: 'var(--accent-gold)' }}>#{playerNumber}</span>
-          <span style={{ fontSize: '14px', fontWeight: 'normal', color: 'var(--text-secondary)' }}>{playerPosition}</span>
-          <span style={{ fontSize: '12px', background: 'var(--accent-green-light)', color: 'var(--accent-green)', padding: '2px 8px', borderRadius: '12px', fontWeight: 'bold' }}>
-            ⚽ {team?.nombre || team?.name || 'Equipo'}
-          </span>
-        </div>
-      </div>
+      {/* 1. HERO BANNER DE RENDIMIENTO (LEGEND CARD + TACTICAL PITCH RADAR) */}
+      <PlayerPerformanceBanner
+        player={player}
+        teamPath={cleanTeamPath || teamPath}
+        onNavigateTab={onNavigateTab}
+        onOpenSummary={() => setActiveSubTab('FÍSICO')}
+      />
 
       {/* 2. BARRA DE SUB-PESTAÑAS RESPONSIVE HÍBRIDA */}
       <PlayerTabs activeTab={activeSubTab} onTabChange={setActiveSubTab} />

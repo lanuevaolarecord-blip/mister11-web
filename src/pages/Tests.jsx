@@ -16,6 +16,7 @@ import LegendCard from '../components/LegendCard';
 import ProgressTracker from '../components/ProgressTracker';
 import TestDetail from './TestDetail';
 import PlayerAnalyticsModal, { SvgRadar } from '../components/PlayerAnalyticsModal';
+import { calculatePlayerPerformanceScores } from '../utils/testScoreEngine';
 import { db } from '../firebaseConfig';
 import { collection, addDoc, getDocs, query, where, orderBy, serverTimestamp, writeBatch, doc, deleteDoc } from '../firebase/firestore-proxy';
 import WellnessTestModal from '../components/WellnessTestModal';
@@ -415,62 +416,80 @@ const Tests = () => {
     loadTests();
   }, [loadTests]);
 
-  // Carga de evaluaciones reales desde Firestore
-  const loadEvaluations = useCallback(async () => {
+  // Carga reactiva en tiempo real (onSnapshot) de evaluaciones y tests completados
+  useEffect(() => {
     if (!user || !activeTeamId) return;
 
     if (user.uid === 'invitado-local') {
-      setLoading(true);
       try {
         const localEvals = localStorage.getItem('mister11_local_evaluaciones') || '[]';
         const parsed = JSON.parse(localEvals);
         const newHistory = {};
         
         parsed.forEach((item) => {
-          const { jugadorId, testId, val, date } = item;
+          const jugadorId = item.jugadorId || item.playerId;
+          const testId = item.testId;
+          const val = Number(item.val ?? item.score ?? item.nota ?? 0);
+          const date = item.date || item.fecha;
+          if (!jugadorId || !testId) return;
           if (!newHistory[jugadorId]) newHistory[jugadorId] = {};
           if (!newHistory[jugadorId][testId]) newHistory[jugadorId][testId] = [];
-          newHistory[jugadorId][testId].push({ id: item.id, date, val: Number(val) });
+          newHistory[jugadorId][testId].push({ id: item.id, date, val });
         });
         setHistoryData(newHistory);
       } catch (e) {
         console.error("Error parsing local evaluations:", e);
-      } finally {
-        setLoading(false);
       }
       return;
     }
 
-    setLoading(true);
-    try {
-      const q = query(
-        collection(db, getTeamPath(), 'evaluaciones'),
-        orderBy('timestamp', 'asc')
-      );
-      const querySnapshot = await getDocs(q);
+    const teamPath = getTeamPath();
+    if (!teamPath) return;
+
+    const unsubEvals = onSnapshot(collection(db, teamPath, 'evaluaciones'), (snapshot) => {
       const newHistory = {};
-      
-      querySnapshot.forEach((doc) => {
-        const data = doc.data();
-        const { jugadorId, testId, val, date } = data;
-        
+      snapshot.forEach((docSnap) => {
+        const data = docSnap.data();
+        const jugadorId = data.jugadorId || data.playerId;
+        const testId = data.testId;
+        const val = Number(data.val ?? data.score ?? data.nota ?? data.puntuacionTotal ?? 0);
+        const date = data.date || data.fecha;
+        if (!jugadorId || !testId) return;
+
         if (!newHistory[jugadorId]) newHistory[jugadorId] = {};
         if (!newHistory[jugadorId][testId]) newHistory[jugadorId][testId] = [];
-        
-        newHistory[jugadorId][testId].push({ id: doc.id, date, val: Number(val) });
-      });
-      
-      setHistoryData(newHistory);
-    } catch (error) {
-      console.error("Error loading evaluations:", error);
-    } finally {
-      setLoading(false);
-    }
-  }, [user, activeTeamId]);
+        newHistory[jugadorId][testId].push({ id: docSnap.id, date, val, raw: data });
 
-  useEffect(() => {
-    loadEvaluations();
-  }, [loadEvaluations]);
+        // Aliases para tests psicológicos y autónomos
+        const aliasMap = {
+          'psi_acsi28_auto': 'psi1',
+          'psi_mtq10_auto': 'psi2',
+          'soc_geq_auto': 'soc1',
+          'soc_mhc_auto': 'soc2',
+          'psi_acsi28': 'psi1',
+          'psi_mtq10': 'psi2',
+          'soc_geq': 'soc1',
+          'soc_cwms': 'soc2'
+        };
+        const aliasId = aliasMap[testId];
+        if (aliasId) {
+          if (!newHistory[jugadorId][aliasId]) newHistory[jugadorId][aliasId] = [];
+          newHistory[jugadorId][aliasId].push({ id: docSnap.id, date, val, raw: data });
+        }
+      });
+      setHistoryData(newHistory);
+      setLoading(false);
+    }, (error) => {
+      console.error("Error en snapshot de evaluaciones:", error);
+      setLoading(false);
+    });
+
+    return () => unsubEvals();
+  }, [user, activeTeamId, getTeamPath]);
+
+  const loadEvaluations = useCallback(() => {
+    // Compatibilidad con callbacks existentes
+  }, []);
 
 
   useEffect(() => {
@@ -1261,53 +1280,19 @@ const Tests = () => {
                 </button>
               </div>
               
-              {/* M11 PLAYER ANALYTICS — cálculo previo al JSX */}
+              {/* M11 PLAYER ANALYTICS — cálculo canónico unificado */}
               {(() => {
                 const player = getPlayerById(histSelectedPlayer);
-                let fis = 0, tec = 0, psi = 0, soc = 0, testCount = 0;
-                let countFis = 0, countTec = 0, countPsi = 0, countSoc = 0;
-
-                tests.forEach(t => {
-                  const h = historyData[histSelectedPlayer]?.[t.id] || [];
-                  if (h.length > 0) {
-                    testCount++;
-                    let val = parseFloat(String(h[h.length - 1].val).replace(',', '.')) || 0;
-                    let norm = val;
-                    if (t.unit === 'seg')   norm = Math.max(0, 100 - (val * 5));
-                    else if (t.unit === 'cm')    norm = Math.min(100, val * 2);
-                    else if (t.unit === 'nivel') norm = Math.min(100, val * 8);
-                    else norm = Math.min(100, val);
-
-                    if (t.type === 'fisico' && t.category !== 'Técnica') { fis += norm; countFis++; }
-                    if (t.type === 'fisico' && t.category === 'Técnica')  { tec += norm; countTec++; }
-                    if (t.type === 'psicodeportivo' || t.type === 'psicosocial')   { psi += norm; countPsi++; }
-                    if (t.type === 'sociodeportivo' || t.type === 'socioemocional') { soc += norm; countSoc++; }
+                const playerEvals = [];
+                Object.entries(historyData[histSelectedPlayer] || {}).forEach(([testId, hList]) => {
+                  if (hList && hList.length > 0) {
+                    const last = hList[hList.length - 1];
+                    playerEvals.push({ testId, val: last.val, date: last.date, ...(last.raw || {}) });
                   }
                 });
 
-                if (player?.name?.toLowerCase().includes('juan') && fis === 0) {
-                  fis = 88; tec = 82; psi = 79; soc = 85; testCount = 4;
-                  countFis = 1; countTec = 1; countPsi = 1; countSoc = 1;
-                } else if (testCount > 0) {
-                  fis = countFis > 0 ? Math.min(99, Math.round(fis / countFis)) : 0;
-                  tec = countTec > 0 ? Math.min(99, Math.round(tec / countTec)) : 0;
-                  psi = countPsi > 0 ? Math.min(99, Math.round(psi / countPsi)) : 0;
-                  soc = countSoc > 0 ? Math.min(99, Math.round(soc / countSoc)) : 0;
-                }
-
-                const overall = testCount > 0 ? Math.round((fis + tec + psi + soc) / 4) : 0;
-                const stats = [
-                  { label: 'FÍS', value: fis || '-' },
-                  { label: 'TÉC', value: tec || '-' },
-                  { label: 'PSI', value: psi || '-' },
-                  { label: 'SOC', value: soc || '-' }
-                ];
-                const radarData = [
-                  { subject: 'FÍS', value: fis },
-                  { subject: 'TÉC', value: tec },
-                  { subject: 'PSI', value: psi },
-                  { subject: 'SOC', value: soc }
-                ];
+                const scores = calculatePlayerPerformanceScores(playerEvals, player);
+                const { fis, tec, psi, soc, overall, testCount, stats4: stats, radarData4: radarData } = scores;
 
                 return (
                   <div id="grafica-rendimiento-jugador" style={{ display: 'flex', flexWrap: 'wrap', gap: 24, alignItems: 'stretch', marginBottom: 24 }}>

@@ -307,7 +307,7 @@ export const PlayerStatsTab = ({ player, team, teamPath, isParentView = false, a
         assists: pStats.assists,
         yellowCards: pStats.yellowCards,
         redCards: pStats.redCards,
-        avgRating: pStats.avgRating !== '-' && pStats.avgRating !== null ? pStats.avgRating : (player?.notaMedia || '8.2'),
+        avgRating: pStats.avgRating !== '-' && pStats.avgRating !== null ? pStats.avgRating : (player?.notaMedia || null),
         matchHistory: pStats.matchHistory || []
       });
     });
@@ -413,8 +413,10 @@ export const PlayerStatsTab = ({ player, team, teamPath, isParentView = false, a
   const scores = calculatePlayerPerformanceScores(evaluations, player, {
     attendancePct: teamComparison?.myAttendancePct !== null && teamComparison?.myAttendancePct !== undefined
       ? teamComparison.myAttendancePct
-      : (player?.attendancePct ? Number(player.attendancePct) : (allAttendance.length > 0 ? 80 : (playerMatchStats.matchesPlayed > 0 ? 100 : 0))),
-    matchRating: playerMatchStats?.avgRating
+      : (player?.attendancePct ? Number(player.attendancePct) : 0),
+    matchRating: playerMatchStats?.matchesPlayed > 0 && playerMatchStats?.avgRating !== '-' 
+      ? playerMatchStats.avgRating 
+      : (player?.notaMedia || null)
   });
 
   const rawFisico = scores.fis;

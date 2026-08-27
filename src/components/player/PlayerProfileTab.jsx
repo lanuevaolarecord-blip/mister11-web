@@ -111,7 +111,10 @@ export const PlayerProfileTab = ({ player, team, teamPath, onNavigateTab }) => {
   }, [cleanTeamPath, effectivePlayerId]);
 
   const performanceScores = useMemo(() => {
-    return calculatePlayerPerformanceScores(evaluations, player);
+    return calculatePlayerPerformanceScores(evaluations, player, {
+      attendancePct: player?.attendancePct ? Number(player.attendancePct) : 0,
+      matchRating: player?.notaMedia || null
+    });
   }, [evaluations, player]);
 
   // Estados de Wellness

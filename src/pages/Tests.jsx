@@ -446,21 +446,20 @@ const Tests = () => {
     const teamPath = getTeamPath();
     if (!teamPath) return;
 
-    const unsubEvals = onSnapshot(collection(db, teamPath, 'evaluaciones'), (snapshot) => {
+    let evalsList = [];
+    let resultsList = [];
+
+    const rebuildHistory = () => {
+      const allDocs = [...evalsList, ...resultsList];
       const newHistory = {};
-      snapshot.forEach((docSnap) => {
-        const data = docSnap.data();
-        const jugadorId = data.jugadorId || data.playerId;
-        const testId = data.testId;
-        const val = Number(data.val ?? data.score ?? data.nota ?? data.puntuacionTotal ?? 0);
+
+      allDocs.forEach((data) => {
+        const jugadorId = data.jugadorId || data.playerId || data.player?.id;
+        const rawTestId = data.testId || data.testName;
+        const val = data.val !== undefined ? Number(data.val) : (data.score !== undefined ? Number(data.score) : Number(data.percentage ?? data.nota ?? data.puntuacionTotal ?? 0));
         const date = data.date || data.fecha;
-        if (!jugadorId || !testId) return;
+        if (!jugadorId || !rawTestId) return;
 
-        if (!newHistory[jugadorId]) newHistory[jugadorId] = {};
-        if (!newHistory[jugadorId][testId]) newHistory[jugadorId][testId] = [];
-        newHistory[jugadorId][testId].push({ id: docSnap.id, date, val, raw: data });
-
-        // Aliases para tests psicológicos y autónomos
         const aliasMap = {
           'psi_acsi28_auto': 'psi1',
           'psi_mtq10_auto': 'psi2',
@@ -471,20 +470,36 @@ const Tests = () => {
           'soc_geq': 'soc1',
           'soc_cwms': 'soc2'
         };
-        const aliasId = aliasMap[testId];
-        if (aliasId) {
-          if (!newHistory[jugadorId][aliasId]) newHistory[jugadorId][aliasId] = [];
-          newHistory[jugadorId][aliasId].push({ id: docSnap.id, date, val, raw: data });
-        }
+        const testId = aliasMap[rawTestId] || rawTestId;
+
+        if (!newHistory[jugadorId]) newHistory[jugadorId] = {};
+        if (!newHistory[jugadorId][testId]) newHistory[jugadorId][testId] = [];
+        newHistory[jugadorId][testId].push({ id: data.id, date, val, raw: data });
       });
+
       setHistoryData(newHistory);
       setLoading(false);
+    };
+
+    const unsubEvals = onSnapshot(collection(db, teamPath, 'evaluaciones'), (snapshot) => {
+      evalsList = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+      rebuildHistory();
     }, (error) => {
       console.error("Error en snapshot de evaluaciones:", error);
       setLoading(false);
     });
 
-    return () => unsubEvals();
+    const unsubResults = onSnapshot(collection(db, teamPath, 'test_results'), (snapshot) => {
+      resultsList = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+      rebuildHistory();
+    }, (error) => {
+      console.warn("Snapshot de test_results opcional:", error);
+    });
+
+    return () => {
+      unsubEvals();
+      unsubResults();
+    };
   }, [user, activeTeamId, getTeamPath]);
 
   const loadEvaluations = useCallback(() => {
@@ -1291,7 +1306,10 @@ const Tests = () => {
                   }
                 });
 
-                const scores = calculatePlayerPerformanceScores(playerEvals, player);
+                const scores = calculatePlayerPerformanceScores(playerEvals, player, {
+                  attendancePct: player?.attendancePct ? Number(player.attendancePct) : 0,
+                  matchRating: player?.notaMedia || null
+                });
                 const { fis, tec, psi, soc, tactica, asistencia, overall, testCount, stats4: stats, radarData5: radarData } = scores;
 
                 return (

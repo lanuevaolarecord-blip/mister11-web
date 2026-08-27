@@ -15,6 +15,7 @@ import { useMatchSheet } from '../hooks/useMatchSheet';
 import { useAuth } from '../context/AuthContext';
 import { useTeams } from '../hooks/useTeams';
 import { calculateMinutesFromEvents, isMatchStartedOrFinished } from '../utils/minutesEngine';
+import PlayerAvatar from './PlayerAvatar';
 
 const RSVP_LABELS = {
   going:       { label: 'Irá',            emoji: '✅', color: '#10B981' },
@@ -73,6 +74,8 @@ const ActaOficialPanel = ({ matchId, matchData, players = [], calledPlayers = []
 
   const [closingInProgress, setClosingInProgress] = useState(false);
   const [expandedPlayer, setExpandedPlayer] = useState(null);
+  const [showWarningsModal, setShowWarningsModal] = useState(false);
+  const [warningsList, setWarningsList] = useState([]);
 
   const isStartedOrDone = useMemo(() => isMatchStartedOrFinished(matchData), [matchData]);
 
@@ -185,11 +188,48 @@ const ActaOficialPanel = ({ matchId, matchData, players = [], calledPlayers = []
     catch { /* toast handled in hook */ }
   };
 
-  const handleClose = async () => {
-    if (!window.confirm('¿Cerrar el acta? Los minutos quedarán registrados de forma oficial y no podrán modificarse sin reabrirla.')) return;
+  const performDivergenceCheck = () => {
+    const warnings = [];
+
+    // 1. Jugadores sin registro de asistencia
+    if (attendanceCounts.sin_registro > 0) {
+      warnings.push(`Hay ${attendanceCounts.sin_registro} jugador(es) marcados como "Sin registro".`);
+    }
+
+    // 2. Discrepancia de goles entre bitácora y marcador
+    const goalsForEvents = (effectiveEvents || []).filter(e => e.type === 'gol_local' || e.type === 'goal_own').length;
+    const goalsAgainstEvents = (effectiveEvents || []).filter(e => e.type === 'gol_rival' || e.type === 'goal_rival').length;
+
+    if (matchData.goalsFor !== undefined && matchData.goalsFor !== null && matchData.goalsFor !== goalsForEvents) {
+      warnings.push(`Goles propios: el marcador indica ${matchData.goalsFor} pero hay ${goalsForEvents} gol(es) registrados en la bitácora.`);
+    }
+    if (matchData.goalsAgainst !== undefined && matchData.goalsAgainst !== null && matchData.goalsAgainst !== goalsAgainstEvents) {
+      warnings.push(`Goles rival: el marcador indica ${matchData.goalsAgainst} pero hay ${goalsAgainstEvents} gol(es) registrados en la bitácora.`);
+    }
+
+    return warnings;
+  };
+
+  const executeCloseActa = async () => {
     setClosingInProgress(true);
-    try { await closeMatchSheet(); }
-    finally { setClosingInProgress(false); }
+    try {
+      await closeMatchSheet();
+      setShowWarningsModal(false);
+    } finally {
+      setClosingInProgress(false);
+    }
+  };
+
+  const handleClose = async () => {
+    const warnings = performDivergenceCheck();
+    if (warnings.length > 0) {
+      setWarningsList(warnings);
+      setShowWarningsModal(true);
+      return;
+    }
+
+    if (!window.confirm('¿Cerrar el acta oficial? Los minutos y estados quedarán registrados de forma oficial.')) return;
+    await executeCloseActa();
   };
 
   const handleReopen = async () => {
@@ -389,9 +429,7 @@ const ActaOficialPanel = ({ matchId, matchData, players = [], calledPlayers = []
               >
                 {/* Avatar + nombre */}
                 <div style={styles.playerInfo}>
-                  <div style={{ ...styles.avatarCircle, background: isStarter ? '#2E7D5C' : '#1B3A2D' }}>
-                    {player.name?.[0]?.toUpperCase() || '?'}
-                  </div>
+                  <PlayerAvatar player={player} size={36} />
                   <div>
                     <div style={styles.playerName}>{player.name}</div>
                     <div style={styles.playerMeta}>
@@ -518,26 +556,109 @@ const ActaOficialPanel = ({ matchId, matchData, players = [], calledPlayers = []
           <h4 style={{ margin: '0 0 16px', fontSize: '14px', fontWeight: '800', color: '#10B981', textTransform: 'uppercase' }}>
             ✅ Resumen Oficial del Acta
           </h4>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: '10px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(170px, 1fr))', gap: '10px' }}>
             {convocadosPlayers.map(player => {
               const pid = String(player.id);
               const actual = getPlayerActual(pid);
               if (!actual) return null;
               const statusInfo = STATUS_OPTIONS.find(s => s.id === actual.status);
+              const minVal = actual.minutes !== undefined && actual.minutes !== null ? actual.minutes : 0;
               return (
                 <div key={pid} style={styles.summaryCard}>
-                  <div style={{ fontWeight: '700', fontSize: '13px', marginBottom: '4px' }}>{player.name}</div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
+                    <PlayerAvatar player={player} size={28} />
+                    <div style={{ fontWeight: '700', fontSize: '13px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {player.name}
+                    </div>
+                  </div>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <span style={{ fontSize: '11px', color: statusInfo?.color || 'var(--partidos-text-muted)' }}>
                       {statusInfo?.emoji} {statusInfo?.label || actual.status}
                     </span>
                     <span style={{ fontSize: '13px', fontWeight: '800', color: 'var(--partidos-accent)' }}>
-                      {actual.minutes ?? '—'}'
+                      {minVal}'
                     </span>
                   </div>
                 </div>
               );
             })}
+          </div>
+        </div>
+      )}
+
+      {/* ── Modal de Advertencias de Coherencia al Cerrar ── */}
+      {showWarningsModal && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: 'rgba(0,0,0,0.7)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 99999,
+          padding: '20px'
+        }}>
+          <div style={{
+            background: 'var(--partidos-card-bg, #1B3A2D)',
+            border: '2px solid #F59E0B',
+            borderRadius: '16px',
+            maxWidth: '520px',
+            width: '100%',
+            padding: '24px',
+            boxShadow: '0 20px 40px rgba(0,0,0,0.6)'
+          }}>
+            <h3 style={{ margin: '0 0 12px', fontSize: '16px', color: '#F59E0B', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              ⚠️ Divergencias Detectadas antes de Cerrar
+            </h3>
+            <p style={{ fontSize: '13px', color: 'var(--partidos-text-primary)', marginBottom: '16px', lineHeight: 1.4 }}>
+              Se han detectado las siguientes alertas de coherencia en el acta oficial:
+            </p>
+            <div style={{ background: 'rgba(0,0,0,0.25)', borderRadius: '8px', padding: '12px', marginBottom: '20px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              {warningsList.map((warn, i) => (
+                <div key={i} style={{ fontSize: '12px', color: '#FCD34D', display: 'flex', gap: '8px', alignItems: 'flex-start' }}>
+                  <span>•</span>
+                  <span>{warn}</span>
+                </div>
+              ))}
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
+              <button
+                type="button"
+                onClick={() => setShowWarningsModal(false)}
+                style={{
+                  padding: '10px 16px',
+                  borderRadius: '8px',
+                  border: '1px solid var(--partidos-border)',
+                  background: 'transparent',
+                  color: 'var(--partidos-text-primary)',
+                  fontWeight: '700',
+                  cursor: 'pointer',
+                  minHeight: '44px'
+                }}
+              >
+                Revisar y Corregir
+              </button>
+              <button
+                type="button"
+                onClick={executeCloseActa}
+                disabled={closingInProgress}
+                style={{
+                  padding: '10px 18px',
+                  borderRadius: '8px',
+                  border: 'none',
+                  background: '#F59E0B',
+                  color: '#000000',
+                  fontWeight: '800',
+                  cursor: 'pointer',
+                  minHeight: '44px'
+                }}
+              >
+                {closingInProgress ? 'Cerrando...' : 'Confirmar Cierre de Todas Formas'}
+              </button>
+            </div>
           </div>
         </div>
       )}

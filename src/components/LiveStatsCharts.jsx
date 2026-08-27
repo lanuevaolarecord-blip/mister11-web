@@ -103,7 +103,7 @@ export const SvgDonut = ({
             fontFamily="system-ui, -apple-system, Roboto, sans-serif"
             style={{ fill: textColor, fontSize: '20px', fontWeight: '900' }}
           >
-            {total > 0 ? `${pct1}%` : '0%'}
+            {total > 0 ? `${pct1}%` : '—'}
           </text>
         </svg>
       </div>
@@ -115,9 +115,15 @@ export const SvgDonut = ({
 
       {/* Leyenda */}
       <div style={{ display: 'flex', gap: '6px', fontSize: '11px', color: subTextColor, fontWeight: 800 }}>
-        <span style={{ color: color1 }}>{value1} {label1}</span>
-        <span style={{ color: subTextColor }}>/</span>
-        <span style={{ color: color2 }}>{value2} {label2}</span>
+        {total > 0 ? (
+          <>
+            <span style={{ color: color1 }}>{value1} {label1}</span>
+            <span style={{ color: subTextColor }}>/</span>
+            <span style={{ color: color2 }}>{value2} {label2}</span>
+          </>
+        ) : (
+          <span style={{ color: subTextColor, fontStyle: 'italic' }}>Sin datos</span>
+        )}
       </div>
     </div>
   );

@@ -166,15 +166,28 @@ export const calculateMinutesFromEvents = (
     }
   }
 
-  // 4. Regla: Lesionado
+  // 4. Determinar si el jugador comenzó el partido en el campo (titular inicial)
+  const hasSubIn = subInMin !== null;
+  const hasSubOut = subOutMin !== null;
+
+  let startedOnPitch = false;
+  if (hasSubOut && (!hasSubIn || subOutMin < subInMin)) {
+    startedOnPitch = true;
+  } else if (isTitular && !hasSubIn) {
+    startedOnPitch = true;
+  } else if (isTitular && isSuplente) {
+    startedOnPitch = !hasSubIn;
+  }
+
+  // 5. Regla: Lesionado
   if (normStatus === 'lesionado' || normStatus === 'injured') {
-    if (isSuplente && subInMin !== null) {
+    if (!startedOnPitch && hasSubIn) {
       const exitMin = expulsionMin !== null
         ? Math.min(subOutMin !== null ? subOutMin : duration, expulsionMin)
         : (subOutMin !== null ? subOutMin : duration);
       return { minutes: Math.max(0, exitMin - subInMin), source: 'injured_played' };
     }
-    if (isTitular) {
+    if (startedOnPitch) {
       const exitMin = expulsionMin !== null
         ? Math.min(subOutMin !== null ? subOutMin : duration, expulsionMin)
         : (subOutMin !== null ? subOutMin : duration);
@@ -183,15 +196,15 @@ export const calculateMinutesFromEvents = (
     return { minutes: 0, source: 'injured' };
   }
 
-  // 5. Regla: Tarde
+  // 6. Regla: Tarde
   if (normStatus === 'tarde' || normStatus === 'late') {
-    if (isSuplente && subInMin !== null) {
+    if (!startedOnPitch && hasSubIn) {
       const exitMin = expulsionMin !== null
         ? Math.min(subOutMin !== null ? subOutMin : duration, expulsionMin)
         : (subOutMin !== null ? subOutMin : duration);
       return { minutes: Math.max(0, exitMin - subInMin), source: 'sub_in' };
     }
-    if (isTitular) {
+    if (startedOnPitch) {
       const lMin = Math.max(0, parseInt(lateMin || 0, 10));
       const exitMin = expulsionMin !== null
         ? Math.min(subOutMin !== null ? subOutMin : duration, expulsionMin)
@@ -201,8 +214,8 @@ export const calculateMinutesFromEvents = (
     return { minutes: 0, source: 'dnp' };
   }
 
-  // 6. Reglas para TITULAR
-  if (isTitular) {
+  // 7. Jugador que INICIÓ EN EL CAMPO (Titular inicial)
+  if (startedOnPitch) {
     let exitMin = duration;
     let source = 'titular_full';
 
@@ -219,30 +232,26 @@ export const calculateMinutesFromEvents = (
     return { minutes: Math.max(0, exitMin), source };
   }
 
-  // 7. Reglas para SUPLENTE
-  if (isSuplente) {
-    if (subInMin !== null) {
-      let exitMin = duration;
-      let source = 'sub_in';
+  // 8. Jugador que INICIÓ EN EL BANQUILLO (Suplente)
+  if (hasSubIn) {
+    let exitMin = duration;
+    let source = 'sub_in';
 
-      if (subOutMin !== null && subOutMin >= subInMin) {
-        exitMin = subOutMin;
-        source = 'sub_out';
-      }
-
-      if (expulsionMin !== null && expulsionMin >= subInMin && expulsionMin < exitMin) {
-        exitMin = expulsionMin;
-        source = 'sub_red_card';
-      }
-
-      return { minutes: Math.max(0, exitMin - subInMin), source };
+    if (subOutMin !== null && subOutMin >= subInMin) {
+      exitMin = subOutMin;
+      source = 'sub_out';
     }
 
-    // Suplente que no entró al campo
-    return { minutes: 0, source: 'dnp' };
+    if (expulsionMin !== null && expulsionMin >= subInMin && expulsionMin < exitMin) {
+      exitMin = expulsionMin;
+      source = 'sub_red_card';
+    }
+
+    return { minutes: Math.max(0, exitMin - subInMin), source };
   }
 
-  return { minutes: 0, source: 'not_called' };
+  // Suplente que no entró al campo
+  return { minutes: 0, source: 'dnp' };
 };
 
 /**

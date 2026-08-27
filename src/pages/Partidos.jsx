@@ -20,10 +20,24 @@ import { t } from '../i18n/translations';
 import { useTheme } from '../context/ThemeContext';
 import { useLiveStats } from '../hooks/useLiveStats';
 import { SvgDonut, SvgComparisonBars, HalfBreakdown } from '../components/LiveStatsCharts';
+import PlayerAvatar from '../components/PlayerAvatar';
 import './Partidos.css';
 import { normalizeText } from '../utils/normalizeInput';
 import { normalizeLineup, applyLineupChange, formatMatchDateSafe } from '../utils/lineupEngine';
 import { buildSmartMatchSheetActual } from '../utils/minutesEngine';
+
+export const normalizeCapitalize = (str) => {
+  if (!str || typeof str !== 'string') return '';
+  return str
+    .trim()
+    .split(/\s+/)
+    .map(word => {
+      if (!word) return '';
+      if (word.includes('.')) return word.toUpperCase();
+      return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
+    })
+    .join(' ');
+};
 
 // Auxiliar para determinar idioma efectivo (manual o idioma del sistema)
 const getEffectiveLanguage = (settingsObj) => {
@@ -259,6 +273,46 @@ const Partidos = () => {
     return [];
   }, [liveEvents, matchData?.liveStatsEvents, matchData?.events]);
 
+  // Derivados 100% canónicos desde events
+  const derivedGoalsFor = useMemo(() => {
+    return (matchData.events || []).filter(e => e.type === 'gol_local' || e.type === 'goal_own').length;
+  }, [matchData.events]);
+
+  const derivedGoalsAgainst = useMemo(() => {
+    return (matchData.events || []).filter(e => e.type === 'gol_rival' || e.type === 'goal_rival').length;
+  }, [matchData.events]);
+
+  const derivedGoleadores = useMemo(() => {
+    return (matchData.events || [])
+      .filter(e => e.type === 'gol_local')
+      .map(e => ({
+        jugadorId: e.playerId,
+        nombre: e.playerName || players.find(p => p.id === e.playerId)?.name || 'Jugador',
+        minuto: String(e.minute),
+        asistenciaId: e.asistenciaId || ''
+      }));
+  }, [matchData.events, players]);
+
+  const derivedTarjetas = useMemo(() => {
+    return (matchData.events || [])
+      .filter(e => e.type === 'amarilla' || e.type === 'roja')
+      .map(e => ({
+        jugadorId: e.playerId,
+        nombre: e.playerName || players.find(p => p.id === e.playerId)?.name || 'Jugador',
+        tipo: e.type,
+        minuto: String(e.minute)
+      }));
+  }, [matchData.events, players]);
+
+  const isMatchFinished = matchData.status === 'Terminado' || matchData.status === 'Finalizado';
+  const isEnLanguage = getEffectiveLanguage(settings) === 'English (EN)';
+
+  const matchHalfLabel = isMatchFinished
+    ? (isEnLanguage ? 'Finished' : 'Finalizado')
+    : (matchSeconds < 2700
+        ? (isEnLanguage ? '1st Half' : '1ª Parte')
+        : (isEnLanguage ? '2nd Half' : '2ª Parte'));
+
   const handleFinishMatch = useCallback(async () => {
     if (!matchData.id) return;
     if (isTimerRunning) {
@@ -301,6 +355,10 @@ const Partidos = () => {
       suplentes: norm.suplentes,
       convocados: norm.convocados,
       liveStatsEvents: allEvents,
+      goalsFor: derivedGoalsFor,
+      goalsAgainst: derivedGoalsAgainst,
+      goleadoresList: derivedGoleadores,
+      tarjetasList: derivedTarjetas,
       actaOficial: {
         ...(matchData.actaOficial || {}),
         actual: smartActual,
@@ -314,7 +372,7 @@ const Partidos = () => {
     } catch (err) {
       console.error("Error al finalizar partido:", err);
     }
-  }, [matchData, isTimerRunning, toggleTimer, updateMatch, effectiveLiveEvents, calledPlayers, user]);
+  }, [matchData, isTimerRunning, toggleTimer, updateMatch, effectiveLiveEvents, calledPlayers, user, derivedGoalsFor, derivedGoalsAgainst, derivedGoleadores, derivedTarjetas]);
 
   const handleAddLiveEvent = useCallback(async (type, explicitHalf) => {
     if (addLiveEvent) {
@@ -323,6 +381,10 @@ const Partidos = () => {
   }, [addLiveEvent]);
 
   const handleTriggerEvent = (type) => {
+    if (isMatchFinished) {
+      alert(isEnLanguage ? 'Match is finished. Cannot register new events.' : 'El partido está finalizado. No se pueden registrar eventos.');
+      return;
+    }
     if (type === 'gol_rival') {
       addEvent('gol_rival', 'Rival', 'Gol del Rival', currentMinute);
       if (handleAddLiveEvent) handleAddLiveEvent('shot_on_target_rival');
@@ -333,6 +395,7 @@ const Partidos = () => {
   };
 
   const handleSelectEventPlayer = (playerId) => {
+    if (isMatchFinished) return;
     const player = players.find(p => p.id === playerId);
     if (!player) return;
     addEvent(pendingEventType, playerId, player.name, currentMinute);
@@ -348,9 +411,16 @@ const Partidos = () => {
   };
 
   const handleMakeSubstitution = () => {
-    if (!subOutId || !subInId) return alert("Por favor selecciona quién sale y quién entra.");
-    const success = makeSubstitution(subOutId, subInId, currentMinute);
-    if (success) {
+    if (isMatchFinished) {
+      alert(isEnLanguage ? 'Match is finished. Substitutions are locked.' : 'El partido ha finalizado. Las sustituciones están bloqueadas.');
+      return;
+    }
+    if (!subOutId || !subInId) {
+      alert(isEnLanguage ? 'Please select both the player leaving and entering.' : 'Por favor selecciona quién sale y quién entra.');
+      return;
+    }
+    const result = makeSubstitution(subOutId, subInId, currentMinute);
+    if (result && result.success) {
       const newCalled = [...calledPlayers];
       const idxOut = newCalled.indexOf(subOutId);
       const idxIn = newCalled.indexOf(subInId);
@@ -362,11 +432,16 @@ const Partidos = () => {
       setSubOutId('');
       setSubInId('');
     } else {
-      alert("Error al realizar la sustitución. Verifica la convocatoria.");
+      alert(result?.reason || (isEnLanguage ? 'Error performing substitution. Check squad.' : 'Error al realizar la sustitución. Verifica la alineación.'));
     }
   };
 
   const handleRemoveEvent = (eventIdx) => {
+    if (isMatchFinished) {
+      if (!window.confirm(isEnLanguage ? 'Match is finished. Do you really want to remove this event from history?' : 'El partido está finalizado. ¿Seguro que deseas eliminar este evento del acta?')) {
+        return;
+      }
+    }
     removeEvent(eventIdx);
   };
 
@@ -1021,33 +1096,47 @@ const Partidos = () => {
                 <div className="form-grid grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
                   <div className="form-group full">
                     <label>Equipo Rival</label>
-                    <input type="text" className="partidos-input" value={matchData.rival} onChange={e => setMatchData({ ...matchData, rival: e.target.value })} onBlur={e => setMatchData(prev => ({ ...prev, rival: normalizeText(e.target.value) }))} placeholder="Ej. fomento castellon" />
+                    <input
+                      type="text"
+                      className="partidos-input"
+                      value={matchData.rival || ''}
+                      onChange={e => setMatchData({ ...matchData, rival: e.target.value })}
+                      onBlur={e => setMatchData(prev => ({ ...prev, rival: normalizeCapitalize(e.target.value) }))}
+                      placeholder={isEnLanguage ? "e.g. Real Madrid C.F." : "Ej. Real Madrid C.F."}
+                    />
                   </div>
                   <div className="form-group quarter">
                     <label>Fecha</label>
-                    <input type="date" className="partidos-input" value={matchData.date} onChange={e => setMatchData({ ...matchData, date: e.target.value })} />
+                    <input type="date" className="partidos-input" value={matchData.date || ''} onChange={e => setMatchData({ ...matchData, date: e.target.value })} />
                   </div>
                   <div className="form-group quarter">
                     <label>Hora</label>
-                    <input type="time" className="partidos-input" value={matchData.time} onChange={e => setMatchData({ ...matchData, time: e.target.value })} />
+                    <input type="time" className="partidos-input" value={matchData.time || ''} onChange={e => setMatchData({ ...matchData, time: e.target.value })} />
                   </div>
                   <div className="form-group quarter">
                     <label>Local / Visitante</label>
-                    <select className="partidos-input" value={matchData.type} onChange={e => setMatchData({ ...matchData, type: e.target.value })}>
+                    <select className="partidos-input" value={matchData.type || 'Local'} onChange={e => setMatchData({ ...matchData, type: e.target.value })}>
                       <option value="Local">Local</option>
                       <option value="Visitante">Visitante</option>
                     </select>
                   </div>
                   <div className="form-group quarter">
                     <label>Estado</label>
-                    <select className="partidos-input" value={matchData.status} onChange={e => setMatchData({ ...matchData, status: e.target.value })}>
+                    <select className="partidos-input" value={matchData.status || 'Pendiente'} onChange={e => setMatchData({ ...matchData, status: e.target.value })}>
                       <option value="Pendiente">Pendiente</option>
                       <option value="Terminado">Terminado</option>
                     </select>
                   </div>
                   <div className="form-group half">
                     <label>Estadio / Lugar</label>
-                    <input type="text" className="partidos-input" value={matchData.location} onChange={e => setMatchData({ ...matchData, location: e.target.value })} onBlur={e => setMatchData(prev => ({ ...prev, location: normalizeText(e.target.value) }))} placeholder="Ej. facsa castellon c.d" />
+                    <input
+                      type="text"
+                      className="partidos-input"
+                      value={matchData.location || ''}
+                      onChange={e => setMatchData({ ...matchData, location: e.target.value })}
+                      onBlur={e => setMatchData(prev => ({ ...prev, location: normalizeCapitalize(e.target.value) }))}
+                      placeholder={isEnLanguage ? "e.g. Municipal Stadium / Sports Complex" : "Ej. Campo Municipal / Estadio"}
+                    />
                   </div>
                   <div className="form-group full" style={{ marginTop: '16px' }}>
                     <label>Sincronización de Calendario</label>
@@ -1120,17 +1209,24 @@ const Partidos = () => {
               <div className="tab-pane">
                 <div className="conv-header">
                   <h3>Selección de Jugadores</h3>
-                  <div className="conv-count">{calledPlayers.length} / 23 Convocados</div>
+                  <div className="conv-count">
+                    {calledPlayers.filter(Boolean).length} / {players.length || 23} {isEnLanguage ? 'Called' : 'Convocados'}
+                  </div>
                 </div>
                 <div className="players-checklist">
                   {players.map(p => {
                     const isSelected = calledPlayers.includes(p.id);
                     return (
-                      <div key={p.id} className={`player-card ${isSelected ? 'selected' : ''}`} onClick={() => togglePlayerCall(p.id)}>
-                        <div className="pc-number">{p.number}</div>
-                        <div className="pc-info">
-                          <span className="pc-name">{p.name}</span>
-                          <span className="pc-pos">{p.position}</span>
+                      <div
+                        key={p.id}
+                        className={`player-card ${isSelected ? 'selected' : ''}`}
+                        onClick={() => togglePlayerCall(p.id)}
+                        style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '10px 14px' }}
+                      >
+                        <PlayerAvatar player={p} size={36} showNumber={true} />
+                        <div className="pc-info" style={{ flex: 1, minWidth: 0 }}>
+                          <span className="pc-name" style={{ fontWeight: '700', fontSize: '13px' }}>{p.name}</span>
+                          <span className="pc-pos" style={{ fontSize: '11px', color: 'var(--partidos-text-muted)' }}>{p.position}</span>
                         </div>
                         <div className="pc-check">{isSelected ? '✓' : ''}</div>
                       </div>
@@ -1202,7 +1298,8 @@ const Partidos = () => {
                             style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: '10px 14px', gap: '10px', cursor: 'pointer', minWidth: 0 }}
                           >
                             <div style={{ display: 'flex', alignItems: 'center', gap: '10px', minWidth: 0, flex: 1 }}>
-                              <span className="slot-num" style={{ fontSize: '14px', fontWeight: '900', color: 'var(--partidos-gold)', minWidth: '20px' }}>{player ? (player.number ?? '-') : '-'}</span>
+                              <PlayerAvatar player={player} size={28} showNumber={false} />
+                              <span className="slot-num" style={{ fontSize: '13px', fontWeight: '900', color: 'var(--partidos-gold)', minWidth: '18px' }}>{player ? (player.number ?? '-') : '-'}</span>
                               <span className="slot-name" style={{ fontSize: '13px', fontWeight: '700', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1, minWidth: 0 }}>{player ? (player.name || (isEn ? 'Player' : 'Jugador')) : (isEn ? 'Empty' : 'Vacío')}</span>
                             </div>
                             <span className="slot-role" style={{ fontSize: '10px', padding: '3px 8px', borderRadius: '4px', background: 'rgba(0,0,0,0.06)', color: 'var(--partidos-text-muted)', fontWeight: '800' }}>{posName}</span>
@@ -1231,7 +1328,8 @@ const Partidos = () => {
                             style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: '10px 14px', gap: '10px', cursor: 'pointer', minWidth: 0 }}
                           >
                             <div style={{ display: 'flex', alignItems: 'center', gap: '10px', minWidth: 0, flex: 1 }}>
-                              <span className="slot-num" style={{ fontSize: '14px', fontWeight: '900', color: 'var(--partidos-gold)', minWidth: '20px' }}>{player ? (player.number ?? '-') : '-'}</span>
+                              <PlayerAvatar player={player} size={28} showNumber={false} />
+                              <span className="slot-num" style={{ fontSize: '13px', fontWeight: '900', color: 'var(--partidos-gold)', minWidth: '18px' }}>{player ? (player.number ?? '-') : '-'}</span>
                               <span className="slot-name" style={{ fontSize: '13px', fontWeight: '700', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1, minWidth: 0 }}>{player ? (player.name || (isEn ? 'Player' : 'Jugador')) : (isEn ? 'Empty' : 'Vacío')}</span>
                             </div>
                             <span className="slot-role" style={{ fontSize: '10px', padding: '3px 8px', borderRadius: '4px', background: 'rgba(212,168,67,0.1)', color: 'var(--partidos-gold)', fontWeight: '800' }}>SUP</span>
@@ -1357,7 +1455,7 @@ const Partidos = () => {
             {/* PESTAÑA: MATCH-DAY */}
             {editTab === 'MATCH-DAY' && (
               <div className="tab-pane match-day-container" ref={matchDayRef}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '15px', marginBottom: '12px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '15px', marginBottom: '12px', flexWrap: 'wrap' }}>
                   <h3 className="section-title" style={{ margin: 0 }}>⏱️ Panel de Control - Día del Partido</h3>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                     <button
@@ -1411,33 +1509,65 @@ const Partidos = () => {
                   {/* Cronómetro y Marcador */}
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
                     <div className="timer-card">
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', marginBottom: '8px' }}>
+                        <span style={{ fontSize: '12px', fontWeight: '800', textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--partidos-text-muted)' }}>
+                          {matchHalfLabel}
+                        </span>
+                        {isMatchFinished && (
+                          <span style={{ background: '#15803D', color: '#FFFFFF', padding: '3px 8px', borderRadius: '6px', fontSize: '11px', fontWeight: '800' }}>
+                            ⏹️ {isEnLanguage ? 'FINAL' : 'FINAL'}
+                          </span>
+                        )}
+                      </div>
                       <span className="timer-display">{formatTime(matchSeconds)}</span>
-                      <div className="timer-controls">
-                        <button
-                          className={`timer-btn ${isTimerRunning ? 'pause' : 'start'}`}
-                          onClick={handleTimerToggle}
-                        >
-                          {isTimerRunning ? '⏸️ Pausar' : '▶️ Iniciar'}
-                        </button>
-                        <button className="timer-btn reset" onClick={handleTimerReset}>🔄 Reiniciar</button>
-                      </div>
-                      <div className="timer-adjust">
-                        <button className="timer-adjust-btn" onClick={() => handleTimerAdjust(-60)}>-1m</button>
-                        <button className="timer-adjust-btn" onClick={() => handleTimerAdjust(60)}>+1m</button>
-                      </div>
+                      {!isMatchFinished ? (
+                        <>
+                          <div className="timer-controls">
+                            <button
+                              className={`timer-btn ${isTimerRunning ? 'pause' : 'start'}`}
+                              onClick={handleTimerToggle}
+                            >
+                              {isTimerRunning ? '⏸️ Pausar' : '▶️ Iniciar'}
+                            </button>
+                            <button className="timer-btn reset" onClick={handleTimerReset}>🔄 Reiniciar</button>
+                          </div>
+                          <div className="timer-adjust">
+                            <button className="timer-adjust-btn" onClick={() => handleTimerAdjust(-60)}>-1m</button>
+                            <button className="timer-adjust-btn" onClick={() => handleTimerAdjust(60)}>+1m</button>
+                          </div>
+                        </>
+                      ) : (
+                        <div style={{ padding: '8px 12px', background: 'rgba(255,255,255,0.05)', borderRadius: '8px', fontSize: '12px', color: 'var(--partidos-text-muted)', textAlign: 'center', marginTop: '8px' }}>
+                          🔒 {isEnLanguage ? 'Timer and controls frozen (Match Finished)' : 'Cronómetro y controles congelados (Partido Terminado)'}
+                        </div>
+                      )}
                     </div>
 
                     <div className="live-scoreboard">
                       <div className="scoreboard-teams">
                         <div className="scoreboard-team">{activeTeam?.nombre || 'Mi Equipo'}</div>
                         <div className="scoreboard-score">
-                          {matchData.goalsFor || 0} - {matchData.goalsAgainst || 0}
+                          {derivedGoalsFor} - {derivedGoalsAgainst}
                         </div>
                         <div className="scoreboard-team">{matchData.rival || 'Rival'}</div>
                       </div>
                       <div className="scoreboard-buttons">
-                        <button className="scoreboard-btn local" onClick={() => handleTriggerEvent('gol_local')}>⚽ GOL LOCAL</button>
-                        <button className="scoreboard-btn rival" onClick={() => handleTriggerEvent('gol_rival')}>⚽ GOL RIVAL</button>
+                        <button
+                          className="scoreboard-btn local"
+                          onClick={() => handleTriggerEvent('gol_local')}
+                          disabled={isMatchFinished}
+                          style={{ opacity: isMatchFinished ? 0.5 : 1, cursor: isMatchFinished ? 'not-allowed' : 'pointer' }}
+                        >
+                          ⚽ GOL LOCAL
+                        </button>
+                        <button
+                          className="scoreboard-btn rival"
+                          onClick={() => handleTriggerEvent('gol_rival')}
+                          disabled={isMatchFinished}
+                          style={{ opacity: isMatchFinished ? 0.5 : 1, cursor: isMatchFinished ? 'not-allowed' : 'pointer' }}
+                        >
+                          ⚽ GOL RIVAL
+                        </button>
                       </div>
                     </div>
                   </div>
@@ -1448,40 +1578,43 @@ const Partidos = () => {
                       <h4 className="sub-section-title" style={{ borderBottom: '1px solid var(--partidos-border)', paddingBottom: '6px', marginBottom: '12px' }}>🔄 Realizar Sustitución</h4>
                       <div className="sub-selectors">
                         <div>
-                          <label className="input-label-caps" style={{ fontSize: '11px' }}>Sale (Titular)</label>
+                          <label className="input-label-caps" style={{ fontSize: '11px' }}>Sale (Titular en Campo)</label>
                           <select
                             className="partidos-input"
                             value={subOutId}
                             onChange={e => setSubOutId(e.target.value)}
+                            disabled={isMatchFinished}
                           >
-                            <option value="">Seleccionar...</option>
+                            <option value="">Seleccionar titular...</option>
                             {calledPlayers.slice(0, 11).map((id, idx) => {
                               if (!id) return null;
                               const p = players.find(pl => pl && pl.id === id);
-                              return p ? <option key={`${id}-${idx}`} value={id}>{p.number ? `#${p.number} ` : ''}{p.name}</option> : null;
+                              return p ? <option key={`out-${id}-${idx}`} value={id}>{p.number ? `#${p.number} ` : ''}{p.name}</option> : null;
                             })}
                           </select>
                         </div>
                         <div>
-                          <label className="input-label-caps" style={{ fontSize: '11px' }}>Entra (Suplente)</label>
+                          <label className="input-label-caps" style={{ fontSize: '11px' }}>Entra (Suplente en Banquillo)</label>
                           <select
                             className="partidos-input"
                             value={subInId}
                             onChange={e => setSubInId(e.target.value)}
+                            disabled={isMatchFinished}
                           >
-                            <option value="">Seleccionar...</option>
+                            <option value="">Seleccionar suplente...</option>
                             {calledPlayers.slice(11, 18).map((id, idx) => {
                               if (!id) return null;
                               const p = players.find(pl => pl && pl.id === id);
-                              return p ? <option key={`${id}-${idx}`} value={id}>{p.number ? `#${p.number} ` : ''}{p.name}</option> : null;
+                              return p ? <option key={`in-${id}-${idx}`} value={id}>{p.number ? `#${p.number} ` : ''}{p.name}</option> : null;
                             })}
                           </select>
                         </div>
                       </div>
                       <button
                         className="btn-success-green-allcaps"
-                        style={{ width: '100%', minHeight: '48px' }}
+                        style={{ width: '100%', minHeight: '48px', opacity: isMatchFinished ? 0.5 : 1, cursor: isMatchFinished ? 'not-allowed' : 'pointer' }}
                         onClick={handleMakeSubstitution}
+                        disabled={isMatchFinished}
                       >
                         🔄 Confirmar Sustitución
                       </button>
@@ -1489,9 +1622,9 @@ const Partidos = () => {
 
                     <div className="live-events-panel">
                       <div className="event-action-buttons">
-                        <button className="event-action-btn" onClick={() => handleTriggerEvent('amarilla')}>🟨 Amarilla</button>
-                        <button className="event-action-btn" onClick={() => handleTriggerEvent('roja')}>🟥 Roja</button>
-                        <button className="event-action-btn" onClick={() => handleTriggerEvent('lesion')}>🩺 Lesión</button>
+                        <button className="event-action-btn" onClick={() => handleTriggerEvent('amarilla')} disabled={isMatchFinished} style={{ opacity: isMatchFinished ? 0.5 : 1 }}>🟨 Amarilla</button>
+                        <button className="event-action-btn" onClick={() => handleTriggerEvent('roja')} disabled={isMatchFinished} style={{ opacity: isMatchFinished ? 0.5 : 1 }}>🟥 Roja</button>
+                        <button className="event-action-btn" onClick={() => handleTriggerEvent('lesion')} disabled={isMatchFinished} style={{ opacity: isMatchFinished ? 0.5 : 1 }}>🩺 Lesión</button>
                       </div>
                     </div>
                   </div>
@@ -1528,6 +1661,7 @@ const Partidos = () => {
                       </div>
                     </div>
                   </div>
+
                   {/* MODAL PARA SELECCIONAR JUGADOR EN EVENTO MATCH DAY (Dentro del contenedor Fullscreen) */}
                   {showEventPlayerSelector && (
                     <div className="event-selector-overlay" onClick={() => setShowEventPlayerSelector(false)} style={{ zIndex: 99999 }}>
@@ -1554,8 +1688,10 @@ const Partidos = () => {
                                 className="event-selector-item"
                                 type="button"
                                 onClick={() => handleSelectEventPlayer(id)}
+                                style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
                               >
-                                {p.number ? `${p.number} - ` : ''}{p.name}
+                                <PlayerAvatar player={p} size={28} showNumber={false} />
+                                <span>{p.number ? `${p.number} - ` : ''}{p.name}</span>
                               </button>
                             ) : null;
                           })}
@@ -1638,156 +1774,69 @@ const Partidos = () => {
                   <div className="post-partido-left-col">
                     {/* Tarjeta 1: Marcador */}
                     <div className="post-match-card">
-                      <h4 className="card-section-title">⚽ Marcador del Partido</h4>
+                      <h4 className="card-section-title">⚽ Marcador del Partido (Derivado de Eventos)</h4>
                       <div className="score-inputs-container" style={{ display: 'flex', alignItems: 'center', gap: '15px', justifyContent: 'center', marginTop: '10px' }}>
                         <div className="score-box" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
                           <label className="input-label-caps" style={{ fontSize: '11px', fontWeight: '700', marginBottom: '6px', color: 'var(--partidos-text-muted)' }}>{getLangText('post.goalsFor')}</label>
-                          <input
-                            type="number"
-                            className="partidos-input text-center text-2xl"
-                            style={{ minHeight: '48px', fontSize: '20px', width: '80px', textAlign: 'center', borderRadius: '8px', border: '1px solid var(--partidos-border)', background: 'var(--partidos-input-bg)', color: 'var(--partidos-text-primary)' }}
-                            value={matchData.goalsFor || 0}
-                            onChange={e => setMatchData({ ...matchData, goalsFor: parseInt(e.target.value) || 0 })}
-                          />
+                          <div style={{ minHeight: '48px', fontSize: '24px', fontWeight: '900', width: '80px', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '8px', border: '1.5px solid var(--partidos-border)', background: 'var(--partidos-input-bg)', color: '#22C55E' }}>
+                            {derivedGoalsFor}
+                          </div>
                         </div>
                         <div className="score-divider" style={{ fontSize: '24px', fontWeight: 'bold', color: 'var(--partidos-text-primary)' }}>-</div>
                         <div className="score-box" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
                           <label className="input-label-caps" style={{ fontSize: '11px', fontWeight: '700', marginBottom: '6px', color: 'var(--partidos-text-muted)' }}>{getLangText('post.goalsAgainst')}</label>
-                          <input
-                            type="number"
-                            className="partidos-input text-center text-2xl"
-                            style={{ minHeight: '48px', fontSize: '20px', width: '80px', textAlign: 'center', borderRadius: '8px', border: '1px solid var(--partidos-border)', background: 'var(--partidos-input-bg)', color: 'var(--partidos-text-primary)' }}
-                            value={matchData.goalsAgainst || 0}
-                            onChange={e => setMatchData({ ...matchData, goalsAgainst: parseInt(e.target.value) || 0 })}
-                          />
+                          <div style={{ minHeight: '48px', fontSize: '24px', fontWeight: '900', width: '80px', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '8px', border: '1.5px solid var(--partidos-border)', background: 'var(--partidos-input-bg)', color: '#EF4444' }}>
+                            {derivedGoalsAgainst}
+                          </div>
                         </div>
                       </div>
                     </div>
 
                     {/* Tarjeta 2: Goleadores */}
                     <div className="post-match-card">
-                      <h4 className="card-section-title">⚽ Goleadores y Asistencias</h4>
-                      <div className="goleadores-list" style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '10px' }}>
-                        {(matchData.goleadoresList || []).map((g, idx) => (
-                          <div key={idx} className="goleador-row" style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                            <select
-                              value={g.jugadorId || ''}
-                              style={{ minHeight: '48px', flex: 1, padding: '0 8px', borderRadius: '8px', border: '1px solid var(--partidos-border)', background: 'var(--partidos-input-bg)', color: 'var(--partidos-text-primary)' }}
-                              onChange={e => {
-                                const list = [...(matchData.goleadoresList || [])];
-                                list[idx] = { ...list[idx], jugadorId: e.target.value };
-                                setMatchData({ ...matchData, goleadoresList: list });
-                              }}
-                            >
-                              <option value="">Jugador...</option>
-                              {calledPlayers.filter(Boolean).map(id => {
-                                const p = players.find(pl => pl && pl.id === id);
-                                return p ? <option key={id} value={id}>{p.name}</option> : null;
-                              })}
-                            </select>
-                            <input
-                              type="number"
-                              min="1"
-                              max="120"
-                              placeholder="Min"
-                              style={{ minHeight: '48px', width: '70px', padding: '0 8px', borderRadius: '8px', border: '1px solid var(--partidos-border)', background: 'var(--partidos-input-bg)', color: 'var(--partidos-text-primary)' }}
-                              value={g.minuto || ''}
-                              onChange={e => {
-                                const list = [...(matchData.goleadoresList || [])];
-                                list[idx] = { ...list[idx], minuto: e.target.value };
-                                setMatchData({ ...matchData, goleadoresList: list });
-                              }}
-                            />
-                            <button
-                              type="button"
-                              className="btn-remove-row"
-                              style={{ width: '48px', height: '48px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#EF4444', color: '#FFF', border: 'none', borderRadius: '8px', cursor: 'pointer', fontSize: '16px' }}
-                              onClick={() => {
-                                const list = (matchData.goleadoresList || []).filter((_, i) => i !== idx);
-                                setMatchData({ ...matchData, goleadoresList: list });
-                              }}
-                            >✕</button>
-                          </div>
-                        ))}
+                      <h4 className="card-section-title">⚽ Goleadores (Canónico desde Bitácora)</h4>
+                      <div className="goleadores-list" style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '10px' }}>
+                        {derivedGoleadores.length === 0 ? (
+                          <p style={{ margin: '8px 0', fontSize: '13px', color: 'var(--partidos-text-muted)', fontStyle: 'italic' }}>
+                            {isEnLanguage ? 'No goals registered in match events.' : 'No se han registrado goles en los eventos del partido.'}
+                          </p>
+                        ) : (
+                          derivedGoleadores.map((g, idx) => {
+                            const p = players.find(pl => pl.id === g.jugadorId);
+                            return (
+                              <div key={idx} className="goleador-row" style={{ display: 'flex', gap: '10px', alignItems: 'center', padding: '8px 12px', background: 'rgba(255,255,255,0.04)', borderRadius: '8px' }}>
+                                <PlayerAvatar player={p} size={28} showNumber={false} />
+                                <span style={{ fontWeight: '700', fontSize: '13px', flex: 1 }}>{g.nombre}</span>
+                                <span style={{ fontWeight: '800', fontSize: '12px', color: '#22C55E' }}>Min. {g.minuto}'</span>
+                              </div>
+                            );
+                          })
+                        )}
                       </div>
-                      <button
-                        type="button"
-                        className="btn-add-row"
-                        onClick={() =>
-                          setMatchData({ ...matchData, goleadoresList: [...(matchData.goleadoresList || []), { jugadorId: '', minuto: '' }] })
-                        }
-                      >
-                        + Añadir Goleador
-                      </button>
                     </div>
 
                     {/* Tarjeta 3: Tarjetas */}
                     <div className="post-match-card">
-                      <h4 className="card-section-title">🟨 Tarjetas</h4>
-                      <div className="goleadores-list" style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '10px' }}>
-                        {(matchData.tarjetasList || []).map((t, idx) => (
-                          <div key={idx} className="goleador-row" style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                            <select
-                              value={t.tipo || 'amarilla'}
-                              style={{ minHeight: '48px', width: '120px', padding: '0 8px', borderRadius: '8px', border: '1px solid var(--partidos-border)', background: 'var(--partidos-input-bg)', color: 'var(--partidos-text-primary)' }}
-                              onChange={e => {
-                                const list = [...(matchData.tarjetasList || [])];
-                                list[idx] = { ...list[idx], tipo: e.target.value };
-                                setMatchData({ ...matchData, tarjetasList: list });
-                              }}
-                            >
-                              <option value="amarilla">🟨 Amarilla</option>
-                              <option value="roja">🟥 Roja</option>
-                            </select>
-                            <select
-                              value={t.jugadorId || ''}
-                              style={{ minHeight: '48px', flex: 1, padding: '0 8px', borderRadius: '8px', border: '1px solid var(--partidos-border)', background: 'var(--partidos-input-bg)', color: 'var(--partidos-text-primary)' }}
-                              onChange={e => {
-                                const list = [...(matchData.tarjetasList || [])];
-                                list[idx] = { ...list[idx], jugadorId: e.target.value };
-                                setMatchData({ ...matchData, tarjetasList: list });
-                              }}
-                            >
-                              <option value="">Jugador...</option>
-                              {calledPlayers.filter(Boolean).map(id => {
-                                const p = players.find(pl => pl && pl.id === id);
-                                return p ? <option key={id} value={id}>{p.name}</option> : null;
-                              })}
-                            </select>
-                            <input
-                              type="number"
-                              min="1"
-                              max="120"
-                              placeholder="Min"
-                              style={{ minHeight: '48px', width: '70px', padding: '0 8px', borderRadius: '8px', border: '1px solid var(--partidos-border)', background: 'var(--partidos-input-bg)', color: 'var(--partidos-text-primary)' }}
-                              value={t.minuto || ''}
-                              onChange={e => {
-                                const list = [...(matchData.tarjetasList || [])];
-                                list[idx] = { ...list[idx], minuto: e.target.value };
-                                setMatchData({ ...matchData, tarjetasList: list });
-                              }}
-                            />
-                            <button
-                              type="button"
-                              className="btn-remove-row"
-                              style={{ width: '48px', height: '48px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#EF4444', color: '#FFF', border: 'none', borderRadius: '8px', cursor: 'pointer', fontSize: '16px' }}
-                              onClick={() => {
-                                const list = (matchData.tarjetasList || []).filter((_, i) => i !== idx);
-                                setMatchData({ ...matchData, tarjetasList: list });
-                              }}
-                            >✕</button>
-                          </div>
-                        ))}
+                      <h4 className="card-section-title">🟨 Tarjetas (Canónico desde Bitácora)</h4>
+                      <div className="goleadores-list" style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '10px' }}>
+                        {derivedTarjetas.length === 0 ? (
+                          <p style={{ margin: '8px 0', fontSize: '13px', color: 'var(--partidos-text-muted)', fontStyle: 'italic' }}>
+                            {isEnLanguage ? 'No cards registered in match events.' : 'No se han registrado tarjetas en los eventos del partido.'}
+                          </p>
+                        ) : (
+                          derivedTarjetas.map((t, idx) => {
+                            const p = players.find(pl => pl.id === t.jugadorId);
+                            return (
+                              <div key={idx} className="goleador-row" style={{ display: 'flex', gap: '10px', alignItems: 'center', padding: '8px 12px', background: 'rgba(255,255,255,0.04)', borderRadius: '8px' }}>
+                                <PlayerAvatar player={p} size={28} showNumber={false} />
+                                <span style={{ fontWeight: '700', fontSize: '13px', flex: 1 }}>{t.nombre}</span>
+                                <span>{t.tipo === 'amarilla' ? '🟨' : '🟥'}</span>
+                                <span style={{ fontWeight: '800', fontSize: '12px', color: 'var(--partidos-text-muted)' }}>Min. {t.minuto}'</span>
+                              </div>
+                            );
+                          })
+                        )}
                       </div>
-                      <button
-                        type="button"
-                        className="btn-add-row"
-                        onClick={() =>
-                          setMatchData({ ...matchData, tarjetasList: [...(matchData.tarjetasList || []), { jugadorId: '', tipo: 'amarilla', minuto: '' }] })
-                        }
-                      >
-                        + Añadir Tarjeta
-                      </button>
                     </div>
                   </div>
 

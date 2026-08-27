@@ -164,30 +164,40 @@ export const calculatePlayerPerformanceScores = (evaluations = [], player = {}, 
     testCount++;
 
     if (
-      rawType === 'fisico' || 
-      testId === 't1' || testId === 't2' || testId === 't3' || testId === 't4' || testId === 't5' || testId === 't6' ||
-      rawCat.includes('resistencia') || rawCat.includes('velocidad') || rawCat.includes('fuerza') || rawCat.includes('agilidad')
-    ) {
-      if (rawCat.includes('técnic') || testId === 't7' || testId === 't8') {
-        tec += norm; countTec++;
-      } else {
-        fis += norm; countFis++;
-      }
-    } else if (
-      rawType === 'tecnico' || testId === 't7' || testId === 't8' ||
-      rawCat.includes('técnic') || rawCat.includes('control') || rawCat.includes('pase') || rawCat.includes('regate') || rawCat.includes('tiro')
-    ) {
-      tec += norm; countTec++;
-    } else if (
-      rawType === 'psicodeportivo' || rawType === 'psicosocial' || testId.startsWith('psi') ||
-      rawCat.includes('afrontamiento') || rawCat.includes('fortaleza') || rawCat.includes('metas') || rawCat.includes('liderazgo') || rawCat.includes('mental') || rawCat.includes('psico') || rawCat.includes('presión') || rawCat.includes('resiliencia')
+      testId.startsWith('psi') || 
+      rawType === 'psicodeportivo' || 
+      rawCat.includes('afrontamiento') || 
+      rawCat.includes('fortaleza') || 
+      rawCat.includes('metas') || 
+      rawCat.includes('liderazgo') || 
+      rawCat.includes('resiliencia')
     ) {
       psi += norm; countPsi++;
     } else if (
-      rawType === 'sociodeportivo' || rawType === 'socioemocional' || testId.startsWith('soc') ||
-      rawCat.includes('cohesión') || rawCat.includes('bienestar') || rawCat.includes('autoconciencia') || rawCat.includes('empatía') || rawCat.includes('conflictos') || rawCat.includes('convivencia') || rawCat.includes('social')
+      testId.startsWith('soc') || 
+      rawType === 'sociodeportivo' || 
+      rawType === 'socioemocional' || 
+      rawCat.includes('cohesión') || 
+      rawCat.includes('bienestar') || 
+      rawCat.includes('convivencia') || 
+      rawCat.includes('social') || 
+      rawCat.includes('empatía') || 
+      rawCat.includes('conflictos')
     ) {
       soc += norm; countSoc++;
+    } else if (
+      testId === 't7' || 
+      testId === 't8' || 
+      rawType === 'tecnico' || 
+      rawCat.includes('técnic') || 
+      rawCat.includes('control') || 
+      rawCat.includes('pase') || 
+      rawCat.includes('regate') || 
+      rawCat.includes('tiro') || 
+      rawCat.includes('conos') || 
+      rawCat.includes('porteria')
+    ) {
+      tec += norm; countTec++;
     } else {
       fis += norm; countFis++;
     }

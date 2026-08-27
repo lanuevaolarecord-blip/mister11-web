@@ -184,7 +184,8 @@ export const PlayerStatsTab = ({ player, team, teamPath, isParentView = false, a
           rawCat.toLowerCase().includes('físic') || rawCat.toLowerCase().includes('resistencia') || rawCat.toLowerCase().includes('velocidad') || rawCat.toLowerCase().includes('fuerza') || rawCat.toLowerCase().includes('agilidad') || testId.startsWith('t1') || testId.startsWith('t2') || testId.startsWith('t3') || testId.startsWith('t4') || testId.startsWith('t5') || testId.startsWith('t6') ? 'fisico' :
           rawCat.toLowerCase().includes('técnic') || rawCat.toLowerCase().includes('pase') || rawCat.toLowerCase().includes('control') || rawCat.toLowerCase().includes('regate') || testId.startsWith('t7') || testId.startsWith('t8') ? 'tecnico' :
           rawCat.toLowerCase().includes('táctic') || rawCat.toLowerCase().includes('posicion') || rawCat.toLowerCase().includes('decision') ? 'tactico' :
-          rawCat.toLowerCase().includes('psico') || rawCat.toLowerCase().includes('mental') || rawCat.toLowerCase().includes('socio') || rawCat.toLowerCase().includes('bienestar') || rawCat.toLowerCase().includes('cohesión') || testId.startsWith('psi') || testId.startsWith('soc') ? 'psicosocial' : 'general'
+          testId.startsWith('psi') || rawCat.toLowerCase().includes('psico') || rawCat.toLowerCase().includes('mental') || rawCat.toLowerCase().includes('afrontamiento') || rawCat.toLowerCase().includes('fortaleza') ? 'psicodeportivo' :
+          testId.startsWith('soc') || rawCat.toLowerCase().includes('socio') || rawCat.toLowerCase().includes('bienestar') || rawCat.toLowerCase().includes('cohesión') ? 'sociodeportivo' : 'general'
         );
         const isTime = canonical.isTime !== undefined 
           ? canonical.isTime 

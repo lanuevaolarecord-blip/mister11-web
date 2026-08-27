@@ -100,6 +100,10 @@ const TEXTS = {
   'live.half.1': { es: '1ª Mitad', en: '1st Half' },
   'live.half.2': { es: '2ª Mitad', en: '2nd Half' },
   'live.feedback.saved': { es: '¡Guardado!', en: 'Saved!' },
+  'live.tab.capture': { es: 'Captura en Vivo', en: 'Live Capture' },
+  'live.tab.tactical': { es: 'Suite Táctica', en: 'Tactical Suite' },
+  'live.tab.analytics': { es: 'Analítica', en: 'Analytics' },
+  'live.tab.players': { es: 'Rendimiento Jugadores', en: 'Player Performance' },
 };
 
 // ── Grupos de botones de captura rápida ──────────────────────────────────────

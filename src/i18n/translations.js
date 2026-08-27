@@ -606,7 +606,13 @@ export const translations = {
     'matches.warnings.auditNote': 'Bitácora depurada el {date}: {count} anomalías aisladas y resueltas.',
     'matches.warnings.auditShow': 'Ver detalle',
     'matches.warnings.auditHide': 'Ocultar auditoría',
-    'matches.warnings.chipTooltip': '{count} anomalías detectadas en bitácora (clic para ver y resolver en Acta Oficial)'
+    'matches.warnings.chipTooltip': '{count} anomalías detectadas en bitácora (clic para ver y resolver en Acta Oficial)',
+
+    // ── LIVESTATS SUBTABS ──────────────────────────────────
+    'live.tab.capture': 'Captura en Vivo',
+    'live.tab.tactical': 'Suite Táctica',
+    'live.tab.analytics': 'Analítica',
+    'live.tab.players': 'Rendimiento Jugadores'
   },
 
   'English (EN)': {
@@ -1216,7 +1222,13 @@ export const translations = {
     'matches.warnings.auditNote': 'Log cleansed on {date}: {count} anomalies isolated and resolved.',
     'matches.warnings.auditShow': 'View details',
     'matches.warnings.auditHide': 'Hide audit',
-    'matches.warnings.chipTooltip': '{count} anomalies detected in log (click to view and resolve in Official Sheet)'
+    'matches.warnings.chipTooltip': '{count} anomalies detected in log (click to view and resolve in Official Sheet)',
+
+    // ── LIVESTATS SUBTABS ──────────────────────────────────
+    'live.tab.capture': 'Live Capture',
+    'live.tab.tactical': 'Tactical Suite',
+    'live.tab.analytics': 'Analytics',
+    'live.tab.players': 'Player Performance'
   }
 };
 

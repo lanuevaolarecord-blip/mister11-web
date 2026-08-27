@@ -339,7 +339,7 @@ html.dark select option {
   overflow: hidden;
   border: 1px solid var(--partidos-border);
   box-shadow: 0 4px 15px rgba(0,0,0,0.03);
-  padding: 16px;
+  padding: 0 !important;
   box-sizing: border-box;
   min-height: calc(100vh - 140px);
   width: 100%;
@@ -348,13 +348,13 @@ html.dark select option {
 
 @media (min-width: 640px) {
   .partidos-editor-container {
-    padding: 20px;
+    padding: 0 !important;
   }
 }
 
 @media (min-width: 1024px) {
   .partidos-editor-container {
-    padding: 24px;
+    padding: 0 !important;
   }
 }
 
@@ -369,6 +369,10 @@ html.dark select option {
   flex-wrap: nowrap;
   width: 100%;
   box-sizing: border-box;
+  flex-shrink: 0;
+  position: sticky;
+  top: 0;
+  z-index: 50;
 }
 .editor-tabs::-webkit-scrollbar { display: none; }
 
@@ -438,7 +442,7 @@ html.dark select option {
 
 .editor-content {
   flex: 1;
-  padding: 16px 0 0 0;
+  padding: 16px;
   overflow-y: auto;
   display: flex;
   flex-direction: column;
@@ -450,22 +454,14 @@ html.dark select option {
 
 @media (min-width: 640px) {
   .editor-content {
-    padding: 20px 0 0 0;
+    padding: 20px;
   }
 }
 
 @media (min-width: 1024px) {
   .editor-content {
-    padding: 24px 0 0 0;
+    padding: 24px;
   }
-}
-
-.editor-content:has(.alineacion-layout) {
-  overflow-y: auto;
-  overflow-x: auto;
-  padding: 16px 20px 60px 20px;
-  min-height: 100%;
-  box-sizing: border-box;
 }
 
 /* =========================================================
@@ -530,17 +526,6 @@ html.dark select option {
   background: rgba(76, 175, 125, 0.1) !important;
 }
 
-@media (min-width: 640px) {
-  .editor-content:has(.alineacion-layout) {
-    padding: 12px 16px;
-  }
-}
-
-@media (min-width: 1024px) {
-  .editor-content:has(.alineacion-layout) {
-    padding: 12px 16px;
-  }
-}
 .editor-content.livestats-active,
 .editor-content:has(.livestats-container) {
   overflow-y: auto;
@@ -2619,31 +2604,32 @@ html.dark .alin-player-item span.slot-role {
     flex-direction: row !important;
     align-items: flex-start !important;
     height: auto !important;
-    max-height: 85vh !important;
-    overflow: hidden !important;
+    overflow: visible !important;
     gap: 20px !important;
-    padding: 16px !important;
+    padding: 0 !important;
+    width: 100% !important;
   }
   .alin-sidebar {
     width: 350px !important;
     min-width: 310px !important;
     max-width: 380px !important;
-    max-height: 78vh !important;
+    max-height: calc(100vh - 220px) !important;
     overflow-y: auto !important;
-    padding: 16px !important;
+    padding: 0 12px 16px 0 !important;
     flex-shrink: 0 !important;
     box-sizing: border-box !important;
   }
   .alin-pitch-wrapper-3d {
     flex: 1 !important;
     width: 100% !important;
-    height: 75vh !important;
-    max-height: 75vh !important;
+    min-width: 0 !important;
+    height: auto !important;
+    max-height: calc(100vh - 220px) !important;
     display: flex !important;
     justify-content: center !important;
     align-items: center !important;
-    padding: 8px !important;
-    overflow: hidden !important;
+    padding: 0 !important;
+    overflow: visible !important;
     box-sizing: border-box !important;
   }
 }

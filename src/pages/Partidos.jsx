@@ -24,7 +24,7 @@ import PlayerAvatar from '../components/PlayerAvatar';
 import './Partidos.css';
 import { normalizeText } from '../utils/normalizeInput';
 import { normalizeLineup, applyLineupChange, formatMatchDateSafe } from '../utils/lineupEngine';
-import { buildSmartMatchSheetActual } from '../utils/minutesEngine';
+import { buildSmartMatchSheetActual, getEffectiveMatchDuration } from '../utils/minutesEngine';
 
 export const normalizeCapitalize = (str) => {
   if (!str || typeof str !== 'string') return '';
@@ -321,10 +321,33 @@ const Partidos = () => {
     finishMatch(finalSec);
     const finalClockStr = formatMatchTime(finalSec);
 
+    const nominalDuration = parseInt(matchData.duration || matchData.duracion || 90, 10);
+    let durationType = matchData.durationType || 'completo';
+
+    // Si el partido finalizó antes de tiempo (ej. 39:30 en un partido de 90 min)
+    if (finalSec > 0 && finalSec < (nominalDuration - 3) * 60) {
+      const clockMin = Math.max(1, Math.ceil(finalSec / 60));
+      const confirmEarly = window.confirm(
+        `⏱️ El partido finalizó a los ${finalClockStr} (${clockMin} min).\n\n` +
+        `¿Deseas registrarlo como finalizado anticipadamente (${clockMin} min)?\n\n` +
+        `• [Aceptar] = Anticipado (${clockMin} min de juego real para cálculo de minutos).\n` +
+        `• [Cancelar] = Completo reglamentario (${nominalDuration} min).`
+      );
+      durationType = confirmEarly ? 'anticipado' : 'completo';
+    }
+
     const allEvents = effectiveLiveEvents && effectiveLiveEvents.length > 0
       ? effectiveLiveEvents
       : (matchData.liveStatsEvents || matchData.events || []);
-    const duration = parseInt(matchData.duration || matchData.duracion || 90, 10);
+
+    const effectiveDuration = getEffectiveMatchDuration({
+      ...matchData,
+      status: 'Terminado',
+      finalSeconds: finalSec,
+      finalClock: finalClockStr,
+      durationType,
+    });
+
     const currentActual = matchData.actaOficial?.actual || {};
     const rsvpMap = matchData.playerRsvp || {};
 
@@ -338,12 +361,14 @@ const Partidos = () => {
       {
         ...matchData,
         status: 'Terminado',
+        finalSeconds: finalSec,
+        finalClock: finalClockStr,
+        durationType,
         titulares: norm.titulares,
         suplentes: norm.suplentes,
         convocados: norm.convocados,
         liveStatsEvents: allEvents,
         events: allEvents,
-        duration
       },
       currentActual,
       rsvpMap,
@@ -357,6 +382,7 @@ const Partidos = () => {
       finalClock: finalClockStr,
       finalSeconds: finalSec,
       elapsedSeconds: finalSec,
+      durationType,
       titulares: norm.titulares,
       suplentes: norm.suplentes,
       convocados: norm.convocados,
@@ -369,7 +395,7 @@ const Partidos = () => {
         ...(matchData.actaOficial || {}),
         actual: smartActual,
         closed: matchData.actaOficial?.closed || false,
-        totalDuration: duration
+        totalDuration: effectiveDuration
       }
     };
     setMatchData(updated);

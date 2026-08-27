@@ -18,7 +18,8 @@ import {
   calculateMinutesFromEvents,
   isMatchStartedOrFinished,
   detectMatchEventDivergences,
-  getUnifiedMatchEvents
+  getUnifiedMatchEvents,
+  getEffectiveMatchDuration
 } from '../utils/minutesEngine';
 import PlayerAvatar from './PlayerAvatar';
 
@@ -117,7 +118,7 @@ const ActaOficialPanel = ({ matchId, matchData, players = [], calledPlayers = []
     return getUnifiedMatchEvents(matchData);
   }, [matchData]);
 
-  const duration = parseInt(matchData?.duration || matchData?.duracion || 90, 10);
+  const duration = getEffectiveMatchDuration(matchData);
 
   // Contadores RSVP (para partidos futuros)
   const rsvpCounts = useMemo(() => {
@@ -203,10 +204,10 @@ const ActaOficialPanel = ({ matchId, matchData, players = [], calledPlayers = []
     return detectMatchEventDivergences(matchData, sheet?.actual || {}, players);
   };
 
-  const executeCloseActa = async () => {
+  const executeCloseActa = async (withWarnings = false) => {
     setClosingInProgress(true);
     try {
-      await closeMatchSheet();
+      await closeMatchSheet(withWarnings, warningsList);
       setShowWarningsModal(false);
     } finally {
       setClosingInProgress(false);
@@ -222,7 +223,7 @@ const ActaOficialPanel = ({ matchId, matchData, players = [], calledPlayers = []
     }
 
     if (!window.confirm('¿Cerrar el acta oficial? Los minutos y estados quedarán registrados de forma oficial.')) return;
-    await executeCloseActa();
+    await executeCloseActa(false);
   };
 
   const handleReopen = async () => {
@@ -254,7 +255,11 @@ const ActaOficialPanel = ({ matchId, matchData, players = [], calledPlayers = []
         <div>
           <h3 style={styles.title}>
             📋 Acta Oficial
-            {isClosed && <span style={styles.closedBadge}>✅ CERRADA</span>}
+            {isClosed && (
+              sheet?.closedWithWarnings
+                ? <span style={{ ...styles.closedBadge, background: 'rgba(245, 158, 11, 0.15)', color: '#F59E0B', borderColor: '#F59E0B' }}>⚠️ CERRADA CON AVISOS</span>
+                : <span style={styles.closedBadge}>✅ CERRADA</span>
+            )}
           </h3>
           <p style={styles.subtitle}>
             {isClosed
@@ -696,7 +701,7 @@ const ActaOficialPanel = ({ matchId, matchData, players = [], calledPlayers = []
                 </button>
                 <button
                   type="button"
-                  onClick={executeCloseActa}
+                  onClick={() => executeCloseActa(true)}
                   disabled={closingInProgress}
                   style={{
                     padding: '10px 18px',
@@ -709,7 +714,7 @@ const ActaOficialPanel = ({ matchId, matchData, players = [], calledPlayers = []
                     minHeight: '44px'
                   }}
                 >
-                  {closingInProgress ? 'Cerrando...' : 'Cerrar de todas formas'}
+                  {closingInProgress ? 'Cerrando...' : '⚠️ Cerrar con avisos'}
                 </button>
               </div>
             </div>

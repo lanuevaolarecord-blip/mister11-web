@@ -1,4 +1,43 @@
 /**
+ * Determina la duración real y efectiva de un partido.
+ * Si el partido finalizó anticipadamente (ej. 39:30), la duración efectiva es el finalClock (40' o 39').
+ * NINGÚN minuto de jugador puede superar este techo.
+ * @param {Object} match
+ * @returns {number} Duración efectiva en minutos
+ */
+export const getEffectiveMatchDuration = (match = {}) => {
+  const nominalDuration = parseInt(match.duration || match.duracion || 90, 10);
+  if (match.hasExtraTime || match.extraTime || match.prorroga) {
+    return Math.max(nominalDuration, 120);
+  }
+
+  // Si se marcó explícitamente como completo reglamentario
+  if (match.durationType === 'completo') {
+    return nominalDuration;
+  }
+
+  // Extraer segundos finales reales si el partido terminó
+  const finalSec = Number.isFinite(match.finalSeconds)
+    ? match.finalSeconds
+    : (typeof match.finalClock === 'string' && match.finalClock.includes(':')
+        ? (parseInt(match.finalClock.split(':')[0], 10) * 60 + parseInt(match.finalClock.split(':')[1], 10))
+        : (Number.isFinite(match.elapsedSeconds) ? match.elapsedSeconds : null));
+
+  const isFinished = match.status === 'Terminado' || match.status === 'Finalizado';
+
+  if (match.durationType === 'anticipado' && finalSec !== null) {
+    return Math.max(1, Math.ceil(finalSec / 60));
+  }
+
+  // Si está terminado y finalSec es menor que la duración nominal menos 3 min (ej. 39:30 en partido de 90')
+  if (isFinished && finalSec !== null && finalSec > 0 && finalSec < (nominalDuration - 3) * 60) {
+    return Math.max(1, Math.ceil(finalSec / 60));
+  }
+
+  return nominalDuration;
+};
+
+/**
  * Extrae y fusiona la lista canónica de eventos de un partido (events + liveStatsEvents).
  * Elimina duplicados por id o firma y ordena por minuto ascendente.
  * @param {Object} match
@@ -44,7 +83,7 @@ export const getUnifiedMatchEvents = (match = {}) => {
  * @param {Array}  allEvents            - Todos los eventos del partido
  * @param {Array}  titulares            - Lista de IDs titulares
  * @param {Array}  suplentes            - Lista de IDs suplentes
- * @param {number} totalDuration        - Duración total del partido en minutos (defecto 90 o 120)
+ * @param {number} totalDuration        - Duración total o efectiva del partido en minutos
  * @param {number|null} minutesOverride - Si el míster editó manualmente los minutos
  * @param {string|null} attendanceStatus - Estado oficial ('presente', 'ausente', 'tarde', 'justificado', 'lesionado')
  * @param {number|null} lateMin         - Minutos de retraso si status === 'tarde'
@@ -69,11 +108,11 @@ export const calculateMinutesFromEvents = (
 
   // Regla Override manual del míster
   if (minutesOverride !== null && minutesOverride !== undefined && !isNaN(Number(minutesOverride))) {
-    const mins = Math.max(0, parseInt(minutesOverride, 10));
+    const mins = Math.min(duration, Math.max(0, parseInt(minutesOverride, 10)));
     return {
       minutes: mins,
       source: 'override',
-      detail: `Modificado manualmente por el míster (${mins}')`,
+      detail: `Modificado manualmente (${mins}')`,
       eventsUsed: []
     };
   }
@@ -95,19 +134,16 @@ export const calculateMinutesFromEvents = (
     return { minutes: 0, source: 'justified', detail: 'Falta justificada', eventsUsed: [] };
   }
 
-  // Detectar prórroga (>90 min)
-  (allEvents || []).forEach(e => {
-    if (e && e.isValid !== false) {
-      const min = parseInt(e.minute || e.minuto || e.min || 0, 10);
-      if (min > duration && min <= 130) {
-        duration = Math.max(duration, min > 90 && min <= 120 ? 120 : min);
-      }
-    }
+  // Filtrar eventos válidos (excluyendo minutos que superen la duración del partido)
+  const validEvents = (allEvents || []).filter(e => {
+    if (!e || e.isValid === false) return false;
+    const min = parseInt(e.minute || e.minuto || e.min || 0, 10);
+    return min <= duration + 5; // Tolerancia de descuento
   });
 
   // Eventos de sustitución válidos
-  const subEvents = (allEvents || []).filter(e =>
-    e && e.isValid !== false && (e.type === 'cambio' || e.type === 'sustitucion' || e.type === 'substitution' || e.type === 'sub')
+  const subEvents = validEvents.filter(e =>
+    e.type === 'cambio' || e.type === 'sustitucion' || e.type === 'substitution' || e.type === 'sub'
   );
 
   const subOutEvents = subEvents.filter(e =>
@@ -117,12 +153,15 @@ export const calculateMinutesFromEvents = (
     String(e.subInId || e.jugadorEntraId || e.playerInId || e.inId || '') === pid
   );
 
-  const subOutMin = subOutEvents.length > 0
+  const rawSubOutMin = subOutEvents.length > 0
     ? parseInt(subOutEvents[0].minute || subOutEvents[0].minuto || subOutEvents[0].min || duration, 10)
     : null;
-  const subInMin = subInEvents.length > 0
+  const rawSubInMin = subInEvents.length > 0
     ? parseInt(subInEvents[0].minute || subInEvents[0].minuto || subInEvents[0].min || 0, 10)
     : null;
+
+  const subOutMin = rawSubOutMin !== null ? Math.min(duration, Math.max(0, rawSubOutMin)) : null;
+  const subInMin = rawSubInMin !== null ? Math.min(duration, Math.max(0, rawSubInMin)) : null;
 
   // Detección de Tarjetas Rojas / Expulsión
   let expulsionMin = null;
@@ -346,6 +385,7 @@ export const isMatchStartedOrFinished = (match) => {
 export const detectMatchEventDivergences = (matchData = {}, sheetActual = {}, players = []) => {
   const warnings = [];
   const allEvents = getUnifiedMatchEvents(matchData);
+  const effectiveDuration = getEffectiveMatchDuration(matchData);
 
   // 1. Goles en bitácora vs Marcador
   const goalsForCount = allEvents.filter(e => e.type === 'gol_local' || e.type === 'goal_own').length;
@@ -366,7 +406,19 @@ export const detectMatchEventDivergences = (matchData = {}, sheetActual = {}, pl
     });
   }
 
-  // 2. Sustituciones duplicadas o imposibles en la bitácora
+  // 2. Eventos con minuto superior a la duración efectiva del partido
+  allEvents.forEach((e) => {
+    const min = parseInt(e.minute || e.minuto || e.min || 0, 10);
+    if (min > effectiveDuration) {
+      warnings.push({
+        type: 'event_beyond_final_whistle',
+        message: `Evento "${e.type || 'evento'}" en min. ${min}' supera la duración final del partido (${effectiveDuration}').`,
+        tabTarget: 'MATCH-DAY'
+      });
+    }
+  });
+
+  // 3. Sustituciones duplicadas o imposibles en la bitácora
   const subEvents = allEvents.filter(e => e.type === 'cambio' || e.type === 'sustitucion');
   const onPitchTracker = new Set((matchData.titulares || []).filter(Boolean).map(String));
 
@@ -374,11 +426,19 @@ export const detectMatchEventDivergences = (matchData = {}, sheetActual = {}, pl
     const pIn = String(se.playerInId || se.subInId || '');
     const pOut = String(se.playerOutId || se.subOutId || '');
     const pInName = se.playerInName || players.find(p => String(p.id) === pIn)?.name || pIn;
+    const pOutName = se.playerOutName || players.find(p => String(p.id) === pOut)?.name || pOut;
 
-    if (onPitchTracker.has(pIn)) {
+    if (pIn && onPitchTracker.has(pIn)) {
       warnings.push({
-        type: 'impossible_substitution',
+        type: 'impossible_substitution_in',
         message: `Sustitución duplicada/imposible: ${pInName} entra en min. ${se.minute}' pero ya estaba en el campo.`,
+        tabTarget: 'MATCH-DAY'
+      });
+    }
+    if (pOut && !onPitchTracker.has(pOut)) {
+      warnings.push({
+        type: 'impossible_substitution_out',
+        message: `Sustitución imposible: ${pOutName} sale en min. ${se.minute}' pero ya estaba en el banquillo.`,
         tabTarget: 'MATCH-DAY'
       });
     }
@@ -387,28 +447,27 @@ export const detectMatchEventDivergences = (matchData = {}, sheetActual = {}, pl
     if (pIn) onPitchTracker.add(pIn);
   });
 
-  // 3. Cambios en bitácora vs Acta
-  const duration = parseInt(matchData.duration || matchData.duracion || 90, 10);
+  // 4. Cambios en bitácora vs Acta y límites de minutos
   (players || []).forEach(p => {
     const pid = String(p.id);
     const actual = sheetActual?.[pid];
     if (!actual) return;
 
-    const playerSubIns = subEvents.filter(e => String(e.playerInId || e.subInId) === pid);
-    const playerSubOuts = subEvents.filter(e => String(e.playerOutId || e.subOutId) === pid);
+    const playerSubIns = subEvents.filter(e => String(e.playerInId || e.subInId) === pid && (parseInt(e.minute || e.minuto || 0, 10) <= effectiveDuration));
+    const playerSubOuts = subEvents.filter(e => String(e.playerOutId || e.subOutId) === pid && (parseInt(e.minute || e.minuto || 0, 10) <= effectiveDuration));
 
-    if (playerSubIns.length > 0 && (actual.minutes === 0 || actual.minuteSource === 'dnp')) {
+    if (playerSubIns.length > 0 && (actual.minutes === 0 && actual.minuteSource === 'dnp')) {
       warnings.push({
         type: 'sub_in_zero_minutes',
-        message: `${p.name} tiene evento de entrada en bitácora (min. ${playerSubIns[0].minute}') pero figura con 0' en el acta.`,
+        message: `${p.name} tiene evento de entrada en bitácora (min. ${playerSubIns[0].minute}') pero figura como "No entró" (0') en el acta.`,
         tabTarget: 'ACTA-OFICIAL'
       });
     }
 
-    if (playerSubOuts.length > 0 && actual.minutes === duration && actual.minuteSource === 'titular_full') {
+    if (playerSubOuts.length > 0 && actual.minutes >= effectiveDuration && actual.minuteSource === 'titular_full') {
       warnings.push({
         type: 'sub_out_full_minutes',
-        message: `${p.name} tiene evento de salida en bitácora (min. ${playerSubOuts[0].minute}') pero figura con ${duration}' en el acta.`,
+        message: `${p.name} tiene evento de salida en bitácora (min. ${playerSubOuts[0].minute}') pero figura como titular completo (${effectiveDuration}') en el acta.`,
         tabTarget: 'ACTA-OFICIAL'
       });
     }
@@ -438,23 +497,49 @@ export const detectMatchEventDivergences = (matchData = {}, sheetActual = {}, pl
  * Marca como { isValid: false, invalidReason: '...' } los eventos redundantes sin destruir el historial.
  * @param {Array} events
  * @param {Array} initialStarters
+ * @param {number} matchDuration
  * @returns {{ cleansedEvents: Array, removedCount: number, details: Array }}
  */
-export const cleanseImpossibleMatchEvents = (events = [], initialStarters = []) => {
+export const cleanseImpossibleMatchEvents = (events = [], initialStarters = [], matchDuration = 90) => {
   const onPitch = new Set((initialStarters || []).filter(Boolean).map(String));
   let removedCount = 0;
   const details = [];
 
   const cleansedEvents = (events || []).map((e) => {
     if (!e) return e;
+    const min = parseInt(e.minute || e.minuto || e.min || 0, 10);
+
+    // 1. Minuto posterior a la duración efectiva del partido
+    if (min > matchDuration) {
+      removedCount++;
+      const msg = `Evento en min. ${min}' posterior al final del partido (${matchDuration}').`;
+      details.push(msg);
+      return {
+        ...e,
+        isValid: false,
+        invalidReason: msg
+      };
+    }
+
+    // 2. Sustituciones duplicadas o imposibles
     if (e.type === 'cambio' || e.type === 'sustitucion') {
       const pIn = String(e.playerInId || e.subInId || '');
       const pOut = String(e.playerOutId || e.subOutId || '');
 
-      if (onPitch.has(pIn)) {
-        // Evento imposible: el jugador que entra ya está en el campo
+      if (pIn && onPitch.has(pIn)) {
         removedCount++;
-        const msg = `Sustitución duplicada min. ${e.minute}': ${e.playerInName || pIn} ya estaba en el campo.`;
+        const msg = `Sustitución duplicada min. ${min}': ${e.playerInName || pIn} ya estaba en el campo.`;
+        details.push(msg);
+        return {
+          ...e,
+          isValid: false,
+          invalidReason: msg
+        };
+      }
+
+      if (pOut && !onPitch.has(pOut)) {
+        removedCount++;
+        const msg = `Sustitución imposible min. ${min}': ${e.playerOutName || pOut} ya estaba en el banquillo.`;
         details.push(msg);
         return {
           ...e,
@@ -500,10 +585,8 @@ export const buildSmartMatchSheetActual = (
   const allEvents = getUnifiedMatchEvents(match);
   const tarjetasList = Array.isArray(match.tarjetasList) ? match.tarjetasList : [];
 
-  let duration = parseInt(match.duration || match.duracion || 90, 10);
-  if (match.hasExtraTime || match.extraTime || match.prorroga) {
-    duration = Math.max(duration, 120);
-  }
+  // Duración efectiva del partido (techo absoluto de minutos)
+  const duration = getEffectiveMatchDuration(match);
 
   const allPlayerIds = [
     ...new Set([
@@ -593,10 +676,7 @@ export const calculateAllPlayerMinutes = (
   const allEvents = getUnifiedMatchEvents(match);
   const tarjetasList = Array.isArray(match.tarjetasList) ? match.tarjetasList : [];
 
-  let duration = parseInt(match.duration || match.duracion || 90, 10);
-  if (match.hasExtraTime || match.extraTime || match.prorroga) {
-    duration = Math.max(duration, 120);
-  }
+  const duration = getEffectiveMatchDuration(match);
 
   const allPlayers = [...new Set([
     ...titulares,

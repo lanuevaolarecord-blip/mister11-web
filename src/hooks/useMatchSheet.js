@@ -25,6 +25,7 @@ import {
   buildSmartMatchSheetActual,
   calculateMinutesFromEvents,
   getUnifiedMatchEvents,
+  getEffectiveMatchDuration,
   cleanseImpossibleMatchEvents
 } from '../utils/minutesEngine';
 import { showToast } from '../utils/toast';
@@ -204,26 +205,33 @@ export const useMatchSheet = (teamPath, matchId, matchData, players = []) => {
   };
 
   /**
-   * Depura eventos imposibles y duplicados de la bitácora, recalculando el acta y marcador.
+   * Depurar eventos imposibles de la bitácora y recalcular acta.
    */
   const cleanseEvents = async () => {
-    if (!isValid || !user || sheet?.closed) return { removedCount: 0 };
+    if (!isValid || !user || !matchId) return;
     try {
-      const rawTitulares = Array.isArray(matchData?.titulares) ? matchData.titulares : (matchData?.alineacion?.titulares || []);
-      const events = Array.isArray(matchData?.events) ? matchData.events : [];
-      const { cleansedEvents, removedCount, details } = cleanseImpossibleMatchEvents(events, rawTitulares);
+      const allEvents = getUnifiedMatchEvents(matchData);
+      const rawTitulares = Array.isArray(matchData.titulares)
+        ? matchData.titulares
+        : (matchData.alineacion?.titulares || []);
+      const duration = getEffectiveMatchDuration(matchData);
+
+      const { cleansedEvents, removedCount, details } = cleanseImpossibleMatchEvents(allEvents, rawTitulares, duration);
 
       if (removedCount === 0) {
-        showToast('✅ No se detectaron sustituciones imposibles ni eventos duplicados.', 'info');
+        showToast('✨ La bitácora ya está limpia. Cero eventos imposibles.', 'info');
         return { removedCount: 0, details: [] };
       }
 
+      // Recalcular marcador desde eventos válidos
       const derivedGoalsFor = cleansedEvents.filter(e => e.isValid !== false && (e.type === 'gol_local' || e.type === 'goal_own')).length;
       const derivedGoalsAgainst = cleansedEvents.filter(e => e.isValid !== false && (e.type === 'gol_rival' || e.type === 'goal_rival')).length;
 
-      const smartActual = buildSmartMatchSheetActual(
-        { ...matchData, events: cleansedEvents },
-        sheet?.actual || {},
+      // Recalcular acta oficial
+      const currentActual = sheet?.actual || {};
+      const updatedActual = buildSmartMatchSheetActual(
+        { ...matchData, events: cleansedEvents, liveStatsEvents: cleansedEvents },
+        currentActual,
         sheet?.rsvp || {},
         user.uid,
         { preserveManual: false }
@@ -232,9 +240,12 @@ export const useMatchSheet = (teamPath, matchId, matchData, players = []) => {
       const matchDocRef = doc(db, `${cleanPath}/matches`, matchId);
       await updateDoc(matchDocRef, {
         events: cleansedEvents,
+        liveStatsEvents: cleansedEvents,
         goalsFor: derivedGoalsFor,
         goalsAgainst: derivedGoalsAgainst,
-        'actaOficial.actual': smartActual,
+        'actaOficial.actual': updatedActual,
+        'actaOficial.totalDuration': duration,
+        updatedAt: serverTimestamp(),
       });
 
       showToast(`🧹 Se depuraron ${removedCount} evento(s) imposible(s) y se recalculó el acta.`, 'success');
@@ -276,12 +287,12 @@ export const useMatchSheet = (teamPath, matchId, matchData, players = []) => {
    * Calcula los minutos reales de cada jugador con el motor de minutos y congela el acta.
    * Solo el staff puede cerrar.
    */
-  const closeMatchSheet = async () => {
+  const closeMatchSheet = async (withWarnings = false, warningsList = []) => {
     if (!isValid || !user) throw new Error('Sin usuario o partido activo.');
     if (sheet?.closed) return;
 
     try {
-      const duration = parseInt(matchData?.duration || matchData?.duracion || 90, 10);
+      const duration = getEffectiveMatchDuration(matchData);
       const currentActual = sheet?.actual || {};
 
       const finalActual = buildSmartMatchSheetActual(
@@ -296,13 +307,19 @@ export const useMatchSheet = (teamPath, matchId, matchData, players = []) => {
       await updateDoc(matchDocRef, {
         'actaOficial.actual': finalActual,
         'actaOficial.closed': true,
+        'actaOficial.closedWithWarnings': Boolean(withWarnings),
+        'actaOficial.warnings': warningsList || [],
         'actaOficial.closedAt': serverTimestamp(),
         'actaOficial.closedBy': user.uid,
         'actaOficial.closedByName': user.displayName || 'Staff',
         'actaOficial.totalDuration': duration,
       });
 
-      showToast('✅ Acta cerrada. Minutos reales guardados.', 'success');
+      if (withWarnings) {
+        showToast('⚠️ Acta cerrada con avisos registrados.', 'warning');
+      } else {
+        showToast('✅ Acta cerrada. Minutos reales guardados.', 'success');
+      }
     } catch (err) {
       console.error('[useMatchSheet] Error cerrando acta:', err);
       showToast('❌ Error al cerrar el acta. Intenta de nuevo.', 'error');

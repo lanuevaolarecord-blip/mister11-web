@@ -3,33 +3,10 @@ import { collection, onSnapshot } from 'firebase/firestore';
 import { db } from '../../firebaseConfig';
 import LegendCard from '../LegendCard';
 import { SvgRadar } from '../PlayerAnalyticsModal';
-import { calculatePlayerPerformanceScores } from '../../utils/testScoreEngine';
+import { calculatePlayerPerformanceScores, CANONICAL_TESTS_MAP } from '../../utils/testScoreEngine';
 import { useTheme } from '../../context/ThemeContext';
 import { useTranslation } from '../../hooks/useTranslation';
 import './PlayerPerformanceBanner.css';
-
-// Catálogo canónico de tests para normalización y cálculo de baremos
-const CANONICAL_TEST_SPECS = {
-  't1': { type: 'fisico', category: 'Resistencia', unit: 'm', name: 'Test de Cooper' },
-  't2': { type: 'fisico', category: 'Resistencia', unit: 'nivel', name: 'Course Navette' },
-  't3': { type: 'fisico', category: 'Velocidad', unit: 'seg', name: 'Sprint 10m' },
-  't4': { type: 'fisico', category: 'Velocidad', unit: 'seg', name: 'Sprint 30m' },
-  't5': { type: 'fisico', category: 'Agilidad', unit: 'seg', name: 'T-Test' },
-  't6': { type: 'fisico', category: 'Fuerza', unit: 'cm', name: 'Salto CMJ' },
-  't7': { type: 'fisico', category: 'Técnica', unit: 'seg', name: 'Conducción conos' },
-  't8': { type: 'fisico', category: 'Técnica', unit: 'pts', name: 'Pase a portería' },
-  'psi1': { type: 'psicosocial', category: 'Afrontamiento', unit: 'pts', name: 'ACSI-28' },
-  'psi2': { type: 'psicosocial', category: 'Fortaleza Mental', unit: 'pts', name: 'MTQ-10' },
-  'psi3': { type: 'psicosocial', category: 'Metas', unit: 'pts', name: 'Establecimiento de Metas' },
-  'psi4': { type: 'psicosocial', category: 'Liderazgo', unit: 'pts', name: 'Liderazgo' },
-  'soc1': { type: 'socioemocional', category: 'Cohesión', unit: 'pts', name: 'GEQ (Cohesión)' },
-  'soc2': { type: 'socioemocional', category: 'Bienestar', unit: 'pts', name: 'Bienestar Mental' },
-  'soc3': { type: 'socioemocional', category: 'Autoconciencia', unit: 'pts', name: 'Autoconciencia' },
-  'psi_acsi28_auto': { type: 'psicosocial', category: 'Afrontamiento', unit: 'pts', name: 'ACSI-28' },
-  'psi_mtq10_auto': { type: 'psicosocial', category: 'Fortaleza Mental', unit: 'pts', name: 'MTQ-10' },
-  'soc_geq_auto': { type: 'socioemocional', category: 'Cohesión', unit: 'pts', name: 'GEQ (Cohesión)' },
-  'soc_mhc_auto': { type: 'socioemocional', category: 'Bienestar', unit: 'pts', name: 'Bienestar Mental' },
-};
 
 export const PlayerPerformanceBanner = ({ player, teamPath, onNavigateTab, onOpenSummary }) => {
   const { darkMode } = useTheme();

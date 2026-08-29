@@ -146,7 +146,7 @@ const PlayerAnalyticsModal = ({
 
   if (!player) return null;
 
-  // ── Cálculo canónico unificado de los 5 ejes deportivos ──────────
+  // ── Cálculo canónico unificado de los 5 ejes deportivos (1:1 con Portal del Jugador) ──
   const playerEvals = [];
   Object.entries(historyData[player?.id] || {}).forEach(([testId, hList]) => {
     if (hList && hList.length > 0) {
@@ -155,7 +155,10 @@ const PlayerAnalyticsModal = ({
     }
   });
 
-  const scores = calculatePlayerPerformanceScores(playerEvals, player);
+  const scores = calculatePlayerPerformanceScores(playerEvals, player, {
+    attendancePct: player?.attendancePct ? Number(player.attendancePct) : 0,
+    matchRating: player?.notaMedia || null
+  });
   const { fis, tec, psi, soc, tactica, asistencia, overall, testCount: totalTests, radarData5: radarData } = scores;
 
   const initials = (player.name || '').split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
@@ -362,22 +365,23 @@ const PlayerAnalyticsModal = ({
                 <span style={{ fontSize: 56, fontWeight: 900, color: C_GOLD, lineHeight: 1 }}>{overall || '--'}</span>
                 <span style={{ color: 'rgba(255,255,255,0.5)', fontSize: 12 }}>sobre 100</span>
               </div>
-              {/* Attribute badges */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+              {/* Attribute badges (5 ejes canónicos del radar pentagonal) */}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(95px, 1fr))', gap: 10 }}>
                 {[
                   { label: 'FÍSICO', value: fis, color: '#4CAF7D' },
-                  { label: 'TÉCNICO', value: tec, color: '#2196F3' },
-                  { label: 'PSICO', value: psi, color: C_GOLD },
-                  { label: 'SOCIAL', value: soc, color: '#9C27B0' },
+                  { label: 'TÉCNICA', value: tec, color: '#2196F3' },
+                  { label: 'TÁCTICA', value: tactica, color: '#10B981' },
+                  { label: 'MENTAL', value: psi, color: C_GOLD },
+                  { label: 'ASISTENCIA', value: asistencia, color: '#8B5CF6' },
                 ].map(({ label, value, color }) => (
                   <div key={label} style={{
-                    background: '#FFF', borderRadius: 12, padding: '14px 16px',
+                    background: '#FFF', borderRadius: 12, padding: '12px 8px',
                     border: `2px solid ${C_BORDER}`, textAlign: 'center'
                   }}>
-                    <div style={{ fontSize: 11, color: '#7A7065', letterSpacing: 1, marginBottom: 4 }}>{label}</div>
-                    <div style={{ fontSize: 30, fontWeight: 800, color }}>{value || '--'}</div>
+                    <div style={{ fontSize: 10, color: '#7A7065', letterSpacing: 0.5, marginBottom: 4, fontWeight: 800 }}>{label}</div>
+                    <div style={{ fontSize: 24, fontWeight: 800, color }}>{value || '--'}</div>
                     {/* Progress bar */}
-                    <div style={{ height: 4, background: C_BORDER, borderRadius: 2, marginTop: 8, overflow: 'hidden' }}>
+                    <div style={{ height: 4, background: C_BORDER, borderRadius: 2, marginTop: 6, overflow: 'hidden' }}>
                       <div style={{
                         height: '100%', width: `${value}%`,
                         background: color, borderRadius: 2,

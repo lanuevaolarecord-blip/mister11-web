@@ -410,14 +410,26 @@ export const PlayerStatsTab = ({ player, team, teamPath, isParentView = false, a
 
   const hasDiscomfortActive = wellnessHistory[0]?.hasDiscomfort;
 
+  // Fecha del test más reciente registrado para el jugador (REC-6)
+  const latestEvalDate = useMemo(() => {
+    if (!evaluations || evaluations.length === 0) return null;
+    const sorted = [...evaluations].sort((a, b) => (b.ts || 0) - (a.ts || 0));
+    return sorted[0]?.displayDate || sorted[0]?.date || null;
+  }, [evaluations]);
+
+  // Asistencia y rating reactivos en tiempo real (directo de attendance y matches, con fallback a ficha)
+  const effectiveAttendance = (teamComparison?.myAttendancePct !== null && teamComparison?.myAttendancePct !== undefined)
+    ? teamComparison.myAttendancePct
+    : (player?.attendancePct ? Number(player.attendancePct) : 0);
+
+  const effectiveRating = (playerMatchStats?.avgRating && playerMatchStats.avgRating !== '-' && playerMatchStats.avgRating !== '8.2')
+    ? playerMatchStats.avgRating
+    : (player?.notaMedia || null);
+
   // Cálculo canónico unificado de radar y baremos deportivos
   const scores = calculatePlayerPerformanceScores(evaluations, player, {
-    attendancePct: teamComparison?.myAttendancePct !== null && teamComparison?.myAttendancePct !== undefined
-      ? teamComparison.myAttendancePct
-      : (player?.attendancePct ? Number(player.attendancePct) : 0),
-    matchRating: playerMatchStats?.matchesPlayed > 0 && playerMatchStats?.avgRating !== '-' 
-      ? playerMatchStats.avgRating 
-      : (player?.notaMedia || null)
+    attendancePct: effectiveAttendance,
+    matchRating: effectiveRating
   });
 
   const rawFisico = scores.fis;
@@ -748,13 +760,18 @@ export const PlayerStatsTab = ({ player, team, teamPath, isParentView = false, a
       {/* 5. RADAR CHART DE COMPETENCIAS (5 EJES CANÓNICOS) */}
       <div className="hud-card radar-stats-card" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', marginBottom: '20px' }}>
         <div className="hud-header" style={{ width: '100%', flexWrap: 'wrap', gap: '8px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
             <span className="hud-badge">
               <Sparkles size={14} /> {t('player.stats.radarTitle')}
             </span>
             <span className="hud-status-live" style={{ color: '#4CAF7D', background: 'rgba(76,175,125,0.12)' }}>
               {t('player.stats.radarLevel', { level: overallTPI })}
             </span>
+            {latestEvalDate && (
+              <span style={{ fontSize: '11px', color: 'var(--text-secondary)', display: 'inline-flex', alignItems: 'center', gap: '4px', background: darkMode ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.04)', padding: '3px 8px', borderRadius: '6px' }}>
+                <Clock size={12} /> {isEn ? 'Last eval:' : 'Última evaluación:'} <strong style={{ color: 'var(--text-primary)' }}>{latestEvalDate}</strong>
+              </span>
+            )}
           </div>
 
           <button 

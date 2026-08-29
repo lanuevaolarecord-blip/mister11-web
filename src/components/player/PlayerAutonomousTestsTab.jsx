@@ -141,6 +141,32 @@ export const AUTONOMOUS_TESTS = [
       { label: 'Siempre', value: 4 }
     ],
     maxScore: 12
+  },
+  {
+    id: 'rpe_borg_auto',
+    category: 'Carga y Esfuerzo Físico',
+    name: 'RPE (Escala Borg CR-10)',
+    shortName: 'RPE Esfuerzo',
+    icon: Activity,
+    color: '#EF4444',
+    desc: 'Registra la intensidad del esfuerzo percibido tras tu último entrenamiento o partido en la escala validada Borg 1-10.',
+    timeMinutes: 1,
+    questions: [
+      { id: 'q1', text: '¿Qué nivel de intensidad o esfuerzo físico sentiste en tu última sesión o partido?', dimension: 'Esfuerzo Percibido' }
+    ],
+    options: [
+      { label: '1 - Muy suave (recuperación)', value: 1 },
+      { label: '2 - Suave (cómodo)', value: 2 },
+      { label: '3 - Moderado (aeróbico constante)', value: 3 },
+      { label: '4 - Algo duro (se siente el cansancio)', value: 4 },
+      { label: '5 - Duro (esfuerzo notable)', value: 5 },
+      { label: '6 - Bastante duro', value: 6 },
+      { label: '7 - Muy duro (alta intensidad)', value: 7 },
+      { label: '8 - Muy duro + (cerca del límite)', value: 8 },
+      { label: '9 - Extenuante', value: 9 },
+      { label: '10 - Esfuerzo Máximo (límite absoluto)', value: 10 }
+    ],
+    maxScore: 10
   }
 ];
 

@@ -11,7 +11,7 @@ import { generateExpediente } from '../utils/pdfGenerator';
 import { normalizeText } from '../utils/normalizeInput';
 import { normalizeEmail } from '../utils/normalizeEmail';
 import { storage, db } from '../firebaseConfig';
-import { collection, onSnapshot, doc, setDoc, deleteDoc, serverTimestamp } from 'firebase/firestore';
+import { collection, onSnapshot, doc, setDoc, deleteDoc, addDoc, serverTimestamp } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { showToast } from '../utils/toast';
 import { sendChatNotification } from '../hooks/useLocalNotifications';
@@ -22,7 +22,7 @@ import { PlayerAttendanceSubTab } from '../components/PlayerAttendanceSubTab';
 import { TeamStaffTab } from '../components/TeamStaffTab';
 import { PlayerTabs } from '../components/player/PlayerTabs';
 import { PlayerChatTab } from '../components/player/PlayerChatTab';
-import { MessageSquare, FileText, Pencil, X, UserPlus, Share2, Mail, Trash2 } from 'lucide-react';
+import { MessageSquare, FileText, Pencil, X, UserPlus, Share2, Mail, Trash2, Bell, Megaphone } from 'lucide-react';
 import { useTranslation } from '../hooks/useTranslation';
 import './MiEquipo.css';
 
@@ -78,6 +78,48 @@ const MiEquipo = () => {
   const [editData, setEditData] = useState(emptyPlayer);
   const [isSaving, setIsSaving] = useState(false);
   const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
+
+  // ── REC-5: Estado del Publicador de Comunicados Oficiales ──
+  const [isAnnouncementModalOpen, setIsAnnouncementModalOpen] = useState(false);
+  const [announcementTitle, setAnnouncementTitle] = useState('');
+  const [announcementMsg, setAnnouncementMsg] = useState('');
+  const [announcementPriority, setAnnouncementPriority] = useState('normal');
+  const [isPublishingAnn, setIsPublishingAnn] = useState(false);
+
+  const handlePublishAnnouncement = async (e) => {
+    e.preventDefault();
+    if (!announcementTitle.trim() || !announcementMsg.trim()) {
+      showToast('Escribe un título y el mensaje del comunicado.', 'warning');
+      return;
+    }
+    const cleanTeamPath = teamPath ? teamPath.replace(/^\/+|\/+$/g, '') : '';
+    if (!cleanTeamPath) {
+      showToast('No se encontró el equipo activo.', 'error');
+      return;
+    }
+
+    setIsPublishingAnn(true);
+    try {
+      const annCollectionRef = collection(db, `${cleanTeamPath}/announcements`);
+      await addDoc(annCollectionRef, {
+        title: announcementTitle.trim(),
+        message: announcementMsg.trim(),
+        authorName: user?.displayName || 'Cuerpo Técnico',
+        authorUid: user?.uid || 'staff',
+        priority: announcementPriority,
+        createdAt: serverTimestamp()
+      });
+      showToast('📢 ¡Comunicado publicado con éxito para toda la plantilla!', 'success');
+      setAnnouncementTitle('');
+      setAnnouncementMsg('');
+      setIsAnnouncementModalOpen(false);
+    } catch (err) {
+      console.error('Error publicando comunicado:', err);
+      showToast('Error al publicar el comunicado.', 'error');
+    } finally {
+      setIsPublishingAnn(false);
+    }
+  };
   const [formError, setFormError] = useState('');
   const [isConsentModalOpen, setIsConsentModalOpen] = useState(false);
   const [consentChecked, setConsentChecked] = useState(false);
@@ -327,9 +369,33 @@ const MiEquipo = () => {
   return (
     <div className="page-wrapper">
       <header className="page-header">
-        <div style={{ marginBottom: '16px' }}>
-          <h1 className="page-title">Mi Equipo</h1>
-          <p className="page-subtitle">{players.length} jugadores en la plantilla</p>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px', marginBottom: '16px' }}>
+          <div>
+            <h1 className="page-title">Mi Equipo</h1>
+            <p className="page-subtitle">{players.length} jugadores en la plantilla</p>
+          </div>
+          <button
+            type="button"
+            onClick={() => setIsAnnouncementModalOpen(true)}
+            style={{
+              minHeight: '44px',
+              padding: '0 16px',
+              borderRadius: '10px',
+              border: '1.5px solid #10B981',
+              background: 'rgba(16, 185, 129, 0.12)',
+              color: '#10B981',
+              fontWeight: '800',
+              fontSize: '13px',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              transition: 'all 0.15s ease'
+            }}
+          >
+            <Megaphone size={16} />
+            <span>📢 Publicar Comunicado</span>
+          </button>
         </div>
 
         {/* Selector de Pestañas a Nivel de Equipo */}
@@ -1199,6 +1265,164 @@ const MiEquipo = () => {
             <div className="modal-footer">
               <button className="btn-secondary" onClick={() => setIsConsentModalOpen(false)}>Cerrar</button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── MODAL: PUBLICAR COMUNICADO OFICIAL PARA LA PLANTILLA (REC-5) ── */}
+      {isAnnouncementModalOpen && (
+        <div className="modal-overlay" onClick={() => setIsAnnouncementModalOpen(false)}>
+          <div 
+            className="modal-content" 
+            style={{ maxWidth: '520px', borderRadius: '16px', overflow: 'hidden' }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="modal-header" style={{ background: '#1B3A2D', color: '#FFFFFF', padding: '16px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <Megaphone size={20} color="#D4A843" />
+                <h3 style={{ margin: 0, fontSize: '16px', fontWeight: '800', color: '#FFFFFF' }}>
+                  Publicar Comunicado Oficial
+                </h3>
+              </div>
+              <button 
+                type="button" 
+                onClick={() => setIsAnnouncementModalOpen(false)}
+                style={{ background: 'transparent', border: 'none', color: '#FFFFFF', fontSize: '18px', cursor: 'pointer' }}
+              >
+                ✕
+              </button>
+            </div>
+
+            <form onSubmit={handlePublishAnnouncement} style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '14px' }}>
+              <div>
+                <label style={{ display: 'block', fontSize: '12px', fontWeight: '800', marginBottom: '6px', color: 'var(--text-primary)' }}>
+                  Título del Comunicado *
+                </label>
+                <input
+                  type="text"
+                  placeholder="Ej: Convocatoria viaje a torneo / Horarios semana próxima"
+                  value={announcementTitle}
+                  onChange={(e) => setAnnouncementTitle(e.target.value)}
+                  style={{
+                    width: '100%',
+                    padding: '12px 14px',
+                    borderRadius: '8px',
+                    border: '1.5px solid var(--border-color)',
+                    background: 'var(--bg-app)',
+                    color: 'var(--text-primary)',
+                    fontSize: '13px',
+                    fontWeight: '600'
+                  }}
+                  required
+                />
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: '12px', fontWeight: '800', marginBottom: '6px', color: 'var(--text-primary)' }}>
+                  Mensaje para la Plantilla y Familias *
+                </label>
+                <textarea
+                  rows={4}
+                  placeholder="Escribe el mensaje oficial aquí. Todos los jugadores y padres lo verán en su pantalla de inicio..."
+                  value={announcementMsg}
+                  onChange={(e) => setAnnouncementMsg(e.target.value)}
+                  style={{
+                    width: '100%',
+                    padding: '12px 14px',
+                    borderRadius: '8px',
+                    border: '1.5px solid var(--border-color)',
+                    background: 'var(--bg-app)',
+                    color: 'var(--text-primary)',
+                    fontSize: '13px',
+                    lineHeight: '1.5',
+                    resize: 'vertical'
+                  }}
+                  required
+                />
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: '12px', fontWeight: '800', marginBottom: '6px', color: 'var(--text-primary)' }}>
+                  Prioridad
+                </label>
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  <button
+                    type="button"
+                    onClick={() => setAnnouncementPriority('normal')}
+                    style={{
+                      flex: 1,
+                      minHeight: '44px',
+                      borderRadius: '8px',
+                      border: `1.5px solid ${announcementPriority === 'normal' ? '#10B981' : 'var(--border-color)'}`,
+                      background: announcementPriority === 'normal' ? 'rgba(16, 185, 129, 0.15)' : 'transparent',
+                      color: announcementPriority === 'normal' ? '#10B981' : 'var(--text-secondary)',
+                      fontWeight: '800',
+                      fontSize: '12px',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    🟢 Normal
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setAnnouncementPriority('alta')}
+                    style={{
+                      flex: 1,
+                      minHeight: '44px',
+                      borderRadius: '8px',
+                      border: `1.5px solid ${announcementPriority === 'alta' ? '#EF4444' : 'var(--border-color)'}`,
+                      background: announcementPriority === 'alta' ? 'rgba(239, 68, 68, 0.15)' : 'transparent',
+                      color: announcementPriority === 'alta' ? '#EF4444' : 'var(--text-secondary)',
+                      fontWeight: '800',
+                      fontSize: '12px',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    🔴 Importante / Urgente
+                  </button>
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', gap: '10px', marginTop: '10px', justifyContent: 'flex-end' }}>
+                <button
+                  type="button"
+                  onClick={() => setIsAnnouncementModalOpen(false)}
+                  style={{
+                    minHeight: '44px',
+                    padding: '0 16px',
+                    borderRadius: '8px',
+                    border: '1px solid var(--border-color)',
+                    background: 'transparent',
+                    color: 'var(--text-secondary)',
+                    fontWeight: '700',
+                    fontSize: '13px',
+                    cursor: 'pointer'
+                  }}
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  disabled={isPublishingAnn}
+                  style={{
+                    minHeight: '44px',
+                    padding: '0 20px',
+                    borderRadius: '8px',
+                    border: 'none',
+                    background: '#10B981',
+                    color: '#FFFFFF',
+                    fontWeight: '800',
+                    fontSize: '13px',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px'
+                  }}
+                >
+                  {isPublishingAnn ? 'Publicando...' : '📢 Enviar a Toda la Plantilla'}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

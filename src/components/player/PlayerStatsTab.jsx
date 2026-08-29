@@ -571,8 +571,13 @@ export const PlayerStatsTab = ({ player, team, teamPath, isParentView = false, a
                         📋 {mItem.isTitular ? t('common.starter') : t('common.substitute')} ({mItem.minutesPlayed}')
                       </span>
                     ) : (
-                      <span style={{ color: '#F59E0B', fontWeight: '700' }}>
+                      <span style={{ color: '#F59E0B', fontWeight: '700', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
                         ⏳ {t('player.stats.pendingActaShort')}
+                        {(mItem.goals > 0 || mItem.assists > 0) && (
+                          <span style={{ fontSize: '10px', background: 'rgba(245, 158, 11, 0.15)', border: '1px solid rgba(245, 158, 11, 0.3)', padding: '1px 6px', borderRadius: '6px' }}>
+                            {isEn ? 'Provisional' : 'Provisional'}
+                          </span>
+                        )}
                       </span>
                     )}
                   </div>
@@ -999,6 +1004,46 @@ export const PlayerStatsTab = ({ player, team, teamPath, isParentView = false, a
             </div>
           </div>
         </div>
+
+        {/* Histórico diario de los últimos 7 check-ins (REC-12) */}
+        {wellnessHistory.length > 0 && (
+          <div style={{ marginTop: '16px', borderTop: '1px dashed var(--border-light, rgba(255,255,255,0.1))', paddingTop: '14px' }}>
+            <span style={{ fontSize: '11px', fontWeight: '800', color: 'var(--text-secondary)', display: 'block', marginBottom: '10px' }}>
+              📊 {isEn ? 'Daily Check-in Progression (Last 7 days)' : 'Evolución Diaria (Últimos 7 check-ins)'}
+            </span>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(75px, 1fr))', gap: '8px' }}>
+              {[...wellnessHistory].reverse().map((w, idx) => {
+                const dateParts = (w.date || '').split('-');
+                const shortDate = dateParts.length === 3 ? `${dateParts[2]}/${dateParts[1]}` : (w.date || `Día ${idx+1}`);
+                return (
+                  <div key={idx} style={{
+                    background: darkMode ? 'rgba(0,0,0,0.3)' : '#F8FAFC',
+                    border: w.hasDiscomfort ? '1.5px solid rgba(239, 68, 68, 0.4)' : '1px solid var(--border-light)',
+                    borderRadius: '10px',
+                    padding: '8px 6px',
+                    textAlign: 'center',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '4px'
+                  }}>
+                    <span style={{ fontSize: '10px', fontWeight: '800', color: 'var(--text-secondary)' }}>
+                      {shortDate}
+                    </span>
+                    <div style={{ fontSize: '11px', fontWeight: '800', color: '#10B981' }}>
+                      💤 {w.sleep || '-'}/5
+                    </div>
+                    <div style={{ fontSize: '11px', fontWeight: '800', color: '#F59E0B' }}>
+                      ⚡ {w.mood || '-'}/5
+                    </div>
+                    <div style={{ fontSize: '10px', fontWeight: '700', color: w.hasDiscomfort ? '#EF4444' : '#10B981' }}>
+                      {w.hasDiscomfort ? '🔴 Dolor' : '🟢 OK'}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* EVOLUCIÓN TEMPORAL DE TESTS */}

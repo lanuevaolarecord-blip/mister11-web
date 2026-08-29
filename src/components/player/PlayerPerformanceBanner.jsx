@@ -87,8 +87,12 @@ export const PlayerPerformanceBanner = ({ player, teamPath, onNavigateTab, onOpe
   }, [cleanPath, effectivePlayerId]);
 
   // 2. Calcular baremos y métricas canónicas unificadas
-  const scores = calculatePlayerPerformanceScores(evaluations, player);
-  const { fis, tec, psi, soc, overall, testCount, stats4: stats, radarData4: radarData } = scores;
+  // PARIDAD TOTAL con PlayerStatsTab y PlayerProfileTab: mismos parámetros
+  const scores = calculatePlayerPerformanceScores(evaluations, player, {
+    attendancePct: player?.attendancePct ? Number(player.attendancePct) : 0,
+    matchRating: player?.notaMedia || null
+  });
+  const { fis, tec, psi, soc, overall, testCount, stats4: stats, radarData5: radarData } = scores;
   const validDimensions = [fis, tec, psi, soc].filter(v => v > 0);
 
   return (

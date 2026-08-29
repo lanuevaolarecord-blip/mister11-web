@@ -520,9 +520,20 @@ const Partidos = () => {
     if (!files.length) return;
 
     files.forEach(file => {
+      const isSvg = file.type === 'image/svg+xml' || file.name?.toLowerCase().endsWith('.svg');
+      const isPng = file.type === 'image/png' || file.name?.toLowerCase().endsWith('.png');
+
       const reader = new FileReader();
       reader.readAsDataURL(file);
       reader.onload = (event) => {
+        if (isSvg) {
+          setMatchData(prev => ({
+            ...prev,
+            postMatchImages: [...(prev.postMatchImages || []), event.target.result]
+          }));
+          return;
+        }
+
         const img = new Image();
         img.src = event.target.result;
         img.onload = () => {
@@ -530,8 +541,8 @@ const Partidos = () => {
           let width = img.width;
           let height = img.height;
 
-          const MAX_WIDTH = 800;
-          const MAX_HEIGHT = 800;
+          const MAX_WIDTH = 1024;
+          const MAX_HEIGHT = 1024;
           if (width > height) {
             if (width > MAX_WIDTH) {
               height *= MAX_WIDTH / width;
@@ -549,7 +560,8 @@ const Partidos = () => {
           const ctx = canvas.getContext('2d');
           ctx.drawImage(img, 0, 0, width, height);
 
-          const compressedBase64 = canvas.toDataURL('image/jpeg', 0.6);
+          const mimeType = isPng ? 'image/png' : 'image/jpeg';
+          const compressedBase64 = canvas.toDataURL(mimeType, isPng ? 0.92 : 0.8);
 
           setMatchData(prev => ({
             ...prev,
@@ -2097,7 +2109,7 @@ const Partidos = () => {
                       <div className="image-upload-wrapper" style={{ marginTop: '10px' }}>
                         <input
                           type="file"
-                          accept="image/*"
+                          accept="image/*, .png, .jpg, .jpeg, .webp, .svg, .gif, .avif, .heic, .bmp"
                           multiple
                           id="post-match-photo-upload"
                           style={{ display: 'none' }}

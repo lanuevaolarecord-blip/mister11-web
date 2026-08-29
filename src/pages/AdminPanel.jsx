@@ -378,20 +378,71 @@ const AdminPanel = () => {
     
     setIsUploadingShield(true);
     try {
-      const options = {
-        maxSizeMB: 0.04,        // 40KB máximo
-        maxWidthOrHeight: 256,  // 256x256 px
-        useWebWorker: true,
-        fileType: 'image/webp'
-      };
-      const compressedFile = await imageCompression(file, options);
-      
-      const base64data = await new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.readAsDataURL(compressedFile);
-        reader.onloadend = () => resolve(reader.result);
-        reader.onerror = (err) => reject(err);
-      });
+      const isSvg = file.type === 'image/svg+xml' || file.name?.toLowerCase().endsWith('.svg');
+      const isPng = file.type === 'image/png' || file.name?.toLowerCase().endsWith('.png');
+
+      // 1. Si es SVG vectorial, guardar directamente como DataURL vectorial
+      if (isSvg) {
+        const svgBase64 = await new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.readAsDataURL(file);
+          reader.onloadend = () => resolve(reader.result);
+          reader.onerror = reject;
+        });
+        await updateTeam(activeTeam.id, { escudo: svgBase64 });
+        showToast("¡Escudo vectorial SVG guardado con éxito!", "success");
+        return;
+      }
+
+      // 2. Para PNG, JPEG, WebP y otros formatos de imagen
+      const targetFileType = isPng ? 'image/png' : 'image/webp';
+      let base64data = null;
+
+      try {
+        const options = {
+          maxSizeMB: isPng ? 0.2 : 0.08,
+          maxWidthOrHeight: 384,
+          useWebWorker: true,
+          fileType: targetFileType
+        };
+        const compressedFile = await imageCompression(file, options);
+        base64data = await new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.readAsDataURL(compressedFile);
+          reader.onloadend = () => resolve(reader.result);
+          reader.onerror = reject;
+        });
+      } catch (compressionErr) {
+        console.warn("Fallo compresión worker, usando Canvas nativo para escudo:", compressionErr);
+        base64data = await new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.readAsDataURL(file);
+          reader.onload = (ev) => {
+            const img = new Image();
+            img.onload = () => {
+              const canvas = document.createElement('canvas');
+              const MAX_DIM = 384;
+              let w = img.width;
+              let h = img.height;
+              if (w > h && w > MAX_DIM) {
+                h = Math.round((h * MAX_DIM) / w);
+                w = MAX_DIM;
+              } else if (h > MAX_DIM) {
+                w = Math.round((w * MAX_DIM) / h);
+                h = MAX_DIM;
+              }
+              canvas.width = w;
+              canvas.height = h;
+              const ctx = canvas.getContext('2d');
+              ctx.drawImage(img, 0, 0, w, h);
+              resolve(canvas.toDataURL(isPng ? 'image/png' : 'image/webp', isPng ? 0.95 : 0.85));
+            };
+            img.onerror = () => resolve(ev.target.result);
+            img.src = ev.target.result;
+          };
+          reader.onerror = reject;
+        });
+      }
       
       await updateTeam(activeTeam.id, { escudo: base64data });
       showToast("¡Escudo guardado y optimizado con éxito!", "success");
@@ -1176,7 +1227,7 @@ const AdminPanel = () => {
                         <span>{isUploadingShield ? 'Subiendo y optimizando...' : 'Subir Imagen'}</span>
                         <input 
                           type="file" 
-                          accept="image/*" 
+                          accept="image/*, .png, .jpg, .jpeg, .webp, .svg, .gif, .avif, .ico" 
                           onChange={handleUploadEscudo}
                           disabled={isUploadingShield || !activeTeam}
                           style={{position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', opacity: 0, cursor: 'pointer'}} 

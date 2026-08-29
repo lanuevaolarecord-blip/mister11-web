@@ -35,16 +35,27 @@ const BlockEditor = ({ block, index, handleUpdateBlock, handleDeleteBlock, handl
 
     window.dispatchEvent(new CustomEvent('m11-loading', { detail: { show: true, message: 'Procesando diagrama...' } }));
     try {
+      const isSvg = file.type === 'image/svg+xml' || file.name?.toLowerCase().endsWith('.svg');
+      const isPng = file.type === 'image/png' || file.name?.toLowerCase().endsWith('.png');
+
       const reader = new FileReader();
       reader.onload = (event) => {
+        if (isSvg) {
+          const svgUrl = event.target.result;
+          handleUpdateBlock(block.id, 'imagenProtocolo', svgUrl);
+          handleUpdateBlock(block.id, 'imageUrl', svgUrl);
+          window.dispatchEvent(new CustomEvent('m11-loading', { detail: { show: false } }));
+          return;
+        }
+
         const img = new Image();
         img.onload = () => {
           const canvas = document.createElement('canvas');
           let width = img.width;
           let height = img.height;
           
-          const MAX_WIDTH = 600;
-          const MAX_HEIGHT = 600;
+          const MAX_WIDTH = 800;
+          const MAX_HEIGHT = 800;
           
           if (width > height) {
             if (width > MAX_WIDTH) {
@@ -63,7 +74,8 @@ const BlockEditor = ({ block, index, handleUpdateBlock, handleDeleteBlock, handl
           const ctx = canvas.getContext('2d');
           ctx.drawImage(img, 0, 0, width, height);
           
-          const base64Url = canvas.toDataURL('image/jpeg', 0.7);
+          const mime = isPng ? 'image/png' : 'image/jpeg';
+          const base64Url = canvas.toDataURL(mime, isPng ? 0.92 : 0.75);
           handleUpdateBlock(block.id, 'imagenProtocolo', base64Url);
           handleUpdateBlock(block.id, 'imageUrl', base64Url);
           window.dispatchEvent(new CustomEvent('m11-loading', { detail: { show: false } }));
@@ -213,7 +225,7 @@ const BlockEditor = ({ block, index, handleUpdateBlock, handleDeleteBlock, handl
                 <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
                   <input 
                     type="file" 
-                    accept="image/png, image/jpeg, image/webp" 
+                    accept="image/*, .png, .jpg, .jpeg, .webp, .svg, .gif, .avif, .bmp" 
                     style={{ display: 'none' }} 
                     ref={fileInputRef}
                     onChange={handleImageUpload}

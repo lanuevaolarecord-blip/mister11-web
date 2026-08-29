@@ -212,25 +212,76 @@ const MiEquipo = () => {
     if (!file) return;
     setIsUploadingPhoto(true);
     try {
-      const options = {
-        maxSizeMB: 0.2,         // 200KB max per requirements
-        maxWidthOrHeight: 512,  
-        useWebWorker: true,
-        fileType: 'image/webp'
-      };
-      const compressedFile = await imageCompression(file, options);
-      
-      const base64data = await new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.readAsDataURL(compressedFile);
-        reader.onloadend = () => resolve(reader.result);
-        reader.onerror = (err) => reject(err);
-      });
-      
-      setEditData(prev => ({ ...prev, photoFile: compressedFile, photoPreview: base64data }));
+      const isSvg = file.type === 'image/svg+xml' || file.name?.toLowerCase().endsWith('.svg');
+      const isPng = file.type === 'image/png' || file.name?.toLowerCase().endsWith('.png');
+
+      // 1. Si es SVG vectorial, leer directamente con FileReader sin compresión raster
+      if (isSvg) {
+        const svgBase64 = await new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.readAsDataURL(file);
+          reader.onloadend = () => resolve(reader.result);
+          reader.onerror = reject;
+        });
+        setEditData(prev => ({ ...prev, photoFile: file, photoPreview: svgBase64 }));
+        return;
+      }
+
+      // 2. Para PNG, JPEG, WebP y otros formatos (GIF, AVIF, HEIC, etc.)
+      const targetFileType = isPng ? 'image/png' : (file.type || 'image/jpeg');
+      let base64data = null;
+      let finalFile = file;
+
+      try {
+        const options = {
+          maxSizeMB: isPng ? 0.4 : 0.25,
+          maxWidthOrHeight: 512,
+          useWebWorker: true,
+          fileType: targetFileType
+        };
+        finalFile = await imageCompression(file, options);
+        base64data = await new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.readAsDataURL(finalFile);
+          reader.onloadend = () => resolve(reader.result);
+          reader.onerror = reject;
+        });
+      } catch (compressionErr) {
+        console.warn("Compresión no disponible para este formato, procesando con Canvas nativo:", compressionErr);
+        base64data = await new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.readAsDataURL(file);
+          reader.onload = (ev) => {
+            const img = new Image();
+            img.onload = () => {
+              const canvas = document.createElement('canvas');
+              const MAX_DIM = 512;
+              let w = img.width;
+              let h = img.height;
+              if (w > h && w > MAX_DIM) {
+                h = Math.round((h * MAX_DIM) / w);
+                w = MAX_DIM;
+              } else if (h > MAX_DIM) {
+                w = Math.round((w * MAX_DIM) / h);
+                h = MAX_DIM;
+              }
+              canvas.width = w;
+              canvas.height = h;
+              const ctx = canvas.getContext('2d');
+              ctx.drawImage(img, 0, 0, w, h);
+              resolve(canvas.toDataURL(isPng ? 'image/png' : 'image/jpeg', isPng ? 0.92 : 0.8));
+            };
+            img.onerror = () => resolve(ev.target.result);
+            img.src = ev.target.result;
+          };
+          reader.onerror = reject;
+        });
+      }
+
+      setEditData(prev => ({ ...prev, photoFile: finalFile, photoPreview: base64data }));
     } catch (error) {
       console.error("Error al procesar foto del jugador:", error);
-      alert("No se pudo procesar la imagen. Verifica que sea un archivo válido.");
+      alert("No se pudo procesar la imagen. Verifica que sea un archivo de imagen válido (PNG, JPG, WebP, SVG, etc.).");
     } finally {
       setIsUploadingPhoto(false);
     }
@@ -600,7 +651,7 @@ const MiEquipo = () => {
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                     <input
                       type="file"
-                      accept="image/*"
+                      accept="image/*, .png, .jpg, .jpeg, .webp, .svg, .gif, .avif, .heic, .bmp"
                       id="player-photo-upload"
                       style={{ display: 'none' }}
                       onChange={handlePhotoUpload}

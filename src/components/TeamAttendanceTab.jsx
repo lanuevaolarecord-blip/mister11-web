@@ -45,7 +45,8 @@ const RSVP_TO_STATUS = {
 
 /** Badge compacto de la respuesta del jugador */
 const RsvpBadge = ({ rsvpKey, isEn }) => {
-  if (!rsvpKey) {
+  const actualKey = typeof rsvpKey === 'object' ? rsvpKey?.status : rsvpKey;
+  if (!actualKey) {
     return (
       <span style={{
         display: 'inline-flex', alignItems: 'center', gap: '3px',
@@ -57,7 +58,7 @@ const RsvpBadge = ({ rsvpKey, isEn }) => {
       </span>
     );
   }
-  const cfg = RSVP_CONFIG[rsvpKey];
+  const cfg = RSVP_CONFIG[actualKey];
   if (!cfg) return null;
   return (
     <span style={{
@@ -213,58 +214,92 @@ export const TeamAttendanceTab = ({ players = [], activeTeam = null }) => {
 
     setIsCurrentSessionSuspended(Boolean(existingRecord?.isSuspended || rawSessionObj?.isSuspended));
 
-    if (existingRecord && existingRecord.records && Object.keys(existingRecord.records).length > 0) {
-      // Fusionar asegurando que TODOS los jugadores de la plantilla están presentes
-      const merged = { ...existingRecord.records };
-      (players || []).forEach((p) => {
-        if (!merged[p.id]) {
-          merged[p.id] = {
-            status: p.currentStatus === 'injured' ? 'injured' : 'present',
-            lateMinutes: 0
-          };
-        }
-      });
-      setRecordsMap(merged);
-      if (existingRecord.date) setSelectedSessionDate(existingRecord.date);
-      if (existingRecord.sessionTitle) setSelectedSessionTitle(existingRecord.sessionTitle);
-    } else if (selectedMatch && selectedMatch.actaOficial?.actual && Object.keys(selectedMatch.actaOficial.actual).length > 0) {
-      // Cargar desde acta oficial del partido
-      const STATUS_FROM_ACTA = {
-        presente: 'present',
-        tarde: 'late',
-        justificado: 'justified',
-        ausente: 'absent',
-        lesionado: 'injured'
-      };
-      const mapFromActa = {};
-      Object.entries(selectedMatch.actaOficial.actual).forEach(([pid, d]) => {
-        mapFromActa[pid] = {
+    const STATUS_FROM_ACTA = {
+      presente: 'present',
+      tarde: 'late',
+      justificado: 'justified',
+      ausente: 'absent',
+      lesionado: 'injured'
+    };
+
+    // Obtener RSVP del evento (prioridad: asistencia guardada -> sesión -> partido)
+    const currentRsvpRaw = (existingRecord?.playerRsvp && typeof existingRecord.playerRsvp === 'object')
+      ? existingRecord.playerRsvp
+      : (rawSessionObj?.playerRsvp || null);
+
+    const existingRecords = (existingRecord && existingRecord.records && typeof existingRecord.records === 'object')
+      ? existingRecord.records
+      : {};
+
+    const matchActaActual = (selectedMatch && selectedMatch.actaOficial?.actual) || {};
+
+    const nextMap = {};
+
+    (players || []).forEach((p) => {
+      // 1. Si el staff ya confirmó o guardó este jugador
+      if (existingRecords[p.id]) {
+        const staffRec = existingRecords[p.id];
+        nextMap[p.id] = {
+          ...staffRec,
+          status: staffRec.status || 'unmarked',
+          source: staffRec.source || 'staff',
+          lateMinutes: staffRec.lateMinutes || 0
+        };
+        return;
+      }
+
+      // 2. Si es un partido con acta oficial
+      if (matchActaActual[p.id]) {
+        const d = matchActaActual[p.id];
+        nextMap[p.id] = {
           status: STATUS_FROM_ACTA[d.status] || d.status || 'present',
+          source: 'staff',
           lateMinutes: d.lateMin || 0
         };
-      });
-      (players || []).forEach((p) => {
-        if (!mapFromActa[p.id]) {
-          mapFromActa[p.id] = {
-            status: p.currentStatus === 'injured' ? 'injured' : 'present',
-            lateMinutes: 0
-          };
-        }
-      });
-      setRecordsMap(mapFromActa);
-      if (selectedMatch.date) setSelectedSessionDate(selectedMatch.date);
-      if (selectedMatch.rival) setSelectedSessionTitle(`🏆 [Partido] vs ${selectedMatch.rival}`);
-    } else {
-      // Default: todos presentes si no hay registro previo
-      const defaultMap = {};
-      (players || []).forEach((p) => {
-        defaultMap[p.id] = {
-          status: p.currentStatus === 'injured' ? 'injured' : 'present',
+        return;
+      }
+
+      // 3. FASE 1: Proyección en tiempo real del RSVP del jugador (Estado PROVISIONAL)
+      const rawPPlayerRsvp = currentRsvpRaw?.[p.id];
+      const pRsvpKey = typeof rawPPlayerRsvp === 'object' ? rawPPlayerRsvp?.status : rawPPlayerRsvp;
+
+      if (pRsvpKey && RSVP_TO_STATUS[pRsvpKey]) {
+        nextMap[p.id] = {
+          status: RSVP_TO_STATUS[pRsvpKey],
+          source: 'rsvp',
           lateMinutes: 0
         };
-      });
-      setRecordsMap(defaultMap);
-    }
+        return;
+      }
+
+      // 4. Si el jugador está marcado como lesionado en la plantilla
+      if (p.currentStatus === 'injured') {
+        nextMap[p.id] = {
+          status: 'injured',
+          source: 'staff',
+          lateMinutes: 0
+        };
+        return;
+      }
+
+      // 5. FASE 2: Sesión sin datos ni respuesta -> 'unmarked' ("—" / Sin respuesta).
+      // PROHIBIDO el "Presente" por defecto que oculte la realidad
+      nextMap[p.id] = {
+        status: 'unmarked',
+        source: null,
+        lateMinutes: 0
+      };
+    });
+
+    setRecordsMap(nextMap);
+
+    if (existingRecord?.date) setSelectedSessionDate(existingRecord.date);
+    else if (selectedMatch?.date) setSelectedSessionDate(selectedMatch.date);
+    else if (rawSessionObj?.fecha || rawSessionObj?.date) setSelectedSessionDate(rawSessionObj.fecha || rawSessionObj.date);
+
+    if (existingRecord?.sessionTitle) setSelectedSessionTitle(existingRecord.sessionTitle);
+    else if (selectedMatch?.rival) setSelectedSessionTitle(`🏆 [Partido] vs ${selectedMatch.rival}`);
+    else if (rawSessionObj?.titulo || rawSessionObj?.title) setSelectedSessionTitle(rawSessionObj.titulo || rawSessionObj.title);
   }, [selectedSessionId, attendanceRecords, players, selectedMatch, sessions]);
 
   const handleSelectEvent = (eventId) => {
@@ -300,6 +335,8 @@ export const TeamAttendanceTab = ({ players = [], activeTeam = null }) => {
       [playerId]: {
         ...(prev[playerId] || {}),
         status,
+        source: 'staff',
+        by: user?.uid || 'staff',
         lateMinutes: status === 'late' ? (prev[playerId]?.lateMinutes || 15) : 0
       }
     }));
@@ -310,6 +347,8 @@ export const TeamAttendanceTab = ({ players = [], activeTeam = null }) => {
       ...prev,
       [playerId]: {
         ...(prev[playerId] || {}),
+        source: 'staff',
+        by: user?.uid || 'staff',
         lateMinutes: Math.max(0, parseInt(minutes, 10) || 0)
       }
     }));
@@ -318,10 +357,10 @@ export const TeamAttendanceTab = ({ players = [], activeTeam = null }) => {
   const handleMarkAllPresent = () => {
     const newMap = {};
     (players || []).forEach((p) => {
-      newMap[p.id] = { status: 'present', lateMinutes: 0 };
+      newMap[p.id] = { status: 'present', source: 'staff', by: user?.uid || 'staff', lateMinutes: 0 };
     });
     setRecordsMap(newMap);
-    showToast(isEn ? 'All marked as present' : 'Todos marcados como presentes', 'info');
+    showToast(isEn ? 'All marked as present (Official)' : 'Todos marcados como presentes (Oficial)', 'info');
   };
 
   const handleSaveCurrentAttendance = async () => {
@@ -332,13 +371,23 @@ export const TeamAttendanceTab = ({ players = [], activeTeam = null }) => {
 
     setIsSaving(true);
     try {
-      // Asegurar que TODOS los jugadores de la plantilla están explícitamente en el mapa
-      const fullRecords = { ...recordsMap };
+      // Asegurar que TODOS los registros guardados queden oficialmente sellados por el staff
+      const fullRecords = {};
       (players || []).forEach((p) => {
-        if (!fullRecords[p.id]) {
+        const r = recordsMap[p.id];
+        if (!r || r.status === 'unmarked') {
           fullRecords[p.id] = {
-            status: p.currentStatus === 'injured' ? 'injured' : 'present',
+            status: p.currentStatus === 'injured' ? 'injured' : 'absent',
+            source: 'staff',
+            by: user?.uid || 'staff',
             lateMinutes: 0
+          };
+        } else {
+          fullRecords[p.id] = {
+            status: r.status,
+            source: 'staff',
+            by: r.by || user?.uid || 'staff',
+            lateMinutes: r.lateMinutes || 0
           };
         }
       });
@@ -348,6 +397,7 @@ export const TeamAttendanceTab = ({ players = [], activeTeam = null }) => {
         date: selectedSessionDate,
         type: selectedSessionType,
         isSuspended: isCurrentSessionSuspended,
+        isClosed: true,
         records: fullRecords
       });
 
@@ -557,7 +607,8 @@ export const TeamAttendanceTab = ({ players = [], activeTeam = null }) => {
   const rsvpCounters = useMemo(() => {
     const counts = { going: 0, not_going: 0, late: 0, justified: 0, none: 0 };
     (players || []).forEach(p => {
-      const r = rsvpMap[p.id];
+      const raw = rsvpMap[p.id];
+      const r = typeof raw === 'object' ? raw?.status : raw;
       if (!r) counts.none++;
       else if (counts[r] !== undefined) counts[r]++;
       else counts.none++;
@@ -1009,6 +1060,7 @@ export const TeamAttendanceTab = ({ players = [], activeTeam = null }) => {
             <div style={{
               display: 'flex',
               flexWrap: 'wrap',
+              alignItems: 'center',
               gap: '8px',
               marginBottom: '16px',
               padding: '12px 16px',
@@ -1017,7 +1069,7 @@ export const TeamAttendanceTab = ({ players = [], activeTeam = null }) => {
               border: '1.5px solid rgba(139, 92, 246, 0.2)'
             }}>
               <span style={{ fontSize: '11px', fontWeight: '800', color: '#8B5CF6', width: '100%', marginBottom: '4px' }}>
-                📲 {isEn ? 'Player RSVP Responses (live)' : 'Respuestas RSVP del Jugador (en vivo)'}
+                📲 {isEn ? 'Player RSVP Responses & Planning (live)' : 'Respuestas RSVP del Jugador y Planificación (en vivo)'}
               </span>
               {rsvpCounters.going > 0 && (
                 <span style={{ fontSize: '11px', fontWeight: '700', color: '#10B981', background: 'rgba(16,185,129,0.12)', padding: '3px 10px', borderRadius: '6px' }}>
@@ -1044,19 +1096,26 @@ export const TeamAttendanceTab = ({ players = [], activeTeam = null }) => {
                   ⚪ {rsvpCounters.none} {isEn ? 'No reply' : 'Sin respuesta'}
                 </span>
               )}
+              <span style={{ fontSize: '11.5px', fontWeight: '800', color: '#10B981', background: 'rgba(16,185,129,0.16)', padding: '4px 12px', borderRadius: '8px', marginLeft: 'auto' }}>
+                ⚽ {isEn 
+                  ? `Expected: ${(players || []).filter(p => recordsMap[p.id]?.status === 'present' || recordsMap[p.id]?.status === 'late').length} / ${players.length}`
+                  : `Se esperan: ${(players || []).filter(p => recordsMap[p.id]?.status === 'present' || recordsMap[p.id]?.status === 'late').length} de ${players.length}`}
+              </span>
             </div>
           )}
 
           {/* Checklist de Jugadores */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
             {players.map((p) => {
-              const currentRec = recordsMap[p.id] || { status: 'present', lateMinutes: 0 };
-              const currentStatus = currentRec.status || 'present';
-              const playerRsvp = rsvpMap[p.id] || null;
+              const currentRec = recordsMap[p.id] || { status: 'unmarked', source: null, lateMinutes: 0 };
+              const currentStatus = currentRec.status;
+              const isProvisional = currentRec.source === 'rsvp';
+              const rawPlayerRsvp = rsvpMap[p.id] || null;
+              const playerRsvp = typeof rawPlayerRsvp === 'object' ? rawPlayerRsvp?.status : rawPlayerRsvp;
 
               // Detección de discrepancia: el jugador dijo X pero el míster marca algo distinto
               const suggestedStatus = playerRsvp ? RSVP_TO_STATUS[playerRsvp] : null;
-              const hasDiscrepancy = !!(suggestedStatus && currentStatus !== suggestedStatus && hasStaffRecord);
+              const hasDiscrepancy = !!(suggestedStatus && currentStatus && currentStatus !== 'unmarked' && currentStatus !== suggestedStatus && currentRec.source === 'staff');
 
               return (
                 <div
@@ -1071,16 +1130,16 @@ export const TeamAttendanceTab = ({ players = [], activeTeam = null }) => {
                     borderRadius: '12px',
                     background: 'var(--bg-app)',
                     border: hasDiscrepancy
-                      ? '1.5px solid rgba(245, 158, 11, 0.5)'
-                      : '1px solid var(--border-color)'
+                      ? '1.5px solid rgba(245, 158, 11, 0.6)'
+                      : (isProvisional ? '1.5px dashed rgba(245, 158, 11, 0.4)' : '1px solid var(--border-color)')
                   }}
                 >
                   {/* Columna izquierda: Avatar + Nombre + RSVP badge */}
                   <div style={{ display: 'flex', alignItems: 'center', gap: '12px', minWidth: '220px' }}>
                     <div
                       style={{
-                        width: '36px',
-                        height: '36px',
+                        width: '38px',
+                        height: '38px',
                         borderRadius: '50%',
                         background: 'var(--accent-green)',
                         color: '#FFFFFF',
@@ -1121,59 +1180,101 @@ export const TeamAttendanceTab = ({ players = [], activeTeam = null }) => {
                     </div>
                   </div>
 
-                  {/* Selector de Estado de Asistencia */}
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', alignItems: 'center' }}>
-                    {Object.entries(STATUS_CONFIG).map(([statusKey, cfg]) => {
-                      const isSelected = currentStatus === statusKey;
-                      return (
-                        <button
-                          key={statusKey}
-                          type="button"
-                          onClick={() => handleStatusChange(p.id, statusKey)}
-                          style={{
-                            minHeight: '40px',
-                            minWidth: '40px',
-                            padding: '0 12px',
-                            borderRadius: '8px',
-                            border: `1.5px solid ${isSelected ? cfg.border : 'var(--border-color)'}`,
-                            background: isSelected ? cfg.bg : 'transparent',
-                            color: isSelected ? cfg.color : 'var(--text-secondary)',
-                            fontWeight: isSelected ? '800' : '600',
-                            fontSize: '12px',
-                            cursor: 'pointer',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '4px',
-                            transition: 'all 0.15s ease'
-                          }}
-                        >
-                          <span>{cfg.icon}</span>
-                          <span>{isEn ? cfg.labelEn : cfg.label}</span>
-                        </button>
-                      );
-                    })}
+                  {/* Selector de Estado de Asistencia con diferenciación Provisional Ámbar vs Oficial Verde */}
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '4px' }}>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', alignItems: 'center' }}>
+                      {Object.entries(STATUS_CONFIG).map(([statusKey, cfg]) => {
+                        const isSelected = currentStatus === statusKey;
+                        const isSelectedProvisional = isSelected && isProvisional;
 
-                    {currentStatus === 'late' && (
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginLeft: '6px' }}>
-                        <input
-                          type="number"
-                          min="1"
-                          max="90"
-                          value={currentRec.lateMinutes || 15}
-                          onChange={(e) => handleLateMinutesChange(p.id, e.target.value)}
-                          style={{
-                            width: '54px',
-                            padding: '6px',
-                            borderRadius: '6px',
-                            border: '1px solid #F97316',
-                            background: 'var(--bg-card)',
-                            color: 'var(--text-primary)',
-                            fontSize: '12px',
-                            textAlign: 'center'
-                          }}
-                        />
-                        <span style={{ fontSize: '11px', color: '#F97316', fontWeight: '700' }}>min</span>
-                      </div>
+                        return (
+                          <button
+                            key={statusKey}
+                            type="button"
+                            onClick={() => handleStatusChange(p.id, statusKey)}
+                            title={isSelectedProvisional 
+                              ? (isEn ? 'Provisional status per player response. Tap to confirm as official.' : 'Estado provisional derivado de la respuesta del jugador. Toca para confirmarlo como oficial.')
+                              : (isSelected ? (isEn ? 'Official status confirmed by staff' : 'Estado oficial confirmado por el cuerpo técnico') : '')}
+                            style={{
+                              minHeight: '44px',
+                              minWidth: '44px',
+                              padding: '0 12px',
+                              borderRadius: '8px',
+                              border: isSelected
+                                ? (isSelectedProvisional ? '1.5px dashed #F59E0B' : `1.5px solid ${cfg.border}`)
+                                : '1px solid var(--border-color)',
+                              background: isSelected
+                                ? (isSelectedProvisional ? 'rgba(245, 158, 11, 0.16)' : cfg.bg)
+                                : 'transparent',
+                              color: isSelected
+                                ? (isSelectedProvisional ? '#F59E0B' : cfg.color)
+                                : 'var(--text-secondary)',
+                              fontWeight: isSelected ? '800' : '600',
+                              fontSize: '12px',
+                              cursor: 'pointer',
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '4px',
+                              transition: 'all 0.15s ease'
+                            }}
+                          >
+                            <span>{cfg.icon}</span>
+                            <span>{isEn ? cfg.labelEn : cfg.label}</span>
+                            {isSelectedProvisional && <span style={{ fontSize: '10px' }}>⏳</span>}
+                          </button>
+                        );
+                      })}
+
+                      {(!currentStatus || currentStatus === 'unmarked') && (
+                        <span style={{
+                          fontSize: '11px',
+                          fontWeight: '700',
+                          color: '#94A3B8',
+                          padding: '6px 12px',
+                          borderRadius: '8px',
+                          background: 'rgba(148,163,184,0.1)',
+                          border: '1px dashed rgba(148,163,184,0.3)',
+                          whiteSpace: 'nowrap'
+                        }}>
+                          — {isEn ? 'Unmarked' : 'Sin registrar'}
+                        </span>
+                      )}
+
+                      {currentStatus === 'late' && (
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginLeft: '6px' }}>
+                          <input
+                            type="number"
+                            min="1"
+                            max="90"
+                            value={currentRec.lateMinutes || 15}
+                            onChange={(e) => handleLateMinutesChange(p.id, e.target.value)}
+                            style={{
+                              width: '54px',
+                              padding: '6px',
+                              borderRadius: '6px',
+                              border: '1px solid #F97316',
+                              background: 'var(--bg-card)',
+                              color: 'var(--text-primary)',
+                              fontSize: '12px',
+                              textAlign: 'center'
+                            }}
+                          />
+                          <span style={{ fontSize: '11px', color: '#F97316', fontWeight: '700' }}>min</span>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Notas explicativas del estado */}
+                    {isProvisional && currentStatus && currentStatus !== 'unmarked' && (
+                      <span style={{ fontSize: '10.5px', fontWeight: '700', color: '#F59E0B', display: 'flex', alignItems: 'center', gap: '3px' }}>
+                        ⏳ {isEn ? 'Provisional · per player response (tap to confirm)' : 'Provisional · según respuesta del jugador (toca para confirmar)'}
+                      </span>
+                    )}
+
+                    {currentRec.source === 'staff' && currentStatus && currentStatus !== 'unmarked' && (
+                      <span style={{ fontSize: '10px', fontWeight: '700', color: '#10B981', display: 'flex', alignItems: 'center', gap: '3px' }}>
+                        ✅ {isEn ? 'Official · confirmed by staff' : 'Oficial · confirmado por el míster'}
+                      </span>
                     )}
                   </div>
                 </div>

@@ -91,7 +91,8 @@ export const extractPlayerVerifiedTimeline = (playerId, attendanceList = [], mat
     let isStaffVerified = false;
 
     if (staffRecord !== undefined && staffRecord !== null) {
-      isStaffVerified = true;
+      const isRsvpSource = typeof staffRecord === 'object' && staffRecord.source === 'rsvp';
+      isStaffVerified = !isRsvpSource || att.isClosed === true;
       if (typeof staffRecord === 'object') {
         rawStatus = staffRecord.status;
       } else if (typeof staffRecord === 'string') {

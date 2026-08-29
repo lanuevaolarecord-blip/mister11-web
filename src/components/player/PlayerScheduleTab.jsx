@@ -129,13 +129,28 @@ export const PlayerScheduleTab = ({ player, team, teamPath, isParentView = false
     return () => unsubAtt();
   }, [cleanPath, effectivePlayerId]);
 
+  const RSVP_TO_ATTENDANCE_STATUS = {
+    going: 'present',
+    ire: 'present',
+    not_going: 'absent',
+    no_ire: 'absent',
+    late: 'late',
+    tarde: 'late',
+    justified: 'justified',
+    justificado: 'justified'
+  };
+
   const handleRsvp = async (eventId, optionId) => {
     if (!cleanPath || !eventId) return;
     setSavingEventId(eventId);
 
     try {
       const attDocRef = doc(db, `${cleanPath}/attendance`, eventId);
-      await setDoc(attDocRef, {
+      const mappedStatus = RSVP_TO_ATTENDANCE_STATUS[optionId] || 'present';
+      const existingOfficial = officialRecords[eventId];
+      const isStaffOfficial = existingOfficial && existingOfficial.source === 'staff';
+
+      const payload = {
         playerRsvp: {
           [effectivePlayerId]: {
             status: optionId,
@@ -144,7 +159,39 @@ export const PlayerScheduleTab = ({ player, team, teamPath, isParentView = false
             updatedAt: serverTimestamp(),
           }
         }
-      }, { merge: true });
+      };
+
+      // FASE 1: La decisión del jugador se proyecta de inmediato en la sesión como estado PROVISIONAL (source: 'rsvp')
+      // mientras no haya sido confirmada previamente por el staff con source: 'staff'
+      if (!isStaffOfficial) {
+        payload.records = {
+          [effectivePlayerId]: {
+            status: mappedStatus,
+            source: 'rsvp',
+            at: serverTimestamp()
+          }
+        };
+      }
+
+      await setDoc(attDocRef, payload, { merge: true });
+
+      // Si el evento es o corresponde a un partido, sincronizar en su documento de matches
+      const cleanEventId = String(eventId).replace(/^match_/, '').replace(/^session_/, '');
+      try {
+        const matchDocRef = doc(db, `${cleanPath}/matches`, cleanEventId);
+        await setDoc(matchDocRef, {
+          playerRsvp: {
+            [effectivePlayerId]: {
+              status: optionId,
+              playerName: player?.name || user?.displayName || 'Jugador',
+              respondedBy: isParentView ? 'parent' : 'player',
+              updatedAt: serverTimestamp(),
+            }
+          }
+        }, { merge: true });
+      } catch (_ignoreMatchErr) {
+        // Si no es un partido válido, continuar silenciosamente
+      }
 
       setRsvps(prev => ({
         ...prev,

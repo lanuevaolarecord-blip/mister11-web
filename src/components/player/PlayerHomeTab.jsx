@@ -5,7 +5,7 @@ import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
 import { useTranslation } from '../../hooks/useTranslation';
 import { useAchievements } from '../../hooks/useAchievements';
-import { Calendar, Clock, MapPin, Trophy, Flame, Bell, CheckCircle2, ChevronRight, Activity } from 'lucide-react';
+import { Calendar, Clock, MapPin, Trophy, Flame, Bell, CheckCircle2, ChevronRight, Activity, ShieldCheck } from 'lucide-react';
 
 import { calculatePlayerMatchStats } from '../../utils/playerMatchStats';
 import { calculatePlayerAttendanceStats } from '../../utils/attendanceStatsHelper';
@@ -177,6 +177,17 @@ export const PlayerHomeTab = ({ player, team, teamPath, onNavigateTab, isParentV
     };
   }, [teamPath, player?.id, team]);
 
+  const isCalledForNextEvent = React.useMemo(() => {
+    if (!nextEvent || !player?.id) return false;
+    const isMatch = nextEvent.type === 'match' || nextEvent.isMatch;
+    if (!isMatch) return false;
+    const pid = String(player.id);
+    const convocados = Array.isArray(nextEvent.convocados) ? nextEvent.convocados.map(String) : [];
+    const titulares = Array.isArray(nextEvent.titulares) ? nextEvent.titulares.map(String) : (Array.isArray(nextEvent.alineacion?.titulares) ? nextEvent.alineacion.titulares.map(String) : []);
+    const suplentes = Array.isArray(nextEvent.suplentes) ? nextEvent.suplentes.map(String) : (Array.isArray(nextEvent.alineacion?.suplentes) ? nextEvent.alineacion.suplentes.map(String) : []);
+    return convocados.includes(pid) || titulares.includes(pid) || suplentes.includes(pid);
+  }, [nextEvent, player?.id]);
+
   return (
     <div className="player-tab-content player-home-tab">
       {/* Saludo y Cabecera del Jugador */}
@@ -209,6 +220,24 @@ export const PlayerHomeTab = ({ player, team, teamPath, onNavigateTab, isParentV
 
         {nextEvent ? (
           <div className="hud-body">
+            {isCalledForNextEvent && (
+              <div style={{
+                background: 'rgba(16, 185, 129, 0.12)',
+                border: '1.5px solid rgba(16, 185, 129, 0.4)',
+                borderRadius: '10px',
+                padding: '8px 12px',
+                marginBottom: '12px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px'
+              }}>
+                <ShieldCheck size={18} color="#10B981" />
+                <span style={{ fontSize: '12px', fontWeight: '800', color: '#10B981' }}>
+                  {isEn ? '📋 You are in the official match squad!' : '📋 ¡Estás en la convocatoria oficial de este partido!'}
+                </span>
+              </div>
+            )}
+
             <h3 className="hud-event-title">
               {nextEvent.titulo || nextEvent.title || (nextEvent.type === 'match' ? t('player.schedule.match') : t('player.schedule.training'))}
             </h3>

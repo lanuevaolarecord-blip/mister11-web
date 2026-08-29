@@ -133,6 +133,25 @@ export const useAttendance = (teamId) => {
         console.warn('[useAttendance] No se pudo sincronizar automáticamente con match.actaOficial:', err);
       }
     }
+
+    // ── REC-7: Sincronizar attendancePct en la ficha del jugador (players/{id}) ──
+    if (!payload.isSuspended && payload.records) {
+      try {
+        const updatedAttendanceList = [
+          ...(attendanceRecords || []).filter(r => r.id !== docId && r.sessionId !== docId),
+          { id: docId, ...cleaned }
+        ];
+        Object.keys(payload.records).forEach((pid) => {
+          try {
+            const stats = calculatePlayerAttendanceStats(pid, updatedAttendanceList, matches, {}, sessions);
+            if (stats && stats.percentage !== null && !isNaN(stats.percentage)) {
+              const pRef = doc(db, `${path}/players`, pid);
+              updateDoc(pRef, { attendancePct: Math.round(Number(stats.percentage)) }).catch(() => {});
+            }
+          } catch (_) {}
+        });
+      } catch (_) {}
+    }
   };
 
   /**

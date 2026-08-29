@@ -7,6 +7,7 @@ import { useTranslation } from '../hooks/useTranslation';
 import { showToast } from '../utils/toast';
 import { generateAttendancePdfReport } from '../utils/attendancePdfReport';
 import { calculateAllPlayerMinutes } from '../utils/minutesEngine';
+import { calculatePlayerMatchStats } from '../utils/playerMatchStats';
 import { 
   calculateSquadAveragePct, 
   getMicrocycleDateRange, 
@@ -413,6 +414,17 @@ export const TeamAttendanceTab = ({ players = [], activeTeam = null }) => {
       });
 
       showToast(isEn ? 'Match sheet closed and minutes calculated' : 'Acta oficial cerrada y minutos calculados', 'success');
+
+      // ── REC-8: Sincronizar notaMedia en la ficha de cada jugador ──
+      (players || []).forEach((p) => {
+        try {
+          const stats = calculatePlayerMatchStats(p.id, matches);
+          if (stats?.avgRating && stats.avgRating !== '-' && !isNaN(Number(stats.avgRating))) {
+            const playerRef = doc(db, `${path}/players`, p.id);
+            updateDoc(playerRef, { notaMedia: parseFloat(stats.avgRating) }).catch(() => {});
+          }
+        } catch (_) {}
+      });
     } catch (err) {
       console.error('Error cerrando acta oficial:', err);
       showToast(isEn ? 'Error closing match sheet' : 'Error al cerrar el acta oficial', 'error');

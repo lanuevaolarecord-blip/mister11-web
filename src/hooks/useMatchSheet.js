@@ -12,6 +12,8 @@
 import { useState, useEffect } from 'react';
 import {
   doc,
+  collection,
+  getDocs,
   onSnapshot,
   updateDoc,
   setDoc,
@@ -28,6 +30,7 @@ import {
   getEffectiveMatchDuration,
   cleanseImpossibleMatchEvents
 } from '../utils/minutesEngine';
+import { calculatePlayerMatchStats } from '../utils/playerMatchStats';
 import { showToast } from '../utils/toast';
 
 /**
@@ -329,6 +332,21 @@ export const useMatchSheet = (teamPath, matchId, matchData, players = []) => {
       } else {
         showToast('✅ Acta cerrada. Minutos reales guardados.', 'success');
       }
+
+      // ── REC-8: Sincronizar notaMedia acumulada en la ficha de cada jugador ──
+      try {
+        const matchesSnap = await getDocs(collection(db, `${cleanPath}/matches`));
+        const allMatches = matchesSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+        Object.keys(finalActual || {}).forEach((pid) => {
+          try {
+            const pStats = calculatePlayerMatchStats(pid, allMatches);
+            if (pStats?.avgRating && pStats.avgRating !== '-' && !isNaN(Number(pStats.avgRating))) {
+              const pRef = doc(db, `${cleanPath}/players`, pid);
+              updateDoc(pRef, { notaMedia: parseFloat(pStats.avgRating) }).catch(() => {});
+            }
+          } catch (_) {}
+        });
+      } catch (_) {}
     } catch (err) {
       console.error('[useMatchSheet] Error cerrando acta:', err);
       showToast('❌ Error al cerrar el acta. Intenta de nuevo.', 'error');

@@ -26,6 +26,50 @@ const STATUS_CONFIG = {
   injured:   { label: 'Lesionado',  labelEn: 'Injured',   color: '#3B82F6', bg: 'rgba(59, 130, 246, 0.12)', border: '#3B82F6', icon: '🚑' },
 };
 
+// ── RSVP Config (respuesta del jugador en su portal) ──────────────────────────
+const RSVP_CONFIG = {
+  going:      { label: 'Irá',         labelEn: 'Will come', color: '#10B981', icon: '✅' },
+  not_going:  { label: 'No irá',      labelEn: 'Won\'t come', color: '#EF4444', icon: '❌' },
+  late:       { label: 'Llegará tarde',labelEn: 'Coming late', color: '#F59E0B', icon: '🟡' },
+  justified:  { label: 'Justificado', labelEn: 'Justified',  color: '#3B82F6', icon: '📄' },
+};
+
+// Mapa RSVP → estado del míster sugerido
+const RSVP_TO_STATUS = {
+  going:     'present',
+  not_going: 'absent',
+  late:      'late',
+  justified: 'justified',
+};
+
+/** Badge compacto de la respuesta del jugador */
+const RsvpBadge = ({ rsvpKey, isEn }) => {
+  if (!rsvpKey) {
+    return (
+      <span style={{
+        display: 'inline-flex', alignItems: 'center', gap: '3px',
+        padding: '2px 7px', borderRadius: '6px',
+        background: 'rgba(148,163,184,0.12)', border: '1px solid rgba(148,163,184,0.25)',
+        fontSize: '10px', fontWeight: '700', color: '#94A3B8', whiteSpace: 'nowrap'
+      }}>
+        ⚪ {isEn ? 'No reply' : 'Sin respuesta'}
+      </span>
+    );
+  }
+  const cfg = RSVP_CONFIG[rsvpKey];
+  if (!cfg) return null;
+  return (
+    <span style={{
+      display: 'inline-flex', alignItems: 'center', gap: '3px',
+      padding: '2px 7px', borderRadius: '6px',
+      background: `${cfg.color}18`, border: `1px solid ${cfg.color}40`,
+      fontSize: '10px', fontWeight: '700', color: cfg.color, whiteSpace: 'nowrap'
+    }}>
+      {cfg.icon} {isEn ? cfg.labelEn : cfg.label}
+    </span>
+  );
+};
+
 const getInitials = (name) => {
   if (!name) return '??';
   return name.split(' ').map((n) => n[0]).join('').toUpperCase().substring(0, 2);
@@ -475,6 +519,73 @@ export const TeamAttendanceTab = ({ players = [], activeTeam = null }) => {
   );
   const hasStaffRecord = !!(currentEventRecord && currentEventRecord.records && Object.keys(currentEventRecord.records).length > 0);
 
+  // ── RSVP: mapa de respuestas del jugador para el evento seleccionado ──────────
+  // El jugador escribe en attendance/{eventId}.playerRsvp[playerId]
+  // También puede vivir en el objeto de sesión directamente si el jugador usó PlayerScheduleTab
+  const rsvpMap = useMemo(() => {
+    // Prioridad 1: registro de asistencia ya guardado (tiene playerRsvp)
+    if (currentEventRecord?.playerRsvp && typeof currentEventRecord.playerRsvp === 'object') {
+      return currentEventRecord.playerRsvp;
+    }
+    // Prioridad 2: documento de sesión con playerRsvp embebido
+    const cleanId = String(selectedSessionId).replace(/^session_/, '').replace(/^match_/, '');
+    const sessionObj = (sessions || []).find(s => s.id === cleanId || s.id === selectedSessionId);
+    if (sessionObj?.playerRsvp && typeof sessionObj.playerRsvp === 'object') {
+      return sessionObj.playerRsvp;
+    }
+    // Prioridad 3: partido con playerRsvp
+    const matchObj = (matches || []).find(m => m.id === cleanId || m.id === selectedSessionId);
+    if (matchObj?.playerRsvp && typeof matchObj.playerRsvp === 'object') {
+      return matchObj.playerRsvp;
+    }
+    return {};
+  }, [currentEventRecord, selectedSessionId, sessions, matches]);
+
+  // Contadores RSVP para el evento seleccionado
+  const rsvpCounters = useMemo(() => {
+    const counts = { going: 0, not_going: 0, late: 0, justified: 0, none: 0 };
+    (players || []).forEach(p => {
+      const r = rsvpMap[p.id];
+      if (!r) counts.none++;
+      else if (counts[r] !== undefined) counts[r]++;
+      else counts.none++;
+    });
+    return counts;
+  }, [rsvpMap, players]);
+
+  const hasAnyRsvp = (players || []).some(p => !!rsvpMap[p.id]);
+
+  // Prellenar desde RSVP: sugiere estados sin pisar ediciones manuales del míster
+  const handlePrefillFromRsvp = () => {
+    if (!hasAnyRsvp) {
+      showToast(isEn ? 'No player responses yet' : 'Ningún jugador ha respondido aún', 'warning');
+      return;
+    }
+    let filled = 0;
+    setRecordsMap(prev => {
+      const next = { ...prev };
+      (players || []).forEach(p => {
+        const rsvp = rsvpMap[p.id];
+        if (!rsvp) return;
+        const suggested = RSVP_TO_STATUS[rsvp];
+        if (!suggested) return;
+        // Solo aplica si aún no hay edición manual o el estado es el default 'present'
+        const current = prev[p.id]?.status;
+        if (!current || current === 'present') {
+          next[p.id] = { ...prev[p.id], status: suggested, lateMinutes: suggested === 'late' ? (prev[p.id]?.lateMinutes || 15) : 0 };
+          filled++;
+        }
+      });
+      return next;
+    });
+    showToast(
+      isEn
+        ? `✅ Pre-filled ${filled} player${filled !== 1 ? 's' : ''} from RSVP (manual edits preserved)`
+        : `✅ Prellenados ${filled} jugador${filled !== 1 ? 'es' : ''} desde RSVP (ediciones manuales conservadas)`,
+      'success'
+    );
+  };
+
   return (
     <div className="attendance-tab-wrapper" style={{ padding: '4px 0 24px 0' }}>
       
@@ -763,6 +874,31 @@ export const TeamAttendanceTab = ({ players = [], activeTeam = null }) => {
                 </button>
               )}
 
+              {/* ⚡ PRELLENAR DESDE RSVP */}
+              {hasAnyRsvp && (
+                <button
+                  type="button"
+                  onClick={handlePrefillFromRsvp}
+                  title={isEn ? 'Pre-fill from player RSVP responses (manual edits preserved)' : 'Prellenar desde respuestas del jugador sin pisar ediciones manuales'}
+                  style={{
+                    minHeight: '44px',
+                    padding: '0 14px',
+                    borderRadius: '10px',
+                    border: '1.5px solid #8B5CF6',
+                    background: 'rgba(139, 92, 246, 0.1)',
+                    color: '#8B5CF6',
+                    fontWeight: '800',
+                    fontSize: '12px',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '5px'
+                  }}
+                >
+                  ⚡ {isEn ? 'Pre-fill from RSVP' : 'Prellenar desde RSVP'}
+                </button>
+              )}
+
               <button
                 type="button"
                 onClick={handleMarkAllPresent}
@@ -856,11 +992,59 @@ export const TeamAttendanceTab = ({ players = [], activeTeam = null }) => {
             )}
           </div>
 
+          {/* ── CONTADORES RSVP (en vivo desde respuestas del jugador) ── */}
+          {(hasAnyRsvp || rsvpCounters.none > 0) && (
+            <div style={{
+              display: 'flex',
+              flexWrap: 'wrap',
+              gap: '8px',
+              marginBottom: '16px',
+              padding: '12px 16px',
+              borderRadius: '12px',
+              background: 'rgba(139, 92, 246, 0.06)',
+              border: '1.5px solid rgba(139, 92, 246, 0.2)'
+            }}>
+              <span style={{ fontSize: '11px', fontWeight: '800', color: '#8B5CF6', width: '100%', marginBottom: '4px' }}>
+                📲 {isEn ? 'Player RSVP Responses (live)' : 'Respuestas RSVP del Jugador (en vivo)'}
+              </span>
+              {rsvpCounters.going > 0 && (
+                <span style={{ fontSize: '11px', fontWeight: '700', color: '#10B981', background: 'rgba(16,185,129,0.12)', padding: '3px 10px', borderRadius: '6px' }}>
+                  ✅ {rsvpCounters.going} {isEn ? 'Will come' : 'Irá'}
+                </span>
+              )}
+              {rsvpCounters.not_going > 0 && (
+                <span style={{ fontSize: '11px', fontWeight: '700', color: '#EF4444', background: 'rgba(239,68,68,0.12)', padding: '3px 10px', borderRadius: '6px' }}>
+                  ❌ {rsvpCounters.not_going} {isEn ? "Won't come" : 'No irá'}
+                </span>
+              )}
+              {rsvpCounters.late > 0 && (
+                <span style={{ fontSize: '11px', fontWeight: '700', color: '#F59E0B', background: 'rgba(245,158,11,0.12)', padding: '3px 10px', borderRadius: '6px' }}>
+                  🟡 {rsvpCounters.late} {isEn ? 'Coming late' : 'Llegará tarde'}
+                </span>
+              )}
+              {rsvpCounters.justified > 0 && (
+                <span style={{ fontSize: '11px', fontWeight: '700', color: '#3B82F6', background: 'rgba(59,130,246,0.12)', padding: '3px 10px', borderRadius: '6px' }}>
+                  📄 {rsvpCounters.justified} {isEn ? 'Justified' : 'Justificado'}
+                </span>
+              )}
+              {rsvpCounters.none > 0 && (
+                <span style={{ fontSize: '11px', fontWeight: '700', color: '#94A3B8', background: 'rgba(148,163,184,0.1)', padding: '3px 10px', borderRadius: '6px' }}>
+                  ⚪ {rsvpCounters.none} {isEn ? 'No reply' : 'Sin respuesta'}
+                </span>
+              )}
+            </div>
+          )}
+
           {/* Checklist de Jugadores */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
             {players.map((p) => {
               const currentRec = recordsMap[p.id] || { status: 'present', lateMinutes: 0 };
               const currentStatus = currentRec.status || 'present';
+              const playerRsvp = rsvpMap[p.id] || null;
+
+              // Detección de discrepancia: el jugador dijo X pero el míster marca algo distinto
+              const suggestedStatus = playerRsvp ? RSVP_TO_STATUS[playerRsvp] : null;
+              const hasDiscrepancy = !!(suggestedStatus && currentStatus !== suggestedStatus && hasStaffRecord);
 
               return (
                 <div
@@ -874,9 +1058,12 @@ export const TeamAttendanceTab = ({ players = [], activeTeam = null }) => {
                     padding: '12px 16px',
                     borderRadius: '12px',
                     background: 'var(--bg-app)',
-                    border: '1px solid var(--border-color)'
+                    border: hasDiscrepancy
+                      ? '1.5px solid rgba(245, 158, 11, 0.5)'
+                      : '1px solid var(--border-color)'
                   }}
                 >
+                  {/* Columna izquierda: Avatar + Nombre + RSVP badge */}
                   <div style={{ display: 'flex', alignItems: 'center', gap: '12px', minWidth: '220px' }}>
                     <div
                       style={{
@@ -890,7 +1077,8 @@ export const TeamAttendanceTab = ({ players = [], activeTeam = null }) => {
                         justifyContent: 'center',
                         fontWeight: '800',
                         fontSize: '13px',
-                        overflow: 'hidden'
+                        overflow: 'hidden',
+                        flexShrink: 0
                       }}
                     >
                       {p.avatarUrl ? (
@@ -899,12 +1087,24 @@ export const TeamAttendanceTab = ({ players = [], activeTeam = null }) => {
                         getInitials(p.name)
                       )}
                     </div>
-                    <div>
-                      <div style={{ fontWeight: '800', color: 'var(--text-primary)', fontSize: '14px' }}>
+                    <div style={{ minWidth: 0 }}>
+                      <div style={{ fontWeight: '800', color: 'var(--text-primary)', fontSize: '14px', display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
                         #{p.number || '-'} {p.name}
+                        {/* ⚠️ Discrepancia: dijo que vendría pero el míster lo marca diferente */}
+                        {hasDiscrepancy && (
+                          <span
+                            title={isEn
+                              ? `Player said "${RSVP_CONFIG[playerRsvp]?.labelEn}" but marked as "${STATUS_CONFIG[currentStatus]?.labelEn}"`
+                              : `Dijo "${RSVP_CONFIG[playerRsvp]?.label}" pero se marcó "${STATUS_CONFIG[currentStatus]?.label}"`
+                            }
+                            style={{ fontSize: '13px', cursor: 'help' }}
+                          >⚠️</span>
+                        )}
                       </div>
-                      <div style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>
-                        {p.position || (isEn ? 'Player' : 'Jugador')}
+                      <div style={{ fontSize: '11px', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '5px', flexWrap: 'wrap', marginTop: '2px' }}>
+                        <span>{p.position || (isEn ? 'Player' : 'Jugador')}</span>
+                        {/* Badge RSVP en vivo del jugador */}
+                        <RsvpBadge rsvpKey={playerRsvp} isEn={isEn} />
                       </div>
                     </div>
                   </div>

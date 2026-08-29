@@ -16,7 +16,9 @@ import LegendCard from '../components/LegendCard';
 import ProgressTracker from '../components/ProgressTracker';
 import TestDetail from './TestDetail';
 import PlayerAnalyticsModal, { SvgRadar } from '../components/PlayerAnalyticsModal';
-import { calculatePlayerPerformanceScores } from '../utils/testScoreEngine';
+import { calculatePlayerPerformanceScores, consolidatePlayerEvaluations } from '../utils/testScoreEngine';
+import { usePlayerSeasonStats } from '../hooks/usePlayerSeasonStats';
+import { calculatePlayerMatchStats } from '../utils/playerMatchStats';
 import { db } from '../firebaseConfig';
 import { collection, addDoc, getDocs, query, where, orderBy, serverTimestamp, writeBatch, doc, deleteDoc, onSnapshot } from '../firebase/firestore-proxy';
 import WellnessTestModal from '../components/WellnessTestModal';
@@ -301,13 +303,13 @@ const Tests = () => {
   const { isPro, isProActive } = usePlan();
   const { players, loading: loadingPlayers } = usePlayers(activeTeamId);
   const { t: tr } = useTranslation();
+  const { matches } = usePlayerSeasonStats(activeTeamId);
   const [historyData, setHistoryData] = useState({});
   const [activeTab, setActiveTab] = useState('FÍSICOS');
   const [tests, setTests] = useState([]);
   const [loading, setLoading] = useState(false);
   const [upgradeModal, setUpgradeModal] = useState({ open: false, message: '' });
   const [imageErrors, setImageErrors] = useState({});
-
   
   // Custom Confirmation Dialog State
   const [modalConfig, setModalConfig] = useState({
@@ -362,6 +364,21 @@ const Tests = () => {
   // History State
   const [histSelectedPlayer, setHistSelectedPlayer] = useState(null);
   const [analyticsPlayer, setAnalyticsPlayer] = useState(null);
+  const [playerDirectTests, setPlayerDirectTests] = useState([]);
+
+  // Listener para tests autónomos guardados en la subcolección directa del jugador seleccionado
+  useEffect(() => {
+    const teamPath = getTeamPath ? getTeamPath(activeTeamId) : '';
+    if (!teamPath || !histSelectedPlayer) {
+      setPlayerDirectTests([]);
+      return;
+    }
+    const clean = teamPath.replace(/^\/+|\/+$/g, '');
+    const unsub = onSnapshot(collection(db, `${clean}/players/${histSelectedPlayer}/test_results`), (snap) => {
+      setPlayerDirectTests(snap.docs.map(d => ({ id: d.id, ...d.data(), playerId: histSelectedPlayer })));
+    }, () => {});
+    return () => unsub();
+  }, [histSelectedPlayer, activeTeamId, getTeamPath]);
 
   // Firestore Tests Loading
   const loadTests = useCallback(async () => {
@@ -1298,17 +1315,22 @@ const Tests = () => {
               {/* M11 PLAYER ANALYTICS — cálculo canónico unificado */}
               {(() => {
                 const player = getPlayerById(histSelectedPlayer);
-                const playerEvals = [];
-                Object.entries(historyData[histSelectedPlayer] || {}).forEach(([testId, hList]) => {
-                  if (hList && hList.length > 0) {
-                    const last = hList[hList.length - 1];
-                    playerEvals.push({ testId, val: last.val, date: last.date, ...(last.raw || {}) });
-                  }
+                const rawItems = [];
+                (historyData[histSelectedPlayer] ? Object.values(historyData[histSelectedPlayer]).flat() : []).forEach(item => {
+                  rawItems.push({ ...(item.raw || {}), testId: item.raw?.testId || item.testId, val: item.val, date: item.date, playerId: histSelectedPlayer });
                 });
+                rawItems.push(...playerDirectTests);
+
+                const playerEvals = consolidatePlayerEvaluations(rawItems, histSelectedPlayer);
+
+                const matchStats = calculatePlayerMatchStats(histSelectedPlayer, matches);
+                const effectiveRating = (matchStats?.avgRating && matchStats.avgRating !== '-' && matchStats.avgRating !== '8.2')
+                  ? matchStats.avgRating
+                  : (player?.notaMedia || null);
 
                 const scores = calculatePlayerPerformanceScores(playerEvals, player, {
                   attendancePct: player?.attendancePct ? Number(player.attendancePct) : 0,
-                  matchRating: player?.notaMedia || null
+                  matchRating: effectiveRating
                 });
                 const { fis, tec, psi, soc, tactica, asistencia, overall, testCount, stats4: stats, radarData5: radarData } = scores;
 

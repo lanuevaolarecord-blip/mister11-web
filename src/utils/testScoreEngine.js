@@ -50,19 +50,22 @@ export const CANONICAL_TESTS_MAP = {
  * Normaliza cualquier prueba o cuestionario a una escala estándar de 10 a 99 puntos.
  */
 export const normalizeTestValue = (val, testId = '', unit = '', rawItem = {}) => {
-  // 1. Si ya tiene porcentaje explícito
+  // 1. Si ya tiene porcentaje explícito o nota calculada (0-100)
   if (rawItem?.percentage !== undefined && rawItem.percentage !== null && !isNaN(Number(rawItem.percentage))) {
     return Math.min(99, Math.max(10, Math.round(Number(rawItem.percentage))));
   }
+  if (rawItem?.nota !== undefined && rawItem.nota !== null && !isNaN(Number(rawItem.nota))) {
+    return Math.min(99, Math.max(10, Math.round(Number(rawItem.nota))));
+  }
 
-  // 2. Si tiene score y maxScore (cuestionarios)
+  // 2. Si tiene score y maxScore (cuestionarios con puntos brutos)
   const score = rawItem?.score !== undefined ? Number(rawItem.score) : Number(rawItem?.puntuacionTotal);
   const maxScore = rawItem?.maxScore !== undefined ? Number(rawItem.maxScore) : (rawItem?.puntuacionMaxima || CANONICAL_TESTS_MAP[testId]?.maxScore);
   if (!isNaN(score) && !isNaN(maxScore) && maxScore > 0) {
     return Math.min(99, Math.max(10, Math.round((score / maxScore) * 100)));
   }
 
-  const num = parseFloat(String(val !== undefined ? val : (rawItem?.val || 0)).replace(',', '.')) || 0;
+  const num = parseFloat(String(val !== undefined ? val : (rawItem?.val !== undefined ? rawItem.val : (rawItem?.score || 0))).replace(',', '.')) || 0;
   const id = String(testId || rawItem?.testId || '').toLowerCase();
   const u = String(unit || rawItem?.unit || CANONICAL_TESTS_MAP[id]?.unit || '').toLowerCase();
 
@@ -124,6 +127,55 @@ export const normalizeTestValue = (val, testId = '', unit = '', rawItem = {}) =>
 };
 
 /**
+ * Consolida deduplicando evaluaciones de todas las fuentes posibles (evaluaciones, test_results y subcolección de jugador).
+ */
+export const consolidatePlayerEvaluations = (rawItems = [], playerId = '') => {
+  const targetPid = playerId ? String(playerId) : '';
+  const aliasMap = {
+    'psi_acsi28_auto': 'psi1',
+    'psi_mtq10_auto': 'psi2',
+    'soc_geq_auto': 'soc1',
+    'soc_mhc_auto': 'soc2',
+    'psi_acsi28': 'psi1',
+    'psi_mtq10': 'psi2',
+    'soc_geq': 'soc1',
+    'soc_cwms': 'soc2'
+  };
+
+  const filtered = rawItems.filter(item => {
+    if (!item) return false;
+    if (!targetPid) return true;
+    const pId = String(item.playerId || item.jugadorId || item.player?.id || '');
+    return !pId || pId === targetPid;
+  });
+
+  return filtered.map(item => {
+    const rawId = String(item.testId || item.testName || 'test_general');
+    const testId = aliasMap[rawId] || rawId;
+    const rawVal = item.val !== undefined 
+      ? item.val 
+      : (item.percentage !== undefined 
+        ? item.percentage 
+        : (item.nota !== undefined 
+          ? item.nota 
+          : (item.score !== undefined ? item.score : (item.puntuacionTotal || 0))));
+    const parsedVal = parseFloat(String(rawVal).replace(',', '.')) || 0;
+    const rawDate = item.date || item.fecha;
+
+    return {
+      ...item,
+      testId,
+      rawTestId: rawId,
+      val: parsedVal,
+      score: item.score !== undefined ? Number(item.score) : parsedVal,
+      percentage: item.percentage !== undefined ? Number(item.percentage) : (item.nota !== undefined ? Number(item.nota) : undefined),
+      nota: item.nota !== undefined ? Number(item.nota) : undefined,
+      date: rawDate
+    };
+  });
+};
+
+/**
  * Calcula las 4 dimensiones (FÍS, TÉC, PSI, SOC), las 5 dimensiones del radar (FÍSICO, TÉCNICA, TÁCTICA, MENTAL, ASISTENCIA)
  * y el TPI Score global para un jugador a partir de todas sus evaluaciones registradas.
  */
@@ -148,14 +200,23 @@ export const calculatePlayerPerformanceScores = (evaluations = [], player = {}, 
       'soc_cwms': 'soc2'
     };
     const testId = aliasMap[rawId] || rawId;
-    if (!latestByTest[testId] || new Date(e.date || e.fecha || 0) >= new Date(latestByTest[testId].date || latestByTest[testId].fecha || 0)) {
+    const currentDate = new Date(e.date || e.fecha || 0).getTime() || 0;
+    const existingDate = latestByTest[testId] ? (new Date(latestByTest[testId].date || latestByTest[testId].fecha || 0).getTime() || 0) : -1;
+    
+    if (!latestByTest[testId] || currentDate >= existingDate) {
       latestByTest[testId] = { ...e, testId };
     }
   });
 
   Object.entries(latestByTest).forEach(([testId, item]) => {
     const canonical = CANONICAL_TESTS_MAP[testId] || {};
-    const val = item.val !== undefined ? item.val : (item.score !== undefined ? item.score : (item.percentage || 0));
+    const val = item.val !== undefined 
+      ? item.val 
+      : (item.percentage !== undefined 
+        ? item.percentage 
+        : (item.nota !== undefined 
+          ? item.nota 
+          : (item.score !== undefined ? item.score : 0)));
     const unit = item.unit || canonical.unit || 'pts';
     const rawCat = String(item.category || canonical.category || item.categoria || '').toLowerCase();
     const rawType = String(item.type || canonical.type || item.tipo || '').toLowerCase();

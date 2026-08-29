@@ -7,7 +7,7 @@ import { isDeveloperEmail } from '../../config/admins';
 import { showToast } from '../../utils/toast';
 import { usePlayerSeasonStats } from '../../hooks/usePlayerSeasonStats';
 import { calculatePlayerMatchStats } from '../../utils/playerMatchStats';
-import { calculatePlayerPerformanceScores } from '../../utils/testScoreEngine';
+import { calculatePlayerPerformanceScores, consolidatePlayerEvaluations } from '../../utils/testScoreEngine';
 import { calcularEdad } from '../../utils/calcularEdad';
 import PlayerHealthTab from '../PlayerHealthTab';
 import { PlayerPlansPortalTab } from './PlayerPlansPortalTab';
@@ -74,24 +74,12 @@ export const PlayerProfileTab = ({ player, team, teamPath, onNavigateTab }) => {
 
     let evalsList = [];
     let testResultsList = [];
+    let playerDirectList = [];
 
     const rebuildData = () => {
-      const allCombined = [...evalsList, ...testResultsList];
-      const seen = new Set();
-      const unique = [];
-
-      allCombined.forEach(item => {
-        const pId = String(item.playerId || item.jugadorId || '');
-        if (pId === String(effectivePlayerId)) {
-          const key = item.id || `${item.testId}_${item.date || item.fecha}_${item.val || item.score}`;
-          if (!seen.has(key)) {
-            seen.add(key);
-            unique.push(item);
-          }
-        }
-      });
-
-      setEvaluations(unique);
+      const allCombined = [...evalsList, ...testResultsList, ...playerDirectList];
+      const consolidated = consolidatePlayerEvaluations(allCombined, effectivePlayerId);
+      setEvaluations(consolidated);
     };
 
     const unsubEvals = onSnapshot(collection(db, `${cleanTeamPath}/evaluaciones`), (snap) => {
@@ -104,18 +92,28 @@ export const PlayerProfileTab = ({ player, team, teamPath, onNavigateTab }) => {
       rebuildData();
     }, () => {});
 
+    const unsubPlayerDirect = onSnapshot(collection(db, `${cleanTeamPath}/players/${effectivePlayerId}/test_results`), (snap) => {
+      playerDirectList = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      rebuildData();
+    }, () => {});
+
     return () => {
       unsubEvals();
       unsubResults();
+      unsubPlayerDirect();
     };
   }, [cleanTeamPath, effectivePlayerId]);
 
   const performanceScores = useMemo(() => {
+    const effectiveRating = (playerSeasonStats?.avgRating && playerSeasonStats.avgRating !== '-' && playerSeasonStats.avgRating !== '8.2')
+      ? playerSeasonStats.avgRating
+      : (player?.notaMedia || null);
+
     return calculatePlayerPerformanceScores(evaluations, player, {
       attendancePct: player?.attendancePct ? Number(player.attendancePct) : 0,
-      matchRating: player?.notaMedia || null
+      matchRating: effectiveRating
     });
-  }, [evaluations, player]);
+  }, [evaluations, player, playerSeasonStats]);
 
   // Estados de Wellness
   const todayStr = new Date().toISOString().split('T')[0];

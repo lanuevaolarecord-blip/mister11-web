@@ -555,6 +555,34 @@ export const PlayerScheduleTab = ({ player, team, teamPath, isParentView = false
                     })()
                   )}
                 </div>
+
+                {/* ── GALERÍA DE FOTOS DE LA SESIÓN O PARTIDO (REC-9) ── */}
+                {Array.isArray(evt.photos || evt.fotos || evt.capturas || evt.images) && 
+                 (evt.photos || evt.fotos || evt.capturas || evt.images).length > 0 && (
+                  <div style={{ marginTop: '12px', borderTop: '1px solid var(--border-light, rgba(255,255,255,0.08))', paddingTop: '10px' }}>
+                    <span style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '5px', marginBottom: '8px' }}>
+                      📸 {isEn ? 'Photos & Captures' : 'Fotos y Capturas del Evento'} ({(evt.photos || evt.fotos || evt.capturas || evt.images).length})
+                    </span>
+                    <div style={{ display: 'flex', gap: '8px', overflowX: 'auto', paddingBottom: '6px' }}>
+                      {(evt.photos || evt.fotos || evt.capturas || evt.images).map((photoUrl, pIdx) => (
+                        <a 
+                          key={pIdx} 
+                          href={photoUrl} 
+                          target="_blank" 
+                          rel="noreferrer"
+                          style={{ flexShrink: 0, borderRadius: '8px', overflow: 'hidden', border: '1px solid var(--border-color)', display: 'block' }}
+                        >
+                          <img 
+                            src={photoUrl} 
+                            alt={`Foto ${pIdx + 1}`} 
+                            style={{ width: '84px', height: '64px', objectFit: 'cover', display: 'block' }} 
+                            loading="lazy"
+                          />
+                        </a>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             );
           })}

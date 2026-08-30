@@ -30,6 +30,9 @@ public class MainActivity extends BridgeActivity {
       controller.setAppearanceLightNavigationBars(false);
     }
 
+    // Habilitar depuración WebView para automatización y QA vía Chrome DevTools Protocol (CDP)
+    android.webkit.WebView.setWebContentsDebuggingEnabled(true);
+
     // Habilitar soporte para ventanas emergentes de autenticación OAuth en el WebView
     if (this.bridge != null && this.bridge.getWebView() != null) {
       this.bridge.getWebView().getSettings().setSupportMultipleWindows(true);

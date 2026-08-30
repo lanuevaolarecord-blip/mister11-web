@@ -146,21 +146,39 @@ export const consolidatePlayerEvaluations = (rawItems = [], playerId = '') => {
     if (!item) return false;
     if (!targetPid) return true;
     const pId = String(item.playerId || item.jugadorId || item.player?.id || '');
-    return !pId || pId === targetPid;
+    return !pId || pId === targetPid || Boolean(item.players?.[targetPid]);
   });
 
-  return filtered.map(item => {
+  // Ordenar cronológicamente ascendente para que las evaluaciones más recientes o de mayor jerarquía se consoliden deterministamente
+  const sorted = [...filtered].sort((a, b) => {
+    const dateA = new Date(a.date || a.fecha || a.fechaActualizacion || 0).getTime() || 0;
+    const dateB = new Date(b.date || b.fecha || b.fechaActualizacion || 0).getTime() || 0;
+    if (dateA !== dateB) return dateA - dateB;
+    // Si tienen la misma fecha, priorizar registros oficiales del cuerpo técnico sobre tests autónomos
+    const aIsStaff = a.tipo !== 'psicologico_auto' && !a.isAutonomous;
+    const bIsStaff = b.tipo !== 'psicologico_auto' && !b.isAutonomous;
+    if (aIsStaff && !bIsStaff) return 1;
+    if (!aIsStaff && bIsStaff) return -1;
+    return 0;
+  });
+
+  return sorted.map(item => {
     const rawId = String(item.testId || item.testName || 'test_general');
     const testId = aliasMap[rawId] || rawId;
+    
+    // Si hay una nota oficial del entrenador (0-100), tiene precedencia para reflejar la decisión técnica
     const rawVal = item.val !== undefined 
       ? item.val 
-      : (item.percentage !== undefined 
-        ? item.percentage 
-        : (item.nota !== undefined 
-          ? item.nota 
+      : (item.nota !== undefined 
+        ? item.nota 
+        : (item.percentage !== undefined 
+          ? item.percentage 
           : (item.score !== undefined ? item.score : (item.puntuacionTotal || 0))));
     const parsedVal = parseFloat(String(rawVal).replace(',', '.')) || 0;
     const rawDate = item.date || item.fecha;
+
+    const resolvedNota = item.nota !== undefined ? Number(item.nota) : (item.percentage !== undefined ? Number(item.percentage) : undefined);
+    const resolvedPercentage = item.percentage !== undefined ? Number(item.percentage) : resolvedNota;
 
     return {
       ...item,
@@ -168,8 +186,8 @@ export const consolidatePlayerEvaluations = (rawItems = [], playerId = '') => {
       rawTestId: rawId,
       val: parsedVal,
       score: item.score !== undefined ? Number(item.score) : parsedVal,
-      percentage: item.percentage !== undefined ? Number(item.percentage) : (item.nota !== undefined ? Number(item.nota) : undefined),
-      nota: item.nota !== undefined ? Number(item.nota) : undefined,
+      percentage: resolvedPercentage,
+      nota: resolvedNota,
       date: rawDate
     };
   });
@@ -185,7 +203,7 @@ export const calculatePlayerPerformanceScores = (evaluations = [], player = {}, 
   let fis = 0, tec = 0, psi = 0, soc = 0, testCount = 0;
   let countFis = 0, countTec = 0, countPsi = 0, countSoc = 0;
 
-  // Agrupar por prueba considerando el registro más reciente
+  // Agrupar por prueba considerando el registro más reciente y desempate determinista
   const latestByTest = {};
   evaluations.forEach(e => {
     const rawId = String(e.testId || e.testName || 'test_general');
@@ -203,8 +221,15 @@ export const calculatePlayerPerformanceScores = (evaluations = [], player = {}, 
     const currentDate = new Date(e.date || e.fecha || 0).getTime() || 0;
     const existingDate = latestByTest[testId] ? (new Date(latestByTest[testId].date || latestByTest[testId].fecha || 0).getTime() || 0) : -1;
     
-    if (!latestByTest[testId] || currentDate >= existingDate) {
+    if (!latestByTest[testId] || currentDate > existingDate) {
       latestByTest[testId] = { ...e, testId };
+    } else if (currentDate === existingDate) {
+      // Si tienen la misma fecha exacta, resolver de forma determinista
+      const curScore = e.nota !== undefined ? Number(e.nota) : (e.val !== undefined ? Number(e.val) : 0);
+      const exScore = latestByTest[testId].nota !== undefined ? Number(latestByTest[testId].nota) : (latestByTest[testId].val !== undefined ? Number(latestByTest[testId].val) : 0);
+      if (curScore >= exScore) {
+        latestByTest[testId] = { ...e, testId };
+      }
     }
   });
 

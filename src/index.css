@@ -929,10 +929,13 @@ button, .nav-item, input, select, .icon-btn, .topbar-btn, .tool-icon-btn {
   /* Header en móvil limpio y adaptado al notch/cámara */
   /* Header en móvil limpio, horizontal y adaptado al notch */
   .header {
-    height: 56px !important;
-    min-height: 56px !important;
-    max-height: 56px !important;
-    padding: 0 12px !important;
+    height: calc(56px + var(--sat, 0px)) !important;
+    min-height: calc(56px + var(--sat, 0px)) !important;
+    max-height: calc(56px + var(--sat, 0px)) !important;
+    padding-top: var(--sat, 0px) !important;
+    padding-bottom: 0px !important;
+    padding-left: calc(48px + var(--sal, 0px)) !important;
+    padding-right: calc(12px + var(--sar, 0px)) !important;
     box-sizing: border-box !important;
     display: flex !important;
     flex-direction: row !important;

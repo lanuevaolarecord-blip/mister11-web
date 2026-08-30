@@ -9,7 +9,7 @@ import { calculatePlayerMatchStats } from '../../utils/playerMatchStats';
 import { calculatePlayerAttendanceStats } from '../../utils/attendanceStatsHelper';
 import { calculateSquadAveragePct } from '../../utils/attendanceMath';
 import { DEFAULT_SEASON_SETTINGS } from '../../config/achievements';
-import { calculatePlayerPerformanceScores } from '../../utils/testScoreEngine';
+import { calculatePlayerPerformanceScores, consolidatePlayerEvaluations } from '../../utils/testScoreEngine';
 import { SvgRadar } from '../PlayerAnalyticsModal';
 import UpgradeModal from '../UpgradeModal';
 import './PlayerStatsTab.css';
@@ -152,35 +152,19 @@ export const PlayerStatsTab = ({ player, team, teamPath, isParentView = false, a
 
     const rebuildEvaluations = () => {
       const allCombined = [...evalsList, ...testResultsList, ...playerDirectTests];
-      const seen = new Set();
-      const uniqueEvals = [];
-
-      allCombined.forEach(e => {
-        // Clave unívoca considerando playerId, testId, fecha y valor
-        const pId = String(e.playerId || e.jugadorId || e.player?.id || '');
-        const key = e.id ? `${e.id}_${pId}` : `${pId}_${e.testId}_${e.date}_${e.val || e.score}`;
-        if (!seen.has(key)) {
-          seen.add(key);
-          uniqueEvals.push(e);
-        }
-      });
-
-      // Filtrar únicamente los tests que pertenezcan a este jugador (soporta playerId y jugadorId)
-      const playerEvals = uniqueEvals.filter(e => {
-        const pId = String(e.playerId || e.jugadorId || e.player?.id || '');
-        return pId === String(effectivePlayerId) || e.players?.[effectivePlayerId];
-      });
+      // Consolidar usando el motor unificado de Míster11 idéntico al portal del entrenador
+      const playerEvals = consolidatePlayerEvaluations(allCombined, effectivePlayerId);
 
       const enrichedEvals = [];
       const grouped = {};
       playerEvals.forEach(e => {
-        const testId = String(e.testId || e.testName || 'test_general');
-        const canonical = CANONICAL_TESTS_MAP[testId] || {};
-        const testName = e.testName || canonical.name || e.name || (isEn ? 'Evaluation' : 'Evaluación');
+        const testId = String(e.testId || e.rawTestId || 'test_general');
+        const canonical = CANONICAL_TESTS_MAP[testId] || CANONICAL_TESTS_MAP[e.rawTestId] || {};
+        const testName = e.testName || canonical.name || e.nombre || (isEn ? 'Evaluation' : 'Evaluación');
         const unit = e.unit || canonical.unit || 'pts';
-        const rawCat = String(e.category || canonical.category || (isEn ? 'General' : 'General'));
+        const rawCat = String(e.category || canonical.category || e.categoria || (isEn ? 'General' : 'General'));
         const category = rawCat;
-        const type = e.type || canonical.type || (
+        const type = e.type || canonical.type || e.tipo || (
           rawCat.toLowerCase().includes('físic') || rawCat.toLowerCase().includes('resistencia') || rawCat.toLowerCase().includes('velocidad') || rawCat.toLowerCase().includes('fuerza') || rawCat.toLowerCase().includes('agilidad') || testId.startsWith('t1') || testId.startsWith('t2') || testId.startsWith('t3') || testId.startsWith('t4') || testId.startsWith('t5') || testId.startsWith('t6') ? 'fisico' :
           rawCat.toLowerCase().includes('técnic') || rawCat.toLowerCase().includes('pase') || rawCat.toLowerCase().includes('control') || rawCat.toLowerCase().includes('regate') || testId.startsWith('t7') || testId.startsWith('t8') ? 'tecnico' :
           rawCat.toLowerCase().includes('táctic') || rawCat.toLowerCase().includes('posicion') || rawCat.toLowerCase().includes('decision') ? 'tactico' :
@@ -191,8 +175,7 @@ export const PlayerStatsTab = ({ player, team, teamPath, isParentView = false, a
           ? canonical.isTime 
           : (unit.toLowerCase().includes('seg') || unit.toLowerCase().includes('s'));
 
-        const rawVal = e.val !== undefined ? e.val : (e.score !== undefined ? e.score : (e.percentage || 0));
-        const parsedVal = parseFloat(String(rawVal).replace(',', '.')) || 0;
+        const parsedVal = Number(e.val) || 0;
         const rawDate = e.date || e.fecha;
         const { ts, isoDate, displayDate } = parseSafeDate(rawDate, e);
 
@@ -206,7 +189,8 @@ export const PlayerStatsTab = ({ player, team, teamPath, isParentView = false, a
           isTime,
           val: parsedVal,
           score: e.score !== undefined ? Number(e.score) : parsedVal,
-          percentage: e.percentage !== undefined ? Number(e.percentage) : undefined,
+          percentage: e.percentage !== undefined ? Number(e.percentage) : (e.nota !== undefined ? Number(e.nota) : undefined),
+          nota: e.nota !== undefined ? Number(e.nota) : (e.percentage !== undefined ? Number(e.percentage) : undefined),
           date: isoDate,
           displayDate,
           ts

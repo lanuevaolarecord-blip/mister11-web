@@ -16,7 +16,7 @@ import LegendCard from '../components/LegendCard';
 import ProgressTracker from '../components/ProgressTracker';
 import TestDetail from './TestDetail';
 import PlayerAnalyticsModal, { SvgRadar } from '../components/PlayerAnalyticsModal';
-import { calculatePlayerPerformanceScores, consolidatePlayerEvaluations } from '../utils/testScoreEngine';
+import { calculatePlayerPerformanceScores, consolidatePlayerEvaluations, getSafeTimestamp } from '../utils/testScoreEngine';
 import { usePlayerSeasonStats } from '../hooks/usePlayerSeasonStats';
 import { calculatePlayerMatchStats } from '../utils/playerMatchStats';
 import { db } from '../firebaseConfig';
@@ -464,55 +464,17 @@ const Tests = () => {
 
     const teamPath = getTeamPath();
     if (!teamPath) return;
+    const clean = teamPath.replace(/^\/+|\/+$/g, '');
 
-    let evalsList = [];
-    let resultsList = [];
-
-    const rebuildHistory = () => {
-      const allDocs = [...evalsList, ...resultsList];
-      const newHistory = {};
-
-      allDocs.forEach((data) => {
-        const jugadorId = data.jugadorId || data.playerId || data.player?.id;
-        const rawTestId = data.testId || data.testName;
-        const val = data.val !== undefined ? Number(data.val) : (data.score !== undefined ? Number(data.score) : Number(data.percentage ?? data.nota ?? data.puntuacionTotal ?? 0));
-        const date = data.date || data.fecha;
-        if (!jugadorId || !rawTestId) return;
-
-        const aliasMap = {
-          'psi_acsi28_auto': 'psi1',
-          'psi_mtq10_auto': 'psi2',
-          'soc_geq_auto': 'soc1',
-          'soc_mhc_auto': 'soc2',
-          'psi_acsi28': 'psi1',
-          'psi_mtq10': 'psi2',
-          'soc_geq': 'soc1',
-          'soc_cwms': 'soc2'
-        };
-        const testId = aliasMap[rawTestId] || rawTestId;
-
-        if (!newHistory[jugadorId]) newHistory[jugadorId] = {};
-        if (!newHistory[jugadorId][testId]) newHistory[jugadorId][testId] = [];
-        newHistory[jugadorId][testId].push({ id: data.id, date, val, raw: data });
-      });
-
-      setHistoryData(newHistory);
-      setLoading(false);
-    };
-
-    const unsubEvals = onSnapshot(collection(db, teamPath, 'evaluaciones'), (snapshot) => {
-      evalsList = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
-      setRawEvalsList(evalsList);
-      rebuildHistory();
+    const unsubEvals = onSnapshot(collection(db, `${clean}/evaluaciones`), (snapshot) => {
+      setRawEvalsList(snapshot.docs.map(d => ({ id: d.id, _collection: 'evaluaciones', ...d.data() })));
     }, (error) => {
       console.error("Error en snapshot de evaluaciones:", error);
       setLoading(false);
     });
 
-    const unsubResults = onSnapshot(collection(db, teamPath, 'test_results'), (snapshot) => {
-      resultsList = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
-      setRawResultsList(resultsList);
-      rebuildHistory();
+    const unsubResults = onSnapshot(collection(db, `${clean}/test_results`), (snapshot) => {
+      setRawResultsList(snapshot.docs.map(d => ({ id: d.id, _collection: 'test_results', ...d.data() })));
     }, (error) => {
       console.warn("Snapshot de test_results opcional:", error);
     });
@@ -522,6 +484,60 @@ const Tests = () => {
       unsubResults();
     };
   }, [user, activeTeamId, getTeamPath]);
+
+  // Sincronización continua y determinista de historyData con orden cronológico estricto
+  useEffect(() => {
+    const allDocs = [...rawEvalsList, ...rawResultsList, ...playerDirectTests];
+    const newHistory = {};
+
+    allDocs.forEach((data) => {
+      const jugadorId = data.jugadorId || data.playerId || data.player?.id;
+      const rawTestId = data.testId || data.testName;
+      const val = data.val !== undefined 
+        ? Number(data.val) 
+        : (data.score !== undefined 
+            ? Number(data.score) 
+            : Number(data.percentage ?? data.nota ?? data.puntuacionTotal ?? 0));
+      const date = data.date || data.fecha || '';
+      if (!jugadorId || !rawTestId) return;
+
+      const aliasMap = {
+        'psi_acsi28_auto': 'psi1',
+        'psi_mtq10_auto': 'psi2',
+        'psi_metas_auto': 'psi3',
+        'psi_goals_auto': 'psi3',
+        'soc_geq_auto': 'soc1',
+        'soc_mhc_auto': 'soc2',
+        'psi_acsi28': 'psi1',
+        'psi_mtq10': 'psi2',
+        'soc_geq': 'soc1',
+        'soc_cwms': 'soc2'
+      };
+      const testId = aliasMap[rawTestId] || rawTestId;
+
+      if (!newHistory[jugadorId]) newHistory[jugadorId] = {};
+      if (!newHistory[jugadorId][testId]) newHistory[jugadorId][testId] = [];
+
+      const ts = getSafeTimestamp(data);
+      newHistory[jugadorId][testId].push({
+        id: data.id,
+        date: date || (ts ? new Date(ts).toISOString().split('T')[0] : 'Reciente'),
+        val,
+        raw: data,
+        timestamp: ts
+      });
+    });
+
+    // Ordenar cronológicamente ascendente por timestamp para que el último elemento sea el más reciente
+    Object.keys(newHistory).forEach(jId => {
+      Object.keys(newHistory[jId]).forEach(tId => {
+        newHistory[jId][tId].sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0));
+      });
+    });
+
+    setHistoryData(newHistory);
+    setLoading(false);
+  }, [rawEvalsList, rawResultsList, playerDirectTests]);
 
   const loadEvaluations = useCallback(() => {
     // Compatibilidad con callbacks existentes
@@ -663,15 +679,34 @@ const Tests = () => {
       return;
     }
 
+    setLoading(true);
     try {
       const lastEval = history[history.length - 1];
-      if (lastEval.id) {
-        await deleteDoc(doc(db, getTeamPath(), 'evaluaciones', lastEval.id));
-        await loadEvaluations();
+      const targetId = lastEval.id;
+      const teamPath = getTeamPath();
+      const clean = teamPath ? teamPath.replace(/^\/+|\/+$/g, '') : '';
+
+      if (targetId) {
+        // Eliminar en todas las colecciones donde pueda existir
+        const deletePromises = [
+          deleteDoc(doc(db, `${clean}/evaluaciones`, targetId)).catch(() => {}),
+          deleteDoc(doc(db, `${clean}/test_results`, targetId)).catch(() => {}),
+          deleteDoc(doc(db, `${clean}/players/${jugadorId}/test_results`, targetId)).catch(() => {})
+        ];
+        await Promise.allSettled(deletePromises);
+
+        // Actualización optimista de estados locales para feedback inmediato
+        setRawEvalsList(prev => prev.filter(e => e.id !== targetId));
+        setRawResultsList(prev => prev.filter(r => r.id !== targetId));
+        setPlayerDirectTests(prev => prev.filter(p => p.id !== targetId));
+
+        await showAlert("Éxito", "Último registro de evaluación eliminado correctamente.");
       }
     } catch (error) {
       console.error("Error deleting last eval:", error);
       await showAlert("Error", "Error al eliminar el dato.");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -696,19 +731,74 @@ const Tests = () => {
       return;
     }
 
+    setLoading(true);
     try {
+      const teamPath = getTeamPath();
+      const clean = teamPath ? teamPath.replace(/^\/+|\/+$/g, '') : '';
       const batch = writeBatch(db);
-      history.forEach(item => {
-        if (item.id) {
-          const evalRef = doc(db, getTeamPath(), 'evaluaciones', item.id);
-          batch.delete(evalRef);
-        }
-      });
-      await batch.commit();
-      await loadEvaluations();
+
+      const reverseAliasMap = {
+        'psi1': ['psi1', 'psi_acsi28_auto', 'psi_acsi28'],
+        'psi2': ['psi2', 'psi_mtq10_auto', 'psi_mtq10'],
+        'psi3': ['psi3', 'psi_metas_auto', 'psi_goals_auto'],
+        'soc1': ['soc1', 'soc_geq_auto', 'soc_geq'],
+        'soc2': ['soc2', 'soc_mhc_auto', 'soc_cwms']
+      };
+      const testIdsToCheck = reverseAliasMap[testId] || [testId];
+      const idsToDelete = new Set(history.map(item => item.id).filter(Boolean));
+
+      // 1. Borrar cada documento identificado en el historial
+      for (const id of idsToDelete) {
+        try { await deleteDoc(doc(db, `${clean}/evaluaciones`, id)); } catch (_) {}
+        try { await deleteDoc(doc(db, `${clean}/test_results`, id)); } catch (_) {}
+        try { await deleteDoc(doc(db, `${clean}/players/${jugadorId}/test_results`, id)); } catch (_) {}
+      }
+
+      // 2. Limpieza exhaustiva en colecciones por queries
+      for (const tid of testIdsToCheck) {
+        // En evaluaciones
+        try {
+          const qE1 = query(collection(db, `${clean}/evaluaciones`), where('jugadorId', '==', jugadorId), where('testId', '==', tid));
+          const s1 = await getDocs(qE1);
+          s1.forEach(d => { idsToDelete.add(d.id); batch.delete(d.ref); });
+
+          const qE2 = query(collection(db, `${clean}/evaluaciones`), where('playerId', '==', jugadorId), where('testId', '==', tid));
+          const s2 = await getDocs(qE2);
+          s2.forEach(d => { idsToDelete.add(d.id); batch.delete(d.ref); });
+        } catch (_) {}
+
+        // En test_results
+        try {
+          const qR1 = query(collection(db, `${clean}/test_results`), where('playerId', '==', jugadorId), where('testId', '==', tid));
+          const s3 = await getDocs(qR1);
+          s3.forEach(d => { idsToDelete.add(d.id); batch.delete(d.ref); });
+
+          const qR2 = query(collection(db, `${clean}/test_results`), where('jugadorId', '==', jugadorId), where('testId', '==', tid));
+          const s4 = await getDocs(qR2);
+          s4.forEach(d => { idsToDelete.add(d.id); batch.delete(d.ref); });
+        } catch (_) {}
+
+        // En players/{jugadorId}/test_results
+        try {
+          const qD = query(collection(db, `${clean}/players/${jugadorId}/test_results`), where('testId', '==', tid));
+          const s5 = await getDocs(qD);
+          s5.forEach(d => { idsToDelete.add(d.id); batch.delete(d.ref); });
+        } catch (_) {}
+      }
+
+      await batch.commit().catch(() => {});
+
+      // Actualización optimista de estados locales
+      setRawEvalsList(prev => prev.filter(e => !idsToDelete.has(e.id)));
+      setRawResultsList(prev => prev.filter(r => !idsToDelete.has(r.id)));
+      setPlayerDirectTests(prev => prev.filter(p => !idsToDelete.has(p.id)));
+
+      await showAlert("Éxito", "Historial completo de este test eliminado correctamente.");
     } catch (error) {
       console.error("Error deleting all evals:", error);
       await showAlert("Error", "Error al eliminar los datos.");
+    } finally {
+      setLoading(false);
     }
   };
 

@@ -204,9 +204,15 @@ export const TeamAttendanceTab = ({ players = [], activeTeam = null }) => {
 
     const cleanId = String(selectedSessionId).replace(/^session_/, '').replace(/^match_/, '');
 
-    const existingRecord = (attendanceRecords || []).find(
+    const matchingRecords = (attendanceRecords || []).filter(
       (r) => r.sessionId === selectedSessionId || r.id === selectedSessionId || r.id === cleanId || r.sessionId === cleanId || r.sessionId === `session_${cleanId}`
     );
+
+    // Prioridad absoluta: Si hay un registro guardado/cerrado por el staff, ese es el registro oficial
+    const staffConfirmedRecord = matchingRecords.find(r => 
+      r.isClosed || Object.values(r.records || {}).some(rec => rec.source === 'staff')
+    );
+    const existingRecord = staffConfirmedRecord || matchingRecords[0] || null;
 
     const rawSessionObj = (sessions || []).find(
       (s) => s.id === selectedSessionId || s.id === cleanId || `session_${s.id}` === selectedSessionId
@@ -239,10 +245,11 @@ export const TeamAttendanceTab = ({ players = [], activeTeam = null }) => {
       // 1. Si el staff ya confirmó o guardó este jugador
       if (existingRecords[p.id]) {
         const staffRec = existingRecords[p.id];
+        const isOfficial = staffRec.source === 'staff' || Boolean(existingRecord?.isClosed);
         nextMap[p.id] = {
           ...staffRec,
           status: staffRec.status || 'unmarked',
-          source: staffRec.source || 'staff',
+          source: isOfficial ? 'staff' : (staffRec.source || 'staff'),
           lateMinutes: staffRec.lateMinutes || 0
         };
         return;

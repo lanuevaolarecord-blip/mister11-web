@@ -11,6 +11,7 @@ import { downloadPDF } from '../utils/download';
 import { APP_VERSION } from '../constants/appVersion';
 import { exportMonthlyPlan } from '../utils/exportMonthlyPlan';
 import { useTranslation } from '../hooks/useTranslation';
+import { SpellCheckedTextarea } from '../components/ui/SpellCheckedTextarea';
 import '../styles/planificacion.css';
 
 // --- CONSTANTS ---
@@ -957,7 +958,7 @@ const Planificacion = () => {
           <span className="plan-icon">🎯</span> OBJETIVO GENERAL DE LA TEMPORADA
         </div>
         <div className="plan-objetivo-body">
-          <textarea
+          <SpellCheckedTextarea
             className="plan-objetivo-textarea"
             value={macroInfo.objective}
             onChange={e => setMacroInfo(p => ({ ...p, objective: e.target.value }))}
@@ -1436,7 +1437,7 @@ const Planificacion = () => {
         <div className="plan-objetivos-tab">
           <div className="plan-card" style={{ marginBottom: 16 }}>
             <div className="plan-card-label"><span className="plan-icon">🎯</span> OBJETIVO GENERAL DE TEMPORADA</div>
-            <textarea
+            <SpellCheckedTextarea
               className="plan-objetivo-textarea"
               style={{ minHeight: 120, border: '1px solid #e0d9cc', borderRadius: 8, padding: '10px 12px', background: '#fff', width: '100%', boxSizing: 'border-box' }}
               value={macroInfo.objective}
@@ -1453,7 +1454,7 @@ const Planificacion = () => {
             ].map(({ icon, label, key, placeholder }) => (
               <div key={key} className="plan-card">
                 <div className="plan-card-label"><span className="plan-icon">{icon}</span> {label}</div>
-                <textarea
+                <SpellCheckedTextarea
                   className="plan-objetivo-textarea"
                   style={{ minHeight: 90, border: '1px solid #e0d9cc', borderRadius: 8, padding: '8px 10px', background: '#fff', width: '100%', boxSizing: 'border-box' }}
                   value={macroInfo[key] || ''}

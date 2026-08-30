@@ -20,6 +20,8 @@ import { shareSessionToFirestore, getSharedSession, exportSessionToJSONFile, exp
 import { Share2, Link as LinkIcon, Download, Upload, Copy, Check, Calendar, ArrowRight } from 'lucide-react';
 import { normalizeText } from '../utils/normalizeInput';
 import { useTranslation } from '../hooks/useTranslation';
+import { SpellCheckedInput } from '../components/ui/SpellCheckedInput';
+import { SpellCheckedTextarea } from '../components/ui/SpellCheckedTextarea';
 import {
   DndContext,
   closestCenter,
@@ -926,7 +928,7 @@ const Sesiones = () => {
               <h3>Datos Generales</h3>
               <div className="form-group full">
                 <label>Título de la Sesión</label>
-                <input type="text" value={editData.title} onChange={e => setEditData({...editData, title: e.target.value})} onBlur={e => setEditData(prev => ({...prev, title: normalizeText(e.target.value)}))} placeholder="Ej. Activación y Rondo..." />
+                <SpellCheckedInput value={editData.title} onChange={e => setEditData({...editData, title: e.target.value})} onBlur={e => setEditData(prev => ({...prev, title: normalizeText(e.target.value)}))} placeholder="Ej. Activación y Rondo..." />
               </div>
               <div className="form-row">
                 <div className="form-group">
@@ -964,7 +966,7 @@ const Sesiones = () => {
               </div>
               <div className="form-group full" style={{marginTop: '16px'}}>
                 <label>Objetivo Principal</label>
-                <textarea value={editData.objectives || ''} onChange={e => setEditData({...editData, objectives: e.target.value})} placeholder="Ej. Mejorar la circulación del balón en zona de creación..." style={{minHeight: '60px'}}></textarea>
+                <SpellCheckedTextarea value={editData.objectives || ''} onChange={e => setEditData({...editData, objectives: e.target.value})} placeholder="Ej. Mejorar la circulación del balón en zona de creación..." rows={2} style={{minHeight: '60px'}} />
               </div>
               <div className="form-group full">
                 <label>Material Necesario</label>

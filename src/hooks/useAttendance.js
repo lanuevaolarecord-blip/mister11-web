@@ -73,29 +73,43 @@ export const useAttendance = (teamId) => {
   const saveAttendance = async (docId, payload) => {
     if (!user || !teamId) throw new Error('No hay usuario o equipo activo.');
     const path = getTeamPath(teamId);
+    const cleanId = String(docId).replace(/^session_/, '').replace(/^match_/, '');
+    const isSession = !String(docId).startsWith('match_') && payload.type !== 'match';
+
     const cleaned = sanitizeForFirestore({
       sessionId: docId,
       sessionTitle: payload.sessionTitle || 'Sesión / Partido',
       date: payload.date || new Date().toISOString().split('T')[0],
       type: payload.type || 'session',
       isSuspended: Boolean(payload.isSuspended),
-      records: payload.records || {}
+      isClosed: payload.isClosed !== undefined ? Boolean(payload.isClosed) : true,
+      records: payload.records || {},
+      closedAt: new Date().toISOString(),
+      closedBy: user.uid
     });
 
     if (docId) {
       await setDocument(`${path}/attendance`, docId, cleaned);
+      // Sincronizar también bajo el ID limpio para eliminar inconsistencias con RSVP
+      if (cleanId && cleanId !== docId) {
+        await setDocument(`${path}/attendance`, cleanId, cleaned).catch(() => {});
+      }
     } else {
       await addDocument(`${path}/attendance`, cleaned);
     }
 
-    // Si se marcó como suspendida y es una sesión, actualizar también el doc de sesiones
-    if (payload.isSuspended && docId && !docId.startsWith('match_')) {
+    // Si es una sesión, actualizar también el doc de sessions para persistencia total
+    if (isSession && cleanId) {
       try {
-        const rawSessionId = docId.replace(/^session_/, '');
-        const sessionRef = doc(db, `${path}/sessions`, rawSessionId);
-        await updateDoc(sessionRef, { isSuspended: true, status: 'suspended' });
+        const sessionRef = doc(db, `${path}/sessions`, cleanId);
+        await updateDoc(sessionRef, {
+          isClosed: true,
+          attendanceClosed: true,
+          attendanceRecords: payload.records || {},
+          isSuspended: Boolean(payload.isSuspended)
+        });
       } catch (err) {
-        console.warn('[useAttendance] No se pudo actualizar isSuspended en sessions:', err);
+        console.warn('[useAttendance] No se pudo actualizar estado en sessions:', err);
       }
     }
 

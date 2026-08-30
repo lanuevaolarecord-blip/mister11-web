@@ -25,6 +25,7 @@ import {
   Shield, 
   User
 } from 'lucide-react';
+import { SpellCheckedInput } from '../ui/SpellCheckedInput';
 import './PlayerChatTab.css';
 
 const PLAYER_QUICK_REPLIES = [
@@ -258,7 +259,7 @@ export const PlayerChatTab = ({ teamPath, player, team, isParentView = false, is
           handleSendMessage();
         }}
       >
-        <input
+        <SpellCheckedInput
           type="text"
           className="chat-text-input"
           placeholder={isCoachView ? `Escribe una respuesta a ${player?.name || 'este jugador'}...` : "Escribe un mensaje al míster..."}

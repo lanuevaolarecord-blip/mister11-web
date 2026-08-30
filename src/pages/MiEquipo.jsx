@@ -24,6 +24,7 @@ import { PlayerTabs } from '../components/player/PlayerTabs';
 import { PlayerChatTab } from '../components/player/PlayerChatTab';
 import { MessageSquare, FileText, Pencil, X, UserPlus, Share2, Mail, Trash2, Bell, Megaphone } from 'lucide-react';
 import { useTranslation } from '../hooks/useTranslation';
+import { SpellCheckedTextarea } from '../components/ui/SpellCheckedTextarea';
 import './MiEquipo.css';
 
 const POSITIONS = ['TODOS', 'POR', 'DEF', 'LTD', 'LTI', 'MCD', 'MC', 'MCO', 'EXT', 'DEL'];
@@ -1372,7 +1373,7 @@ const MiEquipo = () => {
                 <label style={{ display: 'block', fontSize: '12px', fontWeight: '800', marginBottom: '6px', color: 'var(--text-primary)' }}>
                   Mensaje para la Plantilla y Familias *
                 </label>
-                <textarea
+                <SpellCheckedTextarea
                   rows={4}
                   placeholder="Escribe el mensaje oficial aquí. Todos los jugadores y padres lo verán en su pantalla de inicio..."
                   value={announcementMsg}

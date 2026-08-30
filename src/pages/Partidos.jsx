@@ -28,6 +28,7 @@ import { normalizeText } from '../utils/normalizeInput';
 import { normalizeLineup, applyLineupChange, formatMatchDateSafe } from '../utils/lineupEngine';
 import { buildSmartMatchSheetActual, getEffectiveMatchDuration, isMatchLocked } from '../utils/minutesEngine';
 import { sanitizeMatchData } from '../utils/sanitizeMatchData';
+import { SpellCheckedTextarea } from '../components/ui/SpellCheckedTextarea';
 
 export const normalizeCapitalize = (str) => {
   if (!str || typeof str !== 'string') return '';
@@ -2095,7 +2096,7 @@ const Partidos = () => {
                       <h4 className="card-section-title">📝 Notas Tácticas</h4>
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginTop: '10px' }}>
                         <label className="input-label-caps" style={{ fontSize: '11px', fontWeight: '700', color: 'var(--partidos-text-muted)' }}>{getLangText('post.notes')}</label>
-                        <textarea
+                        <SpellCheckedTextarea
                           className="partidos-input textarea-tall"
                           value={matchData.notes || ''}
                           onChange={e => setMatchData({ ...matchData, notes: e.target.value })}
@@ -2185,9 +2186,9 @@ const Partidos = () => {
                           <div key={q.key} className="questionnaire-field-block" style={{ marginBottom: '15px' }}>
                             <label className="question-field-label" style={{ fontWeight: 'bold', fontSize: '13px' }}>{q.label}</label>
                             <p className="question-field-desc" style={{ fontSize: '12px', color: 'var(--partidos-text-muted)', margin: '4px 0 8px 0' }}>{q.question}</p>
-                            <textarea
+                            <SpellCheckedTextarea
                               className="partidos-input"
-                              rows="4"
+                              rows={4}
                               value={(matchData.postMatchAnswers && matchData.postMatchAnswers[q.key]) || ''}
                               onChange={e => handleAnswerChange(q.key, e.target.value)}
                               placeholder="..."

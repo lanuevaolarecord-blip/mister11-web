@@ -1502,8 +1502,25 @@ const Tests = () => {
                         <span style={{ fontSize: 12, fontWeight: 800, letterSpacing: 2, color: 'var(--text-primary, #1B3A2D)', marginBottom: '16px', textTransform: 'uppercase' }}>
                           PERFIL DE RENDIMIENTO
                         </span>
-                        {testCount > 0 ? (
-                          <SvgRadar data={radarData} size={250} />
+                        {radarData && radarData.length > 0 ? (
+                          <>
+                            <SvgRadar data={radarData} size={250} />
+                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', justifyContent: 'center', marginTop: '12px', maxWidth: '320px' }}>
+                              {radarData.map((d, i) => (
+                                <span key={i} style={{
+                                  fontSize: '11px',
+                                  fontWeight: '800',
+                                  padding: '4px 8px',
+                                  borderRadius: '6px',
+                                  background: d.value > 0 ? 'rgba(76, 175, 125, 0.12)' : 'rgba(148, 163, 184, 0.1)',
+                                  color: d.value > 0 ? '#2E7D5C' : 'var(--text-secondary)',
+                                  border: `1px solid ${d.value > 0 ? 'rgba(76, 175, 125, 0.3)' : 'rgba(148, 163, 184, 0.2)'}`
+                                }}>
+                                  {d.label}: {d.value}
+                                </span>
+                              ))}
+                            </div>
+                          </>
                         ) : (
                           <div style={{ textAlign: 'center', color: '#1B3A2D', opacity: 0.8 }}>
                             <div style={{ fontSize: 48, filter: 'grayscale(1)' }}>📊</div>

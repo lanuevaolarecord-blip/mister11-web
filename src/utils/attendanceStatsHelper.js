@@ -79,11 +79,16 @@ export const normalizeEventStatus = (statusRaw) => {
 export const extractPlayerVerifiedTimeline = (playerId, attendanceList = [], matchesList = []) => {
   const pid = String(playerId);
   const timeline = [];
+  const now = new Date();
 
   // 1. Procesar Sesiones de entrenamiento (colección attendance)
   (attendanceList || []).forEach(att => {
     if (!att) return;
     const dateStr = att.fecha || att.date || att.sessionDate || att.createdAt || '1970-01-01';
+
+    // REGLA: Los eventos futuros NO computan como asistencia consumada/realizada
+    const isPast = isEventPast(dateStr, att.time || att.hora || '23:59', now);
+    if (!isPast) return;
 
     // Leer SOLO registro del staff (records[pid])
     let staffRecord = att.records?.[pid];
@@ -134,6 +139,11 @@ export const extractPlayerVerifiedTimeline = (playerId, attendanceList = [], mat
   (matchesList || []).forEach(m => {
     if (!m) return;
     const dateStr = m.date || m.fecha || m.matchDate || '1970-01-01';
+
+    // REGLA: Los partidos futuros no computan como asistencia consumada
+    const isPast = isEventPast(dateStr, m.time || m.hora || '23:59', now);
+    if (!isPast) return;
+
     const isCalled = (m.convocados || []).some(id => String(id) === pid) ||
                      (m.titulares || []).some(id => String(id) === pid) ||
                      (m.suplentes || []).some(id => String(id) === pid) ||

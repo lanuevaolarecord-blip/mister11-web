@@ -233,7 +233,7 @@ export const PlayerStatsTab = ({ player, team, teamPath, isParentView = false, a
       });
 
       setGroupedHistory(grouped);
-      setEvaluations(enrichedEvals);
+      setEvaluations(playerEvals);
       setLoading(false);
     };
 

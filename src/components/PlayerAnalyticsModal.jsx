@@ -140,20 +140,24 @@ const PlayerAnalyticsModal = ({
   onDeleteLastEval,
   onDeleteAllEvals,
   onResetPlayerTests,
-  activeTeam = {}
+  activeTeam = {},
+  playerEvals: incomingPlayerEvals
 }) => {
   const contentRef = useRef(null);
 
   if (!player) return null;
 
   // ── Cálculo canónico unificado de los 5 ejes deportivos (1:1 con Portal del Jugador) ──
-  const playerEvals = [];
-  Object.entries(historyData[player?.id] || {}).forEach(([testId, hList]) => {
-    if (hList && hList.length > 0) {
-      const last = hList[hList.length - 1];
-      playerEvals.push({ testId, val: last.val, date: last.date, ...(last.raw || {}) });
-    }
-  });
+  let playerEvals = incomingPlayerEvals;
+  if (!playerEvals || playerEvals.length === 0) {
+    playerEvals = [];
+    Object.entries(historyData[player?.id] || {}).forEach(([testId, hList]) => {
+      if (hList && hList.length > 0) {
+        const last = hList[hList.length - 1];
+        playerEvals.push({ testId, val: last.val, date: last.date, ...(last.raw || {}) });
+      }
+    });
+  }
 
   const scores = calculatePlayerPerformanceScores(playerEvals, player, {
     attendancePct: player?.attendancePct ? Number(player.attendancePct) : 0,

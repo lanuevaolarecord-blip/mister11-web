@@ -127,6 +127,35 @@ export const normalizeTestValue = (val, testId = '', unit = '', rawItem = {}) =>
 };
 
 /**
+ * Extrae de forma segura y consistente un timestamp numérico (milisegundos) de cualquier
+ * objeto de evaluación o test de Firestore (soporta Timestamps, Date strings, etc.).
+ */
+export const getSafeTimestamp = (item) => {
+  if (!item) return 0;
+  if (item.timestamp?.seconds) return item.timestamp.seconds * 1000;
+  if (typeof item.timestamp?.toDate === 'function') return item.timestamp.toDate().getTime();
+  if (item.createdAt?.seconds) return item.createdAt.seconds * 1000;
+  if (typeof item.createdAt?.toDate === 'function') return item.createdAt.toDate().getTime();
+  if (item.fechaActualizacion?.seconds) return item.fechaActualizacion.seconds * 1000;
+  if (typeof item.fechaActualizacion?.toDate === 'function') return item.fechaActualizacion.toDate().getTime();
+  const raw = item.date || item.fecha;
+  if (typeof raw === 'string' && raw.trim()) {
+    const cleanStr = raw.trim();
+    if (cleanStr.includes('/')) {
+      const parts = cleanStr.split('/');
+      if (parts.length === 3) {
+        // Formato DD/MM/YYYY
+        const d = new Date(`${parts[2]}-${parts[1]}-${parts[0]}`);
+        if (!isNaN(d.getTime())) return d.getTime();
+      }
+    }
+    const parsed = new Date(cleanStr).getTime();
+    if (!isNaN(parsed)) return parsed;
+  }
+  return 0;
+};
+
+/**
  * Consolida deduplicando evaluaciones de todas las fuentes posibles (evaluaciones, test_results y subcolección de jugador).
  */
 export const consolidatePlayerEvaluations = (rawItems = [], playerId = '') => {
@@ -149,24 +178,29 @@ export const consolidatePlayerEvaluations = (rawItems = [], playerId = '') => {
     return !pId || pId === targetPid || Boolean(item.players?.[targetPid]);
   });
 
-  // Ordenar cronológicamente ascendente para que las evaluaciones más recientes o de mayor jerarquía se consoliden deterministamente
+  // Ordenar cronológicamente ascendente usando getSafeTimestamp para que el desempate sea 100% determinista
   const sorted = [...filtered].sort((a, b) => {
-    const dateA = new Date(a.date || a.fecha || a.fechaActualizacion || 0).getTime() || 0;
-    const dateB = new Date(b.date || b.fecha || b.fechaActualizacion || 0).getTime() || 0;
-    if (dateA !== dateB) return dateA - dateB;
-    // Si tienen la misma fecha, priorizar registros oficiales del cuerpo técnico sobre tests autónomos
+    const tsA = getSafeTimestamp(a);
+    const tsB = getSafeTimestamp(b);
+    if (tsA !== tsB) return tsA - tsB;
+
+    // Si tienen la misma fecha o timestamp, priorizar registros oficiales del cuerpo técnico sobre tests autónomos
     const aIsStaff = a.tipo !== 'psicologico_auto' && !a.isAutonomous;
     const bIsStaff = b.tipo !== 'psicologico_auto' && !b.isAutonomous;
     if (aIsStaff && !bIsStaff) return 1;
     if (!aIsStaff && bIsStaff) return -1;
-    return 0;
+
+    // Si ambos son del mismo tipo, priorizar mayor nota
+    const scoreA = Number(a.val ?? a.nota ?? a.percentage ?? a.score ?? 0);
+    const scoreB = Number(b.val ?? b.nota ?? b.percentage ?? b.score ?? 0);
+    return scoreA - scoreB;
   });
 
   return sorted.map(item => {
     const rawId = String(item.testId || item.testName || 'test_general');
     const testId = aliasMap[rawId] || rawId;
     
-    // Si hay una nota oficial del entrenador (0-100), tiene precedencia para reflejar la decisión técnica
+    // Resolución unificada de valor sin alterar ni degradar propiedades
     const rawVal = item.val !== undefined 
       ? item.val 
       : (item.nota !== undefined 
@@ -177,7 +211,7 @@ export const consolidatePlayerEvaluations = (rawItems = [], playerId = '') => {
     const parsedVal = parseFloat(String(rawVal).replace(',', '.')) || 0;
     const rawDate = item.date || item.fecha;
 
-    const resolvedNota = item.nota !== undefined ? Number(item.nota) : (item.percentage !== undefined ? Number(item.percentage) : undefined);
+    const resolvedNota = item.nota !== undefined ? Number(item.nota) : (item.percentage !== undefined ? Number(item.percentage) : (item.val !== undefined ? Number(item.val) : undefined));
     const resolvedPercentage = item.percentage !== undefined ? Number(item.percentage) : resolvedNota;
 
     return {
@@ -188,7 +222,8 @@ export const consolidatePlayerEvaluations = (rawItems = [], playerId = '') => {
       score: item.score !== undefined ? Number(item.score) : parsedVal,
       percentage: resolvedPercentage,
       nota: resolvedNota,
-      date: rawDate
+      date: rawDate,
+      _safeTimestamp: getSafeTimestamp(item)
     };
   });
 };
@@ -203,7 +238,7 @@ export const calculatePlayerPerformanceScores = (evaluations = [], player = {}, 
   let fis = 0, tec = 0, psi = 0, soc = 0, testCount = 0;
   let countFis = 0, countTec = 0, countPsi = 0, countSoc = 0;
 
-  // Agrupar por prueba considerando el registro más reciente y desempate determinista
+  // Agrupar por prueba considerando el registro más reciente y desempate determinista unificado
   const latestByTest = {};
   evaluations.forEach(e => {
     const rawId = String(e.testId || e.testName || 'test_general');
@@ -218,17 +253,25 @@ export const calculatePlayerPerformanceScores = (evaluations = [], player = {}, 
       'soc_cwms': 'soc2'
     };
     const testId = aliasMap[rawId] || rawId;
-    const currentDate = new Date(e.date || e.fecha || 0).getTime() || 0;
-    const existingDate = latestByTest[testId] ? (new Date(latestByTest[testId].date || latestByTest[testId].fecha || 0).getTime() || 0) : -1;
+    const currentTs = e._safeTimestamp || getSafeTimestamp(e);
+    const existingTs = latestByTest[testId] ? (latestByTest[testId]._safeTimestamp || getSafeTimestamp(latestByTest[testId])) : -1;
     
-    if (!latestByTest[testId] || currentDate > existingDate) {
-      latestByTest[testId] = { ...e, testId };
-    } else if (currentDate === existingDate) {
-      // Si tienen la misma fecha exacta, resolver de forma determinista
-      const curScore = e.nota !== undefined ? Number(e.nota) : (e.val !== undefined ? Number(e.val) : 0);
-      const exScore = latestByTest[testId].nota !== undefined ? Number(latestByTest[testId].nota) : (latestByTest[testId].val !== undefined ? Number(latestByTest[testId].val) : 0);
-      if (curScore >= exScore) {
-        latestByTest[testId] = { ...e, testId };
+    if (!latestByTest[testId] || currentTs > existingTs) {
+      latestByTest[testId] = { ...e, testId, _safeTimestamp: currentTs };
+    } else if (currentTs === existingTs) {
+      // Priorizar registro oficial si hay empate
+      const curIsStaff = e.tipo !== 'psicologico_auto' && !e.isAutonomous;
+      const exIsStaff = latestByTest[testId].tipo !== 'psicologico_auto' && !latestByTest[testId].isAutonomous;
+      if (curIsStaff && !exIsStaff) {
+        latestByTest[testId] = { ...e, testId, _safeTimestamp: currentTs };
+      } else if (!curIsStaff && exIsStaff) {
+        // Mantener el existente
+      } else {
+        const curScore = Number(e.nota ?? e.val ?? e.percentage ?? e.score ?? 0);
+        const exScore = Number(latestByTest[testId].nota ?? latestByTest[testId].val ?? latestByTest[testId].percentage ?? latestByTest[testId].score ?? 0);
+        if (curScore >= exScore) {
+          latestByTest[testId] = { ...e, testId, _safeTimestamp: currentTs };
+        }
       }
     }
   });

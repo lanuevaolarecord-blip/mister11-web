@@ -26,24 +26,12 @@ export const PlayerPerformanceBanner = ({ player, teamPath, onNavigateTab, onOpe
 
     let evalsList = [];
     let testResultsList = [];
+    let playerDirectTests = [];
 
     const rebuildData = () => {
-      const allCombined = [...evalsList, ...testResultsList];
-      const seen = new Set();
-      const unique = [];
-
-      allCombined.forEach(item => {
-        const pId = String(item.playerId || item.jugadorId || '');
-        if (pId === String(effectivePlayerId)) {
-          const key = item.id || `${item.testId}_${item.date || item.fecha}_${item.val || item.score}`;
-          if (!seen.has(key)) {
-            seen.add(key);
-            unique.push(item);
-          }
-        }
-      });
-
-      setEvaluations(unique);
+      const allCombined = [...evalsList, ...testResultsList, ...playerDirectTests];
+      const consolidated = consolidatePlayerEvaluations(allCombined, effectivePlayerId);
+      setEvaluations(consolidated);
       setLoading(false);
     };
 
@@ -57,9 +45,15 @@ export const PlayerPerformanceBanner = ({ player, teamPath, onNavigateTab, onOpe
       rebuildData();
     }, () => {});
 
+    const unsubDirect = onSnapshot(collection(db, `${cleanPath}/players/${effectivePlayerId}/test_results`), (snap) => {
+      playerDirectTests = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      rebuildData();
+    }, () => {});
+
     return () => {
       unsubEvals();
       unsubResults();
+      unsubDirect();
     };
   }, [cleanPath, effectivePlayerId]);
 

@@ -365,6 +365,8 @@ const Tests = () => {
   const [histSelectedPlayer, setHistSelectedPlayer] = useState(null);
   const [analyticsPlayer, setAnalyticsPlayer] = useState(null);
   const [playerDirectTests, setPlayerDirectTests] = useState([]);
+  const [rawEvalsList, setRawEvalsList] = useState([]);
+  const [rawResultsList, setRawResultsList] = useState([]);
 
   // Listener para tests autónomos guardados en la subcolección directa del jugador seleccionado
   useEffect(() => {
@@ -500,6 +502,7 @@ const Tests = () => {
 
     const unsubEvals = onSnapshot(collection(db, teamPath, 'evaluaciones'), (snapshot) => {
       evalsList = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+      setRawEvalsList(evalsList);
       rebuildHistory();
     }, (error) => {
       console.error("Error en snapshot de evaluaciones:", error);
@@ -508,6 +511,7 @@ const Tests = () => {
 
     const unsubResults = onSnapshot(collection(db, teamPath, 'test_results'), (snapshot) => {
       resultsList = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+      setRawResultsList(resultsList);
       rebuildHistory();
     }, (error) => {
       console.warn("Snapshot de test_results opcional:", error);
@@ -1315,13 +1319,19 @@ const Tests = () => {
               {/* M11 PLAYER ANALYTICS — cálculo canónico unificado */}
               {(() => {
                 const player = getPlayerById(histSelectedPlayer);
-                const rawItems = [];
-                (historyData[histSelectedPlayer] ? Object.values(historyData[histSelectedPlayer]).flat() : []).forEach(item => {
-                  rawItems.push({ ...(item.raw || {}), testId: item.raw?.testId || item.testId, val: item.val, date: item.date, playerId: histSelectedPlayer });
-                });
-                rawItems.push(...playerDirectTests);
+                const allDirect = [...rawEvalsList, ...rawResultsList, ...playerDirectTests];
+                let sourceDocs = allDirect;
+                if (sourceDocs.length === 0 && historyData[histSelectedPlayer]) {
+                  sourceDocs = Object.values(historyData[histSelectedPlayer]).flat().map(item => ({
+                    ...(item.raw || {}),
+                    testId: item.raw?.testId || item.testId,
+                    val: item.val,
+                    date: item.date,
+                    playerId: histSelectedPlayer
+                  }));
+                }
 
-                const playerEvals = consolidatePlayerEvaluations(rawItems, histSelectedPlayer);
+                const playerEvals = consolidatePlayerEvaluations(sourceDocs, histSelectedPlayer);
 
                 const matchStats = calculatePlayerMatchStats(histSelectedPlayer, matches);
                 const effectiveRating = (matchStats?.avgRating && matchStats.avgRating !== '-' && matchStats.avgRating !== '8.2')
@@ -2092,6 +2102,7 @@ const Tests = () => {
           player={analyticsPlayer}
           tests={tests}
           historyData={historyData}
+          playerEvals={consolidatePlayerEvaluations([...rawEvalsList, ...rawResultsList, ...playerDirectTests], analyticsPlayer.id)}
           onClose={() => setAnalyticsPlayer(null)}
           onResetPlayerTests={async (pId) => {
             await handleResetPlayerTests(pId);

@@ -1995,6 +1995,101 @@ const Partidos = () => {
                       </div>
                     </div>
 
+                    {/* Tarjeta: Calificaciones Individuales del Míster (1 - 10) */}
+                    <div className="post-match-card">
+                      <h4 className="card-section-title">⭐ Calificación del Míster por Jugador (1 - 10)</h4>
+                      <p style={{ fontSize: '12px', color: 'var(--partidos-text-muted)', margin: '4px 0 12px 0' }}>
+                        Asigna la nota del partido a cada jugador para alimentar automáticamente su rendimiento táctico y notas medias oficiales.
+                      </p>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', maxHeight: '340px', overflowY: 'auto', paddingRight: '4px' }}>
+                        {calledPlayers.filter(Boolean).length === 0 ? (
+                          <p style={{ fontSize: '12px', color: 'var(--partidos-text-muted)', fontStyle: 'italic', margin: '6px 0' }}>
+                            No hay jugadores convocados en este partido.
+                          </p>
+                        ) : (
+                          calledPlayers.filter(Boolean).map(id => {
+                            const p = players.find(pl => pl && pl.id === id);
+                            if (!p) return null;
+                            const currentRating = (matchData.playerRatings && matchData.playerRatings[id] !== undefined && matchData.playerRatings[id] !== null)
+                              ? matchData.playerRatings[id]
+                              : ((matchData.ratings && matchData.ratings[id] !== undefined && matchData.ratings[id] !== null) ? matchData.ratings[id] : '');
+
+                            return (
+                              <div
+                                key={id}
+                                style={{
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'space-between',
+                                  padding: '8px 12px',
+                                  background: 'rgba(255,255,255,0.04)',
+                                  borderRadius: '8px',
+                                  border: '1px solid var(--partidos-border)',
+                                  gap: '12px'
+                                }}
+                              >
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flex: 1, minWidth: 0 }}>
+                                  <PlayerAvatar player={p} size={32} showNumber={false} />
+                                  <div style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                    <div style={{ fontWeight: '700', fontSize: '13px' }}>{p.name}</div>
+                                    <div style={{ fontSize: '11px', color: 'var(--partidos-text-muted)' }}>{p.position || 'Jugador'}</div>
+                                  </div>
+                                </div>
+
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                  <input
+                                    type="number"
+                                    min="1"
+                                    max="10"
+                                    step="0.5"
+                                    placeholder="-"
+                                    value={currentRating}
+                                    onChange={e => {
+                                      const rawVal = e.target.value;
+                                      const parsed = rawVal === '' ? null : parseFloat(rawVal);
+                                      setMatchData(prev => ({
+                                        ...prev,
+                                        playerRatings: {
+                                          ...(prev.playerRatings || {}),
+                                          [id]: parsed
+                                        },
+                                        ratings: {
+                                          ...(prev.ratings || {}),
+                                          [id]: parsed
+                                        }
+                                      }));
+                                    }}
+                                    onBlur={async () => {
+                                      if (matchData.id) {
+                                        try {
+                                          await updateMatch(matchData.id, {
+                                            playerRatings: matchData.playerRatings || {},
+                                            ratings: matchData.ratings || {}
+                                          });
+                                        } catch (_) {}
+                                      }
+                                    }}
+                                    style={{
+                                      width: '65px',
+                                      minHeight: '44px',
+                                      textAlign: 'center',
+                                      fontWeight: '900',
+                                      fontSize: '15px',
+                                      borderRadius: '8px',
+                                      border: '1.5px solid var(--partidos-border)',
+                                      background: 'var(--partidos-input-bg)',
+                                      color: currentRating ? '#22C55E' : 'var(--partidos-text-primary)'
+                                    }}
+                                  />
+                                  <span style={{ fontSize: '12px', fontWeight: 'bold', color: 'var(--partidos-text-muted)' }}>/ 10</span>
+                                </div>
+                              </div>
+                            );
+                          })
+                        )}
+                      </div>
+                    </div>
+
                     {/* Tarjeta 5: Notas Tácticas */}
                     <div className="post-match-card">
                       <h4 className="card-section-title">📝 Notas Tácticas</h4>

@@ -349,8 +349,12 @@ export const calculatePlayerPerformanceScores = (evaluations = [], player = {}, 
   if (tec === 0 && rawTecnicaFicha > 0) tec = rawTecnicaFicha;
   if (psi === 0 && rawMentalFicha > 0) psi = rawMentalFicha;
 
-  const tacticaRating = matchRating ? Math.min(99, Math.round(Number(matchRating) * 10)) : 0;
-  const tactica = Math.max(rawTacticaFicha, tacticaRating, tec);
+  // Dimensión TÁCTICA: Derivada 100% de la calificación real del míster en partidos oficiales
+  // (escala 1 a 10 multiplicada por 10 -> 10 a 99). Si no hay calificación en partidos ni nota previa en ficha, es 0.
+  const tacticaRating = (matchRating && matchRating !== '-' && !isNaN(Number(matchRating)) && Number(matchRating) > 0)
+    ? Math.min(99, Math.max(10, Math.round(Number(matchRating) * 10)))
+    : 0;
+  const tactica = tacticaRating > 0 ? tacticaRating : (rawTacticaFicha > 0 ? rawTacticaFicha : 0);
 
   const asistencia = attendancePct !== null && attendancePct !== undefined 
     ? Math.min(99, Math.max(0, Math.round(Number(attendancePct)))) 

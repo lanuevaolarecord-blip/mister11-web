@@ -105,9 +105,9 @@ export const PlayerProfileTab = ({ player, team, teamPath, onNavigateTab }) => {
   }, [cleanTeamPath, effectivePlayerId]);
 
   const performanceScores = useMemo(() => {
-    const effectiveRating = (playerSeasonStats?.avgRating && playerSeasonStats.avgRating !== '-' && playerSeasonStats.avgRating !== '8.2')
-      ? playerSeasonStats.avgRating
-      : (player?.notaMedia || null);
+    const effectiveRating = (playerSeasonStats?.avgRating && playerSeasonStats.avgRating !== '-' && !isNaN(Number(playerSeasonStats.avgRating)))
+      ? Number(playerSeasonStats.avgRating)
+      : (player?.notaMedia && !isNaN(Number(player.notaMedia)) ? Number(player.notaMedia) : null);
 
     return calculatePlayerPerformanceScores(evaluations, player, {
       attendancePct: player?.attendancePct ? Number(player.attendancePct) : 0,

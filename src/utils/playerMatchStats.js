@@ -241,7 +241,7 @@ export const calculatePlayerMatchStats = (playerId, matches = []) => {
     assists: totalAssists,
     yellowCards: totalYellows,
     redCards: totalReds,
-    avgRating: avgRating || (matchesPlayed > 0 ? '7.8' : '-'),
+    avgRating: avgRating || '-',
     matchHistory
   };
 };

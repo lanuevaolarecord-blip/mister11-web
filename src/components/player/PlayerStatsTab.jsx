@@ -60,7 +60,7 @@ export const PlayerStatsTab = ({ player, team, teamPath, isParentView = false, a
     assists: 0,
     yellowCards: 0,
     redCards: 0,
-    avgRating: '8.2',
+    avgRating: '-',
     matchHistory: []
   });
   const [isUpgradeOpen, setIsUpgradeOpen] = useState(false);
@@ -406,9 +406,9 @@ export const PlayerStatsTab = ({ player, team, teamPath, isParentView = false, a
     ? teamComparison.myAttendancePct
     : (player?.attendancePct ? Number(player.attendancePct) : 0);
 
-  const effectiveRating = (playerMatchStats?.avgRating && playerMatchStats.avgRating !== '-' && playerMatchStats.avgRating !== '8.2')
-    ? playerMatchStats.avgRating
-    : (player?.notaMedia || null);
+  const effectiveRating = (playerMatchStats?.avgRating && playerMatchStats.avgRating !== '-' && !isNaN(Number(playerMatchStats.avgRating)))
+    ? Number(playerMatchStats.avgRating)
+    : (player?.notaMedia && !isNaN(Number(player.notaMedia)) ? Number(player.notaMedia) : null);
 
   // Cálculo canónico unificado de radar y baremos deportivos
   const scores = calculatePlayerPerformanceScores(evaluations, player, {

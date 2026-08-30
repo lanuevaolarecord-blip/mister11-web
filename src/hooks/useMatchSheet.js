@@ -210,6 +210,26 @@ export const useMatchSheet = (teamPath, matchId, matchData, players = []) => {
   };
 
   /**
+   * Actualiza la calificación individual (1 a 10) otorgada por el míster a un jugador.
+   */
+  const updatePlayerRating = async (playerId, rating) => {
+    if (!isValid || !user) return;
+    try {
+      const matchDocRef = doc(db, `${cleanPath}/matches`, matchId);
+      const parsed = (rating === '' || rating === null || rating === undefined) ? null : parseFloat(rating);
+      await updateDoc(matchDocRef, {
+        [`playerRatings.${playerId}`]: parsed,
+        [`ratings.${playerId}`]: parsed,
+        [`actaOficial.actual.${playerId}.rating`]: parsed,
+      });
+      showToast('⭐ Calificación táctica guardada', 'success');
+    } catch (err) {
+      console.error('[useMatchSheet] Error actualizando calificación:', err);
+      throw err;
+    }
+  };
+
+  /**
    * Depurar eventos imposibles de la bitácora y recalcular acta.
    */
   const cleanseEvents = async () => {
@@ -410,6 +430,7 @@ export const useMatchSheet = (teamPath, matchId, matchData, players = []) => {
     prefillFromRsvp,
     updatePlayerStatus,
     updateMinutesOverride,
+    updatePlayerRating,
     closeMatchSheet,
     reopenMatchSheet,
     cleanseEvents,

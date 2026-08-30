@@ -79,6 +79,7 @@ const ActaOficialPanel = ({ matchId, matchData, players = [], calledPlayers = []
     prefillFromRsvp,
     updatePlayerStatus,
     updateMinutesOverride,
+    updatePlayerRating,
     closeMatchSheet,
     reopenMatchSheet,
     cleanseEvents,
@@ -228,6 +229,11 @@ const ActaOficialPanel = ({ matchId, matchData, players = [], calledPlayers = []
     const parsed = val === '' ? null : parseInt(val, 10);
     if (val !== '' && isNaN(parsed)) return;
     try { await updateMinutesOverride(pid, val === '' ? null : parsed); }
+    catch { /* toast handled in hook */ }
+  };
+
+  const handleRatingChange = async (pid, val) => {
+    try { await updatePlayerRating(pid, val); }
     catch { /* toast handled in hook */ }
   };
 
@@ -630,6 +636,22 @@ const ActaOficialPanel = ({ matchId, matchData, players = [], calledPlayers = []
                         onBlur={(e) => handleMinutesChange(pid, e.target.value)}
                         style={styles.minutesInput}
                       />
+                    </div>
+                    <div>
+                      <div style={styles.editorLabel}>⭐ Calificación Táctica (1 - 10)</div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <input
+                          type="number"
+                          min="1"
+                          max="10"
+                          step="0.5"
+                          placeholder="-"
+                          defaultValue={actual?.rating ?? matchData?.playerRatings?.[pid] ?? matchData?.ratings?.[pid] ?? ''}
+                          onBlur={(e) => handleRatingChange(pid, e.target.value)}
+                          style={{ ...styles.minutesInput, width: '70px', textAlign: 'center', fontWeight: '800' }}
+                        />
+                        <span style={{ fontSize: '12px', fontWeight: 'bold', color: 'var(--partidos-text-muted)' }}>/ 10</span>
+                      </div>
                     </div>
                     {(actual?.detail || minuteSource) && (
                       <div style={{ fontSize: '12px', color: '#93C5FD', marginTop: '14px', background: 'rgba(59, 130, 246, 0.1)', padding: '6px 10px', borderRadius: '6px' }}>

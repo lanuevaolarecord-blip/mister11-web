@@ -1334,9 +1334,9 @@ const Tests = () => {
                 const playerEvals = consolidatePlayerEvaluations(sourceDocs, histSelectedPlayer);
 
                 const matchStats = calculatePlayerMatchStats(histSelectedPlayer, matches);
-                const effectiveRating = (matchStats?.avgRating && matchStats.avgRating !== '-' && matchStats.avgRating !== '8.2')
-                  ? matchStats.avgRating
-                  : (player?.notaMedia || null);
+                const effectiveRating = (matchStats?.avgRating && matchStats.avgRating !== '-' && !isNaN(Number(matchStats.avgRating)))
+                  ? Number(matchStats.avgRating)
+                  : (player?.notaMedia && !isNaN(Number(player.notaMedia)) ? Number(player.notaMedia) : null);
 
                 const scores = calculatePlayerPerformanceScores(playerEvals, player, {
                   attendancePct: player?.attendancePct ? Number(player.attendancePct) : 0,

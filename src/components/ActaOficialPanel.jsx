@@ -23,6 +23,7 @@ import {
   getStartingXI
 } from '../utils/minutesEngine';
 import { useTranslation } from '../hooks/useTranslation';
+import { calcMixedRating, deriveStatsFromEvents } from '../utils/ratingFormula';
 import PlayerAvatar from './PlayerAvatar';
 import MatchStatsBlock from './MatchStatsBlock';
 
@@ -445,7 +446,6 @@ const ActaOficialPanel = ({ matchId, matchData, players = [], calledPlayers = []
         </div>
       )}
 
-      {/* ── Encabezado de Tabla Canónica ───────────────── */}
       <div
         style={{
           display: 'grid',
@@ -529,9 +529,10 @@ const ActaOficialPanel = ({ matchId, matchData, players = [], calledPlayers = []
           const rsvpInfo = rsvp ? RSVP_LABELS[rsvp.status] : null;
 
           return (
-            <div key={pid} style={{ ...styles.playerCard, ...(isClosed ? styles.playerCardClosed : {}) }}>
+            <div key={pid} className="acta-player-card" style={{ ...styles.playerCard, ...(isClosed ? styles.playerCardClosed : {}) }}>
               {/* Row principal */}
               <div
+                className="acta-player-row"
                 style={styles.playerRow}
                 onClick={() => !isClosed && setExpandedPlayer(isExpanded ? null : pid)}
               >
@@ -670,6 +671,66 @@ const ActaOficialPanel = ({ matchId, matchData, players = [], calledPlayers = []
                         );
                       }
                       return null;
+                    })()}
+                  </div>
+                  {/* Nota Mix FASE 3: Actitud 1-5★ + Nota sugerida */}
+                  <div style={{ marginTop: '16px', padding: '14px', borderRadius: '10px', background: 'rgba(212, 168, 67, 0.08)', border: '1px solid rgba(212, 168, 67, 0.3)' }}>
+                    <div style={{ fontSize: '11px', fontWeight: 800, color: '#D4A843', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '10px' }}>
+                      ★ Esfuerzo / Actitud (1-5★) — Fórmula Mixta 60/40
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '10px', flexWrap: 'wrap' }}>
+                      {[1, 2, 3, 4, 5].map(star => {
+                        const currentAttitude = actual?.attitude || 3;
+                        return (
+                          <button
+                            key={star}
+                            type="button"
+                            onClick={async () => {
+                              const matchDocRef = (await import('firebase/firestore')).doc;
+                              const { db } = await import('../firebaseConfig');
+                              const { doc, updateDoc } = await import('firebase/firestore');
+                              await updateDoc(doc(db, `${teamPath}/matches`, matchId), {
+                                [`actaOficial.actual.${pid}.attitude`]: star,
+                              });
+                            }}
+                            style={{
+                              width: '44px', height: '44px', borderRadius: '8px', border: `2px solid ${(actual?.attitude || 3) >= star ? '#D4A843' : 'rgba(212,168,67,0.3)'}`,
+                              background: (actual?.attitude || 3) >= star ? 'rgba(212,168,67,0.2)' : 'transparent',
+                              fontSize: '20px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                              transition: 'all 0.15s'
+                            }}
+                          >
+                            {(actual?.attitude || 3) >= star ? '★' : '☆'}
+                          </button>
+                        );
+                      })}
+                      <span style={{ fontSize: '12px', color: 'var(--partidos-text-muted)', marginLeft: '4px' }}>
+                        ({actual?.attitude || 3}/5)
+                      </span>
+                    </div>
+                    {/* Nota sugerida derivada de eventos */}
+                    {(() => {
+                      const evts = effectiveEvents || [];
+                      const stats = deriveStatsFromEvents(pid, evts);
+                      const { mixedRating, performanceScore, attitudeScore, suggested } = calcMixedRating(stats, actual?.attitude || 3, actual?.rating);
+                      const ratingColor = mixedRating >= 8 ? '#4CAF7D' : mixedRating >= 6.5 ? '#D4A843' : '#EF4444';
+                      return (
+                        <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', alignItems: 'center' }}>
+                          <div style={{ fontSize: '11px', color: 'var(--partidos-text-muted)' }}>
+                            📊 Rendimiento: <strong style={{ color: '#4CAF7D' }}>{performanceScore}</strong>
+                            &nbsp;&nbsp;★ Actitud: <strong style={{ color: '#D4A843' }}>{attitudeScore}</strong>
+                            &nbsp;&nbsp;→ Sugerida: <strong style={{ color: ratingColor, fontSize: '14px' }}>{suggested}</strong>
+                          </div>
+                          {actual?.rating && (
+                            <div style={{ fontSize: '11px', color: '#93C5FD' }}>
+                              ✏️ Nota Míster: <strong>{parseFloat(actual.rating).toFixed(1)}</strong> (override)
+                            </div>
+                          )}
+                          <div style={{ fontSize: '10px', color: 'var(--partidos-text-muted)', width: '100%', marginTop: '4px' }}>
+                            Fórmula: 60% rendimiento ({performanceScore}) + 40% actitud ({attitudeScore}) = <strong style={{ color: ratingColor }}>{mixedRating}</strong>
+                          </div>
+                        </div>
+                      );
                     })()}
                   </div>
                 </div>

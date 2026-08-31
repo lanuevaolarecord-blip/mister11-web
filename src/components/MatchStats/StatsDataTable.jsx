@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { Table, Search, ArrowUpDown, Download, Check } from 'lucide-react';
+import { Table, Search, ArrowUpDown, Download, Check, HelpCircle, X } from 'lucide-react';
 
 export const StatsDataTable = ({
   playerStats = [],
@@ -8,6 +8,7 @@ export const StatsDataTable = ({
   const [searchTerm, setSearchTerm] = useState('');
   const [sortField, setSortField] = useState('rating');
   const [sortAsc, setSortAsc] = useState(false);
+  const [showHelpModal, setShowHelpModal] = useState(false);
 
   const handleSort = (field) => {
     if (sortField === field) {
@@ -75,7 +76,7 @@ export const StatsDataTable = ({
 
   // Exportar a CSV
   const handleExportCSV = () => {
-    const headers = ['Dorsal', 'Nombre', 'Posición', 'Min', 'Goles', 'Asist', 'Tiros', 'Pases', 'Precisión %', 'Pases Clave', 'Recuperaciones', 'xG', 'Nota'];
+    const headers = ['Dorsal', 'Nombre', 'Posición', 'Min', 'Goles', 'Asist', 'Tiros Puerta', 'Tiros Totales', 'Pases Exitosos', 'Pases Totales', 'Precisión %', 'Pases Clave', 'Recuperaciones', 'Faltas', 'xG', 'Nota'];
     const rows = sortedAndFiltered.map(p => [
       p.dorsal,
       `"${p.nombre}"`,
@@ -83,11 +84,14 @@ export const StatsDataTable = ({
       p.minutos,
       p.goles,
       p.asistencias,
+      p.tirosPuerta,
       p.tiros,
-      `${p.pasesExitosos}/${p.pasesTot}`,
+      p.pasesExitosos,
+      p.pasesTot,
       `${p.passPct}%`,
       p.pasesClave,
       p.recuperaciones,
+      p.faltas,
       p.xG,
       p.rating
     ]);
@@ -109,6 +113,15 @@ export const StatsDataTable = ({
         <div className="table-title">
           <Table size={18} />
           <h3>Rendimiento Individual de Jugadores ({teamName})</h3>
+          <button
+            type="button"
+            onClick={() => setShowHelpModal(true)}
+            className="how-it-works-btn"
+            style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', padding: '4px 10px', borderRadius: '6px', fontSize: '11px', fontWeight: '800', background: 'rgba(212,168,67,0.15)', color: '#D4A843', border: '1px solid rgba(212,168,67,0.4)', cursor: 'pointer' }}
+          >
+            <HelpCircle size={13} />
+            <span>¿Cómo se mide?</span>
+          </button>
         </div>
 
         <div className="table-actions-right">
@@ -128,6 +141,29 @@ export const StatsDataTable = ({
           </button>
         </div>
       </div>
+
+      {/* Modal explicativo de fórmulas */}
+      {showHelpModal && (
+        <div className="event-selector-overlay" onClick={() => setShowHelpModal(false)} style={{ zIndex: 99999 }}>
+          <div className="event-selector-modal" onClick={e => e.stopPropagation()} style={{ maxWidth: '520px', width: '92vw', padding: '22px', borderRadius: '16px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
+              <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 900, color: 'var(--partidos-accent, #4CAF7D)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <HelpCircle size={18} /> ¿Cómo se calculan las métricas individuales?
+              </h3>
+              <button type="button" onClick={() => setShowHelpModal(false)} style={{ background: 'none', border: 'none', color: 'var(--partidos-text-muted)', cursor: 'pointer' }}>
+                <X size={18} />
+              </button>
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', fontSize: '12px', color: 'var(--partidos-text-primary)', lineHeight: 1.5 }}>
+              <div><strong>⭐ Nota (4.0 - 10.0):</strong> Base de 6.0 + Goles (+1.2) + Asistencias (+0.8) + Pases Clave (+0.3) + Recuperaciones (+0.15) − Faltas (−0.2).</div>
+              <div><strong>⚽ xG (Goles Esperados):</strong> Probabilidad matemática de gol basada en disparos a puerta (0.25) y goles directos (0.40).</div>
+              <div><strong>👟 Pases y Acierto:</strong> Pases completados y recepciones limpias sobre el total intentado.</div>
+              <div><strong>↑ Recuperaciones:</strong> Balones recuperados en transiciones defensivas y duelos exitosos.</div>
+              <div><strong>⚡ Faltas:</strong> Infracciones cometidas registradas por el cuerpo técnico en vivo.</div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Tabla con scroll horizontal responsivo */}
       <div className="table-responsive-wrapper">

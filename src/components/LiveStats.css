@@ -869,3 +869,235 @@ html.dark .livestats-tab-btn.active {
   to { opacity: 1; transform: translateY(0); }
 }
 
+
+/* ═══════════════════════════════════════════════════════════════════
+   JUGADOR ACTIVO — Captura Individual a Pie de Campo (FASE 2)
+   Android-First: touch targets ≥56dp, scroll horizontal, flash
+═══════════════════════════════════════════════════════════════════ */
+
+.jugador-activo-strip {
+  padding: 12px 14px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(0, 0, 0, 0.15);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.theme-light .jugador-activo-strip {
+  background: rgba(0, 0, 0, 0.04);
+  border-bottom-color: rgba(0, 0, 0, 0.08);
+}
+
+.jugador-activo-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #4CAF7D;
+  flex-wrap: wrap;
+}
+
+.jugador-activo-clear {
+  background: rgba(239, 68, 68, 0.15);
+  border: 1px solid rgba(239, 68, 68, 0.4);
+  color: #FCA5A5;
+  padding: 3px 10px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.jugador-activo-clear:hover { background: rgba(239, 68, 68, 0.3); }
+
+.jugador-postmatch-btn {
+  background: rgba(59, 130, 246, 0.12);
+  border: 1px solid rgba(59, 130, 246, 0.35);
+  color: #93C5FD;
+  padding: 4px 12px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  margin-left: auto;
+  transition: background 0.15s;
+  min-height: 30px;
+}
+.jugador-postmatch-btn:hover { background: rgba(59, 130, 246, 0.25); }
+
+/* Chips de jugador — scroll horizontal */
+.jugador-activo-chips {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+.jugador-activo-chips::-webkit-scrollbar { display: none; }
+
+.jugador-chip {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  min-width: 52px;
+  padding: 8px 6px;
+  border-radius: 10px;
+  border: 1.5px solid rgba(255, 255, 255, 0.15);
+  background: rgba(255, 255, 255, 0.06);
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: all 0.15s;
+  color: inherit;
+}
+.theme-light .jugador-chip {
+  border-color: rgba(0, 0, 0, 0.12);
+  background: rgba(0, 0, 0, 0.04);
+}
+.jugador-chip:active { transform: scale(0.95); }
+.jugador-chip.active {
+  border-color: #4CAF7D;
+  background: rgba(76, 175, 125, 0.15);
+  box-shadow: 0 0 10px rgba(76, 175, 125, 0.25);
+}
+
+.jugador-chip-dorsal {
+  font-size: 16px;
+  font-weight: 900;
+  color: #4CAF7D;
+  line-height: 1;
+}
+
+.jugador-chip-name {
+  font-size: 9px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: #9CA3AF;
+  max-width: 50px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Grid de 7 acciones individuales */
+.jugador-acciones-grid {
+  padding: 10px 0 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.jugador-acciones-header {
+  font-size: 12px;
+  font-weight: 700;
+  color: #9CA3AF;
+  padding: 0 2px;
+}
+.jugador-acciones-header strong { color: #FFFFFF; }
+.theme-light .jugador-acciones-header strong { color: #0F172A; }
+
+.jugador-acciones-btns {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 6px;
+}
+
+@media (max-width: 600px) {
+  .jugador-acciones-btns { grid-template-columns: repeat(4, 1fr); }
+}
+@media (max-width: 380px) {
+  .jugador-acciones-btns { grid-template-columns: repeat(3, 1fr); }
+}
+
+.jugador-accion-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  min-height: 56px;
+  padding: 8px 4px;
+  border-radius: 10px;
+  border: 1.5px solid rgba(255, 255, 255, 0.15);
+  background: rgba(255, 255, 255, 0.07);
+  cursor: pointer;
+  position: relative;
+  transition: all 0.15s;
+  color: inherit;
+  -webkit-tap-highlight-color: transparent;
+}
+.theme-light .jugador-accion-btn {
+  border-color: rgba(0, 0, 0, 0.12);
+  background: rgba(0, 0, 0, 0.04);
+}
+.jugador-accion-btn:active { transform: scale(0.93); }
+.jugador-accion-btn.flashing {
+  border-color: var(--action-color, #4CAF7D) !important;
+  box-shadow: 0 0 12px color-mix(in srgb, var(--action-color, #4CAF7D) 40%, transparent);
+}
+.jugador-accion-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+
+.jugador-accion-icon {
+  font-size: 20px;
+  line-height: 1;
+}
+
+.jugador-accion-label {
+  font-size: 9px;
+  font-weight: 800;
+  text-transform: uppercase;
+  text-align: center;
+  color: #FFFFFF;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+}
+.theme-light .jugador-accion-label { color: #0F172A; }
+
+.jugador-accion-sub {
+  font-size: 8px;
+  color: #9CA3AF;
+  font-weight: 600;
+}
+
+.jugador-accion-flash {
+  position: absolute;
+  top: 4px;
+  right: 5px;
+  font-size: 11px;
+  font-weight: 900;
+  animation: flashBadge 0.6s ease-out forwards;
+}
+
+@keyframes flashBadge {
+  0%   { opacity: 1; transform: scale(1.2); }
+  100% { opacity: 0; transform: scale(0.8) translateY(-4px); }
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   ACTA OFICIAL — Fix Móvil W6: Tarjetas responsive ≤768px
+   Elimina encabezados flotantes ("letras en el aire")
+═══════════════════════════════════════════════════════════════════ */
+
+@media (max-width: 768px) {
+  .acta-table-header { display: none !important; }
+
+  .acta-player-row {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 8px !important;
+    padding: 12px 14px !important;
+  }
+
+  .acta-player-row > div:nth-child(2) { display: none !important; } /* Ocultar col Rol en móvil */
+  .acta-player-row > div:nth-child(4) { text-align: left !important; }
+  .acta-player-row > div:nth-child(5) { text-align: left !important; }
+}
+

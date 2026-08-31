@@ -95,6 +95,8 @@ export const calculatePlayerMatchStats = (playerId, matches = []) => {
       return r;
     };
     const calcRating = () => {
+      const actaRating = m.actaOficial?.actual?.[pid]?.rating;
+      if (actaRating !== undefined && actaRating !== null && actaRating !== '') return Number(actaRating);
       if (pStats && (pStats.rating || pStats.nota)) return Number(pStats.rating || pStats.nota);
       const raw = m.ratings?.[playerId] || m.playerRatings?.[playerId] || m.notas?.[playerId];
       return raw ? Number(raw) : null;

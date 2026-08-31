@@ -135,7 +135,10 @@ const Planificacion = () => {
     trainer: user?.displayName || 'Míster',
     sessionDuration: 90,
     trainingDays: [0, 2, 4],
+    matchDayOfWeek: 5, // (A) Sábado por defecto
   });
+
+  const [reubicateModal, setReubicateModal] = useState(false);
 
   const [microcycles, setMicrocycles] = useState(() => generateMicrocycles());
   const [saving, setSaving] = useState(false);
@@ -232,10 +235,28 @@ const Planificacion = () => {
       }
       return updated;
     }));
-  // Usamos JSON.stringify(trainingDays) para comparación estable de arrays en el dep array
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [JSON.stringify(macroInfo.trainingDays), macroInfo.sessionDuration, macroInfo.startDate, isLoaded]);
 
+  /**
+   * Etiqueta de día de partido relativo (MD-4 .. MD .. MD+1)
+   * ínice 0 = Lunes, 6 = Domingo
+   * Día de partido = matchDayOfWeek
+   * @param {number} dayIdx - índice de columna (0-6) dentro de la semana
+   * @returns {string} etiqueta MD+n / MD-n
+   */
+  const getMdLabel = (dayIdx) => {
+    const md = macroInfo.matchDayOfWeek ?? 5;
+    const diff = dayIdx - md;
+    if (diff === 0) return 'MD';
+    return diff > 0 ? `MD+${diff}` : `MD${diff}`;
+  };
+
+  // Advertencia de conflicto: si algún día de entrenamiento coincide con MD o MD-1
+  const conflictDays = (macroInfo.trainingDays || []).filter(d => {
+    const diff = d - (macroInfo.matchDayOfWeek ?? 5);
+    return diff === 0 || diff === -1;
+  });
 
   const showToast = useCallback((msg, type = 'success') => {
     setToast({ msg, type });
@@ -892,12 +913,50 @@ const Planificacion = () => {
           <div className="plan-days-row">
             {DAYS_LABELS.map((day, idx) => (
               <button key={idx}
-                className={`plan-day-btn ${macroInfo.trainingDays.includes(idx) ? 'active' : ''}`}
-                onClick={() => toggleDay(idx)}>
+                className={`plan-day-btn ${macroInfo.trainingDays.includes(idx) ? 'active' : ''} ${conflictDays.includes(idx) ? 'conflict' : ''}`}
+                onClick={() => toggleDay(idx)}
+                title={`${day} = ${getMdLabel(idx)}`}
+              >
                 {day}
+                <span style={{ fontSize: '9px', display: 'block', opacity: 0.8, fontWeight: 700 }}>{getMdLabel(idx)}</span>
               </button>
             ))}
           </div>
+          {/* (A) Selector de Día de Partido */}
+          <div style={{ marginTop: '12px', display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+            <span style={{ fontSize: '11px', fontWeight: 800, color: '#D4A843', textTransform: 'uppercase' }}>⚽ Día Partido (MD):</span>
+            <div style={{ display: 'flex', gap: '4px' }}>
+              {DAYS_LABELS.map((day, idx) => (
+                <button
+                  key={idx}
+                  type="button"
+                  onClick={() => setMacroInfo(p => ({ ...p, matchDayOfWeek: idx }))}
+                  style={{
+                    padding: '4px 8px', borderRadius: '6px', fontSize: '11px', fontWeight: 800, cursor: 'pointer',
+                    border: `1.5px solid ${macroInfo.matchDayOfWeek === idx ? '#D4A843' : 'rgba(212,168,67,0.3)'}`,
+                    background: macroInfo.matchDayOfWeek === idx ? 'rgba(212,168,67,0.2)' : 'transparent',
+                    color: macroInfo.matchDayOfWeek === idx ? '#D4A843' : 'inherit',
+                    transition: 'all 0.15s'
+                  }}
+                >
+                  {day}
+                </button>
+              ))}
+            </div>
+            {conflictDays.length > 0 && (
+              <span style={{ fontSize: '11px', color: '#F59E0B', background: 'rgba(245,158,11,0.12)', border: '1px solid rgba(245,158,11,0.3)', borderRadius: '6px', padding: '3px 8px' }}>
+                ⚠️ Entreno en MD{conflictDays.includes(macroInfo.matchDayOfWeek) ? '' : '-1'} — posible fatiga
+              </span>
+            )}
+          </div>
+          {/* (B) Botón Reubicar Entrenos */}
+          <button
+            type="button"
+            onClick={() => setReubicateModal(true)}
+            style={{ marginTop: '10px', padding: '6px 14px', borderRadius: '8px', border: '1px solid rgba(59,130,246,0.4)', background: 'rgba(59,130,246,0.1)', color: '#93C5FD', fontSize: '11px', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }}
+          >
+            🔄 Reubicar entrenos según nuevo día
+          </button>
         </div>
 
         {/* CARD 3 — CATEGORÍA */}
@@ -1093,6 +1152,19 @@ const Planificacion = () => {
                       className="plan-cell-select">
                       <option>Prep</option><option>Comp</option><option>Trans</option>
                     </select>
+                  </td>
+                ))}
+              </tr>
+
+              {/* DÍA DE PARTIDO */}
+              <tr className="plan-mrow plan-mrow-matchday" style={{ background: 'rgba(212,168,67,0.08)' }}>
+                <td className="plan-msticky plan-mlabel-cell" style={{ color: '#D4A843', fontWeight: 900 }}>⚽ DÍA PARTIDO</td>
+                {microcycles.map(m => (
+                  <td key={m.id} className="plan-mcell" style={{ textAlign: 'center' }}>
+                    <span style={{ fontSize: '10px', fontWeight: 900, color: '#D4A843', letterSpacing: '0.03em' }}>
+                      {DAYS_LABELS[macroInfo.matchDayOfWeek ?? 5]}
+                    </span>
+                    <span style={{ display: 'block', fontSize: '9px', color: 'rgba(212,168,67,0.7)', fontWeight: 700 }}>MD</span>
                   </td>
                 ))}
               </tr>
@@ -1466,6 +1538,54 @@ const Planificacion = () => {
           </div>
         </div>
       )}
+      {/* Modal de confirmación para reubicar entrenos (D4 Opción B) */}
+      {reubicateModal && (
+        <div className="event-selector-overlay" onClick={() => setReubicateModal(false)} style={{ zIndex: 99999 }}>
+          <div className="event-selector-modal" onClick={e => e.stopPropagation()} style={{ maxWidth: '460px', width: '92vw', padding: '24px', borderRadius: '16px' }}>
+            <div style={{ fontSize: '32px', marginBottom: '8px' }}>🔄</div>
+            <h3 style={{ margin: '0 0 12px', fontSize: '17px', fontWeight: 900, color: 'var(--text-primary)' }}>
+              ¿Reubicar días de entrenamiento?
+            </h3>
+            <p style={{ fontSize: '13px', color: 'var(--text-secondary)', lineHeight: 1.5, marginBottom: '16px' }}>
+              El día de partido actual es <strong>{DAYS_LABELS[macroInfo.matchDayOfWeek ?? 5]} (MD)</strong>. 
+              Al confirmar, los {macroInfo.trainingDays.length} días de entreno se ajustarán automáticamente a 
+              <strong> MD-4, MD-2 y MD-1</strong> para evitar sobrecargas el día de competición.
+            </p>
+            <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
+              <button
+                type="button"
+                onClick={() => setReubicateModal(false)}
+                style={{ padding: '8px 16px', borderRadius: '8px', border: '1px solid var(--partidos-border)', background: 'transparent', color: 'var(--text-primary)', cursor: 'pointer', fontWeight: 700 }}
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  const md = macroInfo.matchDayOfWeek ?? 5;
+                  const numDays = macroInfo.trainingDays.length || 3;
+                  let newDays;
+                  if (numDays === 2) {
+                    newDays = [(md - 4 + 7) % 7, (md - 2 + 7) % 7];
+                  } else if (numDays === 3) {
+                    newDays = [(md - 4 + 7) % 7, (md - 2 + 7) % 7, (md - 1 + 7) % 7];
+                  } else {
+                    newDays = [(md - 5 + 7) % 7, (md - 4 + 7) % 7, (md - 2 + 7) % 7, (md - 1 + 7) % 7];
+                  }
+                  newDays.sort((a, b) => a - b);
+                  setMacroInfo(p => ({ ...p, trainingDays: newDays }));
+                  setReubicateModal(false);
+                  showToast('✓ Entrenamientos reubicados en base a MD');
+                }}
+                style={{ padding: '8px 20px', borderRadius: '8px', border: 'none', background: '#4CAF7D', color: '#FFFFFF', fontWeight: 900, cursor: 'pointer' }}
+              >
+                Confirmar Reubicación
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <UpgradeModal isOpen={upgradeModal.open} onClose={() => setUpgradeModal({ ...upgradeModal, open: false })} message={upgradeModal.message} />
       </div>
     </div>

@@ -612,7 +612,19 @@ export const translations = {
     'live.tab.capture': 'Captura en Vivo',
     'live.tab.tactical': 'Campo & Táctica',
     'live.tab.analytics': 'Análisis Avanzado',
-    'live.tab.players': 'Jugadores & CSV'
+    'live.tab.players': 'Jugadores & CSV',
+
+    // ── PLANIFICACIÓN & SESIONES ───────────────────────────
+    'plan.tab.macrociclo': 'MACROCICLO',
+    'plan.tab.mesociclo': 'MESOCICLO',
+    'plan.tab.microciclo': 'MICROCICLO',
+    'plan.tab.objetivos': 'OBJETIVOS',
+    'sesiones.title': 'Sesiones de Entrenamiento',
+    'sesiones.tab.sessions': 'Sesiones',
+    'sesiones.tab.captures': 'Capturas',
+    'sesiones.tab.animations': 'Animaciones',
+    'sesiones.newSession': '+ Nueva Sesión',
+    'sesiones.exportICS': '📅 Exportar ICS'
   },
 
   'English (EN)': {
@@ -1228,7 +1240,19 @@ export const translations = {
     'live.tab.capture': 'Live Capture',
     'live.tab.tactical': 'Field & Tactics',
     'live.tab.analytics': 'Advanced Analysis',
-    'live.tab.players': 'Players & CSV'
+    'live.tab.players': 'Players & CSV',
+
+    // ── PLANNING & SESSIONS ────────────────────────────────
+    'plan.tab.macrociclo': 'MACROCYCLE',
+    'plan.tab.mesociclo': 'MESOCYCLE',
+    'plan.tab.microciclo': 'MICROCYCLE',
+    'plan.tab.objetivos': 'OBJECTIVES',
+    'sesiones.title': 'Training Sessions',
+    'sesiones.tab.sessions': 'Sessions',
+    'sesiones.tab.captures': 'Captures',
+    'sesiones.tab.animations': 'Animations',
+    'sesiones.newSession': '+ New Session',
+    'sesiones.exportICS': '📅 Export ICS'
   }
 };
 

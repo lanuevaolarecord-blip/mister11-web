@@ -360,9 +360,38 @@ const Sesiones = () => {
   const categories = ['Todas', 'Técnica', 'Táctica', 'Física', 'Mixta'];
   const [catFilter, setCatFilter] = useState('Todas');
 
-  const filteredSessions = catFilter === 'Todas'
-    ? sessions
-    : sessions.filter(s => (s.category || s.categoria || '') === catFilter);
+  // FASE 5: Selector DÍA | SEMANA | MES y fecha activa
+  const [calendarView, setCalendarView] = useState('semana'); // 'dia' | 'semana' | 'mes'
+  const [selectedCalendarDate, setSelectedCalendarDate] = useState(() => new Date().toISOString().split('T')[0]);
+  const [monthBottomSheetOpen, setMonthBottomSheetOpen] = useState(false);
+
+  const CATEGORY_COLORS = {
+    'Técnica': '#3B82F6',
+    'Táctica': '#10B981',
+    'Física': '#F97316',
+    'Mixta': '#A855F7',
+    'General': '#6B7280',
+    'Partido': '#D4A843',
+  };
+
+  const getSessionsForDate = (dateObj) => {
+    const y = dateObj.getFullYear();
+    const m = String(dateObj.getMonth() + 1).padStart(2, '0');
+    const d = String(dateObj.getDate()).padStart(2, '0');
+    const dStr = `${y}-${m}-${d}`;
+    return sessions.filter(s => (s.date === dStr || s.fecha === dStr));
+  };
+
+  const filteredSessions = useMemo(() => {
+    let list = sessions;
+    if (catFilter !== 'Todas') {
+      list = list.filter(s => (s.category || s.categoria || '') === catFilter);
+    }
+    if (calendarView === 'dia') {
+      list = list.filter(s => (s.date === selectedCalendarDate || s.fecha === selectedCalendarDate));
+    }
+    return list;
+  }, [sessions, catFilter, calendarView, selectedCalendarDate]);
 
   // --- LIST MODE FUNCTIONS ---
   const parseSessionDateTime = (dateStr, timeStr) => {
@@ -1146,26 +1175,179 @@ const Sesiones = () => {
           </div>
         </div>
 
-        <div style={{ display: 'flex', gap: '8px', overflowX: 'auto', paddingBottom: '8px', marginBottom: '16px' }}>
-          {(() => {
-            const today = new Date();
-            const currentDay = today.getDay(); // 0 (Sun) to 6 (Sat)
-            const diff = today.getDate() - currentDay + (currentDay === 0 ? -6 : 1);
-            const monday = new Date(today.setDate(diff));
-            
-            return ['L', 'M', 'X', 'J', 'V', 'S', 'D'].map((day, i) => {
-              const date = new Date(monday);
-              date.setDate(monday.getDate() + i);
-              const isToday = date.toDateString() === new Date().toDateString();
-              return (
-                <div key={i} className={`chip-gold ${isToday ? 'active' : ''}`} style={{ cursor: 'pointer', background: isToday ? 'var(--accent-gold)' : 'var(--bg-card)', border: '1px solid var(--border-light)' }}>
-                  <span style={{ fontSize: '12px', opacity: isToday ? 1 : 0.6 }}>{day}</span>
-                  <strong style={{ fontSize: '16px' }}>{date.getDate()}</strong>
-                </div>
-              );
-            });
-          })()}
+        {/* FASE 5: Barra Switcher DÍA | SEMANA | MES */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px', flexWrap: 'wrap', gap: '10px' }}>
+          <div className="calendar-view-switcher" style={{ display: 'inline-flex', background: 'var(--bg-card)', border: '1.5px solid var(--border-light)', borderRadius: '10px', padding: '3px', gap: '4px' }}>
+            {[
+              { id: 'dia', label: 'DÍA' },
+              { id: 'semana', label: 'SEMANA' },
+              { id: 'mes', label: 'MES' }
+            ].map(v => (
+              <button
+                key={v.id}
+                type="button"
+                className={`cal-view-btn ${calendarView === v.id ? 'active' : ''}`}
+                onClick={() => setCalendarView(v.id)}
+                style={{
+                  padding: '6px 14px',
+                  borderRadius: '7px',
+                  border: 'none',
+                  fontSize: '11px',
+                  fontWeight: 900,
+                  cursor: 'pointer',
+                  background: calendarView === v.id ? 'var(--accent-gold)' : 'transparent',
+                  color: calendarView === v.id ? '#000000' : 'var(--text-secondary)',
+                  transition: 'all 0.15s'
+                }}
+              >
+                {v.label}
+              </button>
+            ))}
+          </div>
+
+          {/* Indicador de Leyenda de Puntos */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '11px', color: 'var(--text-secondary)' }}>
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}><span style={{ width: 7, height: 7, borderRadius: '50%', background: '#3B82F6' }}></span> Técnica</span>
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}><span style={{ width: 7, height: 7, borderRadius: '50%', background: '#10B981' }}></span> Táctica</span>
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}><span style={{ width: 7, height: 7, borderRadius: '50%', background: '#F97316' }}></span> Física</span>
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}><span style={{ width: 7, height: 7, borderRadius: '50%', background: '#A855F7' }}></span> Mixta</span>
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}><span style={{ width: 7, height: 7, borderRadius: '50%', background: '#D4A843' }}></span> Partido</span>
+          </div>
         </div>
+
+        {/* Vista SEMANA o DÍA: Tiras de días con puntos de contenido */}
+        {calendarView !== 'mes' && (
+          <div style={{ display: 'flex', gap: '8px', overflowX: 'auto', paddingBottom: '8px', marginBottom: '16px' }}>
+            {(() => {
+              const today = new Date();
+              const currentDay = today.getDay(); // 0 (Sun) to 6 (Sat)
+              const diff = today.getDate() - currentDay + (currentDay === 0 ? -6 : 1);
+              const monday = new Date(new Date().setDate(diff));
+              
+              return ['L', 'M', 'X', 'J', 'V', 'S', 'D'].map((day, i) => {
+                const date = new Date(monday);
+                date.setDate(monday.getDate() + i);
+                const y = date.getFullYear();
+                const m = String(date.getMonth() + 1).padStart(2, '0');
+                const d = String(date.getDate()).padStart(2, '0');
+                const dateStr = `${y}-${m}-${d}`;
+                const isSelected = selectedCalendarDate === dateStr;
+                const isToday = date.toDateString() === new Date().toDateString();
+                const daySessions = getSessionsForDate(date);
+
+                return (
+                  <div
+                    key={i}
+                    className={`chip-gold ${isSelected ? 'active' : ''}`}
+                    onClick={() => {
+                      setSelectedCalendarDate(dateStr);
+                      if (calendarView === 'dia') {
+                        // filteredSessions updates automatically
+                      }
+                    }}
+                    style={{
+                      cursor: 'pointer',
+                      minWidth: '54px',
+                      padding: '8px 6px',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      background: isSelected ? 'var(--accent-gold)' : (isToday ? 'rgba(212,168,67,0.15)' : 'var(--bg-card)'),
+                      border: `1.5px solid ${isSelected ? 'var(--accent-gold)' : (isToday ? 'rgba(212,168,67,0.4)' : 'var(--border-light)')}`,
+                      borderRadius: '12px'
+                    }}
+                  >
+                    <span style={{ fontSize: '11px', opacity: isSelected ? 1 : 0.7, fontWeight: 700 }}>{day}</span>
+                    <strong style={{ fontSize: '16px', color: isSelected ? '#000000' : 'inherit' }}>{date.getDate()}</strong>
+                    {/* Puntos de contenido por sesión */}
+                    <div style={{ display: 'flex', gap: '3px', marginTop: '4px', minHeight: '6px' }}>
+                      {daySessions.map((s, sIdx) => {
+                        const col = CATEGORY_COLORS[s.category || s.categoria] || '#6B7280';
+                        return <span key={sIdx} style={{ width: 6, height: 6, borderRadius: '50%', background: col }}></span>;
+                      })}
+                    </div>
+                  </div>
+                );
+              });
+            })()}
+          </div>
+        )}
+
+        {/* Vista MES: Cuadrícula Mensual L-D Mobile First */}
+        {calendarView === 'mes' && (
+          <div className="month-calendar-container" style={{ background: 'var(--bg-card)', border: '1px solid var(--border-light)', borderRadius: '16px', padding: '16px', marginBottom: '18px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
+              <strong style={{ fontSize: '15px', color: 'var(--text-primary)', textTransform: 'uppercase' }}>
+                {new Date().toLocaleDateString('es-ES', { month: 'long', year: 'numeric' })}
+              </strong>
+              <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>Pulsa un día para ver sesiones</span>
+            </div>
+            {/* Header L-D */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', textAlign: 'center', fontSize: '11px', fontWeight: 900, color: 'var(--text-secondary)', marginBottom: '8px' }}>
+              {['LUN', 'MAR', 'MIÉ', 'JUE', 'VIE', 'SÁB', 'DOM'].map(d => <span key={d}>{d}</span>)}
+            </div>
+            {/* Celdas del mes actual */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '6px' }}>
+              {(() => {
+                const now = new Date();
+                const year = now.getFullYear();
+                const month = now.getMonth();
+                const firstDay = new Date(year, month, 1);
+                const lastDay = new Date(year, month + 1, 0);
+                const daysInMonth = lastDay.getDate();
+                // Ajustar primer día a lunes (0=domingo -> 6, 1=lunes -> 0)
+                const startOffset = (firstDay.getDay() + 6) % 7;
+
+                const cells = [];
+                for (let i = 0; i < startOffset; i++) {
+                  cells.push(<div key={`empty-${i}`} style={{ minHeight: '44px', opacity: 0.2 }}></div>);
+                }
+                for (let dayNum = 1; dayNum <= daysInMonth; dayNum++) {
+                  const dObj = new Date(year, month, dayNum);
+                  const mStr = String(month + 1).padStart(2, '0');
+                  const dayStr = String(dayNum).padStart(2, '0');
+                  const dateStr = `${year}-${mStr}-${dayStr}`;
+                  const isSelected = selectedCalendarDate === dateStr;
+                  const isToday = dObj.toDateString() === new Date().toDateString();
+                  const daySessions = getSessionsForDate(dObj);
+
+                  cells.push(
+                    <button
+                      key={dayNum}
+                      type="button"
+                      onClick={() => {
+                        setSelectedCalendarDate(dateStr);
+                        setMonthBottomSheetOpen(true);
+                      }}
+                      style={{
+                        minHeight: '46px',
+                        padding: '4px',
+                        borderRadius: '10px',
+                        border: `1.5px solid ${isSelected ? 'var(--accent-gold)' : (isToday ? 'rgba(212,168,67,0.4)' : 'var(--border-light)')}`,
+                        background: isSelected ? 'rgba(212,168,67,0.2)' : (isToday ? 'rgba(212,168,67,0.08)' : 'transparent'),
+                        cursor: 'pointer',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        color: 'inherit'
+                      }}
+                    >
+                      <span style={{ fontSize: '12px', fontWeight: isToday ? 900 : 700, color: isToday ? 'var(--accent-gold)' : 'inherit' }}>{dayNum}</span>
+                      <div style={{ display: 'flex', gap: '2px', flexWrap: 'wrap', justifyContent: 'center' }}>
+                        {daySessions.map((s, sIdx) => {
+                          const col = CATEGORY_COLORS[s.category || s.categoria] || '#6B7280';
+                          return <span key={sIdx} style={{ width: 6, height: 6, borderRadius: '50%', background: col }}></span>;
+                        })}
+                      </div>
+                    </button>
+                  );
+                }
+                return cells;
+              })()}
+            </div>
+          </div>
+        )}
 
         {activeTab === 'sessions' && (
           <div style={{ display: 'flex', gap: '8px', overflowX: 'auto', paddingBottom: '8px' }}>
@@ -1253,6 +1435,130 @@ const Sesiones = () => {
               <div className="empty-state-list">No hay sesiones en esta categoría.</div>
             )}
           </div>
+
+          {/* MONTH VIEW BOTTOM SHEET (Mobile / Tablet) */}
+          {monthBottomSheetOpen && selectedCalendarDate && (
+            <div className="event-selector-overlay" onClick={() => setMonthBottomSheetOpen(false)} style={{ zIndex: 99999 }}>
+              <div
+                className="sesiones-bottom-sheet"
+                onClick={e => e.stopPropagation()}
+                style={{
+                  position: 'fixed',
+                  bottom: 0,
+                  left: 0,
+                  right: 0,
+                  background: 'var(--bg-card)',
+                  borderTop: '2px solid var(--accent-gold)',
+                  borderRadius: '20px 20px 0 0',
+                  padding: '20px',
+                  maxHeight: '75vh',
+                  overflowY: 'auto',
+                  boxShadow: '0 -10px 30px rgba(0,0,0,0.4)',
+                  zIndex: 100000,
+                  maxWidth: '680px',
+                  margin: '0 auto'
+                }}
+              >
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px', borderBottom: '1px solid var(--border-light)', paddingBottom: '10px' }}>
+                  <div>
+                    <span style={{ fontSize: '11px', color: 'var(--accent-gold)', fontWeight: 800, textTransform: 'uppercase' }}>📅 Planificación Diaria</span>
+                    <h3 style={{ margin: '2px 0 0', fontSize: '18px', color: 'var(--text-primary)' }}>
+                      Sesiones del {selectedCalendarDate}
+                    </h3>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setMonthBottomSheetOpen(false)}
+                    style={{ background: 'rgba(255,255,255,0.1)', border: 'none', color: 'var(--text-primary)', borderRadius: '8px', padding: '6px 12px', fontSize: '14px', fontWeight: 800, cursor: 'pointer' }}
+                  >✕</button>
+                </div>
+
+                {(() => {
+                  const daySessions = sessions.filter(s => s.date === selectedCalendarDate || s.fecha === selectedCalendarDate);
+                  if (daySessions.length === 0) {
+                    return (
+                      <div style={{ textAlign: 'center', padding: '24px 10px', color: 'var(--text-secondary)' }}>
+                        <div style={{ fontSize: '32px', marginBottom: '8px' }}>📋</div>
+                        <p style={{ margin: '0 0 16px', fontSize: '14px' }}>No hay sesiones programadas para este día.</p>
+                        <button
+                          type="button"
+                          className="btn-primary-new"
+                          onClick={() => {
+                            setMonthBottomSheetOpen(false);
+                            handleCreateNew();
+                          }}
+                          style={{ margin: '0 auto', display: 'inline-flex' }}
+                        >
+                          + Crear Sesión para este día
+                        </button>
+                      </div>
+                    );
+                  }
+
+                  return (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                      {daySessions.map(session => {
+                        const col = CATEGORY_COLORS[session.category || session.categoria] || '#6B7280';
+                        return (
+                          <div
+                            key={session.id}
+                            style={{
+                              background: 'var(--bg-app)',
+                              border: '1px solid var(--border-light)',
+                              borderLeft: `4px solid ${col}`,
+                              borderRadius: '12px',
+                              padding: '12px 14px',
+                              display: 'flex',
+                              justifyContent: 'space-between',
+                              alignItems: 'center',
+                              gap: '12px'
+                            }}
+                          >
+                            <div style={{ flex: 1 }}>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+                                <span style={{ fontSize: '10px', fontWeight: 900, background: `${col}25`, color: col, padding: '2px 8px', borderRadius: '6px', textTransform: 'uppercase' }}>
+                                  {session.category || session.categoria || 'General'}
+                                </span>
+                                <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>
+                                  {session.duration || session.duracion || 90} min · {session.time || session.hora || '18:00'}
+                                </span>
+                              </div>
+                              <strong style={{ fontSize: '14px', color: 'var(--text-primary)' }}>
+                                {session.title || session.titulo || 'Sin título'}
+                              </strong>
+                            </div>
+
+                            <div style={{ display: 'flex', gap: '6px' }}>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setMonthBottomSheetOpen(false);
+                                  setSelectedSession(session);
+                                }}
+                                style={{ padding: '6px 12px', borderRadius: '8px', border: '1px solid var(--border-light)', background: 'var(--bg-card)', color: 'var(--text-primary)', fontSize: '12px', fontWeight: 700, cursor: 'pointer' }}
+                              >
+                                Ver
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setMonthBottomSheetOpen(false);
+                                  handleEditSession(session);
+                                }}
+                                style={{ padding: '6px 12px', borderRadius: '8px', border: 'none', background: 'var(--accent-gold)', color: '#000', fontSize: '12px', fontWeight: 800, cursor: 'pointer' }}
+                              >
+                                Editar
+                              </button>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  );
+                })()}
+              </div>
+            </div>
+          )}
 
           {/* SESSION PREVIEW MODAL */}
           {selectedSession && (

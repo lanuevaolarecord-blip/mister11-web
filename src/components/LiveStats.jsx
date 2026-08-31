@@ -220,6 +220,33 @@ const LiveStats = ({
   const [tacticalNotes, setTacticalNotes] = useState([]);
   const [isHighlighted, setIsHighlighted] = useState(false);
 
+  // ── JUGADOR ACTIVO (Captura Individual a Pie de Campo) ─────────────────────
+  const [activePlayerId, setActivePlayerId] = useState(null);
+  const [showPostMatchModal, setShowPostMatchModal] = useState(false);
+  const [postMatchCounters, setPostMatchCounters] = useState({});
+
+  // Acciones rápidas individuales (≥56dp, táctil Android)
+  const PLAYER_QUICK_ACTIONS = [
+    { type: 'shot_on_target_own', label: 'Tiro\na Puerta',   icon: '🎯', color: '#4CAF7D' },
+    { type: 'shot_off_target_own', label: 'Tiro\nFuera',    icon: '⬜', color: '#94A3B8' },
+    { type: 'duel_won',            label: 'Pase\nClave',    icon: '⭐', color: '#D4A843' },
+    { type: 'recovery',            label: 'Pase\nComplet.', icon: '✅', color: '#0D9488' },
+    { type: 'duel_won',            label: 'Recuper.',       icon: '↑',  color: '#4CAF7D', subtype: 'recovery_ind' },
+    { type: 'foul_against',        label: 'Falta',          icon: '⚡', color: '#F97316' },
+    { type: 'duel_won',            label: 'Duelo\nGanado',  icon: '✊', color: '#0D9488', subtype: 'duel_ind' },
+  ];
+
+  // 7 acciones correctas por acción individual real
+  const PLAYER_ACTIONS_REAL = [
+    { type: 'shot_on_target_own',  label: 'Tiro a\nPuerta',  icon: '🎯', color: '#4CAF7D' },
+    { type: 'shot_off_target_own', label: 'Tiro\nFuera',     icon: '⬜', color: '#94A3B8' },
+    { type: 'recovery',            label: 'Pase\nClave',     icon: '⭐', color: '#D4A843' },
+    { type: 'recovery',            label: 'Pase\nComplet.',  icon: '✅', color: '#0D9488' },
+    { type: 'recovery',            label: 'Recuper.',        icon: '↑',  color: '#3B82F6' },
+    { type: 'foul_against',        label: 'Falta',           icon: '⚡', color: '#F97316' },
+    { type: 'duel_won',            label: 'Duelo\nGanado',   icon: '✊', color: '#0D9488' },
+  ];
+
   const liveStatsHook = useLiveStats(teamId, matchId, currentMinute, currentHalf);
 
   // ── Estado local para reflejo INMEDIATO (optimista) de eventos capturados ──
@@ -401,6 +428,40 @@ const LiveStats = ({
       console.error("Error al exportar informe PDF de Live Stats:", err);
     }
   }, [matchData, filteredEvents, homeTeamName]);
+
+  // ── Acción individual con playerId adjunto ────────────────────────────────
+  const handlePlayerAction = useCallback(async (type) => {
+    if (!activePlayerId) {
+      showToast('👆 Selecciona un jugador primero', 'warning');
+      return;
+    }
+    if (isMatchLocked(matchData)) {
+      showToast('⚠️ Partido finalizado — usa Reabrir Acta para corregir.', 'warning');
+      return;
+    }
+    const tempId = `local_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`;
+    const localDoc = {
+      id: tempId,
+      type,
+      half: currentHalf,
+      minute: currentMinute || 1,
+      sector: selectedSector,
+      x: 50,
+      y: currentHalf === 1 ? 30 : 70,
+      playerId: activePlayerId,
+      timestamp: new Date().toISOString()
+    };
+    setLocalEvents(prev => [...prev, localDoc]);
+    setFlashType(`player_${type}`);
+    setTimeout(() => setFlashType(null), 650);
+    const hook = parentAddLiveEvent || liveStatsHook.addLiveEvent;
+    if (hook) {
+      const realId = await hook(type, currentHalf, { sector: selectedSector, x: 50, y: currentHalf === 1 ? 30 : 70, playerId: activePlayerId });
+      if (realId && realId !== tempId) {
+        setLocalEvents(prev => prev.filter(e => e.id !== tempId));
+      }
+    }
+  }, [activePlayerId, currentHalf, currentMinute, selectedSector, matchData, parentAddLiveEvent, liveStatsHook.addLiveEvent]);
 
   const innerAddLiveEvent = useCallback(async (type, explicitHalf = null, customCoords = {}) => {
     if (isMatchLocked(matchData)) {
@@ -721,6 +782,103 @@ const LiveStats = ({
         {/* PESTAÑA 1: Captura Rápida */}
         {(activeTab === 'capture' || isFullscreen) && (
           <>
+            {/* ── JUGADOR ACTIVO: Chip Selector Horizontal ─── */}
+            <div className="jugador-activo-strip">
+              <div className="jugador-activo-label">
+                <span>⚡</span>
+                <span>JUGADOR ACTIVO</span>
+                {activePlayerId && (
+                  <button
+                    type="button"
+                    className="jugador-activo-clear"
+                    onClick={() => setActivePlayerId(null)}
+                  >✕ Deseleccionar</button>
+                )}
+                <button
+                  type="button"
+                  className="jugador-postmatch-btn"
+                  onClick={() => { setShowPostMatchModal(true); setPostMatchCounters({}); }}
+                  title="Carga post-partido: entrada rápida de contadores +/-"
+                >📋 Carga Post-Partido</button>
+              </div>
+              <div className="jugador-activo-chips">
+                {playersList.map(p => {
+                  const isActive = activePlayerId === p.id;
+                  return (
+                    <button
+                      key={p.id}
+                      type="button"
+                      className={`jugador-chip ${isActive ? 'active' : ''}`}
+                      onClick={() => setActivePlayerId(isActive ? null : p.id)}
+                    >
+                      <span className="jugador-chip-dorsal">{p.dorsal}</span>
+                      <span className="jugador-chip-name">{(p.nombre || p.name || '').split(' ')[0]}</span>
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* 7 Botones de Acción Individual ≥56dp */}
+              {activePlayerId && (
+                <div className="jugador-acciones-grid">
+                  {(() => {
+                    const ap = playersList.find(p => p.id === activePlayerId);
+                    const ACTIONS = [
+                      { type: 'shot_on_target_own',  label: 'Tiro a\nPuerta',  icon: '🎯', color: '#4CAF7D' },
+                      { type: 'shot_off_target_own', label: 'Tiro\nFuera',     icon: '⬜', color: '#94A3B8' },
+                      { type: 'recovery',            label: 'Pase\nClave',     icon: '⭐', color: '#D4A843' },
+                      { type: 'recovery',            label: 'Pase\nComplet.',  icon: '✅', color: '#0D9488' },
+                      { type: 'recovery',            label: 'Recuper.',        icon: '↑',  color: '#3B82F6' },
+                      { type: 'foul_against',        label: 'Falta',           icon: '⚡', color: '#F97316' },
+                      { type: 'duel_won',            label: 'Duelo\nGanado',   icon: '✊', color: '#0D9488' },
+                    ];
+                    return (
+                      <>
+                        <div className="jugador-acciones-header">
+                          #{ap?.dorsal} <strong>{ap?.nombre || ap?.name}</strong> · {ap?.posicion}
+                        </div>
+                        <div className="jugador-acciones-btns">
+                          {ACTIONS.map((a, idx) => {
+                            const lines = a.label.split('\n');
+                            const isFlashingPlayer = flashType === `player_${a.type}_${idx}`;
+                            return (
+                              <button
+                                key={`${a.type}_${idx}`}
+                                type="button"
+                                className={`jugador-accion-btn ${isFlashingPlayer ? 'flashing' : ''}`}
+                                style={{ '--action-color': a.color }}
+                                onClick={async () => {
+                                  if (isMatchLocked(matchData)) { showToast('⚠️ Partido finalizado', 'warning'); return; }
+                                  setFlashType(`player_${a.type}_${idx}`);
+                                  setTimeout(() => setFlashType(null), 650);
+                                  const tempId = `local_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`;
+                                  const localDoc = { id: tempId, type: a.type, half: currentHalf, minute: currentMinute || 1, sector: selectedSector, x: 50, y: 50, playerId: activePlayerId, timestamp: new Date().toISOString() };
+                                  setLocalEvents(prev => [...prev, localDoc]);
+                                  const hook = parentAddLiveEvent || liveStatsHook.addLiveEvent;
+                                  if (hook) {
+                                    const realId = await hook(a.type, currentHalf, { playerId: activePlayerId, sector: selectedSector });
+                                    if (realId && realId !== tempId) setLocalEvents(prev => prev.filter(e => e.id !== tempId));
+                                  }
+                                }}
+                                disabled={isLocked}
+                              >
+                                <span className="jugador-accion-icon" style={{ color: a.color }}>{a.icon}</span>
+                                <span className="jugador-accion-label">
+                                  {lines[0]}
+                                  {lines[1] && <span className="jugador-accion-sub">{lines[1]}</span>}
+                                </span>
+                                {isFlashingPlayer && <span className="jugador-accion-flash" style={{ color: a.color }}>✓</span>}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </>
+                    );
+                  })()}
+                </div>
+              )}
+            </div>
+
             {/* Selector Táctico de Sector */}
             <div className="livestats-sector-bar">
               <span className="sector-bar-title">📍 Sector de la Jugada:</span>
@@ -940,6 +1098,7 @@ const LiveStats = ({
 
             <div className="analytics-grid-two-cols">
               <MatchRadarChart
+                events={filteredEvents}
                 homeStats={{
                   pasesExitosos: pasesExHome,
                   pasesTotales: Math.max(pasesExHome, 1),
@@ -1040,6 +1199,116 @@ const LiveStats = ({
             </div>
           </div>
         )}
+
+        {/* ── Modal Carga Post-Partido (contadores +/- por jugador) ─────────── */}
+        {showPostMatchModal && (
+          <div className="event-selector-overlay" onClick={() => setShowPostMatchModal(false)} style={{ zIndex: 99998 }}>
+            <div
+              className="event-selector-modal"
+              onClick={e => e.stopPropagation()}
+              style={{ maxWidth: '560px', width: '95vw', borderRadius: '18px', padding: '0', overflow: 'hidden', maxHeight: '88vh', display: 'flex', flexDirection: 'column' }}
+            >
+              {/* Header */}
+              <div style={{ background: 'linear-gradient(135deg, #1B3A2D 0%, #0F2419 100%)', padding: '18px 22px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <div>
+                  <div style={{ fontSize: '17px', fontWeight: 900, color: '#FFFFFF' }}>📋 Carga Post-Partido</div>
+                  <div style={{ fontSize: '12px', color: '#9DC7AF', marginTop: '2px' }}>Entrada rápida de contadores +/− por jugador</div>
+                </div>
+                <button type="button" onClick={() => setShowPostMatchModal(false)} style={{ background: 'rgba(255,255,255,0.15)', border: 'none', color: '#FFFFFF', borderRadius: '8px', padding: '6px 12px', cursor: 'pointer', fontWeight: 700 }}>✕</button>
+              </div>
+
+              {/* Body: jugadores con contador */}
+              <div style={{ overflowY: 'auto', flex: 1, padding: '16px 18px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                {playersList.map(p => {
+                  const pid = p.id;
+                  const counters = postMatchCounters[pid] || {};
+                  const COUNTER_TYPES = [
+                    { key: 'tirosPuerta',    label: 'Tiros Puerta', color: '#4CAF7D' },
+                    { key: 'pasesClave',     label: 'Pases Clave',  color: '#D4A843' },
+                    { key: 'recuperaciones', label: 'Recuperac.',   color: '#3B82F6' },
+                    { key: 'faltas',         label: 'Faltas',       color: '#F97316' },
+                    { key: 'goles',          label: 'Goles',        color: '#10B981' },
+                    { key: 'asistencias',    label: 'Asistencias',  color: '#8B5CF6' },
+                  ];
+                  return (
+                    <div key={pid} style={{ background: 'var(--partidos-player-card-bg, rgba(255,255,255,0.05))', borderRadius: '12px', border: '1px solid var(--partidos-border, rgba(255,255,255,0.1))', padding: '12px 14px' }}>
+                      <div style={{ fontWeight: 700, fontSize: '13px', color: 'var(--partidos-text-primary)', marginBottom: '10px' }}>
+                        <span style={{ color: '#4CAF7D', marginRight: '6px' }}>#{p.dorsal}</span>
+                        {p.nombre || p.name}
+                        <span style={{ color: '#94A3B8', fontSize: '11px', marginLeft: '6px' }}>{p.posicion}</span>
+                      </div>
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px' }}>
+                        {COUNTER_TYPES.map(ct => {
+                          const val = counters[ct.key] || 0;
+                          return (
+                            <div key={ct.key} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
+                              <span style={{ fontSize: '10px', fontWeight: 700, color: ct.color, textTransform: 'uppercase', letterSpacing: '0.03em' }}>{ct.label}</span>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                <button
+                                  type="button"
+                                  onClick={() => setPostMatchCounters(prev => ({ ...prev, [pid]: { ...(prev[pid] || {}), [ct.key]: Math.max(0, (prev[pid]?.[ct.key] || 0) - 1) } }))}
+                                  style={{ width: '30px', height: '30px', borderRadius: '6px', border: `1px solid ${ct.color}`, background: 'transparent', color: ct.color, fontSize: '18px', fontWeight: 900, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', lineHeight: 1 }}
+                                >−</button>
+                                <span style={{ minWidth: '24px', textAlign: 'center', fontSize: '16px', fontWeight: 900, color: 'var(--partidos-text-primary)' }}>{val}</span>
+                                <button
+                                  type="button"
+                                  onClick={() => setPostMatchCounters(prev => ({ ...prev, [pid]: { ...(prev[pid] || {}), [ct.key]: (prev[pid]?.[ct.key] || 0) + 1 } }))}
+                                  style={{ width: '30px', height: '30px', borderRadius: '6px', border: `1px solid ${ct.color}`, background: ct.color, color: '#FFF', fontSize: '18px', fontWeight: 900, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', lineHeight: 1 }}
+                                >+</button>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Footer */}
+              <div style={{ padding: '14px 18px', borderTop: '1px solid var(--partidos-border, rgba(255,255,255,0.1))', display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
+                <button type="button" onClick={() => setShowPostMatchModal(false)} style={{ minHeight: '44px', padding: '0 20px', borderRadius: '8px', border: '1px solid var(--partidos-border)', background: 'transparent', color: 'var(--partidos-text-primary)', fontWeight: 700, cursor: 'pointer' }}>
+                  Cancelar
+                </button>
+                <button
+                  type="button"
+                  onClick={async () => {
+                    // Registrar todos los contadores como eventos por jugador
+                    const TYPE_MAP = {
+                      tirosPuerta: 'shot_on_target_own',
+                      pasesClave: 'recovery',
+                      recuperaciones: 'recovery',
+                      faltas: 'foul_against',
+                      goles: 'gol_local',
+                      asistencias: 'recovery',
+                    };
+                    const hook = parentAddLiveEvent || liveStatsHook.addLiveEvent;
+                    for (const [pid, counters] of Object.entries(postMatchCounters)) {
+                      for (const [key, count] of Object.entries(counters)) {
+                        if (!count || count <= 0) continue;
+                        const evType = TYPE_MAP[key] || key;
+                        for (let i = 0; i < count; i++) {
+                          const tempId = `pm_${Date.now()}_${Math.random().toString(36).substr(2, 4)}`;
+                          setLocalEvents(prev => [...prev, { id: tempId, type: evType, playerId: pid, half: currentHalf, minute: 90, timestamp: new Date().toISOString() }]);
+                          if (hook) {
+                            const realId = await hook(evType, currentHalf, { playerId: pid });
+                            if (realId && realId !== tempId) setLocalEvents(prev => prev.filter(e => e.id !== tempId));
+                          }
+                        }
+                      }
+                    }
+                    showToast('✅ Contadores post-partido guardados', 'success');
+                    setShowPostMatchModal(false);
+                  }}
+                  style={{ minHeight: '44px', padding: '0 24px', borderRadius: '8px', border: 'none', background: '#4CAF7D', color: '#0B1317', fontWeight: 900, cursor: 'pointer', fontSize: '14px' }}
+                >
+                  ✓ Guardar Contadores
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
       </main>
     </div>
   );

@@ -31,6 +31,7 @@ import {
   cleanseImpossibleMatchEvents
 } from '../utils/minutesEngine';
 import { calculatePlayerMatchStats } from '../utils/playerMatchStats';
+import { calcMixedRating, deriveStatsFromEvents } from '../utils/ratingFormula';
 import { showToast } from '../utils/toast';
 
 /**
@@ -334,6 +335,18 @@ export const useMatchSheet = (teamPath, matchId, matchData, players = []) => {
         user.uid,
         { preserveManual: true }
       );
+
+      // D1: Calcular y asignar la nota mixta si el jugador no tiene override manual
+      const unifEvents = getUnifiedMatchEvents(matchData);
+      Object.entries(finalActual).forEach(([pid, act]) => {
+        if (act && (act.minutes > 0 || act.minutesOverride > 0)) {
+          if (!act.rating && !matchData?.playerRatings?.[pid]) {
+            const stats = deriveStatsFromEvents(pid, unifEvents);
+            const { mixedRating } = calcMixedRating(stats, act.attitude || 3);
+            act.rating = mixedRating;
+          }
+        }
+      });
 
       const matchDocRef = doc(db, `${cleanPath}/matches`, matchId);
       await updateDoc(matchDocRef, {

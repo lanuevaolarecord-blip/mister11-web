@@ -816,9 +816,11 @@ const MiEquipo = () => {
                 style={{ 
                   background: 'rgba(255, 255, 255, 0.08)', 
                   border: '1px solid var(--border-light, rgba(255, 255, 255, 0.1))', 
-                  borderRadius: '10px',
-                  width: '42px',
-                  height: '42px',
+                  borderRadius: '12px',
+                  width: '48px',
+                  height: '48px',
+                  minWidth: '48px',
+                  minHeight: '48px',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
@@ -829,10 +831,10 @@ const MiEquipo = () => {
                 onClick={() => setSelectedPlayer(null)}
                 aria-label="Cerrar ficha"
               >
-                <X size={20} />
+                <X size={22} />
               </button>
 
-              <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+              <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
                 <button 
                   className="btn-edit-icon" 
                   onClick={() => setActiveTab('CHAT')}
@@ -841,16 +843,18 @@ const MiEquipo = () => {
                     background: activeTab === 'CHAT' ? '#10B981' : 'rgba(16, 185, 129, 0.15)', 
                     color: activeTab === 'CHAT' ? '#FFFFFF' : '#10B981', 
                     border: '1px solid rgba(16, 185, 129, 0.3)',
-                    width: '42px', 
-                    height: '42px', 
+                    width: '48px', 
+                    height: '48px', 
+                    minWidth: '48px',
+                    minHeight: '48px',
                     display: 'flex', 
                     alignItems: 'center', 
-                    justifyContent: 'center',
-                    borderRadius: '10px',
+                    justifyContent: 'center', 
+                    borderRadius: '12px',
                     cursor: 'pointer'
                   }}
                 >
-                  <MessageSquare size={18} />
+                  <MessageSquare size={20} />
                 </button>
                 <button 
                   className="btn-edit-icon" 
@@ -865,16 +869,18 @@ const MiEquipo = () => {
                     background: 'rgba(37, 211, 102, 0.15)', 
                     color: '#25D366', 
                     border: '1px solid rgba(37, 211, 102, 0.3)',
-                    width: '42px', 
-                    height: '42px', 
+                    width: '48px', 
+                    height: '48px', 
+                    minWidth: '48px',
+                    minHeight: '48px',
                     display: 'flex', 
                     alignItems: 'center', 
-                    justifyContent: 'center',
-                    borderRadius: '10px',
+                    justifyContent: 'center', 
+                    borderRadius: '12px',
                     cursor: 'pointer'
                   }}
                 >
-                  <Share2 size={18} />
+                  <Share2 size={20} />
                 </button>
                 <button 
                   className="btn-edit-icon" 
@@ -903,16 +909,18 @@ const MiEquipo = () => {
                     background: 'rgba(255, 255, 255, 0.08)',
                     border: '1px solid var(--border-light, rgba(255, 255, 255, 0.1))',
                     color: 'var(--text-secondary)',
-                    width: '42px', 
-                    height: '42px', 
+                    width: '48px', 
+                    height: '48px', 
+                    minWidth: '48px',
+                    minHeight: '48px',
                     display: 'flex', 
                     alignItems: 'center', 
-                    justifyContent: 'center',
-                    borderRadius: '10px',
+                    justifyContent: 'center', 
+                    borderRadius: '12px',
                     cursor: 'pointer'
                   }}
                 >
-                  <FileText size={18} />
+                  <FileText size={20} />
                 </button>
                 <button 
                   className="btn-edit-icon" 
@@ -922,16 +930,18 @@ const MiEquipo = () => {
                     background: 'rgba(255, 255, 255, 0.08)',
                     border: '1px solid var(--border-light, rgba(255, 255, 255, 0.1))',
                     color: 'var(--text-secondary)',
-                    width: '42px', 
-                    height: '42px', 
+                    width: '48px', 
+                    height: '48px', 
+                    minWidth: '48px',
+                    minHeight: '48px',
                     display: 'flex', 
                     alignItems: 'center', 
-                    justifyContent: 'center',
-                    borderRadius: '10px',
+                    justifyContent: 'center', 
+                    borderRadius: '12px',
                     cursor: 'pointer'
                   }}
                 >
-                  <Pencil size={18} />
+                  <Edit size={20} />
                 </button>
               </div>
             </div>

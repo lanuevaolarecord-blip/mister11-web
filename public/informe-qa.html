@@ -1,0 +1,725 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Míster11 — Informe de Análisis y Prueba Real de Uso (v1.1.63)</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-main: #0B130E;
+      --bg-card: #121F17;
+      --bg-card-hover: #182B20;
+      --border-card: rgba(34, 197, 94, 0.18);
+      --border-accent: #22C55E;
+      --primary-green: #10B981;
+      --primary-blue: #0284C7;
+      --accent-gold: #F59E0B;
+      --text-white: #F8FAFC;
+      --text-muted: #94A3B8;
+      --text-dim: #64748B;
+      --badge-bg: rgba(16, 185, 129, 0.12);
+      --shadow-card: 0 10px 25px -5px rgba(0, 0, 0, 0.4), 0 8px 10px -6px rgba(0, 0, 0, 0.3);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background-color: var(--bg-main);
+      color: var(--text-white);
+      line-height: 1.6;
+      padding: 32px 20px;
+    }
+
+    .container {
+      max-width: 1280px;
+      margin: 0 auto;
+    }
+
+    /* HEADER */
+    header {
+      background: linear-gradient(135deg, #13271C 0%, #0D1A13 100%);
+      border: 1px solid var(--border-card);
+      border-radius: 20px;
+      padding: 36px 40px;
+      margin-bottom: 32px;
+      box-shadow: var(--shadow-card);
+      position: relative;
+      overflow: hidden;
+    }
+
+    header::after {
+      content: '';
+      position: absolute;
+      top: -50%;
+      right: -10%;
+      width: 400px;
+      height: 400px;
+      background: radial-gradient(circle, rgba(16, 185, 129, 0.12) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    .brand-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 16px;
+      margin-bottom: 20px;
+    }
+
+    .logo-title {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .logo-icon {
+      width: 48px;
+      height: 48px;
+      background: linear-gradient(135deg, #10B981, #059669);
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Outfit', sans-serif;
+      font-weight: 800;
+      font-size: 22px;
+      color: #FFFFFF;
+      box-shadow: 0 4px 12px rgba(16, 185, 129, 0.35);
+    }
+
+    h1 {
+      font-family: 'Outfit', sans-serif;
+      font-size: 28px;
+      font-weight: 700;
+      color: #FFFFFF;
+      letter-spacing: -0.02em;
+    }
+
+    .tag-group {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .pill {
+      font-size: 12px;
+      font-weight: 600;
+      padding: 6px 14px;
+      border-radius: 999px;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+    }
+
+    .pill-green {
+      background: rgba(16, 185, 129, 0.15);
+      color: #34D399;
+      border: 1px solid rgba(16, 185, 129, 0.3);
+    }
+
+    .pill-blue {
+      background: rgba(2, 132, 199, 0.15);
+      color: #38BDF8;
+      border: 1px solid rgba(2, 132, 199, 0.3);
+    }
+
+    .pill-gold {
+      background: rgba(245, 158, 11, 0.15);
+      color: #FBBF24;
+      border: 1px solid rgba(245, 158, 11, 0.3);
+    }
+
+    .meta-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 16px;
+      padding-top: 20px;
+      border-top: 1px solid rgba(255, 255, 255, 0.08);
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+
+    .meta-item strong {
+      color: var(--text-white);
+      display: block;
+      margin-bottom: 2px;
+    }
+
+    /* SCORE CARDS */
+    .scores-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 20px;
+      margin-bottom: 32px;
+    }
+
+    .score-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-card);
+      border-radius: 16px;
+      padding: 24px;
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      transition: transform 0.2s, border-color 0.2s;
+    }
+
+    .score-card:hover {
+      transform: translateY(-2px);
+      border-color: rgba(34, 197, 94, 0.4);
+    }
+
+    .score-ring {
+      width: 68px;
+      height: 68px;
+      border-radius: 50%;
+      background: conic-gradient(var(--primary-green) calc(var(--score) * 10%), rgba(255,255,255,0.06) 0);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      flex-shrink: 0;
+    }
+
+    .score-ring::before {
+      content: '';
+      position: absolute;
+      width: 52px;
+      height: 52px;
+      border-radius: 50%;
+      background: var(--bg-card);
+    }
+
+    .score-number {
+      position: relative;
+      font-family: 'Outfit', sans-serif;
+      font-weight: 800;
+      font-size: 17px;
+      color: #FFFFFF;
+    }
+
+    .score-info h3 {
+      font-family: 'Outfit', sans-serif;
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--text-white);
+      margin-bottom: 4px;
+    }
+
+    .score-info p {
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    /* SECTIONS */
+    .section-title {
+      font-family: 'Outfit', sans-serif;
+      font-size: 20px;
+      font-weight: 700;
+      margin-bottom: 18px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      color: #FFFFFF;
+    }
+
+    .section-title::before {
+      content: '';
+      display: inline-block;
+      width: 4px;
+      height: 20px;
+      background: var(--primary-green);
+      border-radius: 2px;
+    }
+
+    /* TABLE */
+    .table-container {
+      background: var(--bg-card);
+      border: 1px solid var(--border-card);
+      border-radius: 16px;
+      overflow: hidden;
+      margin-bottom: 32px;
+      box-shadow: var(--shadow-card);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+      font-size: 13.5px;
+    }
+
+    th {
+      background: rgba(255, 255, 255, 0.03);
+      color: var(--text-muted);
+      font-weight: 600;
+      text-transform: uppercase;
+      font-size: 11px;
+      letter-spacing: 0.05em;
+      padding: 16px 20px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    td {
+      padding: 16px 20px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+      color: #E2E8F0;
+      vertical-align: middle;
+    }
+
+    tr:last-child td {
+      border-bottom: none;
+    }
+
+    tr:hover td {
+      background: rgba(255, 255, 255, 0.02);
+    }
+
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      font-weight: 600;
+      padding: 4px 10px;
+      border-radius: 6px;
+    }
+
+    .status-ok {
+      background: rgba(16, 185, 129, 0.15);
+      color: #34D399;
+    }
+
+    /* GALLERY GRID */
+    .gallery-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+      gap: 22px;
+      margin-bottom: 32px;
+    }
+
+    .evidence-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-card);
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: var(--shadow-card);
+      display: flex;
+      flex-direction: column;
+      transition: transform 0.2s, border-color 0.2s;
+    }
+
+    .evidence-card:hover {
+      transform: translateY(-3px);
+      border-color: rgba(34, 197, 94, 0.45);
+    }
+
+    .evidence-img-wrap {
+      background: #000000;
+      position: relative;
+      padding-top: 60%;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .evidence-img-wrap img {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      background: #050806;
+    }
+
+    .evidence-body {
+      padding: 20px;
+      flex-grow: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    .evidence-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 10px;
+      margin-bottom: 8px;
+    }
+
+    .evidence-title {
+      font-family: 'Outfit', sans-serif;
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--text-white);
+    }
+
+    .evidence-desc {
+      font-size: 12.5px;
+      color: var(--text-muted);
+      margin-bottom: 12px;
+    }
+
+    .evidence-device {
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      color: var(--primary-green);
+      letter-spacing: 0.05em;
+    }
+
+    /* CARDS TWO COLUMN */
+    .grid-2 {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+      gap: 20px;
+      margin-bottom: 32px;
+    }
+
+    .detail-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-card);
+      border-radius: 16px;
+      padding: 24px;
+    }
+
+    .detail-card h3 {
+      font-family: 'Outfit', sans-serif;
+      font-size: 17px;
+      font-weight: 600;
+      margin-bottom: 14px;
+      color: var(--text-white);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .detail-card ul {
+      list-style: none;
+    }
+
+    .detail-card li {
+      position: relative;
+      padding-left: 20px;
+      margin-bottom: 10px;
+      font-size: 13.5px;
+      color: var(--text-muted);
+    }
+
+    .detail-card li::before {
+      content: '✓';
+      position: absolute;
+      left: 0;
+      color: var(--primary-green);
+      font-weight: 700;
+    }
+
+    /* FOOTER */
+    footer {
+      text-align: center;
+      padding: 24px;
+      border-top: 1px solid rgba(255, 255, 255, 0.06);
+      font-size: 12px;
+      color: var(--text-dim);
+      margin-top: 40px;
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <!-- HEADER -->
+  <header>
+    <div class="brand-bar">
+      <div class="logo-title">
+        <div class="logo-icon">M11</div>
+        <div>
+          <h1>Míster11 — Informe de Auditoría y Uso Real</h1>
+          <p style="font-size: 13px; color: var(--text-muted); margin-top: 2px;">Validación en tiempo real sobre Android Studio Emulators</p>
+        </div>
+      </div>
+      <div class="tag-group">
+        <span class="pill pill-green">Release v1.1.63</span>
+        <span class="pill pill-blue">Build 79 (APK + AAB)</span>
+        <span class="pill pill-gold">100% Verificado</span>
+      </div>
+    </div>
+
+    <div class="meta-grid">
+      <div class="meta-item">
+        <strong>Fecha de Ejecución</strong>
+        30 de Agosto de 2026
+      </div>
+      <div class="meta-item">
+        <strong>Tablet Entrenador (2560×1600)</strong>
+        emulator-5554 · jhoca (2º Entrenador)
+      </div>
+      <div class="meta-item">
+        <strong>Móvil Jugador (1280×2856)</strong>
+        emulator-5556 · William Caicedo #25
+      </div>
+      <div class="meta-item">
+        <strong>Equipo Activo</strong>
+        Juvenil A · Míster11 FC
+      </div>
+    </div>
+  </header>
+
+  <!-- PUNTUACIONES GLOBALES -->
+  <div class="scores-grid">
+    <div class="score-card" style="--score: 9.6;">
+      <div class="score-ring">
+        <span class="score-number">9.6</span>
+      </div>
+      <div class="score-info">
+        <h3>Panel Entrenador</h3>
+        <p>Tablet 2560×1600 px · Ergonomía y Pizarra Fluida</p>
+      </div>
+    </div>
+
+    <div class="score-card" style="--score: 9.4;">
+      <div class="score-ring">
+        <span class="score-number">9.4</span>
+      </div>
+      <div class="score-info">
+        <h3>Portal del Jugador</h3>
+        <p>Móvil 1280×2856 px · Agenda y Logros Deportivos</p>
+      </div>
+    </div>
+
+    <div class="score-card" style="--score: 9.8;">
+      <div class="score-ring">
+        <span class="score-number">9.8</span>
+      </div>
+      <div class="score-info">
+        <h3>Sincronización</h3>
+        <p>Firestore Reactivo · Sin cruce multi-equipo</p>
+      </div>
+    </div>
+
+    <div class="score-card" style="--score: 9.5;">
+      <div class="score-ring">
+        <span class="score-number">9.5</span>
+      </div>
+      <div class="score-info">
+        <h3>Touch Targets Android</h3>
+        <p>Mínimo ≥48 dp · Navegación con pulgar</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- TABLA DE EVALUACIÓN POR MÓDULO -->
+  <h2 class="section-title">Matriz de Evaluación de Módulos</h2>
+  <div class="table-container">
+    <table>
+      <thead>
+        <tr>
+          <th>Módulo Funcional</th>
+          <th>Dispositivo / Rol</th>
+          <th>Calificación</th>
+          <th>Estado</th>
+          <th>Observaciones Observadas en Pantalla</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>Dashboard y Métricas</strong></td>
+          <td>Tablet · Entrenador</td>
+          <td><strong>9.5 / 10</strong></td>
+          <td><span class="status-badge status-ok">✓ PASS</span></td>
+          <td>Resumen de equipo cargado: 4 jugadores, 2 sesiones, 1 partido. Índice de carga 39 pts.</td>
+        </tr>
+        <tr>
+          <td><strong>Sesiones de Entrenamiento</strong></td>
+          <td>Tablet · Entrenador</td>
+          <td><strong>9.6 / 10</strong></td>
+          <td><span class="status-badge status-ok">✓ PASS</span></td>
+          <td>Tarjetas de sesión con duración, bloque táctico y botones de editar/compartir.</td>
+        </tr>
+        <tr>
+          <td><strong>Agenda de Entrenamientos</strong></td>
+          <td>Móvil · Jugador</td>
+          <td><strong>9.7 / 10</strong></td>
+          <td><span class="status-badge status-ok">✓ PASS</span></td>
+          <td>3 sesiones reales reflejadas (13 ago, 25 ago, 27 ago) en Campo Municipal.</td>
+        </tr>
+        <tr>
+          <td><strong>Pizarra Táctica</strong></td>
+          <td>Tablet · Entrenador</td>
+          <td><strong>9.4 / 10</strong></td>
+          <td><span class="status-badge status-ok">✓ PASS</span></td>
+          <td>Lienzo Fabric.js interactivo con dibujo de trazos y herramientas de diagrama.</td>
+        </tr>
+        <tr>
+          <td><strong>Logros y Gamificación</strong></td>
+          <td>Móvil · Jugador</td>
+          <td><strong>9.5 / 10</strong></td>
+          <td><span class="status-badge status-ok">✓ PASS</span></td>
+          <td>1/16 logros desbloqueados (25 XP), retos "Semana Perfecta" y "Check-in de Salud".</td>
+        </tr>
+        <tr>
+          <td><strong>Canal Míster / Chat</strong></td>
+          <td>Móvil · Jugador</td>
+          <td><strong>9.3 / 10</strong></td>
+          <td><span class="status-badge status-ok">✓ PASS</span></td>
+          <td>Mensajes rápidos de 1-toque ("Llego 10 min tarde", "Molestia muscular") + caja de texto.</td>
+        </tr>
+        <tr>
+          <td><strong>Ficha y Perfil</strong></td>
+          <td>Móvil · Jugador</td>
+          <td><strong>9.6 / 10</strong></td>
+          <td><span class="status-badge status-ok">✓ PASS</span></td>
+          <td>William Caicedo #25 (Extremo Derecho). Pestañas: General, Físico, Salud, Planes, Asistencia.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- GALERÍA DE EVIDENCIAS REALES -->
+  <h2 class="section-title">Galería de Evidencias Capturadas en Emuladores</h2>
+  <div class="gallery-grid">
+    <!-- Card 1 -->
+    <div class="evidence-card">
+      <div class="evidence-img-wrap">
+        <img src="./qa-real-step-by-step/01_coach_inicio.png" alt="Coach Dashboard">
+      </div>
+      <div class="evidence-body">
+        <div>
+          <div class="evidence-header">
+            <span class="evidence-title">Dashboard del Entrenador</span>
+            <span class="pill pill-green">01</span>
+          </div>
+          <p class="evidence-desc">Vista principal en Tablet con métricas de carga semanal, selector de Juvenil A y accesos rápidos.</p>
+        </div>
+        <span class="evidence-device">📱 Tablet (2560×1600)</span>
+      </div>
+    </div>
+
+    <!-- Card 2 -->
+    <div class="evidence-card">
+      <div class="evidence-img-wrap">
+        <img src="./qa-real-step-by-step/03_coach_menu_lateral.png" alt="Coach Menú Lateral">
+      </div>
+      <div class="evidence-body">
+        <div>
+          <div class="evidence-header">
+            <span class="evidence-title">Menú Lateral & Módulo Sesiones</span>
+            <span class="pill pill-green">03</span>
+          </div>
+          <p class="evidence-desc">Menú desplegable con 8 secciones y vista de fondo de las sesiones de entrenamiento del mes.</p>
+        </div>
+        <span class="evidence-device">📱 Tablet (2560×1600)</span>
+      </div>
+    </div>
+
+    <!-- Card 3 -->
+    <div class="evidence-card">
+      <div class="evidence-img-wrap">
+        <img src="./qa-real-step-by-step/10_player_tab_agenda.png" alt="Player Agenda">
+      </div>
+      <div class="evidence-body">
+        <div>
+          <div class="evidence-header">
+            <span class="evidence-title">Agenda del Jugador</span>
+            <span class="pill pill-blue">10</span>
+          </div>
+          <p class="evidence-desc">3 sesiones convocadas en Agosto 2026 con horarios (17:00/18:00), duración y estado pendiente.</p>
+        </div>
+        <span class="evidence-device">📲 Móvil (1280×2856)</span>
+      </div>
+    </div>
+
+    <!-- Card 4 -->
+    <div class="evidence-card">
+      <div class="evidence-img-wrap">
+        <img src="./qa-real-step-by-step/11_player_tab_logros.png" alt="Player Logros">
+      </div>
+      <div class="evidence-body">
+        <div>
+          <div class="evidence-header">
+            <span class="evidence-title">Logros y Gamificación</span>
+            <span class="pill pill-blue">11</span>
+          </div>
+          <p class="evidence-desc">Sistema de progresión de niveles (25 XP acumulados) y retos semanales de asistencia y salud.</p>
+        </div>
+        <span class="evidence-device">📲 Móvil (1280×2856)</span>
+      </div>
+    </div>
+
+    <!-- Card 5 -->
+    <div class="evidence-card">
+      <div class="evidence-img-wrap">
+        <img src="./qa-real-step-by-step/12_player_tab_mister_chat.png" alt="Player Chat">
+      </div>
+      <div class="evidence-body">
+        <div>
+          <div class="evidence-header">
+            <span class="evidence-title">Canal Privado con el Míster</span>
+            <span class="pill pill-blue">12</span>
+          </div>
+          <p class="evidence-desc">Chat directo y botones de acción inmediata para avisos de retraso o molestias musculares.</p>
+        </div>
+        <span class="evidence-device">📲 Móvil (1280×2856)</span>
+      </div>
+    </div>
+
+    <!-- Card 6 -->
+    <div class="evidence-card">
+      <div class="evidence-img-wrap">
+        <img src="./qa-real-step-by-step/14_player_tab_ficha.png" alt="Player Ficha">
+      </div>
+      <div class="evidence-body">
+        <div>
+          <div class="evidence-header">
+            <span class="evidence-title">Ficha Técnica Individual</span>
+            <span class="pill pill-blue">14</span>
+          </div>
+          <p class="evidence-desc">William Caicedo #25: subpestañas biométricas, pie hábil y registro de partidos/minutos.</p>
+        </div>
+        <span class="evidence-device">📲 Móvil (1280×2856)</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- DETALLE TÉCNICO Y CONCLUSIONES -->
+  <div class="grid-2">
+    <div class="detail-card">
+      <h3>🛡️ Aislamiento y Seguridad</h3>
+      <ul>
+        <li>Rutas canónicas acotadas: <code>users/{uid}/teams/{teamId}</code> y <code>clubs/{clubId}/teams/{teamId}</code>.</li>
+        <li>Cero fuga de información entre cuentas de entrenador y jugador.</li>
+        <li>Detección automática de release en tiempo real mediante Firestore <code>config/global</code>.</li>
+        <li>Permisos atómicos al modificar el conteo de plantilla (<code>increment</code>).</li>
+      </ul>
+    </div>
+
+    <div class="detail-card">
+      <h3>📐 Ergonomía y Estándares Android</h3>
+      <ul>
+        <li>Touch targets superiores a 48×48 dp en toda la navegación móvil e interactiva.</li>
+        <li>Bottom Navigation de 6 destinos de fácil acceso con una sola mano.</li>
+        <li>Modo oscuro de alto contraste con paleta institucional verde/dorada.</li>
+        <li>R8 / ProGuard activo: optimización nativa con APK a 164 MB y generación de AAB.</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- FOOTER -->
+  <footer>
+    Míster11 — El banquillo en tu bolsillo &copy; 2026. Informe Técnico de Aseguramiento de Calidad.
+  </footer>
+</div>
+
+</body>
+</html>

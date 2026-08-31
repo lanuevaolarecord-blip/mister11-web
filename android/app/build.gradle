@@ -23,7 +23,7 @@ android {
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.
              // Default: https://android.googlesource.com/platform/frameworks/base/+/282e181b58cf72b6ca770dc7ca5f91f135444502/tools/aapt/AaptAssets.cpp#61
-            ignoreAssetsPattern = '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
+            ignoreAssetsPattern = '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~:!*.apk:!*.aab:!*.map'
         }
     }
     buildTypes {
@@ -39,31 +39,18 @@ android {
         }
     }
 
-    // Splits por ABI solo para APK (incompatible con bundleRelease + shrinkResources)
-    // Usar: gradlew assembleRelease    → genera APK con splits
-    // Usar: gradlew bundleRelease      → genera AAB sin splits (Play Store gestiona los splits)
-    splits {
-        abi {
-            enable project.hasProperty('buildApk')
-            reset()
-            include 'arm64-v8a', 'armeabi-v7a'
-            universalApk true
-        }
-    }
-
-    // Nombres de salida personalizados por variante y ABI
+    // Nombre de salida único para Release y Debug
     applicationVariants.all { variant ->
         variant.outputs.each { output ->
-            def abiFilter = output.getFilter(com.android.build.OutputFile.ABI)
             if (variant.buildType.name == 'release') {
-                def suffix = abiFilter ? "-${abiFilter}" : "-universal"
-                output.outputFileName = "mister11${suffix}.apk"
+                output.outputFileName = "mister11.apk"
             } else {
                 output.outputFileName = "mister11-debug.apk"
             }
         }
     }
 }
+
 
 repositories {
     flatDir{

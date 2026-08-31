@@ -251,7 +251,7 @@ const PlayerDashboard = () => {
           if (isUnread && data.lastMessage && lastNotifiedMsgRef.current !== data.lastMessage) {
             lastNotifiedMsgRef.current = data.lastMessage;
             sendChatNotification({
-              title: `💬 Mensaje de tu Míster (${activeTeam?.nombre || 'Equipo'})`,
+              title: `💬 Mensaje de tu Míster (${activePlayerTeam?.nombre || activePlayerTeam?.name || 'Equipo'})`,
               body: data.lastMessage,
               senderName: 'Míster',
               extra: { tab: 'chat', playerId: player.id }
@@ -263,7 +263,7 @@ const PlayerDashboard = () => {
     });
 
     return () => unsub();
-  }, [cleanPath, player?.id, user?.uid, activeTab, activeTeam?.nombre]);
+  }, [cleanPath, player?.id, user?.uid, activeTab, activePlayerTeam?.nombre, activePlayerTeam?.name]);
 
   // Hook de notificaciones push con deep links
   const { showPrompt, checkPromptEligibility, acceptNotifications, dismissNotifications } = usePushNotifications(setActiveTab);

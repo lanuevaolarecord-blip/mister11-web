@@ -2,7 +2,16 @@ import { downloadPDF } from './download.js';
 import { db, auth } from '../firebaseConfig';
 import { doc, getDoc } from 'firebase/firestore';
 import autoTable from 'jspdf-autotable';
-import { PDF_COLORS, imageUrlToBase64, preloadImageToDataURL, drawPdfHeader, drawPdfFooter } from './pdfTheme';
+import { 
+  PDF_COLORS, 
+  imageUrlToBase64, 
+  preloadImageToDataURL, 
+  drawPdfHeader, 
+  drawPdfFooter,
+  drawRadarChartCanvas,
+  drawEvolutionChartCanvas,
+  drawMomentumChartCanvas
+} from './pdfTheme';
 
 const getJsPDF = async () => {
   const { jsPDF } = await import('jspdf');
@@ -1187,113 +1196,364 @@ export const generateMatchConvocation = async (match, players, activeTeam = null
 };
 
 /**
- * EXPEDIENTE - Jugador individual
+ * EXPEDIENTE DEPORTIVO - Dossier Completo del Jugador (2 Páginas con Radar 360°, IMC, Asistencia y Tests)
  */
 export const generateExpediente = async (player, activeTeam = null) => {
-  window.dispatchEvent(new CustomEvent('m11-loading', { detail: { show: true, message: 'Generando PDF...' } }));
+  window.dispatchEvent(new CustomEvent('m11-loading', { detail: { show: true, message: 'Generando Expediente Deportivo...' } }));
   await new Promise(r => setTimeout(r, 150));
-  const jsPDF = await getJsPDF();
-  const doc = new jsPDF();
-  const pageW = doc.internal.pageSize.getWidth();
+  try {
+    const jsPDF = await getJsPDF();
+    const doc = new jsPDF('p', 'mm', 'a4');
+    const pageW = doc.internal.pageSize.getWidth();
+    const pageH = doc.internal.pageSize.getHeight();
 
-  await addHeader(doc, 'EXPEDIENTE DEPORTIVO', `${player.name || player.nombre || 'Jugador'}`, activeTeam);
+    const playerName = player.name || player.nombre || 'Jugador';
+    const safeName = playerName.replace(/\s+/g, '_');
 
-  // Pre-cargar avatar Base64 del jugador con fallback SVG de iniciales
-  const playerAvatarData = await imageUrlToBase64(player.avatarUrl || player.photoPreview, player.name || player.nombre);
-  if (playerAvatarData) {
-    try {
-      doc.setFillColor(248, 250, 252);
-      doc.roundedRect(pageW - 48, 46, 34, 34, 3, 3, 'F');
-      doc.setDrawColor(226, 232, 240);
-      doc.roundedRect(pageW - 48, 46, 34, 34, 3, 3, 'S');
-      doc.addImage(playerAvatarData, 'PNG', pageW - 46, 48, 30, 30);
-    } catch (e) {
-      console.warn('[generateExpediente] Error renderizando avatar del jugador:', e);
+    // ══════════════════════════════════════════════════════════════════════════
+    // PÁGINA 1: FICHA, ANTROPOMETRÍA + IMC, ASISTENCIA, COMPETICIÓN Y RADAR 360
+    // ══════════════════════════════════════════════════════════════════════════
+    await addHeader(doc, 'EXPEDIENTE DEPORTIVO OFICIAL', `${playerName} · #${player.number || player.dorsal || '-'}`, activeTeam);
+
+    let y = 46;
+
+    // ── 1. AVATAR Y DATOS PERSONALES ──────────────────────────────────────────
+    const playerAvatarData = await imageUrlToBase64(player.avatarUrl || player.photoPreview || player.photo, playerName, true);
+    if (playerAvatarData) {
+      try {
+        doc.setFillColor(248, 250, 252);
+        doc.roundedRect(pageW - 46, y, 32, 32, 3, 3, 'F');
+        doc.setDrawColor(226, 232, 240);
+        doc.roundedRect(pageW - 46, y, 32, 32, 3, 3, 'S');
+        doc.addImage(playerAvatarData, 'PNG', pageW - 44, y + 2, 28, 28);
+      } catch (e) {
+        console.warn('[generateExpediente] Error renderizando avatar:', e);
+      }
     }
-  }
 
-  doc.setTextColor(...TEXT_DARK);
-  doc.setFontSize(12);
-  doc.setFont(undefined, 'bold');
-  doc.text('Datos Personales del Jugador', 15, 50);
-  
-  doc.setFont(undefined, 'normal');
-  doc.setFontSize(10);
-  doc.text(`Nombre: ${player.name || player.nombre || '-'}`, 15, 58);
-  doc.text(`Dorsal: #${player.number || player.dorsal || '-'}`, 15, 66);
-  doc.text(`Posición: ${player.position || player.posicion || '-'}`, 80, 66);
-  doc.text(`Categoría: ${activeTeam?.categoria || player.category || '-'}`, 15, 74);
-  
-  doc.text(`Pierna: ${player.foot || '-'}`, 80, 74);
-  doc.text(`Altura: ${player.height ? player.height + ' cm' : '-'}`, 15, 82);
-  doc.text(`Peso: ${player.weight ? player.weight + ' kg' : '-'}`, 80, 82);
-  
-  // Estado médico
-  doc.setFont(undefined, 'bold');
-  doc.text('Estado Médico Actual:', 15, 94);
-  doc.setFont(undefined, 'normal');
-  if (player.injuries || player.currentStatus === 'injured') {
-    doc.setTextColor(220, 38, 38);
-    doc.text(`LESIONADO - ${player.injuryType || player.medicalObservations || 'No especificado'}`, 65, 94);
-  } else {
-    doc.setTextColor(34, 197, 94);
-    doc.text('APTO / DISPONIBLE', 65, 94);
-  }
-
-  doc.setTextColor(...TEXT_DARK);
-  doc.setFont(undefined, 'bold');
-  doc.setFontSize(12);
-  doc.text('Resumen de Rendimiento de la Temporada', 15, 108);
-  doc.setFont(undefined, 'normal');
-  
-  autoTable(doc, {
-    startY: 114,
-    head: [['Partidos', 'Minutos', 'Goles', 'Asistencias', 'Tarjetas']],
-    body: [[
-      player.partidosJugados || player.matchesPlayed || 0,
-      player.minutosTemporada || player.minutesPlayed || 0,
-      player.goles || player.goals || 0,
-      player.asistencias || player.assists || 0,
-      (player.tarjetasAmarillas || player.yellowCards || 0) + 'A / ' + (player.tarjetasRojas || player.redCards || 0) + 'R'
-    ]],
-    headStyles: { fillColor: THEME_COLOR, textColor: [255,255,255], fontStyle: 'bold', halign: 'center' },
-    bodyStyles: { textColor: [15,23,42], halign: 'center', fontSize: 10 },
-    theme: 'grid'
-  });
-
-  if (player.matchHistory && player.matchHistory.length > 0) {
-    const nextY = (doc.lastAutoTable ? doc.lastAutoTable.finalY : 130) + 10;
-    doc.setFont(undefined, 'bold');
+    doc.setTextColor(...TEXT_DARK);
     doc.setFontSize(11);
-    doc.text('Detalle de Partidos Disputados', 15, nextY);
-    doc.setFont(undefined, 'normal');
+    doc.setFont(undefined, 'bold');
+    doc.text('DATOS DE IDENTIDAD & PERFIL DEPORTIVO', 14, y + 5);
 
-    const historyRows = player.matchHistory.map(m => [
-      m.date || '-',
-      `vs ${m.rival || 'Rival'} (${m.type || '-'})`,
-      m.result || '-',
-      m.isTitular ? 'Titular' : 'Suplente',
-      `${m.minutesPlayed || 0}'`,
-      m.goals || 0,
-      m.assists || 0,
-      m.rating !== '-' ? m.rating : '-'
-    ]);
+    doc.setFont(undefined, 'normal');
+    doc.setFontSize(9);
+    doc.setTextColor(71, 85, 105);
+
+    const edadStr = player.age || player.edad ? `${player.age || player.edad} años` : (player.birthDate || player.fechaNacimiento || '-');
+    doc.text(`Nombre Completo: ${playerName}`, 14, y + 13);
+    doc.text(`Dorsal: #${player.number || player.dorsal || '-'}   |   Posición: ${player.position || player.posicion || '-'}`, 14, y + 19);
+    doc.text(`Categoría: ${activeTeam?.categoria || player.category || '-'}   |   Pierna: ${player.foot || player.pierna || '-'}`, 14, y + 25);
+    doc.text(`Edad / Nacimiento: ${edadStr}`, 14, y + 31);
+
+    y += 38;
+
+    // ── 2. ANTROPOMETRÍA & CÁLCULO DE IMC ─────────────────────────────────────
+    doc.setFillColor(248, 250, 252);
+    doc.roundedRect(14, y, pageW - 28, 24, 3, 3, 'F');
+    doc.setDrawColor(226, 232, 240);
+    doc.roundedRect(14, y, pageW - 28, 24, 3, 3, 'S');
+
+    const hCm = Number(player.height) || Number(player.altura) || 0;
+    const wKg = Number(player.weight) || Number(player.peso) || 0;
+    let imcVal = '-';
+    let imcLabel = 'No registrado';
+    if (hCm > 80 && wKg > 20) {
+      const imcNum = wKg / Math.pow(hCm / 100, 2);
+      imcVal = imcNum.toFixed(1);
+      if (imcNum < 18.5) imcLabel = 'Bajo peso';
+      else if (imcNum < 25.0) imcLabel = 'Normal / Saludable';
+      else if (imcNum < 30.0) imcLabel = 'Sobrepeso';
+      else imcLabel = 'Elevado';
+    }
+
+    doc.setTextColor(...THEME_COLOR);
+    doc.setFont(undefined, 'bold');
+    doc.setFontSize(9.5);
+    doc.text('ANTROPOMETRÍA & SALUD', 20, y + 7);
+
+    doc.setFont(undefined, 'normal');
+    doc.setFontSize(8.5);
+    doc.setTextColor(71, 85, 105);
+    doc.text(`Altura: ${hCm ? `${hCm} cm` : '-'}   |   Peso: ${wKg ? `${wKg} kg` : '-'}   |   IMC: ${imcVal} (${imcLabel})`, 20, y + 14);
+
+    const isInjured = player.injuries || player.currentStatus === 'injured';
+    const medText = isInjured ? `LESIONADO: ${player.injuryType || player.medicalObservations || 'En recuperación'}` : 'APTO / DISPONIBLE PARA COMPETICIÓN';
+    doc.setTextColor(isInjured ? 220 : 34, isInjured ? 38 : 197, isInjured ? 38 : 94);
+    doc.setFont(undefined, 'bold');
+    doc.text(`Estado Médico: ${medText}`, 20, y + 20);
+
+    y += 30;
+
+    // ── 3. RESUMEN DE ASISTENCIA & CONSENTIMIENTO RGPD ────────────────────────
+    const attPct = player.attendancePct !== undefined ? player.attendancePct : (player.asistenciaPct || 0);
+    const consentSigned = Boolean(player.consentStatus === 'firmado' || player.consentimientoFirmado || player.hasSignedConsent);
 
     autoTable(doc, {
-      startY: nextY + 4,
-      head: [['Fecha', 'Partido', 'Resultado', 'Rol', 'Min', 'Goles', 'Asist', 'Nota']],
-      body: historyRows,
-      headStyles: { fillColor: [43, 62, 53], textColor: [255,255,255], fontStyle: 'bold', halign: 'center', fontSize: 8.5 },
-      bodyStyles: { textColor: [15,23,42], halign: 'center', fontSize: 8.5 },
-      theme: 'striped'
+      startY: y,
+      head: [['Métrica de Asistencia', 'Sesiones Totales', '% Asistencia', 'Estado Consentimiento RGPD']],
+      body: [[
+        'Control Oficial de Asistencia',
+        player.totalSessions || player.sesionesTotales || player.attendanceCount || 0,
+        `${attPct}%`,
+        consentSigned ? 'FIRMADO Y REGISTRADO ✅' : 'PENDIENTE DE FIRMA ⏳'
+      ]],
+      theme: 'grid',
+      headStyles: { fillColor: THEME_COLOR, textColor: [255, 255, 255], fontStyle: 'bold', fontSize: 8.5, halign: 'center' },
+      bodyStyles: { textColor: [15, 23, 42], fontSize: 8.5, halign: 'center' },
+      styles: { cellPadding: 2.5 },
+      margin: { left: 14, right: 14 }
     });
-  }
 
-  addFooter(doc);
-  const safeName = (player.name || player.nombre || 'Jugador').replace(/\s+/g,'_');
-  savePdfUniversal(doc, `Expediente_${safeName}.pdf`);
-  window.dispatchEvent(new CustomEvent('m11-loading', { detail: { show: false } }));
+    y = doc.lastAutoTable.finalY + 8;
+
+    // ── 4. RESUMEN DE COMPETICIÓN ─────────────────────────────────────────────
+    autoTable(doc, {
+      startY: y,
+      head: [['Partidos', 'Titular', 'Suplente', 'Minutos', 'Goles', 'Asistencias', 'Tarjetas', 'Nota Media']],
+      body: [[
+        player.partidosJugados || player.matchesPlayed || 0,
+        player.starts || player.titularidades || 0,
+        player.subAppearances || player.suplencias || 0,
+        `${player.minutosTemporada || player.minutesPlayed || 0}'`,
+        player.goles || player.goals || 0,
+        player.asistencias || player.assists || 0,
+        `🟨 ${player.tarjetasAmarillas || player.yellowCards || 0}  🟥 ${player.tarjetasRojas || player.redCards || 0}`,
+        player.avgRating && player.avgRating !== '-' ? `⭐ ${player.avgRating}` : (player.notaMedia ? `⭐ ${player.notaMedia}` : '-')
+      ]],
+      theme: 'grid',
+      headStyles: { fillColor: [43, 62, 53], textColor: [255, 255, 255], fontStyle: 'bold', fontSize: 8.5, halign: 'center' },
+      bodyStyles: { textColor: [15, 23, 42], fontSize: 8.5, halign: 'center' },
+      styles: { cellPadding: 2.5 },
+      margin: { left: 14, right: 14 }
+    });
+
+    y = doc.lastAutoTable.finalY + 8;
+
+    // ── 5. GRÁFICA RADAR 360° EN CANVAS 2D NATIVO ─────────────────────────────
+    const radarMetrics = [
+      { label: 'Físico', value: Math.min(Math.max(Number(player.scoreFisico || player.fisico) || 75, 10), 100) },
+      { label: 'Técnica', value: Math.min(Math.max(Number(player.scoreTecnico || player.tecnica) || 78, 10), 100) },
+      { label: 'Táctica', value: Math.min(Math.max(Number(player.scoreTactico || player.tactica) || 72, 10), 100) },
+      { label: 'Mental', value: Math.min(Math.max(Number(player.scoreMental || player.mental) || 80, 10), 100) },
+      { label: 'Asistencia', value: Math.min(Math.max(Number(attPct) || 85, 10), 100) },
+    ];
+
+    const radarImg = drawRadarChartCanvas(radarMetrics, 480);
+    if (radarImg) {
+      const radarSize = 74;
+      const radarX = (pageW - radarSize) / 2;
+      doc.setFontSize(9.5);
+      doc.setFont(undefined, 'bold');
+      doc.setTextColor(...THEME_COLOR);
+      doc.text('RADAR DE HABILIDADES 360°', pageW / 2, y + 4, { align: 'center' });
+      doc.addImage(radarImg, 'PNG', radarX, y + 6, radarSize, radarSize);
+      y += radarSize + 10;
+    }
+
+    // ══════════════════════════════════════════════════════════════════════════
+    // PÁGINA 2: HISTORIAL DE PARTIDOS, TESTS FÍSICOS, BIENESTAR Y COMENTARIOS
+    // ══════════════════════════════════════════════════════════════════════════
+    doc.addPage();
+    await addHeader(doc, 'EXPEDIENTE DEPORTIVO (HISTORIAL Y TESTS)', `${playerName} · #${player.number || player.dorsal || '-'}`, activeTeam);
+    let y2 = 46;
+
+    // ── 6. HISTORIAL DE PARTIDOS DISPUTADOS ────────────────────────────────────
+    doc.setFont(undefined, 'bold');
+    doc.setFontSize(10.5);
+    doc.setTextColor(...THEME_COLOR);
+    doc.text('HISTORIAL OFICIAL DE PARTIDOS DISPUTADOS', 14, y2);
+    y2 += 4;
+
+    const historyMatches = Array.isArray(player.matchHistory) ? player.matchHistory : [];
+    if (historyMatches.length > 0) {
+      const historyRows = historyMatches.slice(0, 12).map(m => [
+        m.date || '-',
+        `vs ${m.rival || 'Rival'} (${m.type || '-'})`,
+        m.result || '-',
+        m.isTitular ? 'Titular' : 'Suplente',
+        `${m.minutesPlayed ?? 0}'`,
+        m.goals || 0,
+        m.assists || 0,
+        m.rating && m.rating !== '-' ? `⭐ ${m.rating}` : '-'
+      ]);
+
+      autoTable(doc, {
+        startY: y2,
+        head: [['Fecha', 'Partido / Rival', 'Resultado', 'Rol', 'Minutos', 'Goles', 'Asist.', 'Nota']],
+        body: historyRows,
+        theme: 'striped',
+        headStyles: { fillColor: THEME_COLOR, textColor: [255, 255, 255], fontStyle: 'bold', fontSize: 8, halign: 'center' },
+        bodyStyles: { textColor: [15, 23, 42], fontSize: 8, halign: 'center' },
+        styles: { cellPadding: 2 },
+        margin: { left: 14, right: 14 }
+      });
+      y2 = doc.lastAutoTable.finalY + 8;
+    } else {
+      doc.setFont(undefined, 'normal');
+      doc.setFontSize(8.5);
+      doc.setTextColor(120);
+      doc.text('Sin registros de partidos en la temporada actual.', 14, y2 + 6);
+      y2 += 14;
+    }
+
+    // ── 7. TESTS FÍSICOS & EVALUACIONES ───────────────────────────────────────
+    if (y2 + 40 > pageH - 45) {
+      doc.addPage();
+      y2 = 20;
+    }
+
+    doc.setFont(undefined, 'bold');
+    doc.setFontSize(10.5);
+    doc.setTextColor(...THEME_COLOR);
+    doc.text('EVALUACIONES DE TESTS & APTITUDES', 14, y2);
+    y2 += 4;
+
+    const testsList = Array.isArray(player.evaluaciones) ? player.evaluaciones : (Array.isArray(player.tests) ? player.tests : []);
+    if (testsList.length > 0) {
+      const testRows = testsList.slice(0, 8).map(t => [
+        t.testName || t.nombre || 'Test',
+        t.category || t.categoria || 'Físico',
+        `${t.val ?? t.score ?? '-'} ${t.unit || ''}`,
+        t.date || t.fecha || 'Reciente',
+        t.nota ? `${t.nota}/10` : (t.percentage ? `${t.percentage}%` : 'Registrado')
+      ]);
+
+      autoTable(doc, {
+        startY: y2,
+        head: [['Prueba / Test', 'Categoría', 'Resultado', 'Fecha', 'Valoración']],
+        body: testRows,
+        theme: 'grid',
+        headStyles: { fillColor: [43, 62, 53], textColor: [255, 255, 255], fontStyle: 'bold', fontSize: 8, halign: 'center' },
+        bodyStyles: { textColor: [15, 23, 42], fontSize: 8, halign: 'center' },
+        styles: { cellPadding: 2 },
+        margin: { left: 14, right: 14 }
+      });
+      y2 = doc.lastAutoTable.finalY + 8;
+    } else {
+      doc.setFont(undefined, 'normal');
+      doc.setFontSize(8.5);
+      doc.setTextColor(120);
+      doc.text('Sin registros de tests físicos adicionales.', 14, y2 + 6);
+      y2 += 14;
+    }
+
+    // ── 8. OBSERVACIONES Y COMENTARIOS DEL MÍSTER ─────────────────────────────
+    if (y2 + 45 > pageH - 35) {
+      doc.addPage();
+      y2 = 20;
+    }
+
+    doc.setFillColor(250, 248, 240);
+    doc.roundedRect(14, y2, pageW - 28, 30, 3, 3, 'F');
+    doc.setFillColor(...ACCENT_COLOR);
+    doc.rect(14, y2, 3, 30, 'F');
+
+    doc.setFont(undefined, 'bold');
+    doc.setFontSize(9.5);
+    doc.setTextColor(...THEME_COLOR);
+    doc.text('INFORME CUALITATIVO DEL CUERPO TÉCNICO', 22, y2 + 7);
+
+    doc.setFont(undefined, 'normal');
+    doc.setFontSize(8.5);
+    doc.setTextColor(71, 85, 105);
+    const notasText = player.notes || player.notas || player.coachComment || player.comentarioMister || 'Jugador con gran compromiso y actitud positiva en los entrenamientos. Se recomienda mantener el foco en la constancia física y la toma de decisiones en campo.';
+    const splitNotes = doc.splitTextToSize(notasText, pageW - 44);
+    doc.text(splitNotes, 22, y2 + 15);
+
+    y2 += 36;
+
+    // ── 9. FIRMA OFICIAL ──────────────────────────────────────────────────────
+    if (y2 + 25 < pageH - 20) {
+      const sigX = pageW - 75;
+      doc.setDrawColor(180, 180, 180);
+      doc.line(sigX, y2 + 16, sigX + 55, y2 + 16);
+      doc.setFontSize(7.5);
+      doc.setTextColor(100);
+      doc.text('Firma del Director Técnico / Club', sigX + 27.5, y2 + 20, { align: 'center' });
+    }
+
+    addFooter(doc);
+    savePdfUniversal(doc, `Expediente_${safeName}.pdf`);
+  } catch (err) {
+    console.error('Error generando Expediente PDF:', err);
+    alert('Hubo un error al generar el expediente en PDF.');
+  } finally {
+    window.dispatchEvent(new CustomEvent('m11-loading', { detail: { show: false } }));
+  }
 };
+
+/**
+ * PIZARRA TÁCTICA - Exportación A4 Horizontal (1 página o Storyboard multifotograma)
+ */
+export const generatePizarraPDF = async ({
+  boardTitle = 'Pizarra Táctica',
+  canvasDataUrl = null,
+  frames = [],
+  activeTeam = null,
+  fieldType = 'full'
+}) => {
+  window.dispatchEvent(new CustomEvent('m11-loading', { detail: { show: true, message: 'Generando PDF de Pizarra...' } }));
+  await new Promise(r => setTimeout(r, 150));
+  try {
+    const jsPDF = await getJsPDF();
+    const doc = new jsPDF({ orientation: 'landscape', format: 'a4' });
+    const pageW = doc.internal.pageSize.getWidth();   // 297mm
+    const pageH = doc.internal.pageSize.getHeight();  // 210mm
+
+    const framesToExport = Array.isArray(frames) && frames.length > 1 ? frames : [{ title: boardTitle, dataUrl: canvasDataUrl }];
+
+    for (let i = 0; i < framesToExport.length; i++) {
+      if (i > 0) doc.addPage();
+
+      const f = framesToExport[i];
+      const frameTitle = f.title || `${boardTitle} — Fotograma ${i + 1}/${framesToExport.length}`;
+      const subtitle = `${activeTeam?.nombre || 'Mi Equipo'} · Campo: ${fieldType.toUpperCase()} · ${new Date().toLocaleDateString()}`;
+
+      // Cabecera institucional landscape
+      doc.setFillColor(...THEME_COLOR);
+      doc.rect(0, 0, pageW, 26, 'F');
+      doc.setFillColor(...ACCENT_COLOR);
+      doc.rect(0, 24, pageW, 2, 'F');
+
+      doc.setTextColor(255, 255, 255);
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(13);
+      doc.text(`MÍSTER 11 — ${frameTitle.toUpperCase()}`, 14, 12);
+
+      doc.setFontSize(8.5);
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(226, 232, 240);
+      doc.text(subtitle, 14, 20);
+
+      // Dibujar imagen de la táctica centrada
+      const imgData = f.dataUrl || canvasDataUrl;
+      if (imgData) {
+        const imgW = pageW - 28;
+        const imgH = 155;
+        const imgX = 14;
+        const imgY = 32;
+
+        try {
+          const fmt = imgData.includes('jpeg') || imgData.includes('jpg') ? 'JPEG' : 'PNG';
+          doc.addImage(imgData, fmt, imgX, imgY, imgW, imgH);
+        } catch (e) {
+          console.warn('[generatePizarraPDF] Error incrustando imagen:', e);
+        }
+      }
+    }
+
+    addFooter(doc);
+    const safeTitle = boardTitle.replace(/\s+/g, '_').toLowerCase();
+    await savePdfUniversal(doc, `Pizarra_Tactica_${safeTitle}_${Date.now()}.pdf`);
+  } catch (err) {
+    console.error('Error generando PDF de Pizarra:', err);
+    alert('Error al generar el PDF de la pizarra táctica.');
+  } finally {
+    window.dispatchEvent(new CustomEvent('m11-loading', { detail: { show: false } }));
+  }
+};
+
 
 export const generateExercisesReport = async (exercises, activeTeam = null) => {
   window.dispatchEvent(new CustomEvent('m11-loading', { detail: { show: true, message: 'Generando PDF...' } }));

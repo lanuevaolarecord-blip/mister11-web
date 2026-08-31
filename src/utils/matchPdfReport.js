@@ -1,6 +1,6 @@
 import { savePdfUniversal } from './pdfGenerator';
 import { getEffectiveLanguage } from '../i18n/translations';
-import { drawPdfFooter, imageUrlToBase64 } from './pdfTheme';
+import { drawPdfFooter, imageUrlToBase64, drawMomentumChartCanvas, drawRadarChartCanvas } from './pdfTheme';
 
 const getPdfLibs = async () => {
   const { jsPDF } = await import('jspdf');
@@ -212,86 +212,26 @@ export const generateMatchPdfReport = async ({
       }
     }
 
-    // ── 4. CAPTURA VISUAL DE LAS GRÁFICAS CON HTML2CANVAS ─────────────────
-    const chartContainerId = mode === 'POST-MATCH'
-      ? 'livestats-charts-container-post'
-      : 'livestats-charts-container-live';
-    const chartElement = document.getElementById(chartContainerId) || document.querySelector('.livestats-summary-grid');
 
-    if (chartElement) {
-      try {
-        // Clonar el contenedor para forzar un tema claro con máximo contraste en el PDF (evita texto blanco sobre blanco)
-        const clone = chartElement.cloneNode(true);
-        clone.style.position = 'fixed';
-        clone.style.left = '-9999px';
-        clone.style.top = '-9999px';
-        clone.style.width = `${chartElement.offsetWidth || 850}px`;
-        clone.style.background = '#FFFFFF';
-        clone.style.color = '#0F172A';
-        clone.style.padding = '20px';
-        clone.style.borderRadius = '12px';
-        clone.style.zIndex = '-99999';
-        document.body.appendChild(clone);
-
-        // Pre-convertir cualquier imagen en las gráficas a Base64
-        const chartImgs = Array.from(clone.querySelectorAll('img'));
-        await Promise.all(chartImgs.map(async (img) => {
-          if (img.src && !img.src.startsWith('data:image')) {
-            const b64 = await imageUrlToBase64(img.src);
-            if (b64) img.src = b64;
-          }
-        }));
-
-        // Forzar legibilidad y alto contraste sobre fondo blanco en todos los nodos descendientes
-        const allNodes = clone.querySelectorAll('*');
-        allNodes.forEach((node) => {
-          const comp = window.getComputedStyle(node);
-          if (comp.color.includes('255, 255, 255') || comp.color.includes('248, 250, 252') || comp.color.includes('226, 232, 240')) {
-            node.style.color = '#0F172A';
-          }
-          if (node.tagName === 'SVG' || node.tagName === 'text' || node.tagName === 'path') {
-            const fill = node.getAttribute('fill');
-            if (fill === '#FFFFFF' || fill === '#ffffff' || fill === '#fff' || fill === '#CBD5E1') {
-              node.setAttribute('fill', '#0F172A');
-            }
-          }
-          if (node.classList && node.classList.contains('livestats-category-card')) {
-            node.style.background = '#F8FAFC';
-            node.style.border = '1px solid #E2E8F0';
-          }
-        });
-
-        await new Promise((r) => setTimeout(r, 150));
-
-        const canvas = await html2canvas(clone, {
-          scale: 2,
-          backgroundColor: '#FFFFFF',
-          useCORS: true,
-          allowTaint: true,
-        });
-
-        const imgData = canvas.toDataURL('image/png');
-        document.body.removeChild(clone);
-
-        const imgW = pageW - 28;
-        const imgH = (canvas.height * imgW) / canvas.width;
-
-        if (y + imgH > pageH - 20) {
+    // ── 4. GRÁFICAS TÁCTICAS NATIVAS (MOMENTUM & RADAR EN CANVAS 2D) ───────────
+    try {
+      const momentumImg = drawMomentumChartCanvas(events, 90, 640, 200);
+      if (momentumImg) {
+        if (y + 75 > pageH - 20) {
           doc.addPage();
           y = 20;
         }
-
         doc.setFontSize(11);
         doc.setFont('helvetica', 'bold');
         doc.setTextColor(...colorPrimary);
-        doc.text(isEn ? 'TACTICAL SUMMARY AND CHARTS IMAGE' : 'RESUMEN Y GRÁFICAS TÁCTICAS EN IMAGEN', 14, y);
+        doc.text(isEn ? 'TACTICAL MOMENTUM & MATCH DYNAMICS' : 'MOMENTUM TÁCTICO Y DINÁMICA DEL PARTIDO', 14, y);
         y += 6;
 
-        doc.addImage(imgData, 'PNG', 14, y, imgW, Math.min(imgH, 130));
-        y += Math.min(imgH, 130) + 10;
-      } catch (e) {
-        console.warn('No se pudo capturar html2canvas de las gráficas:', e);
+        doc.addImage(momentumImg, 'PNG', 14, y, pageW - 28, 62);
+        y += 70;
       }
+    } catch (chartErr) {
+      console.warn('[matchPdfReport] Error generando momentum chart:', chartErr);
     }
 
     // ── 5. TABLAS TÁCTICAS DE EFICIENCIA Y COMPARATIVA ──────────────────────

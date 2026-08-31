@@ -1,13 +1,15 @@
 import { PDF_COLORS, drawPdfHeader, drawPdfFooter } from './pdfTheme';
+import { savePdfUniversal } from './pdfGenerator';
 
 export const exportMonthlyPlan = async (mesocycle, macroInfo, activeTeam, appVersion) => {
   if (!mesocycle) return;
 
   const { default: jsPDF } = await import('jspdf');
-  await import('jspdf-autotable');
+  const autoTableMod = await import('jspdf-autotable');
+  const autoTable = autoTableMod.default || autoTableMod;
 
   const monthsList = ['Sep', 'Oct', 'Nov', 'Dic', 'Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun'];
-  const formattedMonth = mesocycle.month.charAt(0).toUpperCase() + mesocycle.month.slice(1).toLowerCase();
+  const formattedMonth = (mesocycle.month || 'Mes').charAt(0).toUpperCase() + (mesocycle.month || 'mes').slice(1).toLowerCase();
   const mesoNum = monthsList.indexOf(formattedMonth) + 1;
   const mesoNumStr = mesoNum > 0 ? `Nº ${mesoNum}` : '';
 
@@ -22,9 +24,10 @@ export const exportMonthlyPlan = async (mesocycle, macroInfo, activeTeam, appVer
   const cBeige = PDF_COLORS.bgLight;
   const cText = PDF_COLORS.textDark;
 
-  drawPdfHeader(doc, `PLANIFICACIÓN MENSUAL — ${mesocycle.month.toUpperCase()}`, `Mesociclo ${mesoNumStr} | ${activeTeam?.nombre || 'Mi Equipo'}`, pdfWidth);
+  drawPdfHeader(doc, `PLANIFICACIÓN MENSUAL — ${(mesocycle.month || 'MES').toUpperCase()}`, `Mesociclo ${mesoNumStr} | ${activeTeam?.nombre || 'Mi Equipo'}`, pdfWidth);
 
   let yPos = 44;
+  const microsList = Array.isArray(mesocycle.micros) ? mesocycle.micros : [];
 
   // Bloque de Resumen del Mesociclo
   doc.setFillColor(cBeige[0], cBeige[1], cBeige[2]);
@@ -38,13 +41,13 @@ export const exportMonthlyPlan = async (mesocycle, macroInfo, activeTeam, appVer
   doc.setFont('Helvetica', 'normal');
   doc.setFontSize(9);
   doc.setTextColor(cText[0], cText[1], cText[2]);
-  doc.text(`Mes: ${mesocycle.month.toUpperCase()} (Meso ${mesoNumStr})`, 16, yPos + 13);
-  doc.text(`Semanas registradas: ${mesocycle.micros.length}`, 16, yPos + 19);
+  doc.text(`Mes: ${(mesocycle.month || '').toUpperCase()} (Meso ${mesoNumStr})`, 16, yPos + 13);
+  doc.text(`Semanas registradas: ${microsList.length}`, 16, yPos + 19);
 
-  doc.text(`Volumen total del mes: ${mesocycle.volume} min`, 80, yPos + 13);
-  doc.text(`Sesiones del mes: ${mesocycle.sessions}`, 80, yPos + 19);
+  doc.text(`Volumen total del mes: ${mesocycle.volume || 0} min`, 80, yPos + 13);
+  doc.text(`Sesiones del mes: ${mesocycle.sessions || 0}`, 80, yPos + 19);
 
-  const tipoCarga = mesocycle.carga >= mesocycle.micros.length / 2 ? 'CARGA' : 'COMPETICIÓN';
+  const tipoCarga = (mesocycle.carga || 0) >= (microsList.length / 2) ? 'CARGA' : 'COMPETICIÓN';
   doc.text(`Orientación del mes: ${tipoCarga}`, 150, yPos + 13);
   
   yPos += 30;
@@ -63,7 +66,7 @@ export const exportMonthlyPlan = async (mesocycle, macroInfo, activeTeam, appVer
   doc.setFontSize(8.5);
   doc.setTextColor(cText[0], cText[1], cText[2]);
   
-  const defaultObjective = `Optimizar el volumen de entrenamiento e intensificar el enfoque táctico/técnico para el mes de ${mesocycle.month}. Consolidar las fases de posesión de balón y transiciones rápidas defensa-ataque.`;
+  const defaultObjective = `Optimizar el volumen de entrenamiento e intensificar el enfoque táctico/técnico para el mes de ${mesocycle.month || 'la temporada'}. Consolidar las fases de posesión de balón y transiciones rápidas defensa-ataque.`;
   const splitObjective = doc.splitTextToSize(macroInfo?.objective || defaultObjective, pdfWidth - 36);
   doc.text(splitObjective, 16, yPos + 11);
 
@@ -75,19 +78,19 @@ export const exportMonthlyPlan = async (mesocycle, macroInfo, activeTeam, appVer
   doc.setFontSize(10);
   doc.text('DISTRIBUCIÓN Y DINÁMICA DE CARGAS', 12, yPos);
 
-  const headers = ['Métrica / Variable', ...mesocycle.micros.map(m => `Semana ${m.id} (Micro ${m.microciclo})`)];
+  const headers = ['Métrica / Variable', ...microsList.map(m => `Semana ${m.id || ''} (Micro ${m.microciclo || m.id || ''})`)];
   const rows = [
-    ['Mes / Mesociclo', ...mesocycle.micros.map(m => `${m.month} (Meso ${monthsList.indexOf(m.month.charAt(0).toUpperCase() + m.month.slice(1).toLowerCase()) + 1})`)],
-    ['Período', ...mesocycle.micros.map(m => m.periodo)],
-    ['Tipo de Microciclo (Carga)', ...mesocycle.micros.map(m => m.carga)],
-    ['Nº Microciclo', ...mesocycle.micros.map(m => m.microciclo)],
-    ['Test Físico', ...mesocycle.micros.map(m => m.fisio ? 'Sí' : 'No')],
-    ['Tendencia Carga', ...mesocycle.micros.map(m => m.infl || 'Estable')],
-    ['Sesiones', ...mesocycle.micros.map(m => m.sessions)],
-    ['Volumen (minutos)', ...mesocycle.micros.map(m => `${m.volume} min`)],
-    ['Físico (%)', ...mesocycle.micros.map(m => `${m.physical}%`)],
-    ['Técnico (%)', ...mesocycle.micros.map(m => `${m.technical}%`)],
-    ['Táctico (%)', ...mesocycle.micros.map(m => `${m.tactical}%`)],
+    ['Mes / Mesociclo', ...microsList.map(m => `${m.month || mesocycle.month || ''} (Meso ${monthsList.indexOf((m.month || mesocycle.month || '').charAt(0).toUpperCase() + (m.month || mesocycle.month || '').slice(1).toLowerCase()) + 1})`)],
+    ['Período', ...microsList.map(m => m.periodo || 'Competitivo')],
+    ['Tipo de Microciclo (Carga)', ...microsList.map(m => m.carga || 'Carga')],
+    ['Nº Microciclo', ...microsList.map(m => m.microciclo || m.id || '-')],
+    ['Test Físico', ...microsList.map(m => m.fisio ? 'Sí' : 'No')],
+    ['Tendencia Carga', ...microsList.map(m => m.infl || 'Estable')],
+    ['Sesiones', ...microsList.map(m => m.sessions || 0)],
+    ['Volumen (minutos)', ...microsList.map(m => `${m.volume || 0} min`)],
+    ['Físico (%)', ...microsList.map(m => `${m.physical || 0}%`)],
+    ['Técnico (%)', ...microsList.map(m => `${m.technical || 0}%`)],
+    ['Táctico (%)', ...microsList.map(m => `${m.tactical || 0}%`)],
   ];
 
   autoTable(doc, {
@@ -98,7 +101,7 @@ export const exportMonthlyPlan = async (mesocycle, macroInfo, activeTeam, appVer
     headStyles: {
       fillColor: cDark,
       textColor: [255, 255, 255],
-      fontSize: 9,
+      fontSize: 8.5,
       fontStyle: 'bold',
       halign: 'center'
     },
@@ -106,7 +109,7 @@ export const exportMonthlyPlan = async (mesocycle, macroInfo, activeTeam, appVer
       0: { fontStyle: 'bold', width: 50 }
     },
     styles: {
-      fontSize: 8.5,
+      fontSize: 8,
       halign: 'center',
       valign: 'middle'
     },
@@ -116,13 +119,12 @@ export const exportMonthlyPlan = async (mesocycle, macroInfo, activeTeam, appVer
   // Espacio dinámico para el detalle por microciclo
   let currentY = doc.lastAutoTable.finalY + 12;
 
-  mesocycle.micros.forEach((micro, idx) => {
+  microsList.forEach((micro, idx) => {
     // Si se pasa del límite, agregar nueva página
     if (currentY > pdfHeight - 55) {
-      drawFooter(doc.internal.getNumberOfPages(), doc.internal.getNumberOfPages());
       doc.addPage();
-      drawHeader(`Detalle de Microciclos - ${mesocycle.month.toUpperCase()}`);
-      currentY = 32;
+      drawPdfHeader(doc, `Detalle de Microciclos — ${(mesocycle.month || '').toUpperCase()}`, activeTeam?.nombre || 'Mi Equipo', pdfWidth);
+      currentY = 44;
     }
 
     doc.setFillColor(cBeige[0], cBeige[1], cBeige[2]);
@@ -130,7 +132,7 @@ export const exportMonthlyPlan = async (mesocycle, macroInfo, activeTeam, appVer
     doc.setTextColor(cDark[0], cDark[1], cDark[2]);
     doc.setFont('Helvetica', 'bold');
     doc.setFontSize(9.5);
-    doc.text(`DETALLE DE LA SEMANA ${idx + 1} (MICROCICLO #${micro.microciclo})`, 15, currentY + 4.5);
+    doc.text(`DETALLE DE LA SEMANA ${idx + 1} (MICROCICLO #${micro.microciclo || idx + 1})`, 15, currentY + 4.5);
 
     currentY += 10;
 
@@ -139,17 +141,17 @@ export const exportMonthlyPlan = async (mesocycle, macroInfo, activeTeam, appVer
     doc.setFontSize(8.5);
 
     const colWidth = (pdfWidth - 24) / 4;
-    doc.text(`Período: ${micro.periodo}`, 15, currentY);
-    doc.text(`Tipo Microciclo: ${micro.carga}`, 15 + colWidth, currentY);
-    doc.text(`Sesiones: ${micro.sessions}`, 15 + colWidth * 2, currentY);
-    doc.text(`Volumen: ${micro.volume} min`, 15 + colWidth * 3, currentY);
+    doc.text(`Período: ${micro.periodo || 'Competitivo'}`, 15, currentY);
+    doc.text(`Tipo Microciclo: ${micro.carga || 'Carga'}`, 15 + colWidth, currentY);
+    doc.text(`Sesiones: ${micro.sessions || 0}`, 15 + colWidth * 2, currentY);
+    doc.text(`Volumen: ${micro.volume || 0} min`, 15 + colWidth * 3, currentY);
 
     currentY += 6;
 
     doc.setFont('Helvetica', 'bold');
     doc.text('Distribución de Carga:', 15, currentY);
     doc.setFont('Helvetica', 'normal');
-    doc.text(`Física: ${micro.physical}% | Técnica: ${micro.technical}% | Táctica: ${micro.tactical}%`, 50, currentY);
+    doc.text(`Física: ${micro.physical || 0}% | Técnica: ${micro.technical || 0}% | Táctica: ${micro.tactical || 0}%`, 50, currentY);
 
     currentY += 12;
   });
@@ -161,7 +163,8 @@ export const exportMonthlyPlan = async (mesocycle, macroInfo, activeTeam, appVer
     drawPdfFooter(doc, pdfWidth, pdfHeight, i, totalPages);
   }
 
-  // Descarga del PDF
-  const filename = `planificacion_mensual_${mesocycle.month.toLowerCase()}_${activeTeam?.nombre || 'mister11'}.pdf`;
-  doc.save(filename);
+  // Descarga universal del PDF
+  const filename = `planificacion_mensual_${(mesocycle.month || 'mes').toLowerCase()}_${(activeTeam?.nombre || 'mister11').replace(/\s+/g, '_')}.pdf`;
+  await savePdfUniversal(doc, filename);
 };
+

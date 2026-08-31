@@ -31,6 +31,7 @@ const CanvasToolbar = ({
   clearCanvas,
   handleNewPizarra,
   handleCapture,
+  handleExportPDF,
   isCapturing,
   exportAnimationVideo,
   isRecording,
@@ -190,7 +191,8 @@ const CanvasToolbar = ({
             <button className="topbar-btn" onClick={redo} disabled={redoCount === 0} title="Rehacer (Ctrl+Y)">↪</button>
             <button className="topbar-btn danger" onClick={clearCanvas} title="Limpiar todo el canvas">🗑</button>
             <button className="topbar-btn secondary" onClick={handleNewPizarra} title="Crear nueva animación desde cero" style={{ background: 'var(--accent)', color: 'white', fontWeight: 'bold' }}>✨ NUEVA</button>
-            <button className="topbar-btn" onClick={() => handleCapture(true)} disabled={isCapturing} title="Descargar Imagen">📸</button>
+            <button className="topbar-btn" onClick={() => handleCapture(true)} disabled={isCapturing} title="Descargar Imagen (PNG)">📸 PNG</button>
+            <button className="topbar-btn" onClick={handleExportPDF} disabled={isCapturing} title="Exportar Pizarra o Storyboard como PDF (A4)">📄 PDF</button>
             <button className="topbar-btn" onClick={exportAnimationVideo} disabled={isRecording} title="Exportar animacion como video MP4" style={{ background: 'var(--accent)', color: 'white', fontWeight: 'bold' }}>
               {isRecording ? 'REC... EXPORTANDO MP4' : 'EXPORTAR MP4'}
             </button>

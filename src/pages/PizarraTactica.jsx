@@ -36,6 +36,7 @@ import { storage } from '../firebaseConfig';
 import { savePizarraLocal, getPizarraLocal, clearPizarraLocal } from '../lib/pizarraStorage';
 import { getDocument, setDocument } from '../firebase/db';
 import { downloadJSON, downloadImage, downloadVideo } from '../utils/download.js';
+import { generatePizarraPDF } from '../utils/pdfGenerator.js';
 import CanvasToolbar from '../components/pizarra/CanvasToolbar';
 import MaterialsPanel from '../components/pizarra/MaterialsPanel';
 import SavedPlaysPanel from '../components/pizarra/SavedPlaysPanel';
@@ -2537,6 +2538,34 @@ const PizarraTactica = () => {
     }
   };
 
+  // ─── Export Pizarra as A4 Landscape PDF (Single Frame or Storyboard) ───────
+  const handleExportPDF = async () => {
+    if (!isProActive) {
+      setUpgradeModal({ open: true, message: 'La exportación en PDF de la pizarra táctica es una función PRO. Sube de nivel para usarla.' });
+      return;
+    }
+    const fc = fcRef.current;
+    if (!fc) return;
+
+    try {
+      setIsCapturing(true);
+      const captureRes = await handleCapture(false, true);
+      const canvasUrl = captureRes?.thumb || captureRes?.full || fc.toDataURL({ format: 'png', multiplier: 2 });
+      await generatePizarraPDF({
+        boardTitle: currentPizarraTitle || 'Estrategia Táctica',
+        canvasDataUrl: canvasUrl,
+        frames: frames && frames.length > 1 ? frames : [],
+        activeTeam,
+        fieldType
+      });
+    } catch (e) {
+      console.error('Error exportando PDF de pizarra:', e);
+    } finally {
+      setIsCapturing(false);
+    }
+  };
+
+
   // ─── Save entire plan (Frames + Meta) ───────────────────────────────────
   const handleSave = async () => {
     const btn = document.getElementById('btn-guardar-pizarra');
@@ -2956,6 +2985,7 @@ const PizarraTactica = () => {
         clearCanvas={clearCanvas}
         handleNewPizarra={handleNewPizarra}
         handleCapture={handleCapture}
+        handleExportPDF={handleExportPDF}
         isCapturing={isCapturing}
         exportAnimationVideo={exportAnimationVideo}
         isRecording={isRecording}

@@ -355,3 +355,365 @@ export const captureElementHighContrast = async (html2canvas, element, customSca
     }
   }
 };
+
+/**
+ * Dibuja un Radar Chart 360° en Canvas 2D nativo a alta resolución (sin html2canvas/DOM).
+ * @param {Array<{label: string, value: number, max?: number}>} metrics - Lista de métricas (0-100)
+ * @param {number} size - Tamaño en px del canvas cuadrado (defecto 500)
+ * @returns {string} DataURL base64 PNG
+ */
+export const drawRadarChartCanvas = (metrics = [], size = 520) => {
+  if (!metrics || metrics.length === 0) return null;
+  try {
+    const canvas = document.createElement('canvas');
+    canvas.width = size;
+    canvas.height = size;
+    const ctx = canvas.getContext('2d');
+
+    ctx.fillStyle = '#FFFFFF';
+    ctx.fillRect(0, 0, size, size);
+
+    const cx = size / 2;
+    const cy = size / 2;
+    const radius = size * 0.36;
+    const total = metrics.length;
+    const angleStep = (Math.PI * 2) / total;
+
+    // 1. Niveles concéntricos
+    const levels = [0.2, 0.4, 0.6, 0.8, 1.0];
+    levels.forEach((lvl, lvlIdx) => {
+      ctx.beginPath();
+      for (let i = 0; i < total; i++) {
+        const angle = i * angleStep - Math.PI / 2;
+        const r = radius * lvl;
+        const x = cx + r * Math.cos(angle);
+        const y = cy + r * Math.sin(angle);
+        if (i === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+      }
+      ctx.closePath();
+      ctx.strokeStyle = lvlIdx === levels.length - 1 ? '#CBD5E1' : '#E2E8F0';
+      ctx.lineWidth = lvlIdx === levels.length - 1 ? 1.5 : 1;
+      ctx.stroke();
+
+      // Nivel % texto en el eje vertical superior
+      ctx.fillStyle = '#94A3B8';
+      ctx.font = 'bold 11px Arial, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'bottom';
+      ctx.fillText(`${Math.round(lvl * 100)}`, cx, cy - radius * lvl - 2);
+    });
+
+    // 2. Ejes radiales
+    for (let i = 0; i < total; i++) {
+      const angle = i * angleStep - Math.PI / 2;
+      const x = cx + radius * Math.cos(angle);
+      const y = cy + radius * Math.sin(angle);
+
+      ctx.beginPath();
+      ctx.moveTo(cx, cy);
+      ctx.lineTo(x, y);
+      ctx.strokeStyle = '#E2E8F0';
+      ctx.lineWidth = 1;
+      ctx.stroke();
+
+      // Etiquetas exteriores
+      const labelDistance = radius + 30;
+      const lx = cx + labelDistance * Math.cos(angle);
+      const ly = cy + labelDistance * Math.sin(angle);
+
+      const m = metrics[i];
+      const val = Math.round(m.value ?? 0);
+
+      ctx.font = 'bold 13px Arial, sans-serif';
+      ctx.fillStyle = '#0F172A';
+      ctx.textAlign = Math.abs(Math.cos(angle)) < 0.3 ? 'center' : (Math.cos(angle) > 0 ? 'left' : 'right');
+      ctx.textBaseline = Math.abs(Math.sin(angle)) < 0.3 ? 'middle' : (Math.sin(angle) > 0 ? 'top' : 'bottom');
+      ctx.fillText(`${m.label}`, lx, ly - 4);
+
+      ctx.font = 'bold 12px Arial, sans-serif';
+      ctx.fillStyle = '#2E7D5C';
+      ctx.fillText(`${val}%`, lx, ly + 11);
+    }
+
+    // 3. Polígono de datos del jugador
+    ctx.beginPath();
+    for (let i = 0; i < total; i++) {
+      const m = metrics[i];
+      const max = m.max || 100;
+      const pct = Math.min(Math.max((m.value ?? 0) / max, 0.05), 1.0);
+      const angle = i * angleStep - Math.PI / 2;
+      const r = radius * pct;
+      const x = cx + r * Math.cos(angle);
+      const y = cy + r * Math.sin(angle);
+
+      if (i === 0) ctx.moveTo(x, y);
+      else ctx.lineTo(x, y);
+    }
+    ctx.closePath();
+
+    ctx.fillStyle = 'rgba(46, 125, 92, 0.35)'; // Verde institucional translúcido
+    ctx.fill();
+    ctx.strokeStyle = '#2E7D5C';
+    ctx.lineWidth = 3;
+    ctx.stroke();
+
+    // 4. Vértices con detalle dorado
+    for (let i = 0; i < total; i++) {
+      const m = metrics[i];
+      const max = m.max || 100;
+      const pct = Math.min(Math.max((m.value ?? 0) / max, 0.05), 1.0);
+      const angle = i * angleStep - Math.PI / 2;
+      const r = radius * pct;
+      const x = cx + r * Math.cos(angle);
+      const y = cy + r * Math.sin(angle);
+
+      ctx.beginPath();
+      ctx.arc(x, y, 5, 0, Math.PI * 2);
+      ctx.fillStyle = '#D4A843'; // Dorado
+      ctx.fill();
+      ctx.strokeStyle = '#FFFFFF';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+    }
+
+    return canvas.toDataURL('image/png', 0.95);
+  } catch (e) {
+    console.warn('[drawRadarChartCanvas] Error:', e);
+    return null;
+  }
+};
+
+/**
+ * Dibuja una Gráfica de Evolución / Tendencia temporal en Canvas 2D nativo a alta resolución.
+ * @param {Array<{label: string, value: number}>} points - Serie de puntos
+ * @param {number} width - Ancho en px
+ * @param {number} height - Alto en px
+ * @param {string} title - Título de la gráfica
+ * @returns {string} DataURL base64 PNG
+ */
+export const drawEvolutionChartCanvas = (points = [], width = 640, height = 260, title = 'Evolución') => {
+  if (!points || points.length === 0) return null;
+  try {
+    const canvas = document.createElement('canvas');
+    canvas.width = width;
+    canvas.height = height;
+    const ctx = canvas.getContext('2d');
+
+    ctx.fillStyle = '#FFFFFF';
+    ctx.fillRect(0, 0, width, height);
+
+    const padL = 50;
+    const padR = 30;
+    const padT = 35;
+    const padB = 45;
+    const plotW = width - padL - padR;
+    const plotH = height - padT - padB;
+
+    // Título
+    ctx.font = 'bold 13px Arial, sans-serif';
+    ctx.fillStyle = '#0F172A';
+    ctx.textAlign = 'left';
+    ctx.fillText(title.toUpperCase(), padL, padT - 12);
+
+    const vals = points.map(p => Number(p.value) || 0);
+    const minVal = Math.min(0, ...vals);
+    const maxVal = Math.max(10, Math.ceil(Math.max(...vals) * 1.15));
+    const range = maxVal - minVal || 1;
+
+    // Líneas de cuadrícula horizontal
+    const gridCount = 4;
+    for (let i = 0; i <= gridCount; i++) {
+      const y = padT + (plotH / gridCount) * i;
+      const val = Math.round(maxVal - (range / gridCount) * i);
+
+      ctx.beginPath();
+      ctx.moveTo(padL, y);
+      ctx.lineTo(width - padR, y);
+      ctx.strokeStyle = '#E2E8F0';
+      ctx.lineWidth = 1;
+      ctx.stroke();
+
+      ctx.font = '10px Arial, sans-serif';
+      ctx.fillStyle = '#94A3B8';
+      ctx.textAlign = 'right';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(String(val), padL - 8, y);
+    }
+
+    if (points.length === 1) {
+      const cx = padL + plotW / 2;
+      const cy = padT + plotH - ((vals[0] - minVal) / range) * plotH;
+      ctx.beginPath();
+      ctx.arc(cx, cy, 6, 0, Math.PI * 2);
+      ctx.fillStyle = '#2E7D5C';
+      ctx.fill();
+      ctx.font = 'bold 11px Arial, sans-serif';
+      ctx.fillText(`${vals[0]}`, cx, cy - 10);
+      return canvas.toDataURL('image/png', 0.95);
+    }
+
+    const stepX = plotW / (points.length - 1);
+    const coords = points.map((p, idx) => ({
+      x: padL + idx * stepX,
+      y: padT + plotH - ((p.value - minVal) / range) * plotH,
+      label: p.label || `P${idx + 1}`,
+      value: p.value
+    }));
+
+    // Área bajo la curva
+    ctx.beginPath();
+    ctx.moveTo(coords[0].x, padT + plotH);
+    coords.forEach(c => ctx.lineTo(c.x, c.y));
+    ctx.lineTo(coords[coords.length - 1].x, padT + plotH);
+    ctx.closePath();
+    ctx.fillStyle = 'rgba(46, 125, 92, 0.15)';
+    ctx.fill();
+
+    // Línea continua
+    ctx.beginPath();
+    coords.forEach((c, idx) => {
+      if (idx === 0) ctx.moveTo(c.x, c.y);
+      else ctx.lineTo(c.x, c.y);
+    });
+    ctx.strokeStyle = '#2E7D5C';
+    ctx.lineWidth = 3;
+    ctx.stroke();
+
+    // Puntos y etiquetas
+    coords.forEach(c => {
+      ctx.beginPath();
+      ctx.arc(c.x, c.y, 4.5, 0, Math.PI * 2);
+      ctx.fillStyle = '#D4A843';
+      ctx.fill();
+      ctx.strokeStyle = '#FFFFFF';
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+
+      // Valor
+      ctx.font = 'bold 10px Arial, sans-serif';
+      ctx.fillStyle = '#0F172A';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'bottom';
+      ctx.fillText(`${c.value}`, c.x, c.y - 6);
+
+      // Label eje X
+      ctx.font = '10px Arial, sans-serif';
+      ctx.fillStyle = '#64748B';
+      ctx.textBaseline = 'top';
+      ctx.fillText(c.label, c.x, padT + plotH + 8);
+    });
+
+    return canvas.toDataURL('image/png', 0.95);
+  } catch (e) {
+    console.warn('[drawEvolutionChartCanvas] Error:', e);
+    return null;
+  }
+};
+
+/**
+ * Dibuja una Gráfica de Momentum del Partido en Canvas 2D nativo a alta resolución.
+ * @param {Array<Object>} events - Lista de eventos del partido
+ * @param {number} matchDuration - Duración del partido en min (defecto 90)
+ * @param {number} width - Ancho en px
+ * @param {number} height - Alto en px
+ * @returns {string} DataURL base64 PNG
+ */
+export const drawMomentumChartCanvas = (events = [], matchDuration = 90, width = 640, height = 220) => {
+  try {
+    const canvas = document.createElement('canvas');
+    canvas.width = width;
+    canvas.height = height;
+    const ctx = canvas.getContext('2d');
+
+    ctx.fillStyle = '#FFFFFF';
+    ctx.fillRect(0, 0, width, height);
+
+    const padL = 40;
+    const padR = 25;
+    const padT = 30;
+    const padB = 35;
+    const plotW = width - padL - padR;
+    const plotH = height - padT - padB;
+    const midY = padT + plotH / 2;
+
+    // Título
+    ctx.font = 'bold 12px Arial, sans-serif';
+    ctx.fillStyle = '#0F172A';
+    ctx.textAlign = 'left';
+    ctx.fillText('MOMENTUM & DINÁMICA DEL PARTIDO (DOMINIO PROPIO VS RIVAL)', padL, padT - 10);
+
+    // Eje central cero
+    ctx.beginPath();
+    ctx.moveTo(padL, midY);
+    ctx.lineTo(width - padR, midY);
+    ctx.strokeStyle = '#94A3B8';
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+
+    // Líneas de mitad (45')
+    const halfX = padL + (45 / matchDuration) * plotW;
+    ctx.beginPath();
+    ctx.setLineDash([4, 4]);
+    ctx.moveTo(halfX, padT);
+    ctx.lineTo(halfX, padT + plotH);
+    ctx.strokeStyle = '#CBD5E1';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    ctx.font = 'bold 9px Arial, sans-serif';
+    ctx.fillStyle = '#94A3B8';
+    ctx.textAlign = 'center';
+    ctx.fillText('DESCANSO (45\')', halfX, padT + plotH + 16);
+
+    // Calcular momentum por tramos de 5 minutos
+    const bucketMinutes = 5;
+    const bucketsCount = Math.ceil(matchDuration / bucketMinutes);
+    const momentum = new Array(bucketsCount).fill(0);
+
+    (events || []).forEach(e => {
+      const min = Math.min(Math.max(Number(e.minute) || 1, 1), matchDuration);
+      const bIdx = Math.min(Math.floor((min - 1) / bucketMinutes), bucketsCount - 1);
+      let weight = 0;
+      if (e.type === 'gol_local' || e.type === 'gol') weight = 4;
+      else if (e.type === 'gol_rival') weight = -4;
+      else if (e.type === 'shot_on_target_own') weight = 2;
+      else if (e.type === 'shot_on_target_rival') weight = -2;
+      else if (e.type === 'shot_off_target_own' || e.type === 'corner_favor') weight = 1;
+      else if (e.type === 'shot_off_target_rival' || e.type === 'corner_against') weight = -1;
+      else if (e.type === 'recovery' || e.type === 'duel_won') weight = 0.5;
+      else if (e.type === 'loss' || e.type === 'duel_lost') weight = -0.5;
+      momentum[bIdx] += weight;
+    });
+
+    const maxM = Math.max(4, ...momentum.map(Math.abs));
+    const barW = (plotW / bucketsCount) * 0.75;
+
+    // Dibujar barras de momentum
+    momentum.forEach((val, idx) => {
+      const bx = padL + (idx / bucketsCount) * plotW + (plotW / bucketsCount - barW) / 2;
+      const barH = (Math.abs(val) / maxM) * (plotH / 2 - 8);
+      const isPositive = val >= 0;
+      const by = isPositive ? midY - barH : midY;
+
+      ctx.fillStyle = isPositive ? 'rgba(46, 125, 92, 0.85)' : 'rgba(239, 68, 68, 0.85)';
+      ctx.fillRect(bx, by, barW, barH);
+    });
+
+    // Marcas de tiempo en el eje X
+    [0, 15, 30, 45, 60, 75, matchDuration].forEach(m => {
+      const x = padL + (m / matchDuration) * plotW;
+      ctx.font = '9px Arial, sans-serif';
+      ctx.fillStyle = '#64748B';
+      ctx.textAlign = 'center';
+      ctx.fillText(`${m}'`, x, padT + plotH + 4);
+    });
+
+    return canvas.toDataURL('image/png', 0.95);
+  } catch (e) {
+    console.warn('[drawMomentumChartCanvas] Error:', e);
+    return null;
+  }
+};
+

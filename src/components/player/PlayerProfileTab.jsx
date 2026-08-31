@@ -510,7 +510,7 @@ export const PlayerProfileTab = ({ player, team, teamPath, onNavigateTab }) => {
               <div className="hud-badge">
                 <Heart size={15} color="#EF4444" /> {t('player.profile.wellnessCheckin')}
               </div>
-              <span className="hud-status-live" style={{ color: '#34D399' }}>{todayStr}</span>
+              <span className="hud-status-live">{todayStr}</span>
             </div>
 
             <form onSubmit={handleSubmitWellness} className="wellness-form">

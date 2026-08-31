@@ -1041,8 +1041,16 @@ html.light .player-dashboard-layout,
 
 .wellness-question-group label {
   font-size: 13px;
-  font-weight: 700;
-  color: #ffffff;
+  font-weight: 800;
+  color: var(--text-primary, #0F172A);
+}
+
+.theme-dark .wellness-question-group label {
+  color: #F8FAFC !important;
+}
+
+.theme-light .wellness-question-group label {
+  color: #0F172A !important;
 }
 
 .scale-selector-row {
@@ -1067,9 +1075,10 @@ html.light .player-dashboard-layout,
 }
 
 .theme-light .scale-btn {
-  background: #F1F5F9;
-  border-color: #94A3B8;
+  background: #FFFFFF;
+  border: 1.5px solid #CBD5E1;
   color: #0F172A;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
 }
 
 .scale-btn:hover {
@@ -1108,9 +1117,10 @@ html.light .player-dashboard-layout,
 }
 
 .theme-light .discomfort-pill {
-  background: #F1F5F9;
-  border-color: #94A3B8;
+  background: #FFFFFF;
+  border: 1.5px solid #CBD5E1;
   color: #0F172A;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
 }
 
 .discomfort-pill.active.no-pain {
@@ -1121,22 +1131,29 @@ html.light .player-dashboard-layout,
 }
 
 .discomfort-pill.active.with-pain {
-  background: #C2410C !important;
-  border-color: #C2410C !important;
+  background: #D97706 !important;
+  border-color: #D97706 !important;
   color: #FFFFFF !important;
-  box-shadow: 0 2px 8px rgba(194, 65, 12, 0.35);
+  box-shadow: 0 2px 8px rgba(217, 119, 6, 0.35);
 }
 
 .zone-select {
   width: 100%;
   min-height: 46px;
   background: rgba(0, 0, 0, 0.3);
-  border: 1px solid var(--border-color);
+  border: 1.5px solid var(--border-color, rgba(255, 255, 255, 0.2));
   border-radius: 8px;
-  color: #ffffff;
+  color: var(--text-primary, #ffffff);
   padding: 10px 12px;
   font-size: 13px;
+  font-weight: 600;
   box-sizing: border-box;
+}
+
+.theme-light .zone-select {
+  background: #FFFFFF;
+  border-color: #CBD5E1;
+  color: #0F172A;
 }
 
 /* CONSENTS */
@@ -1151,22 +1168,36 @@ html.light .player-dashboard-layout,
   justify-content: space-between;
   align-items: center;
   background: rgba(0, 0, 0, 0.25);
-  border: 1px solid var(--border-color);
+  border: 1px solid var(--border-color, rgba(255, 255, 255, 0.1));
   border-radius: 8px;
   padding: 10px 12px;
+}
+
+.theme-light .consent-status-item {
+  background: #FFFFFF;
+  border-color: #E2E8F0;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
 .consent-title {
   display: block;
   font-size: 13px;
   font-weight: 700;
-  color: #ffffff;
+  color: var(--text-primary, #ffffff);
+}
+
+.theme-light .consent-title {
+  color: #0F172A;
 }
 
 .consent-desc {
   display: block;
   font-size: 11px;
-  color: var(--text-muted);
+  color: var(--text-muted, #94A3B8);
+}
+
+.theme-light .consent-desc {
+  color: #64748B;
 }
 
 .consent-badge {
@@ -1182,12 +1213,31 @@ html.light .player-dashboard-layout,
   color: #10B981;
 }
 
+.theme-light .consent-badge.mandatory {
+  color: #047857;
+  background: #ECFDF5;
+  border: 1px solid #A7F3D0;
+}
+
 .consent-badge.granted {
   background: rgba(52, 211, 153, 0.15);
   color: #34D399;
+}
+
+.theme-light .consent-badge.granted {
+  color: #059669;
+  background: #ECFDF5;
+  border: 1px solid #A7F3D0;
 }
 
 .consent-badge.pending {
   background: rgba(239, 68, 68, 0.15);
   color: #EF4444;
 }
+
+.theme-light .consent-badge.pending {
+  color: #DC2626;
+  background: #FEF2F2;
+  border: 1px solid #FECACA;
+}
+

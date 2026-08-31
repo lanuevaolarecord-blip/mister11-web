@@ -137,11 +137,15 @@ export const useLiveStats = (teamId, matchId, currentMinute, currentHalf = 1) =>
         });
       }
 
+      const targetMin = cleanExtra.minute !== undefined
+        ? cleanExtra.minute
+        : ((targetHalf === 2 && (!currentMinute || currentMinute <= 45)) ? 46 : (currentMinute || 1));
+
       const localDoc = {
         id: newId,
         type,
         half: targetHalf,
-        minute: currentMinute || 1,
+        minute: targetMin,
         ...cleanExtra,
         timestamp: new Date().toISOString(),
       };
@@ -163,7 +167,7 @@ export const useLiveStats = (teamId, matchId, currentMinute, currentHalf = 1) =>
           const docRef = await addDoc(colRef, {
             type,
             half: targetHalf,
-            minute: currentMinute || 1,
+            minute: targetMin,
             ...cleanExtra,
             timestamp: serverTimestamp(),
           });

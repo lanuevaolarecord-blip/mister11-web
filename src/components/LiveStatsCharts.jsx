@@ -42,6 +42,11 @@ export const SvgDonut = ({
   const textColor = darkMode ? '#FFFFFF' : '#0F172A';
   const subTextColor = darkMode ? '#E2E8F0' : '#334155';
 
+  // Proteger contra colores transparentes o blancos sobre fondo blanco en modo claro
+  const isColor2Faint = !color2 || String(color2).includes('rgba(255,255,255') || String(color2).includes('transparent');
+  const safeColor2 = isColor2Faint ? (darkMode ? 'rgba(212, 168, 67, 0.35)' : '#94A3B8') : color2;
+  const legendColor2 = isColor2Faint ? (darkMode ? '#CBD5E1' : '#475569') : color2;
+
   return (
     <div style={{
       display: 'flex',
@@ -54,22 +59,38 @@ export const SvgDonut = ({
     }}>
       <div style={{ position: 'relative', width: size, height: size }}>
         <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} style={{ display: 'block', overflow: 'visible' }}>
-          {/* Pista base (color2 o track vacía) */}
+          {/* Pista base neutra siempre visible */}
           <circle
             cx={center}
             cy={center}
             r={radius}
             fill="none"
-            stroke={total > 0 ? color2 : bgTrack}
+            stroke={bgTrack}
             strokeWidth={strokeWidth}
             style={{
-              stroke: total > 0 ? color2 : bgTrack,
+              stroke: bgTrack,
               strokeWidth: `${strokeWidth}px`,
               fill: 'none'
             }}
           />
+          {/* Pista secundaria si total > 0 */}
+          {total > 0 && safeColor2 !== bgTrack && (
+            <circle
+              cx={center}
+              cy={center}
+              r={radius}
+              fill="none"
+              stroke={safeColor2}
+              strokeWidth={strokeWidth}
+              style={{
+                stroke: safeColor2,
+                strokeWidth: `${strokeWidth}px`,
+                fill: 'none'
+              }}
+            />
+          )}
           {/* Arco primario (color1) */}
-          {total > 0 && (
+          {total > 0 && pct1 > 0 && (
             <circle
               cx={center}
               cy={center}
@@ -119,7 +140,7 @@ export const SvgDonut = ({
           <>
             <span style={{ color: color1 }}>{value1} {label1}</span>
             <span style={{ color: subTextColor }}>/</span>
-            <span style={{ color: color2 }}>{value2} {label2}</span>
+            <span style={{ color: legendColor2 }}>{value2} {label2}</span>
           </>
         ) : (
           <span style={{ color: subTextColor, fontStyle: 'italic' }}>Sin datos</span>
@@ -135,53 +156,41 @@ export const SvgComparisonBars = ({ events, darkMode: darkModeProp }) => {
   const darkMode = darkModeProp !== undefined ? darkModeProp : (themeContext?.darkMode ?? true);
 
   const labelColor = darkMode ? '#FFFFFF' : '#0F172A';
-  const bgBar = darkMode ? 'rgba(255,255,255,0.15)' : '#CBD5E1';
+  const subLabelColor = darkMode ? '#CBD5E1' : '#64748B';
+
+  const countByType = (type) => events.filter((e) => e.type === type).length;
 
   const metrics = [
-    {
-      title: 'Tiros a puerta',
-      own: events.filter((e) => e.type === 'shot_on_target_own').length,
-      rival: events.filter((e) => e.type === 'shot_on_target_rival').length,
-    },
-    {
-      title: 'Córners',
-      own: events.filter((e) => e.type === 'corner_favor').length,
-      rival: events.filter((e) => e.type === 'corner_against').length,
-    },
-    {
-      title: 'Tarjetas',
-      own: events.filter((e) => e.type === 'card_own' || e.type === 'card_yellow_own' || e.type === 'card_red_own').length,
-      rival: events.filter((e) => e.type === 'card_rival' || e.type === 'card_yellow_rival' || e.type === 'card_red_rival').length,
-    },
-    {
-      title: 'Fueras de juego',
-      own: events.filter((e) => e.type === 'offside_own').length,
-      rival: events.filter((e) => e.type === 'offside_rival').length,
-    },
+    { label: 'Tiros a puerta', own: countByType('shot_on_target_own'), rival: countByType('shot_on_target_rival') },
+    { label: 'Tiros fuera', own: countByType('shot_off_target_own'), rival: countByType('shot_off_target_rival') },
+    { label: 'Duelos', own: countByType('duel_won'), rival: countByType('duel_lost') },
+    { label: 'Faltas', own: countByType('foul_against'), rival: countByType('foul_favor') },
+    { label: 'Tarjetas amarillas', own: countByType('card_yellow_own'), rival: countByType('card_yellow_rival') },
+    { label: 'Tarjetas rojas', own: countByType('card_red_own'), rival: countByType('card_red_rival') },
+    { label: 'Córners', own: countByType('corner_favor'), rival: countByType('corner_against') },
+    { label: 'Fueras de juego', own: countByType('offside_own'), rival: countByType('offside_rival') },
   ];
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', width: '100%' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', width: '100%' }}>
       {metrics.map((m) => {
         const total = m.own + m.rival;
-        const ownPct = total > 0 ? (m.own / total) * 100 : 50;
-        const rivalPct = total > 0 ? (m.rival / total) * 100 : 50;
+        const ownPct = total > 0 ? Math.round((m.own / total) * 100) : 50;
+        const rivalPct = total > 0 ? 100 - ownPct : 50;
 
         return (
-          <div key={m.title} style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', fontWeight: 800 }}>
-              <span style={{ color: '#4CAF7D', fontWeight: 900 }}>{m.own} (Propio)</span>
-              <span style={{ color: labelColor, fontWeight: 900, fontSize: '12.5px' }}>{m.title}</span>
-              <span style={{ color: '#EF4444', fontWeight: 900 }}>{m.rival} (Rival)</span>
+          <div key={m.label} style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', fontWeight: 900 }}>
+              <span style={{ color: '#4CAF7D' }}>{m.own}</span>
+              <span style={{ color: labelColor }}>{m.label}</span>
+              <span style={{ color: '#EF4444' }}>{m.rival}</span>
             </div>
-
-            {/* Barra bicolor comparativa */}
             <div style={{
-              height: '11px',
-              borderRadius: '6px',
-              overflow: 'hidden',
               display: 'flex',
-              background: bgBar,
+              height: '8px',
+              borderRadius: '4px',
+              overflow: 'hidden',
+              background: darkMode ? 'rgba(255,255,255,0.08)' : '#E2E8F0',
             }}>
               <div style={{
                 width: `${ownPct}%`,
@@ -202,7 +211,7 @@ export const SvgComparisonBars = ({ events, darkMode: darkModeProp }) => {
 };
 
 // ── 3. Desglose por Mitades (1T: X / 2T: Y) ──────────────────────────────────
-export const HalfBreakdown = ({ events, darkMode: darkModeProp }) => {
+export const HalfBreakdown = ({ events = [], darkMode: darkModeProp }) => {
   const themeContext = useTheme();
   const darkMode = darkModeProp !== undefined ? darkModeProp : (themeContext?.darkMode ?? true);
 
@@ -211,8 +220,27 @@ export const HalfBreakdown = ({ events, darkMode: darkModeProp }) => {
   const cardBg = darkMode ? 'rgba(255,255,255,0.06)' : '#F1F5F9';
   const borderColor = darkMode ? 'rgba(255,255,255,0.12)' : '#CBD5E1';
 
-  const t1Events = events.filter((e) => e.half === 1);
-  const t2Events = events.filter((e) => e.half === 2);
+  // Lógica robusta de detección de mitad (por half numérico/string o por minuto > 45)
+  const isT2 = (e) => {
+    if (!e) return false;
+    const h = Number(e.half);
+    if (h === 2) return true;
+    if (h === 1) return false;
+    const m = Number(e.minute || e.minuto || e.time || 0);
+    return m > 45;
+  };
+  const isT1 = (e) => {
+    if (!e) return false;
+    const h = Number(e.half);
+    if (h === 1) return true;
+    if (h === 2) return false;
+    const m = Number(e.minute || e.minuto || e.time || 0);
+    return m <= 45;
+  };
+
+  const safeEvents = Array.isArray(events) ? events.filter(Boolean) : [];
+  const t1Events = safeEvents.filter(isT1);
+  const t2Events = safeEvents.filter(isT2);
 
   const getCount = (list, types) => list.filter((e) => types.includes(e.type)).length;
 

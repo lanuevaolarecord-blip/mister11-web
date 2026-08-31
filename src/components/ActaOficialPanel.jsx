@@ -26,6 +26,7 @@ import { useTranslation } from '../hooks/useTranslation';
 import { calcMixedRating, deriveStatsFromEvents } from '../utils/ratingFormula';
 import PlayerAvatar from './PlayerAvatar';
 import MatchStatsBlock from './MatchStatsBlock';
+import { MatchRadarChart } from './MatchStats/MatchRadarChart';
 
 const RSVP_LABELS = {
   going:       { label: 'Irá',            emoji: '✅', color: '#10B981' },
@@ -60,7 +61,14 @@ const MINUTE_SOURCE_LABEL = {
 // ─────────────────────────────────────────────────────────────
 // Component
 // ─────────────────────────────────────────────────────────────
-const ActaOficialPanel = ({ matchId, matchData, players = [], calledPlayers = [], onNavigateTab }) => {
+const ActaOficialPanel = ({
+  matchId,
+  matchData,
+  players = [],
+  calledPlayers = [],
+  onNavigateTab,
+  events: propEvents = null
+}) => {
   const { user, getTeamPath } = useAuth();
   const { activeTeam } = useTeams();
   const { t, language } = useTranslation();
@@ -102,6 +110,7 @@ const ActaOficialPanel = ({ matchId, matchData, players = [], calledPlayers = []
   });
 
   const [showAuditDetail, setShowAuditDetail] = useState(false);
+  const [subTab, setSubTab] = useState('roster'); // 'roster' | 'stats'
 
   const toggleWarningsCollapse = () => {
     setIsWarningsCollapsed(prev => {
@@ -141,8 +150,30 @@ const ActaOficialPanel = ({ matchId, matchData, players = [], calledPlayers = []
   );
 
   const effectiveEvents = useMemo(() => {
+    if (propEvents && Array.isArray(propEvents) && propEvents.length > 0) {
+      return propEvents.filter(e => e && e.isValid !== false);
+    }
     return getUnifiedMatchEvents(matchData);
-  }, [matchData]);
+  }, [propEvents, matchData]);
+
+  const statsOverview = useMemo(() => {
+    const evts = effectiveEvents || [];
+    const gf = evts.filter(e => e.type === 'goal_own' || e.type === 'gol_local').length;
+    const ga = evts.filter(e => e.type === 'goal_rival' || e.type === 'gol_rival').length;
+    const sOn = evts.filter(e => e.type === 'shot_on_target_own').length;
+    const sOff = evts.filter(e => e.type === 'shot_off_target_own').length;
+    const rec = evts.filter(e => e.type === 'recovery').length;
+    const fls = evts.filter(e => e.type === 'foul_against').length;
+    return {
+      goalsFor: gf,
+      goalsAgainst: ga,
+      shotsTotal: sOn + sOff,
+      shotsOnTarget: sOn,
+      recoveries: rec,
+      fouls: fls,
+      totalEvents: evts.length
+    };
+  }, [effectiveEvents]);
 
   const { initialTitulares, initialSuplentes } = useMemo(() => {
     return getStartingXI(rawTitulares, rawSuplentes, effectiveEvents);
@@ -381,10 +412,139 @@ const ActaOficialPanel = ({ matchId, matchData, players = [], calledPlayers = []
         </div>
       </div>
 
-      {/* ── Resumen de Asistencia / RSVP Bar ─────────────── */}
-      {isStartedOrDone ? (
-        /* Modo Verificación de Asistencia Real */
-        <div style={styles.rsvpBar}>
+      {/* ── Selector de Vista: Asistencia vs Estadísticas y Gráficas Oficiales ── */}
+      <div style={{
+        display: 'flex',
+        gap: '8px',
+        margin: '12px 0 16px',
+        borderBottom: '1.5px solid var(--partidos-border)',
+        paddingBottom: '10px',
+        flexWrap: 'wrap'
+      }}>
+        <button
+          type="button"
+          onClick={() => setSubTab('roster')}
+          style={{
+            padding: '8px 16px',
+            borderRadius: '8px',
+            fontSize: '12.5px',
+            fontWeight: 800,
+            cursor: 'pointer',
+            border: subTab === 'roster' ? '1.5px solid var(--partidos-accent)' : '1px solid var(--partidos-border)',
+            background: subTab === 'roster' ? 'rgba(76, 175, 125, 0.18)' : 'transparent',
+            color: subTab === 'roster' ? 'var(--partidos-accent)' : 'var(--partidos-text-muted)',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px'
+          }}
+        >
+          📋 {isEn ? 'Attendance & Minutes' : 'Asistencia & Minutos'} ({convocadosPlayers.length})
+        </button>
+        <button
+          type="button"
+          onClick={() => setSubTab('stats')}
+          style={{
+            padding: '8px 16px',
+            borderRadius: '8px',
+            fontSize: '12.5px',
+            fontWeight: 800,
+            cursor: 'pointer',
+            border: subTab === 'stats' ? '1.5px solid var(--partidos-accent)' : '1px solid var(--partidos-border)',
+            background: subTab === 'stats' ? 'rgba(76, 175, 125, 0.18)' : 'transparent',
+            color: subTab === 'stats' ? 'var(--partidos-accent)' : 'var(--partidos-text-muted)',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px'
+          }}
+        >
+          📊 {isEn ? 'Official Stats & Charts' : 'Estadísticas & Gráficas Oficiales'} ({effectiveEvents.length})
+        </button>
+      </div>
+
+      {/* ── Vista 1: Gráficas y Estadísticas Oficiales en Tiempo Real ── */}
+      {subTab === 'stats' && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', marginBottom: '24px' }}>
+          {/* Radar Táctico Oficial */}
+          <div style={{
+            background: 'var(--partidos-card-bg, #FFFFFF)',
+            border: '1.5px solid var(--partidos-border, #CBD5E1)',
+            borderRadius: '12px',
+            padding: '16px',
+            boxShadow: '0 2px 8px rgba(0,0,0,0.04)'
+          }}>
+            <h4 style={{ margin: '0 0 14px', fontSize: '14px', fontWeight: '800', color: 'var(--partidos-accent)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              🕸️ {isEn ? 'Official Tactical Radar (6 Axes)' : 'Radar Táctico Oficial (6 Ejes Comparativos)'}
+            </h4>
+            <MatchRadarChart
+              events={effectiveEvents}
+              homeTeamName={matchData?.local || matchData?.equipoLocal || 'Mi Equipo'}
+              awayTeamName={matchData?.visitante || matchData?.equipoVisitante || matchData?.rival || 'Rival'}
+            />
+          </div>
+
+          {/* Suite Completa de Estadísticas Oficiales (Donas, Comparativa, Mitades, Tablas) */}
+          <MatchStatsBlock
+            matchData={matchData}
+            events={effectiveEvents}
+            language={language || 'Español (ES)'}
+            showDonuts={true}
+            showComparison={true}
+            showHalves={true}
+            showDetailedTables={true}
+          />
+        </div>
+      )}
+
+      {/* ── Vista 2: Pase de Lista y Asistencia Oficial ── */}
+      {subTab === 'roster' && (
+        <>
+          {/* Mini-strip en vivo con estadísticas clave del partido */}
+          {effectiveEvents.length > 0 && (
+            <div style={{
+              display: 'flex',
+              flexWrap: 'wrap',
+              gap: '10px',
+              padding: '10px 14px',
+              borderRadius: '10px',
+              background: 'rgba(76, 175, 125, 0.08)',
+              border: '1px solid rgba(76, 175, 125, 0.25)',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              marginBottom: '14px'
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '12px', fontWeight: 800, flexWrap: 'wrap' }}>
+                <span>⚽ Marcador: <strong style={{ color: '#4CAF7D' }}>{statsOverview.goalsFor}</strong> - <strong style={{ color: '#EF4444' }}>{statsOverview.goalsAgainst}</strong></span>
+                <span style={{ color: 'var(--partidos-text-muted)' }}>•</span>
+                <span>🎯 Remates: <strong>{statsOverview.shotsTotal}</strong> ({statsOverview.shotsOnTarget} a puerta)</span>
+                <span style={{ color: 'var(--partidos-text-muted)' }}>•</span>
+                <span>🛡️ Recuperaciones: <strong>{statsOverview.recoveries}</strong></span>
+                <span style={{ color: 'var(--partidos-text-muted)' }}>•</span>
+                <span>⚡ Faltas: <strong>{statsOverview.fouls}</strong></span>
+                <span style={{ color: 'var(--partidos-text-muted)' }}>•</span>
+                <span>📊 Eventos: <strong style={{ color: '#D4A843' }}>{statsOverview.totalEvents}</strong></span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setSubTab('stats')}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: 'var(--partidos-accent)',
+                  fontWeight: 800,
+                  fontSize: '11.5px',
+                  cursor: 'pointer',
+                  textDecoration: 'underline'
+                }}
+              >
+                Ver gráficas y radar oficial →
+              </button>
+            </div>
+          )}
+
+          {/* ── Resumen de Asistencia / RSVP Bar ─────────────── */}
+          {isStartedOrDone ? (
+            /* Modo Verificación de Asistencia Real */
+            <div style={styles.rsvpBar}>
           <div style={{ ...styles.rsvpBadge, borderColor: '#10B981' }}>
             <span style={{ fontSize: '18px' }}>✅</span>
             <span style={{ fontWeight: '700', color: '#10B981' }}>{attendanceCounts.presente}</span>
@@ -835,6 +995,8 @@ const ActaOficialPanel = ({ matchId, matchData, players = [], calledPlayers = []
           showDetailedTables={true}
         />
       </div>
+      </>
+      )}
 
       {/* ── Modal de Advertencias de Coherencia al Cerrar ── */}
       {showWarningsModal && (

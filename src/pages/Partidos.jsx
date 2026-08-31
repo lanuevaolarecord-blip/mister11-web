@@ -268,7 +268,8 @@ const Partidos = () => {
   const handleTimerAdjust = isMatchFinished ? () => {} : adjustTimer;
 
   const currentMinute = ctxCurrentMinute;
-  const { events: liveEvents, addLiveEvent, resetLiveStats } = useLiveStats(effectiveTeamId, matchData?.id || null, ctxCurrentMinute || 0, 1);
+  const derivedHalf = (matchSeconds >= 2700 || (ctxCurrentMinute && ctxCurrentMinute > 45)) ? 2 : 1;
+  const { events: liveEvents, addLiveEvent, resetLiveStats } = useLiveStats(effectiveTeamId, matchData?.id || null, ctxCurrentMinute || 0, derivedHalf);
 
   const effectiveLiveEvents = useMemo(() => {
     if (liveEvents && liveEvents.length > 0) {
@@ -1891,6 +1892,7 @@ const Partidos = () => {
                 matchData={matchData}
                 players={players}
                 calledPlayers={calledPlayers}
+                events={effectiveLiveEvents}
                 onNavigateTab={handleTabChange}
               />
             )}

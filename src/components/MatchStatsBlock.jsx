@@ -211,7 +211,7 @@ export const MatchStatsBlock = ({
               label1="Goles"
               label2="Remates"
               color1={C.gold}
-              color2="rgba(255,255,255,0.2)"
+              color2={darkMode ? 'rgba(212, 168, 67, 0.35)' : '#64748B'}
               darkMode={darkMode}
             />
           </div>

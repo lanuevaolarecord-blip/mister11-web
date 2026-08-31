@@ -191,13 +191,20 @@ const LiveStats = ({
 
   const isLocked = isMatchLocked(matchData);
   const isMatchFinished = isLocked;
-  const displayHalf = isMatchFinished ? 2 : (matchSeconds < 2700 ? 1 : 2);
+  const displayHalf = isMatchFinished ? 2 : (matchSeconds < 2700 && (!currentMinute || currentMinute <= 45) ? 1 : 2);
   const displaySeconds = isMatchFinished && Number.isFinite(matchData?.finalSeconds) ? matchData.finalSeconds : matchSeconds;
 
   const containerRef = useRef(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [currentHalf, setCurrentHalf] = useState(displayHalf);
   const [showResetModal, setShowResetModal] = useState(false);
+
+  // Sincronizar automáticamente currentHalf si displayHalf avanza a la 2ª Parte
+  useEffect(() => {
+    if (displayHalf === 2 && currentHalf !== 2) {
+      setCurrentHalf(2);
+    }
+  }, [displayHalf, currentHalf]);
 
   // ── Estados de Navegación por Pestañas ──────────────────────────────────────
   const [activeTab, setActiveTab] = useState('capture'); // 'capture', 'tactical', 'analytics', 'players'
@@ -409,8 +416,10 @@ const LiveStats = ({
       // 1. Filtro de Tiempo
       const m = Number(e.minute || e.time || 0);
       if (m < timeRange[0] || m > timeRange[1]) return false;
-      if (timeFilter === '1T' && e.half !== 1 && m > 45) return false;
-      if (timeFilter === '2T' && e.half !== 2 && m <= 45) return false;
+      const isEvT2 = Number(e.half) === 2 || (!e.half && m > 45);
+      const isEvT1 = Number(e.half) === 1 || (!e.half && m <= 45);
+      if (timeFilter === '1T' && !isEvT1) return false;
+      if (timeFilter === '2T' && !isEvT2) return false;
 
       // 2. Filtro de Equipo
       if (teamFilter === 'home' && e.team === 'away') return false;
@@ -937,7 +946,6 @@ const LiveStats = ({
                       { type: 'recovery',            label: 'Recuper.',        icon: '🛡️', color: '#3B82F6' },
                       { type: 'ball_loss',           label: 'Pérdida',         icon: '🔴', color: '#DC2626' },
                       { type: 'duel_won',            label: 'Duelo\nGanado',   icon: '✊', color: '#10B981' },
-                      { type: 'duel_lost',           label: 'Duelo\nPerdido',  icon: '⚠️', color: '#F97316' },
                       { type: 'foul_against',        label: 'Falta\nContra',   icon: '✋', color: '#EAB308' },
                       { type: 'foul_favor',          label: 'Falta\nFavor',    icon: '⚡', color: '#06B6D4' },
                       { type: 'corner_favor',        label: 'Córner\nFavor',   icon: '🚩', color: '#D4A843' },
@@ -970,11 +978,12 @@ const LiveStats = ({
                                   else if (a.type.includes('foul')) defaultX = 30;
 
                                   const tempId = `local_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`;
+                                  const targetMin = (currentHalf === 2 && (!currentMinute || currentMinute <= 45)) ? 46 : (currentMinute || 1);
                                   const localDoc = { 
                                     id: tempId, 
                                     type: a.type, 
                                     half: currentHalf, 
-                                    minute: currentMinute || 1, 
+                                    minute: targetMin, 
                                     sector: selectedSector, 
                                     x: defaultX, 
                                     y: yCoord, 
@@ -987,8 +996,9 @@ const LiveStats = ({
                                     const realId = await hook(a.type, currentHalf, { 
                                       playerId: activePlayerId, 
                                       sector: selectedSector,
-                                      x: defaultX,
-                                      y: yCoord
+                                      x: defaultX, 
+                                      y: yCoord,
+                                      minute: targetMin
                                     });
                                     if (realId && realId !== tempId) setLocalEvents(prev => prev.filter(e => e.id !== tempId));
                                   }

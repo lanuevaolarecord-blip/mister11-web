@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { generateSessionPDF } from '../utils/pdfGenerator';
 import LiveFieldSession from '../components/LiveFieldSession';
@@ -375,20 +375,21 @@ const Sesiones = () => {
   };
 
   const getSessionsForDate = (dateObj) => {
+    if (!dateObj || typeof dateObj.getFullYear !== 'function' || !Array.isArray(sessions)) return [];
     const y = dateObj.getFullYear();
     const m = String(dateObj.getMonth() + 1).padStart(2, '0');
     const d = String(dateObj.getDate()).padStart(2, '0');
     const dStr = `${y}-${m}-${d}`;
-    return sessions.filter(s => (s.date === dStr || s.fecha === dStr));
+    return (sessions || []).filter(s => s && (s.date === dStr || s.fecha === dStr));
   };
 
   const filteredSessions = useMemo(() => {
-    let list = sessions;
+    let list = Array.isArray(sessions) ? sessions.filter(Boolean) : [];
     if (catFilter !== 'Todas') {
-      list = list.filter(s => (s.category || s.categoria || '') === catFilter);
+      list = list.filter(s => s && (s.category || s.categoria || '') === catFilter);
     }
     if (calendarView === 'dia') {
-      list = list.filter(s => (s.date === selectedCalendarDate || s.fecha === selectedCalendarDate));
+      list = list.filter(s => s && (s.date === selectedCalendarDate || s.fecha === selectedCalendarDate));
     }
     return list;
   }, [sessions, catFilter, calendarView, selectedCalendarDate]);
@@ -1262,8 +1263,8 @@ const Sesiones = () => {
                     {/* Puntos de contenido por sesión */}
                     <div style={{ display: 'flex', gap: '3px', marginTop: '4px', minHeight: '6px' }}>
                       {daySessions.map((s, sIdx) => {
-                        const col = CATEGORY_COLORS[s.category || s.categoria] || '#6B7280';
-                        return <span key={sIdx} style={{ width: 6, height: 6, borderRadius: '50%', background: col }}></span>;
+                        const col = CATEGORY_COLORS[s?.category || s?.categoria] || '#6B7280';
+                        return <span key={s?.id || sIdx} style={{ width: 6, height: 6, borderRadius: '50%', background: col }}></span>;
                       })}
                     </div>
                   </div>
@@ -1474,7 +1475,7 @@ const Sesiones = () => {
                 </div>
 
                 {(() => {
-                  const daySessions = sessions.filter(s => s.date === selectedCalendarDate || s.fecha === selectedCalendarDate);
+                  const daySessions = (sessions || []).filter(s => s && (s.date === selectedCalendarDate || s.fecha === selectedCalendarDate));
                   if (daySessions.length === 0) {
                     return (
                       <div style={{ textAlign: 'center', padding: '24px 10px', color: 'var(--text-secondary)' }}>

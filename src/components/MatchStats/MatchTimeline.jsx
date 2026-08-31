@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { TrendingUp, Clock, Info } from 'lucide-react';
+import { TrendingUp, Clock, Info, HelpCircle, ChevronDown, ChevronUp, X, BookOpen } from 'lucide-react';
 
 export const MatchTimeline = ({
   events = [],
@@ -8,10 +8,26 @@ export const MatchTimeline = ({
   matchDuration = 90
 }) => {
   const [hoveredPoint, setHoveredPoint] = useState(null);
+  const [showGuide, setShowGuide] = useState(false);
+  const [showFormulaModal, setShowFormulaModal] = useState(false);
 
   // Normalizar nombres de equipos con espacios correctos
   const cleanHomeName = (homeTeamName || 'Mi Equipo').trim();
   const cleanAwayName = (awayTeamName || 'Rival').trim();
+
+  const getEventLabel = (type) => {
+    if (!type) return 'Acción';
+    const t = type.toLowerCase();
+    if (t.includes('gol_local') || t === 'gol' || t === 'goal') return 'Gol';
+    if (t.includes('gol_rival')) return 'Gol rival';
+    if (t.includes('yellow') || t.includes('amarilla')) return 'Tarjeta amarilla';
+    if (t.includes('red') || t.includes('roja')) return 'Tarjeta roja';
+    if (t.includes('cambio') || t.includes('substitution')) return 'Cambio';
+    if (t.includes('shot_on')) return 'Tiro a puerta';
+    if (t.includes('shot_off')) return 'Tiro fuera';
+    if (t.includes('corner')) return 'Córner';
+    return 'Evento';
+  };
 
   // Calcular curva de momentum por tramos de 5 minutos (Fórmula profesional)
   const { timelineData, keyEvents, hasRealEvents } = useMemo(() => {
@@ -22,6 +38,7 @@ export const MatchTimeline = ({
 
     const points = [];
     const eventsList = [];
+    const seenMilestones = new Set();
     let accumulatedMomentum = 50; // Punto neutro central
 
     const totalMinutes = Math.max(90, Number(matchDuration) || 90);
@@ -51,10 +68,10 @@ export const MatchTimeline = ({
           label = '⚽ Gol rival';
         } else if (t === 'shot_on_target_own' || (t.includes('shot') && t.includes('on') && isHome)) {
           weight = 2.0;
-          label = '🟢 Tiro a puerta';
+          label = '🟢 Tiro puerta';
         } else if (t === 'shot_on_target_rival' || (t.includes('shot') && t.includes('on') && !isHome)) {
           weight = -2.0;
-          label = '🔴 Tiro a puerta rival';
+          label = '🔴 Tiro puerta rival';
         } else if (t === 'shot_off_target_own' || (t.includes('shot') && t.includes('off') && isHome)) {
           weight = 1.0;
           label = '⬜ Tiro fuera';
@@ -69,10 +86,10 @@ export const MatchTimeline = ({
           label = '🚩 Córner contra';
         } else if (t === 'foul_favor' || t === 'falta_favor') {
           weight = 0.5;
-          label = '⚡ Falta a favor';
+          label = '⚡ Falta favor';
         } else if (t === 'foul_against' || t === 'falta_contra' || (t === 'falta' && !isHome)) {
           weight = -0.5;
-          label = '⚡ Falta en contra';
+          label = '⚡ Falta contra';
         } else if (t === 'duel_won') {
           weight = isHome ? 0.5 : -0.5;
           label = isHome ? '⚔️ Duelo ganado' : '⚔️ Duelo rival';
@@ -91,7 +108,7 @@ export const MatchTimeline = ({
         }
 
         if (label) {
-          eventDescriptions.push(`${label} (${e.playerName || e.player || (isHome ? cleanHomeName : cleanAwayName)})`);
+          eventDescriptions.push(`${label}`);
         }
       });
 
@@ -109,20 +126,34 @@ export const MatchTimeline = ({
       });
     }
 
-    // Extraer hitos clave para marcadores visuales
+    // Extraer hitos clave desduplicados
     rawEventsList.forEach((e, idx) => {
       const min = Number(e.minute ?? e.time ?? 0);
       const isHome = e.team === 'home' || e.isHome === true || e.isOwn === true || e.team === 'own' || (!e.team && !e.isRival);
-      if (['gol', 'goal', 'gol_local', 'gol_rival', 'yellow_card', 'tarjeta_amarilla', 'red_card', 'tarjeta_roja', 'card_yellow_own', 'card_red_own', 'card_yellow_rival', 'card_red_rival', 'cambio', 'substitution'].includes(e.type)) {
-        eventsList.push({
-          id: e.id || `evt-${idx}`,
-          minute: min,
-          type: e.type,
-          player: e.playerName || e.player || (isHome ? cleanHomeName : cleanAwayName),
-          team: isHome ? 'home' : 'away'
-        });
+      const t = e.type || '';
+      
+      const isMilestone = ['gol', 'goal', 'gol_local', 'gol_rival', 'yellow_card', 'tarjeta_amarilla', 'red_card', 'tarjeta_roja', 'card_yellow_own', 'card_red_own', 'card_yellow_rival', 'card_red_rival', 'cambio', 'substitution'].includes(t);
+
+      if (isMilestone) {
+        const playerLabel = e.playerName || e.player || (isHome ? cleanHomeName : cleanAwayName);
+        const eventLabel = getEventLabel(t);
+        const dedupeKey = `${min}_${eventLabel}_${playerLabel}`;
+
+        if (!seenMilestones.has(dedupeKey)) {
+          seenMilestones.add(dedupeKey);
+          eventsList.push({
+            id: e.id || `evt-${idx}`,
+            minute: min,
+            type: t,
+            label: eventLabel,
+            player: playerLabel,
+            team: isHome ? 'home' : 'away'
+          });
+        }
       }
     });
+
+    eventsList.sort((a, b) => a.minute - b.minute);
 
     return {
       timelineData: points,
@@ -167,17 +198,82 @@ export const MatchTimeline = ({
           </h3>
         </div>
         
-        {/* Título normalizado con espacios y capitalización estricta */}
-        <div className="timeline-teams-legend" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <span className="legend-badge gold" style={{ background: '#D4A843', color: '#000', padding: '3px 10px', borderRadius: '6px', fontSize: '12px', fontWeight: '800' }}>
-            {cleanHomeName}
-          </span>
-          <span style={{ fontSize: '12px', fontWeight: '800', color: 'rgba(255,255,255,0.6)' }}>vs</span>
-          <span className="legend-badge green" style={{ background: '#4CAF7D', color: '#FFF', padding: '3px 10px', borderRadius: '6px', fontSize: '12px', fontWeight: '800' }}>
-            {cleanAwayName}
-          </span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+          <button
+            type="button"
+            onClick={() => setShowGuide(prev => !prev)}
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '4px',
+              padding: '4px 8px',
+              borderRadius: '6px',
+              fontSize: '11px',
+              fontWeight: '700',
+              background: 'rgba(212, 168, 67, 0.12)',
+              color: '#D4A843',
+              border: '1px solid rgba(212, 168, 67, 0.3)',
+              cursor: 'pointer'
+            }}
+          >
+            <BookOpen size={12} />
+            <span>Cómo leer</span>
+            {showGuide ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
+          </button>
+          <button
+            type="button"
+            onClick={() => setShowFormulaModal(true)}
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '4px',
+              padding: '4px 8px',
+              borderRadius: '6px',
+              fontSize: '11px',
+              fontWeight: '700',
+              background: 'rgba(255, 255, 255, 0.08)',
+              color: 'var(--text-primary, #fff)',
+              border: '1px solid rgba(255, 255, 255, 0.15)',
+              cursor: 'pointer'
+            }}
+          >
+            <HelpCircle size={12} />
+            <span>¿Cómo se calcula?</span>
+          </button>
+
+          {/* Título normalizado con espacios y capitalización estricta */}
+          <div className="timeline-teams-legend" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <span className="legend-badge gold" style={{ background: '#D4A843', color: '#000', padding: '3px 8px', borderRadius: '6px', fontSize: '11.5px', fontWeight: '800' }}>
+              {cleanHomeName}
+            </span>
+            <span style={{ fontSize: '11px', fontWeight: '800', color: 'rgba(255,255,255,0.6)' }}>vs</span>
+            <span className="legend-badge green" style={{ background: '#4CAF7D', color: '#FFF', padding: '3px 8px', borderRadius: '6px', fontSize: '11.5px', fontWeight: '800' }}>
+              {cleanAwayName}
+            </span>
+          </div>
         </div>
       </div>
+
+      {/* Guía plegable para el entrenador */}
+      {showGuide && (
+        <div style={{
+          background: 'rgba(0,0,0,0.3)',
+          border: '1px solid rgba(212,168,67,0.3)',
+          borderRadius: '8px',
+          padding: '10px 14px',
+          marginTop: '10px',
+          fontSize: '11.5px',
+          color: '#cbd5e1',
+          lineHeight: '1.5'
+        }}>
+          <div style={{ fontWeight: 800, color: '#D4A843', marginBottom: '4px' }}>📖 Cómo leer esta gráfica (Lenguaje de Míster):</div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+            <div>📈 <strong>Curva hacia arriba (por encima del 50%):</strong> Tramo donde tu equipo llevó la iniciativa, pisó área rival o generó tiros y córners.</div>
+            <div>📉 <strong>Curva hacia abajo (por debajo del 50%):</strong> Tramo donde el rival tuvo mayor control, generó ocasiones o te encerró en tu campo.</div>
+            <div>⚡ <strong>Hitos (Iconos sobre el minuto):</strong> Momentos que cambiaron la inercia (goles, tarjetas, cambios tácticos).</div>
+          </div>
+        </div>
+      )}
 
       {!hasRealEvents ? (
         <div style={{ padding: '48px 16px', textAlign: 'center', color: 'var(--partidos-text-muted, #888)' }}>
@@ -193,10 +289,10 @@ export const MatchTimeline = ({
               <rect x={padding.left} y={padding.top} width={graphWidth} height={graphHeight} fill="rgba(255,255,255,0.02)" rx="6" />
 
               {/* Zona superior (Dominio Local) / Zona inferior (Dominio Rival) */}
-              <text x={padding.left + 8} y={padding.top + 14} fill="rgba(212, 168, 67, 0.6)" fontSize="9" fontWeight="800">
+              <text x={padding.left + 8} y={padding.top + 14} fill="rgba(212, 168, 67, 0.7)" fontSize="9" fontWeight="800">
                 ▲ DOMINIO {cleanHomeName.toUpperCase()}
               </text>
-              <text x={padding.left + 8} y={padding.top + graphHeight - 8} fill="rgba(76, 175, 125, 0.6)" fontSize="9" fontWeight="800">
+              <text x={padding.left + 8} y={padding.top + graphHeight - 8} fill="rgba(76, 175, 125, 0.7)" fontSize="9" fontWeight="800">
                 ▼ DOMINIO {cleanAwayName.toUpperCase()}
               </text>
 
@@ -335,7 +431,7 @@ export const MatchTimeline = ({
                 </span>
                 {hoveredPoint.descriptions && hoveredPoint.descriptions.length > 0 && (
                   <div style={{ fontSize: '11px', color: '#cbd5e1', marginTop: '3px' }}>
-                    Eventos: {hoveredPoint.descriptions.join(' · ')}
+                    Acciones en este tramo: {hoveredPoint.descriptions.join(' · ')}
                   </div>
                 )}
               </div>
@@ -349,10 +445,10 @@ export const MatchTimeline = ({
             </div>
           )}
 
-          {/* Lista de hitos clave */}
+          {/* Lista de hitos clave explicados */}
           {keyEvents.length > 0 && (
             <div className="timeline-events-list" style={{ marginTop: '12px' }}>
-              <div className="events-list-title" style={{ fontSize: '12px', fontWeight: '800', color: 'var(--partidos-text-muted, #888)', marginBottom: '6px' }}>
+              <div className="events-list-title" style={{ fontSize: '12px', fontWeight: '800', color: 'var(--partidos-text-muted, #94a3b8)', marginBottom: '6px' }}>
                 Hitos y Eventos del Partido:
               </div>
               <div className="events-chips-scroll" style={{ display: 'flex', gap: '8px', overflowX: 'auto', paddingBottom: '4px' }}>
@@ -371,7 +467,7 @@ export const MatchTimeline = ({
                   }}>
                     <span>{getEventIcon(e.type)}</span>
                     <span style={{ color: '#D4A843' }}>{e.minute}′</span>
-                    <span>{e.player}</span>
+                    <span>{e.label}: {e.player}</span>
                   </div>
                 ))}
               </div>
@@ -379,6 +475,82 @@ export const MatchTimeline = ({
           )}
         </>
       )}
+
+      {/* Modal ¿Cómo se calcula el Momentum? */}
+      {showFormulaModal && (
+        <div 
+          style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(0,0,0,0.7)',
+            zIndex: 9999,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '16px'
+          }}
+          onClick={() => setShowFormulaModal(false)}
+        >
+          <div 
+            style={{
+              background: 'var(--bg-card, #1B3A2D)',
+              border: '1px solid var(--border-light, #2d4a2d)',
+              borderRadius: '12px',
+              maxWidth: '500px',
+              width: '100%',
+              padding: '20px',
+              color: 'var(--text-primary, #fff)',
+              boxShadow: '0 8px 32px rgba(0,0,0,0.4)',
+              maxHeight: '90vh',
+              overflowY: 'auto'
+            }}
+            onClick={e => e.stopPropagation()}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
+              <h3 style={{ margin: 0, fontSize: '16px', fontWeight: '800', color: '#D4A843', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <TrendingUp size={18} /> ¿Cómo se calcula el Momentum (Tramos de 5')?
+              </h3>
+              <button 
+                type="button" 
+                onClick={() => setShowFormulaModal(false)}
+                style={{ background: 'transparent', border: 'none', color: '#888', cursor: 'pointer', padding: '4px' }}
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            <p style={{ fontSize: '12.5px', color: '#cbd5e1', lineHeight: '1.5', margin: '0 0 14px 0' }}>
+              La curva de presión mide el balance de iniciativa entre ambos equipos en intervalos de 5 minutos mediante una ponderación de acciones reales:
+            </p>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '12px' }}>
+              <div style={{ background: 'rgba(0,0,0,0.2)', padding: '8px 10px', borderRadius: '6px' }}>
+                ⚽ <strong>Gol:</strong> ±3.5 pts (Impacto máximo en la dinámica)
+              </div>
+              <div style={{ background: 'rgba(0,0,0,0.2)', padding: '8px 10px', borderRadius: '6px' }}>
+                🎯 <strong>Tiro a puerta:</strong> ±2.0 pts | <strong>Tiro fuera / Córner:</strong> ±1.0 pts
+              </div>
+              <div style={{ background: 'rgba(0,0,0,0.2)', padding: '8px 10px', borderRadius: '6px' }}>
+                ⚔️ <strong>Duelo ganado / Recuperación / Falta a favor:</strong> ±0.5 pts
+              </div>
+              <div style={{ background: 'rgba(0,0,0,0.2)', padding: '8px 10px', borderRadius: '6px' }}>
+                🔄 <strong>Inercia deportiva:</strong> Se aplica suavizado del 70% del tramo anterior + 30% neutro, evitando saltos bruscos y reflejando las fases de dominio sostenido.
+              </div>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => setShowFormulaModal(false)}
+              className="btn-primary"
+              style={{ width: '100%', marginTop: '18px', padding: '10px', fontWeight: '800' }}
+            >
+              ENTENDIDO
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
+
+export default MatchTimeline;

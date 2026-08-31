@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { Table, Search, ArrowUpDown, Download, Check, HelpCircle, X } from 'lucide-react';
+import { downloadCSV } from '../../utils/downloadCSV.js';
 
 export const StatsDataTable = ({
   playerStats = [],
@@ -21,16 +22,34 @@ export const StatsDataTable = ({
 
   const processedData = useMemo(() => {
     return playerStats.map((p, idx) => {
-      const pasesTot = (p.pasesExitosos || 0) + (p.pasesFallidos || 0);
-      const passPct = pasesTot > 0 ? Math.round(((p.pasesExitosos || 0) / pasesTot) * 100) : 0;
-      const xG = p.xG || ((p.tirosPuerta || 0) * 0.25 + (p.goles || 0) * 0.4).toFixed(2);
+      const pasesC = p.pasesExitosos || 0;
+      const pasesF = p.pasesFallidos || 0;
+      const pasesTot = pasesC + pasesF;
+      const passPct = pasesTot > 0 ? Math.round((pasesC / pasesTot) * 100) : 0;
+
+      const duelosG = p.duelosGanados ?? p.entradas ?? 0;
+      const duelosP = p.duelosPerdidos ?? 0;
+      const duelosTot = duelosG + duelosP;
+      const duelPct = duelosTot > 0 ? Math.round((duelosG / duelosTot) * 100) : 0;
+
+      const tirosP = p.tirosPuerta || 0;
+      const tirosTot = Math.max(tirosP, p.tiros || 0);
+      const shotPct = tirosTot > 0 ? Math.round((tirosP / tirosTot) * 100) : 0;
+
+      const recup = p.recuperaciones || 0;
+      const perd = p.perdidas || p.pasesFallidos || 0;
+
+      const xG = p.xG || ((tirosP * 0.25) + ((p.goles || 0) * 0.4)).toFixed(2);
       
-      // Cálculo de nota táctica 1-10
+      // Cálculo de nota táctica mixta 1-10
       const score = 6.0 + 
         (p.goles || 0) * 1.2 + 
         (p.asistencias || 0) * 0.8 + 
         (p.pasesClave || 0) * 0.3 + 
-        (p.recuperaciones || 0) * 0.15 - 
+        (recup * 0.15) +
+        (duelosG * 0.2) -
+        (duelosP * 0.15) -
+        (perd * 0.15) -
         (p.faltas || 0) * 0.2;
       const rating = Math.min(10, Math.max(4.0, score)).toFixed(1);
 
@@ -42,14 +61,20 @@ export const StatsDataTable = ({
         minutos: p.minutos || p.minutes || 90,
         goles: p.goles || 0,
         asistencias: p.asistencias || 0,
-        tiros: p.tiros || 0,
-        tirosPuerta: p.tirosPuerta || 0,
+        tiros: tirosTot,
+        tirosPuerta: tirosP,
+        shotPct,
+        pasesExitosos: pasesC,
+        pasesFallidos: pasesF,
         pasesTot,
-        pasesExitosos: p.pasesExitosos || 0,
         passPct,
+        duelosGanados: duelosG,
+        duelosPerdidos: duelosP,
+        duelosTot,
+        duelPct,
+        recuperaciones: recup,
+        perdidas: perd,
         pasesClave: p.pasesClave || 0,
-        recuperaciones: p.recuperaciones || 0,
-        entradas: p.entradas || 0,
         faltas: p.faltas || 0,
         xG: Number(xG),
         rating: Number(rating)
@@ -75,35 +100,41 @@ export const StatsDataTable = ({
   }, [processedData, searchTerm, sortField, sortAsc]);
 
   // Exportar a CSV
-  const handleExportCSV = () => {
-    const headers = ['Dorsal', 'Nombre', 'Posición', 'Min', 'Goles', 'Asist', 'Tiros Puerta', 'Tiros Totales', 'Pases Exitosos', 'Pases Totales', 'Precisión %', 'Pases Clave', 'Recuperaciones', 'Faltas', 'xG', 'Nota'];
+  const handleExportCSV = async () => {
+    const headers = [
+      'Dorsal', 'Nombre', 'Posición', 'Min', 'Nota', 'Goles', 'Asistencias', 'xG',
+      'Tiros Puerta', 'Tiros Totales', 'Precisión Tiros %',
+      'Pases C', 'Pases F', 'Pases Totales', '% Pase',
+      'Duelos G', 'Duelos P', 'Duelos Totales', '% Duelos',
+      'Recuperaciones', 'Pérdidas', 'Faltas'
+    ];
     const rows = sortedAndFiltered.map(p => [
       p.dorsal,
       `"${p.nombre}"`,
       p.posicion,
       p.minutos,
+      p.rating,
       p.goles,
       p.asistencias,
+      p.xG,
       p.tirosPuerta,
       p.tiros,
+      `${p.shotPct}%`,
       p.pasesExitosos,
+      p.pasesFallidos,
       p.pasesTot,
       `${p.passPct}%`,
-      p.pasesClave,
+      p.duelosGanados,
+      p.duelosPerdidos,
+      p.duelosTot,
+      `${p.duelPct}%`,
       p.recuperaciones,
-      p.faltas,
-      p.xG,
-      p.rating
+      p.perdidas,
+      p.faltas
     ]);
 
-    const csvContent = 'data:text/csv;charset=utf-8,' + [headers.join(','), ...rows.map(e => e.join(','))].join('\n');
-    const encodedUri = encodeURI(csvContent);
-    const link = document.createElement('a');
-    link.setAttribute('href', encodedUri);
-    link.setAttribute('download', `estadisticas_jugadores_${teamName.toLowerCase().replace(/\s+/g, '_')}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    const csvContent = '\uFEFF' + [headers.join(';'), ...rows.map(e => e.join(';'))].join('\n');
+    await downloadCSV(csvContent, `estadisticas_${teamName.toLowerCase().replace(/\s+/g, '_')}.csv`);
   };
 
   return (
@@ -112,7 +143,7 @@ export const StatsDataTable = ({
       <div className="table-controls-bar">
         <div className="table-title">
           <Table size={18} />
-          <h3>Rendimiento Individual de Jugadores ({teamName})</h3>
+          <h3>Rendimiento Individual ({teamName})</h3>
           <button
             type="button"
             onClick={() => setShowHelpModal(true)}
@@ -145,29 +176,30 @@ export const StatsDataTable = ({
       {/* Modal explicativo de fórmulas */}
       {showHelpModal && (
         <div className="event-selector-overlay" onClick={() => setShowHelpModal(false)} style={{ zIndex: 99999 }}>
-          <div className="event-selector-modal" onClick={e => e.stopPropagation()} style={{ maxWidth: '520px', width: '92vw', padding: '22px', borderRadius: '16px' }}>
+          <div className="event-selector-modal" onClick={e => e.stopPropagation()} style={{ maxWidth: '540px', width: '92vw', padding: '22px', borderRadius: '16px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
               <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 900, color: 'var(--partidos-accent, #4CAF7D)', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <HelpCircle size={18} /> ¿Cómo se calculan las métricas individuales?
+                <HelpCircle size={18} /> ¿Cómo se miden las métricas individuales?
               </h3>
               <button type="button" onClick={() => setShowHelpModal(false)} style={{ background: 'none', border: 'none', color: 'var(--partidos-text-muted)', cursor: 'pointer' }}>
                 <X size={18} />
               </button>
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', fontSize: '12px', color: 'var(--partidos-text-primary)', lineHeight: 1.5 }}>
-              <div><strong>⭐ Nota (4.0 - 10.0):</strong> Base de 6.0 + Goles (+1.2) + Asistencias (+0.8) + Pases Clave (+0.3) + Recuperaciones (+0.15) − Faltas (−0.2).</div>
-              <div><strong>⚽ xG (Goles Esperados):</strong> Probabilidad matemática de gol basada en disparos a puerta (0.25) y goles directos (0.40).</div>
-              <div><strong>👟 Pases y Acierto:</strong> Pases completados y recepciones limpias sobre el total intentado.</div>
-              <div><strong>↑ Recuperaciones:</strong> Balones recuperados en transiciones defensivas y duelos exitosos.</div>
-              <div><strong>⚡ Faltas:</strong> Infracciones cometidas registradas por el cuerpo técnico en vivo.</div>
+              <div><strong>⭐ Nota (4.0 - 10.0):</strong> Nota mixta: base 6.0 + Goles (+1.2) + Asistencias (+0.8) + Pases Clave (+0.3) + Recuperaciones (+0.15) + Duelos Ganados (+0.2) − Duelos Perdidos (−0.15) − Pérdidas (−0.15) − Faltas (−0.2).</div>
+              <div><strong>⚽ xG (Goles Esperados):</strong> Probabilidad matemática acumulada según disparos a puerta (0.25) y goles directos (0.40).</div>
+              <div><strong>👟 Pases C/F (%):</strong> Pases Completados (C) vs Fallidos (F) y % de acierto sobre el total intentado.</div>
+              <div><strong>⚔️ Duelos G/P (%):</strong> Duelos Ganados (G) vs Perdidos (P) y % de eficacia en disputas de balón.</div>
+              <div><strong>🛡️ Recup / Pérd:</strong> Balones recuperados vs pérdidas de posesión.</div>
+              <div><strong>🎯 Tiros P/Tot (%):</strong> Disparos a puerta sobre el total de tiros realizados y porcentaje de puntería.</div>
             </div>
           </div>
         </div>
       )}
 
       {/* Tabla con scroll horizontal responsivo */}
-      <div className="table-responsive-wrapper">
-        <table className="pro-stats-table">
+      <div className="table-responsive-wrapper" style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
+        <table className="pro-stats-table" style={{ minWidth: '780px' }}>
           <thead>
             <tr>
               <th onClick={() => handleSort('dorsal')} className="sortable center">#</th>
@@ -177,10 +209,10 @@ export const StatsDataTable = ({
               <th onClick={() => handleSort('goles')} className="sortable center">GOL</th>
               <th onClick={() => handleSort('asistencias')} className="sortable center">AST</th>
               <th onClick={() => handleSort('xG')} className="sortable center">xG</th>
-              <th onClick={() => handleSort('tiros')} className="sortable center">Tiros</th>
-              <th onClick={() => handleSort('pasesExitosos')} className="sortable center">Pases (Acierto)</th>
-              <th onClick={() => handleSort('pasesClave')} className="sortable center">Pases Clave</th>
-              <th onClick={() => handleSort('recuperaciones')} className="sortable center">Recup.</th>
+              <th onClick={() => handleSort('pasesExitosos')} className="sortable center">Pases C/F (%)</th>
+              <th onClick={() => handleSort('duelosGanados')} className="sortable center">Duelos G/P (%)</th>
+              <th onClick={() => handleSort('recuperaciones')} className="sortable center">Rec / Pérd</th>
+              <th onClick={() => handleSort('tirosPuerta')} className="sortable center">Tiros P/Tot (%)</th>
               <th onClick={() => handleSort('faltas')} className="sortable center">Faltas</th>
             </tr>
           </thead>
@@ -205,14 +237,26 @@ export const StatsDataTable = ({
                   <td className="center font-semibold">{p.goles > 0 ? `⚽ ${p.goles}` : '—'}</td>
                   <td className="center">{p.asistencias > 0 ? `👟 ${p.asistencias}` : '—'}</td>
                   <td className="center text-gold">{p.xG > 0 ? p.xG : '0.00'}</td>
-                  <td className="center">{p.tirosPuerta}/{p.tiros}</td>
                   <td className="center">
-                    <span className="pass-stat-box">
-                      {p.pasesExitosos}/{p.pasesTot} ({p.passPct}%)
+                    <span className="pass-stat-box" style={{ fontWeight: 700 }}>
+                      {p.pasesExitosos}/{p.pasesFallidos} <small style={{ opacity: 0.8 }}>({p.passPct}%)</small>
                     </span>
                   </td>
-                  <td className="center">{p.pasesClave > 0 ? p.pasesClave : '—'}</td>
-                  <td className="center">{p.recuperaciones}</td>
+                  <td className="center">
+                    <span style={{ fontWeight: 700 }}>
+                      {p.duelosGanados}/{p.duelosPerdidos} <small style={{ opacity: 0.8 }}>({p.duelPct}%)</small>
+                    </span>
+                  </td>
+                  <td className="center">
+                    <span style={{ fontWeight: 700 }}>
+                      <span style={{ color: '#3B82F6' }}>{p.recuperaciones}</span> / <span style={{ color: '#EF4444' }}>{p.perdidas}</span>
+                    </span>
+                  </td>
+                  <td className="center">
+                    <span style={{ fontWeight: 700 }}>
+                      {p.tirosPuerta}/{p.tiros} <small style={{ opacity: 0.8 }}>({p.shotPct}%)</small>
+                    </span>
+                  </td>
                   <td className="center">{p.faltas}</td>
                 </tr>
               ))
@@ -223,3 +267,5 @@ export const StatsDataTable = ({
     </div>
   );
 };
+
+export default StatsDataTable;

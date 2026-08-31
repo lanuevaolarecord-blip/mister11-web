@@ -1004,12 +1004,12 @@ html.dark .livestats-tab-btn.active {
 
 .jugador-acciones-btns {
   display: grid;
-  grid-template-columns: repeat(7, 1fr);
+  grid-template-columns: repeat(auto-fill, minmax(78px, 1fr));
   gap: 6px;
 }
 
 @media (max-width: 600px) {
-  .jugador-acciones-btns { grid-template-columns: repeat(4, 1fr); }
+  .jugador-acciones-btns { grid-template-columns: repeat(auto-fill, minmax(68px, 1fr)); }
 }
 @media (max-width: 380px) {
   .jugador-acciones-btns { grid-template-columns: repeat(3, 1fr); }

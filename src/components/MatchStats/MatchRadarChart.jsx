@@ -210,8 +210,8 @@ export const MatchRadarChart = ({
       {!hasRealData ? (
         <div style={{ padding: '48px 16px', textAlign: 'center', color: 'var(--partidos-text-muted, #888)' }}>
           <Info size={32} style={{ margin: '0 auto 10px', opacity: 0.6 }} />
-          <div style={{ fontSize: '14px', fontWeight: '700', color: 'var(--partidos-text-primary, #fff)' }}>Sin datos de eventos</div>
-          <div style={{ fontSize: '12px', marginTop: '4px' }}>Registra eventos a pie de campo para generar el radar táctico comparativo.</div>
+          <div style={{ fontSize: '14px', fontWeight: '700', color: 'var(--partidos-text-primary, #fff)' }}>Sin datos suficientes</div>
+          <div style={{ fontSize: '12px', marginTop: '4px' }}>Registra eventos a pie de campo o en el acta para generar el radar táctico comparativo.</div>
         </div>
       ) : (
         <>
@@ -231,15 +231,16 @@ export const MatchRadarChart = ({
                 />
               ))}
 
-              {/* Ejes radiales y etiquetas */}
+              {/* Ejes radiales y etiquetas rotuladas con valor */}
               {axes.map((axis, i) => {
                 const angle = i * angleSlice - Math.PI / 2;
                 const x = center + radius * Math.cos(angle);
                 const y = center + radius * Math.sin(angle);
-                const labelX = center + (radius + 22) * Math.cos(angle);
-                const labelY = center + (radius + 16) * Math.sin(angle);
+                const labelX = center + (radius + 24) * Math.cos(angle);
+                const labelY = center + (radius + 18) * Math.sin(angle);
 
                 const isHovered = activeTooltipAxis === axis.key;
+                const normVal = teamAStats[i];
 
                 return (
                   <g 
@@ -257,14 +258,23 @@ export const MatchRadarChart = ({
                     />
                     <text
                       x={labelX}
-                      y={labelY}
+                      y={labelY - 5}
                       textAnchor="middle"
-                      dy="0.35em"
-                      fontSize="9.5"
-                      fill={isHovered ? '#D4A843' : 'rgba(255, 255, 255, 0.85)'}
-                      fontWeight="700"
+                      fontSize="9"
+                      fill={isHovered ? '#D4A843' : 'rgba(255, 255, 255, 0.9)'}
+                      fontWeight="800"
                     >
                       {axis.label}
+                    </text>
+                    <text
+                      x={labelX}
+                      y={labelY + 7}
+                      textAnchor="middle"
+                      fontSize="8.5"
+                      fill="#D4A843"
+                      fontWeight="700"
+                    >
+                      {normVal} pts
                     </text>
                   </g>
                 );
@@ -322,7 +332,7 @@ export const MatchRadarChart = ({
             </svg>
           </div>
 
-          {/* Tooltip interactivo / Desglose del eje seleccionado */}
+          {/* Tooltip interactivo / Desglose del eje seleccionado con conteos crudos */}
           {activeTooltipAxis && (
             <div style={{
               background: 'rgba(15, 26, 15, 0.95)',
@@ -344,22 +354,88 @@ export const MatchRadarChart = ({
                 </span>
               </div>
               <div style={{ display: 'flex', gap: '12px', textAlign: 'right', fontWeight: '800' }}>
-                <span style={{ color: '#D4A843' }}>{homeTeamName}: {rawCounts[activeTooltipAxis]?.home}</span>
-                <span style={{ color: '#4CAF7D' }}>{awayTeamName}: {rawCounts[activeTooltipAxis]?.away}</span>
+                <span style={{ color: '#D4A843' }}>{homeTeamName}: {rawCounts[activeTooltipAxis]?.home} {rawCounts[activeTooltipAxis]?.unit}</span>
+                <span style={{ color: '#4CAF7D' }}>{awayTeamName}: {rawCounts[activeTooltipAxis]?.away} {rawCounts[activeTooltipAxis]?.unit}</span>
               </div>
             </div>
           )}
 
-          {/* Leyenda comparativa */}
-          <div className="radar-legend">
-            <div className="legend-item">
-              <span className="legend-box gold" />
-              <span>{homeTeamName} (Local)</span>
+          {/* Leyenda comparativa fija */}
+          <div className="radar-legend" style={{ display: 'flex', justifyContent: 'center', gap: '20px', marginBottom: '14px' }}>
+            <div className="legend-item" style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', fontWeight: 800 }}>
+              <span className="legend-box gold" style={{ width: '12px', height: '12px', background: '#D4A843', borderRadius: '3px', display: 'inline-block' }} />
+              <span style={{ color: '#D4A843' }}>{homeTeamName} (Local)</span>
             </div>
-            <div className="legend-item">
-              <span className="legend-box green" />
-              <span>{awayTeamName} (Visitante)</span>
+            <div className="legend-item" style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', fontWeight: 800 }}>
+              <span className="legend-box green" style={{ width: '12px', height: '12px', background: '#4CAF7D', borderRadius: '3px', display: 'inline-block' }} />
+              <span style={{ color: '#4CAF7D' }}>{awayTeamName} (Visitante)</span>
             </div>
+          </div>
+
+          {/* TABLA COMPARATIVA DE RESPALDO (Fuente de verdad visual) */}
+          <div className="radar-table-wrapper" style={{ marginTop: '10px', overflowX: 'auto', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '10px' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '11.5px', textAlign: 'left' }}>
+              <thead>
+                <tr style={{ background: 'rgba(0,0,0,0.3)', borderBottom: '1px solid rgba(255,255,255,0.12)' }}>
+                  <th style={{ padding: '8px 10px', color: 'var(--partidos-text-muted, #94a3b8)', fontWeight: 800 }}>MÉTRICA</th>
+                  <th style={{ padding: '8px 10px', color: '#D4A843', fontWeight: 900 }}>{homeTeamName} (L)</th>
+                  <th style={{ padding: '8px 10px', color: '#4CAF7D', fontWeight: 900 }}>{awayTeamName} (V)</th>
+                  <th style={{ padding: '8px 10px', color: 'var(--partidos-text-muted, #94a3b8)', fontWeight: 800 }}>NORMALIZADO</th>
+                  <th style={{ padding: '8px 10px', textAlign: 'center', color: 'var(--partidos-text-muted, #94a3b8)', fontWeight: 800 }}>GANADOR</th>
+                </tr>
+              </thead>
+              <tbody>
+                {axes.map((axis, i) => {
+                  const raw = rawCounts[axis.key];
+                  const normA = teamAStats[i];
+                  const normB = teamBStats[i];
+                  let winnerLabel = 'Empate';
+                  let winnerColor = '#94a3b8';
+                  let winnerBg = 'rgba(148, 163, 184, 0.15)';
+
+                  if (normA > normB) {
+                    winnerLabel = homeTeamName;
+                    winnerColor = '#D4A843';
+                    winnerBg = 'rgba(212, 168, 67, 0.15)';
+                  } else if (normB > normA) {
+                    winnerLabel = awayTeamName;
+                    winnerColor = '#4CAF7D';
+                    winnerBg = 'rgba(76, 175, 125, 0.15)';
+                  }
+
+                  return (
+                    <tr key={axis.key} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                      <td style={{ padding: '8px 10px', fontWeight: 700, color: '#FFFFFF' }}>
+                        {axis.label}
+                      </td>
+                      <td style={{ padding: '8px 10px', color: '#D4A843', fontWeight: 800 }}>
+                        {raw?.home ?? '-'}
+                      </td>
+                      <td style={{ padding: '8px 10px', color: '#4CAF7D', fontWeight: 800 }}>
+                        {raw?.away ?? '-'}
+                      </td>
+                      <td style={{ padding: '8px 10px', color: '#cbd5e1' }}>
+                        {normA} vs {normB} pts
+                      </td>
+                      <td style={{ padding: '8px 10px', textAlign: 'center' }}>
+                        <span style={{
+                          padding: '2px 8px',
+                          borderRadius: '10px',
+                          fontSize: '10.5px',
+                          fontWeight: 800,
+                          color: winnerColor,
+                          background: winnerBg,
+                          border: `1px solid ${winnerColor}40`,
+                          display: 'inline-block'
+                        }}>
+                          {winnerLabel}
+                        </span>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
           </div>
         </>
       )}

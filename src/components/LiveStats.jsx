@@ -826,11 +826,15 @@ const LiveStats = ({
                     const ACTIONS = [
                       { type: 'shot_on_target_own',  label: 'Tiro a\nPuerta',  icon: '🎯', color: '#4CAF7D' },
                       { type: 'shot_off_target_own', label: 'Tiro\nFuera',     icon: '⬜', color: '#94A3B8' },
-                      { type: 'recovery',            label: 'Pase\nClave',     icon: '⭐', color: '#D4A843' },
-                      { type: 'recovery',            label: 'Pase\nComplet.',  icon: '✅', color: '#0D9488' },
-                      { type: 'recovery',            label: 'Recuper.',        icon: '↑',  color: '#3B82F6' },
-                      { type: 'foul_against',        label: 'Falta',           icon: '⚡', color: '#F97316' },
-                      { type: 'duel_won',            label: 'Duelo\nGanado',   icon: '✊', color: '#0D9488' },
+                      { type: 'pass_completed',      label: 'Pase\nComplet.',  icon: '✅', color: '#0D9488' },
+                      { type: 'pass_failed',         label: 'Pase\nFallido',   icon: '❌', color: '#EF4444' },
+                      { type: 'key_pass',            label: 'Pase\nClave',     icon: '⭐', color: '#D4A843' },
+                      { type: 'recovery',            label: 'Recuper.',        icon: '🛡️', color: '#3B82F6' },
+                      { type: 'ball_loss',           label: 'Pérdida',         icon: '🔴', color: '#DC2626' },
+                      { type: 'duel_won',            label: 'Duelo\nGanado',   icon: '✊', color: '#10B981' },
+                      { type: 'duel_lost',           label: 'Duelo\nPerdido',  icon: '⚠️', color: '#F97316' },
+                      { type: 'foul_against',        label: 'Falta\nContra',   icon: '✋', color: '#EAB308' },
+                      { type: 'foul_favor',          label: 'Falta\nFavor',    icon: '⚡', color: '#06B6D4' },
                     ];
                     return (
                       <>
@@ -1145,17 +1149,27 @@ const LiveStats = ({
                 const pid = p.id;
                 const evsByPlayer = filteredEvents.filter(e => e.playerId === pid || e.fromPlayerId === pid);
                 const countP = (t) => evsByPlayer.filter(e => e.type === t).length;
+                const pasesC = countP('pass_completed') + countP('key_pass');
+                const pasesF = countP('pass_failed');
+                const duelosG = countP('duel_won');
+                const duelosP = countP('duel_lost');
+                const recup = countP('recovery');
+                const perd = countP('ball_loss') + countP('pass_failed');
+
                 return {
                   ...p,
                   goles: filteredEvents.filter(e => (e.type === 'gol_local' || e.type === 'goal') && e.playerId === pid).length,
                   asistencias: filteredEvents.filter(e => e.asistenciaId === pid).length,
                   tiros: countP('shot_on_target_own') + countP('shot_off_target_own'),
                   tirosPuerta: countP('shot_on_target_own'),
-                  pasesExitosos: countP('recovery') + countP('duel_won'),
-                  pasesFallidos: countP('loss'),
-                  pasesClave: countP('duel_won'),
-                  recuperaciones: countP('recovery'),
-                  entradas: countP('duel_won') + countP('duel_lost'),
+                  pasesExitosos: pasesC,
+                  pasesFallidos: pasesF,
+                  duelosGanados: duelosG,
+                  duelosPerdidos: duelosP,
+                  recuperaciones: recup,
+                  perdidas: perd,
+                  pasesClave: countP('key_pass'),
+                  entradas: duelosG + duelosP,
                   faltas: countP('foul_against'),
                   xG: parseFloat(((countP('shot_on_target_own') * 0.35) + (countP('shot_off_target_own') * 0.05)).toFixed(2))
                 };

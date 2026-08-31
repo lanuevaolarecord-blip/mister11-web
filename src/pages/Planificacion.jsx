@@ -163,27 +163,29 @@ const Planificacion = () => {
   const [macroCounts, setMacroCounts] = useState({ sesiones: 3, sesionesMax: 10, trabajo: 4, trabajoMax: 10, compet: 2, competMax: 10 });
   const [isLoaded, setIsLoaded] = useState(false);
 
-  // ── LOAD FROM FIRESTORE ──────────────────────────────────────────
+  // ── LOAD & LISTEN REALTIME FROM FIRESTORE ──────────────────────────
   useEffect(() => {
-    const load = async () => {
-      if (!user || !activeTeamId) return;
-      try {
-        const ref = doc(db, getTeamPath(), 'planificacion', 'config');
-        const snap = await getDoc(ref);
+    if (!user || !activeTeamId) return;
+    try {
+      const ref = doc(db, getTeamPath(), 'planificacion', 'config');
+      const unsub = onSnapshot(ref, (snap) => {
         if (snap.exists()) {
           const d = snap.data();
           if (d.macroInfo) setMacroInfo(prev => ({ ...prev, ...d.macroInfo }));
           if (d.microcycles?.length > 0) setMicrocycles(d.microcycles);
           if (d.macroCounts) setMacroCounts(d.macroCounts);
         }
-      } catch (e) { 
-        console.error(e); 
-      } finally {
         setIsLoaded(true);
-      }
-    };
-    load();
-  }, [user, activeTeamId]);
+      }, (err) => {
+        console.warn('[Planificacion] Error en listener tiempo real:', err);
+        setIsLoaded(true);
+      });
+      return () => unsub();
+    } catch (e) { 
+      console.error(e); 
+      setIsLoaded(true);
+    }
+  }, [user, activeTeamId, getTeamPath]);
 
   // Auto-save planning configuration to Firestore on changes (with a 1.5s debounce)
   useEffect(() => {
@@ -635,7 +637,8 @@ const Planificacion = () => {
         const headers = ['Día', 'Actividad / Estado', 'Distribución de Trabajo (% Fis / Tec / Tac)'];
         const rows = DAYS_LABELS.map((day, idx) => {
           const isTrainingDay = macroInfo.trainingDays.includes(idx);
-          const isMatchDay = idx === 6; // Domingo default
+          const mcMatchDay = mc.matchDayOfWeek ?? macroInfo.matchDayOfWeek ?? 5;
+          const isMatchDay = idx === mcMatchDay;
           
           let activityText = 'Descanso';
           let detailsText = '-';
@@ -915,37 +918,44 @@ const Planificacion = () => {
               <button key={idx}
                 className={`plan-day-btn ${macroInfo.trainingDays.includes(idx) ? 'active' : ''} ${conflictDays.includes(idx) ? 'conflict' : ''}`}
                 onClick={() => toggleDay(idx)}
-                title={`${day} = ${getMdLabel(idx)}`}
+                title={day}
               >
                 {day}
-                <span style={{ fontSize: '9px', display: 'block', opacity: 0.8, fontWeight: 700 }}>{getMdLabel(idx)}</span>
               </button>
             ))}
           </div>
-          {/* (A) Selector de Día de Partido */}
+          {/* (A) Selector de Día de Partido Reactivo */}
           <div style={{ marginTop: '12px', display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
-            <span style={{ fontSize: '11px', fontWeight: 800, color: '#D4A843', textTransform: 'uppercase' }}>⚽ Día Partido (MD):</span>
+            <span style={{ fontSize: '11px', fontWeight: 800, color: '#D4A843', textTransform: 'uppercase' }}>⚽ Día de Partido:</span>
             <div style={{ display: 'flex', gap: '4px' }}>
-              {DAYS_LABELS.map((day, idx) => (
-                <button
-                  key={idx}
-                  type="button"
-                  onClick={() => setMacroInfo(p => ({ ...p, matchDayOfWeek: idx }))}
-                  style={{
-                    padding: '4px 8px', borderRadius: '6px', fontSize: '11px', fontWeight: 800, cursor: 'pointer',
-                    border: `1.5px solid ${macroInfo.matchDayOfWeek === idx ? '#D4A843' : 'rgba(212,168,67,0.3)'}`,
-                    background: macroInfo.matchDayOfWeek === idx ? 'rgba(212,168,67,0.2)' : 'transparent',
-                    color: macroInfo.matchDayOfWeek === idx ? '#D4A843' : 'inherit',
-                    transition: 'all 0.15s'
-                  }}
-                >
-                  {day}
-                </button>
-              ))}
+              {DAYS_LABELS.map((day, idx) => {
+                const currentMc = microcycles.find(m => m.id === selectedMicro) || microcycles[0];
+                const activeMd = currentMc?.matchDayOfWeek ?? macroInfo.matchDayOfWeek ?? 5;
+                const isSelected = activeMd === idx;
+                return (
+                  <button
+                    key={idx}
+                    type="button"
+                    onClick={() => {
+                      setMacroInfo(p => ({ ...p, matchDayOfWeek: idx }));
+                      setMicrocycles(prev => prev.map(m => m.id === selectedMicro ? { ...m, matchDayOfWeek: idx } : m));
+                    }}
+                    style={{
+                      padding: '4px 8px', borderRadius: '6px', fontSize: '11px', fontWeight: 800, cursor: 'pointer',
+                      border: `1.5px solid ${isSelected ? '#D4A843' : 'rgba(212,168,67,0.3)'}`,
+                      background: isSelected ? 'rgba(212,168,67,0.2)' : 'transparent',
+                      color: isSelected ? '#D4A843' : 'inherit',
+                      transition: 'all 0.15s'
+                    }}
+                  >
+                    {day}
+                  </button>
+                );
+              })}
             </div>
             {conflictDays.length > 0 && (
               <span style={{ fontSize: '11px', color: '#F59E0B', background: 'rgba(245,158,11,0.12)', border: '1px solid rgba(245,158,11,0.3)', borderRadius: '6px', padding: '3px 8px' }}>
-                ⚠️ Entreno en MD{conflictDays.includes(macroInfo.matchDayOfWeek) ? '' : '-1'} — posible fatiga
+                ⚠️ Entreno en MD-1 — posible fatiga
               </span>
             )}
           </div>
@@ -1156,17 +1166,26 @@ const Planificacion = () => {
                 ))}
               </tr>
 
-              {/* DÍA DE PARTIDO */}
+              {/* DÍA DE PARTIDO POR MICROCICLO */}
               <tr className="plan-mrow plan-mrow-matchday" style={{ background: 'rgba(212,168,67,0.08)' }}>
                 <td className="plan-msticky plan-mlabel-cell" style={{ color: '#D4A843', fontWeight: 900 }}>⚽ DÍA PARTIDO</td>
-                {microcycles.map(m => (
-                  <td key={m.id} className="plan-mcell" style={{ textAlign: 'center' }}>
-                    <span style={{ fontSize: '10px', fontWeight: 900, color: '#D4A843', letterSpacing: '0.03em' }}>
-                      {DAYS_LABELS[macroInfo.matchDayOfWeek ?? 5]}
-                    </span>
-                    <span style={{ display: 'block', fontSize: '9px', color: 'rgba(212,168,67,0.7)', fontWeight: 700 }}>MD</span>
-                  </td>
-                ))}
+                {microcycles.map(m => {
+                  const mMatchDay = m.matchDayOfWeek ?? macroInfo.matchDayOfWeek ?? 5;
+                  return (
+                    <td key={m.id} className="plan-mcell" style={{ textAlign: 'center' }}>
+                      <select
+                        value={mMatchDay}
+                        onChange={e => handleMicroChange(m.id, 'matchDayOfWeek', Number(e.target.value))}
+                        className="plan-cell-select"
+                        style={{ fontSize: '10px', fontWeight: 900, color: '#D4A843', cursor: 'pointer', textAlign: 'center' }}
+                      >
+                        {DAYS_LABELS.map((dl, dIdx) => (
+                          <option key={dIdx} value={dIdx}>{dl}</option>
+                        ))}
+                      </select>
+                    </td>
+                  );
+                })}
               </tr>
 
               {/* Nº MICROCICLO */}
@@ -1456,7 +1475,8 @@ const Planificacion = () => {
             {DAYS_LABELS.map((day, idx) => {
               const currentMicro = microcycles.find(m => m.id === selectedMicro) || microcycles[0];
               const isTrainingDay = macroInfo.trainingDays.includes(idx);
-              const isMatchDay = idx === 6; // Sunday default
+              const activeMatchDay = currentMicro?.matchDayOfWeek ?? macroInfo.matchDayOfWeek ?? 5;
+              const isMatchDay = idx === activeMatchDay;
               const isRestDay = !isTrainingDay && !isMatchDay;
               
               let statusText = 'Descanso';
@@ -1464,7 +1484,7 @@ const Planificacion = () => {
               let statusBg = 'transparent';
               
               if (isMatchDay) {
-                statusText = 'Día de Partido';
+                statusText = '🏆 Día de Partido';
                 statusColor = '#8C6D1F';
                 statusBg = '#FDF3DC';
               } else if (isTrainingDay) {
@@ -1547,9 +1567,8 @@ const Planificacion = () => {
               ¿Reubicar días de entrenamiento?
             </h3>
             <p style={{ fontSize: '13px', color: 'var(--text-secondary)', lineHeight: 1.5, marginBottom: '16px' }}>
-              El día de partido actual es <strong>{DAYS_LABELS[macroInfo.matchDayOfWeek ?? 5]} (MD)</strong>. 
-              Al confirmar, los {macroInfo.trainingDays.length} días de entreno se ajustarán automáticamente a 
-              <strong> MD-4, MD-2 y MD-1</strong> para evitar sobrecargas el día de competición.
+              El día de partido seleccionado para esta semana es <strong>{DAYS_LABELS[microcycles.find(m => m.id === selectedMicro)?.matchDayOfWeek ?? macroInfo.matchDayOfWeek ?? 5]}</strong>. 
+              Al confirmar, los {macroInfo.trainingDays.length} días de entreno se ajustarán automáticamente para equilibrar la carga previa al encuentro competitivo.
             </p>
             <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
               <button

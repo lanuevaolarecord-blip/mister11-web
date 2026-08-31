@@ -342,7 +342,8 @@ const Dashboard = () => {
       case 'Este microciclo': {
         return dayLabelsShort.map((dayLabel, idx) => {
           const isTrainingDay = macroInfo.trainingDays.includes(idx);
-          const isMatchDay = idx === 6;
+          const mcMatchDay = activeMicrocycle?.matchDayOfWeek ?? macroInfo?.matchDayOfWeek ?? 5;
+          const isMatchDay = idx === mcMatchDay;
           let val = 0;
           if (isMatchDay) {
             val = 90;

@@ -272,16 +272,19 @@ const Partidos = () => {
   const { events: liveEvents, addLiveEvent, resetLiveStats } = useLiveStats(effectiveTeamId, matchData?.id || null, ctxCurrentMinute || 0, derivedHalf);
 
   const effectiveLiveEvents = useMemo(() => {
-    if (liveEvents && liveEvents.length > 0) {
-      return liveEvents;
-    }
-    if (matchData?.liveStatsEvents && matchData.liveStatsEvents.length > 0) {
-      return matchData.liveStatsEvents;
-    }
-    if (matchData?.events && matchData.events.length > 0) {
-      return matchData.events;
-    }
-    return [];
+    // Fuente principal: liveStats de Firestore (captura en tiempo real)
+    const liveBase = (liveEvents && liveEvents.length > 0)
+      ? liveEvents
+      : (matchData?.liveStatsEvents && matchData.liveStatsEvents.length > 0
+          ? matchData.liveStatsEvents
+          : []);
+    // Eventos del Match-Day (goles, tarjetas, sustituciones registrados en bitácora)
+    const matchDayEvents = (matchData?.events || []).filter(Boolean);
+    // Unir ambas fuentes deduplicando por id (liveBase tiene precedencia)
+    const liveIds = new Set(liveBase.map(e => e?.id).filter(Boolean));
+    const extraFromMatchDay = matchDayEvents.filter(e => e && e.id && !liveIds.has(e.id));
+    const merged = [...liveBase, ...extraFromMatchDay];
+    return merged.length > 0 ? merged : [];
   }, [liveEvents, matchData?.liveStatsEvents, matchData?.events]);
 
   // Derivados 100% canónicos desde events
@@ -441,8 +444,25 @@ const Partidos = () => {
       }
     };
 
-    // Limpiar campos undefined para garantizar compatibilidad con Firestore
-    const cleanUpdated = JSON.parse(JSON.stringify(updated));
+    // Limpiar campos undefined/Timestamp para garantizar compatibilidad con Firestore
+    // JSON.parse/stringify falla con objetos Timestamp {seconds, nanoseconds}
+    const deepClean = (obj) => {
+      if (obj === null || obj === undefined) return null;
+      if (typeof obj !== 'object') return obj;
+      if (Array.isArray(obj)) return obj.map(deepClean).filter(v => v !== undefined);
+      // Detectar Firestore Timestamp serializado y convertir a ISO string
+      if (obj.seconds !== undefined && obj.nanoseconds !== undefined) {
+        try { return new Date(obj.seconds * 1000).toISOString(); } catch { return null; }
+      }
+      const result = {};
+      for (const [k, v] of Object.entries(obj)) {
+        if (v === undefined) continue;
+        const cleaned = deepClean(v);
+        if (cleaned !== undefined) result[k] = cleaned;
+      }
+      return result;
+    };
+    const cleanUpdated = deepClean(updated);
     setMatchData(cleanUpdated);
 
     try {

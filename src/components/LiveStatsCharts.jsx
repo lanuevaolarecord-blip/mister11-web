@@ -220,20 +220,26 @@ export const HalfBreakdown = ({ events = [], darkMode: darkModeProp }) => {
   const cardBg = darkMode ? 'rgba(255,255,255,0.06)' : '#F1F5F9';
   const borderColor = darkMode ? 'rgba(255,255,255,0.12)' : '#CBD5E1';
 
-  // Lógica robusta de detección de mitad (por half numérico/string o por minuto > 45)
+  // Lógica robusta de detección de mitad:
+  // 1) half explícito como número o string "1"/"2"
+  // 2) Fallback: minuto > 45 => 2T, ≤ 45 => 1T
   const isT2 = (e) => {
     if (!e) return false;
-    const h = Number(e.half);
-    if (h === 2) return true;
-    if (h === 1) return false;
+    // Evaluar half como número independientemente del tipo almacenado
+    if (e.half !== undefined && e.half !== null && e.half !== '') {
+      const h = Number(e.half);
+      if (!isNaN(h) && h > 0) return h === 2;
+    }
+    // Fallback por minuto
     const m = Number(e.minute || e.minuto || e.time || 0);
     return m > 45;
   };
   const isT1 = (e) => {
     if (!e) return false;
-    const h = Number(e.half);
-    if (h === 1) return true;
-    if (h === 2) return false;
+    if (e.half !== undefined && e.half !== null && e.half !== '') {
+      const h = Number(e.half);
+      if (!isNaN(h) && h > 0) return h === 1;
+    }
     const m = Number(e.minute || e.minuto || e.time || 0);
     return m <= 45;
   };
@@ -241,15 +247,68 @@ export const HalfBreakdown = ({ events = [], darkMode: darkModeProp }) => {
   const safeEvents = Array.isArray(events) ? events.filter(Boolean) : [];
   const t1Events = safeEvents.filter(isT1);
   const t2Events = safeEvents.filter(isT2);
+  const totalEvents = t1Events.length + t2Events.length;
 
   const getCount = (list, types) => list.filter((e) => types.includes(e.type)).length;
 
   const items = [
-    { label: 'Eventos totales', t1: t1Events.length, t2: t2Events.length },
-    { label: 'Remates propios', t1: getCount(t1Events, ['shot_on_target_own', 'shot_off_target_own']), t2: getCount(t2Events, ['shot_on_target_own', 'shot_off_target_own']) },
-    { label: 'Recuperaciones', t1: getCount(t1Events, ['recovery']), t2: getCount(t2Events, ['recovery']) },
-    { label: 'Faltas cometidas', t1: getCount(t1Events, ['foul_against']), t2: getCount(t2Events, ['foul_against']) },
+    {
+      label: 'Eventos totales',
+      icon: '📊',
+      t1: t1Events.length,
+      t2: t2Events.length,
+    },
+    {
+      label: 'Remates propios',
+      icon: '🎯',
+      t1: getCount(t1Events, ['shot_on_target_own', 'shot_off_target_own', 'gol_local']),
+      t2: getCount(t2Events, ['shot_on_target_own', 'shot_off_target_own', 'gol_local']),
+    },
+    {
+      label: 'Recuperaciones',
+      icon: '🔄',
+      t1: getCount(t1Events, ['recovery']),
+      t2: getCount(t2Events, ['recovery']),
+    },
+    {
+      label: 'Goles propios',
+      icon: '⚽',
+      t1: getCount(t1Events, ['gol_local', 'goal_own']),
+      t2: getCount(t2Events, ['gol_local', 'goal_own']),
+    },
+    {
+      label: 'Faltas cometidas',
+      icon: '⚡',
+      t1: getCount(t1Events, ['foul_against']),
+      t2: getCount(t2Events, ['foul_against']),
+    },
+    {
+      label: 'Tarjetas',
+      icon: '🟨',
+      t1: getCount(t1Events, ['amarilla', 'roja', 'card_yellow_own', 'card_red_own']),
+      t2: getCount(t2Events, ['amarilla', 'roja', 'card_yellow_own', 'card_red_own']),
+    },
+    {
+      label: 'Córners a favor',
+      icon: '🚩',
+      t1: getCount(t1Events, ['corner_favor']),
+      t2: getCount(t2Events, ['corner_favor']),
+    },
+    {
+      label: 'Duelos ganados',
+      icon: '✊',
+      t1: getCount(t1Events, ['duel_won']),
+      t2: getCount(t2Events, ['duel_won']),
+    },
   ];
+
+  if (totalEvents === 0) {
+    return (
+      <div style={{ padding: '20px', textAlign: 'center', color: subLabelColor, fontSize: '13px', fontStyle: 'italic' }}>
+        Sin eventos registrados para el desglose por mitades.
+      </div>
+    );
+  }
 
   return (
     <div style={{
@@ -268,12 +327,21 @@ export const HalfBreakdown = ({ events = [], darkMode: darkModeProp }) => {
           flexDirection: 'column',
           gap: '4px',
         }}>
-          <span style={{ fontSize: '11px', fontWeight: 900, color: labelColor }}>{item.label}</span>
+          <span style={{ fontSize: '11px', fontWeight: 900, color: labelColor }}>
+            {item.icon} {item.label}
+          </span>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', fontWeight: 900 }}>
             <span style={{ color: '#D4A843' }}>1T: {item.t1}</span>
             <span style={{ color: subLabelColor }}>/</span>
             <span style={{ color: '#4CAF7D' }}>2T: {item.t2}</span>
           </div>
+          {/* Barra mini de progreso por mitad */}
+          {(item.t1 + item.t2) > 0 && (
+            <div style={{ display: 'flex', height: '3px', borderRadius: '2px', overflow: 'hidden', background: borderColor, marginTop: '2px' }}>
+              <div style={{ width: `${Math.round((item.t1 / (item.t1 + item.t2)) * 100)}%`, background: '#D4A843', transition: 'width 0.4s ease' }} />
+              <div style={{ flex: 1, background: '#4CAF7D' }} />
+            </div>
+          )}
         </div>
       ))}
     </div>

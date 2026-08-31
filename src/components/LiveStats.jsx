@@ -510,11 +510,14 @@ const LiveStats = ({
       return;
     }
     const tempId = `local_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`;
+    const safeMinute = currentHalf === 2
+      ? Math.max(46, (currentMinute && currentMinute > 0 ? currentMinute : 46))
+      : Math.max(1, (currentMinute && currentMinute > 0 ? currentMinute : 1));
     const localDoc = {
       id: tempId,
       type,
       half: currentHalf,
-      minute: currentMinute || 1,
+      minute: safeMinute,
       sector: selectedSector,
       x: 50,
       y: currentHalf === 1 ? 30 : 70,
@@ -557,7 +560,10 @@ const LiveStats = ({
       id: tempId,
       type,
       half: targetHalf,
-      minute: currentMinute || 1,
+      // Garantizar minuto coherente: 2T siempre >= 46
+      minute: targetHalf === 2
+        ? Math.max(46, (currentMinute && currentMinute > 0 ? currentMinute : 46))
+        : Math.max(1, (currentMinute && currentMinute > 0 ? currentMinute : 1)),
       sector: effectiveSector,
       x: xCoord,
       y: yCoord,

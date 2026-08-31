@@ -211,13 +211,6 @@ export const calculateMinutesFromEvents = (
   // Normalizar estado de asistencia
   const normStatus = attendanceStatus ? String(attendanceStatus).toLowerCase().trim() : null;
 
-  if (normStatus === 'ausente' || normStatus === 'absent' || normStatus === 'not_going') {
-    return { minutes: 0, source: 'absent', detail: 'Ausente (No asistió)', eventsUsed: [] };
-  }
-  if (normStatus === 'justificado' || normStatus === 'justified') {
-    return { minutes: 0, source: 'justified', detail: 'Falta justificada', eventsUsed: [] };
-  }
-
   // Filtrar eventos válidos (excluyendo minutos que superen la duración del partido)
   const validEvents = (allEvents || []).filter(e => {
     if (!e || e.isValid === false) return false;
@@ -236,6 +229,22 @@ export const calculateMinutesFromEvents = (
   const subInEvents = subEvents.filter(e =>
     String(e.subInId || e.jugadorEntraId || e.playerInId || e.inId || '') === pid
   );
+
+  const hasSubInEvent = subInEvents.length > 0;
+  const hasPlayerEvents = validEvents.some(e =>
+    String(e.playerId || e.jugadorId || e.fromPlayerId || e.asistenciaId || '') === pid
+  );
+  const isActuallyOnField = isTitular || hasSubInEvent || hasPlayerEvents;
+
+  // Si el jugador estuvo en el campo (titular, sustituto o eventos), NO PUEDE SER AUSENTE
+  if (!isActuallyOnField) {
+    if (normStatus === 'ausente' || normStatus === 'absent' || normStatus === 'not_going') {
+      return { minutes: 0, source: 'absent', detail: 'Ausente (No asistió)', eventsUsed: [] };
+    }
+    if (normStatus === 'justificado' || normStatus === 'justified') {
+      return { minutes: 0, source: 'justified', detail: 'Falta justificada', eventsUsed: [] };
+    }
+  }
 
   const rawSubOutMin = subOutEvents.length > 0
     ? parseInt(subOutEvents[0].minute || subOutEvents[0].minuto || subOutEvents[0].min || duration, 10)
@@ -693,11 +702,31 @@ export const buildSmartMatchSheetActual = (
     const isSub = suplentes.includes(pid);
     const isCalled = convocados.includes(pid) || isStarter || isSub;
 
+    // Detectar si el jugador tuvo eventos en el campo o entró de cambio
+    const hasPlayerEvents = allEvents.some(e => {
+      if (!e || e.isValid === false) return false;
+      return String(e.playerId || e.jugadorId || e.fromPlayerId || e.asistenciaId || '') === pid;
+    });
+    const hasSubIn = allEvents.some(e => {
+      if (!e || e.isValid === false) return false;
+      const type = e.type || '';
+      return (type === 'cambio' || type === 'sustitucion') &&
+        String(e.subInId || e.jugadorEntraId || e.playerInId || e.inId || '') === pid;
+    });
+    const isActuallyOnField = isStarter || hasSubIn || hasPlayerEvents;
+
     const isManual = existing.source === 'manual';
     let status = existing.status;
 
-    if (!status || (!isManual && !options.preserveManual)) {
-      if (isCalled) {
+    // Regla de coherencia fáctica: si jugó o es titular, NUNCA puede ser ausente
+    if (isActuallyOnField) {
+      if (!status || status === 'ausente' || status === 'sin_registro' || (!isManual && !options.preserveManual)) {
+        status = (existing.lateMin && existing.lateMin > 0) ? 'tarde' : 'presente';
+      }
+    } else if (!status || (!isManual && !options.preserveManual)) {
+      if (isSub) {
+        status = 'presente'; // En banquillo disponible
+      } else if (isCalled) {
         status = 'presente';
       } else if (rsvp?.status) {
         const RSVP_MAP = { going: 'presente', not_going: 'ausente', late: 'tarde', justified: 'justificado' };
@@ -721,8 +750,8 @@ export const buildSmartMatchSheetActual = (
       tarjetasList
     );
 
-    // Si el jugador entró al campo en los eventos, asegurar estado presente
-    if ((minutesCalc.source === 'sub_in' || minutesCalc.source === 'sub_out' || minutesCalc.source === 'titular_subout') && status === 'sin_registro') {
+    // Si el jugador participó en el partido o tuvo minutos, asegurar estado presente
+    if ((isActuallyOnField || minutesCalc.minutes > 0) && (status === 'sin_registro' || status === 'ausente')) {
       status = 'presente';
     }
 

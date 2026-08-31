@@ -23,7 +23,7 @@ import { PlayerAttendanceSubTab } from '../components/PlayerAttendanceSubTab';
 import { TeamStaffTab } from '../components/TeamStaffTab';
 import { PlayerTabs } from '../components/player/PlayerTabs';
 import { PlayerChatTab } from '../components/player/PlayerChatTab';
-import { MessageSquare, FileText, Pencil, X, UserPlus, Share2, Mail, Trash2, Bell, Megaphone } from 'lucide-react';
+import { MessageSquare, FileText, Pencil, Edit, X, UserPlus, Share2, Mail, Trash2, Bell, Megaphone } from 'lucide-react';
 import { useTranslation } from '../hooks/useTranslation';
 import { SpellCheckedTextarea } from '../components/ui/SpellCheckedTextarea';
 import './MiEquipo.css';

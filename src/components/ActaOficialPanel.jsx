@@ -182,21 +182,36 @@ const ActaOficialPanel = ({ matchId, matchData, players = [], calledPlayers = []
     convocadosIds.forEach(pid => {
       const idStr = String(pid);
       const actual = sheet?.actual?.[idStr];
-      const status = actual?.status;
+      const isStarter = initialTitularesSet.has(idStr);
+      const isSub = initialSuplentesSet.has(idStr);
+      const hasSubIn = effectiveEvents.some(e =>
+        (e.type === 'cambio' || e.type === 'sustitucion') &&
+        String(e.subInId || e.jugadorEntraId || e.playerInId || '') === idStr
+      );
+      const hasPlayerEvents = effectiveEvents.some(e =>
+        String(e.playerId || e.jugadorId || e.fromPlayerId || '') === idStr
+      );
+      const isActuallyOnField = isStarter || hasSubIn || hasPlayerEvents;
+
+      let status = actual?.status;
+      if (isActuallyOnField && (!status || status === 'ausente' || status === 'sin_registro')) {
+        status = (actual?.lateMin && actual.lateMin > 0) ? 'tarde' : 'presente';
+      } else if (!status) {
+        if (isStarter || isSub) {
+          status = 'presente';
+        } else {
+          status = 'sin_registro';
+        }
+      }
+
       if (status && counts[status] !== undefined) {
         counts[status]++;
-      } else if (!status) {
-        if (initialTitularesSet.has(idStr) || initialSuplentesSet.has(idStr)) {
-          counts.presente++;
-        } else {
-          counts.sin_registro++;
-        }
       } else {
         counts.sin_registro++;
       }
     });
     return counts;
-  }, [sheet?.actual, convocadosIds, initialTitularesSet, initialSuplentesSet]);
+  }, [sheet?.actual, convocadosIds, initialTitularesSet, initialSuplentesSet, effectiveEvents]);
 
   const discrepancies = useMemo(() => getDiscrepancies(), [sheet]);
 
@@ -480,10 +495,20 @@ const ActaOficialPanel = ({ matchId, matchData, players = [], calledPlayers = []
           const actual = getPlayerActual(pid);
           const isStarter = initialTitularesSet.has(pid);
           const isSub = initialSuplentesSet.has(pid);
+          const hasSubIn = effectiveEvents.some(e =>
+            (e.type === 'cambio' || e.type === 'sustitucion') &&
+            String(e.subInId || e.jugadorEntraId || e.playerInId || '') === pid
+          );
+          const hasPlayerEvents = effectiveEvents.some(e =>
+            String(e.playerId || e.jugadorId || e.fromPlayerId || '') === pid
+          );
+          const isActuallyOnField = isStarter || hasSubIn || hasPlayerEvents;
 
-          // Determinación del estado efectivo
+          // Determinación del estado efectivo: si jugó o es titular, NUNCA es ausente
           let status = actual?.status;
-          if (!status) {
+          if (isActuallyOnField && (!status || status === 'ausente' || status === 'sin_registro')) {
+            status = (actual?.lateMin && actual.lateMin > 0) ? 'tarde' : 'presente';
+          } else if (!status) {
             if (isStartedOrDone) {
               if (isStarter || isSub) status = 'presente';
               else if (rsvp?.status) {
@@ -590,7 +615,7 @@ const ActaOficialPanel = ({ matchId, matchData, players = [], calledPlayers = []
                   <span style={styles.minuteSourceLabel}>
                     {actual?.minutesOverride !== undefined && actual?.minutesOverride !== null
                       ? '✏️ Manual'
-                      : `Auto (${actual?.detail || computedMin.detail || MINUTE_SOURCE_LABEL[minuteSource] || minuteSource})`}
+                      : `Auto (${(isActuallyOnField && actual?.status === 'ausente') ? computedMin.detail : (actual?.detail || computedMin.detail || MINUTE_SOURCE_LABEL[minuteSource] || minuteSource)})`}
                   </span>
                 </div>
 

@@ -19,6 +19,9 @@
 /* TEMA OSCURO (GAMING HUD) */
 .player-dashboard-root.theme-dark,
 .player-dashboard-layout.theme-dark,
+.dark .player-dashboard-layout,
+.dark .player-dashboard-root,
+html.dark .player-dashboard-layout,
 [data-theme="dark"] .player-dashboard-layout {
   --bg-primary: #0B120E;
   --bg-card: #121A15;
@@ -33,15 +36,48 @@
 /* TEMA CLARO (INSTITUCIONAL LIMPIO) */
 .player-dashboard-root.theme-light,
 .player-dashboard-layout.theme-light,
+.light .player-dashboard-layout,
+.light .player-dashboard-root,
+html.light .player-dashboard-layout,
 [data-theme="light"] .player-dashboard-layout {
   --bg-primary: #F8FAFC;
   --bg-card: #FFFFFF;
   --text-primary: #0F172A;
   --text-secondary: #334155;
   --text-muted: #64748B;
-  --border-color: #E2E8F0;
+  --border-color: #CBD5E1;
   background: #F8FAFC;
   color: #0F172A;
+}
+
+.theme-light .hud-card,
+.light .hud-card,
+[data-theme="light"] .hud-card {
+  background: #FFFFFF;
+  border-color: #CBD5E1;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.05);
+}
+
+.theme-light .hud-stat-card,
+.light .hud-stat-card,
+[data-theme="light"] .hud-stat-card {
+  background: #FFFFFF;
+  border-color: #CBD5E1;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.theme-light .player-hero-header,
+.light .player-hero-header,
+[data-theme="light"] .player-hero-header {
+  background: #FFFFFF;
+  border-color: #CBD5E1;
+}
+
+.theme-light .hud-action-btn,
+.light .hud-action-btn {
+  background: #047857;
+  border-color: #059669;
+  color: #FFFFFF;
 }
 
 .player-loading-screen {

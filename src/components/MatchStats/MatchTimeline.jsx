@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { TrendingUp, Clock, Info, HelpCircle, ChevronDown, ChevronUp, X, BookOpen } from 'lucide-react';
+import { useTheme } from '../../context/ThemeContext';
 
 export const MatchTimeline = ({
   events = [],
@@ -7,6 +8,7 @@ export const MatchTimeline = ({
   awayTeamName = 'Rival',
   matchDuration = 90
 }) => {
+  const { darkMode } = useTheme();
   const [hoveredPoint, setHoveredPoint] = useState(null);
   const [showGuide, setShowGuide] = useState(false);
   const [showFormulaModal, setShowFormulaModal] = useState(false);
@@ -231,9 +233,9 @@ export const MatchTimeline = ({
               borderRadius: '6px',
               fontSize: '11px',
               fontWeight: '700',
-              background: 'rgba(255, 255, 255, 0.08)',
-              color: 'var(--text-primary, #fff)',
-              border: '1px solid rgba(255, 255, 255, 0.15)',
+              background: darkMode ? 'rgba(255, 255, 255, 0.08)' : '#F1F5F9',
+              color: darkMode ? '#FFFFFF' : '#0F172A',
+              border: darkMode ? '1px solid rgba(255, 255, 255, 0.15)' : '1px solid #CBD5E1',
               cursor: 'pointer'
             }}
           >
@@ -243,11 +245,11 @@ export const MatchTimeline = ({
 
           {/* Título normalizado con espacios y capitalización estricta */}
           <div className="timeline-teams-legend" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-            <span className="legend-badge gold" style={{ background: '#D4A843', color: '#000', padding: '3px 8px', borderRadius: '6px', fontSize: '11.5px', fontWeight: '800' }}>
+            <span className="legend-badge gold" style={{ background: darkMode ? '#FBBF24' : '#D4A843', color: '#000', padding: '3px 8px', borderRadius: '6px', fontSize: '11.5px', fontWeight: '900' }}>
               {cleanHomeName}
             </span>
-            <span style={{ fontSize: '11px', fontWeight: '800', color: 'rgba(255,255,255,0.6)' }}>vs</span>
-            <span className="legend-badge green" style={{ background: '#4CAF7D', color: '#FFF', padding: '3px 8px', borderRadius: '6px', fontSize: '11.5px', fontWeight: '800' }}>
+            <span style={{ fontSize: '11px', fontWeight: '800', color: darkMode ? 'rgba(255,255,255,0.6)' : '#64748B' }}>vs</span>
+            <span className="legend-badge green" style={{ background: darkMode ? '#4ADE80' : '#059669', color: '#FFF', padding: '3px 8px', borderRadius: '6px', fontSize: '11.5px', fontWeight: '900' }}>
               {cleanAwayName}
             </span>
           </div>
@@ -257,16 +259,16 @@ export const MatchTimeline = ({
       {/* Guía plegable para el entrenador */}
       {showGuide && (
         <div style={{
-          background: 'rgba(0,0,0,0.3)',
-          border: '1px solid rgba(212,168,67,0.3)',
+          background: darkMode ? 'rgba(0,0,0,0.3)' : '#F8FAFC',
+          border: darkMode ? '1px solid rgba(212,168,67,0.3)' : '1px solid #CBD5E1',
           borderRadius: '8px',
           padding: '10px 14px',
           marginTop: '10px',
           fontSize: '11.5px',
-          color: '#cbd5e1',
+          color: darkMode ? '#CBD5E1' : '#1E293B',
           lineHeight: '1.5'
         }}>
-          <div style={{ fontWeight: 800, color: '#D4A843', marginBottom: '4px' }}>📖 Cómo leer esta gráfica (Lenguaje de Míster):</div>
+          <div style={{ fontWeight: 900, color: darkMode ? '#FBBF24' : '#B45309', marginBottom: '4px' }}>📖 Cómo leer esta gráfica (Lenguaje de Míster):</div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
             <div>📈 <strong>Curva hacia arriba (por encima del 50%):</strong> Tramo donde tu equipo llevó la iniciativa, pisó área rival o generó tiros y córners.</div>
             <div>📉 <strong>Curva hacia abajo (por debajo del 50%):</strong> Tramo donde el rival tuvo mayor control, generó ocasiones o te encerró en tu campo.</div>
@@ -276,9 +278,9 @@ export const MatchTimeline = ({
       )}
 
       {!hasRealEvents ? (
-        <div style={{ padding: '48px 16px', textAlign: 'center', color: 'var(--partidos-text-muted, #888)' }}>
+        <div style={{ padding: '48px 16px', textAlign: 'center', color: darkMode ? '#94A3B8' : '#64748B' }}>
           <Info size={32} style={{ margin: '0 auto 10px', opacity: 0.6 }} />
-          <div style={{ fontSize: '14px', fontWeight: '700', color: 'var(--partidos-text-primary, #fff)' }}>Sin datos de momentum</div>
+          <div style={{ fontSize: '14px', fontWeight: '700', color: darkMode ? '#FFFFFF' : '#0F172A' }}>Sin datos de momentum</div>
           <div style={{ fontSize: '12px', marginTop: '4px' }}>Inicia el cronómetro y registra eventos durante el partido para visualizar la curva de dominio.</div>
         </div>
       ) : (
@@ -286,13 +288,13 @@ export const MatchTimeline = ({
           <div className="timeline-svg-wrapper" style={{ marginTop: '14px' }}>
             <svg viewBox={`0 0 ${width} ${height}`} className="timeline-svg" style={{ width: '100%', height: 'auto', display: 'block' }}>
               {/* Fondo del gráfico */}
-              <rect x={padding.left} y={padding.top} width={graphWidth} height={graphHeight} fill="rgba(255,255,255,0.02)" rx="6" />
+              <rect x={padding.left} y={padding.top} width={graphWidth} height={graphHeight} fill={darkMode ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.03)'} rx="6" />
 
               {/* Zona superior (Dominio Local) / Zona inferior (Dominio Rival) */}
-              <text x={padding.left + 8} y={padding.top + 14} fill="rgba(212, 168, 67, 0.7)" fontSize="9" fontWeight="800">
+              <text x={padding.left + 8} y={padding.top + 14} fill={darkMode ? '#FBBF24' : '#B45309'} fontSize="9.5" fontWeight="900">
                 ▲ DOMINIO {cleanHomeName.toUpperCase()}
               </text>
-              <text x={padding.left + 8} y={padding.top + graphHeight - 8} fill="rgba(76, 175, 125, 0.7)" fontSize="9" fontWeight="800">
+              <text x={padding.left + 8} y={padding.top + graphHeight - 8} fill={darkMode ? '#4ADE80' : '#047857'} fontSize="9.5" fontWeight="900">
                 ▼ DOMINIO {cleanAwayName.toUpperCase()}
               </text>
 
@@ -302,7 +304,7 @@ export const MatchTimeline = ({
                 y1={padding.top + graphHeight / 2}
                 x2={padding.left + graphWidth}
                 y2={padding.top + graphHeight / 2}
-                stroke="rgba(255, 255, 255, 0.2)"
+                stroke={darkMode ? 'rgba(255, 255, 255, 0.25)' : 'rgba(0, 0, 0, 0.25)'}
                 strokeDasharray="4 4"
                 strokeWidth="1"
               />
@@ -313,7 +315,7 @@ export const MatchTimeline = ({
                 y1={padding.top}
                 x2={padding.left + (45 / totalMins) * graphWidth}
                 y2={padding.top + graphHeight}
-                stroke="#D4A843"
+                stroke={darkMode ? '#FBBF24' : '#B45309'}
                 strokeWidth="1.5"
                 strokeDasharray="3 3"
               />
@@ -323,17 +325,17 @@ export const MatchTimeline = ({
                 width="88" 
                 height="16" 
                 rx="4" 
-                fill="#1B3A2D" 
-                stroke="#D4A843" 
+                fill={darkMode ? '#1B3A2D' : '#FEF3C7'} 
+                stroke={darkMode ? '#FBBF24' : '#B45309'} 
                 strokeWidth="1"
               />
               <text
                 x={padding.left + (45 / totalMins) * graphWidth}
                 y={padding.top - 7}
                 textAnchor="middle"
-                fill="#D4A843"
+                fill={darkMode ? '#FBBF24' : '#92400E'}
                 fontSize="8.5"
-                fontWeight="800"
+                fontWeight="900"
               >
                 DESCANSO (45′)
               </text>
@@ -342,7 +344,7 @@ export const MatchTimeline = ({
               <path
                 d={getPath()}
                 fill="none"
-                stroke="#D4A843"
+                stroke={darkMode ? '#FBBF24' : '#D4A843'}
                 strokeWidth="2.5"
                 strokeLinecap="round"
                 strokeLinejoin="round"
@@ -360,8 +362,8 @@ export const MatchTimeline = ({
                     cx={x}
                     cy={y}
                     r={isHovered ? 6 : 3.5}
-                    fill={pt.momentum >= 50 ? '#D4A843' : '#4CAF7D'}
-                    stroke="#FFFFFF"
+                    fill={pt.momentum >= 50 ? (darkMode ? '#FBBF24' : '#D4A843') : (darkMode ? '#4ADE80' : '#059669')}
+                    stroke={darkMode ? '#FFFFFF' : '#0F172A'}
                     strokeWidth={isHovered ? 2 : 1}
                     style={{ cursor: 'pointer', transition: 'r 0.15s' }}
                     onMouseEnter={() => setHoveredPoint(pt)}
@@ -378,7 +380,7 @@ export const MatchTimeline = ({
 
                 return (
                   <g key={e.id} transform={`translate(${x}, ${y})`} className="timeline-event-node" style={{ cursor: 'pointer' }}>
-                    <circle r="9" fill="#1B3A2D" stroke={isHome ? '#D4A843' : '#4CAF7D'} strokeWidth="1.5" />
+                    <circle r="9" fill={darkMode ? '#1B3A2D' : '#FFFFFF'} stroke={isHome ? (darkMode ? '#FBBF24' : '#B45309') : (darkMode ? '#4ADE80' : '#059669')} strokeWidth="1.5" />
                     <text textAnchor="middle" dy="0.35em" fontSize="10">
                       {getEventIcon(e.type)}
                     </text>
@@ -391,14 +393,14 @@ export const MatchTimeline = ({
                 const x = padding.left + (m / totalMins) * graphWidth;
                 return (
                   <g key={m}>
-                    <line x1={x} y1={padding.top + graphHeight} x2={x} y2={padding.top + graphHeight + 5} stroke="rgba(255,255,255,0.4)" />
+                    <line x1={x} y1={padding.top + graphHeight} x2={x} y2={padding.top + graphHeight + 5} stroke={darkMode ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.3)'} />
                     <text
                       x={x}
                       y={padding.top + graphHeight + 16}
                       textAnchor="middle"
-                      fill="rgba(255,255,255,0.7)"
+                      fill={darkMode ? '#CBD5E1' : '#1E293B'}
                       fontSize="9.5"
-                      fontWeight="700"
+                      fontWeight="800"
                     >
                       {m}′
                     </text>
@@ -411,8 +413,8 @@ export const MatchTimeline = ({
           {/* Tooltip de tramo interactivo */}
           {hoveredPoint && (
             <div style={{
-              background: 'rgba(27, 58, 45, 0.95)',
-              border: '1px solid #D4A843',
+              background: darkMode ? 'rgba(27, 58, 45, 0.95)' : '#FFFFFF',
+              border: darkMode ? '1px solid #D4A843' : '1.5px solid #CBD5E1',
               borderRadius: '8px',
               padding: '10px 14px',
               marginTop: '10px',
@@ -420,17 +422,18 @@ export const MatchTimeline = ({
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'space-between',
-              gap: '12px'
+              gap: '12px',
+              boxShadow: darkMode ? '0 4px 16px rgba(0,0,0,0.4)' : '0 4px 12px rgba(0,0,0,0.08)'
             }}>
               <div>
-                <strong style={{ color: '#D4A843' }}>Minuto {hoveredPoint.minute}′:</strong>{' '}
-                <span>
+                <strong style={{ color: darkMode ? '#FBBF24' : '#B45309' }}>Minuto {hoveredPoint.minute}′:</strong>{' '}
+                <span style={{ color: darkMode ? '#FFFFFF' : '#0F172A', fontWeight: 600 }}>
                   {hoveredPoint.momentum >= 50
                     ? `Dominio de ${cleanHomeName} (${hoveredPoint.momentum}%)`
                     : `Dominio de ${cleanAwayName} (${(100 - hoveredPoint.momentum).toFixed(1)}%)`}
                 </span>
                 {hoveredPoint.descriptions && hoveredPoint.descriptions.length > 0 && (
-                  <div style={{ fontSize: '11px', color: '#cbd5e1', marginTop: '3px' }}>
+                  <div style={{ fontSize: '11px', color: darkMode ? '#CBD5E1' : '#475569', marginTop: '3px' }}>
                     Acciones en este tramo: {hoveredPoint.descriptions.join(' · ')}
                   </div>
                 )}
@@ -438,7 +441,7 @@ export const MatchTimeline = ({
               <button
                 type="button"
                 onClick={() => setHoveredPoint(null)}
-                style={{ background: 'transparent', border: 'none', color: '#888', cursor: 'pointer', fontSize: '11px' }}
+                style={{ background: 'transparent', border: 'none', color: darkMode ? '#94A3B8' : '#64748B', cursor: 'pointer', fontSize: '13px' }}
               >
                 ✕
               </button>
@@ -448,7 +451,7 @@ export const MatchTimeline = ({
           {/* Lista de hitos clave explicados */}
           {keyEvents.length > 0 && (
             <div className="timeline-events-list" style={{ marginTop: '12px' }}>
-              <div className="events-list-title" style={{ fontSize: '12px', fontWeight: '800', color: 'var(--partidos-text-muted, #94a3b8)', marginBottom: '6px' }}>
+              <div className="events-list-title" style={{ fontSize: '12px', fontWeight: '900', color: darkMode ? '#94A3B8' : '#334155', marginBottom: '6px' }}>
                 Hitos y Eventos del Partido:
               </div>
               <div className="events-chips-scroll" style={{ display: 'flex', gap: '8px', overflowX: 'auto', paddingBottom: '4px' }}>
@@ -459,14 +462,17 @@ export const MatchTimeline = ({
                     gap: '6px',
                     padding: '4px 10px',
                     borderRadius: '20px',
-                    background: e.team === 'home' ? 'rgba(212, 168, 67, 0.15)' : 'rgba(76, 175, 125, 0.15)',
-                    border: `1px solid ${e.team === 'home' ? '#D4A843' : '#4CAF7D'}`,
+                    background: e.team === 'home' 
+                      ? (darkMode ? 'rgba(212, 168, 67, 0.15)' : '#FEF3C7') 
+                      : (darkMode ? 'rgba(76, 175, 125, 0.15)' : '#E8F5EE'),
+                    border: `1px solid ${e.team === 'home' ? (darkMode ? '#D4A843' : '#B45309') : (darkMode ? '#4CAF7D' : '#059669')}`,
+                    color: darkMode ? '#FFFFFF' : '#0F172A',
                     fontSize: '11px',
-                    fontWeight: '700',
+                    fontWeight: '800',
                     whiteSpace: 'nowrap'
                   }}>
                     <span>{getEventIcon(e.type)}</span>
-                    <span style={{ color: '#D4A843' }}>{e.minute}′</span>
+                    <span style={{ color: e.team === 'home' ? (darkMode ? '#FBBF24' : '#B45309') : (darkMode ? '#4ADE80' : '#047857') }}>{e.minute}′</span>
                     <span>{e.label}: {e.player}</span>
                   </div>
                 ))}
@@ -493,48 +499,56 @@ export const MatchTimeline = ({
         >
           <div 
             style={{
-              background: 'var(--bg-card, #1B3A2D)',
-              border: '1px solid var(--border-light, #2d4a2d)',
+              background: darkMode ? '#1B3A2D' : '#FFFFFF',
+              border: darkMode ? '1px solid #2d4a2d' : '1px solid #CBD5E1',
               borderRadius: '12px',
               maxWidth: '500px',
               width: '100%',
               padding: '20px',
-              color: 'var(--text-primary, #fff)',
-              boxShadow: '0 8px 32px rgba(0,0,0,0.4)',
+              color: darkMode ? '#FFFFFF' : '#0F172A',
+              boxShadow: '0 8px 32px rgba(0,0,0,0.35)',
               maxHeight: '90vh',
               overflowY: 'auto'
             }}
             onClick={e => e.stopPropagation()}
           >
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
-              <h3 style={{ margin: 0, fontSize: '16px', fontWeight: '800', color: '#D4A843', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <h3 style={{ margin: 0, fontSize: '16px', fontWeight: '800', color: darkMode ? '#D4A843' : '#B45309', display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <TrendingUp size={18} /> ¿Cómo se calcula el Momentum (Tramos de 5')?
               </h3>
               <button 
                 type="button" 
                 onClick={() => setShowFormulaModal(false)}
-                style={{ background: 'transparent', border: 'none', color: '#888', cursor: 'pointer', padding: '4px' }}
+                style={{ background: 'transparent', border: 'none', color: darkMode ? '#94A3B8' : '#64748B', cursor: 'pointer', padding: '4px' }}
               >
                 <X size={20} />
               </button>
             </div>
 
-            <p style={{ fontSize: '12.5px', color: '#cbd5e1', lineHeight: '1.5', margin: '0 0 14px 0' }}>
-              La curva de presión mide el balance de iniciativa entre ambos equipos en intervalos de 5 minutos mediante una ponderación de acciones reales:
+            <p style={{ fontSize: '12.5px', color: darkMode ? '#CBD5E1' : '#334155', lineHeight: '1.5', margin: '0 0 14px 0' }}>
+              El Momentum representa el <strong>equilibrio dinámico de iniciativa y control</strong> en cada bloque de 5 minutos de juego:
             </p>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '12px' }}>
-              <div style={{ background: 'rgba(0,0,0,0.2)', padding: '8px 10px', borderRadius: '6px' }}>
-                ⚽ <strong>Gol:</strong> ±3.5 pts (Impacto máximo en la dinámica)
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              <div style={{ background: darkMode ? 'rgba(0,0,0,0.2)' : '#F8FAFC', padding: '10px 12px', borderRadius: '8px', borderLeft: `3px solid ${darkMode ? '#D4A843' : '#B45309'}` }}>
+                <div style={{ fontWeight: '800', fontSize: '13px', color: darkMode ? '#FFFFFF' : '#0F172A' }}>⚖️ Línea de Equilibrio (50%)</div>
+                <div style={{ fontSize: '11.5px', color: darkMode ? '#94A3B8' : '#475569', marginTop: '2px' }}>
+                  Cuando el partido está igualado sin ocasiones de peligro o con juego trabado en mediocampo, la curva se sitúa en el 50%.
+                </div>
               </div>
-              <div style={{ background: 'rgba(0,0,0,0.2)', padding: '8px 10px', borderRadius: '6px' }}>
-                🎯 <strong>Tiro a puerta:</strong> ±2.0 pts | <strong>Tiro fuera / Córner:</strong> ±1.0 pts
+
+              <div style={{ background: darkMode ? 'rgba(0,0,0,0.2)' : '#F8FAFC', padding: '10px 12px', borderRadius: '8px', borderLeft: `3px solid ${darkMode ? '#4CAF7D' : '#059669'}` }}>
+                <div style={{ fontWeight: '800', fontSize: '13px', color: darkMode ? '#FFFFFF' : '#0F172A' }}>🔥 Ponderación de Eventos Reales</div>
+                <div style={{ fontSize: '11.5px', color: darkMode ? '#94A3B8' : '#475569', marginTop: '2px' }}>
+                  Cada evento suma peso estadístico: Gol (+10 pts), Tiro a puerta (+4 pts), Córner (+2 pts), Duelo ganado (+1 pt). Los fallos y tarjetas rivales suman a la contra.
+                </div>
               </div>
-              <div style={{ background: 'rgba(0,0,0,0.2)', padding: '8px 10px', borderRadius: '6px' }}>
-                ⚔️ <strong>Duelo ganado / Recuperación / Falta a favor:</strong> ±0.5 pts
-              </div>
-              <div style={{ background: 'rgba(0,0,0,0.2)', padding: '8px 10px', borderRadius: '6px' }}>
-                🔄 <strong>Inercia deportiva:</strong> Se aplica suavizado del 70% del tramo anterior + 30% neutro, evitando saltos bruscos y reflejando las fases de dominio sostenido.
+
+              <div style={{ background: darkMode ? 'rgba(0,0,0,0.2)' : '#F8FAFC', padding: '10px 12px', borderRadius: '8px', borderLeft: '3px solid #3B82F6' }}>
+                <div style={{ fontWeight: '800', fontSize: '13px', color: darkMode ? '#FFFFFF' : '#0F172A' }}>🔄 Inercia Deportiva (70% / 30%)</div>
+                <div style={{ fontSize: '11.5px', color: darkMode ? '#94A3B8' : '#475569', marginTop: '2px' }}>
+                  Para reflejar rachas tácticas reales, el momentum de cada bloque mantiene un 30% del tramo anterior y un 70% de las acciones del tramo presente.
+                </div>
               </div>
             </div>
 

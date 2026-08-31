@@ -316,8 +316,10 @@ export const PlayerHomeTab = ({ player, team, teamPath, onNavigateTab, isParentV
         <div 
           className="hud-card closest-achievement-card"
           style={{
-            background: 'linear-gradient(135deg, rgba(27, 58, 45, 0.6) 0%, rgba(201, 168, 76, 0.1) 100%)',
-            border: '1.5px solid rgba(201, 168, 76, 0.4)',
+            background: darkMode 
+              ? 'linear-gradient(135deg, rgba(27, 58, 45, 0.6) 0%, rgba(201, 168, 76, 0.1) 100%)' 
+              : 'linear-gradient(135deg, #FFFBEB 0%, #FEF3C7 100%)',
+            border: darkMode ? '1.5px solid rgba(201, 168, 76, 0.4)' : '1.5px solid #FCD34D',
             borderRadius: '14px',
             padding: '14px 16px',
             marginBottom: '16px',
@@ -329,7 +331,7 @@ export const PlayerHomeTab = ({ player, team, teamPath, onNavigateTab, isParentV
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
               <span style={{ fontSize: '1.2rem' }}>{closestAchievement.tierInfo?.icon || '🏆'}</span>
               <div>
-                <span style={{ fontSize: '0.7rem', color: '#D4A843', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                <span style={{ fontSize: '0.7rem', color: darkMode ? '#D4A843' : '#B45309', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
                   {closestAchievement.tier === 'GOLD' 
                     ? t('player.home.almostGold') 
                     : (closestAchievement.tier === 'SILVER' 
@@ -338,17 +340,25 @@ export const PlayerHomeTab = ({ player, team, teamPath, onNavigateTab, isParentV
                             ? t('player.home.almostBronze') 
                             : t('player.home.nextChallenge')))}
                 </span>
-                <h4 style={{ margin: 0, fontSize: '0.95rem', color: '#FFFFFF', fontWeight: 800 }}>
+                <h4 style={{ margin: 0, fontSize: '0.95rem', color: darkMode ? '#FFFFFF' : '#0F172A', fontWeight: 800 }}>
                   {closestAchievement.nameKey ? t(closestAchievement.nameKey, {}, closestAchievement.name) : closestAchievement.name}
                 </h4>
               </div>
             </div>
-            <span style={{ fontSize: '0.82rem', fontWeight: 900, color: '#D4A843' }}>
+            <span style={{ fontSize: '0.82rem', fontWeight: 900, color: darkMode ? '#D4A843' : '#B45309' }}>
               {closestAchievement.progress} / {closestAchievement.target}
             </span>
           </div>
-          <div style={{ background: 'rgba(0, 0, 0, 0.4)', height: '6px', borderRadius: '4px', overflow: 'hidden' }}>
-            <div style={{ width: `${closestAchievement.percent}%`, height: '100%', background: '#D4A843', borderRadius: '4px' }} />
+          <div style={{ background: darkMode ? 'rgba(0, 0, 0, 0.4)' : 'rgba(0, 0, 0, 0.1)', height: '6px', borderRadius: '4px', overflow: 'hidden' }}>
+            <div 
+              style={{
+                width: `${closestAchievement.percent}%`,
+                height: '100%',
+                background: darkMode ? '#D4A843' : '#D97706',
+                borderRadius: '4px',
+                transition: 'width 0.4s ease'
+              }}
+            />
           </div>
         </div>
       )}

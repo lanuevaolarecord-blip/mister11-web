@@ -2,6 +2,7 @@ import React, { useRef } from 'react';
 import { SvgLineChart } from './GraficasTest';
 import { downloadPDF } from '../utils/download';
 import { calculatePlayerPerformanceScores } from '../utils/testScoreEngine';
+import { useTheme } from '../context/ThemeContext';
 
 // ── Colores institucionales ──────────────────────────────────────────────────
 const C_DARK    = '#1B3A2D';
@@ -13,6 +14,7 @@ const C_BORDER  = '#E0DACA';
 
 // ── SVG Radar Chart (Pentagonal 5 Ejes / Dinámico) ──────────────
 export const SvgRadar = ({ data, size = 320 }) => {
+  const { darkMode } = useTheme();
   if (!data || data.length === 0) return null;
   const cx = size / 2;
   const cy = size / 2;
@@ -21,6 +23,10 @@ export const SvgRadar = ({ data, size = 320 }) => {
   const hasData = data.some(d => d.value > 0);
 
   const angleOf = i => (2 * Math.PI * i) / n - Math.PI / 2;
+
+  const ringStroke = darkMode ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0, 0, 0, 0.18)';
+  const labelColor = darkMode ? '#FFFFFF' : '#0F172A';
+  const valColor = darkMode ? '#FBBF24' : '#B45309';
 
   // Grid rings
   const rings = [20, 40, 60, 80, 100].map(pct => (
@@ -32,7 +38,7 @@ export const SvgRadar = ({ data, size = 320 }) => {
         return `${cx + rr * Math.cos(a)},${cy + rr * Math.sin(a)}`;
       }).join(' ')}
       fill="none"
-      stroke={C_BORDER}
+      stroke={ringStroke}
       strokeWidth={pct === 100 ? 1.5 : 0.8}
       strokeDasharray={pct === 100 ? 'none' : '3,3'}
     />
@@ -46,7 +52,7 @@ export const SvgRadar = ({ data, size = 320 }) => {
         key={i}
         x1={cx} y1={cy}
         x2={cx + r * Math.cos(a)} y2={cy + r * Math.sin(a)}
-        stroke={C_BORDER} strokeWidth={1}
+        stroke={ringStroke} strokeWidth={1}
       />
     );
   });
@@ -79,8 +85,8 @@ export const SvgRadar = ({ data, size = 320 }) => {
           y={ly - 4}
           textAnchor={textAnchor}
           dominantBaseline="middle"
-          fill={C_DARK}
-          style={{ fontSize: 11, fontWeight: 800, fontFamily: 'Outfit, sans-serif' }}
+          fill={labelColor}
+          style={{ fontSize: 11, fontWeight: 900, fontFamily: 'Outfit, sans-serif' }}
         >
           {labelText}
         </text>
@@ -89,7 +95,7 @@ export const SvgRadar = ({ data, size = 320 }) => {
           y={ly + 8}
           textAnchor={textAnchor}
           dominantBaseline="middle"
-          fill="#D4A843"
+          fill={valColor}
           style={{ fontSize: 10, fontWeight: 800, fontFamily: 'Outfit, sans-serif' }}
         >
           ({d.value || 0})
@@ -106,14 +112,14 @@ export const SvgRadar = ({ data, size = 320 }) => {
         <>
           <polygon
             points={polyStr}
-            fill={C_DARK}
-            fillOpacity={0.35}
-            stroke={C_GOLD}
+            fill={darkMode ? 'rgba(76, 175, 125, 0.35)' : 'rgba(27, 58, 45, 0.25)'}
+            fillOpacity={0.4}
+            stroke={darkMode ? '#FBBF24' : '#D4A843'}
             strokeWidth={2.5}
           />
           {dataPoints.map((p, i) => (
             <circle key={i} cx={p.x} cy={p.y} r={5}
-              fill={C_GOLD} stroke="white" strokeWidth={2} />
+              fill={darkMode ? '#FBBF24' : '#D4A843'} stroke={darkMode ? '#FFFFFF' : '#0F172A'} strokeWidth={1.5} />
           ))}
         </>
       )}

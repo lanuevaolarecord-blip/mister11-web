@@ -82,18 +82,18 @@ export const PlayerPerformanceBanner = ({ player, teamPath, onNavigateTab, onOpe
 
       {/* 2. BANNER TÁCTICO CON CAMPO DE FÚTBOL Y RADAR */}
       <div className="hero-pitch-banner-col">
-        {/* SVG Campo de Fútbol de Fondo */}
+        {/* SVG Campo de Fútbol de Fondo adaptativo */}
         <svg width="100%" height="100%" viewBox="0 0 400 250" xmlns="http://www.w3.org/2000/svg" className="pitch-svg-bg">
-          <rect x="10" y="10" width="380" height="230" fill="none" stroke="#1B3A2D" strokeWidth="2" />
-          <line x1="200" y1="10" x2="200" y2="240" stroke="#1B3A2D" strokeWidth="2" />
-          <circle cx="200" cy="125" r="40" fill="none" stroke="#1B3A2D" strokeWidth="2" />
-          <circle cx="200" cy="125" r="3" fill="#1B3A2D" />
-          <rect x="10" y="55" width="50" height="140" fill="none" stroke="#1B3A2D" strokeWidth="2" />
-          <rect x="340" y="55" width="50" height="140" fill="none" stroke="#1B3A2D" strokeWidth="2" />
-          <rect x="10" y="85" width="20" height="80" fill="none" stroke="#1B3A2D" strokeWidth="1.5" />
-          <rect x="370" y="85" width="20" height="80" fill="none" stroke="#1B3A2D" strokeWidth="1.5" />
-          <path d="M 60,105 A 25,25 0 0,1 60,145" fill="none" stroke="#1B3A2D" strokeWidth="2" />
-          <path d="M 340,105 A 25,25 0 0,0 340,145" fill="none" stroke="#1B3A2D" strokeWidth="2" />
+          <rect x="10" y="10" width="380" height="230" fill="none" stroke={darkMode ? "#4CAF7D" : "#1B3A2D"} strokeWidth="2" />
+          <line x1="200" y1="10" x2="200" y2="240" stroke={darkMode ? "#4CAF7D" : "#1B3A2D"} strokeWidth="2" />
+          <circle cx="200" cy="125" r="40" fill="none" stroke={darkMode ? "#4CAF7D" : "#1B3A2D"} strokeWidth="2" />
+          <circle cx="200" cy="125" r="3" fill={darkMode ? "#4CAF7D" : "#1B3A2D"} />
+          <rect x="10" y="55" width="50" height="140" fill="none" stroke={darkMode ? "#4CAF7D" : "#1B3A2D"} strokeWidth="2" />
+          <rect x="340" y="55" width="50" height="140" fill="none" stroke={darkMode ? "#4CAF7D" : "#1B3A2D"} strokeWidth="2" />
+          <rect x="10" y="85" width="20" height="80" fill="none" stroke={darkMode ? "#4CAF7D" : "#1B3A2D"} strokeWidth="1.5" />
+          <rect x="370" y="85" width="20" height="80" fill="none" stroke={darkMode ? "#4CAF7D" : "#1B3A2D"} strokeWidth="1.5" />
+          <path d="M 60,105 A 25,25 0 0,1 60,145" fill="none" stroke={darkMode ? "#4CAF7D" : "#1B3A2D"} strokeWidth="2" />
+          <path d="M 340,105 A 25,25 0 0,0 340,145" fill="none" stroke={darkMode ? "#4CAF7D" : "#1B3A2D"} strokeWidth="2" />
         </svg>
 
         {/* Balón 3D Wireframe en el centro */}

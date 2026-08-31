@@ -1,11 +1,13 @@
 import React, { useState, useMemo } from 'react';
 import { Table, Search, ArrowUpDown, Download, Check, HelpCircle, X } from 'lucide-react';
 import { downloadCSV } from '../../utils/downloadCSV.js';
+import { useTheme } from '../../context/ThemeContext';
 
 export const StatsDataTable = ({
   playerStats = [],
   teamName = 'Local'
 }) => {
+  const { darkMode } = useTheme();
   const [searchTerm, setSearchTerm] = useState('');
   const [sortField, setSortField] = useState('rating');
   const [sortAsc, setSortAsc] = useState(false);
@@ -140,34 +142,81 @@ export const StatsDataTable = ({
   return (
     <div className="stats-table-container">
       {/* Barra superior de la tabla */}
-      <div className="table-controls-bar">
-        <div className="table-title">
-          <Table size={18} />
-          <h3>Rendimiento Individual ({teamName})</h3>
+      <div className="table-controls-bar" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px', marginBottom: '14px', flexWrap: 'wrap' }}>
+        <div className="table-title" style={{ display: 'flex', alignItems: 'center', gap: '8px', color: darkMode ? '#FFFFFF' : '#0F172A', fontWeight: 900 }}>
+          <Table size={18} color={darkMode ? '#FBBF24' : '#B45309'} />
+          <h3 style={{ margin: 0, fontSize: '15px' }}>Rendimiento Individual ({teamName})</h3>
           <button
             type="button"
             onClick={() => setShowHelpModal(true)}
             className="how-it-works-btn"
-            style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', padding: '4px 10px', borderRadius: '6px', fontSize: '11px', fontWeight: '800', background: 'rgba(212,168,67,0.15)', color: '#D4A843', border: '1px solid rgba(212,168,67,0.4)', cursor: 'pointer' }}
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '5px',
+              padding: '4px 10px',
+              borderRadius: '6px',
+              fontSize: '11px',
+              fontWeight: '800',
+              background: darkMode ? 'rgba(212,168,67,0.15)' : '#FEF3C7',
+              color: darkMode ? '#FBBF24' : '#92400E',
+              border: darkMode ? '1px solid rgba(212,168,67,0.4)' : '1px solid #FCD34D',
+              cursor: 'pointer'
+            }}
           >
             <HelpCircle size={13} />
             <span>¿Cómo se mide?</span>
           </button>
         </div>
 
-        <div className="table-actions-right">
-          <div className="table-search-box">
-            <Search size={14} />
+        <div className="table-actions-right" style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+          <div className="table-search-box" style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px',
+            background: darkMode ? 'rgba(255,255,255,0.06)' : '#FFFFFF',
+            border: darkMode ? '1px solid rgba(255,255,255,0.15)' : '1.5px solid #CBD5E1',
+            borderRadius: '8px',
+            padding: '6px 10px',
+            color: darkMode ? '#FFFFFF' : '#0F172A'
+          }}>
+            <Search size={14} style={{ color: darkMode ? '#94A3B8' : '#64748B' }} />
             <input
               type="text"
               placeholder="Buscar jugador..."
               value={searchTerm}
               onChange={e => setSearchTerm(e.target.value)}
+              style={{
+                background: 'transparent',
+                border: 'none',
+                outline: 'none',
+                fontSize: '12.5px',
+                color: darkMode ? '#FFFFFF' : '#0F172A'
+              }}
             />
           </div>
 
-          <button type="button" onClick={handleExportCSV} className="export-csv-btn" title="Descargar CSV para Excel">
-            <Download size={14} />
+          <button
+            type="button"
+            onClick={handleExportCSV}
+            className="export-csv-btn"
+            title="Descargar CSV para Excel"
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '6px',
+              minHeight: '36px',
+              padding: '0 12px',
+              borderRadius: '8px',
+              border: darkMode ? '1px solid #D4A843' : '1.5px solid #CBD5E1',
+              background: darkMode ? 'transparent' : '#FFFFFF',
+              color: darkMode ? '#FFFFFF' : '#0F172A',
+              fontWeight: 700,
+              fontSize: '12px',
+              cursor: 'pointer'
+            }}
+          >
+            <Download size={14} color={darkMode ? '#FBBF24' : '#059669'} />
             <span>Descargar CSV</span>
           </button>
         </div>
@@ -176,16 +225,25 @@ export const StatsDataTable = ({
       {/* Modal explicativo de fórmulas */}
       {showHelpModal && (
         <div className="event-selector-overlay" onClick={() => setShowHelpModal(false)} style={{ zIndex: 99999 }}>
-          <div className="event-selector-modal" onClick={e => e.stopPropagation()} style={{ maxWidth: '540px', width: '92vw', padding: '22px', borderRadius: '16px' }}>
+          <div className="event-selector-modal" onClick={e => e.stopPropagation()} style={{
+            maxWidth: '540px',
+            width: '92vw',
+            padding: '22px',
+            borderRadius: '16px',
+            background: darkMode ? '#1B3A2D' : '#FFFFFF',
+            border: darkMode ? '1px solid #2d4a2d' : '1px solid #CBD5E1',
+            color: darkMode ? '#FFFFFF' : '#0F172A',
+            boxShadow: '0 8px 32px rgba(0,0,0,0.35)'
+          }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
-              <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 900, color: 'var(--partidos-accent, #4CAF7D)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 900, color: darkMode ? '#4ADE80' : '#059669', display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <HelpCircle size={18} /> ¿Cómo se miden las métricas individuales?
               </h3>
-              <button type="button" onClick={() => setShowHelpModal(false)} style={{ background: 'none', border: 'none', color: 'var(--partidos-text-muted)', cursor: 'pointer' }}>
+              <button type="button" onClick={() => setShowHelpModal(false)} style={{ background: 'none', border: 'none', color: darkMode ? '#94A3B8' : '#64748B', cursor: 'pointer' }}>
                 <X size={18} />
               </button>
             </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', fontSize: '12px', color: 'var(--partidos-text-primary)', lineHeight: 1.5 }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', fontSize: '12px', color: darkMode ? '#CBD5E1' : '#334155', lineHeight: 1.5 }}>
               <div><strong>⭐ Nota (4.0 - 10.0):</strong> Nota mixta: base 6.0 + Goles (+1.2) + Asistencias (+0.8) + Pases Clave (+0.3) + Recuperaciones (+0.15) + Duelos Ganados (+0.2) − Duelos Perdidos (−0.15) − Pérdidas (−0.15) − Faltas (−0.2).</div>
               <div><strong>⚽ xG (Goles Esperados):</strong> Probabilidad matemática acumulada según disparos a puerta (0.25) y goles directos (0.40).</div>
               <div><strong>👟 Pases C/F (%):</strong> Pases Completados (C) vs Fallidos (F) y % de acierto sobre el total intentado.</div>

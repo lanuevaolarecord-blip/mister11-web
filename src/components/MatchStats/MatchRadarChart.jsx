@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { Activity, HelpCircle, X, Info } from 'lucide-react';
+import { useTheme } from '../../context/ThemeContext';
 
 export const MatchRadarChart = ({
   events = [],
@@ -8,6 +9,7 @@ export const MatchRadarChart = ({
   homeTeamName = 'Mi Equipo',
   awayTeamName = 'Rival'
 }) => {
+  const { darkMode } = useTheme();
   const [showFormulaModal, setShowFormulaModal] = useState(false);
   const [activeTooltipAxis, setActiveTooltipAxis] = useState(null);
 
@@ -208,16 +210,16 @@ export const MatchRadarChart = ({
       </div>
 
       {!hasRealData ? (
-        <div style={{ padding: '48px 16px', textAlign: 'center', color: 'var(--partidos-text-muted, #888)' }}>
+        <div style={{ padding: '48px 16px', textAlign: 'center', color: darkMode ? '#94A3B8' : '#64748B' }}>
           <Info size={32} style={{ margin: '0 auto 10px', opacity: 0.6 }} />
-          <div style={{ fontSize: '14px', fontWeight: '700', color: 'var(--partidos-text-primary, #fff)' }}>Sin datos suficientes</div>
+          <div style={{ fontSize: '14px', fontWeight: '700', color: darkMode ? '#FFFFFF' : '#0F172A' }}>Sin datos suficientes</div>
           <div style={{ fontSize: '12px', marginTop: '4px' }}>Registra eventos a pie de campo o en el acta para generar el radar táctico comparativo.</div>
         </div>
       ) : (
         <>
           <div className="radar-chart-body" style={{ position: 'relative' }}>
             <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} className="radar-svg">
-              {/* Telaraña concéntrica */}
+              {/* Telaraña concéntrica adaptativa */}
               {[0.25, 0.5, 0.75, 1].map((level, idx) => (
                 <circle
                   key={idx}
@@ -225,9 +227,9 @@ export const MatchRadarChart = ({
                   cy={center}
                   r={radius * level}
                   fill="none"
-                  stroke="rgba(255, 255, 255, 0.12)"
+                  stroke={darkMode ? 'rgba(255, 255, 255, 0.16)' : 'rgba(0, 0, 0, 0.18)'}
                   strokeDasharray={level === 1 ? 'none' : '2 2'}
-                  strokeWidth="0.8"
+                  strokeWidth="0.9"
                 />
               ))}
 
@@ -253,26 +255,26 @@ export const MatchRadarChart = ({
                       y1={center}
                       x2={x}
                       y2={y}
-                      stroke={isHovered ? '#D4A843' : 'rgba(255, 255, 255, 0.2)'}
-                      strokeWidth={isHovered ? '1.5' : '0.8'}
+                      stroke={isHovered ? '#D4A843' : (darkMode ? 'rgba(255, 255, 255, 0.25)' : 'rgba(0, 0, 0, 0.25)')}
+                      strokeWidth={isHovered ? '1.5' : '0.9'}
                     />
                     <text
                       x={labelX}
                       y={labelY - 5}
                       textAnchor="middle"
-                      fontSize="9"
-                      fill={isHovered ? '#D4A843' : 'rgba(255, 255, 255, 0.9)'}
-                      fontWeight="800"
+                      fontSize="9.5"
+                      fill={isHovered ? (darkMode ? '#F59E0B' : '#B45309') : (darkMode ? '#F8FAFC' : '#0F172A')}
+                      fontWeight="900"
                     >
                       {axis.label}
                     </text>
                     <text
                       x={labelX}
-                      y={labelY + 7}
+                      y={labelY + 8}
                       textAnchor="middle"
                       fontSize="8.5"
-                      fill="#D4A843"
-                      fontWeight="700"
+                      fill={darkMode ? '#FBBF24' : '#B45309'}
+                      fontWeight="800"
                     >
                       {normVal} pts
                     </text>
@@ -280,19 +282,19 @@ export const MatchRadarChart = ({
                 );
               })}
 
-              {/* Polígono Equipo Local (Dorado Institucional #D4A843) */}
+              {/* Polígono Equipo Local (Dorado Institucional) */}
               <polygon
                 points={getPolygonPoints(teamAStats)}
                 fill="rgba(212, 168, 67, 0.35)"
-                stroke="#D4A843"
+                stroke={darkMode ? '#FBBF24' : '#D4A843'}
                 strokeWidth="2.5"
               />
 
-              {/* Polígono Equipo Visitante (Verde Campo #4CAF7D) */}
+              {/* Polígono Equipo Visitante (Verde Campo) */}
               <polygon
                 points={getPolygonPoints(teamBStats)}
                 fill="rgba(76, 175, 125, 0.35)"
-                stroke="#4CAF7D"
+                stroke={darkMode ? '#4ADE80' : '#059669'}
                 strokeWidth="2.5"
               />
 
@@ -305,9 +307,9 @@ export const MatchRadarChart = ({
                     key={`a-${i}`}
                     cx={center + r * Math.cos(angle)}
                     cy={center + r * Math.sin(angle)}
-                    r="4"
-                    fill="#D4A843"
-                    stroke="#FFFFFF"
+                    r="4.5"
+                    fill={darkMode ? '#FBBF24' : '#D4A843'}
+                    stroke={darkMode ? '#FFFFFF' : '#0F172A'}
                     strokeWidth="1.2"
                   />
                 );
@@ -322,9 +324,9 @@ export const MatchRadarChart = ({
                     key={`b-${i}`}
                     cx={center + r * Math.cos(angle)}
                     cy={center + r * Math.sin(angle)}
-                    r="4"
-                    fill="#4CAF7D"
-                    stroke="#FFFFFF"
+                    r="4.5"
+                    fill={darkMode ? '#4ADE80' : '#059669'}
+                    stroke={darkMode ? '#FFFFFF' : '#0F172A'}
                     strokeWidth="1.2"
                   />
                 );
@@ -335,27 +337,28 @@ export const MatchRadarChart = ({
           {/* Tooltip interactivo / Desglose del eje seleccionado con conteos crudos */}
           {activeTooltipAxis && (
             <div style={{
-              background: 'rgba(15, 26, 15, 0.95)',
-              border: '1px solid #D4A843',
+              background: darkMode ? 'rgba(15, 26, 15, 0.95)' : '#FFFFFF',
+              border: darkMode ? '1px solid #D4A843' : '1.5px solid #CBD5E1',
               borderRadius: '8px',
               padding: '10px 14px',
               margin: '8px 12px 14px 12px',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'space-between',
-              fontSize: '12px'
+              fontSize: '12px',
+              boxShadow: darkMode ? '0 4px 16px rgba(0,0,0,0.4)' : '0 4px 12px rgba(0,0,0,0.08)'
             }}>
               <div>
-                <strong style={{ color: '#D4A843', display: 'block', fontSize: '13px' }}>
+                <strong style={{ color: darkMode ? '#F59E0B' : '#B45309', display: 'block', fontSize: '13px' }}>
                   {axes.find(a => a.key === activeTooltipAxis)?.label}
                 </strong>
-                <span style={{ color: '#aaa', fontSize: '11px' }}>
+                <span style={{ color: darkMode ? '#94A3B8' : '#475569', fontSize: '11px' }}>
                   {axes.find(a => a.key === activeTooltipAxis)?.desc}
                 </span>
               </div>
               <div style={{ display: 'flex', gap: '12px', textAlign: 'right', fontWeight: '800' }}>
-                <span style={{ color: '#D4A843' }}>{homeTeamName}: {rawCounts[activeTooltipAxis]?.home} {rawCounts[activeTooltipAxis]?.unit}</span>
-                <span style={{ color: '#4CAF7D' }}>{awayTeamName}: {rawCounts[activeTooltipAxis]?.away} {rawCounts[activeTooltipAxis]?.unit}</span>
+                <span style={{ color: darkMode ? '#FBBF24' : '#B45309' }}>{homeTeamName}: {rawCounts[activeTooltipAxis]?.home} {rawCounts[activeTooltipAxis]?.unit}</span>
+                <span style={{ color: darkMode ? '#4ADE80' : '#047857' }}>{awayTeamName}: {rawCounts[activeTooltipAxis]?.away} {rawCounts[activeTooltipAxis]?.unit}</span>
               </div>
             </div>
           )}
@@ -363,25 +366,34 @@ export const MatchRadarChart = ({
           {/* Leyenda comparativa fija */}
           <div className="radar-legend" style={{ display: 'flex', justifyContent: 'center', gap: '20px', marginBottom: '14px' }}>
             <div className="legend-item" style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', fontWeight: 800 }}>
-              <span className="legend-box gold" style={{ width: '12px', height: '12px', background: '#D4A843', borderRadius: '3px', display: 'inline-block' }} />
-              <span style={{ color: '#D4A843' }}>{homeTeamName} (Local)</span>
+              <span className="legend-box gold" style={{ width: '12px', height: '12px', background: darkMode ? '#FBBF24' : '#D4A843', borderRadius: '3px', display: 'inline-block' }} />
+              <span style={{ color: darkMode ? '#FBBF24' : '#B45309' }}>{homeTeamName} (Local)</span>
             </div>
             <div className="legend-item" style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', fontWeight: 800 }}>
-              <span className="legend-box green" style={{ width: '12px', height: '12px', background: '#4CAF7D', borderRadius: '3px', display: 'inline-block' }} />
-              <span style={{ color: '#4CAF7D' }}>{awayTeamName} (Visitante)</span>
+              <span className="legend-box green" style={{ width: '12px', height: '12px', background: darkMode ? '#4ADE80' : '#059669', borderRadius: '3px', display: 'inline-block' }} />
+              <span style={{ color: darkMode ? '#4ADE80' : '#047857' }}>{awayTeamName} (Visitante)</span>
             </div>
           </div>
 
           {/* TABLA COMPARATIVA DE RESPALDO (Fuente de verdad visual) */}
-          <div className="radar-table-wrapper" style={{ marginTop: '10px', overflowX: 'auto', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '10px' }}>
+          <div className="radar-table-wrapper" style={{
+            marginTop: '10px',
+            overflowX: 'auto',
+            border: darkMode ? '1px solid rgba(255,255,255,0.1)' : '1px solid #CBD5E1',
+            borderRadius: '10px',
+            background: darkMode ? 'transparent' : '#FFFFFF'
+          }}>
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '11.5px', textAlign: 'left' }}>
               <thead>
-                <tr style={{ background: 'rgba(0,0,0,0.3)', borderBottom: '1px solid rgba(255,255,255,0.12)' }}>
-                  <th style={{ padding: '8px 10px', color: 'var(--partidos-text-muted, #94a3b8)', fontWeight: 800 }}>MÉTRICA</th>
-                  <th style={{ padding: '8px 10px', color: '#D4A843', fontWeight: 900 }}>{homeTeamName} (L)</th>
-                  <th style={{ padding: '8px 10px', color: '#4CAF7D', fontWeight: 900 }}>{awayTeamName} (V)</th>
-                  <th style={{ padding: '8px 10px', color: 'var(--partidos-text-muted, #94a3b8)', fontWeight: 800 }}>NORMALIZADO</th>
-                  <th style={{ padding: '8px 10px', textAlign: 'center', color: 'var(--partidos-text-muted, #94a3b8)', fontWeight: 800 }}>GANADOR</th>
+                <tr style={{
+                  background: darkMode ? 'rgba(0,0,0,0.3)' : '#F1F5F9',
+                  borderBottom: darkMode ? '1px solid rgba(255,255,255,0.12)' : '1px solid #CBD5E1'
+                }}>
+                  <th style={{ padding: '8px 10px', color: darkMode ? '#94A3B8' : '#334155', fontWeight: 900 }}>MÉTRICA</th>
+                  <th style={{ padding: '8px 10px', color: darkMode ? '#FBBF24' : '#B45309', fontWeight: 900 }}>{homeTeamName} (L)</th>
+                  <th style={{ padding: '8px 10px', color: darkMode ? '#4ADE80' : '#047857', fontWeight: 900 }}>{awayTeamName} (V)</th>
+                  <th style={{ padding: '8px 10px', color: darkMode ? '#94A3B8' : '#334155', fontWeight: 900 }}>NORMALIZADO</th>
+                  <th style={{ padding: '8px 10px', textAlign: 'center', color: darkMode ? '#94A3B8' : '#334155', fontWeight: 900 }}>GANADOR</th>
                 </tr>
               </thead>
               <tbody>
@@ -390,31 +402,31 @@ export const MatchRadarChart = ({
                   const normA = teamAStats[i];
                   const normB = teamBStats[i];
                   let winnerLabel = 'Empate';
-                  let winnerColor = '#94a3b8';
-                  let winnerBg = 'rgba(148, 163, 184, 0.15)';
+                  let winnerColor = darkMode ? '#94A3B8' : '#475569';
+                  let winnerBg = darkMode ? 'rgba(148, 163, 184, 0.15)' : 'rgba(71, 85, 105, 0.1)';
 
                   if (normA > normB) {
                     winnerLabel = homeTeamName;
-                    winnerColor = '#D4A843';
-                    winnerBg = 'rgba(212, 168, 67, 0.15)';
+                    winnerColor = darkMode ? '#FBBF24' : '#B45309';
+                    winnerBg = darkMode ? 'rgba(212, 168, 67, 0.15)' : 'rgba(245, 158, 11, 0.12)';
                   } else if (normB > normA) {
                     winnerLabel = awayTeamName;
-                    winnerColor = '#4CAF7D';
-                    winnerBg = 'rgba(76, 175, 125, 0.15)';
+                    winnerColor = darkMode ? '#4ADE80' : '#047857';
+                    winnerBg = darkMode ? 'rgba(76, 175, 125, 0.15)' : 'rgba(16, 185, 129, 0.12)';
                   }
 
                   return (
-                    <tr key={axis.key} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-                      <td style={{ padding: '8px 10px', fontWeight: 700, color: '#FFFFFF' }}>
+                    <tr key={axis.key} style={{ borderBottom: darkMode ? '1px solid rgba(255,255,255,0.05)' : '1px solid #E2E8F0' }}>
+                      <td style={{ padding: '8px 10px', fontWeight: 800, color: darkMode ? '#FFFFFF' : '#0F172A' }}>
                         {axis.label}
                       </td>
-                      <td style={{ padding: '8px 10px', color: '#D4A843', fontWeight: 800 }}>
+                      <td style={{ padding: '8px 10px', color: darkMode ? '#FBBF24' : '#B45309', fontWeight: 800 }}>
                         {raw?.home ?? '-'}
                       </td>
-                      <td style={{ padding: '8px 10px', color: '#4CAF7D', fontWeight: 800 }}>
+                      <td style={{ padding: '8px 10px', color: darkMode ? '#4ADE80' : '#047857', fontWeight: 800 }}>
                         {raw?.away ?? '-'}
                       </td>
-                      <td style={{ padding: '8px 10px', color: '#cbd5e1' }}>
+                      <td style={{ padding: '8px 10px', color: darkMode ? '#CBD5E1' : '#1E293B', fontWeight: 600 }}>
                         {normA} vs {normB} pts
                       </td>
                       <td style={{ padding: '8px 10px', textAlign: 'center' }}>
@@ -457,42 +469,42 @@ export const MatchRadarChart = ({
         >
           <div 
             style={{
-              background: 'var(--bg-card, #1B3A2D)',
-              border: '1px solid var(--border-light, #2d4a2d)',
+              background: darkMode ? '#1B3A2D' : '#FFFFFF',
+              border: darkMode ? '1px solid #2d4a2d' : '1px solid #CBD5E1',
               borderRadius: '12px',
               maxWidth: '500px',
               width: '100%',
               padding: '20px',
-              color: 'var(--text-primary, #fff)',
-              boxShadow: '0 8px 32px rgba(0,0,0,0.4)',
+              color: darkMode ? '#FFFFFF' : '#0F172A',
+              boxShadow: '0 8px 32px rgba(0,0,0,0.35)',
               maxHeight: '90vh',
               overflowY: 'auto'
             }}
             onClick={e => e.stopPropagation()}
           >
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
-              <h3 style={{ margin: 0, fontSize: '16px', fontWeight: '800', color: '#D4A843', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <h3 style={{ margin: 0, fontSize: '16px', fontWeight: '800', color: darkMode ? '#D4A843' : '#B45309', display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <Activity size={18} /> ¿Cómo se calcula el Radar Comparativo?
               </h3>
               <button 
                 type="button" 
                 onClick={() => setShowFormulaModal(false)}
-                style={{ background: 'transparent', border: 'none', color: '#888', cursor: 'pointer', padding: '4px' }}
+                style={{ background: 'transparent', border: 'none', color: darkMode ? '#94A3B8' : '#64748B', cursor: 'pointer', padding: '4px' }}
               >
                 <X size={20} />
               </button>
             </div>
 
-            <p style={{ fontSize: '12.5px', color: '#cbd5e1', lineHeight: '1.5', margin: '0 0 14px 0' }}>
+            <p style={{ fontSize: '12.5px', color: darkMode ? '#CBD5E1' : '#334155', lineHeight: '1.5', margin: '0 0 14px 0' }}>
               Todos los 6 ejes nacen <strong>exclusivamente de los eventos reales</strong> capturados a pie de campo o en el acta oficial:
             </p>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
               {axes.map(a => (
-                <div key={a.key} style={{ background: 'rgba(0,0,0,0.2)', padding: '10px 12px', borderRadius: '8px', borderLeft: '3px solid #D4A843' }}>
-                  <div style={{ fontWeight: '800', fontSize: '13px', color: '#fff' }}>{a.label}</div>
-                  <div style={{ fontSize: '11.5px', color: '#94a3b8', marginTop: '2px' }}>{a.desc}</div>
-                  <div style={{ fontSize: '11px', color: '#4CAF7D', marginTop: '4px', fontWeight: '600' }}>📐 {a.calc}</div>
+                <div key={a.key} style={{ background: darkMode ? 'rgba(0,0,0,0.2)' : '#F8FAFC', padding: '10px 12px', borderRadius: '8px', borderLeft: `3px solid ${darkMode ? '#D4A843' : '#B45309'}` }}>
+                  <div style={{ fontWeight: '800', fontSize: '13px', color: darkMode ? '#FFFFFF' : '#0F172A' }}>{a.label}</div>
+                  <div style={{ fontSize: '11.5px', color: darkMode ? '#94A3B8' : '#475569', marginTop: '2px' }}>{a.desc}</div>
+                  <div style={{ fontSize: '11px', color: darkMode ? '#4CAF7D' : '#047857', marginTop: '4px', fontWeight: '700' }}>📐 {a.calc}</div>
                 </div>
               ))}
             </div>

@@ -407,7 +407,7 @@ export const PlayerScheduleTab = ({ player, team, teamPath, isParentView = false
                     ) : (
                       <div>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-                          <span style={{ fontSize: '0.82rem', fontWeight: 800, color: '#FFFFFF' }}>
+                          <span style={{ fontSize: '0.82rem', fontWeight: 800, color: 'var(--text-primary)' }}>
                             {isStarter ? (isEn ? '⭐ Starter' : '⭐ Titular') : isSub ? (isEn ? '🔄 Substitute' : '🔄 Suplente') : isCalled ? (isEn ? '📋 Called up' : '📋 Convocado') : (isEn ? 'No minutes' : 'Sin minutos')}
                           </span>
                           <span style={{ fontSize: '0.75rem', color: 'var(--accent-gold)' }}>

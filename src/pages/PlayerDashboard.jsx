@@ -284,7 +284,7 @@ const PlayerDashboard = () => {
   }
 
   return (
-    <div className={`player-dashboard-layout ${darkMode ? 'theme-dark' : 'theme-light'}`}>
+    <div className={`player-dashboard-root player-dashboard-layout ${darkMode ? 'theme-dark' : 'theme-light'}`}>
       
       {/* Banner Contextual de Permiso de Notificaciones */}
       {showPrompt && (

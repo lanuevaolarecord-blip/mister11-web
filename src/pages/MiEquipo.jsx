@@ -14,6 +14,7 @@ import { storage, db } from '../firebaseConfig';
 import { collection, onSnapshot, doc, setDoc, deleteDoc, addDoc, serverTimestamp } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { showToast } from '../utils/toast';
+import { savePlayerIdentity, deletePlayerIdentity } from '../utils/playerIdentity';
 import { sendChatNotification } from '../hooks/useLocalNotifications';
 import PlayerHealthTab from '../components/PlayerHealthTab';
 import PlayerPlansTab from '../components/PlayerPlansTab';
@@ -135,17 +136,16 @@ const MiEquipo = () => {
     players.forEach(async (p) => {
       const rawEmail = p.email || p.requesterEmail;
       if (rawEmail && p.id) {
-        const emailNorm = rawEmail.trim().toLowerCase();
         try {
-          await setDoc(doc(db, 'playerIdentityByEmail', emailNorm), {
+          await savePlayerIdentity({
             email: rawEmail,
-            emailNorm,
             teamId: activeTeam.id,
             teamPath: teamPathStr,
             playerId: p.id,
             teamName: tName,
-            updatedAt: serverTimestamp()
-          }, { merge: true });
+            role: 'player',
+            uid: p.requesterUid || p.playerUid || p.userId || null
+          });
         } catch (_) {}
       }
     });
@@ -349,20 +349,19 @@ const MiEquipo = () => {
         setSelectedPlayer({ ...selectedPlayer, ...playerDataToSave });
       }
 
-      // ─── VINCULACIÓN DETERMINISTA AUTOMÁTICA POR EMAIL ───────────────────
+      // ─── VINCULACIÓN DETERMINISTA AUTOMÁTICA POR EMAIL MULTI-EQUIPO ─────
       const rawEmail = editData.email || editData.requesterEmail || '';
-      const emailNorm = rawEmail ? rawEmail.trim().toLowerCase() : '';
-      if (emailNorm && savedPlayerId && activeTeam?.id) {
+      if (rawEmail && savedPlayerId && activeTeam?.id) {
         try {
-          await setDoc(doc(db, 'playerIdentityByEmail', emailNorm), {
+          await savePlayerIdentity({
             email: rawEmail,
-            emailNorm,
             teamId: activeTeam.id,
             teamPath: getTeamPath(activeTeam.id),
             playerId: savedPlayerId,
             teamName: activeTeam.nombre || activeTeam.name || 'Mi Equipo',
-            updatedAt: serverTimestamp()
-          }, { merge: true });
+            role: 'player',
+            uid: editData.requesterUid || editData.playerUid || editData.userId || null
+          });
         } catch (err) {
           console.warn('[MiEquipo] Error guardando playerIdentityByEmail:', err);
         }
@@ -388,9 +387,9 @@ const MiEquipo = () => {
         const rawEmail = playerToDelete?.email || playerToDelete?.requesterEmail;
         const playerUid = playerToDelete?.requesterUid || playerToDelete?.playerUid || playerToDelete?.userId;
         
-        if (rawEmail) {
+        if (rawEmail && activeTeam?.id) {
           try {
-            await deleteDoc(doc(db, 'playerIdentityByEmail', rawEmail.trim().toLowerCase()));
+            await deletePlayerIdentity(rawEmail, activeTeam.id);
           } catch (_) {}
         }
         if (playerUid) {

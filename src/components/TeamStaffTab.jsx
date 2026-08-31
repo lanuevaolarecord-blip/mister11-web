@@ -10,6 +10,7 @@ import { collection, onSnapshot, query, doc, updateDoc, setDoc, addDoc, serverTi
 import { db } from '../firebaseConfig';
 import { Shield, UserPlus, Trash2, Mail, Copy, Check, Clock, Users, Award, KeyRound, Share2, CheckCircle2, XCircle } from 'lucide-react';
 import { normalizeEmail } from '../utils/normalizeEmail';
+import { savePlayerIdentity } from '../utils/playerIdentity';
 
 export const TeamStaffTab = ({ activeTeam }) => {
   const { user } = useAuth();
@@ -324,13 +325,15 @@ export const TeamStaffTab = ({ activeTeam }) => {
         }
         if (emailNorm) {
           try {
-            await setDoc(doc(db, 'playerIdentityByEmail', emailNorm), {
-              uid: requesterUid || null,
-              playerId: assignedPlayerId,
+            await savePlayerIdentity({
+              email: request.email || request.requesterEmail || emailNorm,
               teamId: activeTeam.id,
               teamPath,
-              createdAt: serverTimestamp(),
-            }, { merge: true });
+              playerId: assignedPlayerId,
+              teamName: activeTeam.nombre || activeTeam.name || 'Mi Equipo',
+              role: request.role || 'player',
+              uid: requesterUid || null
+            });
           } catch (_) {}
         }
 

@@ -35,6 +35,7 @@ const ConsentForm       = lazy(() => import('./pages/ConsentForm'));
 const DemoMode          = lazy(() => import('./pages/DemoMode'));
 const PlayerDashboard   = lazy(() => import('./pages/PlayerDashboard'));
 
+import { TeamRoleSelectorModal } from './components/TeamRoleSelectorModal';
 import './App.css';
 
 function compareVersions(remote, local) {
@@ -192,6 +193,7 @@ function App() {
           </div>
         </div>
       )}
+      <TeamRoleSelectorModal />
       <Suspense fallback={<PageLoader />}>
         <Routes>
           <Route 

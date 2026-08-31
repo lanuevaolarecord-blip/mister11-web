@@ -1,10 +1,11 @@
 import React, { createContext, useContext, useState, useEffect, useMemo, useCallback } from 'react';
 import { auth, db, initUserDocument } from '../firebaseConfig';
 import { onAuthStateChanged, signInAnonymously, signInWithEmailAndPassword, signOut, getRedirectResult } from 'firebase/auth';
-import { collection, query, onSnapshot, addDoc, serverTimestamp, getDocs, doc, getDoc } from 'firebase/firestore';
+import { collection, query, onSnapshot, addDoc, serverTimestamp, getDocs, doc, getDoc, setDoc } from 'firebase/firestore';
 import { seedInitialData } from '../utils/seedData';
-
 import { normalizeEmail } from '../utils/normalizeEmail';
+import { getPlayerIdentitiesByEmail } from '../utils/playerIdentity';
+import { showToast } from '../utils/toast';
 
 const AuthContext = createContext();
 
@@ -13,7 +14,12 @@ export const AuthProvider = ({ children }) => {
   const [userProfile, setUserProfile] = useState(null);
   const [club, setClub] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [activeTeamId, setActiveTeamId] = useState(null);
+  
+  // FASE 1: Estados Duales por Rol (Coach vs Player)
+  const [activeCoachTeamId, setActiveCoachTeamId] = useState(() => localStorage.getItem('mister11_active_coach_team') || null);
+  const [activePlayerTeamId, setActivePlayerTeamId] = useState(() => localStorage.getItem('mister11_active_player_team') || null);
+  const [showRoleSelectorModal, setShowRoleSelectorModal] = useState({ isOpen: false, role: null });
+
   const [personalTeams, setPersonalTeams] = useState([]);
   const [personalTeamsLoaded, setPersonalTeamsLoaded] = useState(false);
   const [clubTeams, setClubTeams] = useState([]);
@@ -259,15 +265,13 @@ export const AuthProvider = ({ children }) => {
       return;
     }
 
-    // Comprobación de auto-vinculación determinista por email si no tiene equipos compartidos
+    // Comprobación de auto-vinculación determinista por email si tiene identidades multi-equipo
     const checkEmailIdentity = async () => {
       if (!user.email) return;
       try {
-        const emailNorm = user.email.trim().toLowerCase();
-        const idSnap = await getDoc(doc(db, 'playerIdentityByEmail', emailNorm));
-        if (idSnap.exists()) {
-          const idData = idSnap.data();
-          if (idData.teamId && idData.teamPath) {
+        const identities = await getPlayerIdentitiesByEmail(user.email);
+        for (const idData of identities) {
+          if (idData.teamId && idData.teamPath && (idData.role === 'player' || idData.role === 'parent')) {
             const userSharedRef = doc(db, `users/${user.uid}/shared_teams`, idData.teamId);
             const userSharedSnap = await getDoc(userSharedRef);
             if (!userSharedSnap.exists()) {
@@ -275,7 +279,7 @@ export const AuthProvider = ({ children }) => {
                 teamId: idData.teamId,
                 teamPath: idData.teamPath,
                 teamName: idData.teamName || 'Mi Equipo',
-                role: 'player',
+                role: idData.role || 'player',
                 playerId: idData.playerId || '',
                 joinedAt: serverTimestamp()
               });
@@ -283,7 +287,7 @@ export const AuthProvider = ({ children }) => {
           }
         }
       } catch (err) {
-        console.warn('[AuthContext] Auto-link email identity error:', err);
+        console.warn('[AuthContext] Auto-link email identities error:', err);
       }
     };
 
@@ -308,6 +312,8 @@ export const AuthProvider = ({ children }) => {
                 ...tSnap.data(),
                 teamPath: pointer.teamPath,
                 staffRole: pointer.role || 'player',
+                role: pointer.role || 'player',
+                playerId: pointer.playerId || '',
                 source: 'shared'
               };
             }
@@ -317,6 +323,8 @@ export const AuthProvider = ({ children }) => {
               name: pointer.teamName || 'Equipo Compartido',
               teamPath: pointer.teamPath,
               staffRole: pointer.role || 'player',
+              role: pointer.role || 'player',
+              playerId: pointer.playerId || '',
               source: 'shared'
             };
           } catch (e) {
@@ -326,6 +334,8 @@ export const AuthProvider = ({ children }) => {
               name: pointer.teamName || 'Equipo Compartido',
               teamPath: pointer.teamPath,
               staffRole: pointer.role || 'player',
+              role: pointer.role || 'player',
+              playerId: pointer.playerId || '',
               source: 'shared'
             };
           }
@@ -342,148 +352,155 @@ export const AuthProvider = ({ children }) => {
     return () => unsubShared();
   }, [user]);
 
-  // Combinar todas las listas de equipos de forma reactiva (Dando prioridad a sharedTeams para jugadores)
-  const teams = useMemo(() => {
+  // FASE 1: Separación Estricta de Equipos por Rol
+  const coachTeams = useMemo(() => {
     if (user && user.uid === 'invitado-local') {
       return [{
         id: 'team-invitado',
         nombre: 'FC Invitado',
         name: 'FC Invitado',
         categoria: 'Juvenil',
-        category: 'Juvenil',
         temporada: '2025-26',
         colorLocal: '#10B981',
         colorVisitante: '#059669',
-        color: '#10B981',
-        escudo: ''
+        source: 'personal'
       }];
     }
-    // Si el usuario es jugador o tiene equipos compartidos, los compartidos van primero
-    if (userProfile?.role === 'player' || activeMode === 'player') {
-      if (sharedTeams.length > 0) return [...sharedTeams, ...clubTeams];
-    }
-    return [...sharedTeams, ...clubTeams, ...personalTeams];
-  }, [user, personalTeams, clubTeams, sharedTeams, userProfile?.role, activeMode]);
+    // Solo equipos donde el usuario es dueño, entrenador o staff técnico
+    const cClub = clubTeams.filter(t => t.clubRole !== 'player');
+    const cShared = sharedTeams.filter(t => 
+      t.staffRole !== 'player' && 
+      t.role !== 'player' && 
+      t.staffRole !== 'parent' && 
+      t.role !== 'parent'
+    );
+    return [...personalTeams, ...cClub, ...cShared];
+  }, [user, personalTeams, clubTeams, sharedTeams]);
 
-  // Selección de equipo activo y creación de equipo por defecto
+  const playerTeams = useMemo(() => {
+    if (user && user.uid === 'invitado-local') return [];
+    // Solo equipos donde el usuario es jugador o familia
+    return sharedTeams.filter(t => 
+      t.staffRole === 'player' || 
+      t.role === 'player' || 
+      t.staffRole === 'parent' || 
+      t.role === 'parent' ||
+      Boolean(t.playerId)
+    );
+  }, [user, sharedTeams]);
+
+  // Selección automática de equipo activo por rol
   useEffect(() => {
     if (!user) return;
     if (user.uid === 'invitado-local') {
-      setActiveTeamId('team-invitado');
+      setActiveCoachTeamId('team-invitado');
       setLoading(false);
       return;
     }
 
-    // Esperar a que terminen de cargar todos
     if (!personalTeamsLoaded || !clubTeamsLoaded || !sharedTeamsLoaded) {
       return;
     }
 
-    // Si tiene equipos compartidos (ej. asignado por su entrenador), priorizarlos siempre
-    let combinedTeams = [];
-    if (userProfile?.role === 'player' || activeMode === 'player' || sharedTeams.length > 0) {
-      combinedTeams = [...sharedTeams, ...clubTeams, ...personalTeams];
+    // 1. Resolver activeCoachTeamId
+    if (coachTeams.length > 0) {
+      const savedCoachTeam = localStorage.getItem(`lastCoachTeam_${user.uid}`) || localStorage.getItem('mister11_active_coach_team');
+      if (savedCoachTeam && coachTeams.some(t => t.id === savedCoachTeam)) {
+        setActiveCoachTeamId(savedCoachTeam);
+      } else {
+        setActiveCoachTeamId(coachTeams[0].id);
+        localStorage.setItem(`lastCoachTeam_${user.uid}`, coachTeams[0].id);
+      }
     } else {
-      combinedTeams = [...personalTeams, ...clubTeams, ...sharedTeams];
+      setActiveCoachTeamId(null);
     }
 
-    if (combinedTeams.length > 0) {
-      const savedTeamId = localStorage.getItem('mister11_active_team');
-      // Si el equipo guardado existe en la lista y no es un equipo personal huérfano cuando es jugador
-      if (savedTeamId && combinedTeams.some(t => t.id === savedTeamId)) {
-        setActiveTeamId(savedTeamId);
+    // 2. Resolver activePlayerTeamId
+    if (playerTeams.length > 0) {
+      const savedPlayerTeam = localStorage.getItem(`lastPlayerTeam_${user.uid}`) || localStorage.getItem('mister11_active_player_team');
+      if (savedPlayerTeam && playerTeams.some(t => t.id === savedPlayerTeam)) {
+        setActivePlayerTeamId(savedPlayerTeam);
       } else {
-        setActiveTeamId(combinedTeams[0].id);
-        localStorage.setItem('mister11_active_team', combinedTeams[0].id);
+        setActivePlayerTeamId(playerTeams[0].id);
+        localStorage.setItem(`lastPlayerTeam_${user.uid}`, playerTeams[0].id);
       }
-      setLoading(false);
     } else {
-      // Si es un jugador y no tiene equipos, no crear equipo falso
-      if (userProfile?.role === 'player' || activeMode === 'player') {
-        setActiveTeamId(null);
-        setLoading(false);
-        return;
-      }
-
-      // Si el usuario es entrenador y no tiene ningún equipo, creamos su equipo personal limpio
-      const creatingKey = `mister11_creating_team_${user.uid}`;
-      if (!localStorage.getItem(creatingKey)) {
-        localStorage.setItem(creatingKey, 'true');
-        
-        const createDefaultTeam = async () => {
-          try {
-            const docRef = await addDoc(collection(db, 'users', user.uid, 'teams'), {
-              nombre: 'Mi Equipo',
-              categoria: 'General',
-              temporada: '2025-26',
-              source: 'personal',
-              ownerUid: user.uid,
-              ownerEmail: user.email,
-              createdAt: serverTimestamp()
-            });
-            
-            localStorage.setItem('mister11_active_team', docRef.id);
-            setActiveTeamId(docRef.id);
-          } catch (err) {
-            console.error("Error al crear equipo por defecto para nuevo entrenador:", err);
-          } finally {
-            localStorage.removeItem(creatingKey);
-            setLoading(false);
-          }
-        };
-        createDefaultTeam();
-      } else {
-        setActiveTeamId(null);
-        setLoading(false);
-      }
+      setActivePlayerTeamId(null);
     }
-  }, [user, userProfile?.role, personalTeamsLoaded, clubTeamsLoaded, sharedTeamsLoaded, personalTeams, clubTeams, sharedTeams]);
 
-  // Determinar de forma dinámica el modo actual (retrocompatibilidad)
-  const currentMode = useMemo(() => {
-    const activeTeam = teams.find(t => t.id === activeTeamId);
-    return activeTeam?.source === 'club' ? 'club' : 'pro';
-  }, [teams, activeTeamId]);
+    setLoading(false);
+  }, [user, personalTeamsLoaded, clubTeamsLoaded, sharedTeamsLoaded, coachTeams, playerTeams]);
+
+  const activeCoachTeam = useMemo(() => {
+    return coachTeams.find(t => t.id === activeCoachTeamId) || coachTeams[0] || null;
+  }, [coachTeams, activeCoachTeamId]);
+
+  const activePlayerTeam = useMemo(() => {
+    return playerTeams.find(t => t.id === activePlayerTeamId) || playerTeams[0] || null;
+  }, [playerTeams, activePlayerTeamId]);
+
+  // Retrocompatibilidad dinámica: apunta al contexto activo sin mezclar estados
+  const activeTeamId = activeMode === 'player' ? activePlayerTeamId : activeCoachTeamId;
+  const activeTeam = activeMode === 'player' ? activePlayerTeam : activeCoachTeam;
+  const teams = activeMode === 'player' ? playerTeams : coachTeams;
+
+  const changeActiveCoachTeam = useCallback((id) => {
+    setActiveCoachTeamId(id);
+    localStorage.setItem('mister11_active_coach_team', id);
+    if (user?.uid) localStorage.setItem(`lastCoachTeam_${user.uid}`, id);
+  }, [user]);
+
+  const changeActivePlayerTeam = useCallback((id) => {
+    setActivePlayerTeamId(id);
+    localStorage.setItem('mister11_active_player_team', id);
+    if (user?.uid) localStorage.setItem(`lastPlayerTeam_${user.uid}`, id);
+  }, [user]);
 
   const changeActiveTeam = useCallback((id) => {
-    setActiveTeamId(id);
-    localStorage.setItem('mister11_active_team', id);
-  }, []);
+    if (activeMode === 'player') {
+      changeActivePlayerTeam(id);
+    } else {
+      changeActiveCoachTeam(id);
+    }
+  }, [activeMode, changeActivePlayerTeam, changeActiveCoachTeam]);
 
-  const toggleMode = useCallback(() => {
-    // No-op (se eliminó el selector manual de modo)
-  }, []);
+  const currentMode = useMemo(() => {
+    const at = activeMode === 'player' ? activePlayerTeam : activeCoachTeam;
+    return at?.source === 'club' ? 'club' : 'pro';
+  }, [activeMode, activePlayerTeam, activeCoachTeam]);
 
-  const refreshTeam = useCallback(async () => {
-    // No-op (los listeners en tiempo real mantienen todo actualizado)
-  }, []);
-
-  const getTeamPath = useCallback((teamId = activeTeamId) => {
+  const getTeamPath = useCallback((teamId = null, role = null) => {
     if (!user) return '';
-    // Para el usuario invitado local, devolver el path mock del equipo invitado
     if (user.uid === 'invitado-local') {
       const tId = teamId || 'team-invitado';
       return `users/invitado-local/teams/${tId}`;
     }
-    const tId = teamId || activeTeamId;
-    if (!tId) return '';
-    
-    // 1. Buscar en sharedTeams
-    const sharedTeam = sharedTeams.find(t => t.id === tId);
+    const effectiveRole = role || (activeMode === 'player' ? 'player' : 'coach');
+    const targetTeamId = teamId || (effectiveRole === 'player' ? activePlayerTeamId : activeCoachTeamId);
+    if (!targetTeamId) return '';
+
+    // 1. Si es de jugador, buscar primero en playerTeams
+    if (effectiveRole === 'player') {
+      const pTeam = playerTeams.find(t => t.id === targetTeamId);
+      if (pTeam?.teamPath) return pTeam.teamPath;
+    }
+
+    // 2. Buscar en sharedTeams
+    const sharedTeam = sharedTeams.find(t => t.id === targetTeamId);
     if (sharedTeam?.teamPath) {
       return sharedTeam.teamPath;
     }
 
-    // 2. Buscar en clubTeams
-    const clubTeam = clubTeams.find(t => t.id === tId);
+    // 3. Buscar en clubTeams
+    const clubTeam = clubTeams.find(t => t.id === targetTeamId);
     if (clubTeam) {
       const cId = userProfile?.clubId || localStorage.getItem('mister11_club_id');
-      return `clubs/${cId}/teams/${tId}`;
+      return `clubs/${cId}/teams/${targetTeamId}`;
     }
 
-    // 3. Por defecto, equipo personal
-    return `users/${user.uid}/teams/${tId}`;
-  }, [user, userProfile, activeTeamId, sharedTeams, clubTeams]);
+    // 4. Por defecto, equipo personal
+    return `users/${user.uid}/teams/${targetTeamId}`;
+  }, [user, userProfile, activeMode, activePlayerTeamId, activeCoachTeamId, playerTeams, sharedTeams, clubTeams]);
 
   // Función centralizada para iniciar sesión en Modo Invitado
   const loginAsGuest = useCallback(async () => {
@@ -506,7 +523,6 @@ export const AuthProvider = ({ children }) => {
         localStorage.setItem('mister11_active_user_uid', 'invitado-local');
         setUser(mockUser);
 
-        
         const mockTeam = {
           id: 'team-invitado',
           nombre: 'FC Invitado',
@@ -517,10 +533,11 @@ export const AuthProvider = ({ children }) => {
           colorLocal: '#10B981',
           colorVisitante: '#059669',
           color: '#10B981',
-          escudo: ''
+          escudo: '',
+          source: 'personal'
         };
         setPersonalTeams([mockTeam]);
-        setActiveTeamId('team-invitado');
+        setActiveCoachTeamId('team-invitado');
       }
     } finally {
       setLoading(false);
@@ -533,7 +550,8 @@ export const AuthProvider = ({ children }) => {
       localStorage.removeItem('mister11_active_user_uid');
       if (user && user.uid === 'invitado-local') {
         setUser(null);
-        setActiveTeamId(null);
+        setActiveCoachTeamId(null);
+        setActivePlayerTeamId(null);
         setPersonalTeams([]);
       } else {
         await signOut(auth);
@@ -545,13 +563,48 @@ export const AuthProvider = ({ children }) => {
     }
   }, [user]);
 
-  const switchMode = useCallback((mode) => {
-    if (mode === 'player' || mode === 'coach') {
-      localStorage.setItem('mister11_active_mode', mode);
-      setActiveModeState(mode);
+  // FASE 2: Conmutación Inteligente por Rol sin Sobrescribir el Rol Opuesto
+  const switchMode = useCallback((mode, targetTeamId = null) => {
+    if (mode === 'player') {
+      localStorage.setItem('mister11_active_mode', 'player');
+      setActiveModeState('player');
       if (user && user.uid !== 'invitado-local') {
-        setDoc(doc(db, `users/${user.uid}/prefs`, 'lastMode'), { mode, updatedAt: serverTimestamp() }, { merge: true }).catch(() => {});
+        setDoc(doc(db, `users/${user.uid}/prefs`, 'lastMode'), { mode: 'player', updatedAt: serverTimestamp() }, { merge: true }).catch(() => {});
       }
+
+      if (targetTeamId) {
+        changeActivePlayerTeam(targetTeamId);
+      } else {
+        const savedPlayerTeam = user?.uid ? localStorage.getItem(`lastPlayerTeam_${user.uid}`) : null;
+        if (savedPlayerTeam && playerTeams.some(t => t.id === savedPlayerTeam)) {
+          changeActivePlayerTeam(savedPlayerTeam);
+        } else if (playerTeams.length === 1) {
+          changeActivePlayerTeam(playerTeams[0].id);
+        } else if (playerTeams.length > 1) {
+          setShowRoleSelectorModal({ isOpen: true, role: 'player' });
+        }
+      }
+      showToast('Cambiado a Portal de Jugador', 'info');
+    } else if (mode === 'coach') {
+      localStorage.setItem('mister11_active_mode', 'coach');
+      setActiveModeState('coach');
+      if (user && user.uid !== 'invitado-local') {
+        setDoc(doc(db, `users/${user.uid}/prefs`, 'lastMode'), { mode: 'coach', updatedAt: serverTimestamp() }, { merge: true }).catch(() => {});
+      }
+
+      if (targetTeamId) {
+        changeActiveCoachTeam(targetTeamId);
+      } else {
+        const savedCoachTeam = user?.uid ? localStorage.getItem(`lastCoachTeam_${user.uid}`) : null;
+        if (savedCoachTeam && coachTeams.some(t => t.id === savedCoachTeam)) {
+          changeActiveCoachTeam(savedCoachTeam);
+        } else if (coachTeams.length === 1) {
+          changeActiveCoachTeam(coachTeams[0].id);
+        } else if (coachTeams.length > 1) {
+          setShowRoleSelectorModal({ isOpen: true, role: 'coach' });
+        }
+      }
+      showToast('Cambiado a Modo Entrenador', 'info');
     } else {
       localStorage.removeItem('mister11_active_mode');
       setActiveModeState(null);
@@ -559,40 +612,31 @@ export const AuthProvider = ({ children }) => {
         setDoc(doc(db, `users/${user.uid}/prefs`, 'lastMode'), { mode: null, updatedAt: serverTimestamp() }, { merge: true }).catch(() => {});
       }
     }
-  }, [user]);
-
-  const activeTeam = useMemo(() => {
-    return teams.find(t => t.id === activeTeamId) || teams[0] || null;
-  }, [teams, activeTeamId]);
+  }, [user, playerTeams, coachTeams, changeActivePlayerTeam, changeActiveCoachTeam]);
 
   const isCoach = useMemo(() => {
     if (!user) return false;
     if (activeMode === 'coach') return true;
     if (activeMode === 'player') return false;
     if (userProfile?.role === 'coach' || userProfile?.role === 'admin') return true;
-    if (personalTeams.length > 0 || (clubTeams.length > 0 && userProfile?.clubRole !== 'player')) return true;
+    if (coachTeams.length > 0) return true;
     return false;
-  }, [user, activeMode, userProfile, personalTeams.length, clubTeams.length]);
+  }, [user, activeMode, userProfile, coachTeams.length]);
 
   const isPlayer = useMemo(() => {
     if (!user) return false;
     if (activeMode === 'player') return true;
     if (activeMode === 'coach') return false;
     if (userProfile?.role === 'player' || userProfile?.role === 'parent') return true;
-    if (activeTeam?.staffRole === 'player' || activeTeam?.role === 'player') return true;
-    if (activeTeam?.memberRoles?.[user.uid] === 'player' || activeTeam?.memberRoles?.[user.uid] === 'parent') return true;
-    // Si no tiene equipos personales y tiene equipos compartidos de jugador
-    if (personalTeams.length === 0 && sharedTeams.some(t => t.staffRole === 'player' || t.role === 'player')) return true;
+    if (playerTeams.length > 0 && coachTeams.length === 0) return true;
     return false;
-  }, [user, activeTeam, userProfile, activeMode, personalTeams.length, sharedTeams]);
+  }, [user, activeMode, userProfile, playerTeams.length, coachTeams.length]);
 
   const isHybrid = useMemo(() => {
     if (!user) return false;
     if (userProfile?.role === 'hybrid') return true;
-    const hasCoachTeam = personalTeams.length > 0 || clubTeams.length > 0;
-    const hasPlayerTeam = sharedTeams.some(t => t.staffRole === 'player' || t.role === 'player') || userProfile?.role === 'player';
-    return hasCoachTeam && hasPlayerTeam;
-  }, [user, userProfile, personalTeams.length, clubTeams.length, sharedTeams]);
+    return coachTeams.length > 0 && playerTeams.length > 0;
+  }, [user, userProfile, coachTeams.length, playerTeams.length]);
 
   const value = useMemo(() => ({
     user, 
@@ -601,6 +645,16 @@ export const AuthProvider = ({ children }) => {
     activeTeam,
     changeActiveTeam, 
     teams,
+    activeCoachTeamId,
+    activeCoachTeam,
+    changeActiveCoachTeam,
+    coachTeams,
+    activePlayerTeamId,
+    activePlayerTeam,
+    changeActivePlayerTeam,
+    playerTeams,
+    showRoleSelectorModal,
+    setShowRoleSelectorModal,
     isPlayer,
     isCoach,
     isHybrid,
@@ -608,14 +662,40 @@ export const AuthProvider = ({ children }) => {
     activeMode,
     loginAsGuest,
     logout,
-    refreshTeam,
+    refreshTeam: async () => {},
     clubId: userProfile?.clubId || null,
     clubRole: userProfile?.clubRole || null,
     isClubMember: !!(userProfile?.clubId),
     club,
     getTeamPath,
     userProfile,
-  }), [user, loading, activeTeamId, activeTeam, changeActiveTeam, teams, isPlayer, isCoach, isHybrid, switchMode, activeMode, loginAsGuest, logout, refreshTeam, userProfile, club, getTeamPath]);
+  }), [
+    user, 
+    loading, 
+    activeTeamId, 
+    activeTeam, 
+    changeActiveTeam, 
+    teams,
+    activeCoachTeamId,
+    activeCoachTeam,
+    changeActiveCoachTeam,
+    coachTeams,
+    activePlayerTeamId,
+    activePlayerTeam,
+    changeActivePlayerTeam,
+    playerTeams,
+    showRoleSelectorModal,
+    isPlayer, 
+    isCoach, 
+    isHybrid, 
+    switchMode, 
+    activeMode, 
+    loginAsGuest, 
+    logout, 
+    userProfile, 
+    club, 
+    getTeamPath
+  ]);
 
   return (
     <AuthContext.Provider value={value}>
@@ -625,4 +705,5 @@ export const AuthProvider = ({ children }) => {
 };
 
 export const useAuth = () => useContext(AuthContext);
+
 

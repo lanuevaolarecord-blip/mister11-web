@@ -13,18 +13,31 @@ import { PlayerChatTab } from '../components/player/PlayerChatTab';
 import { PlayerAutonomousTestsTab } from '../components/player/PlayerAutonomousTestsTab';
 import { PlayerStatsTab } from '../components/player/PlayerStatsTab';
 import { PlayerProfileTab } from '../components/player/PlayerProfileTab';
-import { Shield, Sun, Moon, LogOut, CheckCircle2, ChevronRight, Users, Bell, AlertTriangle, Settings, Loader } from 'lucide-react';
+import { Shield, Sun, Moon, LogOut, CheckCircle2, ChevronRight, Users, Bell, AlertTriangle, Settings, Loader, KeyRound, ArrowRight } from 'lucide-react';
 import { PlayerSettingsModal } from '../components/player/PlayerSettingsModal';
 import { usePushNotifications } from '../hooks/usePushNotifications';
 import { sendChatNotification, clearDeliveredChatNotifications } from '../hooks/useLocalNotifications';
 import { showToast } from '../utils/toast';
+import { getPlayerIdentitiesByEmail } from '../utils/playerIdentity';
 import './PlayerDashboard.css';
 
 const normalizeStr = (str) => (str || '').toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
 
 const PlayerDashboard = () => {
   const navigate = useNavigate();
-  const { user, userProfile, activeTeam, getTeamPath, changeActiveTeam, teams, logout } = useAuth();
+  // FASE 1 y 2: Desacoplar estado: Usar activePlayerTeam y playerTeams
+  const { 
+    user, 
+    userProfile, 
+    activePlayerTeam, 
+    changeActivePlayerTeam, 
+    playerTeams, 
+    coachTeams,
+    getTeamPath, 
+    switchMode,
+    isHybrid,
+    logout 
+  } = useAuth();
   const { darkMode, toggleTheme } = useTheme();
 
   const [activeTab, setActiveTab] = useState('home'); // 'home' | 'schedule' | 'achievements' | 'chat' | 'tests' | 'stats' | 'profile'
@@ -35,7 +48,8 @@ const PlayerDashboard = () => {
   const [selectedChildId, setSelectedChildId] = useState(null);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
-  const teamPath = activeTeam?.teamPath || (activeTeam?.id ? getTeamPath(activeTeam.id) : null);
+  // FASE 2: Prohibido usar activeCoachTeam. Ruta estricta de jugador
+  const teamPath = activePlayerTeam?.teamPath || (activePlayerTeam?.id ? getTeamPath(activePlayerTeam.id, 'player') : null);
   const cleanPath = teamPath ? teamPath.replace(/^\/+|\/+$/g, '') : '';
   const [resolvedTeamPath, setResolvedTeamPath] = useState(cleanPath);
 
@@ -43,11 +57,20 @@ const PlayerDashboard = () => {
     if (cleanPath) setResolvedTeamPath(cleanPath);
   }, [cleanPath]);
 
+  // Si viene con ?teamId= en la URL, validar que pertenezca a sus equipos de jugador
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const paramTeamId = params.get('teamId');
+    if (paramTeamId && playerTeams.some(t => t.id === paramTeamId)) {
+      changeActivePlayerTeam(paramTeamId);
+    }
+  }, [playerTeams, changeActivePlayerTeam]);
+
   // Determinar estrictamente si la cuenta actual tiene rol de padre/tutor
   const isParentRole = Boolean(
     userProfile?.role === 'parent' ||
-    activeTeam?.memberRoles?.[user?.uid] === 'parent' ||
-    activeTeam?.staffRole === 'parent'
+    activePlayerTeam?.memberRoles?.[user?.uid] === 'parent' ||
+    activePlayerTeam?.staffRole === 'parent'
   );
 
   const handleLogout = async () => {
@@ -61,9 +84,15 @@ const PlayerDashboard = () => {
     }
   };
 
-  // 1. Escuchar la plantilla y resolver la ficha real del jugador o hijos del padre
+  // 1. Escuchar la plantilla y resolver la ficha real del jugador
   useEffect(() => {
     if (!user) {
+      setLoading(false);
+      return;
+    }
+
+    // FASE 2: Si no tiene equipos como jugador, mostrar pantalla limpia sin consultar coach
+    if (!activePlayerTeam && playerTeams.length === 0) {
       setLoading(false);
       return;
     }
@@ -75,30 +104,30 @@ const PlayerDashboard = () => {
       let effectivePath = cleanPath;
       let targetPlayerId = null;
 
-      // 1.1 Consultar índice determinista por email si existe
+      // 1.1 Consultar índice determinista multi-equipo por email
       if (user.email) {
         try {
-          const emailNorm = user.email.trim().toLowerCase();
-          const idSnap = await getDoc(doc(db, 'playerIdentityByEmail', emailNorm));
-          if (idSnap.exists()) {
-            const idData = idSnap.data();
-            if (idData.teamPath) {
-              effectivePath = idData.teamPath.replace(/^\/+|\/+$/g, '');
-              targetPlayerId = idData.playerId;
+          const identities = await getPlayerIdentitiesByEmail(user.email);
+          const currentIdentity = identities.find(i => i.teamId === activePlayerTeam?.id) || identities[0];
+          if (currentIdentity) {
+            if (currentIdentity.teamPath) {
+              effectivePath = currentIdentity.teamPath.replace(/^\/+|\/+$/g, '');
+            }
+            if (currentIdentity.playerId) {
+              targetPlayerId = currentIdentity.playerId;
             }
           }
         } catch (_) {}
       }
 
-      // 1.2 Si no encontró por email, consultar en shared_teams
-      if (!targetPlayerId && activeTeam?.id) {
+      // 1.2 Si no encontró por email, consultar en shared_teams del usuario
+      if (!targetPlayerId && activePlayerTeam?.id) {
         try {
-          const stSnap = await getDoc(doc(db, `users/${user.uid}/shared_teams`, activeTeam.id));
-          if (stSnap.exists() && stSnap.data().playerId) {
-            targetPlayerId = stSnap.data().playerId;
-            if (stSnap.data().teamPath) {
-              effectivePath = stSnap.data().teamPath.replace(/^\/+|\/+$/g, '');
-            }
+          const stSnap = await getDoc(doc(db, `users/${user.uid}/shared_teams`, activePlayerTeam.id));
+          if (stSnap.exists()) {
+            const stData = stSnap.data();
+            if (stData.playerId) targetPlayerId = stData.playerId;
+            if (stData.teamPath) effectivePath = stData.teamPath.replace(/^\/+|\/+$/g, '');
           }
         } catch (_) {}
       }
@@ -145,14 +174,14 @@ const PlayerDashboard = () => {
         if (found) {
           setPlayer(found);
         } else {
-          // Si no hay ficha asignada aún, construir perfil seguro del usuario logueado
+          // Si no hay ficha asignada aún, construir perfil seguro
           setPlayer({
             id: user.uid,
             name: user.displayName || user.email?.split('@')[0] || 'Jugador Míster11',
             email: user.email || '',
             position: 'MC',
             number: '-',
-            category: activeTeam?.categoria || activeTeam?.category || 'General',
+            category: activePlayerTeam?.categoria || activePlayerTeam?.category || 'General',
             consents: { basic: true, attendance: true, health: true, tests: true }
           });
         }
@@ -169,7 +198,7 @@ const PlayerDashboard = () => {
       isMounted = false;
       if (unsubRoster) unsubRoster();
     };
-  }, [user, cleanPath, activeTeam?.id, selectedChildId, isParentRole]);
+  }, [user, cleanPath, activePlayerTeam?.id, selectedChildId, isParentRole]);
 
   // Lista de hijos vinculados para padres
   const myChildren = isParentRole
@@ -418,18 +447,64 @@ const PlayerDashboard = () => {
             <LogOut size={18} color="#EF4444" />
           </button>
 
-          {/* Selector de Equipo */}
-          <select
-            value={activeTeam?.id || ''}
-            onChange={(e) => changeActiveTeam(e.target.value)}
-            className="player-team-select"
-          >
-            {teams.map(t => (
-              <option key={t.id} value={t.id}>
-                {t.nombre || t.name || 'Mi Equipo'}
-              </option>
-            ))}
-          </select>
+          {/* FASE 7: Selector Multi-Equipo de Jugador (SOLO equipos de jugador) */}
+          {playerTeams && playerTeams.length > 1 ? (
+            <select
+              value={activePlayerTeam?.id || ''}
+              onChange={(e) => changeActivePlayerTeam(e.target.value)}
+              className="player-team-select"
+              aria-label="Seleccionar equipo de jugador"
+            >
+              {playerTeams.map(t => (
+                <option key={t.id} value={t.id}>
+                  {t.nombre || t.name || 'Mi Equipo'}
+                </option>
+              ))}
+            </select>
+          ) : activePlayerTeam ? (
+            <span style={{
+              fontSize: '0.76rem',
+              fontWeight: 800,
+              padding: '4px 10px',
+              borderRadius: '8px',
+              background: 'rgba(16, 185, 129, 0.15)',
+              color: '#10B981',
+              border: '1px solid rgba(16, 185, 129, 0.3)',
+              whiteSpace: 'nowrap'
+            }}>
+              {activePlayerTeam.nombre || activePlayerTeam.name || 'Mi Equipo'}
+            </span>
+          ) : null}
+
+          {/* Conmutador a Entrenador si tiene rol híbrido o equipos de entrenador */}
+          {(isHybrid || (coachTeams && coachTeams.length > 0)) && (
+            <button
+              type="button"
+              className="player-theme-btn"
+              onClick={() => {
+                switchMode('coach');
+                navigate('/');
+              }}
+              aria-label="Cambiar a Modo Entrenador"
+              title="Cambiar a Modo Entrenador"
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '4px',
+                background: 'rgba(59, 130, 246, 0.15)',
+                color: '#3B82F6',
+                border: '1px solid rgba(59, 130, 246, 0.4)',
+                borderRadius: '14px',
+                padding: '4px 8px',
+                fontSize: '0.72rem',
+                fontWeight: '800',
+                cursor: 'pointer',
+                whiteSpace: 'nowrap'
+              }}
+            >
+              <Shield size={13} /> Entrenador
+            </button>
+          )}
         </div>
       </header>
 
@@ -468,7 +543,7 @@ const PlayerDashboard = () => {
 
       {/* Contenido principal según pestaña activa */}
       <main className="player-main-viewport">
-        {!activeTeam && (
+        {!activePlayerTeam && (
           <div style={{
             margin: '16px',
             padding: '24px 18px',
@@ -487,7 +562,7 @@ const PlayerDashboard = () => {
               ¡Hola, {user?.displayName?.split(' ')[0] || user?.email?.split('@')[0] || 'Crack'}! 👋
             </h3>
             <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--text-secondary)', lineHeight: '1.4', maxWidth: '340px' }}>
-              Aún no estás vinculado a ningún equipo. Pídele el código de acceso a tu entrenador o pulsa a continuación para unirte a tu plantilla.
+              Aún no estás vinculado a ningún equipo como jugador. Pídele el código de acceso a tu entrenador o pulsa a continuación para unirte a tu plantilla.
             </p>
             <button
               type="button"
@@ -517,7 +592,7 @@ const PlayerDashboard = () => {
         {activeTab === 'home' && (
           <PlayerHomeTab
             player={player}
-            team={activeTeam}
+            team={activePlayerTeam}
             teamPath={resolvedTeamPath || cleanPath}
             onNavigateTab={setActiveTab}
             isParentView={isParentView}
@@ -528,7 +603,7 @@ const PlayerDashboard = () => {
         {activeTab === 'schedule' && (
           <PlayerScheduleTab
             player={player}
-            team={activeTeam}
+            team={activePlayerTeam}
             teamPath={resolvedTeamPath || cleanPath}
             isParentView={isParentView}
           />
@@ -546,7 +621,7 @@ const PlayerDashboard = () => {
         {activeTab === 'chat' && (
           <PlayerChatTab
             player={player}
-            team={activeTeam}
+            team={activePlayerTeam}
             teamPath={resolvedTeamPath || cleanPath}
             isParentView={isParentView}
           />
@@ -555,7 +630,7 @@ const PlayerDashboard = () => {
         {activeTab === 'tests' && (
           <PlayerAutonomousTestsTab
             player={player}
-            team={activeTeam}
+            team={activePlayerTeam}
             teamPath={resolvedTeamPath || cleanPath}
             isParentView={isParentView}
           />
@@ -564,7 +639,7 @@ const PlayerDashboard = () => {
         {activeTab === 'stats' && (
           <PlayerStatsTab
             player={player}
-            team={activeTeam}
+            team={activePlayerTeam}
             teamPath={resolvedTeamPath || cleanPath}
             isParentView={isParentView}
             achievements={achievements}
@@ -575,7 +650,7 @@ const PlayerDashboard = () => {
         {activeTab === 'profile' && (
           <PlayerProfileTab
             player={player}
-            team={activeTeam}
+            team={activePlayerTeam}
             teamPath={resolvedTeamPath || cleanPath}
             isParentView={isParentView}
             onNavigateTab={setActiveTab}

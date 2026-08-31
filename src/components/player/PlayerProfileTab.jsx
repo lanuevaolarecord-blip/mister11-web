@@ -5,6 +5,7 @@ import { db, auth } from '../../firebaseConfig';
 import { useAuth } from '../../context/AuthContext';
 import { isDeveloperEmail } from '../../config/admins';
 import { showToast } from '../../utils/toast';
+import { getPlayerIdentitiesByEmail, deletePlayerIdentity } from '../../utils/playerIdentity';
 import { usePlayerSeasonStats } from '../../hooks/usePlayerSeasonStats';
 import { calculatePlayerMatchStats } from '../../utils/playerMatchStats';
 import { calculatePlayerPerformanceScores, consolidatePlayerEvaluations } from '../../utils/testScoreEngine';
@@ -152,6 +153,12 @@ export const PlayerProfileTab = ({ player, team, teamPath, onNavigateTab }) => {
       const rawEmail = user.email;
       if (rawEmail) {
         try {
+          const identities = await getPlayerIdentitiesByEmail(rawEmail);
+          for (const idDoc of identities) {
+            if (idDoc.teamId) {
+              await deletePlayerIdentity(rawEmail, idDoc.teamId);
+            }
+          }
           await deleteDoc(doc(db, 'playerIdentityByEmail', rawEmail.trim().toLowerCase()));
         } catch (_) {}
       }

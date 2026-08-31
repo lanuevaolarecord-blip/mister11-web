@@ -12,14 +12,13 @@ import { useTranslation } from '../hooks/useTranslation';
 const Header = ({ onToggleNotif }) => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { user, logout, switchMode } = useAuth();
+  const { user, logout, switchMode, isHybrid, playerTeams } = useAuth();
   const isDev = isDeveloperEmail(user?.email);
   const { teams, activeTeam, selectTeam } = useTeams();
   const { permissions, switchMyRole, STAFF_ROLES } = useTeamMembers(activeTeam?.id);
   const { darkMode, toggleTheme } = useTheme();
   const { isRunning, matchSeconds, formatMatchTime } = useMatch();
   const { t } = useTranslation();
-  const [showUserMenu, setShowUserMenu] = useState(false);
 
   const handleLogout = async () => {
     if (window.confirm('¿Deseas cerrar sesión o cambiar de cuenta?')) {
@@ -68,7 +67,7 @@ const Header = ({ onToggleNotif }) => {
       <div className="header-title-container" style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
         <h1 className="header-title" style={{ fontFamily: 'var(--font-heading)', fontSize: '24px', margin: 0, letterSpacing: '1px' }}>{getPageTitle()}</h1>
         
-        {teams.length > 0 && (
+        {teams && teams.length > 0 && (
           <div className="team-switcher-header-v2" style={{ position: 'relative', cursor: 'pointer', display: 'inline-flex', alignItems: 'center' }}>
             <Shield fill="#1B3A2D" color="#FFF" size={16} style={{ pointerEvents: 'none', marginRight: '6px' }} />
             <span className="team-name-span" style={{ pointerEvents: 'none', marginRight: '6px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '140px' }}>
@@ -152,11 +151,10 @@ const Header = ({ onToggleNotif }) => {
             </select>
           </div>
         )}
-
       </div>
       
       <div className="header-actions">
-        {/* ── Badge partido en vivo (solo visible fuera de /partidos) ── */}
+        {/* Badge partido en vivo (solo visible fuera de /partidos) */}
         {isRunning && location.pathname !== '/partidos' && (
           <button
             onClick={() => navigate('/partidos')}
@@ -186,14 +184,15 @@ const Header = ({ onToggleNotif }) => {
             {formatMatchTime(matchSeconds)}
           </button>
         )}
-        {/* Botón exclusivo para cuentas de desarrollador para probar el Portal de Jugador */}
-        {isDev && (
+
+        {/* Conmutador a Portal Jugador si tiene identidades de jugador o es desarrollador / híbrido */}
+        {(isDev || isHybrid || (playerTeams && playerTeams.length > 0)) && (
           <button
             onClick={() => {
               switchMode('player');
-              window.location.href = '/';
+              navigate('/player-dashboard');
             }}
-            title="Cambiar a Portal Jugador (Modo Dev)"
+            title="Cambiar a Portal Jugador"
             style={{
               display: 'inline-flex',
               alignItems: 'center',

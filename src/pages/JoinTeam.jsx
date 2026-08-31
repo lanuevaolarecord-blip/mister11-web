@@ -11,6 +11,7 @@ import './Login.css';
 const POSITIONS = ['POR', 'DEF', 'LTD', 'LTI', 'MCD', 'MC', 'MCO', 'EXT', 'DEL'];
 
 import { normalizeEmail } from '../utils/normalizeEmail';
+import { getPlayerIdentitiesByEmail } from '../utils/playerIdentity';
 
 const JoinTeam = () => {
   const [searchParams] = useSearchParams();
@@ -86,29 +87,25 @@ const JoinTeam = () => {
         setTeamData(data);
         setInputCode(code);
 
-        if (user && user.uid !== 'invitado-local') {
-          const emailNorm = normalizeEmail(user.email);
+        if (user && user.uid !== 'invitado-local' && user.email) {
           try {
-            if (emailNorm) {
-              const identityDoc = await getDoc(doc(db, 'playerIdentityByEmail', emailNorm));
-              if (identityDoc.exists()) {
-                const idData = identityDoc.data();
-                if (idData.teamId === data.teamId && idData.playerId) {
-                  await setDoc(doc(db, `users/${user.uid}/shared_teams`, data.teamId), {
-                    teamId: data.teamId,
-                    teamPath: data.teamPath,
-                    teamName: data.teamName || 'Mi Equipo',
-                    role: 'player',
-                    playerId: idData.playerId,
-                    joinedAt: serverTimestamp(),
-                  }, { merge: true });
+            const identities = await getPlayerIdentitiesByEmail(user.email);
+            const matchingId = identities.find(i => i.teamId === data.teamId && i.playerId);
+            if (matchingId) {
+              await setDoc(doc(db, `users/${user.uid}/shared_teams`, data.teamId), {
+                teamId: data.teamId,
+                teamPath: data.teamPath,
+                teamName: data.teamName || 'Mi Equipo',
+                role: matchingId.role || 'player',
+                playerId: matchingId.playerId,
+                joinedAt: serverTimestamp(),
+              }, { merge: true });
 
-                  localStorage.setItem('mister11_active_mode', 'player');
-                  showToast('¡Ya formas parte de este equipo! Cargando tu portal...', 'success');
-                  navigate('/player-dashboard');
-                  return;
-                }
-              }
+              localStorage.setItem('mister11_active_mode', 'player');
+              localStorage.setItem(`lastPlayerTeam_${user.uid}`, data.teamId);
+              showToast('¡Ya formas parte de este equipo! Cargando tu portal...', 'success');
+              navigate('/player-dashboard');
+              return;
             }
           } catch (e) {
             console.warn('[JoinTeam] Error comprobando jugador existente:', e);

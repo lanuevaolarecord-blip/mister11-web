@@ -51,6 +51,7 @@ import ClubManagement from '../components/ClubManagement';
 import UpgradeModal from '../components/UpgradeModal';
 import ExerciseLibrary from '../components/ExerciseLibrary';
 import { normalizeEmail } from '../utils/normalizeEmail';
+import { savePlayerIdentity } from '../utils/playerIdentity';
 import { normalizeAttendanceDatabase, checkAttendanceConsistency } from '../utils/attendanceStatsHelper';
 import { sanitizeAllMatchesDatabase } from '../utils/sanitizeMatchData';
 import './AdminPanel.css';
@@ -1854,13 +1855,15 @@ const AdminPanel = () => {
                                   const uid = p.requesterUid || p.playerUid || p.userId || p.uid || null;
 
                                   if (emailNorm) {
-                                    await setDoc(doc(db, 'playerIdentityByEmail', emailNorm), {
-                                      uid,
-                                      playerId: pDoc.id,
+                                    await savePlayerIdentity({
+                                      email: rawEmail,
                                       teamId: t.id,
                                       teamPath: path,
-                                      createdAt: serverTimestamp(),
-                                    }, { merge: true });
+                                      playerId: pDoc.id,
+                                      teamName: t.nombre || t.name || 'Mi Equipo',
+                                      role: 'player',
+                                      uid
+                                    });
                                     count++;
                                   }
 

@@ -23,6 +23,7 @@ import {
   TrendingUp, 
   Sparkles, 
   ChevronRight, 
+  ChevronDown,
   Heart, 
   Flame, 
   Brain, 
@@ -32,7 +33,10 @@ import {
   Users,
   ShieldCheck,
   HelpCircle,
-  Info
+  Info,
+  MessageSquare,
+  TrendingDown,
+  Minus
 } from 'lucide-react';
 
 import { PlayerLeaderboard } from './PlayerLeaderboard';
@@ -65,6 +69,7 @@ export const PlayerStatsTab = ({ player, team, teamPath, isParentView = false, a
   });
   const [isUpgradeOpen, setIsUpgradeOpen] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [expandedMatchId, setExpandedMatchId] = useState(null);
 
   const cleanPath = teamPath ? teamPath.replace(/^\/+|\/+$/g, '') : '';
   const effectivePlayerId = player?.id || 'player-self';
@@ -520,61 +525,395 @@ export const PlayerStatsTab = ({ player, team, teamPath, isParentView = false, a
 
         {playerMatchStats.matchHistory.length > 0 ? (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-            {playerMatchStats.matchHistory.map((mItem, idx) => (
-              <div key={idx} style={{ 
-                background: darkMode ? 'rgba(0,0,0,0.3)' : '#F8FAFC', 
-                border: '1px solid var(--border-light)', 
-                borderRadius: '10px', 
-                padding: '12px',
-                display: 'flex',
-                flexDirection: 'column',
-                gap: '6px'
-              }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span style={{ fontSize: '13px', fontWeight: '800', color: 'var(--text-primary)' }}>
-                    vs {mItem.rival}
-                  </span>
-                  <span style={{ 
-                    fontSize: '11px', 
-                    fontWeight: '800', 
-                    padding: '2px 8px', 
-                    borderRadius: '10px',
-                    background: 'rgba(76, 175, 125, 0.15)',
-                    color: '#4CAF7D'
-                  }}>
-                    {mItem.result} ({mItem.type || t('player.stats.officialMatch')})
-                  </span>
-                </div>
+            {playerMatchStats.matchHistory.map((mItem, idx) => {
+              const isExpanded = expandedMatchId === mItem.matchId;
+              const prevItem = playerMatchStats.matchHistory[idx + 1] || null;
 
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '11.5px', color: 'var(--text-secondary)', flexWrap: 'wrap', gap: '6px' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                    <span>📅 {mItem.date}</span>
-                    <span>&middot;</span>
-                    {mItem.actaClosed ? (
-                      <span style={{ color: '#10B981', fontWeight: '700' }}>
-                        📋 {mItem.isTitular ? t('common.starter') : t('common.substitute')} ({mItem.minutesPlayed}')
+              // ── Calcula KPIs tácticos de los liveEvents del jugador ──
+              const le = mItem.liveEvents || [];
+              const tiros_puerta = le.filter(e => e.type === 'shot_on_target_own').length;
+              const tiros_fuera = le.filter(e => e.type === 'shot_off_target_own').length;
+              const tiros_total = tiros_puerta + tiros_fuera;
+              const duelos_ganados = le.filter(e => e.type === 'duel_won').length;
+              const duelos_perdidos = le.filter(e => e.type === 'duel_lost').length;
+              const duelos_total = duelos_ganados + duelos_perdidos;
+              const recuperaciones = le.filter(e => e.type === 'recovery').length;
+              const perdidas = le.filter(e => e.type === 'loss').length;
+              const pases_clave = le.filter(e => e.type === 'duel_won' && e.subtype === 'recovery_ind').length;
+              const faltas_cometidas = le.filter(e => e.type === 'foul_against').length;
+
+              // Estim. xG simple: 0.1 por tiro fuera + 0.35 por tiro a puerta
+              const xG = Math.round(((tiros_puerta * 0.35) + (tiros_fuera * 0.10)) * 100) / 100;
+
+              // KPI "mejor dato" automático
+              const allKpis = [
+                { label: 'Goles', val: mItem.goals || 0, icon: '⚽', color: '#4CAF7D' },
+                { label: 'Tiros a puerta', val: tiros_puerta, icon: '🎯', color: '#3B82F6' },
+                { label: 'Duelos ganados', val: duelos_ganados, icon: '✊', color: '#D4A843' },
+                { label: 'Recuperaciones', val: recuperaciones, icon: '🔄', color: '#0D9488' },
+              ];
+              const bestKpi = allKpis.reduce((best, k) => (k.val > (best?.val || 0) ? k : best), null);
+
+              // Flechas progreso vs partido anterior
+              const arrowFor = (curr, prev) => {
+                if (prev === null || prev === undefined) return null;
+                if (curr > prev) return '↑';
+                if (curr < prev) return '↓';
+                return '=';
+              };
+              const arrowColor = (arr) => arr === '↑' ? '#4CAF7D' : arr === '↓' ? '#EF4444' : '#94A3B8';
+
+              // Promedio de temporada del jugador (para mini-barras)
+              const seasonAvgGoals = playerMatchStats.matchesPlayed > 0
+                ? Math.round((playerMatchStats.goals / playerMatchStats.matchesPlayed) * 10) / 10 : 0;
+              const seasonAvgMinutes = playerMatchStats.matchesPlayed > 0
+                ? Math.round(playerMatchStats.minutesPlayed / playerMatchStats.matchesPlayed) : 0;
+
+              return (
+                <div key={mItem.matchId || idx} style={{
+                  background: darkMode ? 'rgba(0,0,0,0.35)' : '#F8FAFC',
+                  border: isExpanded
+                    ? `1.5px solid ${darkMode ? 'rgba(76,175,125,0.5)' : '#4CAF7D'}`
+                    : '1px solid var(--border-light)',
+                  borderRadius: '12px',
+                  overflow: 'hidden',
+                  transition: 'border-color 0.2s ease'
+                }}>
+
+                  {/* ── Cabecera siempre visible: row tactable ── */}
+                  <button
+                    type="button"
+                    onClick={() => setExpandedMatchId(isExpanded ? null : mItem.matchId)}
+                    style={{
+                      width: '100%',
+                      background: 'none',
+                      border: 'none',
+                      cursor: 'pointer',
+                      padding: '12px 14px',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: '6px',
+                      textAlign: 'left',
+                    }}
+                    aria-expanded={isExpanded}
+                  >
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <span style={{ fontSize: '13px', fontWeight: '800', color: 'var(--text-primary)' }}>
+                        vs {mItem.rival}
                       </span>
-                    ) : (
-                      <span style={{ color: '#F59E0B', fontWeight: '700', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-                        ⏳ {t('player.stats.pendingActaShort')}
-                        {(mItem.goals > 0 || mItem.assists > 0) && (
-                          <span style={{ fontSize: '10px', background: 'rgba(245, 158, 11, 0.15)', border: '1px solid rgba(245, 158, 11, 0.3)', padding: '1px 6px', borderRadius: '6px' }}>
-                            {isEn ? 'Provisional' : 'Provisional'}
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <span style={{
+                          fontSize: '11px', fontWeight: '800', padding: '2px 8px', borderRadius: '10px',
+                          background: 'rgba(76,175,125,0.15)', color: '#4CAF7D'
+                        }}>
+                          {mItem.result}
+                        </span>
+                        {isExpanded
+                          ? <ChevronDown size={16} color="#4CAF7D" />
+                          : <ChevronRight size={16} color={darkMode ? '#64748B' : '#94A3B8'} />
+                        }
+                      </div>
+                    </div>
+
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '11.5px', color: 'var(--text-secondary)', flexWrap: 'wrap', gap: '6px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <span>📅 {mItem.date}</span>
+                        <span>&middot;</span>
+                        {mItem.actaClosed ? (
+                          <span style={{ color: '#10B981', fontWeight: '700' }}>
+                            📋 {mItem.isTitular ? (isEn ? 'Starter' : 'Titular') : (isEn ? 'Sub' : 'Suplente')} ({mItem.minutesPlayed}')
+                          </span>
+                        ) : (
+                          <span style={{ color: '#F59E0B', fontWeight: '700' }}>
+                            ⏳ {isEn ? 'Pending official sheet' : 'Pendiente de acta'}
                           </span>
                         )}
-                      </span>
-                    )}
-                  </div>
-                  <div style={{ display: 'flex', gap: '6px', fontWeight: '800' }}>
-                    {mItem.goals > 0 && <span style={{ color: '#4CAF7D' }}>⚽ {mItem.goals}</span>}
-                    {mItem.assists > 0 && <span style={{ color: '#3B82F6' }}>👟 {mItem.assists}</span>}
-                    {mItem.yellowCards > 0 && <span>🟨</span>}
-                    {mItem.redCards > 0 && <span>🟥</span>}
-                    {mItem.rating && mItem.rating !== '-' && <span style={{ color: '#C9A84C' }}>⭐ {mItem.rating}</span>}
-                  </div>
+                      </div>
+                      <div style={{ display: 'flex', gap: '6px', fontWeight: '800' }}>
+                        {mItem.goals > 0 && <span style={{ color: '#4CAF7D' }}>⚽ {mItem.goals}</span>}
+                        {mItem.assists > 0 && <span style={{ color: '#3B82F6' }}>💟 {mItem.assists}</span>}
+                        {mItem.yellowCards > 0 && <span>🟨</span>}
+                        {mItem.redCards > 0 && <span>🟥</span>}
+                        {mItem.rating && mItem.rating !== '-' && <span style={{ color: '#C9A84C' }}>⭐ {mItem.rating}</span>}
+                      </div>
+                    </div>
+                  </button>
+
+                  {/* ── Panel de detalle expandido ── */}
+                  {isExpanded && (
+                    <div style={{
+                      borderTop: `1px solid ${darkMode ? 'rgba(255,255,255,0.08)' : '#E2E8F0'}`,
+                      padding: '14px',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: '14px',
+                      animation: 'fadeInDown 0.2s ease'
+                    }}>
+
+                      {/* GUARD: acta abierta */}
+                      {!mItem.actaClosed && (
+                        <div style={{
+                          background: 'rgba(245,158,11,0.1)',
+                          border: '1.5px solid rgba(245,158,11,0.4)',
+                          borderRadius: '10px',
+                          padding: '14px',
+                          textAlign: 'center',
+                          color: '#F59E0B',
+                          fontWeight: '800',
+                          fontSize: '13px'
+                        }}>
+                          ⏳ {isEn
+                            ? 'Pending official confirmation — Stats will appear once the match sheet is closed.'
+                            : 'Pendiente de confirmación oficial — Los datos aparecerán cuando el míster cierre el acta.'}
+                        </div>
+                      )}
+
+                      {mItem.actaClosed && (
+                        <>
+                          {/* BLOQUE 1: KPIs clave */}
+                          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '8px' }}>
+                            {[
+                              { icon: '⚽', label: isEn ? 'Goals' : 'Goles', val: mItem.goals || 0, color: '#4CAF7D' },
+                              { icon: '💟', label: isEn ? 'Assists' : 'Asist.', val: mItem.assists || 0, color: '#3B82F6' },
+                              { icon: '⏱️', label: isEn ? 'Minutes' : 'Minutos', val: mItem.minutesPlayed || 0, color: '#D4A843' },
+                              { icon: '📈', label: 'xG', val: xG, color: '#A855F7' },
+                            ].map(k => (
+                              <div key={k.label} style={{
+                                background: darkMode ? 'rgba(0,0,0,0.4)' : '#FFFFFF',
+                                border: '1px solid var(--border-light)',
+                                borderRadius: '10px',
+                                padding: '10px 8px',
+                                textAlign: 'center'
+                              }}>
+                                <div style={{ fontSize: '18px' }}>{k.icon}</div>
+                                <div style={{ fontSize: '16px', fontWeight: '900', color: k.color }}>{k.val}</div>
+                                <div style={{ fontSize: '10px', color: 'var(--text-secondary)', fontWeight: '700' }}>{k.label}</div>
+                              </div>
+                            ))}
+                          </div>
+
+                          {/* BLOQUE 2: Nota del míster (grande) */}
+                          {(mItem.misterNote !== null && mItem.misterNote !== undefined && mItem.misterNote !== '') && (
+                            <div style={{
+                              background: darkMode ? 'rgba(201,168,76,0.08)' : 'rgba(201,168,76,0.06)',
+                              border: '1.5px solid rgba(201,168,76,0.3)',
+                              borderRadius: '12px',
+                              padding: '14px',
+                              display: 'flex',
+                              flexDirection: 'column',
+                              gap: '8px'
+                            }}>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                <span style={{ fontSize: '24px', fontWeight: '900', color: '#C9A84C' }}>⭐ {Number(mItem.misterNote).toFixed(1)}</span>
+                                <span style={{ fontSize: '11px', color: 'var(--text-secondary)', fontWeight: '700' }}>
+                                  {isEn ? "Coach's rating" : 'Nota del Míster'}
+                                </span>
+                                {/* Estrellas de actitud */}
+                                {mItem.actitudStars != null && (
+                                  <div style={{ marginLeft: 'auto', display: 'flex', gap: '2px' }}>
+                                    {[1,2,3].map(s => (
+                                      <Star
+                                        key={s}
+                                        size={14}
+                                        fill={s <= mItem.actitudStars ? '#C9A84C' : 'none'}
+                                        color={s <= mItem.actitudStars ? '#C9A84C' : '#64748B'}
+                                      />
+                                    ))}
+                                    <span style={{ fontSize: '10px', color: '#C9A84C', fontWeight: '700', marginLeft: '4px' }}>
+                                      {isEn ? 'Attitude' : 'Actitud'}
+                                    </span>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          )}
+
+                          {/* BLOQUE 3: Aciertos vs Desaciertos */}
+                          {le.length > 0 && (
+                            <div style={{
+                              background: darkMode ? 'rgba(0,0,0,0.3)' : '#FFFFFF',
+                              border: '1px solid var(--border-light)',
+                              borderRadius: '12px',
+                              padding: '12px 14px',
+                            }}>
+                              <div style={{ fontSize: '12px', fontWeight: '900', color: 'var(--text-primary)', marginBottom: '10px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                                🎯 {isEn ? 'Hits vs Misses' : 'Aciertos vs Desaciertos'}
+                              </div>
+                              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                                {[
+                                  {
+                                    label: isEn ? 'Shots on target / total' : 'Tiros a puerta / total',
+                                    good: tiros_puerta, total: tiros_total,
+                                    icon: '🎯', goodColor: '#4CAF7D', badColor: '#EF4444'
+                                  },
+                                  {
+                                    label: isEn ? 'Duels won / total' : 'Duelos ganados / total',
+                                    good: duelos_ganados, total: duelos_total,
+                                    icon: '✊', goodColor: '#D4A843', badColor: '#94A3B8'
+                                  },
+                                  {
+                                    label: isEn ? 'Recoveries vs Losses' : 'Recuperaciones vs Pérdidas',
+                                    good: recuperaciones, total: recuperaciones + perdidas,
+                                    icon: '🔄', goodColor: '#0D9488', badColor: '#F97316'
+                                  },
+                                ].map(row => {
+                                  const pct = row.total > 0 ? Math.round((row.good / row.total) * 100) : 0;
+                                  return (
+                                    <div key={row.label} style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
+                                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', fontWeight: '800' }}>
+                                        <span style={{ color: 'var(--text-secondary)' }}>{row.icon} {row.label}</span>
+                                        <span style={{ color: row.good > 0 ? row.goodColor : '#94A3B8' }}>
+                                          {row.good}/{row.total} ({pct}%)
+                                        </span>
+                                      </div>
+                                      <div style={{ height: '5px', borderRadius: '3px', background: darkMode ? 'rgba(255,255,255,0.1)' : '#E2E8F0', overflow: 'hidden' }}>
+                                        <div style={{ width: `${pct}%`, height: '100%', background: pct >= 60 ? row.goodColor : row.badColor, transition: 'width 0.4s ease' }} />
+                                      </div>
+                                    </div>
+                                  );
+                                })}
+                                {/* Faltas y pases clave */}
+                                <div style={{ display: 'flex', gap: '8px', marginTop: '4px', flexWrap: 'wrap' }}>
+                                  <span style={{ fontSize: '11px', fontWeight: '800', color: '#F97316', background: 'rgba(249,115,22,0.1)', padding: '3px 8px', borderRadius: '6px' }}>
+                                    ⚡ {faltas_cometidas} {isEn ? 'fouls' : 'faltas'}
+                                  </span>
+                                  {pases_clave > 0 && (
+                                    <span style={{ fontSize: '11px', fontWeight: '800', color: '#3B82F6', background: 'rgba(59,130,246,0.1)', padding: '3px 8px', borderRadius: '6px' }}>
+                                      ⭐ {pases_clave} {isEn ? 'key passes' : 'pases clave'}
+                                    </span>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                          )}
+
+                          {/* BLOQUE 4: Mejor dato del partido */}
+                          {bestKpi && bestKpi.val > 0 && (
+                            <div style={{
+                              background: `linear-gradient(135deg, ${darkMode ? 'rgba(212,168,67,0.12)' : 'rgba(212,168,67,0.08)'}, transparent)`,
+                              border: '1.5px solid rgba(212,168,67,0.3)',
+                              borderRadius: '10px',
+                              padding: '10px 14px',
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '10px'
+                            }}>
+                              <span style={{ fontSize: '20px' }}>🏆</span>
+                              <div>
+                                <div style={{ fontSize: '11px', fontWeight: '700', color: '#C9A84C', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                                  {isEn ? 'Your best stat this match' : 'Tu mejor dato del partido'}
+                                </div>
+                                <div style={{ fontSize: '15px', fontWeight: '900', color: bestKpi.color }}>
+                                  {bestKpi.icon} {bestKpi.val} {bestKpi.label}
+                                </div>
+                              </div>
+                            </div>
+                          )}
+
+                          {/* BLOQUE 5: Tú vs tu media de temporada */}
+                          <div style={{
+                            background: darkMode ? 'rgba(0,0,0,0.3)' : '#FFFFFF',
+                            border: '1px solid var(--border-light)',
+                            borderRadius: '12px',
+                            padding: '12px 14px',
+                          }}>
+                            <div style={{ fontSize: '12px', fontWeight: '900', color: 'var(--text-primary)', marginBottom: '10px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                              📈 {isEn ? 'You vs Your Season Average' : 'Tú vs tu media de temporada'}
+                            </div>
+                            {[
+                              {
+                                label: isEn ? 'Goals this match' : 'Goles este partido',
+                                val: mItem.goals || 0,
+                                avg: seasonAvgGoals,
+                                color: '#4CAF7D'
+                              },
+                              {
+                                label: isEn ? 'Minutes this match' : 'Minutos este partido',
+                                val: mItem.minutesPlayed || 0,
+                                avg: seasonAvgMinutes,
+                                color: '#D4A843'
+                              }
+                            ].map(row => {
+                              const maxVal = Math.max(row.val, row.avg, 1);
+                              const myPct = Math.round((row.val / maxVal) * 100);
+                              const avgPct = Math.round((row.avg / maxVal) * 100);
+                              const arr = arrowFor(row.val, row.avg);
+                              return (
+                                <div key={row.label} style={{ marginBottom: '8px' }}>
+                                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', fontWeight: '800', marginBottom: '4px' }}>
+                                    <span style={{ color: 'var(--text-secondary)' }}>{row.label}</span>
+                                    <span style={{ color: arrowColor(arr) }}>
+                                      {arr} {row.val} vs {isEn ? 'avg' : 'media'} {row.avg}
+                                    </span>
+                                  </div>
+                                  <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                                    <div style={{ display: 'flex', gap: '4px', alignItems: 'center', fontSize: '10px' }}>
+                                      <span style={{ width: '36px', textAlign: 'right', color: row.color, fontWeight: '700' }}>{isEn ? 'You' : 'Tú'}</span>
+                                      <div style={{ flex: 1, height: '5px', background: darkMode ? 'rgba(255,255,255,0.1)' : '#E2E8F0', borderRadius: '3px', overflow: 'hidden' }}>
+                                        <div style={{ width: `${myPct}%`, height: '100%', background: row.color }} />
+                                      </div>
+                                    </div>
+                                    <div style={{ display: 'flex', gap: '4px', alignItems: 'center', fontSize: '10px' }}>
+                                      <span style={{ width: '36px', textAlign: 'right', color: '#94A3B8', fontWeight: '700' }}>{isEn ? 'Avg' : 'Media'}</span>
+                                      <div style={{ flex: 1, height: '5px', background: darkMode ? 'rgba(255,255,255,0.1)' : '#E2E8F0', borderRadius: '3px', overflow: 'hidden' }}>
+                                        <div style={{ width: `${avgPct}%`, height: '100%', background: '#94A3B8' }} />
+                                      </div>
+                                    </div>
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+
+                          {/* BLOQUE 6: Comentario del míster */}
+                          {mItem.misterComment && mItem.misterComment.trim() !== '' && (
+                            <div style={{
+                              background: darkMode ? 'rgba(59,130,246,0.08)' : 'rgba(59,130,246,0.05)',
+                              border: '1.5px solid rgba(59,130,246,0.3)',
+                              borderRadius: '12px',
+                              padding: '14px',
+                              display: 'flex',
+                              gap: '10px',
+                              alignItems: 'flex-start'
+                            }}>
+                              <MessageSquare size={18} color="#3B82F6" style={{ flexShrink: 0, marginTop: '2px' }} />
+                              <div>
+                                <div style={{ fontSize: '11px', fontWeight: '800', color: '#3B82F6', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '4px' }}>
+                                  {isEn ? "Coach's Message" : 'Mensaje del Míster'}
+                                </div>
+                                <p style={{ margin: 0, fontSize: '13px', color: 'var(--text-primary)', lineHeight: '1.55', fontStyle: 'italic' }}>
+                                  "{mItem.misterComment}"
+                                </p>
+                              </div>
+                            </div>
+                          )}
+
+                          {/* BLOQUE 7: Disciplina */}
+                          {(mItem.yellowCards > 0 || mItem.redCards > 0) && (
+                            <div style={{
+                              background: darkMode ? 'rgba(0,0,0,0.2)' : '#FFF9F0',
+                              border: '1px solid rgba(245,158,11,0.3)',
+                              borderRadius: '10px',
+                              padding: '10px 14px',
+                              display: 'flex',
+                              gap: '12px',
+                              alignItems: 'center'
+                            }}>
+                              <span style={{ fontSize: '12px', fontWeight: '900', color: 'var(--text-secondary)', textTransform: 'uppercase' }}>
+                                {isEn ? 'Discipline' : 'Disciplina'}
+                              </span>
+                              {mItem.yellowCards > 0 && <span style={{ fontSize: '15px' }}>🟨 ×{mItem.yellowCards}</span>}
+                              {mItem.redCards > 0 && <span style={{ fontSize: '15px' }}>🟥 ×{mItem.redCards}</span>}
+                            </div>
+                          )}
+
+                        </>
+                      )}
+                    </div>
+                  )}
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         ) : (
           <div style={{ padding: '20px', textAlign: 'center', color: 'var(--text-secondary)', fontSize: '12px' }}>

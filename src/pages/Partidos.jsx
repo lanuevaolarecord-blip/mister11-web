@@ -2162,7 +2162,83 @@ const Partidos = () => {
                       </div>
                     </div>
 
+                    {/* Tarjeta 5b: Comentario del Míster por Jugador (visible en portal jugador) */}
+                    <div className="post-match-card">
+                      <h4 className="card-section-title">💬 Comentario para el Jugador</h4>
+                      <p style={{ fontSize: '12px', color: 'var(--partidos-text-muted)', margin: '4px 0 12px 0' }}>
+                        Mensaje personal del míster — el jugador lo verá en su portal bajo el detalle de este partido. Máximo 280 caracteres. Tono positivo y constructivo.
+                      </p>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', maxHeight: '360px', overflowY: 'auto', paddingRight: '4px' }}>
+                        {calledPlayers.filter(Boolean).length === 0 ? (
+                          <p style={{ fontSize: '12px', color: 'var(--partidos-text-muted)', fontStyle: 'italic', margin: '6px 0' }}>
+                            No hay jugadores convocados en este partido.
+                          </p>
+                        ) : (
+                          calledPlayers.filter(Boolean).map(id => {
+                            const p = players.find(pl => pl && pl.id === id);
+                            if (!p) return null;
+                            const currentComment = (matchData.playerComments && matchData.playerComments[id]) || '';
+                            return (
+                              <div
+                                key={id}
+                                style={{
+                                  display: 'flex',
+                                  flexDirection: 'column',
+                                  gap: '6px',
+                                  padding: '10px 12px',
+                                  background: 'rgba(255,255,255,0.04)',
+                                  borderRadius: '8px',
+                                  border: '1px solid var(--partidos-border)',
+                                }}
+                              >
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                  <PlayerAvatar player={p} size={28} showNumber={false} />
+                                  <span style={{ fontWeight: '700', fontSize: '12px', color: 'var(--partidos-text-primary)' }}>{p.name}</span>
+                                  <span style={{ fontSize: '10px', color: 'var(--partidos-text-muted)', marginLeft: 'auto' }}>{currentComment.length}/280</span>
+                                </div>
+                                <textarea
+                                  maxLength={280}
+                                  rows={2}
+                                  placeholder={`Escribe un comentario motivador para ${p.name}...`}
+                                  value={currentComment}
+                                  onChange={e => {
+                                    const val = e.target.value.slice(0, 280);
+                                    setMatchData(prev => ({
+                                      ...prev,
+                                      playerComments: { ...(prev.playerComments || {}), [id]: val }
+                                    }));
+                                  }}
+                                  onBlur={async () => {
+                                    if (matchData.id) {
+                                      try {
+                                        await updateMatch(matchData.id, { playerComments: matchData.playerComments || {} });
+                                      } catch (_) {}
+                                    }
+                                  }}
+                                  style={{
+                                    width: '100%',
+                                    padding: '8px',
+                                    borderRadius: '8px',
+                                    border: '1.5px solid var(--partidos-border)',
+                                    background: 'var(--partidos-input-bg)',
+                                    color: 'var(--partidos-text-primary)',
+                                    fontSize: '12px',
+                                    lineHeight: '1.5',
+                                    resize: 'vertical',
+                                    minHeight: '56px',
+                                    boxSizing: 'border-box',
+                                    fontFamily: 'inherit'
+                                  }}
+                                />
+                              </div>
+                            );
+                          })
+                        )}
+                      </div>
+                    </div>
+
                     {/* Tarjeta 5: Notas Tácticas */}
+
                     <div className="post-match-card">
                       <h4 className="card-section-title">📝 Notas Tácticas</h4>
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginTop: '10px' }}>

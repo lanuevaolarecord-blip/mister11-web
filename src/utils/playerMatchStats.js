@@ -173,6 +173,12 @@ export const calculatePlayerMatchStats = (playerId, matches = []) => {
       totalReds += redCardsInMatch;
       if (ratingInMatch && !isNaN(ratingInMatch)) ratings.push(ratingInMatch);
 
+      // Extraer eventos de liveStats filtrados por este jugador (para detalle de partido)
+      const allLiveEvents = [
+        ...(Array.isArray(m.liveStatsEvents) ? m.liveStatsEvents : []),
+        ...(Array.isArray(m.events) ? m.events : [])
+      ].filter(e => e && e.playerId && String(e.playerId) === pid);
+
       matchHistory.push({
         matchId: m.id,
         date: m.date || m.fecha || 'Reciente',
@@ -190,7 +196,17 @@ export const calculatePlayerMatchStats = (playerId, matches = []) => {
         assists: assistsInMatch,
         yellowCards: yellowCardsInMatch,
         redCards: redCardsInMatch,
-        rating: ratingInMatch ? ratingInMatch.toFixed(1) : '-'
+        rating: ratingInMatch ? ratingInMatch.toFixed(1) : '-',
+        // ── Datos enriquecidos para el detalle expandible ──
+        misterNote: actaActual.nota ?? actaActual.misterNote ?? null,
+        misterComment: (m.playerComments && m.playerComments[pid]) || null,
+        actitudStars: actaActual.actitud ?? null,
+        liveEvents: allLiveEvents,
+        // Estadísticas tácticas de los liveStats del partido completo (no filtrado por jugador)
+        allMatchLiveEvents: [
+          ...(Array.isArray(m.liveStatsEvents) ? m.liveStatsEvents : []),
+          ...(Array.isArray(m.events) ? m.events : [])
+        ]
       });
       return; // procesado desde acta oficial → stop
     }
@@ -223,7 +239,12 @@ export const calculatePlayerMatchStats = (playerId, matches = []) => {
       assists: assistsInMatch,
       yellowCards: yellowCardsInMatch,
       redCards: redCardsInMatch,
-      rating: ratingInMatch ? ratingInMatch.toFixed(1) : '-'
+      rating: ratingInMatch ? ratingInMatch.toFixed(1) : '-',
+      misterNote: null,
+      misterComment: null,
+      actitudStars: null,
+      liveEvents: [],
+      allMatchLiveEvents: []
     });
   });
 

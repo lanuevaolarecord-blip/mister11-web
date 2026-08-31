@@ -72,15 +72,27 @@ export const HeatMap = ({
     let total = 0;
 
     filteredEvents.forEach(e => {
-      // Usar coordenadas explícitas o fallback por tipo y sector
-      let fallbackY = 50;
-      if (e.sector === 'left') fallbackY = 20;
-      else if (e.sector === 'right') fallbackY = 80;
-      else if (ZONE_MAP[e.type]) fallbackY = ZONE_MAP[e.type].y;
+      // Determinar Y prioritariamente por sector lateral seleccionado
+      let y = 50;
+      const sec = String(e.sector || '').toLowerCase();
+      if (sec === 'left' || sec.includes('izq')) {
+        y = 16;
+      } else if (sec === 'right' || sec.includes('der')) {
+        y = 84;
+      } else if (sec === 'center' || sec.includes('cent')) {
+        y = 50;
+      } else if (typeof e.y === 'number' && e.y >= 0 && e.y <= 100 && e.y !== 50) {
+        y = e.y;
+      } else if (ZONE_MAP[e.type]) {
+        y = ZONE_MAP[e.type].y;
+      }
 
-      const fallbackX = ZONE_MAP[e.type]?.x ?? 50;
-      const x = typeof e.x === 'number' ? Math.max(0, Math.min(100, e.x)) : fallbackX;
-      const y = typeof e.y === 'number' ? Math.max(0, Math.min(100, e.y)) : fallbackY;
+      // Determinar X por coordenadas numéricas o zona según acción
+      let fallbackX = ZONE_MAP[e.type]?.x ?? 50;
+      if (e.type?.includes('shot') || e.type?.includes('goal') || e.type === 'corner_favor') fallbackX = 85;
+      else if (e.type?.includes('foul') || e.type?.includes('card') || e.type === 'corner_against') fallbackX = 30;
+
+      const x = (typeof e.x === 'number' && e.x >= 0 && e.x <= 100) ? e.x : fallbackX;
 
       const col = Math.min(COLS - 1, Math.floor((x / 100) * COLS));
       const row = Math.min(ROWS - 1, Math.floor((y / 100) * ROWS));

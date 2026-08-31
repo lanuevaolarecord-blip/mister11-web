@@ -28,6 +28,7 @@ import { normalizeText } from '../utils/normalizeInput';
 import { normalizeLineup, applyLineupChange, formatMatchDateSafe } from '../utils/lineupEngine';
 import { buildSmartMatchSheetActual, getEffectiveMatchDuration, isMatchLocked } from '../utils/minutesEngine';
 import { sanitizeMatchData } from '../utils/sanitizeMatchData';
+import { showToast } from '../utils/toast';
 import { SpellCheckedTextarea } from '../components/ui/SpellCheckedTextarea';
 
 export const normalizeCapitalize = (str) => {
@@ -320,7 +321,37 @@ const Partidos = () => {
         : (isEnLanguage ? '2nd Half' : '2ª Parte'));
 
   const handleFinishMatch = useCallback(async () => {
-    if (!matchData.id) return;
+    if (!matchData?.id) return;
+
+    // Si ya está terminado, permitir reabrir o navegar directamente a post-partido
+    if (matchData.status === 'Terminado') {
+      const wantsReopen = window.confirm(
+        isEnLanguage
+          ? 'This match is already finished. Do you want to reopen it to record more events or edit data?'
+          : 'Este partido ya está finalizado. ¿Deseas reabrirlo para registrar más eventos o corregir datos?'
+      );
+      if (wantsReopen) {
+        const reopened = { ...matchData, status: 'Pendiente' };
+        setMatchData(reopened);
+        try {
+          await updateMatch(matchData.id, reopened);
+          showToast(isEnLanguage ? 'Match reopened.' : 'Partido reabierto.', 'info');
+        } catch (e) {
+          console.error(e);
+        }
+      } else {
+        setEditTab('POST-PARTIDO');
+      }
+      return;
+    }
+
+    const confirmFinish = window.confirm(
+      isEnLanguage
+        ? 'Are you sure you want to finish the match? Official scores, timer, sheets, and player statistics will be consolidated.'
+        : '¿Deseas dar por finalizado el partido? Se registrará el resultado oficial, se cerrará el cronómetro y se consolidarán las estadísticas y el acta.'
+    );
+    if (!confirmFinish) return;
+
     const finalSec = Number.isFinite(matchSeconds) ? matchSeconds : (matchData.finalSeconds || 0);
     finishMatch(finalSec);
     const finalClockStr = formatMatchTime(finalSec);
@@ -355,11 +386,17 @@ const Partidos = () => {
     const currentActual = matchData.actaOficial?.actual || {};
     const rsvpMap = matchData.playerRsvp || {};
 
-    const norm = normalizeLineup(
-      calledPlayers.slice(0, 11),
-      calledPlayers.slice(11, 18),
-      calledPlayers.filter(Boolean)
-    );
+    const rawTit = (Array.isArray(matchData.titulares) && matchData.titulares.length > 0)
+      ? matchData.titulares
+      : (calledPlayers || []).slice(0, 11);
+    const rawSup = (Array.isArray(matchData.suplentes) && matchData.suplentes.length > 0)
+      ? matchData.suplentes
+      : (calledPlayers || []).slice(11, 18);
+    const rawConv = (Array.isArray(matchData.convocados) && matchData.convocados.length > 0)
+      ? matchData.convocados
+      : (calledPlayers || []);
+
+    const norm = normalizeLineup(rawTit, rawSup, rawConv);
 
     const smartActual = buildSmartMatchSheetActual(
       {
@@ -402,17 +439,29 @@ const Partidos = () => {
         totalDuration: effectiveDuration
       }
     };
-    setMatchData(updated);
+
+    // Limpiar campos undefined para garantizar compatibilidad con Firestore
+    const cleanUpdated = JSON.parse(JSON.stringify(updated));
+    setMatchData(cleanUpdated);
+
     try {
-      await updateMatch(matchData.id, updated);
+      await updateMatch(matchData.id, cleanUpdated);
+      showToast(
+        isEnLanguage
+          ? '🏁 Match finished successfully. Stats and official sheet saved.'
+          : '🏁 Partido finalizado con éxito. Datos y estadísticas consolidadas.',
+        'success'
+      );
+      setEditTab('POST-PARTIDO');
     } catch (err) {
       console.error("Error al finalizar partido:", err);
+      showToast('❌ Error al guardar finalización: ' + (err.message || ''), 'error');
     }
-  }, [matchData, matchSeconds, finishMatch, formatMatchTime, updateMatch, effectiveLiveEvents, calledPlayers, user, derivedGoalsFor, derivedGoalsAgainst, derivedGoleadores, derivedTarjetas]);
+  }, [matchData, matchSeconds, finishMatch, formatMatchTime, updateMatch, effectiveLiveEvents, calledPlayers, user, derivedGoalsFor, derivedGoalsAgainst, derivedGoleadores, derivedTarjetas, isEnLanguage]);
 
-  const handleAddLiveEvent = useCallback(async (type, explicitHalf) => {
+  const handleAddLiveEvent = useCallback(async (type, explicitHalf, extraData = {}) => {
     if (addLiveEvent) {
-      return await addLiveEvent(type, explicitHalf);
+      return await addLiveEvent(type, explicitHalf, extraData);
     }
   }, [addLiveEvent]);
 

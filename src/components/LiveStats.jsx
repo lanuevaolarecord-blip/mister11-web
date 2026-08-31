@@ -17,7 +17,7 @@ import { useTheme } from '../context/ThemeContext';
 import { useMatch } from '../context/MatchContext';
 import { SvgDonut, SvgComparisonBars, HalfBreakdown } from './LiveStatsCharts';
 import { getEffectiveLanguage } from '../i18n/translations';
-import { isMatchLocked } from '../utils/minutesEngine';
+import { isMatchLocked, getStartingXI } from '../utils/minutesEngine';
 import { showToast } from '../utils/toast';
 import MatchStatsBlock from './MatchStatsBlock';
 
@@ -340,8 +340,69 @@ const LiveStats = ({
     ];
   }, [players, calledPlayers, matchData]);
 
+  // ── Jugadores actualmente en el campo (Alineación + Sustituciones dinámicas) ──
+  const onPitchPlayersList = useMemo(() => {
+    // 1. Extraer titulares canónicos
+    const rawTitulares = Array.isArray(matchData?.titulares) && matchData.titulares.length > 0
+      ? matchData.titulares
+      : (Array.isArray(matchData?.alineacion?.titulares) && matchData.alineacion.titulares.length > 0
+          ? matchData.alineacion.titulares
+          : (calledPlayers || []).slice(0, 11));
 
-  // ── Filtrado Multidimensional de Eventos ────────────────────────────────────
+    const rawSuplentes = Array.isArray(matchData?.suplentes) && matchData.suplentes.length > 0
+      ? matchData.suplentes
+      : (calledPlayers || []).slice(11, 18);
+
+    const { initialTitulares } = getStartingXI(
+      (rawTitulares || []).map(p => (typeof p === 'object' && p ? p.id : p)),
+      (rawSuplentes || []).map(p => (typeof p === 'object' && p ? p.id : p)),
+      rawEvents
+    );
+
+    const onPitchSet = new Set((initialTitulares || []).filter(Boolean).map(String));
+
+    // 2. Aplicar sustituciones cronológicamente
+    const subEvents = (rawEvents || [])
+      .filter(e => e && e.isValid !== false && (e.type === 'cambio' || e.type === 'sustitucion' || e.type === 'sub'))
+      .sort((a, b) => (parseInt(a.minute || a.minuto || 0, 10) - parseInt(b.minute || b.minuto || 0, 10)));
+
+    subEvents.forEach(e => {
+      const pIn = String(e.playerInId || e.subInId || e.jugadorEntraId || e.inId || '');
+      const pOut = String(e.playerOutId || e.subOutId || e.jugadorSaleId || e.outId || '');
+      if (pOut) onPitchSet.delete(pOut);
+      if (pIn) onPitchSet.add(pIn);
+    });
+
+    // 3. Quitar jugadores con tarjeta roja / expulsión
+    (rawEvents || []).forEach(e => {
+      if (!e || e.isValid === false) return;
+      const type = String(e.type || '').toLowerCase();
+      const card = String(e.card || e.tipo || '').toLowerCase();
+      const isRed = type === 'roja' || type === 'card_red_own' || type === 'expulsion' || (type === 'tarjeta' && card === 'roja');
+      if (isRed) {
+        const pId = String(e.playerId || e.jugadorId || '');
+        if (pId) onPitchSet.delete(pId);
+      }
+    });
+
+    // Fallback: Si no hay alineación configurada aún, mostrar los disponibles
+    if (onPitchSet.size === 0) {
+      return playersList;
+    }
+
+    const filtered = playersList.filter(p => onPitchSet.has(String(p.id)));
+    return filtered.length > 0 ? filtered : playersList;
+  }, [matchData, rawEvents, calledPlayers, playersList]);
+
+  // Si el jugador activo sale de cambio o es expulsado, deseleccionarlo
+  useEffect(() => {
+    if (activePlayerId && onPitchPlayersList.length > 0) {
+      const isStillOnPitch = onPitchPlayersList.some(p => String(p.id) === String(activePlayerId));
+      if (!isStillOnPitch) {
+        setActivePlayerId(null);
+      }
+    }
+  }, [onPitchPlayersList, activePlayerId]);
   const filteredEvents = useMemo(() => {
     return (rawEvents || []).filter(e => {
       if (!e) return false;
@@ -471,32 +532,46 @@ const LiveStats = ({
     const tempId = `local_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`;
     const targetHalf = explicitHalf !== null ? explicitHalf : currentHalf;
 
-    const xMap = { left: 20, center: 50, right: 80 };
-    const yCoord = customCoords?.y ?? (targetHalf === 1 ? 30 : 70);
-    const xCoord = customCoords?.x ?? (xMap[type] || 50);
+    const yMap = { left: 16, center: 50, right: 84 };
+    const effectiveSector = customCoords?.sector || selectedSector || 'center';
+    const yCoord = customCoords?.y ?? (yMap[effectiveSector] || 50);
+
+    // X según tipo de acción (Defensa: 25, Medio: 50, Ataque: 80)
+    let defaultX = 50;
+    if (type.includes('shot') || type.includes('goal') || type === 'corner_favor') defaultX = 85;
+    else if (type.includes('foul') || type.includes('card') || type === 'corner_against') defaultX = 30;
+    const xCoord = customCoords?.x ?? defaultX;
+
+    const targetPlayerId = customCoords?.playerId || activePlayerId || null;
 
     const localDoc = {
       id: tempId,
       type,
       half: targetHalf,
       minute: currentMinute || 1,
-      sector: selectedSector,
+      sector: effectiveSector,
       x: xCoord,
       y: yCoord,
+      playerId: targetPlayerId,
       timestamp: new Date().toISOString()
     };
 
     setLocalEvents(prev => [...prev, localDoc]);
     const hook = parentAddLiveEvent || liveStatsHook.addLiveEvent;
     if (hook) {
-      const realId = await hook(type, explicitHalf, { sector: selectedSector, x: xCoord, y: yCoord });
+      const realId = await hook(type, explicitHalf, { 
+        sector: effectiveSector, 
+        x: xCoord, 
+        y: yCoord,
+        playerId: targetPlayerId 
+      });
       if (realId && realId !== tempId) {
         setLocalEvents(prev => prev.filter(e => e.id !== tempId));
       }
       return realId;
     }
     return tempId;
-  }, [parentAddLiveEvent, liveStatsHook.addLiveEvent, currentHalf, currentMinute, selectedSector, matchData]);
+  }, [parentAddLiveEvent, liveStatsHook.addLiveEvent, currentHalf, currentMinute, selectedSector, activePlayerId, matchData]);
 
   const addLiveEvent = innerAddLiveEvent;
   const resetLiveStats = useCallback(async () => {
@@ -515,13 +590,16 @@ const LiveStats = ({
         showToast('⚠️ Partido finalizado — usa Reabrir Acta para corregir.', 'warning');
         return;
       }
-      const id = await addLiveEvent(type, currentHalf);
+      const id = await addLiveEvent(type, currentHalf, {
+        sector: selectedSector,
+        playerId: activePlayerId || null
+      });
       if (id) {
         setFlashType(type);
         setTimeout(() => setFlashType(null), 650);
       }
     },
-    [addLiveEvent, currentHalf, matchData]
+    [addLiveEvent, currentHalf, matchData, selectedSector, activePlayerId]
   );
 
 
@@ -695,6 +773,33 @@ const LiveStats = ({
               >
                 ↺
               </button>
+
+              {onFinishMatch && (
+                <button
+                  type="button"
+                  id="livestats-btn-finish-match"
+                  onClick={onFinishMatch}
+                  className="livestats-btn-timer"
+                  style={{
+                    backgroundColor: isMatchFinished ? '#15803D' : '#22C55E',
+                    color: '#FFFFFF',
+                    fontWeight: 'bold',
+                    fontSize: '11px',
+                    padding: '8px 12px',
+                    minHeight: '40px',
+                    borderRadius: '8px',
+                    border: 'none',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '4px',
+                    boxShadow: '0 2px 8px rgba(34, 197, 94, 0.4)'
+                  }}
+                  title={isMatchFinished ? (isEn ? 'Match finished' : 'Partido finalizado') : (isEn ? 'Finish match' : 'Finalizar partido')}
+                >
+                  {isMatchFinished ? (isEn ? '✓ Finished' : '✓ Terminado') : (isEn ? '🏁 Finish' : '🏁 Finalizar')}
+                </button>
+              )}
             </div>
           </div>
 
@@ -802,7 +907,7 @@ const LiveStats = ({
                 >📋 Carga Post-Partido</button>
               </div>
               <div className="jugador-activo-chips">
-                {playersList.map(p => {
+                {onPitchPlayersList.map(p => {
                   const isActive = activePlayerId === p.id;
                   return (
                     <button
@@ -818,7 +923,7 @@ const LiveStats = ({
                 })}
               </div>
 
-              {/* 7 Botones de Acción Individual ≥56dp */}
+              {/* Botones de Acción Individual ≥56dp */}
               {activePlayerId && (
                 <div className="jugador-acciones-grid">
                   {(() => {
@@ -835,6 +940,8 @@ const LiveStats = ({
                       { type: 'duel_lost',           label: 'Duelo\nPerdido',  icon: '⚠️', color: '#F97316' },
                       { type: 'foul_against',        label: 'Falta\nContra',   icon: '✋', color: '#EAB308' },
                       { type: 'foul_favor',          label: 'Falta\nFavor',    icon: '⚡', color: '#06B6D4' },
+                      { type: 'corner_favor',        label: 'Córner\nFavor',   icon: '🚩', color: '#D4A843' },
+                      { type: 'offside_own',         label: 'Fuera\nJuego',    icon: '🏃', color: '#F97316' },
                     ];
                     return (
                       <>
@@ -855,12 +962,34 @@ const LiveStats = ({
                                   if (isMatchLocked(matchData)) { showToast('⚠️ Partido finalizado', 'warning'); return; }
                                   setFlashType(`player_${a.type}_${idx}`);
                                   setTimeout(() => setFlashType(null), 650);
+
+                                  const yMap = { left: 16, center: 50, right: 84 };
+                                  const yCoord = yMap[selectedSector] || 50;
+                                  let defaultX = 50;
+                                  if (a.type.includes('shot') || a.type === 'corner_favor') defaultX = 85;
+                                  else if (a.type.includes('foul')) defaultX = 30;
+
                                   const tempId = `local_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`;
-                                  const localDoc = { id: tempId, type: a.type, half: currentHalf, minute: currentMinute || 1, sector: selectedSector, x: 50, y: 50, playerId: activePlayerId, timestamp: new Date().toISOString() };
+                                  const localDoc = { 
+                                    id: tempId, 
+                                    type: a.type, 
+                                    half: currentHalf, 
+                                    minute: currentMinute || 1, 
+                                    sector: selectedSector, 
+                                    x: defaultX, 
+                                    y: yCoord, 
+                                    playerId: activePlayerId, 
+                                    timestamp: new Date().toISOString() 
+                                  };
                                   setLocalEvents(prev => [...prev, localDoc]);
                                   const hook = parentAddLiveEvent || liveStatsHook.addLiveEvent;
                                   if (hook) {
-                                    const realId = await hook(a.type, currentHalf, { playerId: activePlayerId, sector: selectedSector });
+                                    const realId = await hook(a.type, currentHalf, { 
+                                      playerId: activePlayerId, 
+                                      sector: selectedSector,
+                                      x: defaultX,
+                                      y: yCoord
+                                    });
                                     if (realId && realId !== tempId) setLocalEvents(prev => prev.filter(e => e.id !== tempId));
                                   }
                                 }}
@@ -1146,22 +1275,40 @@ const LiveStats = ({
           <div className="players-tab-content">
             <StatsDataTable
               playerStats={playersList.map((p) => {
-                const pid = p.id;
-                const evsByPlayer = filteredEvents.filter(e => e.playerId === pid || e.fromPlayerId === pid);
+                const pid = String(p.id);
+                // Unificar eventos del jugador (LiveStats + Match events como goles, tarjetas, asistencias)
+                const poolEvents = [...(filteredEvents || []), ...(matchData?.events || [])];
+                const evsByPlayer = poolEvents.filter(e => {
+                  if (!e) return false;
+                  const ePid = String(e.playerId || e.jugadorId || e.fromPlayerId || '');
+                  return ePid === pid;
+                });
+
                 const countP = (t) => evsByPlayer.filter(e => e.type === t).length;
                 const pasesC = countP('pass_completed') + countP('key_pass');
                 const pasesF = countP('pass_failed');
                 const duelosG = countP('duel_won');
                 const duelosP = countP('duel_lost');
                 const recup = countP('recovery');
-                const perd = countP('ball_loss') + countP('pass_failed');
+                const perd = countP('ball_loss') + countP('loss') + countP('pass_failed');
+                const tirosP = countP('shot_on_target_own');
+                const tirosF = countP('shot_off_target_own');
+                const tirosTot = tirosP + tirosF;
+
+                const golesFromEvs = poolEvents.filter(e => (e.type === 'gol_local' || e.type === 'goal') && String(e.playerId || e.jugadorId) === pid).length;
+                const golesFromList = (matchData?.goleadoresList || []).filter(g => String(g.jugadorId) === pid).length;
+                const goles = Math.max(golesFromEvs, golesFromList);
+
+                const asistencias = poolEvents.filter(e => String(e.asistenciaId || e.assistId) === pid).length;
+                const minutos = matchData?.actaOficial?.actual?.[pid]?.minutes ?? p.minutos ?? 90;
 
                 return {
                   ...p,
-                  goles: filteredEvents.filter(e => (e.type === 'gol_local' || e.type === 'goal') && e.playerId === pid).length,
-                  asistencias: filteredEvents.filter(e => e.asistenciaId === pid).length,
-                  tiros: countP('shot_on_target_own') + countP('shot_off_target_own'),
-                  tirosPuerta: countP('shot_on_target_own'),
+                  minutos,
+                  goles,
+                  asistencias,
+                  tiros: tirosTot,
+                  tirosPuerta: tirosP,
                   pasesExitosos: pasesC,
                   pasesFallidos: pasesF,
                   duelosGanados: duelosG,
@@ -1171,7 +1318,7 @@ const LiveStats = ({
                   pasesClave: countP('key_pass'),
                   entradas: duelosG + duelosP,
                   faltas: countP('foul_against'),
-                  xG: parseFloat(((countP('shot_on_target_own') * 0.35) + (countP('shot_off_target_own') * 0.05)).toFixed(2))
+                  xG: parseFloat(((tirosP * 0.35) + (tirosF * 0.05) + (goles * 0.4)).toFixed(2))
                 };
               })}
               teamName={homeTeamName}

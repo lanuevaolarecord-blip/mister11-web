@@ -125,14 +125,24 @@ export const useLiveStats = (teamId, matchId, currentMinute, currentHalf = 1) =>
 
   // ── Añadir un evento (Incremento inmediato optimista + Persistencia) ──────
   const addLiveEvent = useCallback(
-    async (type, explicitHalf = null) => {
+    async (type, explicitHalf = null, extraData = {}) => {
       const targetHalf = explicitHalf !== null && explicitHalf !== undefined ? explicitHalf : currentHalf;
       const newId = 'evt_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5);
+      
+      // Limpiar campos undefined para evitar rechazos de Firestore
+      const cleanExtra = {};
+      if (extraData && typeof extraData === 'object') {
+        Object.entries(extraData).forEach(([k, v]) => {
+          if (v !== undefined) cleanExtra[k] = v;
+        });
+      }
+
       const localDoc = {
         id: newId,
         type,
         half: targetHalf,
         minute: currentMinute || 1,
+        ...cleanExtra,
         timestamp: new Date().toISOString(),
       };
 
@@ -154,6 +164,7 @@ export const useLiveStats = (teamId, matchId, currentMinute, currentHalf = 1) =>
             type,
             half: targetHalf,
             minute: currentMinute || 1,
+            ...cleanExtra,
             timestamp: serverTimestamp(),
           });
           return docRef?.id || newId;

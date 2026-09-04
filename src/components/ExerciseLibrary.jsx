@@ -44,7 +44,9 @@ const ExerciseLibrary = ({ activeTeamId }) => {
   };
 
   const filteredExercises = exercises.filter(ex => {
-    const matchesSearch = (ex.name || ex.titulo || '').toLowerCase().includes(searchTerm.toLowerCase());
+    const rawName = (ex.name || ex.titulo || ex.title || '').trim();
+    if (!rawName || rawName === '<think>' || rawName.toLowerCase().startsWith('<think>')) return false;
+    const matchesSearch = rawName.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesCategory = categoryFilter === 'all' || ex.category === categoryFilter;
     return matchesSearch && matchesCategory;
   });
@@ -87,7 +89,7 @@ const ExerciseLibrary = ({ activeTeamId }) => {
           {filteredExercises.map(ex => (
             <div key={ex.id} className="exercise-card">
               <div className="exercise-card-header">
-                <h3>{ex.name || ex.titulo}</h3>
+                <h3>{ex.name || ex.titulo || ex.title || 'Ejercicio'}</h3>
                 {ex.source === 'system' && <span className="badge-system">Sistema</span>}
                 {ex.source === 'ia' && <span className="badge-ia">IA</span>}
               </div>

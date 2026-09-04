@@ -74,10 +74,15 @@ export default async function handler(req, res) {
       }
 
       const data = await groqResponse.json();
-      const text = data?.choices?.[0]?.message?.content;
+      const rawText = data?.choices?.[0]?.message?.content;
 
-      if (text) {
-        return res.status(200).json({ result: text });
+      if (rawText) {
+        // Eliminar razonamiento interno de modelos tipo Qwen / DeepSeek (<think>...</think>)
+        const cleanText = rawText
+          .replace(/<think>[\s\S]*?<\/think>/gi, '')
+          .replace(/<\/?think>/gi, '')
+          .trim();
+        return res.status(200).json({ result: cleanText || rawText.trim() });
       }
     } catch (modelErr) {
       console.warn(`[ia-generate] Excepción con modelo ${model}:`, modelErr);

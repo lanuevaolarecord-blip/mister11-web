@@ -26,9 +26,17 @@ const AssignPlanModal = ({ player, activeTeamId, onClose }) => {
   const [planName, setPlanName] = useState('');
   const [saving, setSaving] = useState(false);
 
-  const filtered = exercises.filter(ex =>
-    (ex.name || ex.titulo || '').toLowerCase().includes(search.toLowerCase())
-  );
+  const validExercises = exercises.filter(ex => {
+    const rawName = (ex.name || ex.titulo || ex.title || ex.nombre || '').trim();
+    return rawName.length > 0 && rawName !== '<think>' && rawName !== '</think>';
+  });
+
+  const filtered = validExercises.filter(ex => {
+    const name = (ex.name || ex.titulo || ex.title || ex.nombre || '').toLowerCase();
+    const cat = (ex.category || '').toLowerCase();
+    const q = search.toLowerCase();
+    return name.includes(q) || cat.includes(q);
+  });
 
   const toggleSelect = (id) => {
     setSelectedIds(prev =>
@@ -146,35 +154,42 @@ const AssignPlanModal = ({ player, activeTeamId, onClose }) => {
               />
             </div>
             <div style={{ maxHeight: '280px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '8px', border: '1px solid #F1F5F9', borderRadius: '8px', padding: '8px' }}>
-              {filtered.map(ex => {
-                const isSelected = selectedIds.includes(ex.id);
-                return (
-                  <div
-                    key={ex.id}
-                    onClick={() => toggleSelect(ex.id)}
-                    style={{
-                      display: 'flex', alignItems: 'center', gap: '12px',
-                      padding: '12px', borderRadius: '8px', cursor: 'pointer',
-                      background: isSelected ? '#F0FDF4' : '#F8FAFC',
-                      border: isSelected ? '1px solid #4CAF7D' : '1px solid transparent',
-                      transition: 'all 0.15s'
-                    }}
-                  >
-                    {isSelected
-                      ? <CheckSquare size={18} color="#4CAF7D" style={{ flexShrink: 0 }} />
-                      : <Square size={18} color="#9CA3AF" style={{ flexShrink: 0 }} />
-                    }
-                    <div>
-                      <div style={{ fontWeight: 600, color: '#111827', fontSize: '0.9rem' }}>
-                        {ex.name || ex.titulo}
-                      </div>
-                      <div style={{ fontSize: '0.78rem', color: '#6B7280' }}>
-                        {ex.category} {ex.series > 0 ? `· ${ex.series} series` : ''} {ex.durationSeconds > 0 ? `· ${ex.durationSeconds}s` : ''} {ex.reps > 0 ? `· ${ex.reps} reps` : ''}
+              {filtered.length === 0 ? (
+                <div style={{ textAlign: 'center', padding: '24px', color: '#9CA3AF', fontSize: '0.88rem' }}>
+                  No se encontraron ejercicios disponibles.
+                </div>
+              ) : (
+                filtered.map(ex => {
+                  const isSelected = selectedIds.includes(ex.id);
+                  const displayName = (ex.name || ex.titulo || ex.title || ex.nombre || 'Ejercicio').replace(/<\/?think>/gi, '').trim();
+                  return (
+                    <div
+                      key={ex.id}
+                      onClick={() => toggleSelect(ex.id)}
+                      style={{
+                        display: 'flex', alignItems: 'center', gap: '12px',
+                        padding: '12px', borderRadius: '8px', cursor: 'pointer',
+                        background: isSelected ? '#F0FDF4' : '#F8FAFC',
+                        border: isSelected ? '1px solid #4CAF7D' : '1px solid transparent',
+                        transition: 'all 0.15s'
+                      }}
+                    >
+                      {isSelected
+                        ? <CheckSquare size={18} color="#4CAF7D" style={{ flexShrink: 0 }} />
+                        : <Square size={18} color="#9CA3AF" style={{ flexShrink: 0 }} />
+                      }
+                      <div>
+                        <div style={{ fontWeight: 600, color: '#111827', fontSize: '0.9rem' }}>
+                          {displayName}
+                        </div>
+                        <div style={{ fontSize: '0.78rem', color: '#6B7280' }}>
+                          {ex.category || 'General'} {ex.series > 0 ? `· ${ex.series} series` : ''} {ex.durationSeconds > 0 ? `· ${ex.durationSeconds}s` : ''} {ex.reps > 0 ? `· ${ex.reps} reps` : ''}
+                        </div>
                       </div>
                     </div>
-                  </div>
-                );
-              })}
+                  );
+                })
+              )}
             </div>
           </div>
         </div>

@@ -65,6 +65,48 @@ const escapeHTML = (str) => {
     .replace(/'/g, "&#039;");
 };
 
+export const extractExerciseTitle = (text) => {
+  if (!text || typeof text !== 'string') return `Ejercicio IA ${new Date().toLocaleTimeString()}`;
+  // 1. Limpiar etiquetas de razonamiento interno <think>...</think> o etiquetas HTML/XML
+  const sanitized = text
+    .replace(/<think>[\s\S]*?<\/think>/gi, '')
+    .replace(/<[^>]+>/g, '')
+    .trim();
+
+  const lines = sanitized.split('\n').map(l => l.trim()).filter(Boolean);
+
+  // 2. Buscar primero encabezados markdown (# o ##) en cualquier línea
+  for (const line of lines) {
+    if (line.startsWith('## ')) {
+      const t = line.replace(/^##\s+/, '').replace(/\*\*/g, '').trim();
+      if (t.length > 2) return t.slice(0, 80);
+    }
+    if (line.startsWith('# ')) {
+      const t = line.replace(/^#\s+/, '').replace(/\*\*/g, '').trim();
+      if (t.length > 2) return t.slice(0, 80);
+    }
+  }
+
+  // 3. Buscar etiquetas tipo "Título:", "**Título:**", "**Nombre:**"
+  for (const line of lines) {
+    const match = line.match(/^(?:\*\*)?(?:título|titulo|nombre|ejercicio)(?:\*\*)?:\s*(.+)/i);
+    if (match && match[1]) {
+      const t = match[1].replace(/\*\*/g, '').trim();
+      if (t.length > 2) return t.slice(0, 80);
+    }
+  }
+
+  // 4. Si no hay encabezados, tomar la primera línea informativa válida
+  for (const line of lines) {
+    const cleanLine = line.replace(/^[-*#\d.]+\s*/, '').replace(/\*\*/g, '').trim();
+    if (cleanLine.length > 2 && !cleanLine.toLowerCase().startsWith('objetivo')) {
+      return cleanLine.slice(0, 80);
+    }
+  }
+
+  return `Ejercicio IA ${new Date().toLocaleTimeString()}`;
+};
+
 const renderMarkdown = (text) => {
   if (!text) return null;
   return text.split('\n').map((line, i) => {
@@ -273,21 +315,7 @@ Responde solo en español y usa formato markdown.`;
 
   const handleSave = async () => {
     if (!result) return;
-    // Extrae el título de forma robusta desde el markdown generado por la IA
-    const extractTitle = (text) => {
-      const lines = text.split('\n');
-      for (const line of lines) {
-        const trimmed = line.trim();
-        if (!trimmed) continue;
-        // Encabezados markdown: ## Título o # Título
-        if (trimmed.startsWith('## ')) return trimmed.replace(/^##\s+/, '').trim();
-        if (trimmed.startsWith('# '))  return trimmed.replace(/^#\s+/, '').trim();
-        // Primera línea no vacía como fallback
-        if (trimmed.length > 0) return trimmed.slice(0, 80);
-      }
-      return `Ejercicio IA ${new Date().toLocaleTimeString()}`;
-    };
-    const title = extractTitle(result);
+    const title = extractExerciseTitle(result);
     try {
       await addExercise({ 
         name: title, 
@@ -581,7 +609,7 @@ Responde solo en español y usa formato markdown.`;
                 <div className="ia-result-content">
                   <div className="result-actions" style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
                     <button className="btn-primary" onClick={handleSave}>💾 Guardar</button>
-                    <button className="btn-primary" onClick={() => generateExercisePDF({ title: result.split('\n')[0].replace('## ', '').trim(), content: result }, activeTeam)}>📄 Exportar PDF</button>
+                    <button className="btn-primary" onClick={() => generateExercisePDF({ title: extractExerciseTitle(result), content: result }, activeTeam)}>📄 Exportar PDF</button>
                     <button className="btn-outline" style={{ borderColor: 'var(--ia-text-right)', color: 'var(--ia-text-right)' }} onClick={() => setResult(null)}>🔄 Limpiar</button>
                   </div>
                   <div className="ia-markdown-container">

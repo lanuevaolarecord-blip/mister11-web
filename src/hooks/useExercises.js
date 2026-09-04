@@ -80,8 +80,30 @@ export const useExercises = (teamId) => {
     setLoading(true);
     const path = getTeamPath(teamId);
     const unsubscribe = subscribeToCollection(`${path}/exercises`, (data) => {
-      // Combinar los predefinidos con los guardados en Firestore
-      setExercises([...PREDEFINED_EXERCISES, ...data]);
+      const validCustom = [];
+      (data || []).forEach(ex => {
+        const rawName = (ex.name || ex.titulo || ex.title || ex.nombre || '').trim();
+        const isCorrupt = !rawName || rawName === '<think>' || rawName === '</think>' || rawName.startsWith('<think');
+
+        if (isCorrupt) {
+          // Auto-limpieza en segundo plano de documentos huérfanos o con tags <think> en Firestore
+          if (ex.id) {
+            deleteDocument(`${path}/exercises`, ex.id).catch(err => {
+              console.warn('[useExercises] Error purgando ejercicio corrupto:', err);
+            });
+          }
+        } else {
+          const cleanName = rawName.replace(/<\/?think>/gi, '').trim();
+          validCustom.push({
+            ...ex,
+            name: cleanName || 'Ejercicio',
+            titulo: cleanName || 'Ejercicio'
+          });
+        }
+      });
+
+      // Combinar los predefinidos con los ejercicios válidos
+      setExercises([...PREDEFINED_EXERCISES, ...validCustom]);
       setLoading(false);
     });
 
@@ -89,14 +111,25 @@ export const useExercises = (teamId) => {
   }, [user, teamId, getTeamPath]);
 
   const addExercise = async (exerciseData) => {
-    if (!user || !teamId) return;
+    if (!user || !teamId) return null;
+    const rawName = (exerciseData.name || exerciseData.titulo || exerciseData.title || exerciseData.nombre || '').trim();
+    const cleanName = rawName.replace(/<\/?think>/gi, '').trim();
+
+    if (!cleanName || cleanName === '<think>' || cleanName === '</think>') {
+      console.warn('[useExercises] Rechazado ejercicio con nombre inválido o tag <think>');
+      return null;
+    }
+
     const path = getTeamPath(teamId);
     const docId = await addDocument(`${path}/exercises`, {
       ...exerciseData,
+      name: cleanName,
+      title: cleanName,
+      titulo: cleanName,
       createdAt: new Date().toISOString()
     });
 
-    await createNotification('success', `Nuevo ejercicio guardado: ${exerciseData.titulo || exerciseData.nombre || exerciseData.name}`);
+    await createNotification('success', `Nuevo ejercicio guardado: ${cleanName}`);
     return docId;
   };
 

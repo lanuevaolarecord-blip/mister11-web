@@ -1,74 +1,117 @@
 /**
  * Sube el APK a Firebase Storage y actualiza config/global en Firestore
- * Usa las credenciales de Application Default Credentials (firebase login)
+ * Usa las credenciales activas de Firebase CLI (~/.config/configstore/firebase-tools.json)
  */
-import { initializeApp, applicationDefault } from 'firebase-admin/app';
-import { getStorage } from 'firebase-admin/storage';
-import { getFirestore } from 'firebase-admin/firestore';
+import fs from 'fs';
+import path from 'path';
+import crypto from 'crypto';
 
-// ─── Configuración ────────────────────────────────────────────────────────────
 const APK_PATH = 'android/app/build/outputs/apk/release/mister11.apk';
 const STORAGE_PATH = 'mister11.apk';
 const BUCKET = 'mister11.firebasestorage.app';
 const NEW_VERSION = '1.1.65';
 const NEW_VERSION_CODE = 81;
 
-process.env.GOOGLE_APPLICATION_CREDENTIALS = process.env.GOOGLE_APPLICATION_CREDENTIALS || '';
+// 1. Obtener token de Firebase CLI
+const configPath = path.join(process.env.USERPROFILE, '.config', 'configstore', 'firebase-tools.json');
+const configData = JSON.parse(fs.readFileSync(configPath, 'utf8'));
+const accessToken = configData.tokens?.access_token;
 
-initializeApp({
-  credential: applicationDefault(),
-  storageBucket: BUCKET,
-  projectId: 'mister11',
-});
+if (!accessToken) {
+  throw new Error('No access token found in firebase-tools.json. Ejecuta "firebase login".');
+}
 
-const storage = getStorage();
-const db = getFirestore();
+const apkBuffer = fs.readFileSync(APK_PATH);
+const fileSize = apkBuffer.length;
+const downloadToken = crypto.randomUUID();
 
-// ─── Subir APK ────────────────────────────────────────────────────────────────
-console.log(`📤 Subiendo APK desde: ${APK_PATH}`);
+console.log(`📤 Subiendo APK (${(fileSize / (1024 * 1024)).toFixed(2)} MB) a Firebase Storage...`);
 console.log(`   → gs://${BUCKET}/${STORAGE_PATH}`);
 
-const bucket = storage.bucket();
-const [file, metadata] = await bucket.upload(APK_PATH, {
-  destination: STORAGE_PATH,
-  metadata: {
-    contentType: 'application/vnd.android.package-archive',
-    metadata: {
-      version: NEW_VERSION,
-      versionCode: String(NEW_VERSION_CODE),
+// Iniciar sesión resumable upload de GCS
+const initRes = await fetch(
+  `https://storage.googleapis.com/upload/storage/v1/b/${BUCKET}/o?uploadType=resumable&name=${encodeURIComponent(STORAGE_PATH)}`,
+  {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+      'Content-Type': 'application/json; charset=UTF-8',
+      'X-Upload-Content-Type': 'application/vnd.android.package-archive',
+      'X-Upload-Content-Length': String(fileSize),
     },
+    body: JSON.stringify({
+      contentType: 'application/vnd.android.package-archive',
+      metadata: {
+        firebaseStorageDownloadTokens: downloadToken,
+        version: NEW_VERSION,
+        versionCode: String(NEW_VERSION_CODE),
+      },
+    }),
+  }
+);
+
+if (!initRes.ok) {
+  const errText = await initRes.text();
+  throw new Error(`Error al iniciar upload resumable (${initRes.status}): ${errText}`);
+}
+
+const uploadUrl = initRes.headers.get('location');
+
+// Subir los bytes del archivo
+const uploadRes = await fetch(uploadUrl, {
+  method: 'PUT',
+  headers: {
+    'Content-Length': String(fileSize),
+    'Content-Type': 'application/vnd.android.package-archive',
   },
+  body: apkBuffer,
 });
 
-// Hacer el archivo público y obtener URL de descarga firmada
-await file.makePublic();
-const apkUrl = `https://storage.googleapis.com/${BUCKET}/${STORAGE_PATH}`;
+if (!uploadRes.ok) {
+  const errText = await uploadRes.text();
+  throw new Error(`Error al subir archivo (${uploadRes.status}): ${errText}`);
+}
 
-// URL de descarga con token (compatible con Firebase Console)
-const [signedUrl] = await file.getSignedUrl({
-  action: 'read',
-  expires: '2030-01-01',
-});
+const uploadedMeta = await uploadRes.json();
+console.log(`✅ APK subido exitosamente a Firebase Storage!`);
 
-console.log(`✅ APK subido correctamente`);
-console.log(`   URL pública: ${apkUrl}`);
-console.log(`   Tamaño: ${(metadata.size / 1024 / 1024).toFixed(1)} MB`);
+const publicUrl = `https://firebasestorage.googleapis.com/v0/b/${BUCKET}/o/${encodeURIComponent(STORAGE_PATH)}?alt=media&token=${downloadToken}`;
+console.log(`   URL pública / descarga: ${publicUrl}`);
+console.log(`   Tamaño confirmado: ${(uploadedMeta.size / (1024 * 1024)).toFixed(2)} MB`);
 
-// ─── Actualizar Firestore ──────────────────────────────────────────────────────
+// 2. Actualizar Firestore config/global
 console.log(`\n📝 Actualizando config/global en Firestore...`);
-
 const now = new Date().toISOString();
-await db.collection('config').doc('global').set({
-  apkUrl: apkUrl,
-  apkDownloadUrl: signedUrl,
-  apkVersion: NEW_VERSION,
-  latestApkVersion: NEW_VERSION,
-  versionCode: NEW_VERSION_CODE,
-  apkUpdatedAt: now,
-}, { merge: true });
 
-console.log(`✅ Firestore actualizado:`);
-console.log(`   apkVersion: ${NEW_VERSION}`);
+const firestoreRes = await fetch(
+  `https://firestore.googleapis.com/v1/projects/mister11/databases/(default)/documents/config/global?updateMask.fieldPaths=apkUrl&updateMask.fieldPaths=apkDownloadUrl&updateMask.fieldPaths=apkVersion&updateMask.fieldPaths=latestApkVersion&updateMask.fieldPaths=appVersion&updateMask.fieldPaths=versionCode&updateMask.fieldPaths=apkUpdatedAt`,
+  {
+    method: 'PATCH',
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      fields: {
+        apkUrl: { stringValue: publicUrl },
+        apkDownloadUrl: { stringValue: publicUrl },
+        apkVersion: { stringValue: NEW_VERSION },
+        latestApkVersion: { stringValue: NEW_VERSION },
+        appVersion: { stringValue: NEW_VERSION },
+        versionCode: { integerValue: String(NEW_VERSION_CODE) },
+        apkUpdatedAt: { stringValue: now },
+      },
+    }),
+  }
+);
+
+if (!firestoreRes.ok) {
+  const errText = await firestoreRes.text();
+  throw new Error(`Error al actualizar Firestore (${firestoreRes.status}): ${errText}`);
+}
+
+console.log(`✅ Firestore config/global actualizado con éxito:`);
+console.log(`   version: ${NEW_VERSION}`);
 console.log(`   versionCode: ${NEW_VERSION_CODE}`);
 console.log(`   apkUpdatedAt: ${now}`);
-console.log(`\n🎉 ¡Todo listo! APK v${NEW_VERSION} disponible en Firebase.`);
+console.log(`\n🎉 ¡Despliegue de APK completado con éxito!`);

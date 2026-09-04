@@ -1534,3 +1534,23 @@ html.dark .coach-active-assignment,
   50% { transform: scale(1.1); }
   100% { transform: scale(1); }
 }
+
+/* Insignia de Nivel Adaptativo por Mérito */
+.game-level-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  font-weight: 800;
+  padding: 3px 8px;
+  border-radius: 12px;
+  background: #F8FAF9;
+  border: 1px solid currentColor;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.dark .game-level-badge,
+html.dark .game-level-badge,
+.theme-dark .game-level-badge {
+  background: rgba(255, 255, 255, 0.08);
+}

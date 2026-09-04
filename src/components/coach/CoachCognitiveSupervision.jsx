@@ -5,16 +5,25 @@ import { useTranslation } from '../../hooks/useTranslation';
 import { getWeekKey } from '../../hooks/useCognitiveSync';
 import { RETOS_CATALOG } from '../games/retos/retosConfig';
 import { showToast } from '../../utils/toast';
-import { Brain, CheckCircle2, Star, TrendingUp, Clock, Target, Plus, X } from 'lucide-react';
+import { Brain, CheckCircle2, Star, TrendingUp, Clock, Target, Plus, X, Award } from 'lucide-react';
+import { NIVEL_LABELS, getCategoria } from '../../utils/cognitiveLevels';
 import '../games/Games.css';
 
 const COGNITIVE_GAMES_LIST = [
-  { id: 'g1', name: 'Semáforo Pro', icon: '🚦' },
-  { id: 'g2', name: 'Freno Impulsivo', icon: '🛑' },
-  { id: 'g3', name: 'Ojo Táctico', icon: '👁️' },
-  { id: 'g4', name: 'Memoria de Conos', icon: '🔺' },
-  { id: 'g5', name: 'Respiración 4-4', icon: '🌬️' },
-  { id: 'g6', name: 'Decisión 1 Segundo', icon: '⚡' }
+  { id: 'g1', name: 'Semáforo Pro', icon: '🚦', code: 'semaforo' },
+  { id: 'g2', name: 'Freno Impulsivo', icon: '🛑', code: 'freno' },
+  { id: 'g3', name: 'Ojo Táctico', icon: '👁️', code: 'ojo' },
+  { id: 'g4', name: 'Memoria de Conos', icon: '🔺', code: 'memoria' },
+  { id: 'g5', name: 'Respiración 4-4', icon: '🌬️', code: 'respiracion' },
+  { id: 'g6', name: 'Decisión 1 Segundo', icon: '⚡', code: 'decision' }
+];
+
+const COMPETITIVE_GAMES = [
+  { id: 'semaforo', altId: 'g1', name: 'Semáforo', icon: '🚦' },
+  { id: 'freno', altId: 'g2', name: 'Freno', icon: '🛑' },
+  { id: 'ojo', altId: 'g3', name: 'Ojo Táctico', icon: '👁️' },
+  { id: 'memoria', altId: 'g4', name: 'Memoria', icon: '🔺' },
+  { id: 'decision', altId: 'g6', name: 'Decisión 1"', icon: '⚡' }
 ];
 
 export const CoachCognitiveSupervision = ({ player, teamPath, teamId }) => {
@@ -212,6 +221,45 @@ export const CoachCognitiveSupervision = ({ player, teamPath, teamId }) => {
           <div className="coach-metric-val" style={{ color: isImproving ? '#10B981' : '#F59E0B' }}>
             {isImproving ? '↑ En progresión' : '= Estable'}
           </div>
+        </div>
+      </div>
+
+      {/* Bloque: Niveles por Juego Adaptativo (Bronce -> Leyenda) */}
+      <div style={{ marginTop: '12px', background: 'rgba(255,255,255,0.04)', borderRadius: '10px', padding: '12px', border: '1px solid var(--border-color, #e2e8f0)' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px', flexWrap: 'wrap', gap: '6px' }}>
+          <span style={{ fontSize: '12px', fontWeight: 800, color: 'var(--games-text-primary, var(--text-primary))', display: 'flex', alignItems: 'center', gap: '5px' }}>
+            <Award size={15} color="#C9A84C" /> Nivel por Juego (Mérito Adaptativo)
+          </span>
+          <span style={{ fontSize: '11px', fontWeight: 700, padding: '2px 8px', borderRadius: '12px', background: 'rgba(27,58,45,0.1)', color: 'var(--primary, #1B3A2D)' }}>
+            Categoría: {getCategoria(player?.birthDate).toUpperCase()}
+          </span>
+        </div>
+
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(105px, 1fr))', gap: '8px' }}>
+          {COMPETITIVE_GAMES.map(cg => {
+            const rawLvl = player?.cognitive?.levels?.[cg.id] || player?.cognitive?.levels?.[cg.altId] || 'bronce';
+            const info = NIVEL_LABELS[rawLvl] || NIVEL_LABELS.bronce;
+            return (
+              <div 
+                key={cg.id} 
+                style={{ 
+                  background: 'var(--bg-card, #f8fafc)', 
+                  border: `1px solid ${info.color}50`, 
+                  borderRadius: '8px', 
+                  padding: '8px 6px', 
+                  textAlign: 'center' 
+                }}
+              >
+                <div style={{ fontSize: '18px' }}>{cg.icon}</div>
+                <div style={{ fontSize: '11px', fontWeight: 700, margin: '2px 0', color: 'var(--text-primary, #0f172a)' }}>
+                  {cg.name}
+                </div>
+                <div style={{ fontSize: '11px', fontWeight: 800, color: info.color }}>
+                  {info.badge} {info.es}
+                </div>
+              </div>
+            );
+          })}
         </div>
       </div>
 

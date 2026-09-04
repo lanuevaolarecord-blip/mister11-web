@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { GameShell } from './GameShell';
 import { useTranslation } from '../../hooks/useTranslation';
 
-const genField = () => {
+const genField = (numRivals = 6) => {
   let out = null;
   for (let t = 0; t < 300 && !out; t++) {
     const mates = [];
@@ -16,14 +16,14 @@ const genField = () => {
       }
     }
     g = 0;
-    while (rivals.length < 6 && g++ < 300) {
+    while (rivals.length < numRivals && g++ < 300) {
       const x = 8 + Math.random() * 84;
       const y = 10 + Math.random() * 80;
       if ([...mates, ...rivals].every(d => Math.hypot(d.x - x, d.y - y) > 13)) {
         rivals.push({ x, y });
       }
     }
-    if (mates.length < 6 || rivals.length < 6) continue;
+    if (mates.length < 6 || rivals.length < numRivals) continue;
 
     const sc = mates.map((m, i) => ({
       i,
@@ -48,7 +48,7 @@ const genField = () => {
   };
 };
 
-export const OjoTactico = ({ isOpen, onClose, onSessionFinished }) => {
+export const OjoTactico = ({ isOpen, onClose, onSessionFinished, adaptiveParams, currentLevel }) => {
   const { t } = useTranslation();
 
   const gameInfo = {
@@ -132,9 +132,11 @@ export const OjoTactico = ({ isOpen, onClose, onSessionFinished }) => {
   }, []);
 
   const setupRound = (rNum, practiceMode) => {
-    const generated = genField();
+    const numRivals = adaptiveParams?.rivales ?? 6;
+    const generated = genField(numRivals);
     setFieldData(generated);
-    setTimeLeft(5);
+    const roundSecs = adaptiveParams?.tiempo ? Math.round(adaptiveParams.tiempo) : 5;
+    setTimeLeft(roundSecs);
     roundStartTimeRef.current = performance.now();
 
     if (practiceMode) {
@@ -149,8 +151,8 @@ export const OjoTactico = ({ isOpen, onClose, onSessionFinished }) => {
       });
     }
 
-    // Cronómetro de 5 segundos
-    let currentSec = 5;
+    // Cronómetro de ronda adaptativo
+    let currentSec = roundSecs;
     timerIntervalRef.current = setInterval(() => {
       currentSec--;
       setTimeLeft(Math.max(0, currentSec));
@@ -225,12 +227,14 @@ export const OjoTactico = ({ isOpen, onClose, onSessionFinished }) => {
     if (onSessionFinished) {
       const res = await onSessionFinished({
         gameId: 'g3',
+        gameIdCode: 'ojo',
         mode: 'cognitive',
         score: hits,
         reactionMs: avgMs,
         accuracy: Math.round((hits / 5) * 100),
         allSetsCompleted: true,
-        sets: [{ set: 1, value: hits }]
+        sets: [{ set: 1, value: hits }],
+        metrics: { a: hits }
       }, true); // higher hits is better
       setXpResult(res);
     }

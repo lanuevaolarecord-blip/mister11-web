@@ -238,6 +238,21 @@ export const calculatePlayerCognitiveScore = (player = {}) => {
   const cog = player?.cognitive;
   if (!cog) return null;
 
+  // 1. Progresión adaptativa por niveles (Bronce: 60, Plata: 70, Oro: 80, Diamante: 90, Leyenda: 99)
+  const levels = cog.levels;
+  if (levels && typeof levels === 'object') {
+    const levelScoreMap = { bronce: 60, plata: 70, oro: 80, diamante: 90, leyenda: 99 };
+    const levelScores = [];
+    Object.values(levels).forEach(lvl => {
+      if (lvl && levelScoreMap[lvl]) {
+        levelScores.push(levelScoreMap[lvl]);
+      }
+    });
+    if (levelScores.length > 0) {
+      return Math.round(levelScores.reduce((a, b) => a + b, 0) / levelScores.length);
+    }
+  }
+
   if (cog.weekly && cog.weekly.points > 0) {
     return Math.min(99, Math.max(10, Math.round(Number(cog.weekly.points) * 1.5)));
   }

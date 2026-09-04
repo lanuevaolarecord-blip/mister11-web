@@ -4,7 +4,7 @@ import { useTranslation } from '../../hooks/useTranslation';
 
 const CONE_COLORS = ['blue', 'pink', 'sage'];
 
-export const MemoriaConos = ({ isOpen, onClose, onSessionFinished }) => {
+export const MemoriaConos = ({ isOpen, onClose, onSessionFinished, adaptiveParams, currentLevel }) => {
   const { t } = useTranslation();
 
   const gameInfo = {
@@ -132,11 +132,12 @@ export const MemoriaConos = ({ isOpen, onClose, onSessionFinished }) => {
   };
 
   const advanceGame = () => {
+    const maxTarget = Math.min(10, adaptiveParams?.max ?? 8);
     if (isPracticeRef.current) {
       isPracticeRef.current = false;
       setIsPractice(false);
       playSequence(3);
-    } else if (seqRef.current.length < 8) {
+    } else if (seqRef.current.length < maxTarget) {
       playSequence(seqRef.current.length + 1);
     } else {
       finishGame();
@@ -157,10 +158,12 @@ export const MemoriaConos = ({ isOpen, onClose, onSessionFinished }) => {
     if (onSessionFinished) {
       const res = await onSessionFinished({
         gameId: 'g4',
+        gameIdCode: 'memoria',
         mode: 'cognitive',
         score: max,
         allSetsCompleted: true,
-        sets: [{ set: 1, value: max }]
+        sets: [{ set: 1, value: max }],
+        metrics: { s: max }
       }, true); // higher length is better
       setXpResult(res);
     }

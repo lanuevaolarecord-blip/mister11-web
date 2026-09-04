@@ -9,7 +9,7 @@ const median = (arr) => {
   return s.length % 2 ? s[m] : Math.round((s[m - 1] + s[m]) / 2);
 };
 
-export const SemaforoPro = ({ isOpen, onClose, onSessionFinished }) => {
+export const SemaforoPro = ({ isOpen, onClose, onSessionFinished, adaptiveParams, currentLevel }) => {
   const { t } = useTranslation();
 
   const gameInfo = {
@@ -110,7 +110,9 @@ export const SemaforoPro = ({ isOpen, onClose, onSessionFinished }) => {
       if (expectedTok !== tokRef.current) return;
       setActiveBulb('amber');
 
-      const amberDelay = 800 + Math.random() * 2200;
+      const ambMin = adaptiveParams?.ambMin || 800;
+      const ambMax = adaptiveParams?.ambMax || 3000;
+      const amberDelay = ambMin + Math.random() * (ambMax - ambMin);
       addTimeout(() => {
         if (expectedTok !== tokRef.current) return;
         setActiveBulb('green');
@@ -146,11 +148,13 @@ export const SemaforoPro = ({ isOpen, onClose, onSessionFinished }) => {
     if (onSessionFinished) {
       const res = await onSessionFinished({
         gameId: 'g1',
+        gameIdCode: 'semaforo',
         mode: 'cognitive',
         reactionMs: med,
         score: med,
         allSetsCompleted: true,
-        sets: [{ set: 1 }, { set: 2 }, { set: 3 }]
+        sets: [{ set: 1 }, { set: 2 }, { set: 3 }],
+        metrics: { med, fs: falsesRef.current }
       }, false); // lower is better for reaction time
       setXpResult(res);
     }

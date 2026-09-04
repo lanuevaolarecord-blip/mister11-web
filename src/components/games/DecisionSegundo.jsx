@@ -4,7 +4,7 @@ import { useTranslation } from '../../hooks/useTranslation';
 
 const OPTIONS = ['TIRO', 'PASE', 'CONDUCCIÓN'];
 
-export const DecisionSegundo = ({ isOpen, onClose, onSessionFinished }) => {
+export const DecisionSegundo = ({ isOpen, onClose, onSessionFinished, adaptiveParams, currentLevel }) => {
   const { t } = useTranslation();
 
   const gameInfo = {
@@ -107,11 +107,12 @@ export const DecisionSegundo = ({ isOpen, onClose, onSessionFinished }) => {
       space
     });
 
-    setTimeLeft(4);
+    const turnTime = adaptiveParams?.tiempo ? Math.max(2, Math.round(adaptiveParams.tiempo)) : 4;
+    setTimeLeft(turnTime);
     setFeedback({ text: t('games.g6.prompt', {}, '¡Decide rápido!'), type: '' });
 
-    // Temporizador de 4 segundos
-    let currentSec = 4;
+    // Temporizador de turno adaptativo
+    let currentSec = turnTime;
     timerIntervalRef.current = setInterval(() => {
       currentSec--;
       setTimeLeft(Math.max(0, currentSec));
@@ -178,12 +179,14 @@ export const DecisionSegundo = ({ isOpen, onClose, onSessionFinished }) => {
     if (onSessionFinished) {
       const res = await onSessionFinished({
         gameId: 'g6',
+        gameIdCode: 'decision',
         mode: 'cognitive',
         accuracy: acc,
         reactionMs: avgRt,
         score: acc,
         allSetsCompleted: true,
-        sets: [{ set: 1 }, { set: 2 }, { set: 3 }]
+        sets: [{ set: 1 }, { set: 2 }, { set: 3 }],
+        metrics: { p: acc }
       }, true); // higher accuracy is better
       setXpResult(res);
     }

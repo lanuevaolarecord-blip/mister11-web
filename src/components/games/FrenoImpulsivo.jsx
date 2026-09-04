@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { GameShell } from './GameShell';
 import { useTranslation } from '../../hooks/useTranslation';
 
-export const FrenoImpulsivo = ({ isOpen, onClose, onSessionFinished }) => {
+export const FrenoImpulsivo = ({ isOpen, onClose, onSessionFinished, adaptiveParams, currentLevel }) => {
   const { t } = useTranslation();
 
   const gameInfo = {
@@ -99,14 +99,16 @@ export const FrenoImpulsivo = ({ isOpen, onClose, onSessionFinished }) => {
 
     addTimeout(() => {
       const cell = Math.floor(Math.random() * 9);
-      const red = Math.random() < 0.3; // 30% rojos
+      const redRatio = adaptiveParams?.redPct ?? 0.30;
+      const winTime = adaptiveParams?.window ?? 1400;
+      const red = Math.random() < redRatio;
       curTargetRef.current = { cell, red, at: performance.now(), done: false };
       setActiveCell({ cell, red });
 
-      // Ventana de 1400 ms
+      // Ventana de tiempo adaptativa
       addTimeout(() => {
         resolveStimulus(null, isPracticeRef.current);
-      }, 1400);
+      }, winTime);
 
     }, 500 + Math.random() * 900);
   };
@@ -173,13 +175,14 @@ export const FrenoImpulsivo = ({ isOpen, onClose, onSessionFinished }) => {
     if (onSessionFinished) {
       const res = await onSessionFinished({
         gameId: 'g2',
+        gameIdCode: 'freno',
         mode: 'cognitive',
         accuracy: acc,
-        reactionMs: avgRt,
         score: acc,
         allSetsCompleted: true,
-        sets: [{ set: 1 }, { set: 2 }, { set: 3 }]
-      }, true); // higher accuracy is better
+        sets: [{ set: 1 }, { set: 2 }, { set: 3 }],
+        metrics: { p: acc, ff: faRef.current }
+      }, true);
       setXpResult(res);
     }
 

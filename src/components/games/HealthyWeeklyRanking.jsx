@@ -123,48 +123,32 @@ export const HealthyWeeklyRanking = ({ teamPath, currentPlayerId, isAnonymous = 
             return (
               <div
                 key={item.id}
-                style={{
-                  background: isMe ? '#eff6ff' : 'var(--bg-card, #ffffff)',
-                  border: isMe ? '2px solid #3b82f6' : '1px solid var(--border-color, #e2e8f0)',
-                  borderRadius: '10px',
-                  padding: '10px 14px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  boxShadow: '0 1px 3px rgba(0,0,0,0.03)'
-                }}
+                className={`ranking-item ${isMe ? 'is-me' : ''}`}
               >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                  <span style={{ fontSize: '16px', fontWeight: 800, width: '28px', textAlign: 'center' }}>
+                <div className="ranking-item-left">
+                  <span className="ranking-medal">
                     {medal}
                   </span>
                   <div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                      <span style={{ fontSize: '14px', fontWeight: 800, color: 'var(--text-primary, #0f172a)' }}>
+                    <div className="ranking-name-row">
+                      <span className="ranking-name">
                         {displayName}
                       </span>
                       {isMe && (
-                        <span style={{
-                          background: '#1E3A8A',
-                          color: '#ffffff',
-                          fontSize: '10px',
-                          fontWeight: 800,
-                          padding: '1px 6px',
-                          borderRadius: '4px'
-                        }}>
+                        <span className="ranking-you-badge">
                           TÚ
                         </span>
                       )}
                     </div>
                     {item.dorsal && !isAnonymous && (
-                      <span style={{ fontSize: '11px', color: '#64748b' }}>
+                      <span className="ranking-dorsal">
                         Dorsal #{item.dorsal}
                       </span>
                     )}
                   </div>
                 </div>
 
-                <div style={{ fontSize: '15px', fontWeight: 800, color: '#10B981' }}>
+                <div className="ranking-score-val">
                   {valueDisplay}
                 </div>
               </div>

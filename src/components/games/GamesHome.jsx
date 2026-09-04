@@ -70,7 +70,7 @@ export const GamesHome = ({ player, team, teamPath, isParentView = false }) => {
       <div className="games-limits-card">
         <div className="limits-header">
           <div className="limits-title-wrap">
-            <Brain size={18} color="#1E3A8A" />
+            <Brain size={18} className="limits-brain-icon" />
             <h4 className="limits-title">
               {t('games.limits.title', {}, 'Entrenamiento Saludable')}
             </h4>
@@ -136,20 +136,12 @@ export const GamesHome = ({ player, team, teamPath, isParentView = false }) => {
           <div className="recommended-badge">
             ⭐ {t('games.badge.recommended', {}, 'Recomendado por tu míster')}
           </div>
-          <div style={{
-            background: '#eff6ff',
-            border: '1px solid #bfdbfe',
-            borderRadius: '12px',
-            padding: '12px 14px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between'
-          }}>
+          <div className="recommended-assignment-card">
             <div>
-              <div style={{ fontSize: '14px', fontWeight: 800, color: '#1E3A8A' }}>
+              <div className="recommended-assignment-title">
                 {t('games.assignment.todayPrompt', {}, 'El cuerpo técnico te ha asignado un reto especial')}
               </div>
-              <div style={{ fontSize: '12px', color: '#475569', marginTop: '2px' }}>
+              <div className="recommended-assignment-subtitle">
                 {recommendedAssignment.gameName || recommendedAssignment.gameId}
               </div>
             </div>

@@ -81,11 +81,11 @@ export const GameShell = ({
 
               {/* NOTA DE SEGURIDAD (Para retos físicos) */}
               {safetyNote && (
-                <div className="game-intro-block" style={{ borderColor: '#fed7aa', background: '#fff7ed' }}>
-                  <h4 className="game-intro-heading" style={{ color: '#c2410c' }}>
-                    <ShieldCheck size={14} /> {t('games.safety.title', {}, 'Seguridad en casa')}
+                <div className="retos-safety-banner">
+                  <h4 className="retos-safety-heading">
+                    <ShieldCheck size={16} /> {t('games.safety.title', {}, 'Seguridad en casa')}
                   </h4>
-                  <p className="game-intro-text" style={{ color: '#9a3412', fontSize: '12px' }}>
+                  <p className="retos-safety-text">
                     {safetyNote}
                   </p>
                 </div>
@@ -93,19 +93,18 @@ export const GameShell = ({
 
               {/* PACTO DE HONESTIDAD */}
               {honestyPact && (
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '12px', color: '#64748b' }}>
+                <div className="retos-pact-note">
                   <span>🤝</span>
                   <span>{t('games.honesty.pact', {}, 'Pacto de honestidad: anota tus repeticiones reales. ¡El esfuerzo es tuyo!')}</span>
                 </div>
               )}
 
               {/* Botones de Inicio: Práctica previa recomendada */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '8px' }}>
+              <div className="game-launch-actions">
                 {onStartPractice && (
                   <button
                     type="button"
-                    className="game-play-btn"
-                    style={{ background: '#f1f5f9', color: '#1E3A8A', border: '1px solid #cbd5e1' }}
+                    className="game-practice-launch-btn"
                     onClick={onStartPractice}
                   >
                     {t('games.btn.practiceFirst', {}, 'Probar en Modo Práctica')}
@@ -113,7 +112,7 @@ export const GameShell = ({
                 )}
                 <button
                   type="button"
-                  className="game-play-btn success"
+                  className="game-session-launch-btn"
                   onClick={onStartGame}
                 >
                   {t('games.btn.startOfficial', {}, 'Comenzar Sesión')}
@@ -129,7 +128,7 @@ export const GameShell = ({
 
           {/* FASE 2: EN JUEGO / PRÁCTICA */}
           {status === 'playing' && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', width: '100%' }}>
+            <div className="game-stage-wrapper">
               {children}
             </div>
           )}
@@ -141,7 +140,7 @@ export const GameShell = ({
               <h3 className="game-finish-title">
                 {t('games.finish.title', {}, '¡Excelente esfuerzo!')}
               </h3>
-              <p style={{ margin: 0, fontSize: '13px', color: '#64748b' }}>
+              <p className="game-finish-subtitle">
                 {t('games.finish.subtitle', {}, 'Has completado la sesión con dedicación.')}
               </p>
 
@@ -162,7 +161,7 @@ export const GameShell = ({
                 <div className="game-xp-line">
                   ⭐ +{xpResult.xpEarned || 10} XP acumulados
                   {xpResult.isPersonalBest && (
-                    <span style={{ display: 'block', fontSize: '11px', color: '#16a34a', marginTop: '2px' }}>
+                    <span className="game-xp-record">
                       ✨ ¡Nuevo récord personal!
                     </span>
                   )}
@@ -170,15 +169,14 @@ export const GameShell = ({
               )}
 
               {/* Anti-adicción: Cierre amable y retorno directo al catálogo */}
-              <p style={{ fontSize: '12px', color: '#047857', background: '#ecfdf5', padding: '8px 12px', borderRadius: '8px', margin: '4px 0 0 0', width: '100%', boxSizing: 'border-box' }}>
+              <p className="game-healthy-closing">
                 {t('games.finish.healthyClosing', {}, '¡Gran trabajo mental! Descansa la vista y el cuerpo.')}
               </p>
 
               {/* BOTÓN ÚNICO: VOLVER AL CATÁLOGO (PROHIBIDO "OTRA PARTIDA") */}
               <button
                 type="button"
-                className="game-play-btn"
-                style={{ width: '100%', marginTop: '8px' }}
+                className="game-back-catalog-btn"
                 onClick={onClose}
               >
                 {t('games.btn.backToCatalog', {}, 'Volver al Catálogo')}

@@ -29,6 +29,7 @@
   --text-muted: #1B3A2D;     /* Reemplazado gris por verde oscuro para legibilidad */
   --bg-primary: #F5F0E8;     /* Arena */
   --bg-card: #FFFFFF;        /* Blanco puro para contraste */
+  --bg-surface: #F4F8F5;     /* Superficie suave institucional */
   --bg-sidebar: #1B3A2D;
   --text-sidebar: #FFFFFF;
   --border-color: #D4A843;   /* Dorado */
@@ -61,6 +62,7 @@
   --text-muted: #D4A843;     /* Dorado para destacar etiquetas secundarias */
   --bg-primary: #0D0D0D;     /* Negro base */
   --bg-card: #1E1E1E;        /* Gris carbón */
+  --bg-surface: #1E2822;     /* Verde carbón institucional oscuro */
   --bg-sidebar: #0D0D0D;
   --text-sidebar: #FFFFFF;
   --border-color: #4CAF7D;   /* Verde hierba */

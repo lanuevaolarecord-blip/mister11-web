@@ -6,6 +6,7 @@ import { getWeekKey } from '../../hooks/useCognitiveSync';
 import { RETOS_CATALOG } from '../games/retos/retosConfig';
 import { showToast } from '../../utils/toast';
 import { Brain, CheckCircle2, Star, TrendingUp, Clock, Target, Plus, X } from 'lucide-react';
+import '../games/Games.css';
 
 const COGNITIVE_GAMES_LIST = [
   { id: 'g1', name: 'Semáforo Pro', icon: '🚦' },
@@ -134,30 +135,18 @@ export const CoachCognitiveSupervision = ({ player, teamPath, teamId }) => {
   };
 
   return (
-    <div style={{
-      background: 'var(--bg-card, #ffffff)',
-      border: '1px solid var(--border-color, #e2e8f0)',
-      borderRadius: '14px',
-      padding: '18px 20px',
-      marginTop: '16px',
-      boxShadow: '0 2px 8px rgba(0,0,0,0.04)'
-    }}>
+    <div className="coach-cognitive-card">
       {/* Cabecera */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '14px', flexWrap: 'wrap', gap: '10px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <div style={{
-            background: 'rgba(30, 58, 138, 0.1)',
-            color: '#1E3A8A',
-            padding: '8px',
-            borderRadius: '10px'
-          }}>
+          <div className="coach-header-icon">
             <Brain size={22} />
           </div>
           <div>
-            <h4 style={{ margin: 0, fontSize: '15px', fontWeight: 800, color: 'var(--text-primary, #0f172a)' }}>
+            <h4 style={{ margin: 0, fontSize: '15px', fontWeight: 800, color: 'var(--games-text-primary, var(--text-primary))' }}>
               Supervisión Cognitiva y Retos en Casa
             </h4>
-            <span style={{ fontSize: '11px', color: 'var(--text-secondary, #64748b)' }}>
+            <span style={{ fontSize: '11px', color: 'var(--games-text-secondary, var(--text-secondary))' }}>
               Semana actual · {sessionsThisWeek.length} sesiones registradas
             </span>
           </div>
@@ -166,19 +155,8 @@ export const CoachCognitiveSupervision = ({ player, teamPath, teamId }) => {
         <div style={{ display: 'flex', gap: '8px' }}>
           <button
             type="button"
-            style={{
-              background: '#10B981',
-              color: '#ffffff',
-              border: 'none',
-              borderRadius: '8px',
-              padding: '8px 14px',
-              fontSize: '12px',
-              fontWeight: 800,
-              cursor: 'pointer',
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '6px'
-            }}
+            className="game-play-btn success"
+            style={{ minHeight: '40px', padding: '0 12px', fontSize: '12px' }}
             onClick={handleVerify}
             disabled={verifying}
           >
@@ -188,19 +166,8 @@ export const CoachCognitiveSupervision = ({ player, teamPath, teamId }) => {
 
           <button
             type="button"
-            style={{
-              background: '#1E3A8A',
-              color: '#ffffff',
-              border: 'none',
-              borderRadius: '8px',
-              padding: '8px 14px',
-              fontSize: '12px',
-              fontWeight: 800,
-              cursor: 'pointer',
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '6px'
-            }}
+            className="game-play-btn"
+            style={{ minHeight: '40px', padding: '0 12px', fontSize: '12px' }}
             onClick={() => setShowAssignModal(true)}
           >
             <Star size={16} />
@@ -211,38 +178,38 @@ export const CoachCognitiveSupervision = ({ player, teamPath, teamId }) => {
 
       {/* Grid de Métricas Semanales */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '10px' }}>
-        <div style={{ background: 'var(--bg-surface, #f8fafc)', border: '1px solid var(--border-color, #e2e8f0)', padding: '10px 12px', borderRadius: '10px' }}>
-          <div style={{ fontSize: '11px', color: '#64748b', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '4px' }}>
+        <div className="coach-metric-box">
+          <div className="coach-metric-lbl">
             <Clock size={12} /> Sesiones semana
           </div>
-          <div style={{ fontSize: '18px', fontWeight: 800, color: '#1E3A8A', marginTop: '4px' }}>
+          <div className="coach-metric-val">
             {sessionsThisWeek.length}
           </div>
         </div>
 
-        <div style={{ background: 'var(--bg-surface, #f8fafc)', border: '1px solid var(--border-color, #e2e8f0)', padding: '10px 12px', borderRadius: '10px' }}>
-          <div style={{ fontSize: '11px', color: '#64748b', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '4px' }}>
+        <div className="coach-metric-box">
+          <div className="coach-metric-lbl">
             ⚡ Reacción mediana
           </div>
-          <div style={{ fontSize: '18px', fontWeight: 800, color: '#0f172a', marginTop: '4px' }}>
+          <div className="coach-metric-val">
             {medianReaction ? `${medianReaction} ms` : '—'}
           </div>
         </div>
 
-        <div style={{ background: 'var(--bg-surface, #f8fafc)', border: '1px solid var(--border-color, #e2e8f0)', padding: '10px 12px', borderRadius: '10px' }}>
-          <div style={{ fontSize: '11px', color: '#64748b', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '4px' }}>
+        <div className="coach-metric-box">
+          <div className="coach-metric-lbl">
             <Target size={12} /> Precisión media
           </div>
-          <div style={{ fontSize: '18px', fontWeight: 800, color: '#0f172a', marginTop: '4px' }}>
+          <div className="coach-metric-val">
             {avgAccuracy ? `${avgAccuracy}%` : '—'}
           </div>
         </div>
 
-        <div style={{ background: 'var(--bg-surface, #f8fafc)', border: '1px solid var(--border-color, #e2e8f0)', padding: '10px 12px', borderRadius: '10px' }}>
-          <div style={{ fontSize: '11px', color: '#64748b', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '4px' }}>
+        <div className="coach-metric-box">
+          <div className="coach-metric-lbl">
             <TrendingUp size={12} /> Tendencia
           </div>
-          <div style={{ fontSize: '16px', fontWeight: 800, color: isImproving ? '#10B981' : '#f59e0b', marginTop: '4px' }}>
+          <div className="coach-metric-val" style={{ color: isImproving ? '#10B981' : '#F59E0B' }}>
             {isImproving ? '↑ En progresión' : '= Estable'}
           </div>
         </div>
@@ -250,10 +217,10 @@ export const CoachCognitiveSupervision = ({ player, teamPath, teamId }) => {
 
       {/* Asignaciones activas */}
       {activeAssignments.length > 0 && (
-        <div style={{ marginTop: '12px', padding: '8px 12px', background: '#eff6ff', borderRadius: '8px', fontSize: '12px', color: '#1E3A8A', display: 'flex', alignItems: 'center', gap: '6px' }}>
+        <div className="coach-active-assignment">
           <span>📌 Reto recomendado activo:</span>
           <strong>{activeAssignments[0].gameName}</strong>
-          <span style={{ fontSize: '11px', color: '#64748b' }}>
+          <span style={{ fontSize: '11px', opacity: 0.85 }}>
             ({activeAssignments[0].target === 'team' ? 'Todo el equipo' : 'Individual'})
           </span>
         </div>

@@ -190,7 +190,7 @@ export const FrenoImpulsivo = ({ isOpen, onClose, onSessionFinished }) => {
     clearAllTimeouts();
     isPracticeRef.current = true;
     setIsPractice(true);
-    setCurrentSetRef.current = 0;
+    currentSetRef.current = 0;
     setCurrentSet(0);
     setStimulusIndex(1);
     setTotalStimuli(4);

@@ -175,32 +175,23 @@ export const RetoEngine = ({ isOpen, onClose, reto, onSessionFinished }) => {
           </span>
         </div>
 
-        {/* Indicador de la ronda / descripción */}
-        <div style={{ 
-          background: 'var(--bg-surface, #f8fafc)', 
-          border: '1px solid var(--border-color, #e2e8f0)',
-          borderRadius: '12px',
-          padding: '16px',
-          width: '100%',
-          textAlign: 'center',
-          boxSizing: 'border-box'
-        }}>
-          <div style={{ fontSize: '36px', marginBottom: '8px' }}>
+        {/* TARJETA DE CONSIGNA DE LA RONDA */}
+        <div className="reto-round-card">
+          <div className="reto-round-icon">
             {currentRoundData ? currentRoundData.e : reto.em}
           </div>
-          <p style={{ margin: 0, fontSize: '14px', fontWeight: 700, color: 'var(--text-primary, #0f172a)' }}>
+          <p className="reto-round-desc">
             {currentRoundData ? currentRoundData.d : reto.what}
           </p>
         </div>
 
         {/* MODO TIMER */}
         {reto.mode === 'timer' && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', width: '100%', alignItems: 'center' }}>
+          <div className="reto-timer-wrapper">
             {!timerRunning && !showQuestion && (
               <button
                 type="button"
-                className="game-play-btn success"
-                style={{ width: '100%' }}
+                className="game-session-launch-btn"
                 onClick={startTimer}
               >
                 ⏱️ {t('games.retos.startTimer', {}, 'Comenzar Tiempo')}
@@ -208,28 +199,27 @@ export const RetoEngine = ({ isOpen, onClose, reto, onSessionFinished }) => {
             )}
 
             {timerRunning && (
-              <div style={{ fontSize: '40px', fontWeight: 800, color: '#1E3A8A', margin: '12px 0' }}>
+              <div className="reto-counter-val">
                 {timerSeconds}s
               </div>
             )}
 
             {showQuestion && (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', width: '100%' }}>
-                <p style={{ margin: 0, fontSize: '14px', fontWeight: 700, textAlign: 'center' }}>
+              <div className="reto-question-box">
+                <p className="reto-question-text">
                   {t('games.retos.questionTimer', {}, '¿Lograste mantener el ejercicio durante todo el tiempo?')}
                 </p>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                <div className="reto-question-actions">
                   <button
                     type="button"
-                    className="game-play-btn success"
+                    className="game-session-launch-btn"
                     onClick={() => handleAnswerQuestion(true)}
                   >
                     ✅ {t('common.yes', {}, 'Sí, superado')}
                   </button>
                   <button
                     type="button"
-                    className="game-play-btn"
-                    style={{ background: '#64748b' }}
+                    className="game-practice-launch-btn"
                     onClick={() => handleAnswerQuestion(false)}
                   >
                     ❌ {t('common.no', {}, 'No esta vez')}
@@ -242,16 +232,15 @@ export const RetoEngine = ({ isOpen, onClose, reto, onSessionFinished }) => {
 
         {/* MODO COUNT O STREAK */}
         {(reto.mode === 'count' || reto.mode === 'streak') && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', width: '100%', alignItems: 'center' }}>
-            <div style={{ fontSize: '44px', fontWeight: 800, color: '#1E3A8A' }}>
+          <div className="reto-count-wrapper">
+            <div className="reto-counter-val">
               {setCount} {reto.target ? `/ ${reto.target}` : ''}
             </div>
 
             {/* Botón táctil grande +1 */}
             <button
               type="button"
-              className="game-play-btn"
-              style={{ width: '100%', minHeight: '64px', fontSize: '18px' }}
+              className="reto-tap-btn"
               onClick={handleIncrement}
             >
               ➕ {t('games.retos.addRep', {}, '+1 Repetición')}
@@ -260,12 +249,7 @@ export const RetoEngine = ({ isOpen, onClose, reto, onSessionFinished }) => {
             {/* Botón de fin de set o caída de racha */}
             <button
               type="button"
-              className="game-play-btn"
-              style={{
-                width: '100%',
-                background: reto.mode === 'streak' ? '#f97316' : '#10B981',
-                color: '#ffffff'
-              }}
+              className={`reto-finish-btn ${reto.mode === 'streak' ? 'streak' : 'count'}`}
               onClick={handleFinishCountOrStreak}
             >
               {reto.mode === 'streak' 

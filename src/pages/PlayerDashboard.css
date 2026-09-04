@@ -25,6 +25,7 @@ html.dark .player-dashboard-layout,
 [data-theme="dark"] .player-dashboard-layout {
   --bg-primary: #0B120E;
   --bg-card: #121A15;
+  --bg-surface: #1A281E;
   --text-primary: #FFFFFF;
   --text-secondary: #CBD5E1;
   --text-muted: #94A3B8;
@@ -42,6 +43,7 @@ html.light .player-dashboard-layout,
 [data-theme="light"] .player-dashboard-layout {
   --bg-primary: #F8FAFC;
   --bg-card: #FFFFFF;
+  --bg-surface: #F4F8F5;
   --text-primary: #0F172A;
   --text-secondary: #334155;
   --text-muted: #64748B;

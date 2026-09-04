@@ -615,6 +615,9 @@ const PlayerDashboard = () => {
             loading={loadingAchievements}
             isParentView={isParentView}
             playerName={player?.name}
+            player={player}
+            team={activePlayerTeam}
+            teamPath={resolvedTeamPath || cleanPath}
           />
         )}
 

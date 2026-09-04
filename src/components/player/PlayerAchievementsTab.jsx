@@ -19,6 +19,8 @@ import {
 } from 'lucide-react';
 import { ACHIEVEMENT_TIERS } from '../../config/achievements';
 import { useTranslation } from '../../hooks/useTranslation';
+import { GamesHome } from '../games/GamesHome';
+import { HealthyWeeklyRanking } from '../games/HealthyWeeklyRanking';
 import './PlayerAchievementsTab.css';
 
 const ICON_MAP = {
@@ -38,8 +40,17 @@ const ICON_MAP = {
   Trophy
 };
 
-export const PlayerAchievementsTab = ({ achievements = [], loading, isParentView = false, playerName = '' }) => {
+export const PlayerAchievementsTab = ({ 
+  achievements = [], 
+  loading, 
+  isParentView = false, 
+  playerName = '',
+  player = null,
+  team = null,
+  teamPath = ''
+}) => {
   const { t, isEn } = useTranslation();
+  const [activeSubTab, setActiveSubTab] = useState('vitrina'); // 'vitrina' | 'juegos' | 'ranking'
   const [selectedTier, setSelectedTier] = useState('ALL'); // 'ALL' | 'BRONZE' | 'SILVER' | 'GOLD'
 
   if (loading) {
@@ -64,8 +75,38 @@ export const PlayerAchievementsTab = ({ achievements = [], loading, isParentView
   return (
     <div className="player-tab-content player-achievements-tab">
       
-      {/* Banner de Nivel & XP */}
-      <div className="achievements-hero-card">
+      {/* Control Segmentado Superior: Vitrina | Juegos | Ranking */}
+      <div className="achievements-segmented-nav">
+        <button
+          type="button"
+          className={`ach-seg-btn ${activeSubTab === 'vitrina' ? 'active' : ''}`}
+          onClick={() => setActiveSubTab('vitrina')}
+        >
+          <Trophy size={16} />
+          <span>{t('player.achievements.subtabVitrina', {}, 'Vitrina')}</span>
+        </button>
+        <button
+          type="button"
+          className={`ach-seg-btn ${activeSubTab === 'juegos' ? 'active' : ''}`}
+          onClick={() => setActiveSubTab('juegos')}
+        >
+          <Brain size={16} />
+          <span>{t('player.achievements.subtabJuegos', {}, 'Juegos y Retos')}</span>
+        </button>
+        <button
+          type="button"
+          className={`ach-seg-btn ${activeSubTab === 'ranking' ? 'active' : ''}`}
+          onClick={() => setActiveSubTab('ranking')}
+        >
+          <Award size={16} />
+          <span>{t('player.achievements.subtabRanking', {}, 'Ranking')}</span>
+        </button>
+      </div>
+
+      {activeSubTab === 'vitrina' && (
+        <>
+          {/* Banner de Nivel & XP */}
+          <div className="achievements-hero-card">
         <div className="achievements-hero-left">
           <div className="achievements-trophy-badge">
             <Trophy size={32} color="#C9A84C" />
@@ -208,6 +249,27 @@ export const PlayerAchievementsTab = ({ achievements = [], loading, isParentView
           );
         })}
       </div>
+      </>
+      )}
+
+      {/* Subtab: Juegos Cognitivos y Retos en Casa */}
+      {activeSubTab === 'juegos' && (
+        <GamesHome
+          player={player}
+          team={team}
+          teamPath={teamPath}
+          isParentView={isParentView}
+        />
+      )}
+
+      {/* Subtab: Ranking Semanal Saludable */}
+      {activeSubTab === 'ranking' && (
+        <HealthyWeeklyRanking
+          teamPath={teamPath}
+          currentPlayerId={player?.id}
+          isAnonymous={Boolean(team?.leaderboardAnonymous)}
+        />
+      )}
 
     </div>
   );

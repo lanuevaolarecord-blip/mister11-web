@@ -257,6 +257,86 @@ export const ACHIEVEMENTS_CATALOG = [
     targetType: 'fixed',
     defaultTarget: 8,
     xp: 100
+  },
+
+  // ─── LOGROS COGNITIVOS Y RETOS EN CASA (v1.1.64) ──────────────────────
+  {
+    id: 'weekly_mind_active',
+    tier: 'BRONZE',
+    name: 'Mente Activa',
+    nameKey: 'ach.weekly_mind_active.name',
+    desc: 'Completa al menos 3 sesiones de entrenamiento cognitivo o retos esta semana.',
+    descKey: 'ach.weekly_mind_active.desc',
+    category: 'cognitive',
+    icon: 'Brain',
+    targetType: 'fixed',
+    defaultTarget: 3,
+    xp: 25
+  },
+  {
+    id: 'weekly_zen',
+    tier: 'BRONZE',
+    name: 'Zen',
+    nameKey: 'ach.weekly_zen.name',
+    desc: 'Completa la Respiración 4-4 en al menos 3 días distintos en la semana.',
+    descKey: 'ach.weekly_zen.desc',
+    category: 'cognitive',
+    icon: 'Sparkles',
+    targetType: 'fixed',
+    defaultTarget: 3,
+    xp: 25
+  },
+  {
+    id: 'gold_impulse_brake',
+    tier: 'GOLD',
+    name: 'Freno de Oro',
+    nameKey: 'ach.gold_impulse_brake.name',
+    desc: 'Alcanza un 90% o más de precisión en el juego Freno Impulsivo.',
+    descKey: 'ach.gold_impulse_brake.desc',
+    category: 'cognitive',
+    icon: 'Shield',
+    targetType: 'fixed',
+    defaultTarget: 90,
+    xp: 50
+  },
+  {
+    id: 'gold_tactical_eye',
+    tier: 'GOLD',
+    name: 'Ojo de Halcón',
+    nameKey: 'ach.gold_tactical_eye.name',
+    desc: 'Logra un pleno de 5/5 aciertos en Ojo Táctico encontrando al compañero libre.',
+    descKey: 'ach.gold_tactical_eye.desc',
+    category: 'cognitive',
+    icon: 'Target',
+    targetType: 'fixed',
+    defaultTarget: 5,
+    xp: 50
+  },
+  {
+    id: 'gold_cone_memory',
+    tier: 'GOLD',
+    name: 'Memoria de Campeonato',
+    nameKey: 'ach.gold_cone_memory.name',
+    desc: 'Recuerda y reproduce una secuencia de al menos 6 conos en Memoria de Conos.',
+    descKey: 'ach.gold_cone_memory.desc',
+    category: 'cognitive',
+    icon: 'Award',
+    targetType: 'fixed',
+    defaultTarget: 6,
+    xp: 50
+  },
+  {
+    id: 'season_mental_squad',
+    tier: 'GOLD',
+    name: 'Equipo Mental',
+    nameKey: 'ach.season_mental_squad.name',
+    desc: 'Logro colectivo: el equipo acumula 20 o más sesiones cognitivas completadas.',
+    descKey: 'ach.season_mental_squad.desc',
+    category: 'cognitive',
+    icon: 'Users',
+    targetType: 'fixed',
+    defaultTarget: 20,
+    xp: 75
   }
 ];
 

@@ -23,6 +23,7 @@ import { db } from '../firebaseConfig';
 import { collection, addDoc, getDocs, query, where, orderBy, serverTimestamp, writeBatch, doc, deleteDoc, onSnapshot } from '../firebase/firestore-proxy';
 import WellnessTestModal from '../components/WellnessTestModal';
 import RPETestModal from '../components/RPETestModal';
+import CoachCognitiveSupervision from '../components/coach/CoachCognitiveSupervision';
 import './Tests.css';
 
 const gamingVisualsV1 = true;
@@ -304,6 +305,7 @@ const Tests = () => {
   const { players, loading: loadingPlayers } = usePlayers(activeTeamId);
   const { t: tr } = useTranslation();
   const { matches } = usePlayerSeasonStats(activeTeamId);
+  const effectiveTeamPath = getTeamPath ? getTeamPath(activeTeamId) : (activeTeam ? (activeTeam.clubId ? `clubs/${activeTeam.clubId}/teams/${activeTeamId}` : `users/${user?.uid}/teams/${activeTeamId}`) : '');
   const [historyData, setHistoryData] = useState({});
   const [activeTab, setActiveTab] = useState('FÍSICOS');
   const [tests, setTests] = useState([]);
@@ -1634,6 +1636,13 @@ const Tests = () => {
                   </div>
                 );
               })()}
+
+              {/* Supervisión Cognitiva y Retos en Casa */}
+              <CoachCognitiveSupervision
+                player={getPlayerById(histSelectedPlayer)}
+                teamPath={effectiveTeamPath}
+                teamId={activeTeamId}
+              />
 
               <div className="hist-charts-grid">
                 {tests.filter(t => (historyData[histSelectedPlayer]?.[t.id] || []).length > 0).length === 0 ? (

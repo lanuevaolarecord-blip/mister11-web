@@ -12,6 +12,8 @@ export const useAchievements = (teamPath, playerId, isParentView = false) => {
   const [attendanceRecords, setAttendanceRecords] = useState([]);
   const [wellnessRecords, setWellnessRecords] = useState([]);
   const [testResults, setTestResults] = useState([]);
+  const [cognitiveRecords, setCognitiveRecords] = useState([]);
+  const [playerData, setPlayerData] = useState(null);
   const [loading, setLoading] = useState(true);
 
   // Registro en memoria de logros ya notificados en esta sesión para evitar bucles de toasts
@@ -84,9 +86,23 @@ export const useAchievements = (teamPath, playerId, isParentView = false) => {
       setTestResults(myTests);
     });
 
+    const unsubCognitive = onSnapshot(collection(db, `${cleanPath}/players/${playerId}/cognitive`), (snap) => {
+      setCognitiveRecords(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+    }, (err) => {
+      console.warn('[useAchievements] Error escuchando subcolección cognitive:', err);
+    });
+
+    const unsubPlayer = onSnapshot(doc(db, `${cleanPath}/players`, playerId), (snap) => {
+      if (snap.exists()) {
+        setPlayerData(snap.data());
+      }
+    });
+
     return () => {
       unsubWellness();
       unsubTests();
+      unsubCognitive();
+      unsubPlayer();
     };
   }, [teamPath, playerId]);
 
@@ -248,6 +264,30 @@ export const useAchievements = (teamPath, playerId, isParentView = false) => {
         if (pendingSessionsThisWeek.length > 0 && progress < target) {
           isPendingActa = true;
         }
+      } else if (ach.id === 'weekly_mind_active') {
+        const cogThisWeek = cognitiveRecords.filter(c => {
+          const d = (c.startedAt || c.endedAt || '').split('T')[0];
+          return d && d >= weekStartStr;
+        });
+        progress = cogThisWeek.length;
+      } else if (ach.id === 'weekly_zen') {
+        const zenThisWeek = cognitiveRecords.filter(c => {
+          const d = (c.startedAt || c.endedAt || '').split('T')[0];
+          return c.gameId === 'g5' && d && d >= weekStartStr;
+        });
+        const uniqueDays = new Set(zenThisWeek.map(c => (c.startedAt || c.endedAt || '').split('T')[0]));
+        progress = uniqueDays.size;
+      } else if (ach.id === 'gold_impulse_brake') {
+        const bestG2 = playerData?.cognitive?.best?.g2 || 0;
+        progress = Number(bestG2) || 0;
+      } else if (ach.id === 'gold_tactical_eye') {
+        const bestG3 = playerData?.cognitive?.best?.g3 || 0;
+        progress = Number(bestG3) || 0;
+      } else if (ach.id === 'gold_cone_memory') {
+        const bestG4 = playerData?.cognitive?.best?.g4 || 0;
+        progress = Number(bestG4) || 0;
+      } else if (ach.id === 'season_mental_squad') {
+        progress = cognitiveRecords.length;
       }
 
       const percent = target > 0 ? Math.min(100, Math.round((progress / target) * 100)) : 0;
@@ -266,7 +306,7 @@ export const useAchievements = (teamPath, playerId, isParentView = false) => {
         tierInfo: ACHIEVEMENT_TIERS[ach.tier] || ACHIEVEMENT_TIERS.BRONZE
       };
     });
-  }, [sessions, matches, attendanceRecords, wellnessRecords, testResults, unlockedState, playerId, seasonSettings]);
+  }, [sessions, matches, attendanceRecords, wellnessRecords, testResults, cognitiveRecords, playerData, unlockedState, playerId, seasonSettings]);
 
   // 5. Guardar logros recién desbloqueados con control estricto de notificación única
   useEffect(() => {

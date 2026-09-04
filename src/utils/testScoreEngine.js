@@ -229,6 +229,44 @@ export const consolidatePlayerEvaluations = (rawItems = [], playerId = '') => {
 };
 
 /**
+ * Calcula la puntuación cognitiva normalizada (0-99) a partir del estado de cognitive del jugador
+ */
+export const calculatePlayerCognitiveScore = (player = {}) => {
+  if (player?.cognitiveScore !== undefined && !isNaN(Number(player.cognitiveScore))) {
+    return Number(player.cognitiveScore);
+  }
+  const cog = player?.cognitive;
+  if (!cog) return null;
+
+  if (cog.weekly && cog.weekly.points > 0) {
+    return Math.min(99, Math.max(10, Math.round(Number(cog.weekly.points) * 1.5)));
+  }
+
+  if (cog.best) {
+    const scores = [];
+    if (cog.best.g2 !== undefined && !isNaN(Number(cog.best.g2))) {
+      scores.push(Number(cog.best.g2)); // precisión %
+    }
+    if (cog.best.g6 !== undefined && !isNaN(Number(cog.best.g6))) {
+      scores.push(Number(cog.best.g6)); // precisión %
+    }
+    if (cog.best.g3 !== undefined && !isNaN(Number(cog.best.g3))) {
+      scores.push(Math.min(99, Number(cog.best.g3) * 20)); // aciertos / 5 -> 0..100
+    }
+    if (cog.best.g1 !== undefined && !isNaN(Number(cog.best.g1))) {
+      const ms = Number(cog.best.g1);
+      const scaled = Math.min(99, Math.max(10, Math.round(100 - (ms - 200) * 0.1)));
+      scores.push(scaled);
+    }
+    if (scores.length > 0) {
+      return Math.round(scores.reduce((a, b) => a + b, 0) / scores.length);
+    }
+  }
+
+  return null;
+};
+
+/**
  * Calcula las 4 dimensiones (FÍS, TÉC, PSI, SOC), las 5 dimensiones del radar (FÍSICO, TÉCNICA, TÁCTICA, MENTAL, ASISTENCIA)
  * y el TPI Score global para un jugador a partir de todas sus evaluaciones registradas.
  */
@@ -348,6 +386,23 @@ export const calculatePlayerPerformanceScores = (evaluations = [], player = {}, 
   if (fis === 0 && rawFisicoFicha > 0) fis = rawFisicoFicha;
   if (tec === 0 && rawTecnicaFicha > 0) tec = rawTecnicaFicha;
   if (psi === 0 && rawMentalFicha > 0) psi = rawMentalFicha;
+
+  // Integración de Entrenamiento Cognitivo en el eje MENTAL (Regla D7: radarWeight 0 / 0.2 / 0.4)
+  const weight = options.radarWeight !== undefined 
+    ? Number(options.radarWeight) 
+    : (options.team?.settings?.cognitive?.radarWeight ?? player?.teamSettings?.cognitive?.radarWeight ?? 0.2);
+
+  const cogScore = options.cognitiveScore !== undefined && options.cognitiveScore !== null
+    ? Number(options.cognitiveScore)
+    : calculatePlayerCognitiveScore(player);
+
+  if (cogScore !== null && !isNaN(cogScore) && weight > 0) {
+    if (psi > 0) {
+      psi = Math.min(99, Math.max(0, Math.round(psi * (1 - weight) + cogScore * weight)));
+    } else {
+      psi = Math.min(99, Math.max(0, Math.round(cogScore)));
+    }
+  }
 
   // Dimensión TÁCTICA: Derivada 100% de la calificación real del míster en partidos oficiales
   // (escala 1 a 10 multiplicada por 10 -> 10 a 99). Si no hay calificación en partidos ni nota previa en ficha, es 0.

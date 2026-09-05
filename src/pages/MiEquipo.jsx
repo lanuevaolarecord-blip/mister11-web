@@ -798,153 +798,121 @@ const MiEquipo = () => {
         </div>
       )}
 
+      {/* BACKDROP DETALLE JUGADOR */}
+      {selectedPlayer && (
+        <div 
+          className="player-sidebar-backdrop" 
+          onClick={() => setSelectedPlayer(null)} 
+          aria-hidden="true" 
+        />
+      )}
+
       {/* SIDEBAR DETALLE JUGADOR */}
       {selectedPlayer && (
-        <div className={`player-sidebar ${selectedPlayer ? 'open' : ''} h-[calc(100vh-56px)] max-h-[calc(100vh-56px)] overflow-y-auto overscroll-contain pb-20`} style={{ background: 'var(--bg-app)', borderLeft: '1px solid var(--border-light)' }}>
-          <div style={{ position: 'relative', padding: '16px 16px 0 16px', textAlign: 'center', paddingTop: 'max(16px, env(safe-area-inset-top, 16px))' }}>
-            <div style={{ 
-              display: 'flex', 
-              justifyContent: 'space-between', 
-              alignItems: 'center', 
-              gap: '8px', 
-              marginBottom: '12px',
-              width: '100%'
-            }}>
+        <div 
+          className={`player-sidebar ${selectedPlayer ? 'open' : ''}`}
+          role="dialog"
+          aria-modal="true"
+          aria-label={`Ficha de ${selectedPlayer.name}`}
+        >
+          {/* BARRA SUPERIOR STICKY CON ACCIONES (ANDROID FIRST) */}
+          <div className="player-sidebar-topbar">
+            <button 
+              type="button"
+              className="player-sidebar-btn btn-close-fiche"
+              onClick={() => setSelectedPlayer(null)}
+              aria-label="Cerrar ficha"
+              title="Cerrar ficha"
+            >
+              <X size={22} />
+            </button>
+
+            <div style={{ display: 'flex', gap: '8px', alignItems: 'center', overflowX: 'auto', padding: '2px 0' }}>
+              {/* 1. EDITAR FICHA */}
               <button 
                 type="button"
-                style={{ 
-                  background: 'rgba(255, 255, 255, 0.08)', 
-                  border: '1px solid var(--border-light, rgba(255, 255, 255, 0.1))', 
-                  borderRadius: '12px',
-                  width: '48px',
-                  height: '48px',
-                  minWidth: '48px',
-                  minHeight: '48px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  color: 'var(--text-secondary)', 
-                  cursor: 'pointer',
-                  flexShrink: 0
-                }} 
-                onClick={() => setSelectedPlayer(null)}
-                aria-label="Cerrar ficha"
+                className="player-sidebar-btn btn-edit-fiche"
+                onClick={() => handleOpenForm(selectedPlayer)}
+                title="Editar ficha"
+                aria-label="Editar ficha"
               >
-                <X size={22} />
+                <Edit size={20} />
               </button>
 
-              <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                <button 
-                  className="btn-edit-icon" 
-                  onClick={() => setActiveTab('CHAT')}
-                  title="Abrir Chat con el Jugador"
-                  style={{ 
-                    background: activeTab === 'CHAT' ? '#10B981' : 'rgba(16, 185, 129, 0.15)', 
-                    color: activeTab === 'CHAT' ? '#FFFFFF' : '#10B981', 
-                    border: '1px solid rgba(16, 185, 129, 0.3)',
-                    width: '48px', 
-                    height: '48px', 
-                    minWidth: '48px',
-                    minHeight: '48px',
-                    display: 'flex', 
-                    alignItems: 'center', 
-                    justifyContent: 'center', 
-                    borderRadius: '12px',
-                    cursor: 'pointer'
-                  }}
-                >
-                  <MessageSquare size={20} />
-                </button>
-                <button 
-                  className="btn-edit-icon" 
-                  onClick={() => {
-                    const baseUrl = window.location.origin;
-                    const consentLink = `${baseUrl}/shared/consentimiento?coachId=${user.uid}&teamId=${activeTeamId}&teamName=${encodeURIComponent(activeTeam?.nombre || 'Míster11 Club')}&coachName=${encodeURIComponent(user.displayName || 'el Entrenador')}`;
-                    const whatsappMsg = `Hola, necesito que firmes el consentimiento digital para registrar a ${selectedPlayer.name} en la plataforma deportiva Míster11. Puedes rellenarlo y firmarlo con tu dedo en 1 minuto desde este enlace: ${consentLink}`;
-                    window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(whatsappMsg)}`, '_blank');
-                  }}
-                  title="Compartir link de Consentimiento Digital por WhatsApp"
-                  style={{ 
-                    background: 'rgba(37, 211, 102, 0.15)', 
-                    color: '#25D366', 
-                    border: '1px solid rgba(37, 211, 102, 0.3)',
-                    width: '48px', 
-                    height: '48px', 
-                    minWidth: '48px',
-                    minHeight: '48px',
-                    display: 'flex', 
-                    alignItems: 'center', 
-                    justifyContent: 'center', 
-                    borderRadius: '12px',
-                    cursor: 'pointer'
-                  }}
-                >
-                  <Share2 size={20} />
-                </button>
-                <button 
-                  className="btn-edit-icon" 
-                  onClick={() => {
-                    if (!isProActive) {
-                      setUpgradeModal({ 
-                        open: true, 
-                        message: "La exportación del expediente del jugador es una función PRO. Sube de nivel para usarla." 
-                      });
-                    } else {
-                      generateExpediente({
-                        ...selectedPlayer,
-                        ...playerSeasonStats,
-                        goles: playerSeasonStats.goals,
-                        asistencias: playerSeasonStats.assists,
-                        partidosJugados: playerSeasonStats.matchesPlayed,
-                        minutosTemporada: playerSeasonStats.minutesPlayed,
-                        tarjetasAmarillas: playerSeasonStats.yellowCards,
-                        tarjetasRojas: playerSeasonStats.redCards,
-                        matchHistory: playerSeasonStats.matchHistory
-                      }, activeTeam);
-                    }
-                  }} 
-                  title="Exportar Expediente"
-                  style={{
-                    background: 'rgba(255, 255, 255, 0.08)',
-                    border: '1px solid var(--border-light, rgba(255, 255, 255, 0.1))',
-                    color: 'var(--text-secondary)',
-                    width: '48px', 
-                    height: '48px', 
-                    minWidth: '48px',
-                    minHeight: '48px',
-                    display: 'flex', 
-                    alignItems: 'center', 
-                    justifyContent: 'center', 
-                    borderRadius: '12px',
-                    cursor: 'pointer'
-                  }}
-                >
-                  <FileText size={20} />
-                </button>
-                <button 
-                  className="btn-edit-icon" 
-                  onClick={() => handleOpenForm(selectedPlayer)}
-                  title="Editar ficha"
-                  style={{
-                    background: 'rgba(255, 255, 255, 0.08)',
-                    border: '1px solid var(--border-light, rgba(255, 255, 255, 0.1))',
-                    color: 'var(--text-secondary)',
-                    width: '48px', 
-                    height: '48px', 
-                    minWidth: '48px',
-                    minHeight: '48px',
-                    display: 'flex', 
-                    alignItems: 'center', 
-                    justifyContent: 'center', 
-                    borderRadius: '12px',
-                    cursor: 'pointer'
-                  }}
-                >
-                  <Edit size={20} />
-                </button>
-              </div>
+              {/* 2. PUBLICAR COMUNICADO / NOTIFICACIÓN */}
+              <button 
+                type="button"
+                className="player-sidebar-btn btn-notif-fiche"
+                onClick={() => {
+                  setAnnouncementTitle(`Aviso para ${selectedPlayer.name}`);
+                  setIsAnnouncementModalOpen(true);
+                }}
+                title="Publicar Comunicado / Notificación"
+                aria-label="Publicar comunicado o notificación"
+              >
+                <Bell size={20} />
+              </button>
+
+              {/* 3. CHAT DIRECTO 1:1 */}
+              <button 
+                type="button"
+                className={`player-sidebar-btn btn-chat-fiche ${activeTab === 'CHAT' ? 'active' : ''}`}
+                onClick={() => setActiveTab('CHAT')}
+                title="Abrir Chat con el Jugador"
+                aria-label="Abrir Chat con el jugador"
+              >
+                <MessageSquare size={20} />
+              </button>
+
+              {/* 4. COMPARTIR CONSENTIMIENTO POR WHATSAPP */}
+              <button 
+                type="button"
+                className="player-sidebar-btn btn-share-fiche"
+                onClick={() => {
+                  const baseUrl = window.location.origin;
+                  const consentLink = `${baseUrl}/shared/consentimiento?coachId=${user.uid}&teamId=${activeTeamId}&teamName=${encodeURIComponent(activeTeam?.nombre || 'Míster11 Club')}&coachName=${encodeURIComponent(user.displayName || 'el Entrenador')}`;
+                  const whatsappMsg = `Hola, necesito que firmes el consentimiento digital para registrar a ${selectedPlayer.name} en la plataforma deportiva Míster11. Puedes rellenarlo y firmarlo con tu dedo en 1 minuto desde este enlace: ${consentLink}`;
+                  window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(whatsappMsg)}`, '_blank');
+                }}
+                title="Compartir link de Consentimiento Digital por WhatsApp"
+                aria-label="Compartir link de consentimiento digital por WhatsApp"
+              >
+                <Share2 size={20} />
+              </button>
+
+              {/* 5. EXPORTAR EXPEDIENTE PDF */}
+              <button 
+                type="button"
+                className="player-sidebar-btn btn-export-fiche"
+                onClick={() => {
+                  if (!isProActive) {
+                    setUpgradeModal({ 
+                      open: true, 
+                      message: "La exportación del expediente del jugador es una función PRO. Sube de nivel para usarla." 
+                    });
+                  } else {
+                    generateExpediente({
+                      ...selectedPlayer,
+                      ...playerSeasonStats,
+                      goles: playerSeasonStats.goals,
+                      asistencias: playerSeasonStats.assists,
+                      partidosJugados: playerSeasonStats.matchesPlayed,
+                      minutosTemporada: playerSeasonStats.minutesPlayed,
+                      tarjetasAmarillas: playerSeasonStats.yellowCards,
+                      tarjetasRojas: playerSeasonStats.redCards,
+                      matchHistory: playerSeasonStats.matchHistory
+                    }, activeTeam);
+                  }
+                }} 
+                title="Exportar Expediente"
+                aria-label="Exportar expediente en PDF"
+              >
+                <FileText size={20} />
+              </button>
             </div>
-            
+          </div>
+
+          <div style={{ position: 'relative', padding: '16px 16px 0 16px', textAlign: 'center' }}>
             <div style={{ width: '90px', height: '90px', margin: '8px auto 10px auto', borderRadius: '50%', background: !selectedPlayer.avatarUrl ? stringToColor(selectedPlayer.id || selectedPlayer.name) : '#FFF', border: '3px solid var(--bg-card)', boxShadow: '0 0 0 2px var(--accent-gold)', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               {selectedPlayer.avatarUrl ? <img src={selectedPlayer.avatarUrl} alt={selectedPlayer.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <span style={{ color: '#FFF', fontSize: '30px', fontWeight: 'bold' }}>{getInitials(selectedPlayer.name)}</span>}
             </div>

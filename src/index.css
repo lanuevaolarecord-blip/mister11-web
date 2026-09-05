@@ -1017,23 +1017,28 @@ button, .nav-item, input, select, .icon-btn, .topbar-btn, .tool-icon-btn {
     text-overflow: ellipsis !important;
   }
 
-  /* Modales a pantalla completa en móvil */
+  /* Modales a pantalla completa en móvil (Android First) */
   .modal-content {
     min-width: unset !important;
     width: 100% !important;
     max-width: 100% !important;
     margin: 0 !important;
-    border-radius: 16px 16px 0 0 !important;
+    border-radius: 20px 20px 0 0 !important;
     position: fixed !important;
     bottom: 0 !important;
     left: 0 !important;
     right: 0 !important;
-    max-height: 90vh !important;
-    overflow-y: auto !important;
+    max-height: 92dvh !important;
+    display: flex !important;
+    flex-direction: column !important;
+    overflow: hidden !important;
+    box-shadow: 0 -8px 30px rgba(0, 0, 0, 0.35) !important;
+    z-index: 20001 !important;
   }
 
   .modal-overlay {
     align-items: flex-end !important;
+    z-index: 20000 !important;
   }
 
   /* 🛡️ Evitar Desbordamiento y Desalineaciones (image_b5a344.png) */

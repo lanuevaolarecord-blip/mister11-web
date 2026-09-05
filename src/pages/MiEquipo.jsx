@@ -774,22 +774,22 @@ const MiEquipo = () => {
                 </label>
               </div>
             </div>
-            <div className="modal-footer" style={{ flexWrap: 'wrap' }}>
+            <div className="modal-footer">
               {formError && (
                 <div style={{
                   background: '#FDEDEC', color: '#C0392B', border: '1px solid #E74C3C',
-                  borderRadius: 8, padding: '8px 12px', marginBottom: 8, fontSize: 13,
+                  borderRadius: 8, padding: '8px 12px', marginBottom: 4, fontSize: 13,
                   width: '100%', textAlign: 'left'
                 }}>
                   ⚠️ {formError}
                 </div>
               )}
               {editData.id && (
-                <button className="btn-text-error" onClick={() => handleDeletePlayer(editData.id)}>Eliminar Jugador</button>
+                <button type="button" className="btn-text-error" onClick={() => handleDeletePlayer(editData.id)}>Eliminar Jugador</button>
               )}
               <div className="footer-actions">
-                <button className="btn-secondary" style={{ marginRight: '10px' }} onClick={() => setIsFormOpen(false)}>Cancelar</button>
-                <button className="btn-primary" onClick={handleSavePlayer} disabled={isSaving}>
+                <button type="button" className="btn-secondary" onClick={() => setIsFormOpen(false)}>Cancelar</button>
+                <button type="button" className="btn-primary" onClick={handleSavePlayer} disabled={isSaving}>
                   {isSaving ? 'Guardando...' : 'Guardar'}
                 </button>
               </div>

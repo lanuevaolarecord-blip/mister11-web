@@ -109,43 +109,63 @@ const Header = ({ onToggleNotif }) => {
           </div>
         )}
 
-        {/* Selector interactivo de Rol en el Cuerpo Técnico */}
+        {/* Selector interactivo de Rol en el Cuerpo Técnico (Basado en Icono) */}
         {permissions?.roleInfo && (
           <div 
             className="header-staff-role-switcher"
-            title={`Rol activo: ${permissions.roleInfo.label}. Haz clic para cambiar de rol.`}
+            title={`Rol en el Cuerpo Técnico: ${permissions.roleInfo.label}. Toca para cambiar.`}
             style={{
+              position: 'relative',
               display: 'inline-flex',
               alignItems: 'center',
-              borderRadius: '16px',
-              background: `${permissions.roleInfo.color}20`,
-              border: `1px solid ${permissions.roleInfo.color}60`,
-              padding: '2px 6px',
-              cursor: 'pointer'
+              justifyContent: 'center',
+              width: '34px',
+              height: '34px',
+              minWidth: '34px',
+              minHeight: '34px',
+              borderRadius: '10px',
+              background: `${permissions.roleInfo.color}22`,
+              border: `1.5px solid ${permissions.roleInfo.color}`,
+              cursor: 'pointer',
+              flexShrink: 0,
+              boxSizing: 'border-box'
             }}
           >
+            <span style={{ fontSize: '1.1rem', lineHeight: 1, pointerEvents: 'none', userSelect: 'none' }}>
+              {permissions.role === 'admin' || permissions.role === 'first_coach' || permissions.role === 'owner' ? '👑' :
+               permissions.role === 'coach' || permissions.role === 'second_coach' ? '🥈' :
+               permissions.role === 'fitness_coach' || permissions.role === 'pf' ? '🏋️' :
+               permissions.role === 'assistant' ? '⏱️' :
+               permissions.role === 'physio' ? '🩺' : '👑'}
+            </span>
             <select
               value={permissions.role}
               onChange={(e) => switchMyRole(e.target.value)}
-              aria-label="Cambiar mi rol en el equipo"
+              aria-label={`Rol activo: ${permissions.roleInfo.label}. Cambiar mi rol.`}
               style={{
-                background: 'transparent',
-                border: 'none',
-                color: permissions.roleInfo.color,
-                fontSize: '0.72rem',
-                fontWeight: '700',
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                width: '100%',
+                height: '100%',
+                opacity: 0,
                 cursor: 'pointer',
-                outline: 'none',
-                padding: '2px 4px'
+                appearance: 'none',
+                WebkitAppearance: 'none',
+                zIndex: 3
               }}
             >
               {STAFF_ROLES && Object.values(STAFF_ROLES).map(r => (
                 <option 
                   key={r.id} 
                   value={r.id} 
-                  style={{ background: '#121C16', color: '#FFFFFF', fontSize: '0.85rem' }}
+                  style={{ background: '#121C16', color: '#FFFFFF', fontSize: '0.85rem', padding: '6px' }}
                 >
-                  {r.badge}
+                  {r.id === 'admin' ? '👑 Primer Entrenador' :
+                   r.id === 'coach' ? '🥈 Segundo Entrenador' :
+                   r.id === 'fitness_coach' ? '🏋️ Preparador Físico' :
+                   r.id === 'assistant' ? '⏱️ Ayudante' :
+                   r.id === 'physio' ? '🩺 Fisioterapeuta' : r.badge}
                 </option>
               ))}
             </select>
@@ -185,31 +205,35 @@ const Header = ({ onToggleNotif }) => {
           </button>
         )}
 
-        {/* Conmutador a Portal Jugador si tiene identidades de jugador o es desarrollador / híbrido */}
+        {/* Conmutador a Portal Jugador (Icono Solo) */}
         {(isDev || isHybrid || (playerTeams && playerTeams.length > 0)) && (
           <button
+            type="button"
+            className="icon-btn header-mode-toggle"
             onClick={() => {
               switchMode('player');
               navigate('/player-dashboard');
             }}
             title="Cambiar a Portal Jugador"
+            aria-label="Cambiar a Portal Jugador"
             style={{
               display: 'inline-flex',
               alignItems: 'center',
-              gap: '4px',
-              background: 'rgba(16, 185, 129, 0.15)',
+              justifyContent: 'center',
+              width: '34px',
+              height: '34px',
+              minWidth: '34px',
+              minHeight: '34px',
+              background: 'rgba(16, 185, 129, 0.16)',
               color: '#10B981',
-              border: '1px solid rgba(16, 185, 129, 0.4)',
-              borderRadius: '14px',
-              padding: '4px 8px',
-              fontSize: '0.72rem',
-              fontWeight: '800',
+              border: '1.5px solid rgba(16, 185, 129, 0.45)',
+              borderRadius: '8px',
               cursor: 'pointer',
-              whiteSpace: 'nowrap',
+              padding: 0,
               flexShrink: 0
             }}
           >
-            <User size={13} /> Jugador
+            <User size={18} strokeWidth={2.4} />
           </button>
         )}
 

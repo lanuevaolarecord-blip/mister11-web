@@ -476,11 +476,11 @@ const PlayerDashboard = () => {
             </span>
           ) : null}
 
-          {/* Conmutador a Entrenador si tiene rol híbrido o equipos de entrenador */}
+          {/* Conmutador a Modo Entrenador (Icono Solo) */}
           {(isHybrid || (coachTeams && coachTeams.length > 0)) && (
             <button
               type="button"
-              className="player-theme-btn"
+              className="player-theme-btn header-mode-toggle"
               onClick={() => {
                 switchMode('coach');
                 navigate('/');
@@ -490,19 +490,21 @@ const PlayerDashboard = () => {
               style={{
                 display: 'inline-flex',
                 alignItems: 'center',
-                gap: '4px',
-                background: 'rgba(59, 130, 246, 0.15)',
+                justifyContent: 'center',
+                width: '34px',
+                height: '34px',
+                minWidth: '34px',
+                minHeight: '34px',
+                background: 'rgba(59, 130, 246, 0.16)',
                 color: '#3B82F6',
-                border: '1px solid rgba(59, 130, 246, 0.4)',
-                borderRadius: '14px',
-                padding: '4px 8px',
-                fontSize: '0.72rem',
-                fontWeight: '800',
+                border: '1.5px solid rgba(59, 130, 246, 0.45)',
+                borderRadius: '8px',
                 cursor: 'pointer',
-                whiteSpace: 'nowrap'
+                padding: 0,
+                flexShrink: 0
               }}
             >
-              <Shield size={13} /> Entrenador
+              <Shield size={18} strokeWidth={2.4} />
             </button>
           )}
         </div>

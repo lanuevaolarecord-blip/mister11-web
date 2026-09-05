@@ -2,8 +2,9 @@ import { useState, useEffect, useCallback, useMemo } from 'react';
 import { doc, updateDoc, onSnapshot } from 'firebase/firestore';
 import { db } from '../firebaseConfig';
 
-const MAX_SESSIONS_PER_DAY = 2;
-const MAX_MINUTES_PER_DAY = 10;
+export const MAX_COGNITIVE_MINUTES_PER_DAY = 15;
+export const MAX_CHALLENGES_MINUTES_PER_DAY = 20;
+export const MAX_ATTEMPTS_PER_CHALLENGE = 2;
 
 export const getTodayDateKey = () => {
   const d = new Date();
@@ -18,7 +19,7 @@ export const useGameLimits = (teamPath, playerId) => {
   const todayKey = getTodayDateKey();
   const storageKey = `m11_cog_limits_${playerId || 'local'}`;
 
-  // Cargar estado inicial desde localStorage (garantiza respuesta offline instantánea)
+  // Cargar estado inicial desde localStorage (offline-first instantáneo)
   const getInitialLimits = () => {
     try {
       const cached = localStorage.getItem(storageKey);
@@ -27,15 +28,28 @@ export const useGameLimits = (teamPath, playerId) => {
         if (parsed.date === todayKey) {
           return {
             date: todayKey,
-            sessionsToday: Number(parsed.sessionsToday) || 0,
-            minutesToday: Number(parsed.minutesToday) || 0
+            cognitiveMinutesToday: Number(parsed.cognitiveMinutesToday) || 0,
+            challengesMinutesToday: Number(parsed.challengesMinutesToday) || 0,
+            challengesAttemptsToday: parsed.challengesAttemptsToday || {},
+            challengesCompletedToday: parsed.challengesCompletedToday || {},
+            // Retrocompatibilidad:
+            minutesToday: (Number(parsed.cognitiveMinutesToday) || 0) + (Number(parsed.challengesMinutesToday) || 0),
+            sessionsToday: Number(parsed.sessionsToday) || 0
           };
         }
       }
     } catch (e) {
-      console.warn('[useGameLimits] Error reading cache:', e);
+      console.warn('[useGameLimits] Error leyendo caché local:', e);
     }
-    return { date: todayKey, sessionsToday: 0, minutesToday: 0 };
+    return {
+      date: todayKey,
+      cognitiveMinutesToday: 0,
+      challengesMinutesToday: 0,
+      challengesAttemptsToday: {},
+      challengesCompletedToday: {},
+      minutesToday: 0,
+      sessionsToday: 0
+    };
   };
 
   const [limits, setLimits] = useState(getInitialLimits);
@@ -55,11 +69,28 @@ export const useGameLimits = (teamPath, playerId) => {
         const firestoreLimits = data?.cognitive?.limits;
         if (firestoreLimits && firestoreLimits.date === todayKey) {
           setLimits((prev) => {
+            const cogMin = Math.max(prev.cognitiveMinutesToday, Number(firestoreLimits.cognitiveMinutesToday ?? firestoreLimits.minutesToday) || 0);
+            const chalMin = Math.max(prev.challengesMinutesToday, Number(firestoreLimits.challengesMinutesToday) || 0);
+            
+            const mergedAttempts = {
+              ...(prev.challengesAttemptsToday || {}),
+              ...(firestoreLimits.challengesAttemptsToday || {})
+            };
+            const mergedCompleted = {
+              ...(prev.challengesCompletedToday || {}),
+              ...(firestoreLimits.challengesCompletedToday || {})
+            };
+
             const merged = {
               date: todayKey,
-              sessionsToday: Math.max(prev.sessionsToday, Number(firestoreLimits.sessionsToday) || 0),
-              minutesToday: Math.max(prev.minutesToday, Number(firestoreLimits.minutesToday) || 0)
+              cognitiveMinutesToday: cogMin,
+              challengesMinutesToday: chalMin,
+              challengesAttemptsToday: mergedAttempts,
+              challengesCompletedToday: mergedCompleted,
+              minutesToday: cogMin + chalMin,
+              sessionsToday: (Number(prev.sessionsToday) || 0) + 1
             };
+
             try {
               localStorage.setItem(storageKey, JSON.stringify(merged));
             } catch (_e) {}
@@ -69,37 +100,113 @@ export const useGameLimits = (teamPath, playerId) => {
       }
       setLoading(false);
     }, (err) => {
-      console.warn('[useGameLimits] Firestore sync error, using local fallback:', err);
+      console.warn('[useGameLimits] Error en listener de Firestore, usando local:', err);
       setLoading(false);
     });
 
     return () => unsub();
   }, [cleanPath, playerId, todayKey, storageKey]);
 
+  // Si el día cambió en el cliente mientras la app seguía abierta, resetear
   const activeLimits = useMemo(() => {
     if (limits.date !== todayKey) {
-      return { date: todayKey, sessionsToday: 0, minutesToday: 0 };
+      return {
+        date: todayKey,
+        cognitiveMinutesToday: 0,
+        challengesMinutesToday: 0,
+        challengesAttemptsToday: {},
+        challengesCompletedToday: {},
+        minutesToday: 0,
+        sessionsToday: 0
+      };
     }
     return limits;
   }, [limits, todayKey]);
 
-  const canPlay = useMemo(() => {
-    return activeLimits.sessionsToday < MAX_SESSIONS_PER_DAY && activeLimits.minutesToday < MAX_MINUTES_PER_DAY;
-  }, [activeLimits.sessionsToday, activeLimits.minutesToday]);
+  // ─── VALIDACIONES COGNITIVAS (Juegos: 15 min max) ──────────────────────────
+  const canPlayCognitive = useMemo(() => {
+    return activeLimits.cognitiveMinutesToday < MAX_COGNITIVE_MINUTES_PER_DAY;
+  }, [activeLimits.cognitiveMinutesToday]);
 
-  const remainingSessions = Math.max(0, MAX_SESSIONS_PER_DAY - activeLimits.sessionsToday);
-  const remainingMinutes = Math.max(0, MAX_MINUTES_PER_DAY - activeLimits.minutesToday);
+  const remainingCognitiveMinutes = Math.max(
+    0,
+    MAX_COGNITIVE_MINUTES_PER_DAY - activeLimits.cognitiveMinutesToday
+  );
 
-  const registerSession = useCallback(async (durationSec = 60) => {
+  // ─── VALIDACIONES RETOS EN CASA (20 min max y 2 intentos por reto) ─────────
+  const remainingChallengeMinutes = Math.max(
+    0,
+    MAX_CHALLENGES_MINUTES_PER_DAY - activeLimits.challengesMinutesToday
+  );
+
+  const getChallengeAttempts = useCallback((retoId) => {
+    return activeLimits.challengesAttemptsToday?.[retoId] || 0;
+  }, [activeLimits.challengesAttemptsToday]);
+
+  const canPlayChallenge = useCallback((retoId) => {
+    if (remainingChallengeMinutes <= 0) {
+      return { allowed: false, reason: 'time_limit' };
+    }
+    const attempts = activeLimits.challengesAttemptsToday?.[retoId] || 0;
+    if (attempts >= MAX_ATTEMPTS_PER_CHALLENGE) {
+      return { allowed: false, reason: 'attempts_limit' };
+    }
+    return { allowed: true, reason: 'ok' };
+  }, [remainingChallengeMinutes, activeLimits.challengesAttemptsToday]);
+
+  const isChallengeCompletedToday = useCallback((retoId) => {
+    return Boolean(activeLimits.challengesCompletedToday?.[retoId]);
+  }, [activeLimits.challengesCompletedToday]);
+
+  // canPlay global para retrocompatibilidad
+  const canPlay = canPlayCognitive || remainingChallengeMinutes > 0;
+
+  // ─── REGISTRAR SESIÓN CON DURACIÓN REAL ────────────────────────────────────
+  const registerSession = useCallback(async (durationSec = 60, isChallenge = false, challengeId = null, isSuccess = false) => {
     const minutesAdded = Math.max(1, Math.round(durationSec / 60));
     let updated;
+
     setLimits((prev) => {
-      const base = prev.date === todayKey ? prev : { date: todayKey, sessionsToday: 0, minutesToday: 0 };
+      const base = prev.date === todayKey
+        ? prev
+        : {
+            date: todayKey,
+            cognitiveMinutesToday: 0,
+            challengesMinutesToday: 0,
+            challengesAttemptsToday: {},
+            challengesCompletedToday: {},
+            minutesToday: 0,
+            sessionsToday: 0
+          };
+
+      const newCognitiveMin = isChallenge
+        ? base.cognitiveMinutesToday
+        : base.cognitiveMinutesToday + minutesAdded;
+
+      const newChallengesMin = isChallenge
+        ? base.challengesMinutesToday + minutesAdded
+        : base.challengesMinutesToday;
+
+      const newAttempts = { ...(base.challengesAttemptsToday || {}) };
+      if (isChallenge && challengeId) {
+        newAttempts[challengeId] = (newAttempts[challengeId] || 0) + 1;
+      }
+
+      const newCompleted = { ...(base.challengesCompletedToday || {}) };
+      if (isChallenge && challengeId && isSuccess) {
+        newCompleted[challengeId] = true;
+      }
+
       updated = {
         date: todayKey,
-        sessionsToday: base.sessionsToday + 1,
-        minutesToday: base.minutesToday + minutesAdded
+        cognitiveMinutesToday: newCognitiveMin,
+        challengesMinutesToday: newChallengesMin,
+        challengesAttemptsToday: newAttempts,
+        challengesCompletedToday: newCompleted,
+        minutesToday: newCognitiveMin + newChallengesMin,
+        sessionsToday: (base.sessionsToday || 0) + 1
       };
+
       try {
         localStorage.setItem(storageKey, JSON.stringify(updated));
       } catch (_e) {}
@@ -123,11 +230,21 @@ export const useGameLimits = (teamPath, playerId) => {
   return {
     limits: activeLimits,
     canPlay,
-    remainingSessions,
-    remainingMinutes,
-    maxSessions: MAX_SESSIONS_PER_DAY,
-    maxMinutes: MAX_MINUTES_PER_DAY,
+    canPlayCognitive,
+    remainingCognitiveMinutes,
+    maxCognitiveMinutes: MAX_COGNITIVE_MINUTES_PER_DAY,
+    remainingChallengeMinutes,
+    maxChallengeMinutes: MAX_CHALLENGES_MINUTES_PER_DAY,
+    maxAttemptsPerChallenge: MAX_ATTEMPTS_PER_CHALLENGE,
+    canPlayChallenge,
+    getChallengeAttempts,
+    isChallengeCompletedToday,
     registerSession,
+    // Retrocompatibilidad:
+    remainingMinutes: remainingCognitiveMinutes,
+    maxMinutes: MAX_COGNITIVE_MINUTES_PER_DAY,
+    remainingSessions: 99,
+    maxSessions: 99,
     loading
   };
 };

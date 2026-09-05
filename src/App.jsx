@@ -61,6 +61,19 @@ function App() {
   const { user, loading, isPlayer } = useAuth();
   const [showUpdate, setShowUpdate] = useState(false);
   const [updateData, setUpdateData] = useState({ version: '', url: '' });
+  const [splashSlowWarning, setSplashSlowWarning] = useState(false);
+  const [bypassLoading, setBypassLoading] = useState(false);
+
+  useEffect(() => {
+    if (!loading) {
+      setSplashSlowWarning(false);
+      return;
+    }
+    const timer = setTimeout(() => {
+      setSplashSlowWarning(true);
+    }, 6500);
+    return () => clearTimeout(timer);
+  }, [loading]);
 
   useEffect(() => {
     if (user) {
@@ -72,14 +85,18 @@ function App() {
   }, [user]);
 
   useEffect(() => {
-    const checkVersion = async () => {
+    // Comprobación de versión en segundo plano diferida para no interferir en el arranque
+    const timer = setTimeout(async () => {
       try {
         const versionRef = doc(db, 'config', 'global');
-        const versionSnap = await getDoc(versionRef);
+        const timeoutPromise = new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('Timeout config')), 4000)
+        );
+        const versionSnap = await Promise.race([getDoc(versionRef), timeoutPromise]);
         
-        if (versionSnap.exists()) {
+        if (versionSnap && versionSnap.exists()) {
           const data = versionSnap.data();
-          const remoteVersion = data.appVersion;
+          const remoteVersion = data.appVersion || data.latestApkVersion;
           // Unificado: usa apkDownloadUrl (igual que AdminPanel) con fallback a apkUrl
           const apkUrl = data.apkDownloadUrl || data.apkUrl || '/mister11.apk';
           
@@ -92,11 +109,11 @@ function App() {
           }
         }
       } catch (error) {
-        console.error("Error al comprobar la versión:", error);
+        console.warn("[App] Comprobación no crítica de versión en background finalizada:", error?.message || error);
       }
-    };
+    }, 1500);
 
-    checkVersion();
+    return () => clearTimeout(timer);
   }, []);
 
   const handleCloseUpdate = () => {
@@ -120,15 +137,89 @@ function App() {
     return () => window.removeEventListener('m11-loading', handleGlobalLoading);
   }, []);
 
-  // 4. Mientras onAuthStateChanged no ha respondido todavía, muestra pantalla de carga
-  // Se usa visibility:hidden en lugar de nada para evitar FOUC (Flash of Unstyled Content)
-  if (loading) {
+  // 4. Mientras onAuthStateChanged no ha respondido todavía, muestra pantalla de carga con Watchdog de rescate
+  if (loading && !bypassLoading) {
     return (
-      <div className="global-loader" style={{ backgroundColor: '#111B21', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <div className="loader-content">
+      <div className="global-loader" style={{ backgroundColor: '#111B21', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
+        <div className="loader-content" style={{ maxWidth: '420px', width: '100%', textAlign: 'center' }}>
           <img src="/logo_mister11.png" alt="Míster11" className="loader-logo-img" style={{ height: '72px', marginBottom: '20px' }} />
           <div className="spinner"></div>
-          <p style={{ color: 'rgba(255,255,255,0.6)', marginTop: '12px', fontFamily: 'Outfit, sans-serif' }}>Cargando...</p>
+          <p style={{ color: 'rgba(255,255,255,0.7)', marginTop: '12px', fontFamily: 'Outfit, sans-serif', fontWeight: 600 }}>Cargando...</p>
+          
+          {splashSlowWarning && (
+            <div style={{
+              marginTop: '24px',
+              padding: '16px',
+              background: 'rgba(255,255,255,0.06)',
+              border: '1px solid rgba(255,255,255,0.15)',
+              borderRadius: '12px',
+              textAlign: 'center'
+            }}>
+              <p style={{ fontSize: '13px', color: '#FCD34D', margin: '0 0 14px 0', fontWeight: 700 }}>
+                ⚠️ El inicio está tardando más de lo habitual.
+              </p>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                <button
+                  type="button"
+                  onClick={() => setBypassLoading(true)}
+                  style={{
+                    padding: '10px 16px',
+                    borderRadius: '8px',
+                    border: 'none',
+                    background: '#10B981',
+                    color: '#fff',
+                    fontWeight: 700,
+                    fontSize: '13px',
+                    cursor: 'pointer'
+                  }}
+                >
+                  ⚡ Continuar sin esperar
+                </button>
+                <button
+                  type="button"
+                  onClick={() => window.location.reload()}
+                  style={{
+                    padding: '10px 16px',
+                    borderRadius: '8px',
+                    border: '1px solid rgba(255,255,255,0.2)',
+                    background: 'transparent',
+                    color: '#fff',
+                    fontWeight: 600,
+                    fontSize: '13px',
+                    cursor: 'pointer'
+                  }}
+                >
+                  🔄 Reintentar conexión
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    try {
+                      localStorage.clear();
+                      sessionStorage.clear();
+                      if ('caches' in window) {
+                        caches.keys().then(keys => keys.forEach(k => caches.delete(k)));
+                      }
+                    } catch (_) {}
+                    window.location.reload();
+                  }}
+                  style={{
+                    padding: '8px 12px',
+                    borderRadius: '8px',
+                    border: 'none',
+                    background: 'transparent',
+                    color: '#EF4444',
+                    fontWeight: 600,
+                    fontSize: '12px',
+                    cursor: 'pointer',
+                    marginTop: '4px'
+                  }}
+                >
+                  🧹 Limpiar caché y reiniciar
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     );

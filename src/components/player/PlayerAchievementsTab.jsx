@@ -66,9 +66,11 @@ export const PlayerAchievementsTab = ({
     ? achievements 
     : achievements.filter(a => a.tier === selectedTier);
 
-  const totalXP = achievements
+  const achievementsXP = achievements
     .filter(a => a.isUnlocked)
     .reduce((sum, a) => sum + (a.xp || 0), 0);
+  const cognitiveXP = Number(player?.cognitive?.totalXp) || Number(player?.totalCognitiveXp) || 0;
+  const totalXP = achievementsXP + cognitiveXP;
 
   const unlockedCount = achievements.filter(a => a.isUnlocked).length;
 

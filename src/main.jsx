@@ -19,23 +19,26 @@ if (Capacitor.isNativePlatform()) {
 
 
 import { LanguageProvider } from './context/LanguageContext.jsx'
+import ErrorBoundary from './components/ErrorBoundary.jsx'
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
-    <ThemeProvider>
-      <AuthProvider>
-        <LanguageProvider>
-          <TeamProvider>
-            <PizarraProvider>
-              <MatchProvider>
-                <BrowserRouter>
-                  <App />
-                </BrowserRouter>
-              </MatchProvider>
-            </PizarraProvider>
-          </TeamProvider>
-        </LanguageProvider>
-      </AuthProvider>
-    </ThemeProvider>
+    <ErrorBoundary>
+      <ThemeProvider>
+        <AuthProvider>
+          <LanguageProvider>
+            <TeamProvider>
+              <PizarraProvider>
+                <MatchProvider>
+                  <BrowserRouter>
+                    <App />
+                  </BrowserRouter>
+                </MatchProvider>
+              </PizarraProvider>
+            </TeamProvider>
+          </LanguageProvider>
+        </AuthProvider>
+      </ThemeProvider>
+    </ErrorBoundary>
   </StrictMode>,
 )

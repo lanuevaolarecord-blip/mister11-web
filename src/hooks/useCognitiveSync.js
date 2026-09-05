@@ -1,11 +1,12 @@
 import { useState, useEffect, useCallback } from 'react';
-import { doc, setDoc, updateDoc, collection, serverTimestamp, getDoc } from 'firebase/firestore';
+import { doc, writeBatch, serverTimestamp, getDoc, increment } from 'firebase/firestore';
 import { db } from '../firebaseConfig';
 
 export const getWeekKey = (d = new Date()) => {
   const date = new Date(d);
   date.setHours(0, 0, 0, 0);
   const day = date.getDay();
+  // Lunes como inicio de semana (ISO-8601)
   const diff = date.getDate() - day + (day === 0 ? -6 : 1);
   date.setDate(diff);
   return date.toISOString().split('T')[0];
@@ -49,7 +50,7 @@ export const useCognitiveSync = (teamPath, playerId) => {
     fetchPlayer();
   }, [cleanPath, playerId, bestKey]);
 
-  // Sincronizar cola offline cuando vuelva la conexión
+  // Sincronizar cola offline atómicamente cuando vuelva la conexión
   const drainOfflineQueue = useCallback(async () => {
     if (!cleanPath || !playerId || !navigator.onLine) return;
     try {
@@ -61,11 +62,29 @@ export const useCognitiveSync = (teamPath, playerId) => {
       const remaining = [];
       for (const item of queue) {
         try {
+          const batch = writeBatch(db);
           const sessionRef = doc(db, `${cleanPath}/players/${playerId}/cognitive`, item.sessionId);
-          await setDoc(sessionRef, {
+          batch.set(sessionRef, {
             ...item,
             syncedAt: serverTimestamp()
           }, { merge: true });
+
+          const pRef = doc(db, `${cleanPath}/players`, playerId);
+          const pUpdate = {
+            'cognitive.weekly.weekKey': item.weekKey || getWeekKey(),
+            'cognitive.weekly.points': increment(item.xpEarned || 0),
+            'cognitive.totalXp': increment(item.xpEarned || 0),
+            'xp': increment(item.xpEarned || 0)
+          };
+          if (item.isPersonalBest && item.score !== undefined) {
+            pUpdate[`cognitive.best.${item.gameId}`] = item.score;
+          }
+          if (item.limitsUpdate) {
+            pUpdate['cognitive.limits'] = item.limitsUpdate;
+          }
+          batch.update(pRef, pUpdate);
+
+          await batch.commit();
         } catch (e) {
           remaining.push(item);
         }
@@ -88,11 +107,13 @@ export const useCognitiveSync = (teamPath, playerId) => {
   }, [drainOfflineQueue]);
 
   /**
-   * Registra una sesión completada
+   * Registra una sesión completada de forma 100% ATÓMICA con writeBatch.
+   * Actualiza doc de sesión + weekly.points + cognitive.totalXp + limits + xp del jugador.
    * @param {Object} sessionData
-   * @param {boolean} higherBetter - Indica si una puntuación más alta es mejor (ej: precisión vs tiempo reacción)
+   * @param {boolean} higherBetter
+   * @param {Object} limitsUpdate
    */
-  const saveSession = useCallback(async (sessionData, higherBetter = true) => {
+  const saveSession = useCallback(async (sessionData, higherBetter = true, limitsUpdate = null) => {
     const {
       gameId,
       mode = 'cognitive',
@@ -117,7 +138,7 @@ export const useCognitiveSync = (teamPath, playerId) => {
       }
     }
 
-    // Regla D4: XP por esfuerzo
+    // Regla D4: XP por esfuerzo pedagógico y superación
     // +10 sesión completada
     // +5 récord personal
     // +5 si reto conseguido (mode === 'challenge' o sets con éxito)
@@ -136,6 +157,7 @@ export const useCognitiveSync = (teamPath, playerId) => {
       try { localStorage.setItem(bestKey, JSON.stringify(newBestMap)); } catch (e) {}
     }
 
+    const currentWeekKey = getWeekKey();
     const payload = {
       sessionId,
       gameId,
@@ -150,10 +172,11 @@ export const useCognitiveSync = (teamPath, playerId) => {
       accuracy,
       xpEarned,
       isPersonalBest,
-      weekKey: getWeekKey()
+      weekKey: currentWeekKey,
+      limitsUpdate: limitsUpdate || null
     };
 
-    // Si no hay red o falla, encolar en localStorage para sync posterior
+    // Respaldo inmediato en cola local para garantía offline
     const enqueueLocally = () => {
       try {
         const raw = localStorage.getItem(queueKey);
@@ -169,27 +192,44 @@ export const useCognitiveSync = (teamPath, playerId) => {
     }
 
     try {
+      // ─── ESCRITURA ATÓMICA ÚNICA (writeBatch) ─────────────────────────────
+      const batch = writeBatch(db);
+
+      // 1. Doc de sesión individual en cognitive/{sessionId}
       const sessionRef = doc(db, `${cleanPath}/players/${playerId}/cognitive`, sessionId);
-      await setDoc(sessionRef, {
+      batch.set(sessionRef, {
         ...payload,
         createdAt: serverTimestamp()
       });
 
-      // Actualizar documento de jugador (best, weekly)
+      // 2. Doc del jugador: actualiza weekly.points, totalXp, xp general, límites y best
       const pRef = doc(db, `${cleanPath}/players`, playerId);
-      const updateData = {};
-      if (isPersonalBest) {
-        updateData[`cognitive.best.${gameId}`] = evaluatedVal;
-      }
-      // Actualizar semana
-      const currentWeekKey = getWeekKey();
-      updateData[`cognitive.weekly.weekKey`] = currentWeekKey;
+      const playerUpdates = {
+        'cognitive.weekly.weekKey': currentWeekKey,
+        'cognitive.weekly.points': increment(xpEarned),
+        'cognitive.totalXp': increment(xpEarned),
+        'xp': increment(xpEarned)
+      };
 
-      await updateDoc(pRef, updateData).catch(err => {
-        console.warn('[useCognitiveSync] Non-blocking updateDoc warning:', err);
-      });
+      if (isPersonalBest) {
+        playerUpdates[`cognitive.best.${gameId}`] = evaluatedVal;
+      }
+
+      if (limitsUpdate) {
+        playerUpdates['cognitive.limits'] = limitsUpdate;
+      }
+
+      if (sessionData.improvementPct !== undefined && sessionData.improvementPct !== null) {
+        playerUpdates['cognitive.weekly.improvement'] = Number(sessionData.improvementPct) || 0;
+      }
+
+      batch.update(pRef, playerUpdates);
+
+      // Confirmar en un solo paquete de red atómico
+      await batch.commit();
+      console.log(`[useCognitiveSync] ✅ Sesión guardada y ranking actualizado atómicamente (+${xpEarned} pts)`);
     } catch (err) {
-      console.warn('[useCognitiveSync] Fallback a cola offline por error de red:', err);
+      console.warn('[useCognitiveSync] Error en batch atómico, respaldando en cola offline:', err);
       enqueueLocally();
     }
 

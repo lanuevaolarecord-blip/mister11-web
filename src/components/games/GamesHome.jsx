@@ -25,10 +25,14 @@ export const GamesHome = ({ player, team, teamPath, isParentView = false }) => {
   const {
     limits,
     canPlay,
-    remainingSessions,
-    remainingMinutes,
-    maxSessions,
-    maxMinutes,
+    canPlayCognitive,
+    remainingCognitiveMinutes,
+    maxCognitiveMinutes,
+    canPlayChallenge,
+    remainingChallengeMinutes,
+    maxChallengeMinutes,
+    getChallengeAttempts,
+    isChallengeCompletedToday,
     registerSession
   } = useGameLimits(cleanPath, playerId);
 
@@ -65,10 +69,19 @@ export const GamesHome = ({ player, team, teamPath, isParentView = false }) => {
   // Manejar finalización de cualquier juego o reto
   const handleSessionFinished = async (sessionData, higherBetter = true) => {
     const duration = sessionData.durationSec || 60;
+    const isChallenge = Boolean(sessionData.isChallenge || sessionData.challengeId || (sessionData.gameId && sessionData.gameId.startsWith('reto_')));
+    const challengeId = sessionData.challengeId || (sessionData.gameId && sessionData.gameId.startsWith('reto_') ? sessionData.gameId.replace('reto_', '') : null);
+    const isSuccess = Boolean(sessionData.completed || sessionData.success || (sessionData.score > 0));
+
     // 1. Actualizar límites diarios anti-adicción
-    await registerSession(duration);
-    // 2. Guardar sesión y actualizar XP y mejores marcas
-    const xpRes = await saveSession(sessionData, higherBetter);
+    const updatedLimits = await registerSession(duration, {
+      isChallenge,
+      challengeId,
+      isSuccess
+    });
+
+    // 2. Guardar sesión y actualizar XP y mejores marcas atómicamente con writeBatch
+    const xpRes = await saveSession(sessionData, higherBetter, updatedLimits);
 
     // 3. Evaluar progresión adaptativa de nivel (solo para juegos competitivos con métricas)
     const code = sessionData.gameIdCode || (
@@ -95,10 +108,12 @@ export const GamesHome = ({ player, team, teamPath, isParentView = false }) => {
 
   const recommendedAssignment = assignments.length > 0 ? assignments[0] : null;
 
+  const currentCategoryCanPlay = activeCategory === 'cognitive' ? canPlayCognitive : (remainingChallengeMinutes > 0);
+
   return (
     <div className="games-container">
 
-      {/* ── BANNER ANTI-ADICCIÓN Y LÍMITES DIARIOS ── */}
+      {/* ── BANNER ANTI-ADICCIÓN Y LÍMITES DIARIOS DIFERENCIADOS ── */}
       <div className="games-limits-card">
         <div className="limits-header">
           <div className="limits-title-wrap">
@@ -108,54 +123,76 @@ export const GamesHome = ({ player, team, teamPath, isParentView = false }) => {
             </h4>
           </div>
           <span className="limits-pill">
-            {canPlay 
+            {currentCategoryCanPlay 
               ? t('games.limits.available', {}, 'Disponible') 
               : t('games.limits.completedToday', {}, 'Completado por hoy')}
           </span>
         </div>
 
         <div className="limits-stats-row">
-          {/* Sesiones hoy */}
+          {/* Juegos Cognitivos */}
           <div className="limit-stat-box">
             <span className="limit-stat-lbl">
-              {t('games.limits.sessionsLbl', {}, 'Sesiones hoy')}
+              🧠 {t('games.limits.cognitiveLbl', {}, 'Juegos Cognitivos')}
             </span>
             <span className="limit-stat-val">
-              {limits.sessionsToday} / {maxSessions}
+              {limits.cognitiveMinutesToday} / {maxCognitiveMinutes} min
             </span>
             <div className="limits-bar-bg">
               <div 
                 className="limits-bar-fill" 
-                style={{ width: `${Math.min(100, (limits.sessionsToday / maxSessions) * 100)}%` }} 
+                style={{ width: `${Math.min(100, (limits.cognitiveMinutesToday / maxCognitiveMinutes) * 100)}%` }} 
               />
             </div>
+            <span style={{ fontSize: '11px', color: '#64748B', marginTop: '3px' }}>
+              {canPlayCognitive
+                ? t('games.limits.remainingMin', { count: remainingCognitiveMinutes }, `Te quedan ${remainingCognitiveMinutes} min hoy`)
+                : t('games.limits.completed', {}, 'Completado')}
+            </span>
           </div>
 
-          {/* Minutos hoy */}
+          {/* Retos en Casa */}
           <div className="limit-stat-box">
             <span className="limit-stat-lbl">
-              {t('games.limits.minutesLbl', {}, 'Tiempo jugado')}
+              ⚽ {t('games.limits.retosLbl', {}, 'Retos en Casa')}
             </span>
             <span className="limit-stat-val">
-              {limits.minutesToday} / {maxMinutes} min
+              {limits.challengesMinutesToday} / {maxChallengeMinutes} min
             </span>
             <div className="limits-bar-bg">
               <div 
                 className="limits-bar-fill" 
-                style={{ width: `${Math.min(100, (limits.minutesToday / maxMinutes) * 100)}%` }} 
+                style={{ width: `${Math.min(100, (limits.challengesMinutesToday / maxChallengeMinutes) * 100)}%` }} 
               />
             </div>
+            <span style={{ fontSize: '11px', color: '#64748B', marginTop: '3px' }}>
+              {remainingChallengeMinutes > 0
+                ? t('games.limits.remainingMin', { count: remainingChallengeMinutes }, `Te quedan ${remainingChallengeMinutes} min hoy`)
+                : t('games.limits.completed', {}, 'Completado')}
+            </span>
           </div>
         </div>
 
-        {/* Candado Amigable si se alcanza el límite */}
-        {!canPlay && (
+        {/* Candado Amigable diferenciado por categoría */}
+        {activeCategory === 'cognitive' && !canPlayCognitive && (
           <div className="limits-locked-banner">
             <Lock size={24} color="#059669" style={{ flexShrink: 0 }} />
             <div>
-              <h4>{t('games.limits.lockedTitle', {}, '¡Bien hecho por hoy!')}</h4>
+              <h4>{t('games.limits.cognitiveLockedTitle', {}, '🧠 ¡Mente entrenada por hoy!')}</h4>
               <p>
-                {t('games.limits.lockedDesc', {}, 'Has alcanzado el límite saludable de entrenamiento diario (2 sesiones o 10 min). Vuelve mañana para seguir mejorando tu mente y coordinación.')}
+                {t('games.limits.cognitiveLockedDesc', {}, 'Has alcanzado el límite saludable de 15 minutos de juegos cognitivos. ¡A descansar la mente para consolidar lo aprendido!')}
+              </p>
+            </div>
+          </div>
+        )}
+
+        {activeCategory === 'retos' && remainingChallengeMinutes <= 0 && (
+          <div className="limits-locked-banner">
+            <Lock size={24} color="#059669" style={{ flexShrink: 0 }} />
+            <div>
+              <h4>{t('games.limits.retosLockedTitle', {}, '⚽ ¡Cuerpo y técnica trabajados!')}</h4>
+              <p>
+                {t('games.limits.retosLockedDesc', {}, 'Has alcanzado tus 20 minutos de retos en casa por hoy. ¡Gran esfuerzo físico, recupérate para el próximo entreno!')}
               </p>
             </div>
           </div>
@@ -207,7 +244,7 @@ export const GamesHome = ({ player, team, teamPath, isParentView = false }) => {
             const lvl = getGameLevel('semaforo') || 'bronce';
             const info = NIVEL_LABELS[lvl] || NIVEL_LABELS.bronce;
             return (
-              <div className={`game-card ${!canPlay ? 'disabled' : ''}`}>
+              <div className={`game-card ${!canPlayCognitive ? 'disabled' : ''}`}>
                 <div className="game-card-top">
                   <div className="game-card-icon">🚦</div>
                   <div className="game-card-meta">
@@ -230,7 +267,7 @@ export const GamesHome = ({ player, team, teamPath, isParentView = false }) => {
                   <button
                     type="button"
                     className="game-play-btn"
-                    disabled={!canPlay}
+                    disabled={!canPlayCognitive}
                     onClick={() => setActiveGameModal('g1')}
                   >
                     {t('games.btn.play', {}, 'Jugar')}
@@ -245,7 +282,7 @@ export const GamesHome = ({ player, team, teamPath, isParentView = false }) => {
             const lvl = getGameLevel('freno') || 'bronce';
             const info = NIVEL_LABELS[lvl] || NIVEL_LABELS.bronce;
             return (
-              <div className={`game-card ${!canPlay ? 'disabled' : ''}`}>
+              <div className={`game-card ${!canPlayCognitive ? 'disabled' : ''}`}>
                 <div className="game-card-top">
                   <div className="game-card-icon">🛑</div>
                   <div className="game-card-meta">
@@ -268,7 +305,7 @@ export const GamesHome = ({ player, team, teamPath, isParentView = false }) => {
                   <button
                     type="button"
                     className="game-play-btn"
-                    disabled={!canPlay}
+                    disabled={!canPlayCognitive}
                     onClick={() => setActiveGameModal('g2')}
                   >
                     {t('games.btn.play', {}, 'Jugar')}
@@ -283,7 +320,7 @@ export const GamesHome = ({ player, team, teamPath, isParentView = false }) => {
             const lvl = getGameLevel('ojo') || 'bronce';
             const info = NIVEL_LABELS[lvl] || NIVEL_LABELS.bronce;
             return (
-              <div className={`game-card ${!canPlay ? 'disabled' : ''}`}>
+              <div className={`game-card ${!canPlayCognitive ? 'disabled' : ''}`}>
                 <div className="game-card-top">
                   <div className="game-card-icon">👁️</div>
                   <div className="game-card-meta">
@@ -306,7 +343,7 @@ export const GamesHome = ({ player, team, teamPath, isParentView = false }) => {
                   <button
                     type="button"
                     className="game-play-btn"
-                    disabled={!canPlay}
+                    disabled={!canPlayCognitive}
                     onClick={() => setActiveGameModal('g3')}
                   >
                     {t('games.btn.play', {}, 'Jugar')}
@@ -321,7 +358,7 @@ export const GamesHome = ({ player, team, teamPath, isParentView = false }) => {
             const lvl = getGameLevel('memoria') || 'bronce';
             const info = NIVEL_LABELS[lvl] || NIVEL_LABELS.bronce;
             return (
-              <div className={`game-card ${!canPlay ? 'disabled' : ''}`}>
+              <div className={`game-card ${!canPlayCognitive ? 'disabled' : ''}`}>
                 <div className="game-card-top">
                   <div className="game-card-icon">🔺</div>
                   <div className="game-card-meta">
@@ -344,7 +381,7 @@ export const GamesHome = ({ player, team, teamPath, isParentView = false }) => {
                   <button
                     type="button"
                     className="game-play-btn"
-                    disabled={!canPlay}
+                    disabled={!canPlayCognitive}
                     onClick={() => setActiveGameModal('g4')}
                   >
                     {t('games.btn.play', {}, 'Jugar')}
@@ -355,7 +392,7 @@ export const GamesHome = ({ player, team, teamPath, isParentView = false }) => {
           })()}
 
           {/* G5: Respiración 4-4 (SIN NIVELES) */}
-          <div className={`game-card ${!canPlay ? 'disabled' : ''}`}>
+          <div className={`game-card ${!canPlayCognitive ? 'disabled' : ''}`}>
             <div className="game-card-top">
               <div className="game-card-icon">🌬️</div>
               <div className="game-card-meta">
@@ -373,7 +410,7 @@ export const GamesHome = ({ player, team, teamPath, isParentView = false }) => {
               <button
                 type="button"
                 className="game-play-btn"
-                disabled={!canPlay}
+                disabled={!canPlayCognitive}
                 onClick={() => setActiveGameModal('g5')}
               >
                 {t('games.btn.play', {}, 'Respirar')}
@@ -386,7 +423,7 @@ export const GamesHome = ({ player, team, teamPath, isParentView = false }) => {
             const lvl = getGameLevel('decision') || 'bronce';
             const info = NIVEL_LABELS[lvl] || NIVEL_LABELS.bronce;
             return (
-              <div className={`game-card ${!canPlay ? 'disabled' : ''}`}>
+              <div className={`game-card ${!canPlayCognitive ? 'disabled' : ''}`}>
                 <div className="game-card-top">
                   <div className="game-card-icon">⚡</div>
                   <div className="game-card-meta">
@@ -409,7 +446,7 @@ export const GamesHome = ({ player, team, teamPath, isParentView = false }) => {
                   <button
                     type="button"
                     className="game-play-btn"
-                    disabled={!canPlay}
+                    disabled={!canPlayCognitive}
                     onClick={() => setActiveGameModal('g6')}
                   >
                     {t('games.btn.play', {}, 'Jugar')}
@@ -424,7 +461,10 @@ export const GamesHome = ({ player, team, teamPath, isParentView = false }) => {
       {/* ── CATÁLOGO DE RETOS EN CASA (8) (SIN NIVELES) ── */}
       {activeCategory === 'retos' && (
         <RetosCasaCatalog
-          canPlay={canPlay}
+          canPlay={remainingChallengeMinutes > 0}
+          canPlayChallenge={canPlayChallenge}
+          getChallengeAttempts={getChallengeAttempts}
+          isChallengeCompletedToday={isChallengeCompletedToday}
           onSessionFinished={handleSessionFinished}
           assignments={assignments}
         />

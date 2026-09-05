@@ -9,8 +9,8 @@ import crypto from 'crypto';
 const APK_PATH = 'android/app/build/outputs/apk/release/mister11.apk';
 const STORAGE_PATH = 'mister11.apk';
 const BUCKET = 'mister11.firebasestorage.app';
-const NEW_VERSION = '1.1.65';
-const NEW_VERSION_CODE = 83;
+const NEW_VERSION = '1.1.66';
+const NEW_VERSION_CODE = 84;
 
 // 1. Obtener token de Firebase CLI
 const configPath = path.join(process.env.USERPROFILE, '.config', 'configstore', 'firebase-tools.json');

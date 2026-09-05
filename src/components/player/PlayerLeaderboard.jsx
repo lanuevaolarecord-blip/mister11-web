@@ -100,10 +100,12 @@ export const PlayerLeaderboard = ({
       }
 
       // D) Cálculo de Global XP con fórmula unificada
+      const cognitiveXP = Number(p?.cognitive?.totalXp) || Number(p?.totalCognitiveXp) || 0;
       const xpBreakdown = calculatePlayerGlobalXP({
         attendanceXP,
         playerMatchStats: pMatchStats,
-        achievementsXP
+        achievementsXP,
+        cognitiveXP
       });
 
       const totalXP = xpBreakdown.totalXP;

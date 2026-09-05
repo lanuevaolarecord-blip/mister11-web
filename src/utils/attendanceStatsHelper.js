@@ -484,6 +484,7 @@ export const calculatePlayerGlobalXP = ({
   attendanceXP = 0,
   playerMatchStats = null,
   achievementsXP = 0,
+  cognitiveXP = 0,
   customMatchXpWeights = {}
 }) => {
   let matchXP = 0;
@@ -510,13 +511,15 @@ export const calculatePlayerGlobalXP = ({
     matchXP = Math.max(0, minutesPoints + goalsPoints + assistsPoints + ratingBonus - cardsPenalty);
   }
 
-  const totalXP = attendanceXP + matchXP + achievementsXP;
+  const cognitivePoints = Number(cognitiveXP) || 0;
+  const totalXP = attendanceXP + matchXP + achievementsXP + cognitivePoints;
 
   return {
     totalXP,
     attendanceXP,
     matchXP,
-    achievementsXP
+    achievementsXP,
+    cognitiveXP: cognitivePoints
   };
 };
 

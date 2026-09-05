@@ -18,6 +18,7 @@ export const RetoEngine = ({ isOpen, onClose, reto, onSessionFinished }) => {
   const countRef = useRef(0);
   const timeoutsRef = useRef([]);
   const timerIntervalRef = useRef(null);
+  const startTimeRef = useRef(null);
 
   const addTimeout = (fn, delay) => {
     const id = setTimeout(fn, delay);
@@ -44,6 +45,7 @@ export const RetoEngine = ({ isOpen, onClose, reto, onSessionFinished }) => {
 
   const startReto = () => {
     clearAllTimeouts();
+    startTimeRef.current = performance.now();
     valsRef.current = [];
     setCurrentSet(0);
     setStatus('playing');
@@ -133,11 +135,15 @@ export const RetoEngine = ({ isOpen, onClose, reto, onSessionFinished }) => {
 
     const doneCount = vals.filter(v => v > 0).length;
     const allSetsDone = doneCount === reto.sets;
+    const durationSec = startTimeRef.current
+      ? Math.max(1, Math.round((performance.now() - startTimeRef.current) / 1000))
+      : 60;
 
     if (onSessionFinished) {
       const res = await onSessionFinished({
         gameId: reto.id,
         mode: 'challenge',
+        durationSec,
         score: finalVal,
         allSetsCompleted: allSetsDone,
         sets: vals.map((v, i) => ({ set: i + 1, value: v }))

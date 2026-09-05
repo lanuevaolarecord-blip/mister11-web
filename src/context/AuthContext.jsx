@@ -87,13 +87,14 @@ export const AuthProvider = ({ children }) => {
         if (isGuestRef.current) return;
         localStorage.removeItem('mister11_active_user_uid');
         setUser(null);
-        setActiveTeamId(null);
+        setActiveCoachTeamId(null);
+        setActivePlayerTeamId(null);
         setPersonalTeams([]);
-        setPersonalTeamsLoaded(false);
+        setPersonalTeamsLoaded(true);
         setClubTeams([]);
-        setClubTeamsLoaded(false);
+        setClubTeamsLoaded(true);
         setSharedTeams([]);
-        setSharedTeamsLoaded(false);
+        setSharedTeamsLoaded(true);
         setUserProfile(null);
         setClub(null);
         setLoading(false);
@@ -224,7 +225,12 @@ export const AuthProvider = ({ children }) => {
 
     // Esperar a que el club esté cargado para saber coaches/assignedTeams
     if (!club) {
-      return;
+      // Fail-safe: Si el club tarda más de 2500ms o no existe, liberar clubTeamsLoaded para no bloquear el boot
+      const clubFallbackTimer = setTimeout(() => {
+        console.warn('[AuthContext] Timeout esperando doc de club. Desbloqueando clubTeamsLoaded.');
+        setClubTeamsLoaded(true);
+      }, 2500);
+      return () => clearTimeout(clubFallbackTimer);
     }
 
     const coaches = club.coaches || [];
@@ -305,7 +311,11 @@ export const AuthProvider = ({ children }) => {
         teamPointers.map(async (pointer) => {
           try {
             const tRef = doc(db, pointer.teamPath || `teams/${pointer.id}`);
-            const tSnap = await getDoc(tRef);
+            const fetchPromise = getDoc(tRef);
+            const timeoutPromise = new Promise((_, reject) => 
+              setTimeout(() => reject(new Error('Timeout shared team')), 2500)
+            );
+            const tSnap = await Promise.race([fetchPromise, timeoutPromise]);
             if (tSnap.exists()) {
               return {
                 id: tSnap.id,
@@ -430,6 +440,26 @@ export const AuthProvider = ({ children }) => {
 
     setLoading(false);
   }, [user, personalTeamsLoaded, clubTeamsLoaded, sharedTeamsLoaded, coachTeams, playerTeams]);
+
+  // ─── WATCHDOG DE BOOT (4.5s) ────────────────────────────────────────────────
+  // Garantiza que bajo NINGUNA circunstancia (red lenta, offline, promesas colgadas)
+  // la app se quede en loading infinito. A los 4.5s fuerza la resolución de carga.
+  useEffect(() => {
+    const bootTimer = setTimeout(() => {
+      setPersonalTeamsLoaded(true);
+      setClubTeamsLoaded(true);
+      setSharedTeamsLoaded(true);
+      setLoading((currLoading) => {
+        if (currLoading) {
+          console.warn('[BOOT-WATCHDOG] ⏱️ Tiempo límite de arranque alcanzado (4.5s). Desbloqueando UI de forma segura.');
+          return false;
+        }
+        return false;
+      });
+    }, 4500);
+
+    return () => clearTimeout(bootTimer);
+  }, []);
 
   const activeCoachTeam = useMemo(() => {
     return coachTeams.find(t => t.id === activeCoachTeamId) || coachTeams[0] || null;

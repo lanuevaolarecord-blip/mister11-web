@@ -24,9 +24,12 @@ const firebaseConfig = {
   appId:             '1:954668402587:web:ccae27f1bba1396d2b833e',
 };
 
-// ─── Datos de la versión (Leída de package.json) ─────────────────────────────
+// ─── Datos de la versión (Leída de package.json y build.gradle) ──────────────
 const pkgJson = JSON.parse(readFileSync(resolve(__dirname, 'package.json'), 'utf8'));
 const APP_VERSION = pkgJson.version;
+const buildGradle = readFileSync(resolve(__dirname, 'android/app/build.gradle'), 'utf8');
+const versionCodeMatch = buildGradle.match(/versionCode\s+(\d+)/);
+const APP_VERSION_CODE = versionCodeMatch ? parseInt(versionCodeMatch[1], 10) : 85;
 const APK_LOCAL_PATH = resolve(
   __dirname,
   'android/app/build/outputs/apk/release/mister11.apk'
@@ -102,7 +105,7 @@ async function main() {
       ...currentData,
       latestApkVersion: APP_VERSION,
       appVersion:       APP_VERSION,
-      versionCode:      55,
+      versionCode:      APP_VERSION_CODE,
       apkDownloadUrl:   downloadURL,
       apkUrl:           downloadURL,
       apkUpdatedAt:     new Date().toISOString(),

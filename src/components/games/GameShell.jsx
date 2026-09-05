@@ -14,7 +14,8 @@ export const GameShell = ({
   summaryStats = [],
   children,
   safetyNote = null,
-  honestyPact = false
+  honestyPact = false,
+  headerExtra = null
 }) => {
   const { t } = useTranslation();
 
@@ -35,14 +36,17 @@ export const GameShell = ({
               </span>
             </div>
           </div>
-          <button 
-            type="button" 
-            className="game-shell-close-btn" 
-            onClick={onClose}
-            aria-label={t('common.close', {}, 'Cerrar')}
-          >
-            <X size={24} />
-          </button>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            {headerExtra}
+            <button 
+              type="button" 
+              className="game-shell-close-btn" 
+              onClick={onClose}
+              aria-label={t('common.close', {}, 'Cerrar')}
+            >
+              <X size={24} />
+            </button>
+          </div>
         </div>
 
         {/* Contenido Principal */}

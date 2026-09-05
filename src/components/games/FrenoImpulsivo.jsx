@@ -1,9 +1,27 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { GameShell } from './GameShell';
+import { GameLiveTimerChip } from './GameLiveTimerChip';
+import { useGameTimer } from '../../hooks/useGameTimer';
 import { useTranslation } from '../../hooks/useTranslation';
 
-export const FrenoImpulsivo = ({ isOpen, onClose, onSessionFinished, adaptiveParams, currentLevel }) => {
+export const FrenoImpulsivo = ({ 
+  isOpen, 
+  onClose, 
+  onSessionFinished, 
+  adaptiveParams, 
+  currentLevel,
+  recordTimeDelta = null,
+  startSession = null,
+  remainingCognitiveSeconds = 900
+}) => {
   const { t } = useTranslation();
+
+  const timer = useGameTimer({
+    category: 'cognitive',
+    initialRemainingSeconds: remainingCognitiveSeconds,
+    recordTimeDelta,
+    startSession
+  });
 
   const gameInfo = {
     id: 'g2',
@@ -77,14 +95,20 @@ export const FrenoImpulsivo = ({ isOpen, onClose, onSessionFinished, adaptivePar
           missRef.current = 0;
           crRef.current = 0;
           rtRef.current = [];
-          spawnStimulus(false);
-        } else if (currentSetRef.current < 3) {
-          currentSetRef.current += 1;
-          setCurrentSet(currentSetRef.current);
-          setStimulusIndex(1);
+          timer.startTimer();
           spawnStimulus(false);
         } else {
-          finishGame();
+          // Flush delta del set completado
+          timer.flushDelta();
+
+          if (timer.isTimeExpired || currentSetRef.current >= 3) {
+            finishGame();
+          } else {
+            currentSetRef.current += 1;
+            setCurrentSet(currentSetRef.current);
+            setStimulusIndex(1);
+            spawnStimulus(false);
+          }
         }
         return nextIdx;
       }
@@ -92,7 +116,7 @@ export const FrenoImpulsivo = ({ isOpen, onClose, onSessionFinished, adaptivePar
       spawnStimulus(practiceMode);
       return nextIdx;
     });
-  }, []);
+  }, [timer]);
 
   const spawnStimulus = (practiceMode) => {
     setFeedback({ text: t('games.g2.prepare', {}, 'Atento al cono…'), type: '' });
@@ -161,6 +185,7 @@ export const FrenoImpulsivo = ({ isOpen, onClose, onSessionFinished, adaptivePar
 
   const finishGame = async () => {
     clearAllTimeouts();
+    const elapsed = timer.stopTimer();
     const total = hitsRef.current + faRef.current + missRef.current + crRef.current;
     const acc = total ? Math.round(((hitsRef.current + crRef.current) / total) * 100) : 0;
     const avgRt = rtRef.current.length ? Math.round(rtRef.current.reduce((a, b) => a + b, 0) / rtRef.current.length) : null;
@@ -177,10 +202,11 @@ export const FrenoImpulsivo = ({ isOpen, onClose, onSessionFinished, adaptivePar
         gameId: 'g2',
         gameIdCode: 'freno',
         mode: 'cognitive',
+        durationSec: Math.max(1, elapsed),
         accuracy: acc,
         score: acc,
-        allSetsCompleted: true,
-        sets: [{ set: 1 }, { set: 2 }, { set: 3 }],
+        allSetsCompleted: currentSetRef.current >= 3,
+        sets: [{ set: 1 }, { set: 2 }, { set: 3 }].slice(0, currentSetRef.current),
         metrics: { p: acc, ff: faRef.current }
       }, true);
       setXpResult(res);
@@ -220,6 +246,7 @@ export const FrenoImpulsivo = ({ isOpen, onClose, onSessionFinished, adaptivePar
     crRef.current = 0;
     rtRef.current = [];
     setStatus('playing');
+    timer.startTimer();
     spawnStimulus(false);
   };
 
@@ -232,6 +259,15 @@ export const FrenoImpulsivo = ({ isOpen, onClose, onSessionFinished, adaptivePar
       onStartPractice={startPractice}
       onStartGame={startGameOfficial}
       xpResult={xpResult}
+      headerExtra={status === 'playing' ? (
+        <GameLiveTimerChip
+          formattedElapsed={timer.formattedElapsed}
+          formattedRemaining={timer.formattedRemaining}
+          isPaused={timer.isPaused}
+          isTimeExpired={timer.isTimeExpired}
+          category="cognitive"
+        />
+      ) : null}
       summaryStats={[
         { label: t('games.g2.statAcc', {}, 'Precisión'), value: summary.acc },
         { label: t('games.g2.statRt', {}, 'Tiempo medio'), value: summary.ms },

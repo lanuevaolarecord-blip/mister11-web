@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { GameShell } from './GameShell';
+import { GameLiveTimerChip } from './GameLiveTimerChip';
+import { useGameTimer } from '../../hooks/useGameTimer';
 import { useTranslation } from '../../hooks/useTranslation';
 
 const median = (arr) => {
@@ -9,8 +11,24 @@ const median = (arr) => {
   return s.length % 2 ? s[m] : Math.round((s[m - 1] + s[m]) / 2);
 };
 
-export const SemaforoPro = ({ isOpen, onClose, onSessionFinished, adaptiveParams, currentLevel }) => {
+export const SemaforoPro = ({ 
+  isOpen, 
+  onClose, 
+  onSessionFinished, 
+  adaptiveParams, 
+  currentLevel,
+  recordTimeDelta = null,
+  startSession = null,
+  remainingCognitiveSeconds = 900
+}) => {
   const { t } = useTranslation();
+
+  const timer = useGameTimer({
+    category: 'cognitive',
+    initialRemainingSeconds: remainingCognitiveSeconds,
+    recordTimeDelta,
+    startSession
+  });
 
   const gameInfo = {
     id: 'g1',
@@ -83,16 +101,22 @@ export const SemaforoPro = ({ isOpen, onClose, onSessionFinished, adaptiveParams
           setStimulusIndex(1);
           reactionsRef.current = [];
           falsesRef.current = 0;
-          runStimulusCycle(myTok, false);
-        } else if (currentSetRef.current < 3) {
-          // Siguiente set oficial
-          currentSetRef.current += 1;
-          setCurrentSet(currentSetRef.current);
-          setStimulusIndex(1);
+          timer.startTimer();
           runStimulusCycle(myTok, false);
         } else {
-          // Fin del juego oficial
-          finishGame();
+          // Flush delta del set terminado
+          timer.flushDelta();
+
+          if (timer.isTimeExpired || currentSetRef.current >= 3) {
+            // Fin del juego oficial (o tiempo diario agotado al completar este set)
+            finishGame();
+          } else {
+            // Siguiente set oficial
+            currentSetRef.current += 1;
+            setCurrentSet(currentSetRef.current);
+            setStimulusIndex(1);
+            runStimulusCycle(myTok, false);
+          }
         }
         return nextIdx;
       }
@@ -100,7 +124,7 @@ export const SemaforoPro = ({ isOpen, onClose, onSessionFinished, adaptiveParams
       runStimulusCycle(myTok, practiceMode);
       return nextIdx;
     });
-  }, []);
+  }, [timer]);
 
   const runStimulusCycle = (expectedTok, practiceMode) => {
     setActiveBulb('red');
@@ -136,6 +160,8 @@ export const SemaforoPro = ({ isOpen, onClose, onSessionFinished, adaptiveParams
 
   const finishGame = async () => {
     clearAllTimeouts();
+    const elapsed = timer.stopTimer();
+
     const med = median(reactionsRef.current);
     const best = reactionsRef.current.length ? Math.min(...reactionsRef.current) : null;
     const finalSummary = {
@@ -150,10 +176,11 @@ export const SemaforoPro = ({ isOpen, onClose, onSessionFinished, adaptiveParams
         gameId: 'g1',
         gameIdCode: 'semaforo',
         mode: 'cognitive',
+        durationSec: Math.max(1, elapsed),
         reactionMs: med,
         score: med,
-        allSetsCompleted: true,
-        sets: [{ set: 1 }, { set: 2 }, { set: 3 }],
+        allSetsCompleted: currentSetRef.current >= 3,
+        sets: [{ set: 1 }, { set: 2 }, { set: 3 }].slice(0, currentSetRef.current),
         metrics: { med, fs: falsesRef.current }
       }, false); // lower is better for reaction time
       setXpResult(res);
@@ -189,37 +216,39 @@ export const SemaforoPro = ({ isOpen, onClose, onSessionFinished, adaptiveParams
     reactionsRef.current = [];
     falsesRef.current = 0;
     setStatus('playing');
+    timer.startTimer();
     runStimulusCycle(tokRef.current, false);
   };
 
   const handleTap = () => {
-    if (status !== 'playing' || lockRef.current) return;
-    lockRef.current = true;
-    tokRef.current++;
+    if (lockRef.current || status !== 'playing') return;
 
-    if (activeBulb === 'green') {
-      const ms = Math.round(performance.now() - greenAtRef.current);
-      if (!isPracticeRef.current) {
-        reactionsRef.current.push(ms);
-      }
-      setLastReaction(ms);
-
-      const msg = ms < 300 
-        ? `⚡ ${ms} ms ¡Rapidísimo!` 
-        : ms < 450 
-          ? `✅ ${ms} ms ¡Bien!` 
-          : `${ms} ms`;
-      setFeedback({ text: msg, type: 'good' });
-    } else {
-      if (!isPracticeRef.current) {
-        falsesRef.current++;
-      }
-      setFeedback({ text: t('games.g1.falseStart', {}, '🚫 Salida en falso.'), type: 'bad' });
+    if (activeBulb === 'red' || activeBulb === 'amber') {
+      // Salida en falso
+      falsesRef.current++;
+      tokRef.current++;
+      lockRef.current = true;
+      setFeedback({ text: t('games.g1.falseStart', {}, '⚠️ ¡Salida en falso! Espera al verde.'), type: 'bad' });
+      addTimeout(() => {
+        nextStimulus(isPracticeRef.current);
+      }, 1000);
+      return;
     }
 
-    addTimeout(() => {
-      nextStimulus(isPracticeRef.current);
-    }, 900);
+    if (activeBulb === 'green') {
+      // Acierto: medir tiempo de reacción
+      lockRef.current = true;
+      const rt = Math.round(performance.now() - greenAtRef.current);
+      setLastReaction(rt);
+      if (!isPracticeRef.current) {
+        reactionsRef.current.push(rt);
+      }
+      setFeedback({ text: `⚡ ${rt} ms`, type: 'good' });
+
+      addTimeout(() => {
+        nextStimulus(isPracticeRef.current);
+      }, 750);
+    }
   };
 
   return (
@@ -231,6 +260,15 @@ export const SemaforoPro = ({ isOpen, onClose, onSessionFinished, adaptiveParams
       onStartPractice={startPractice}
       onStartGame={startGameOfficial}
       xpResult={xpResult}
+      headerExtra={status === 'playing' ? (
+        <GameLiveTimerChip
+          formattedElapsed={timer.formattedElapsed}
+          formattedRemaining={timer.formattedRemaining}
+          isPaused={timer.isPaused}
+          isTimeExpired={timer.isTimeExpired}
+          category="cognitive"
+        />
+      ) : null}
       summaryStats={[
         { label: t('games.g1.statMedian', {}, 'Mediana'), value: summary.median },
         { label: t('games.g1.statBest', {}, 'Mejor marca'), value: summary.best },

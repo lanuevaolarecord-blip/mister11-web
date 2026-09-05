@@ -10,7 +10,10 @@ export const RetosCasaCatalog = ({
   getChallengeAttempts,
   isChallengeCompletedToday,
   onSessionFinished,
-  assignments = []
+  assignments = [],
+  recordTimeDelta = null,
+  startSession = null,
+  remainingChallengeSeconds = 1200
 }) => {
   const { t } = useTranslation();
   const [activeReto, setActiveReto] = useState(null);
@@ -119,6 +122,9 @@ export const RetosCasaCatalog = ({
           onClose={() => setActiveReto(null)}
           reto={activeReto}
           onSessionFinished={onSessionFinished}
+          recordTimeDelta={recordTimeDelta}
+          startSession={startSession}
+          remainingChallengeSeconds={remainingChallengeSeconds}
         />
       )}
     </div>

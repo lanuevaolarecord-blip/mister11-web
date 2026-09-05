@@ -1,9 +1,25 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { GameShell } from './GameShell';
+import { GameLiveTimerChip } from './GameLiveTimerChip';
+import { useGameTimer } from '../../hooks/useGameTimer';
 import { useTranslation } from '../../hooks/useTranslation';
 
-export const Respiracion44 = ({ isOpen, onClose, onSessionFinished }) => {
+export const Respiracion44 = ({ 
+  isOpen, 
+  onClose, 
+  onSessionFinished,
+  recordTimeDelta = null,
+  startSession = null,
+  remainingCognitiveSeconds = 900
+}) => {
   const { t } = useTranslation();
+
+  const timer = useGameTimer({
+    category: 'cognitive',
+    initialRemainingSeconds: remainingCognitiveSeconds,
+    recordTimeDelta,
+    startSession
+  });
 
   const gameInfo = {
     id: 'g5',
@@ -64,7 +80,8 @@ export const Respiracion44 = ({ isOpen, onClose, onSessionFinished }) => {
           } else {
             // Siguiente ciclo
             cycleRef.current++;
-            if (cycleRef.current > 6) {
+            timer.flushDelta();
+            if (cycleRef.current > 6 || timer.isTimeExpired) {
               finishBreathing();
             } else {
               setCycle(cycleRef.current);
@@ -80,14 +97,16 @@ export const Respiracion44 = ({ isOpen, onClose, onSessionFinished }) => {
 
   const finishBreathing = async () => {
     clearAllTimeouts();
+    const elapsed = timer.stopTimer();
 
     if (onSessionFinished) {
       const res = await onSessionFinished({
         gameId: 'g5',
         mode: 'cognitive',
-        score: 6,
+        durationSec: Math.max(1, elapsed),
+        score: cycleRef.current,
         allSetsCompleted: true,
-        sets: [{ set: 1, value: 6 }]
+        sets: [{ set: 1, value: cycleRef.current }]
       }, true);
       setXpResult(res);
     }
@@ -97,6 +116,7 @@ export const Respiracion44 = ({ isOpen, onClose, onSessionFinished }) => {
 
   const startBreathing = () => {
     clearAllTimeouts();
+    timer.startTimer();
     cycleRef.current = 1;
     setCycle(1);
     setStatus('playing');
@@ -111,8 +131,17 @@ export const Respiracion44 = ({ isOpen, onClose, onSessionFinished }) => {
       status={status}
       onStartGame={startBreathing}
       xpResult={xpResult}
+      headerExtra={status === 'playing' ? (
+        <GameLiveTimerChip
+          formattedElapsed={timer.formattedElapsed}
+          formattedRemaining={timer.formattedRemaining}
+          isPaused={timer.isPaused}
+          isTimeExpired={timer.isTimeExpired}
+          category="cognitive"
+        />
+      ) : null}
       summaryStats={[
-        { label: t('games.g5.statCycles', {}, 'Ciclos'), value: '6 / 6' },
+        { label: t('games.g5.statCycles', {}, 'Ciclos'), value: `${Math.min(6, cycle)} / 6` },
         { label: t('games.g5.statTempo', {}, 'Compás'), value: '4 s / 4 s' },
         { label: t('games.g5.statBenefit', {}, 'Beneficio'), value: 'Calma' }
       ]}

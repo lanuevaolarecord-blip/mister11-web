@@ -1,11 +1,29 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { GameShell } from './GameShell';
+import { GameLiveTimerChip } from './GameLiveTimerChip';
+import { useGameTimer } from '../../hooks/useGameTimer';
 import { useTranslation } from '../../hooks/useTranslation';
 
 const OPTIONS = ['TIRO', 'PASE', 'CONDUCCIÓN'];
 
-export const DecisionSegundo = ({ isOpen, onClose, onSessionFinished, adaptiveParams, currentLevel }) => {
+export const DecisionSegundo = ({ 
+  isOpen, 
+  onClose, 
+  onSessionFinished, 
+  adaptiveParams, 
+  currentLevel,
+  recordTimeDelta = null,
+  startSession = null,
+  remainingCognitiveSeconds = 900
+}) => {
   const { t } = useTranslation();
+
+  const timer = useGameTimer({
+    category: 'cognitive',
+    initialRemainingSeconds: remainingCognitiveSeconds,
+    recordTimeDelta,
+    startSession
+  });
 
   const gameInfo = {
     id: 'g6',
@@ -76,14 +94,20 @@ export const DecisionSegundo = ({ isOpen, onClose, onSessionFinished, adaptivePa
           setStimulusIndex(1);
           okRef.current = 0;
           rtRef.current = [];
-          spawnScenario(false);
-        } else if (currentSetRef.current < 3) {
-          currentSetRef.current += 1;
-          setCurrentSet(currentSetRef.current);
-          setStimulusIndex(1);
+          timer.startTimer();
           spawnScenario(false);
         } else {
-          finishGame();
+          // Flush delta del set terminado
+          timer.flushDelta();
+
+          if (timer.isTimeExpired || currentSetRef.current >= 3) {
+            finishGame();
+          } else {
+            currentSetRef.current += 1;
+            setCurrentSet(currentSetRef.current);
+            setStimulusIndex(1);
+            spawnScenario(false);
+          }
         }
         return nextIdx;
       }
@@ -91,7 +115,7 @@ export const DecisionSegundo = ({ isOpen, onClose, onSessionFinished, adaptivePa
       spawnScenario(practiceMode);
       return nextIdx;
     });
-  }, []);
+  }, [timer]);
 
   const spawnScenario = (practiceMode) => {
     const correct = OPTIONS[Math.floor(Math.random() * 3)];
@@ -165,7 +189,8 @@ export const DecisionSegundo = ({ isOpen, onClose, onSessionFinished, adaptivePa
 
   const finishGame = async () => {
     clearAllTimeouts();
-    const acc = Math.round((okRef.current / 18) * 100);
+    const elapsed = timer.stopTimer();
+    const acc = Math.round((okRef.current / (currentSetRef.current * 6 || 18)) * 100);
     const avgRt = rtRef.current.length
       ? Math.round(rtRef.current.reduce((a, b) => a + b, 0) / rtRef.current.length)
       : null;
@@ -181,11 +206,12 @@ export const DecisionSegundo = ({ isOpen, onClose, onSessionFinished, adaptivePa
         gameId: 'g6',
         gameIdCode: 'decision',
         mode: 'cognitive',
+        durationSec: Math.max(1, elapsed),
         accuracy: acc,
         reactionMs: avgRt,
         score: acc,
-        allSetsCompleted: true,
-        sets: [{ set: 1 }, { set: 2 }, { set: 3 }],
+        allSetsCompleted: currentSetRef.current >= 3,
+        sets: [{ set: 1 }, { set: 2 }, { set: 3 }].slice(0, currentSetRef.current),
         metrics: { p: acc }
       }, true); // higher accuracy is better
       setXpResult(res);
@@ -219,6 +245,7 @@ export const DecisionSegundo = ({ isOpen, onClose, onSessionFinished, adaptivePa
     okRef.current = 0;
     rtRef.current = [];
     setStatus('playing');
+    timer.startTimer();
     spawnScenario(false);
   };
 
@@ -231,8 +258,17 @@ export const DecisionSegundo = ({ isOpen, onClose, onSessionFinished, adaptivePa
       onStartPractice={startPractice}
       onStartGame={startGameOfficial}
       xpResult={xpResult}
+      headerExtra={status === 'playing' ? (
+        <GameLiveTimerChip
+          formattedElapsed={timer.formattedElapsed}
+          formattedRemaining={timer.formattedRemaining}
+          isPaused={timer.isPaused}
+          isTimeExpired={timer.isTimeExpired}
+          category="cognitive"
+        />
+      ) : null}
       summaryStats={[
-        { label: t('games.g6.statAcc', {}, 'Aciertos'), value: `${okRef.current} / 18` },
+        { label: t('games.g6.statAcc', {}, 'Aciertos'), value: `${okRef.current} / ${currentSetRef.current * 6 || 18}` },
         { label: t('games.g6.statPct', {}, 'Precisión'), value: summary.acc },
         { label: t('games.g6.statTime', {}, 'Tiempo medio'), value: summary.ms }
       ]}

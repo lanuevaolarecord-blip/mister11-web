@@ -27,13 +27,18 @@ export const GamesHome = ({ player, team, teamPath, isParentView = false }) => {
     canPlay,
     canPlayCognitive,
     remainingCognitiveMinutes,
+    remainingCognitiveSeconds,
     maxCognitiveMinutes,
     canPlayChallenge,
     remainingChallengeMinutes,
+    remainingChallengeSeconds,
     maxChallengeMinutes,
     getChallengeAttempts,
     isChallengeCompletedToday,
-    registerSession
+    registerSession,
+    startSession,
+    recordTimeDelta,
+    formatTime
   } = useGameLimits(cleanPath, playerId);
 
   const { bestScores, saveSession } = useCognitiveSync(cleanPath, playerId);
@@ -108,7 +113,7 @@ export const GamesHome = ({ player, team, teamPath, isParentView = false }) => {
 
   const recommendedAssignment = assignments.length > 0 ? assignments[0] : null;
 
-  const currentCategoryCanPlay = activeCategory === 'cognitive' ? canPlayCognitive : (remainingChallengeMinutes > 0);
+  const currentCategoryCanPlay = activeCategory === 'cognitive' ? canPlayCognitive : (remainingChallengeSeconds > 0);
 
   return (
     <div className="games-container">
@@ -136,17 +141,17 @@ export const GamesHome = ({ player, team, teamPath, isParentView = false }) => {
               🧠 {t('games.limits.cognitiveLbl', {}, 'Juegos Cognitivos')}
             </span>
             <span className="limit-stat-val">
-              {limits.cognitiveMinutesToday} / {maxCognitiveMinutes} min
+              {formatTime(limits.secGames || 0)} / 15:00
             </span>
             <div className="limits-bar-bg">
               <div 
                 className="limits-bar-fill" 
-                style={{ width: `${Math.min(100, (limits.cognitiveMinutesToday / maxCognitiveMinutes) * 100)}%` }} 
+                style={{ width: `${Math.min(100, Math.round(((limits.secGames || 0) / 900) * 100))}%` }} 
               />
             </div>
             <span style={{ fontSize: '11px', color: '#64748B', marginTop: '3px' }}>
               {canPlayCognitive
-                ? t('games.limits.remainingMin', { count: remainingCognitiveMinutes }, `Te quedan ${remainingCognitiveMinutes} min hoy`)
+                ? t('games.limits.remainingTime', { time: formatTime(remainingCognitiveSeconds) }, `Te quedan ${formatTime(remainingCognitiveSeconds)} hoy`)
                 : t('games.limits.completed', {}, 'Completado')}
             </span>
           </div>
@@ -157,17 +162,17 @@ export const GamesHome = ({ player, team, teamPath, isParentView = false }) => {
               ⚽ {t('games.limits.retosLbl', {}, 'Retos en Casa')}
             </span>
             <span className="limit-stat-val">
-              {limits.challengesMinutesToday} / {maxChallengeMinutes} min
+              {formatTime(limits.secRetos || 0)} / 20:00
             </span>
             <div className="limits-bar-bg">
               <div 
                 className="limits-bar-fill" 
-                style={{ width: `${Math.min(100, (limits.challengesMinutesToday / maxChallengeMinutes) * 100)}%` }} 
+                style={{ width: `${Math.min(100, Math.round(((limits.secRetos || 0) / 1200) * 100))}%` }} 
               />
             </div>
             <span style={{ fontSize: '11px', color: '#64748B', marginTop: '3px' }}>
-              {remainingChallengeMinutes > 0
-                ? t('games.limits.remainingMin', { count: remainingChallengeMinutes }, `Te quedan ${remainingChallengeMinutes} min hoy`)
+              {remainingChallengeSeconds > 0
+                ? t('games.limits.remainingTime', { time: formatTime(remainingChallengeSeconds) }, `Te quedan ${formatTime(remainingChallengeSeconds)} hoy`)
                 : t('games.limits.completed', {}, 'Completado')}
             </span>
           </div>
@@ -186,7 +191,7 @@ export const GamesHome = ({ player, team, teamPath, isParentView = false }) => {
           </div>
         )}
 
-        {activeCategory === 'retos' && remainingChallengeMinutes <= 0 && (
+        {activeCategory === 'retos' && remainingChallengeSeconds <= 0 && (
           <div className="limits-locked-banner">
             <Lock size={24} color="#059669" style={{ flexShrink: 0 }} />
             <div>
@@ -461,12 +466,15 @@ export const GamesHome = ({ player, team, teamPath, isParentView = false }) => {
       {/* ── CATÁLOGO DE RETOS EN CASA (8) (SIN NIVELES) ── */}
       {activeCategory === 'retos' && (
         <RetosCasaCatalog
-          canPlay={remainingChallengeMinutes > 0}
+          canPlay={remainingChallengeSeconds > 0}
           canPlayChallenge={canPlayChallenge}
           getChallengeAttempts={getChallengeAttempts}
           isChallengeCompletedToday={isChallengeCompletedToday}
           onSessionFinished={handleSessionFinished}
           assignments={assignments}
+          recordTimeDelta={recordTimeDelta}
+          startSession={startSession}
+          remainingChallengeSeconds={remainingChallengeSeconds}
         />
       )}
 
@@ -478,6 +486,9 @@ export const GamesHome = ({ player, team, teamPath, isParentView = false }) => {
           onSessionFinished={handleSessionFinished}
           adaptiveParams={getAdjustedParams('semaforo')}
           currentLevel={getGameLevel('semaforo')}
+          recordTimeDelta={recordTimeDelta}
+          startSession={startSession}
+          remainingSeconds={remainingCognitiveSeconds}
         />
       )}
       {activeGameModal === 'g2' && (
@@ -487,6 +498,9 @@ export const GamesHome = ({ player, team, teamPath, isParentView = false }) => {
           onSessionFinished={handleSessionFinished}
           adaptiveParams={getAdjustedParams('freno')}
           currentLevel={getGameLevel('freno')}
+          recordTimeDelta={recordTimeDelta}
+          startSession={startSession}
+          remainingSeconds={remainingCognitiveSeconds}
         />
       )}
       {activeGameModal === 'g3' && (
@@ -496,6 +510,9 @@ export const GamesHome = ({ player, team, teamPath, isParentView = false }) => {
           onSessionFinished={handleSessionFinished}
           adaptiveParams={getAdjustedParams('ojo')}
           currentLevel={getGameLevel('ojo')}
+          recordTimeDelta={recordTimeDelta}
+          startSession={startSession}
+          remainingSeconds={remainingCognitiveSeconds}
         />
       )}
       {activeGameModal === 'g4' && (
@@ -505,6 +522,9 @@ export const GamesHome = ({ player, team, teamPath, isParentView = false }) => {
           onSessionFinished={handleSessionFinished}
           adaptiveParams={getAdjustedParams('memoria')}
           currentLevel={getGameLevel('memoria')}
+          recordTimeDelta={recordTimeDelta}
+          startSession={startSession}
+          remainingSeconds={remainingCognitiveSeconds}
         />
       )}
       {activeGameModal === 'g5' && (
@@ -512,6 +532,9 @@ export const GamesHome = ({ player, team, teamPath, isParentView = false }) => {
           isOpen={true}
           onClose={() => setActiveGameModal(null)}
           onSessionFinished={handleSessionFinished}
+          recordTimeDelta={recordTimeDelta}
+          startSession={startSession}
+          remainingSeconds={remainingCognitiveSeconds}
         />
       )}
       {activeGameModal === 'g6' && (
@@ -521,6 +544,9 @@ export const GamesHome = ({ player, team, teamPath, isParentView = false }) => {
           onSessionFinished={handleSessionFinished}
           adaptiveParams={getAdjustedParams('decision')}
           currentLevel={getGameLevel('decision')}
+          recordTimeDelta={recordTimeDelta}
+          startSession={startSession}
+          remainingSeconds={remainingCognitiveSeconds}
         />
       )}
 

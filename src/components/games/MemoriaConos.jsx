@@ -1,11 +1,29 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { GameShell } from './GameShell';
+import { GameLiveTimerChip } from './GameLiveTimerChip';
+import { useGameTimer } from '../../hooks/useGameTimer';
 import { useTranslation } from '../../hooks/useTranslation';
 
 const CONE_COLORS = ['blue', 'pink', 'sage'];
 
-export const MemoriaConos = ({ isOpen, onClose, onSessionFinished, adaptiveParams, currentLevel }) => {
+export const MemoriaConos = ({ 
+  isOpen, 
+  onClose, 
+  onSessionFinished, 
+  adaptiveParams, 
+  currentLevel,
+  recordTimeDelta = null,
+  startSession = null,
+  remainingCognitiveSeconds = 900
+}) => {
   const { t } = useTranslation();
+
+  const timer = useGameTimer({
+    category: 'cognitive',
+    initialRemainingSeconds: remainingCognitiveSeconds,
+    recordTimeDelta,
+    startSession
+  });
 
   const gameInfo = {
     id: 'g4',
@@ -136,16 +154,23 @@ export const MemoriaConos = ({ isOpen, onClose, onSessionFinished, adaptiveParam
     if (isPracticeRef.current) {
       isPracticeRef.current = false;
       setIsPractice(false);
+      timer.startTimer();
       playSequence(3);
-    } else if (seqRef.current.length < maxTarget) {
-      playSequence(seqRef.current.length + 1);
     } else {
-      finishGame();
+      timer.flushDelta();
+      if (timer.isTimeExpired && seqRef.current.length >= 3) {
+        finishGame();
+      } else if (seqRef.current.length < maxTarget) {
+        playSequence(seqRef.current.length + 1);
+      } else {
+        finishGame();
+      }
     }
   };
 
   const finishGame = async () => {
     clearAllTimeouts();
+    const elapsed = timer.stopTimer();
     const max = maxOkRef.current;
     const okTotal = okCountRef.current;
 
@@ -160,6 +185,7 @@ export const MemoriaConos = ({ isOpen, onClose, onSessionFinished, adaptiveParam
         gameId: 'g4',
         gameIdCode: 'memoria',
         mode: 'cognitive',
+        durationSec: Math.max(1, elapsed),
         score: max,
         allSetsCompleted: true,
         sets: [{ set: 1, value: max }],
@@ -188,6 +214,7 @@ export const MemoriaConos = ({ isOpen, onClose, onSessionFinished, adaptiveParam
     maxOkRef.current = 0;
     okCountRef.current = 0;
     setStatus('playing');
+    timer.startTimer();
     playSequence(3);
   };
 
@@ -200,6 +227,15 @@ export const MemoriaConos = ({ isOpen, onClose, onSessionFinished, adaptiveParam
       onStartPractice={startPractice}
       onStartGame={startGameOfficial}
       xpResult={xpResult}
+      headerExtra={status === 'playing' ? (
+        <GameLiveTimerChip
+          formattedElapsed={timer.formattedElapsed}
+          formattedRemaining={timer.formattedRemaining}
+          isPaused={timer.isPaused}
+          isTimeExpired={timer.isTimeExpired}
+          category="cognitive"
+        />
+      ) : null}
       summaryStats={[
         { label: t('games.g4.statMax', {}, 'Máx. secuencia'), value: summary.maxLen },
         { label: t('games.g4.statOk', {}, 'Rondas acertadas'), value: summary.okCount },

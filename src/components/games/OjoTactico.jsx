@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { GameShell } from './GameShell';
+import { GameLiveTimerChip } from './GameLiveTimerChip';
+import { useGameTimer } from '../../hooks/useGameTimer';
 import { useTranslation } from '../../hooks/useTranslation';
 
 const genField = (numRivals = 6) => {
@@ -48,8 +50,24 @@ const genField = (numRivals = 6) => {
   };
 };
 
-export const OjoTactico = ({ isOpen, onClose, onSessionFinished, adaptiveParams, currentLevel }) => {
+export const OjoTactico = ({ 
+  isOpen, 
+  onClose, 
+  onSessionFinished, 
+  adaptiveParams, 
+  currentLevel,
+  recordTimeDelta = null,
+  startSession = null,
+  remainingCognitiveSeconds = 900
+}) => {
   const { t } = useTranslation();
+
+  const timer = useGameTimer({
+    category: 'cognitive',
+    initialRemainingSeconds: remainingCognitiveSeconds,
+    recordTimeDelta,
+    startSession
+  });
 
   const gameInfo = {
     id: 'g3',
@@ -118,6 +136,7 @@ export const OjoTactico = ({ isOpen, onClose, onSessionFinished, adaptiveParams,
           setTotalRounds(5);
           hitsRef.current = 0;
           timesRef.current = [];
+          timer.startTimer();
           setupRound(1, false);
           return 1;
         } else {
@@ -126,10 +145,19 @@ export const OjoTactico = ({ isOpen, onClose, onSessionFinished, adaptiveParams,
         }
       }
 
+      // Flush delta en cada ronda
+      if (!practiceMode) {
+        timer.flushDelta();
+        if (timer.isTimeExpired && prev >= 1) {
+          finishGame();
+          return nextR;
+        }
+      }
+
       setupRound(nextR, practiceMode);
       return nextR;
     });
-  }, []);
+  }, [timer]);
 
   const setupRound = (rNum, practiceMode) => {
     const numRivals = adaptiveParams?.rivales ?? 6;
@@ -213,6 +241,7 @@ export const OjoTactico = ({ isOpen, onClose, onSessionFinished, adaptiveParams,
 
   const finishGame = async () => {
     clearAllTimeouts();
+    const elapsed = timer.stopTimer();
     const hits = hitsRef.current;
     const avgMs = timesRef.current.length 
       ? Math.round(timesRef.current.reduce((a, b) => a + b, 0) / timesRef.current.length) 
@@ -229,6 +258,7 @@ export const OjoTactico = ({ isOpen, onClose, onSessionFinished, adaptiveParams,
         gameId: 'g3',
         gameIdCode: 'ojo',
         mode: 'cognitive',
+        durationSec: Math.max(1, elapsed),
         score: hits,
         reactionMs: avgMs,
         accuracy: Math.round((hits / 5) * 100),
@@ -261,6 +291,7 @@ export const OjoTactico = ({ isOpen, onClose, onSessionFinished, adaptiveParams,
     hitsRef.current = 0;
     timesRef.current = [];
     setStatus('playing');
+    timer.startTimer();
     nextRound(false);
   };
 
@@ -273,6 +304,15 @@ export const OjoTactico = ({ isOpen, onClose, onSessionFinished, adaptiveParams,
       onStartPractice={startPractice}
       onStartGame={startGameOfficial}
       xpResult={xpResult}
+      headerExtra={status === 'playing' ? (
+        <GameLiveTimerChip
+          formattedElapsed={timer.formattedElapsed}
+          formattedRemaining={timer.formattedRemaining}
+          isPaused={timer.isPaused}
+          isTimeExpired={timer.isTimeExpired}
+          category="cognitive"
+        />
+      ) : null}
       summaryStats={[
         { label: t('games.g3.statHits', {}, 'Aciertos'), value: summary.hits },
         { label: t('games.g3.statTime', {}, 'Tiempo medio'), value: summary.time },

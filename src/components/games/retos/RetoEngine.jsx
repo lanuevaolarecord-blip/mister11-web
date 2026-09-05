@@ -1,9 +1,26 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { GameShell } from '../GameShell';
+import { GameLiveTimerChip } from '../GameLiveTimerChip';
+import { useGameTimer } from '../../../hooks/useGameTimer';
 import { useTranslation } from '../../../hooks/useTranslation';
 
-export const RetoEngine = ({ isOpen, onClose, reto, onSessionFinished }) => {
+export const RetoEngine = ({ 
+  isOpen, 
+  onClose, 
+  reto, 
+  onSessionFinished,
+  recordTimeDelta = null,
+  startSession = null,
+  remainingChallengeSeconds = 1200
+}) => {
   const { t } = useTranslation();
+
+  const timer = useGameTimer({
+    category: 'retos',
+    initialRemainingSeconds: remainingChallengeSeconds,
+    recordTimeDelta,
+    startSession
+  });
 
   const [status, setStatus] = useState('intro'); // 'intro' | 'playing' | 'finished'
   const [currentSet, setCurrentSet] = useState(0);
@@ -18,7 +35,6 @@ export const RetoEngine = ({ isOpen, onClose, reto, onSessionFinished }) => {
   const countRef = useRef(0);
   const timeoutsRef = useRef([]);
   const timerIntervalRef = useRef(null);
-  const startTimeRef = useRef(null);
 
   const addTimeout = (fn, delay) => {
     const id = setTimeout(fn, delay);
@@ -45,7 +61,7 @@ export const RetoEngine = ({ isOpen, onClose, reto, onSessionFinished }) => {
 
   const startReto = () => {
     clearAllTimeouts();
-    startTimeRef.current = performance.now();
+    timer.startTimer();
     valsRef.current = [];
     setCurrentSet(0);
     setStatus('playing');
@@ -98,6 +114,15 @@ export const RetoEngine = ({ isOpen, onClose, reto, onSessionFinished }) => {
   };
 
   const advanceSet = () => {
+    // Flush delta acumulado al terminar el set
+    timer.flushDelta();
+
+    // Si se agotó el tiempo diario, nunca cortar el set a mitad; permitir concluir positivamente
+    if (timer.isTimeExpired) {
+      finishReto();
+      return;
+    }
+
     const nextS = currentSet + 1;
     if (nextS < reto.sets) {
       setCurrentSet(nextS);
@@ -109,6 +134,8 @@ export const RetoEngine = ({ isOpen, onClose, reto, onSessionFinished }) => {
 
   const finishReto = async () => {
     clearAllTimeouts();
+    const elapsed = timer.stopTimer();
+
     const vals = valsRef.current;
     let finalVal = 0;
     let formattedVal = '';
@@ -135,9 +162,7 @@ export const RetoEngine = ({ isOpen, onClose, reto, onSessionFinished }) => {
 
     const doneCount = vals.filter(v => v > 0).length;
     const allSetsDone = doneCount === reto.sets;
-    const durationSec = startTimeRef.current
-      ? Math.max(1, Math.round((performance.now() - startTimeRef.current) / 1000))
-      : 60;
+    const durationSec = Math.max(1, elapsed);
 
     if (onSessionFinished) {
       const res = await onSessionFinished({
@@ -164,6 +189,15 @@ export const RetoEngine = ({ isOpen, onClose, reto, onSessionFinished }) => {
       xpResult={xpResult}
       safetyNote={reto.safetyNote}
       honestyPact={true}
+      headerExtra={status === 'playing' ? (
+        <GameLiveTimerChip
+          formattedElapsed={timer.formattedElapsed}
+          formattedRemaining={timer.formattedRemaining}
+          isPaused={timer.isPaused}
+          isTimeExpired={timer.isTimeExpired}
+          category="retos"
+        />
+      ) : null}
       summaryStats={[
         { label: reto.metric, value: summary.metricVal },
         { label: t('games.retos.statSets', {}, 'Sets'), value: `${currentSet + 1} / ${reto.sets}` },

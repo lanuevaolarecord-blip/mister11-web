@@ -1505,25 +1505,28 @@ export const drawPostMatchDonutsCanvas = ({
     );
 
     const safeEvents = Array.isArray(events) ? events.filter(Boolean) : [];
-    const countOf = (type) => safeEvents.filter((e) => e.type === type).length;
+    const countOf = (types) => {
+      const arr = Array.isArray(types) ? types : [types];
+      return safeEvents.filter((e) => e && arr.includes(e.type)).length;
+    };
 
-    // Métricas
-    const duelsWon = countOf('duel_won');
-    const duelsLost = countOf('duel_lost');
+    // Métricas robustas con soporte para alias
+    const duelsWon = countOf(['duel_won', 'duelo_ganado']);
+    const duelsLost = countOf(['duel_lost', 'duelo_perdido']);
     const totalDuels = duelsWon + duelsLost;
     const duelsPct = totalDuels > 0 ? Math.round((duelsWon / totalDuels) * 100) : 0;
 
-    const shotsOn = countOf('shot_on_target_own');
-    const shotsOff = countOf('shot_off_target_own');
+    const shotsOn = countOf(['shot_on_target_own', 'shot_on_target', 'tiro_puerta']);
+    const shotsOff = countOf(['shot_off_target_own', 'shot_off_target', 'tiro_fuera']);
     const totalShots = shotsOn + shotsOff;
     const shotsPct = totalShots > 0 ? Math.round((shotsOn / totalShots) * 100) : 0;
 
-    const rec = countOf('recovery');
-    const loss = countOf('loss');
+    const rec = countOf(['recovery', 'recuperacion']);
+    const loss = countOf(['loss', 'ball_loss', 'perdida']);
     const totalPoss = rec + loss;
     const possPct = totalPoss > 0 ? Math.round((rec / totalPoss) * 100) : (safeEvents.length > 0 ? 50 : 0);
 
-    const goalsOwn = countOf('gol_local') + countOf('goal_own');
+    const goalsOwn = countOf(['gol_local', 'goal_own', 'gol']);
     const finishingPct = totalShots > 0 ? Math.round((goalsOwn / totalShots) * 100) : 0;
 
     const donutsData = [
@@ -1679,33 +1682,36 @@ export const drawStatsComparisonAndHalvesCanvas = ({
     ctx.stroke();
 
     const safeEvents = Array.isArray(events) ? events.filter(Boolean) : [];
-    const countOf = (type) => safeEvents.filter((e) => e.type === type).length;
+    const countOf = (types) => {
+      const arr = Array.isArray(types) ? types : [types];
+      return safeEvents.filter((e) => e && arr.includes(e.type)).length;
+    };
 
-    // Métricas Cara a Cara
-    const shotsOnOwn = countOf('shot_on_target_own');
-    const shotsOffOwn = countOf('shot_off_target_own');
+    // Métricas Cara a Cara robustas
+    const shotsOnOwn = countOf(['shot_on_target_own', 'shot_on_target', 'tiro_puerta']);
+    const shotsOffOwn = countOf(['shot_off_target_own', 'shot_off_target', 'tiro_fuera']);
     const totalShotsOwn = shotsOnOwn + shotsOffOwn;
-    const shotsOnRival = countOf('shot_on_target_rival');
-    const shotsOffRival = countOf('shot_off_target_rival');
+    const shotsOnRival = countOf(['shot_on_target_rival', 'gol_rival', 'goal_rival']);
+    const shotsOffRival = countOf(['shot_off_target_rival']);
     const totalShotsRival = shotsOnRival + shotsOffRival;
 
-    const duelsWon = countOf('duel_won');
-    const duelsLost = countOf('duel_lost');
+    const duelsWon = countOf(['duel_won', 'duelo_ganado']);
+    const duelsLost = countOf(['duel_lost', 'duelo_perdido']);
 
-    const rec = countOf('recovery');
-    const loss = countOf('loss');
+    const rec = countOf(['recovery', 'recuperacion']);
+    const loss = countOf(['loss', 'ball_loss', 'perdida']);
     const totalPoss = rec + loss;
     const possPctOwn = totalPoss > 0 ? Math.round((rec / totalPoss) * 100) : 50;
     const possPctRival = 100 - possPctOwn;
 
-    const cornersOwn = countOf('corner_favor');
-    const cornersRival = countOf('corner_against');
+    const cornersOwn = countOf(['corner_favor', 'corner_own']);
+    const cornersRival = countOf(['corner_against', 'corner_rival']);
 
-    const foulsOwn = countOf('foul_against');
-    const foulsRival = countOf('foul_favor');
+    const foulsOwn = countOf(['foul_against', 'falta_contra', 'foul']);
+    const foulsRival = countOf(['foul_favor', 'falta_favor']);
 
-    const cardsOwn = countOf('card_yellow_own') + countOf('amarilla') + countOf('card_red_own') + countOf('roja');
-    const cardsRival = countOf('card_yellow_rival') + countOf('card_red_rival');
+    const cardsOwn = countOf(['card_yellow_own', 'amarilla', 'yellow_card', 'card_red_own', 'roja', 'red_card']);
+    const cardsRival = countOf(['card_yellow_rival', 'card_red_rival']);
 
     // ── COLUMNA IZQUIERDA: BARRAS COMPARATIVAS (Width: 320px) ──
     const col1X = 16;

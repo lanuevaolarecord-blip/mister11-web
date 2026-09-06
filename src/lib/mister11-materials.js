@@ -776,7 +776,11 @@ export async function placeMaterialOnCanvas(canvas, itemId, x, y, color) {
 
       const scale = (item.defaultSize * 0.85) / Math.max(group.width, group.height);
       group.scale(scale);
+      const isBall = itemId === 'balon' || itemId === 'balon_negro' || itemId === 'balon_movimiento' || itemId.startsWith('balon');
+      const uniqueMatId = isBall ? 'ball' : `mat_${itemId}_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
+
       group.set({
+        id: uniqueMatId,
         left: x,
         top: y,
         originX: 'center',
@@ -784,7 +788,9 @@ export async function placeMaterialOnCanvas(canvas, itemId, x, y, color) {
         hasControls: false,     // usar controles personalizados
         hasBorders: false,
         data: {
-          type: 'material',
+          id: uniqueMatId,
+          type: isBall ? 'ball' : 'material',
+          tipo: isBall ? 'balon' : 'material',
           itemId: itemId,
           color: chosenColor,
           label: item.label,

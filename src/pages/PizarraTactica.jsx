@@ -116,7 +116,9 @@ const PizarraTactica = () => {
   const futureR   = useRef([]);    // future stack (redo)
   const syncingR  = useRef(false); // prevent events during load
   const readyR    = useRef(false); // track initial load safely
-  const saveTimeoutR = useRef(null); // for debouncing saves
+  const saveTimeoutR = useRef(null); // for general debouncing
+  const saveFrameTimeoutR = useRef(null); // for debouncing frame saves to DB (separated)
+  const saveEstadoTimeoutR = useRef(null); // for debouncing canvasState to estado_actual
   const clipboardR = useRef(null); // for copy/paste
   const defaultDrawnR = useRef(false); // prevent double default-formation draw
   const lastStateRef = useRef(null);  // PERSISTENCIA: último estado serializado (siempre actualizado)
@@ -584,11 +586,11 @@ const PizarraTactica = () => {
     };
 
     if (immediate) {
-      if (saveTimeoutR.current) clearTimeout(saveTimeoutR.current);
+      if (saveFrameTimeoutR.current) clearTimeout(saveFrameTimeoutR.current);
       return await saveToDB();
     } else {
-      if (saveTimeoutR.current) clearTimeout(saveTimeoutR.current);
-      saveTimeoutR.current = setTimeout(saveToDB, 1000); // 1s debounce
+      if (saveFrameTimeoutR.current) clearTimeout(saveFrameTimeoutR.current);
+      saveFrameTimeoutR.current = setTimeout(saveToDB, 800); // 800ms debounce
     }
   }, [user, planId, activeTeamId]);
 
@@ -788,6 +790,20 @@ const PizarraTactica = () => {
   const getObjectIdentifier = useCallback((obj) => {
     if (!obj) return null;
     const d = obj.data || {};
+    
+    // Balón (material o independiente)
+    const isBall = d.type === 'ball' || 
+                   d.tipo === 'balon' || 
+                   d.itemId === 'balon' || 
+                   d.itemId === 'balon_negro' || 
+                   d.itemId === 'balon_movimiento' ||
+                   d.matType === 'balon' ||
+                   obj.id === 'ball' ||
+                   obj.id === 'balon';
+    if (isBall) {
+      return 'ball';
+    }
+
     if (d.id) return String(d.id);
     if (obj.id) return String(obj.id);
     
@@ -803,14 +819,11 @@ const PizarraTactica = () => {
       return `player_${pType}_${label ?? ''}`;
     }
     
-    // Balón
-    if (d.type === 'ball' || d.tipo === 'balon') {
-      return 'ball';
-    }
-    
     // Materiales
-    if (d.type === 'material' || d.tipo === 'material' || d.matType) {
-      return `material_${d.matType || d.tipo}_${d.materialIndex ?? ''}`;
+    if (d.type === 'material' || d.tipo === 'material' || d.matType || d.itemId) {
+      const kind = d.itemId || d.matType || d.tipo || 'mat';
+      const mIdx = d.materialIndex ?? d.id ?? obj.id ?? '';
+      return `material_${kind}_${mIdx}`;
     }
     
     return null;
@@ -1065,6 +1078,8 @@ const PizarraTactica = () => {
 
               const animatableObjs = objs.filter(o => o.type !== 'field' && o.data?.type !== 'field' && o.data?.type !== 'background');
               let completed = 0;
+              let transitionScheduled = false;
+
               animatableObjs.forEach((obj, i) => {
                 const objId = getObjectIdentifier(obj);
                 const t = (objId && targetsByKey.get(objId)) || targetListWithPos[i] || { left: obj.left, top: obj.top };
@@ -1081,9 +1096,10 @@ const PizarraTactica = () => {
                     fc.renderAll();
                   },
                   onComplete: () => {
-                    if (!playingR.current || !recordingActive) return;
+                    if (!playingR.current || !recordingActive || transitionScheduled) return;
                     completed++;
                     if (completed >= animatableObjs.length) {
+                      transitionScheduled = true;
                       try {
                         cargarFrame(stateB, () => {
                           try {
@@ -1451,8 +1467,8 @@ const PizarraTactica = () => {
     };
 
     const debouncedSaveEstado = () => {
-      if (saveTimeoutR.current) clearTimeout(saveTimeoutR.current);
-      saveTimeoutR.current = setTimeout(autoguardarEstado, 1500);
+      if (saveEstadoTimeoutR.current) clearTimeout(saveEstadoTimeoutR.current);
+      saveEstadoTimeoutR.current = setTimeout(autoguardarEstado, 1500);
     };
 
     const onChange = (opt) => {
@@ -1623,31 +1639,34 @@ const PizarraTactica = () => {
         unsubscribe = onSnapshot(q, (snap) => {
           if (playingR.current) return; // IGNORAR actualizaciones durante la reproducción/exportación
           if (!snap.empty) {
-            // FIX: filtrar frames que hemos eliminado localmente y aún no se han
-            // propagado en Firestore (evita que el onSnapshot los restaure)
-            const currentIdx = frameIdxR.current;
-            const currentLocalFrame = (framesR.current && framesR.current[currentIdx]) ? framesR.current[currentIdx] : null;
+            const localMap = new Map((framesR.current || []).map(f => [f.id, f]));
 
             const dbFrames = snap.docs
               .filter(d => !deletedFrameIdsR.current.has(d.id))
               .map(d => {
                 const data = d.data();
                 const parsedState = typeof data.state === 'string' ? JSON.parse(data.state) : data.state;
+                const localFrame = localMap.get(d.id);
                 
-                // Si este frame coincide con el frame activo local, preservar el estado local
-                if (currentLocalFrame && d.id === currentLocalFrame.id) {
+                // Si este frame existe en memoria local con estado válido, PRESERVAR estado local
+                if (localFrame && localFrame.state && localFrame.state.objects && localFrame.state.objects.length > 0) {
                   return {
                     id: d.id,
                     ...data,
-                    state: currentLocalFrame.state
+                    state: localFrame.state
                   };
                 }
                 
                 return { id: d.id, ...data, state: parsedState };
               });
-            if (dbFrames.length > 0) {
-              setFrames(dbFrames);
-              framesR.current = dbFrames;
+
+            const dbIds = new Set(snap.docs.map(d => d.id));
+            const optimisticFrames = (framesR.current || []).filter(f => !dbIds.has(f.id) && !deletedFrameIdsR.current.has(f.id));
+            const merged = [...dbFrames, ...optimisticFrames].sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+
+            if (merged.length > 0) {
+              setFrames(merged);
+              framesR.current = merged;
             }
           }
           if (!readyR.current) { readyR.current = true; setReady(true); }
@@ -1699,34 +1718,39 @@ const PizarraTactica = () => {
               if (!readyR.current) { readyR.current = true; setReady(true); }
               return;
             }
-            const currentIdx = frameIdxR.current;
-            const currentLocalFrame = (framesR.current && framesR.current[currentIdx]) ? framesR.current[currentIdx] : null;
+            const localMap = new Map((framesR.current || []).map(f => [f.id, f]));
 
             const dbFrames = snapshot.docs
               .filter(d => !deletedFrameIdsR.current.has(d.id))
               .map(d => {
                 const data = d.data();
                 const parsedState = typeof data.state === 'string' ? JSON.parse(data.state) : data.state;
+                const localFrame = localMap.get(d.id);
                 
-                // Si este frame coincide con el frame activo local, preservar el estado local
-                if (currentLocalFrame && d.id === currentLocalFrame.id) {
+                // Si este frame existe en memoria local con estado válido, PRESERVAR estado local
+                if (localFrame && localFrame.state && localFrame.state.objects && localFrame.state.objects.length > 0) {
                   return {
                     id: d.id,
                     ...data,
-                    state: currentLocalFrame.state
+                    state: localFrame.state
                   };
                 }
                 
                 return { id: d.id, ...data, state: parsedState };
               });
-            setFrames(dbFrames);
-            framesR.current = dbFrames;
+
+            const dbIds = new Set(snapshot.docs.map(d => d.id));
+            const optimisticFrames = (framesR.current || []).filter(f => !dbIds.has(f.id) && !deletedFrameIdsR.current.has(f.id));
+            const merged = [...dbFrames, ...optimisticFrames].sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+
+            setFrames(merged);
+            framesR.current = merged;
             if (!readyR.current) {
               readyR.current = true;
               setReady(true);
-              if (dbFrames.length > 0 && !defaultDrawnR.current) {
+              if (merged.length > 0 && !defaultDrawnR.current) {
                 defaultDrawnR.current = true;
-                cargarFrameConListeners(dbFrames[0].state, () => {
+                cargarFrameConListeners(merged[0].state, () => {
                   setFrameIdx(0);
                   frameIdxR.current = 0;
                 });
@@ -2032,6 +2056,8 @@ const PizarraTactica = () => {
     return () => {
       // Cancelar timers pendientes
       if (saveTimeoutR.current) clearTimeout(saveTimeoutR.current);
+      if (saveFrameTimeoutR.current) clearTimeout(saveFrameTimeoutR.current);
+      if (saveEstadoTimeoutR.current) clearTimeout(saveEstadoTimeoutR.current);
 
       // Guardado SÍNCRONO al desmontar — usar lastStateRef (no necesita serializar)
       const stateToSave = lastStateRef.current || (fcRef.current ? serializarFrame() : null);
@@ -2694,7 +2720,7 @@ const PizarraTactica = () => {
     if (!activeTeamId) return;
     
     try {
-      const nextIdx = frames.length;
+      const nextIdx = framesR.current ? framesR.current.length : frames.length;
       
       const newFrameData = {
         name: `Frame ${nextIdx + 1}`,
@@ -2888,7 +2914,17 @@ const PizarraTactica = () => {
       const stateB = parseState(fB.state);
       const dur = fB.duration || 800;
 
-      cargarFrame(stateA, () => {
+      // Al inicio de la animación completa (idx === 0), cargar frame 0 en canvas
+      // Para pasos posteriores, los objetos ya están posicionados en el estado final del paso anterior
+      const prepareFrame = (onReady) => {
+        if (idx === 0) {
+          cargarFrame(stateA, onReady);
+        } else {
+          onReady();
+        }
+      };
+
+      prepareFrame(() => {
         if (!playingR.current) return;
         const objs = fc.getObjects();
         const rawTargets = Array.isArray(stateB.objects) ? stateB.objects : [];
@@ -2939,6 +2975,8 @@ const PizarraTactica = () => {
         }
 
         let completed = 0;
+        let transitionScheduled = false;
+
         animatableObjs.forEach((obj, i) => {
           const objId = getObjectIdentifier(obj);
           const t = (objId && targetsByKey.get(objId)) || targetListWithPos[i] || { left: obj.left, top: obj.top };
@@ -2959,9 +2997,10 @@ const PizarraTactica = () => {
               fc.renderAll();
             },
             onComplete: () => {
-              if (!playingR.current) return;
+              if (!playingR.current || transitionScheduled) return;
               completed++;
               if (completed >= animatableObjs.length) {
+                transitionScheduled = true;
                 cargarFrame(stateB, () => {
                   if (!playingR.current) return;
                   fc.renderAll();

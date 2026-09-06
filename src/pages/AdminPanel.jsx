@@ -29,7 +29,8 @@ import {
   Search,
   Sparkles,
   Clipboard,
-  Shield
+  Shield,
+  Trophy
 } from 'lucide-react';
 import { generateSeasonReport, generateMatchConvocation, generateSessionPDF, generateExercisesReport } from '../utils/pdfGenerator';
 import { generateGlobalTeamReport } from '../utils/teamReportGenerator';

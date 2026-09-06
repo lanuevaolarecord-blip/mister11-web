@@ -1138,7 +1138,7 @@ const styles = {
   container: {
     width: '100%',
     maxWidth: 'none',
-    padding: '4px 6px 20px',
+    padding: '0 0 20px',
     margin: '0',
     fontFamily: 'var(--font-body, system-ui)',
     boxSizing: 'border-box',

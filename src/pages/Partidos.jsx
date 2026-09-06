@@ -1377,9 +1377,9 @@ const Partidos = () => {
 
             {/* PESTAÑA: CONVOCATORIA */}
             {editTab === 'CONVOCATORIA' && (
-              <div className="tab-pane">
+              <div className="tab-pane convocatoria-container" style={{ padding: '24px', boxSizing: 'border-box' }}>
                 <div className="conv-header">
-                  <h3>Selección de Jugadores</h3>
+                  <h3 className="section-title">Selección de Jugadores</h3>
                   <div className="conv-count">
                     {calledPlayers.filter(Boolean).length} / {players.length || 23} {isEnLanguage ? 'Called' : 'Convocados'}
                   </div>
@@ -1409,7 +1409,7 @@ const Partidos = () => {
 
             {/* PESTAÑA: ALINEACIÓN */}
             {editTab === 'ALINEACIÓN' && (
-              <div className="tab-pane alineacion-layout">
+              <div className="tab-pane alineacion-layout" style={{ padding: '24px', boxSizing: 'border-box' }}>
                 <div className="alin-sidebar">
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                     <FormationSelector
@@ -1626,7 +1626,7 @@ const Partidos = () => {
 
             {/* PESTAÑA: MATCH-DAY */}
             {editTab === 'MATCH-DAY' && (
-              <div className="tab-pane match-day-container" ref={matchDayRef}>
+              <div className="tab-pane match-day-container" ref={matchDayRef} style={{ padding: '24px', boxSizing: 'border-box' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '15px', marginBottom: '12px', flexWrap: 'wrap' }}>
                   <h3 className="section-title" style={{ margin: 0 }}>⏱️ Panel de Control - Día del Partido</h3>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
@@ -1918,19 +1918,21 @@ const Partidos = () => {
 
             {/* PESTAÑA: ACTA OFICIAL */}
             {editTab === 'ACTA' && (
-              <ActaOficialPanel
-                matchId={matchData?.id || null}
-                matchData={matchData}
-                players={players}
-                calledPlayers={calledPlayers}
-                events={effectiveLiveEvents}
-                onNavigateTab={handleTabChange}
-              />
+              <div className="tab-pane acta-container" style={{ padding: '24px', boxSizing: 'border-box' }}>
+                <ActaOficialPanel
+                  matchId={matchData?.id || null}
+                  matchData={matchData}
+                  players={players}
+                  calledPlayers={calledPlayers}
+                  events={effectiveLiveEvents}
+                  onNavigateTab={handleTabChange}
+                />
+              </div>
             )}
 
             {/* PESTAÑA: POST-PARTIDO */}
             {editTab === 'POST-PARTIDO' && (
-              <div className="tab-pane post-partido-container">
+              <div className="tab-pane post-partido-container" style={{ padding: '24px', boxSizing: 'border-box' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px', marginBottom: '16px' }}>
                   <h3 className="section-title" style={{ margin: 0 }}>📊 Informe Post-Partido y Análisis</h3>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>

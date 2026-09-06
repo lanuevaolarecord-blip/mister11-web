@@ -631,6 +631,15 @@ html.dark select option {
 /* =========================================================
    PESTAÑA: CONVOCATORIA
 ========================================================= */
+.convocatoria-container {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  padding: 24px 28px;
+  box-sizing: border-box;
+  width: 100%;
+}
+
 .conv-header {
   display: flex;
   justify-content: space-between;
@@ -720,8 +729,27 @@ html.dark select option {
   height: 100%;
   min-height: 0;
   overflow: visible;
-  padding-bottom: 24px;
+  padding: 24px 28px;
+  box-sizing: border-box;
   align-items: stretch;
+}
+
+.match-day-container,
+.post-partido-container {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding: 24px 28px;
+  box-sizing: border-box;
+  width: 100%;
+}
+
+.acta-container {
+  display: flex;
+  flex-direction: column;
+  padding: 24px 28px;
+  box-sizing: border-box;
+  width: 100%;
 }
 
 .alin-sidebar {
@@ -1764,8 +1792,8 @@ html.dark select option {
     max-height: none !important;
     overflow-y: auto !important;
     overflow-x: hidden !important;
-    gap: 8px !important;
-    padding: 8px !important;
+    gap: 12px !important;
+    padding: 16px 20px !important;
     width: 100% !important;
     box-sizing: border-box !important;
     -webkit-overflow-scrolling: touch !important;
@@ -1875,9 +1903,9 @@ html.dark select option {
     min-height: 36px !important;
   }
 
-  /* Editor sin padding extra */
+  /* Editor sin padding extra para delegar en alineacion-layout */
   .editor-content:has(.alineacion-layout) {
-    padding: 4px !important;
+    padding: 0 !important;
     overflow-y: auto !important;
     overflow-x: hidden !important;
     max-height: calc(100dvh - 220px) !important;
@@ -2728,8 +2756,7 @@ html.dark .alin-player-item span.slot-role {
   .partidos-page {
     padding: 12px 12px 24px !important;
   }
-  .partidos-list-container,
-  .post-partido-container {
+  .partidos-list-container {
     padding: 12px !important;
     box-sizing: border-box !important;
   }
@@ -2738,9 +2765,14 @@ html.dark .alin-player-item span.slot-role {
     box-sizing: border-box !important;
   }
   .editor-content {
-    padding: 18px 18px !important;
+    padding: 0 !important;
   }
-  .pre-partido-container {
+  .pre-partido-container,
+  .convocatoria-container,
+  .alineacion-layout,
+  .match-day-container,
+  .acta-container,
+  .post-partido-container {
     padding: 16px 20px !important;
     box-sizing: border-box !important;
   }

@@ -1305,8 +1305,12 @@ const LiveStats = ({
             <StatsDataTable
               playerStats={playersList.map((p) => {
                 const pid = String(p.id);
-                // Unificar eventos del jugador (LiveStats + Match events como goles, tarjetas, asistencias)
-                const poolEvents = [...(filteredEvents || []), ...(matchData?.events || [])];
+                // Consolidar todos los eventos reales del jugador (LiveStats + Match events + guardados en matchData)
+                const poolEvents = [
+                  ...(rawEvents || []), 
+                  ...(matchData?.events || []), 
+                  ...(matchData?.liveStatsEvents || [])
+                ];
                 const evsByPlayer = poolEvents.filter(e => {
                   if (!e) return false;
                   const ePid = String(e.playerId || e.jugadorId || e.fromPlayerId || '');
@@ -1314,26 +1318,90 @@ const LiveStats = ({
                 });
 
                 const countP = (t) => evsByPlayer.filter(e => e.type === t).length;
-                const pasesC = countP('pass_completed') + countP('key_pass');
-                const pasesF = countP('pass_failed');
-                const duelosG = countP('duel_won');
-                const duelosP = countP('duel_lost');
-                const recup = countP('recovery');
-                const perd = countP('ball_loss') + countP('loss') + countP('pass_failed');
-                const tirosP = countP('shot_on_target_own');
-                const tirosF = countP('shot_off_target_own');
-                const tirosTot = tirosP + tirosF;
+                const pStats = matchData?.playerStats?.[pid] || matchData?.playerStats?.[p.id] || {};
+                const actaActual = matchData?.actaOficial?.actual?.[pid];
 
-                const golesFromEvs = poolEvents.filter(e => (e.type === 'gol_local' || e.type === 'goal') && String(e.playerId || e.jugadorId) === pid).length;
+                // Goles reales: eventos + goleadoresList + acta + pStats
+                const golesFromEvs = poolEvents.filter(e => (e.type === 'gol_local' || e.type === 'goal' || e.isGoal) && (String(e.playerId) === pid || String(e.jugadorId) === pid)).length;
                 const golesFromList = (matchData?.goleadoresList || []).filter(g => String(g.jugadorId) === pid).length;
-                const goles = Math.max(golesFromEvs, golesFromList);
+                const golesFromActa = Number(actaActual?.goals || 0);
+                const golesFromPStats = Number(pStats.goals || pStats.goles || 0);
+                const goles = Math.max(golesFromEvs, golesFromList, golesFromActa, golesFromPStats);
 
-                const asistencias = poolEvents.filter(e => String(e.asistenciaId || e.assistId) === pid).length;
-                const minutos = matchData?.actaOficial?.actual?.[pid]?.minutes ?? p.minutos ?? 90;
+                // Asistencias reales
+                const astFromEvs = poolEvents.filter(e => (e.type === 'asistencia' || e.type === 'assist' || e.asistenciaId) && (String(e.asistenciaId || e.assistId || e.playerId) === pid)).length;
+                const astFromList = (matchData?.goleadoresList || []).filter(g => String(g.asistenciaId) === pid).length;
+                const astFromActa = Number(actaActual?.assists || 0);
+                const astFromPStats = Number(pStats.assists || pStats.asistencias || 0);
+                const asistencias = Math.max(astFromEvs, astFromList, astFromActa, astFromPStats);
+
+                // Tarjetas
+                const yFromEvs = poolEvents.filter(e => (e.type === 'card_yellow_own' || e.type === 'yellow_card' || e.type === 'amarilla') && (String(e.playerId) === pid || String(e.jugadorId) === pid)).length;
+                const yFromList = (matchData?.tarjetasList || []).filter(t => String(t.jugadorId) === pid && (t.tipo === 'amarilla' || t.tipo === 'yellow')).length;
+                const yFromActa = Number(actaActual?.yellowCards || 0);
+                const amarillas = Math.max(yFromEvs, yFromList, yFromActa, Number(pStats.yellowCards || 0));
+
+                const rFromEvs = poolEvents.filter(e => (e.type === 'card_red_own' || e.type === 'red_card' || e.type === 'roja') && (String(e.playerId) === pid || String(e.jugadorId) === pid)).length;
+                const rFromList = (matchData?.tarjetasList || []).filter(t => String(t.jugadorId) === pid && (t.tipo === 'roja' || t.tipo === 'red')).length;
+                const rFromActa = Number(actaActual?.redCards || 0);
+                const rojas = Math.max(rFromEvs, rFromList, rFromActa, Number(pStats.redCards || 0));
+
+                // Acciones de campo
+                const pasesC = Math.max(countP('pass_completed') + countP('key_pass'), Number(pStats.pasesExitosos || pStats.pasesC || 0));
+                const pasesF = Math.max(countP('pass_failed'), Number(pStats.pasesFallidos || pStats.pasesF || 0));
+                const duelosG = Math.max(countP('duel_won'), Number(pStats.duelosGanados || pStats.duelosG || 0));
+                const duelosP = Math.max(countP('duel_lost'), Number(pStats.duelosPerdidos || pStats.duelosP || 0));
+                const recup = Math.max(countP('recovery'), Number(pStats.recuperaciones || pStats.recup || 0));
+                const perd = Math.max(countP('ball_loss') + countP('loss'), Number(pStats.perdidas || pStats.perd || 0));
+                const tirosP = Math.max(countP('shot_on_target_own') + goles, Number(pStats.tirosPuerta || pStats.tirosP || (goles > 0 ? goles : 0)));
+                const tirosF = Math.max(countP('shot_off_target_own'), Number(pStats.tirosFuera || pStats.tirosF || 0));
+                const tirosTot = Math.max(tirosP + tirosF, Number(pStats.tiros || 0));
+                const faltas = Math.max(countP('foul_against'), Number(pStats.faltas || 0));
+                const pasesClave = Math.max(countP('key_pass'), Number(pStats.pasesClave || 0));
+
+                // Minutos jugados
+                let minutos = 0;
+                if (actaActual && actaActual.minutes !== undefined && actaActual.minutes !== null) {
+                  minutos = parseInt(actaActual.minutes, 10) || 0;
+                } else if (p.minutos !== undefined && p.minutos !== null) {
+                  minutos = parseInt(p.minutos, 10) || 0;
+                } else {
+                  const titulares = (matchData?.titulares || matchData?.alineacion?.titulares || []).map(String);
+                  const suplentes = (matchData?.suplentes || matchData?.alineacion?.suplentes || []).map(String);
+                  const isTit = titulares.includes(pid);
+                  const isSup = suplentes.includes(pid);
+                  const dur = parseInt(matchData?.duracion || matchData?.duration || 90, 10);
+                  const curMin = (currentMinute && currentMinute > 0) ? currentMinute : dur;
+
+                  if (isTit) {
+                    const subOut = poolEvents.find(e => (e.type === 'cambio' || e.type === 'substitution') && String(e.playerOutId || e.jugadorSaleId) === pid);
+                    minutos = subOut ? Math.max(1, parseInt(subOut.minute || subOut.minuto || curMin, 10)) : curMin;
+                  } else if (isSup) {
+                    const subIn = poolEvents.find(e => (e.type === 'cambio' || e.type === 'substitution') && String(e.playerInId || e.jugadorEntraId) === pid);
+                    minutos = subIn ? Math.max(0, curMin - parseInt(subIn.minute || subIn.minuto || curMin, 10)) : 0;
+                  } else {
+                    const hasEv = evsByPlayer.length > 0;
+                    minutos = hasEv ? curMin : 0;
+                  }
+                }
+
+                // Nota (Rating)
+                const manualRating = actaActual?.rating || matchData?.playerRatings?.[pid] || matchData?.ratings?.[pid] || matchData?.notas?.[pid];
+                let rating = null;
+                if (manualRating !== undefined && manualRating !== null && manualRating !== '' && !isNaN(Number(manualRating))) {
+                  rating = parseFloat(Number(manualRating).toFixed(1));
+                } else if (minutos > 0 || goles > 0 || asistencias > 0 || evsByPlayer.length > 0) {
+                  const base = 6.0;
+                  const bonus = (goles * 1.2) + (asistencias * 0.8) + (pasesClave * 0.3) + (recup * 0.15) - (perd * 0.15) + (duelosG * 0.2) - (duelosP * 0.15) + (tirosP * 0.2) - (faltas * 0.2) - (amarillas * 0.5) - (rojas * 2.0);
+                  rating = parseFloat(Math.min(10.0, Math.max(4.0, base + bonus)).toFixed(1));
+                }
+
+                const xG = parseFloat(((tirosP * 0.35) + (tirosF * 0.05) + (goles * 0.4)).toFixed(2));
 
                 return {
                   ...p,
                   minutos,
+                  rating,
                   goles,
                   asistencias,
                   tiros: tirosTot,
@@ -1344,10 +1412,11 @@ const LiveStats = ({
                   duelosPerdidos: duelosP,
                   recuperaciones: recup,
                   perdidas: perd,
-                  pasesClave: countP('key_pass'),
-                  entradas: duelosG + duelosP,
-                  faltas: countP('foul_against'),
-                  xG: parseFloat(((tirosP * 0.35) + (tirosF * 0.05) + (goles * 0.4)).toFixed(2))
+                  pasesClave,
+                  faltas,
+                  amarillas,
+                  rojas,
+                  xG
                 };
               })}
               teamName={homeTeamName}
@@ -1413,12 +1482,20 @@ const LiveStats = ({
                   const pid = p.id;
                   const counters = postMatchCounters[pid] || {};
                   const COUNTER_TYPES = [
-                    { key: 'tirosPuerta',    label: 'Tiros Puerta', color: '#4CAF7D' },
-                    { key: 'pasesClave',     label: 'Pases Clave',  color: '#D4A843' },
-                    { key: 'recuperaciones', label: 'Recuperac.',   color: '#3B82F6' },
-                    { key: 'faltas',         label: 'Faltas',       color: '#F97316' },
-                    { key: 'goles',          label: 'Goles',        color: '#10B981' },
-                    { key: 'asistencias',    label: 'Asistencias',  color: '#8B5CF6' },
+                    { key: 'goles',             label: 'Goles',        color: '#10B981' },
+                    { key: 'asistencias',       label: 'Asistencias',  color: '#8B5CF6' },
+                    { key: 'tirosPuerta',       label: 'Tiros Puerta', color: '#4CAF7D' },
+                    { key: 'tirosFuera',        label: 'Tiros Fuera',  color: '#94A3B8' },
+                    { key: 'pasesCompletados',  label: 'Pases Compl.', color: '#0D9488' },
+                    { key: 'pasesFallidos',     label: 'Pases Fall.',  color: '#EF4444' },
+                    { key: 'pasesClave',        label: 'Pases Clave',  color: '#D4A843' },
+                    { key: 'duelosGanados',     label: 'Duelos Gan.',  color: '#10B981' },
+                    { key: 'duelosPerdidos',    label: 'Duelos Perd.', color: '#F43F5E' },
+                    { key: 'recuperaciones',    label: 'Recuperac.',   color: '#3B82F6' },
+                    { key: 'perdidas',          label: 'Pérdidas',     color: '#DC2626' },
+                    { key: 'faltas',            label: 'Faltas',       color: '#F97316' },
+                    { key: 'amarillas',         label: 'Amarilla 🟨',  color: '#EAB308' },
+                    { key: 'rojas',             label: 'Roja 🟥',      color: '#EF4444' },
                   ];
                   return (
                     <div key={pid} style={{ background: 'var(--partidos-player-card-bg, rgba(255,255,255,0.05))', borderRadius: '12px', border: '1px solid var(--partidos-border, rgba(255,255,255,0.1))', padding: '12px 14px' }}>
@@ -1427,23 +1504,23 @@ const LiveStats = ({
                         {p.nombre || p.name}
                         <span style={{ color: '#94A3B8', fontSize: '11px', marginLeft: '6px' }}>{p.posicion}</span>
                       </div>
-                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px' }}>
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(110px, 1fr))', gap: '8px' }}>
                         {COUNTER_TYPES.map(ct => {
                           const val = counters[ct.key] || 0;
                           return (
-                            <div key={ct.key} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
-                              <span style={{ fontSize: '10px', fontWeight: 700, color: ct.color, textTransform: 'uppercase', letterSpacing: '0.03em' }}>{ct.label}</span>
-                              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                            <div key={ct.key} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px', background: 'rgba(0,0,0,0.15)', padding: '6px 4px', borderRadius: '8px' }}>
+                              <span style={{ fontSize: '10px', fontWeight: 700, color: ct.color, textTransform: 'uppercase', letterSpacing: '0.03em', textAlign: 'center' }}>{ct.label}</span>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
                                 <button
                                   type="button"
                                   onClick={() => setPostMatchCounters(prev => ({ ...prev, [pid]: { ...(prev[pid] || {}), [ct.key]: Math.max(0, (prev[pid]?.[ct.key] || 0) - 1) } }))}
-                                  style={{ width: '30px', height: '30px', borderRadius: '6px', border: `1px solid ${ct.color}`, background: 'transparent', color: ct.color, fontSize: '18px', fontWeight: 900, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', lineHeight: 1 }}
+                                  style={{ width: '28px', height: '28px', borderRadius: '6px', border: `1px solid ${ct.color}`, background: 'transparent', color: ct.color, fontSize: '16px', fontWeight: 900, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', lineHeight: 1 }}
                                 >−</button>
-                                <span style={{ minWidth: '24px', textAlign: 'center', fontSize: '16px', fontWeight: 900, color: 'var(--partidos-text-primary)' }}>{val}</span>
+                                <span style={{ minWidth: '22px', textAlign: 'center', fontSize: '15px', fontWeight: 900, color: 'var(--partidos-text-primary)' }}>{val}</span>
                                 <button
                                   type="button"
                                   onClick={() => setPostMatchCounters(prev => ({ ...prev, [pid]: { ...(prev[pid] || {}), [ct.key]: (prev[pid]?.[ct.key] || 0) + 1 } }))}
-                                  style={{ width: '30px', height: '30px', borderRadius: '6px', border: `1px solid ${ct.color}`, background: ct.color, color: '#FFF', fontSize: '18px', fontWeight: 900, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', lineHeight: 1 }}
+                                  style={{ width: '28px', height: '28px', borderRadius: '6px', border: `1px solid ${ct.color}`, background: ct.color, color: '#FFF', fontSize: '16px', fontWeight: 900, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', lineHeight: 1 }}
                                 >+</button>
                               </div>
                             </div>
@@ -1463,25 +1540,37 @@ const LiveStats = ({
                 <button
                   type="button"
                   onClick={async () => {
-                    // Registrar todos los contadores como eventos por jugador
+                    // Registrar todos los contadores como eventos reales por jugador
                     const TYPE_MAP = {
-                      tirosPuerta: 'shot_on_target_own',
-                      pasesClave: 'recovery',
-                      recuperaciones: 'recovery',
-                      faltas: 'foul_against',
                       goles: 'gol_local',
-                      asistencias: 'recovery',
+                      asistencias: 'asistencia',
+                      tirosPuerta: 'shot_on_target_own',
+                      tirosFuera: 'shot_off_target_own',
+                      pasesCompletados: 'pass_completed',
+                      pasesFallidos: 'pass_failed',
+                      pasesClave: 'key_pass',
+                      duelosGanados: 'duel_won',
+                      duelosPerdidos: 'duel_lost',
+                      recuperaciones: 'recovery',
+                      perdidas: 'ball_loss',
+                      faltas: 'foul_against',
+                      amarillas: 'card_yellow_own',
+                      rojas: 'card_red_own',
                     };
                     const hook = parentAddLiveEvent || liveStatsHook.addLiveEvent;
                     for (const [pid, counters] of Object.entries(postMatchCounters)) {
                       for (const [key, count] of Object.entries(counters)) {
                         if (!count || count <= 0) continue;
                         const evType = TYPE_MAP[key] || key;
+                        const extraPayload = { playerId: pid };
+                        if (key === 'asistencias') {
+                          extraPayload.asistenciaId = pid;
+                        }
                         for (let i = 0; i < count; i++) {
                           const tempId = `pm_${Date.now()}_${Math.random().toString(36).substr(2, 4)}`;
-                          setLocalEvents(prev => [...prev, { id: tempId, type: evType, playerId: pid, half: currentHalf, minute: 90, timestamp: new Date().toISOString() }]);
+                          setLocalEvents(prev => [...prev, { id: tempId, type: evType, ...extraPayload, half: currentHalf, minute: 90, timestamp: new Date().toISOString() }]);
                           if (hook) {
-                            const realId = await hook(evType, currentHalf, { playerId: pid });
+                            const realId = await hook(evType, currentHalf, extraPayload);
                             if (realId && realId !== tempId) setLocalEvents(prev => prev.filter(e => e.id !== tempId));
                           }
                         }

@@ -24,45 +24,62 @@ export const StatsDataTable = ({
 
   const processedData = useMemo(() => {
     return playerStats.map((p, idx) => {
-      const pasesC = p.pasesExitosos || 0;
-      const pasesF = p.pasesFallidos || 0;
+      const pasesC = Number(p.pasesExitosos || 0);
+      const pasesF = Number(p.pasesFallidos || 0);
       const pasesTot = pasesC + pasesF;
-      const passPct = pasesTot > 0 ? Math.round((pasesC / pasesTot) * 100) : 0;
+      const passPct = pasesTot > 0 ? Math.round((pasesC / pasesTot) * 100) : null;
 
-      const duelosG = p.duelosGanados ?? p.entradas ?? 0;
-      const duelosP = p.duelosPerdidos ?? 0;
+      const duelosG = Number(p.duelosGanados ?? p.entradas ?? 0);
+      const duelosP = Number(p.duelosPerdidos ?? 0);
       const duelosTot = duelosG + duelosP;
-      const duelPct = duelosTot > 0 ? Math.round((duelosG / duelosTot) * 100) : 0;
+      const duelPct = duelosTot > 0 ? Math.round((duelosG / duelosTot) * 100) : null;
 
-      const tirosP = p.tirosPuerta || 0;
-      const tirosTot = Math.max(tirosP, p.tiros || 0);
-      const shotPct = tirosTot > 0 ? Math.round((tirosP / tirosTot) * 100) : 0;
+      const tirosP = Number(p.tirosPuerta || 0);
+      const tirosTot = Math.max(tirosP, Number(p.tiros || 0));
+      const shotPct = tirosTot > 0 ? Math.round((tirosP / tirosTot) * 100) : null;
 
-      const recup = p.recuperaciones || 0;
-      const perd = p.perdidas || p.pasesFallidos || 0;
+      const recup = Number(p.recuperaciones || 0);
+      const perd = Number(p.perdidas || 0);
 
-      const xG = p.xG || ((tirosP * 0.25) + ((p.goles || 0) * 0.4)).toFixed(2);
+      const goles = Number(p.goles || 0);
+      const asistencias = Number(p.asistencias || 0);
+      const faltas = Number(p.faltas || 0);
+      const amarillas = Number(p.amarillas || 0);
+      const rojas = Number(p.rojas || 0);
+      const pasesClave = Number(p.pasesClave || 0);
+      const minutos = Number(p.minutos ?? 0);
+
+      const xG = p.xG !== undefined && p.xG !== null 
+        ? Number(p.xG) 
+        : parseFloat(((tirosP * 0.35) + (Math.max(0, tirosTot - tirosP) * 0.05) + (goles * 0.4)).toFixed(2));
       
-      // Cálculo de nota táctica mixta 1-10
-      const score = 6.0 + 
-        (p.goles || 0) * 1.2 + 
-        (p.asistencias || 0) * 0.8 + 
-        (p.pasesClave || 0) * 0.3 + 
-        (recup * 0.15) +
-        (duelosG * 0.2) -
-        (duelosP * 0.15) -
-        (perd * 0.15) -
-        (p.faltas || 0) * 0.2;
-      const rating = Math.min(10, Math.max(4.0, score)).toFixed(1);
+      // Cálculo de nota táctica 4.0 - 10.0 (solo si jugó o tuvo acciones)
+      let rating = null;
+      if (p.rating !== undefined && p.rating !== null && !isNaN(Number(p.rating))) {
+        rating = Number(p.rating);
+      } else if (minutos > 0 || goles > 0 || asistencias > 0 || tirosTot > 0 || pasesTot > 0 || duelosTot > 0 || recup > 0 || perd > 0 || faltas > 0 || amarillas > 0 || rojas > 0) {
+        const score = 6.0 + 
+          (goles * 1.2) + 
+          (asistencias * 0.8) + 
+          (pasesClave * 0.3) + 
+          (recup * 0.15) +
+          (duelosG * 0.2) -
+          (duelosP * 0.15) -
+          (perd * 0.15) -
+          (faltas * 0.2) -
+          (amarillas * 0.5) -
+          (rojas * 2.0);
+        rating = Number(Math.min(10.0, Math.max(4.0, score)).toFixed(1));
+      }
 
       return {
         id: p.id || `p-${idx}`,
         dorsal: p.dorsal || p.number || (idx + 1),
         nombre: p.nombre || p.name || `Jugador #${idx + 1}`,
         posicion: p.posicion || p.position || 'MED',
-        minutos: p.minutos || p.minutes || 90,
-        goles: p.goles || 0,
-        asistencias: p.asistencias || 0,
+        minutos,
+        goles,
+        asistencias,
         tiros: tirosTot,
         tirosPuerta: tirosP,
         shotPct,
@@ -76,10 +93,12 @@ export const StatsDataTable = ({
         duelPct,
         recuperaciones: recup,
         perdidas: perd,
-        pasesClave: p.pasesClave || 0,
-        faltas: p.faltas || 0,
-        xG: Number(xG),
-        rating: Number(rating)
+        pasesClave,
+        faltas,
+        amarillas,
+        rojas,
+        xG,
+        rating
       };
     });
   }, [playerStats]);
@@ -94,49 +113,53 @@ export const StatsDataTable = ({
       .sort((a, b) => {
         const valA = a[sortField];
         const valB = b[sortField];
+        if (valA === null && valB !== null) return 1;
+        if (valB === null && valA !== null) return -1;
         if (typeof valA === 'string') {
           return sortAsc ? valA.localeCompare(valB) : valB.localeCompare(valA);
         }
-        return sortAsc ? valA - valB : valB - valA;
+        return sortAsc ? (valA ?? 0) - (valB ?? 0) : (valB ?? 0) - (valA ?? 0);
       });
   }, [processedData, searchTerm, sortField, sortAsc]);
 
-  // Exportar a CSV
+  // Exportar a CSV estructurado y con compatibilidad total con Excel (BOM UTF-8 y delimitador ;)
   const handleExportCSV = async () => {
     const headers = [
-      'Dorsal', 'Nombre', 'Posición', 'Min', 'Nota', 'Goles', 'Asistencias', 'xG',
-      'Tiros Puerta', 'Tiros Totales', 'Precisión Tiros %',
-      'Pases C', 'Pases F', 'Pases Totales', '% Pase',
-      'Duelos G', 'Duelos P', 'Duelos Totales', '% Duelos',
-      'Recuperaciones', 'Pérdidas', 'Faltas'
+      'Dorsal', 'Nombre', 'Posición', 'Minutos', 'Nota', 'Goles', 'Asistencias', 'xG',
+      'Tiros Puerta', 'Tiros Totales', '% Puntería',
+      'Pases Completados', 'Pases Fallidos', 'Pases Totales', '% Precisión Pase',
+      'Duelos Ganados', 'Duelos Perdidos', 'Duelos Totales', '% Éxito Duelos',
+      'Recuperaciones', 'Pérdidas', 'Faltas', 'Tarjetas Amarillas', 'Tarjetas Rojas'
     ];
     const rows = sortedAndFiltered.map(p => [
       p.dorsal,
       `"${p.nombre}"`,
       p.posicion,
       p.minutos,
-      p.rating,
+      p.rating !== null ? p.rating : '-',
       p.goles,
       p.asistencias,
-      p.xG,
+      p.xG.toFixed(2),
       p.tirosPuerta,
       p.tiros,
-      `${p.shotPct}%`,
+      p.shotPct !== null ? `${p.shotPct}%` : '-',
       p.pasesExitosos,
       p.pasesFallidos,
       p.pasesTot,
-      `${p.passPct}%`,
+      p.passPct !== null ? `${p.passPct}%` : '-',
       p.duelosGanados,
       p.duelosPerdidos,
       p.duelosTot,
-      `${p.duelPct}%`,
+      p.duelPct !== null ? `${p.duelPct}%` : '-',
       p.recuperaciones,
       p.perdidas,
-      p.faltas
+      p.faltas,
+      p.amarillas,
+      p.rojas
     ]);
 
     const csvContent = '\uFEFF' + [headers.join(';'), ...rows.map(e => e.join(';'))].join('\n');
-    await downloadCSV(csvContent, `estadisticas_${teamName.toLowerCase().replace(/\s+/g, '_')}.csv`);
+    await downloadCSV(csvContent, `estadisticas_jugadores_${teamName.toLowerCase().replace(/\s+/g, '_')}.csv`);
   };
 
   return (
@@ -255,14 +278,34 @@ export const StatsDataTable = ({
         </div>
       )}
 
+      {/* Banner informativo de fuentes de datos */}
+      <div style={{
+        margin: '0 0 12px 0',
+        padding: '10px 14px',
+        borderRadius: '8px',
+        background: darkMode ? 'rgba(212, 168, 67, 0.1)' : '#FEF3C7',
+        border: darkMode ? '1px solid rgba(212, 168, 67, 0.3)' : '1px solid #FCD34D',
+        fontSize: '11.5px',
+        color: darkMode ? '#FBBF24' : '#92400E',
+        display: 'flex',
+        alignItems: 'center',
+        gap: '8px'
+      }}>
+        <span>💡</span>
+        <span>
+          <strong>Rendimiento Individual Verificable:</strong> Las estadísticas se consolidan automáticamente desde la <strong>Captura en Vivo</strong> (pulsando el chip del jugador activo), <strong>📋 Carga Post-Partido</strong> y el <strong>Acta Oficial</strong>. Los jugadores sin minutos ni acciones se muestran con nota pendiente (—).
+        </span>
+      </div>
+
       {/* Tabla con scroll horizontal responsivo */}
       <div className="table-responsive-wrapper" style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
-        <table className="pro-stats-table" style={{ minWidth: '780px' }}>
+        <table className="pro-stats-table" style={{ minWidth: '860px' }}>
           <thead>
             <tr>
               <th onClick={() => handleSort('dorsal')} className="sortable center">#</th>
               <th onClick={() => handleSort('nombre')} className="sortable left">Jugador</th>
               <th onClick={() => handleSort('posicion')} className="sortable center">Pos</th>
+              <th onClick={() => handleSort('minutos')} className="sortable center">Min <ArrowUpDown size={11} /></th>
               <th onClick={() => handleSort('rating')} className="sortable center highlight-col">Nota <ArrowUpDown size={12} /></th>
               <th onClick={() => handleSort('goles')} className="sortable center">GOL</th>
               <th onClick={() => handleSort('asistencias')} className="sortable center">AST</th>
@@ -272,12 +315,13 @@ export const StatsDataTable = ({
               <th onClick={() => handleSort('recuperaciones')} className="sortable center">Rec / Pérd</th>
               <th onClick={() => handleSort('tirosPuerta')} className="sortable center">Tiros P/Tot (%)</th>
               <th onClick={() => handleSort('faltas')} className="sortable center">Faltas</th>
+              <th onClick={() => handleSort('amarillas')} className="sortable center">Tarjetas</th>
             </tr>
           </thead>
           <tbody>
             {sortedAndFiltered.length === 0 ? (
               <tr>
-                <td colSpan={12} className="no-data-cell">No se encontraron estadísticas para los filtros aplicados.</td>
+                <td colSpan={14} className="no-data-cell">No se encontraron jugadores para los filtros aplicados.</td>
               </tr>
             ) : (
               sortedAndFiltered.map(p => (
@@ -287,35 +331,80 @@ export const StatsDataTable = ({
                     <strong>{p.nombre}</strong>
                   </td>
                   <td className="center"><span className="pos-badge">{p.posicion}</span></td>
+                  <td className="center font-semibold" style={{ color: p.minutos > 0 ? (darkMode ? '#FFFFFF' : '#0F172A') : (darkMode ? '#64748B' : '#94A3B8') }}>
+                    {p.minutos > 0 ? `${p.minutos}'` : '0\''}
+                  </td>
                   <td className="center">
-                    <span className={`rating-pill ${p.rating >= 8 ? 'high' : p.rating >= 6.5 ? 'mid' : 'low'}`}>
-                      {p.rating}
-                    </span>
+                    {p.rating !== null ? (
+                      <span className={`rating-pill ${p.rating >= 8 ? 'high' : p.rating >= 6.5 ? 'mid' : 'low'}`}>
+                        {p.rating}
+                      </span>
+                    ) : (
+                      <span style={{ 
+                        display: 'inline-block',
+                        padding: '2px 8px',
+                        borderRadius: '6px',
+                        fontSize: '11px',
+                        fontWeight: 700,
+                        background: darkMode ? 'rgba(255,255,255,0.06)' : '#E2E8F0',
+                        color: darkMode ? '#94A3B8' : '#64748B'
+                      }}>
+                        —
+                      </span>
+                    )}
                   </td>
                   <td className="center font-semibold">{p.goles > 0 ? `⚽ ${p.goles}` : '—'}</td>
-                  <td className="center">{p.asistencias > 0 ? `👟 ${p.asistencias}` : '—'}</td>
-                  <td className="center text-gold">{p.xG > 0 ? p.xG : '0.00'}</td>
+                  <td className="center font-semibold">{p.asistencias > 0 ? `👟 ${p.asistencias}` : '—'}</td>
+                  <td className="center text-gold">{p.xG > 0 ? p.xG.toFixed(2) : '0.00'}</td>
                   <td className="center">
-                    <span className="pass-stat-box" style={{ fontWeight: 700 }}>
-                      {p.pasesExitosos}/{p.pasesFallidos} <small style={{ opacity: 0.8 }}>({p.passPct}%)</small>
-                    </span>
+                    {p.pasesTot > 0 ? (
+                      <span className="pass-stat-box" style={{ fontWeight: 700 }}>
+                        {p.pasesExitosos}/{p.pasesFallidos} <small style={{ opacity: 0.8 }}>({p.passPct}%)</small>
+                      </span>
+                    ) : (
+                      <span style={{ color: darkMode ? '#64748B' : '#94A3B8' }}>0/0 (—)</span>
+                    )}
                   </td>
                   <td className="center">
-                    <span style={{ fontWeight: 700 }}>
-                      {p.duelosGanados}/{p.duelosPerdidos} <small style={{ opacity: 0.8 }}>({p.duelPct}%)</small>
-                    </span>
+                    {p.duelosTot > 0 ? (
+                      <span style={{ fontWeight: 700 }}>
+                        {p.duelosGanados}/{p.duelosPerdidos} <small style={{ opacity: 0.8 }}>({p.duelPct}%)</small>
+                      </span>
+                    ) : (
+                      <span style={{ color: darkMode ? '#64748B' : '#94A3B8' }}>0/0 (—)</span>
+                    )}
                   </td>
                   <td className="center">
-                    <span style={{ fontWeight: 700 }}>
-                      <span style={{ color: '#3B82F6' }}>{p.recuperaciones}</span> / <span style={{ color: '#EF4444' }}>{p.perdidas}</span>
-                    </span>
+                    {(p.recuperaciones > 0 || p.perdidas > 0) ? (
+                      <span style={{ fontWeight: 700 }}>
+                        <span style={{ color: '#3B82F6' }}>{p.recuperaciones}</span> / <span style={{ color: '#EF4444' }}>{p.perdidas}</span>
+                      </span>
+                    ) : (
+                      <span style={{ color: darkMode ? '#64748B' : '#94A3B8' }}>0 / 0</span>
+                    )}
                   </td>
                   <td className="center">
-                    <span style={{ fontWeight: 700 }}>
-                      {p.tirosPuerta}/{p.tiros} <small style={{ opacity: 0.8 }}>({p.shotPct}%)</small>
-                    </span>
+                    {p.tiros > 0 ? (
+                      <span style={{ fontWeight: 700 }}>
+                        {p.tirosPuerta}/{p.tiros} <small style={{ opacity: 0.8 }}>({p.shotPct}%)</small>
+                      </span>
+                    ) : (
+                      <span style={{ color: darkMode ? '#64748B' : '#94A3B8' }}>0/0 (—)</span>
+                    )}
                   </td>
-                  <td className="center">{p.faltas}</td>
+                  <td className="center" style={{ fontWeight: p.faltas > 0 ? 800 : 400, color: p.faltas > 0 ? (darkMode ? '#FBBF24' : '#B45309') : 'inherit' }}>
+                    {p.faltas}
+                  </td>
+                  <td className="center">
+                    {(p.amarillas > 0 || p.rojas > 0) ? (
+                      <span style={{ display: 'inline-flex', gap: '4px', alignItems: 'center' }}>
+                        {p.amarillas > 0 && <span style={{ background: '#F59E0B25', color: '#F59E0B', border: '1px solid #F59E0B50', padding: '1px 5px', borderRadius: '4px', fontSize: '10.5px', fontWeight: 800 }}>{p.amarillas} 🟨</span>}
+                        {p.rojas > 0 && <span style={{ background: '#EF444425', color: '#EF4444', border: '1px solid #EF444450', padding: '1px 5px', borderRadius: '4px', fontSize: '10.5px', fontWeight: 800 }}>{p.rojas} 🟥</span>}
+                      </span>
+                    ) : (
+                      <span style={{ color: darkMode ? '#64748B' : '#94A3B8' }}>—</span>
+                    )}
+                  </td>
                 </tr>
               ))
             )}

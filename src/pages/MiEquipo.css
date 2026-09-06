@@ -654,7 +654,8 @@
   margin-top: 40px;
 }
 
-.btn-outline-gold {
+.equipo-page .btn-outline-gold,
+.player-sidebar .btn-outline-gold {
   width: 100%;
   padding: 12px;
   background: transparent;
@@ -666,7 +667,8 @@
   transition: all 0.2s;
 }
 
-.btn-outline-gold:hover {
+.equipo-page .btn-outline-gold:hover,
+.player-sidebar .btn-outline-gold:hover {
   background: rgba(76, 175, 125, 0.1);
 }
 

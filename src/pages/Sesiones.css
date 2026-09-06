@@ -293,6 +293,24 @@
 .btn-text-error { background: transparent; border: none; color: #EF4444; font-size: 13px; font-weight: bold; padding: 10px; cursor: pointer; transition: opacity 0.2s;}
 .btn-text-error:hover { opacity: 0.8; }
 
+/* Barra de acciones superiores de Sesiones (Garantiza layout horizontal inline y previene estiramiento al 100%) */
+.sesiones-top-actions-bar {
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  flex-wrap: wrap !important;
+  gap: 8px !important;
+}
+
+.sesiones-top-actions-bar .btn-outline-gold,
+.sesiones-top-actions-bar .btn-primary-new,
+.sesiones-top-actions-bar .tab-switcher {
+  width: auto !important;
+  max-width: none !important;
+  flex: 0 0 auto !important;
+  white-space: nowrap !important;
+}
+
 /* --- EDIT MODE (EDITOR) --- */
 .editor-content {
   display: grid;

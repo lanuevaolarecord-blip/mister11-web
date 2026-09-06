@@ -1137,11 +1137,11 @@ const Sesiones = () => {
       <header className="page-header">
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', flexWrap: 'wrap', gap: '16px' }}>
           <h1 className="page-title" style={{ margin: 0 }}>{t('sesiones.title')}</h1>
-          <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
-            <button className={`tab-switcher ${activeTab === 'sessions' ? 'active' : ''}`} onClick={() => setActiveTab('sessions')}>{t('sesiones.tab.sessions')}</button>
-            <button className={`tab-switcher ${activeTab === 'captures' ? 'active' : ''}`} onClick={() => setActiveTab('captures')}>{t('sesiones.tab.captures')}</button>
-            <button className={`tab-switcher ${activeTab === 'animations' ? 'active' : ''}`} onClick={() => setActiveTab('animations')}>{t('sesiones.tab.animations')}</button>
-            <div style={{ width: '1px', height: '24px', background: 'var(--border-light)', margin: '0 8px' }} />
+          <div className="sesiones-top-actions-bar" style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
+            <button className={`tab-switcher ${activeTab === 'sessions' ? 'active' : ''}`} onClick={() => setActiveTab('sessions')} style={{ width: 'auto', flex: '0 0 auto', whiteSpace: 'nowrap' }}>{t('sesiones.tab.sessions')}</button>
+            <button className={`tab-switcher ${activeTab === 'captures' ? 'active' : ''}`} onClick={() => setActiveTab('captures')} style={{ width: 'auto', flex: '0 0 auto', whiteSpace: 'nowrap' }}>{t('sesiones.tab.captures')}</button>
+            <button className={`tab-switcher ${activeTab === 'animations' ? 'active' : ''}`} onClick={() => setActiveTab('animations')} style={{ width: 'auto', flex: '0 0 auto', whiteSpace: 'nowrap' }}>{t('sesiones.tab.animations')}</button>
+            <div style={{ width: '1px', height: '24px', background: 'var(--border-light)', margin: '0 8px', flexShrink: 0 }} />
             <button
               className="btn-outline-gold"
               onClick={() => {
@@ -1152,14 +1152,14 @@ const Sesiones = () => {
                   showToast('No hay sesiones disponibles.', 'info');
                 }
               }}
-              style={{ padding: '8px 16px', minHeight: '44px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '6px', fontWeight: 'bold' }}
+              style={{ padding: '8px 16px', minHeight: '44px', width: 'auto', flex: '0 0 auto', whiteSpace: 'nowrap', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '6px', fontWeight: 'bold' }}
             >
               ⏱️ Modo Campo
             </button>
             <button
               className="btn-outline-gold"
               onClick={() => setImportModal({ open: true, activeTab: 'link', inputVal: '', loading: false, previewSession: null, file: null, error: '' })}
-              style={{ padding: '8px 16px', minHeight: '44px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '6px', fontWeight: 'bold' }}
+              style={{ padding: '8px 16px', minHeight: '44px', width: 'auto', flex: '0 0 auto', whiteSpace: 'nowrap', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '6px', fontWeight: 'bold' }}
             >
               📥 Importar Sesión
             </button>
@@ -1167,12 +1167,12 @@ const Sesiones = () => {
               <button 
                 className="btn-outline-gold" 
                 onClick={handleExportAllSessionsICS}
-                style={{ padding: '8px 16px', minHeight: '44px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '6px', fontWeight: 'bold' }}
+                style={{ padding: '8px 16px', minHeight: '44px', width: 'auto', flex: '0 0 auto', whiteSpace: 'nowrap', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '6px', fontWeight: 'bold' }}
               >
                 {t('sesiones.exportICS')}
               </button>
             )}
-            <button className="btn-primary-new" onClick={handleCreateNew}>{t('sesiones.newSession')}</button>
+            <button className="btn-primary-new" onClick={handleCreateNew} style={{ width: 'auto', flex: '0 0 auto', whiteSpace: 'nowrap' }}>{t('sesiones.newSession')}</button>
           </div>
         </div>
 

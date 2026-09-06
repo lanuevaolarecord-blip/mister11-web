@@ -322,15 +322,28 @@ const ActaOficialPanel = ({
     try {
       const { generateMatchPdfReport } = await import('../utils/matchPdfReport');
       await generateMatchPdfReport({
-        mode: 'POST-MATCH',
+        mode: 'ACTA',
         teamName: activeTeam?.nombre || activeTeam?.name || 'Mi Equipo',
-        matchData,
+        matchData: {
+          ...matchData,
+          actaOficial: {
+            ...(matchData?.actaOficial || {}),
+            actual: sheet?.actual || matchData?.actaOficial?.actual || {},
+            closed: isClosed,
+            closedAt: sheet?.closedAt || matchData?.actaOficial?.closedAt,
+            closedBy: sheet?.closedBy || matchData?.actaOficial?.closedBy,
+            warnings: sheet?.warnings || matchData?.actaOficial?.warnings || warningsList || [],
+            totalDuration: duration
+          }
+        },
         events: effectiveEvents || [],
         players: players || [],
-        language: 'Español (ES)',
+        calledPlayers: calledPlayers || [],
+        language: isEn ? 'English (EN)' : 'Español (ES)',
       });
     } catch (e) {
       console.error('Error exportando PDF del acta:', e);
+      alert(isEn ? 'Error exporting official match sheet PDF' : 'Error al exportar el PDF del acta oficial.');
     }
   };
 

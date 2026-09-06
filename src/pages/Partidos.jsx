@@ -662,27 +662,37 @@ const Partidos = () => {
 
   const handleExportPDF = async () => {
     if (!matchData?.id) {
-      alert("Guarde el partido antes de exportar el PDF.");
+      alert(getEffectiveLanguage(settings?.language) === 'English (EN)' ? 'Please save the match before exporting the PDF.' : 'Guarde el partido antes de exportar el PDF.');
       return;
     }
     let lineupImageBase64 = null;
     try {
-      const { imageUrlToBase64, generateMatchPdfReport } = await import('../utils/matchPdfReport');
+      const { generateMatchPdfReport } = await import('../utils/matchPdfReport');
+      const { imageUrlToBase64 } = await import('../utils/pdfTheme');
+
       const pitchElem = document.getElementById('export-pitch-container') || document.querySelector('.alin-pitch-container-h3d');
       if (pitchElem) {
-        // Pre-convertir avatares y fotos de jugadores a Base64 data URLs con imageUrlToBase64
-        const images = Array.from(pitchElem.querySelectorAll('img'));
-        await Promise.all(images.map(async (img) => {
-          if (img.src && !img.src.startsWith('data:image')) {
-            const b64 = await imageUrlToBase64(img.src);
-            if (b64) img.src = b64;
-          }
-        }));
-        await new Promise((r) => setTimeout(r, 200));
+        try {
+          // Pre-convertir avatares y fotos de jugadores a Base64 data URLs con imageUrlToBase64 de forma segura
+          const images = Array.from(pitchElem.querySelectorAll('img'));
+          await Promise.all(images.map(async (img) => {
+            try {
+              if (img.src && !img.src.startsWith('data:image')) {
+                const b64 = await imageUrlToBase64(img.src);
+                if (b64) img.src = b64;
+              }
+            } catch (imgErr) {
+              console.warn('Could not convert image to base64:', imgErr);
+            }
+          }));
+          await new Promise((r) => setTimeout(r, 150));
 
-        const { default: html2canvas } = await import('html2canvas');
-        const canvas = await html2canvas(pitchElem, { scale: 2, useCORS: true, allowTaint: true, backgroundColor: '#0B1812' });
-        lineupImageBase64 = canvas.toDataURL('image/png');
+          const { default: html2canvas } = await import('html2canvas');
+          const canvas = await html2canvas(pitchElem, { scale: 2, useCORS: true, allowTaint: true, backgroundColor: '#0B1812' });
+          lineupImageBase64 = canvas.toDataURL('image/png');
+        } catch (pitchErr) {
+          console.warn('Could not capture tactical pitch for PDF:', pitchErr);
+        }
       }
 
       await generateMatchPdfReport({
@@ -691,11 +701,13 @@ const Partidos = () => {
         matchData,
         events: effectiveLiveEvents || [],
         players: players || [],
+        calledPlayers: calledPlayers || [],
         lineupImage: lineupImageBase64,
         language: getEffectiveLanguage(settings?.language),
       });
     } catch (e) {
       console.error("Error al exportar el PDF del partido:", e);
+      alert(getEffectiveLanguage(settings?.language) === 'English (EN)' ? 'Error generating PDF report.' : 'Error al generar el informe PDF del partido.');
     }
   };
 

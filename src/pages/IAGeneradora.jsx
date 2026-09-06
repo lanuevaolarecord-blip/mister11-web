@@ -4,34 +4,60 @@ import { useExercises } from '../hooks/useExercises';
 import { useAuth } from '../context/AuthContext';
 import { usePlan } from '../hooks/usePlan';
 import { useIAUsage } from '../hooks/useIAUsage';
+import { useTranslation } from '../hooks/useTranslation';
 import UpgradeModal from '../components/UpgradeModal';
 import { useCaptures } from '../hooks/useCaptures';
 import { Capacitor } from '@capacitor/core';
 import { generateExercisePDF } from '../utils/pdfGenerator';
 import './IAGeneradora.css';
 
-// --- OPCIONES DE FORMULARIO ---
+// --- OPCIONES DE FORMULARIO INTERNACIONALIZADAS ---
 const OBJETIVOS = [
-  'Resistencia aeróbica', 'Velocidad', 'Agilidad y coordinación', 'Fuerza y potencia',
-  'Posesión de balón', 'Presión y pressing', 'Transición ataque-defensa', 'Transición defensa-ataque',
-  'Juego de posición', 'Finalización y remate', 'Centros y llegadas', 'Calentamiento',
-  'Vuelta a la calma'
+  { id: 'aerobic', key: 'ia.obj.aerobic' },
+  { id: 'speed', key: 'ia.obj.speed' },
+  { id: 'agility', key: 'ia.obj.agility' },
+  { id: 'strength', key: 'ia.obj.strength' },
+  { id: 'possession', key: 'ia.obj.possession' },
+  { id: 'pressing', key: 'ia.obj.pressing' },
+  { id: 'transAttDef', key: 'ia.obj.transAttDef' },
+  { id: 'transDefAtt', key: 'ia.obj.transDefAtt' },
+  { id: 'positional', key: 'ia.obj.positional' },
+  { id: 'finishing', key: 'ia.obj.finishing' },
+  { id: 'crossing', key: 'ia.obj.crossing' },
+  { id: 'warmup', key: 'ia.obj.warmup' },
+  { id: 'cooldown', key: 'ia.obj.cooldown' }
 ];
 
 const MATERIALES = [
-  { id: 'balones', label: 'Balones', icon: '⚽' },
-  { id: 'conos', label: 'Conos', icon: '🔺' },
-  { id: 'petos', label: 'Petos', icon: '🦺' },
-  { id: 'porterias', label: 'Porterías', icon: '🥅' },
-  { id: 'escalera', label: 'Escalera', icon: '🪜' },
-  { id: 'vallas', label: 'Vallas', icon: '🚧' },
-  { id: 'aros', label: 'Aros', icon: '⭕' },
+  { id: 'balones', key: 'ia.mat.balls', icon: '⚽' },
+  { id: 'conos', key: 'ia.mat.cones', icon: '🔺' },
+  { id: 'petos', key: 'ia.mat.bibs', icon: '🦺' },
+  { id: 'porterias', key: 'ia.mat.goals', icon: '🥅' },
+  { id: 'escalera', key: 'ia.mat.ladder', icon: '🪜' },
+  { id: 'vallas', key: 'ia.mat.hurdles', icon: '🚧' },
+  { id: 'aros', key: 'ia.mat.rings', icon: '⭕' },
 ];
 
-const ESPACIOS = ['Área penal', 'Medio campo', '3/4 campo', 'Campo completo', 'Espacio reducido', 'Sala / Gimnasio'];
+const ESPACIOS = [
+  { id: 'box', key: 'ia.space.box' },
+  { id: 'half', key: 'ia.space.half' },
+  { id: 'threeQuarter', key: 'ia.space.threeQuarter' },
+  { id: 'full', key: 'ia.space.full' },
+  { id: 'small', key: 'ia.space.small' },
+  { id: 'gym', key: 'ia.space.gym' }
+];
+
 const DURACIONES = [5, 10, 15, 20, 25, 30];
-const INTENSIDADES = ['Baja', 'Media', 'Alta', 'Máxima'];
-const EDADES = ['Fútbol base (6-10 años)', 'Prebenjamín / Benjamín (8-10)', 'Alevín (10-12)', 'Infantil (12-14)', 'Cadete (14-16)', 'Juvenil (16-18)', 'Amateur'];
+
+const EDADES = [
+  { id: 'base', key: 'ia.age.base' },
+  { id: 'prebenjamin', key: 'ia.age.prebenjamin' },
+  { id: 'alevin', key: 'ia.age.alevin' },
+  { id: 'infantil', key: 'ia.age.infantil' },
+  { id: 'cadete', key: 'ia.age.cadete' },
+  { id: 'juvenil', key: 'ia.age.juvenil' },
+  { id: 'amateur', key: 'ia.age.amateur' }
+];
 
 const INITIAL_FORM = {
   edad: '',
@@ -48,12 +74,27 @@ const INITIAL_PREVENTION_FORM = {
   descripcion: '',
   tipo: 'Prevención',
   zona: '',
-  nivel: 'Intermedio',
+  nivel: 'intermediate',
   materiales: [],
 };
 
-const ZONAS_CORPORALES = ['Rodilla', 'Tobillo', 'Isquiotibial', 'Lumbar', 'Hombro', 'Cuádriceps', 'Aductores', 'Core / Pelvis', 'Gemelos'];
-const NIVELES = ['Básico', 'Intermedio', 'Avanzado'];
+const ZONAS_CORPORALES = [
+  { id: 'knee', key: 'ia.zone.knee' },
+  { id: 'ankle', key: 'ia.zone.ankle' },
+  { id: 'hamstring', key: 'ia.zone.hamstring' },
+  { id: 'lumbar', key: 'ia.zone.lumbar' },
+  { id: 'shoulder', key: 'ia.zone.shoulder' },
+  { id: 'quadriceps', key: 'ia.zone.quadriceps' },
+  { id: 'adductors', key: 'ia.zone.adductors' },
+  { id: 'core', key: 'ia.zone.core' },
+  { id: 'calves', key: 'ia.zone.calves' }
+];
+
+const NIVELES = [
+  { id: 'basic', key: 'ia.level.basic' },
+  { id: 'intermediate', key: 'ia.level.intermediate' },
+  { id: 'advanced', key: 'ia.level.advanced' }
+];
 
 const escapeHTML = (str) => {
   if (!str) return '';
@@ -65,8 +106,8 @@ const escapeHTML = (str) => {
     .replace(/'/g, "&#039;");
 };
 
-export const extractExerciseTitle = (text) => {
-  if (!text || typeof text !== 'string') return `Ejercicio IA ${new Date().toLocaleTimeString()}`;
+export const extractExerciseTitle = (text, fallback = null) => {
+  if (!text || typeof text !== 'string') return fallback || `Ejercicio IA ${new Date().toLocaleTimeString()}`;
   // 1. Limpiar etiquetas de razonamiento interno <think>...</think> o etiquetas HTML/XML
   const sanitized = text
     .replace(/<think>[\s\S]*?<\/think>/gi, '')
@@ -89,7 +130,7 @@ export const extractExerciseTitle = (text) => {
 
   // 3. Buscar etiquetas tipo "Título:", "**Título:**", "**Nombre:**"
   for (const line of lines) {
-    const match = line.match(/^(?:\*\*)?(?:título|titulo|nombre|ejercicio)(?:\*\*)?:\s*(.+)/i);
+    const match = line.match(/^(?:\*\*)?(?:título|titulo|title|drill\s+name|nombre|ejercicio)(?:\*\*)?:\s*(.+)/i);
     if (match && match[1]) {
       const t = match[1].replace(/\*\*/g, '').trim();
       if (t.length > 2) return t.slice(0, 80);
@@ -99,12 +140,12 @@ export const extractExerciseTitle = (text) => {
   // 4. Si no hay encabezados, tomar la primera línea informativa válida
   for (const line of lines) {
     const cleanLine = line.replace(/^[-*#\d.]+\s*/, '').replace(/\*\*/g, '').trim();
-    if (cleanLine.length > 2 && !cleanLine.toLowerCase().startsWith('objetivo')) {
+    if (cleanLine.length > 2 && !cleanLine.toLowerCase().startsWith('objetivo') && !cleanLine.toLowerCase().startsWith('objective')) {
       return cleanLine.slice(0, 80);
     }
   }
 
-  return `Ejercicio IA ${new Date().toLocaleTimeString()}`;
+  return fallback || `Ejercicio IA ${new Date().toLocaleTimeString()}`;
 };
 
 const renderMarkdown = (text) => {
@@ -130,8 +171,8 @@ const renderMarkdown = (text) => {
   });
 };
 
-
 const IAGeneradora = () => {
+  const { t, isEn, language } = useTranslation();
   const { activeTeamId, teams } = useAuth();
   const activeTeam = teams.find(t => t.id === activeTeamId) || null;
   const { isPro, isProActive } = usePlan();
@@ -151,6 +192,7 @@ const IAGeneradora = () => {
   const isCallingRef = useRef(false);
   const [isListening, setIsListening] = useState(false);
   const recognitionRef = useRef(null);
+  const resultRef = useRef(null);
 
   // Hook de uso mensual de IA
   const {
@@ -163,7 +205,6 @@ const IAGeneradora = () => {
   } = useIAUsage();
 
   // ── callGroq: delega al proxy del servidor /api/ia-generate ─────────────────
-  // La clave de Groq NUNCA llega al cliente — vive en las env vars de Vercel.
   const callGroq = async (promptTexto) => {
     try {
       const endpoint = Capacitor.isNativePlatform()
@@ -173,7 +214,10 @@ const IAGeneradora = () => {
       const response = await fetch(endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prompt: promptTexto }),
+        body: JSON.stringify({
+          prompt: promptTexto,
+          lang: isEn ? 'en' : 'es'
+        }),
       });
 
       if (!response.ok) {
@@ -183,7 +227,7 @@ const IAGeneradora = () => {
 
       const data = await response.json();
       const text = data?.result;
-      if (!text) throw new Error('Respuesta vacía de la IA');
+      if (!text) throw new Error(t('ia.emptyResponse'));
       return text;
     } catch (err) {
       console.error('[IA Generadora] Error en proxy:', err);
@@ -203,7 +247,7 @@ const IAGeneradora = () => {
   const handleVoiceDictation = () => {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (!SpeechRecognition) {
-      alert('Tu navegador no soporta el dictado por voz. Usa Chrome en Android para esta función.');
+      alert(t('ia.dictationNotSupported'));
       return;
     }
     if (isListening) {
@@ -212,7 +256,7 @@ const IAGeneradora = () => {
       return;
     }
     const recog = new SpeechRecognition();
-    recog.lang = 'es-ES';
+    recog.lang = isEn ? 'en-US' : 'es-ES';
     recog.continuous = false;
     recog.interimResults = false;
     recog.onresult = (event) => {
@@ -233,55 +277,137 @@ const IAGeneradora = () => {
     // 1. Verificar si el usuario ha alcanzado su límite mensual de uso
     const hasUsage = await checkUsage();
     if (!hasUsage) {
-      alert(`Has alcanzado el límite de ${limit} generaciones de IA este mes. El límite se reinicia el próximo mes.`);
+      alert(t('ia.limitReached', { limit }));
       return;
     }
 
     if (mode === 'tactico') {
       if (!form.edad || !form.objetivo || !form.espacio) {
-        setError('Por favor completa: Edad, Objetivo y Espacio.');
+        setError(t('ia.validationTactical'));
         return;
       }
     } else {
       if (!preventionForm.descripcion || !preventionForm.zona) {
-        setError('Por favor describe el caso y selecciona una zona corporal.');
+        setError(t('ia.validationPrevention'));
         return;
       }
     }
 
     isCallingRef.current = true;
     setIsGenerating(true);
-    setLoadingMsg('⏳ Analizando contexto...');
+    setLoadingMsg(t('ia.loadingAnalyzing'));
     setError('');
     setResult(null);
 
     let prompt = '';
     
     if (mode === 'tactico') {
-      const materialesStr = form.materiales.length > 0
-        ? MATERIALES.filter(m => form.materiales.includes(m.id)).map(m => m.label).join(', ')
-        : 'Sin material específico';
+      const edadObj = EDADES.find(e => e.id === form.edad);
+      const edadLabel = edadObj ? t(edadObj.key) : form.edad;
 
-      prompt = `Genera UN ejercicio de entrenamiento de fútbol en español:
-      Edad: ${form.edad}, Jugadores: ${form.jugadores}, Objetivo: ${form.objetivo}, Duración: ${form.duracion} min, Material: ${materialesStr}, Espacio: ${form.espacio}, Intensidad: ${form.intensidad}.
-      ${selectedTacticalRef ? `IMPORTANTE: Basar el ejercicio en la REFERENCIA TÁCTICA: "${selectedTacticalRef.title}".` : ''}
-      ${form.observaciones ? `Observaciones: ${form.observaciones}` : ''}
-      Usa el formato markdown con ## para el título.
-      Explica la dinámica del ejercicio basándote en la referencia táctica si se ha proporcionado.`;
+      const objItem = OBJETIVOS.find(o => o.id === form.objetivo);
+      const objLabel = objItem ? t(objItem.key) : form.objetivo;
+
+      const espacioItem = ESPACIOS.find(s => s.id === form.espacio);
+      const espacioLabel = espacioItem ? t(espacioItem.key) : form.espacio;
+
+      const materialesLabels = form.materiales.map(id => {
+        const mat = MATERIALES.find(m => m.id === id);
+        return mat ? t(mat.key) : id;
+      });
+      const materialesStr = materialesLabels.length > 0
+        ? materialesLabels.join(', ')
+        : (isEn ? 'No specific equipment' : 'Sin material específico');
+
+      if (isEn) {
+        prompt = `Generate ONE football training drill in English:
+Age Category: ${edadLabel}, Number of Players: ${form.jugadores}, Main Objective: ${objLabel}, Duration: ${form.duracion} min, Equipment: ${materialesStr}, Pitch Area: ${espacioLabel}, Intensity: ${form.intensidad}.
+${selectedTacticalRef ? `IMPORTANT: Base the drill on the TACTICAL REFERENCE: "${selectedTacticalRef.title}".` : ''}
+${form.observaciones ? `Coach Notes: ${form.observaciones}` : ''}
+Use markdown format starting with ## for the drill title.
+Structure the drill with:
+## [Drill Title]
+**Objective:** ...
+**Setup & Organization:** ...
+**Drill Dynamics:** ...
+**Key Coaching Points:** ...
+**Variations & Progressions:** ...
+Do not include any thinking process, reasoning, or analysis. Respond exclusively in English.`;
+      } else {
+        prompt = `Genera UN ejercicio de entrenamiento de fútbol en español:
+Edad: ${edadLabel}, Jugadores: ${form.jugadores}, Objetivo: ${objLabel}, Duración: ${form.duracion} min, Material: ${materialesStr}, Espacio: ${espacioLabel}, Intensidad: ${form.intensidad}.
+${selectedTacticalRef ? `IMPORTANTE: Basar el ejercicio en la REFERENCIA TÁCTICA: "${selectedTacticalRef.title}".` : ''}
+${form.observaciones ? `Observaciones: ${form.observaciones}` : ''}
+Usa el formato markdown con ## para el título.
+Estructura el ejercicio con:
+## [Título del Ejercicio]
+**Objetivo:** ...
+**Organización y Espacio:** ...
+**Dinámica del Ejercicio:** ...
+**Consignas Clave para el Entrenador:** ...
+**Variantes y Progresión:** ...
+No incluyas proceso de razonamiento, thinking ni análisis. Responde exclusivamente en español.`;
+      }
     } else {
-      const materialesStr = preventionForm.materiales.length > 0
-        ? MATERIALES.filter(m => preventionForm.materiales.includes(m.id)).map(m => m.label).join(', ')
-        : 'Sin material';
-        
-      prompt = `Eres un fisioterapeuta deportivo y preparador físico experto en fútbol formativo.
+      const zonaObj = ZONAS_CORPORALES.find(z => z.id === preventionForm.zona);
+      const zonaLabel = zonaObj ? t(zonaObj.key) : preventionForm.zona;
+
+      const nivelObj = NIVELES.find(n => n.id === preventionForm.nivel);
+      const nivelLabel = nivelObj ? t(nivelObj.key) : preventionForm.nivel;
+
+      const prevMaterialesLabels = preventionForm.materiales.map(id => {
+        const mat = MATERIALES.find(m => m.id === id);
+        return mat ? t(mat.key) : id;
+      });
+      const prevMaterialesStr = prevMaterialesLabels.length > 0
+        ? prevMaterialesLabels.join(', ')
+        : (isEn ? 'No equipment' : 'Sin material');
+
+      if (isEn) {
+        const planTypeLabel = preventionForm.tipo === 'Recuperación' || preventionForm.tipo === 'recovery'
+          ? 'Recovery'
+          : (preventionForm.tipo === 'Readaptación' || preventionForm.tipo === 'readaptation' ? 'Readaptation' : 'Prevention');
+
+        prompt = `You are a sports physiotherapist and elite youth football physical preparation expert.
+The coach describes the following case:
+
+"${preventionForm.descripcion}"
+
+Plan Type: ${planTypeLabel}
+Body Zone: ${zonaLabel}
+Player Level: ${nivelLabel}
+Available Equipment: ${prevMaterialesStr}
+
+Generate a structured exercise plan in English with the following format:
+
+## [Descriptive Plan Title]
+**Objective:** ...
+**Contraindications:** ... (if any)
+
+### Exercises:
+1. **[Exercise Name]**
+   - **Description:** ...
+   - **Sets and Repetitions:** ...
+   - **Progression:** ...
+
+### Suggested Frequency: ...
+### Coach Notes: ...
+
+Do not include any thinking process, reasoning, or analysis. Respond exclusively in English.`;
+      } else {
+        const planTypeLabel = preventionForm.tipo === 'Recuperación' || preventionForm.tipo === 'recovery'
+          ? 'Recuperación'
+          : (preventionForm.tipo === 'Readaptación' || preventionForm.tipo === 'readaptation' ? 'Readaptación' : 'Prevención');
+
+        prompt = `Eres un fisioterapeuta deportivo y preparador físico experto en fútbol formativo.
 El entrenador describe el siguiente caso:
 
 "${preventionForm.descripcion}"
 
-Tipo: ${preventionForm.tipo}
-Zona corporal: ${preventionForm.zona}
-Nivel del jugador: ${preventionForm.nivel}
-Material disponible: ${materialesStr}
+Tipo: ${planTypeLabel}
+Zona corporal: ${zonaLabel}
+Nivel del jugador: ${nivelLabel}
+Material disponible: ${prevMaterialesStr}
 
 Genera un plan de ejercicios estructurado con el siguiente formato:
 
@@ -298,13 +424,17 @@ Genera un plan de ejercicios estructurado con el siguiente formato:
 ### Frecuencia sugerida: ...
 ### Notas para el entrenador: ...
 
-Responde solo en español y usa formato markdown.`;
+No incluyas proceso de razonamiento, thinking ni análisis. Responde exclusivamente en español.`;
+      }
     }
 
     try {
       const texto = await callGroq(prompt);
       setResult(texto);
       await incrementUsage();
+      setTimeout(() => {
+        resultRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 100);
     } catch (err) {
       setError(`Error: ${err.message}`);
     } finally {
@@ -315,7 +445,8 @@ Responde solo en español y usa formato markdown.`;
 
   const handleSave = async () => {
     if (!result) return;
-    const title = extractExerciseTitle(result);
+    const defaultTitle = t('ia.defaultTitle', { time: new Date().toLocaleTimeString() });
+    const title = extractExerciseTitle(result, defaultTitle);
     try {
       await addExercise({ 
         name: title, 
@@ -327,10 +458,10 @@ Responde solo en español y usa formato markdown.`;
         category: mode === 'prevencion' ? 'prevencion' : 'tactico',
         createdAt: new Date().toISOString()
       });
-      alert(`✅ Guardado en la biblioteca: "${title}"`);
+      alert(t('ia.saveSuccess', { title }));
     } catch (error) {
       console.error('Error al guardar ejercicio IA:', error);
-      alert("Error al guardar el ejercicio. Intenta de nuevo.");
+      alert(t('ia.saveError'));
     }
   };
 
@@ -339,8 +470,8 @@ Responde solo en español y usa formato markdown.`;
       <div className="ia-form-panel landscape:max-h-[75vh] landscape:overflow-y-auto landscape:pb-8">
         <header className="ia-form-header">
           <div className="ia-header-text">
-            <h1>✨ IA Generadora</h1>
-            <p>Diseño de entrenamientos inteligentes</p>
+            <h1>{t('ia.title')}</h1>
+            <p>{t('ia.subtitle')}</p>
           </div>
           <div style={{ display: 'flex', gap: '8px' }}>
             <button 
@@ -349,7 +480,7 @@ Responde solo en español y usa formato markdown.`;
               }} 
               className={`btn-outline-gold library-btn ${exercises.length > 0 ? 'has-content' : ''}`}
             >
-              ☁️ Biblioteca ({exercises.length})
+              {t('ia.libraryBtn', { count: exercises.length })}
             </button>
           </div>
         </header>
@@ -360,14 +491,14 @@ Responde solo en español y usa formato markdown.`;
                 onClick={() => setMode('tactico')}
               >
                 <div className="mode-card-icon">⚽</div>
-                <span>Ejercicio<br/>Táctico</span>
+                <span style={{ whiteSpace: 'pre-line' }}>{t('ia.modeTactical')}</span>
               </button>
               <button
                 className={`mode-card ${mode === 'prevencion' ? 'active' : ''} landscape:py-2`}
                 onClick={() => setMode('prevencion')}
               >
                 <div className="mode-card-icon">🩺</div>
-                <span>Prevención /<br/>Recuperación</span>
+                <span style={{ whiteSpace: 'pre-line' }}>{t('ia.modePrevention')}</span>
               </button>
             </div>
 
@@ -375,15 +506,15 @@ Responde solo en español y usa formato markdown.`;
               {mode === 'tactico' ? (
                 <>
               <div className="ia-field">
-                <label>Categoría / Edad</label>
+                <label>{t('ia.categoryAge')}</label>
                 <select value={form.edad} onChange={e => setForm({...form, edad: e.target.value})}>
-                  <option value="">Seleccionar...</option>
-                  {EDADES.map(e => <option key={e} value={e}>{e}</option>)}
+                  <option value="">{t('ia.selectPlaceholder')}</option>
+                  {EDADES.map(e => <option key={e.id} value={e.id}>{t(e.key)}</option>)}
                 </select>
               </div>
 
               <div className="ia-field">
-                <label>N° De Jugadores: {form.jugadores}</label>
+                <label>{t('ia.numPlayers', { count: form.jugadores })}</label>
                 <div className="ia-players-row">
                   <div className="ia-players-count">
                     <span className="player-icon">👤</span>
@@ -398,54 +529,54 @@ Responde solo en español y usa formato markdown.`;
               </div>
 
               <div className="ia-field">
-                <label>Objetivo Principal</label>
+                <label>{t('ia.mainObjective')}</label>
                 <select value={form.objetivo} onChange={e => setForm({...form, objetivo: e.target.value})}>
-                  <option value="">Seleccionar...</option>
-                  {OBJETIVOS.map(o => <option key={o} value={o}>{o}</option>)}
+                  <option value="">{t('ia.selectPlaceholder')}</option>
+                  {OBJETIVOS.map(o => <option key={o.id} value={o.id}>{t(o.key)}</option>)}
                 </select>
               </div>
 
               <div className="ia-field">
-                <label>Materiales</label>
+                <label>{t('ia.materials')}</label>
                 <div className="chip-group">
                   {MATERIALES.map(m => (
                     <button key={m.id} className={`chip ${form.materiales.includes(m.id) ? 'active' : ''}`}
                       onClick={() => toggleMaterial(m.id)}>
-                      <span className="chip-icon">{m.icon}</span> {m.label}
+                      <span className="chip-icon">{m.icon}</span> {t(m.key)}
                     </button>
                   ))}
                 </div>
               </div>
 
               <div className="ia-field">
-                <label>Espacio</label>
+                <label>{t('ia.space')}</label>
                 <div className="chip-group">
                   {ESPACIOS.map(e => (
-                    <button key={e} className={`chip ${form.espacio === e ? 'active' : ''}`}
-                      onClick={() => setForm({...form, espacio: e})}>{e}</button>
+                    <button key={e.id} className={`chip ${form.espacio === e.id ? 'active' : ''}`}
+                      onClick={() => setForm({...form, espacio: e.id})}>{t(e.key)}</button>
                   ))}
                 </div>
               </div>
 
               <div className="ia-field">
-                <label>Referencia Táctica (Opcional)</label>
+                <label>{t('ia.tacticalRef')}</label>
                 <div className="tactical-ref-selector">
                   <div 
                     className={`tactical-thumb-none ${!selectedTacticalRef ? 'active' : ''}`}
                     onClick={() => setSelectedTacticalRef(null)}
                   >
-                    <span>Sin Ref.</span>
+                    <span>{t('ia.noRef')}</span>
                   </div>
                   {captures.map(cap => (
                     <div 
                       key={cap.id} 
                       className={`tactical-thumb ${selectedTacticalRef?.id === cap.id ? 'active' : ''}`}
                       onClick={() => setSelectedTacticalRef(cap)}
-                      title={cap.title || 'Captura Táctica'}
+                      title={cap.title || t('ia.capture')}
                     >
                       <img src={cap.thumbnail || cap.url} alt={cap.title} />
                       <div className="thumb-check">✓</div>
-                      <div className="thumb-label">Captura</div>
+                      <div className="thumb-label">{t('ia.capture')}</div>
                     </div>
                   ))}
                   {exercises.filter(ex => ex.type === 'pizarra').map(piz => (
@@ -453,33 +584,33 @@ Responde solo en español y usa formato markdown.`;
                       key={piz.id} 
                       className={`tactical-thumb ${selectedTacticalRef?.id === piz.id ? 'active' : ''}`}
                       onClick={() => setSelectedTacticalRef(piz)}
-                      title={piz.title || 'Animación'}
+                      title={piz.title || t('ia.animation', { count: piz.framesCount || 0 })}
                     >
                       {piz.thumbnail ? (
                         <img src={piz.thumbnail} alt={piz.title} />
                       ) : (
-                        <div style={{width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#000', color: '#888', fontSize: '10px', fontWeight: 'bold'}}>🎬 Pizarra</div>
+                        <div style={{width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#000', color: '#888', fontSize: '10px', fontWeight: 'bold'}}>{t('ia.tacticalBoard')}</div>
                       )}
                       <div className="thumb-check">✓</div>
-                      <div className="thumb-label">Animación ({piz.framesCount || 0}F)</div>
+                      <div className="thumb-label">{t('ia.animation', { count: piz.framesCount || 0 })}</div>
                     </div>
                   ))}
                 </div>
               </div>
 
               <div className="ia-field">
-                <label>Observaciones adicionales</label>
+                <label>{t('ia.additionalObs')}</label>
                 <div style={{ position: 'relative' }}>
                   <textarea 
                     value={form.observaciones} 
                     onChange={e => setForm({...form, observaciones: e.target.value})} 
-                    placeholder="Ej. Enfocarse en la velocidad de ejecución o en el repliegue defensivo..."
+                    placeholder={t('ia.obsPlaceholder')}
                     className="ia-textarea"
                     style={{ paddingRight: '52px' }}
                   />
                   <button
                     onClick={handleVoiceDictation}
-                    title={isListening ? 'Detener dictado' : 'Dictar por voz'}
+                    title={isListening ? t('ia.dictationStop') : t('ia.dictationStart')}
                     style={{
                       position: 'absolute',
                       right: '10px',
@@ -504,17 +635,17 @@ Responde solo en español y usa formato markdown.`;
                   </button>
                 </div>
                 {isListening && (
-                  <p style={{ fontSize: 12, color: '#EF4444', marginTop: 4, fontWeight: 600 }}>🔴 Escuchando... habla ahora</p>
+                  <p style={{ fontSize: 12, color: '#EF4444', marginTop: 4, fontWeight: 600 }}>{t('ia.listening')}</p>
                 )}
               </div>
                 </>
               ) : (
                 <>
                   <div className="ia-field full-width">
-                    <label>Descripción Clínica / Problema</label>
+                    <label>{t('ia.prev.descLabel')}</label>
                     <textarea
                       rows="4"
-                      placeholder="Ej: Jugador de 16 años con sobrecarga isquiotibial izquierdo tras partido, necesita ejercicios excéntricos y de fortalecimiento..."
+                      placeholder={t('ia.prev.descPlaceholder')}
                       value={preventionForm.descripcion}
                       onChange={e => setPreventionForm({...preventionForm, descripcion: e.target.value})}
                       className="ia-textarea"
@@ -522,31 +653,31 @@ Responde solo en español y usa formato markdown.`;
                   </div>
 
                   <div className="ia-field">
-                    <label>Tipo de Plan</label>
+                    <label>{t('ia.prev.planType')}</label>
                     <select value={preventionForm.tipo} onChange={e => setPreventionForm({...preventionForm, tipo: e.target.value})}>
-                      <option value="Prevención">Prevención</option>
-                      <option value="Recuperación">Recuperación</option>
-                      <option value="Readaptación">Readaptación</option>
+                      <option value="Prevención">{t('ia.prev.typePrevention')}</option>
+                      <option value="Recuperación">{t('ia.prev.typeRecovery')}</option>
+                      <option value="Readaptación">{t('ia.prev.typeReadaptation')}</option>
                     </select>
                   </div>
 
                   <div className="ia-field">
-                    <label>Zona Corporal</label>
+                    <label>{t('ia.prev.bodyZone')}</label>
                     <select value={preventionForm.zona} onChange={e => setPreventionForm({...preventionForm, zona: e.target.value})}>
-                      <option value="">Seleccionar...</option>
-                      {ZONAS_CORPORALES.map(z => <option key={z} value={z}>{z}</option>)}
+                      <option value="">{t('ia.selectPlaceholder')}</option>
+                      {ZONAS_CORPORALES.map(z => <option key={z.id} value={z.id}>{t(z.key)}</option>)}
                     </select>
                   </div>
 
                   <div className="ia-field">
-                    <label>Nivel del Jugador</label>
+                    <label>{t('ia.prev.playerLevel')}</label>
                     <select value={preventionForm.nivel} onChange={e => setPreventionForm({...preventionForm, nivel: e.target.value})}>
-                      {NIVELES.map(n => <option key={n} value={n}>{n}</option>)}
+                      {NIVELES.map(n => <option key={n.id} value={n.id}>{t(n.key)}</option>)}
                     </select>
                   </div>
 
                   <div className="ia-field full-width">
-                    <label>Material Disponible</label>
+                    <label>{t('ia.prev.availableMaterial')}</label>
                     <div className="chip-group">
                       {MATERIALES.map(m => (
                         <button
@@ -559,7 +690,7 @@ Responde solo en español y usa formato markdown.`;
                               : [...prev.materiales, m.id]
                           }))}
                         >
-                          {m.icon} {m.label}
+                          {m.icon} {t(m.key)}
                         </button>
                       ))}
                     </div>
@@ -571,20 +702,20 @@ Responde solo en español y usa formato markdown.`;
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', alignItems: 'center', marginTop: '16px' }}>
                 <button className="btn-generate" onClick={handleGenerate} disabled={isGenerating || loadingUsage} style={{ width: '100%' }}>
-                  {isGenerating ? loadingMsg : (mode === 'prevencion' ? '🩺 Generar Plan de Ejercicios' : '✨ Generar Ejercicio')}
+                  {isGenerating ? loadingMsg : (mode === 'prevencion' ? t('ia.btnGeneratePrevention') : t('ia.btnGenerateTactical'))}
                 </button>
                 <div style={{ fontSize: '13px', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '4px', fontWeight: 'bold' }}>
                   {loadingUsage ? (
-                    <span>🔑 IA: Cargando usos...</span>
+                    <span>{t('ia.loadingUsage')}</span>
                   ) : (
-                    <span>🔑 IA: te quedan {getRemainingUsages()} usos este mes (límite {limit})</span>
+                    <span>{t('ia.usageRemaining', { count: getRemainingUsages(), limit })}</span>
                   )}
                 </div>
               </div>
             </div>
           </div>
 
-          <div className="ia-result-panel">
+          <div className="ia-result-panel" ref={resultRef}>
             <div className="ia-result-canvas">
               {!result && !isGenerating && (
                 <div className="ia-empty-state">
@@ -592,7 +723,7 @@ Responde solo en español y usa formato markdown.`;
                     <div className="sparkle-main">✦</div>
                     <div className="sparkle-mini">✦</div>
                   </div>
-                  <h2>Tu ejercicio aparecerá aquí</h2>
+                  <h2>{t('ia.emptyPlaceholder')}</h2>
                 </div>
               )}
               {isGenerating && (
@@ -602,15 +733,15 @@ Responde solo en español y usa formato markdown.`;
                     <div className="ai-dot"/>
                     <div className="ai-dot"/>
                   </div>
-                  <h2 style={{ color: 'var(--ia-text-right)', fontFamily: 'var(--font-heading, Georgia, serif)' }}>Generando...</h2>
+                  <h2 style={{ color: 'var(--ia-text-right)', fontFamily: 'var(--font-heading, Georgia, serif)' }}>{t('ia.loadingGenerating')}</h2>
                 </div>
               )}
               {result && !isGenerating && (
                 <div className="ia-result-content">
                   <div className="result-actions" style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-                    <button className="btn-primary" onClick={handleSave}>💾 Guardar</button>
-                    <button className="btn-primary" onClick={() => generateExercisePDF({ title: extractExerciseTitle(result), content: result }, activeTeam)}>📄 Exportar PDF</button>
-                    <button className="btn-outline" style={{ borderColor: 'var(--ia-text-right)', color: 'var(--ia-text-right)' }} onClick={() => setResult(null)}>🔄 Limpiar</button>
+                    <button className="btn-primary" onClick={handleSave}>{t('ia.btnSave')}</button>
+                    <button className="btn-primary" onClick={() => generateExercisePDF({ title: extractExerciseTitle(result, t('ia.defaultTitle', { time: new Date().toLocaleTimeString() })), content: result }, activeTeam)}>{t('ia.btnExportPdf')}</button>
+                    <button className="btn-outline" style={{ borderColor: 'var(--ia-text-right)', color: 'var(--ia-text-right)' }} onClick={() => setResult(null)}>{t('ia.btnClear')}</button>
                   </div>
                   <div className="ia-markdown-container">
                     <div className="ia-markdown">{renderMarkdown(result)}</div>
@@ -626,14 +757,14 @@ Responde solo en español y usa formato markdown.`;
             <div className="drawer-handle-bar" />
             <div className="drawer-content">
               <div className="drawer-header">
-                <h3>☁️ Biblioteca Cloud</h3>
+                <h3>{t('ia.drawerTitle')}</h3>
                 <button className="btn-close-drawer" onClick={() => setShowBiblioteca(false)}>✕</button>
               </div>
               <div className="exercise-list">
                 {exercises.length === 0 ? (
                   <div className="empty-library">
                     <div className="empty-icon">📂</div>
-                    <p>No hay ejercicios guardados aún.</p>
+                    <p>{t('ia.emptyLibrary')}</p>
                   </div>
                 ) : (
                   (() => {
@@ -659,7 +790,7 @@ Responde solo en español y usa formato markdown.`;
                       .map(ej => {
                         const dateVal = getExerciseDate(ej);
                         const dateStr = dateVal 
-                          ? dateVal.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })
+                          ? dateVal.toLocaleDateString(isEn ? 'en-US' : 'es-ES', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })
                           : 'Sistema';
 
                         return (
@@ -671,8 +802,8 @@ Responde solo en español y usa formato markdown.`;
                             )}
                             <div className="exercise-card-content">
                               <div className="exercise-card-title">
-                                <span className={`type-tag ${ej.type || 'ia'}`}>{ej.type === 'pizarra' ? '📋 Pizarra' : '✨ IA'}</span>
-                                <span className="title-text">{ej.title || ej.name || ej.nombre || 'Sin título'}</span>
+                                <span className={`type-tag ${ej.type || 'ia'}`}>{ej.type === 'pizarra' ? t('ia.tacticalBoard') : '✨ IA'}</span>
+                                <span className="title-text">{ej.title || ej.name || ej.nombre || t('session.untitled')}</span>
                               </div>
                               <div className="exercise-card-meta">
                                 <span>{dateStr}</span>
@@ -694,36 +825,36 @@ Responde solo en español y usa formato markdown.`;
         <div className="modal-overlay" style={{ zIndex: 11000 }} onClick={() => setSelectedExerciseDetail(null)}>
           <div className="modal-content" onClick={e => e.stopPropagation()}>
             <div className="modal-header">
-              <h2>{selectedExerciseDetail.title || selectedExerciseDetail.name || selectedExerciseDetail.nombre || 'Detalle'}</h2>
+              <h2>{selectedExerciseDetail.title || selectedExerciseDetail.name || selectedExerciseDetail.nombre || t('ia.modalDetail')}</h2>
               <button className="btn-close" onClick={() => setSelectedExerciseDetail(null)}>✕</button>
             </div>
             <div className="modal-body" style={{whiteSpace:'pre-wrap', padding:'20px'}}>
               {selectedExerciseDetail.type === 'pizarra' ? (
                 <div className="pizarra-detail">
                   {selectedExerciseDetail.thumbnail && <img src={selectedExerciseDetail.thumbnail} alt="Vista previa" style={{width: '100%', borderRadius: '8px', marginBottom: '15px'}} />}
-                  <p><strong>Tipo:</strong> Pizarra Táctica</p>
+                  <p><strong>Tipo:</strong> {t('nav.pizarra')}</p>
                   <p><strong>Frames:</strong> {selectedExerciseDetail.framesCount || 0}</p>
                   <p style={{marginTop: '10px'}}>Este es un esquema táctico interactivo. Puedes verlo en el módulo de Pizarra Táctica.</p>
                 </div>
               ) : (
-                selectedExerciseDetail.content || selectedExerciseDetail.description || 'Sin contenido.'
+                selectedExerciseDetail.content || selectedExerciseDetail.description || t('ia.modalNoContent')
               )}
             </div>
             <div className="modal-footer">
               {selectedExerciseDetail.type !== 'pizarra' && (
                 <>
-                  <button className="btn-outline" style={{ marginRight: '8px' }} onClick={() => generateExercisePDF({ title: selectedExerciseDetail.title || selectedExerciseDetail.name, content: selectedExerciseDetail.content || selectedExerciseDetail.description }, activeTeam)}>📄 Exportar PDF</button>
+                  <button className="btn-outline" style={{ marginRight: '8px' }} onClick={() => generateExercisePDF({ title: selectedExerciseDetail.title || selectedExerciseDetail.name, content: selectedExerciseDetail.content || selectedExerciseDetail.description }, activeTeam)}>{t('ia.btnExportPdf')}</button>
                   <button className="btn-primary" onClick={() => {
                     setResult(selectedExerciseDetail.content || selectedExerciseDetail.description || '');
                     setSelectedExerciseDetail(null);
                     setShowBiblioteca(false);
-                  }}>Cargar</button>
+                  }}>{t('ia.modalLoad')}</button>
                 </>
               )}
               {selectedExerciseDetail.type === 'pizarra' && (
                 <button className="btn-primary" onClick={() => {
                   window.location.href = `/pizarra?id=${selectedExerciseDetail.id}`;
-                }}>Abrir en Pizarra</button>
+                }}>{t('ia.modalOpenBoard')}</button>
               )}
             </div>
           </div>

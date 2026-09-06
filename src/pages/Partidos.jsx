@@ -17,6 +17,7 @@ import FormationSelector from '../components/FormationSelector';
 import LiveStats from '../components/LiveStats';
 import { MultiMatchAnalysis } from '../components/MultiMatchAnalysis';
 import { t, getEffectiveLanguage } from '../i18n/translations';
+import { useTranslation } from '../hooks/useTranslation';
 import { useTheme } from '../context/ThemeContext';
 import { useLiveStats } from '../hooks/useLiveStats';
 import { SvgDonut, SvgComparisonBars, HalfBreakdown } from '../components/LiveStatsCharts';
@@ -121,6 +122,7 @@ const Partidos = () => {
   const { players, loading: loadingPlayers } = usePlayers(effectiveTeamId);
   const { settings } = useSettings(effectiveTeamId);
   const { darkMode } = useTheme();
+  const { language: currentGlobalLanguage, isEn: isGlobalEn } = useTranslation();
 
   const [viewMode, setViewMode] = useState('LIST'); // 'LIST' or 'EDIT'
   const [mainTab, setMainTab] = useState('LIST'); // 'LIST' or 'ANALISIS'
@@ -250,7 +252,7 @@ const Partidos = () => {
   const formatTime = formatMatchTime;
 
   const isMatchFinished = isMatchLocked(matchData);
-  const isEnLanguage = getEffectiveLanguage(settings) === 'English (EN)';
+  const isEnLanguage = isGlobalEn;
 
   const handleTimerToggle = isMatchFinished ? () => {} : toggleTimer;
   const handleTimerReset = isMatchFinished ? () => {} : resetTimerCtx;
@@ -541,7 +543,7 @@ const Partidos = () => {
   };
 
   const getLangText = (key) => {
-    const isEn = settings && settings.language === 'English (EN)';
+    const isEn = isGlobalEn;
     const texts = {
       'post.title': { es: 'Resultados y Análisis', en: 'Results & Analysis' },
       'post.goalsFor': { es: 'Goles a Favor', en: 'Goals For' },
@@ -651,7 +653,7 @@ const Partidos = () => {
 
   const handleExportPDF = async () => {
     if (!matchData?.id) {
-      alert(getEffectiveLanguage(settings) === 'English (EN)' ? 'Please save the match before exporting the PDF.' : 'Guarde el partido antes de exportar el PDF.');
+      alert(isGlobalEn ? 'Please save the match before exporting the PDF.' : 'Guarde el partido antes de exportar el PDF.');
       return;
     }
     let lineupImageBase64 = null;
@@ -659,8 +661,8 @@ const Partidos = () => {
       const { generateMatchPdfReport } = await import('../utils/matchPdfReport');
       const { drawTacticalPitchCanvas } = await import('../utils/pdfTheme');
 
-      const effLang = getEffectiveLanguage(settings);
-      const isEn = effLang === 'English (EN)';
+      const effLang = currentGlobalLanguage || getEffectiveLanguage();
+      const isEn = isGlobalEn;
 
       try {
         lineupImageBase64 = await drawTacticalPitchCanvas({
@@ -686,7 +688,7 @@ const Partidos = () => {
       });
     } catch (e) {
       console.error("Error al exportar el PDF del partido:", e);
-      alert(getEffectiveLanguage(settings) === 'English (EN)' ? 'Error generating PDF report.' : 'Error al generar el informe PDF del partido.');
+      alert(isGlobalEn ? 'Error generating PDF report.' : 'Error al generar el informe PDF del partido.');
     }
   };
 
@@ -1245,7 +1247,7 @@ const Partidos = () => {
                 className={`e-tab ${editTab === tabObj.id ? 'active' : ''}`}
                 onClick={() => handleTabChange(tabObj.id)}
               >
-                {getEffectiveLanguage(settings) === 'English (EN)' ? tabObj.en : tabObj.es}
+                {isGlobalEn ? tabObj.en : tabObj.es}
               </button>
             ))}
           </div>
@@ -1450,7 +1452,7 @@ const Partidos = () => {
                         const player = pid ? (players.find(p => p && p.id === pid) || null) : null;
                         const posName = getSlotPosition(idx);
                         const isSelected = selectedSlotIdx === idx;
-                        const isEn = getEffectiveLanguage(settings) === 'English (EN)';
+                        const isEn = isGlobalEn;
 
                         return (
                           <div
@@ -1480,7 +1482,7 @@ const Partidos = () => {
                         const pid = calledPlayers[idx];
                         const player = pid ? (players.find(p => p && p.id === pid) || null) : null;
                         const isSelected = selectedSlotIdx === idx;
-                        const isEn = getEffectiveLanguage(settings) === 'English (EN)';
+                        const isEn = isGlobalEn;
 
                         return (
                           <div
@@ -1557,7 +1559,7 @@ const Partidos = () => {
                       const pid = calledPlayers[idx];
                       const player = pid ? (players.find(p => p && p.id === pid) || null) : null;
                       const customPos = matchData.customPositions && matchData.customPositions[idx];
-                      const isEn = getEffectiveLanguage(settings) === 'English (EN)';
+                      const isEn = isGlobalEn;
 
                       // Las posiciones en formaciones.js ya son HORIZONTALES: left=X, top=Y
                       // Clampear top entre 12% y 84% para proteger márgenes superior e inferior sin desbordes
@@ -1796,7 +1798,7 @@ const Partidos = () => {
                   <div className="post-partido-full-width-card" style={{ gridColumn: '1 / -1' }}>
                     <div className="events-log-card">
                       <h4 className="card-section-title" style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <span>📋 {getEffectiveLanguage(settings) === 'English (EN)' ? 'Match Event Log (Real Time)' : 'Bitácora del Partido (Tiempo Real)'}</span>
+                        <span>📋 {isGlobalEn ? 'Match Event Log (Real Time)' : 'Bitácora del Partido (Tiempo Real)'}</span>
                         {matchData?.warnings && matchData.warnings.length > 0 && !matchData.warningsResolved && (
                           <span
                             style={{
@@ -1810,7 +1812,7 @@ const Partidos = () => {
                               cursor: 'pointer'
                             }}
                             onClick={() => handleTabChange('acta')}
-                            title={getEffectiveLanguage(settings) === 'English (EN)'
+                            title={isGlobalEn
                               ? `${matchData.warnings.length} anomalies detected (click to view and resolve in Official Sheet)`
                               : `${matchData.warnings.length} anomalías detectadas (clic para ver y resolver en Acta Oficial)`}
                           >
@@ -2321,7 +2323,7 @@ const Partidos = () => {
                         <MatchStatsBlock
                           matchData={matchData}
                           events={effectiveLiveEvents || []}
-                          language={settings?.language || 'Español (ES)'}
+                          language={currentGlobalLanguage || 'Español (ES)'}
                           showDonuts={true}
                           showComparison={true}
                           showHalves={true}

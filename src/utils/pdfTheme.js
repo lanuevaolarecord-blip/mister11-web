@@ -1468,3 +1468,573 @@ export const drawTacticalPitchCanvas = async ({
   }
 };
 
+/**
+ * Dibuja las 4 Gráficas Donut de Eficiencia Táctica del partido en Canvas 2D nativo en alta resolución.
+ * Donas: Duelos Ganados, Precisión de Tiro, Posesión Estimada, Eficacia de Gol.
+ */
+export const drawPostMatchDonutsCanvas = ({
+  events = [],
+  isEn = false,
+  width = 660,
+  height = 190
+}) => {
+  try {
+    const canvas = document.createElement('canvas');
+    canvas.width = width;
+    canvas.height = height;
+    const ctx = canvas.getContext('2d');
+
+    // Fondo tarjeta blanca con borde sutil
+    ctx.fillStyle = '#FFFFFF';
+    drawCanvasRoundRect(ctx, 0, 0, width, height, 10);
+    ctx.fill();
+    ctx.strokeStyle = '#CBD5E1';
+    ctx.lineWidth = 1.5;
+    drawCanvasRoundRect(ctx, 0, 0, width, height, 10);
+    ctx.stroke();
+
+    // Título de la sección
+    ctx.font = 'bold 12px Arial, sans-serif';
+    ctx.fillStyle = '#172D21';
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'top';
+    ctx.fillText(
+      isEn ? 'TACTICAL EFFICIENCY (DONUT CHARTS)' : 'EFICIENCIA TÁCTICA DEL PARTIDO (GRÁFICAS DONUT)',
+      18,
+      14
+    );
+
+    const safeEvents = Array.isArray(events) ? events.filter(Boolean) : [];
+    const countOf = (type) => safeEvents.filter((e) => e.type === type).length;
+
+    // Métricas
+    const duelsWon = countOf('duel_won');
+    const duelsLost = countOf('duel_lost');
+    const totalDuels = duelsWon + duelsLost;
+    const duelsPct = totalDuels > 0 ? Math.round((duelsWon / totalDuels) * 100) : 0;
+
+    const shotsOn = countOf('shot_on_target_own');
+    const shotsOff = countOf('shot_off_target_own');
+    const totalShots = shotsOn + shotsOff;
+    const shotsPct = totalShots > 0 ? Math.round((shotsOn / totalShots) * 100) : 0;
+
+    const rec = countOf('recovery');
+    const loss = countOf('loss');
+    const totalPoss = rec + loss;
+    const possPct = totalPoss > 0 ? Math.round((rec / totalPoss) * 100) : (safeEvents.length > 0 ? 50 : 0);
+
+    const goalsOwn = countOf('gol_local') + countOf('goal_own');
+    const finishingPct = totalShots > 0 ? Math.round((goalsOwn / totalShots) * 100) : 0;
+
+    const donutsData = [
+      {
+        title: isEn ? 'DUELS WON' : 'DUELOS GANADOS',
+        pct: duelsPct,
+        val1: duelsWon,
+        val2: duelsLost,
+        label1: isEn ? 'Won' : 'Ganados',
+        label2: isEn ? 'Lost' : 'Perdidos',
+        color1: '#22C55E',
+        color2: '#EF4444'
+      },
+      {
+        title: isEn ? 'SHOT ACCURACY' : 'PRECISIÓN DE TIRO',
+        pct: shotsPct,
+        val1: shotsOn,
+        val2: shotsOff,
+        label1: isEn ? 'On Target' : 'A Puerta',
+        label2: isEn ? 'Off' : 'Fuera',
+        color1: '#0D9488',
+        color2: '#F97316'
+      },
+      {
+        title: isEn ? 'EST. POSSESSION' : 'POSESIÓN ESTIMADA',
+        pct: possPct,
+        val1: rec,
+        val2: loss,
+        label1: isEn ? 'Recov.' : 'Recup.',
+        label2: isEn ? 'Losses' : 'Pérdidas',
+        color1: '#3B82F6',
+        color2: '#E11D48'
+      },
+      {
+        title: isEn ? 'GOAL EFFICIENCY' : 'EFICACIA DE GOL',
+        pct: finishingPct,
+        val1: goalsOwn,
+        val2: Math.max(0, totalShots - goalsOwn),
+        label1: isEn ? 'Goals' : 'Goles',
+        label2: isEn ? 'Shots' : 'Remates',
+        color1: '#D4A843',
+        color2: '#94A3B8'
+      }
+    ];
+
+    const colW = width / 4;
+    const radius = 34;
+    const strokeW = 8;
+    const centerY = 92;
+
+    donutsData.forEach((d, idx) => {
+      const cx = idx * colW + colW / 2;
+
+      // Título de la dona
+      ctx.font = 'bold 9px Arial, sans-serif';
+      ctx.fillStyle = '#475569';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(d.title, cx, 40);
+
+      // Pista de fondo (círculo completo neutro)
+      ctx.beginPath();
+      ctx.arc(cx, centerY, radius, 0, Math.PI * 2);
+      ctx.strokeStyle = '#E2E8F0';
+      ctx.lineWidth = strokeW;
+      ctx.stroke();
+
+      // Pista secundaria si hay eventos
+      const totalVal = d.val1 + d.val2;
+      if (totalVal > 0) {
+        ctx.beginPath();
+        ctx.arc(cx, centerY, radius, 0, Math.PI * 2);
+        ctx.strokeStyle = d.color2;
+        ctx.lineWidth = strokeW;
+        ctx.stroke();
+
+        // Arco primario (d.pct)
+        if (d.pct > 0) {
+          const startAngle = -Math.PI / 2;
+          const endAngle = startAngle + (d.pct / 100) * (Math.PI * 2);
+          ctx.beginPath();
+          ctx.arc(cx, centerY, radius, startAngle, endAngle);
+          ctx.strokeStyle = d.color1;
+          ctx.lineWidth = strokeW;
+          ctx.lineCap = 'round';
+          ctx.stroke();
+          ctx.lineCap = 'butt';
+        }
+      }
+
+      // Porcentaje en el centro
+      ctx.font = 'bold 15px Arial, sans-serif';
+      ctx.fillStyle = '#0F172A';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(totalVal > 0 ? `${d.pct}%` : '--%', cx, centerY);
+
+      // Leyenda inferior con valores
+      ctx.font = '8.5px Arial, sans-serif';
+      ctx.fillStyle = '#1E293B';
+      const legendText = `${d.val1} ${d.label1} / ${d.val2} ${d.label2}`;
+      ctx.fillText(legendText, cx, 145);
+
+      // Píldora de estado con color
+      ctx.fillStyle = d.color1;
+      ctx.beginPath();
+      ctx.arc(cx - 38, 163, 3, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#64748B';
+      ctx.font = '7.8px Arial, sans-serif';
+      ctx.textAlign = 'left';
+      ctx.fillText(d.label1, cx - 32, 163);
+
+      ctx.fillStyle = d.color2;
+      ctx.beginPath();
+      ctx.arc(cx + 8, 163, 3, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#64748B';
+      ctx.fillText(d.label2, cx + 14, 163);
+    });
+
+    return canvas.toDataURL('image/png', 0.95);
+  } catch (e) {
+    console.warn('[drawPostMatchDonutsCanvas] Error:', e);
+    return null;
+  }
+};
+
+/**
+ * Dibuja las Barras Comparativas Propio vs Rival y el Desglose por Mitades en Canvas 2D de alta resolución.
+ */
+export const drawStatsComparisonAndHalvesCanvas = ({
+  events = [],
+  homeTeamName = 'Mi Equipo',
+  awayTeamName = 'Rival',
+  isEn = false,
+  width = 660,
+  height = 240
+}) => {
+  try {
+    const canvas = document.createElement('canvas');
+    canvas.width = width;
+    canvas.height = height;
+    const ctx = canvas.getContext('2d');
+
+    // Fondo global blanco
+    ctx.fillStyle = '#FFFFFF';
+    drawCanvasRoundRect(ctx, 0, 0, width, height, 10);
+    ctx.fill();
+    ctx.strokeStyle = '#CBD5E1';
+    ctx.lineWidth = 1.5;
+    drawCanvasRoundRect(ctx, 0, 0, width, height, 10);
+    ctx.stroke();
+
+    const safeEvents = Array.isArray(events) ? events.filter(Boolean) : [];
+    const countOf = (type) => safeEvents.filter((e) => e.type === type).length;
+
+    // Métricas Cara a Cara
+    const shotsOnOwn = countOf('shot_on_target_own');
+    const shotsOffOwn = countOf('shot_off_target_own');
+    const totalShotsOwn = shotsOnOwn + shotsOffOwn;
+    const shotsOnRival = countOf('shot_on_target_rival');
+    const shotsOffRival = countOf('shot_off_target_rival');
+    const totalShotsRival = shotsOnRival + shotsOffRival;
+
+    const duelsWon = countOf('duel_won');
+    const duelsLost = countOf('duel_lost');
+
+    const rec = countOf('recovery');
+    const loss = countOf('loss');
+    const totalPoss = rec + loss;
+    const possPctOwn = totalPoss > 0 ? Math.round((rec / totalPoss) * 100) : 50;
+    const possPctRival = 100 - possPctOwn;
+
+    const cornersOwn = countOf('corner_favor');
+    const cornersRival = countOf('corner_against');
+
+    const foulsOwn = countOf('foul_against');
+    const foulsRival = countOf('foul_favor');
+
+    const cardsOwn = countOf('card_yellow_own') + countOf('amarilla') + countOf('card_red_own') + countOf('roja');
+    const cardsRival = countOf('card_yellow_rival') + countOf('card_red_rival');
+
+    // ── COLUMNA IZQUIERDA: BARRAS COMPARATIVAS (Width: 320px) ──
+    const col1X = 16;
+    const col1W = (width - 48) * 0.52;
+
+    ctx.font = 'bold 11px Arial, sans-serif';
+    ctx.fillStyle = '#172D21';
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'top';
+    ctx.fillText(isEn ? '⚔️ OWN VS OPPONENT COMPARISON' : '⚔️ COMPARATIVA PROPIO VS RIVAL', col1X, 14);
+
+    // Leyenda de equipos
+    ctx.font = 'bold 8.5px Arial, sans-serif';
+    ctx.fillStyle = '#2E7D5C';
+    ctx.fillText(`■ ${homeTeamName.substring(0, 16)}`, col1X, 32);
+    ctx.fillStyle = '#EF4444';
+    ctx.textAlign = 'right';
+    ctx.fillText(`${awayTeamName.substring(0, 16)} ■`, col1X + col1W, 32);
+
+    const compRows = [
+      { label: isEn ? 'Total Shots' : 'Tiros Totales', valA: totalShotsOwn, valB: totalShotsRival },
+      { label: isEn ? 'Shots on Target' : 'Tiros a Puerta', valA: shotsOnOwn, valB: shotsOnRival },
+      { label: isEn ? 'Duels Won' : 'Duelos Ganados', valA: duelsWon, valB: duelsLost },
+      { label: isEn ? 'Possession %' : 'Posesión %', valA: possPctOwn, valB: possPctRival, isPct: true },
+      { label: isEn ? 'Corner Kicks' : 'Córners', valA: cornersOwn, valB: cornersRival },
+      { label: isEn ? 'Fouls' : 'Faltas', valA: foulsOwn, valB: foulsRival },
+      { label: isEn ? 'Cards' : 'Tarjetas', valA: cardsOwn, valB: cardsRival },
+    ];
+
+    let rowY = 50;
+    compRows.forEach((row) => {
+      ctx.font = 'bold 8px Arial, sans-serif';
+      ctx.fillStyle = '#475569';
+      ctx.textAlign = 'center';
+      ctx.fillText(row.label, col1X + col1W / 2, rowY);
+
+      // Valores numéricos
+      ctx.font = 'bold 9px Arial, sans-serif';
+      ctx.fillStyle = '#0F172A';
+      ctx.textAlign = 'left';
+      ctx.fillText(row.isPct ? `${row.valA}%` : `${row.valA}`, col1X, rowY + 11);
+      ctx.textAlign = 'right';
+      ctx.fillText(row.isPct ? `${row.valB}%` : `${row.valB}`, col1X + col1W, rowY + 11);
+
+      // Barra horizontal dual
+      const barTrackX = col1X + 26;
+      const barTrackW = col1W - 52;
+      const barTrackY = rowY + 5;
+      const barTrackH = 8;
+
+      ctx.fillStyle = '#E2E8F0';
+      drawCanvasRoundRect(ctx, barTrackX, barTrackY, barTrackW, barTrackH, 3);
+      ctx.fill();
+
+      const sum = (row.valA + row.valB) || 1;
+      const pctA = row.isPct ? row.valA : Math.round((row.valA / sum) * 100);
+      const wA = (pctA / 100) * barTrackW;
+
+      if (wA > 0) {
+        ctx.fillStyle = '#2E7D5C';
+        drawCanvasRoundRect(ctx, barTrackX, barTrackY, wA, barTrackH, 3);
+        ctx.fill();
+      }
+
+      if (barTrackW - wA > 0) {
+        ctx.fillStyle = '#EF4444';
+        drawCanvasRoundRect(ctx, barTrackX + wA, barTrackY, barTrackW - wA, barTrackH, 3);
+        ctx.fill();
+      }
+
+      rowY += 26;
+    });
+
+    // Línea divisoria vertical
+    const divX = col1X + col1W + 16;
+    ctx.beginPath();
+    ctx.moveTo(divX, 14);
+    ctx.lineTo(divX, height - 14);
+    ctx.strokeStyle = '#E2E8F0';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+
+    // ── COLUMNA DERECHA: DESGLOSE POR MITADES ──
+    const col2X = divX + 16;
+    const col2W = width - col2X - 16;
+
+    ctx.font = 'bold 11px Arial, sans-serif';
+    ctx.fillStyle = '#172D21';
+    ctx.textAlign = 'left';
+    ctx.fillText(isEn ? '⏱️ HALVES BREAKDOWN (1H VS 2H)' : '⏱️ DESGLOSE POR MITADES (1T VS 2T)', col2X, 14);
+
+    const isT2 = (e) => {
+      if (!e) return false;
+      if (e.half !== undefined && e.half !== null && e.half !== '') {
+        const h = Number(e.half);
+        if (!isNaN(h) && h > 0) return h === 2;
+      }
+      const m = Number(e.minute || e.minuto || e.time || 0);
+      return m > 45;
+    };
+    const isT1 = (e) => {
+      if (!e) return false;
+      if (e.half !== undefined && e.half !== null && e.half !== '') {
+        const h = Number(e.half);
+        if (!isNaN(h) && h > 0) return h === 1;
+      }
+      const m = Number(e.minute || e.minuto || e.time || 0);
+      return m <= 45;
+    };
+
+    const t1Events = safeEvents.filter(isT1);
+    const t2Events = safeEvents.filter(isT2);
+
+    const getHCount = (list, types) => list.filter((e) => types.includes(e.type)).length;
+
+    const halvesData = [
+      {
+        label: isEn ? 'Total Events' : 'Eventos Totales',
+        t1: t1Events.length,
+        t2: t2Events.length,
+        icon: '📊'
+      },
+      {
+        label: isEn ? 'Shots on Target' : 'Remates a Puerta',
+        t1: getHCount(t1Events, ['shot_on_target_own']),
+        t2: getHCount(t2Events, ['shot_on_target_own']),
+        icon: '🎯'
+      },
+      {
+        label: isEn ? 'Goals in Favor' : 'Goles a Favor',
+        t1: getHCount(t1Events, ['gol_local', 'goal_own']),
+        t2: getHCount(t2Events, ['gol_local', 'goal_own']),
+        icon: '⚽'
+      },
+      {
+        label: isEn ? 'Ball Recoveries' : 'Recuperaciones',
+        t1: getHCount(t1Events, ['recovery']),
+        t2: getHCount(t2Events, ['recovery']),
+        icon: '🔄'
+      },
+      {
+        label: isEn ? 'Fouls Committed' : 'Faltas Cometidas',
+        t1: getHCount(t1Events, ['foul_against']),
+        t2: getHCount(t2Events, ['foul_against']),
+        icon: '⚡'
+      },
+      {
+        label: isEn ? 'Cards Issued' : 'Tarjetas',
+        t1: getHCount(t1Events, ['amarilla', 'roja', 'card_yellow_own', 'card_red_own']),
+        t2: getHCount(t2Events, ['amarilla', 'roja', 'card_yellow_own', 'card_red_own']),
+        icon: '🟨'
+      },
+      {
+        label: isEn ? 'Duels Won' : 'Duelos Ganados',
+        t1: getHCount(t1Events, ['duel_won']),
+        t2: getHCount(t2Events, ['duel_won']),
+        icon: '✊'
+      }
+    ];
+
+    let hRowY = 38;
+    halvesData.forEach((item) => {
+      // Caja de la fila
+      ctx.fillStyle = '#F8FAFC';
+      drawCanvasRoundRect(ctx, col2X, hRowY, col2W, 24, 4);
+      ctx.fill();
+      ctx.strokeStyle = '#E2E8F0';
+      ctx.lineWidth = 1;
+      drawCanvasRoundRect(ctx, col2X, hRowY, col2W, 24, 4);
+      ctx.stroke();
+
+      // Etiqueta
+      ctx.font = 'bold 8.5px Arial, sans-serif';
+      ctx.fillStyle = '#1E293B';
+      ctx.textAlign = 'left';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(`${item.icon} ${item.label}`, col2X + 8, hRowY + 12);
+
+      // Badge 1T
+      const badge1W = 44;
+      const badge1X = col2X + col2W - badge1W * 2 - 12;
+      ctx.fillStyle = '#E0F2FE';
+      drawCanvasRoundRect(ctx, badge1X, hRowY + 4, badge1W, 16, 3);
+      ctx.fill();
+      ctx.font = 'bold 8px Arial, sans-serif';
+      ctx.fillStyle = '#0369A1';
+      ctx.textAlign = 'center';
+      ctx.fillText(`1T: ${item.t1}`, badge1X + badge1W / 2, hRowY + 12);
+
+      // Badge 2T
+      const badge2X = col2X + col2W - badge1W - 6;
+      ctx.fillStyle = '#FEF3C7';
+      drawCanvasRoundRect(ctx, badge2X, hRowY + 4, badge1W, 16, 3);
+      ctx.fill();
+      ctx.fillStyle = '#B45309';
+      ctx.fillText(`2T: ${item.t2}`, badge2X + badge1W / 2, hRowY + 12);
+
+      hRowY += 28;
+    });
+
+    return canvas.toDataURL('image/png', 0.95);
+  } catch (e) {
+    console.warn('[drawStatsComparisonAndHalvesCanvas] Error:', e);
+    return null;
+  }
+};
+
+/**
+ * Dibuja la Distribución Táctica por Sectores en Canvas 2D de alta resolución.
+ */
+export const drawSectorsDistributionCanvas = ({
+  events = [],
+  isEn = false,
+  width = 660,
+  height = 80
+}) => {
+  try {
+    const canvas = document.createElement('canvas');
+    canvas.width = width;
+    canvas.height = height;
+    const ctx = canvas.getContext('2d');
+
+    // Fondo blanco
+    ctx.fillStyle = '#FFFFFF';
+    drawCanvasRoundRect(ctx, 0, 0, width, height, 8);
+    ctx.fill();
+    ctx.strokeStyle = '#CBD5E1';
+    ctx.lineWidth = 1.5;
+    drawCanvasRoundRect(ctx, 0, 0, width, height, 8);
+    ctx.stroke();
+
+    const safeEvents = Array.isArray(events) ? events.filter(Boolean) : [];
+    const sectorLeft = safeEvents.filter((e) => e.sector === 'left').length;
+    const sectorCenter = safeEvents.filter((e) => e.sector === 'center').length;
+    const sectorRight = safeEvents.filter((e) => e.sector === 'right').length;
+    const totalSectors = sectorLeft + sectorCenter + sectorRight;
+
+    const pctLeft = totalSectors > 0 ? Math.round((sectorLeft / totalSectors) * 100) : 33;
+    const pctCenter = totalSectors > 0 ? Math.round((sectorCenter / totalSectors) * 100) : 34;
+    const pctRight = totalSectors > 0 ? Math.max(0, 100 - pctLeft - pctCenter) : 33;
+
+    // Encabezado
+    ctx.font = 'bold 10px Arial, sans-serif';
+    ctx.fillStyle = '#172D21';
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'top';
+    ctx.fillText(
+      isEn ? '📍 PITCH SECTOR DISTRIBUTION' : '📍 DISTRIBUCIÓN TÁCTICA POR SECTORES',
+      14,
+      10
+    );
+
+    const sectors = [
+      {
+        name: isEn ? '⬅️ Left Wing' : '⬅️ Banda Izquierda',
+        count: sectorLeft,
+        pct: pctLeft,
+        color: '#A855F7',
+        bg: 'rgba(168, 85, 247, 0.08)'
+      },
+      {
+        name: isEn ? '⏺️ Center Corridor' : '⏺️ Pasillo Central',
+        count: sectorCenter,
+        pct: pctCenter,
+        color: '#3B82F6',
+        bg: 'rgba(59, 130, 246, 0.08)'
+      },
+      {
+        name: isEn ? '➡️ Right Wing' : '➡️ Banda Derecha',
+        count: sectorRight,
+        pct: pctRight,
+        color: '#0D9488',
+        bg: 'rgba(13, 148, 136, 0.08)'
+      }
+    ];
+
+    const boxW = (width - 48) / 3;
+    const boxY = 28;
+    const boxH = 42;
+
+    sectors.forEach((sec, idx) => {
+      const bx = 14 + idx * (boxW + 10);
+
+      ctx.fillStyle = sec.bg;
+      drawCanvasRoundRect(ctx, bx, boxY, boxW, boxH, 6);
+      ctx.fill();
+      ctx.strokeStyle = sec.color;
+      ctx.lineWidth = 1;
+      drawCanvasRoundRect(ctx, bx, boxY, boxW, boxH, 6);
+      ctx.stroke();
+
+      ctx.font = 'bold 8.5px Arial, sans-serif';
+      ctx.fillStyle = '#334155';
+      ctx.textAlign = 'left';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(sec.name, bx + 10, boxY + 14);
+
+      ctx.font = 'bold 13px Arial, sans-serif';
+      ctx.fillStyle = sec.color;
+      ctx.textAlign = 'right';
+      ctx.fillText(`${sec.pct}%`, bx + boxW - 10, boxY + 14);
+
+      // Mini barra indicadora de porcentaje
+      const barX = bx + 10;
+      const barY = boxY + 26;
+      const barW = boxW - 20;
+      const barH = 5;
+
+      ctx.fillStyle = '#E2E8F0';
+      drawCanvasRoundRect(ctx, barX, barY, barW, barH, 2);
+      ctx.fill();
+
+      const filledW = (sec.pct / 100) * barW;
+      if (filledW > 0) {
+        ctx.fillStyle = sec.color;
+        drawCanvasRoundRect(ctx, barX, barY, filledW, barH, 2);
+        ctx.fill();
+      }
+
+      ctx.font = '7.5px Arial, sans-serif';
+      ctx.fillStyle = '#64748B';
+      ctx.textAlign = 'right';
+      ctx.fillText(`${sec.count} ${isEn ? 'actions' : 'acciones'}`, bx + boxW - 10, barY + 9);
+    });
+
+    return canvas.toDataURL('image/png', 0.95);
+  } catch (e) {
+    console.warn('[drawSectorsDistributionCanvas] Error:', e);
+    return null;
+  }
+};
+

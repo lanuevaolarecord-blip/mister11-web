@@ -1713,21 +1713,18 @@ export const translations = {
 };
 
 export const getEffectiveLanguage = (input) => {
-  let val = input;
-  if (val && typeof val === 'object') {
-    val = val.language || val.lang;
-  }
-
-  if (typeof val === 'string') {
-    const trimmed = val.trim();
-    if (trimmed === 'English (EN)' || trimmed === 'en' || trimmed.toLowerCase().startsWith('en')) {
+  // 1. Si se pasa explícitamente un string directo de idioma
+  if (typeof input === 'string') {
+    const trimmed = input.trim();
+    if (trimmed === 'English (EN)' || trimmed === 'en' || trimmed.toLowerCase() === 'english' || trimmed.toLowerCase().startsWith('en-')) {
       return 'English (EN)';
     }
-    if (trimmed === 'Español (ES)' || trimmed === 'es' || trimmed.toLowerCase().startsWith('es')) {
+    if (trimmed === 'Español (ES)' || trimmed === 'es' || trimmed.toLowerCase() === 'spanish' || trimmed.toLowerCase().startsWith('es-')) {
       return 'Español (ES)';
     }
   }
 
+  // 2. Preferencia activa global del usuario en el navegador (LanguageContext / localStorage)
   try {
     const saved = localStorage.getItem('mister11_language') || localStorage.getItem('language');
     if (saved && typeof saved === 'string') {
@@ -1737,7 +1734,21 @@ export const getEffectiveLanguage = (input) => {
     }
   } catch (_) {}
 
-  // Por defecto en Míster11 es SIEMPRE Español (ES) a menos que se haya seleccionado Inglés explícitamente
+  // 3. Si input es un objeto (settings, matchData, etc.) y no había selección en localStorage
+  if (input && typeof input === 'object') {
+    const val = input.language || input.lang;
+    if (typeof val === 'string') {
+      const trimmed = val.trim();
+      if (trimmed === 'English (EN)' || trimmed === 'en' || trimmed.toLowerCase().startsWith('en')) {
+        return 'English (EN)';
+      }
+      if (trimmed === 'Español (ES)' || trimmed === 'es' || trimmed.toLowerCase().startsWith('es')) {
+        return 'Español (ES)';
+      }
+    }
+  }
+
+  // 4. Por defecto en Míster11 es SIEMPRE Español (ES) a menos que se haya seleccionado Inglés explícitamente
   return 'Español (ES)';
 };
 

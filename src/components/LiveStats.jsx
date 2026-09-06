@@ -457,7 +457,7 @@ const LiveStats = ({
   // ── Extraer Pases para la Red de Pases ──────────────────────────────────────
   const passesList = useMemo(() => {
     return (filteredEvents || []).filter(e => 
-      e && ['pass', 'pase', 'recovery', 'duel_won'].includes(e.type)
+      e && ['pass', 'pase', 'pass_completed', 'pass_failed', 'key_pass', 'recovery', 'duel_won'].includes(e.type)
     );
   }, [filteredEvents]);
 

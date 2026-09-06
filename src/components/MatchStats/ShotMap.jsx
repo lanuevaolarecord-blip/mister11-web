@@ -8,6 +8,7 @@ export const ShotMap = ({
 }) => {
   const [selectedShot, setSelectedShot] = useState(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [showTacticalGuide, setShowTacticalGuide] = useState(false);
   const wrapperRef = useRef(null);
 
   const toggleFullscreen = useCallback(() => {
@@ -30,10 +31,12 @@ export const ShotMap = ({
   const shotsWithXG = useMemo(() => {
     return shots.map((shot, idx) => {
       let y = typeof shot.y === 'number' ? shot.y : 50;
-      if (shot.sector === 'left') y = 25;
-      else if (shot.sector === 'right') y = 75;
+      const sec = String(shot.sector || '').toLowerCase();
+      if (sec === 'left' || sec.includes('izq')) y = 18;
+      else if (sec === 'right' || sec.includes('der')) y = 82;
+      else if (sec === 'center' || sec.includes('cent')) y = 50;
 
-      const x = typeof shot.x === 'number' ? shot.x : 75;
+      const x = typeof shot.x === 'number' ? shot.x : 78;
 
       // Distancia en metros (asumiendo campo 105x68m)
       const dx = ((100 - x) / 100) * 105;
@@ -50,8 +53,8 @@ export const ShotMap = ({
 
       if (shot.bodyPart === 'head' || shot.bodyPart === 'cabeza') xGValue *= 0.65;
       if (shot.isPenalty || shot.type === 'penalti') xGValue = 0.76;
-      if (shot.outcome === 'goal' || shot.type === 'gol') {
-        xGValue = Math.max(0.12, xGValue);
+      if (shot.outcome === 'goal' || shot.type === 'gol' || shot.type === 'gol_local' || shot.type === 'goal') {
+        xGValue = Math.max(0.18, xGValue);
       }
 
       const finalXG = Number(Math.min(0.99, Math.max(0.02, xGValue)).toFixed(2));
@@ -75,8 +78,10 @@ export const ShotMap = ({
 
     shotsWithXG.forEach(s => {
       sumXG += s.xG;
-      if (s.outcome === 'goal' || s.type === 'gol' || s.isGoal) goals++;
-      if (s.outcome === 'goal' || s.outcome === 'on_target' || s.type === 'tiro_puerta' || s.type === 'gol') onTarget++;
+      const isGoal = s.outcome === 'goal' || s.type === 'gol' || s.type === 'goal' || s.type === 'gol_local' || s.type === 'gol_rival' || s.isGoal;
+      const isOnTarget = isGoal || s.outcome === 'on_target' || s.type === 'tiro_puerta' || s.type === 'shot_on_target_own' || s.type === 'shot_on_target_rival';
+      if (isGoal) goals++;
+      if (isOnTarget) onTarget++;
     });
 
     const conversion = shotsWithXG.length > 0 ? Math.round((goals / shotsWithXG.length) * 100) : 0;
@@ -90,10 +95,12 @@ export const ShotMap = ({
   }, [shotsWithXG]);
 
   const getOutcomeBadge = (shot) => {
-    if (shot.outcome === 'goal' || shot.type === 'gol' || shot.isGoal) {
-      return { label: 'GOL', icon: '⚽', color: '#10B981', bg: 'rgba(16, 185, 129, 0.2)' };
+    const isGoal = shot.outcome === 'goal' || shot.type === 'gol' || shot.type === 'goal' || shot.type === 'gol_local' || shot.type === 'gol_rival' || shot.isGoal;
+    if (isGoal) {
+      return { label: 'GOL', icon: '⚽', color: '#10B981', bg: 'rgba(16, 185, 129, 0.2)', isGoal: true };
     }
-    if (shot.outcome === 'on_target' || shot.type === 'tiro_puerta') {
+    const isOnTarget = shot.outcome === 'on_target' || shot.type === 'tiro_puerta' || shot.type === 'shot_on_target_own' || shot.type === 'shot_on_target_rival';
+    if (isOnTarget) {
       return { label: 'A Puerta', icon: '🎯', color: '#3B82F6', bg: 'rgba(59, 130, 246, 0.2)' };
     }
     if (shot.outcome === 'blocked' || shot.type === 'tiro_bloqueado') {
@@ -128,7 +135,7 @@ export const ShotMap = ({
       <div className="shot-map-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexShrink: 0, marginBottom: '12px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           <Target size={20} color="#D4A843" />
-          <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 700, color: '#FFFFFF' }}>
+          <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 800 }}>
             Mapa de Tiros y Modelo xG ({teamName})
           </h3>
         </div>
@@ -233,6 +240,11 @@ export const ShotMap = ({
           <line x1="22.6" y1="3" x2="22.6" y2="52" stroke="rgba(212,168,67,0.3)" strokeWidth="0.6" strokeDasharray="2 2" />
           <line x1="45.3" y1="3" x2="45.3" y2="52" stroke="rgba(212,168,67,0.3)" strokeWidth="0.6" strokeDasharray="2 2" />
 
+          {/* Rótulos de Sectores Tácticos en el Medio Campo Ofensivo */}
+          <text x="11.3" y="8" textAnchor="middle" fill="#FFFFFF" stroke="#000000" strokeWidth="0.3" fontSize="2.4" fontWeight="800" style={{ paintOrder: 'stroke fill' }}>⬅️ BANDA IZQ</text>
+          <text x="34" y="8" textAnchor="middle" fill="#FFFFFF" stroke="#000000" strokeWidth="0.3" fontSize="2.4" fontWeight="800" style={{ paintOrder: 'stroke fill' }}>⏺️ PASILLO CENTRAL</text>
+          <text x="56.7" y="8" textAnchor="middle" fill="#FFFFFF" stroke="#000000" strokeWidth="0.3" fontSize="2.4" fontWeight="800" style={{ paintOrder: 'stroke fill' }}>➡️ BANDA DER</text>
+
           {/* Línea de medio campo */}
           <line x1="3" y1="3" x2="65" y2="3" stroke="rgba(255,255,255,0.55)" strokeWidth="0.8" />
           {/* Semicírculo central */}
@@ -262,6 +274,7 @@ export const ShotMap = ({
 
           {/* Portería */}
           <rect x="30.34" y="52" width="7.32" height="2.2" fill="rgba(255,255,255,0.2)" stroke="#D4A843" strokeWidth="0.7" />
+          <text x="34" y="50" textAnchor="middle" fill="#D4A843" fontSize="1.8" fontWeight="800">PORTERÍA</text>
 
           {/* Renderizado de Marcadores de Tiro */}
           {shotsWithXG.map(shot => {
@@ -364,6 +377,58 @@ export const ShotMap = ({
           <span className="text">Tamaño = Mayor xG (Probabilidad de Gol)</span>
         </div>
       </div>
+
+      {/* Panel pedagógico y táctico (oculto en fullscreen para evitar scroll) */}
+      {!isFullscreen && (
+        <div className="tactical-guide-panel" style={{ marginTop: '16px' }}>
+          <div className="tactical-guide-header" onClick={() => setShowTacticalGuide(prev => !prev)}>
+            <div className="tactical-guide-title">
+              <span className="guide-icon">💡</span>
+              <strong>Guía Táctica: ¿Cómo interpretar y usar el Mapa de Tiros y xG?</strong>
+            </div>
+            <button type="button" className="tactical-guide-toggle-btn">
+              {showTacticalGuide ? 'Ocultar Explicación ▲' : 'Ver Metodología Completa ▼'}
+            </button>
+          </div>
+
+          <div className="tactical-guide-summary">
+            <span>🎯 xG = <strong>Expected Goals (Probabilidad estocástica de gol entre 0.00 y 1.00)</strong></span>
+            <span>📐 Criterios: <strong>Distancia euclidiana</strong> · <strong>Ángulo visible de portería</strong></span>
+          </div>
+
+          {showTacticalGuide && (
+            <div className="tactical-guide-body">
+              <div className="guide-card">
+                <h4>📖 ¿Qué es este mapa?</h4>
+                <p>
+                  Es una <strong>geolocalización de todos los remates</strong> efectuados hacia la portería rival sobre el medio campo ofensivo reglamentario. A cada tiro se le calcula el índice <strong>xG (Goles Esperados)</strong>, que evalúa la probabilidad matemática de que ese remate acabe en gol basándose en miles de disparos en posiciones idénticas.
+                </p>
+              </div>
+
+              <div className="guide-card">
+                <h4>📲 ¿Cómo se toman los datos?</h4>
+                <p>
+                  El sistema captura cada remate registrando los siguientes valores clave:
+                </p>
+                <ul>
+                  <li><strong>Ubicación de remate:</strong> Posición en el eje longitudinal ($X$) y sector lateral (Banda Izquierda, Pasillo Central, Banda Derecha).</li>
+                  <li><strong>Resultado real:</strong> Clasificación inmediata en <em>GOL</em> (⚽), <em>A puerta</em> (🎯), <em>Fuera</em> (❌) o <em>Bloqueado</em> (🚫).</li>
+                  <li><strong>Parámetros balísticos:</strong> Distancia a línea de gol (en metros) y ángulo subtendido entre ambos postes de la portería reglamentaria (7.32m).</li>
+                </ul>
+              </div>
+
+              <div className="guide-card">
+                <h4>🎯 ¿Cómo se debe usar táctica y operativamente?</h4>
+                <ul>
+                  <li><strong>Calidad vs. Cantidad:</strong> Un equipo con 15 tiros lejanos puede sumar apenas 0.40 xG total, mientras que un equipo con 4 tiros a bocajarro en el área pequeña puede sumar 2.30 xG. Evalúa si tus jugadores seleccionan bien los disparos o rematan precipitadamente desde zonas de bajo peligro.</li>
+                  <li><strong>Eficacia rematadora (Goles vs xG):</strong> Si tus goles convertidos superan al total xG, tu equipo está finalizando con gran precisión. Si los goles están muy por debajo del xG, existe un problema de definición o grandes paradas del portero rival.</li>
+                  <li><strong>Puntos de remate preferentes:</strong> Comprueba si los tiros nacen tras centros laterales (desde bandas hacia el corazón del área) o filtraciones frontales por el pasillo central.</li>
+                </ul>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 };

@@ -25,6 +25,7 @@ export const PassNetwork = ({
   const [selectedNode, setSelectedNode] = useState(null);
   const [selectedEdge, setSelectedEdge] = useState(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [showTacticalGuide, setShowTacticalGuide] = useState(false);
   const wrapperRef = useRef(null);
 
   const toggleFullscreen = useCallback(() => {
@@ -42,24 +43,45 @@ export const PassNetwork = ({
     return () => document.removeEventListener('fullscreenchange', handler);
   }, []);
 
+  // Función para determinar coordenadas base reglamentarias según posición real
+  const getBasePosition = (pos, idx) => {
+    const p = String(pos || '').toUpperCase().trim();
+    if (p === 'POR' || p === 'PT' || p === 'GK') return { x: 10, y: 50 };
+    if (p === 'LI' || p === 'LB' || p === 'LTI') return { x: 28, y: 18 };
+    if (p === 'LD' || p === 'RB' || p === 'LTD') return { x: 28, y: 82 };
+    if (p === 'DFC' || p === 'CB' || p === 'DEF') {
+      const isLeft = idx % 2 === 0;
+      return { x: 25, y: isLeft ? 36 : 64 };
+    }
+    if (p === 'MCD' || p === 'DM' || p === 'PIV') return { x: 42, y: 50 };
+    if (p === 'MC' || p === 'CM' || p === 'MED') {
+      const isLeft = idx % 2 === 0;
+      return { x: 50, y: isLeft ? 34 : 66 };
+    }
+    if (p === 'MCO' || p === 'AM' || p === 'MP') return { x: 58, y: 50 };
+    if (p === 'EI' || p === 'LW' || p === 'MI') return { x: 68, y: 18 };
+    if (p === 'ED' || p === 'RW' || p === 'MD') return { x: 68, y: 82 };
+    if (p === 'DC' || p === 'CF' || p === 'ST' || p === 'DEL') return { x: 75, y: 50 };
+    
+    const defaultGrid = [
+      { x: 10, y: 50 }, { x: 28, y: 20 }, { x: 25, y: 40 }, { x: 25, y: 60 }, { x: 28, y: 80 },
+      { x: 48, y: 30 }, { x: 45, y: 50 }, { x: 48, y: 70 },
+      { x: 70, y: 22 }, { x: 75, y: 50 }, { x: 70, y: 78 }
+    ];
+    return defaultGrid[idx % defaultGrid.length];
+  };
+
   // 1. Calcular posición promedio (centroide) y volumen de toques de cada jugador
   const playerNodes = useMemo(() => {
     const map = {};
 
-    // Posiciones tácticas de respaldo si no hay suficientes eventos registrados
-    const defaultPositions = [
-      { x: 10, y: 50 }, // Portero
-      { x: 28, y: 20 }, { x: 25, y: 40 }, { x: 25, y: 60 }, { x: 28, y: 80 }, // Defensas
-      { x: 48, y: 30 }, { x: 45, y: 50 }, { x: 48, y: 70 }, // Medios
-      { x: 70, y: 25 }, { x: 75, y: 50 }, { x: 70, y: 75 }  // Delanteros
-    ];
-
     players.forEach((p, idx) => {
-      const def = defaultPositions[idx % defaultPositions.length];
+      const def = getBasePosition(p.posicion || p.position, idx);
       map[p.id] = {
         id: p.id,
         name: p.nombre || p.name || `J#${p.dorsal || idx + 1}`,
         dorsal: p.dorsal || p.number || (idx + 1),
+        posicion: p.posicion || p.position || 'JUG',
         xSum: 0,
         ySum: 0,
         touchCount: 0,
@@ -71,9 +93,14 @@ export const PassNetwork = ({
     passes.forEach(pass => {
       const pId = pass.playerId || pass.fromPlayerId;
       if (pId && map[pId]) {
-        const fallback = ZONE_MAP[pass.type] || { x: 50, y: 50 };
+        let fallback = ZONE_MAP[pass.type] || { x: 50, y: 50 };
+        const sec = String(pass.sector || '').toLowerCase();
+        let py = (typeof pass.y === 'number' && pass.y >= 0 && pass.y <= 100) ? pass.y : fallback.y;
+        if (sec === 'left' || sec.includes('izq')) py = 18;
+        else if (sec === 'right' || sec.includes('der')) py = 82;
+        else if (sec === 'center' || sec.includes('cent')) py = 50;
+
         const px = typeof pass.x === 'number' ? pass.x : fallback.x;
-        const py = typeof pass.y === 'number' ? pass.y : fallback.y;
         map[pId].xSum += px;
         map[pId].ySum += py;
         map[pId].touchCount += 1;
@@ -92,13 +119,15 @@ export const PassNetwork = ({
   }, [passes, players]);
 
   // 2. Calcular enlaces (aristas) entre pares de jugadores
+  // Soporta tanto pases con emisor/receptor explícito como secuencias cronológicas de posesión
   const passEdges = useMemo(() => {
     const edgesMap = {};
 
+    // A) Enlaces explícitos
     passes.forEach(pass => {
       const from = pass.fromPlayerId || pass.playerId;
       const to = pass.toPlayerId || pass.receiverId;
-      const successful = pass.successful !== false && pass.outcome !== 'incomplete';
+      const successful = pass.successful !== false && pass.outcome !== 'incomplete' && pass.type !== 'pass_failed';
 
       if (from && to && from !== to) {
         const edgeKey = `${from}->${to}`;
@@ -115,6 +144,43 @@ export const PassNetwork = ({
         if (successful) edgesMap[edgeKey].successfulCount += 1;
       }
     });
+
+    // B) Reconstrucción de secuencias continuas de posesión si no hay receptores explícitos
+    if (Object.keys(edgesMap).length === 0 && passes.length > 1) {
+      // Ordenar cronológicamente por minuto y timestamp
+      const sorted = [...passes].sort((a, b) => {
+        const minA = Number(a.minute || a.time || 0);
+        const minB = Number(b.minute || b.time || 0);
+        if (minA !== minB) return minA - minB;
+        return (new Date(a.timestamp || 0).getTime()) - (new Date(b.timestamp || 0).getTime());
+      });
+
+      for (let i = 0; i < sorted.length - 1; i++) {
+        const p1 = sorted[i];
+        const p2 = sorted[i + 1];
+        const from = p1.playerId;
+        const to = p2.playerId;
+        const min1 = Number(p1.minute || p1.time || 0);
+        const min2 = Number(p2.minute || p2.time || 0);
+
+        // Si ocurren dentro del mismo minuto o minuto consecutivo (cadena de posesión del mismo equipo)
+        if (from && to && from !== to && Math.abs(min2 - min1) <= 2) {
+          const successful = p1.type !== 'pass_failed' && p1.outcome !== 'incomplete';
+          const edgeKey = `${from}->${to}`;
+          if (!edgesMap[edgeKey]) {
+            edgesMap[edgeKey] = {
+              id: edgeKey,
+              from,
+              to,
+              count: 0,
+              successfulCount: 0
+            };
+          }
+          edgesMap[edgeKey].count += 1;
+          if (successful) edgesMap[edgeKey].successfulCount += 1;
+        }
+      }
+    }
 
     return Object.values(edgesMap);
   }, [passes]);
@@ -383,6 +449,57 @@ export const PassNetwork = ({
           <span>Grosor = Mayor frecuencia</span>
         </div>
       </div>
+
+      {/* Panel pedagógico y táctico (oculto en fullscreen para evitar scroll) */}
+      {!isFullscreen && (
+        <div className="tactical-guide-panel" style={{ marginTop: '16px' }}>
+          <div className="tactical-guide-header" onClick={() => setShowTacticalGuide(prev => !prev)}>
+            <div className="tactical-guide-title">
+              <span className="guide-icon">💡</span>
+              <strong>Guía Táctica: ¿Cómo interpretar y usar la Red de Pases?</strong>
+            </div>
+            <button type="button" className="tactical-guide-toggle-btn">
+              {showTacticalGuide ? 'Ocultar Explicación ▲' : 'Ver Metodología Completa ▼'}
+            </button>
+          </div>
+
+          <div className="tactical-guide-summary">
+            <span>⚽ Nodos: <strong>Tamaño = Volumen de toques/pases</strong></span>
+            <span>🔗 Líneas: <strong>Grosor = Frecuencia asociativa</strong> · <strong>Color = % Acierto</strong></span>
+          </div>
+
+          {showTacticalGuide && (
+            <div className="tactical-guide-body">
+              <div className="guide-card">
+                <h4>📖 ¿Qué es este mapa?</h4>
+                <p>
+                  Es un <strong>grafo táctico relacional</strong> que proyecta el sistema de juego real de tu equipo en el campo. Cada círculo (nodo) representa a un jugador en su <strong>centroide de posición promedio</strong> (dónde interviene habitualmente), mientras que las líneas (aristas) reflejan las conexiones de pase entre compañeros.
+                </p>
+              </div>
+
+              <div className="guide-card">
+                <h4>📲 ¿Cómo se toman los datos?</h4>
+                <p>
+                  El motor táctico calcula las conexiones a partir de dos fuentes verificadas:
+                </p>
+                <ul>
+                  <li><strong>Pases individuales y colectivos:</strong> Registro de pases completados, pases fallidos, pases clave y recuperaciones asociados a cada jugador.</li>
+                  <li><strong>Cadenas de posesión:</strong> Secuencia temporal cronológica de intervenciones consecutivas entre compañeros, reconstruyendo el circuito de circulación del balón.</li>
+                </ul>
+              </div>
+
+              <div className="guide-card">
+                <h4>🎯 ¿Cómo se debe usar táctica y operativamente?</h4>
+                <ul>
+                  <li><strong>Identificar al eje del juego:</strong> El nodo más grande y con más conexiones gruesas es el catalizador de tu juego (suele ser el mediocentro o el central organizador). Si el rival lo presiona, necesitas activar vías alternativas.</li>
+                  <li><strong>Detectar jugadores aislados:</strong> Si tu delantero centro o extremos no tienen líneas de pase hacia ellos, significa que están desabastecidos o que el equipo juega en bloques inconexos.</li>
+                  <li><strong>Verificar la salida limpia de balón:</strong> Observa si los centrales (#4 y #5) conectan con el pivote (#6) e interiores (#8 y #10) con líneas verdes (alta precisión), o si se recurre al pelotazo largo directo hacia arriba.</li>
+                </ul>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 };

@@ -343,8 +343,35 @@
 .dark .radar-chart-container,
 .dark .match-timeline-container,
 .dark .comparative-bars-container,
-.dark .stats-table-container {
-  background: #1A1A1A;
+.dark .stats-table-container,
+.theme-dark .heat-map-container,
+.theme-dark .pass-network-container,
+.theme-dark .shot-map-container,
+.theme-dark .radar-chart-container,
+.theme-dark .match-timeline-container,
+.theme-dark .comparative-bars-container,
+.theme-dark .stats-table-container {
+  background: #15241D !important;
+  border-color: rgba(212, 168, 67, 0.35) !important;
+}
+
+html.light .heat-map-container,
+html.light .pass-network-container,
+html.light .shot-map-container,
+html.light .radar-chart-container,
+html.light .match-timeline-container,
+html.light .comparative-bars-container,
+html.light .stats-table-container,
+:root:not(.dark) .heat-map-container,
+:root:not(.dark) .pass-network-container,
+:root:not(.dark) .shot-map-container,
+:root:not(.dark) .radar-chart-container,
+:root:not(.dark) .match-timeline-container,
+:root:not(.dark) .comparative-bars-container,
+:root:not(.dark) .stats-table-container {
+  background: #FFFFFF;
+  border-color: #CBD5E1;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
 }
 
 .heat-map-header,
@@ -403,6 +430,24 @@
 
 .flame-icon, .network-icon {
   color: #D4A843 !important;
+}
+
+.pass-network-summary {
+  font-size: 12px;
+  color: var(--text-secondary, #475569);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.dark .pass-network-summary,
+.theme-dark .pass-network-summary {
+  color: #CBD5E1;
+}
+
+.pass-network-summary strong {
+  color: var(--accent-gold, #D4A843);
 }
 
 .heat-mode-pills {
@@ -593,7 +638,9 @@
   border-radius: 8px;
 }
 
-.theme-light:not(.heat-map-fullscreen-active) .heatmap-legend {
+.theme-light:not(.heat-map-fullscreen-active) .heatmap-legend,
+html.light :not(.heat-map-fullscreen-active) .heatmap-legend,
+:root:not(.dark) :not(.heat-map-fullscreen-active) .heatmap-legend {
   background: #F1F5F9;
   border-color: #CBD5E1;
   color: #0F172A !important;
@@ -644,7 +691,9 @@
   color: #F8FAFC !important;
 }
 
-.theme-light:not(.pass-network-fullscreen-active) .pass-network-legend {
+.theme-light:not(.pass-network-fullscreen-active) .pass-network-legend,
+html.light :not(.pass-network-fullscreen-active) .pass-network-legend,
+:root:not(.dark) :not(.pass-network-fullscreen-active) .pass-network-legend {
   background: #F1F5F9;
   border-color: #CBD5E1;
   color: #0F172A !important;
@@ -693,7 +742,9 @@
   color: #F8FAFC !important;
 }
 
-.theme-light:not(.shot-map-fullscreen-active) .shot-map-legend {
+.theme-light:not(.shot-map-fullscreen-active) .shot-map-legend,
+html.light :not(.shot-map-fullscreen-active) .shot-map-legend,
+:root:not(.dark) :not(.shot-map-fullscreen-active) .shot-map-legend {
   background: #F1F5F9;
   border-color: #CBD5E1;
   color: #0F172A !important;
@@ -743,7 +794,9 @@
   border-radius: 8px;
 }
 
-.theme-light:not(.shot-map-fullscreen-active) .shot-kpi-card {
+.theme-light:not(.shot-map-fullscreen-active) .shot-kpi-card,
+html.light :not(.shot-map-fullscreen-active) .shot-kpi-card,
+:root:not(.dark) :not(.shot-map-fullscreen-active) .shot-kpi-card {
   background: #FFFFFF;
   border: 1px solid #CBD5E1;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
@@ -770,7 +823,9 @@
   color: #FFFFFF;
 }
 
-.theme-light:not(.shot-map-fullscreen-active) .kpi-value {
+.theme-light:not(.shot-map-fullscreen-active) .kpi-value,
+html.light :not(.shot-map-fullscreen-active) .kpi-value,
+:root:not(.dark) :not(.shot-map-fullscreen-active) .kpi-value {
   color: #0F172A;
 }
 
@@ -781,7 +836,9 @@
   text-transform: uppercase;
 }
 
-.theme-light:not(.shot-map-fullscreen-active) .kpi-label {
+.theme-light:not(.shot-map-fullscreen-active) .kpi-label,
+html.light :not(.shot-map-fullscreen-active) .kpi-label,
+:root:not(.dark) :not(.shot-map-fullscreen-active) .kpi-label {
   color: #475569;
 }
 
@@ -1069,5 +1126,166 @@
   color: var(--accent-gold, #D4A843);
   margin: 4px 0 0 0;
   font-weight: 600;
+}
+
+/* ── 8. PANELES PEDAGÓGICOS Y GUÍAS TÁCTICAS EXPLICATIVAS ───────────────── */
+.tactical-guide-panel {
+  margin-top: 18px;
+  padding: 16px;
+  background: rgba(212, 168, 67, 0.06);
+  border: 1.5px dashed rgba(212, 168, 67, 0.45);
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  transition: all 0.25s ease;
+}
+
+.dark .tactical-guide-panel,
+.theme-dark .tactical-guide-panel {
+  background: rgba(0, 0, 0, 0.25);
+  border-color: rgba(212, 168, 67, 0.35);
+}
+
+.tactical-guide-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.tactical-guide-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13.5px;
+  font-weight: 800;
+  color: var(--text-primary, #1B3A2D);
+}
+
+.dark .tactical-guide-title,
+.theme-dark .tactical-guide-title {
+  color: #F8FAFC;
+}
+
+.guide-icon {
+  font-size: 18px;
+}
+
+.tactical-guide-toggle-btn {
+  background: transparent;
+  border: 1px solid var(--accent-gold, #D4A843);
+  color: var(--accent-gold, #D4A843);
+  padding: 5px 12px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.tactical-guide-toggle-btn:hover {
+  background: rgba(212, 168, 67, 0.15);
+}
+
+.tactical-guide-summary {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  flex-wrap: wrap;
+  gap: 16px;
+  font-size: 12px;
+  color: var(--text-secondary, #475569);
+  padding: 8px 12px;
+  background: rgba(0, 0, 0, 0.03);
+  border-radius: 8px;
+  border: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.dark .tactical-guide-summary,
+.theme-dark .tactical-guide-summary {
+  color: #CBD5E1;
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+.tactical-guide-summary strong {
+  color: var(--accent-gold, #D4A843);
+}
+
+.tactical-guide-body {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 14px;
+  margin-top: 6px;
+  animation: fadeIn 0.25s ease-out;
+}
+
+.guide-card {
+  padding: 14px 16px;
+  background: var(--bg-card, #FFFFFF);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 10px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.03);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.dark .guide-card,
+.theme-dark .guide-card {
+  background: #1A2820;
+  border-color: rgba(255, 255, 255, 0.1);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.guide-card h4 {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--accent-gold, #D4A843);
+}
+
+.guide-card p {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.55;
+  color: var(--text-primary, #334155);
+}
+
+.dark .guide-card p,
+.theme-dark .guide-card p {
+  color: #E2E8F0;
+}
+
+.guide-card ul {
+  margin: 0;
+  padding-left: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.guide-card li {
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--text-primary, #334155);
+}
+
+.dark .guide-card li,
+.theme-dark .guide-card li {
+  color: #CBD5E1;
+}
+
+.guide-card strong {
+  color: var(--text-primary, #0F172A);
+}
+
+.dark .guide-card strong,
+.theme-dark .guide-card strong {
+  color: #FFFFFF;
 }
 

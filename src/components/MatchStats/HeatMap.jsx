@@ -7,8 +7,18 @@ const ZONE_MAP = {
   shot_off_target_own:   { x: 80, y: 45 },
   shot_on_target_rival:  { x: 12, y: 50 },
   shot_off_target_rival: { x: 20, y: 55 },
+  gol:                   { x: 92, y: 50 },
+  goal:                  { x: 92, y: 50 },
+  gol_local:             { x: 92, y: 50 },
+  gol_rival:             { x: 8,  y: 50 },
+  pass:                  { x: 50, y: 50 },
+  pase:                  { x: 50, y: 50 },
+  pass_completed:        { x: 55, y: 50 },
+  pass_failed:           { x: 52, y: 50 },
+  key_pass:              { x: 74, y: 50 },
   recovery:              { x: 55, y: 48 },
   loss:                  { x: 45, y: 52 },
+  ball_loss:             { x: 45, y: 52 },
   duel_won:              { x: 58, y: 45 },
   duel_lost:             { x: 42, y: 55 },
   foul_favor:            { x: 62, y: 50 },
@@ -35,6 +45,7 @@ export const HeatMap = ({
   const [hoveredCell, setHoveredCell] = useState(null);
   const [activeTab, setActiveTab] = useState('density');
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [showTacticalGuide, setShowTacticalGuide] = useState(false);
   const wrapperRef = useRef(null);
 
   const COLS = 15;
@@ -59,8 +70,8 @@ export const HeatMap = ({
   const filteredEvents = useMemo(() => {
     return events.filter(e => {
       if (selectedPlayerId !== 'all' && e.playerId !== selectedPlayerId) return false;
-      if (activeTab === 'passes' && !['recovery','duel_won','pass','pase'].includes(e.type)) return false;
-      if (activeTab === 'shots' && !['shot_on_target_own','shot_off_target_own','shot','tiro','gol'].includes(e.type)) return false;
+      if (activeTab === 'passes' && !['recovery','duel_won','pass','pase','pass_completed','pass_failed','key_pass'].includes(e.type)) return false;
+      if (activeTab === 'shots' && !['shot_on_target_own','shot_off_target_own','shot_on_target_rival','shot_off_target_rival','shot','tiro','gol','goal','gol_local','gol_rival'].includes(e.type)) return false;
       return true;
     });
   }, [events, selectedPlayerId, activeTab]);
@@ -287,20 +298,53 @@ export const HeatMap = ({
         </div>
       </div>
 
-      {/* Panel explicativo de sectores (oculto en fullscreen para evitar scroll) */}
+      {/* Panel explicativo pedagógico y táctico (oculto en fullscreen para evitar scroll) */}
       {!isFullscreen && (
-        <div className="heatmap-zone-info">
-          <p className="zone-info-title">📍 <strong>Mapeo de Zonas y Bandas del Campo</strong></p>
-          <p className="zone-info-desc">
-            Cada botón de captura registra automáticamente el tercio (Defensa, Medio, Ataque) y el <strong>sector activo</strong> (Banda Izquierda, Centro, Banda Derecha) seleccionado en la barra de captura.
-          </p>
-          <div className="zone-info-grid">
-            <div className="zone-info-item"><span className="zone-dot" style={{background:'#EF4444'}}/><div><strong>Ataque</strong><span>Tiros a puerta, Córners a favor, Fuera de juego</span></div></div>
-            <div className="zone-info-item"><span className="zone-dot" style={{background:'#D4A843'}}/><div><strong>Medio</strong><span>Recuperaciones, Pérdidas, Duelos, Faltas</span></div></div>
-            <div className="zone-info-item"><span className="zone-dot" style={{background:'#3B82F6'}}/><div><strong>Defensa</strong><span>Tiros rivales, Córners en contra, Tarjetas</span></div></div>
+        <div className="tactical-guide-panel">
+          <div className="tactical-guide-header" onClick={() => setShowTacticalGuide(prev => !prev)}>
+            <div className="tactical-guide-title">
+              <span className="guide-icon">💡</span>
+              <strong>Guía Táctica: ¿Cómo interpretar y usar este Mapa de Calor?</strong>
+            </div>
+            <button type="button" className="tactical-guide-toggle-btn">
+              {showTacticalGuide ? 'Ocultar Explicación ▲' : 'Ver Metodología Completa ▼'}
+            </button>
           </div>
-          {!hasEvents && (
-            <p className="zone-info-empty">⬆️ Pulsa botones en <strong>"Captura en Vivo"</strong> para poblar el mapa.</p>
+
+          <div className="tactical-guide-summary">
+            <span>📍 Tercios analizados: <strong>Defensa (0-35m)</strong> · <strong>Medio (35-70m)</strong> · <strong>Ataque (70-105m)</strong></span>
+            <span>⚡ Sectores laterales: <strong>Banda Izq (0-33%)</strong> · <strong>Centro (33-66%)</strong> · <strong>Banda Der (66-100%)</strong></span>
+          </div>
+
+          {showTacticalGuide && (
+            <div className="tactical-guide-body">
+              <div className="guide-card">
+                <h4>📖 ¿Qué es este mapa?</h4>
+                <p>
+                  Es una representación matricial (15 columnas × 10 filas) de la <strong>densidad espacial e intensidad de juego</strong> de tu equipo o de un jugador específico. Refleja dónde se concentraron las acciones con balón (pases, recuperaciones, duelos, faltas y disparos) a lo largo del partido.
+                </p>
+              </div>
+
+              <div className="guide-card">
+                <h4>📲 ¿Cómo se toman los datos?</h4>
+                <p>
+                  Cada intervención registrada en la pestaña <em>"Captura en Vivo"</em> o en la <em>"Carga Post-Partido"</em> asigna automáticamente las coordenadas en base a dos parámetros verificados:
+                </p>
+                <ul>
+                  <li><strong>Tercio longitudinal:</strong> Determinado según la naturaleza de la jugada (Ataque: remates y centros; Medio: duelos, pases y pérdidas; Defensa: despejes y faltas defensivas).</li>
+                  <li><strong>Sector de jugada:</strong> Asignado por el botón de sector activo (⬅️ Banda Izquierda, ⏺️ Centro, ➡️ Banda Derecha) seleccionado durante la captura.</li>
+                </ul>
+              </div>
+
+              <div className="guide-card">
+                <h4>🎯 ¿Cómo se debe usar táctica y operativamente?</h4>
+                <ul>
+                  <li><strong>Detectar asimetrías ofensivas:</strong> Comprueba si el equipo ataca obsesivamente por una banda y desaprovecha el lado débil del rival.</li>
+                  <li><strong>Evaluar la altura del bloque:</strong> Si las zonas rojas de alta intensidad están en tercio medio y defensivo, el equipo jugó en bloque bajo; si predominan en medio campo y ataque, la presión alta y el dominio territorial fueron efectivos.</li>
+                  <li><strong>Análisis por jugador:</strong> Selecciona un jugador en el desplegable superior para verificar si los extremos mantuvieron la amplitud, si el pivote dominó el pasillo central o si el delantero pisó el área con frecuencia.</li>
+                </ul>
+              </div>
+            </div>
           )}
         </div>
       )}

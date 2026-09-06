@@ -89,6 +89,9 @@ export const cleanPdfText = (text) => {
   return str;
 };
 
+// Factor de escalado de alta densidad (3x Retina = 300+ DPI para impresión y visualización nítida sin pixelación)
+export const CANVAS_DPI_SCALE = 3;
+
 /**
  * Convierte una URL remota (Firebase Storage / Web) a Base64 data URL con fallback SVG si falla.
  * @param {string} url - URL remota
@@ -97,10 +100,15 @@ export const cleanPdfText = (text) => {
 const generateInitialsAvatar = (fallbackInitials) => {
   try {
     const safeInitials = (fallbackInitials || 'M11').substring(0, 2).toUpperCase();
+    const scale = CANVAS_DPI_SCALE;
+    const baseSize = 120;
     const canvas = document.createElement('canvas');
-    canvas.width = 120;
-    canvas.height = 120;
+    canvas.width = Math.round(baseSize * scale);
+    canvas.height = Math.round(baseSize * scale);
     const ctx = canvas.getContext('2d');
+    ctx.scale(scale, scale);
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = 'high';
     
     ctx.fillStyle = '#172D21';
     ctx.beginPath();
@@ -184,10 +192,12 @@ const convertImageToPngViaCanvas = (srcUrl, timeoutMs = 2500) => {
         canvas.width = w;
         canvas.height = h;
         const ctx = canvas.getContext('2d');
+        ctx.imageSmoothingEnabled = true;
+        ctx.imageSmoothingQuality = 'high';
         ctx.fillStyle = '#FFFFFF';
         ctx.fillRect(0, 0, w, h);
         ctx.drawImage(img, 0, 0, w, h);
-        const pngDataUrl = canvas.toDataURL('image/png', 0.95);
+        const pngDataUrl = canvas.toDataURL('image/png', 1.0);
         resolve(pngDataUrl);
       } catch (e) {
         console.warn('[convertImageToPngViaCanvas] Canvas error:', e);
@@ -339,7 +349,7 @@ export const drawPdfFooter = (doc, pageW = 210, pageH = 297, currentPage = 1, to
  * Captura un elemento DOM usando html2canvas forzando estilos claros de alto contraste,
  * garantizando que el modo oscuro del cliente no afecte el resultado.
  */
-export const captureElementHighContrast = async (html2canvas, element, customScale = 2) => {
+export const captureElementHighContrast = async (html2canvas, element, customScale = 3) => {
   if (!element) return null;
 
   const clone = element.cloneNode(true);
@@ -392,10 +402,14 @@ export const captureElementHighContrast = async (html2canvas, element, customSca
 export const drawRadarChartCanvas = (metrics = [], size = 520) => {
   if (!metrics || metrics.length === 0) return null;
   try {
+    const scale = CANVAS_DPI_SCALE;
     const canvas = document.createElement('canvas');
-    canvas.width = size;
-    canvas.height = size;
+    canvas.width = Math.round(size * scale);
+    canvas.height = Math.round(size * scale);
     const ctx = canvas.getContext('2d');
+    ctx.scale(scale, scale);
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = 'high';
 
     ctx.fillStyle = '#FFFFFF';
     ctx.fillRect(0, 0, size, size);
@@ -526,10 +540,14 @@ export const drawMatchRadarChartCanvas = ({
   height = 440
 }) => {
   try {
+    const scale = CANVAS_DPI_SCALE;
     const canvas = document.createElement('canvas');
-    canvas.width = width;
-    canvas.height = height;
+    canvas.width = Math.round(width * scale);
+    canvas.height = Math.round(height * scale);
     const ctx = canvas.getContext('2d');
+    ctx.scale(scale, scale);
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = 'high';
 
     // Fondo blanco limpio para PDF
     ctx.fillStyle = '#FFFFFF';
@@ -788,10 +806,14 @@ export const drawMatchRadarChartCanvas = ({
 export const drawEvolutionChartCanvas = (points = [], width = 640, height = 260, title = 'Evolución') => {
   if (!points || points.length === 0) return null;
   try {
+    const scale = CANVAS_DPI_SCALE;
     const canvas = document.createElement('canvas');
-    canvas.width = width;
-    canvas.height = height;
+    canvas.width = Math.round(width * scale);
+    canvas.height = Math.round(height * scale);
     const ctx = canvas.getContext('2d');
+    ctx.scale(scale, scale);
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = 'high';
 
     ctx.fillStyle = '#FFFFFF';
     ctx.fillRect(0, 0, width, height);
@@ -914,10 +936,14 @@ export const drawEvolutionChartCanvas = (points = [], width = 640, height = 260,
  */
 export const drawMomentumChartCanvas = (events = [], matchDuration = 90, width = 640, height = 220) => {
   try {
+    const scale = CANVAS_DPI_SCALE;
     const canvas = document.createElement('canvas');
-    canvas.width = width;
-    canvas.height = height;
+    canvas.width = Math.round(width * scale);
+    canvas.height = Math.round(height * scale);
     const ctx = canvas.getContext('2d');
+    ctx.scale(scale, scale);
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = 'high';
 
     ctx.fillStyle = '#FFFFFF';
     ctx.fillRect(0, 0, width, height);
@@ -1057,10 +1083,14 @@ export const drawTacticalPitchCanvas = async ({
   height = 510
 }) => {
   try {
+    const scale = CANVAS_DPI_SCALE;
     const canvas = document.createElement('canvas');
-    canvas.width = width;
-    canvas.height = height;
+    canvas.width = Math.round(width * scale);
+    canvas.height = Math.round(height * scale);
     const ctx = canvas.getContext('2d');
+    ctx.scale(scale, scale);
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = 'high';
 
     // 1. Fondo exterior institucional oscuro
     ctx.fillStyle = '#0B1812';
@@ -1479,10 +1509,14 @@ export const drawPostMatchDonutsCanvas = ({
   height = 190
 }) => {
   try {
+    const scale = CANVAS_DPI_SCALE;
     const canvas = document.createElement('canvas');
-    canvas.width = width;
-    canvas.height = height;
+    canvas.width = Math.round(width * scale);
+    canvas.height = Math.round(height * scale);
     const ctx = canvas.getContext('2d');
+    ctx.scale(scale, scale);
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = 'high';
 
     // Fondo tarjeta blanca con borde sutil
     ctx.fillStyle = '#FFFFFF';
@@ -1667,10 +1701,14 @@ export const drawStatsComparisonAndHalvesCanvas = ({
   height = 240
 }) => {
   try {
+    const scale = CANVAS_DPI_SCALE;
     const canvas = document.createElement('canvas');
-    canvas.width = width;
-    canvas.height = height;
+    canvas.width = Math.round(width * scale);
+    canvas.height = Math.round(height * scale);
     const ctx = canvas.getContext('2d');
+    ctx.scale(scale, scale);
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = 'high';
 
     // Fondo global blanco
     ctx.fillStyle = '#FFFFFF';
@@ -1929,10 +1967,14 @@ export const drawSectorsDistributionCanvas = ({
   height = 80
 }) => {
   try {
+    const scale = CANVAS_DPI_SCALE;
     const canvas = document.createElement('canvas');
-    canvas.width = width;
-    canvas.height = height;
+    canvas.width = Math.round(width * scale);
+    canvas.height = Math.round(height * scale);
     const ctx = canvas.getContext('2d');
+    ctx.scale(scale, scale);
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = 'high';
 
     // Fondo blanco
     ctx.fillStyle = '#FFFFFF';

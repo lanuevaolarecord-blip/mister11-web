@@ -16,12 +16,14 @@ const getPdfLibs = async () => {
  */
 const drawAttendanceTrendChartCanvas = (trendData = [], threshold = 70, isEn = false, width = 760, height = 300) => {
   try {
-    const scale = 2;
+    const scale = 3;
     const canvas = document.createElement('canvas');
     canvas.width = width * scale;
     canvas.height = height * scale;
     const ctx = canvas.getContext('2d');
     ctx.scale(scale, scale);
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = 'high';
 
     // Fondo blanco con esquinas redondeadas
     ctx.fillStyle = '#FFFFFF';
@@ -262,12 +264,14 @@ const drawAttendanceDonutChartCanvas = (
   height = 240
 ) => {
   try {
-    const scale = 2;
+    const scale = 3;
     const canvas = document.createElement('canvas');
     canvas.width = width * scale;
     canvas.height = height * scale;
     const ctx = canvas.getContext('2d');
     ctx.scale(scale, scale);
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = 'high';
 
     // Fondo blanco
     ctx.fillStyle = '#FFFFFF';

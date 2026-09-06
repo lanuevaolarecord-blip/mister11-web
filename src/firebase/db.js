@@ -51,11 +51,29 @@ export const subscribeToCollection = (collectionName, callback, filters = []) =>
   });
 };
 
+const sanitizeForFirestore = (obj) => {
+  if (obj === null || obj === undefined) return null;
+  if (typeof obj !== 'object') return obj;
+  if (Array.isArray(obj)) return obj.map(sanitizeForFirestore).filter((v) => v !== undefined);
+  // Preservar FieldValue o Timestamp de Firestore
+  if (obj._methodName || obj.constructor?.name === 'FieldValue' || (obj.seconds !== undefined && obj.nanoseconds !== undefined)) {
+    return obj;
+  }
+  const res = {};
+  for (const [k, v] of Object.entries(obj)) {
+    if (v === undefined) continue;
+    const clean = sanitizeForFirestore(v);
+    if (clean !== undefined) res[k] = clean;
+  }
+  return res;
+};
+
 export const addDocument = async (collectionName, data) => {
   try {
     const colRef = collection(db, collectionName);
+    const cleanData = sanitizeForFirestore(data) || {};
     const docRef = await addDoc(colRef, {
-      ...data,
+      ...cleanData,
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp()
     });
@@ -69,10 +87,13 @@ export const addDocument = async (collectionName, data) => {
 export const updateDocument = async (collectionName, id, data) => {
   try {
     const docRef = doc(db, collectionName, id);
-    await updateDoc(docRef, {
-      ...data,
+    const cleanData = sanitizeForFirestore(data) || {};
+    // setDoc con { merge: true } asegura que si el documento no existe aún
+    // (ej. ID autogenerado temporal match_...), se cree automáticamente sin fallar con "No document to update"
+    await setDoc(docRef, {
+      ...cleanData,
       updatedAt: serverTimestamp()
-    });
+    }, { merge: true });
   } catch (error) {
     console.error(`Error updating document ${id} in ${collectionName}:`, error);
     throw error;
@@ -82,8 +103,9 @@ export const updateDocument = async (collectionName, id, data) => {
 export const setDocument = async (collectionName, id, data) => {
   try {
     const docRef = doc(db, collectionName, id);
+    const cleanData = sanitizeForFirestore(data) || {};
     await setDoc(docRef, {
-      ...data,
+      ...cleanData,
       updatedAt: serverTimestamp()
     }, { merge: true });
   } catch (error) {

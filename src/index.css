@@ -485,6 +485,71 @@ a {
   color: var(--text-primary);
 }
 
+/* ─── MODAL GLOBAL OVERLAY & SHEETS (DESKTOP & MOBILE) ─── */
+.modal-overlay {
+  position: fixed !important;
+  inset: 0 !important;
+  width: 100vw !important;
+  height: 100dvh !important;
+  background: rgba(10, 20, 15, 0.72) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  z-index: 20000 !important;
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
+  padding: 20px;
+  box-sizing: border-box;
+}
+
+.modal-content {
+  background: var(--bg-card, #FFFFFF);
+  width: 92%;
+  max-width: 680px;
+  max-height: 90vh;
+  border-radius: 16px;
+  box-shadow: 0 24px 48px rgba(0, 0, 0, 0.3);
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--border-color);
+  overflow: hidden;
+  position: relative;
+  box-sizing: border-box;
+}
+
+.modal-content.large {
+  max-width: 860px;
+  width: 95%;
+  max-height: 92vh;
+}
+
+.modal-header {
+  flex-shrink: 0;
+  padding: 18px 24px;
+  border-bottom: 1px solid var(--border-color);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: var(--bg-card);
+}
+
+.modal-body {
+  flex: 1 1 auto;
+  padding: 24px;
+  overflow-y: auto !important;
+  -webkit-overflow-scrolling: touch;
+}
+
+.modal-footer {
+  flex-shrink: 0;
+  padding: 16px 24px;
+  border-top: 1px solid var(--border-color);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: var(--bg-card);
+}
+
 .protocolo-card {
   background-color: #F5F0E8;
   border-left: 4px solid #D4A843;
@@ -1038,6 +1103,7 @@ button, .nav-item, input, select, .icon-btn, .topbar-btn, .tool-icon-btn {
 
   .modal-overlay {
     align-items: flex-end !important;
+    padding: 0 !important;
     z-index: 20000 !important;
   }
 

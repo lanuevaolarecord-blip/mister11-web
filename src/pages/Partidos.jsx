@@ -7,7 +7,7 @@ import { usePlayers } from '../hooks/usePlayers';
 import { useAuth } from '../context/AuthContext';
 import { useSettings } from '../hooks/useSettings';
 import { useTeams } from '../hooks/useTeams';
-import { generatePostMatchReportPDF } from '../utils/pdfGenerator';
+import { generatePostMatchReportPDF, generateMatchesCalendarPDF } from '../utils/pdfGenerator';
 import { generateGoogleCalendarUrl, generateICSContent, downloadICSFile } from '../utils/calendarHelper';
 import { PREDEFINED_FORMATIONS } from '../utils/formaciones';
 import { useCustomFormations } from '../hooks/useCustomFormations';
@@ -1106,13 +1106,23 @@ const Partidos = () => {
             {viewMode === 'LIST' ? (
               <>
                 {matches.length > 0 && (
-                  <button
-                    className="btn-outline-dark flex-1 md:flex-initial px-3 py-2 text-xs md:text-sm"
-                    onClick={handleExportAllMatchesICS}
-                    style={{ minHeight: '40px', fontWeight: 'bold' }}
-                  >
-                    📥 EXPORTAR ICS
-                  </button>
+                  <>
+                    <button
+                      className="btn-outline-dark flex-1 md:flex-initial px-3 py-2 text-xs md:text-sm"
+                      onClick={() => generateMatchesCalendarPDF(matches, activeTeam)}
+                      style={{ minHeight: '40px', fontWeight: 'bold' }}
+                      title="Exportar calendario oficial de la temporada a PDF"
+                    >
+                      📄 CALENDARIO PDF
+                    </button>
+                    <button
+                      className="btn-outline-dark flex-1 md:flex-initial px-3 py-2 text-xs md:text-sm"
+                      onClick={handleExportAllMatchesICS}
+                      style={{ minHeight: '40px', fontWeight: 'bold' }}
+                    >
+                      📥 EXPORTAR ICS
+                    </button>
+                  </>
                 )}
                 <button className="btn-primary-dark flex-1 md:flex-initial px-3 py-2 text-xs md:text-sm" onClick={handleNewMatch} style={{ minHeight: '40px' }}>+ NUEVO PARTIDO</button>
               </>
@@ -1223,6 +1233,7 @@ const Partidos = () => {
                 matches={matches}
                 teamId={activeTeamId}
                 language={settings?.language}
+                activeTeam={activeTeam}
               />
             </div>
           )}
@@ -1251,9 +1262,9 @@ const Partidos = () => {
           <div className={`editor-content ${editTab === 'LIVE-STATS' ? 'livestats-active' : ''}`}>
             {/* PESTAÑA: PRE-PARTIDO */}
             {editTab === 'PRE-PARTIDO' && (
-              <div className="tab-pane pre-partido-container">
+              <div className="tab-pane pre-partido-container" style={{ padding: '24px', boxSizing: 'border-box' }}>
                 <h3 className="section-title">Datos Generales del Encuentro</h3>
-                <div className="form-grid grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+                <div className="form-grid grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 w-full">
                   <div className="form-group full">
                     <label>Equipo Rival</label>
                     <input

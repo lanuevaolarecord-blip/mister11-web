@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { collection, onSnapshot, doc, setDoc, updateDoc, serverTimestamp, increment } from 'firebase/firestore';
+import { collection, onSnapshot, doc, setDoc, updateDoc, deleteDoc, serverTimestamp, increment } from 'firebase/firestore';
 import { db } from '../../firebaseConfig';
 import { useTranslation } from '../../hooks/useTranslation';
 import { getWeekKey } from '../../hooks/useCognitiveSync';
 import { RETOS_CATALOG } from '../games/retos/retosConfig';
 import { showToast } from '../../utils/toast';
-import { Brain, CheckCircle2, Star, TrendingUp, Clock, Target, Plus, X, Award } from 'lucide-react';
+import { Brain, CheckCircle2, Star, TrendingUp, Clock, Target, Plus, X, Award, Check } from 'lucide-react';
 import { NIVEL_LABELS, getCategoria } from '../../utils/cognitiveLevels';
 import '../games/Games.css';
 
@@ -35,7 +35,7 @@ export const CoachCognitiveSupervision = ({ player, teamPath, teamId }) => {
   const [cognitiveSessions, setCognitiveSessions] = useState([]);
   const [activeAssignments, setActiveAssignments] = useState([]);
   const [showAssignModal, setShowAssignModal] = useState(false);
-  const [selectedGameId, setSelectedGameId] = useState('g1');
+  const [selectedGameIds, setSelectedGameIds] = useState(['g1']);
   const [assignTarget, setAssignTarget] = useState('player'); // 'player' | 'team'
   const [verifying, setVerifying] = useState(false);
 
@@ -112,34 +112,74 @@ export const CoachCognitiveSupervision = ({ player, teamPath, teamId }) => {
     }
   };
 
-  // Acción: Crear asignación de juego o reto
+  // Alternar selección de un juego/reto
+  const toggleGameSelection = (gid) => {
+    setSelectedGameIds(prev =>
+      prev.includes(gid) ? prev.filter(x => x !== gid) : [...prev, gid]
+    );
+  };
+
+  const handleSelectAllCognitive = () => {
+    const cogIds = COGNITIVE_GAMES_LIST.map(g => g.id);
+    const allSelected = cogIds.every(id => selectedGameIds.includes(id));
+    if (allSelected) {
+      setSelectedGameIds(prev => prev.filter(id => !cogIds.includes(id)));
+    } else {
+      setSelectedGameIds(prev => Array.from(new Set([...prev, ...cogIds])));
+    }
+  };
+
+  const handleSelectAllRetos = () => {
+    const retoIds = RETOS_CATALOG.map(r => r.id);
+    const allSelected = retoIds.every(id => selectedGameIds.includes(id));
+    if (allSelected) {
+      setSelectedGameIds(prev => prev.filter(id => !retoIds.includes(id)));
+    } else {
+      setSelectedGameIds(prev => Array.from(new Set([...prev, ...retoIds])));
+    }
+  };
+
+  // Acción: Crear asignaciones múltiples de juegos o retos
   const handleCreateAssignment = async () => {
-    if (!cleanPath) return;
+    if (!cleanPath || selectedGameIds.length === 0) return;
 
     try {
-      const assignId = `assign_${Date.now()}`;
-      const assignRef = doc(db, `${cleanPath}/gameAssignments`, assignId);
-
       const allItems = [...COGNITIVE_GAMES_LIST, ...RETOS_CATALOG.map(r => ({ id: r.id, name: r.t, icon: r.em }))];
-      const selectedItem = allItems.find(i => i.id === selectedGameId);
 
-      await setDoc(assignRef, {
-        id: assignId,
-        teamId: teamId || cleanPath,
-        target: assignTarget, // 'team' | playerId
-        playerId: assignTarget === 'player' ? playerId : null,
-        gameId: selectedGameId,
-        gameName: selectedItem ? `${selectedItem.icon} ${selectedItem.name}` : selectedGameId,
-        weekKey: currentWeek,
-        freqPerWeek: 3,
-        createdAt: serverTimestamp()
-      });
+      for (const gid of selectedGameIds) {
+        const assignId = `assign_${Date.now()}_${gid}`;
+        const assignRef = doc(db, `${cleanPath}/gameAssignments`, assignId);
+        const selectedItem = allItems.find(i => i.id === gid);
 
-      showToast('Recomendación asignada con éxito al plan semanal', 'success');
+        await setDoc(assignRef, {
+          id: assignId,
+          teamId: teamId || cleanPath,
+          target: assignTarget, // 'team' | playerId
+          playerId: assignTarget === 'player' ? playerId : null,
+          gameId: gid,
+          gameName: selectedItem ? `${selectedItem.icon} ${selectedItem.name}` : gid,
+          weekKey: currentWeek,
+          freqPerWeek: 3,
+          createdAt: serverTimestamp()
+        });
+      }
+
+      showToast(`✔ ${selectedGameIds.length} recomendación(es) asignadas con éxito`, 'success');
       setShowAssignModal(false);
     } catch (err) {
-      console.warn('[CoachCognitiveSupervision] Error asignando reto:', err);
-      showToast('Error al guardar la asignación', 'error');
+      console.warn('[CoachCognitiveSupervision] Error asignando retos:', err);
+      showToast('Error al guardar las asignaciones', 'error');
+    }
+  };
+
+  // Acción: Eliminar asignación
+  const handleDeleteAssignment = async (assignId) => {
+    if (!cleanPath || !assignId) return;
+    try {
+      await deleteDoc(doc(db, `${cleanPath}/gameAssignments`, assignId));
+      showToast('Recomendación eliminada', 'success');
+    } catch (err) {
+      console.warn('[CoachCognitiveSupervision] Error eliminando asignación:', err);
     }
   };
 
@@ -265,21 +305,53 @@ export const CoachCognitiveSupervision = ({ player, teamPath, teamId }) => {
 
       {/* Asignaciones activas */}
       {activeAssignments.length > 0 && (
-        <div className="coach-active-assignment">
-          <span>📌 Reto recomendado activo:</span>
-          <strong>{activeAssignments[0].gameName}</strong>
-          <span style={{ fontSize: '11px', opacity: 0.85 }}>
-            ({activeAssignments[0].target === 'team' ? 'Todo el equipo' : 'Individual'})
-          </span>
+        <div style={{ marginTop: '14px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+          <div style={{ fontSize: '12px', fontWeight: 800, color: 'var(--games-text-primary, var(--text-primary))', display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <span>📌</span>
+            <span>Retos y Juegos Recomendados Activos ({activeAssignments.length}):</span>
+          </div>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+            {activeAssignments.map(a => (
+              <div
+                key={a.id}
+                className="coach-active-assignment"
+                style={{ margin: 0, padding: '8px 12px', display: 'flex', alignItems: 'center', gap: '8px' }}
+              >
+                <strong>{a.gameName || a.gameId}</strong>
+                <span style={{ fontSize: '11px', opacity: 0.85 }}>
+                  ({a.target === 'team' ? 'Todo el equipo' : 'Individual'})
+                </span>
+                <button
+                  type="button"
+                  onClick={() => handleDeleteAssignment(a.id)}
+                  title="Eliminar recomendación"
+                  style={{
+                    background: 'transparent',
+                    border: 'none',
+                    color: 'inherit',
+                    cursor: 'pointer',
+                    padding: '4px',
+                    marginLeft: '4px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    opacity: 0.75,
+                    borderRadius: '4px'
+                  }}
+                >
+                  <X size={15} />
+                </button>
+              </div>
+            ))}
+          </div>
         </div>
       )}
 
-      {/* Modal Recomendar Reto */}
+      {/* Modal Recomendar Reto Múltiple */}
       {showAssignModal && (
-        <div className="game-shell-modal" role="dialog">
-          <div className="game-shell-card" style={{ maxWidth: '420px' }}>
-            <div className="game-shell-header">
-              <h4 style={{ margin: 0, color: '#ffffff' }}>⭐ Asignar Reto o Juego</h4>
+        <div className="game-shell-modal" role="dialog" style={{ zIndex: 20000 }}>
+          <div className="game-shell-card" style={{ maxWidth: '520px', maxHeight: '90vh', display: 'flex', flexDirection: 'column' }}>
+            <div className="game-shell-header" style={{ flexShrink: 0 }}>
+              <h4 style={{ margin: 0, color: '#ffffff' }}>⭐ Asignar Retos o Juegos</h4>
               <button 
                 type="button" 
                 className="game-shell-close-btn"
@@ -289,7 +361,7 @@ export const CoachCognitiveSupervision = ({ player, teamPath, teamId }) => {
               </button>
             </div>
 
-            <div style={{ padding: '16px', display: 'flex', flexDirection: 'column', gap: '14px' }}>
+            <div style={{ padding: '16px', display: 'flex', flexDirection: 'column', gap: '14px', overflowY: 'auto', flex: 1 }}>
               <div>
                 <label style={{ fontSize: '12px', fontWeight: 800, color: '#475569', display: 'block', marginBottom: '6px' }}>
                   Destinatario:
@@ -305,34 +377,127 @@ export const CoachCognitiveSupervision = ({ player, teamPath, teamId }) => {
               </div>
 
               <div>
-                <label style={{ fontSize: '12px', fontWeight: 800, color: '#475569', display: 'block', marginBottom: '6px' }}>
-                  Seleccionar Juego o Reto:
-                </label>
-                <select
-                  style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '14px' }}
-                  value={selectedGameId}
-                  onChange={(e) => setSelectedGameId(e.target.value)}
-                >
-                  <optgroup label="🧠 Juegos Cognitivos">
-                    {COGNITIVE_GAMES_LIST.map(g => (
-                      <option key={g.id} value={g.id}>{g.icon} {g.name}</option>
-                    ))}
-                  </optgroup>
-                  <optgroup label="⚽ Retos en Casa">
-                    {RETOS_CATALOG.map(r => (
-                      <option key={r.id} value={r.id}>{r.em} {r.t} ({r.sk})</option>
-                    ))}
-                  </optgroup>
-                </select>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                  <label style={{ fontSize: '12px', fontWeight: 800, color: '#475569', margin: 0 }}>
+                    🧠 Juegos Cognitivos ({COGNITIVE_GAMES_LIST.filter(g => selectedGameIds.includes(g.id)).length}/{COGNITIVE_GAMES_LIST.length}):
+                  </label>
+                  <button
+                    type="button"
+                    onClick={handleSelectAllCognitive}
+                    style={{ background: 'none', border: 'none', color: '#2563EB', fontSize: '12px', fontWeight: 700, cursor: 'pointer', padding: '2px 6px' }}
+                  >
+                    {COGNITIVE_GAMES_LIST.every(g => selectedGameIds.includes(g.id)) ? 'Desmarcar todos' : 'Marcar todos'}
+                  </button>
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: '8px' }}>
+                  {COGNITIVE_GAMES_LIST.map(g => {
+                    const isSelected = selectedGameIds.includes(g.id);
+                    return (
+                      <div
+                        key={g.id}
+                        onClick={() => toggleGameSelection(g.id)}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '8px',
+                          padding: '10px 12px',
+                          borderRadius: '8px',
+                          cursor: 'pointer',
+                          border: isSelected ? '2px solid #1B3A2D' : '1px solid #E2E8F0',
+                          backgroundColor: isSelected ? '#E8F5EE' : '#F8FAFC',
+                          color: isSelected ? '#1B3A2D' : '#334155',
+                          fontWeight: isSelected ? 800 : 600,
+                          fontSize: '12px',
+                          transition: 'all 0.15s ease'
+                        }}
+                      >
+                        <div style={{
+                          width: '18px',
+                          height: '18px',
+                          borderRadius: '4px',
+                          border: isSelected ? '2px solid #1B3A2D' : '1.5px solid #94A3B8',
+                          background: isSelected ? '#1B3A2D' : 'transparent',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          flexShrink: 0
+                        }}>
+                          {isSelected && <Check size={12} color="#FFFFFF" strokeWidth={3} />}
+                        </div>
+                        <span style={{ fontSize: '16px' }}>{g.icon}</span>
+                        <span style={{ flex: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{g.name}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px', marginTop: '6px' }}>
+                  <label style={{ fontSize: '12px', fontWeight: 800, color: '#475569', margin: 0 }}>
+                    ⚽ Retos en Casa ({RETOS_CATALOG.filter(r => selectedGameIds.includes(r.id)).length}/{RETOS_CATALOG.length}):
+                  </label>
+                  <button
+                    type="button"
+                    onClick={handleSelectAllRetos}
+                    style={{ background: 'none', border: 'none', color: '#2563EB', fontSize: '12px', fontWeight: 700, cursor: 'pointer', padding: '2px 6px' }}
+                  >
+                    {RETOS_CATALOG.every(r => selectedGameIds.includes(r.id)) ? 'Desmarcar todos' : 'Marcar todos'}
+                  </button>
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: '8px' }}>
+                  {RETOS_CATALOG.map(r => {
+                    const isSelected = selectedGameIds.includes(r.id);
+                    return (
+                      <div
+                        key={r.id}
+                        onClick={() => toggleGameSelection(r.id)}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '8px',
+                          padding: '10px 12px',
+                          borderRadius: '8px',
+                          cursor: 'pointer',
+                          border: isSelected ? '2px solid #1B3A2D' : '1px solid #E2E8F0',
+                          backgroundColor: isSelected ? '#E8F5EE' : '#F8FAFC',
+                          color: isSelected ? '#1B3A2D' : '#334155',
+                          fontWeight: isSelected ? 800 : 600,
+                          fontSize: '12px',
+                          transition: 'all 0.15s ease'
+                        }}
+                      >
+                        <div style={{
+                          width: '18px',
+                          height: '18px',
+                          borderRadius: '4px',
+                          border: isSelected ? '2px solid #1B3A2D' : '1.5px solid #94A3B8',
+                          background: isSelected ? '#1B3A2D' : 'transparent',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          flexShrink: 0
+                        }}>
+                          {isSelected && <Check size={12} color="#FFFFFF" strokeWidth={3} />}
+                        </div>
+                        <span style={{ fontSize: '16px' }}>{r.em}</span>
+                        <span style={{ flex: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{r.t}</span>
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
 
               <button
                 type="button"
                 className="game-play-btn"
-                style={{ marginTop: '8px', width: '100%' }}
+                style={{ marginTop: '8px', width: '100%', minHeight: '48px', opacity: selectedGameIds.length === 0 ? 0.6 : 1 }}
+                disabled={selectedGameIds.length === 0}
                 onClick={handleCreateAssignment}
               >
-                Confirmar Asignación
+                {selectedGameIds.length === 0
+                  ? 'Selecciona al menos un reto o juego'
+                  : `Confirmar ${selectedGameIds.length} Asignación${selectedGameIds.length > 1 ? 'es' : ''}`}
               </button>
             </div>
           </div>

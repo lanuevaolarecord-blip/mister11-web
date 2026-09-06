@@ -205,20 +205,24 @@ export const GamesHome = ({ player, team, teamPath, isParentView = false }) => {
       </div>
 
       {/* ── HOY TE TOCA (Recomendaciones del Míster) ── */}
-      {recommendedAssignment && canPlay && (
+      {assignments.length > 0 && canPlay && (
         <div className="games-recommended-section">
           <div className="recommended-badge">
-            ⭐ {t('games.badge.recommended', {}, 'Recomendado por tu míster')}
+            ⭐ {t('games.badge.recommended', {}, 'Recomendado por tu míster')} ({assignments.length})
           </div>
-          <div className="recommended-assignment-card">
-            <div>
-              <div className="recommended-assignment-title">
-                {t('games.assignment.todayPrompt', {}, 'El cuerpo técnico te ha asignado un reto especial')}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '8px' }}>
+            {assignments.map(a => (
+              <div key={a.id} className="recommended-assignment-card" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px' }}>
+                <div>
+                  <div className="recommended-assignment-title">
+                    {t('games.assignment.todayPrompt', {}, 'El cuerpo técnico te ha asignado un reto especial')}
+                  </div>
+                  <div className="recommended-assignment-subtitle">
+                    {a.gameName || a.gameId}
+                  </div>
+                </div>
               </div>
-              <div className="recommended-assignment-subtitle">
-                {recommendedAssignment.gameName || recommendedAssignment.gameId}
-              </div>
-            </div>
+            ))}
           </div>
         </div>
       )}

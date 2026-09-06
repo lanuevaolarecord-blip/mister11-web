@@ -258,11 +258,12 @@ html.dark select option {
 .match-card {
   background: var(--partidos-card-bg);
   border-radius: 12px;
-  padding: 20px;
+  padding: 22px 24px;
   box-shadow: 0 4px 10px rgba(0,0,0,0.03);
   border: 1px solid var(--partidos-border);
   cursor: pointer;
   transition: transform 0.2s, box-shadow 0.2s;
+  box-sizing: border-box;
 }
 .match-card:hover {
   transform: translateY(-3px);
@@ -275,6 +276,7 @@ html.dark select option {
   justify-content: space-between;
   align-items: center;
   margin-bottom: 20px;
+  padding: 0 4px;
 }
 .status-badge {
   font-size: 11px;
@@ -294,7 +296,7 @@ html.dark select option {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 20px 0;
+  padding: 20px 8px;
   border-top: 1px solid var(--partidos-border);
   border-bottom: 1px solid var(--partidos-border);
   margin-bottom: 15px;
@@ -442,7 +444,7 @@ html.dark select option {
 
 .editor-content {
   flex: 1;
-  padding: 24px 20px;
+  padding: 24px 28px;
   overflow-y: auto;
   display: flex;
   flex-direction: column;
@@ -454,13 +456,13 @@ html.dark select option {
 
 @media (min-width: 640px) {
   .editor-content {
-    padding: 28px 28px;
+    padding: 28px 36px;
   }
 }
 
 @media (min-width: 1024px) {
   .editor-content {
-    padding: 32px 36px;
+    padding: 32px 44px;
   }
 }
 
@@ -545,7 +547,10 @@ html.dark select option {
 .pre-partido-container {
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 24px;
+  padding: 24px 28px;
+  box-sizing: border-box;
+  width: 100%;
 }
 
 .section-title {
@@ -2724,14 +2729,24 @@ html.dark .alin-player-item span.slot-role {
     padding: 12px 12px 24px !important;
   }
   .partidos-list-container,
-  .partidos-editor-container,
   .post-partido-container {
     padding: 12px !important;
     box-sizing: border-box !important;
   }
+  .partidos-editor-container {
+    padding: 0 !important;
+    box-sizing: border-box !important;
+  }
+  .editor-content {
+    padding: 18px 18px !important;
+  }
+  .pre-partido-container {
+    padding: 16px 20px !important;
+    box-sizing: border-box !important;
+  }
   .match-card,
   .post-match-card {
-    padding: 14px !important;
+    padding: 16px 18px !important;
   }
   .matches-grid {
     grid-template-columns: 1fr !important;

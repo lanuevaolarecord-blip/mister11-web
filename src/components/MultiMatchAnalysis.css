@@ -116,21 +116,31 @@
 }
 
 .shortcut-chip {
-  min-height: 40px;
-  padding: 0 14px;
-  border-radius: 20px;
+  min-height: 44px;
+  padding: 0 16px;
+  border-radius: 22px;
   border: 1px solid var(--mm-border);
   background: var(--mm-bg);
   color: var(--mm-text-primary);
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 700;
   cursor: pointer;
   transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .shortcut-chip:hover {
   border-color: var(--mm-accent);
   color: var(--mm-accent);
+}
+
+.shortcut-chip.active {
+  background: var(--mm-accent);
+  color: #FFFFFF;
+  border-color: var(--mm-accent);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
 }
 
 /* Toggle Modo (Acumulados vs Promedio) */
@@ -155,21 +165,72 @@
 }
 
 .toggle-pill {
-  min-height: 40px;
-  padding: 0 14px;
+  min-height: 44px;
+  padding: 0 16px;
   border: none;
   background: transparent;
   color: var(--mm-text-secondary);
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 700;
   border-radius: 6px;
   cursor: pointer;
   transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .toggle-pill.active {
   background: var(--mm-accent);
   color: #FFFFFF;
+}
+
+/* Botón Descarga PDF Análisis */
+.btn-export-analysis-pdf {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 48px;
+  padding: 0 20px;
+  background: #1B3A2D;
+  color: #FFFFFF;
+  border: none;
+  border-radius: 8px;
+  font-weight: 800;
+  font-size: 13px;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(27, 58, 45, 0.25);
+  transition: all 0.2s ease;
+}
+
+.btn-export-analysis-pdf:hover:not(:disabled) {
+  background: #13281F;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 10px rgba(27, 58, 45, 0.35);
+}
+
+.btn-export-analysis-pdf:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.btn-export-analysis-pdf:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+.dark-mode .btn-export-analysis-pdf {
+  background: #D4A843;
+  color: #0F172A;
+  box-shadow: 0 2px 6px rgba(212, 168, 67, 0.25);
+}
+
+.dark-mode .btn-export-analysis-pdf:hover:not(:disabled) {
+  background: #F1C40F;
+  box-shadow: 0 4px 10px rgba(212, 168, 67, 0.4);
 }
 
 /* ── ESTADOS DE CARGA & VACÍO ── */
@@ -436,20 +497,40 @@
 }
 
 .modal-chip {
-  min-height: 40px;
-  padding: 0 12px;
+  min-height: 44px;
+  padding: 0 16px;
   border-radius: 8px;
   border: 1px solid var(--mm-border);
   background: var(--mm-card-bg);
   color: var(--mm-text-primary);
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 700;
   cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.modal-chip:hover {
+  border-color: var(--mm-accent);
+  color: var(--mm-accent);
+}
+
+.modal-chip.active {
+  background: var(--mm-accent);
+  color: #FFFFFF;
+  border-color: var(--mm-accent);
 }
 
 .modal-chip.danger {
   color: #EF4444;
   border-color: rgba(239, 68, 68, 0.3);
+}
+
+.modal-chip.danger:hover {
+  background: #EF4444;
+  color: #FFFFFF;
 }
 
 .modal-matches-list {
@@ -526,6 +607,35 @@
   color: var(--mm-text-secondary);
 }
 
+.btn-confirm-modal {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 48px;
+  padding: 0 24px;
+  background: #1B3A2D;
+  color: #FFFFFF;
+  border: none;
+  border-radius: 8px;
+  font-weight: 800;
+  font-size: 13px;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(27, 58, 45, 0.25);
+  transition: all 0.2s ease;
+}
+
+.btn-confirm-modal:hover {
+  background: #13281F;
+  transform: translateY(-1px);
+}
+
+.dark-mode .btn-confirm-modal {
+  background: #D4A843;
+  color: #0F172A;
+}
+
 /* Media Query Responsive */
 @media (max-width: 900px) {
   .multi-charts-grid {
@@ -534,5 +644,25 @@
 
   .chart-box.half-width {
     grid-column: 1 / -1;
+  }
+
+  .filter-actions-row {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+
+  .shortcuts-group {
+    justify-content: flex-start;
+  }
+
+  .btn-select-matches,
+  .btn-export-analysis-pdf {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .view-mode-toggle {
+    justify-content: space-between;
   }
 }

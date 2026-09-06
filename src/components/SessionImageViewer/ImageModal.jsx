@@ -327,21 +327,25 @@ export const ImageModal = ({
             <span className="btn-text">Anotar</span>
           </button>
 
-          {/* Toggle Cuadrícula */}
+          {/* Toggle Cuadrícula Táctica */}
           <div className="grid-selector-wrapper">
             <button
               type="button"
               className={`tool-btn ${gridType !== 'none' ? 'active' : ''}`}
               onClick={() => {
-                const types = ['none', 'pitch', 'grid10x15', 'thirds', 'channels'];
+                const types = ['none', 'grid10x15', 'channels', 'thirds', 'zones18', 'pitch'];
                 const nextIdx = (types.indexOf(gridType) + 1) % types.length;
                 setGridType(types[nextIdx]);
               }}
-              title="Alternar cuadrículas tácticas"
+              title="Alternar cuadrículas tácticas (10x15, 5 Carriles, Tercios, 18 Zonas, Campo)"
             >
               <Grid size={16} />
               <span className="btn-text">
-                {gridType === 'none' ? 'Cuadrícula' : gridType === 'pitch' ? 'Campo' : gridType === 'thirds' ? 'Tercios' : gridType === 'channels' ? 'Carriles' : '10x15'}
+                {gridType === 'none' ? 'Cuadrícula' :
+                 gridType === 'grid10x15' ? '10×15' :
+                 gridType === 'channels' ? '5 Carriles' :
+                 gridType === 'thirds' ? 'Tercios' :
+                 gridType === 'zones18' ? '18 Zonas' : 'Campo'}
               </span>
             </button>
           </div>

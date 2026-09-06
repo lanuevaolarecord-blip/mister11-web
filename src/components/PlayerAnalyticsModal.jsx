@@ -16,9 +16,13 @@ const C_BORDER  = '#E0DACA';
 export const SvgRadar = ({ data, size = 320 }) => {
   const { darkMode } = useTheme();
   if (!data || data.length === 0) return null;
-  const cx = size / 2;
-  const cy = size / 2;
-  const r  = size * 0.35;
+  const padX = 95;
+  const padY = 32;
+  const svgW = size + padX * 2;
+  const svgH = size + padY * 2;
+  const cx = svgW / 2;
+  const cy = svgH / 2;
+  const r  = (size / 2) * 0.58;
   const n  = data.length;
   const hasData = data.some(d => d.value > 0);
 
@@ -68,13 +72,13 @@ export const SvgRadar = ({ data, size = 320 }) => {
   // Labels around the radar
   const labels = data.map((d, i) => {
     const a = angleOf(i);
-    const labelR = r + 24;
+    const labelR = r + 22;
     const lx = cx + labelR * Math.cos(a);
     const ly = cy + labelR * Math.sin(a);
 
     let textAnchor = 'middle';
-    if (Math.cos(a) > 0.2) textAnchor = 'start';
-    else if (Math.cos(a) < -0.2) textAnchor = 'end';
+    if (Math.cos(a) > 0.25) textAnchor = 'start';
+    else if (Math.cos(a) < -0.25) textAnchor = 'end';
 
     const labelText = d.subject || d.label || `Eje ${i+1}`;
 
@@ -105,7 +109,17 @@ export const SvgRadar = ({ data, size = 320 }) => {
   });
 
   return (
-    <svg width={size} height={size} style={{ overflow: 'visible' }}>
+    <svg
+      viewBox={`0 0 ${svgW} ${svgH}`}
+      style={{
+        width: '100%',
+        maxWidth: `${svgW}px`,
+        height: 'auto',
+        overflow: 'visible',
+        display: 'block',
+        margin: '0 auto'
+      }}
+    >
       {rings}
       {axes}
       {hasData && (
@@ -118,8 +132,15 @@ export const SvgRadar = ({ data, size = 320 }) => {
             strokeWidth={2.5}
           />
           {dataPoints.map((p, i) => (
-            <circle key={i} cx={p.x} cy={p.y} r={5}
-              fill={darkMode ? '#FBBF24' : '#D4A843'} stroke={darkMode ? '#FFFFFF' : '#0F172A'} strokeWidth={1.5} />
+            <circle
+              key={i}
+              cx={p.x}
+              cy={p.y}
+              r={4}
+              fill={darkMode ? '#FBBF24' : '#1B3A2D'}
+              stroke="#FFF"
+              strokeWidth={1.5}
+            />
           ))}
         </>
       )}

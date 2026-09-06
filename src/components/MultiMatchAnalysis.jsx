@@ -1,11 +1,13 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { FileDown, CheckCircle2, X } from 'lucide-react';
 import { t } from '../i18n/translations';
 import { db } from '../firebaseConfig';
 import { collection, getDocs } from '../firebase/firestore-proxy';
 import { useTheme } from '../context/ThemeContext';
+import { exportMultiMatchAnalysisPDF } from '../utils/analysisPdfReport';
 import './MultiMatchAnalysis.css';
 
-export const MultiMatchAnalysis = ({ matches = [], teamId, language = 'Español (ES)' }) => {
+export const MultiMatchAnalysis = ({ matches = [], teamId, activeTeam = null, language = 'Español (ES)' }) => {
   const { darkMode } = useTheme();
 
   // Seleccionar por defecto los últimos 5 partidos (o los que existan)
@@ -18,6 +20,7 @@ export const MultiMatchAnalysis = ({ matches = [], teamId, language = 'Español 
   const [eventsCache, setEventsCache] = useState({});
   const [loadingEvents, setLoadingEvents] = useState(false);
   const [showMatchModal, setShowMatchModal] = useState(false);
+  const [isExportingPdf, setIsExportingPdf] = useState(false);
 
   // Inicializar selección por defecto cuando se carguen partidos
   useEffect(() => {
@@ -200,7 +203,89 @@ export const MultiMatchAnalysis = ({ matches = [], teamId, language = 'Español 
     );
   };
 
-  const tx = (key, params) => t(key, language, params);
+  const activeShortcut = useMemo(() => {
+    if (selectedIds.length === 0) return 'NONE';
+    if (matches.length > 0 && selectedIds.length === matches.length && matches.every((m) => selectedIds.includes(m.id))) {
+      return 'ALL';
+    }
+    const last3Ids = matches.slice(0, 3).map((m) => m.id);
+    if (selectedIds.length === last3Ids.length && last3Ids.every((id) => selectedIds.includes(id))) {
+      return 'LAST_3';
+    }
+    const last5Ids = matches.slice(0, 5).map((m) => m.id);
+    if (selectedIds.length === last5Ids.length && last5Ids.every((id) => selectedIds.includes(id))) {
+      return 'LAST_5';
+    }
+    return 'CUSTOM';
+  }, [selectedIds, matches]);
+
+  const FALLBACK_STRINGS = {
+    'analisis.title': 'Análisis Comparativo Multipartido',
+    'analisis.subtitle': 'Comparativa de rendimiento táctico y métricas avanzadas entre encuentros',
+    'analisis.selectMatches': 'Seleccionar Partidos',
+    'analisis.shortcuts.title': 'Atajos:',
+    'analisis.shortcuts.last3': 'Últimos 3',
+    'analisis.shortcuts.last5': 'Últimos 5',
+    'analisis.shortcuts.allSeason': 'Toda la Temporada',
+    'analisis.mode.title': 'Modo:',
+    'analisis.mode.averages': 'Promedios',
+    'analisis.mode.totals': 'Totales',
+    'analisis.loadingData': 'Cargando eventos de partidos...',
+    'analisis.noMatchesSelected': 'Selecciona al menos 2 partidos para realizar el análisis comparativo',
+    'analisis.kpi.shots': 'Tiros a Puerta',
+    'analisis.kpi.duels': 'Duelos Ganados (%)',
+    'analisis.kpi.recoveries': 'Recuperaciones / Pérdidas',
+    'analisis.kpi.counters': 'Efectividad Contraataque',
+    'analisis.chart.trend': 'Evolución de Tendencia por Partido',
+    'analisis.chart.bars': 'Comparativa Directa de Eventos',
+    'analisis.chart.radar': 'Radar de Perfil Táctico Promedio',
+    'analisis.table.title': 'Desglose Detallado por Encuentro',
+    'analisis.table.match': 'Partido / Rival',
+    'analisis.table.result': 'Resultado',
+    'analisis.table.shots': 'Tiros (P / R)',
+    'analisis.table.duels': 'Duelos %',
+    'analisis.table.recLoss': 'Rec / Pérd',
+    'analisis.table.fouls': 'Faltas (F / C)',
+    'analisis.table.cards': 'Tarjetas (A / R)',
+    'analisis.exportPdf': 'Descargar PDF Análisis',
+    'analisis.exportingPdf': 'Generando PDF...',
+    'analisis.modal.title': 'Seleccionar Partidos para Comparar',
+    'analisis.modal.confirm': 'ACEPTAR Y COMPARAR',
+    'analisis.modal.clear': 'Limpiar',
+    'analisis.modal.all': 'Todos',
+    'analisis.modal.selectedCount': '{count} partidos seleccionados',
+  };
+
+  const tx = (key, params) => {
+    const val = t(key, language, params);
+    if (val && val !== key) return val;
+    let fallback = FALLBACK_STRINGS[key] || key;
+    if (params && typeof params === 'object') {
+      Object.keys(params).forEach((p) => {
+        fallback = fallback.replace(`{${p}}`, params[p]);
+      });
+    }
+    return fallback;
+  };
+
+  const handleExportPDF = async () => {
+    if (selectedMatches.length === 0) return;
+    setIsExportingPdf(true);
+    try {
+      await exportMultiMatchAnalysisPDF({
+        selectedMatches,
+        perMatchMetrics,
+        aggregates,
+        viewMode,
+        activeTeam,
+      });
+    } catch (err) {
+      console.error('[MultiMatchAnalysis] Error al exportar PDF:', err);
+      alert('Hubo un error al generar el PDF de análisis.');
+    } finally {
+      setIsExportingPdf(false);
+    }
+  };
 
   return (
     <div className={`multi-match-container ${darkMode ? 'dark-mode' : 'light-mode'}`}>
@@ -227,21 +312,21 @@ export const MultiMatchAnalysis = ({ matches = [], teamId, language = 'Español 
             <span className="shortcuts-label">{tx('analisis.shortcuts.title')}</span>
             <button
               type="button"
-              className="shortcut-chip"
+              className={`shortcut-chip ${activeShortcut === 'LAST_3' ? 'active' : ''}`}
               onClick={() => handleShortcutSelect('LAST_3')}
             >
               {tx('analisis.shortcuts.last3')}
             </button>
             <button
               type="button"
-              className="shortcut-chip"
+              className={`shortcut-chip ${activeShortcut === 'LAST_5' ? 'active' : ''}`}
               onClick={() => handleShortcutSelect('LAST_5')}
             >
               {tx('analisis.shortcuts.last5')}
             </button>
             <button
               type="button"
-              className="shortcut-chip"
+              className={`shortcut-chip ${activeShortcut === 'ALL' ? 'active' : ''}`}
               onClick={() => handleShortcutSelect('ALL')}
             >
               {tx('analisis.shortcuts.allSeason')}
@@ -268,6 +353,18 @@ export const MultiMatchAnalysis = ({ matches = [], teamId, language = 'Español 
               </button>
             </div>
           </div>
+
+          {/* Botón Descargar PDF de Análisis */}
+          <button
+            type="button"
+            className="btn-export-analysis-pdf"
+            onClick={handleExportPDF}
+            disabled={isExportingPdf || selectedMatches.length < 2}
+            title={tx('analisis.exportPdf')}
+          >
+            <FileDown size={18} />
+            <span>{isExportingPdf ? tx('analisis.exportingPdf') : tx('analisis.exportPdf')}</span>
+          </button>
         </div>
       </div>
 
@@ -440,44 +537,44 @@ export const MultiMatchAnalysis = ({ matches = [], teamId, language = 'Español 
         <div className="multi-modal-overlay" onClick={() => setShowMatchModal(false)}>
           <div className="multi-modal-content" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
-              <h3>⚽ Seleccionar Partidos para Comparar</h3>
+              <h3>⚽ {tx('analisis.modal.title')}</h3>
               <button
                 type="button"
                 className="btn-close"
                 onClick={() => setShowMatchModal(false)}
               >
-                ✕
+                <X size={20} />
               </button>
             </div>
 
             <div className="modal-shortcuts">
               <button
                 type="button"
-                className="modal-chip"
+                className={`modal-chip ${activeShortcut === 'LAST_3' ? 'active' : ''}`}
                 onClick={() => handleShortcutSelect('LAST_3')}
               >
-                Últimos 3
+                {tx('analisis.shortcuts.last3')}
               </button>
               <button
                 type="button"
-                className="modal-chip"
+                className={`modal-chip ${activeShortcut === 'LAST_5' ? 'active' : ''}`}
                 onClick={() => handleShortcutSelect('LAST_5')}
               >
-                Últimos 5
+                {tx('analisis.shortcuts.last5')}
               </button>
               <button
                 type="button"
-                className="modal-chip"
+                className={`modal-chip ${activeShortcut === 'ALL' ? 'active' : ''}`}
                 onClick={() => handleShortcutSelect('ALL')}
               >
-                Todos ({matches.length})
+                {tx('analisis.modal.all')} ({matches.length})
               </button>
               <button
                 type="button"
                 className="modal-chip danger"
                 onClick={() => handleShortcutSelect('CLEAR')}
               >
-                Limpiar
+                {tx('analisis.modal.clear')}
               </button>
             </div>
 
@@ -513,13 +610,14 @@ export const MultiMatchAnalysis = ({ matches = [], teamId, language = 'Español 
             </div>
 
             <div className="modal-footer">
-              <span>{selectedIds.length} partidos seleccionados</span>
+              <span>{tx('analisis.modal.selectedCount', { count: selectedIds.length })}</span>
               <button
                 type="button"
-                className="btn-primary-dark"
+                className="btn-primary-dark btn-confirm-modal"
                 onClick={() => setShowMatchModal(false)}
               >
-                ACEPTAR Y COMPARAR
+                <CheckCircle2 size={18} />
+                <span>{tx('analisis.modal.confirm')}</span>
               </button>
             </div>
           </div>

@@ -1395,7 +1395,7 @@ const Tests = () => {
                     const element = document.getElementById('grafica-rendimiento-jugador');
                     if (element) {
                       const html2canvas = (await import('html2canvas')).default;
-                      const canvas = await html2canvas(element, { scale: 2, backgroundColor: null });
+                      const canvas = await html2canvas(element, { scale: 2, backgroundColor: null, useCORS: true, allowTaint: true });
                       graficaUrl = canvas.toDataURL('image/png');
                     }
                     await generatePlayerTestReport(getPlayerById(histSelectedPlayer), tests, historyData, activeTeam, graficaUrl);
@@ -1500,13 +1500,13 @@ const Tests = () => {
                       </div>
 
                       {/* Performance Profile / Radar Chart */}
-                      <div style={{ zIndex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                      <div style={{ zIndex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', minWidth: 0, width: '100%', maxWidth: '380px' }}>
                         <span style={{ fontSize: 12, fontWeight: 800, letterSpacing: 2, color: 'var(--text-primary, #1B3A2D)', marginBottom: '16px', textTransform: 'uppercase' }}>
                           PERFIL DE RENDIMIENTO
                         </span>
                         {radarData && radarData.length > 0 ? (
                           <>
-                            <SvgRadar data={radarData} size={250} />
+                            <SvgRadar data={radarData} size={230} />
                             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', justifyContent: 'center', marginTop: '12px', maxWidth: '320px' }}>
                               {radarData.map((d, i) => (
                                 <span key={i} style={{
@@ -1580,7 +1580,7 @@ const Tests = () => {
                                 const element = document.getElementById('grafica-rendimiento-jugador');
                                 if (element) {
                                   const html2canvas = (await import('html2canvas')).default;
-                      const canvas = await html2canvas(element, { scale: 2, backgroundColor: null });
+                                  const canvas = await html2canvas(element, { scale: 2, backgroundColor: null, useCORS: true, allowTaint: true });
                                   graficaUrl = canvas.toDataURL('image/png');
                                 }
                                 await generatePlayerTestReport(getPlayerById(histSelectedPlayer), tests, historyData, activeTeam, graficaUrl);
@@ -2071,7 +2071,7 @@ const Tests = () => {
       {/* MODAL DETALLES DEL TEST */}
       {selectedTestDetail && (
         <div className="modal-overlay" onClick={() => setSelectedTestDetail(null)}>
-          <div className="modal-content large" onClick={e => e.stopPropagation()} style={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - 56px)', maxHeight: 'calc(100vh - 56px)', overflow: 'hidden', backgroundColor: '#FAF8F5' }}>
+          <div className="modal-content large" onClick={e => e.stopPropagation()} style={{ display: 'flex', flexDirection: 'column', maxHeight: '88vh', overflow: 'hidden', backgroundColor: 'var(--bg-card, #FAF8F5)' }}>
             <div className="modal-header" style={{ flexShrink: 0 }}>
               <div style={{display: 'flex', alignItems: 'center', gap: '15px'}}>
                 <span className="t-cat">{selectedTestDetail.category}</span>
@@ -2080,10 +2080,35 @@ const Tests = () => {
               <button className="btn-close" onClick={() => setSelectedTestDetail(null)}>✕</button>
             </div>
             
-            <div className="modal-body test-detail-body flex-1 overflow-y-auto overscroll-contain px-4 py-3 pb-24" style={{ padding: '20px 20px 100px 20px' }}>
-              <div className="test-image-placeholder" style={{ padding: selectedTestDetail.imagenProtocolo ? '0' : '20px', backgroundColor: selectedTestDetail.imagenProtocolo ? 'transparent' : '#e2e8f0', borderRadius: '12px', marginBottom: '20px', display: 'flex', justifyContent: 'center', alignItems: 'center', overflow: 'hidden', width: '100%' }}>
+            <div className="modal-body test-detail-body" style={{ flex: '1 1 auto', minHeight: 0, overflowY: 'auto', WebkitOverflowScrolling: 'touch', padding: '20px 20px 40px 20px' }}>
+              <div className="test-image-placeholder" style={{ 
+                padding: '12px', 
+                backgroundColor: 'rgba(0, 0, 0, 0.03)', 
+                borderRadius: '12px', 
+                marginBottom: '20px', 
+                display: 'flex', 
+                justifyContent: 'center', 
+                alignItems: 'center', 
+                overflow: 'hidden', 
+                width: '100%',
+                maxHeight: '260px',
+                border: '1px solid var(--border-color)'
+              }}>
                 {selectedTestDetail.imagenProtocolo ? (
-                  <img src={selectedTestDetail.imagenProtocolo} alt="Protocolo" className="w-full h-auto max-h-[220px] object-contain rounded-xl block mx-auto" />
+                  <img 
+                    src={selectedTestDetail.imagenProtocolo} 
+                    alt={selectedTestDetail.name || 'Protocolo'} 
+                    style={{
+                      maxWidth: '100%',
+                      maxHeight: '240px',
+                      width: 'auto',
+                      height: 'auto',
+                      objectFit: 'contain',
+                      borderRadius: '8px',
+                      display: 'block',
+                      margin: '0 auto'
+                    }} 
+                  />
                 ) : (
                   <div className="vector-icon-large" style={{ fontSize: '3rem' }}>📊</div>
                 )}
@@ -2116,10 +2141,10 @@ const Tests = () => {
 
               {/* Botones de acción integrados en la zona de scroll con colchón pb-24 */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginTop: '24px' }}>
-                <button className="btn-outline-gold" style={{ width: '100%', minHeight: '44px' }} onClick={() => descargarPlantilla(selectedTestDetail, players)}>
+                <button className="btn-outline-gold" style={{ width: '100%', minHeight: '48px', fontWeight: 800 }} onClick={() => descargarPlantilla(selectedTestDetail, players)}>
                   ⬇️ Descargar Plantilla de Toma de Datos
                 </button>
-                <button className="btn-primary" style={{ width: '100%', minHeight: '44px' }} onClick={() => {
+                <button className="btn-primary" style={{ width: '100%', minHeight: '48px', fontWeight: 800 }} onClick={() => {
                   if (selectedTestDetail.isQuestionnaire) {
                     setRegSelectedTest(selectedTestDetail.id);
                     setIsQuestionnaireOpen(true);
@@ -2143,15 +2168,15 @@ const Tests = () => {
         message={upgradeModal.message}
       />
 
-      {/* MODAL REGISTRO */}
+      {/* MODAL REGISTRO CON SCROLL GARANTIZADO */}
       {isRegModalOpen && (
         <div className="modal-overlay" onClick={() => setIsRegModalOpen(false)}>
-          <div className="modal-content large" onClick={e => e.stopPropagation()} style={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - 56px)', maxHeight: 'calc(100vh - 56px)', overflow: 'hidden', backgroundColor: '#FAF8F5' }}>
+          <div className="modal-content large" onClick={e => e.stopPropagation()} style={{ display: 'flex', flexDirection: 'column', maxHeight: '88vh', height: '88vh', overflow: 'hidden', backgroundColor: 'var(--bg-card, #FAF8F5)', borderRadius: '16px' }}>
             <div className="modal-header" style={{ flexShrink: 0 }}>
               <h2>Registro: {getTestById(regSelectedTest)?.name}</h2>
               <button className="btn-close" onClick={() => setIsRegModalOpen(false)}>✕</button>
             </div>
-            <div className="modal-body flex-1 overflow-y-auto overscroll-contain px-4 py-3 pb-24" style={{ padding: '20px 20px 100px 20px' }}>
+            <div className="modal-body" style={{ flex: '1 1 auto', minHeight: 0, overflowY: 'auto', WebkitOverflowScrolling: 'touch', padding: '16px 20px 40px 20px' }}>
               <div className="reg-main-header" style={{ marginBottom: '15px' }}>
                 <span className="unit-badge">Unidad: {getTestById(regSelectedTest)?.unit}</span>
               </div>
@@ -2173,10 +2198,10 @@ const Tests = () => {
                 ))}
               </div>
 
-              {/* Botones de acción integrados en la zona de scroll con colchón pb-24 */}
-              <div style={{ display: 'flex', gap: '10px', marginTop: '24px' }}>
-                <button className="btn-outline" style={{ flex: 1, minHeight: '44px' }} onClick={() => setIsRegModalOpen(false)}>Cancelar</button>
-                <button className="btn-primary" style={{ flex: 1, minHeight: '44px' }} onClick={() => {
+              {/* Botones de acción integrados en la zona de scroll con colchón */}
+              <div style={{ display: 'flex', gap: '10px', marginTop: '24px', paddingBottom: '16px' }}>
+                <button className="btn-outline" style={{ flex: 1, minHeight: '48px', fontWeight: 800 }} onClick={() => setIsRegModalOpen(false)}>Cancelar</button>
+                <button className="btn-primary" style={{ flex: 1, minHeight: '48px', fontWeight: 800 }} onClick={() => {
                   handleSaveRegistration();
                   setIsRegModalOpen(false);
                 }}>Guardar Resultados</button>

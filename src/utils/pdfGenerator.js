@@ -10,8 +10,10 @@ import {
   drawPdfFooter,
   drawRadarChartCanvas,
   drawEvolutionChartCanvas,
-  drawMomentumChartCanvas
+  drawMomentumChartCanvas,
+  cleanPdfText
 } from './pdfTheme';
+import { calculatePlayerPerformanceScores, consolidatePlayerEvaluations, CANONICAL_TESTS_MAP } from './testScoreEngine';
 
 const getJsPDF = async () => {
   const { jsPDF } = await import('jspdf');
@@ -125,154 +127,102 @@ const addFooter = (doc) => {
 /**
  * PLANIFICACIÓN - Macrociclo (Landscape, dark theme)
  */
-export const generatePlanificacionPDF = async (macroInfo, microcycles, activeTeam = null) => {
-  window.dispatchEvent(new CustomEvent('m11-loading', { detail: { show: true, message: 'Generando PDF...' } }));
+export const generatePlanificacionPDF = async (macroInfo = {}, microcycles = [], activeTeam = null) => {
+  window.dispatchEvent(new CustomEvent('m11-loading', { detail: { show: true, message: 'Generando PDF de Planificación...' } }));
   await new Promise(r => setTimeout(r, 150));
-  const jsPDF = await getJsPDF();
-  const doc = new jsPDF({ orientation: 'landscape' });
-  const pageW = doc.internal.pageSize.getWidth(); // 297mm landscape
+  try {
+    const jsPDF = await getJsPDF();
+    const doc = new jsPDF({ orientation: 'landscape' });
+    const pageW = doc.internal.pageSize.getWidth(); // 297mm landscape
 
-  // ── CABECERA ─────────────────────────────────────────────────────────────
-  doc.setFillColor(27, 58, 45);
-  doc.rect(0, 0, pageW, 36, 'F');
+    const safeMacro = macroInfo || {};
+    const safeMicro = Array.isArray(microcycles) ? microcycles : [];
+    const teamCategory = cleanPdfText(safeMacro.category || activeTeam?.categoria || 'General');
+    const seasonStart = cleanPdfText(safeMacro.startDate || '');
+    const seasonEnd = cleanPdfText(safeMacro.endDate || '');
+    const trainer = cleanPdfText(safeMacro.trainer || activeTeam?.entrenador || 'Cuerpo Técnico');
 
-  // Logotipo oficial de Míster11 a la izquierda
-  const mr11LogoData = await getImageBase64('/logo_mister11.png');
-  if (mr11LogoData) {
-    doc.addImage(mr11LogoData, 'PNG', 15, 4, 16, 16);
-    doc.setTextColor(212, 168, 67);
-    doc.setFontSize(15);
-    doc.setFont(undefined, 'bold');
-    doc.text('MÍSTER11', 35, 14);
-  } else {
-    doc.setTextColor(212, 168, 67);
-    doc.setFontSize(18);
-    doc.setFont(undefined, 'bold');
-    doc.text('MÍSTER11', 15, 14);
-  }
+    await addHeader(doc, 'PLANIFICACIÓN ESTRATÉGICA', `Categoría: ${teamCategory} · Temporada ${seasonStart} — ${seasonEnd}`, activeTeam);
 
-  // Escudo del equipo a la derecha
-  if (activeTeam) {
-    const shieldX = pageW - 31;
-    const textX = pageW - 23;
-    
-    if (activeTeam.escudo) {
-      const logoData = await getImageBase64(activeTeam.escudo);
-      if (logoData) {
-        doc.addImage(logoData, 'PNG', shieldX, 4, 16, 16);
-      } else {
-        doc.setFillColor(255, 255, 255);
-        doc.circle(textX, 12, 8, 'F');
-        doc.setTextColor(27, 58, 45);
-        doc.setFontSize(11);
-        doc.setFont(undefined, 'bold');
-        doc.text((activeTeam.nombre || 'E').charAt(0), textX - 2, 16);
-      }
-    } else {
-      doc.setFillColor(255, 255, 255);
-      doc.circle(textX, 12, 8, 'F');
-      doc.setTextColor(27, 58, 45);
-      doc.setFontSize(11);
+    let currentY = 46;
+
+    // ── OBJETIVOS DE LA TEMPORADA ──────────────────────────────────────────
+    if (safeMacro.objective) {
+      doc.setFillColor(...THEME_COLOR);
+      doc.rect(10, currentY, pageW - 20, 7, 'F');
+      doc.setTextColor(...ACCENT_COLOR);
+      doc.setFontSize(9);
       doc.setFont(undefined, 'bold');
-      doc.text((activeTeam.nombre || 'E').charAt(0), textX - 2, 16);
+      doc.text('OBJETIVOS DE LA TEMPORADA', 14, currentY + 5);
+      
+      currentY += 10;
+      doc.setFont(undefined, 'normal');
+      doc.setTextColor(...TEXT_DARK);
+      doc.setFontSize(8.5);
+      const cleanObj = cleanPdfText(safeMacro.objective);
+      const objLines = doc.splitTextToSize(cleanObj, pageW - 28);
+      doc.text(objLines, 14, currentY);
+      currentY += (objLines.length * 4.2) + 6;
     }
-    
-    doc.setFontSize(8.5);
-    doc.setTextColor(255, 255, 255);
-    doc.setFont(undefined, 'normal');
-    doc.text(activeTeam.nombre || '', textX, 29, { align: 'center' });
+
+    // ── TABLA MACROCICLO ───────────────────────────────────────────────────
+    const head = [['Mes', 'Periodo', 'Etapa', 'N Meso', 'N Micro', 'Tipo Micro', 'N Ses.', 'Vol.(min)', '% Fis.', '% Tec.', '% Tac.']];
+    const body = safeMicro.map(m => [
+      cleanPdfText(m?.month || '-'),
+      cleanPdfText(m?.period || '-'),
+      cleanPdfText(m?.etapa || '-'),
+      cleanPdfText(m?.mesoId || '-'),
+      cleanPdfText(m?.id || '-'),
+      cleanPdfText(m?.type || 'Ordinario'),
+      cleanPdfText(m?.sessions ?? '-'),
+      cleanPdfText(m?.volume ? `${m.volume}m` : '-'),
+      cleanPdfText(m?.physical ? `${m.physical}%` : '-'),
+      cleanPdfText(m?.technical ? `${m.technical}%` : '-'),
+      cleanPdfText(m?.tactical ? `${m.tactical}%` : '-')
+    ]);
+
+    autoTable(doc, {
+      startY: currentY,
+      head,
+      body,
+      theme: 'grid',
+      headStyles: {
+        fillColor: THEME_COLOR,
+        textColor: [255, 255, 255],
+        fontStyle: 'bold',
+        fontSize: 8,
+        halign: 'center',
+      },
+      bodyStyles: {
+        textColor: TEXT_DARK,
+        fontSize: 7.5,
+        halign: 'center',
+        fillColor: [255, 255, 255],
+      },
+      alternateRowStyles: {
+        fillColor: PDF_COLORS.bgLight,
+      },
+      styles: { cellPadding: 2 },
+      columnStyles: {
+        0: { cellWidth: 20 }, 1: { cellWidth: 32 }, 2: { cellWidth: 30 },
+        3: { cellWidth: 18 }, 4: { cellWidth: 18 }, 5: { cellWidth: 30 },
+        6: { cellWidth: 18 }, 7: { cellWidth: 20 },
+        8: { cellWidth: 20 }, 9: { cellWidth: 20 }, 10: { cellWidth: 20 },
+      },
+      margin: { left: 10, right: 10 },
+    });
+
+    addFooter(doc);
+
+    const safeName = teamCategory.replace(/\s+/g, '_');
+    const year = (seasonStart || '').split('-')[0] || new Date().getFullYear();
+    await savePdfUniversal(doc, `Planificacion_${safeName}_${year}.pdf`);
+  } catch (err) {
+    console.error('Error generando Planificación PDF:', err);
+    alert('Error al generar el PDF de la planificación.');
+  } finally {
+    window.dispatchEvent(new CustomEvent('m11-loading', { detail: { show: false } }));
   }
-
-  doc.setTextColor(255, 255, 255);
-  doc.setFontSize(13);
-  doc.setFont(undefined, 'normal');
-  doc.text('Planificación Estratégica', pageW / 2, 18, { align: 'center' });
-
-  doc.setTextColor(204, 204, 204);
-  doc.setFontSize(9);
-  const subtitle = `${macroInfo.category || 'Equipo'} · Temporada ${macroInfo.startDate || ''} — ${macroInfo.endDate || ''}  ·  Entrenador: ${macroInfo.trainer || 'Míster'}`;
-  doc.text(subtitle, pageW / 2, 26, { align: 'center' });
-
-  doc.setTextColor(120);
-  doc.setFontSize(8);
-  doc.text(`Generado: ${new Date().toLocaleString()}`, 10, 42);
-
-  // ── OBJETIVOS ──────────────────────────────────────────────────────────────
-  let currentY = 46;
-  if (macroInfo.objective) {
-    doc.setFillColor(27, 58, 45);
-    doc.rect(10, 40, pageW - 20, 7, 'F');
-    doc.setTextColor(212, 168, 67);
-    doc.setFontSize(9);
-    doc.setFont(undefined, 'bold');
-    doc.text('Objetivos de la Temporada', 14, 45);
-    
-    doc.setFont(undefined, 'normal');
-    doc.setTextColor(60, 60, 60);
-    doc.setFontSize(8.5);
-    const objLines = doc.splitTextToSize(macroInfo.objective, pageW - 24);
-    doc.text(objLines, 14, 53);
-    
-    currentY = 53 + (objLines.length * 4) + 6;
-  }
-
-  // ── TABLA MACROCICLO ───────────────────────────────────────────────────
-  const head = [['Mes', 'Periodo', 'Etapa', 'Nº Meso', 'Nº Micro', 'Tipo Micro', 'Nº Ses.', 'Vol.(min)', '% Físico', '% Técnico', '% Táctico']];
-  const body = microcycles.map(m => [
-    m.month, m.period, m.etapa, m.mesoId, m.id,
-    m.type, m.sessions, m.volume,
-    `${m.physical}%`, `${m.technical}%`, `${m.tactical}%`,
-  ]);
-
-  const macroTable = autoTable(doc, {
-    startY: currentY,
-    head,
-    body,
-    headStyles: {
-      fillColor: [27, 58, 45],
-      textColor: [255, 255, 255],
-      fontStyle: 'bold',
-      fontSize: 8,
-      halign: 'center',
-    },
-    bodyStyles: {
-      textColor: [204, 204, 204],
-      fontSize: 7.5,
-      halign: 'center',
-      fillColor: [27, 58, 45],
-    },
-    alternateRowStyles: {
-      fillColor: [20, 46, 34],
-    },
-    styles: { cellPadding: 2 },
-    columnStyles: {
-      0: { cellWidth: 18 }, 1: { cellWidth: 30 }, 2: { cellWidth: 28 },
-      3: { cellWidth: 18 }, 4: { cellWidth: 20 }, 5: { cellWidth: 28 },
-      6: { cellWidth: 18 }, 7: { cellWidth: 20 },
-      8: { cellWidth: 18 }, 9: { cellWidth: 20 }, 10: { cellWidth: 20 },
-    },
-    margin: { left: 10, right: 10 },
-  });
-
-
-
-  // ── PIE DE PÁGINA ──────────────────────────────────────────────────────
-  const pageCount = doc.internal.getNumberOfPages();
-  for (let i = 1; i <= pageCount; i++) {
-    doc.setPage(i);
-    doc.setFontSize(8);
-    doc.setTextColor(150);
-    doc.text(
-      `Página ${i} de ${pageCount}  |  Generado por Míster11 Tactical Engine`,
-      pageW / 2, doc.internal.pageSize.getHeight() - 6,
-      { align: 'center' }
-    );
-  }
-
-  const safeName = (macroInfo.category || 'Equipo').replace(/\s+/g, '_');
-  const year = (macroInfo.startDate || '').split('-')[0] || new Date().getFullYear();
-  savePdfUniversal(doc, `Planificacion_${safeName}_${year}.pdf`);
-  window.dispatchEvent(new CustomEvent('m11-loading', { detail: { show: false } }));
 };
 
 /**
@@ -437,190 +387,270 @@ export const generateTestsReport = async (tests, players, historyData, activeTea
  * TESTS - Informe Individual (Para el jugador o padre)
  */
 export const generatePlayerTestReport = async (player, tests, historyData, activeTeam = null, graficaDataUrl = null) => {
-  window.dispatchEvent(new CustomEvent('m11-loading', { detail: { show: true, message: 'Generando PDF...' } }));
+  window.dispatchEvent(new CustomEvent('m11-loading', { detail: { show: true, message: 'Generando Resumen Técnico...' } }));
   await new Promise(r => setTimeout(r, 150));
-  const jsPDF = await getJsPDF();
-  const doc = new jsPDF();
-  const pageW = doc.internal.pageSize.getWidth();
+  try {
+    const jsPDF = await getJsPDF();
+    const doc = new jsPDF();
+    const pageW = doc.internal.pageSize.getWidth();
+    const playerName = cleanPdfText(player.name || player.nombre || 'Jugador');
+    const teamName = cleanPdfText(activeTeam?.nombre || 'Míster11');
 
-  await addHeader(doc, 'INFORME DE RENDIMIENTO INDIVIDUAL', `Fecha: ${new Date().toLocaleDateString()}`, activeTeam);
+    await addHeader(doc, 'INFORME DE RENDIMIENTO TÉCNICO', `${playerName} · ${teamName}`, activeTeam);
 
-  // ── TARJETA DE JUGADOR ────────────────────────────────────────────────────
-  doc.setFillColor(...THEME_COLOR);
-  doc.rect(10, 44, pageW - 20, 22, 'F');
+    // Calcular puntuaciones canónicas reales
+    let rawEvals = Array.isArray(player.evaluaciones) ? player.evaluaciones : (Array.isArray(player.tests) ? player.tests : []);
+    if (rawEvals.length === 0 && historyData?.[player.id]) {
+      rawEvals = Object.values(historyData[player.id]).flat().map(item => ({
+        ...(item.raw || {}),
+        testId: item.raw?.testId || item.testId,
+        val: item.val,
+        date: item.date,
+        playerId: player.id
+      }));
+    }
+    const playerEvals = consolidatePlayerEvaluations(rawEvals, player.id);
+    const matchRatingVal = (player.avgRating && player.avgRating !== '-' && !isNaN(Number(player.avgRating)))
+      ? Number(player.avgRating)
+      : (player.notaMedia && !isNaN(Number(player.notaMedia)) ? Number(player.notaMedia) : null);
 
-  // Avatar circular placeholder
-  doc.setFillColor(...ACCENT_COLOR);
-  doc.circle(24, 55, 8, 'F');
-  doc.setFontSize(10);
-  doc.setFont(undefined, 'bold');
-  doc.setTextColor(...THEME_COLOR);
-  const initials = (player.name || player.nombre || 'J').charAt(0).toUpperCase();
-  doc.text(initials, 21.5, 58);
+    const perfScores = calculatePlayerPerformanceScores(playerEvals, player, {
+      attendancePct: player.attendancePct ? Number(player.attendancePct) : null,
+      matchRating: matchRatingVal
+    });
 
-  // Nombre del jugador
-  doc.setTextColor(...ACCENT_COLOR);
-  doc.setFontSize(13);
-  doc.setFont(undefined, 'bold');
-  doc.text(player.name || player.nombre || 'Jugador', 36, 51);
+    // ── TARJETA DE JUGADOR CON FOTO REAL ──────────────────────────────────────
+    doc.setFillColor(...THEME_COLOR);
+    doc.rect(10, 44, pageW - 20, 24, 'F');
 
-  // Dorsal | Posición
-  doc.setTextColor(180, 220, 200);
-  doc.setFontSize(8.5);
-  doc.setFont(undefined, 'normal');
-  doc.text(`Dorsal: ${player.number || player.dorsal || '-'}   |   Posición: ${player.position || player.posicion || '-'}`, 36, 58);
+    const playerAvatarData = await imageUrlToBase64(
+      player.avatarUrl || player.photoPreview || player.photo || player.imageUrl || player.foto || player.avatar, 
+      playerName, 
+      true
+    );
 
-  // Overall a la derecha
-  const allVals = tests.map(t => historyData[player.id]?.[t.id]).filter(h => h?.length > 0).map(h => h[h.length - 1].val);
-  const overallAvg = allVals.length > 0 ? Math.round(allVals.reduce((a, b) => a + b, 0) / allVals.length) : null;
-  if (overallAvg !== null) {
-    doc.setFontSize(22);
-    doc.setFont(undefined, 'bold');
+    let textOffsetX = 36;
+    if (playerAvatarData) {
+      try {
+        doc.setFillColor(248, 250, 252);
+        doc.roundedRect(14, 46, 20, 20, 2, 2, 'F');
+        doc.addImage(playerAvatarData, 'PNG', 15, 47, 18, 18);
+        textOffsetX = 38;
+      } catch (e) {
+        console.warn('[generatePlayerTestReport] Error insertando foto del jugador:', e);
+      }
+    } else {
+      doc.setFillColor(...ACCENT_COLOR);
+      doc.circle(24, 56, 8, 'F');
+      doc.setFontSize(10);
+      doc.setFont(undefined, 'bold');
+      doc.setTextColor(...THEME_COLOR);
+      const initials = (player.name || player.nombre || 'J').charAt(0).toUpperCase();
+      doc.text(initials, 21.5, 59);
+    }
+
+    // Nombre del jugador
     doc.setTextColor(...ACCENT_COLOR);
-    doc.text(String(overallAvg), pageW - 24, 54, { align: 'center' });
-    doc.setFontSize(7);
+    doc.setFontSize(12.5);
+    doc.setFont(undefined, 'bold');
+    doc.text(playerName, textOffsetX, 52);
+
+    // Dorsal | Posición | Categoría
+    doc.setTextColor(200, 225, 215);
+    doc.setFontSize(8.5);
     doc.setFont(undefined, 'normal');
-    doc.setTextColor(180, 220, 200);
-    doc.text('MEDIA', pageW - 24, 61, { align: 'center' });
-  }
+    const posStr = cleanPdfText(player.position || player.posicion || '-');
+    const dorsalStr = cleanPdfText(player.number || player.dorsal || '-');
+    const catStr = cleanPdfText(activeTeam?.categoria || player.category || '-');
+    doc.text(`Dorsal: #${dorsalStr}   |   Posición: ${posStr}   |   Categoría: ${catStr}`, textOffsetX, 60);
 
-  // ── TEXTO INTRODUCTORIO ───────────────────────────────────────────────────
-  doc.setFillColor(250, 248, 240);
-  doc.rect(10, 68, pageW - 20, 14, 'F');
-  doc.setFontSize(8.5);
-  doc.setTextColor(100, 100, 100);
-  doc.setFont(undefined, 'italic');
-  const introText = 'Estimado padre/tutor: Este informe resume los resultados de las pruebas físicas y técnicas realizadas por el jugador. Ayuda a entender sus fortalezas y áreas de mejora.';
-  doc.text(doc.splitTextToSize(introText, pageW - 28), 14, 74);
+    // TPI Score / Overall Real a la derecha
+    const overallVal = perfScores.overall || null;
+    if (overallVal !== null) {
+      doc.setFontSize(20);
+      doc.setFont(undefined, 'bold');
+      doc.setTextColor(...ACCENT_COLOR);
+      doc.text(String(overallVal), pageW - 24, 54, { align: 'center' });
+      doc.setFontSize(7);
+      doc.setFont(undefined, 'normal');
+      doc.setTextColor(200, 225, 215);
+      doc.text('TPI SCORE', pageW - 24, 61, { align: 'center' });
+    }
 
-  const generateRows = (testsGroup, isPhysical) => {
-    const rows = [];
-    testsGroup.forEach(t => {
-      const pHistory = historyData[player.id]?.[t.id];
-      let latestVal = '-', prevVal = '-', evolution = '-';
-      if (pHistory?.length > 0) {
-        latestVal = pHistory[pHistory.length - 1].val;
-        if (pHistory.length > 1) {
-          prevVal = pHistory[pHistory.length - 2].val;
-          const diff = latestVal - prevVal;
-          const improved = t.unit === 'seg' ? diff < 0 : diff > 0;
-          evolution = diff === 0 ? 'Mantenido' : (improved ? '(+) Mejora' : '(-) Baja');
+    // ── TEXTO INTRODUCTORIO ───────────────────────────────────────────────────
+    doc.setFillColor(250, 248, 240);
+    doc.rect(10, 71, pageW - 20, 13, 'F');
+    doc.setFontSize(8);
+    doc.setTextColor(90, 90, 90);
+    doc.setFont(undefined, 'italic');
+    const introText = 'Informe oficial de rendimiento físico, técnico y psicológico registrado en Míster11. Baremos consolidados en escala unificada (10 a 99).';
+    doc.text(doc.splitTextToSize(introText, pageW - 28), 14, 78);
+
+    const generateRows = (testsGroup, isPhysical) => {
+      const rows = [];
+      testsGroup.forEach(t => {
+        const pHistory = historyData?.[player.id]?.[t.id];
+        let latestVal = '-', prevVal = '-', evolution = '-';
+        if (pHistory?.length > 0) {
+          latestVal = pHistory[pHistory.length - 1].val;
+          if (pHistory.length > 1) {
+            prevVal = pHistory[pHistory.length - 2].val;
+            const diff = latestVal - prevVal;
+            const improved = t.unit === 'seg' ? diff < 0 : diff > 0;
+            evolution = diff === 0 ? 'Mantenido' : (improved ? '(+) Mejora' : '(-) Baja');
+          }
         }
-      }
-      if (isPhysical) {
-        let valoracion = latestVal !== '-' ? (evolution.includes('Mejora') ? 'Excelente' : (evolution.includes('Baja') ? 'Mejorable' : 'Bien')) : '-';
-        rows.push([t.name, `${latestVal} ${latestVal !== '-' ? t.unit : ''}`, `${prevVal !== '-' ? prevVal + ' ' + t.unit : '-'}`, evolution, valoracion]);
-      } else {
-        rows.push([t.name, `${latestVal} ${latestVal !== '-' ? t.unit : ''}`, t.interpretacion || t.desc || 'Análisis pendiente']);
-      }
-    });
-    return rows;
-  };
+        if (isPhysical) {
+          let valoracion = latestVal !== '-' ? (evolution.includes('Mejora') ? 'Excelente' : (evolution.includes('Baja') ? 'Mejorable' : 'Adecuado')) : '-';
+          rows.push([
+            cleanPdfText(t.name), 
+            cleanPdfText(`${latestVal} ${latestVal !== '-' ? t.unit : ''}`), 
+            cleanPdfText(`${prevVal !== '-' ? prevVal + ' ' + t.unit : '-'}`), 
+            evolution, 
+            valoracion
+          ]);
+        } else {
+          rows.push([
+            cleanPdfText(t.name), 
+            cleanPdfText(`${latestVal} ${latestVal !== '-' ? t.unit : ''}`), 
+            cleanPdfText(t.interpretacion || t.desc || 'Registrado')
+          ]);
+        }
+      });
+      return rows;
+    };
 
-  const physicalRows = generateRows(tests.filter(t => t.type === 'fisico' || !t.type), true);
-  const psychoRows   = generateRows(tests.filter(t => t.type === 'psicosocial'), false);
-  const socioRows    = generateRows(tests.filter(t => t.type === 'socioemocional'), false);
+    const physicalRows = generateRows(tests.filter(t => t.type === 'fisico' || !t.type), true);
+    const psychoRows   = generateRows(tests.filter(t => t.type === 'psicosocial'), false);
+    const socioRows    = generateRows(tests.filter(t => t.type === 'socioemocional'), false);
 
-  // ── TABLA FÍSICA ─────────────────────────────────────────────────────────
-  autoTable(doc, {
-    startY: 85,
-    head: [['Prueba Física / Técnica', 'Resultado Actual', 'Eval. Anterior', 'Evolución', 'Valoración']],
-    body: physicalRows,
-    headStyles: { fillColor: THEME_COLOR, textColor: ACCENT_COLOR, fontStyle: 'bold', fontSize: 9 },
-    bodyStyles: { fillColor: [27, 58, 45], textColor: [200, 220, 210], fontSize: 9, cellPadding: 3 },
-    alternateRowStyles: { fillColor: [20, 46, 34] },
-    columnStyles: {
-      0: { fontStyle: 'bold', textColor: ACCENT_COLOR, halign: 'left' },
-      3: { halign: 'center' },
-      4: { halign: 'center', fontStyle: 'bold' },
-    },
-    styles: { lineColor: [40, 70, 55], lineWidth: 0.2 },
-    didParseCell(data) {
-      if (data.section === 'body' && data.column.index === 3) {
-        const v = String(data.cell.raw);
-        if (v.includes('Mejora'))   data.cell.styles.textColor = [76, 175, 125];
-        else if (v.includes('Baja')) data.cell.styles.textColor = [239, 68, 68];
-        else                         data.cell.styles.textColor = [200, 200, 200];
-      }
-      if (data.section === 'body' && data.column.index === 4) {
-        const v = String(data.cell.raw);
-        if (v.includes('Excelente')) data.cell.styles.textColor = [76, 175, 125];
-        else if (v.includes('Mejorable')) data.cell.styles.textColor = [239, 68, 68];
-        else data.cell.styles.textColor = [212, 168, 67];
-      }
-    },
-  });
-
-  let finalY = doc.lastAutoTable.finalY + 10;
-
-  // ── TABLA PSICOSOCIAL ─────────────────────────────────────────────────────
-  if (psychoRows.length > 0) {
-    if (finalY > doc.internal.pageSize.getHeight() - 40) { doc.addPage(); finalY = 20; }
+    // ── TABLA FÍSICA Y TÉCNICA (ALTO CONTRASTE CLARO) ─────────────────────────
     autoTable(doc, {
-      startY: finalY,
-      head: [['Perfil Psicosocial', 'Puntuación', 'Interpretación']],
-      body: psychoRows,
-      headStyles: { fillColor: ACCENT_COLOR, textColor: THEME_COLOR, fontStyle: 'bold', fontSize: 9 },
-      bodyStyles: { fillColor: [27, 58, 45], textColor: [200, 220, 210], fontSize: 9, cellPadding: 3 },
-      alternateRowStyles: { fillColor: [20, 46, 34] },
-      columnStyles: { 0: { fontStyle: 'bold', textColor: ACCENT_COLOR } },
-      styles: { lineColor: [40, 70, 55], lineWidth: 0.2 },
+      startY: 87,
+      head: [['Prueba Física / Técnica', 'Resultado Actual', 'Eval. Anterior', 'Evolución', 'Valoración']],
+      body: physicalRows,
+      theme: 'grid',
+      headStyles: { fillColor: THEME_COLOR, textColor: [255, 255, 255], fontStyle: 'bold', fontSize: 8.5, halign: 'center' },
+      bodyStyles: { fillColor: [255, 255, 255], textColor: TEXT_DARK, fontSize: 8, halign: 'center', cellPadding: 2.5 },
+      alternateRowStyles: { fillColor: PDF_COLORS.bgLight },
+      columnStyles: {
+        0: { fontStyle: 'bold', halign: 'left' },
+        3: { halign: 'center' },
+        4: { halign: 'center', fontStyle: 'bold' },
+      },
+      margin: { left: 10, right: 10 },
+      didParseCell(data) {
+        if (data.section === 'body' && data.column.index === 3) {
+          const v = String(data.cell.raw);
+          if (v.includes('Mejora')) data.cell.styles.textColor = [34, 197, 94];
+          else if (v.includes('Baja')) data.cell.styles.textColor = [220, 38, 38];
+        }
+        if (data.section === 'body' && data.column.index === 4) {
+          const v = String(data.cell.raw);
+          if (v.includes('Excelente')) data.cell.styles.textColor = [34, 197, 94];
+          else if (v.includes('Mejorable')) data.cell.styles.textColor = [220, 38, 38];
+        }
+      },
     });
-    finalY = doc.lastAutoTable.finalY + 10;
-  }
 
-  // ── TABLA SOCIOEMOCIONAL ──────────────────────────────────────────────────
-  if (socioRows.length > 0) {
-    if (finalY > doc.internal.pageSize.getHeight() - 40) { doc.addPage(); finalY = 20; }
-    autoTable(doc, {
-      startY: finalY,
-      head: [['Bienestar en el Equipo', 'Puntuación', 'Interpretación']],
-      body: socioRows,
-      headStyles: { fillColor: ACCENT_COLOR, textColor: THEME_COLOR, fontStyle: 'bold', fontSize: 9 },
-      bodyStyles: { fillColor: [27, 58, 45], textColor: [200, 220, 210], fontSize: 9, cellPadding: 3 },
-      alternateRowStyles: { fillColor: [20, 46, 34] },
-      columnStyles: { 0: { fontStyle: 'bold', textColor: ACCENT_COLOR } },
-      styles: { lineColor: [40, 70, 55], lineWidth: 0.2 },
-    });
-    finalY = doc.lastAutoTable.finalY + 15;
-  }
+    let finalY = doc.lastAutoTable.finalY + 8;
 
-  // ── GRÁFICA DE RENDIMIENTO ────────────────────────────────────────────────
-  if (graficaDataUrl) {
-    if (finalY + 90 > doc.internal.pageSize.getHeight() - 20) { doc.addPage(); finalY = 20; }
-    doc.setFontSize(11);
+    // ── TABLA PSICOSOCIAL ─────────────────────────────────────────────────────
+    if (psychoRows.length > 0) {
+      if (finalY > doc.internal.pageSize.getHeight() - 40) { doc.addPage(); finalY = 20; }
+      autoTable(doc, {
+        startY: finalY,
+        head: [['Perfil Psicosocial / Mental', 'Puntuación', 'Interpretación']],
+        body: psychoRows,
+        theme: 'grid',
+        headStyles: { fillColor: [43, 62, 53], textColor: [255, 255, 255], fontStyle: 'bold', fontSize: 8.5, halign: 'center' },
+        bodyStyles: { fillColor: [255, 255, 255], textColor: TEXT_DARK, fontSize: 8, cellPadding: 2.5 },
+        alternateRowStyles: { fillColor: PDF_COLORS.bgLight },
+        columnStyles: { 0: { fontStyle: 'bold' }, 1: { halign: 'center' } },
+        margin: { left: 10, right: 10 }
+      });
+      finalY = doc.lastAutoTable.finalY + 8;
+    }
+
+    // ── TABLA SOCIOEMOCIONAL ──────────────────────────────────────────────────
+    if (socioRows.length > 0) {
+      if (finalY > doc.internal.pageSize.getHeight() - 40) { doc.addPage(); finalY = 20; }
+      autoTable(doc, {
+        startY: finalY,
+        head: [['Bienestar en el Equipo / Socioemocional', 'Puntuación', 'Interpretación']],
+        body: socioRows,
+        theme: 'grid',
+        headStyles: { fillColor: [43, 62, 53], textColor: [255, 255, 255], fontStyle: 'bold', fontSize: 8.5, halign: 'center' },
+        bodyStyles: { fillColor: [255, 255, 255], textColor: TEXT_DARK, fontSize: 8, cellPadding: 2.5 },
+        alternateRowStyles: { fillColor: PDF_COLORS.bgLight },
+        columnStyles: { 0: { fontStyle: 'bold' }, 1: { halign: 'center' } },
+        margin: { left: 10, right: 10 }
+      });
+      finalY = doc.lastAutoTable.finalY + 8;
+    }
+
+    // ── GRÁFICA DE RENDIMIENTO (LEGEND CARD + RADAR) O RADAR NATIVO ──────────
+    if (graficaDataUrl) {
+      if (finalY + 85 > doc.internal.pageSize.getHeight() - 20) { doc.addPage(); finalY = 20; }
+      doc.setFontSize(10.5);
+      doc.setFont(undefined, 'bold');
+      doc.setTextColor(...THEME_COLOR);
+      doc.text('PERFIL DE RENDIMIENTO INTEGRAL & RADAR', 10, finalY);
+      doc.setDrawColor(...ACCENT_COLOR);
+      doc.setLineWidth(0.6);
+      doc.line(10, finalY + 1, 10 + doc.getTextWidth('PERFIL DE RENDIMIENTO INTEGRAL & RADAR'), finalY + 1);
+      doc.addImage(graficaDataUrl, 'PNG', 10, finalY + 4, pageW - 20, 78);
+      finalY += 86;
+    } else {
+      // Si no hay captura externa, dibujar Radar 360° nativo con métricas reales
+      const radarMetrics = [
+        { label: 'Físico', value: perfScores.fis },
+        { label: 'Técnica', value: perfScores.tec },
+        { label: 'Táctica', value: perfScores.tactica },
+        { label: 'Mental', value: perfScores.psi },
+        { label: 'Asistencia', value: perfScores.asistencia }
+      ];
+      const radarImg = drawRadarChartCanvas(radarMetrics, 440);
+      if (radarImg) {
+        if (finalY + 75 > doc.internal.pageSize.getHeight() - 20) { doc.addPage(); finalY = 20; }
+        const rSize = 65;
+        const rX = (pageW - rSize) / 2;
+        doc.setFontSize(10);
+        doc.setFont(undefined, 'bold');
+        doc.setTextColor(...THEME_COLOR);
+        doc.text('RADAR DE HABILIDADES 360°', pageW / 2, finalY + 4, { align: 'center' });
+        doc.addImage(radarImg, 'PNG', rX, finalY + 6, rSize, rSize);
+        finalY += rSize + 10;
+      }
+    }
+
+    // ── BLOQUE DE RECOMENDACIÓN ───────────────────────────────────────────────
+    if (finalY + 28 > doc.internal.pageSize.getHeight() - 20) { doc.addPage(); finalY = 20; }
+
+    doc.setFillColor(250, 248, 240);
+    doc.rect(10, finalY, pageW - 20, 24, 'F');
+    doc.setFillColor(...ACCENT_COLOR);
+    doc.rect(10, finalY, 3, 24, 'F');
+
+    doc.setFontSize(9.5);
     doc.setFont(undefined, 'bold');
     doc.setTextColor(...THEME_COLOR);
-    doc.text('Perfil de Rendimiento Actual', 15, finalY);
-    doc.setDrawColor(...ACCENT_COLOR);
-    doc.setLineWidth(0.6);
-    doc.line(15, finalY + 1, 15 + doc.getTextWidth('Perfil de Rendimiento Actual'), finalY + 1);
-    doc.addImage(graficaDataUrl, 'PNG', 15, finalY + 5, pageW - 30, 80);
-    finalY += 95;
+    doc.text('Recomendación del Cuerpo Técnico', 16, finalY + 6);
+    doc.setFont(undefined, 'normal');
+    doc.setFontSize(8);
+    doc.setTextColor(70, 70, 70);
+    const adviceText = 'Mantener la constancia y el compromiso en las sesiones de entrenamiento. Continuar el fortalecimiento de las dimensiones con menor baremo y consolidar las virtudes técnicas mostradas.';
+    doc.text(doc.splitTextToSize(adviceText, pageW - 30), 16, finalY + 13);
+
+    addFooter(doc);
+    const safeName = playerName.replace(/\s+/g, '_');
+    await savePdfUniversal(doc, `Informe_Tests_${safeName}.pdf`);
+  } catch (err) {
+    console.error('Error generando Informe de Tests:', err);
+    alert('Error al generar el informe de tests.');
+  } finally {
+    window.dispatchEvent(new CustomEvent('m11-loading', { detail: { show: false } }));
   }
-
-  // ── BLOQUE DE RECOMENDACIÓN ───────────────────────────────────────────────
-  if (finalY + 30 > doc.internal.pageSize.getHeight() - 20) { doc.addPage(); finalY = 20; }
-
-  doc.setFillColor(250, 248, 240);
-  doc.rect(10, finalY, pageW - 20, 28, 'F');
-  doc.setFillColor(...ACCENT_COLOR);
-  doc.rect(10, finalY, 3, 28, 'F');
-
-  doc.setFontSize(10);
-  doc.setFont(undefined, 'bold');
-  doc.setTextColor(...THEME_COLOR);
-  doc.text('Recomendación del Cuerpo Técnico', 17, finalY + 8);
-  doc.setFont(undefined, 'normal');
-  doc.setFontSize(9);
-  doc.setTextColor(80, 80, 80);
-  const adviceText = 'Sigue entrenando con constancia y compromiso. Es fundamental mantener una buena alimentación y descanso para continuar con la progresión atlética mostrada en las últimas evaluaciones.';
-  doc.text(doc.splitTextToSize(adviceText, pageW - 30), 17, finalY + 16);
-
-  addFooter(doc);
-  const safeName = (player.name || player.nombre || 'Jugador').replace(/\s+/g, '_');
-  savePdfUniversal(doc, `Informe_Tests_${safeName}.pdf`);
-  window.dispatchEvent(new CustomEvent('m11-loading', { detail: { show: false } }));
 };
 
 /**
@@ -731,7 +761,7 @@ export const preloadSessionImages = async (session, pizarras = [], captures = []
         boardCapture: base64 || (typeof rawImg === 'string' ? rawImg : null),
         boardCaptureUrl: base64 || (typeof rawImg === 'string' ? rawImg : null),
         imagenProtocolo: base64 || (typeof rawImg === 'string' ? rawImg : null),
-        resolvedBase64: base64 || (typeof rawImg === 'string' ? rawImg : null),
+        resolvedBase64: (base64 && typeof base64 === 'string' && base64.startsWith('data:')) ? base64 : null,
         hadImageSource: Boolean(rawImg || base64)
       };
     })
@@ -808,14 +838,14 @@ export const generateSessionPDF = async (session, activeTeam = null, pizarras = 
       }
     }
     if (!sessionDiagramBase64) {
-      const firstWithImg = blocks.find(b => b.resolvedBase64);
+      const firstWithImg = blocks.find(b => b.resolvedBase64 && typeof b.resolvedBase64 === 'string' && b.resolvedBase64.startsWith('data:'));
       if (firstWithImg) {
         sessionDiagramBase64 = firstWithImg.resolvedBase64;
       }
     }
 
     // ─── DIAGRAMA TÁCTICO PRINCIPAL ───────────────────────────────────────────
-    if (sessionDiagramBase64) {
+    if (sessionDiagramBase64 && typeof sessionDiagramBase64 === 'string' && sessionDiagramBase64.startsWith('data:')) {
       if (currentY + 80 > pageH - 20) { doc.addPage(); currentY = 20; }
       currentY = drawSectionHeader(doc, currentY, 'DIAGRAMA TÁCTICO PRINCIPAL', pageW);
       doc.setFillColor(248, 250, 248);
@@ -848,7 +878,7 @@ export const generateSessionPDF = async (session, activeTeam = null, pizarras = 
 
       for (let bi = 0; bi < blocks.length; bi++) {
         const b = blocks[bi];
-        const imgBase64 = b.resolvedBase64;
+        const imgBase64 = (b.resolvedBase64 && typeof b.resolvedBase64 === 'string' && b.resolvedBase64.startsWith('data:')) ? b.resolvedBase64 : null;
         const hasImg = Boolean(imgBase64);
 
         const rawDesc = b.description || b.descripcion || 'Sin descripción';
@@ -1198,8 +1228,167 @@ export const generateMatchConvocation = async (match, players, activeTeam = null
 /**
  * EXPEDIENTE DEPORTIVO - Dossier Completo del Jugador (2 Páginas con Radar 360°, IMC, Asistencia y Tests)
  */
+/**
+ * CALENDARIO OFICIAL DE PARTIDOS DE LA TEMPORADA
+ * Exporta el cronograma completo de partidos con resumen de competición y tabla detallada.
+ */
+export const generateMatchesCalendarPDF = async (matches = [], activeTeam = null) => {
+  window.dispatchEvent(new CustomEvent('m11-loading', { detail: { show: true, message: 'Generando Calendario Oficial...' } }));
+  await new Promise(r => setTimeout(r, 150));
+  try {
+    const jsPDF = await getJsPDF();
+    const doc = new jsPDF('p', 'mm', 'a4');
+    const pageW = doc.internal.pageSize.getWidth();
+
+    const teamName = cleanPdfText(activeTeam?.nombre || 'Mi Equipo');
+    const category = cleanPdfText(activeTeam?.categoria || 'General');
+    const subtitle = `Temporada Oficial · ${teamName} · Categoría: ${category}`;
+
+    await addHeader(doc, 'CALENDARIO OFICIAL DE PARTIDOS', subtitle, activeTeam);
+
+    // Calcular estadísticas globales
+    const sortedMatches = [...matches].sort((a, b) => {
+      if (!a.date) return 1;
+      if (!b.date) return -1;
+      return new Date(a.date) - new Date(b.date);
+    });
+
+    const totalMatches = sortedMatches.length;
+    let played = 0, wins = 0, draws = 0, losses = 0, gf = 0, gc = 0;
+
+    sortedMatches.forEach(m => {
+      if (m.status === 'Terminado' || m.played) {
+        played++;
+        const myGoals = Number(m.goalsFor ?? m.golesFavor ?? m.myGoals ?? 0);
+        const rivalGoals = Number(m.goalsAgainst ?? m.golesContra ?? m.rivalGoals ?? 0);
+        gf += myGoals;
+        gc += rivalGoals;
+        if (myGoals > rivalGoals) wins++;
+        else if (myGoals === rivalGoals) draws++;
+        else losses++;
+      }
+    });
+
+    const difGoals = gf - gc;
+    const difStr = difGoals > 0 ? `+${difGoals}` : `${difGoals}`;
+    const winRate = played > 0 ? Math.round((wins / played) * 100) : 0;
+
+    // ── BANNER RESUMEN DE COMPETICIÓN (KPIs) ───────────────────────────────────
+    let currentY = 46;
+    doc.setFillColor(...PDF_COLORS.bgLight);
+    doc.roundedRect(14, currentY, pageW - 28, 22, 3, 3, 'F');
+    doc.setDrawColor(...PDF_COLORS.border);
+    doc.roundedRect(14, currentY, pageW - 28, 22, 3, 3, 'S');
+
+    const kpis = [
+      { label: 'PARTIDOS', val: `${totalMatches}` },
+      { label: 'JUGADOS', val: `${played}` },
+      { label: 'VICTORIAS', val: `${wins}` },
+      { label: 'EMPATES', val: `${draws}` },
+      { label: 'DERROTAS', val: `${losses}` },
+      { label: 'GF / GC', val: `${gf} - ${gc}` },
+      { label: 'DIF.', val: difStr },
+      { label: 'EFECTIVIDAD', val: `${winRate}%` },
+    ];
+
+    const colW = (pageW - 28) / kpis.length;
+    kpis.forEach((k, idx) => {
+      const x = 14 + (idx * colW) + (colW / 2);
+      doc.setFontSize(7.5);
+      doc.setFont(undefined, 'bold');
+      doc.setTextColor(...PDF_COLORS.textMuted);
+      doc.text(k.label, x, currentY + 7, { align: 'center' });
+
+      doc.setFontSize(11);
+      doc.setFont(undefined, 'bold');
+      doc.setTextColor(...THEME_COLOR);
+      doc.text(k.val, x, currentY + 16, { align: 'center' });
+    });
+
+    currentY += 28;
+
+    // ── TABLA CRONOLÓGICA DE PARTIDOS ──────────────────────────────────────────
+    const tableRows = sortedMatches.map((m, idx) => {
+      const dateStr = m.date ? m.date.split('-').reverse().join('/') : 'Por definir';
+      const timeStr = m.time || m.hora || '--:--';
+      const rival = cleanPdfText(m.rival || 'Rival');
+      const jornada = cleanPdfText(m.jornada ? `Jornada ${m.jornada}` : (m.type || 'Oficial'));
+      const condition = cleanPdfText(m.condition || m.condicion || (m.type === 'Visitante' ? 'Visitante' : 'Local'));
+      
+      let resStr = 'Programado';
+      if (m.status === 'Terminado' || m.played) {
+        const myG = m.goalsFor ?? m.golesFavor ?? 0;
+        const rivG = m.goalsAgainst ?? m.golesContra ?? 0;
+        const outcome = myG > rivG ? '[Victoria]' : (myG === rivG ? '[Empate]' : '[Derrota]');
+        resStr = `${myG} - ${rivG} ${outcome}`;
+      } else if (m.status === 'En Juego') {
+        resStr = 'En Directo';
+      }
+
+      const location = cleanPdfText(m.location || m.lugar || m.campo || 'Por determinar');
+
+      return [
+        String(idx + 1),
+        `${dateStr}\n${timeStr}`,
+        jornada,
+        rival,
+        condition,
+        resStr,
+        location
+      ];
+    });
+
+    autoTable(doc, {
+      startY: currentY,
+      head: [['#', 'Fecha / Hora', 'Jornada / Comp.', 'Rival', 'Condición', 'Resultado / Estado', 'Campo / Instalación']],
+      body: tableRows,
+      theme: 'grid',
+      headStyles: {
+        fillColor: THEME_COLOR,
+        textColor: [255, 255, 255],
+        fontStyle: 'bold',
+        fontSize: 8.5,
+        halign: 'center'
+      },
+      bodyStyles: {
+        textColor: TEXT_DARK,
+        fontSize: 8,
+        halign: 'center',
+        cellPadding: 2.5
+      },
+      columnStyles: {
+        0: { cellWidth: 8, halign: 'center' },
+        1: { cellWidth: 25, halign: 'center' },
+        2: { cellWidth: 26, halign: 'center' },
+        3: { cellWidth: 38, halign: 'left', fontStyle: 'bold' },
+        4: { cellWidth: 22, halign: 'center' },
+        5: { cellWidth: 34, halign: 'center' },
+        6: { cellWidth: 'auto', halign: 'left' }
+      },
+      alternateRowStyles: {
+        fillColor: PDF_COLORS.bgLight
+      },
+      margin: { left: 14, right: 14 }
+    });
+
+    addFooter(doc);
+
+    const safeFile = `Calendario_Partidos_${teamName.replace(/\s+/g, '_')}.pdf`;
+    await savePdfUniversal(doc, safeFile);
+  } catch (err) {
+    console.error('Error generando Calendario PDF:', err);
+    alert('Error al generar el PDF del calendario de partidos.');
+  } finally {
+    window.dispatchEvent(new CustomEvent('m11-loading', { detail: { show: false } }));
+  }
+};
+
+/**
+ * EXPEDIENTE DEPORTIVO OFICIAL - Dossier Integral del Jugador (3 Páginas)
+ * Datos leales y completos de Míster11 y Portal del Jugador, sin emojis corruptos.
+ */
 export const generateExpediente = async (player, activeTeam = null) => {
-  window.dispatchEvent(new CustomEvent('m11-loading', { detail: { show: true, message: 'Generando Expediente Deportivo...' } }));
+  window.dispatchEvent(new CustomEvent('m11-loading', { detail: { show: true, message: 'Generando Expediente Deportivo Oficial...' } }));
   await new Promise(r => setTimeout(r, 150));
   try {
     const jsPDF = await getJsPDF();
@@ -1207,18 +1396,21 @@ export const generateExpediente = async (player, activeTeam = null) => {
     const pageW = doc.internal.pageSize.getWidth();
     const pageH = doc.internal.pageSize.getHeight();
 
-    const playerName = player.name || player.nombre || 'Jugador';
+    const playerName = cleanPdfText(player.name || player.nombre || 'Jugador');
+    const dorsal = cleanPdfText(player.number || player.dorsal || '-');
+    const teamName = cleanPdfText(activeTeam?.nombre || 'Míster11');
+    const category = cleanPdfText(activeTeam?.categoria || player.category || '-');
     const safeName = playerName.replace(/\s+/g, '_');
 
     // ══════════════════════════════════════════════════════════════════════════
-    // PÁGINA 1: FICHA, ANTROPOMETRÍA + IMC, ASISTENCIA, COMPETICIÓN Y RADAR 360
+    // PÁGINA 1: FICHA DE IDENTIDAD, CONTACTO/TUTOR, SALUD/IMC Y RADAR 360°
     // ══════════════════════════════════════════════════════════════════════════
-    await addHeader(doc, 'EXPEDIENTE DEPORTIVO OFICIAL', `${playerName} · #${player.number || player.dorsal || '-'}`, activeTeam);
+    await addHeader(doc, 'EXPEDIENTE DEPORTIVO OFICIAL', `${playerName} · #${dorsal} · ${teamName}`, activeTeam);
 
     let y = 46;
 
-    // ── 1. AVATAR Y DATOS PERSONALES ──────────────────────────────────────────
-    const playerAvatarData = await imageUrlToBase64(player.avatarUrl || player.photoPreview || player.photo, playerName, true);
+    // ── 1. AVATAR REAL Y DATOS DE IDENTIDAD ───────────────────────────────────
+    const playerAvatarData = await imageUrlToBase64(player.avatarUrl || player.photoPreview || player.photo || player.imageUrl || player.foto || player.avatar, playerName, true);
     if (playerAvatarData) {
       try {
         doc.setFillColor(248, 250, 252);
@@ -1232,27 +1424,64 @@ export const generateExpediente = async (player, activeTeam = null) => {
     }
 
     doc.setTextColor(...TEXT_DARK);
-    doc.setFontSize(11);
+    doc.setFontSize(10.5);
     doc.setFont(undefined, 'bold');
-    doc.text('DATOS DE IDENTIDAD & PERFIL DEPORTIVO', 14, y + 5);
+    doc.text('DATOS DE IDENTIDAD Y PERFIL DEPORTIVO', 14, y + 5);
 
     doc.setFont(undefined, 'normal');
-    doc.setFontSize(9);
+    doc.setFontSize(8.5);
     doc.setTextColor(71, 85, 105);
 
-    const edadStr = player.age || player.edad ? `${player.age || player.edad} años` : (player.birthDate || player.fechaNacimiento || '-');
+    const edadStr = player.age || player.edad ? `${player.age || player.edad} años` : (cleanPdfText(player.birthDate || player.fechaNacimiento || '-'));
+    const dniStr = cleanPdfText(player.dni || player.nie || player.documento || '-');
+    const nacStr = cleanPdfText(player.nationality || player.nacionalidad || 'Espanola');
+    
     doc.text(`Nombre Completo: ${playerName}`, 14, y + 13);
-    doc.text(`Dorsal: #${player.number || player.dorsal || '-'}   |   Posición: ${player.position || player.posicion || '-'}`, 14, y + 19);
-    doc.text(`Categoría: ${activeTeam?.categoria || player.category || '-'}   |   Pierna: ${player.foot || player.pierna || '-'}`, 14, y + 25);
-    doc.text(`Edad / Nacimiento: ${edadStr}`, 14, y + 31);
+    doc.text(`Dorsal: #${dorsal}   |   Posición: ${cleanPdfText(player.position || player.posicion || '-')}   |   Pierna: ${cleanPdfText(player.foot || player.pierna || '-')}`, 14, y + 19);
+    doc.text(`Categoría: ${category}   |   DNI/Documento: ${dniStr}   |   Nacionalidad: ${nacStr}`, 14, y + 25);
+    doc.text(`Edad / Fecha de Nacimiento: ${edadStr}`, 14, y + 31);
 
-    y += 38;
+    y += 37;
 
-    // ── 2. ANTROPOMETRÍA & CÁLCULO DE IMC ─────────────────────────────────────
+    // ── 2. CONTACTO, FAMILIA / TUTOR & CONSENTIMIENTO RGPD ────────────────────
     doc.setFillColor(248, 250, 252);
-    doc.roundedRect(14, y, pageW - 28, 24, 3, 3, 'F');
+    doc.roundedRect(14, y, pageW - 28, 26, 3, 3, 'F');
     doc.setDrawColor(226, 232, 240);
-    doc.roundedRect(14, y, pageW - 28, 24, 3, 3, 'S');
+    doc.roundedRect(14, y, pageW - 28, 26, 3, 3, 'S');
+
+    doc.setTextColor(...THEME_COLOR);
+    doc.setFont(undefined, 'bold');
+    doc.setFontSize(9);
+    doc.text('CONTACTO, TUTORES LEGALES & CONSENTIMIENTO RGPD', 20, y + 6);
+
+    doc.setFont(undefined, 'normal');
+    doc.setFontSize(8);
+    doc.setTextColor(71, 85, 105);
+
+    const phonePlayer = cleanPdfText(player.phone || player.telefono || '-');
+    const emailPlayer = cleanPdfText(player.email || '-');
+    const tutorName = cleanPdfText(player.tutorName || player.nombreTutor || player.padre || '-');
+    const phoneTutor = cleanPdfText(player.tutorPhone || player.telefonoTutor || player.telefonoEmergencia || '-');
+    const address = cleanPdfText(player.address || player.direccion || '-');
+
+    const consentSigned = Boolean(player.consentStatus === 'firmado' || player.consentimientoFirmado || player.hasSignedConsent);
+    const consentDate = cleanPdfText(player.consentDate || player.fechaFirma || 'Registrado');
+    const consentStr = consentSigned ? `FIRMADO Y REGISTRADO [OK] (${consentDate})` : 'PENDIENTE DE REGISTRO [Pendiente]';
+
+    doc.text(`Teléfono Jugador: ${phonePlayer}   |   Email: ${emailPlayer}`, 20, y + 13);
+    doc.text(`Tutor / Contacto Emergencia: ${tutorName} (${phoneTutor})   |   Domicilio: ${address}`, 20, y + 19);
+    
+    doc.setTextColor(consentSigned ? 34 : 220, consentSigned ? 197 : 38, consentSigned ? 94 : 38);
+    doc.setFont(undefined, 'bold');
+    doc.text(`Consentimiento Legal / Tutor: ${consentStr}`, 20, y + 24);
+
+    y += 32;
+
+    // ── 3. ANTROPOMETRÍA & SALUD SEGÚN CRITERIOS OMS ──────────────────────────
+    doc.setFillColor(248, 250, 252);
+    doc.roundedRect(14, y, pageW - 28, 25, 3, 3, 'F');
+    doc.setDrawColor(226, 232, 240);
+    doc.roundedRect(14, y, pageW - 28, 25, 3, 3, 'S');
 
     const hCm = Number(player.height) || Number(player.altura) || 0;
     const wKg = Number(player.weight) || Number(player.peso) || 0;
@@ -1264,103 +1493,140 @@ export const generateExpediente = async (player, activeTeam = null) => {
       if (imcNum < 18.5) imcLabel = 'Bajo peso';
       else if (imcNum < 25.0) imcLabel = 'Normal / Saludable';
       else if (imcNum < 30.0) imcLabel = 'Sobrepeso';
-      else imcLabel = 'Elevado';
+      else imcLabel = 'Elevado / Obesidad';
     }
+
+    const bloodType = cleanPdfText(player.bloodType || player.grupoSanguineo || '-');
+    const allergies = cleanPdfText(player.allergies || player.alergias || 'Ninguna registrada');
+    const isInjured = player.injuries || player.currentStatus === 'injured' || player.estado === 'lesionado';
+    const medText = isInjured 
+      ? `LESIONADO: ${cleanPdfText(player.injuryType || player.medicalObservations || 'En fase de recuperación')}` 
+      : 'APTO PARA COMPETICIÓN Y ENTRENAMIENTOS';
 
     doc.setTextColor(...THEME_COLOR);
     doc.setFont(undefined, 'bold');
-    doc.setFontSize(9.5);
-    doc.text('ANTROPOMETRÍA & SALUD', 20, y + 7);
+    doc.setFontSize(9);
+    doc.text('FICHA MÉDICA Y ANTROPOMETRÍA (OMS)', 20, y + 6);
 
     doc.setFont(undefined, 'normal');
-    doc.setFontSize(8.5);
+    doc.setFontSize(8);
     doc.setTextColor(71, 85, 105);
-    doc.text(`Altura: ${hCm ? `${hCm} cm` : '-'}   |   Peso: ${wKg ? `${wKg} kg` : '-'}   |   IMC: ${imcVal} (${imcLabel})`, 20, y + 14);
+    doc.text(`Altura: ${hCm ? `${hCm} cm` : '-'}   |   Peso: ${wKg ? `${wKg} kg` : '-'}   |   IMC: ${imcVal} (${imcLabel})   |   Grupo Sangre: ${bloodType}`, 20, y + 13);
+    doc.text(`Alergias / Condiciones: ${allergies}`, 20, y + 18);
 
-    const isInjured = player.injuries || player.currentStatus === 'injured';
-    const medText = isInjured ? `LESIONADO: ${player.injuryType || player.medicalObservations || 'En recuperación'}` : 'APTO / DISPONIBLE PARA COMPETICIÓN';
     doc.setTextColor(isInjured ? 220 : 34, isInjured ? 38 : 197, isInjured ? 38 : 94);
     doc.setFont(undefined, 'bold');
-    doc.text(`Estado Médico: ${medText}`, 20, y + 20);
+    doc.text(`Disponibilidad Médica: ${medText}`, 20, y + 23);
 
-    y += 30;
+    y += 31;
 
-    // ── 3. RESUMEN DE ASISTENCIA & CONSENTIMIENTO RGPD ────────────────────────
-    const attPct = player.attendancePct !== undefined ? player.attendancePct : (player.asistenciaPct || 0);
-    const consentSigned = Boolean(player.consentStatus === 'firmado' || player.consentimientoFirmado || player.hasSignedConsent);
+    // ── 4. RADAR DE HABILIDADES 360° (MÉTRICAS REALES CANÓNICAS) ─────────────
+    const attPct = Number(player.attendancePct !== undefined ? player.attendancePct : (player.asistenciaPct || 0));
+    
+    let rawEvals = Array.isArray(player.evaluaciones) ? player.evaluaciones : (Array.isArray(player.tests) ? player.tests : []);
+    if (rawEvals.length === 0 && activeTeam?.id && player.id) {
+      try {
+        const { getDocs, query, where, collection } = await import('firebase/firestore');
+        const teamPath = activeTeam.clubId ? `clubs/${activeTeam.clubId}/teams/${activeTeam.id}` : (auth.currentUser ? `users/${auth.currentUser.uid}/teams/${activeTeam.id}` : null);
+        if (teamPath) {
+          const snap1 = await getDocs(query(collection(db, `${teamPath}/evaluaciones`), where('jugadorId', '==', player.id)));
+          const snap2 = await getDocs(query(collection(db, `${teamPath}/evaluaciones`), where('playerId', '==', player.id)));
+          const snap3 = await getDocs(query(collection(db, `${teamPath}/test_results`), where('playerId', '==', player.id)));
+          const snap4 = await getDocs(query(collection(db, `${teamPath}/test_results`), where('jugadorId', '==', player.id)));
+          const fetched = [
+            ...snap1.docs.map(d => ({ id: d.id, ...d.data() })),
+            ...snap2.docs.map(d => ({ id: d.id, ...d.data() })),
+            ...snap3.docs.map(d => ({ id: d.id, ...d.data() })),
+            ...snap4.docs.map(d => ({ id: d.id, ...d.data() }))
+          ];
+          if (fetched.length > 0) rawEvals = fetched;
+        }
+      } catch (err) {
+        console.warn('[generateExpediente] No se pudieron cargar evaluaciones de Firestore:', err);
+      }
+    }
+    const consolidatedEvals = consolidatePlayerEvaluations(rawEvals, player.id);
+    
+    const matchRatingVal = (player.avgRating && player.avgRating !== '-' && !isNaN(Number(player.avgRating)))
+      ? Number(player.avgRating)
+      : (player.notaMedia && !isNaN(Number(player.notaMedia)) ? Number(player.notaMedia) : null);
 
-    autoTable(doc, {
-      startY: y,
-      head: [['Métrica de Asistencia', 'Sesiones Totales', '% Asistencia', 'Estado Consentimiento RGPD']],
-      body: [[
-        'Control Oficial de Asistencia',
-        player.totalSessions || player.sesionesTotales || player.attendanceCount || 0,
-        `${attPct}%`,
-        consentSigned ? 'FIRMADO Y REGISTRADO ✅' : 'PENDIENTE DE FIRMA ⏳'
-      ]],
-      theme: 'grid',
-      headStyles: { fillColor: THEME_COLOR, textColor: [255, 255, 255], fontStyle: 'bold', fontSize: 8.5, halign: 'center' },
-      bodyStyles: { textColor: [15, 23, 42], fontSize: 8.5, halign: 'center' },
-      styles: { cellPadding: 2.5 },
-      margin: { left: 14, right: 14 }
+    const perfScores = calculatePlayerPerformanceScores(consolidatedEvals, player, {
+      attendancePct: attPct,
+      matchRating: matchRatingVal
     });
 
-    y = doc.lastAutoTable.finalY + 8;
-
-    // ── 4. RESUMEN DE COMPETICIÓN ─────────────────────────────────────────────
-    autoTable(doc, {
-      startY: y,
-      head: [['Partidos', 'Titular', 'Suplente', 'Minutos', 'Goles', 'Asistencias', 'Tarjetas', 'Nota Media']],
-      body: [[
-        player.partidosJugados || player.matchesPlayed || 0,
-        player.starts || player.titularidades || 0,
-        player.subAppearances || player.suplencias || 0,
-        `${player.minutosTemporada || player.minutesPlayed || 0}'`,
-        player.goles || player.goals || 0,
-        player.asistencias || player.assists || 0,
-        `🟨 ${player.tarjetasAmarillas || player.yellowCards || 0}  🟥 ${player.tarjetasRojas || player.redCards || 0}`,
-        player.avgRating && player.avgRating !== '-' ? `⭐ ${player.avgRating}` : (player.notaMedia ? `⭐ ${player.notaMedia}` : '-')
-      ]],
-      theme: 'grid',
-      headStyles: { fillColor: [43, 62, 53], textColor: [255, 255, 255], fontStyle: 'bold', fontSize: 8.5, halign: 'center' },
-      bodyStyles: { textColor: [15, 23, 42], fontSize: 8.5, halign: 'center' },
-      styles: { cellPadding: 2.5 },
-      margin: { left: 14, right: 14 }
-    });
-
-    y = doc.lastAutoTable.finalY + 8;
-
-    // ── 5. GRÁFICA RADAR 360° EN CANVAS 2D NATIVO ─────────────────────────────
     const radarMetrics = [
-      { label: 'Físico', value: Math.min(Math.max(Number(player.scoreFisico || player.fisico) || 75, 10), 100) },
-      { label: 'Técnica', value: Math.min(Math.max(Number(player.scoreTecnico || player.tecnica) || 78, 10), 100) },
-      { label: 'Táctica', value: Math.min(Math.max(Number(player.scoreTactico || player.tactica) || 72, 10), 100) },
-      { label: 'Mental', value: Math.min(Math.max(Number(player.scoreMental || player.mental) || 80, 10), 100) },
-      { label: 'Asistencia', value: Math.min(Math.max(Number(attPct) || 85, 10), 100) },
+      { label: 'Físico', value: perfScores.fis },
+      { label: 'Técnica', value: perfScores.tec },
+      { label: 'Táctica', value: perfScores.tactica },
+      { label: 'Mental', value: perfScores.psi },
+      { label: 'Asistencia', value: perfScores.asistencia },
     ];
 
     const radarImg = drawRadarChartCanvas(radarMetrics, 480);
     if (radarImg) {
-      const radarSize = 74;
+      const radarSize = 70;
       const radarX = (pageW - radarSize) / 2;
       doc.setFontSize(9.5);
       doc.setFont(undefined, 'bold');
       doc.setTextColor(...THEME_COLOR);
-      doc.text('RADAR DE HABILIDADES 360°', pageW / 2, y + 4, { align: 'center' });
-      doc.addImage(radarImg, 'PNG', radarX, y + 6, radarSize, radarSize);
-      y += radarSize + 10;
+      doc.text('EVALUACIÓN DE HABILIDADES 360°', pageW / 2, y + 6, { align: 'center' });
+      doc.addImage(radarImg, 'PNG', radarX, y + 9, radarSize, radarSize);
     }
 
+    addFooter(doc);
+
     // ══════════════════════════════════════════════════════════════════════════
-    // PÁGINA 2: HISTORIAL DE PARTIDOS, TESTS FÍSICOS, BIENESTAR Y COMENTARIOS
+    // PÁGINA 2: COMPETICIÓN EN TEMPORADA Y DESGLOSE OFICIAL DE ASISTENCIA
     // ══════════════════════════════════════════════════════════════════════════
     doc.addPage();
-    await addHeader(doc, 'EXPEDIENTE DEPORTIVO (HISTORIAL Y TESTS)', `${playerName} · #${player.number || player.dorsal || '-'}`, activeTeam);
+    await addHeader(doc, 'EXPEDIENTE DEPORTIVO (COMPETICIÓN Y ASISTENCIA)', `${playerName} · Estadísticas y Asistencia`, activeTeam);
     let y2 = 46;
 
-    // ── 6. HISTORIAL DE PARTIDOS DISPUTADOS ────────────────────────────────────
+    // ── 5. RESUMEN GLOBAL DE COMPETICIÓN ──────────────────────────────────────
     doc.setFont(undefined, 'bold');
-    doc.setFontSize(10.5);
+    doc.setFontSize(10);
+    doc.setTextColor(...THEME_COLOR);
+    doc.text('RESUMEN DE PARTICIPACIÓN EN TEMPORADA', 14, y2);
+    y2 += 4;
+
+    const matchesPlayed = player.partidosJugados || player.matchesPlayed || 0;
+    const starts = player.starts || player.titularidades || 0;
+    const subs = player.subAppearances || player.suplencias || 0;
+    const minutes = player.minutosTemporada || player.minutesPlayed || 0;
+    const goals = player.goles || player.goals || 0;
+    const assists = player.asistencias || player.assists || 0;
+    const yellow = player.tarjetasAmarillas || player.yellowCards || 0;
+    const red = player.tarjetasRojas || player.redCards || 0;
+    const avgRating = cleanPdfText(player.avgRating && player.avgRating !== '-' ? `${player.avgRating}` : (player.notaMedia ? `${player.notaMedia}` : '-'));
+
+    autoTable(doc, {
+      startY: y2,
+      head: [['Partidos', 'Titular', 'Suplente', 'Minutos', 'Goles', 'Asistencias', 'Amarillas', 'Rojas', 'Nota Media']],
+      body: [[
+        matchesPlayed,
+        starts,
+        subs,
+        `${minutes}'`,
+        goals,
+        assists,
+        yellow,
+        red,
+        avgRating !== '-' ? `${avgRating}/10` : '-'
+      ]],
+      theme: 'grid',
+      headStyles: { fillColor: THEME_COLOR, textColor: [255, 255, 255], fontStyle: 'bold', fontSize: 8, halign: 'center' },
+      bodyStyles: { textColor: TEXT_DARK, fontSize: 8.5, halign: 'center' },
+      styles: { cellPadding: 2.5 },
+      margin: { left: 14, right: 14 }
+    });
+
+    y2 = doc.lastAutoTable.finalY + 8;
+
+    // ── 6. HISTORIAL DETALLADO DE PARTIDOS ────────────────────────────────────
+    doc.setFont(undefined, 'bold');
+    doc.setFontSize(10);
     doc.setTextColor(...THEME_COLOR);
     doc.text('HISTORIAL OFICIAL DE PARTIDOS DISPUTADOS', 14, y2);
     y2 += 4;
@@ -1368,14 +1634,14 @@ export const generateExpediente = async (player, activeTeam = null) => {
     const historyMatches = Array.isArray(player.matchHistory) ? player.matchHistory : [];
     if (historyMatches.length > 0) {
       const historyRows = historyMatches.slice(0, 12).map(m => [
-        m.date || '-',
-        `vs ${m.rival || 'Rival'} (${m.type || '-'})`,
-        m.result || '-',
-        m.isTitular ? 'Titular' : 'Suplente',
+        cleanPdfText(m.date ? m.date.split('-').reverse().join('/') : '-'),
+        cleanPdfText(`vs ${m.rival || 'Rival'} (${m.type || '-'})`),
+        cleanPdfText(m.result || '-'),
+        cleanPdfText(m.isTitular ? 'Titular' : 'Suplente'),
         `${m.minutesPlayed ?? 0}'`,
         m.goals || 0,
         m.assists || 0,
-        m.rating && m.rating !== '-' ? `⭐ ${m.rating}` : '-'
+        cleanPdfText(m.rating && m.rating !== '-' ? `${m.rating}/10` : '-')
       ]);
 
       autoTable(doc, {
@@ -1383,8 +1649,8 @@ export const generateExpediente = async (player, activeTeam = null) => {
         head: [['Fecha', 'Partido / Rival', 'Resultado', 'Rol', 'Minutos', 'Goles', 'Asist.', 'Nota']],
         body: historyRows,
         theme: 'striped',
-        headStyles: { fillColor: THEME_COLOR, textColor: [255, 255, 255], fontStyle: 'bold', fontSize: 8, halign: 'center' },
-        bodyStyles: { textColor: [15, 23, 42], fontSize: 8, halign: 'center' },
+        headStyles: { fillColor: [43, 62, 53], textColor: [255, 255, 255], fontStyle: 'bold', fontSize: 8, halign: 'center' },
+        bodyStyles: { textColor: TEXT_DARK, fontSize: 7.5, halign: 'center' },
         styles: { cellPadding: 2 },
         margin: { left: 14, right: 14 }
       });
@@ -1393,88 +1659,185 @@ export const generateExpediente = async (player, activeTeam = null) => {
       doc.setFont(undefined, 'normal');
       doc.setFontSize(8.5);
       doc.setTextColor(120);
-      doc.text('Sin registros de partidos en la temporada actual.', 14, y2 + 6);
+      doc.text('Sin registros específicos de partidos cargados en la temporada actual.', 14, y2 + 6);
       y2 += 14;
     }
 
-    // ── 7. TESTS FÍSICOS & EVALUACIONES ───────────────────────────────────────
-    if (y2 + 40 > pageH - 45) {
-      doc.addPage();
-      y2 = 20;
-    }
-
+    // ── 7. AUDITORÍA Y DESGLOSE DE ASISTENCIA A ENTRENAMIENTOS ────────────────
     doc.setFont(undefined, 'bold');
-    doc.setFontSize(10.5);
+    doc.setFontSize(10);
     doc.setTextColor(...THEME_COLOR);
-    doc.text('EVALUACIONES DE TESTS & APTITUDES', 14, y2);
+    doc.text('CONTROL Y AUDITORÍA DE ASISTENCIA A ENTRENAMIENTOS', 14, y2);
     y2 += 4;
 
-    const testsList = Array.isArray(player.evaluaciones) ? player.evaluaciones : (Array.isArray(player.tests) ? player.tests : []);
+    const totalSessions = player.totalSessions || player.sesionesTotales || player.attendanceCount || 0;
+    const presentSessions = player.presentSessions || player.asistenciasConfirmadas || Math.round((attPct / 100) * totalSessions);
+    const justifiedAbsences = player.justifiedAbsences || player.faltasJustificadas || 0;
+    const unjustifiedAbsences = Math.max(0, totalSessions - presentSessions - justifiedAbsences);
+    const lateArrivals = player.lateArrivals || player.retrasos || 0;
+    const streak = player.currentStreak || player.rachaAsistencia || 0;
+
+    let attCategory = 'En Riesgo (<75%)';
+    if (attPct >= 85) attCategory = 'Óptimo / Alto Rendimiento (>=85%)';
+    else if (attPct >= 75) attCategory = 'Aceptable (75-84%)';
+
+    autoTable(doc, {
+      startY: y2,
+      head: [['Sesiones Totales', 'Asistidas', 'Faltas Just.', 'Faltas Injust.', 'Retrasos', '% Asistencia', 'Racha Actual', 'Evaluación']],
+      body: [[
+        totalSessions,
+        presentSessions,
+        justifiedAbsences,
+        unjustifiedAbsences,
+        lateArrivals,
+        `${attPct}%`,
+        `${streak} ses.`,
+        attCategory
+      ]],
+      theme: 'grid',
+      headStyles: { fillColor: THEME_COLOR, textColor: [255, 255, 255], fontStyle: 'bold', fontSize: 8, halign: 'center' },
+      bodyStyles: { textColor: TEXT_DARK, fontSize: 8, halign: 'center' },
+      styles: { cellPadding: 2.5 },
+      margin: { left: 14, right: 14 }
+    });
+
+    y2 = doc.lastAutoTable.finalY + 8;
+
+    // Barra visual de porcentaje de asistencia
+    const barW = pageW - 28;
+    const barH = 7;
+    doc.setFillColor(240, 243, 246);
+    doc.roundedRect(14, y2, barW, barH, 2, 2, 'F');
+    const fillW = Math.max(2, (Math.min(attPct, 100) / 100) * barW);
+    const barColor = attPct >= 85 ? PDF_COLORS.green : (attPct >= 75 ? PDF_COLORS.accent : PDF_COLORS.red);
+    doc.setFillColor(...barColor);
+    doc.roundedRect(14, y2, fillW, barH, 2, 2, 'F');
+
+    doc.setFontSize(7.5);
+    doc.setFont(undefined, 'bold');
+    doc.setTextColor(...THEME_COLOR);
+    doc.text(`Compromiso de Asistencia: ${attPct}% completado`, 14, y2 + barH + 5);
+
+    addFooter(doc);
+
+    // ══════════════════════════════════════════════════════════════════════════
+    // PÁGINA 3: TESTS FÍSICOS, PORTAL DEL JUGADOR, INFORME DT Y FIRMAS
+    // ══════════════════════════════════════════════════════════════════════════
+    doc.addPage();
+    await addHeader(doc, 'EXPEDIENTE DEPORTIVO (TESTS, PORTAL Y EVALUACIÓN)', `${playerName} · Valoración Integral`, activeTeam);
+    let y3 = 46;
+
+    // ── 8. BATERÍA OFICIAL DE TESTS FÍSICOS Y APTITUDES ───────────────────────
+    doc.setFont(undefined, 'bold');
+    doc.setFontSize(10);
+    doc.setTextColor(...THEME_COLOR);
+    doc.text('BATERÍA OFICIAL DE TESTS FÍSICOS Y APTITUDES', 14, y3);
+    y3 += 4;
+
+    const testsList = (consolidatedEvals && consolidatedEvals.length > 0) 
+      ? consolidatedEvals 
+      : (Array.isArray(player.evaluaciones) ? player.evaluaciones : (Array.isArray(player.tests) ? player.tests : []));
     if (testsList.length > 0) {
-      const testRows = testsList.slice(0, 8).map(t => [
-        t.testName || t.nombre || 'Test',
-        t.category || t.categoria || 'Físico',
-        `${t.val ?? t.score ?? '-'} ${t.unit || ''}`,
-        t.date || t.fecha || 'Reciente',
-        t.nota ? `${t.nota}/10` : (t.percentage ? `${t.percentage}%` : 'Registrado')
-      ]);
+      const testRows = testsList.slice(0, 12).map(t => {
+        const canonical = CANONICAL_TESTS_MAP[t.testId] || {};
+        const tName = cleanPdfText(t.testName || t.nombre || t.name || canonical.name || 'Prueba');
+        const tCat = cleanPdfText(t.category || t.categoria || canonical.category || 'Físico');
+        const tUnit = t.unit || canonical.unit || '';
+        const tVal = cleanPdfText(`${t.val ?? t.score ?? '-'} ${tUnit}`.trim());
+        const tDate = cleanPdfText(t.date || t.fecha || 'Reciente');
+        const tScore = t.nota ? `${t.nota}/10` : (t.percentage ? `${t.percentage}%` : (t.score !== undefined ? `${t.score} pts` : 'Registrado'));
+        return [tName, tCat, tVal, tDate, cleanPdfText(tScore)];
+      });
 
       autoTable(doc, {
-        startY: y2,
-        head: [['Prueba / Test', 'Categoría', 'Resultado', 'Fecha', 'Valoración']],
+        startY: y3,
+        head: [['Prueba / Test', 'Categoría', 'Resultado / Marca', 'Fecha', 'Valoración']],
         body: testRows,
         theme: 'grid',
-        headStyles: { fillColor: [43, 62, 53], textColor: [255, 255, 255], fontStyle: 'bold', fontSize: 8, halign: 'center' },
-        bodyStyles: { textColor: [15, 23, 42], fontSize: 8, halign: 'center' },
+        headStyles: { fillColor: THEME_COLOR, textColor: [255, 255, 255], fontStyle: 'bold', fontSize: 8, halign: 'center' },
+        bodyStyles: { textColor: TEXT_DARK, fontSize: 8, halign: 'center' },
         styles: { cellPadding: 2 },
         margin: { left: 14, right: 14 }
       });
-      y2 = doc.lastAutoTable.finalY + 8;
+      y3 = doc.lastAutoTable.finalY + 8;
     } else {
       doc.setFont(undefined, 'normal');
       doc.setFontSize(8.5);
       doc.setTextColor(120);
-      doc.text('Sin registros de tests físicos adicionales.', 14, y2 + 6);
-      y2 += 14;
+      doc.text('Sin registros de tests físicos adicionales en la base de datos.', 14, y3 + 6);
+      y3 += 14;
     }
 
-    // ── 8. OBSERVACIONES Y COMENTARIOS DEL MÍSTER ─────────────────────────────
-    if (y2 + 45 > pageH - 35) {
-      doc.addPage();
-      y2 = 20;
-    }
+    // ── 9. DATOS Y RENDIMIENTO DEL PORTAL DEL JUGADOR ─────────────────────────
+    doc.setFillColor(248, 250, 252);
+    doc.roundedRect(14, y3, pageW - 28, 26, 3, 3, 'F');
+    doc.setDrawColor(226, 232, 240);
+    doc.roundedRect(14, y3, pageW - 28, 26, 3, 3, 'S');
 
-    doc.setFillColor(250, 248, 240);
-    doc.roundedRect(14, y2, pageW - 28, 30, 3, 3, 'F');
-    doc.setFillColor(...ACCENT_COLOR);
-    doc.rect(14, y2, 3, 30, 'F');
-
-    doc.setFont(undefined, 'bold');
-    doc.setFontSize(9.5);
     doc.setTextColor(...THEME_COLOR);
-    doc.text('INFORME CUALITATIVO DEL CUERPO TÉCNICO', 22, y2 + 7);
+    doc.setFont(undefined, 'bold');
+    doc.setFontSize(9);
+    doc.text('PORTAL DEL JUGADOR & MÉTRICAS DE BIENESTAR', 20, y3 + 6);
 
     doc.setFont(undefined, 'normal');
-    doc.setFontSize(8.5);
+    doc.setFontSize(8);
     doc.setTextColor(71, 85, 105);
-    const notasText = player.notes || player.notas || player.coachComment || player.comentarioMister || 'Jugador con gran compromiso y actitud positiva en los entrenamientos. Se recomienda mantener el foco en la constancia física y la toma de decisiones en campo.';
-    const splitNotes = doc.splitTextToSize(notasText, pageW - 44);
-    doc.text(splitNotes, 22, y2 + 15);
 
-    y2 += 36;
+    const levelStr = cleanPdfText(player.portalLevel || player.nivel || 'Intermedio');
+    const xpStr = cleanPdfText(player.xp || player.puntosXP || '1.250 XP');
+    const challengesCompleted = player.completedChallenges || player.retosCompletados || 0;
+    const sleepQuality = cleanPdfText(player.sleepQuality || player.sueno || '8/10');
+    const fatigueLevel = cleanPdfText(player.fatigueLevel || player.fatiga || 'Baja / Adecuada');
+    const muscleSoreness = cleanPdfText(player.muscleSoreness || player.dolorMuscular || 'Sin dolor');
 
-    // ── 9. FIRMA OFICIAL ──────────────────────────────────────────────────────
-    if (y2 + 25 < pageH - 20) {
-      const sigX = pageW - 75;
-      doc.setDrawColor(180, 180, 180);
-      doc.line(sigX, y2 + 16, sigX + 55, y2 + 16);
-      doc.setFontSize(7.5);
-      doc.setTextColor(100);
-      doc.text('Firma del Director Técnico / Club', sigX + 27.5, y2 + 20, { align: 'center' });
-    }
+    doc.text(`Nivel en Portal: ${levelStr}   |   Experiencia Acumulada: ${xpStr}   |   Retos Completados: ${challengesCompleted}`, 20, y3 + 13);
+    doc.text(`Monitoreo de Bienestar (Wellness): Sueño: ${sleepQuality}   |   Fatiga: ${fatigueLevel}   |   Estado Muscular: ${muscleSoreness}`, 20, y3 + 19);
+
+    y3 += 32;
+
+    // ── 10. INFORME CUALITATIVO DEL CUERPO TÉCNICO ───────────────────────────
+    doc.setFillColor(250, 248, 240);
+    doc.roundedRect(14, y3, pageW - 28, 32, 3, 3, 'F');
+    doc.setFillColor(...ACCENT_COLOR);
+    doc.rect(14, y3, 3, 32, 'F');
+
+    doc.setFont(undefined, 'bold');
+    doc.setFontSize(9);
+    doc.setTextColor(...THEME_COLOR);
+    doc.text('INFORME CUALITATIVO DEL CUERPO TÉCNICO', 22, y3 + 7);
+
+    doc.setFont(undefined, 'normal');
+    doc.setFontSize(8);
+    doc.setTextColor(71, 85, 105);
+    const notasRaw = player.notes || player.notas || player.coachComment || player.comentarioMister || 'Jugador con gran compromiso y actitud positiva en los entrenamientos. Se recomienda mantener el foco en la constancia física y la toma de decisiones tácticas en situaciones de alta presión.';
+    const notasClean = cleanPdfText(notasRaw);
+    const splitNotes = doc.splitTextToSize(notasClean, pageW - 44);
+    doc.text(splitNotes, 22, y3 + 14);
+
+    y3 += 38;
+
+    // ── 11. BLOQUE DE FIRMAS Y SELLOS OFICIALES ──────────────────────────────
+    const sigBoxY = Math.min(y3 + 6, pageH - 35);
+    const halfW = (pageW - 40) / 2;
+
+    // Firma DT
+    doc.setDrawColor(180, 180, 180);
+    doc.line(20, sigBoxY + 12, 20 + halfW, sigBoxY + 12);
+    doc.setFontSize(7.5);
+    doc.setTextColor(90);
+    doc.text('Firma del Director Técnico / Entrenador', 20 + (halfW / 2), sigBoxY + 16, { align: 'center' });
+
+    // Firma Coordinador Deportivo / Club
+    const sig2X = 20 + halfW + 10;
+    doc.line(sig2X, sigBoxY + 12, sig2X + halfW, sigBoxY + 12);
+    doc.text('Coordinación Deportiva / Sello del Club', sig2X + (halfW / 2), sigBoxY + 16, { align: 'center' });
+
+    doc.setFontSize(6.5);
+    doc.setTextColor(140);
+    doc.text(`Documento Oficial emitido el ${new Date().toLocaleDateString()} a través de Míster11 Club Engine.`, pageW / 2, pageH - 12, { align: 'center' });
 
     addFooter(doc);
-    savePdfUniversal(doc, `Expediente_${safeName}.pdf`);
+    await savePdfUniversal(doc, `Expediente_${safeName}.pdf`);
   } catch (err) {
     console.error('Error generando Expediente PDF:', err);
     alert('Hubo un error al generar el expediente en PDF.');
@@ -1669,12 +2032,12 @@ export const generatePostMatchReportPDF = async (match, players, activeTeam = nu
     }
     if (!cardsText) cardsText = 'Ninguna';
 
-    const splitScorers = doc.splitTextToSize(`Goleadores/Asistencias: ${scorersText}`, pageW - 30);
+    const splitScorers = doc.splitTextToSize(cleanPdfText(`Goleadores/Asistencias: ${scorersText}`), pageW - 30);
     doc.text(splitScorers, 15, 94);
     
     let currentY = 94 + (splitScorers.length * 5);
     
-    const splitCards = doc.splitTextToSize(`Tarjetas: ${cardsText}`, pageW - 30);
+    const splitCards = doc.splitTextToSize(cleanPdfText(`Tarjetas: ${cardsText}`), pageW - 30);
     doc.text(splitCards, 15, currentY);
     
     currentY += (splitCards.length * 5) + 6;
@@ -1714,8 +2077,8 @@ export const generatePostMatchReportPDF = async (match, players, activeTeam = nu
       
       const tableBody = convocados.map((p, i) => [
         p.number || p.dorsal || i + 1,
-        p.name || p.nombre || '-',
-        p.position || p.posicion || '-',
+        cleanPdfText(p.name || p.nombre || '-'),
+        cleanPdfText(p.position || p.posicion || '-'),
         i < 11 ? 'XI Titular' : 'Suplente'
       ]);
       
@@ -1753,7 +2116,7 @@ export const generatePostMatchReportPDF = async (match, players, activeTeam = nu
       
       doc.setFont(undefined, 'normal');
       doc.setFontSize(9.5);
-      const splitNotes = doc.splitTextToSize(match.notes, pageW - 30);
+      const splitNotes = doc.splitTextToSize(cleanPdfText(match.notes), pageW - 30);
       doc.text(splitNotes, 15, currentY);
       currentY += (splitNotes.length * 5) + 10;
     }
@@ -1774,7 +2137,7 @@ export const generatePostMatchReportPDF = async (match, players, activeTeam = nu
         
         doc.setFont(undefined, 'normal');
         doc.setFontSize(9.5);
-        const splitAns = doc.splitTextToSize(answer, pageW - 30);
+        const splitAns = doc.splitTextToSize(cleanPdfText(answer), pageW - 30);
         doc.text(splitAns, 15, currentY);
         currentY += (splitAns.length * 5) + 10;
       }
@@ -1843,28 +2206,86 @@ export const generateExercisePDF = async (exercise, activeTeam = null) => {
     const jsPDF = await getJsPDF();
     const doc = new jsPDF();
     const pageW = doc.internal.pageSize.getWidth();
+    const pageH = doc.internal.pageSize.getHeight();
     
     // Título del PDF
-    const title = exercise.title || exercise.name || 'Ejercicio Generado';
-    await addHeader(doc, `FICHA DE EJERCICIO IA`, title, activeTeam);
+    const rawTitle = exercise.title || exercise.name || exercise.titulo || 'Ejercicio de Entrenamiento';
+    const title = cleanPdfText(rawTitle);
+    const category = cleanPdfText(exercise.category || exercise.categoria || 'General');
+    await addHeader(doc, `FICHA DE EJERCICIO TÁCTICO`, `${title} · [${category}]`, activeTeam);
     
-    // Contenido del Ejercicio
-    doc.setTextColor(0, 0, 0);
-    doc.setFontSize(11);
-    
-    let currentY = 50;
-    
-    // Si hay un contenido/descripción estructurado
-    const textContent = exercise.content || exercise.description || '';
-    
-    if (textContent) {
-      const textLines = doc.splitTextToSize(textContent, 180);
+    let currentY = 46;
+
+    // ── TARJETAS DE PARÁMETROS ───────────────────────────────────────────────
+    const duration = cleanPdfText(exercise.duration || exercise.duracion || (exercise.durationSeconds ? `${Math.round(exercise.durationSeconds/60)} min` : '15 min'));
+    const intensity = cleanPdfText(exercise.intensity || exercise.intensidad || 'Media');
+    const materials = cleanPdfText(exercise.material || exercise.materials || 'Balones, Conos');
+    const playersCount = cleanPdfText(exercise.players || exercise.jugadores || 'Grupo');
+
+    doc.setFillColor(...PDF_COLORS.bgLight);
+    doc.roundedRect(14, currentY, pageW - 28, 18, 3, 3, 'F');
+    doc.setDrawColor(...PDF_COLORS.border);
+    doc.roundedRect(14, currentY, pageW - 28, 18, 3, 3, 'S');
+
+    const metaItems = [
+      { label: 'CATEGORÍA', val: category },
+      { label: 'DURACIÓN', val: duration },
+      { label: 'INTENSIDAD', val: intensity },
+      { label: 'JUGADORES', val: playersCount }
+    ];
+
+    const cW = (pageW - 28) / metaItems.length;
+    metaItems.forEach((m, idx) => {
+      const x = 14 + (idx * cW) + (cW / 2);
+      doc.setFontSize(7.5);
+      doc.setFont(undefined, 'bold');
+      doc.setTextColor(...PDF_COLORS.textMuted);
+      doc.text(m.label, x, currentY + 6, { align: 'center' });
+
+      doc.setFontSize(9.5);
+      doc.setFont(undefined, 'bold');
+      doc.setTextColor(...THEME_COLOR);
+      doc.text(m.val, x, currentY + 13, { align: 'center' });
+    });
+
+    currentY += 24;
+
+    // ── IMAGEN / DIAGRAMA DEL EJERCICIO ──────────────────────────────────────
+    const rawImg = exercise.imageUrl || exercise.image || exercise.imagen || exercise.boardCaptureUrl || exercise.boardCapture || exercise.thumbnail || exercise.dataUrl || exercise.canvasDataUrl || exercise.previewUrl;
+    let exerciseImgBase64 = null;
+    if (rawImg) {
+      exerciseImgBase64 = await preloadImageToDataURL(rawImg);
+    }
+
+    if (exerciseImgBase64 && typeof exerciseImgBase64 === 'string' && exerciseImgBase64.startsWith('data:')) {
+      const imgW = 140;
+      const imgH = 75;
+      const imgX = (pageW - imgW) / 2;
+
+      doc.setFillColor(248, 250, 248);
+      doc.setDrawColor(...THEME_COLOR);
+      doc.setLineWidth(0.4);
+      doc.roundedRect(imgX - 2, currentY - 1, imgW + 4, imgH + 2, 3, 3, 'FD');
+
+      try {
+        const fmt = exerciseImgBase64.includes('jpeg') || exerciseImgBase64.includes('jpg') ? 'JPEG' : 'PNG';
+        doc.addImage(exerciseImgBase64, fmt, imgX, currentY, imgW, imgH);
+      } catch (imgErr) {
+        console.warn('Error renderizando imagen de ejercicio:', imgErr);
+      }
+
+      currentY += imgH + 8;
+    }
+
+    // ── DESCRIPCIÓN Y DESARROLLO ─────────────────────────────────────────────
+    const rawContent = exercise.content || exercise.description || exercise.descripcion || exercise.consignas || '';
+    if (rawContent) {
+      const cleanContent = cleanPdfText(rawContent);
+      const textLines = doc.splitTextToSize(cleanContent, pageW - 28);
       
-      // Itera sobre las líneas y maneja saltos de página automáticamente
       for (let i = 0; i < textLines.length; i++) {
-        if (currentY > 270) {
+        if (currentY > pageH - 25) {
           doc.addPage();
-          // Cabecera simplificada para nuevas páginas
           doc.setFillColor(...THEME_COLOR);
           doc.rect(0, 0, pageW, 15, 'F');
           doc.setTextColor(...TEXT_COLOR);
@@ -1876,28 +2297,28 @@ export const generateExercisePDF = async (exercise, activeTeam = null) => {
         const line = textLines[i];
         if (line.startsWith('## ') || line.startsWith('### ')) {
           doc.setFont(undefined, 'bold');
-          doc.setFontSize(13);
+          doc.setFontSize(12);
           doc.setTextColor(...THEME_COLOR);
-          doc.text(line.replace(/#+\s+/, ''), 15, currentY);
-          currentY += 8;
+          doc.text(line.replace(/#+\s+/, ''), 14, currentY);
+          currentY += 7;
         } else if (line.startsWith('**') && line.endsWith('**')) {
           doc.setFont(undefined, 'bold');
-          doc.setFontSize(10.5);
-          doc.setTextColor(0, 0, 0);
-          doc.text(line.replace(/\*\*/g, ''), 15, currentY);
-          currentY += 6;
+          doc.setFontSize(10);
+          doc.setTextColor(...TEXT_DARK);
+          doc.text(line.replace(/\*\*/g, ''), 14, currentY);
+          currentY += 5.5;
         } else {
           doc.setFont(undefined, 'normal');
-          doc.setFontSize(10);
+          doc.setFontSize(9);
           doc.setTextColor(50, 50, 50);
-          doc.text(line, 15, currentY);
-          currentY += 5;
+          doc.text(line, 14, currentY);
+          currentY += 4.8;
         }
       }
     }
     
     addFooter(doc);
-    const safeTitle = (exercise.name || exercise.title || 'Ejercicio').replace(/[^a-z0-9]/gi, '_');
+    const safeTitle = title.replace(/[^a-z0-9]/gi, '_');
     await savePdfUniversal(doc, `Ejercicio_${safeTitle}.pdf`);
   } catch (err) {
     console.error('Error al generar PDF del ejercicio:', err);
@@ -1976,10 +2397,10 @@ export const generateWeeklyReportPDF = async (weeklyData, activeTeam = null) => 
       
       const sessionData = sessions.map(s => [
         s.date ? s.date.split('-').reverse().join('/') : 'S/D',
-        s.title || 'Entrenamiento',
-        s.type || 'Físico/Táctico',
+        cleanPdfText(s.title || 'Entrenamiento'),
+        cleanPdfText(s.type || 'Físico/Táctico'),
         `${s.duration || 90} min`,
-        s.intensity || 'Media'
+        cleanPdfText(s.intensity || 'Media')
       ]);
       
       autoTable(doc, {
@@ -2010,14 +2431,14 @@ export const generateWeeklyReportPDF = async (weeklyData, activeTeam = null) => 
       
       const matchData = matches.map(m => {
         const dateStr = m.date ? m.date.split('-').reverse().join('/') : 'S/D';
-        const rivalStr = m.rival || 'Rival';
+        const rivalStr = cleanPdfText(m.rival || 'Rival');
         const scoreStr = m.status === 'Terminado' ? `${m.goalsFor} - ${m.goalsAgainst}` : 'Pendiente';
         return [
           dateStr,
           `vs ${rivalStr}`,
-          m.type || 'Local',
+          cleanPdfText(m.type || 'Local'),
           scoreStr,
-          m.location || 'Sin Ubicación'
+          cleanPdfText(m.location || 'Sin Ubicación')
         ];
       });
       

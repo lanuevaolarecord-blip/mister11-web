@@ -509,7 +509,8 @@ export const TeamAttendanceTab = ({ players = [], activeTeam = null }) => {
   const handleExportPDF = () => {
     const squadStats = getTeamSquadStats(players);
     generateAttendancePdfReport({
-      teamName: activeTeam?.name || 'Mi Equipo',
+      teamName: activeTeam?.nombre || activeTeam?.name || 'Mi Equipo',
+      activeTeam,
       squadStats,
       threshold,
       isEn

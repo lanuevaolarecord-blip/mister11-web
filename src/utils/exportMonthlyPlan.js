@@ -1,12 +1,11 @@
-import { PDF_COLORS, drawPdfHeader, drawPdfFooter } from './pdfTheme';
+import autoTable from 'jspdf-autotable';
+import { PDF_COLORS, drawPdfHeader, drawPdfFooter, cleanPdfText } from './pdfTheme';
 import { savePdfUniversal } from './pdfGenerator';
 
 export const exportMonthlyPlan = async (mesocycle, macroInfo, activeTeam, appVersion) => {
   if (!mesocycle) return;
 
   const { default: jsPDF } = await import('jspdf');
-  const autoTableMod = await import('jspdf-autotable');
-  const autoTable = autoTableMod.default || autoTableMod;
 
   const monthsList = ['Sep', 'Oct', 'Nov', 'Dic', 'Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun'];
   const formattedMonth = (mesocycle.month || 'Mes').charAt(0).toUpperCase() + (mesocycle.month || 'mes').slice(1).toLowerCase();

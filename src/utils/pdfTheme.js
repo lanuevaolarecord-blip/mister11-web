@@ -26,6 +26,69 @@ export const PDF_COLORS = {
 };
 
 /**
+ * cleanPdfText - Sanea cadenas para jsPDF / autoTable eliminando o traduciendo emojis
+ * a representaciones legibles en texto plano, evitando caracteres raros o unicode corrupto.
+ * Solo afecta a la generación de PDFs; la interfaz gráfica conserva todos sus emojis intactos.
+ */
+export const cleanPdfText = (text) => {
+  if (text === null || text === undefined) return '';
+  let str = String(text);
+
+  const emojiReplacements = {
+    '⚽': '[Gol]',
+    '👟': '[Asist.]',
+    '🟨': '[Amarilla]',
+    '🟥': '[Roja]',
+    '⭐': '*',
+    '🌟': '*',
+    '✨': '*',
+    '⚠️': '[ALERTA]',
+    '✅': '[OK]',
+    '❌': '[X]',
+    '⏳': '[Pendiente]',
+    '⏱️': '[Min]',
+    '⏱': '[Min]',
+    '🚑': '[Lesión]',
+    '📝': '[Nota]',
+    '🔘': '[-]',
+    '🔥': '[Racha]',
+    '📋': '[Historial]',
+    '📄': '[Doc]',
+    '📊': '[Métrica]',
+    '🎯': '[Objetivo]',
+    '🏆': '[Trofeo]',
+    '🧤': '[Portero]',
+    '🏃': '[Jugador]',
+    '🛡️': '[Defensa]',
+    '🛡': '[Defensa]',
+    '🧠': '[Mental]',
+    '💪': '[Físico]',
+    '📅': '[Fecha]',
+    '📍': '[Lugar]',
+    '🏟️': '[Estadio]',
+    '🏟': '[Estadio]',
+    '🔄': '[Cambio]',
+    '👑': '[Capitán]',
+    '🏷️': '[Etiqueta]',
+    '🏷': '[Etiqueta]',
+    '🔔': '[Aviso]',
+    '✓': '[OK]',
+    '✔': '[OK]',
+    '✗': '[X]',
+    '✘': '[X]'
+  };
+
+  for (const [emoji, replacement] of Object.entries(emojiReplacements)) {
+    str = str.split(emoji).join(replacement);
+  }
+
+  // Eliminar cualquier otro emoji o caracter suplementario no soportado por fuentes estándar de PDF (Helvetica/WinAnsiEncoding)
+  str = str.replace(/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}\u{1F000}-\u{1F02F}\u{1F0A0}-\u{1F0FF}\u{1F100}-\u{1F64F}\u{1F680}-\u{1F6FF}]/gu, '');
+
+  return str;
+};
+
+/**
  * Convierte una URL remota (Firebase Storage / Web) a Base64 data URL con fallback SVG si falla.
  * @param {string} url - URL remota
  * @param {string} fallbackInitials - Iniciales para el avatar de fallback si falla la imagen
@@ -78,51 +141,20 @@ export const blobToDataURL = (blob) => {
 };
 
 /**
- * Convierte una URL a Base64 usando fetch -> blob -> FileReader
+ * Convierte una URL a Base64 usando fetch -> blob -> FileReader o Firebase Storage SDK
  */
 export const convertImageToBase64 = async (url) => {
   if (!url) return null;
-  return await preloadImageToDataURL(url);
+  return await imageUrlToBase64(url, 'M11', false);
 };
 
 /**
- * Función de precarga directa de imágenes a Base64 usando fetch + blob + FileReader
+ * Función de precarga directa de imágenes a Base64
  * Convierte cualquier URL remota a dataURL antes de pasar a jsPDF / html2canvas.
  */
 export const preloadImageToDataURL = async (url) => {
   if (!url) return null;
-  if (typeof url === 'string' && url.startsWith('data:')) {
-    return url;
-  }
-
-  // Normalizar URLs relativas
-  let targetUrl = url;
-  if (typeof targetUrl === 'string' && !targetUrl.startsWith('data:') && !targetUrl.startsWith('http') && !targetUrl.startsWith('gs://')) {
-    const origin = typeof window !== 'undefined' && window.location ? window.location.origin : 'https://www.mister11.app';
-    const cleanPath = targetUrl.startsWith('/') ? targetUrl : `/${targetUrl}`;
-    targetUrl = `${origin}${cleanPath}`;
-  }
-
-  // 1. Fetch directo con mode: 'cors' -> blob -> Base64 DataURL
-  try {
-    const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), 3000);
-    const response = await fetch(targetUrl, { mode: 'cors', signal: controller.signal });
-    clearTimeout(timer);
-    if (response.ok) {
-      const blob = await response.blob();
-      const b64 = await blobToDataURL(blob);
-      if (b64) return b64;
-    }
-  } catch (_) {}
-
-  // 2. Fallback Canvas 2D
-  try {
-    const canvasB64 = await convertImageToPngViaCanvas(targetUrl, 1500);
-    if (canvasB64) return canvasB64;
-  } catch (_) {}
-
-  return null;
+  return await imageUrlToBase64(url, 'M11', false);
 };
 
 // Helper: dibuja cualquier objeto de imagen (WebP, DataURL, URL) en Canvas 2D con fondo blanco y devuelve data:image/png
@@ -176,92 +208,86 @@ export const imageUrlToBase64 = async (url, fallbackInitials = 'M11', isAvatar =
     return isAvatar ? generateInitialsAvatar(fallbackInitials) : null;
   }
 
-  // Normalizar URLs relativas (/img/..., img/..., assets/...) a URLs absolutas con origin
-  let targetUrl = url;
-  if (typeof targetUrl === 'string' && !targetUrl.startsWith('data:') && !targetUrl.startsWith('http') && !targetUrl.startsWith('gs://')) {
-    const origin = typeof window !== 'undefined' && window.location ? window.location.origin : 'https://www.mister11.app';
-    const cleanPath = targetUrl.startsWith('/') ? targetUrl : `/${targetUrl}`;
-    targetUrl = `${origin}${cleanPath}`;
-  }
-
   // 1. Si la URL ya es una cadena DataURL (data:...)
-  if (typeof targetUrl === 'string' && targetUrl.startsWith('data:')) {
-    if (targetUrl.startsWith('data:image/png') || targetUrl.startsWith('data:image/jpeg') || targetUrl.startsWith('data:image/jpg')) {
-      return targetUrl;
+  if (typeof url === 'string' && url.startsWith('data:')) {
+    if (url.startsWith('data:image/png') || url.startsWith('data:image/jpeg') || url.startsWith('data:image/jpg')) {
+      return url;
     }
     // Si es WebP, SVG u otro formato DataURL, convertir a PNG mediante Canvas 2D
     try {
-      const convertedPng = await convertImageToPngViaCanvas(targetUrl, 1500);
+      const convertedPng = await convertImageToPngViaCanvas(url, 2000);
       if (convertedPng && convertedPng.startsWith('data:image/png')) {
         return convertedPng;
       }
     } catch (e) {
       console.warn('[imageUrlToBase64] Error convirtiendo DataURL WebP/SVG:', e);
     }
+    return url;
   }
 
-  // Timeout helper (2500ms)
-  const withTimeout = (promise, ms = 2500) =>
+  // Normalizar URLs relativas (/img/..., img/..., assets/...) a URLs absolutas con origin
+  let targetUrl = url;
+  if (typeof targetUrl === 'string' && !targetUrl.startsWith('http') && !targetUrl.startsWith('gs://')) {
+    const origin = typeof window !== 'undefined' && window.location ? window.location.origin : 'https://www.mister11.app';
+    const cleanPath = targetUrl.startsWith('/') ? targetUrl : `/${targetUrl}`;
+    targetUrl = `${origin}${cleanPath}`;
+  }
+
+  // Timeout helper (5000ms)
+  const withTimeout = (promise, ms = 5000) =>
     Promise.race([promise, new Promise((resolve) => setTimeout(() => resolve(null), ms))]);
 
-  // 2. Si es una URL remota HTTP / HTTPS / gs://
-  if (typeof targetUrl === 'string' && (targetUrl.startsWith('http') || targetUrl.startsWith('gs://'))) {
-
-    // A. Intentar Canvas 2D directo (la vía más rápida)
+  // 2. PRIORIDAD 1: Firebase Storage SDK con extracción limpia del path (Evita 400 Bad Request y bloqueos CORS)
+  if (typeof targetUrl === 'string' && (targetUrl.includes('firebasestorage.googleapis.com') || targetUrl.includes('firebasestorage') || targetUrl.startsWith('gs://'))) {
     try {
-      const canvasResult = await convertImageToPngViaCanvas(targetUrl, 2500);
-      if (canvasResult) return canvasResult;
-    } catch (e) {}
-
-    // B. Firebase Storage SDK getBlob
-    if (targetUrl.includes('firebasestorage') || targetUrl.startsWith('gs://')) {
-      try {
-        const base64 = await withTimeout(
-          (async () => {
-            let fileRef = null;
-            if (targetUrl.startsWith('gs://')) {
-              fileRef = storageRef(storage, targetUrl);
-            } else {
-              try { fileRef = storageRef(storage, targetUrl); } catch (e) { fileRef = null; }
-            }
-            if (!fileRef) return null;
-            const blob = await getBlob(fileRef);
-            return await blobToDataURL(blob);
-          })(),
-          2500
-        );
-        if (base64) {
-          if (base64.startsWith('data:image/webp')) {
-            const png = await convertImageToPngViaCanvas(base64, 1500);
-            return png || base64;
+      let path = targetUrl;
+      if (targetUrl.startsWith('gs://')) {
+        path = targetUrl.replace(/^gs:\/\/[^/]+\//, '');
+      } else if (targetUrl.includes('/o/')) {
+        const rawPath = targetUrl.split('/o/')[1].split('?')[0];
+        path = decodeURIComponent(rawPath);
+      }
+      const fileRef = storageRef(storage, path);
+      const blob = await withTimeout(getBlob(fileRef), 5000);
+      if (blob) {
+        const b64 = await blobToDataURL(blob);
+        if (b64) {
+          if (b64.startsWith('data:image/webp')) {
+            const png = await convertImageToPngViaCanvas(b64, 2000);
+            return png || b64;
           }
-          return base64;
+          return b64;
         }
-      } catch (sdkErr) {
-        console.warn('[pdfTheme] Firebase Storage getBlob falló:', sdkErr);
+      }
+    } catch (sdkErr) {
+      console.warn('[imageUrlToBase64] Firebase Storage getBlob falló:', sdkErr);
+    }
+  }
+
+  // 3. PRIORIDAD 2: Direct Fetch con mode: 'cors'
+  try {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 3500);
+    const response = await fetch(targetUrl, { mode: 'cors', signal: controller.signal });
+    clearTimeout(timer);
+    if (response.ok) {
+      const blob = await response.blob();
+      const b64 = await blobToDataURL(blob);
+      if (b64) {
+        if (b64.startsWith('data:image/webp')) {
+          const png = await convertImageToPngViaCanvas(b64, 2000);
+          return png || b64;
+        }
+        return b64;
       }
     }
+  } catch (_) {}
 
-    // C. Direct Fetch con Blob -> DataURL
-    try {
-      const base64 = await withTimeout(
-        (async () => {
-          const res = await fetch(targetUrl, { mode: 'cors', cache: 'force-cache' });
-          if (!res.ok) return null;
-          const blob = await res.blob();
-          return await blobToDataURL(blob);
-        })(),
-        2500
-      );
-      if (base64) {
-        if (base64.startsWith('data:image/webp')) {
-          const png = await convertImageToPngViaCanvas(base64, 1500);
-          return png || base64;
-        }
-        return base64;
-      }
-    } catch (e) {}
-  }
+  // 4. PRIORIDAD 3: Fallback Canvas 2D
+  try {
+    const canvasB64 = await convertImageToPngViaCanvas(targetUrl, 2500);
+    if (canvasB64) return canvasB64;
+  } catch (_) {}
 
   if (isAvatar) {
     return generateInitialsAvatar(fallbackInitials);

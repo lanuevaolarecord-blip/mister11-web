@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect, useCallback } from 'react';
-import { doc, getDoc, setDoc, serverTimestamp } from '../firebase/firestore-proxy';
+import { doc, getDoc, setDoc, onSnapshot, serverTimestamp } from '../firebase/firestore-proxy';
 import { db, auth } from '../firebaseConfig';
 import { useAuth } from '../context/AuthContext';
 import { useTeams } from '../hooks/useTeams';
@@ -7,12 +7,27 @@ import { useTheme } from '../context/ThemeContext';
 import { usePlan } from '../hooks/usePlan';
 import UpgradeModal from '../components/UpgradeModal';
 import { Save, FileText } from 'lucide-react';
+import autoTable from 'jspdf-autotable';
 import { downloadPDF } from '../utils/download';
+import { savePdfUniversal } from '../utils/pdfGenerator';
 import { APP_VERSION } from '../constants/appVersion';
 import { exportMonthlyPlan } from '../utils/exportMonthlyPlan';
 import { useTranslation } from '../hooks/useTranslation';
 import { SpellCheckedTextarea } from '../components/ui/SpellCheckedTextarea';
+import { cleanPdfText } from '../utils/pdfTheme';
 import '../styles/planificacion.css';
+
+const runAutoTable = (targetDoc, options) => {
+  if (typeof autoTable === 'function') {
+    autoTable(targetDoc, options);
+  } else if (typeof targetDoc.autoTable === 'function') {
+    targetDoc.autoTable(options);
+  } else if (typeof window !== 'undefined' && window.jspdfAutoTable) {
+    window.jspdfAutoTable(targetDoc, options);
+  } else {
+    console.warn('[Planificacion] autoTable helper unavailable');
+  }
+};
 
 // --- CONSTANTS ---
 const MONTHS = ['Sep','Oct','Nov','Dic','Ene','Feb','Mar','Abr','May','Jun'];
@@ -305,7 +320,6 @@ const Planificacion = () => {
 
     try {
       const { jsPDF } = await import('jspdf');
-      await import('jspdf-autotable');
       const isLandscape = activeTab === 'macrociclo' || (activeTab === 'mesociclo' && selectedMesoItem);
       const doc = new jsPDF(isLandscape ? 'l' : 'p', 'mm', 'a4');
       const pdfWidth = doc.internal.pageSize.getWidth();
@@ -337,13 +351,13 @@ const Planificacion = () => {
         doc.setFont('Helvetica', 'normal');
         doc.setFontSize(9);
         doc.setTextColor(210, 225, 215);
-        doc.text(titleSub.toUpperCase(), 12, 17);
+        doc.text(cleanPdfText(titleSub).toUpperCase(), 12, 17);
 
         // Nombre del equipo y fecha en el lado derecho
         doc.setFont('Helvetica', 'bold');
         doc.setTextColor(255, 255, 255);
         doc.setFontSize(10);
-        const teamNameText = (activeTeam?.nombre || activeTeam?.name || 'MI EQUIPO').toUpperCase();
+        const teamNameText = cleanPdfText(activeTeam?.nombre || activeTeam?.name || 'MI EQUIPO').toUpperCase();
         doc.text(teamNameText, pdfWidth - 12, 11, { align: 'right' });
 
         doc.setFont('Helvetica', 'normal');
@@ -415,8 +429,8 @@ const Planificacion = () => {
         doc.setFontSize(8);
         doc.setTextColor(cText[0], cText[1], cText[2]);
         doc.text(`Inicio: ${macroInfo.startDate}   Fin: ${macroInfo.endDate}`, 16, yPos + 13);
-        doc.text(`Categoría: ${macroInfo.category || 'Infantil A'}`, 16, yPos + 19);
-        doc.text(`Entrenador: ${macroInfo.trainer || 'Sin Entrenador'}`, 16, yPos + 25);
+        doc.text(`Categoría: ${cleanPdfText(macroInfo.category || 'Infantil A')}`, 16, yPos + 19);
+        doc.text(`Entrenador: ${cleanPdfText(macroInfo.trainer || 'Sin Entrenador')}`, 16, yPos + 25);
 
         doc.text(`Horas Totales: ${totalHours}h ${remainingMins}min (${totalMinutes} min)`, 110, yPos + 13);
         doc.text(`Duración Sesión: ${macroInfo.sessionDuration} min`, 110, yPos + 19);
@@ -430,7 +444,8 @@ const Planificacion = () => {
         doc.text('MÉTRICAS CLAVE (CARGA)', 222.5, yPos + 6, { align: 'center' });
 
         // Dibujar los 4 indicadores circulares alineados
-        drawCircleMetric(185, yPos + 16, overallScore, 100, 'Global', cDark, [232, 245, 238]);
+        const globalScore = computedMetrics?.overall ?? 0;
+        drawCircleMetric(185, yPos + 16, globalScore, 100, 'Global', cDark, [232, 245, 238]);
         drawCircleMetric(210, yPos + 16, computedMetrics.sesiones, computedMetrics.sesionesMax, 'Sesiones', [27, 58, 45], [232, 245, 238]);
         drawCircleMetric(235, yPos + 16, computedMetrics.trabajo, computedMetrics.trabajoMax, 'Trabajo', [76, 175, 125], [232, 245, 238]);
         drawCircleMetric(260, yPos + 16, computedMetrics.compet, computedMetrics.competMax, 'Compet.', [212, 168, 67], [253, 243, 220]);
@@ -450,7 +465,7 @@ const Planificacion = () => {
         doc.setFont('Helvetica', 'normal');
         doc.setFontSize(8);
         doc.setTextColor(cText[0], cText[1], cText[2]);
-        const splitObjective = doc.splitTextToSize(macroInfo.objective || 'Sin objetivo general configurado.', pdfWidth - 36);
+        const splitObjective = doc.splitTextToSize(cleanPdfText(macroInfo.objective || 'Sin objetivo general configurado.'), pdfWidth - 36);
         doc.text(splitObjective, 16, yPos + 10);
 
         yPos += 26;
@@ -482,11 +497,11 @@ const Planificacion = () => {
           
           const rows = [
             ['Mes / Mesociclo', ...chunkMicros.map(m => `${m.month} (Meso ${MONTHS.indexOf(m.month) + 1})`)],
-            ['Período', ...chunkMicros.map(m => m.periodo)],
-            ['Tipo Micro (Carga)', ...chunkMicros.map(m => m.carga)],
+            ['Período', ...chunkMicros.map(m => cleanPdfText(m.periodo || ''))],
+            ['Tipo Micro (Carga)', ...chunkMicros.map(m => cleanPdfText(m.carga || ''))],
             ['Nº Microciclo', ...chunkMicros.map(m => m.id)],
-            ['Test Físico', ...chunkMicros.map(m => m.fisio ? '✓' : '')],
-            ['Dinámica Carga', ...chunkMicros.map(m => m.infl || '')],
+            ['Test Físico', ...chunkMicros.map(m => m.fisio ? 'Sí' : '-')],
+            ['Dinámica Carga', ...chunkMicros.map(m => cleanPdfText(m.infl || ''))],
             ['Volumen (min)', ...chunkMicros.map(m => m.volume)],
             ['Sesiones', ...chunkMicros.map(m => m.sessions)],
             ['% Físico', ...chunkMicros.map(m => `${m.physical}%`)],
@@ -494,7 +509,7 @@ const Planificacion = () => {
             ['% Táctico', ...chunkMicros.map(m => `${m.tactical}%`)],
           ];
 
-          autoTable(doc, {
+          runAutoTable(doc, {
             startY: yPos,
             head: [headers],
             body: rows,
@@ -540,7 +555,7 @@ const Planificacion = () => {
             meso.carga >= meso.micros.length / 2 ? 'CARGA' : 'COMPETICIÓN'
           ]);
 
-          autoTable(doc, {
+          runAutoTable(doc, {
             startY: yPos + 5,
             head: [headers],
             body: rows,
@@ -570,13 +585,13 @@ const Planificacion = () => {
           doc.setTextColor(cDark[0], cDark[1], cDark[2]);
           doc.text(`SEMANAS REGISTRADAS EN EL MES DE ${selectedMesoItem.toUpperCase()}`, 12, yPos);
 
-          const headers = ['METRICA / VARIABLE', ...chunkMicros.map(m => `Semana ${m.id}`)];
+          const headers = ['MÉTRICA / VARIABLE', ...chunkMicros.map(m => `Semana ${m.id}`)];
           const rows = [
             ['Mes / Mesociclo', ...chunkMicros.map(m => `${m.month} (Meso ${MONTHS.indexOf(m.month) + 1})`)],
-            ['Período', ...chunkMicros.map(m => m.periodo)],
+            ['Período', ...chunkMicros.map(m => cleanPdfText(m.periodo || ''))],
             ['Nº Microciclo', ...chunkMicros.map(m => m.id)],
-            ['Test Físico', ...chunkMicros.map(m => m.fisio ? '✓' : '')],
-            ['Dinámica Carga', ...chunkMicros.map(m => m.infl || '')],
+            ['Test Físico', ...chunkMicros.map(m => m.fisio ? 'Sí' : '-')],
+            ['Dinámica Carga', ...chunkMicros.map(m => cleanPdfText(m.infl || ''))],
             ['Volumen (min)', ...chunkMicros.map(m => m.volume)],
             ['Sesiones', ...chunkMicros.map(m => m.sessions)],
             ['% Físico', ...chunkMicros.map(m => `${m.physical}%`)],
@@ -584,7 +599,7 @@ const Planificacion = () => {
             ['% Táctico', ...chunkMicros.map(m => `${m.tactical}%`)],
           ];
 
-          autoTable(doc, {
+          runAutoTable(doc, {
             startY: yPos + 5,
             head: [headers],
             body: rows,
@@ -629,7 +644,7 @@ const Planificacion = () => {
         doc.setFont('Helvetica', 'normal');
         doc.setFontSize(9);
         doc.setTextColor(cText[0], cText[1], cText[2]);
-        doc.text(`Período: ${mc.periodo}  |  Carga: ${mc.carga}  |  Sesiones: ${mc.sessions}  |  Volumen Semanal: ${mc.volume} minutos`, 16, yPos + 13);
+        doc.text(`Período: ${cleanPdfText(mc.periodo || '')}  |  Carga: ${cleanPdfText(mc.carga || '')}  |  Sesiones: ${mc.sessions}  |  Volumen Semanal: ${mc.volume} minutos`, 16, yPos + 13);
 
         yPos += 28;
 
@@ -650,10 +665,10 @@ const Planificacion = () => {
             detailsText = `Físico: ${mc.physical}%  |  Técnico: ${mc.technical}%  |  Táctico: ${mc.tactical}%`;
           }
           
-          return [day.toUpperCase(), activityText, detailsText];
+          return [day.toUpperCase(), cleanPdfText(activityText), cleanPdfText(detailsText)];
         });
 
-        autoTable(doc, {
+        runAutoTable(doc, {
           startY: yPos,
           head: [headers],
           body: rows,
@@ -688,7 +703,7 @@ const Planificacion = () => {
         doc.setTextColor(255, 255, 255);
         doc.setFont('Helvetica', 'bold');
         doc.setFontSize(9);
-        doc.text('🎯 OBJETIVO GENERAL DE TEMPORADA', 16, yPos + 5);
+        doc.text('OBJETIVO GENERAL DE TEMPORADA', 16, yPos + 5);
 
         doc.setFillColor(cBeige[0], cBeige[1], cBeige[2]);
         doc.rect(12, yPos + 7, pdfWidth - 24, 25, 'F');
@@ -696,17 +711,17 @@ const Planificacion = () => {
         doc.setTextColor(cText[0], cText[1], cText[2]);
         doc.setFont('Helvetica', 'normal');
         doc.setFontSize(9);
-        const splitGeneral = doc.splitTextToSize(macroInfo.objective || 'No se ha configurado un objetivo general.', pdfWidth - 32);
+        const splitGeneral = doc.splitTextToSize(cleanPdfText(macroInfo.objective || 'No se ha configurado un objetivo general.'), pdfWidth - 32);
         doc.text(splitGeneral, 16, yPos + 13);
 
         yPos += 40;
 
         // OBJETIVOS ESPECÍFICOS (Físico, Técnico, Táctico, Mental)
         const specificObjs = [
-          { title: '💪 OBJETIVO FÍSICO', val: macroInfo.objFisico, key: 'objFisico', placeholder: 'Mejorar la resistencia aeróbica y la velocidad de reacción...' },
-          { title: '⚽ OBJETIVO TÉCNICO', val: macroInfo.objTecnico, key: 'objTecnico', placeholder: 'Mejorar el control y el pase en espacios reducidos...' },
-          { title: '♟️ OBJETIVO TÁCTICO', val: macroInfo.objTactico, key: 'objTactico', placeholder: 'Dominar la presión alta y la salida de balón...' },
-          { title: '🧠 OBJETIVO MENTAL', val: macroInfo.objMental, key: 'objMental', placeholder: 'Desarrollar la concentración y el trabajo en equipo...' },
+          { title: 'OBJETIVO FÍSICO', val: macroInfo.objFisico, key: 'objFisico', placeholder: 'Mejorar la resistencia aeróbica y la velocidad de reacción...' },
+          { title: 'OBJETIVO TÉCNICO', val: macroInfo.objTecnico, key: 'objTecnico', placeholder: 'Mejorar el control y el pase en espacios reducidos...' },
+          { title: 'OBJETIVO TÁCTICO', val: macroInfo.objTactico, key: 'objTactico', placeholder: 'Dominar la presión alta y la salida de balón...' },
+          { title: 'OBJETIVO MENTAL', val: macroInfo.objMental, key: 'objMental', placeholder: 'Desarrollar la concentración y el trabajo en equipo...' },
         ];
 
         specificObjs.forEach(obj => {
@@ -715,7 +730,7 @@ const Planificacion = () => {
           doc.setTextColor(255, 255, 255);
           doc.setFont('Helvetica', 'bold');
           doc.setFontSize(9);
-          doc.text(obj.title, 16, yPos + 5);
+          doc.text(cleanPdfText(obj.title), 16, yPos + 5);
 
           // Fondo blanco con borde para los específicos
           doc.setFillColor(255, 255, 255);
@@ -725,7 +740,7 @@ const Planificacion = () => {
           doc.setTextColor(cText[0], cText[1], cText[2]);
           doc.setFont('Helvetica', 'normal');
           doc.setFontSize(9);
-          const splitText = doc.splitTextToSize(obj.val || obj.placeholder, pdfWidth - 32);
+          const splitText = doc.splitTextToSize(cleanPdfText(obj.val || obj.placeholder), pdfWidth - 32);
           doc.text(splitText, 16, yPos + 13);
 
           yPos += 36;
@@ -739,15 +754,15 @@ const Planificacion = () => {
         drawFooter(i, totalPages);
       }
 
-      // 6. Descargar PDF utilizando el helper nativo / web
-      const pdfBase64 = doc.output('dataurlstring').split(',')[1];
+      // 6. Descargar PDF utilizando el helper universal (Web y APK)
       let tabName = activeTab.toUpperCase();
       if (activeTab === 'mesociclo' && selectedMesoItem) {
         tabName += `_${selectedMesoItem.toUpperCase()}`;
       }
-      const fileName = `Planificacion_${activeTeam?.name || 'Equipo'}_${tabName}.pdf`;
+      const safeTeamName = cleanPdfText(activeTeam?.nombre || activeTeam?.name || 'Equipo').replace(/\s+/g, '_');
+      const fileName = `Planificacion_${safeTeamName}_${tabName}.pdf`;
 
-      await downloadPDF(pdfBase64, fileName);
+      await savePdfUniversal(doc, fileName);
       showToast('PDF exportado ✓');
     } catch (err) {
       console.error('Error generating PDF:', err);

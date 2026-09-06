@@ -68,11 +68,13 @@ const LegendCard = ({ player, stats, overall, position, streak, type = "gold" })
           <div className="card-avatar-wrapper">
             <CrownSvg />
             <div className="card-avatar-circle">
-              {player?.avatarUrl || player?.imageUrl ? (
-                <img src={player.avatarUrl || player.imageUrl} alt={player.name} className="card-avatar-img" />
-              ) : (
-                <span className="avatar-placeholder">{player?.name?.charAt(0).toUpperCase() || 'P'}</span>
-              )}
+              {(() => {
+                const photoSrc = player?.avatarUrl || player?.photoPreview || player?.photo || player?.foto || player?.imageUrl || player?.avatar;
+                if (photoSrc) {
+                  return <img src={photoSrc} alt={player?.name || 'Jugador'} className="card-avatar-img" crossOrigin="anonymous" />;
+                }
+                return <span className="avatar-placeholder">{player?.name?.charAt(0).toUpperCase() || 'P'}</span>;
+              })()}
             </div>
           </div>
 

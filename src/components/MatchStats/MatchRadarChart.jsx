@@ -18,38 +18,38 @@ export const MatchRadarChart = ({
     { 
       key: 'shotsOnTarget', 
       label: 'Tiros a puerta', 
-      desc: 'Remates directos entre los tres palos.',
-      calc: 'Normalizado hasta un tope de 10 remates a puerta.'
+      desc: 'Disparos a puerta o goles convertidos.',
+      calc: 'Normalizado sobre 8 tiros a puerta (8 = 100 pts).'
     },
     { 
       key: 'duels', 
       label: 'Duelos / Posesión', 
-      desc: 'Eficacia en duelos ganados individuales y retención de balón.',
-      calc: '% de duelos ganados sobre el total disputado.'
+      desc: 'Eficacia en duelos ganados individuales y retención.',
+      calc: '% de duelos ganados. Si no hay registros (0/0) es 0 pts.'
     },
     { 
       key: 'fouls', 
       label: 'Faltas', 
-      desc: 'Infracciones cometidas e intensidad en la disputa.',
-      calc: 'Control de faltas cometidas respecto al volumen de juego.'
+      desc: 'Infracciones cometidas durante el tiempo de juego.',
+      calc: 'Infracciones cometidas sobre escala de 12 faltas (12 = 100 pts).'
     },
     { 
       key: 'discipline', 
-      label: 'Disciplina', 
-      desc: 'Fair-play y limpieza táctica (amarillas y rojas evitadas).',
-      calc: '100 pts base menos penalizaciones por amarillas (-15) y rojas (-35).'
+      label: 'Tarjetas (Sanciones)', 
+      desc: 'Sanciones disciplinarias (0 tarjetas = 0 pts / juego limpio).',
+      calc: '0 tarjetas = 0 pts. Cada amarilla suma 20 pts y cada roja 50 pts.'
     },
     { 
       key: 'corners', 
       label: 'Córners', 
       desc: 'Saques de esquina a favor provocados.',
-      calc: 'Normalizado hasta un tope de 8 córners.'
+      calc: 'Normalizado sobre 8 córners a favor (8 = 100 pts).'
     },
     { 
       key: 'offsides', 
       label: 'Offsides', 
-      desc: 'Posiciones adelantadas provocadas o cometidas.',
-      calc: 'Control de línea de fuera de juego.'
+      desc: 'Posiciones adelantadas o fueras de juego cometidos.',
+      calc: 'Fueras de juego sobre escala de 5 offsides (5 = 100 pts).'
     }
   ];
 
@@ -135,21 +135,23 @@ export const MatchRadarChart = ({
     const totalLocalDuels = localDuelsWon + localDuelsLost;
     const totalRivalDuels = rivalDuelsWon + rivalDuelsLost;
 
-    const totalEventsCount = localShotsOn + rivalShotsOn + totalLocalDuels + totalRivalDuels + localFouls + rivalFouls + localCorners + rivalCorners + localOffsides + rivalOffsides;
+    const totalEventsCount = localShotsOn + rivalShotsOn + totalLocalDuels + totalRivalDuels + localFouls + rivalFouls + localCorners + rivalCorners + localOffsides + rivalOffsides + localYellows + localReds + rivalYellows + rivalReds;
     const isActuallyEmpty = !hasEvents && totalEventsCount === 0;
 
     // Normalización 0 - 100
     const normShotsA = Math.min(100, Math.round((localShotsOn / 8) * 100));
     const normShotsB = Math.min(100, Math.round((rivalShotsOn / 8) * 100));
 
-    const normDuelsA = totalLocalDuels > 0 ? Math.round((localDuelsWon / totalLocalDuels) * 100) : (localDuelsWon > 0 ? 70 : 50);
-    const normDuelsB = totalRivalDuels > 0 ? Math.round((rivalDuelsWon / totalRivalDuels) * 100) : (rivalDuelsWon > 0 ? 70 : 50);
+    // Duelos: % de efectividad real. Si no hay duelos (0/0), es 0 pts (no 50 pts inventados)
+    const normDuelsA = totalLocalDuels > 0 ? Math.min(100, Math.round((localDuelsWon / totalLocalDuels) * 100)) : 0;
+    const normDuelsB = totalRivalDuels > 0 ? Math.min(100, Math.round((rivalDuelsWon / totalRivalDuels) * 100)) : 0;
 
     const normFoulsA = Math.min(100, Math.round((localFouls / 12) * 100));
     const normFoulsB = Math.min(100, Math.round((rivalFouls / 12) * 100));
 
-    const normDiscB = Math.max(10, 100 - (rivalYellows * 15 + rivalReds * 35));
-    const normDiscA = Math.max(10, 100 - (localYellows * 15 + localReds * 35));
+    // Tarjetas (Sanciones): 0 tarjetas = 0 pts (juego limpio en el centro). Cada amarilla suma 20 pts y cada roja 50 pts
+    const normDiscA = Math.min(100, localYellows * 20 + localReds * 50);
+    const normDiscB = Math.min(100, rivalYellows * 20 + rivalReds * 50);
 
     const normCornersA = Math.min(100, Math.round((localCorners / 8) * 100));
     const normCornersB = Math.min(100, Math.round((rivalCorners / 8) * 100));
@@ -181,7 +183,7 @@ export const MatchRadarChart = ({
 
   const getPolygonPoints = (values) => {
     return values.map((val, i) => {
-      const r = (Math.max(val, 5) / 100) * radius;
+      const r = (Math.max(val, 0) / 100) * radius;
       const angle = i * angleSlice - Math.PI / 2;
       const x = center + r * Math.cos(angle);
       const y = center + r * Math.sin(angle);
@@ -273,10 +275,11 @@ export const MatchRadarChart = ({
                       y={labelY + 8}
                       textAnchor="middle"
                       fontSize="8.5"
-                      fill={darkMode ? '#FBBF24' : '#B45309'}
                       fontWeight="800"
                     >
-                      {normVal} pts
+                      <tspan fill={darkMode ? '#FBBF24' : '#B45309'}>{normVal}</tspan>
+                      <tspan fill={darkMode ? '#94A3B8' : '#64748B'}> vs </tspan>
+                      <tspan fill={darkMode ? '#4ADE80' : '#047857'}>{teamBStats[i]} pts</tspan>
                     </text>
                   </g>
                 );
@@ -300,7 +303,7 @@ export const MatchRadarChart = ({
 
               {/* Nodos de datos Local */}
               {teamAStats.map((val, i) => {
-                const r = (Math.max(val, 5) / 100) * radius;
+                const r = (Math.max(val, 0) / 100) * radius;
                 const angle = i * angleSlice - Math.PI / 2;
                 return (
                   <circle
@@ -317,7 +320,7 @@ export const MatchRadarChart = ({
 
               {/* Nodos de datos Visitante */}
               {teamBStats.map((val, i) => {
-                const r = (Math.max(val, 5) / 100) * radius;
+                const r = (Math.max(val, 0) / 100) * radius;
                 const angle = i * angleSlice - Math.PI / 2;
                 return (
                   <circle
@@ -338,33 +341,40 @@ export const MatchRadarChart = ({
           {activeTooltipAxis && (
             <div style={{
               background: darkMode ? 'rgba(15, 26, 15, 0.95)' : '#FFFFFF',
-              border: darkMode ? '1px solid #D4A843' : '1.5px solid #CBD5E1',
+              border: darkMode ? '1px solid #2d4a2d' : '1px solid #CBD5E1',
               borderRadius: '8px',
               padding: '10px 14px',
-              margin: '8px 12px 14px 12px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              fontSize: '12px',
-              boxShadow: darkMode ? '0 4px 16px rgba(0,0,0,0.4)' : '0 4px 12px rgba(0,0,0,0.08)'
+              margin: '8px 0 12px 0',
+              boxShadow: '0 4px 16px rgba(0,0,0,0.18)',
+              fontSize: '12px'
             }}>
-              <div>
-                <strong style={{ color: darkMode ? '#F59E0B' : '#B45309', display: 'block', fontSize: '13px' }}>
-                  {axes.find(a => a.key === activeTooltipAxis)?.label}
-                </strong>
-                <span style={{ color: darkMode ? '#94A3B8' : '#475569', fontSize: '11px' }}>
-                  {axes.find(a => a.key === activeTooltipAxis)?.desc}
-                </span>
-              </div>
-              <div style={{ display: 'flex', gap: '12px', textAlign: 'right', fontWeight: '800' }}>
-                <span style={{ color: darkMode ? '#FBBF24' : '#B45309' }}>{homeTeamName}: {rawCounts[activeTooltipAxis]?.home} {rawCounts[activeTooltipAxis]?.unit}</span>
-                <span style={{ color: darkMode ? '#4ADE80' : '#047857' }}>{awayTeamName}: {rawCounts[activeTooltipAxis]?.away} {rawCounts[activeTooltipAxis]?.unit}</span>
-              </div>
+              {(() => {
+                const ax = axes.find(a => a.key === activeTooltipAxis);
+                const raw = rawCounts[activeTooltipAxis];
+                const i = axes.findIndex(a => a.key === activeTooltipAxis);
+                return (
+                  <div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
+                      <strong style={{ color: darkMode ? '#D4A843' : '#B45309' }}>{ax?.label}</strong>
+                      <span style={{ fontSize: '10.5px', color: darkMode ? '#94A3B8' : '#64748B' }}>📐 {ax?.calc}</span>
+                    </div>
+                    <div style={{ color: darkMode ? '#CBD5E1' : '#475569', fontSize: '11px', marginBottom: '6px' }}>{ax?.desc}</div>
+                    <div style={{ display: 'flex', gap: '14px', fontWeight: 700 }}>
+                      <span style={{ color: darkMode ? '#FBBF24' : '#B45309' }}>
+                        {homeTeamName}: {raw?.home ?? 0} {raw?.unit || ''} ({teamAStats[i]} pts)
+                      </span>
+                      <span style={{ color: darkMode ? '#4ADE80' : '#047857' }}>
+                        {awayTeamName}: {raw?.away ?? 0} {raw?.unit || ''} ({teamBStats[i]} pts)
+                      </span>
+                    </div>
+                  </div>
+                );
+              })()}
             </div>
           )}
 
           {/* Leyenda comparativa fija */}
-          <div className="radar-legend" style={{ display: 'flex', justifyContent: 'center', gap: '20px', marginBottom: '14px' }}>
+          <div className="radar-legend" style={{ display: 'flex', justifyContent: 'center', gap: '20px', margin: '8px 0 14px 0' }}>
             <div className="legend-item" style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', fontWeight: 800 }}>
               <span className="legend-box gold" style={{ width: '12px', height: '12px', background: darkMode ? '#FBBF24' : '#D4A843', borderRadius: '3px', display: 'inline-block' }} />
               <span style={{ color: darkMode ? '#FBBF24' : '#B45309' }}>{homeTeamName} (Local)</span>
@@ -401,18 +411,31 @@ export const MatchRadarChart = ({
                   const raw = rawCounts[axis.key];
                   const normA = teamAStats[i];
                   const normB = teamBStats[i];
+                  const isNegativeMetric = axis.key === 'fouls' || axis.key === 'discipline' || axis.key === 'offsides';
                   let winnerLabel = 'Empate';
                   let winnerColor = darkMode ? '#94A3B8' : '#475569';
                   let winnerBg = darkMode ? 'rgba(148, 163, 184, 0.15)' : 'rgba(71, 85, 105, 0.1)';
 
-                  if (normA > normB) {
-                    winnerLabel = homeTeamName;
-                    winnerColor = darkMode ? '#FBBF24' : '#B45309';
-                    winnerBg = darkMode ? 'rgba(212, 168, 67, 0.15)' : 'rgba(245, 158, 11, 0.12)';
-                  } else if (normB > normA) {
-                    winnerLabel = awayTeamName;
+                  if (normA === 0 && normB === 0) {
+                    if (axis.key === 'discipline') winnerLabel = 'Limpio (0)';
+                    else if (axis.key === 'fouls') winnerLabel = 'Sin faltas (0)';
+                    else if (axis.key === 'offsides') winnerLabel = 'Sin offsides (0)';
+                    else winnerLabel = 'Empate (0)';
                     winnerColor = darkMode ? '#4ADE80' : '#047857';
-                    winnerBg = darkMode ? 'rgba(76, 175, 125, 0.15)' : 'rgba(16, 185, 129, 0.12)';
+                    winnerBg = darkMode ? 'rgba(74, 222, 128, 0.15)' : 'rgba(16, 185, 129, 0.12)';
+                  } else if (normA === normB) {
+                    winnerLabel = 'Empate';
+                  } else {
+                    const homeWins = isNegativeMetric ? (normA < normB) : (normA > normB);
+                    if (homeWins) {
+                      winnerLabel = homeTeamName;
+                      winnerColor = darkMode ? '#FBBF24' : '#B45309';
+                      winnerBg = darkMode ? 'rgba(212, 168, 67, 0.15)' : 'rgba(245, 158, 11, 0.12)';
+                    } else {
+                      winnerLabel = awayTeamName;
+                      winnerColor = darkMode ? '#4ADE80' : '#047857';
+                      winnerBg = darkMode ? 'rgba(76, 175, 125, 0.15)' : 'rgba(16, 185, 129, 0.12)';
+                    }
                   }
 
                   return (

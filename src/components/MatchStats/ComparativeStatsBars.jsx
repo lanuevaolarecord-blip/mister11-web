@@ -34,9 +34,20 @@ export const ComparativeStatsBars = ({
 
       <div className="bars-list">
         {metrics.map((m, idx) => {
-          const total = (m.homeVal + m.awayVal) || 1;
-          const homePct = m.isPercent ? m.homeVal : Math.round((m.homeVal / total) * 100);
-          const awayPct = m.isPercent ? m.awayVal : 100 - homePct;
+          const sum = (Number(m.homeVal) || 0) + (Number(m.awayVal) || 0);
+          let homePct = 0;
+          let awayPct = 0;
+
+          if (m.isPercent) {
+            homePct = Number(m.homeVal) || 0;
+            awayPct = Number(m.awayVal) || 0;
+          } else if (sum > 0) {
+            homePct = Math.round(((Number(m.homeVal) || 0) / sum) * 100);
+            awayPct = 100 - homePct;
+          } else {
+            homePct = 0;
+            awayPct = 0;
+          }
 
           return (
             <div key={idx} className="metric-bar-row">

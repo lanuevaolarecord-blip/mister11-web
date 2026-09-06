@@ -1200,21 +1200,34 @@ const LiveStats = ({
           const posHome = totalPossEvents > 0 ? Math.round((recHome / totalPossEvents) * 100) : 50;
           const posAway = 100 - posHome;
 
-          const tirosHome   = countByType('shot_on_target_own') + countByType('shot_off_target_own');
-          const tirosAway   = countByType('shot_on_target_rival') + countByType('shot_off_target_rival');
+          const goalsHome   = countByType('gol_local') + countByType('gol') + countByType('goal');
+          const goalsAway   = countByType('gol_rival');
+          const tirosPuertaHome = countByType('shot_on_target_own') + goalsHome;
+          const tirosPuertaAway = countByType('shot_on_target_rival') + goalsAway;
+          const tirosHome   = tirosPuertaHome + countByType('shot_off_target_own');
+          const tirosAway   = tirosPuertaAway + countByType('shot_off_target_rival');
           const duelsWon    = countByType('duel_won');
           const duelsLost   = countByType('duel_lost');
-          const cornHome    = countByType('corner_favor');
-          const cornAway    = countByType('corner_against');
-          const faultsBy    = countByType('foul_against');
-          const faultsOpp   = countByType('foul_favor');
-          const yellHome    = countByType('card_yellow_own');
+          const cornHome    = countByType('corner_favor') + countByType('corner_own');
+          const cornAway    = countByType('corner_against') + countByType('corner_rival');
+          const faultsBy    = countByType('foul_against') + countByType('falta_contra');
+          const faultsOpp   = countByType('foul_favor') + countByType('falta_favor');
+          const yellHome    = countByType('card_yellow_own') + countByType('yellow_card') + countByType('amarilla');
           const yellAway    = countByType('card_yellow_rival');
-          const redHome     = countByType('card_red_own');
+          const redHome     = countByType('card_red_own') + countByType('red_card') + countByType('roja');
           const redAway     = countByType('card_red_rival');
-          // Pases proxy: recuperaciones + duelos ganados ≈ pases exitosos propios
-          const pasesExHome = recHome + duelsWon;
-          const pasesExAway = lossHome + duelsLost;
+
+          const pasesRealHome = countByType('pass_completed') + countByType('key_pass');
+          const pasesRealFailHome = countByType('pass_failed');
+          const hasRealPasses = (pasesRealHome + pasesRealFailHome) > 0;
+          const pasesExHome = hasRealPasses ? pasesRealHome : (recHome + duelsWon);
+          const pasesTotHome = hasRealPasses ? (pasesRealHome + pasesRealFailHome) : (pasesExHome + faultsBy);
+
+          const pasesRealAway = countByType('pass_completed_rival');
+          const pasesRealFailAway = countByType('pass_failed_rival');
+          const hasRealPassesAway = (pasesRealAway + pasesRealFailAway) > 0;
+          const pasesExAway = hasRealPassesAway ? pasesRealAway : (lossHome + duelsLost);
+          const pasesTotAway = hasRealPassesAway ? (pasesRealAway + pasesRealFailAway) : (pasesExAway + faultsOpp);
 
           return (
           <div className="analytics-tab-content">
@@ -1222,9 +1235,9 @@ const LiveStats = ({
               homeStats={{
                 posesion: posHome,
                 tiros: tirosHome,
-                tirosPuerta: countByType('shot_on_target_own'),
+                tirosPuerta: tirosPuertaHome,
                 pasesExitosos: pasesExHome,
-                pasesTotales: pasesExHome + faultsBy,
+                pasesTotales: pasesTotHome,
                 recuperaciones: recHome,
                 corners: cornHome,
                 faltas: faultsBy,
@@ -1233,9 +1246,9 @@ const LiveStats = ({
               awayStats={{
                 posesion: posAway,
                 tiros: tirosAway,
-                tirosPuerta: countByType('shot_on_target_rival'),
+                tirosPuerta: tirosPuertaAway,
                 pasesExitosos: pasesExAway,
-                pasesTotales: pasesExAway + faultsOpp,
+                pasesTotales: pasesTotAway,
                 recuperaciones: lossHome,
                 corners: cornAway,
                 faltas: faultsOpp,

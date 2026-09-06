@@ -131,7 +131,7 @@ const PizarraTactica = () => {
     if (!fc || !fr) return { objects: [] };
 
     const objects = fc.getObjects().map(obj => {
-      const serializado = obj.toObject(['data']);
+      const serializado = obj.toObject(['data', 'id']);
       
       let absX = obj.left;
       let absY = obj.top;
@@ -154,6 +154,7 @@ const PizarraTactica = () => {
 
       return {
         ...serializado,
+        data: obj.data ? { ...obj.data, xRel: rx, yRel: ry } : undefined,
         xRel: rx,
         yRel: ry,
         radiusRel: obj.radius 
@@ -314,7 +315,13 @@ const PizarraTactica = () => {
 
       // FIX-2: try/catch para garantizar que syncingR nunca queda en true permanentemente
       try {
-        objects.forEach(o => {
+        objects.forEach((o, objIdx) => {
+          if (!o.data && enlivenedData[objIdx]?.data) {
+            o.data = { ...enlivenedData[objIdx].data };
+          }
+          if (!o.id && enlivenedData[objIdx]?.id) {
+            o.id = enlivenedData[objIdx].id;
+          }
           // Restaurar borde blanco en los jugadores
           const isPlayer = o.data?.type === 'player' || 
                            o.data?.tipo === 'jugador' || 
@@ -525,7 +532,7 @@ const PizarraTactica = () => {
 
   // ─── Save current canvas state into current frame ─────────────────────────
   const saveFrameState = useCallback(async (immediate = false) => {
-    if (syncingR.current) return; // Block saves while loading/syncing
+    if (syncingR.current || playingR.current) return; // Block saves while loading/syncing or playing
     
     const fc = fcRef.current;
     if (!fc || playingR.current || !user || !activeTeamId) return;
@@ -536,7 +543,8 @@ const PizarraTactica = () => {
     // Si no hay frame definido en el array de la ref, no podemos guardar en DB todavía
     if (!frame || !frame.id) return;
 
-    const state = serializarFrame();
+    const rawState = serializarFrame();
+    const state = JSON.parse(JSON.stringify(rawState));
 
     // Update Local State (Immediate)
     setFrames(prev => {
@@ -776,6 +784,38 @@ const PizarraTactica = () => {
     e.target.value = '';
   };
 
+  // ─── Identificador determinista para emparejar objetos entre frames ────────
+  const getObjectIdentifier = useCallback((obj) => {
+    if (!obj) return null;
+    const d = obj.data || {};
+    if (d.id) return String(d.id);
+    if (obj.id) return String(obj.id);
+    
+    // Jugador
+    const isPlayer = d.type === 'player' || d.tipo === 'jugador' || (obj.type === 'group' && (d.playerType || d.tipo));
+    if (isPlayer) {
+      let label = d.label;
+      if (label === undefined && obj.getObjects) {
+        const textChild = obj.getObjects().find(c => c.type === 'text');
+        if (textChild) label = textChild.text;
+      }
+      const pType = d.playerType || 'local';
+      return `player_${pType}_${label ?? ''}`;
+    }
+    
+    // Balón
+    if (d.type === 'ball' || d.tipo === 'balon') {
+      return 'ball';
+    }
+    
+    // Materiales
+    if (d.type === 'material' || d.tipo === 'material' || d.matType) {
+      return `material_${d.matType || d.tipo}_${d.materialIndex ?? ''}`;
+    }
+    
+    return null;
+  }, []);
+
   // ─── Export Animation Video (MP4/WebM) ────────────────────────────────────
   const exportAnimationVideo = async () => {
     // Helper local: showToast usa el sistema de notificaciones real del componente
@@ -954,7 +994,7 @@ const PizarraTactica = () => {
         }
         if (idx >= framesR.current.length - 1) {
           clearTimeout(safetyTimeout);
-          loadFrame(framesR.current.length - 1);
+          loadFrame(framesR.current.length - 1, false);
           setTimeout(() => safeStop('animation-complete'), 500);
           return;
         }
@@ -991,9 +1031,9 @@ const PizarraTactica = () => {
                 return;
               }
               const objs = fc.getObjects();
-              const rawTargets = stateB.objects || [];
+              const rawTargets = Array.isArray(stateB.objects) ? stateB.objects : [];
 
-              if (objs.length === 0 || objs.length !== rawTargets.length) {
+              if (objs.length === 0 || rawTargets.length === 0) {
                 // Fallback: corte directo al frame B
                 try {
                   cargarFrame(stateB, () => {
@@ -1007,7 +1047,8 @@ const PizarraTactica = () => {
                 return;
               }
 
-              const targets = rawTargets.map(objData => {
+              const targetsByKey = new Map();
+              const targetListWithPos = rawTargets.map((objData, i) => {
                 let left, top;
                 if (objData.xRel !== undefined && objData.yRel !== undefined) {
                   const point = frRef.current.getCanvasPoint(objData.xRel, objData.yRel);
@@ -1016,26 +1057,33 @@ const PizarraTactica = () => {
                   left = (objData.left / CANVAS_REF_WIDTH) * fc.width;
                   top  = (objData.top / CANVAS_REF_HEIGHT) * fc.height;
                 }
-                return { left, top };
+                const id = getObjectIdentifier(objData);
+                const tInfo = { left, top, id, data: objData, index: i };
+                if (id) targetsByKey.set(id, tInfo);
+                return tInfo;
               });
 
+              const animatableObjs = objs.filter(o => o.type !== 'field' && o.data?.type !== 'field' && o.data?.type !== 'background');
               let completed = 0;
-              objs.forEach((obj, i) => {
-                const t = targets[i] || { left: obj.left, top: obj.top };
+              animatableObjs.forEach((obj, i) => {
+                const objId = getObjectIdentifier(obj);
+                const t = (objId && targetsByKey.get(objId)) || targetListWithPos[i] || { left: obj.left, top: obj.top };
                 const sLeft = obj.left || 0;
                 const sTop  = obj.top  || 0;
+                const tLeft = t.left !== undefined ? t.left : sLeft;
+                const tTop  = t.top !== undefined ? t.top : sTop;
                 fabric.util.animate({
                   startValue: 0, endValue: 1, duration: dur,
                   easing: fabric.util.ease.easeInOutSine,
                   onChange: (v) => {
                     if (!playingR.current) return;
-                    obj.set({ left: sLeft + ((t.left || 0) - sLeft) * v, top: sTop + ((t.top || 0) - sTop) * v });
+                    obj.set({ left: sLeft + (tLeft - sLeft) * v, top: sTop + (tTop - sTop) * v });
                     fc.renderAll();
                   },
                   onComplete: () => {
                     if (!playingR.current || !recordingActive) return;
                     completed++;
-                    if (completed === objs.length) {
+                    if (completed >= animatableObjs.length) {
                       try {
                         cargarFrame(stateB, () => {
                           try {
@@ -1101,6 +1149,7 @@ const PizarraTactica = () => {
       fontSize: Math.round(radius * 0.85), fontWeight: 'bold', fill: '#FFFFFF',
       originX: 'center', originY: 'center',
     });
+    const playerId = options.id || `player_${type}_${label}`;
     const group = new fabric.Group([circle, text], {
       left: x, top: y,
       originX: 'center', originY: 'center',
@@ -1108,10 +1157,13 @@ const PizarraTactica = () => {
       // FIX: stroke en el Group para que sobreviva serialización/deserialización
       stroke: '#FFFFFF',
       strokeWidth: borderWidth,
+      id: playerId,
       data: { 
+        id: playerId,
         type: 'player',
         tipo: 'jugador',
         playerType: type,
+        label: String(label),
         xRel: rx,
         yRel: ry,
         _strokeWidth: borderWidth  // guardar para restaurar al desserializar
@@ -2635,8 +2687,9 @@ const PizarraTactica = () => {
     // 1. Save current immediately before adding to prevent state desync
     await saveFrameState(true);
 
-    // 2. Clone current state
-    const state = serializarFrame();
+    // 2. Clone current state deeply
+    const rawState = serializarFrame();
+    const state = JSON.parse(JSON.stringify(rawState));
     
     if (!activeTeamId) return;
     
@@ -2680,7 +2733,7 @@ const PizarraTactica = () => {
       const newFrame = {
         id: newFrameId,
         ...newFrameData,
-        state // Keep it as object in local state
+        state // Keep deep-cloned object in local state
       };
 
       // 3. Actualización Optimista del Estado Local (INMEDIATA)
@@ -2699,19 +2752,28 @@ const PizarraTactica = () => {
   };
 
   // ─── Load Frame ──────────────────────────────────────────────────────────
-  const loadFrame = async (idx) => {
+  const loadFrame = async (idx, saveCurrent = true) => {
     const fc = fcRef.current;
-    if (!fc || !framesR.current[idx]) return;
-    await saveFrameState(true); // Save current immediately
+    if (!fc || !framesR.current || !framesR.current[idx]) return;
+
+    // Solo guardar el frame anterior si se solicita explícitamente y no estamos en medio de reproducción o sync
+    if (saveCurrent && !playingR.current && !syncingR.current) {
+      await saveFrameState(true);
+    }
     
     syncingR.current = true;
-    cargarFrame(framesR.current[idx].state, () => {
+    const targetFrame = framesR.current[idx];
+    const targetState = (typeof targetFrame.state === 'string')
+      ? JSON.parse(targetFrame.state)
+      : targetFrame.state;
+
+    cargarFrame(targetState, () => {
       syncingR.current = false;
       fc.renderAll();
       setFrameIdx(idx);
       frameIdxR.current = idx;
       resetHistory();
-      presentR.current = JSON.stringify(framesR.current[idx].state);
+      presentR.current = JSON.stringify(targetState);
     });
   };
 
@@ -2783,20 +2845,32 @@ const PizarraTactica = () => {
     const fr = frRef.current;
     if (!fc || !fr || framesR.current.length < 2 || playingR.current) return;
     
-    // Save current frame state immediately before starting animation to prevent data loss
+    // Guardar frame actual antes de reproducir para asegurar que no se pierdan ediciones
     await saveFrameState(true);
 
     setIsPlaying(true);
     playingR.current = true;
 
+    const parseState = (s) => {
+      if (!s) return { objects: [] };
+      if (typeof s === 'string') {
+        try { return JSON.parse(s); } catch (_) { return { objects: [] }; }
+      }
+      return s;
+    };
+
     const animate = (idx) => {
-      // Early-exit guard if playback is stopped
+      // Salida temprana si el usuario detuvo la animación
       if (!playingR.current) return;
 
       if (idx >= framesR.current.length - 1) {
+        const lastIdx = framesR.current.length - 1;
         setIsPlaying(false);
         playingR.current = false;
-        loadFrame(framesR.current.length - 1); // Restore responsive interactivity on the final frame
+        setFrameIdx(lastIdx);
+        frameIdxR.current = lastIdx;
+        // Restaurar interactividad y controles del frame final SIN sobreescribir el frame
+        loadFrame(lastIdx, false);
         return;
       }
 
@@ -2804,16 +2878,24 @@ const PizarraTactica = () => {
       frameIdxR.current = idx;
       const fA = framesR.current[idx];
       const fB = framesR.current[idx + 1];
+      if (!fA || !fB) {
+        setIsPlaying(false);
+        playingR.current = false;
+        return;
+      }
+
+      const stateA = parseState(fA.state);
+      const stateB = parseState(fB.state);
       const dur = fB.duration || 800;
 
-      cargarFrame(fA.state, () => {
+      cargarFrame(stateA, () => {
         if (!playingR.current) return;
         const objs = fc.getObjects();
-        const rawTargets = fB.state.objects || [];
+        const rawTargets = Array.isArray(stateB.objects) ? stateB.objects : [];
 
-        if (objs.length === 0 || objs.length !== rawTargets.length) {
-          // Fallback: instant responsive transition
-          cargarFrame(fB.state, () => {
+        if (objs.length === 0 || rawTargets.length === 0) {
+          // Fallback: transición directa
+          cargarFrame(stateB, () => {
             if (!playingR.current) return;
             fc.renderAll();
             setTimeout(() => {
@@ -2824,8 +2906,9 @@ const PizarraTactica = () => {
           return;
         }
 
-        // Dynamically compute responsive absolute target coordinates based on relative percentages (xRel/yRel)
-        const targets = rawTargets.map(objData => {
+        // Mapear objetivos por ID único determinista
+        const targetsByKey = new Map();
+        const targetListWithPos = rawTargets.map((objData, i) => {
           let left, top;
           if (objData.xRel !== undefined && objData.yRel !== undefined) {
             const point = fr.getCanvasPoint(objData.xRel, objData.yRel);
@@ -2835,30 +2918,51 @@ const PizarraTactica = () => {
             left = (objData.left / CANVAS_REF_WIDTH) * fc.width;
             top  = (objData.top / CANVAS_REF_HEIGHT) * fc.height;
           }
-          return { left, top };
+          const id = getObjectIdentifier(objData);
+          const tInfo = { left, top, id, data: objData, index: i };
+          if (id) targetsByKey.set(id, tInfo);
+          return tInfo;
         });
 
+        // Filtrar objetos animables (no el fondo ni el césped)
+        const animatableObjs = objs.filter(o => o.type !== 'field' && o.data?.type !== 'field' && o.data?.type !== 'background');
+        if (animatableObjs.length === 0) {
+          cargarFrame(stateB, () => {
+            if (!playingR.current) return;
+            fc.renderAll();
+            setTimeout(() => {
+              if (!playingR.current) return;
+              animate(idx + 1);
+            }, 200);
+          });
+          return;
+        }
+
         let completed = 0;
-        objs.forEach((obj, i) => {
-          const t = targets[i];
+        animatableObjs.forEach((obj, i) => {
+          const objId = getObjectIdentifier(obj);
+          const t = (objId && targetsByKey.get(objId)) || targetListWithPos[i] || { left: obj.left, top: obj.top };
           const sLeft = obj.left || 0;
           const sTop  = obj.top  || 0;
+          const tLeft = t.left !== undefined ? t.left : sLeft;
+          const tTop  = t.top !== undefined ? t.top : sTop;
+
           fabric.util.animate({
             startValue: 0, endValue: 1, duration: dur,
             easing: fabric.util.ease.easeInOutSine,
             onChange: (v) => {
               if (!playingR.current) return;
               obj.set({
-                left: sLeft + ((t.left || 0) - sLeft) * v,
-                top:  sTop  + ((t.top  || 0) - sTop ) * v,
+                left: sLeft + (tLeft - sLeft) * v,
+                top:  sTop  + (tTop  - sTop ) * v,
               });
               fc.renderAll();
             },
             onComplete: () => {
               if (!playingR.current) return;
               completed++;
-              if (completed === objs.length) {
-                cargarFrame(fB.state, () => {
+              if (completed >= animatableObjs.length) {
+                cargarFrame(stateB, () => {
                   if (!playingR.current) return;
                   fc.renderAll();
                   setTimeout(() => {
@@ -2879,8 +2983,8 @@ const PizarraTactica = () => {
   const stopAnimation = () => {
     setIsPlaying(false);
     playingR.current = false;
-    // Reload frame to restore fully interactive state with active drag handlers and event listeners
-    loadFrame(frameIdxR.current);
+    // Recargar frame actual sin guardar el estado a mitad de animación
+    loadFrame(frameIdxR.current, false);
   };
 
   // ─── Add Single Players ───────────────────────────────────────────────────
@@ -2889,16 +2993,25 @@ const PizarraTactica = () => {
     if (!fc) return;
     
     let color = localColor;
-    let label = '1';
     if (type === 'rival') color = rivalColor;
     if (type === 'joker') color = jokerColor;
 
+    const existing = fc.getObjects().filter(o => o.data?.playerType === type);
+    const label = String(existing.length + 1);
+
     const center = fc.getCenter();
-    const player = createPlayer(center.left, center.top, { color, label, type, pos: '' });
+    const player = createPlayer(center.left, center.top, { 
+      color, 
+      label, 
+      type, 
+      pos: '',
+      id: `player_${type}_${label}_${Date.now()}`
+    });
     fc.add(player);
     normalizarTamañoJugadores(fc);
     fc.setActiveObject(player);
     fc.renderAll();
+    saveFrameState();
   };
 
   const deleteSelected = () => {

@@ -5,6 +5,7 @@ import {
   imageUrlToBase64,
   drawMomentumChartCanvas,
   drawRadarChartCanvas,
+  drawMatchRadarChartCanvas,
   drawTacticalPitchCanvas,
   cleanPdfText,
   PDF_COLORS
@@ -527,6 +528,235 @@ export const generateMatchPdfReport = async ({
         y + 26,
         { align: 'center' }
       );
+
+      // ── ANEXO OFICIAL: ESTADÍSTICAS TÁCTICAS Y RENDIMIENTO EN ACTA OFICIAL ──
+      doc.addPage();
+      y = 20;
+
+      // Encabezado de Anexo Oficial
+      doc.setFillColor(...colorPrimary);
+      doc.roundedRect(14, y, pageW - 28, 14, 2, 2, 'F');
+      doc.setFontSize(10.5);
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(255, 255, 255);
+      doc.text(
+        isEn ? 'OFFICIAL ANNEX: TACTICAL STATS & MATCH REPORT' : 'ANEXO OFICIAL: ESTADÍSTICAS TÁCTICAS Y RENDIMIENTO',
+        pageW / 2,
+        y + 9.5,
+        { align: 'center' }
+      );
+      y += 22;
+
+      // 1. Radar Táctico Oficial (6 Ejes Comparativos)
+      try {
+        const radarImg = drawMatchRadarChartCanvas({
+          events,
+          homeTeamName: safeTeamName,
+          awayTeamName: rivalName,
+          isEn,
+          width: 520,
+          height: 400
+        });
+        if (radarImg) {
+          doc.setFontSize(10.5);
+          doc.setFont('helvetica', 'bold');
+          doc.setTextColor(...colorPrimary);
+          doc.text(
+            isEn ? 'OFFICIAL TACTICAL RADAR (6 COMPARATIVE AXES)' : 'RADAR TÁCTICO OFICIAL (6 EJES COMPARATIVOS)',
+            14,
+            y
+          );
+          y += 5;
+
+          const radarW = 125;
+          const radarH = (400 / 520) * radarW; // ~96 mm
+          const radarX = (pageW - radarW) / 2;
+          doc.addImage(radarImg, 'PNG', radarX, y, radarW, radarH);
+          y += radarH + 9;
+        }
+      } catch (radarErr) {
+        console.warn('Error dibujando radar en Acta Oficial:', radarErr);
+      }
+
+      // 2. Terreno de Juego con la Alineación Táctica Oficial (11 Titulares + Banquillo de Suplentes)
+      let actaLineupImage = lineupImage;
+      if (!actaLineupImage) {
+        try {
+          actaLineupImage = await drawTacticalPitchCanvas({
+            matchData,
+            calledPlayers,
+            players,
+            isEn
+          });
+        } catch (pitchErr) {
+          console.warn('Error generando alineación para Acta Oficial:', pitchErr);
+        }
+      }
+
+      if (actaLineupImage) {
+        if (y + 105 > pageH - 20) {
+          doc.addPage();
+          y = 20;
+        }
+        doc.setFontSize(10.5);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(...colorPrimary);
+        doc.text(
+          isEn ? 'OFFICIAL TACTICAL LINEUP & SQUAD BENCH' : 'ALINEACIÓN TÁCTICA OFICIAL Y BANQUILLO',
+          14,
+          y
+        );
+        y += 5;
+
+        const pitchW = 152;
+        const pitchH = (510 / 720) * pitchW;
+        const pitchX = (pageW - pitchW) / 2;
+        doc.addImage(actaLineupImage, 'PNG', pitchX, y, pitchW, pitchH);
+        y += pitchH + 9;
+      }
+
+      // 3. Gráfica de Momentum Táctico y Dinámica del Partido
+      try {
+        const momentumImg = drawMomentumChartCanvas(events, durationMin, 640, 200);
+        if (momentumImg) {
+          if (y + 65 > pageH - 20) {
+            doc.addPage();
+            y = 20;
+          }
+          doc.setFontSize(10.5);
+          doc.setFont('helvetica', 'bold');
+          doc.setTextColor(...colorPrimary);
+          doc.text(
+            isEn ? 'MATCH MOMENTUM & DYNAMICS' : 'MOMENTUM Y DINÁMICA DEL PARTIDO',
+            14,
+            y
+          );
+          y += 5;
+
+          doc.addImage(momentumImg, 'PNG', 14, y, pageW - 28, 56);
+          y += 64;
+        }
+      } catch (mErr) {
+        console.warn('Error generando momentum en Acta Oficial:', mErr);
+      }
+
+      // 4. Tabla de Eficiencia Táctica y Comparativa Directa
+      if (y + 55 > pageH - 20) {
+        doc.addPage();
+        y = 20;
+      }
+      doc.setFontSize(10.5);
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(...colorPrimary);
+      doc.text(
+        isEn ? 'TACTICAL EFFICIENCY AND COMPARISON TABLE' : 'TABLA DE EFICIENCIA TÁCTICA Y COMPARATIVA',
+        14,
+        y
+      );
+      y += 5;
+
+      const countOfActa = (t) => events.filter((e) => e.type === t).length;
+      const duelsWonActa = countOfActa('duel_won');
+      const duelsLostActa = countOfActa('duel_lost');
+      const totalDuelsActa = duelsWonActa + duelsLostActa;
+      const duelsPctActa = totalDuelsActa > 0 ? Math.round((duelsWonActa / totalDuelsActa) * 100) : 0;
+
+      const shotsOnActa = countOfActa('shot_on_target_own');
+      const shotsOffActa = countOfActa('shot_off_target_own');
+      const totalShotsActa = shotsOnActa + shotsOffActa;
+      const shotsPctActa = totalShotsActa > 0 ? Math.round((shotsOnActa / totalShotsActa) * 100) : 0;
+
+      const recActa = countOfActa('recovery');
+      const lossActa = countOfActa('loss');
+      const totalPossActa = recActa + lossActa;
+      const possPctActa = totalPossActa > 0 ? Math.round((recActa / totalPossActa) * 100) : 0;
+
+      const effDataActa = isEn ? [
+        ['Tactical Metric', 'Positive Events', 'Negative Events', '% Efficiency'],
+        ['Individual Duels', `${duelsWonActa} Won`, `${duelsLostActa} Lost`, `${duelsPctActa}% Success`],
+        ['Shots Accuracy', `${shotsOnActa} On Target`, `${shotsOffActa} Off Target`, `${shotsPctActa}% On Target`],
+        ['Ball Balance', `${recActa} Recoveries`, `${lossActa} Losses`, `${possPctActa}% Retention`],
+      ] : [
+        ['Métrica Táctica', 'Eventos Positivos', 'Eventos Negativos', '% Eficiencia'],
+        ['Duelos individuales', `${duelsWonActa} Ganados`, `${duelsLostActa} Perdidos`, `${duelsPctActa}% Éxito`],
+        ['Precisión de Tiro', `${shotsOnActa} a Puerta`, `${shotsOffActa} Fuera`, `${shotsPctActa}% Puerta`],
+        ['Balance de Balón', `${recActa} Recuperaciones`, `${lossActa} Pérdidas`, `${possPctActa}% Retención`],
+      ];
+
+      autoTable(doc, {
+        startY: y,
+        head: [effDataActa[0]],
+        body: effDataActa.slice(1),
+        theme: 'grid',
+        headStyles: { fillColor: colorPrimary, textColor: [255, 255, 255], fontStyle: 'bold' },
+        styles: { fontSize: 8, cellPadding: 2.8 },
+      });
+
+      y = (doc.lastAutoTable ? doc.lastAutoTable.finalY : y + 30) + 8;
+
+      // 5. Comparativa Directa Cara a Cara (Local vs Rival)
+      if (y + 55 > pageH - 20) {
+        doc.addPage();
+        y = 20;
+      }
+      doc.setFontSize(10.5);
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(...colorPrimary);
+      doc.text(
+        isEn ? 'HEAD-TO-HEAD STATISTICAL COMPARISON' : 'COMPARATIVA ESTADÍSTICA CARA A CARA',
+        14,
+        y
+      );
+      y += 5;
+
+      const shotsOnRivalActa = countOfActa('shot_on_target_rival');
+      const shotsOffRivalActa = countOfActa('shot_off_target_rival');
+      const cornersFavorActa = countOfActa('corner_favor');
+      const cornersAgainstActa = countOfActa('corner_against');
+      const foulsAgainstActa = countOfActa('foul_against');
+      const foulsFavorActa = countOfActa('foul_favor');
+      const offsidesOwnActa = countOfActa('offside_own');
+      const offsidesRivalActa = countOfActa('offside_rival');
+      const yellowOwnActa = events.filter((e) => e.type === 'card_yellow_own' || e.type === 'yellow_card' || e.type === 'amarilla').length;
+      const yellowRivalActa = countOfActa('card_yellow_rival');
+      const redOwnActa = events.filter((e) => e.type === 'card_red_own' || e.type === 'red_card' || e.type === 'roja').length;
+      const redRivalActa = countOfActa('card_red_rival');
+
+      const compDataActa = isEn ? [
+        ['Comparative Metric', safeTeamName, rivalName],
+        ['Total Shots', `${shotsOnActa + shotsOffActa}`, `${shotsOnRivalActa + shotsOffRivalActa}`],
+        ['Shots on Target', `${shotsOnActa}`, `${shotsOnRivalActa}`],
+        ['Shots off Target', `${shotsOffActa}`, `${shotsOffRivalActa}`],
+        ['Corner Kicks', `${cornersFavorActa}`, `${cornersAgainstActa}`],
+        ['Fouls', `${foulsAgainstActa}`, `${foulsFavorActa}`],
+        ['Offsides', `${offsidesOwnActa}`, `${offsidesRivalActa}`],
+        ['Yellow Cards', `${yellowOwnActa}`, `${yellowRivalActa}`],
+        ['Red Cards', `${redOwnActa}`, `${redRivalActa}`],
+        ['Estimated Possession', `${possPctActa}%`, `${100 - possPctActa}%`],
+      ] : [
+        ['Métrica Comparativa', safeTeamName, rivalName],
+        ['Tiros Totales', `${shotsOnActa + shotsOffActa}`, `${shotsOnRivalActa + shotsOffRivalActa}`],
+        ['Tiros a Puerta', `${shotsOnActa}`, `${shotsOnRivalActa}`],
+        ['Tiros Fuera', `${shotsOffActa}`, `${shotsOffRivalActa}`],
+        ['Córners', `${cornersFavorActa}`, `${cornersAgainstActa}`],
+        ['Faltas cometidas', `${foulsAgainstActa}`, `${foulsFavorActa}`],
+        ['Fueras de Juego', `${offsidesOwnActa}`, `${offsidesRivalActa}`],
+        ['Tarjetas Amarillas', `${yellowOwnActa}`, `${yellowRivalActa}`],
+        ['Tarjetas Rojas', `${redOwnActa}`, `${redRivalActa}`],
+        ['Posesión Estimada', `${possPctActa}%`, `${100 - possPctActa}%`],
+      ];
+
+      autoTable(doc, {
+        startY: y,
+        head: [compDataActa[0]],
+        body: compDataActa.slice(1),
+        theme: 'striped',
+        headStyles: { fillColor: colorPrimary, textColor: [255, 255, 255], fontStyle: 'bold' },
+        styles: { fontSize: 8, cellPadding: 2.5 },
+        columnStyles: { 0: { fontStyle: 'bold', width: 65 } },
+      });
+
+      y = (doc.lastAutoTable ? doc.lastAutoTable.finalY : y + 45) + 8;
     }
 
     // ── B) MODO INFORME TOTAL POST-PARTIDO (CON GRÁFICAS, FOTOS Y ACTA) ───
@@ -655,7 +885,38 @@ export const generateMatchPdfReport = async ({
         }
       }
 
-      // 4. Gráfica de Momentum Táctico (Canvas HD)
+      // 4. Radar Táctico Oficial (6 Ejes Comparativos)
+      try {
+        const radarImg = drawMatchRadarChartCanvas({
+          events,
+          homeTeamName: safeTeamName,
+          awayTeamName: rivalName,
+          isEn,
+          width: 520,
+          height: 400
+        });
+        if (radarImg) {
+          if (y + 105 > pageH - 20) {
+            doc.addPage();
+            y = 20;
+          }
+          doc.setFontSize(10.5);
+          doc.setFont('helvetica', 'bold');
+          doc.setTextColor(...colorPrimary);
+          doc.text(isEn ? 'OFFICIAL TACTICAL RADAR (6 COMPARATIVE AXES)' : 'RADAR TÁCTICO OFICIAL (6 EJES COMPARATIVOS)', 14, y);
+          y += 5;
+
+          const radarW = 125;
+          const radarH = (400 / 520) * radarW;
+          const radarX = (pageW - radarW) / 2;
+          doc.addImage(radarImg, 'PNG', radarX, y, radarW, radarH);
+          y += radarH + 9;
+        }
+      } catch (radarErr) {
+        console.warn('Error generando radar chart post-partido:', radarErr);
+      }
+
+      // 5. Gráfica de Momentum Táctico (Canvas HD)
       try {
         const momentumImg = drawMomentumChartCanvas(events, 90, 640, 200);
         if (momentumImg) {

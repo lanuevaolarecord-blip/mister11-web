@@ -24,8 +24,8 @@ export const MatchRadarChart = ({
     { 
       key: 'duels', 
       label: 'Duelos / Posesión', 
-      desc: 'Eficacia en duelos ganados individuales y retención.',
-      calc: '% de duelos ganados. Si no hay registros (0/0) es 0 pts.'
+      desc: 'Eficacia y volumen de duelos individuales ganados.',
+      calc: 'Normalizado sobre 10 duelos ganados (10 = 100 pts).'
     },
     { 
       key: 'fouls', 
@@ -142,9 +142,9 @@ export const MatchRadarChart = ({
     const normShotsA = Math.min(100, Math.round((localShotsOn / 8) * 100));
     const normShotsB = Math.min(100, Math.round((rivalShotsOn / 8) * 100));
 
-    // Duelos: % de efectividad real. Si no hay duelos (0/0), es 0 pts (no 50 pts inventados)
-    const normDuelsA = totalLocalDuels > 0 ? Math.min(100, Math.round((localDuelsWon / totalLocalDuels) * 100)) : 0;
-    const normDuelsB = totalRivalDuels > 0 ? Math.min(100, Math.round((rivalDuelsWon / totalRivalDuels) * 100)) : 0;
+    // Duelos: Normalizado sobre 10 duelos ganados (10 = 100 pts), evitando picos irreales de 100 pts con 1 solo duelo
+    const normDuelsA = Math.min(100, Math.round((localDuelsWon / 10) * 100));
+    const normDuelsB = Math.min(100, Math.round((rivalDuelsWon / 10) * 100));
 
     const normFoulsA = Math.min(100, Math.round((localFouls / 12) * 100));
     const normFoulsB = Math.min(100, Math.round((rivalFouls / 12) * 100));

@@ -512,6 +512,272 @@ export const drawRadarChartCanvas = (metrics = [], size = 520) => {
 };
 
 /**
+ * Dibuja el Radar Táctico Oficial de 6 Ejes Comparativos (Local vs Rival)
+ * en Canvas 2D nativo a alta resolución para incrustar en PDFs.
+ */
+export const drawMatchRadarChartCanvas = ({
+  events = [],
+  homeStats = {},
+  awayStats = {},
+  homeTeamName = 'Mi Equipo',
+  awayTeamName = 'Rival',
+  isEn = false,
+  width = 540,
+  height = 440
+}) => {
+  try {
+    const canvas = document.createElement('canvas');
+    canvas.width = width;
+    canvas.height = height;
+    const ctx = canvas.getContext('2d');
+
+    // Fondo blanco limpio para PDF
+    ctx.fillStyle = '#FFFFFF';
+    ctx.fillRect(0, 0, width, height);
+
+    let localShotsOn = 0, rivalShotsOn = 0;
+    let localDuelsWon = 0, localDuelsLost = 0;
+    let rivalDuelsWon = 0, rivalDuelsLost = 0;
+    let localFouls = 0, rivalFouls = 0;
+    let localYellows = 0, localReds = 0;
+    let rivalYellows = 0, rivalReds = 0;
+    let localCorners = 0, rivalCorners = 0;
+    let localOffsides = 0, rivalOffsides = 0;
+
+    (events || []).forEach(e => {
+      if (!e) return;
+      const isHome = e.team === 'home' || e.isHome === true || e.isOwn === true || e.team === 'own' || (!e.team && !e.isRival);
+      const t = e.type || '';
+
+      if (t === 'shot_on_target_own' || (t.includes('shot') && t.includes('on') && isHome) || t === 'gol_local' || t === 'gol') {
+        localShotsOn++;
+      } else if (t === 'shot_on_target_rival' || (t.includes('shot') && t.includes('on') && !isHome) || t === 'gol_rival') {
+        rivalShotsOn++;
+      }
+
+      if (t === 'duel_won') {
+        if (isHome) localDuelsWon++; else rivalDuelsWon++;
+      } else if (t === 'duel_lost') {
+        if (isHome) localDuelsLost++; else rivalDuelsLost++;
+      }
+
+      if (t === 'foul_favor' || t === 'falta_favor') {
+        rivalFouls++;
+      } else if (t === 'foul_against' || t === 'falta_contra' || t === 'falta') {
+        if (isHome) localFouls++; else rivalFouls++;
+      }
+
+      if (t === 'yellow_card' || t === 'amarilla' || t === 'card_yellow_own') {
+        localYellows++;
+      } else if (t === 'card_yellow_rival') {
+        rivalYellows++;
+      } else if (t === 'red_card' || t === 'roja' || t === 'card_red_own') {
+        localReds++;
+      } else if (t === 'card_red_rival') {
+        rivalReds++;
+      }
+
+      if (t === 'corner_favor' || t === 'corner_own' || (t === 'corner' && isHome)) {
+        localCorners++;
+      } else if (t === 'corner_against' || t === 'corner_rival' || (t === 'corner' && !isHome)) {
+        rivalCorners++;
+      }
+
+      if (t === 'offside_own' || (t === 'offside' && isHome)) {
+        localOffsides++;
+      } else if (t === 'offside_rival' || (t === 'offside' && !isHome)) {
+        rivalOffsides++;
+      }
+    });
+
+    if (homeStats && Object.keys(homeStats).length > 0) {
+      if (typeof homeStats.tirosPuerta === 'number') localShotsOn = Math.max(localShotsOn, homeStats.tirosPuerta);
+      if (typeof homeStats.corners === 'number') localCorners = Math.max(localCorners, homeStats.corners);
+      if (typeof homeStats.faltas === 'number') localFouls = Math.max(localFouls, homeStats.faltas);
+    }
+    if (awayStats && Object.keys(awayStats).length > 0) {
+      if (typeof awayStats.tirosPuerta === 'number') rivalShotsOn = Math.max(rivalShotsOn, awayStats.tirosPuerta);
+      if (typeof awayStats.corners === 'number') rivalCorners = Math.max(rivalCorners, awayStats.corners);
+      if (typeof awayStats.faltas === 'number') rivalFouls = Math.max(rivalFouls, awayStats.faltas);
+    }
+
+    const normShotsA = Math.min(100, Math.round((localShotsOn / 8) * 100));
+    const normShotsB = Math.min(100, Math.round((rivalShotsOn / 8) * 100));
+
+    // Duelos: Normalizado sobre 10 duelos ganados (10 = 100 pts)
+    const normDuelsA = Math.min(100, Math.round((localDuelsWon / 10) * 100));
+    const normDuelsB = Math.min(100, Math.round((rivalDuelsWon / 10) * 100));
+
+    const normFoulsA = Math.min(100, Math.round((localFouls / 12) * 100));
+    const normFoulsB = Math.min(100, Math.round((rivalFouls / 12) * 100));
+
+    const normDiscA = Math.min(100, localYellows * 20 + localReds * 50);
+    const normDiscB = Math.min(100, rivalYellows * 20 + rivalReds * 50);
+
+    const normCornersA = Math.min(100, Math.round((localCorners / 8) * 100));
+    const normCornersB = Math.min(100, Math.round((rivalCorners / 8) * 100));
+
+    const normOffsidesA = Math.min(100, Math.round((localOffsides / 5) * 100));
+    const normOffsidesB = Math.min(100, Math.round((rivalOffsides / 5) * 100));
+
+    const valsA = [normShotsA, normDuelsA, normFoulsA, normDiscA, normCornersA, normOffsidesA];
+    const valsB = [normShotsB, normDuelsB, normFoulsB, normDiscB, normCornersB, normOffsidesB];
+
+    const axesLabels = isEn ? [
+      'Shots on target',
+      'Duels / Possession',
+      'Fouls',
+      'Cards (Discipline)',
+      'Corners',
+      'Offsides'
+    ] : [
+      'Tiros a puerta',
+      'Duelos / Posesión',
+      'Faltas',
+      'Tarjetas (Sanciones)',
+      'Córners',
+      'Offsides'
+    ];
+
+    const cx = width / 2;
+    const cy = (height - 46) / 2 + 15;
+    const radius = Math.min(width, height - 70) * 0.35;
+    const total = 6;
+    const angleStep = (Math.PI * 2) / total;
+
+    // 1. Niveles concéntricos
+    const levels = [0.2, 0.4, 0.6, 0.8, 1.0];
+    levels.forEach((lvl) => {
+      ctx.beginPath();
+      for (let i = 0; i < total; i++) {
+        const angle = i * angleStep - Math.PI / 2;
+        const r = radius * lvl;
+        const x = cx + r * Math.cos(angle);
+        const y = cy + r * Math.sin(angle);
+        if (i === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+      }
+      ctx.closePath();
+      ctx.strokeStyle = '#E2E8F0';
+      ctx.lineWidth = 1;
+      ctx.stroke();
+
+      ctx.fillStyle = '#94A3B8';
+      ctx.font = 'bold 9px Arial, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'bottom';
+      ctx.fillText(`${Math.round(lvl * 100)}`, cx, cy - radius * lvl - 2);
+    });
+
+    // 2. Ejes radiales y etiquetas
+    for (let i = 0; i < total; i++) {
+      const angle = i * angleStep - Math.PI / 2;
+      const x = cx + radius * Math.cos(angle);
+      const y = cy + radius * Math.sin(angle);
+
+      ctx.beginPath();
+      ctx.moveTo(cx, cy);
+      ctx.lineTo(x, y);
+      ctx.strokeStyle = '#CBD5E1';
+      ctx.lineWidth = 1;
+      ctx.stroke();
+
+      // Posición de etiqueta
+      const labelDist = radius + 22;
+      const lx = cx + labelDist * Math.cos(angle);
+      const ly = cy + labelDist * Math.sin(angle);
+
+      ctx.font = 'bold 9.5px Arial, sans-serif';
+      ctx.fillStyle = '#1E293B';
+      ctx.textAlign = Math.abs(Math.cos(angle)) < 0.3 ? 'center' : (Math.cos(angle) > 0 ? 'left' : 'right');
+      ctx.textBaseline = Math.abs(Math.sin(angle)) < 0.3 ? 'middle' : (Math.sin(angle) > 0 ? 'top' : 'bottom');
+      ctx.fillText(axesLabels[i], lx, ly);
+
+      // Puntos anotados (ej. "10 vs 0 pts")
+      ctx.font = '8px Arial, sans-serif';
+      ctx.fillStyle = '#64748B';
+      const ptsSub = `${valsA[i]} vs ${valsB[i]} pts`;
+      ctx.fillText(ptsSub, lx, ly + (Math.sin(angle) > 0 ? 11 : -11));
+    }
+
+    // 3. Polígono Equipo B (Rival)
+    ctx.beginPath();
+    for (let i = 0; i < total; i++) {
+      const pct = Math.min(Math.max(valsB[i] / 100, 0.04), 1.0);
+      const angle = i * angleStep - Math.PI / 2;
+      const r = radius * pct;
+      const x = cx + r * Math.cos(angle);
+      const y = cy + r * Math.sin(angle);
+      if (i === 0) ctx.moveTo(x, y);
+      else ctx.lineTo(x, y);
+    }
+    ctx.closePath();
+    ctx.fillStyle = 'rgba(34, 197, 94, 0.22)';
+    ctx.fill();
+    ctx.strokeStyle = '#22C55E';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+
+    // 4. Polígono Equipo A (Local - Mi Equipo)
+    ctx.beginPath();
+    for (let i = 0; i < total; i++) {
+      const pct = Math.min(Math.max(valsA[i] / 100, 0.04), 1.0);
+      const angle = i * angleStep - Math.PI / 2;
+      const r = radius * pct;
+      const x = cx + r * Math.cos(angle);
+      const y = cy + r * Math.sin(angle);
+      if (i === 0) ctx.moveTo(x, y);
+      else ctx.lineTo(x, y);
+    }
+    ctx.closePath();
+    ctx.fillStyle = 'rgba(212, 168, 67, 0.35)';
+    ctx.fill();
+    ctx.strokeStyle = '#D4A843';
+    ctx.lineWidth = 2.5;
+    ctx.stroke();
+
+    // Vértices dorados Equipo A
+    for (let i = 0; i < total; i++) {
+      const pct = Math.min(Math.max(valsA[i] / 100, 0.04), 1.0);
+      const angle = i * angleStep - Math.PI / 2;
+      const r = radius * pct;
+      const x = cx + r * Math.cos(angle);
+      const y = cy + r * Math.sin(angle);
+      ctx.beginPath();
+      ctx.arc(x, y, 4, 0, Math.PI * 2);
+      ctx.fillStyle = '#D4A843';
+      ctx.fill();
+      ctx.strokeStyle = '#FFFFFF';
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+    }
+
+    // 5. Leyenda en el fondo
+    const legY = height - 20;
+    ctx.font = 'bold 10.5px Arial, sans-serif';
+
+    // Cuadro A
+    ctx.fillStyle = '#D4A843';
+    ctx.fillRect(cx - 150, legY - 10, 12, 12);
+    ctx.fillStyle = '#0F172A';
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(`${homeTeamName} (${isEn ? 'Home' : 'Local'})`, cx - 132, legY - 4);
+
+    // Cuadro B
+    ctx.fillStyle = '#22C55E';
+    ctx.fillRect(cx + 25, legY - 10, 12, 12);
+    ctx.fillStyle = '#0F172A';
+    ctx.fillText(`${awayTeamName} (${isEn ? 'Away' : 'Visitante'})`, cx + 43, legY - 4);
+
+    return canvas.toDataURL('image/png', 0.95);
+  } catch (e) {
+    console.warn('[drawMatchRadarChartCanvas] Error:', e);
+    return null;
+  }
+};
+
+/**
  * Dibuja una Gráfica de Evolución / Tendencia temporal en Canvas 2D nativo a alta resolución.
  * @param {Array<{label: string, value: number}>} points - Serie de puntos
  * @param {number} width - Ancho en px

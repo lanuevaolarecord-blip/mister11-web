@@ -512,6 +512,7 @@ export const TeamAttendanceTab = ({ players = [], activeTeam = null }) => {
       teamName: activeTeam?.nombre || activeTeam?.name || 'Mi Equipo',
       activeTeam,
       squadStats,
+      trendData,
       threshold,
       isEn
     });

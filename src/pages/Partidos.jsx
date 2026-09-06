@@ -1409,7 +1409,7 @@ const Partidos = () => {
 
             {/* PESTAÑA: ALINEACIÓN */}
             {editTab === 'ALINEACIÓN' && (
-              <div className="tab-pane alineacion-layout" style={{ padding: '24px', boxSizing: 'border-box' }}>
+              <div className="tab-pane alineacion-layout" style={{ padding: '24px 28px', boxSizing: 'border-box' }}>
                 <div className="alin-sidebar">
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                     <FormationSelector

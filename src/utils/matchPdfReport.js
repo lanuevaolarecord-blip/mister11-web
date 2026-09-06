@@ -5,6 +5,7 @@ import {
   imageUrlToBase64,
   drawMomentumChartCanvas,
   drawRadarChartCanvas,
+  drawTacticalPitchCanvas,
   cleanPdfText,
   PDF_COLORS
 } from './pdfTheme';
@@ -617,9 +618,23 @@ export const generateMatchPdfReport = async ({
         y = (doc.lastAutoTable ? doc.lastAutoTable.finalY : y + 30) + 9;
       }
 
-      // 3. Alineación Táctica Inicial (Captura del Campo)
-      if (lineupImage) {
-        if (y + 90 > pageH - 20) {
+      // 3. Alineación Táctica Inicial (Terreno de juego oficial con Titulares y Suplentes)
+      let effectiveLineupImage = lineupImage;
+      if (!effectiveLineupImage) {
+        try {
+          effectiveLineupImage = await drawTacticalPitchCanvas({
+            matchData,
+            calledPlayers,
+            players,
+            isEn
+          });
+        } catch (pitchGenErr) {
+          console.warn('Error generando terreno de juego táctico canvas:', pitchGenErr);
+        }
+      }
+
+      if (effectiveLineupImage) {
+        if (y + 95 > pageH - 20) {
           doc.addPage();
           y = 20;
         }
@@ -629,11 +644,11 @@ export const generateMatchPdfReport = async ({
         doc.text(isEn ? 'INITIAL TACTICAL LINEUP & SUBSTITUTES' : 'ALINEACIÓN TÁCTICA INICIAL Y SUPLENTES', 14, y);
         y += 5;
 
-        const pitchW = 145;
-        const pitchH = (530 / 720) * pitchW;
+        const pitchW = 152;
+        const pitchH = (510 / 720) * pitchW;
         const pitchX = (pageW - pitchW) / 2;
         try {
-          doc.addImage(lineupImage, 'PNG', pitchX, y, pitchW, pitchH);
+          doc.addImage(effectiveLineupImage, 'PNG', pitchX, y, pitchW, pitchH);
           y += pitchH + 9;
         } catch (e) {
           console.error("Error al incluir gráfico de alineación:", e);

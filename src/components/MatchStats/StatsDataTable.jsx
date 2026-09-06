@@ -2,6 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { Table, Search, ArrowUpDown, Download, Check, HelpCircle, X } from 'lucide-react';
 import { downloadCSV } from '../../utils/downloadCSV.js';
 import { useTheme } from '../../context/ThemeContext';
+import { getEffectiveLanguage } from '../../i18n/translations';
 
 export const StatsDataTable = ({
   playerStats = [],
@@ -124,7 +125,14 @@ export const StatsDataTable = ({
 
   // Exportar a CSV estructurado y con compatibilidad total con Excel (BOM UTF-8 y delimitador ;)
   const handleExportCSV = async () => {
-    const headers = [
+    const isEn = getEffectiveLanguage() === 'English (EN)';
+    const headers = isEn ? [
+      'Jersey', 'Name', 'Position', 'Minutes', 'Rating', 'Goals', 'Assists', 'xG',
+      'Shots on Target', 'Total Shots', '% Shot Accuracy',
+      'Completed Passes', 'Failed Passes', 'Total Passes', '% Pass Accuracy',
+      'Duels Won', 'Duels Lost', 'Total Duels', '% Duel Success',
+      'Recoveries', 'Losses', 'Fouls', 'Yellow Cards', 'Red Cards'
+    ] : [
       'Dorsal', 'Nombre', 'Posición', 'Minutos', 'Nota', 'Goles', 'Asistencias', 'xG',
       'Tiros Puerta', 'Tiros Totales', '% Puntería',
       'Pases Completados', 'Pases Fallidos', 'Pases Totales', '% Precisión Pase',
@@ -159,7 +167,10 @@ export const StatsDataTable = ({
     ]);
 
     const csvContent = '\uFEFF' + [headers.join(';'), ...rows.map(e => e.join(';'))].join('\n');
-    await downloadCSV(csvContent, `estadisticas_jugadores_${teamName.toLowerCase().replace(/\s+/g, '_')}.csv`);
+    const filename = isEn
+      ? `player_stats_${teamName.toLowerCase().replace(/\s+/g, '_')}.csv`
+      : `estadisticas_jugadores_${teamName.toLowerCase().replace(/\s+/g, '_')}.csv`;
+    await downloadCSV(csvContent, filename);
   };
 
   return (

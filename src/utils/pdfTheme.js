@@ -12,6 +12,7 @@
 
 import { ref as storageRef, getBlob } from 'firebase/storage';
 import { storage } from '../firebaseConfig';
+import { PREDEFINED_FORMATIONS } from './formaciones';
 
 export const PDF_COLORS = {
   primary: [23, 45, 33],     // #172D21 Verde Institucional Míster11
@@ -739,6 +740,464 @@ export const drawMomentumChartCanvas = (events = [], matchDuration = 90, width =
     return canvas.toDataURL('image/png', 0.95);
   } catch (e) {
     console.warn('[drawMomentumChartCanvas] Error:', e);
+    return null;
+  }
+};
+
+/**
+ * Helper para dibujar rectángulos redondeados en Canvas 2D compatible con todos los navegadores
+ */
+const drawCanvasRoundRect = (ctx, x, y, w, h, r) => {
+  if (ctx.roundRect) {
+    ctx.beginPath();
+    ctx.roundRect(x, y, w, h, r);
+  } else {
+    ctx.beginPath();
+    ctx.moveTo(x + r, y);
+    ctx.lineTo(x + w - r, y);
+    ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+    ctx.lineTo(x + w, y + h - r);
+    ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+    ctx.lineTo(x + r, y + h);
+    ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+    ctx.lineTo(x, y + r);
+    ctx.quadraticCurveTo(x, y, x + r, y);
+    ctx.closePath();
+  }
+};
+
+/**
+ * Dibuja un terreno de juego táctico con la alineación titular completa (11 jugadores)
+ * y el banquillo de suplentes en un Canvas 2D nativo a alta resolución,
+ * garantizando cero distorsiones, contención estricta de fotos de jugadores y estilo profesional.
+ *
+ * @param {Object} options
+ * @param {Object} options.matchData - Datos del partido (formación, alineación, customPositions, etc.)
+ * @param {Array<string>} options.calledPlayers - IDs de jugadores convocados (0..10 titulares, 11.. suplentes)
+ * @param {Array<Object>} options.players - Catálogo completo de jugadores
+ * @param {Array<Object>} options.customFormations - Formaciones personalizadas
+ * @param {boolean} options.isEn - Idioma inglés o español
+ * @param {number} options.width - Ancho del canvas (defecto 720)
+ * @param {number} options.height - Alto del canvas (defecto 510)
+ * @returns {Promise<string>} DataURL base64 PNG
+ */
+export const drawTacticalPitchCanvas = async ({
+  matchData = {},
+  calledPlayers = [],
+  players = [],
+  customFormations = [],
+  isEn = false,
+  width = 720,
+  height = 510
+}) => {
+  try {
+    const canvas = document.createElement('canvas');
+    canvas.width = width;
+    canvas.height = height;
+    const ctx = canvas.getContext('2d');
+
+    // 1. Fondo exterior institucional oscuro
+    ctx.fillStyle = '#0B1812';
+    ctx.fillRect(0, 0, width, height);
+
+    // 2. Campo de Juego Césped (Dimensiones y Franjas)
+    const fieldX = 14;
+    const fieldY = 14;
+    const fieldW = width - 28; // 692px
+    const fieldH = 345;
+    const fieldR = 10;
+
+    ctx.save();
+    drawCanvasRoundRect(ctx, fieldX, fieldY, fieldW, fieldH, fieldR);
+    ctx.clip();
+
+    // Franjas de césped alternadas estilo estadio
+    const bands = 12;
+    const bandW = fieldW / bands;
+    for (let i = 0; i < bands; i++) {
+      ctx.fillStyle = (i % 2 === 0) ? '#1B4D24' : '#235F2D';
+      ctx.fillRect(fieldX + i * bandW, fieldY, bandW, fieldH);
+    }
+
+    // Borde exterior suave del césped
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)';
+    ctx.lineWidth = 3;
+    drawCanvasRoundRect(ctx, fieldX, fieldY, fieldW, fieldH, fieldR);
+    ctx.stroke();
+
+    // Sombreado radial sutil
+    const vigGrad = ctx.createRadialGradient(
+      fieldX + fieldW / 2, fieldY + fieldH / 2, fieldW * 0.25,
+      fieldX + fieldW / 2, fieldY + fieldH / 2, fieldW * 0.6
+    );
+    vigGrad.addColorStop(0, 'rgba(0,0,0,0)');
+    vigGrad.addColorStop(1, 'rgba(0,0,0,0.3)');
+    ctx.fillStyle = vigGrad;
+    ctx.fillRect(fieldX, fieldY, fieldW, fieldH);
+    ctx.restore();
+
+    // 3. Líneas Oficiales del Terreno de Juego (Blanco nítido 85%)
+    const lineInset = 12;
+    const lx = fieldX + lineInset;
+    const ly = fieldY + lineInset;
+    const lw = fieldW - lineInset * 2; // 668px
+    const lh = fieldH - lineInset * 2; // 321px
+
+    ctx.save();
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.85)';
+    ctx.lineWidth = 2;
+
+    // Línea perimetral
+    ctx.strokeRect(lx, ly, lw, lh);
+
+    // Línea de medio campo
+    const midX = lx + lw / 2;
+    const midY = ly + lh / 2;
+    ctx.beginPath();
+    ctx.moveTo(midX, ly);
+    ctx.lineTo(midX, ly + lh);
+    ctx.stroke();
+
+    // Círculo central (radio 44)
+    ctx.beginPath();
+    ctx.arc(midX, midY, 44, 0, Math.PI * 2);
+    ctx.stroke();
+
+    // Punto central
+    ctx.beginPath();
+    ctx.arc(midX, midY, 3, 0, Math.PI * 2);
+    ctx.fillStyle = '#FFFFFF';
+    ctx.fill();
+
+    // Área grande izquierda
+    const penW = 75;
+    const penH = 160;
+    const penY = ly + (lh - penH) / 2;
+    ctx.strokeRect(lx, penY, penW, penH);
+
+    // Área pequeña izquierda
+    const gBoxW = 26;
+    const gBoxH = 75;
+    const gBoxY = ly + (lh - gBoxH) / 2;
+    ctx.strokeRect(lx, gBoxY, gBoxW, gBoxH);
+
+    // Punto de penalti izquierdo
+    const lSpotX = lx + 54;
+    ctx.beginPath();
+    ctx.arc(lSpotX, midY, 2.5, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Semicírculo del área izquierda
+    ctx.beginPath();
+    ctx.arc(lSpotX, midY, 36, -0.65, 0.65);
+    ctx.stroke();
+
+    // Portería izquierda
+    ctx.strokeRect(lx - 7, ly + (lh - 48) / 2, 7, 48);
+
+    // Área grande derecha
+    ctx.strokeRect(lx + lw - penW, penY, penW, penH);
+
+    // Área pequeña derecha
+    ctx.strokeRect(lx + lw - gBoxW, gBoxY, gBoxW, gBoxH);
+
+    // Punto de penalti derecho
+    const rSpotX = lx + lw - 54;
+    ctx.beginPath();
+    ctx.arc(rSpotX, midY, 2.5, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Semicírculo del área derecha
+    ctx.beginPath();
+    ctx.arc(rSpotX, midY, 36, Math.PI - 0.65, Math.PI + 0.65);
+    ctx.stroke();
+
+    // Portería derecha
+    ctx.strokeRect(lx + lw, ly + (lh - 48) / 2, 7, 48);
+
+    // Esquinas (Córners)
+    ctx.beginPath(); ctx.arc(lx, ly, 10, 0, Math.PI / 2); ctx.stroke();
+    ctx.beginPath(); ctx.arc(lx, ly + lh, 10, -Math.PI / 2, 0); ctx.stroke();
+    ctx.beginPath(); ctx.arc(lx + lw, ly, 10, Math.PI / 2, Math.PI); ctx.stroke();
+    ctx.beginPath(); ctx.arc(lx + lw, ly + lh, 10, Math.PI, -Math.PI / 2); ctx.stroke();
+    ctx.restore();
+
+    // 4. Precargar fotos de jugadores convocados a Base64
+    const imageMap = {};
+    const loadImageElement = (src) => {
+      return new Promise((resolve) => {
+        if (!src) return resolve(null);
+        const img = new Image();
+        img.crossOrigin = 'anonymous';
+        img.onload = () => resolve(img);
+        img.onerror = () => resolve(null);
+        img.src = src;
+      });
+    };
+
+    const uniquePlayerIds = [...new Set((calledPlayers || []).filter(Boolean))];
+    await Promise.all(
+      uniquePlayerIds.map(async (pid) => {
+        const p = players.find((x) => x && String(x.id) === String(pid));
+        const url = p?.avatarUrl || p?.photoUrl || p?.photo || p?.photoPreview;
+        if (url) {
+          try {
+            const b64 = await imageUrlToBase64(url, p?.name, false);
+            if (b64) {
+              const imgEl = await loadImageElement(b64);
+              if (imgEl) imageMap[pid] = imgEl;
+            }
+          } catch (_) {}
+        }
+      })
+    );
+
+    // 5. Renderizado de los 11 Titulares en sus posiciones tácticas
+    const lineupName = matchData?.lineup || '4-3-3';
+    let formationPositions = PREDEFINED_FORMATIONS?.[lineupName];
+    if (!formationPositions && Array.isArray(customFormations)) {
+      const custom = customFormations.find((f) => f.name === lineupName);
+      if (custom) formationPositions = custom.positions;
+    }
+    if (!formationPositions) formationPositions = PREDEFINED_FORMATIONS?.['4-3-3'] || [];
+
+    const startersCount = 11;
+    for (let idx = 0; idx < startersCount; idx++) {
+      const posDef = formationPositions[idx] || { top: '50%', left: '50%', pos: 'MC' };
+      const customPos = matchData?.customPositions?.[idx];
+      const rawTop = parseFloat(customPos ? customPos.top : posDef.top);
+      const rawLeft = parseFloat(customPos ? customPos.left : posDef.left);
+      const clampedTop = Math.min(Math.max(rawTop, 12), 86);
+      const clampedLeft = Math.min(Math.max(rawLeft, 8), 90);
+
+      const cx = lx + (clampedLeft / 100) * lw;
+      const cy = ly + (clampedTop / 100) * lh;
+
+      const pid = (calledPlayers || [])[idx];
+      const player = pid ? players.find((p) => p && String(p.id) === String(pid)) : null;
+      const posLabel = (matchData?.customRoles && matchData.customRoles[idx]) || posDef.pos || 'DEF';
+
+      // Tarjeta FIFA / Míster11 (Ancho: 44px, Alto: 50px)
+      const cardW = 44;
+      const cardH = 50;
+      const cardX = cx - cardW / 2;
+      const cardY = cy - cardH / 2;
+
+      // Sombra de la ficha
+      ctx.save();
+      ctx.shadowColor = 'rgba(0, 0, 0, 0.7)';
+      ctx.shadowBlur = 8;
+      ctx.shadowOffsetY = 3;
+
+      // Marco de la tarjeta
+      drawCanvasRoundRect(ctx, cardX, cardY, cardW, cardH, 7);
+      if (player) {
+        const goldGrad = ctx.createLinearGradient(cardX, cardY, cardX + cardW, cardY + cardH);
+        goldGrad.addColorStop(0, '#FFF5D0');
+        goldGrad.addColorStop(0.5, '#D4A843');
+        goldGrad.addColorStop(1, '#8C6207');
+        ctx.fillStyle = goldGrad;
+        ctx.fill();
+        ctx.strokeStyle = '#FFF8DC';
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+      } else {
+        ctx.fillStyle = '#334155';
+        ctx.fill();
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+      }
+      ctx.restore();
+
+      // Avatar circular del jugador (Radio estricto: 13.5px = Diámetro: 27px)
+      const avatarRadius = 13.5;
+      const avatarCx = cx;
+      const avatarCy = cardY + 18;
+
+      const playerImg = pid ? imageMap[pid] : null;
+      if (player && playerImg) {
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(avatarCx, avatarCy, avatarRadius, 0, Math.PI * 2);
+        ctx.clip();
+        ctx.drawImage(playerImg, avatarCx - avatarRadius, avatarCy - avatarRadius, avatarRadius * 2, avatarRadius * 2);
+        ctx.restore();
+
+        ctx.beginPath();
+        ctx.arc(avatarCx, avatarCy, avatarRadius, 0, Math.PI * 2);
+        ctx.strokeStyle = '#FFFFFF';
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+      } else {
+        ctx.beginPath();
+        ctx.arc(avatarCx, avatarCy, avatarRadius, 0, Math.PI * 2);
+        ctx.fillStyle = player ? '#1B3A2D' : '#1E293B';
+        ctx.fill();
+        ctx.strokeStyle = player ? '#D4A843' : '#64748B';
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+
+        ctx.fillStyle = player ? '#D4A843' : '#94A3B8';
+        ctx.font = 'bold 11px Arial, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(player ? (player.number || (player.name ? player.name.charAt(0).toUpperCase() : idx + 1)) : `${idx + 1}`, avatarCx, avatarCy);
+      }
+
+      // Dorsal (esquina superior izquierda de la tarjeta)
+      ctx.font = 'bold 8px Arial, sans-serif';
+      ctx.fillStyle = player ? '#172D21' : '#CBD5E1';
+      ctx.textAlign = 'left';
+      ctx.textBaseline = 'top';
+      ctx.fillText(player?.number ? `${player.number}` : `${idx + 1}`, cardX + 3, cardY + 3);
+
+      // Posición (esquina superior derecha de la tarjeta)
+      ctx.font = 'bold 7.5px Arial, sans-serif';
+      ctx.fillStyle = player ? '#172D21' : '#CBD5E1';
+      ctx.textAlign = 'right';
+      ctx.textBaseline = 'top';
+      ctx.fillText(posLabel, cardX + cardW - 3, cardY + 3);
+
+      // Banner inferior con nombre del jugador
+      const bannerH = 11;
+      const bannerY = cardY + cardH - bannerH - 2;
+      const bannerW = cardW - 4;
+      const bannerX = cardX + 2;
+
+      ctx.fillStyle = 'rgba(15, 23, 42, 0.95)';
+      drawCanvasRoundRect(ctx, bannerX, bannerY, bannerW, bannerH, 3);
+      ctx.fill();
+      ctx.strokeStyle = player ? '#D4A843' : '#64748B';
+      ctx.lineWidth = 0.8;
+      ctx.stroke();
+
+      ctx.fillStyle = '#FFFFFF';
+      ctx.font = 'bold 6.8px Arial, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      let displayName = player ? (player.name || 'Jugador') : (isEn ? 'Empty' : 'Vacío');
+      if (displayName.length > 9) displayName = displayName.substring(0, 8) + '.';
+      ctx.fillText(displayName, bannerX + bannerW / 2, bannerY + bannerH / 2);
+    }
+
+    // 6. Bloque de Suplentes / Relevos en el inferior
+    const benchY = fieldY + fieldH + 10;
+    const benchH = height - benchY - 12; // ~129px
+    const benchW = fieldW;
+
+    ctx.fillStyle = '#172D21';
+    drawCanvasRoundRect(ctx, fieldX, benchY, benchW, benchH, 8);
+    ctx.fill();
+    ctx.strokeStyle = '#D4A843';
+    ctx.lineWidth = 1.5;
+    drawCanvasRoundRect(ctx, fieldX, benchY, benchW, benchH, 8);
+    ctx.stroke();
+
+    // Encabezado de suplentes
+    const subsIds = (calledPlayers || []).slice(11).filter(Boolean);
+    const subsPlayers = subsIds.map((pid) => players.find((p) => p && String(p.id) === String(pid))).filter(Boolean);
+
+    ctx.font = 'bold 11px Arial, sans-serif';
+    ctx.fillStyle = '#D4A843';
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'top';
+    ctx.fillText(
+      isEn ? `CALLED SUBSTITUTES (${subsPlayers.length})` : `CONVOCADOS SUPLENTES (${subsPlayers.length})`,
+      fieldX + 14,
+      benchY + 10
+    );
+
+    // Fichas estilizadas de suplentes
+    if (subsPlayers.length > 0) {
+      const chipW = 154;
+      const chipH = 26;
+      const gapX = 8;
+      const gapY = 6;
+      const startX = fieldX + 14;
+      const startY = benchY + 28;
+      const maxCols = 4;
+
+      subsPlayers.forEach((sub, sIdx) => {
+        const col = sIdx % maxCols;
+        const row = Math.floor(sIdx / maxCols);
+        const chipX = startX + col * (chipW + gapX);
+        const chipY = startY + row * (chipH + gapY);
+
+        if (chipY + chipH > benchY + benchH - 4) return;
+
+        // Fondo del chip
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.08)';
+        drawCanvasRoundRect(ctx, chipX, chipY, chipW, chipH, 13);
+        ctx.fill();
+        ctx.strokeStyle = 'rgba(212, 168, 67, 0.4)';
+        ctx.lineWidth = 1;
+        drawCanvasRoundRect(ctx, chipX, chipY, chipW, chipH, 13);
+        ctx.stroke();
+
+        // Mini avatar suplente (Radio estricto: 9px = Diámetro: 18px)
+        const subRadius = 9;
+        const subCx = chipX + 14;
+        const subCy = chipY + chipH / 2;
+
+        const subImg = imageMap[sub.id];
+        if (subImg) {
+          ctx.save();
+          ctx.beginPath();
+          ctx.arc(subCx, subCy, subRadius, 0, Math.PI * 2);
+          ctx.clip();
+          ctx.drawImage(subImg, subCx - subRadius, subCy - subRadius, subRadius * 2, subRadius * 2);
+          ctx.restore();
+
+          ctx.beginPath();
+          ctx.arc(subCx, subCy, subRadius, 0, Math.PI * 2);
+          ctx.strokeStyle = '#D4A843';
+          ctx.lineWidth = 1;
+          ctx.stroke();
+        } else {
+          ctx.beginPath();
+          ctx.arc(subCx, subCy, subRadius, 0, Math.PI * 2);
+          ctx.fillStyle = '#D4A843';
+          ctx.fill();
+          ctx.fillStyle = '#172D21';
+          ctx.font = 'bold 8.5px Arial, sans-serif';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText(sub.number ? `${sub.number}` : (sub.name ? sub.name[0] : '?'), subCx, subCy);
+        }
+
+        // Dorsal + Nombre
+        ctx.fillStyle = '#FFFFFF';
+        ctx.font = 'bold 9px Arial, sans-serif';
+        ctx.textAlign = 'left';
+        ctx.textBaseline = 'middle';
+        let subNameText = `${sub.number ? sub.number + '. ' : ''}${sub.name || 'Jugador'}`;
+        if (subNameText.length > 13) subNameText = subNameText.substring(0, 12) + '…';
+        ctx.fillText(subNameText, chipX + 28, subCy);
+
+        // Posición pill dorada
+        const posW = 24;
+        const posH = 14;
+        const posX = chipX + chipW - posW - 6;
+        const posY = chipY + (chipH - posH) / 2;
+        ctx.fillStyle = 'rgba(212, 168, 67, 0.25)';
+        drawCanvasRoundRect(ctx, posX, posY, posW, posH, 3);
+        ctx.fill();
+        ctx.fillStyle = '#D4A843';
+        ctx.font = 'bold 7.5px Arial, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(sub.position || 'SUP', posX + posW / 2, posY + posH / 2);
+      });
+    } else {
+      ctx.font = 'italic 10.5px Arial, sans-serif';
+      ctx.fillStyle = '#94A3B8';
+      ctx.fillText(isEn ? 'No substitutes called' : 'Sin suplentes convocados', fieldX + 16, benchY + 36);
+    }
+
+    return canvas.toDataURL('image/png', 0.95);
+  } catch (e) {
+    console.warn('[drawTacticalPitchCanvas] Error:', e);
     return null;
   }
 };

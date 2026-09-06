@@ -1712,17 +1712,32 @@ export const translations = {
   }
 };
 
-export const getEffectiveLanguage = (languageStr) => {
-  if (languageStr === 'English (EN)' || languageStr === 'en') return 'English (EN)';
-  if (languageStr === 'Español (ES)' || languageStr === 'es') return 'Español (ES)';
+export const getEffectiveLanguage = (input) => {
+  let val = input;
+  if (val && typeof val === 'object') {
+    val = val.language || val.lang;
+  }
+
+  if (typeof val === 'string') {
+    const trimmed = val.trim();
+    if (trimmed === 'English (EN)' || trimmed === 'en' || trimmed.toLowerCase().startsWith('en')) {
+      return 'English (EN)';
+    }
+    if (trimmed === 'Español (ES)' || trimmed === 'es' || trimmed.toLowerCase().startsWith('es')) {
+      return 'Español (ES)';
+    }
+  }
 
   try {
     const saved = localStorage.getItem('mister11_language') || localStorage.getItem('language');
-    if (saved === 'English (EN)' || saved === 'en') return 'English (EN)';
-    if (saved === 'Español (ES)' || saved === 'es') return 'Español (ES)';
+    if (saved && typeof saved === 'string') {
+      const sTrim = saved.trim();
+      if (sTrim === 'English (EN)' || sTrim === 'en' || sTrim.toLowerCase().startsWith('en')) return 'English (EN)';
+      if (sTrim === 'Español (ES)' || sTrim === 'es' || sTrim.toLowerCase().startsWith('es')) return 'Español (ES)';
+    }
   } catch (_) {}
 
-  // Por defecto en Míster11 es Español (ES) a menos que el usuario seleccione Inglés
+  // Por defecto en Míster11 es SIEMPRE Español (ES) a menos que se haya seleccionado Inglés explícitamente
   return 'Español (ES)';
 };
 

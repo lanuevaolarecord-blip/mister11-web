@@ -16,7 +16,7 @@ import CustomFormationModal from '../components/CustomFormationModal';
 import FormationSelector from '../components/FormationSelector';
 import LiveStats from '../components/LiveStats';
 import { MultiMatchAnalysis } from '../components/MultiMatchAnalysis';
-import { t } from '../i18n/translations';
+import { t, getEffectiveLanguage } from '../i18n/translations';
 import { useTheme } from '../context/ThemeContext';
 import { useLiveStats } from '../hooks/useLiveStats';
 import { SvgDonut, SvgComparisonBars, HalfBreakdown } from '../components/LiveStatsCharts';
@@ -42,17 +42,6 @@ export const normalizeCapitalize = (str) => {
       return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
     })
     .join(' ');
-};
-
-// Auxiliar para determinar idioma efectivo (manual o idioma del sistema)
-const getEffectiveLanguage = (settingsObj) => {
-  if (settingsObj?.language === 'English (EN)') return 'English (EN)';
-  if (settingsObj?.language === 'Español (ES)') return 'Español (ES)';
-  const sysLang = typeof navigator !== 'undefined' ? (navigator.language || navigator.userLanguage) : '';
-  if (sysLang && sysLang.toLowerCase().startsWith('en')) {
-    return 'English (EN)';
-  }
-  return 'Español (ES)';
 };
 
 // Pestañas con traducción automática
@@ -662,37 +651,27 @@ const Partidos = () => {
 
   const handleExportPDF = async () => {
     if (!matchData?.id) {
-      alert(getEffectiveLanguage(settings?.language) === 'English (EN)' ? 'Please save the match before exporting the PDF.' : 'Guarde el partido antes de exportar el PDF.');
+      alert(getEffectiveLanguage(settings) === 'English (EN)' ? 'Please save the match before exporting the PDF.' : 'Guarde el partido antes de exportar el PDF.');
       return;
     }
     let lineupImageBase64 = null;
     try {
       const { generateMatchPdfReport } = await import('../utils/matchPdfReport');
-      const { imageUrlToBase64 } = await import('../utils/pdfTheme');
+      const { drawTacticalPitchCanvas } = await import('../utils/pdfTheme');
 
-      const pitchElem = document.getElementById('export-pitch-container') || document.querySelector('.alin-pitch-container-h3d');
-      if (pitchElem) {
-        try {
-          // Pre-convertir avatares y fotos de jugadores a Base64 data URLs con imageUrlToBase64 de forma segura
-          const images = Array.from(pitchElem.querySelectorAll('img'));
-          await Promise.all(images.map(async (img) => {
-            try {
-              if (img.src && !img.src.startsWith('data:image')) {
-                const b64 = await imageUrlToBase64(img.src);
-                if (b64) img.src = b64;
-              }
-            } catch (imgErr) {
-              console.warn('Could not convert image to base64:', imgErr);
-            }
-          }));
-          await new Promise((r) => setTimeout(r, 150));
+      const effLang = getEffectiveLanguage(settings);
+      const isEn = effLang === 'English (EN)';
 
-          const { default: html2canvas } = await import('html2canvas');
-          const canvas = await html2canvas(pitchElem, { scale: 2, useCORS: true, allowTaint: true, backgroundColor: '#0B1812' });
-          lineupImageBase64 = canvas.toDataURL('image/png');
-        } catch (pitchErr) {
-          console.warn('Could not capture tactical pitch for PDF:', pitchErr);
-        }
+      try {
+        lineupImageBase64 = await drawTacticalPitchCanvas({
+          matchData,
+          calledPlayers: calledPlayers || [],
+          players: players || [],
+          customFormations,
+          isEn
+        });
+      } catch (pitchErr) {
+        console.warn('Could not generate tactical pitch canvas for PDF:', pitchErr);
       }
 
       await generateMatchPdfReport({
@@ -703,11 +682,11 @@ const Partidos = () => {
         players: players || [],
         calledPlayers: calledPlayers || [],
         lineupImage: lineupImageBase64,
-        language: getEffectiveLanguage(settings?.language),
+        language: effLang,
       });
     } catch (e) {
       console.error("Error al exportar el PDF del partido:", e);
-      alert(getEffectiveLanguage(settings?.language) === 'English (EN)' ? 'Error generating PDF report.' : 'Error al generar el informe PDF del partido.');
+      alert(getEffectiveLanguage(settings) === 'English (EN)' ? 'Error generating PDF report.' : 'Error al generar el informe PDF del partido.');
     }
   };
 
@@ -2650,7 +2629,7 @@ const Partidos = () => {
                   <div className={`futu-card-frame ${player ? '' : 'empty-slot'}`}>
                     {player ? (
                       photoUrl ? (
-                        <img src={photoUrl} alt={player.name} className="futu-card-photo" crossOrigin="anonymous" />
+                        <img src={photoUrl} alt={player.name} width="36" height="36" style={{ width: '36px', height: '36px', maxWidth: '36px', maxHeight: '36px', borderRadius: '50%', objectFit: 'cover' }} className="futu-card-photo" crossOrigin="anonymous" />
                       ) : (
                         <div className="futu-card-initials" style={{ background: '#1B3A2D', color: '#D4A843', display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%', height: '100%', borderRadius: '50%', fontWeight: 'bold', fontSize: '15px' }}>
                           {player.number || (player.name ? player.name.charAt(0).toUpperCase() : idx + 1)}
@@ -2701,7 +2680,7 @@ const Partidos = () => {
                     border: '1px solid rgba(212, 168, 67, 0.4)'
                   }}>
                     {photoUrl ? (
-                      <img src={photoUrl} alt={player.name} style={{ width: '22px', height: '22px', borderRadius: '50%', objectFit: 'cover' }} crossOrigin="anonymous" />
+                      <img src={photoUrl} alt={player.name} width="22" height="22" style={{ width: '22px', height: '22px', maxWidth: '22px', maxHeight: '22px', borderRadius: '50%', objectFit: 'cover' }} crossOrigin="anonymous" />
                     ) : (
                       <div style={{ width: '22px', height: '22px', borderRadius: '50%', background: '#D4A843', color: '#172D21', fontWeight: 'bold', fontSize: '11px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                         {player.number || (player.name ? player.name.charAt(0).toUpperCase() : '?')}

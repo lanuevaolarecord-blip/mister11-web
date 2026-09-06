@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Browser } from '@capacitor/browser';
 import { Capacitor } from '@capacitor/core';
+import { isNativeAndroid, openExternal } from '../utils/platform';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { APP_VERSION } from '../constants/appVersion';
 import { isDeveloperEmail } from '../config/admins';
@@ -206,13 +207,26 @@ const AdminPanel = () => {
       }
 
       if (result && result.data && result.data.url) {
-        window.location.assign(result.data.url);
+        if (isNativeAndroid()) {
+          alert(tr('admin.manageSubAndroidMsg') || "Gestiona tu suscripción desde mister11.app");
+          await openExternal(result.data.url);
+        } else {
+          window.location.assign(result.data.url);
+        }
       } else {
-        throw new Error("No se devolvió la URL del Portal.");
+        if (isNativeAndroid()) {
+          alert(tr('admin.manageSubAndroidMsg') || "Gestiona tu suscripción desde mister11.app");
+          await openExternal('https://www.mister11.app/admin');
+        } else {
+          throw new Error("No se devolvió la URL del Portal.");
+        }
       }
     } catch (error) {
       console.error('Error al abrir Customer Portal:', error);
-      if (error.message?.includes('not found') || error.message?.includes('NOT_FOUND') || error.code === 'not-found') {
+      if (isNativeAndroid()) {
+        alert(tr('admin.manageSubAndroidMsg') || "Gestiona tu suscripción desde mister11.app");
+        await openExternal('https://www.mister11.app/admin');
+      } else if (error.message?.includes('not found') || error.message?.includes('NOT_FOUND') || error.code === 'not-found') {
         alert('El portal de suscripción no está disponible. Asegúrate de que la extensión de Stripe está instalada y que tienes una suscripción activa.');
       } else {
         alert('No se pudo abrir el portal de suscripción. Inténtalo de nuevo más tarde.');

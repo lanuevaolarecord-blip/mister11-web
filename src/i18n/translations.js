@@ -132,6 +132,14 @@ export const translations = {
     'paywall.benefit2': 'IA Generadora de tareas ilimitada',
     'paywall.benefit3': 'Exportación de informes técnicos en PDF',
     'paywall.benefit4': 'Suite avanzada de estadísticas y métricas',
+    'paywall.androidDialogTitle': 'Planes Míster11 PRO',
+    'paywall.androidDialogText': 'La suscripción se gestiona de forma centralizada desde nuestra plataforma web. Visita mister11.app para contratar tu plan y recibe el acceso al instante en esta app.',
+    'paywall.androidOpenWeb': 'Abrir mister11.app',
+    'paywall.androidHaveCode': 'Ya tengo un código',
+    'paywall.androidNotNow': 'Ahora no',
+    'paywall.androidRedeemTitle': 'Canjear Código',
+    'paywall.androidRedeemDesc': 'Introduce tu código corporativo o promocional para activar tu plan PRO al instante.',
+    'paywall.androidBackToInfo': 'Volver',
 
     // ── Autenticación y Registro ────────────────────────────
     'auth.loginTitle': 'Iniciar Sesión',
@@ -210,6 +218,7 @@ export const translations = {
     'admin.lang.title': 'Idioma del Sistema',
     'admin.theme.dark': 'Modo Oscuro',
     'admin.notif.title': 'Notificaciones',
+    'admin.manageSubAndroidMsg': 'Gestiona tu suscripción desde mister11.app',
 
     // ── Pestañas de Módulos del Entrenador ──────────────────
     'equipo.tab.squad': 'Plantilla',
@@ -988,6 +997,14 @@ export const translations = {
     'paywall.benefit2': 'Unlimited AI task generator',
     'paywall.benefit3': 'Export technical reports in PDF',
     'paywall.benefit4': 'Advanced statistics and metrics suite',
+    'paywall.androidDialogTitle': 'Míster11 PRO Plans',
+    'paywall.androidDialogText': 'Subscriptions are centrally managed on our web platform. Visit mister11.app to purchase your plan and get instant access in this app.',
+    'paywall.androidOpenWeb': 'Open mister11.app',
+    'paywall.androidHaveCode': 'I already have a code',
+    'paywall.androidNotNow': 'Not now',
+    'paywall.androidRedeemTitle': 'Redeem Code',
+    'paywall.androidRedeemDesc': 'Enter your corporate or promotional code to activate your PRO plan instantly.',
+    'paywall.androidBackToInfo': 'Back',
 
     // ── Authentication and Sign-up ──────────────────────────
     'auth.loginTitle': 'Sign In',
@@ -1066,6 +1083,7 @@ export const translations = {
     'admin.lang.title': 'System Language',
     'admin.theme.dark': 'Dark Mode',
     'admin.notif.title': 'Notifications',
+    'admin.manageSubAndroidMsg': 'Manage your subscription from mister11.app',
 
     // ── Coach Module Tabs ───────────────────────────────────
     'equipo.tab.squad': 'Squad',

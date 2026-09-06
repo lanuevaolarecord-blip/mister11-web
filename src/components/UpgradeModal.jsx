@@ -3,6 +3,8 @@ import { db, auth } from '../firebaseConfig';
 import { collection, addDoc, onSnapshot, doc, getDoc, setDoc, updateDoc, increment, getDocs, writeBatch, Timestamp } from 'firebase/firestore';
 import { PLANS, calcularDesgloseIVA } from '../config/plans';
 import { useAuth } from '../context/AuthContext';
+import { useTranslation } from '../hooks/useTranslation';
+import { isNativeAndroid, openExternal } from '../utils/platform';
 import './UpgradeModal.css';
 
 /**
@@ -32,6 +34,9 @@ const createStripeCheckoutSession = async (uid, priceId, successUrl, cancelUrl, 
 
 const UpgradeModal = ({ isOpen, onClose, message, urgency = false, isSuccessState = false }) => {
   const { activeTeamId } = useAuth();
+  const { t } = useTranslation();
+  const isAndroid = isNativeAndroid();
+  const [showRedeemView, setShowRedeemView] = useState(false);
   const [billingCycle, setBillingCycle] = useState('season'); // 'season' | 'monthly'
   const [loadingPlan, setLoadingPlan] = useState(null);
   const [stripeError, setStripeError] = useState(null);
@@ -43,6 +48,12 @@ const UpgradeModal = ({ isOpen, onClose, message, urgency = false, isSuccessStat
   const [promoCode, setPromoCode] = useState('');
   const [redeeming, setRedeeming] = useState(false);
   const [promoMessage, setPromoMessage] = useState({ type: '', text: '' });
+
+  const handleModalClose = () => {
+    setShowRedeemView(false);
+    setPromoMessage({ type: '', text: '' });
+    onClose();
+  };
 
   const handleRedeemPromoCode = async () => {
     const codeStr = promoCode.trim().toUpperCase();
@@ -170,6 +181,246 @@ const UpgradeModal = ({ isOpen, onClose, message, urgency = false, isSuccessStat
             <button className="upgrade-subscribe-btn btn-pro" onClick={onClose} style={{ maxWidth: '180px', margin: '0 auto' }}>
               ENTENDIDO
             </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // DIÁLOGO EXCLUSIVO PARA ANDROID NATIVO (CUMPLIMIENTO POLÍTICA GOOGLE PLAY 3.1.1)
+  if (isAndroid) {
+    return (
+      <div className="modal-overlay" onClick={handleModalClose}>
+        <div 
+          className="upgrade-modal-wrapper android-paywall-modal" 
+          onClick={e => e.stopPropagation()}
+          style={{ maxWidth: '480px', width: '92vw', padding: '0', overflow: 'hidden' }}
+        >
+          {/* Header */}
+          <div className="upgrade-modal-header" style={{ padding: '28px 20px 20px' }}>
+            <button className="upgrade-close-x" onClick={handleModalClose} aria-label="Cerrar">✕</button>
+            <div className="upgrade-crown-anim">👑</div>
+            <h2 className="upgrade-title" style={{ fontSize: '1.45rem' }}>
+              {showRedeemView ? t('paywall.androidRedeemTitle') : t('paywall.androidDialogTitle')}
+            </h2>
+            <p className="upgrade-subtitle" style={{ fontSize: '0.85rem', marginBottom: 0 }}>
+              {showRedeemView 
+                ? t('paywall.androidRedeemDesc')
+                : (message || t('paywall.androidDialogText'))}
+            </p>
+          </div>
+
+          {/* Body */}
+          <div style={{ padding: '24px 20px' }}>
+            {showRedeemView ? (
+              /* Vista de Canje de Código */
+              <div className="android-redeem-container">
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                  <input
+                    type="text"
+                    placeholder="CÓDIGO (EJ. BETA2026)"
+                    value={promoCode}
+                    onChange={e => setPromoCode(e.target.value.toUpperCase())}
+                    disabled={redeeming}
+                    style={{
+                      width: '100%',
+                      minHeight: '48px',
+                      padding: '0 16px',
+                      borderRadius: '8px',
+                      border: '1px solid var(--border-color, rgba(255,255,255,0.2))',
+                      backgroundColor: 'rgba(0,0,0,0.25)',
+                      color: '#fff',
+                      fontSize: '0.95rem',
+                      fontWeight: '700',
+                      textAlign: 'center',
+                      letterSpacing: '1px'
+                    }}
+                  />
+                  <button
+                    onClick={handleRedeemPromoCode}
+                    disabled={redeeming || !promoCode.trim()}
+                    style={{
+                      width: '100%',
+                      minHeight: '48px',
+                      borderRadius: '8px',
+                      backgroundColor: '#10B981',
+                      color: '#FFFFFF',
+                      fontWeight: '800',
+                      fontSize: '0.9rem',
+                      letterSpacing: '0.5px',
+                      textTransform: 'uppercase',
+                      border: 'none',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      boxShadow: '0 4px 12px rgba(16,185,129,0.35)'
+                    }}
+                  >
+                    {redeeming ? '⏳ PROCESANDO...' : 'CANJEAR CÓDIGO'}
+                  </button>
+
+                  {promoMessage.text && (
+                    <div style={{
+                      padding: '12px',
+                      borderRadius: '8px',
+                      fontSize: '0.82rem',
+                      fontWeight: '600',
+                      textAlign: 'center',
+                      lineHeight: '1.4',
+                      backgroundColor: promoMessage.type === 'success' ? 'rgba(16,185,129,0.12)' : 'rgba(239,68,68,0.12)',
+                      border: `1px solid ${promoMessage.type === 'success' ? '#10B981' : '#ef4444'}`,
+                      color: promoMessage.type === 'success' ? '#10B981' : '#ef4444'
+                    }}>
+                      {promoMessage.text}
+                    </div>
+                  )}
+
+                  <button
+                    onClick={() => {
+                      setShowRedeemView(false);
+                      setPromoMessage({ type: '', text: '' });
+                    }}
+                    style={{
+                      marginTop: '8px',
+                      minHeight: '48px',
+                      background: 'none',
+                      border: '1px solid rgba(255,255,255,0.15)',
+                      borderRadius: '8px',
+                      color: 'var(--text-secondary, #94a3b8)',
+                      fontSize: '0.85rem',
+                      fontWeight: '700',
+                      cursor: 'pointer',
+                      textTransform: 'uppercase'
+                    }}
+                  >
+                    {t('paywall.androidBackToInfo')}
+                  </button>
+                </div>
+              </div>
+            ) : (
+              /* Vista Principal de Diálogo Informativo */
+              <div className="android-info-container">
+                <div style={{
+                  padding: '16px',
+                  borderRadius: '10px',
+                  backgroundColor: 'rgba(0, 75, 135, 0.1)',
+                  border: '1px solid rgba(0, 75, 135, 0.3)',
+                  marginBottom: '20px'
+                }}>
+                  <p style={{
+                    margin: 0,
+                    fontSize: '0.88rem',
+                    lineHeight: '1.55',
+                    color: 'var(--text-primary, #f1f5f9)',
+                    textAlign: 'center'
+                  }}>
+                    {t('paywall.androidDialogText')}
+                  </p>
+                </div>
+
+                {/* Beneficios PRO Destacados (vectores y tipografía limpia, sin precios) */}
+                <div style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '10px',
+                  marginBottom: '24px'
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '0.84rem', color: 'var(--text-secondary, #cbd5e1)' }}>
+                    <span style={{ color: '#10B981', fontWeight: 'bold' }}>✓</span>
+                    <span>{t('paywall.benefit1')}</span>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '0.84rem', color: 'var(--text-secondary, #cbd5e1)' }}>
+                    <span style={{ color: '#10B981', fontWeight: 'bold' }}>✓</span>
+                    <span>{t('paywall.benefit2')}</span>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '0.84rem', color: 'var(--text-secondary, #cbd5e1)' }}>
+                    <span style={{ color: '#10B981', fontWeight: 'bold' }}>✓</span>
+                    <span>{t('paywall.benefit3')}</span>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '0.84rem', color: 'var(--text-secondary, #cbd5e1)' }}>
+                    <span style={{ color: '#10B981', fontWeight: 'bold' }}>✓</span>
+                    <span>{t('paywall.benefit4')}</span>
+                  </div>
+                </div>
+
+                {/* Botones de Acción Android */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                  {/* Botón Primario: Azul Institucional #004B87, Blanco, ALL CAPS, 8px, 48dp */}
+                  <button
+                    id="btn-android-open-web"
+                    onClick={() => openExternal('https://www.mister11.app/planes')}
+                    style={{
+                      width: '100%',
+                      minHeight: '48px',
+                      backgroundColor: '#004B87',
+                      color: '#FFFFFF',
+                      border: 'none',
+                      borderRadius: '8px',
+                      fontWeight: '800',
+                      fontSize: '0.88rem',
+                      letterSpacing: '0.6px',
+                      textTransform: 'uppercase',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '8px',
+                      boxShadow: '0 4px 14px rgba(0,75,135,0.4)'
+                    }}
+                  >
+                    🌐 {t('paywall.androidOpenWeb')}
+                  </button>
+
+                  {/* Botón Acción/Éxito: Verde Campo #10B981 */}
+                  <button
+                    id="btn-android-have-code"
+                    onClick={() => setShowRedeemView(true)}
+                    style={{
+                      width: '100%',
+                      minHeight: '48px',
+                      backgroundColor: '#10B981',
+                      color: '#FFFFFF',
+                      border: 'none',
+                      borderRadius: '8px',
+                      fontWeight: '800',
+                      fontSize: '0.88rem',
+                      letterSpacing: '0.6px',
+                      textTransform: 'uppercase',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '8px',
+                      boxShadow: '0 4px 14px rgba(16,185,129,0.3)'
+                    }}
+                  >
+                    🔑 {t('paywall.androidHaveCode')}
+                  </button>
+
+                  {/* Botón Cerrar: Ahora no */}
+                  <button
+                    id="btn-android-not-now"
+                    onClick={handleModalClose}
+                    style={{
+                      width: '100%',
+                      minHeight: '48px',
+                      backgroundColor: 'transparent',
+                      color: 'var(--text-secondary, #94a3b8)',
+                      border: 'none',
+                      borderRadius: '8px',
+                      fontWeight: '700',
+                      fontSize: '0.85rem',
+                      letterSpacing: '0.5px',
+                      textTransform: 'uppercase',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    {t('paywall.androidNotNow')}
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>

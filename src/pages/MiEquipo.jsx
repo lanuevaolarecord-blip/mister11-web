@@ -11,7 +11,7 @@ import { generateExpediente } from '../utils/pdfGenerator';
 import { normalizeText } from '../utils/normalizeInput';
 import { normalizeEmail } from '../utils/normalizeEmail';
 import { storage, db } from '../firebaseConfig';
-import { collection, onSnapshot, doc, setDoc, deleteDoc, addDoc, serverTimestamp } from 'firebase/firestore';
+import { collection, onSnapshot, doc, setDoc, deleteDoc, updateDoc, addDoc, serverTimestamp, query, orderBy } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { showToast } from '../utils/toast';
 import { savePlayerIdentity, deletePlayerIdentity } from '../utils/playerIdentity';
@@ -23,7 +23,7 @@ import { PlayerAttendanceSubTab } from '../components/PlayerAttendanceSubTab';
 import { TeamStaffTab } from '../components/TeamStaffTab';
 import { PlayerTabs } from '../components/player/PlayerTabs';
 import { PlayerChatTab } from '../components/player/PlayerChatTab';
-import { MessageSquare, FileText, Pencil, Edit, X, UserPlus, Share2, Mail, Trash2, Bell, Megaphone } from 'lucide-react';
+import { MessageSquare, FileText, Pencil, Edit, X, UserPlus, Share2, Mail, Trash2, Bell, Megaphone, Flag, Ban, CheckCircle, AlertTriangle } from 'lucide-react';
 import { useTranslation } from '../hooks/useTranslation';
 import { SpellCheckedTextarea } from '../components/ui/SpellCheckedTextarea';
 import './MiEquipo.css';
@@ -190,6 +190,85 @@ const MiEquipo = () => {
 
     return () => unsub();
   }, [activeTeam?.id, getTeamPath, user]);
+
+  // Escuchar denuncias y moderación UGC del equipo
+  const [teamReports, setTeamReports] = useState([]);
+  const [isModerationModalOpen, setIsModerationModalOpen] = useState(false);
+  const [resolvingReportId, setResolvingReportId] = useState(null);
+  const [deletingReportMsgId, setDeletingReportMsgId] = useState(null);
+  const lastNotifiedReportIdRef = React.useRef(new Set());
+
+  useEffect(() => {
+    if (!activeTeam?.id || typeof getTeamPath !== 'function' || !user) return;
+    const teamPathStr = getTeamPath(activeTeam.id);
+    if (!teamPathStr) return;
+
+    const cleanP = teamPathStr.replace(/^\/+|\/+$/g, '');
+    const reportsCol = collection(db, `${cleanP}/teamReports`);
+    const q = query(reportsCol, orderBy('createdAt', 'desc'));
+
+    const unsub = onSnapshot(q, (snap) => {
+      const reps = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      setTeamReports(reps);
+
+      reps.filter(r => r.status === 'open').forEach(r => {
+        if (!lastNotifiedReportIdRef.current.has(r.id)) {
+          lastNotifiedReportIdRef.current.add(r.id);
+          showToast(`🚩 Nueva denuncia en chat: "${(r.msgText || '').substring(0, 30)}..."`, 'error');
+        }
+      });
+    }, (err) => {
+      console.warn('[MiEquipo] Error escuchando denuncias:', err);
+    });
+
+    return () => unsub();
+  }, [activeTeam?.id, getTeamPath, user]);
+
+  const openReportsCount = useMemo(() => {
+    return teamReports.filter(r => r.status === 'open').length;
+  }, [teamReports]);
+
+  const handleResolveReport = async (report) => {
+    if (!report?.id || !activeTeam?.id) return;
+    setResolvingReportId(report.id);
+    try {
+      const cleanP = getTeamPath(activeTeam.id).replace(/^\/+|\/+$/g, '');
+      const repRef = doc(db, `${cleanP}/teamReports`, report.id);
+      await updateDoc(repRef, { status: 'resolved', resolvedAt: serverTimestamp(), resolvedBy: user.uid });
+      showToast(t('player.chat.moderation.resolved'), 'success');
+    } catch (err) {
+      console.error('Error resolving report:', err);
+      showToast('Error al resolver reporte.', 'error');
+    } finally {
+      setResolvingReportId(null);
+    }
+  };
+
+  const handleDeleteReportedMessage = async (report) => {
+    if (!report?.id || !report?.msgId || !report?.playerId || !activeTeam?.id) return;
+    if (!window.confirm(t('player.chat.moderation.deleteConfirm'))) return;
+    setDeletingReportMsgId(report.id);
+    try {
+      const cleanP = getTeamPath(activeTeam.id).replace(/^\/+|\/+$/g, '');
+      const msgRef = doc(db, `${cleanP}/threads/${report.playerId}/messages`, report.msgId);
+      await deleteDoc(msgRef);
+
+      const repRef = doc(db, `${cleanP}/teamReports`, report.id);
+      await updateDoc(repRef, { 
+        status: 'resolved', 
+        deletedMessage: true, 
+        resolvedAt: serverTimestamp(), 
+        resolvedBy: user.uid 
+      });
+
+      showToast(t('player.chat.moderation.msgDeleted'), 'success');
+    } catch (err) {
+      console.error('Error deleting reported message:', err);
+      showToast('Error al eliminar mensaje.', 'error');
+    } finally {
+      setDeletingReportMsgId(null);
+    }
+  };
 
   const filteredPlayers = filter === 'TODOS' 
     ? players 
@@ -478,6 +557,29 @@ const MiEquipo = () => {
             <span>🛡️</span>
             <span>{t('equipo.tab.staff') || 'Cuerpo Técnico'}</span>
           </button>
+
+          {teamReports.length > 0 && (
+            <button 
+              type="button"
+              className={`chip ${isModerationModalOpen ? 'active' : ''}`}
+              style={{ 
+                fontWeight: '800', 
+                minHeight: '44px', 
+                padding: '0 18px', 
+                fontSize: '13px', 
+                display: 'flex', 
+                alignItems: 'center', 
+                gap: '6px',
+                background: openReportsCount > 0 ? 'rgba(239, 68, 68, 0.15)' : undefined,
+                color: openReportsCount > 0 ? '#EF4444' : undefined,
+                borderColor: openReportsCount > 0 ? '#EF4444' : undefined
+              }}
+              onClick={() => setIsModerationModalOpen(true)}
+            >
+              <Flag size={15} color={openReportsCount > 0 ? '#EF4444' : 'currentColor'} />
+              <span>{t('player.chat.moderation.badge') || 'Reportes'} {openReportsCount > 0 && `(${openReportsCount})`}</span>
+            </button>
+          )}
         </div>
 
         {mainTeamTab === 'squad' && (
@@ -1452,6 +1554,149 @@ const MiEquipo = () => {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL: PANEL DE MODERACIÓN DE REPORTES (UGC GOOGLE PLAY) */}
+      {isModerationModalOpen && (
+        <div className="modal-overlay" onClick={() => setIsModerationModalOpen(false)}>
+          <div 
+            className="modal-content" 
+            style={{ maxWidth: '640px', width: '100%', maxHeight: '85vh', display: 'flex', flexDirection: 'column' }} 
+            onClick={e => e.stopPropagation()}
+          >
+            <div className="modal-header" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <Flag size={22} color="#EF4444" />
+                <h2 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 800 }}>
+                  {t('player.chat.moderation.title') || 'Moderación de Mensajes'}
+                </h2>
+              </div>
+              <button 
+                type="button" 
+                className="btn-close" 
+                onClick={() => setIsModerationModalOpen(false)}
+                aria-label="Cerrar modal de moderación"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="modal-body" style={{ overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '14px', padding: '16px' }}>
+              {teamReports.length === 0 ? (
+                <div style={{ textAlign: 'center', padding: '32px 16px', color: 'var(--text-secondary)' }}>
+                  <CheckCircle size={40} color="#10B981" style={{ marginBottom: '10px' }} />
+                  <p style={{ margin: 0, fontWeight: 700 }}>
+                    {t('player.chat.moderation.empty') || 'No hay mensajes denunciados pendientes de revisión.'}
+                  </p>
+                </div>
+              ) : (
+                teamReports.map(rep => {
+                  const isOpen = rep.status === 'open';
+                  const dateStr = rep.createdAt?.toDate 
+                    ? rep.createdAt.toDate().toLocaleString([], { dateStyle: 'short', timeStyle: 'short' })
+                    : (rep.createdAt ? new Date(rep.createdAt).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' }) : 'Reciente');
+
+                  const reasonLabel = {
+                    inappropriate: t('player.chat.report.reason.inappropriate') || 'Contenido inapropiado',
+                    harassment: t('player.chat.report.reason.harassment') || 'Acoso o intimidación',
+                    spam: t('player.chat.report.reason.spam') || 'Spam',
+                    other: t('player.chat.report.reason.other') || 'Otro'
+                  }[rep.reason] || rep.reason;
+
+                  return (
+                    <div 
+                      key={rep.id} 
+                      style={{
+                        background: 'var(--bg-card, #FFFFFF)',
+                        border: `1.5px solid ${isOpen ? '#FCA5A5' : 'var(--border-color, #E2E8F0)'}`,
+                        borderRadius: '12px',
+                        padding: '14px',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: '10px',
+                        boxShadow: '0 2px 8px rgba(0,0,0,0.04)'
+                      }}
+                    >
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '6px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                          <span style={{ 
+                            background: isOpen ? '#FEF2F2' : 'var(--bg-app, #F1F5F9)', 
+                            color: isOpen ? '#DC2626' : 'var(--text-secondary, #64748B)',
+                            padding: '3px 8px', 
+                            borderRadius: '6px', 
+                            fontSize: '11px', 
+                            fontWeight: 800 
+                          }}>
+                            {isOpen ? '🚩 PENDIENTE' : '✅ RESUELTO'}
+                          </span>
+                          <span style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>{dateStr}</span>
+                        </div>
+                        <span style={{ fontSize: '12px', fontWeight: 700, color: 'var(--text-primary)' }}>
+                          Por: <strong>{rep.byName || 'Usuario'}</strong> ({rep.byRole || 'usuario'})
+                        </span>
+                      </div>
+
+                      <div style={{ background: 'var(--bg-app, #F8FAFC)', padding: '10px 12px', borderRadius: '8px', borderLeft: '3px solid #EF4444' }}>
+                        <div style={{ fontSize: '11px', fontWeight: 800, textTransform: 'uppercase', color: '#EF4444', marginBottom: '2px' }}>
+                          Motivo: {reasonLabel}
+                        </div>
+                        <p style={{ margin: 0, fontStyle: 'italic', fontSize: '13px', color: 'var(--text-primary)', wordBreak: 'break-word' }}>
+                          "{rep.msgText}"
+                        </p>
+                        {rep.details && (
+                          <p style={{ margin: '6px 0 0 0', fontSize: '12px', color: 'var(--text-secondary)' }}>
+                            <strong>Detalles:</strong> {rep.details}
+                          </p>
+                        )}
+                      </div>
+
+                      {isOpen && (
+                        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', marginTop: '4px' }}>
+                          <button
+                            type="button"
+                            disabled={resolvingReportId === rep.id || deletingReportMsgId === rep.id}
+                            style={{
+                              background: '#E2E8F0',
+                              color: '#334155',
+                              border: 'none',
+                              borderRadius: '8px',
+                              padding: '8px 14px',
+                              minHeight: '44px',
+                              fontSize: '12px',
+                              fontWeight: 700,
+                              cursor: 'pointer'
+                            }}
+                            onClick={() => handleResolveReport(rep)}
+                          >
+                            {resolvingReportId === rep.id ? 'Marcando...' : (t('player.chat.moderation.resolve') || 'Marcar como resuelto')}
+                          </button>
+                          <button
+                            type="button"
+                            disabled={resolvingReportId === rep.id || deletingReportMsgId === rep.id}
+                            style={{
+                              background: '#DC2626',
+                              color: '#FFFFFF',
+                              border: 'none',
+                              borderRadius: '8px',
+                              padding: '8px 14px',
+                              minHeight: '44px',
+                              fontSize: '12px',
+                              fontWeight: 700,
+                              cursor: 'pointer'
+                            }}
+                            onClick={() => handleDeleteReportedMessage(rep)}
+                          >
+                            {deletingReportMsgId === rep.id ? 'Eliminando...' : (t('player.chat.moderation.deleteMsg') || 'Eliminar mensaje')}
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })
+              )}
+            </div>
           </div>
         </div>
       )}

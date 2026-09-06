@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { doc, getDoc, setDoc, deleteDoc, serverTimestamp, collection, onSnapshot } from 'firebase/firestore';
+import { doc, getDoc, setDoc, deleteDoc, updateDoc, serverTimestamp, collection, onSnapshot } from 'firebase/firestore';
 import { deleteUser } from 'firebase/auth';
 import { db, auth } from '../../firebaseConfig';
 import { useAuth } from '../../context/AuthContext';
@@ -32,7 +32,8 @@ import {
   Target,
   Mail,
   Trash2,
-  AlertTriangle
+  AlertTriangle,
+  Ban
 } from 'lucide-react';
 
 const BODY_ZONES = ['Ninguna', 'Gemelo Izquierdo', 'Gemelo Derecho', 'Cuádriceps', 'Isquiotibiales', 'Rodilla', 'Tobillo', 'Espalda / Lumbar', 'Aductor', 'Hombro'];
@@ -139,6 +140,40 @@ export const PlayerProfileTab = ({ player, team, teamPath, onNavigateTab }) => {
   const [signConsentHealth, setSignConsentHealth] = useState(consents.health || false);
   const [signConsentTests, setSignConsentTests] = useState(consents.tests || false);
   const [savingConsent, setSavingConsent] = useState(false);
+
+  // Estados de Usuarios Bloqueados (Google Play UGC)
+  const [blockedUsersList, setBlockedUsersList] = useState([]);
+  const [unblockingId, setUnblockingId] = useState(null);
+
+  useEffect(() => {
+    if (!user?.uid) return;
+    const unsub = onSnapshot(collection(db, 'users', user.uid, 'blockedUsers'), (snapshot) => {
+      const list = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+      setBlockedUsersList(list);
+    }, (err) => console.warn('Error loading blocked users:', err));
+    return () => unsub();
+  }, [user?.uid]);
+
+  const handleUnblockUserFromProfile = async (blockedItem) => {
+    if (!user?.uid || !blockedItem) return;
+    setUnblockingId(blockedItem.id);
+    try {
+      await deleteDoc(doc(db, 'users', user.uid, 'blockedUsers', blockedItem.id));
+      const targetThreadId = blockedItem.threadId || blockedItem.playerId || blockedItem.id;
+      if (targetThreadId) {
+        try {
+          await updateDoc(doc(db, 'threads', targetThreadId), {
+            [`blocks.${user.uid}`]: false
+          });
+        } catch (_) {}
+      }
+      showToast(t('player.chat.unblock.success'), 'success');
+    } catch (err) {
+      console.error('Error unblocking user:', err);
+    } finally {
+      setUnblockingId(null);
+    }
+  };
 
   // Estados de Eliminación de Cuenta (RGPD)
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -698,6 +733,64 @@ export const PlayerProfileTab = ({ player, team, teamPath, onNavigateTab }) => {
         >
           {t('player.profile.logout')}
         </button>
+
+        {/* ZONA DE USUARIOS BLOQUEADOS (Google Play UGC) */}
+        {blockedUsersList.length > 0 && (
+          <div style={{ marginTop: '20px', paddingTop: '16px', borderTop: '1px solid var(--border-color, #E2E8F0)', width: '100%' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
+              <Ban size={18} color="#EF4444" />
+              <h4 style={{ margin: 0, fontSize: '14px', fontWeight: '700', color: 'var(--text-primary)' }}>
+                {t('player.profile.blockedUsers')} ({blockedUsersList.length})
+              </h4>
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              {blockedUsersList.map((blocked) => (
+                <div 
+                  key={blocked.id}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    padding: '10px 14px',
+                    borderRadius: '8px',
+                    background: 'var(--surface-color, #F8FAFC)',
+                    border: '1px solid var(--border-color, #E2E8F0)'
+                  }}
+                >
+                  <div style={{ display: 'flex', flexDirection: 'column' }}>
+                    <span style={{ fontSize: '13px', fontWeight: '600', color: 'var(--text-primary)' }}>
+                      {blocked.displayName || blocked.name || blocked.id}
+                    </span>
+                    <span style={{ fontSize: '11px', color: '#64748B' }}>
+                      {blocked.blockedAt ? new Date(blocked.blockedAt.toDate ? blocked.blockedAt.toDate() : blocked.blockedAt).toLocaleDateString() : ''}
+                    </span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => handleUnblockUserFromProfile(blocked)}
+                    disabled={unblockingId === blocked.id}
+                    style={{
+                      padding: '6px 14px',
+                      borderRadius: '8px',
+                      border: '1px solid #EF4444',
+                      background: 'transparent',
+                      color: '#EF4444',
+                      fontSize: '12px',
+                      fontWeight: '700',
+                      cursor: 'pointer',
+                      minHeight: '48px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center'
+                    }}
+                  >
+                    {unblockingId === blocked.id ? '...' : t('player.chat.unblock.btn')}
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* ZONA DE PRIVACIDAD / ELIMINAR CUENTA (RGPD) */}
         <div style={{ marginTop: '16px', paddingTop: '16px', borderTop: '1px solid rgba(239, 68, 68, 0.2)', width: '100%', textAlign: 'center' }}>

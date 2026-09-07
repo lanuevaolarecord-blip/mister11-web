@@ -85,32 +85,38 @@ const ExerciseLibrary = ({ activeTeamId }) => {
       </div>
 
       {loading ? (
-        <div className="loading-state">Cargando ejercicios...</div>
+        <div className="loading-state">{isEn ? 'Loading exercises...' : 'Cargando ejercicios...'}</div>
       ) : (
         <div className="exercises-grid">
           {filteredExercises.map(ex => (
             <div key={ex.id} className="exercise-card">
               <div className="exercise-card-header">
-                <h3>{ex.name || ex.titulo || ex.title || 'Ejercicio'}</h3>
-                {ex.source === 'system' && <span className="badge-system">Sistema</span>}
-                {ex.source === 'ia' && <span className="badge-ia">IA</span>}
+                <h3>{ex.name || ex.titulo || ex.title || (isEn ? 'Exercise' : 'Ejercicio')}</h3>
+                {ex.source === 'system' && <span className="badge-system">{isEn ? 'System' : 'Sistema'}</span>}
+                {ex.source === 'ia' && <span className="badge-ia">{isEn ? 'AI' : 'IA'}</span>}
               </div>
               <div className="exercise-card-body">
-                <span className={`badge-cat cat-${ex.category}`}>{ex.category}</span>
-                <p>{ex.description || 'Sin descripción'}</p>
+                <span className={`badge-cat cat-${ex.category}`}>
+                  {ex.category === 'prevencion' ? (isEn ? 'Prevention' : 'Prevención') :
+                   ex.category === 'recuperacion' ? (isEn ? 'Recovery' : 'Recuperación') :
+                   ex.category === 'fortalecimiento' ? (isEn ? 'Strengthening' : 'Fortalecimiento') :
+                   ex.category === 'movilidad' ? (isEn ? 'Mobility' : 'Movilidad') :
+                   ex.category}
+                </span>
+                <p>{ex.description || (isEn ? 'No description' : 'Sin descripción')}</p>
                 <div className="exercise-meta">
                   {ex.durationSeconds > 0 && <span>⏱️ {ex.durationSeconds}s</span>}
                   {ex.reps > 0 && <span>🔁 {ex.reps} reps</span>}
-                  {ex.series > 0 && <span>🔄 {ex.series} series</span>}
-                  <span>⭐ Nivel {ex.difficulty}</span>
+                  {ex.series > 0 && <span>🔄 {ex.series} {isEn ? 'sets' : 'series'}</span>}
+                  <span>⭐ {isEn ? 'Level' : 'Nivel'} {ex.difficulty}</span>
                 </div>
               </div>
               <div className="exercise-card-actions">
-                <button className="btn-view-exercise" onClick={() => setViewExercise(ex)} title="Ver detalle">
-                  <Eye size={16} /> Ver
+                <button className="btn-view-exercise" onClick={() => setViewExercise(ex)} title={isEn ? 'View detail' : 'Ver detalle'}>
+                  <Eye size={16} /> {isEn ? 'View' : 'Ver'}
                 </button>
                 {ex.source !== 'system' && (
-                  <button className="btn-delete-exercise" onClick={() => removeExercise(ex.id)} title="Eliminar">
+                  <button className="btn-delete-exercise" onClick={() => removeExercise(ex.id)} title={isEn ? 'Delete' : 'Eliminar'}>
                     <Trash2 size={16} />
                   </button>
                 )}
@@ -174,7 +180,13 @@ const ExerciseLibrary = ({ activeTeamId }) => {
           <div className="modal-content view-exercise-modal" onClick={e => e.stopPropagation()}>
             <div className="modal-header">
               <h2>{viewExercise.name || viewExercise.titulo}</h2>
-              <span className={`badge-cat cat-${viewExercise.category}`}>{viewExercise.category}</span>
+              <span className={`badge-cat cat-${viewExercise.category}`}>
+                {viewExercise.category === 'prevencion' ? (isEn ? 'Prevention' : 'Prevención') :
+                 viewExercise.category === 'recuperacion' ? (isEn ? 'Recovery' : 'Recuperación') :
+                 viewExercise.category === 'fortalecimiento' ? (isEn ? 'Strengthening' : 'Fortalecimiento') :
+                 viewExercise.category === 'movilidad' ? (isEn ? 'Mobility' : 'Movilidad') :
+                 viewExercise.category}
+              </span>
             </div>
             
             <div className="exercise-meta-detail">

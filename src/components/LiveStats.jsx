@@ -906,20 +906,20 @@ const LiveStats = ({
             <div className="jugador-activo-strip">
               <div className="jugador-activo-label">
                 <span>⚡</span>
-                <span>JUGADOR ACTIVO</span>
+                <span>{isEn ? 'ACTIVE PLAYER' : 'JUGADOR ACTIVO'}</span>
                 {activePlayerId && (
                   <button
                     type="button"
                     className="jugador-activo-clear"
                     onClick={() => setActivePlayerId(null)}
-                  >✕ Deseleccionar</button>
+                  >✕ {isEn ? 'Deselect' : 'Deseleccionar'}</button>
                 )}
                 <button
                   type="button"
                   className="jugador-postmatch-btn"
                   onClick={() => { setShowPostMatchModal(true); setPostMatchCounters({}); }}
-                  title="Carga post-partido: entrada rápida de contadores +/-"
-                >📋 Carga Post-Partido</button>
+                  title={isEn ? 'Post-match load: quick entry of +/- counters' : 'Carga post-partido: entrada rápida de contadores +/-'}
+                >📋 {isEn ? 'Post-Match Entry' : 'Carga Post-Partido'}</button>
               </div>
               <div className="jugador-activo-chips">
                 {onPitchPlayersList.map(p => {
@@ -944,18 +944,18 @@ const LiveStats = ({
                   {(() => {
                     const ap = playersList.find(p => p.id === activePlayerId);
                     const ACTIONS = [
-                      { type: 'shot_on_target_own',  label: 'Tiro a\nPuerta',  icon: '🎯', color: '#4CAF7D' },
-                      { type: 'shot_off_target_own', label: 'Tiro\nFuera',     icon: '⬜', color: '#94A3B8' },
-                      { type: 'pass_completed',      label: 'Pase\nComplet.',  icon: '✅', color: '#0D9488' },
-                      { type: 'pass_failed',         label: 'Pase\nFallido',   icon: '❌', color: '#EF4444' },
-                      { type: 'key_pass',            label: 'Pase\nClave',     icon: '⭐', color: '#D4A843' },
-                      { type: 'recovery',            label: 'Recuper.',        icon: '🛡️', color: '#3B82F6' },
-                      { type: 'ball_loss',           label: 'Pérdida',         icon: '🔴', color: '#DC2626' },
-                      { type: 'duel_won',            label: 'Duelo\nGanado',   icon: '✊', color: '#10B981' },
-                      { type: 'foul_against',        label: 'Falta\nContra',   icon: '✋', color: '#EAB308' },
-                      { type: 'foul_favor',          label: 'Falta\nFavor',    icon: '⚡', color: '#06B6D4' },
-                      { type: 'corner_favor',        label: 'Córner\nFavor',   icon: '🚩', color: '#D4A843' },
-                      { type: 'offside_own',         label: 'Fuera\nJuego',    icon: '🏃', color: '#F97316' },
+                      { type: 'shot_on_target_own',  label: isEn ? 'Shot on\nTarget' : 'Tiro a\nPuerta',  icon: '🎯', color: '#4CAF7D' },
+                      { type: 'shot_off_target_own', label: isEn ? 'Shot\nOff' : 'Tiro\nFuera',     icon: '⬜', color: '#94A3B8' },
+                      { type: 'pass_completed',      label: isEn ? 'Pass\nComp.' : 'Pase\nComplet.',  icon: '✅', color: '#0D9488' },
+                      { type: 'pass_failed',         label: isEn ? 'Pass\nIncomp.' : 'Pase\nFallido',   icon: '❌', color: '#EF4444' },
+                      { type: 'key_pass',            label: isEn ? 'Key\nPass' : 'Pase\nClave',     icon: '⭐', color: '#D4A843' },
+                      { type: 'recovery',            label: isEn ? 'Recovery' : 'Recuper.',        icon: '🛡️', color: '#3B82F6' },
+                      { type: 'ball_loss',           label: isEn ? 'Turnover' : 'Pérdida',         icon: '🔴', color: '#DC2626' },
+                      { type: 'duel_won',            label: isEn ? 'Duel\nWon' : 'Duelo\nGanado',   icon: '✊', color: '#10B981' },
+                      { type: 'foul_against',        label: isEn ? 'Foul\nConceded' : 'Falta\nContra',   icon: '✋', color: '#EAB308' },
+                      { type: 'foul_favor',          label: isEn ? 'Foul\nWon' : 'Falta\nFavor',    icon: '⚡', color: '#06B6D4' },
+                      { type: 'corner_favor',        label: isEn ? 'Corner\nFor' : 'Córner\nFavor',   icon: '🚩', color: '#D4A843' },
+                      { type: 'offside_own',         label: isEn ? 'Offside' : 'Fuera\nJuego',    icon: '🏃', color: '#F97316' },
                     ];
                     return (
                       <>
@@ -978,19 +978,19 @@ const LiveStats = ({
                                   setTimeout(() => setFlashType(null), 650);
 
                                   const yMap = { left: 16, center: 50, right: 84 };
-                                  const yCoord = yMap[selectedSector] || 50;
+                                  const effectiveSector = selectedSector || 'center';
+                                  const yCoord = yMap[effectiveSector] || 50;
                                   let defaultX = 50;
-                                  if (a.type.includes('shot') || a.type === 'corner_favor') defaultX = 85;
-                                  else if (a.type.includes('foul')) defaultX = 30;
+                                  if (a.type.includes('shot') || a.type.includes('goal') || a.type === 'corner_favor') defaultX = 85;
+                                  else if (a.type.includes('foul') || a.type.includes('card') || a.type === 'corner_against') defaultX = 30;
 
                                   const tempId = `local_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`;
-                                  const targetMin = (currentHalf === 2 && (!currentMinute || currentMinute <= 45)) ? 46 : (currentMinute || 1);
                                   const localDoc = { 
                                     id: tempId, 
                                     type: a.type, 
                                     half: currentHalf, 
-                                    minute: targetMin, 
-                                    sector: selectedSector, 
+                                    minute: currentHalf === 2 ? Math.max(46, (currentMinute && currentMinute > 0 ? currentMinute : 46)) : Math.max(1, (currentMinute && currentMinute > 0 ? currentMinute : 1)),
+                                    sector: effectiveSector, 
                                     x: defaultX, 
                                     y: yCoord, 
                                     playerId: activePlayerId, 
@@ -1001,10 +1001,9 @@ const LiveStats = ({
                                   if (hook) {
                                     const realId = await hook(a.type, currentHalf, { 
                                       playerId: activePlayerId, 
-                                      sector: selectedSector,
+                                      sector: effectiveSector,
                                       x: defaultX, 
-                                      y: yCoord,
-                                      minute: targetMin
+                                      y: yCoord
                                     });
                                     if (realId && realId !== tempId) setLocalEvents(prev => prev.filter(e => e.id !== tempId));
                                   }
@@ -1030,7 +1029,7 @@ const LiveStats = ({
 
             {/* Selector Táctico de Sector */}
             <div className="livestats-sector-bar">
-              <span className="sector-bar-title">📍 Sector de la Jugada:</span>
+              <span className="sector-bar-title">📍 {isEn ? 'Play Sector:' : 'Sector de la Jugada:'}</span>
               <div className="sector-bar-pills">
                 <button
                   type="button"
@@ -1040,7 +1039,7 @@ const LiveStats = ({
                   title={isLocked ? (isEn ? 'Match finished — Reopen match sheet to edit' : 'Partido finalizado — usa Reabrir Acta para corregir') : undefined}
                   style={isLocked ? { opacity: 0.6, cursor: 'not-allowed' } : {}}
                 >
-                  ⬅️ Banda Izquierda
+                  ⬅️ {isEn ? 'Left Flank' : 'Banda Izquierda'}
                 </button>
                 <button
                   type="button"
@@ -1050,7 +1049,7 @@ const LiveStats = ({
                   title={isLocked ? (isEn ? 'Match finished — Reopen match sheet to edit' : 'Partido finalizado — usa Reabrir Acta para corregir') : undefined}
                   style={isLocked ? { opacity: 0.6, cursor: 'not-allowed' } : {}}
                 >
-                  ⏺️ Centro / Pasillo Central
+                  ⏺️ {isEn ? 'Center Channel' : 'Centro / Pasillo Central'}
                 </button>
                 <button
                   type="button"
@@ -1060,7 +1059,7 @@ const LiveStats = ({
                   title={isLocked ? (isEn ? 'Match finished — Reopen match sheet to edit' : 'Partido finalizado — usa Reabrir Acta para corregir') : undefined}
                   style={isLocked ? { opacity: 0.6, cursor: 'not-allowed' } : {}}
                 >
-                  ➡️ Banda Derecha
+                  ➡️ {isEn ? 'Right Flank' : 'Banda Derecha'}
                 </button>
               </div>
             </div>

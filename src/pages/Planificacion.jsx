@@ -128,6 +128,11 @@ const Planificacion = () => {
   const { darkMode } = useTheme();
   const { isProActive } = usePlan();
   const { t, isEn, locale } = useTranslation();
+  const getMonthI18n = (m) => {
+    if (!m) return '';
+    const mKey = `month.${m}`;
+    return t(mKey) || m;
+  };
   const localizedDays = useMemo(() => isEn 
     ? ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'] 
     : ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'], [isEn]);
@@ -799,15 +804,16 @@ const Planificacion = () => {
     
     if (activeTab === 'macrociclo') {
       activeMicros = microcycles;
-      title = "MACRO-CICLO";
+      title = isEn ? "MACROCYCLE" : "MACRO-CICLO";
     } else if (activeTab === 'mesociclo') {
       if (selectedMesoItem) {
         const meso = mesocycles.find(m => m.month === selectedMesoItem);
         activeMicros = meso?.micros || [];
-        title = `MESO-CICLO: ${selectedMesoItem.toUpperCase()}`;
+        const monthLabel = getMonthI18n(selectedMesoItem);
+        title = isEn ? `MESOCYCLE: ${monthLabel.toUpperCase()}` : `MESO-CICLO: ${monthLabel.toUpperCase()}`;
       } else {
         activeMicros = microcycles;
-        title = "MESO-CICLOS (VISTA GENERAL)";
+        title = isEn ? "MESOCYCLES (OVERVIEW)" : "MESO-CICLOS (VISTA GENERAL)";
       }
     }
     
@@ -836,7 +842,7 @@ const Planificacion = () => {
       competMax,
       overall
     };
-  }, [activeTab, selectedMesoItem, microcycles, mesocycles, macroInfo]);
+  }, [activeTab, selectedMesoItem, microcycles, mesocycles, macroInfo, isEn]);
 
   const overallScore = useMemo(() => {
     const avg = microcycles.reduce((a, m) => a + (Number(m.physical||0) + Number(m.technical||0) + Number(m.tactical||0)) / 3, 0) / (microcycles.length || 1);
@@ -1063,9 +1069,9 @@ const Planificacion = () => {
           <span className="plan-macro-title-icon">⟳</span>
           <span className="plan-macro-title">{computedMetrics.title}</span>
           <div className="plan-macro-legend">
-            <span className="plan-legend-chip chip-sesiones">Sesiones {computedMetrics.sesiones}/{computedMetrics.sesionesMax}</span>
-            <span className="plan-legend-chip chip-trabajo">🏋 Trabajo {computedMetrics.trabajo}/{computedMetrics.trabajoMax}</span>
-            <span className="plan-legend-chip chip-compet">● Compet. {computedMetrics.compet}/{computedMetrics.competMax}</span>
+            <span className="plan-legend-chip chip-sesiones">{isEn ? 'Sessions' : 'Sesiones'} {computedMetrics.sesiones}/{computedMetrics.sesionesMax}</span>
+            <span className="plan-legend-chip chip-trabajo">🏋 {isEn ? 'Work' : 'Trabajo'} {computedMetrics.trabajo}/{computedMetrics.trabajoMax}</span>
+            <span className="plan-legend-chip chip-compet">● {isEn ? 'Compet.' : 'Compet.'} {computedMetrics.compet}/{computedMetrics.competMax}</span>
           </div>
         </div>
 
@@ -1082,7 +1088,7 @@ const Planificacion = () => {
             <div className="plan-metric-group">
               <div className="plan-metric-header">
                 <span className="plan-metric-icon">📅</span>
-                <span className="plan-metric-name">SESIONES</span>
+                <span className="plan-metric-name">{isEn ? 'SESSIONS' : 'SESIONES'}</span>
                 <span className="plan-metric-count" style={{ color: sesionesColor }}>{computedMetrics.sesiones}/{computedMetrics.sesionesMax}</span>
               </div>
               <div style={{ display:'flex', alignItems:'center', gap:8, minHeight: '32px' }}>
@@ -1102,7 +1108,7 @@ const Planificacion = () => {
             <div className="plan-metric-group">
               <div className="plan-metric-header">
                 <span className="plan-metric-icon">🏋</span>
-                <span className="plan-metric-name">TRABAJO</span>
+                <span className="plan-metric-name">{isEn ? 'WORK' : 'TRABAJO'}</span>
                 <span className="plan-metric-badge">Tektips</span>
                 <span className="plan-metric-count" style={{ color: trabajoColor }}>{computedMetrics.trabajo}/{computedMetrics.trabajoMax}</span>
               </div>
@@ -1124,7 +1130,7 @@ const Planificacion = () => {
               <div className="plan-metric-header">
                 <span className="plan-metric-icon">🏆</span>
                 <span className="plan-metric-name">COMPET.</span>
-                <span className="plan-metric-badge chip-compet-badge">Competencia</span>
+                <span className="plan-metric-badge chip-compet-badge">{isEn ? 'Competition' : 'Competencia'}</span>
                 <span className="plan-metric-count" style={{ color: competColor }}>{computedMetrics.compet}/{computedMetrics.competMax}</span>
               </div>
               <div style={{ display:'flex', alignItems:'center', gap:8, minHeight: '32px' }}>
@@ -1141,31 +1147,31 @@ const Planificacion = () => {
 
       {/* ── ROW 3: PLANNING MATRIX ─────────────────────────────────── */}
       <div className="plan-matrix-card">
-        <div className="plan-matrix-title">MATRIZ DE PLANIFICACIÓN</div>
+        <div className="plan-matrix-title">{isEn ? 'PLANNING MATRIX' : 'MATRIZ DE PLANIFICACIÓN'}</div>
         <div className="plan-matrix-scroll">
           <table className="plan-matrix-table">
             <thead>
               {/* Month header row */}
               <tr className="plan-mrow plan-mrow-month">
-                <th className="plan-msticky plan-mlabel-cell">MESES</th>
+                <th className="plan-msticky plan-mlabel-cell">{isEn ? 'MONTHS' : 'MESES'}</th>
                 {Object.entries(monthGroups).map(([month, weeks]) => (
                   <th key={month} colSpan={weeks.length} className="plan-month-header">
-                    {month}
+                    {getMonthI18n(month)}
                   </th>
                 ))}
               </tr>
               {/* Carga sub-header */}
               <tr className="plan-mrow plan-mrow-carga">
-                <th className="plan-msticky plan-mlabel-cell">TIPO MICRO</th>
+                <th className="plan-msticky plan-mlabel-cell">{isEn ? 'MICRO TYPE' : 'TIPO MICRO'}</th>
                 {microcycles.map(m => (
                   <th key={m.id} className="plan-mcell plan-mcell-carga">
                     <select value={m.carga} onChange={e => handleMicroChange(m.id, 'carga', e.target.value)}
                       className="plan-cell-select plan-cell-select-carga">
-                      <option>Carga</option>
-                      <option>Ajuste</option>
-                      <option>Choque</option>
-                      <option>Comp</option>
-                      <option>Recup</option>
+                      <option value="Carga">{isEn ? 'Load' : 'Carga'}</option>
+                      <option value="Ajuste">{isEn ? 'Adjustment' : 'Ajuste'}</option>
+                      <option value="Choque">{isEn ? 'Shock' : 'Choque'}</option>
+                      <option value="Comp">{isEn ? 'Comp' : 'Comp'}</option>
+                      <option value="Recup">{isEn ? 'Recovery' : 'Recup'}</option>
                     </select>
                   </th>
                 ))}
@@ -1174,12 +1180,14 @@ const Planificacion = () => {
             <tbody>
               {/* CARGA row */}
               <tr className="plan-mrow plan-mrow-alt">
-                <td className="plan-msticky plan-mlabel-cell">PERÍODOS</td>
+                <td className="plan-msticky plan-mlabel-cell">{isEn ? 'PERIODS' : 'PERÍODOS'}</td>
                 {microcycles.map(m => (
                   <td key={m.id} className="plan-mcell">
                     <select value={m.periodo} onChange={e => handleMicroChange(m.id, 'periodo', e.target.value)}
                       className="plan-cell-select">
-                      <option>Prep</option><option>Comp</option><option>Trans</option>
+                      <option value="Prep">{isEn ? 'Prep' : 'Prep'}</option>
+                      <option value="Comp">{isEn ? 'Comp' : 'Comp'}</option>
+                      <option value="Trans">{isEn ? 'Trans' : 'Trans'}</option>
                     </select>
                   </td>
                 ))}
@@ -1187,7 +1195,7 @@ const Planificacion = () => {
 
               {/* DÍA DE PARTIDO POR MICROCICLO */}
               <tr className="plan-mrow plan-mrow-matchday" style={{ background: 'rgba(212,168,67,0.08)' }}>
-                <td className="plan-msticky plan-mlabel-cell" style={{ color: '#D4A843', fontWeight: 900 }}>⚽ DÍA PARTIDO</td>
+                <td className="plan-msticky plan-mlabel-cell" style={{ color: '#D4A843', fontWeight: 900 }}>⚽ {isEn ? 'MATCH DAY' : 'DÍA PARTIDO'}</td>
                 {microcycles.map(m => {
                   const mMatchDay = m.matchDayOfWeek ?? macroInfo.matchDayOfWeek ?? 5;
                   return (
@@ -1198,7 +1206,7 @@ const Planificacion = () => {
                         className="plan-cell-select"
                         style={{ fontSize: '10px', fontWeight: 900, color: '#D4A843', cursor: 'pointer', textAlign: 'center' }}
                       >
-                        {DAYS_LABELS.map((dl, dIdx) => (
+                        {localizedDays.map((dl, dIdx) => (
                           <option key={dIdx} value={dIdx}>{dl}</option>
                         ))}
                       </select>
@@ -1209,7 +1217,7 @@ const Planificacion = () => {
 
               {/* Nº MICROCICLO */}
               <tr className="plan-mrow">
-                <td className="plan-msticky plan-mlabel-cell">Nº MICROCICLO</td>
+                <td className="plan-msticky plan-mlabel-cell">{isEn ? 'MICROCYCLE NO.' : 'Nº MICROCICLO'}</td>
                 {microcycles.map(m => (
                   <td key={m.id} className="plan-mcell plan-mcell-num">
                     {m.id}
@@ -1219,7 +1227,7 @@ const Planificacion = () => {
 
               {/* FISIOLÓGICO — checkmarks */}
               <tr className="plan-mrow plan-mrow-fisio">
-                <td className="plan-msticky plan-mlabel-cell">TEST FÍSICO</td>
+                <td className="plan-msticky plan-mlabel-cell">{isEn ? 'PHYSICAL TEST' : 'TEST FÍSICO'}</td>
                 {microcycles.map(m => (
                   <td key={m.id} className="plan-mcell" style={{ cursor:'pointer' }}
                     onClick={() => handleMicroChange(m.id, 'fisio', !m.fisio)}>
@@ -1232,7 +1240,7 @@ const Planificacion = () => {
 
               {/* INFL EMBD — arrows */}
               <tr className="plan-mrow plan-mrow-infl">
-                <td className="plan-msticky plan-mlabel-cell">DINÁMICA CARGA</td>
+                <td className="plan-msticky plan-mlabel-cell">{isEn ? 'LOAD DYNAMICS' : 'DINÁMICA CARGA'}</td>
                 {microcycles.map(m => (
                   <td key={m.id} className="plan-mcell" style={{ cursor:'pointer' }}
                     onClick={() => {
@@ -1248,7 +1256,7 @@ const Planificacion = () => {
 
               {/* VOLUMEN (MIN) */}
               <tr className="plan-mrow plan-mrow-activ">
-                <td className="plan-msticky plan-mlabel-cell">VOLUMEN (MIN)</td>
+                <td className="plan-msticky plan-mlabel-cell">{isEn ? 'VOLUME (MIN)' : 'VOLUMEN (MIN)'}</td>
                 {microcycles.map(m => (
                   <td key={m.id} className="plan-mcell">
                     <input type="number" className="plan-cell-input" value={m.volume}
@@ -1259,7 +1267,7 @@ const Planificacion = () => {
 
               {/* SESIONES */}
               <tr className="plan-mrow">
-                <td className="plan-msticky plan-mlabel-cell">SESIONES</td>
+                <td className="plan-msticky plan-mlabel-cell">{isEn ? 'SESSIONS' : 'SESIONES'}</td>
                 {microcycles.map(m => (
                   <td key={m.id} className="plan-mcell">
                     <input type="number" className="plan-cell-input" value={m.sessions}
@@ -1268,11 +1276,9 @@ const Planificacion = () => {
                 ))}
               </tr>
 
-              {/* Deleted MOCIOR BMIN */}
-
               {/* % FÍSICO */}
               <tr className="plan-mrow plan-mrow-fisic">
-                <td className="plan-msticky plan-mlabel-cell">% FÍSICO</td>
+                <td className="plan-msticky plan-mlabel-cell">{isEn ? '% PHYSICAL' : '% FÍSICO'}</td>
                 {microcycles.map(m => (
                   <td key={m.id} className="plan-mcell">
                     <input type="number" className="plan-cell-input" value={m.physical}
@@ -1283,7 +1289,7 @@ const Planificacion = () => {
 
               {/* % TÉCNICO */}
               <tr className="plan-mrow plan-mrow-tecnico">
-                <td className="plan-msticky plan-mlabel-cell">% TÉCNICO</td>
+                <td className="plan-msticky plan-mlabel-cell">{isEn ? '% TECHNICAL' : '% TÉCNICO'}</td>
                 {microcycles.map(m => (
                   <td key={m.id} className="plan-mcell">
                     <input type="number" className="plan-cell-input" value={m.technical}
@@ -1294,7 +1300,7 @@ const Planificacion = () => {
 
               {/* % TÁCTICO */}
               <tr className="plan-mrow plan-mrow-tactico">
-                <td className="plan-msticky plan-mlabel-cell">% TÁCTICO</td>
+                <td className="plan-msticky plan-mlabel-cell">{isEn ? '% TACTICAL' : '% TÁCTICO'}</td>
                 {microcycles.map(m => (
                   <td key={m.id} className="plan-mcell">
                     <input type="number" className="plan-cell-input" value={m.tactical}
@@ -1314,12 +1320,12 @@ const Planificacion = () => {
               {totalHours}h {remainingMins}min
             </span>
             <span style={{ fontSize: 12, color: 'var(--text-secondary)', marginLeft: 8 }}>
-              ({totalMinutes} minutos totales) · {macroInfo.trainingDays.length} días/sem
+              ({totalMinutes} {isEn ? 'total minutes' : 'minutos totales'}) · {macroInfo.trainingDays.length} {isEn ? 'days/wk' : 'días/sem'}
             </span>
           </div>
           <button className="btn-primary" onClick={handleSave} disabled={saving}
             style={{ display:'flex', alignItems:'center', gap:6, padding:'10px 24px', fontSize:13 }}>
-            <Save size={15} /> {saving ? 'GUARDANDO...' : 'GUARDAR PLANIFICACIÓN'}
+            <Save size={15} /> {saving ? (isEn ? 'SAVING...' : 'GUARDANDO...') : (isEn ? 'SAVE PLANNING' : 'GUARDAR PLANIFICACIÓN')}
           </button>
         </div>
       </div>
@@ -1334,22 +1340,22 @@ const Planificacion = () => {
               {mesocycles.map((meso, idx) => (
                 <div key={idx} className="plan-card" style={{ cursor: 'pointer' }} onClick={() => setSelectedMesoItem(meso.month)}>
                   <div className="plan-card-label" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <span><span className="plan-icon">📆</span> MES {meso.month.toUpperCase()}</span>
-                    <span className="plan-legend-chip chip-sesiones">{meso.micros.length} Semanas</span>
+                    <span><span className="plan-icon">📆</span> {isEn ? 'MONTH' : 'MES'} {getMonthI18n(meso.month).toUpperCase()}</span>
+                    <span className="plan-legend-chip chip-sesiones">{meso.micros.length} {isEn ? 'Weeks' : 'Semanas'}</span>
                   </div>
                   <div style={{ marginTop: '10px' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #e8e0d0', paddingBottom: '8px', marginBottom: '8px' }}>
-                      <span style={{ fontSize: 12, color: '#888', fontWeight: 600 }}>VOLUMEN TOTAL</span>
+                      <span style={{ fontSize: 12, color: '#888', fontWeight: 600 }}>{isEn ? 'TOTAL VOLUME' : 'VOLUMEN TOTAL'}</span>
                       <span style={{ fontSize: 14, color: 'var(--text-primary)', fontWeight: 800 }}>{meso.volume} min</span>
                     </div>
                     <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #e8e0d0', paddingBottom: '8px', marginBottom: '8px' }}>
-                      <span style={{ fontSize: 12, color: '#888', fontWeight: 600 }}>SESIONES</span>
+                      <span style={{ fontSize: 12, color: '#888', fontWeight: 600 }}>{isEn ? 'SESSIONS' : 'SESIONES'}</span>
                       <span style={{ fontSize: 14, color: 'var(--text-primary)', fontWeight: 800 }}>{meso.sessions}</span>
                     </div>
                     <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                      <span style={{ fontSize: 12, color: '#888', fontWeight: 600 }}>TIPO PREDOMINANTE</span>
+                      <span style={{ fontSize: 12, color: '#888', fontWeight: 600 }}>{isEn ? 'PREDOMINANT TYPE' : 'TIPO PREDOMINANTE'}</span>
                       <span className={`plan-metric-badge ${meso.carga >= meso.micros.length / 2 ? '' : 'chip-compet-badge'}`}>
-                        {meso.carga >= meso.micros.length / 2 ? 'CARGA' : 'COMPETICIÓN'}
+                        {meso.carga >= meso.micros.length / 2 ? (isEn ? 'LOAD' : 'CARGA') : (isEn ? 'COMPETITION' : 'COMPETICIÓN')}
                       </span>
                     </div>
                   </div>
@@ -1364,25 +1370,25 @@ const Planificacion = () => {
                   style={{ padding: '6px 12px', fontSize: 13, background: '#fff', border: '1px solid #ddd', borderRadius: 6, cursor: 'pointer', fontWeight: 600 }}
                   onClick={() => setSelectedMesoItem(null)}
                 >
-                  ← Volver a Mesociclos
+                  {isEn ? '← Back to Mesocycles' : '← Volver a Mesociclos'}
                 </button>
-                <h3 style={{ margin: 0, fontSize: 18, color: 'var(--text-primary)' }}>Detalle del Mes: {selectedMesoItem.toUpperCase()}</h3>
+                <h3 style={{ margin: 0, fontSize: 18, color: 'var(--text-primary)' }}>{isEn ? 'Month Detail: ' : 'Detalle del Mes: '}{getMonthI18n(selectedMesoItem).toUpperCase()}</h3>
                 <button 
                   className="btn-primary"
                   style={{ padding: '6px 12px', fontSize: 13, background: '#004B87', color: '#fff', border: 'none', borderRadius: 6, cursor: 'pointer', fontWeight: 600, marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '6px' }}
                   onClick={handleExportMonthlyPDF}
                 >
-                  📄 Exportar mes a PDF
+                  📄 {isEn ? 'Export month to PDF' : 'Exportar mes a PDF'}
                 </button>
               </div>
               <div className="plan-matrix-container" style={{ overflowX: 'auto', background: darkMode ? 'var(--bg-secondary)' : '#fff', padding: '16px', borderRadius: '12px', boxShadow: '0 4px 12px rgba(0,0,0,0.03)' }}>
                 <table className="plan-matrix-table" style={{ width: '100%', minWidth: '600px' }}>
                   <thead>
                     <tr>
-                      <th className="plan-msticky plan-mheader" style={{ width: '140px' }}>MES</th>
+                      <th className="plan-msticky plan-mheader" style={{ width: '140px' }}>{isEn ? 'MONTH' : 'MES'}</th>
                       {mesocycles.find(m => m.month === selectedMesoItem)?.micros.map(m => (
                         <th key={m.id} className="plan-mheader">
-                          <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--primary-color)' }}>{m.month.toUpperCase()}</span>
+                          <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--primary-color)' }}>{getMonthI18n(m.month).toUpperCase()}</span>
                         </th>
                       ))}
                     </tr>
@@ -1390,7 +1396,7 @@ const Planificacion = () => {
                   <tbody>
                     {/* PERÍODOS */}
                     <tr className="plan-mrow plan-mrow-alt">
-                      <td className="plan-msticky plan-mlabel-cell">PERÍODOS</td>
+                      <td className="plan-msticky plan-mlabel-cell">{isEn ? 'PERIODS' : 'PERÍODOS'}</td>
                       {mesocycles.find(m => m.month === selectedMesoItem)?.micros.map(m => (
                         <td key={m.id} className="plan-mcell">
                           <span style={{ fontSize: 12, fontWeight: 600, color: '#555' }}>{m.periodo}</span>
@@ -1399,14 +1405,14 @@ const Planificacion = () => {
                     </tr>
                     {/* Nº MICROCICLO */}
                     <tr className="plan-mrow">
-                      <td className="plan-msticky plan-mlabel-cell">Nº MICROCICLO</td>
+                      <td className="plan-msticky plan-mlabel-cell">{isEn ? 'MICROCYCLE NO.' : 'Nº MICROCICLO'}</td>
                       {mesocycles.find(m => m.month === selectedMesoItem)?.micros.map(m => (
                         <td key={m.id} className="plan-mcell plan-mcell-num">{m.id}</td>
                       ))}
                     </tr>
                     {/* TEST FÍSICO */}
                     <tr className="plan-mrow plan-mrow-fisio">
-                      <td className="plan-msticky plan-mlabel-cell">TEST FÍSICO</td>
+                      <td className="plan-msticky plan-mlabel-cell">{isEn ? 'PHYSICAL TEST' : 'TEST FÍSICO'}</td>
                       {mesocycles.find(m => m.month === selectedMesoItem)?.micros.map(m => (
                         <td key={m.id} className="plan-mcell">
                           <span className={`plan-check ${m.fisio ? 'plan-check-active' : ''}`}>{m.fisio ? '✓' : ''}</span>
@@ -1415,7 +1421,7 @@ const Planificacion = () => {
                     </tr>
                     {/* DINÁMICA CARGA */}
                     <tr className="plan-mrow plan-mrow-infl">
-                      <td className="plan-msticky plan-mlabel-cell">DINÁMICA CARGA</td>
+                      <td className="plan-msticky plan-mlabel-cell">{isEn ? 'LOAD DYNAMICS' : 'DINÁMICA CARGA'}</td>
                       {mesocycles.find(m => m.month === selectedMesoItem)?.micros.map(m => (
                         <td key={m.id} className="plan-mcell">
                           <span className={`plan-arrow-badge plan-arrow-${m.infl === '↗' ? 'up' : m.infl === '↘' ? 'down' : 'none'}`}>
@@ -1426,35 +1432,35 @@ const Planificacion = () => {
                     </tr>
                     {/* VOLUMEN (MIN) */}
                     <tr className="plan-mrow plan-mrow-activ">
-                      <td className="plan-msticky plan-mlabel-cell">VOLUMEN (MIN)</td>
+                      <td className="plan-msticky plan-mlabel-cell">{isEn ? 'VOLUME (MIN)' : 'VOLUMEN (MIN)'}</td>
                       {mesocycles.find(m => m.month === selectedMesoItem)?.micros.map(m => (
                         <td key={m.id} className="plan-mcell"><span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{m.volume}</span></td>
                       ))}
                     </tr>
                     {/* SESIONES */}
                     <tr className="plan-mrow">
-                      <td className="plan-msticky plan-mlabel-cell">SESIONES</td>
+                      <td className="plan-msticky plan-mlabel-cell">{isEn ? 'SESSIONS' : 'SESIONES'}</td>
                       {mesocycles.find(m => m.month === selectedMesoItem)?.micros.map(m => (
                         <td key={m.id} className="plan-mcell"><span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{m.sessions}</span></td>
                       ))}
                     </tr>
                     {/* % FÍSICO */}
                     <tr className="plan-mrow plan-mrow-fisic">
-                      <td className="plan-msticky plan-mlabel-cell">% FÍSICO</td>
+                      <td className="plan-msticky plan-mlabel-cell">{isEn ? '% PHYSICAL' : '% FÍSICO'}</td>
                       {mesocycles.find(m => m.month === selectedMesoItem)?.micros.map(m => (
                         <td key={m.id} className="plan-mcell"><span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{m.physical}</span></td>
                       ))}
                     </tr>
                     {/* % TÉCNICO */}
                     <tr className="plan-mrow plan-mrow-tecnico">
-                      <td className="plan-msticky plan-mlabel-cell">% TÉCNICO</td>
+                      <td className="plan-msticky plan-mlabel-cell">{isEn ? '% TECHNICAL' : '% TÉCNICO'}</td>
                       {mesocycles.find(m => m.month === selectedMesoItem)?.micros.map(m => (
                         <td key={m.id} className="plan-mcell"><span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{m.technical}</span></td>
                       ))}
                     </tr>
                     {/* % TÁCTICO */}
                     <tr className="plan-mrow plan-mrow-tactico">
-                      <td className="plan-msticky plan-mlabel-cell">% TÁCTICO</td>
+                      <td className="plan-msticky plan-mlabel-cell">{isEn ? '% TACTICAL' : '% TÁCTICO'}</td>
                       {mesocycles.find(m => m.month === selectedMesoItem)?.micros.map(m => (
                         <td key={m.id} className="plan-mcell"><span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{m.tactical}</span></td>
                       ))}
@@ -1471,7 +1477,7 @@ const Planificacion = () => {
       {activeTab === 'microciclo' && (
         <div className="plan-micro-tab">
           <div className="plan-card" style={{ marginBottom: 16, display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
-            <div className="plan-card-label"><span className="plan-icon">📅</span> SELECCIONAR SEMANA</div>
+            <div className="plan-card-label"><span className="plan-icon">📅</span> {isEn ? 'SELECT WEEK' : 'SELECCIONAR SEMANA'}</div>
             <select 
               className="plan-dur-input" 
               style={{ width: 'auto', minWidth: '160px' }}
@@ -1479,7 +1485,7 @@ const Planificacion = () => {
               onChange={e => setSelectedMicro(Number(e.target.value))}
             >
               {microcycles.map(mc => (
-                <option key={mc.id} value={mc.id}>Semana {mc.microciclo} - {mc.month} ({mc.periodo})</option>
+                <option key={mc.id} value={mc.id}>{isEn ? 'Week' : 'Semana'} {mc.microciclo} - {getMonthI18n(mc.month)} ({mc.periodo})</option>
               ))}
             </select>
             {microcycles.find(m => m.id === selectedMicro) && (
@@ -1491,23 +1497,23 @@ const Planificacion = () => {
           </div>
           
           <div className="plan-micro-week" style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-            {DAYS_LABELS.map((day, idx) => {
+            {localizedDays.map((day, idx) => {
               const currentMicro = microcycles.find(m => m.id === selectedMicro) || microcycles[0];
               const isTrainingDay = macroInfo.trainingDays.includes(idx);
               const activeMatchDay = currentMicro?.matchDayOfWeek ?? macroInfo.matchDayOfWeek ?? 5;
               const isMatchDay = idx === activeMatchDay;
               const isRestDay = !isTrainingDay && !isMatchDay;
               
-              let statusText = 'Descanso';
+              let statusText = isEn ? 'Rest' : 'Descanso';
               let statusColor = '#888';
               let statusBg = 'transparent';
               
               if (isMatchDay) {
-                statusText = '🏆 Día de Partido';
+                statusText = isEn ? '🏆 Match Day' : '🏆 Día de Partido';
                 statusColor = '#8C6D1F';
                 statusBg = '#FDF3DC';
               } else if (isTrainingDay) {
-                statusText = `Sesión (${macroInfo.sessionDuration} min)`;
+                statusText = isEn ? `Session (${macroInfo.sessionDuration} min)` : `Sesión (${macroInfo.sessionDuration} min)`;
                 statusColor = 'var(--text-primary)';
                 statusBg = '#E8F5EE';
               }
@@ -1524,15 +1530,15 @@ const Planificacion = () => {
                     <div style={{ display: 'flex', gap: 10 }}>
                       <div style={{ fontSize: 11, color: '#555', textAlign: 'center' }}>
                         <div style={{ fontWeight: 800, color: 'var(--text-primary)' }}>{currentMicro.physical}%</div>
-                        <div style={{ fontSize: 9 }}>Físico</div>
+                        <div style={{ fontSize: 9 }}>{isEn ? 'Physical' : 'Físico'}</div>
                       </div>
                       <div style={{ fontSize: 11, color: '#555', textAlign: 'center' }}>
                         <div style={{ fontWeight: 800, color: 'var(--text-primary)' }}>{currentMicro.technical}%</div>
-                        <div style={{ fontSize: 9 }}>Técnico</div>
+                        <div style={{ fontSize: 9 }}>{isEn ? 'Technical' : 'Técnico'}</div>
                       </div>
                       <div style={{ fontSize: 11, color: '#555', textAlign: 'center' }}>
                         <div style={{ fontWeight: 800, color: 'var(--text-primary)' }}>{currentMicro.tactical}%</div>
-                        <div style={{ fontSize: 9 }}>Táctico</div>
+                        <div style={{ fontSize: 9 }}>{isEn ? 'Tactical' : 'Táctico'}</div>
                       </div>
                     </div>
                   )}
@@ -1547,21 +1553,21 @@ const Planificacion = () => {
       {activeTab === 'objetivos' && (
         <div className="plan-objetivos-tab">
           <div className="plan-card" style={{ marginBottom: 16 }}>
-            <div className="plan-card-label"><span className="plan-icon">🎯</span> OBJETIVO GENERAL DE TEMPORADA</div>
+            <div className="plan-card-label"><span className="plan-icon">🎯</span> {isEn ? 'SEASON GENERAL OBJECTIVE' : 'OBJETIVO GENERAL DE TEMPORADA'}</div>
             <SpellCheckedTextarea
               className="plan-objetivo-textarea"
               style={{ minHeight: 120, border: '1px solid #e0d9cc', borderRadius: 8, padding: '10px 12px', background: '#fff', width: '100%', boxSizing: 'border-box' }}
               value={macroInfo.objective}
               onChange={e => setMacroInfo(p => ({ ...p, objective: e.target.value }))}
-              placeholder="Describe el objetivo principal de la temporada..."
+              placeholder={isEn ? 'Describe the main goal of the season...' : 'Describe el objetivo principal de la temporada...'}
             />
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
             {[
-              { icon: '💪', label: 'OBJETIVO FÍSICO', key: 'objFisico', placeholder: 'Mejorar la resistencia aeróbica y la velocidad de reacción...' },
-              { icon: '⚽', label: 'OBJETIVO TÉCNICO', key: 'objTecnico', placeholder: 'Mejorar el control y el pase en espacios reducidos...' },
-              { icon: '♟️', label: 'OBJETIVO TÁCTICO', key: 'objTactico', placeholder: 'Dominar la presión alta y la salida de balón...' },
-              { icon: '🧠', label: 'OBJETIVO MENTAL', key: 'objMental', placeholder: 'Desarrollar la concentración y el trabajo en equipo...' },
+              { icon: '💪', label: isEn ? 'PHYSICAL OBJECTIVE' : 'OBJETIVO FÍSICO', key: 'objFisico', placeholder: isEn ? 'Improve aerobic endurance and reaction speed...' : 'Mejorar la resistencia aeróbica y la velocidad de reacción...' },
+              { icon: '⚽', label: isEn ? 'TECHNICAL OBJECTIVE' : 'OBJETIVO TÉCNICO', key: 'objTecnico', placeholder: isEn ? 'Improve ball control and passing in tight spaces...' : 'Mejorar el control y el pase en espacios reducidos...' },
+              { icon: '♟️', label: isEn ? 'TACTICAL OBJECTIVE' : 'OBJETIVO TÁCTICO', key: 'objTactico', placeholder: isEn ? 'Master high pressing and build-up play...' : 'Dominar la presión alta y la salida de balón...' },
+              { icon: '🧠', label: isEn ? 'MENTAL OBJECTIVE' : 'OBJETIVO MENTAL', key: 'objMental', placeholder: isEn ? 'Develop focus and teamwork under pressure...' : 'Desarrollar la concentración y el trabajo en equipo...' },
             ].map(({ icon, label, key, placeholder }) => (
               <div key={key} className="plan-card">
                 <div className="plan-card-label"><span className="plan-icon">{icon}</span> {label}</div>
@@ -1583,11 +1589,14 @@ const Planificacion = () => {
           <div className="event-selector-modal" onClick={e => e.stopPropagation()} style={{ maxWidth: '460px', width: '92vw', padding: '24px', borderRadius: '16px' }}>
             <div style={{ fontSize: '32px', marginBottom: '8px' }}>🔄</div>
             <h3 style={{ margin: '0 0 12px', fontSize: '17px', fontWeight: 900, color: 'var(--text-primary)' }}>
-              ¿Reubicar días de entrenamiento?
+              {isEn ? 'Reschedule training days?' : '¿Reubicar días de entrenamiento?'}
             </h3>
             <p style={{ fontSize: '13px', color: 'var(--text-secondary)', lineHeight: 1.5, marginBottom: '16px' }}>
-              El día de partido seleccionado para esta semana es <strong>{DAYS_LABELS[microcycles.find(m => m.id === selectedMicro)?.matchDayOfWeek ?? macroInfo.matchDayOfWeek ?? 5]}</strong>. 
-              Al confirmar, los {macroInfo.trainingDays.length} días de entreno se ajustarán automáticamente para equilibrar la carga previa al encuentro competitivo.
+              {isEn ? (
+                <>The match day selected for this week is <strong>{localizedDays[microcycles.find(m => m.id === selectedMicro)?.matchDayOfWeek ?? macroInfo.matchDayOfWeek ?? 5]}</strong>. Upon confirmation, the {macroInfo.trainingDays.length} training days will be automatically adjusted to balance load before the match.</>
+              ) : (
+                <>El día de partido seleccionado para esta semana es <strong>{DAYS_LABELS[microcycles.find(m => m.id === selectedMicro)?.matchDayOfWeek ?? macroInfo.matchDayOfWeek ?? 5]}</strong>. Al confirmar, los {macroInfo.trainingDays.length} días de entreno se ajustarán automáticamente para equilibrar la carga previa al encuentro competitivo.</>
+              )}
             </p>
             <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
               <button
@@ -1595,7 +1604,7 @@ const Planificacion = () => {
                 onClick={() => setReubicateModal(false)}
                 style={{ padding: '8px 16px', borderRadius: '8px', border: '1px solid var(--partidos-border)', background: 'transparent', color: 'var(--text-primary)', cursor: 'pointer', fontWeight: 700 }}
               >
-                Cancelar
+                {isEn ? 'Cancel' : 'Cancelar'}
               </button>
               <button
                 type="button"
@@ -1613,11 +1622,11 @@ const Planificacion = () => {
                   newDays.sort((a, b) => a - b);
                   setMacroInfo(p => ({ ...p, trainingDays: newDays }));
                   setReubicateModal(false);
-                  showToast('✓ Entrenamientos reubicados en base a MD');
+                  showToast(isEn ? '✓ Trainings rescheduled based on MD' : '✓ Entrenamientos reubicados en base a MD');
                 }}
                 style={{ padding: '8px 20px', borderRadius: '8px', border: 'none', background: '#4CAF7D', color: '#FFFFFF', fontWeight: 900, cursor: 'pointer' }}
               >
-                Confirmar Reubicación
+                {isEn ? 'Confirm Reschedule' : 'Confirmar Reubicación'}
               </button>
             </div>
           </div>

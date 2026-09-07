@@ -305,6 +305,78 @@ const Tests = () => {
   const { players, loading: loadingPlayers } = usePlayers(activeTeamId);
   const { t: tr, isEn } = useTranslation();
   const { matches } = usePlayerSeasonStats(activeTeamId);
+
+  const getCategoryLabel = useCallback((cat) => {
+    if (!isEn || !cat) return cat;
+    const map = {
+      'Resistencia': 'Endurance',
+      'Velocidad': 'Speed',
+      'Agilidad': 'Agility',
+      'Fuerza': 'Strength',
+      'Técnica': 'Technique',
+      'Afrontamiento': 'Coping',
+      'Fortaleza Mental': 'Mental Toughness',
+      'Metas': 'Goals',
+      'Liderazgo': 'Leadership',
+      'Cohesión': 'Cohesion',
+      'Bienestar': 'Wellness',
+      'Autoconciencia': 'Self-Awareness',
+      'Empatía': 'Empathy',
+      'Conflictos': 'Conflicts',
+      'Evaluación': 'Evaluation'
+    };
+    return map[cat] || cat;
+  }, [isEn]);
+
+  const getTestDisplayName = useCallback((t) => {
+    if (!isEn || !t) return t?.name || '';
+    const map = {
+      'Test de Cooper': 'Cooper Test',
+      'Course Navette': 'Beep Test (Course Navette)',
+      'Sprint 10m': '10m Sprint',
+      'Sprint 30m': '30m Sprint',
+      'T-Test': 'T-Test',
+      'Salto CMJ': 'CMJ Jump',
+      'Conducción conos': 'Cone Dribbling',
+      'Pase a portería': 'Target Passing',
+      'Inventario de Habilidades de Afrontamiento (ACSI-28)': 'Coping Skills Inventory (ACSI-28)',
+      'Cuestionario de Fortaleza Mental (MTQ-10)': 'Mental Toughness Questionnaire (MTQ-10)',
+      'Escala de Establecimiento de Metas': 'Goal Setting Scale',
+      'Inventario de Liderazgo y Comunicación': 'Leadership & Communication Inventory',
+      'Cuestionario de Cohesión de Equipo (GEQ)': 'Group Environment Questionnaire (GEQ)',
+      'Escala de Bienestar Mental (MHC-SF)': 'Mental Health Continuum (MHC-SF)',
+      'Test de Autoconciencia Emocional': 'Emotional Self-Awareness Test',
+      'Escala de Empatía Deportiva': 'Sports Empathy Scale',
+      'Cuestionario de Resolución de Conflictos': 'Conflict Resolution Questionnaire',
+      'ACSI-28 (Habilidades de Afrontamiento)': 'ACSI-28 (Athletic Coping Skills)'
+    };
+    return map[t.name] || t.name;
+  }, [isEn]);
+
+  const getTestDisplayDesc = useCallback((t) => {
+    if (!isEn || !t) return t?.desc || '';
+    const map = {
+      'Distancia recorrida en 12 minutos.': 'Distance covered in 12 minutes.',
+      'Carrera de ida y vuelta de 20m con pitidos.': '20m shuttle run with acoustic beeps.',
+      'Aceleración en distancia corta.': 'Short-distance acceleration.',
+      'Velocidad máxima lanzada.': 'Maximum flying speed.',
+      'Desplazamientos frontales, laterales y de espaldas.': 'Forward, lateral, and backpedal movements.',
+      'Salto vertical con contramovimiento.': 'Vertical countermovement jump.',
+      'Slalom entre conos con finalización.': 'Slalom through cones with target pass.',
+      'Precisión de pase a zonas objetivo (10 pases).': 'Passing accuracy to target zones (10 passes).',
+      'Evalúa cómo el jugador maneja la presión y la adversidad': 'Evaluates how the player handles pressure and adversity',
+      'Mide la capacidad de perseverar bajo presión': 'Measures ability to persevere under pressure',
+      'Evalúa capacidad de fijar y perseguir objetivos': 'Evaluates goal-setting and achievement capacity',
+      'Mide habilidades de liderazgo y comunicación': 'Measures leadership and communication skills',
+      'Evalúa la unión del grupo': 'Evaluates team cohesion and unity',
+      'Evalúa bienestar emocional, psicológico y social': 'Evaluates emotional, psychological, and social well-being',
+      'Capacidad de reconocer y nombrar emociones propias': 'Ability to recognize and name personal emotions',
+      'Capacidad de comprender emociones de compañeros': 'Ability to understand teammates’ emotions',
+      'Habilidad para manejar desacuerdos constructivamente': 'Skill to manage disagreements constructively',
+      'Evalúa cómo maneja la presión, se concentra y se comunica.': 'Evaluates handling pressure, concentration, and communication.'
+    };
+    return map[t.desc] || t.desc;
+  }, [isEn]);
   const effectiveTeamPath = getTeamPath ? getTeamPath(activeTeamId) : (activeTeam ? (activeTeam.clubId ? `clubs/${activeTeam.clubId}/teams/${activeTeamId}` : `users/${user?.uid}/teams/${activeTeamId}`) : '');
   const [historyData, setHistoryData] = useState({});
   const [activeTab, setActiveTab] = useState('FÍSICOS');
@@ -1115,7 +1187,7 @@ const Tests = () => {
 
       <header className="tests-header">
         <div className="header-top">
-          <h1>EVALUACIÓN Y TESTS</h1>
+          <h1>{isEn ? 'EVALUATION & TESTS' : 'EVALUACIÓN Y TESTS'}</h1>
           <div className="tests-page-actions">
             <button
               className="btn-outline"
@@ -1133,40 +1205,40 @@ const Tests = () => {
               }}
               onClick={handleResetSeasonData}
               disabled={loading}
-              title="Elimina todos los datos de evaluaciones de los jugadores para iniciar una nueva temporada"
+              title={isEn ? 'Deletes all player evaluation data to start a new season' : 'Elimina todos los datos de evaluaciones de los jugadores para iniciar una nueva temporada'}
             >
-              🗑️ Reiniciar Temporada
+              {isEn ? '🗑️ Reset Season' : '🗑️ Reiniciar Temporada'}
             </button>
             <button
               className="btn-outline"
               onClick={seedDemoEvaluations}
               disabled={loading}
-              title="Inserta evaluaciones ficticias para ver cómo funcionan las gráficas"
+              title={isEn ? 'Inserts mock evaluations to preview chart functionality' : 'Inserta evaluaciones ficticias para ver cómo funcionan las gráficas'}
             >
-              🎯 Datos Demo
+              {isEn ? '🎯 Demo Data' : '🎯 Datos Demo'}
             </button>
             <button 
               className="btn-outline" 
               onClick={() => {
                 if (!isPro) {
-                  setUpgradeModal({ open: true, message: 'La exportación de informes completos es una función PRO.' });
+                  setUpgradeModal({ open: true, message: isEn ? 'Exporting complete reports is a PRO feature.' : 'La exportación de informes completos es una función PRO.' });
                   return;
                 }
                 generateTestsReport(tests, players, historyData, activeTeam);
               }}
             >
-              Exportar Informe
+              {isEn ? 'Export Report' : 'Exportar Informe'}
             </button>
           </div>
         </div>
 
         <div className="tests-tabs">
           {[
-            { key: 'FÍSICOS',                labelKey: 'tests.tab.fisicos',      fallback: 'Tests Físicos' },
-            { key: 'PSICOSOCIALES',          labelKey: 'tests.tab.psicosociales', fallback: 'Psicosociales' },
-            { key: 'PREVENCIÓN',            labelKey: 'tests.tab.prevencion',    fallback: 'Prevención y Salud' },
-            { key: 'HISTORIAL POR JUGADOR',  labelKey: 'tests.tab.historial',     fallback: 'Historial' },
-            { key: 'COMPARATIVA EQUIPO',     labelKey: 'tests.tab.comparativa',   fallback: 'Comparativa' },
+            { key: 'FÍSICOS',                labelKey: 'tests.tab.fisicos',      fallback: isEn ? 'Physical Tests' : 'Tests Físicos' },
+            { key: 'PSICOSOCIALES',          labelKey: 'tests.tab.psicosociales', fallback: isEn ? 'Psychosocial' : 'Psicosociales' },
+            { key: 'PREVENCIÓN',            labelKey: 'tests.tab.prevencion',    fallback: isEn ? 'Prevention & Health' : 'Prevención y Salud' },
+            { key: 'HISTORIAL POR JUGADOR',  labelKey: 'tests.tab.historial',     fallback: isEn ? 'History' : 'Historial' },
+            { key: 'COMPARATIVA EQUIPO',     labelKey: 'tests.tab.comparativa',   fallback: isEn ? 'Comparison' : 'Comparativa' },
           ].map(tab => (
             <button 
               key={tab.key} 
@@ -1200,7 +1272,7 @@ const Tests = () => {
                     {!imageErrors[t.id] ? (
                       <img
                         src={resolveTestImage(t)}
-                        alt={t.name}
+                        alt={getTestDisplayName(t)}
                         style={{ width: '100%', height: '100%', objectFit: 'contain', objectPosition: 'center', padding: '10px' }}
                         onError={() => setImageErrors(prev => ({ ...prev, [t.id]: true }))}
                       />
@@ -1221,23 +1293,23 @@ const Tests = () => {
                       }}>
                         <span style={{ fontSize: '32px' }}>🧠</span>
                         <span style={{ fontSize: '13px', fontWeight: '800', color: 'var(--accent-gold, #D4A843)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                          {t.category || 'Evaluación'}
+                          {getCategoryLabel(t.category) || (isEn ? 'Evaluation' : 'Evaluación')}
                         </span>
                         <span style={{ fontSize: '11px', color: 'rgba(255,255,255,0.85)', fontWeight: '600' }}>
-                          {t.name}
+                          {getTestDisplayName(t)}
                         </span>
                       </div>
                     )}
 
                     <div style={{ position: 'absolute', top: '12px', left: '12px', display: 'flex', gap: '8px' }}>
-                      <span style={{ background: 'var(--accent-green)', color: '#FFF', padding: '4px 8px', borderRadius: '4px', fontSize: '10px', fontWeight: 'bold', textTransform: 'uppercase' }}>{t.category}</span>
-                      <span style={{ background: 'var(--bg-card)', color: 'var(--text-primary)', border: '1px solid var(--border-light)', padding: '4px 8px', borderRadius: '4px', fontSize: '10px', fontWeight: 'bold' }}>Medida: {t.unit}</span>
+                      <span style={{ background: 'var(--accent-green)', color: '#FFF', padding: '4px 8px', borderRadius: '4px', fontSize: '10px', fontWeight: 'bold', textTransform: 'uppercase' }}>{getCategoryLabel(t.category)}</span>
+                      <span style={{ background: 'var(--bg-card)', color: 'var(--text-primary)', border: '1px solid var(--border-light)', padding: '4px 8px', borderRadius: '4px', fontSize: '10px', fontWeight: 'bold' }}>{isEn ? 'Metric: ' : 'Medida: '}{t.unit}</span>
                     </div>
                   </div>
                   
                   <div style={{ padding: '20px', flex: 1, display: 'flex', flexDirection: 'column' }}>
-                    <h4 style={{ margin: '0 0 8px 0', fontSize: '18px', fontFamily: 'var(--font-heading)', color: 'var(--text-primary)' }}>{t.name}</h4>
-                    <p style={{ margin: '0 0 20px 0', fontSize: '13px', color: 'var(--text-secondary)', lineHeight: '1.5', flex: 1 }}>{t.desc}</p>
+                    <h4 style={{ margin: '0 0 8px 0', fontSize: '18px', fontFamily: 'var(--font-heading)', color: 'var(--text-primary)' }}>{getTestDisplayName(t)}</h4>
+                    <p style={{ margin: '0 0 20px 0', fontSize: '13px', color: 'var(--text-secondary)', lineHeight: '1.5', flex: 1 }}>{getTestDisplayDesc(t)}</p>
                     
                     <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
                       <button 
@@ -1254,7 +1326,7 @@ const Tests = () => {
                           }
                         }}
                       >
-                        REGISTRAR
+                        {isEn ? 'RECORD' : 'REGISTRAR'}
                       </button>
                       <button 
                         className="btn-outline" 
@@ -1264,7 +1336,7 @@ const Tests = () => {
                           descargarPlantilla(t, players);
                         }}
                       >
-                        📥 PLANTILLA
+                        📥 {isEn ? 'TEMPLATE' : 'PLANTILLA'}
                       </button>
                     </div>
                   </div>
@@ -1279,9 +1351,9 @@ const Tests = () => {
           <div className="tab-prevencion">
             <div className="prevencion-section-header">
               <div>
-                <h3>🛡️ Autoevaluación y Prevención</h3>
+                <h3>🛡️ {isEn ? 'Self-Assessment & Prevention' : 'Autoevaluación y Prevención'}</h3>
               </div>
-              <p>Registra métricas de bienestar y esfuerzo percibido para prevenir sobrecargas.</p>
+              <p>{isEn ? 'Record wellness and perceived exertion metrics to prevent fatigue and overload.' : 'Registra métricas de bienestar y esfuerzo percibido para prevenir sobrecargas.'}</p>
             </div>
             <div className="prevencion-grid">
               {players.map(p => {
@@ -1307,7 +1379,7 @@ const Tests = () => {
                         className="btn-prev-wellness"
                         onClick={() => { setSelectedPlayerForTest(p); setIsWellnessModalOpen(true); }}
                       >
-                        🌿 Bienestar
+                        🌿 {isEn ? 'Wellness' : 'Bienestar'}
                       </button>
                       <button
                         className="btn-prev-rpe"
@@ -1327,7 +1399,7 @@ const Tests = () => {
         {activeTab === 'HISTORIAL POR JUGADOR' && (
           <div className="tab-historial">
             <div className="hist-sidebar">
-              <h3>Seleccionar Jugador</h3>
+              <h3>{isEn ? 'Select Player' : 'Seleccionar Jugador'}</h3>
               <div className="player-selector">
                 {players.map((p, idx) => (
                   <div 
@@ -1366,7 +1438,7 @@ const Tests = () => {
                     }}
                     onClick={() => setAnalyticsPlayer(getPlayerById(histSelectedPlayer))}
                   >
-                    📊 Ver Analíticas
+                    📊 {isEn ? 'View Analytics' : 'Ver Analíticas'}
                   </button>
                   <div style={{ marginTop: 24, display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '16px 0', borderTop: '1px dashed var(--border-color)' }}>
                     <svg width="80" height="80" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -1377,17 +1449,17 @@ const Tests = () => {
                       <path d="M3 10L10 5L15 8L21 2" stroke="#1B3A2D" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                       <path d="M17 2H21V6" stroke="#1B3A2D" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                     </svg>
-                    <span style={{ fontSize: 13, fontWeight: 800, color: 'var(--text-primary)', marginTop: 8, textTransform: 'uppercase', letterSpacing: 0.5 }}>Ver Analíticas</span>
+                    <span style={{ fontSize: 13, fontWeight: 800, color: 'var(--text-primary)', marginTop: 8, textTransform: 'uppercase', letterSpacing: 0.5 }}>{isEn ? 'View Analytics' : 'Ver Analíticas'}</span>
                   </div>
                 </>
               )}
             </div>
             <div className="hist-main">
               <div className="hist-main-header">
-                <h3>Evolución: {getPlayerById(histSelectedPlayer)?.name}</h3>
+                <h3>{isEn ? 'Progress: ' : 'Evolución: '}{getPlayerById(histSelectedPlayer)?.name}</h3>
                 <button className="btn-outline-gold" onClick={async () => {
                   if (!isPro) {
-                    setUpgradeModal({ open: true, message: 'La exportación de informes individuales es una función PRO.' });
+                    setUpgradeModal({ open: true, message: isEn ? 'Exporting individual reports is a PRO feature.' : 'La exportación de informes individuales es una función PRO.' });
                     return;
                   }
                   try {
@@ -1401,10 +1473,10 @@ const Tests = () => {
                     await generatePlayerTestReport(getPlayerById(histSelectedPlayer), tests, historyData, activeTeam, graficaUrl);
                   } catch (e) {
                     console.error(e);
-                    await showAlert("Error", "Error al generar el PDF.");
+                    await showAlert("Error", isEn ? "Error generating PDF." : "Error al generar el PDF.");
                   }
                 }}>
-                  📄 Exportar Informe del Jugador
+                  📄 {isEn ? 'Export Player Report' : 'Exportar Informe del Jugador'}
                 </button>
               </div>
               
@@ -1435,6 +1507,19 @@ const Tests = () => {
                   matchRating: effectiveRating
                 });
                 const { fis, tec, psi, soc, tactica, asistencia, overall, testCount, stats4: stats, radarData5: radarData } = scores;
+
+                const radarLabelMap = {
+                  'FÍSICO': 'PHYSICAL',
+                  'TÉCNICA': 'TECHNICAL',
+                  'TÁCTICA': 'TACTICAL',
+                  'MENTAL': 'MENTAL',
+                  'ASISTENCIA': 'ATTENDANCE'
+                };
+                const localizedRadarData = (radarData || []).map(d => ({
+                  ...d,
+                  subject: isEn ? (radarLabelMap[d.subject] || d.subject) : d.subject,
+                  label: isEn ? (radarLabelMap[d.label] || d.label) : d.label
+                }));
 
                 return (
                   <div id="grafica-rendimiento-jugador" style={{ display: 'flex', flexWrap: 'wrap', gap: 24, alignItems: 'stretch', marginBottom: 24 }}>
@@ -1502,13 +1587,13 @@ const Tests = () => {
                       {/* Performance Profile / Radar Chart */}
                       <div style={{ zIndex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', minWidth: 0, width: '100%', maxWidth: '380px' }}>
                         <span style={{ fontSize: 12, fontWeight: 800, letterSpacing: 2, color: 'var(--text-primary, #1B3A2D)', marginBottom: '16px', textTransform: 'uppercase' }}>
-                          PERFIL DE RENDIMIENTO
+                          {isEn ? 'PERFORMANCE PROFILE' : 'PERFIL DE RENDIMIENTO'}
                         </span>
-                        {radarData && radarData.length > 0 ? (
+                        {localizedRadarData && localizedRadarData.length > 0 ? (
                           <>
-                            <SvgRadar data={radarData} size={230} />
+                            <SvgRadar data={localizedRadarData} size={230} />
                             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', justifyContent: 'center', marginTop: '12px', maxWidth: '320px' }}>
-                              {radarData.map((d, i) => (
+                              {localizedRadarData.map((d, i) => (
                                 <span key={i} style={{
                                   fontSize: '11px',
                                   fontWeight: '800',
@@ -1526,7 +1611,9 @@ const Tests = () => {
                         ) : (
                           <div style={{ textAlign: 'center', color: '#1B3A2D', opacity: 0.8 }}>
                             <div style={{ fontSize: 48, filter: 'grayscale(1)' }}>📊</div>
-                            <p style={{ fontSize: 14, marginTop: 8, fontWeight: 600, color: 'var(--text-secondary)' }}>Sin evaluaciones.<br />Registra datos para ver el radar.</p>
+                            <p style={{ fontSize: 14, marginTop: 8, fontWeight: 600, color: 'var(--text-secondary)' }}>
+                              {isEn ? <>No evaluations.<br />Record data to view radar.</> : <>Sin evaluaciones.<br />Registra datos para ver el radar.</>}
+                            </p>
                           </div>
                         )}
                       </div>
@@ -1558,7 +1645,7 @@ const Tests = () => {
                             }}
                             onClick={() => setAnalyticsPlayer(getPlayerById(histSelectedPlayer))}
                           >
-                            📈 Ver Analíticas Completas
+                            📈 {isEn ? 'View Full Analytics' : 'Ver Analíticas Completas'}
                           </button>
                           
                           <button
@@ -1572,7 +1659,7 @@ const Tests = () => {
                             }}
                             onClick={async () => {
                               if (!isProActive) {
-                                setUpgradeModal({ open: true, message: 'La exportación de informes individuales es una función PRO. Sube de nivel para usarla.' });
+                                setUpgradeModal({ open: true, message: isEn ? 'Exporting individual reports is a PRO feature. Upgrade to use it.' : 'La exportación de informes individuales es una función PRO. Sube de nivel para usarla.' });
                                 return;
                               }
                               try {
@@ -1586,11 +1673,11 @@ const Tests = () => {
                                 await generatePlayerTestReport(getPlayerById(histSelectedPlayer), tests, historyData, activeTeam, graficaUrl);
                               } catch (e) {
                                 console.error(e);
-                                await showAlert("Error", "Error al generar el PDF.");
+                                await showAlert("Error", isEn ? "Error generating PDF." : "Error al generar el PDF.");
                               }
                             }}
                           >
-                            📄 Resumen Técnico
+                            📄 {isEn ? 'Technical Summary' : 'Resumen Técnico'}
                           </button>
 
                           <button
@@ -1610,9 +1697,9 @@ const Tests = () => {
                               gap: 6
                             }}
                             onClick={() => handleResetPlayerTests(histSelectedPlayer)}
-                            title="Renovar cuestionarios y limpiar evaluaciones anteriores para una nueva prueba limpia"
+                            title={isEn ? "Reset questionnaires and clear prior evaluations for a fresh test" : "Renovar cuestionarios y limpiar evaluaciones anteriores para una nueva prueba limpia"}
                           >
-                            🔄 Renovar Cuestionarios y Tests
+                            🔄 {isEn ? 'Reset Questionnaires & Tests' : 'Renovar Cuestionarios y Tests'}
                           </button>
                         </div>
                       </div>
@@ -1628,7 +1715,7 @@ const Tests = () => {
                           <path d="M12 6.5 L12.5 8 L14 8.2 L12.8 9.3 L13.2 10.8 L12 9.8 L10.8 10.8 L11.2 9.3 L10 8.2 L11.5 8 Z" fill="#FFF" />
                         </svg>
                         <span style={{ fontSize: 11, fontWeight: 800, color: 'var(--text-primary, #1B3A2D)', textTransform: 'uppercase', letterSpacing: 0.5 }}>
-                          Medalla de Rendimiento
+                          {isEn ? 'Performance Medal' : 'Medalla de Rendimiento'}
                         </span>
                       </div>
 
@@ -1682,7 +1769,7 @@ const Tests = () => {
                             </span>
                           ) : (
                             <span className="trend-arrow neutral" style={{ color: 'var(--text-secondary)', background: 'var(--bg-secondary)' }}>
-                              Último: {last}
+                              {isEn ? 'Latest: ' : 'Último: '}{last}
                             </span>
                           )}
                         </div>
@@ -1733,9 +1820,9 @@ const Tests = () => {
                               transition: 'all 0.2s'
                             }}
                             onClick={() => handleDeleteLastEval(histSelectedPlayer, t.id)}
-                            title="Eliminar la última marca registrada por error"
+                            title={isEn ? "Delete the last recorded score entered by mistake" : "Eliminar la última marca registrada por error"}
                           >
-                            🗑️ Borrar Último
+                            🗑️ {isEn ? 'Delete Latest' : 'Borrar Último'}
                           </button>
                           <button
                             className="btn-outline"
@@ -1756,9 +1843,9 @@ const Tests = () => {
                               transition: 'all 0.2s'
                             }}
                             onClick={() => handleDeleteAllEvals(histSelectedPlayer, t.id)}
-                            title="Eliminar todo el historial de este test para este jugador"
+                            title={isEn ? "Delete all history for this test and player" : "Eliminar todo el historial de este test para este jugador"}
                           >
-                            🗑️ Borrar Historial
+                            🗑️ {isEn ? 'Delete History' : 'Borrar Historial'}
                           </button>
                         </div>
                         <button
@@ -1780,7 +1867,7 @@ const Tests = () => {
                               downloadAnchor.remove();
                             } catch (error) {
                               console.error("Error al exportar gráfico:", error);
-                              alert("Error al exportar gráfico a imagen.");
+                              alert(isEn ? "Error exporting chart to image." : "Error al exportar gráfico a imagen.");
                             }
                           }}
                           style={{
@@ -1802,7 +1889,7 @@ const Tests = () => {
                             gap: '6px'
                           }}
                         >
-                          🖼️ Exportar Gráfico (PNG)
+                          🖼️ {isEn ? 'Export Chart (PNG)' : 'Exportar Gráfico (PNG)'}
                         </button>
                       </div>
                     );
@@ -1820,15 +1907,15 @@ const Tests = () => {
             <div className="comp-main-col">
               {/* Título descriptivo */}
               <div className="comp-title-bar">
-                Versiones de Mejora Individuales de la Planificación Estratégica (Basado en la Referencia)
+                {isEn ? 'Individual Improvement Versions of Strategic Planning (Based on Benchmark)' : 'Versiones de Mejora Individuales de la Planificación Estratégica (Basado en la Referencia)'}
               </div>
 
               {/* Controles */}
               <div className="comp-controls-row">
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <label>Test a analizar:</label>
+                  <label>{isEn ? 'Test to analyze:' : 'Test a analizar:'}</label>
                   <select value={heatSelectedTest} onChange={e => setHeatSelectedTest(e.target.value)}>
-                    {tests.map(t => <option key={t.id} value={t.id}>{t.name} ({t.unit})</option>)}
+                    {tests.map(t => <option key={t.id} value={t.id}>{getTestDisplayName(t)} ({t.unit})</option>)}
                   </select>
                 </div>
                 <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
@@ -1837,7 +1924,7 @@ const Tests = () => {
                     style={{ minHeight: '44px', display: 'flex', alignItems: 'center', gap: '6px' }}
                     onClick={() => {
                       if (!isProActive) {
-                        setUpgradeModal({ open: true, message: 'La exportación de informes en CSV es una función PRO. Sube de nivel para usarla.' });
+                        setUpgradeModal({ open: true, message: isEn ? 'Exporting CSV reports is a PRO feature. Upgrade to use it.' : 'La exportación de informes en CSV es una función PRO. Sube de nivel para usarla.' });
                         return;
                       }
                       const testInfo = getTestById(heatSelectedTest);
@@ -1873,37 +1960,37 @@ const Tests = () => {
                       downloadCSV(csv, `comparativa_${testInfo.name.replace(/\s+/g,'_')}.csv`);
                     }}
                   >
-                    📊 Exportar CSV
+                    📊 {isEn ? 'Export CSV' : 'Exportar CSV'}
                   </button>
                   <button 
                     className="btn-outline-gold" 
                     onClick={() => {
                       if (!isProActive) {
-                        setUpgradeModal({ open: true, message: 'La exportación de informes colectivos es una función PRO. Sube de nivel para usarla.' });
+                        setUpgradeModal({ open: true, message: isEn ? 'Exporting team reports is a PRO feature. Upgrade to use it.' : 'La exportación de informes colectivos es una función PRO. Sube de nivel para usarla.' });
                       } else {
                         generateTestsReport(tests, players, historyData, activeTeam);
                       }
                     }}
                   >
-                    📄 Exportar Informe Colectivo
+                    📄 {isEn ? 'Export Team Report' : 'Exportar Informe Colectivo'}
                   </button>
                 </div>
               </div>
 
-              {/* PLANNINGA MATRIX */}
+              {/* PLANNING MATRIX */}
               <div>
-                <div className="matrix-label-row">PLANNINGA MATRIX</div>
+                <div className="matrix-label-row">{isEn ? 'PLANNING MATRIX' : 'PLANNINGA MATRIX'}</div>
                 <div className="matrix-container">
                   <table className="matrix-table">
                     <thead>
                       <tr>
-                        <th>Dorsal</th>
-                        <th style={{ textAlign: 'left' }}>Jugador</th>
-                        <th>Eval Inicial</th>
+                        <th>{isEn ? 'Number' : 'Dorsal'}</th>
+                        <th style={{ textAlign: 'left' }}>{isEn ? 'Player' : 'Jugador'}</th>
+                        <th>{isEn ? 'Initial Eval' : 'Eval Inicial'}</th>
                         <th>✓</th><th>✓</th><th>✓</th><th>✓</th><th>✓</th><th>✓</th>
-                        <th>Penúltima Eval</th>
-                        <th>Última Eval</th>
-                        <th>Evolución</th>
+                        <th>{isEn ? 'Previous Eval' : 'Penúltima Eval'}</th>
+                        <th>{isEn ? 'Latest Eval' : 'Última Eval'}</th>
+                        <th>{isEn ? 'Progress' : 'Evolución'}</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -1976,11 +2063,11 @@ const Tests = () => {
                 const testInfo = getTestById(heatSelectedTest);
                 return (
                   <div className="comp-season-footer">
-                    <strong>VOLUMEN TOTAL TEMPORADA</strong>
+                    <strong>{isEn ? 'TOTAL SEASON VOLUME' : 'VOLUMEN TOTAL TEMPORADA'}</strong>
                     <p>
-                      Evaluaciones registradas: <strong>{allVals.length}</strong> &nbsp;·&nbsp;
-                      Media general: <strong>{(total / allVals.length).toFixed(1)} {testInfo?.unit}</strong> &nbsp;·&nbsp;
-                      Total acumulado: <strong>{total.toFixed(1)}</strong>
+                      {isEn ? 'Registered evaluations: ' : 'Evaluaciones registradas: '}<strong>{allVals.length}</strong> &nbsp;·&nbsp;
+                      {isEn ? 'Overall mean: ' : 'Media general: '}<strong>{(total / allVals.length).toFixed(1)} {testInfo?.unit}</strong> &nbsp;·&nbsp;
+                      {isEn ? 'Cumulative total: ' : 'Total acumulado: '}<strong>{total.toFixed(1)}</strong>
                     </p>
                   </div>
                 );

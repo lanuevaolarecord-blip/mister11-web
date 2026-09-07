@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from '../hooks/useTranslation';
 import './LegendCard.css';
 
 const RunningSvg = () => (
@@ -36,21 +37,26 @@ const ShieldSvg = () => (
 );
 
 const LegendCard = ({ player, stats, overall, position, streak, type = "gold" }) => {
+  const { isEn } = useTranslation();
   const renderStats = () => {
     if (!stats || stats.length === 0) return null;
     return (
       <div className="card-stats-grid-new">
-        {stats.map((s, idx) => (
-          <div key={idx} className="stat-pill-btn">
-            <span className="stat-pill-label">{s.label} {s.value}</span>
-            <span className="stat-pill-icon">
-              {s.label === 'FÍS' && <RunningSvg />}
-              {s.label === 'TÉC' && <TrophySvg />}
-              {s.label === 'PSI' && <BrainSvg />}
-              {s.label === 'SOC' && <BallSvg />}
-            </span>
-          </div>
-        ))}
+        {stats.map((s, idx) => {
+          const labelEn = s.label === 'FÍS' ? 'PHY' : s.label === 'TÉC' ? 'TEC' : s.label === 'PSI' ? 'PSY' : s.label === 'SOC' ? 'SOC' : s.label;
+          const displayLabel = isEn ? (s.labelEn || labelEn) : s.label;
+          return (
+            <div key={idx} className="stat-pill-btn">
+              <span className="stat-pill-label">{displayLabel} {s.value}</span>
+              <span className="stat-pill-icon">
+                {(s.label === 'FÍS' || s.label === 'PHY') && <RunningSvg />}
+                {(s.label === 'TÉC' || s.label === 'TEC') && <TrophySvg />}
+                {(s.label === 'PSI' || s.label === 'PSY') && <BrainSvg />}
+                {(s.label === 'SOC') && <BallSvg />}
+              </span>
+            </div>
+          );
+        })}
       </div>
     );
   };
@@ -71,7 +77,7 @@ const LegendCard = ({ player, stats, overall, position, streak, type = "gold" })
               {(() => {
                 const photoSrc = player?.avatarUrl || player?.photoPreview || player?.photo || player?.foto || player?.imageUrl || player?.avatar;
                 if (photoSrc) {
-                  return <img src={photoSrc} alt={player?.name || 'Jugador'} className="card-avatar-img" crossOrigin="anonymous" />;
+                  return <img src={photoSrc} alt={player?.name || (isEn ? 'Player' : 'Jugador')} className="card-avatar-img" crossOrigin="anonymous" />;
                 }
                 return <span className="avatar-placeholder">{player?.name?.charAt(0).toUpperCase() || 'P'}</span>;
               })()}
@@ -98,7 +104,7 @@ const LegendCard = ({ player, stats, overall, position, streak, type = "gold" })
               </div>
             </div>
             <div className="streak-info">
-              <span>🔥 Racha: {streak || 0} tests</span>
+              <span>🔥 {isEn ? 'Streak:' : 'Racha:'} {streak || 0} tests</span>
               <span>✅</span>
             </div>
           </div>

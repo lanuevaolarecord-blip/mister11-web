@@ -1,5 +1,6 @@
 import React, { useState, useMemo, useRef, useCallback } from 'react';
 import { Flame, Maximize2, Minimize2, Eye } from 'lucide-react';
+import { useTranslation } from '../../hooks/useTranslation';
 
 // ── Mapa semántico: tipo de evento → zona estimada (0–100) ──────────────────
 const ZONE_MAP = {
@@ -42,6 +43,7 @@ export const HeatMap = ({
   onSelectPlayer,
   teamName = 'Local'
 }) => {
+  const { isEn } = useTranslation();
   const [hoveredCell, setHoveredCell] = useState(null);
   const [activeTab, setActiveTab] = useState('density');
   const [isFullscreen, setIsFullscreen] = useState(false);
@@ -153,22 +155,26 @@ export const HeatMap = ({
       <div className="heat-map-header" style={{ flexShrink: 0, marginBottom: isFullscreen ? '8px' : '16px' }}>
         <div className="heat-map-title">
           <Flame size={20} className="flame-icon" />
-          <h3>Mapa de Calor Táctico ({teamName})</h3>
+          <h3>{isEn ? `Tactical Heat Map (${teamName})` : `Mapa de Calor Táctico (${teamName})`}</h3>
         </div>
 
         <div className="heat-map-controls">
           <div className="heat-mode-pills">
-            {[{key:'density',label:'Actividad General'},{key:'passes',label:'Pases'},{key:'shots',label:'Tiros'}].map(({key,label})=>(
-              <button key={key} type="button" className={`mode-pill ${activeTab===key?'active':''}`} onClick={()=>setActiveTab(key)}>{label}</button>
+            {[
+              { key: 'density', label: isEn ? 'Overall Activity' : 'Actividad General' },
+              { key: 'passes', label: isEn ? 'Passes' : 'Pases' },
+              { key: 'shots', label: isEn ? 'Shots' : 'Tiros' }
+            ].map(({ key, label }) => (
+              <button key={key} type="button" className={`mode-pill ${activeTab === key ? 'active' : ''}`} onClick={() => setActiveTab(key)}>{label}</button>
             ))}
           </div>
 
           {players.length > 0 && (
             <div className="player-filter-select-wrapper">
-              <select value={selectedPlayerId} onChange={e=>onSelectPlayer&&onSelectPlayer(e.target.value)} className="player-filter-select">
-                <option value="all">Todo el equipo ({teamName})</option>
-                {players.map(p=>(
-                  <option key={p.id} value={p.id}>#{p.dorsal||p.number||'•'} {p.nombre||p.name||'Jugador'}</option>
+              <select value={selectedPlayerId} onChange={e => onSelectPlayer && onSelectPlayer(e.target.value)} className="player-filter-select">
+                <option value="all">{isEn ? `Whole Team (${teamName})` : `Todo el equipo (${teamName})`}</option>
+                {players.map(p => (
+                  <option key={p.id} value={p.id}>#{p.dorsal || p.number || '•'} {p.nombre || p.name || (isEn ? 'Player' : 'Jugador')}</option>
                 ))}
               </select>
             </div>
@@ -180,7 +186,7 @@ export const HeatMap = ({
             onClick={toggleFullscreen}
           >
             {isFullscreen ? <Minimize2 size={16} /> : <Maximize2 size={16} />}
-            <span>{isFullscreen ? 'Salir' : 'Pantalla Completa'}</span>
+            <span>{isFullscreen ? (isEn ? 'Exit' : 'Salir') : (isEn ? 'Fullscreen' : 'Pantalla Completa')}</span>
           </button>
         </div>
       </div>
@@ -204,7 +210,7 @@ export const HeatMap = ({
           type="button"
           className="btn-floating-pitch-fullscreen"
           onClick={toggleFullscreen}
-          title={isFullscreen ? 'Salir de Pantalla Completa' : 'Ver en Pantalla Completa'}
+          title={isFullscreen ? (isEn ? 'Exit Fullscreen' : 'Salir de Pantalla Completa') : (isEn ? 'View Fullscreen' : 'Ver en Pantalla Completa')}
         >
           {isFullscreen ? <Minimize2 size={18} /> : <Maximize2 size={18} />}
         </button>
@@ -241,13 +247,13 @@ export const HeatMap = ({
             <line x1="3" y1="45.3" x2="102" y2="45.3" stroke="rgba(212,168,67,0.4)" strokeWidth="0.6" strokeDasharray="2 2" />
 
             {/* Etiquetas de Sector y Zonas con Contraste Máximo */}
-            <text x="52.5" y="13" textAnchor="middle" fill="#FFFFFF" stroke="#000000" strokeWidth="0.35" fontSize="3.2" fontWeight="900" style={{ paintOrder: 'stroke fill' }}>⬅️ BANDA IZQUIERDA</text>
-            <text x="52.5" y="34.8" textAnchor="middle" fill="#FFFFFF" stroke="#000000" strokeWidth="0.35" fontSize="3.2" fontWeight="900" style={{ paintOrder: 'stroke fill' }}>⏺️ PASILLO CENTRAL</text>
-            <text x="52.5" y="57" textAnchor="middle" fill="#FFFFFF" stroke="#000000" strokeWidth="0.35" fontSize="3.2" fontWeight="900" style={{ paintOrder: 'stroke fill' }}>➡️ BANDA DERECHA</text>
+            <text x="52.5" y="13" textAnchor="middle" fill="#FFFFFF" stroke="#000000" strokeWidth="0.35" fontSize="3.2" fontWeight="900" style={{ paintOrder: 'stroke fill' }}>⬅️ {isEn ? 'LEFT FLANK' : 'BANDA IZQUIERDA'}</text>
+            <text x="52.5" y="34.8" textAnchor="middle" fill="#FFFFFF" stroke="#000000" strokeWidth="0.35" fontSize="3.2" fontWeight="900" style={{ paintOrder: 'stroke fill' }}>⏺️ {isEn ? 'CENTER CHANNEL' : 'PASILLO CENTRAL'}</text>
+            <text x="52.5" y="57" textAnchor="middle" fill="#FFFFFF" stroke="#000000" strokeWidth="0.35" fontSize="3.2" fontWeight="900" style={{ paintOrder: 'stroke fill' }}>➡️ {isEn ? 'RIGHT FLANK' : 'BANDA DERECHA'}</text>
 
-            <text x="17" y="7" textAnchor="middle" fill="#FFFFFF" stroke="#000000" strokeWidth="0.35" fontSize="3.6" fontWeight="900" style={{ paintOrder: 'stroke fill' }}>DEFENSA</text>
-            <text x="52.5" y="7" textAnchor="middle" fill="#FFFFFF" stroke="#000000" strokeWidth="0.35" fontSize="3.6" fontWeight="900" style={{ paintOrder: 'stroke fill' }}>MEDIO</text>
-            <text x="88" y="7" textAnchor="middle" fill="#FFFFFF" stroke="#000000" strokeWidth="0.35" fontSize="3.6" fontWeight="900" style={{ paintOrder: 'stroke fill' }}>ATAQUE</text>
+            <text x="17" y="7" textAnchor="middle" fill="#FFFFFF" stroke="#000000" strokeWidth="0.35" fontSize="3.6" fontWeight="900" style={{ paintOrder: 'stroke fill' }}>{isEn ? 'DEFENSE' : 'DEFENSA'}</text>
+            <text x="52.5" y="7" textAnchor="middle" fill="#FFFFFF" stroke="#000000" strokeWidth="0.35" fontSize="3.6" fontWeight="900" style={{ paintOrder: 'stroke fill' }}>{isEn ? 'MIDFIELD' : 'MEDIO'}</text>
+            <text x="88" y="7" textAnchor="middle" fill="#FFFFFF" stroke="#000000" strokeWidth="0.35" fontSize="3.6" fontWeight="900" style={{ paintOrder: 'stroke fill' }}>{isEn ? 'ATTACK' : 'ATAQUE'}</text>
           </svg>
 
           {/* Celdas interactivas de calor */}
@@ -279,8 +285,8 @@ export const HeatMap = ({
           {/* Tooltip flotante */}
           {hoveredCell && (
             <div className="heatmap-tooltip">
-              <div className="tooltip-title">Sector [{hoveredCell.col + 1}, {hoveredCell.row + 1}]</div>
-              <div className="tooltip-value">{hoveredCell.count} acción(es) ({hoveredCell.pct}%)</div>
+              <div className="tooltip-title">{isEn ? 'Sector' : 'Sector'} [{hoveredCell.col + 1}, {hoveredCell.row + 1}]</div>
+              <div className="tooltip-value">{hoveredCell.count} {isEn ? 'action(s)' : 'acción(es)'} ({hoveredCell.pct}%)</div>
             </div>
           )}
         </div>
@@ -289,12 +295,12 @@ export const HeatMap = ({
       {/* Leyenda de Intensidad */}
       <div className="heatmap-legend" style={{ flexShrink: 0, marginTop: isFullscreen ? '6px' : '14px' }}>
         <div className="legend-scale">
-          <span className="legend-label">Baja actividad</span>
+          <span className="legend-label">{isEn ? 'Low activity' : 'Baja actividad'}</span>
           <div className="legend-gradient-bar" />
-          <span className="legend-label">Alta intensidad</span>
+          <span className="legend-label">{isEn ? 'High intensity' : 'Alta intensidad'}</span>
         </div>
         <div className="total-actions-badge">
-          Total acciones analizadas: <strong>{totalCount}</strong>
+          {isEn ? 'Total analyzed actions:' : 'Total acciones analizadas:'} <strong>{totalCount}</strong>
         </div>
       </div>
 
@@ -304,44 +310,48 @@ export const HeatMap = ({
           <div className="tactical-guide-header" onClick={() => setShowTacticalGuide(prev => !prev)}>
             <div className="tactical-guide-title">
               <span className="guide-icon">💡</span>
-              <strong>Guía Táctica: ¿Cómo interpretar y usar este Mapa de Calor?</strong>
+              <strong>{isEn ? 'Tactical Guide: How to interpret and use this Heat Map?' : 'Guía Táctica: ¿Cómo interpretar y usar este Mapa de Calor?'}</strong>
             </div>
             <button type="button" className="tactical-guide-toggle-btn">
-              {showTacticalGuide ? 'Ocultar Explicación ▲' : 'Ver Metodología Completa ▼'}
+              {showTacticalGuide ? (isEn ? 'Hide Guide ▲' : 'Ocultar Explicación ▲') : (isEn ? 'View Methodology ▼' : 'Ver Metodología Completa ▼')}
             </button>
           </div>
 
           <div className="tactical-guide-summary">
-            <span>📍 Tercios analizados: <strong>Defensa (0-35m)</strong> · <strong>Medio (35-70m)</strong> · <strong>Ataque (70-105m)</strong></span>
-            <span>⚡ Sectores laterales: <strong>Banda Izq (0-33%)</strong> · <strong>Centro (33-66%)</strong> · <strong>Banda Der (66-100%)</strong></span>
+            <span>📍 {isEn ? 'Analyzed thirds:' : 'Tercios analizados:'} <strong>{isEn ? 'Defense (0-35m)' : 'Defensa (0-35m)'}</strong> · <strong>{isEn ? 'Midfield (35-70m)' : 'Medio (35-70m)'}</strong> · <strong>{isEn ? 'Attack (70-105m)' : 'Ataque (70-105m)'}</strong></span>
+            <span>⚡ {isEn ? 'Flank sectors:' : 'Sectores laterales:'} <strong>{isEn ? 'Left Flank (0-33%)' : 'Banda Izq (0-33%)'}</strong> · <strong>{isEn ? 'Center (33-66%)' : 'Centro (33-66%)'}</strong> · <strong>{isEn ? 'Right Flank (66-100%)' : 'Banda Der (66-100%)'}</strong></span>
           </div>
 
           {showTacticalGuide && (
             <div className="tactical-guide-body">
               <div className="guide-card">
-                <h4>📖 ¿Qué es este mapa?</h4>
+                <h4>📖 {isEn ? 'What is this map?' : '¿Qué es este mapa?'}</h4>
                 <p>
-                  Es una representación matricial (15 columnas × 10 filas) de la <strong>densidad espacial e intensidad de juego</strong> de tu equipo o de un jugador específico. Refleja dónde se concentraron las acciones con balón (pases, recuperaciones, duelos, faltas y disparos) a lo largo del partido.
+                  {isEn
+                    ? 'A matrix representation (15 columns × 10 rows) of the spatial density and playing intensity of your team or specific player. Shows where ball actions were concentrated throughout the match.'
+                    : 'Es una representación matricial (15 columnas × 10 filas) de la densidad espacial e intensidad de juego de tu equipo o de un jugador específico. Refleja dónde se concentraron las acciones con balón (pases, recuperaciones, duelos, faltas y disparos) a lo largo del partido.'}
                 </p>
               </div>
 
               <div className="guide-card">
-                <h4>📲 ¿Cómo se toman los datos?</h4>
+                <h4>📲 {isEn ? 'How are data collected?' : '¿Cómo se toman los datos?'}</h4>
                 <p>
-                  Cada intervención registrada en la pestaña <em>"Captura en Vivo"</em> o en la <em>"Carga Post-Partido"</em> asigna automáticamente las coordenadas en base a dos parámetros verificados:
+                  {isEn
+                    ? 'Each action registered in "Live Capture" or "Post-Match Entry" automatically assigns coordinates based on two verified parameters:'
+                    : 'Cada intervención registrada en la pestaña "Captura en Vivo" o en la "Carga Post-Partido" asigna automáticamente las coordenadas en base a dos parámetros verificados:'}
                 </p>
                 <ul>
-                  <li><strong>Tercio longitudinal:</strong> Determinado según la naturaleza de la jugada (Ataque: remates y centros; Medio: duelos, pases y pérdidas; Defensa: despejes y faltas defensivas).</li>
-                  <li><strong>Sector de jugada:</strong> Asignado por el botón de sector activo (⬅️ Banda Izquierda, ⏺️ Centro, ➡️ Banda Derecha) seleccionado durante la captura.</li>
+                  <li><strong>{isEn ? 'Longitudinal Third:' : 'Tercio longitudinal:'}</strong> {isEn ? 'Determined by play nature (Attack: shots & crosses; Midfield: duels, passes & turnovers; Defense: clearances & fouls).' : 'Determinado según la naturaleza de la jugada (Ataque: remates y centros; Medio: duelos, pases y pérdidas; Defensa: despejes y faltas defensivas).'}</li>
+                  <li><strong>{isEn ? 'Play Sector:' : 'Sector de jugada:'}</strong> {isEn ? 'Assigned by active sector button (Left Flank, Center, Right Flank) chosen during capture.' : 'Asignado por el botón de sector activo (⬅️ Banda Izquierda, ⏺️ Centro, ➡️ Banda Derecha) seleccionado durante la captura.'}</li>
                 </ul>
               </div>
 
               <div className="guide-card">
-                <h4>🎯 ¿Cómo se debe usar táctica y operativamente?</h4>
+                <h4>🎯 {isEn ? 'How to use it tactically?' : '¿Cómo se debe usar táctica y operativamente?'}</h4>
                 <ul>
-                  <li><strong>Detectar asimetrías ofensivas:</strong> Comprueba si el equipo ataca obsesivamente por una banda y desaprovecha el lado débil del rival.</li>
-                  <li><strong>Evaluar la altura del bloque:</strong> Si las zonas rojas de alta intensidad están en tercio medio y defensivo, el equipo jugó en bloque bajo; si predominan en medio campo y ataque, la presión alta y el dominio territorial fueron efectivos.</li>
-                  <li><strong>Análisis por jugador:</strong> Selecciona un jugador en el desplegable superior para verificar si los extremos mantuvieron la amplitud, si el pivote dominó el pasillo central o si el delantero pisó el área con frecuencia.</li>
+                  <li><strong>{isEn ? 'Detect offensive asymmetries:' : 'Detectar asimetrías ofensivas:'}</strong> {isEn ? "Check if team attacks obsessively down one wing and ignores the opponent's weak side." : 'Comprueba si el equipo ataca obsesivamente por una banda y desaprovecha el lado débil del rival.'}</li>
+                  <li><strong>{isEn ? 'Evaluate block height:' : 'Evaluar la altura del bloque:'}</strong> {isEn ? 'If red high-density zones sit in mid/defensive third, the team played a low block; if concentrated in midfield/attack, high press succeeded.' : 'Si las zonas rojas de alta intensidad están en tercio medio y defensivo, el equipo jugó en bloque bajo; si predominan en medio campo y ataque, la presión alta y el dominio territorial fueron efectivos.'}</li>
+                  <li><strong>{isEn ? 'Player-by-player analysis:' : 'Análisis por jugador:'}</strong> {isEn ? 'Select a player to check whether wingers held width, pivot dominated central channel, or striker entered the box frequently.' : 'Selecciona un jugador en el desplegable superior para verificar si los extremos mantuvieron la amplitud, si el pivote dominó el pasillo central o si el delantero pisó el área con frecuencia.'}</li>
                 </ul>
               </div>
             </div>
@@ -351,4 +361,6 @@ export const HeatMap = ({
     </div>
   );
 };
+
+export default HeatMap;
 

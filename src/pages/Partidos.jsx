@@ -1094,7 +1094,7 @@ const Partidos = () => {
     <div className="partidos-page">
       <header className="partidos-header">
         <div className="header-top w-full flex flex-col items-center space-y-3 md:flex-row md:justify-between px-4">
-          <h1 className="whitespace-normal text-xl font-bold block text-center">GESTIÓN DE PARTIDOS</h1>
+          <h1 className="whitespace-normal text-xl font-bold block text-center">{isGlobalEn ? 'MATCH MANAGEMENT' : 'GESTIÓN DE PARTIDOS'}</h1>
           <div className="partidos-page-actions flex flex-row gap-2 w-full justify-center md:w-auto">
             {viewMode === 'LIST' ? (
               <>
@@ -1104,20 +1104,20 @@ const Partidos = () => {
                       className="btn-outline-dark flex-1 md:flex-initial px-3 py-2 text-xs md:text-sm"
                       onClick={() => generateMatchesCalendarPDF(matches, activeTeam)}
                       style={{ minHeight: '40px', fontWeight: 'bold' }}
-                      title="Exportar calendario oficial de la temporada a PDF"
+                      title={isGlobalEn ? "Export official season calendar to PDF" : "Exportar calendario oficial de la temporada a PDF"}
                     >
-                      📄 CALENDARIO PDF
+                      📄 {isGlobalEn ? 'PDF CALENDAR' : 'CALENDARIO PDF'}
                     </button>
                     <button
                       className="btn-outline-dark flex-1 md:flex-initial px-3 py-2 text-xs md:text-sm"
                       onClick={handleExportAllMatchesICS}
                       style={{ minHeight: '40px', fontWeight: 'bold' }}
                     >
-                      📥 EXPORTAR ICS
+                      📥 {isGlobalEn ? 'EXPORT ICS' : 'EXPORTAR ICS'}
                     </button>
                   </>
                 )}
-                <button className="btn-primary-dark flex-1 md:flex-initial px-3 py-2 text-xs md:text-sm" onClick={handleNewMatch} style={{ minHeight: '40px' }}>+ NUEVO PARTIDO</button>
+                <button className="btn-primary-dark flex-1 md:flex-initial px-3 py-2 text-xs md:text-sm" onClick={handleNewMatch} style={{ minHeight: '40px' }}>{isGlobalEn ? '+ NEW MATCH' : '+ NUEVO PARTIDO'}</button>
               </>
             ) : (
               <>
@@ -1168,15 +1168,15 @@ const Partidos = () => {
             <div className="partidos-list-container">
               {matches.length === 0 ? (
                 <div style={{ textAlign: 'center', marginTop: '40px', color: 'var(--partidos-text-muted)' }}>
-                  <h2>No hay partidos registrados</h2>
-                  <p>Comienza añadiendo un nuevo partido.</p>
+                  <h2>{isGlobalEn ? 'No matches registered' : 'No hay partidos registrados'}</h2>
+                  <p>{isGlobalEn ? 'Start by adding a new match.' : 'Comienza añadiendo un nuevo partido.'}</p>
                 </div>
               ) : (
                 <>
                   <div className="list-filters">
-                    <button className={`filter-tab ${filterMode === 'Todos' ? 'active' : ''}`} onClick={() => setFilterMode('Todos')}>Todos</button>
-                    <button className={`filter-tab ${filterMode === 'Pendientes' ? 'active' : ''}`} onClick={() => setFilterMode('Pendientes')}>Pendientes</button>
-                    <button className={`filter-tab ${filterMode === 'Terminados' ? 'active' : ''}`} onClick={() => setFilterMode('Terminados')}>Terminados</button>
+                    <button className={`filter-tab ${filterMode === 'Todos' ? 'active' : ''}`} onClick={() => setFilterMode('Todos')}>{isGlobalEn ? 'All' : 'Todos'}</button>
+                    <button className={`filter-tab ${filterMode === 'Pendientes' ? 'active' : ''}`} onClick={() => setFilterMode('Pendientes')}>{isGlobalEn ? 'Pending' : 'Pendientes'}</button>
+                    <button className={`filter-tab ${filterMode === 'Terminados' ? 'active' : ''}`} onClick={() => setFilterMode('Terminados')}>{isGlobalEn ? 'Finished' : 'Terminados'}</button>
                   </div>
 
                     <div className="matches-grid">
@@ -1184,17 +1184,18 @@ const Partidos = () => {
                         const localScore = m.type === 'Local' ? (m.goalsFor ?? 0) : (m.goalsAgainst ?? 0);
                         const visitScore = m.type === 'Local' ? (m.goalsAgainst ?? 0) : (m.goalsFor ?? 0);
                         const isFinishedCard = m.status === 'Terminado' || m.status === 'Finalizado';
+                        const statusLabel = isGlobalEn ? (isFinishedCard ? 'Finished' : 'Pending') : (m.status || 'Pendiente');
                         return (
                           <div key={m.id || Math.random()} className="match-card" onClick={() => handleEditMatch(m)}>
                             <div className="mc-header">
-                              <span className={`status-badge ${(m.status || 'Pendiente').toLowerCase()}`}>{m.status || 'Pendiente'}</span>
+                              <span className={`status-badge ${(m.status || 'Pendiente').toLowerCase()}`}>{statusLabel}</span>
                               <span className="mc-date">{formatMatchDateSafe(m, settings?.language)}</span>
                             </div>
 
                             <div className="mc-body">
                               <div className="team-local">
                                 <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: 'var(--partidos-border)' }}></div>
-                                <span className="t-name">{m.type === 'Local' ? (activeTeam?.nombre || 'Mi Equipo') : (m.rival || 'Rival')}</span>
+                                <span className="t-name">{m.type === 'Local' ? (activeTeam?.nombre || (isGlobalEn ? 'My Team' : 'Mi Equipo')) : (m.rival || (isGlobalEn ? 'Opponent' : 'Rival'))}</span>
                               </div>
                               <div className="mc-score">
                                 {isFinishedCard ? (
@@ -1204,14 +1205,14 @@ const Partidos = () => {
                                 )}
                               </div>
                               <div className="team-visit">
-                                <span className="t-name">{m.type === 'Visitante' ? (activeTeam?.nombre || 'Mi Equipo') : (m.rival || 'Rival')}</span>
+                                <span className="t-name">{m.type === 'Visitante' ? (activeTeam?.nombre || (isGlobalEn ? 'My Team' : 'Mi Equipo')) : (m.rival || (isGlobalEn ? 'Opponent' : 'Rival'))}</span>
                                 <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: 'var(--partidos-border)' }}></div>
                               </div>
                             </div>
 
                             <div className="mc-footer">
-                              <span>📍 {m.location || 'Sin ubicación'}</span>
-                              <span>🛡️ Formación: {m.lineup || '4-3-3'}</span>
+                              <span>📍 {m.location || (isGlobalEn ? 'No venue' : 'Sin ubicación')}</span>
+                              <span>🛡️ {isGlobalEn ? 'Formation: ' : 'Formación: '}{m.lineup || '4-3-3'}</span>
                             </div>
                           </div>
                         );
@@ -1256,54 +1257,54 @@ const Partidos = () => {
             {/* PESTAÑA: PRE-PARTIDO */}
             {editTab === 'PRE-PARTIDO' && (
               <div className="tab-pane pre-partido-container" style={{ padding: '24px', boxSizing: 'border-box' }}>
-                <h3 className="section-title">Datos Generales del Encuentro</h3>
+                <h3 className="section-title">{isGlobalEn ? 'Match General Info' : 'Datos Generales del Encuentro'}</h3>
                 <div className="form-grid grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 w-full">
                   <div className="form-group full">
-                    <label>Equipo Rival</label>
+                    <label>{isGlobalEn ? 'Opponent Team' : 'Equipo Rival'}</label>
                     <input
                       type="text"
                       className="partidos-input"
                       value={matchData.rival || ''}
                       onChange={e => setMatchData({ ...matchData, rival: e.target.value })}
                       onBlur={e => setMatchData(prev => ({ ...prev, rival: normalizeCapitalize(e.target.value) }))}
-                      placeholder={isEnLanguage ? "e.g. Real Madrid C.F." : "Ej. Real Madrid C.F."}
+                      placeholder={isGlobalEn ? "e.g. Real Madrid C.F." : "Ej. Real Madrid C.F."}
                     />
                   </div>
                   <div className="form-group quarter">
-                    <label>Fecha</label>
+                    <label>{isGlobalEn ? 'Date' : 'Fecha'}</label>
                     <input type="date" className="partidos-input" value={matchData.date || ''} onChange={e => setMatchData({ ...matchData, date: e.target.value })} />
                   </div>
                   <div className="form-group quarter">
-                    <label>Hora</label>
+                    <label>{isGlobalEn ? 'Time' : 'Hora'}</label>
                     <input type="time" className="partidos-input" value={matchData.time || ''} onChange={e => setMatchData({ ...matchData, time: e.target.value })} />
                   </div>
                   <div className="form-group quarter">
-                    <label>Local / Visitante</label>
+                    <label>{isGlobalEn ? 'Home / Away' : 'Local / Visitante'}</label>
                     <select className="partidos-input" value={matchData.type || 'Local'} onChange={e => setMatchData({ ...matchData, type: e.target.value })}>
-                      <option value="Local">Local</option>
-                      <option value="Visitante">Visitante</option>
+                      <option value="Local">{isGlobalEn ? 'Home' : 'Local'}</option>
+                      <option value="Visitante">{isGlobalEn ? 'Away' : 'Visitante'}</option>
                     </select>
                   </div>
                   <div className="form-group quarter">
-                    <label>Estado</label>
+                    <label>{isGlobalEn ? 'Status' : 'Estado'}</label>
                     <select className="partidos-input" value={matchData.status || 'Pendiente'} onChange={e => setMatchData({ ...matchData, status: e.target.value })}>
-                      <option value="Pendiente">Pendiente</option>
-                      <option value="Terminado">Terminado</option>
+                      <option value="Pendiente">{isGlobalEn ? 'Pending' : 'Pendiente'}</option>
+                      <option value="Terminado">{isGlobalEn ? 'Finished' : 'Terminado'}</option>
                     </select>
                   </div>
                   <div className="form-group half">
-                    <label>Estadio / Lugar</label>
+                    <label>{isGlobalEn ? 'Stadium / Venue' : 'Estadio / Lugar'}</label>
                     <input
                       type="text"
                       className="partidos-input"
                       value={matchData.location || ''}
                       onChange={e => setMatchData({ ...matchData, location: e.target.value })}
                       onBlur={e => setMatchData(prev => ({ ...prev, location: normalizeCapitalize(e.target.value) }))}
-                      placeholder={isEnLanguage ? "e.g. Municipal Stadium / Sports Complex" : "Ej. Campo Municipal / Estadio"}
+                      placeholder={isGlobalEn ? "e.g. Municipal Stadium / Sports Complex" : "Ej. Campo Municipal / Estadio"}
                     />
                   </div>
                   <div className="form-group full" style={{ marginTop: '16px' }}>
-                    <label>Sincronización de Calendario</label>
+                    <label>{isGlobalEn ? 'Calendar Sync' : 'Sincronización de Calendario'}</label>
                     <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
                       <button
                         type="button"
@@ -1345,7 +1346,7 @@ const Partidos = () => {
                           border: 'none'
                         }}
                       >
-                        📥 Exportar .ICS
+                        📥 {isGlobalEn ? 'EXPORT .ICS' : 'EXPORTAR .ICS'}
                       </button>
                     </div>
                   </div>
@@ -1356,7 +1357,7 @@ const Partidos = () => {
                     {matchData.id && (
                       <button className="eliminar-toggle" onClick={handleDeleteMatch} disabled={isSaving}>
                         <TrashIcon />
-                        <span>ELIMINAR</span>
+                        <span>{isGlobalEn ? 'DELETE' : 'ELIMINAR'}</span>
                       </button>
                     )}
                   </div>
@@ -1372,9 +1373,9 @@ const Partidos = () => {
             {editTab === 'CONVOCATORIA' && (
               <div className="tab-pane convocatoria-container" style={{ padding: '24px', boxSizing: 'border-box' }}>
                 <div className="conv-header">
-                  <h3 className="section-title">Selección de Jugadores</h3>
+                  <h3 className="section-title">{isGlobalEn ? 'Player Selection' : 'Selección de Jugadores'}</h3>
                   <div className="conv-count">
-                    {calledPlayers.filter(Boolean).length} / {players.length || 23} {isEnLanguage ? 'Called' : 'Convocados'}
+                    {calledPlayers.filter(Boolean).length} / {players.length || 23} {isGlobalEn ? 'Called' : 'Convocados'}
                   </div>
                 </div>
                 <div className="players-checklist">
@@ -1434,18 +1435,18 @@ const Partidos = () => {
                             setMatchData(prev => ({ ...prev, lineup: '4-3-3' }));
                           }
                         } catch (err) {
-                          alert("Error al eliminar la formación.");
+                          alert(isGlobalEn ? "Error deleting formation." : "Error al eliminar la formación.");
                         }
                       }}
                     />
                     <button type="button" className="btn-reset-layout" onClick={handleResetPositions}>
-                      🔄 Restablecer Campo
+                      🔄 {isGlobalEn ? 'Reset Field' : 'Restablecer Campo'}
                     </button>
                   </div>
 
                   {/* XI Titular - en una sola columna para nombre completo */}
                   <div>
-                    <h4 style={{ margin: '8px 0' }}>XI Titular <span style={{ fontSize: '12px', fontWeight: 'normal', color: 'var(--partidos-text-muted)' }}>({calledPlayers.slice(0, 11).filter(Boolean).length}/11)</span></h4>
+                    <h4 style={{ margin: '8px 0' }}>{isGlobalEn ? 'Starting XI' : 'XI Titular'} <span style={{ fontSize: '12px', fontWeight: 'normal', color: 'var(--partidos-text-muted)' }}>({calledPlayers.slice(0, 11).filter(Boolean).length}/11)</span></h4>
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '6px' }}>
                       {Array.from({ length: 11 }).map((_, idx) => {
                         const pid = calledPlayers[idx];
@@ -1621,7 +1622,7 @@ const Partidos = () => {
             {editTab === 'MATCH-DAY' && (
               <div className="tab-pane match-day-container" ref={matchDayRef} style={{ padding: '24px', boxSizing: 'border-box' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '15px', marginBottom: '12px', flexWrap: 'wrap' }}>
-                  <h3 className="section-title" style={{ margin: 0 }}>⏱️ Panel de Control - Día del Partido</h3>
+                  <h3 className="section-title" style={{ margin: 0 }}>⏱️ {isGlobalEn ? 'Control Panel - Match Day' : 'Panel de Control - Día del Partido'}</h3>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                     <button
                       type="button"
@@ -1643,7 +1644,7 @@ const Partidos = () => {
                         boxShadow: '0 2px 8px rgba(34, 197, 94, 0.4)'
                       }}
                     >
-                      {matchData.status === 'Terminado' ? '✓ Partido Terminado' : '🏁 Finalizar Partido'}
+                      {matchData.status === 'Terminado' ? (isGlobalEn ? '✓ Match Finished' : '✓ Partido Terminado') : (isGlobalEn ? '🏁 Finish Match' : '🏁 Finalizar Partido')}
                     </button>
                     <button
                       type="button"
@@ -1665,7 +1666,7 @@ const Partidos = () => {
                         fontSize: '12px'
                       }}
                     >
-                      {isFullscreen ? '🗗 Salir Pantalla Completa' : '📺 Pantalla Completa'}
+                      {isFullscreen ? (isGlobalEn ? '🗗 Exit Fullscreen' : '🗗 Salir Pantalla Completa') : (isGlobalEn ? '📺 Fullscreen' : '📺 Pantalla Completa')}
                     </button>
                   </div>
                 </div>
@@ -1710,11 +1711,11 @@ const Partidos = () => {
 
                     <div className="live-scoreboard">
                       <div className="scoreboard-teams">
-                        <div className="scoreboard-team">{activeTeam?.nombre || 'Mi Equipo'}</div>
+                        <div className="scoreboard-team">{activeTeam?.nombre || (isGlobalEn ? 'My Team' : 'Mi Equipo')}</div>
                         <div className="scoreboard-score">
                           {derivedGoalsFor} - {derivedGoalsAgainst}
                         </div>
-                        <div className="scoreboard-team">{matchData.rival || 'Rival'}</div>
+                        <div className="scoreboard-team">{matchData.rival || (isGlobalEn ? 'Opponent' : 'Rival')}</div>
                       </div>
                       <div className="scoreboard-buttons">
                         <button
@@ -1723,7 +1724,7 @@ const Partidos = () => {
                           disabled={isMatchFinished}
                           style={{ opacity: isMatchFinished ? 0.5 : 1, cursor: isMatchFinished ? 'not-allowed' : 'pointer' }}
                         >
-                          ⚽ GOL LOCAL
+                          ⚽ {isGlobalEn ? 'GOAL (US)' : 'GOL LOCAL'}
                         </button>
                         <button
                           className="scoreboard-btn rival"
@@ -1731,7 +1732,7 @@ const Partidos = () => {
                           disabled={isMatchFinished}
                           style={{ opacity: isMatchFinished ? 0.5 : 1, cursor: isMatchFinished ? 'not-allowed' : 'pointer' }}
                         >
-                          ⚽ GOL RIVAL
+                          ⚽ {isGlobalEn ? 'GOAL (OPPONENT)' : 'GOL RIVAL'}
                         </button>
                       </div>
                     </div>
@@ -1740,17 +1741,17 @@ const Partidos = () => {
                   {/* Acciones y Sustituciones */}
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
                     <div className="substitutions-panel">
-                      <h4 className="sub-section-title" style={{ borderBottom: '1px solid var(--partidos-border)', paddingBottom: '6px', marginBottom: '12px' }}>🔄 Realizar Sustitución</h4>
+                      <h4 className="sub-section-title" style={{ borderBottom: '1px solid var(--partidos-border)', paddingBottom: '6px', marginBottom: '12px' }}>🔄 {isGlobalEn ? 'Make Substitution' : 'Realizar Sustitución'}</h4>
                       <div className="sub-selectors">
                         <div>
-                          <label className="input-label-caps" style={{ fontSize: '11px' }}>Sale (Titular en Campo)</label>
+                          <label className="input-label-caps" style={{ fontSize: '11px' }}>{isGlobalEn ? 'Out (Starter on Field)' : 'Sale (Titular en Campo)'}</label>
                           <select
                             className="partidos-input"
                             value={subOutId}
                             onChange={e => setSubOutId(e.target.value)}
                             disabled={isMatchFinished}
                           >
-                            <option value="">Seleccionar titular...</option>
+                            <option value="">{isGlobalEn ? 'Select starter...' : 'Seleccionar titular...'}</option>
                             {calledPlayers.slice(0, 11).map((id, idx) => {
                               if (!id) return null;
                               const p = players.find(pl => pl && pl.id === id);
@@ -1759,14 +1760,14 @@ const Partidos = () => {
                           </select>
                         </div>
                         <div>
-                          <label className="input-label-caps" style={{ fontSize: '11px' }}>Entra (Suplente en Banquillo)</label>
+                          <label className="input-label-caps" style={{ fontSize: '11px' }}>{isGlobalEn ? 'In (Substitute on Bench)' : 'Entra (Suplente en Banquillo)'}</label>
                           <select
                             className="partidos-input"
                             value={subInId}
                             onChange={e => setSubInId(e.target.value)}
                             disabled={isMatchFinished}
                           >
-                            <option value="">Seleccionar suplente...</option>
+                            <option value="">{isGlobalEn ? 'Select substitute...' : 'Seleccionar suplente...'}</option>
                             {calledPlayers.slice(11, 18).map((id, idx) => {
                               if (!id) return null;
                               const p = players.find(pl => pl && pl.id === id);
@@ -1781,15 +1782,15 @@ const Partidos = () => {
                         onClick={handleMakeSubstitution}
                         disabled={isMatchFinished}
                       >
-                        🔄 Confirmar Sustitución
+                        🔄 {isGlobalEn ? 'Confirm Substitution' : 'Confirmar Sustitución'}
                       </button>
                     </div>
 
                     <div className="live-events-panel">
                       <div className="event-action-buttons">
-                        <button className="event-action-btn" onClick={() => handleTriggerEvent('amarilla')} disabled={isMatchFinished} style={{ opacity: isMatchFinished ? 0.5 : 1 }}>🟨 Amarilla</button>
-                        <button className="event-action-btn" onClick={() => handleTriggerEvent('roja')} disabled={isMatchFinished} style={{ opacity: isMatchFinished ? 0.5 : 1 }}>🟥 Roja</button>
-                        <button className="event-action-btn" onClick={() => handleTriggerEvent('lesion')} disabled={isMatchFinished} style={{ opacity: isMatchFinished ? 0.5 : 1 }}>🩺 Lesión</button>
+                        <button className="event-action-btn" onClick={() => handleTriggerEvent('amarilla')} disabled={isMatchFinished} style={{ opacity: isMatchFinished ? 0.5 : 1 }}>🟨 {isGlobalEn ? 'Yellow Card' : 'Amarilla'}</button>
+                        <button className="event-action-btn" onClick={() => handleTriggerEvent('roja')} disabled={isMatchFinished} style={{ opacity: isMatchFinished ? 0.5 : 1 }}>🟥 {isGlobalEn ? 'Red Card' : 'Roja'}</button>
+                        <button className="event-action-btn" onClick={() => handleTriggerEvent('lesion')} disabled={isMatchFinished} style={{ opacity: isMatchFinished ? 0.5 : 1 }}>🩺 {isGlobalEn ? 'Injury' : 'Lesión'}</button>
                       </div>
                     </div>
                   </div>
@@ -1822,26 +1823,28 @@ const Partidos = () => {
                       </h4>
                       <div className="events-log-list">
                         {(!matchData.events || matchData.events.length === 0) ? (
-                          <p style={{ margin: '15px 0', fontSize: '14px', color: 'var(--partidos-text-muted)', fontStyle: 'italic', textAlign: 'center' }}>No se han registrado eventos en este partido.</p>
+                          <p style={{ margin: '15px 0', fontSize: '14px', color: 'var(--partidos-text-muted)', fontStyle: 'italic', textAlign: 'center' }}>
+                            {isGlobalEn ? 'No events recorded in this match.' : 'No se han registrado eventos en este partido.'}
+                          </p>
                         ) : (
                           [...matchData.events].reverse().map((ev, idx) => {
                             if (!ev) return null;
                             const originalIdx = matchData.events.length - 1 - idx;
                             let icon = '⚡';
                             let desc = '';
-                            if (ev.type === 'gol_local') { icon = '⚽'; desc = `¡GOL! ${ev.playerName || 'Jugador'} anota para el equipo.`; }
-                            else if (ev.type === 'gol_rival') { icon = '⚽'; desc = `Gol de ${matchData.rival || 'Rival'}.`; }
-                            else if (ev.type === 'amarilla') { icon = '🟨'; desc = `Tarjeta Amarilla para ${ev.playerName || 'Jugador'}.`; }
-                            else if (ev.type === 'roja') { icon = '🟥'; desc = `Tarjeta Roja para ${ev.playerName || 'Jugador'}.`; }
-                            else if (ev.type === 'lesion') { icon = '🩺'; desc = `Lesión de ${ev.playerName || 'Jugador'}.`; }
-                            else if (ev.type === 'sustitucion' || ev.type === 'cambio') { icon = '🔄'; desc = `Cambio: Sale ${ev.playerOutName || 'Jugador'} y entra ${ev.playerInName || 'Jugador'}.`; }
+                            if (ev.type === 'gol_local') { icon = '⚽'; desc = isGlobalEn ? `GOAL! ${ev.playerName || 'Player'} scores for the team.` : `¡GOL! ${ev.playerName || 'Jugador'} anota para el equipo.`; }
+                            else if (ev.type === 'gol_rival') { icon = '⚽'; desc = isGlobalEn ? `Goal for ${matchData.rival || 'Opponent'}.` : `Gol de ${matchData.rival || 'Rival'}.`; }
+                            else if (ev.type === 'amarilla') { icon = '🟨'; desc = isGlobalEn ? `Yellow Card for ${ev.playerName || 'Player'}.` : `Tarjeta Amarilla para ${ev.playerName || 'Jugador'}.`; }
+                            else if (ev.type === 'roja') { icon = '🟥'; desc = isGlobalEn ? `Red Card for ${ev.playerName || 'Player'}.` : `Tarjeta Roja para ${ev.playerName || 'Jugador'}.`; }
+                            else if (ev.type === 'lesion') { icon = '🩺'; desc = isGlobalEn ? `Injury: ${ev.playerName || 'Player'}.` : `Lesión de ${ev.playerName || 'Jugador'}.`; }
+                            else if (ev.type === 'sustitucion' || ev.type === 'cambio') { icon = '🔄'; desc = isGlobalEn ? `Sub: Out ${ev.playerOutName || 'Player'}, In ${ev.playerInName || 'Player'}.` : `Cambio: Sale ${ev.playerOutName || 'Jugador'} y entra ${ev.playerInName || 'Jugador'}.`; }
 
                             return (
                               <div key={idx} className="event-log-item">
                                 <span className="event-log-time">Min. {ev.minute || 0}'</span>
                                 <span style={{ fontSize: '18px' }}>{icon}</span>
                                 <span className="event-log-desc">{desc}</span>
-                                <button className="event-log-remove" onClick={() => handleRemoveEvent(originalIdx)} title="Eliminar evento">✕</button>
+                                <button className="event-log-remove" onClick={() => handleRemoveEvent(originalIdx)} title={isGlobalEn ? 'Delete event' : 'Eliminar evento'}>✕</button>
                               </div>
                             );
                           })
@@ -1856,9 +1859,9 @@ const Partidos = () => {
                       <div className="event-selector-modal" onClick={e => e.stopPropagation()}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                           <h4 className="event-selector-title">
-                            {pendingEventType === 'gol_local' ? '⚽ Seleccionar Goleador' :
-                              pendingEventType === 'amarilla' ? '🟨 Tarjeta Amarilla' :
-                                pendingEventType === 'roja' ? '🟥 Tarjeta Roja' : '🩺 Registrar Lesión'}
+                            {pendingEventType === 'gol_local' ? (isGlobalEn ? '⚽ Select Goalscorer' : '⚽ Seleccionar Goleador') :
+                              pendingEventType === 'amarilla' ? (isGlobalEn ? '🟨 Yellow Card' : '🟨 Tarjeta Amarilla') :
+                                pendingEventType === 'roja' ? (isGlobalEn ? '🟥 Red Card' : '🟥 Tarjeta Roja') : (isGlobalEn ? '🩺 Record Injury' : '🩺 Registrar Lesión')}
                           </h4>
                           <button
                             onClick={() => setShowEventPlayerSelector(false)}
@@ -1927,7 +1930,7 @@ const Partidos = () => {
             {editTab === 'POST-PARTIDO' && (
               <div className="tab-pane post-partido-container" style={{ padding: '24px', boxSizing: 'border-box' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px', marginBottom: '16px' }}>
-                  <h3 className="section-title" style={{ margin: 0 }}>📊 Informe Post-Partido y Análisis</h3>
+                  <h3 className="section-title" style={{ margin: 0 }}>📊 {isGlobalEn ? 'Post-Match Report & Analysis' : 'Informe Post-Partido y Análisis'}</h3>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                     <button
                       type="button"
@@ -1949,7 +1952,7 @@ const Partidos = () => {
                         boxShadow: '0 2px 8px rgba(34, 197, 94, 0.4)'
                       }}
                     >
-                      {matchData.status === 'Terminado' ? '✓ Partido Terminado' : '🏁 Finalizar Partido'}
+                      {matchData.status === 'Terminado' ? (isGlobalEn ? '✓ Match Finished' : '✓ Partido Terminado') : (isGlobalEn ? '🏁 Finish Match' : '🏁 Finalizar Partido')}
                     </button>
                     <button
                       type="button"
@@ -1957,7 +1960,7 @@ const Partidos = () => {
                       onClick={handleExportPDF}
                       style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '10px 16px', borderRadius: '8px', cursor: 'pointer', minHeight: '44px' }}
                     >
-                      📄 Exportar PDF
+                      📄 {isGlobalEn ? 'Export PDF' : 'Exportar PDF'}
                     </button>
                   </div>
                 </div>
@@ -1966,7 +1969,7 @@ const Partidos = () => {
                   <div className="post-partido-left-col">
                     {/* Tarjeta 1: Marcador */}
                     <div className="post-match-card">
-                      <h4 className="card-section-title">⚽ Marcador del Partido (Derivado de Eventos)</h4>
+                      <h4 className="card-section-title">⚽ {isGlobalEn ? 'Match Score (Derived from Events)' : 'Marcador del Partido (Derivado de Eventos)'}</h4>
                       <div className="score-inputs-container" style={{ display: 'flex', alignItems: 'center', gap: '15px', justifyContent: 'center', marginTop: '10px' }}>
                         <div className="score-box" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
                           <label className="input-label-caps" style={{ fontSize: '11px', fontWeight: '700', marginBottom: '6px', color: 'var(--partidos-text-muted)' }}>{getLangText('post.goalsFor')}</label>
@@ -1986,7 +1989,7 @@ const Partidos = () => {
 
                     {/* Tarjeta 2: Goleadores */}
                     <div className="post-match-card">
-                      <h4 className="card-section-title">⚽ Goleadores (Canónico desde Bitácora)</h4>
+                      <h4 className="card-section-title">⚽ {isGlobalEn ? 'Scorers (Canonical from Log)' : 'Goleadores (Canónico desde Bitácora)'}</h4>
                       <div className="goleadores-list" style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '10px' }}>
                         {derivedGoleadores.length === 0 ? (
                           <p style={{ margin: '8px 0', fontSize: '13px', color: 'var(--partidos-text-muted)', fontStyle: 'italic' }}>
@@ -2009,7 +2012,7 @@ const Partidos = () => {
 
                     {/* Tarjeta 3: Tarjetas */}
                     <div className="post-match-card">
-                      <h4 className="card-section-title">🟨 Tarjetas (Canónico desde Bitácora)</h4>
+                      <h4 className="card-section-title">🟨 {isGlobalEn ? 'Cards (Canonical from Log)' : 'Tarjetas (Canónico desde Bitácora)'}</h4>
                       <div className="goleadores-list" style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '10px' }}>
                         {derivedTarjetas.length === 0 ? (
                           <p style={{ margin: '8px 0', fontSize: '13px', color: 'var(--partidos-text-muted)', fontStyle: 'italic' }}>
@@ -2036,7 +2039,7 @@ const Partidos = () => {
                   <div className="post-partido-right-col">
                     {/* Tarjeta 4: MVP y Valoración */}
                     <div className="post-match-card">
-                      <h4 className="card-section-title">👑 MVP y Valoración</h4>
+                      <h4 className="card-section-title">👑 {isGlobalEn ? 'MVP & Rating' : 'MVP y Valoración'}</h4>
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '15px', marginTop: '10px' }}>
                         <div className="mvp-selection-box" style={{ display: 'flex', flexDirection: 'column' }}>
                           <label className="input-label-caps" style={{ fontSize: '11px', fontWeight: '700', marginBottom: '6px', color: 'var(--partidos-text-muted)' }}>{getLangText('post.mvp')}</label>
@@ -2057,7 +2060,7 @@ const Partidos = () => {
                         {/* Valoración del equipo slider 1-10 */}
                         <div style={{ display: 'flex', flexDirection: 'column' }}>
                           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-                            <label className="input-label-caps" style={{ fontSize: '11px', fontWeight: '700', color: 'var(--partidos-text-muted)' }}>VALORACIÓN DEL EQUIPO</label>
+                            <label className="input-label-caps" style={{ fontSize: '11px', fontWeight: '700', color: 'var(--partidos-text-muted)' }}>{isGlobalEn ? 'TEAM RATING' : 'VALORACIÓN DEL EQUIPO'}</label>
                             <span style={{ fontSize: '15px', fontWeight: 'bold', color: 'var(--partidos-accent)' }}>{matchData.teamRating || 5} / 10</span>
                           </div>
                           <input
@@ -2075,14 +2078,16 @@ const Partidos = () => {
 
                     {/* Tarjeta: Calificaciones Individuales del Míster (1 - 10) */}
                     <div className="post-match-card">
-                      <h4 className="card-section-title">⭐ Calificación del Míster por Jugador (1 - 10)</h4>
+                      <h4 className="card-section-title">⭐ {isGlobalEn ? "Coach's Individual Ratings (1 - 10)" : 'Calificación del Míster por Jugador (1 - 10)'}</h4>
                       <p style={{ fontSize: '12px', color: 'var(--partidos-text-muted)', margin: '4px 0 12px 0' }}>
-                        Asigna la nota del partido a cada jugador para alimentar automáticamente su rendimiento táctico y notas medias oficiales.
+                        {isGlobalEn
+                          ? 'Assign match rating to each player to automatically feed tactical performance and official averages.'
+                          : 'Asigna la nota del partido a cada jugador para alimentar automáticamente su rendimiento táctico y notas medias oficiales.'}
                       </p>
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', maxHeight: '340px', overflowY: 'auto', paddingRight: '4px' }}>
                         {calledPlayers.filter(Boolean).length === 0 ? (
                           <p style={{ fontSize: '12px', color: 'var(--partidos-text-muted)', fontStyle: 'italic', margin: '6px 0' }}>
-                            No hay jugadores convocados en este partido.
+                            {isGlobalEn ? 'No players called up for this match.' : 'No hay jugadores convocados en este partido.'}
                           </p>
                         ) : (
                           calledPlayers.filter(Boolean).map(id => {
@@ -2110,7 +2115,7 @@ const Partidos = () => {
                                   <PlayerAvatar player={p} size={32} showNumber={false} />
                                   <div style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                                     <div style={{ fontWeight: '700', fontSize: '13px' }}>{p.name}</div>
-                                    <div style={{ fontSize: '11px', color: 'var(--partidos-text-muted)' }}>{p.position || 'Jugador'}</div>
+                                    <div style={{ fontSize: '11px', color: 'var(--partidos-text-muted)' }}>{p.position || (isGlobalEn ? 'Player' : 'Jugador')}</div>
                                   </div>
                                 </div>
 
@@ -2170,14 +2175,16 @@ const Partidos = () => {
 
                     {/* Tarjeta 5b: Comentario del Míster por Jugador (visible en portal jugador) */}
                     <div className="post-match-card">
-                      <h4 className="card-section-title">💬 Comentario para el Jugador</h4>
+                      <h4 className="card-section-title">💬 {isGlobalEn ? 'Feedback for Player' : 'Comentario para el Jugador'}</h4>
                       <p style={{ fontSize: '12px', color: 'var(--partidos-text-muted)', margin: '4px 0 12px 0' }}>
-                        Mensaje personal del míster — el jugador lo verá en su portal bajo el detalle de este partido. Máximo 280 caracteres. Tono positivo y constructivo.
+                        {isGlobalEn
+                          ? 'Personal message from the coach — the player will see it in their portal under this match details. Max 280 characters. Positive and constructive tone.'
+                          : 'Mensaje personal del míster — el jugador lo verá en su portal bajo el detalle de este partido. Máximo 280 caracteres. Tono positivo y constructivo.'}
                       </p>
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', maxHeight: '360px', overflowY: 'auto', paddingRight: '4px' }}>
                         {calledPlayers.filter(Boolean).length === 0 ? (
                           <p style={{ fontSize: '12px', color: 'var(--partidos-text-muted)', fontStyle: 'italic', margin: '6px 0' }}>
-                            No hay jugadores convocados en este partido.
+                            {isGlobalEn ? 'No players called up for this match.' : 'No hay jugadores convocados en este partido.'}
                           </p>
                         ) : (
                           calledPlayers.filter(Boolean).map(id => {
@@ -2205,7 +2212,7 @@ const Partidos = () => {
                                 <textarea
                                   maxLength={280}
                                   rows={2}
-                                  placeholder={`Escribe un comentario motivador para ${p.name}...`}
+                                  placeholder={isGlobalEn ? `Write an encouraging comment for ${p.name}...` : `Escribe un comentario motivador para ${p.name}...`}
                                   value={currentComment}
                                   onChange={e => {
                                     const val = e.target.value.slice(0, 280);
@@ -2246,7 +2253,7 @@ const Partidos = () => {
                     {/* Tarjeta 5: Notas Tácticas */}
 
                     <div className="post-match-card">
-                      <h4 className="card-section-title">📝 Notas Tácticas</h4>
+                      <h4 className="card-section-title">📝 {isGlobalEn ? 'Tactical Notes' : 'Notas Tácticas'}</h4>
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginTop: '10px' }}>
                         <label className="input-label-caps" style={{ fontSize: '11px', fontWeight: '700', color: 'var(--partidos-text-muted)' }}>{getLangText('post.notes')}</label>
                         <SpellCheckedTextarea
@@ -2286,7 +2293,7 @@ const Partidos = () => {
                         marginTop: '10px'
                       }}
                     >
-                      {isSaving ? 'GUARDANDO...' : '💾 GUARDAR POST-PARTIDO'}
+                      {isSaving ? (isGlobalEn ? 'SAVING...' : 'GUARDANDO...') : (isGlobalEn ? '💾 SAVE POST-MATCH' : '💾 GUARDAR POST-PARTIDO')}
                     </button>
                   </div>
 
@@ -2296,7 +2303,7 @@ const Partidos = () => {
                     <div className="post-match-card">
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px', marginBottom: '16px' }}>
                         <h4 className="card-section-title" style={{ margin: 0 }}>
-                          📈 Resumen del Partido
+                          📈 {isGlobalEn ? 'Match Summary' : 'Resumen del Partido'}
                         </h4>
                         <button
                           type="button"
@@ -2315,7 +2322,7 @@ const Partidos = () => {
                             fontSize: '12px'
                           }}
                         >
-                          📄 Descargar Informe PDF
+                          📄 {isGlobalEn ? 'Download PDF Report' : 'Descargar Informe PDF'}
                         </button>
                       </div>
 
@@ -2333,7 +2340,7 @@ const Partidos = () => {
                     </div>
                     {/* Tarjeta 6: Cuestionario de Análisis */}
                     <div className="post-match-card">
-                      <h4 className="card-section-title">📋 Cuestionario de Informe de Partido</h4>
+                      <h4 className="card-section-title">📋 {isGlobalEn ? 'Match Report Questionnaire' : 'Cuestionario de Informe de Partido'}</h4>
                       <div className="questionnaire-fields" style={{ marginTop: '10px' }}>
                         {reportQuestions.map(q => (
                           <div key={q.key} className="questionnaire-field-block" style={{ marginBottom: '15px' }}>
@@ -2495,7 +2502,7 @@ const Partidos = () => {
                   </p>
                 </div>
                 <div>
-                  <h4 style={{ margin: '0 0 6px 0', fontSize: '12px', fontWeight: '800', textTransform: 'uppercase', color: 'var(--partidos-text-muted)' }}>Tarjetas</h4>
+                  <h4 style={{ margin: '0 0 6px 0', fontSize: '12px', fontWeight: '800', textTransform: 'uppercase', color: 'var(--partidos-text-muted)' }}>{isGlobalEn ? 'Cards' : 'Tarjetas'}</h4>
                   <p style={{ margin: '0', fontWeight: '700', fontSize: '15px' }}>
                     {matchData.tarjetasList && matchData.tarjetasList.length > 0
                       ? matchData.tarjetasList.map(t => {
@@ -2583,7 +2590,7 @@ const Partidos = () => {
             setEditingCustomFormation(null);
           } catch (err) {
             console.error("Error saving custom formation:", err);
-            alert("Error al guardar la formación personalizada.");
+            alert(isGlobalEn ? "Error saving custom formation." : "Error al guardar la formación personalizada.");
           }
         }}
       />
@@ -2663,7 +2670,7 @@ const Partidos = () => {
           fontFamily: 'system-ui, -apple-system, sans-serif'
         }}>
           <div style={{ fontSize: '13px', fontWeight: '800', color: '#D4A843', marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-            🔄 Convocados Suplentes ({calledPlayers.length > 11 ? calledPlayers.length - 11 : 0})
+            {isGlobalEn ? '🔄 Substitute Squad' : '🔄 Convocados Suplentes'} ({calledPlayers.length > 11 ? calledPlayers.length - 11 : 0})
           </div>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
             {calledPlayers.slice(11).length > 0 ? (
@@ -2698,7 +2705,7 @@ const Partidos = () => {
                 );
               })
             ) : (
-              <span style={{ fontSize: '12px', color: '#94A3B8', fontStyle: 'italic' }}>Sin suplentes convocados</span>
+              <span style={{ fontSize: '12px', color: '#94A3B8', fontStyle: 'italic' }}>{isGlobalEn ? 'No substitutes called' : 'Sin suplentes convocados'}</span>
             )}
           </div>
         </div>

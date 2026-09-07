@@ -28,35 +28,35 @@ import PlayerAvatar from './PlayerAvatar';
 import MatchStatsBlock from './MatchStatsBlock';
 import { MatchRadarChart } from './MatchStats/MatchRadarChart';
 
-const RSVP_LABELS = {
-  going:       { label: 'Irá',            emoji: '✅', color: '#10B981' },
-  not_going:   { label: 'No irá',         emoji: '❌', color: '#EF4444' },
-  late:        { label: 'Llegará tarde',  emoji: '⚠️', color: '#F59E0B' },
-  justified:   { label: 'Justificado',    emoji: '📋', color: '#3B82F6' },
-};
+const getRsvpLabels = (isEn) => ({
+  going:       { label: isEn ? 'Going' : 'Irá',            emoji: '✅', color: '#10B981' },
+  not_going:   { label: isEn ? 'Not going' : 'No irá',     emoji: '❌', color: '#EF4444' },
+  late:        { label: isEn ? 'Late' : 'Llegará tarde',   emoji: '⚠️', color: '#F59E0B' },
+  justified:   { label: isEn ? 'Justified' : 'Justificado', emoji: '📋', color: '#3B82F6' },
+});
 
-const STATUS_OPTIONS = [
-  { id: 'presente',     label: 'Presente',     emoji: '✅', color: '#10B981', bg: 'rgba(16,185,129,0.15)' },
-  { id: 'ausente',      label: 'Ausente',      emoji: '❌', color: '#EF4444', bg: 'rgba(239,68,68,0.15)'  },
-  { id: 'tarde',        label: 'Tarde',        emoji: '⚠️', color: '#F59E0B', bg: 'rgba(245,158,11,0.15)' },
-  { id: 'justificado',  label: 'Justificado',  emoji: '📋', color: '#3B82F6', bg: 'rgba(59,130,246,0.15)' },
-  { id: 'lesionado',    label: 'Lesionado',    emoji: '🩺', color: '#A855F7', bg: 'rgba(168,85,247,0.15)' },
-  { id: 'sin_registro', label: 'Sin registro', emoji: '🔘', color: '#6B7280', bg: 'rgba(107,114,128,0.15)' },
+const getStatusOptions = (isEn) => [
+  { id: 'presente',     label: isEn ? 'Present' : 'Presente',         emoji: '✅', color: '#10B981', bg: 'rgba(16,185,129,0.15)' },
+  { id: 'ausente',      label: isEn ? 'Absent' : 'Ausente',           emoji: '❌', color: '#EF4444', bg: 'rgba(239,68,68,0.15)'  },
+  { id: 'tarde',        label: isEn ? 'Late' : 'Tarde',               emoji: '⚠️', color: '#F59E0B', bg: 'rgba(245,158,11,0.15)' },
+  { id: 'justificado',  label: isEn ? 'Justified' : 'Justificado',     emoji: '📋', color: '#3B82F6', bg: 'rgba(59,130,246,0.15)' },
+  { id: 'lesionado',    label: isEn ? 'Injured' : 'Lesionado',         emoji: '🩺', color: '#A855F7', bg: 'rgba(168,85,247,0.15)' },
+  { id: 'sin_registro', label: isEn ? 'Unregistered' : 'Sin registro', emoji: '🔘', color: '#6B7280', bg: 'rgba(107,114,128,0.15)' },
 ];
 
-const MINUTE_SOURCE_LABEL = {
-  override:       '✏️ Manual',
-  titular_full:   '⚽ Titular completo',
-  titular_subout: '🔄 Sustituido',
-  sub_in:         '🔄 Entró',
-  dnp:            '🪑 No entró',
-  absent:         '❌ Ausente',
-  justified:      '📋 Justificado',
-  injured:        '🩺 Lesionado (0\')',
-  injured_played: '🩺 Lesionado (jugó)',
-  late_adjusted:  '⚠️ Tarde (ajustado)',
+const getMinuteSourceLabel = (isEn) => ({
+  override:       isEn ? '✏️ Manual' : '✏️ Manual',
+  titular_full:   isEn ? '⚽ Full starter' : '⚽ Titular completo',
+  titular_subout: isEn ? '🔄 Subbed out' : '🔄 Sustituido',
+  sub_in:         isEn ? '🔄 Subbed in' : '🔄 Entró',
+  dnp:            isEn ? '🪑 Did not play' : '🪑 No entró',
+  absent:         isEn ? '❌ Absent' : '❌ Ausente',
+  justified:      isEn ? '📋 Justified' : '📋 Justificado',
+  injured:        isEn ? '🩺 Injured (0\')' : '🩺 Lesionado (0\')',
+  injured_played: isEn ? '🩺 Injured (played)' : '🩺 Lesionado (jugó)',
+  late_adjusted:  isEn ? '⚠️ Late (adjusted)' : '⚠️ Tarde (ajustado)',
   not_called:     '—',
-};
+});
 
 // ─────────────────────────────────────────────────────────────
 // Component
@@ -74,6 +74,10 @@ const ActaOficialPanel = ({
   const { t, language } = useTranslation();
   const isEn = language === 'English (EN)';
   const activeTeamId = activeTeam?.id || null;
+
+  const RSVP_LABELS = useMemo(() => getRsvpLabels(isEn), [isEn]);
+  const STATUS_OPTIONS = useMemo(() => getStatusOptions(isEn), [isEn]);
+  const MINUTE_SOURCE_LABEL = useMemo(() => getMinuteSourceLabel(isEn), [isEn]);
 
   const teamPath = activeTeamId ? getTeamPath(activeTeamId) : '';
 
@@ -258,7 +262,9 @@ const ActaOficialPanel = ({
   };
 
   const handleCleanse = async () => {
-    if (!window.confirm('¿Depurar la bitácora? Se invalidarán sustituciones duplicadas o imposibles y se recalcularán acta, minutos y marcadores.')) return;
+    if (!window.confirm(isEn
+      ? 'Cleanse match log? Duplicate or impossible substitutions will be invalidated and match sheet, minutes, and scores recalculated.'
+      : '¿Depurar la bitácora? Se invalidarán sustituciones duplicadas o imposibles y se recalcularán acta, minutos y marcadores.')) return;
     setCleansingInProgress(true);
     try {
       await cleanseEvents();
@@ -306,12 +312,17 @@ const ActaOficialPanel = ({
       return;
     }
 
-    if (!window.confirm('¿Cerrar el acta oficial? Los minutos y estados quedarán registrados de forma oficial.')) return;
+    if (!window.confirm(isEn
+      ? 'Close official match sheet? Minutes and statuses will be officially recorded.'
+      : '¿Cerrar el acta oficial? Los minutos y estados quedarán registrados de forma oficial.')) return;
     await executeCloseActa(false);
   };
 
   const handleReopen = async () => {
-    const reason = window.prompt('¿Motivo de reapertura del acta? (opcional):', 'Corrección solicitada por el cuerpo técnico');
+    const reason = window.prompt(
+      isEn ? 'Reason for reopening match sheet? (optional):' : '¿Motivo de reapertura del acta? (opcional):',
+      isEn ? 'Correction requested by coaching staff' : 'Corrección solicitada por el cuerpo técnico'
+    );
     if (reason === null) return; // cancelado por el usuario
     try {
       await reopenMatchSheet(reason);
@@ -351,14 +362,14 @@ const ActaOficialPanel = ({
     return (
       <div style={styles.emptyState}>
         <p style={{ color: 'var(--partidos-text-muted)' }}>
-          💾 Guarda el partido primero para gestionar el acta oficial.
+          💾 {isEn ? 'Save the match first to manage the official sheet.' : 'Guarda el partido primero para gestionar el acta oficial.'}
         </p>
       </div>
     );
   }
 
   if (loading) {
-    return <div style={styles.emptyState}><p>Cargando acta...</p></div>;
+    return <div style={styles.emptyState}><p>{isEn ? 'Loading sheet...' : 'Cargando acta...'}</p></div>;
   }
 
   // ── Render ────────────────────────────────────────────────
@@ -369,57 +380,57 @@ const ActaOficialPanel = ({
       <div style={styles.header}>
         <div>
           <h3 style={styles.title}>
-            📋 Acta Oficial
+            📋 {isEn ? 'Official Match Sheet' : 'Acta Oficial'}
             {isClosed && (
               sheet?.closedWithWarnings
-                ? <span style={{ ...styles.closedBadge, background: 'rgba(245, 158, 11, 0.15)', color: '#F59E0B', borderColor: '#F59E0B' }}>⚠️ CERRADA CON AVISOS</span>
-                : <span style={styles.closedBadge}>✅ CERRADA</span>
+                ? <span style={{ ...styles.closedBadge, background: 'rgba(245, 158, 11, 0.15)', color: '#F59E0B', borderColor: '#F59E0B' }}>⚠️ {isEn ? 'CLOSED WITH WARNINGS' : 'CERRADA CON AVISOS'}</span>
+                : <span style={styles.closedBadge}>✅ {isEn ? 'CLOSED' : 'CERRADA'}</span>
             )}
           </h3>
           <p style={styles.subtitle}>
             {isClosed
-              ? `Cerrada por ${sheet?.closedBy ? 'Staff' : '—'}. Minutos oficiales registrados.`
+              ? (isEn ? `Closed by ${sheet?.closedBy ? 'Staff' : '—'}. Official minutes registered.` : `Cerrada por ${sheet?.closedBy ? 'Staff' : '—'}. Minutos oficiales registrados.`)
               : isStartedOrDone
-                ? 'Verifica la asistencia real y minutos de los jugadores antes de cerrar el acta.'
-                : 'Planificación de convocatoria y confirmación de asistencia previa (RSVP).'}
+                ? (isEn ? 'Verify actual attendance and player minutes before closing the match sheet.' : 'Verifica la asistencia real y minutos de los jugadores antes de cerrar el acta.')
+                : (isEn ? 'Squad planning and pre-match attendance confirmation (RSVP).' : 'Planificación de convocatoria y confirmación de asistencia previa (RSVP).')}
           </p>
         </div>
         <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
           <button
             style={{ ...styles.btnSecondary, background: 'rgba(59, 130, 246, 0.15)', borderColor: '#3B82F6', color: '#60A5FA', display: 'flex', alignItems: 'center', gap: '6px' }}
             onClick={handleExportActaPDF}
-            title="Descarga el acta oficial y estadísticas completas en PDF"
+            title={isEn ? 'Download official match sheet and complete stats in PDF' : 'Descarga el acta oficial y estadísticas completas en PDF'}
           >
-            📄 Exportar PDF
+            📄 {isEn ? 'Export PDF' : 'Exportar PDF'}
           </button>
           {!isClosed && (
             <>
-              <button style={styles.btnPrimary} onClick={handleSmartPrefill} title="Calcula minutos reales según sustituciones y eventos">
-                ⚡ Prellenado inteligente
+              <button style={styles.btnPrimary} onClick={handleSmartPrefill} title={isEn ? 'Calculates real minutes based on substitutions and events' : 'Calcula minutos reales según sustituciones y eventos'}>
+                ⚡ {isEn ? 'Smart Autofill' : 'Prellenado inteligente'}
               </button>
               <button
                 style={{ ...styles.btnSecondary, background: 'rgba(245, 158, 11, 0.15)', borderColor: '#F59E0B', color: '#F59E0B' }}
                 onClick={handleCleanse}
                 disabled={cleansingInProgress}
-                title="Depura sustituciones duplicadas o imposibles de la bitácora"
+                title={isEn ? 'Cleans duplicate or invalid substitutions from the log' : 'Depura sustituciones duplicadas o imposibles de la bitácora'}
               >
-                {cleansingInProgress ? 'Depurando...' : '🧹 Depurar bitácora'}
+                {cleansingInProgress ? (isEn ? 'Cleaning...' : 'Depurando...') : (isEn ? '🧹 Clean Log' : '🧹 Depurar bitácora')}
               </button>
               <button style={styles.btnSecondary} onClick={handlePrefill}>
-                📅 Prellenar desde RSVP
+                📅 {isEn ? 'Autofill from RSVP' : 'Prellenar desde RSVP'}
               </button>
               <button
                 style={{ ...styles.btnClose, opacity: closingInProgress ? 0.7 : 1 }}
                 onClick={handleClose}
                 disabled={closingInProgress}
               >
-                {closingInProgress ? 'Cerrando...' : '🔒 CERRAR ACTA'}
+                {closingInProgress ? (isEn ? 'Closing...' : 'Cerrando...') : (isEn ? '🔒 CLOSE MATCH SHEET' : '🔒 CERRAR ACTA')}
               </button>
             </>
           )}
           {isClosed && (
             <button style={styles.btnReopen} onClick={handleReopen}>
-              🔓 Reabrir Acta
+              🔓 {isEn ? 'Reopen Match Sheet' : 'Reabrir Acta'}
             </button>
           )}
         </div>
@@ -526,15 +537,15 @@ const ActaOficialPanel = ({
               marginBottom: '14px'
             }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '12px', fontWeight: 800, flexWrap: 'wrap' }}>
-                <span>⚽ Marcador: <strong style={{ color: '#4CAF7D' }}>{statsOverview.goalsFor}</strong> - <strong style={{ color: '#EF4444' }}>{statsOverview.goalsAgainst}</strong></span>
+                <span>⚽ {isEn ? 'Score:' : 'Marcador:'} <strong style={{ color: '#4CAF7D' }}>{statsOverview.goalsFor}</strong> - <strong style={{ color: '#EF4444' }}>{statsOverview.goalsAgainst}</strong></span>
                 <span style={{ color: 'var(--partidos-text-muted)' }}>•</span>
-                <span>🎯 Remates: <strong>{statsOverview.shotsTotal}</strong> ({statsOverview.shotsOnTarget} a puerta)</span>
+                <span>🎯 {isEn ? 'Shots:' : 'Remates:'} <strong>{statsOverview.shotsTotal}</strong> ({statsOverview.shotsOnTarget} {isEn ? 'on target' : 'a puerta'})</span>
                 <span style={{ color: 'var(--partidos-text-muted)' }}>•</span>
-                <span>🛡️ Recuperaciones: <strong>{statsOverview.recoveries}</strong></span>
+                <span>🛡️ {isEn ? 'Recoveries:' : 'Recuperaciones:'} <strong>{statsOverview.recoveries}</strong></span>
                 <span style={{ color: 'var(--partidos-text-muted)' }}>•</span>
-                <span>⚡ Faltas: <strong>{statsOverview.fouls}</strong></span>
+                <span>⚡ {isEn ? 'Fouls:' : 'Faltas:'} <strong>{statsOverview.fouls}</strong></span>
                 <span style={{ color: 'var(--partidos-text-muted)' }}>•</span>
-                <span>📊 Eventos: <strong style={{ color: '#D4A843' }}>{statsOverview.totalEvents}</strong></span>
+                <span>📊 {isEn ? 'Events:' : 'Eventos:'} <strong style={{ color: '#D4A843' }}>{statsOverview.totalEvents}</strong></span>
               </div>
               <button
                 type="button"
@@ -549,7 +560,7 @@ const ActaOficialPanel = ({
                   textDecoration: 'underline'
                 }}
               >
-                Ver gráficas y radar oficial →
+                {isEn ? 'View official charts & radar →' : 'Ver gráficas y radar oficial →'}
               </button>
             </div>
           )}
@@ -561,38 +572,38 @@ const ActaOficialPanel = ({
           <div style={{ ...styles.rsvpBadge, borderColor: '#10B981' }}>
             <span style={{ fontSize: '18px' }}>✅</span>
             <span style={{ fontWeight: '700', color: '#10B981' }}>{attendanceCounts.presente}</span>
-            <span style={{ fontSize: '11px', color: 'var(--partidos-text-muted)' }}>Presentes</span>
+            <span style={{ fontSize: '11px', color: 'var(--partidos-text-muted)' }}>{isEn ? 'Present' : 'Presentes'}</span>
           </div>
           <div style={{ ...styles.rsvpBadge, borderColor: '#EF4444' }}>
             <span style={{ fontSize: '18px' }}>❌</span>
             <span style={{ fontWeight: '700', color: '#EF4444' }}>{attendanceCounts.ausente}</span>
-            <span style={{ fontSize: '11px', color: 'var(--partidos-text-muted)' }}>Ausentes</span>
+            <span style={{ fontSize: '11px', color: 'var(--partidos-text-muted)' }}>{isEn ? 'Absent' : 'Ausentes'}</span>
           </div>
           <div style={{ ...styles.rsvpBadge, borderColor: '#F59E0B' }}>
             <span style={{ fontSize: '18px' }}>⚠️</span>
             <span style={{ fontWeight: '700', color: '#F59E0B' }}>{attendanceCounts.tarde}</span>
-            <span style={{ fontSize: '11px', color: 'var(--partidos-text-muted)' }}>Tarde</span>
+            <span style={{ fontSize: '11px', color: 'var(--partidos-text-muted)' }}>{isEn ? 'Late' : 'Tarde'}</span>
           </div>
           <div style={{ ...styles.rsvpBadge, borderColor: '#3B82F6' }}>
             <span style={{ fontSize: '18px' }}>📋</span>
             <span style={{ fontWeight: '700', color: '#3B82F6' }}>{attendanceCounts.justificado}</span>
-            <span style={{ fontSize: '11px', color: 'var(--partidos-text-muted)' }}>Justificados</span>
+            <span style={{ fontSize: '11px', color: 'var(--partidos-text-muted)' }}>{isEn ? 'Excused' : 'Justificados'}</span>
           </div>
           <div style={{ ...styles.rsvpBadge, borderColor: '#A855F7' }}>
             <span style={{ fontSize: '18px' }}>🩺</span>
             <span style={{ fontWeight: '700', color: '#A855F7' }}>{attendanceCounts.lesionado}</span>
-            <span style={{ fontSize: '11px', color: 'var(--partidos-text-muted)' }}>Lesionados</span>
+            <span style={{ fontSize: '11px', color: 'var(--partidos-text-muted)' }}>{isEn ? 'Injured' : 'Lesionados'}</span>
           </div>
           <div style={{ ...styles.rsvpBadge, borderColor: '#6B7280' }}>
             <span style={{ fontSize: '18px' }}>🔘</span>
             <span style={{ fontWeight: '700', color: '#6B7280' }}>{attendanceCounts.sin_registro}</span>
-            <span style={{ fontSize: '11px', color: 'var(--partidos-text-muted)' }}>Sin registro</span>
+            <span style={{ fontSize: '11px', color: 'var(--partidos-text-muted)' }}>{isEn ? 'Unregistered' : 'Sin registro'}</span>
           </div>
           {discrepancies.length > 0 && (
             <div style={{ ...styles.rsvpBadge, borderColor: '#F59E0B', background: 'rgba(245,158,11,0.1)' }}>
               <span style={{ fontSize: '18px' }}>⚠️</span>
               <span style={{ fontWeight: '700', color: '#F59E0B' }}>{discrepancies.length}</span>
-              <span style={{ fontSize: '11px', color: '#F59E0B' }}>Discrepancias</span>
+              <span style={{ fontSize: '11px', color: '#F59E0B' }}>{isEn ? 'Discrepancies' : 'Discrepancias'}</span>
             </div>
           )}
         </div>
@@ -602,33 +613,33 @@ const ActaOficialPanel = ({
           <div style={{ ...styles.rsvpBadge, borderColor: '#10B981' }}>
             <span style={{ fontSize: '18px' }}>✅</span>
             <span style={{ fontWeight: '700', color: '#10B981' }}>{rsvpCounts.going}</span>
-            <span style={{ fontSize: '11px', color: 'var(--partidos-text-muted)' }}>Confirmados</span>
+            <span style={{ fontSize: '11px', color: 'var(--partidos-text-muted)' }}>{isEn ? 'Confirmed' : 'Confirmados'}</span>
           </div>
           <div style={{ ...styles.rsvpBadge, borderColor: '#EF4444' }}>
             <span style={{ fontSize: '18px' }}>❌</span>
             <span style={{ fontWeight: '700', color: '#EF4444' }}>{rsvpCounts.not_going}</span>
-            <span style={{ fontSize: '11px', color: 'var(--partidos-text-muted)' }}>No irán</span>
+            <span style={{ fontSize: '11px', color: 'var(--partidos-text-muted)' }}>{isEn ? "Won't attend" : 'No irán'}</span>
           </div>
           <div style={{ ...styles.rsvpBadge, borderColor: '#F59E0B' }}>
             <span style={{ fontSize: '18px' }}>⚠️</span>
             <span style={{ fontWeight: '700', color: '#F59E0B' }}>{rsvpCounts.late}</span>
-            <span style={{ fontSize: '11px', color: 'var(--partidos-text-muted)' }}>Tarde</span>
+            <span style={{ fontSize: '11px', color: 'var(--partidos-text-muted)' }}>{isEn ? 'Late' : 'Tarde'}</span>
           </div>
           <div style={{ ...styles.rsvpBadge, borderColor: '#3B82F6' }}>
             <span style={{ fontSize: '18px' }}>📋</span>
             <span style={{ fontWeight: '700', color: '#3B82F6' }}>{rsvpCounts.justificado}</span>
-            <span style={{ fontSize: '11px', color: 'var(--partidos-text-muted)' }}>Justificados</span>
+            <span style={{ fontSize: '11px', color: 'var(--partidos-text-muted)' }}>{isEn ? 'Excused' : 'Justificados'}</span>
           </div>
           <div style={{ ...styles.rsvpBadge, borderColor: '#6B7280' }}>
             <span style={{ fontSize: '18px' }}>🔘</span>
             <span style={{ fontWeight: '700', color: '#6B7280' }}>{rsvpCounts.noReply}</span>
-            <span style={{ fontSize: '11px', color: 'var(--partidos-text-muted)' }}>Sin respuesta</span>
+            <span style={{ fontSize: '11px', color: 'var(--partidos-text-muted)' }}>{isEn ? 'No reply' : 'Sin respuesta'}</span>
           </div>
           {discrepancies.length > 0 && (
             <div style={{ ...styles.rsvpBadge, borderColor: '#F59E0B', background: 'rgba(245,158,11,0.1)' }}>
               <span style={{ fontSize: '18px' }}>⚠️</span>
               <span style={{ fontWeight: '700', color: '#F59E0B' }}>{discrepancies.length}</span>
-              <span style={{ fontSize: '11px', color: '#F59E0B' }}>Discrepancias</span>
+              <span style={{ fontSize: '11px', color: '#F59E0B' }}>{isEn ? 'Discrepancies' : 'Discrepancias'}</span>
             </div>
           )}
         </div>
@@ -740,7 +751,7 @@ const ActaOficialPanel = ({
                   <div>
                     <div style={styles.playerName}>{player.name}</div>
                     <div style={styles.playerMeta}>
-                      {isStarter ? '⚽ Titular' : '🪑 Suplente'}
+                      {isStarter ? (isEn ? '⚽ Starter' : '⚽ Titular') : (isEn ? '🪑 Substitute' : '🪑 Suplente')}
                       {player.number ? ` · #${player.number}` : ''}
                     </div>
                   </div>
@@ -755,7 +766,7 @@ const ActaOficialPanel = ({
                 <div style={styles.rsvpCell}>
                   {isStartedOrDone ? (
                     <span
-                      title={`RSVP previo: ${rsvpInfo ? rsvpInfo.label : 'Sin respuesta'}`}
+                      title={`RSVP: ${rsvpInfo ? rsvpInfo.label : (isEn ? 'No reply' : 'Sin respuesta')}`}
                       style={{ fontSize: '11px', color: 'var(--partidos-text-muted)', display: 'inline-flex', alignItems: 'center', gap: '3px' }}
                     >
                       <span style={{ fontSize: '14px' }}>{rsvpInfo ? rsvpInfo.emoji : '🔘'}</span>
@@ -776,7 +787,7 @@ const ActaOficialPanel = ({
                       {currentStatus.emoji} {currentStatus.label}
                     </span>
                   ) : (
-                    <span style={styles.statusChipEmpty}>Sin registro</span>
+                    <span style={styles.statusChipEmpty}>{isEn ? 'Unregistered' : 'Sin registro'}</span>
                   )}
                 </div>
 
@@ -803,7 +814,7 @@ const ActaOficialPanel = ({
                 <div style={styles.expandedEditor}>
                   {/* Status buttons */}
                   <div style={{ marginBottom: '12px' }}>
-                    <div style={styles.editorLabel}>Estado de asistencia</div>
+                    <div style={styles.editorLabel}>{isEn ? 'Attendance Status' : 'Estado de asistencia'}</div>
                     <div style={styles.statusGrid}>
                       {STATUS_OPTIONS.map(opt => (
                         <button
@@ -825,7 +836,7 @@ const ActaOficialPanel = ({
                   {/* Minutes override */}
                   <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
                     <div>
-                      <div style={styles.editorLabel}>Override de minutos (opcional)</div>
+                      <div style={styles.editorLabel}>{isEn ? 'Minutes override (optional)' : 'Override de minutos (opcional)'}</div>
                       <input
                         type="number"
                         min="0"
@@ -837,7 +848,7 @@ const ActaOficialPanel = ({
                       />
                     </div>
                     <div>
-                      <div style={styles.editorLabel}>⭐ Calificación Táctica (1 - 10)</div>
+                      <div style={styles.editorLabel}>⭐ {isEn ? 'Tactical Rating (1 - 10)' : 'Calificación Táctica (1 - 10)'}</div>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                         <input
                           type="number"
@@ -854,7 +865,7 @@ const ActaOficialPanel = ({
                     </div>
                     {(actual?.detail || minuteSource) && (
                       <div style={{ fontSize: '12px', color: '#93C5FD', marginTop: '14px', background: 'rgba(59, 130, 246, 0.1)', padding: '6px 10px', borderRadius: '6px' }}>
-                        💡 <strong>Cálculo del motor:</strong> {actual?.detail || `${MINUTE_SOURCE_LABEL[minuteSource] || minuteSource} (${computedMin.minutes}')`}
+                        💡 <strong>{isEn ? 'Engine calculation:' : 'Cálculo del motor:'}</strong> {actual?.detail || `${MINUTE_SOURCE_LABEL[minuteSource] || minuteSource} (${computedMin.minutes}')`}
                       </div>
                     )}
                     {/* Discrepancia */}
@@ -864,7 +875,9 @@ const ActaOficialPanel = ({
                       if (expected && status !== expected) {
                         return (
                           <div style={styles.discrepancyChip}>
-                            ⚠️ Discrepancia: RSVP previo dijo "{RSVP_LABELS[rsvp.status]?.label}" pero verificaste "{currentStatus?.label}"
+                            ⚠️ {isEn
+                              ? `Discrepancy: Prior RSVP said "${RSVP_LABELS[rsvp.status]?.label}" but you verified "${currentStatus?.label}"`
+                              : `Discrepancia: RSVP previo dijo "${RSVP_LABELS[rsvp.status]?.label}" pero verificaste "${currentStatus?.label}"`}
                           </div>
                         );
                       }
@@ -874,7 +887,7 @@ const ActaOficialPanel = ({
                   {/* Nota Mix FASE 3: Actitud 1-5★ + Nota sugerida */}
                   <div style={{ marginTop: '16px', padding: '14px', borderRadius: '10px', background: 'rgba(212, 168, 67, 0.08)', border: '1px solid rgba(212, 168, 67, 0.3)' }}>
                     <div style={{ fontSize: '11px', fontWeight: 800, color: '#D4A843', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '10px' }}>
-                      ★ Esfuerzo / Actitud (1-5★) — Fórmula Mixta 60/40
+                      ★ {isEn ? 'Effort / Attitude (1-5★) — Mixed Formula 60/40' : 'Esfuerzo / Actitud (1-5★) — Fórmula Mixta 60/40'}
                     </div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '10px', flexWrap: 'wrap' }}>
                       {[1, 2, 3, 4, 5].map(star => {
@@ -915,17 +928,19 @@ const ActaOficialPanel = ({
                       return (
                         <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', alignItems: 'center' }}>
                           <div style={{ fontSize: '11px', color: 'var(--partidos-text-muted)' }}>
-                            📊 Rendimiento: <strong style={{ color: '#4CAF7D' }}>{performanceScore}</strong>
-                            &nbsp;&nbsp;★ Actitud: <strong style={{ color: '#D4A843' }}>{attitudeScore}</strong>
-                            &nbsp;&nbsp;→ Sugerida: <strong style={{ color: ratingColor, fontSize: '14px' }}>{suggested}</strong>
+                            📊 {isEn ? 'Performance:' : 'Rendimiento:'} <strong style={{ color: '#4CAF7D' }}>{performanceScore}</strong>
+                            &nbsp;&nbsp;★ {isEn ? 'Attitude:' : 'Actitud:'} <strong style={{ color: '#D4A843' }}>{attitudeScore}</strong>
+                            &nbsp;&nbsp;→ {isEn ? 'Suggested:' : 'Sugerida:'} <strong style={{ color: ratingColor, fontSize: '14px' }}>{suggested}</strong>
                           </div>
                           {actual?.rating && (
                             <div style={{ fontSize: '11px', color: '#93C5FD' }}>
-                              ✏️ Nota Míster: <strong>{parseFloat(actual.rating).toFixed(1)}</strong> (override)
+                              ✏️ {isEn ? "Coach's Rating:" : 'Nota Míster:'} <strong>{parseFloat(actual.rating).toFixed(1)}</strong> (override)
                             </div>
                           )}
                           <div style={{ fontSize: '10px', color: 'var(--partidos-text-muted)', width: '100%', marginTop: '4px' }}>
-                            Fórmula: 60% rendimiento ({performanceScore}) + 40% actitud ({attitudeScore}) = <strong style={{ color: ratingColor }}>{mixedRating}</strong>
+                            {isEn
+                              ? `Formula: 60% performance (${performanceScore}) + 40% attitude (${attitudeScore}) = `
+                              : `Fórmula: 60% rendimiento (${performanceScore}) + 40% actitud (${attitudeScore}) = `}<strong style={{ color: ratingColor }}>{mixedRating}</strong>
                           </div>
                         </div>
                       );
@@ -942,7 +957,7 @@ const ActaOficialPanel = ({
       {isClosed && (
         <div style={styles.summaryBox}>
           <h4 style={{ margin: '0 0 16px', fontSize: '14px', fontWeight: '800', color: '#10B981', textTransform: 'uppercase' }}>
-            ✅ Resumen Oficial del Acta
+            ✅ {isEn ? 'Official Match Sheet Summary' : 'Resumen Oficial del Acta'}
           </h4>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '12px', width: '100%' }}>
             {convocadosPlayers.map(player => {
@@ -996,12 +1011,12 @@ const ActaOficialPanel = ({
       {/* ── Estadísticas Oficiales del Encuentro (Suite en Vivo) ── */}
       <div style={{ marginTop: '24px' }}>
         <h4 style={{ margin: '0 0 16px', fontSize: '15px', fontWeight: '800', color: 'var(--partidos-accent)', display: 'flex', alignItems: 'center', gap: '8px' }}>
-          📊 Estadísticas Oficiales del Encuentro
+          📊 {isEn ? 'Official Match Statistics' : 'Estadísticas Oficiales del Encuentro'}
         </h4>
         <MatchStatsBlock
           matchData={matchData}
           events={effectiveEvents}
-          language="Español (ES)"
+          language={language || (isEn ? 'English (EN)' : 'Español (ES)')}
           showDonuts={true}
           showComparison={true}
           showHalves={true}
@@ -1036,10 +1051,12 @@ const ActaOficialPanel = ({
             boxShadow: '0 20px 40px rgba(0,0,0,0.6)'
           }}>
             <h3 style={{ margin: '0 0 12px', fontSize: '17px', color: '#F59E0B', display: 'flex', alignItems: 'center', gap: '8px' }}>
-              ⚠️ Divergencias Detectadas antes de Cerrar
+              ⚠️ {isEn ? 'Divergences Detected before Closing' : 'Divergencias Detectadas antes de Cerrar'}
             </h3>
             <p style={{ fontSize: '13px', color: 'var(--partidos-text-primary)', marginBottom: '16px', lineHeight: 1.4 }}>
-              Se han detectado las siguientes incongruencias en el acta oficial o en la bitácora del partido:
+              {isEn
+                ? 'The following discrepancies were detected in the official match sheet or log:'
+                : 'Se han detectado las siguientes incongruencias en el acta oficial o en la bitácora del partido:'}
             </p>
 
             <div style={{ background: 'rgba(0,0,0,0.25)', borderRadius: '10px', padding: '12px', marginBottom: '20px', display: 'flex', flexDirection: 'column', gap: '10px', maxHeight: '280px', overflowY: 'auto' }}>
@@ -1072,7 +1089,7 @@ const ActaOficialPanel = ({
                           whiteSpace: 'nowrap'
                         }}
                       >
-                        🔍 Corregir en {tab}
+                        🔍 {isEn ? `Fix in ${tab}` : `Corregir en ${tab}`}
                       </button>
                     )}
                   </div>
@@ -1098,7 +1115,7 @@ const ActaOficialPanel = ({
                   fontSize: '12px'
                 }}
               >
-                ⚡ Recalcular con eventos
+                ⚡ {isEn ? 'Recalculate with events' : 'Recalcular con eventos'}
               </button>
 
               <div style={{ display: 'flex', gap: '10px' }}>
@@ -1116,7 +1133,7 @@ const ActaOficialPanel = ({
                     minHeight: '44px'
                   }}
                 >
-                  Revisar
+                  {isEn ? 'Review' : 'Revisar'}
                 </button>
                 <button
                   type="button"
@@ -1133,7 +1150,7 @@ const ActaOficialPanel = ({
                     minHeight: '44px'
                   }}
                 >
-                  {closingInProgress ? 'Cerrando...' : '⚠️ Cerrar con avisos'}
+                  {closingInProgress ? (isEn ? 'Closing...' : 'Cerrando...') : (isEn ? '⚠️ Close with warnings' : '⚠️ Cerrar con avisos')}
                 </button>
               </div>
             </div>

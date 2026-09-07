@@ -26,6 +26,10 @@ export const LanguageProvider = ({ children }) => {
       localStorage.setItem('mister11_language', validLang);
       localStorage.setItem('language', validLang);
       window.dispatchEvent(new CustomEvent('m11-language-changed', { detail: validLang }));
+      if (typeof document !== 'undefined' && document.documentElement) {
+        document.documentElement.lang = validLang === 'English (EN)' ? 'en' : 'es';
+        document.documentElement.dir = 'ltr';
+      }
     } catch (_) {}
 
     // Persistencia en segundo plano en Firestore para el usuario activo
@@ -36,6 +40,15 @@ export const LanguageProvider = ({ children }) => {
       } catch (_) {}
     }
   }, [user?.uid]);
+
+  useEffect(() => {
+    try {
+      if (typeof document !== 'undefined' && document.documentElement) {
+        document.documentElement.lang = language === 'English (EN)' ? 'en' : 'es';
+        document.documentElement.dir = 'ltr';
+      }
+    } catch (_) {}
+  }, [language]);
 
   const isEn = language === 'English (EN)';
   const locale = isEn ? 'en-GB' : 'es-ES';

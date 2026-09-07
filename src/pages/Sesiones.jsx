@@ -128,14 +128,14 @@ const Sesiones = () => {
       shareUrl = `${baseUrl}/shared/session/${shareId}`;
     }
 
-    const sessionTitle = sessionToShare.title || sessionToShare.nombre || sessionToShare.titulo || 'Sesión de Entrenamiento';
+    const sessionTitle = sessionToShare.title || sessionToShare.nombre || sessionToShare.titulo || (isEn ? 'Training Session' : 'Sesión de Entrenamiento');
 
     // 1. Web Share API nativo si está disponible
     if (navigator.share) {
       try {
         await navigator.share({
           title: `${sessionTitle} - Míster11`,
-          text: `Te comparto esta sesión de entrenamiento: ${sessionTitle}`,
+          text: isEn ? `Sharing this training session: ${sessionTitle}` : `Te comparto esta sesión de entrenamiento: ${sessionTitle}`,
           url: shareUrl,
         });
         return;
@@ -151,7 +151,7 @@ const Sesiones = () => {
     try {
       if (navigator.clipboard && navigator.clipboard.writeText) {
         await navigator.clipboard.writeText(shareUrl);
-        showToast('¡Enlace copiado al portapapeles!', 'success');
+        showToast(isEn ? 'Link copied to clipboard!' : '¡Enlace copiado al portapapeles!', 'success');
         return;
       }
     } catch (clipErr) {
@@ -173,7 +173,7 @@ const Sesiones = () => {
     if (!shareModal.shareUrl) return;
     navigator.clipboard.writeText(shareModal.shareUrl);
     setShareModal(prev => ({ ...prev, copied: true }));
-    showToast('¡Enlace copiado al portapapeles!', 'success');
+    showToast(isEn ? 'Link copied to clipboard!' : '¡Enlace copiado al portapapeles!', 'success');
     setTimeout(() => setShareModal(prev => ({ ...prev, copied: false })), 2000);
   };
 
@@ -186,10 +186,10 @@ const Sesiones = () => {
         if (data) {
           setImportModal(prev => ({ ...prev, loading: false, previewSession: data }));
         } else {
-          setImportModal(prev => ({ ...prev, loading: false, error: 'No se encontró ninguna sesión compartida con ese enlace.' }));
+          setImportModal(prev => ({ ...prev, loading: false, error: isEn ? 'No shared session found with that link.' : 'No se encontró ninguna sesión compartida con ese enlace.' }));
         }
       }).catch(() => {
-        setImportModal(prev => ({ ...prev, loading: false, error: 'Error al cargar la sesión compartida.' }));
+        setImportModal(prev => ({ ...prev, loading: false, error: isEn ? 'Error loading the shared session.' : 'Error al cargar la sesión compartida.' }));
       });
       setSearchParams({}, { replace: true });
     }
@@ -199,7 +199,7 @@ const Sesiones = () => {
   const handleFetchSharePreview = async () => {
     const queryVal = importModal.inputVal.trim();
     if (!queryVal) {
-      setImportModal(prev => ({ ...prev, error: 'Por favor, introduce un enlace o código de compartir válido.' }));
+      setImportModal(prev => ({ ...prev, error: isEn ? 'Please enter a valid link or share code.' : 'Por favor, introduce un enlace o código de compartir válido.' }));
       return;
     }
 
@@ -209,10 +209,10 @@ const Sesiones = () => {
       if (data) {
         setImportModal(prev => ({ ...prev, loading: false, previewSession: data }));
       } else {
-        setImportModal(prev => ({ ...prev, loading: false, error: 'No se encontró la sesión compartida. Verifica el enlace o código.' }));
+        setImportModal(prev => ({ ...prev, loading: false, error: isEn ? 'Shared session not found. Check the link or code.' : 'No se encontró la sesión compartida. Verifica el enlace o código.' }));
       }
     } catch (err) {
-      setImportModal(prev => ({ ...prev, loading: false, error: 'Error al consultar la sesión compartida.' }));
+      setImportModal(prev => ({ ...prev, loading: false, error: isEn ? 'Error querying the shared session.' : 'Error al consultar la sesión compartida.' }));
     }
   };
 
@@ -225,7 +225,7 @@ const Sesiones = () => {
       const parsed = await parseSessionFile(file);
       setImportModal(prev => ({ ...prev, loading: false, previewSession: parsed }));
     } catch (err) {
-      setImportModal(prev => ({ ...prev, loading: false, error: err.message || 'Error al leer el archivo.' }));
+      setImportModal(prev => ({ ...prev, loading: false, error: err.message || (isEn ? 'Error reading the file.' : 'Error al leer el archivo.') }));
     }
   };
 
@@ -248,11 +248,11 @@ const Sesiones = () => {
         importedAt: new Date().toISOString(),
       };
       await addSession(sessionPayload);
-      showToast('¡Sesión importada con éxito en tu equipo!', 'success');
+      showToast(isEn ? 'Session imported successfully to your team!' : '¡Sesión importada con éxito en tu equipo!', 'success');
       setImportModal({ open: false, activeTab: 'link', inputVal: '', loading: false, previewSession: null, file: null, error: '' });
     } catch (err) {
       console.error('Error al importar la sesión:', err);
-      showAlert('Error', 'No se pudo guardar la sesión importada en tu equipo.');
+      showAlert('Error', isEn ? 'Could not save the imported session to your team.' : 'No se pudo guardar la sesión importada en tu equipo.');
       setImportModal(prev => ({ ...prev, loading: false }));
     }
   };
@@ -280,7 +280,7 @@ const Sesiones = () => {
             await downloadVideo(base64data, `animacion_sesion.${fileType}`, anim.videoMimeType || 'video/webm');
           } catch (e) {
             console.error("Error al procesar descarga de video existente:", e);
-            showToast("Error al guardar el video localmente", "error");
+            showToast(isEn ? 'Error saving the video locally.' : 'Error al guardar el video localmente.', 'error');
           } finally {
             setExportingId(null);
           }
@@ -289,12 +289,12 @@ const Sesiones = () => {
         console.error("Fallo al descargar video pre-renderizado:", err);
         // Fallback: renderizar en segundo plano si el enlace de storage no responde
         setExportingId(anim.id);
-        showToast("Intentando renderizar animación en segundo plano...", "info");
+        showToast(isEn ? 'Trying to render animation in the background...' : 'Intentando renderizar animación en segundo plano...', 'info');
       }
     } else {
       // Si no existe videoUrl (animación no compilada), disparamos la exportación en segundo plano
       setExportingId(anim.id);
-      showToast("Generando video de la animación en segundo plano. Por favor, espera...", "info");
+      showToast(isEn ? 'Generating animation video in the background. Please wait...' : 'Generando video de la animación en segundo plano. Por favor, espera...', 'info');
     }
   };
 
@@ -306,15 +306,15 @@ const Sesiones = () => {
           const { downloadVideo } = await import('../utils/download.js');
           const finalExt = filename.includes('mp4') ? 'mp4' : 'webm';
           await downloadVideo(base64data, `animacion_sesion.${finalExt}`, mimeType);
-          showToast("🎉 Animación descargada exitosamente", "success");
+          showToast(isEn ? '🎉 Animation downloaded successfully' : '🎉 Animación descargada exitosamente', 'success');
         } catch (err) {
-          console.error("Error descargando video renderizado en backend:", err);
-          await showAlert("Error", "No se pudo descargar la animación renderizada.");
+          console.error('Error descargando video renderizado en backend:', err);
+          await showAlert('Error', isEn ? 'Could not download the rendered animation.' : 'No se pudo descargar la animación renderizada.');
         } finally {
           setExportingId(null);
         }
       } else if (event.data === 'EXPORT_ERROR') {
-        await showAlert("Error", "Error al procesar el renderizado en la pizarra táctica.");
+        await showAlert('Error', isEn ? 'Error processing the render in the tactical board.' : 'Error al procesar el renderizado en la pizarra táctica.');
         setExportingId(null);
       }
     };
@@ -458,7 +458,7 @@ const Sesiones = () => {
 
   const handleCreateNew = () => {
     if (!isPro && sessions.length >= limits.SESSIONS) {
-      setUpgradeModal({ open: true, message: `Has alcanzado el límite de ${limits.SESSIONS} sesiones del plan gratuito.` });
+      setUpgradeModal({ open: true, message: isEn ? `You have reached the limit of ${limits.SESSIONS} sessions on the free plan.` : `Has alcanzado el límite de ${limits.SESSIONS} sesiones del plan gratuito.` });
       return;
     }
     setEditData({
@@ -474,7 +474,7 @@ const Sesiones = () => {
       materials: 'Balones, petos, conos, setas',
       linkedPizarraId: '',
       blocks: [
-        { id: Date.now() + Math.random(), name: 'Calentamiento', duration: 15, type: 'Física', description: '' }
+        { id: Date.now() + Math.random(), name: isEn ? 'Warm-up' : 'Calentamiento', duration: 15, type: isEn ? 'Physical' : 'Física', description: '' }
       ]
     });
     setViewMode('edit');
@@ -494,7 +494,7 @@ const Sesiones = () => {
 
     if (!sess || typeof sess !== 'object') {
       console.warn('[handleEditSession] No se proporcionó una sesión válida.');
-      showToast('Error: No se encontró la sesión a editar', 'error');
+      showToast(isEn ? 'Error: Session to edit not found' : 'Error: No se encontró la sesión a editar', 'error');
       return;
     }
 
@@ -542,7 +542,7 @@ const Sesiones = () => {
         players: Array.isArray(sess.players) ? sess.players : (Array.isArray(sess.convocados) ? sess.convocados : []),
         files: Array.isArray(sess.files) ? sess.files : [],
         blocks: mappedBlocks.length > 0 ? mappedBlocks : [
-          { id: Date.now(), name: 'Calentamiento', duration: 15, type: 'Física', description: '', imageUrl: null, imagenProtocolo: null }
+          { id: Date.now(), name: isEn ? 'Warm-up' : 'Calentamiento', duration: 15, type: isEn ? 'Physical' : 'Física', description: '', imageUrl: null, imagenProtocolo: null }
         ],
         linkedPizarraId: String(sess.linkedPizarraId || ''),
       };
@@ -556,12 +556,12 @@ const Sesiones = () => {
       }, 50);
     } catch (err) {
       console.error('[handleEditSession] Error al abrir formulario de edición:', err);
-      showToast(`Error al abrir editor: ${err.message || err}`, 'error');
+      showToast(isEn ? `Error opening editor: ${err.message || err}` : `Error al abrir editor: ${err.message || err}`, 'error');
     }
   };
 
   const handleDeleteSession = async (id) => {
-    const confirmDelete = await showConfirm('Confirmar eliminación', '¿Eliminar esta sesión?');
+    const confirmDelete = await showConfirm(isEn ? 'Confirm deletion' : 'Confirmar eliminación', isEn ? 'Delete this session?' : '¿Eliminar esta sesión?');
     if (confirmDelete) {
       try {
         const sessionToDelete = sessions.find(s => s.id === id);
@@ -579,13 +579,13 @@ const Sesiones = () => {
         await removeSession(id);
         if(selectedSession?.id === id) setSelectedSession(null);
       } catch (error) {
-        await showAlert("Error", "Error al eliminar sesión.");
+        await showAlert('Error', isEn ? 'Error deleting session.' : 'Error al eliminar sesión.');
       }
     }
   };
 
   const handleDeleteCapture = async (capture) => {
-    const confirmDelete = await showConfirm('Confirmar eliminación', '¿Eliminar esta captura?');
+    const confirmDelete = await showConfirm(isEn ? 'Confirm deletion' : 'Confirmar eliminación', isEn ? 'Delete this capture?' : '¿Eliminar esta captura?');
     if (confirmDelete) {
       try {
         if (capture.storagePath) {
@@ -600,14 +600,14 @@ const Sesiones = () => {
         if(selectedCapture?.id === capture.id) setSelectedCapture(null);
       } catch (error) {
         console.error(error);
-        await showAlert("Error", "Error al eliminar captura.");
+        await showAlert('Error', isEn ? 'Error deleting capture.' : 'Error al eliminar captura.');
       }
     }
   };
 
   const handleDeleteAnimation = async (anim) => {
     if (!anim) return;
-    const confirmDelete = await showConfirm('Confirmar eliminación', '¿Eliminar esta animación permanentemente?');
+    const confirmDelete = await showConfirm(isEn ? 'Confirm deletion' : 'Confirmar eliminación', isEn ? 'Permanently delete this animation?' : '¿Eliminar esta animación permanentemente?');
     if (confirmDelete) {
       try {
         if (user && activeTeamId) {
@@ -665,10 +665,10 @@ const Sesiones = () => {
         if (selectedAnimation && selectedAnimation.id === anim.id) {
           setSelectedAnimation(null);
         }
-        showToast("Animación eliminada exitosamente", "success");
+        showToast(isEn ? 'Animation deleted successfully' : 'Animación eliminada exitosamente', 'success');
       } catch (error) {
-        console.error("Error general eliminando animación: ", error);
-        await showAlert("Error", "Error al eliminar la animación.");
+        console.error('Error general eliminando animación: ', error);
+        await showAlert('Error', isEn ? 'Error deleting the animation.' : 'Error al eliminar la animación.');
       }
     }
   };
@@ -746,7 +746,7 @@ const Sesiones = () => {
   const handleSaveSession = async () => {
     const title = (editData?.title || '').trim();
     if (!title) {
-      await showAlert('Validación', 'El título de la sesión es obligatorio.');
+      await showAlert(isEn ? 'Validation' : 'Validación', isEn ? 'Session title is required.' : 'El título de la sesión es obligatorio.');
       return;
     }
 
@@ -795,11 +795,11 @@ const Sesiones = () => {
       // ── Paso 3: Guardar en Firestore ──
       if (editData.id) {
         await updateSession(editData.id, sessionPayload);
-        showToast('Sesión actualizada exitosamente', 'success');
+        showToast(isEn ? 'Session updated successfully' : 'Sesión actualizada exitosamente', 'success');
         setSelectedSession({ ...sessionPayload, id: editData.id });
       } else {
         const newId = await addSession(sessionPayload);
-        showToast('Sesión guardada exitosamente', 'success');
+        showToast(isEn ? 'Session saved successfully' : 'Sesión guardada exitosamente', 'success');
         if (newId) {
           setSelectedSession({ ...sessionPayload, id: newId });
         }
@@ -807,8 +807,8 @@ const Sesiones = () => {
       setViewMode('list');
     } catch (error) {
       console.error('[Sesiones] Error al guardar sesión:', error);
-      showToast(error?.message || 'Error al guardar la sesión', 'error');
-      await showAlert('Error', error?.message || 'Error al guardar la sesión en la base de datos.');
+      showToast(error?.message || (isEn ? 'Error saving the session' : 'Error al guardar la sesión'), 'error');
+      await showAlert('Error', error?.message || (isEn ? 'Error saving the session to the database.' : 'Error al guardar la sesión en la base de datos.'));
     } finally {
       // SIEMPRE liberar el estado de carga
       setIsSaving(false);
@@ -818,7 +818,7 @@ const Sesiones = () => {
   const handleAddBlock = () => {
     setEditData(prev => ({
       ...prev,
-      blocks: [...prev.blocks, { id: Date.now() + Math.random(), name: 'Nuevo Ejercicio', duration: 15, type: 'Táctica', description: '' }]
+      blocks: [...prev.blocks, { id: Date.now() + Math.random(), name: isEn ? 'New Exercise' : 'Nuevo Ejercicio', duration: 15, type: isEn ? 'Tactical' : 'Táctica', description: '' }]
     }));
   };
 
@@ -837,7 +837,7 @@ const Sesiones = () => {
   };
 
   const handleDuplicateBlock = (block) => {
-    const duplicate = { ...block, id: Date.now() + Math.random(), name: `${block.name} (copia)` };
+    const duplicate = { ...block, id: Date.now() + Math.random(), name: `${block.name} (${isEn ? 'copy' : 'copia'})` };
     setEditData(prev => {
       const idx = prev.blocks.findIndex(b => b.id === block.id);
       const newBlocks = [...prev.blocks];
@@ -861,7 +861,7 @@ const Sesiones = () => {
     if (!file || !user || !activeTeamId) return;
     
     if (file.type !== 'application/pdf') {
-      await showAlert("Validación", "Solo se permiten archivos PDF.");
+      await showAlert(isEn ? 'Validation' : 'Validación', isEn ? 'Only PDF files are allowed.' : 'Solo se permiten archivos PDF.');
       return;
     }
 
@@ -879,7 +879,7 @@ const Sesiones = () => {
       },
       async (error) => {
         console.error("Error uploading file:", error);
-        await showAlert("Error", "Error al subir el archivo. Revisa tu conexión.");
+        await showAlert('Error', isEn ? 'Error uploading the file. Check your connection.' : 'Error al subir el archivo. Revisa tu conexión.');
         setIsSaving(false);
         setUploadProgress(0);
       },
@@ -961,42 +961,42 @@ const Sesiones = () => {
         <div className="editor-content">
           <div className="editor-left">
             <div className="edit-section">
-              <h3>Datos Generales</h3>
+              <h3>{isEn ? 'General Data' : 'Datos Generales'}</h3>
               <div className="form-group full">
-                <label>Título de la Sesión</label>
-                <SpellCheckedInput value={editData.title} onChange={e => setEditData({...editData, title: e.target.value})} onBlur={e => setEditData(prev => ({...prev, title: normalizeText(e.target.value)}))} placeholder="Ej. Activación y Rondo..." />
+                <label>{isEn ? 'Session Title' : 'Título de la Sesión'}</label>
+                <SpellCheckedInput value={editData.title} onChange={e => setEditData({...editData, title: e.target.value})} onBlur={e => setEditData(prev => ({...prev, title: normalizeText(e.target.value)}))} placeholder={isEn ? 'e.g. Activation and Rondo...' : 'Ej. Activación y Rondo...'} />
               </div>
               <div className="form-row">
                 <div className="form-group">
-                  <label>Fecha</label>
+                  <label>{isEn ? 'Date' : 'Fecha'}</label>
                   <input type="date" value={editData.date} onChange={e => setEditData({...editData, date: e.target.value})} />
                 </div>
                 <div className="form-group">
-                  <label>Hora</label>
+                  <label>{isEn ? 'Time' : 'Hora'}</label>
                   <input type="time" value={editData.time} onChange={e => setEditData({...editData, time: e.target.value})} />
                 </div>
                 <div className="form-group">
-                  <label>Duración (min)</label>
+                  <label>{isEn ? 'Duration (min)' : 'Duración (min)'}</label>
                   <input type="number" min="15" step="5" value={editData.duration} onChange={e => setEditData({...editData, duration: Number(e.target.value)})} />
                 </div>
               </div>
               <div className="form-row">
                 <div className="form-group">
-                  <label>Categoría</label>
+                  <label>{isEn ? 'Category' : 'Categoría'}</label>
                   <select value={editData.category} onChange={e => setEditData({...editData, category: e.target.value})}>
-                    <option value="Técnica">Técnica</option>
-                    <option value="Táctica">Táctica</option>
-                    <option value="Física">Física</option>
-                    <option value="Mixta">Mixta</option>
+                    <option value="Técnica">{isEn ? 'Technical' : 'Técnica'}</option>
+                    <option value="Táctica">{isEn ? 'Tactical' : 'Táctica'}</option>
+                    <option value="Física">{isEn ? 'Physical' : 'Física'}</option>
+                    <option value="Mixta">{isEn ? 'Mixed' : 'Mixta'}</option>
                   </select>
                 </div>
                 <div className="form-group">
-                  <label>Intensidad / Carga</label>
+                  <label>{isEn ? 'Intensity / Load' : 'Intensidad / Carga'}</label>
                   <select value={editData.intensity} onChange={e => setEditData({...editData, intensity: e.target.value})}>
-                    <option value="Baja">Baja (Recuperación)</option>
-                    <option value="Media">Media (Mantenimiento)</option>
-                    <option value="Alta">Alta (Adquisición)</option>
-                    <option value="Máxima">Máxima (Competición)</option>
+                    <option value="Baja">{isEn ? 'Low (Recovery)' : 'Baja (Recuperación)'}</option>
+                    <option value="Media">{isEn ? 'Medium (Maintenance)' : 'Media (Mantenimiento)'}</option>
+                    <option value="Alta">{isEn ? 'High (Acquisition)' : 'Alta (Adquisición)'}</option>
+                    <option value="Máxima">{isEn ? 'Maximum (Competition)' : 'Máxima (Competición)'}</option>
                   </select>
                 </div>
               </div>
@@ -1026,9 +1026,9 @@ const Sesiones = () => {
                     marginTop: '4px'
                   }}
                 >
-                  <option value="">Ninguna animación vinculada</option>
+                  <option value="">{isEn ? 'No linked animation' : 'Ninguna animación vinculada'}</option>
                   {pizarras.map(piz => (
-                    <option key={piz.id} value={piz.id}>{piz.title || 'Sin Título'}</option>
+                    <option key={piz.id} value={piz.id}>{piz.title || (isEn ? 'Untitled' : 'Sin Título')}</option>
                   ))}
                 </select>
               </div>
@@ -1036,8 +1036,8 @@ const Sesiones = () => {
 
             <div className="edit-section">
               <div className="section-header-flex">
-                <h3>Archivos Adjuntos (PDF)</h3>
-                <button className="btn-small-outline" onClick={() => fileInputRef.current?.click()} disabled={uploadProgress > 0 && uploadProgress < 100}>+ Subir PDF</button>
+                <h3>{isEn ? 'Attached Files (PDF)' : 'Archivos Adjuntos (PDF)'}</h3>
+                <button className="btn-small-outline" onClick={() => fileInputRef.current?.click()} disabled={uploadProgress > 0 && uploadProgress < 100}>+ {isEn ? 'Upload PDF' : 'Subir PDF'}</button>
                 <input type="file" ref={fileInputRef} style={{display:'none'}} accept=".pdf" onChange={handleFileUpload} />
               </div>
               {uploadProgress > 0 && uploadProgress < 100 && (
@@ -1046,7 +1046,7 @@ const Sesiones = () => {
                 </div>
               )}
               {editData.files.length === 0 ? (
-                <div className="empty-files">No hay archivos adjuntos. Sube un PDF con diagramas o apuntes.</div>
+                <div className="empty-files">{isEn ? 'No attached files. Upload a PDF with diagrams or notes.' : 'No hay archivos adjuntos. Sube un PDF con diagramas o apuntes.'}</div>
               ) : (
                 <div className="files-list">
                   {editData.files.map(f => (
@@ -1089,7 +1089,7 @@ const Sesiones = () => {
             
             <div className="blocks-builder-list">
               {editData.blocks.length === 0 ? (
-                <div className="empty-blocks">Añade bloques de entrenamiento para organizar tu sesión.</div>
+                <div className="empty-blocks">{isEn ? 'Add training blocks to organise your session.' : 'Añade bloques de entrenamiento para organizar tu sesión.'}</div>
               ) : (
                 <DndContext
                   sensors={sensors}
@@ -1124,7 +1124,7 @@ const Sesiones = () => {
           <div className="modal-overlay-pdf" onClick={() => setPdfPreview(null)}>
             <div className="modal-content-pdf" onClick={e => e.stopPropagation()}>
               <div className="modal-header-pdf">
-                <h3>Vista Previa del PDF</h3>
+                <h3>{isEn ? 'PDF Preview' : 'Vista Previa del PDF'}</h3>
                 <button className="btn-close-pdf" onClick={() => setPdfPreview(null)}>✕</button>
               </div>
               <div className="modal-body-pdf">
@@ -1155,7 +1155,7 @@ const Sesiones = () => {
                   setSelectedSession(sessions[0]);
                   setShowLiveField(true);
                 } else {
-                  showToast('No hay sesiones disponibles.', 'info');
+                  showToast(isEn ? 'No sessions available.' : 'No hay sesiones disponibles.', 'info');
                 }
               }}
               style={{ padding: '8px 16px', minHeight: '44px', width: 'auto', flex: '0 0 auto', whiteSpace: 'nowrap', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '6px', fontWeight: 'bold' }}
@@ -1376,7 +1376,7 @@ const Sesiones = () => {
         <div className="sessions-content">
           <div className="grid-3-cols">
             {filteredSessions.map(session => {
-              const title      = session.title    || session.titulo    || 'Sin título';
+              const title      = session.title    || session.titulo    || (isEn ? 'Untitled' : 'Sin título');
               const time       = session.time     || session.hora      || '--:--';
               const duration   = session.duration || session.duracion  || 0;
               const category   = session.category || session.categoria || 'General';
@@ -1398,7 +1398,7 @@ const Sesiones = () => {
                         type="button"
                         onClick={(e) => { e.stopPropagation(); handleEditSession(session); }}
                         style={{ background: 'rgba(255, 255, 255, 0.08)', border: '1px solid var(--border-light)', color: 'var(--text-primary)', padding: '4px 10px', borderRadius: '12px', fontSize: '12px', fontWeight: 'bold', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px' }}
-                        title="Editar esta sesión"
+                        title={isEn ? 'Edit this session' : 'Editar esta sesión'}
                       >
                         ✏️ {t('sesiones.actions.edit')}
                       </button>
@@ -1406,7 +1406,7 @@ const Sesiones = () => {
                         type="button"
                         onClick={(e) => { e.stopPropagation(); handleShareSession(session); }}
                         style={{ background: 'rgba(212, 168, 67, 0.15)', border: '1px solid var(--accent-gold)', color: 'var(--accent-gold)', padding: '4px 10px', borderRadius: '12px', fontSize: '12px', fontWeight: 'bold', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px' }}
-                        title="Compartir sesión con otro entrenador"
+                        title={isEn ? 'Share session with another coach' : 'Compartir sesión con otro entrenador'}
                       >
                         <Share2 size={13} /> {t('sesiones.actions.share')}
                       </button>
@@ -1440,7 +1440,7 @@ const Sesiones = () => {
               );
             })}
             {filteredSessions.length === 0 && (
-              <div className="empty-state-list">No hay sesiones en esta categoría.</div>
+              <div className="empty-state-list">{isEn ? 'No sessions in this category.' : 'No hay sesiones en esta categoría.'}</div>
             )}
           </div>
 
@@ -1469,9 +1469,9 @@ const Sesiones = () => {
               >
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px', borderBottom: '1px solid var(--border-light)', paddingBottom: '10px' }}>
                   <div>
-                    <span style={{ fontSize: '11px', color: 'var(--accent-gold)', fontWeight: 800, textTransform: 'uppercase' }}>📅 Planificación Diaria</span>
+                    <span style={{ fontSize: '11px', color: 'var(--accent-gold)', fontWeight: 800, textTransform: 'uppercase' }}>📅 {isEn ? 'Daily Planning' : 'Planificación Diaria'}</span>
                     <h3 style={{ margin: '2px 0 0', fontSize: '18px', color: 'var(--text-primary)' }}>
-                      Sesiones del {selectedCalendarDate}
+                      {isEn ? `Sessions for ${selectedCalendarDate}` : `Sesiones del ${selectedCalendarDate}`}
                     </h3>
                   </div>
                   <button
@@ -1487,7 +1487,7 @@ const Sesiones = () => {
                     return (
                       <div style={{ textAlign: 'center', padding: '24px 10px', color: 'var(--text-secondary)' }}>
                         <div style={{ fontSize: '32px', marginBottom: '8px' }}>📋</div>
-                        <p style={{ margin: '0 0 16px', fontSize: '14px' }}>No hay sesiones programadas para este día.</p>
+                        <p style={{ margin: '0 0 16px', fontSize: '14px' }}>{isEn ? 'No sessions scheduled for this day.' : 'No hay sesiones programadas para este día.'}</p>
                         <button
                           type="button"
                           className="btn-primary-new"
@@ -1497,7 +1497,7 @@ const Sesiones = () => {
                           }}
                           style={{ margin: '0 auto', display: 'inline-flex' }}
                         >
-                          + Crear Sesión para este día
+                          + {isEn ? 'Create Session for this day' : 'Crear Sesión para este día'}
                         </button>
                       </div>
                     );
@@ -1532,7 +1532,7 @@ const Sesiones = () => {
                                 </span>
                               </div>
                               <strong style={{ fontSize: '14px', color: 'var(--text-primary)' }}>
-                                {session.title || session.titulo || 'Sin título'}
+                                {session.title || session.titulo || (isEn ? 'Untitled' : 'Sin título')}
                               </strong>
                             </div>
 
@@ -1545,7 +1545,7 @@ const Sesiones = () => {
                                 }}
                                 style={{ padding: '6px 12px', borderRadius: '8px', border: '1px solid var(--border-light)', background: 'var(--bg-card)', color: 'var(--text-primary)', fontSize: '12px', fontWeight: 700, cursor: 'pointer' }}
                               >
-                                Ver
+                                {isEn ? 'View' : 'Ver'}
                               </button>
                               <button
                                 type="button"
@@ -1555,7 +1555,7 @@ const Sesiones = () => {
                                 }}
                                 style={{ padding: '6px 12px', borderRadius: '8px', border: 'none', background: 'var(--accent-gold)', color: '#000', fontSize: '12px', fontWeight: 800, cursor: 'pointer' }}
                               >
-                                Editar
+                                {isEn ? 'Edit' : 'Editar'}
                               </button>
                             </div>
                           </div>
@@ -1575,7 +1575,7 @@ const Sesiones = () => {
                 <div className="preview-content">
                   <div className="preview-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                     <div>
-                      <h2>{selectedSession.title || selectedSession.titulo || 'Sin título'}</h2>
+                      <h2>{selectedSession.title || selectedSession.titulo || (isEn ? 'Untitled' : 'Sin título')}</h2>
                       <span className="date-full">
                         {selectedSession.date || selectedSession.fecha || ''} · {selectedSession.time || selectedSession.hora || ''}
                       </span>
@@ -1623,7 +1623,7 @@ const Sesiones = () => {
                             />
                           ) : (
                             <div style={{width: '90px', height: '60px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#000', borderRadius: '8px', color: '#888', fontSize: '10px'}}>
-                              Pizarra
+                              {isEn ? 'Board' : 'Pizarra'}
                             </div>
                           )}
                           <div style={{flex: 1, minWidth: 0}}>
@@ -1764,8 +1764,8 @@ const Sesiones = () => {
           {captures.length === 0 ? (
             <div className="empty-state-full">
               <div className="empty-icon">🎨</div>
-              <h3>No hay capturas de pizarra</h3>
-              <p>Las capturas que guardes en la Pizarra Táctica aparecerán aquí automáticamente.</p>
+              <h3>{isEn ? 'No tactical captures' : 'No hay capturas de pizarra'}</h3>
+              <p>{isEn ? 'Captures saved in the Tactical Board will appear here automatically.' : 'Las capturas que guardes en la Pizarra Táctica aparecerán aquí automáticamente.'}</p>
             </div>
           ) : (
             captures.map(cap => (
@@ -1773,13 +1773,13 @@ const Sesiones = () => {
                 <div className="capture-image-wrapper">
                   <img src={cap.thumbnail || cap.url} alt="Pizarra" loading="lazy" />
                   <div className="capture-overlay">
-                    <span>👁 Ver</span>
+                    <span>👁 {isEn ? 'View' : 'Ver'}</span>
                   </div>
                 </div>
                 <div className="capture-info">
-                  <span className="capture-name">{cap.title || cap.name || 'Captura Táctica'}</span>
+                  <span className="capture-name">{cap.title || cap.name || (isEn ? 'Tactical Capture' : 'Captura Táctica')}</span>
                   <span className="capture-date">
-                    {cap.timestamp?.toDate ? cap.timestamp.toDate().toLocaleDateString() : 'Reciente'}
+                    {cap.timestamp?.toDate ? cap.timestamp.toDate().toLocaleDateString(locale) : (isEn ? 'Recent' : 'Reciente')}
                   </span>
                 </div>
               </div>
@@ -1791,8 +1791,8 @@ const Sesiones = () => {
           {pizarras.length === 0 ? (
             <div className="empty-state-full">
               <div className="empty-icon">🎬</div>
-              <h3>No hay animaciones de pizarra</h3>
-              <p>Crea animaciones multi-frame en la Pizarra Táctica para exportarlas o vincularlas a tus sesiones.</p>
+              <h3>{isEn ? 'No board animations' : 'No hay animaciones de pizarra'}</h3>
+              <p>{isEn ? 'Create multi-frame animations in the Tactical Board to export or link to your sessions.' : 'Crea animaciones multi-frame en la Pizarra Táctica para exportarlas o vincularlas a tus sesiones.'}</p>
             </div>
           ) : (
             pizarras.map(piz => (
@@ -1801,16 +1801,16 @@ const Sesiones = () => {
                   {piz.thumbnail ? (
                     <img src={piz.thumbnail} alt="Animación" loading="lazy" style={{objectFit: 'cover'}} />
                   ) : (
-                    <div style={{width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#111', color: '#888', fontSize: '14px', fontWeight: 'bold'}}>🎬 Pizarra</div>
+                    <div style={{width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#111', color: '#888', fontSize: '14px', fontWeight: 'bold'}}>🎬 {isEn ? 'Board' : 'Pizarra'}</div>
                   )}
                   <div className="capture-overlay">
-                    <span>👁 Ver Detalles</span>
+                    <span>👁 {isEn ? 'View Details' : 'Ver Detalles'}</span>
                   </div>
                 </div>
                 <div className="capture-info">
-                  <span className="capture-name">{piz.title || 'Animación Táctica'}</span>
+                  <span className="capture-name">{piz.title || (isEn ? 'Tactical Animation' : 'Animación Táctica')}</span>
                   <span className="capture-date">
-                    {piz.framesCount || 0} Frames · {piz.timestamp?.toDate ? piz.timestamp.toDate().toLocaleDateString() : 'Reciente'}
+                    {piz.framesCount || 0} {isEn ? 'Frames' : 'Frames'} · {piz.timestamp?.toDate ? piz.timestamp.toDate().toLocaleDateString(locale) : (isEn ? 'Recent' : 'Reciente')}
                   </span>
                 </div>
               </div>
@@ -1827,9 +1827,9 @@ const Sesiones = () => {
           images={captures.map(c => c.url || c.thumbnail).filter(Boolean)}
           initialIndex={Math.max(0, captures.findIndex(c => c.id === selectedCapture.id))}
           exercisesData={captures.map(c => ({
-            name: c.title || c.name || 'Captura de Pizarra Táctica',
-            type: 'Pizarra Táctica',
-            description: c.description || 'Captura exportada desde la Pizarra Táctica de Míster11.'
+            name: c.title || c.name || (isEn ? 'Tactical Board Capture' : 'Captura de Pizarra Táctica'),
+            type: isEn ? 'Tactical Board' : 'Pizarra Táctica',
+            description: c.description || (isEn ? 'Capture exported from Mister11 Tactical Board.' : 'Captura exportada desde la Pizarra Táctica de Míster11.')
           }))}
         />
       )}
@@ -1841,8 +1841,8 @@ const Sesiones = () => {
           display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center'
         }}>
           <div style={{zIndex: 2, textAlign: 'center', color: 'white', padding: '20px', borderRadius: '12px', background: '#1A2E1A', border: '1px solid #4CAF7D'}}>
-            <h2 style={{margin: '0 0 10px 0', fontSize: '1.5rem'}}>🎬 Descargando Video MP4...</h2>
-            <p style={{margin: 0, color: '#ccc'}}>Por favor espera un momento.</p>
+            <h2 style={{margin: '0 0 10px 0', fontSize: '1.5rem'}}>🎬 {isEn ? 'Downloading MP4 Video...' : 'Descargando Video MP4...'}</h2>
+            <p style={{margin: 0, color: '#ccc'}}>{isEn ? 'Please wait a moment.' : 'Por favor espera un momento.'}</p>
             <div style={{marginTop: '20px', width: '40px', height: '40px', border: '4px solid rgba(76,175,125,0.3)', borderTop: '4px solid #4CAF7D', borderRadius: '50%', animation: 'spin 1s linear infinite', margin: '0 auto'}}></div>
             <style>{`@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }`}</style>
           </div>
@@ -1860,7 +1860,7 @@ const Sesiones = () => {
         <div className="modal-overlay-capture" onClick={() => setSelectedAnimation(null)}>
           <div className="modal-content-capture" onClick={e => e.stopPropagation()}>
             <div className="modal-header-capture">
-              <h3>{selectedAnimation.title || 'Animación Táctica'}</h3>
+              <h3>{selectedAnimation.title || (isEn ? 'Tactical Animation' : 'Animación Táctica')}</h3>
               <button className="btn-close-pdf" onClick={() => setSelectedAnimation(null)}>✕</button>
             </div>
             <div className="modal-body-capture" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
@@ -1888,7 +1888,7 @@ const Sesiones = () => {
         <div className="modal-overlay-pdf" onClick={() => setPdfPreview(null)}>
           <div className="modal-content-pdf" onClick={e => e.stopPropagation()}>
             <div className="modal-header-pdf">
-              <h3>Vista Previa del PDF</h3>
+              <h3>{isEn ? 'PDF Preview' : 'Vista Previa del PDF'}</h3>
               <button className="btn-close-pdf" onClick={() => setPdfPreview(null)}>✕</button>
             </div>
             <div className="modal-body-pdf">
@@ -1910,7 +1910,7 @@ const Sesiones = () => {
           <div className="modal-content-pdf" style={{ maxWidth: '540px', height: 'auto', padding: '24px' }} onClick={e => e.stopPropagation()}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
               <h3 style={{ margin: 0, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <Share2 size={20} color="var(--accent-gold)" /> Compartir Sesión de Entrenamiento
+                <Share2 size={20} color="var(--accent-gold)" /> {isEn ? 'Share Training Session' : 'Compartir Sesión de Entrenamiento'}
               </h3>
               <button className="btn-close-pdf" onClick={() => setShareModal(prev => ({ ...prev, open: false }))}>✕</button>
             </div>
@@ -1918,12 +1918,12 @@ const Sesiones = () => {
             {shareModal.loading ? (
               <div style={{ textAlign: 'center', padding: '30px 0', color: 'var(--text-secondary)' }}>
                 <div style={{ width: '36px', height: '36px', border: '3px solid var(--accent-gold-light)', borderTopColor: 'var(--accent-gold)', borderRadius: '50%', animation: 'spin 1s linear infinite', margin: '0 auto 12px auto' }} />
-                <p>Generando enlace público y preparando datos...</p>
+                <p>{isEn ? 'Generating public link and preparing data...' : 'Generando enlace público y preparando datos...'}</p>
               </div>
             ) : (
               <div>
                 <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', marginBottom: '16px' }}>
-                  Cualquier entrenador o usuario con este enlace podrá ver los ejercicios y clonar la sesión directamente a su equipo.
+                  {isEn ? 'Any coach or user with this link will be able to view the exercises and clone the session directly to their team.' : 'Cualquier entrenador o usuario con este enlace podrá ver los ejercicios y clonar la sesión directamente a su equipo.'}
                 </p>
 
                 <div style={{ background: 'var(--bg-app)', border: '1px solid var(--border-light)', borderRadius: '10px', padding: '12px', display: 'flex', gap: '8px', alignItems: 'center', marginBottom: '20px' }}>
@@ -1939,12 +1939,12 @@ const Sesiones = () => {
                     onClick={handleCopyShareUrl}
                   >
                     {shareModal.copied ? <Check size={16} /> : <Copy size={16} />}
-                    {shareModal.copied ? '¡Copiado!' : 'Copiar Link'}
+                    {shareModal.copied ? (isEn ? 'Copied!' : '¡Copiado!') : (isEn ? 'Copy Link' : 'Copiar Link')}
                   </button>
                 </div>
 
                 <div style={{ borderTop: '1px solid var(--border-light)', paddingTop: '16px' }}>
-                  <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', fontWeight: 'bold', textTransform: 'uppercase' }}>Otras Opciones de Exportación / Transferencia:</span>
+                  <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', fontWeight: 'bold', textTransform: 'uppercase' }}>{isEn ? 'Other Export / Transfer Options:' : 'Otras Opciones de Exportación / Transferencia:'}</span>
                   <div style={{ display: 'flex', gap: '10px', marginTop: '10px' }}>
                     <button
                       className="btn-outline-gold"
@@ -1974,7 +1974,7 @@ const Sesiones = () => {
           <div className="modal-content-pdf" style={{ maxWidth: '600px', height: 'auto', padding: '24px', maxHeight: '90vh', overflowY: 'auto' }} onClick={e => e.stopPropagation()}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
               <h3 style={{ margin: 0, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <Download size={20} color="var(--accent-gold)" /> Importar / Transferir Sesión
+                <Download size={20} color="var(--accent-gold)" /> {isEn ? 'Import / Transfer Session' : 'Importar / Transferir Sesión'}
               </h3>
               <button className="btn-close-pdf" onClick={() => setImportModal(prev => ({ ...prev, open: false }))}>✕</button>
             </div>
@@ -1985,25 +1985,25 @@ const Sesiones = () => {
                 className={`tab-switcher ${importModal.activeTab === 'link' ? 'active' : ''}`}
                 onClick={() => setImportModal(prev => ({ ...prev, activeTab: 'link', error: '' }))}
               >
-                🔗 Por Enlace / Código
+                🔗 {isEn ? 'By Link / Code' : 'Por Enlace / Código'}
               </button>
               <button
                 className={`tab-switcher ${importModal.activeTab === 'file' ? 'active' : ''}`}
                 onClick={() => setImportModal(prev => ({ ...prev, activeTab: 'file', error: '' }))}
               >
-                📁 Por Archivo (.m11session / .json)
+                📁 {isEn ? 'By File (.m11session / .json)' : 'Por Archivo (.m11session / .json)'}
               </button>
             </div>
 
             {importModal.activeTab === 'link' ? (
               <div>
                 <p style={{ color: 'var(--text-secondary)', fontSize: '0.88rem', marginBottom: '12px' }}>
-                  Pega el enlace web o código de compartir que te haya enviado otro entrenador:
+                  {isEn ? 'Paste the web link or share code sent by another coach:' : 'Pega el enlace web o código de compartir que te haya enviado otro entrenador:'}
                 </p>
                 <div style={{ display: 'flex', gap: '8px', marginBottom: '16px' }}>
                   <input
                     type="text"
-                    placeholder="Ej: https://www.mister11.app/shared/session/m11_ses_..."
+                    placeholder={isEn ? 'e.g. https://www.mister11.app/shared/session/m11_ses_...' : 'Ej: https://www.mister11.app/shared/session/m11_ses_...'}
                     value={importModal.inputVal}
                     onChange={e => setImportModal(prev => ({ ...prev, inputVal: e.target.value }))}
                     style={{ flex: 1, padding: '10px 14px', background: 'var(--bg-app)', border: '1px solid var(--border-light)', borderRadius: '8px', color: 'var(--text-primary)', outline: 'none' }}
@@ -2013,14 +2013,14 @@ const Sesiones = () => {
                     disabled={importModal.loading}
                     onClick={handleFetchSharePreview}
                   >
-                    {importModal.loading ? 'Buscando...' : 'Buscar Sesión'}
+                    {importModal.loading ? (isEn ? 'Searching...' : 'Buscando...') : (isEn ? 'Search Session' : 'Buscar Sesión')}
                   </button>
                 </div>
               </div>
             ) : (
               <div style={{ marginBottom: '20px' }}>
                 <p style={{ color: 'var(--text-secondary)', fontSize: '0.88rem', marginBottom: '12px' }}>
-                  Selecciona un archivo <code>.m11session</code> o <code>.json</code> exportado de Míster11:
+                  {isEn ? <span>Select a <code>.m11session</code> or <code>.json</code> file exported from Míster11:</span> : <span>Selecciona un archivo <code>.m11session</code> o <code>.json</code> exportado de Míster11:</span>}
                 </p>
                 <input
                   type="file"
@@ -2044,7 +2044,7 @@ const Sesiones = () => {
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '10px' }}>
                   <div>
                     <span style={{ fontSize: '0.75rem', background: 'rgba(212, 168, 67, 0.2)', color: 'var(--accent-gold)', padding: '2px 8px', borderRadius: '10px', fontWeight: 'bold' }}>
-                      Sesión Encontrada
+                      {isEn ? 'Session Found' : 'Sesión Encontrada'}
                     </span>
                     <h4 style={{ margin: '6px 0 0 0', fontSize: '1.1rem', color: 'var(--text-primary)' }}>
                       {importModal.previewSession.title}
@@ -2056,7 +2056,7 @@ const Sesiones = () => {
                 </div>
 
                 <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', margin: '0 0 10px 0' }}>
-                  Categoría: <strong>{importModal.previewSession.category}</strong> • Carga: <strong>{importModal.previewSession.intensity}</strong> • Bloques: <strong>{(importModal.previewSession.blocks || []).length} ejercicios</strong>
+                  {isEn ? 'Category:' : 'Categoría:'} <strong>{importModal.previewSession.category}</strong> • {isEn ? 'Load:' : 'Carga:'} <strong>{importModal.previewSession.intensity}</strong> • {isEn ? 'Blocks:' : 'Bloques:'} <strong>{(importModal.previewSession.blocks || []).length} {isEn ? 'exercises' : 'ejercicios'}</strong>
                 </p>
 
                 {importModal.previewSession.objectives && (
@@ -2071,7 +2071,7 @@ const Sesiones = () => {
                   disabled={importModal.loading}
                   onClick={handleConfirmImportSession}
                 >
-                  <Download size={18} /> Importar a mi Equipo ({activeTeam?.nombre || 'Equipo Activo'})
+                  <Download size={18} /> {isEn ? `Import to my Team (${activeTeam?.nombre || 'Active Team'})` : `Importar a mi Equipo (${activeTeam?.nombre || 'Equipo Activo'})`}
                 </button>
               </div>
             )}
@@ -2107,7 +2107,7 @@ const Sesiones = () => {
                   className="btn-modal-cancel" 
                   onClick={() => modalConfig.onConfirm(false)}
                 >
-                  CANCELAR
+                  {isEn ? 'CANCEL' : 'CANCELAR'}
                 </button>
               )}
               <button 
@@ -2115,7 +2115,7 @@ const Sesiones = () => {
                 className="btn-modal-confirm" 
                 onClick={() => modalConfig.onConfirm(true)}
               >
-                {modalConfig.isConfirm ? 'ACEPTAR' : 'ENTENDIDO'}
+                {modalConfig.isConfirm ? (isEn ? 'ACCEPT' : 'ACEPTAR') : (isEn ? 'UNDERSTOOD' : 'ENTENDIDO')}
               </button>
             </div>
           </div>

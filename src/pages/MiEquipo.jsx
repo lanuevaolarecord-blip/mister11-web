@@ -91,12 +91,12 @@ const MiEquipo = () => {
   const handlePublishAnnouncement = async (e) => {
     e.preventDefault();
     if (!announcementTitle.trim() || !announcementMsg.trim()) {
-      showToast('Escribe un título y el mensaje del comunicado.', 'warning');
+      showToast(isEn ? 'Please enter a title and message for the announcement.' : 'Escribe un título y el mensaje del comunicado.', 'warning');
       return;
     }
     const cleanTeamPath = teamPath ? teamPath.replace(/^\/+|\/+$/g, '') : '';
     if (!cleanTeamPath) {
-      showToast('No se encontró el equipo activo.', 'error');
+      showToast(isEn ? 'Active team not found.' : 'No se encontró el equipo activo.', 'error');
       return;
     }
 
@@ -111,13 +111,13 @@ const MiEquipo = () => {
         priority: announcementPriority,
         createdAt: serverTimestamp()
       });
-      showToast('📢 ¡Comunicado publicado con éxito para toda la plantilla!', 'success');
+      showToast(isEn ? '📢 Announcement published successfully to the whole squad!' : '📢 ¡Comunicado publicado con éxito para toda la plantilla!', 'success');
       setAnnouncementTitle('');
       setAnnouncementMsg('');
       setIsAnnouncementModalOpen(false);
     } catch (err) {
       console.error('Error publicando comunicado:', err);
-      showToast('Error al publicar el comunicado.', 'error');
+      showToast(isEn ? 'Error publishing the announcement.' : 'Error al publicar el comunicado.', 'error');
     } finally {
       setIsPublishingAnn(false);
     }
@@ -174,12 +174,12 @@ const MiEquipo = () => {
           if (data.lastMessage && lastCoachNotifiedMsgRef.current[pId] !== data.lastMessage) {
             lastCoachNotifiedMsgRef.current[pId] = data.lastMessage;
             sendChatNotification({
-              title: `💬 Mensaje de ${data.playerName || 'Jugador'}`,
+              title: `💬 ${isEn ? 'Message from' : 'Mensaje de'} ${data.playerName || (isEn ? 'Player' : 'Jugador')}`,  
               body: data.lastMessage,
-              senderName: data.playerName || 'Jugador',
+              senderName: data.playerName || (isEn ? 'Player' : 'Jugador'),
               extra: { playerId: pId }
             });
-            showToast(`💬 Mensaje de ${data.playerName || 'Jugador'}: "${data.lastMessage}"`, 'info');
+            showToast(`💬 ${isEn ? 'Message from' : 'Mensaje de'} ${data.playerName || (isEn ? 'Player' : 'Jugador')}: "${data.lastMessage}"`, 'info');
           }
         }
       });
@@ -214,7 +214,7 @@ const MiEquipo = () => {
       reps.filter(r => r.status === 'open').forEach(r => {
         if (!lastNotifiedReportIdRef.current.has(r.id)) {
           lastNotifiedReportIdRef.current.add(r.id);
-          showToast(`🚩 Nueva denuncia en chat: "${(r.msgText || '').substring(0, 30)}..."`, 'error');
+          showToast(`🚩 ${isEn ? 'New chat report' : 'Nueva denuncia en chat'}: "${(r.msgText || '').substring(0, 30)}..."`, 'error');
         }
       });
     }, (err) => {
@@ -238,7 +238,7 @@ const MiEquipo = () => {
       showToast(t('player.chat.moderation.resolved'), 'success');
     } catch (err) {
       console.error('Error resolving report:', err);
-      showToast('Error al resolver reporte.', 'error');
+      showToast(isEn ? 'Error resolving report.' : 'Error al resolver reporte.', 'error');
     } finally {
       setResolvingReportId(null);
     }
@@ -264,7 +264,7 @@ const MiEquipo = () => {
       showToast(t('player.chat.moderation.msgDeleted'), 'success');
     } catch (err) {
       console.error('Error deleting reported message:', err);
-      showToast('Error al eliminar mensaje.', 'error');
+      showToast(isEn ? 'Error deleting message.' : 'Error al eliminar mensaje.', 'error');
     } finally {
       setDeletingReportMsgId(null);
     }
@@ -278,7 +278,7 @@ const MiEquipo = () => {
     try {
       await updatePlayer(player.id, { injuries: !player.injuries });
     } catch (error) {
-      alert("Error al actualizar estado médico.");
+      alert(isEn ? 'Error updating medical status.' : 'Error al actualizar estado médico.');
     }
   };
 
@@ -361,7 +361,7 @@ const MiEquipo = () => {
       setEditData(prev => ({ ...prev, photoFile: finalFile, photoPreview: base64data }));
     } catch (error) {
       console.error("Error al procesar foto del jugador:", error);
-      alert("No se pudo procesar la imagen. Verifica que sea un archivo de imagen válido (PNG, JPG, WebP, SVG, etc.).");
+      alert(isEn ? 'Could not process the image. Please check it is a valid image file (PNG, JPG, WebP, SVG, etc.).' : 'No se pudo procesar la imagen. Verifica que sea un archivo de imagen válido (PNG, JPG, WebP, SVG, etc.).');
     } finally {
       setIsUploadingPhoto(false);
     }
@@ -372,7 +372,7 @@ const MiEquipo = () => {
   // -- CRUD Actions --
   const handleOpenForm = (player = null) => {
     if (!player && players.length >= limits.PLAYERS) {
-      setUpgradeModal({ open: true, message: `Plantilla completa: máximo ${limits.PLAYERS} jugadores.` });
+      setUpgradeModal({ open: true, message: isEn ? `Squad full: maximum ${limits.PLAYERS} players.` : `Plantilla completa: máximo ${limits.PLAYERS} jugadores.` });
       return;
     }
     if (player) {
@@ -387,11 +387,11 @@ const MiEquipo = () => {
 
   const handleSavePlayer = async () => {
     if(!editData.name || !editData.number || (!editData.fechaNacimiento && !editData.birthDate)) {
-      setFormError("El nombre, el dorsal y la fecha de nacimiento son obligatorios.");
+      setFormError(isEn ? 'Name, shirt number and date of birth are required.' : 'El nombre, el dorsal y la fecha de nacimiento son obligatorios.');
       return;
     }
     if (!consentChecked) {
-      setFormError("Debes confirmar que te responsabilizas de obtener el consentimiento parental.");
+      setFormError(isEn ? 'You must confirm that you will obtain parental consent.' : 'Debes confirmar que te responsabilizas de obtener el consentimiento parental.');
       return;
     }
 
@@ -449,7 +449,7 @@ const MiEquipo = () => {
       setIsFormOpen(false);
     } catch (error) {
       console.error('Error al guardar jugador:', error);
-      setFormError('No se pudo guardar. Verifica tu conexión e inténtalo de nuevo.');
+      setFormError(isEn ? 'Could not save. Check your connection and try again.' : 'No se pudo guardar. Verifica tu conexión e inténtalo de nuevo.');
     } finally {
       setIsSaving(false);
     }
@@ -457,8 +457,8 @@ const MiEquipo = () => {
 
   const handleDeletePlayer = async (id) => {
     const playerToDelete = players.find(p => p.id === id) || (selectedPlayer?.id === id ? selectedPlayer : null);
-    const pName = playerToDelete?.name || 'este jugador';
-    if (window.confirm(`¿Seguro que deseas eliminar a ${pName} del equipo? Se cancelará su acceso vinculado.`)) {
+    const pName = playerToDelete?.name || (isEn ? 'this player' : 'este jugador');
+    if (window.confirm(isEn ? `Are you sure you want to remove ${pName} from the team? Their linked access will be revoked.` : `¿Seguro que deseas eliminar a ${pName} del equipo? Se cancelará su acceso vinculado.`)) {
       try {
         await removePlayer(id);
         
@@ -484,10 +484,10 @@ const MiEquipo = () => {
           setSelectedPlayer(null);
         }
         setIsFormOpen(false);
-        showToast(`Jugador ${pName} eliminado del equipo`, 'success');
+        showToast(isEn ? `Player ${pName} removed from the team` : `Jugador ${pName} eliminado del equipo`, 'success');
       } catch (error) {
         console.error('Error al eliminar jugador:', error);
-        alert("Error al eliminar jugador.");
+        alert(isEn ? 'Error deleting player.' : 'Error al eliminar jugador.');
       }
     }
   };
@@ -604,8 +604,8 @@ const MiEquipo = () => {
       ) : players.length === 0 ? (
         <div className="empty-team-state">
           <div className="empty-icon">⚽</div>
-          <h2>Tu plantilla está vacía</h2>
-          <p>Añade a tus primeros jugadores para empezar a gestionar tu equipo.</p>
+          <h2>{isEn ? 'Your squad is empty' : 'Tu plantilla está vacía'}</h2>
+          <p>{isEn ? 'Add your first players to start managing your team.' : 'Añade a tus primeros jugadores para empezar a gestionar tu equipo.'}</p>
           <button className="btn-primary-new" onClick={() => handleOpenForm(null)}>{t('player.addPlayer')}</button>
         </div>
       ) : (
@@ -677,7 +677,7 @@ const MiEquipo = () => {
                     overflow: 'hidden',
                     textOverflow: 'ellipsis'
                   }}>
-                    {player.email || player.requesterEmail || 'Sin cuenta vinculada'}
+                    {player.email || player.requesterEmail || (isEn ? 'No linked account' : 'Sin cuenta vinculada')}
                   </span>
                 </div>
 
@@ -698,11 +698,11 @@ const MiEquipo = () => {
                     boxShadow: '0 2px 8px rgba(16, 185, 129, 0.4)',
                     animation: 'pulse 2s infinite'
                   }}>
-                    💬 Mensaje
+                    💬 {isEn ? 'Message' : 'Mensaje'}
                   </div>
                 )}
 
-                {(player.currentStatus === 'injured' || player.currentStatus === 'recovery') && <div style={{ position: 'absolute', top: '8px', right: '8px', background: 'var(--bg-card)', borderRadius: '50%', padding: '4px', boxShadow: 'var(--shadow-card)' }} title={player.currentStatus === 'injured' ? "Lesionado" : "En recuperación"}>🚑</div>}
+                {(player.currentStatus === 'injured' || player.currentStatus === 'recovery') && <div style={{ position: 'absolute', top: '8px', right: '8px', background: 'var(--bg-card)', borderRadius: '50%', padding: '4px', boxShadow: 'var(--shadow-card)' }} title={player.currentStatus === 'injured' ? (isEn ? 'Injured' : 'Lesionado') : (isEn ? 'In recovery' : 'En recuperación')}>🚑</div>}
               </div>
             );
           })}
@@ -724,16 +724,16 @@ const MiEquipo = () => {
         <div className="modal-overlay" onClick={() => setIsFormOpen(false)}>
           <div className="modal-content" onClick={e => e.stopPropagation()}>
             <div className="modal-header">
-              <h2>{editData.id ? 'Editar Jugador' : 'Nuevo Jugador'}</h2>
+              <h2>{editData.id ? (isEn ? 'Edit Player' : 'Editar Jugador') : (isEn ? 'New Player' : 'Nuevo Jugador')}</h2>
               <button className="btn-close" onClick={() => setIsFormOpen(false)}>✕</button>
             </div>
             <div className="modal-body">
               <div className="form-group-team full">
-                <label>Nombre del Jugador *</label>
+                <label>{isEn ? 'Player Name *' : 'Nombre del Jugador *'}</label>
                 <input type="text" value={editData.name} onChange={e => setEditData({...editData, name: e.target.value})} onBlur={e => setEditData(prev => ({...prev, name: normalizeText(e.target.value)}))} placeholder="Ej. Lamine Yamal" />
               </div>
               <div className="form-group-team full" style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '16px' }}>
-                <label>Foto del Jugador</label>
+                <label>{isEn ? 'Player Photo' : 'Foto del Jugador'}</label>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
                   <div style={{
                     width: '60px',
@@ -749,7 +749,7 @@ const MiEquipo = () => {
                     fontWeight: 'bold',
                     fontSize: '20px'
                   }}>
-                    {(editData.photoPreview || editData.avatarUrl) ? <img src={editData.photoPreview || editData.avatarUrl} alt="Vista previa" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : getInitials(editData.name)}
+                    {(editData.photoPreview || editData.avatarUrl) ? <img src={editData.photoPreview || editData.avatarUrl} alt={isEn ? 'Preview' : 'Vista previa'} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : getInitials(editData.name)}
                   </div>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                     <input
@@ -776,7 +776,7 @@ const MiEquipo = () => {
                       gap: '6px'
                     }}>
                       <span style={{ fontSize: '16px' }}>📷</span>
-                      {isUploadingPhoto ? 'Procesando...' : 'Subir foto'}
+                      {isUploadingPhoto ? (isEn ? 'Processing...' : 'Procesando...') : (isEn ? 'Upload photo' : 'Subir foto')}
                     </label>
                     {(editData.photoPreview || editData.avatarUrl) && (
                       <button
@@ -793,7 +793,7 @@ const MiEquipo = () => {
                           padding: '0'
                         }}
                       >
-                        Eliminar Foto
+                        {isEn ? 'Remove Photo' : 'Eliminar Foto'}
                       </button>
                     )}
                   </div>
@@ -801,17 +801,17 @@ const MiEquipo = () => {
               </div>
               <div className="form-row-team">
                 <div className="form-group-team">
-                  <label>Dorsal *</label>
+                  <label>{isEn ? 'Shirt Number *' : 'Dorsal *'}</label>
                   <input type="number" value={editData.number} onChange={e => setEditData({...editData, number: e.target.value})} />
                 </div>
                 <div className="form-group-team">
-                  <label>Posición</label>
+                  <label>{isEn ? 'Position' : 'Posición'}</label>
                   <select value={editData.position} onChange={e => setEditData({...editData, position: e.target.value})}>
                     {POSITIONS.filter(p=>p!=='TODOS').map(pos => <option key={pos} value={pos}>{pos}</option>)}
                   </select>
                 </div>
                 <div className="form-group-team">
-                  <label>Fecha de Nacimiento</label>
+                  <label>{isEn ? 'Date of Birth' : 'Fecha de Nacimiento'}</label>
                   <input
                     type="date"
                     value={editData.fechaNacimiento || editData.birthDate || ''}
@@ -821,34 +821,34 @@ const MiEquipo = () => {
               </div>
               <div className="form-row-team">
                 <div className="form-group-team">
-                  <label>Altura (cm)</label>
+                  <label>{isEn ? 'Height (cm)' : 'Altura (cm)'}</label>
                   <input type="number" value={editData.height} onChange={e => setEditData({...editData, height: e.target.value})} />
                 </div>
                 <div className="form-group-team">
-                  <label>Peso (kg)</label>
+                  <label>{isEn ? 'Weight (kg)' : 'Peso (kg)'}</label>
                   <input type="number" value={editData.weight} onChange={e => setEditData({...editData, weight: e.target.value})} />
                 </div>
                 <div className="form-group-team">
-                  <label>Pie Dominante</label>
+                  <label>{isEn ? 'Dominant Foot' : 'Pie Dominante'}</label>
                   <select value={editData.foot} onChange={e => setEditData({...editData, foot: e.target.value})}>
-                    <option value="Derecho">Derecho</option>
-                    <option value="Izquierdo">Izquierdo</option>
-                    <option value="Ambidiestro">Ambidiestro</option>
+                    <option value="Derecho">{isEn ? 'Right' : 'Derecho'}</option>
+                    <option value="Izquierdo">{isEn ? 'Left' : 'Izquierdo'}</option>
+                    <option value="Ambidiestro">{isEn ? 'Both' : 'Ambidiestro'}</option>
                   </select>
                 </div>
               </div>
 
               <div className="form-row-team" style={{ marginTop: '8px' }}>
                 <div className="form-group-team" style={{ width: '100%' }}>
-                  <label>Email de Acceso del Jugador / Familia (Opcional)</label>
+                  <label>{isEn ? 'Player / Family Access Email (Optional)' : 'Email de Acceso del Jugador / Familia (Opcional)'}</label>
                   <input 
                     type="email" 
-                    placeholder="ejemplo@correo.com (para vincular su portal automáticamente)"
+                    placeholder={isEn ? 'example@email.com (to link their portal automatically)' : 'ejemplo@correo.com (para vincular su portal automáticamente)'}
                     value={editData.email || editData.requesterEmail || ''} 
                     onChange={e => setEditData({ ...editData, email: e.target.value })} 
                   />
                   <span style={{ fontSize: '11px', color: 'var(--text-secondary, #64748B)', marginTop: '2px', display: 'block' }}>
-                    Al ingresar este correo, el jugador accederá automáticamente a esta ficha al iniciar sesión.
+                    {isEn ? 'By entering this email, the player will automatically access this profile when they log in.' : 'Al ingresar este correo, el jugador accederá automáticamente a esta ficha al iniciar sesión.'}
                   </span>
                 </div>
               </div>
@@ -864,7 +864,7 @@ const MiEquipo = () => {
                 gap: '8px'
               }}>
                 <p style={{ margin: 0, fontSize: '11px', color: '#555', lineHeight: '1.4' }}>
-                  <strong>Aviso de Gobernanza Legal:</strong> El entrenador es responsable de obtener el consentimiento informado de los padres/tutores de los jugadores menores de edad conforme a la normativa de protección de datos (RGPD/LOPDGDD).
+                  {isEn ? <><strong>Legal Notice:</strong> The coach is responsible for obtaining informed consent from parents/guardians of underage players in accordance with data protection regulations.</> : <><strong>Aviso de Gobernanza Legal:</strong> El entrenador es responsable de obtener el consentimiento informado de los padres/tutores de los jugadores menores de edad conforme a la normativa de protección de datos (RGPD/LOPDGDD).</>}
                 </p>
                 <label style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', cursor: 'pointer', fontSize: '12px', color: 'var(--text-primary)', fontWeight: 'bold' }}>
                   <input 
@@ -873,7 +873,7 @@ const MiEquipo = () => {
                     onChange={e => setConsentChecked(e.target.checked)} 
                     style={{ marginTop: '2px', width: '16px', height: '16px' }}
                   />
-                  <span>Confirmo que he sido informado y que obtendré los consentimientos necesarios. *</span>
+                  <span>{isEn ? 'I confirm I have been informed and will obtain the necessary consents. *' : 'Confirmo que he sido informado y que obtendré los consentimientos necesarios. *'}</span>
                 </label>
               </div>
             </div>
@@ -947,11 +947,11 @@ const MiEquipo = () => {
                 type="button"
                 className="player-sidebar-btn btn-notif-fiche"
                 onClick={() => {
-                  setAnnouncementTitle(`Aviso para ${selectedPlayer.name}`);
+                  setAnnouncementTitle(isEn ? `Notice for ${selectedPlayer.name}` : `Aviso para ${selectedPlayer.name}`);
                   setIsAnnouncementModalOpen(true);
                 }}
-                title="Publicar Comunicado / Notificación"
-                aria-label="Publicar comunicado o notificación"
+                title={isEn ? 'Publish Announcement / Notification' : 'Publicar Comunicado / Notificación'}
+                aria-label={isEn ? 'Publish announcement or notification' : 'Publicar comunicado o notificación'}
               >
                 <Bell size={20} />
               </button>
@@ -975,11 +975,11 @@ const MiEquipo = () => {
                 onClick={() => {
                   const baseUrl = window.location.origin;
                   const consentLink = `${baseUrl}/shared/consentimiento?coachId=${user.uid}&teamId=${activeTeamId}&teamName=${encodeURIComponent(activeTeam?.nombre || 'Míster11 Club')}&coachName=${encodeURIComponent(user.displayName || 'el Entrenador')}`;
-                  const whatsappMsg = `Hola, necesito que firmes el consentimiento digital para registrar a ${selectedPlayer.name} en la plataforma deportiva Míster11. Puedes rellenarlo y firmarlo con tu dedo en 1 minuto desde este enlace: ${consentLink}`;
+                  const whatsappMsg = isEn ? `Hi, I need you to sign the digital consent form to register ${selectedPlayer.name} on the Míster11 sports platform. You can fill it out and sign it with your finger in 1 minute at this link: ${consentLink}` : `Hola, necesito que firmes el consentimiento digital para registrar a ${selectedPlayer.name} en la plataforma deportiva Míster11. Puedes rellenarlo y firmarlo con tu dedo en 1 minuto desde este enlace: ${consentLink}`;
                   window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(whatsappMsg)}`, '_blank');
                 }}
-                title="Compartir link de Consentimiento Digital por WhatsApp"
-                aria-label="Compartir link de consentimiento digital por WhatsApp"
+                title={isEn ? 'Share Digital Consent link via WhatsApp' : 'Compartir link de Consentimiento Digital por WhatsApp'}
+                aria-label={isEn ? 'Share digital consent link via WhatsApp' : 'Compartir link de consentimiento digital por WhatsApp'}
               >
                 <Share2 size={20} />
               </button>
@@ -992,7 +992,7 @@ const MiEquipo = () => {
                   if (!isProActive) {
                     setUpgradeModal({ 
                       open: true, 
-                      message: "La exportación del expediente del jugador es una función PRO. Sube de nivel para usarla." 
+                      message: isEn ? 'Player record export is a PRO feature. Upgrade to use it.' : 'La exportación del expediente del jugador es una función PRO. Sube de nivel para usarla.' 
                     });
                   } else {
                     generateExpediente({
@@ -1308,7 +1308,7 @@ const MiEquipo = () => {
         <div className="modal-overlay" onClick={() => setIsConsentModalOpen(false)}>
           <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: '500px' }}>
             <div className="modal-header">
-              <h2>📄 Consentimiento Parental</h2>
+              <h2>📄 {isEn ? 'Parental Consent' : 'Consentimiento Parental'}</h2>
               <button className="btn-close" onClick={() => setIsConsentModalOpen(false)}>✕</button>
             </div>
             <div className="modal-body" style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
@@ -1321,13 +1321,11 @@ const MiEquipo = () => {
                 lineHeight: '1.5',
                 borderLeft: '4px solid #1B3A2D'
               }}>
-                Este enlace permite a los padres rellenar el formulario de consentimiento y firmarlo digitalmente en su móvil. <strong>Ellos recibirán el PDF firmado para descargar. Tú también puedes descargarlo desde el mismo enlace.</strong>
-                <br /><br />
-                ⚠️ Míster11 no almacena copias de las firmas ni de los PDF firmados. Es tu responsabilidad exclusiva descargar y guardar una copia del PDF firmado.
+                {isEn ? <>This link lets parents fill out the consent form and sign it digitally on their phone. <strong>They will receive the signed PDF to download. You can also download it from the same link.</strong><br /><br />⚠️ Míster11 does not store copies of signatures or signed PDFs. It is solely your responsibility to download and save a copy of the signed PDF.</> : <>Este enlace permite a los padres rellenar el formulario de consentimiento y firmarlo digitalmente en su móvil. <strong>Ellos recibirán el PDF firmado para descargar. Tú también puedes descargarlo desde el mismo enlace.</strong><br /><br />⚠️ Míster11 no almacena copias de las firmas ni de los PDF firmados. Es tu responsabilidad exclusiva descargar y guardar una copia del PDF firmado.</>}
               </div>
 
               <div className="form-group-team full">
-                <label>Enlace público de consentimiento</label>
+                <label>{isEn ? 'Public consent link' : 'Enlace público de consentimiento'}</label>
                 <div style={{ display: 'flex', gap: '8px', marginTop: '4px' }}>
                   <input 
                     type="text" 
@@ -1340,7 +1338,7 @@ const MiEquipo = () => {
                     onClick={() => {
                       const link = `${window.location.origin}/consentimiento?playerName=${encodeURIComponent(selectedPlayer.name)}&teamName=${encodeURIComponent(activeTeam?.nombre || '')}&coachName=${encodeURIComponent(user.displayName || '')}`;
                       navigator.clipboard.writeText(link);
-                      alert('¡Enlace copiado al portapapeles!');
+                      alert(isEn ? 'Link copied to clipboard!' : '¡Enlace copiado al portapapeles!');
                     }}
                     style={{
                       background: '#1B3A2D',
@@ -1353,7 +1351,7 @@ const MiEquipo = () => {
                       cursor: 'pointer'
                     }}
                   >
-                    Copiar
+                    {isEn ? 'Copy' : 'Copiar'}
                   </button>
                 </div>
               </div>
@@ -1362,7 +1360,7 @@ const MiEquipo = () => {
                 <button
                   onClick={() => {
                     const link = `${window.location.origin}/consentimiento?playerName=${encodeURIComponent(selectedPlayer.name)}&teamName=${encodeURIComponent(activeTeam?.nombre || '')}&coachName=${encodeURIComponent(user.displayName || '')}`;
-                    const whatsappMsg = `Hola, necesito que firmes el consentimiento digital para registrar a ${selectedPlayer.name} en la plataforma deportiva Míster11. Puedes rellenarlo y firmarlo con tu dedo en 1 minuto desde este enlace: ${link}`;
+                    const whatsappMsg = isEn ? `Hi, I need you to sign the digital consent form to register ${selectedPlayer.name} on the Míster11 sports platform. You can fill it out and sign it with your finger in 1 minute at this link: ${link}` : `Hola, necesito que firmes el consentimiento digital para registrar a ${selectedPlayer.name} en la plataforma deportiva Míster11. Puedes rellenarlo y firmarlo con tu dedo en 1 minuto desde este enlace: ${link}`;
                     window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(whatsappMsg)}`, '_blank');
                   }}
                   style={{
@@ -1381,7 +1379,7 @@ const MiEquipo = () => {
                     minHeight: '48px'
                   }}
                 >
-                  💬 Compartir por WhatsApp
+                  💬 {isEn ? 'Share via WhatsApp' : 'Compartir por WhatsApp'}
                 </button>
 
                 <div style={{ borderTop: '1px solid #e2e8f0', paddingTop: '16px', marginTop: '8px', textAlign: 'center' }}>
@@ -1391,7 +1389,7 @@ const MiEquipo = () => {
                     rel="noreferrer"
                     style={{ fontSize: '13px', color: '#1B3A2D', fontWeight: 'bold', textDecoration: 'underline' }}
                   >
-                    Descargar consentimiento en blanco para imprimir (Papel)
+                    {isEn ? 'Download blank consent form to print (Paper)' : 'Descargar consentimiento en blanco para imprimir (Papel)'}
                   </a>
                 </div>
               </div>
@@ -1415,7 +1413,7 @@ const MiEquipo = () => {
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <Megaphone size={20} color="#D4A843" />
                 <h3 style={{ margin: 0, fontSize: '16px', fontWeight: '800', color: '#FFFFFF' }}>
-                  Publicar Comunicado Oficial
+                  {isEn ? 'Publish Official Announcement' : 'Publicar Comunicado Oficial'}
                 </h3>
               </div>
               <button 
@@ -1430,11 +1428,11 @@ const MiEquipo = () => {
             <form onSubmit={handlePublishAnnouncement} style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '14px' }}>
               <div>
                 <label style={{ display: 'block', fontSize: '12px', fontWeight: '800', marginBottom: '6px', color: 'var(--text-primary)' }}>
-                  Título del Comunicado *
+                  {isEn ? 'Announcement Title *' : 'Título del Comunicado *'}
                 </label>
                 <input
                   type="text"
-                  placeholder="Ej: Convocatoria viaje a torneo / Horarios semana próxima"
+                  placeholder={isEn ? 'E.g: Tournament trip call-up / Next week schedule' : 'Ej: Convocatoria viaje a torneo / Horarios semana próxima'}
                   value={announcementTitle}
                   onChange={(e) => setAnnouncementTitle(e.target.value)}
                   style={{
@@ -1477,7 +1475,7 @@ const MiEquipo = () => {
 
               <div>
                 <label style={{ display: 'block', fontSize: '12px', fontWeight: '800', marginBottom: '6px', color: 'var(--text-primary)' }}>
-                  Prioridad
+                  {isEn ? 'Priority' : 'Prioridad'}
                 </label>
                 <div style={{ display: 'flex', gap: '8px' }}>
                   <button
@@ -1495,7 +1493,7 @@ const MiEquipo = () => {
                       cursor: 'pointer'
                     }}
                   >
-                    🟢 Normal
+                    🟢 {isEn ? 'Normal' : 'Normal'}
                   </button>
                   <button
                     type="button"
@@ -1512,7 +1510,7 @@ const MiEquipo = () => {
                       cursor: 'pointer'
                     }}
                   >
-                    🔴 Importante / Urgente
+                    🔴 {isEn ? 'Important / Urgent' : 'Importante / Urgente'}
                   </button>
                 </div>
               </div>
@@ -1533,7 +1531,7 @@ const MiEquipo = () => {
                     cursor: 'pointer'
                   }}
                 >
-                  Cancelar
+                  {t('common.cancel')}
                 </button>
                 <button
                   type="submit"
@@ -1553,7 +1551,7 @@ const MiEquipo = () => {
                     gap: '6px'
                   }}
                 >
-                  {isPublishingAnn ? 'Publicando...' : '📢 Enviar a Toda la Plantilla'}
+                  {isPublishingAnn ? (isEn ? 'Publishing...' : 'Publicando...') : (isEn ? '📢 Send to Whole Squad' : '📢 Enviar a Toda la Plantilla')}
                 </button>
               </div>
             </form>
@@ -1599,7 +1597,7 @@ const MiEquipo = () => {
                   const isOpen = rep.status === 'open';
                   const dateStr = rep.createdAt?.toDate 
                     ? rep.createdAt.toDate().toLocaleString([], { dateStyle: 'short', timeStyle: 'short' })
-                    : (rep.createdAt ? new Date(rep.createdAt).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' }) : 'Reciente');
+                    : (rep.createdAt ? new Date(rep.createdAt).toLocaleString(isEn ? 'en-US' : 'es-ES', { dateStyle: 'short', timeStyle: 'short' }) : (isEn ? 'Recent' : 'Reciente'));
 
                   const reasonLabel = {
                     inappropriate: t('player.chat.report.reason.inappropriate') || 'Contenido inapropiado',
@@ -1632,25 +1630,25 @@ const MiEquipo = () => {
                             fontSize: '11px', 
                             fontWeight: 800 
                           }}>
-                            {isOpen ? '🚩 PENDIENTE' : '✅ RESUELTO'}
+                            {isOpen ? (isEn ? '🚩 PENDING' : '🚩 PENDIENTE') : (isEn ? '✅ RESOLVED' : '✅ RESUELTO')}
                           </span>
                           <span style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>{dateStr}</span>
                         </div>
                         <span style={{ fontSize: '12px', fontWeight: 700, color: 'var(--text-primary)' }}>
-                          Por: <strong>{rep.byName || 'Usuario'}</strong> ({rep.byRole || 'usuario'})
+                          {isEn ? 'By:' : 'Por:'} <strong>{rep.byName || (isEn ? 'User' : 'Usuario')}</strong> ({rep.byRole || (isEn ? 'user' : 'usuario')})
                         </span>
                       </div>
 
                       <div style={{ background: 'var(--bg-app, #F8FAFC)', padding: '10px 12px', borderRadius: '8px', borderLeft: '3px solid #EF4444' }}>
                         <div style={{ fontSize: '11px', fontWeight: 800, textTransform: 'uppercase', color: '#EF4444', marginBottom: '2px' }}>
-                          Motivo: {reasonLabel}
+                          {isEn ? 'Reason:' : 'Motivo:'} {reasonLabel}
                         </div>
                         <p style={{ margin: 0, fontStyle: 'italic', fontSize: '13px', color: 'var(--text-primary)', wordBreak: 'break-word' }}>
                           "{rep.msgText}"
                         </p>
                         {rep.details && (
                           <p style={{ margin: '6px 0 0 0', fontSize: '12px', color: 'var(--text-secondary)' }}>
-                            <strong>Detalles:</strong> {rep.details}
+                            <strong>{isEn ? 'Details:' : 'Detalles:'}</strong> {rep.details}
                           </p>
                         )}
                       </div>
@@ -1673,7 +1671,7 @@ const MiEquipo = () => {
                             }}
                             onClick={() => handleResolveReport(rep)}
                           >
-                            {resolvingReportId === rep.id ? 'Marcando...' : (t('player.chat.moderation.resolve') || 'Marcar como resuelto')}
+                            {resolvingReportId === rep.id ? (isEn ? 'Marking...' : 'Marcando...') : (t('player.chat.moderation.resolve') || (isEn ? 'Mark as resolved' : 'Marcar como resuelto'))}
                           </button>
                           <button
                             type="button"
@@ -1691,7 +1689,7 @@ const MiEquipo = () => {
                             }}
                             onClick={() => handleDeleteReportedMessage(rep)}
                           >
-                            {deletingReportMsgId === rep.id ? 'Eliminando...' : (t('player.chat.moderation.deleteMsg') || 'Eliminar mensaje')}
+                            {deletingReportMsgId === rep.id ? (isEn ? 'Deleting...' : 'Eliminando...') : (t('player.chat.moderation.deleteMsg') || (isEn ? 'Delete message' : 'Eliminar mensaje'))}
                           </button>
                         </div>
                       )}

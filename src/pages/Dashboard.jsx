@@ -82,7 +82,7 @@ const Dashboard = () => {
   const { matches } = useMatches(activeTeamId);
   const { alerts, loading: alertsLoading } = useHealthAlerts();
   const { playerPlans, teamPlans } = usePlayerPlans(activeTeamId);
-  const [workloadPeriod, setWorkloadPeriod] = useState('Esta semana');
+  const [workloadPeriod, setWorkloadPeriod] = useState('week');
   const [planningConfig, setPlanningConfig] = useState(null);
 
   // --- Estados de Informe Semanal ---
@@ -132,7 +132,7 @@ const Dashboard = () => {
       const alreadyProcessed = localStorage.getItem(storageKey);
       if (!alreadyProcessed) {
         try {
-          await createNotification('success', `📋 Tu informe semanal del equipo ya está listo. ¡Descárgalo en el panel principal!`);
+          await createNotification('success', isEn ? '📋 Your weekly team report is ready. Download it from the main panel!' : '📋 Tu informe semanal del equipo ya está listo. ¡Descárgalo en el panel principal!');
           localStorage.setItem(storageKey, 'notified');
         } catch (e) {
           console.error("Error creating weekly report notification:", e);
@@ -268,10 +268,10 @@ const Dashboard = () => {
 
   const getWorkloadData = () => {
     const lang = settings.language || 'Español (ES)';
-    const dayLabelsShort = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
+    const dayLabelsShort = isEn ? ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'] : ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
 
     switch (workloadPeriod) {
-      case 'Esta sesión': {
+      case 'session': {
         const nextSession = upcomingSessions[0];
         if (nextSession && nextSession.blocks && nextSession.blocks.length > 0) {
           return nextSession.blocks.map((b, idx) => {
@@ -303,7 +303,7 @@ const Dashboard = () => {
           { day: t('block.physical', lang), val: 60 },
         ];
       }
-      case 'Esta semana': {
+      case 'week': {
         const today = new Date();
         const currentDay = today.getDay();
         const diff = today.getDate() - currentDay + (currentDay === 0 ? -6 : 1);
@@ -340,7 +340,7 @@ const Dashboard = () => {
           return { day: t(`day.${dayLabel}`, lang), val: 0 };
         });
       }
-      case 'Este microciclo': {
+      case 'micro': {
         return dayLabelsShort.map((dayLabel, idx) => {
           const isTrainingDay = macroInfo.trainingDays.includes(idx);
           const mcMatchDay = activeMicrocycle?.matchDayOfWeek ?? macroInfo?.matchDayOfWeek ?? 5;
@@ -354,7 +354,7 @@ const Dashboard = () => {
           return { day: t(`day.${dayLabel}`, lang), val };
         });
       }
-      case 'Este mesociclo': {
+      case 'meso': {
         const currentMonth = activeMicrocycle ? activeMicrocycle.month : 'Sep';
         const mesomicrocycles = microcycles.filter(mc => mc.month === currentMonth);
         
@@ -364,7 +364,7 @@ const Dashboard = () => {
           return { day: label, val: loadVal };
         });
       }
-      case 'Este macrociclo': {
+      case 'macro': {
         const monthsList = ['Sep','Oct','Nov','Dic','Ene','Feb','Mar','Abr','May','Jun'];
         
         return monthsList.map(m => {
@@ -722,11 +722,11 @@ const Dashboard = () => {
               onChange={(e) => setWorkloadPeriod(e.target.value)}
               style={{ border: '1px solid var(--accent-gold)', background: 'var(--bg-card)', padding: '4px 12px', color: 'var(--text-primary)', fontWeight: 'bold' }}
             >
-              <option value="Esta sesión">{t('dashboard.period.session', settings.language)}</option>
-              <option value="Esta semana">{t('dashboard.period.week', settings.language)}</option>
-              <option value="Este microciclo">{t('dashboard.period.micro', settings.language)}</option>
-              <option value="Este mesociclo">{t('dashboard.period.meso', settings.language)}</option>
-              <option value="Este macrociclo">{t('dashboard.period.macro', settings.language)}</option>
+              <option value="session">{t('dashboard.period.session', settings.language)}</option>
+              <option value="week">{t('dashboard.period.week', settings.language)}</option>
+              <option value="micro">{t('dashboard.period.micro', settings.language)}</option>
+              <option value="meso">{t('dashboard.period.meso', settings.language)}</option>
+              <option value="macro">{t('dashboard.period.macro', settings.language)}</option>
             </select>
           </div>
           
@@ -802,7 +802,7 @@ const Dashboard = () => {
           {[
             { label: t('nav.pizarra', settings.language), icon: <Presentation size={24} />, route: '/pizarra' },
             { label: t('nav.sesiones', settings.language), icon: <FilePlus size={24} />, route: '/sesiones' },
-            { label: 'AJUSTES', icon: <Settings size={24} />, route: '/admin', state: { activeTab: 'ajustes' } },
+            { label: isEn ? 'SETTINGS' : 'AJUSTES', icon: <Settings size={24} />, route: '/admin', state: { activeTab: 'ajustes' } },
             { label: t('nav.equipo', settings.language), icon: <Users size={24} />, route: '/equipo' },
             { label: t('nav.ia', settings.language), icon: <Sparkles size={24} />, route: '/ia-generadora' }
           ].map((action, idx) => (

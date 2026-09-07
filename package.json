@@ -8,6 +8,8 @@
     "build": "vite build",
     "check-i18n": "node scripts/check-i18n.js",
     "qa-language": "node scripts/qa-language.js",
+    "qa-language-runtime": "node scripts/qa-language-runtime.js",
+    "audit-literals": "node scripts/audit-literals.js",
     "test:i18n": "node scripts/check-i18n.js && node scripts/qa-language.js",
     "lint": "eslint .",
     "preview": "vite preview",

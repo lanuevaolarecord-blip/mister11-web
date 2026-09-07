@@ -85,7 +85,7 @@ export const TeamStaffTab = ({ activeTeam }) => {
     const ok = await copyToClipboard(generatedLink);
     if (ok) {
       setCopied(true);
-      showToast('Enlace copiado al portapapeles.', 'success');
+      showToast(isEn ? 'Link copied to clipboard.' : 'Enlace copiado al portapapeles.', 'success');
       setTimeout(() => setCopied(false), 2500);
     }
   };
@@ -95,8 +95,8 @@ export const TeamStaffTab = ({ activeTeam }) => {
     if (navigator.share) {
       try {
         await navigator.share({
-          title: `Únete al Cuerpo Técnico de ${activeTeam?.nombre || 'Mi Equipo'} - Míster11`,
-          text: `¡Hola! Únete al cuerpo técnico de ${activeTeam?.nombre || 'Mi Equipo'} en Míster11 con este enlace:\n${generatedLink}\nCódigo de acceso: ${generatedCode}`,
+          title: isEn ? `Join ${activeTeam?.nombre || 'My Team'}'s Coaching Staff - Míster11` : `Únete al Cuerpo Técnico de ${activeTeam?.nombre || 'Mi Equipo'} - Míster11`,
+          text: isEn ? `Hello! Join ${activeTeam?.nombre || 'My Team'}'s coaching staff on Míster11:\n${generatedLink}\nAccess code: ${generatedCode}` : `¡Hola! Únete al cuerpo técnico de ${activeTeam?.nombre || 'Mi Equipo'} en Míster11 con este enlace:\n${generatedLink}\nCódigo de acceso: ${generatedCode}`,
           url: generatedLink
         });
       } catch (_) {}
@@ -110,7 +110,7 @@ export const TeamStaffTab = ({ activeTeam }) => {
     const ok = await copyToClipboard(generatedCode);
     if (ok) {
       setCopiedCode(true);
-      showToast('Código de 6 dígitos copiado.', 'success');
+      showToast(isEn ? '6-digit code copied.' : 'Código de 6 dígitos copiado.', 'success');
       setTimeout(() => setCopiedCode(false), 2500);
     }
   };
@@ -247,7 +247,7 @@ export const TeamStaffTab = ({ activeTeam }) => {
           } catch (_) {}
         }
 
-        showToast(`¡Padre/Tutor ${requesterName} vinculado al jugador correctamente!`, 'success');
+        showToast(isEn ? `Parent/Guardian ${requesterName} successfully linked to the player!` : `¡Padre/Tutor ${requesterName} vinculado al jugador correctamente!`, 'success');
       } else {
         // FLUJO JUGADOR: CREAR / VINCULAR FICHA
         const playerName = (request.playerName || request.childName || requesterName || 'Jugador').trim();
@@ -349,11 +349,11 @@ export const TeamStaffTab = ({ activeTeam }) => {
           } catch (_) {}
         }
 
-        showToast(`¡Jugador ${playerName} aprobado e incorporado a la plantilla!`, 'success');
+        showToast(isEn ? `Player ${playerName} approved and added to the squad!` : `¡Jugador ${playerName} aprobado e incorporado a la plantilla!`, 'success');
       }
     } catch (err) {
       console.error('Error al aprobar solicitud:', err);
-      showToast('Error al aprobar solicitud: ' + (err.message || 'Desconocido'), 'error');
+      showToast(isEn ? 'Error approving request: ' + (err.message || 'Unknown') : 'Error al aprobar solicitud: ' + (err.message || 'Desconocido'), 'error');
     } finally {
       setProcessingId(null);
     }
@@ -361,8 +361,8 @@ export const TeamStaffTab = ({ activeTeam }) => {
 
   const handleRejectRequest = async (request) => {
     if (!request || !teamPath) return;
-    const nameToDisplay = request.playerName || request.childName || request.requesterName || 'la solicitud';
-    if (!window.confirm(`¿Rechazar la solicitud de ${nameToDisplay}?`)) return;
+    const nameToDisplay = request.playerName || request.childName || request.requesterName || (isEn ? 'the request' : 'la solicitud');
+    if (!window.confirm(isEn ? `Reject the request from ${nameToDisplay}?` : `¿Rechazar la solicitud de ${nameToDisplay}?`)) return;
     setProcessingId(request.id);
     try {
       const reqDocRef = doc(db, `${teamPath}/joinRequests`, request.id);
@@ -373,10 +373,10 @@ export const TeamStaffTab = ({ activeTeam }) => {
         await updateDoc(userReqRef, { status: 'rejected', rejectedAt: serverTimestamp() });
       } catch (_) {}
 
-      showToast('Solicitud rechazada.', 'info');
+      showToast(isEn ? 'Request rejected.' : 'Solicitud rechazada.', 'info');
     } catch (err) {
       console.error('Error al rechazar solicitud:', err);
-      showToast('Error al rechazar solicitud.', 'error');
+      showToast(isEn ? 'Error rejecting request.' : 'Error al rechazar solicitud.', 'error');
     } finally {
       setProcessingId(null);
     }
@@ -387,7 +387,7 @@ export const TeamStaffTab = ({ activeTeam }) => {
     const ok = await copyToClipboard(teamCode);
     if (ok) {
       setCopiedTeamCode(true);
-      showToast('Código de equipo copiado al portapapeles.', 'success');
+      showToast(isEn ? 'Team code copied to clipboard.' : 'Código de equipo copiado al portapapeles.', 'success');
       setTimeout(() => setCopiedTeamCode(false), 2500);
     }
   };
@@ -398,14 +398,14 @@ export const TeamStaffTab = ({ activeTeam }) => {
     if (navigator.share) {
       try {
         await navigator.share({
-          title: `Únete a ${activeTeam?.nombre || 'nuestro equipo'} en Míster11`,
-          text: `¡Hola! Únete al equipo ${activeTeam?.nombre || 'Mi Equipo'} en Míster11 con este código: ${teamCode}\nEnlace directo: ${shareUrl}`,
+          title: isEn ? `Join ${activeTeam?.nombre || 'our team'} on Míster11` : `Únete a ${activeTeam?.nombre || 'nuestro equipo'} en Míster11`,
+          text: isEn ? `Hello! Join the team ${activeTeam?.nombre || 'My Team'} on Míster11 with this code: ${teamCode}\nDirect link: ${shareUrl}` : `¡Hola! Únete al equipo ${activeTeam?.nombre || 'Mi Equipo'} en Míster11 con este código: ${teamCode}\nEnlace directo: ${shareUrl}`,
           url: shareUrl
         });
       } catch (_) {}
     } else {
       await copyToClipboard(shareUrl);
-      showToast('Enlace de invitación de jugadores copiado.', 'success');
+      showToast(isEn ? 'Player invitation link copied.' : 'Enlace de invitación de jugadores copiado.', 'success');
     }
   };
 
@@ -489,7 +489,7 @@ export const TeamStaffTab = ({ activeTeam }) => {
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '14px' }}>
             <Clock size={20} color="#C9A84C" />
             <h4 style={{ margin: 0, fontSize: '1.05rem', color: textColorPrimary, fontWeight: 800 }}>
-              Solicitudes de Ingreso Pendientes ({joinRequests.length})
+              {isEn ? `Pending Join Requests (${joinRequests.length})` : `Solicitudes de Ingreso Pendientes (${joinRequests.length})`}
             </h4>
           </div>
 
@@ -524,22 +524,22 @@ export const TeamStaffTab = ({ activeTeam }) => {
                         padding: '3px 8px',
                         borderRadius: '12px'
                       }}>
-                        {isParent ? '👨👦 Padre / Tutor' : `⚽ Jugador ${req.position || 'MC'}`}
+                        {isParent ? (isEn ? '👨👦 Parent / Guardian' : '👨👦 Padre / Tutor') : (isEn ? `⚽ Player ${req.position || 'MC'}` : `⚽ Jugador ${req.position || 'MC'}`)}
                       </span>
                     </div>
 
                     <div style={{ fontSize: '0.8rem', color: textColorSecondary, marginTop: '4px' }}>
-                      📅 Nacimiento: <strong>{req.birthDate || req.childBirthDate || 'No especificada'}</strong>
+                      📅 {isEn ? 'Birth:' : 'Nacimiento:'} <strong>{req.birthDate || req.childBirthDate || (isEn ? 'Not specified' : 'No especificada')}</strong>
                     </div>
                     <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '2px' }}>
-                      👤 Solicitante: <strong>{req.requesterName || 'Usuario'}</strong> ({req.requesterEmail || req.email || 'Email'})
+                      👤 {isEn ? 'Requester:' : 'Solicitante:'} <strong>{req.requesterName || (isEn ? 'User' : 'Usuario')}</strong> ({req.requesterEmail || req.email || 'Email'})
                     </div>
 
                     {/* Selector de Vinculación para Padres */}
                     {isParent && (
                       <div style={{ marginTop: '10px', background: darkMode ? 'rgba(0,0,0,0.25)' : '#F8FAFC', padding: '8px 10px', borderRadius: '8px', border: `1px dashed ${borderColorVal}` }}>
                         <label style={{ display: 'block', fontSize: '11px', fontWeight: '800', color: textColorSecondary, marginBottom: '4px' }}>
-                          Vincular a ficha de la plantilla:
+                          {isEn ? 'Link to squad profile:' : 'Vincular a ficha de la plantilla:'}
                         </label>
                         <select
                           value={parentPlayerSelection[req.id] || (rosterPlayers.find(p => p.name?.trim().toLowerCase() === req.childName?.trim().toLowerCase())?.id || '')}
@@ -554,13 +554,13 @@ export const TeamStaffTab = ({ activeTeam }) => {
                             borderRadius: '6px'
                           }}
                         >
-                          <option value="">-- Autodetectar por nombre --</option>
+                          <option value="">{isEn ? '-- Auto-detect by name --' : '-- Autodetectar por nombre --'}</option>
                           {rosterPlayers.map(p => (
                             <option key={p.id} value={p.id}>
-                              {p.name} {p.number ? `(#${p.number})` : ''} - {p.position || 'Jugador'}
+                              {p.name} {p.number ? `(#${p.number})` : ''} - {p.position || (isEn ? 'Player' : 'Jugador')}
                             </option>
                           ))}
-                          <option value="__NEW__">+ Crear nueva ficha para {req.childName}</option>
+                          <option value="__NEW__">{isEn ? `+ Create new profile for ${req.childName}` : `+ Crear nueva ficha para ${req.childName}`}</option>
                         </select>
                       </div>
                     )}
@@ -587,7 +587,7 @@ export const TeamStaffTab = ({ activeTeam }) => {
                       }}
                     >
                       <CheckCircle2 size={16} />
-                      {processingId === req.id ? 'Aprobando...' : 'Aprobar'}
+                      {processingId === req.id ? (isEn ? 'Approving...' : 'Aprobando...') : (isEn ? 'Approve' : 'Aprobar')}
                     </button>
 
                     <button
@@ -605,7 +605,7 @@ export const TeamStaffTab = ({ activeTeam }) => {
                         cursor: 'pointer'
                       }}
                     >
-                      Rechazar
+                      {isEn ? 'Reject' : 'Rechazar'}
                     </button>
                   </div>
                 </div>
@@ -830,7 +830,7 @@ export const TeamStaffTab = ({ activeTeam }) => {
                       {inv.email}
                     </div>
                     <div style={{ fontSize: '0.8rem', color: textColorSecondary, fontWeight: 600 }}>
-                      Rol: <strong style={{ color: '#D4A843' }}>{roleLabel}</strong> · {t('staff.createdDate', { date: formatDate ? formatDate(inv.createdAt) : new Date(inv.createdAt).toLocaleDateString() })}
+                      {isEn ? 'Role:' : 'Rol:'} <strong style={{ color: '#D4A843' }}>{roleLabel}</strong> · {t('staff.createdDate', { date: formatDate ? formatDate(inv.createdAt) : new Date(inv.createdAt).toLocaleDateString() })}
                     </div>
                   </div>
 
@@ -1033,7 +1033,7 @@ export const TeamStaffTab = ({ activeTeam }) => {
       <UpgradeModal
         isOpen={isUpgradeModalOpen}
         onClose={() => setIsUpgradeModalOpen(false)}
-        message={`Has alcanzado el límite de ${limits.staffLimit === 1 ? '1 entrenador' : `${limits.staffLimit} miembros de staff`} de tu plan actual. Elige un Plan Club para colaborar con más entrenadores y especialistas.`}
+        message={isEn ? `You've reached the limit of ${limits.staffLimit === 1 ? '1 coach' : `${limits.staffLimit} staff members`} on your current plan. Choose a Club Plan to collaborate with more coaches and specialists.` : `Has alcanzado el límite de ${limits.staffLimit === 1 ? '1 entrenador' : `${limits.staffLimit} miembros de staff`} de tu plan actual. Elige un Plan Club para colaborar con más entrenadores y especialistas.`}
       />
     </div>
   );

@@ -18,8 +18,13 @@ if (Capacitor.isNativePlatform()) {
 }
 
 
-import { LanguageProvider } from './context/LanguageContext.jsx'
+import { LanguageProvider, useLanguage } from './context/LanguageContext.jsx'
 import ErrorBoundary from './components/ErrorBoundary.jsx'
+
+function AppWithLanguageKey() {
+  const { language } = useLanguage();
+  return <App key={language} />;
+}
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
@@ -31,7 +36,7 @@ createRoot(document.getElementById('root')).render(
               <PizarraProvider>
                 <MatchProvider>
                   <BrowserRouter>
-                    <App />
+                    <AppWithLanguageKey />
                   </BrowserRouter>
                 </MatchProvider>
               </PizarraProvider>

@@ -3,6 +3,7 @@ import { collection, doc, onSnapshot, setDoc, serverTimestamp, increment } from 
 import { db } from '../firebaseConfig';
 import { ACHIEVEMENTS_CATALOG, ACHIEVEMENT_TIERS, DEFAULT_SEASON_SETTINGS } from '../config/achievements';
 import { showToast } from '../utils/toast';
+import { t } from '../i18n/index.js';
 
 export const useAchievements = (teamPath, playerId, isParentView = false) => {
   const [unlockedState, setUnlockedState] = useState({});
@@ -331,7 +332,7 @@ export const useAchievements = (teamPath, playerId, isParentView = false) => {
           }, { merge: true });
 
           // Notificación única
-          showToast(`🏆 ¡Logro desbloqueado: ${ach.name}! (+${ach.xp} XP)`, 'success');
+          showToast(t('achievements.toast_unlocked', { name: ach.name, xp: ach.xp }), 'success');
           if (ach.tier === 'GOLD' && navigator?.vibrate) {
             navigator.vibrate([100, 50, 100]);
           }

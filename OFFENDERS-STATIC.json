@@ -1,12 +1,12 @@
 {
-  "generated": "2026-09-07T22:01:58.567Z",
+  "generated": "2026-09-07T22:07:52.783Z",
   "totalFiles": 198,
-  "totalOffenders": 309,
+  "totalOffenders": 272,
   "byCategory": {
     "NATIVE_DIALOG": 48,
     "PLACEHOLDER_HARDCODED": 20,
     "TITLE_HARDCODED": 30,
-    "TOAST_HARDCODED": 174,
+    "TOAST_HARDCODED": 137,
     "ARIA_HARDCODED": 7,
     "LOCALE_DATE_NO_LOCALE": 16,
     "SETSTATE_MSG_HARDCODED": 14
@@ -683,206 +683,6 @@
       "desc": "window.alert()/confirm() con literal hardcodeado",
       "literal": "El pago no está disponible en modo invitado. Inicia sesión primero.",
       "context": "alert('El pago no está disponible en modo invitado. Inicia sesión primero.');"
-    },
-    {
-      "file": "context/AuthContext.jsx",
-      "line": 617,
-      "cat": "TOAST_HARDCODED",
-      "desc": "showToast/showAlert/showConfirm con literal sin isEn",
-      "literal": "Cambiado a Portal de Jugador",
-      "context": "showToast('Cambiado a Portal de Jugador', 'info');"
-    },
-    {
-      "file": "context/AuthContext.jsx",
-      "line": 637,
-      "cat": "TOAST_HARDCODED",
-      "desc": "showToast/showAlert/showConfirm con literal sin isEn",
-      "literal": "Cambiado a Modo Entrenador",
-      "context": "showToast('Cambiado a Modo Entrenador', 'info');"
-    },
-    {
-      "file": "hooks/useAchievements.js",
-      "line": 334,
-      "cat": "TOAST_HARDCODED",
-      "desc": "showToast/showAlert/showConfirm con literal sin isEn",
-      "literal": "🏆 ¡Logro desbloqueado: ${ach.name}! (+${ach.xp} XP)",
-      "context": "showToast(`🏆 ¡Logro desbloqueado: ${ach.name}! (+${ach.xp} XP)`, 'success');"
-    },
-    {
-      "file": "hooks/useCoachChatNotifications.js",
-      "line": 64,
-      "cat": "TOAST_HARDCODED",
-      "desc": "showToast/showAlert/showConfirm con literal sin isEn",
-      "literal": "💬 Mensaje de ${playerName}:",
-      "context": "showToast(`💬 Mensaje de ${playerName}: \"${msgText}\"`, 'info');"
-    },
-    {
-      "file": "hooks/useMatchEvents.js",
-      "line": 18,
-      "cat": "TOAST_HARDCODED",
-      "desc": "showToast/showAlert/showConfirm con literal sin isEn",
-      "literal": "⚠️ Partido finalizado. Reabre el acta para registrar eventos.",
-      "context": "showToast('⚠️ Partido finalizado. Reabre el acta para registrar eventos.', 'warning');"
-    },
-    {
-      "file": "hooks/useMatchSheet.js",
-      "line": 102,
-      "cat": "TOAST_HARDCODED",
-      "desc": "showToast/showAlert/showConfirm con literal sin isEn",
-      "literal": "⚡ Acta prellenada inteligentemente desde alineación y eventos.",
-      "context": "showToast('⚡ Acta prellenada inteligentemente desde alineación y eventos.', 'success');"
-    },
-    {
-      "file": "hooks/useMatchSheet.js",
-      "line": 105,
-      "cat": "TOAST_HARDCODED",
-      "desc": "showToast/showAlert/showConfirm con literal sin isEn",
-      "literal": "❌ Error en prellenado inteligente.",
-      "context": "showToast('❌ Error en prellenado inteligente.', 'error');"
-    },
-    {
-      "file": "hooks/useMatchSheet.js",
-      "line": 144,
-      "cat": "TOAST_HARDCODED",
-      "desc": "showToast/showAlert/showConfirm con literal sin isEn",
-      "literal": "No hay respuestas RSVP pendientes para prellenar.",
-      "context": "showToast('No hay respuestas RSVP pendientes para prellenar.', 'info');"
-    },
-    {
-      "file": "hooks/useMatchSheet.js",
-      "line": 151,
-      "cat": "TOAST_HARDCODED",
-      "desc": "showToast/showAlert/showConfirm con literal sin isEn",
-      "literal": "✅ Estados prellenados desde RSVP.",
-      "context": "showToast('✅ Estados prellenados desde RSVP.', 'success');"
-    },
-    {
-      "file": "hooks/useMatchSheet.js",
-      "line": 154,
-      "cat": "TOAST_HARDCODED",
-      "desc": "showToast/showAlert/showConfirm con literal sin isEn",
-      "literal": "❌ Error al prellenar desde RSVP.",
-      "context": "showToast('❌ Error al prellenar desde RSVP.', 'error');"
-    },
-    {
-      "file": "hooks/useMatchSheet.js",
-      "line": 226,
-      "cat": "TOAST_HARDCODED",
-      "desc": "showToast/showAlert/showConfirm con literal sin isEn",
-      "literal": "⭐ Calificación táctica guardada",
-      "context": "showToast('⭐ Calificación táctica guardada', 'success');"
-    },
-    {
-      "file": "hooks/useMatchSheet.js",
-      "line": 248,
-      "cat": "TOAST_HARDCODED",
-      "desc": "showToast/showAlert/showConfirm con literal sin isEn",
-      "literal": "✨ La bitácora ya está limpia. Cero eventos imposibles.",
-      "context": "showToast('✨ La bitácora ya está limpia. Cero eventos imposibles.', 'info');"
-    },
-    {
-      "file": "hooks/useMatchSheet.js",
-      "line": 284,
-      "cat": "TOAST_HARDCODED",
-      "desc": "showToast/showAlert/showConfirm con literal sin isEn",
-      "literal": "✔ ${count} anomalía(s) resuelta(s) y acta sincronizada.",
-      "context": "showToast(`✔ ${count} anomalía(s) resuelta(s) y acta sincronizada.`, 'success');"
-    },
-    {
-      "file": "hooks/useMatchSheet.js",
-      "line": 288,
-      "cat": "TOAST_HARDCODED",
-      "desc": "showToast/showAlert/showConfirm con literal sin isEn",
-      "literal": "❌ Error al depurar bitácora.",
-      "context": "showToast('❌ Error al depurar bitácora.', 'error');"
-    },
-    {
-      "file": "hooks/useMatchSheet.js",
-      "line": 364,
-      "cat": "TOAST_HARDCODED",
-      "desc": "showToast/showAlert/showConfirm con literal sin isEn",
-      "literal": "⚠️ Acta cerrada con avisos registrados.",
-      "context": "showToast('⚠️ Acta cerrada con avisos registrados.', 'warning');"
-    },
-    {
-      "file": "hooks/useMatchSheet.js",
-      "line": 366,
-      "cat": "TOAST_HARDCODED",
-      "desc": "showToast/showAlert/showConfirm con literal sin isEn",
-      "literal": "✅ Acta cerrada. Minutos reales guardados.",
-      "context": "showToast('✅ Acta cerrada. Minutos reales guardados.', 'success');"
-    },
-    {
-      "file": "hooks/useMatchSheet.js",
-      "line": 385,
-      "cat": "TOAST_HARDCODED",
-      "desc": "showToast/showAlert/showConfirm con literal sin isEn",
-      "literal": "❌ Error al cerrar el acta. Intenta de nuevo.",
-      "context": "showToast('❌ Error al cerrar el acta. Intenta de nuevo.', 'error');"
-    },
-    {
-      "file": "hooks/useMatchSheet.js",
-      "line": 406,
-      "cat": "TOAST_HARDCODED",
-      "desc": "showToast/showAlert/showConfirm con literal sin isEn",
-      "literal": "🔓 Acta y partido reabiertos para correcciones.",
-      "context": "showToast('🔓 Acta y partido reabiertos para correcciones.', 'info');"
-    },
-    {
-      "file": "hooks/useMatchSheet.js",
-      "line": 409,
-      "cat": "TOAST_HARDCODED",
-      "desc": "showToast/showAlert/showConfirm con literal sin isEn",
-      "literal": "❌ Error al reabrir el acta.",
-      "context": "showToast('❌ Error al reabrir el acta.', 'error');"
-    },
-    {
-      "file": "hooks/useTeamMembers.js",
-      "line": 245,
-      "cat": "TOAST_HARDCODED",
-      "desc": "showToast/showAlert/showConfirm con literal sin isEn",
-      "literal": "Este usuario ya es miembro del cuerpo técnico.",
-      "context": "showToast('Este usuario ya es miembro del cuerpo técnico.', 'warning');"
-    },
-    {
-      "file": "hooks/useTeamMembers.js",
-      "line": 281,
-      "cat": "TOAST_HARDCODED",
-      "desc": "showToast/showAlert/showConfirm con literal sin isEn",
-      "literal": "Enlace y código de invitación generados con éxito.",
-      "context": "showToast('Enlace y código de invitación generados con éxito.', 'success');"
-    },
-    {
-      "file": "hooks/useTeamMembers.js",
-      "line": 333,
-      "cat": "TOAST_HARDCODED",
-      "desc": "showToast/showAlert/showConfirm con literal sin isEn",
-      "literal": "Rol actualizado a ${getRoleInfo(normRole).label}.",
-      "context": "showToast(`Rol actualizado a ${getRoleInfo(normRole).label}.`, 'success');"
-    },
-    {
-      "file": "hooks/useTeamMembers.js",
-      "line": 346,
-      "cat": "TOAST_HARDCODED",
-      "desc": "showToast/showAlert/showConfirm con literal sin isEn",
-      "literal": "Solo el Primer Entrenador (Admin) puede eliminar miembros del equipo.",
-      "context": "showToast('Solo el Primer Entrenador (Admin) puede eliminar miembros del equipo.', 'error');"
-    },
-    {
-      "file": "hooks/useTeamMembers.js",
-      "line": 367,
-      "cat": "TOAST_HARDCODED",
-      "desc": "showToast/showAlert/showConfirm con literal sin isEn",
-      "literal": "Miembro eliminado del cuerpo técnico.",
-      "context": "showToast('Miembro eliminado del cuerpo técnico.', 'info');"
-    },
-    {
-      "file": "hooks/useTeamMembers.js",
-      "line": 376,
-      "cat": "TOAST_HARDCODED",
-      "desc": "showToast/showAlert/showConfirm con literal sin isEn",
-      "literal": "Invitación cancelada.",
-      "context": "showToast('Invitación cancelada.', 'info');"
     },
     {
       "file": "pages/AdminPanel.jsx",
@@ -2237,94 +2037,6 @@
       "context": "alert('Hubo un error al generar el PDF de análisis multipartido.');"
     },
     {
-      "file": "utils/download.js",
-      "line": 46,
-      "cat": "TOAST_HARDCODED",
-      "desc": "showToast/showAlert/showConfirm con literal sin isEn",
-      "literal": "✅ Guardado en: Documentos/Mister11/${filename}",
-      "context": "showToast(`✅ Guardado en: Documentos/Mister11/${filename}`, 'success');"
-    },
-    {
-      "file": "utils/download.js",
-      "line": 51,
-      "cat": "TOAST_HARDCODED",
-      "desc": "showToast/showAlert/showConfirm con literal sin isEn",
-      "literal": "Guardado en caché. Si no se abre, busca",
-      "context": "showToast(`Guardado en caché. Si no se abre, busca \"${filename}\" en Archivos`, 'info');"
-    },
-    {
-      "file": "utils/download.js",
-      "line": 63,
-      "cat": "TOAST_HARDCODED",
-      "desc": "showToast/showAlert/showConfirm con literal sin isEn",
-      "literal": "✅ PDF listo:",
-      "context": "showToast(`✅ PDF listo: \"${filename}\"`, 'success');"
-    },
-    {
-      "file": "utils/download.js",
-      "line": 66,
-      "cat": "TOAST_HARDCODED",
-      "desc": "showToast/showAlert/showConfirm con literal sin isEn",
-      "literal": "Error al guardar el PDF",
-      "context": "showToast(`Error al guardar el PDF`, 'error');"
-    },
-    {
-      "file": "utils/download.js",
-      "line": 85,
-      "cat": "TOAST_HARDCODED",
-      "desc": "showToast/showAlert/showConfirm con literal sin isEn",
-      "literal": "✅ Archivo exportado exitosamente.",
-      "context": "showToast(`✅ Archivo exportado exitosamente.`, 'success');"
-    },
-    {
-      "file": "utils/download.js",
-      "line": 102,
-      "cat": "TOAST_HARDCODED",
-      "desc": "showToast/showAlert/showConfirm con literal sin isEn",
-      "literal": "✅ Imagen exportada exitosamente.",
-      "context": "showToast(`✅ Imagen exportada exitosamente.`, 'success');"
-    },
-    {
-      "file": "utils/download.js",
-      "line": 148,
-      "cat": "TOAST_HARDCODED",
-      "desc": "showToast/showAlert/showConfirm con literal sin isEn",
-      "literal": "✅ Plantilla exportada exitosamente.",
-      "context": "showToast(`✅ Plantilla exportada exitosamente.`, 'success');"
-    },
-    {
-      "file": "utils/download.js",
-      "line": 179,
-      "cat": "TOAST_HARDCODED",
-      "desc": "showToast/showAlert/showConfirm con literal sin isEn",
-      "literal": "✅ Animación exportada exitosamente.",
-      "context": "showToast(`✅ Animación exportada exitosamente.`, 'success');"
-    },
-    {
-      "file": "utils/downloadCSV.js",
-      "line": 37,
-      "cat": "TOAST_HARDCODED",
-      "desc": "showToast/showAlert/showConfirm con literal sin isEn",
-      "literal": "✅ Guardado en: Documentos/Mister11/${filename}",
-      "context": "showToast(`✅ Guardado en: Documentos/Mister11/${filename}`, 'success');"
-    },
-    {
-      "file": "utils/downloadCSV.js",
-      "line": 41,
-      "cat": "TOAST_HARDCODED",
-      "desc": "showToast/showAlert/showConfirm con literal sin isEn",
-      "literal": "Guardado en caché. Si no se abre, busca",
-      "context": "showToast(`Guardado en caché. Si no se abre, busca \"${filename}\" en Archivos`, 'info');"
-    },
-    {
-      "file": "utils/downloadCSV.js",
-      "line": 51,
-      "cat": "TOAST_HARDCODED",
-      "desc": "showToast/showAlert/showConfirm con literal sin isEn",
-      "literal": "✅ Plantilla exportada exitosamente.",
-      "context": "showToast(`✅ Plantilla exportada exitosamente.`, 'success');"
-    },
-    {
       "file": "utils/pdfGenerator.js",
       "line": 39,
       "cat": "NATIVE_DIALOG",
@@ -2459,14 +2171,6 @@
       "desc": "window.alert()/confirm() con literal hardcodeado",
       "literal": "Error al generar el PDF del informe semanal.",
       "context": "alert('Error al generar el PDF del informe semanal.');"
-    },
-    {
-      "file": "utils/pushNotifications.js",
-      "line": 132,
-      "cat": "TOAST_HARDCODED",
-      "desc": "showToast/showAlert/showConfirm con literal sin isEn",
-      "literal": "🔔 ${title}: ${body}",
-      "context": "showToast(`🔔 ${title}: ${body}`, 'info');"
     },
     {
       "file": "utils/teamReportGenerator.js",

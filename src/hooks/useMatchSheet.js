@@ -33,6 +33,7 @@ import {
 import { calculatePlayerMatchStats } from '../utils/playerMatchStats';
 import { calcMixedRating, deriveStatsFromEvents } from '../utils/ratingFormula';
 import { showToast } from '../utils/toast';
+import { t } from '../i18n/index.js';
 
 /**
  * Hook principal del Acta Oficial.
@@ -99,10 +100,10 @@ export const useMatchSheet = (teamPath, matchId, matchData, players = []) => {
       await updateDoc(matchDocRef, {
         'actaOficial.actual': smartActual,
       });
-      showToast('⚡ Acta prellenada inteligentemente desde alineación y eventos.', 'success');
+      showToast(t('matchSheet.prefill_smart_success'), 'success');
     } catch (err) {
       console.error('[useMatchSheet] Error en prellenado inteligente:', err);
-      showToast('❌ Error en prellenado inteligente.', 'error');
+      showToast(t('matchSheet.prefill_smart_error'), 'error');
       throw err;
     }
   };
@@ -141,17 +142,17 @@ export const useMatchSheet = (teamPath, matchId, matchData, players = []) => {
     });
 
     if (Object.keys(updates).length === 0) {
-      showToast('No hay respuestas RSVP pendientes para prellenar.', 'info');
+      showToast(t('matchSheet.prefill_rsvp_empty'), 'info');
       return;
     }
 
     try {
       const matchDocRef = doc(db, `${cleanPath}/matches`, matchId);
       await updateDoc(matchDocRef, updates);
-      showToast('✅ Estados prellenados desde RSVP.', 'success');
+      showToast(t('matchSheet.prefill_rsvp_success'), 'success');
     } catch (err) {
       console.error('[useMatchSheet] Error prellenando desde RSVP:', err);
-      showToast('❌ Error al prellenar desde RSVP.', 'error');
+      showToast(t('matchSheet.prefill_rsvp_error'), 'error');
       throw err;
     }
   };
@@ -223,7 +224,7 @@ export const useMatchSheet = (teamPath, matchId, matchData, players = []) => {
         [`ratings.${playerId}`]: parsed,
         [`actaOficial.actual.${playerId}.rating`]: parsed,
       });
-      showToast('⭐ Calificación táctica guardada', 'success');
+      showToast(t('matchSheet.tactical_grade_saved'), 'success');
     } catch (err) {
       console.error('[useMatchSheet] Error actualizando calificación:', err);
       throw err;
@@ -245,7 +246,7 @@ export const useMatchSheet = (teamPath, matchId, matchData, players = []) => {
       const { cleansedEvents, removedCount, details } = cleanseImpossibleMatchEvents(allEvents, rawTitulares, duration);
 
       if (removedCount === 0) {
-        showToast('✨ La bitácora ya está limpia. Cero eventos imposibles.', 'info');
+        showToast(t('matchSheet.log_already_clean'), 'info');
         return { removedCount: 0, details: [] };
       }
 
@@ -281,11 +282,11 @@ export const useMatchSheet = (teamPath, matchId, matchData, players = []) => {
       });
 
       const count = removedCount > 0 ? removedCount : (matchData?.warnings?.length || 1);
-      showToast(`✔ ${count} anomalía(s) resuelta(s) y acta sincronizada.`, 'success');
+      showToast(t('matchSheet.anomalies_resolved', { count }), 'success');
       return { removedCount, details };
     } catch (err) {
       console.error('[useMatchSheet] Error depurando bitácora:', err);
-      showToast('❌ Error al depurar bitácora.', 'error');
+      showToast(t('matchSheet.log_debug_error'), 'error');
       throw err;
     }
   };
@@ -361,9 +362,9 @@ export const useMatchSheet = (teamPath, matchId, matchData, players = []) => {
       });
 
       if (withWarnings) {
-        showToast('⚠️ Acta cerrada con avisos registrados.', 'warning');
+        showToast(t('matchSheet.closed_with_warnings'), 'warning');
       } else {
-        showToast('✅ Acta cerrada. Minutos reales guardados.', 'success');
+        showToast(t('matchSheet.closed_success'), 'success');
       }
 
       // ── REC-8: Sincronizar notaMedia acumulada en la ficha de cada jugador ──
@@ -382,7 +383,7 @@ export const useMatchSheet = (teamPath, matchId, matchData, players = []) => {
       } catch (_) {}
     } catch (err) {
       console.error('[useMatchSheet] Error cerrando acta:', err);
-      showToast('❌ Error al cerrar el acta. Intenta de nuevo.', 'error');
+      showToast(t('matchSheet.close_error'), 'error');
       throw err;
     }
   };
@@ -403,10 +404,10 @@ export const useMatchSheet = (teamPath, matchId, matchData, players = []) => {
         'actaOficial.reopenReason': motivo || 'Reapertura para corrección autorizada por el cuerpo técnico',
         status: 'Pendiente',
       });
-      showToast('🔓 Acta y partido reabiertos para correcciones.', 'info');
+      showToast(t('matchSheet.reopened_info'), 'info');
     } catch (err) {
       console.error('[useMatchSheet] Error reabriendo acta:', err);
-      showToast('❌ Error al reabrir el acta.', 'error');
+      showToast(t('matchSheet.reopen_error'), 'error');
       throw err;
     }
   };

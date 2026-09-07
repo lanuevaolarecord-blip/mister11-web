@@ -1465,7 +1465,57 @@ export const translations = {
     'consent.errPlayerDob': 'La fecha de nacimiento del jugador es obligatoria.',
     'consent.errBasicAuth': 'Es obligatorio autorizar el tratamiento del nombre y fecha de nacimiento para poder registrar al jugador en la aplicación.',
     'consent.errSig': 'Por favor, dibuja tu firma digital en el recuadro antes de continuar.',
-    'consent.whatsappMsg': 'Hola entrenador, ya he rellenado y firmado digitalmente el consentimiento parental para {name}. He descargado el PDF firmado en mi dispositivo. Te lo comparto a continuación.'
+    'consent.whatsappMsg': 'Hola entrenador, ya he rellenado y firmado digitalmente el consentimiento parental para {name}. He descargado el PDF firmado en mi dispositivo. Te lo comparto a continuación.',
+
+    // ── Descargas / Archivos ─────────────────────────────────
+    'download.saved_in': '✅ Guardado en: {path}',
+    'download.cache_hint': 'Guardado en caché. Si no se abre, busca "{filename}" en Archivos',
+    'download.pdf_ready': '✅ PDF listo: "{filename}"',
+    'download.pdf_error': 'Error al guardar el PDF',
+    'download.json_success': '✅ Archivo exportado exitosamente.',
+    'download.image_success': '✅ Imagen exportada exitosamente.',
+    'download.csv_success': '✅ Plantilla exportada exitosamente.',
+    'download.video_success': '✅ Animación exportada exitosamente.',
+
+    // ── Notificaciones Push ──────────────────────────────────
+    'push.foreground_toast': '🔔 {title}: {body}',
+
+    // ── Logros / Achievements ────────────────────────────────
+    'achievements.toast_unlocked': '🏆 ¡Logro desbloqueado: {name}! (+{xp} XP)',
+
+    // ── Chat / Mensajes ──────────────────────────────────────
+    'chat.notif_from_player': '💬 Mensaje de {playerName}: "{msgText}"',
+
+    // ── Eventos de Partido ───────────────────────────────────
+    'match.locked_reopen': '⚠️ Partido finalizado. Reabre el acta para registrar eventos.',
+
+    // ── Acta de Partido (useMatchSheet) ──────────────────────
+    'matchSheet.prefill_smart_success': '⚡ Acta prellenada inteligentemente desde alineación y eventos.',
+    'matchSheet.prefill_smart_error': '❌ Error en prellenado inteligente.',
+    'matchSheet.prefill_rsvp_empty': 'No hay respuestas RSVP pendientes para prellenar.',
+    'matchSheet.prefill_rsvp_success': '✅ Estados prellenados desde RSVP.',
+    'matchSheet.prefill_rsvp_error': '❌ Error al prellenar desde RSVP.',
+    'matchSheet.tactical_grade_saved': '⭐ Calificación táctica guardada',
+    'matchSheet.log_already_clean': '✨ La bitácora ya está limpia. Cero eventos imposibles.',
+    'matchSheet.anomalies_resolved': '✔ {count} anomalía(s) resuelta(s) y acta sincronizada.',
+    'matchSheet.log_debug_error': '❌ Error al depurar bitácora.',
+    'matchSheet.closed_with_warnings': '⚠️ Acta cerrada con avisos registrados.',
+    'matchSheet.closed_success': '✅ Acta cerrada. Minutos reales guardados.',
+    'matchSheet.close_error': '❌ Error al cerrar el acta. Intenta de nuevo.',
+    'matchSheet.reopened_info': '🔓 Acta y partido reabiertos para correcciones.',
+    'matchSheet.reopen_error': '❌ Error al reabrir el acta.',
+
+    // ── Cuerpo Técnico (useTeamMembers) ──────────────────────
+    'teamMembers.already_member': 'Este usuario ya es miembro del cuerpo técnico.',
+    'teamMembers.invite_generated': 'Enlace y código de invitación generados con éxito.',
+    'teamMembers.role_updated': 'Rol actualizado a {role}.',
+    'teamMembers.admin_only_remove': 'Solo el Primer Entrenador (Admin) puede eliminar miembros del equipo.',
+    'teamMembers.member_removed': 'Miembro eliminado del cuerpo técnico.',
+    'teamMembers.invite_cancelled': 'Invitación cancelada.',
+
+    // ── Auth Context ─────────────────────────────────────────
+    'auth.switched_player': 'Cambiado a Portal de Jugador',
+    'auth.switched_coach': 'Cambiado a Modo Entrenador'
   },
 
   'English (EN)': {
@@ -2934,7 +2984,57 @@ export const translations = {
     'consent.errPlayerDob': 'Player date of birth is required.',
     'consent.errBasicAuth': 'It is mandatory to authorize the processing of name and date of birth to register the player in the app.',
     'consent.errSig': 'Please draw your digital signature in the box before proceeding.',
-    'consent.whatsappMsg': 'Hello coach, I have already completed and digitally signed the parental consent for {name}. I downloaded the signed PDF to my device. I will share it with you next.'
+    'consent.whatsappMsg': 'Hello coach, I have already completed and digitally signed the parental consent for {name}. I downloaded the signed PDF to my device. I will share it with you next.',
+    
+    // ── Downloads / Files ────────────────────────────────────
+    'download.saved_in': '✅ Saved in: {path}',
+    'download.cache_hint': 'Saved to cache. If it does not open, look for "{filename}" in Files',
+    'download.pdf_ready': '✅ PDF ready: "{filename}"',
+    'download.pdf_error': 'Error saving PDF',
+    'download.json_success': '✅ File exported successfully.',
+    'download.image_success': '✅ Image exported successfully.',
+    'download.csv_success': '✅ Template exported successfully.',
+    'download.video_success': '✅ Animation exported successfully.',
+
+    // ── Push Notifications ───────────────────────────────────
+    'push.foreground_toast': '🔔 {title}: {body}',
+
+    // ── Achievements ─────────────────────────────────────────
+    'achievements.toast_unlocked': '🏆 Achievement unlocked: {name}! (+{xp} XP)',
+
+    // ── Chat / Messages ──────────────────────────────────────
+    'chat.notif_from_player': '💬 Message from {playerName}: "{msgText}"',
+
+    // ── Match Events ─────────────────────────────────────────
+    'match.locked_reopen': '⚠️ Match completed. Reopen match sheet to record events.',
+
+    // ── Match Sheet (useMatchSheet) ──────────────────────────
+    'matchSheet.prefill_smart_success': '⚡ Match sheet smartly pre-filled from lineup and events.',
+    'matchSheet.prefill_smart_error': '❌ Error in smart pre-filling.',
+    'matchSheet.prefill_rsvp_empty': 'No pending RSVP responses to pre-fill.',
+    'matchSheet.prefill_rsvp_success': '✅ Statuses pre-filled from RSVP.',
+    'matchSheet.prefill_rsvp_error': '❌ Error pre-filling from RSVP.',
+    'matchSheet.tactical_grade_saved': '⭐ Tactical rating saved',
+    'matchSheet.log_already_clean': '✨ The match log is already clean. Zero impossible events.',
+    'matchSheet.anomalies_resolved': '✔ {count} anomaly(ies) resolved and sheet synchronized.',
+    'matchSheet.log_debug_error': '❌ Error debugging log.',
+    'matchSheet.closed_with_warnings': '⚠️ Match sheet closed with recorded warnings.',
+    'matchSheet.closed_success': '✅ Match sheet closed. Real minutes saved.',
+    'matchSheet.close_error': '❌ Error closing match sheet. Please try again.',
+    'matchSheet.reopened_info': '🔓 Match sheet and match reopened for corrections.',
+    'matchSheet.reopen_error': '❌ Error reopening match sheet.',
+
+    // ── Coaching Staff (useTeamMembers) ──────────────────────
+    'teamMembers.already_member': 'This user is already a member of the coaching staff.',
+    'teamMembers.invite_generated': 'Invitation link and code generated successfully.',
+    'teamMembers.role_updated': 'Role updated to {role}.',
+    'teamMembers.admin_only_remove': 'Only the Head Coach (Admin) can remove team members.',
+    'teamMembers.member_removed': 'Member removed from coaching staff.',
+    'teamMembers.invite_cancelled': 'Invitation cancelled.',
+
+    // ── Auth Context ─────────────────────────────────────────
+    'auth.switched_player': 'Switched to Player Portal',
+    'auth.switched_coach': 'Switched to Coach Mode'
   }
 };
 

@@ -4,6 +4,7 @@ import { db } from '../firebaseConfig';
 import { useAuth } from '../context/AuthContext';
 import { sendChatNotification, requestNotificationPermission } from './useLocalNotifications';
 import { showToast } from '../utils/toast';
+import { t } from '../i18n/index.js';
 
 /**
  * useCoachChatNotifications
@@ -61,7 +62,7 @@ export const useCoachChatNotifications = () => {
             extra: { tab: 'CHAT', playerId: t.playerId || t.id }
           });
 
-          showToast(`💬 Mensaje de ${playerName}: "${msgText}"`, 'info');
+          showToast(t('chat.notif_from_player', { playerName, msgText }), 'info');
         }
       });
 

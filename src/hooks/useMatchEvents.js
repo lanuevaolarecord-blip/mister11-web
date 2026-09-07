@@ -1,6 +1,7 @@
 import { useCallback } from 'react';
 import { isMatchLocked } from '../utils/minutesEngine';
 import { showToast } from '../utils/toast';
+import { t } from '../i18n/index.js';
 
 /**
  * useMatchEvents.js
@@ -15,7 +16,7 @@ import { showToast } from '../utils/toast';
 export const useMatchEvents = (matchData, setMatchData, players = [], updateMatch) => {
   const addEvent = useCallback((type, playerId, playerName, minute, additional = {}) => {
     if (isMatchLocked(matchData)) {
-      showToast('⚠️ Partido finalizado. Reabre el acta para registrar eventos.', 'warning');
+      showToast(t('match.locked_reopen'), 'warning');
       return;
     }
     const minInt = Math.max(1, parseInt(minute, 10) || 1);

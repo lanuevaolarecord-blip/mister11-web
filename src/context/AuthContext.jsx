@@ -6,6 +6,7 @@ import { seedInitialData } from '../utils/seedData';
 import { normalizeEmail } from '../utils/normalizeEmail';
 import { getPlayerIdentitiesByEmail } from '../utils/playerIdentity';
 import { showToast } from '../utils/toast';
+import { t } from '../i18n/index.js';
 
 const AuthContext = createContext();
 
@@ -614,7 +615,7 @@ export const AuthProvider = ({ children }) => {
           setShowRoleSelectorModal({ isOpen: true, role: 'player' });
         }
       }
-      showToast('Cambiado a Portal de Jugador', 'info');
+      showToast(t('auth.switched_player'), 'info');
     } else if (mode === 'coach') {
       localStorage.setItem('mister11_active_mode', 'coach');
       setActiveModeState('coach');
@@ -634,7 +635,7 @@ export const AuthProvider = ({ children }) => {
           setShowRoleSelectorModal({ isOpen: true, role: 'coach' });
         }
       }
-      showToast('Cambiado a Modo Entrenador', 'info');
+      showToast(t('auth.switched_coach'), 'info');
     } else {
       localStorage.removeItem('mister11_active_mode');
       setActiveModeState(null);

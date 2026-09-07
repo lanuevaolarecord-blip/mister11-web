@@ -2,6 +2,7 @@ import { Filesystem, Directory } from '@capacitor/filesystem';
 import { Capacitor } from '@capacitor/core';
 import { Share } from '@capacitor/share';
 import { showToast } from './toast';
+import { t } from '../i18n/index.js';
 
 const _saveToCache = async (filename, base64Data) => {
   const result = await Filesystem.writeFile({
@@ -34,11 +35,11 @@ const _openNative = async (uri, mimeType, filename, base64Data) => {
       directory: Directory.Documents,
       recursive: true,
     });
-    showToast(`✅ Guardado en: Documentos/Mister11/${filename}`, 'success');
+    showToast(t('download.saved_in', { path: `Documentos/Mister11/${filename}` }), 'success');
   } catch (docErr) {
     console.error('[downloadCSV] Documents también falló:', docErr);
     try { window.open(uri, '_system'); } catch (_) {}
-    showToast(`Guardado en caché. Si no se abre, busca "${filename}" en Archivos`, 'info');
+    showToast(t('download.cache_hint', { filename }), 'info');
   }
 };
 
@@ -48,7 +49,7 @@ export const downloadCSV = async (csvString, filename) => {
       const base64 = btoa(unescape(encodeURIComponent(csvString)));
       const uri = await _saveToCache(filename, base64);
       await _openNative(uri, 'text/csv', filename, base64);
-      showToast(`✅ Plantilla exportada exitosamente.`, 'success');
+      showToast(t('download.csv_success'), 'success');
     } catch (err) {
       console.error('[downloadCSV] Error CSV Android:', err);
       _downloadCSVWeb(csvString, filename);

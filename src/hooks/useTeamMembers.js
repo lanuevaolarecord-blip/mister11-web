@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useMemo } from 'react';
 import { db } from '../firebaseConfig';
 import { useAuth } from '../context/AuthContext';
 import { showToast } from '../utils/toast';
+import { t } from '../i18n/index.js';
 import {
   collection,
   doc,
@@ -242,7 +243,7 @@ export const useTeamMembers = (teamIdOverride = null) => {
 
     // Comprobar si ya es miembro SOLO si se introdujo un email específico
     if (emailClean && members.some(m => m.email?.toLowerCase() === emailClean)) {
-      showToast('Este usuario ya es miembro del cuerpo técnico.', 'warning');
+      showToast(t('teamMembers.already_member'), 'warning');
       return null;
     }
 
@@ -278,7 +279,7 @@ export const useTeamMembers = (teamIdOverride = null) => {
     }
 
     const inviteUrl = `${window.location.origin}/join-team/${token}`;
-    showToast('Enlace y código de invitación generados con éxito.', 'success');
+    showToast(t('teamMembers.invite_generated'), 'success');
     return { ...inviteData, inviteUrl, inviteCode };
   }, [user, targetTeamId, getTeamPath, currentTeam, members]);
 
@@ -330,7 +331,7 @@ export const useTeamMembers = (teamIdOverride = null) => {
       }, { merge: true }).catch(() => {});
     } catch (e) {}
 
-    showToast(`Rol actualizado a ${getRoleInfo(normRole).label}.`, 'success');
+    showToast(t('teamMembers.role_updated', { role: getRoleInfo(normRole).label }), 'success');
   }, [user, targetTeamId, getTeamPath, members, currentTeam]);
 
   // 6. Cambiar mi propio rol rápidamente
@@ -343,7 +344,7 @@ export const useTeamMembers = (teamIdOverride = null) => {
   const removeMember = useCallback(async (memberUid) => {
     if (!user || !targetTeamId) return;
     if (!permissions.isFirstCoach && memberUid !== user.uid) {
-      showToast('Solo el Primer Entrenador (Admin) puede eliminar miembros del equipo.', 'error');
+      showToast(t('teamMembers.admin_only_remove'), 'error');
       return;
     }
 
@@ -364,7 +365,7 @@ export const useTeamMembers = (teamIdOverride = null) => {
       await deleteDoc(doc(db, 'users', memberUid, 'shared_teams', targetTeamId)).catch(() => {});
     } catch (e) {}
 
-    showToast('Miembro eliminado del cuerpo técnico.', 'info');
+    showToast(t('teamMembers.member_removed'), 'info');
   }, [user, targetTeamId, getTeamPath, permissions.isFirstCoach]);
 
   // 8. Cancelar invitación pendiente
@@ -373,7 +374,7 @@ export const useTeamMembers = (teamIdOverride = null) => {
     const teamPath = getTeamPath(targetTeamId);
     await deleteDoc(doc(db, `${teamPath}/staff_invitations`, token)).catch(() => {});
     await deleteDoc(doc(db, 'staff_invitations', token)).catch(() => {});
-    showToast('Invitación cancelada.', 'info');
+    showToast(t('teamMembers.invite_cancelled'), 'info');
   }, [targetTeamId, getTeamPath]);
 
   return {

@@ -8,6 +8,7 @@ import { PushNotifications } from '@capacitor/push-notifications';
 import { doc, setDoc, getDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../firebaseConfig';
 import { showToast } from './toast';
+import { t } from '../i18n/index.js';
 
 const COOLDOWN_DAYS = 30;
 const LOCAL_STORAGE_KEY = 'm11_push_prompt_state';
@@ -129,7 +130,7 @@ export const registerPushNotifications = async (userId, teamIds = [], onNavigate
         console.log('[Push] Notificación recibida en foreground:', notification);
         const title = notification.title || 'Míster11';
         const body = notification.body || '';
-        showToast(`🔔 ${title}: ${body}`, 'info');
+        showToast(t('push.foreground_toast', { title, body }), 'info');
       });
 
       // Listener cuando el usuario pulsa en la notificación (Deep Link)

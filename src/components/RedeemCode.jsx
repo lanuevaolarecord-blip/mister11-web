@@ -3,9 +3,11 @@ import { db } from '../firebaseConfig';
 import { doc, getDoc, updateDoc, setDoc, increment, Timestamp, collection, getDocs, writeBatch } from 'firebase/firestore';
 import { useAuth } from '../context/AuthContext';
 import { usePlan } from '../hooks/usePlan';
+import { useTranslation } from '../hooks/useTranslation';
 import { Ticket, Loader2, CheckCircle2, AlertCircle } from 'lucide-react';
 
 const RedeemCode = () => {
+  const { isEn } = useTranslation();
   const { user } = useAuth();
   const { isPro, proExpiration } = usePlan();
   const [code, setCode] = useState('');
@@ -113,16 +115,16 @@ const RedeemCode = () => {
     <div className="settings-card redeem-card">
       <div className="card-header-icon">
         <Ticket size={20} />
-        <h3>Código Promocional</h3>
+        <h3>{isEn ? 'Promo Code' : 'Código Promocional'}</h3>
       </div>
       
       <div className="settings-form">
-        <p className="card-desc">Si tienes un código de acceso beta o promocional, canjéalo aquí para desbloquear funciones Pro.</p>
+        <p className="card-desc">{isEn ? 'If you have a beta or promotional access code, redeem it here to unlock Pro features.' : 'Si tienes un código de acceso beta o promocional, canjéalo aquí para desbloquear funciones Pro.'}</p>
         
         <div className="promo-input-group">
           <input 
             type="text" 
-            placeholder="Introduce tu código (ej. BETA2026)" 
+            placeholder={isEn ? 'Enter your code (e.g. BETA2026)' : 'Introduce tu código (ej. BETA2026)'} 
             value={code}
             onChange={(e) => setCode(e.target.value.toUpperCase())}
             disabled={loading}
@@ -132,7 +134,7 @@ const RedeemCode = () => {
             onClick={handleRedeem}
             disabled={loading || !code.trim()}
           >
-            {loading ? <Loader2 className="animate-spin" size={18} /> : 'Canjear'}
+            {loading ? <Loader2 className="animate-spin" size={18} /> : (isEn ? 'Redeem' : 'Canjear')}
           </button>
         </div>
 

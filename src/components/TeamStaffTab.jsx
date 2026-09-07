@@ -11,10 +11,12 @@ import { db } from '../firebaseConfig';
 import { Shield, UserPlus, Trash2, Mail, Copy, Check, Clock, Users, Award, KeyRound, Share2, CheckCircle2, XCircle } from 'lucide-react';
 import { normalizeEmail } from '../utils/normalizeEmail';
 import { savePlayerIdentity } from '../utils/playerIdentity';
+import { useTranslation } from '../hooks/useTranslation';
 
 export const TeamStaffTab = ({ activeTeam }) => {
   const { user } = useAuth();
   const { darkMode } = useTheme();
+  const { t, isEn, formatDate } = useTranslation();
   const { canInviteStaff, limits } = usePlan();
   const {
     members,
@@ -427,13 +429,13 @@ export const TeamStaffTab = ({ activeTeam }) => {
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '14px' }}>
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#4CAF7D', fontWeight: 800, fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-              <KeyRound size={18} /> Código Único para Jugadores y Familias
+              <KeyRound size={18} /> {t('staff.uniqueCodeTitle')}
             </div>
             <h4 style={{ margin: '4px 0 2px 0', fontSize: '1.25rem', color: textColorPrimary, fontWeight: 900, fontFamily: 'monospace', letterSpacing: '2px' }}>
-              {teamCode || 'Generando código...'}
+              {teamCode || t('common.loading')}
             </h4>
             <p style={{ margin: 0, fontSize: '0.8rem', color: textColorSecondary }}>
-              Comparte este código para que los jugadores o sus padres se unan desde el Portal (/join-team).
+              {t('staff.shareCodeDesc')}
             </p>
           </div>
 
@@ -452,7 +454,7 @@ export const TeamStaffTab = ({ activeTeam }) => {
               }}
             >
               {copiedTeamCode ? <Check size={16} color="#4CAF7D" /> : <Copy size={16} />}
-              {copiedTeamCode ? 'Copiado' : 'Copiar Código'}
+              {copiedTeamCode ? t('staff.copied') : t('staff.copyCode')}
             </button>
 
             <button
@@ -469,7 +471,7 @@ export const TeamStaffTab = ({ activeTeam }) => {
                 background: '#4CAF7D'
               }}
             >
-              <Share2 size={16} /> Compartir Enlace
+              <Share2 size={16} /> {t('staff.shareLink')}
             </button>
           </div>
         </div>
@@ -613,7 +615,7 @@ export const TeamStaffTab = ({ activeTeam }) => {
         </div>
       )}
 
-      {/* Cabecera y botón invitar staff */}
+      {/* Cabecera y botón de invitar */}
       <div style={{
         display: 'flex',
         justifyContent: 'space-between',
@@ -625,10 +627,10 @@ export const TeamStaffTab = ({ activeTeam }) => {
         <div>
           <h3 style={{ margin: 0, fontSize: '1.2rem', color: textColorPrimary, fontWeight: 800, display: 'flex', alignItems: 'center', gap: '8px' }}>
             <Shield size={22} color="var(--accent-gold, #D4A843)" />
-            Cuerpo Técnico y Colaboradores
+            {t('staff.staffTitle')}
           </h3>
           <p style={{ margin: '4px 0 0', fontSize: '0.85rem', color: textColorSecondary, fontWeight: 600 }}>
-            Equipo: <strong style={{ color: '#D4A843' }}>{activeTeam?.nombre || activeTeam?.name || 'Mi Equipo'}</strong> · Sincronización en tiempo real
+            {t('staff.realtimeSync', { team: activeTeam?.nombre || activeTeam?.name || 'Mi Equipo' })}
           </p>
         </div>
 
@@ -646,7 +648,7 @@ export const TeamStaffTab = ({ activeTeam }) => {
             style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 16px', fontWeight: 'bold', minHeight: '44px' }}
           >
             <UserPlus size={18} />
-            Invitar Staff ({members.length}/{limits.staffLimit === Infinity ? '∞' : limits.staffLimit})
+            {t('staff.inviteStaffBtn', { count: members.length, limit: limits.staffLimit === Infinity ? '∞' : limits.staffLimit })}
           </button>
         )}
       </div>
@@ -654,11 +656,17 @@ export const TeamStaffTab = ({ activeTeam }) => {
       {/* Lista de Miembros Actuales */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '16px', marginBottom: '30px' }}>
         {members.map((member) => {
-          const roleData = STAFF_ROLES[member.role?.toUpperCase()] || {
-            label: member.role || 'Cuerpo Técnico',
-            badge: member.role || 'Miembro',
-            color: '#10B981',
-            description: 'Colaborador del cuerpo técnico.'
+          const rawRole = (member.role || 'admin').toLowerCase();
+          const roleId = (rawRole === 'first_coach' || rawRole === 'owner') ? 'admin' 
+            : (rawRole === 'second_coach') ? 'coach' 
+            : (rawRole === 'physical_trainer' || rawRole === 'preparador_fisico' || rawRole === 'pf') ? 'fitness_coach'
+            : (rawRole === 'assistant_coach') ? 'assistant'
+            : rawRole;
+          const baseRole = STAFF_ROLES[member.role?.toUpperCase()] || STAFF_ROLES.ADMIN;
+          const roleData = {
+            ...baseRole,
+            label: t(`staff.role.${roleId}`, { defaultValue: baseRole.label }),
+            description: t(`staff.roleDesc.${roleId}`, { defaultValue: baseRole.description })
           };
 
           const isSelf = member.uid === user?.uid || member.id === user?.uid;
@@ -700,7 +708,7 @@ export const TeamStaffTab = ({ activeTeam }) => {
                     <div>
                       <h4 style={{ margin: 0, fontSize: '1rem', color: textColorPrimary, fontWeight: 800, display: 'flex', alignItems: 'center', gap: '6px' }}>
                         {member.displayName || member.email?.split('@')[0] || 'Entrenador'}
-                        {isSelf && <span style={{ fontSize: '0.75rem', color: darkMode ? '#D4A843' : '#1B3A2D', fontWeight: 700 }}>(Tú)</span>}
+                        {isSelf && <span style={{ fontSize: '0.75rem', color: darkMode ? '#D4A843' : '#1B3A2D', fontWeight: 700 }}>{t('staff.you')}</span>}
                       </h4>
                       <span style={{ fontSize: '0.8rem', color: textColorSecondary, fontWeight: 600 }}>
                         {member.email}
@@ -717,7 +725,7 @@ export const TeamStaffTab = ({ activeTeam }) => {
                     color: roleData.color,
                     border: `1px solid ${roleData.color}50`
                   }}>
-                    {roleData.badge}
+                    {roleData.label}
                   </span>
                 </div>
 
@@ -729,7 +737,7 @@ export const TeamStaffTab = ({ activeTeam }) => {
               {/* Acciones de administración de rol */}
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderTop: `1px solid ${darkMode ? 'rgba(255,255,255,0.1)' : '#E2E8F0'}`, paddingTop: '12px', marginTop: '10px' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <span style={{ fontSize: '0.8rem', color: textColorSecondary, fontWeight: 700 }}>Cambiar Rol:</span>
+                  <span style={{ fontSize: '0.8rem', color: textColorSecondary, fontWeight: 700 }}>{t('staff.changeRole')}</span>
                   <select
                     value={member.role || (isOwner ? 'admin' : 'assistant')}
                     onChange={(e) => updateMemberRole(member.uid || member.id, e.target.value)}
@@ -746,7 +754,7 @@ export const TeamStaffTab = ({ activeTeam }) => {
                   >
                     {Object.values(STAFF_ROLES).map(r => (
                       <option key={r.id} value={r.id} style={{ background: inputBgColor, color: textColorPrimary }}>
-                        {r.label}
+                        {t(`staff.role.${r.id}`, { defaultValue: r.label })}
                       </option>
                     ))}
                   </select>
@@ -755,7 +763,7 @@ export const TeamStaffTab = ({ activeTeam }) => {
                 {!isSelf && permissions.canManageStaff && (
                   <button
                     onClick={() => {
-                      if (window.confirm(`¿Estás seguro de eliminar a ${member.displayName || member.email} del cuerpo técnico?`)) {
+                      if (window.confirm(t('staff.removeConfirm', { name: member.displayName || member.email }))) {
                         removeMember(member.uid || member.id);
                       }
                     }}
@@ -773,7 +781,7 @@ export const TeamStaffTab = ({ activeTeam }) => {
                       fontWeight: 700
                     }}
                   >
-                    <Trash2 size={14} /> Quitar
+                    <Trash2 size={14} /> {t('staff.remove')}
                   </button>
                 )}
               </div>
@@ -787,12 +795,19 @@ export const TeamStaffTab = ({ activeTeam }) => {
         <div style={{ marginTop: '30px' }}>
           <h4 style={{ fontSize: '1rem', color: textColorPrimary, fontWeight: 800, marginBottom: '14px', display: 'flex', alignItems: 'center', gap: '8px' }}>
             <Clock size={18} color="#EAB308" />
-            Invitaciones Pendientes ({invitations.length})
+            {t('staff.pendingInvitations', { count: invitations.length })}
           </h4>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
             {invitations.map((inv) => {
-              const roleData = STAFF_ROLES[inv.role?.toUpperCase()] || { label: inv.role };
+              const rawRole = (inv.role || 'assistant').toLowerCase();
+              const roleId = (rawRole === 'first_coach' || rawRole === 'owner') ? 'admin' 
+                : (rawRole === 'second_coach') ? 'coach' 
+                : (rawRole === 'physical_trainer' || rawRole === 'preparador_fisico' || rawRole === 'pf') ? 'fitness_coach'
+                : (rawRole === 'assistant_coach') ? 'assistant'
+                : rawRole;
+              const baseRole = STAFF_ROLES[inv.role?.toUpperCase()] || STAFF_ROLES.ASSISTANT;
+              const roleLabel = t(`staff.role.${roleId}`, { defaultValue: baseRole.label });
               const link = `${window.location.origin}/join-team/${inv.token || inv.id}`;
 
               return (
@@ -815,7 +830,7 @@ export const TeamStaffTab = ({ activeTeam }) => {
                       {inv.email}
                     </div>
                     <div style={{ fontSize: '0.8rem', color: textColorSecondary, fontWeight: 600 }}>
-                      Rol: <strong style={{ color: '#D4A843' }}>{roleData.label}</strong> · Creada: {new Date(inv.createdAt).toLocaleDateString()}
+                      Rol: <strong style={{ color: '#D4A843' }}>{roleLabel}</strong> · {t('staff.createdDate', { date: formatDate ? formatDate(inv.createdAt) : new Date(inv.createdAt).toLocaleDateString() })}
                     </div>
                   </div>
 
@@ -824,11 +839,11 @@ export const TeamStaffTab = ({ activeTeam }) => {
                       className="btn-outline"
                       onClick={() => {
                         navigator.clipboard.writeText(link);
-                        showToast('Enlace de invitación copiado.', 'success');
+                        showToast(t('staff.inviteLinkCopied'), 'success');
                       }}
                       style={{ padding: '6px 12px', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '6px' }}
                     >
-                      <Copy size={14} /> Copiar Enlace
+                      <Copy size={14} /> {t('staff.copyLink')}
                     </button>
 
                     {permissions.canManageStaff && (
@@ -841,7 +856,7 @@ export const TeamStaffTab = ({ activeTeam }) => {
                           cursor: 'pointer',
                           padding: '6px'
                         }}
-                        title="Cancelar invitación"
+                        title={t('staff.cancelInvitation')}
                       >
                         <Trash2 size={16} />
                       </button>
@@ -870,18 +885,18 @@ export const TeamStaffTab = ({ activeTeam }) => {
           >
             <h3 style={{ margin: '0 0 12px', color: textColorPrimary, fontWeight: 800, display: 'flex', alignItems: 'center', gap: '8px' }}>
               <UserPlus size={20} color="var(--accent-gold, #D4A843)" />
-              Invitar Miembro al Cuerpo Técnico
+              {t('staff.inviteModalTitle')}
             </h3>
 
             {!generatedLink ? (
               <form onSubmit={handleSendInvite} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
                 <p style={{ fontSize: '0.85rem', color: textColorSecondary, margin: 0, fontWeight: 500 }}>
-                  Introduce el correo electrónico y selecciona el rol. El usuario podrá acceder y colaborar en tiempo real.
+                  {t('staff.inviteModalDesc')}
                 </p>
 
                 <div>
                   <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 'bold', marginBottom: '6px', color: textColorPrimary }}>
-                    Correo Electrónico
+                    {t('common.email')}
                   </label>
                   <div style={{ position: 'relative' }}>
                     <Mail size={16} color={textColorSecondary} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)' }} />
@@ -907,7 +922,7 @@ export const TeamStaffTab = ({ activeTeam }) => {
 
                 <div>
                   <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 'bold', marginBottom: '6px', color: textColorPrimary }}>
-                    Rol en el Cuerpo Técnico
+                    {t('staff.roleLabel')}
                   </label>
                   <select
                     value={selectedRole}
@@ -925,7 +940,7 @@ export const TeamStaffTab = ({ activeTeam }) => {
                   >
                     {Object.values(STAFF_ROLES).filter(r => r.id !== 'first_coach').map(r => (
                       <option key={r.id} value={r.id} style={{ background: inputBgColor, color: textColorPrimary }}>
-                        {r.label} — {r.description.slice(0, 45)}...
+                        {t(`staff.role.${r.id}`, { defaultValue: r.label })} — {t(`staff.roleDesc.${r.id}`, { defaultValue: r.description }).slice(0, 45)}...
                       </option>
                     ))}
                   </select>
@@ -933,10 +948,10 @@ export const TeamStaffTab = ({ activeTeam }) => {
 
                 <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '10px' }}>
                   <button type="button" className="btn-outline" onClick={() => setIsInviteModalOpen(false)}>
-                    Cancelar
+                    {t('common.cancel')}
                   </button>
                   <button type="submit" className="btn-primary" disabled={isInviting}>
-                    {isInviting ? 'Generando...' : (inviteEmail ? 'Enviar Invitación' : '⚡ Generar Enlace / Código')}
+                    {isInviting ? t('common.loading') : (inviteEmail ? t('staff.sendInvite') : t('staff.generateLink'))}
                   </button>
                 </div>
               </form>
@@ -945,9 +960,9 @@ export const TeamStaffTab = ({ activeTeam }) => {
                 <div style={{ background: 'rgba(16, 185, 129, 0.15)', color: '#10B981', width: '52px', height: '52px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 12px' }}>
                   <Check size={28} />
                 </div>
-                <h4 style={{ color: textColorPrimary, fontWeight: 800, marginBottom: '8px' }}>¡Invitación Generada!</h4>
+                <h4 style={{ color: textColorPrimary, fontWeight: 800, marginBottom: '8px' }}>{t('staff.inviteGenerated')}</h4>
                 <p style={{ fontSize: '0.85rem', color: textColorSecondary, marginBottom: '16px', fontWeight: 500 }}>
-                  Copia y envía este enlace al miembro del cuerpo técnico para que se una al equipo:
+                  {t('staff.copyLinkDesc')}
                 </p>
 
                 <div style={{ display: 'flex', gap: '8px', marginBottom: '14px' }}>
@@ -968,7 +983,7 @@ export const TeamStaffTab = ({ activeTeam }) => {
                   />
                   <button className="btn-primary" onClick={handleCopyLink} style={{ display: 'flex', alignItems: 'center', gap: '6px', whiteSpace: 'nowrap' }}>
                     {copied ? <Check size={16} /> : <Copy size={16} />}
-                    {copied ? 'Copiado' : 'Copiar'}
+                    {copied ? t('staff.copied') : t('staff.copy')}
                   </button>
                 </div>
 
@@ -979,7 +994,7 @@ export const TeamStaffTab = ({ activeTeam }) => {
                     onClick={handleShareNative}
                     style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', background: '#2E7D5C', fontWeight: 'bold' }}
                   >
-                    📲 Compartir Enlace (WhatsApp / Apps)
+                    {t('staff.shareNative')}
                   </button>
                 </div>
 
@@ -995,18 +1010,18 @@ export const TeamStaffTab = ({ activeTeam }) => {
                     alignItems: 'center'
                   }}>
                     <div style={{ textAlign: 'left' }}>
-                      <span style={{ fontSize: '0.75rem', color: textColorSecondary, display: 'block', fontWeight: 600 }}>Código de 6 dígitos:</span>
+                      <span style={{ fontSize: '0.75rem', color: textColorSecondary, display: 'block', fontWeight: 600 }}>{t('staff.sixDigitCode')}</span>
                       <strong style={{ fontSize: '1.25rem', color: 'var(--accent-gold, #D4A843)', letterSpacing: '2px' }}>{generatedCode}</strong>
                     </div>
                     <button className="btn-outline" onClick={handleCopyCode} style={{ padding: '6px 12px', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
                       {copiedCode ? <Check size={14} /> : <Copy size={14} />}
-                      {copiedCode ? 'Copiado' : 'Copiar'}
+                      {copiedCode ? t('staff.copied') : t('staff.copy')}
                     </button>
                   </div>
                 )}
 
                 <button className="btn-outline full-width" onClick={() => setIsInviteModalOpen(false)}>
-                  Cerrar
+                  {t('common.close')}
                 </button>
               </div>
             )}

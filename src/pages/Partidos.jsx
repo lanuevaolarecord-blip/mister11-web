@@ -1127,17 +1127,17 @@ const Partidos = () => {
                     onClick={handleFinishMatch}
                     style={{ minHeight: '40px', background: '#10B981', color: '#FFFFFF', fontWeight: 'bold' }}
                   >
-                    🏁 FINALIZAR PARTIDO
+                    {isGlobalEn ? '🏁 FINISH MATCH' : '🏁 FINALIZAR PARTIDO'}
                   </button>
                 )}
                 {matchData.id && (
                   <button className="btn-danger flex-1 md:flex-initial px-3 py-2 text-xs md:text-sm" onClick={handleDeleteMatch} disabled={isSaving} style={{ minHeight: '40px' }}>
-                    <TrashIcon /> ELIMINAR
+                    <TrashIcon /> {isGlobalEn ? 'DELETE' : 'ELIMINAR'}
                   </button>
                 )}
-                <button className="btn-outline-dark flex-1 md:flex-initial px-3 py-2 text-xs md:text-sm" onClick={handleCancel} style={{ minHeight: '40px' }}>CANCELAR</button>
+                <button className="btn-outline-dark flex-1 md:flex-initial px-3 py-2 text-xs md:text-sm" onClick={handleCancel} style={{ minHeight: '40px' }}>{isGlobalEn ? 'CANCEL' : 'CANCELAR'}</button>
                 <button className="btn-primary-dark flex-1 md:flex-initial px-3 py-2 text-xs md:text-sm" onClick={handleSaveMatch} disabled={isSaving} style={{ minHeight: '40px' }}>
-                  {isSaving ? 'GUARDANDO...' : 'GUARDAR PARTIDO'}
+                  {isSaving ? (isGlobalEn ? 'SAVING...' : 'GUARDANDO...') : (isGlobalEn ? 'SAVE MATCH' : 'GUARDAR PARTIDO')}
                 </button>
               </>
             )}
@@ -1361,8 +1361,8 @@ const Partidos = () => {
                     )}
                   </div>
                   <div className="form-actions-right">
-                    <button className="btn-outline-dark" onClick={() => setViewMode('LIST')}>CANCELAR</button>
-                    <button className="btn-primary-dark" onClick={handleSaveMatch} disabled={isSaving}>GUARDAR PARTIDO</button>
+                    <button className="btn-outline-dark" onClick={() => setViewMode('LIST')}>{isGlobalEn ? 'CANCEL' : 'CANCELAR'}</button>
+                    <button className="btn-primary-dark" onClick={handleSaveMatch} disabled={isSaving}>{isSaving ? (isGlobalEn ? 'SAVING...' : 'GUARDANDO...') : (isGlobalEn ? 'SAVE MATCH' : 'GUARDAR PARTIDO')}</button>
                   </div>
                 </div>
               </div>
@@ -1692,9 +1692,9 @@ const Partidos = () => {
                               className={`timer-btn ${isTimerRunning ? 'pause' : 'start'}`}
                               onClick={handleTimerToggle}
                             >
-                              {isTimerRunning ? '⏸️ Pausar' : '▶️ Iniciar'}
+                              {isTimerRunning ? (isGlobalEn ? '⏸️ Pause' : '⏸️ Pausar') : (isGlobalEn ? '▶️ Start' : '▶️ Iniciar')}
                             </button>
-                            <button className="timer-btn reset" onClick={handleTimerReset}>🔄 Reiniciar</button>
+                            <button className="timer-btn reset" onClick={handleTimerReset}>🔄 {isGlobalEn ? 'Reset' : 'Reiniciar'}</button>
                           </div>
                           <div className="timer-adjust">
                             <button className="timer-adjust-btn" onClick={() => handleTimerAdjust(-60)}>-1m</button>

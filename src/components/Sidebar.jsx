@@ -48,7 +48,7 @@ const Sidebar = ({ isOpen, onClose }) => {
         <button 
           className="sidebar-close-btn" 
           onClick={onClose}
-          aria-label="Cerrar menú"
+          aria-label={t('common.closeMenu', settings.language)}
         >
           ✕
         </button>

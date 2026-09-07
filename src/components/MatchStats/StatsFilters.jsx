@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useTranslation } from '../../hooks/useTranslation';
 import { 
   Clock, 
   Users, 
@@ -29,6 +30,7 @@ export const StatsFilters = ({
   homeTeamName = 'Local',
   awayTeamName = 'Visitante'
 }) => {
+  const { isEn } = useTranslation();
   const [showPlayerDropdown, setShowPlayerDropdown] = useState(false);
   const [playerSearch, setPlayerSearch] = useState('');
 
@@ -145,7 +147,7 @@ export const StatsFilters = ({
               <Search size={14} />
               <input
                 type="text"
-                placeholder="Buscar dorsal o nombre..."
+                placeholder={isEn ? 'Search number or name...' : 'Buscar dorsal o nombre...'}
                 value={playerSearch}
                 onChange={(e) => setPlayerSearch(e.target.value)}
                 autoFocus

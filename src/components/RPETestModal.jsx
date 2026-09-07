@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
+import { useTranslation } from '../hooks/useTranslation';
 
 const RPETestModal = ({ isOpen, onClose, onSave, player }) => {
+  const { t } = useTranslation();
   const [rpe, setRpe] = useState(5);
   const [sessionDuration, setSessionDuration] = useState(60);
 
@@ -82,8 +84,8 @@ const RPETestModal = ({ isOpen, onClose, onSave, player }) => {
           </div>
         </div>
         <div className="modal-footer" style={{ padding: '16px 24px', display: 'flex', gap: '12px', borderTop: '1px solid var(--border-color)' }}>
-          <button className="btn-secondary" style={{ flex: 1, minHeight: '48px', fontWeight: 800 }} onClick={onClose}>CANCELAR</button>
-          <button className="btn-primary" style={{ flex: 1, minHeight: '48px', fontWeight: 800, background: '#10B981', borderColor: '#10B981', color: '#FFF' }} onClick={handleSave}>GUARDAR RPE</button>
+          <button className="btn-secondary" style={{ flex: 1, minHeight: '48px', fontWeight: 800 }} onClick={onClose}>{t('tests.rpe.cancel')}</button>
+          <button className="btn-primary" style={{ flex: 1, minHeight: '48px', fontWeight: 800, background: '#10B981', borderColor: '#10B981', color: '#FFF' }} onClick={handleSave}>{t('tests.rpe.save')}</button>
         </div>
       </div>
     </div>

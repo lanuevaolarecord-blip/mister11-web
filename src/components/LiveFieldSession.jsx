@@ -272,9 +272,9 @@ const LiveFieldSession = ({ session, onClose }) => {
       {splitModalOpen && (
         <div className="modal-overlay-field">
           <div className="modal-card-field">
-            <h3>⏱️ Dividir Ejercicio en Series</h3>
-            <p>Duración total del bloque: <strong>{totalBlockMinutes} minutos</strong></p>
-            <p className="subtext">Selecciona en cuántas series deseas dividir el tiempo del ejercicio:</p>
+            <h3>{isEn ? '⏱️ Split Exercise into Sets' : '⏱️ Dividir Ejercicio en Series'}</h3>
+            <p>{isEn ? 'Total block duration:' : 'Duración total del bloque:'} <strong>{totalBlockMinutes} {isEn ? 'minutes' : 'minutos'}</strong></p>
+            <p className="subtext">{isEn ? 'Select how many sets you want to divide the exercise time into:' : 'Selecciona en cuántas series deseas dividir el tiempo del ejercicio:'}</p>
 
             <div className="split-options-grid">
               {[1, 2, 3, 4, 5].map(num => {
@@ -285,16 +285,16 @@ const LiveFieldSession = ({ session, onClose }) => {
                     className={`split-opt-btn ${parseInt(tempSplitInput, 10) === num ? 'selected' : ''}`}
                     onClick={() => setTempSplitInput(String(num))}
                   >
-                    <span className="opt-num">{num} {num === 1 ? 'Serie' : 'Series'}</span>
-                    <span className="opt-desc">{minsPerSplit} min / serie</span>
+                    <span className="opt-num">{num} {num === 1 ? (isEn ? 'Set' : 'Serie') : (isEn ? 'Sets' : 'Series')}</span>
+                    <span className="opt-desc">{minsPerSplit} {isEn ? 'min / set' : 'min / serie'}</span>
                   </button>
                 );
               })}
             </div>
 
             <div className="modal-actions-field">
-              <button className="btn-cancel-field" onClick={() => setSplitModalOpen(false)}>Cancelar</button>
-              <button className="btn-confirm-field" onClick={handleApplySplit}><Check size={18} /> Aplicar División</button>
+              <button className="btn-cancel-field" onClick={() => setSplitModalOpen(false)}>{isEn ? 'Cancel' : 'Cancelar'}</button>
+              <button className="btn-confirm-field" onClick={handleApplySplit}><Check size={18} /> {isEn ? 'Apply Split' : 'Aplicar División'}</button>
             </div>
           </div>
         </div>

@@ -6,10 +6,12 @@
 
 /**
  * @param {any} fechaNacimiento - Puede ser Timestamp Firestore, string o Date
- * @returns {{ text: string, cat: string }} - Texto de edad y categoría formativa
+ * @param {boolean} isEn - Indica si el resultado textual debe estar en inglés
+ * @returns {{ text: string, years: number, age: number, cat: string }} - Texto de edad y categoría formativa
  */
-export const calcularEdad = (fechaNacimiento) => {
-  if (!fechaNacimiento) return { text: 'Sin edad', cat: 'N/A' };
+export const calcularEdad = (fechaNacimiento, isEn = false) => {
+  const noAgeText = isEn ? 'No age' : 'Sin edad';
+  if (!fechaNacimiento) return { text: noAgeText, years: 0, age: 0, cat: 'N/A' };
 
   // Caso especial: edad directa en años como número o string numérico
   const valNum = parseInt(fechaNacimiento);
@@ -22,7 +24,8 @@ export const calcularEdad = (fechaNacimiento) => {
     else if (valNum <= 13) cat = 'Infantil';
     else if (valNum <= 15) cat = 'Cadete';
     else if (valNum <= 18) cat = 'Juvenil';
-    return { text: `${valNum} años`, cat };
+    const ageText = isEn ? `${valNum} ${valNum === 1 ? 'year old' : 'years old'}` : `${valNum} años`;
+    return { text: ageText, years: valNum, age: valNum, cat };
   }
 
   let fecha;
@@ -37,7 +40,7 @@ export const calcularEdad = (fechaNacimiento) => {
 
     // Validar que no sea un string de categoría o texto libre ("juvenil", "cadete", etc.)
     // Una fecha válida debe tener al menos un dígito y un separador
-    if (!/\d/.test(trimmed)) return { text: 'Sin edad', cat: 'N/A' };
+    if (!/\d/.test(trimmed)) return { text: noAgeText, years: 0, age: 0, cat: 'N/A' };
 
     // Formato ISO: YYYY-MM-DD (el más común desde <input type="date">)
     if (/^\d{4}-\d{2}-\d{2}/.test(trimmed)) {
@@ -62,15 +65,15 @@ export const calcularEdad = (fechaNacimiento) => {
     fecha = new Date(fechaNacimiento);
 
   } else {
-    return { text: 'Sin edad', cat: 'N/A' };
+    return { text: noAgeText, years: 0, age: 0, cat: 'N/A' };
   }
 
   // Validar que la fecha parseada es válida
-  if (!fecha || isNaN(fecha.getTime())) return { text: 'Sin edad', cat: 'N/A' };
+  if (!fecha || isNaN(fecha.getTime())) return { text: noAgeText, years: 0, age: 0, cat: 'N/A' };
 
   // Validar rango razonable (entre 1990 y hoy)
   const hoy = new Date();
-  if (fecha > hoy || fecha.getFullYear() < 1990) return { text: 'Sin edad', cat: 'N/A' };
+  if (fecha > hoy || fecha.getFullYear() < 1990) return { text: noAgeText, years: 0, age: 0, cat: 'N/A' };
 
   // Calcular edad exacta
   let edad = hoy.getFullYear() - fecha.getFullYear();
@@ -87,5 +90,7 @@ export const calcularEdad = (fechaNacimiento) => {
   else if (edad <= 15) cat = 'Cadete';
   else if (edad <= 18) cat = 'Juvenil';
 
-  return { text: `${edad} años`, cat };
+  const ageText = isEn ? `${edad} ${edad === 1 ? 'year old' : 'years old'}` : `${edad} años`;
+  return { text: ageText, years: edad, age: edad, cat };
 };
+

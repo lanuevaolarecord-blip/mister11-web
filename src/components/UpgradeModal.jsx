@@ -161,7 +161,7 @@ const UpgradeModal = ({ isOpen, onClose, message, urgency = false, isSuccessStat
       <div className="modal-overlay" onClick={onClose}>
         <div className="upgrade-modal-wrapper success-loading-wrapper" onClick={e => e.stopPropagation()} style={{ padding: '24px', maxWidth: '500px' }}>
           <div className="upgrade-modal-header" style={{ borderBottom: 'none', padding: 0 }}>
-            <button className="upgrade-close-x" onClick={onClose} aria-label="Cerrar">✕</button>
+            <button className="upgrade-close-x" onClick={onClose} aria-label={t('common.close')}>✕</button>
             <div className="success-spinner-container" style={{ margin: '30px auto 16px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
               <div className="spinner" style={{ width: '48px', height: '48px', border: '4px solid rgba(46, 125, 50, 0.15)', borderTopColor: '#2e7d32', borderRadius: '50%' }}></div>
               <h3 style={{ marginTop: '20px', fontSize: '1.3rem', fontWeight: '800', color: 'var(--text-primary)' }}>¡Pago Recibido!</h3>
@@ -198,7 +198,7 @@ const UpgradeModal = ({ isOpen, onClose, message, urgency = false, isSuccessStat
         >
           {/* Header */}
           <div className="upgrade-modal-header" style={{ padding: '28px 20px 20px' }}>
-            <button className="upgrade-close-x" onClick={handleModalClose} aria-label="Cerrar">✕</button>
+            <button className="upgrade-close-x" onClick={handleModalClose} aria-label={t('common.close')}>✕</button>
             <div className="upgrade-crown-anim">👑</div>
             <h2 className="upgrade-title" style={{ fontSize: '1.45rem' }}>
               {showRedeemView ? t('paywall.androidRedeemTitle') : t('paywall.androidDialogTitle')}
@@ -547,7 +547,7 @@ const UpgradeModal = ({ isOpen, onClose, message, urgency = false, isSuccessStat
 
         {/* Header */}
         <div className="upgrade-modal-header">
-          <button className="upgrade-close-x" onClick={onClose} aria-label="Cerrar">✕</button>
+          <button className="upgrade-close-x" onClick={onClose} aria-label={t('common.close')}>✕</button>
           {urgency && <div className="upgrade-urgency-pill">⏰ ¡PRUEBA POR VENCER!</div>}
           <div className="upgrade-crown-anim">👑</div>
           <h2 className="upgrade-title">Desbloquea Míster11</h2>
@@ -699,14 +699,14 @@ const UpgradeModal = ({ isOpen, onClose, message, urgency = false, isSuccessStat
 
         {/* Canjear Código Beta / Promocional */}
         <div className="upgrade-promo-section">
-          <h4 style={{ margin: '0 0 8px 0', fontSize: '0.9rem', color: 'var(--text-primary)' }}>🔑 ¿Tienes un código promocional o de prueba beta?</h4>
+          <h4 style={{ margin: '0 0 8px 0', fontSize: '0.9rem', color: 'var(--text-primary)' }}>{t('paywall.promoSectionTitle')}</h4>
           <p style={{ margin: '0 0 12px 0', fontSize: '0.78rem', color: 'var(--text-secondary)' }}>
-            Introduce tu código (ej. <strong>BETA2026</strong>) para activar el acceso inmediatamente.
+            {t('paywall.promoSectionDesc')}
           </p>
           <div style={{ display: 'flex', gap: '8px', maxWidth: '360px', margin: '0 auto' }}>
             <input 
               type="text" 
-              placeholder="Código (ej. BETA2026)" 
+              placeholder={t('paywall.promoPlaceholder')} 
               value={promoCode}
               onChange={e => setPromoCode(e.target.value.toUpperCase())}
               disabled={redeeming}

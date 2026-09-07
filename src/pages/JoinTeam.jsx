@@ -3,6 +3,7 @@ import { useSearchParams, useNavigate, Link } from 'react-router-dom';
 import { doc, getDoc, setDoc, addDoc, collection, serverTimestamp, onSnapshot, query, where } from 'firebase/firestore';
 import { db, signInWithGoogle, signInWithEmail, registerWithEmail } from '../firebaseConfig';
 import { useAuth } from '../context/AuthContext';
+import { useTranslation } from '../hooks/useTranslation';
 import { getTeamByCode } from '../utils/teamCode';
 import { showToast } from '../utils/toast';
 import { Shield, CheckCircle, AlertCircle, Users, ArrowRight, Loader, KeyRound, Mail, Lock, User, Calendar, Shirt } from 'lucide-react';
@@ -14,6 +15,7 @@ import { normalizeEmail } from '../utils/normalizeEmail';
 import { getPlayerIdentitiesByEmail } from '../utils/playerIdentity';
 
 const JoinTeam = () => {
+  const { t, isEn } = useTranslation();
   const [searchParams] = useSearchParams();
   const codeParam = searchParams.get('code') || searchParams.get('token') || '';
   
@@ -277,10 +279,14 @@ const JoinTeam = () => {
                 <Loader size={26} className="spin" style={{ animation: 'spin 2s linear infinite' }} />
               </div>
               <h3 style={{ color: '#ffffff', margin: '0 0 6px 0', fontSize: '1.2rem' }}>
-                Solicitud Pendiente de Aprobación
+                {isEn ? 'Request Pending Approval' : 'Solicitud Pendiente de Aprobación'}
               </h3>
               <p style={{ fontSize: '13px', color: 'var(--text-secondary)', lineHeight: '1.5', margin: '0 0 16px 0' }}>
-                Has solicitado ingresar a <strong>{myExistingRequest.teamName}</strong> como {myExistingRequest.requesterRole === 'parent' ? `Padre/Tutor de ${myExistingRequest.childName}` : `Jugador (${myExistingRequest.playerName})`}. Tu entrenador revisará la solicitud y te dará acceso muy pronto.
+                {isEn ? (
+                  <>You have requested to join <strong>{myExistingRequest.teamName}</strong> as {myExistingRequest.requesterRole === 'parent' ? `Parent/Guardian of ${myExistingRequest.childName}` : `Player (${myExistingRequest.playerName})`}. Your coach will review your request and grant access soon.</>
+                ) : (
+                  <>Has solicitado ingresar a <strong>{myExistingRequest.teamName}</strong> como {myExistingRequest.requesterRole === 'parent' ? `Padre/Tutor de ${myExistingRequest.childName}` : `Jugador (${myExistingRequest.playerName})`}. Tu entrenador revisará la solicitud y te dará acceso muy pronto.</>
+                )}
               </p>
               <div style={{
                 background: 'rgba(0,0,0,0.3)',
@@ -291,16 +297,16 @@ const JoinTeam = () => {
                 marginBottom: '16px',
                 textAlign: 'left'
               }}>
-                <div>• Tipo: <strong>{myExistingRequest.requesterRole === 'parent' ? '👨👦 Padre / Tutor' : '⚽ Jugador'}</strong></div>
-                <div>• Solicitante: <strong>{myExistingRequest.requesterName}</strong></div>
-                <div>• Estado: <span style={{ color: '#C9A84C', fontWeight: 'bold' }}>En espera de confirmación del míster</span></div>
+                <div>• {isEn ? 'Type:' : 'Tipo:'} <strong>{myExistingRequest.requesterRole === 'parent' ? (isEn ? '👨👦 Parent / Guardian' : '👨👦 Padre / Tutor') : (isEn ? '⚽ Player' : '⚽ Jugador')}</strong></div>
+                <div>• {isEn ? 'Requester:' : 'Solicitante:'} <strong>{myExistingRequest.requesterName}</strong></div>
+                <div>• {isEn ? 'Status:' : 'Estado:'} <span style={{ color: '#C9A84C', fontWeight: 'bold' }}>{isEn ? 'Awaiting coach confirmation' : 'En espera de confirmación del míster'}</span></div>
               </div>
               <button 
                 className="btn-guest" 
                 onClick={() => window.location.reload()}
                 style={{ width: '100%' }}
               >
-                Comprobar Estado
+                {isEn ? 'Check Status' : 'Comprobar Estado'}
               </button>
             </div>
           )}
@@ -308,8 +314,8 @@ const JoinTeam = () => {
           {!user && !myExistingRequest && (
             <div className="join-auth-step">
               <div className="auth-mode-tabs">
-                <button type="button" className={`auth-tab-btn ${authTab === 'login' ? 'active' : ''}`} onClick={() => setAuthTab('login')}>Ya tengo cuenta</button>
-                <button type="button" className={`auth-tab-btn ${authTab === 'register' ? 'active' : ''}`} onClick={() => setAuthTab('register')}>Crear cuenta nueva</button>
+                <button type="button" className={`auth-tab-btn ${authTab === 'login' ? 'active' : ''}`} onClick={() => setAuthTab('login')}>{isEn ? 'I already have an account' : 'Ya tengo cuenta'}</button>
+                <button type="button" className={`auth-tab-btn ${authTab === 'register' ? 'active' : ''}`} onClick={() => setAuthTab('register')}>{isEn ? 'Create new account' : 'Crear cuenta nueva'}</button>
               </div>
 
               <button className="btn-google" onClick={handleGoogleAuth} disabled={loading} style={{ marginBottom: '14px' }}>
@@ -319,37 +325,37 @@ const JoinTeam = () => {
                   <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
                   <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
                 </svg>
-                Continuar con Google
+                {isEn ? 'Continue with Google' : 'Continuar con Google'}
               </button>
 
-              <div className="divider-auth"><span>o con correo electrónico</span></div>
+              <div className="divider-auth"><span>{isEn ? 'or with email' : 'o con correo electrónico'}</span></div>
 
               <form onSubmit={handleEmailAuth} className="email-auth-form">
                 {authTab === 'register' && (
                   <div className="input-group-auth">
-                    <label>Tu Nombre y Apellidos (Padre / Tutor / Jugador)</label>
+                    <label>{isEn ? 'Your Full Name (Parent / Guardian / Player)' : 'Tu Nombre y Apellidos (Padre / Tutor / Jugador)'}</label>
                     <div className="input-with-icon">
                       <User size={18} />
-                      <input type="text" placeholder="Ej. Roberto Gómez o Carlos Pérez" value={authName} onChange={(e) => setAuthName(e.target.value)} required />
+                      <input type="text" placeholder={isEn ? 'e.g. Robert Smith or John Doe' : 'Ej. Roberto Gómez o Carlos Pérez'} value={authName} onChange={(e) => setAuthName(e.target.value)} required />
                     </div>
                   </div>
                 )}
                 <div className="input-group-auth">
-                  <label>Correo Electrónico</label>
+                  <label>{isEn ? 'Email Address' : 'Correo Electrónico'}</label>
                   <div className="input-with-icon">
                     <Mail size={18} />
                     <input type="email" placeholder="tucorreo@ejemplo.com" value={authEmail} onChange={(e) => setAuthEmail(e.target.value)} required />
                   </div>
                 </div>
                 <div className="input-group-auth">
-                  <label>Contraseña</label>
+                  <label>{isEn ? 'Password' : 'Contraseña'}</label>
                   <div className="input-with-icon">
                     <Lock size={18} />
-                    <input type="password" placeholder="Mínimo 6 caracteres" value={authPassword} onChange={(e) => setAuthPassword(e.target.value)} required />
+                    <input type="password" placeholder={isEn ? 'Minimum 6 characters' : 'Mínimo 6 caracteres'} value={authPassword} onChange={(e) => setAuthPassword(e.target.value)} required />
                   </div>
                 </div>
                 <button type="submit" className="btn-submit-auth" disabled={loading}>
-                  {loading ? 'Procesando...' : (authTab === 'register' ? 'Crear Cuenta y Continuar' : 'Iniciar Sesión')}
+                  {loading ? (isEn ? 'Processing...' : 'Procesando...') : (authTab === 'register' ? (isEn ? 'Create Account and Continue' : 'Crear Cuenta y Continuar') : (isEn ? 'Sign In' : 'Iniciar Sesión'))}
                   <ArrowRight size={18} />
                 </button>
               </form>
@@ -360,17 +366,17 @@ const JoinTeam = () => {
             <div className="join-code-step">
               <div className="user-logged-badge">
                 <User size={16} color="#4CAF7D" />
-                <span>Sesión activa como: <strong>{user.email || user.displayName}</strong></span>
+                <span>{isEn ? 'Logged in as: ' : 'Sesión activa como: '}<strong>{user.email || user.displayName}</strong></span>
               </div>
               <div className="input-group-auth" style={{ marginTop: '16px' }}>
-                <label>Ingresa el Código de Equipo (proporcionado por el entrenador)</label>
+                <label>{isEn ? 'Enter Team Code (provided by your coach)' : 'Ingresa el Código de Equipo (proporcionado por el entrenador)'}</label>
                 <div className="input-with-icon">
                   <KeyRound size={18} />
-                  <input type="text" placeholder="Ej. M11-ABC123" value={inputCode} onChange={(e) => setInputCode(e.target.value.toUpperCase())} style={{ textTransform: 'uppercase', letterSpacing: '2px', fontWeight: 'bold', fontSize: '16px' }} />
+                  <input type="text" placeholder={isEn ? 'e.g. M11-ABC123' : 'Ej. M11-ABC123'} value={inputCode} onChange={(e) => setInputCode(e.target.value.toUpperCase())} style={{ textTransform: 'uppercase', letterSpacing: '2px', fontWeight: 'bold', fontSize: '16px' }} />
                 </div>
               </div>
               <button type="button" className="btn-submit-auth" onClick={() => handleVerifyCode(inputCode)} disabled={loading || !inputCode.trim()}>
-                {loading ? 'Buscando equipo...' : 'BUSCAR EQUIPO'}
+                {loading ? (isEn ? 'Searching team...' : 'Buscando equipo...') : (isEn ? 'SEARCH TEAM' : 'BUSCAR EQUIPO')}
                 <ArrowRight size={18} />
               </button>
             </div>
@@ -379,67 +385,67 @@ const JoinTeam = () => {
           {user && !myExistingRequest && teamData && (
             <form onSubmit={handleSubmitRequest} className="join-player-form">
               <div style={{ background: 'rgba(76, 175, 125, 0.12)', border: '1.5px solid rgba(76, 175, 125, 0.4)', borderRadius: '12px', padding: '14px', marginBottom: '18px', textAlign: 'left' }}>
-                <div style={{ fontSize: '11px', textTransform: 'uppercase', color: '#4CAF7D', fontWeight: 'bold' }}>⚽ Equipo Encontrado</div>
+                <div style={{ fontSize: '11px', textTransform: 'uppercase', color: '#4CAF7D', fontWeight: 'bold' }}>⚽ {isEn ? 'Team Found' : 'Equipo Encontrado'}</div>
                 <div style={{ fontSize: '17px', fontWeight: '900', color: '#ffffff', marginTop: '2px' }}>{teamData.teamName}</div>
-                <div style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: '2px' }}>Código: <strong style={{ color: '#C9A84C' }}>{inputCode}</strong></div>
+                <div style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: '2px' }}>{isEn ? 'Code: ' : 'Código: '}<strong style={{ color: '#C9A84C' }}>{inputCode}</strong></div>
               </div>
 
               <div style={{ marginBottom: '18px' }}>
-                <label style={{ display: 'block', fontSize: '13px', fontWeight: '800', color: '#ffffff', marginBottom: '8px' }}>¿Quién se une al equipo? *</label>
+                <label style={{ display: 'block', fontSize: '13px', fontWeight: '800', color: '#ffffff', marginBottom: '8px' }}>{isEn ? 'Who is joining the team? *' : '¿Quién se une al equipo? *'}</label>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
-                  <button type="button" onClick={() => setRequesterRole('player')} style={{ minHeight: '52px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', padding: '10px 12px', borderRadius: '10px', fontSize: '13px', fontWeight: '800', cursor: 'pointer', border: requesterRole === 'player' ? '2px solid #4CAF7D' : '1px solid var(--border-color)', background: requesterRole === 'player' ? 'rgba(76, 175, 125, 0.2)' : 'rgba(255, 255, 255, 0.04)', color: requesterRole === 'player' ? '#4CAF7D' : '#CBD5E1', transition: 'all 0.2s ease', touchAction: 'manipulation' }}>⚽ Soy el jugador</button>
-                  <button type="button" onClick={() => setRequesterRole('parent')} style={{ minHeight: '52px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', padding: '10px 12px', borderRadius: '10px', fontSize: '13px', fontWeight: '800', cursor: 'pointer', border: requesterRole === 'parent' ? '2px solid #C9A84C' : '1px solid var(--border-color)', background: requesterRole === 'parent' ? 'rgba(201, 168, 76, 0.2)' : 'rgba(255, 255, 255, 0.04)', color: requesterRole === 'parent' ? '#C9A84C' : '#CBD5E1', transition: 'all 0.2s ease', touchAction: 'manipulation' }}>👨 Soy padre / tutor</button>
+                  <button type="button" onClick={() => setRequesterRole('player')} style={{ minHeight: '52px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', padding: '10px 12px', borderRadius: '10px', fontSize: '13px', fontWeight: '800', cursor: 'pointer', border: requesterRole === 'player' ? '2px solid #4CAF7D' : '1px solid var(--border-color)', background: requesterRole === 'player' ? 'rgba(76, 175, 125, 0.2)' : 'rgba(255, 255, 255, 0.04)', color: requesterRole === 'player' ? '#4CAF7D' : '#CBD5E1', transition: 'all 0.2s ease', touchAction: 'manipulation' }}>⚽ {isEn ? "I'm the player" : 'Soy el jugador'}</button>
+                  <button type="button" onClick={() => setRequesterRole('parent')} style={{ minHeight: '52px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', padding: '10px 12px', borderRadius: '10px', fontSize: '13px', fontWeight: '800', cursor: 'pointer', border: requesterRole === 'parent' ? '2px solid #C9A84C' : '1px solid var(--border-color)', background: requesterRole === 'parent' ? 'rgba(201, 168, 76, 0.2)' : 'rgba(255, 255, 255, 0.04)', color: requesterRole === 'parent' ? '#C9A84C' : '#CBD5E1', transition: 'all 0.2s ease', touchAction: 'manipulation' }}>👨 {isEn ? "I'm a parent / guardian" : 'Soy padre / tutor'}</button>
                 </div>
               </div>
 
               {requesterRole === 'player' ? (
                 <>
                   <div className="input-group-auth">
-                    <label>Nombre Completo del Jugador *</label>
-                    <div className="input-with-icon"><User size={18} /><input type="text" placeholder="Ej. Mateo Caicedo" value={playerName} onChange={(e) => setPlayerName(e.target.value)} required /></div>
+                    <label>{isEn ? 'Player Full Name *' : 'Nombre Completo del Jugador *'}</label>
+                    <div className="input-with-icon"><User size={18} /><input type="text" placeholder={isEn ? 'e.g. Mateo Johnson' : 'Ej. Mateo Caicedo'} value={playerName} onChange={(e) => setPlayerName(e.target.value)} required /></div>
                   </div>
                   <div className="input-group-auth">
-                    <label>Fecha de Nacimiento *</label>
+                    <label>{isEn ? 'Date of Birth *' : 'Fecha de Nacimiento *'}</label>
                     <div className="input-with-icon"><Calendar size={18} /><input type="date" value={birthDate} onChange={(e) => setBirthDate(e.target.value)} required /></div>
                   </div>
                   <div className="input-group-auth">
-                    <label>Posición Habitual</label>
+                    <label>{isEn ? 'Primary Position' : 'Posición Habitual'}</label>
                     <select value={position} onChange={(e) => setPosition(e.target.value)} style={{ width: '100%', minHeight: '48px', padding: '12px 14px', background: 'rgba(0, 0, 0, 0.3)', border: '1px solid var(--border-color, rgba(255, 255, 255, 0.1))', borderRadius: '8px', color: '#ffffff', fontSize: '14px' }}>
                       {POSITIONS.map(pos => <option key={pos} value={pos} style={{ background: '#121814', color: '#ffffff' }}>{pos}</option>)}
                     </select>
                   </div>
                   <div className="input-group-auth" style={{ marginBottom: '18px' }}>
-                    <label>Dorsal Preferido (Opcional)</label>
-                    <div className="input-with-icon"><Shirt size={18} /><input type="text" placeholder="Ej. 10" value={jerseyNumber} onChange={(e) => setJerseyNumber(e.target.value)} /></div>
+                    <label>{isEn ? 'Preferred Jersey Number (Optional)' : 'Dorsal Preferido (Opcional)'}</label>
+                    <div className="input-with-icon"><Shirt size={18} /><input type="text" placeholder={isEn ? 'e.g. 10' : 'Ej. 10'} value={jerseyNumber} onChange={(e) => setJerseyNumber(e.target.value)} /></div>
                   </div>
                 </>
               ) : (
                 <>
                   <div className="input-group-auth">
-                    <label>Tu Nombre y Apellidos (Padre / Madre / Tutor) *</label>
-                    <div className="input-with-icon"><User size={18} /><input type="text" placeholder="Ej. Juan Carlos Caicedo" value={parentName || user.displayName || ''} onChange={(e) => setParentName(e.target.value)} required /></div>
+                    <label>{isEn ? 'Your Full Name (Parent / Guardian) *' : 'Tu Nombre y Apellidos (Padre / Madre / Tutor) *'}</label>
+                    <div className="input-with-icon"><User size={18} /><input type="text" placeholder={isEn ? 'e.g. John Johnson' : 'Ej. Juan Carlos Caicedo'} value={parentName || user.displayName || ''} onChange={(e) => setParentName(e.target.value)} required /></div>
                   </div>
                   <div className="input-group-auth">
-                    <label>Nombre Completo de tu Hijo / Hija *</label>
-                    <div className="input-with-icon"><User size={18} /><input type="text" placeholder="Ej. Mateo Caicedo" value={childName} onChange={(e) => setChildName(e.target.value)} required /></div>
-                    <small style={{ fontSize: '11px', color: 'var(--text-secondary)', marginTop: '3px', display: 'block' }}>🔒 Por privacidad (RGPD), el entrenador vinculará la ficha al aprobar.</small>
+                    <label>{isEn ? "Child's Full Name *" : 'Nombre Completo de tu Hijo / Hija *'}</label>
+                    <div className="input-with-icon"><User size={18} /><input type="text" placeholder={isEn ? 'e.g. Mateo Johnson' : 'Ej. Mateo Caicedo'} value={childName} onChange={(e) => setChildName(e.target.value)} required /></div>
+                    <small style={{ fontSize: '11px', color: 'var(--text-secondary)', marginTop: '3px', display: 'block' }}>{isEn ? '🔒 For privacy (GDPR), the coach will link the profile upon approval.' : '🔒 Por privacidad (RGPD), el entrenador vinculará la ficha al aprobar.'}</small>
                   </div>
                   <div className="input-group-auth" style={{ marginBottom: '18px' }}>
-                    <label>Fecha de Nacimiento de tu Hijo / Hija *</label>
+                    <label>{isEn ? "Child's Date of Birth *" : 'Fecha de Nacimiento de tu Hijo / Hija *'}</label>
                     <div className="input-with-icon"><Calendar size={18} /><input type="date" value={childBirthDate} onChange={(e) => setChildBirthDate(e.target.value)} required /></div>
                   </div>
                 </>
               )}
 
               <button type="submit" className="btn-submit-auth" disabled={submitting}>
-                {submitting ? 'Enviando solicitud...' : 'ENVIAR SOLICITUD AL ENTRENADOR'}
+                {submitting ? (isEn ? 'Sending request...' : 'Enviando solicitud...') : (isEn ? 'SUBMIT REQUEST TO COACH' : 'ENVIAR SOLICITUD AL ENTRENADOR')}
                 <ArrowRight size={18} />
               </button>
             </form>
           )}
 
           <div className="login-footer">
-            <Link to="/login" style={{ color: 'var(--text-secondary)', fontSize: '12px' }}>← Volver al inicio de sesión</Link>
+            <Link to="/login" style={{ color: 'var(--text-secondary)', fontSize: '12px' }}>{isEn ? '← Back to login' : '← Volver al inicio de sesión'}</Link>
           </div>
         </div>
       </div>

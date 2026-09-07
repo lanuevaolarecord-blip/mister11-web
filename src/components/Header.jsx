@@ -21,7 +21,7 @@ const Header = ({ onToggleNotif }) => {
   const { t } = useTranslation();
 
   const handleLogout = async () => {
-    if (window.confirm('¿Deseas cerrar sesión o cambiar de cuenta?')) {
+    if (window.confirm(t('header.logoutConfirm'))) {
       try {
         await logout();
         navigate('/');
@@ -214,8 +214,8 @@ const Header = ({ onToggleNotif }) => {
               switchMode('player');
               navigate('/player-dashboard');
             }}
-            title="Cambiar a Portal Jugador"
-            aria-label="Cambiar a Portal Jugador"
+            title={t('header.switchPlayerPortal')}
+            aria-label={t('header.switchPlayerPortal')}
             style={{
               display: 'inline-flex',
               alignItems: 'center',

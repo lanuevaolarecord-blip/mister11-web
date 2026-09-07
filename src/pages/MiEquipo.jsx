@@ -606,7 +606,7 @@ const MiEquipo = () => {
           <div className="empty-icon">⚽</div>
           <h2>Tu plantilla está vacía</h2>
           <p>Añade a tus primeros jugadores para empezar a gestionar tu equipo.</p>
-          <button className="btn-primary-new" onClick={() => handleOpenForm(null)}>+ Añadir Jugador</button>
+          <button className="btn-primary-new" onClick={() => handleOpenForm(null)}>{t('player.addPlayer')}</button>
         </div>
       ) : (
         <div className="grid-8-cols">
@@ -634,7 +634,7 @@ const MiEquipo = () => {
                   )}
                   {pStats.matchesPlayed > 0 && (
                     <span style={{ background: 'rgba(212, 168, 67, 0.15)', color: 'var(--accent-gold)', border: '1px solid rgba(212, 168, 67, 0.3)', borderRadius: '12px', padding: '2px 8px', fontSize: '10.5px', fontWeight: '800' }}>
-                      🏟️ {pStats.matchesPlayed} PJ
+                      🏟️ {pStats.matchesPlayed} {t('player.matchesAbbr')}
                     </span>
                   )}
                 </div>
@@ -645,14 +645,15 @@ const MiEquipo = () => {
                     <strong style={{ fontSize: '12px', color: 'var(--text-primary)' }}>{player.position}</strong>
                   </div>
                   <div style={{ display: 'flex', flexDirection: 'column' }}>
-                    <span style={{ fontSize: '10px', color: 'var(--text-secondary)' }}>Edad</span>
-                    <strong style={{ fontSize: '12px', color: 'var(--text-primary)' }}>{calcularEdad(player.fechaNacimiento || player.birthDate || player.age).text}</strong>
+                    <span style={{ fontSize: '10px', color: 'var(--text-secondary)' }}>{t('player.age')}</span>
+                    <strong style={{ fontSize: '12px', color: 'var(--text-primary)' }}>{calcularEdad(player.fechaNacimiento || player.birthDate || player.age, isEn).text}</strong>
                   </div>
                   <div style={{ display: 'flex', flexDirection: 'column' }}>
                     <span style={{ fontSize: '10px', color: 'var(--text-secondary)' }}>Alt</span>
                     <strong style={{ fontSize: '12px', color: 'var(--text-primary)' }}>{player.height || '--'}</strong>
                   </div>
                 </div>
+
 
                 {/* Email / Estado de Vinculación con Alto Contraste */}
                 <div style={{
@@ -887,12 +888,12 @@ const MiEquipo = () => {
                 </div>
               )}
               {editData.id && (
-                <button type="button" className="btn-text-error" onClick={() => handleDeletePlayer(editData.id)}>Eliminar Jugador</button>
+                <button type="button" className="btn-text-error" onClick={() => handleDeletePlayer(editData.id)}>{t('common.delete')}</button>
               )}
               <div className="footer-actions">
-                <button type="button" className="btn-secondary" onClick={() => setIsFormOpen(false)}>Cancelar</button>
+                <button type="button" className="btn-secondary" onClick={() => setIsFormOpen(false)}>{t('common.cancel')}</button>
                 <button type="button" className="btn-primary" onClick={handleSavePlayer} disabled={isSaving}>
-                  {isSaving ? 'Guardando...' : 'Guardar'}
+                  {isSaving ? t('common.loading') : t('common.save')}
                 </button>
               </div>
             </div>
@@ -923,8 +924,8 @@ const MiEquipo = () => {
               type="button"
               className="player-sidebar-btn btn-close-fiche"
               onClick={() => setSelectedPlayer(null)}
-              aria-label="Cerrar ficha"
-              title="Cerrar ficha"
+              aria-label={t('player.closeProfile')}
+              title={t('player.closeProfile')}
             >
               <X size={22} />
             </button>
@@ -935,8 +936,8 @@ const MiEquipo = () => {
                 type="button"
                 className="player-sidebar-btn btn-edit-fiche"
                 onClick={() => handleOpenForm(selectedPlayer)}
-                title="Editar ficha"
-                aria-label="Editar ficha"
+                title={t('player.editProfile')}
+                aria-label={t('player.editProfile')}
               >
                 <Edit size={20} />
               </button>
@@ -960,11 +961,12 @@ const MiEquipo = () => {
                 type="button"
                 className={`player-sidebar-btn btn-chat-fiche ${activeTab === 'CHAT' ? 'active' : ''}`}
                 onClick={() => setActiveTab('CHAT')}
-                title="Abrir Chat con el Jugador"
-                aria-label="Abrir Chat con el jugador"
+                title={t('player.openChat')}
+                aria-label={t('player.openChat')}
               >
                 <MessageSquare size={20} />
               </button>
+
 
               {/* 4. COMPARTIR CONSENTIMIENTO POR WHATSAPP */}
               <button 
@@ -1036,39 +1038,39 @@ const MiEquipo = () => {
                 {/* Resumen Rápido de Temporada Sincronizado */}
                 <div style={{ background: 'var(--bg-app)', padding: '12px', borderRadius: '10px', display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px', textAlign: 'center', border: '1px solid var(--border-light)' }}>
                   <div>
-                    <span style={{ fontSize: '10px', color: 'var(--text-secondary)', textTransform: 'uppercase', fontWeight: 'bold' }}>Goles</span>
+                    <span style={{ fontSize: '10px', color: 'var(--text-secondary)', textTransform: 'uppercase', fontWeight: 'bold' }}>{t('player.goals')}</span>
                     <div style={{ fontSize: '16px', fontWeight: '900', color: 'var(--accent-green)' }}>⚽ {playerSeasonStats.goals}</div>
                   </div>
                   <div>
-                    <span style={{ fontSize: '10px', color: 'var(--text-secondary)', textTransform: 'uppercase', fontWeight: 'bold' }}>Minutos</span>
+                    <span style={{ fontSize: '10px', color: 'var(--text-secondary)', textTransform: 'uppercase', fontWeight: 'bold' }}>{t('player.minutes')}</span>
                     <div style={{ fontSize: '16px', fontWeight: '900', color: 'var(--text-primary)' }}>{playerSeasonStats.minutesPlayed}'</div>
                   </div>
                   <div>
-                    <span style={{ fontSize: '10px', color: 'var(--text-secondary)', textTransform: 'uppercase', fontWeight: 'bold' }}>Partidos</span>
-                    <div style={{ fontSize: '16px', fontWeight: '900', color: 'var(--accent-gold)' }}>{playerSeasonStats.matchesPlayed} PJ</div>
+                    <span style={{ fontSize: '10px', color: 'var(--text-secondary)', textTransform: 'uppercase', fontWeight: 'bold' }}>{t('player.matches')}</span>
+                    <div style={{ fontSize: '16px', fontWeight: '900', color: 'var(--accent-gold)' }}>{playerSeasonStats.matchesPlayed} {t('player.matchesAbbr')}</div>
                   </div>
                 </div>
 
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: '12px', borderBottom: '1px dashed var(--border-light)' }}>
-                  <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>Categoría</span>
+                  <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>{t('player.category')}</span>
                   <strong className="capitalize" style={{ fontSize: '13px', color: 'var(--text-primary)' }}>{activeTeam?.categoria || selectedPlayer.category}</strong>
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: '12px', borderBottom: '1px dashed var(--border-light)' }}>
-                  <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>Pie dominante</span>
+                  <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>{t('player.foot')}</span>
                   <strong className="capitalize" style={{ fontSize: '13px', color: 'var(--text-primary)' }}>{selectedPlayer.foot}</strong>
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: '12px', borderBottom: '1px dashed var(--border-light)' }}>
-                  <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>Posición Principal</span>
+                  <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>{t('player.primaryPosition')}</span>
                   <span className="capitalize" style={{ background: 'var(--accent-green-light)', color: 'var(--accent-green)', padding: '4px 12px', borderRadius: '16px', fontSize: '12px', fontWeight: 'bold' }}>{selectedPlayer.position}</span>
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: '12px', borderBottom: '1px dashed var(--border-light)' }}>
-                  <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>Edad</span>
-                  <strong style={{ fontSize: '13px', color: 'var(--text-primary)' }}>{calcularEdad(selectedPlayer.fechaNacimiento || selectedPlayer.birthDate || selectedPlayer.age).text}</strong>
+                  <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>{t('player.age')}</span>
+                  <strong style={{ fontSize: '13px', color: 'var(--text-primary)' }}>{calcularEdad(selectedPlayer.fechaNacimiento || selectedPlayer.birthDate || selectedPlayer.age, isEn).text}</strong>
                 </div>
 
                 {/* Cuenta de Acceso / Email Vinculado */}
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: '12px', borderBottom: '1px dashed var(--border-light)' }}>
-                  <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>Cuenta Vinculada</span>
+                  <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>{t('player.linkedAccount')}</span>
                   <div style={{ textAlign: 'right' }}>
                     {(selectedPlayer.email || selectedPlayer.requesterEmail) ? (
                       <span style={{ color: '#10B981', fontWeight: 'bold', fontSize: '12px', display: 'flex', alignItems: 'center', gap: '4px' }}>
@@ -1076,7 +1078,7 @@ const MiEquipo = () => {
                       </span>
                     ) : (
                       <span style={{ color: '#94A3B8', fontSize: '11px' }}>
-                        Sin cuenta (editar ficha para añadir)
+                        {t('player.noAccount')}
                       </span>
                     )}
                   </div>
@@ -1103,7 +1105,7 @@ const MiEquipo = () => {
                     width: '100%'
                   }}
                 >
-                  <span>📄</span> Compartir Consentimiento Parental
+                  <span>📄</span> {t('player.shareConsent')}
                 </button>
 
                 <button
@@ -1127,7 +1129,7 @@ const MiEquipo = () => {
                   }}
                 >
                   <Trash2 size={16} />
-                  <span>Eliminar a {selectedPlayer.name} del Equipo</span>
+                  <span>{t('player.deleteFromTeam', { name: selectedPlayer.name })}</span>
                 </button>
                 
                 {/* Fake Radial Chart matching the image */}
@@ -1157,15 +1159,15 @@ const MiEquipo = () => {
                 <div className="physical-stats">
                   <div className="stat-item">
                     <div className="stat-val">{selectedPlayer.height || '--'}<span>cm</span></div>
-                    <label>Altura</label>
+                    <label>{t('player.height')}</label>
                   </div>
                   <div className="stat-item">
                     <div className="stat-val">{selectedPlayer.weight || '--'}<span>kg</span></div>
-                    <label>Peso</label>
+                    <label>{t('player.weight')}</label>
                   </div>
                   <div className="stat-item">
                     <div className="stat-val">{(selectedPlayer.weight && selectedPlayer.height) ? (selectedPlayer.weight / Math.pow(selectedPlayer.height/100, 2)).toFixed(1) : '--'}</div>
-                    <label>IMC</label>
+                    <label>{t('player.bmi')}</label>
                   </div>
                 </div>
               </div>
@@ -1184,43 +1186,43 @@ const MiEquipo = () => {
                 {/* 4 Tarjetas HUD Principales Sincronizadas */}
                 <div className="stats-grid">
                   <div className="stat-card" style={{ borderLeft: '4px solid var(--accent-green)' }}>
-                    <span style={{ fontSize: '11px', color: 'var(--text-secondary)', textTransform: 'uppercase', fontWeight: 'bold' }}>Partidos</span>
+                    <span style={{ fontSize: '11px', color: 'var(--text-secondary)', textTransform: 'uppercase', fontWeight: 'bold' }}>{t('player.matches')}</span>
                     <strong style={{ fontSize: '20px', color: 'var(--text-primary)' }}>{playerSeasonStats.matchesPlayed}</strong>
                     <small style={{ fontSize: '10px', color: 'var(--text-secondary)' }}>
-                      {playerSeasonStats.starts} tit. · {playerSeasonStats.subAppearances} sup.
+                      {playerSeasonStats.starts} {isEn ? 'starts' : 'tit.'} · {playerSeasonStats.subAppearances} {isEn ? 'sub' : 'sup.'}
                     </small>
                   </div>
 
                   <div className="stat-card" style={{ borderLeft: '4px solid #10B981' }}>
-                    <span style={{ fontSize: '11px', color: 'var(--text-secondary)', textTransform: 'uppercase', fontWeight: 'bold' }}>Goles</span>
+                    <span style={{ fontSize: '11px', color: 'var(--text-secondary)', textTransform: 'uppercase', fontWeight: 'bold' }}>{t('player.goals')}</span>
                     <strong style={{ fontSize: '20px', color: '#10B981' }}>⚽ {playerSeasonStats.goals}</strong>
-                    <small style={{ fontSize: '10px', color: 'var(--text-secondary)' }}>Temporada</small>
+                    <small style={{ fontSize: '10px', color: 'var(--text-secondary)' }}>{isEn ? 'Season' : 'Temporada'}</small>
                   </div>
 
                   <div className="stat-card" style={{ borderLeft: '4px solid #3B82F6' }}>
-                    <span style={{ fontSize: '11px', color: 'var(--text-secondary)', textTransform: 'uppercase', fontWeight: 'bold' }}>Asistencias</span>
+                    <span style={{ fontSize: '11px', color: 'var(--text-secondary)', textTransform: 'uppercase', fontWeight: 'bold' }}>{t('player.assists')}</span>
                     <strong style={{ fontSize: '20px', color: '#3B82F6' }}>👟 {playerSeasonStats.assists}</strong>
-                    <small style={{ fontSize: '10px', color: 'var(--text-secondary)' }}>Pases de gol</small>
+                    <small style={{ fontSize: '10px', color: 'var(--text-secondary)' }}>{isEn ? 'Goal passes' : 'Pases de gol'}</small>
                   </div>
 
                   <div className="stat-card" style={{ borderLeft: '4px solid #F59E0B' }}>
-                    <span style={{ fontSize: '11px', color: 'var(--text-secondary)', textTransform: 'uppercase', fontWeight: 'bold' }}>Minutos</span>
+                    <span style={{ fontSize: '11px', color: 'var(--text-secondary)', textTransform: 'uppercase', fontWeight: 'bold' }}>{t('player.minutes')}</span>
                     <strong style={{ fontSize: '20px', color: '#F59E0B' }}>⏱️ {playerSeasonStats.minutesPlayed}'</strong>
-                    <small style={{ fontSize: '10px', color: 'var(--text-secondary)' }}>En campo</small>
+                    <small style={{ fontSize: '10px', color: 'var(--text-secondary)' }}>{isEn ? 'On pitch' : 'En campo'}</small>
                   </div>
                 </div>
 
                 {/* Disciplina y Nota Media */}
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
                   <div style={{ background: 'var(--bg-card)', padding: '12px', borderRadius: '10px', border: '1px solid var(--border-light)', textAlign: 'center' }}>
-                    <span style={{ fontSize: '11px', color: 'var(--text-secondary)', fontWeight: 'bold' }}>TARJETAS</span>
+                    <span style={{ fontSize: '11px', color: 'var(--text-secondary)', fontWeight: 'bold' }}>{t('player.cards')}</span>
                     <div style={{ fontSize: '15px', fontWeight: '800', marginTop: '4px', color: 'var(--text-primary)' }}>
                       🟨 {playerSeasonStats.yellowCards} · 🟥 {playerSeasonStats.redCards}
                     </div>
                   </div>
 
                   <div style={{ background: 'var(--bg-card)', padding: '12px', borderRadius: '10px', border: '1px solid var(--border-light)', textAlign: 'center' }}>
-                    <span style={{ fontSize: '11px', color: 'var(--text-secondary)', fontWeight: 'bold' }}>NOTA MEDIA</span>
+                    <span style={{ fontSize: '11px', color: 'var(--text-secondary)', fontWeight: 'bold' }}>{t('player.avgRating')}</span>
                     <div style={{ fontSize: '15px', fontWeight: '800', marginTop: '4px', color: '#D4A843' }}>
                       ⭐ {playerSeasonStats.avgRating}
                     </div>
@@ -1230,7 +1232,7 @@ const MiEquipo = () => {
                 {/* Historial Detallado de Partidos Disputados */}
                 <div style={{ marginTop: '4px' }}>
                   <h4 style={{ margin: '0 0 10px 0', fontSize: '13px', fontWeight: '800', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                    <span>📋</span> Historial de Partidos ({playerSeasonStats.matchHistory.length})
+                    <span>📋</span> {t('player.matchHistory')} ({playerSeasonStats.matchHistory.length})
                   </h4>
 
                   {playerSeasonStats.matchHistory.length > 0 ? (
@@ -1253,8 +1255,8 @@ const MiEquipo = () => {
                               fontSize: '11px', 
                               fontWeight: '700', 
                               padding: '2px 8px', 
-                              borderRadius: '12px',
-                              background: 'rgba(27, 58, 45, 0.08)',
+                              borderRadius: '12px', 
+                              background: 'rgba(27, 58, 45, 0.08)', 
                               color: 'var(--text-primary)'
                             }}>
                               {mItem.result} ({mItem.type})
@@ -1262,7 +1264,7 @@ const MiEquipo = () => {
                           </div>
 
                           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '11px', color: 'var(--text-secondary)' }}>
-                            <span>📅 {mItem.date} · {mItem.isTitular ? 'Titular' : 'Suplente'} ({mItem.minutesPlayed}')</span>
+                            <span>📅 {mItem.date} · {mItem.isTitular ? t('player.starter') : t('player.substitute')} ({mItem.minutesPlayed}')</span>
                             <div style={{ display: 'flex', gap: '6px', fontWeight: '800' }}>
                               {mItem.goals > 0 && <span style={{ color: '#10B981' }}>⚽ {mItem.goals}</span>}
                               {mItem.assists > 0 && <span style={{ color: '#3B82F6' }}>👟 {mItem.assists}</span>}
@@ -1280,19 +1282,20 @@ const MiEquipo = () => {
                       border: '1px dashed var(--border-light)', 
                       borderRadius: '10px', 
                       padding: '20px', 
-                      textAlign: 'center',
+                      textAlign: 'center', 
                       color: 'var(--text-secondary)',
                       fontSize: '12px'
                     }}>
-                      <p style={{ margin: 0, fontWeight: '700' }}>Sin partidos registrados con este jugador</p>
+                      <p style={{ margin: 0, fontWeight: '700' }}>{t('player.matchHistoryEmpty')}</p>
                       <p style={{ margin: '4px 0 0 0', fontSize: '11px' }}>
-                        Los goles, alineaciones y minutos registrados en el módulo <strong>Partidos</strong> se sincronizarán aquí automáticamente.
+                        {t('player.syncNotice')}
                       </p>
                     </div>
                   )}
                 </div>
               </div>
             )}
+
 
             {activeTab === 'ASISTENCIA' && (
               <PlayerAttendanceSubTab playerId={selectedPlayer.id} teamId={activeTeam?.id} />
@@ -1394,7 +1397,7 @@ const MiEquipo = () => {
               </div>
             </div>
             <div className="modal-footer">
-              <button className="btn-secondary" onClick={() => setIsConsentModalOpen(false)}>Cerrar</button>
+              <button className="btn-secondary" onClick={() => setIsConsentModalOpen(false)}>{t('common.close')}</button>
             </div>
           </div>
         </div>
@@ -1450,11 +1453,11 @@ const MiEquipo = () => {
 
               <div>
                 <label style={{ display: 'block', fontSize: '12px', fontWeight: '800', marginBottom: '6px', color: 'var(--text-primary)' }}>
-                  Mensaje para la Plantilla y Familias *
+                  {isEn ? 'Message for Squad and Families *' : 'Mensaje para la Plantilla y Familias *'}
                 </label>
                 <SpellCheckedTextarea
                   rows={4}
-                  placeholder="Escribe el mensaje oficial aquí. Todos los jugadores y padres lo verán en su pantalla de inicio..."
+                  placeholder={isEn ? 'Write the official announcement here. All players and parents will see it on their home screen...' : 'Escribe el mensaje oficial aquí. Todos los jugadores y padres lo verán en su pantalla de inicio...'}
                   value={announcementMsg}
                   onChange={(e) => setAnnouncementMsg(e.target.value)}
                   style={{
@@ -1577,7 +1580,7 @@ const MiEquipo = () => {
                 type="button" 
                 className="btn-close" 
                 onClick={() => setIsModerationModalOpen(false)}
-                aria-label="Cerrar modal de moderación"
+                aria-label={t('common.close')}
               >
                 ✕
               </button>

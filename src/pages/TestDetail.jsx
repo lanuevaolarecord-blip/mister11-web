@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
+import { useTranslation } from '../hooks/useTranslation';
 import './Tests.css';
 
 const TestDetail = ({ test, players, onClose, onSave }) => {
+  const { t, isEn } = useTranslation();
   const [selectedPlayerId, setSelectedPlayerId] = useState(players.length > 0 ? players[0].id : '');
   const [answers, setAnswers] = useState({});
 
@@ -45,12 +47,12 @@ const TestDetail = ({ test, players, onClose, onSave }) => {
             <span className="t-cat" style={{backgroundColor: 'var(--accent-gold)', color: '#fff'}}>{test.category}</span>
             <h2 style={{margin: 0}}>{test.name}</h2>
           </div>
-          <button className="btn-close" onClick={onClose}>✕</button>
+          <button className="btn-close" onClick={onClose} aria-label={t('common.close')}>✕</button>
         </div>
         
         <div className="modal-body flex-1 overflow-y-auto overscroll-contain px-4 py-3 pb-24" style={{ padding: '20px 20px 100px 20px' }}>
           <div className="form-group" style={{ marginBottom: '20px' }}>
-            <label>Seleccionar Jugador a Evaluar</label>
+            <label>{isEn ? 'Select Player to Evaluate' : 'Seleccionar Jugador a Evaluar'}</label>
             <select 
               value={selectedPlayerId} 
               onChange={e => {
@@ -66,8 +68,8 @@ const TestDetail = ({ test, players, onClose, onSave }) => {
           </div>
 
           <div className="protocolo-card" style={{ marginBottom: '20px', backgroundColor: '#f8fafc' }}>
-            <h3>Instrucciones</h3>
-            <p>Responde cada pregunta usando la escala del 1 al 5, donde 1 es "Totalmente en desacuerdo / Nunca" y 5 es "Totalmente de acuerdo / Siempre".</p>
+            <h3>{isEn ? 'Instructions' : 'Instrucciones'}</h3>
+            <p>{isEn ? 'Answer each question using the 1 to 5 scale, where 1 is "Strongly disagree / Never" and 5 is "Strongly agree / Always".' : 'Responde cada pregunta usando la escala del 1 al 5, donde 1 es "Totalmente en desacuerdo / Nunca" y 5 es "Totalmente de acuerdo / Siempre".'}</p>
           </div>
 
           <div className="questions-container">
@@ -101,17 +103,17 @@ const TestDetail = ({ test, players, onClose, onSave }) => {
           {/* Botones de acción integrados en la zona de scroll con padding inferior */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginTop: '24px' }}>
             <div style={{ color: '#64748b', fontSize: '0.9rem', textAlign: 'center', fontWeight: 'bold' }}>
-              {Object.keys(answers).length} de {test.questions?.length} respondidas
+              {Object.keys(answers).length} {isEn ? 'of' : 'de'} {test.questions?.length} {isEn ? 'answered' : 'respondidas'}
             </div>
             <div style={{ display: 'flex', gap: '10px' }}>
-              <button className="btn-outline" style={{ flex: 1, minHeight: '44px' }} onClick={onClose}>Cancelar</button>
+              <button className="btn-outline" style={{ flex: 1, minHeight: '44px' }} onClick={onClose}>{t('common.cancel')}</button>
               <button 
                 className="btn-primary" 
                 onClick={handleSave}
                 disabled={!isComplete}
                 style={{ flex: 1, minHeight: '44px', opacity: isComplete ? 1 : 0.5, cursor: isComplete ? 'pointer' : 'not-allowed' }}
               >
-                Guardar Evaluación
+                {t('tests.wellness.save')}
               </button>
             </div>
           </div>

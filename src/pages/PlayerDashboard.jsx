@@ -19,12 +19,14 @@ import { usePushNotifications } from '../hooks/usePushNotifications';
 import { sendChatNotification, clearDeliveredChatNotifications } from '../hooks/useLocalNotifications';
 import { showToast } from '../utils/toast';
 import { getPlayerIdentitiesByEmail } from '../utils/playerIdentity';
+import { useTranslation } from '../hooks/useTranslation';
 import './PlayerDashboard.css';
 
 const normalizeStr = (str) => (str || '').toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
 
 const PlayerDashboard = () => {
   const navigate = useNavigate();
+  const { t, isEn } = useTranslation();
   // FASE 1 y 2: Desacoplar estado: Usar activePlayerTeam y playerTeams
   const { 
     user, 
@@ -407,7 +409,7 @@ const PlayerDashboard = () => {
         <div className="player-topbar-brand">
           <img src="/logo_mister11.png" alt="Míster11" className="player-brand-logo" />
           <span className="player-portal-badge">
-            {isParentView ? 'PORTAL FAMILIA' : 'PORTAL JUGADOR'}
+            {isParentView ? t('player.portal.family') : t('player.portal.player')}
           </span>
         </div>
 
@@ -417,8 +419,8 @@ const PlayerDashboard = () => {
             type="button" 
             className="player-theme-btn" 
             onClick={() => setIsSettingsOpen(true)}
-            aria-label="Configuración y Ajustes"
-            title="Configuración y Ajustes"
+            aria-label={t('player.portal.settingsAria')}
+            title={t('player.portal.settingsAria')}
             style={{ color: '#4CAF7D' }}
           >
             <Settings size={18} color="#4CAF7D" />
@@ -429,8 +431,8 @@ const PlayerDashboard = () => {
             type="button" 
             className="player-theme-btn" 
             onClick={toggleTheme}
-            aria-label={darkMode ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'}
-            title={darkMode ? 'Modo Claro' : 'Modo Oscuro'}
+            aria-label={darkMode ? t('player.portal.themeLightAria') : t('player.portal.themeDarkAria')}
+            title={darkMode ? (isEn ? 'Light Mode' : 'Modo Claro') : (isEn ? 'Dark Mode' : 'Modo Oscuro')}
           >
             {darkMode ? <Sun size={18} color="#F59E0B" /> : <Moon size={18} color="#1B3A2D" />}
           </button>
@@ -440,8 +442,8 @@ const PlayerDashboard = () => {
             type="button" 
             className="player-theme-btn" 
             onClick={handleLogout}
-            aria-label="Cerrar Sesión o Cambiar Cuenta"
-            title="Cerrar Sesión o Cambiar Cuenta"
+            aria-label={t('player.portal.logoutAria')}
+            title={t('player.portal.logoutAria')}
             style={{ color: '#EF4444' }}
           >
             <LogOut size={18} color="#EF4444" />
@@ -453,7 +455,7 @@ const PlayerDashboard = () => {
               value={activePlayerTeam?.id || ''}
               onChange={(e) => changeActivePlayerTeam(e.target.value)}
               className="player-team-select"
-              aria-label="Seleccionar equipo de jugador"
+              aria-label={t('player.portal.selectTeamAria')}
             >
               {playerTeams.map(t => (
                 <option key={t.id} value={t.id}>
@@ -485,8 +487,8 @@ const PlayerDashboard = () => {
                 switchMode('coach');
                 navigate('/');
               }}
-              aria-label="Cambiar a Modo Entrenador"
-              title="Cambiar a Modo Entrenador"
+              aria-label={t('player.portal.switchToCoach')}
+              title={t('player.portal.switchToCoach')}
               style={{
                 display: 'inline-flex',
                 alignItems: 'center',
@@ -522,7 +524,7 @@ const PlayerDashboard = () => {
           fontSize: '0.76rem'
         }}>
           <span style={{ color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '4px', fontWeight: 600 }}>
-            <Users size={13} /> Ficha activa:
+            <Users size={13} /> {t('player.portal.activeCard')}
           </span>
           <span style={{
             color: 'var(--accent-green, #10B981)',
@@ -561,10 +563,10 @@ const PlayerDashboard = () => {
           }}>
             <span style={{ fontSize: '36px' }}>⚽</span>
             <h3 style={{ margin: 0, fontSize: '1.15rem', fontWeight: 800, color: 'var(--text-primary)' }}>
-              ¡Hola, {user?.displayName?.split(' ')[0] || user?.email?.split('@')[0] || 'Crack'}! 👋
+              {t('player.portal.notLinkedTitle', { name: user?.displayName?.split(' ')[0] || user?.email?.split('@')[0] || (isEn ? 'Champion' : 'Crack') })}
             </h3>
             <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--text-secondary)', lineHeight: '1.4', maxWidth: '340px' }}>
-              Aún no estás vinculado a ningún equipo como jugador. Pídele el código de acceso a tu entrenador o pulsa a continuación para unirte a tu plantilla.
+              {t('player.portal.notLinkedDesc')}
             </p>
             <button
               type="button"
@@ -585,7 +587,7 @@ const PlayerDashboard = () => {
               }}
             >
               <KeyRound size={18} />
-              <span>Unirme a un Equipo con Código</span>
+              <span>{t('player.portal.joinWithCode')}</span>
               <ArrowRight size={16} />
             </button>
           </div>

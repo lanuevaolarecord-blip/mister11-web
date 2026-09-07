@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useTranslation } from '../../hooks/useTranslation';
 import { 
   Download, 
   Share2, 
@@ -20,6 +21,7 @@ export const MatchActionsToolbar = ({
   isHighlighted = false,
   videoUrl = null
 }) => {
+  const { t, isEn } = useTranslation();
   const [showShareModal, setShowShareModal] = useState(false);
   const [showNoteModal, setShowNoteModal] = useState(false);
   const [noteText, setNoteText] = useState('');
@@ -132,14 +134,14 @@ export const MatchActionsToolbar = ({
         <div className="stats-modal-overlay" onClick={() => setShowNoteModal(false)}>
           <div className="stats-modal-card" onClick={e => e.stopPropagation()}>
             <div className="stats-modal-header">
-              <h3>Añadir Nota Táctica</h3>
-              <button type="button" onClick={() => setShowNoteModal(false)} className="close-btn">
+              <h3>{isEn ? 'Add Tactical Note' : 'Añadir Nota Táctica'}</h3>
+              <button type="button" onClick={() => setShowNoteModal(false)} className="close-btn" aria-label={t('common.close')}>
                 <X size={18} />
               </button>
             </div>
             <div className="stats-modal-body">
               <textarea
-                placeholder="Escribe observaciones tácticas clave (ej: Ajustar presión alta tras pérdida en banda izquierda, mayor repliegue en ABP rival...)"
+                placeholder={isEn ? 'Write key tactical observations (e.g. Adjust high press after turnover on left wing, deeper retreat on rival set pieces...)' : 'Escribe observaciones tácticas clave (ej: Ajustar presión alta tras pérdida en banda izquierda, mayor repliegue en ABP rival...)'}
                 value={noteText}
                 onChange={e => setNoteText(e.target.value)}
                 rows={4}
@@ -148,11 +150,11 @@ export const MatchActionsToolbar = ({
             </div>
             <div className="stats-modal-footer">
               <button type="button" className="btn-cancel" onClick={() => setShowNoteModal(false)}>
-                Cancelar
+                {t('common.cancel')}
               </button>
               <button type="button" className="btn-confirm" onClick={handleSaveNote} disabled={!noteText.trim()}>
                 <Send size={14} />
-                <span>Guardar Nota</span>
+                <span>{isEn ? 'Save Note' : 'Guardar Nota'}</span>
               </button>
             </div>
           </div>

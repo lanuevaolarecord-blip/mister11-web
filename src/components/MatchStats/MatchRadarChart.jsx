@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { Activity, HelpCircle, X, Info } from 'lucide-react';
 import { useTheme } from '../../context/ThemeContext';
+import { useTranslation } from '../../hooks/useTranslation';
 
 export const MatchRadarChart = ({
   events = [],
@@ -9,6 +10,7 @@ export const MatchRadarChart = ({
   homeTeamName = 'Mi Equipo',
   awayTeamName = 'Rival'
 }) => {
+  const { isEn } = useTranslation();
   const { darkMode } = useTheme();
   const [showFormulaModal, setShowFormulaModal] = useState(false);
   const [activeTooltipAxis, setActiveTooltipAxis] = useState(null);
@@ -196,7 +198,7 @@ export const MatchRadarChart = ({
       <div className="radar-chart-header">
         <div className="radar-title">
           <Activity size={20} className="radar-icon" />
-          <h3>Perfil Táctico Comparativo (Radar)</h3>
+          <h3>{isEn ? 'Comparative Tactical Profile (Radar)' : 'Perfil Táctico Comparativo (Radar)'}</h3>
         </div>
 
         <button
@@ -204,18 +206,18 @@ export const MatchRadarChart = ({
           className="mode-btn"
           onClick={() => setShowFormulaModal(true)}
           style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '11px', fontWeight: '700' }}
-          title="Ver fórmula y explicación de cálculo"
+          title={isEn ? 'View formula and calculation explanation' : 'Ver fórmula y explicación de cálculo'}
         >
           <HelpCircle size={14} />
-          <span>¿Cómo se calcula?</span>
+          <span>{isEn ? 'How is it calculated?' : '¿Cómo se calcula?'}</span>
         </button>
       </div>
 
       {!hasRealData ? (
         <div style={{ padding: '48px 16px', textAlign: 'center', color: darkMode ? '#94A3B8' : '#64748B' }}>
           <Info size={32} style={{ margin: '0 auto 10px', opacity: 0.6 }} />
-          <div style={{ fontSize: '14px', fontWeight: '700', color: darkMode ? '#FFFFFF' : '#0F172A' }}>Sin datos suficientes</div>
-          <div style={{ fontSize: '12px', marginTop: '4px' }}>Registra eventos a pie de campo o en el acta para generar el radar táctico comparativo.</div>
+          <div style={{ fontSize: '14px', fontWeight: '700', color: darkMode ? '#FFFFFF' : '#0F172A' }}>{isEn ? 'Not enough data' : 'Sin datos suficientes'}</div>
+          <div style={{ fontSize: '12px', marginTop: '4px' }}>{isEn ? 'Record pitchside events or in the match sheet to generate the comparative tactical radar.' : 'Registra eventos a pie de campo o en el acta para generar el radar táctico comparativo.'}</div>
         </div>
       ) : (
         <>

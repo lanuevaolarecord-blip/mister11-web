@@ -128,6 +128,9 @@ const Planificacion = () => {
   const { darkMode } = useTheme();
   const { isProActive } = usePlan();
   const { t, isEn, locale } = useTranslation();
+  const localizedDays = useMemo(() => isEn 
+    ? ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'] 
+    : ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'], [isEn]);
   const [upgradeModal, setUpgradeModal] = useState({ open: false, message: '' });
 
   // Colores adaptativos de contraste dorado/verde según el modo de tema
@@ -869,13 +872,13 @@ const Planificacion = () => {
 
       {/* PAGE HEADER */}
       <div className="plan-page-header">
-        <h1 className="page-title">PLANIFICACIÓN ESTRATÉGICA</h1>
+        <h1 className="page-title">{t('plan.strategicPlanning')}</h1>
         <div style={{ display: 'flex', gap: 10 }}>
           <button className="btn-outline" onClick={handleExportPDF} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13 }}>
-            <FileText size={15} /> EXPORTAR PDF
+            <FileText size={15} /> {t('plan.exportPdf')}
           </button>
           <button className="btn-primary" onClick={handleSave} disabled={saving} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13 }}>
-            <Save size={15} /> {saving ? 'GUARDANDO...' : 'GUARDAR'}
+            <Save size={15} /> {saving ? t('plan.saving') : t('plan.save')}
           </button>
         </div>
       </div>
@@ -906,17 +909,17 @@ const Planificacion = () => {
         {/* CARD 1 — FECHAS DE TEMPORADA */}
         <div className="plan-card plan-card-fechas">
           <div className="plan-card-label">
-            <span className="plan-icon">📅</span> RANGO DE FECHAS
+            <span className="plan-icon">📅</span> {t('plan.dateRange')}
           </div>
           <div className="plan-date-row">
             <div className="plan-date-block">
-              <label>Inicio</label>
+              <label>{t('plan.start')}</label>
               <input type="date" value={macroInfo.startDate}
                 onChange={e => setMacroInfo(p => ({ ...p, startDate: e.target.value }))}
                 className="plan-date-input" />
             </div>
             <div className="plan-date-block">
-              <label>Fin</label>
+              <label>{t('plan.end')}</label>
               <input type="date" value={macroInfo.endDate}
                 onChange={e => setMacroInfo(p => ({ ...p, endDate: e.target.value }))}
                 className="plan-date-input" />
@@ -927,10 +930,10 @@ const Planificacion = () => {
         {/* CARD 2 — DÍAS DE ENTRENAMIENTO */}
         <div className="plan-card plan-card-dias">
           <div className="plan-card-label">
-            <span className="plan-icon">⚙</span> DÍAS DE ENTRENAMIENTO
+            <span className="plan-icon">⚙</span> {t('plan.trainingDays')}
           </div>
           <div className="plan-days-row">
-            {DAYS_LABELS.map((day, idx) => (
+            {localizedDays.map((day, idx) => (
               <button key={idx}
                 className={`plan-day-btn ${macroInfo.trainingDays.includes(idx) ? 'active' : ''} ${conflictDays.includes(idx) ? 'conflict' : ''}`}
                 onClick={() => toggleDay(idx)}
@@ -942,9 +945,9 @@ const Planificacion = () => {
           </div>
           {/* (A) Selector de Día de Partido Reactivo */}
           <div style={{ marginTop: '12px', display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
-            <span style={{ fontSize: '11px', fontWeight: 800, color: '#D4A843', textTransform: 'uppercase' }}>⚽ Día de Partido:</span>
+            <span style={{ fontSize: '11px', fontWeight: 800, color: '#D4A843', textTransform: 'uppercase' }}>{t('plan.matchDay')}</span>
             <div style={{ display: 'flex', gap: '4px' }}>
-              {DAYS_LABELS.map((day, idx) => {
+              {localizedDays.map((day, idx) => {
                 const currentMc = microcycles.find(m => m.id === selectedMicro) || microcycles[0];
                 const activeMd = currentMc?.matchDayOfWeek ?? macroInfo.matchDayOfWeek ?? 5;
                 const isSelected = activeMd === idx;
@@ -971,7 +974,7 @@ const Planificacion = () => {
             </div>
             {conflictDays.length > 0 && (
               <span style={{ fontSize: '11px', color: '#F59E0B', background: 'rgba(245,158,11,0.12)', border: '1px solid rgba(245,158,11,0.3)', borderRadius: '6px', padding: '3px 8px' }}>
-                ⚠️ Entreno en MD-1 — posible fatiga
+                {t('plan.fatigaWarning')}
               </span>
             )}
           </div>
@@ -981,24 +984,24 @@ const Planificacion = () => {
             onClick={() => setReubicateModal(true)}
             style={{ marginTop: '10px', padding: '6px 14px', borderRadius: '8px', border: '1px solid rgba(59,130,246,0.4)', background: 'rgba(59,130,246,0.1)', color: '#93C5FD', fontSize: '11px', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }}
           >
-            🔄 Reubicar entrenos según nuevo día
+            {t('plan.reubicarBtn')}
           </button>
         </div>
 
         {/* CARD 3 — CATEGORÍA */}
         <div className="plan-card plan-card-categoria">
           <div className="plan-card-label">
-            <span className="plan-icon">⊞</span> CATEGORÍA
+            <span className="plan-icon">⊞</span> {t('plan.category')}
           </div>
           <input
             className="plan-cat-input"
             value={macroInfo.category}
             onChange={e => setMacroInfo(p => ({ ...p, category: e.target.value }))}
-            placeholder="Ej: Infantil A"
+            placeholder={isEn ? "e.g.: Under-14 A" : "Ej: Infantil A"}
           />
           <div className="plan-trainer-row">
             <span className="plan-trainer-label">
-              <span style={{ marginRight: 6 }}>👤</span> ENTRENADOR
+              <span style={{ marginRight: 6 }}>👤</span> {t('plan.coach')}
             </span>
           </div>
           <div className="plan-trainer-name-row">
@@ -1009,7 +1012,7 @@ const Planificacion = () => {
               className="plan-trainer-input"
               value={macroInfo.trainer}
               onChange={e => setMacroInfo(p => ({ ...p, trainer: e.target.value }))}
-              placeholder="Nombre entrenador"
+              placeholder={isEn ? "Coach name" : "Nombre entrenador"}
             />
           </div>
         </div>
@@ -1017,15 +1020,15 @@ const Planificacion = () => {
         {/* CARD 4 — VOLUMEN TEMPORADA */}
         <div className="plan-card plan-card-volumen">
           <div className="plan-card-label">
-            <span className="plan-icon">⌛</span> VOLUMEN TEMPORADA
+            <span className="plan-icon">⌛</span> {t('plan.seasonVolume')}
           </div>
           <div className="plan-volumen-body">
-            <CircularGauge value={weeklyVolume} max={600} size={96} color="#4CAF7D" bgColor="#e0ede6" label="min/sem" />
+            <CircularGauge value={weeklyVolume} max={600} size={96} color="#4CAF7D" bgColor="#e0ede6" label={isEn ? "min/wk" : "min/sem"} />
             <div className="plan-volumen-text">
               <div className="plan-volumen-big">{weeklyVolume} <span className="plan-volumen-unit">min</span></div>
-              <div className="plan-volumen-sub">{totalHours}h {remainingMins}min ({totalMinutes} minutos totales)</div>
+              <div className="plan-volumen-sub">{totalHours}h {remainingMins}min ({totalMinutes} {isEn ? 'total minutes' : 'minutos totales'})</div>
               <div className="plan-session-dur-row">
-                <label className="plan-session-label">Duración sesión:</label>
+                <label className="plan-session-label">{t('plan.sessionDuration')}</label>
                 <input type="number" value={macroInfo.sessionDuration} min={30} max={180}
                   onChange={e => setMacroInfo(p => ({ ...p, sessionDuration: Number(e.target.value) }))}
                   className="plan-dur-input" />
@@ -1040,7 +1043,7 @@ const Planificacion = () => {
       {/* CARD 5 — OBJETIVO GENERAL (100% Ancho) */}
       <div className="plan-card plan-card-objetivo">
         <div className="plan-card-label">
-          <span className="plan-icon">🎯</span> OBJETIVO GENERAL DE LA TEMPORADA
+          <span className="plan-icon">🎯</span> {t('plan.seasonObjective')}
         </div>
         <div className="plan-objetivo-body">
           <SpellCheckedTextarea
@@ -1048,7 +1051,7 @@ const Planificacion = () => {
             value={macroInfo.objective}
             onChange={e => setMacroInfo(p => ({ ...p, objective: e.target.value }))}
             rows={3}
-            placeholder="Escribe el objetivo general de la temporada..."
+            placeholder={t('plan.seasonObjectivePlaceholder')}
           />
           <div className="plan-objetivo-icon">🤝</div>
         </div>

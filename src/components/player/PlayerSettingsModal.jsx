@@ -134,7 +134,7 @@ export const PlayerSettingsModal = ({ isOpen, onClose, player }) => {
               alignItems: 'center',
               justifyContent: 'center'
             }}
-            aria-label="Cerrar modal"
+            aria-label={t('common.close')}
           >
             <X size={20} />
           </button>

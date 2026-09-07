@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Plus, Trash2, Search, Filter, Eye } from 'lucide-react';
 import { useExercises } from '../hooks/useExercises';
 import { useAuth } from '../context/AuthContext';
+import { useTranslation } from '../hooks/useTranslation';
 import './ExerciseLibrary.css';
 
 const renderMarkdown = (text) => {
@@ -19,6 +20,7 @@ const renderMarkdown = (text) => {
 };
 
 const ExerciseLibrary = ({ activeTeamId }) => {
+  const { t, isEn } = useTranslation();
   const { exercises, loading, addExercise, removeExercise } = useExercises(activeTeamId);
   const [searchTerm, setSearchTerm] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('all');
@@ -54,9 +56,9 @@ const ExerciseLibrary = ({ activeTeamId }) => {
   return (
     <div className="exercise-library">
       <div className="library-header">
-        <h2>Biblioteca de Ejercicios</h2>
+        <h2>{isEn ? 'Exercise Library' : 'Biblioteca de Ejercicios'}</h2>
         <button className="btn-primary" onClick={() => setShowModal(true)}>
-          <Plus size={18} /> Nuevo Ejercicio
+          <Plus size={18} /> {isEn ? 'New Exercise' : 'Nuevo Ejercicio'}
         </button>
       </div>
 
@@ -65,7 +67,7 @@ const ExerciseLibrary = ({ activeTeamId }) => {
           <Search size={18} />
           <input 
             type="text" 
-            placeholder="Buscar ejercicio..." 
+            placeholder={isEn ? 'Search exercise...' : 'Buscar ejercicio...'} 
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
@@ -73,11 +75,11 @@ const ExerciseLibrary = ({ activeTeamId }) => {
         <div className="filter-box">
           <Filter size={18} />
           <select value={categoryFilter} onChange={(e) => setCategoryFilter(e.target.value)}>
-            <option value="all">Todas las categorías</option>
-            <option value="prevencion">Prevención</option>
-            <option value="recuperacion">Recuperación</option>
-            <option value="fortalecimiento">Fortalecimiento</option>
-            <option value="movilidad">Movilidad</option>
+            <option value="all">{isEn ? 'All categories' : 'Todas las categorías'}</option>
+            <option value="prevencion">{isEn ? 'Prevention' : 'Prevención'}</option>
+            <option value="recuperacion">{isEn ? 'Recovery' : 'Recuperación'}</option>
+            <option value="fortalecimiento">{isEn ? 'Strengthening' : 'Fortalecimiento'}</option>
+            <option value="movilidad">{isEn ? 'Mobility' : 'Movilidad'}</option>
           </select>
         </div>
       </div>
@@ -121,47 +123,47 @@ const ExerciseLibrary = ({ activeTeamId }) => {
       {showModal && (
         <div className="modal-overlay" onClick={() => setShowModal(false)}>
           <div className="modal-content" onClick={e => e.stopPropagation()}>
-            <h2>Añadir Ejercicio Manual</h2>
+            <h2>{isEn ? 'Add Manual Exercise' : 'Añadir Ejercicio Manual'}</h2>
             <div className="form-group">
-              <label>Nombre del Ejercicio</label>
-              <input type="text" value={newExercise.name} onChange={e => setNewExercise({...newExercise, name: e.target.value})} placeholder="Ej. Plancha Lateral..." />
+              <label>{isEn ? 'Exercise Name' : 'Nombre del Ejercicio'}</label>
+              <input type="text" value={newExercise.name} onChange={e => setNewExercise({...newExercise, name: e.target.value})} placeholder={isEn ? 'e.g. Side Plank...' : 'Ej. Plancha Lateral...'} />
             </div>
             <div className="form-row">
               <div className="form-group">
-                <label>Categoría</label>
+                <label>{isEn ? 'Category' : 'Categoría'}</label>
                 <select value={newExercise.category} onChange={e => setNewExercise({...newExercise, category: e.target.value})}>
-                  <option value="prevencion">Prevención</option>
-                  <option value="recuperacion">Recuperación</option>
-                  <option value="fortalecimiento">Fortalecimiento</option>
-                  <option value="movilidad">Movilidad</option>
+                  <option value="prevencion">{isEn ? 'Prevention' : 'Prevención'}</option>
+                  <option value="recuperacion">{isEn ? 'Recovery' : 'Recuperación'}</option>
+                  <option value="fortalecimiento">{isEn ? 'Strengthening' : 'Fortalecimiento'}</option>
+                  <option value="movilidad">{isEn ? 'Mobility' : 'Movilidad'}</option>
                 </select>
               </div>
               <div className="form-group">
-                <label>Dificultad (1-3)</label>
+                <label>{isEn ? 'Difficulty (1-3)' : 'Dificultad (1-3)'}</label>
                 <input type="number" min="1" max="3" value={newExercise.difficulty} onChange={e => setNewExercise({...newExercise, difficulty: parseInt(e.target.value)})} />
               </div>
             </div>
             <div className="form-group">
-              <label>Descripción</label>
-              <textarea value={newExercise.description} onChange={e => setNewExercise({...newExercise, description: e.target.value})} placeholder="Instrucciones detalladas..." rows="3"></textarea>
+              <label>{isEn ? 'Description' : 'Descripción'}</label>
+              <textarea value={newExercise.description} onChange={e => setNewExercise({...newExercise, description: e.target.value})} placeholder={isEn ? 'Detailed instructions...' : 'Instrucciones detalladas...'} rows="3"></textarea>
             </div>
             <div className="form-row">
               <div className="form-group">
-                <label>Series</label>
+                <label>{isEn ? 'Sets' : 'Series'}</label>
                 <input type="number" value={newExercise.series} onChange={e => setNewExercise({...newExercise, series: parseInt(e.target.value)})} />
               </div>
               <div className="form-group">
-                <label>Repeticiones</label>
+                <label>{isEn ? 'Reps' : 'Repeticiones'}</label>
                 <input type="number" value={newExercise.reps} onChange={e => setNewExercise({...newExercise, reps: parseInt(e.target.value)})} />
               </div>
               <div className="form-group">
-                <label>Duración (segs)</label>
+                <label>{isEn ? 'Duration (sec)' : 'Duración (segs)'}</label>
                 <input type="number" value={newExercise.durationSeconds} onChange={e => setNewExercise({...newExercise, durationSeconds: parseInt(e.target.value)})} />
               </div>
             </div>
             <div className="modal-actions">
-              <button className="btn-cancel" onClick={() => setShowModal(false)}>Cancelar</button>
-              <button className="btn-save" onClick={handleSave}>Guardar Ejercicio</button>
+              <button className="btn-cancel" onClick={() => setShowModal(false)}>{t('common.cancel')}</button>
+              <button className="btn-save" onClick={handleSave}>{isEn ? 'Save Exercise' : 'Guardar Ejercicio'}</button>
             </div>
           </div>
         </div>
@@ -178,8 +180,8 @@ const ExerciseLibrary = ({ activeTeamId }) => {
             <div className="exercise-meta-detail">
               {viewExercise.durationSeconds > 0 && <span>⏱️ {viewExercise.durationSeconds}s</span>}
               {viewExercise.reps > 0 && <span>🔁 {viewExercise.reps} reps</span>}
-              {viewExercise.series > 0 && <span>🔄 {viewExercise.series} series</span>}
-              <span>⭐ Nivel {viewExercise.difficulty}</span>
+              {viewExercise.series > 0 && <span>🔄 {viewExercise.series} {isEn ? 'sets' : 'series'}</span>}
+              <span>⭐ {isEn ? 'Level' : 'Nivel'} {viewExercise.difficulty}</span>
             </div>
 
             <div className="exercise-description-detail">
@@ -188,12 +190,12 @@ const ExerciseLibrary = ({ activeTeamId }) => {
                   {renderMarkdown(viewExercise.markdown)}
                 </div>
               ) : (
-                <p>{viewExercise.description || 'Sin descripción'}</p>
+                <p>{viewExercise.description || (isEn ? 'No description' : 'Sin descripción')}</p>
               )}
             </div>
 
             <div className="modal-actions">
-              <button className="btn-primary" onClick={() => setViewExercise(null)}>Cerrar</button>
+              <button className="btn-primary" onClick={() => setViewExercise(null)}>{t('common.close')}</button>
             </div>
           </div>
         </div>

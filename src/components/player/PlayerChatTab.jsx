@@ -55,7 +55,7 @@ const COACH_QUICK_REPLIES = [
 
 export const PlayerChatTab = ({ teamPath, player, team, isParentView = false, isCoachView = false }) => {
   const { user, getTeamPath } = useAuth();
-  const { t } = useTranslation();
+  const { t, isEn } = useTranslation();
   const [messages, setMessages] = useState([]);
   const [threadMeta, setThreadMeta] = useState(null);
   const [inputText, setInputText] = useState('');
@@ -81,7 +81,22 @@ export const PlayerChatTab = ({ teamPath, player, team, isParentView = false, is
   const cleanPath = resolvedPath ? resolvedPath.replace(/^\/+|\/+$/g, '') : '';
   const isValidPath = cleanPath.length > 0 && cleanPath.split('/').length % 2 === 0;
 
-  const quickReplies = isCoachView ? COACH_QUICK_REPLIES : PLAYER_QUICK_REPLIES;
+  const playerQuickReplies = [
+    t('player.chat.qr.late10'),
+    t('player.chat.qr.discomfort'),
+    t('player.chat.qr.talk'),
+    t('player.chat.qr.ready'),
+    t('player.chat.qr.transport')
+  ];
+
+  const coachQuickReplies = [
+    t('player.chat.qr.coachReceived'),
+    t('player.chat.qr.coachEarly'),
+    t('player.chat.qr.coachRest'),
+    t('player.chat.qr.coachSquad')
+  ];
+
+  const quickReplies = isCoachView ? coachQuickReplies : playerQuickReplies;
 
   // 1. Escuchar mensajes del hilo 1:1 en tiempo real
   useEffect(() => {
@@ -392,10 +407,10 @@ export const PlayerChatTab = ({ teamPath, player, team, isParentView = false, is
           </div>
           <div className="chat-header-info">
             <h3 className="chat-title">
-              Canal Directo con el Cuerpo Técnico
+              {t('player.chat.headerTitle')}
             </h3>
             <p className="chat-subtitle">
-              {team?.nombre || 'Mi Equipo'} · Mensajes privados y confidenciales
+              {t('player.chat.headerSubtitle', { team: team?.nombre || team?.name || 'Mi Equipo' })}
             </p>
           </div>
         </div>
@@ -403,7 +418,7 @@ export const PlayerChatTab = ({ teamPath, player, team, isParentView = false, is
 
       {/* Píldoras de Respuestas Rápidas */}
       <div className="quick-replies-section">
-        <span className="quick-replies-title">⚡ Mensajes rápidos:</span>
+        <span className="quick-replies-title">{t('player.chat.quickReplies')}</span>
         <div className="quick-replies-list">
           {quickReplies.map((reply, i) => (
             <button
@@ -423,13 +438,13 @@ export const PlayerChatTab = ({ teamPath, player, team, isParentView = false, is
       <div className="chat-messages-container">
         {loading ? (
           <div className="chat-empty-state">
-            <p>Cargando conversación...</p>
+            <p>{t('player.chat.loading')}</p>
           </div>
         ) : messages.length === 0 ? (
           <div className="chat-empty-state">
             <MessageSquare size={38} className="chat-empty-icon" style={{ color: 'var(--accent-green, #10B981)' }} />
-            <p>Aún no hay mensajes en este canal.</p>
-            <span>Escribe un mensaje o pulsa una de las opciones rápidas arriba.</span>
+            <p>{t('player.chat.emptyTitle')}</p>
+            <span>{t('player.chat.emptyDesc')}</span>
           </div>
         ) : (
           messages.map((msg) => {
@@ -437,7 +452,7 @@ export const PlayerChatTab = ({ teamPath, player, team, isParentView = false, is
             const isMine = isCoachView ? isCoachSender : !isCoachSender;
             const timeStr = msg.createdAt?.toDate 
               ? msg.createdAt.toDate().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-              : 'Ahora';
+              : t('player.chat.now');
 
             return (
               <div 
@@ -447,7 +462,7 @@ export const PlayerChatTab = ({ teamPath, player, team, isParentView = false, is
                 <div className="chat-bubble-header-row">
                   {!isMine && (
                     <span className="chat-sender-tag">
-                      {isCoachSender ? '👑 Cuerpo Técnico' : (msg.senderName || '👤 Jugador')}
+                      {isCoachSender ? t('player.chat.coachSender') : (msg.senderName || t('player.chat.playerSender'))}
                     </span>
                   )}
                   
@@ -456,7 +471,7 @@ export const PlayerChatTab = ({ teamPath, player, team, isParentView = false, is
                     <button
                       type="button"
                       className="chat-msg-options-btn"
-                      aria-label="Opciones del mensaje"
+                      aria-label={t('player.chat.optionsAria')}
                       onClick={(e) => {
                         e.stopPropagation();
                         setActiveMenuMsgId(activeMenuMsgId === msg.id ? null : msg.id);
@@ -547,8 +562,8 @@ export const PlayerChatTab = ({ teamPath, player, team, isParentView = false, is
           placeholder={isBlocked 
             ? t('player.chat.blocked.banner') 
             : isCoachView 
-              ? `Escribe una respuesta a ${player?.name || 'este jugador'}...` 
-              : "Escribe un mensaje al míster..."
+              ? t('player.chat.placeholderCoach', { name: player?.name || (isEn ? 'this player' : 'este jugador') }) 
+              : t('player.chat.placeholder')
           }
           value={inputText}
           onChange={(e) => setInputText(e.target.value)}
@@ -559,7 +574,7 @@ export const PlayerChatTab = ({ teamPath, player, team, isParentView = false, is
           type="submit"
           className="chat-send-btn"
           disabled={sending || !inputText.trim() || isBlocked}
-          aria-label="Enviar mensaje"
+          aria-label={t('player.chat.sendAria')}
         >
           <Send size={18} />
         </button>

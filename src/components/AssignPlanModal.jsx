@@ -1,22 +1,24 @@
 import React, { useState } from 'react';
 import { useExercises } from '../hooks/useExercises';
 import { usePlayerPlans } from '../hooks/usePlayerPlans';
+import { useTranslation } from '../hooks/useTranslation';
 import { X, Search, CheckSquare, Square } from 'lucide-react';
 
-const FREQUENCY_OPTIONS = [
-  { value: 'daily', label: 'Diario' },
-  { value: 'mon-wed-fri', label: 'Lunes, Miércoles y Viernes' },
-  { value: 'weekly', label: 'Una vez por semana' },
-  { value: 'pre-match', label: 'Pre-partido' },
-];
-
-const REASON_OPTIONS = [
-  { value: 'prevencion', label: 'Prevención' },
-  { value: 'recuperacion', label: 'Recuperación / Lesión' },
-  { value: 'fortalecimiento', label: 'Fortalecimiento general' },
-];
-
 const AssignPlanModal = ({ player, activeTeamId, onClose }) => {
+  const { t, isEn } = useTranslation();
+
+  const FREQUENCY_OPTIONS = [
+    { value: 'daily', label: isEn ? 'Daily' : 'Diario' },
+    { value: 'mon-wed-fri', label: isEn ? 'Monday, Wednesday and Friday' : 'Lunes, Miércoles y Viernes' },
+    { value: 'weekly', label: isEn ? 'Once a week' : 'Una vez por semana' },
+    { value: 'pre-match', label: isEn ? 'Pre-match' : 'Pre-partido' },
+  ];
+
+  const REASON_OPTIONS = [
+    { value: 'prevencion', label: isEn ? 'Prevention' : 'Prevención' },
+    { value: 'recuperacion', label: isEn ? 'Recovery / Injury' : 'Recuperación / Lesión' },
+    { value: 'fortalecimiento', label: isEn ? 'General strengthening' : 'Fortalecimiento general' },
+  ];
   const { exercises } = useExercises(activeTeamId);
   const { addPlayerPlan } = usePlayerPlans(activeTeamId);
   const [search, setSearch] = useState('');
@@ -141,13 +143,13 @@ const AssignPlanModal = ({ player, activeTeamId, onClose }) => {
 
           <div>
             <label style={{ fontSize: '0.85rem', fontWeight: 600, color: '#374151', display: 'block', marginBottom: '6px' }}>
-              Seleccionar Ejercicios ({selectedIds.length} seleccionados)
+              {isEn ? 'Select Exercises' : 'Seleccionar Ejercicios'} ({selectedIds.length} {isEn ? 'selected' : 'seleccionados'})
             </label>
             <div style={{ position: 'relative', marginBottom: '10px' }}>
               <Search size={16} style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: '#9CA3AF' }} />
               <input
                 type="text"
-                placeholder="Buscar ejercicio..."
+                placeholder={isEn ? 'Search exercise...' : 'Buscar ejercicio...'}
                 value={search}
                 onChange={e => setSearch(e.target.value)}
                 style={{ width: '100%', padding: '10px 12px 10px 34px', border: '1px solid #E5E7EB', borderRadius: '8px', fontFamily: 'inherit', boxSizing: 'border-box' }}
@@ -156,7 +158,7 @@ const AssignPlanModal = ({ player, activeTeamId, onClose }) => {
             <div style={{ maxHeight: '280px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '8px', border: '1px solid #F1F5F9', borderRadius: '8px', padding: '8px' }}>
               {filtered.length === 0 ? (
                 <div style={{ textAlign: 'center', padding: '24px', color: '#9CA3AF', fontSize: '0.88rem' }}>
-                  No se encontraron ejercicios disponibles.
+                  {isEn ? 'No exercises available.' : 'No se encontraron ejercicios disponibles.'}
                 </div>
               ) : (
                 filtered.map(ex => {
@@ -183,7 +185,7 @@ const AssignPlanModal = ({ player, activeTeamId, onClose }) => {
                           {displayName}
                         </div>
                         <div style={{ fontSize: '0.78rem', color: '#6B7280' }}>
-                          {ex.category || 'General'} {ex.series > 0 ? `· ${ex.series} series` : ''} {ex.durationSeconds > 0 ? `· ${ex.durationSeconds}s` : ''} {ex.reps > 0 ? `· ${ex.reps} reps` : ''}
+                          {ex.category || 'General'} {ex.series > 0 ? (isEn ? `· ${ex.series} sets` : `· ${ex.series} series`) : ''} {ex.durationSeconds > 0 ? `· ${ex.durationSeconds}s` : ''} {ex.reps > 0 ? `· ${ex.reps} reps` : ''}
                         </div>
                       </div>
                     </div>
@@ -203,14 +205,14 @@ const AssignPlanModal = ({ player, activeTeamId, onClose }) => {
             padding: '10px 20px', borderRadius: '8px', border: '1px solid #E5E7EB',
             background: 'white', color: '#374151', cursor: 'pointer', fontFamily: 'inherit'
           }}>
-            Cancelar
+            {t('common.cancel')}
           </button>
           <button onClick={handleSave} disabled={saving} style={{
             padding: '10px 24px', borderRadius: '8px', border: 'none',
             background: '#4CAF7D', color: 'white', fontWeight: 700, cursor: 'pointer',
             fontFamily: 'inherit', opacity: saving ? 0.7 : 1
           }}>
-            {saving ? 'Guardando...' : '✅ Asignar Plan'}
+            {saving ? (isEn ? 'Saving...' : 'Guardando...') : (isEn ? '✅ Assign Plan' : '✅ Asignar Plan')}
           </button>
         </div>
       </div>

@@ -303,7 +303,7 @@ const Tests = () => {
   const { activeTeam } = useTeams();
   const { isPro, isProActive } = usePlan();
   const { players, loading: loadingPlayers } = usePlayers(activeTeamId);
-  const { t: tr } = useTranslation();
+  const { t: tr, isEn } = useTranslation();
   const { matches } = usePlayerSeasonStats(activeTeamId);
   const effectiveTeamPath = getTeamPath ? getTeamPath(activeTeamId) : (activeTeam ? (activeTeam.clubId ? `clubs/${activeTeam.clubId}/teams/${activeTeamId}` : `users/${user?.uid}/teams/${activeTeamId}`) : '');
   const [historyData, setHistoryData] = useState({});
@@ -1105,9 +1105,9 @@ const Tests = () => {
             <p style={{ color: 'var(--text-secondary)' }}>{modalConfig.message}</p>
             <div style={{ display: 'flex', gap: '10px', marginTop: '20px' }}>
               {modalConfig.isConfirm && (
-                <button className="btn-outline" onClick={() => modalConfig.onConfirm(false)}>Cancelar</button>
+                <button className="btn-outline" onClick={() => modalConfig.onConfirm(false)}>{tr('common.cancel')}</button>
               )}
-              <button className="btn-primary" style={{ flex: 1 }} onClick={() => modalConfig.onConfirm(true)}>Aceptar</button>
+              <button className="btn-primary" style={{ flex: 1 }} onClick={() => modalConfig.onConfirm(true)}>{isEn ? 'Confirm' : 'Aceptar'}</button>
             </div>
           </div>
         </div>
@@ -1184,8 +1184,8 @@ const Tests = () => {
         {['FÍSICOS', 'PSICOSOCIALES'].includes(activeTab) && (
           <div className="tab-bateria">
             <div className="bateria-header">
-              <h3>Catálogo de Pruebas: {activeTab}</h3>
-              <button className="btn-primary" onClick={() => setIsNewTestModalOpen(true)}>+ Crear Test</button>
+              <h3>{isEn ? `Test Catalog: ${activeTab === 'FÍSICOS' ? 'PHYSICAL' : 'PSYCHOSOCIAL'}` : `Catálogo de Pruebas: ${activeTab}`}</h3>
+              <button className="btn-primary" onClick={() => setIsNewTestModalOpen(true)}>{tr('tests.createTest')}</button>
             </div>
             
             <div className="grid-3-cols">
@@ -2061,8 +2061,8 @@ const Tests = () => {
               </div>
             </div>
             <div className="modal-footer">
-              <button className="btn-outline" onClick={() => setIsNewTestModalOpen(false)}>Cancelar</button>
-              <button className="btn-primary" onClick={handleCreateTest}>Guardar</button>
+              <button className="btn-outline" onClick={() => setIsNewTestModalOpen(false)}>{tr('common.cancel')}</button>
+              <button className="btn-primary" onClick={handleCreateTest}>{tr('common.save')}</button>
             </div>
           </div>
         </div>
@@ -2200,11 +2200,11 @@ const Tests = () => {
 
               {/* Botones de acción integrados en la zona de scroll con colchón */}
               <div style={{ display: 'flex', gap: '10px', marginTop: '24px', paddingBottom: '16px' }}>
-                <button className="btn-outline" style={{ flex: 1, minHeight: '48px', fontWeight: 800 }} onClick={() => setIsRegModalOpen(false)}>Cancelar</button>
+                <button className="btn-outline" style={{ flex: 1, minHeight: '48px', fontWeight: 800 }} onClick={() => setIsRegModalOpen(false)}>{tr('common.cancel')}</button>
                 <button className="btn-primary" style={{ flex: 1, minHeight: '48px', fontWeight: 800 }} onClick={() => {
                   handleSaveRegistration();
                   setIsRegModalOpen(false);
-                }}>Guardar Resultados</button>
+                }}>{tr('tests.saveResults')}</button>
               </div>
             </div>
           </div>

@@ -5,9 +5,11 @@ import { usePWA } from '../hooks/usePWA';
 import { showToast } from '../utils/toast';
 import { Mail, Lock, User, ArrowRight, Eye, EyeOff, UserPlus, LogIn, Users } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { useTranslation } from '../hooks/useTranslation';
 import './Login.css';
 
 const Login = () => {
+  const { t, isEn } = useTranslation();
   const [authMode, setAuthMode] = useState('google'); // 'google' | 'email_login' | 'email_register'
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -143,14 +145,14 @@ const Login = () => {
         <div className="login-card">
           {selectedPlan && (
             <div className="login-plan-banner">
-              ⭐ Estás a un paso de activar tu plan {selectedPlan.toUpperCase()} de Míster11. Inicia sesión o crea una cuenta para continuar.
+              ⭐ {isEn ? `You are one step away from activating your ${selectedPlan.toUpperCase()} plan for Míster11. Sign in or create an account to continue.` : `Estás a un paso de activar tu plan ${selectedPlan.toUpperCase()} de Míster11. Inicia sesión o crea una cuenta para continuar.`}
             </div>
           )}
-          <h2>Bienvenido al banquillo</h2>
+          <h2>{isEn ? 'Welcome to the Bench' : 'Bienvenido al banquillo'}</h2>
           <p className="login-subtitle">
             {authMode === 'email_register'
-              ? 'Crea tu cuenta como entrenador, padre/tutor o jugador.'
-              : 'Inicia sesión para gestionar tu equipo o acceder al Portal del Jugador.'}
+              ? (isEn ? 'Create your account as coach, parent/guardian, or player.' : 'Crea tu cuenta como entrenador, padre/tutor o jugador.')
+              : (isEn ? 'Sign in to manage your team or access the Player Portal.' : 'Inicia sesión para gestionar tu equipo o acceder al Portal del Jugador.')}
           </p>
 
           <div className="auth-mode-tabs">
@@ -166,21 +168,21 @@ const Login = () => {
               className={`auth-tab-btn ${authMode === 'email_login' ? 'active' : ''}`}
               onClick={() => { setAuthMode('email_login'); setError(''); }}
             >
-              <LogIn size={15} /> Entrar
+              <LogIn size={15} /> {isEn ? 'Sign In' : 'Entrar'}
             </button>
             <button 
               type="button"
               className={`auth-tab-btn ${authMode === 'email_register' ? 'active' : ''}`}
               onClick={() => { setAuthMode('email_register'); setError(''); }}
             >
-              <UserPlus size={15} /> Registro
+              <UserPlus size={15} /> {isEn ? 'Register' : 'Registro'}
             </button>
           </div>
 
           {error && <div className="login-error">{error}</div>}
           {resetSent && (
             <div className="login-success-banner">
-              ✉️ Te hemos enviado un correo para restablecer tu contraseña. Revisa tu bandeja de entrada o spam.
+              ✉️ {isEn ? 'We have sent you an email to reset your password. Check your inbox or spam.' : 'Te hemos enviado un correo para restablecer tu contraseña. Revisa tu bandeja de entrada o spam.'}
             </div>
           )}
 
@@ -191,7 +193,7 @@ const Login = () => {
                 onClick={handleGoogleLogin}
                 disabled={isLoading}
               >
-                {isLoading ? 'Conectando con Google...' : (
+                {isLoading ? (isEn ? 'Connecting to Google...' : 'Conectando con Google...') : (
                   <>
                     <svg width="20" height="20" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                       <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
@@ -199,7 +201,7 @@ const Login = () => {
                       <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
                       <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
                     </svg>
-                    Continuar con Google
+                    {isEn ? 'Continue with Google' : 'Continuar con Google'}
                   </>
                 )}
               </button>
@@ -211,12 +213,12 @@ const Login = () => {
               {authMode === 'email_register' && (
                 <>
                   <div className="input-group-auth">
-                    <label>Nombre y Apellidos</label>
+                    <label>{isEn ? 'Full Name' : 'Nombre y Apellidos'}</label>
                     <div className="input-with-icon">
                       <User size={18} />
                       <input 
                         type="text" 
-                        placeholder="Ej. Carlos Martínez"
+                        placeholder={isEn ? 'e.g. Carlos Martinez' : 'Ej. Carlos Martínez'}
                         value={displayName}
                         onChange={(e) => setDisplayName(e.target.value)}
                         required
@@ -225,21 +227,21 @@ const Login = () => {
                   </div>
 
                   <div className="input-group-auth">
-                    <label>Tipo de Cuenta</label>
+                    <label>{isEn ? 'Account Type' : 'Tipo de Cuenta'}</label>
                     <div className="role-selector-pills">
                       <button
                         type="button"
                         className={`role-pill ${selectedRole === 'coach' ? 'selected' : ''}`}
                         onClick={() => setSelectedRole('coach')}
                       >
-                        ⚽ Entrenador / Staff
+                        ⚽ {isEn ? 'Coach / Staff' : 'Entrenador / Staff'}
                       </button>
                       <button
                         type="button"
                         className={`role-pill ${selectedRole === 'player' ? 'selected' : ''}`}
                         onClick={() => setSelectedRole('player')}
                       >
-                        🏃 Jugador / Padre
+                        🏃 {isEn ? 'Player / Parent' : 'Jugador / Padre'}
                       </button>
                     </div>
                   </div>
@@ -247,7 +249,7 @@ const Login = () => {
               )}
 
               <div className="input-group-auth">
-                <label>Correo Electrónico</label>
+                <label>{isEn ? 'Email Address' : 'Correo Electrónico'}</label>
                 <div className="input-with-icon">
                   <Mail size={18} />
                   <input 
@@ -262,12 +264,12 @@ const Login = () => {
               </div>
 
               <div className="input-group-auth">
-                <label>Contraseña</label>
+                <label>{isEn ? 'Password' : 'Contraseña'}</label>
                 <div className="input-with-icon">
                   <Lock size={18} />
                   <input 
                     type={showPassword ? 'text' : 'password'} 
-                    placeholder="Mínimo 6 caracteres"
+                    placeholder={isEn ? 'Minimum 6 characters' : 'Mínimo 6 caracteres'}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     required
@@ -287,7 +289,7 @@ const Login = () => {
               {authMode === 'email_login' && (
                 <div className="forgot-password-link">
                   <button type="button" onClick={handleForgotPassword}>
-                    ¿Olvidaste tu contraseña?
+                    {isEn ? 'Forgot your password?' : '¿Olvidaste tu contraseña?'}
                   </button>
                 </div>
               )}
@@ -298,8 +300,8 @@ const Login = () => {
                 disabled={isLoading}
               >
                 {isLoading 
-                  ? 'Procesando...' 
-                  : (authMode === 'email_register' ? 'CREAR CUENTA' : 'INICIAR SESIÓN')}
+                  ? (isEn ? 'Processing...' : 'Procesando...') 
+                  : (authMode === 'email_register' ? (isEn ? 'CREATE ACCOUNT' : 'CREAR CUENTA') : (isEn ? 'SIGN IN' : 'INICIAR SESIÓN'))}
                 <ArrowRight size={18} />
               </button>
             </form>
@@ -307,14 +309,14 @@ const Login = () => {
 
           <div className="player-code-callout">
             <Users size={18} />
-            <span>¿Tienes un código de equipo?</span>
+            <span>{isEn ? 'Have a team code?' : '¿Tienes un código de equipo?'}</span>
             <Link to="/join-team" className="player-code-link">
-              Unirme a un equipo <ArrowRight size={14} />
+              {isEn ? 'Join a team' : 'Unirme a un equipo'} <ArrowRight size={14} />
             </Link>
           </div>
 
           <div className="divider-auth">
-            <span>o también</span>
+            <span>{isEn ? 'or also' : 'o también'}</span>
           </div>
 
           <button
@@ -322,7 +324,7 @@ const Login = () => {
             onClick={handleGuestLogin}
             disabled={isLoading}
           >
-            {isLoading ? 'Entrando como Invitado...' : 'Entrar Modo Invitado/Prueba'}
+            {isLoading ? (isEn ? 'Entering as Guest...' : 'Entrando como Invitado...') : (isEn ? 'Enter Guest/Demo Mode' : 'Entrar Modo Invitado/Prueba')}
           </button>
 
           {deferredPrompt && !isInstalled && (
@@ -331,21 +333,24 @@ const Login = () => {
               onClick={installApp}
               style={{ marginTop: '15px', width: '100%', minHeight: '48px' }}
             >
-              📲 Instalar Míster11 en Inicio
+              📲 {isEn ? 'Install Míster11 on Home Screen' : 'Instalar Míster11 en Inicio'}
             </button>
           )}
 
           <div className="login-footer">
             <p>
-              Al iniciar sesión, aceptas nuestros{' '}
-              <a href="/legal/terminos.html" target="_blank" rel="noopener noreferrer">Términos y Condiciones</a>{' '}
-              y nuestra{' '}
-              <a href="/legal/privacidad.html" target="_blank" rel="noopener noreferrer">Política de Privacidad</a>.
+              {isEn ? (
+                <>By logging in, you accept our <a href="/legal/terminos.html" target="_blank" rel="noopener noreferrer">Terms & Conditions</a> and our <a href="/legal/privacidad.html" target="_blank" rel="noopener noreferrer">Privacy Policy</a>.</>
+              ) : (
+                <>Al iniciar sesión, aceptas nuestros <a href="/legal/terminos.html" target="_blank" rel="noopener noreferrer">Términos y Condiciones</a> y nuestra <a href="/legal/privacidad.html" target="_blank" rel="noopener noreferrer">Política de Privacidad</a>.</>
+              )}
             </p>
             <p style={{ marginTop: '10px' }}>
               📄{' '}
-              <a href="/legal/modelo-consentimiento-mister11.pdf" target="_blank" rel="noopener noreferrer">Modelo de consentimiento para padres</a>{' '}
-              (descargar e imprimir)
+              <a href="/legal/modelo-consentimiento-mister11.pdf" target="_blank" rel="noopener noreferrer">
+                {isEn ? 'Parental Consent Form Template' : 'Modelo de consentimiento para padres'}
+              </a>{' '}
+              {isEn ? '(download and print)' : '(descargar e imprimir)'}
             </p>
           </div>
         </div>

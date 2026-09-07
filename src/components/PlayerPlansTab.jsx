@@ -6,12 +6,14 @@ import AssignPlanModal from './AssignPlanModal';
 import { CheckCircle, Circle, Activity, Trash2, Plus, Share2, Copy } from 'lucide-react';
 import { db } from '../firebaseConfig';
 import { doc, setDoc } from 'firebase/firestore';
+import { useTranslation } from '../hooks/useTranslation';
 import './PlayerPlansTab.css';
 
 const PlayerPlansTab = ({ player, activeTeamId }) => {
   const { playerPlans, teamPlans, loading, updatePlayerPlan, removePlayerPlan } = usePlayerPlans(activeTeamId);
   const { exercises } = useExercises(activeTeamId);
   const { activeTeam } = useTeams();
+  const { t, isEn, fmtPlural } = useTranslation();
   const [showAssignModal, setShowAssignModal] = useState(false);
   const [showShareModal, setShowShareModal] = useState(false);
   const [sharedLink, setSharedLink] = useState('');
@@ -20,7 +22,7 @@ const PlayerPlansTab = ({ player, activeTeamId }) => {
   const handleSharePlan = async (plan) => {
     try {
       if (!plan) {
-        alert("Error: No se pudo obtener la información del plan.");
+        alert(isEn ? 'Error: Could not retrieve plan details.' : 'Error: No se pudo obtener la información del plan.');
         return;
       }
 
@@ -28,72 +30,68 @@ const PlayerPlansTab = ({ player, activeTeamId }) => {
       const planDocId = plan.id || `shared_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
 
       const resolvedExercises = (plan.exercises || []).map(ex => {
-        const details = exercises.find(e => e.id === ex.exerciseId) || { name: ex.exerciseId || 'Ejercicio', description: '' };
+        const found = exercises.find(e => e.id === ex.exerciseId);
         return {
-          name: details.name || details.titulo || ex.exerciseId || 'Ejercicio',
-          description: details.description || details.descripcion || '',
-          frequency: ex.frequency || 'Diario'
+          ...ex,
+          name: ex.name || found?.name || found?.titulo || (isEn ? 'Exercise' : 'Ejercicio'),
+          description: ex.description || found?.description || found?.descripcion || '',
+          category: ex.category || found?.category || found?.categoria || (isEn ? 'General' : 'General'),
+          duration: ex.duration || found?.duration || found?.duracion || '15 min'
         };
       });
 
-      const sharedPlanData = {
-        name: plan.name || plan.reason || 'Plan Asignado',
-        teamName: activeTeam ? (activeTeam.nombre || activeTeam.name || '') : '',
+      const sharedData = {
+        title: plan.name || plan.reason || (isEn ? 'Individual Training Plan' : 'Plan de Desarrollo Individual'),
+        teamName: activeTeam?.nombre || activeTeam?.name || 'Míster11 Club',
+        playerName: player?.name || (isEn ? 'Player' : 'Jugador'),
+        playerNumber: player?.number || '11',
+        playerPosition: player?.position || 'MC',
         exercises: resolvedExercises,
-        sharedAt: new Date().toISOString()
+        coachNotes: plan.description || '',
+        createdAt: new Date().toISOString()
       };
 
-      await setDoc(doc(db, 'sharedPlans', planDocId), sharedPlanData);
+      await setDoc(doc(db, 'sharedPlans', planDocId), sharedData);
 
-      const shareUrl = `${window.location.origin}/shared/plan/${planDocId}`;
-      setSharedLink(shareUrl);
+      const url = `${window.location.origin}/shared/plan/${planDocId}`;
+      setSharedLink(url);
       setShowShareModal(true);
       setCopied(false);
-    } catch (error) {
-      console.error("Error al compartir el plan:", error);
-      alert(`Error al generar el enlace: ${error.message || 'Error desconocido. Verifica tu conexión e inténtalo de nuevo.'}`);
+    } catch (err) {
+      console.error("Error sharing plan:", err);
+      alert(isEn ? 'Error creating public plan link.' : 'Error al crear el enlace público del plan.');
     }
   };
 
-  const handleCopyLink = () => {
+  const copyToClipboard = () => {
     navigator.clipboard.writeText(sharedLink);
     setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+    setTimeout(() => setCopied(false), 3000);
   };
 
-  const activePlayerPlans = playerPlans.filter(p => p.playerId === player.id && p.active);
-  // Team plans that apply to all
-  const activeTeamPlansForPlayer = teamPlans.filter(p => p.active && (p.assignedToAll || (p.playerIds && p.playerIds.includes(player.id))));
-
-  const allPlans = [...activePlayerPlans, ...activeTeamPlansForPlayer];
+  const allPlans = [...playerPlans, ...teamPlans];
 
   const getExerciseDetails = (exId) => {
-    return exercises.find(e => e.id === exId) || { name: 'Ejercicio Desconocido' };
+    return exercises.find(e => e.id === exId) || {};
   };
 
   const toggleExerciseCompletion = async (planId, exId, isTeamPlan) => {
+    if (isTeamPlan) return; 
+
+    const plan = playerPlans.find(p => p.id === planId);
+    if (!plan || !plan.exercises) return;
+
     const today = new Date().toISOString().slice(0, 10);
-    const plan = isTeamPlan ? teamPlans.find(p => p.id === planId) : playerPlans.find(p => p.id === planId);
-    if (!plan) return;
-
-    // For team plans, we need a structure that tracks per-player completion. 
-    // Simplified for now: assume we only modify individual plans.
-    if (isTeamPlan) {
-      alert("Para simplificar, el registro de planes de equipo se hace desde el panel general o se replica al jugador. Por ahora marca solo los individuales.");
-      return;
-    }
-
     const exIndex = plan.exercises.findIndex(e => e.exerciseId === exId);
     if (exIndex === -1) return;
 
-    const currentCompleted = plan.exercises[exIndex].completedDates || [];
-    const hasCompletedToday = currentCompleted.includes(today);
-
+    const completed = plan.exercises[exIndex].completedDates || [];
     let newCompleted;
-    if (hasCompletedToday) {
-      newCompleted = currentCompleted.filter(d => d !== today);
+
+    if (completed.includes(today)) {
+      newCompleted = completed.filter(d => d !== today);
     } else {
-      newCompleted = [...currentCompleted, today];
+      newCompleted = [...completed, today];
     }
 
     const updatedExercises = [...plan.exercises];
@@ -105,18 +103,18 @@ const PlayerPlansTab = ({ player, activeTeamId }) => {
   return (
     <div className="player-plans-tab">
       <div className="plans-header">
-        <h3>Rutinas y Prevención</h3>
+        <h3>{t('plans.routinesAndPrevention')}</h3>
         <button className="btn-primary" onClick={() => setShowAssignModal(true)}>
-          <Plus size={16} /> Recomendar Ejercicios
+          <Plus size={16} /> {t('plans.recommendExercises')}
         </button>
       </div>
 
       {loading ? (
-        <p>Cargando planes...</p>
+        <p>{t('plans.loadingPlans')}</p>
       ) : allPlans.length === 0 ? (
         <div className="empty-plans">
           <Activity size={40} color="#CBD5E1" />
-          <p>El jugador no tiene planes asignados.</p>
+          <p>{t('plans.noPlansAssigned')}</p>
         </div>
       ) : (
         <div className="plans-list">
@@ -126,13 +124,13 @@ const PlayerPlansTab = ({ player, activeTeamId }) => {
               <div key={plan.id} className="plan-card">
                 <div className="plan-card-header">
                   <div>
-                    <h4>{plan.name || plan.reason || 'Plan Asignado'}</h4>
+                    <h4>{plan.name || plan.reason || (isEn ? 'Assigned Plan' : 'Plan Asignado')}</h4>
                     <span className={`plan-badge ${isTeamPlan ? 'team' : 'individual'}`}>
-                      {isTeamPlan ? 'Equipo' : 'Individual'}
+                      {isTeamPlan ? t('plans.badgeTeam') : t('plans.badgeIndividual')}
                     </span>
                   </div>
                   <div className="plan-card-header-actions">
-                    <button className="btn-share-plan" onClick={() => handleSharePlan(plan)} title="Compartir Plan">
+                    <button className="btn-share-plan" onClick={() => handleSharePlan(plan)} title={t('plans.sharePlan')}>
                       <Share2 size={16} />
                     </button>
                     {!isTeamPlan && (
@@ -161,7 +159,7 @@ const PlayerPlansTab = ({ player, activeTeamId }) => {
                         </button>
                         <div className="ex-details">
                           <strong>{exDetails.name || exDetails.titulo}</strong>
-                          <span>{ex.frequency || 'Diario'} | Racha: {completedDates.length} días</span>
+                          <span>{ex.frequency || (isEn ? 'Daily' : 'Diario')} | {fmtPlural(completedDates.length, 'plans.streakDays')}</span>
                         </div>
                       </div>
                     );
@@ -197,7 +195,7 @@ const PlayerPlansTab = ({ player, activeTeamId }) => {
               display: 'flex', justifyContent: 'space-between', alignItems: 'center',
               borderTopLeftRadius: '16px', borderTopRightRadius: '16px'
             }}>
-              <h2 style={{ margin: 0, fontSize: '1.2rem', textTransform: 'uppercase' }}>🔗 Compartir Plan</h2>
+              <h2 style={{ margin: 0, fontSize: '1.2rem', textTransform: 'uppercase' }}>{t('plans.sharePlan')}</h2>
               <button onClick={() => setShowShareModal(false)} style={{
                 background: 'rgba(255,255,255,0.1)', border: 'none', color: '#fff',
                 borderRadius: '8px', padding: '8px', cursor: 'pointer', minHeight: '44px', minWidth: '44px'
@@ -209,7 +207,7 @@ const PlayerPlansTab = ({ player, activeTeamId }) => {
             {/* Body */}
             <div style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
               <p style={{ margin: 0, fontSize: '0.95rem', color: '#475569', lineHeight: 1.5 }}>
-                Comparte este enlace con tus jugadores para que puedan ver su plan de ejercicios sin necesidad de iniciar sesión:
+                {isEn ? 'Share this link with your players so they can view their exercise plan without logging in:' : 'Comparte este enlace con tus jugadores para que puedan ver su plan de ejercicios sin necesidad de iniciar sesión:'}
               </p>
               <div style={{
                 display: 'flex', gap: '8px', background: '#f8fafc',
@@ -222,15 +220,14 @@ const PlayerPlansTab = ({ player, activeTeamId }) => {
                   value={sharedLink}
                   style={{
                     flex: 1, border: 'none', background: 'transparent',
-                    fontSize: '0.85rem', color: '#334155', outline: 'none', padding: 0
+                    color: '#0f172a', fontSize: '0.9rem', outline: 'none'
                   }}
-                  onClick={(e) => e.target.select()}
                 />
               </div>
 
               {/* Action Buttons */}
               <button 
-                onClick={handleCopyLink} 
+                onClick={copyToClipboard} 
                 style={{
                   background: copied ? '#4CAF7D' : '#1B3A2D', 
                   color: 'white', 
@@ -249,7 +246,7 @@ const PlayerPlansTab = ({ player, activeTeamId }) => {
                 }}
               >
                 <Copy size={16} />
-                {copied ? '¡ENLACE COPIADO!' : 'COPIAR ENLACE'}
+                {copied ? (isEn ? 'COPIED!' : '¡ENLACE COPIADO!') : (isEn ? 'COPY LINK' : 'COPIAR ENLACE')}
               </button>
               
               <button 
@@ -269,7 +266,7 @@ const PlayerPlansTab = ({ player, activeTeamId }) => {
                   textTransform: 'uppercase'
                 }}
               >
-                Cerrar
+                {t('common.close')}
               </button>
             </div>
           </div>

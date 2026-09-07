@@ -2,12 +2,14 @@ import React, { useState, useMemo } from 'react';
 import { Table, Search, ArrowUpDown, Download, Check, HelpCircle, X } from 'lucide-react';
 import { downloadCSV } from '../../utils/downloadCSV.js';
 import { useTheme } from '../../context/ThemeContext';
+import { useTranslation } from '../../hooks/useTranslation';
 import { getEffectiveLanguage } from '../../i18n/translations';
 
 export const StatsDataTable = ({
   playerStats = [],
   teamName = 'Local'
 }) => {
+  const { isEn } = useTranslation();
   const { darkMode } = useTheme();
   const [searchTerm, setSearchTerm] = useState('');
   const [sortField, setSortField] = useState('rating');
@@ -217,7 +219,7 @@ export const StatsDataTable = ({
             <Search size={14} style={{ color: darkMode ? '#94A3B8' : '#64748B' }} />
             <input
               type="text"
-              placeholder="Buscar jugador..."
+              placeholder={isEn ? 'Search player...' : 'Buscar jugador...'}
               value={searchTerm}
               onChange={e => setSearchTerm(e.target.value)}
               style={{

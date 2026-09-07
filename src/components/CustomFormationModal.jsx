@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { useTranslation } from '../hooks/useTranslation';
 import './CustomFormationModal.css';
 
 const INITIAL_POSITIONS = [
@@ -18,6 +19,7 @@ const INITIAL_POSITIONS = [
 const ROLES = ['POR', 'DEF', 'LTD', 'LTI', 'MCD', 'MC', 'MCO', 'MD', 'MI', 'EXT', 'DEL'];
 
 const CustomFormationModal = ({ isOpen, onClose, onSave, editFormation = null }) => {
+  const { t, isEn } = useTranslation();
   const [name, setName] = useState('');
   const [positions, setPositions] = useState(INITIAL_POSITIONS);
   const [selectedIdx, setSelectedIdx] = useState(null);
@@ -120,19 +122,19 @@ const CustomFormationModal = ({ isOpen, onClose, onSave, editFormation = null })
     <div className="cfm-overlay" onClick={onClose}>
       <div className="cfm-modal" onClick={(e) => e.stopPropagation()}>
         <div className="cfm-header">
-          <h3>{editFormation ? 'EDITAR FORMACIÓN PERSONALIZADA' : 'NUEVA FORMACIÓN PERSONALIZADA'}</h3>
-          <button type="button" className="cfm-close-btn" onClick={onClose}>✕</button>
+          <h3>{editFormation ? (isEn ? 'EDIT CUSTOM FORMATION' : 'EDITAR FORMACIÓN PERSONALIZADA') : (isEn ? 'NEW CUSTOM FORMATION' : 'NUEVA FORMACIÓN PERSONALIZADA')}</h3>
+          <button type="button" className="cfm-close-btn" onClick={onClose} aria-label={t('common.close')}>✕</button>
         </div>
 
         <div className="cfm-body">
           <div className="cfm-form-group">
-            <label>Nombre de la Formación</label>
+            <label>{isEn ? 'Formation Name' : 'Nombre de la Formación'}</label>
             <input 
               type="text" 
               className="cfm-input" 
               value={name} 
               onChange={(e) => setName(e.target.value)} 
-              placeholder="Ej. Mi 4-2-4 de ataque" 
+              placeholder={isEn ? 'e.g. My 4-2-4 Attack' : 'Ej. Mi 4-2-4 de ataque'} 
             />
           </div>
 
@@ -220,10 +222,10 @@ const CustomFormationModal = ({ isOpen, onClose, onSave, editFormation = null })
 
         <div className="cfm-footer">
           <button type="button" className="btn-outline-dark" style={{ minHeight: '48px', padding: '0 20px', borderRadius: '8px', fontWeight: 'bold' }} onClick={onClose}>
-            CANCELAR
+            {isEn ? 'CANCEL' : 'CANCELAR'}
           </button>
           <button type="button" className="btn-primary-dark" style={{ minHeight: '48px', padding: '0 20px', borderRadius: '8px', fontWeight: 'bold' }} onClick={handleSave}>
-            GUARDAR FORMACIÓN
+            {isEn ? 'SAVE FORMATION' : 'GUARDAR FORMACIÓN'}
           </button>
         </div>
       </div>

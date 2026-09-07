@@ -946,13 +946,13 @@ const Sesiones = () => {
         <header className="sesiones-header edit-mode-header">
           <div className="header-top">
             <div className="title-group">
-              <button className="btn-icon-back" onClick={() => setViewMode('list')}>← Volver</button>
-              <h1>{editData.title || 'Nueva Sesión'}</h1>
+              <button className="btn-icon-back" onClick={() => setViewMode('list')}>← {t('common.back')}</button>
+              <h1>{editData.title || (isEn ? 'New Session' : 'Nueva Sesión')}</h1>
             </div>
             <div className="sesiones-page-actions">
-              <button className="btn-outline" onClick={() => setViewMode('list')}>Cancelar</button>
+              <button className="btn-outline" onClick={() => setViewMode('list')}>{t('common.cancel')}</button>
               <button className="btn-primary" onClick={handleSaveSession} disabled={isSaving}>
-                {isSaving ? 'Guardando...' : 'Guardar Sesión'}
+                {isSaving ? t('common.saving') : (isEn ? 'Save Session' : 'Guardar Sesión')}
               </button>
             </div>
           </div>
@@ -1001,15 +1001,15 @@ const Sesiones = () => {
                 </div>
               </div>
               <div className="form-group full" style={{marginTop: '16px'}}>
-                <label>Objetivo Principal</label>
-                <SpellCheckedTextarea value={editData.objectives || ''} onChange={e => setEditData({...editData, objectives: e.target.value})} placeholder="Ej. Mejorar la circulación del balón en zona de creación..." rows={2} style={{minHeight: '60px'}} />
+                <label>{isEn ? 'Main Objective' : 'Objetivo Principal'}</label>
+                <SpellCheckedTextarea value={editData.objectives || ''} onChange={e => setEditData({...editData, objectives: e.target.value})} placeholder={isEn ? 'e.g. Improve ball circulation in the build-up zone...' : 'Ej. Mejorar la circulación del balón en zona de creación...'} rows={2} style={{minHeight: '60px'}} />
               </div>
               <div className="form-group full">
-                <label>Material Necesario</label>
-                <input type="text" value={editData.materials || ''} onChange={e => setEditData({...editData, materials: e.target.value})} onBlur={e => setEditData(prev => ({...prev, materials: normalizeText(e.target.value)}))} placeholder="Ej. 10 balones, 15 petos (rojos/azules), 20 conos" />
+                <label>{isEn ? 'Required Equipment' : 'Material Necesario'}</label>
+                <input type="text" value={editData.materials || ''} onChange={e => setEditData({...editData, materials: e.target.value})} onBlur={e => setEditData(prev => ({...prev, materials: normalizeText(e.target.value)}))} placeholder={isEn ? 'e.g. 10 balls, 15 bibs (red/blue), 20 cones' : 'Ej. 10 balones, 15 petos (rojos/azules), 20 conos'} />
               </div>
               <div className="form-group full" style={{marginTop: '16px'}}>
-                <label>🎬 Vincular Animación / Pizarra Táctica</label>
+                <label>{isEn ? '🎬 Link Animation / Tactical Board' : '🎬 Vincular Animación / Pizarra Táctica'}</label>
                 <select 
                   value={editData.linkedPizarraId || ''} 
                   onChange={e => setEditData({...editData, linkedPizarraId: e.target.value})}
@@ -1056,7 +1056,7 @@ const Sesiones = () => {
                         <span className="file-name">{f.name}</span>
                         <span className="file-size">{f.size}</span>
                       </div>
-                      {f.url && <button className="btn-small-outline" style={{marginRight: '10px'}} onClick={() => setPdfPreview(f.url)}>Ver PDF</button>}
+                      {f.url && <button className="btn-small-outline" style={{marginRight: '10px'}} onClick={() => setPdfPreview(f.url)}>{t('sesiones.preview.viewPdf')}</button>}
                       <button className="btn-del-icon" onClick={() => handleRemoveFile(f.id)}>✕</button>
                     </div>
                   ))}
@@ -1066,8 +1066,8 @@ const Sesiones = () => {
 
             <div className="edit-section">
               <div className="section-header-flex">
-                <h3>Convocatoria ({editData.players.length}/{players.length})</h3>
-                <button className="btn-text" onClick={() => setEditData({...editData, players: players.map(p=>p.id)})}>Marcar Todos</button>
+                <h3>{isEn ? `Squad List (${editData.players.length}/${players.length})` : `Convocatoria (${editData.players.length}/${players.length})`}</h3>
+                <button className="btn-text" onClick={() => setEditData({...editData, players: players.map(p=>p.id)})}>{isEn ? 'Select All' : 'Marcar Todos'}</button>
               </div>
               <div className="players-checklist">
                 {players.map(p => (
@@ -1083,8 +1083,8 @@ const Sesiones = () => {
 
           <div className="editor-right">
             <div className="blocks-header">
-              <h3>Formato de la Sesión</h3>
-              <button className="btn-primary-small" onClick={handleAddBlock}>+ Añadir Bloque</button>
+              <h3>{isEn ? 'Session Format' : 'Formato de la Sesión'}</h3>
+              <button className="btn-primary-small" onClick={handleAddBlock}>{t('sesiones.preview.addBlock')}</button>
             </div>
             
             <div className="blocks-builder-list">
@@ -1583,9 +1583,9 @@ const Sesiones = () => {
                     <button className="btn-close-pdf" style={{ color: 'var(--text-primary)', marginTop: '-10px', marginRight: '-10px' }} onClick={() => setSelectedSession(null)}>✕</button>
                   </div>
                 <div className="preview-stats">
-                  <div className="p-stat"><strong>{selectedSession.duration || selectedSession.duracion || 0}</strong><span>MIN</span></div>
-                  <div className="p-stat"><strong>{(selectedSession.blocks || selectedSession.bloques || []).length}</strong><span>BLOQUES</span></div>
-                  <div className="p-stat"><strong>{selectedSession.intensity || selectedSession.intensidad || 'Media'}</strong><span>CARGA</span></div>
+                  <div className="p-stat"><strong>{selectedSession.duration || selectedSession.duracion || 0}</strong><span>{t('sesiones.preview.min')}</span></div>
+                  <div className="p-stat"><strong>{(selectedSession.blocks || selectedSession.bloques || []).length}</strong><span>{t('sesiones.preview.blocks')}</span></div>
+                  <div className="p-stat"><strong>{selectedSession.intensity || selectedSession.intensidad || (isEn ? 'Medium' : 'Media')}</strong><span>{t('sesiones.preview.load')}</span></div>
                 </div>
                 
                 <div className="preview-files">
@@ -1602,7 +1602,7 @@ const Sesiones = () => {
                   })()}
                   {selectedSession.objectives && (
                     <div className="protocolo-card" style={{marginTop: '0', marginBottom: '15px'}}>
-                      <h4>Objetivos</h4>
+                      <h4>{isEn ? 'Objectives' : 'Objetivos'}</h4>
                       <p style={{fontSize: '0.9rem', color: 'inherit'}}>{selectedSession.objectives}</p>
                     </div>
                   )}
@@ -1612,7 +1612,7 @@ const Sesiones = () => {
                     return (
                       <div className="protocolo-card" style={{marginTop: '15px', marginBottom: '15px', padding: '15px', border: '1.5px solid #2d4a2d', borderRadius: '12px', background: '#0f1a0f'}}>
                         <h4 style={{display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--accent-gold)', margin: '0 0 10px 0', fontSize: '12px', fontWeight: '800', textTransform: 'uppercase'}}>
-                          🎬 Animación Vinculada
+                          🎬 {isEn ? 'Linked Animation' : 'Animación Vinculada'}
                         </h4>
                         <div style={{display: 'flex', gap: '12px', alignItems: 'center'}}>
                           {linkedPiz.thumbnail ? (
@@ -1627,9 +1627,9 @@ const Sesiones = () => {
                             </div>
                           )}
                           <div style={{flex: 1, minWidth: 0}}>
-                            <div style={{fontWeight: '700', fontSize: '13px', color: 'white', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap'}}>{linkedPiz.title || 'Animación'}</div>
+                            <div style={{fontWeight: '700', fontSize: '13px', color: 'white', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap'}}>{linkedPiz.title || (isEn ? 'Animation' : 'Animación')}</div>
                             <div style={{fontSize: '11px', color: '#888', marginTop: '4px'}}>
-                              {linkedPiz.framesCount || 0} Frames · Animación táctica
+                              {linkedPiz.framesCount || 0} {isEn ? 'Frames · Tactical animation' : 'Frames · Animación táctica'}
                             </div>
                           </div>
                         </div>
@@ -1641,7 +1641,7 @@ const Sesiones = () => {
                               window.location.href = `/pizarra?id=${linkedPiz.id}`;
                             }}
                           >
-                            👁 VER ANIMACIÓN
+                            👁 {isEn ? 'VIEW ANIMATION' : 'VER ANIMACIÓN'}
                           </button>
                         </div>
                       </div>
@@ -1649,20 +1649,20 @@ const Sesiones = () => {
                   })()}
                   {selectedSession.files?.length > 0 && (
                     <div className="files-indicator">
-                      <span>📎 {selectedSession.files.length} archivos adjuntos</span>
+                      <span>📎 {isEn ? `${selectedSession.files.length} attached files` : `${selectedSession.files.length} archivos adjuntos`}</span>
                       {selectedSession.files.map(f => (
-                        f.url ? <button key={f.id} className="btn-text-small" onClick={() => setPdfPreview(f.url)}>Ver PDF</button> : null
+                        f.url ? <button key={f.id} className="btn-text-small" onClick={() => setPdfPreview(f.url)}>{t('sesiones.preview.viewPdf')}</button> : null
                       ))}
                     </div>
                   )}
                 </div>
 
                 <div className="preview-blocks">
-                  <h4>Estructura de la Sesión</h4>
+                  <h4>{t('sesiones.preview.structure')}</h4>
                   {(() => {
                     const blocks = selectedSession.blocks || selectedSession.bloques || [];
                     if (blocks.length === 0) {
-                      return <p className="empty-blocks-text">No hay bloques definidos.</p>;
+                      return <p className="empty-blocks-text">{t('sesiones.preview.emptyBlocks')}</p>;
                     }
                     return blocks.map((b, i) => {
                       const blockImg = b.imageUrl || b.imagenProtocolo || b.image || b.photo || b.previewUrl;
@@ -1671,7 +1671,7 @@ const Sesiones = () => {
                           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                             <span className="b-num" style={{ minWidth: '24px', height: '24px', borderRadius: '50%', background: 'var(--accent-gold, #c9a84c)', color: '#000', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold', fontSize: '12px' }}>{i + 1}</span>
                             <div className="b-info" style={{ flex: 1 }}>
-                              <strong style={{ display: 'block', fontSize: '14px' }}>{b.name || b.nombre || 'Bloque'}</strong>
+                              <strong style={{ display: 'block', fontSize: '14px' }}>{b.name || b.nombre || (isEn ? 'Block' : 'Bloque')}</strong>
                               <span style={{ fontSize: '12px', opacity: 0.7 }}>{b.duration || b.duracion || 0} min · {b.type || b.tipo || ''}</span>
                             </div>
                           </div>
@@ -1695,7 +1695,7 @@ const Sesiones = () => {
                     style={{ marginBottom: '10px', backgroundColor: '#22c55e', color: '#000', fontWeight: '800', border: 'none', minHeight: '44px' }}
                     onClick={() => setShowLiveField(true)}
                   >
-                    ⏱️ Iniciar Modo Campo (Cronómetro & Voz)
+                    {t('sesiones.preview.startLiveField')}
                   </button>
                   <button 
                     className="btn-primary full-width" 
@@ -1703,7 +1703,7 @@ const Sesiones = () => {
                     disabled={isGeneratingPDF}
                     onClick={() => {
                       if (!isProActive) {
-                        setUpgradeModal({ open: true, message: 'La exportación de sesiones a PDF es una función PRO. Sube de nivel para usarla.' });
+                        setUpgradeModal({ open: true, message: isEn ? 'Session PDF export is a PRO feature. Upgrade to use it.' : 'La exportación de sesiones a PDF es una función PRO. Sube de nivel para usarla.' });
                         return;
                       }
                       setIsGeneratingPDF(true);
@@ -1712,21 +1712,21 @@ const Sesiones = () => {
                           await generateSessionPDF(selectedSession, activeTeam, pizarras, captures, players, exercises);
                         } catch(err) {
                           console.error(err);
-                          await showAlert("Error", "Error al generar el PDF");
+                          await showAlert("Error", isEn ? "Error generating PDF" : "Error al generar el PDF");
                         } finally {
                           setIsGeneratingPDF(false);
                         }
                       }, 150);
                     }}
                   >
-                    {isGeneratingPDF ? '⏳ Generando informe...' : '📄 Exportar a PDF'}
+                    {isGeneratingPDF ? t('sesiones.preview.generating') : t('sesiones.preview.exportPdf')}
                   </button>
                   <button 
                     className="btn-outline-gold full-width" 
                     style={{ marginBottom: '10px', minHeight: '44px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', fontWeight: 'bold' }} 
                     onClick={() => handleShareSession(selectedSession)}
                   >
-                    <Share2 size={16} /> 🔗 Compartir / Transferir Sesión
+                    <Share2 size={16} /> {t('sesiones.preview.shareSession')}
                   </button>
                   <div style={{ display: 'flex', gap: '10px', marginBottom: '10px' }}>
                     <button 
@@ -1734,14 +1734,14 @@ const Sesiones = () => {
                       style={{ flex: 1, backgroundColor: '#1B3A2D', color: 'white', border: 'none', minHeight: '44px', fontWeight: 'bold' }} 
                       onClick={() => handleAddToGoogleCalendar(selectedSession)}
                     >
-                      📅 Google Cal
+                      {t('sesiones.preview.googleCal')}
                     </button>
                     <button 
                       className="btn-outline" 
                       style={{ flex: 1, backgroundColor: '#4CAF7D', color: 'white', border: 'none', minHeight: '44px', fontWeight: 'bold' }} 
                       onClick={() => handleExportICS(selectedSession)}
                     >
-                      📥 ICS
+                      {t('sesiones.preview.ics')}
                     </button>
                   </div>
                   <button 
@@ -1750,9 +1750,9 @@ const Sesiones = () => {
                     style={{ marginBottom: '10px', minHeight: '44px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', fontWeight: 'bold' }} 
                     onClick={(e) => handleEditSession(selectedSession, e)}
                   >
-                    ✏️ Editar Sesión
+                    {t('sesiones.preview.editSession')}
                   </button>
-                  <button className="btn-text-error full-width" onClick={() => handleDeleteSession(selectedSession.id)}>Eliminar Sesión</button>
+                  <button className="btn-text-error full-width" onClick={() => handleDeleteSession(selectedSession.id)}>{t('sesiones.preview.deleteSession')}</button>
                 </div>
               </div>
             </div>
@@ -1867,15 +1867,15 @@ const Sesiones = () => {
               {selectedAnimation.thumbnail ? (
                 <img src={selectedAnimation.thumbnail} alt="Animación" style={{ maxHeight: '350px', objectFit: 'contain', borderRadius: '8px' }} />
               ) : (
-                <div style={{ width: '100%', height: '240px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#111', color: '#888', borderRadius: '8px', fontSize: '18px', fontWeight: 'bold' }}>🎬 Animación sin miniatura</div>
+                <div style={{ width: '100%', height: '240px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#111', color: '#888', borderRadius: '8px', fontSize: '18px', fontWeight: 'bold' }}>{isEn ? '🎬 Animation without thumbnail' : '🎬 Animación sin miniatura'}</div>
               )}
               <div style={{ margin: '15px 0', textAlign: 'center', color: '#ccc', fontSize: '14px' }}>
-                <p><strong>Total de Frames:</strong> {selectedAnimation.framesCount || 0}</p>
-                <p>La animación se exportará directamente en formato MP4 (Video).</p>
+                <p><strong>{isEn ? 'Total Frames:' : 'Total de Frames:'}</strong> {selectedAnimation.framesCount || 0}</p>
+                <p>{isEn ? 'The animation will be exported directly in MP4 format (Video).' : 'La animación se exportará directamente en formato MP4 (Video).'}</p>
               </div>
               <div className="capture-actions-float" style={{ display: 'flex', gap: '10px', justifyContent: 'center', position: 'static', marginTop: '10px' }}>
-                 <button className="btn-primary" onClick={() => handleExportMP4(selectedAnimation)}>🎬 EXPORTAR MP4</button>
-                 <button className="btn-text-error" onClick={() => handleDeleteAnimation(selectedAnimation)}>ELIMINAR</button>
+                 <button className="btn-primary" onClick={() => handleExportMP4(selectedAnimation)}>{t('sesiones.preview.exportMp4')}</button>
+                 <button className="btn-text-error" onClick={() => handleDeleteAnimation(selectedAnimation)}>{t('sesiones.preview.deleteAnimation')}</button>
               </div>
             </div>
           </div>

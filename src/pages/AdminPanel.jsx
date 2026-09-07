@@ -279,6 +279,7 @@ const AdminPanel = () => {
   }, [user, isAdmin]);
   
   const { settings, saveSettings, loading: loadingSettings } = useSettings(activeTeam?.id);
+  const { t, isEn } = useTranslation();
   const { permissions, switchMyRole, STAFF_ROLES, inviteMember } = useTeamMembers(activeTeam?.id);
   const { darkMode, toggleTheme } = useTheme();
   const [profileData, setProfileData] = useState({ profileName: '', specialty: 'Primer Entrenador' });
@@ -1027,20 +1028,20 @@ const AdminPanel = () => {
               <div className="settings-card">
                 <div className="card-header-icon">
                   <Users size={20} />
-                  <h3>Perfil del Entrenador</h3>
+                  <h3>{isEn ? 'Coach Profile' : 'Perfil del Entrenador'}</h3>
                 </div>
                 <div className="settings-form" style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                   <div className="form-group" style={{ margin: 0 }}>
-                    <label>Nombre Completo</label>
+                    <label>{isEn ? 'Full Name' : 'Nombre Completo'}</label>
                     <input 
                       type="text" 
-                      placeholder="Tu nombre" 
+                      placeholder={isEn ? 'Your name' : 'Tu nombre'} 
                       value={profileData.profileName} 
                       onChange={(e) => setProfileData({...profileData, profileName: e.target.value})} 
                     />
                   </div>
                   <div className="form-group" style={{ margin: 0 }}>
-                    <label>Rol / Especialidad en el Equipo</label>
+                    <label>{isEn ? 'Role / Specialty in Team' : 'Rol / Especialidad en el Equipo'}</label>
                     <select 
                       className="admin-select-input"
                       value={profileData.specialty}
@@ -1167,7 +1168,7 @@ const AdminPanel = () => {
                         }}
                       >
                         <Trash2 size={14} color="#EF4444" />
-                        <span>Eliminar mi Cuenta de Entrenador y Equipos</span>
+                        <span>{t('btn.deleteAccount', settings.language)}</span>
                       </button>
                     </div>
                   </div>
@@ -1178,14 +1179,14 @@ const AdminPanel = () => {
               <div className="settings-card">
                 <div className="card-header-icon">
                   <Layers size={20} />
-                  <h3>Identidad del Equipo ({activeTeam?.nombre || 'Ninguno'})</h3>
+                  <h3>{t('settings.teamIdentity', settings.language)} ({activeTeam?.nombre || t('status.none', settings.language)})</h3>
                 </div>
                 <div className="settings-form">
                   <div className="form-group">
-                    <label>Nombre del Equipo</label>
+                    <label>{t('form.teamName', settings.language)}</label>
                     <input 
                       type="text" 
-                      placeholder="Ej. Real Madrid C.F." 
+                      placeholder={t('placeholder.teamName', settings.language)} 
                       value={teamEditData.nombre} 
                       onChange={(e) => setTeamEditData({...teamEditData, nombre: e.target.value})}
                       onBlur={e => setTeamEditData(prev => ({...prev, nombre: normalizeText(e.target.value)}))}
@@ -2112,15 +2113,15 @@ const AdminPanel = () => {
           <div className="modal-content" style={{ maxWidth: '600px' }} onClick={e => e.stopPropagation()}>
             <div className="modal-header">
               <h2>{selectedExerciseDetail.title || selectedExerciseDetail.name || 'Detalle del Ejercicio'}</h2>
-              <button className="btn-close" onClick={() => setSelectedExerciseDetail(null)}>✕</button>
+              <button className="btn-close" onClick={() => setSelectedExerciseDetail(null)} aria-label={t('common.close')}>✕</button>
             </div>
             <div className="modal-body" style={{ padding: '20px', lineHeight: '1.6', color: 'var(--text-primary)' }}>
               <div style={{ whiteSpace: 'pre-wrap', fontSize: '0.95rem' }}>
-                {selectedExerciseDetail.content || selectedExerciseDetail.descripcion || 'Sin contenido detallado.'}
+                {selectedExerciseDetail.content || selectedExerciseDetail.descripcion || (isEn ? 'No detailed content.' : 'Sin contenido detallado.')}
               </div>
             </div>
             <div className="modal-footer">
-              <button className="btn-primary" onClick={() => setSelectedExerciseDetail(null)}>Cerrar</button>
+              <button className="btn-primary" onClick={() => setSelectedExerciseDetail(null)}>{t('common.close')}</button>
             </div>
           </div>
         </div>

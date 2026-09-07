@@ -825,19 +825,19 @@ export const PlayerProfileTab = ({ player, team, teamPath, onNavigateTab }) => {
               <div style={{ width: '56px', height: '56px', borderRadius: '50%', background: 'rgba(239, 68, 68, 0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 12px auto' }}>
                 <AlertTriangle size={28} color="#EF4444" />
               </div>
-              <h3 style={{ margin: '0 0 8px 0', fontSize: '1.2rem', color: '#EF4444', fontWeight: 800 }}>¿Eliminar tu cuenta?</h3>
+              <h3 style={{ margin: '0 0 8px 0', fontSize: '1.2rem', color: '#EF4444', fontWeight: 800 }}>{t('player.profile.deleteAccountTitle')}</h3>
               <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--text-secondary)', lineHeight: '1.5' }}>
-                Esta acción es <strong>permanente e irreversible</strong>. Se eliminará tu acceso de usuario, tu historial deportivo, consentimientos y perfil en Míster11.
+                {t('player.profile.deleteAccountDesc')}
               </p>
             </div>
 
             <div style={{ background: 'var(--bg-app)', padding: '12px', borderRadius: '10px', marginBottom: '16px', fontSize: '0.82rem', color: 'var(--text-primary)' }}>
-              <span>Escribe <strong>ELIMINAR</strong> para confirmar:</span>
+              <span>{t('player.profile.deleteConfirmPrompt')}</span>
               <input
                 type="text"
                 value={deleteConfirmText}
                 onChange={e => setDeleteConfirmText(e.target.value)}
-                placeholder="ELIMINAR"
+                placeholder={t('player.profile.deleteConfirmWord')}
                 style={{
                   width: '100%',
                   marginTop: '8px',
@@ -858,11 +858,15 @@ export const PlayerProfileTab = ({ player, team, teamPath, onNavigateTab }) => {
                 onClick={() => setIsDeleteModalOpen(false)}
                 disabled={isDeletingAccount}
               >
-                Cancelar
+                {t('common.cancel')}
               </button>
               <button
                 type="button"
-                disabled={deleteConfirmText.trim().toUpperCase() !== 'ELIMINAR' || isDeletingAccount}
+                disabled={
+                  (deleteConfirmText.trim().toUpperCase() !== t('player.profile.deleteConfirmWord').toUpperCase() &&
+                   deleteConfirmText.trim().toUpperCase() !== 'ELIMINAR' &&
+                   deleteConfirmText.trim().toUpperCase() !== 'DELETE') || isDeletingAccount
+                }
                 onClick={handleDeleteMyAccount}
                 style={{
                   background: '#EF4444',
@@ -871,11 +875,11 @@ export const PlayerProfileTab = ({ player, team, teamPath, onNavigateTab }) => {
                   borderRadius: '8px',
                   padding: '10px 18px',
                   fontWeight: 800,
-                  cursor: deleteConfirmText.trim().toUpperCase() === 'ELIMINAR' ? 'pointer' : 'not-allowed',
-                  opacity: deleteConfirmText.trim().toUpperCase() === 'ELIMINAR' ? 1 : 0.5
+                  cursor: (deleteConfirmText.trim().toUpperCase() === t('player.profile.deleteConfirmWord').toUpperCase() || deleteConfirmText.trim().toUpperCase() === 'ELIMINAR' || deleteConfirmText.trim().toUpperCase() === 'DELETE') ? 'pointer' : 'not-allowed',
+                  opacity: (deleteConfirmText.trim().toUpperCase() === t('player.profile.deleteConfirmWord').toUpperCase() || deleteConfirmText.trim().toUpperCase() === 'ELIMINAR' || deleteConfirmText.trim().toUpperCase() === 'DELETE') ? 1 : 0.5
                 }}
               >
-                {isDeletingAccount ? 'Eliminando...' : 'Sí, Eliminar Cuenta'}
+                {isDeletingAccount ? t('player.profile.deleteDeleting') : t('player.profile.deleteConfirmBtn')}
               </button>
             </div>
           </div>
@@ -889,24 +893,24 @@ export const PlayerProfileTab = ({ player, team, teamPath, onNavigateTab }) => {
             <div className="modal-header">
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <Shield size={20} color="#10B981" />
-                <h3 style={{ margin: 0, fontSize: '1.1rem' }}>Consentimiento Parental Digital</h3>
+                <h3 style={{ margin: 0, fontSize: '1.1rem' }}>{t('player.profile.consentModalTitle')}</h3>
               </div>
               <button className="btn-close" onClick={() => setIsConsentModalOpen(false)}>✕</button>
             </div>
 
             <div className="modal-body" style={{ maxHeight: '75vh', overflowY: 'auto' }}>
               <p style={{ fontSize: '13px', color: 'var(--text-muted)', lineHeight: '1.4' }}>
-                Conforme al Reglamento General de Protección de Datos (RGPD) y la LOPDGDD, el padre, madre o tutor legal puede autorizar o denegar los siguientes tratamientos de datos del menor:
+                {t('player.profile.consentModalDesc')}
               </p>
 
               {/* Nombre del padre/tutor */}
               <div className="form-group-team full" style={{ marginBottom: '14px' }}>
-                <label style={{ fontSize: '12px', fontWeight: 'bold' }}>Nombre y Apellidos del Padre / Tutor *</label>
+                <label style={{ fontSize: '12px', fontWeight: 'bold' }}>{t('player.profile.consentParentNameLabel')}</label>
                 <input
                   type="text"
                   value={parentName}
                   onChange={(e) => setParentName(e.target.value)}
-                  placeholder="Ej. Carlos Caicedo Pérez"
+                  placeholder={isEn ? "e.g. Carlos Caicedo Perez" : "Ej. Carlos Caicedo Pérez"}
                   style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid var(--border-color)' }}
                 />
               </div>
@@ -921,7 +925,7 @@ export const PlayerProfileTab = ({ player, team, teamPath, onNavigateTab }) => {
                     style={{ width: '18px', height: '18px', marginTop: '2px', accentColor: '#10B981' }}
                   />
                   <span>
-                    <strong>Datos de Salud y Molestias:</strong> Autorizo el registro del check-in diario de bienestar y reporte de fatiga muscular con fines exclusivos de prevención de lesiones.
+                    {t('player.profile.consentHealthCheck')}
                   </span>
                 </label>
 
@@ -933,7 +937,7 @@ export const PlayerProfileTab = ({ player, team, teamPath, onNavigateTab }) => {
                     style={{ width: '18px', height: '18px', marginTop: '2px', accentColor: '#10B981' }}
                   />
                   <span>
-                    <strong>Tests y Rendimiento:</strong> Autorizo la realización de evaluaciones autónomas de velocidad, salto y resistencia para seguimiento técnico.
+                    {t('player.profile.consentTestsCheck')}
                   </span>
                 </label>
               </div>
@@ -941,13 +945,13 @@ export const PlayerProfileTab = ({ player, team, teamPath, onNavigateTab }) => {
               {/* Pad de firma digital */}
               <div style={{ marginBottom: '12px' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-                  <label style={{ fontSize: '12px', fontWeight: 'bold' }}>Firma del Padre / Tutor (con el dedo o ratón):</label>
+                  <label style={{ fontSize: '12px', fontWeight: 'bold' }}>{t('player.profile.consentDrawLabel')}</label>
                   <button
                     type="button"
                     onClick={handleClearSignature}
                     style={{ background: 'none', border: 'none', color: '#EF4444', fontSize: '11px', cursor: 'pointer', fontWeight: 'bold' }}
                   >
-                    Borrar firma
+                    {t('player.profile.consentClearSign')}
                   </button>
                 </div>
                 <div style={{ border: '2px dashed var(--accent-green)', borderRadius: '8px', background: '#FFF', height: '120px', touchAction: 'none' }}>
@@ -966,7 +970,7 @@ export const PlayerProfileTab = ({ player, team, teamPath, onNavigateTab }) => {
             </div>
 
             <div className="modal-footer">
-              <button type="button" className="btn-secondary" onClick={() => setIsConsentModalOpen(false)}>Cancelar</button>
+              <button type="button" className="btn-secondary" onClick={() => setIsConsentModalOpen(false)}>{t('common.cancel')}</button>
               <button
                 type="button"
                 className="btn-primary"
@@ -974,7 +978,7 @@ export const PlayerProfileTab = ({ player, team, teamPath, onNavigateTab }) => {
                 disabled={savingConsent}
                 style={{ background: '#10B981', fontWeight: 'bold' }}
               >
-                {savingConsent ? 'Guardando...' : 'Confirmar y Guardar Firma'}
+                {savingConsent ? t('player.profile.consentSaving') : t('player.profile.consentSaveSign')}
               </button>
             </div>
           </div>

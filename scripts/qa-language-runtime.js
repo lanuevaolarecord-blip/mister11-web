@@ -28,7 +28,7 @@ const SPANISH_STOPWORDS_IN_EN = [
   'semana', 'mesociclo', 'microciclo', 'acciones', 'materiales', 'señalización',
   'portería', 'balón', 'coordinación', 'medidas', 'zonas', 'comodín', 'rival',
   'minutos', 'goles', 'categoría', 'pie dominante', 'posición', 'edad', 'años',
-  'cuenta vinculada', 'rutinas', 'individual', 'copiar', 'invitar', 'cambiar rol',
+  'cuenta vinculada', 'rutinas', 'copiar', 'invitar', 'cambiar rol',
   'estructura', 'calentamiento', 'física', 'técnica', 'táctica', 'días de entrenamiento',
   'volumen', 'objetivo', 'iniciar modo campo', 'exportar a pdf', 'solicitudes pendientes',
   'disponible', 'convocado', 'titular', 'suplente'

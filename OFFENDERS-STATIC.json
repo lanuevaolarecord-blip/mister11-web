@@ -1,11 +1,11 @@
 {
-  "generated": "2026-09-07T21:48:35.124Z",
+  "generated": "2026-09-07T22:01:58.567Z",
   "totalFiles": 198,
-  "totalOffenders": 317,
+  "totalOffenders": 309,
   "byCategory": {
     "NATIVE_DIALOG": 48,
-    "PLACEHOLDER_HARDCODED": 26,
-    "TITLE_HARDCODED": 32,
+    "PLACEHOLDER_HARDCODED": 20,
+    "TITLE_HARDCODED": 30,
     "TOAST_HARDCODED": 174,
     "ARIA_HARDCODED": 7,
     "LOCALE_DATE_NO_LOCALE": 16,
@@ -1206,59 +1206,11 @@
     },
     {
       "file": "pages/ConsentForm.jsx",
-      "line": 316,
-      "cat": "PLACEHOLDER_HARDCODED",
-      "desc": "placeholder=\"\" con texto hardcodeado sin t()/isEn",
-      "literal": "Nombre y Apellidos",
-      "context": "placeholder=\"Nombre y Apellidos\""
-    },
-    {
-      "file": "pages/ConsentForm.jsx",
-      "line": 326,
-      "cat": "PLACEHOLDER_HARDCODED",
-      "desc": "placeholder=\"\" con texto hardcodeado sin t()/isEn",
-      "literal": "Ej. 12345678Z",
-      "context": "placeholder=\"Ej. 12345678Z\""
-    },
-    {
-      "file": "pages/ConsentForm.jsx",
-      "line": 344,
-      "cat": "PLACEHOLDER_HARDCODED",
-      "desc": "placeholder=\"\" con texto hardcodeado sin t()/isEn",
-      "literal": "Opcional",
-      "context": "placeholder=\"Opcional\""
-    },
-    {
-      "file": "pages/ConsentForm.jsx",
-      "line": 357,
-      "cat": "PLACEHOLDER_HARDCODED",
-      "desc": "placeholder=\"\" con texto hardcodeado sin t()/isEn",
-      "literal": "Nombre y Apellidos",
-      "context": "placeholder=\"Nombre y Apellidos\""
-    },
-    {
-      "file": "pages/ConsentForm.jsx",
-      "line": 376,
-      "cat": "PLACEHOLDER_HARDCODED",
-      "desc": "placeholder=\"\" con texto hardcodeado sin t()/isEn",
-      "literal": "Nombre del Club",
-      "context": "placeholder=\"Nombre del Club\""
-    },
-    {
-      "file": "pages/ConsentForm.jsx",
-      "line": 385,
+      "line": 390,
       "cat": "PLACEHOLDER_HARDCODED",
       "desc": "placeholder=\"\" con texto hardcodeado sin t()/isEn",
       "literal": "Ej. 2026/2027",
       "context": "placeholder=\"Ej. 2026/2027\""
-    },
-    {
-      "file": "pages/ConsentForm.jsx",
-      "line": 398,
-      "cat": "PLACEHOLDER_HARDCODED",
-      "desc": "placeholder=\"\" con texto hardcodeado sin t()/isEn",
-      "literal": "Nombre del técnico",
-      "context": "placeholder=\"Nombre del técnico\""
     },
     {
       "file": "pages/ConsentimientoFirma.jsx",
@@ -1291,22 +1243,6 @@
       "desc": "placeholder=\"\" con texto hardcodeado sin t()/isEn",
       "literal": "Ej. Thiago Pérez",
       "context": "placeholder=\"Ej. Thiago Pérez\""
-    },
-    {
-      "file": "pages/Instalar.jsx",
-      "line": 9,
-      "cat": "TITLE_HARDCODED",
-      "desc": "title=\"\" atributo con literal sin t()/isEn",
-      "literal": "Instalar Míster11 — La App de Fútbol para Entrenadores",
-      "context": "document.title = \"Instalar Míster11 — La App de Fútbol para Entrenadores\";"
-    },
-    {
-      "file": "pages/Instalar.jsx",
-      "line": 21,
-      "cat": "TITLE_HARDCODED",
-      "desc": "title=\"\" atributo con literal sin t()/isEn",
-      "literal": "Míster11 — El banquillo en tu bolsillo",
-      "context": "document.title = \"Míster11 — El banquillo en tu bolsillo\";"
     },
     {
       "file": "pages/JoinTeam.jsx",
@@ -1950,7 +1886,7 @@
     },
     {
       "file": "pages/Sesiones.jsx",
-      "line": 1777,
+      "line": 1853,
       "cat": "TITLE_HARDCODED",
       "desc": "title=\"\" atributo con literal sin t()/isEn",
       "literal": "Auto-Exporter Frame",
@@ -1958,7 +1894,7 @@
     },
     {
       "file": "pages/Sesiones.jsx",
-      "line": 1819,
+      "line": 1895,
       "cat": "TITLE_HARDCODED",
       "desc": "title=\"\" atributo con literal sin t()/isEn",
       "literal": "PDF Preview",

@@ -2,12 +2,13 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Shield, PenTool, Check, Download, Info } from 'lucide-react';
 import SignatureCanvas from '../components/SignatureCanvas';
-import { getEffectiveLanguage } from '../i18n/translations';
+import { useTranslation } from '../hooks/useTranslation';
 import { drawPdfFooter } from '../utils/pdfTheme';
 import '../styles/consent.css';
 
 const ConsentForm = () => {
   const [searchParams] = useSearchParams();
+  const { t, isEn, locale } = useTranslation();
 
   // Precargar parámetros de la URL opcionales
   const initialPlayerName = searchParams.get('playerName') || '';
@@ -56,6 +57,10 @@ const ConsentForm = () => {
     if (initialCoachName) setCoachName(initialCoachName);
   }, [initialPlayerName, initialTeamName, initialCoachName]);
 
+  useEffect(() => {
+    document.title = `${t('consent.heading')} — Míster11`;
+  }, [t]);
+
   const handleStroke = () => {
     setIsSigned(true);
     setError('');
@@ -69,19 +74,19 @@ const ConsentForm = () => {
   };
 
   const validateForm = () => {
-    if (!parentName.trim()) return 'El nombre del padre/madre/tutor es obligatorio.';
-    if (!parentDni.trim()) return 'El DNI/NIE/Pasaporte del tutor es obligatorio.';
-    if (!playerName.trim()) return 'El nombre del jugador (menor) es obligatorio.';
-    if (!playerDob) return 'La fecha de nacimiento del jugador es obligatoria.';
+    if (!parentName.trim()) return t('consent.errParentName');
+    if (!parentDni.trim()) return t('consent.errParentDni');
+    if (!playerName.trim()) return t('consent.errPlayerName');
+    if (!playerDob) return t('consent.errPlayerDob');
     
     // Al menos las autorizaciones básicas de identidad (nombre y fecha de nacimiento) deben estar marcadas
     if (!authName || !authDob) {
-      return 'Es obligatorio autorizar el tratamiento del nombre y fecha de nacimiento para poder registrar al jugador en la aplicación.';
+      return t('consent.errBasicAuth');
     }
 
     const signatureData = signatureRef.current?.getDataUrl();
     if (!isSigned || !signatureData) {
-      return 'Por favor, dibuja tu firma digital en el recuadro antes de continuar.';
+      return t('consent.errSig');
     }
 
     return null;
@@ -242,7 +247,7 @@ const ConsentForm = () => {
   };
 
   const handleWhatsAppNotify = () => {
-    const message = `Hola entrenador, ya he rellenado y firmado digitalmente el consentimiento parental para ${playerName}. He descargado el PDF firmado en mi dispositivo. Te lo comparto a continuación.`;
+    const message = t('consent.whatsappMsg', { name: playerName });
     const whatsappUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(message)}`;
     window.open(whatsappUrl, '_blank');
   };
@@ -254,29 +259,29 @@ const ConsentForm = () => {
           <div className="success-icon-wrapper">
             <Check size={40} color="white" />
           </div>
-          <h2>¡Firmado con Éxito!</h2>
+          <h2>{t('consent.successTitle')}</h2>
           <p>
-            El documento de consentimiento parental para el jugador <strong>{playerName}</strong> se ha generado y descargado en tu dispositivo correctamente.
+            {t('consent.successDesc', { name: playerName })}
           </p>
 
           <div className="signed-actions">
             <button className="btn-whatsapp-share" onClick={handleWhatsAppNotify}>
-              Notificar al Entrenador por WhatsApp
+              {t('consent.notifyWhatsapp')}
             </button>
             {pdfBlobUrl && (
               <a href={pdfBlobUrl} download={`Consentimiento_Parental_${playerName.replace(/\s+/g, '_')}.pdf`} className="btn-download-pdf">
                 <Download size={18} style={{ marginRight: '8px' }} />
-                Volver a descargar PDF
+                {t('consent.redownloadPdf')}
               </a>
             )}
           </div>
 
           <div style={{ padding: '16px', background: '#f8fafc', borderRadius: '8px', border: '1px solid #e2e8f0', textAlign: 'left', marginBottom: '20px' }}>
             <span style={{ display: 'flex', gap: '8px', color: '#1B3A2D', fontWeight: 'bold', fontSize: '13px', marginBottom: '8px' }}>
-              <Info size={16} /> AVISO DE PRIVACIDAD
+              <Info size={16} /> {t('consent.privacyTitle')}
             </span>
             <p className="consent-signed-card" style={{ fontSize: '12px', color: '#666', margin: '0', textAlign: 'left', border: 'none', padding: '0', boxShadow: 'none' }}>
-              Este documento ha sido generado de manera local. <strong>Míster11 no almacena copias de tu firma ni del consentimiento en sus servidores</strong>. Envía el PDF descargado al entrenador por WhatsApp para que lo conserve de forma segura.
+              {t('consent.privacyDesc')}
             </p>
           </div>
         </div>
@@ -299,69 +304,69 @@ const ConsentForm = () => {
           <div className="sp-icon-wrapper">
             <Shield size={24} color="#1B3A2D" />
           </div>
-          <h1>Consentimiento Parental Digital</h1>
-          <p className="sub-title">Autorización informada para la gestión deportiva del jugador menor de edad.</p>
+          <h1>{t('consent.heading')}</h1>
+          <p className="sub-title">{t('consent.subTitle')}</p>
         </div>
 
         <form className="consent-form-card" onSubmit={handleGeneratePDF}>
-          <h2>Detalles del Consentimiento</h2>
-          <p className="instructions">Cumplimente los datos requeridos. Los campos marcados con (*) son obligatorios.</p>
+          <h2>{t('consent.detailsTitle')}</h2>
+          <p className="instructions">{t('consent.instructions')}</p>
 
-          <h3 style={{ fontSize: '14px', color: '#1B3A2D', borderBottom: '1px solid #e2e8f0', paddingBottom: '6px', marginBottom: '14px' }}>1. Datos del Padre, Madre o Tutor</h3>
+          <h3 style={{ fontSize: '14px', color: '#1B3A2D', borderBottom: '1px solid #e2e8f0', paddingBottom: '6px', marginBottom: '14px' }}>{t('consent.sec1')}</h3>
           <div className="form-grid">
             <div className="form-field">
-              <label>Nombre del Tutor *</label>
+              <label>{t('consent.parentNameLabel')}</label>
               <input 
                 type="text" 
-                placeholder="Nombre y Apellidos" 
+                placeholder={t('consent.parentNamePlaceholder')} 
                 value={parentName}
                 onChange={e => setParentName(e.target.value)}
                 required
               />
             </div>
             <div className="form-field">
-              <label>DNI / NIE / Pasaporte *</label>
+              <label>{t('consent.parentDniLabel')}</label>
               <input 
                 type="text" 
-                placeholder="Ej. 12345678Z" 
+                placeholder={t('consent.parentDniPlaceholder')} 
                 value={parentDni}
                 onChange={e => setParentDni(e.target.value)}
                 required
               />
             </div>
             <div className="form-field">
-              <label>Parentesco *</label>
+              <label>{t('consent.relationLabel')}</label>
               <select value={relation} onChange={e => setRelation(e.target.value)}>
-                <option value="Padre">Padre</option>
-                <option value="Madre">Madre</option>
-                <option value="Tutor Legal">Tutor Legal / Representante</option>
+                <option value="Padre">{t('consent.relationFather')}</option>
+                <option value="Madre">{t('consent.relationMother')}</option>
+                <option value="Tutor Legal">{t('consent.relationGuardian')}</option>
               </select>
             </div>
             <div className="form-field">
-              <label>Teléfono de Contacto</label>
+              <label>{t('consent.parentPhoneLabel')}</label>
               <input 
                 type="tel" 
-                placeholder="Opcional" 
+                placeholder={t('consent.parentPhonePlaceholder')} 
                 value={parentPhone}
                 onChange={e => setParentPhone(e.target.value)}
               />
             </div>
           </div>
 
-          <h3 style={{ fontSize: '14px', color: '#1B3A2D', borderBottom: '1px solid #e2e8f0', paddingBottom: '6px', marginBottom: '14px' }}>2. Datos del Deportista (Menor)</h3>
+          <h3 style={{ fontSize: '14px', color: '#1B3A2D', borderBottom: '1px solid #e2e8f0', paddingBottom: '6px', marginBottom: '14px' }}>{t('consent.sec2')}</h3>
           <div className="form-grid">
             <div className="form-field">
-              <label>Nombre del Jugador *</label>
+              <label>{t('consent.playerNameLabel')}</label>
               <input 
                 type="text" 
-                placeholder="Nombre y Apellidos" 
+                placeholder={t('consent.playerNamePlaceholder')} 
                 value={playerName}
                 onChange={e => setPlayerName(e.target.value)}
                 required
               />
             </div>
             <div className="form-field">
-              <label>Fecha de Nacimiento *</label>
+              <label>{t('consent.playerDobLabel')}</label>
               <input 
                 type="date" 
                 value={playerDob}
@@ -370,16 +375,16 @@ const ConsentForm = () => {
               />
             </div>
             <div className="form-field">
-              <label>Club o Escuela Deportiva</label>
+              <label>{t('consent.teamNameLabel')}</label>
               <input 
                 type="text" 
-                placeholder="Nombre del Club" 
+                placeholder={t('consent.teamNamePlaceholder')} 
                 value={teamName}
                 onChange={e => setTeamName(e.target.value)}
               />
             </div>
             <div className="form-field">
-              <label>Temporada</label>
+              <label>{t('consent.seasonLabel')}</label>
               <input 
                 type="text" 
                 placeholder="Ej. 2026/2027" 
@@ -389,92 +394,92 @@ const ConsentForm = () => {
             </div>
           </div>
 
-          <h3 style={{ fontSize: '14px', color: '#1B3A2D', borderBottom: '1px solid #e2e8f0', paddingBottom: '6px', marginBottom: '14px' }}>3. Datos del Entrenador</h3>
+          <h3 style={{ fontSize: '14px', color: '#1B3A2D', borderBottom: '1px solid #e2e8f0', paddingBottom: '6px', marginBottom: '14px' }}>{t('consent.sec3')}</h3>
           <div className="form-grid" style={{ gridTemplateColumns: '1fr', marginBottom: '24px' }}>
             <div className="form-field">
-              <label>Nombre del Entrenador Responsable</label>
+              <label>{t('consent.coachNameLabel')}</label>
               <input 
                 type="text" 
-                placeholder="Nombre del técnico" 
+                placeholder={t('consent.coachNamePlaceholder')} 
                 value={coachName}
                 onChange={e => setCoachName(e.target.value)}
               />
             </div>
           </div>
 
-          <h3 style={{ fontSize: '14px', color: '#1B3A2D', borderBottom: '1px solid #e2e8f0', paddingBottom: '6px', marginBottom: '14px' }}>4. Autorizaciones de Datos Personales</h3>
-          <p className="instructions" style={{ margin: '0 0 12px 0' }}>Seleccione qué datos autoriza que sean procesados en Míster11 por el cuerpo técnico:</p>
+          <h3 style={{ fontSize: '14px', color: '#1B3A2D', borderBottom: '1px solid #e2e8f0', paddingBottom: '6px', marginBottom: '14px' }}>{t('consent.sec4')}</h3>
+          <p className="instructions" style={{ margin: '0 0 12px 0' }}>{t('consent.sec4Desc')}</p>
           <div className="legal-consent-boxes">
             <label className="checkbox-field">
               <input type="checkbox" checked={authName} onChange={e => setAuthName(e.target.checked)} />
-              <span className="checkbox-text">Nombre y apellidos (Requerido para la ficha del jugador)</span>
+              <span className="checkbox-text">{t('consent.authName')}</span>
             </label>
             <label className="checkbox-field">
               <input type="checkbox" checked={authDob} onChange={e => setAuthDob(e.target.checked)} />
-              <span className="checkbox-text">Fecha de nacimiento (Requerido para el cálculo automático de edad y categoría)</span>
+              <span className="checkbox-text">{t('consent.authDob')}</span>
             </label>
             <label className="checkbox-field">
               <input type="checkbox" checked={authPosition} onChange={e => setAuthPosition(e.target.checked)} />
-              <span className="checkbox-text">Posición deportiva y número de dorsal asignado</span>
+              <span className="checkbox-text">{t('consent.authPosition')}</span>
             </label>
             <label className="checkbox-field">
               <input type="checkbox" checked={authBiometric} onChange={e => setAuthBiometric(e.target.checked)} />
-              <span className="checkbox-text">Ficha antropométrica (altura y peso corporal para el seguimiento físico e IMC)</span>
+              <span className="checkbox-text">{t('consent.authBiometric')}</span>
             </label>
             <label className="checkbox-field">
               <input type="checkbox" checked={authPhysicalTests} onChange={e => setAuthPhysicalTests(e.target.checked)} />
-              <span className="checkbox-text">Resultados de pruebas y tests físicos de aptitud y rendimiento</span>
+              <span className="checkbox-text">{t('consent.authPhysicalTests')}</span>
             </label>
             <label className="checkbox-field">
               <input type="checkbox" checked={authPsychosocial} onChange={e => setAuthPsychosocial(e.target.checked)} />
-              <span className="checkbox-text">Cuestionarios psicosociales y tests diarios de bienestar (fatiga, sueño, estrés, humor)</span>
+              <span className="checkbox-text">{t('consent.authPsychosocial')}</span>
             </label>
             <label className="checkbox-field">
               <input type="checkbox" checked={authInjuries} onChange={e => setAuthInjuries(e.target.checked)} />
-              <span className="checkbox-text">Historial clínico de lesiones sufridas (datos médicos de salud - Art. 9 RGPD)</span>
+              <span className="checkbox-text">{t('consent.authInjuries')}</span>
             </label>
             <label className="checkbox-field">
               <input type="checkbox" checked={authAvatar} onChange={e => setAuthAvatar(e.target.checked)} />
-              <span className="checkbox-text">Fotografía o avatar identificativo del jugador en las alineaciones y pizarra</span>
+              <span className="checkbox-text">{t('consent.authAvatar')}</span>
             </label>
             <label className="checkbox-field">
               <input type="checkbox" checked={authSessions} onChange={e => setAuthSessions(e.target.checked)} />
-              <span className="checkbox-text">Registros de asistencia y participación en partidos, alineaciones e informes técnicos</span>
+              <span className="checkbox-text">{t('consent.authSessions')}</span>
             </label>
             <label className="checkbox-field">
               <input type="checkbox" checked={authExercises} onChange={e => setAuthExercises(e.target.checked)} />
-              <span className="checkbox-text">Asignación de planes de entrenamiento de recuperación e individuales</span>
+              <span className="checkbox-text">{t('consent.authExercises')}</span>
             </label>
           </div>
 
-          <h3 style={{ fontSize: '14px', color: '#1B3A2D', borderBottom: '1px solid #e2e8f0', paddingBottom: '6px', marginBottom: '14px' }}>5. Firma del Tutor</h3>
+          <h3 style={{ fontSize: '14px', color: '#1B3A2D', borderBottom: '1px solid #e2e8f0', paddingBottom: '6px', marginBottom: '14px' }}>{t('consent.sec6')}</h3>
           <div className="signature-section">
             <label className="signature-label">
               <PenTool size={14} style={{ marginRight: '6px' }} />
-              Dibuja tu Firma con el Dedo o Ratón *
+              {t('consent.sigLabel')}
             </label>
             <div className="signature-pad-container">
               <SignatureCanvas ref={signatureRef} onStroke={handleStroke} />
             </div>
             <div className="signature-pad-actions">
-              <button type="button" className="btn-clear-sig" onClick={handleClearSignature}>Limpiar panel de firma</button>
+              <button type="button" className="btn-clear-sig" onClick={handleClearSignature}>{t('consent.clearSig')}</button>
             </div>
           </div>
 
           {error && <div className="consent-error-message">⚠️ {error}</div>}
 
           <button type="submit" className="btn-submit-consent" disabled={isGenerating}>
-            {isGenerating ? 'Generando PDF...' : '✍️ Generar PDF y Descargar Consentimiento'}
+            {isGenerating ? t('consent.submittingBtn') : t('consent.submitBtn')}
           </button>
         </form>
 
         <div style={{ marginTop: '24px', padding: '16px', background: '#fff', borderRadius: '12px', border: '1px solid #e1e8ed', boxShadow: '0 4px 12px rgba(0,0,0,0.02)', fontSize: '13px', color: '#555' }}>
-          <strong>🔒 Privacidad garantizada:</strong> Míster11 no almacena tus datos de contacto, la firma ni el archivo PDF en sus bases de datos. El documento PDF se procesa de forma temporal e instantánea en la memoria de tu propio navegador móvil/ordenador. La custodia legal del documento PDF firmado recae enteramente en los padres/tutores y en el entrenador a cargo de la gestión del equipo.
+          <strong>🔒 {t('consent.privacyTitle')}:</strong> {t('consent.footerLegal')}
         </div>
       </main>
 
       <footer className="consent-page-footer">
-        <p>© {new Date().getFullYear()} Míster11 · El banquillo en tu bolsillo</p>
+        <p>© {new Date().getFullYear()} Míster11 · {t('app.slogan')}</p>
       </footer>
     </div>
   );

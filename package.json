@@ -7,6 +7,8 @@
     "dev": "vite",
     "build": "vite build",
     "check-i18n": "node scripts/check-i18n.js",
+    "qa-language": "node scripts/qa-language.js",
+    "test:i18n": "node scripts/check-i18n.js && node scripts/qa-language.js",
     "lint": "eslint .",
     "preview": "vite preview",
     "test:e2e": "playwright test"

@@ -1,9 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Play, Pause, RotateCcw, Volume2, VolumeX, ChevronLeft, ChevronRight, Split, Check, X, Maximize2 } from 'lucide-react';
 import { ImageModal } from './SessionImageViewer/ImageModal';
+import { useTranslation } from '../hooks/useTranslation';
 import './LiveFieldSession.css';
 
 const LiveFieldSession = ({ session, onClose }) => {
+  const { isEn } = useTranslation();
   const blocks = session?.blocks || session?.bloques || [];
   const [activeBlockIndex, setActiveBlockIndex] = useState(0);
   const activeBlock = blocks[activeBlockIndex] || null;
@@ -48,7 +50,7 @@ const LiveFieldSession = ({ session, onClose }) => {
           if (prev <= 1) {
             clearInterval(timerRef.current);
             setIsRunning(false);
-            speakText('¡Tiempo! Fin del ejercicio.');
+            speakText(isEn ? 'Time! End of exercise.' : '¡Tiempo! Fin del ejercicio.');
             return 0;
           }
 
@@ -57,7 +59,9 @@ const LiveFieldSession = ({ session, onClose }) => {
           // Anuncio por voz en los últimos 5 segundos
           if (soundEnabled && nextSec <= 5 && nextSec > 0 && lastSpokenRef.current !== nextSec) {
             lastSpokenRef.current = nextSec;
-            const numberWords = { 5: 'Cinco', 4: 'Cuatro', 3: 'Tres', 2: 'Dos', 1: 'Uno' };
+            const numberWords = isEn
+              ? { 5: 'Five', 4: 'Four', 3: 'Three', 2: 'Two', 1: 'One' }
+              : { 5: 'Cinco', 4: 'Cuatro', 3: 'Tres', 2: 'Dos', 1: 'Uno' };
             if (numberWords[nextSec]) {
               speakText(numberWords[nextSec]);
             }
@@ -73,7 +77,7 @@ const LiveFieldSession = ({ session, onClose }) => {
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
     };
-  }, [isRunning, soundEnabled]);
+  }, [isRunning, soundEnabled, isEn]);
 
   // Función para síntesis de voz (Web Speech API)
   const speakText = (text) => {
@@ -81,7 +85,7 @@ const LiveFieldSession = ({ session, onClose }) => {
     try {
       window.speechSynthesis.cancel(); // Cancelar locución anterior
       const utterance = new SpeechSynthesisUtterance(text);
-      utterance.lang = 'es-ES';
+      utterance.lang = isEn ? 'en-US' : 'es-ES';
       utterance.rate = 1.1; // Velocidad dinámica ligera
       utterance.pitch = 1.0;
       window.speechSynthesis.speak(utterance);

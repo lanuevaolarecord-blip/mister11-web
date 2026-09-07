@@ -1,7 +1,8 @@
 import React from 'react';
 import { FORMATIONS } from '../../lib/mister11-field.js';
+import { useTranslation } from '../../hooks/useTranslation';
 
-const TeamCard = ({ color, name, count, onAdd, onColorChange, formation, onFormationChange, onApply }) => (
+const TeamCard = ({ color, name, count, onAdd, onColorChange, formation, onFormationChange, onApply, applyLabel }) => (
   <div className="team-card-pizarra">
     <div className="team-header-pizarra">
       <div style={{ position: 'relative', width: 22, height: 22 }}>
@@ -36,7 +37,7 @@ const TeamCard = ({ color, name, count, onAdd, onColorChange, formation, onForma
           onClick={onApply}
           title="Aplicar / Reiniciar alineación"
         >
-          APLICAR
+          {applyLabel || 'APLICAR'}
         </button>
       </div>
     )}
@@ -60,48 +61,52 @@ const SavedPlaysPanel = ({
   setShowRival,
   deleteSelected,
 }) => {
+  const { t } = useTranslation();
+
   return (
     <div className="pizarra-sidebar-content">
-      <div className="panel-title">EQUIPOS</div>
+      <div className="panel-title">{t('board.teams.title')}</div>
       <div style={{ padding: '0 0 8px' }}>
         <TeamCard 
           color={localColor} 
-          name="Local" 
+          name={t('board.teams.local')} 
           count={11} 
           onAdd={() => addManualPlayer('local')} 
           onColorChange={setLocalColor}
           formation={localFormation}
           onFormationChange={setLocalFormation}
           onApply={() => aplicarFormacion('local', localFormation)}
+          applyLabel={t('board.teams.apply')}
         />
         <TeamCard 
           color={rivalColor} 
-          name="Rival" 
+          name={t('board.teams.rival')} 
           count={11} 
           onAdd={() => addManualPlayer('rival')} 
           onColorChange={setRivalColor}
           formation={rivalFormation}
           onFormationChange={setRivalFormation}
           onApply={() => aplicarFormacion('rival', rivalFormation)}
+          applyLabel={t('board.teams.apply')}
         />
         <TeamCard 
           color={jokerColor} 
-          name="Comodín" 
+          name={t('board.teams.wildcard')} 
           count={0} 
           onAdd={() => addManualPlayer('joker')} 
           onColorChange={setJokerColor}
         />
       </div>
 
-      <div className="panel-title">ACCIONES</div>
+      <div className="panel-title">{t('board.actions.title')}</div>
       <div className="acciones-panel-container-grid">
         <button 
           className={`toggle-rival ${showRival ? 'active' : ''}`}
           onClick={() => setShowRival(!showRival)}
         >
-          {showRival ? '👁 QUITAR RIVAL' : '👁 MOSTRAR RIVAL'}
+          {showRival ? t('board.actions.hideRival') : t('board.actions.showRival')}
         </button>
-        <button className="btn-delete-pizarra" onClick={deleteSelected}>🗑 BORRAR</button>
+        <button className="btn-delete-pizarra" onClick={deleteSelected}>🗑 {t('board.actions.delete')}</button>
       </div>
     </div>
   );

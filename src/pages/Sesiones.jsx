@@ -50,7 +50,7 @@ const Sesiones = () => {
   const { sessions, addSession, updateSession, removeSession, loading: loadingSessions } = useSessions(activeTeamId);
   const { players, loading: loadingPlayers } = usePlayers(activeTeamId);
   const { captures, loading: loadingCaptures, removeCapture } = useCaptures(activeTeamId);
-  const { t } = useTranslation();
+  const { t, isEn, locale, fmtPlural, getWeekdays } = useTranslation();
   const { exercises, loading: loadingExercises, removeExercise } = useExercises(activeTeamId);
   const pizarras = (exercises || []).filter(e => e.type === 'pizarra');
 
@@ -357,7 +357,13 @@ const Sesiones = () => {
     }
   };
 
-  const categories = ['Todas', 'Técnica', 'Táctica', 'Física', 'Mixta'];
+  const categoryFilters = [
+    { key: 'Todas', labelKey: 'sesiones.categories.all' },
+    { key: 'Técnica', labelKey: 'sesiones.categories.tecnica' },
+    { key: 'Táctica', labelKey: 'sesiones.categories.tactica' },
+    { key: 'Física', labelKey: 'sesiones.categories.fisica' },
+    { key: 'Mixta', labelKey: 'sesiones.categories.mixta' },
+  ];
   const [catFilter, setCatFilter] = useState('Todas');
 
   // FASE 5: Selector DÍA | SEMANA | MES y fecha activa
@@ -1154,14 +1160,14 @@ const Sesiones = () => {
               }}
               style={{ padding: '8px 16px', minHeight: '44px', width: 'auto', flex: '0 0 auto', whiteSpace: 'nowrap', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '6px', fontWeight: 'bold' }}
             >
-              ⏱️ Modo Campo
+              ⏱️ {t('sesiones.fieldMode')}
             </button>
             <button
               className="btn-outline-gold"
               onClick={() => setImportModal({ open: true, activeTab: 'link', inputVal: '', loading: false, previewSession: null, file: null, error: '' })}
               style={{ padding: '8px 16px', minHeight: '44px', width: 'auto', flex: '0 0 auto', whiteSpace: 'nowrap', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '6px', fontWeight: 'bold' }}
             >
-              📥 Importar Sesión
+              📥 {t('sesiones.importSession')}
             </button>
             {activeTab === 'sessions' && sessions.length > 0 && (
               <button 
@@ -1180,9 +1186,9 @@ const Sesiones = () => {
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px', flexWrap: 'wrap', gap: '10px' }}>
           <div className="calendar-view-switcher" style={{ display: 'inline-flex', background: 'var(--bg-card)', border: '1.5px solid var(--border-light)', borderRadius: '10px', padding: '3px', gap: '4px' }}>
             {[
-              { id: 'dia', label: 'DÍA' },
-              { id: 'semana', label: 'SEMANA' },
-              { id: 'mes', label: 'MES' }
+              { id: 'dia', label: t('sesiones.views.day') },
+              { id: 'semana', label: t('sesiones.views.week') },
+              { id: 'mes', label: t('sesiones.views.month') }
             ].map(v => (
               <button
                 key={v.id}
@@ -1208,11 +1214,11 @@ const Sesiones = () => {
 
           {/* Indicador de Leyenda de Puntos */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '11px', color: 'var(--text-secondary)' }}>
-            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}><span style={{ width: 7, height: 7, borderRadius: '50%', background: '#3B82F6' }}></span> Técnica</span>
-            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}><span style={{ width: 7, height: 7, borderRadius: '50%', background: '#10B981' }}></span> Táctica</span>
-            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}><span style={{ width: 7, height: 7, borderRadius: '50%', background: '#F97316' }}></span> Física</span>
-            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}><span style={{ width: 7, height: 7, borderRadius: '50%', background: '#A855F7' }}></span> Mixta</span>
-            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}><span style={{ width: 7, height: 7, borderRadius: '50%', background: '#D4A843' }}></span> Partido</span>
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}><span style={{ width: 7, height: 7, borderRadius: '50%', background: '#3B82F6' }}></span> {t('sesiones.categories.tecnica')}</span>
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}><span style={{ width: 7, height: 7, borderRadius: '50%', background: '#10B981' }}></span> {t('sesiones.categories.tactica')}</span>
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}><span style={{ width: 7, height: 7, borderRadius: '50%', background: '#F97316' }}></span> {t('sesiones.categories.fisica')}</span>
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}><span style={{ width: 7, height: 7, borderRadius: '50%', background: '#A855F7' }}></span> {t('sesiones.categories.mixta')}</span>
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}><span style={{ width: 7, height: 7, borderRadius: '50%', background: '#D4A843' }}></span> {t('sesiones.categories.partido')}</span>
           </div>
         </div>
 
@@ -1224,8 +1230,9 @@ const Sesiones = () => {
               const currentDay = today.getDay(); // 0 (Sun) to 6 (Sat)
               const diff = today.getDate() - currentDay + (currentDay === 0 ? -6 : 1);
               const monday = new Date(new Date().setDate(diff));
+              const narrowWeekdays = getWeekdays('narrow', true);
               
-              return ['L', 'M', 'X', 'J', 'V', 'S', 'D'].map((day, i) => {
+              return narrowWeekdays.map((day, i) => {
                 const date = new Date(monday);
                 date.setDate(monday.getDate() + i);
                 const y = date.getFullYear();
@@ -1279,13 +1286,13 @@ const Sesiones = () => {
           <div className="month-calendar-container" style={{ background: 'var(--bg-card)', border: '1px solid var(--border-light)', borderRadius: '16px', padding: '16px', marginBottom: '18px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
               <strong style={{ fontSize: '15px', color: 'var(--text-primary)', textTransform: 'uppercase' }}>
-                {new Date().toLocaleDateString('es-ES', { month: 'long', year: 'numeric' })}
+                {new Date().toLocaleDateString(locale, { month: 'long', year: 'numeric' })}
               </strong>
-              <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>Pulsa un día para ver sesiones</span>
+              <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>{t('sesiones.clickDayToView')}</span>
             </div>
             {/* Header L-D */}
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', textAlign: 'center', fontSize: '11px', fontWeight: 900, color: 'var(--text-secondary)', marginBottom: '8px' }}>
-              {['LUN', 'MAR', 'MIÉ', 'JUE', 'VIE', 'SÁB', 'DOM'].map(d => <span key={d}>{d}</span>)}
+              {getWeekdays('short', true).map(d => <span key={d}>{d.toUpperCase()}</span>)}
             </div>
             {/* Celdas del mes actual */}
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '6px' }}>
@@ -1352,13 +1359,13 @@ const Sesiones = () => {
 
         {activeTab === 'sessions' && (
           <div style={{ display: 'flex', gap: '8px', overflowX: 'auto', paddingBottom: '8px' }}>
-            {categories.map(cat => (
+            {categoryFilters.map(cat => (
               <button 
-                key={cat} 
-                className={`chip ${catFilter === cat ? 'active' : ''}`}
-                onClick={() => setCatFilter(cat)}
+                key={cat.key} 
+                className={`chip ${catFilter === cat.key ? 'active' : ''}`}
+                onClick={() => setCatFilter(cat.key)}
               >
-                {cat}
+                {t(cat.labelKey)}
               </button>
             ))}
           </div>
@@ -1393,7 +1400,7 @@ const Sesiones = () => {
                         style={{ background: 'rgba(255, 255, 255, 0.08)', border: '1px solid var(--border-light)', color: 'var(--text-primary)', padding: '4px 10px', borderRadius: '12px', fontSize: '12px', fontWeight: 'bold', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px' }}
                         title="Editar esta sesión"
                       >
-                        ✏️ Editar
+                        ✏️ {t('sesiones.actions.edit')}
                       </button>
                       <button
                         type="button"
@@ -1401,7 +1408,7 @@ const Sesiones = () => {
                         style={{ background: 'rgba(212, 168, 67, 0.15)', border: '1px solid var(--accent-gold)', color: 'var(--accent-gold)', padding: '4px 10px', borderRadius: '12px', fontSize: '12px', fontWeight: 'bold', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px' }}
                         title="Compartir sesión con otro entrenador"
                       >
-                        <Share2 size={13} /> Compartir
+                        <Share2 size={13} /> {t('sesiones.actions.share')}
                       </button>
                     </div>
                   </div>
@@ -1417,7 +1424,7 @@ const Sesiones = () => {
                         ) : (
                           <span style={{ color: 'var(--text-secondary)', fontSize: '12px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
                             <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" strokeWidth="2" fill="none"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
-                            Sin diagrama
+                            {t('sesiones.noDiagram')}
                           </span>
                         )}
                       </div>
@@ -1425,7 +1432,7 @@ const Sesiones = () => {
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', minWidth: '110px' }}>
                         <span style={{ fontSize: '11px', fontWeight: 'bold', background: 'var(--bg-card)', border: '1px solid var(--border-light)', padding: '8px', borderRadius: '8px', color: 'var(--text-primary)', textAlign: 'center', boxShadow: '0 1px 2px rgba(0,0,0,0.02)' }}>{category}</span>
                         <span style={{ fontSize: '11px', fontWeight: 'bold', background: 'var(--bg-card)', border: '1px solid var(--border-light)', padding: '8px', borderRadius: '8px', color: 'var(--text-primary)', textAlign: 'center', boxShadow: '0 1px 2px rgba(0,0,0,0.02)' }}>{intensity}</span>
-                        <span style={{ fontSize: '11px', fontWeight: 'bold', background: 'var(--bg-card)', border: '1px solid var(--border-light)', padding: '8px', borderRadius: '8px', color: 'var(--text-primary)', textAlign: 'center', boxShadow: '0 1px 2px rgba(0,0,0,0.02)' }}>{blocks.length} Bloques</span>
+                        <span style={{ fontSize: '11px', fontWeight: 'bold', background: 'var(--bg-card)', border: '1px solid var(--border-light)', padding: '8px', borderRadius: '8px', color: 'var(--text-primary)', textAlign: 'center', boxShadow: '0 1px 2px rgba(0,0,0,0.02)' }}>{fmtPlural(blocks.length, 'sesiones.blockCount')}</span>
                       </div>
                     </div>
                   </div>

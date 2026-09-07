@@ -14,6 +14,7 @@ import {
   cleanPdfText
 } from './pdfTheme';
 import { calculatePlayerPerformanceScores, consolidatePlayerEvaluations, CANONICAL_TESTS_MAP } from './testScoreEngine';
+import { getEffectiveLanguage } from '../i18n/translations';
 
 const getJsPDF = async () => {
   const { jsPDF } = await import('jspdf');
@@ -1108,24 +1109,27 @@ export const generateSeasonReport = async (team, players, matches) => {
   const teamName = team?.nombre || 'Equipo';
   const season = team?.temporada || new Date().getFullYear();
 
-  await addHeader(doc, 'INFORME DE TEMPORADA', `${teamName} · Temporada ${season}`, team);
+  const isEn = getEffectiveLanguage() === 'English (EN)';
+  const dateLoc = isEn ? 'en-GB' : 'es-ES';
+
+  await addHeader(doc, isEn ? 'SEASON REPORT' : 'INFORME DE TEMPORADA', `${teamName} · ${isEn ? 'Season' : 'Temporada'} ${season}`, team);
 
   doc.setTextColor(45, 45, 45);
   doc.setFontSize(11);
-  doc.text(`Categoría: ${team?.categoria || '-'}`, 15, 50);
-  doc.text(`Temporada: ${season}`, 110, 50);
-  doc.text(`Fecha: ${new Date().toLocaleDateString('es-ES')}`, 15, 57);
-  doc.text(`Total jugadores: ${players.length}`, 110, 57);
+  doc.text(`${isEn ? 'Category' : 'Categoría'}: ${team?.categoria || '-'}`, 15, 50);
+  doc.text(`${isEn ? 'Season' : 'Temporada'}: ${season}`, 110, 50);
+  doc.text(`${isEn ? 'Date' : 'Fecha'}: ${new Date().toLocaleDateString(dateLoc)}`, 15, 57);
+  doc.text(`${isEn ? 'Total players' : 'Total jugadores'}: ${players.length}`, 110, 57);
 
   doc.setFontSize(13);
   doc.setTextColor(...THEME_COLOR);
   doc.setFont(undefined, 'bold');
-  doc.text('Estadísticas de Plantilla', 15, 70);
+  doc.text(isEn ? 'Squad Statistics' : 'Estadísticas de Plantilla', 15, 70);
   doc.setFont(undefined, 'normal');
 
   const seasonTable = autoTable(doc, {
     startY: 74,
-    head: [['#', 'Jugador', 'Posición', 'Min.', 'PJ', 'Goles', 'Asist.', 'TA', 'TR', 'Estado']],
+    head: [['#', isEn ? 'Player' : 'Jugador', isEn ? 'Position' : 'Posición', 'Min.', isEn ? 'Apps' : 'PJ', isEn ? 'Goals' : 'Goles', isEn ? 'Assists' : 'Asist.', isEn ? 'YC' : 'TA', isEn ? 'RC' : 'TR', isEn ? 'Status' : 'Estado']],
     body: players.map(p => [
       p.dorsal || '-',
       p.nombre || '-',

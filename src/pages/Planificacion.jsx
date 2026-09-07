@@ -127,7 +127,7 @@ const Planificacion = () => {
   const { activeTeam } = useTeams();
   const { darkMode } = useTheme();
   const { isProActive } = usePlan();
-  const { t } = useTranslation();
+  const { t, isEn, locale } = useTranslation();
   const [upgradeModal, setUpgradeModal] = useState({ open: false, message: '' });
 
   // Colores adaptativos de contraste dorado/verde según el modo de tema
@@ -363,8 +363,9 @@ const Planificacion = () => {
         doc.setFont('Helvetica', 'normal');
         doc.setFontSize(8);
         doc.setTextColor(210, 225, 215);
-        const todayStr = new Date().toLocaleDateString('es-ES');
-        doc.text(`Fecha: ${todayStr} | Versión: ${APP_VERSION}`, pdfWidth - 12, 17, { align: 'right' });
+        const dateLocale = isEn ? 'en-US' : 'es-ES';
+        const todayStr = new Date().toLocaleDateString(dateLocale);
+        doc.text(`${isEn ? 'Date' : 'Fecha'}: ${todayStr} | ${isEn ? 'Version' : 'Versión'}: ${APP_VERSION}`, pdfWidth - 12, 17, { align: 'right' });
       };
 
       // Función para dibujar pie de página
@@ -375,7 +376,7 @@ const Planificacion = () => {
         doc.setFontSize(8);
         doc.setFont('Helvetica', 'normal');
         doc.text('Míster 11 - Inteligencia y Gestión Deportiva', 12, pdfHeight - 4);
-        doc.text(`Página ${pageNum} de ${totalPages}`, pdfWidth - 12, pdfHeight - 4, { align: 'right' });
+        doc.text(`${isEn ? 'Page' : 'Página'} ${pageNum} ${isEn ? 'of' : 'de'} ${totalPages}`, pdfWidth - 12, pdfHeight - 4, { align: 'right' });
       };
 
       // Función auxiliar para dibujar un indicador de métrica circular en el PDF

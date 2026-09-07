@@ -41,6 +41,7 @@ import CanvasToolbar from '../components/pizarra/CanvasToolbar';
 import MaterialsPanel from '../components/pizarra/MaterialsPanel';
 import SavedPlaysPanel from '../components/pizarra/SavedPlaysPanel';
 import AnimationPanel from '../components/pizarra/AnimationPanel';
+import { useTranslation } from '../hooks/useTranslation';
 import './Pizarra.css';
 
 // helper: 'half-attack' → 'half_attack' (library uses underscores)
@@ -69,6 +70,7 @@ const toLibType = (t) => {
 // ─────────────────────────────────────────────────────────────────────────────
 const PizarraTactica = () => {
   // Referencias a Context
+  const { t } = useTranslation();
   const { guardarEstado, obtenerEstado } = usePizarra();
   const { isProActive } = usePlan();
   const [upgradeModal, setUpgradeModal] = useState({ open: false, message: '' });
@@ -3238,7 +3240,7 @@ const PizarraTactica = () => {
               onPointerUp={(e) => e.stopPropagation()}
             >
               <div className="flex justify-between items-center mb-4 border-b pb-2">
-                <h3 className="font-bold text-lg text-gray-800">Equipos</h3>
+                <h3 className="font-bold text-lg text-gray-800">{t('board.panels.teams')}</h3>
                 <button className="text-gray-500 hover:text-black text-xl" onClick={(e) => { e.stopPropagation(); setShowTeamsDrawer(false); }}>✕</button>
               </div>
               <TeamsPanel />
@@ -3258,7 +3260,7 @@ const PizarraTactica = () => {
               onPointerUp={(e) => e.stopPropagation()}
             >
               <div className="flex justify-between items-center mb-4 border-b pb-2">
-                <h3 className="font-bold text-lg text-gray-800">Materiales</h3>
+                <h3 className="font-bold text-lg text-gray-800">{t('board.panels.materials')}</h3>
                 <button className="text-gray-500 hover:text-black text-xl" onClick={(e) => { e.stopPropagation(); setShowMatsDrawer(false); }}>✕</button>
               </div>
               <MaterialsPanelWrapper />
@@ -3271,14 +3273,14 @@ const PizarraTactica = () => {
               <button 
                 className={`btn-fullscreen-floating-left ${showTeamsDrawer ? 'active' : ''}`} 
                 onClick={() => { setShowTeamsDrawer(v => !v); setShowMatsDrawer(false); }}
-                title="Equipos"
+                title={t('board.panels.teams')}
               >
                 📋
               </button>
               <button 
                 className={`btn-fullscreen-floating-right ${showMatsDrawer ? 'active' : ''}`} 
                 onClick={() => { setShowMatsDrawer(v => !v); setShowTeamsDrawer(false); }}
-                title="Materiales"
+                title={t('board.panels.materials')}
               >
                 🧰
               </button>
@@ -3290,14 +3292,14 @@ const PizarraTactica = () => {
                 <button 
                   onClick={() => toggleLeftPanel()} 
                   className={`btn-portrait-floating-left ${showTeamsDrawer ? 'active' : ''}`}
-                  title="Equipos"
+                  title={t('board.panels.teams')}
                 >
                   👥
                 </button>
                 <button 
                   onClick={() => toggleRightPanel()} 
                   className={`btn-portrait-floating-right ${showMatsDrawer ? 'active' : ''}`}
-                  title="Materiales"
+                  title={t('board.panels.materials')}
                 >
                   🧰
                 </button>
@@ -3317,7 +3319,7 @@ const PizarraTactica = () => {
         {!showSidebars && !fullscreenMode && (showTeamsDrawer || showMatsDrawer) && (
           <div className="pizarra-portrait-drawer">
             <div className="pizarra-portrait-drawer-header">
-              <h3>{showTeamsDrawer ? 'Equipos y Formaciones' : 'Materiales'}</h3>
+              <h3>{showTeamsDrawer ? t('board.panels.teamsAndFormations') : t('board.panels.materials')}</h3>
               <button 
                 className="btn-close-portrait-drawer" 
                 onClick={() => { setShowTeamsDrawer(false); setShowMatsDrawer(false); }}

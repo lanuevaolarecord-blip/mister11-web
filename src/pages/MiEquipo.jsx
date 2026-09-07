@@ -62,7 +62,7 @@ const MiEquipo = () => {
   const { isPro, limits, isProActive } = usePlan();
   const { players, loading, addPlayer, updatePlayer, removePlayer } = usePlayers(activeTeamId);
   const { matches, allPlayersStats } = usePlayerSeasonStats(activeTeamId);
-  const { t } = useTranslation();
+  const { t, isEn, fmtPlural } = useTranslation();
   const [mainTeamTab, setMainTeamTab] = useState('squad'); // 'squad' | 'attendance'
   const [filter, setFilter] = useState('TODOS');
   const [selectedPlayer, setSelectedPlayer] = useState(null);
@@ -493,7 +493,7 @@ const MiEquipo = () => {
   };
 
   if (loading) {
-    return <div className="loading-state">Cargando plantilla...</div>;
+    return <div className="loading-state">{t('equipo.loadingSquad')}</div>;
   }
 
   return (
@@ -501,8 +501,8 @@ const MiEquipo = () => {
       <header className="page-header">
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px', marginBottom: '16px' }}>
           <div>
-            <h1 className="page-title">Mi Equipo</h1>
-            <p className="page-subtitle">{players.length} jugadores en la plantilla</p>
+            <h1 className="page-title">{t('equipo.title')}</h1>
+            <p className="page-subtitle">{fmtPlural(players.length, 'team.squadCount')}</p>
           </div>
           <button
             type="button"
@@ -524,7 +524,7 @@ const MiEquipo = () => {
             }}
           >
             <Megaphone size={16} />
-            <span>📢 Publicar Comunicado</span>
+            <span>📢 {t('equipo.publishAnnouncement')}</span>
           </button>
         </div>
 
@@ -590,7 +590,7 @@ const MiEquipo = () => {
                 className={`chip ${filter === pos ? 'active' : ''}`}
                 onClick={() => setFilter(pos)}
               >
-                {pos}
+                {pos === 'TODOS' ? t('common.all') : pos}
               </button>
             ))}
           </div>

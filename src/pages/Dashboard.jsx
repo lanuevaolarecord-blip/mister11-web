@@ -23,7 +23,7 @@ import {
   CheckCircle,
   Settings
 } from 'lucide-react';
-import { t } from '../i18n/translations';
+import { useTranslation } from '../hooks/useTranslation';
 import { useTheme } from '../context/ThemeContext';
 import { db, auth } from '../firebaseConfig';
 import { doc, getDoc, collection, onSnapshot } from '../firebase/firestore-proxy';
@@ -33,6 +33,7 @@ import './Dashboard.css';
 
 const Dashboard = () => {
   const { darkMode } = useTheme();
+  const { t, isEn } = useTranslation();
   const navigate = useNavigate();
   const { user, activeTeamId, refreshTeam, teams, getTeamPath } = useAuth();
   const activeTeam = teams?.find(t => t.id === activeTeamId) || null;
@@ -438,10 +439,10 @@ const Dashboard = () => {
             </div>
             <div>
               <h3 style={{ margin: 0, color: '#ffffff', fontSize: '18px', fontFamily: 'var(--font-heading)' }}>
-                ¡Tu Informe Semanal está listo!
+                {t('dashboard.weeklyReport.ready')}
               </h3>
               <p style={{ margin: '4px 0 0 0', color: '#cbd5e1', fontSize: '13px' }}>
-                Resumen de entrenamientos y partidos de la semana ({weeklyReportData.sessions.length} sesiones, {weeklyReportData.matches.length} partidos).
+                {t('dashboard.weeklyReport.desc', { sessions: weeklyReportData.sessions.length, matches: weeklyReportData.matches.length })}
               </p>
             </div>
           </div>
@@ -469,7 +470,7 @@ const Dashboard = () => {
                 boxShadow: '0 4px 6px rgba(0,0,0,0.1)'
               }}
             >
-              📥 Descargar PDF
+              📥 {t('dashboard.weeklyReport.download')}
             </button>
           </div>
         </div>
@@ -501,7 +502,7 @@ const Dashboard = () => {
                 minWidth: '150px'
               }}
             >
-              {isPro ? 'Probar Plan Gratuito' : 'Activar Modo PRO'}
+              {isPro ? t('dashboard.upgrade.tryFree') : t('dashboard.upgrade.activatePro')}
             </button>
             <div className="btn-outline-green" style={{ fontSize: '12px' }}>
               {t('dashboard.devUnlimited', settings.language)}
@@ -553,12 +554,12 @@ const Dashboard = () => {
                 fontFamily: 'var(--font-heading)'
               }}>
                 {(!isAdmin && isOnTrial && trialDaysRemaining <= 1)
-                  ? '⚠️ ¡Tu prueba vence pronto!'
+                  ? t('dashboard.upgrade.trialExpiringTitle')
                   : isPro && isOnTrial
-                    ? `👑 Míster11 ${plan.toUpperCase()} · Prueba Gratuita Activa`
+                    ? t('dashboard.upgrade.trialActiveTitle', { plan: plan.toUpperCase() })
                     : isPro && isRealPaidPro
-                      ? `👑 Míster11 ${plan.toUpperCase()} · Plan Activo`
-                      : '⭐ Míster11 Plan Gratuito (Limitado)'}
+                      ? t('dashboard.upgrade.planActiveTitle', { plan: plan.toUpperCase() })
+                      : t('dashboard.upgrade.freePlanTitle')}
               </h3>
               <p style={{
                 margin: 0,
@@ -567,14 +568,14 @@ const Dashboard = () => {
                 marginTop: '4px'
               }}>
                 {(!isAdmin && isOnTrial && trialDaysRemaining <= 1)
-                  ? `Solo quedan ${trialHoursRemaining > 0 ? trialHoursRemaining + ' horas' : 'pocas horas'} de prueba. Suscríbete para no perder el acceso.`
+                  ? t('dashboard.upgrade.trialExpiringDesc', { hours: trialHoursRemaining > 0 ? `${trialHoursRemaining}h` : (isEn ? 'few hours' : 'pocas horas') })
                   : isPro && isOnTrial
-                    ? `Tienes acceso total a todas las funciones premium. Te quedan ${trialDaysRemaining} días (${trialHoursRemaining % 24}h) de prueba.`
+                    ? t('dashboard.upgrade.trialActiveDesc', { days: trialDaysRemaining, hours: trialHoursRemaining % 24 })
                     : isPro && isRealPaidPro
-                      ? 'Tienes acceso completo a todas las funciones. Gracias por ser parte de Míster11 PRO.'
+                      ? t('dashboard.upgrade.planActiveDesc')
                       : isTrialExpired
-                        ? '🔒 Tu prueba gratuita ha finalizado. Suscríbete para recuperar el acceso PRO.'
-                        : 'Límites activos: 1 equipo, 23 jugadores, 10 sesiones y 5 generaciones de IA al mes.'}
+                        ? t('dashboard.upgrade.trialExpiredDesc')
+                        : t('dashboard.upgrade.freePlanDesc')}
               </p>
             </div>
           </div>
@@ -596,7 +597,7 @@ const Dashboard = () => {
                     minWidth: '150px'
                   }}
                 >
-                  {isPro ? 'Probar Plan Gratuito' : 'Activar Prueba PRO'}
+                  {isPro ? t('dashboard.upgrade.tryFree') : t('dashboard.upgrade.activateProTrial')}
                 </button>
                 {isPro && (
                   <button
@@ -613,7 +614,7 @@ const Dashboard = () => {
                       minHeight: '48px'
                     }}
                   >
-                    🔄 Reiniciar
+                    🔄 {t('dashboard.upgrade.resetTrial')}
                   </button>
                 )}
               </>
@@ -643,7 +644,7 @@ const Dashboard = () => {
                   whiteSpace: 'nowrap'
                 }}
               >
-                {isTrialExpired ? '🔓 RENOVAR ACCESO' : (!isAdmin && isOnTrial && trialDaysRemaining <= 1) ? '⚡ SUSCRIBIRME' : isPro ? '👑 VER PLANES' : '👑 VER PLANES PRO'}
+                {isTrialExpired ? t('dashboard.upgrade.renewAccess') : (!isAdmin && isOnTrial && trialDaysRemaining <= 1) ? t('dashboard.upgrade.subscribe') : isPro ? t('dashboard.upgrade.viewPlans') : t('dashboard.upgrade.viewPlansPro')}
               </button>
             )}
           </div>

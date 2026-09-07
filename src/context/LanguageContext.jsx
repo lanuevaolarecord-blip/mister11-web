@@ -40,32 +40,40 @@ export const LanguageProvider = ({ children }) => {
   const isEn = language === 'English (EN)';
   const locale = isEn ? 'en-GB' : 'es-ES';
 
-  const t = useCallback((key, replacements = {}) => {
-    return tFunction(key, language, replacements);
-  }, [language]);
-
-  const formatDate = useCallback((date, options = { month: 'short', day: 'numeric', year: 'numeric' }) => {
-    if (!date) return '';
+  const fmtPlural = useCallback((count, keyBase, params = {}) => {
+    const num = Number(count) || 0;
     try {
-      const d = date instanceof Date ? date : new Date(date);
-      if (isNaN(d.getTime())) return String(date);
-      return new Intl.DateTimeFormat(locale, options).format(d);
-    } catch (_) {
-      return String(date);
-    }
-  }, [locale]);
+      const pr = new Intl.PluralRules(locale);
+      const category = pr.select(num); // 'one', 'other', etc.
+      const candidateKey = `${keyBase}.${category}`;
+      const translated = tFunction(candidateKey, language, { count: num, n: num, ...params }, null);
+      if (translated && translated !== candidateKey) {
+        return translated;
+      }
+    } catch (_) {}
+    return tFunction(keyBase, language, { count: num, n: num, ...params });
+  }, [language, locale]);
 
-  const formatNumber = useCallback((number, options = {}) => {
-    if (number === null || number === undefined || isNaN(number)) return '--';
+  const getWeekdays = useCallback((style = 'narrow', startMonday = true) => {
     try {
-      return new Intl.NumberFormat(locale, options).format(number);
+      const days = [];
+      const dtf = new Intl.DateTimeFormat(locale, { weekday: style });
+      // 2026-01-05 es Lunes
+      const baseDay = startMonday ? 5 : 4; // 5=Lunes, 4=Domingo
+      for (let i = 0; i < 7; i++) {
+        const d = new Date(2026, 0, baseDay + i);
+        let s = dtf.format(d);
+        if (style === 'narrow') s = s.charAt(0).toUpperCase();
+        days.push(s);
+      }
+      return days;
     } catch (_) {
-      return String(number);
+      return isEn ? ['M', 'T', 'W', 'T', 'F', 'S', 'S'] : ['L', 'M', 'X', 'J', 'V', 'S', 'D'];
     }
-  }, [locale]);
+  }, [locale, isEn]);
 
   return (
-    <LanguageContext.Provider value={{ language, setLanguage, t, isEn, locale, formatDate, formatNumber }}>
+    <LanguageContext.Provider value={{ language, setLanguage, t, isEn, locale, formatDate, formatNumber, fmtPlural, getWeekdays }}>
       {children}
     </LanguageContext.Provider>
   );
@@ -76,14 +84,18 @@ export const useLanguage = () => {
   if (!context) {
     // Fallback defensivo si se usa fuera del provider
     const eff = getEffectiveLanguage();
+    const isE = eff === 'English (EN)';
+    const loc = isE ? 'en-GB' : 'es-ES';
     return {
       language: eff,
       setLanguage: () => {},
       t: (key, replacements) => tFunction(key, eff, replacements),
-      isEn: eff === 'English (EN)',
-      locale: eff === 'English (EN)' ? 'en-GB' : 'es-ES',
+      isEn: isE,
+      locale: loc,
       formatDate: (d) => String(d || ''),
-      formatNumber: (n) => String(n || '')
+      formatNumber: (n) => String(n || ''),
+      fmtPlural: (count, keyBase, params) => tFunction(keyBase, eff, { count, n: count, ...params }),
+      getWeekdays: () => isE ? ['M', 'T', 'W', 'T', 'F', 'S', 'S'] : ['L', 'M', 'X', 'J', 'V', 'S', 'D']
     };
   }
   return context;

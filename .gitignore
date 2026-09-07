@@ -48,6 +48,10 @@ android/app/build/
 Mister11.apk
 *.apk
 *.aab
-
+Mister11.aab
 mister11_registro_digital/
 *.zip
+
+# Service Account Key (Firebase Admin)
+serviceAccountKey.json
+*serviceAccount*.json

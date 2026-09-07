@@ -40,6 +40,30 @@ export const LanguageProvider = ({ children }) => {
   const isEn = language === 'English (EN)';
   const locale = isEn ? 'en-GB' : 'es-ES';
 
+  const t = useCallback((key, replacements, fallback) => {
+    return tFunction(key, language, replacements, fallback);
+  }, [language]);
+
+  const formatDate = useCallback((date, options = {}) => {
+    if (!date) return '';
+    try {
+      const d = typeof date === 'string' || typeof date === 'number' ? new Date(date) : date;
+      if (isNaN(d.getTime())) return String(date);
+      return new Intl.DateTimeFormat(locale, options).format(d);
+    } catch (_) {
+      return String(date);
+    }
+  }, [locale]);
+
+  const formatNumber = useCallback((number, options = {}) => {
+    if (number === null || number === undefined || isNaN(number)) return '';
+    try {
+      return new Intl.NumberFormat(locale, options).format(number);
+    } catch (_) {
+      return String(number);
+    }
+  }, [locale]);
+
   const fmtPlural = useCallback((count, keyBase, params = {}) => {
     const num = Number(count) || 0;
     try {

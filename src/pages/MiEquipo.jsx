@@ -974,7 +974,8 @@ const MiEquipo = () => {
                 className="player-sidebar-btn btn-share-fiche"
                 onClick={() => {
                   const baseUrl = window.location.origin;
-                  const consentLink = `${baseUrl}/shared/consentimiento?coachId=${user.uid}&teamId=${activeTeamId}&teamName=${encodeURIComponent(activeTeam?.nombre || 'Míster11 Club')}&coachName=${encodeURIComponent(user.displayName || 'el Entrenador')}`;
+                  const playerLocale = selectedPlayer?.locale || selectedPlayer?.lang || (isEn ? 'en' : 'es');
+                  const consentLink = `${baseUrl}/shared/consentimiento?coachId=${user.uid}&teamId=${activeTeamId}&teamName=${encodeURIComponent(activeTeam?.nombre || 'Míster11 Club')}&coachName=${encodeURIComponent(user.displayName || 'el Entrenador')}&lang=${playerLocale}`;
                   const whatsappMsg = isEn ? `Hi, I need you to sign the digital consent form to register ${selectedPlayer.name} on the Míster11 sports platform. You can fill it out and sign it with your finger in 1 minute at this link: ${consentLink}` : `Hola, necesito que firmes el consentimiento digital para registrar a ${selectedPlayer.name} en la plataforma deportiva Míster11. Puedes rellenarlo y firmarlo con tu dedo en 1 minuto desde este enlace: ${consentLink}`;
                   window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(whatsappMsg)}`, '_blank');
                 }}

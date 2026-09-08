@@ -379,7 +379,8 @@ const AdminPanel = () => {
     await addExercise({
       ...newExercise,
       source: 'manual',
-      createdBy: 'trainer'
+      createdBy: 'trainer',
+      locale: isEn ? 'en' : 'es'
     });
     setShowAddExerciseModal(false);
     setNewExercise({
@@ -995,7 +996,7 @@ const AdminPanel = () => {
                         return;
                       }
                       const baseUrl = window.location.origin;
-                      const consentLink = `${baseUrl}/shared/consentimiento?coachId=${user.uid}&teamId=${activeTeam.id}&teamName=${encodeURIComponent(activeTeam.nombre || 'Míster11 Club')}&coachName=${encodeURIComponent(user.displayName || 'el Entrenador')}`;
+                      const consentLink = `${baseUrl}/shared/consentimiento?coachId=${user.uid}&teamId=${activeTeam.id}&teamName=${encodeURIComponent(activeTeam.nombre || 'Míster11 Club')}&coachName=${encodeURIComponent(user.displayName || 'el Entrenador')}&lang=${isEn ? 'en' : 'es'}`;
                       navigator.clipboard.writeText(consentLink);
                       showToast(isEn ? "Link copied to clipboard! Share it with parents." : "¡Enlace copiado al portapapeles! Envíalo por WhatsApp.", "success");
                     }}

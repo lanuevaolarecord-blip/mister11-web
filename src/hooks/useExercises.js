@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { subscribeToCollection, addDocument, updateDocument, deleteDocument, createNotification } from '../firebase/db';
+import { isEn, t } from '../i18n/index.js';
 
 export const PREDEFINED_EXERCISES = [
   {
@@ -121,22 +122,33 @@ export const useExercises = (teamId) => {
     }
 
     const path = getTeamPath(teamId);
+    const activeLocale = exerciseData.locale || (isEn() ? 'en' : 'es');
     const docId = await addDocument(`${path}/exercises`, {
       ...exerciseData,
       name: cleanName,
       title: cleanName,
       titulo: cleanName,
+      locale: activeLocale,
       createdAt: new Date().toISOString()
     });
 
-    await createNotification('success', `Nuevo ejercicio guardado: ${cleanName}`);
+    await createNotification('success', {
+      template: 'notifications.newExerciseSaved',
+      payload: { name: cleanName },
+      text: t('notifications.newExerciseSaved', { name: cleanName }),
+      locale: activeLocale
+    });
     return docId;
   };
 
   const removeExercise = async (id) => {
     if (!user || !teamId) return;
     if (id.startsWith('sys-')) {
-      await createNotification('error', 'No puedes eliminar un ejercicio predefinido del sistema.');
+      await createNotification('error', {
+        template: 'notifications.predefinedExerciseError',
+        text: t('notifications.predefinedExerciseError'),
+        locale: isEn() ? 'en' : 'es'
+      });
       return;
     }
     const path = getTeamPath(teamId);

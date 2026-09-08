@@ -10,6 +10,7 @@ import {
   addDoc, 
   serverTimestamp 
 } from 'firebase/firestore';
+import { t, getLocale, isEn } from '../i18n/index.js';
 
 export const useNotifications = (teamId) => {
   const { user, getTeamPath } = useAuth();
@@ -55,7 +56,7 @@ export const useNotifications = (teamId) => {
           id: doc.id,
           ...doc.data(),
           rawDate: doc.data().createdAt,
-          time: formatTime(doc.data().createdAt)
+          time: formatNotificationTime(doc.data().createdAt)
         }));
         updateMerged();
       }, (err) => {
@@ -75,7 +76,7 @@ export const useNotifications = (teamId) => {
         id: doc.id,
         ...doc.data(),
         rawDate: doc.data().createdAt,
-        time: formatTime(doc.data().createdAt)
+        time: formatNotificationTime(doc.data().createdAt)
       }));
       updateMerged();
     }, (err) => {
@@ -89,15 +90,26 @@ export const useNotifications = (teamId) => {
     };
   }, [user, teamId, getTeamPath]);
 
-  const addNotification = async (type, text) => {
+  const addNotification = async (type, content, extra = {}) => {
     if (!user || !teamId) return;
     try {
       const path = getTeamPath(teamId);
-      await addDoc(collection(db, path, 'notifications'), {
+      const isObj = typeof content === 'object' && content !== null;
+      const text = isObj ? (content.text || '') : (typeof content === 'string' ? content : '');
+      const template = isObj ? content.template : extra.template;
+      const payload = isObj ? content.payload : extra.payload;
+      const locale = (isObj && content.locale) || extra.locale || (isEn() ? 'en' : 'es');
+
+      const notifData = {
         type,
         text,
+        locale,
         createdAt: serverTimestamp()
-      });
+      };
+      if (template) notifData.template = template;
+      if (payload) notifData.payload = payload;
+
+      await addDoc(collection(db, path, 'notifications'), notifData);
     } catch (error) {
       console.error("Error adding notification:", error);
     }
@@ -106,14 +118,15 @@ export const useNotifications = (teamId) => {
   return { notifications, loading, addNotification };
 };
 
-const formatTime = (timestamp) => {
-  if (!timestamp) return 'Ahora';
+export const formatNotificationTime = (timestamp) => {
+  if (!timestamp) return t('notifications.timeNow');
   const date = (timestamp && typeof timestamp.toDate === 'function') ? timestamp.toDate() : new Date(timestamp);
+  if (isNaN(date.getTime())) return t('notifications.timeNow');
   const now = new Date();
   const diffInSeconds = Math.floor((now - date) / 1000);
 
-  if (diffInSeconds < 60) return 'Hace un momento';
-  if (diffInSeconds < 3600) return `Hace ${Math.floor(diffInSeconds / 60)} min`;
-  if (diffInSeconds < 86400) return `Hace ${Math.floor(diffInSeconds / 3600)} horas`;
-  return date.toLocaleDateString('es-ES', { day: 'numeric', month: 'short' });
+  if (diffInSeconds < 60) return t('notifications.timeJustNow');
+  if (diffInSeconds < 3600) return t('notifications.timeMinAgo', { min: Math.floor(diffInSeconds / 60) });
+  if (diffInSeconds < 86400) return t('notifications.timeHoursAgo', { hours: Math.floor(diffInSeconds / 3600) });
+  return date.toLocaleDateString(getLocale(), { day: 'numeric', month: 'short' });
 };

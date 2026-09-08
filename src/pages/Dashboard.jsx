@@ -132,7 +132,10 @@ const Dashboard = () => {
       const alreadyProcessed = localStorage.getItem(storageKey);
       if (!alreadyProcessed) {
         try {
-          await createNotification('success', isEn ? '📋 Your weekly team report is ready. Download it from the main panel!' : '📋 Tu informe semanal del equipo ya está listo. ¡Descárgalo en el panel principal!');
+          await createNotification('success', {
+            template: 'notifications.weeklyReportReady',
+            text: t('notifications.weeklyReportReady')
+          });
           localStorage.setItem(storageKey, 'notified');
         } catch (e) {
           console.error("Error creating weekly report notification:", e);

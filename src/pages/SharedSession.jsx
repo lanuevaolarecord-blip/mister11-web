@@ -74,11 +74,16 @@ const SharedSession = () => {
         time: '18:00',
         blocks: session.blocks || [],
         importedFromShareId: shareId,
+        locale: session.locale || (isEn ? 'en' : 'es'),
         importedAt: new Date().toISOString(),
       };
 
       await addDocument(`${teamPath}/sessions`, sessionPayload);
-      await createNotification('success', isEn ? `Session "${sessionPayload.title}" imported successfully` : `Sesión "${sessionPayload.title}" importada con éxito`).catch(() => {});
+      await createNotification('success', {
+        template: 'notifications.sessionImportedSuccess',
+        payload: { title: sessionPayload.title },
+        text: t('notifications.sessionImportedSuccess', { title: sessionPayload.title })
+      }).catch(() => {});
       
       setImportedSuccess(true);
       setTimeout(() => {

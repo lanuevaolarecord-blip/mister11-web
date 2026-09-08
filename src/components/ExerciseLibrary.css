@@ -89,6 +89,17 @@
   color: #854D0E;
 }
 
+.badge-original-lang {
+  font-size: 0.7rem;
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-weight: 600;
+  background: #EFF6FF;
+  color: #1D4ED8;
+  border: 1px solid #BFDBFE;
+  white-space: nowrap;
+}
+
 .badge-cat {
   font-size: 0.75rem;
   padding: 4px 10px;

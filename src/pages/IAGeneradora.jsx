@@ -455,6 +455,7 @@ No incluyas proceso de razonamiento, thinking ni análisis. Responde exclusivame
         content: result,
         source: 'ia', 
         createdBy: 'ia',
+        locale: isEn ? 'en' : 'es',
         category: mode === 'prevencion' ? 'prevencion' : 'tactico',
         createdAt: new Date().toISOString()
       });

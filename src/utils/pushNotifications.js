@@ -8,7 +8,7 @@ import { PushNotifications } from '@capacitor/push-notifications';
 import { doc, setDoc, getDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../firebaseConfig';
 import { showToast } from './toast';
-import { t } from '../i18n/index.js';
+import { t, isEn } from '../i18n/index.js';
 
 const COOLDOWN_DAYS = 30;
 const LOCAL_STORAGE_KEY = 'm11_push_prompt_state';
@@ -75,6 +75,7 @@ export const savePushToken = async (userId, token, platform = 'android', teamIds
       token,
       platform,
       teamIds: Array.isArray(teamIds) ? teamIds : [teamIds].filter(Boolean),
+      locale: isEn() ? 'en' : 'es',
       lastSeenAt: serverTimestamp(),
       createdAt: serverTimestamp(),
     }, { merge: true });

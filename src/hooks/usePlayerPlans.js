@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { subscribeToCollection, addDocument, updateDocument, deleteDocument, createNotification } from '../firebase/db';
+import { t, isEn } from '../i18n/index.js';
 
 export const usePlayerPlans = (teamId) => {
   const { user, getTeamPath } = useAuth();
@@ -38,10 +39,14 @@ export const usePlayerPlans = (teamId) => {
     const path = getTeamPath(teamId);
     const docId = await addDocument(`${path}/playerPlans`, {
       ...planData,
+      locale: planData.locale || (isEn() ? 'en' : 'es'),
       createdAt: new Date().toISOString(),
       active: true
     });
-    await createNotification('success', 'Plan individual asignado correctamente');
+    await createNotification('success', {
+      template: 'notifications.individualPlanAssigned',
+      text: t('notifications.individualPlanAssigned')
+    });
     return docId;
   };
 
@@ -56,10 +61,14 @@ export const usePlayerPlans = (teamId) => {
     const path = getTeamPath(teamId);
     const docId = await addDocument(`${path}/teamPlans`, {
       ...planData,
+      locale: planData.locale || (isEn() ? 'en' : 'es'),
       createdAt: new Date().toISOString(),
       active: true
     });
-    await createNotification('success', 'Plan de equipo asignado correctamente');
+    await createNotification('success', {
+      template: 'notifications.teamPlanAssigned',
+      text: t('notifications.teamPlanAssigned')
+    });
     return docId;
   };
 
@@ -73,14 +82,20 @@ export const usePlayerPlans = (teamId) => {
     if (!user || !teamId) return;
     const path = getTeamPath(teamId);
     await deleteDocument(`${path}/playerPlans`, id);
-    await createNotification('info', 'Plan individual eliminado');
+    await createNotification('info', {
+      template: 'notifications.individualPlanRemoved',
+      text: t('notifications.individualPlanRemoved')
+    });
   };
 
   const removeTeamPlan = async (id) => {
     if (!user || !teamId) return;
     const path = getTeamPath(teamId);
     await deleteDocument(`${path}/teamPlans`, id);
-    await createNotification('info', 'Plan de equipo eliminado');
+    await createNotification('info', {
+      template: 'notifications.teamPlanRemoved',
+      text: t('notifications.teamPlanRemoved')
+    });
   };
 
   return { 

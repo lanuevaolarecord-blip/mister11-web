@@ -12,6 +12,7 @@ import {
   getDoc
 } from './firestore-proxy';
 import { db, auth } from '../firebaseConfig';
+import { isEn } from '../i18n/index.js';
 
 /**
  * Lee un documento único de Firestore.
@@ -124,7 +125,7 @@ export const deleteDocument = async (collectionName, id) => {
   }
 };
 
-export const createNotification = async (type, text, targetTeamId = null) => {
+export const createNotification = async (type, content, targetTeamId = null, extra = {}) => {
   try {
     const uid = auth.currentUser?.uid || localStorage.getItem('mister11_active_user_uid');
     if (!uid || uid === 'invitado-local') return; // Silenciar en modo invitado
@@ -134,11 +135,23 @@ export const createNotification = async (type, text, targetTeamId = null) => {
       ? collection(db, 'users', uid, 'teams', activeTeamId, 'notifications')
       : collection(db, 'users', uid, 'notifications');
 
-    await addDoc(colRef, {
+    const isObj = typeof content === 'object' && content !== null;
+    const text = isObj ? (content.text || '') : (typeof content === 'string' ? content : '');
+    const template = isObj ? content.template : extra.template;
+    const payload = isObj ? content.payload : extra.payload;
+    const locale = (isObj && content.locale) || extra.locale || (isEn() ? 'en' : 'es');
+
+    const notifData = {
       type,
       text,
+      locale,
       createdAt: serverTimestamp()
-    });
+    };
+
+    if (template) notifData.template = template;
+    if (payload) notifData.payload = payload;
+
+    await addDoc(colRef, notifData);
   } catch (error) {
     console.error("Error creating notification:", error);
   }

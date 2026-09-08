@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { subscribeToCollection, addDocument, updateDocument, deleteDocument, createNotification } from '../firebase/db';
 import { scheduleSessionReminder, cancelSessionReminder, requestNotificationPermission } from './useLocalNotifications';
+import { t, isEn } from '../i18n/index.js';
 
 export const sanitizeForFirestore = (obj) => {
   if (obj === undefined || obj === null) return null;
@@ -49,7 +50,12 @@ export const useSessions = (teamId) => {
     const docId = await addDocument(`${path}/sessions`, cleanedData);
 
     // Notificaciones en segundo plano (no bloqueantes)
-    createNotification('success', `Nueva sesión creada: ${sessionData.title || 'Sesión'}`).catch(() => {});
+    const sessTitle = sessionData.title || (isEn() ? 'Session' : 'Sesión');
+    createNotification('success', {
+      template: 'notifications.newSessionCreated',
+      payload: { title: sessTitle },
+      text: t('notifications.newSessionCreated', { title: sessTitle })
+    }).catch(() => {});
 
     const notifEnabled = localStorage.getItem('mister11_notifications_enabled') !== 'false';
     if (notifEnabled && docId) {

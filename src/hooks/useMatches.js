@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { subscribeToCollection, addDocument, updateDocument, deleteDocument, createNotification } from '../firebase/db';
+import { t, isEn } from '../i18n/index.js';
 
 export const useMatches = (teamId) => {
   const { user, getTeamPath } = useAuth();
@@ -27,11 +28,18 @@ export const useMatches = (teamId) => {
   const addMatch = async (matchData) => {
     if (!user || !teamId) return;
     const path = getTeamPath(teamId);
+    const mLocale = matchData.locale || (isEn() ? 'en' : 'es');
     const docId = await addDocument(`${path}/matches`, {
-      ...matchData
+      ...matchData,
+      locale: mLocale
     });
 
-    await createNotification('info', `Nuevo partido registrado vs ${matchData.rival}`);
+    const rivalName = matchData.rival || (isEn() ? 'Rival' : 'Rival');
+    await createNotification('info', {
+      template: 'notifications.newMatchRegistered',
+      payload: { rival: rivalName },
+      text: t('notifications.newMatchRegistered', { rival: rivalName })
+    });
     return docId;
   };
 

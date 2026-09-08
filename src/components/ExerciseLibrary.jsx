@@ -36,7 +36,8 @@ const ExerciseLibrary = ({ activeTeamId }) => {
     await addExercise({
       ...newExercise,
       source: 'manual',
-      createdBy: 'trainer'
+      createdBy: 'trainer',
+      locale: isEn ? 'en' : 'es'
     });
     setShowModal(false);
     setNewExercise({
@@ -92,8 +93,18 @@ const ExerciseLibrary = ({ activeTeamId }) => {
             <div key={ex.id} className="exercise-card">
               <div className="exercise-card-header">
                 <h3>{ex.name || ex.titulo || ex.title || (isEn ? 'Exercise' : 'Ejercicio')}</h3>
-                {ex.source === 'system' && <span className="badge-system">{isEn ? 'System' : 'Sistema'}</span>}
-                {ex.source === 'ia' && <span className="badge-ia">{isEn ? 'AI' : 'IA'}</span>}
+                <div style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
+                  {ex.source === 'system' && <span className="badge-system">{isEn ? 'System' : 'Sistema'}</span>}
+                  {ex.source === 'ia' && <span className="badge-ia">{isEn ? 'AI' : 'IA'}</span>}
+                  {ex.locale && ex.locale !== (isEn ? 'en' : 'es') && (
+                    <span 
+                      className="badge-original-lang" 
+                      title={ex.locale === 'es' ? t('common.originalLanguageEs') : t('common.originalLanguageEn')}
+                    >
+                      {ex.locale === 'es' ? t('common.originalBadgeEs') : t('common.originalBadgeEn')}
+                    </span>
+                  )}
+                </div>
               </div>
               <div className="exercise-card-body">
                 <span className={`badge-cat cat-${ex.category}`}>
@@ -180,13 +191,23 @@ const ExerciseLibrary = ({ activeTeamId }) => {
           <div className="modal-content view-exercise-modal" onClick={e => e.stopPropagation()}>
             <div className="modal-header">
               <h2>{viewExercise.name || viewExercise.titulo}</h2>
-              <span className={`badge-cat cat-${viewExercise.category}`}>
-                {viewExercise.category === 'prevencion' ? (isEn ? 'Prevention' : 'Prevención') :
-                 viewExercise.category === 'recuperacion' ? (isEn ? 'Recovery' : 'Recuperación') :
-                 viewExercise.category === 'fortalecimiento' ? (isEn ? 'Strengthening' : 'Fortalecimiento') :
-                 viewExercise.category === 'movilidad' ? (isEn ? 'Mobility' : 'Movilidad') :
-                 viewExercise.category}
-              </span>
+              <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+                <span className={`badge-cat cat-${viewExercise.category}`}>
+                  {viewExercise.category === 'prevencion' ? (isEn ? 'Prevention' : 'Prevención') :
+                   viewExercise.category === 'recuperacion' ? (isEn ? 'Recovery' : 'Recuperación') :
+                   viewExercise.category === 'fortalecimiento' ? (isEn ? 'Strengthening' : 'Fortalecimiento') :
+                   viewExercise.category === 'movilidad' ? (isEn ? 'Mobility' : 'Movilidad') :
+                   viewExercise.category}
+                </span>
+                {viewExercise.locale && viewExercise.locale !== (isEn ? 'en' : 'es') && (
+                  <span 
+                    className="badge-original-lang" 
+                    title={viewExercise.locale === 'es' ? t('common.originalLanguageEs') : t('common.originalLanguageEn')}
+                  >
+                    {viewExercise.locale === 'es' ? t('common.originalLanguageEs') : t('common.originalLanguageEn')}
+                  </span>
+                )}
+              </div>
             </div>
             
             <div className="exercise-meta-detail">

@@ -8,8 +8,18 @@ import { useTranslation } from '../hooks/useTranslation';
 import './ConsentimientoFirma.css';
 
 const ConsentimientoFirma = () => {
-  const { t, isEn, locale } = useTranslation();
+  const { t, isEn, locale, setLanguage } = useTranslation();
   const [searchParams] = useSearchParams();
+
+  useEffect(() => {
+    const langParam = searchParams.get('lang') || searchParams.get('locale');
+    if (langParam) {
+      const target = (langParam === 'en' || langParam === 'English (EN)' || langParam.toLowerCase().startsWith('en'))
+        ? 'English (EN)'
+        : 'Español (ES)';
+      setLanguage(target);
+    }
+  }, [searchParams, setLanguage]);
   
   // Parámetros de la URL pasados por el entrenador
   const coachId = searchParams.get('coachId') || '';
@@ -254,6 +264,7 @@ const ConsentimientoFirma = () => {
         relation,
         acceptHealth,
         acceptImage,
+        locale: isEn ? 'en' : 'es',
         createdAt: new Date().toISOString(),
         signedIP: 'Firma Móvil Digitalizada'
       });

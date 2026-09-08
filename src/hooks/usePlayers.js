@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { subscribeToCollection, addDocument, updateDocument, deleteDocument, createNotification } from '../firebase/db';
 import { increment } from 'firebase/firestore';
+import { t, isEn } from '../i18n/index.js';
 
 export const usePlayers = (teamId) => {
   const { user, getTeamPath } = useAuth();
@@ -28,8 +29,10 @@ export const usePlayers = (teamId) => {
   const addPlayer = async (playerData) => {
     if (!user || !teamId) return;
     const path = getTeamPath(teamId);
+    const pLocale = playerData.locale || (isEn() ? 'en' : 'es');
     const docId = await addDocument(`${path}/players`, {
-      ...playerData
+      ...playerData,
+      locale: pLocale
     });
     
     // Actualizar playerCount en el documento del equipo de forma atómica
@@ -38,7 +41,12 @@ export const usePlayers = (teamId) => {
     const colPath = pathParts.join('/');
     await updateDocument(colPath, tId, { playerCount: increment(1) });
     
-    await createNotification('info', `Nuevo jugador añadido: ${playerData.nombre}`);
+    const playerName = playerData.nombre || playerData.name || (isEn() ? 'Player' : 'Jugador');
+    await createNotification('info', {
+      template: 'notifications.newPlayerAdded',
+      payload: { name: playerName },
+      text: t('notifications.newPlayerAdded', { name: playerName })
+    });
     return docId;
   };
 

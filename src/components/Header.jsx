@@ -141,7 +141,7 @@ const Header = ({ onToggleNotif }) => {
             <select
               value={permissions.role}
               onChange={(e) => switchMyRole(e.target.value)}
-              aria-label={`Rol activo: ${permissions.roleInfo.label}. Cambiar mi rol.`}
+              aria-label={isEn ? `Active role: ${permissions.roleInfo.label}. Switch my role.` : `Rol activo: ${permissions.roleInfo.label}. Cambiar mi rol.`}
               style={{
                 position: 'absolute',
                 top: 0,
@@ -161,11 +161,11 @@ const Header = ({ onToggleNotif }) => {
                   value={r.id} 
                   style={{ background: '#121C16', color: '#FFFFFF', fontSize: '0.85rem', padding: '6px' }}
                 >
-                  {r.id === 'admin' ? '👑 Primer Entrenador' :
-                   r.id === 'coach' ? '🥈 Segundo Entrenador' :
-                   r.id === 'fitness_coach' ? '🏋️ Preparador Físico' :
-                   r.id === 'assistant' ? '⏱️ Ayudante' :
-                   r.id === 'physio' ? '🩺 Fisioterapeuta' : r.badge}
+                  {r.id === 'admin' ? (isEn ? '👑 Head Coach' : '👑 Primer Entrenador') :
+                   r.id === 'coach' ? (isEn ? '🥈 Assistant Coach' : '🥈 Segundo Entrenador') :
+                   r.id === 'fitness_coach' ? (isEn ? '🏋️ Fitness Coach' : '🏋️ Preparador Físico') :
+                   r.id === 'assistant' ? (isEn ? '⏱️ Assistant' : '⏱️ Ayudante') :
+                   r.id === 'physio' ? (isEn ? '🩺 Physiotherapist' : '🩺 Fisioterapeuta') : r.badge}
                 </option>
               ))}
             </select>

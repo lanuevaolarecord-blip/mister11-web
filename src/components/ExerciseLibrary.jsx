@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Plus, Trash2, Search, Filter, Eye } from 'lucide-react';
-import { useExercises } from '../hooks/useExercises';
+import { useExercises, getLocalizedExercise } from '../hooks/useExercises';
 import { useAuth } from '../context/AuthContext';
 import { useTranslation } from '../hooks/useTranslation';
 import './ExerciseLibrary.css';
@@ -89,7 +89,9 @@ const ExerciseLibrary = ({ activeTeamId }) => {
         <div className="loading-state">{isEn ? 'Loading exercises...' : 'Cargando ejercicios...'}</div>
       ) : (
         <div className="exercises-grid">
-          {filteredExercises.map(ex => (
+          {filteredExercises.map(rawEx => {
+            const ex = getLocalizedExercise(rawEx, isEn);
+            return (
             <div key={ex.id} className="exercise-card">
               <div className="exercise-card-header">
                 <h3>{ex.name || ex.titulo || ex.title || (isEn ? 'Exercise' : 'Ejercicio')}</h3>
@@ -133,7 +135,7 @@ const ExerciseLibrary = ({ activeTeamId }) => {
                 )}
               </div>
             </div>
-          ))}
+          ); })}
         </div>
       )}
 
@@ -186,44 +188,46 @@ const ExerciseLibrary = ({ activeTeamId }) => {
         </div>
       )}
 
-      {viewExercise && (
+      {viewExercise && (() => {
+        const activeViewEx = getLocalizedExercise(viewExercise, isEn);
+        return (
         <div className="modal-overlay" onClick={() => setViewExercise(null)}>
           <div className="modal-content view-exercise-modal" onClick={e => e.stopPropagation()}>
             <div className="modal-header">
-              <h2>{viewExercise.name || viewExercise.titulo}</h2>
+              <h2>{activeViewEx.name || activeViewEx.titulo}</h2>
               <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
-                <span className={`badge-cat cat-${viewExercise.category}`}>
-                  {viewExercise.category === 'prevencion' ? (isEn ? 'Prevention' : 'Prevención') :
-                   viewExercise.category === 'recuperacion' ? (isEn ? 'Recovery' : 'Recuperación') :
-                   viewExercise.category === 'fortalecimiento' ? (isEn ? 'Strengthening' : 'Fortalecimiento') :
-                   viewExercise.category === 'movilidad' ? (isEn ? 'Mobility' : 'Movilidad') :
-                   viewExercise.category}
+                <span className={`badge-cat cat-${activeViewEx.category}`}>
+                  {activeViewEx.category === 'prevencion' ? (isEn ? 'Prevention' : 'Prevención') :
+                   activeViewEx.category === 'recuperacion' ? (isEn ? 'Recovery' : 'Recuperación') :
+                   activeViewEx.category === 'fortalecimiento' ? (isEn ? 'Strengthening' : 'Fortalecimiento') :
+                   activeViewEx.category === 'movilidad' ? (isEn ? 'Mobility' : 'Movilidad') :
+                   activeViewEx.category}
                 </span>
-                {viewExercise.locale && viewExercise.locale !== (isEn ? 'en' : 'es') && (
+                {activeViewEx.locale && activeViewEx.locale !== (isEn ? 'en' : 'es') && (
                   <span 
                     className="badge-original-lang" 
-                    title={viewExercise.locale === 'es' ? t('common.originalLanguageEs') : t('common.originalLanguageEn')}
+                    title={activeViewEx.locale === 'es' ? t('common.originalLanguageEs') : t('common.originalLanguageEn')}
                   >
-                    {viewExercise.locale === 'es' ? t('common.originalLanguageEs') : t('common.originalLanguageEn')}
+                    {activeViewEx.locale === 'es' ? t('common.originalLanguageEs') : t('common.originalLanguageEn')}
                   </span>
                 )}
               </div>
             </div>
             
             <div className="exercise-meta-detail">
-              {viewExercise.durationSeconds > 0 && <span>⏱️ {viewExercise.durationSeconds}s</span>}
-              {viewExercise.reps > 0 && <span>🔁 {viewExercise.reps} reps</span>}
-              {viewExercise.series > 0 && <span>🔄 {viewExercise.series} {isEn ? 'sets' : 'series'}</span>}
-              <span>⭐ {isEn ? 'Level' : 'Nivel'} {viewExercise.difficulty}</span>
+              {activeViewEx.durationSeconds > 0 && <span>⏱️ {activeViewEx.durationSeconds}s</span>}
+              {activeViewEx.reps > 0 && <span>🔁 {activeViewEx.reps} reps</span>}
+              {activeViewEx.series > 0 && <span>🔄 {activeViewEx.series} {isEn ? 'sets' : 'series'}</span>}
+              <span>⭐ {isEn ? 'Level' : 'Nivel'} {activeViewEx.difficulty}</span>
             </div>
 
             <div className="exercise-description-detail">
-              {viewExercise.markdown ? (
+              {activeViewEx.markdown ? (
                 <div className="ia-markdown">
-                  {renderMarkdown(viewExercise.markdown)}
+                  {renderMarkdown(activeViewEx.markdown)}
                 </div>
               ) : (
-                <p>{viewExercise.description || (isEn ? 'No description' : 'Sin descripción')}</p>
+                <p>{activeViewEx.description || (isEn ? 'No description' : 'Sin descripción')}</p>
               )}
             </div>
 
@@ -232,7 +236,7 @@ const ExerciseLibrary = ({ activeTeamId }) => {
             </div>
           </div>
         </div>
-      )}
+      ); })()}
     </div>
   );
 };

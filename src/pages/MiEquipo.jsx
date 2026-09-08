@@ -30,6 +30,23 @@ import './MiEquipo.css';
 
 const POSITIONS = ['TODOS', 'POR', 'DEF', 'LTD', 'LTI', 'MCD', 'MC', 'MCO', 'EXT', 'DEL'];
 
+const formatPosition = (pos, isEn) => {
+  if (!pos) return '';
+  if (pos === 'TODOS') return isEn ? 'ALL' : 'TODOS';
+  const map = {
+    'POR': isEn ? 'GK' : 'POR',
+    'DEF': isEn ? 'DEF' : 'DEF',
+    'LTD': isEn ? 'RB' : 'LTD',
+    'LTI': isEn ? 'LB' : 'LTI',
+    'MCD': isEn ? 'CDM' : 'MCD',
+    'MC':  isEn ? 'CM' : 'MC',
+    'MCO': isEn ? 'CAM' : 'MCO',
+    'EXT': isEn ? 'W' : 'EXT',
+    'DEL': isEn ? 'ST' : 'DEL',
+  };
+  return map[pos] || pos;
+};
+
 const stringToColor = (str) => {
   if (!str) return '#1B3A2D';
   let hash = 0;
@@ -590,7 +607,7 @@ const MiEquipo = () => {
                 className={`chip ${filter === pos ? 'active' : ''}`}
                 onClick={() => setFilter(pos)}
               >
-                {pos === 'TODOS' ? t('common.all') : pos}
+                {formatPosition(pos, isEn)}
               </button>
             ))}
           </div>
@@ -642,14 +659,14 @@ const MiEquipo = () => {
                 <div style={{ background: 'var(--bg-app)', margin: '0 12px 6px 12px', padding: '8px', borderRadius: '8px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <div style={{ display: 'flex', flexDirection: 'column' }}>
                     <span style={{ fontSize: '10px', color: 'var(--text-secondary)' }}>Pos</span>
-                    <strong style={{ fontSize: '12px', color: 'var(--text-primary)' }}>{player.position}</strong>
+                    <strong style={{ fontSize: '12px', color: 'var(--text-primary)' }}>{formatPosition(player.position, isEn)}</strong>
                   </div>
                   <div style={{ display: 'flex', flexDirection: 'column' }}>
                     <span style={{ fontSize: '10px', color: 'var(--text-secondary)' }}>{t('player.age')}</span>
                     <strong style={{ fontSize: '12px', color: 'var(--text-primary)' }}>{calcularEdad(player.fechaNacimiento || player.birthDate || player.age, isEn).text}</strong>
                   </div>
                   <div style={{ display: 'flex', flexDirection: 'column' }}>
-                    <span style={{ fontSize: '10px', color: 'var(--text-secondary)' }}>Alt</span>
+                    <span style={{ fontSize: '10px', color: 'var(--text-secondary)' }}>{isEn ? 'Ht' : 'Alt'}</span>
                     <strong style={{ fontSize: '12px', color: 'var(--text-primary)' }}>{player.height || '--'}</strong>
                   </div>
                 </div>
@@ -807,7 +824,7 @@ const MiEquipo = () => {
                 <div className="form-group-team">
                   <label>{isEn ? 'Position' : 'Posición'}</label>
                   <select value={editData.position} onChange={e => setEditData({...editData, position: e.target.value})}>
-                    {POSITIONS.filter(p=>p!=='TODOS').map(pos => <option key={pos} value={pos}>{pos}</option>)}
+                    {POSITIONS.filter(p=>p!=='TODOS').map(pos => <option key={pos} value={pos}>{formatPosition(pos, isEn)}</option>)}
                   </select>
                 </div>
                 <div className="form-group-team">
@@ -1025,7 +1042,7 @@ const MiEquipo = () => {
             <h2 style={{ margin: '0 0 4px 0', fontSize: '19px', fontFamily: 'var(--font-heading)', color: 'var(--text-primary)', fontWeight: 800 }}>{selectedPlayer.name}</h2>
             <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px', fontSize: '16px', fontWeight: 'bold', color: 'var(--text-primary)', marginBottom: '16px' }}>
               <span style={{ color: 'var(--accent-gold)' }}>#{selectedPlayer.number || '11'}</span>
-              <span className="capitalize" style={{ fontSize: '13px', fontWeight: 'bold', background: 'var(--accent-green-light)', color: 'var(--accent-green)', padding: '2px 8px', borderRadius: '12px' }}>{selectedPlayer.position}</span>
+              <span className="capitalize" style={{ fontSize: '13px', fontWeight: 'bold', background: 'var(--accent-green-light)', color: 'var(--accent-green)', padding: '2px 8px', borderRadius: '12px' }}>{formatPosition(selectedPlayer.position, isEn)}</span>
             </div>
           </div>
 
@@ -1058,11 +1075,16 @@ const MiEquipo = () => {
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: '12px', borderBottom: '1px dashed var(--border-light)' }}>
                   <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>{t('player.foot')}</span>
-                  <strong className="capitalize" style={{ fontSize: '13px', color: 'var(--text-primary)' }}>{selectedPlayer.foot}</strong>
+                  <strong className="capitalize" style={{ fontSize: '13px', color: 'var(--text-primary)' }}>
+                    {selectedPlayer.foot === 'Derecho' ? (isEn ? 'Right' : 'Derecho') :
+                     selectedPlayer.foot === 'Izquierdo' ? (isEn ? 'Left' : 'Izquierdo') :
+                     selectedPlayer.foot === 'Ambidiestro' ? (isEn ? 'Both' : 'Ambidiestro') :
+                     selectedPlayer.foot}
+                  </strong>
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: '12px', borderBottom: '1px dashed var(--border-light)' }}>
                   <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>{t('player.primaryPosition')}</span>
-                  <span className="capitalize" style={{ background: 'var(--accent-green-light)', color: 'var(--accent-green)', padding: '4px 12px', borderRadius: '16px', fontSize: '12px', fontWeight: 'bold' }}>{selectedPlayer.position}</span>
+                  <span className="capitalize" style={{ background: 'var(--accent-green-light)', color: 'var(--accent-green)', padding: '4px 12px', borderRadius: '16px', fontSize: '12px', fontWeight: 'bold' }}>{formatPosition(selectedPlayer.position, isEn)}</span>
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: '12px', borderBottom: '1px dashed var(--border-light)' }}>
                   <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>{t('player.age')}</span>

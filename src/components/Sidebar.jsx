@@ -15,21 +15,49 @@ import {
 import { auth, signOut } from '../firebaseConfig';
 import { useSettings } from '../hooks/useSettings';
 import { useAuth } from '../context/AuthContext';
-import { t } from '../i18n/translations';
+import { useTranslation } from '../hooks/useTranslation';
 
 const Sidebar = ({ isOpen, onClose }) => {
   const { teams, activeTeamId, changeActiveTeam, logout, switchMode } = useAuth();
   const { settings } = useSettings(activeTeamId);
+  const { t, isEn } = useTranslation();
+
+  const getRoleLabel = () => {
+    const raw = settings.specialty || 'Primer Entrenador';
+    if (raw === 'Primer Entrenador' || raw === 'admin') {
+      return isEn ? 'Head Coach' : 'Primer Entrenador';
+    }
+    if (raw === 'Entrenador' || raw === 'Coach') {
+      return isEn ? 'Coach' : 'Entrenador';
+    }
+    if (raw === 'Segundo Entrenador' || raw === 'assistantCoach') {
+      return isEn ? 'Assistant Coach' : 'Segundo Entrenador';
+    }
+    if (raw === 'Preparador Físico' || raw === 'physicalTrainer') {
+      return isEn ? 'Fitness Coach' : 'Preparador Físico';
+    }
+    if (raw === 'Entrenador de Porteros' || raw === 'goalkeeperCoach') {
+      return isEn ? 'Goalkeeper Coach' : 'Entrenador de Porteros';
+    }
+    if (raw === 'Analista Táctico' || raw === 'analyst') {
+      return isEn ? 'Tactical Analyst' : 'Analista Táctico';
+    }
+    if (raw === 'Fisioterapeuta' || raw === 'physio') {
+      return isEn ? 'Physiotherapist' : 'Fisioterapeuta';
+    }
+    return raw;
+  };
+
   const navItems = [
-    { path: '/', label: t('nav.dashboard', settings.language), icon: LayoutDashboard },
-    { path: '/pizarra', label: t('nav.pizarra', settings.language), icon: Presentation },
-    { path: '/equipo', label: t('nav.equipo', settings.language), icon: Users },
-    { path: '/sesiones', label: t('nav.sesiones', settings.language), icon: CalendarDays },
-    { path: '/planificacion', label: t('nav.planificacion', settings.language), icon: TrendingUp },
-    { path: '/tests', label: t('nav.tests', settings.language), icon: Activity },
-    { path: '/partidos', label: t('nav.partidos', settings.language), icon: Trophy },
-    { path: '/ia-generadora', label: t('nav.ia', settings.language), icon: Sparkles },
-    { path: '/admin', label: t('nav.admin', settings.language), icon: ShieldCheck },
+    { path: '/', label: t('nav.dashboard'), icon: LayoutDashboard },
+    { path: '/pizarra', label: t('nav.pizarra'), icon: Presentation },
+    { path: '/equipo', label: t('nav.equipo'), icon: Users },
+    { path: '/sesiones', label: t('nav.sesiones'), icon: CalendarDays },
+    { path: '/planificacion', label: t('nav.planificacion'), icon: TrendingUp },
+    { path: '/tests', label: t('nav.tests'), icon: Activity },
+    { path: '/partidos', label: t('nav.partidos'), icon: Trophy },
+    { path: '/ia-generadora', label: t('nav.ia'), icon: Sparkles },
+    { path: '/admin', label: t('nav.admin'), icon: ShieldCheck },
   ];
 
   const handleLogout = async () => {
@@ -48,7 +76,7 @@ const Sidebar = ({ isOpen, onClose }) => {
         <button 
           className="sidebar-close-btn" 
           onClick={onClose}
-          aria-label={t('common.closeMenu', settings.language)}
+          aria-label={t('common.closeMenu')}
         >
           ✕
         </button>
@@ -77,8 +105,8 @@ const Sidebar = ({ isOpen, onClose }) => {
             {auth.currentUser?.displayName?.charAt(0)?.toUpperCase() || 'M'}
           </div>
           <div className="user-info">
-            <span className="user-name">{settings.profileName || auth.currentUser?.displayName?.split(' ')[0] || 'Míster'}</span>
-            <span className="user-role">{settings.specialty || 'Entrenador'}</span>
+            <span className="user-name">{settings.profileName || auth.currentUser?.displayName?.split(' ')[0] || (isEn ? 'Coach' : 'Míster')}</span>
+            <span className="user-role">{getRoleLabel()}</span>
           </div>
         </div>
         <button 
@@ -90,14 +118,14 @@ const Sidebar = ({ isOpen, onClose }) => {
           className="btn-logout-sidebar"
           style={{ background: 'rgba(16, 185, 129, 0.15)', color: '#10B981', borderColor: 'rgba(16, 185, 129, 0.3)' }}
         >
-          <Users size={14} /> Modo / Portal Jugador
+          <Users size={14} /> {isEn ? 'Player Portal / Mode' : 'Modo / Portal Jugador'}
         </button>
 
         <button 
           onClick={handleLogout} 
           className="btn-logout-sidebar"
         >
-          <LogOut size={14} /> Cerrar Sesión
+          <LogOut size={14} /> {t('auth.logout')}
         </button>
 
       </div>

@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { TrendingUp, Clock, Info, HelpCircle, ChevronDown, ChevronUp, X, BookOpen } from 'lucide-react';
 import { useTheme } from '../../context/ThemeContext';
+import { useTranslation } from '../../hooks/useTranslation';
 
 export const MatchTimeline = ({
   events = [],
@@ -9,26 +10,27 @@ export const MatchTimeline = ({
   matchDuration = 90
 }) => {
   const { darkMode } = useTheme();
+  const { isEn } = useTranslation();
   const [hoveredPoint, setHoveredPoint] = useState(null);
   const [showGuide, setShowGuide] = useState(false);
   const [showFormulaModal, setShowFormulaModal] = useState(false);
 
   // Normalizar nombres de equipos con espacios correctos
-  const cleanHomeName = (homeTeamName || 'Mi Equipo').trim();
-  const cleanAwayName = (awayTeamName || 'Rival').trim();
+  const cleanHomeName = (homeTeamName || (isEn ? 'My Team' : 'Mi Equipo')).trim();
+  const cleanAwayName = (awayTeamName || (isEn ? 'Opponent' : 'Rival')).trim();
 
   const getEventLabel = (type) => {
-    if (!type) return 'Acción';
+    if (!type) return isEn ? 'Action' : 'Acción';
     const t = type.toLowerCase();
-    if (t.includes('gol_local') || t === 'gol' || t === 'goal') return 'Gol';
-    if (t.includes('gol_rival')) return 'Gol rival';
-    if (t.includes('yellow') || t.includes('amarilla')) return 'Tarjeta amarilla';
-    if (t.includes('red') || t.includes('roja')) return 'Tarjeta roja';
-    if (t.includes('cambio') || t.includes('substitution')) return 'Cambio';
-    if (t.includes('shot_on')) return 'Tiro a puerta';
-    if (t.includes('shot_off')) return 'Tiro fuera';
-    if (t.includes('corner')) return 'Córner';
-    return 'Evento';
+    if (t.includes('gol_local') || t === 'gol' || t === 'goal') return isEn ? 'Goal' : 'Gol';
+    if (t.includes('gol_rival')) return isEn ? 'Opponent goal' : 'Gol rival';
+    if (t.includes('yellow') || t.includes('amarilla')) return isEn ? 'Yellow card' : 'Tarjeta amarilla';
+    if (t.includes('red') || t.includes('roja')) return isEn ? 'Red card' : 'Tarjeta roja';
+    if (t.includes('cambio') || t.includes('substitution')) return isEn ? 'Substitution' : 'Cambio';
+    if (t.includes('shot_on')) return isEn ? 'Shot on target' : 'Tiro a puerta';
+    if (t.includes('shot_off')) return isEn ? 'Shot off target' : 'Tiro fuera';
+    if (t.includes('corner')) return isEn ? 'Corner' : 'Córner';
+    return isEn ? 'Event' : 'Evento';
   };
 
   // Calcular curva de momentum por tramos de 5 minutos (Fórmula profesional)
@@ -219,7 +221,7 @@ export const MatchTimeline = ({
             }}
           >
             <BookOpen size={12} />
-            <span>Cómo leer</span>
+            <span>{isEn ? 'How to read' : 'Cómo leer'}</span>
             {showGuide ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
           </button>
           <button
@@ -240,7 +242,7 @@ export const MatchTimeline = ({
             }}
           >
             <HelpCircle size={12} />
-            <span>¿Cómo se calcula?</span>
+            <span>{isEn ? 'How is it calculated?' : '¿Cómo se calcula?'}</span>
           </button>
 
           {/* Título normalizado con espacios y capitalización estricta */}
@@ -268,11 +270,13 @@ export const MatchTimeline = ({
           color: darkMode ? '#CBD5E1' : '#1E293B',
           lineHeight: '1.5'
         }}>
-          <div style={{ fontWeight: 900, color: darkMode ? '#FBBF24' : '#B45309', marginBottom: '4px' }}>📖 Cómo leer esta gráfica (Lenguaje de Míster):</div>
+          <div style={{ fontWeight: 900, color: darkMode ? '#FBBF24' : '#B45309', marginBottom: '4px' }}>
+            {isEn ? '📖 How to read this chart (Coach language):' : '📖 Cómo leer esta gráfica (Lenguaje de Míster):'}
+          </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-            <div>📈 <strong>Curva hacia arriba (por encima del 50%):</strong> Tramo donde tu equipo llevó la iniciativa, pisó área rival o generó tiros y córners.</div>
-            <div>📉 <strong>Curva hacia abajo (por debajo del 50%):</strong> Tramo donde el rival tuvo mayor control, generó ocasiones o te encerró en tu campo.</div>
-            <div>⚡ <strong>Hitos (Iconos sobre el minuto):</strong> Momentos que cambiaron la inercia (goles, tarjetas, cambios tácticos).</div>
+            <div>📈 <strong>{isEn ? 'Upward curve (above 50%):' : 'Curva hacia arriba (por encima del 50%):'}</strong> {isEn ? 'Period when your team had initiative, entered the opponent box, or created shots and corners.' : 'Tramo donde tu equipo llevó la iniciativa, pisó área rival o generó tiros y córners.'}</div>
+            <div>📉 <strong>{isEn ? 'Downward curve (below 50%):' : 'Curva hacia abajo (por debajo del 50%):'}</strong> {isEn ? 'Period when the opponent had greater control, created chances, or pinned you in your half.' : 'Tramo donde el rival tuvo mayor control, generó ocasiones o te encerró en tu campo.'}</div>
+            <div>⚡ <strong>{isEn ? 'Milestones (Icons on the minute):' : 'Hitos (Iconos sobre el minuto):'}</strong> {isEn ? 'Moments that changed the momentum (goals, cards, tactical substitutions).' : 'Momentos que cambiaron la inercia (goles, tarjetas, cambios tácticos).'}</div>
           </div>
         </div>
       )}
@@ -280,8 +284,12 @@ export const MatchTimeline = ({
       {!hasRealEvents ? (
         <div style={{ padding: '48px 16px', textAlign: 'center', color: darkMode ? '#94A3B8' : '#64748B' }}>
           <Info size={32} style={{ margin: '0 auto 10px', opacity: 0.6 }} />
-          <div style={{ fontSize: '14px', fontWeight: '700', color: darkMode ? '#FFFFFF' : '#0F172A' }}>Sin datos de momentum</div>
-          <div style={{ fontSize: '12px', marginTop: '4px' }}>Inicia el cronómetro y registra eventos durante el partido para visualizar la curva de dominio.</div>
+          <div style={{ fontSize: '14px', fontWeight: '700', color: darkMode ? '#FFFFFF' : '#0F172A' }}>
+            {isEn ? 'No momentum data' : 'Sin datos de momentum'}
+          </div>
+          <div style={{ fontSize: '12px', marginTop: '4px' }}>
+            {isEn ? 'Start the timer and record match events to visualize the dominance curve.' : 'Inicia el cronómetro y registra eventos durante el partido para visualizar la curva de dominio.'}
+          </div>
         </div>
       ) : (
         <>
@@ -292,10 +300,10 @@ export const MatchTimeline = ({
 
               {/* Zona superior (Dominio Local) / Zona inferior (Dominio Rival) */}
               <text x={padding.left + 8} y={padding.top + 14} fill={darkMode ? '#FBBF24' : '#B45309'} fontSize="9.5" fontWeight="900">
-                ▲ DOMINIO {cleanHomeName.toUpperCase()}
+                ▲ {isEn ? `${cleanHomeName.toUpperCase()} DOMINANCE` : `DOMINIO ${cleanHomeName.toUpperCase()}`}
               </text>
               <text x={padding.left + 8} y={padding.top + graphHeight - 8} fill={darkMode ? '#4ADE80' : '#047857'} fontSize="9.5" fontWeight="900">
-                ▼ DOMINIO {cleanAwayName.toUpperCase()}
+                ▼ {isEn ? `${cleanAwayName.toUpperCase()} DOMINANCE` : `DOMINIO ${cleanAwayName.toUpperCase()}`}
               </text>
 
               {/* Línea central de equilibrio (50% momentum neutro) */}
@@ -337,7 +345,7 @@ export const MatchTimeline = ({
                 fontSize="8.5"
                 fontWeight="900"
               >
-                DESCANSO (45′)
+                {isEn ? 'HALF TIME (45′)' : 'DESCANSO (45′)'}
               </text>
 
               {/* Curva de Momentum */}
@@ -426,15 +434,17 @@ export const MatchTimeline = ({
               boxShadow: darkMode ? '0 4px 16px rgba(0,0,0,0.4)' : '0 4px 12px rgba(0,0,0,0.08)'
             }}>
               <div>
-                <strong style={{ color: darkMode ? '#FBBF24' : '#B45309' }}>Minuto {hoveredPoint.minute}′:</strong>{' '}
+                <strong style={{ color: darkMode ? '#FBBF24' : '#B45309' }}>
+                  {isEn ? `Minute ${hoveredPoint.minute}′:` : `Minuto ${hoveredPoint.minute}′:`}
+                </strong>{' '}
                 <span style={{ color: darkMode ? '#FFFFFF' : '#0F172A', fontWeight: 600 }}>
                   {hoveredPoint.momentum >= 50
-                    ? `Dominio de ${cleanHomeName} (${hoveredPoint.momentum}%)`
-                    : `Dominio de ${cleanAwayName} (${(100 - hoveredPoint.momentum).toFixed(1)}%)`}
+                    ? (isEn ? `${cleanHomeName} dominance (${hoveredPoint.momentum}%)` : `Dominio de ${cleanHomeName} (${hoveredPoint.momentum}%)`)
+                    : (isEn ? `${cleanAwayName} dominance (${(100 - hoveredPoint.momentum).toFixed(1)}%)` : `Dominio de ${cleanAwayName} (${(100 - hoveredPoint.momentum).toFixed(1)}%)`)}
                 </span>
                 {hoveredPoint.descriptions && hoveredPoint.descriptions.length > 0 && (
                   <div style={{ fontSize: '11px', color: darkMode ? '#CBD5E1' : '#475569', marginTop: '3px' }}>
-                    Acciones en este tramo: {hoveredPoint.descriptions.join(' · ')}
+                    {isEn ? 'Actions in this period:' : 'Acciones en este tramo:'} {hoveredPoint.descriptions.join(' · ')}
                   </div>
                 )}
               </div>
@@ -514,7 +524,7 @@ export const MatchTimeline = ({
           >
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
               <h3 style={{ margin: 0, fontSize: '16px', fontWeight: '800', color: darkMode ? '#D4A843' : '#B45309', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <TrendingUp size={18} /> ¿Cómo se calcula el Momentum (Tramos de 5')?
+                <TrendingUp size={18} /> {isEn ? "How is Momentum calculated (5' blocks)?" : "¿Cómo se calcula el Momentum (Tramos de 5')?"}
               </h3>
               <button 
                 type="button" 
@@ -526,28 +536,42 @@ export const MatchTimeline = ({
             </div>
 
             <p style={{ fontSize: '12.5px', color: darkMode ? '#CBD5E1' : '#334155', lineHeight: '1.5', margin: '0 0 14px 0' }}>
-              El Momentum representa el <strong>equilibrio dinámico de iniciativa y control</strong> en cada bloque de 5 minutos de juego:
+              {isEn 
+                ? <>Momentum represents the <strong>dynamic balance of initiative and control</strong> in each 5-minute match period:</>
+                : <>El Momentum representa el <strong>equilibrio dinámico de iniciativa y control</strong> en cada bloque de 5 minutos de juego:</>}
             </p>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
               <div style={{ background: darkMode ? 'rgba(0,0,0,0.2)' : '#F8FAFC', padding: '10px 12px', borderRadius: '8px', borderLeft: `3px solid ${darkMode ? '#D4A843' : '#B45309'}` }}>
-                <div style={{ fontWeight: '800', fontSize: '13px', color: darkMode ? '#FFFFFF' : '#0F172A' }}>⚖️ Línea de Equilibrio (50%)</div>
+                <div style={{ fontWeight: '800', fontSize: '13px', color: darkMode ? '#FFFFFF' : '#0F172A' }}>
+                  {isEn ? '⚖️ Balance Line (50%)' : '⚖️ Línea de Equilibrio (50%)'}
+                </div>
                 <div style={{ fontSize: '11.5px', color: darkMode ? '#94A3B8' : '#475569', marginTop: '2px' }}>
-                  Cuando el partido está igualado sin ocasiones de peligro o con juego trabado en mediocampo, la curva se sitúa en el 50%.
+                  {isEn 
+                    ? 'When the match is balanced without danger or locked in midfield, the curve sits at 50%.'
+                    : 'Cuando el partido está igualado sin ocasiones de peligro o con juego trabado en mediocampo, la curva se sitúa en el 50%.'}
                 </div>
               </div>
 
               <div style={{ background: darkMode ? 'rgba(0,0,0,0.2)' : '#F8FAFC', padding: '10px 12px', borderRadius: '8px', borderLeft: `3px solid ${darkMode ? '#4CAF7D' : '#059669'}` }}>
-                <div style={{ fontWeight: '800', fontSize: '13px', color: darkMode ? '#FFFFFF' : '#0F172A' }}>🔥 Ponderación de Eventos Reales</div>
+                <div style={{ fontWeight: '800', fontSize: '13px', color: darkMode ? '#FFFFFF' : '#0F172A' }}>
+                  {isEn ? '🔥 Real Event Weighting' : '🔥 Ponderación de Eventos Reales'}
+                </div>
                 <div style={{ fontSize: '11.5px', color: darkMode ? '#94A3B8' : '#475569', marginTop: '2px' }}>
-                  Cada evento suma peso estadístico: Gol (+10 pts), Tiro a puerta (+4 pts), Córner (+2 pts), Duelo ganado (+1 pt). Los fallos y tarjetas rivales suman a la contra.
+                  {isEn 
+                    ? 'Each event adds statistical weight: Goal (+10 pts), Shot on target (+4 pts), Corner (+2 pts), Duel won (+1 pt). Opponent events count in reverse.'
+                    : 'Cada evento suma peso estadístico: Gol (+10 pts), Tiro a puerta (+4 pts), Córner (+2 pts), Duelo ganado (+1 pt). Los fallos y tarjetas rivales suman a la contra.'}
                 </div>
               </div>
 
               <div style={{ background: darkMode ? 'rgba(0,0,0,0.2)' : '#F8FAFC', padding: '10px 12px', borderRadius: '8px', borderLeft: '3px solid #3B82F6' }}>
-                <div style={{ fontWeight: '800', fontSize: '13px', color: darkMode ? '#FFFFFF' : '#0F172A' }}>🔄 Inercia Deportiva (70% / 30%)</div>
+                <div style={{ fontWeight: '800', fontSize: '13px', color: darkMode ? '#FFFFFF' : '#0F172A' }}>
+                  {isEn ? '🔄 Match Inertia (70% / 30%)' : '🔄 Inercia Deportiva (70% / 30%)'}
+                </div>
                 <div style={{ fontSize: '11.5px', color: darkMode ? '#94A3B8' : '#475569', marginTop: '2px' }}>
-                  Para reflejar rachas tácticas reales, el momentum de cada bloque mantiene un 30% del tramo anterior y un 70% de las acciones del tramo presente.
+                  {isEn 
+                    ? 'To reflect realistic tactical flow, each period keeps 30% of previous momentum and 70% from current actions.'
+                    : 'Para reflejar rachas tácticas reales, el momentum de cada bloque mantiene un 30% del tramo anterior y un 70% de las acciones del tramo presente.'}
                 </div>
               </div>
             </div>
@@ -558,7 +582,7 @@ export const MatchTimeline = ({
               className="btn-primary"
               style={{ width: '100%', marginTop: '18px', padding: '10px', fontWeight: '800' }}
             >
-              ENTENDIDO
+              {isEn ? 'UNDERSTOOD' : 'ENTENDIDO'}
             </button>
           </div>
         </div>

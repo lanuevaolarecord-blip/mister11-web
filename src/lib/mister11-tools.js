@@ -16,6 +16,7 @@
 
 import { fabric } from 'fabric';
 import { applyMister11Controls } from './mister11-materials.js';
+import { isEn } from '../i18n/index.js';
 
 // ─────────────────────────────────────────
 // DEFINICIÓN DE HERRAMIENTAS
@@ -738,7 +739,8 @@ export class ToolManager {
   // CREAR TEXTO
   // ───────────────────────────────────────
   _createText(x, y) {
-    const text = new fabric.IText('Texto', {
+    const defaultText = isEn() ? 'Text' : 'Texto';
+    const text = new fabric.IText(defaultText, {
       left: x,
       top: y,
       fontFamily: 'Inter, Arial, sans-serif',

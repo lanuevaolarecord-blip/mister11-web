@@ -934,7 +934,7 @@ export const drawEvolutionChartCanvas = (points = [], width = 640, height = 260,
  * @param {number} height - Alto en px
  * @returns {string} DataURL base64 PNG
  */
-export const drawMomentumChartCanvas = (events = [], matchDuration = 90, width = 640, height = 220) => {
+export const drawMomentumChartCanvas = (events = [], matchDuration = 90, width = 640, height = 220, isEn = false) => {
   try {
     const scale = CANVAS_DPI_SCALE;
     const canvas = document.createElement('canvas');
@@ -960,7 +960,7 @@ export const drawMomentumChartCanvas = (events = [], matchDuration = 90, width =
     ctx.font = 'bold 12px Arial, sans-serif';
     ctx.fillStyle = '#0F172A';
     ctx.textAlign = 'left';
-    ctx.fillText('MOMENTUM & DINÁMICA DEL PARTIDO (DOMINIO PROPIO VS RIVAL)', padL, padT - 10);
+    ctx.fillText(isEn ? 'MATCH MOMENTUM & DYNAMICS (OWN VS OPPONENT DOMINANCE)' : 'MOMENTUM & DINÁMICA DEL PARTIDO (DOMINIO PROPIO VS RIVAL)', padL, padT - 10);
 
     // Eje central cero
     ctx.beginPath();
@@ -984,7 +984,7 @@ export const drawMomentumChartCanvas = (events = [], matchDuration = 90, width =
     ctx.font = 'bold 9px Arial, sans-serif';
     ctx.fillStyle = '#94A3B8';
     ctx.textAlign = 'center';
-    ctx.fillText('DESCANSO (45\')', halfX, padT + plotH + 16);
+    ctx.fillText(isEn ? 'HALF TIME (45\')' : 'DESCANSO (45\')', halfX, padT + plotH + 16);
 
     // Calcular momentum por tramos de 5 minutos
     const bucketMinutes = 5;

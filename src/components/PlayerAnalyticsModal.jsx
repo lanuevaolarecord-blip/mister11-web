@@ -16,6 +16,7 @@ const C_BORDER  = '#E0DACA';
 // ── SVG Radar Chart (Pentagonal 5 Ejes / Dinámico) ──────────────
 export const SvgRadar = ({ data, size = 320 }) => {
   const { darkMode } = useTheme();
+  const { isEn } = useTranslation();
   if (!data || data.length === 0) return null;
   const padX = 95;
   const padY = 32;
@@ -81,7 +82,15 @@ export const SvgRadar = ({ data, size = 320 }) => {
     if (Math.cos(a) > 0.25) textAnchor = 'start';
     else if (Math.cos(a) < -0.25) textAnchor = 'end';
 
-    const labelText = d.subject || d.label || `Eje ${i+1}`;
+    const radarLabelMap = {
+      'FÍSICO': isEn ? 'PHYSICAL' : 'FÍSICO',
+      'TÉCNICA': isEn ? 'TECHNICAL' : 'TÉCNICA',
+      'TÁCTICA': isEn ? 'TACTICAL' : 'TÁCTICA',
+      'MENTAL': isEn ? 'MENTAL' : 'MENTAL',
+      'ASISTENCIA': isEn ? 'ATTENDANCE' : 'ASISTENCIA'
+    };
+    const rawLabel = d.subject || d.label || (isEn ? `Axis ${i+1}` : `Eje ${i+1}`);
+    const labelText = radarLabelMap[rawLabel.toUpperCase()] || rawLabel;
 
     return (
       <g key={labelText + i}>
@@ -382,7 +391,7 @@ const PlayerAnalyticsModal = ({
               flexShrink: 0
             }}>
               <h3 style={{ margin: 0, color: C_DARK, fontSize: 14, fontWeight: 700, letterSpacing: 1 }}>
-                PERFIL DE RENDIMIENTO
+                {isEn ? 'PERFORMANCE PROFILE' : 'PERFIL DE RENDIMIENTO'}
               </h3>
               <SvgRadar data={radarData} size={300} />
             </div>
@@ -394,18 +403,22 @@ const PlayerAnalyticsModal = ({
                 background: C_DARK, borderRadius: 16, padding: '20px 24px',
                 display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4
               }}>
-                <span style={{ color: 'rgba(255,255,255,0.6)', fontSize: 12, letterSpacing: 2 }}>ÍNDICE GLOBAL</span>
+                <span style={{ color: 'rgba(255,255,255,0.6)', fontSize: 12, letterSpacing: 2 }}>
+                  {isEn ? 'OVERALL RATING' : 'ÍNDICE GLOBAL'}
+                </span>
                 <span style={{ fontSize: 56, fontWeight: 900, color: C_GOLD, lineHeight: 1 }}>{overall || '--'}</span>
-                <span style={{ color: 'rgba(255,255,255,0.5)', fontSize: 12 }}>sobre 100</span>
+                <span style={{ color: 'rgba(255,255,255,0.5)', fontSize: 12 }}>
+                  {isEn ? 'out of 100' : 'sobre 100'}
+                </span>
               </div>
               {/* Attribute badges (5 ejes canónicos del radar pentagonal) */}
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(95px, 1fr))', gap: 10 }}>
                 {[
-                  { label: 'FÍSICO', value: fis, color: '#4CAF7D' },
-                  { label: 'TÉCNICA', value: tec, color: '#2196F3' },
-                  { label: 'TÁCTICA', value: tactica, color: '#10B981' },
-                  { label: 'MENTAL', value: psi, color: C_GOLD },
-                  { label: 'ASISTENCIA', value: asistencia, color: '#8B5CF6' },
+                  { label: isEn ? 'PHYSICAL' : 'FÍSICO', value: fis, color: '#4CAF7D' },
+                  { label: isEn ? 'TECHNICAL' : 'TÉCNICA', value: tec, color: '#2196F3' },
+                  { label: isEn ? 'TACTICAL' : 'TÁCTICA', value: tactica, color: '#10B981' },
+                  { label: isEn ? 'MENTAL' : 'MENTAL', value: psi, color: C_GOLD },
+                  { label: isEn ? 'ATTENDANCE' : 'ASISTENCIA', value: asistencia, color: '#8B5CF6' },
                 ].map(({ label, value, color }) => (
                   <div key={label} style={{
                     background: '#FFF', borderRadius: 12, padding: '12px 8px',

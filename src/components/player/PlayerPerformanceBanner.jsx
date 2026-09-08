@@ -116,7 +116,7 @@ export const PlayerPerformanceBanner = ({ player, teamPath, onNavigateTab, onOpe
 
         {/* Columna Izquierda: Radar Perfil de Rendimiento */}
         <div className="pitch-radar-block">
-          <span className="pitch-block-title">PERFIL DE RENDIMIENTO</span>
+          <span className="pitch-block-title">{isEn ? 'PERFORMANCE PROFILE' : 'PERFIL DE RENDIMIENTO'}</span>
           {testCount > 0 || validDimensions.length > 0 ? (
             <div className="radar-wrapper">
               <SvgRadar data={radarData} size={220} />
@@ -131,7 +131,7 @@ export const PlayerPerformanceBanner = ({ player, teamPath, onNavigateTab, onOpe
           )}
           <div className="pitch-medal-badge">
             <span style={{ fontSize: '14px' }}>🎖️</span>
-            <span>MEDALLA DE RENDIMIENTO</span>
+            <span>{isEn ? 'PERFORMANCE MEDAL' : 'MEDALLA DE RENDIMIENTO'}</span>
           </div>
         </div>
 

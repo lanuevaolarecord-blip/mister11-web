@@ -12,6 +12,7 @@
 
 import React from 'react';
 import { useTheme } from '../context/ThemeContext';
+import { useTranslation } from '../hooks/useTranslation';
 
 // ── 1. SVG Donut Chart (Gráfica de Eficiencia) ────────────────────────────────
 export const SvgDonut = ({
@@ -25,6 +26,7 @@ export const SvgDonut = ({
   darkMode: darkModeProp,
 }) => {
   const themeContext = useTheme();
+  const { isEn } = useTranslation();
   const darkMode = darkModeProp !== undefined ? darkModeProp : (themeContext?.darkMode ?? true);
 
   const total = value1 + value2;
@@ -143,7 +145,7 @@ export const SvgDonut = ({
             <span style={{ color: legendColor2 }}>{value2} {label2}</span>
           </>
         ) : (
-          <span style={{ color: subTextColor, fontStyle: 'italic' }}>Sin datos</span>
+          <span style={{ color: subTextColor, fontStyle: 'italic' }}>{isEn ? 'No data' : 'Sin datos'}</span>
         )}
       </div>
     </div>
@@ -153,6 +155,7 @@ export const SvgDonut = ({
 // ── 2. Comparativa Propio vs Rival (Barras Horizontales) ──────────────────────
 export const SvgComparisonBars = ({ events, darkMode: darkModeProp }) => {
   const themeContext = useTheme();
+  const { isEn } = useTranslation();
   const darkMode = darkModeProp !== undefined ? darkModeProp : (themeContext?.darkMode ?? true);
 
   const labelColor = darkMode ? '#FFFFFF' : '#0F172A';
@@ -161,14 +164,14 @@ export const SvgComparisonBars = ({ events, darkMode: darkModeProp }) => {
   const countByType = (type) => events.filter((e) => e.type === type).length;
 
   const metrics = [
-    { label: 'Tiros a puerta', own: countByType('shot_on_target_own'), rival: countByType('shot_on_target_rival') },
-    { label: 'Tiros fuera', own: countByType('shot_off_target_own'), rival: countByType('shot_off_target_rival') },
-    { label: 'Duelos', own: countByType('duel_won'), rival: countByType('duel_lost') },
-    { label: 'Faltas', own: countByType('foul_against'), rival: countByType('foul_favor') },
-    { label: 'Tarjetas amarillas', own: countByType('card_yellow_own'), rival: countByType('card_yellow_rival') },
-    { label: 'Tarjetas rojas', own: countByType('card_red_own'), rival: countByType('card_red_rival') },
-    { label: 'Córners', own: countByType('corner_favor'), rival: countByType('corner_against') },
-    { label: 'Fueras de juego', own: countByType('offside_own'), rival: countByType('offside_rival') },
+    { label: isEn ? 'Shots on target' : 'Tiros a puerta', own: countByType('shot_on_target_own'), rival: countByType('shot_on_target_rival') },
+    { label: isEn ? 'Shots off target' : 'Tiros fuera', own: countByType('shot_off_target_own'), rival: countByType('shot_off_target_rival') },
+    { label: isEn ? 'Duels' : 'Duelos', own: countByType('duel_won'), rival: countByType('duel_lost') },
+    { label: isEn ? 'Fouls' : 'Faltas', own: countByType('foul_against'), rival: countByType('foul_favor') },
+    { label: isEn ? 'Yellow cards' : 'Tarjetas amarillas', own: countByType('card_yellow_own'), rival: countByType('card_yellow_rival') },
+    { label: isEn ? 'Red cards' : 'Tarjetas rojas', own: countByType('card_red_own'), rival: countByType('card_red_rival') },
+    { label: isEn ? 'Corners' : 'Córners', own: countByType('corner_favor'), rival: countByType('corner_against') },
+    { label: isEn ? 'Offsides' : 'Fueras de juego', own: countByType('offside_own'), rival: countByType('offside_rival') },
   ];
 
   return (
@@ -213,6 +216,7 @@ export const SvgComparisonBars = ({ events, darkMode: darkModeProp }) => {
 // ── 3. Desglose por Mitades (1T: X / 2T: Y) ──────────────────────────────────
 export const HalfBreakdown = ({ events = [], darkMode: darkModeProp }) => {
   const themeContext = useTheme();
+  const { isEn } = useTranslation();
   const darkMode = darkModeProp !== undefined ? darkModeProp : (themeContext?.darkMode ?? true);
 
   const labelColor = darkMode ? '#FFFFFF' : '#0F172A';
@@ -253,49 +257,49 @@ export const HalfBreakdown = ({ events = [], darkMode: darkModeProp }) => {
 
   const items = [
     {
-      label: 'Eventos totales',
+      label: isEn ? 'Total events' : 'Eventos totales',
       icon: '📊',
       t1: t1Events.length,
       t2: t2Events.length,
     },
     {
-      label: 'Remates propios',
+      label: isEn ? 'Own shots' : 'Remates propios',
       icon: '🎯',
       t1: getCount(t1Events, ['shot_on_target_own', 'shot_off_target_own', 'gol_local']),
       t2: getCount(t2Events, ['shot_on_target_own', 'shot_off_target_own', 'gol_local']),
     },
     {
-      label: 'Recuperaciones',
+      label: isEn ? 'Recoveries' : 'Recuperaciones',
       icon: '🔄',
       t1: getCount(t1Events, ['recovery']),
       t2: getCount(t2Events, ['recovery']),
     },
     {
-      label: 'Goles propios',
+      label: isEn ? 'Own goals' : 'Goles propios',
       icon: '⚽',
       t1: getCount(t1Events, ['gol_local', 'goal_own']),
       t2: getCount(t2Events, ['gol_local', 'goal_own']),
     },
     {
-      label: 'Faltas cometidas',
+      label: isEn ? 'Fouls committed' : 'Faltas cometidas',
       icon: '⚡',
       t1: getCount(t1Events, ['foul_against']),
       t2: getCount(t2Events, ['foul_against']),
     },
     {
-      label: 'Tarjetas',
+      label: isEn ? 'Cards' : 'Tarjetas',
       icon: '🟨',
       t1: getCount(t1Events, ['amarilla', 'roja', 'card_yellow_own', 'card_red_own']),
       t2: getCount(t2Events, ['amarilla', 'roja', 'card_yellow_own', 'card_red_own']),
     },
     {
-      label: 'Córners a favor',
+      label: isEn ? 'Corners won' : 'Córners a favor',
       icon: '🚩',
       t1: getCount(t1Events, ['corner_favor']),
       t2: getCount(t2Events, ['corner_favor']),
     },
     {
-      label: 'Duelos ganados',
+      label: isEn ? 'Duels won' : 'Duelos ganados',
       icon: '✊',
       t1: getCount(t1Events, ['duel_won']),
       t2: getCount(t2Events, ['duel_won']),
@@ -305,7 +309,7 @@ export const HalfBreakdown = ({ events = [], darkMode: darkModeProp }) => {
   if (totalEvents === 0) {
     return (
       <div style={{ padding: '20px', textAlign: 'center', color: subLabelColor, fontSize: '13px', fontStyle: 'italic' }}>
-        Sin eventos registrados para el desglose por mitades.
+        {isEn ? 'No events recorded for half breakdown.' : 'Sin eventos registrados para el desglose por mitades.'}
       </div>
     );
   }
@@ -331,9 +335,9 @@ export const HalfBreakdown = ({ events = [], darkMode: darkModeProp }) => {
             {item.icon} {item.label}
           </span>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', fontWeight: 900 }}>
-            <span style={{ color: '#D4A843' }}>1T: {item.t1}</span>
+            <span style={{ color: '#D4A843' }}>{isEn ? '1H' : '1T'}: {item.t1}</span>
             <span style={{ color: subLabelColor }}>/</span>
-            <span style={{ color: '#4CAF7D' }}>2T: {item.t2}</span>
+            <span style={{ color: '#4CAF7D' }}>{isEn ? '2H' : '2T'}: {item.t2}</span>
           </div>
           {/* Barra mini de progreso por mitad */}
           {(item.t1 + item.t2) > 0 && (

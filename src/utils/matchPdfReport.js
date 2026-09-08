@@ -813,7 +813,7 @@ export const generateMatchPdfReport = async ({
 
     // 5. Gráfica de Momentum Táctico y Dinámica del Partido (Canvas HD)
     try {
-      const momentumImg = drawMomentumChartCanvas(safeEvents, durationMin || 90, 640, 180);
+      const momentumImg = drawMomentumChartCanvas(safeEvents, durationMin || 90, 640, 180, isEn);
       if (momentumImg) {
         doc.setFontSize(9.5);
         doc.setFont('helvetica', 'bold');

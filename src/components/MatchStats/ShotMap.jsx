@@ -1,5 +1,6 @@
 import React, { useState, useMemo, useRef, useCallback } from 'react';
 import { Target, Trophy, Percent, Crosshair, X, Maximize2, Minimize2 } from 'lucide-react';
+import { useTranslation } from '../../hooks/useTranslation';
 
 export const ShotMap = ({
   shots = [],
@@ -10,6 +11,7 @@ export const ShotMap = ({
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [showTacticalGuide, setShowTacticalGuide] = useState(false);
   const wrapperRef = useRef(null);
+  const { isEn } = useTranslation();
 
   const toggleFullscreen = useCallback(() => {
     if (!wrapperRef.current) return;
@@ -101,12 +103,12 @@ export const ShotMap = ({
     }
     const isOnTarget = shot.outcome === 'on_target' || shot.type === 'tiro_puerta' || shot.type === 'shot_on_target_own' || shot.type === 'shot_on_target_rival';
     if (isOnTarget) {
-      return { label: 'A Puerta', icon: '🎯', color: '#3B82F6', bg: 'rgba(59, 130, 246, 0.2)' };
+      return { label: isEn ? 'On Target' : 'A Puerta', icon: '🎯', color: '#3B82F6', bg: 'rgba(59, 130, 246, 0.2)' };
     }
     if (shot.outcome === 'blocked' || shot.type === 'tiro_bloqueado') {
-      return { label: 'Bloqueado', icon: '🚫', color: '#F59E0B', bg: 'rgba(245, 158, 11, 0.2)' };
+      return { label: isEn ? 'Blocked' : 'Bloqueado', icon: '🚫', color: '#F59E0B', bg: 'rgba(245, 158, 11, 0.2)' };
     }
-    return { label: 'Fuera', icon: '❌', color: '#EF4444', bg: 'rgba(239, 68, 68, 0.2)' };
+    return { label: isEn ? 'Missed' : 'Fuera', icon: '❌', color: '#EF4444', bg: 'rgba(239, 68, 68, 0.2)' };
   };
 
   return (
@@ -136,7 +138,7 @@ export const ShotMap = ({
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           <Target size={20} color="#D4A843" />
           <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 800 }}>
-            Mapa de Tiros y Modelo xG ({teamName})
+            {isEn ? `Shot Map & xG Model (${teamName})` : `Mapa de Tiros y Modelo xG (${teamName})`}
           </h3>
         </div>
         <button
@@ -145,7 +147,7 @@ export const ShotMap = ({
           onClick={toggleFullscreen}
         >
           {isFullscreen ? <Minimize2 size={16} /> : <Maximize2 size={16} />}
-          <span>{isFullscreen ? 'Salir' : 'Pantalla Completa'}</span>
+          <span>{isFullscreen ? (isEn ? 'Exit' : 'Salir') : (isEn ? 'Fullscreen' : 'Pantalla Completa')}</span>
         </button>
       </div>
 
@@ -157,7 +159,7 @@ export const ShotMap = ({
           </div>
           <div className="kpi-data">
             <span className="kpi-value">{totalXG}</span>
-            <span className="kpi-label">xG Esperado</span>
+            <span className="kpi-label">{isEn ? 'Expected xG' : 'xG Esperado'}</span>
           </div>
         </div>
 
@@ -167,7 +169,7 @@ export const ShotMap = ({
           </div>
           <div className="kpi-data">
             <span className="kpi-value">{goalsCount} / {shotsWithXG.length}</span>
-            <span className="kpi-label">Goles / Tiros</span>
+            <span className="kpi-label">{isEn ? 'Goals / Shots' : 'Goles / Tiros'}</span>
           </div>
         </div>
 
@@ -177,7 +179,7 @@ export const ShotMap = ({
           </div>
           <div className="kpi-data">
             <span className="kpi-value">{onTargetCount}</span>
-            <span className="kpi-label">Tiros a Puerta</span>
+            <span className="kpi-label">{isEn ? 'Shots on Target' : 'Tiros a Puerta'}</span>
           </div>
         </div>
 
@@ -187,7 +189,7 @@ export const ShotMap = ({
           </div>
           <div className="kpi-data">
             <span className="kpi-value">{conversionRate}%</span>
-            <span className="kpi-label">Conversión</span>
+            <span className="kpi-label">{isEn ? 'Conversion' : 'Conversión'}</span>
           </div>
         </div>
       </div>
@@ -211,7 +213,7 @@ export const ShotMap = ({
           type="button"
           className="btn-floating-pitch-fullscreen"
           onClick={toggleFullscreen}
-          title={isFullscreen ? 'Salir de Pantalla Completa' : 'Ver en Pantalla Completa'}
+          title={isFullscreen ? (isEn ? 'Exit Fullscreen' : 'Salir de Pantalla Completa') : (isEn ? 'View Fullscreen' : 'Ver en Pantalla Completa')}
         >
           {isFullscreen ? <Minimize2 size={18} /> : <Maximize2 size={18} />}
         </button>
@@ -241,9 +243,9 @@ export const ShotMap = ({
           <line x1="45.3" y1="3" x2="45.3" y2="52" stroke="rgba(212,168,67,0.3)" strokeWidth="0.6" strokeDasharray="2 2" />
 
           {/* Rótulos de Sectores Tácticos en el Medio Campo Ofensivo */}
-          <text x="11.3" y="8" textAnchor="middle" fill="#FFFFFF" stroke="#000000" strokeWidth="0.3" fontSize="2.4" fontWeight="800" style={{ paintOrder: 'stroke fill' }}>⬅️ BANDA IZQ</text>
-          <text x="34" y="8" textAnchor="middle" fill="#FFFFFF" stroke="#000000" strokeWidth="0.3" fontSize="2.4" fontWeight="800" style={{ paintOrder: 'stroke fill' }}>⏺️ PASILLO CENTRAL</text>
-          <text x="56.7" y="8" textAnchor="middle" fill="#FFFFFF" stroke="#000000" strokeWidth="0.3" fontSize="2.4" fontWeight="800" style={{ paintOrder: 'stroke fill' }}>➡️ BANDA DER</text>
+          <text x="11.3" y="8" textAnchor="middle" fill="#FFFFFF" stroke="#000000" strokeWidth="0.3" fontSize="2.4" fontWeight="800" style={{ paintOrder: 'stroke fill' }}>⬅️ {isEn ? 'LEFT WING' : 'BANDA IZQ'}</text>
+          <text x="34" y="8" textAnchor="middle" fill="#FFFFFF" stroke="#000000" strokeWidth="0.3" fontSize="2.4" fontWeight="800" style={{ paintOrder: 'stroke fill' }}>⏺️ {isEn ? 'CENTER' : 'PASILLO CENTRAL'}</text>
+          <text x="56.7" y="8" textAnchor="middle" fill="#FFFFFF" stroke="#000000" strokeWidth="0.3" fontSize="2.4" fontWeight="800" style={{ paintOrder: 'stroke fill' }}>➡️ {isEn ? 'RIGHT WING' : 'BANDA DER'}</text>
 
           {/* Línea de medio campo */}
           <line x1="3" y1="3" x2="65" y2="3" stroke="rgba(255,255,255,0.55)" strokeWidth="0.8" />
@@ -274,7 +276,7 @@ export const ShotMap = ({
 
           {/* Portería */}
           <rect x="30.34" y="52" width="7.32" height="2.2" fill="rgba(255,255,255,0.2)" stroke="#D4A843" strokeWidth="0.7" />
-          <text x="34" y="50" textAnchor="middle" fill="#D4A843" fontSize="1.8" fontWeight="800">PORTERÍA</text>
+          <text x="34" y="50" textAnchor="middle" fill="#D4A843" fontSize="1.8" fontWeight="800">{isEn ? 'GOAL' : 'PORTERÍA'}</text>
 
           {/* Renderizado de Marcadores de Tiro */}
           {shotsWithXG.map(shot => {
@@ -346,17 +348,17 @@ export const ShotMap = ({
                 <span className="outcome-pill" style={{ backgroundColor: getOutcomeBadge(selectedShot).bg, color: getOutcomeBadge(selectedShot).color }}>
                   {getOutcomeBadge(selectedShot).icon} {getOutcomeBadge(selectedShot).label}
                 </span>
-                <strong>Minuto {selectedShot.minute || selectedShot.time || '—'}′</strong>
+                <strong>{'⏱'} {isEn ? 'Minute' : 'Minuto'} {selectedShot.minute || selectedShot.time || '—'}′</strong>
               </div>
               <button type="button" onClick={() => setSelectedShot(null)} className="close-btn">
                 <X size={14} />
               </button>
             </div>
             <div className="detail-card-grid">
-              <div>Jugador: <strong>{selectedShot.playerName || `Dorsal #${selectedShot.playerNumber || '—'}`}</strong></div>
-              <div>Valor xG: <strong className="gold-text">{selectedShot.xG}</strong></div>
-              <div>Distancia: <strong>{selectedShot.distMeters} metros</strong></div>
-              <div>Tipo: <strong>{selectedShot.action || selectedShot.bodyPart || 'Pie'}</strong></div>
+              <div>{isEn ? 'Player:' : 'Jugador:'} <strong>{selectedShot.playerName || `#${selectedShot.playerNumber || '—'}`}</strong></div>
+              <div>{isEn ? 'xG Value:' : 'Valor xG:'} <strong className="gold-text">{selectedShot.xG}</strong></div>
+              <div>{isEn ? 'Distance:' : 'Distancia:'} <strong>{selectedShot.distMeters} {isEn ? 'm' : 'metros'}</strong></div>
+              <div>{isEn ? 'Type:' : 'Tipo:'} <strong>{selectedShot.action || selectedShot.bodyPart || (isEn ? 'Foot' : 'Pie')}</strong></div>
             </div>
           </div>
         )}
@@ -365,16 +367,16 @@ export const ShotMap = ({
       {/* Leyenda de Tiros y xG */}
       <div className="shot-map-legend">
         <div className="legend-outcomes">
-          <span>⚽ Gol</span>
-          <span>🎯 A puerta</span>
-          <span>❌ Fuera</span>
-          <span>🚫 Bloqueado</span>
+          <span>⚽ {isEn ? 'Goal' : 'Gol'}</span>
+          <span>🎯 {isEn ? 'On Target' : 'A puerta'}</span>
+          <span>❌ {isEn ? 'Missed' : 'Fuera'}</span>
+          <span>🚫 {isEn ? 'Blocked' : 'Bloqueado'}</span>
         </div>
         <div className="legend-xg-size">
           <span className="dot small" />
           <span className="dot medium" />
           <span className="dot large" />
-          <span className="text">Tamaño = Mayor xG (Probabilidad de Gol)</span>
+          <span className="text">{isEn ? 'Size = Higher xG (Goal Probability)' : 'Tamaño = Mayor xG (Probabilidad de Gol)'}</span>
         </div>
       </div>
 
@@ -384,16 +386,16 @@ export const ShotMap = ({
           <div className="tactical-guide-header" onClick={() => setShowTacticalGuide(prev => !prev)}>
             <div className="tactical-guide-title">
               <span className="guide-icon">💡</span>
-              <strong>Guía Táctica: ¿Cómo interpretar y usar el Mapa de Tiros y xG?</strong>
+              <strong>{isEn ? 'Tactical Guide: How to interpret and use the Shot Map & xG?' : 'Guía Táctica: ¿Cómo interpretar y usar el Mapa de Tiros y xG?'}</strong>
             </div>
             <button type="button" className="tactical-guide-toggle-btn">
-              {showTacticalGuide ? 'Ocultar Explicación ▲' : 'Ver Metodología Completa ▼'}
+              {showTacticalGuide ? (isEn ? 'Hide Guide ▲' : 'Ocultar Explicación ▲') : (isEn ? 'View Methodology ▼' : 'Ver Metodología Completa ▼')}
             </button>
           </div>
 
           <div className="tactical-guide-summary">
-            <span>🎯 xG = <strong>Expected Goals (Probabilidad estocástica de gol entre 0.00 y 1.00)</strong></span>
-            <span>📐 Criterios: <strong>Distancia euclidiana</strong> · <strong>Ángulo visible de portería</strong></span>
+            <span>🎯 xG = <strong>{isEn ? 'Expected Goals (stochastic goal probability 0.00–1.00)' : 'Expected Goals (Probabilidad estocástica de gol entre 0.00 y 1.00)'}</strong></span>
+            <span>📐 {isEn ? 'Criteria:' : 'Criterios:'} <strong>{isEn ? 'Euclidean distance' : 'Distancia euclidiana'}</strong> · <strong>{isEn ? 'Visible goal angle' : 'Ángulo visible de portería'}</strong></span>
           </div>
 
           {showTacticalGuide && (

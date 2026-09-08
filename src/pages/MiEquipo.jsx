@@ -1353,13 +1353,13 @@ const MiEquipo = () => {
                   <input 
                     type="text" 
                     readOnly 
-                    value={`${window.location.origin}/consentimiento?playerName=${encodeURIComponent(selectedPlayer.name)}&teamName=${encodeURIComponent(activeTeam?.nombre || '')}&coachName=${encodeURIComponent(user.displayName || '')}`}
+                    value={`${window.location.origin}/consentimiento?playerName=${encodeURIComponent(selectedPlayer.name)}&teamName=${encodeURIComponent(activeTeam?.nombre || '')}&coachName=${encodeURIComponent(user.displayName || '')}&lang=${selectedPlayer?.locale || selectedPlayer?.lang || (isEn ? 'en' : 'es')}`}
                     style={{ flex: 1, padding: '10px', fontSize: '12px', background: '#f4f6f9', border: '1px solid #d1d9e0', borderRadius: '6px' }}
                     onClick={e => e.target.select()}
                   />
                   <button 
                     onClick={() => {
-                      const link = `${window.location.origin}/consentimiento?playerName=${encodeURIComponent(selectedPlayer.name)}&teamName=${encodeURIComponent(activeTeam?.nombre || '')}&coachName=${encodeURIComponent(user.displayName || '')}`;
+                      const link = `${window.location.origin}/consentimiento?playerName=${encodeURIComponent(selectedPlayer.name)}&teamName=${encodeURIComponent(activeTeam?.nombre || '')}&coachName=${encodeURIComponent(user.displayName || '')}&lang=${selectedPlayer?.locale || selectedPlayer?.lang || (isEn ? 'en' : 'es')}`;
                       navigator.clipboard.writeText(link);
                       alert(isEn ? 'Link copied to clipboard!' : '¡Enlace copiado al portapapeles!');
                     }}
@@ -1382,7 +1382,7 @@ const MiEquipo = () => {
               <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                 <button
                   onClick={() => {
-                    const link = `${window.location.origin}/consentimiento?playerName=${encodeURIComponent(selectedPlayer.name)}&teamName=${encodeURIComponent(activeTeam?.nombre || '')}&coachName=${encodeURIComponent(user.displayName || '')}`;
+                    const link = `${window.location.origin}/consentimiento?playerName=${encodeURIComponent(selectedPlayer.name)}&teamName=${encodeURIComponent(activeTeam?.nombre || '')}&coachName=${encodeURIComponent(user.displayName || '')}&lang=${selectedPlayer?.locale || selectedPlayer?.lang || (isEn ? 'en' : 'es')}`;
                     const whatsappMsg = isEn ? `Hi, I need you to sign the digital consent form to register ${selectedPlayer.name} on the Míster11 sports platform. You can fill it out and sign it with your finger in 1 minute at this link: ${link}` : `Hola, necesito que firmes el consentimiento digital para registrar a ${selectedPlayer.name} en la plataforma deportiva Míster11. Puedes rellenarlo y firmarlo con tu dedo en 1 minuto desde este enlace: ${link}`;
                     window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(whatsappMsg)}`, '_blank');
                   }}

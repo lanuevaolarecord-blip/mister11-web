@@ -1,22 +1,23 @@
 import React from 'react';
 import { BarChart3 } from 'lucide-react';
-
+import { useTranslation } from '../../hooks/useTranslation';
 export const ComparativeStatsBars = ({
   homeStats = {},
   awayStats = {},
   homeTeamName = 'Local',
   awayTeamName = 'Visitante'
 }) => {
+  const { isEn } = useTranslation();
   const metrics = [
-    { label: 'Posesión', homeVal: homeStats.posesion || 50, awayVal: awayStats.posesion || 50, isPercent: true },
-    { label: 'Tiros Totales', homeVal: homeStats.tiros || 0, awayVal: awayStats.tiros || 0 },
-    { label: 'Tiros a Puerta', homeVal: homeStats.tirosPuerta || 0, awayVal: awayStats.tirosPuerta || 0 },
-    { label: 'Pases Completados', homeVal: homeStats.pasesExitosos || 0, awayVal: awayStats.pasesExitosos || 0 },
-    { label: 'Precisión de Pase', homeVal: homeStats.pasesTotales > 0 ? Math.round(((homeStats.pasesExitosos || 0) / homeStats.pasesTotales) * 100) : 0, awayVal: awayStats.pasesTotales > 0 ? Math.round(((awayStats.pasesExitosos || 0) / awayStats.pasesTotales) * 100) : 0, isPercent: true },
-    { label: 'Recuperaciones', homeVal: homeStats.recuperaciones || 0, awayVal: awayStats.recuperaciones || 0 },
-    { label: 'Córners (ABP)', homeVal: homeStats.corners || 0, awayVal: awayStats.corners || 0 },
-    { label: 'Faltas Cometidas', homeVal: homeStats.faltas || 0, awayVal: awayStats.faltas || 0 },
-    { label: 'Tarjetas Amarillas', homeVal: homeStats.amarillas || 0, awayVal: awayStats.amarillas || 0 },
+    { label: isEn ? 'Possession' : 'Posesión', homeVal: homeStats.posesion || 50, awayVal: awayStats.posesion || 50, isPercent: true },
+    { label: isEn ? 'Total Shots' : 'Tiros Totales', homeVal: homeStats.tiros || 0, awayVal: awayStats.tiros || 0 },
+    { label: isEn ? 'Shots on Target' : 'Tiros a Puerta', homeVal: homeStats.tirosPuerta || 0, awayVal: awayStats.tirosPuerta || 0 },
+    { label: isEn ? 'Completed Passes' : 'Pases Completados', homeVal: homeStats.pasesExitosos || 0, awayVal: awayStats.pasesExitosos || 0 },
+    { label: isEn ? 'Pass Accuracy' : 'Precisión de Pase', homeVal: homeStats.pasesTotales > 0 ? Math.round(((homeStats.pasesExitosos || 0) / homeStats.pasesTotales) * 100) : 0, awayVal: awayStats.pasesTotales > 0 ? Math.round(((awayStats.pasesExitosos || 0) / awayStats.pasesTotales) * 100) : 0, isPercent: true },
+    { label: isEn ? 'Recoveries' : 'Recuperaciones', homeVal: homeStats.recuperaciones || 0, awayVal: awayStats.recuperaciones || 0 },
+    { label: isEn ? 'Corners (SP)' : 'Córners (ABP)', homeVal: homeStats.corners || 0, awayVal: awayStats.corners || 0 },
+    { label: isEn ? 'Fouls Committed' : 'Faltas Cometidas', homeVal: homeStats.faltas || 0, awayVal: awayStats.faltas || 0 },
+    { label: isEn ? 'Yellow Cards' : 'Tarjetas Amarillas', homeVal: homeStats.amarillas || 0, awayVal: awayStats.amarillas || 0 },
   ];
 
   return (
@@ -24,7 +25,7 @@ export const ComparativeStatsBars = ({
       <div className="comparative-header">
         <div className="comparative-title">
           <BarChart3 size={20} className="comp-icon" />
-          <h3>Estadísticas Comparativas de Partido</h3>
+          <h3>{isEn ? 'Match Comparative Statistics' : 'Estadísticas Comparativas de Partido'}</h3>
         </div>
         <div className="teams-header-labels">
           <div className="team-badge-tag home">{homeTeamName}</div>

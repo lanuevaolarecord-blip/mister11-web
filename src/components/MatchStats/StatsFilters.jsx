@@ -62,14 +62,14 @@ export const StatsFilters = ({
       <div className="filter-group">
         <div className="filter-label">
           <Clock size={16} className="filter-icon" />
-          <span>TIEMPO</span>
+          <span>{isEn ? 'TIME' : 'TIEMPO'}</span>
         </div>
         <div className="filter-btn-group">
           {[
-            { id: 'all', label: 'Todo', range: [0, 90] },
-            { id: '1T', label: '1T (1′-45′)', range: [1, 45] },
-            { id: '2T', label: '2T (46′-90′)', range: [46, 90] },
-            { id: 'extra', label: 'Prórroga', range: [91, 120] }
+            { id: 'all', label: isEn ? 'All' : 'Todo', range: [0, 90] },
+            { id: '1T', label: isEn ? '1H (1′-45′)' : '1T (1′-45′)', range: [1, 45] },
+            { id: '2T', label: isEn ? '2H (46′-90′)' : '2T (46′-90′)', range: [46, 90] },
+            { id: 'extra', label: isEn ? 'Extra Time' : 'Prórroga', range: [91, 120] }
           ].map(t => (
             <button
               key={t.id}
@@ -85,7 +85,7 @@ export const StatsFilters = ({
           ))}
         </div>
         <div className="time-range-summary-badge">
-          <span>Tramo activo: <strong>{timeRange[0]}′ a {timeRange[1]}′</strong></span>
+          <span>{isEn ? 'Active range:' : 'Tramo activo:'} <strong>{timeRange[0]}′ {isEn ? 'to' : 'a'} {timeRange[1]}′</strong></span>
         </div>
       </div>
 
@@ -93,7 +93,7 @@ export const StatsFilters = ({
       <div className="filter-group">
         <div className="filter-label">
           <Users size={16} className="filter-icon" />
-          <span>EQUIPO</span>
+          <span>{isEn ? 'TEAM' : 'EQUIPO'}</span>
         </div>
         <div className="filter-btn-group team-btn-group">
           <button
@@ -101,7 +101,7 @@ export const StatsFilters = ({
             className={`filter-pill-btn ${teamFilter === 'both' ? 'active' : ''}`}
             onClick={() => setTeamFilter('both')}
           >
-            Ambos
+            {isEn ? 'Both' : 'Ambos'}
           </button>
           <button
             type="button"
@@ -126,7 +126,7 @@ export const StatsFilters = ({
       <div className="filter-group relative-filter">
         <div className="filter-label">
           <User size={16} className="filter-icon" />
-          <span>JUGADORES</span>
+          <span>{isEn ? 'PLAYERS' : 'JUGADORES'}</span>
           {selectedPlayers.length > 0 && (
             <span className="badge-count">{selectedPlayers.length}</span>
           )}
@@ -135,8 +135,8 @@ export const StatsFilters = ({
         <div className="player-selector-trigger" onClick={() => setShowPlayerDropdown(!showPlayerDropdown)}>
           <span className="trigger-text">
             {selectedPlayers.length === 0 
-              ? 'Todos los jugadores' 
-              : `${selectedPlayers.length} seleccionado(s)`}
+              ? (isEn ? 'All players' : 'Todos los jugadores')
+              : (isEn ? `${selectedPlayers.length} selected` : `${selectedPlayers.length} seleccionado(s)`)}
           </span>
           <ChevronDown size={16} />
         </div>
@@ -165,13 +165,13 @@ export const StatsFilters = ({
                 className="action-link"
                 onClick={() => setSelectedPlayers([])}
               >
-                Limpiar selección
+                {isEn ? 'Clear selection' : 'Limpiar selección'}
               </button>
             </div>
 
             <div className="dropdown-list">
               {filteredPlayersList.length === 0 ? (
-                <div className="empty-list-msg">No se encontraron jugadores</div>
+                <div className="empty-list-msg">{isEn ? 'No players found' : 'No se encontraron jugadores'}</div>
               ) : (
                 filteredPlayersList.map(p => {
                   const isSelected = selectedPlayers.includes(p.id);
@@ -185,7 +185,7 @@ export const StatsFilters = ({
                         {p.dorsal || p.number || '•'}
                       </div>
                       <span className="player-name-text">
-                        {p.nombre || p.name || `Jugador #${p.dorsal || ''}`}
+                        {p.nombre || p.name || (isEn ? `Player #${p.dorsal || ''}` : `Jugador #${p.dorsal || ''}`)}
                       </span>
                       {isSelected && <Check size={16} className="check-icon" />}
                     </div>
@@ -201,14 +201,14 @@ export const StatsFilters = ({
       <div className="filter-group">
         <div className="filter-label">
           <Target size={16} className="filter-icon" />
-          <span>ZONA DEL CAMPO</span>
+          <span>{isEn ? 'FIELD ZONE' : 'ZONA DEL CAMPO'}</span>
         </div>
         <div className="filter-btn-group zones-group">
           {[
-            { id: 'all', label: 'Todo' },
-            { id: 'def', label: 'Defensiva' },
-            { id: 'mid', label: 'Media' },
-            { id: 'att', label: 'Ofensiva' }
+            { id: 'all', label: isEn ? 'All' : 'Todo' },
+            { id: 'def', label: isEn ? 'Defensive' : 'Defensiva' },
+            { id: 'mid', label: isEn ? 'Midfield' : 'Media' },
+            { id: 'att', label: isEn ? 'Offensive' : 'Ofensiva' }
           ].map(z => (
             <button
               key={z.id}
@@ -226,15 +226,15 @@ export const StatsFilters = ({
       <div className="filter-group">
         <div className="filter-label">
           <BarChart2 size={16} className="filter-icon" />
-          <span>ACCIONES</span>
+          <span>{isEn ? 'ACTIONS' : 'ACCIONES'}</span>
         </div>
         <div className="action-checkboxes-row">
           {[
-            { key: 'passes', label: 'Pases', color: '#3B82F6' },
-            { key: 'shots', label: 'Tiros', color: '#10B981' },
-            { key: 'defense', label: 'Defensa', color: '#F59E0B' },
-            { key: 'fouls', label: 'Faltas', color: '#EF4444' },
-            { key: 'setPieces', label: 'ABP', color: '#8B5CF6' },
+            { key: 'passes', label: isEn ? 'Passes' : 'Pases', color: '#3B82F6' },
+            { key: 'shots', label: isEn ? 'Shots' : 'Tiros', color: '#10B981' },
+            { key: 'defense', label: isEn ? 'Defense' : 'Defensa', color: '#F59E0B' },
+            { key: 'fouls', label: isEn ? 'Fouls' : 'Faltas', color: '#EF4444' },
+            { key: 'setPieces', label: isEn ? 'SP' : 'ABP', color: '#8B5CF6' },
           ].map(act => (
             <label key={act.key} className="action-checkbox-item">
               <input

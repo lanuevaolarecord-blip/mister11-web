@@ -49,20 +49,40 @@ function cleanAndValidateOutput(rawText, targetLang) {
     .replace(/<\/?think>/gi, '')
     .trim();
 
-  // 2. Si el texto contiene un título markdown (## o #), descartar cualquier preámbulo / razonamiento anterior
-  const headerMatch = text.match(/(?:^|\n)(#{1,3}\s+[^\n]+)/m);
-  if (headerMatch && headerMatch.index !== undefined) {
-    const matchIndex = headerMatch.index;
-    if (matchIndex > 0) {
-      text = text.substring(matchIndex).trim();
+  // 2. Eliminar preámbulos y bloques de razonamiento (Chain of Thought) antes del contenido real
+  // Identificar el verdadero inicio del ejercicio:
+  // Un encabezado markdown (##) que NO sea de razonamiento (Analysis, Step 1, Thinking, etc.)
+  // O un inicio con **Objetivo / **Ejercicio / **Plan / **Ficha
+  const reasoningHeaderRegex = /^(?:#+\s*)?(?:Step\s*\d+|Paso\s*\d+|Thinking(?:\s*Process)?|Reasoning|Razonamiento|Chain\s*of\s*Thought|Analyze(?:\s*User\s*Input)?|Análisis|User\s*Input|Deconstruct|Context)/i;
+  
+  const lines = text.split('\n');
+  let firstValidHeaderLine = -1;
+
+  for (let i = 0; i < lines.length; i++) {
+    const trimmed = lines[i].trim();
+    if (/^#{1,3}\s+/.test(trimmed)) {
+      const headerTitle = trimmed.replace(/^#{1,3}\s+/, '').trim();
+      if (!reasoningHeaderRegex.test(headerTitle)) {
+        firstValidHeaderLine = i;
+        break;
+      }
+    } else if (/^\*\*(?:Objetivo|Objective|Ejercicio|Drill|Nombre|Plan|Ficha)/i.test(trimmed)) {
+      firstValidHeaderLine = i;
+      break;
     }
   }
 
-  // 3. Eliminar bloques de chain-of-thought residuales comunes
+  if (firstValidHeaderLine > 0) {
+    text = lines.slice(firstValidHeaderLine).join('\n').trim();
+  }
+
+  // 3. Eliminar líneas residuales de razonamiento / bullets de CoT si quedaran
   text = text
-    .replace(/^(?:Here'?s a thinking process|Thinking Process:?|Reasoning:?|Analyze User Input:?|Analysis:?|1\.\s*Analyze[\s\S]*?)(?=\n#{1,3}\s+|\n\*\*|$)/i, '')
-    .replace(/^(?:1\.\s*Analyze[\s\S]*?2\.\s*Deconstruct[\s\S]*?)(?=\n#{1,3}\s+|\n\*\*|$)/i, '')
-    .replace(/^(?:In this drill|Let's design|Okay, let's create|I will create)[\s\S]*?(?=\n#{1,3}\s+)/i, '')
+    .replace(/^[-*•]\s*(?:Role|Parameters|Drill Type|Sport|Age Group|Duration|Players|Level|Skill Focus|Analyze|Analysis|Input|Output|Step \d|Constraints|Key Elements)[^\n]*\n?/gim, '')
+    .replace(/^\d+\.\s*(?:Analyze|Deconstruct|Design|Consider|Review|Think|Plan|Identify|Evaluate|User Input)[^\n]*\n?/gim, '')
+    .replace(/^(?:Here'?s a thinking process|Thinking Process:?|Reasoning:?|Analyze User Input:?|Analysis:?)[\s\S]*?(?=\n#{1,3}\s+|\n\*\*|$)/gi, '')
+    .replace(/^(?:In this drill|Let's design|Okay, let's create|I will create)[\s\S]*?(?=\n#{1,3}\s+)/gi, '')
+    .replace(/\n{3,}/g, '\n\n')
     .trim();
 
   // 4. Verificación de idioma por stopwords

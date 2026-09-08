@@ -398,8 +398,8 @@ const Dashboard = () => {
     <div className="page-wrapper">
       <header className="page-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div>
-          <h1 className="page-title">{t('dashboard.welcome', settings.language, { name: (settings.profileName || user?.displayName || 'Míster').trim().split(' ')[0] })}</h1>
-          <p className="page-subtitle">{t('dashboard.activity', settings.language, { club: settings.clubName || 'burriana e.d.' })}</p>
+          <h1 className="page-title">{t('dashboard.welcome', { name: (settings.profileName || user?.displayName || 'Míster').trim().split(' ')[0] })}</h1>
+          <p className="page-subtitle">{t('dashboard.activity', { club: settings.clubName || activeTeam?.name || 'Mi Equipo' })}</p>
         </div>
         <div className="card-base" style={{ padding: '8px 16px', textAlign: 'center' }}>
           <span style={{ fontSize: '10px', color: 'var(--text-secondary)', textTransform: 'uppercase' }}>

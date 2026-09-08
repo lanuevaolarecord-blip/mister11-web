@@ -1,5 +1,6 @@
 import React, { useState, useMemo, useRef, useCallback } from 'react';
 import { Share2, Maximize2, Minimize2, Users } from 'lucide-react';
+import { useTranslation } from '../../hooks/useTranslation';
 
 const ZONE_MAP = {
   shot_on_target_own:    { x: 88, y: 50 },
@@ -27,6 +28,7 @@ export const PassNetwork = ({
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [showTacticalGuide, setShowTacticalGuide] = useState(false);
   const wrapperRef = useRef(null);
+  const { isEn } = useTranslation();
 
   const toggleFullscreen = useCallback(() => {
     if (!wrapperRef.current) return;
@@ -216,18 +218,18 @@ export const PassNetwork = ({
       <div className="pass-network-header" style={{ flexShrink: 0, marginBottom: isFullscreen ? '8px' : '16px' }}>
         <div className="pass-network-title">
           <Share2 size={20} className="network-icon" />
-          <h3>Red de Pases Táctica ({teamName})</h3>
+          <h3>{isEn ? `Tactical Pass Network (${teamName})` : `Red de Pases Táctica (${teamName})`}</h3>
         </div>
         <div className="pass-network-summary" style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
-          <span>Pases: <strong>{passes.length}</strong></span>
-          <span>Conexiones: <strong>{passEdges.length}</strong></span>
+          <span>{isEn ? 'Passes:' : 'Pases:'} <strong>{passes.length}</strong></span>
+          <span>{isEn ? 'Connections:' : 'Conexiones:'} <strong>{passEdges.length}</strong></span>
           <button
             type="button"
             className="btn-fullscreen-match-card"
             onClick={toggleFullscreen}
           >
             {isFullscreen ? <Minimize2 size={16} /> : <Maximize2 size={16} />}
-            <span>{isFullscreen ? 'Salir' : 'Pantalla Completa'}</span>
+            <span>{isFullscreen ? (isEn ? 'Exit' : 'Salir') : (isEn ? 'Fullscreen' : 'Pantalla Completa')}</span>
           </button>
         </div>
       </div>
@@ -251,7 +253,7 @@ export const PassNetwork = ({
           type="button"
           className="btn-floating-pitch-fullscreen"
           onClick={toggleFullscreen}
-          title={isFullscreen ? 'Salir de Pantalla Completa' : 'Ver en Pantalla Completa'}
+          title={isFullscreen ? (isEn ? 'Exit Fullscreen' : 'Salir de Pantalla Completa') : (isEn ? 'View Fullscreen' : 'Ver en Pantalla Completa')}
         >
           {isFullscreen ? <Minimize2 size={18} /> : <Maximize2 size={18} />}
         </button>
@@ -411,8 +413,8 @@ export const PassNetwork = ({
               <strong>{selectedNode.name}</strong>
             </div>
             <div className="info-card-body">
-              <div>Toques / Participaciones: <strong>{selectedNode.touchCount}</strong></div>
-              <div>Posición media en campo: <strong>X: {Math.round(selectedNode.x)}% | Y: {Math.round(selectedNode.y)}%</strong></div>
+              <div>{isEn ? 'Touches / Involvements:' : 'Toques / Participaciones:'} <strong>{selectedNode.touchCount}</strong></div>
+              <div>{isEn ? 'Average field position:' : 'Posición media en campo:'} <strong>X: {Math.round(selectedNode.x)}% | Y: {Math.round(selectedNode.y)}%</strong></div>
             </div>
           </div>
         )}
@@ -420,11 +422,11 @@ export const PassNetwork = ({
         {selectedEdge && (
           <div className="network-info-card">
             <div className="info-card-header">
-              <strong>Conexión de Pase</strong>
+              <strong>{isEn ? 'Pass Connection' : 'Conexión de Pase'}</strong>
             </div>
             <div className="info-card-body">
-              <div>Pases totales entre jugadores: <strong>{selectedEdge.count}</strong></div>
-              <div>Pases completados: <strong>{selectedEdge.successfulCount}</strong> ({Math.round((selectedEdge.successfulCount / selectedEdge.count) * 100)}% acierto)</div>
+              <div>{isEn ? 'Total passes between players:' : 'Pases totales entre jugadores:'} <strong>{selectedEdge.count}</strong></div>
+              <div>{isEn ? 'Completed passes:' : 'Pases completados:'} <strong>{selectedEdge.successfulCount}</strong> ({Math.round((selectedEdge.successfulCount / selectedEdge.count) * 100)}% {isEn ? 'accuracy' : 'acierto'})</div>
             </div>
           </div>
         )}
@@ -434,19 +436,19 @@ export const PassNetwork = ({
       <div className="pass-network-legend">
         <div className="legend-item">
           <span className="legend-dot green" />
-          <span>Alta precisión (≥80%)</span>
+          <span>{isEn ? 'High accuracy (≥80%)' : 'Alta precisión (≥80%)'}</span>
         </div>
         <div className="legend-item">
           <span className="legend-dot gold" />
-          <span>Precisión media (60-79%)</span>
+          <span>{isEn ? 'Medium accuracy (60-79%)' : 'Precisión media (60-79%)'}</span>
         </div>
         <div className="legend-item">
           <span className="legend-dot red" />
-          <span>Pérdidas frecuentes (&lt;60%)</span>
+          <span>{isEn ? 'Frequent losses (<60%)' : 'Pérdidas frecuentes (<60%)'}</span>
         </div>
         <div className="legend-item">
           <span className="legend-line thick" />
-          <span>Grosor = Mayor frecuencia</span>
+          <span>{isEn ? 'Thickness = Higher frequency' : 'Grosor = Mayor frecuencia'}</span>
         </div>
       </div>
 
@@ -456,16 +458,16 @@ export const PassNetwork = ({
           <div className="tactical-guide-header" onClick={() => setShowTacticalGuide(prev => !prev)}>
             <div className="tactical-guide-title">
               <span className="guide-icon">💡</span>
-              <strong>Guía Táctica: ¿Cómo interpretar y usar la Red de Pases?</strong>
+              <strong>{isEn ? 'Tactical Guide: How to interpret and use the Pass Network?' : 'Guía Táctica: ¿Cómo interpretar y usar la Red de Pases?'}</strong>
             </div>
             <button type="button" className="tactical-guide-toggle-btn">
-              {showTacticalGuide ? 'Ocultar Explicación ▲' : 'Ver Metodología Completa ▼'}
+              {showTacticalGuide ? (isEn ? 'Hide Guide ▲' : 'Ocultar Explicación ▲') : (isEn ? 'View Methodology ▼' : 'Ver Metodología Completa ▼')}
             </button>
           </div>
 
           <div className="tactical-guide-summary">
-            <span>⚽ Nodos: <strong>Tamaño = Volumen de toques/pases</strong></span>
-            <span>🔗 Líneas: <strong>Grosor = Frecuencia asociativa</strong> · <strong>Color = % Acierto</strong></span>
+            <span>⚽ {isEn ? 'Nodes: Size = Touch/pass volume' : 'Nodos: Tamaño = Volumen de toques/pases'}</span>
+            <span>🔗 {isEn ? 'Lines: Thickness = Associative frequency · Color = % Accuracy' : 'Líneas: Grosor = Frecuencia asociativa · Color = % Acierto'}</span>
           </div>
 
           {showTacticalGuide && (

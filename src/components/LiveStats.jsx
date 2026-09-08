@@ -235,24 +235,24 @@ const LiveStats = ({
 
   // Acciones rápidas individuales (≥56dp, táctil Android)
   const PLAYER_QUICK_ACTIONS = [
-    { type: 'shot_on_target_own', label: 'Tiro\na Puerta',   icon: '🎯', color: '#4CAF7D' },
-    { type: 'shot_off_target_own', label: 'Tiro\nFuera',    icon: '⬜', color: '#94A3B8' },
-    { type: 'duel_won',            label: 'Pase\nClave',    icon: '⭐', color: '#D4A843' },
-    { type: 'recovery',            label: 'Pase\nComplet.', icon: '✅', color: '#0D9488' },
-    { type: 'duel_won',            label: 'Recuper.',       icon: '↑',  color: '#4CAF7D', subtype: 'recovery_ind' },
-    { type: 'foul_against',        label: 'Falta',          icon: '⚡', color: '#F97316' },
-    { type: 'duel_won',            label: 'Duelo\nGanado',  icon: '✊', color: '#0D9488', subtype: 'duel_ind' },
+    { type: 'shot_on_target_own', label: isEn ? 'Shot\nOn Target' : 'Tiro\na Puerta',   icon: '🎯', color: '#4CAF7D' },
+    { type: 'shot_off_target_own', label: isEn ? 'Shot\nMissed' : 'Tiro\nFuera',        icon: '⬜', color: '#94A3B8' },
+    { type: 'duel_won',            label: isEn ? 'Key\nPass'    : 'Pase\nClave',         icon: '⭐', color: '#D4A843' },
+    { type: 'recovery',            label: isEn ? 'Pass\nCompl.' : 'Pase\nComplet.',      icon: '✅', color: '#0D9488' },
+    { type: 'duel_won',            label: isEn ? 'Recov.'       : 'Recuper.',             icon: '↑',  color: '#4CAF7D', subtype: 'recovery_ind' },
+    { type: 'foul_against',        label: isEn ? 'Foul'         : 'Falta',                icon: '⚡', color: '#F97316' },
+    { type: 'duel_won',            label: isEn ? 'Duel\nWon'   : 'Duelo\nGanado',        icon: '✊', color: '#0D9488', subtype: 'duel_ind' },
   ];
 
   // 7 acciones correctas por acción individual real
   const PLAYER_ACTIONS_REAL = [
-    { type: 'shot_on_target_own',  label: 'Tiro a\nPuerta',  icon: '🎯', color: '#4CAF7D' },
-    { type: 'shot_off_target_own', label: 'Tiro\nFuera',     icon: '⬜', color: '#94A3B8' },
-    { type: 'recovery',            label: 'Pase\nClave',     icon: '⭐', color: '#D4A843' },
-    { type: 'recovery',            label: 'Pase\nComplet.',  icon: '✅', color: '#0D9488' },
-    { type: 'recovery',            label: 'Recuper.',        icon: '↑',  color: '#3B82F6' },
-    { type: 'foul_against',        label: 'Falta',           icon: '⚡', color: '#F97316' },
-    { type: 'duel_won',            label: 'Duelo\nGanado',   icon: '✊', color: '#0D9488' },
+    { type: 'shot_on_target_own',  label: isEn ? 'Shot\nOn Target' : 'Tiro a\nPuerta',  icon: '🎯', color: '#4CAF7D' },
+    { type: 'shot_off_target_own', label: isEn ? 'Shot\nMissed'    : 'Tiro\nFuera',      icon: '⬜', color: '#94A3B8' },
+    { type: 'recovery',            label: isEn ? 'Key\nPass'       : 'Pase\nClave',      icon: '⭐', color: '#D4A843' },
+    { type: 'recovery',            label: isEn ? 'Pass\nCompl.'    : 'Pase\nComplet.',   icon: '✅', color: '#0D9488' },
+    { type: 'recovery',            label: isEn ? 'Recov.'          : 'Recuper.',          icon: '↑',  color: '#3B82F6' },
+    { type: 'foul_against',        label: isEn ? 'Foul'            : 'Falta',             icon: '⚡', color: '#F97316' },
+    { type: 'duel_won',            label: isEn ? 'Duel\nWon'       : 'Duelo\nGanado',    icon: '✊', color: '#0D9488' },
   ];
 
   const liveStatsHook = useLiveStats(teamId, matchId, currentMinute, currentHalf);

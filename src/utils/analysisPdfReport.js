@@ -1,6 +1,7 @@
 import { PDF_COLORS, cleanPdfText, drawRadarChartCanvas, imageUrlToBase64 } from './pdfTheme';
 import { savePdfUniversal } from './pdfGenerator';
 import autoTable from 'jspdf-autotable';
+import { getEffectiveLanguage } from '../i18n/translations';
 
 const THEME_COLOR = PDF_COLORS.primary;
 const ACCENT_COLOR = PDF_COLORS.accent;
@@ -16,7 +17,8 @@ export const exportMultiMatchAnalysisPDF = async ({
   viewMode = 'AVERAGES',
   activeTeam = null
 }) => {
-  window.dispatchEvent(new CustomEvent('m11-loading', { detail: { show: true, message: 'Generando Informe de Análisis Multipartido...' } }));
+  const isEn = getEffectiveLanguage() === 'en';
+  window.dispatchEvent(new CustomEvent('m11-loading', { detail: { show: true, message: isEn ? 'Generating Multi-Match Analysis Report...' : 'Generando Informe de Análisis Multipartido...' } }));
   await new Promise((r) => setTimeout(r, 150));
 
   try {
@@ -296,7 +298,7 @@ export const exportMultiMatchAnalysisPDF = async ({
     await savePdfUniversal(doc, fileName);
   } catch (err) {
     console.error('[exportMultiMatchAnalysisPDF] Error:', err);
-    alert('Hubo un error al generar el PDF de análisis multipartido.');
+    alert(isEn ? 'There was an error generating the multi-match analysis PDF.' : 'Hubo un error al generar el PDF de análisis multipartido.');
   } finally {
     window.dispatchEvent(new CustomEvent('m11-loading', { detail: { show: false } }));
   }

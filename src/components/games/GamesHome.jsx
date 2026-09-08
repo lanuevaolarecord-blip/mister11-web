@@ -18,7 +18,7 @@ import { Lock, Sparkles, Brain, ShieldAlert, Award } from 'lucide-react';
 import './Games.css';
 
 export const GamesHome = ({ player, team, teamPath, isParentView = false }) => {
-  const { t } = useTranslation();
+  const { t, isEn } = useTranslation();
   const cleanPath = teamPath ? teamPath.replace(/^\/+|\/+$/g, '') : '';
   const playerId = player?.id;
 
@@ -101,9 +101,19 @@ export const GamesHome = ({ player, team, teamPath, isParentView = false }) => {
       const levelRes = await processSessionProgression(code, sessionData.metrics);
       if (levelRes.subio) {
         const lvlInfo = NIVEL_LABELS[levelRes.nivel] || NIVEL_LABELS.bronce;
-        showToast(`🎉 ¡Subiste a nivel ${lvlInfo.es}! ${lvlInfo.badge} (+10 XP)`, 'success');
+        showToast(
+          isEn
+            ? `🎉 You leveled up to ${lvlInfo.en || lvlInfo.es}! ${lvlInfo.badge} (+10 XP)`
+            : `🎉 ¡Subiste a nivel ${lvlInfo.es}! ${lvlInfo.badge} (+10 XP)`,
+          'success'
+        );
         if (levelRes.techo) {
-          showToast('👑 ¡Alcanzaste el techo de Leyenda! ¡Eres un crack!', 'success');
+          showToast(
+            isEn
+              ? '👑 You reached the Legend ceiling! You are awesome!'
+              : '👑 ¡Alcanzaste el techo de Leyenda! ¡Eres un crack!',
+            'success'
+          );
         }
       }
     }

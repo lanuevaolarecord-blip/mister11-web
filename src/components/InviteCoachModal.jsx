@@ -2,9 +2,11 @@ import React, { useState } from 'react';
 import { doc, setDoc, updateDoc } from 'firebase/firestore';
 import { db } from '../firebaseConfig';
 import { showToast } from '../utils/toast';
+import { useTranslation } from '../hooks/useTranslation';
 import { X, Mail, Shield } from 'lucide-react';
 
 const InviteCoachModal = ({ isOpen, onClose, clubId, clubName, currentCoaches, onInviteSuccess }) => {
+  const { t, isEn } = useTranslation();
   const [inviteEmail, setInviteEmail] = useState('');
   const [loading, setLoading] = useState(false);
   const [generatedLink, setGeneratedLink] = useState('');
@@ -25,7 +27,7 @@ const InviteCoachModal = ({ isOpen, onClose, clubId, clubName, currentCoaches, o
       );
 
       if (alreadyExists) {
-        showToast("Este correo ya está registrado o invitado en el club.", "warning");
+        showToast(t('invite.already_registered'), 'warning');
         setLoading(false);
         return;
       }
@@ -58,11 +60,11 @@ const InviteCoachModal = ({ isOpen, onClose, clubId, clubName, currentCoaches, o
       const link = `${window.location.origin}/accept-invitation?token=${token}`;
       setGeneratedLink(link);
       setInviteEmail('');
-      showToast("Invitación generada con éxito.", "success");
+      showToast(t('invite.generated_success'), 'success');
       if (onInviteSuccess) onInviteSuccess(updatedCoaches);
     } catch (err) {
       console.error("Error inviting coach:", err);
-      showToast("Error al generar la invitación.", "error");
+      showToast(t('invite.generated_error'), 'error');
     } finally {
       setLoading(false);
     }
@@ -92,7 +94,7 @@ const InviteCoachModal = ({ isOpen, onClose, clubId, clubName, currentCoaches, o
                 <Mail size={16} color="var(--text-secondary)" style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)' }} />
                 <input 
                   type="email" 
-                  placeholder="ejemplo@correo.com" 
+                  placeholder={isEn ? "example@email.com" : "ejemplo@correo.com"} 
                   value={inviteEmail}
                   onChange={e => setInviteEmail(e.target.value)}
                   required
@@ -148,7 +150,7 @@ const InviteCoachModal = ({ isOpen, onClose, clubId, clubName, currentCoaches, o
                   className="btn-primary"
                   onClick={() => {
                     navigator.clipboard.writeText(generatedLink);
-                    showToast("¡Enlace copiado!", "success");
+                    showToast(t('invite.link_copied'), 'success');
                   }}
                   style={{ padding: '10px 16px', fontSize: '0.85rem', minHeight: '40px', fontWeight: 'bold' }}
                 >

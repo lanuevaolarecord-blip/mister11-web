@@ -109,7 +109,7 @@ const CustomFormationModal = ({ isOpen, onClose, onSave, editFormation = null })
 
   const handleSave = () => {
     if (!name.trim()) {
-      alert("Por favor introduce un nombre para la formación.");
+      alert(isEn ? "Please enter a name for the formation." : "Por favor introduce un nombre para la formación.");
       return;
     }
     onSave({

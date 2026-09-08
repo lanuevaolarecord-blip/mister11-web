@@ -3,6 +3,7 @@ import { SvgLineChart } from './GraficasTest';
 import { downloadPDF } from '../utils/download';
 import { calculatePlayerPerformanceScores } from '../utils/testScoreEngine';
 import { useTheme } from '../context/ThemeContext';
+import { useTranslation } from '../hooks/useTranslation';
 
 // ── Colores institucionales ──────────────────────────────────────────────────
 const C_DARK    = '#1B3A2D';
@@ -170,6 +171,7 @@ const PlayerAnalyticsModal = ({
   activeTeam = {},
   playerEvals: incomingPlayerEvals
 }) => {
+  const { t, isEn } = useTranslation();
   const contentRef = useRef(null);
 
   if (!player) return null;
@@ -268,7 +270,7 @@ const PlayerAnalyticsModal = ({
       await downloadPDF(pdfBase64, `Informe_Jugador_${player.name.replace(/\s+/g, '_')}.pdf`);
     } catch (e) {
       console.error("Error generating pdf:", e);
-      alert('Error al exportar PDF');
+      alert(isEn ? 'Error exporting PDF' : 'Error al exportar PDF');
     }
   };
 
@@ -335,9 +337,9 @@ const PlayerAnalyticsModal = ({
                   alignItems: 'center',
                   gap: 6
                 }}
-                title="Renovar cuestionarios y limpiar evaluaciones para una nueva prueba"
+                title={isEn ? "Reset questionnaires and clear evaluations for a new test" : "Renovar cuestionarios y limpiar evaluaciones para una nueva prueba"}
               >
-                🔄 Renovar Tests
+                🔄 {isEn ? 'Renew Tests' : 'Renovar Tests'}
               </button>
             )}
             <button

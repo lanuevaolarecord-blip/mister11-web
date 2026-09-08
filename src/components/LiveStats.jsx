@@ -19,6 +19,7 @@ import { SvgDonut, SvgComparisonBars, HalfBreakdown } from './LiveStatsCharts';
 import { getEffectiveLanguage } from '../i18n/translations';
 import { isMatchLocked, getStartingXI } from '../utils/minutesEngine';
 import { showToast } from '../utils/toast';
+import { t } from '../i18n/index.js';
 import MatchStatsBlock from './MatchStatsBlock';
 
 // ── Nuevos Componentes de la Suite de Estadísticas ────────────────────────────
@@ -502,11 +503,11 @@ const LiveStats = ({
   // ── Acción individual con playerId adjunto ────────────────────────────────
   const handlePlayerAction = useCallback(async (type) => {
     if (!activePlayerId) {
-      showToast('👆 Selecciona un jugador primero', 'warning');
+      showToast(t('livestats.select_player_first'), 'warning');
       return;
     }
     if (isMatchLocked(matchData)) {
-      showToast('⚠️ Partido finalizado — usa Reabrir Acta para corregir.', 'warning');
+      showToast(t('livestats.match_locked_use_reopen'), 'warning');
       return;
     }
     const tempId = `local_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`;
@@ -538,7 +539,7 @@ const LiveStats = ({
 
   const innerAddLiveEvent = useCallback(async (type, explicitHalf = null, customCoords = {}) => {
     if (isMatchLocked(matchData)) {
-      showToast('⚠️ Partido finalizado — usa Reabrir Acta para corregir.', 'warning');
+      showToast(t('livestats.match_locked_use_reopen'), 'warning');
       return null;
     }
     const tempId = `local_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`;
@@ -591,7 +592,7 @@ const LiveStats = ({
   const addLiveEvent = innerAddLiveEvent;
   const resetLiveStats = useCallback(async () => {
     if (isMatchLocked(matchData)) {
-      showToast('⚠️ Partido finalizado — usa Reabrir Acta para corregir.', 'warning');
+      showToast(t('livestats.match_locked_use_reopen'), 'warning');
       return;
     }
     setLocalEvents([]);
@@ -602,7 +603,7 @@ const LiveStats = ({
   const handlePress = useCallback(
     async (type) => {
       if (isMatchLocked(matchData)) {
-        showToast('⚠️ Partido finalizado — usa Reabrir Acta para corregir.', 'warning');
+        showToast(t('livestats.match_locked_use_reopen'), 'warning');
         return;
       }
       const id = await addLiveEvent(type, currentHalf, {
@@ -973,7 +974,7 @@ const LiveStats = ({
                                 className={`jugador-accion-btn ${isFlashingPlayer ? 'flashing' : ''}`}
                                 style={{ '--action-color': a.color }}
                                 onClick={async () => {
-                                  if (isMatchLocked(matchData)) { showToast('⚠️ Partido finalizado', 'warning'); return; }
+                                  if (isMatchLocked(matchData)) { showToast(t('livestats.match_locked_short'), 'warning'); return; }
                                   setFlashType(`player_${a.type}_${idx}`);
                                   setTimeout(() => setFlashType(null), 650);
 
@@ -1575,7 +1576,7 @@ const LiveStats = ({
                         }
                       }
                     }
-                    showToast('✅ Contadores post-partido guardados', 'success');
+                    showToast(t('livestats.post_match_saved'), 'success');
                     setShowPostMatchModal(false);
                   }}
                   style={{ minHeight: '44px', padding: '0 24px', borderRadius: '8px', border: 'none', background: '#4CAF7D', color: '#0B1317', fontWeight: 900, cursor: 'pointer', fontSize: '14px' }}

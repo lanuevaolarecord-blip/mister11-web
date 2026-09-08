@@ -61,7 +61,7 @@ import './AdminPanel.css';
 const AdminPanel = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { t: tr, setLanguage: setGlobalLanguage, language: currentGlobalLanguage } = useTranslation();
+  const { t: tr, isEn, setLanguage: setGlobalLanguage, language: currentGlobalLanguage } = useTranslation();
   const [activeTab, setActiveTab] = useState(location.state?.activeTab || 'equipos');
   const [backfilling, setBackfilling] = useState(false);
   const [normalizingAttendance, setNormalizingAttendance] = useState(false);
@@ -114,14 +114,14 @@ const AdminPanel = () => {
         await deleteUser(auth.currentUser);
       }
 
-      showToast('Tu cuenta de entrenador y datos han sido eliminados correctamente.', 'info');
+      showToast(isEn ? 'Your coach account and data have been successfully deleted.' : 'Tu cuenta de entrenador y datos han sido eliminados correctamente.', 'info');
       window.location.href = '/';
     } catch (err) {
       console.error('Error al eliminar cuenta de entrenador:', err);
       if (err.code === 'auth/requires-recent-login') {
-        alert('Por motivos de seguridad, debes cerrar sesión e iniciarla de nuevo antes de eliminar tu cuenta.');
+        alert(isEn ? 'For security reasons, you must log out and log back in before deleting your account.' : 'Por motivos de seguridad, debes cerrar sesión e iniciarla de nuevo antes de eliminar tu cuenta.');
       } else {
-        alert('No se pudo eliminar la cuenta. Por favor contáctanos o reintenta tras reiniciar sesión.');
+        alert(isEn ? 'Could not delete the account. Please contact us or try again after logging back in.' : 'No se pudo eliminar la cuenta. Por favor contáctanos o reintenta tras reiniciar sesión.');
       }
     } finally {
       setIsDeletingCoach(false);
@@ -134,7 +134,7 @@ const AdminPanel = () => {
   const handleManageSubscription = async () => {
     const activeUid = localStorage.getItem('mister11_active_user_uid');
     if (activeUid === 'invitado-local') {
-      if (window.confirm("Estás en Modo de Prueba con un plan simulado. ¿Deseas desactivar el plan simulado para volver al plan gratuito y probar las restricciones?")) {
+      if (window.confirm(isEn ? "You are in Trial Mode with a simulated plan. Do you want to disable the simulated plan to return to the free plan and test restrictions?" : "Estás en Modo de Prueba con un plan simulado. ¿Deseas desactivar el plan simulado para volver al plan gratuito y probar las restricciones?")) {
         localStorage.removeItem('mister11_simulated_plan');
         window.location.reload();
       }
@@ -181,7 +181,7 @@ const AdminPanel = () => {
       }
 
       if (!hasCustomerId) {
-        alert("Aún no tienes una suscripción activa. Actualiza a Pro para gestionar tu suscripción.");
+        alert(isEn ? "You don't have an active subscription yet. Upgrade to Pro to manage your subscription." : "Aún no tienes una suscripción activa. Actualiza a Pro para gestionar tu suscripción.");
         setLoadingPortal(false);
         return;
       }
@@ -224,12 +224,12 @@ const AdminPanel = () => {
     } catch (error) {
       console.error('Error al abrir Customer Portal:', error);
       if (isNativeAndroid()) {
-        alert(tr('admin.manageSubAndroidMsg') || "Gestiona tu suscripción desde mister11.app");
+        alert(tr('admin.manageSubAndroidMsg') || (isEn ? "Manage your subscription from mister11.app" : "Gestiona tu suscripción desde mister11.app"));
         await openExternal('https://www.mister11.app/admin');
       } else if (error.message?.includes('not found') || error.message?.includes('NOT_FOUND') || error.code === 'not-found') {
-        alert('El portal de suscripción no está disponible. Asegúrate de que la extensión de Stripe está instalada y que tienes una suscripción activa.');
+        alert(isEn ? 'The subscription portal is not available. Make sure the Stripe extension is installed and you have an active subscription.' : 'El portal de suscripción no está disponible. Asegúrate de que la extensión de Stripe está instalada y que tienes una suscripción activa.');
       } else {
-        alert('No se pudo abrir el portal de suscripción. Inténtalo de nuevo más tarde.');
+        alert(isEn ? 'Could not open the subscription portal. Please try again later.' : 'No se pudo abrir el portal de suscripción. Inténtalo de nuevo más tarde.');
       }
     } finally {
       setLoadingPortal(false);
@@ -279,7 +279,7 @@ const AdminPanel = () => {
   }, [user, isAdmin]);
   
   const { settings, saveSettings, loading: loadingSettings } = useSettings(activeTeam?.id);
-  const { t, isEn } = useTranslation();
+  const { t } = useTranslation();
   const { permissions, switchMyRole, STAFF_ROLES, inviteMember } = useTeamMembers(activeTeam?.id);
   const { darkMode, toggleTheme } = useTheme();
   const [profileData, setProfileData] = useState({ profileName: '', specialty: 'Primer Entrenador' });
@@ -407,7 +407,7 @@ const AdminPanel = () => {
           reader.onerror = reject;
         });
         await updateTeam(activeTeam.id, { escudo: svgBase64 });
-        showToast("¡Escudo vectorial SVG guardado con éxito!", "success");
+        showToast(isEn ? "SVG vector crest saved successfully!" : "¡Escudo vectorial SVG guardado con éxito!", "success");
         return;
       }
 
@@ -462,10 +462,10 @@ const AdminPanel = () => {
       }
       
       await updateTeam(activeTeam.id, { escudo: base64data });
-      showToast("¡Escudo guardado y optimizado con éxito!", "success");
+      showToast(isEn ? "Crest saved and optimized successfully!" : "¡Escudo guardado y optimizado con éxito!", "success");
     } catch (error) {
       console.error("Error al subir el escudo:", error);
-      showToast("No se pudo subir o procesar la imagen.", "error");
+      showToast(isEn ? "Could not upload or process image." : "No se pudo subir o procesar la imagen.", "error");
     } finally {
       setIsUploadingShield(false);
     }
@@ -519,10 +519,10 @@ const AdminPanel = () => {
       if (switchMyRole && roleId) {
         await switchMyRole(roleId);
       }
-      showToast("Perfil de entrenador sincronizado en todo el sistema.", "success");
+      showToast(isEn ? "Coach profile synchronized throughout the system." : "Perfil de entrenador sincronizado en todo el sistema.", "success");
     } catch (e) {
       console.error('[AdminPanel] Error al guardar perfil:', e);
-      showToast("Error al guardar perfil.", "error");
+      showToast(isEn ? "Error saving profile." : "Error al guardar perfil.", "error");
     }
   };
 
@@ -530,9 +530,9 @@ const AdminPanel = () => {
     if (!activeTeam) return;
     try {
       await updateTeam(activeTeam.id, teamEditData);
-      showToast("Identidad del equipo actualizada correctamente.", "success");
+      showToast(isEn ? "Team identity updated successfully." : "Identidad del equipo actualizada correctamente.", "success");
     } catch (e) {
-      showToast("Error al actualizar identidad del equipo.", "error");
+      showToast(isEn ? "Error updating team identity." : "Error al actualizar identidad del equipo.", "error");
     }
   };
 
@@ -545,9 +545,9 @@ const AdminPanel = () => {
           ...gamificationData
         }
       });
-      showToast("Tabla de XP y objetivos de temporada guardados con éxito.", "success");
+      showToast(isEn ? "XP table and season goals saved successfully." : "Tabla de XP y objetivos de temporada guardados con éxito.", "success");
     } catch (e) {
-      showToast("Error al guardar configuración de XP.", "error");
+      showToast(isEn ? "Error saving XP settings." : "Error al guardar configuración de XP.", "error");
     }
   };
 
@@ -563,25 +563,25 @@ const AdminPanel = () => {
 
   const handleExportSeason = async () => {
     if (!isPro) {
-      setUpgradeModal({ open: true, message: 'La exportación del Informe de Temporada a PDF es una función PRO.' });
+      setUpgradeModal({ open: true, message: isEn ? 'Exporting the Season Report to PDF is a PRO feature.' : 'La exportación del Informe de Temporada a PDF es una función PRO.' });
       return;
     }
-    if (!activeTeam) { showToast('Selecciona un equipo primero.', 'info'); return; }
+    if (!activeTeam) { showToast(isEn ? 'Select a team first.' : 'Selecciona un equipo primero.', 'info'); return; }
     await generateSeasonReport(activeTeam, players, matches);
   };
 
   const handleExportGlobalReport = async () => {
     if (!isPro) {
-      setUpgradeModal({ open: true, message: 'La generación del Informe Global del Equipo a PDF es una función PRO.' });
+      setUpgradeModal({ open: true, message: isEn ? 'Generating the Global Team Report as PDF is a PRO feature.' : 'La generación del Informe Global del Equipo a PDF es una función PRO.' });
       return;
     }
-    if (!activeTeam) { showToast('Selecciona un equipo primero.', 'info'); return; }
-    if (players.length === 0) { showToast('No hay jugadores en el equipo activo.', 'info'); return; }
+    if (!activeTeam) { showToast(isEn ? 'Select a team first.' : 'Selecciona un equipo primero.', 'info'); return; }
+    if (players.length === 0) { showToast(isEn ? 'There are no players in the active team.' : 'No hay jugadores en el equipo activo.', 'info'); return; }
     try {
       await generateGlobalTeamReport(players, teamTests, teamEvaluaciones, activeTeam);
     } catch (err) {
       console.error('Error generando informe global:', err);
-      showToast('Error al generar el informe global.', 'error');
+      showToast(isEn ? 'Error generating global report.' : 'Error al generar el informe global.', 'error');
     }
   };
 
@@ -589,7 +589,7 @@ const AdminPanel = () => {
   // Esto evita que Chrome en Android abra la URL inline y elimine el archivo.
   const downloadApk = async (url, version) => {
     try {
-      showToast('⬇️ Iniciando descarga del APK...', 'info');
+      showToast(isEn ? '⬇️ Starting APK download...' : '⬇️ Iniciando descarga del APK...', 'info');
       const response = await fetch(url);
       if (!response.ok) throw new Error(`HTTP ${response.status}`);
       const blob = await response.blob();
@@ -605,11 +605,11 @@ const AdminPanel = () => {
         document.body.removeChild(a);
         URL.revokeObjectURL(blobUrl);
       }, 5000);
-      showToast('✅ Descarga completada. Busca el archivo en tu carpeta de Descargas e instálalo.', 'success');
+      showToast(isEn ? '✅ Download complete. Check your Downloads folder and install it.' : '✅ Descarga completada. Busca el archivo en tu carpeta de Descargas e instálalo.', 'success');
     } catch (err) {
       console.error('Error en descarga APK:', err);
       // Fallback: abrir en _system para que el SO gestione la descarga
-      showToast('⚠️ Descarga directa fallida. Abriendo enlace alternativo...', 'warning');
+      showToast(isEn ? '⚠️ Direct download failed. Opening alternative link...' : '⚠️ Descarga directa fallida. Abriendo enlace alternativo...', 'warning');
       window.open(url, '_system');
     }
   };
@@ -641,18 +641,18 @@ const AdminPanel = () => {
         };
 
         if (isNewer(remoteVersion, APP_VERSION)) {
-          if (window.confirm(`🆕 Nueva versión ${remoteVersion} disponible (tu versión actual: ${APP_VERSION}).\n¿Descargar ahora?`)) {
+          if (window.confirm(isEn ? `🆕 New version ${remoteVersion} available (your current version: ${APP_VERSION}).\nDownload now?` : `🆕 Nueva versión ${remoteVersion} disponible (tu versión actual: ${APP_VERSION}).\n¿Descargar ahora?`)) {
             await downloadApk(apkDownloadUrl, remoteVersion);
           }
         } else {
-          showToast(`✅ Ya tienes la última versión instalada (v${APP_VERSION}).`, 'success');
+          showToast(isEn ? `✅ You already have the latest version installed (v${APP_VERSION}).` : `✅ Ya tienes la última versión instalada (v${APP_VERSION}).`, 'success');
         }
       } else {
-        showToast('No se pudo comprobar actualizaciones.', 'error');
+        showToast(isEn ? 'Could not check for updates.' : 'No se pudo comprobar actualizaciones.', 'error');
       }
     } catch (err) {
       console.error('Error al comprobar actualizaciones:', err);
-      showToast('Error al conectar con el servidor.', 'error');
+      showToast(isEn ? 'Error connecting to server.' : 'Error al conectar con el servidor.', 'error');
     } finally {
       setCheckingUpdate(false);
     }
@@ -660,29 +660,29 @@ const AdminPanel = () => {
 
   const handleExportConvocatoria = async () => {
     if (!isPro) {
-      setUpgradeModal({ open: true, message: 'La exportación de la lista de convocados a PDF es una función PRO.' });
+      setUpgradeModal({ open: true, message: isEn ? 'Exporting the squad list to PDF is a PRO feature.' : 'La exportación de la lista de convocados a PDF es una función PRO.' });
       return;
     }
-    if (!selectedMatchId) { showToast('Selecciona un partido primero.', 'info'); return; }
+    if (!selectedMatchId) { showToast(isEn ? 'Select a match first.' : 'Selecciona un partido primero.', 'info'); return; }
     const match = matches.find(m => m.id === selectedMatchId);
-    if (!match) { showToast('Partido no encontrado.', 'error'); return; }
+    if (!match) { showToast(isEn ? 'Match not found.' : 'Partido no encontrado.', 'error'); return; }
     await generateMatchConvocation(match, players, activeTeam);
   };
 
   const handleExportSession = async () => {
     if (!isPro) {
-      setUpgradeModal({ open: true, message: 'La exportación de la ficha de sesión a PDF es una función PRO.' });
+      setUpgradeModal({ open: true, message: isEn ? 'Exporting the session sheet to PDF is a PRO feature.' : 'La exportación de la ficha de sesión a PDF es una función PRO.' });
       return;
     }
-    if (!selectedSessionId) { showToast('Selecciona una sesión primero.', 'info'); return; }
+    if (!selectedSessionId) { showToast(isEn ? 'Select a session first.' : 'Selecciona una sesión primero.', 'info'); return; }
     const session = sessions.find(s => s.id === selectedSessionId);
-    if (!session) { showToast('Sesión no encontrada.', 'error'); return; }
+    if (!session) { showToast(isEn ? 'Session not found.' : 'Sesión no encontrada.', 'error'); return; }
     await generateSessionPDF(session, activeTeam);
   };
 
   const handleExportBackup = async () => {
     if (!user || !activeTeam) {
-      showToast("No hay ningún equipo activo seleccionado.", "error");
+      showToast(isEn ? "No active team selected." : "No hay ningún equipo activo seleccionado.", "error");
       return;
     }
     
@@ -723,7 +723,7 @@ const AdminPanel = () => {
       await downloadJSON(jsonString, filename);
     } catch (error) {
       console.error("Error al exportar backup:", error);
-      showToast("Error al generar la copia de seguridad.", "error");
+      showToast(isEn ? "Error generating backup." : "Error al generar la copia de seguridad.", "error");
     }
   };
 
@@ -1487,10 +1487,10 @@ const AdminPanel = () => {
                       Configura la clave API de Groq para que la IA Generadora funcione en todos los dispositivos (incluyendo el APK de la tablet sin necesidad de recompilar).
                     </p>
                     <div className="form-group">
-                      <label>Clave API de Groq (gsk_...)</label>
+                      <label>{isEn ? "Groq API Key (gsk_...)" : "Clave API de Groq (gsk_...)"}</label>
                       <input 
                         type="password" 
-                        placeholder="Pega tu clave gsk_..." 
+                        placeholder={isEn ? "Paste your gsk_... key" : "Pega tu clave gsk_..."} 
                         value={groqApiKey} 
                         onChange={(e) => setGroqApiKey(e.target.value)} 
                         style={{
@@ -1511,15 +1511,15 @@ const AdminPanel = () => {
                       onClick={async () => {
                         try {
                           await setDoc(doc(db, 'config', 'global'), { groqApiKey }, { merge: true });
-                          showToast("¡Clave API de Groq guardada con éxito!", "success");
+                          showToast(isEn ? "Groq API key saved successfully!" : "¡Clave API de Groq guardada con éxito!", "success");
                         } catch (err) {
                           console.error("Error al guardar clave en Firestore:", err);
-                          showToast("Error al guardar la clave API en Firestore.", "error");
+                          showToast(isEn ? "Error saving API key to Firestore." : "Error al guardar la clave API en Firestore.", "error");
                         }
                       }}
                       style={{ width: '100%', minHeight: '48px', fontWeight: 'bold' }}
                     >
-                      Guardar Clave
+                      {isEn ? "Save Key" : "Guardar Clave"}
                     </button>
                   </div>
                 </div>

@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Play, Pause, Square, Maximize2, Minimize2, ChevronLeft, ChevronRight, Clock, Repeat } from 'lucide-react';
+import { useTranslation } from '../../hooks/useTranslation';
 
 export const PresentationMode = ({
   isPlaying = false,
@@ -16,6 +17,7 @@ export const PresentationMode = ({
   isFullscreen = false,
   onToggleFullscreen
 }) => {
+  const { isEn } = useTranslation();
   const [progress, setProgress] = useState(0);
   const progressTimerRef = useRef(null);
 
@@ -64,14 +66,14 @@ export const PresentationMode = ({
             title={isPlaying ? 'Pausar presentación' : 'Iniciar presentación automática'}
           >
             {isPlaying ? <Pause size={18} /> : <Play size={18} />}
-            <span>{isPlaying ? 'Pausa' : 'Auto-Play'}</span>
+            <span>{isPlaying ? (isEn ? 'Pause' : 'Pausa') : 'Auto-Play'}</span>
           </button>
 
           <button
             type="button"
             className="pres-btn"
             onClick={onStop}
-            title="Detener presentación"
+            title={isEn ? "Stop presentation" : "Detener presentación"}
           >
             <Square size={16} />
           </button>
@@ -84,7 +86,7 @@ export const PresentationMode = ({
             className="pres-btn nav"
             onClick={onPrev}
             disabled={!isLoop && currentIndex === 0}
-            title="Anterior ejercicio"
+            title={isEn ? "Previous exercise" : "Anterior ejercicio"}
           >
             <ChevronLeft size={18} />
           </button>
@@ -98,7 +100,7 @@ export const PresentationMode = ({
             className="pres-btn nav"
             onClick={onNext}
             disabled={!isLoop && currentIndex === totalImages - 1}
-            title="Siguiente ejercicio"
+            title={isEn ? "Next exercise" : "Siguiente ejercicio"}
           >
             <ChevronRight size={18} />
           </button>

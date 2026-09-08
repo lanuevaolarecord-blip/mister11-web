@@ -1128,7 +1128,7 @@ const Sesiones = () => {
                 <button className="btn-close-pdf" onClick={() => setPdfPreview(null)}>✕</button>
               </div>
               <div className="modal-body-pdf">
-                <iframe src={pdfPreview} title="PDF Preview" width="100%" height="100%" style={{border: 'none'}}></iframe>
+                <iframe src={pdfPreview} title={isEn ? "PDF Preview" : "Vista Previa del PDF"} width="100%" height="100%" style={{border: 'none'}}></iframe>
               </div>
             </div>
           </div>
@@ -1850,7 +1850,7 @@ const Sesiones = () => {
           <iframe 
             src={`/pizarra?id=${exportingId}&autoExport=true`} 
             style={{ width: '1px', height: '1px', visibility: 'hidden', position: 'absolute' }}
-            title="Auto-Exporter Frame"
+            title={isEn ? "Auto-Exporter Frame" : "Marco de auto-exportación"}
           />
         </div>
       )}
@@ -1892,7 +1892,7 @@ const Sesiones = () => {
               <button className="btn-close-pdf" onClick={() => setPdfPreview(null)}>✕</button>
             </div>
             <div className="modal-body-pdf">
-              <iframe src={pdfPreview} title="PDF Preview" width="100%" height="100%" style={{border: 'none'}}></iframe>
+              <iframe src={pdfPreview} title={isEn ? "PDF Preview" : "Vista Previa del PDF"} width="100%" height="100%" style={{border: 'none'}}></iframe>
             </div>
           </div>
         </div>

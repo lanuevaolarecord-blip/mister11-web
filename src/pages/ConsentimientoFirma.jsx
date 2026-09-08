@@ -4,9 +4,11 @@ import { db } from '../firebaseConfig';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { Shield, Check, Download, Share2, Sparkles, FileText, Lock } from 'lucide-react';
 import { drawPdfFooter } from '../utils/pdfTheme';
+import { useTranslation } from '../hooks/useTranslation';
 import './ConsentimientoFirma.css';
 
 const ConsentimientoFirma = () => {
+  const { t, isEn, locale } = useTranslation();
   const [searchParams] = useSearchParams();
   
   // Parámetros de la URL pasados por el entrenador
@@ -217,8 +219,8 @@ const ConsentimientoFirma = () => {
       
       doc.setFont('helvetica', 'normal');
       doc.setFontSize(9.5);
-      doc.text('Firmado digitalmente en pantalla táctil de dispositivo móvil.', 15, 182);
-      doc.text(`Fecha de la Firma: ${new Date().toLocaleDateString()}`, 15, 188);
+      doc.text(isEn ? 'Digitally signed on mobile touchscreen.' : 'Firmado digitalmente en pantalla táctil de dispositivo móvil.', 15, 182);
+      doc.text(`${isEn ? 'Signature Date: ' : 'Fecha de la Firma: '}${new Date().toLocaleDateString(locale || (isEn ? 'en-US' : 'es-ES'))}`, 15, 188);
 
       // Añadir la firma del canvas al PDF
       doc.addImage(signatureDataUrl, 'PNG', 15, 195, 60, 30);
@@ -332,7 +334,7 @@ const ConsentimientoFirma = () => {
               <label>Nombre del Padre / Madre / Tutor *</label>
               <input 
                 type="text" 
-                placeholder="Ej. Juan Pérez" 
+                placeholder={isEn ? "e.g. John Doe" : "Ej. Juan Pérez"} 
                 value={parentName} 
                 onChange={e => setParentName(e.target.value)} 
                 required 
@@ -343,7 +345,7 @@ const ConsentimientoFirma = () => {
               <label>Documento de Identidad (DNI/NIE/Pasaporte) *</label>
               <input 
                 type="text" 
-                placeholder="Ej. 12345678Z" 
+                placeholder={isEn ? "e.g. 12345678Z" : "Ej. 12345678Z"} 
                 value={parentDni} 
                 onChange={e => setParentDni(e.target.value)} 
                 required 
@@ -353,9 +355,9 @@ const ConsentimientoFirma = () => {
             <div className="form-field">
               <label>Parentesco *</label>
               <select value={relation} onChange={e => setRelation(e.target.value)}>
-                <option value="Padre">Padre</option>
-                <option value="Madre">Madre</option>
-                <option value="Tutor">Tutor / Representante Legal</option>
+                <option value="Padre">{isEn ? "Father" : "Padre"}</option>
+                <option value="Madre">{isEn ? "Mother" : "Madre"}</option>
+                <option value="Tutor">{isEn ? "Legal Guardian / Tutor" : "Tutor / Representante Legal"}</option>
               </select>
             </div>
 
@@ -363,7 +365,7 @@ const ConsentimientoFirma = () => {
               <label>Nombre del Jugador (Menor) *</label>
               <input 
                 type="text" 
-                placeholder="Ej. Thiago Pérez" 
+                placeholder={isEn ? "e.g. Thiago Doe" : "Ej. Thiago Pérez"} 
                 value={playerName} 
                 onChange={e => setPlayerName(e.target.value)} 
                 required 

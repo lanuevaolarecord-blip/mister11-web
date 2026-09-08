@@ -5,8 +5,10 @@ import { uploadImageFile } from '../utils/uploadImage';
 import { auth } from '../firebaseConfig';
 import { useCaptures } from '../hooks/useCaptures';
 import { ImageModal } from './SessionImageViewer/ImageModal';
+import { useTranslation } from '../hooks/useTranslation';
 
 const BlockEditor = ({ block, index, handleUpdateBlock, handleDeleteBlock, handleDuplicateBlock, teamId, sessionId }) => {
+  const { isEn } = useTranslation();
   const fileInputRef = useRef(null);
   const [showCaptureModal, setShowCaptureModal] = useState(false);
   const [showViewerModal, setShowViewerModal] = useState(false);
@@ -81,19 +83,19 @@ const BlockEditor = ({ block, index, handleUpdateBlock, handleDeleteBlock, handl
           window.dispatchEvent(new CustomEvent('m11-loading', { detail: { show: false } }));
         };
         img.onerror = () => {
-          alert('Error al procesar la imagen.');
+          alert(isEn ? 'Error processing image.' : 'Error al procesar la imagen.');
           window.dispatchEvent(new CustomEvent('m11-loading', { detail: { show: false } }));
         };
         img.src = event.target.result;
       };
       reader.onerror = () => {
-        alert('Error al leer el archivo.');
+        alert(isEn ? 'Error reading file.' : 'Error al leer el archivo.');
         window.dispatchEvent(new CustomEvent('m11-loading', { detail: { show: false } }));
       };
       reader.readAsDataURL(file);
     } catch (err) {
       console.error(err);
-      alert('Error al procesar la imagen.');
+      alert(isEn ? 'Error processing image.' : 'Error al procesar la imagen.');
       window.dispatchEvent(new CustomEvent('m11-loading', { detail: { show: false } }));
     } finally {
       if (fileInputRef.current) {
@@ -119,11 +121,11 @@ const BlockEditor = ({ block, index, handleUpdateBlock, handleDeleteBlock, handl
           className="block-title-input" 
           value={block.name || ''} 
           onChange={e => handleUpdateBlock(block.id, 'name', e.target.value)} 
-          placeholder="Nombre del ejercicio" 
+          placeholder={isEn ? "Exercise name" : "Nombre del ejercicio"} 
         />
         {handleDuplicateBlock && (
           <button
-            title="Duplicar bloque"
+            title={isEn ? "Duplicate block" : "Duplicar bloque"}
             onClick={() => handleDuplicateBlock(block)}
             style={{ minWidth: '48px', minHeight: '48px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'transparent', border: '1px solid var(--border-light, #e2e8f0)', borderRadius: '8px', cursor: 'pointer', color: 'var(--text-secondary)', transition: 'all 0.2s', marginRight: '4px' }}
           >
@@ -133,27 +135,40 @@ const BlockEditor = ({ block, index, handleUpdateBlock, handleDeleteBlock, handl
         <button 
           className="btn-del-icon" 
           onClick={() => handleDeleteBlock(block.id)}
-          style={{ minWidth: '48px', minHeight: '48px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+          style={{ minWidth: '48px', minHeight: '48px', display: 'flex', alignItems: 'center', justifyContent: 'center', touchAction: 'manipulation' }}
+          title={isEn ? "Delete block" : "Eliminar bloque"}
         >
           ✕
         </button>
       </div>
       
       <div className="block-editor-body">
-        <div className="form-row">
-          <div className="form-group mini">
-            <label>Duración (min)</label>
+        <div className="form-row-compact">
+          <div className="form-group">
+            <label>Minutos</label>
             <input 
               type="number" 
-              min="1" 
-              value={block.duration} 
-              onChange={e => handleUpdateBlock(block.id, 'duration', Number(e.target.value))} 
+              value={block.duration || ''} 
+              onChange={e => handleUpdateBlock(block.id, 'duration', parseInt(e.target.value) || 0)} 
+              placeholder="15" 
+              min="1"
             />
           </div>
-          <div className="form-group mini">
-            <label>Tipo</label>
+          <div className="form-group">
+            <label>Intensidad</label>
             <select 
-              value={block.type} 
+              value={block.intensity || 'Media'} 
+              onChange={e => handleUpdateBlock(block.id, 'intensity', e.target.value)}
+            >
+              <option value="Baja">Baja</option>
+              <option value="Media">Media</option>
+              <option value="Alta">Alta</option>
+            </select>
+          </div>
+          <div className="form-group">
+            <label>Contenido</label>
+            <select 
+              value={block.type || 'Técnica'} 
               onChange={e => handleUpdateBlock(block.id, 'type', e.target.value)}
             >
               <option value="Física">Calentamiento/Físico</option>
@@ -169,7 +184,7 @@ const BlockEditor = ({ block, index, handleUpdateBlock, handleDeleteBlock, handl
           <textarea 
             value={block.description || ''} 
             onChange={e => handleUpdateBlock(block.id, 'description', e.target.value)} 
-            placeholder="Describe el ejercicio, restricciones, puntuación..."
+            placeholder={isEn ? "Describe the exercise, restrictions, scoring..." : "Describe el ejercicio, restricciones, puntuación..."}
           ></textarea>
         </div>
 

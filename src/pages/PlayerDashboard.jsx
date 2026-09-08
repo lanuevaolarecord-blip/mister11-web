@@ -76,7 +76,7 @@ const PlayerDashboard = () => {
   );
 
   const handleLogout = async () => {
-    if (window.confirm('¿Deseas cerrar sesión o cambiar de cuenta?')) {
+    if (window.confirm(isEn ? 'Do you want to sign out or switch accounts?' : '¿Deseas cerrar sesión o cambiar de cuenta?')) {
       try {
         await logout();
         window.location.href = '/';
@@ -258,7 +258,7 @@ const PlayerDashboard = () => {
               senderName: 'Míster',
               extra: { tab: 'chat', playerId: player.id }
             });
-            showToast(`💬 Nuevo mensaje del Míster: "${data.lastMessage}"`, 'info');
+            showToast(`${t('playerDashboard.new_message')} "${data.lastMessage}"`, 'info');
           }
         }
       }

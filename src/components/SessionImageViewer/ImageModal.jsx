@@ -25,6 +25,7 @@ import { AnnotationLayer } from './AnnotationLayer';
 import { TacticalGridOverlay } from './TacticalGridOverlay';
 import { PresentationMode } from './PresentationMode';
 import { SplitViewLayout } from './SplitViewLayout';
+import { useTranslation } from '../../hooks/useTranslation';
 import './SessionImageViewer.css';
 
 export const ImageModal = ({
@@ -35,6 +36,7 @@ export const ImageModal = ({
   exercisesData = [],
   onSaveAnnotations
 }) => {
+  const { isEn } = useTranslation();
   const [currentIndex, setCurrentIndex] = useState(initialIndex);
   const [zoom, setZoom] = useState(1);
   const [pan, setPan] = useState({ x: 0, y: 0 });
@@ -218,7 +220,7 @@ export const ImageModal = ({
       } catch (err) {}
     } else {
       navigator.clipboard.writeText(window.location.href);
-      alert('¡Enlace copiado al portapapeles!');
+      alert(isEn ? 'Link copied to clipboard!' : '¡Enlace copiado al portapapeles!');
     }
   };
 
@@ -321,10 +323,10 @@ export const ImageModal = ({
             type="button"
             className={`tool-btn ${isAnnotationMode ? 'active' : ''}`}
             onClick={() => setIsAnnotationMode(!isAnnotationMode)}
-            title="Activar herramientas de dibujo táctico"
+            title={isEn ? "Enable tactical drawing tools" : "Activar herramientas de dibujo táctico"}
           >
             <Edit3 size={16} />
-            <span className="btn-text">Anotar</span>
+            <span className="btn-text">{isEn ? "Annotate" : "Anotar"}</span>
           </button>
 
           {/* Toggle Cuadrícula Táctica */}
@@ -337,15 +339,15 @@ export const ImageModal = ({
                 const nextIdx = (types.indexOf(gridType) + 1) % types.length;
                 setGridType(types[nextIdx]);
               }}
-              title="Alternar cuadrículas tácticas (10x15, 5 Carriles, Tercios, 18 Zonas, Campo)"
+              title={isEn ? "Toggle tactical grids (10x15, 5 Channels, Thirds, 18 Zones, Pitch)" : "Alternar cuadrículas tácticas (10x15, 5 Carriles, Tercios, 18 Zonas, Campo)"}
             >
               <Grid size={16} />
               <span className="btn-text">
-                {gridType === 'none' ? 'Cuadrícula' :
+                {gridType === 'none' ? (isEn ? 'Grid' : 'Cuadrícula') :
                  gridType === 'grid10x15' ? '10×15' :
-                 gridType === 'channels' ? '5 Carriles' :
-                 gridType === 'thirds' ? 'Tercios' :
-                 gridType === 'zones18' ? '18 Zonas' : 'Campo'}
+                 gridType === 'channels' ? (isEn ? '5 Channels' : '5 Carriles') :
+                 gridType === 'thirds' ? (isEn ? 'Thirds' : 'Tercios') :
+                 gridType === 'zones18' ? (isEn ? '18 Zones' : '18 Zonas') : (isEn ? 'Pitch' : 'Campo')}
               </span>
             </button>
           </div>
@@ -359,10 +361,10 @@ export const ImageModal = ({
               if (!isPresentationOpen) setIsPlaying(true);
               else setIsPlaying(false);
             }}
-            title="Modo presentación automática"
+            title={isEn ? "Automated presentation mode" : "Modo presentación automática"}
           >
             <Tv size={16} />
-            <span className="btn-text">Presentación</span>
+            <span className="btn-text">{isEn ? "Presentation" : "Presentación"}</span>
           </button>
 
           {/* Toggle Split View */}
@@ -370,10 +372,10 @@ export const ImageModal = ({
             type="button"
             className={`tool-btn ${isSplitView ? 'active' : ''}`}
             onClick={() => setIsSplitView(!isSplitView)}
-            title="Vista dividida (Imagen + Descripción)"
+            title={isEn ? "Split view (Image + Description)" : "Vista dividida (Imagen + Descripción)"}
           >
             <Columns size={16} />
-            <span className="btn-text">Dividir</span>
+            <span className="btn-text">{isEn ? "Split" : "Dividir"}</span>
           </button>
         </div>
 
@@ -474,10 +476,10 @@ export const ImageModal = ({
             type="button"
             className="clear-all-annotations-btn"
             onClick={() => handleUpdateAnnotations([])}
-            title="Borrar todas las anotaciones"
+            title={isEn ? "Clear all annotations" : "Borrar todas las anotaciones"}
           >
             <Trash2 size={14} />
-            <span>Limpiar</span>
+            <span>{isEn ? "Clear" : "Limpiar"}</span>
           </button>
         </div>
       )}
@@ -486,7 +488,7 @@ export const ImageModal = ({
       <main className="viewer-viewport-content">
         {/* Flecha Izquierda */}
         {images.length > 1 && (
-          <button type="button" onClick={handlePrevImage} className="nav-arrow left" title="Anterior imagen (←)">
+          <button type="button" onClick={handlePrevImage} className="nav-arrow left" title={isEn ? "Previous image (←)" : "Anterior imagen (←)"}>
             <ChevronLeft size={28} />
           </button>
         )}

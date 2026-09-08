@@ -48,7 +48,7 @@ const AssignPlanModal = ({ player, activeTeamId, onClose }) => {
 
   const handleSave = async () => {
     if (selectedIds.length === 0) {
-      alert('Selecciona al menos un ejercicio.');
+      alert(isEn ? 'Please select at least one exercise.' : 'Selecciona al menos un ejercicio.');
       return;
     }
     setSaving(true);
@@ -110,7 +110,7 @@ const AssignPlanModal = ({ player, activeTeamId, onClose }) => {
                 type="text"
                 value={planName}
                 onChange={e => setPlanName(e.target.value)}
-                placeholder="Ej: Prevención isquios"
+                placeholder={isEn ? "e.g. Hamstrings prevention" : "Ej: Prevención isquios"}
                 style={{ width: '100%', padding: '10px 12px', border: '1px solid #E5E7EB', borderRadius: '8px', fontFamily: 'inherit', boxSizing: 'border-box' }}
               />
             </div>

@@ -49,10 +49,10 @@ export const MatchActionsToolbar = ({
         type="button" 
         className="action-btn pdf-btn"
         onClick={onExportPdf}
-        title="Descargar informe completo en PDF"
+        title={isEn ? "Download full report in PDF" : "Descargar informe completo en PDF"}
       >
         <Download size={16} />
-        <span>Exportar PDF</span>
+        <span>{isEn ? "Export PDF" : "Exportar PDF"}</span>
       </button>
 
       {/* 🔗 2. Compartir */}
@@ -63,10 +63,10 @@ export const MatchActionsToolbar = ({
           if (onShare) onShare();
           setShowShareModal(true);
         }}
-        title="Compartir estadísticas del partido"
+        title={isEn ? "Share match statistics" : "Compartir estadísticas del partido"}
       >
         <Share2 size={16} />
-        <span>Compartir</span>
+        <span>{isEn ? "Share" : "Compartir"}</span>
       </button>
 
       {/* 📝 3. Añadir Nota Táctica */}
@@ -74,10 +74,10 @@ export const MatchActionsToolbar = ({
         type="button" 
         className="action-btn note-btn"
         onClick={() => setShowNoteModal(true)}
-        title="Añadir observaciones tácticas del partido"
+        title={isEn ? "Add tactical observations for the match" : "Añadir observaciones tácticas del partido"}
       >
         <FileEdit size={16} />
-        <span>Notas {notesCount > 0 && `(${notesCount})`}</span>
+        <span>{isEn ? "Notes" : "Notas"} {notesCount > 0 && `(${notesCount})`}</span>
       </button>
 
       {/* 🔖 4. Marcar Destacado */}
@@ -85,10 +85,10 @@ export const MatchActionsToolbar = ({
         type="button" 
         className={`action-btn bookmark-btn ${isHighlighted ? 'active' : ''}`}
         onClick={onToggleHighlight}
-        title={isHighlighted ? 'Partido marcado como clave' : 'Marcar como partido clave'}
+        title={isHighlighted ? (isEn ? 'Match marked as key' : 'Partido marcado como clave') : (isEn ? 'Mark as key match' : 'Marcar como partido clave')}
       >
         <Bookmark size={16} fill={isHighlighted ? '#D4A843' : 'none'} color={isHighlighted ? '#D4A843' : 'currentColor'} />
-        <span>{isHighlighted ? 'Destacado' : 'Marcar'}</span>
+        <span>{isHighlighted ? (isEn ? 'Key' : 'Destacado') : (isEn ? 'Mark' : 'Marcar')}</span>
       </button>
 
       {/* 🎬 5. Ver Video */}
@@ -98,10 +98,10 @@ export const MatchActionsToolbar = ({
           target="_blank" 
           rel="noopener noreferrer" 
           className="action-btn video-btn"
-          title="Ver grabación del partido"
+          title={isEn ? "Watch match recording" : "Ver grabación del partido"}
         >
           <Video size={16} />
-          <span>Ver Video</span>
+          <span>{isEn ? "Watch Video" : "Ver Video"}</span>
         </a>
       )}
 

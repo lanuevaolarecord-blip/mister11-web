@@ -34,7 +34,7 @@ const createStripeCheckoutSession = async (uid, priceId, successUrl, cancelUrl, 
 
 const UpgradeModal = ({ isOpen, onClose, message, urgency = false, isSuccessState = false }) => {
   const { activeTeamId } = useAuth();
-  const { t } = useTranslation();
+  const { t, isEn, locale } = useTranslation();
   const isAndroid = isNativeAndroid();
   const [showRedeemView, setShowRedeemView] = useState(false);
   const [billingCycle, setBillingCycle] = useState('season'); // 'season' | 'monthly'
@@ -126,7 +126,9 @@ const UpgradeModal = ({ isOpen, onClose, message, urgency = false, isSuccessStat
 
       setPromoMessage({
         type: 'success',
-        text: `¡Código canjeado con éxito! Plan PRO activo hasta el ${expirationDate.toLocaleDateString()}.`
+        text: isEn
+          ? `Code redeemed successfully! PRO Plan active until ${expirationDate.toLocaleDateString(locale || 'en-US')}.`
+          : `¡Código canjeado con éxito! Plan PRO activo hasta el ${expirationDate.toLocaleDateString(locale || 'es-ES')}.`
       });
       setPromoCode('');
 
@@ -218,7 +220,7 @@ const UpgradeModal = ({ isOpen, onClose, message, urgency = false, isSuccessStat
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                   <input
                     type="text"
-                    placeholder="CÓDIGO (EJ. BETA2026)"
+                    placeholder={isEn ? "CODE (E.G. BETA2026)" : "CÓDIGO (EJ. BETA2026)"}
                     value={promoCode}
                     onChange={e => setPromoCode(e.target.value.toUpperCase())}
                     disabled={redeeming}
@@ -451,7 +453,7 @@ const UpgradeModal = ({ isOpen, onClose, message, urgency = false, isSuccessStat
     // Guest / demo mode
     const activeUid = localStorage.getItem('mister11_active_user_uid');
     if (activeUid === 'invitado-local') {
-      alert('El pago no está disponible en modo invitado. Inicia sesión primero.');
+      alert(isEn ? 'Payment is not available in guest mode. Please sign in first.' : 'El pago no está disponible en modo invitado. Inicia sesión primero.');
       setLoadingPlan(null);
       setStatusMsg('');
       return;

@@ -70,7 +70,7 @@ const toLibType = (t) => {
 // ─────────────────────────────────────────────────────────────────────────────
 const PizarraTactica = () => {
   // Referencias a Context
-  const { t } = useTranslation();
+  const { t, isEn } = useTranslation();
   const { guardarEstado, obtenerEstado } = usePizarra();
   const { isProActive } = usePlan();
   const [upgradeModal, setUpgradeModal] = useState({ open: false, message: '' });
@@ -692,7 +692,7 @@ const PizarraTactica = () => {
     const exportData = {
       app: 'Mister11',
       version: '1.0.0',
-      title: `Pizarra - ${new Date().toLocaleDateString()}`,
+      title: `Pizarra - ${new Date().toLocaleDateString(isEn ? 'en-US' : 'es-ES')}`,
       fieldType: fieldType,
       frames: (framesR.current || []).map(f => ({
         name: f.name || '',
@@ -716,10 +716,10 @@ const PizarraTactica = () => {
       try {
         const data = JSON.parse(event.target.result);
         if (data.app !== 'Mister11' || !Array.isArray(data.frames)) {
-          showToast('El archivo no tiene el formato válido de animación de Míster11.', 'error');
+          showToast(isEn ? 'The file does not have a valid Mister11 animation format.' : 'El archivo no tiene el formato válido de animación de Míster11.', 'error');
           return;
         }
-        if (!window.confirm(`¿Importar esta animación con ${data.frames.length} frames? Esto reemplazará los frames actuales.`)) {
+        if (!window.confirm(isEn ? `Import this animation with ${data.frames.length} frames? This will replace current frames.` : `¿Importar esta animación con ${data.frames.length} frames? Esto reemplazará los frames actuales.`)) {
           return;
         }
 
@@ -778,10 +778,10 @@ const PizarraTactica = () => {
             presentR.current = JSON.stringify(newFrames[0].state);
           });
         }
-        showToast('¡Animación importada con éxito!', 'success');
+        showToast(isEn ? 'Animation imported successfully!' : '¡Animación importada con éxito!', 'success');
       } catch (err) {
         console.error('Error al importar:', err);
-        showToast('Error al procesar el archivo JSON de animación.', 'error');
+        showToast(isEn ? 'Error processing animation JSON file.' : 'Error al procesar el archivo JSON de animación.', 'error');
       }
     };
     reader.readAsText(file);
@@ -840,18 +840,18 @@ const PizarraTactica = () => {
     };
 
     if (!isProActive) {
-      setUpgradeModal({ open: true, message: 'La exportación de animaciones en video MP4 es una función PRO. Sube de nivel para usarla.' });
+      setUpgradeModal({ open: true, message: isEn ? 'Exporting animations as MP4 video is a PRO feature. Upgrade to use it.' : 'La exportación de animaciones en video MP4 es una función PRO. Sube de nivel para usarla.' });
       return;
     }
     const fc = fcRef.current;
     const fieldCanvas = fieldCanvasRef.current;
     if (!fc || !fieldCanvas || framesR.current.length < 2) {
-      showToast('Necesitas al menos 2 frames para exportar un video.', 'info');
+      showToast(isEn ? 'You need at least 2 frames to export a video.' : 'Necesitas al menos 2 frames para exportar un video.', 'info');
       return;
     }
     if (isRecording) return;
     setIsRecording(true);
-    showToast('Generando video, por favor espera...', 'info');
+    showToast(isEn ? 'Generating video, please wait...' : 'Generando video, por favor espera...', 'info');
     
     let recordingActive = true;
 
@@ -902,7 +902,7 @@ const PizarraTactica = () => {
         
         if (chunks.length === 0 || blob.size === 0) {
           console.error('[MP4 Export] El blob de video está vacío. Puede que el canvas no tenga contenido o que MediaRecorder no capturó frames.');
-          showToast('Error: el video grabado está vacío. Asegúrate de tener al menos 2 frames con contenido.', 'error');
+          showToast(isEn ? 'Error: the recorded video is empty. Make sure you have at least 2 frames with content.' : 'Error: el video grabado está vacío. Asegúrate de tener al menos 2 frames con contenido.', 'error');
           setIsRecording(false);
           return;
         }
@@ -911,7 +911,7 @@ const PizarraTactica = () => {
         reader.readAsDataURL(blob);
         reader.onerror = () => {
           console.error('[MP4 Export] Error al leer el blob de video.');
-          showToast('Error al procesar el video generado.', 'error');
+          showToast(isEn ? 'Error processing the generated video.' : 'Error al procesar el video generado.', 'error');
           setIsRecording(false);
         };
         reader.onloadend = async () => {
@@ -943,7 +943,7 @@ const PizarraTactica = () => {
           if (autoExport === 'true' && window.parent) {
             window.parent.postMessage({ type: 'EXPORT_DONE', base64data, filename, mimeType: finalMime }, '*');
           } else {
-            showToast('Video exportado exitosamente.', 'success');
+            showToast(isEn ? 'Video exported successfully.' : 'Video exportado exitosamente.', 'success');
             downloadVideo(base64data, filename, finalMime);
           }
         };
@@ -995,7 +995,7 @@ const PizarraTactica = () => {
         if (recordingActive) {
           console.warn('[MP4 Export] Timeout de seguridad. Forzando parada.');
           safeStop('safety-timeout');
-          showToast('La exportación tardó demasiado. Intenta con menos frames.', 'error');
+          showToast(isEn ? 'Export took too long. Try with fewer frames.' : 'La exportación tardó demasiado. Intenta con menos frames.', 'error');
           setIsRecording(false);
         }
       }, 60000);
@@ -1022,7 +1022,7 @@ const PizarraTactica = () => {
         if (!fA || !fB) {
           clearTimeout(safetyTimeout);
           safeStop('frame-undefined');
-          showToast('Error: frame no encontrado durante la exportación.', 'error');
+          showToast(isEn ? 'Error: frame not found during export.' : 'Error: frame no encontrado durante la exportación.', 'error');
           setIsRecording(false);
           return;
         }
@@ -1056,9 +1056,9 @@ const PizarraTactica = () => {
                       if (!playingR.current || !recordingActive) { clearTimeout(safetyTimeout); safeStop('stopped-fallback-B'); return; }
                       fc.renderAll();
                       setTimeout(() => runRecordingAnimation(idx + 1), 300);
-                    } catch (e) { clearTimeout(safetyTimeout); safeStop('err-fallback-B-cb'); showToast('Error exportación frame B.', 'error'); setIsRecording(false); }
+                    } catch (e) { clearTimeout(safetyTimeout); safeStop('err-fallback-B-cb'); showToast(isEn ? 'Error exporting frame B.' : 'Error exportación frame B.', 'error'); setIsRecording(false); }
                   });
-                } catch (e) { clearTimeout(safetyTimeout); safeStop('err-cargarFrame-B-fallback'); showToast('Error cargando frame B.', 'error'); setIsRecording(false); }
+                } catch (e) { clearTimeout(safetyTimeout); safeStop('err-cargarFrame-B-fallback'); showToast(isEn ? 'Error loading frame B.' : 'Error cargando frame B.', 'error'); setIsRecording(false); }
                 return;
               }
 
@@ -1108,9 +1108,9 @@ const PizarraTactica = () => {
                             if (!playingR.current || !recordingActive) return;
                             fc.renderAll();
                             setTimeout(() => runRecordingAnimation(idx + 1), 200);
-                          } catch (e) { clearTimeout(safetyTimeout); safeStop('err-cargarFrame-B-complete-cb'); showToast('Error exportación final.', 'error'); setIsRecording(false); }
+                          } catch (e) { clearTimeout(safetyTimeout); safeStop('err-cargarFrame-B-complete-cb'); showToast(isEn ? 'Final export error.' : 'Error exportación final.', 'error'); setIsRecording(false); }
                         });
-                      } catch (e) { clearTimeout(safetyTimeout); safeStop('err-cargarFrame-B-complete'); showToast('Error exportación.', 'error'); setIsRecording(false); }
+                      } catch (e) { clearTimeout(safetyTimeout); safeStop('err-cargarFrame-B-complete'); showToast(isEn ? 'Export error.' : 'Error exportación.', 'error'); setIsRecording(false); }
                     }
                   },
                 });
@@ -1119,7 +1119,7 @@ const PizarraTactica = () => {
               clearTimeout(safetyTimeout);
               console.error('[MP4 Export] Error en callback cargarFrame A:', cbErr);
               safeStop('err-in-A-callback');
-              showToast('Error al animar los jugadores.', 'error');
+              showToast(isEn ? 'Error animating players.' : 'Error al animar los jugadores.', 'error');
               setIsRecording(false);
             }
           });
@@ -1127,7 +1127,7 @@ const PizarraTactica = () => {
           clearTimeout(safetyTimeout);
           console.error('[MP4 Export] Error al llamar cargarFrame A:', e);
           safeStop('err-calling-A');
-          showToast('Error al cargar frame de exportación.', 'error');
+          showToast(isEn ? 'Error loading export frame.' : 'Error al cargar frame de exportación.', 'error');
           setIsRecording(false);
         }
       };
@@ -1135,7 +1135,7 @@ const PizarraTactica = () => {
 
     } catch (err) {
       console.error("Error al exportar video:", err);
-      showToast("Error al exportar la animación como video.", 'error');
+      showToast(isEn ? "Error exporting animation as video." : "Error al exportar la animación como video.", 'error');
       setIsRecording(false);
       recordingActive = false;
       const autoExport = new URLSearchParams(window.location.search).get('autoExport');
@@ -2389,7 +2389,7 @@ const PizarraTactica = () => {
   // functions defined above with useCallback
 
   const clearCanvas = () => {
-    if (!window.confirm('¿Limpiar pizarra? (Esto borra el dibujo actual, pero no elimina los frames de la animación. Usa "NUEVA" para empezar de cero)')) return;
+    if (!window.confirm(isEn ? 'Clear board? (This clears the current drawing, but does not delete animation frames. Use "NEW" to start from scratch)' : '¿Limpiar pizarra? (Esto borra el dibujo actual, pero no elimina los frames de la animación. Usa "NUEVA" para empezar de cero)')) return;
     const fc = fcRef.current; const fr = frRef.current;
     if (!fc || !fr) return;
     fc.clear();
@@ -2401,7 +2401,7 @@ const PizarraTactica = () => {
 
   // ─── Nueva Pizarra ────────────────────────────────────────────────────────
   const handleNewPizarra = async () => {
-    if (!window.confirm('¿Crear nueva pizarra? Se perderán los cambios no guardados y empezarás una animación desde cero.')) return;
+    if (!window.confirm(isEn ? 'Create new board? Unsaved changes will be lost and you will start an animation from scratch.' : '¿Crear nueva pizarra? Se perderán los cambios no guardados y empezarás una animación desde cero.')) return;
     
     // PERSISTENCIA: borrar TODO el estado guardado para este equipo
     if (activeTeamId) {
@@ -2445,15 +2445,15 @@ const PizarraTactica = () => {
   // ─── Capture Canvas as Image ──────────────────────────────────────────────
   const handleCapture = async (download = true, silent = false) => {
     if ((download || !silent) && !isProActive) {
-      setUpgradeModal({ open: true, message: 'La descarga y captura de imágenes de la pizarra es una función PRO. Sube de nivel para usarla.' });
+      setUpgradeModal({ open: true, message: isEn ? 'Downloading and capturing board images is a PRO feature. Upgrade to use it.' : 'La descarga y captura de imágenes de la pizarra es una función PRO. Sube de nivel para usarla.' });
       return null;
     }
     const fc = fcRef.current;
     const fieldCanvas = fieldCanvasRef.current;
     
     if (!fc || !fieldCanvas || !user || !activeTeamId) {
-      if (!silent && !user) alert("Debes iniciar sesión para capturar.");
-      if (!silent && user && !activeTeamId) alert("Debes seleccionar un equipo activo.");
+      if (!silent && !user) alert(isEn ? "You must sign in to capture." : "Debes iniciar sesión para capturar.");
+      if (!silent && user && !activeTeamId) alert(isEn ? "You must select an active team." : "Debes seleccionar un equipo activo.");
       return null;
     }
 
@@ -2574,24 +2574,24 @@ const PizarraTactica = () => {
             url: finalUrl,                           // Storage URL o '' — NUNCA base64
             thumbnail: safeThumb,                    // Miniatura <80KB o ''
             storagePath: storagePath ?? null,
-            title: `Captura Táctica (${new Date().toLocaleTimeString()})`,
+            title: isEn ? `Tactical Capture (${new Date().toLocaleTimeString('en-US')})` : `Captura Táctica (${new Date().toLocaleTimeString('es-ES')})`,
             hasImage: finalUrl !== '',
             timestamp: serverTimestamp(),
             createdAt: serverTimestamp(),
             updatedAt: serverTimestamp()
           });
           // Toast no bloqueante — permite que React procese setIsCapturing(false) sin trabas
-          setCaptureToast({ type: 'success', msg: '✅ Captura guardada. Puedes verla en Sesiones > Capturas.' });
+          setCaptureToast({ type: 'success', msg: isEn ? '✅ Capture saved. You can view it in Sessions > Captures.' : '✅ Captura guardada. Puedes verla en Sesiones > Capturas.' });
           setTimeout(() => setCaptureToast(null), 4000);
         } catch (dbErr) {
           console.error('[Capture] Error guardando en Firestore:', dbErr);
-          setCaptureToast({ type: 'error', msg: '❌ Error al guardar: ' + (dbErr?.code || dbErr?.message || 'Error desconocido') });
+          setCaptureToast({ type: 'error', msg: (isEn ? '❌ Error saving: ' : '❌ Error al guardar: ') + (dbErr?.code || dbErr?.message || (isEn ? 'Unknown error' : 'Error desconocido')) });
           setTimeout(() => setCaptureToast(null), 5000);
         }
       } else {
         if (!download) {
           // invitado: notificar sin alert bloqueante
-          setCaptureToast({ type: 'success', msg: '✅ Captura completada localmente.' });
+          setCaptureToast({ type: 'success', msg: isEn ? '✅ Capture completed locally.' : '✅ Captura completada localmente.' });
           setTimeout(() => setCaptureToast(null), 4000);
         }
       }
@@ -2605,7 +2605,7 @@ const PizarraTactica = () => {
     } catch (err) {
       console.error("Error en captura:", err);
       if (!silent) {
-        setCaptureToast({ type: 'error', msg: '❌ Error al generar la captura. Revisar consola.' });
+        setCaptureToast({ type: 'error', msg: isEn ? '❌ Error generating capture. Check console.' : '❌ Error al generar la captura. Revisar consola.' });
         setTimeout(() => setCaptureToast(null), 5000);
       }
       return null;
@@ -2621,7 +2621,7 @@ const PizarraTactica = () => {
   // ─── Export Pizarra as A4 Landscape PDF (Single Frame or Storyboard) ───────
   const handleExportPDF = async () => {
     if (!isProActive) {
-      setUpgradeModal({ open: true, message: 'La exportación en PDF de la pizarra táctica es una función PRO. Sube de nivel para usarla.' });
+      setUpgradeModal({ open: true, message: isEn ? 'Exporting the tactical board to PDF is a PRO feature. Upgrade to use it.' : 'La exportación en PDF de la pizarra táctica es una función PRO. Sube de nivel para usarla.' });
       return;
     }
     const fc = fcRef.current;
@@ -2652,13 +2652,13 @@ const PizarraTactica = () => {
     const originalText = btn ? btn.innerHTML : '💾 GUARDAR';
 
     if (!user || !activeTeamId) {
-      alert("Error: Usuario o Equipo no identificados.");
+      alert(isEn ? "Error: User or Team not identified." : "Error: Usuario o Equipo no identificados.");
       return;
     }
     
     // Bloquear UI
     if (btn) {
-      btn.innerHTML = '⏳ Guardando...';
+      btn.innerHTML = isEn ? '⏳ Saving...' : '⏳ Guardando...';
       btn.disabled = true;
       btn.style.pointerEvents = 'none';
     }
@@ -2679,7 +2679,7 @@ const PizarraTactica = () => {
         // Usamos el thumbnail de 300px que garantizamos que es < 1MB
         await setDoc(exerciseRef, {
           id: planId,
-          title: `Pizarra Táctica (${new Date().toLocaleDateString()})`,
+          title: isEn ? `Tactical Board (${new Date().toLocaleDateString('en-US')})` : `Pizarra Táctica (${new Date().toLocaleDateString('es-ES')})`,
           type: 'pizarra',
           framesCount: (framesR.current || []).length,
           thumbnail: finalThumb, // Siempre miniatura ligera
@@ -3192,9 +3192,9 @@ const PizarraTactica = () => {
             <div className="fs-divider" />
 
             {/* Deshacer / Limpiar */}
-            <button onClick={undo} title="Deshacer">↩</button>
-            <button onClick={clearCanvas} title="Limpiar todo" style={{ color: '#ff6b6b' }}>🗑</button>
-            <button onClick={() => handleCapture(true)} title="Capturar imagen">📸</button>
+            <button onClick={undo} title={isEn ? "Undo" : "Deshacer"}>↩</button>
+            <button onClick={clearCanvas} title={isEn ? "Clear all" : "Limpiar todo"} style={{ color: '#ff6b6b' }}>🗑</button>
+            <button onClick={() => handleCapture(true)} title={isEn ? "Capture image" : "Capturar imagen"}>📸</button>
           </div>
         </>
       )}

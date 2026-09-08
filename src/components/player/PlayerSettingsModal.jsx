@@ -215,7 +215,7 @@ export const PlayerSettingsModal = ({ isOpen, onClose, player }) => {
                 transition: 'background-color 0.2s ease',
                 padding: '2px'
               }}
-              aria-label="Toggle tema oscuro/claro"
+              aria-label={isEn ? "Toggle dark/light theme" : "Toggle tema oscuro/claro"}
             >
               <div style={{
                 width: '26px',
@@ -251,7 +251,7 @@ export const PlayerSettingsModal = ({ isOpen, onClose, player }) => {
                 transition: 'background-color 0.2s ease',
                 padding: '2px'
               }}
-              aria-label="Toggle notificaciones"
+              aria-label={isEn ? "Toggle notifications" : "Toggle notificaciones"}
             >
               <div style={{
                 width: '26px',

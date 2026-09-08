@@ -387,7 +387,7 @@ const ConsentForm = () => {
               <label>{t('consent.seasonLabel')}</label>
               <input 
                 type="text" 
-                placeholder="Ej. 2026/2027" 
+                placeholder={isEn ? "e.g. 2026/2027" : "Ej. 2026/2027"} 
                 value={season}
                 onChange={e => setSeason(e.target.value)}
               />

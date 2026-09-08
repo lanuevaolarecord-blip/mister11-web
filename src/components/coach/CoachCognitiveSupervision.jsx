@@ -27,7 +27,7 @@ const COMPETITIVE_GAMES = [
 ];
 
 export const CoachCognitiveSupervision = ({ player, teamPath, teamId }) => {
-  const { t } = useTranslation();
+  const { t, isEn } = useTranslation();
   const cleanPath = teamPath ? teamPath.replace(/^\/+|\/+$/g, '') : '';
   const playerId = player?.id;
   const currentWeek = getWeekKey();
@@ -103,10 +103,10 @@ export const CoachCognitiveSupervision = ({ player, teamPath, teamId }) => {
         'cognitive.verifiedBonusXP': increment(5)
       });
 
-      showToast(`✔ Retos verificados: +5 XP asignados a ${player?.name || 'jugador'}`, 'success');
+      showToast(t('cognitive.verified_xp', { name: player?.name || 'jugador' }), 'success');
     } catch (err) {
       console.warn('[CoachCognitiveSupervision] Error al verificar:', err);
-      showToast('Error al registrar verificación', 'error');
+      showToast(t('cognitive.verify_error'), 'error');
     } finally {
       setVerifying(false);
     }
@@ -164,11 +164,11 @@ export const CoachCognitiveSupervision = ({ player, teamPath, teamId }) => {
         });
       }
 
-      showToast(`✔ ${selectedGameIds.length} recomendación(es) asignadas con éxito`, 'success');
+      showToast(t('cognitive.assigned_success', { count: selectedGameIds.length }), 'success');
       setShowAssignModal(false);
     } catch (err) {
       console.warn('[CoachCognitiveSupervision] Error asignando retos:', err);
-      showToast('Error al guardar las asignaciones', 'error');
+      showToast(t('cognitive.assign_error'), 'error');
     }
   };
 
@@ -177,7 +177,7 @@ export const CoachCognitiveSupervision = ({ player, teamPath, teamId }) => {
     if (!cleanPath || !assignId) return;
     try {
       await deleteDoc(doc(db, `${cleanPath}/gameAssignments`, assignId));
-      showToast('Recomendación eliminada', 'success');
+      showToast(t('cognitive.recommendation_deleted'), 'success');
     } catch (err) {
       console.warn('[CoachCognitiveSupervision] Error eliminando asignación:', err);
     }
@@ -324,7 +324,7 @@ export const CoachCognitiveSupervision = ({ player, teamPath, teamId }) => {
                 <button
                   type="button"
                   onClick={() => handleDeleteAssignment(a.id)}
-                  title="Eliminar recomendación"
+                  title={isEn ? "Delete recommendation" : "Eliminar recomendación"}
                   style={{
                     background: 'transparent',
                     border: 'none',

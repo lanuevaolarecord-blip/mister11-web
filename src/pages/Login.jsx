@@ -36,7 +36,7 @@ const Login = () => {
       console.error('=== ERROR GOOGLE SIGN-IN ===', err);
       const isCanceled = err?.message?.toLowerCase().includes('cancel') || err?.code === 'auth/popup-closed-by-user';
       if (isCanceled) {
-        showToast('Inicio de sesión cancelado por el usuario', 'info');
+        showToast(t('login.cancelled'), 'info');
         return;
       }
 
@@ -77,10 +77,10 @@ const Login = () => {
           return;
         }
         await registerWithEmail(email.trim(), password, displayName.trim(), selectedRole);
-        showToast('¡Cuenta creada exitosamente!', 'success');
+        showToast(t('login.account_created'), 'success');
       } else {
         await signInWithEmail(email.trim(), password);
-        showToast('¡Bienvenido a Míster11!', 'success');
+        showToast(t('login.welcome'), 'success');
       }
     } catch (err) {
       console.error('[Login] Error Email Auth:', err);
@@ -104,7 +104,7 @@ const Login = () => {
   const handleForgotPassword = async () => {
     if (!email.trim()) {
       setError('Escribe tu correo electrónico para enviarte el enlace de recuperación.');
-      showToast('Escribe tu correo primero', 'info');
+      showToast(t('login.write_email_first'), 'info');
       return;
     }
     setIsLoading(true);
@@ -112,11 +112,11 @@ const Login = () => {
     try {
       await resetPassword(email.trim());
       setResetSent(true);
-      showToast('Enlace de recuperación enviado a tu correo', 'success');
+      showToast(t('login.recovery_sent'), 'success');
     } catch (err) {
       console.error('[Login] Error reset password:', err);
       setError('No se pudo enviar el correo de recuperación. Verifica el email.');
-      showToast('Error al enviar correo', 'error');
+      showToast(t('login.recovery_error'), 'error');
     } finally {
       setIsLoading(false);
     }
@@ -254,7 +254,7 @@ const Login = () => {
                   <Mail size={18} />
                   <input 
                     type="email" 
-                    placeholder="tu@email.com"
+                    placeholder={isEn ? "your@email.com" : "tu@email.com"}
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     required

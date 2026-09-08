@@ -1,4 +1,5 @@
 import React, { useState, useRef } from 'react';
+import { useTranslation } from '../../hooks/useTranslation';
 
 export const AnnotationLayer = ({
   annotations = [],
@@ -10,6 +11,7 @@ export const AnnotationLayer = ({
   opacity = 1.0,
   visible = true
 }) => {
+  const { isEn } = useTranslation();
   const [currentShape, setCurrentShape] = useState(null);
   const [textInputPos, setTextInputPos] = useState(null);
   const [inputText, setInputText] = useState('');
@@ -330,7 +332,7 @@ export const AnnotationLayer = ({
         >
           <input
             type="text"
-            placeholder="Anotación táctica..."
+            placeholder={isEn ? "Tactical note..." : "Anotación táctica..."}
             value={inputText}
             onChange={e => setInputText(e.target.value)}
             onKeyDown={e => {

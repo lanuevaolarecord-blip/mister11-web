@@ -18,7 +18,7 @@ const Header = ({ onToggleNotif }) => {
   const { permissions, switchMyRole, STAFF_ROLES } = useTeamMembers(activeTeam?.id);
   const { darkMode, toggleTheme } = useTheme();
   const { isRunning, matchSeconds, formatMatchTime } = useMatch();
-  const { t } = useTranslation();
+  const { t, isEn } = useTranslation();
 
   const handleLogout = async () => {
     if (window.confirm(t('header.logoutConfirm'))) {
@@ -178,7 +178,7 @@ const Header = ({ onToggleNotif }) => {
         {isRunning && location.pathname !== '/partidos' && (
           <button
             onClick={() => navigate('/partidos')}
-            title="Partido en curso · Ir al Match Day"
+            title={isEn ? "Match in progress · Go to Match Day" : "Partido en curso · Ir al Match Day"}
             style={{
               display: 'inline-flex',
               alignItems: 'center',
@@ -248,7 +248,7 @@ const Header = ({ onToggleNotif }) => {
         </button>
         <button 
           className="icon-btn" 
-          title="Cerrar Sesión / Cambiar Cuenta" 
+          title={isEn ? "Sign Out / Switch Account" : "Cerrar Sesión / Cambiar Cuenta"} 
           onClick={handleLogout}
           style={{ color: '#EF4444' }}
         >

@@ -202,7 +202,7 @@ export const PlayerScheduleTab = ({ player, team, teamPath, isParentView = false
       showToast(t('player.schedule.rsvpConfirmed', { status: optLabel }), 'success');
     } catch (err) {
       console.error('Error guardando RSVP:', err);
-      showToast('Error al guardar asistencia.', 'error');
+      showToast(t('player.schedule.attendance_error'), 'error');
     } finally {
       setSavingEventId(null);
     }

@@ -289,42 +289,42 @@ const Planificacion = () => {
   }, []);
 
   const handleSave = useCallback(async () => {
-    if (!user || !activeTeamId) { showToast('Inicia sesión para guardar', 'error'); return; }
+    if (!user || !activeTeamId) { showToast(isEn ? 'Sign in to save' : 'Inicia sesión para guardar', 'error'); return; }
     setSaving(true);
     try {
       const ref = doc(db, getTeamPath(), 'planificacion', 'config');
       await setDoc(ref, { macroInfo, microcycles, macroCounts, updatedAt: serverTimestamp() }, { merge: true });
-      showToast('Planificación guardada ✓');
-    } catch (e) { showToast('Error al guardar.', 'error'); }
+      showToast(isEn ? 'Planning saved ✓' : 'Planificación guardada ✓');
+    } catch (e) { showToast(isEn ? 'Error saving.' : 'Error al guardar.', 'error'); }
     finally { setSaving(false); }
-  }, [user, macroInfo, microcycles, macroCounts, showToast, activeTeamId]);
+  }, [user, macroInfo, microcycles, macroCounts, showToast, activeTeamId, isEn]);
 
   const handleExportMonthlyPDF = async () => {
     if (!isProActive) {
-      setUpgradeModal({ open: true, message: 'La exportación del mesociclo a PDF es una función PRO. Sube de nivel para usarla.' });
+      setUpgradeModal({ open: true, message: isEn ? 'Exporting mesocycle to PDF is a PRO feature. Upgrade to use it.' : 'La exportación del mesociclo a PDF es una función PRO. Sube de nivel para usarla.' });
       return;
     }
-    showToast('Generando PDF del mesociclo...', 'info');
+    showToast(isEn ? 'Generating mesocycle PDF...' : 'Generando PDF del mesociclo...', 'info');
     try {
       const meso = mesocycles.find(m => m.month === selectedMesoItem);
       if (!meso) {
-        showToast('Error: No se encontró la información del mes.', 'error');
+        showToast(isEn ? 'Error: Month information not found.' : 'Error: No se encontró la información del mes.', 'error');
         return;
       }
       exportMonthlyPlan(meso, macroInfo, activeTeam, APP_VERSION);
-      showToast('PDF del mesociclo generado con éxito ✓');
+      showToast(isEn ? 'Mesocycle PDF generated successfully ✓' : 'PDF del mesociclo generado con éxito ✓');
     } catch (err) {
       console.error(err);
-      showToast('Error al exportar PDF.', 'error');
+      showToast(isEn ? 'Error exporting PDF.' : 'Error al exportar PDF.', 'error');
     }
   };
 
   const handleExportPDF = async () => {
     if (!isProActive) {
-      setUpgradeModal({ open: true, message: 'La exportación del plan estratégico a PDF es una función PRO. Sube de nivel para usarla.' });
+      setUpgradeModal({ open: true, message: isEn ? 'Exporting strategic plan to PDF is a PRO feature. Upgrade to use it.' : 'La exportación del plan estratégico a PDF es una función PRO. Sube de nivel para usarla.' });
       return;
     }
-    showToast('Generando PDF...', 'info');
+    showToast(isEn ? 'Generating PDF...' : 'Generando PDF...', 'info');
 
     try {
       const { jsPDF } = await import('jspdf');
@@ -772,10 +772,10 @@ const Planificacion = () => {
       const fileName = `Planificacion_${safeTeamName}_${tabName}.pdf`;
 
       await savePdfUniversal(doc, fileName);
-      showToast('PDF exportado ✓');
+      showToast(isEn ? 'PDF exported ✓' : 'PDF exportado ✓');
     } catch (err) {
       console.error('Error generating PDF:', err);
-      showToast('Error al exportar PDF.', 'error');
+      showToast(isEn ? 'Error exporting PDF.' : 'Error al exportar PDF.', 'error');
     }
   };
 
@@ -800,7 +800,7 @@ const Planificacion = () => {
 
   const computedMetrics = useMemo(() => {
     let activeMicros = [];
-    let title = "MACRO-CICLO";
+    let title = isEn ? "MACROCYCLE" : "MACRO-CICLO";
     
     if (activeTab === 'macrociclo') {
       activeMicros = microcycles;

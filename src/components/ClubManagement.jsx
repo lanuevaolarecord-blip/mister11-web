@@ -4,6 +4,7 @@ import { useTeams } from '../hooks/useTeams';
 import { doc, getDoc, updateDoc, arrayUnion } from 'firebase/firestore';
 import { db } from '../firebaseConfig';
 import { showToast } from '../utils/toast';
+import { t } from '../i18n/index.js';
 import InviteCoachModal from './InviteCoachModal';
 import { Sparkles, Users, Layers, Plus, Shield, Check, X } from 'lucide-react';
 
@@ -57,11 +58,11 @@ const ClubManagement = () => {
         }
       }
 
-      showToast("Equipos asignados correctamente.", "success");
+      showToast(t('club.teams_assigned'), 'success');
       setSelectedCoachForTeams(null);
     } catch (err) {
       console.error("Error saving coach teams:", err);
-      showToast("Error al asignar equipos.", "error");
+      showToast(t('club.teams_assign_error'), 'error');
     } finally {
       setSavingTeams(false);
     }
@@ -74,10 +75,10 @@ const ClubManagement = () => {
     const season = window.prompt("Temporada (Ej. 2026-27):", "2026-27");
     try {
       await addTeam({ nombre: name, categoria: category || 'General', temporada: season || '2026-27' }, 'club');
-      showToast("Equipo del club creado correctamente.", "success");
+      showToast(t('club.team_created'), 'success');
     } catch (err) {
       console.error(err);
-      showToast("Error al crear el equipo del club.", "error");
+      showToast(t('club.team_create_error'), 'error');
     }
   };
 

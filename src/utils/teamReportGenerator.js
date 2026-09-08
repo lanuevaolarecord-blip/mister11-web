@@ -1,5 +1,6 @@
 import { downloadPDF } from './download.js';
 import { PDF_COLORS, imageUrlToBase64, drawPdfHeader, drawPdfFooter } from './pdfTheme';
+import { getEffectiveLanguage } from '../i18n/translations';
 
 const THEME_COLOR = PDF_COLORS.primary;
 const ACCENT_COLOR = PDF_COLORS.accent;
@@ -9,7 +10,8 @@ const getImageBase64 = async (url) => {
 };
 
 export const generateGlobalTeamReport = async (players, tests, evaluaciones, activeTeam = null) => {
-  window.dispatchEvent(new CustomEvent('m11-loading', { detail: { show: true, message: 'Generando PDF...' } }));
+  const isEn = getEffectiveLanguage() === 'en';
+  window.dispatchEvent(new CustomEvent('m11-loading', { detail: { show: true, message: isEn ? 'Generating PDF...' : 'Generando PDF...' } }));
   await new Promise(r => setTimeout(r, 150));
   const { jsPDF } = await import('jspdf');
   await import('jspdf-autotable');
@@ -18,14 +20,19 @@ export const generateGlobalTeamReport = async (players, tests, evaluaciones, act
   const pageH = doc.internal.pageSize.getHeight();
 
   // 1. Cabecera unificada
-  drawPdfHeader(doc, 'INFORME GLOBAL DE RENDIMIENTO', `Equipo: ${activeTeam?.nombre || 'General'} | Fecha: ${new Date().toLocaleDateString()}`, pageW);
+  const dateStr = new Date().toLocaleDateString(isEn ? 'en-US' : 'es-ES');
+  const title = isEn ? 'OVERALL PERFORMANCE REPORT' : 'INFORME GLOBAL DE RENDIMIENTO';
+  const subtitle = isEn 
+    ? `Team: ${activeTeam?.nombre || 'General'} | Date: ${dateStr}`
+    : `Equipo: ${activeTeam?.nombre || 'General'} | Fecha: ${dateStr}`;
+  drawPdfHeader(doc, title, subtitle, pageW);
 
   let yPos = 48;
 
   // 2. Procesar datos
   if (!players || players.length === 0) {
     doc.setTextColor(100, 100, 100);
-    doc.text('No hay jugadores registrados en el equipo.', 15, yPos);
+    doc.text(isEn ? 'No players registered in the team.' : 'No hay jugadores registrados en el equipo.', 15, yPos);
     save(doc, 'Informe_Global_Vacio.pdf');
     return;
   }
@@ -188,6 +195,7 @@ const save = async (doc, filename) => {
     await downloadPDF(pdfBase64, filename);
   } catch (error) {
     console.error('Error al guardar PDF:', error);
-    alert('Error al guardar el PDF. Revisa tu espacio y permisos.');
+    const isEn = getEffectiveLanguage() === 'en';
+    alert(isEn ? 'Error saving PDF. Please check your storage and permissions.' : 'Error al guardar el PDF. Revisa tu espacio y permisos.');
   }
 };

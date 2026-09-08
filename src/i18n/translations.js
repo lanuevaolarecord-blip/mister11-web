@@ -1515,7 +1515,128 @@ export const translations = {
 
     // ── Auth Context ─────────────────────────────────────────
     'auth.switched_player': 'Cambiado a Portal de Jugador',
-    'auth.switched_coach': 'Cambiado a Modo Entrenador'
+    'auth.switched_coach': 'Cambiado a Modo Entrenador',
+
+    // ── ClubManagement ───────────────────────────────────────
+    'club.teams_assigned': 'Equipos asignados correctamente.',
+    'club.teams_assign_error': 'Error al asignar equipos.',
+    'club.team_created': 'Equipo del club creado correctamente.',
+    'club.team_create_error': 'Error al crear el equipo del club.',
+
+    // ── InviteCoachModal ─────────────────────────────────────
+    'invite.already_registered': 'Este correo ya está registrado o invitado en el club.',
+    'invite.generated_success': 'Invitación generada con éxito.',
+    'invite.generated_error': 'Error al generar la invitación.',
+    'invite.link_copied': '¡Enlace copiado!',
+
+    // ── CoachCognitiveSupervision ────────────────────────────
+    'cognitive.verified_xp': '✔ Retos verificados: +5 XP asignados a {name}',
+    'cognitive.verify_error': 'Error al registrar verificación',
+    'cognitive.assigned_success': '✔ {count} recomendación(es) asignadas con éxito',
+    'cognitive.assign_error': 'Error al guardar las asignaciones',
+    'cognitive.recommendation_deleted': 'Recomendación eliminada',
+
+    // ── GamesHome ────────────────────────────────────────────
+    'games.level_up': '🎉 ¡Subiste a nivel {level}! {badge} (+10 XP)',
+    'games.legend_ceiling': '👑 ¡Alcanzaste el techo de Leyenda! ¡Eres un crack!',
+
+    // ── LiveStats ────────────────────────────────────────────
+    'livestats.select_player_first': '👆 Selecciona un jugador primero',
+    'livestats.match_locked_use_reopen': '⚠️ Partido finalizado — usa Reabrir Acta para corregir.',
+    'livestats.match_locked_short': '⚠️ Partido finalizado',
+    'livestats.post_match_saved': '✅ Contadores post-partido guardados',
+
+    // ── PlayerChatTab ────────────────────────────────────────
+    'player.chat.report_error': 'Error al enviar la denuncia.',
+    'player.chat.block_error': 'Error al bloquear usuario.',
+
+    // ── PlayerPlansPortalTab ─────────────────────────────────
+    'player.plans.error': 'Error',
+
+    // ── PlayerProfileTab ────────────────────────────────────
+    'player.profile.account_deleted': 'Tu cuenta ha sido eliminada correctamente.',
+    'player.profile.wellness_saved': '¡Check-in de bienestar guardado correctamente!',
+    'player.profile.parent_name_required': 'Escribe el nombre del padre/tutor.',
+    'player.profile.consent_saved': 'Consentimiento parental actualizado exitosamente.',
+    'player.profile.consent_error': 'Error al guardar consentimiento.',
+
+    // ── PlayerScheduleTab ────────────────────────────────────
+    'player.schedule.attendance_error': 'Error al guardar asistencia.',
+
+    // ── PlayerDashboard ──────────────────────────────────────
+    'playerDashboard.new_message': '💬 Nuevo mensaje del Míster:',
+
+    // ── JoinTeam ─────────────────────────────────────────────
+    'joinTeam.request_approved': '¡Tu solicitud ha sido aprobada!',
+    'joinTeam.already_member': '¡Ya formas parte de este equipo! Cargando tu portal...',
+    'joinTeam.google_sign_in': 'Sesión iniciada con Google',
+    'joinTeam.account_created': 'Cuenta creada exitosamente',
+    'joinTeam.welcome': 'Bienvenido a Míster11',
+    'joinTeam.request_sent': '¡Solicitud enviada al entrenador!',
+
+    // ── Login ────────────────────────────────────────────────
+    'login.cancelled': 'Inicio de sesión cancelado por el usuario',
+    'login.account_created': '¡Cuenta creada exitosamente!',
+    'login.welcome': '¡Bienvenido a Míster11!',
+    'login.write_email_first': 'Escribe tu correo primero',
+    'login.recovery_sent': 'Enlace de recuperación enviado a tu correo',
+    'login.recovery_error': 'Error al enviar correo',
+
+    // ── Planificacion ─────────────────────────────────────────
+    'planning.login_required': 'Inicia sesión para guardar',
+    'planning.saved': 'Planificación guardada ✓',
+    'planning.save_error': 'Error al guardar.',
+    'planning.generating_pdf': 'Generando PDF del mesociclo...',
+    'planning.pdf_month_not_found': 'Error: No se encontró la información del mes.',
+    'planning.pdf_success': 'PDF del mesociclo generado con éxito ✓',
+    'planning.pdf_error': 'Error al exportar PDF.',
+    'planning.generating_pdf_generic': 'Generando PDF...',
+    'planning.pdf_exported': 'PDF exportado ✓',
+
+    // ── Partidos ─────────────────────────────────────────────
+    'matches.finish_error': '❌ Error al guardar finalización:',
+    'matches.repaired': '✅ Partido reparado y persistido con éxito.',
+    'matches.repair_error': '❌ Error al reparar el partido.',
+    'matches.log_cleansed': '🧹 Bitácora depurada con éxito. {count} registros saneados.',
+    'matches.log_cleanse_error': '❌ Error al depurar la bitácora.',
+
+    // ── AdminPanel ───────────────────────────────────────────
+    'admin.account_deleted': 'Tu cuenta de entrenador y datos han sido eliminados correctamente.',
+    'admin.svg_shield_saved': '¡Escudo vectorial SVG guardado con éxito!',
+    'admin.shield_saved': '¡Escudo guardado y optimizado con éxito!',
+    'admin.shield_error': 'No se pudo subir o procesar la imagen.',
+    'admin.profile_synced': 'Perfil de entrenador sincronizado en todo el sistema.',
+    'admin.profile_error': 'Error al guardar perfil.',
+    'admin.team_identity_updated': 'Identidad del equipo actualizada correctamente.',
+    'admin.team_identity_error': 'Error al actualizar identidad del equipo.',
+    'admin.xp_saved': 'Tabla de XP y objetivos de temporada guardados con éxito.',
+    'admin.xp_error': 'Error al guardar configuración de XP.',
+    'admin.select_team_first': 'Selecciona un equipo primero.',
+    'admin.no_players': 'No hay jugadores en el equipo activo.',
+    'admin.report_error': 'Error al generar el informe global.',
+    'admin.apk_download_start': '⬇️ Iniciando descarga del APK...',
+    'admin.apk_download_done': '✅ Descarga completada. Busca el archivo en tu carpeta de Descargas e instálalo.',
+    'admin.apk_download_fallback': '⚠️ Descarga directa fallida. Abriendo enlace alternativo...',
+    'admin.already_latest': '✅ Ya tienes la última versión instalada (v{version}).',
+    'admin.update_check_error': 'No se pudo comprobar actualizaciones.',
+    'admin.update_connect_error': 'Error al conectar con el servidor.',
+    'admin.select_match_first': 'Selecciona un partido primero.',
+    'admin.match_not_found': 'Partido no encontrado.',
+    'admin.select_session_first': 'Selecciona una sesión primero.',
+    'admin.session_not_found': 'Sesión no encontrada.',
+    'admin.no_active_team': 'No hay ningún equipo activo seleccionado.',
+    'admin.backup_error': 'Error al generar la copia de seguridad.',
+    'admin.groq_api_saved': '¡Clave API de Groq guardada con éxito!',
+    'admin.groq_api_error': 'Error al guardar la clave API en Firestore.',
+
+    // ── Tests ────────────────────────────────────────────────
+    'tests.success': 'Éxito',
+    'tests.error': 'Error',
+    'tests.confirm_delete': 'Confirmar eliminación',
+    'tests.confirm_season_reset': 'Reiniciar Temporada',
+    'tests.attention': '⚠️ ATENCIÓN',
+    'tests.validation': 'Validación',
+    'tests.insert_demo': 'Insertar datos demo'
   },
 
   'English (EN)': {
@@ -3034,7 +3155,128 @@ export const translations = {
 
     // ── Auth Context ─────────────────────────────────────────
     'auth.switched_player': 'Switched to Player Portal',
-    'auth.switched_coach': 'Switched to Coach Mode'
+    'auth.switched_coach': 'Switched to Coach Mode',
+
+    // ── ClubManagement ───────────────────────────────────────
+    'club.teams_assigned': 'Teams assigned successfully.',
+    'club.teams_assign_error': 'Error assigning teams.',
+    'club.team_created': 'Club team created successfully.',
+    'club.team_create_error': 'Error creating club team.',
+
+    // ── InviteCoachModal ─────────────────────────────────────
+    'invite.already_registered': 'This email is already registered or invited to the club.',
+    'invite.generated_success': 'Invitation generated successfully.',
+    'invite.generated_error': 'Error generating the invitation.',
+    'invite.link_copied': 'Link copied!',
+
+    // ── CoachCognitiveSupervision ────────────────────────────
+    'cognitive.verified_xp': '✔ Challenges verified: +5 XP assigned to {name}',
+    'cognitive.verify_error': 'Error registering verification',
+    'cognitive.assigned_success': '✔ {count} recommendation(s) assigned successfully',
+    'cognitive.assign_error': 'Error saving assignments',
+    'cognitive.recommendation_deleted': 'Recommendation deleted',
+
+    // ── GamesHome ────────────────────────────────────────────
+    'games.level_up': '🎉 You leveled up to {level}! {badge} (+10 XP)',
+    'games.legend_ceiling': '👑 You reached the Legend ceiling! You are a legend!',
+
+    // ── LiveStats ────────────────────────────────────────────
+    'livestats.select_player_first': '👆 Select a player first',
+    'livestats.match_locked_use_reopen': '⚠️ Match completed — use Reopen Match Sheet to correct.',
+    'livestats.match_locked_short': '⚠️ Match completed',
+    'livestats.post_match_saved': '✅ Post-match counters saved',
+
+    // ── PlayerChatTab ────────────────────────────────────────
+    'player.chat.report_error': 'Error sending report.',
+    'player.chat.block_error': 'Error blocking user.',
+
+    // ── PlayerPlansPortalTab ─────────────────────────────────
+    'player.plans.error': 'Error',
+
+    // ── PlayerProfileTab ────────────────────────────────────
+    'player.profile.account_deleted': 'Your account has been deleted successfully.',
+    'player.profile.wellness_saved': 'Wellness check-in saved successfully!',
+    'player.profile.parent_name_required': 'Please enter the parent/guardian name.',
+    'player.profile.consent_saved': 'Parental consent updated successfully.',
+    'player.profile.consent_error': 'Error saving consent.',
+
+    // ── PlayerScheduleTab ────────────────────────────────────
+    'player.schedule.attendance_error': 'Error saving attendance.',
+
+    // ── PlayerDashboard ──────────────────────────────────────
+    'playerDashboard.new_message': '💬 New message from Coach:',
+
+    // ── JoinTeam ─────────────────────────────────────────────
+    'joinTeam.request_approved': 'Your request has been approved!',
+    'joinTeam.already_member': 'You are already on this team! Loading your portal...',
+    'joinTeam.google_sign_in': 'Signed in with Google',
+    'joinTeam.account_created': 'Account created successfully',
+    'joinTeam.welcome': 'Welcome to Míster11',
+    'joinTeam.request_sent': 'Request sent to the coach!',
+
+    // ── Login ────────────────────────────────────────────────
+    'login.cancelled': 'Sign-in cancelled by user',
+    'login.account_created': 'Account created successfully!',
+    'login.welcome': 'Welcome to Míster11!',
+    'login.write_email_first': 'Please enter your email first',
+    'login.recovery_sent': 'Recovery link sent to your email',
+    'login.recovery_error': 'Error sending email',
+
+    // ── Planificacion ─────────────────────────────────────────
+    'planning.login_required': 'Sign in to save',
+    'planning.saved': 'Planning saved ✓',
+    'planning.save_error': 'Error saving.',
+    'planning.generating_pdf': 'Generating mesocycle PDF...',
+    'planning.pdf_month_not_found': 'Error: Month information not found.',
+    'planning.pdf_success': 'Mesocycle PDF generated successfully ✓',
+    'planning.pdf_error': 'Error exporting PDF.',
+    'planning.generating_pdf_generic': 'Generating PDF...',
+    'planning.pdf_exported': 'PDF exported ✓',
+
+    // ── Partidos ─────────────────────────────────────────────
+    'matches.finish_error': '❌ Error saving completion:',
+    'matches.repaired': '✅ Match repaired and persisted successfully.',
+    'matches.repair_error': '❌ Error repairing match.',
+    'matches.log_cleansed': '🧹 Log cleansed successfully. {count} records sanitized.',
+    'matches.log_cleanse_error': '❌ Error cleansing log.',
+
+    // ── AdminPanel ───────────────────────────────────────────
+    'admin.account_deleted': 'Your coach account and data have been deleted successfully.',
+    'admin.svg_shield_saved': 'SVG vector shield saved successfully!',
+    'admin.shield_saved': 'Shield saved and optimized successfully!',
+    'admin.shield_error': 'Could not upload or process the image.',
+    'admin.profile_synced': 'Coach profile synced across the entire system.',
+    'admin.profile_error': 'Error saving profile.',
+    'admin.team_identity_updated': 'Team identity updated successfully.',
+    'admin.team_identity_error': 'Error updating team identity.',
+    'admin.xp_saved': 'XP table and season objectives saved successfully.',
+    'admin.xp_error': 'Error saving XP configuration.',
+    'admin.select_team_first': 'Please select a team first.',
+    'admin.no_players': 'No players in the active team.',
+    'admin.report_error': 'Error generating global report.',
+    'admin.apk_download_start': '⬇️ Starting APK download...',
+    'admin.apk_download_done': '✅ Download complete. Find the file in your Downloads folder and install it.',
+    'admin.apk_download_fallback': '⚠️ Direct download failed. Opening alternative link...',
+    'admin.already_latest': '✅ You already have the latest version installed (v{version}).',
+    'admin.update_check_error': 'Could not check for updates.',
+    'admin.update_connect_error': 'Error connecting to the server.',
+    'admin.select_match_first': 'Please select a match first.',
+    'admin.match_not_found': 'Match not found.',
+    'admin.select_session_first': 'Please select a session first.',
+    'admin.session_not_found': 'Session not found.',
+    'admin.no_active_team': 'No active team selected.',
+    'admin.backup_error': 'Error generating backup.',
+    'admin.groq_api_saved': 'Groq API key saved successfully!',
+    'admin.groq_api_error': 'Error saving API key to Firestore.',
+
+    // ── Tests ────────────────────────────────────────────────
+    'tests.success': 'Success',
+    'tests.error': 'Error',
+    'tests.confirm_delete': 'Confirm deletion',
+    'tests.confirm_season_reset': 'Reset Season',
+    'tests.attention': '⚠️ ATTENTION',
+    'tests.validation': 'Validation',
+    'tests.insert_demo': 'Insert demo data'
   }
 };
 

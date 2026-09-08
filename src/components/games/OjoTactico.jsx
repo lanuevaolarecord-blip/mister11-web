@@ -60,7 +60,7 @@ export const OjoTactico = ({
   startSession = null,
   remainingCognitiveSeconds = 900
 }) => {
-  const { t } = useTranslation();
+  const { t, isEn } = useTranslation();
 
   const timer = useGameTimer({
     category: 'cognitive',
@@ -341,7 +341,7 @@ export const OjoTactico = ({
                   className="tactico-dot rival"
                   style={{ left: `${r.x}%`, top: `${r.y}%` }}
                   onClick={() => handleTap(-1)}
-                  aria-label="Rival"
+                  aria-label={isEn ? "Opponent" : "Rival"}
                 >
                   🔴
                 </button>
@@ -360,7 +360,7 @@ export const OjoTactico = ({
                     className={`tactico-dot mate ${isGold ? 'gold' : ''} ${isRevealedTarget ? 'reveal' : ''}`}
                     style={{ left: `${m.x}%`, top: `${m.y}%` }}
                     onClick={() => handleTap(i)}
-                    aria-label="Compañero"
+                    aria-label={isEn ? "Teammate" : "Compañero"}
                   >
                     {isGold ? '⭐' : '🟢'}
                   </button>

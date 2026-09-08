@@ -313,7 +313,7 @@ export const PlayerChatTab = ({ teamPath, player, team, isParentView = false, is
       setReportModalMsg(null);
     } catch (err) {
       console.error('Error submitting report:', err);
-      showToast('Error al enviar la denuncia.', 'error');
+      showToast(t('player.chat.report_error'), 'error');
     } finally {
       setSubmittingReport(false);
     }
@@ -371,7 +371,7 @@ export const PlayerChatTab = ({ teamPath, player, team, isParentView = false, is
       setBlockModalOpen(false);
     } catch (err) {
       console.error('Error submitting block:', err);
-      showToast('Error al bloquear usuario.', 'error');
+      showToast(t('player.chat.block_error'), 'error');
     } finally {
       setSubmittingBlock(false);
     }

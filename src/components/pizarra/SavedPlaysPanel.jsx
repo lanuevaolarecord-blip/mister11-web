@@ -2,7 +2,9 @@ import React from 'react';
 import { FORMATIONS } from '../../lib/mister11-field.js';
 import { useTranslation } from '../../hooks/useTranslation';
 
-const TeamCard = ({ color, name, count, onAdd, onColorChange, formation, onFormationChange, onApply, applyLabel }) => (
+const TeamCard = ({ color, name, count, onAdd, onColorChange, formation, onFormationChange, onApply, applyLabel }) => {
+  const { isEn } = useTranslation();
+  return (
   <div className="team-card-pizarra">
     <div className="team-header-pizarra">
       <div style={{ position: 'relative', width: 22, height: 22 }}>
@@ -35,7 +37,7 @@ const TeamCard = ({ color, name, count, onAdd, onColorChange, formation, onForma
         <button 
           className="btn-apply-formation-pizarra"
           onClick={onApply}
-          title="Aplicar / Reiniciar alineación"
+          title={isEn ? "Apply / Reset lineup" : "Aplicar / Reiniciar alineación"}
         >
           {applyLabel || 'APLICAR'}
         </button>
@@ -43,6 +45,7 @@ const TeamCard = ({ color, name, count, onAdd, onColorChange, formation, onForma
     )}
   </div>
 );
+};
 
 const SavedPlaysPanel = ({
   localColor,

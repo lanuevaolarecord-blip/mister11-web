@@ -59,7 +59,7 @@ export const PlayerProfileTab = ({ player, team, teamPath, onNavigateTab }) => {
   const { user, logout, switchMode, userProfile, activeTeamId } = useAuth();
   const [activeSubTab, setActiveSubTab] = useState('GENERAL'); // 'GENERAL' | 'FÍSICO' | 'SALUD' | 'PLANES' | 'ESTS.' | 'ASISTENCIA'
 
-  const { t, isEn } = useTranslation();
+  const { t, isEn, locale } = useTranslation();
 
   // Estadísticas sincronizadas de partidos
   const effectiveTeamId = team?.id || activeTeamId;
@@ -207,14 +207,14 @@ export const PlayerProfileTab = ({ player, team, teamPath, onNavigateTab }) => {
         await deleteUser(auth.currentUser);
       }
 
-      showToast('Tu cuenta ha sido eliminada correctamente.', 'info');
+      showToast(t('player.profile.account_deleted'), 'info');
       window.location.href = '/';
     } catch (err) {
       console.error('Error al eliminar cuenta:', err);
       if (err.code === 'auth/requires-recent-login') {
-        alert('Por motivos de seguridad, debes cerrar sesión e iniciarla de nuevo antes de eliminar tu cuenta.');
+        alert(isEn ? 'For security reasons, you must log out and sign in again before deleting your account.' : 'Por motivos de seguridad, debes cerrar sesión e iniciarla de nuevo antes de eliminar tu cuenta.');
       } else {
-        alert('No se pudo eliminar la cuenta. Por favor contáctanos o reintenta tras reiniciar sesión.');
+        alert(isEn ? 'Could not delete account. Please contact us or try again after restarting session.' : 'No se pudo eliminar la cuenta. Por favor contáctanos o reintenta tras reiniciar sesión.');
       }
     } finally {
       setIsDeletingAccount(false);
@@ -350,11 +350,11 @@ export const PlayerProfileTab = ({ player, team, teamPath, onNavigateTab }) => {
       }
 
       setWellnessSubmitted(true);
-      showToast('¡Check-in de bienestar guardado correctamente!', 'success');
+      showToast(t('player.profile.wellness_saved'), 'success');
     } catch (err) {
       console.warn('Error guardando wellness en nube, guardado localmente:', err);
       setWellnessSubmitted(true);
-      showToast('¡Check-in de bienestar guardado correctamente!', 'success');
+      showToast(t('player.profile.wellness_saved'), 'success');
     } finally {
       setSavingWellness(false);
     }
@@ -364,7 +364,7 @@ export const PlayerProfileTab = ({ player, team, teamPath, onNavigateTab }) => {
   const handleSaveConsent = async () => {
     if (!teamPath) return;
     if (!parentName.trim()) {
-      showToast('Escribe el nombre del padre/tutor.', 'error');
+      showToast(t('player.profile.parent_name_required'), 'error');
       return;
     }
 
@@ -392,10 +392,10 @@ export const PlayerProfileTab = ({ player, team, teamPath, onNavigateTab }) => {
 
       setConsents(updatedConsents);
       setIsConsentModalOpen(false);
-      showToast('Consentimiento parental actualizado exitosamente.', 'success');
+      showToast(t('player.profile.consent_saved'), 'success');
     } catch (err) {
       console.error('Error guardando consentimientos:', err);
-      showToast('Error al guardar consentimiento.', 'error');
+      showToast(t('player.profile.consent_error'), 'error');
     } finally {
       setSavingConsent(false);
     }
@@ -762,7 +762,7 @@ export const PlayerProfileTab = ({ player, team, teamPath, onNavigateTab }) => {
                       {blocked.displayName || blocked.name || blocked.id}
                     </span>
                     <span style={{ fontSize: '11px', color: '#64748B' }}>
-                      {blocked.blockedAt ? new Date(blocked.blockedAt.toDate ? blocked.blockedAt.toDate() : blocked.blockedAt).toLocaleDateString() : ''}
+                      {blocked.blockedAt ? new Date(blocked.blockedAt.toDate ? blocked.blockedAt.toDate() : blocked.blockedAt).toLocaleDateString(locale || (isEn ? 'en-US' : 'es-ES')) : ''}
                     </span>
                   </div>
                   <button

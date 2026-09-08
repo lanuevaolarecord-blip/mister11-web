@@ -4,10 +4,12 @@ import { t } from '../i18n/translations';
 import { db } from '../firebaseConfig';
 import { collection, getDocs } from '../firebase/firestore-proxy';
 import { useTheme } from '../context/ThemeContext';
+import { useTranslation } from '../hooks/useTranslation';
 import { exportMultiMatchAnalysisPDF } from '../utils/analysisPdfReport';
 import './MultiMatchAnalysis.css';
 
 export const MultiMatchAnalysis = ({ matches = [], teamId, activeTeam = null, language = 'Español (ES)' }) => {
+  const { isEn } = useTranslation();
   const { darkMode } = useTheme();
 
   // Seleccionar por defecto los últimos 5 partidos (o los que existan)
@@ -281,7 +283,7 @@ export const MultiMatchAnalysis = ({ matches = [], teamId, activeTeam = null, la
       });
     } catch (err) {
       console.error('[MultiMatchAnalysis] Error al exportar PDF:', err);
-      alert('Hubo un error al generar el PDF de análisis.');
+      alert(isEn ? 'There was an error generating the analysis PDF.' : 'Hubo un error al generar el PDF de análisis.');
     } finally {
       setIsExportingPdf(false);
     }

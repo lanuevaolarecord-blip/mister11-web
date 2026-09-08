@@ -730,7 +730,7 @@ const MiEquipo = () => {
             <div className="modal-body">
               <div className="form-group-team full">
                 <label>{isEn ? 'Player Name *' : 'Nombre del Jugador *'}</label>
-                <input type="text" value={editData.name} onChange={e => setEditData({...editData, name: e.target.value})} onBlur={e => setEditData(prev => ({...prev, name: normalizeText(e.target.value)}))} placeholder="Ej. Lamine Yamal" />
+                <input type="text" value={editData.name} onChange={e => setEditData({...editData, name: e.target.value})} onBlur={e => setEditData(prev => ({...prev, name: normalizeText(e.target.value)}))} placeholder={isEn ? "e.g. Lamine Yamal" : "Ej. Lamine Yamal"} />
               </div>
               <div className="form-group-team full" style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '16px' }}>
                 <label>{isEn ? 'Player Photo' : 'Foto del Jugador'}</label>
@@ -1008,8 +1008,8 @@ const MiEquipo = () => {
                     }, activeTeam);
                   }
                 }} 
-                title="Exportar Expediente"
-                aria-label="Exportar expediente en PDF"
+                title={isEn ? "Export File" : "Exportar Expediente"}
+                aria-label={isEn ? "Export player file to PDF" : "Exportar expediente en PDF"}
               >
                 <FileText size={20} />
               </button>

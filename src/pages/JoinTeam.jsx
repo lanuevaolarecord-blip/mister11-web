@@ -60,7 +60,7 @@ const JoinTeam = () => {
         const pending = reqs.find(r => r.status === 'pending');
         const approved = reqs.find(r => r.status === 'approved');
         if (approved) {
-          showToast('¡Tu solicitud ha sido aprobada!', 'success');
+          showToast(t('joinTeam.request_approved'), 'success');
           navigate(approved.requesterRole === 'parent' ? '/player-dashboard' : '/player-dashboard');
         } else if (pending) {
           setMyExistingRequest(pending);
@@ -105,7 +105,7 @@ const JoinTeam = () => {
 
               localStorage.setItem('mister11_active_mode', 'player');
               localStorage.setItem(`lastPlayerTeam_${user.uid}`, data.teamId);
-              showToast('¡Ya formas parte de este equipo! Cargando tu portal...', 'success');
+              showToast(t('joinTeam.already_member'), 'success');
               navigate('/player-dashboard');
               return;
             }
@@ -129,7 +129,7 @@ const JoinTeam = () => {
     setError('');
     try {
       await signInWithGoogle();
-      showToast('Sesión iniciada con Google', 'success');
+      showToast(t('joinTeam.google_sign_in'), 'success');
     } catch (err) {
       setError(err?.message || 'Error al iniciar sesión.');
     } finally {
@@ -154,10 +154,10 @@ const JoinTeam = () => {
           return;
         }
         await registerWithEmail(authEmail.trim(), authPassword, authName.trim(), 'player');
-        showToast('Cuenta creada exitosamente', 'success');
+        showToast(t('joinTeam.account_created'), 'success');
       } else {
         await signInWithEmail(authEmail.trim(), authPassword);
-        showToast('Bienvenido a Míster11', 'success');
+        showToast(t('joinTeam.welcome'), 'success');
       }
     } catch (err) {
       setError(err.message || 'Error en la autenticación.');
@@ -230,7 +230,7 @@ const JoinTeam = () => {
 
       setMyExistingRequest(requestPayload);
       setStep(4);
-      showToast('¡Solicitud enviada al entrenador!', 'success');
+      showToast(t('joinTeam.request_sent'), 'success');
     } catch (err) {
       console.error('[JoinTeam] Error enviando solicitud:', err);
       setError('Error al enviar la solicitud.');
@@ -344,7 +344,7 @@ const JoinTeam = () => {
                   <label>{isEn ? 'Email Address' : 'Correo Electrónico'}</label>
                   <div className="input-with-icon">
                     <Mail size={18} />
-                    <input type="email" placeholder="tucorreo@ejemplo.com" value={authEmail} onChange={(e) => setAuthEmail(e.target.value)} required />
+                    <input type="email" placeholder={isEn ? "youremail@example.com" : "tucorreo@ejemplo.com"} value={authEmail} onChange={(e) => setAuthEmail(e.target.value)} required />
                   </div>
                 </div>
                 <div className="input-group-auth">

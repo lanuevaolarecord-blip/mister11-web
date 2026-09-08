@@ -7,8 +7,10 @@ import { useSettings } from '../hooks/useSettings';
 import { useOfflineStatus } from '../hooks/useOfflineStatus';
 import { useCoachChatNotifications } from '../hooks/useCoachChatNotifications';
 import BottomNav from './BottomNav';
+import { useTranslation } from '../hooks/useTranslation';
 
 const Layout = () => {
+  const { isEn } = useTranslation();
   const [isNotifOpen, setIsNotifOpen] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const { settings } = useSettings();
@@ -67,7 +69,7 @@ const Layout = () => {
               fontWeight: 'bold',
               lineHeight: 1,
             }}
-            title="Cerrar aviso"
+            title={isEn ? "Dismiss notice" : "Cerrar aviso"}
           >
             ×
           </button>
@@ -77,7 +79,7 @@ const Layout = () => {
       <button 
         className="hamburger-btn" 
         onClick={() => setIsSidebarOpen(true)}
-        aria-label="Open Menu"
+        aria-label={isEn ? "Open Menu" : "Abrir Menú"}
       >
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <line x1="3" y1="12" x2="21" y2="12"></line>

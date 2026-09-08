@@ -16,6 +16,10 @@ import {
 import { calculatePlayerPerformanceScores, consolidatePlayerEvaluations, CANONICAL_TESTS_MAP } from './testScoreEngine';
 import { getEffectiveLanguage } from '../i18n/translations';
 
+const isEnglish = () => getEffectiveLanguage() === 'en';
+const getLocale = () => (isEnglish() ? 'en-US' : 'es-ES');
+const formatCurrentDate = () => new Date().toLocaleDateString(getLocale());
+
 const getJsPDF = async () => {
   const { jsPDF } = await import('jspdf');
   return jsPDF;
@@ -36,7 +40,7 @@ export const savePdfUniversal = async (doc, filename) => {
     await downloadPDF(pdfBase64, filename);
   } catch (error) {
     console.error('Error al guardar PDF:', error);
-    alert('Error al guardar el PDF. Revisa tu espacio y permisos.');
+    alert(isEnglish() ? 'Error saving PDF. Please check your storage and permissions.' : 'Error al guardar el PDF. Revisa tu espacio y permisos.');
   }
 };
 
@@ -220,7 +224,7 @@ export const generatePlanificacionPDF = async (macroInfo = {}, microcycles = [],
     await savePdfUniversal(doc, `Planificacion_${safeName}_${year}.pdf`);
   } catch (err) {
     console.error('Error generando Planificación PDF:', err);
-    alert('Error al generar el PDF de la planificación.');
+    alert(isEnglish() ? 'Error generating planning PDF.' : 'Error al generar el PDF de la planificación.');
   } finally {
     window.dispatchEvent(new CustomEvent('m11-loading', { detail: { show: false } }));
   }
@@ -230,28 +234,28 @@ export const generatePlanificacionPDF = async (macroInfo = {}, microcycles = [],
  * TESTS - Informe Colectivo
  */
 export const generateTestsReport = async (tests, players, historyData, activeTeam = null) => {
-  window.dispatchEvent(new CustomEvent('m11-loading', { detail: { show: true, message: 'Generando PDF...' } }));
+  window.dispatchEvent(new CustomEvent('m11-loading', { detail: { show: true, message: isEnglish() ? 'Generating PDF...' : 'Generando PDF...' } }));
   await new Promise(r => setTimeout(r, 150));
   const jsPDF = await getJsPDF();
   const doc = new jsPDF({ orientation: 'landscape' });
   const pageW = doc.internal.pageSize.getWidth();
 
-  await addHeader(doc, 'INFORME DE RENDIMIENTO GLOBAL', `Fecha: ${new Date().toLocaleDateString()}`, activeTeam);
+  await addHeader(doc, isEnglish() ? 'OVERALL PERFORMANCE REPORT' : 'INFORME DE RENDIMIENTO GLOBAL', `${isEnglish() ? 'Date' : 'Fecha'}: ${formatCurrentDate()}`, activeTeam);
 
   // ── BANDA KPI ──────────────────────────────────────────────────────────────
   const totalPlayers = players.length;
   const totalTests   = tests.length;
   const evaluated    = players.filter(p => tests.some(t => historyData[p.id]?.[t.id]?.length > 0)).length;
-  const today        = new Date().toLocaleDateString();
+  const today        = formatCurrentDate();
 
   doc.setFillColor(20, 46, 34);
   doc.rect(0, 40, pageW, 16, 'F');
 
   const kpis = [
-    { label: 'Jugadores',  value: totalPlayers },
-    { label: 'Evaluados',  value: evaluated },
-    { label: 'Pruebas',    value: totalTests },
-    { label: 'Fecha',      value: today },
+    { label: isEnglish() ? 'Players' : 'Jugadores',  value: totalPlayers },
+    { label: isEnglish() ? 'Evaluated' : 'Evaluados',  value: evaluated },
+    { label: isEnglish() ? 'Tests' : 'Pruebas',    value: totalTests },
+    { label: isEnglish() ? 'Date' : 'Fecha',      value: today },
   ];
   kpis.forEach((k, i) => {
     const x = 15 + i * (pageW / 4);
@@ -380,7 +384,7 @@ export const generateTestsReport = async (tests, players, historyData, activeTea
   doc.text('Resultado más bajo', 60, legendY);
 
   addFooter(doc);
-  savePdfUniversal(doc, `Tests_Equipo_${new Date().toLocaleDateString().replace(/\//g, '-')}.pdf`);
+  savePdfUniversal(doc, `Tests_Equipo_${formatCurrentDate().replace(/\//g, '-')}.pdf`);
   window.dispatchEvent(new CustomEvent('m11-loading', { detail: { show: false } }));
 };
 
@@ -648,7 +652,7 @@ export const generatePlayerTestReport = async (player, tests, historyData, activ
     await savePdfUniversal(doc, `Informe_Tests_${safeName}.pdf`);
   } catch (err) {
     console.error('Error generando Informe de Tests:', err);
-    alert('Error al generar el informe de tests.');
+    alert(isEnglish() ? 'Error generating tests report.' : 'Error al generar el informe de tests.');
   } finally {
     window.dispatchEvent(new CustomEvent('m11-loading', { detail: { show: false } }));
   }
@@ -802,7 +806,7 @@ export const generateSessionPDF = async (session, activeTeam = null, pizarras = 
     // ─── TARJETAS DE METADATOS ────────────────────────────────────────────────
     const metaY = 46;
     const cardW = (pageW - 38) / 4;
-    const date = (session.date || session.fecha || new Date().toLocaleDateString()).split('-').reverse().join('/');
+    const date = (session.date || session.fecha || formatCurrentDate()).split('-').reverse().join('/');
     drawInfoCard(doc, 15,          metaY, cardW, 18, 'FECHA',       date);
     drawInfoCard(doc, 16 + cardW,  metaY, cardW, 18, 'HORA',        session.time || session.hora || '18:00');
     drawInfoCard(doc, 17 + cardW*2,metaY, cardW, 18, 'DURACIÓN',    `${session.duration || session.duracion || 90} min`);
@@ -1092,7 +1096,7 @@ export const generateSessionPDF = async (session, activeTeam = null, pizarras = 
     await savePdfUniversal(doc, 'Sesion_' + safeTitle + '_' + (session.date || 'Hoy').replace(/-/g, '') + '.pdf');
   } catch (err) {
     console.error('Error al generar PDF de sesion:', err);
-    alert('Error al generar el PDF de la sesion.');
+    alert(isEnglish() ? 'Error generating session PDF.' : 'Error al generar el PDF de la sesion.');
   } finally {
     window.dispatchEvent(new CustomEvent('m11-loading', { detail: { show: false } }));
   }
@@ -1381,7 +1385,7 @@ export const generateMatchesCalendarPDF = async (matches = [], activeTeam = null
     await savePdfUniversal(doc, safeFile);
   } catch (err) {
     console.error('Error generando Calendario PDF:', err);
-    alert('Error al generar el PDF del calendario de partidos.');
+    alert(isEnglish() ? 'Error generating match schedule PDF.' : 'Error al generar el PDF del calendario de partidos.');
   } finally {
     window.dispatchEvent(new CustomEvent('m11-loading', { detail: { show: false } }));
   }
@@ -1838,13 +1842,13 @@ export const generateExpediente = async (player, activeTeam = null) => {
 
     doc.setFontSize(6.5);
     doc.setTextColor(140);
-    doc.text(`Documento Oficial emitido el ${new Date().toLocaleDateString()} a través de Míster11 Club Engine.`, pageW / 2, pageH - 12, { align: 'center' });
+    doc.text(isEnglish() ? `Official document issued on ${formatCurrentDate()} via Míster11 Club Engine.` : `Documento Oficial emitido el ${formatCurrentDate()} a través de Míster11 Club Engine.`, pageW / 2, pageH - 12, { align: 'center' });
 
     addFooter(doc);
     await savePdfUniversal(doc, `Expediente_${safeName}.pdf`);
   } catch (err) {
     console.error('Error generando Expediente PDF:', err);
-    alert('Hubo un error al generar el expediente en PDF.');
+    alert(isEnglish() ? 'There was an error generating the file PDF.' : 'Hubo un error al generar el expediente en PDF.');
   } finally {
     window.dispatchEvent(new CustomEvent('m11-loading', { detail: { show: false } }));
   }
@@ -1874,8 +1878,8 @@ export const generatePizarraPDF = async ({
       if (i > 0) doc.addPage();
 
       const f = framesToExport[i];
-      const frameTitle = f.title || `${boardTitle} — Fotograma ${i + 1}/${framesToExport.length}`;
-      const subtitle = `${activeTeam?.nombre || 'Mi Equipo'} · Campo: ${fieldType.toUpperCase()} · ${new Date().toLocaleDateString()}`;
+      const frameTitle = f.title || `${boardTitle} — ${isEnglish() ? 'Frame' : 'Fotograma'} ${i + 1}/${framesToExport.length}`;
+      const subtitle = `${activeTeam?.nombre || (isEnglish() ? 'My Team' : 'Mi Equipo')} · ${isEnglish() ? 'Pitch' : 'Campo'}: ${fieldType.toUpperCase()} · ${formatCurrentDate()}`;
 
       // Cabecera institucional landscape
       doc.setFillColor(...THEME_COLOR);
@@ -1915,7 +1919,7 @@ export const generatePizarraPDF = async ({
     await savePdfUniversal(doc, `Pizarra_Tactica_${safeTitle}_${Date.now()}.pdf`);
   } catch (err) {
     console.error('Error generando PDF de Pizarra:', err);
-    alert('Error al generar el PDF de la pizarra táctica.');
+    alert(isEnglish() ? 'Error generating tactical board PDF.' : 'Error al generar el PDF de la pizarra táctica.');
   } finally {
     window.dispatchEvent(new CustomEvent('m11-loading', { detail: { show: false } }));
   }
@@ -1954,7 +1958,7 @@ export const generateExercisesReport = async (exercises, activeTeam = null) => {
     await savePdfUniversal(doc, `biblioteca_ejercicios_${teamName.toLowerCase().replace(/\s+/g, '_')}.pdf`);
   } catch (error) {
     console.error('Error generating exercises report:', error);
-    alert('Error al generar el PDF.');
+    alert(isEnglish() ? 'Error generating PDF.' : 'Error al generar el PDF.');
   } finally {
     window.dispatchEvent(new CustomEvent('m11-loading', { detail: { show: false } }));
   }
@@ -2194,7 +2198,7 @@ export const generatePostMatchReportPDF = async (match, players, activeTeam = nu
     await savePdfUniversal(doc, `Informe_PostPartido_${safeRival}_${safeDate}.pdf`);
   } catch (error) {
     console.error('Error generating post-match report:', error);
-    alert('Error al generar el PDF del informe.');
+    alert(isEnglish() ? 'Error generating report PDF.' : 'Error al generar el PDF del informe.');
   } finally {
     window.dispatchEvent(new CustomEvent('m11-loading', { detail: { show: false } }));
   }
@@ -2326,7 +2330,7 @@ export const generateExercisePDF = async (exercise, activeTeam = null) => {
     await savePdfUniversal(doc, `Ejercicio_${safeTitle}.pdf`);
   } catch (err) {
     console.error('Error al generar PDF del ejercicio:', err);
-    alert('Error al generar el PDF del ejercicio.');
+    alert(isEnglish() ? 'Error generating exercise PDF.' : 'Error al generar el PDF del ejercicio.');
   } finally {
     window.dispatchEvent(new CustomEvent('m11-loading', { detail: { show: false } }));
   }
@@ -2464,7 +2468,7 @@ export const generateWeeklyReportPDF = async (weeklyData, activeTeam = null) => 
     await savePdfUniversal(doc, `Informe_Semanal_${safeDate}.pdf`);
   } catch (error) {
     console.error('Error generating weekly report PDF:', error);
-    alert('Error al generar el PDF del informe semanal.');
+    alert(isEnglish() ? 'Error generating weekly report PDF.' : 'Error al generar el PDF del informe semanal.');
   } finally {
     window.dispatchEvent(new CustomEvent('m11-loading', { detail: { show: false } }));
   }

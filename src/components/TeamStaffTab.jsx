@@ -830,7 +830,7 @@ export const TeamStaffTab = ({ activeTeam }) => {
                       {inv.email}
                     </div>
                     <div style={{ fontSize: '0.8rem', color: textColorSecondary, fontWeight: 600 }}>
-                      {isEn ? 'Role:' : 'Rol:'} <strong style={{ color: '#D4A843' }}>{roleLabel}</strong> · {t('staff.createdDate', { date: formatDate ? formatDate(inv.createdAt) : new Date(inv.createdAt).toLocaleDateString() })}
+                      {isEn ? 'Role:' : 'Rol:'} <strong style={{ color: '#D4A843' }}>{roleLabel}</strong> · {t('staff.createdDate', { date: formatDate ? formatDate(inv.createdAt) : new Date(inv.createdAt).toLocaleDateString(isEn ? 'en-US' : 'es-ES') })}
                     </div>
                   </div>
 
@@ -904,7 +904,7 @@ export const TeamStaffTab = ({ activeTeam }) => {
                       type="email"
                       value={inviteEmail}
                       onChange={e => setInviteEmail(e.target.value)}
-                      placeholder="entrenador@ejemplo.com"
+                      placeholder={isEn ? "coach@example.com" : "entrenador@ejemplo.com"}
                       required
                       style={{
                         width: '100%',

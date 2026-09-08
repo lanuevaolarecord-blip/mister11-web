@@ -236,7 +236,7 @@ export const StatsDataTable = ({
             type="button"
             onClick={handleExportCSV}
             className="export-csv-btn"
-            title="Descargar CSV para Excel"
+            title={isEn ? "Download CSV for Excel" : "Descargar CSV para Excel"}
             style={{
               display: 'inline-flex',
               alignItems: 'center',

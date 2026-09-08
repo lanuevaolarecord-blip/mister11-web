@@ -5,9 +5,11 @@ import { useTeams } from '../hooks/useTeams';
 import { getSharedSession, exportSessionToJSONFile, exportSessionToICSFile } from '../utils/sessionSharing';
 import { addDocument, createNotification } from '../firebase/db';
 import { Share2, Download, Calendar, ArrowRight, Check, Shield, Copy } from 'lucide-react';
+import { useTranslation } from '../hooks/useTranslation';
 import './SharedSession.css';
 
 const SharedSession = () => {
+  const { isEn, locale } = useTranslation();
   const { shareId } = useParams();
   const navigate = useNavigate();
   const { user, getTeamPath } = useAuth();
@@ -53,7 +55,7 @@ const SharedSession = () => {
       return;
     }
     if (!selectedTeamId) {
-      alert('Por favor, selecciona un equipo para importar la sesión.');
+      alert(isEn ? 'Please select a team to import the session.' : 'Por favor, selecciona un equipo para importar la sesión.');
       return;
     }
 
@@ -62,10 +64,10 @@ const SharedSession = () => {
       const teamPath = getTeamPath(selectedTeamId);
       
       const sessionPayload = {
-        title: session.title || 'Sesión Compartida',
-        category: session.category || 'Táctica',
+        title: session.title || (isEn ? 'Shared Session' : 'Sesión Compartida'),
+        category: session.category || (isEn ? 'Tactics' : 'Táctica'),
         duration: Number(session.duration || 90),
-        intensity: session.intensity || 'Media',
+        intensity: session.intensity || (isEn ? 'Medium' : 'Media'),
         materials: session.materials || '',
         objectives: session.objectives || '',
         date: new Date().toISOString().split('T')[0],
@@ -76,7 +78,7 @@ const SharedSession = () => {
       };
 
       await addDocument(`${teamPath}/sessions`, sessionPayload);
-      await createNotification('success', `Sesión "${sessionPayload.title}" importada con éxito`).catch(() => {});
+      await createNotification('success', isEn ? `Session "${sessionPayload.title}" imported successfully` : `Sesión "${sessionPayload.title}" importada con éxito`).catch(() => {});
       
       setImportedSuccess(true);
       setTimeout(() => {
@@ -84,7 +86,7 @@ const SharedSession = () => {
       }, 1200);
     } catch (err) {
       console.error('Error al importar sesión:', err);
-      alert('Error al guardar la sesión en tu equipo.');
+      alert(isEn ? 'Error saving session to your team.' : 'Error al guardar la sesión en tu equipo.');
     } finally {
       setImporting(false);
     }
@@ -129,16 +131,16 @@ const SharedSession = () => {
         <div className="ss-header">
           <div>
             <span className="ss-badge-shared">
-              <Share2 size={14} /> Sesión Compartida por {session.sharedByName || 'Entrenador'}
+              <Share2 size={14} /> {isEn ? `Session Shared by ${session.sharedByName || 'Coach'}` : `Sesión Compartida por ${session.sharedByName || 'Entrenador'}`}
             </span>
             <h1 className="ss-title">{session.title}</h1>
             <p className="ss-subtitle">
-              {session.teamName} • Creada el {new Date(session.sharedAt || Date.now()).toLocaleDateString()}
+              {session.teamName} • {isEn ? 'Created on ' : 'Creada el '}{new Date(session.sharedAt || Date.now()).toLocaleDateString(locale || (isEn ? 'en-US' : 'es-ES'))}
             </p>
           </div>
-          <button className="ss-btn-secondary" onClick={handleCopyLink} title="Copiar enlace">
+          <button className="ss-btn-secondary" onClick={handleCopyLink} title={isEn ? "Copy link" : "Copiar enlace"}>
             {copiedLink ? <Check size={16} color="#22c55e" /> : <Copy size={16} />}
-            {copiedLink ? '¡Copiado!' : 'Compartir Link'}
+            {copiedLink ? (isEn ? 'Copied!' : '¡Copiado!') : (isEn ? 'Share Link' : 'Compartir Link')}
           </button>
         </div>
 

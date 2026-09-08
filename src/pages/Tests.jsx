@@ -656,12 +656,12 @@ const Tests = () => {
         });
         
         localStorage.setItem('mister11_local_evaluaciones', JSON.stringify(localEvals));
-        await showAlert("Éxito", "Resultados guardados localmente en el dispositivo.");
+        await showAlert(isEn ? "Success" : "Éxito", isEn ? "Results saved locally on the device." : "Resultados guardados localmente en el dispositivo.");
         setRegInputs({});
         loadEvaluations();
       } catch (error) {
         console.error("Error saving local evaluations:", error);
-        await showAlert("Error", "Error al guardar los resultados localmente.");
+        await showAlert(isEn ? "Error" : "Error", isEn ? "Error saving results locally." : "Error al guardar los resultados localmente.");
       } finally {
         setLoading(false);
       }
@@ -686,12 +686,12 @@ const Tests = () => {
       });
       
       await batch.commit();
-      await showAlert("Éxito", "Resultados guardados exitosamente en la nube.");
+      await showAlert(isEn ? "Success" : "Éxito", isEn ? "Results successfully saved to cloud." : "Resultados guardados exitosamente en la nube.");
       setRegInputs({});
       loadEvaluations();
     } catch (error) {
       console.error("Error saving evaluations:", error);
-      await showAlert("Error", "Error al guardar los resultados.");
+      await showAlert(isEn ? "Error" : "Error", isEn ? "Error saving results." : "Error al guardar los resultados.");
     } finally {
       setLoading(false);
     }
@@ -709,11 +709,11 @@ const Tests = () => {
           date: new Date().toISOString().split('T')[0]
         });
         localStorage.setItem('mister11_local_evaluaciones', JSON.stringify(localEvals));
-        await showAlert("Éxito", "Evaluación guardada localmente.");
+        await showAlert(isEn ? "Success" : "Éxito", isEn ? "Evaluation saved locally." : "Evaluación guardada localmente.");
         loadEvaluations();
       } catch (error) {
         console.error("Error saving local prev test", error);
-        await showAlert("Error", "Error al guardar la evaluación localmente.");
+        await showAlert(isEn ? "Error" : "Error", isEn ? "Error saving evaluation locally." : "Error al guardar la evaluación localmente.");
       }
       return;
     }
@@ -723,11 +723,11 @@ const Tests = () => {
         ...data,
         timestamp: serverTimestamp()
       });
-      await showAlert("Éxito", "Evaluación guardada exitosamente.");
+      await showAlert(isEn ? "Success" : "Éxito", isEn ? "Evaluation successfully saved." : "Evaluación guardada exitosamente.");
       loadEvaluations();
     } catch (error) {
       console.error("Error saving prev test", error);
-      await showAlert("Error", "Error al guardar la evaluación.");
+      await showAlert(isEn ? "Error" : "Error", isEn ? "Error saving evaluation." : "Error al guardar la evaluación.");
     }
   };
 
@@ -737,7 +737,10 @@ const Tests = () => {
     const history = historyData[jugadorId]?.[testId];
     if (!history || history.length === 0) return;
     
-    const confirmDelete = await showConfirm('Confirmar eliminación', '¿Estás seguro de que deseas eliminar el último dato agregado para este test?');
+    const confirmDelete = await showConfirm(
+      isEn ? 'Confirm deletion' : 'Confirmar eliminación',
+      isEn ? 'Are you sure you want to delete the last recorded data for this test?' : '¿Estás seguro de que deseas eliminar el último dato agregado para este test?'
+    );
     if (!confirmDelete) return;
 
     if (user.uid === 'invitado-local') {
@@ -774,11 +777,11 @@ const Tests = () => {
         setRawResultsList(prev => prev.filter(r => r.id !== targetId));
         setPlayerDirectTests(prev => prev.filter(p => p.id !== targetId));
 
-        await showAlert("Éxito", "Último registro de evaluación eliminado correctamente.");
+        await showAlert(isEn ? "Success" : "Éxito", isEn ? "Last evaluation record deleted successfully." : "Último registro de evaluación eliminado correctamente.");
       }
     } catch (error) {
       console.error("Error deleting last eval:", error);
-      await showAlert("Error", "Error al eliminar el dato.");
+      await showAlert(isEn ? "Error" : "Error", isEn ? "Error deleting data." : "Error al eliminar el dato.");
     } finally {
       setLoading(false);
     }
@@ -789,7 +792,10 @@ const Tests = () => {
     const history = historyData[jugadorId]?.[testId];
     if (!history || history.length === 0) return;
 
-    const confirmDelete = await showConfirm('Confirmar eliminación', '¿Estás seguro de que deseas eliminar TODOS los datos históricos de este test para este jugador?');
+    const confirmDelete = await showConfirm(
+      isEn ? 'Confirm deletion' : 'Confirmar eliminación',
+      isEn ? 'Are you sure you want to delete ALL historical data for this test for this player?' : '¿Estás seguro de que deseas eliminar TODOS los datos históricos de este test para este jugador?'
+    );
     if (!confirmDelete) return;
 
     if (user.uid === 'invitado-local') {
@@ -867,10 +873,10 @@ const Tests = () => {
       setRawResultsList(prev => prev.filter(r => !idsToDelete.has(r.id)));
       setPlayerDirectTests(prev => prev.filter(p => !idsToDelete.has(p.id)));
 
-      await showAlert("Éxito", "Historial completo de este test eliminado correctamente.");
+      await showAlert(isEn ? "Success" : "Éxito", isEn ? "Complete history for this test deleted successfully." : "Historial completo de este test eliminado correctamente.");
     } catch (error) {
       console.error("Error deleting all evals:", error);
-      await showAlert("Error", "Error al eliminar los datos.");
+      await showAlert(isEn ? "Error" : "Error", isEn ? "Error deleting data." : "Error al eliminar los datos.");
     } finally {
       setLoading(false);
     }
@@ -879,11 +885,13 @@ const Tests = () => {
   const handleResetPlayerTests = async (jugadorId) => {
     if (!user || !activeTeamId || !jugadorId) return;
     const playerObj = getPlayerById(jugadorId);
-    const playerName = playerObj?.name || 'este jugador';
+    const playerName = playerObj?.name || (isEn ? 'this player' : 'este jugador');
 
     const confirmReset = await showConfirm(
-      '🔄 Renovar cuestionarios y tests',
-      `¿Deseas renovar y reiniciar los cuestionarios mentales y tests de "${playerName}"?\n\nSe limpiarán las respuestas y evaluaciones previas para que el futbolista pueda realizar una nueva batería de tests desde cero en su portal de jugador.`
+      isEn ? '🔄 Renew questionnaires and tests' : '🔄 Renovar cuestionarios y tests',
+      isEn
+        ? `Do you want to renew and restart mental questionnaires and tests for "${playerName}"?\n\nPrevious answers and evaluations will be cleared so the player can take a fresh battery of tests from their player portal.`
+        : `¿Deseas renovar y reiniciar los cuestionarios mentales y tests de "${playerName}"?\n\nSe limpiarán las respuestas y evaluaciones previas para que el futbolista pueda realizar una nueva batería de tests desde cero en su portal de jugador.`
     );
     if (!confirmReset) return;
 
@@ -894,7 +902,7 @@ const Tests = () => {
         const filtered = localEvals.filter(item => String(item.jugadorId) !== String(jugadorId) && String(item.playerId) !== String(jugadorId));
         localStorage.setItem('mister11_local_evaluaciones', JSON.stringify(filtered));
         await loadEvaluations();
-        await showAlert('Éxito', `Tests renovados correctamente para ${playerName}.`);
+        await showAlert(isEn ? 'Success' : 'Éxito', isEn ? `Tests successfully renewed for ${playerName}.` : `Tests renovados correctamente para ${playerName}.`);
         return;
       }
 
@@ -930,10 +938,15 @@ const Tests = () => {
 
       await batch.commit();
       await loadEvaluations();
-      await showAlert('Éxito', `✅ Tests y cuestionarios psicológicos renovados con éxito para ${playerName}. El jugador ya puede volver a realizarlos.`);
+      await showAlert(
+        isEn ? 'Success' : 'Éxito',
+        isEn
+          ? `✅ Tests and psychological questionnaires successfully renewed for ${playerName}. The player can now take them again.`
+          : `✅ Tests y cuestionarios psicológicos renovados con éxito para ${playerName}. El jugador ya puede volver a realizarlos.`
+      );
     } catch (err) {
       console.error('Error renovando tests del jugador:', err);
-      await showAlert('Error', 'No se pudieron renovar los tests del jugador.');
+      await showAlert(isEn ? 'Error' : 'Error', isEn ? 'Could not renew player tests.' : 'No se pudieron renovar los tests del jugador.');
     } finally {
       setLoading(false);
     }
@@ -942,7 +955,12 @@ const Tests = () => {
 
   const handleDeleteTest = async (testId, testName) => {
     if (!user || !activeTeamId) return;
-    const confirmDelete = await showConfirm('Confirmar eliminación', `¿Estás seguro de que deseas eliminar el test "${testName}"?\nSe borrarán permanentemente el test y todas las evaluaciones registradas de todos los jugadores para este test.`);
+    const confirmDelete = await showConfirm(
+      isEn ? 'Confirm deletion' : 'Confirmar eliminación',
+      isEn
+        ? `Are you sure you want to delete test "${testName}"?\nThe test and all evaluations recorded for all players for this test will be permanently deleted.`
+        : `¿Estás seguro de que deseas eliminar el test "${testName}"?\nSe borrarán permanentemente el test y todas las evaluaciones registradas de todos los jugadores para este test.`
+    );
     if (!confirmDelete) return;
 
     setLoading(true);
@@ -971,14 +989,19 @@ const Tests = () => {
         setSelectedTestDetail(null);
       }
 
-      await showAlert("Éxito", `El test "${testName}" y todas sus evaluaciones asociadas han sido eliminados correctamente.`);
+      await showAlert(
+        isEn ? "Success" : "Éxito",
+        isEn
+          ? `Test "${testName}" and all associated evaluations were deleted successfully.`
+          : `El test "${testName}" y todas sus evaluaciones asociadas han sido eliminados correctamente.`
+      );
       
       // 3. Recargar tests y evaluaciones
       await loadTests();
       await loadEvaluations();
     } catch (error) {
       console.error("Error deleting test and evaluations:", error);
-      await showAlert("Error", "Error al eliminar el test.");
+      await showAlert(isEn ? "Error" : "Error", isEn ? "Error deleting test." : "Error al eliminar el test.");
     } finally {
       setLoading(false);
     }
@@ -986,9 +1009,19 @@ const Tests = () => {
 
   const handleResetSeasonData = async () => {
     if (!user || !activeTeamId) return;
-    const confirm1 = await showConfirm('Reiniciar Temporada', '¿Estás seguro de que deseas iniciar una nueva temporada?\nEsto eliminará permanentemente TODOS los datos y registros de evaluaciones de todos los jugadores de este equipo.');
+    const confirm1 = await showConfirm(
+      isEn ? 'Reset Season' : 'Reiniciar Temporada',
+      isEn
+        ? 'Are you sure you want to start a new season?\nThis will permanently delete ALL evaluation data and records of all players in this team.'
+        : '¿Estás seguro de que deseas iniciar una nueva temporada?\nEsto eliminará permanentemente TODOS los datos y registros de evaluaciones de todos los jugadores de este equipo.'
+    );
     if (!confirm1) return;
-    const confirm2 = await showConfirm('⚠️ ATENCIÓN', '⚠️ ATENCIÓN: Esta acción es irreversible y borrará por completo el historial de pruebas del equipo. ¿Confirmas que deseas proceder con el reinicio de datos?');
+    const confirm2 = await showConfirm(
+      isEn ? '⚠️ ATTENTION' : '⚠️ ATENCIÓN',
+      isEn
+        ? '⚠️ ATTENTION: This action is irreversible and will completely delete the team test history. Do you confirm you want to proceed with resetting data?'
+        : '⚠️ ATENCIÓN: Esta acción es irreversible y borrará por completo el historial de pruebas del equipo. ¿Confirmas que deseas proceder con el reinicio de datos?'
+    );
     if (!confirm2) return;
 
     setLoading(true);
@@ -1004,11 +1037,16 @@ const Tests = () => {
         await batch.commit();
       }
       
-      await showAlert("Éxito", "✅ Temporada reiniciada. Se han eliminado todos los datos de evaluaciones de los jugadores correctamente.");
+      await showAlert(
+        isEn ? "Success" : "Éxito",
+        isEn
+          ? "✅ Season reset. All player evaluation data has been deleted successfully."
+          : "✅ Temporada reiniciada. Se han eliminado todos los datos de evaluaciones de los jugadores correctamente."
+      );
       await loadEvaluations();
     } catch (error) {
       console.error("Error resetting season data:", error);
-      await showAlert("Error", "Error al reiniciar los datos de la temporada.");
+      await showAlert(isEn ? "Error" : "Error", isEn ? "Error resetting season data." : "Error al reiniciar los datos de la temporada.");
     } finally {
       setLoading(false);
     }
@@ -1016,7 +1054,7 @@ const Tests = () => {
 
   const handleCreateTest = async () => {
     if (!newTest.name || !newTest.unit) {
-      await showAlert("Validación", "Nombre y unidad son obligatorios");
+      await showAlert(isEn ? "Validation" : "Validación", isEn ? "Name and unit are required" : "Nombre y unidad son obligatorios");
       return;
     }
     if (!user || !activeTeamId) return;
@@ -1030,7 +1068,7 @@ const Tests = () => {
       setNewTest({ name: '', type: 'fisico', category: 'Física', unit: '', desc: '', protocol: '' });
     } catch (error) {
       console.error(error);
-      await showAlert("Error", "Error al crear el test.");
+      await showAlert(isEn ? "Error" : "Error", isEn ? "Error creating test." : "Error al crear el test.");
     } finally {
       setLoading(false);
     }
@@ -1068,10 +1106,15 @@ const Tests = () => {
   // ─── SEED DEMO DATA ───────────────────────────────────────────────────────
   const seedDemoEvaluations = async () => {
     if (!user || !activeTeamId || players.length === 0) {
-      await showAlert('Validación', 'No hay jugadores en el equipo. Añade jugadores primero.');
+      await showAlert(isEn ? 'Validation' : 'Validación', isEn ? 'No players in the team. Add players first.' : 'No hay jugadores en el equipo. Añade jugadores primero.');
       return;
     }
-    const confirmSeed = await showConfirm('Insertar datos demo', `¿Insertar evaluaciones de demostración para ${players.length} jugador(es)?\nEsto añadirá datos ficticios para visualizar las gráficas.`);
+    const confirmSeed = await showConfirm(
+      isEn ? 'Insert demo data' : 'Insertar datos demo',
+      isEn
+        ? `Insert demo evaluations for ${players.length} player(s)?\nThis will add sample data to preview graphs.`
+        : `¿Insertar evaluaciones de demostración para ${players.length} jugador(es)?\nEsto añadirá datos ficticios para visualizar las gráficas.`
+    );
     if (!confirmSeed) return;
 
     setLoading(true);
@@ -1124,11 +1167,16 @@ const Tests = () => {
       });
 
       await batch.commit();
-      await showAlert("Éxito", `✅ Datos demo insertados para ${players.length} jugador(es). Recargando...`);
+      await showAlert(
+        isEn ? "Success" : "Éxito",
+        isEn
+          ? `✅ Demo data inserted for ${players.length} player(s). Reloading...`
+          : `✅ Datos demo insertados para ${players.length} jugador(es). Recargando...`
+      );
       loadEvaluations();
     } catch (err) {
       console.error('Error seeding demo data:', err);
-      await showAlert("Error", 'Error al insertar datos de demostración.');
+      await showAlert(isEn ? "Error" : "Error", isEn ? 'Error inserting demo data.' : 'Error al insertar datos de demostración.');
     } finally {
       setLoading(false);
     }
@@ -2111,40 +2159,40 @@ const Tests = () => {
         <div className="modal-overlay" onClick={() => setIsNewTestModalOpen(false)}>
           <div className="modal-content" onClick={e => e.stopPropagation()}>
             <div className="modal-header">
-              <h2>Nuevo Test</h2>
+              <h2>{isEn ? "New Test" : "Nuevo Test"}</h2>
               <button className="btn-close" onClick={() => setIsNewTestModalOpen(false)}>✕</button>
             </div>
             <div className="modal-body">
               <div className="form-group">
-                <label>Nombre del Test</label>
-                <input type="text" value={newTest.name} onChange={e => setNewTest({...newTest, name: e.target.value})} placeholder="Ej. RM Sentadilla" />
+                <label>{isEn ? "Test Name" : "Nombre del Test"}</label>
+                <input type="text" value={newTest.name} onChange={e => setNewTest({...newTest, name: e.target.value})} placeholder={isEn ? "e.g. Squat 1RM" : "Ej. RM Sentadilla"} />
               </div>
               <div className="form-row-team">
                 <div className="form-group">
-                  <label>Tipo de Test</label>
+                  <label>{isEn ? "Test Type" : "Tipo de Test"}</label>
                   <select value={newTest.type} onChange={e => setNewTest({...newTest, type: e.target.value})}>
-                    <option value="fisico">Físico</option>
-                    <option value="tactico">Táctico</option>
-                    <option value="psicosocial">Psicosocial</option>
-                    <option value="socioemocional">Socioemocional</option>
+                    <option value="fisico">{isEn ? "Physical" : "Físico"}</option>
+                    <option value="tactico">{isEn ? "Tactical" : "Táctico"}</option>
+                    <option value="psicosocial">{isEn ? "Psychosocial" : "Psicosocial"}</option>
+                    <option value="socioemocional">{isEn ? "Socio-emotional" : "Socioemocional"}</option>
                   </select>
                 </div>
                 <div className="form-group">
-                  <label>Categoría Específica</label>
-                  <input type="text" value={newTest.category} onChange={e => setNewTest({...newTest, category: e.target.value})} placeholder="Ej. Resistencia, Psicología..." />
+                  <label>{isEn ? "Specific Category" : "Categoría Específica"}</label>
+                  <input type="text" value={newTest.category} onChange={e => setNewTest({...newTest, category: e.target.value})} placeholder={isEn ? "e.g. Endurance, Psychology..." : "Ej. Resistencia, Psicología..."} />
                 </div>
               </div>
               <div className="form-group">
-                <label>Unidad de medida</label>
-                <input type="text" value={newTest.unit} onChange={e => setNewTest({...newTest, unit: e.target.value})} placeholder="Ej. kg, seg, pts" />
+                <label>{isEn ? "Unit of Measurement" : "Unidad de medida"}</label>
+                <input type="text" value={newTest.unit} onChange={e => setNewTest({...newTest, unit: e.target.value})} placeholder={isEn ? "e.g. kg, sec, pts" : "Ej. kg, seg, pts"} />
               </div>
               <div className="form-group">
-                <label>Descripción rápida</label>
-                <input type="text" value={newTest.desc} onChange={e => setNewTest({...newTest, desc: e.target.value})} placeholder="Resumen del test" />
+                <label>{isEn ? "Short Description" : "Descripción rápida"}</label>
+                <input type="text" value={newTest.desc} onChange={e => setNewTest({...newTest, desc: e.target.value})} placeholder={isEn ? "Test summary" : "Resumen del test"} />
               </div>
               <div className="form-group">
-                <label>Protocolo de Ejecución Completo</label>
-                <textarea rows="4" value={newTest.protocol || ''} onChange={e => setNewTest({...newTest, protocol: e.target.value})} placeholder="Pasos exactos de cómo se realiza la prueba en campo..."></textarea>
+                <label>{isEn ? "Complete Execution Protocol" : "Protocolo de Ejecución Completo"}</label>
+                <textarea rows="4" value={newTest.protocol || ''} onChange={e => setNewTest({...newTest, protocol: e.target.value})} placeholder={isEn ? "Exact steps on how the test is performed on field..." : "Pasos exactos de cómo se realiza la prueba en campo..."}></textarea>
               </div>
             </div>
             <div className="modal-footer">
@@ -2313,12 +2361,12 @@ const Tests = () => {
                 fecha: serverTimestamp(),
                 ...evalData
               });
-              await showAlert('Éxito', 'Resultados del cuestionario guardados.');
+              await showAlert(isEn ? 'Success' : 'Éxito', isEn ? 'Questionnaire results saved.' : 'Resultados del cuestionario guardados.');
               setIsQuestionnaireOpen(false);
               loadEvaluations();
             } catch(e) {
               console.error(e);
-              await showAlert("Error", "Error al guardar cuestionario");
+              await showAlert(isEn ? "Error" : "Error", isEn ? "Error saving questionnaire." : "Error al guardar cuestionario");
             }
           }}
         />
@@ -2338,7 +2386,7 @@ const Tests = () => {
           }}
           onExportPDF={(player) => {
             if (!isPro) {
-              setUpgradeModal({ open: true, message: 'La exportación de informes individuales es una función PRO.' });
+              setUpgradeModal({ open: true, message: isEn ? 'Exporting individual reports is a PRO feature.' : 'La exportación de informes individuales es una función PRO.' });
               return;
             }
             generatePlayerTestReport(player, tests, historyData, activeTeam);

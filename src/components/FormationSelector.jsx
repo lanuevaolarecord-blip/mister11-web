@@ -2,6 +2,7 @@ import React from 'react';
 import { PREDEFINED_FORMATIONS } from '../utils/formaciones';
 import { useCustomFormations } from '../hooks/useCustomFormations';
 import { Edit2, Trash2 } from 'lucide-react';
+import { useTranslation } from '../hooks/useTranslation';
 import './FormationSelector.css';
 
 const FormationSelector = ({ 
@@ -11,6 +12,7 @@ const FormationSelector = ({
   onEditFormation, 
   onDeleteFormation 
 }) => {
+  const { isEn } = useTranslation();
   const { customFormations } = useCustomFormations();
   
   const predefinedKeys = Object.keys(PREDEFINED_FORMATIONS);
@@ -57,7 +59,7 @@ const FormationSelector = ({
                 <button
                   type="button"
                   className="fs-action-btn"
-                  title="Editar formación"
+                  title={isEn ? "Edit formation" : "Editar formación"}
                   onClick={(e) => {
                     e.stopPropagation();
                     onEditFormation(f);
@@ -68,10 +70,10 @@ const FormationSelector = ({
                 <button
                   type="button"
                   className="fs-action-btn"
-                  title="Eliminar formación"
+                  title={isEn ? "Delete formation" : "Eliminar formación"}
                   onClick={(e) => {
                     e.stopPropagation();
-                    if (window.confirm(`¿Estás seguro de que deseas eliminar la formación "${f.name}"?`)) {
+                    if (window.confirm(isEn ? `Are you sure you want to delete formation "${f.name}"?` : `¿Estás seguro de que deseas eliminar la formación "${f.name}"?`)) {
                       onDeleteFormation(f.id);
                     }
                   }}

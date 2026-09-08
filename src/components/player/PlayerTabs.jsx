@@ -19,7 +19,7 @@ export const PLAYER_TABS = [
 ];
 
 export const PlayerTabs = ({ activeTab, onTabChange, className = '' }) => {
-  const { t } = useTranslation();
+  const { t, isEn } = useTranslation();
 
   const handleKeyDown = (e, tabId, index) => {
     if (e.key === 'Enter' || e.key === ' ') {
@@ -40,7 +40,7 @@ export const PlayerTabs = ({ activeTab, onTabChange, className = '' }) => {
     <div 
       className={`player-tabs-navigation ${className}`}
       role="tablist"
-      aria-label="Secciones del perfil de jugador"
+      aria-label={isEn ? "Player profile sections" : "Secciones del perfil de jugador"}
     >
       {PLAYER_TABS.map((tab, idx) => {
         const IconComponent = tab.icon;

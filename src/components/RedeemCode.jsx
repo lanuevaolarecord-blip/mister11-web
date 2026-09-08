@@ -23,9 +23,10 @@ const RedeemCode = () => {
     try {
       // 1. Verificar si ya tiene Pro activo
       if (isPro && proExpiration) {
+        const dateStr = proExpiration.toLocaleDateString(isEn ? 'en-US' : 'es-ES');
         setMessage({ 
           type: 'info', 
-          text: `Ya tienes Plan Pro activo hasta el ${proExpiration.toLocaleDateString()}.` 
+          text: isEn ? `You already have an active Pro Plan until ${dateStr}.` : `Ya tienes Plan Pro activo hasta el ${dateStr}.` 
         });
         setLoading(false);
         return;
@@ -89,9 +90,10 @@ const RedeemCode = () => {
 
       await batch.commit();
 
+      const dateStr = expirationDate.toLocaleDateString(isEn ? 'en-US' : 'es-ES');
       setMessage({ 
         type: 'success', 
-        text: `¡Felicidades! Plan Pro activado hasta el ${expirationDate.toLocaleDateString()}.` 
+        text: isEn ? `Congratulations! Pro Plan activated until ${dateStr}.` : `¡Felicidades! Plan Pro activado hasta el ${dateStr}.` 
       });
       setCode('');
 

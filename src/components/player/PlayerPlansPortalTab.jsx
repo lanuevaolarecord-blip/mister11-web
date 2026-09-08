@@ -213,7 +213,7 @@ export const PlayerPlansPortalTab = ({ player, team, teamPath }) => {
       }
     } catch (err) {
       console.error('Error actualizando ejercicio:', err);
-      showToast('Error', 'error');
+      showToast(t('player.plans.error'), 'error');
     }
   };
 

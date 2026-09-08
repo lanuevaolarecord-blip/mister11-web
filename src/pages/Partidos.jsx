@@ -467,7 +467,7 @@ const Partidos = () => {
       setEditTab('POST-PARTIDO');
     } catch (err) {
       console.error("Error al finalizar partido:", err);
-      showToast('❌ Error al guardar finalización: ' + (err.message || ''), 'error');
+      showToast(isEnLanguage ? '❌ Error saving finalization: ' + (err.message || '') : '❌ Error al guardar finalización: ' + (err.message || ''), 'error');
     }
   }, [matchData, matchSeconds, finishMatch, formatMatchTime, updateMatch, effectiveLiveEvents, calledPlayers, user, derivedGoalsFor, derivedGoalsAgainst, derivedGoleadores, derivedTarjetas, isEnLanguage]);
 
@@ -847,7 +847,7 @@ const Partidos = () => {
 
   const handleAddToGoogleCalendar = () => {
     if (!matchData.rival) {
-      alert("Introduce el nombre del rival antes de sincronizar.");
+      alert(isEnLanguage ? "Enter opponent name before syncing." : "Introduce el nombre del rival antes de sincronizar.");
       return;
     }
     const startDate = parseMatchDateTime(matchData.date, matchData.time);
@@ -864,7 +864,7 @@ const Partidos = () => {
 
   const handleExportICS = () => {
     if (!matchData.rival) {
-      alert("Introduce el nombre del rival antes de exportar.");
+      alert(isEnLanguage ? "Enter opponent name before exporting." : "Introduce el nombre del rival antes de exportar.");
       return;
     }
     const startDate = parseMatchDateTime(matchData.date, matchData.time);
@@ -963,10 +963,10 @@ const Partidos = () => {
       if (updateMatch && matchData.id) {
         await updateMatch(matchData.id, sanitizedMatch);
       }
-      showToast('✅ Partido reparado y persistido con éxito.', 'success');
+      showToast(isEnLanguage ? '✅ Match repaired and saved successfully.' : '✅ Partido reparado y persistido con éxito.', 'success');
     } catch (err) {
       console.error('Error reparando partido:', err);
-      showToast('❌ Error al reparar el partido.', 'error');
+      showToast(isEnLanguage ? '❌ Error repairing match.' : '❌ Error al reparar el partido.', 'error');
     }
   };
 
@@ -979,10 +979,10 @@ const Partidos = () => {
       if (updateMatch) {
         await updateMatch(matchData.id, sanitizedMatch);
       }
-      showToast(`🧹 Bitácora depurada con éxito. ${warnings.length} registros saneados.`, 'success');
+      showToast(isEnLanguage ? `🧹 Log cleansed successfully. ${warnings.length} records sanitized.` : `🧹 Bitácora depurada con éxito. ${warnings.length} registros saneados.`, 'success');
     } catch (err) {
       console.error('Error depurando bitácora:', err);
-      showToast('❌ Error al depurar la bitácora.', 'error');
+      showToast(isEnLanguage ? '❌ Error cleansing log.' : '❌ Error al depurar la bitácora.', 'error');
     } finally {
       setCleansingInProgress(false);
     }
@@ -1005,7 +1005,7 @@ const Partidos = () => {
       }));
     } else {
       const activeCount = calledPlayers.filter(Boolean).length;
-      if (activeCount >= 23) return alert("Máximo 23 convocados permitidos.");
+      if (activeCount >= 23) return alert(isEnLanguage ? "Maximum 23 selected players allowed." : "Máximo 23 convocados permitidos.");
 
       const updated = [...calledPlayers];
       while (updated.length < 18) {
@@ -1031,7 +1031,7 @@ const Partidos = () => {
   };
 
   const handleSaveMatch = async () => {
-    if (!matchData.rival || !matchData.rival.trim()) return alert("El nombre del rival es obligatorio.");
+    if (!matchData.rival || !matchData.rival.trim()) return alert(isEnLanguage ? "Opponent name is required." : "El nombre del rival es obligatorio.");
     setIsSaving(true);
     try {
       const norm = normalizeLineup(
@@ -1055,7 +1055,7 @@ const Partidos = () => {
       handleCancel();
     } catch (error) {
       console.error(error);
-      alert("Error al guardar el partido.");
+      alert(isEnLanguage ? "Error saving match." : "Error al guardar el partido.");
     } finally {
       setIsSaving(false);
     }
@@ -1063,14 +1063,14 @@ const Partidos = () => {
 
   const handleDeleteMatch = async () => {
     if (!matchData.id) return;
-    if (!window.confirm("¿Estás seguro de que deseas eliminar este partido?")) return;
+    if (!window.confirm(isEnLanguage ? "Are you sure you want to delete this match?" : "¿Estás seguro de que deseas eliminar este partido?")) return;
     setIsSaving(true);
     try {
       await removeMatch(matchData.id);
       handleCancel();
     } catch (error) {
       console.error(error);
-      alert("Error al eliminar el partido.");
+      alert(isEnLanguage ? "Error deleting match." : "Error al eliminar el partido.");
     } finally {
       setIsSaving(false);
     }

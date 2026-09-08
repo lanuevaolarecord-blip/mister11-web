@@ -12,6 +12,7 @@
 
 import React, { useMemo } from 'react';
 import { useTheme } from '../context/ThemeContext';
+import { useTranslation } from '../hooks/useTranslation';
 import { SvgDonut, SvgComparisonBars, HalfBreakdown } from './LiveStatsCharts';
 import { getEffectiveLanguage } from '../i18n/translations';
 import { getUnifiedMatchEvents } from '../utils/minutesEngine';
@@ -51,6 +52,20 @@ const TEXTS = {
   catSetPieces: { es: '🟨 Disciplina y Balón Parado', en: '🟨 Discipline & Set Pieces' },
   catSectors: { es: '📍 Distribución por Sectores', en: '📍 Sector Distribution' },
 
+  shotsOnTargetLabel: { es: 'Tiros a Puerta', en: 'Shots on Target' },
+  shotsOffTargetLabel: { es: 'Tiros Fuera', en: 'Shots off Target' },
+  totalShotsLabel: { es: 'Total Remates:', en: 'Total Shots:' },
+  recoveriesLabel: { es: 'Recuperaciones de balón:', en: 'Ball Recoveries:' },
+  lossesLabel: { es: 'Pérdidas de balón:', en: 'Ball Losses:' },
+  duelsWonLostLabel: { es: 'Duelos Ganados / Perdidos:', en: 'Duels Won / Lost:' },
+  possessionEstimatedLabel: { es: 'Posesión Estimada:', en: 'Estimated Possession:' },
+  foulsForAgainstLabel: { es: 'Faltas a Favor / En Contra:', en: 'Fouls Won / Conceded:' },
+  countersNotCutLabel: { es: 'Contras no cortadas:', en: 'Unbroken Counters:' },
+  unfinishedPlaysLabel: { es: 'Jugadas sin finalizar:', en: 'Unfinished Plays:' },
+  cornersForAgainstLabel: { es: 'Córners (Favor / Contra):', en: 'Corners (For / Against):' },
+  offsidesOwnRivalLabel: { es: 'Fueras de Juego (Propio / Rival):', en: 'Offsides (Own / Opponent):' },
+  yellowRedCardsLabel: { es: 'Tarjetas Amarillas / Rojas:', en: 'Yellow / Red Cards:' },
+
   leftSector: { es: '⬅️ Banda Izquierda', en: '⬅️ Left Wing' },
   centerSector: { es: '⏺️ Pasillo Central', en: '⏺️ Center Corridor' },
   rightSector: { es: '➡️ Banda Derecha', en: '➡️ Right Wing' },
@@ -71,7 +86,8 @@ export const MatchStatsBlock = ({
   containerStyle = {}
 }) => {
   const { darkMode } = useTheme();
-  const isEn = getEffectiveLanguage(language) === 'English (EN)';
+  const { isEn: contextIsEn } = useTranslation();
+  const isEn = contextIsEn || getEffectiveLanguage(language) === 'English (EN)';
   const t = (k) => (TEXTS[k] ? (isEn ? TEXTS[k].en : TEXTS[k].es) : k);
 
   const homeTeamName = matchData?.local || matchData?.equipoLocal || t('ownTeam');
@@ -280,15 +296,15 @@ export const MatchStatsBlock = ({
               <h5 style={{ margin: '0 0 8px 0', fontSize: '13px', fontWeight: '800', color: C.teal }}>{t('catShots')}</h5>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', fontSize: '12px' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <span style={{ color: textMuted }}>Tiros a Puerta ({homeTeamName} / {awayTeamName}):</span>
+                  <span style={{ color: textMuted }}>{t('shotsOnTargetLabel')} ({homeTeamName} / {awayTeamName}):</span>
                   <span style={{ fontWeight: '700', color: textMain }}>{shotsOnOwn} - {shotsOnRival}</span>
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <span style={{ color: textMuted }}>Tiros Fuera ({homeTeamName} / {awayTeamName}):</span>
+                  <span style={{ color: textMuted }}>{t('shotsOffTargetLabel')} ({homeTeamName} / {awayTeamName}):</span>
                   <span style={{ fontWeight: '700', color: textMain }}>{shotsOffOwn} - {shotsOffRival}</span>
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <span style={{ color: textMuted }}>Total Remates:</span>
+                  <span style={{ color: textMuted }}>{t('totalShotsLabel')}</span>
                   <span style={{ fontWeight: '800', color: C.green }}>{shotsTotalOwn} - {shotsTotalRival}</span>
                 </div>
               </div>
@@ -299,19 +315,19 @@ export const MatchStatsBlock = ({
               <h5 style={{ margin: '0 0 8px 0', fontSize: '13px', fontWeight: '800', color: C.blue }}>{t('catDefense')}</h5>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', fontSize: '12px' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <span style={{ color: textMuted }}>Recuperaciones de balón:</span>
+                  <span style={{ color: textMuted }}>{t('recoveriesLabel')}</span>
                   <span style={{ fontWeight: '700', color: C.green }}>{recoveries}</span>
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <span style={{ color: textMuted }}>Pérdidas de balón:</span>
+                  <span style={{ color: textMuted }}>{t('lossesLabel')}</span>
                   <span style={{ fontWeight: '700', color: C.red }}>{losses}</span>
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <span style={{ color: textMuted }}>Duelos Ganados / Perdidos:</span>
+                  <span style={{ color: textMuted }}>{t('duelsWonLostLabel')}</span>
                   <span style={{ fontWeight: '700', color: textMain }}>{duelsWon} / {duelsLost}</span>
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <span style={{ color: textMuted }}>Posesión Estimada:</span>
+                  <span style={{ color: textMuted }}>{t('possessionEstimatedLabel')}</span>
                   <span style={{ fontWeight: '800', color: C.blue }}>{possPctOwn}% - {possPctRival}%</span>
                 </div>
               </div>
@@ -322,15 +338,15 @@ export const MatchStatsBlock = ({
               <h5 style={{ margin: '0 0 8px 0', fontSize: '13px', fontWeight: '800', color: C.orange }}>{t('catFouls')}</h5>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', fontSize: '12px' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <span style={{ color: textMuted }}>Faltas a Favor / En Contra:</span>
+                  <span style={{ color: textMuted }}>{t('foulsForAgainstLabel')}</span>
                   <span style={{ fontWeight: '700', color: textMain }}>{foulsFavor} / {foulsAgainst}</span>
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <span style={{ color: textMuted }}>Contras no cortadas:</span>
+                  <span style={{ color: textMuted }}>{t('countersNotCutLabel')}</span>
                   <span style={{ fontWeight: '700', color: C.red }}>{counterNotCut}</span>
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <span style={{ color: textMuted }}>Jugadas sin finalizar:</span>
+                  <span style={{ color: textMuted }}>{t('unfinishedPlaysLabel')}</span>
                   <span style={{ fontWeight: '700', color: C.orange }}>{playerNoFinish}</span>
                 </div>
               </div>
@@ -341,15 +357,15 @@ export const MatchStatsBlock = ({
               <h5 style={{ margin: '0 0 8px 0', fontSize: '13px', fontWeight: '800', color: C.gold }}>{t('catSetPieces')}</h5>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', fontSize: '12px' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <span style={{ color: textMuted }}>Córners (Favor / Contra):</span>
+                  <span style={{ color: textMuted }}>{t('cornersForAgainstLabel')}</span>
                   <span style={{ fontWeight: '700', color: textMain }}>{cornersFavor} / {cornersAgainst}</span>
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <span style={{ color: textMuted }}>Fueras de Juego (Propio / Rival):</span>
+                  <span style={{ color: textMuted }}>{t('offsidesOwnRivalLabel')}</span>
                   <span style={{ fontWeight: '700', color: textMain }}>{offsidesOwn} / {offsidesRival}</span>
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <span style={{ color: textMuted }}>Tarjetas Amarillas / Rojas:</span>
+                  <span style={{ color: textMuted }}>{t('yellowRedCardsLabel')}</span>
                   <span style={{ fontWeight: '700', color: textMain }}>🟨 {yellowOwn + yellowRival} | 🟥 {redOwn + redRival}</span>
                 </div>
               </div>

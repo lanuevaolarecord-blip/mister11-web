@@ -50,11 +50,13 @@ function cleanAndValidateOutput(rawText, targetLang) {
     .trim();
 
   // 2. Eliminar preámbulos y bloques de razonamiento (Chain of Thought) antes del contenido real
-  // Identificar el verdadero inicio del ejercicio:
-  // Un encabezado markdown (##) que NO sea de razonamiento (Analysis, Step 1, Thinking, etc.)
-  // O un inicio con **Objetivo / **Ejercicio / **Plan / **Ficha
-  const reasoningHeaderRegex = /^(?:#+\s*)?(?:Step\s*\d+|Paso\s*\d+|Thinking(?:\s*Process)?|Reasoning|Razonamiento|Chain\s*of\s*Thought|Analyze(?:\s*User\s*Input)?|Análisis|User\s*Input|Deconstruct|Context)/i;
-  
+  // Estrategia A: eliminar cualquier bloque <think>…</think> residual que haya quedado anidado
+  text = text.replace(/<think>[\s\S]*?<\/think>/gi, '').replace(/<\/?think>/gi, '').trim();
+
+  // Estrategia B: eliminar bloques de razonamiento completos antes del primer encabezado válido
+  // Un encabezado válido es ## que NO sea de razonamiento (Analysis, Step 1, Thinking, etc.)
+  const reasoningHeaderRegex = /^(?:#+\s*)?(?:Step\s*\d+|Paso\s*\d+|Thinking(?:\s*Process)?|Reasoning|Razonamiento|Chain\s*of\s*Thought|Analyze(?:\s*User\s*Input)?|Análisis|User\s*Input|Deconstruct|Context|Introduction|Overview)/i;
+
   const lines = text.split('\n');
   let firstValidHeaderLine = -1;
 
@@ -77,11 +79,19 @@ function cleanAndValidateOutput(rawText, targetLang) {
   }
 
   // 3. Eliminar líneas residuales de razonamiento / bullets de CoT si quedaran
+  // Se aplican múltiples pases para capturar patrones que Qwen/reasoning-models suelen generar
   text = text
-    .replace(/^[-*•]\s*(?:Role|Parameters|Drill Type|Sport|Age Group|Duration|Players|Level|Skill Focus|Analyze|Analysis|Input|Output|Step \d|Constraints|Key Elements)[^\n]*\n?/gim, '')
-    .replace(/^\d+\.\s*(?:Analyze|Deconstruct|Design|Consider|Review|Think|Plan|Identify|Evaluate|User Input)[^\n]*\n?/gim, '')
-    .replace(/^(?:Here'?s a thinking process|Thinking Process:?|Reasoning:?|Analyze User Input:?|Analysis:?)[\s\S]*?(?=\n#{1,3}\s+|\n\*\*|$)/gi, '')
-    .replace(/^(?:In this drill|Let's design|Okay, let's create|I will create)[\s\S]*?(?=\n#{1,3}\s+)/gi, '')
+    // Bullets descriptivos de parámetros de entrada (CoT)
+    .replace(/^[-*•]\s*(?:Role|Parameters|Drill Type|Sport|Age Group|Duration|Players|Level|Skill Focus|Analyze|Analysis|Input|Output|Step \d|Constraints|Key Elements|User Request|Language|Format)[^\n]*\n?/gim, '')
+    // Pasos numerados de razonamiento
+    .replace(/^\d+\.\s*(?:Analyze|Deconstruct|Design|Consider|Review|Think|Plan|Identify|Evaluate|User Input|Understand|Parse|Extract)[^\n]*\n?/gim, '')
+    // Bloques multi-línea de intro de razonamiento (hasta el primer ## o ** real)
+    .replace(/(?:^|\n)(?:Here'?s (?:a |my )?(?:thinking|analysis|approach|plan)|Thinking Process:?|Reasoning:?|Analyze User Input:?|Analysis:?|My approach:?|Let me (?:analyze|design|create|think)|I(?:'ll| will) (?:create|design|analyze|generate))[^\n]*(?:\n(?![#*\-])[^\n]*)*/gi, '')
+    // Frases de arranque de generación
+    .replace(/^(?:In this drill|Let's design|Okay, let's create|I will create|Sure, here|Certainly, here|Alright,)[^\n]*\n?/gim, '')
+    // Etiquetas vacías de sección residuales (--- o *** solos)
+    .replace(/^(?:---+|\*\*\*+)\s*\n/gm, '')
+    // Colapsar múltiples saltos en uno doble
     .replace(/\n{3,}/g, '\n\n')
     .trim();
 

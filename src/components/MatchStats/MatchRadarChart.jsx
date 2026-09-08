@@ -19,39 +19,39 @@ export const MatchRadarChart = ({
   const axes = [
     { 
       key: 'shotsOnTarget', 
-      label: 'Tiros a puerta', 
-      desc: 'Disparos a puerta o goles convertidos.',
-      calc: 'Normalizado sobre 8 tiros a puerta (8 = 100 pts).'
+      label: isEn ? 'Shots on target' : 'Tiros a puerta', 
+      desc: isEn ? 'Shots on target or converted goals.' : 'Disparos a puerta o goles convertidos.',
+      calc: isEn ? 'Normalized to 8 shots on target (8 = 100 pts).' : 'Normalizado sobre 8 tiros a puerta (8 = 100 pts).'
     },
     { 
       key: 'duels', 
-      label: 'Duelos / Posesión', 
-      desc: 'Eficacia y volumen de duelos individuales ganados.',
-      calc: 'Normalizado sobre 10 duelos ganados (10 = 100 pts).'
+      label: isEn ? 'Duels / Possession' : 'Duelos / Posesión', 
+      desc: isEn ? 'Efficiency and volume of individual duels won.' : 'Eficacia y volumen de duelos individuales ganados.',
+      calc: isEn ? 'Normalized to 10 duels won (10 = 100 pts).' : 'Normalizado sobre 10 duelos ganados (10 = 100 pts).'
     },
     { 
       key: 'fouls', 
-      label: 'Faltas', 
-      desc: 'Infracciones cometidas durante el tiempo de juego.',
-      calc: 'Infracciones cometidas sobre escala de 12 faltas (12 = 100 pts).'
+      label: isEn ? 'Fouls' : 'Faltas', 
+      desc: isEn ? 'Infractions committed during match play.' : 'Infracciones cometidas durante el tiempo de juego.',
+      calc: isEn ? 'Fouls committed on a 12-foul scale (12 = 100 pts).' : 'Infracciones cometidas sobre escala de 12 faltas (12 = 100 pts).'
     },
     { 
       key: 'discipline', 
-      label: 'Tarjetas (Sanciones)', 
-      desc: 'Sanciones disciplinarias (0 tarjetas = 0 pts / juego limpio).',
-      calc: '0 tarjetas = 0 pts. Cada amarilla suma 20 pts y cada roja 50 pts.'
+      label: isEn ? 'Cards (Discipline)' : 'Tarjetas (Sanciones)', 
+      desc: isEn ? 'Disciplinary cards (0 cards = 0 pts / clean play).' : 'Sanciones disciplinarias (0 tarjetas = 0 pts / juego limpio).',
+      calc: isEn ? '0 cards = 0 pts. Each yellow adds 20 pts and each red 50 pts.' : '0 tarjetas = 0 pts. Cada amarilla suma 20 pts y cada roja 50 pts.'
     },
     { 
       key: 'corners', 
-      label: 'Córners', 
-      desc: 'Saques de esquina a favor provocados.',
-      calc: 'Normalizado sobre 8 córners a favor (8 = 100 pts).'
+      label: isEn ? 'Corners' : 'Córners', 
+      desc: isEn ? 'Corner kicks won by team.' : 'Saques de esquina a favor provocados.',
+      calc: isEn ? 'Normalized to 8 corners won (8 = 100 pts).' : 'Normalizado sobre 8 córners a favor (8 = 100 pts).'
     },
     { 
       key: 'offsides', 
-      label: 'Offsides', 
-      desc: 'Posiciones adelantadas o fueras de juego cometidos.',
-      calc: 'Fueras de juego sobre escala de 5 offsides (5 = 100 pts).'
+      label: isEn ? 'Offsides' : 'Offsides', 
+      desc: isEn ? 'Offside infractions committed.' : 'Posiciones adelantadas o fueras de juego cometidos.',
+      calc: isEn ? 'Offsides on a 5-offside scale (5 = 100 pts).' : 'Fueras de juego sobre escala de 5 offsides (5 = 100 pts).'
     }
   ];
 
@@ -165,12 +165,12 @@ export const MatchRadarChart = ({
       teamAStats: [normShotsA, normDuelsA, normFoulsA, normDiscA, normCornersA, normOffsidesA],
       teamBStats: [normShotsB, normDuelsB, normFoulsB, normDiscB, normCornersB, normOffsidesB],
       rawCounts: {
-        shotsOnTarget: { home: localShotsOn, away: rivalShotsOn, unit: 'tiros' },
-        duels: { home: `${localDuelsWon}/${totalLocalDuels || localDuelsWon}`, away: `${rivalDuelsWon}/${totalRivalDuels || rivalDuelsWon}`, unit: 'ganados' },
-        fouls: { home: localFouls, away: rivalFouls, unit: 'faltas' },
-        discipline: { home: `${localYellows}🟨 ${localReds}🟥`, away: `${rivalYellows}🟨 ${rivalReds}🟥`, unit: 'tarjetas' },
-        corners: { home: localCorners, away: rivalCorners, unit: 'córners' },
-        offsides: { home: localOffsides, away: rivalOffsides, unit: 'offsides' }
+        shotsOnTarget: { home: localShotsOn, away: rivalShotsOn, unit: isEn ? 'shots' : 'tiros' },
+        duels: { home: `${localDuelsWon}/${totalLocalDuels || localDuelsWon}`, away: `${rivalDuelsWon}/${totalRivalDuels || rivalDuelsWon}`, unit: isEn ? 'won' : 'ganados' },
+        fouls: { home: localFouls, away: rivalFouls, unit: isEn ? 'fouls' : 'faltas' },
+        discipline: { home: `${localYellows}🟨 ${localReds}🟥`, away: `${rivalYellows}🟨 ${rivalReds}🟥`, unit: isEn ? 'cards' : 'tarjetas' },
+        corners: { home: localCorners, away: rivalCorners, unit: isEn ? 'corners' : 'córners' },
+        offsides: { home: localOffsides, away: rivalOffsides, unit: isEn ? 'offsides' : 'offsides' }
       },
       hasRealData: !isActuallyEmpty
     };
@@ -379,11 +379,11 @@ export const MatchRadarChart = ({
           <div className="radar-legend" style={{ display: 'flex', justifyContent: 'center', gap: '20px', margin: '8px 0 14px 0' }}>
             <div className="legend-item" style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', fontWeight: 800 }}>
               <span className="legend-box gold" style={{ width: '12px', height: '12px', background: darkMode ? '#FBBF24' : '#D4A843', borderRadius: '3px', display: 'inline-block' }} />
-              <span style={{ color: darkMode ? '#FBBF24' : '#B45309' }}>{homeTeamName} (Local)</span>
+              <span style={{ color: darkMode ? '#FBBF24' : '#B45309' }}>{homeTeamName} {isEn ? '(Home)' : '(Local)'}</span>
             </div>
             <div className="legend-item" style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', fontWeight: 800 }}>
               <span className="legend-box green" style={{ width: '12px', height: '12px', background: darkMode ? '#4ADE80' : '#059669', borderRadius: '3px', display: 'inline-block' }} />
-              <span style={{ color: darkMode ? '#4ADE80' : '#047857' }}>{awayTeamName} (Visitante)</span>
+              <span style={{ color: darkMode ? '#4ADE80' : '#047857' }}>{awayTeamName} {isEn ? '(Away)' : '(Visitante)'}</span>
             </div>
           </div>
 
@@ -401,11 +401,11 @@ export const MatchRadarChart = ({
                   background: darkMode ? 'rgba(0,0,0,0.3)' : '#F1F5F9',
                   borderBottom: darkMode ? '1px solid rgba(255,255,255,0.12)' : '1px solid #CBD5E1'
                 }}>
-                  <th style={{ padding: '8px 10px', color: darkMode ? '#94A3B8' : '#334155', fontWeight: 900 }}>MÉTRICA</th>
-                  <th style={{ padding: '8px 10px', color: darkMode ? '#FBBF24' : '#B45309', fontWeight: 900 }}>{homeTeamName} (L)</th>
-                  <th style={{ padding: '8px 10px', color: darkMode ? '#4ADE80' : '#047857', fontWeight: 900 }}>{awayTeamName} (V)</th>
-                  <th style={{ padding: '8px 10px', color: darkMode ? '#94A3B8' : '#334155', fontWeight: 900 }}>NORMALIZADO</th>
-                  <th style={{ padding: '8px 10px', textAlign: 'center', color: darkMode ? '#94A3B8' : '#334155', fontWeight: 900 }}>GANADOR</th>
+                  <th style={{ padding: '8px 10px', color: darkMode ? '#94A3B8' : '#334155', fontWeight: 900 }}>{isEn ? 'METRIC' : 'MÉTRICA'}</th>
+                  <th style={{ padding: '8px 10px', color: darkMode ? '#FBBF24' : '#B45309', fontWeight: 900 }}>{homeTeamName} ({isEn ? 'H' : 'L'})</th>
+                  <th style={{ padding: '8px 10px', color: darkMode ? '#4ADE80' : '#047857', fontWeight: 900 }}>{awayTeamName} ({isEn ? 'A' : 'V'})</th>
+                  <th style={{ padding: '8px 10px', color: darkMode ? '#94A3B8' : '#334155', fontWeight: 900 }}>{isEn ? 'NORMALIZED' : 'NORMALIZADO'}</th>
+                  <th style={{ padding: '8px 10px', textAlign: 'center', color: darkMode ? '#94A3B8' : '#334155', fontWeight: 900 }}>{isEn ? 'WINNER' : 'GANADOR'}</th>
                 </tr>
               </thead>
               <tbody>
@@ -414,19 +414,19 @@ export const MatchRadarChart = ({
                   const normA = teamAStats[i];
                   const normB = teamBStats[i];
                   const isNegativeMetric = axis.key === 'fouls' || axis.key === 'discipline' || axis.key === 'offsides';
-                  let winnerLabel = 'Empate';
+                  let winnerLabel = isEn ? 'Draw' : 'Empate';
                   let winnerColor = darkMode ? '#94A3B8' : '#475569';
                   let winnerBg = darkMode ? 'rgba(148, 163, 184, 0.15)' : 'rgba(71, 85, 105, 0.1)';
 
                   if (normA === 0 && normB === 0) {
-                    if (axis.key === 'discipline') winnerLabel = 'Limpio (0)';
-                    else if (axis.key === 'fouls') winnerLabel = 'Sin faltas (0)';
-                    else if (axis.key === 'offsides') winnerLabel = 'Sin offsides (0)';
-                    else winnerLabel = 'Empate (0)';
+                    if (axis.key === 'discipline') winnerLabel = isEn ? 'Clean (0)' : 'Limpio (0)';
+                    else if (axis.key === 'fouls') winnerLabel = isEn ? 'No fouls (0)' : 'Sin faltas (0)';
+                    else if (axis.key === 'offsides') winnerLabel = isEn ? 'No offsides (0)' : 'Sin offsides (0)';
+                    else winnerLabel = isEn ? 'Draw (0)' : 'Empate (0)';
                     winnerColor = darkMode ? '#4ADE80' : '#047857';
                     winnerBg = darkMode ? 'rgba(74, 222, 128, 0.15)' : 'rgba(16, 185, 129, 0.12)';
                   } else if (normA === normB) {
-                    winnerLabel = 'Empate';
+                    winnerLabel = isEn ? 'Draw' : 'Empate';
                   } else {
                     const homeWins = isNegativeMetric ? (normA < normB) : (normA > normB);
                     if (homeWins) {

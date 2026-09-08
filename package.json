@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
+    "test": "node scripts/ci-i18n-gate.mjs",
     "check-i18n": "node scripts/check-i18n.js",
     "i18n:check": "node scripts/check-i18n.js",
     "i18n:audit": "node scripts/audit-literals.mjs",

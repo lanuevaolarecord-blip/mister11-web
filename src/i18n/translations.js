@@ -1726,7 +1726,7 @@ export const translations = {
     'notifications.teamPlanAssigned': 'Team plan assigned successfully',
     'notifications.individualPlanRemoved': 'Individual plan removed',
     'notifications.teamPlanRemoved': 'Team plan removed',
-    'notifications.newMatchRegistered': 'New match registered vs {rival}',
+    'notifications.newMatchRegistered': 'New match registered vs {opponent}',
     'notifications.weeklyReportReady': '📋 Your weekly team report is ready. Download it from the main panel!',
     'notifications.sessionImportedSuccess': 'Session "{title}" imported successfully',
 
@@ -3369,7 +3369,14 @@ export const t = (key, language, replacements = {}, fallback = null) => {
   const isEn = effLang === 'English (EN)';
   
   const targetDict = isEn ? translations['English (EN)'] : translations['Español (ES)'];
-  let text = targetDict?.[key] || translations['English (EN)']?.[key] || translations['Español (ES)']?.[key] || fallback || key;
+  let text = targetDict?.[key];
+
+  if (text === undefined) {
+    if (typeof window !== 'undefined' && window.dispatchEvent) {
+      window.dispatchEvent(new CustomEvent('m11-i18n-missing-key', { detail: { key, lang: effLang } }));
+    }
+    text = translations['English (EN)']?.[key] || translations['Español (ES)']?.[key] || fallback || key;
+  }
   
   if (typeof text === 'string') {
     Object.keys(replacements).forEach(r => {

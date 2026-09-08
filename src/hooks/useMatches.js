@@ -34,11 +34,11 @@ export const useMatches = (teamId) => {
       locale: mLocale
     });
 
-    const rivalName = matchData.rival || (isEn() ? 'Rival' : 'Rival');
+    const rivalName = matchData.rival || (isEn() ? 'Opponent' : 'Rival');
     await createNotification('info', {
       template: 'notifications.newMatchRegistered',
-      payload: { rival: rivalName },
-      text: t('notifications.newMatchRegistered', { rival: rivalName })
+      payload: { opponent: rivalName, rival: rivalName },
+      text: t('notifications.newMatchRegistered', { opponent: rivalName, rival: rivalName })
     });
     return docId;
   };

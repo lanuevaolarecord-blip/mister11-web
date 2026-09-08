@@ -15,7 +15,7 @@ const FAIL_ON   = process.argv.includes('--fail-on-found');
 
 // ── Dirs/files to skip ────────────────────────────────────────────────────────
 const SKIP_DIRS  = new Set(['node_modules', '.git', 'dist', 'build', '__tests__', 'coverage']);
-const SKIP_FILES = new Set(['translations.js', 'i18n-singleton.js', 'index.js']);
+const SKIP_FILES = new Set(['translations.js', 'i18n-singleton.js', 'index.js', 'I18nDevOverlay.jsx']);
 
 // ── Line-level early exits (not UI literals) ──────────────────────────────────
 function shouldSkipLine(line) {

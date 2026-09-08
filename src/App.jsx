@@ -36,6 +36,7 @@ const DemoMode          = lazy(() => import('./pages/DemoMode'));
 const PlayerDashboard   = lazy(() => import('./pages/PlayerDashboard'));
 
 import { TeamRoleSelectorModal } from './components/TeamRoleSelectorModal';
+import I18nDevOverlay from './components/I18nDevOverlay';
 import './App.css';
 
 function compareVersions(remote, local) {
@@ -394,6 +395,7 @@ function App() {
           <Route path="*" element={<NotFound />} />
         </Routes>
       </Suspense>
+      <I18nDevOverlay />
     </>
   );
 }

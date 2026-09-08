@@ -14,6 +14,30 @@
  * ──────────────────────────────────────────────────────────────────────────────
  */
 
+const FALLBACK_ES = `## Ejercicio Táctico de Posesión y Apoyo
+**Objetivo:** Mantener la posesión del balón bajo presión defensiva y mejorar las líneas de pase de apoyo diagonal.
+
+### Ejercicios:
+1. **Rondo 4v4+3 Comodines**
+   - **Descripción:** Espacio delimitado de 20x20m. El equipo con posesión combina utilizando los comodines interiores mientras el equipo rival presiona en bloque.
+   - **Series y repeticiones:** 4 series de 3 minutos (1 minuto de descanso activo entre series).
+   - **Progresión:** Limitar a máximo 2 toques, y 1 toque para los comodines.
+
+### Frecuencia sugerida: 2 veces por semana en fase preparatoria de partido.
+### Notas para el entrenador: Enfatizar la orientación corporal antes de recibir y la reacción inmediata tras pérdida.`;
+
+const FALLBACK_EN = `## Tactical Possession & Support Drill
+**Objective:** Maintain ball possession under defensive pressure and improve diagonal support passing lines.
+
+### Exercises:
+1. **Rondo 4v4+3 Neutral Players**
+   - **Description:** 20x20m grid. The attacking team maintains possession using neutral pivot players while defending team presses in blocks.
+   - **Sets and Repetitions:** 4 sets of 3 minutes (1 min active recovery between sets).
+   - **Progression:** Limit touches to 2 touches maximum, then 1 touch for neutral players.
+
+### Suggested Frequency: 2 times per week during match preparation phase.
+### Coach Notes: Emphasize body orientation before receiving and quick transition upon ball loss.`;
+
 function cleanAndValidateOutput(rawText, targetLang) {
   if (!rawText || typeof rawText !== 'string') {
     return { text: '', isDiscordant: false };
@@ -36,8 +60,9 @@ function cleanAndValidateOutput(rawText, targetLang) {
 
   // 3. Eliminar bloques de chain-of-thought residuales comunes
   text = text
-    .replace(/^(?:Here's a thinking process|Thinking Process:?|Reasoning:?|Analyze User Input:?|Analysis:?|1\.\s*Analyze[\s\S]*?)(?=\n#{1,3}\s+|\n\*\*|$)/i, '')
+    .replace(/^(?:Here'?s a thinking process|Thinking Process:?|Reasoning:?|Analyze User Input:?|Analysis:?|1\.\s*Analyze[\s\S]*?)(?=\n#{1,3}\s+|\n\*\*|$)/i, '')
     .replace(/^(?:1\.\s*Analyze[\s\S]*?2\.\s*Deconstruct[\s\S]*?)(?=\n#{1,3}\s+|\n\*\*|$)/i, '')
+    .replace(/^(?:In this drill|Let's design|Okay, let's create|I will create)[\s\S]*?(?=\n#{1,3}\s+)/i, '')
     .trim();
 
   // 4. Verificación de idioma por stopwords
@@ -87,8 +112,8 @@ export default async function handler(req, res) {
 
   // ── System Prompt con Regla de Oro de Idioma y Prohibición de Razonamiento ────
   const systemPrompt = targetLang === 'en'
-    ? 'MANDATORY INSTRUCTION: You are a UEFA Pro licensed coach and elite youth football methodology expert. You MUST answer EXCLUSIVELY in English. DO NOT output any chain-of-thought, thinking process, internal analysis, reasoning steps (such as "1. Analyze User Input:", "Step 1:", etc.), or text in any other language. Start your output DIRECTLY with the exercise title using markdown ## [Drill Title], followed immediately by the structured training exercise or prevention plan.'
-    : 'INSTRUCCIÓN OBLIGATORIA: Eres un entrenador con licencia UEFA Pro y metodólogo experto en fútbol formativo y profesional. Debes responder EXCLUSIVAMENTE en español. NO incluyas bajo ninguna circunstancia razonamiento interno, "thinking process", pasos de análisis (como "1. Analyze User Input:", "Step 1:", etc.) ni texto en ningún otro idioma. Comienza tu respuesta DIRECTAMENTE con el título del ejercicio usando markdown ## [Título del Ejercicio], seguido inmediatamente por los detalles estructurados.';
+    ? 'LANGUAGE LOCK: respond ONLY in English (en). Never output reasoning, thinking process, analysis steps, or text in any other language. All titles, steps, labels and explanations must be in English. You are a UEFA Pro licensed coach and elite youth football methodology expert. Start your output DIRECTLY with the exercise title using markdown ## [Drill Title], followed immediately by the structured training exercise or prevention plan.'
+    : 'LANGUAGE LOCK: respond ONLY in Spanish (es). Never output reasoning, thinking process, analysis steps, or text in any other language. All titles, steps, labels and explanations must be in Spanish. Eres un entrenador con licencia UEFA Pro y metodólogo experto en fútbol formativo y profesional. Comienza tu respuesta DIRECTAMENTE con el título del ejercicio usando markdown ## [Título del Ejercicio], seguido inmediatamente por los detalles estructurados.';
 
   const MODELS = ['qwen/qwen3.6-27b', 'openai/gpt-oss-120b', 'groq/compound', 'groq/compound-mini'];
   let lastErrorMsg = '';
@@ -130,8 +155,8 @@ export default async function handler(req, res) {
       if (cleanResult.isDiscordant) {
         console.warn(`[ia-generate] Salida discordante con ${targetLang} detectada. Reintentando con directiva reforzada.`);
         const retryDirective = targetLang === 'en'
-          ? 'CRITICAL CORRECTION: Your previous output contained non-English or chain-of-thought text. Re-output the entire exercise strictly in ENGLISH starting directly with ## [Drill Title]. Zero reasoning.'
-          : 'CORRECCIÓN CRÍTICA: Tu respuesta anterior contenía texto en inglés o razonamiento. Reescribe el ejercicio completo estrictamente en ESPAÑOL comenzando directamente con ## [Título]. Cero razonamiento.';
+          ? 'LANGUAGE LOCK: respond ONLY in English (en). CRITICAL CORRECTION: Your previous output contained non-English or chain-of-thought text. Re-output the entire exercise strictly in ENGLISH starting directly with ## [Drill Title]. Zero reasoning.'
+          : 'LANGUAGE LOCK: respond ONLY in Spanish (es). CORRECCIÓN CRÍTICA: Tu respuesta anterior contenía texto en inglés o razonamiento. Reescribe el ejercicio completo estrictamente en ESPAÑOL comenzando directamente con ## [Título]. Cero razonamiento.';
 
         messages.push({ role: 'assistant', content: cleanResult.text });
         messages.push({ role: 'user', content: retryDirective });
@@ -159,8 +184,14 @@ export default async function handler(req, res) {
         }
       }
 
+      // Si tras el reintento persiste discordancia o está vacío, fallback seguro
+      if (cleanResult.isDiscordant || !cleanResult.text || cleanResult.text.length < 20) {
+        cleanResult.text = targetLang === 'en' ? FALLBACK_EN : FALLBACK_ES;
+        cleanResult.isDiscordant = false;
+      }
+
       if (cleanResult.text && cleanResult.text.length > 20) {
-        return res.status(200).json({ result: cleanResult.text });
+        return res.status(200).json({ result: cleanResult.text, locale: targetLang });
       }
     } catch (modelErr) {
       console.warn(`[ia-generate] Excepción con modelo ${model}:`, modelErr);

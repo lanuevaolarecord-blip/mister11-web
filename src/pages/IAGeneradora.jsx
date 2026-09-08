@@ -226,8 +226,13 @@ const IAGeneradora = () => {
       }
 
       const data = await response.json();
-      const text = data?.result;
+      let text = data?.result;
       if (!text) throw new Error(t('ia.emptyResponse'));
+      text = text.replace(/<think>[\s\S]*?<\/think>/gi, '').replace(/<\/?think>/gi, '').trim();
+      const headerMatch = text.match(/(?:^|\n)(#{1,3}\s+[^\n]+)/m);
+      if (headerMatch && headerMatch.index !== undefined && headerMatch.index > 0) {
+        text = text.substring(headerMatch.index).trim();
+      }
       return text;
     } catch (err) {
       console.error('[IA Generadora] Error en proxy:', err);

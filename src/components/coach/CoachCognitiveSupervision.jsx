@@ -193,10 +193,10 @@ export const CoachCognitiveSupervision = ({ player, teamPath, teamId }) => {
           </div>
           <div>
             <h4 style={{ margin: 0, fontSize: '15px', fontWeight: 800, color: 'var(--games-text-primary, var(--text-primary))' }}>
-              Supervisión Cognitiva y Retos en Casa
+              {t('cognitive.supervision_title')}
             </h4>
             <span style={{ fontSize: '11px', color: 'var(--games-text-secondary, var(--text-secondary))' }}>
-              Semana actual · {sessionsThisWeek.length} sesiones registradas
+              {t('cognitive.week_sessions', { count: sessionsThisWeek.length })}
             </span>
           </div>
         </div>
@@ -210,7 +210,7 @@ export const CoachCognitiveSupervision = ({ player, teamPath, teamId }) => {
             disabled={verifying}
           >
             <CheckCircle2 size={16} />
-            {verifying ? 'Verificando…' : '✔ Verificado (+5 XP)'}
+            {verifying ? t('cognitive.btn_verifying') : t('cognitive.btn_verified')}
           </button>
 
           <button
@@ -220,7 +220,7 @@ export const CoachCognitiveSupervision = ({ player, teamPath, teamId }) => {
             onClick={() => setShowAssignModal(true)}
           >
             <Star size={16} />
-            Recomendar Reto
+            {t('cognitive.btn_recommend_challenge')}
           </button>
         </div>
       </div>
@@ -229,7 +229,7 @@ export const CoachCognitiveSupervision = ({ player, teamPath, teamId }) => {
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '10px' }}>
         <div className="coach-metric-box">
           <div className="coach-metric-lbl">
-            <Clock size={12} /> Sesiones semana
+            <Clock size={12} /> {t('cognitive.metric_sessions_week')}
           </div>
           <div className="coach-metric-val">
             {sessionsThisWeek.length}
@@ -238,7 +238,7 @@ export const CoachCognitiveSupervision = ({ player, teamPath, teamId }) => {
 
         <div className="coach-metric-box">
           <div className="coach-metric-lbl">
-            ⚡ Reacción mediana
+            ⚡ {t('cognitive.metric_median_reaction')}
           </div>
           <div className="coach-metric-val">
             {medianReaction ? `${medianReaction} ms` : '—'}
@@ -247,7 +247,7 @@ export const CoachCognitiveSupervision = ({ player, teamPath, teamId }) => {
 
         <div className="coach-metric-box">
           <div className="coach-metric-lbl">
-            <Target size={12} /> Precisión media
+            <Target size={12} /> {t('cognitive.metric_avg_accuracy')}
           </div>
           <div className="coach-metric-val">
             {avgAccuracy ? `${avgAccuracy}%` : '—'}
@@ -256,10 +256,10 @@ export const CoachCognitiveSupervision = ({ player, teamPath, teamId }) => {
 
         <div className="coach-metric-box">
           <div className="coach-metric-lbl">
-            <TrendingUp size={12} /> Tendencia
+            <TrendingUp size={12} /> {t('cognitive.metric_trend')}
           </div>
           <div className="coach-metric-val" style={{ color: isImproving ? '#10B981' : '#F59E0B' }}>
-            {isImproving ? '↑ En progresión' : '= Estable'}
+            {isImproving ? t('cognitive.trend_improving') : t('cognitive.trend_stable')}
           </div>
         </div>
       </div>
@@ -268,10 +268,10 @@ export const CoachCognitiveSupervision = ({ player, teamPath, teamId }) => {
       <div style={{ marginTop: '12px', background: 'rgba(255,255,255,0.04)', borderRadius: '10px', padding: '12px', border: '1px solid var(--border-color, #e2e8f0)' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px', flexWrap: 'wrap', gap: '6px' }}>
           <span style={{ fontSize: '12px', fontWeight: 800, color: 'var(--games-text-primary, var(--text-primary))', display: 'flex', alignItems: 'center', gap: '5px' }}>
-            <Award size={15} color="#C9A84C" /> Nivel por Juego (Mérito Adaptativo)
+            <Award size={15} color="#C9A84C" /> {t('cognitive.level_by_game_title')}
           </span>
           <span style={{ fontSize: '11px', fontWeight: 700, padding: '2px 8px', borderRadius: '12px', background: 'rgba(27,58,45,0.1)', color: 'var(--primary, #1B3A2D)' }}>
-            Categoría: {getCategoria(player?.birthDate).toUpperCase()}
+            {t('cognitive.category_label', { cat: t(`cognitive.cat.${getCategoria(player?.birthDate)}`) })}
           </span>
         </div>
 
@@ -292,10 +292,10 @@ export const CoachCognitiveSupervision = ({ player, teamPath, teamId }) => {
               >
                 <div style={{ fontSize: '18px' }}>{cg.icon}</div>
                 <div style={{ fontSize: '11px', fontWeight: 700, margin: '2px 0', color: 'var(--text-primary, #0f172a)' }}>
-                  {cg.name}
+                  {t(`cognitive.game.${cg.id}`, {}, cg.name)}
                 </div>
                 <div style={{ fontSize: '11px', fontWeight: 800, color: info.color }}>
-                  {info.badge} {info.es}
+                  {info.badge} {isEn ? info.en : info.es}
                 </div>
               </div>
             );
@@ -308,7 +308,7 @@ export const CoachCognitiveSupervision = ({ player, teamPath, teamId }) => {
         <div style={{ marginTop: '14px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
           <div style={{ fontSize: '12px', fontWeight: 800, color: 'var(--games-text-primary, var(--text-primary))', display: 'flex', alignItems: 'center', gap: '6px' }}>
             <span>📌</span>
-            <span>Retos y Juegos Recomendados Activos ({activeAssignments.length}):</span>
+            <span>{t('cognitive.active_challenges_title', { count: activeAssignments.length })}</span>
           </div>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
             {activeAssignments.map(a => (
@@ -319,12 +319,12 @@ export const CoachCognitiveSupervision = ({ player, teamPath, teamId }) => {
               >
                 <strong>{a.gameName || a.gameId}</strong>
                 <span style={{ fontSize: '11px', opacity: 0.85 }}>
-                  ({a.target === 'team' ? 'Todo el equipo' : 'Individual'})
+                  ({a.target === 'team' ? t('cognitive.target_team') : t('cognitive.target_player')})
                 </span>
                 <button
                   type="button"
                   onClick={() => handleDeleteAssignment(a.id)}
-                  title={isEn ? "Delete recommendation" : "Eliminar recomendación"}
+                  title={t('cognitive.delete_recommendation')}
                   style={{
                     background: 'transparent',
                     border: 'none',
@@ -351,7 +351,7 @@ export const CoachCognitiveSupervision = ({ player, teamPath, teamId }) => {
         <div className="game-shell-modal" role="dialog" style={{ zIndex: 20000 }}>
           <div className="game-shell-card" style={{ maxWidth: '520px', maxHeight: '90vh', display: 'flex', flexDirection: 'column' }}>
             <div className="game-shell-header" style={{ flexShrink: 0 }}>
-              <h4 style={{ margin: 0, color: '#ffffff' }}>⭐ Asignar Retos o Juegos</h4>
+              <h4 style={{ margin: 0, color: '#ffffff' }}>{t('cognitive.modal_assign_title')}</h4>
               <button 
                 type="button" 
                 className="game-shell-close-btn"
@@ -364,29 +364,29 @@ export const CoachCognitiveSupervision = ({ player, teamPath, teamId }) => {
             <div style={{ padding: '16px', display: 'flex', flexDirection: 'column', gap: '14px', overflowY: 'auto', flex: 1 }}>
               <div>
                 <label style={{ fontSize: '12px', fontWeight: 800, color: '#475569', display: 'block', marginBottom: '6px' }}>
-                  Destinatario:
+                  {t('cognitive.modal_recipient_label')}
                 </label>
                 <select
                   style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '14px' }}
                   value={assignTarget}
                   onChange={(e) => setAssignTarget(e.target.value)}
                 >
-                  <option value="player">Solo {player?.name || 'este jugador'}</option>
-                  <option value="team">Toda la plantilla del equipo</option>
+                  <option value="player">{t('cognitive.modal_only_player', { name: player?.name || (isEn ? 'this player' : 'este jugador') })}</option>
+                  <option value="team">{t('cognitive.modal_entire_team')}</option>
                 </select>
               </div>
 
               <div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
                   <label style={{ fontSize: '12px', fontWeight: 800, color: '#475569', margin: 0 }}>
-                    🧠 Juegos Cognitivos ({COGNITIVE_GAMES_LIST.filter(g => selectedGameIds.includes(g.id)).length}/{COGNITIVE_GAMES_LIST.length}):
+                    {t('cognitive.modal_cog_games', { count: COGNITIVE_GAMES_LIST.filter(g => selectedGameIds.includes(g.id)).length, total: COGNITIVE_GAMES_LIST.length })}
                   </label>
                   <button
                     type="button"
                     onClick={handleSelectAllCognitive}
                     style={{ background: 'none', border: 'none', color: '#2563EB', fontSize: '12px', fontWeight: 700, cursor: 'pointer', padding: '2px 6px' }}
                   >
-                    {COGNITIVE_GAMES_LIST.every(g => selectedGameIds.includes(g.id)) ? 'Desmarcar todos' : 'Marcar todos'}
+                    {COGNITIVE_GAMES_LIST.every(g => selectedGameIds.includes(g.id)) ? t('cognitive.deselect_all') : t('cognitive.select_all')}
                   </button>
                 </div>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: '8px' }}>
@@ -425,7 +425,7 @@ export const CoachCognitiveSupervision = ({ player, teamPath, teamId }) => {
                           {isSelected && <Check size={12} color="#FFFFFF" strokeWidth={3} />}
                         </div>
                         <span style={{ fontSize: '16px' }}>{g.icon}</span>
-                        <span style={{ flex: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{g.name}</span>
+                        <span style={{ flex: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{t(`cognitive.game.${g.code || g.id}`, {}, g.name)}</span>
                       </div>
                     );
                   })}
@@ -435,14 +435,14 @@ export const CoachCognitiveSupervision = ({ player, teamPath, teamId }) => {
               <div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px', marginTop: '6px' }}>
                   <label style={{ fontSize: '12px', fontWeight: 800, color: '#475569', margin: 0 }}>
-                    ⚽ Retos en Casa ({RETOS_CATALOG.filter(r => selectedGameIds.includes(r.id)).length}/{RETOS_CATALOG.length}):
+                    {t('cognitive.modal_home_retos', { count: RETOS_CATALOG.filter(r => selectedGameIds.includes(r.id)).length, total: RETOS_CATALOG.length })}
                   </label>
                   <button
                     type="button"
                     onClick={handleSelectAllRetos}
                     style={{ background: 'none', border: 'none', color: '#2563EB', fontSize: '12px', fontWeight: 700, cursor: 'pointer', padding: '2px 6px' }}
                   >
-                    {RETOS_CATALOG.every(r => selectedGameIds.includes(r.id)) ? 'Desmarcar todos' : 'Marcar todos'}
+                    {RETOS_CATALOG.every(r => selectedGameIds.includes(r.id)) ? t('cognitive.deselect_all') : t('cognitive.select_all')}
                   </button>
                 </div>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: '8px' }}>
@@ -496,8 +496,8 @@ export const CoachCognitiveSupervision = ({ player, teamPath, teamId }) => {
                 onClick={handleCreateAssignment}
               >
                 {selectedGameIds.length === 0
-                  ? 'Selecciona al menos un reto o juego'
-                  : `Confirmar ${selectedGameIds.length} Asignación${selectedGameIds.length > 1 ? 'es' : ''}`}
+                  ? t('cognitive.modal_select_min')
+                  : t('cognitive.modal_confirm_assign', { count: selectedGameIds.length })}
               </button>
             </div>
           </div>

@@ -16,7 +16,10 @@ import {
 import { calculatePlayerPerformanceScores, consolidatePlayerEvaluations, CANONICAL_TESTS_MAP } from './testScoreEngine';
 import { getEffectiveLanguage } from '../i18n/translations';
 
-const isEnglish = () => getEffectiveLanguage() === 'en';
+const isEnglish = () => {
+  const l = getEffectiveLanguage();
+  return l === 'English (EN)' || l === 'en' || (typeof l === 'string' && l.toLowerCase().startsWith('en'));
+};
 const getLocale = () => (isEnglish() ? 'en-US' : 'es-ES');
 const formatCurrentDate = () => new Date().toLocaleDateString(getLocale());
 
@@ -391,17 +394,18 @@ export const generateTestsReport = async (tests, players, historyData, activeTea
 /**
  * TESTS - Informe Individual (Para el jugador o padre)
  */
-export const generatePlayerTestReport = async (player, tests, historyData, activeTeam = null, graficaDataUrl = null) => {
-  window.dispatchEvent(new CustomEvent('m11-loading', { detail: { show: true, message: 'Generando Resumen Técnico...' } }));
+export const generatePlayerTestReport = async (player, tests, historyData, activeTeam = null, _graficaDataUrl = null) => {
+  const isEn = isEnglish();
+  window.dispatchEvent(new CustomEvent('m11-loading', { detail: { show: true, message: isEn ? 'Generating Technical Summary...' : 'Generando Resumen Técnico...' } }));
   await new Promise(r => setTimeout(r, 150));
   try {
     const jsPDF = await getJsPDF();
     const doc = new jsPDF();
     const pageW = doc.internal.pageSize.getWidth();
-    const playerName = cleanPdfText(player.name || player.nombre || 'Jugador');
+    const playerName = cleanPdfText(player.name || player.nombre || (isEn ? 'Player' : 'Jugador'));
     const teamName = cleanPdfText(activeTeam?.nombre || 'Míster11');
 
-    await addHeader(doc, 'INFORME DE RENDIMIENTO TÉCNICO', `${playerName} · ${teamName}`, activeTeam);
+    await addHeader(doc, isEn ? 'TECHNICAL PERFORMANCE REPORT' : 'INFORME DE RENDIMIENTO TÉCNICO', `${playerName} · ${teamName}`, activeTeam);
 
     // Calcular puntuaciones canónicas reales
     let rawEvals = Array.isArray(player.evaluaciones) ? player.evaluaciones : (Array.isArray(player.tests) ? player.tests : []);
@@ -467,7 +471,10 @@ export const generatePlayerTestReport = async (player, tests, historyData, activ
     const posStr = cleanPdfText(player.position || player.posicion || '-');
     const dorsalStr = cleanPdfText(player.number || player.dorsal || '-');
     const catStr = cleanPdfText(activeTeam?.categoria || player.category || '-');
-    doc.text(`Dorsal: #${dorsalStr}   |   Posición: ${posStr}   |   Categoría: ${catStr}`, textOffsetX, 60);
+    const labelDorsal = isEn ? 'Number:' : 'Dorsal:';
+    const labelPos = isEn ? 'Position:' : 'Posición:';
+    const labelCat = isEn ? 'Category:' : 'Categoría:';
+    doc.text(`${labelDorsal} #${dorsalStr}   |   ${labelPos} ${posStr}   |   ${labelCat} ${catStr}`, textOffsetX, 60);
 
     // TPI Score / Overall Real a la derecha
     const overallVal = perfScores.overall || null;
@@ -488,7 +495,9 @@ export const generatePlayerTestReport = async (player, tests, historyData, activ
     doc.setFontSize(8);
     doc.setTextColor(90, 90, 90);
     doc.setFont(undefined, 'italic');
-    const introText = 'Informe oficial de rendimiento físico, técnico y psicológico registrado en Míster11. Baremos consolidados en escala unificada (10 a 99).';
+    const introText = isEn 
+      ? 'Official physical, technical and psychological performance report recorded in Míster11. Consolidated benchmarks on a unified scale (10 to 99).'
+      : 'Informe oficial de rendimiento físico, técnico y psicológico registrado en Míster11. Baremos consolidados en escala unificada (10 a 99).';
     doc.text(doc.splitTextToSize(introText, pageW - 28), 14, 78);
 
     const generateRows = (testsGroup, isPhysical) => {
@@ -502,11 +511,19 @@ export const generatePlayerTestReport = async (player, tests, historyData, activ
             prevVal = pHistory[pHistory.length - 2].val;
             const diff = latestVal - prevVal;
             const improved = t.unit === 'seg' ? diff < 0 : diff > 0;
-            evolution = diff === 0 ? 'Mantenido' : (improved ? '(+) Mejora' : '(-) Baja');
+            evolution = diff === 0 
+              ? (isEn ? 'Maintained' : 'Mantenido') 
+              : (improved ? (isEn ? '(+) Improvement' : '(+) Mejora') : (isEn ? '(-) Decline' : '(-) Baja'));
           }
         }
         if (isPhysical) {
-          let valoracion = latestVal !== '-' ? (evolution.includes('Mejora') ? 'Excelente' : (evolution.includes('Baja') ? 'Mejorable' : 'Adecuado')) : '-';
+          let valoracion = latestVal !== '-' 
+            ? (evolution.includes('Mejora') || evolution.includes('Improvement') 
+              ? (isEn ? 'Excellent' : 'Excelente') 
+              : (evolution.includes('Baja') || evolution.includes('Decline') 
+                ? (isEn ? 'Needs Work' : 'Mejorable') 
+                : (isEn ? 'Adequate' : 'Adecuado'))) 
+            : '-';
           rows.push([
             cleanPdfText(t.name), 
             cleanPdfText(`${latestVal} ${latestVal !== '-' ? t.unit : ''}`), 
@@ -515,10 +532,17 @@ export const generatePlayerTestReport = async (player, tests, historyData, activ
             valoracion
           ]);
         } else {
+          let interp = t.interpretacion || t.desc || (isEn ? 'Recorded' : 'Registrado');
+          if (isEn && typeof interp === 'string') {
+            if (interp === 'Registrado') interp = 'Recorded';
+            else if (interp === 'Óptimo' || interp === 'Optimo') interp = 'Optimal';
+            else if (interp === 'Riesgo') interp = 'Risk';
+            else if (interp === 'Adecuado') interp = 'Adequate';
+          }
           rows.push([
             cleanPdfText(t.name), 
             cleanPdfText(`${latestVal} ${latestVal !== '-' ? t.unit : ''}`), 
-            cleanPdfText(t.interpretacion || t.desc || 'Registrado')
+            cleanPdfText(interp)
           ]);
         }
       });
@@ -532,7 +556,9 @@ export const generatePlayerTestReport = async (player, tests, historyData, activ
     // ── TABLA FÍSICA Y TÉCNICA (ALTO CONTRASTE CLARO) ─────────────────────────
     autoTable(doc, {
       startY: 87,
-      head: [['Prueba Física / Técnica', 'Resultado Actual', 'Eval. Anterior', 'Evolución', 'Valoración']],
+      head: [isEn 
+        ? ['Physical / Technical Test', 'Current Result', 'Previous Eval.', 'Evolution', 'Rating'] 
+        : ['Prueba Física / Técnica', 'Resultado Actual', 'Eval. Anterior', 'Evolución', 'Valoración']],
       body: physicalRows,
       theme: 'grid',
       headStyles: { fillColor: THEME_COLOR, textColor: [255, 255, 255], fontStyle: 'bold', fontSize: 8.5, halign: 'center' },
@@ -547,13 +573,13 @@ export const generatePlayerTestReport = async (player, tests, historyData, activ
       didParseCell(data) {
         if (data.section === 'body' && data.column.index === 3) {
           const v = String(data.cell.raw);
-          if (v.includes('Mejora')) data.cell.styles.textColor = [34, 197, 94];
-          else if (v.includes('Baja')) data.cell.styles.textColor = [220, 38, 38];
+          if (v.includes('Mejora') || v.includes('Improvement')) data.cell.styles.textColor = [34, 197, 94];
+          else if (v.includes('Baja') || v.includes('Decline')) data.cell.styles.textColor = [220, 38, 38];
         }
         if (data.section === 'body' && data.column.index === 4) {
           const v = String(data.cell.raw);
-          if (v.includes('Excelente')) data.cell.styles.textColor = [34, 197, 94];
-          else if (v.includes('Mejorable')) data.cell.styles.textColor = [220, 38, 38];
+          if (v.includes('Excelente') || v.includes('Excellent')) data.cell.styles.textColor = [34, 197, 94];
+          else if (v.includes('Mejorable') || v.includes('Needs Work')) data.cell.styles.textColor = [220, 38, 38];
         }
       },
     });
@@ -565,7 +591,9 @@ export const generatePlayerTestReport = async (player, tests, historyData, activ
       if (finalY > doc.internal.pageSize.getHeight() - 40) { doc.addPage(); finalY = 20; }
       autoTable(doc, {
         startY: finalY,
-        head: [['Perfil Psicosocial / Mental', 'Puntuación', 'Interpretación']],
+        head: [isEn 
+          ? ['Psychosocial / Mental Profile', 'Score', 'Interpretation'] 
+          : ['Perfil Psicosocial / Mental', 'Puntuación', 'Interpretación']],
         body: psychoRows,
         theme: 'grid',
         headStyles: { fillColor: [43, 62, 53], textColor: [255, 255, 255], fontStyle: 'bold', fontSize: 8.5, halign: 'center' },
@@ -582,7 +610,9 @@ export const generatePlayerTestReport = async (player, tests, historyData, activ
       if (finalY > doc.internal.pageSize.getHeight() - 40) { doc.addPage(); finalY = 20; }
       autoTable(doc, {
         startY: finalY,
-        head: [['Bienestar en el Equipo / Socioemocional', 'Puntuación', 'Interpretación']],
+        head: [isEn 
+          ? ['Team Well-being / Socioemotional', 'Score', 'Interpretation'] 
+          : ['Bienestar en el Equipo / Socioemocional', 'Puntuación', 'Interpretación']],
         body: socioRows,
         theme: 'grid',
         headStyles: { fillColor: [43, 62, 53], textColor: [255, 255, 255], fontStyle: 'bold', fontSize: 8.5, halign: 'center' },
@@ -594,39 +624,25 @@ export const generatePlayerTestReport = async (player, tests, historyData, activ
       finalY = doc.lastAutoTable.finalY + 8;
     }
 
-    // ── GRÁFICA DE RENDIMIENTO (LEGEND CARD + RADAR) O RADAR NATIVO ──────────
-    if (graficaDataUrl) {
-      if (finalY + 85 > doc.internal.pageSize.getHeight() - 20) { doc.addPage(); finalY = 20; }
-      doc.setFontSize(10.5);
+    // ── SECCIÓN RADAR NATIVO 360° (PROHIBIDO VOLCAR DOM/UI) ───────────────────
+    const radarMetrics = [
+      { label: isEn ? 'Physical' : 'Físico', value: perfScores.fis },
+      { label: isEn ? 'Technical' : 'Técnica', value: perfScores.tec },
+      { label: isEn ? 'Tactical' : 'Táctica', value: perfScores.tactica },
+      { label: isEn ? 'Mental' : 'Mental', value: perfScores.psi },
+      { label: isEn ? 'Attendance' : 'Asistencia', value: perfScores.asistencia }
+    ];
+    const radarImg = drawRadarChartCanvas(radarMetrics, 440);
+    if (radarImg) {
+      if (finalY + 75 > doc.internal.pageSize.getHeight() - 20) { doc.addPage(); finalY = 20; }
+      const rSize = 65;
+      const rX = (pageW - rSize) / 2;
+      doc.setFontSize(10);
       doc.setFont(undefined, 'bold');
       doc.setTextColor(...THEME_COLOR);
-      doc.text('PERFIL DE RENDIMIENTO INTEGRAL & RADAR', 10, finalY);
-      doc.setDrawColor(...ACCENT_COLOR);
-      doc.setLineWidth(0.6);
-      doc.line(10, finalY + 1, 10 + doc.getTextWidth('PERFIL DE RENDIMIENTO INTEGRAL & RADAR'), finalY + 1);
-      doc.addImage(graficaDataUrl, 'PNG', 10, finalY + 4, pageW - 20, 78);
-      finalY += 86;
-    } else {
-      // Si no hay captura externa, dibujar Radar 360° nativo con métricas reales
-      const radarMetrics = [
-        { label: 'Físico', value: perfScores.fis },
-        { label: 'Técnica', value: perfScores.tec },
-        { label: 'Táctica', value: perfScores.tactica },
-        { label: 'Mental', value: perfScores.psi },
-        { label: 'Asistencia', value: perfScores.asistencia }
-      ];
-      const radarImg = drawRadarChartCanvas(radarMetrics, 440);
-      if (radarImg) {
-        if (finalY + 75 > doc.internal.pageSize.getHeight() - 20) { doc.addPage(); finalY = 20; }
-        const rSize = 65;
-        const rX = (pageW - rSize) / 2;
-        doc.setFontSize(10);
-        doc.setFont(undefined, 'bold');
-        doc.setTextColor(...THEME_COLOR);
-        doc.text('RADAR DE HABILIDADES 360°', pageW / 2, finalY + 4, { align: 'center' });
-        doc.addImage(radarImg, 'PNG', rX, finalY + 6, rSize, rSize);
-        finalY += rSize + 10;
-      }
+      doc.text(isEn ? '360° SKILLS & PERFORMANCE RADAR' : 'RADAR DE HABILIDADES 360°', pageW / 2, finalY + 4, { align: 'center' });
+      doc.addImage(radarImg, 'PNG', rX, finalY + 6, rSize, rSize);
+      finalY += rSize + 10;
     }
 
     // ── BLOQUE DE RECOMENDACIÓN ───────────────────────────────────────────────
@@ -640,16 +656,18 @@ export const generatePlayerTestReport = async (player, tests, historyData, activ
     doc.setFontSize(9.5);
     doc.setFont(undefined, 'bold');
     doc.setTextColor(...THEME_COLOR);
-    doc.text('Recomendación del Cuerpo Técnico', 16, finalY + 6);
+    doc.text(isEn ? 'Coaching Staff Recommendation' : 'Recomendación del Cuerpo Técnico', 16, finalY + 6);
     doc.setFont(undefined, 'normal');
     doc.setFontSize(8);
     doc.setTextColor(70, 70, 70);
-    const adviceText = 'Mantener la constancia y el compromiso en las sesiones de entrenamiento. Continuar el fortalecimiento de las dimensiones con menor baremo y consolidar las virtudes técnicas mostradas.';
+    const adviceText = isEn
+      ? 'Maintain consistency and commitment in training sessions. Continue strengthening dimensions with lower benchmarks and consolidate demonstrated technical strengths.'
+      : 'Mantener la constancia y el compromiso en las sesiones de entrenamiento. Continuar el fortalecimiento de las dimensiones con menor baremo y consolidar las virtudes técnicas mostradas.';
     doc.text(doc.splitTextToSize(adviceText, pageW - 30), 16, finalY + 13);
 
     addFooter(doc);
     const safeName = playerName.replace(/\s+/g, '_');
-    await savePdfUniversal(doc, `Informe_Tests_${safeName}.pdf`);
+    await savePdfUniversal(doc, `${isEn ? 'Tests_Report' : 'Informe_Tests'}_${safeName}.pdf`);
   } catch (err) {
     console.error('Error generando Informe de Tests:', err);
     alert(isEnglish() ? 'Error generating tests report.' : 'Error al generar el informe de tests.');

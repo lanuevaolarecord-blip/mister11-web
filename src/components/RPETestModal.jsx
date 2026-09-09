@@ -43,16 +43,16 @@ const RPETestModal = ({ isOpen, onClose, onSave, player }) => {
         }}
       >
         <div className="modal-header" style={{ padding: '18px 24px' }}>
-          <h2 style={{ margin: 0, fontSize: '18px', fontWeight: 800 }}>Registro de Esfuerzo Percibido (RPE)</h2>
+          <h2 style={{ margin: 0, fontSize: '18px', fontWeight: 800 }}>{t('wellness.rpe.title')}</h2>
           <button className="btn-close" onClick={onClose}>✕</button>
         </div>
         <div className="modal-body" style={{ display: 'flex', flexDirection: 'column', gap: '20px', padding: '24px' }}>
           <p style={{ color: 'var(--text-muted, #64748B)', fontSize: '0.9rem', margin: 0 }}>
-            Registra cómo percibió el esfuerzo <strong>{player?.name}</strong>.
+            {t('wellness.rpe.desc', { name: player?.name || '' })}
           </p>
           
           <div className="form-group-team" style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-            <label style={{ fontSize: '13px', fontWeight: 700 }}>Nivel de Esfuerzo (RPE 1-10)</label>
+            <label style={{ fontSize: '13px', fontWeight: 700 }}>{t('wellness.rpe.levelLabel')}</label>
             <input 
               type="range" 
               min="1" 
@@ -63,13 +63,13 @@ const RPETestModal = ({ isOpen, onClose, onSave, player }) => {
             />
             <div style={{ textAlign: 'center', fontWeight: '900', fontSize: '1.8rem', color: getRpeColor(rpe), lineHeight: 1 }}>{rpe}</div>
             <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.78rem', color: 'var(--text-muted, #64748B)', fontWeight: 600 }}>
-              <span>1 - Muy suave</span>
-              <span>10 - Máximo esfuerzo</span>
+              <span>{t('wellness.rpe.scaleMin')}</span>
+              <span>{t('wellness.rpe.scaleMax')}</span>
             </div>
           </div>
 
           <div className="form-group-team" style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-            <label style={{ fontSize: '13px', fontWeight: 700 }}>Duración de la sesión (minutos)</label>
+            <label style={{ fontSize: '13px', fontWeight: 700 }}>{t('wellness.rpe.durationLabel')}</label>
             <input 
               type="number" 
               value={sessionDuration} 
@@ -79,13 +79,13 @@ const RPETestModal = ({ isOpen, onClose, onSave, player }) => {
           </div>
 
           <div style={{ padding: '16px', background: 'var(--bg-primary, #F8FAFC)', borderRadius: '12px', textAlign: 'center', border: '1px solid var(--border-color)' }}>
-            <span style={{ fontSize: '0.85rem', color: 'var(--text-muted, #64748B)', fontWeight: 600 }}>Carga de Entrenamiento (RPE × Duración):</span><br/>
+            <span style={{ fontSize: '0.85rem', color: 'var(--text-muted, #64748B)', fontWeight: 600 }}>{t('wellness.rpe.trainingLoad')}</span><br/>
             <strong style={{ fontSize: '1.3rem', color: 'var(--accent, #10B981)', display: 'inline-block', marginTop: '4px' }}>{rpe * sessionDuration} UA</strong>
           </div>
         </div>
         <div className="modal-footer" style={{ padding: '16px 24px', display: 'flex', gap: '12px', borderTop: '1px solid var(--border-color)' }}>
-          <button className="btn-secondary" style={{ flex: 1, minHeight: '48px', fontWeight: 800 }} onClick={onClose}>{t('tests.rpe.cancel')}</button>
-          <button className="btn-primary" style={{ flex: 1, minHeight: '48px', fontWeight: 800, background: '#10B981', borderColor: '#10B981', color: '#FFF' }} onClick={handleSave}>{t('tests.rpe.save')}</button>
+          <button className="btn-secondary" style={{ flex: 1, minHeight: '48px', fontWeight: 800 }} onClick={onClose}>{t('wellness.rpe.cancel')}</button>
+          <button className="btn-primary" style={{ flex: 1, minHeight: '48px', fontWeight: 800, background: '#10B981', borderColor: '#10B981', color: '#FFF' }} onClick={handleSave}>{t('wellness.rpe.save')}</button>
         </div>
       </div>
     </div>

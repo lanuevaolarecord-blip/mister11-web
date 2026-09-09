@@ -43,16 +43,18 @@ const LegendCard = ({ player, stats, overall, position, streak, type = "gold" })
     return (
       <div className="card-stats-grid-new">
         {stats.map((s, idx) => {
-          const labelEn = s.label === 'FÍS' ? 'PHY' : s.label === 'TÉC' ? 'TEC' : s.label === 'PSI' ? 'PSY' : s.label === 'SOC' ? 'SOC' : s.label;
-          const displayLabel = isEn ? (s.labelEn || labelEn) : s.label;
+          const labelMapEn = { 'FÍS': 'PHY', 'TÉC': 'TEC', 'PSI': 'PSY', 'SOC': 'SOC', 'FÍSICO': 'PHY', 'PHYSICAL': 'PHY', 'TÉCNICA': 'TEC', 'TECHNICAL': 'TEC', 'PSICOLÓGICO': 'PSY', 'PSYCHOLOGICAL': 'PSY' };
+          const labelMapEs = { 'FÍS': 'FÍS', 'TÉC': 'TÉC', 'PSI': 'PSI', 'SOC': 'SOC', 'PHYSICAL': 'FÍS', 'TECHNICAL': 'TÉC', 'PSYCHOLOGICAL': 'PSI', 'PHY': 'FÍS', 'TEC': 'TÉC', 'PSY': 'PSI' };
+          const displayLabel = isEn ? (s.labelEn || labelMapEn[s.label] || s.label) : (labelMapEs[s.label] || s.label);
+          const rawUpper = String(s.label || '').toUpperCase();
           return (
             <div key={idx} className="stat-pill-btn">
               <span className="stat-pill-label">{displayLabel} {s.value}</span>
               <span className="stat-pill-icon">
-                {(s.label === 'FÍS' || s.label === 'PHY') && <RunningSvg />}
-                {(s.label === 'TÉC' || s.label === 'TEC') && <TrophySvg />}
-                {(s.label === 'PSI' || s.label === 'PSY') && <BrainSvg />}
-                {(s.label === 'SOC') && <BallSvg />}
+                {(rawUpper.includes('FÍS') || rawUpper.includes('PHY')) && <RunningSvg />}
+                {(rawUpper.includes('TÉC') || rawUpper.includes('TEC')) && <TrophySvg />}
+                {(rawUpper.includes('PSI') || rawUpper.includes('PSY')) && <BrainSvg />}
+                {(rawUpper.includes('SOC')) && <BallSvg />}
               </span>
             </div>
           );
@@ -104,7 +106,7 @@ const LegendCard = ({ player, stats, overall, position, streak, type = "gold" })
               </div>
             </div>
             <div className="streak-info">
-              <span>🔥 {isEn ? 'Streak:' : 'Racha:'} {streak || 0} tests</span>
+              <span>🔥 {isEn ? 'Streak:' : 'Racha:'} {streak || 0} {isEn ? 'tests' : 'evaluaciones'}</span>
               <span>✅</span>
             </div>
           </div>

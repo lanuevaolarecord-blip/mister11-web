@@ -13,6 +13,71 @@ const C_GREEN   = '#4CAF7D';
 const C_TEXT    = '#2D2D2D';
 const C_BORDER  = '#E0DACA';
 
+const CATEGORY_MAP = {
+  'resistencia': 'Endurance',
+  'velocidad': 'Speed',
+  'agilidad': 'Agility',
+  'fuerza': 'Strength',
+  'técnica': 'Technique',
+  'tecnica': 'Technique',
+  'afrontamiento': 'Coping',
+  'fortaleza mental': 'Mental Toughness',
+  'metas': 'Goals',
+  'liderazgo': 'Leadership',
+  'cohesión': 'Cohesion',
+  'cohesion': 'Cohesion',
+  'bienestar': 'Wellness',
+  'autoconciencia': 'Self-Awareness',
+  'empatía': 'Empathy',
+  'empatia': 'Empathy',
+  'conflictos': 'Conflicts',
+  'evaluación': 'Evaluation',
+  'evaluacion': 'Evaluation',
+  'psicología': 'Psychology',
+  'psicologia': 'Psychology',
+  'sociología': 'Sociology',
+  'sociologia': 'Sociology',
+  'convivencia': 'Coexistence',
+  'trabajo en equipo': 'Teamwork',
+  'resiliencia': 'Resilience'
+};
+
+const TEST_NAME_MAP = {
+  'Test de Cooper': 'Cooper Test',
+  'Course Navette': 'Beep Test (Course Navette)',
+  'Sprint 10m': '10m Sprint',
+  'Sprint 30m': '30m Sprint',
+  'T-Test': 'T-Test',
+  'Salto CMJ': 'CMJ Jump',
+  'Conducción conos': 'Cone Dribbling',
+  'Pase a portería': 'Target Passing',
+  'Inventario de Habilidades de Afrontamiento (ACSI-28)': 'Coping Skills Inventory (ACSI-28)',
+  'Cuestionario de Fortaleza Mental (MTQ-10)': 'Mental Toughness Questionnaire (MTQ-10)',
+  'Escala de Establecimiento de Metas': 'Goal Setting Scale',
+  'Inventario de Liderazgo y Comunicación': 'Leadership & Communication Inventory',
+  'Cuestionario de Cohesión de Equipo (GEQ)': 'Group Environment Questionnaire (GEQ)',
+  'Escala de Bienestar Mental (MHC-SF)': 'Mental Health Continuum (MHC-SF)',
+  'Test de Autoconciencia Emocional': 'Emotional Self-Awareness Test',
+  'Escala de Empatía Deportiva': 'Sports Empathy Scale',
+  'Cuestionario de Resolución de Conflictos': 'Conflict Resolution Questionnaire',
+  'ACSI-28 (Habilidades de Afrontamiento)': 'ACSI-28 (Athletic Coping Skills)',
+  'Escala de Autoconfianza': 'Self-Confidence Scale',
+  'Ansiedad Competitiva (CSAI-2R)': 'Competitive Anxiety (CSAI-2R)',
+  'Motivación Deportiva (SMS-II)': 'Sport Motivation Scale (SMS-II)',
+  'Resiliencia en el Deporte': 'Sports Resilience',
+  'Atención y Concentración': 'Attention & Concentration',
+  'Cohesión de Equipo (GEQ)': 'Team Cohesion (GEQ)',
+  'Escala de Deporte Limpio': 'Clean Sport Scale',
+  'Habilidades Sociales': 'Social Skills',
+  'Liderazgo Percibido': 'Perceived Leadership',
+  'Satisfacción con el Entrenador': 'Coach Satisfaction',
+  'IRES (Resiliencia en el Deporte)': 'IRES (Sports Resilience)',
+  'GETS (Trabajo en Equipo para Jóvenes)': 'GETS (Youth Teamwork)',
+  'CWMS (Bienestar Mental)': 'CWMS (Mental Well-Being)',
+  'ECED (Cohesión en Equipos)': 'ECED (Team Cohesion)',
+  'EDL (Deporte Limpio)': 'EDL (Clean Sport)'
+};
+
 // ── SVG Radar Chart (Pentagonal 5 Ejes / Dinámico) ──────────────
 export const SvgRadar = ({ data, size = 320 }) => {
   const { darkMode } = useTheme();
@@ -240,7 +305,7 @@ const PlayerAnalyticsModal = ({
         };
       };
 
-      drawPdfHeader(doc, `INFORME INDIVIDUAL: ${player.name}`, `#${player.number || '-'} · ${player.position || 'Jugador'}`, pdfWidth);
+      drawPdfHeader(doc, isEn ? `INDIVIDUAL REPORT: ${player.name}` : `INFORME INDIVIDUAL: ${player.name}`, `#${player.number || '-'} · ${player.position || (isEn ? 'Player' : 'Jugador')}`, pdfWidth);
       let yPos = 44;
 
       // 2. Radar y Stats
@@ -258,7 +323,7 @@ const PlayerAnalyticsModal = ({
         if (yPos + imgHeight > pdfHeight - 20) {
           doc.addPage();
           yPos = 44;
-          drawPdfHeader(doc, `INFORME INDIVIDUAL: ${player.name}`, `Evolución de Rendimiento`, pdfWidth);
+          drawPdfHeader(doc, isEn ? `INDIVIDUAL REPORT: ${player.name}` : `INFORME INDIVIDUAL: ${player.name}`, isEn ? 'Performance Evolution' : 'Evolución de Rendimiento', pdfWidth);
         }
         doc.addImage(evoData.img, 'PNG', 12, yPos, pdfWidth - 24, imgHeight);
       }
@@ -276,7 +341,7 @@ const PlayerAnalyticsModal = ({
       deleteButtons.forEach(btn => { btn.style.display = 'flex'; });
 
       const pdfBase64 = doc.output('dataurlstring').split(',')[1];
-      await downloadPDF(pdfBase64, `Informe_Jugador_${player.name.replace(/\s+/g, '_')}.pdf`);
+      await downloadPDF(pdfBase64, `${isEn ? 'Player_Report' : 'Informe_Jugador'}_${player.name.replace(/\s+/g, '_')}.pdf`);
     } catch (e) {
       console.error("Error generating pdf:", e);
       alert(isEn ? 'Error exporting PDF' : 'Error al exportar PDF');
@@ -324,7 +389,7 @@ const PlayerAnalyticsModal = ({
             <div>
               <h2 style={{ margin: 0, fontSize: 22, fontWeight: 800, color: '#FFF' }}>{player.name}</h2>
               <p style={{ margin: 0, fontSize: 13, color: 'rgba(255,255,255,0.65)' }}>
-                #{player.number} · {player.position} · {totalTests} evaluaciones registradas
+                #{player.number} · {player.position} · {totalTests} {isEn ? 'evaluations recorded' : 'evaluaciones registradas'}
               </p>
             </div>
           </div>
@@ -359,7 +424,7 @@ const PlayerAnalyticsModal = ({
                 fontWeight: 700, fontSize: 13, cursor: 'pointer'
               }}
             >
-              📄 Exportar PDF
+              📄 {isEn ? 'Export PDF' : 'Exportar PDF'}
             </button>
             <button
               onClick={onClose}
@@ -446,12 +511,16 @@ const PlayerAnalyticsModal = ({
               background: C_BEIGE, borderRadius: 16, padding: 40,
               textAlign: 'center', color: '#7A7065'
             }}>
-              <p style={{ fontSize: 18 }}>📊 Sin evaluaciones aún. Usa el botón <strong>"🎯 Datos Demo"</strong> para ver las gráficas.</p>
+              <p style={{ fontSize: 18 }}>
+                {isEn 
+                  ? <>📊 No evaluations yet. Use the <strong>"🎯 Demo Data"</strong> button to view charts.</>
+                  : <>📊 Sin evaluaciones aún. Usa el botón <strong>"🎯 Datos Demo"</strong> para ver las gráficas.</>}
+              </p>
             </div>
           ) : (
             <>
               <h3 style={{ color: C_DARK, fontSize: 14, fontWeight: 700, letterSpacing: 1, marginBottom: 16 }}>
-                EVOLUCIÓN POR PRUEBA
+                {isEn ? 'PROGRESS BY TEST' : 'EVOLUCIÓN POR PRUEBA'}
               </h3>
               <div id="player-evolution-charts" style={{
                 display: 'grid',
@@ -479,8 +548,12 @@ const PlayerAnalyticsModal = ({
                     }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 10 }}>
                         <div>
-                          <div style={{ fontSize: 11, color: '#7A7065', marginBottom: 2 }}>{t.category}</div>
-                          <div style={{ fontSize: 13, fontWeight: 700, color: C_DARK }}>{t.name}</div>
+                          <div style={{ fontSize: 11, color: '#7A7065', marginBottom: 2 }}>
+                            {isEn ? (CATEGORY_MAP[String(t.category).trim().toLowerCase()] || t.category) : t.category}
+                          </div>
+                          <div style={{ fontSize: 13, fontWeight: 700, color: C_DARK }}>
+                            {isEn ? (TEST_NAME_MAP[t.name] || t.name) : t.name}
+                          </div>
                         </div>
                         {noChange ? (
                           <span style={{
@@ -527,7 +600,7 @@ const PlayerAnalyticsModal = ({
                             fontSize: 11, cursor: 'pointer', fontWeight: 600, padding: 0
                           }}
                         >
-                          🗑️ Eliminar último
+                          🗑️ {isEn ? 'Delete latest' : 'Eliminar último'}
                         </button>
                         <button
                           onClick={() => onDeleteAllEvals?.(player.id, t.id)}
@@ -536,7 +609,7 @@ const PlayerAnalyticsModal = ({
                             fontSize: 11, cursor: 'pointer', fontWeight: 600, padding: 0, opacity: 0.8
                           }}
                         >
-                          💥 Eliminar todos
+                          💥 {isEn ? 'Delete all' : 'Eliminar todos'}
                         </button>
                       </div>
                     </div>

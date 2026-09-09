@@ -1176,18 +1176,27 @@ const Tests = () => {
   };
 
   const descargarPlantilla = (test, players) => {
-    let contenido = `"${test.name}" - Plantilla de registro\n`;
-    contenido += `Instrucciones: ${test.protocol || test.desc}\n`;
-    contenido += `Unidad: ${test.unit}\n\n`;
+    const testName = getTestDisplayName(test);
+    const testDesc = getTestDisplayDesc(test);
+    const templateLabel = isEn ? 'Registration Template' : 'Plantilla de registro';
+    const instructionsLabel = isEn ? 'Instructions:' : 'Instrucciones:';
+    const unitLabel = isEn ? 'Unit:' : 'Unidad:';
+    const playerHeader = isEn ? 'Player' : 'Jugador';
+    const numberHeader = isEn ? 'Number' : 'Dorsal';
+    const totalScoreHeader = isEn ? `Total Score (${test.unit})` : `Valoración Total (${test.unit})`;
 
-    let headers = ['Jugador', 'Dorsal'];
+    let contenido = `"${testName}" - ${templateLabel}\n`;
+    contenido += `${instructionsLabel} ${testDesc || test.protocol || test.desc}\n`;
+    contenido += `${unitLabel} ${test.unit}\n\n`;
+
+    let headers = [playerHeader, numberHeader];
     
     let isDetailed = test.isQuestionnaire && test.questions;
     if (isDetailed) {
        const dims = [...new Set(test.questions.map(q => q.dimension))];
        headers = headers.concat(dims);
     }
-    headers.push(`Valoración Total (${test.unit})`);
+    headers.push(totalScoreHeader);
     
     contenido += headers.map(h => `"${h}"`).join(',') + '\n';
     
@@ -1201,7 +1210,7 @@ const Tests = () => {
       contenido += row.join(',') + '\n';
     });
 
-    downloadCSV(contenido, `${test.id}_plantilla.csv`);
+    downloadCSV(contenido, `${test.id}_${isEn ? 'template' : 'plantilla'}.csv`);
   };
 
   // ─── SEED DEMO DATA ───────────────────────────────────────────────────────
@@ -1883,7 +1892,9 @@ const Tests = () => {
               <div className="hist-charts-grid">
                 {tests.filter(t => (historyData[histSelectedPlayer]?.[t.id] || []).length > 0).length === 0 ? (
                   <div style={{ padding: '40px', textAlign: 'center', background: 'var(--bg-secondary)', borderRadius: '12px', gridColumn: '1 / -1' }}>
-                    <p style={{ fontSize: '18px', color: 'var(--text-secondary)' }}>📊 Sin evaluaciones previas. Registra resultados para ver la evolución.</p>
+                    <p style={{ fontSize: '18px', color: 'var(--text-secondary)' }}>
+                      {isEn ? '📊 No previous evaluations. Record results to see progress.' : '📊 Sin evaluaciones previas. Registra resultados para ver la evolución.'}
+                    </p>
                   </div>
                 ) : (
                   tests.map(t => {
@@ -1911,7 +1922,7 @@ const Tests = () => {
                     return (
                       <div key={t.id} className="hist-chart-card">
                         <div className="hc-header">
-                          <h4>{t.name} <span className="unit">({t.unit})</span></h4>
+                          <h4>{getTestDisplayName(t)} <span className="unit">({t.unit})</span></h4>
                           {vals.length > 1 && diff !== 0 ? (
                             <span className={`trend-arrow ${improved ? 'good' : 'bad'}`}>
                               {improved ? '▲' : '▼'} {Math.abs((diff/first)*100).toFixed(1)}%
@@ -2094,7 +2105,9 @@ const Tests = () => {
                       const allVals = allEvals.map(e => e.val);
                       const isTime = testInfo.unit === 'seg';
                       
-                      let csv = `Test;Fecha;Jugador;Valor;Percentil;Nota\n`;
+                      let csv = isEn 
+                        ? `Test;Date;Player;Value;Percentile;Grade\n`
+                        : `Test;Fecha;Jugador;Valor;Percentil;Nota\n`;
                       allEvals.forEach(ev => {
                         let pct = 100;
                         if (allVals.length > 1) {
@@ -2103,10 +2116,10 @@ const Tests = () => {
                           pct = Math.round(((worse + 0.5 * equal) / allVals.length) * 100);
                         }
                         const nota = (1 + 9 * (pct / 100)).toFixed(1);
-                        csv += `"${testInfo.name}";"${ev.date}";"${ev.playerName}";"${ev.val}";"${pct}%";"${nota}"\n`;
+                        csv += `"${getTestDisplayName(testInfo)}";"${ev.date}";"${ev.playerName}";"${ev.val}";"${pct}%";"${nota}"\n`;
                       });
                       
-                      downloadCSV(csv, `comparativa_${testInfo.name.replace(/\s+/g,'_')}.csv`);
+                      downloadCSV(csv, `${isEn ? 'team_comparison' : 'comparativa'}_${(getTestDisplayName(testInfo) || testInfo.name).replace(/\s+/g,'_')}.csv`);
                     }}
                   >
                     📊 {isEn ? 'Export CSV' : 'Exportar CSV'}
@@ -2128,7 +2141,7 @@ const Tests = () => {
 
               {/* PLANNING MATRIX */}
               <div>
-                <div className="matrix-label-row">{isEn ? 'PLANNING MATRIX' : 'PLANNINGA MATRIX'}</div>
+                <div className="matrix-label-row">{isEn ? 'PLANNING MATRIX' : 'MATRIZ DE PLANIFICACIÓN'}</div>
                 <div className="matrix-container">
                   <table className="matrix-table">
                     <thead>
@@ -2520,14 +2533,14 @@ const Tests = () => {
                   className="btn-modal-cancel" 
                   onClick={() => modalConfig.onConfirm(false)}
                 >
-                  CANCELAR
+                  {isEn ? 'CANCEL' : 'CANCELAR'}
                 </button>
               )}
               <button 
                 className="btn-modal-confirm" 
                 onClick={() => modalConfig.onConfirm(true)}
               >
-                ACEPTAR
+                {isEn ? 'OK' : 'ACEPTAR'}
               </button>
             </div>
           </div>

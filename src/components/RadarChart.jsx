@@ -4,6 +4,7 @@ import {
   PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer, Tooltip
 } from 'recharts';
 import { useTheme } from '../context/ThemeContext';
+import { useTranslation } from '../hooks/useTranslation';
 
 const CustomTooltip = ({ active, payload }) => {
   if (active && payload && payload.length) {
@@ -29,6 +30,7 @@ const CustomTooltip = ({ active, payload }) => {
 
 const RadarChart = ({ data, height = 300 }) => {
   const { darkMode } = useTheme();
+  const { isEn } = useTranslation();
   const tickColor = darkMode ? '#F5F0E8' : '#1B3A2D';
 
   if (!data || data.length === 0) return null;
@@ -52,7 +54,7 @@ const RadarChart = ({ data, height = 300 }) => {
           <PolarRadiusAxis angle={30} domain={[0, 100]} tick={false} axisLine={false} />
           
           <Radar 
-            name="Evaluación" 
+            name={isEn ? "Evaluation" : "Evaluación"} 
             dataKey="value" 
             stroke="#D4A843" 
             strokeWidth={3}

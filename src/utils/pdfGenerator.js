@@ -234,6 +234,45 @@ export const generatePlanificacionPDF = async (macroInfo = {}, microcycles = [],
 };
 
 /**
+ * TESTS - Mapeo canónico de nombres en inglés
+ */
+const TEST_NAME_MAP = {
+  'Test de Cooper': 'Cooper Test',
+  'Course Navette': 'Beep Test (Course Navette)',
+  'Sprint 10m': '10m Sprint',
+  'Sprint 30m': '30m Sprint',
+  'T-Test': 'T-Test',
+  'Salto CMJ': 'CMJ Jump',
+  'Conducción conos': 'Cone Dribbling',
+  'Pase a portería': 'Target Passing',
+  'Inventario de Habilidades de Afrontamiento (ACSI-28)': 'Coping Skills Inventory (ACSI-28)',
+  'Cuestionario de Fortaleza Mental (MTQ-10)': 'Mental Toughness Questionnaire (MTQ-10)',
+  'Escala de Establecimiento de Metas': 'Goal Setting Scale',
+  'Inventario de Liderazgo y Comunicación': 'Leadership & Communication Inventory',
+  'Cuestionario de Cohesión de Equipo (GEQ)': 'Group Environment Questionnaire (GEQ)',
+  'Escala de Bienestar Mental (MHC-SF)': 'Mental Health Continuum (MHC-SF)',
+  'Test de Autoconciencia Emocional': 'Emotional Self-Awareness Test',
+  'Escala de Empatía Deportiva': 'Sports Empathy Scale',
+  'Cuestionario de Resolución de Conflictos': 'Conflict Resolution Questionnaire',
+  'ACSI-28 (Habilidades de Afrontamiento)': 'ACSI-28 (Athletic Coping Skills)',
+  'Escala de Autoconfianza': 'Self-Confidence Scale',
+  'Ansiedad Competitiva (CSAI-2R)': 'Competitive Anxiety (CSAI-2R)',
+  'Motivación Deportiva (SMS-II)': 'Sport Motivation Scale (SMS-II)',
+  'Resiliencia en el Deporte': 'Sports Resilience',
+  'Atención y Concentración': 'Attention & Concentration',
+  'Cohesión de Equipo (GEQ)': 'Team Cohesion (GEQ)',
+  'Escala de Deporte Limpio': 'Clean Sport Scale',
+  'Habilidades Sociales': 'Social Skills',
+  'Liderazgo Percibido': 'Perceived Leadership',
+  'Satisfacción con el Entrenador': 'Coach Satisfaction',
+  'IRES (Resiliencia en el Deporte)': 'IRES (Sports Resilience)',
+  'GETS (Trabajo en Equipo para Jóvenes)': 'GETS (Youth Teamwork)',
+  'CWMS (Bienestar Mental)': 'CWMS (Mental Well-Being)',
+  'ECED (Cohesión en Equipos)': 'ECED (Team Cohesion)',
+  'EDL (Deporte Limpio)': 'EDL (Clean Sport)'
+};
+
+/**
  * TESTS - Informe Colectivo
  */
 export const generateTestsReport = async (tests, players, historyData, activeTeam = null) => {
@@ -297,7 +336,7 @@ export const generateTestsReport = async (tests, players, historyData, activeTea
     doc.text(groupName.toUpperCase(), 14, finalY + 1);
     finalY += 8;
 
-    const head = ['Jugador', ...groupTests.map(t => `${t.name}\n(${t.unit})`)];
+    const head = [isEnglish() ? 'Player' : 'Jugador', ...groupTests.map(t => `${isEnglish() ? (TEST_NAME_MAP[t.name] || t.name) : t.name}\n(${t.unit})`)];
 
     const recentData = players.map(p => {
       const rowData = { player: p.name || p.nombre || '-' };
@@ -369,9 +408,9 @@ export const generateTestsReport = async (tests, players, historyData, activeTea
   const psychoTests   = tests.filter(t => t.type === 'psicosocial');
   const socioTests    = tests.filter(t => t.type === 'socioemocional');
 
-  renderCategoryTable(physicalTests, 'Pruebas Físicas y Técnicas',   THEME_COLOR,  ACCENT_COLOR);
-  renderCategoryTable(psychoTests,   'Pruebas Psicosociales',        ACCENT_COLOR, THEME_COLOR);
-  renderCategoryTable(socioTests,    'Pruebas Socioemocionales',     ACCENT_COLOR, THEME_COLOR);
+  renderCategoryTable(physicalTests, isEnglish() ? 'Physical and Technical Tests' : 'Pruebas Físicas y Técnicas',   THEME_COLOR,  ACCENT_COLOR);
+  renderCategoryTable(psychoTests,   isEnglish() ? 'Psychosocial Tests' : 'Pruebas Psicosociales',        ACCENT_COLOR, THEME_COLOR);
+  renderCategoryTable(socioTests,    isEnglish() ? 'Socioemotional Tests' : 'Pruebas Socioemocionales',     ACCENT_COLOR, THEME_COLOR);
 
   // Leyenda
   const legendY = Math.min(finalY + 10, doc.internal.pageSize.getHeight() - 16);
@@ -380,14 +419,14 @@ export const generateTestsReport = async (tests, players, historyData, activeTea
   doc.setTextColor(76, 175, 125);
   doc.text('■ ', 10, legendY);
   doc.setTextColor(120);
-  doc.text('Mejor del equipo    ', 15, legendY);
+  doc.text(isEnglish() ? 'Team best    ' : 'Mejor del equipo    ', 15, legendY);
   doc.setTextColor(239, 68, 68);
   doc.text('■ ', 55, legendY);
   doc.setTextColor(120);
-  doc.text('Resultado más bajo', 60, legendY);
+  doc.text(isEnglish() ? 'Lowest score' : 'Resultado más bajo', 60, legendY);
 
   addFooter(doc);
-  savePdfUniversal(doc, `Tests_Equipo_${formatCurrentDate().replace(/\//g, '-')}.pdf`);
+  savePdfUniversal(doc, `${isEnglish() ? 'Team_Tests' : 'Tests_Equipo'}_${formatCurrentDate().replace(/\//g, '-')}.pdf`);
   window.dispatchEvent(new CustomEvent('m11-loading', { detail: { show: false } }));
 };
 
@@ -525,7 +564,7 @@ export const generatePlayerTestReport = async (player, tests, historyData, activ
                 : (isEn ? 'Adequate' : 'Adecuado'))) 
             : '-';
           rows.push([
-            cleanPdfText(t.name), 
+            cleanPdfText(isEn ? (TEST_NAME_MAP[t.name] || t.name) : t.name), 
             cleanPdfText(`${latestVal} ${latestVal !== '-' ? t.unit : ''}`), 
             cleanPdfText(`${prevVal !== '-' ? prevVal + ' ' + t.unit : '-'}`), 
             evolution, 
@@ -540,7 +579,7 @@ export const generatePlayerTestReport = async (player, tests, historyData, activ
             else if (interp === 'Adecuado') interp = 'Adequate';
           }
           rows.push([
-            cleanPdfText(t.name), 
+            cleanPdfText(isEn ? (TEST_NAME_MAP[t.name] || t.name) : t.name), 
             cleanPdfText(`${latestVal} ${latestVal !== '-' ? t.unit : ''}`), 
             cleanPdfText(interp)
           ]);

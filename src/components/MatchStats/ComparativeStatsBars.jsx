@@ -12,6 +12,7 @@ export const ComparativeStatsBars = ({
     { label: isEn ? 'Possession' : 'Posesión', homeVal: homeStats.posesion || 50, awayVal: awayStats.posesion || 50, isPercent: true },
     { label: isEn ? 'Total Shots' : 'Tiros Totales', homeVal: homeStats.tiros || 0, awayVal: awayStats.tiros || 0 },
     { label: isEn ? 'Shots on Target' : 'Tiros a Puerta', homeVal: homeStats.tirosPuerta || 0, awayVal: awayStats.tirosPuerta || 0 },
+    { label: isEn ? 'Goalkeeper Saves' : 'Paradas de Portero', homeVal: homeStats.paradas || 0, awayVal: awayStats.paradas || 0 },
     { label: isEn ? 'Completed Passes' : 'Pases Completados', homeVal: homeStats.pasesExitosos || 0, awayVal: awayStats.pasesExitosos || 0 },
     { label: isEn ? 'Pass Accuracy' : 'Precisión de Pase', homeVal: homeStats.pasesTotales > 0 ? Math.round(((homeStats.pasesExitosos || 0) / homeStats.pasesTotales) * 100) : 0, awayVal: awayStats.pasesTotales > 0 ? Math.round(((awayStats.pasesExitosos || 0) / awayStats.pasesTotales) * 100) : 0, isPercent: true },
     { label: isEn ? 'Recoveries' : 'Recuperaciones', homeVal: homeStats.recuperaciones || 0, awayVal: awayStats.recuperaciones || 0 },

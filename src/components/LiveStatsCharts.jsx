@@ -165,6 +165,7 @@ export const SvgComparisonBars = ({ events, darkMode: darkModeProp }) => {
 
   const metrics = [
     { label: isEn ? 'Shots on target' : 'Tiros a puerta', own: countByType('shot_on_target_own'), rival: countByType('shot_on_target_rival') },
+    { label: isEn ? 'Goalkeeper saves' : 'Paradas de portero', own: countByType('save_own'), rival: countByType('save_rival') },
     { label: isEn ? 'Shots off target' : 'Tiros fuera', own: countByType('shot_off_target_own'), rival: countByType('shot_off_target_rival') },
     { label: isEn ? 'Duels' : 'Duelos', own: countByType('duel_won'), rival: countByType('duel_lost') },
     { label: isEn ? 'Fouls' : 'Faltas', own: countByType('foul_against'), rival: countByType('foul_favor') },
@@ -267,6 +268,12 @@ export const HalfBreakdown = ({ events = [], darkMode: darkModeProp }) => {
       icon: '🎯',
       t1: getCount(t1Events, ['shot_on_target_own', 'shot_off_target_own', 'gol_local']),
       t2: getCount(t2Events, ['shot_on_target_own', 'shot_off_target_own', 'gol_local']),
+    },
+    {
+      label: isEn ? 'Goalkeeper saves' : 'Paradas de portero',
+      icon: '🧤',
+      t1: getCount(t1Events, ['save_own']),
+      t2: getCount(t2Events, ['save_own']),
     },
     {
       label: isEn ? 'Recoveries' : 'Recuperaciones',

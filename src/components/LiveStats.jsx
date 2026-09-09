@@ -97,6 +97,16 @@ const TEXTS = {
   'live.btn.corner_against': { es: 'Córner\nen contra', en: 'Corner\nAgainst' },
   'live.btn.offside_own': { es: 'Fuera de juego\n(Propio)', en: 'Offside\n(Own)' },
   'live.btn.offside_rival': { es: 'Fuera de juego\n(Rival)', en: 'Offside\n(Rival)' },
+  'live.btn.save_own': { es: 'Parada portero\n(Propio)', en: 'Goalkeeper Save\n(Own)' },
+  'live.btn.save_rival': { es: 'Parada portero\n(Rival)', en: 'Goalkeeper Save\n(Rival)' },
+  'live.select.scorer': { es: '⚽ Seleccionar Goleador', en: '⚽ Select Goalscorer' },
+  'live.select.yellow': { es: '🟨 Tarjeta Amarilla (Propia)', en: '🟨 Yellow Card (Own)' },
+  'live.select.red': { es: '🟥 Tarjeta Roja (Propia)', en: '🟥 Red Card (Own)' },
+  'live.select.unassigned_goal': { es: 'Autogol rival / Sin asignar', en: 'Opponent Own Goal / Unassigned' },
+  'live.select.starters': { es: 'Titulares', en: 'Starters' },
+  'live.select.substitutes': { es: 'Suplentes', en: 'Substitutes' },
+  'live.select.squad': { es: 'Otros Jugadores', en: 'Other Squad Players' },
+  'live.select.cancel': { es: 'Cancelar', en: 'Cancel' },
   'live.half.select': { es: 'Mitad:', en: 'Half:' },
   'live.half.1': { es: '1ª Mitad', en: '1st Half' },
   'live.half.2': { es: '2ª Mitad', en: '2nd Half' },
@@ -112,12 +122,14 @@ const BUTTON_GROUPS = [
   {
     catKey: 'live.cat.shots',
     color: C.green,
-    colsClass: 'cols-4',
+    colsClass: 'cols-6',
     buttons: [
       { type: 'shot_on_target_own', labelKey: 'live.btn.shot_on_own', icon: '🟢' },
       { type: 'shot_on_target_rival', labelKey: 'live.btn.shot_on_rival', icon: '🔴' },
       { type: 'shot_off_target_own', labelKey: 'live.btn.shot_off_own', icon: '⬜' },
       { type: 'shot_off_target_rival', labelKey: 'live.btn.shot_off_rival', icon: '🔲' },
+      { type: 'save_own', labelKey: 'live.btn.save_own', icon: '🧤' },
+      { type: 'save_rival', labelKey: 'live.btn.save_rival', icon: '🧤' },
     ],
   },
   {
@@ -168,6 +180,7 @@ const LiveStats = ({
   language,
   onAddGoalFor,
   onAddGoalAgainst,
+  onAddCard,
   events: parentEvents,
   addLiveEvent: parentAddLiveEvent,
   resetLiveStats: parentResetLiveStats,
@@ -199,6 +212,7 @@ const LiveStats = ({
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [currentHalf, setCurrentHalf] = useState(displayHalf);
   const [showResetModal, setShowResetModal] = useState(false);
+  const [pendingPlayerSelection, setPendingPlayerSelection] = useState(null);
 
   // Sincronizar automáticamente currentHalf si displayHalf avanza a la 2ª Parte
   useEffect(() => {
@@ -611,16 +625,118 @@ const LiveStats = ({
         showToast(t('livestats.match_locked_use_reopen'), 'warning');
         return;
       }
+      if (type === 'card_yellow_own') {
+        setPendingPlayerSelection({ action: 'card_yellow_own', title: tx('live.select.yellow') });
+        return;
+      }
+      if (type === 'card_red_own') {
+        setPendingPlayerSelection({ action: 'card_red_own', title: tx('live.select.red') });
+        return;
+      }
+
+      let effectivePlayerId = activePlayerId || null;
+      let effectivePlayerName = '';
+      if (!effectivePlayerId && type === 'save_own') {
+        const portero = playersList.find(p => (p.posicion === 'POR' || p.position === 'POR' || p.posicion === 'GK'));
+        if (portero) {
+          effectivePlayerId = portero.id;
+          effectivePlayerName = portero.nombre || portero.name || '';
+        }
+      }
+
       const id = await addLiveEvent(type, currentHalf, {
         sector: selectedSector,
-        playerId: activePlayerId || null
+        playerId: effectivePlayerId,
+        playerName: effectivePlayerName
       });
       if (id) {
         setFlashType(type);
         setTimeout(() => setFlashType(null), 650);
       }
     },
-    [addLiveEvent, currentHalf, matchData, selectedSector, activePlayerId]
+    [addLiveEvent, currentHalf, matchData, selectedSector, activePlayerId, tx, playersList]
+  );
+
+  const handleConfirmPlayerSelection = useCallback(
+    async (playerId, playerName) => {
+      if (!pendingPlayerSelection) return;
+      const { action } = pendingPlayerSelection;
+      setPendingPlayerSelection(null);
+
+      const targetMin = currentHalf === 2 
+        ? Math.max(46, (currentMinute && currentMinute > 0 ? currentMinute : 46)) 
+        : Math.max(1, (currentMinute && currentMinute > 0 ? currentMinute : 1));
+
+      if (action === 'goal') {
+        if (onAddGoalFor) {
+          onAddGoalFor(playerId, playerName);
+        }
+        const tempId = `local_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`;
+        const localDoc = {
+          id: tempId,
+          type: 'shot_on_target_own',
+          half: currentHalf,
+          minute: targetMin,
+          sector: selectedSector || 'center',
+          x: 85,
+          y: 50,
+          playerId: playerId !== 'unassigned' ? playerId : null,
+          playerName: playerName || '',
+          timestamp: new Date().toISOString()
+        };
+        setLocalEvents(prev => [...prev, localDoc]);
+        const hook = parentAddLiveEvent || liveStatsHook.addLiveEvent;
+        if (hook) {
+          const realId = await hook('shot_on_target_own', currentHalf, {
+            playerId: playerId !== 'unassigned' ? playerId : null,
+            playerName: playerName || '',
+            sector: selectedSector || 'center',
+            x: 85,
+            y: 50
+          });
+          if (realId && realId !== tempId) {
+            setLocalEvents(prev => prev.filter(e => e.id !== tempId));
+          }
+        }
+        setFlashType('shot_on_target_own');
+        setTimeout(() => setFlashType(null), 650);
+      } else if (action === 'card_yellow_own' || action === 'card_red_own') {
+        const cardType = action === 'card_yellow_own' ? 'amarilla' : 'roja';
+        if (onAddCard) {
+          onAddCard(cardType, playerId, playerName);
+        }
+        const tempId = `local_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`;
+        const localDoc = {
+          id: tempId,
+          type: action,
+          half: currentHalf,
+          minute: targetMin,
+          sector: selectedSector || 'center',
+          x: 30,
+          y: 50,
+          playerId: playerId || null,
+          playerName: playerName || '',
+          timestamp: new Date().toISOString()
+        };
+        setLocalEvents(prev => [...prev, localDoc]);
+        const hook = parentAddLiveEvent || liveStatsHook.addLiveEvent;
+        if (hook) {
+          const realId = await hook(action, currentHalf, {
+            playerId: playerId || null,
+            playerName: playerName || '',
+            sector: selectedSector || 'center',
+            x: 30,
+            y: 50
+          });
+          if (realId && realId !== tempId) {
+            setLocalEvents(prev => prev.filter(e => e.id !== tempId));
+          }
+        }
+        setFlashType(action);
+        setTimeout(() => setFlashType(null), 650);
+      }
+    },
+    [pendingPlayerSelection, currentHalf, currentMinute, onAddGoalFor, onAddCard, selectedSector, parentAddLiveEvent, liveStatsHook.addLiveEvent]
   );
 
 
@@ -837,7 +953,7 @@ const LiveStats = ({
                 {onAddGoalFor && (
                   <button
                     type="button"
-                    onClick={isLocked ? undefined : onAddGoalFor}
+                    onClick={isLocked ? undefined : () => setPendingPlayerSelection({ action: 'goal', title: tx('live.select.scorer') })}
                     disabled={isLocked}
                     title={isLocked ? (isEn ? 'Match finished — Reopen match sheet to edit' : 'Partido finalizado — usa Reabrir Acta para corregir') : tx('live.goal.for')}
                     className="livestats-btn-goal for"
@@ -1245,6 +1361,7 @@ const LiveStats = ({
                 posesion: posHome,
                 tiros: tirosHome,
                 tirosPuerta: tirosPuertaHome,
+                paradas: countByType('save_own'),
                 pasesExitosos: pasesExHome,
                 pasesTotales: pasesTotHome,
                 recuperaciones: recHome,
@@ -1256,6 +1373,7 @@ const LiveStats = ({
                 posesion: posAway,
                 tiros: tirosAway,
                 tirosPuerta: tirosPuertaAway,
+                paradas: countByType('save_rival'),
                 pasesExitosos: pasesExAway,
                 pasesTotales: pasesTotAway,
                 recuperaciones: lossHome,
@@ -1356,6 +1474,7 @@ const LiveStats = ({
                 const rojas = Math.max(rFromEvs, rFromList, rFromActa, Number(pStats.redCards || 0));
 
                 // Acciones de campo
+                const paradas = Math.max(countP('save_own'), Number(pStats.paradas || pStats.saves || 0));
                 const pasesC = Math.max(countP('pass_completed') + countP('key_pass'), Number(pStats.pasesExitosos || pStats.pasesC || 0));
                 const pasesF = Math.max(countP('pass_failed'), Number(pStats.pasesFallidos || pStats.pasesF || 0));
                 const duelosG = Math.max(countP('duel_won'), Number(pStats.duelosGanados || pStats.duelosG || 0));
@@ -1399,9 +1518,9 @@ const LiveStats = ({
                 let rating = null;
                 if (manualRating !== undefined && manualRating !== null && manualRating !== '' && !isNaN(Number(manualRating))) {
                   rating = parseFloat(Number(manualRating).toFixed(1));
-                } else if (minutos > 0 || goles > 0 || asistencias > 0 || evsByPlayer.length > 0) {
+                } else if (minutos > 0 || goles > 0 || asistencias > 0 || paradas > 0 || evsByPlayer.length > 0) {
                   const base = 6.0;
-                  const bonus = (goles * 1.2) + (asistencias * 0.8) + (pasesClave * 0.3) + (recup * 0.15) - (perd * 0.15) + (duelosG * 0.2) - (duelosP * 0.15) + (tirosP * 0.2) - (faltas * 0.2) - (amarillas * 0.5) - (rojas * 2.0);
+                  const bonus = (goles * 1.2) + (asistencias * 0.8) + (paradas * 0.4) + (pasesClave * 0.3) + (recup * 0.15) - (perd * 0.15) + (duelosG * 0.2) - (duelosP * 0.15) + (tirosP * 0.2) - (faltas * 0.2) - (amarillas * 0.5) - (rojas * 2.0);
                   rating = parseFloat(Math.min(10.0, Math.max(4.0, base + bonus)).toFixed(1));
                 }
 
@@ -1413,6 +1532,7 @@ const LiveStats = ({
                   rating,
                   goles,
                   asistencias,
+                  paradas,
                   tiros: tirosTot,
                   tirosPuerta: tirosP,
                   pasesExitosos: pasesC,
@@ -1591,6 +1711,207 @@ const LiveStats = ({
                   style={{ minHeight: '44px', padding: '0 24px', borderRadius: '8px', border: 'none', background: '#4CAF7D', color: '#0B1317', fontWeight: 900, cursor: 'pointer', fontSize: '14px' }}
                 >
                   ✓ Guardar Contadores
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Modal para selección de jugador en Gol o Tarjetas (Android First, Touch Target >= 48dp) */}
+        {pendingPlayerSelection && (
+          <div
+            className="event-selector-overlay"
+            onClick={() => setPendingPlayerSelection(null)}
+            style={{ zIndex: 99999 }}
+          >
+            <div
+              className="event-selector-modal"
+              onClick={(e) => e.stopPropagation()}
+              style={{
+                maxWidth: '520px',
+                width: '94vw',
+                maxHeight: '85vh',
+                display: 'flex',
+                flexDirection: 'column',
+                borderRadius: '16px',
+                padding: '20px',
+                backgroundColor: darkMode ? '#122415' : '#FFFFFF',
+                border: darkMode ? '1.5px solid rgba(212, 168, 67, 0.4)' : '1.5px solid #CBD5E1',
+                boxShadow: '0 10px 30px rgba(0,0,0,0.4)',
+                overflow: 'hidden'
+              }}
+            >
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px', borderBottom: darkMode ? '1px solid rgba(255,255,255,0.1)' : '1px solid #E2E8F0', paddingBottom: '10px' }}>
+                <h4 style={{ margin: 0, fontSize: '17px', fontWeight: 900, color: darkMode ? '#FFFFFF' : '#0F172A' }}>
+                  {pendingPlayerSelection.title}
+                </h4>
+                <button
+                  type="button"
+                  onClick={() => setPendingPlayerSelection(null)}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    fontSize: '20px',
+                    fontWeight: 800,
+                    cursor: 'pointer',
+                    color: darkMode ? '#94A3B8' : '#64748B',
+                    width: '44px',
+                    height: '44px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    borderRadius: '8px'
+                  }}
+                >✕</button>
+              </div>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', overflowY: 'auto', flex: 1, paddingRight: '4px', WebkitOverflowScrolling: 'touch' }}>
+                {pendingPlayerSelection.action === 'goal' && (
+                  <button
+                    type="button"
+                    onClick={() => handleConfirmPlayerSelection('unassigned', tx('live.select.unassigned_goal'))}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '12px',
+                      minHeight: '52px',
+                      padding: '12px 16px',
+                      borderRadius: '10px',
+                      border: '1.5px dashed #D4A843',
+                      background: darkMode ? 'rgba(212, 168, 67, 0.12)' : '#FEF3C7',
+                      color: darkMode ? '#FBBF24' : '#92400E',
+                      fontWeight: 800,
+                      fontSize: '13.5px',
+                      cursor: 'pointer',
+                      textAlign: 'left',
+                      marginBottom: '4px'
+                    }}
+                  >
+                    <span style={{ fontSize: '20px' }}>⚽</span>
+                    <span>{tx('live.select.unassigned_goal')}</span>
+                  </button>
+                )}
+
+                {(() => {
+                  const starterIds = (calledPlayers || []).slice(0, 11).filter(Boolean);
+                  const subIds = (calledPlayers || []).slice(11, 18).filter(Boolean);
+                  const hasCalled = starterIds.length > 0 || subIds.length > 0;
+
+                  const renderBtn = (p, roleLabel, roleColor) => {
+                    const pNum = p.dorsal || p.number || '';
+                    const pName = p.nombre || p.name || '';
+                    const pPos = p.posicion || p.position || '';
+                    return (
+                      <button
+                        key={p.id}
+                        type="button"
+                        onClick={() => handleConfirmPlayerSelection(p.id, pName)}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          gap: '10px',
+                          minHeight: '50px',
+                          padding: '10px 14px',
+                          borderRadius: '10px',
+                          border: darkMode ? '1px solid rgba(255, 255, 255, 0.15)' : '1px solid #E2E8F0',
+                          background: darkMode ? 'rgba(255, 255, 255, 0.05)' : '#F8FAFC',
+                          color: darkMode ? '#FFFFFF' : '#0F172A',
+                          cursor: 'pointer',
+                          textAlign: 'left',
+                          transition: 'background 0.15s ease'
+                        }}
+                      >
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                          <span style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            width: '32px',
+                            height: '32px',
+                            borderRadius: '50%',
+                            background: darkMode ? '#1E3A2B' : '#E2E8F0',
+                            color: darkMode ? '#4CAF7D' : '#15803D',
+                            fontWeight: 900,
+                            fontSize: '12px'
+                          }}>
+                            {pNum ? `#${pNum}` : '👤'}
+                          </span>
+                          <span style={{ fontWeight: 800, fontSize: '13.5px' }}>{pName}</span>
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                          {pPos && (
+                            <span style={{ fontSize: '11px', opacity: 0.7, fontWeight: 700 }}>{pPos}</span>
+                          )}
+                          {roleLabel && (
+                            <span style={{
+                              fontSize: '10px',
+                              fontWeight: 800,
+                              padding: '2px 7px',
+                              borderRadius: '4px',
+                              background: roleColor ? `${roleColor}25` : 'rgba(0,0,0,0.1)',
+                              color: roleColor || 'inherit'
+                            }}>
+                              {roleLabel}
+                            </span>
+                          )}
+                        </div>
+                      </button>
+                    );
+                  };
+
+                  if (hasCalled) {
+                    const starters = starterIds.map(id => playersList.find(pl => String(pl.id) === String(id))).filter(Boolean);
+                    const subs = subIds.map(id => playersList.find(pl => String(pl.id) === String(id))).filter(Boolean);
+                    const others = playersList.filter(pl => !starterIds.map(String).includes(String(pl.id)) && !subIds.map(String).includes(String(pl.id)));
+
+                    return (
+                      <>
+                        {starters.length > 0 && (
+                          <div style={{ fontSize: '11px', fontWeight: 900, color: '#4CAF7D', textTransform: 'uppercase', marginTop: '4px', letterSpacing: '0.5px' }}>
+                            {tx('live.select.starters')}
+                          </div>
+                        )}
+                        {starters.map(p => renderBtn(p, tx('live.select.starters'), '#4CAF7D'))}
+
+                        {subs.length > 0 && (
+                          <div style={{ fontSize: '11px', fontWeight: 900, color: '#D4A843', textTransform: 'uppercase', marginTop: '8px', letterSpacing: '0.5px' }}>
+                            {tx('live.select.substitutes')}
+                          </div>
+                        )}
+                        {subs.map(p => renderBtn(p, tx('live.select.substitutes'), '#D4A843'))}
+
+                        {others.length > 0 && (
+                          <div style={{ fontSize: '11px', fontWeight: 900, color: '#94A3B8', textTransform: 'uppercase', marginTop: '8px', letterSpacing: '0.5px' }}>
+                            {tx('live.select.squad')}
+                          </div>
+                        )}
+                        {others.map(p => renderBtn(p, null, null))}
+                      </>
+                    );
+                  }
+
+                  return playersList.map(p => renderBtn(p, null, null));
+                })()}
+              </div>
+
+              <div style={{ marginTop: '14px', paddingTop: '10px', borderTop: darkMode ? '1px solid rgba(255,255,255,0.1)' : '1px solid #E2E8F0', display: 'flex', justifyContent: 'flex-end' }}>
+                <button
+                  type="button"
+                  onClick={() => setPendingPlayerSelection(null)}
+                  style={{
+                    minHeight: '48px',
+                    padding: '0 20px',
+                    borderRadius: '8px',
+                    border: darkMode ? '1px solid rgba(255,255,255,0.2)' : '1px solid #CBD5E1',
+                    background: 'transparent',
+                    color: darkMode ? '#FFFFFF' : '#0F172A',
+                    fontWeight: 700,
+                    fontSize: '13px',
+                    cursor: 'pointer'
+                  }}
+                >
+                  {tx('live.select.cancel')}
                 </button>
               </div>
             </div>

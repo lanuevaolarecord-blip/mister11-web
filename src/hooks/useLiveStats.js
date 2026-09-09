@@ -29,6 +29,8 @@ export const EVENT_TYPES = [
   'shot_on_target_rival',
   'shot_off_target_own',
   'shot_off_target_rival',
+  'save_own',
+  'save_rival',
   'card_own',
   'card_rival',
   'card_yellow_own',

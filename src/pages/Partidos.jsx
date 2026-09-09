@@ -493,14 +493,30 @@ const Partidos = () => {
 
   const handleSelectEventPlayer = (playerId) => {
     if (isMatchFinished) return;
-    const player = players.find(p => p.id === playerId);
+    if (playerId === 'unassigned') {
+      const label = pendingEventType === 'gol_local'
+        ? (isEnLanguage ? 'Opponent Own Goal / Unassigned' : 'Autogol rival / Sin asignar')
+        : (isEnLanguage ? 'Unassigned' : 'Sin asignar');
+      addEvent(pendingEventType, 'unassigned', label, currentMinute);
+      if (handleAddLiveEvent && pendingEventType === 'gol_local') {
+        handleAddLiveEvent('shot_on_target_own', null, { playerId: 'unassigned', playerName: label });
+      }
+      setPendingEventType(null);
+      setShowEventPlayerSelector(false);
+      return;
+    }
+    const player = players.find(p => p && p.id === playerId);
     if (!player) return;
     addEvent(pendingEventType, playerId, player.name, currentMinute);
     if (handleAddLiveEvent) {
       if (pendingEventType === 'gol_local') {
-        handleAddLiveEvent('shot_on_target_own');
-      } else if (pendingEventType === 'amarilla' || pendingEventType === 'roja') {
-        handleAddLiveEvent('card_own');
+        handleAddLiveEvent('shot_on_target_own', null, { playerId, playerName: player.name });
+      } else if (pendingEventType === 'amarilla') {
+        handleAddLiveEvent('card_yellow_own', null, { playerId, playerName: player.name });
+      } else if (pendingEventType === 'roja') {
+        handleAddLiveEvent('card_red_own', null, { playerId, playerName: player.name });
+      } else {
+        handleAddLiveEvent('card_own', null, { playerId, playerName: player.name });
       }
     }
     setPendingEventType(null);
@@ -1869,23 +1885,117 @@ const Partidos = () => {
                           >✕</button>
                         </div>
 
-                        <div className="event-selector-list">
-                          {calledPlayers.slice(0, 11).map((id, idx) => {
-                            if (!id) return null;
-                            const p = players.find(pl => pl && pl.id === id);
-                            return p ? (
+                        <div className="event-selector-list" style={{ display: 'flex', flexDirection: 'column', gap: '8px', maxHeight: '60vh', overflowY: 'auto', padding: '4px' }}>
+                          {pendingEventType === 'gol_local' && (
+                            <button
+                              type="button"
+                              className="event-selector-item"
+                              onClick={() => handleSelectEventPlayer('unassigned')}
+                              style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '10px',
+                                minHeight: '48px',
+                                padding: '10px 14px',
+                                borderRadius: '10px',
+                                border: '1.5px dashed var(--partidos-gold, #D4A843)',
+                                background: 'rgba(212, 168, 67, 0.08)',
+                                color: 'var(--partidos-text-primary)',
+                                fontWeight: 700,
+                                cursor: 'pointer',
+                                textAlign: 'left'
+                              }}
+                            >
+                              <span style={{ fontSize: '20px' }}>⚽</span>
+                              <span>{isGlobalEn ? 'Opponent Own Goal / Unassigned' : 'Autogol rival / Sin asignar'}</span>
+                            </button>
+                          )}
+
+                          {(() => {
+                            const starterIds = (calledPlayers || []).slice(0, 11).filter(Boolean);
+                            const subIds = (calledPlayers || []).slice(11, 18).filter(Boolean);
+                            const hasCalled = starterIds.length > 0 || subIds.length > 0;
+
+                            const renderPlayerBtn = (p, roleLabel, roleColor) => (
                               <button
-                                key={`${id}-${idx}`}
+                                key={p.id}
                                 className="event-selector-item"
                                 type="button"
-                                onClick={() => handleSelectEventPlayer(id)}
-                                style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
+                                onClick={() => handleSelectEventPlayer(p.id)}
+                                style={{
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'space-between',
+                                  gap: '10px',
+                                  minHeight: '48px',
+                                  padding: '10px 14px',
+                                  borderRadius: '10px',
+                                  border: '1px solid var(--partidos-border, rgba(255,255,255,0.12))',
+                                  background: 'var(--partidos-card-bg, rgba(255,255,255,0.04))',
+                                  color: 'var(--partidos-text-primary)',
+                                  cursor: 'pointer',
+                                  textAlign: 'left'
+                                }}
                               >
-                                <PlayerAvatar player={p} size={28} showNumber={false} />
-                                <span>{p.number ? `${p.number} - ` : ''}{p.name}</span>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                  <PlayerAvatar player={p} size={32} showNumber={false} />
+                                  <span style={{ fontWeight: 800, fontSize: '13px' }}>
+                                    {p.number || p.dorsal ? `${p.number || p.dorsal} - ` : ''}{p.name || p.nombre}
+                                  </span>
+                                </div>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                  {(p.position || p.posicion) && (
+                                    <span style={{ fontSize: '11px', opacity: 0.7 }}>{p.position || p.posicion}</span>
+                                  )}
+                                  {roleLabel && (
+                                    <span style={{
+                                      fontSize: '10px',
+                                      fontWeight: 800,
+                                      padding: '2px 6px',
+                                      borderRadius: '4px',
+                                      background: roleColor ? `${roleColor}20` : 'rgba(0,0,0,0.1)',
+                                      color: roleColor || 'inherit'
+                                    }}>
+                                      {roleLabel}
+                                    </span>
+                                  )}
+                                </div>
                               </button>
-                            ) : null;
-                          })}
+                            );
+
+                            if (hasCalled) {
+                              const starters = starterIds.map(id => players.find(pl => pl && pl.id === id)).filter(Boolean);
+                              const subs = subIds.map(id => players.find(pl => pl && pl.id === id)).filter(Boolean);
+                              const otherPlayers = (players || []).filter(pl => pl && !starterIds.includes(pl.id) && !subIds.includes(pl.id));
+
+                              return (
+                                <>
+                                  {starters.length > 0 && (
+                                    <div style={{ fontSize: '11px', fontWeight: 800, color: '#4CAF7D', textTransform: 'uppercase', marginTop: '4px' }}>
+                                      {isGlobalEn ? 'Starters' : 'Titulares'}
+                                    </div>
+                                  )}
+                                  {starters.map(p => renderPlayerBtn(p, isGlobalEn ? 'TITULAR' : 'TITULAR', '#4CAF7D'))}
+
+                                  {subs.length > 0 && (
+                                    <div style={{ fontSize: '11px', fontWeight: 800, color: '#D4A843', textTransform: 'uppercase', marginTop: '8px' }}>
+                                      {isGlobalEn ? 'Substitutes' : 'Suplentes'}
+                                    </div>
+                                  )}
+                                  {subs.map(p => renderPlayerBtn(p, isGlobalEn ? 'SUPLENTE' : 'SUPLENTE', '#D4A843'))}
+
+                                  {otherPlayers.length > 0 && (
+                                    <div style={{ fontSize: '11px', fontWeight: 800, color: '#94A3B8', textTransform: 'uppercase', marginTop: '8px' }}>
+                                      {isGlobalEn ? 'Other Squad Players' : 'Otros Jugadores'}
+                                    </div>
+                                  )}
+                                  {otherPlayers.map(p => renderPlayerBtn(p, null, null))}
+                                </>
+                              );
+                            }
+
+                            return (players || []).map(p => renderPlayerBtn(p, null, null));
+                          })()}
                         </div>
                       </div>
                     </div>
@@ -1906,8 +2016,9 @@ const Partidos = () => {
                 addLiveEvent={handleAddLiveEvent}
                 resetLiveStats={resetLiveStats}
                 language={settings?.language || 'Español (ES)'}
-                onAddGoalFor={() => addEvent('gol_local', 'Equipo', 'Gol Propio', currentMinute)}
-                onAddGoalAgainst={() => addEvent('gol_rival', 'Rival', 'Gol del Rival', currentMinute)}
+                onAddGoalFor={(playerId, playerName) => addEvent('gol_local', playerId || 'Equipo', playerName || (isGlobalEn ? 'Own Goal' : 'Gol Propio'), currentMinute)}
+                onAddGoalAgainst={() => addEvent('gol_rival', 'Rival', isGlobalEn ? 'Opponent Goal' : 'Gol del Rival', currentMinute)}
+                onAddCard={(cardType, playerId, playerName) => addEvent(cardType, playerId || 'Equipo', playerName || (isGlobalEn ? 'Player' : 'Jugador'), currentMinute)}
                 onFinishMatch={handleFinishMatch}
               />
             </div>

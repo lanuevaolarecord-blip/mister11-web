@@ -49,6 +49,7 @@ export const StatsDataTable = ({
       const faltas = Number(p.faltas || 0);
       const amarillas = Number(p.amarillas || 0);
       const rojas = Number(p.rojas || 0);
+      const paradas = Number(p.paradas || p.saves || 0);
       const pasesClave = Number(p.pasesClave || 0);
       const minutos = Number(p.minutos ?? 0);
 
@@ -60,10 +61,11 @@ export const StatsDataTable = ({
       let rating = null;
       if (p.rating !== undefined && p.rating !== null && !isNaN(Number(p.rating))) {
         rating = Number(p.rating);
-      } else if (minutos > 0 || goles > 0 || asistencias > 0 || tirosTot > 0 || pasesTot > 0 || duelosTot > 0 || recup > 0 || perd > 0 || faltas > 0 || amarillas > 0 || rojas > 0) {
+      } else if (minutos > 0 || goles > 0 || asistencias > 0 || paradas > 0 || tirosTot > 0 || pasesTot > 0 || duelosTot > 0 || recup > 0 || perd > 0 || faltas > 0 || amarillas > 0 || rojas > 0) {
         const score = 6.0 + 
           (goles * 1.2) + 
           (asistencias * 0.8) + 
+          (paradas * 0.4) +
           (pasesClave * 0.3) + 
           (recup * 0.15) +
           (duelosG * 0.2) -
@@ -83,6 +85,7 @@ export const StatsDataTable = ({
         minutos,
         goles,
         asistencias,
+        paradas,
         tiros: tirosTot,
         tirosPuerta: tirosP,
         shotPct,
@@ -129,44 +132,45 @@ export const StatsDataTable = ({
   const handleExportCSV = async () => {
     const isEn = getEffectiveLanguage() === 'English (EN)';
     const headers = isEn ? [
-      'Jersey', 'Name', 'Position', 'Minutes', 'Rating', 'Goals', 'Assists', 'xG',
-      'Shots on Target', 'Total Shots', '% Shot Accuracy',
-      'Completed Passes', 'Failed Passes', 'Total Passes', '% Pass Accuracy',
-      'Duels Won', 'Duels Lost', 'Total Duels', '% Duel Success',
-      'Recoveries', 'Losses', 'Fouls', 'Yellow Cards', 'Red Cards'
-    ] : [
-      'Dorsal', 'Nombre', 'Posición', 'Minutos', 'Nota', 'Goles', 'Asistencias', 'xG',
-      'Tiros Puerta', 'Tiros Totales', '% Puntería',
-      'Pases Completados', 'Pases Fallidos', 'Pases Totales', '% Precisión Pase',
-      'Duelos Ganados', 'Duelos Perdidos', 'Duelos Totales', '% Éxito Duelos',
-      'Recuperaciones', 'Pérdidas', 'Faltas', 'Tarjetas Amarillas', 'Tarjetas Rojas'
-    ];
-    const rows = sortedAndFiltered.map(p => [
-      p.dorsal,
-      `"${p.nombre}"`,
-      p.posicion,
-      p.minutos,
-      p.rating !== null ? p.rating : '-',
-      p.goles,
-      p.asistencias,
-      p.xG.toFixed(2),
-      p.tirosPuerta,
-      p.tiros,
-      p.shotPct !== null ? `${p.shotPct}%` : '-',
-      p.pasesExitosos,
-      p.pasesFallidos,
-      p.pasesTot,
-      p.passPct !== null ? `${p.passPct}%` : '-',
-      p.duelosGanados,
-      p.duelosPerdidos,
-      p.duelosTot,
-      p.duelPct !== null ? `${p.duelPct}%` : '-',
-      p.recuperaciones,
-      p.perdidas,
-      p.faltas,
-      p.amarillas,
-      p.rojas
-    ]);
+       'Jersey', 'Name', 'Position', 'Minutes', 'Rating', 'Goals', 'Assists', 'xG',
+       'Shots on Target', 'Total Shots', '% Shot Accuracy', 'Goalkeeper Saves',
+       'Completed Passes', 'Failed Passes', 'Total Passes', '% Pass Accuracy',
+       'Duels Won', 'Duels Lost', 'Total Duels', '% Duel Success',
+       'Recoveries', 'Losses', 'Fouls', 'Yellow Cards', 'Red Cards'
+     ] : [
+       'Dorsal', 'Nombre', 'Posición', 'Minutos', 'Nota', 'Goles', 'Asistencias', 'xG',
+       'Tiros Puerta', 'Tiros Totales', '% Puntería', 'Paradas Portero',
+       'Pases Completados', 'Pases Fallidos', 'Pases Totales', '% Precisión Pase',
+       'Duelos Ganados', 'Duelos Perdidos', 'Duelos Totales', '% Éxito Duelos',
+       'Recuperaciones', 'Pérdidas', 'Faltas', 'Tarjetas Amarillas', 'Tarjetas Rojas'
+     ];
+     const rows = sortedAndFiltered.map(p => [
+       p.dorsal,
+       `"${p.nombre}"`,
+       p.posicion,
+       p.minutos,
+       p.rating !== null ? p.rating : '-',
+       p.goles,
+       p.asistencias,
+       p.xG.toFixed(2),
+       p.tirosPuerta,
+       p.tiros,
+       p.shotPct !== null ? `${p.shotPct}%` : '-',
+       p.paradas,
+       p.pasesExitosos,
+       p.pasesFallidos,
+       p.pasesTot,
+       p.passPct !== null ? `${p.passPct}%` : '-',
+       p.duelosGanados,
+       p.duelosPerdidos,
+       p.duelosTot,
+       p.duelPct !== null ? `${p.duelPct}%` : '-',
+       p.recuperaciones,
+       p.perdidas,
+       p.faltas,
+       p.amarillas,
+       p.rojas
+     ]);
 
     const csvContent = '\uFEFF' + [headers.join(';'), ...rows.map(e => e.join(';'))].join('\n');
     const filename = isEn
@@ -327,6 +331,7 @@ export const StatsDataTable = ({
               <th onClick={() => handleSort('duelosGanados')} className="sortable center">Duelos G/P (%)</th>
               <th onClick={() => handleSort('recuperaciones')} className="sortable center">Rec / Pérd</th>
               <th onClick={() => handleSort('tirosPuerta')} className="sortable center">Tiros P/Tot (%)</th>
+              <th onClick={() => handleSort('paradas')} className="sortable center" title={isEn ? 'Goalkeeper Saves' : 'Paradas de Portero'}>PAR <ArrowUpDown size={11} /></th>
               <th onClick={() => handleSort('faltas')} className="sortable center">Faltas</th>
               <th onClick={() => handleSort('amarillas')} className="sortable center">Tarjetas</th>
             </tr>
@@ -334,7 +339,7 @@ export const StatsDataTable = ({
           <tbody>
             {sortedAndFiltered.length === 0 ? (
               <tr>
-                <td colSpan={14} className="no-data-cell">No se encontraron jugadores para los filtros aplicados.</td>
+                <td colSpan={15} className="no-data-cell">{isEn ? 'No players found for the applied filters.' : 'No se encontraron jugadores para los filtros aplicados.'}</td>
               </tr>
             ) : (
               sortedAndFiltered.map(p => (
@@ -404,6 +409,9 @@ export const StatsDataTable = ({
                     ) : (
                       <span style={{ color: darkMode ? '#64748B' : '#94A3B8' }}>0/0 (—)</span>
                     )}
+                  </td>
+                  <td className="center font-semibold" style={{ color: p.paradas > 0 ? (darkMode ? '#4ADE80' : '#059669') : 'inherit' }}>
+                    {p.paradas > 0 ? `🧤 ${p.paradas}` : '—'}
                   </td>
                   <td className="center" style={{ fontWeight: p.faltas > 0 ? 800 : 400, color: p.faltas > 0 ? (darkMode ? '#FBBF24' : '#B45309') : 'inherit' }}>
                     {p.faltas}

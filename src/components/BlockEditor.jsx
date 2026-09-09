@@ -7,12 +7,29 @@ import { useCaptures } from '../hooks/useCaptures';
 import { ImageModal } from './SessionImageViewer/ImageModal';
 import { useTranslation } from '../hooks/useTranslation';
 
+const BLOCK_NAME_TRANSLATIONS = {
+  'Calentamiento': 'Warm-up',
+  'Vuelta a la calma': 'Cool-down',
+  'Activación táctica': 'Tactical Activation',
+  'Ejercicio de pase en triángulos': 'Triangle Passing Drill',
+  'Partido posicional 5v5': '5v5 Positional Game',
+  'Defensa 8v8 en bloque': '8v8 Block Defense',
+  'Transición defensa-ataque': 'Defense-to-Attack Transition',
+  'Partido condicionado': 'Conditioned Match'
+};
+
 const BlockEditor = ({ block, index, handleUpdateBlock, handleDeleteBlock, handleDuplicateBlock, teamId, sessionId }) => {
   const { isEn } = useTranslation();
   const fileInputRef = useRef(null);
   const [showCaptureModal, setShowCaptureModal] = useState(false);
   const [showViewerModal, setShowViewerModal] = useState(false);
   const { captures } = useCaptures(teamId);
+
+  const getBlockDisplayName = (name) => {
+    if (!name) return '';
+    if (isEn && BLOCK_NAME_TRANSLATIONS[name]) return BLOCK_NAME_TRANSLATIONS[name];
+    return name;
+  };
 
   const {
     attributes,
@@ -35,7 +52,7 @@ const BlockEditor = ({ block, index, handleUpdateBlock, handleDeleteBlock, handl
     const file = e.target.files[0];
     if (!file) return;
 
-    window.dispatchEvent(new CustomEvent('m11-loading', { detail: { show: true, message: 'Procesando diagrama...' } }));
+    window.dispatchEvent(new CustomEvent('m11-loading', { detail: { show: true, message: isEn ? 'Processing diagram...' : 'Procesando diagrama...' } }));
     try {
       const isSvg = file.type === 'image/svg+xml' || file.name?.toLowerCase().endsWith('.svg');
       const isPng = file.type === 'image/png' || file.name?.toLowerCase().endsWith('.png');
@@ -119,7 +136,7 @@ const BlockEditor = ({ block, index, handleUpdateBlock, handleDeleteBlock, handl
         <input 
           type="text" 
           className="block-title-input" 
-          value={block.name || ''} 
+          value={getBlockDisplayName(block.name)} 
           onChange={e => handleUpdateBlock(block.id, 'name', e.target.value)} 
           placeholder={isEn ? "Exercise name" : "Nombre del ejercicio"} 
         />
@@ -145,7 +162,7 @@ const BlockEditor = ({ block, index, handleUpdateBlock, handleDeleteBlock, handl
       <div className="block-editor-body">
         <div className="form-row-compact">
           <div className="form-group">
-            <label>Minutos</label>
+            <label>{isEn ? 'Minutes' : 'Minutos'}</label>
             <input 
               type="number" 
               value={block.duration || ''} 
@@ -155,32 +172,32 @@ const BlockEditor = ({ block, index, handleUpdateBlock, handleDeleteBlock, handl
             />
           </div>
           <div className="form-group">
-            <label>Intensidad</label>
+            <label>{isEn ? 'Intensity' : 'Intensidad'}</label>
             <select 
               value={block.intensity || 'Media'} 
               onChange={e => handleUpdateBlock(block.id, 'intensity', e.target.value)}
             >
-              <option value="Baja">Baja</option>
-              <option value="Media">Media</option>
-              <option value="Alta">Alta</option>
+              <option value="Baja">{isEn ? 'Low' : 'Baja'}</option>
+              <option value="Media">{isEn ? 'Medium' : 'Media'}</option>
+              <option value="Alta">{isEn ? 'High' : 'Alta'}</option>
             </select>
           </div>
           <div className="form-group">
-            <label>Contenido</label>
+            <label>{isEn ? 'Content' : 'Contenido'}</label>
             <select 
               value={block.type || 'Técnica'} 
               onChange={e => handleUpdateBlock(block.id, 'type', e.target.value)}
             >
-              <option value="Física">Calentamiento/Físico</option>
-              <option value="Técnica">Técnico</option>
-              <option value="Táctica">Táctico</option>
-              <option value="Partido">Partido R.</option>
+              <option value="Física">{isEn ? 'Warm-up / Physical' : 'Calentamiento/Físico'}</option>
+              <option value="Técnica">{isEn ? 'Technical' : 'Técnico'}</option>
+              <option value="Táctica">{isEn ? 'Tactical' : 'Táctico'}</option>
+              <option value="Partido">{isEn ? 'Match / Game' : 'Partido R.'}</option>
             </select>
           </div>
         </div>
         
         <div className="form-group full">
-          <label>Descripción y Reglas</label>
+          <label>{isEn ? 'Description & Rules' : 'Descripción y Reglas'}</label>
           <textarea 
             value={block.description || ''} 
             onChange={e => handleUpdateBlock(block.id, 'description', e.target.value)} 
@@ -193,12 +210,12 @@ const BlockEditor = ({ block, index, handleUpdateBlock, handleDeleteBlock, handl
             const blockImg = block.imageUrl || block.imagenProtocolo || block.image || block.photo || block.previewUrl;
             return (
               <div className="form-group full">
-                <label>Imagen / Diagrama del Ejercicio</label>
+                <label>{isEn ? 'Exercise Image / Diagram' : 'Imagen / Diagrama del Ejercicio'}</label>
                 {blockImg && (
                   <div style={{ position: 'relative', marginBottom: '10px' }}>
                     <img 
                       src={blockImg} 
-                      alt="Diagrama del ejercicio" 
+                      alt={isEn ? "Exercise diagram" : "Diagrama del ejercicio"} 
                       onClick={() => setShowViewerModal(true)}
                       style={{ width: '100%', maxHeight: '200px', objectFit: 'contain', borderRadius: '8px', border: '1px solid #e2e8f0', backgroundColor: '#f8fafc', cursor: 'zoom-in' }} 
                     />
@@ -208,7 +225,7 @@ const BlockEditor = ({ block, index, handleUpdateBlock, handleDeleteBlock, handl
                         onClick={() => setShowViewerModal(true)}
                         style={{ background: 'rgba(0,0,0,0.75)', color: '#FFF', border: '1px solid #D4A843', borderRadius: '6px', padding: '4px 8px', fontSize: '11px', fontWeight: 'bold', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px' }}
                       >
-                        🔍 Ver / Anotar
+                        🔍 {isEn ? 'View / Annotate' : 'Ver / Anotar'}
                       </button>
                     </div>
                     <button 
@@ -219,6 +236,7 @@ const BlockEditor = ({ block, index, handleUpdateBlock, handleDeleteBlock, handl
                         handleUpdateBlock(block.id, 'photo', null);
                         handleUpdateBlock(block.id, 'previewUrl', null);
                       }}
+                      title={isEn ? "Delete image" : "Eliminar imagen"}
                       style={{ position: 'absolute', top: 5, right: 5, backgroundColor: 'rgba(255,0,0,0.8)', color: 'white', border: 'none', borderRadius: '50%', width: '30px', height: '30px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                     >✕</button>
                   </div>
@@ -230,8 +248,8 @@ const BlockEditor = ({ block, index, handleUpdateBlock, handleDeleteBlock, handl
                     images={[blockImg]}
                     initialIndex={0}
                     exercisesData={[{
-                      name: block.name || 'Ejercicio',
-                      type: block.type || 'Táctico',
+                      name: getBlockDisplayName(block.name) || (isEn ? 'Exercise' : 'Ejercicio'),
+                      type: block.type || (isEn ? 'Tactical' : 'Táctico'),
                       duration: block.duration || 15,
                       description: block.description || ''
                     }]}
@@ -246,10 +264,10 @@ const BlockEditor = ({ block, index, handleUpdateBlock, handleDeleteBlock, handl
                     onChange={handleImageUpload}
                   />
                   <button className="btn-outline" onClick={() => fileInputRef.current?.click()}>
-                    📸 Subir Imagen
+                    📸 {isEn ? 'Upload Image' : 'Subir Imagen'}
                   </button>
                   <button className="btn-outline" onClick={() => setShowCaptureModal(true)}>
-                    🖼️ Seleccionar Captura
+                    🖼️ {isEn ? 'Select Capture' : 'Seleccionar Captura'}
                   </button>
                 </div>
               </div>
@@ -261,7 +279,7 @@ const BlockEditor = ({ block, index, handleUpdateBlock, handleDeleteBlock, handl
         <div className="modal-overlay" onClick={() => setShowCaptureModal(false)} style={{ zIndex: 9999 }}>
           <div className="modal-content" onClick={e => e.stopPropagation()}>
             <div className="modal-header">
-              <h3>Seleccionar Captura</h3>
+              <h3>{isEn ? 'Select Capture' : 'Seleccionar Captura'}</h3>
               <button className="btn-close" onClick={() => setShowCaptureModal(false)}>✕</button>
             </div>
             <div className="modal-body">
@@ -281,13 +299,13 @@ const BlockEditor = ({ block, index, handleUpdateBlock, handleDeleteBlock, handl
                     >
                       <img src={cap.url} alt={cap.title} style={{ width: '100%', height: '100px', objectFit: 'cover' }} />
                       <p style={{ fontSize: '12px', textAlign: 'center', padding: '4px', margin: 0, backgroundColor: '#f1f5f9' }}>
-                        {cap.title || 'Captura'}
+                        {cap.title || (isEn ? 'Capture' : 'Captura')}
                       </p>
                     </div>
                   ))}
                 </div>
               ) : (
-                <p>No hay capturas disponibles.</p>
+                <p>{isEn ? 'No captures available.' : 'No hay capturas disponibles.'}</p>
               )}
             </div>
           </div>

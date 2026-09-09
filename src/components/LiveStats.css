@@ -54,7 +54,20 @@
 
 .livestats-fullscreen .livestats-top-bar-wrapper,
 .livestats-fullscreen .stats-filters-container,
-.livestats-fullscreen .livestats-tab-navigation {
+.livestats-fullscreen .livestats-tab-navigation,
+.livestats-fullscreen .match-actions-toolbar,
+.fullscreen-mode .livestats-top-bar-wrapper,
+.fullscreen-mode .stats-filters-container,
+.fullscreen-mode .livestats-tab-navigation,
+.fullscreen-mode .match-actions-toolbar,
+.livestats-container:fullscreen .livestats-top-bar-wrapper,
+.livestats-container:fullscreen .stats-filters-container,
+.livestats-container:fullscreen .livestats-tab-navigation,
+.livestats-container:fullscreen .match-actions-toolbar,
+.livestats-container:-webkit-full-screen .livestats-top-bar-wrapper,
+.livestats-container:-webkit-full-screen .stats-filters-container,
+.livestats-container:-webkit-full-screen .livestats-tab-navigation,
+.livestats-container:-webkit-full-screen .match-actions-toolbar {
   display: none !important;
 }
 

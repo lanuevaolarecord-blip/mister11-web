@@ -307,29 +307,44 @@ const Tests = () => {
   const { matches } = usePlayerSeasonStats(activeTeamId);
 
   const getCategoryLabel = useCallback((cat) => {
-    if (!isEn || !cat) return cat;
+    if (!cat) return '';
+    if (!isEn) return cat;
+    const cleanCat = String(cat).trim().toLowerCase();
     const map = {
-      'Resistencia': 'Endurance',
-      'Velocidad': 'Speed',
-      'Agilidad': 'Agility',
-      'Fuerza': 'Strength',
-      'Técnica': 'Technique',
-      'Afrontamiento': 'Coping',
-      'Fortaleza Mental': 'Mental Toughness',
-      'Metas': 'Goals',
-      'Liderazgo': 'Leadership',
-      'Cohesión': 'Cohesion',
-      'Bienestar': 'Wellness',
-      'Autoconciencia': 'Self-Awareness',
-      'Empatía': 'Empathy',
-      'Conflictos': 'Conflicts',
-      'Evaluación': 'Evaluation'
+      'resistencia': 'Endurance',
+      'velocidad': 'Speed',
+      'agilidad': 'Agility',
+      'fuerza': 'Strength',
+      'técnica': 'Technique',
+      'tecnica': 'Technique',
+      'afrontamiento': 'Coping',
+      'fortaleza mental': 'Mental Toughness',
+      'metas': 'Goals',
+      'liderazgo': 'Leadership',
+      'cohesión': 'Cohesion',
+      'cohesion': 'Cohesion',
+      'bienestar': 'Wellness',
+      'autoconciencia': 'Self-Awareness',
+      'empatía': 'Empathy',
+      'empatia': 'Empathy',
+      'conflictos': 'Conflicts',
+      'evaluación': 'Evaluation',
+      'evaluacion': 'Evaluation',
+      'psicología': 'Psychology',
+      'psicologia': 'Psychology',
+      'sociología': 'Sociology',
+      'sociologia': 'Sociology',
+      'convivencia': 'Coexistence',
+      'trabajo en equipo': 'Teamwork',
+      'resiliencia': 'Resilience'
     };
-    return map[cat] || cat;
+    return map[cleanCat] || cat;
   }, [isEn]);
 
   const getTestDisplayName = useCallback((t) => {
-    if (!isEn || !t) return t?.name || '';
+    if (!t) return '';
+    const rawName = typeof t === 'string' ? t : (t?.name || '');
+    if (!isEn) return rawName;
     const map = {
       'Test de Cooper': 'Cooper Test',
       'Course Navette': 'Beep Test (Course Navette)',
@@ -348,13 +363,30 @@ const Tests = () => {
       'Test de Autoconciencia Emocional': 'Emotional Self-Awareness Test',
       'Escala de Empatía Deportiva': 'Sports Empathy Scale',
       'Cuestionario de Resolución de Conflictos': 'Conflict Resolution Questionnaire',
-      'ACSI-28 (Habilidades de Afrontamiento)': 'ACSI-28 (Athletic Coping Skills)'
+      'ACSI-28 (Habilidades de Afrontamiento)': 'ACSI-28 (Athletic Coping Skills)',
+      'Escala de Autoconfianza': 'Self-Confidence Scale',
+      'Ansiedad Competitiva (CSAI-2R)': 'Competitive Anxiety (CSAI-2R)',
+      'Motivación Deportiva (SMS-II)': 'Sport Motivation Scale (SMS-II)',
+      'Resiliencia en el Deporte': 'Sports Resilience',
+      'Atención y Concentración': 'Attention & Concentration',
+      'Cohesión de Equipo (GEQ)': 'Team Cohesion (GEQ)',
+      'Escala de Deporte Limpio': 'Clean Sport Scale',
+      'Habilidades Sociales': 'Social Skills',
+      'Liderazgo Percibido': 'Perceived Leadership',
+      'Satisfacción con el Entrenador': 'Coach Satisfaction',
+      'IRES (Resiliencia en el Deporte)': 'IRES (Sports Resilience)',
+      'GETS (Trabajo en Equipo para Jóvenes)': 'GETS (Youth Teamwork)',
+      'CWMS (Bienestar Mental)': 'CWMS (Mental Well-Being)',
+      'ECED (Cohesión en Equipos)': 'ECED (Team Cohesion)',
+      'EDL (Deporte Limpio)': 'EDL (Clean Sport)'
     };
-    return map[t.name] || t.name;
+    return map[rawName] || rawName;
   }, [isEn]);
 
   const getTestDisplayDesc = useCallback((t) => {
-    if (!isEn || !t) return t?.desc || '';
+    if (!t) return '';
+    const rawDesc = typeof t === 'string' ? t : (t?.desc || '');
+    if (!isEn) return rawDesc;
     const map = {
       'Distancia recorrida en 12 minutos.': 'Distance covered in 12 minutes.',
       'Carrera de ida y vuelta de 20m con pitidos.': '20m shuttle run with acoustic beeps.',
@@ -373,9 +405,78 @@ const Tests = () => {
       'Capacidad de reconocer y nombrar emociones propias': 'Ability to recognize and name personal emotions',
       'Capacidad de comprender emociones de compañeros': 'Ability to understand teammates’ emotions',
       'Habilidad para manejar desacuerdos constructivamente': 'Skill to manage disagreements constructively',
-      'Evalúa cómo maneja la presión, se concentra y se comunica.': 'Evaluates handling pressure, concentration, and communication.'
+      'Evalúa cómo maneja la presión, se concentra y se comunica.': 'Evaluates handling pressure, concentration, and communication.',
+      'Mide la confianza del jugador en sus capacidades deportivas': "Measures the player's confidence in their athletic abilities",
+      'Evalúa ansiedad cognitiva, somática y autoconfianza': 'Evaluates cognitive, somatic anxiety and self-confidence',
+      'Mide tipos de motivación en el deporte': 'Measures types of motivation in sport',
+      'Capacidad de sobreponerse a situaciones adversas': 'Ability to overcome adverse situations',
+      'Mide la atención selectiva y concentración': 'Measures selective attention and concentration',
+      'Cuestionario del Ambiente de Grupo': 'Group Environment Questionnaire',
+      'Actitudes hacia el Fair Play': 'Attitudes towards Fair Play',
+      'Asertividad y comunicación en el deporte': 'Assertiveness and communication in sports',
+      'Percepción de roles de liderazgo en el equipo': 'Perception of leadership roles in the team',
+      'Percepción sobre el cuerpo técnico': 'Perception of coaching staff',
+      'Capacidad de recuperarse de reveses.': 'Ability to recover from setbacks.',
+      'Habilidad para colaborar y comunicarse.': 'Ability to collaborate and communicate.',
+      'Bienestar emocional, psicológico y social.': 'Emotional, psychological, and social well-being.',
+      'Cohesión de tarea y social.': 'Task and social cohesion.',
+      'Conductas antideportivas y presión por ganar.': 'Unsportsmanlike behavior and winning pressure.'
     };
-    return map[t.desc] || t.desc;
+    return map[rawDesc] || rawDesc;
+  }, [isEn]);
+
+  const PROTOCOL_TEXT_MAP = {
+    'Responder cuestionario en escala de 1 a 5.': 'Answer questionnaire on a 1 to 5 scale.',
+    'Cuestionario de 4 preguntas.': '4-question questionnaire.',
+    'Responder a 3 preguntas.': 'Answer 3 questions.',
+    'Responder a 4 preguntas.': 'Answer 4 questions.',
+    'Responder a 2 preguntas.': 'Answer 2 questions.',
+    '28 preguntas. Escala 1-4.': '28 questions. 1-4 scale.',
+    '19 preguntas. Escala 1-4.': '19 questions. 1-4 scale.',
+    '10 preguntas. Escala 1-5.': '10 questions. 1-5 scale.',
+    '14 preguntas. Escala 1-5.': '14 questions. 1-5 scale.',
+    '12 preguntas. Escala 1-7.': '12 questions. 1-7 scale.',
+    '10 preguntas. Escala 1-4.': '10 questions. 1-4 scale.',
+    'Cuestionario de Rosenberg adaptado al deporte. Respuestas tipo Likert.': 'Rosenberg questionnaire adapted to sports. Likert scale responses.',
+    'Cuestionario antes de competir.': 'Pre-competition questionnaire.',
+    'Cuestionario SMS-II': 'SMS-II Questionnaire',
+    'Cuestionario de resiliencia': 'Resilience questionnaire',
+    'Prueba cognitiva cronometrada': 'Timed cognitive test',
+    'Evalúa la cohesión social y de tarea.': 'Evaluates social and task cohesion.',
+    'Cuestionario de actitudes.': 'Attitudes questionnaire.',
+    'Evaluación de habilidades interpersonales.': 'Interpersonal skills assessment.',
+    'Cuestionario de liderazgo deportivo.': 'Sports leadership questionnaire.',
+    'Cuestionario de satisfacción': 'Satisfaction questionnaire',
+    'Correr la mayor distancia posible en 12 minutos alrededor de una pista o campo marcado.': 'Run the greatest distance possible in 12 minutes around a marked track or field.',
+    'Se anota la distancia total en metros usando cinta métrica o GPS.': 'Record total distance in meters using measuring tape or GPS.',
+    'Medir la capacidad aeróbica máxima (VO2 máx) y la resistencia general.': 'Measure maximal aerobic capacity (VO2 max) and general endurance.',
+    'Carreras de 20 metros al ritmo de un pitido de audio que se acelera cada minuto.': '20-meter shuttle runs paced by an audio beep that accelerates every minute.',
+    'Se anota el último palier (nivel) completado antes de no llegar a tiempo a la línea.': 'Record the last completed stage (level) before failing to reach the line in time.',
+    'Medir la potencia aeróbica máxima y el consumo máximo de oxígeno.': 'Measure maximal aerobic power and maximum oxygen uptake.',
+    'Desde posición estática, sprint al máximo esfuerzo hasta rebasar la línea de 10 metros.': 'From a stationary position, sprint at maximum effort across the 10-meter line.',
+    'Uso de cronómetro manual o fotocélulas. Se anota el tiempo en segundos.': 'Use of manual stopwatch or timing gates. Record time in seconds.',
+    'Mejorar la capacidad de aceleración y explosividad en los primeros metros.': 'Evaluate acceleration capacity and explosiveness in the opening meters.',
+    'Sprint de 30 metros al máximo esfuerzo desde posición estática.': '30-meter sprint at maximum effort from a stationary position.',
+    'Tiempo en segundos cronometrado.': 'Timed in seconds.',
+    'Medir la velocidad máxima y capacidad anaeróbica aláctica.': 'Measure maximal speed and alactic anaerobic capacity.',
+    'Sprint 10m al frente, desplazamiento lateral 5m a la izquierda, 10m a la derecha, 5m al centro y 10m de espaldas al inicio.': '10m forward sprint, 5m lateral shuffle left, 10m right, 5m to center, and 10m backpedal to start.',
+    'Tiempo en segundos. Se penaliza si se cruzan las piernas en el lateral.': 'Time in seconds. Penalized if legs cross during lateral shuffle.',
+    'Evaluar la agilidad, equilibrio y cambios de dirección rápidos.': 'Evaluate agility, balance, and quick directional changes.',
+    'Manos en las caderas. Bajar el centro de gravedad (flexión de rodillas) e inmediatamente saltar lo más alto posible.': 'Hands on hips. Lower center of gravity (knee flexion) and immediately jump as high as possible.',
+    'Altura del salto en centímetros (usar plataforma de contacto o app de video).': 'Jump height in centimeters (using contact mat or video app).',
+    'Medir la potencia explosiva del tren inferior (fuerza reactiva).': 'Measure explosive power of lower body (reactive strength).',
+    'Conducir el balón haciendo slalom entre 5 conos separados por 2 metros y dar un pase a un objetivo.': 'Dribble ball through slalom of 5 cones spaced 2 meters apart and deliver a pass to target.',
+    'Tiempo total en segundos desde inicio hasta que el pase entra al objetivo.': 'Total time in seconds from start until pass enters target.',
+    'Evaluar el control del balón en velocidad y precisión final.': 'Evaluate ball control at speed and finishing accuracy.',
+    '10 pases desde la frontal del área hacia pequeñas porterías o zonas marcadas.': '10 passes from the edge of the penalty area toward mini-goals or marked zones.',
+    '1 punto por cada acierto. Total de 10 puntos posibles.': '1 point per hit. Total of 10 possible points.',
+    'Medir la precisión del golpeo y concentración técnica.': 'Measure striking accuracy and technical focus.'
+  };
+
+  const getProtocolText = useCallback((text) => {
+    if (!text) return '';
+    if (!isEn) return text;
+    return PROTOCOL_TEXT_MAP[text] || text;
   }, [isEn]);
   const effectiveTeamPath = getTeamPath ? getTeamPath(activeTeamId) : (activeTeam ? (activeTeam.clubId ? `clubs/${activeTeam.clubId}/teams/${activeTeamId}` : `users/${user?.uid}/teams/${activeTeamId}`) : '');
   const [historyData, setHistoryData] = useState({});
@@ -2209,8 +2310,8 @@ const Tests = () => {
           <div className="modal-content large" onClick={e => e.stopPropagation()} style={{ display: 'flex', flexDirection: 'column', maxHeight: '88vh', overflow: 'hidden', backgroundColor: 'var(--bg-card, #FAF8F5)' }}>
             <div className="modal-header" style={{ flexShrink: 0 }}>
               <div style={{display: 'flex', alignItems: 'center', gap: '15px'}}>
-                <span className="t-cat">{selectedTestDetail.category}</span>
-                <h2 style={{margin: 0}}>{selectedTestDetail.name}</h2>
+                <span className="t-cat">{getCategoryLabel(selectedTestDetail.category)}</span>
+                <h2 style={{margin: 0}}>{getTestDisplayName(selectedTestDetail)}</h2>
               </div>
               <button className="btn-close" onClick={() => setSelectedTestDetail(null)}>✕</button>
             </div>
@@ -2232,7 +2333,7 @@ const Tests = () => {
                 {selectedTestDetail.imagenProtocolo ? (
                   <img 
                     src={selectedTestDetail.imagenProtocolo} 
-                    alt={selectedTestDetail.name || 'Protocolo'} 
+                    alt={getTestDisplayName(selectedTestDetail)} 
                     style={{
                       maxWidth: '100%',
                       maxHeight: '240px',
@@ -2250,34 +2351,34 @@ const Tests = () => {
               </div>
               <div className="test-info-block" style={{ padding: '0 0 20px 0' }}>
                 <div className="protocolo-card">
-                  <h3>Objetivo y Descripción</h3>
-                  <p>{selectedTestDetail.desc}</p>
+                  <h3>{isEn ? 'OBJECTIVE & DESCRIPTION' : 'OBJETIVO Y DESCRIPCIÓN'}</h3>
+                  <p>{getTestDisplayDesc(selectedTestDetail)}</p>
                 </div>
                 
                 <div className="protocolo-card" style={{ marginTop: '16px' }}>
-                  <h3>Protocolo de Ejecución</h3>
+                  <h3>{isEn ? 'EXECUTION PROTOCOL' : 'PROTOCOLO DE EJECUCIÓN'}</h3>
                   {typeof selectedTestDetail.protocol === 'string' ? (
-                    <p>{selectedTestDetail.protocol || 'No se ha especificado un protocolo detallado para esta prueba.'}</p>
+                    <p>{getProtocolText(selectedTestDetail.protocol) || (isEn ? 'No detailed protocol specified for this test.' : 'No se ha especificado un protocolo detallado para esta prueba.')}</p>
                   ) : selectedTestDetail.protocol && typeof selectedTestDetail.protocol === 'object' ? (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                      <p><strong>Ejecución:</strong> {selectedTestDetail.protocol.ejecucion}</p>
-                      <p><strong>Medición:</strong> {selectedTestDetail.protocol.medicion}</p>
-                      <p><strong>Objetivo:</strong> {selectedTestDetail.protocol.objetivo}</p>
+                      <p><strong>{isEn ? 'Execution:' : 'Ejecución:'}</strong> {getProtocolText(selectedTestDetail.protocol.ejecucion)}</p>
+                      <p><strong>{isEn ? 'Measurement:' : 'Medición:'}</strong> {getProtocolText(selectedTestDetail.protocol.medicion)}</p>
+                      <p><strong>{isEn ? 'Objective:' : 'Objetivo:'}</strong> {getProtocolText(selectedTestDetail.protocol.objetivo)}</p>
                     </div>
                   ) : (
-                    <p>No se ha especificado un protocolo detallado para esta prueba.</p>
+                    <p>{isEn ? 'No detailed protocol specified for this test.' : 'No se ha especificado un protocolo detallado para esta prueba.'}</p>
                   )}
                 </div>
                 
                 <div className="test-meta" style={{ marginTop: '16px' }}>
-                  <span><strong>Unidad de medida:</strong> {selectedTestDetail.unit}</span>
+                  <span><strong>{isEn ? 'Unit of measurement:' : 'Unidad de medida:'}</strong> {selectedTestDetail.unit}</span>
                 </div>
               </div>
 
               {/* Botones de acción integrados en la zona de scroll con colchón pb-24 */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginTop: '24px' }}>
                 <button className="btn-outline-gold" style={{ width: '100%', minHeight: '48px', fontWeight: 800 }} onClick={() => descargarPlantilla(selectedTestDetail, players)}>
-                  ⬇️ Descargar Plantilla de Toma de Datos
+                  ⬇️ {isEn ? 'Download Data Collection Template' : 'Descargar Plantilla de Toma de Datos'}
                 </button>
                 <button className="btn-primary" style={{ width: '100%', minHeight: '48px', fontWeight: 800 }} onClick={() => {
                   if (selectedTestDetail.isQuestionnaire) {
@@ -2289,7 +2390,7 @@ const Tests = () => {
                   }
                   setSelectedTestDetail(null);
                 }}>
-                  Ir a Registrar Resultados
+                  {isEn ? 'Go to Record Results' : 'Ir a Registrar Resultados'}
                 </button>
               </div>
             </div>
@@ -2308,12 +2409,12 @@ const Tests = () => {
         <div className="modal-overlay" onClick={() => setIsRegModalOpen(false)}>
           <div className="modal-content large" onClick={e => e.stopPropagation()} style={{ display: 'flex', flexDirection: 'column', maxHeight: '88vh', height: '88vh', overflow: 'hidden', backgroundColor: 'var(--bg-card, #FAF8F5)', borderRadius: '16px' }}>
             <div className="modal-header" style={{ flexShrink: 0 }}>
-              <h2>Registro: {getTestById(regSelectedTest)?.name}</h2>
+              <h2>{isEn ? 'Record:' : 'Registro:'} {getTestDisplayName(getTestById(regSelectedTest))}</h2>
               <button className="btn-close" onClick={() => setIsRegModalOpen(false)}>✕</button>
             </div>
             <div className="modal-body" style={{ flex: '1 1 auto', minHeight: 0, overflowY: 'auto', WebkitOverflowScrolling: 'touch', padding: '16px 20px 40px 20px' }}>
               <div className="reg-main-header" style={{ marginBottom: '15px' }}>
-                <span className="unit-badge">Unidad: {getTestById(regSelectedTest)?.unit}</span>
+                <span className="unit-badge">{isEn ? 'Unit: ' : 'Unidad: '}{getTestById(regSelectedTest)?.unit}</span>
               </div>
               <div className="reg-players-grid" style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                 {players.map(p => (

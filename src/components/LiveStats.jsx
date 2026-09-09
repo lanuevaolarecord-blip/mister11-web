@@ -465,7 +465,11 @@ const LiveStats = ({
   // ── Listener de eventos Fullscreen nativos ──────────────────────────────────
   useEffect(() => {
     const handleFSChange = () => {
-      setIsFullscreen(!!(document.fullscreenElement || document.webkitFullscreenElement));
+      const isFS = !!(document.fullscreenElement || document.webkitFullscreenElement);
+      setIsFullscreen(isFS);
+      if (isFS) {
+        setActiveTab('capture');
+      }
     };
     document.addEventListener('fullscreenchange', handleFSChange);
     document.addEventListener('webkitfullscreenchange', handleFSChange);
@@ -476,6 +480,7 @@ const LiveStats = ({
   }, []);
 
   const toggleFullscreen = () => {
+    setActiveTab('capture');
     const elem = containerRef.current || document.documentElement;
     if (!document.fullscreenElement) {
       elem.requestFullscreen().catch(() => {});
@@ -650,7 +655,7 @@ const LiveStats = ({
   return (
     <div
       ref={containerRef}
-      className={`livestats-container ${darkMode ? 'dark-theme dark theme-dark' : 'light-theme theme-light'} ${isFullscreen ? 'fullscreen-mode' : ''}`}
+      className={`livestats-container ${darkMode ? 'dark-theme dark theme-dark' : 'light-theme theme-light'} ${isFullscreen ? 'livestats-fullscreen fullscreen-mode' : ''}`}
       style={{
         backgroundColor: darkMode ? '#0B1317' : '#F1F5F9',
         color: darkMode ? '#FFFFFF' : '#0F172A',
@@ -678,53 +683,57 @@ const LiveStats = ({
         </div>
       )}
 
-      {/* ── 1. Barra de Navegación por Pestañas de LiveStats ────────────────── */}
-      <nav className="livestats-tab-navigation">
-        <button
-          type="button"
-          className={`stats-tab-btn ${activeTab === 'capture' ? 'active' : ''}`}
-          onClick={() => setActiveTab('capture')}
-        >
-          🔴 {tx('live.tab.capture')}
-        </button>
-        <button
-          type="button"
-          className={`stats-tab-btn ${activeTab === 'tactical' ? 'active' : ''}`}
-          onClick={() => setActiveTab('tactical')}
-        >
-          ⚽ {tx('live.tab.tactical')}
-        </button>
-        <button
-          type="button"
-          className={`stats-tab-btn ${activeTab === 'analytics' ? 'active' : ''}`}
-          onClick={() => setActiveTab('analytics')}
-        >
-          📈 {tx('live.tab.analytics')}
-        </button>
-        <button
-          type="button"
-          className={`stats-tab-btn ${activeTab === 'players' ? 'active' : ''}`}
-          onClick={() => setActiveTab('players')}
-        >
-          📋 {tx('live.tab.players')}
-        </button>
-      </nav>
+      {/* ── 1. Barra de Navegación por Pestañas de LiveStats (oculta en pantalla completa) ────────────────── */}
+      {!isFullscreen && (
+        <nav className="livestats-tab-navigation">
+          <button
+            type="button"
+            className={`stats-tab-btn ${activeTab === 'capture' ? 'active' : ''}`}
+            onClick={() => setActiveTab('capture')}
+          >
+            🔴 {tx('live.tab.capture')}
+          </button>
+          <button
+            type="button"
+            className={`stats-tab-btn ${activeTab === 'tactical' ? 'active' : ''}`}
+            onClick={() => setActiveTab('tactical')}
+          >
+            ⚽ {tx('live.tab.tactical')}
+          </button>
+          <button
+            type="button"
+            className={`stats-tab-btn ${activeTab === 'analytics' ? 'active' : ''}`}
+            onClick={() => setActiveTab('analytics')}
+          >
+            📈 {tx('live.tab.analytics')}
+          </button>
+          <button
+            type="button"
+            className={`stats-tab-btn ${activeTab === 'players' ? 'active' : ''}`}
+            onClick={() => setActiveTab('players')}
+          >
+            📋 {tx('live.tab.players')}
+          </button>
+        </nav>
+      )}
 
-      {/* ── 2. Barra de Herramientas Rápida ─────────────────────────────────── */}
-      <MatchActionsToolbar
-        matchData={matchData}
-        teamName={homeTeamName}
-        events={filteredEvents}
-        players={playersList}
-        tacticalNotes={tacticalNotes}
-        onAddTacticalNote={handleAddTacticalNote}
-        isHighlighted={isHighlighted}
-        onToggleHighlight={handleToggleHighlight}
-        language={language}
-      />
+      {/* ── 2. Barra de Herramientas Rápida (oculta en pantalla completa) ─────────────────────────────────── */}
+      {!isFullscreen && (
+        <MatchActionsToolbar
+          matchData={matchData}
+          teamName={homeTeamName}
+          events={filteredEvents}
+          players={playersList}
+          tacticalNotes={tacticalNotes}
+          onAddTacticalNote={handleAddTacticalNote}
+          isHighlighted={isHighlighted}
+          onToggleHighlight={handleToggleHighlight}
+          language={language}
+        />
+      )}
 
       {/* ── 3. Panel Desplegable de Filtros Avanzados ───────────────────────── */}
-      {activeTab !== 'capture' && (
+      {activeTab !== 'capture' && !isFullscreen && (
         <StatsFilters
           timeFilter={timeFilter}
           setTimeFilter={setTimeFilter}

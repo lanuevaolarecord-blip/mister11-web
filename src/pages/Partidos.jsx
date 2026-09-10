@@ -135,6 +135,8 @@ const Partidos = () => {
   const [calledPlayers, setCalledPlayers] = useState([]);
   const [draggingIdx, setDraggingIdx] = useState(null);
   const pitchRef = useRef(null);
+  const pitchExportRef = useRef(null);
+  const [isDownloadingPng, setIsDownloadingPng] = useState(false);
   // En desktop y tablet landscape siempre horizontal
   const [isDesktop, setIsDesktop] = useState(true);
 
@@ -791,6 +793,43 @@ const Partidos = () => {
     setSelectedSlotIdx(null);
   };
 
+  const handleDownloadLineupPng = async () => {
+    if (!pitchExportRef.current) return;
+    setIsDownloadingPng(true);
+    try {
+      const html2canvasMod = await import('html2canvas');
+      const html2canvas = html2canvasMod.default || html2canvasMod;
+
+      const canvas = await html2canvas(pitchExportRef.current, {
+        scale: 2,
+        useCORS: true,
+        allowTaint: true,
+        backgroundColor: '#1B3A2D',
+        logging: false
+      });
+
+      const dataUrl = canvas.toDataURL('image/png');
+      const rivalName = (matchData.rival || (isGlobalEn ? 'match' : 'partido'))
+        .trim()
+        .replace(/[^a-zA-Z0-9_\-]/g, '_');
+      const lineupName = (matchData.lineup || '4-3-3').replace(/[^a-zA-Z0-9_\-]/g, '_');
+      const filename = `alineacion_${rivalName}_${lineupName}_${Date.now()}.png`;
+
+      const link = document.createElement('a');
+      link.href = dataUrl;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      showToast(isGlobalEn ? 'Lineup exported successfully' : 'Alineación exportada con éxito', 'success');
+    } catch (err) {
+      console.error('Error al descargar PNG de alineación:', err);
+      showToast(isGlobalEn ? 'Error exporting lineup' : 'Error al exportar alineación', 'error');
+    } finally {
+      setIsDownloadingPng(false);
+    }
+  };
+
   const getSlotPosition = (idx) => {
     if (matchData.customRoles && matchData.customRoles[idx]) {
       return matchData.customRoles[idx];
@@ -1425,7 +1464,63 @@ const Partidos = () => {
 
             {/* PESTAÑA: ALINEACIÓN */}
             {editTab === 'ALINEACIÓN' && (
-              <div className="tab-pane alineacion-layout" style={{ padding: '24px 28px', boxSizing: 'border-box' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', width: '100%', boxSizing: 'border-box' }}>
+                {/* Cabecera Superior de la Pestaña ALINEACIÓN con Botón Oficial de Descarga PNG */}
+                <div
+                  className="lineup-header-bar"
+                  style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    padding: '16px 28px 14px 28px',
+                    borderBottom: '1.5px solid var(--partidos-border)',
+                    flexWrap: 'wrap',
+                    gap: '14px',
+                    backgroundColor: 'var(--partidos-panel-bg)'
+                  }}
+                >
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                    <h3 style={{ margin: 0, fontSize: '18px', fontWeight: 900, color: 'var(--partidos-text-primary)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <span>📋</span>
+                      <span>{t('matches.lineup.title')}</span>
+                    </h3>
+                    <span style={{ fontSize: '12.5px', color: 'var(--partidos-text-muted)', fontWeight: '500' }}>
+                      {t('matches.lineup.subtitle')}
+                    </span>
+                  </div>
+
+                  <button
+                    type="button"
+                    className="btn-download-lineup-png"
+                    onClick={handleDownloadLineupPng}
+                    disabled={isDownloadingPng}
+                    style={{
+                      minHeight: '48px',
+                      padding: '0 22px',
+                      backgroundColor: '#1B3A2D',
+                      border: '1.5px solid #D4A843',
+                      color: '#FFFFFF',
+                      borderRadius: '8px',
+                      fontWeight: 800,
+                      fontSize: '13px',
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.6px',
+                      cursor: isDownloadingPng ? 'wait' : 'pointer',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '10px',
+                      boxShadow: '0 4px 12px rgba(27, 58, 45, 0.25)',
+                      transition: 'all 0.2s ease',
+                      opacity: isDownloadingPng ? 0.7 : 1
+                    }}
+                    title={t('matches.lineup.downloadPng')}
+                  >
+                    <span style={{ fontSize: '16px' }}>{isDownloadingPng ? '⏳' : '📥'}</span>
+                    <span>{isDownloadingPng ? t('matches.lineup.exportingPng') : t('matches.lineup.downloadPng')}</span>
+                  </button>
+                </div>
+
+                <div className="tab-pane alineacion-layout" style={{ padding: '24px 28px', boxSizing: 'border-box' }}>
                 <div className="alin-sidebar">
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                     <FormationSelector
@@ -1562,95 +1657,201 @@ const Partidos = () => {
                   style={{
                     flex: 1,
                     display: 'flex',
+                    flexDirection: 'column',
                     alignItems: 'center',
-                    justifyContent: 'center',
-                    padding: '24px 20px 60px 20px',
+                    justifyContent: 'flex-start',
+                    padding: '16px 20px 60px 20px',
                     overflow: 'visible',
                     position: 'relative',
                     minHeight: 'fit-content',
                     boxSizing: 'border-box'
                   }}
                 >
+                  {/* Pizarra Completa Exportable: Once Titular + Banquillo de Suplentes */}
                   <div
-                    className="alin-pitch-container-h3d"
-                    ref={pitchRef}
-                    onPointerMove={handlePitchPointerMove}
-                    onTouchMove={handlePitchPointerMove}
-                    style={{ touchAction: 'none' }}
+                    className="alin-pitch-export-board"
+                    ref={pitchExportRef}
+                    style={{
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      background: 'linear-gradient(180deg, #142a20 0%, #1B3A2D 100%)',
+                      padding: '18px 20px 22px 20px',
+                      borderRadius: '16px',
+                      border: '2px solid #D4A843',
+                      boxShadow: '0 12px 36px rgba(0, 0, 0, 0.35)',
+                      width: '100%',
+                      maxWidth: '740px',
+                      boxSizing: 'border-box'
+                    }}
                   >
-                    {/* Terreno de juego HORIZONTAL NATIVO */}
-                    <div className="pitch-h-outer">
-                      <div className="pitch-h-center-line"></div>
-                      <div className="pitch-h-center-circle"></div>
-                      <div className="pitch-h-spot-center"></div>
-                      <div className="pitch-h-penalty-left"></div>
-                      <div className="pitch-h-goal-left"></div>
-                      <div className="pitch-h-penalty-right"></div>
-                      <div className="pitch-h-goal-right"></div>
-                    </div>
+                    <div
+                      className="alin-pitch-container-h3d"
+                      ref={pitchRef}
+                      onPointerMove={handlePitchPointerMove}
+                      onTouchMove={handlePitchPointerMove}
+                      style={{ touchAction: 'none' }}
+                    >
+                      {/* Terreno de juego HORIZONTAL NATIVO */}
+                      <div className="pitch-h-outer">
+                        <div className="pitch-h-center-line"></div>
+                        <div className="pitch-h-center-circle"></div>
+                        <div className="pitch-h-spot-center"></div>
+                        <div className="pitch-h-penalty-left"></div>
+                        <div className="pitch-h-goal-left"></div>
+                        <div className="pitch-h-penalty-right"></div>
+                        <div className="pitch-h-goal-right"></div>
+                      </div>
 
-                    {/* Fichas de Jugadores — posiciones directas de formaciones.js (ya en horizontal) */}
-                    {getFormationPositions(matchData.lineup || '4-3-3').map((pos, idx) => {
-                      const pid = calledPlayers[idx];
-                      const player = pid ? (players.find(p => p && p.id === pid) || null) : null;
-                      const customPos = matchData.customPositions && matchData.customPositions[idx];
-                      const isEn = isGlobalEn;
+                      {/* Fichas de Jugadores — posiciones directas de formaciones.js (ya en horizontal) */}
+                      {getFormationPositions(matchData.lineup || '4-3-3').map((pos, idx) => {
+                        const pid = calledPlayers[idx];
+                        const player = pid ? (players.find(p => p && p.id === pid) || null) : null;
+                        const customPos = matchData.customPositions && matchData.customPositions[idx];
+                        const isEn = isGlobalEn;
 
-                      // Las posiciones en formaciones.js ya son HORIZONTALES: left=X, top=Y
-                      // Clampear top entre 12% y 84% para proteger márgenes superior e inferior sin desbordes
-                      const rawTop = parseFloat(customPos ? customPos.top : pos.top);
-                      const clampedTop = Math.min(Math.max(rawTop, 12), 84);
-                      const topPos = `${clampedTop}%`;
-                      const rawLeft = parseFloat(customPos ? customPos.left : pos.left);
-                      const clampedLeft = Math.min(Math.max(rawLeft, 8), 90);
-                      const leftPos = `${clampedLeft}%`;
+                        // Las posiciones en formaciones.js ya son HORIZONTALES: left=X, top=Y
+                        // Clampear top entre 12% y 84% para proteger márgenes superior e inferior sin desbordes
+                        const rawTop = parseFloat(customPos ? customPos.top : pos.top);
+                        const clampedTop = Math.min(Math.max(rawTop, 12), 84);
+                        const topPos = `${clampedTop}%`;
+                        const rawLeft = parseFloat(customPos ? customPos.left : pos.left);
+                        const clampedLeft = Math.min(Math.max(rawLeft, 8), 90);
+                        const leftPos = `${clampedLeft}%`;
 
-                      const posLabel = getSlotPosition(idx);
-                      const isSelected = selectedSlotIdx === idx;
-                      const photoUrl = player ? (player.avatarUrl || player.photoUrl || player.photo || player.photoPreview) : null;
+                        const posLabel = getSlotPosition(idx);
+                        const isSelected = selectedSlotIdx === idx;
+                        const photoUrl = player ? (player.avatarUrl || player.photoUrl || player.photo || player.photoPreview) : null;
 
-                      return (
-                        <div
-                          key={idx}
-                          className={`pitch-player-3d ${player ? '' : 'empty-slot'} ${isSelected ? 'selected-swap' : ''}`}
-                          style={{
-                            top: topPos,
-                            left: leftPos,
-                            zIndex: draggingIdx === idx ? 99 : isSelected ? 30 : Math.round(clampedTop)
-                          }}
-                          title={player ? `Jugador: ${player.name}\nDorsal: ${player.number ?? '-'}\nPosición: ${player.position || posLabel}` : (isEn ? 'Empty Slot' : 'Slot Vacío')}
-                          onPointerDown={(e) => handleDragStart(e, idx)}
-                          onTouchStart={(e) => handleDragStart(e, idx)}
-                        >
-                          <div className="futu-card-badge">
-                            <div className={`futu-card-frame ${player ? '' : 'empty-slot'}`}>
-                              {player ? (
-                                photoUrl ? (
-                                  <img src={photoUrl} alt={player.name} className="futu-card-photo" />
+                        return (
+                          <div
+                            key={idx}
+                            className={`pitch-player-3d ${player ? '' : 'empty-slot'} ${isSelected ? 'selected-swap' : ''}`}
+                            style={{
+                              top: topPos,
+                              left: leftPos,
+                              zIndex: draggingIdx === idx ? 99 : isSelected ? 30 : Math.round(clampedTop)
+                            }}
+                            title={player ? `Jugador: ${player.name}\nDorsal: ${player.number ?? '-'}\nPosición: ${player.position || posLabel}` : (isEn ? 'Empty Slot' : 'Slot Vacío')}
+                            onPointerDown={(e) => handleDragStart(e, idx)}
+                            onTouchStart={(e) => handleDragStart(e, idx)}
+                          >
+                            <div className="futu-card-badge">
+                              <div className={`futu-card-frame ${player ? '' : 'empty-slot'}`}>
+                                {player ? (
+                                  photoUrl ? (
+                                    <img src={photoUrl} alt={player.name} className="futu-card-photo" />
+                                  ) : (
+                                    <div className="futu-card-initials">
+                                      {player.number || (player.name ? player.name.charAt(0).toUpperCase() : idx + 1)}
+                                    </div>
+                                  )
                                 ) : (
-                                  <div className="futu-card-initials">
-                                    {player.number || (player.name ? player.name.charAt(0).toUpperCase() : idx + 1)}
+                                  <div className="futu-card-initials empty">
+                                    {idx + 1}
                                   </div>
-                                )
-                              ) : (
-                                <div className="futu-card-initials empty">
-                                  {idx + 1}
-                                </div>
-                              )}
-                              <span className="futu-card-number">{player?.number ?? (idx + 1)}</span>
-                              <span className="futu-card-pos">{posLabel}</span>
-                            </div>
-                            <div className="futu-card-banner">
-                              {player ? `${player.number !== undefined && player.number !== null ? player.number + ' - ' : ''}${player.name || (isEn ? 'Player' : 'Jugador')}` : `Slot ${idx + 1}`}
+                                )}
+                                <span className="futu-card-number">{player?.number ?? (idx + 1)}</span>
+                                <span className="futu-card-pos">{posLabel}</span>
+                              </div>
+                              <div className="futu-card-banner">
+                                {player ? `${player.number !== undefined && player.number !== null ? player.number + ' - ' : ''}${player.name || (isEn ? 'Player' : 'Jugador')}` : `Slot ${idx + 1}`}
+                              </div>
                             </div>
                           </div>
-                        </div>
-                      );
-                    })}
+                        );
+                      })}
+                    </div>
+
+                    {/* Banquillo de Suplentes (7 slots) integrado en la pizarra */}
+                    <div
+                      className="lineup-bench-board"
+                      style={{
+                        marginTop: '16px',
+                        width: '100%',
+                        backgroundColor: 'rgba(18, 36, 28, 0.95)',
+                        border: '1.5px solid rgba(212, 168, 67, 0.45)',
+                        borderRadius: '12px',
+                        padding: '12px 14px',
+                        boxSizing: 'border-box'
+                      }}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
+                        <span style={{ fontSize: '11px', fontWeight: 900, color: '#D4A843', textTransform: 'uppercase', letterSpacing: '0.6px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                          <span>🪑</span>
+                          <span>{t('matches.lineup.benchTitle')}</span>
+                        </span>
+                        <span style={{ fontSize: '11px', fontWeight: 800, color: 'rgba(245, 240, 232, 0.75)' }}>
+                          {calledPlayers.slice(11, 18).filter(Boolean).length}/7
+                        </span>
+                      </div>
+
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '6px' }}>
+                        {Array.from({ length: 7 }).map((_, subIdx) => {
+                          const idx = 11 + subIdx;
+                          const pid = calledPlayers[idx];
+                          const player = pid ? (players.find(p => p && p.id === pid) || null) : null;
+                          const isSelected = selectedSlotIdx === idx;
+                          const isGk = player && (player.position === 'POR' || player.posicion === 'POR');
+                          const photoUrl = player ? (player.avatarUrl || player.photoUrl || player.photo || player.photoPreview) : null;
+
+                          return (
+                            <div
+                              key={`bench-slot-${subIdx}`}
+                              className={`bench-player-chip ${isSelected ? 'selected-swap' : ''}`}
+                              onClick={() => handleSlotClick(idx)}
+                              style={{
+                                display: 'flex',
+                                flexDirection: 'column',
+                                alignItems: 'center',
+                                background: isSelected ? 'rgba(212, 168, 67, 0.28)' : (player ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.25)'),
+                                border: isSelected ? '1.5px solid #D4A843' : (player ? '1px solid rgba(255, 255, 255, 0.15)' : '1px dashed rgba(255, 255, 255, 0.2)'),
+                                borderRadius: '8px',
+                                padding: '8px 4px',
+                                cursor: 'pointer',
+                                minHeight: '74px',
+                                justifyContent: 'center',
+                                boxSizing: 'border-box',
+                                transition: 'all 0.15s ease'
+                              }}
+                              title={player ? `${player.name} (${isGk ? 'POR' : (player.position || player.posicion || 'SUB')})` : t('matches.lineup.emptySlot')}
+                            >
+                              {player ? (
+                                <>
+                                  {photoUrl ? (
+                                    <img src={photoUrl} alt={player.name} style={{ width: '32px', height: '32px', borderRadius: '50%', objectFit: 'cover', border: '1.5px solid #D4A843' }} />
+                                  ) : (
+                                    <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: '#4CAF7D', color: '#FFFFFF', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 900, fontSize: '11px', border: '1.5px solid #D4A843' }}>
+                                      {player.number || (player.name ? player.name.charAt(0).toUpperCase() : 'S')}
+                                    </div>
+                                  )}
+                                  <span style={{ fontSize: '10px', fontWeight: 800, color: '#FFFFFF', marginTop: '4px', textAlign: 'center', width: '100%', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                    {player.name}
+                                  </span>
+                                  <span style={{ fontSize: '9px', fontWeight: 900, color: isGk ? '#60A5FA' : '#D4A843' }}>
+                                    {isGk ? '🧤 POR' : (player.position || player.posicion || `SUB ${subIdx + 1}`)}
+                                  </span>
+                                </>
+                              ) : (
+                                <>
+                                  <div style={{ width: '28px', height: '28px', borderRadius: '50%', border: '1px dashed rgba(255, 255, 255, 0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'rgba(255, 255, 255, 0.4)', fontSize: '11px', fontWeight: 700 }}>
+                                    {subIdx + 1}
+                                  </div>
+                                  <span style={{ fontSize: '9px', color: 'rgba(255, 255, 255, 0.4)', marginTop: '4px' }}>
+                                    {t('matches.lineup.emptySlot')}
+                                  </span>
+                                </>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
-            )}
+            </div>
+          )}
 
             {/* PESTAÑA: MATCH-DAY */}
             {editTab === 'MATCH-DAY' && (

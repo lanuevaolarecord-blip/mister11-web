@@ -847,6 +847,12 @@ export const translations = {
     'matches.warnings.auditShow': 'Ver detalle',
     'matches.warnings.auditHide': 'Ocultar auditoría',
     'matches.warnings.chipTooltip': '{count} anomalías detectadas en bitácora (clic para ver y resolver en Acta Oficial)',
+    'matches.lineup.title': 'Alineación Táctica y Banquillo',
+    'matches.lineup.subtitle': 'Pizarra gráfica con once titular y banquillo de suplentes',
+    'matches.lineup.downloadPng': 'DESCARGAR PNG',
+    'matches.lineup.exportingPng': 'EXPORTANDO...',
+    'matches.lineup.benchTitle': 'BANQUILLO DE SUPLENTES',
+    'matches.lineup.emptySlot': 'Vacío',
 
     // ── LIVESTATS SUBTABS ──────────────────────────────────
     'live.tab.capture': 'Captura en Vivo',
@@ -2632,6 +2638,12 @@ export const translations = {
     'matches.warnings.auditShow': 'View details',
     'matches.warnings.auditHide': 'Hide audit',
     'matches.warnings.chipTooltip': '{count} anomalies detected in log (click to view and resolve in Official Sheet)',
+    'matches.lineup.title': 'Tactical Lineup & Bench',
+    'matches.lineup.subtitle': 'Tactical board with starting XI and substitutes bench',
+    'matches.lineup.downloadPng': 'DOWNLOAD PNG',
+    'matches.lineup.exportingPng': 'EXPORTING...',
+    'matches.lineup.benchTitle': 'SUBSTITUTES BENCH',
+    'matches.lineup.emptySlot': 'Empty',
 
     // ── LIVESTATS SUBTABS ──────────────────────────────────
     'live.tab.capture': 'Live Capture',

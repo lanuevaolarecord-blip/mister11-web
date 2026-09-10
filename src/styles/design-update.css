@@ -1210,8 +1210,144 @@ html.dark select option {
   color: #FFFFFF !important;
 }
 
-html:not(.dark) select option,
-html.light select option {
-  background-color: #FFFFFF !important;
-  color: #0F172A !important;
+/* ─── EXERCISE DIAGRAM ─────────────────────────────────────────────────────── */
+.exercise-diagram {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+  box-sizing: border-box;
+  overflow: hidden;
 }
+
+.diagram-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+
+.diagram-title {
+  font-weight: 700;
+  font-size: 14px;
+  color: var(--text-primary);
+  display: block;
+}
+
+.diagram-sub {
+  font-size: 12px;
+  color: var(--text-secondary);
+  display: block;
+}
+
+.diagram-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+
+.legend-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  display: inline-block;
+  flex-shrink: 0;
+}
+
+.legend-arrow-icon {
+  font-size: 16px;
+  color: rgba(255,255,255,0.7);
+}
+
+/* El canvas siempre ocupa el 100% de su contenedor sin sobresalir */
+.diagram-canvas {
+  display: block;
+  width: 100% !important;
+  max-width: 100% !important;
+  height: auto;
+  border-radius: 10px;
+}
+
+.diagram-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+/* ─── IMÁGENES EN CARDS / MODALES - CONTENCIÓN GLOBAL ──────────────────────── */
+/* Evita que cualquier imagen se salga de su contenedor en móvil o tablet */
+.card-base img,
+.exercise-card img,
+.modal-card img,
+.session-image img {
+  max-width: 100%;
+  width: 100%;
+  height: auto;
+  object-fit: contain;
+  display: block;
+}
+
+/* ─── CANVAS GLOBAL RESPONSIVE ─────────────────────────────────────────────── */
+/* Todos los canvas de la app son responsivos por defecto */
+canvas {
+  max-width: 100%;
+  height: auto;
+}
+
+/* ─── IMÁGENES TÁCTICAS EN SECCIÓN DE PARTIDOS ──────────────────────────────── */
+.lineup-preview-container,
+.tactical-board-preview {
+  width: 100%;
+  overflow: hidden;
+  border-radius: 12px;
+  background: var(--bg-surface, #F4F8F5);
+  border: 1px solid var(--border-light, #E5E7EB);
+}
+
+.lineup-preview-container img,
+.tactical-board-preview img {
+  width: 100%;
+  max-width: 100%;
+  height: auto;
+  display: block;
+  border-radius: 12px;
+  object-fit: contain;
+}
+
+/* ─── GRIDS RESPONSIVOS PARA MÓVIL ─────────────────────────────────────────── */
+@media (max-width: 480px) {
+  .exercises-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .diagram-legend {
+    gap: 6px;
+  }
+
+  .legend-item {
+    font-size: 11px;
+  }
+
+  /* Imágenes de ejercicios en modo lista vertical */
+  .exercise-img-wrapper img {
+    max-height: 200px;
+  }
+}
+
+@media (max-width: 768px) {
+  .exercises-grid {
+    grid-template-columns: 1fr;
+  }
+}
+

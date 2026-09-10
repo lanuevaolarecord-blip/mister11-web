@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 // ─── FIELD VIEW PER SPACE ────────────────────────────────────────────────────
@@ -136,14 +136,25 @@ const ExerciseDiagram = ({ espacio, jugadores, resultText }) => {
 
   const { attackers, defenders, goalkeeper } = getPositions(jugadores, withGoalkeeper);
 
-  useEffect(() => {
+  const draw = useCallback(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-    const W = canvas.offsetWidth || 600;
-    const H = 300;
-    canvas.width = W;
-    canvas.height = H;
+
+    // Use the parent container's width for perfect containment
+    const container = canvas.parentElement;
+    const W = container ? Math.floor(container.clientWidth) : (canvas.clientWidth || 320);
+    const H = Math.round(W * 0.5); // 2:1 aspect ratio
+    if (W < 10) return;
+
+    // Set both canvas attributes AND CSS size (prevents blurry/oversized canvas on mobile)
+    const dpr = window.devicePixelRatio || 1;
+    canvas.width = W * dpr;
+    canvas.height = H * dpr;
+    canvas.style.width = `${W}px`;
+    canvas.style.height = `${H}px`;
+
     const ctx = canvas.getContext('2d');
+    ctx.scale(dpr, dpr);
 
     drawField(ctx, W, H, config.view, config.color);
 
@@ -157,7 +168,6 @@ const ExerciseDiagram = ({ espacio, jugadores, resultText }) => {
       drawPlayer(ctx, goalkeeper.rx * W, goalkeeper.ry * H, 'P', '#D4A843');
     }
 
-    // Auto movement arrows
     if (attackers.length >= 2) {
       const a0 = attackers[0], a1 = attackers[1];
       drawArrow(ctx, a0.rx * W, a0.ry * H, a1.rx * W + W * 0.08, a1.ry * H + H * 0.1);
@@ -172,6 +182,20 @@ const ExerciseDiagram = ({ espacio, jugadores, resultText }) => {
       drawArrow(ctx, d0.rx * W, d0.ry * H, (d0.rx + d1.rx) / 2 * W, (d0.ry + d1.ry) / 2 * H);
     }
   }, [espacio, jugadores, config, attackers, defenders, goalkeeper]);
+
+  useEffect(() => {
+    draw();
+
+    // Redraw whenever the container resizes (handles mobile orientation changes, split view, etc.)
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const container = canvas.parentElement;
+    if (!container || typeof ResizeObserver === 'undefined') return;
+
+    const ro = new ResizeObserver(() => { draw(); });
+    ro.observe(container);
+    return () => ro.disconnect();
+  }, [draw]);
 
   return (
     <div className="exercise-diagram">
@@ -193,7 +217,14 @@ const ExerciseDiagram = ({ espacio, jugadores, resultText }) => {
         </span>
       </div>
 
-      <canvas ref={canvasRef} className="diagram-canvas" />
+      {/* Wrapper with overflow:hidden prevents canvas from breaking layout */}
+      <div style={{ width: '100%', overflow: 'hidden', borderRadius: '10px' }}>
+        <canvas
+          ref={canvasRef}
+          className="diagram-canvas"
+          style={{ display: 'block', width: '100%', maxWidth: '100%' }}
+        />
+      </div>
 
       <div className="diagram-actions">
         <button className="btn-outline" onClick={() => navigate('/pizarra')}>
@@ -205,3 +236,4 @@ const ExerciseDiagram = ({ espacio, jugadores, resultText }) => {
 };
 
 export default ExerciseDiagram;
+

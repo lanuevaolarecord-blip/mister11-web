@@ -11,6 +11,7 @@
   bottom: 0 !important;
   width: 100vw !important;
   height: 100vh !important;
+  height: 100dvh !important;
   z-index: 1000000 !important;
   display: flex !important;
   flex-direction: column !important;
@@ -272,6 +273,7 @@
 .main-preview-image {
   max-width: 95vw;
   max-height: calc(100vh - 140px);
+  max-height: calc(100dvh - 140px);
   width: auto;
   height: auto;
   object-fit: contain;

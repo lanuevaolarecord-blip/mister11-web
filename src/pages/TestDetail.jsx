@@ -135,7 +135,7 @@ const TestDetail = ({ test, players, onClose, onSave }) => {
 
   return (
     <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-content large" onClick={e => e.stopPropagation()} style={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - 56px)', maxHeight: 'calc(100vh - 56px)', overflow: 'hidden', backgroundColor: '#FAF8F5' }}>
+      <div className="modal-content large" onClick={e => e.stopPropagation()} style={{ display: 'flex', flexDirection: 'column', height: 'calc(100dvh - 56px)', maxHeight: 'calc(100dvh - 56px)', overflow: 'hidden', backgroundColor: '#FAF8F5' }}>
         <div className="modal-header" style={{ flexShrink: 0 }}>
           <div style={{display: 'flex', alignItems: 'center', gap: '15px'}}>
             <span className="t-cat" style={{backgroundColor: 'var(--accent-gold)', color: '#fff'}}>{displayCat}</span>

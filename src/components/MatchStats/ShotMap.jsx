@@ -122,8 +122,8 @@ export const ShotMap = ({
         right: 0,
         bottom: 0,
         width: '100vw',
-        height: '100vh',
-        maxHeight: '100vh',
+        height: '100dvh',
+        maxHeight: '100dvh',
         background: '#0b1712',
         padding: '12px 16px',
         overflow: 'hidden',
@@ -221,7 +221,7 @@ export const ShotMap = ({
           viewBox="0 0 68 55"
           className="half-pitch-svg"
           preserveAspectRatio="none"
-          style={isFullscreen ? { maxHeight: 'calc(100vh - 200px)', width: 'auto', maxWidth: '100%', objectFit: 'contain' } : {}}
+          style={isFullscreen ? { maxHeight: 'calc(100dvh - 200px)', width: 'auto', maxWidth: '100%', objectFit: 'contain' } : {}}
         >
           {/* Fondo del campo */}
           <rect x="0" y="0" width="68" height="55" fill="#1b4d2e" />

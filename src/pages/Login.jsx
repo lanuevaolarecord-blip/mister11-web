@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { signInWithGoogle, signInWithEmail, registerWithEmail, resetPassword } from '../firebaseConfig';
 import { useAuth } from '../context/AuthContext';
 import { usePWA } from '../hooks/usePWA';
@@ -25,6 +25,20 @@ const Login = () => {
   
   const urlParams = new URLSearchParams(window.location.search);
   const selectedPlan = urlParams.get('plan');
+
+  useEffect(() => {
+    if (typeof window === 'undefined' || !window.visualViewport) return;
+    const handleResize = () => {
+      const active = document.activeElement;
+      if (active && ['INPUT', 'SELECT', 'TEXTAREA', 'BUTTON'].includes(active.tagName)) {
+        setTimeout(() => {
+          active.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }, 120);
+      }
+    };
+    window.visualViewport.addEventListener('resize', handleResize);
+    return () => window.visualViewport.removeEventListener('resize', handleResize);
+  }, []);
 
   const handleGoogleLogin = async () => {
     setIsLoading(true);

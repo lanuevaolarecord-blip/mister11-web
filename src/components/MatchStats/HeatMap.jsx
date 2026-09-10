@@ -140,8 +140,8 @@ export const HeatMap = ({
         right: 0,
         bottom: 0,
         width: '100vw',
-        height: '100vh',
-        maxHeight: '100vh',
+        height: '100dvh',
+        maxHeight: '100dvh',
         background: '#0b1712',
         padding: '12px 16px',
         overflow: 'hidden',
@@ -220,7 +220,7 @@ export const HeatMap = ({
             viewBox="0 0 105 68"
             className="football-pitch-svg"
             preserveAspectRatio="none"
-            style={isFullscreen ? { maxHeight: 'calc(100vh - 120px)', width: 'auto', maxWidth: '100%', objectFit: 'contain' } : {}}
+            style={isFullscreen ? { maxHeight: 'calc(100dvh - 120px)', width: 'auto', maxWidth: '100%', objectFit: 'contain' } : {}}
           >
             <rect x="0" y="0" width="105" height="68" fill="#1b4d2e" />
             {Array.from({ length: 9 }).map((_, i) => (

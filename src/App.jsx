@@ -141,7 +141,7 @@ function App() {
   // 4. Mientras onAuthStateChanged no ha respondido todavía, muestra pantalla de carga con Watchdog de rescate
   if (loading && !bypassLoading) {
     return (
-      <div className="global-loader" style={{ backgroundColor: '#111B21', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
+      <div className="global-loader" style={{ backgroundColor: '#111B21', minHeight: '100dvh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
         <div className="loader-content" style={{ maxWidth: '420px', width: '100%', textAlign: 'center' }}>
           <img src="/logo_mister11.png" alt="Míster11" className="loader-logo-img" style={{ height: '72px', marginBottom: '20px' }} />
           <div className="spinner"></div>

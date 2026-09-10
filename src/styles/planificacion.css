@@ -5,6 +5,7 @@
 /* ── PAGE WRAPPER ───────────────────────────────────── */
 .plan-page {
   min-height: 100vh;
+  min-height: 100dvh;
   background: var(--bg-app, #F5F0E8);
   color: var(--text-primary, #1B3A2D);
   font-family: var(--font-body, 'Inter', sans-serif);

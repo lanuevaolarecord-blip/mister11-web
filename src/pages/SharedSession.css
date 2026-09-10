@@ -1,5 +1,6 @@
 .shared-session-container {
   min-height: 100vh;
+  min-height: 100dvh;
   background-color: #0d1612;
   color: #f8fafc;
   display: flex;

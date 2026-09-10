@@ -1,5 +1,6 @@
 .shared-plan-page {
   min-height: 100vh;
+  min-height: 100dvh;
   background-color: #f8fafc;
   color: #1e293b;
   display: flex;
@@ -198,6 +199,7 @@
 .shared-plan-loader,
 .shared-plan-error-page {
   min-height: 100vh;
+  min-height: 100dvh;
   display: flex;
   flex-direction: column;
   align-items: center;

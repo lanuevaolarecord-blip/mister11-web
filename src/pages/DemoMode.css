@@ -2,6 +2,7 @@
 
 .demo-container {
   min-height: 100vh;
+  min-height: 100dvh;
   background: #f0f4f0;
   display: flex;
   flex-direction: column;

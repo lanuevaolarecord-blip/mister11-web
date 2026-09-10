@@ -55,3 +55,7 @@ mister11_registro_digital/
 # Service Account Key (Firebase Admin)
 serviceAccountKey.json
 *serviceAccount*.json
+
+# Playwright
+test-results/
+playwright-report/

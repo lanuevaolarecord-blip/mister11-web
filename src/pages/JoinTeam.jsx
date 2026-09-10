@@ -45,6 +45,20 @@ const JoinTeam = () => {
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
+    if (typeof window === 'undefined' || !window.visualViewport) return;
+    const handleResize = () => {
+      const active = document.activeElement;
+      if (active && ['INPUT', 'SELECT', 'TEXTAREA', 'BUTTON'].includes(active.tagName)) {
+        setTimeout(() => {
+          active.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }, 120);
+      }
+    };
+    window.visualViewport.addEventListener('resize', handleResize);
+    return () => window.visualViewport.removeEventListener('resize', handleResize);
+  }, []);
+
+  useEffect(() => {
     if (codeParam) {
       handleVerifyCode(codeParam);
     }

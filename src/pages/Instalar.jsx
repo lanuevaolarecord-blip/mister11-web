@@ -26,7 +26,7 @@ const Instalar = () => {
   }, [t]);
 
   return (
-    <div className="admin-container" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh', textAlign: 'center', padding: '20px' }}>
+    <div className="admin-container" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100dvh', textAlign: 'center', padding: '20px' }}>
       <div className="settings-card" style={{ maxWidth: '500px', width: '100%' }}>
         <img src="/logo_mister11.png" alt="Míster11" width="120" style={{ marginBottom: '20px' }} />
         <h1 style={{ color: '#ffffff', marginBottom: '10px' }}>{t('install.title')}</h1>

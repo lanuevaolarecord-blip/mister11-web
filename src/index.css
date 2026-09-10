@@ -89,21 +89,32 @@ html, body, #root, .app-container, .app-layout {
   padding: 0;
 }
 
-html, body, #root {
-  height: 100%;
+html, body {
+  min-height: 100vh;
+  min-height: 100dvh;
   background-color: var(--bg-primary);
+  overflow-x: hidden;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 #root {
+  min-height: 100vh;
   min-height: 100dvh;
-  height: 100dvh;
   display: flex;
   flex-direction: column;
   overflow-x: hidden !important;
-  overflow-y: hidden;
+  width: 100%;
 }
 
-/* En móvil, eliminar scroll fijado y asegurar ancho correcto */
+/* Scroll Lock canónico para modales y overlays */
+body.scroll-locked,
+html.scroll-locked {
+  overflow: hidden !important;
+  touch-action: none;
+}
+
+/* En móvil, asegurar comportamiento elástico correcto */
 @media (max-width: 768px) {
   #root {
     padding: 0;
@@ -114,7 +125,8 @@ html, body, #root {
     overflow-x: hidden;
     overflow-y: auto;
     width: 100%;
-    height: 100%;
+    min-height: 100vh;
+    min-height: 100dvh;
   }
 }
 
@@ -171,6 +183,7 @@ a {
 /* Layout Core Classes */
 .app-container {
   display: flex;
+  height: 100vh;
   height: 100dvh; /* dvh para adaptarse a barras nativas Android */
   width: 100%;
   overflow: hidden;
@@ -187,7 +200,9 @@ a {
   padding: 20px 0 calc(24px + var(--sab));
   border-right: 1px solid rgba(255, 255, 255, 0.1);
   color: #FFFFFF;
+  height: 100vh;
   height: 100dvh; /* dvh en lugar de vh */
+  max-height: 100vh;
   max-height: 100dvh;
   overflow-y: auto;
   overflow-x: hidden;
@@ -305,6 +320,7 @@ a {
   flex: 1;
   display: flex;
   flex-direction: column;
+  height: 100vh;
   height: 100dvh;
   overflow: hidden;
   background-color: var(--bg-primary);
@@ -702,6 +718,7 @@ input::placeholder, textarea::placeholder {
   left: 0;
   width: 100vw;
   height: 100vh;
+  height: 100dvh;
   background: rgba(13, 26, 45, 0.4);
   backdrop-filter: blur(5px);
   -webkit-backdrop-filter: blur(5px);
@@ -1379,6 +1396,7 @@ button, .nav-item, input, select, .icon-btn, .topbar-btn, .tool-icon-btn {
   bottom: 0 !important;
   width: 100vw !important;
   height: 100vh !important;
+  height: 100dvh !important;
   background: rgba(0, 0, 0, 0.75) !important;
   backdrop-filter: blur(8px) !important;
   -webkit-backdrop-filter: blur(8px) !important;

@@ -3230,7 +3230,7 @@ const PizarraTactica = () => {
           {fullscreenMode && showTeamsDrawer && (
             <div 
               className="absolute left-[90px] top-[80px] w-[320px] h-[calc(100vh-120px)] bg-white/95 backdrop-blur-md rounded-2xl shadow-2xl border border-gray-200 z-[1020] overflow-y-auto p-4 text-black fullscreen-floating-panel-left"
-              style={{ zIndex: 10020, pointerEvents: 'auto' }}
+              style={{ zIndex: 10020, pointerEvents: 'auto', maxHeight: 'calc(100dvh - 120px)' }}
               onClick={(e) => e.stopPropagation()}
               onMouseDown={(e) => e.stopPropagation()}
               onMouseUp={(e) => e.stopPropagation()}
@@ -3250,7 +3250,7 @@ const PizarraTactica = () => {
           {fullscreenMode && showMatsDrawer && (
             <div 
               className="absolute right-[90px] top-[140px] w-[320px] h-[calc(100vh-180px)] bg-white/95 backdrop-blur-md rounded-2xl shadow-2xl border border-gray-200 z-[1020] overflow-y-auto p-4 text-black fullscreen-floating-panel-right"
-              style={{ zIndex: 10020, pointerEvents: 'auto' }}
+              style={{ zIndex: 10020, pointerEvents: 'auto', maxHeight: 'calc(100dvh - 180px)' }}
               onClick={(e) => e.stopPropagation()}
               onMouseDown={(e) => e.stopPropagation()}
               onMouseUp={(e) => e.stopPropagation()}

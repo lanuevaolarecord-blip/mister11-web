@@ -83,7 +83,18 @@ export const getUnifiedMatchEvents = (match = {}) => {
     const mA = parseInt(a.minute || a.minuto || a.min || 0, 10);
     const mB = parseInt(b.minute || b.minuto || b.min || 0, 10);
     if (mA !== mB) return mA - mB;
-    return (a.timestamp || '').localeCompare(b.timestamp || '');
+    // Normalize timestamp: Firestore Timestamps have .toMillis() or .seconds, Dates have .getTime(), numbers/strings are used directly
+    const toMs = (ts) => {
+      if (!ts) return 0;
+      if (typeof ts.toMillis === 'function') return ts.toMillis();
+      if (typeof ts.seconds === 'number') return ts.seconds * 1000;
+      if (typeof ts._seconds === 'number') return ts._seconds * 1000;
+      if (ts instanceof Date) return ts.getTime();
+      if (typeof ts === 'number') return ts;
+      if (typeof ts === 'string') return new Date(ts).getTime() || 0;
+      return 0;
+    };
+    return toMs(a.timestamp) - toMs(b.timestamp);
   });
 
   return merged;

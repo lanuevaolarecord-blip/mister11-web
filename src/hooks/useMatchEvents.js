@@ -13,6 +13,17 @@ import { t } from '../i18n/index.js';
  * 3. Las sustituciones validan que el que SALE esté en el campo y el que ENTRA esté en el banquillo y no duplicado.
  * 4. Tras confirmar un cambio, se actualiza el estado de la alineación y se sincroniza en Firestore.
  */
+const toTimestampMs = (ts) => {
+  if (!ts) return 0;
+  if (typeof ts.toMillis === 'function') return ts.toMillis();
+  if (typeof ts.seconds === 'number') return ts.seconds * 1000;
+  if (typeof ts._seconds === 'number') return ts._seconds * 1000;
+  if (ts instanceof Date) return ts.getTime();
+  if (typeof ts === 'number') return ts;
+  if (typeof ts === 'string') return new Date(ts).getTime() || 0;
+  return 0;
+};
+
 export const useMatchEvents = (matchData, setMatchData, players = [], updateMatch) => {
   const addEvent = useCallback((type, playerId, playerName, minute, additional = {}) => {
     if (isMatchLocked(matchData)) {
@@ -39,7 +50,7 @@ export const useMatchEvents = (matchData, setMatchData, players = [], updateMatc
         const mA = parseInt(a.minute, 10) || 0;
         const mB = parseInt(b.minute, 10) || 0;
         if (mA !== mB) return mA - mB;
-        return (a.timestamp || '').localeCompare(b.timestamp || '');
+        return toTimestampMs(a.timestamp) - toTimestampMs(b.timestamp);
       });
 
       // Marcador DERIVADO de los eventos de gol
@@ -96,7 +107,7 @@ export const useMatchEvents = (matchData, setMatchData, players = [], updateMatc
         const mA = parseInt(a.minute, 10) || 0;
         const mB = parseInt(b.minute, 10) || 0;
         if (mA !== mB) return mA - mB;
-        return (a.timestamp || '').localeCompare(b.timestamp || '');
+        return toTimestampMs(a.timestamp) - toTimestampMs(b.timestamp);
       });
 
       // Marcador DERIVADO
@@ -234,7 +245,7 @@ export const useMatchEvents = (matchData, setMatchData, players = [], updateMatc
         const mA = parseInt(a.minute, 10) || 0;
         const mB = parseInt(b.minute, 10) || 0;
         if (mA !== mB) return mA - mB;
-        return (a.timestamp || '').localeCompare(b.timestamp || '');
+        return toTimestampMs(a.timestamp) - toTimestampMs(b.timestamp);
       });
 
       const nextData = {

@@ -929,19 +929,19 @@ const LiveStats = ({
                   onClick={onFinishMatch}
                   className="livestats-btn-timer"
                   style={{
-                    backgroundColor: isMatchFinished ? '#15803D' : '#22C55E',
+                    backgroundColor: isMatchFinished ? '#1B3A2D' : '#4CAF7D',
                     color: '#FFFFFF',
                     fontWeight: 'bold',
                     fontSize: '11px',
                     padding: '8px 12px',
-                    minHeight: '40px',
+                    minHeight: '48px',
                     borderRadius: '8px',
-                    border: 'none',
+                    border: isMatchFinished ? '1.5px solid #4CAF7D' : 'none',
                     cursor: 'pointer',
                     display: 'flex',
                     alignItems: 'center',
                     gap: '4px',
-                    boxShadow: '0 2px 8px rgba(34, 197, 94, 0.4)'
+                    boxShadow: '0 2px 8px rgba(76, 175, 125, 0.3)'
                   }}
                   title={isMatchFinished ? (isEn ? 'Match finished' : 'Partido finalizado') : (isEn ? 'Finish match' : 'Finalizar partido')}
                 >

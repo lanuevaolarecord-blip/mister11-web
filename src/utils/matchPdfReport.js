@@ -1,6 +1,6 @@
 import { savePdfUniversal } from './pdfGenerator';
 import { getEffectiveLanguage } from '../i18n/translations';
-import { getUnifiedMatchEvents } from './minutesEngine';
+import { getUnifiedMatchEvents, calculateMinutesFromEvents, getEffectiveMatchDuration } from './minutesEngine';
 import {
   drawPdfFooter,
   imageUrlToBase64,
@@ -267,7 +267,7 @@ export const generateMatchPdfReport = async ({
     doc.setFontSize(8.5);
     doc.setFont('helvetica', 'normal');
     doc.setTextColor(100, 116, 139);
-    const durationMin = matchData.actaOficial?.totalDuration || matchData.duration || 90;
+    const durationMin = getEffectiveMatchDuration(matchData) || matchData.actaOficial?.totalDuration || matchData.duration || 90;
     const venueStr = cleanPdfText(matchData.field || matchData.lugar || (isEn ? 'Standard Pitch' : 'Campo Oficial'));
     const mvpStr = cleanPdfText(matchData.mvp || 'N/A');
     doc.text(
@@ -293,14 +293,51 @@ export const generateMatchPdfReport = async ({
       ...Object.keys(actualMap)
     ])];
 
+    const unifiedMatchEvents = getUnifiedMatchEvents({
+      ...matchData,
+      events: safeEvents,
+      liveStatsEvents: safeEvents
+    });
+
     const squadRoster = allCalledIds.map((pid) => {
       const pObj = players.find((pl) => String(pl.id) === String(pid)) || { name: 'Jugador', number: '-' };
       const actual = actualMap[pid] || {};
       const isStarter = titularesIds.includes(String(pid));
       const statusKey = actual.status || (isStarter ? 'presente' : 'sin_registro');
-      const minutesVal = typeof actual.minutes === 'number' ? actual.minutes : (isStarter ? durationMin : 0);
+      const isManual = actual.minutesOverride !== undefined && actual.minutesOverride !== null && actual.minutesOverride !== '';
+
+      let minutesVal = null;
+      // 1) Prioridad: Override manual del míster en el acta
+      if (isManual) {
+        const parsed = parseInt(actual.minutesOverride, 10);
+        if (!isNaN(parsed)) minutesVal = parsed;
+      }
+
+      // 2) Si no hay override manual, calcular con el motor canónico exacto como en el Acta de la app
+      if (minutesVal === null) {
+        if (typeof actual.minutes === 'number' && actual.minutes > 0 && matchData.actaOficial?.closed) {
+          minutesVal = actual.minutes;
+        } else {
+          const computed = calculateMinutesFromEvents(
+            pid,
+            unifiedMatchEvents,
+            titularesIds,
+            suplentesIds,
+            durationMin,
+            null,
+            statusKey,
+            actual.lateMin ?? null,
+            matchData.tarjetasList || []
+          );
+          minutesVal = computed.minutes;
+        }
+      }
+
+      if (typeof minutesVal !== 'number' || isNaN(minutesVal)) {
+        minutesVal = isStarter ? durationMin : 0;
+      }
+
       const ratingVal = actual.rating ?? matchData?.playerRatings?.[pid] ?? matchData?.ratings?.[pid] ?? '-';
-      const isManual = actual.minutesOverride !== undefined && actual.minutesOverride !== null;
 
       const rsvpObj = matchData.actaOficial?.rsvp?.[pid];
       let rsvpText = '-';

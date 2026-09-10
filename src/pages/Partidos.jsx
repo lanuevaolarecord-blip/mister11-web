@@ -27,7 +27,8 @@ import MatchErrorBoundary from '../components/MatchErrorBoundary';
 import './Partidos.css';
 import { normalizeText } from '../utils/normalizeInput';
 import { normalizeLineup, applyLineupChange, formatMatchDateSafe } from '../utils/lineupEngine';
-import { buildSmartMatchSheetActual, getEffectiveMatchDuration, isMatchLocked } from '../utils/minutesEngine';
+import { buildSmartMatchSheetActual, getEffectiveMatchDuration, isMatchLocked, getUnifiedMatchEvents, calculateMinutesFromEvents } from '../utils/minutesEngine';
+import { calcMixedRating, deriveStatsFromEvents } from '../utils/ratingFormula';
 import { sanitizeMatchData } from '../utils/sanitizeMatchData';
 import { showToast } from '../utils/toast';
 import { SpellCheckedTextarea } from '../components/ui/SpellCheckedTextarea';
@@ -132,6 +133,10 @@ const Partidos = () => {
   // Edit State
   const [editTab, setEditTab] = useState('PRE-PARTIDO');
   const [matchData, setMatchData] = useState({});
+  const matchDataRef = useRef(matchData);
+  useEffect(() => {
+    matchDataRef.current = matchData;
+  }, [matchData]);
   const [calledPlayers, setCalledPlayers] = useState([]);
   const [draggingIdx, setDraggingIdx] = useState(null);
   const pitchRef = useRef(null);
@@ -213,15 +218,16 @@ const Partidos = () => {
 
   const handleTabChange = useCallback(async (tab) => {
     setEditTab(tab);
-    if (matchData.id) {
+    const current = matchDataRef.current || matchData;
+    if (current?.id) {
       try {
-        localStorage.setItem(`mister11_last_edit_tab_${matchData.id}`, tab);
-        await updateMatch(matchData.id, { ...matchData, convocados: calledPlayers });
+        localStorage.setItem(`mister11_last_edit_tab_${current.id}`, tab);
+        await updateMatch(current.id, { ...current, convocados: calledPlayers });
       } catch (err) {
         console.error("Error auto-saving match on tab change:", err);
       }
     }
-  }, [matchData, calledPlayers, updateMatch]);
+  }, [calledPlayers, updateMatch]);
 
   useEffect(() => {
     const handleFullscreenChange = () => {
@@ -318,20 +324,30 @@ const Partidos = () => {
         : (isEnLanguage ? '2nd Half' : '2ª Parte'));
 
   const handleFinishMatch = useCallback(async () => {
-    if (!matchData?.id) return;
+    const currentMatch = matchDataRef.current || matchData;
+    if (!currentMatch?.id) return;
 
     // Si ya está terminado, permitir reabrir o navegar directamente a post-partido
-    if (matchData.status === 'Terminado') {
+    if (currentMatch.status === 'Terminado') {
       const wantsReopen = window.confirm(
         isEnLanguage
           ? 'This match is already finished. Do you want to reopen it to record more events or edit data?'
           : 'Este partido ya está finalizado. ¿Deseas reabrirlo para registrar más eventos o corregir datos?'
       );
       if (wantsReopen) {
-        const reopened = { ...matchData, status: 'Pendiente' };
+        const reopened = {
+          ...currentMatch,
+          status: 'Pendiente',
+          actaOficial: {
+            ...(currentMatch.actaOficial || {}),
+            closed: false
+          }
+        };
         setMatchData(reopened);
+        matchDataRef.current = reopened;
+        syncMatchState(currentMatch.id, { status: 'Pendiente' });
         try {
-          await updateMatch(matchData.id, reopened);
+          await updateMatch(currentMatch.id, reopened);
           showToast(isEnLanguage ? 'Match reopened.' : 'Partido reabierto.', 'info');
         } catch (e) {
           console.error(e);
@@ -344,17 +360,18 @@ const Partidos = () => {
 
     const confirmFinish = window.confirm(
       isEnLanguage
-        ? 'Are you sure you want to finish the match? Official scores, timer, sheets, and player statistics will be consolidated.'
-        : '¿Deseas dar por finalizado el partido? Se registrará el resultado oficial, se cerrará el cronómetro y se consolidarán las estadísticas y el acta.'
+        ? 'Are you sure you want to finish the match? The match will be closed officially, timer stopped, and official sheet and player minutes consolidated.'
+        : '¿Deseas dar por finalizado el partido? Se cerrará oficialmente el encuentro, se detendrá el cronómetro y se consolidarán los minutos reales y el acta oficial.'
     );
     if (!confirmFinish) return;
 
-    const finalSec = Number.isFinite(matchSeconds) ? matchSeconds : (matchData.finalSeconds || 0);
+    const finalSec = Number.isFinite(matchSeconds) ? matchSeconds : (currentMatch.finalSeconds || 0);
     finishMatch(finalSec);
     const finalClockStr = formatMatchTime(finalSec);
+    syncMatchState(currentMatch.id, { status: 'Terminado', finalSeconds: finalSec, finalClock: finalClockStr, elapsedSeconds: finalSec });
 
-    const nominalDuration = parseInt(matchData.duration || matchData.duracion || 90, 10);
-    let durationType = matchData.durationType || 'completo';
+    const nominalDuration = parseInt(currentMatch.duration || currentMatch.duracion || 90, 10);
+    let durationType = currentMatch.durationType || 'completo';
 
     // Si el partido finalizó antes de tiempo (ej. 39:30 en un partido de 90 min)
     if (finalSec > 0 && finalSec < (nominalDuration - 3) * 60) {
@@ -368,36 +385,38 @@ const Partidos = () => {
       durationType = confirmEarly ? 'anticipado' : 'completo';
     }
 
-    const allEvents = effectiveLiveEvents && effectiveLiveEvents.length > 0
-      ? effectiveLiveEvents
-      : (matchData.liveStatsEvents || matchData.events || []);
+    const allEvents = getUnifiedMatchEvents({
+      ...currentMatch,
+      events: effectiveLiveEvents && effectiveLiveEvents.length > 0 ? effectiveLiveEvents : (currentMatch.events || []),
+      liveStatsEvents: effectiveLiveEvents && effectiveLiveEvents.length > 0 ? effectiveLiveEvents : (currentMatch.liveStatsEvents || [])
+    });
 
     const effectiveDuration = getEffectiveMatchDuration({
-      ...matchData,
+      ...currentMatch,
       status: 'Terminado',
       finalSeconds: finalSec,
       finalClock: finalClockStr,
       durationType,
     });
 
-    const currentActual = matchData.actaOficial?.actual || {};
-    const rsvpMap = matchData.playerRsvp || {};
+    const currentActual = currentMatch.actaOficial?.actual || {};
+    const rsvpMap = currentMatch.playerRsvp || {};
 
-    const rawTit = (Array.isArray(matchData.titulares) && matchData.titulares.length > 0)
-      ? matchData.titulares
+    const rawTit = (Array.isArray(currentMatch.titulares) && currentMatch.titulares.length > 0)
+      ? currentMatch.titulares
       : (calledPlayers || []).slice(0, 11);
-    const rawSup = (Array.isArray(matchData.suplentes) && matchData.suplentes.length > 0)
-      ? matchData.suplentes
+    const rawSup = (Array.isArray(currentMatch.suplentes) && currentMatch.suplentes.length > 0)
+      ? currentMatch.suplentes
       : (calledPlayers || []).slice(11, 18);
-    const rawConv = (Array.isArray(matchData.convocados) && matchData.convocados.length > 0)
-      ? matchData.convocados
+    const rawConv = (Array.isArray(currentMatch.convocados) && currentMatch.convocados.length > 0)
+      ? currentMatch.convocados
       : (calledPlayers || []);
 
     const norm = normalizeLineup(rawTit, rawSup, rawConv);
 
     const smartActual = buildSmartMatchSheetActual(
       {
-        ...matchData,
+        ...currentMatch,
         status: 'Terminado',
         finalSeconds: finalSec,
         finalClock: finalClockStr,
@@ -414,8 +433,41 @@ const Partidos = () => {
       { preserveManual: true }
     );
 
+    // D1: Calcular y asignar notas individuales y métricas GK
+    const gkStatsMap = {};
+    Object.entries(smartActual).forEach(([pid, act]) => {
+      if (act && (act.minutes > 0 || act.minutesOverride > 0)) {
+        const playerObj = (players || []).find(p => String(p.id) === String(pid));
+        const role = playerObj?.position || playerObj?.posicion || null;
+        const stats = deriveStatsFromEvents(pid, allEvents, role);
+
+        if (!act.rating && !currentMatch?.playerRatings?.[pid] && !currentMatch?.ratings?.[pid]) {
+          const { mixedRating } = calcMixedRating(stats, act.attitude || 3);
+          act.rating = mixedRating;
+        }
+
+        if (role === 'POR' || stats.isGoalkeeper) {
+          const saves = stats.saves || 0;
+          const conceded = stats.conceded || 0;
+          const totalShots = saves + conceded;
+          const savePct = totalShots > 0 ? Math.round((saves / totalShots) * 100) : 0;
+          gkStatsMap[pid] = {
+            saves,
+            conceded,
+            cleanSheet: stats.cleanSheet ? 1 : 0,
+            penaltySaves: stats.penaltySaves || 0,
+            claims: stats.claims || 0,
+            errorGoal: stats.errorGoal || 0,
+            savePercentage: savePct,
+            rating: act.rating || 6.0
+          };
+        }
+      }
+    });
+
+    const nowIso = new Date().toISOString();
     const updated = { 
-      ...matchData, 
+      ...currentMatch, 
       status: 'Terminado',
       finalClock: finalClockStr,
       finalSeconds: finalSec,
@@ -425,25 +477,31 @@ const Partidos = () => {
       suplentes: norm.suplentes,
       convocados: norm.convocados,
       liveStatsEvents: allEvents,
+      events: allEvents,
       goalsFor: derivedGoalsFor,
       goalsAgainst: derivedGoalsAgainst,
       goleadoresList: derivedGoleadores,
       tarjetasList: derivedTarjetas,
       actaOficial: {
-        ...(matchData.actaOficial || {}),
+        ...(currentMatch.actaOficial || {}),
         actual: smartActual,
-        closed: matchData.actaOficial?.closed || false,
+        closed: true,
+        closedAt: currentMatch.actaOficial?.closedAt || nowIso,
+        closedBy: currentMatch.actaOficial?.closedBy || user?.uid || 'staff',
+        closedByName: currentMatch.actaOficial?.closedByName || user?.displayName || 'Staff',
         totalDuration: effectiveDuration
+      },
+      gkStats: {
+        ...(currentMatch.gkStats || {}),
+        ...gkStatsMap
       }
     };
 
     // Limpiar campos undefined/Timestamp para garantizar compatibilidad con Firestore
-    // JSON.parse/stringify falla con objetos Timestamp {seconds, nanoseconds}
     const deepClean = (obj) => {
       if (obj === null || obj === undefined) return null;
       if (typeof obj !== 'object') return obj;
       if (Array.isArray(obj)) return obj.map(deepClean).filter(v => v !== undefined);
-      // Detectar Firestore Timestamp serializado y convertir a ISO string
       if (obj.seconds !== undefined && obj.nanoseconds !== undefined) {
         try { return new Date(obj.seconds * 1000).toISOString(); } catch { return null; }
       }
@@ -457,13 +515,15 @@ const Partidos = () => {
     };
     const cleanUpdated = deepClean(updated);
     setMatchData(cleanUpdated);
+    matchDataRef.current = cleanUpdated;
 
     try {
-      await updateMatch(matchData.id, cleanUpdated);
+      await updateMatch(currentMatch.id, cleanUpdated);
+      syncMatchState(currentMatch.id, cleanUpdated);
       showToast(
         isEnLanguage
-          ? '🏁 Match finished successfully. Stats and official sheet saved.'
-          : '🏁 Partido finalizado con éxito. Datos y estadísticas consolidadas.',
+          ? '🏁 Match officially finished and closed. Stats and official sheet consolidated.'
+          : '🏁 Partido finalizado y cerrado con éxito. Estadísticas y acta oficial consolidadas.',
         'success'
       );
       setEditTab('POST-PARTIDO');
@@ -471,7 +531,7 @@ const Partidos = () => {
       console.error("Error al finalizar partido:", err);
       showToast(isEnLanguage ? '❌ Error saving finalization: ' + (err.message || '') : '❌ Error al guardar finalización: ' + (err.message || ''), 'error');
     }
-  }, [matchData, matchSeconds, finishMatch, formatMatchTime, updateMatch, effectiveLiveEvents, calledPlayers, user, derivedGoalsFor, derivedGoalsAgainst, derivedGoleadores, derivedTarjetas, isEnLanguage]);
+  }, [matchData, matchSeconds, finishMatch, formatMatchTime, syncMatchState, updateMatch, effectiveLiveEvents, calledPlayers, players, user, derivedGoalsFor, derivedGoalsAgainst, derivedGoleadores, derivedTarjetas, isEnLanguage]);
 
   const handleAddLiveEvent = useCallback(async (type, explicitHalf, extraData = {}) => {
     if (addLiveEvent) {
@@ -1086,7 +1146,8 @@ const Partidos = () => {
   };
 
   const handleSaveMatch = async () => {
-    if (!matchData.rival || !matchData.rival.trim()) return alert(isEnLanguage ? "Opponent name is required." : "El nombre del rival es obligatorio.");
+    const current = matchDataRef.current || matchData;
+    if (!current.rival || !current.rival.trim()) return alert(isEnLanguage ? "Opponent name is required." : "El nombre del rival es obligatorio.");
     setIsSaving(true);
     try {
       const norm = normalizeLineup(
@@ -1094,15 +1155,23 @@ const Partidos = () => {
         calledPlayers.slice(11, 18),
         calledPlayers.filter(Boolean)
       );
+      const isFinished = current.status === 'Terminado' || current.actaOficial?.closed === true;
       const dataToSave = { 
-        ...matchData, 
+        ...current, 
+        ...(isFinished ? {
+          status: 'Terminado',
+          actaOficial: {
+            ...(current.actaOficial || {}),
+            closed: true
+          }
+        } : {}),
         titulares: norm.titulares,
         suplentes: norm.suplentes,
         convocados: norm.convocados,
-        liveStatsEvents: effectiveLiveEvents && effectiveLiveEvents.length > 0 ? effectiveLiveEvents : (matchData.liveStatsEvents || [])
+        liveStatsEvents: effectiveLiveEvents && effectiveLiveEvents.length > 0 ? effectiveLiveEvents : (current.liveStatsEvents || [])
       };
-      if (matchData.id) {
-        await updateMatch(matchData.id, dataToSave);
+      if (current.id) {
+        await updateMatch(current.id, dataToSave);
       } else {
         const newId = await addMatch(dataToSave);
         if (newId) setActiveMatchId(newId);
@@ -1176,13 +1245,22 @@ const Partidos = () => {
               </>
             ) : (
               <>
-                {matchData.id && matchData.status !== 'Terminado' && (
+                {matchData.id && (
                   <button
                     className="btn-success flex-1 md:flex-initial px-3 py-2 text-xs md:text-sm"
                     onClick={handleFinishMatch}
-                    style={{ minHeight: '40px', background: '#10B981', color: '#FFFFFF', fontWeight: 'bold' }}
+                    style={{
+                      minHeight: '48px',
+                      background: matchData.status === 'Terminado' ? '#1B3A2D' : '#4CAF7D',
+                      color: '#FFFFFF',
+                      border: matchData.status === 'Terminado' ? '1.5px solid #4CAF7D' : 'none',
+                      borderRadius: '8px',
+                      fontWeight: 'bold',
+                      boxShadow: '0 2px 8px rgba(76, 175, 125, 0.3)'
+                    }}
+                    title={matchData.status === 'Terminado' ? (isGlobalEn ? 'Match finished. Click to review or reopen.' : 'Partido finalizado. Clic para revisar o reabrir.') : (isGlobalEn ? 'Finish and close match' : 'Finalizar y cerrar partido')}
                   >
-                    {isGlobalEn ? '🏁 FINISH MATCH' : '🏁 FINALIZAR PARTIDO'}
+                    {matchData.status === 'Terminado' ? (isGlobalEn ? '✓ MATCH FINISHED' : '✓ PARTIDO TERMINADO') : (isGlobalEn ? '🏁 FINISH MATCH' : '🏁 FINALIZAR PARTIDO')}
                   </button>
                 )}
                 {matchData.id && (
@@ -1867,16 +1945,16 @@ const Partidos = () => {
                         alignItems: 'center',
                         gap: '6px',
                         padding: '10px 16px',
-                        minHeight: '44px',
+                        minHeight: '48px',
                         cursor: 'pointer',
-                        border: 'none',
+                        border: matchData.status === 'Terminado' ? '1.5px solid #4CAF7D' : 'none',
                         borderRadius: '8px',
-                        background: matchData.status === 'Terminado' ? '#15803D' : '#22C55E',
+                        background: matchData.status === 'Terminado' ? '#1B3A2D' : '#4CAF7D',
                         color: '#FFFFFF',
                         fontFamily: 'var(--font-heading)',
                         fontWeight: 'bold',
                         fontSize: '12px',
-                        boxShadow: '0 2px 8px rgba(34, 197, 94, 0.4)'
+                        boxShadow: '0 2px 8px rgba(76, 175, 125, 0.3)'
                       }}
                     >
                       {matchData.status === 'Terminado' ? (isGlobalEn ? '✓ Match Finished' : '✓ Partido Terminado') : (isGlobalEn ? '🏁 Finish Match' : '🏁 Finalizar Partido')}
@@ -2270,16 +2348,16 @@ const Partidos = () => {
                         alignItems: 'center',
                         gap: '6px',
                         padding: '10px 16px',
-                        minHeight: '44px',
+                        minHeight: '48px',
                         cursor: 'pointer',
-                        border: 'none',
+                        border: matchData.status === 'Terminado' ? '1.5px solid #4CAF7D' : 'none',
                         borderRadius: '8px',
-                        background: matchData.status === 'Terminado' ? '#15803D' : '#22C55E',
+                        background: matchData.status === 'Terminado' ? '#1B3A2D' : '#4CAF7D',
                         color: '#FFFFFF',
                         fontFamily: 'var(--font-heading)',
                         fontWeight: 'bold',
                         fontSize: '12px',
-                        boxShadow: '0 2px 8px rgba(34, 197, 94, 0.4)'
+                        boxShadow: '0 2px 8px rgba(76, 175, 125, 0.3)'
                       }}
                     >
                       {matchData.status === 'Terminado' ? (isGlobalEn ? '✓ Match Finished' : '✓ Partido Terminado') : (isGlobalEn ? '🏁 Finish Match' : '🏁 Finalizar Partido')}
@@ -2288,7 +2366,7 @@ const Partidos = () => {
                       type="button"
                       className="btn-save-match"
                       onClick={handleExportPDF}
-                      style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '10px 16px', borderRadius: '8px', cursor: 'pointer', minHeight: '44px' }}
+                      style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '10px 16px', borderRadius: '8px', cursor: 'pointer', minHeight: '48px', background: '#D4A843', color: '#0E1A14', fontWeight: 'bold' }}
                     >
                       📄 {isGlobalEn ? 'Export PDF' : 'Exportar PDF'}
                     </button>
@@ -2362,6 +2440,144 @@ const Partidos = () => {
                           })
                         )}
                       </div>
+                    </div>
+
+                    {/* Tarjeta 3b: Minutos Jugados Reales (Acta Oficial) */}
+                    <div className="post-match-card">
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '8px' }}>
+                        <h4 className="card-section-title" style={{ margin: 0 }}>⏱️ {isGlobalEn ? 'Official Minutes Played' : 'Minutos Jugados Reales'}</h4>
+                        <button
+                          type="button"
+                          onClick={() => setEditTab('ACTA')}
+                          style={{
+                            background: 'transparent',
+                            border: 'none',
+                            color: '#4CAF7D',
+                            fontSize: '11px',
+                            fontWeight: '700',
+                            cursor: 'pointer',
+                            padding: '4px 8px',
+                            borderRadius: '4px'
+                          }}
+                        >
+                          📋 {isGlobalEn ? 'View Sheet' : 'Ver Acta'}
+                        </button>
+                      </div>
+                      <p style={{ fontSize: '11px', color: 'var(--partidos-text-muted)', margin: '4px 0 10px 0' }}>
+                        {isGlobalEn
+                          ? 'Real minutes played calculated from starting XI, substitutions and cards in match sheet.'
+                          : 'Minutos reales calculados según titularidad, sustituciones y tarjetas del acta oficial.'}
+                      </p>
+                      {(() => {
+                        const rawTit = (Array.isArray(matchData.titulares) && matchData.titulares.length > 0)
+                          ? matchData.titulares
+                          : (calledPlayers || []).slice(0, 11);
+                        const rawSup = (Array.isArray(matchData.suplentes) && matchData.suplentes.length > 0)
+                          ? matchData.suplentes
+                          : (calledPlayers || []).slice(11, 18);
+                        const titIds = rawTit.filter(Boolean).map(String);
+                        const supIds = rawSup.filter(Boolean).map(String);
+                        const allCalled = [...new Set([...titIds, ...supIds, ...Object.keys(matchData.actaOficial?.actual || {})])];
+                        const unifEvts = getUnifiedMatchEvents(matchData);
+                        const dur = getEffectiveMatchDuration(matchData);
+
+                        const rosterList = allCalled.map(pid => {
+                          const p = (players || []).find(pl => String(pl.id) === String(pid));
+                          const actual = matchData.actaOficial?.actual?.[pid] || {};
+                          const isTit = titIds.includes(String(pid));
+                          let minVal = null;
+                          if (actual.minutesOverride !== undefined && actual.minutesOverride !== null && actual.minutesOverride !== '') {
+                            minVal = parseInt(actual.minutesOverride, 10);
+                          } else if (typeof actual.minutes === 'number' && actual.minutes > 0 && matchData.actaOficial?.closed) {
+                            minVal = actual.minutes;
+                          } else {
+                            const calc = calculateMinutesFromEvents(
+                              pid,
+                              unifEvts,
+                              titIds,
+                              supIds,
+                              dur,
+                              null,
+                              actual.status || (isTit ? 'presente' : 'sin_registro'),
+                              actual.lateMin ?? null,
+                              matchData.tarjetasList || []
+                            );
+                            minVal = calc.minutes;
+                          }
+                          return {
+                            id: pid,
+                            player: p,
+                            name: p?.name || (isGlobalEn ? 'Player' : 'Jugador'),
+                            number: p?.number || '-',
+                            isStarter: isTit,
+                            minutes: Number(minVal) || 0,
+                            status: actual.status || (isTit ? 'presente' : 'sin_registro'),
+                          };
+                        });
+
+                        rosterList.sort((a, b) => {
+                          if (a.isStarter && !b.isStarter) return -1;
+                          if (!a.isStarter && b.isStarter) return 1;
+                          return b.minutes - a.minutes;
+                        });
+
+                        if (rosterList.length === 0) {
+                          return (
+                            <p style={{ margin: '8px 0', fontSize: '13px', color: 'var(--partidos-text-muted)', fontStyle: 'italic' }}>
+                              {isGlobalEn ? 'No players recorded in match squad.' : 'No hay jugadores registrados en la convocatoria.'}
+                            </p>
+                          );
+                        }
+
+                        return (
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', maxHeight: '360px', overflowY: 'auto', paddingRight: '4px' }}>
+                            {rosterList.map((r) => (
+                              <div
+                                key={r.id}
+                                style={{
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'space-between',
+                                  padding: '8px 12px',
+                                  background: 'rgba(255,255,255,0.04)',
+                                  borderRadius: '8px',
+                                  border: '1px solid var(--partidos-border)',
+                                  gap: '10px',
+                                  minHeight: '48px'
+                                }}
+                              >
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flex: 1, minWidth: 0 }}>
+                                  <span style={{ fontSize: '11px', fontWeight: '800', width: '22px', textAlign: 'center', color: '#D4A843' }}>
+                                    #{r.number}
+                                  </span>
+                                  <PlayerAvatar player={r.player} size={28} showNumber={false} />
+                                  <div style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                    <div style={{ fontWeight: '700', fontSize: '13px', color: 'var(--partidos-text-primary)' }}>{r.name}</div>
+                                    <div style={{ fontSize: '10px', color: 'var(--partidos-text-muted)' }}>
+                                      {r.isStarter ? (isGlobalEn ? 'Starter' : 'Titular') : (isGlobalEn ? 'Substitute' : 'Suplente')}
+                                    </div>
+                                  </div>
+                                </div>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                  <span
+                                    style={{
+                                      fontSize: '13px',
+                                      fontWeight: '800',
+                                      padding: '4px 10px',
+                                      borderRadius: '6px',
+                                      background: r.minutes > 0 ? 'rgba(76, 175, 125, 0.15)' : 'rgba(148, 163, 184, 0.1)',
+                                      color: r.minutes > 0 ? '#4CAF7D' : 'var(--partidos-text-muted)',
+                                      border: `1px solid ${r.minutes > 0 ? '#4CAF7D' : 'var(--partidos-border)'}`
+                                    }}
+                                  >
+                                    {r.minutes}'
+                                  </span>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        );
+                      })()}
                     </div>
                   </div>
 

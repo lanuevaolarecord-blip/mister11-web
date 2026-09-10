@@ -854,6 +854,19 @@ export const translations = {
     'matches.lineup.benchTitle': 'BANQUILLO DE SUPLENTES',
     'matches.lineup.emptySlot': 'Vacío',
 
+    // ── CORRECTOR ORTOGRÁFICO (SPELL CHECKER) ───────────────
+    'spell.title': 'Ortografía & Gramática',
+    'spell.observations': '{count} observación ortográfica',
+    'spell.observationsPlural': '{count} observaciones ortográficas',
+    'spell.missingAccent': 'Falta tilde',
+    'spell.typo': 'Error tipográfico',
+    'spell.unrecognized': 'Palabra no reconocida',
+    'spell.addToDictionary': 'Agregar al diccionario',
+    'spell.ignore': 'Ignorar',
+    'spell.recommended': 'Sugerencias:',
+    'spell.noSuggestions': 'Sin sugerencias directas',
+    'spell.allCorrect': 'Sin observaciones ortográficas',
+
     // ── LIVESTATS SUBTABS ──────────────────────────────────
     'live.tab.capture': 'Captura en Vivo',
     'live.tab.tactical': 'Campo & Táctica',
@@ -2644,6 +2657,19 @@ export const translations = {
     'matches.lineup.exportingPng': 'EXPORTING...',
     'matches.lineup.benchTitle': 'SUBSTITUTES BENCH',
     'matches.lineup.emptySlot': 'Empty',
+
+    // ── CORRECTOR ORTOGRÁFICO (SPELL CHECKER) ───────────────
+    'spell.title': 'Spelling & Grammar',
+    'spell.observations': '{count} spelling observation',
+    'spell.observationsPlural': '{count} spelling observations',
+    'spell.missingAccent': 'Missing accent',
+    'spell.typo': 'Typo',
+    'spell.unrecognized': 'Unrecognized word',
+    'spell.addToDictionary': 'Add to dictionary',
+    'spell.ignore': 'Ignore',
+    'spell.recommended': 'Suggestions:',
+    'spell.noSuggestions': 'No direct suggestions',
+    'spell.allCorrect': 'No spelling issues',
 
     // ── LIVESTATS SUBTABS ──────────────────────────────────
     'live.tab.capture': 'Live Capture',

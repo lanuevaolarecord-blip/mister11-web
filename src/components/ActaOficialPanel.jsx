@@ -753,13 +753,16 @@ const ActaOficialPanel = ({
                     <div style={styles.playerMeta}>
                       {isStarter ? (isEn ? '⚽ Starter' : '⚽ Titular') : (isEn ? '🪑 Substitute' : '🪑 Suplente')}
                       {player.number ? ` · #${player.number}` : ''}
+                      {(player.position === 'POR' || player.posicion === 'POR') ? ` · 🧤 ${isEn ? 'Goalkeeper' : 'Portero'}` : ''}
                     </div>
                   </div>
                 </div>
 
                 {/* Rol */}
-                <div style={{ textAlign: 'center', fontSize: '11px', fontWeight: '800', color: isStarter ? 'var(--partidos-accent)' : 'var(--partidos-text-muted)' }}>
-                  {isStarter ? (isEn ? 'Starter' : 'Titular') : (isEn ? 'Sub' : 'Suplente')}
+                <div style={{ textAlign: 'center', fontSize: '11px', fontWeight: '800', color: (player.position === 'POR' || player.posicion === 'POR') ? '#3B82F6' : (isStarter ? 'var(--partidos-accent)' : 'var(--partidos-text-muted)') }}>
+                  {(player.position === 'POR' || player.posicion === 'POR')
+                    ? (isEn ? '🧤 GK' : '🧤 POR')
+                    : (isStarter ? (isEn ? 'Starter' : 'Titular') : (isEn ? 'Sub' : 'Suplente'))}
                 </div>
 
                 {/* RSVP previo / Respuesta del jugador */}
@@ -922,27 +925,52 @@ const ActaOficialPanel = ({
                     {/* Nota sugerida derivada de eventos */}
                     {(() => {
                       const evts = effectiveEvents || [];
-                      const stats = deriveStatsFromEvents(pid, evts);
+                      const playerRole = player.position || player.posicion || null;
+                      const stats = deriveStatsFromEvents(pid, evts, playerRole);
                       const { mixedRating, performanceScore, attitudeScore, suggested } = calcMixedRating(stats, actual?.attitude || 3, actual?.rating);
                       const ratingColor = mixedRating >= 8 ? '#4CAF7D' : mixedRating >= 6.5 ? '#D4A843' : '#EF4444';
+                      const isGk = playerRole === 'POR' || stats.isGoalkeeper;
                       return (
-                        <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', alignItems: 'center' }}>
-                          <div style={{ fontSize: '11px', color: 'var(--partidos-text-muted)' }}>
-                            📊 {isEn ? 'Performance:' : 'Rendimiento:'} <strong style={{ color: '#4CAF7D' }}>{performanceScore}</strong>
-                            &nbsp;&nbsp;★ {isEn ? 'Attitude:' : 'Actitud:'} <strong style={{ color: '#D4A843' }}>{attitudeScore}</strong>
-                            &nbsp;&nbsp;→ {isEn ? 'Suggested:' : 'Sugerida:'} <strong style={{ color: ratingColor, fontSize: '14px' }}>{suggested}</strong>
-                          </div>
-                          {actual?.rating && (
-                            <div style={{ fontSize: '11px', color: '#93C5FD' }}>
-                              ✏️ {isEn ? "Coach's Rating:" : 'Nota Míster:'} <strong>{parseFloat(actual.rating).toFixed(1)}</strong> (override)
+                        <>
+                          {isGk && (
+                            <div style={{
+                              display: 'flex',
+                              gap: '12px',
+                              flexWrap: 'wrap',
+                              alignItems: 'center',
+                              padding: '8px 12px',
+                              marginBottom: '8px',
+                              borderRadius: '8px',
+                              background: 'rgba(59, 130, 246, 0.12)',
+                              border: '1px solid rgba(59, 130, 246, 0.3)',
+                              fontSize: '11px',
+                              color: '#93C5FD'
+                            }}>
+                              <span>🧤 <strong>{isEn ? 'Saves:' : 'Paradas:'}</strong> {stats.saves || 0}</span>
+                              <span>🥅 <strong>{isEn ? 'Conceded:' : 'Encajados:'}</strong> {stats.conceded || 0}</span>
+                              <span>🧼 <strong>{isEn ? 'Clean Sheet:' : 'Imbatibilidad:'}</strong> {stats.cleanSheet ? (isEn ? 'Yes' : 'Sí') : 'No'}</span>
+                              {(stats.penaltySaves || 0) > 0 && <span>🛡️ <strong>{isEn ? 'Penalties Saved:' : 'Penaltis:'}</strong> {stats.penaltySaves}</span>}
+                              {(stats.claims || 0) > 0 && <span>⬆️ <strong>{isEn ? 'Claims:' : 'Salidas:'}</strong> {stats.claims}</span>}
                             </div>
                           )}
-                          <div style={{ fontSize: '10px', color: 'var(--partidos-text-muted)', width: '100%', marginTop: '4px' }}>
-                            {isEn
-                              ? `Formula: 60% performance (${performanceScore}) + 40% attitude (${attitudeScore}) = `
-                              : `Fórmula: 60% rendimiento (${performanceScore}) + 40% actitud (${attitudeScore}) = `}<strong style={{ color: ratingColor }}>{mixedRating}</strong>
+                          <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', alignItems: 'center' }}>
+                            <div style={{ fontSize: '11px', color: 'var(--partidos-text-muted)' }}>
+                              📊 {isEn ? (isGk ? 'GK Performance:' : 'Performance:') : (isGk ? 'Rendimiento Portero:' : 'Rendimiento:')} <strong style={{ color: '#4CAF7D' }}>{performanceScore}</strong>
+                              &nbsp;&nbsp;★ {isEn ? 'Attitude:' : 'Actitud:'} <strong style={{ color: '#D4A843' }}>{attitudeScore}</strong>
+                              &nbsp;&nbsp;→ {isEn ? 'Suggested:' : 'Sugerida:'} <strong style={{ color: ratingColor, fontSize: '14px' }}>{suggested}</strong>
+                            </div>
+                            {actual?.rating && (
+                              <div style={{ fontSize: '11px', color: '#93C5FD' }}>
+                                ✏️ {isEn ? "Coach's Rating:" : 'Nota Míster:'} <strong>{parseFloat(actual.rating).toFixed(1)}</strong> (override)
+                              </div>
+                            )}
+                            <div style={{ fontSize: '10px', color: 'var(--partidos-text-muted)', width: '100%', marginTop: '4px' }}>
+                              {isEn
+                                ? `Formula: 60% performance (${performanceScore}) + 40% attitude (${attitudeScore}) = `
+                                : `Fórmula: 60% rendimiento (${performanceScore}) + 40% actitud (${attitudeScore}) = `}<strong style={{ color: ratingColor }}>{mixedRating}</strong>
+                            </div>
                           </div>
-                        </div>
+                        </>
                       );
                     })()}
                   </div>

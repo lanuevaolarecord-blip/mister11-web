@@ -21,6 +21,17 @@ export const calculatePlayerMatchStats = (playerId, matches = []) => {
       yellowCards: 0,
       redCards: 0,
       avgRating: null,
+      gkStats: {
+        saves: 0,
+        savesPerMatch: 0,
+        conceded: 0,
+        concededPerMatch: 0,
+        cleanSheets: 0,
+        penaltySaves: 0,
+        claims: 0,
+        errors: 0,
+        savePercentage: 0,
+      },
       matchHistory: []
     };
   }
@@ -34,6 +45,12 @@ export const calculatePlayerMatchStats = (playerId, matches = []) => {
   let totalAssists = 0;
   let totalYellows = 0;
   let totalReds = 0;
+  let totalSaves = 0;
+  let totalConceded = 0;
+  let totalPenaltySaves = 0;
+  let totalClaims = 0;
+  let totalErrors = 0;
+  let totalCleanSheets = 0;
   const ratings = [];
   const matchHistory = [];
 
@@ -179,6 +196,25 @@ export const calculatePlayerMatchStats = (playerId, matches = []) => {
         ...(Array.isArray(m.events) ? m.events : [])
       ].filter(e => e && e.playerId && String(e.playerId) === pid);
 
+      // Extraer eventos GK y métricas de portero del partido
+      const mGk = m.gkStats?.[pid] || {};
+      const gkEvents = allLiveEvents.filter(e => ['save', 'save_own', 'conceded', 'penaltySave', 'claim', 'errorGoal'].includes(e.type));
+      const savesInMatch = mGk.saves ?? allLiveEvents.filter(e => e.type === 'save' || e.type === 'save_own').length;
+      const concededInMatch = mGk.conceded ?? allLiveEvents.filter(e => e.type === 'conceded').length;
+      const penaltySavesInMatch = mGk.penaltySaves ?? allLiveEvents.filter(e => e.type === 'penaltySave').length;
+      const claimsInMatch = mGk.claims ?? allLiveEvents.filter(e => e.type === 'claim').length;
+      const errorsInMatch = mGk.errors ?? allLiveEvents.filter(e => e.type === 'errorGoal').length;
+      const cleanSheetInMatch = mGk.cleanSheet ?? (concededInMatch === 0 && minutesInMatch > 0 ? 1 : 0);
+      const shotsFaced = savesInMatch + concededInMatch;
+      const savePctInMatch = shotsFaced > 0 ? Math.round((savesInMatch / shotsFaced) * 100) : (cleanSheetInMatch ? 100 : 0);
+
+      totalSaves += savesInMatch;
+      totalConceded += concededInMatch;
+      totalPenaltySaves += penaltySavesInMatch;
+      totalClaims += claimsInMatch;
+      totalErrors += errorsInMatch;
+      totalCleanSheets += cleanSheetInMatch;
+
       matchHistory.push({
         matchId: m.id,
         date: m.date || m.fecha || 'Reciente',
@@ -197,6 +233,17 @@ export const calculatePlayerMatchStats = (playerId, matches = []) => {
         yellowCards: yellowCardsInMatch,
         redCards: redCardsInMatch,
         rating: ratingInMatch ? ratingInMatch.toFixed(1) : '-',
+        // ── Métricas GK de este partido ──
+        gk: {
+          saves: savesInMatch,
+          conceded: concededInMatch,
+          penaltySaves: penaltySavesInMatch,
+          claims: claimsInMatch,
+          errors: errorsInMatch,
+          cleanSheet: cleanSheetInMatch,
+          savePercentage: savePctInMatch
+        },
+        gkEvents,
         // ── Datos enriquecidos para el detalle expandible ──
         misterNote: actaActual.nota ?? actaActual.misterNote ?? null,
         misterComment: (m.playerComments && m.playerComments[pid]) || null,
@@ -240,6 +287,16 @@ export const calculatePlayerMatchStats = (playerId, matches = []) => {
       yellowCards: yellowCardsInMatch,
       redCards: redCardsInMatch,
       rating: ratingInMatch ? ratingInMatch.toFixed(1) : '-',
+      gk: {
+        saves: 0,
+        conceded: 0,
+        penaltySaves: 0,
+        claims: 0,
+        errors: 0,
+        cleanSheet: 0,
+        savePercentage: 0
+      },
+      gkEvents: [],
       misterNote: null,
       misterComment: null,
       actitudStars: null,
@@ -255,6 +312,13 @@ export const calculatePlayerMatchStats = (playerId, matches = []) => {
     ? (ratings.reduce((a, b) => a + b, 0) / ratings.length).toFixed(1)
     : null;
 
+  const totalShotsFaced = totalSaves + totalConceded;
+  const savePercentage = totalShotsFaced > 0 
+    ? Math.round((totalSaves / totalShotsFaced) * 100) 
+    : (totalCleanSheets > 0 ? 100 : 0);
+  const savesPerMatch = matchesPlayed > 0 ? parseFloat((totalSaves / matchesPlayed).toFixed(1)) : 0;
+  const concededPerMatch = matchesPlayed > 0 ? parseFloat((totalConceded / matchesPlayed).toFixed(1)) : 0;
+
   return {
     matchesPlayed,
     starts,
@@ -265,6 +329,17 @@ export const calculatePlayerMatchStats = (playerId, matches = []) => {
     yellowCards: totalYellows,
     redCards: totalReds,
     avgRating: avgRating || '-',
+    gkStats: {
+      saves: totalSaves,
+      savesPerMatch,
+      conceded: totalConceded,
+      concededPerMatch,
+      cleanSheets: totalCleanSheets,
+      penaltySaves: totalPenaltySaves,
+      claims: totalClaims,
+      errors: totalErrors,
+      savePercentage,
+    },
     matchHistory
   };
 };

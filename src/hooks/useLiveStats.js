@@ -49,6 +49,11 @@ export const EVENT_TYPES = [
   'offside_rival',
   'recovery',
   'loss',
+  'save',
+  'conceded',
+  'penaltySave',
+  'claim',
+  'errorGoal',
 ];
 
 /**

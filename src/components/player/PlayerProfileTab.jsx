@@ -429,20 +429,38 @@ export const PlayerProfileTab = ({ player, team, teamPath, onNavigateTab }) => {
       {activeSubTab === 'GENERAL' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
           {/* Resumen Rápido Sincronizado */}
-          <div style={{ background: 'var(--bg-card)', padding: '14px', borderRadius: '12px', display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px', textAlign: 'center', border: '1px solid var(--border-color)' }}>
-            <div>
-              <span style={{ fontSize: '10px', color: 'var(--text-secondary)', textTransform: 'uppercase', fontWeight: 'bold' }}>{t('player.profile.goals')}</span>
-              <div style={{ fontSize: '18px', fontWeight: '900', color: 'var(--accent-green)' }}>⚽ {playerSeasonStats.goals}</div>
-            </div>
-            <div>
-              <span style={{ fontSize: '10px', color: 'var(--text-secondary)', textTransform: 'uppercase', fontWeight: 'bold' }}>{t('player.profile.minutes')}</span>
-              <div style={{ fontSize: '18px', fontWeight: '900', color: 'var(--text-primary)' }}>{playerSeasonStats.minutesPlayed}'</div>
-            </div>
-            <div>
-              <span style={{ fontSize: '10px', color: 'var(--text-secondary)', textTransform: 'uppercase', fontWeight: 'bold' }}>{t('player.profile.matches')}</span>
-              <div style={{ fontSize: '18px', fontWeight: '900', color: 'var(--accent-gold)' }}>{playerSeasonStats.matchesPlayed} {isEn ? 'MP' : 'PJ'}</div>
-            </div>
-          </div>
+          {(() => {
+            const isGk = player?.position === 'POR' || player?.posicion === 'POR' || playerSeasonStats.isGoalkeeper;
+            return (
+              <div style={{ background: 'var(--bg-card)', padding: '14px', borderRadius: '12px', display: 'grid', gridTemplateColumns: isGk ? 'repeat(4, 1fr)' : 'repeat(3, 1fr)', gap: '8px', textAlign: 'center', border: '1px solid var(--border-color)' }}>
+                {isGk ? (
+                  <>
+                    <div>
+                      <span style={{ fontSize: '10px', color: 'var(--text-secondary)', textTransform: 'uppercase', fontWeight: 'bold' }}>{t('gk.saves')}</span>
+                      <div style={{ fontSize: '18px', fontWeight: '900', color: '#3B82F6' }}>🧤 {playerSeasonStats.gkStats?.saves ?? 0}</div>
+                    </div>
+                    <div>
+                      <span style={{ fontSize: '10px', color: 'var(--text-secondary)', textTransform: 'uppercase', fontWeight: 'bold' }}>{t('gk.cleanSheetsShort')}</span>
+                      <div style={{ fontSize: '18px', fontWeight: '900', color: '#10B981' }}>🧼 {playerSeasonStats.gkStats?.cleanSheets ?? 0}</div>
+                    </div>
+                  </>
+                ) : (
+                  <div>
+                    <span style={{ fontSize: '10px', color: 'var(--text-secondary)', textTransform: 'uppercase', fontWeight: 'bold' }}>{t('player.profile.goals')}</span>
+                    <div style={{ fontSize: '18px', fontWeight: '900', color: 'var(--accent-green)' }}>⚽ {playerSeasonStats.goals}</div>
+                  </div>
+                )}
+                <div>
+                  <span style={{ fontSize: '10px', color: 'var(--text-secondary)', textTransform: 'uppercase', fontWeight: 'bold' }}>{t('player.profile.minutes')}</span>
+                  <div style={{ fontSize: '18px', fontWeight: '900', color: 'var(--text-primary)' }}>{playerSeasonStats.minutesPlayed}'</div>
+                </div>
+                <div>
+                  <span style={{ fontSize: '10px', color: 'var(--text-secondary)', textTransform: 'uppercase', fontWeight: 'bold' }}>{t('player.profile.matches')}</span>
+                  <div style={{ fontSize: '18px', fontWeight: '900', color: 'var(--accent-gold)' }}>{playerSeasonStats.matchesPlayed} {isEn ? 'MP' : 'PJ'}</div>
+                </div>
+              </div>
+            );
+          })()}
 
           {/* Tabla de Atributos del Jugador */}
           <div style={{ background: 'var(--bg-card)', padding: '16px', borderRadius: '12px', border: '1px solid var(--border-color)', display: 'flex', flexDirection: 'column', gap: '12px' }}>
@@ -462,8 +480,15 @@ export const PlayerProfileTab = ({ player, team, teamPath, onNavigateTab }) => {
 
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: '10px', borderBottom: '1px dashed var(--border-color)' }}>
               <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>{t('player.profile.position')}</span>
-              <span style={{ background: 'var(--accent-green-light)', color: 'var(--accent-green)', padding: '3px 10px', borderRadius: '14px', fontSize: '12px', fontWeight: 'bold' }}>
-                {playerPosition}
+              <span style={{
+                background: (player?.position === 'POR' || player?.posicion === 'POR') ? 'rgba(59,130,246,0.15)' : 'var(--accent-green-light)',
+                color: (player?.position === 'POR' || player?.posicion === 'POR') ? '#2563EB' : 'var(--accent-green)',
+                padding: '3px 10px',
+                borderRadius: '14px',
+                fontSize: '12px',
+                fontWeight: 'bold'
+              }}>
+                {(player?.position === 'POR' || player?.posicion === 'POR') ? '🧤 POR' : playerPosition}
               </span>
             </div>
 

@@ -505,10 +505,29 @@ export const calculatePlayerGlobalXP = ({
     const assistsPoints = assists * (customMatchXpWeights.xpPerAssist ?? 5);
     // Bonus por nota media alta (si nota >= 8.0)
     const ratingBonus = avgRating >= 8.0 ? 15 : (avgRating >= 7.0 ? 5 : 0);
+    // Puntos específicos de Portero (Rol POR):
+    // +2 XP por parada, +15 XP por portería a cero, +10 XP por penalti parado
+    const isGk = Boolean(
+      playerMatchStats.isGoalkeeper ||
+      playerMatchStats.position === 'POR' ||
+      playerMatchStats.posicion === 'POR' ||
+      playerMatchStats.role === 'POR' ||
+      playerMatchStats.gkStats
+    );
+    const gkData = playerMatchStats.gkStats || {};
+    const gkSaves = Number(gkData.saves) || 0;
+    const gkCleanSheets = Number(gkData.cleanSheets) || 0;
+    const gkPenSaves = Number(gkData.penaltySaves) || 0;
+    const gkPoints = isGk
+      ? (gkSaves * (customMatchXpWeights.xpPerGkSave ?? 2)) +
+        (gkCleanSheets * (customMatchXpWeights.xpPerGkCleanSheet ?? 15)) +
+        (gkPenSaves * (customMatchXpWeights.xpPerGkPenaltySave ?? 10))
+      : 0;
+
     // Penalización por tarjetas
     const cardsPenalty = (yellowCards * 2) + (redCards * 5);
 
-    matchXP = Math.max(0, minutesPoints + goalsPoints + assistsPoints + ratingBonus - cardsPenalty);
+    matchXP = Math.max(0, minutesPoints + goalsPoints + assistsPoints + ratingBonus + gkPoints - cardsPenalty);
   }
 
   const cognitivePoints = Number(cognitiveXP) || 0;

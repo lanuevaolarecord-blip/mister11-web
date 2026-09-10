@@ -475,3 +475,42 @@ export const calculatePlayerPerformanceScores = (evaluations = [], player = {}, 
     ]
   };
 };
+
+/**
+ * Ponderaciones editables y fórmula de nota para POR (Porteros) cuando disputan minutos.
+ * Fórmula canónica:
+ * nota = clamp(5 + saves*0.15 + cleanSheet*1 + penaltySave*0.5 + claims*0.05 - conceded*0.10 - errorGoal*0.5, 0, 10)
+ */
+export const GK_RATING_WEIGHTS = {
+  base: 5.0,
+  save: 0.15,
+  cleanSheet: 1.0,
+  penaltySave: 0.5,
+  claim: 0.05,
+  conceded: 0.10, // penalización: se resta conceded * 0.10
+  errorGoal: 0.50, // penalización: se resta errorGoal * 0.50
+  min: 0.0,
+  max: 10.0,
+};
+
+export function calcGkPerformanceScore(gkStats = {}, weights = GK_RATING_WEIGHTS) {
+  const saves = Number(gkStats.saves) || 0;
+  const conceded = Number(gkStats.conceded) || 0;
+  const penaltySave = Number(gkStats.penaltySaves || gkStats.penaltySave) || 0;
+  const claims = Number(gkStats.claims || gkStats.claim) || 0;
+  const errorGoal = Number(gkStats.errorGoal || gkStats.errors || 0);
+  const cleanSheet = (Number(gkStats.cleanSheet) || (conceded === 0 && (gkStats.minutes > 0 || gkStats.hasMinutes)) ? 1 : 0);
+
+  const w = { ...GK_RATING_WEIGHTS, ...weights };
+  const raw =
+    w.base +
+    saves * w.save +
+    cleanSheet * w.cleanSheet +
+    penaltySave * w.penaltySave +
+    claims * w.claim -
+    conceded * w.conceded -
+    errorGoal * w.errorGoal;
+
+  return Math.min(w.max, Math.max(w.min, parseFloat(raw.toFixed(2))));
+}
+

@@ -1407,7 +1407,13 @@ const Partidos = () => {
                         <PlayerAvatar player={p} size={36} showNumber={true} />
                         <div className="pc-info" style={{ flex: 1, minWidth: 0 }}>
                           <span className="pc-name" style={{ fontWeight: '700', fontSize: '13px' }}>{p.name}</span>
-                          <span className="pc-pos" style={{ fontSize: '11px', color: 'var(--partidos-text-muted)' }}>{p.position}</span>
+                          <span className="pc-pos" style={{
+                            fontSize: '11px',
+                            color: (p.position === 'POR' || p.posicion === 'POR') ? '#2563EB' : 'var(--partidos-text-muted)',
+                            fontWeight: (p.position === 'POR' || p.posicion === 'POR') ? '800' : 'normal'
+                          }}>
+                            {(p.position === 'POR' || p.posicion === 'POR') ? '🧤 POR' : (p.position || p.posicion || 'JUG')}
+                          </span>
                         </div>
                         <div className="pc-check">{isSelected ? '✓' : ''}</div>
                       </div>
@@ -1451,9 +1457,11 @@ const Partidos = () => {
                             setMatchData(prev => ({ ...prev, lineup: '4-3-3' }));
                           }
                         } catch (err) {
-                          alert(isGlobalEn ? "Error deleting formation." : "Error al eliminar la formación.");
+                          console.error("Error al eliminar formación personalizada:", err);
                         }
                       }}
+                      formations={customFormations}
+                      isGlobalEn={isGlobalEn}
                     />
                     <button type="button" className="btn-reset-layout" onClick={handleResetPositions}>
                       🔄 {isGlobalEn ? 'Reset Field' : 'Restablecer Campo'}
@@ -1470,6 +1478,7 @@ const Partidos = () => {
                         const posName = getSlotPosition(idx);
                         const isSelected = selectedSlotIdx === idx;
                         const isEn = isGlobalEn;
+                        const isGk = posName === 'POR' || (player && (player.position === 'POR' || player.posicion === 'POR'));
 
                         return (
                           <div
@@ -1483,7 +1492,16 @@ const Partidos = () => {
                               <span className="slot-num" style={{ fontSize: '13px', fontWeight: '900', color: 'var(--partidos-gold)', minWidth: '18px' }}>{player ? (player.number ?? '-') : '-'}</span>
                               <span className="slot-name" style={{ fontSize: '13px', fontWeight: '700', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1, minWidth: 0 }}>{player ? (player.name || (isEn ? 'Player' : 'Jugador')) : (isEn ? 'Empty' : 'Vacío')}</span>
                             </div>
-                            <span className="slot-role" style={{ fontSize: '10px', padding: '3px 8px', borderRadius: '4px', background: 'rgba(0,0,0,0.06)', color: 'var(--partidos-text-muted)', fontWeight: '800' }}>{posName}</span>
+                            <span className="slot-role" style={{
+                              fontSize: '10px',
+                              padding: '3px 8px',
+                              borderRadius: '4px',
+                              background: isGk ? 'rgba(37,99,235,0.12)' : 'rgba(0,0,0,0.06)',
+                              color: isGk ? '#2563EB' : 'var(--partidos-text-muted)',
+                              fontWeight: '800'
+                            }}>
+                              {isGk ? '🧤 POR' : posName}
+                            </span>
                           </div>
                         );
                       })}

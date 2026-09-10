@@ -68,6 +68,11 @@ const EVENT_NAMES_ES = {
   substitution: 'Sustitución / Cambio',
   lesion: 'Atención por lesión',
   injury: 'Atención por lesión',
+  save: 'Parada portero',
+  conceded: 'Gol encajado',
+  penaltySave: 'Penalti parado',
+  claim: 'Salida aérea / Despeje',
+  errorGoal: 'Error que causa gol',
 };
 
 const EVENT_NAMES_EN = {
@@ -111,6 +116,11 @@ const EVENT_NAMES_EN = {
   substitution: 'Substitution',
   lesion: 'Injury Treatment',
   injury: 'Injury Treatment',
+  save: 'Goalkeeper Save',
+  conceded: 'Goal Conceded',
+  penaltySave: 'Penalty Saved',
+  claim: 'Aerial Claim / Punch',
+  errorGoal: 'Error leading to goal',
 };
 
 const formatEventText = (type, isEn) => {
@@ -507,6 +517,63 @@ export const generateMatchPdfReport = async ({
 
       y = (doc.lastAutoTable ? doc.lastAutoTable.finalY : y + 35) + 8;
 
+      // 3.5 Rendimiento de Portería (Acta Oficial)
+      const gkRosterActa = squadRoster.filter(r => (r.position === 'POR' || r.role === 'POR' || r.position === 'GK') && (parseInt(r.minutes, 10) > 0 || r.minutes > 0));
+      if (gkRosterActa.length > 0) {
+        if (y + 35 > pageH - 35) {
+          doc.addPage();
+          y = 20;
+        }
+        doc.setFontSize(10);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(...colorPrimary);
+        doc.text(isEn ? 'GOALKEEPING PERFORMANCE' : 'RENDIMIENTO DE PORTERÍA', 14, y);
+        y += 5;
+
+        const gkHead = isEn
+          ? [['#', 'Goalkeeper', 'Minutes', 'Saves', 'Conceded', 'Save %', 'Clean Sheet', 'Pen. Saved', 'Claims', 'Rating']]
+          : [['#', 'Portero', 'Minutos', 'Paradas', 'Encajados', '% Paradas', 'Imbatibilidad', 'Pen. Parados', 'Salidas', 'Nota']];
+
+        const gkBody = gkRosterActa.map(r => {
+          const pEvts = safeEvents.filter(e => e && String(e.playerId) === String(r.pid));
+          const saves = pEvts.filter(e => e.type === 'save' || e.type === 'save_own').length;
+          const conceded = pEvts.filter(e => e.type === 'conceded').length;
+          const penSaves = pEvts.filter(e => e.type === 'penaltySave').length;
+          const claims = pEvts.filter(e => e.type === 'claim').length;
+          const total = saves + conceded;
+          const savePct = total > 0 ? `${Math.round((saves / total) * 100)}%` : '-';
+          const cleanSheet = conceded === 0 ? (isEn ? 'Yes' : 'Sí') : 'No';
+
+          return [
+            r.number,
+            r.name,
+            `${r.minutes}'`,
+            String(saves),
+            String(conceded),
+            savePct,
+            cleanSheet,
+            String(penSaves),
+            String(claims),
+            String(r.rating || '-')
+          ];
+        });
+
+        autoTable(doc, {
+          startY: y,
+          head: gkHead,
+          body: gkBody,
+          theme: 'striped',
+          headStyles: { fillColor: colorPrimary, textColor: [255, 255, 255], fontStyle: 'bold', fontSize: 7.5, halign: 'center' },
+          styles: { fontSize: 7.2, cellPadding: 2, halign: 'center' },
+          columnStyles: {
+            0: { width: 8 },
+            1: { halign: 'left', fontStyle: 'bold', width: 34 }
+          }
+        });
+
+        y = (doc.lastAutoTable ? doc.lastAutoTable.finalY : y + 25) + 8;
+      }
+
       // 4. Advertencias y Observaciones Arbitrales / Del Cuerpo Técnico
       const warnings = matchData.actaOficial?.warnings || [];
       if (warnings.length > 0) {
@@ -691,6 +758,63 @@ export const generateMatchPdfReport = async ({
         });
 
         y = (doc.lastAutoTable ? doc.lastAutoTable.finalY : y + 30) + 9;
+
+        // Resumen de Portería para Modo Partido / Live Stats
+        const gkRosterPost = squadRoster.filter(r => (r.position === 'POR' || r.role === 'POR' || r.position === 'GK') && (parseInt(r.minutes, 10) > 0 || r.minutes > 0));
+        if (gkRosterPost.length > 0) {
+          if (y + 35 > pageH - 35) {
+            doc.addPage();
+            y = 20;
+          }
+          doc.setFontSize(10);
+          doc.setFont('helvetica', 'bold');
+          doc.setTextColor(...colorPrimary);
+          doc.text(isEn ? 'GOALKEEPING PERFORMANCE' : 'RENDIMIENTO DE PORTERÍA', 14, y);
+          y += 5;
+
+          const gkHead = isEn
+            ? [['#', 'Goalkeeper', 'Minutes', 'Saves', 'Conceded', 'Save %', 'Clean Sheet', 'Pen. Saved', 'Claims', 'Rating']]
+            : [['#', 'Portero', 'Minutos', 'Paradas', 'Encajados', '% Paradas', 'Imbatibilidad', 'Pen. Parados', 'Salidas', 'Nota']];
+
+          const gkBody = gkRosterPost.map(r => {
+            const pEvts = safeEvents.filter(e => e && String(e.playerId) === String(r.pid));
+            const saves = pEvts.filter(e => e.type === 'save' || e.type === 'save_own').length;
+            const conceded = pEvts.filter(e => e.type === 'conceded').length;
+            const penSaves = pEvts.filter(e => e.type === 'penaltySave').length;
+            const claims = pEvts.filter(e => e.type === 'claim').length;
+            const total = saves + conceded;
+            const savePct = total > 0 ? `${Math.round((saves / total) * 100)}%` : '-';
+            const cleanSheet = conceded === 0 ? (isEn ? 'Yes' : 'Sí') : 'No';
+
+            return [
+              r.number,
+              r.name,
+              `${r.minutes}'`,
+              String(saves),
+              String(conceded),
+              savePct,
+              cleanSheet,
+              String(penSaves),
+              String(claims),
+              String(r.rating || '-')
+            ];
+          });
+
+          autoTable(doc, {
+            startY: y,
+            head: gkHead,
+            body: gkBody,
+            theme: 'striped',
+            headStyles: { fillColor: colorPrimary, textColor: [255, 255, 255], fontStyle: 'bold', fontSize: 7.5, halign: 'center' },
+            styles: { fontSize: 7.2, cellPadding: 2, halign: 'center' },
+            columnStyles: {
+              0: { width: 8 },
+              1: { halign: 'left', fontStyle: 'bold', width: 34 }
+            }
+          });
+
+          y = (doc.lastAutoTable ? doc.lastAutoTable.finalY : y + 25) + 8;
+        }
       }
     }
 

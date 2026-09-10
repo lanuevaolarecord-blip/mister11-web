@@ -419,6 +419,31 @@ export const PlayerScheduleTab = ({ player, team, teamPath, isParentView = false
                             {isEn ? 'Coach Rating:' : 'Nota del Míster:'} {playerStats.coachRating} / 10
                           </div>
                         )}
+                        {(() => {
+                          const gkMatch = evt.gkStats?.[effectivePlayerId];
+                          const isGk = player?.position === 'POR' || player?.posicion === 'POR' || Boolean(gkMatch);
+                          if (!isGk || !gkMatch) return null;
+                          return (
+                            <div style={{
+                              marginTop: '8px',
+                              padding: '8px 10px',
+                              borderRadius: '8px',
+                              background: 'rgba(59,130,246,0.1)',
+                              border: '1px solid rgba(59,130,246,0.25)',
+                              display: 'flex',
+                              gap: '10px',
+                              flexWrap: 'wrap',
+                              fontSize: '0.78rem',
+                              color: '#60A5FA',
+                              fontWeight: 700
+                            }}>
+                              <span>🧤 {t('gk.saves')}: {gkMatch.saves || 0}</span>
+                              <span>🥅 {t('gk.conceded')}: {gkMatch.conceded || 0}</span>
+                              <span>🧼 {t('gk.cleanSheets')}: {gkMatch.cleanSheet ? (isEn ? 'Yes' : 'Sí') : 'No'}</span>
+                              {(gkMatch.penaltySaves || 0) > 0 && <span>🛡️ {t('gk.penaltySaves')}: {gkMatch.penaltySaves}</span>}
+                            </div>
+                          );
+                        })()}
                       </div>
                     )}
                   </div>

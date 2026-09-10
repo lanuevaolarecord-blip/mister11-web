@@ -619,6 +619,13 @@ const LiveStats = ({
     if (hook) await hook();
   }, [parentResetLiveStats, liveStatsHook.resetLiveStats, matchData]);
 
+  // ── Portero en Campo Activo (dinámico por alineación y sustituciones) ────────
+  const activeGoalkeeper = useMemo(() => {
+    return onPitchPlayersList.find(p => (p.posicion === 'POR' || p.position === 'POR' || p.posicion === 'GK')) || null;
+  }, [onPitchPlayersList]);
+
+  const [showGoalAgainstModal, setShowGoalAgainstModal] = useState(false);
+
   const handlePress = useCallback(
     async (type) => {
       if (isMatchLocked(matchData)) {
@@ -636,8 +643,8 @@ const LiveStats = ({
 
       let effectivePlayerId = activePlayerId || null;
       let effectivePlayerName = '';
-      if (!effectivePlayerId && type === 'save_own') {
-        const portero = playersList.find(p => (p.posicion === 'POR' || p.position === 'POR' || p.posicion === 'GK'));
+      if (!effectivePlayerId && (type === 'save_own' || type === 'save')) {
+        const portero = activeGoalkeeper || playersList.find(p => (p.posicion === 'POR' || p.position === 'POR' || p.posicion === 'GK'));
         if (portero) {
           effectivePlayerId = portero.id;
           effectivePlayerName = portero.nombre || portero.name || '';
@@ -654,7 +661,7 @@ const LiveStats = ({
         setTimeout(() => setFlashType(null), 650);
       }
     },
-    [addLiveEvent, currentHalf, matchData, selectedSector, activePlayerId, tx, playersList]
+    [addLiveEvent, currentHalf, matchData, selectedSector, activePlayerId, tx, playersList, activeGoalkeeper]
   );
 
   const handleConfirmPlayerSelection = useCallback(
@@ -972,7 +979,13 @@ const LiveStats = ({
                 {onAddGoalAgainst && (
                   <button
                     type="button"
-                    onClick={isLocked ? undefined : onAddGoalAgainst}
+                    onClick={isLocked ? undefined : () => {
+                      if (activeGoalkeeper) {
+                        setShowGoalAgainstModal(true);
+                      } else {
+                        onAddGoalAgainst();
+                      }
+                    }}
                     disabled={isLocked}
                     title={isLocked ? (isEn ? 'Match finished — Reopen match sheet to edit' : 'Partido finalizado — usa Reabrir Acta para corregir') : tx('live.goal.against')}
                     className="livestats-btn-goal against"
@@ -1189,6 +1202,116 @@ const LiveStats = ({
                 </button>
               </div>
             </div>
+
+            {/* ── SECCIÓN DE PORTERO EN CAMPO (🧤) ── */}
+            <section
+              className="livestats-category-card livestats-gk-card"
+              style={{
+                backgroundColor: darkMode ? '#0F1E2E' : '#EFF6FF',
+                borderColor: darkMode ? '#1E3A8A' : '#93C5FD',
+                borderWidth: '2px',
+                borderStyle: 'solid',
+                borderRadius: '14px',
+                padding: '14px',
+                marginBottom: '16px'
+              }}
+            >
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <span style={{ fontSize: '20px' }}>🧤</span>
+                  <span style={{ fontWeight: 800, fontSize: '13px', color: darkMode ? '#93C5FD' : '#1E40AF', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                    {t('gk.activeGoalkeeper')}: <strong style={{ color: activeGoalkeeper ? (darkMode ? '#60A5FA' : '#1D4ED8') : '#EF4444' }}>{activeGoalkeeper ? (activeGoalkeeper.nombre || activeGoalkeeper.name) : t('gk.noActiveGoalkeeper')}</strong>
+                  </span>
+                </div>
+                {activeGoalkeeper && (
+                  <span style={{ fontSize: '12px', fontWeight: 'bold', background: darkMode ? 'rgba(59,130,246,0.2)' : '#DBEAFE', color: '#2563EB', padding: '2px 8px', borderRadius: '12px' }}>
+                    #{activeGoalkeeper.dorsal || activeGoalkeeper.number || '1'}
+                  </span>
+                )}
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '8px' }}>
+                {[
+                  { type: 'save', label: t('gk.btn.save'), icon: '🧤', color: '#22C55E' },
+                  { type: 'conceded', label: t('gk.btn.conceded'), icon: '🥅', color: '#EF4444' },
+                  { type: 'penaltySave', label: t('gk.btn.penaltySave'), icon: '🛡️', color: '#3B82F6' },
+                  { type: 'claim', label: t('gk.btn.claim'), icon: '⬆️', color: '#0D9488' },
+                  { type: 'errorGoal', label: t('gk.btn.errorGoal'), icon: '⚠️', color: '#F97316' },
+                ].map(gkAction => {
+                  const isFlashingGk = flashType === `gk_${gkAction.type}`;
+                  const count = (filteredEvents || []).filter(e => e.type === gkAction.type && (activeGoalkeeper ? String(e.playerId) === String(activeGoalkeeper.id) : true)).length;
+                  return (
+                    <button
+                      key={gkAction.type}
+                      type="button"
+                      id={`livestats-btn-gk-${gkAction.type}`}
+                      disabled={isLocked || saving}
+                      onClick={async () => {
+                        if (isLocked) { showToast(t('livestats.match_locked_short'), 'warning'); return; }
+                        setFlashType(`gk_${gkAction.type}`);
+                        setTimeout(() => setFlashType(null), 650);
+
+                        const safeMin = currentHalf === 2 
+                          ? Math.max(46, (currentMinute && currentMinute > 0 ? currentMinute : 46))
+                          : Math.max(1, (currentMinute && currentMinute > 0 ? currentMinute : 1));
+
+                        const tempId = `local_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`;
+                        const localDoc = {
+                          id: tempId,
+                          type: gkAction.type,
+                          half: currentHalf,
+                          minute: safeMin,
+                          sector: selectedSector || 'center',
+                          x: 15,
+                          y: 50,
+                          playerId: activeGoalkeeper?.id || null,
+                          playerName: activeGoalkeeper?.nombre || activeGoalkeeper?.name || '',
+                          timestamp: new Date().toISOString()
+                        };
+                        setLocalEvents(prev => [...prev, localDoc]);
+                        const hook = parentAddLiveEvent || liveStatsHook.addLiveEvent;
+                        if (hook) {
+                          const realId = await hook(gkAction.type, currentHalf, {
+                            playerId: activeGoalkeeper?.id || null,
+                            playerName: activeGoalkeeper?.nombre || activeGoalkeeper?.name || '',
+                            sector: selectedSector || 'center',
+                            x: 15,
+                            y: 50
+                          });
+                          if (realId && realId !== tempId) setLocalEvents(prev => prev.filter(e => e.id !== tempId));
+                        }
+                      }}
+                      style={{
+                        minHeight: '48px',
+                        minWidth: '48px',
+                        borderRadius: '8px',
+                        padding: '8px 10px',
+                        border: `1.5px solid ${isFlashingGk ? gkAction.color : (darkMode ? 'rgba(255,255,255,0.15)' : '#CBD5E1')}`,
+                        background: isFlashingGk ? `${gkAction.color}33` : (darkMode ? 'rgba(255,255,255,0.06)' : '#FFFFFF'),
+                        color: darkMode ? '#FFFFFF' : '#0F172A',
+                        cursor: isLocked ? 'not-allowed' : 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        gap: '6px',
+                        fontWeight: 700,
+                        fontSize: '12px',
+                        boxShadow: isFlashingGk ? `0 0 12px ${gkAction.color}66` : 'none',
+                        transition: 'all 0.15s ease'
+                      }}
+                    >
+                      <span style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                        <span>{gkAction.icon}</span>
+                        <span>{gkAction.label}</span>
+                      </span>
+                      <span style={{ fontSize: '11px', background: `${gkAction.color}22`, color: gkAction.color, padding: '1px 6px', borderRadius: '10px', fontWeight: 800 }}>
+                        {count}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            </section>
 
             <div className="livestats-categories-grid">
               {BUTTON_GROUPS.map((group) => (
@@ -1910,6 +2033,134 @@ const LiveStats = ({
                     fontSize: '13px',
                     cursor: 'pointer'
                   }}
+                >
+                  {tx('live.select.cancel')}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ── Modal de Sugerencia de Gol Encajado a Portero Activo ── */}
+        {showGoalAgainstModal && activeGoalkeeper && (
+          <div
+            style={{
+              position: 'fixed',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              backgroundColor: 'rgba(0, 0, 0, 0.75)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              zIndex: 10000,
+              padding: '16px',
+            }}
+            onClick={() => setShowGoalAgainstModal(false)}
+          >
+            <div
+              style={{
+                backgroundColor: darkMode ? '#1E293B' : '#FFFFFF',
+                borderRadius: '16px',
+                padding: '24px',
+                maxWidth: '440px',
+                width: '100%',
+                boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.5)',
+                border: darkMode ? '1px solid rgba(255,255,255,0.1)' : '1px solid #E2E8F0',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '16px',
+              }}
+              onClick={e => e.stopPropagation()}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <span style={{ fontSize: '28px' }}>🥅</span>
+                <h3 style={{ margin: 0, fontSize: '17px', fontWeight: 800, color: darkMode ? '#FFFFFF' : '#0F172A' }}>
+                  {t('gk.suggest.title')}
+                </h3>
+              </div>
+
+              <p style={{ margin: 0, fontSize: '14px', lineHeight: 1.5, color: darkMode ? '#CBD5E1' : '#475569' }}>
+                {t('gk.suggest.message', { name: activeGoalkeeper.nombre || activeGoalkeeper.name || 'Portero' })}
+              </p>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '8px' }}>
+                <button
+                  type="button"
+                  id="livestats-btn-confirm-gk-conceded"
+                  style={{
+                    minHeight: '48px',
+                    backgroundColor: '#1E40AF',
+                    color: '#FFFFFF',
+                    border: 'none',
+                    borderRadius: '8px',
+                    fontWeight: 800,
+                    fontSize: '13px',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.5px',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '8px',
+                    padding: '0 16px'
+                  }}
+                  onClick={async () => {
+                    setShowGoalAgainstModal(false);
+                    if (onAddGoalAgainst) onAddGoalAgainst();
+                    const safeMin = currentHalf === 2 
+                      ? Math.max(46, (currentMinute && currentMinute > 0 ? currentMinute : 46))
+                      : Math.max(1, (currentMinute && currentMinute > 0 ? currentMinute : 1));
+                    await addLiveEvent('conceded', currentHalf, {
+                      playerId: activeGoalkeeper.id,
+                      playerName: activeGoalkeeper.nombre || activeGoalkeeper.name || '',
+                      sector: selectedSector || 'center',
+                      x: 15,
+                      y: 50,
+                      minute: safeMin
+                    });
+                  }}
+                >
+                  <span>🧤</span>
+                  <span>{t('gk.suggest.confirm')}</span>
+                </button>
+
+                <button
+                  type="button"
+                  id="livestats-btn-ignore-gk-conceded"
+                  style={{
+                    minHeight: '48px',
+                    backgroundColor: darkMode ? '#334155' : '#F1F5F9',
+                    color: darkMode ? '#F1F5F9' : '#334155',
+                    border: 'none',
+                    borderRadius: '8px',
+                    fontWeight: 700,
+                    fontSize: '13px',
+                    cursor: 'pointer',
+                    padding: '0 16px'
+                  }}
+                  onClick={() => {
+                    setShowGoalAgainstModal(false);
+                    if (onAddGoalAgainst) onAddGoalAgainst();
+                  }}
+                >
+                  {t('gk.suggest.ignore')}
+                </button>
+
+                <button
+                  type="button"
+                  style={{
+                    minHeight: '48px',
+                    backgroundColor: 'transparent',
+                    color: darkMode ? '#94A3B8' : '#64748B',
+                    border: 'none',
+                    borderRadius: '8px',
+                    fontWeight: 600,
+                    fontSize: '13px',
+                    cursor: 'pointer'
+                  }}
+                  onClick={() => setShowGoalAgainstModal(false)}
                 >
                   {tx('live.select.cancel')}
                 </button>

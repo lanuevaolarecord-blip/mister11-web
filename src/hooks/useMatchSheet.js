@@ -339,12 +339,34 @@ export const useMatchSheet = (teamPath, matchId, matchData, players = []) => {
 
       // D1: Calcular y asignar la nota mixta si el jugador no tiene override manual
       const unifEvents = getUnifiedMatchEvents(matchData);
+      const gkStatsMap = {};
+
       Object.entries(finalActual).forEach(([pid, act]) => {
         if (act && (act.minutes > 0 || act.minutesOverride > 0)) {
+          const playerObj = players.find(p => String(p.id) === String(pid));
+          const role = playerObj?.position || playerObj?.posicion || null;
+          const stats = deriveStatsFromEvents(pid, unifEvents, role);
+
           if (!act.rating && !matchData?.playerRatings?.[pid]) {
-            const stats = deriveStatsFromEvents(pid, unifEvents);
             const { mixedRating } = calcMixedRating(stats, act.attitude || 3);
             act.rating = mixedRating;
+          }
+
+          if (role === 'POR' || stats.isGoalkeeper) {
+            const saves = stats.saves || 0;
+            const conceded = stats.conceded || 0;
+            const totalShots = saves + conceded;
+            const savePct = totalShots > 0 ? Math.round((saves / totalShots) * 100) : 0;
+            gkStatsMap[pid] = {
+              saves,
+              conceded,
+              cleanSheet: stats.cleanSheet ? 1 : 0,
+              penaltySaves: stats.penaltySaves || 0,
+              claims: stats.claims || 0,
+              errorGoal: stats.errorGoal || 0,
+              savePercentage: savePct,
+              rating: act.rating || 6.0
+            };
           }
         }
       });
@@ -359,6 +381,7 @@ export const useMatchSheet = (teamPath, matchId, matchData, players = []) => {
         'actaOficial.closedBy': user.uid,
         'actaOficial.closedByName': user.displayName || 'Staff',
         'actaOficial.totalDuration': duration,
+        gkStats: gkStatsMap,
       });
 
       if (withWarnings) {
@@ -366,6 +389,51 @@ export const useMatchSheet = (teamPath, matchId, matchData, players = []) => {
       } else {
         showToast(t('matchSheet.closed_success'), 'success');
       }
+
+      // ── Sincronizar stats.gk acumuladas en la ficha de cada portero ──
+      Object.entries(gkStatsMap).forEach(async ([gkId, currentGkStats]) => {
+        try {
+          const pRef = doc(db, `${cleanPath}/players`, gkId);
+          const pSnap = await getDoc(pRef);
+          if (pSnap.exists()) {
+            const pData = pSnap.data() || {};
+            const existingGk = pData.stats?.gk || {
+              matches: 0,
+              saves: 0,
+              conceded: 0,
+              cleanSheets: 0,
+              penaltySaves: 0,
+              claims: 0,
+              errorGoals: 0,
+              savePercentage: 0
+            };
+            const newMatches = (existingGk.matches || 0) + 1;
+            const newSaves = (existingGk.saves || 0) + (currentGkStats.saves || 0);
+            const newConceded = (existingGk.conceded || 0) + (currentGkStats.conceded || 0);
+            const newCleanSheets = (existingGk.cleanSheets || 0) + (currentGkStats.cleanSheet || 0);
+            const newPenSaves = (existingGk.penaltySaves || 0) + (currentGkStats.penaltySaves || 0);
+            const newClaims = (existingGk.claims || 0) + (currentGkStats.claims || 0);
+            const newErrGoals = (existingGk.errorGoals || 0) + (currentGkStats.errorGoal || 0);
+            const totShots = newSaves + newConceded;
+            const newSavePct = totShots > 0 ? Math.round((newSaves / totShots) * 100) : 0;
+
+            await updateDoc(pRef, {
+              'stats.gk': {
+                matches: newMatches,
+                saves: newSaves,
+                conceded: newConceded,
+                cleanSheets: newCleanSheets,
+                penaltySaves: newPenSaves,
+                claims: newClaims,
+                errorGoals: newErrGoals,
+                savePercentage: newSavePct
+              }
+            });
+          }
+        } catch (e) {
+          console.warn('[useMatchSheet] Error actualizando stats.gk del portero:', e);
+        }
+      });
 
       // ── REC-8: Sincronizar notaMedia acumulada en la ficha de cada jugador ──
       try {

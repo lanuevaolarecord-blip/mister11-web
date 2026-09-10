@@ -23,12 +23,28 @@
  * Nota mixta = (performanceScore × 0.60) + (attitudeScore × 0.40)
  */
 
+import { calcGkPerformanceScore } from './testScoreEngine.js';
+
 /**
  * Calcula la nota de rendimiento estadístico puro (base 10).
+ * Para jugadores de campo y porteros (rol POR).
  * @param {Object} stats
- * @returns {number} score ∈ [4.0, 10.0]
+ * @returns {number} score ∈ [0.0, 10.0]
  */
 export function calcPerformanceScore(stats = {}) {
+  const isGk = Boolean(
+    stats.isGoalkeeper || 
+    stats.position === 'POR' || 
+    stats.posicion === 'POR' || 
+    stats.role === 'POR' ||
+    stats.gkStats
+  );
+
+  if (isGk) {
+    const gkData = stats.gkStats || stats;
+    return calcGkPerformanceScore(gkData);
+  }
+
   const {
     goles = 0,
     asistencias = 0,
@@ -100,9 +116,15 @@ export function calcMixedRating(stats = {}, actitud = 3, misterOverride = null) 
  * @param {Array}  events
  * @returns {Object} stats
  */
-export function deriveStatsFromEvents(playerId, events = []) {
+export function deriveStatsFromEvents(playerId, events = [], playerRole = null) {
   const byPlayer = events.filter(e => e && (e.playerId === playerId || e.fromPlayerId === playerId));
   const count = (type) => byPlayer.filter(e => e.type === type).length;
+
+  const saves = byPlayer.filter(e => e.type === 'save' || e.type === 'save_own').length;
+  const conceded = count('conceded');
+  const penaltySaves = count('penaltySave');
+  const claims = count('claim');
+  const errorGoal = count('errorGoal');
 
   return {
     goles:             events.filter(e => e && (e.type === 'gol_local' || e.type === 'goal') && e.playerId === playerId).length,
@@ -113,5 +135,12 @@ export function deriveStatsFromEvents(playerId, events = []) {
     faltas:            count('foul_against'),
     tarjetasAmarillas: events.filter(e => e && e.type === 'card_yellow_own' && e.playerId === playerId).length,
     tarjetasRojas:     events.filter(e => e && e.type === 'card_red_own' && e.playerId === playerId).length,
+    // Métricas GK específicas
+    saves,
+    conceded,
+    penaltySaves,
+    claims,
+    errorGoal,
+    isGoalkeeper: playerRole === 'POR',
   };
 }

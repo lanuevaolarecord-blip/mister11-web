@@ -298,7 +298,9 @@ export const PlayerStatsTab = ({ player, team, teamPath, isParentView = false, a
         yellowCards: pStats.yellowCards,
         redCards: pStats.redCards,
         avgRating: pStats.avgRating !== '-' && pStats.avgRating !== null ? pStats.avgRating : (player?.notaMedia || null),
-        matchHistory: pStats.matchHistory || []
+        matchHistory: pStats.matchHistory || [],
+        gkStats: pStats.gkStats || {},
+        isGoalkeeper: pStats.isGoalkeeper || player?.posicion === 'POR' || player?.position === 'POR',
       });
     });
 
@@ -449,6 +451,8 @@ export const PlayerStatsTab = ({ player, team, teamPath, isParentView = false, a
   const gridLevels = [0.25, 0.5, 0.75, 1];
   const historyKeys = Object.keys(groupedHistory);
 
+  const isGk = Boolean(playerMatchStats.isGoalkeeper || player?.position === 'POR' || player?.posicion === 'POR');
+
   return (
     <div className="player-tab-content player-stats-tab">
       
@@ -471,46 +475,199 @@ export const PlayerStatsTab = ({ player, team, teamPath, isParentView = false, a
             </span>
           </div>
 
-          <div className="summary-metric-box">
-            <span className="metric-label">{t('player.stats.goals')}</span>
-            <div className="metric-value green">⚽ {playerMatchStats.goals}</div>
-            <span className="metric-sub">
-              {playerMatchStats.matchesPlayed === 1 
-                ? t('player.stats.inMatch', { count: playerMatchStats.matchesPlayed }) 
-                : t('player.stats.inMatches', { count: playerMatchStats.matchesPlayed })}
-            </span>
-          </div>
+          {isGk ? (
+            <div className="summary-metric-box">
+              <span className="metric-label">{t('gk.saves')}</span>
+              <div className="metric-value green" style={{ color: '#3B82F6' }}>🧤 {playerMatchStats.gkStats?.saves ?? 0}</div>
+              <span className="metric-sub">{playerMatchStats.gkStats?.cleanSheets ?? 0} {t('gk.cleanSheetsShort')}</span>
+            </div>
+          ) : (
+            <div className="summary-metric-box">
+              <span className="metric-label">{t('player.stats.goals')}</span>
+              <div className="metric-value green">⚽ {playerMatchStats.goals}</div>
+              <span className="metric-sub">
+                {playerMatchStats.matchesPlayed === 1 
+                  ? t('player.stats.inMatch', { count: playerMatchStats.matchesPlayed }) 
+                  : t('player.stats.inMatches', { count: playerMatchStats.matchesPlayed })}
+              </span>
+            </div>
+          )}
 
-          <div className="summary-metric-box">
-            <span className="metric-label">{t('player.stats.assists')}</span>
-            <div className="metric-value gold">👟 {playerMatchStats.assists}</div>
-            <span className="metric-sub">{t('player.stats.keyPasses')}</span>
-          </div>
+          {isGk ? (
+            <div className="summary-metric-box">
+              <span className="metric-label">{t('gk.savePercentage')}</span>
+              <div className="metric-value gold">{playerMatchStats.gkStats?.savePercentage ?? 0}%</div>
+              <span className="metric-sub">{playerMatchStats.gkStats?.conceded ?? 0} {t('gk.concededShort')}</span>
+            </div>
+          ) : (
+            <div className="summary-metric-box">
+              <span className="metric-label">{t('player.stats.assists')}</span>
+              <div className="metric-value gold">👟 {playerMatchStats.assists}</div>
+              <span className="metric-sub">{t('player.stats.keyPasses')}</span>
+            </div>
+          )}
 
           <div className="summary-metric-box">
             <span className="metric-label">{t('player.stats.minutesPlayed')}</span>
             <div className="metric-value white">⏱️ {playerMatchStats.minutesPlayed}'</div>
             <span className="metric-sub">{t('player.stats.inCompetition')}</span>
           </div>
+
+          <div className="summary-metric-box">
+            <span className="metric-label">{t('player.stats.cards')}</span>
+            <div className="metric-value yellow">
+              🟨 {playerMatchStats.yellowCards} &middot; 🟥 {playerMatchStats.redCards}
+            </div>
+            <span className="metric-sub">{t('player.stats.disciplinarySanctions')}</span>
+          </div>
+
+          <div className="summary-metric-box">
+            <span className="metric-label">{t('player.stats.officialRating')}</span>
+            <div className="metric-value gold">
+              ⭐ {playerMatchStats.avgRating && playerMatchStats.avgRating !== '-' ? parseFloat(playerMatchStats.avgRating).toFixed(1) : '-'}
+            </div>
+            <span className="metric-sub">{t('player.stats.seasonAverage')}</span>
+          </div>
         </div>
 
-        {/* Fila secundaria: Tarjetas y Nota Media */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginTop: '12px' }}>
+        {/* Sub-grid resumen de desglose */}
+        <div style={{ marginTop: '14px', paddingTop: '14px', borderTop: '1px dashed var(--border-light)', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '8px' }}>
+          <div style={{ background: darkMode ? 'rgba(0,0,0,0.3)' : 'rgba(255,255,255,0.7)', padding: '10px', borderRadius: '10px', textAlign: 'center', border: '1px solid var(--border-light)' }}>
+            <span style={{ fontSize: '11px', color: 'var(--text-secondary)', fontWeight: 'bold' }}>{t('player.stats.minutesPerMatch')}</span>
+            <div style={{ fontSize: '16px', fontWeight: '800', marginTop: '3px', color: 'var(--text-primary)' }}>
+              {playerMatchStats.matchesPlayed > 0 ? Math.round(playerMatchStats.minutesPlayed / playerMatchStats.matchesPlayed) : 0}'
+            </div>
+          </div>
+
           <div style={{ background: darkMode ? 'rgba(0,0,0,0.3)' : 'rgba(255,255,255,0.7)', padding: '10px', borderRadius: '10px', textAlign: 'center', border: '1px solid var(--border-light)' }}>
             <span style={{ fontSize: '11px', color: 'var(--text-secondary)', fontWeight: 'bold' }}>{t('player.stats.cards')}</span>
             <div style={{ fontSize: '16px', fontWeight: '800', marginTop: '3px', color: 'var(--text-primary)' }}>
               🟨 {playerMatchStats.yellowCards} · 🟥 {playerMatchStats.redCards}
             </div>
           </div>
-
-          <div style={{ background: darkMode ? 'rgba(0,0,0,0.3)' : 'rgba(255,255,255,0.7)', padding: '10px', borderRadius: '10px', textAlign: 'center', border: '1px solid var(--border-light)' }}>
-            <span style={{ fontSize: '11px', color: 'var(--text-secondary)', fontWeight: 'bold' }}>{t('player.stats.avgRating')}</span>
-            <div style={{ fontSize: '16px', fontWeight: '800', marginTop: '3px', color: '#C9A84C' }}>
-              ⭐ {playerMatchStats.avgRating}
-            </div>
-          </div>
         </div>
       </div>
+
+      {/* 1.5 TARJETA EXCLUSIVA DE PORTERO (ROL POR) */}
+      {isGk && (
+        <div className="hud-card" style={{ marginBottom: '20px', padding: '16px', border: '1.5px solid rgba(59, 130, 246, 0.4)' }}>
+          <div className="hud-header" style={{ marginBottom: '14px' }}>
+            <span className="hud-badge" style={{ color: '#3B82F6', borderColor: 'rgba(59, 130, 246, 0.35)', background: 'rgba(59, 130, 246, 0.1)' }}>
+              🧤 {t('gk.title')}
+            </span>
+            <span style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>
+              {t('gk.roleBadge')}
+            </span>
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '10px', marginBottom: '16px' }}>
+            <div style={{ background: darkMode ? 'rgba(0,0,0,0.3)' : 'rgba(255,255,255,0.7)', padding: '10px', borderRadius: '10px', textAlign: 'center', border: '1px solid var(--border-light)' }}>
+              <span style={{ fontSize: '11px', color: 'var(--text-secondary)', fontWeight: 'bold' }}>{t('gk.saves')}</span>
+              <div style={{ fontSize: '18px', fontWeight: '900', marginTop: '3px', color: '#22C55E' }}>
+                🧤 {playerMatchStats.gkStats?.saves ?? 0}
+              </div>
+              <span style={{ fontSize: '10px', color: 'var(--text-secondary)' }}>
+                {playerMatchStats.matchesPlayed > 0 ? ((playerMatchStats.gkStats?.saves || 0) / playerMatchStats.matchesPlayed).toFixed(1) : '0.0'} {t('gk.perMatch')}
+              </span>
+            </div>
+
+            <div style={{ background: darkMode ? 'rgba(0,0,0,0.3)' : 'rgba(255,255,255,0.7)', padding: '10px', borderRadius: '10px', textAlign: 'center', border: '1px solid var(--border-light)' }}>
+              <span style={{ fontSize: '11px', color: 'var(--text-secondary)', fontWeight: 'bold' }}>{t('gk.conceded')}</span>
+              <div style={{ fontSize: '18px', fontWeight: '900', marginTop: '3px', color: '#EF4444' }}>
+                🥅 {playerMatchStats.gkStats?.conceded ?? 0}
+              </div>
+              <span style={{ fontSize: '10px', color: 'var(--text-secondary)' }}>
+                {playerMatchStats.matchesPlayed > 0 ? ((playerMatchStats.gkStats?.conceded || 0) / playerMatchStats.matchesPlayed).toFixed(1) : '0.0'} {t('gk.perMatch')}
+              </span>
+            </div>
+
+            <div style={{ background: darkMode ? 'rgba(0,0,0,0.3)' : 'rgba(255,255,255,0.7)', padding: '10px', borderRadius: '10px', textAlign: 'center', border: '1px solid var(--border-light)' }}>
+              <span style={{ fontSize: '11px', color: 'var(--text-secondary)', fontWeight: 'bold' }}>{t('gk.savePercentage')}</span>
+              <div style={{ fontSize: '18px', fontWeight: '900', marginTop: '3px', color: '#3B82F6' }}>
+                {playerMatchStats.gkStats?.savePercentage ?? 0}%
+              </div>
+            </div>
+
+            <div style={{ background: darkMode ? 'rgba(0,0,0,0.3)' : 'rgba(255,255,255,0.7)', padding: '10px', borderRadius: '10px', textAlign: 'center', border: '1px solid var(--border-light)' }}>
+              <span style={{ fontSize: '11px', color: 'var(--text-secondary)', fontWeight: 'bold' }}>{t('gk.cleanSheets')}</span>
+              <div style={{ fontSize: '18px', fontWeight: '900', marginTop: '3px', color: '#10B981' }}>
+                🧼 {playerMatchStats.gkStats?.cleanSheets ?? 0}
+              </div>
+            </div>
+
+            <div style={{ background: darkMode ? 'rgba(0,0,0,0.3)' : 'rgba(255,255,255,0.7)', padding: '10px', borderRadius: '10px', textAlign: 'center', border: '1px solid var(--border-light)' }}>
+              <span style={{ fontSize: '11px', color: 'var(--text-secondary)', fontWeight: 'bold' }}>{t('gk.penaltySaves')}</span>
+              <div style={{ fontSize: '18px', fontWeight: '900', marginTop: '3px', color: '#D4A843' }}>
+                🛡️ {playerMatchStats.gkStats?.penaltySaves ?? 0}
+              </div>
+            </div>
+
+            <div style={{ background: darkMode ? 'rgba(0,0,0,0.3)' : 'rgba(255,255,255,0.7)', padding: '10px', borderRadius: '10px', textAlign: 'center', border: '1px solid var(--border-light)' }}>
+              <span style={{ fontSize: '11px', color: 'var(--text-secondary)', fontWeight: 'bold' }}>{t('gk.claims')}</span>
+              <div style={{ fontSize: '18px', fontWeight: '900', marginTop: '3px', color: '#0D9488' }}>
+                ⬆️ {playerMatchStats.gkStats?.claims ?? 0}
+              </div>
+            </div>
+          </div>
+
+          {/* Gráfico SVG de Evolución del % de Paradas */}
+          {(() => {
+            const historyWithGk = (playerMatchStats.matchHistory || [])
+              .filter(m => m && m.gk)
+              .reverse();
+
+            if (historyWithGk.length === 0) return null;
+
+            const w = 420;
+            const h = 120;
+            const padX = 40;
+            const padY = 24;
+            const innerW = w - padX * 2;
+            const innerH = h - padY * 2;
+
+            const points = historyWithGk.map((m, i) => {
+              const pct = typeof m.gk.savePercentage === 'number' ? m.gk.savePercentage : 0;
+              const x = historyWithGk.length === 1 ? w / 2 : padX + (i / (historyWithGk.length - 1)) * innerW;
+              const y = h - padY - (pct / 100) * innerH;
+              return { x, y, pct, date: m.date || `P${i+1}` };
+            });
+
+            const pathD = points.length === 1
+              ? `M ${points[0].x - 30} ${points[0].y} L ${points[0].x + 30} ${points[0].y}`
+              : points.reduce((acc, pt, idx) => `${acc} ${idx === 0 ? 'M' : 'L'} ${pt.x.toFixed(1)} ${pt.y.toFixed(1)}`, '');
+
+            return (
+              <div style={{ marginTop: '12px', background: darkMode ? 'rgba(0,0,0,0.2)' : 'rgba(255,255,255,0.5)', padding: '12px', borderRadius: '10px', border: '1px solid var(--border-light)' }}>
+                <div style={{ fontSize: '11px', fontWeight: '800', color: '#3B82F6', marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                  📈 {t('gk.evolution')}
+                </div>
+                <div style={{ width: '100%', overflowX: 'auto' }}>
+                  <svg viewBox={`0 0 ${w} ${h}`} style={{ width: '100%', maxHeight: '140px', display: 'block' }}>
+                    {[0, 50, 100].map(val => {
+                      const y = h - padY - (val / 100) * innerH;
+                      return (
+                        <g key={val}>
+                          <line x1={padX} y1={y} x2={w - padX} y2={y} stroke={darkMode ? 'rgba(255,255,255,0.08)' : '#E2E8F0'} strokeDasharray="3 3" />
+                          <text x={padX - 8} y={y + 3} textAnchor="end" fontSize="9" fill={darkMode ? '#94A3B8' : '#64748B'}>{val}%</text>
+                        </g>
+                      );
+                    })}
+                    <path d={pathD} fill="none" stroke="#3B82F6" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+                    {points.map((pt, idx) => (
+                      <g key={idx}>
+                        <circle cx={pt.x} cy={pt.y} r="4.5" fill="#1D4ED8" stroke="#FFFFFF" strokeWidth="1.5" />
+                        <text x={pt.x} y={pt.y - 7} textAnchor="middle" fontSize="9" fontWeight="bold" fill={darkMode ? '#FFFFFF' : '#0F172A'}>
+                          {pt.pct}%
+                        </text>
+                      </g>
+                    ))}
+                  </svg>
+                </div>
+              </div>
+            );
+          })()}
+        </div>
+      )}
 
       {/* 2. HISTORIAL DETALLADO DE PARTIDOS DISPUTADOS (UNIFICADO DESDE EL PERFIL) */}
       <div className="hud-card" style={{ marginBottom: '20px', padding: '16px' }}>
@@ -630,8 +787,14 @@ export const PlayerStatsTab = ({ player, team, teamPath, isParentView = false, a
                         )}
                       </div>
                       <div style={{ display: 'flex', gap: '6px', fontWeight: '800' }}>
-                        {mItem.goals > 0 && <span style={{ color: '#4CAF7D' }}>⚽ {mItem.goals}</span>}
-                        {mItem.assists > 0 && <span style={{ color: '#3B82F6' }}>💟 {mItem.assists}</span>}
+                        {isGk && mItem.gk && (
+                          <>
+                            <span style={{ color: '#2563EB' }}>🧤 {mItem.gk.saves || 0}</span>
+                            {mItem.gk.cleanSheet ? <span style={{ color: '#10B981' }}>🧼</span> : null}
+                          </>
+                        )}
+                        {!isGk && mItem.goals > 0 && <span style={{ color: '#4CAF7D' }}>⚽ {mItem.goals}</span>}
+                        {!isGk && mItem.assists > 0 && <span style={{ color: '#3B82F6' }}>💟 {mItem.assists}</span>}
                         {mItem.yellowCards > 0 && <span>🟨</span>}
                         {mItem.redCards > 0 && <span>🟥</span>}
                         {mItem.rating && mItem.rating !== '-' && <span style={{ color: '#C9A84C' }}>⭐ {mItem.rating}</span>}
@@ -665,6 +828,37 @@ export const PlayerStatsTab = ({ player, team, teamPath, isParentView = false, a
                           ⏳ {isEn
                             ? 'Pending official confirmation — Stats will appear once the match sheet is closed.'
                             : 'Pendiente de confirmación oficial — Los datos aparecerán cuando el míster cierre el acta.'}
+                        </div>
+                      )}
+
+                      {/* KPI Grid para Portero */}
+                      {isGk && mItem.gk && (
+                        <div style={{
+                          background: darkMode ? 'rgba(37,99,235,0.1)' : '#EFF6FF',
+                          border: '1px solid rgba(37,99,235,0.25)',
+                          borderRadius: '10px',
+                          padding: '12px',
+                          display: 'grid',
+                          gridTemplateColumns: 'repeat(auto-fit, minmax(110px, 1fr))',
+                          gap: '8px',
+                          textAlign: 'center'
+                        }}>
+                          <div>
+                            <span style={{ fontSize: '10px', color: 'var(--text-secondary)', fontWeight: 'bold' }}>{t('gk.saves')}</span>
+                            <div style={{ fontSize: '15px', fontWeight: '800', color: '#2563EB' }}>🧤 {mItem.gk.saves || 0}</div>
+                          </div>
+                          <div>
+                            <span style={{ fontSize: '10px', color: 'var(--text-secondary)', fontWeight: 'bold' }}>{t('gk.conceded')}</span>
+                            <div style={{ fontSize: '15px', fontWeight: '800', color: '#EF4444' }}>🥅 {mItem.gk.conceded || 0}</div>
+                          </div>
+                          <div>
+                            <span style={{ fontSize: '10px', color: 'var(--text-secondary)', fontWeight: 'bold' }}>{t('gk.cleanSheets')}</span>
+                            <div style={{ fontSize: '15px', fontWeight: '800', color: '#10B981' }}>{mItem.gk.cleanSheet ? (isEn ? 'Yes' : 'Sí') : 'No'}</div>
+                          </div>
+                          <div>
+                            <span style={{ fontSize: '10px', color: 'var(--text-secondary)', fontWeight: 'bold' }}>{t('gk.savePercentage')}</span>
+                            <div style={{ fontSize: '15px', fontWeight: '800', color: 'var(--text-primary)' }}>{mItem.gk.savePercentage !== undefined ? `${mItem.gk.savePercentage}%` : '-'}</div>
+                          </div>
                         </div>
                       )}
 

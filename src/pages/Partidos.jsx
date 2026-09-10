@@ -877,6 +877,22 @@ const Partidos = () => {
       exportClone.style.boxSizing = 'border-box';
       exportClone.style.zIndex = '-9999';
 
+      // Reubicar cada ficha del clon usando coordenadas exactas sin CSS transform
+      // para eliminar completamente el bug de desplazamiento vertical hacia arriba de html2canvas
+      const playerChips = exportClone.querySelectorAll('.pitch-player-3d');
+      playerChips.forEach((chip) => {
+        const topStr = chip.style.top || '50%';
+        const leftStr = chip.style.left || '50%';
+        const topVal = parseFloat(topStr);
+        const leftVal = parseFloat(leftStr);
+
+        chip.style.transform = 'none';
+        chip.style.webkitTransform = 'none';
+        // Centro exacto sin transform: ancho de tarjeta 58px / 2 = 29px; alto efectivo ~76px / 2 = 38px
+        chip.style.left = `calc(${leftVal}% - 29px)`;
+        chip.style.top = `calc(${topVal}% - 38px)`;
+      });
+
       document.body.appendChild(exportClone);
 
       // Breve pausa para asegurar renderizado de fuentes y estilos en el clon

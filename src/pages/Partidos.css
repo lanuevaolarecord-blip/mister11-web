@@ -3079,7 +3079,9 @@ html.dark .alin-player-item span.slot-role {
 }
 
 .export-lineup-hd-capture .pitch-player-3d {
-  transform: translate(-50%, -50%) scale(1) !important;
+  transform: none !important;
+  -webkit-transform: none !important;
+  width: 58px !important;
 }
 
 .export-lineup-hd-capture .futu-card-badge {

@@ -1614,6 +1614,13 @@ export const translations = {
     'matchSheet.close_error': '❌ Error al cerrar el acta. Intenta de nuevo.',
     'matchSheet.reopened_info': '🔓 Acta y partido reabiertos para correcciones.',
     'matchSheet.reopen_error': '❌ Error al reabrir el acta.',
+    'matchSheet.confirm_save_btn': '💾 CONFIRMAR Y GUARDAR ACTA',
+    'matchSheet.confirm_save_tooltip': 'Guarda todas las correcciones manuales de minutos y actualiza el acta oficial',
+    'matchSheet.saving': '💾 Guardando...',
+    'matchSheet.manual_override_title': 'Corrección manual de minutos',
+    'matchSheet.manual_allowed_closed': 'permitido aunque esté cerrada',
+    'matchSheet.manual_badge': 'Manual',
+    'matchSheet.auto_badge': 'Auto',
 
     // ── Cuerpo Técnico (useTeamMembers) ──────────────────────
     'teamMembers.already_member': 'Este usuario ya es miembro del cuerpo técnico.',
@@ -3418,6 +3425,13 @@ export const translations = {
     'matchSheet.close_error': '❌ Error closing match sheet. Please try again.',
     'matchSheet.reopened_info': '🔓 Match sheet and match reopened for corrections.',
     'matchSheet.reopen_error': '❌ Error reopening match sheet.',
+    'matchSheet.confirm_save_btn': '💾 CONFIRM & SAVE SHEET',
+    'matchSheet.confirm_save_tooltip': 'Save all manual minute corrections and update the official match sheet',
+    'matchSheet.saving': '💾 Saving...',
+    'matchSheet.manual_override_title': 'Manual minutes override',
+    'matchSheet.manual_allowed_closed': 'allowed even when closed',
+    'matchSheet.manual_badge': 'Manual',
+    'matchSheet.auto_badge': 'Auto',
 
     // ── Coaching Staff (useTeamMembers) ──────────────────────
     'teamMembers.already_member': 'This user is already a member of the coaching staff.',

@@ -67,6 +67,7 @@ const ActaOficialPanel = ({
   players = [],
   calledPlayers = [],
   onNavigateTab,
+  onUpdateMatchData,
   events: propEvents = null
 }) => {
   const { user, getTeamPath } = useAuth();
@@ -103,6 +104,8 @@ const ActaOficialPanel = ({
   const [expandedPlayer, setExpandedPlayer] = useState(null);
   const [showWarningsModal, setShowWarningsModal] = useState(false);
   const [warningsList, setWarningsList] = useState([]);
+  // Mapa local pid → minutos para input controlado (permite editar acta cerrada)
+  const [localMinutes, setLocalMinutes] = useState({});
 
   // Estado de colapso persistido para la alerta de anomalías
   const [isWarningsCollapsed, setIsWarningsCollapsed] = useState(() => {
@@ -281,7 +284,25 @@ const ActaOficialPanel = ({
   const handleMinutesChange = async (pid, val) => {
     const parsed = val === '' ? null : parseInt(val, 10);
     if (val !== '' && isNaN(parsed)) return;
-    try { await updateMinutesOverride(pid, val === '' ? null : parsed); }
+    try {
+      await updateMinutesOverride(pid, val === '' ? null : parsed);
+      // Notificar al padre (Partidos.jsx) para mantener estado sincronizado
+      if (onUpdateMatchData && parsed !== null) {
+        onUpdateMatchData({
+          actaOficial: {
+            ...(matchData?.actaOficial || {}),
+            actual: {
+              ...(matchData?.actaOficial?.actual || {}),
+              [pid]: {
+                ...(matchData?.actaOficial?.actual?.[pid] || {}),
+                minutesOverride: parsed,
+                minuteSource: 'override',
+              }
+            }
+          }
+        });
+      }
+    }
     catch { /* toast handled in hook */ }
   };
 
@@ -297,8 +318,19 @@ const ActaOficialPanel = ({
   const executeCloseActa = async (withWarnings = false) => {
     setClosingInProgress(true);
     try {
-      await closeMatchSheet(withWarnings, warningsList);
+      const result = await closeMatchSheet(withWarnings, warningsList);
       setShowWarningsModal(false);
+      // Notificar a Partidos.jsx con el acta actualizada
+      if (onUpdateMatchData && result?.finalActual) {
+        onUpdateMatchData({
+          actaOficial: {
+            ...(matchData?.actaOficial || {}),
+            actual: result.finalActual,
+            closed: true,
+            totalDuration: result.duration,
+          }
+        });
+      }
     } finally {
       setClosingInProgress(false);
     }
@@ -428,10 +460,39 @@ const ActaOficialPanel = ({
               </button>
             </>
           )}
+          {/* ── CONFIRMAR Y GUARDAR ACTA: siempre visible si hay cambios manuales (acta cerrada) ── */}
           {isClosed && (
-            <button style={styles.btnReopen} onClick={handleReopen}>
-              🔓 {isEn ? 'Reopen Match Sheet' : 'Reabrir Acta'}
-            </button>
+            <>
+              <button
+                style={{
+                  minHeight: '48px',
+                  padding: '0 20px',
+                  borderRadius: '8px',
+                  border: 'none',
+                  background: 'linear-gradient(135deg, #4CAF7D, #2E7D52)',
+                  color: '#fff',
+                  fontWeight: '800',
+                  fontSize: '13px',
+                  letterSpacing: '0.04em',
+                  cursor: closingInProgress ? 'not-allowed' : 'pointer',
+                  opacity: closingInProgress ? 0.7 : 1,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  boxShadow: '0 2px 8px rgba(76,175,125,0.35)',
+                }}
+                onClick={() => executeCloseActa(false)}
+                disabled={closingInProgress}
+                title={t('matchSheet.confirm_save_tooltip')}
+              >
+                {closingInProgress
+                  ? t('matchSheet.saving')
+                  : t('matchSheet.confirm_save_btn')}
+              </button>
+              <button style={styles.btnReopen} onClick={handleReopen}>
+                🔓 {isEn ? 'Reopen Match Sheet' : 'Reabrir Acta'}
+              </button>
+            </>
           )}
         </div>
       </div>
@@ -742,8 +803,8 @@ const ActaOficialPanel = ({
               {/* Row principal */}
               <div
                 className="acta-player-row"
-                style={styles.playerRow}
-                onClick={() => !isClosed && setExpandedPlayer(isExpanded ? null : pid)}
+                style={{ ...styles.playerRow, cursor: 'pointer' }}
+                onClick={() => setExpandedPlayer(isExpanded ? null : pid)}
               >
                 {/* Avatar + nombre */}
                 <div style={styles.playerInfo}>
@@ -794,26 +855,56 @@ const ActaOficialPanel = ({
                   )}
                 </div>
 
-                {/* Minutos jugados en vivo */}
-                <div style={styles.minutesCell}>
-                  <span style={styles.minutesValue}>
-                    {displayMinutes !== null && displayMinutes !== undefined ? `${displayMinutes}'` : '0\''}
-                  </span>
-                  <span style={styles.minuteSourceLabel}>
-                    {actual?.minutesOverride !== undefined && actual?.minutesOverride !== null
-                      ? '✏️ Manual'
-                      : `Auto (${(isActuallyOnField && actual?.status === 'ausente') ? computedMin.detail : (actual?.detail || computedMin.detail || MINUTE_SOURCE_LABEL[minuteSource] || minuteSource)})`}
+                {/* Minutos jugados — input inline siempre editable */}
+                <div style={{ ...styles.minutesCell, flexDirection: 'column', alignItems: 'flex-end', gap: '2px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                    <input
+                      type="number"
+                      min="0"
+                      max={duration}
+                      value={localMinutes[pid] !== undefined
+                        ? localMinutes[pid]
+                        : (actual?.minutesOverride !== null && actual?.minutesOverride !== undefined
+                            ? actual.minutesOverride
+                            : (displayMinutes ?? ''))}
+                      onClick={(e) => e.stopPropagation()}
+                      onChange={(e) => {
+                        setLocalMinutes(prev => ({ ...prev, [pid]: e.target.value }));
+                      }}
+                      onBlur={(e) => {
+                        const val = e.target.value;
+                        handleMinutesChange(pid, val);
+                        setLocalMinutes(prev => { const n = { ...prev }; delete n[pid]; return n; });
+                      }}
+                      style={{
+                        width: '56px',
+                        height: '44px',
+                        minHeight: '44px',
+                        borderRadius: '6px',
+                        border: (actual?.minutesOverride !== null && actual?.minutesOverride !== undefined)
+                          ? '2px solid #4CAF7D'
+                          : '1.5px solid var(--partidos-border)',
+                        background: 'var(--partidos-bg)',
+                        color: 'var(--partidos-text)',
+                        fontSize: '15px',
+                        fontWeight: '700',
+                        textAlign: 'center',
+                        padding: '0 4px',
+                      }}
+                    />
+                    <span style={{ fontSize: '12px', color: 'var(--partidos-text-muted)' }}>'</span>
+                  </div>
+                  <span style={{ fontSize: '10px', color: (actual?.minutesOverride !== null && actual?.minutesOverride !== undefined) ? '#4CAF7D' : 'var(--partidos-text-muted)' }}>
+                    {(actual?.minutesOverride !== null && actual?.minutesOverride !== undefined) ? `✏️ ${t('matchSheet.manual_badge')}` : t('matchSheet.auto_badge')}
                   </span>
                 </div>
 
-                {/* Expand chevron */}
-                {!isClosed && (
-                  <span style={{ fontSize: '16px', color: 'var(--partidos-text-muted)', transition: 'transform 0.2s', transform: isExpanded ? 'rotate(90deg)' : 'none', textAlign: 'center' }}>›</span>
-                )}
+                {/* Expand chevron — siempre visible */}
+                <span style={{ fontSize: '16px', color: 'var(--partidos-text-muted)', transition: 'transform 0.2s', transform: isExpanded ? 'rotate(90deg)' : 'none', textAlign: 'center' }}>›</span>
               </div>
 
               {/* ── Expanded editor ────────────────────── */}
-              {isExpanded && !isClosed && (
+              {isExpanded && (
                 <div style={styles.expandedEditor}>
                   {/* Status buttons */}
                   <div style={{ marginBottom: '12px' }}>
@@ -836,18 +927,29 @@ const ActaOficialPanel = ({
                     </div>
                   </div>
 
-                  {/* Minutes override */}
+                  {/* Minutes override — editable aunque acta esté cerrada */}
                   <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
                     <div>
-                      <div style={styles.editorLabel}>{isEn ? 'Minutes override (optional)' : 'Override de minutos (opcional)'}</div>
+                      <div style={styles.editorLabel}>
+                        ✏️ {t('matchSheet.manual_override_title')}
+                        {isClosed && <span style={{ marginLeft: '6px', fontSize: '10px', color: '#4CAF7D', fontWeight: '700' }}>({t('matchSheet.manual_allowed_closed')})</span>}
+                      </div>
                       <input
                         type="number"
                         min="0"
                         max={duration}
                         placeholder={`Auto (${computedMin.minutes}')`}
-                        defaultValue={actual?.minutesOverride ?? ''}
-                        onBlur={(e) => handleMinutesChange(pid, e.target.value)}
-                        style={styles.minutesInput}
+                        value={localMinutes[pid] !== undefined
+                          ? localMinutes[pid]
+                          : (actual?.minutesOverride !== null && actual?.minutesOverride !== undefined
+                              ? actual.minutesOverride
+                              : '')}
+                        onChange={(e) => setLocalMinutes(prev => ({ ...prev, [pid]: e.target.value }))}
+                        onBlur={(e) => {
+                          handleMinutesChange(pid, e.target.value);
+                          setLocalMinutes(prev => { const n = { ...prev }; delete n[pid]; return n; });
+                        }}
+                        style={{ ...styles.minutesInput, border: (actual?.minutesOverride !== null && actual?.minutesOverride !== undefined) ? '2px solid #4CAF7D' : undefined }}
                       />
                     </div>
                     <div>

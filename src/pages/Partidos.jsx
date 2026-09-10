@@ -222,7 +222,10 @@ const Partidos = () => {
     if (current?.id) {
       try {
         localStorage.setItem(`mister11_last_edit_tab_${current.id}`, tab);
-        await updateMatch(current.id, { ...current, convocados: calledPlayers });
+        // IMPORTANTE: excluir actaOficial del guardado automático para no sobreescribir
+        // las correcciones manuales de minutos que el entrenador haya hecho en el panel del acta.
+        const { actaOficial: _ignored, ...currentWithoutActa } = current;
+        await updateMatch(current.id, { ...currentWithoutActa, convocados: calledPlayers });
       } catch (err) {
         console.error("Error auto-saving match on tab change:", err);
       }
@@ -2330,6 +2333,13 @@ const Partidos = () => {
                   calledPlayers={calledPlayers}
                   events={effectiveLiveEvents}
                   onNavigateTab={handleTabChange}
+                  onUpdateMatchData={(updatedFields) => {
+                    setMatchData(prev => {
+                      const merged = { ...prev, ...updatedFields };
+                      matchDataRef.current = merged;
+                      return merged;
+                    });
+                  }}
                 />
               </div>
             )}
@@ -2512,6 +2522,7 @@ const Partidos = () => {
                             isStarter: isTit,
                             minutes: Number(minVal) || 0,
                             status: actual.status || (isTit ? 'presente' : 'sin_registro'),
+                            isManual: actual.minutesOverride !== undefined && actual.minutesOverride !== null && actual.minutesOverride !== '',
                           };
                         });
 
@@ -2559,6 +2570,11 @@ const Partidos = () => {
                                   </div>
                                 </div>
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                  {r.isManual && (
+                                    <span style={{ fontSize: '10px', color: '#4CAF7D', fontWeight: '700', background: 'rgba(76,175,125,0.12)', padding: '2px 6px', borderRadius: '4px', border: '1px solid rgba(76,175,125,0.3)' }}>
+                                      ✏️ {isGlobalEn ? 'Manual' : 'Manual'}
+                                    </span>
+                                  )}
                                   <span
                                     style={{
                                       fontSize: '13px',
@@ -2567,7 +2583,7 @@ const Partidos = () => {
                                       borderRadius: '6px',
                                       background: r.minutes > 0 ? 'rgba(76, 175, 125, 0.15)' : 'rgba(148, 163, 184, 0.1)',
                                       color: r.minutes > 0 ? '#4CAF7D' : 'var(--partidos-text-muted)',
-                                      border: `1px solid ${r.minutes > 0 ? '#4CAF7D' : 'var(--partidos-border)'}`
+                                      border: `1px solid ${r.isManual ? '#4CAF7D' : (r.minutes > 0 ? '#4CAF7D' : 'var(--partidos-border)')}`
                                     }}
                                   >
                                     {r.minutes}'

@@ -166,7 +166,7 @@ export const useMatchSheet = (teamPath, matchId, matchData, players = []) => {
    * @param {number|null} [minutesOverride] - Override manual de minutos jugados
    */
   const updatePlayerStatus = async (playerId, status, lateMin = null, minutesOverride = null) => {
-    if (!isValid || !user || sheet?.closed) return;
+    if (!isValid || !user) return;
     try {
       const matchDocRef = doc(db, `${cleanPath}/matches`, matchId);
       const existing = sheet?.actual?.[playerId] || {};
@@ -202,9 +202,22 @@ export const useMatchSheet = (teamPath, matchId, matchData, players = []) => {
       if (lateMin !== null) payload.lateMin = lateMin;
       if (minutesOverride !== null) payload.minutesOverride = minutesOverride;
 
+      // Actualización optimista inmediata en useMatchSheet
+      setSheet(prev => {
+        if (!prev) return prev;
+        return {
+          ...prev,
+          actual: {
+            ...(prev.actual || {}),
+            [playerId]: payload
+          }
+        };
+      });
+
       await updateDoc(matchDocRef, {
         [`actaOficial.actual.${playerId}`]: payload,
       });
+      return payload;
     } catch (err) {
       console.error('[useMatchSheet] Error actualizando estado:', err);
       throw err;
@@ -293,23 +306,58 @@ export const useMatchSheet = (teamPath, matchId, matchData, players = []) => {
 
   /**
    * Actualizar solo el override de minutos de un jugador.
+   * Permite al cuerpo técnico corregir minutos en cualquier momento.
    */
   const updateMinutesOverride = async (playerId, minutes) => {
-    if (!isValid || !user || sheet?.closed) return;
+    if (!isValid || !user) return;
     try {
       const matchDocRef = doc(db, `${cleanPath}/matches`, matchId);
-      const parsed = minutes === '' || minutes === null ? null : parseInt(minutes, 10);
+      const parsed = (minutes === '' || minutes === null || minutes === undefined) ? null : Math.max(0, parseInt(minutes, 10));
       const existing = sheet?.actual?.[playerId] || {};
+      const nowIso = new Date().toISOString();
       const updates = {
         [`actaOficial.actual.${playerId}.minutesOverride`]: parsed,
         [`actaOficial.actual.${playerId}.by`]: user.uid,
         [`actaOficial.actual.${playerId}.source`]: 'manual',
+        [`actaOficial.actual.${playerId}.at`]: nowIso,
       };
+      let newStatus = existing.status || 'sin_registro';
       if (parsed !== null) {
         updates[`actaOficial.actual.${playerId}.minutes`] = parsed;
         updates[`actaOficial.actual.${playerId}.minuteSource`] = 'override';
+        if (parsed > 0 && (newStatus === 'sin_registro' || newStatus === 'ausente')) {
+          newStatus = 'presente';
+          updates[`actaOficial.actual.${playerId}.status`] = 'presente';
+        }
       }
+
+      const updatedPlayerEntry = {
+        ...existing,
+        minutesOverride: parsed,
+        by: user.uid,
+        source: 'manual',
+        at: nowIso,
+        ...(parsed !== null ? {
+          minutes: parsed,
+          minuteSource: 'override',
+          status: newStatus
+        } : {})
+      };
+
+      // Actualización optimista local inmediata
+      setSheet(prev => {
+        if (!prev) return prev;
+        return {
+          ...prev,
+          actual: {
+            ...(prev.actual || {}),
+            [playerId]: updatedPlayerEntry
+          }
+        };
+      });
+
       await updateDoc(matchDocRef, updates);
+      return updatedPlayerEntry;
     } catch (err) {
       console.error('[useMatchSheet] Error actualizando override de minutos:', err);
       throw err;
@@ -317,13 +365,14 @@ export const useMatchSheet = (teamPath, matchId, matchData, players = []) => {
   };
 
   /**
-   * CERRAR EL ACTA.
-   * Calcula los minutos reales de cada jugador con el motor de minutos y congela el acta.
-   * Solo el staff puede cerrar.
+   * CERRAR O CONFIRMAR MANUALMENTE EL ACTA.
+   * Calcula los minutos reales de cada jugador con el motor de minutos (respetando al 100%
+   * cualquier override manual introducido por el entrenador) y congela/confirma el acta.
+   * Solo el staff puede confirmar.
    */
-  const closeMatchSheet = async (withWarnings = false, warningsList = []) => {
+  const closeMatchSheet = async (withWarnings = false, warningsList = [], forceSave = true) => {
     if (!isValid || !user) throw new Error('Sin usuario o partido activo.');
-    if (sheet?.closed) return;
+    if (sheet?.closed && !forceSave) return;
 
     try {
       const duration = getEffectiveMatchDuration(matchData);
@@ -449,6 +498,8 @@ export const useMatchSheet = (teamPath, matchId, matchData, players = []) => {
           } catch (_) {}
         });
       } catch (_) {}
+
+      return { finalActual, duration, gkStatsMap };
     } catch (err) {
       console.error('[useMatchSheet] Error cerrando acta:', err);
       showToast(t('matchSheet.close_error'), 'error');

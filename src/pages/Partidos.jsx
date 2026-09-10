@@ -859,16 +859,37 @@ const Partidos = () => {
   const handleDownloadLineupPng = async () => {
     if (!pitchExportRef.current) return;
     setIsDownloadingPng(true);
+    let exportClone = null;
     try {
       const html2canvasMod = await import('html2canvas');
       const html2canvas = html2canvasMod.default || html2canvasMod;
 
-      const canvas = await html2canvas(pitchExportRef.current, {
+      // Crear clon fuera de pantalla para forzar SIEMPRE renderizado HD profesional
+      // idéntico a la versión de escritorio (780px, campo amplio, tarjetas FIFA completas y suplentes en 1 fila)
+      exportClone = pitchExportRef.current.cloneNode(true);
+      exportClone.classList.add('export-lineup-hd-capture');
+      exportClone.style.position = 'fixed';
+      exportClone.style.left = '-9999px';
+      exportClone.style.top = '0';
+      exportClone.style.width = '780px';
+      exportClone.style.maxWidth = '780px';
+      exportClone.style.minWidth = '780px';
+      exportClone.style.boxSizing = 'border-box';
+      exportClone.style.zIndex = '-9999';
+
+      document.body.appendChild(exportClone);
+
+      // Breve pausa para asegurar renderizado de fuentes y estilos en el clon
+      await new Promise((resolve) => setTimeout(resolve, 80));
+
+      const canvas = await html2canvas(exportClone, {
         scale: 2,
         useCORS: true,
         allowTaint: true,
         backgroundColor: '#1B3A2D',
-        logging: false
+        logging: false,
+        width: 780,
+        windowWidth: 1024
       });
 
       const dataUrl = canvas.toDataURL('image/png');
@@ -889,6 +910,9 @@ const Partidos = () => {
       console.error('Error al descargar PNG de alineación:', err);
       showToast(isGlobalEn ? 'Error exporting lineup' : 'Error al exportar alineación', 'error');
     } finally {
+      if (exportClone && exportClone.parentNode) {
+        exportClone.parentNode.removeChild(exportClone);
+      }
       setIsDownloadingPng(false);
     }
   };

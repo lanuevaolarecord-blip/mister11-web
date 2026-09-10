@@ -2726,32 +2726,52 @@ html.dark .alin-player-item span.slot-role {
   margin-top: -2px !important;
 }
 
-/* ─── MÓVIL: fichas PEQUEÑAS en el campo horizontal de alineación ─── */
+/* ─── MÓVIL: fichas nítidas, legibles y proporcionales en el campo horizontal ─── */
 @media (max-width: 767px) {
-  /* Escalar TODA la tarjeta FIFA al 48% — mantiene el diseño intacto */
+  /* Escalar la tarjeta FIFA a un tamaño equilibrado y nítido (68%) */
   .alin-pitch-container-h3d .pitch-player-3d {
-    transform: translate(-50%, -50%) scale(0.48) !important;
+    transform: translate(-50%, -50%) scale(0.68) !important;
     transform-origin: center center !important;
   }
   .alin-pitch-container-h3d .pitch-player-3d:active {
-    transform: translate(-50%, -60%) scale(0.52) !important;
+    transform: translate(-50%, -60%) scale(0.76) !important;
   }
-  /* Ocultar banner de nombre en móvil (ilegible a 48% y ocupa mucho espacio) */
+  /* Banner de nombre VISIBLE y legible en pantalla móvil */
   .alin-pitch-container-h3d .futu-card-banner {
-    display: none !important;
+    display: block !important;
+    font-size: 8px !important;
+    font-weight: 800 !important;
+    padding: 1px 3px !important;
+    max-width: 62px !important;
+    margin-top: -1px !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    border-radius: 4px !important;
   }
   /* Campo completo con aspect-ratio y centrado sin cortes */
   .alin-pitch-container-h3d {
     width: 100% !important;
     max-width: 100% !important;
     height: auto !important;
-    min-height: 220px !important;
-    max-height: 320px !important;
+    min-height: 240px !important;
+    max-height: 330px !important;
     aspect-ratio: 105 / 68 !important;
     margin: auto !important;
   }
   .alineacion-layout > div:last-child {
     min-height: 250px !important;
+  }
+}
+
+@media (max-width: 420px) {
+  .alin-pitch-container-h3d .pitch-player-3d {
+    transform: translate(-50%, -50%) scale(0.62) !important;
+  }
+  .alin-pitch-container-h3d .futu-card-banner {
+    font-size: 7.5px !important;
+    max-width: 54px !important;
+    padding: 1px 2px !important;
   }
 }
 
@@ -3026,5 +3046,99 @@ html.dark .alin-player-item span.slot-role {
   .bench-player-chip .bench-player-pos {
     font-size: 8px !important;
   }
+}
+
+/* =========================================================
+   CAPTURA HD DE ALINEACIÓN PARA DESCARGA PNG (DESKTOP Y MÓVIL)
+   Garantiza que la imagen exportada sea siempre perfecta,
+   con terreno amplio, fichas FIFA completas y suplentes en 1 fila
+========================================================= */
+.export-lineup-hd-capture {
+  width: 780px !important;
+  max-width: 780px !important;
+  min-width: 780px !important;
+  padding: 22px 24px !important;
+  background: linear-gradient(180deg, #142a20 0%, #1B3A2D 100%) !important;
+  border-radius: 16px !important;
+  border: 2.5px solid #D4A843 !important;
+  box-sizing: border-box !important;
+  overflow: hidden !important;
+  box-shadow: none !important;
+}
+
+.export-lineup-hd-capture .alin-pitch-container-h3d {
+  width: 100% !important;
+  max-width: 732px !important;
+  aspect-ratio: 105 / 68 !important;
+  height: 474px !important;
+  max-height: 474px !important;
+  min-height: 474px !important;
+  border: 3.5px solid rgba(255, 255, 255, 0.8) !important;
+  border-radius: 12px !important;
+  margin: 0 auto !important;
+}
+
+.export-lineup-hd-capture .pitch-player-3d {
+  transform: translate(-50%, -50%) scale(1) !important;
+}
+
+.export-lineup-hd-capture .futu-card-badge {
+  width: 58px !important;
+}
+
+.export-lineup-hd-capture .futu-card-frame {
+  height: 66px !important;
+}
+
+.export-lineup-hd-capture .futu-card-photo,
+.export-lineup-hd-capture .futu-card-initials {
+  width: 44px !important;
+  height: 44px !important;
+  font-size: 16px !important;
+}
+
+.export-lineup-hd-capture .futu-card-banner {
+  display: block !important;
+  font-size: 10px !important;
+  max-width: 95px !important;
+  padding: 2px 5px !important;
+  margin-top: -2px !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+}
+
+.export-lineup-hd-capture .lineup-bench-board {
+  margin-top: 18px !important;
+  padding: 12px 14px !important;
+  border-radius: 12px !important;
+}
+
+.export-lineup-hd-capture .lineup-bench-grid {
+  grid-template-columns: repeat(7, minmax(0, 1fr)) !important;
+  gap: 8px !important;
+}
+
+.export-lineup-hd-capture .bench-player-chip {
+  min-height: 86px !important;
+  max-height: 86px !important;
+  height: 86px !important;
+  padding: 8px 4px !important;
+}
+
+.export-lineup-hd-capture .bench-player-avatar-img,
+.export-lineup-hd-capture .bench-player-avatar-placeholder {
+  width: 32px !important;
+  height: 32px !important;
+  min-width: 32px !important;
+  min-height: 32px !important;
+}
+
+.export-lineup-hd-capture .bench-player-chip .bench-player-name {
+  font-size: 10px !important;
+}
+
+.export-lineup-hd-capture .bench-player-chip .bench-player-pos {
+  font-size: 9px !important;
 }
 

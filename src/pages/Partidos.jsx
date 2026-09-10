@@ -1845,29 +1845,18 @@ const Partidos = () => {
                     </div>
 
                     {/* Banquillo de Suplentes (7 slots) integrado en la pizarra */}
-                    <div
-                      className="lineup-bench-board"
-                      style={{
-                        marginTop: '16px',
-                        width: '100%',
-                        backgroundColor: 'rgba(18, 36, 28, 0.95)',
-                        border: '1.5px solid rgba(212, 168, 67, 0.45)',
-                        borderRadius: '12px',
-                        padding: '12px 14px',
-                        boxSizing: 'border-box'
-                      }}
-                    >
-                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
-                        <span style={{ fontSize: '11px', fontWeight: 900, color: '#D4A843', textTransform: 'uppercase', letterSpacing: '0.6px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <div className="lineup-bench-board">
+                      <div className="lineup-bench-header">
+                        <span className="lineup-bench-title">
                           <span>🪑</span>
                           <span>{t('matches.lineup.benchTitle')}</span>
                         </span>
-                        <span style={{ fontSize: '11px', fontWeight: 800, color: 'rgba(245, 240, 232, 0.75)' }}>
+                        <span className="lineup-bench-count">
                           {calledPlayers.slice(11, 18).filter(Boolean).length}/7
                         </span>
                       </div>
 
-                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '6px' }}>
+                      <div className="lineup-bench-grid">
                         {Array.from({ length: 7 }).map((_, subIdx) => {
                           const idx = 11 + subIdx;
                           const pid = calledPlayers[idx];
@@ -1879,46 +1868,32 @@ const Partidos = () => {
                           return (
                             <div
                               key={`bench-slot-${subIdx}`}
-                              className={`bench-player-chip ${isSelected ? 'selected-swap' : ''}`}
+                              className={`bench-player-chip ${player ? 'bench-occupied' : 'bench-empty'} ${isSelected ? 'selected-swap' : ''}`}
                               onClick={() => handleSlotClick(idx)}
-                              style={{
-                                display: 'flex',
-                                flexDirection: 'column',
-                                alignItems: 'center',
-                                background: isSelected ? 'rgba(212, 168, 67, 0.28)' : (player ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.25)'),
-                                border: isSelected ? '1.5px solid #D4A843' : (player ? '1px solid rgba(255, 255, 255, 0.15)' : '1px dashed rgba(255, 255, 255, 0.2)'),
-                                borderRadius: '8px',
-                                padding: '8px 4px',
-                                cursor: 'pointer',
-                                minHeight: '74px',
-                                justifyContent: 'center',
-                                boxSizing: 'border-box',
-                                transition: 'all 0.15s ease'
-                              }}
                               title={player ? `${player.name} (${isGk ? 'POR' : (player.position || player.posicion || 'SUB')})` : t('matches.lineup.emptySlot')}
                             >
                               {player ? (
                                 <>
                                   {photoUrl ? (
-                                    <img src={photoUrl} alt={player.name} style={{ width: '32px', height: '32px', borderRadius: '50%', objectFit: 'cover', border: '1.5px solid #D4A843' }} />
+                                    <img src={photoUrl} alt={player.name} className="bench-player-avatar-img" />
                                   ) : (
-                                    <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: '#4CAF7D', color: '#FFFFFF', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 900, fontSize: '11px', border: '1.5px solid #D4A843' }}>
+                                    <div className="bench-player-avatar-placeholder">
                                       {player.number || (player.name ? player.name.charAt(0).toUpperCase() : 'S')}
                                     </div>
                                   )}
-                                  <span style={{ fontSize: '10px', fontWeight: 800, color: '#FFFFFF', marginTop: '4px', textAlign: 'center', width: '100%', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                  <span className="bench-player-name">
                                     {player.name}
                                   </span>
-                                  <span style={{ fontSize: '9px', fontWeight: 900, color: isGk ? '#60A5FA' : '#D4A843' }}>
+                                  <span className="bench-player-pos" style={{ color: isGk ? '#60A5FA' : '#D4A843' }}>
                                     {isGk ? '🧤 POR' : (player.position || player.posicion || `SUB ${subIdx + 1}`)}
                                   </span>
                                 </>
                               ) : (
                                 <>
-                                  <div style={{ width: '28px', height: '28px', borderRadius: '50%', border: '1px dashed rgba(255, 255, 255, 0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'rgba(255, 255, 255, 0.4)', fontSize: '11px', fontWeight: 700 }}>
+                                  <div className="bench-empty-number">
                                     {subIdx + 1}
                                   </div>
-                                  <span style={{ fontSize: '9px', color: 'rgba(255, 255, 255, 0.4)', marginTop: '4px' }}>
+                                  <span className="bench-empty-label">
                                     {t('matches.lineup.emptySlot')}
                                   </span>
                                 </>

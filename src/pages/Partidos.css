@@ -2796,3 +2796,235 @@ html.dark .alin-player-item span.slot-role {
   }
 }
 
+/* =========================================================
+   BANQUILLO DE SUPLENTES (LINEUP BENCH BOARD)
+   Solución: Ranuras uniformes, contención estricta y responsive
+========================================================= */
+.alin-pitch-export-board {
+  overflow: hidden !important;
+  max-width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+.lineup-bench-board {
+  margin-top: 16px;
+  width: 100% !important;
+  max-width: 100% !important;
+  background-color: rgba(18, 36, 28, 0.95) !important;
+  border: 1.5px solid rgba(212, 168, 67, 0.45) !important;
+  border-radius: 12px !important;
+  padding: 12px 14px !important;
+  box-sizing: border-box !important;
+  overflow: hidden !important;
+}
+
+.lineup-bench-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.lineup-bench-title {
+  font-size: 11px;
+  font-weight: 900;
+  color: #D4A843;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.lineup-bench-count {
+  font-size: 11px;
+  font-weight: 800;
+  color: rgba(245, 240, 232, 0.75);
+}
+
+/* En Desktop y Tablet: 7 columnas estrictamente iguales e idénticas en tamaño */
+.lineup-bench-grid {
+  display: grid !important;
+  grid-template-columns: repeat(7, minmax(0, 1fr)) !important;
+  gap: 8px !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+.bench-player-chip {
+  min-width: 0 !important;
+  width: 100% !important;
+  min-height: 86px !important;
+  max-height: 86px !important;
+  height: 86px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  border-radius: 8px !important;
+  padding: 8px 4px !important;
+  cursor: pointer;
+  box-sizing: border-box !important;
+  overflow: hidden !important;
+  transition: all 0.15s ease;
+  position: relative;
+}
+
+.bench-player-chip.bench-occupied {
+  background: rgba(255, 255, 255, 0.08) !important;
+  border: 1px solid rgba(255, 255, 255, 0.15) !important;
+}
+
+.bench-player-chip.bench-empty {
+  background: rgba(0, 0, 0, 0.25) !important;
+  border: 1px dashed rgba(255, 255, 255, 0.2) !important;
+}
+
+.bench-player-chip.selected-swap {
+  background: rgba(212, 168, 67, 0.28) !important;
+  border: 1.5px solid #D4A843 !important;
+  box-shadow: 0 0 10px rgba(212, 168, 67, 0.5) !important;
+}
+
+.bench-player-chip:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
+}
+
+.bench-player-avatar-img {
+  width: 32px !important;
+  height: 32px !important;
+  min-width: 32px !important;
+  min-height: 32px !important;
+  border-radius: 50% !important;
+  object-fit: cover !important;
+  border: 1.5px solid #D4A843 !important;
+  flex-shrink: 0 !important;
+}
+
+.bench-player-avatar-placeholder {
+  width: 32px !important;
+  height: 32px !important;
+  min-width: 32px !important;
+  min-height: 32px !important;
+  border-radius: 50% !important;
+  background: #4CAF7D !important;
+  color: #FFFFFF !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  font-weight: 900 !important;
+  font-size: 11px !important;
+  border: 1.5px solid #D4A843 !important;
+  flex-shrink: 0 !important;
+}
+
+.bench-player-chip .bench-player-name {
+  font-size: 10px !important;
+  font-weight: 800 !important;
+  color: #FFFFFF !important;
+  margin-top: 4px !important;
+  margin-bottom: 2px !important;
+  text-align: center !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+  word-break: normal !important;
+  overflow-wrap: normal !important;
+  display: block !important;
+  box-sizing: border-box !important;
+  line-height: 1.2 !important;
+}
+
+.bench-player-chip .bench-player-pos {
+  font-size: 9px !important;
+  font-weight: 900 !important;
+  text-align: center !important;
+  white-space: nowrap !important;
+  word-break: normal !important;
+  overflow-wrap: normal !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  max-width: 100% !important;
+  line-height: 1 !important;
+  display: block !important;
+}
+
+.bench-empty-number {
+  width: 28px !important;
+  height: 28px !important;
+  min-width: 28px !important;
+  min-height: 28px !important;
+  border-radius: 50% !important;
+  border: 1px dashed rgba(255, 255, 255, 0.3) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  color: rgba(255, 255, 255, 0.4) !important;
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  flex-shrink: 0 !important;
+}
+
+.bench-player-chip .bench-empty-label {
+  font-size: 9px !important;
+  color: rgba(255, 255, 255, 0.4) !important;
+  margin-top: 4px !important;
+  white-space: nowrap !important;
+  word-break: normal !important;
+  overflow-wrap: normal !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  max-width: 100% !important;
+  text-align: center !important;
+  display: block !important;
+}
+
+/* Protección explícita para evitar que reglas globales de texto partan caracteres */
+.lineup-bench-board span,
+.bench-player-chip span {
+  white-space: nowrap !important;
+  word-break: normal !important;
+  overflow-wrap: normal !important;
+}
+
+/* =========================================================
+   RESPONSIVE MÓVIL (<= 640px)
+   Distribución en 4 columnas (4 + 3) para garantizar
+   tamaño táctil mínimo 48dp y legibilidad absoluta
+========================================================= */
+@media (max-width: 640px) {
+  .alin-pitch-export-board {
+    padding: 12px 10px 16px 10px !important;
+  }
+  .lineup-bench-board {
+    padding: 10px 8px !important;
+    margin-top: 12px !important;
+  }
+  .lineup-bench-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+    gap: 6px !important;
+  }
+  .bench-player-chip {
+    min-height: 78px !important;
+    max-height: 78px !important;
+    height: 78px !important;
+    padding: 6px 2px !important;
+  }
+  .bench-player-avatar-img,
+  .bench-player-avatar-placeholder {
+    width: 28px !important;
+    height: 28px !important;
+    min-width: 28px !important;
+    min-height: 28px !important;
+  }
+  .bench-player-chip .bench-player-name {
+    font-size: 9px !important;
+  }
+  .bench-player-chip .bench-player-pos {
+    font-size: 8px !important;
+  }
+}
+

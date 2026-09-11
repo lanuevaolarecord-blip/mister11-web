@@ -26,8 +26,8 @@ import MatchStatsBlock from './MatchStatsBlock';
 import { StatsFilters } from './MatchStats/StatsFilters';
 import { MatchActionsToolbar } from './MatchStats/MatchActionsToolbar';
 import { HeatMap } from './MatchStats/HeatMap';
-import { PassNetwork } from './MatchStats/PassNetwork';
 import { ShotMap } from './MatchStats/ShotMap';
+import { ShotCaptureModal } from './ShotCaptureModal';
 import { MatchRadarChart } from './MatchStats/MatchRadarChart';
 import { MatchTimeline } from './MatchStats/MatchTimeline';
 import { ComparativeStatsBars } from './MatchStats/ComparativeStatsBars';
@@ -213,6 +213,12 @@ const LiveStats = ({
   const [currentHalf, setCurrentHalf] = useState(displayHalf);
   const [showResetModal, setShowResetModal] = useState(false);
   const [pendingPlayerSelection, setPendingPlayerSelection] = useState(null);
+  const [pendingShotModal, setPendingShotModal] = useState({
+    isOpen: false,
+    initialTeam: 'own',
+    initialResult: null,
+    initialDifficulty: null,
+  });
 
   // Sincronizar automáticamente currentHalf si displayHalf avanza a la 2ª Parte
   useEffect(() => {
@@ -529,6 +535,18 @@ const LiveStats = ({
       showToast(t('livestats.match_locked_use_reopen'), 'warning');
       return;
     }
+
+    // Interceptar tiros individuales para captura rápida con contexto (<= 3 taps)
+    if (type === 'shot_on_target_own' || type === 'shot_off_target_own') {
+      setPendingShotModal({
+        isOpen: true,
+        initialTeam: 'own',
+        initialResult: type === 'shot_on_target_own' ? null : 'fuera',
+        initialDifficulty: null
+      });
+      return;
+    }
+
     const tempId = `local_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`;
     const safeMinute = currentHalf === 2
       ? Math.max(46, (currentMinute && currentMinute > 0 ? currentMinute : 46))
@@ -588,7 +606,8 @@ const LiveStats = ({
       x: xCoord,
       y: yCoord,
       playerId: targetPlayerId,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
+      ...customCoords,
     };
 
     setLocalEvents(prev => [...prev, localDoc]);
@@ -598,7 +617,8 @@ const LiveStats = ({
         sector: effectiveSector, 
         x: xCoord, 
         y: yCoord,
-        playerId: targetPlayerId 
+        playerId: targetPlayerId,
+        ...customCoords
       });
       if (realId && realId !== tempId) {
         setLocalEvents(prev => prev.filter(e => e.id !== tempId));
@@ -626,6 +646,95 @@ const LiveStats = ({
 
   const [showGoalAgainstModal, setShowGoalAgainstModal] = useState(false);
 
+  // ── Callback de confirmación del modal de tiro con contexto (<=3 taps) ─────────
+  const handleConfirmShot = useCallback(async (shotPayload) => {
+    const {
+      team,
+      result,
+      saveDifficulty,
+      shooterComfort,
+      zone,
+      playType,
+      xG,
+      playerId,
+      playerName,
+      sector
+    } = shotPayload;
+
+    let eventType = 'shot_off_target_own';
+    if (team === 'own') {
+      if (result === 'gol' || result === 'parada') eventType = 'shot_on_target_own';
+      else eventType = 'shot_off_target_own';
+    } else {
+      if (result === 'gol' || result === 'parada') eventType = 'shot_on_target_rival';
+      else eventType = 'shot_off_target_rival';
+    }
+
+    const effectivePlayerId = playerId || activePlayerId || null;
+    let effectivePlayerName = playerName || '';
+    if (effectivePlayerId && !effectivePlayerName) {
+      const p = playersList.find(x => String(x.id) === String(effectivePlayerId));
+      if (p) effectivePlayerName = p.nombre || p.name || '';
+    }
+
+    let xCoord = 85;
+    let yCoord = 50;
+    if (zone.includes('izq')) yCoord = 18;
+    else if (zone.includes('der')) yCoord = 82;
+    else yCoord = 50;
+    if (zone.includes('fuera')) xCoord = 68;
+    if (zone === 'penalti') xCoord = 88;
+
+    // 1. Guardar evento de tiro con todo su contexto enriquecido
+    await addLiveEvent(eventType, currentHalf, {
+      team,
+      result,
+      saveDifficulty: result === 'parada' ? (saveDifficulty || 'normal') : null,
+      shooterComfort,
+      zone,
+      playType,
+      xG,
+      playerId: effectivePlayerId,
+      playerName: effectivePlayerName,
+      sector: sector || selectedSector || 'center',
+      x: xCoord,
+      y: yCoord,
+      outcome: result === 'gol' ? 'goal' : (result === 'parada' ? 'on_target' : 'off_target'),
+      isGoal: result === 'gol',
+      isDecisive: saveDifficulty === 'decisiva'
+    });
+
+    // 2. Si fue un remate rival detenido (parada del portero propio)
+    // Genera tanto el tiro rival (xG/exposición) como el evento de portería con dificultad
+    if (team === 'rival' && result === 'parada') {
+      const portero = activeGoalkeeper || playersList.find(p => (p.posicion === 'POR' || p.position === 'POR' || p.posicion === 'GK'));
+      if (portero) {
+        await addLiveEvent('save_own', currentHalf, {
+          playerId: portero.id,
+          playerName: portero.nombre || portero.name || 'Portero',
+          saveDifficulty: saveDifficulty || 'normal',
+          isDecisive: saveDifficulty === 'decisiva',
+          sector: sector || selectedSector || 'center',
+          x: 10,
+          y: yCoord
+        });
+      }
+    }
+
+    // 3. Notificar gol propio al partido si aplica
+    if (team === 'own' && result === 'gol' && onAddGoalFor) {
+      onAddGoalFor(effectivePlayerId, effectivePlayerName);
+    }
+
+    // 4. Notificar gol rival si aplica
+    if (team === 'rival' && result === 'gol' && onAddGoalAgainst) {
+      onAddGoalAgainst();
+    }
+
+    setFlashType(eventType);
+    setTimeout(() => setFlashType(null), 650);
+  }, [addLiveEvent, currentHalf, activePlayerId, selectedSector, activeGoalkeeper, playersList, onAddGoalFor, onAddGoalAgainst]);
+
   const handlePress = useCallback(
     async (type) => {
       if (isMatchLocked(matchData)) {
@@ -638,6 +747,40 @@ const LiveStats = ({
       }
       if (type === 'card_red_own') {
         setPendingPlayerSelection({ action: 'card_red_own', title: tx('live.select.red') });
+        return;
+      }
+
+      // Interceptar acciones de tiro para modal rápido de contexto (<= 3 taps)
+      const isShotAction = [
+        'shot_on_target_own',
+        'shot_on_target_rival',
+        'shot_off_target_own',
+        'shot_off_target_rival',
+        'save_own',
+        'save_rival'
+      ].includes(type);
+
+      if (isShotAction) {
+        let initialTeam = 'own';
+        let initialResult = null;
+        let initialDifficulty = null;
+
+        if (type.includes('rival') || type === 'save_own') {
+          initialTeam = 'rival';
+        }
+
+        if (type === 'save_own' || type === 'save_rival') {
+          initialResult = 'parada';
+        } else if (type.includes('off_target')) {
+          initialResult = 'fuera';
+        }
+
+        setPendingShotModal({
+          isOpen: true,
+          initialTeam,
+          initialResult,
+          initialDifficulty
+        });
         return;
       }
 
@@ -2168,6 +2311,21 @@ const LiveStats = ({
             </div>
           </div>
         )}
+
+        {/* Modal de Captura Rápida de Tiro con Contexto (<= 3 taps) */}
+        <ShotCaptureModal
+          isOpen={pendingShotModal.isOpen}
+          onClose={() => setPendingShotModal(prev => ({ ...prev, isOpen: false }))}
+          onConfirmShot={handleConfirmShot}
+          initialTeam={pendingShotModal.initialTeam}
+          initialSector={selectedSector || 'center'}
+          initialResult={pendingShotModal.initialResult}
+          initialDifficulty={pendingShotModal.initialDifficulty}
+          activePlayerId={activePlayerId}
+          activePlayerName={activePlayerId ? (playersList.find(p => String(p.id) === String(activePlayerId))?.nombre || '') : ''}
+          playersList={onPitchPlayersList.length > 0 ? onPitchPlayersList : playersList}
+          activeGoalkeeper={activeGoalkeeper}
+        />
 
       </main>
     </div>

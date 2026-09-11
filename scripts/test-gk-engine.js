@@ -86,10 +86,41 @@ const xpResult = calculatePlayerGlobalXP({
 assert(xpResult.matchXP === 78, `calculatePlayerGlobalXP calcula 78 matchXP incluyendo 60 XP de portero (obtenido: ${xpResult.matchXP})`);
 assert(xpResult.totalXP === 128, `calculatePlayerGlobalXP calcula 128 totalXP (obtenido: ${xpResult.totalXP})`);
 
+// 7. Test calcGkPerformanceScore con paradas decisivas (ponderación doble)
+// Normal: 2 paradas, Decisivas: 2 paradas -> weightedSaves = 2 + 2*2 = 6
+// 5.0 + (6 * 0.15 = 0.90) + 1.0 (cleanSheet) = 6.90
+const decisiveMatchScore = calcGkPerformanceScore({
+  minutes: 90,
+  saves: 4,
+  decisiveSaves: 2,
+  conceded: 0
+});
+assert(decisiveMatchScore === 6.90, `GK con 2 normales y 2 decisivas pondera 6 paradas equivalentes = 6.90 (obtenido: ${decisiveMatchScore})`);
+
+// 8. Test calculatePlayerGlobalXP con paradas decisivas (+2 extra XP por decisiva)
+// 4 saves * 2 = 8 XP + 2 decisive * 2 = 4 XP extra + 1 clean sheet * 15 = 15 XP -> 27 GK XP
+// Minutes: 90 * 0.2 = 18 XP -> total matchXP = 18 + 27 = 45 XP
+const xpDecisiveResult = calculatePlayerGlobalXP({
+  attendanceXP: 50,
+  playerMatchStats: {
+    isGoalkeeper: true,
+    minutesPlayed: 90,
+    yellowCards: 0,
+    redCards: 0,
+    gkStats: {
+      saves: 4,
+      decisiveSaves: 2,
+      cleanSheets: 1,
+      penaltySaves: 0
+    }
+  }
+});
+assert(xpDecisiveResult.matchXP === 45, `calculatePlayerGlobalXP calcula 45 matchXP con bonus de decisivas (obtenido: ${xpDecisiveResult.matchXP})`);
+
 console.log(`\n🧤 Resumen GK Engine Test: ${passed} pasados, ${failed} fallidos.`);
 
 if (failed > 0) {
   process.exit(1);
 } else {
-  console.log('🎉 ¡Todas las 8 pruebas del motor de portero superadas con éxito!');
+  console.log('🎉 ¡Todas las pruebas del motor de portero superadas con éxito!');
 }

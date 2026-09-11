@@ -494,7 +494,12 @@ export const GK_RATING_WEIGHTS = {
 };
 
 export function calcGkPerformanceScore(gkStats = {}, weights = GK_RATING_WEIGHTS) {
-  const saves = Number(gkStats.saves) || 0;
+  const decisiveSaves = Number(gkStats.decisiveSaves || 0);
+  const rawSaves = Number(gkStats.saves) || 0;
+  const normalSaves = Number(gkStats.normalSaves !== undefined ? gkStats.normalSaves : Math.max(0, rawSaves - decisiveSaves));
+  // Ponderación doble para paradas decisivas (D1)
+  const weightedSaves = normalSaves + (decisiveSaves * 2);
+
   const conceded = Number(gkStats.conceded) || 0;
   const penaltySave = Number(gkStats.penaltySaves || gkStats.penaltySave) || 0;
   const claims = Number(gkStats.claims || gkStats.claim) || 0;
@@ -504,7 +509,7 @@ export function calcGkPerformanceScore(gkStats = {}, weights = GK_RATING_WEIGHTS
   const w = { ...GK_RATING_WEIGHTS, ...weights };
   const raw =
     w.base +
-    saves * w.save +
+    weightedSaves * w.save +
     cleanSheet * w.cleanSheet +
     penaltySave * w.penaltySave +
     claims * w.claim -

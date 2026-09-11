@@ -2086,3 +2086,307 @@ export const drawSectorsDistributionCanvas = ({
   }
 };
 
+/**
+ * Dibuja el Bloque de Exigencia y Rendimiento de Portería (Fase 2 y 3)
+ */
+export const drawGkExertionCanvas = ({
+  gkIndices = {},
+  isEn = false,
+  width = 660,
+  height = 190
+}) => {
+  try {
+    const scale = CANVAS_DPI_SCALE;
+    const canvas = document.createElement('canvas');
+    canvas.width = Math.round(width * scale);
+    canvas.height = Math.round(height * scale);
+    const ctx = canvas.getContext('2d');
+    ctx.scale(scale, scale);
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = 'high';
+
+    // Fondo tarjeta
+    ctx.fillStyle = '#FFFFFF';
+    drawCanvasRoundRect(ctx, 0, 0, width, height, 10);
+    ctx.fill();
+    ctx.strokeStyle = '#CBD5E1';
+    ctx.lineWidth = 1.5;
+    drawCanvasRoundRect(ctx, 0, 0, width, height, 10);
+    ctx.stroke();
+
+    // Encabezado
+    ctx.font = 'bold 11px Arial, sans-serif';
+    ctx.fillStyle = '#172D21';
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'top';
+    ctx.fillText(
+      isEn ? '🧤 GOALKEEPING EXERTION & DEFENSIVE EXPOSURE' : '🧤 EXIGENCIA DE PORTERÍA Y EXPOSICIÓN DEFENSIVA',
+      18,
+      14
+    );
+
+    // Badge Tarde Exigente o Controlada
+    const isDemanding = gkIndices.isDemandingMatch || (gkIndices.gkExertionIndex >= 6);
+    const badgeText = isDemanding
+      ? (isEn ? '🔥 DEMANDING MATCH (EXERTION >= 6)' : '🔥 TARDE EXIGENTE (EXIGENCIA >= 6)')
+      : (isEn ? '🛡️ CONTROLLED MATCH' : '🛡️ EXIGENCIA CONTROLADA');
+    const badgeBg = isDemanding ? '#FEF2F2' : '#F0FDF4';
+    const badgeBorder = isDemanding ? '#F87171' : '#4ADE80';
+    const badgeColor = isDemanding ? '#DC2626' : '#16A34A';
+
+    ctx.font = 'bold 9px Arial, sans-serif';
+    const bW = ctx.measureText(badgeText).width + 16;
+    ctx.fillStyle = badgeBg;
+    drawCanvasRoundRect(ctx, width - 18 - bW, 11, bW, 20, 10);
+    ctx.fill();
+    ctx.strokeStyle = badgeBorder;
+    ctx.lineWidth = 1;
+    drawCanvasRoundRect(ctx, width - 18 - bW, 11, bW, 20, 10);
+    ctx.stroke();
+    ctx.fillStyle = badgeColor;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(badgeText, width - 18 - bW / 2, 21);
+
+    // 4 Fichas de Métricas Principales
+    const metricsCards = [
+      {
+        title: isEn ? 'GK Exertion Index' : 'Índice de Exigencia',
+        val: `${gkIndices.gkExertionIndex ?? 0}`,
+        sub: isEn ? 'Saves + 2xDecisive' : 'Paradas + 2xDecisivas',
+        color: isDemanding ? '#DC2626' : '#2563EB'
+      },
+      {
+        title: isEn ? 'Decisive Saves' : 'Paradas Decisivas',
+        val: `${gkIndices.decisiveSaves ?? 0}`,
+        sub: `${isEn ? 'Total Saves' : 'Total Paradas'}: ${gkIndices.totalSaves ?? 0}`,
+        color: '#D97706'
+      },
+      {
+        title: isEn ? 'Save Efficiency %' : '% Eficacia Paradas',
+        val: `${gkIndices.totalSavePct ?? 100}%`,
+        sub: `${gkIndices.concededGoals ?? 0} ${isEn ? 'Conceded' : 'Encajados'}`,
+        color: '#16A34A'
+      },
+      {
+        title: isEn ? 'Opponent Comfort' : 'Comodidad Rival',
+        val: `${gkIndices.rivalComfortPct ?? 0}%`,
+        sub: isEn ? 'Comfortable Shots' : 'Tiros Cómodos',
+        color: (gkIndices.rivalComfortPct >= 40) ? '#DC2626' : '#0D9488'
+      }
+    ];
+
+    const cardY = 38;
+    const cardH = 58;
+    const cardW = (width - 36 - 30) / 4;
+
+    metricsCards.forEach((c, idx) => {
+      const cx = 18 + idx * (cardW + 10);
+      ctx.fillStyle = '#F8FAFC';
+      drawCanvasRoundRect(ctx, cx, cardY, cardW, cardH, 8);
+      ctx.fill();
+      ctx.strokeStyle = '#E2E8F0';
+      ctx.lineWidth = 1;
+      drawCanvasRoundRect(ctx, cx, cardY, cardW, cardH, 8);
+      ctx.stroke();
+
+      ctx.font = 'bold 8px Arial, sans-serif';
+      ctx.fillStyle = '#64748B';
+      ctx.textAlign = 'left';
+      ctx.textBaseline = 'top';
+      ctx.fillText(c.title, cx + 10, cardY + 8);
+
+      ctx.font = 'bold 18px Arial, sans-serif';
+      ctx.fillStyle = c.color;
+      ctx.fillText(c.val, cx + 10, cardY + 20);
+
+      ctx.font = '7.5px Arial, sans-serif';
+      ctx.fillStyle = '#94A3B8';
+      ctx.fillText(c.sub, cx + 10, cardY + 42);
+    });
+
+    // Subbloque: Desglose de Exposición Defensiva por Zona
+    const expY = 106;
+    const expH = 70;
+    const expW = width - 36;
+    ctx.fillStyle = '#0F172A';
+    drawCanvasRoundRect(ctx, 18, expY, expW, expH, 8);
+    ctx.fill();
+
+    ctx.font = 'bold 9px Arial, sans-serif';
+    ctx.fillStyle = '#F8FAFC';
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'top';
+    ctx.fillText(isEn ? 'DEFENSIVE EXPOSURE BREAKDOWN' : 'DESGLOSE DE EXPOSICIÓN DEFENSIVA', 28, expY + 10);
+
+    const map = gkIndices.defensiveExposureMap || {};
+    const centerT = map.dentro_centro?.total ?? 0;
+    const centerC = map.dentro_centro?.comodo ?? 0;
+    const wingsT = map.dentro_lateral?.total ?? 0;
+    const wingsC = map.dentro_lateral?.comodo ?? 0;
+    const outT = map.fuera?.total ?? 0;
+    const outC = map.fuera?.comodo ?? 0;
+
+    const expZones = [
+      {
+        name: isEn ? 'Central Box' : 'Área Central',
+        text: `${centerT} ${isEn ? 'shots' : 'tiros'} (${centerC} ${isEn ? 'comfortable' : 'cómodos'})`,
+        status: centerC >= 2 ? '#EF4444' : '#22C55E'
+      },
+      {
+        name: isEn ? 'Wide Box' : 'Área Lateral',
+        text: `${wingsT} ${isEn ? 'shots' : 'tiros'} (${wingsC} ${isEn ? 'comfortable' : 'cómodos'})`,
+        status: wingsC >= 2 ? '#F59E0B' : '#22C55E'
+      },
+      {
+        name: isEn ? 'Outside Box' : 'Fuera del Área',
+        text: `${outT} ${isEn ? 'shots' : 'tiros'} (${outC} ${isEn ? 'comfortable' : 'cómodos'})`,
+        status: '#3B82F6'
+      }
+    ];
+
+    const colW = (expW - 20) / 3;
+    expZones.forEach((z, zIdx) => {
+      const zx = 28 + zIdx * colW;
+      ctx.font = 'bold 9px Arial, sans-serif';
+      ctx.fillStyle = z.status;
+      ctx.fillText(z.name, zx, expY + 28);
+
+      ctx.font = '8.5px Arial, sans-serif';
+      ctx.fillStyle = '#CBD5E1';
+      ctx.fillText(z.text, zx, expY + 44);
+    });
+
+    return canvas.toDataURL('image/png', 0.95);
+  } catch (e) {
+    console.warn('[drawGkExertionCanvas] Error:', e);
+    return null;
+  }
+};
+
+/**
+ * Dibuja el Mapa de Remates con xG-Lite y Comodidad (Fase 2 y 5)
+ */
+export const drawShotMapCanvas = ({
+  shots = [],
+  ownXg = 0,
+  rivalXg = 0,
+  isEn = false,
+  width = 660,
+  height = 240
+}) => {
+  try {
+    const scale = CANVAS_DPI_SCALE;
+    const canvas = document.createElement('canvas');
+    canvas.width = Math.round(width * scale);
+    canvas.height = Math.round(height * scale);
+    const ctx = canvas.getContext('2d');
+    ctx.scale(scale, scale);
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = 'high';
+
+    // Fondo tarjeta blanca
+    ctx.fillStyle = '#FFFFFF';
+    drawCanvasRoundRect(ctx, 0, 0, width, height, 10);
+    ctx.fill();
+    ctx.strokeStyle = '#CBD5E1';
+    ctx.lineWidth = 1.5;
+    drawCanvasRoundRect(ctx, 0, 0, width, height, 10);
+    ctx.stroke();
+
+    // Título y resumen de xG
+    ctx.font = 'bold 11px Arial, sans-serif';
+    ctx.fillStyle = '#172D21';
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'top';
+    ctx.fillText(isEn ? '🎯 SHOT MAPS & xG-LITE MODEL' : '🎯 MAPAS DE TIROS Y MODELO xG-LITE', 18, 14);
+
+    const xgBadge = `${isEn ? 'Own xG' : 'xG Propio'}: ${ownXg}  |  ${isEn ? 'Opponent xG' : 'xG Rival'}: ${rivalXg}`;
+    ctx.font = 'bold 9px Arial, sans-serif';
+    const xgW = ctx.measureText(xgBadge).width + 16;
+    ctx.fillStyle = '#F1F5F9';
+    drawCanvasRoundRect(ctx, width - 18 - xgW, 11, xgW, 20, 10);
+    ctx.fill();
+    ctx.fillStyle = '#334155';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(xgBadge, width - 18 - xgW / 2, 21);
+
+    // Medio campo de fútbol sintético para graficar remates
+    const pX = 18;
+    const pY = 38;
+    const pW = width - 36;
+    const pH = height - 52;
+
+    ctx.fillStyle = '#1B4D24';
+    drawCanvasRoundRect(ctx, pX, pY, pW, pH, 8);
+    ctx.fill();
+
+    // Líneas del campo
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)';
+    ctx.lineWidth = 1.5;
+
+    // Área grande (en la derecha, atacando hacia portería en x: 100)
+    const boxW = pW * 0.28;
+    const boxH = pH * 0.65;
+    const boxY = pY + (pH - boxH) / 2;
+    ctx.strokeRect(pX + pW - boxW, boxY, boxW, boxH);
+
+    // Área pequeña
+    const smallW = pW * 0.12;
+    const smallH = pH * 0.35;
+    const smallY = pY + (pH - smallH) / 2;
+    ctx.strokeRect(pX + pW - smallW, smallY, smallW, smallH);
+
+    // Punto de penalti
+    ctx.beginPath();
+    ctx.arc(pX + pW - (pW * 0.18), pY + pH / 2, 2.5, 0, Math.PI * 2);
+    ctx.fillStyle = '#FFFFFF';
+    ctx.fill();
+
+    // Portería exterior
+    ctx.strokeStyle = '#FFFFFF';
+    ctx.lineWidth = 3;
+    ctx.strokeRect(pX + pW - 3, pY + (pH - smallH) / 2 + 5, 3, smallH - 10);
+
+    // Graficar cada remate
+    const safeShots = Array.isArray(shots) ? shots : [];
+    safeShots.forEach(s => {
+      const sx = typeof s.x === 'number' ? s.x : 80;
+      const sy = typeof s.y === 'number' ? s.y : 50;
+      const posX = pX + (sx / 100) * pW;
+      const posY = pY + (sy / 100) * pH;
+
+      const isGoal = s.outcome === 'goal' || s.isGoal || s.result === 'gol';
+      const isSaved = s.result === 'parada' || s.outcome === 'on_target';
+
+      let dotColor = '#94A3B8';
+      if (isGoal) dotColor = '#22C55E';
+      else if (isSaved) dotColor = '#3B82F6';
+
+      const radius = isGoal ? 7 : 5;
+      ctx.beginPath();
+      ctx.arc(posX, posY, radius, 0, Math.PI * 2);
+      ctx.fillStyle = dotColor;
+      ctx.fill();
+      ctx.strokeStyle = '#FFFFFF';
+      ctx.lineWidth = 1.2;
+      ctx.stroke();
+
+      // Etiqueta de xG
+      if (s.xG !== undefined) {
+        ctx.font = 'bold 7px Arial, sans-serif';
+        ctx.fillStyle = '#FFFFFF';
+        ctx.textAlign = 'center';
+        ctx.fillText(`${s.xG}`, posX, posY - 8);
+      }
+    });
+
+    return canvas.toDataURL('image/png', 0.95);
+  } catch (e) {
+    console.warn('[drawShotMapCanvas] Error:', e);
+    return null;
+  }
+};
+
+

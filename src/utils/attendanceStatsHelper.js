@@ -516,10 +516,12 @@ export const calculatePlayerGlobalXP = ({
     );
     const gkData = playerMatchStats.gkStats || {};
     const gkSaves = Number(gkData.saves) || 0;
+    const gkDecisiveSaves = Number(gkData.decisiveSaves) || 0;
     const gkCleanSheets = Number(gkData.cleanSheets) || 0;
     const gkPenSaves = Number(gkData.penaltySaves) || 0;
     const gkPoints = isGk
       ? (gkSaves * (customMatchXpWeights.xpPerGkSave ?? 2)) +
+        (gkDecisiveSaves * (customMatchXpWeights.xpPerGkDecisiveSave ?? 2)) +
         (gkCleanSheets * (customMatchXpWeights.xpPerGkCleanSheet ?? 15)) +
         (gkPenSaves * (customMatchXpWeights.xpPerGkPenaltySave ?? 10))
       : 0;

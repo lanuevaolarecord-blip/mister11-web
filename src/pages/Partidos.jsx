@@ -24,6 +24,11 @@ import { SvgDonut, SvgComparisonBars, HalfBreakdown } from '../components/LiveSt
 import PlayerAvatar from '../components/PlayerAvatar';
 import MatchStatsBlock from '../components/MatchStatsBlock';
 import MatchErrorBoundary from '../components/MatchErrorBoundary';
+import { ShotMap } from '../components/MatchStats/ShotMap';
+import { SwotMatrix } from '../components/SwotMatrix';
+import { evaluateSwotRules } from '../utils/swotRules';
+import { calculateMatchDerivedIndices } from '../config/xgWeights';
+import { CANONICAL_REPORT_SECTIONS } from '../utils/reportSections';
 import './Partidos.css';
 import { normalizeText } from '../utils/normalizeInput';
 import { normalizeLineup, applyLineupChange, formatMatchDateSafe } from '../utils/lineupEngine';
@@ -319,6 +324,22 @@ const Partidos = () => {
         minuto: String(e.minute || 0)
       }));
   }, [matchData.events, players]);
+
+  const postMatchDerivedIndices = useMemo(() => {
+    return calculateMatchDerivedIndices(effectiveLiveEvents || []);
+  }, [effectiveLiveEvents]);
+
+  const postMatchSwotData = useMemo(() => {
+    return evaluateSwotRules(matchData, effectiveLiveEvents || [], calledPlayers || []);
+  }, [matchData, effectiveLiveEvents, calledPlayers]);
+
+  const postMatchShotEvents = useMemo(() => {
+    return (effectiveLiveEvents || []).filter(e => {
+      if (!e) return false;
+      const t = String(e.type || '').toLowerCase();
+      return t.includes('shot') || t.startsWith('gol_') || t === 'goal';
+    });
+  }, [effectiveLiveEvents]);
 
   const matchHalfLabel = isMatchFinished
     ? (isEnLanguage ? 'Finished' : 'Finalizado')
@@ -2397,277 +2418,553 @@ const Partidos = () => {
                     </button>
                   </div>
                 </div>
-                <div className="post-partido-grid-layout">
-                  {/* Columna Izquierda: Marcador, Goleadores, Tarjetas */}
-                  <div className="post-partido-left-col">
-                    {/* Tarjeta 1: Marcador */}
-                    <div className="post-match-card">
-                      <h4 className="card-section-title">⚽ {isGlobalEn ? 'Match Score (Derived from Events)' : 'Marcador del Partido (Derivado de Eventos)'}</h4>
-                      <div className="score-inputs-container" style={{ display: 'flex', alignItems: 'center', gap: '15px', justifyContent: 'center', marginTop: '10px' }}>
-                        <div className="score-box" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                          <label className="input-label-caps" style={{ fontSize: '11px', fontWeight: '700', marginBottom: '6px', color: 'var(--partidos-text-muted)' }}>{getLangText('post.goalsFor')}</label>
-                          <div style={{ minHeight: '48px', fontSize: '24px', fontWeight: '900', width: '80px', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '8px', border: '1.5px solid var(--partidos-border)', background: 'var(--partidos-input-bg)', color: '#22C55E' }}>
-                            {derivedGoalsFor}
+                {/* BARRA DE NAVEGACIÓN RÁPIDA (9 SECCIONES CANÓNICAS) */}
+                <div style={{
+                  display: 'flex',
+                  gap: '8px',
+                  overflowX: 'auto',
+                  paddingBottom: '10px',
+                  marginBottom: '20px',
+                  WebkitOverflowScrolling: 'touch'
+                }}>
+                  {CANONICAL_REPORT_SECTIONS.map((sec) => (
+                    <button
+                      key={sec.id}
+                      type="button"
+                      onClick={() => {
+                        const el = document.getElementById(sec.anchorId);
+                        if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                      }}
+                      style={{
+                        minHeight: '48px',
+                        padding: '0 14px',
+                        borderRadius: '8px',
+                        border: '1px solid var(--partidos-border)',
+                        background: 'rgba(255, 255, 255, 0.05)',
+                        color: 'var(--partidos-text-primary)',
+                        fontSize: '11px',
+                        fontWeight: '700',
+                        whiteSpace: 'nowrap',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '6px'
+                      }}
+                    >
+                      <span style={{ color: '#D4A843' }}>{sec.order}.</span>
+                      {isGlobalEn
+                        ? (sec.titleKey === 'exports.report.sec1_timeline' ? 'Timeline'
+                          : sec.titleKey === 'exports.report.sec2_momentum' ? 'Momentum'
+                          : sec.titleKey === 'exports.report.sec3_radar' ? 'Radar'
+                          : sec.titleKey === 'exports.report.sec4_top5' ? 'Top-5'
+                          : sec.titleKey === 'exports.report.sec5_shots' ? 'Shots & xG'
+                          : sec.titleKey === 'exports.report.sec6_gk' ? 'Goalkeeping'
+                          : sec.titleKey === 'exports.report.sec7_lineup' ? 'Lineup'
+                          : sec.titleKey === 'exports.report.sec8_players' ? 'Players'
+                          : 'SWOT')
+                        : (sec.titleKey === 'exports.report.sec1_timeline' ? 'Cronología'
+                          : sec.titleKey === 'exports.report.sec2_momentum' ? 'Momentum'
+                          : sec.titleKey === 'exports.report.sec3_radar' ? 'Radar'
+                          : sec.titleKey === 'exports.report.sec4_top5' ? 'Top-5'
+                          : sec.titleKey === 'exports.report.sec5_shots' ? 'Tiros & xG'
+                          : sec.titleKey === 'exports.report.sec6_gk' ? 'Portería'
+                          : sec.titleKey === 'exports.report.sec7_lineup' ? 'Alineación'
+                          : sec.titleKey === 'exports.report.sec8_players' ? 'Rendimiento'
+                          : 'DAFO')}
+                    </button>
+                  ))}
+                </div>
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '28px' }}>
+                  {/* ── SECCIÓN 1: MARCADOR & CRONOLOGÍA DE EVENTOS ── */}
+                  <div id="sec_timeline" className="post-match-card" style={{ scrollMarginTop: '80px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', borderBottom: '1.5px solid var(--partidos-border)', paddingBottom: '10px', marginBottom: '14px' }}>
+                      <span style={{ background: '#172D21', color: '#D4A843', padding: '4px 10px', borderRadius: '6px', fontSize: '11px', fontWeight: '900' }}>1</span>
+                      <h4 className="card-section-title" style={{ margin: 0 }}>
+                        {isGlobalEn ? '1. Score & Event Timeline' : '1. Marcador y Cronología de Eventos'}
+                      </h4>
+                    </div>
+
+                    <div className="post-partido-grid-layout" style={{ marginTop: 0 }}>
+                      <div className="post-partido-left-col">
+                        {/* Marcador */}
+                        <div style={{ padding: '16px', background: 'rgba(255,255,255,0.03)', borderRadius: '10px', border: '1px solid var(--partidos-border)' }}>
+                          <div className="score-inputs-container" style={{ display: 'flex', alignItems: 'center', gap: '15px', justifyContent: 'center' }}>
+                            <div className="score-box" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                              <label className="input-label-caps" style={{ fontSize: '11px', fontWeight: '700', marginBottom: '6px', color: 'var(--partidos-text-muted)' }}>{getLangText('post.goalsFor')}</label>
+                              <div style={{ minHeight: '48px', fontSize: '26px', fontWeight: '900', width: '80px', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '8px', border: '1.5px solid var(--partidos-border)', background: 'var(--partidos-input-bg)', color: '#22C55E' }}>
+                                {derivedGoalsFor}
+                              </div>
+                            </div>
+                            <div className="score-divider" style={{ fontSize: '24px', fontWeight: 'bold', color: 'var(--partidos-text-primary)' }}>-</div>
+                            <div className="score-box" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                              <label className="input-label-caps" style={{ fontSize: '11px', fontWeight: '700', marginBottom: '6px', color: 'var(--partidos-text-muted)' }}>{getLangText('post.goalsAgainst')}</label>
+                              <div style={{ minHeight: '48px', fontSize: '26px', fontWeight: '900', width: '80px', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '8px', border: '1.5px solid var(--partidos-border)', background: 'var(--partidos-input-bg)', color: '#EF4444' }}>
+                                {derivedGoalsAgainst}
+                              </div>
+                            </div>
                           </div>
                         </div>
-                        <div className="score-divider" style={{ fontSize: '24px', fontWeight: 'bold', color: 'var(--partidos-text-primary)' }}>-</div>
-                        <div className="score-box" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                          <label className="input-label-caps" style={{ fontSize: '11px', fontWeight: '700', marginBottom: '6px', color: 'var(--partidos-text-muted)' }}>{getLangText('post.goalsAgainst')}</label>
-                          <div style={{ minHeight: '48px', fontSize: '24px', fontWeight: '900', width: '80px', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '8px', border: '1.5px solid var(--partidos-border)', background: 'var(--partidos-input-bg)', color: '#EF4444' }}>
-                            {derivedGoalsAgainst}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
 
-                    {/* Tarjeta 2: Goleadores */}
-                    <div className="post-match-card">
-                      <h4 className="card-section-title">⚽ {isGlobalEn ? 'Scorers (Canonical from Log)' : 'Goleadores (Canónico desde Bitácora)'}</h4>
-                      <div className="goleadores-list" style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '10px' }}>
-                        {derivedGoleadores.length === 0 ? (
-                          <p style={{ margin: '8px 0', fontSize: '13px', color: 'var(--partidos-text-muted)', fontStyle: 'italic' }}>
-                            {isEnLanguage ? 'No goals registered in match events.' : 'No se han registrado goles en los eventos del partido.'}
-                          </p>
-                        ) : (
-                          derivedGoleadores.map((g, idx) => {
-                            const p = players.find(pl => pl.id === g.jugadorId);
-                            return (
-                              <div key={idx} className="goleador-row" style={{ display: 'flex', gap: '10px', alignItems: 'center', padding: '8px 12px', background: 'rgba(255,255,255,0.04)', borderRadius: '8px' }}>
-                                <PlayerAvatar player={p} size={28} showNumber={false} />
-                                <span style={{ fontWeight: '700', fontSize: '13px', flex: 1 }}>{g.nombre}</span>
-                                <span style={{ fontWeight: '800', fontSize: '12px', color: '#22C55E' }}>Min. {g.minuto}'</span>
-                              </div>
-                            );
-                          })
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Tarjeta 3: Tarjetas */}
-                    <div className="post-match-card">
-                      <h4 className="card-section-title">🟨 {isGlobalEn ? 'Cards (Canonical from Log)' : 'Tarjetas (Canónico desde Bitácora)'}</h4>
-                      <div className="goleadores-list" style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '10px' }}>
-                        {derivedTarjetas.length === 0 ? (
-                          <p style={{ margin: '8px 0', fontSize: '13px', color: 'var(--partidos-text-muted)', fontStyle: 'italic' }}>
-                            {isEnLanguage ? 'No cards registered in match events.' : 'No se han registrado tarjetas en los eventos del partido.'}
-                          </p>
-                        ) : (
-                          derivedTarjetas.map((t, idx) => {
-                            const p = players.find(pl => pl.id === t.jugadorId);
-                            return (
-                              <div key={idx} className="goleador-row" style={{ display: 'flex', gap: '10px', alignItems: 'center', padding: '8px 12px', background: 'rgba(255,255,255,0.04)', borderRadius: '8px' }}>
-                                <PlayerAvatar player={p} size={28} showNumber={false} />
-                                <span style={{ fontWeight: '700', fontSize: '13px', flex: 1 }}>{t.nombre}</span>
-                                <span>{t.tipo === 'amarilla' ? '🟨' : '🟥'}</span>
-                                <span style={{ fontWeight: '800', fontSize: '12px', color: 'var(--partidos-text-muted)' }}>Min. {t.minuto}'</span>
-                              </div>
-                            );
-                          })
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Tarjeta 3b: Minutos Jugados Reales (Acta Oficial) */}
-                    <div className="post-match-card">
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '8px' }}>
-                        <h4 className="card-section-title" style={{ margin: 0 }}>⏱️ {isGlobalEn ? 'Official Minutes Played' : 'Minutos Jugados Reales'}</h4>
-                        <button
-                          type="button"
-                          onClick={() => setEditTab('ACTA')}
-                          style={{
-                            background: 'transparent',
-                            border: 'none',
-                            color: '#4CAF7D',
-                            fontSize: '11px',
-                            fontWeight: '700',
-                            cursor: 'pointer',
-                            padding: '4px 8px',
-                            borderRadius: '4px'
-                          }}
-                        >
-                          📋 {isGlobalEn ? 'View Sheet' : 'Ver Acta'}
-                        </button>
-                      </div>
-                      <p style={{ fontSize: '11px', color: 'var(--partidos-text-muted)', margin: '4px 0 10px 0' }}>
-                        {isGlobalEn
-                          ? 'Real minutes played calculated from starting XI, substitutions and cards in match sheet.'
-                          : 'Minutos reales calculados según titularidad, sustituciones y tarjetas del acta oficial.'}
-                      </p>
-                      {(() => {
-                        const rawTit = (Array.isArray(matchData.titulares) && matchData.titulares.length > 0)
-                          ? matchData.titulares
-                          : (calledPlayers || []).slice(0, 11);
-                        const rawSup = (Array.isArray(matchData.suplentes) && matchData.suplentes.length > 0)
-                          ? matchData.suplentes
-                          : (calledPlayers || []).slice(11, 18);
-                        const titIds = rawTit.filter(Boolean).map(String);
-                        const supIds = rawSup.filter(Boolean).map(String);
-                        const allCalled = [...new Set([...titIds, ...supIds, ...Object.keys(matchData.actaOficial?.actual || {})])];
-                        const unifEvts = getUnifiedMatchEvents(matchData);
-                        const dur = getEffectiveMatchDuration(matchData);
-
-                        const rosterList = allCalled.map(pid => {
-                          const p = (players || []).find(pl => String(pl.id) === String(pid));
-                          const actual = matchData.actaOficial?.actual?.[pid] || {};
-                          const isTit = titIds.includes(String(pid));
-                          let minVal = null;
-                          if (actual.minutesOverride !== undefined && actual.minutesOverride !== null && actual.minutesOverride !== '') {
-                            minVal = parseInt(actual.minutesOverride, 10);
-                          } else if (typeof actual.minutes === 'number' && actual.minutes > 0 && matchData.actaOficial?.closed) {
-                            minVal = actual.minutes;
-                          } else {
-                            const calc = calculateMinutesFromEvents(
-                              pid,
-                              unifEvts,
-                              titIds,
-                              supIds,
-                              dur,
-                              null,
-                              actual.status || (isTit ? 'presente' : 'sin_registro'),
-                              actual.lateMin ?? null,
-                              matchData.tarjetasList || []
-                            );
-                            minVal = calc.minutes;
-                          }
-                          return {
-                            id: pid,
-                            player: p,
-                            name: p?.name || (isGlobalEn ? 'Player' : 'Jugador'),
-                            number: p?.number || '-',
-                            isStarter: isTit,
-                            minutes: Number(minVal) || 0,
-                            status: actual.status || (isTit ? 'presente' : 'sin_registro'),
-                            isManual: actual.minutesOverride !== undefined && actual.minutesOverride !== null && actual.minutesOverride !== '',
-                          };
-                        });
-
-                        rosterList.sort((a, b) => {
-                          if (a.isStarter && !b.isStarter) return -1;
-                          if (!a.isStarter && b.isStarter) return 1;
-                          return b.minutes - a.minutes;
-                        });
-
-                        if (rosterList.length === 0) {
-                          return (
-                            <p style={{ margin: '8px 0', fontSize: '13px', color: 'var(--partidos-text-muted)', fontStyle: 'italic' }}>
-                              {isGlobalEn ? 'No players recorded in match squad.' : 'No hay jugadores registrados en la convocatoria.'}
+                        {/* Goleadores */}
+                        <div style={{ marginTop: '12px' }}>
+                          <h5 style={{ margin: '0 0 8px 0', fontSize: '12px', fontWeight: '700', color: 'var(--partidos-text-muted)' }}>
+                            ⚽ {isGlobalEn ? 'Scorers' : 'Goleadores'}
+                          </h5>
+                          {derivedGoleadores.length === 0 ? (
+                            <p style={{ margin: '4px 0', fontSize: '12px', color: 'var(--partidos-text-muted)', fontStyle: 'italic' }}>
+                              {isGlobalEn ? 'No goals recorded' : 'Sin goles registrados'}
                             </p>
-                          );
-                        }
+                          ) : (
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                              {derivedGoleadores.map((g, idx) => (
+                                <div key={idx} style={{ display: 'flex', gap: '10px', alignItems: 'center', padding: '6px 10px', background: 'rgba(255,255,255,0.04)', borderRadius: '6px', minHeight: '48px' }}>
+                                  <span style={{ fontWeight: '700', fontSize: '12px', flex: 1 }}>{g.nombre}</span>
+                                  <span style={{ fontWeight: '800', fontSize: '12px', color: '#22C55E' }}>Min. {g.minuto}'</span>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
 
-                        return (
-                          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', maxHeight: '360px', overflowY: 'auto', paddingRight: '4px' }}>
-                            {rosterList.map((r) => (
-                              <div
-                                key={r.id}
-                                style={{
-                                  display: 'flex',
-                                  alignItems: 'center',
-                                  justifyContent: 'space-between',
-                                  padding: '8px 12px',
-                                  background: 'rgba(255,255,255,0.04)',
-                                  borderRadius: '8px',
-                                  border: '1px solid var(--partidos-border)',
-                                  gap: '10px',
-                                  minHeight: '48px'
-                                }}
-                              >
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flex: 1, minWidth: 0 }}>
-                                  <span style={{ fontSize: '11px', fontWeight: '800', width: '22px', textAlign: 'center', color: '#D4A843' }}>
-                                    #{r.number}
-                                  </span>
-                                  <PlayerAvatar player={r.player} size={28} showNumber={false} />
-                                  <div style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                                    <div style={{ fontWeight: '700', fontSize: '13px', color: 'var(--partidos-text-primary)' }}>{r.name}</div>
-                                    <div style={{ fontSize: '10px', color: 'var(--partidos-text-muted)' }}>
-                                      {r.isStarter ? (isGlobalEn ? 'Starter' : 'Titular') : (isGlobalEn ? 'Substitute' : 'Suplente')}
-                                    </div>
-                                  </div>
+                        {/* Tarjetas */}
+                        <div style={{ marginTop: '12px' }}>
+                          <h5 style={{ margin: '0 0 8px 0', fontSize: '12px', fontWeight: '700', color: 'var(--partidos-text-muted)' }}>
+                            🟨 {isGlobalEn ? 'Disciplinary Cards' : 'Tarjetas y Sanciones'}
+                          </h5>
+                          {derivedTarjetas.length === 0 ? (
+                            <p style={{ margin: '4px 0', fontSize: '12px', color: 'var(--partidos-text-muted)', fontStyle: 'italic' }}>
+                              {isGlobalEn ? 'No cards recorded' : 'Sin tarjetas registradas'}
+                            </p>
+                          ) : (
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                              {derivedTarjetas.map((t, idx) => (
+                                <div key={idx} style={{ display: 'flex', gap: '10px', alignItems: 'center', padding: '6px 10px', background: 'rgba(255,255,255,0.04)', borderRadius: '6px', minHeight: '48px' }}>
+                                  <span style={{ fontWeight: '700', fontSize: '12px', flex: 1 }}>{t.nombre}</span>
+                                  <span>{t.tipo === 'amarilla' ? '🟨' : '🟥'}</span>
+                                  <span style={{ fontWeight: '800', fontSize: '12px', color: 'var(--partidos-text-muted)' }}>Min. {t.minuto}'</span>
                                 </div>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                  {r.isManual && (
-                                    <span style={{ fontSize: '10px', color: '#4CAF7D', fontWeight: '700', background: 'rgba(76,175,125,0.12)', padding: '2px 6px', borderRadius: '4px', border: '1px solid rgba(76,175,125,0.3)' }}>
-                                      ✏️ {isGlobalEn ? 'Manual' : 'Manual'}
-                                    </span>
-                                  )}
-                                  <span
-                                    style={{
-                                      fontSize: '13px',
-                                      fontWeight: '800',
-                                      padding: '4px 10px',
-                                      borderRadius: '6px',
-                                      background: r.minutes > 0 ? 'rgba(76, 175, 125, 0.15)' : 'rgba(148, 163, 184, 0.1)',
-                                      color: r.minutes > 0 ? '#4CAF7D' : 'var(--partidos-text-muted)',
-                                      border: `1px solid ${r.isManual ? '#4CAF7D' : (r.minutes > 0 ? '#4CAF7D' : 'var(--partidos-border)')}`
-                                    }}
-                                  >
-                                    {r.minutes}'
-                                  </span>
-                                </div>
-                              </div>
-                            ))}
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="post-partido-right-col">
+                        {/* MVP & Valoración */}
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                          <div style={{ display: 'flex', flexDirection: 'column' }}>
+                            <label className="input-label-caps" style={{ fontSize: '11px', fontWeight: '700', marginBottom: '6px', color: 'var(--partidos-text-muted)' }}>{getLangText('post.mvp')}</label>
+                            <select
+                              className="partidos-input"
+                              value={matchData.mvp || ''}
+                              onChange={e => setMatchData({ ...matchData, mvp: e.target.value })}
+                              style={{ minHeight: '48px', padding: '0 8px', borderRadius: '8px', border: '1px solid var(--partidos-border)', background: 'var(--partidos-input-bg)', color: 'var(--partidos-text-primary)' }}
+                            >
+                              <option value="">{getLangText('post.mvpSelect')}</option>
+                              {calledPlayers.filter(Boolean).map(id => {
+                                const p = players.find(pl => pl && pl.id === id);
+                                return p ? <option key={id} value={p.name}>{p.name}</option> : null;
+                              })}
+                            </select>
                           </div>
-                        );
-                      })()}
+
+                          <div style={{ display: 'flex', flexDirection: 'column' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                              <label className="input-label-caps" style={{ fontSize: '11px', fontWeight: '700', color: 'var(--partidos-text-muted)' }}>{isGlobalEn ? 'TEAM RATING' : 'VALORACIÓN DEL EQUIPO'}</label>
+                              <span style={{ fontSize: '15px', fontWeight: 'bold', color: 'var(--partidos-accent)' }}>{matchData.teamRating || 5} / 10</span>
+                            </div>
+                            <input
+                              type="range"
+                              min="1"
+                              max="10"
+                              step="1"
+                              value={matchData.teamRating || 5}
+                              onChange={e => setMatchData({ ...matchData, teamRating: parseInt(e.target.value) || 5 })}
+                              style={{ width: '100%', cursor: 'pointer', height: '8px', borderRadius: '4px', background: 'var(--partidos-border)' }}
+                            />
+                          </div>
+                        </div>
+                      </div>
                     </div>
                   </div>
 
-                  {/* Columna Derecha: MVP, Valoración, Notas, Botón de Guardar */}
-                  <div className="post-partido-right-col">
-                    {/* Tarjeta 4: MVP y Valoración */}
-                    <div className="post-match-card">
-                      <h4 className="card-section-title">👑 {isGlobalEn ? 'MVP & Rating' : 'MVP y Valoración'}</h4>
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '15px', marginTop: '10px' }}>
-                        <div className="mvp-selection-box" style={{ display: 'flex', flexDirection: 'column' }}>
-                          <label className="input-label-caps" style={{ fontSize: '11px', fontWeight: '700', marginBottom: '6px', color: 'var(--partidos-text-muted)' }}>{getLangText('post.mvp')}</label>
-                          <select
-                            className="partidos-input"
-                            value={matchData.mvp || ''}
-                            onChange={e => setMatchData({ ...matchData, mvp: e.target.value })}
-                            style={{ minHeight: '48px', padding: '0 8px', borderRadius: '8px', border: '1px solid var(--partidos-border)', background: 'var(--partidos-input-bg)', color: 'var(--partidos-text-primary)' }}
-                          >
-                            <option value="">{getLangText('post.mvpSelect')}</option>
-                            {calledPlayers.filter(Boolean).map(id => {
-                              const p = players.find(pl => pl && pl.id === id);
-                              return p ? <option key={id} value={p.name}>{p.name}</option> : null;
-                            })}
-                          </select>
-                        </div>
+                  {/* ── SECCIÓN 2: MOMENTUM & POSESIÓN POR BLOQUES 15' ── */}
+                  <div id="sec_momentum" className="post-match-card" style={{ scrollMarginTop: '80px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', borderBottom: '1.5px solid var(--partidos-border)', paddingBottom: '10px', marginBottom: '14px' }}>
+                      <span style={{ background: '#172D21', color: '#D4A843', padding: '4px 10px', borderRadius: '6px', fontSize: '11px', fontWeight: '900' }}>2</span>
+                      <h4 className="card-section-title" style={{ margin: 0 }}>
+                        {isGlobalEn ? '2. Momentum & 15-Minute Possession Blocks' : '2. Momentum y Posesión por Bloques 15\''}
+                      </h4>
+                    </div>
+                    <div style={{ marginTop: '12px' }}>
+                      <MatchStatsBlock
+                        matchData={matchData}
+                        events={effectiveLiveEvents || []}
+                        language={currentGlobalLanguage || 'Español (ES)'}
+                        showDonuts={false}
+                        showComparison={false}
+                        showHalves={true}
+                        showDetailedTables={false}
+                      />
+                    </div>
+                  </div>
 
-                        {/* Valoración del equipo slider 1-10 */}
-                        <div style={{ display: 'flex', flexDirection: 'column' }}>
-                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-                            <label className="input-label-caps" style={{ fontSize: '11px', fontWeight: '700', color: 'var(--partidos-text-muted)' }}>{isGlobalEn ? 'TEAM RATING' : 'VALORACIÓN DEL EQUIPO'}</label>
-                            <span style={{ fontSize: '15px', fontWeight: 'bold', color: 'var(--partidos-accent)' }}>{matchData.teamRating || 5} / 10</span>
-                          </div>
-                          <input
-                            type="range"
-                            min="1"
-                            max="10"
-                            step="1"
-                            value={matchData.teamRating || 5}
-                            onChange={e => setMatchData({ ...matchData, teamRating: parseInt(e.target.value) || 5 })}
-                            style={{ width: '100%', cursor: 'pointer', height: '8px', borderRadius: '4px', background: 'var(--partidos-border)' }}
-                          />
+                  {/* ── SECCIÓN 3: RADAR COMPARATIVO PROPIO VS RIVAL ── */}
+                  <div id="sec_radar" className="post-match-card" style={{ scrollMarginTop: '80px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', borderBottom: '1.5px solid var(--partidos-border)', paddingBottom: '10px', marginBottom: '14px' }}>
+                      <span style={{ background: '#172D21', color: '#D4A843', padding: '4px 10px', borderRadius: '6px', fontSize: '11px', fontWeight: '900' }}>3</span>
+                      <h4 className="card-section-title" style={{ margin: 0 }}>
+                        {isGlobalEn ? '3. Normalized Comparative Radar (Own vs Opponent)' : '3. Radar Comparativo Propio vs Rival (6 Ejes)'}
+                      </h4>
+                    </div>
+                    <div style={{ marginTop: '12px' }}>
+                      <MatchStatsBlock
+                        matchData={matchData}
+                        events={effectiveLiveEvents || []}
+                        language={currentGlobalLanguage || 'Español (ES)'}
+                        showDonuts={false}
+                        showComparison={true}
+                        showHalves={false}
+                        showDetailedTables={false}
+                      />
+                    </div>
+                  </div>
+
+                  {/* ── SECCIÓN 4: MÉTRICAS TOP-5 DIFERENCIALES ── */}
+                  <div id="sec_top5" className="post-match-card" style={{ scrollMarginTop: '80px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', borderBottom: '1.5px solid var(--partidos-border)', paddingBottom: '10px', marginBottom: '14px' }}>
+                      <span style={{ background: '#172D21', color: '#D4A843', padding: '4px 10px', borderRadius: '6px', fontSize: '11px', fontWeight: '900' }}>4</span>
+                      <h4 className="card-section-title" style={{ margin: 0 }}>
+                        {isGlobalEn ? '4. Top-5 Differential KPIs' : '4. Métricas Top-5 Diferenciales'}
+                      </h4>
+                    </div>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '12px', marginTop: '14px' }}>
+                      <div style={{ padding: '14px', background: 'rgba(255,255,255,0.03)', borderRadius: '10px', border: '1px solid var(--partidos-border)' }}>
+                        <div style={{ fontSize: '11px', fontWeight: '700', color: 'var(--partidos-text-muted)' }}>1. {isGlobalEn ? 'Expected Goals (xG)' : 'Goles Esperados (xG)'}</div>
+                        <div style={{ fontSize: '18px', fontWeight: '900', color: '#D4A843', marginTop: '4px' }}>
+                          {postMatchDerivedIndices.ownXg} vs {postMatchDerivedIndices.rivalXg}
+                        </div>
+                        <div style={{ fontSize: '11px', color: 'var(--partidos-text-muted)', marginTop: '2px' }}>
+                          {postMatchDerivedIndices.ownXg >= postMatchDerivedIndices.rivalXg ? (isGlobalEn ? '+ Favorable production' : '+ Producción favorable') : (isGlobalEn ? 'Deficit' : 'Déficit ofensivo')}
+                        </div>
+                      </div>
+
+                      <div style={{ padding: '14px', background: 'rgba(255,255,255,0.03)', borderRadius: '10px', border: '1px solid var(--partidos-border)' }}>
+                        <div style={{ fontSize: '11px', fontWeight: '700', color: 'var(--partidos-text-muted)' }}>2. {isGlobalEn ? 'Shots on Target' : 'Remates a Puerta'}</div>
+                        <div style={{ fontSize: '18px', fontWeight: '900', color: '#22C55E', marginTop: '4px' }}>
+                          {effectiveLiveEvents.filter(e => e && (e.type === 'shot_on_target_own' || e.type === 'shot_on_target')).length}
+                        </div>
+                        <div style={{ fontSize: '11px', color: 'var(--partidos-text-muted)', marginTop: '2px' }}>
+                          {isGlobalEn ? 'Total shots:' : 'Remates totales:'} {postMatchDerivedIndices.ownShotsCount}
+                        </div>
+                      </div>
+
+                      <div style={{ padding: '14px', background: 'rgba(255,255,255,0.03)', borderRadius: '10px', border: '1px solid var(--partidos-border)' }}>
+                        <div style={{ fontSize: '11px', fontWeight: '700', color: 'var(--partidos-text-muted)' }}>3. {isGlobalEn ? 'Opponent Comfort' : 'Comodidad Rival'}</div>
+                        <div style={{ fontSize: '18px', fontWeight: '900', color: postMatchDerivedIndices.rivalComfortPct > 40 ? '#EF4444' : '#22C55E', marginTop: '4px' }}>
+                          {postMatchDerivedIndices.rivalComfortPct}%
+                        </div>
+                        <div style={{ fontSize: '11px', color: 'var(--partidos-text-muted)', marginTop: '2px' }}>
+                          {postMatchDerivedIndices.rivalComfortableShots} {isGlobalEn ? 'comfortable shots conceded' : 'tiros cómodos concedidos'}
+                        </div>
+                      </div>
+
+                      <div style={{ padding: '14px', background: 'rgba(255,255,255,0.03)', borderRadius: '10px', border: '1px solid var(--partidos-border)' }}>
+                        <div style={{ fontSize: '11px', fontWeight: '700', color: 'var(--partidos-text-muted)' }}>4. {isGlobalEn ? 'Goalkeeper Exertion' : 'Exigencia de Portería'}</div>
+                        <div style={{ fontSize: '18px', fontWeight: '900', color: postMatchDerivedIndices.isDemandingMatch ? '#EF4444' : '#D4A843', marginTop: '4px' }}>
+                          {postMatchDerivedIndices.gkExertionIndex} pts
+                        </div>
+                        <div style={{ fontSize: '11px', color: 'var(--partidos-text-muted)', marginTop: '2px' }}>
+                          {postMatchDerivedIndices.decisiveSaves} {isGlobalEn ? 'decisive saves' : 'paradas decisivas'}
+                        </div>
+                      </div>
+
+                      <div style={{ padding: '14px', background: 'rgba(255,255,255,0.03)', borderRadius: '10px', border: '1px solid var(--partidos-border)' }}>
+                        <div style={{ fontSize: '11px', fontWeight: '700', color: 'var(--partidos-text-muted)' }}>5. {isGlobalEn ? 'Save Efficiency' : 'Eficacia de Paradas'}</div>
+                        <div style={{ fontSize: '18px', fontWeight: '900', color: '#22C55E', marginTop: '4px' }}>
+                          {postMatchDerivedIndices.totalSavePct}%
+                        </div>
+                        <div style={{ fontSize: '11px', color: 'var(--partidos-text-muted)', marginTop: '2px' }}>
+                          {postMatchDerivedIndices.totalSaves} {isGlobalEn ? 'total saves' : 'paradas totales'}
                         </div>
                       </div>
                     </div>
+                  </div>
 
-                    {/* Tarjeta: Calificaciones Individuales del Míster (1 - 10) */}
-                    <div className="post-match-card">
-                      <h4 className="card-section-title">⭐ {isGlobalEn ? "Coach's Individual Ratings (1 - 10)" : 'Calificación del Míster por Jugador (1 - 10)'}</h4>
-                      <p style={{ fontSize: '12px', color: 'var(--partidos-text-muted)', margin: '4px 0 12px 0' }}>
-                        {isGlobalEn
-                          ? 'Assign match rating to each player to automatically feed tactical performance and official averages.'
-                          : 'Asigna la nota del partido a cada jugador para alimentar automáticamente su rendimiento táctico y notas medias oficiales.'}
-                      </p>
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', maxHeight: '340px', overflowY: 'auto', paddingRight: '4px' }}>
-                        {calledPlayers.filter(Boolean).length === 0 ? (
-                          <p style={{ fontSize: '12px', color: 'var(--partidos-text-muted)', fontStyle: 'italic', margin: '6px 0' }}>
-                            {isGlobalEn ? 'No players called up for this match.' : 'No hay jugadores convocados en este partido.'}
-                          </p>
-                        ) : (
-                          calledPlayers.filter(Boolean).map(id => {
+                  {/* ── SECCIÓN 5: MAPAS DE TIROS & MODELO xG-LITE ── */}
+                  <div id="sec_shots" className="post-match-card" style={{ scrollMarginTop: '80px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '10px', borderBottom: '1.5px solid var(--partidos-border)', paddingBottom: '10px', marginBottom: '14px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <span style={{ background: '#172D21', color: '#D4A843', padding: '4px 10px', borderRadius: '6px', fontSize: '11px', fontWeight: '900' }}>5</span>
+                        <h4 className="card-section-title" style={{ margin: 0 }}>
+                          {isGlobalEn ? '5. Shot Maps & xG-Lite Model' : '5. Mapas de Tiros y Modelo xG-Lite'}
+                        </h4>
+                      </div>
+                      <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                        <span style={{ padding: '4px 10px', borderRadius: '6px', fontSize: '11px', fontWeight: '700', background: 'rgba(34,197,94,0.15)', color: '#22C55E', border: '1px solid rgba(34,197,94,0.3)' }}>
+                          {isGlobalEn ? 'Own xG:' : 'xG Propio:'} {postMatchDerivedIndices.ownXg}
+                        </span>
+                        <span style={{ padding: '4px 10px', borderRadius: '6px', fontSize: '11px', fontWeight: '700', background: 'rgba(239,68,68,0.15)', color: '#EF4444', border: '1px solid rgba(239,68,68,0.3)' }}>
+                          {isGlobalEn ? 'Opponent xG:' : 'xG Rival:'} {postMatchDerivedIndices.rivalXg}
+                        </span>
+                      </div>
+                    </div>
+                    <div style={{ marginTop: '12px' }}>
+                      <ShotMap
+                        shots={postMatchShotEvents}
+                        teamName={activeTeam?.nombre || activeTeam?.name || 'Mi Equipo'}
+                        players={players || []}
+                      />
+                    </div>
+                  </div>
+
+                  {/* ── SECCIÓN 6: EXIGENCIA & RENDIMIENTO DE PORTERÍA ── */}
+                  <div id="sec_gk" className="post-match-card" style={{ scrollMarginTop: '80px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', borderBottom: '1.5px solid var(--partidos-border)', paddingBottom: '10px', marginBottom: '14px' }}>
+                      <span style={{ background: '#172D21', color: '#D4A843', padding: '4px 10px', borderRadius: '6px', fontSize: '11px', fontWeight: '900' }}>6</span>
+                      <h4 className="card-section-title" style={{ margin: 0 }}>
+                        🧤 {isGlobalEn ? '6. Goalkeeping Exertion & Performance' : '6. Exigencia y Rendimiento de Portería'}
+                      </h4>
+                      {postMatchDerivedIndices.isDemandingMatch && (
+                        <span style={{ marginLeft: 'auto', background: '#EF4444', color: '#FFFFFF', padding: '3px 8px', borderRadius: '4px', fontSize: '10px', fontWeight: '800' }}>
+                          🔥 {isGlobalEn ? 'DEMANDING MATCH' : 'TARDE EXIGENTE'}
+                        </span>
+                      )}
+                    </div>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '10px', marginTop: '12px' }}>
+                      <div style={{ padding: '12px', background: 'rgba(255,255,255,0.03)', borderRadius: '8px', border: '1px solid var(--partidos-border)', textAlign: 'center' }}>
+                        <div style={{ fontSize: '11px', color: 'var(--partidos-text-muted)' }}>{isGlobalEn ? 'Exertion Index' : 'Índice Exigencia'}</div>
+                        <div style={{ fontSize: '20px', fontWeight: '900', color: '#D4A843', marginTop: '4px' }}>{postMatchDerivedIndices.gkExertionIndex}</div>
+                      </div>
+                      <div style={{ padding: '12px', background: 'rgba(255,255,255,0.03)', borderRadius: '8px', border: '1px solid var(--partidos-border)', textAlign: 'center' }}>
+                        <div style={{ fontSize: '11px', color: 'var(--partidos-text-muted)' }}>{isGlobalEn ? 'Normal Saves' : 'Paradas Normales'}</div>
+                        <div style={{ fontSize: '20px', fontWeight: '900', color: '#22C55E', marginTop: '4px' }}>{postMatchDerivedIndices.normalSaves}</div>
+                      </div>
+                      <div style={{ padding: '12px', background: 'rgba(255,255,255,0.03)', borderRadius: '8px', border: '1px solid var(--partidos-border)', textAlign: 'center' }}>
+                        <div style={{ fontSize: '11px', color: 'var(--partidos-text-muted)' }}>{isGlobalEn ? 'Decisive Saves' : 'Paradas Decisivas'}</div>
+                        <div style={{ fontSize: '20px', fontWeight: '900', color: '#4CAF7D', marginTop: '4px' }}>
+                          {postMatchDerivedIndices.decisiveSaves}
+                          <span style={{ fontSize: '10px', color: 'var(--partidos-text-muted)', display: 'block' }}>x2 XP</span>
+                        </div>
+                      </div>
+                      <div style={{ padding: '12px', background: 'rgba(255,255,255,0.03)', borderRadius: '8px', border: '1px solid var(--partidos-border)', textAlign: 'center' }}>
+                        <div style={{ fontSize: '11px', color: 'var(--partidos-text-muted)' }}>{isGlobalEn ? 'Penalties Saved' : 'Penaltis Parados'}</div>
+                        <div style={{ fontSize: '20px', fontWeight: '900', color: '#3B82F6', marginTop: '4px' }}>{postMatchDerivedIndices.penaltySaves}</div>
+                      </div>
+                      <div style={{ padding: '12px', background: 'rgba(255,255,255,0.03)', borderRadius: '8px', border: '1px solid var(--partidos-border)', textAlign: 'center' }}>
+                        <div style={{ fontSize: '11px', color: 'var(--partidos-text-muted)' }}>{isGlobalEn ? 'Goals Conceded' : 'Goles Encajados'}</div>
+                        <div style={{ fontSize: '20px', fontWeight: '900', color: '#EF4444', marginTop: '4px' }}>{postMatchDerivedIndices.concededGoals}</div>
+                      </div>
+                      <div style={{ padding: '12px', background: 'rgba(255,255,255,0.03)', borderRadius: '8px', border: '1px solid var(--partidos-border)', textAlign: 'center' }}>
+                        <div style={{ fontSize: '11px', color: 'var(--partidos-text-muted)' }}>{isGlobalEn ? 'Total Save %' : '% Paradas'}</div>
+                        <div style={{ fontSize: '20px', fontWeight: '900', color: '#22C55E', marginTop: '4px' }}>{postMatchDerivedIndices.totalSavePct}%</div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* ── SECCIÓN 7: ALINEACIÓN TÁCTICA CON FOTOGRAFÍAS [PROTEGIDA] ── */}
+                  <div id="sec_lineup" className="post-match-card" style={{ scrollMarginTop: '80px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '10px', borderBottom: '1.5px solid var(--partidos-border)', paddingBottom: '10px', marginBottom: '14px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <span style={{ background: '#172D21', color: '#D4A843', padding: '4px 10px', borderRadius: '6px', fontSize: '11px', fontWeight: '900' }}>7</span>
+                        <h4 className="card-section-title" style={{ margin: 0 }}>
+                          {isGlobalEn ? '7. Tactical Lineup with Photos' : '7. Alineación Táctica con Fotografías'}
+                        </h4>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setEditTab('ALINEACIÓN')}
+                        style={{
+                          background: '#1B3A2D',
+                          color: '#4CAF7D',
+                          border: '1px solid #4CAF7D',
+                          borderRadius: '6px',
+                          padding: '8px 14px',
+                          fontSize: '11px',
+                          fontWeight: '800',
+                          cursor: 'pointer',
+                          minHeight: '48px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '6px'
+                        }}
+                      >
+                        📐 {isGlobalEn ? 'Open Lineup & HD PNG' : 'Ver Alineación & Descargar PNG'}
+                      </button>
+                    </div>
+                    <p style={{ fontSize: '12px', color: 'var(--partidos-text-muted)', margin: '4px 0 12px 0' }}>
+                      {isGlobalEn
+                        ? 'Tactical pitch with starting XI and substitutes bench photos is rendered canonically in PDF and downloadable in ≥2048px HD PNG.'
+                        : 'El terreno táctico con fotos de los 11 titulares y el banquillo de suplentes se exporta de forma canónica en el informe PDF y cuenta con descarga PNG HD (≥2048px).'}
+                    </p>
+                    <div style={{ padding: '16px', background: 'rgba(255,255,255,0.03)', borderRadius: '8px', border: '1px solid var(--partidos-border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px' }}>
+                      <div>
+                        <div style={{ fontSize: '13px', fontWeight: '800', color: 'var(--partidos-text-primary)' }}>
+                          {matchData.formation || matchData.lineup || '4-3-3'}
+                        </div>
+                        <div style={{ fontSize: '11px', color: 'var(--partidos-text-muted)' }}>
+                          {Array.isArray(matchData.titulares) ? matchData.titulares.filter(Boolean).length : 11} {isGlobalEn ? 'starters' : 'titulares'} · {Array.isArray(matchData.suplentes) ? matchData.suplentes.filter(Boolean).length : 0} {isGlobalEn ? 'substitutes' : 'suplentes'}
+                        </div>
+                      </div>
+                      <div style={{ display: 'flex', gap: '6px' }}>
+                        {(Array.isArray(matchData.titulares) ? matchData.titulares : (calledPlayers || []).slice(0, 5)).slice(0, 5).map(pid => {
+                          const p = (players || []).find(pl => String(pl.id) === String(pid));
+                          return <PlayerAvatar key={pid} player={p} size={32} showNumber={false} />;
+                        })}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* ── SECCIÓN 8: RENDIMIENTO INDIVIDUAL & PLANTILLA ── */}
+                  <div id="sec_players" className="post-match-card" style={{ scrollMarginTop: '80px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', borderBottom: '1.5px solid var(--partidos-border)', paddingBottom: '10px', marginBottom: '14px' }}>
+                      <span style={{ background: '#172D21', color: '#D4A843', padding: '4px 10px', borderRadius: '6px', fontSize: '11px', fontWeight: '900' }}>8</span>
+                      <h4 className="card-section-title" style={{ margin: 0 }}>
+                        {isGlobalEn ? '8. Individual Player Table & Goalkeeping' : '8. Rendimiento Individual y Minutos Oficiales'}
+                      </h4>
+                    </div>
+
+                    <div className="post-partido-grid-layout" style={{ marginTop: 0 }}>
+                      <div className="post-partido-left-col">
+                        {/* Minutos Jugados Reales */}
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+                          <h5 style={{ margin: 0, fontSize: '12px', fontWeight: '700', color: 'var(--partidos-text-muted)' }}>
+                            ⏱️ {isGlobalEn ? 'Official Minutes' : 'Minutos Reales Jugados'}
+                          </h5>
+                          <button
+                            type="button"
+                            onClick={() => setEditTab('ACTA')}
+                            style={{ background: 'transparent', border: 'none', color: '#4CAF7D', fontSize: '11px', fontWeight: '700', cursor: 'pointer' }}
+                          >
+                            📋 {isGlobalEn ? 'Match Sheet' : 'Ver Acta'}
+                          </button>
+                        </div>
+                        {(() => {
+                          const rawTit = (Array.isArray(matchData.titulares) && matchData.titulares.length > 0)
+                            ? matchData.titulares
+                            : (calledPlayers || []).slice(0, 11);
+                          const rawSup = (Array.isArray(matchData.suplentes) && matchData.suplentes.length > 0)
+                            ? matchData.suplentes
+                            : (calledPlayers || []).slice(11, 18);
+                          const titIds = rawTit.filter(Boolean).map(String);
+                          const supIds = rawSup.filter(Boolean).map(String);
+                          const allCalled = [...new Set([...titIds, ...supIds, ...Object.keys(matchData.actaOficial?.actual || {})])];
+                          const unifEvts = getUnifiedMatchEvents(matchData);
+                          const dur = getEffectiveMatchDuration(matchData);
+
+                          const rosterList = allCalled.map(pid => {
+                            const p = (players || []).find(pl => String(pl.id) === String(pid));
+                            const actual = matchData.actaOficial?.actual?.[pid] || {};
+                            const isTit = titIds.includes(String(pid));
+                            let minVal = null;
+                            if (actual.minutesOverride !== undefined && actual.minutesOverride !== null && actual.minutesOverride !== '') {
+                              minVal = parseInt(actual.minutesOverride, 10);
+                            } else if (typeof actual.minutes === 'number' && actual.minutes > 0 && matchData.actaOficial?.closed) {
+                              minVal = actual.minutes;
+                            } else {
+                              const calc = calculateMinutesFromEvents(
+                                pid,
+                                unifEvts,
+                                titIds,
+                                supIds,
+                                dur,
+                                null,
+                                actual.status || (isTit ? 'presente' : 'sin_registro'),
+                                actual.lateMin ?? null,
+                                matchData.tarjetasList || []
+                              );
+                              minVal = calc.minutes;
+                            }
+                            return {
+                              id: pid,
+                              player: p,
+                              name: p?.name || (isGlobalEn ? 'Player' : 'Jugador'),
+                              number: p?.number || '-',
+                              isStarter: isTit,
+                              minutes: Number(minVal) || 0,
+                              status: actual.status || (isTit ? 'presente' : 'sin_registro'),
+                              isManual: actual.minutesOverride !== undefined && actual.minutesOverride !== null && actual.minutesOverride !== '',
+                            };
+                          });
+
+                          rosterList.sort((a, b) => {
+                            if (a.isStarter && !b.isStarter) return -1;
+                            if (!a.isStarter && b.isStarter) return 1;
+                            return b.minutes - a.minutes;
+                          });
+
+                          if (rosterList.length === 0) {
+                            return (
+                              <p style={{ margin: '8px 0', fontSize: '13px', color: 'var(--partidos-text-muted)', fontStyle: 'italic' }}>
+                                {isGlobalEn ? 'No players recorded in match squad.' : 'No hay jugadores registrados en la convocatoria.'}
+                              </p>
+                            );
+                          }
+
+                          return (
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', maxHeight: '340px', overflowY: 'auto', paddingRight: '4px' }}>
+                              {rosterList.map((r) => (
+                                <div
+                                  key={r.id}
+                                  style={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'space-between',
+                                    padding: '8px 12px',
+                                    background: 'rgba(255,255,255,0.04)',
+                                    borderRadius: '8px',
+                                    border: '1px solid var(--partidos-border)',
+                                    gap: '10px',
+                                    minHeight: '48px'
+                                  }}
+                                >
+                                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flex: 1, minWidth: 0 }}>
+                                    <span style={{ fontSize: '11px', fontWeight: '800', width: '22px', textAlign: 'center', color: '#D4A843' }}>
+                                      #{r.number}
+                                    </span>
+                                    <PlayerAvatar player={r.player} size={28} showNumber={false} />
+                                    <div style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                      <div style={{ fontWeight: '700', fontSize: '13px', color: 'var(--partidos-text-primary)' }}>{r.name}</div>
+                                      <div style={{ fontSize: '10px', color: 'var(--partidos-text-muted)' }}>
+                                        {r.isStarter ? (isGlobalEn ? 'Starter' : 'Titular') : (isGlobalEn ? 'Substitute' : 'Suplente')}
+                                      </div>
+                                    </div>
+                                  </div>
+                                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                    {r.isManual && (
+                                      <span style={{ fontSize: '10px', color: '#4CAF7D', fontWeight: '700', background: 'rgba(76,175,125,0.12)', padding: '2px 6px', borderRadius: '4px', border: '1px solid rgba(76,175,125,0.3)' }}>
+                                        ✏️ {isGlobalEn ? 'Manual' : 'Manual'}
+                                      </span>
+                                    )}
+                                    <span
+                                      style={{
+                                        fontSize: '13px',
+                                        fontWeight: '800',
+                                        padding: '4px 10px',
+                                        borderRadius: '6px',
+                                        background: r.minutes > 0 ? 'rgba(76, 175, 125, 0.15)' : 'rgba(148, 163, 184, 0.1)',
+                                        color: r.minutes > 0 ? '#4CAF7D' : 'var(--partidos-text-muted)',
+                                        border: `1px solid ${r.isManual ? '#4CAF7D' : (r.minutes > 0 ? '#4CAF7D' : 'var(--partidos-border)')}`
+                                      }}
+                                    >
+                                      {r.minutes}'
+                                    </span>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          );
+                        })()}
+                      </div>
+
+                      <div className="post-partido-right-col">
+                        {/* Calificaciones 1-10 */}
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', maxHeight: '340px', overflowY: 'auto', paddingRight: '4px' }}>
+                          <h5 style={{ margin: '0 0 4px 0', fontSize: '12px', fontWeight: '700', color: 'var(--partidos-text-muted)' }}>
+                            ⭐ {isGlobalEn ? 'Coach Ratings (1-10)' : 'Calificación del Míster (1-10)'}
+                          </h5>
+                          {calledPlayers.filter(Boolean).map(id => {
                             const p = players.find(pl => pl && pl.id === id);
                             if (!p) return null;
                             const currentRating = (matchData.playerRatings && matchData.playerRatings[id] !== undefined && matchData.playerRatings[id] !== null)
@@ -2685,17 +2982,14 @@ const Partidos = () => {
                                   background: 'rgba(255,255,255,0.04)',
                                   borderRadius: '8px',
                                   border: '1px solid var(--partidos-border)',
-                                  gap: '12px'
+                                  gap: '12px',
+                                  minHeight: '48px'
                                 }}
                               >
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flex: 1, minWidth: 0 }}>
-                                  <PlayerAvatar player={p} size={32} showNumber={false} />
-                                  <div style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                                    <div style={{ fontWeight: '700', fontSize: '13px' }}>{p.name}</div>
-                                    <div style={{ fontSize: '11px', color: 'var(--partidos-text-muted)' }}>{p.position || (isGlobalEn ? 'Player' : 'Jugador')}</div>
-                                  </div>
+                                  <PlayerAvatar player={p} size={28} showNumber={false} />
+                                  <span style={{ fontWeight: '700', fontSize: '12px', color: 'var(--partidos-text-primary)' }}>{p.name}</span>
                                 </div>
-
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                                   <input
                                     type="number"
@@ -2709,14 +3003,8 @@ const Partidos = () => {
                                       const parsed = rawVal === '' ? null : parseFloat(rawVal);
                                       setMatchData(prev => ({
                                         ...prev,
-                                        playerRatings: {
-                                          ...(prev.playerRatings || {}),
-                                          [id]: parsed
-                                        },
-                                        ratings: {
-                                          ...(prev.ratings || {}),
-                                          [id]: parsed
-                                        }
+                                        playerRatings: { ...(prev.playerRatings || {}), [id]: parsed },
+                                        ratings: { ...(prev.ratings || {}), [id]: parsed }
                                       }));
                                     }}
                                     onBlur={async () => {
@@ -2730,216 +3018,77 @@ const Partidos = () => {
                                       }
                                     }}
                                     style={{
-                                      width: '65px',
+                                      width: '60px',
                                       minHeight: '44px',
                                       textAlign: 'center',
                                       fontWeight: '900',
-                                      fontSize: '15px',
-                                      borderRadius: '8px',
+                                      fontSize: '14px',
+                                      borderRadius: '6px',
                                       border: '1.5px solid var(--partidos-border)',
                                       background: 'var(--partidos-input-bg)',
                                       color: currentRating ? '#22C55E' : 'var(--partidos-text-primary)'
                                     }}
                                   />
-                                  <span style={{ fontSize: '12px', fontWeight: 'bold', color: 'var(--partidos-text-muted)' }}>/ 10</span>
+                                  <span style={{ fontSize: '11px', fontWeight: 'bold', color: 'var(--partidos-text-muted)' }}>/ 10</span>
                                 </div>
                               </div>
                             );
-                          })
-                        )}
+                          })}
+                        </div>
                       </div>
                     </div>
-
-                    {/* Tarjeta 5b: Comentario del Míster por Jugador (visible en portal jugador) */}
-                    <div className="post-match-card">
-                      <h4 className="card-section-title">💬 {isGlobalEn ? 'Feedback for Player' : 'Comentario para el Jugador'}</h4>
-                      <p style={{ fontSize: '12px', color: 'var(--partidos-text-muted)', margin: '4px 0 12px 0' }}>
-                        {isGlobalEn
-                          ? 'Personal message from the coach — the player will see it in their portal under this match details. Max 280 characters. Positive and constructive tone.'
-                          : 'Mensaje personal del míster — el jugador lo verá en su portal bajo el detalle de este partido. Máximo 280 caracteres. Tono positivo y constructivo.'}
-                      </p>
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', maxHeight: '360px', overflowY: 'auto', paddingRight: '4px' }}>
-                        {calledPlayers.filter(Boolean).length === 0 ? (
-                          <p style={{ fontSize: '12px', color: 'var(--partidos-text-muted)', fontStyle: 'italic', margin: '6px 0' }}>
-                            {isGlobalEn ? 'No players called up for this match.' : 'No hay jugadores convocados en este partido.'}
-                          </p>
-                        ) : (
-                          calledPlayers.filter(Boolean).map(id => {
-                            const p = players.find(pl => pl && pl.id === id);
-                            if (!p) return null;
-                            const currentComment = (matchData.playerComments && matchData.playerComments[id]) || '';
-                            return (
-                              <div
-                                key={id}
-                                style={{
-                                  display: 'flex',
-                                  flexDirection: 'column',
-                                  gap: '6px',
-                                  padding: '10px 12px',
-                                  background: 'rgba(255,255,255,0.04)',
-                                  borderRadius: '8px',
-                                  border: '1px solid var(--partidos-border)',
-                                }}
-                              >
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                  <PlayerAvatar player={p} size={28} showNumber={false} />
-                                  <span style={{ fontWeight: '700', fontSize: '12px', color: 'var(--partidos-text-primary)' }}>{p.name}</span>
-                                  <span style={{ fontSize: '10px', color: 'var(--partidos-text-muted)', marginLeft: 'auto' }}>{currentComment.length}/280</span>
-                                </div>
-                                <textarea
-                                  maxLength={280}
-                                  rows={2}
-                                  placeholder={isGlobalEn ? `Write an encouraging comment for ${p.name}...` : `Escribe un comentario motivador para ${p.name}...`}
-                                  value={currentComment}
-                                  onChange={e => {
-                                    const val = e.target.value.slice(0, 280);
-                                    setMatchData(prev => ({
-                                      ...prev,
-                                      playerComments: { ...(prev.playerComments || {}), [id]: val }
-                                    }));
-                                  }}
-                                  onBlur={async () => {
-                                    if (matchData.id) {
-                                      try {
-                                        await updateMatch(matchData.id, { playerComments: matchData.playerComments || {} });
-                                      } catch (_) {}
-                                    }
-                                  }}
-                                  style={{
-                                    width: '100%',
-                                    padding: '8px',
-                                    borderRadius: '8px',
-                                    border: '1.5px solid var(--partidos-border)',
-                                    background: 'var(--partidos-input-bg)',
-                                    color: 'var(--partidos-text-primary)',
-                                    fontSize: '12px',
-                                    lineHeight: '1.5',
-                                    resize: 'vertical',
-                                    minHeight: '56px',
-                                    boxSizing: 'border-box',
-                                    fontFamily: 'inherit'
-                                  }}
-                                />
-                              </div>
-                            );
-                          })
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Tarjeta 5: Notas Tácticas */}
-
-                    <div className="post-match-card">
-                      <h4 className="card-section-title">📝 {isGlobalEn ? 'Tactical Notes' : 'Notas Tácticas'}</h4>
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginTop: '10px' }}>
-                        <label className="input-label-caps" style={{ fontSize: '11px', fontWeight: '700', color: 'var(--partidos-text-muted)' }}>{getLangText('post.notes')}</label>
-                        <SpellCheckedTextarea
-                          className="partidos-input textarea-tall"
-                          value={matchData.notes || ''}
-                          onChange={e => setMatchData({ ...matchData, notes: e.target.value })}
-                          placeholder={getLangText('post.notesPlaceholder')}
-                          rows={5}
-                          style={{ minHeight: '120px', width: '100%', padding: '8px', borderRadius: '8px', border: '1px solid var(--partidos-border)', background: 'var(--partidos-input-bg)', color: 'var(--partidos-text-primary)', boxSizing: 'border-box' }}
-                        />
-                      </div>
-                    </div>
-
-                    {/* Botón de Guardar Post-Partido (Verde Campo) */}
-                    <button
-                      type="button"
-                      className="btn-success-green-allcaps"
-                      onClick={handleSaveMatch}
-                      disabled={isSaving}
-                      style={{
-                        width: '100%',
-                        minHeight: '52px',
-                        background: '#2E7D5C',
-                        color: '#FFFFFF',
-                        border: 'none',
-                        borderRadius: '8px',
-                        fontWeight: '700',
-                        fontSize: '15px',
-                        cursor: 'pointer',
-                        textTransform: 'uppercase',
-                        boxShadow: '0 4px 10px rgba(46,125,92,0.2)',
-                        transition: 'all 0.2s ease',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        gap: '8px',
-                        marginTop: '10px'
-                      }}
-                    >
-                      {isSaving ? (isGlobalEn ? 'SAVING...' : 'GUARDANDO...') : (isGlobalEn ? '💾 SAVE POST-MATCH' : '💾 GUARDAR POST-PARTIDO')}
-                    </button>
                   </div>
 
-                  {/* Secciones de ancho completo abajo */}
-                  <div className="post-partido-full-width-card" style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-                    {/* Tarjeta Resumen del Partido (Gráficas Fase 3a) */}
-                    <div className="post-match-card">
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px', marginBottom: '16px' }}>
-                        <h4 className="card-section-title" style={{ margin: 0 }}>
-                          📈 {isGlobalEn ? 'Match Summary' : 'Resumen del Partido'}
-                        </h4>
-                        <button
-                          type="button"
-                          onClick={handleExportPDF}
-                          style={{
-                            background: '#D4A843',
-                            color: '#0E1A14',
-                            border: 'none',
-                            fontWeight: '800',
-                            padding: '8px 16px',
-                            borderRadius: '8px',
-                            cursor: 'pointer',
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            gap: '6px',
-                            fontSize: '12px'
-                          }}
-                        >
-                          📄 {isGlobalEn ? 'Download PDF Report' : 'Descargar Informe PDF'}
-                        </button>
-                      </div>
-
-                      <div style={{ marginTop: '16px' }}>
-                        <MatchStatsBlock
-                          matchData={matchData}
-                          events={effectiveLiveEvents || []}
-                          language={currentGlobalLanguage || 'Español (ES)'}
-                          showDonuts={true}
-                          showComparison={true}
-                          showHalves={true}
-                          showDetailedTables={true}
-                        />
-                      </div>
+                  {/* ── SECCIÓN 9: MATRIZ DAFO & RECOMENDACIONES ── */}
+                  <div id="sec_swot" className="post-match-card" style={{ scrollMarginTop: '80px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', borderBottom: '1.5px solid var(--partidos-border)', paddingBottom: '10px', marginBottom: '14px' }}>
+                      <span style={{ background: '#172D21', color: '#D4A843', padding: '4px 10px', borderRadius: '6px', fontSize: '11px', fontWeight: '900' }}>9</span>
+                      <h4 className="card-section-title" style={{ margin: 0 }}>
+                        {isGlobalEn ? '9. SWOT Matrix & Recommendations' : '9. Matriz DAFO Trazable y Recomendaciones'}
+                      </h4>
                     </div>
-                    {/* Tarjeta 6: Cuestionario de Análisis */}
-                    <div className="post-match-card">
-                      <h4 className="card-section-title">📋 {isGlobalEn ? 'Match Report Questionnaire' : 'Cuestionario de Informe de Partido'}</h4>
-                      <div className="questionnaire-fields" style={{ marginTop: '10px' }}>
+
+                    {/* Componente DAFO interactivo con chips trazables */}
+                    <div style={{ marginTop: '12px' }}>
+                      <SwotMatrix
+                        derivedSwot={postMatchSwotData}
+                        matchData={matchData}
+                        onNavigateToSection={(target) => {
+                          const el = document.getElementById(target);
+                          if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                        }}
+                      />
+                    </div>
+
+                    {/* Cuestionario de Análisis del Entrenador */}
+                    <div style={{ marginTop: '24px', paddingTop: '16px', borderTop: '1px solid var(--partidos-border)' }}>
+                      <h5 style={{ margin: '0 0 10px 0', fontSize: '13px', fontWeight: '800' }}>
+                        📋 {isGlobalEn ? 'Tactical Notes Questionnaire' : 'Cuestionario de Análisis Táctico'}
+                      </h5>
+                      <div className="questionnaire-fields">
                         {reportQuestions.map(q => (
-                          <div key={q.key} className="questionnaire-field-block" style={{ marginBottom: '15px' }}>
-                            <label className="question-field-label" style={{ fontWeight: 'bold', fontSize: '13px' }}>{q.label}</label>
-                            <p className="question-field-desc" style={{ fontSize: '12px', color: 'var(--partidos-text-muted)', margin: '4px 0 8px 0' }}>{q.question}</p>
+                          <div key={q.key} className="questionnaire-field-block" style={{ marginBottom: '14px' }}>
+                            <label className="question-field-label" style={{ fontWeight: 'bold', fontSize: '12px' }}>{q.label}</label>
+                            <p className="question-field-desc" style={{ fontSize: '11px', color: 'var(--partidos-text-muted)', margin: '2px 0 6px 0' }}>{q.question}</p>
                             <SpellCheckedTextarea
                               className="partidos-input"
-                              rows={4}
+                              rows={3}
                               value={(matchData.postMatchAnswers && matchData.postMatchAnswers[q.key]) || ''}
                               onChange={e => handleAnswerChange(q.key, e.target.value)}
                               placeholder="..."
-                              style={{ width: '100%', background: 'var(--partidos-input-bg)', minHeight: '100px', padding: '8px', borderRadius: '8px', border: '1px solid var(--partidos-border)', color: 'var(--partidos-text-primary)' }}
+                              style={{ width: '100%', background: 'var(--partidos-input-bg)', minHeight: '80px', padding: '8px', borderRadius: '8px', border: '1px solid var(--partidos-border)', color: 'var(--partidos-text-primary)' }}
                             />
                           </div>
                         ))}
                       </div>
                     </div>
 
-                    {/* Tarjeta 7: Galería de Imágenes */}
-                    <div className="post-match-card">
-                      <h4 className="card-section-title">📷 {getLangText('post.images')}</h4>
-                      <div className="image-upload-wrapper" style={{ marginTop: '10px' }}>
+                    {/* Galería de Fotografías Post-Partido */}
+                    <div style={{ marginTop: '20px', paddingTop: '16px', borderTop: '1px solid var(--partidos-border)' }}>
+                      <h5 style={{ margin: '0 0 8px 0', fontSize: '13px', fontWeight: '800' }}>
+                        📷 {getLangText('post.images')}
+                      </h5>
+                      <div className="image-upload-wrapper">
                         <input
                           type="file"
                           accept="image/*, .png, .jpg, .jpeg, .webp, .svg, .gif, .avif, .heic, .bmp"
@@ -2971,9 +3120,9 @@ const Partidos = () => {
                         </label>
                       </div>
 
-                      <div className="images-gallery" style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', marginTop: '16px' }}>
+                      <div className="images-gallery" style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', marginTop: '14px' }}>
                         {(matchData.postMatchImages || []).map((img, idx) => (
-                          <div key={idx} className="gallery-thumbnail-container" style={{ position: 'relative', width: '100px', height: '100px', borderRadius: '8px', overflow: 'hidden', border: '1px solid var(--partidos-border)' }}>
+                          <div key={idx} className="gallery-thumbnail-container" style={{ position: 'relative', width: '90px', height: '90px', borderRadius: '8px', overflow: 'hidden', border: '1px solid var(--partidos-border)' }}>
                             <img src={img} alt={`Match Photo ${idx + 1}`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                             <button
                               type="button"
@@ -2992,7 +3141,7 @@ const Partidos = () => {
                                 display: 'flex',
                                 alignItems: 'center',
                                 justifyContent: 'center',
-                                fontSize: '14px',
+                                fontSize: '13px',
                                 fontWeight: 'bold'
                               }}
                             >
@@ -3003,34 +3152,43 @@ const Partidos = () => {
                       </div>
                     </div>
 
-                    {/* Botones de acción del informe */}
-                    <div style={{ display: 'flex', gap: '12px', marginTop: '20px', justifyContent: 'flex-end', flexWrap: 'wrap' }}>
+                    {/* Botones Finales de Acción */}
+                    <div style={{ display: 'flex', gap: '12px', marginTop: '24px', justifyContent: 'flex-end', flexWrap: 'wrap' }}>
                       <button
                         type="button"
                         className="btn-outline-dark"
-                        style={{ minHeight: '48px', padding: '0 24px', borderRadius: '8px', fontWeight: '800', border: '1px solid var(--partidos-text-primary)', color: 'var(--partidos-text-primary)', background: 'transparent', cursor: 'pointer' }}
+                        style={{ minHeight: '48px', padding: '0 20px', borderRadius: '8px', fontWeight: '800', border: '1px solid var(--partidos-text-primary)', color: 'var(--partidos-text-primary)', background: 'transparent', cursor: 'pointer' }}
                         onClick={() => setShowReportPreview(true)}
                       >
                         👁️ {getLangText('post.viewReport')}
                       </button>
                       <button
                         type="button"
+                        className="btn-save-match"
+                        style={{ minHeight: '48px', padding: '0 24px', borderRadius: '8px', fontWeight: '800', background: '#D4A843', color: '#0E1A14', border: 'none', cursor: 'pointer' }}
+                        onClick={handleExportPDF}
+                      >
+                        📄 {isGlobalEn ? 'Export PDF' : 'Exportar PDF'}
+                      </button>
+                      <button
+                        type="button"
                         className="btn-success-green-allcaps"
                         style={{
-                          minHeight: '48px',
-                          padding: '0 24px',
+                          minHeight: '52px',
+                          padding: '0 28px',
                           borderRadius: '8px',
                           fontWeight: '800',
                           background: '#2E7D5C',
                           color: '#FFFFFF',
                           border: 'none',
-                          boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
+                          boxShadow: '0 4px 8px rgba(46,125,92,0.3)',
                           cursor: 'pointer',
                           textTransform: 'uppercase'
                         }}
-                        onClick={handleExportPDF}
+                        onClick={handleSaveMatch}
+                        disabled={isSaving}
                       >
-                        📥 {getLangText('post.downloadReport')}
+                        {isSaving ? (isGlobalEn ? 'SAVING...' : 'GUARDANDO...') : (isGlobalEn ? '💾 SAVE POST-MATCH' : '💾 GUARDAR POST-PARTIDO')}
                       </button>
                     </div>
                   </div>

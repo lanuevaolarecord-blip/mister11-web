@@ -287,3 +287,71 @@
   border-radius: 8px;
   cursor: pointer;
 }
+
+/* Chips de Jugadores con scroll táctil */
+.shot-player-chips-scroll {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding: 4px 2px;
+  scrollbar-width: thin;
+  -webkit-overflow-scrolling: touch;
+}
+
+.shot-player-chip {
+  min-height: 44px;
+  padding: 6px 12px;
+  border-radius: 8px;
+  border: 1.5px solid rgba(255, 255, 255, 0.15);
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text-primary, #FFFFFF);
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.shot-player-chip.selected {
+  background: #1E3A8A;
+  border-color: #3B82F6;
+  color: #FFFFFF;
+  box-shadow: 0 0 8px rgba(59, 130, 246, 0.4);
+}
+
+.shot-player-chip.selected-unassigned {
+  background: rgba(148, 163, 184, 0.2);
+  border-color: #94A3B8;
+  color: #E2E8F0;
+}
+
+.shot-player-chip.selected-assist {
+  background: #1B4D24;
+  border-color: #22C55E;
+  color: #FFFFFF;
+}
+
+.shot-player-chip.selected-none {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+.shot-player-dorsal {
+  font-weight: 800;
+  color: #60A5FA;
+}
+
+.shot-pitch-toggle-btn {
+  background: none;
+  border: 1px solid rgba(59, 130, 246, 0.35);
+  color: #60A5FA;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+

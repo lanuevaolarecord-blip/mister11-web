@@ -1,26 +1,25 @@
 /**
  * src/utils/ratingFormula.js
- * Míster11 — Fórmula Mixta de Nota de Jugador (D1)
+ * Míster11 — Fórmula Mixta de Nota de Jugador (Rediseño de Captura)
  *
  * Nota MIXTA = 60% rendimiento estadístico + 40% esfuerzo/actitud (1-5★)
  * Rango final: 1.0 – 10.0 (redondeado a 1 decimal)
  *
- * Fórmula de rendimiento (base 10):
+ * Fórmula de rendimiento sin pases (base 10):
  *   base = 6.0
  *   + goles × 1.5
  *   + asistencias × 1.0
- *   + pasesClave × 0.4
- *   + recuperaciones × 0.2
- *   + tirosPuerta × 0.3
- *   − faltas × 0.25
+ *   + tirosPuerta × 0.35
+ *   + recuperaciones × 0.25
+ *   + duelosGanados × 0.25
+ *   − duelosPerdidos × 0.15
+ *   + pasesClave × 0.4 (si existen)
+ *   − faltas × 0.20
  *   − tarjetasAmarillas × 0.5
  *   − tarjetasRojas × 1.5
  *   Clamped [4.0, 10.0]
  *
- * Fórmula de actitud (1-5★ → escala 10):
- *   attitudeScore = (actitud / 5) × 10   → [2.0, 10.0]
- *
- * Nota mixta = (performanceScore × 0.60) + (attitudeScore × 0.40)
+ * Para porteros: calcGkPerformanceScore (con paradas normales + 2×decisivas).
  */
 
 import { calcGkPerformanceScore } from './testScoreEngine.js';
@@ -29,7 +28,7 @@ import { calcGkPerformanceScore } from './testScoreEngine.js';
  * Calcula la nota de rendimiento estadístico puro (base 10).
  * Para jugadores de campo y porteros (rol POR).
  * @param {Object} stats
- * @returns {number} score ∈ [0.0, 10.0]
+ * @returns {number} score ∈ [4.0, 10.0]
  */
 export function calcPerformanceScore(stats = {}) {
   const isGk = Boolean(
@@ -48,9 +47,11 @@ export function calcPerformanceScore(stats = {}) {
   const {
     goles = 0,
     asistencias = 0,
-    pasesClave = 0,
-    recuperaciones = 0,
     tirosPuerta = 0,
+    recuperaciones = 0,
+    duelosGanados = 0,
+    duelosPerdidos = 0,
+    pasesClave = 0,
     faltas = 0,
     tarjetasAmarillas = 0,
     tarjetasRojas = 0,
@@ -60,10 +61,12 @@ export function calcPerformanceScore(stats = {}) {
     6.0 +
     goles * 1.5 +
     asistencias * 1.0 +
-    pasesClave * 0.4 +
-    recuperaciones * 0.2 +
-    tirosPuerta * 0.3 -
-    faltas * 0.25 -
+    tirosPuerta * 0.35 +
+    recuperaciones * 0.25 +
+    duelosGanados * 0.25 -
+    duelosPerdidos * 0.15 +
+    pasesClave * 0.4 -
+    faltas * 0.20 -
     tarjetasAmarillas * 0.5 -
     tarjetasRojas * 1.5;
 
@@ -112,31 +115,64 @@ export function calcMixedRating(stats = {}, actitud = 3, misterOverride = null) 
 
 /**
  * Deriva las estadísticas de rendimiento de un jugador desde la lista de eventos del partido.
+ * Ignora eventos no atribuidos (attributed: false o playerId nulo).
+ *
  * @param {string} playerId
  * @param {Array}  events
+ * @param {string|null} playerRole
  * @returns {Object} stats
  */
-export function deriveStatsFromEvents(playerId, events = [], playerRole = null) {
-  const byPlayer = events.filter(e => e && (e.playerId === playerId || e.fromPlayerId === playerId));
+export function deriveStatsFromEvents(playerIdOrEvents, eventsOrPlayerId = [], playerRole = null) {
+  let pid = '';
+  let events = [];
+  if (Array.isArray(playerIdOrEvents)) {
+    events = playerIdOrEvents;
+    pid = String(eventsOrPlayerId);
+  } else {
+    pid = String(playerIdOrEvents);
+    events = eventsOrPlayerId;
+  }
+  const validEvents = (events || []).filter(e => e && e.attributed !== false);
+
+  const byPlayer = validEvents.filter(e => String(e.playerId) === pid || String(e.fromPlayerId) === pid);
   const count = (type) => byPlayer.filter(e => e.type === type).length;
 
-  const saves = byPlayer.filter(e => e.type === 'save' || e.type === 'save_own').length;
+  const allSaves = byPlayer.filter(e => e.type === 'save' || e.type === 'save_own');
+  const normalSaves = allSaves.filter(e => e.saveDifficulty !== 'decisiva' && e.difficulty !== 'decisiva').length;
+  const decisiveSaves = allSaves.filter(e => e.saveDifficulty === 'decisiva' || e.difficulty === 'decisiva').length;
   const conceded = count('conceded');
-  const penaltySaves = count('penaltySave');
+  const penaltySaves = count('penaltySave') + count('penalty_save');
   const claims = count('claim');
   const errorGoal = count('errorGoal');
 
+  // Tiros a puerta propios del jugador
+  const tirosPuerta = byPlayer.filter(e => {
+    const t = String(e.type || '').toLowerCase();
+    const isOwn = !t.includes('rival');
+    return isOwn && (t === 'shot_on_target_own' || e.outcome === 'on_target' || e.result === 'parada' || e.result === 'gol' || e.isGoal);
+  }).length;
+
   return {
-    goles:             events.filter(e => e && (e.type === 'gol_local' || e.type === 'goal') && e.playerId === playerId).length,
-    asistencias:       events.filter(e => e && e.asistenciaId === playerId).length,
-    tirosPuerta:       count('shot_on_target_own'),
-    pasesClave:        count('duel_won'),
-    recuperaciones:    count('recovery'),
-    faltas:            count('foul_against'),
-    tarjetasAmarillas: events.filter(e => e && e.type === 'card_yellow_own' && e.playerId === playerId).length,
-    tarjetasRojas:     events.filter(e => e && e.type === 'card_red_own' && e.playerId === playerId).length,
+    goles: validEvents.filter(e => {
+      const isScorer = String(e.playerId) === pid;
+      const isGoalType = e.type === 'gol_local' || e.type === 'goal' || e.isGoal || e.result === 'gol';
+      const isNotRival = !String(e.type || '').includes('rival') && e.team !== 'rival';
+      return isScorer && isGoalType && isNotRival;
+    }).length,
+    asistencias: validEvents.filter(e => String(e.asistenciaId) === pid).length,
+    tirosPuerta,
+    recuperaciones: count('recovery'),
+    duelosGanados: count('duel_won'),
+    duelosPerdidos: count('duel_lost'),
+    pasesClave: count('key_pass'),
+    faltas: count('foul_against'),
+    faltasProvocadas: count('foul_favor'),
+    tarjetasAmarillas: validEvents.filter(e => String(e.playerId) === pid && (e.type === 'card_yellow_own' || (e.type === 'amarilla' && e.card !== 'roja'))).length,
+    tarjetasRojas: validEvents.filter(e => String(e.playerId) === pid && (e.type === 'card_red_own' || e.type === 'roja' || e.type === 'expulsion')).length,
     // Métricas GK específicas
-    saves,
+    saves: allSaves.length,
+    normalSaves,
+    decisiveSaves,
     conceded,
     penaltySaves,
     claims,

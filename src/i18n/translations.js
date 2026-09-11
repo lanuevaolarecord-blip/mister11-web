@@ -2071,7 +2071,24 @@ export const translations = {
     'player.notifications.promptLater': 'Más tarde',
     'player.portal.parentView': 'Vista de Padre',
     'player.portal.loading': 'Cargando tu portal de jugador...',
-    'player.portal.myTeam': 'Mi Equipo'
+    'player.portal.myTeam': 'Mi Equipo',
+
+    // ── Captura Rediseñada y Sectores 2D (capture.*, sector.*) ───
+    'capture.team.shot_own': 'Tiro Propio',
+    'capture.team.shot_rival': 'Tiro Rival',
+    'sector.activeZone': 'Zona Activa: {zone}',
+    'capture.hud.shot': 'Tiro',
+    'capture.hud.recovery': 'Recuperación',
+    'capture.hud.duel_won': 'Duelo Ganado',
+    'capture.hud.foul': 'Falta',
+    'capture.hud.advanced': 'Avanzado',
+    'capture.hud.key_pass': 'Pase Clave',
+    'capture.hud.turnover': 'Pérdida',
+    'capture.hud.duel_lost': 'Duelo Perdido',
+    'capture.hud.unattributed': 'Sin atribuir',
+    'capture.criteria.title': 'Manual de Criterios de Captura',
+    'capture.criteria.search': 'Buscar criterio...',
+    'capture.criteria.downloadPdf': 'Descargar PDF Oficial'
   },
 
   'English (EN)': {
@@ -4146,7 +4163,24 @@ export const translations = {
     'player.notifications.promptLater': 'Later',
     'player.portal.parentView': 'Parent View',
     'player.portal.loading': 'Loading your player portal...',
-    'player.portal.myTeam': 'My Team'
+    'player.portal.myTeam': 'My Team',
+
+    // ── Redesigned Capture & 2D Sectors (capture.*, sector.*) ────
+    'capture.team.shot_own': 'Own Shot',
+    'capture.team.shot_rival': 'Opponent Shot',
+    'sector.activeZone': 'Active Zone: {zone}',
+    'capture.hud.shot': 'Shot',
+    'capture.hud.recovery': 'Recovery',
+    'capture.hud.duel_won': 'Duel Won',
+    'capture.hud.foul': 'Foul',
+    'capture.hud.advanced': 'Advanced',
+    'capture.hud.key_pass': 'Key Pass',
+    'capture.hud.turnover': 'Turnover',
+    'capture.hud.duel_lost': 'Duel Lost',
+    'capture.hud.unattributed': 'Unattributed',
+    'capture.criteria.title': 'Capture Criteria Manual',
+    'capture.criteria.search': 'Search criterion...',
+    'capture.criteria.downloadPdf': 'Download Official PDF'
   }
 };
 

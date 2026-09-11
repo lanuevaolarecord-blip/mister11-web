@@ -1,0 +1,171 @@
+/* src/components/SectorMiniPitch2D.css */
+
+.mini-pitch-2d-container {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+  max-width: 380px;
+  margin: 0 auto;
+  user-select: none;
+}
+
+.mini-pitch-2d-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  font-size: 12px;
+  padding: 2px 4px;
+}
+
+.mini-pitch-2d-icon {
+  font-size: 14px;
+}
+
+.mini-pitch-2d-title {
+  color: var(--partidos-text-muted, #94A3B8);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-size: 11px;
+}
+
+.mini-pitch-2d-badge {
+  background: rgba(30, 58, 138, 0.15);
+  color: #3B82F6;
+  border: 1px solid rgba(59, 130, 246, 0.35);
+  padding: 3px 10px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.mini-pitch-2d-board {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 6px;
+  background: #143526;
+  border: 1.5px solid rgba(76, 175, 125, 0.3);
+  border-radius: 12px;
+  box-shadow: inset 0 0 12px rgba(0, 0, 0, 0.4);
+  overflow: hidden;
+}
+
+/* Marcas vectoriales del campo */
+.mini-pitch-mark-box {
+  position: absolute;
+  left: 25%;
+  width: 50%;
+  height: 18px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  pointer-events: none;
+}
+
+.mini-pitch-mark-box.top-box {
+  top: 0;
+  border-top: none;
+  border-radius: 0 0 6px 6px;
+}
+
+.mini-pitch-mark-box.bottom-box {
+  bottom: 0;
+  border-bottom: none;
+  border-radius: 6px 6px 0 0;
+}
+
+.mini-pitch-mark-circle {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 44px;
+  height: 44px;
+  transform: translate(-50%, -50%);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+.mini-pitch-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 4px;
+  z-index: 1;
+}
+
+.mini-pitch-cell {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 48px;
+  min-width: 44px;
+  padding: 6px 4px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px dashed rgba(255, 255, 255, 0.15);
+  border-radius: 8px;
+  color: #E2E8F0;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  outline: none;
+}
+
+.mini-pitch-cell:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.35);
+}
+
+.mini-pitch-cell:active:not(:disabled) {
+  transform: scale(0.97);
+}
+
+.mini-pitch-cell.selected {
+  background: rgba(30, 58, 138, 0.85);
+  border: 1.5px solid #60A5FA;
+  color: #FFFFFF;
+  box-shadow: 0 0 10px rgba(59, 130, 246, 0.5);
+}
+
+.cell-col-label {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.3px;
+  line-height: 1.1;
+}
+
+.cell-row-label {
+  font-size: 9px;
+  font-weight: 600;
+  opacity: 0.8;
+  line-height: 1.1;
+  text-transform: uppercase;
+}
+
+.cell-check {
+  position: absolute;
+  top: 3px;
+  right: 5px;
+  font-size: 8px;
+  color: #60A5FA;
+}
+
+/* Modo compacto */
+.mini-pitch-2d-container.compact {
+  max-width: 240px;
+}
+
+.mini-pitch-2d-container.compact .mini-pitch-cell {
+  min-height: 44px;
+  padding: 4px 2px;
+}
+
+.mini-pitch-2d-container.compact .cell-col-label {
+  font-size: 10px;
+}
+
+.mini-pitch-2d-container.compact .cell-row-label {
+  font-size: 8px;
+}

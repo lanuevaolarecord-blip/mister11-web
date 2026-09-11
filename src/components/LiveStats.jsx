@@ -32,6 +32,10 @@ import { MatchRadarChart } from './MatchStats/MatchRadarChart';
 import { MatchTimeline } from './MatchStats/MatchTimeline';
 import { ComparativeStatsBars } from './MatchStats/ComparativeStatsBars';
 import { StatsDataTable } from './MatchStats/StatsDataTable';
+import { SectorMiniPitch2D } from './SectorMiniPitch2D';
+import { UnattributedEventsManager } from './UnattributedEventsManager';
+import { CaptureCriteriaModal } from './CaptureCriteriaModal';
+import { CAPTURE_CRITERIA } from '../config/captureCriteria';
 
 import './LiveStats.css';
 import './MatchStats/MatchStats.css';
@@ -115,43 +119,37 @@ const TEXTS = {
   'live.tab.tactical': { es: 'Campo & Táctica', en: 'Field & Tactics' },
   'live.tab.analytics': { es: 'Análisis Avanzado', en: 'Advanced Analysis' },
   'live.tab.players': { es: 'Jugadores & CSV', en: 'Players & CSV' },
+  'capture.team.shot_own': { es: 'Tiro\nPropio', en: 'Shot\n(Own)' },
+  'capture.team.shot_rival': { es: 'Tiro\nRival', en: 'Shot\n(Rival)' },
+  'capture.hud.shot': { es: 'Tiro', en: 'Shot' },
+  'capture.hud.recovery': { es: 'Recuper.', en: 'Recov.' },
+  'capture.hud.duel_won': { es: 'Duelo\nGanado', en: 'Duel\nWon' },
+  'capture.hud.foul': { es: 'Falta', en: 'Foul' },
+  'capture.hud.advanced': { es: 'Avanzado', en: 'Advanced' },
+  'capture.hud.key_pass': { es: 'Pase\nClave', en: 'Key\nPass' },
+  'capture.hud.turnover': { es: 'Pérdida', en: 'Turnover' },
+  'capture.hud.duel_lost': { es: 'Duelo\nPerdido', en: 'Duel\nLost' },
+  'capture.hud.unattributed': { es: 'Sin atribuir', en: 'Unattributed' },
 };
 
-// ── Grupos de botones de captura rápida ──────────────────────────────────────
+// ── Grupos de botones de captura rápida (Panel de Equipo Reducido: 12 botones) ────
 const BUTTON_GROUPS = [
   {
     catKey: 'live.cat.shots',
     color: C.green,
-    colsClass: 'cols-6',
+    colsClass: 'cols-2',
     buttons: [
-      { type: 'shot_on_target_own', labelKey: 'live.btn.shot_on_own', icon: '🟢' },
-      { type: 'shot_on_target_rival', labelKey: 'live.btn.shot_on_rival', icon: '🔴' },
-      { type: 'shot_off_target_own', labelKey: 'live.btn.shot_off_own', icon: '⬜' },
-      { type: 'shot_off_target_rival', labelKey: 'live.btn.shot_off_rival', icon: '🔲' },
-      { type: 'save_own', labelKey: 'live.btn.save_own', icon: '🧤' },
-      { type: 'save_rival', labelKey: 'live.btn.save_rival', icon: '🧤' },
-    ],
-  },
-  {
-    catKey: 'live.cat.possession',
-    color: C.teal,
-    colsClass: 'cols-4',
-    buttons: [
-      { type: 'recovery', labelKey: 'live.btn.recovery', icon: '↑' },
-      { type: 'loss', labelKey: 'live.btn.loss', icon: '↓' },
-      { type: 'duel_won', labelKey: 'live.btn.duel_won', icon: '✊' },
-      { type: 'duel_lost', labelKey: 'live.btn.duel_lost', icon: '🤜' },
+      { type: 'shot_own', labelKey: 'capture.team.shot_own', icon: '⚽', criterionId: 'shot_on_target' },
+      { type: 'shot_rival', labelKey: 'capture.team.shot_rival', icon: '🔴', criterionId: 'shot_on_target' },
     ],
   },
   {
     catKey: 'live.cat.fouls',
     color: C.orange,
-    colsClass: 'cols-4',
+    colsClass: 'cols-2',
     buttons: [
-      { type: 'foul_favor', labelKey: 'live.btn.foul_favor', icon: '✅' },
-      { type: 'foul_against', labelKey: 'live.btn.foul_against', icon: '❌' },
-      { type: 'counter_not_cut', labelKey: 'live.btn.counter_not_cut', icon: '⚡' },
-      { type: 'player_no_finish', labelKey: 'live.btn.player_no_finish', icon: '😤' },
+      { type: 'foul_favor', labelKey: 'live.btn.foul_favor', icon: '✅', criterionId: 'foul_favor' },
+      { type: 'foul_against', labelKey: 'live.btn.foul_against', icon: '⚡', criterionId: 'foul_against' },
     ],
   },
   {
@@ -159,14 +157,21 @@ const BUTTON_GROUPS = [
     color: C.gold,
     colsClass: 'cols-4',
     buttons: [
-      { type: 'card_yellow_own', labelKey: 'live.btn.card_yellow_own', icon: '🟨' },
-      { type: 'card_red_own', labelKey: 'live.btn.card_red_own', icon: '🟥' },
-      { type: 'card_yellow_rival', labelKey: 'live.btn.card_yellow_rival', icon: '🟨' },
-      { type: 'card_red_rival', labelKey: 'live.btn.card_red_rival', icon: '🟥' },
-      { type: 'corner_favor', labelKey: 'live.btn.corner_favor', icon: '🚩' },
-      { type: 'corner_against', labelKey: 'live.btn.corner_against', icon: '⛳' },
-      { type: 'offside_own', labelKey: 'live.btn.offside_own', icon: '🏃' },
-      { type: 'offside_rival', labelKey: 'live.btn.offside_rival', icon: '🏃‍♂️' },
+      { type: 'card_yellow_own', labelKey: 'live.btn.card_yellow_own', icon: '🟨', criterionId: 'card_yellow' },
+      { type: 'card_red_own', labelKey: 'live.btn.card_red_own', icon: '🟥', criterionId: 'card_red' },
+      { type: 'card_yellow_rival', labelKey: 'live.btn.card_yellow_rival', icon: '🟨', criterionId: 'card_yellow' },
+      { type: 'card_red_rival', labelKey: 'live.btn.card_red_rival', icon: '🟥', criterionId: 'card_red' },
+    ],
+  },
+  {
+    catKey: 'live.cat.discipline',
+    color: C.teal,
+    colsClass: 'cols-4',
+    buttons: [
+      { type: 'corner_favor', labelKey: 'live.btn.corner_favor', icon: '🚩', criterionId: 'corner' },
+      { type: 'corner_against', labelKey: 'live.btn.corner_against', icon: '⛳', criterionId: 'corner' },
+      { type: 'offside_own', labelKey: 'live.btn.offside_own', icon: '🏃', criterionId: 'offside' },
+      { type: 'offside_rival', labelKey: 'live.btn.offside_rival', icon: '🏃‍♂️', criterionId: 'offside' },
     ],
   },
 ];
@@ -303,6 +308,34 @@ const LiveStats = ({
 
   const [flashType, setFlashType] = useState(null);
   const [selectedSector, setSelectedSector] = useState('center'); // 'left' | 'center' | 'right'
+  const [selectedSector2D, setSelectedSector2D] = useState('centro_att'); // 9 Zonas 2D tácticas
+  const [showCriteriaModal, setShowCriteriaModal] = useState(false);
+  const [showUnattributedModal, setShowUnattributedModal] = useState(false);
+  const [showAdvancedHud, setShowAdvancedHud] = useState(false);
+  const [pendingFoulModal, setPendingFoulModal] = useState(false);
+  const [activeCriterionTooltip, setActiveCriterionTooltip] = useState(null);
+  const longPressTimerRef = useRef(null);
+
+  const handleTouchStartCriterion = (criterionId) => {
+    if (!criterionId) return;
+    longPressTimerRef.current = setTimeout(() => {
+      setActiveCriterionTooltip(criterionId);
+    }, 400);
+  };
+
+  const handleTouchEndCriterion = () => {
+    if (longPressTimerRef.current) {
+      clearTimeout(longPressTimerRef.current);
+      longPressTimerRef.current = null;
+    }
+  };
+
+  const handleSelectSector2D = (zKey) => {
+    setSelectedSector2D(zKey);
+    if (zKey.includes('izq')) setSelectedSector('left');
+    else if (zKey.includes('der')) setSelectedSector('right');
+    else setSelectedSector('center');
+  };
 
   // ── Extraer Jugadores Reales y Nombres de Equipo ────────────────────────────
   const homeTeamName = matchData?.local || matchData?.equipoLocal || 'Mi Equipo';
@@ -463,8 +496,37 @@ const LiveStats = ({
     });
   }, [rawEvents, timeFilter, timeRange, teamFilter, selectedPlayers, zoneFilter]);
 
+  const unattributedCount = useMemo(() => {
+    return (rawEvents || []).filter(e => {
+      if (!e) return false;
+      const isRival = e.team === 'rival' || e.team === 'away' || String(e.type || '').includes('rival');
+      if (isRival) return false;
+      return (!e.playerId || e.playerId === 'unassigned' || e.attributed === false);
+    }).length;
+  }, [rawEvents]);
+
+  const handleAttributeEvents = useCallback(async ({ eventIds = [], playerId, playerName }) => {
+    if (!eventIds || eventIds.length === 0 || !playerId) return;
+    const idSet = new Set(eventIds.map(String));
+
+    setLocalEvents(prev => prev.map(e => idSet.has(String(e.id)) ? { ...e, playerId, playerName, attributed: true } : e));
+
+    if (liveStatsHook.updateLiveEvents) {
+      await liveStatsHook.updateLiveEvents(eventIds, { playerId, playerName, attributed: true });
+    }
+    showToast(isEn ? `Attributed ${eventIds.length} event(s) to ${playerName}` : `Atribuido(s) ${eventIds.length} evento(s) a ${playerName}`, 'success');
+  }, [liveStatsHook, isEn]);
+
   const countByType = useCallback(
-    (type) => filteredEvents.filter((e) => e && e.type === type).length,
+    (type) => {
+      if (type === 'shot_own') {
+        return filteredEvents.filter(e => e && (e.team === 'own' || !e.team || String(e.type || '').includes('own') || e.type === 'gol_local' || e.type === 'shot_favor')).length;
+      }
+      if (type === 'shot_rival') {
+        return filteredEvents.filter(e => e && (e.team === 'rival' || String(e.type || '').includes('rival') || e.type === 'gol_rival')).length;
+      }
+      return filteredEvents.filter((e) => e && e.type === type).length;
+    },
     [filteredEvents]
   );
 
@@ -752,6 +814,8 @@ const LiveStats = ({
 
       // Interceptar acciones de tiro para modal rápido de contexto (<= 3 taps)
       const isShotAction = [
+        'shot_own',
+        'shot_rival',
         'shot_on_target_own',
         'shot_on_target_rival',
         'shot_off_target_own',
@@ -765,7 +829,7 @@ const LiveStats = ({
         let initialResult = null;
         let initialDifficulty = null;
 
-        if (type.includes('rival') || type === 'save_own') {
+        if (type === 'shot_rival' || type.includes('rival') || type === 'save_own') {
           initialTeam = 'rival';
         }
 
@@ -1103,7 +1167,7 @@ const LiveStats = ({
                 {onAddGoalFor && (
                   <button
                     type="button"
-                    onClick={isLocked ? undefined : () => setPendingPlayerSelection({ action: 'goal', title: tx('live.select.scorer') })}
+                    onClick={isLocked ? undefined : () => setPendingShotModal({ isOpen: true, initialTeam: 'own', initialResult: 'gol', initialDifficulty: null })}
                     disabled={isLocked}
                     title={isLocked ? (isEn ? 'Match finished — Reopen match sheet to edit' : 'Partido finalizado — usa Reabrir Acta para corregir') : tx('live.goal.for')}
                     className="livestats-btn-goal for"
@@ -1122,13 +1186,7 @@ const LiveStats = ({
                 {onAddGoalAgainst && (
                   <button
                     type="button"
-                    onClick={isLocked ? undefined : () => {
-                      if (activeGoalkeeper) {
-                        setShowGoalAgainstModal(true);
-                      } else {
-                        onAddGoalAgainst();
-                      }
-                    }}
+                    onClick={isLocked ? undefined : () => setPendingShotModal({ isOpen: true, initialTeam: 'rival', initialResult: 'gol', initialDifficulty: null })}
                     disabled={isLocked}
                     title={isLocked ? (isEn ? 'Match finished — Reopen match sheet to edit' : 'Partido finalizado — usa Reabrir Acta para corregir') : tx('live.goal.against')}
                     className="livestats-btn-goal against"
@@ -1143,6 +1201,31 @@ const LiveStats = ({
 
           {/* Selector de Mitad y Acciones de Cabecera */}
           <div className="livestats-header-right">
+            <button
+              type="button"
+              className="livestats-criteria-btn"
+              onClick={() => setShowCriteriaModal(true)}
+              title={isEn ? 'Capture Criteria Manual (Definitions & PDF)' : 'Manual de Criterios de Captura (Definiciones y PDF)'}
+              style={{
+                minHeight: '48px',
+                minWidth: '48px',
+                borderRadius: '8px',
+                padding: '0 12px',
+                background: darkMode ? 'rgba(59,130,246,0.15)' : '#EFF6FF',
+                border: '1.5px solid #3B82F6',
+                color: darkMode ? '#93C5FD' : '#1D4ED8',
+                fontWeight: 700,
+                fontSize: '12px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                cursor: 'pointer'
+              }}
+            >
+              <span>📖</span>
+              <span>{isEn ? 'Criteria' : 'Criterios'}</span>
+            </button>
+
             <div className="livestats-half-selector">
               <span className="livestats-half-label">{tx('live.half.select')}</span>
               <button
@@ -1198,6 +1281,29 @@ const LiveStats = ({
                 )}
                 <button
                   type="button"
+                  className="jugador-unattributed-btn"
+                  onClick={() => setShowUnattributedModal(true)}
+                  title={isEn ? 'Manage unattributed events' : 'Gestionar eventos sin atribuir'}
+                  style={{
+                    minHeight: '38px',
+                    borderRadius: '8px',
+                    padding: '0 10px',
+                    background: unattributedCount > 0 ? 'rgba(239, 68, 68, 0.15)' : 'rgba(100, 116, 139, 0.15)',
+                    border: `1.5px solid ${unattributedCount > 0 ? '#EF4444' : '#64748B'}`,
+                    color: unattributedCount > 0 ? '#EF4444' : (darkMode ? '#94A3B8' : '#475569'),
+                    fontWeight: 800,
+                    fontSize: '11px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '5px',
+                    cursor: 'pointer'
+                  }}
+                >
+                  <span>🔘</span>
+                  <span>{isEn ? `Unattributed (${unattributedCount})` : `Sin atribuir (${unattributedCount})`}</span>
+                </button>
+                <button
+                  type="button"
                   className="jugador-postmatch-btn"
                   onClick={() => { setShowPostMatchModal(true); setPostMatchCounters({}); }}
                   title={isEn ? 'Post-match load: quick entry of +/- counters' : 'Carga post-partido: entrada rápida de contadores +/-'}
@@ -1220,88 +1326,185 @@ const LiveStats = ({
                 })}
               </div>
 
-              {/* Botones de Acción Individual ≥56dp */}
+              {/* Botones de Acción Individual Canónicos (5 controles + Avanzado desplegable) */}
               {activePlayerId && (
                 <div className="jugador-acciones-grid">
                   {(() => {
                     const ap = playersList.find(p => p.id === activePlayerId);
-                    const ACTIONS = [
-                      { type: 'shot_on_target_own',  label: isEn ? 'Shot on\nTarget' : 'Tiro a\nPuerta',  icon: '🎯', color: '#4CAF7D' },
-                      { type: 'shot_off_target_own', label: isEn ? 'Shot\nOff' : 'Tiro\nFuera',     icon: '⬜', color: '#94A3B8' },
-                      { type: 'pass_completed',      label: isEn ? 'Pass\nComp.' : 'Pase\nComplet.',  icon: '✅', color: '#0D9488' },
-                      { type: 'pass_failed',         label: isEn ? 'Pass\nIncomp.' : 'Pase\nFallido',   icon: '❌', color: '#EF4444' },
-                      { type: 'key_pass',            label: isEn ? 'Key\nPass' : 'Pase\nClave',     icon: '⭐', color: '#D4A843' },
-                      { type: 'recovery',            label: isEn ? 'Recovery' : 'Recuper.',        icon: '🛡️', color: '#3B82F6' },
-                      { type: 'ball_loss',           label: isEn ? 'Turnover' : 'Pérdida',         icon: '🔴', color: '#DC2626' },
-                      { type: 'duel_won',            label: isEn ? 'Duel\nWon' : 'Duelo\nGanado',   icon: '✊', color: '#10B981' },
-                      { type: 'foul_against',        label: isEn ? 'Foul\nConceded' : 'Falta\nContra',   icon: '✋', color: '#EAB308' },
-                      { type: 'foul_favor',          label: isEn ? 'Foul\nWon' : 'Falta\nFavor',    icon: '⚡', color: '#06B6D4' },
-                      { type: 'corner_favor',        label: isEn ? 'Corner\nFor' : 'Córner\nFavor',   icon: '🚩', color: '#D4A843' },
-                      { type: 'offside_own',         label: isEn ? 'Offside' : 'Fuera\nJuego',    icon: '🏃', color: '#F97316' },
-                    ];
+                    const handleIndividualAction = async (actType) => {
+                      if (isMatchLocked(matchData)) { showToast(t('livestats.match_locked_short'), 'warning'); return; }
+                      setFlashType(`player_${actType}`);
+                      setTimeout(() => setFlashType(null), 650);
+
+                      const targetMin = currentHalf === 2 
+                        ? Math.max(46, (currentMinute && currentMinute > 0 ? currentMinute : 46)) 
+                        : Math.max(1, (currentMinute && currentMinute > 0 ? currentMinute : 1));
+
+                      const tempId = `local_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`;
+                      const localDoc = {
+                        id: tempId,
+                        type: actType,
+                        half: currentHalf,
+                        minute: targetMin,
+                        sector: selectedSector || 'center',
+                        zone2D: selectedSector2D,
+                        x: 60,
+                        y: 50,
+                        playerId: activePlayerId,
+                        playerName: ap?.nombre || ap?.name || '',
+                        timestamp: new Date().toISOString()
+                      };
+                      setLocalEvents(prev => [...prev, localDoc]);
+                      const hook = parentAddLiveEvent || liveStatsHook.addLiveEvent;
+                      if (hook) {
+                        const realId = await hook(actType, currentHalf, {
+                          playerId: activePlayerId,
+                          playerName: ap?.nombre || ap?.name || '',
+                          sector: selectedSector || 'center',
+                          zone2D: selectedSector2D,
+                          x: 60,
+                          y: 50
+                        });
+                        if (realId && realId !== tempId) setLocalEvents(prev => prev.filter(e => e.id !== tempId));
+                      }
+                    };
+
                     return (
                       <>
-                        <div className="jugador-acciones-header">
-                          #{ap?.dorsal} <strong>{ap?.nombre || ap?.name}</strong> · {ap?.posicion}
+                        <div className="jugador-acciones-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <span>#{ap?.dorsal} <strong>{ap?.nombre || ap?.name}</strong> · {ap?.posicion}</span>
+                          <span style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>📍 {selectedSector2D.replace('_', ' ').toUpperCase()}</span>
                         </div>
-                        <div className="jugador-acciones-btns">
-                          {ACTIONS.map((a, idx) => {
-                            const lines = a.label.split('\n');
-                            const isFlashingPlayer = flashType === `player_${a.type}_${idx}`;
-                            return (
-                              <button
-                                key={`${a.type}_${idx}`}
-                                type="button"
-                                className={`jugador-accion-btn ${isFlashingPlayer ? 'flashing' : ''}`}
-                                style={{ '--action-color': a.color }}
-                                onClick={async () => {
-                                  if (isMatchLocked(matchData)) { showToast(t('livestats.match_locked_short'), 'warning'); return; }
-                                  setFlashType(`player_${a.type}_${idx}`);
-                                  setTimeout(() => setFlashType(null), 650);
+                        <div className="jugador-acciones-btns" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(90px, 1fr))', gap: '8px' }}>
+                          {/* 1. TIRO */}
+                          <button
+                            type="button"
+                            className={`jugador-accion-btn ${flashType === 'player_shot' ? 'flashing' : ''}`}
+                            style={{ '--action-color': '#4CAF7D', minHeight: '48px' }}
+                            onClick={() => {
+                              setPendingShotModal({
+                                isOpen: true,
+                                initialTeam: 'own',
+                                initialResult: null,
+                                initialDifficulty: null
+                              });
+                            }}
+                          >
+                            <span className="jugador-accion-icon" style={{ color: '#4CAF7D' }}>🎯</span>
+                            <span className="jugador-accion-label">{isEn ? 'Shot' : 'Tiro'}</span>
+                          </button>
 
-                                  const yMap = { left: 16, center: 50, right: 84 };
-                                  const effectiveSector = selectedSector || 'center';
-                                  const yCoord = yMap[effectiveSector] || 50;
-                                  let defaultX = 50;
-                                  if (a.type.includes('shot') || a.type.includes('goal') || a.type === 'corner_favor') defaultX = 85;
-                                  else if (a.type.includes('foul') || a.type.includes('card') || a.type === 'corner_against') defaultX = 30;
+                          {/* 2. RECUPERACIÓN */}
+                          <button
+                            type="button"
+                            className={`jugador-accion-btn ${flashType === 'player_recovery' ? 'flashing' : ''}`}
+                            style={{ '--action-color': '#3B82F6', minHeight: '48px' }}
+                            onClick={() => handleIndividualAction('recovery')}
+                          >
+                            <span className="jugador-accion-icon" style={{ color: '#3B82F6' }}>🛡️</span>
+                            <span className="jugador-accion-label">{isEn ? 'Recovery' : 'Recuper.'}</span>
+                          </button>
 
-                                  const tempId = `local_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`;
-                                  const localDoc = { 
-                                    id: tempId, 
-                                    type: a.type, 
-                                    half: currentHalf, 
-                                    minute: currentHalf === 2 ? Math.max(46, (currentMinute && currentMinute > 0 ? currentMinute : 46)) : Math.max(1, (currentMinute && currentMinute > 0 ? currentMinute : 1)),
-                                    sector: effectiveSector, 
-                                    x: defaultX, 
-                                    y: yCoord, 
-                                    playerId: activePlayerId, 
-                                    timestamp: new Date().toISOString() 
-                                  };
-                                  setLocalEvents(prev => [...prev, localDoc]);
-                                  const hook = parentAddLiveEvent || liveStatsHook.addLiveEvent;
-                                  if (hook) {
-                                    const realId = await hook(a.type, currentHalf, { 
-                                      playerId: activePlayerId, 
-                                      sector: effectiveSector,
-                                      x: defaultX, 
-                                      y: yCoord
-                                    });
-                                    if (realId && realId !== tempId) setLocalEvents(prev => prev.filter(e => e.id !== tempId));
-                                  }
-                                }}
-                                disabled={isLocked}
-                              >
-                                <span className="jugador-accion-icon" style={{ color: a.color }}>{a.icon}</span>
-                                <span className="jugador-accion-label">
-                                  {lines[0]}
-                                  {lines[1] && <span className="jugador-accion-sub">{lines[1]}</span>}
-                                </span>
-                                {isFlashingPlayer && <span className="jugador-accion-flash" style={{ color: a.color }}>✓</span>}
-                              </button>
-                            );
-                          })}
+                          {/* 3. DUELO GANADO */}
+                          <button
+                            type="button"
+                            className={`jugador-accion-btn ${flashType === 'player_duel_won' ? 'flashing' : ''}`}
+                            style={{ '--action-color': '#10B981', minHeight: '48px' }}
+                            onClick={() => handleIndividualAction('duel_won')}
+                          >
+                            <span className="jugador-accion-icon" style={{ color: '#10B981' }}>✊</span>
+                            <span className="jugador-accion-label">{isEn ? 'Duel Won' : 'Duelo Gan.'}</span>
+                          </button>
+
+                          {/* 4. FALTA (Abre menú rápido) */}
+                          <button
+                            type="button"
+                            className="jugador-accion-btn"
+                            style={{ '--action-color': '#F59E0B', minHeight: '48px' }}
+                            onClick={() => setPendingFoulModal(prev => !prev)}
+                          >
+                            <span className="jugador-accion-icon" style={{ color: '#F59E0B' }}>⚡</span>
+                            <span className="jugador-accion-label">{isEn ? 'Foul...' : 'Falta...'}</span>
+                          </button>
+
+                          {/* 5. AVANZADO (Toggle) */}
+                          <button
+                            type="button"
+                            className={`jugador-accion-btn ${showAdvancedHud ? 'active' : ''}`}
+                            style={{ '--action-color': '#8B5CF6', minHeight: '48px', borderStyle: 'dashed' }}
+                            onClick={() => setShowAdvancedHud(prev => !prev)}
+                          >
+                            <span className="jugador-accion-icon" style={{ color: '#8B5CF6' }}>{showAdvancedHud ? '▲' : '▼'}</span>
+                            <span className="jugador-accion-label">{isEn ? 'Advanced' : 'Avanzado'}</span>
+                          </button>
                         </div>
+
+                        {/* Submenú de Faltas y Tarjetas si está abierto */}
+                        {pendingFoulModal && (
+                          <div style={{ display: 'flex', gap: '8px', marginTop: '8px', padding: '8px', background: darkMode ? 'rgba(255,255,255,0.05)' : '#F8FAFC', borderRadius: '8px', border: '1px solid #CBD5E1' }}>
+                            <button
+                              type="button"
+                              style={{ flex: 1, minHeight: '44px', borderRadius: '6px', background: '#FEF3C7', color: '#92400E', border: '1px solid #F59E0B', fontWeight: 700, fontSize: '11px', cursor: 'pointer' }}
+                              onClick={() => { handleIndividualAction('foul_against'); setPendingFoulModal(false); }}
+                            >
+                              ✋ {isEn ? 'Foul Conceded' : 'Falta Cometida'}
+                            </button>
+                            <button
+                              type="button"
+                              style={{ flex: 1, minHeight: '44px', borderRadius: '6px', background: '#CFFAFE', color: '#155E75', border: '1px solid #06B6D4', fontWeight: 700, fontSize: '11px', cursor: 'pointer' }}
+                              onClick={() => { handleIndividualAction('foul_favor'); setPendingFoulModal(false); }}
+                            >
+                              ⚡ {isEn ? 'Foul Won' : 'Falta Recibida'}
+                            </button>
+                            <button
+                              type="button"
+                              style={{ minHeight: '44px', minWidth: '44px', borderRadius: '6px', background: '#FEF08A', color: '#854D0E', border: '1px solid #EAB308', fontWeight: 800, cursor: 'pointer' }}
+                              onClick={() => { handlePress('card_yellow_own'); setPendingFoulModal(false); }}
+                            >
+                              🟨
+                            </button>
+                            <button
+                              type="button"
+                              style={{ minHeight: '44px', minWidth: '44px', borderRadius: '6px', background: '#FEE2E2', color: '#991B1B', border: '1px solid #EF4444', fontWeight: 800, cursor: 'pointer' }}
+                              onClick={() => { handlePress('card_red_own'); setPendingFoulModal(false); }}
+                            >
+                              🟥
+                            </button>
+                          </div>
+                        )}
+
+                        {/* Set Avanzado Desplegable */}
+                        {showAdvancedHud && (
+                          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px', marginTop: '8px' }}>
+                            <button
+                              type="button"
+                              className="jugador-accion-btn"
+                              style={{ '--action-color': '#D4A843', minHeight: '48px' }}
+                              onClick={() => handleIndividualAction('key_pass')}
+                            >
+                              <span className="jugador-accion-icon" style={{ color: '#D4A843' }}>⭐</span>
+                              <span className="jugador-accion-label">{isEn ? 'Key Pass' : 'Pase Clave'}</span>
+                            </button>
+                            <button
+                              type="button"
+                              className="jugador-accion-btn"
+                              style={{ '--action-color': '#EF4444', minHeight: '48px' }}
+                              onClick={() => handleIndividualAction('ball_loss')}
+                            >
+                              <span className="jugador-accion-icon" style={{ color: '#EF4444' }}>🔴</span>
+                              <span className="jugador-accion-label">{isEn ? 'Turnover' : 'Pérdida'}</span>
+                            </button>
+                            <button
+                              type="button"
+                              className="jugador-accion-btn"
+                              style={{ '--action-color': '#F97316', minHeight: '48px' }}
+                              onClick={() => handleIndividualAction('duel_lost')}
+                            >
+                              <span className="jugador-accion-icon" style={{ color: '#F97316' }}>✋</span>
+                              <span className="jugador-accion-label">{isEn ? 'Duel Lost' : 'Duelo Perd.'}</span>
+                            </button>
+                          </div>
+                        )}
                       </>
                     );
                   })()}
@@ -1309,42 +1512,13 @@ const LiveStats = ({
               )}
             </div>
 
-            {/* Selector Táctico de Sector */}
-            <div className="livestats-sector-bar">
-              <span className="sector-bar-title">📍 {isEn ? 'Play Sector:' : 'Sector de la Jugada:'}</span>
-              <div className="sector-bar-pills">
-                <button
-                  type="button"
-                  className={`sector-pill ${selectedSector === 'left' ? 'active' : ''}`}
-                  onClick={isLocked ? undefined : () => setSelectedSector('left')}
-                  disabled={isLocked}
-                  title={isLocked ? (isEn ? 'Match finished — Reopen match sheet to edit' : 'Partido finalizado — usa Reabrir Acta para corregir') : undefined}
-                  style={isLocked ? { opacity: 0.6, cursor: 'not-allowed' } : {}}
-                >
-                  ⬅️ {isEn ? 'Left Flank' : 'Banda Izquierda'}
-                </button>
-                <button
-                  type="button"
-                  className={`sector-pill ${selectedSector === 'center' ? 'active' : ''}`}
-                  onClick={isLocked ? undefined : () => setSelectedSector('center')}
-                  disabled={isLocked}
-                  title={isLocked ? (isEn ? 'Match finished — Reopen match sheet to edit' : 'Partido finalizado — usa Reabrir Acta para corregir') : undefined}
-                  style={isLocked ? { opacity: 0.6, cursor: 'not-allowed' } : {}}
-                >
-                  ⏺️ {isEn ? 'Center Channel' : 'Centro / Pasillo Central'}
-                </button>
-                <button
-                  type="button"
-                  className={`sector-pill ${selectedSector === 'right' ? 'active' : ''}`}
-                  onClick={isLocked ? undefined : () => setSelectedSector('right')}
-                  disabled={isLocked}
-                  title={isLocked ? (isEn ? 'Match finished — Reopen match sheet to edit' : 'Partido finalizado — usa Reabrir Acta para corregir') : undefined}
-                  style={isLocked ? { opacity: 0.6, cursor: 'not-allowed' } : {}}
-                >
-                  ➡️ {isEn ? 'Right Flank' : 'Banda Derecha'}
-                </button>
-              </div>
-            </div>
+            {/* Selector Táctico de Sector 2D (9 Zonas Canónicas) */}
+            <SectorMiniPitch2D
+              selectedZone={selectedSector2D}
+              onSelectZone={handleSelectSector2D}
+              isEn={isEn}
+              disabled={isLocked}
+            />
 
             {/* ── SECCIÓN DE PORTERO EN CAMPO (🧤) ── */}
             <section
@@ -1473,7 +1647,7 @@ const LiveStats = ({
                   </div>
 
                   <div className={`livestats-buttons-grid ${group.colsClass}`}>
-                    {group.buttons.map(({ type, labelKey, icon }) => {
+                    {group.buttons.map(({ type, labelKey, icon, criterionId }) => {
                       const count = countByType(type);
                       const isFlashing = flashType === type;
                       const label = tx(labelKey);
@@ -1485,6 +1659,11 @@ const LiveStats = ({
                           type="button"
                           id={`livestats-btn-${type}`}
                           onClick={isLocked ? undefined : () => handlePress(type)}
+                          onTouchStart={() => handleTouchStartCriterion(criterionId)}
+                          onTouchEnd={handleTouchEndCriterion}
+                          onMouseDown={() => handleTouchStartCriterion(criterionId)}
+                          onMouseUp={handleTouchEndCriterion}
+                          onMouseLeave={handleTouchEndCriterion}
                           disabled={saving || isLocked}
                           title={isLocked ? (isEn ? 'Match finished — Reopen match sheet to edit' : 'Partido finalizado — usa Reabrir Acta para corregir') : undefined}
                           className={`livestats-btn ${isFlashing ? 'flashing' : ''}`}
@@ -2312,13 +2491,14 @@ const LiveStats = ({
           </div>
         )}
 
-        {/* Modal de Captura Rápida de Tiro con Contexto (<= 3 taps) */}
+        {/* Modal de Captura Canónica de Tiro con Contexto (<= 3 taps) */}
         <ShotCaptureModal
           isOpen={pendingShotModal.isOpen}
           onClose={() => setPendingShotModal(prev => ({ ...prev, isOpen: false }))}
           onConfirmShot={handleConfirmShot}
           initialTeam={pendingShotModal.initialTeam}
           initialSector={selectedSector || 'center'}
+          zone2D={selectedSector2D}
           initialResult={pendingShotModal.initialResult}
           initialDifficulty={pendingShotModal.initialDifficulty}
           activePlayerId={activePlayerId}
@@ -2326,6 +2506,82 @@ const LiveStats = ({
           playersList={onPitchPlayersList.length > 0 ? onPitchPlayersList : playersList}
           activeGoalkeeper={activeGoalkeeper}
         />
+
+        {/* Modal de Manual de Criterios de Captura y Descarga PDF */}
+        <CaptureCriteriaModal
+          isOpen={showCriteriaModal}
+          onClose={() => setShowCriteriaModal(false)}
+          isEn={isEn}
+        />
+
+        {/* Modal de Gestión de Eventos Sin Atribuir (Atribución Diferida) */}
+        <UnattributedEventsManager
+          isOpen={showUnattributedModal}
+          onClose={() => setShowUnattributedModal(false)}
+          events={rawEvents}
+          players={playersList}
+          onUpdateEvents={handleAttributeEvents}
+          isEn={isEn}
+        />
+
+        {/* Tooltip Flotante de Criterio Activo por Long-Press */}
+        {activeCriterionTooltip && CAPTURE_CRITERIA[activeCriterionTooltip] && (
+          <div
+            className="criterion-floating-tooltip"
+            style={{
+              position: 'fixed',
+              bottom: '24px',
+              left: '50%',
+              transform: 'translateX(-50%)',
+              zIndex: 9999,
+              maxWidth: '420px',
+              width: '90%',
+              backgroundColor: darkMode ? '#0F172A' : '#FFFFFF',
+              color: darkMode ? '#FFFFFF' : '#0F172A',
+              padding: '16px',
+              borderRadius: '12px',
+              boxShadow: '0 10px 25px rgba(0,0,0,0.3)',
+              border: '2px solid #3B82F6'
+            }}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+              <strong style={{ color: '#3B82F6', fontSize: '14px' }}>
+                📖 {isEn ? CAPTURE_CRITERIA[activeCriterionTooltip].nameEn : CAPTURE_CRITERIA[activeCriterionTooltip].nameEs}
+              </strong>
+              <button
+                type="button"
+                onClick={() => setActiveCriterionTooltip(null)}
+                style={{ background: 'none', border: 'none', color: '#94A3B8', fontSize: '18px', cursor: 'pointer' }}
+              >
+                ✕
+              </button>
+            </div>
+            <p style={{ fontSize: '12px', lineHeight: 1.4, margin: '0 0 10px 0' }}>
+              {isEn ? CAPTURE_CRITERIA[activeCriterionTooltip].definitionEn : CAPTURE_CRITERIA[activeCriterionTooltip].definitionEs}
+            </p>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <span style={{ fontSize: '11px', color: '#10B981' }}>
+                ✓ {isEn ? 'Counts when:' : 'Anota si:'} {isEn ? (CAPTURE_CRITERIA[activeCriterionTooltip].countsWhenEn || '').slice(0, 45) : (CAPTURE_CRITERIA[activeCriterionTooltip].countsWhenEs || '').slice(0, 45)}...
+              </span>
+              <button
+                type="button"
+                onClick={() => { setActiveCriterionTooltip(null); setShowCriteriaModal(true); }}
+                style={{
+                  background: '#3B82F6',
+                  color: '#FFFFFF',
+                  border: 'none',
+                  borderRadius: '6px',
+                  padding: '4px 10px',
+                  fontSize: '11px',
+                  fontWeight: 700,
+                  cursor: 'pointer'
+                }}
+              >
+                {isEn ? 'Full Manual →' : 'Ver Manual →'}
+              </button>
+            </div>
+          </div>
+        )}
 
       </main>
     </div>

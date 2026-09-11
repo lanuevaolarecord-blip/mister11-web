@@ -27,6 +27,8 @@ import { calcMixedRating, deriveStatsFromEvents } from '../utils/ratingFormula';
 import PlayerAvatar from './PlayerAvatar';
 import MatchStatsBlock from './MatchStatsBlock';
 import { MatchRadarChart } from './MatchStats/MatchRadarChart';
+import { UnattributedEventsManager } from './UnattributedEventsManager';
+import { showToast } from '../utils/toast';
 
 const getRsvpLabels = (isEn) => ({
   going:       { label: isEn ? 'Going' : 'Irá',            emoji: '✅', color: '#10B981' },
@@ -118,6 +120,7 @@ const ActaOficialPanel = ({
 
   const [showAuditDetail, setShowAuditDetail] = useState(false);
   const [subTab, setSubTab] = useState('roster'); // 'roster' | 'stats'
+  const [showUnattributedModal, setShowUnattributedModal] = useState(false);
 
   const toggleWarningsCollapse = () => {
     setIsWarningsCollapsed(prev => {
@@ -162,6 +165,25 @@ const ActaOficialPanel = ({
     }
     return getUnifiedMatchEvents(matchData);
   }, [propEvents, matchData]);
+
+  const unattributedCount = useMemo(() => {
+    return (effectiveEvents || []).filter(e => {
+      if (!e) return false;
+      const isRival = e.team === 'rival' || e.team === 'away' || String(e.type || '').includes('rival');
+      if (isRival) return false;
+      return (!e.playerId || e.playerId === 'unassigned' || e.attributed === false);
+    }).length;
+  }, [effectiveEvents]);
+
+  const handleAttributeEvents = async ({ eventIds = [], playerId, playerName }) => {
+    if (!eventIds || eventIds.length === 0 || !playerId) return;
+    if (onUpdateMatchData && Array.isArray(effectiveEvents)) {
+      const idSet = new Set(eventIds.map(String));
+      const updatedEvents = effectiveEvents.map(e => idSet.has(String(e.id)) ? { ...e, playerId, playerName, attributed: true } : e);
+      onUpdateMatchData({ liveStatsEvents: updatedEvents, events: updatedEvents });
+    }
+    showToast(isEn ? `Attributed ${eventIds.length} event(s) to ${playerName}` : `Atribuido(s) ${eventIds.length} evento(s) a ${playerName}`, 'success');
+  };
 
   const statsOverview = useMemo(() => {
     const evts = effectiveEvents || [];
@@ -543,6 +565,28 @@ const ActaOficialPanel = ({
           }}
         >
           📊 {isEn ? 'Official Stats & Charts' : 'Estadísticas & Gráficas Oficiales'} ({effectiveEvents.length})
+        </button>
+        <button
+          type="button"
+          id="acta-unattributed-btn"
+          onClick={() => setShowUnattributedModal(true)}
+          title={isEn ? 'Manage unattributed events' : 'Gestionar eventos sin atribuir'}
+          style={{
+            padding: '8px 16px',
+            borderRadius: '8px',
+            fontSize: '12.5px',
+            fontWeight: 800,
+            cursor: 'pointer',
+            border: `1.5px solid ${unattributedCount > 0 ? '#EF4444' : 'var(--partidos-border)'}`,
+            background: unattributedCount > 0 ? 'rgba(239, 68, 68, 0.15)' : 'transparent',
+            color: unattributedCount > 0 ? '#EF4444' : 'var(--partidos-text-muted)',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px',
+            marginLeft: 'auto'
+          }}
+        >
+          🔘 {isEn ? `Unattributed (${unattributedCount})` : `Sin atribuir (${unattributedCount})`}
         </button>
       </div>
 
@@ -1287,6 +1331,16 @@ const ActaOficialPanel = ({
           </div>
         </div>
       )}
+
+      {/* Modal de Gestión y Atribución Diferida en Acta Oficial */}
+      <UnattributedEventsManager
+        isOpen={showUnattributedModal}
+        onClose={() => setShowUnattributedModal(false)}
+        events={effectiveEvents}
+        players={players}
+        onUpdateEvents={handleAttributeEvents}
+        isEn={isEn}
+      />
     </div>
   );
 };

@@ -218,11 +218,35 @@ export const useLiveStats = (teamId, matchId, currentMinute, currentHalf = 1) =>
     }
   }, [fullCollectionPath, cacheKey]);
 
-  // ── Conteo por tipo ───────────────────────────────────────────────────────
-  const countByType = useCallback(
-    (type) => events.filter((e) => e.type === type).length,
-    [events]
-  );
+  // ── Actualizar eventos en lote de forma idempotente ────────────────────────
+  const updateLiveEvents = useCallback(async (eventIds = [], updates = {}) => {
+    if (!eventIds || eventIds.length === 0) return;
+    const idSet = new Set(eventIds.map(String));
 
-  return { events, loading, saving, addLiveEvent, resetLiveStats, countByType };
+    setEvents((prev) => {
+      const next = prev.map((e) => (idSet.has(String(e.id)) ? { ...e, ...updates } : e));
+      if (cacheKey) {
+        try { localStorage.setItem(cacheKey, JSON.stringify(next)); } catch (_) { }
+      }
+      return next;
+    });
+
+    if (fullCollectionPath) {
+      setSaving(true);
+      try {
+        const { doc, updateDoc } = await import('../firebase/firestore-proxy');
+        const promises = eventIds.map((id) => {
+          const docRef = doc(db, `${fullCollectionPath}/${id}`);
+          return updateDoc(docRef, updates).catch(() => {});
+        });
+        await Promise.all(promises);
+      } catch (err) {
+        console.error('[useLiveStats] Error actualizando eventos en lote:', err);
+      } finally {
+        setSaving(false);
+      }
+    }
+  }, [fullCollectionPath, cacheKey]);
+
+  return { events, loading, saving, addLiveEvent, resetLiveStats, countByType, updateLiveEvents };
 };

@@ -248,5 +248,11 @@ export const useLiveStats = (teamId, matchId, currentMinute, currentHalf = 1) =>
     }
   }, [fullCollectionPath, cacheKey]);
 
+  // ── Conteo rápido por tipo ───────────────────────────────────────────────
+  const countByType = useCallback(
+    (type) => (events || []).filter((e) => e && e.type === type).length,
+    [events]
+  );
+
   return { events, loading, saving, addLiveEvent, resetLiveStats, countByType, updateLiveEvents };
 };

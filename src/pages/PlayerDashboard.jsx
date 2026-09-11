@@ -280,7 +280,9 @@ const PlayerDashboard = () => {
     return (
       <div className="player-loading-screen">
         <Loader size={36} className="spin" style={{ color: '#10B981', animation: 'spin 1.5s linear infinite' }} />
-        <p style={{ marginTop: '14px', fontWeight: 600, color: 'var(--text-secondary)' }}>Cargando tu portal de jugador...</p>
+        <p style={{ marginTop: '14px', fontWeight: 600, color: 'var(--text-secondary)' }}>
+          {t('player.portal.loading', {}, 'Cargando tu portal de jugador...')}
+        </p>
       </div>
     );
   }
@@ -305,11 +307,11 @@ const PlayerDashboard = () => {
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <Bell size={18} color="#10B981" />
             <span style={{ fontWeight: 700 }}>
-              ¿Deseas activar avisos de convocatorias y partidos?
+              {t('player.notifications.promptTitle', {}, '¿Deseas activar avisos de convocatorias y partidos?')}
             </span>
           </div>
           <p style={{ margin: 0, fontSize: '0.75rem', color: '#94A3B8', lineHeight: 1.4 }}>
-            Recibe al instante las convocatorias oficiales del míster y recordatorios 2h antes de cada entreno.
+            {t('player.notifications.promptDesc', {}, 'Recibe al instante las convocatorias oficiales del míster y recordatorios 2h antes de cada entreno.')}
           </p>
           <div style={{ display: 'flex', gap: '8px', marginTop: '4px' }}>
             <button
@@ -326,7 +328,7 @@ const PlayerDashboard = () => {
                 cursor: 'pointer'
               }}
             >
-              ACTIVAR AVISOS
+              {t('player.notifications.promptBtn', {}, 'ACTIVAR AVISOS')}
             </button>
             <button
               onClick={dismissNotifications}
@@ -341,7 +343,7 @@ const PlayerDashboard = () => {
                 cursor: 'pointer'
               }}
             >
-              Más tarde
+              {t('player.notifications.promptLater', {}, 'Más tarde')}
             </button>
           </div>
         </div>
@@ -369,7 +371,7 @@ const PlayerDashboard = () => {
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <UserCheck size={18} color="#C9A84C" />
             <span>
-              👨 <strong>Vista de Padre</strong> — <span style={{ color: '#C9A84C' }}>{player?.name || 'Hijo/a'}</span>
+              👨 <strong>{t('player.portal.parentView', {}, 'Vista de Padre')}</strong> — <span style={{ color: '#C9A84C' }}>{player?.name || 'Hijo/a'}</span>
             </span>
           </div>
 
@@ -459,7 +461,7 @@ const PlayerDashboard = () => {
             >
               {playerTeams.map(t => (
                 <option key={t.id} value={t.id}>
-                  {t.nombre || t.name || 'Mi Equipo'}
+                  {(isEn && (!t.nombre || t.nombre.toLowerCase() === 'mi equipo')) ? 'My Team' : (t.nombre || t.name || t('player.portal.myTeam', {}, 'Mi Equipo'))}
                 </option>
               ))}
             </select>
@@ -474,7 +476,7 @@ const PlayerDashboard = () => {
               border: '1px solid rgba(16, 185, 129, 0.3)',
               whiteSpace: 'nowrap'
             }}>
-              {activePlayerTeam.nombre || activePlayerTeam.name || 'Mi Equipo'}
+              {(isEn && (!activePlayerTeam.nombre || activePlayerTeam.nombre.toLowerCase() === 'mi equipo')) ? 'My Team' : (activePlayerTeam.nombre || activePlayerTeam.name || t('player.portal.myTeam', {}, 'Mi Equipo'))}
             </span>
           ) : null}
 

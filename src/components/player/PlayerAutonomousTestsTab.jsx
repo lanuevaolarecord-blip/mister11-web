@@ -26,6 +26,10 @@ import './PlayerAutonomousTestsTab.css';
 export const AUTONOMOUS_TESTS = [
   {
     id: 'psi_acsi28_auto',
+    nameKey: 'test.auto.acsi28.name',
+    shortKey: 'test.auto.acsi28.short',
+    catKey: 'test.auto.acsi28.cat',
+    descKey: 'test.auto.acsi28.desc',
     category: 'Afrontamiento y Presión',
     name: 'ACSI-28 (Afrontamiento Deportivo)',
     shortName: 'ACSI-28',
@@ -34,25 +38,29 @@ export const AUTONOMOUS_TESTS = [
     desc: 'Evalúa tu capacidad para mantener la calma ante errores, soportar la presión del rival y concentrarte en momentos clave.',
     timeMinutes: 4,
     questions: [
-      { id: 'q1', text: 'Mantengo la calma y una actitud positiva aunque el equipo vaya perdiendo.', dimension: 'Afrontamiento' },
-      { id: 'q2', text: 'Si cometo un error o pierdo un balón, lo olvido rápido y me concentro en la siguiente jugada.', dimension: 'Afrontamiento' },
-      { id: 'q3', text: 'Me mantengo concentrado en el partido a pesar de los gritos o distracciones externas.', dimension: 'Concentración' },
-      { id: 'q4', text: 'Puedo enfocarme al 100% en la tarea táctica que me pide el míster.', dimension: 'Concentración' },
-      { id: 'q5', text: 'Siento total seguridad en mis habilidades antes de saltar al campo.', dimension: 'Confianza' },
-      { id: 'q6', text: 'En los minutos finales o momentos decisivos juego con la misma soltura sin atenazarme.', dimension: 'Rendimiento bajo presión' },
-      { id: 'q7', text: 'Acepto las correcciones del entrenador entendiendo que son para hacerme mejor jugador.', dimension: 'Entrenabilidad' },
-      { id: 'q8', text: 'Me adapto rápidamente si el míster me cambia de posición o rol durante el partido.', dimension: 'Entrenabilidad' }
+      { id: 'q1', textKey: 'test.auto.acsi28.q1', dimKey: 'test.dim.coping', text: 'Mantengo la calma y una actitud positiva aunque el equipo vaya perdiendo.', dimension: 'Afrontamiento' },
+      { id: 'q2', textKey: 'test.auto.acsi28.q2', dimKey: 'test.dim.coping', text: 'Si cometo un error o pierdo un balón, lo olvido rápido y me concentro en la siguiente jugada.', dimension: 'Afrontamiento' },
+      { id: 'q3', textKey: 'test.auto.acsi28.q3', dimKey: 'test.dim.concentration', text: 'Me mantengo concentrado en el partido a pesar de los gritos o distracciones externas.', dimension: 'Concentración' },
+      { id: 'q4', textKey: 'test.auto.acsi28.q4', dimKey: 'test.dim.concentration', text: 'Puedo enfocarme al 100% en la tarea táctica que me pide el míster.', dimension: 'Concentración' },
+      { id: 'q5', textKey: 'test.auto.acsi28.q5', dimKey: 'test.dim.confidence', text: 'Siento total seguridad en mis habilidades antes de saltar al campo.', dimension: 'Confianza' },
+      { id: 'q6', textKey: 'test.auto.acsi28.q6', dimKey: 'test.dim.underPressure', text: 'En los minutos finales o momentos decisivos juego con la misma soltura sin atenazarme.', dimension: 'Rendimiento bajo presión' },
+      { id: 'q7', textKey: 'test.auto.acsi28.q7', dimKey: 'test.dim.coachability', text: 'Acepto las correcciones del entrenador entendiendo que son para hacerme mejor jugador.', dimension: 'Entrenabilidad' },
+      { id: 'q8', textKey: 'test.auto.acsi28.q8', dimKey: 'test.dim.coachability', text: 'Me adapto rápidamente si el míster me cambia de posición o rol durante el partido.', dimension: 'Entrenabilidad' }
     ],
     options: [
-      { label: 'Casi nunca', value: 1 },
-      { label: 'A veces', value: 2 },
-      { label: 'A menudo', value: 3 },
-      { label: 'Casi siempre', value: 4 }
+      { labelKey: 'test.opt.almostNever', label: 'Casi nunca', value: 1 },
+      { labelKey: 'test.opt.sometimes', label: 'A veces', value: 2 },
+      { labelKey: 'test.opt.often', label: 'A menudo', value: 3 },
+      { labelKey: 'test.opt.almostAlways', label: 'Casi siempre', value: 4 }
     ],
     maxScore: 32
   },
   {
     id: 'psi_mtq10_auto',
+    nameKey: 'test.auto.mtq10.name',
+    shortKey: 'test.auto.mtq10.short',
+    catKey: 'test.auto.mtq10.cat',
+    descKey: 'test.auto.mtq10.desc',
     category: 'Fortaleza Mental',
     name: 'MTQ-10 (Fortaleza y Resiliencia)',
     shortName: 'Fortaleza MTQ',
@@ -61,22 +69,26 @@ export const AUTONOMOUS_TESTS = [
     desc: 'Mide tu determinación, perseverancia y cómo transformas los momentos difíciles en oportunidades de crecimiento.',
     timeMinutes: 3,
     questions: [
-      { id: 'q1', text: 'Mantengo el control emocional cuando el árbitro o una jugada no sale como esperaba.', dimension: 'Control Emocional' },
-      { id: 'q2', text: 'Cumplo con los entrenamientos y el plan físico incluso los días que no tengo motivación.', dimension: 'Compromiso' },
-      { id: 'q3', text: 'Veo los rivales difíciles y los desafíos como una oportunidad para demostrar mi nivel.', dimension: 'Desafío' },
-      { id: 'q4', text: 'Confío en mi capacidad para superar cualquier bache de juego o suplencia.', dimension: 'Autoconfianza' },
-      { id: 'q5', text: 'No me rindo jamás hasta que el árbitro pita el final del encuentro.', dimension: 'Perseverancia' }
+      { id: 'q1', textKey: 'test.auto.mtq10.q1', dimKey: 'test.dim.emotionalControl', text: 'Mantengo el control emocional cuando el árbitro o una jugada no sale como esperaba.', dimension: 'Control Emocional' },
+      { id: 'q2', textKey: 'test.auto.mtq10.q2', dimKey: 'test.dim.commitment', text: 'Cumplo con los entrenamientos y el plan físico incluso los días que no tengo motivación.', dimension: 'Compromiso' },
+      { id: 'q3', textKey: 'test.auto.mtq10.q3', dimKey: 'test.dim.challenge', text: 'Veo los rivales difíciles y los desafíos como una oportunidad para demostrar mi nivel.', dimension: 'Desafío' },
+      { id: 'q4', textKey: 'test.auto.mtq10.q4', dimKey: 'test.dim.confidence', text: 'Confío en mi capacidad para superar cualquier bache de juego o suplencia.', dimension: 'Autoconfianza' },
+      { id: 'q5', textKey: 'test.auto.mtq10.q5', dimKey: 'test.dim.perseverance', text: 'No me rindo jamás hasta que el árbitro pita el final del encuentro.', dimension: 'Perseverancia' }
     ],
     options: [
-      { label: 'Totalmente en desacuerdo', value: 1 },
-      { label: 'En desacuerdo', value: 2 },
-      { label: 'De acuerdo', value: 3 },
-      { label: 'Totalmente de acuerdo', value: 4 }
+      { labelKey: 'test.opt.stronglyDisagree', label: 'Totalmente en desacuerdo', value: 1 },
+      { labelKey: 'test.opt.disagree', label: 'En desacuerdo', value: 2 },
+      { labelKey: 'test.opt.agree', label: 'De acuerdo', value: 3 },
+      { labelKey: 'test.opt.stronglyAgree', label: 'Totalmente de acuerdo', value: 4 }
     ],
     maxScore: 20
   },
   {
     id: 'soc_geq_auto',
+    nameKey: 'test.auto.geq.name',
+    shortKey: 'test.auto.geq.short',
+    catKey: 'test.auto.geq.cat',
+    descKey: 'test.auto.geq.desc',
     category: 'Cohesión y Vestuario',
     name: 'GEQ (Cohesión de Equipo y Clima)',
     shortName: 'Cohesión GEQ',
@@ -85,21 +97,25 @@ export const AUTONOMOUS_TESTS = [
     desc: 'Evalúa la unión del grupo, la comunicación entre compañeros y el sentido de pertenencia en el equipo.',
     timeMinutes: 2,
     questions: [
-      { id: 'q1', text: 'Todos en el vestuario remamos en la misma dirección para alcanzar los objetivos.', dimension: 'Cohesión de Tarea' },
-      { id: 'q2', text: 'Nos apoyamos y animamos mutuamente cuando alguien comete un fallo.', dimension: 'Apoyo Grupal' },
-      { id: 'q3', text: 'Existe un ambiente sano, divertido y de compañerismo fuera del campo.', dimension: 'Cohesión Social' },
-      { id: 'q4', text: 'Me siento 100% valorado e integrado en este equipo.', dimension: 'Pertenencia' }
+      { id: 'q1', textKey: 'test.auto.geq.q1', dimKey: 'test.dim.taskCohesion', text: 'Todos en el vestuario remamos en la misma dirección para alcanzar los objetivos.', dimension: 'Cohesión de Tarea' },
+      { id: 'q2', textKey: 'test.auto.geq.q2', dimKey: 'test.dim.groupSupport', text: 'Nos apoyamos y animamos mutuamente cuando alguien comete un fallo.', dimension: 'Apoyo Grupal' },
+      { id: 'q3', textKey: 'test.auto.geq.q3', dimKey: 'test.dim.socialCohesion', text: 'Existe un ambiente sano, divertido y de compañerismo fuera del campo.', dimension: 'Cohesión Social' },
+      { id: 'q4', textKey: 'test.auto.geq.q4', dimKey: 'test.dim.belonging', text: 'Me siento 100% valorado e integrado en este equipo.', dimension: 'Pertenencia' }
     ],
     options: [
-      { label: 'Nada de acuerdo', value: 1 },
-      { label: 'Poco de acuerdo', value: 2 },
-      { label: 'Bastante de acuerdo', value: 3 },
-      { label: 'Totalmente de acuerdo', value: 4 }
+      { labelKey: 'test.opt.notAtAll', label: 'Nada de acuerdo', value: 1 },
+      { labelKey: 'test.opt.somewhatDisagree', label: 'Poco de acuerdo', value: 2 },
+      { labelKey: 'test.opt.quiteAgree', label: 'Bastante de acuerdo', value: 3 },
+      { labelKey: 'test.opt.stronglyAgree', label: 'Totalmente de acuerdo', value: 4 }
     ],
     maxScore: 16
   },
   {
     id: 'soc_mhc_auto',
+    nameKey: 'test.auto.mhc.name',
+    shortKey: 'test.auto.mhc.short',
+    catKey: 'test.auto.mhc.cat',
+    descKey: 'test.auto.mhc.desc',
     category: 'Bienestar Psicodeportivo',
     name: 'MHC-SF (Bienestar Emocional)',
     shortName: 'Bienestar Mental',
@@ -108,20 +124,24 @@ export const AUTONOMOUS_TESTS = [
     desc: 'Mide tu disfrute por el fútbol, satisfacción personal y sensación de progreso como deportista.',
     timeMinutes: 2,
     questions: [
-      { id: 'q1', text: 'Disfruto y me siento feliz cada vez que voy a entrenar o jugar.', dimension: 'Disfrute Deportivo' },
-      { id: 'q2', text: 'Siento que el fútbol me ayuda a ser mejor persona y desarrollar disciplina.', dimension: 'Propósito' },
-      { id: 'q3', text: 'Tengo una relación de confianza y respeto con el cuerpo técnico.', dimension: 'Confianza Staff' }
+      { id: 'q1', textKey: 'test.auto.mhc.q1', dimKey: 'test.dim.sportsJoy', text: 'Disfruto y me siento feliz cada vez que voy a entrenar o jugar.', dimension: 'Disfrute Deportivo' },
+      { id: 'q2', textKey: 'test.auto.mhc.q2', dimKey: 'test.dim.purpose', text: 'Siento que el fútbol me ayuda a ser mejor persona y desarrollar disciplina.', dimension: 'Propósito' },
+      { id: 'q3', textKey: 'test.auto.mhc.q3', dimKey: 'test.dim.staffTrust', text: 'Tengo una relación de confianza y respeto con el cuerpo técnico.', dimension: 'Confianza Staff' }
     ],
     options: [
-      { label: 'Raras veces', value: 1 },
-      { label: 'Algunas veces', value: 2 },
-      { label: 'La mayoría de veces', value: 3 },
-      { label: 'Siempre', value: 4 }
+      { labelKey: 'test.opt.rarely', label: 'Raras veces', value: 1 },
+      { labelKey: 'test.opt.sometimes', label: 'Algunas veces', value: 2 },
+      { labelKey: 'test.opt.mostTimes', label: 'La mayoría de veces', value: 3 },
+      { labelKey: 'test.opt.always', label: 'Siempre', value: 4 }
     ],
     maxScore: 12
   },
   {
     id: 'psi_goals_auto',
+    nameKey: 'test.auto.goals.name',
+    shortKey: 'test.auto.goals.short',
+    catKey: 'test.auto.goals.cat',
+    descKey: 'test.auto.goals.desc',
     category: 'Metas y Enfoque',
     name: 'Escala de Establecimiento de Metas',
     shortName: 'Metas Individuales',
@@ -130,20 +150,24 @@ export const AUTONOMOUS_TESTS = [
     desc: 'Evalúa cómo planificas tus objetivos técnicos y físicos para superarte semana a semana.',
     timeMinutes: 2,
     questions: [
-      { id: 'q1', text: 'Tengo claro qué aspectos técnicos o físicos debo mejorar este mes.', dimension: 'Claridad de Objetivos' },
-      { id: 'q2', text: 'Me esfuerzo extra en los ejercicios que me resultan más difíciles.', dimension: 'Superación' },
-      { id: 'q3', text: 'Reviso mis partidos y entrenos para ver qué puedo hacer mejor la próxima vez.', dimension: 'Autoanálisis' }
+      { id: 'q1', textKey: 'test.auto.goals.q1', dimKey: 'test.dim.goalClarity', text: 'Tengo claro qué aspectos técnicos o físicos debo mejorar este mes.', dimension: 'Claridad de Objetivos' },
+      { id: 'q2', textKey: 'test.auto.goals.q2', dimKey: 'test.dim.selfOvercoming', text: 'Me esfuerzo extra en los ejercicios que me resultan más difíciles.', dimension: 'Superación' },
+      { id: 'q3', textKey: 'test.auto.goals.q3', dimKey: 'test.dim.selfAnalysis', text: 'Reviso mis partidos y entrenos para ver qué puedo hacer mejor la próxima vez.', dimension: 'Autoanálisis' }
     ],
     options: [
-      { label: 'Nunca', value: 1 },
-      { label: 'A veces', value: 2 },
-      { label: 'Casi siempre', value: 3 },
-      { label: 'Siempre', value: 4 }
+      { labelKey: 'test.opt.never', label: 'Nunca', value: 1 },
+      { labelKey: 'test.opt.sometimes', label: 'A veces', value: 2 },
+      { labelKey: 'test.opt.almostAlways', label: 'Casi siempre', value: 3 },
+      { labelKey: 'test.opt.always', label: 'Siempre', value: 4 }
     ],
     maxScore: 12
   },
   {
     id: 'rpe_borg_auto',
+    nameKey: 'test.auto.rpe.name',
+    shortKey: 'test.auto.rpe.short',
+    catKey: 'test.auto.rpe.cat',
+    descKey: 'test.auto.rpe.desc',
     category: 'Carga y Esfuerzo Físico',
     name: 'RPE (Escala Borg CR-10)',
     shortName: 'RPE Esfuerzo',
@@ -152,19 +176,19 @@ export const AUTONOMOUS_TESTS = [
     desc: 'Registra la intensidad del esfuerzo percibido tras tu último entrenamiento o partido en la escala validada Borg 1-10.',
     timeMinutes: 1,
     questions: [
-      { id: 'q1', text: '¿Qué nivel de intensidad o esfuerzo físico sentiste en tu última sesión o partido?', dimension: 'Esfuerzo Percibido' }
+      { id: 'q1', textKey: 'test.auto.rpe.q1', dimKey: 'test.dim.perceivedEffort', text: '¿Qué nivel de intensidad o esfuerzo físico sentiste en tu última sesión o partido?', dimension: 'Esfuerzo Percibido' }
     ],
     options: [
-      { label: '1 - Muy suave (recuperación)', value: 1 },
-      { label: '2 - Suave (cómodo)', value: 2 },
-      { label: '3 - Moderado (aeróbico constante)', value: 3 },
-      { label: '4 - Algo duro (se siente el cansancio)', value: 4 },
-      { label: '5 - Duro (esfuerzo notable)', value: 5 },
-      { label: '6 - Bastante duro', value: 6 },
-      { label: '7 - Muy duro (alta intensidad)', value: 7 },
-      { label: '8 - Muy duro + (cerca del límite)', value: 8 },
-      { label: '9 - Extenuante', value: 9 },
-      { label: '10 - Esfuerzo Máximo (límite absoluto)', value: 10 }
+      { labelKey: 'test.opt.rpe1', label: '1 - Muy suave (recuperación)', value: 1 },
+      { labelKey: 'test.opt.rpe2', label: '2 - Suave (cómodo)', value: 2 },
+      { labelKey: 'test.opt.rpe3', label: '3 - Moderado (aeróbico constante)', value: 3 },
+      { labelKey: 'test.opt.rpe4', label: '4 - Algo duro (se siente el cansancio)', value: 4 },
+      { labelKey: 'test.opt.rpe5', label: '5 - Duro (esfuerzo notable)', value: 5 },
+      { labelKey: 'test.opt.rpe6', label: '6 - Bastante duro', value: 6 },
+      { labelKey: 'test.opt.rpe7', label: '7 - Muy duro (alta intensidad)', value: 7 },
+      { labelKey: 'test.opt.rpe8', label: '8 - Muy duro + (cerca del límite)', value: 8 },
+      { labelKey: 'test.opt.rpe9', label: '9 - Extenuante', value: 9 },
+      { labelKey: 'test.opt.rpe10', label: '10 - Esfuerzo Máximo (límite absoluto)', value: 10 }
     ],
     maxScore: 10
   }
@@ -289,7 +313,7 @@ export const PlayerAutonomousTestsTab = ({ player, team, teamPath }) => {
         [selectedTest.id]: testPayload
       }));
 
-      showToast(t('test.completedSuccess', { name: selectedTest.shortName, pct: percentage }), 'success');
+      showToast(t('test.completedSuccess', { name: selectedTest.shortKey ? t(selectedTest.shortKey, {}, selectedTest.shortName) : selectedTest.shortName, pct: percentage }), 'success');
       setSelectedTest(null);
     } catch (err) {
       console.error('[PlayerAutonomousTestsTab] Error guardando test:', err);
@@ -318,10 +342,10 @@ export const PlayerAutonomousTestsTab = ({ player, team, teamPath }) => {
         <div className="test-runner-card">
           <div className="test-runner-header">
             <span className="test-runner-cat" style={{ color: selectedTest.color }}>
-              {selectedTest.category}
+              {selectedTest.catKey ? t(selectedTest.catKey, {}, selectedTest.category) : selectedTest.category}
             </span>
             <span className="test-runner-step">
-              {t('test.question')} {currentQuestionIdx + 1} {t('test.of')} {selectedTest.questions.length}
+              {t('test.questionProgress', { current: currentQuestionIdx + 1, total: selectedTest.questions.length }, `Pregunta ${currentQuestionIdx + 1} de ${selectedTest.questions.length}`)}
             </span>
           </div>
 
@@ -333,8 +357,12 @@ export const PlayerAutonomousTestsTab = ({ player, team, teamPath }) => {
           </div>
 
           <div className="test-question-box">
-            <span className="test-question-dimension">{t('test.dimension')}: {currentQ.dimension}</span>
-            <h3 className="test-question-text">{currentQ.text}</h3>
+            <span className="test-question-dimension">
+              {t('test.dimension')}: {currentQ.dimKey ? t(currentQ.dimKey, {}, currentQ.dimension) : currentQ.dimension}
+            </span>
+            <h3 className="test-question-text">
+              {currentQ.textKey ? t(currentQ.textKey, {}, currentQ.text) : currentQ.text}
+            </h3>
           </div>
 
           <div className="test-options-list">
@@ -348,7 +376,7 @@ export const PlayerAutonomousTestsTab = ({ player, team, teamPath }) => {
                   onClick={() => handleSelectOption(opt.value)}
                 >
                   <span className="opt-indicator">{opt.value}</span>
-                  <span className="opt-label">{opt.label}</span>
+                  <span className="opt-label">{opt.labelKey ? t(opt.labelKey, {}, opt.label) : opt.label}</span>
                   {isSelected && <CheckCircle2 size={18} className="opt-check" />}
                 </button>
               );
@@ -412,8 +440,8 @@ export const PlayerAutonomousTestsTab = ({ player, team, teamPath }) => {
                 </div>
               </div>
 
-              <h3 className="auto-test-title">{test.name}</h3>
-              <p className="auto-test-desc">{test.desc}</p>
+              <h3 className="auto-test-title">{test.nameKey ? t(test.nameKey, {}, test.name) : test.name}</h3>
+              <p className="auto-test-desc">{test.descKey ? t(test.descKey, {}, test.desc) : test.desc}</p>
 
               {lastResult ? (
                 <div className="auto-test-last-result">

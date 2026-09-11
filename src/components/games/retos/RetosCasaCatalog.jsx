@@ -38,7 +38,7 @@ export const RetosCasaCatalog = ({
               </div>
               <div className="game-card-meta">
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '6px' }}>
-                  <h4 className="game-card-title">{reto.t}</h4>
+                  <h4 className="game-card-title">{t(`games.retos.${reto.id}.title`, {}, reto.t)}</h4>
                   <span style={{
                     fontSize: '10px',
                     fontWeight: 800,
@@ -50,11 +50,11 @@ export const RetosCasaCatalog = ({
                     {attempts} / 2 {t('games.retos.attemptsToday', {}, 'intentos hoy')}
                   </span>
                 </div>
-                <span className="game-card-skill">{reto.sk}</span>
+                <span className="game-card-skill">{t(`games.retos.${reto.id}.skill`, {}, reto.sk)}</span>
               </div>
             </div>
 
-            <p className="game-card-desc">{reto.what}</p>
+            <p className="game-card-desc">{t(`games.retos.${reto.id}.what`, {}, reto.what)}</p>
 
             {isCompleted && (
               <div style={{
@@ -95,7 +95,7 @@ export const RetosCasaCatalog = ({
 
             <div className="game-card-footer">
               <span className="game-card-best">
-                {reto.sets} sets · {reto.metric}
+                {reto.sets} {t('games.retos.setsWord', {}, 'sets')} · {t(`games.retos.${reto.id}.metric`, {}, reto.metric)}
               </span>
               <button
                 type="button"

@@ -57,6 +57,14 @@ export const RetoEngine = ({
 
   if (!reto) return null;
 
+  const localizedReto = {
+    ...reto,
+    t: t(`games.retos.${reto.id}.title`, {}, reto.t),
+    sk: t(`games.retos.${reto.id}.skill`, {}, reto.sk),
+    what: t(`games.retos.${reto.id}.what`, {}, reto.what),
+    metric: t(`games.retos.${reto.id}.metric`, {}, reto.metric)
+  };
+
   const currentRoundData = reto.rounds ? reto.rounds[currentSet] : null;
 
   const startReto = () => {
@@ -143,21 +151,21 @@ export const RetoEngine = ({
     if (reto.mode === 'timer') {
       const sum = vals.reduce((a, b) => a + b, 0);
       finalVal = sum;
-      formattedVal = `${sum} / ${reto.sets} sets`;
+      formattedVal = `${sum} / ${reto.sets} ${t('games.retos.setsWord', {}, 'sets')}`;
     } else if (reto.mode === 'count') {
       const sum = vals.reduce((a, b) => a + b, 0);
       finalVal = sum;
-      formattedVal = `${sum} repeticiones`;
+      formattedVal = t('games.retos.repetitions', { count: sum }, `${sum} repeticiones`);
     } else {
       // streak
       const maxStreak = vals.length ? Math.max(...vals) : 0;
       finalVal = maxStreak;
-      formattedVal = `${maxStreak} toques seguidos`;
+      formattedVal = t('games.retos.touchesStreak', { count: maxStreak }, `${maxStreak} toques seguidos`);
     }
 
     setSummary({
       metricVal: formattedVal,
-      metricName: reto.metric
+      metricName: localizedReto.metric
     });
 
     const doneCount = vals.filter(v => v > 0).length;
@@ -183,7 +191,7 @@ export const RetoEngine = ({
     <GameShell
       isOpen={isOpen}
       onClose={onClose}
-      game={reto}
+      game={localizedReto}
       status={status}
       onStartGame={startReto}
       xpResult={xpResult}
@@ -199,19 +207,19 @@ export const RetoEngine = ({
         />
       ) : null}
       summaryStats={[
-        { label: reto.metric, value: summary.metricVal },
+        { label: localizedReto.metric, value: summary.metricVal },
         { label: t('games.retos.statSets', {}, 'Sets'), value: `${currentSet + 1} / ${reto.sets}` },
-        { label: t('games.retos.statStatus', {}, 'Resultado'), value: 'Completado' }
+        { label: t('games.retos.statStatus', {}, 'Resultado'), value: t('games.retos.completedResult', {}, 'Completado') }
       ]}
     >
       <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', alignItems: 'center' }}>
         {/* Cabecera del set */}
         <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%', fontSize: '13px', fontWeight: 800 }}>
           <span style={{ color: '#1E3A8A' }}>
-            Set {currentSet + 1} de {reto.sets}
+            {t('games.retos.setHeader', { current: currentSet + 1, total: reto.sets }, `Set ${currentSet + 1} de ${reto.sets}`)}
           </span>
           <span style={{ color: '#64748b' }}>
-            {reto.mode === 'count' ? `Objetivo: ${reto.target} reps` : (reto.mode === 'timer' ? `${reto.seg}s por set` : 'Racha')}
+            {reto.mode === 'count' ? `Objetivo: ${reto.target} reps` : (reto.mode === 'timer' ? `${reto.seg}s` : 'Racha')}
           </span>
         </div>
 
@@ -221,7 +229,7 @@ export const RetoEngine = ({
             {currentRoundData ? currentRoundData.e : reto.em}
           </div>
           <p className="reto-round-desc">
-            {currentRoundData ? currentRoundData.d : reto.what}
+            {currentRoundData ? currentRoundData.d : localizedReto.what}
           </p>
         </div>
 

@@ -433,6 +433,16 @@ export const PlayerStatsTab = ({ player, team, teamPath, isParentView = false, a
   const zeroMetrics = radarMetrics.filter(m => m.value === 0);
   const overallTPI = scores.overall;
 
+  const getAxisLabel = (axis) => {
+    const norm = String(axis || '').toUpperCase();
+    if (norm.includes('FÍS') || norm.includes('FIS')) return t('player.stats.axis.physical', {}, isEn ? 'PHYSICAL' : 'FÍSICO');
+    if (norm.includes('TÉC') || norm.includes('TEC')) return t('player.stats.axis.technical', {}, isEn ? 'TECHNICAL' : 'TÉCNICA');
+    if (norm.includes('TÁC') || norm.includes('TAC')) return t('player.stats.axis.tactical', {}, isEn ? 'TACTICAL' : 'TÁCTICA');
+    if (norm.includes('MEN') || norm.includes('PSI')) return t('player.stats.axis.mental', {}, isEn ? 'MENTAL' : 'MENTAL');
+    if (norm.includes('ASIS') || norm.includes('ATT')) return t('player.stats.axis.attendance', {}, isEn ? 'ATTENDANCE' : 'ASISTENCIA');
+    return axis;
+  };
+
   const svgWidth = 340;
   const svgHeight = 290;
   const centerX = svgWidth / 2;
@@ -1418,7 +1428,7 @@ export const PlayerStatsTab = ({ player, team, teamPath, isParentView = false, a
                   fontSize="11"
                   fontWeight="800"
                 >
-                  {m.label} ({m.value})
+                  {getAxisLabel(m.label)} ({m.value})
                 </text>
               );
             })}
@@ -1440,7 +1450,7 @@ export const PlayerStatsTab = ({ player, team, teamPath, isParentView = false, a
                 color: m.value > 0 ? '#10B981' : 'var(--text-secondary)'
               }}
             >
-              {m.label}: {m.value}
+              {getAxisLabel(m.label)}: {m.value}
             </span>
           ))}
         </div>
@@ -1463,7 +1473,7 @@ export const PlayerStatsTab = ({ player, team, teamPath, isParentView = false, a
           }}>
             <div style={{ flex: 1, minWidth: '200px' }}>
               <div style={{ fontWeight: 800, fontSize: '0.78rem', color: '#F59E0B' }}>
-                💡 {isEn ? 'Areas pending measurement' : 'Áreas pendientes de medición'} ({zeroMetrics.map(z => z.label).join(', ')})
+                💡 {isEn ? 'Areas pending measurement' : 'Áreas pendientes de medición'} ({zeroMetrics.map(z => getAxisLabel(z.label)).join(', ')})
               </div>
               <p style={{ margin: '2px 0 0 0', fontSize: '0.72rem', color: darkMode ? '#94A3B8' : '#64748B' }}>
                 {t('player.stats.areasInZeroDesc')}
@@ -1553,7 +1563,7 @@ export const PlayerStatsTab = ({ player, team, teamPath, isParentView = false, a
                       ⚡ {w.mood || '-'}/5
                     </div>
                     <div style={{ fontSize: '10px', fontWeight: '700', color: w.hasDiscomfort ? '#EF4444' : '#10B981' }}>
-                      {w.hasDiscomfort ? '🔴 Dolor' : '🟢 OK'}
+                      {w.hasDiscomfort ? (isEn ? '🔴 Pain' : '🔴 Dolor') : '🟢 OK'}
                     </div>
                   </div>
                 );

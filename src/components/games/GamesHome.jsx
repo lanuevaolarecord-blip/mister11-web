@@ -125,6 +125,38 @@ export const GamesHome = ({ player, team, teamPath, isParentView = false }) => {
 
   const currentCategoryCanPlay = activeCategory === 'cognitive' ? canPlayCognitive : (remainingChallengeSeconds > 0);
 
+  const getGameTitle = (gameIdOrName) => {
+    if (!gameIdOrName) return '';
+    const norm = String(gameIdOrName).toLowerCase().trim();
+    if (norm === 'g1' || norm === 'semaforo' || norm.includes('semáforo') || norm.includes('semaforo')) {
+      return t('games.g1.title', {}, 'Semáforo Pro');
+    }
+    if (norm === 'g2' || norm === 'freno' || norm.includes('freno')) {
+      return t('games.g2.title', {}, 'Freno Impulsivo');
+    }
+    if (norm === 'g3' || norm === 'ojo' || norm.includes('ojo')) {
+      return t('games.g3.title', {}, 'Ojo Táctico');
+    }
+    if (norm === 'g4' || norm === 'memoria' || norm.includes('memoria')) {
+      return t('games.g4.title', {}, 'Memoria de Conos');
+    }
+    if (norm === 'g5' || norm === 'respiracion' || norm.includes('respiración') || norm.includes('respiracion')) {
+      return t('games.g5.title', {}, 'Respiración 4-4');
+    }
+    if (norm === 'g6' || norm === 'decision' || norm.includes('decisión') || norm.includes('decision')) {
+      return t('games.g6.title', {}, 'Decisión 1 Segundo');
+    }
+    if (norm === 'eq' || norm.includes('equilibrio')) return t('games.retos.eq.title', {}, 'Reto Equilibrio');
+    if (norm === 'cuerda' || norm.includes('cuerda')) return t('games.retos.cuerda.title', {}, 'Salta la Cuerda');
+    if (norm === 'dom' || norm.includes('dominada')) return t('games.retos.dom.title', {}, 'Dominadas de Balón');
+    if (norm === 'pared' || norm.includes('pared')) return t('games.retos.pared.title', {}, 'Pared de Pases');
+    if (norm === 'punt' || norm.includes('puntería') || norm.includes('punteria')) return t('games.retos.punt.title', {}, 'Puntería al Cono');
+    if (norm === 'crp' || norm === 'cabeza' || norm.includes('cabeza')) return t('games.retos.crp.title', {}, 'Cabeza-Rodilla-Pie');
+    if (norm === 'esc' || norm.includes('escalera')) return t('games.retos.esc.title', {}, 'Escalera de Coordinación');
+    if (norm === 'reg' || norm.includes('slalom') || norm.includes('regate')) return t('games.retos.reg.title', {}, 'Slalom de Regates');
+    return gameIdOrName;
+  };
+
   return (
     <div className="games-container">
 
@@ -228,7 +260,7 @@ export const GamesHome = ({ player, team, teamPath, isParentView = false }) => {
                     {t('games.assignment.todayPrompt', {}, 'El cuerpo técnico te ha asignado un reto especial')}
                   </div>
                   <div className="recommended-assignment-subtitle">
-                    {a.gameName || a.gameId}
+                    {getGameTitle(a.gameName || a.gameId)}
                   </div>
                 </div>
               </div>
@@ -270,7 +302,7 @@ export const GamesHome = ({ player, team, teamPath, isParentView = false }) => {
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '6px' }}>
                       <h4 className="game-card-title">{t('games.g1.title', {}, 'Semáforo Pro')}</h4>
                       <span className="game-level-badge" style={{ color: info.color }}>
-                        {info.badge} {info.es}
+                        {info.badge} {isEn ? info.en : info.es}
                       </span>
                     </div>
                     <span className="game-card-skill">{t('games.g1.skill', {}, 'Velocidad de reacción')}</span>
@@ -281,7 +313,7 @@ export const GamesHome = ({ player, team, teamPath, isParentView = false }) => {
                 </p>
                 <div className="game-card-footer">
                   <span className="game-card-best">
-                    {bestScores.g1 ? `Récord: ${bestScores.g1} ms` : t('games.status.notPlayed', {}, 'Sin registro')}
+                    {bestScores.g1 ? t('games.best.record', { val: bestScores.g1 }, `Récord: ${bestScores.g1} ms`) : t('games.status.notPlayed', {}, 'Sin registro')}
                   </span>
                   <button
                     type="button"
@@ -308,7 +340,7 @@ export const GamesHome = ({ player, team, teamPath, isParentView = false }) => {
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '6px' }}>
                       <h4 className="game-card-title">{t('games.g2.title', {}, 'Freno Impulsivo')}</h4>
                       <span className="game-level-badge" style={{ color: info.color }}>
-                        {info.badge} {info.es}
+                        {info.badge} {isEn ? info.en : info.es}
                       </span>
                     </div>
                     <span className="game-card-skill">{t('games.g2.skill', {}, 'Autocontrol y decisión')}</span>
@@ -319,7 +351,7 @@ export const GamesHome = ({ player, team, teamPath, isParentView = false }) => {
                 </p>
                 <div className="game-card-footer">
                   <span className="game-card-best">
-                    {bestScores.g2 ? `Precisión: ${bestScores.g2}%` : t('games.status.notPlayed', {}, 'Sin registro')}
+                    {bestScores.g2 ? t('games.best.accuracy', { val: bestScores.g2 }, `Precisión: ${bestScores.g2}%`) : t('games.status.notPlayed', {}, 'Sin registro')}
                   </span>
                   <button
                     type="button"
@@ -346,7 +378,7 @@ export const GamesHome = ({ player, team, teamPath, isParentView = false }) => {
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '6px' }}>
                       <h4 className="game-card-title">{t('games.g3.title', {}, 'Ojo Táctico')}</h4>
                       <span className="game-level-badge" style={{ color: info.color }}>
-                        {info.badge} {info.es}
+                        {info.badge} {isEn ? info.en : info.es}
                       </span>
                     </div>
                     <span className="game-card-skill">{t('games.g3.skill', {}, 'Escaneo visual y percepción')}</span>
@@ -357,7 +389,7 @@ export const GamesHome = ({ player, team, teamPath, isParentView = false }) => {
                 </p>
                 <div className="game-card-footer">
                   <span className="game-card-best">
-                    {bestScores.g3 ? `Aciertos: ${bestScores.g3}/5` : t('games.status.notPlayed', {}, 'Sin registro')}
+                    {bestScores.g3 ? t('games.best.hits', { val: bestScores.g3 }, `Aciertos: ${bestScores.g3}/5`) : t('games.status.notPlayed', {}, 'Sin registro')}
                   </span>
                   <button
                     type="button"
@@ -384,7 +416,7 @@ export const GamesHome = ({ player, team, teamPath, isParentView = false }) => {
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '6px' }}>
                       <h4 className="game-card-title">{t('games.g4.title', {}, 'Memoria de Conos')}</h4>
                       <span className="game-level-badge" style={{ color: info.color }}>
-                        {info.badge} {info.es}
+                        {info.badge} {isEn ? info.en : info.es}
                       </span>
                     </div>
                     <span className="game-card-skill">{t('games.g4.skill', {}, 'Memoria de trabajo')}</span>
@@ -395,7 +427,7 @@ export const GamesHome = ({ player, team, teamPath, isParentView = false }) => {
                 </p>
                 <div className="game-card-footer">
                   <span className="game-card-best">
-                    {bestScores.g4 ? `Máx: ${bestScores.g4} conos` : t('games.status.notPlayed', {}, 'Sin registro')}
+                    {bestScores.g4 ? t('games.best.maxCones', { val: bestScores.g4 }, `Máx: ${bestScores.g4} conos`) : t('games.status.notPlayed', {}, 'Sin registro')}
                   </span>
                   <button
                     type="button"
@@ -449,7 +481,7 @@ export const GamesHome = ({ player, team, teamPath, isParentView = false }) => {
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '6px' }}>
                       <h4 className="game-card-title">{t('games.g6.title', {}, 'Decisión 1 Segundo')}</h4>
                       <span className="game-level-badge" style={{ color: info.color }}>
-                        {info.badge} {info.es}
+                        {info.badge} {isEn ? info.en : info.es}
                       </span>
                     </div>
                     <span className="game-card-skill">{t('games.g6.skill', {}, 'Lectura táctica')}</span>
@@ -460,7 +492,7 @@ export const GamesHome = ({ player, team, teamPath, isParentView = false }) => {
                 </p>
                 <div className="game-card-footer">
                   <span className="game-card-best">
-                    {bestScores.g6 ? `Precisión: ${bestScores.g6}%` : t('games.status.notPlayed', {}, 'Sin registro')}
+                    {bestScores.g6 ? t('games.best.accuracy', { val: bestScores.g6 }, `Precisión: ${bestScores.g6}%`) : t('games.status.notPlayed', {}, 'Sin registro')}
                   </span>
                   <button
                     type="button"

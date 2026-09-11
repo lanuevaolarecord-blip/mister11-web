@@ -149,11 +149,36 @@ if (fs.existsSync(indexCssPath)) {
   }
 }
 
+// ── 5. Validar que ningún control del header se oculte en CSS ────────────────
+if (fs.existsSync(indexCssPath)) {
+  const css = fs.readFileSync(indexCssPath, 'utf8');
+  const forbiddenSelectors = [
+    '\\.header-logout-btn',
+    '\\.header-mode-toggle',
+    '\\.header-theme-toggle',
+    '\\.header-notif-btn',
+    '\\.header-settings-btn',
+    '\\.header-staff-role-switcher',
+    '\\.team-switcher-header-v2',
+  ];
+
+  forbiddenSelectors.forEach((sel) => {
+    // Regex buscando selector seguido de bloque con display: none o visibility: hidden
+    const regex = new RegExp(`${sel}[^{]*\\{[^}]*(?:display\\s*:\\s*none|visibility\\s*:\\s*hidden)`, 'i');
+    if (regex.test(css)) {
+      console.error(`❌ [FAIL] src/index.css oculta el control del header (${sel}) con display:none o visibility:hidden.`);
+      hasErrors = true;
+    } else {
+      console.log(`✅ [PASS] Control ${sel.replace(/\\/g, '')} visible sin reglas de ocultado en CSS.`);
+    }
+  });
+}
+
 // ── Resultado Final ──────────────────────────────────────────────────────────
 if (hasErrors) {
-  console.error('\n💥 La guarda de PWA manifest & rotation detectó violaciones. Revisa los errores anteriores.\n');
+  console.error('\n💥 La guarda de PWA manifest, rotation & header visibility detectó violaciones. Revisa los errores anteriores.\n');
   process.exit(1);
 } else {
-  console.log('\n✅ [ALL PASS] Todos los manifests, guardas de orientación y safe-area son conformes al estándar.\n');
+  console.log('\n✅ [ALL PASS] Todos los manifests, guardas de orientación, safe-area y controles de header son conformes al estándar.\n');
   process.exit(0);
 }

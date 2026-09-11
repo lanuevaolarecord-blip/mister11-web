@@ -1013,14 +1013,14 @@ button, .nav-item, input, select, .icon-btn, .topbar-btn, .tool-icon-btn {
 
   /* Header en móvil limpio y adaptado al notch/cámara */
   /* Header en móvil limpio, horizontal y adaptado al notch */
+  /* Header en móvil limpio, horizontal y adaptado al notch */
   .header {
-    height: calc(56px + var(--sat, 0px)) !important;
+    height: auto !important;
     min-height: calc(56px + var(--sat, 0px)) !important;
-    max-height: calc(56px + var(--sat, 0px)) !important;
     padding-top: var(--sat, 0px) !important;
     padding-bottom: 0px !important;
-    padding-left: calc(12px + var(--sal, 0px)) !important;
-    padding-right: calc(12px + var(--sar, 0px)) !important;
+    padding-left: calc(6px + var(--sal, 0px)) !important;
+    padding-right: calc(6px + var(--sar, 0px)) !important;
     box-sizing: border-box !important;
     display: flex !important;
     flex-direction: row !important;
@@ -1028,7 +1028,7 @@ button, .nav-item, input, select, .icon-btn, .topbar-btn, .tool-icon-btn {
     justify-content: space-between !important;
     align-items: center !important;
     position: relative !important;
-    gap: 8px !important;
+    gap: 4px !important;
     background-color: var(--primary, #1B3A2D) !important;
     border-bottom: 1px solid rgba(212, 168, 67, 0.2) !important;
     z-index: 1000 !important;
@@ -1044,7 +1044,7 @@ button, .nav-item, input, select, .icon-btn, .topbar-btn, .tool-icon-btn {
     flex-direction: row !important;
     flex-wrap: nowrap !important;
     align-items: center !important;
-    gap: 6px !important;
+    gap: 4px !important;
     flex: 1 1 auto !important;
     min-width: 0 !important;
     overflow: visible !important; /* Permitir que la medalla sea 100% visible */
@@ -1056,6 +1056,7 @@ button, .nav-item, input, select, .icon-btn, .topbar-btn, .tool-icon-btn {
 
   /* Selector de rol técnico (Medalla / Corona): NUNCA recortar */
   .header-staff-role-switcher {
+    position: relative !important;
     flex-shrink: 0 !important;
     width: 34px !important;
     height: 34px !important;
@@ -1065,6 +1066,20 @@ button, .nav-item, input, select, .icon-btn, .topbar-btn, .tool-icon-btn {
     align-items: center !important;
     justify-content: center !important;
     box-sizing: border-box !important;
+    border-radius: 8px !important;
+  }
+
+  /* Touch target >= 48dp para accesibilidad táctil */
+  .header-staff-role-switcher::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 48px;
+    height: 48px;
+    transform: translate(-50%, -50%);
+    pointer-events: auto;
+    z-index: 1;
   }
 
   .header-actions {
@@ -1073,13 +1088,14 @@ button, .nav-item, input, select, .icon-btn, .topbar-btn, .tool-icon-btn {
     flex-direction: row !important;
     flex-wrap: nowrap !important;
     align-items: center !important;
-    gap: 6px !important;
+    gap: 3px !important;
     flex-shrink: 0 !important;
     margin-left: auto !important;
   }
 
   .header-actions .icon-btn {
-    padding: 6px !important;
+    position: relative !important;
+    padding: 5px !important;
     min-width: 34px !important;
     min-height: 34px !important;
     width: 34px !important;
@@ -1093,26 +1109,42 @@ button, .nav-item, input, select, .icon-btn, .topbar-btn, .tool-icon-btn {
     border: 1px solid rgba(212, 168, 67, 0.15) !important;
   }
 
-  /* Colapsar iconos secundarios en móvil para proteger espacio a 360px */
-  .header-actions .header-logout-btn,
-  .header-actions .header-mode-toggle {
-    display: none !important;
+  /* Touch target >= 48dp para botones de acción del header */
+  .header-actions .icon-btn::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 48px;
+    height: 48px;
+    transform: translate(-50%, -50%);
+    pointer-events: auto;
+    z-index: 1;
   }
 
-  /* Reducir el switcher de equipo en móvil */
+  /* Switcher de equipo en móvil con ellipsis fluido */
   .team-switcher-header-v2 {
-    padding: 4px 8px !important;
-    max-width: 110px !important;
+    position: relative !important;
+    padding: 4px 6px !important;
+    min-width: 0 !important;
+    max-width: 140px !important;
+    flex: 1 1 auto !important;
     flex-shrink: 1 !important;
     border-radius: 12px !important;
     background: rgba(212, 168, 67, 0.15) !important;
     border: 1px solid rgba(212, 168, 67, 0.3) !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    box-sizing: border-box !important;
+    gap: 4px !important;
   }
   
   .team-name-span {
-    max-width: 65px !important;
-    font-size: 10.5px !important;
+    min-width: 0 !important;
+    max-width: 80px !important;
+    font-size: 11px !important;
     font-weight: 700 !important;
+    flex: 1 1 auto !important;
     flex-shrink: 1 !important;
     white-space: nowrap !important;
     overflow: hidden !important;
@@ -1120,11 +1152,32 @@ button, .nav-item, input, select, .icon-btn, .topbar-btn, .tool-icon-btn {
   }
 
   @media (max-width: 420px) {
-    .header-actions .header-theme-toggle {
-      display: none !important;
+    .header-actions {
+      gap: 3px !important;
+    }
+  }
+
+  /* Breakpoint estrecho 360px portrait: todos los controles visibles y alineados */
+  @media (max-width: 380px) {
+    .header {
+      padding-left: calc(4px + var(--sal, 0px)) !important;
+      padding-right: calc(4px + var(--sar, 0px)) !important;
+      gap: 2px !important;
+    }
+    .header-title-container {
+      gap: 2px !important;
+      overflow: visible !important;
+    }
+    .team-switcher-header-v2 {
+      padding: 3px 5px !important;
+      max-width: 105px !important;
+    }
+    .team-name-span {
+      max-width: 58px !important;
+      font-size: 10px !important;
     }
     .header-actions {
-      gap: 4px !important;
+      gap: 2px !important;
     }
     .header-actions .icon-btn {
       width: 32px !important;
@@ -1133,29 +1186,11 @@ button, .nav-item, input, select, .icon-btn, .topbar-btn, .tool-icon-btn {
       min-height: 32px !important;
       padding: 4px !important;
     }
-  }
-
-  /* Breakpoint estrecho 360px portrait: cero recortes, medalla visible */
-  @media (max-width: 380px) {
-    .header {
-      padding-left: calc(8px + var(--sal, 0px)) !important;
-      padding-right: calc(8px + var(--sar, 0px)) !important;
-      gap: 4px !important;
-    }
-    .header-title-container {
-      gap: 4px !important;
-      overflow: visible !important;
-    }
-    .team-switcher-header-v2 {
-      padding: 3px 6px !important;
-      max-width: 88px !important;
-    }
-    .team-name-span {
-      max-width: 45px !important;
-      font-size: 10px !important;
-    }
-    .header-actions {
-      gap: 4px !important;
+    .header-staff-role-switcher {
+      width: 32px !important;
+      height: 32px !important;
+      min-width: 32px !important;
+      min-height: 32px !important;
     }
   }
 

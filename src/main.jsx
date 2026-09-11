@@ -12,6 +12,7 @@ import { StatusBar, Style } from '@capacitor/status-bar';
 import { Capacitor } from '@capacitor/core';
 
 if (Capacitor.isNativePlatform()) {
+  document.documentElement.classList.add('capacitor-native');
   StatusBar.setStyle({ style: Style.Dark });
   StatusBar.setBackgroundColor({ color: '#1a2e1a' });
   StatusBar.setOverlaysWebView({ overlay: false });

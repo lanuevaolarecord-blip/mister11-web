@@ -117,13 +117,14 @@ export default defineConfig(({ mode }) => {
           ]
         },
         manifest: {
+          id: '/?v=1.1.71',
           name: 'Míster 11',
           short_name: 'Míster 11',
           description: 'Plataforma para Entrenadores de Fútbol',
           theme_color: '#0D1A2D',
           background_color: '#ffffff',
           display: 'standalone',
-          orientation: 'landscape',
+          orientation: 'any',
           icons: [
             { src: 'pwa-192x192.png', sizes: '192x192', type: 'image/png' },
             { src: 'pwa-512x512.png', sizes: '512x512', type: 'image/png' }

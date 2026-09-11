@@ -237,17 +237,17 @@ const Header = ({ onToggleNotif }) => {
           </button>
         )}
 
-        <button className="icon-btn theme-toggle" title="Cambiar Tema" onClick={toggleTheme}>
+        <button className="icon-btn theme-toggle header-theme-toggle" title={isEn ? "Toggle Theme" : "Cambiar Tema"} onClick={toggleTheme}>
           {darkMode ? <Sun size={19} color="var(--accent-gold)" /> : <Moon size={19} color="var(--accent-gold)" />}
         </button>
-        <button className="icon-btn" title="Notificaciones" onClick={onToggleNotif}>
+        <button className="icon-btn header-notif-btn" title={isEn ? "Notifications" : "Notificaciones"} onClick={onToggleNotif}>
           <Bell size={19} color="var(--accent-gold)" />
         </button>
-        <button className="icon-btn" title="Ajustes y Configuración" onClick={() => navigate('/admin')}>
+        <button className="icon-btn header-settings-btn" title={isEn ? "Settings & Configuration" : "Ajustes y Configuración"} onClick={() => navigate('/admin')}>
           <Settings size={19} color="var(--accent-gold)" />
         </button>
         <button 
-          className="icon-btn" 
+          className="icon-btn header-logout-btn" 
           title={isEn ? "Sign Out / Switch Account" : "Cerrar Sesión / Cambiar Cuenta"} 
           onClick={handleLogout}
           style={{ color: '#EF4444' }}

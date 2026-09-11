@@ -1,13 +1,14 @@
 {
   "name": "mister11-web",
   "private": true,
-  "version": "1.1.70",
+  "version": "1.1.71",
   "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
     "test": "node scripts/ci-i18n-gate.mjs",
     "check-viewport": "node scripts/check-viewport.mjs",
+    "check-manifest": "node scripts/check-manifest.mjs",
     "check-i18n": "node scripts/check-i18n.js",
     "i18n:check": "node scripts/check-i18n.js",
     "i18n:audit": "node scripts/audit-literals.mjs",

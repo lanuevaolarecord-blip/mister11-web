@@ -10,16 +10,20 @@ import {
   Trophy, 
   Sparkles,
   ShieldCheck,
-  LogOut
+  LogOut,
+  Sun,
+  Moon
 } from 'lucide-react';
 import { auth, signOut } from '../firebaseConfig';
 import { useSettings } from '../hooks/useSettings';
 import { useAuth } from '../context/AuthContext';
+import { useTheme } from '../context/ThemeContext';
 import { useTranslation } from '../hooks/useTranslation';
 
 const Sidebar = ({ isOpen, onClose }) => {
   const { teams, activeTeamId, changeActiveTeam, logout, switchMode } = useAuth();
   const { settings } = useSettings(activeTeamId);
+  const { darkMode, toggleTheme } = useTheme();
   const { t, isEn } = useTranslation();
 
   const getRoleLabel = () => {
@@ -119,6 +123,14 @@ const Sidebar = ({ isOpen, onClose }) => {
           style={{ background: 'rgba(16, 185, 129, 0.15)', color: '#10B981', borderColor: 'rgba(16, 185, 129, 0.3)' }}
         >
           <Users size={14} /> {isEn ? 'Player Portal / Mode' : 'Modo / Portal Jugador'}
+        </button>
+
+        <button 
+          onClick={toggleTheme} 
+          className="btn-logout-sidebar"
+          style={{ background: 'rgba(212, 168, 67, 0.12)', color: 'var(--accent-gold, #D4A843)', borderColor: 'rgba(212, 168, 67, 0.35)' }}
+        >
+          {darkMode ? <Sun size={14} /> : <Moon size={14} />} {darkMode ? (isEn ? 'Light Theme' : 'Tema Claro') : (isEn ? 'Dark Theme' : 'Tema Oscuro')}
         </button>
 
         <button 

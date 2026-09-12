@@ -26,6 +26,7 @@ import { renderRadarCompareSvgString } from '../components/canonical/RadarCompar
 import { renderShotMapSvgString } from '../components/canonical/ShotMapSVG';
 import { renderSectorTacticsSvgString } from '../components/canonical/SectorTacticsSVG';
 import { calculateCanonicalStats } from '../components/canonical/calculateCanonicalStats';
+import { getMatchAnalytics } from './matchAnalytics';
 
 export { imageUrlToBase64 };
 
@@ -713,14 +714,11 @@ export const generateMatchPdfReport = async ({
         return y + yOffset + 12;
       };
 
+      const analytics = getMatchAnalytics(matchData, safeEvents, { isEn });
       const derivedIndices = calculateMatchDerivedIndices(safeEvents);
       const swotResult = evaluateSwotRules(matchData, safeEvents, calledPlayers);
-      const { homeStats, awayStats, tacticsData } = calculateCanonicalStats(matchData, safeEvents);
-      const shotEvents = safeEvents.filter((e) => {
-        if (!e) return false;
-        const t = String(e.type || '').toLowerCase();
-        return t.includes('shot') || t.startsWith('gol_') || t === 'goal';
-      });
+      const { homeStats, awayStats, tacticsData } = analytics;
+      const shotEvents = analytics.shots.all;
 
       // ── PÁGINA 1: SECCIÓN 1 — MARCADOR & CRONOLOGÍA DE EVENTOS ────────────
       y = drawSectionHeader('sec1_timeline');
@@ -955,9 +953,11 @@ export const generateMatchPdfReport = async ({
       y = drawSectionHeader('sec6_shots');
       try {
         const shotSvg = renderShotMapSvgString({
-          shots: shotEvents,
-          ownXg: derivedIndices.ownXg,
-          rivalXg: derivedIndices.rivalXg,
+          shots: analytics.shots.all,
+          ownXg: analytics.shots.ownTotalXg,
+          rivalXg: analytics.shots.rivalTotalXg,
+          homeTeamName: safeTeamName,
+          awayTeamName: rivalName,
           isEn,
           width: 660,
           height: 195
@@ -976,16 +976,16 @@ export const generateMatchPdfReport = async ({
       // Tabla cuantitativa de tiros xG-lite
       const shotComparisonData = isEn ? [
         ['Shot Metric', safeTeamName, rivalName],
-        ['Cumulative xG-Lite', `${derivedIndices.ownXg} xG`, `${derivedIndices.rivalXg} xG`],
-        ['Total Shot Attempts', `${derivedIndices.ownShotsCount}`, `${derivedIndices.rivalShotsCount}`],
-        ['Comfortable Shots (% Comfortable)', `${shotEvents.filter(e => (!String(e.type).includes('rival')) && e.shooterComfort === 'comodo').length}`, `${derivedIndices.rivalComfortableShots} (${derivedIndices.rivalComfortPct}%)`],
-        ['Penalty Box Central Shots', `${shotEvents.filter(e => (!String(e.type).includes('rival')) && (e.zone === 'dentro_centro' || (e.x >= 80 && e.y >= 30 && e.y <= 70))).length}`, `${derivedIndices.defensiveExposureMap?.dentro_centro?.total ?? 0}`]
+        ['Cumulative xG-Lite', `${analytics.shots.ownTotalXg} xG`, `${analytics.shots.rivalTotalXg} xG`],
+        ['Total Shot Attempts', `${analytics.shots.ownShots.length}`, `${analytics.shots.rivalShots.length}`],
+        ['Comfortable Shots (% Comfortable)', `${analytics.shots.ownShots.filter(e => e.shooterComfort === 'comodo').length}`, `${derivedIndices.rivalComfortableShots} (${derivedIndices.rivalComfortPct}%)`],
+        ['Penalty Box Central Shots', `${analytics.shots.bySector.center.count}`, `${derivedIndices.defensiveExposureMap?.dentro_centro?.total ?? 0}`]
       ] : [
         ['Métrica de Remate', safeTeamName, rivalName],
-        ['xG-Lite Acumulado', `${derivedIndices.ownXg} xG`, `${derivedIndices.rivalXg} xG`],
-        ['Remates Totales', `${derivedIndices.ownShotsCount}`, `${derivedIndices.rivalShotsCount}`],
-        ['Tiros Cómodos (% Comodidad)', `${shotEvents.filter(e => (!String(e.type).includes('rival')) && e.shooterComfort === 'comodo').length}`, `${derivedIndices.rivalComfortableShots} (${derivedIndices.rivalComfortPct}%)`],
-        ['Tiros en Área Central', `${shotEvents.filter(e => (!String(e.type).includes('rival')) && (e.zone === 'dentro_centro' || (e.x >= 80 && e.y >= 30 && e.y <= 70))).length}`, `${derivedIndices.defensiveExposureMap?.dentro_centro?.total ?? 0}`]
+        ['xG-Lite Acumulado', `${analytics.shots.ownTotalXg} xG`, `${analytics.shots.rivalTotalXg} xG`],
+        ['Remates Totales', `${analytics.shots.ownShots.length}`, `${analytics.shots.rivalShots.length}`],
+        ['Tiros Cómodos (% Comodidad)', `${analytics.shots.ownShots.filter(e => e.shooterComfort === 'comodo').length}`, `${derivedIndices.rivalComfortableShots} (${derivedIndices.rivalComfortPct}%)`],
+        ['Tiros en Área Central', `${analytics.shots.bySector.center.count}`, `${derivedIndices.defensiveExposureMap?.dentro_centro?.total ?? 0}`]
       ];
 
       autoTable(doc, {

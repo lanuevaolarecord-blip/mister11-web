@@ -1,17 +1,19 @@
 /**
- * src/components/canonical/ShotMapSVG.jsx
+ * src/components/canonical/ShotMapSVG.js
  * Míster11 — Renderizador Canónico de Mapa de Tiros y xG (App + PDF)
  *
- * Características de élite:
- *  - Campo de fútbol COMPLETO con proporción táctica real (105m x 68m).
- *  - Franjas de césped de estadio, líneas reglamentarias y pasillos tácticos (3 bandas).
- *  - Puntos de tiro coloreados por comodidad (verde = cómodo, ámbar/rojo = presionado),
- *    diferenciando remates propios y del rival.
- *  - Cabecera con resumen xG-Lite de ambos equipos.
- *  - Exporta componente React y generador puro de cadena SVG para rasterizado 3x en PDF.
+ * Paleta Oficial Tierra y Campo:
+ *  - Fondo institucional: #1B3A2D
+ *  - Césped Táctico: #152C22
+ *  - Tiros Propios a Puerta: #4CAF7D
+ *  - Goles: #D4A843
+ *  - Tiros Fuera / Bloqueados: #A3B5AD / #64748B
+ *  - Tiros Rivales: #EF4444
+ *  - Tipografía: #F2EDE4
  */
 
 import React from 'react';
+import { CHART_THEME } from '../../config/chartTheme.js';
 
 export function renderShotMapSvgString({
   shots = [],
@@ -20,9 +22,11 @@ export function renderShotMapSvgString({
   homeTeamName = 'Mi Equipo',
   awayTeamName = 'Rival',
   isEn = false,
+  isDark = true,
   width = 660,
   height = 240
 }) {
+  const theme = isDark ? CHART_THEME.dark : CHART_THEME.light;
   const safeShots = Array.isArray(shots) ? shots.filter(Boolean) : [];
   const safeOwnXg = Number(ownXg || 0).toFixed(2);
   const safeRivalXg = Number(rivalXg || 0).toFixed(2);
@@ -31,14 +35,14 @@ export function renderShotMapSvgString({
 
   // Dimensiones del campo dentro del SVG
   const padX = 14;
-  const padY = 32;
+  const padY = 36;
   const pW = width - padX * 2;
-  const pH = height - padY - 14;
+  const pH = height - padY - 24;
 
   // Franjas de césped (10 franjas alternadas)
   const stripeWidth = pW / 10;
   const stripes = Array.from({ length: 10 }).map((_, i) => {
-    const fill = i % 2 === 0 ? '#1B4D24' : '#17421E';
+    const fill = i % 2 === 0 ? 'rgba(0, 0, 0, 0.08)' : 'rgba(255, 255, 255, 0.02)';
     return `<rect x="${padX + i * stripeWidth}" y="${padY}" width="${stripeWidth}" height="${pH}" fill="${fill}" />`;
   }).join('');
 
@@ -56,42 +60,33 @@ export function renderShotMapSvgString({
     let sx = typeof s.x === 'number' ? s.x : (isRival ? 25 : 75);
     let sy = typeof s.y === 'number' ? s.y : 50;
 
-    // Normalizar sector si no hay coordenadas x,y precisas
-    if (s.x === undefined && s.sector) {
-      const sec = String(s.sector).toLowerCase();
-      if (sec.includes('izq') || sec === 'left') sy = 22;
-      else if (sec.includes('der') || sec === 'right') sy = 78;
-      else sy = 50;
-      sx = isRival ? 22 : 78;
-    }
-
     const posX = padX + (Math.max(4, Math.min(96, sx)) / 100) * pW;
     const posY = padY + (Math.max(4, Math.min(96, sy)) / 100) * pH;
 
     // Colores según resultado y comodidad
     const comfort = s.shooterComfort || 'normal';
-    let dotFill = '#3B82F6'; // On target propio
+    let dotFill = theme.teamHome; // On target propio
     let dotStroke = '#FFFFFF';
-    let radius = isGoal ? 6.5 : 4.5;
+    let radius = isGoal ? 6 : 4;
 
     if (isRival) {
-      dotFill = isGoal ? '#EF4444' : '#F97316';
+      dotFill = isGoal ? theme.teamAway : '#F97316';
       dotStroke = '#7F1D1D';
     } else {
       if (isGoal) {
-        dotFill = '#10B981';
-        dotStroke = '#064E3B';
+        dotFill = theme.gold;
+        dotStroke = '#FFFFFF';
       } else if (!isOnTarget) {
-        dotFill = '#94A3B8';
-        dotStroke = '#334155';
+        dotFill = theme.textMuted;
+        dotStroke = 'rgba(255,255,255,0.4)';
       }
     }
 
     const comfortRing = comfort === 'comodo'
-      ? `<circle cx="${posX.toFixed(1)}" cy="${posY.toFixed(1)}" r="${(radius + 2.5).toFixed(1)}" fill="none" stroke="#FACC15" stroke-width="1.2" stroke-dasharray="2 1" />`
+      ? `<circle cx="${posX.toFixed(1)}" cy="${posY.toFixed(1)}" r="${(radius + 2.5).toFixed(1)}" fill="none" stroke="${theme.gold}" stroke-width="1.2" stroke-dasharray="2 1" />`
       : '';
 
-    const labelText = s.xG !== undefined ? Number(s.xG).toFixed(2) : (isGoal ? 'GOL' : '');
+    const labelText = isGoal ? '⚽' : (s.xG !== undefined ? Number(s.xG).toFixed(2) : '');
     const labelSvg = labelText ? `
       <text x="${posX.toFixed(1)}" y="${(posY - radius - 2).toFixed(1)}" text-anchor="middle" fill="#FFFFFF" font-size="7" font-weight="800" font-family="Arial, sans-serif" stroke="#000000" stroke-width="0.3" style="paint-order: stroke fill;">${labelText}</text>
     ` : '';
@@ -99,7 +94,7 @@ export function renderShotMapSvgString({
     return `
       <g key="shot-${idx}">
         ${comfortRing}
-        <circle cx="${posX.toFixed(1)}" cy="${posY.toFixed(1)}" r="${radius}" fill="${dotFill}" stroke="${dotStroke}" stroke-width="1.5" />
+        <circle cx="${posX.toFixed(1)}" cy="${posY.toFixed(1)}" r="${radius}" fill="${dotFill}" stroke="${dotStroke}" stroke-width="1.2" />
         ${labelSvg}
       </g>
     `;
@@ -107,84 +102,72 @@ export function renderShotMapSvgString({
 
   return `
 <svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">
-  <!-- Fondo Contenedor -->
-  <rect x="0" y="0" width="${width}" height="${height}" fill="#0F172A" rx="8" />
+  <!-- Fondo Contenedor Institucional Tierra y Campo -->
+  <rect x="0" y="0" width="${width}" height="${height}" fill="${theme.bgCard}" rx="10" stroke="${theme.border}" stroke-width="1" />
 
   <!-- Cabecera Superior -->
-  <text x="14" y="19" fill="#F8FAFC" font-size="11" font-weight="800" font-family="Arial, sans-serif">
+  <text x="14" y="20" fill="${theme.gold}" font-size="11.5" font-weight="800" font-family="Arial, sans-serif">
     ${isEn ? '🎯 SHOT MAPS & xG-LITE MODEL' : '🎯 MAPA DE TIROS & MODELO xG-LITE'}
   </text>
   
-  <!-- Badges de xG -->
-  <rect x="${width - 230}" y="7" width="105" height="18" fill="rgba(16, 185, 129, 0.2)" stroke="#10B981" stroke-width="0.8" rx="4" />
-  <text x="${width - 178}" y="19" text-anchor="middle" fill="#34D399" font-size="8.5" font-weight="800" font-family="Arial, sans-serif">
-    ${safeHome} xG: ${safeOwnXg}
+  <!-- Badges de xG sin colisión -->
+  <rect x="${width - 230}" y="8" width="105" height="18" fill="rgba(76, 175, 125, 0.2)" stroke="${theme.teamHome}" stroke-width="0.8" rx="4" />
+  <text x="${width - 178}" y="20" text-anchor="middle" fill="${theme.teamHome}" font-size="8.5" font-weight="800" font-family="Arial, sans-serif">
+    ${safeHome.slice(0, 10)} xG: ${safeOwnXg}
   </text>
 
-  <rect x="${width - 118}" y="7" width="105" height="18" fill="rgba(239, 68, 68, 0.2)" stroke="#EF4444" stroke-width="0.8" rx="4" />
-  <text x="${width - 66}" y="19" text-anchor="middle" fill="#F87171" font-size="8.5" font-weight="800" font-family="Arial, sans-serif">
-    ${safeAway} xG: ${safeRivalXg}
+  <rect x="${width - 118}" y="8" width="105" height="18" fill="rgba(239, 68, 68, 0.2)" stroke="${theme.teamAway}" stroke-width="0.8" rx="4" />
+  <text x="${width - 66}" y="20" text-anchor="middle" fill="${theme.teamAway}" font-size="8.5" font-weight="800" font-family="Arial, sans-serif">
+    ${safeAway.slice(0, 10)} xG: ${safeRivalXg}
   </text>
 
   <!-- Terreno de Juego Completo (105m x 68m) -->
   <g id="pitch-field">
     <!-- Césped con franjas -->
-    <rect x="${padX}" y="${padY}" width="${pW}" height="${pH}" fill="#1B4D24" rx="4" />
+    <rect x="${padX}" y="${padY}" width="${pW}" height="${pH}" fill="${theme.bgPitch}" rx="4" />
     ${stripes}
 
     <!-- Pasillos Tácticos Sutiles -->
     <line x1="${corridor1.toFixed(1)}" y1="${padY}" x2="${corridor1.toFixed(1)}" y2="${padY + pH}" stroke="rgba(255,255,255,0.12)" stroke-width="1" stroke-dasharray="3 3" />
     <line x1="${corridor2.toFixed(1)}" y1="${padY}" x2="${corridor2.toFixed(1)}" y2="${padY + pH}" stroke="rgba(255,255,255,0.12)" stroke-width="1" stroke-dasharray="3 3" />
     
-    <text x="${(padX + corridor1 / 2).toFixed(1)}" y="${padY + 10}" fill="rgba(255,255,255,0.3)" font-size="6.5" font-weight="700" font-family="Arial, sans-serif" text-anchor="middle">${isEn ? 'LEFT' : 'IZQ'}</text>
+    <text x="${(padX + (corridor1 - padX) / 2).toFixed(1)}" y="${padY + 10}" fill="rgba(255,255,255,0.3)" font-size="6.5" font-weight="700" font-family="Arial, sans-serif" text-anchor="middle">${isEn ? 'LEFT' : 'IZQ'}</text>
     <text x="${((corridor1 + corridor2) / 2).toFixed(1)}" y="${padY + 10}" fill="rgba(255,255,255,0.3)" font-size="6.5" font-weight="700" font-family="Arial, sans-serif" text-anchor="middle">${isEn ? 'CENTER' : 'CENTRO'}</text>
-    <text x="${((corridor2 + padX + pW) / 2).toFixed(1)}" y="${padY + 10}" fill="rgba(255,255,255,0.3)" font-size="6.5" font-weight="700" font-family="Arial, sans-serif" text-anchor="middle">${isEn ? 'RIGHT' : 'DER'}</text>
+    <text x="${(corridor2 + (width - padX - corridor2) / 2).toFixed(1)}" y="${padY + 10}" fill="rgba(255,255,255,0.3)" font-size="6.5" font-weight="700" font-family="Arial, sans-serif" text-anchor="middle">${isEn ? 'RIGHT' : 'DER'}</text>
 
-    <!-- Líneas Perimetrales de Juego -->
-    <rect x="${padX}" y="${padY}" width="${pW}" height="${pH}" fill="none" stroke="rgba(255,255,255,0.7)" stroke-width="1.2" />
+    <!-- Líneas reglamentarias -->
+    <rect x="${padX}" y="${padY}" width="${pW}" height="${pH}" fill="none" stroke="${theme.pitchLines}" stroke-width="1" />
+    <line x1="${(padX + pW / 2).toFixed(1)}" y1="${padY}" x2="${(padX + pW / 2).toFixed(1)}" y2="${padY + pH}" stroke="${theme.pitchLines}" stroke-width="1" />
+    <circle cx="${(padX + pW / 2).toFixed(1)}" cy="${(padY + pH / 2).toFixed(1)}" r="${(pH * 0.22).toFixed(1)}" fill="none" stroke="${theme.pitchLines}" stroke-width="1" />
+    <circle cx="${(padX + pW / 2).toFixed(1)}" cy="${(padY + pH / 2).toFixed(1)}" r="1.5" fill="${theme.pitchLines}" />
 
-    <!-- Línea de Medio Campo y Círculo Central -->
-    <line x1="${(padX + pW / 2).toFixed(1)}" y1="${padY}" x2="${(padX + pW / 2).toFixed(1)}" y2="${padY + pH}" stroke="rgba(255,255,255,0.7)" stroke-width="1.2" />
-    <circle cx="${(padX + pW / 2).toFixed(1)}" cy="${(padY + pH / 2).toFixed(1)}" r="${(pH * 0.18).toFixed(1)}" fill="none" stroke="rgba(255,255,255,0.7)" stroke-width="1.2" />
-    <circle cx="${(padX + pW / 2).toFixed(1)}" cy="${(padY + pH / 2).toFixed(1)}" r="1.8" fill="rgba(255,255,255,0.9)" />
-
-    <!-- Área de Penalti Izquierda (Rival Defendiendo o Local según dirección) -->
-    <rect x="${padX}" y="${(padY + pH * 0.22).toFixed(1)}" width="${(pW * 0.16).toFixed(1)}" height="${(pH * 0.56).toFixed(1)}" fill="none" stroke="rgba(255,255,255,0.7)" stroke-width="1.2" />
-    <rect x="${padX}" y="${(padY + pH * 0.35).toFixed(1)}" width="${(pW * 0.06).toFixed(1)}" height="${(pH * 0.30).toFixed(1)}" fill="none" stroke="rgba(255,255,255,0.7)" stroke-width="1.2" />
-    <circle cx="${(padX + pW * 0.11).toFixed(1)}" cy="${(padY + pH / 2).toFixed(1)}" r="1.5" fill="rgba(255,255,255,0.9)" />
-
-    <!-- Área de Penalti Derecha (Objetivo Ataque Propio) -->
-    <rect x="${(padX + pW - pW * 0.16).toFixed(1)}" y="${(padY + pH * 0.22).toFixed(1)}" width="${(pW * 0.16).toFixed(1)}" height="${(pH * 0.56).toFixed(1)}" fill="none" stroke="rgba(255,255,255,0.7)" stroke-width="1.2" />
-    <rect x="${(padX + pW - pW * 0.06).toFixed(1)}" y="${(padY + pH * 0.35).toFixed(1)}" width="${(pW * 0.06).toFixed(1)}" height="${(pH * 0.30).toFixed(1)}" fill="none" stroke="rgba(255,255,255,0.7)" stroke-width="1.2" />
-    <circle cx="${(padX + pW - pW * 0.11).toFixed(1)}" cy="${(padY + pH / 2).toFixed(1)}" r="1.5" fill="rgba(255,255,255,0.9)" />
+    <!-- Áreas Grandes -->
+    <rect x="${padX}" y="${(padY + pH * 0.2).toFixed(1)}" width="${(pW * 0.16).toFixed(1)}" height="${(pH * 0.6).toFixed(1)}" fill="none" stroke="${theme.pitchLines}" stroke-width="1" />
+    <rect x="${(padX + pW * 0.84).toFixed(1)}" y="${(padY + pH * 0.2).toFixed(1)}" width="${(pW * 0.16).toFixed(1)}" height="${(pH * 0.6).toFixed(1)}" fill="none" stroke="${theme.pitchLines}" stroke-width="1" />
 
     <!-- Porterías -->
-    <rect x="${(padX - 3.5).toFixed(1)}" y="${(padY + pH * 0.42).toFixed(1)}" width="3.5" height="${(pH * 0.16).toFixed(1)}" fill="none" stroke="#D4A843" stroke-width="1" />
-    <rect x="${(padX + pW).toFixed(1)}" y="${(padY + pH * 0.42).toFixed(1)}" width="3.5" height="${(pH * 0.16).toFixed(1)}" fill="none" stroke="#D4A843" stroke-width="1" />
+    <rect x="${padX - 4}" y="${(padY + pH * 0.38).toFixed(1)}" width="4" height="${(pH * 0.24).toFixed(1)}" fill="rgba(212,168,67,0.3)" stroke="${theme.gold}" stroke-width="1" />
+    <rect x="${padX + pW}" y="${(padY + pH * 0.38).toFixed(1)}" width="4" height="${(pH * 0.24).toFixed(1)}" fill="rgba(212,168,67,0.3)" stroke="${theme.gold}" stroke-width="1" />
   </g>
 
-  <!-- Puntos de Remates Graficados -->
-  <g id="shots-layer">
+  <!-- Puntos de Remates -->
+  <g id="shot-markers">
     ${shotMarkers}
   </g>
 
   <!-- Leyenda Inferior -->
-  <g id="legend" transform="translate(${padX}, ${height - 6})">
-    <circle cx="5" cy="-2" r="3.5" fill="#10B981" />
-    <text x="12" y="1" fill="#94A3B8" font-size="7" font-family="Arial, sans-serif">${isEn ? 'Goal (Own)' : 'Gol Propio'}</text>
+  <g transform="translate(${padX}, ${height - 10})">
+    <circle cx="5" cy="-2" r="3.5" fill="${theme.gold}" />
+    <text x="12" y="1" fill="${theme.textSecondary}" font-size="7.5" font-family="Arial, sans-serif">${isEn ? 'Goal' : 'Gol'}</text>
 
-    <circle cx="75" cy="-2" r="3.5" fill="#3B82F6" />
-    <text x="82" y="1" fill="#94A3B8" font-size="7" font-family="Arial, sans-serif">${isEn ? 'On Target' : 'A Puerta'}</text>
+    <circle cx="75" cy="-2" r="3.5" fill="${theme.teamHome}" />
+    <text x="82" y="1" fill="${theme.textSecondary}" font-size="7.5" font-family="Arial, sans-serif">${isEn ? 'On Target' : 'A puerta'}</text>
 
-    <circle cx="145" cy="-2" r="3.5" fill="#94A3B8" />
-    <text x="152" y="1" fill="#94A3B8" font-size="7" font-family="Arial, sans-serif">${isEn ? 'Off Target' : 'Tiro Fuera'}</text>
+    <circle cx="150" cy="-2" r="3" fill="${theme.textMuted}" />
+    <text x="156" y="1" fill="${theme.textSecondary}" font-size="7.5" font-family="Arial, sans-serif">${isEn ? 'Off Target / Blocked' : 'Fuera / Bloqueado'}</text>
 
-    <circle cx="215" cy="-2" r="3.5" fill="#EF4444" />
-    <text x="222" y="1" fill="#94A3B8" font-size="7" font-family="Arial, sans-serif">${isEn ? 'Rival Shot' : 'Tiro Rival'}</text>
-
-    <circle cx="285" cy="-2" r="4.5" fill="none" stroke="#FACC15" stroke-width="1" stroke-dasharray="2 1" />
-    <circle cx="285" cy="-2" r="2.5" fill="#3B82F6" />
-    <text x="294" y="1" fill="#94A3B8" font-size="7" font-family="Arial, sans-serif">${isEn ? 'Comfortable Chance' : 'Tiro Cómodo'}</text>
+    <circle cx="240" cy="-2" r="3.5" fill="${theme.teamAway}" />
+    <text x="248" y="1" fill="${theme.textSecondary}" font-size="7.5" font-family="Arial, sans-serif">${isEn ? 'Opponent Shot' : 'Tiro Rival'}</text>
   </g>
 </svg>
   `.trim();

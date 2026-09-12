@@ -1,16 +1,18 @@
 /**
- * src/components/canonical/SectorTacticsSVG.jsx
+ * src/components/canonical/SectorTacticsSVG.js
  * Míster11 — Renderizador Canónico de Campo y Táctica (Sectores, ABP, Bloques)
  *
- * Muestra:
- * 1. Mini-campo o representación visual de los 3 pasillos tácticos (Banda Izq, Centro, Banda Der) con porcentajes de ataque.
- * 2. Bloque ABP (Córners, Faltas y Penaltis comparados Local vs Rival).
- * 3. Balance de Presencia Territorial / Bloque Ofensivo vs Defensivo.
- *
- * Exporta renderSectorTacticsSvgString y el componente React SectorTacticsSVG.
+ * Paleta Oficial Tierra y Campo:
+ *  - Fondo institucional: #1B3A2D
+ *  - Césped Táctico: #152C22
+ *  - Serie Propia / Canales: #4CAF7D
+ *  - Serie Rival: #EF4444
+ *  - Títulos y Acentos: #D4A843
+ *  - Tipografía: #F2EDE4
  */
 
 import React from 'react';
+import { CHART_THEME } from '../../config/chartTheme.js';
 
 export function renderSectorTacticsSvgString({
   homeStats = {},
@@ -19,9 +21,11 @@ export function renderSectorTacticsSvgString({
   homeTeamName = 'Mi Equipo',
   awayTeamName = 'Rival',
   isEn = false,
+  isDark = true,
   width = 660,
   height = 240
 }) {
+  const theme = isDark ? CHART_THEME.dark : CHART_THEME.light;
   const safeHome = String(homeTeamName || (isEn ? 'Home' : 'Local')).trim();
   const safeAway = String(awayTeamName || (isEn ? 'Away' : 'Rival')).trim();
 
@@ -44,105 +48,109 @@ export function renderSectorTacticsSvgString({
   const defHome = 100 - safeOffHome;
 
   return `
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${width} ${height}" width="${width}" height="${height}" style="background:#0c121e; border-radius:10px; font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
-      <!-- Título de cabecera -->
-      <text x="20" y="24" fill="#ffffff" font-size="13" font-weight="700" letter-spacing="0.5">${isEn ? 'FIELD & TACTICAL ANALYSIS' : 'CAMPO Y TÁCTICA: SECTORES Y ABP'}</text>
-      <text x="${width - 20}" y="24" text-anchor="end" fill="#94a3b8" font-size="11">${safeHome} vs ${safeAway}</text>
-      <line x1="20" y1="34" x2="${width - 20}" y2="34" stroke="#1e293b" stroke-width="1" />
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${width} ${height}" width="${width}" height="${height}" style="background:${theme.bgCard}; border-radius:10px; font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+      <!-- Fondo Institucional -->
+      <rect x="0" y="0" width="${width}" height="${height}" fill="${theme.bgCard}" rx="10" stroke="${theme.border}" stroke-width="1" />
+
+      <!-- Fila 1: Título de cabecera -->
+      <text x="20" y="24" fill="${theme.gold}" font-size="12" font-weight="800" letter-spacing="0.5">${isEn ? 'FIELD & TACTICAL ANALYSIS' : 'CAMPO Y TÁCTICA: SECTORES Y ABP'}</text>
+      <text x="${width - 20}" y="24" text-anchor="end" fill="${theme.textSecondary}" font-size="10" font-weight="700">${safeHome} vs ${safeAway}</text>
+      <line x1="20" y1="34" x2="${width - 20}" y2="34" stroke="rgba(242,237,228,0.12)" stroke-width="1" />
 
       <!-- COLUMNA 1: DISTRIBUCIÓN POR PASILLOS (Ataque) -->
       <g transform="translate(20, 48)">
-        <text x="0" y="14" fill="#38bdf8" font-size="11" font-weight="700">${isEn ? 'ATTACK CHANNELS' : 'PASILLOS DE ATAQUE'}</text>
+        <text x="0" y="14" fill="${theme.teamHome}" font-size="11" font-weight="700">${isEn ? 'ATTACK CHANNELS' : 'PASILLOS DE ATAQUE'}</text>
         
         <!-- Mini campo esquemático 180x140 -->
-        <rect x="0" y="24" width="180" height="140" rx="6" fill="#142235" stroke="#334155" stroke-width="1.5" />
-        <line x1="60" y1="24" x2="60" y2="164" stroke="#1e293b" stroke-dasharray="3,3" stroke-width="1" />
-        <line x1="120" y1="24" x2="120" y2="164" stroke="#1e293b" stroke-dasharray="3,3" stroke-width="1" />
-        <circle cx="90" cy="94" r="24" fill="none" stroke="#1e293b" stroke-width="1" />
-        <line x1="0" y1="94" x2="180" y2="94" stroke="#1e293b" stroke-width="1" />
+        <rect x="0" y="24" width="180" height="140" rx="6" fill="${theme.bgPitch}" stroke="rgba(76,175,125,0.25)" stroke-width="1.5" />
+        <line x1="60" y1="24" x2="60" y2="164" stroke="rgba(255,255,255,0.15)" stroke-dasharray="3,3" stroke-width="1" />
+        <line x1="120" y1="24" x2="120" y2="164" stroke="rgba(255,255,255,0.15)" stroke-dasharray="3,3" stroke-width="1" />
+        <circle cx="90" cy="94" r="24" fill="none" stroke="rgba(255,255,255,0.15)" stroke-width="1" />
+        <line x1="0" y1="94" x2="180" y2="94" stroke="rgba(255,255,255,0.15)" stroke-width="1" />
 
         <!-- Overlay de calor por pasillo -->
-        <rect x="2" y="26" width="56" height="136" rx="4" fill="#38bdf8" fill-opacity="${(leftPct / 100) * 0.45}" />
-        <rect x="62" y="26" width="56" height="136" rx="4" fill="#38bdf8" fill-opacity="${(centerPct / 100) * 0.45}" />
-        <rect x="122" y="26" width="56" height="136" rx="4" fill="#38bdf8" fill-opacity="${(rightPct / 100) * 0.45}" />
+        <rect x="2" y="26" width="56" height="136" rx="4" fill="${theme.teamHome}" fill-opacity="${(leftPct / 100) * 0.45}" />
+        <rect x="62" y="26" width="56" height="136" rx="4" fill="${theme.teamHome}" fill-opacity="${(centerPct / 100) * 0.45}" />
+        <rect x="122" y="26" width="56" height="136" rx="4" fill="${theme.teamHome}" fill-opacity="${(rightPct / 100) * 0.45}" />
 
         <!-- Textos pasillos -->
-        <text x="30" y="85" text-anchor="middle" fill="#ffffff" font-size="12" font-weight="700">${leftPct}%</text>
-        <text x="30" y="102" text-anchor="middle" fill="#94a3b8" font-size="9">${isEn ? 'Left' : 'Izq'}</text>
+        <text x="30" y="85" text-anchor="middle" fill="${theme.textPrimary}" font-size="12" font-weight="700">${leftPct}%</text>
+        <text x="30" y="102" text-anchor="middle" fill="${theme.textMuted}" font-size="9">${isEn ? 'Left' : 'Izq'}</text>
 
-        <text x="90" y="85" text-anchor="middle" fill="#ffffff" font-size="13" font-weight="800">${centerPct}%</text>
-        <text x="90" y="102" text-anchor="middle" fill="#38bdf8" font-size="9" font-weight="700">${isEn ? 'Center' : 'Centro'}</text>
+        <text x="90" y="85" text-anchor="middle" fill="${theme.textPrimary}" font-size="13" font-weight="800">${centerPct}%</text>
+        <text x="90" y="102" text-anchor="middle" fill="${theme.gold}" font-size="9.5" font-weight="800">${isEn ? 'Center' : 'Centro'}</text>
 
-        <text x="150" y="85" text-anchor="middle" fill="#ffffff" font-size="12" font-weight="700">${rightPct}%</text>
-        <text x="150" y="102" text-anchor="middle" fill="#94a3b8" font-size="9">${isEn ? 'Right' : 'Der'}</text>
+        <text x="150" y="85" text-anchor="middle" fill="${theme.textPrimary}" font-size="12" font-weight="700">${rightPct}%</text>
+        <text x="150" y="102" text-anchor="middle" fill="${theme.textMuted}" font-size="9">${isEn ? 'Right' : 'Der'}</text>
       </g>
 
       <!-- COLUMNA 2: ACCIONES A BALÓN PARADO (ABP) -->
       <g transform="translate(230, 48)">
-        <text x="0" y="14" fill="#f59e0b" font-size="11" font-weight="700">${isEn ? 'SET PIECES BALANCE (ABP)' : 'BALANCE A BALÓN PARADO (ABP)'}</text>
+        <text x="0" y="14" fill="${theme.gold}" font-size="11" font-weight="700">${isEn ? 'SET PIECES BALANCE (ABP)' : 'BALANCE A BALÓN PARADO (ABP)'}</text>
 
         <!-- Filas ABP -->
         <!-- Corners -->
         <g transform="translate(0, 32)">
-          <text x="0" y="12" fill="#cbd5e1" font-size="11">${isEn ? 'Corners' : 'Córners'}</text>
-          <text x="110" y="12" fill="#38bdf8" font-size="11" font-weight="700">${cornersHome}</text>
-          <text x="130" y="12" fill="#64748b" font-size="10">vs</text>
-          <text x="155" y="12" fill="#f43f5e" font-size="11" font-weight="700">${cornersAway}</text>
-          <rect x="0" y="18" width="180" height="6" rx="3" fill="#1e293b" />
-          <rect x="0" y="18" width="${cornersHome + cornersAway > 0 ? (cornersHome / (cornersHome + cornersAway)) * 180 : 90}" height="6" rx="3" fill="#38bdf8" />
+          <text x="0" y="12" fill="${theme.textPrimary}" font-size="10.5">${isEn ? 'Corners' : 'Córners'}</text>
+          <text x="110" y="12" fill="${theme.teamHome}" font-size="11" font-weight="800">${cornersHome}</text>
+          <text x="130" y="12" fill="${theme.textMuted}" font-size="10">vs</text>
+          <text x="155" y="12" fill="${theme.teamAway}" font-size="11" font-weight="800">${cornersAway}</text>
+          <rect x="0" y="18" width="180" height="6" rx="3" fill="rgba(242,237,228,0.1)" />
+          <rect x="0" y="18" width="${cornersHome + cornersAway > 0 ? (cornersHome / (cornersHome + cornersAway)) * 180 : 90}" height="6" rx="3" fill="${theme.teamHome}" />
         </g>
 
         <!-- Faltas -->
         <g transform="translate(0, 72)">
-          <text x="0" y="12" fill="#cbd5e1" font-size="11">${isEn ? 'Fouls' : 'Faltas'}</text>
-          <text x="110" y="12" fill="#38bdf8" font-size="11" font-weight="700">${faltasHome}</text>
-          <text x="130" y="12" fill="#64748b" font-size="10">vs</text>
-          <text x="155" y="12" fill="#f43f5e" font-size="11" font-weight="700">${faltasAway}</text>
-          <rect x="0" y="18" width="180" height="6" rx="3" fill="#1e293b" />
-          <rect x="0" y="18" width="${faltasHome + faltasAway > 0 ? (faltasHome / (faltasHome + faltasAway)) * 180 : 90}" height="6" rx="3" fill="#38bdf8" />
+          <text x="0" y="12" fill="${theme.textPrimary}" font-size="10.5">${isEn ? 'Fouls' : 'Faltas'}</text>
+          <text x="110" y="12" fill="${theme.teamHome}" font-size="11" font-weight="800">${faltasHome}</text>
+          <text x="130" y="12" fill="${theme.textMuted}" font-size="10">vs</text>
+          <text x="155" y="12" fill="${theme.teamAway}" font-size="11" font-weight="800">${faltasAway}</text>
+          <rect x="0" y="18" width="180" height="6" rx="3" fill="rgba(242,237,228,0.1)" />
+          <rect x="0" y="18" width="${faltasHome + faltasAway > 0 ? (faltasHome / (faltasHome + faltasAway)) * 180 : 90}" height="6" rx="3" fill="${theme.teamHome}" />
         </g>
 
         <!-- Penaltis -->
         <g transform="translate(0, 112)">
-          <text x="0" y="12" fill="#cbd5e1" font-size="11">${isEn ? 'Penalties' : 'Penaltis'}</text>
-          <text x="110" y="12" fill="#38bdf8" font-size="11" font-weight="700">${penaltisHome}</text>
-          <text x="130" y="12" fill="#64748b" font-size="10">vs</text>
-          <text x="155" y="12" fill="#f43f5e" font-size="11" font-weight="700">${penaltisAway}</text>
-          <rect x="0" y="18" width="180" height="6" rx="3" fill="#1e293b" />
-          <rect x="0" y="18" width="${penaltisHome + penaltisAway > 0 ? (penaltisHome / (penaltisHome + penaltisAway)) * 180 : 90}" height="6" rx="3" fill="#f59e0b" />
+          <text x="0" y="12" fill="${theme.textPrimary}" font-size="10.5">${isEn ? 'Penalties' : 'Penaltis'}</text>
+          <text x="110" y="12" fill="${theme.teamHome}" font-size="11" font-weight="800">${penaltisHome}</text>
+          <text x="130" y="12" fill="${theme.textMuted}" font-size="10">vs</text>
+          <text x="155" y="12" fill="${theme.teamAway}" font-size="11" font-weight="800">${penaltisAway}</text>
+          <rect x="0" y="18" width="180" height="6" rx="3" fill="rgba(242,237,228,0.1)" />
+          <rect x="0" y="18" width="${penaltisHome + penaltisAway > 0 ? (penaltisHome / (penaltisHome + penaltisAway)) * 180 : 90}" height="6" rx="3" fill="${theme.gold}" />
         </g>
       </g>
 
       <!-- COLUMNA 3: TERRITORIO / BLOQUE OFENSIVO VS DEFENSIVO -->
       <g transform="translate(440, 48)">
-        <text x="0" y="14" fill="#22c55e" font-size="11" font-weight="700">${isEn ? 'TERRITORIAL BLOCK' : 'BLOQUE Y TERRITORIO'}</text>
+        <text x="0" y="14" fill="${theme.teamHome}" font-size="11" font-weight="700">${isEn ? 'TERRITORIAL BLOCK' : 'BLOQUE Y TERRITORIO'}</text>
 
-        <rect x="0" y="32" width="200" height="70" rx="8" fill="#111c2e" stroke="#1e293b" />
+        <rect x="0" y="32" width="200" height="70" rx="8" fill="${theme.bgPitch}" stroke="rgba(76,175,125,0.25)" />
         
-        <text x="14" y="55" fill="#38bdf8" font-size="16" font-weight="800">${safeOffHome}%</text>
-        <text x="14" y="70" fill="#94a3b8" font-size="9">${isEn ? 'Offensive / Middle 3rd' : 'Ofensivo / Campo Rival'}</text>
+        <text x="14" y="55" fill="${theme.teamHome}" font-size="16" font-weight="800">${safeOffHome}%</text>
+        <text x="14" y="70" fill="${theme.textMuted}" font-size="9">${isEn ? 'Offensive / Middle 3rd' : 'Ofensivo / Campo Rival'}</text>
 
-        <text x="120" y="55" fill="#64748b" font-size="16" font-weight="800">${defHome}%</text>
-        <text x="120" y="70" fill="#94a3b8" font-size="9">${isEn ? 'Defensive 3rd' : 'Bloque Defensivo'}</text>
+        <text x="120" y="55" fill="${theme.textSecondary}" font-size="16" font-weight="800">${defHome}%</text>
+        <text x="120" y="70" fill="${theme.textMuted}" font-size="9">${isEn ? 'Defensive 3rd' : 'Bloque Defensivo'}</text>
 
         <!-- Barra segmentada -->
-        <rect x="14" y="80" width="172" height="8" rx="4" fill="#334155" />
-        <rect x="14" y="80" width="${(safeOffHome / 100) * 172}" height="8" rx="4" fill="#22c55e" />
+        <rect x="14" y="80" width="172" height="8" rx="4" fill="rgba(242,237,228,0.1)" />
+        <rect x="14" y="80" width="${(safeOffHome / 100) * 172}" height="8" rx="4" fill="${theme.teamHome}" />
 
         <!-- Etiqueta táctica inferior -->
-        <text x="0" y="125" fill="#cbd5e1" font-size="10" font-weight="600">${isEn ? 'Style' : 'Comportamiento'}:</text>
-        <text x="90" y="125" fill="${safeOffHome >= 50 ? '#22c55e' : '#f59e0b'}" font-size="10" font-weight="700">${safeOffHome >= 50 ? (isEn ? 'High Press / Dominant' : 'Presión Alta / Proactivo') : (isEn ? 'Direct / Counter' : 'Bloque Medio / Repliegue')}</text>
+        <text x="0" y="125" fill="${theme.textPrimary}" font-size="10" font-weight="600">${isEn ? 'Style' : 'Comportamiento'}:</text>
+        <text x="95" y="125" fill="${safeOffHome >= 50 ? theme.teamHome : theme.gold}" font-size="10" font-weight="700">${safeOffHome >= 50 ? (isEn ? 'High Press / Dominant' : 'Presión Alta / Proactivo') : (isEn ? 'Direct / Counter' : 'Bloque Medio / Repliegue')}</text>
       </g>
     </svg>
   `;
 }
 
-export default function SectorTacticsSVG(props) {
-  const svgMarkup = renderSectorTacticsSvgString(props);
+export const SectorTacticsSVG = (props) => {
+  const svgString = renderSectorTacticsSvgString(props);
   return React.createElement('div', {
-    className: 'm11-canonical-sectortactics-container',
+    className: 'canonical-svg-wrapper sector-tactics-svg-wrapper',
     style: { width: '100%', overflowX: 'auto', display: 'flex', justifyContent: 'center' },
-    dangerouslySetInnerHTML: { __html: svgMarkup }
+    dangerouslySetInnerHTML: { __html: svgString }
   });
-}
-export { SectorTacticsSVG };
+};
+
+export default SectorTacticsSVG;

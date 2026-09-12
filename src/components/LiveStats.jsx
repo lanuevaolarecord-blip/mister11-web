@@ -1908,6 +1908,7 @@ const LiveStats = ({
               ) : (
                 <ZoneEventMap
                   events={filteredEvents}
+                  matchData={matchData}
                   teamName={homeTeamName}
                   isSubstitute={true}
                 />
@@ -1918,6 +1919,8 @@ const LiveStats = ({
             <SectionErrorBoundary sectionCode="TACTICAL_SHOT_MAP" sectionTitle={isEn ? 'Shot Map & xG' : 'Mapa de Tiros y xG'}>
               <ShotMap
                 shots={shotsList}
+                events={filteredEvents}
+                matchData={matchData}
                 players={playersList}
                 teamName={homeTeamName}
               />

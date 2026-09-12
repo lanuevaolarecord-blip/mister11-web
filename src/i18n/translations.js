@@ -2125,7 +2125,18 @@ export const translations = {
     'error.section_unavailable': 'Sección no disponible temporalmente',
     'error.section_desc': 'Ha ocurrido una anomalía aislada al renderizar esta sección. El resto del partido continúa operativo.',
     'error.retry_section': 'Reintentar',
-    'error.section_code': 'Código: {code}'
+    'error.section_code': 'Código: {code}',
+    'charts.guide.radar': 'Visualiza el equilibrio táctico en 6 dimensiones entre el equipo propio y el rival.',
+    'charts.guide.bars': 'Comparativa cuantitativa de las 10 métricas clave de juego.',
+    'charts.guide.momentum': 'Evolución del dominio y control del partido en bloques de 15 minutos.',
+    'charts.guide.shots': 'Distribución de remates y probabilidad esperada de gol (xG).',
+    'charts.guide.zones': 'Distribución territorial de las intervenciones del equipo en 9 cuadrantes.',
+    'charts.insights.finishing_deficit': 'Eficacia rematadora: Volumen alto de ocasiones pero déficit en definición respecto al xG generado.',
+    'charts.insights.defensive_alert': 'Aviso defensivo: El rival generó ocasiones claras con alta comodidad de remate.',
+    'charts.insights.dominant_zone': 'Zona dominante: Más del 40% de las intervenciones se concentraron en esta zona.',
+    'charts.pass_insufficient_tooltip': 'Se requieren al menos 5 pases registrados para generar la red táctica.',
+    'charts.view.pass_network': 'Red de Pases',
+    'charts.view.territorial_map': 'Mapa Territorial'
   },
 
   'English (EN)': {
@@ -4254,7 +4265,18 @@ export const translations = {
     'error.section_unavailable': 'Section temporarily unavailable',
     'error.section_desc': 'An isolated anomaly occurred while rendering this section. The rest of the match remains operational.',
     'error.retry_section': 'Retry',
-    'error.section_code': 'Code: {code}'
+    'error.section_code': 'Code: {code}',
+    'charts.guide.radar': 'Visualizes tactical balance across 6 dimensions between own team and opponent.',
+    'charts.guide.bars': 'Quantitative comparison of the 10 key gameplay metrics.',
+    'charts.guide.momentum': 'Evolution of match dominance and control in 15-minute intervals.',
+    'charts.guide.shots': 'Shot distribution and expected goals (xG) probability model.',
+    'charts.guide.zones': 'Territorial distribution of team interventions across 9 pitch zones.',
+    'charts.insights.finishing_deficit': 'Finishing Efficiency: High volume of scoring chances with deficit in conversion vs generated xG.',
+    'charts.insights.defensive_alert': 'Defensive Alert: Opponent generated clear chances with high shooting comfort.',
+    'charts.insights.dominant_zone': 'Dominant Zone: Over 40% of actions concentrated in this area.',
+    'charts.pass_insufficient_tooltip': 'At least 5 recorded passes required to generate tactical pass network.',
+    'charts.view.pass_network': 'Pass Network',
+    'charts.view.territorial_map': 'Territorial Map'
   }
 };
 

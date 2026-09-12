@@ -35,6 +35,7 @@ import { MomentumSVG } from '../components/canonical/MomentumSVG';
 import { ShotMapSVG } from '../components/canonical/ShotMapSVG';
 import { SectorTacticsSVG } from '../components/canonical/SectorTacticsSVG';
 import { calculateCanonicalStats } from '../components/canonical/calculateCanonicalStats';
+import { getMatchAnalytics } from '../utils/matchAnalytics';
 import './Partidos.css';
 import { normalizeText } from '../utils/normalizeInput';
 import { normalizeLineup, applyLineupChange, formatMatchDateSafe } from '../utils/lineupEngine';
@@ -389,17 +390,12 @@ const Partidos = () => {
     return evaluateSwotRules(matchData, effectiveLiveEvents || [], calledPlayers || []);
   }, [matchData, effectiveLiveEvents, calledPlayers]);
 
-  const postMatchShotEvents = useMemo(() => {
-    return (effectiveLiveEvents || []).filter(e => {
-      if (!e) return false;
-      const t = String(e.type || '').toLowerCase();
-      return t.includes('shot') || t.startsWith('gol_') || t === 'goal';
-    });
-  }, [effectiveLiveEvents]);
+  const postMatchAnalytics = useMemo(() => {
+    return getMatchAnalytics(matchData, effectiveLiveEvents || [], { isEn: isGlobalEn });
+  }, [matchData, effectiveLiveEvents, isGlobalEn]);
 
-  const postMatchCanonicalStats = useMemo(() => {
-    return calculateCanonicalStats(matchData, effectiveLiveEvents || []);
-  }, [matchData, effectiveLiveEvents]);
+  const postMatchShotEvents = postMatchAnalytics.shots.all;
+  const postMatchCanonicalStats = postMatchAnalytics;
 
   const matchHalfLabel = isMatchFinished
     ? (isEnLanguage ? 'Finished' : 'Finalizado')
@@ -2787,10 +2783,10 @@ const Partidos = () => {
                       <div style={{ padding: '14px', background: 'rgba(255,255,255,0.03)', borderRadius: '10px', border: '1px solid var(--partidos-border)' }}>
                         <div style={{ fontSize: '11px', fontWeight: '700', color: 'var(--partidos-text-muted)' }}>1. {isGlobalEn ? 'Expected Goals (xG)' : 'Goles Esperados (xG)'}</div>
                         <div style={{ fontSize: '18px', fontWeight: '900', color: '#D4A843', marginTop: '4px' }}>
-                          {postMatchDerivedIndices.ownXg} vs {postMatchDerivedIndices.rivalXg}
+                          {postMatchAnalytics.shots.ownTotalXg} vs {postMatchAnalytics.shots.rivalTotalXg}
                         </div>
                         <div style={{ fontSize: '11px', color: 'var(--partidos-text-muted)', marginTop: '2px' }}>
-                          {postMatchDerivedIndices.ownXg >= postMatchDerivedIndices.rivalXg ? (isGlobalEn ? '+ Favorable production' : '+ Producción favorable') : (isGlobalEn ? 'Deficit' : 'Déficit ofensivo')}
+                          {postMatchAnalytics.shots.ownTotalXg >= postMatchAnalytics.shots.rivalTotalXg ? (isGlobalEn ? '+ Favorable production' : '+ Producción favorable') : (isGlobalEn ? 'Deficit' : 'Déficit ofensivo')}
                         </div>
                       </div>
 
@@ -2848,19 +2844,19 @@ const Partidos = () => {
                         </h4>
                       </div>
                       <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-                        <span style={{ padding: '4px 10px', borderRadius: '6px', fontSize: '11px', fontWeight: '700', background: 'rgba(34,197,94,0.15)', color: '#22C55E', border: '1px solid rgba(34,197,94,0.3)' }}>
-                          {isGlobalEn ? 'Own xG:' : 'xG Propio:'} {postMatchDerivedIndices.ownXg}
+                        <span style={{ padding: '4px 10px', borderRadius: '6px', fontSize: '11px', fontWeight: '700', background: 'rgba(76,175,125,0.15)', color: '#4CAF7D', border: '1px solid rgba(76,175,125,0.3)' }}>
+                          {isGlobalEn ? 'Own xG:' : 'xG Propio:'} {postMatchAnalytics.shots.ownTotalXg}
                         </span>
                         <span style={{ padding: '4px 10px', borderRadius: '6px', fontSize: '11px', fontWeight: '700', background: 'rgba(239,68,68,0.15)', color: '#EF4444', border: '1px solid rgba(239,68,68,0.3)' }}>
-                          {isGlobalEn ? 'Opponent xG:' : 'xG Rival:'} {postMatchDerivedIndices.rivalXg}
+                          {isGlobalEn ? 'Opponent xG:' : 'xG Rival:'} {postMatchAnalytics.shots.rivalTotalXg}
                         </span>
                       </div>
                     </div>
                     <div style={{ marginTop: '12px' }}>
                       <ShotMapSVG
-                        shots={postMatchShotEvents}
-                        ownXg={postMatchDerivedIndices.ownXg}
-                        rivalXg={postMatchDerivedIndices.rivalXg}
+                        shots={postMatchAnalytics.shots.all}
+                        ownXg={postMatchAnalytics.shots.ownTotalXg}
+                        rivalXg={postMatchAnalytics.shots.rivalTotalXg}
                         isEn={isGlobalEn}
                       />
                     </div>

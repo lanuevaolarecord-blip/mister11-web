@@ -1,12 +1,17 @@
 /**
- * src/components/canonical/ComparisonBarsSVG.jsx
+ * src/components/canonical/ComparisonBarsSVG.js
  * Míster11 — Renderizador Canónico de Barras Comparativas (10 Métricas)
  *
- * Muestra las 10 métricas esenciales de fútbol con barras divididas proporcionales
- * entre Local y Visitante, cabecera con nombres de equipo y estilo idéntico en App y PDF.
+ * Paleta Oficial Tierra y Campo:
+ *  - Fondo institucional: #1B3A2D
+ *  - Equipo Local: #4CAF7D
+ *  - Equipo Rival: #EF4444
+ *  - Títulos y Acentos: #D4A843
+ *  - Tipografía: #F2EDE4
  */
 
 import React from 'react';
+import { CHART_THEME } from '../../config/chartTheme.js';
 
 export function renderComparisonBarsSvgString({
   homeStats = {},
@@ -14,9 +19,11 @@ export function renderComparisonBarsSvgString({
   homeTeamName = 'Mi Equipo',
   awayTeamName = 'Rival',
   isEn = false,
+  isDark = true,
   width = 660,
-  height = 280
+  height = 300
 }) {
+  const theme = isDark ? CHART_THEME.dark : CHART_THEME.light;
   const safeHomeName = String(homeTeamName || (isEn ? 'Home' : 'Local')).trim();
   const safeAwayName = String(awayTeamName || (isEn ? 'Away' : 'Rival')).trim();
 
@@ -34,10 +41,12 @@ export function renderComparisonBarsSvgString({
   ];
 
   const rowHeight = 22;
-  const startY = 40;
-  const padX = 14;
+  const startY = 56;
+  const padX = 16;
   const availW = width - padX * 2;
-  const halfW = (availW - 140) / 2; // ancho de cada barra izquierda/derecha
+  const labelWidth = 140;
+  const valueWidth = 45;
+  const halfBarWidth = (availW - labelWidth - valueWidth * 2) / 2;
   const centerX = width / 2;
 
   const rows = metrics.map((m, idx) => {
@@ -52,15 +61,15 @@ export function renderComparisonBarsSvgString({
       hPct = Math.min(100, Math.max(0, hVal));
       aPct = Math.min(100, Math.max(0, aVal));
     } else if (sum > 0) {
-      hPct = (hVal / sum) * 100;
-      aPct = (aVal / sum) * 100;
+      hPct = Math.min(100, Math.max(0, (hVal / sum) * 100));
+      aPct = Math.min(100, Math.max(0, (aVal / sum) * 100));
     } else {
       hPct = 0;
       aPct = 0;
     }
 
-    const homeBarWidth = (hPct / 100) * halfW;
-    const awayBarWidth = (aPct / 100) * halfW;
+    const homeBarW = (hPct / 100) * halfBarWidth;
+    const awayBarW = (aPct / 100) * halfBarWidth;
 
     const homeValStr = `${m.homeVal}${m.isPercent ? '%' : ''}`;
     const awayValStr = `${m.awayVal}${m.isPercent ? '%' : ''}`;
@@ -68,28 +77,28 @@ export function renderComparisonBarsSvgString({
     return `
       <g key="row-${idx}">
         <!-- Fondo de fila alternada -->
-        <rect x="${padX}" y="${y - 2}" width="${availW}" height="${rowHeight - 2}" fill="${idx % 2 === 0 ? 'rgba(255,255,255,0.02)' : 'transparent'}" rx="3" />
+        <rect x="${padX}" y="${y - 2}" width="${availW}" height="${rowHeight - 2}" fill="${idx % 2 === 0 ? 'rgba(76, 175, 125, 0.05)' : 'transparent'}" rx="3" />
 
-        <!-- Valor Local a la izquierda -->
-        <text x="${padX + 22}" y="${y + 11}" fill="#10B981" font-size="8.5" font-weight="900" font-family="Arial, sans-serif" text-anchor="end">
+        <!-- Valor Local (Holgado, nunca cortado) -->
+        <text x="${padX + valueWidth - 6}" y="${y + 11}" fill="${theme.teamHome}" font-size="9" font-weight="900" font-family="Arial, sans-serif" text-anchor="end">
           ${homeValStr}
         </text>
 
-        <!-- Barra Local (crece hacia la izquierda desde el centro) -->
-        <rect x="${centerX - 70 - halfW}" y="${y + 5}" width="${halfW}" height="8" fill="rgba(255,255,255,0.06)" rx="3" />
-        <rect x="${centerX - 70 - homeBarWidth}" y="${y + 5}" width="${homeBarWidth}" height="8" fill="#10B981" rx="3" />
+        <!-- Barra Local (crece hacia la izquierda hacia el centro) -->
+        <rect x="${centerX - (labelWidth / 2) - halfBarWidth}" y="${y + 5}" width="${halfBarWidth}" height="8" fill="rgba(242, 237, 228, 0.08)" rx="3" />
+        <rect x="${centerX - (labelWidth / 2) - homeBarW}" y="${y + 5}" width="${homeBarW}" height="8" fill="${theme.teamHome}" rx="3" />
 
         <!-- Etiqueta Central Métrica -->
-        <text x="${centerX}" y="${y + 11}" fill="#F1F5F9" font-size="8" font-weight="700" font-family="Arial, sans-serif" text-anchor="middle">
+        <text x="${centerX}" y="${y + 11}" fill="${theme.textPrimary}" font-size="8.5" font-weight="700" font-family="Arial, sans-serif" text-anchor="middle">
           ${m.label}
         </text>
 
         <!-- Barra Visitante (crece hacia la derecha desde el centro) -->
-        <rect x="${centerX + 70}" y="${y + 5}" width="${halfW}" height="8" fill="rgba(255,255,255,0.06)" rx="3" />
-        <rect x="${centerX + 70}" y="${y + 5}" width="${awayBarWidth}" height="8" fill="#EF4444" rx="3" />
+        <rect x="${centerX + (labelWidth / 2)}" y="${y + 5}" width="${halfBarWidth}" height="8" fill="rgba(242, 237, 228, 0.08)" rx="3" />
+        <rect x="${centerX + (labelWidth / 2)}" y="${y + 5}" width="${awayBarW}" height="8" fill="${theme.teamAway}" rx="3" />
 
-        <!-- Valor Visitante a la derecha -->
-        <text x="${width - padX - 22}" y="${y + 11}" fill="#EF4444" font-size="8.5" font-weight="900" font-family="Arial, sans-serif" text-anchor="start">
+        <!-- Valor Visitante (Holgado, nunca cortado) -->
+        <text x="${width - padX - valueWidth + 6}" y="${y + 11}" fill="${theme.teamAway}" font-size="9" font-weight="900" font-family="Arial, sans-serif" text-anchor="start">
           ${awayValStr}
         </text>
       </g>
@@ -98,28 +107,31 @@ export function renderComparisonBarsSvgString({
 
   return `
 <svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">
-  <!-- Fondo Contenedor -->
-  <rect x="0" y="0" width="${width}" height="${height}" fill="#0F172A" rx="8" />
+  <!-- Fondo Contenedor Institucional Tierra y Campo -->
+  <rect x="0" y="0" width="${width}" height="${height}" fill="${theme.bgCard}" rx="10" stroke="${theme.border}" stroke-width="1" />
 
-  <!-- Cabecera y Nombres de Equipo -->
-  <text x="${padX}" y="20" fill="#F8FAFC" font-size="11" font-weight="800" font-family="Arial, sans-serif">
-    ${isEn ? '📊 COMPARATIVE MATCH STATISTICS (10 METRICS)' : '📊 ESTADÍSTICAS COMPARATIVAS DE PARTIDO (10 MÉTRICAS)'}
+  <!-- Fila 1: Título Institucional (Línea limpia superior) -->
+  <text x="${padX}" y="22" fill="${theme.gold}" font-size="11.5" font-weight="800" font-family="Arial, sans-serif">
+    ${isEn ? '📊 COMPARATIVE MATCH STATISTICS (10 CANONICAL METRICS)' : '📊 ESTADÍSTICAS COMPARATIVAS DE PARTIDO (10 MÉTRICAS CANÓNICAS)'}
   </text>
 
-  <!-- Badge Equipo Local -->
-  <rect x="${centerX - 190}" y="8" width="110" height="18" fill="rgba(16, 185, 129, 0.2)" stroke="#10B981" stroke-width="0.8" rx="4" />
-  <text x="${centerX - 135}" y="20" text-anchor="middle" fill="#34D399" font-size="8.5" font-weight="800" font-family="Arial, sans-serif">
-    🟢 ${safeHomeName.slice(0, 16)}
-  </text>
+  <!-- Fila 2: Badges de Equipo (Línea separada para erradicar cualquier solape) -->
+  <g transform="translate(${padX}, 34)">
+    <!-- Badge Equipo Local -->
+    <rect x="0" y="0" width="120" height="15" fill="rgba(76, 175, 125, 0.2)" stroke="${theme.teamHome}" stroke-width="0.8" rx="3" />
+    <text x="60" y="10.5" text-anchor="middle" fill="${theme.teamHome}" font-size="8.5" font-weight="800" font-family="Arial, sans-serif">
+      🟢 ${safeHomeName.slice(0, 16)}
+    </text>
 
-  <!-- Separador VS -->
-  <text x="${centerX}" y="20" text-anchor="middle" fill="#94A3B8" font-size="8.5" font-weight="800" font-family="Arial, sans-serif">VS</text>
+    <!-- Separador VS -->
+    <text x="${centerX - padX}" y="11" text-anchor="middle" fill="${theme.textMuted}" font-size="8.5" font-weight="800" font-family="Arial, sans-serif">VS</text>
 
-  <!-- Badge Equipo Visitante -->
-  <rect x="${centerX + 80}" y="8" width="110" height="18" fill="rgba(239, 68, 68, 0.2)" stroke="#EF4444" stroke-width="0.8" rx="4" />
-  <text x="${centerX + 135}" y="20" text-anchor="middle" fill="#F87171" font-size="8.5" font-weight="800" font-family="Arial, sans-serif">
-    🔴 ${safeAwayName.slice(0, 16)}
-  </text>
+    <!-- Badge Equipo Visitante -->
+    <rect x="${width - padX * 2 - 120}" y="0" width="120" height="15" fill="rgba(239, 68, 68, 0.2)" stroke="${theme.teamAway}" stroke-width="0.8" rx="3" />
+    <text x="${width - padX * 2 - 60}" y="10.5" text-anchor="middle" fill="${theme.teamAway}" font-size="8.5" font-weight="800" font-family="Arial, sans-serif">
+      🔴 ${safeAwayName.slice(0, 16)}
+    </text>
+  </g>
 
   <!-- Filas de Métricas Comparativas -->
   <g id="bars-list">

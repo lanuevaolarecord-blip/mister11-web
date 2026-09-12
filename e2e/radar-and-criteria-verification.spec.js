@@ -123,4 +123,41 @@ test.describe('Míster 11 — Verificación RadarCompareSVG, SectionErrorBoundar
     await expect(zoneMap).toBeVisible();
   });
 
+  test('4. Verificación de Paleta Canónica Tierra y Campo (Cero Azul) y Paridad de Gráficas', async ({ page }) => {
+    await page.setViewportSize({ width: 1280, height: 800 });
+    await page.goto('/demo');
+    await page.waitForTimeout(800);
+
+    // Navegar a Partidos y estadísticas
+    const partidosNav = page.locator('button, .demo-nav-btn').filter({ hasText: /Partidos|Match-Day/i }).first();
+    await partidosNav.click();
+    await page.waitForTimeout(600);
+
+    const statsTab = page.locator('button.tab-btn').filter({ hasText: /ESTADÍSTICAS/i }).first();
+    await statsTab.click();
+    await page.waitForTimeout(400);
+
+    // 1. Radar
+    const radarSubTab = page.locator('#demo-tab-radar-btn');
+    await radarSubTab.click();
+    await page.waitForTimeout(400);
+
+    const radarSvg = page.locator('#sec_radar svg').first();
+    await expect(radarSvg).toBeVisible();
+    const radarFill = await radarSvg.locator('rect').first().getAttribute('fill');
+    expect(radarFill?.toUpperCase()).toBe('#1B3A2D');
+
+    // Captura probatoria del Radar en Tierra y Campo
+    await radarSvg.screenshot({ path: 'C:/Users/jhojan/.gemini/antigravity-ide/brain/50b57bce-b5a9-450c-aed5-b09f08ddbf03/radar_tierraycampo_verified.png' });
+
+    // 2. Campo y Táctica (Mapa Territorial 3x3)
+    const tacticalSubTab = page.locator('button.sub-tab-btn:has-text("Campo & Táctica")');
+    await tacticalSubTab.click();
+    await page.waitForTimeout(400);
+
+    const zoneMapWrapper = page.locator('.zone-event-map-container').first();
+    await expect(zoneMapWrapper).toBeVisible();
+    await zoneMapWrapper.screenshot({ path: 'C:/Users/jhojan/.gemini/antigravity-ide/brain/50b57bce-b5a9-450c-aed5-b09f08ddbf03/zone_event_map_tierraycampo.png' });
+  });
+
 });

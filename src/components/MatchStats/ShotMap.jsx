@@ -2,6 +2,7 @@ import React, { useState, useMemo, useRef, useCallback } from 'react';
 import { Target, Trophy, Percent, Crosshair, X, Maximize2, Minimize2 } from 'lucide-react';
 import { useTranslation } from '../../hooks/useTranslation';
 import { calculateShotXg } from '../../config/xgWeights';
+import { useTheaterFullscreen } from '../../hooks/useTheaterFullscreen';
 
 export const ShotMap = ({
   shots = [],
@@ -9,25 +10,11 @@ export const ShotMap = ({
   players = []
 }) => {
   const [selectedShot, setSelectedShot] = useState(null);
-  const [isFullscreen, setIsFullscreen] = useState(false);
   const [showTacticalGuide, setShowTacticalGuide] = useState(false);
   const wrapperRef = useRef(null);
   const { isEn, t } = useTranslation();
-
-  const toggleFullscreen = useCallback(() => {
-    if (!wrapperRef.current) return;
-    if (!document.fullscreenElement) {
-      wrapperRef.current.requestFullscreen?.().catch(() => {});
-    } else {
-      document.exitFullscreen?.().catch(() => {});
-    }
-  }, []);
-
-  React.useEffect(() => {
-    const handler = () => setIsFullscreen(!!document.fullscreenElement);
-    document.addEventListener('fullscreenchange', handler);
-    return () => document.removeEventListener('fullscreenchange', handler);
-  }, []);
+  const { isFullscreen, isTheater, toggle: toggleFullscreen } = useTheaterFullscreen(wrapperRef);
+  const isExpanded = isFullscreen || isTheater;
 
   // Calcular modelo de xG canónico (Expected Goals) para cada tiro
   const shotsWithXG = useMemo(() => {
@@ -102,7 +89,7 @@ export const ShotMap = ({
     <div
       ref={wrapperRef}
       className="shot-map-container"
-      style={isFullscreen ? {
+      style={isExpanded ? {
         position: 'fixed',
         top: 0,
         left: 0,
@@ -113,7 +100,8 @@ export const ShotMap = ({
         maxHeight: '100dvh',
         background: '#0b1712',
         padding: '12px 16px',
-        overflow: 'hidden',
+        overflowY: 'auto',
+        overflowX: 'hidden',
         display: 'flex',
         flexDirection: 'column',
         zIndex: 999999,
@@ -132,9 +120,10 @@ export const ShotMap = ({
           type="button"
           className="btn-fullscreen-match-card"
           onClick={toggleFullscreen}
+          style={{ minHeight: '48px', minWidth: '48px' }}
         >
-          {isFullscreen ? <Minimize2 size={16} /> : <Maximize2 size={16} />}
-          <span>{isFullscreen ? (isEn ? 'Exit' : 'Salir') : (isEn ? 'Fullscreen' : 'Pantalla Completa')}</span>
+          {isExpanded ? <Minimize2 size={16} /> : <Maximize2 size={16} />}
+          <span>{isExpanded ? (isEn ? 'Exit' : 'Salir') : (isEn ? 'Fullscreen' : 'Pantalla Completa')}</span>
         </button>
       </div>
 
@@ -200,15 +189,16 @@ export const ShotMap = ({
           type="button"
           className="btn-floating-pitch-fullscreen"
           onClick={toggleFullscreen}
-          title={isFullscreen ? (isEn ? 'Exit Fullscreen' : 'Salir de Pantalla Completa') : (isEn ? 'View Fullscreen' : 'Ver en Pantalla Completa')}
+          style={{ minWidth: '48px', minHeight: '48px' }}
+          title={isExpanded ? (isEn ? 'Exit Fullscreen' : 'Salir de Pantalla Completa') : (isEn ? 'View Fullscreen' : 'Ver en Pantalla Completa')}
         >
-          {isFullscreen ? <Minimize2 size={18} /> : <Maximize2 size={18} />}
+          {isExpanded ? <Minimize2 size={18} /> : <Maximize2 size={18} />}
         </button>
         <svg
           viewBox="0 0 68 55"
           className="half-pitch-svg"
           preserveAspectRatio="none"
-          style={isFullscreen ? { maxHeight: 'calc(100dvh - 200px)', width: 'auto', maxWidth: '100%', objectFit: 'contain' } : {}}
+          style={isExpanded ? { maxHeight: 'calc(100dvh - 200px)', width: 'auto', maxWidth: '100%', objectFit: 'contain' } : {}}
         >
           {/* Fondo del campo */}
           <rect x="0" y="0" width="68" height="55" fill="#1b4d2e" />

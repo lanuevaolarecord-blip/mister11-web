@@ -1,6 +1,7 @@
 import React, { useState, useMemo, useRef, useCallback } from 'react';
 import { Share2, Maximize2, Minimize2, Users } from 'lucide-react';
 import { useTranslation } from '../../hooks/useTranslation';
+import { useTheaterFullscreen } from '../../hooks/useTheaterFullscreen';
 
 const ZONE_MAP = {
   shot_on_target_own:    { x: 88, y: 50 },
@@ -25,25 +26,11 @@ export const PassNetwork = ({
 }) => {
   const [selectedNode, setSelectedNode] = useState(null);
   const [selectedEdge, setSelectedEdge] = useState(null);
-  const [isFullscreen, setIsFullscreen] = useState(false);
   const [showTacticalGuide, setShowTacticalGuide] = useState(false);
   const wrapperRef = useRef(null);
-  const { isEn } = useTranslation();
-
-  const toggleFullscreen = useCallback(() => {
-    if (!wrapperRef.current) return;
-    if (!document.fullscreenElement) {
-      wrapperRef.current.requestFullscreen?.().catch(() => {});
-    } else {
-      document.exitFullscreen?.().catch(() => {});
-    }
-  }, []);
-
-  React.useEffect(() => {
-    const handler = () => setIsFullscreen(!!document.fullscreenElement);
-    document.addEventListener('fullscreenchange', handler);
-    return () => document.removeEventListener('fullscreenchange', handler);
-  }, []);
+  const { t, isEn } = useTranslation();
+  const { isFullscreen, isTheater, toggle: toggleFullscreen } = useTheaterFullscreen(wrapperRef);
+  const isExpanded = isFullscreen || isTheater;
 
   // Función para determinar coordenadas base reglamentarias según posición real
   const getBasePosition = (pos, idx) => {
@@ -196,7 +183,7 @@ export const PassNetwork = ({
     <div
       ref={wrapperRef}
       className="pass-network-container"
-      style={isFullscreen ? {
+      style={isExpanded ? {
         position: 'fixed',
         top: 0,
         left: 0,
@@ -207,7 +194,8 @@ export const PassNetwork = ({
         maxHeight: '100dvh',
         background: '#0b1712',
         padding: '12px 16px',
-        overflow: 'hidden',
+        overflowY: 'auto',
+        overflowX: 'hidden',
         display: 'flex',
         flexDirection: 'column',
         zIndex: 999999,
@@ -215,7 +203,7 @@ export const PassNetwork = ({
       } : {}}
     >
       {/* Header de la red de pases */}
-      <div className="pass-network-header" style={{ flexShrink: 0, marginBottom: isFullscreen ? '8px' : '16px' }}>
+      <div className="pass-network-header" style={{ flexShrink: 0, marginBottom: isExpanded ? '8px' : '12px' }}>
         <div className="pass-network-title">
           <Share2 size={20} className="network-icon" />
           <h3>{isEn ? `Tactical Pass Network (${teamName})` : `Red de Pases Táctica (${teamName})`}</h3>
@@ -227,17 +215,37 @@ export const PassNetwork = ({
             type="button"
             className="btn-fullscreen-match-card"
             onClick={toggleFullscreen}
+            style={{ minHeight: '48px', minWidth: '48px' }}
           >
-            {isFullscreen ? <Minimize2 size={16} /> : <Maximize2 size={16} />}
-            <span>{isFullscreen ? (isEn ? 'Exit' : 'Salir') : (isEn ? 'Fullscreen' : 'Pantalla Completa')}</span>
+            {isExpanded ? <Minimize2 size={16} /> : <Maximize2 size={16} />}
+            <span>{isExpanded ? (isEn ? 'Exit' : 'Salir') : (isEn ? 'Fullscreen' : 'Pantalla Completa')}</span>
           </button>
         </div>
+      </div>
+
+      {/* Guía metodológica visible en 2 líneas */}
+      <div
+        className="pass-network-guide"
+        style={{
+          fontSize: '12px',
+          color: 'var(--text-secondary, #94A3B8)',
+          lineHeight: '1.45',
+          background: 'rgba(255, 255, 255, 0.03)',
+          borderLeft: '3px solid #D4A843',
+          padding: '8px 12px',
+          borderRadius: '0 6px 6px 0',
+          marginBottom: '12px',
+          flexShrink: 0
+        }}
+      >
+        <strong style={{ color: 'var(--text-primary, #FFFFFF)' }}>{isEn ? 'Methodological guide: ' : 'Guía metodológica: '}</strong>
+        {t('stats.passNetwork.guide')}
       </div>
 
       {/* Campo SVG con Nodos y Aristas (Zero-scroll) */}
       <div
         className="field-network-canvas"
-        style={isFullscreen ? {
+        style={isExpanded ? {
           flex: 1,
           minHeight: 0,
           display: 'flex',
@@ -253,9 +261,10 @@ export const PassNetwork = ({
           type="button"
           className="btn-floating-pitch-fullscreen"
           onClick={toggleFullscreen}
-          title={isFullscreen ? (isEn ? 'Exit Fullscreen' : 'Salir de Pantalla Completa') : (isEn ? 'View Fullscreen' : 'Ver en Pantalla Completa')}
+          style={{ minWidth: '48px', minHeight: '48px' }}
+          title={isExpanded ? (isEn ? 'Exit Fullscreen' : 'Salir de Pantalla Completa') : (isEn ? 'View Fullscreen' : 'Ver en Pantalla Completa')}
         >
-          {isFullscreen ? <Minimize2 size={18} /> : <Maximize2 size={18} />}
+          {isExpanded ? <Minimize2 size={18} /> : <Maximize2 size={18} />}
         </button>
 
         <svg

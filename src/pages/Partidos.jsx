@@ -43,6 +43,53 @@ import { calcMixedRating, deriveStatsFromEvents } from '../utils/ratingFormula';
 import { sanitizeMatchData } from '../utils/sanitizeMatchData';
 import { showToast } from '../utils/toast';
 import { SpellCheckedTextarea } from '../components/ui/SpellCheckedTextarea';
+import UnattributedEventsManager from '../components/UnattributedEventsManager';
+
+export const getMatchDerivedStatus = (m) => {
+  if (!m) return 'NO_DISPUTADO';
+
+  // 1. Acta reabierta o partido explícitamente en edición
+  const isReopened = Boolean(
+    m.actaReabierta ||
+    m.reopenedAt ||
+    m.actaOficial?.reopenedAt ||
+    m.status === 'En Edicion' ||
+    m.status === 'En Edición'
+  );
+  if (isReopened) {
+    return 'EN_EDICION';
+  }
+
+  // 2. Finalizado: finishedAt o status finalizado o actaOficial.closedAt
+  const isFinished = Boolean(
+    m.finishedAt ||
+    m.actaOficial?.closedAt ||
+    m.status === 'Terminado' ||
+    m.status === 'Finalizado' ||
+    m.status === 'finished'
+  );
+  if (isFinished) {
+    return 'FINALIZADO';
+  }
+
+  // 3. Sin finalizar: evaluar fecha
+  const rawDate = m.fecha || m.date;
+  if (rawDate) {
+    const d = new Date(rawDate);
+    if (!isNaN(d.getTime())) {
+      const today = new Date();
+      const matchDay = new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
+      const currentDay = new Date(today.getFullYear(), today.getMonth(), today.getDate()).getTime();
+      if (matchDay >= currentDay) {
+        return 'PENDIENTE';
+      } else {
+        return 'NO_DISPUTADO';
+      }
+    }
+  }
+
+  return 'NO_DISPUTADO';
+};
 
 export const normalizeCapitalize = (str) => {
   if (!str || typeof str !== 'string') return '';
@@ -197,6 +244,8 @@ const Partidos = () => {
   const [subInId, setSubInId] = useState('');
   const [pendingEventType, setPendingEventType] = useState(null); // 'amarilla' | 'roja' | 'lesion' | 'gol_local'
   const [showEventPlayerSelector, setShowEventPlayerSelector] = useState(false);
+  const [showRefinePromptModal, setShowRefinePromptModal] = useState(false);
+  const [showUnattributedModal, setShowUnattributedModal] = useState(false);
 
   const [isFullscreen, setIsFullscreen] = useState(false);
   const matchDayRef = useRef(null);
@@ -369,20 +418,24 @@ const Partidos = () => {
           : 'Este partido ya está finalizado. ¿Deseas reabrirlo para registrar más eventos o corregir datos?'
       );
       if (wantsReopen) {
+        const nowIso = new Date().toISOString();
         const reopened = {
           ...currentMatch,
-          status: 'Pendiente',
+          status: 'En Edicion',
+          actaReabierta: true,
+          reopenedAt: nowIso,
           actaOficial: {
             ...(currentMatch.actaOficial || {}),
-            closed: false
+            closed: false,
+            reopenedAt: nowIso
           }
         };
         setMatchData(reopened);
         matchDataRef.current = reopened;
-        syncMatchState(currentMatch.id, { status: 'Pendiente' });
+        syncMatchState(currentMatch.id, { status: 'En Edicion', actaReabierta: true, reopenedAt: nowIso });
         try {
           await updateMatch(currentMatch.id, reopened);
-          showToast(isEnLanguage ? 'Match reopened.' : 'Partido reabierto.', 'info');
+          showToast(isEnLanguage ? 'Match reopened for editing.' : 'Partido reabierto para edición.', 'info');
         } catch (e) {
           console.error(e);
         }
@@ -503,6 +556,9 @@ const Partidos = () => {
     const updated = { 
       ...currentMatch, 
       status: 'Terminado',
+      finishedAt: currentMatch.finishedAt || nowIso,
+      actaReabierta: false,
+      reopenedAt: null,
       finalClock: finalClockStr,
       finalSeconds: finalSec,
       elapsedSeconds: finalSec,
@@ -561,6 +617,7 @@ const Partidos = () => {
         'success'
       );
       setEditTab('POST-PARTIDO');
+      setShowRefinePromptModal(true);
     } catch (err) {
       console.error("Error al finalizar partido:", err);
       showToast(isEnLanguage ? '❌ Error saving finalization: ' + (err.message || '') : '❌ Error al guardar finalización: ' + (err.message || ''), 'error');
@@ -1275,13 +1332,16 @@ const Partidos = () => {
   };
 
   const filteredMatches = matches.filter(m => {
-    if (filterMode === 'Pendientes') return m.status === 'Pendiente';
-    if (filterMode === 'Terminados') return m.status === 'Terminado';
+    const derived = getMatchDerivedStatus(m);
+    if (filterMode === 'Pendientes') return derived === 'PENDIENTE' || derived === 'NO_DISPUTADO';
+    if (filterMode === 'Terminados') return derived === 'FINALIZADO' || derived === 'EN_EDICION';
     return true;
   }).sort((a, b) => {
-    if (!a.date) return 1;
-    if (!b.date) return -1;
-    return new Date(b.date) - new Date(a.date);
+    const dateA = a.date || a.fecha;
+    const dateB = b.date || b.fecha;
+    if (!dateA) return 1;
+    if (!dateB) return -1;
+    return new Date(dateB) - new Date(dateA);
   });
 
   if (loadingMatches || loadingPlayers) {
@@ -1390,12 +1450,33 @@ const Partidos = () => {
                       {filteredMatches.map(m => {
                         const localScore = m.type === 'Local' ? (m.goalsFor ?? 0) : (m.goalsAgainst ?? 0);
                         const visitScore = m.type === 'Local' ? (m.goalsAgainst ?? 0) : (m.goalsFor ?? 0);
-                        const isFinishedCard = m.status === 'Terminado' || m.status === 'Finalizado';
-                        const statusLabel = isGlobalEn ? (isFinishedCard ? 'Finished' : 'Pending') : (m.status || 'Pendiente');
+                        const derivedStatus = getMatchDerivedStatus(m);
+                        const isFinishedCard = derivedStatus === 'FINALIZADO' || derivedStatus === 'EN_EDICION';
+                        let statusLabel = '';
+                        let statusClass = '';
+                        switch (derivedStatus) {
+                          case 'FINALIZADO':
+                            statusLabel = t('match.status.finalizado', settings?.language);
+                            statusClass = 'finalizado terminado';
+                            break;
+                          case 'EN_EDICION':
+                            statusLabel = t('match.status.en_edicion', settings?.language);
+                            statusClass = 'en-edicion editing';
+                            break;
+                          case 'PENDIENTE':
+                            statusLabel = t('match.status.pendiente', settings?.language);
+                            statusClass = 'pendiente';
+                            break;
+                          case 'NO_DISPUTADO':
+                          default:
+                            statusLabel = t('match.status.no_disputado', settings?.language);
+                            statusClass = 'no-disputado';
+                            break;
+                        }
                         return (
                           <div key={m.id || Math.random()} className="match-card" onClick={() => handleEditMatch(m)}>
                             <div className="mc-header">
-                              <span className={`status-badge ${(m.status || 'Pendiente').toLowerCase()}`}>{statusLabel}</span>
+                              <span className={`status-badge ${statusClass}`} data-status={derivedStatus}>{statusLabel}</span>
                               <span className="mc-date">{formatMatchDateSafe(m, settings?.language)}</span>
                             </div>
 
@@ -3524,6 +3605,77 @@ const Partidos = () => {
           </div>
         </div>
       </div>
+
+      {/* Modal ligero y descartable de "¿Refinar atribución individual ahora? (opcional)" */}
+      {showRefinePromptModal && (
+        <div
+          className="unattr-modal-overlay"
+          onClick={() => setShowRefinePromptModal(false)}
+          style={{ zIndex: 10000 }}
+          role="dialog"
+          aria-modal="true"
+        >
+          <div
+            className="unattr-modal-sheet"
+            onClick={e => e.stopPropagation()}
+            style={{ maxWidth: '480px', padding: '24px', boxSizing: 'border-box' }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '12px' }}>
+              <span style={{ fontSize: '24px' }}>✨</span>
+              <h3 style={{ margin: 0, fontSize: '17px', fontWeight: 800, color: 'var(--partidos-text-primary, #FFFFFF)' }}>
+                {t('capture.refine_prompt_title', settings?.language)}
+              </h3>
+            </div>
+            <p style={{ margin: '0 0 20px', fontSize: '13px', color: 'var(--partidos-text-muted, #94A3B8)', lineHeight: 1.5 }}>
+              {t('capture.refine_subtitle', settings?.language)}
+            </p>
+            <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end', flexWrap: 'wrap' }}>
+              <button
+                type="button"
+                className="btn-outline-dark"
+                onClick={() => {
+                  setShowRefinePromptModal(false);
+                  setShowUnattributedModal(true);
+                }}
+                style={{ minHeight: '48px', padding: '0 16px', fontWeight: 700, borderRadius: '8px', cursor: 'pointer', border: '1.5px solid var(--partidos-gold, #D4A843)', color: 'var(--partidos-gold, #D4A843)', background: 'transparent' }}
+              >
+                {t('capture.refine_btn', settings?.language)}
+              </button>
+              <button
+                type="button"
+                className="btn-primary-dark"
+                onClick={() => setShowRefinePromptModal(false)}
+                style={{ minHeight: '48px', padding: '0 20px', fontWeight: 800, background: '#1E3A8A', border: '1px solid #3B82F6', color: '#FFFFFF', borderRadius: '8px', cursor: 'pointer' }}
+                autoFocus
+              >
+                {t('capture.refine_skip', settings?.language)}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal gestor de atribución opcional */}
+      <UnattributedEventsManager
+        isOpen={showUnattributedModal}
+        onClose={() => setShowUnattributedModal(false)}
+        events={matchData.events || matchData.liveStatsEvents || effectiveLiveEvents || []}
+        playersList={players || []}
+        onAttributeEvents={({ eventIds, playerId, playerName }) => {
+          const currentEvents = matchData.events || matchData.liveStatsEvents || effectiveLiveEvents || [];
+          const updatedEvents = currentEvents.map(e => {
+            if (eventIds.includes(e.id)) {
+              return { ...e, playerId, playerName, attributed: true };
+            }
+            return e;
+          });
+          const updatedMatch = { ...matchData, events: updatedEvents, liveStatsEvents: updatedEvents };
+          setMatchData(updatedMatch);
+          matchDataRef.current = updatedMatch;
+          updateMatch(matchData.id, updatedMatch);
+        }}
+        readOnly={false}
+      />
 
     </div>
   );

@@ -6,6 +6,10 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ShotCaptureModal } from '../components/ShotCaptureModal';
+import { UnattributedEventsManager } from '../components/UnattributedEventsManager';
+import ZoneEventMap from '../components/MatchStats/ZoneEventMap';
+import { getMatchDerivedStatus } from './Partidos';
+import { useLanguage } from '../context/LanguageContext';
 import './DemoMode.css';
 
 // ── Mock Data ─────────────────────────────────────────────────────────────────
@@ -194,54 +198,251 @@ function SesionesView() {
 }
 
 function PartidosView() {
+  const { t } = useLanguage();
   const [shotModalOpen, setShotModalOpen] = useState(false);
+  const [unattrModalOpen, setUnattrModalOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState('matchday'); // 'matchday' | 'stats'
+  const [statsSubTab, setStatsSubTab] = useState('tactical'); // 'overview' | 'tactical'
+
+  const demoMatches = [
+    {
+      id: 'm1',
+      rival: 'Real Deportivo CF',
+      fecha: '2026-09-10',
+      hora: '18:00',
+      marcadorPropio: 3,
+      marcadorRival: 1,
+      status: 'Terminado',
+      finishedAt: '2026-09-10T19:50:00Z',
+      lugar: 'Local'
+    },
+    {
+      id: 'm2',
+      rival: 'UD Los Rosales',
+      fecha: '2026-09-11',
+      hora: '17:00',
+      marcadorPropio: 2,
+      marcadorRival: 2,
+      status: 'En Edicion',
+      actaReabierta: true,
+      lugar: 'Visitante'
+    },
+    {
+      id: 'm3',
+      rival: 'CD Esperanza',
+      fecha: '2026-10-15',
+      hora: '12:00',
+      status: 'Programado',
+      lugar: 'Local'
+    },
+    {
+      id: 'm4',
+      rival: 'Atlético San Telmo',
+      fecha: '2026-08-15',
+      hora: '10:00',
+      status: 'Programado',
+      lugar: 'Visitante'
+    }
+  ];
+
+  const [mockUnattributed, setMockUnattributed] = useState([
+    { id: 'evt-1', type: 'recovery', minute: 14, timestamp: Date.now() - 40000 },
+    { id: 'evt-2', type: 'duel_won', minute: 28, timestamp: Date.now() - 30000 },
+    { id: 'evt-3', type: 'shot_on_target_own', minute: 35, timestamp: Date.now() - 20000 },
+    { id: 'evt-4', type: 'foul_against', minute: 42, timestamp: Date.now() - 10000 }
+  ]);
+
+  const mockEventsForZone = [
+    { id: 'z1', type: 'tiro', team: 'own', x: 85, y: 50, minute: 23 },
+    { id: 'z2', type: 'tiro', team: 'own', x: 90, y: 45, minute: 58 },
+    { id: 'z3', type: 'recuperacion', team: 'own', x: 45, y: 30, minute: 12 },
+    { id: 'z4', type: 'recuperacion', team: 'own', x: 52, y: 70, minute: 34 },
+    { id: 'z5', type: 'duelo', team: 'own', x: 30, y: 50, minute: 18 },
+    { id: 'z6', type: 'falta', team: 'own', x: 50, y: 20, minute: 41 },
+    { id: 'z7', type: 'recuperacion', team: 'own', x: 25, y: 80, minute: 61 }
+  ];
+
+  const handleSaveAttribution = (eventId, playerId) => {
+    setMockUnattributed(prev => prev.filter(e => e.id !== eventId));
+  };
 
   return (
     <div className="demo-view">
-      <h2>⏱️ Match-Day en Vivo — 2ª Parte (67')</h2>
-      <div className="demo-stats-grid">
-        <div className="demo-stat-card" style={{ borderLeft: '4px solid #4CAF7D' }}>
-          <span className="demo-stat-icon">⚽</span>
-          <span className="demo-stat-value">2 - 1</span>
-          <span className="demo-stat-label">Marcador en Directo</span>
-        </div>
-        <div className="demo-stat-card" style={{ borderLeft: '4px solid #D4A843' }}>
-          <span className="demo-stat-icon">⏱️</span>
-          <span className="demo-stat-value">67:42</span>
-          <span className="demo-stat-label">Minuto de Juego</span>
-        </div>
-      </div>
-      <div className="demo-next-match" style={{ marginTop: '16px' }}>
-        <h3>📝 Cronología del Encuentro</h3>
-        <ul style={{ listStyle: 'none', padding: 0, margin: '8px 0', fontSize: '14px' }}>
-          <li style={{ padding: '6px 0', borderBottom: '1px solid #eee' }}>⚽ 23' Gol de Iván Fernández (#7)</li>
-          <li style={{ padding: '6px 0', borderBottom: '1px solid #eee' }}>🟨 41' Tarjeta Amarilla a Sergio López (#4)</li>
-          <li style={{ padding: '6px 0', borderBottom: '1px solid #eee' }}>⚽ 58' Gol de Marcos Díaz (#9)</li>
-          <li style={{ padding: '6px 0' }}>🔄 65' Cambio: Entra Rubén Moreno (#10)</li>
-        </ul>
+      <div style={{ display: 'flex', gap: '8px', marginBottom: '16px', borderBottom: '1px solid #e0e0e0', paddingBottom: '8px' }}>
         <button
           type="button"
-          className="demo-open-shotmodal-btn"
-          onClick={() => setShotModalOpen(true)}
+          className={`tab-btn ${activeTab === 'matchday' ? 'active' : ''}`}
+          onClick={() => setActiveTab('matchday')}
           style={{
-            marginTop: '12px',
             minHeight: '48px',
-            padding: '10px 18px',
-            borderRadius: '10px',
-            background: '#1B3A2D',
-            color: '#FFFFFF',
-            border: '1.5px solid #D4A843',
-            fontWeight: 800,
-            fontSize: '14px',
+            padding: '8px 16px',
+            borderRadius: '8px',
+            fontWeight: 700,
             cursor: 'pointer',
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '8px'
+            background: activeTab === 'matchday' ? '#1B3A2D' : '#f5f5f5',
+            color: activeTab === 'matchday' ? '#ffffff' : '#333333',
+            border: 'none'
           }}
         >
-          🎯 Abrir ShotModal (Prueba de Chips)
+          ⏱️ MATCH-DAY & PARTIDOS
+        </button>
+        <button
+          type="button"
+          className={`tab-btn ${activeTab === 'stats' ? 'active' : ''}`}
+          onClick={() => setActiveTab('stats')}
+          style={{
+            minHeight: '48px',
+            padding: '8px 16px',
+            borderRadius: '8px',
+            fontWeight: 700,
+            cursor: 'pointer',
+            background: activeTab === 'stats' ? '#1B3A2D' : '#f5f5f5',
+            color: activeTab === 'stats' ? '#ffffff' : '#333333',
+            border: 'none'
+          }}
+        >
+          📊 ESTADÍSTICAS
         </button>
       </div>
+
+      {activeTab === 'matchday' && (
+        <>
+          <h2>⏱️ Match-Day en Vivo — 2ª Parte (67')</h2>
+          <div className="demo-stats-grid">
+            <div className="demo-stat-card" style={{ borderLeft: '4px solid #4CAF7D' }}>
+              <span className="demo-stat-icon">⚽</span>
+              <span className="demo-stat-value">2 - 1</span>
+              <span className="demo-stat-label">Marcador en Directo</span>
+            </div>
+            <div className="demo-stat-card" style={{ borderLeft: '4px solid #D4A843' }}>
+              <span className="demo-stat-icon">⏱️</span>
+              <span className="demo-stat-value">67:42</span>
+              <span className="demo-stat-label">Minuto de Juego</span>
+            </div>
+          </div>
+
+          <div style={{ marginTop: '16px', display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+            {/* Botón de Refinamiento Opcional con touch target >= 48dp y color neutro */}
+            <button
+              type="button"
+              id="livestats-unattributed-counter-btn"
+              className="jugador-unattributed-btn"
+              onClick={() => setUnattrModalOpen(true)}
+              style={{
+                minHeight: '48px',
+                padding: '10px 16px',
+                borderRadius: '8px',
+                background: '#F8FAFC',
+                border: '1.5px solid #D4A843',
+                color: '#1E293B',
+                fontWeight: 700,
+                fontSize: '13px',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '8px',
+                cursor: 'pointer'
+              }}
+            >
+              <span>⚙️</span>
+              <span>{mockUnattributed.length > 0 ? `Refinar atribución (${mockUnattributed.length} opcionales)` : 'Nada pendiente ✅'}</span>
+            </button>
+
+            <button
+              type="button"
+              className="demo-open-shotmodal-btn"
+              onClick={() => setShotModalOpen(true)}
+              style={{
+                minHeight: '48px',
+                padding: '10px 18px',
+                borderRadius: '8px',
+                background: '#1B3A2D',
+                color: '#FFFFFF',
+                border: '1.5px solid #D4A843',
+                fontWeight: 800,
+                fontSize: '14px',
+                cursor: 'pointer',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '8px'
+              }}
+            >
+              🎯 Abrir ShotModal (Prueba de Chips)
+            </button>
+          </div>
+
+          <h3 style={{ marginTop: '24px', marginBottom: '12px' }}>📋 Lista de Partidos (Badges Derivados)</h3>
+          <div className="matches-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '12px' }}>
+            {demoMatches.map(m => {
+              const derivedStatus = getMatchDerivedStatus(m);
+              const statusKey = derivedStatus === 'FINALIZADO' ? 'finalizado'
+                : derivedStatus === 'EN_EDICION' ? 'en-edicion'
+                : derivedStatus === 'PENDIENTE' ? 'pendiente'
+                : 'no-disputado';
+              const statusLabel = derivedStatus === 'FINALIZADO' ? (t('match.status.finalizado') || 'FINALIZADO')
+                : derivedStatus === 'EN_EDICION' ? (t('match.status.en_edicion') || 'EN EDICIÓN')
+                : derivedStatus === 'PENDIENTE' ? (t('match.status.pendiente') || 'PENDIENTE')
+                : (t('match.status.no_disputado') || 'NO DISPUTADO');
+              return (
+                <div key={m.id} className="match-card" style={{ padding: '14px', borderRadius: '12px', border: '1px solid #e2e8f0', background: '#ffffff', boxShadow: '0 2px 4px rgba(0,0,0,0.04)' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                    <span style={{ fontSize: '12px', color: '#64748B' }}>📅 {m.fecha} · {m.hora}</span>
+                    <span className={`status-badge ${statusKey}`} style={{
+                      display: 'inline-block',
+                      padding: '4px 10px',
+                      borderRadius: '12px',
+                      fontSize: '11px',
+                      fontWeight: 800,
+                      letterSpacing: '0.04em',
+                      textTransform: 'uppercase',
+                      backgroundColor: statusKey === 'finalizado' ? '#E2E8F0' : statusKey === 'en-edicion' ? '#FEF3C7' : statusKey === 'pendiente' ? '#DCFCE7' : '#F1F5F9',
+                      color: statusKey === 'finalizado' ? '#475569' : statusKey === 'en-edicion' ? '#B45309' : statusKey === 'pendiente' ? '#15803D' : '#94A3B8'
+                    }}>
+                      {statusLabel}
+                    </span>
+                  </div>
+                  <h4 style={{ margin: '0 0 6px 0', fontSize: '15px', color: '#0F172A' }}>vs. {m.rival}</h4>
+                  <div style={{ fontSize: '13px', color: '#475569' }}>
+                    {m.marcadorPropio !== undefined ? `Resultado: ${m.marcadorPropio} - ${m.marcadorRival}` : 'Sin disputar'}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </>
+      )}
+
+      {activeTab === 'stats' && (
+        <div>
+          <div style={{ display: 'flex', gap: '8px', marginBottom: '16px' }}>
+            <button
+              type="button"
+              className={`sub-tab-btn ${statsSubTab === 'tactical' ? 'active' : ''}`}
+              onClick={() => setStatsSubTab('tactical')}
+              style={{
+                minHeight: '48px',
+                padding: '8px 16px',
+                borderRadius: '8px',
+                fontWeight: 700,
+                cursor: 'pointer',
+                background: statsSubTab === 'tactical' ? '#1B3A2D' : '#e2e8f0',
+                color: statsSubTab === 'tactical' ? '#ffffff' : '#333333',
+                border: 'none'
+              }}
+            >
+              📍 Campo & Táctica
+            </button>
+          </div>
+
+          {statsSubTab === 'tactical' && (
+            <div>
+              <ZoneEventMap
+                events={mockEventsForZone}
+                t={t}
+              />
+            </div>
+          )}
+        </div>
+      )}
 
       <ShotCaptureModal
         isOpen={shotModalOpen}
@@ -249,6 +450,14 @@ function PartidosView() {
         onConfirmShot={() => setShotModalOpen(false)}
         origin="team"
         initialTeam="own"
+        playersList={DEMO_PLAYERS}
+      />
+
+      <UnattributedEventsManager
+        isOpen={unattrModalOpen}
+        onClose={() => setUnattrModalOpen(false)}
+        events={mockUnattributed}
+        onAttributeEvents={handleSaveAttribution}
         playersList={DEMO_PLAYERS}
       />
     </div>

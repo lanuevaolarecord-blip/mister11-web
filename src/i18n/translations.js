@@ -2103,7 +2103,25 @@ export const translations = {
     'capture.hud.unattributed': 'Sin atribuir',
     'capture.criteria.title': 'Manual de Criterios de Captura',
     'capture.criteria.search': 'Buscar criterio...',
-    'capture.criteria.downloadPdf': 'Descargar PDF Oficial'
+    'capture.criteria.downloadPdf': 'Descargar PDF Oficial',
+    'capture.refine_title': 'Refinar atribución individual (opcional)',
+    'capture.refine_subtitle': 'Los totales de equipo ya están computados. Asigna solo lo que quieras reflejar en nota, radar y XP.',
+    'capture.refine_empty': 'Nada pendiente ✅',
+    'capture.refine_skip': 'Omitir',
+    'capture.refine_prompt_title': '¿Refinar atribución individual ahora? (opcional)',
+    'capture.refine_btn': 'Refinar atribución',
+    'match.status.finalizado': 'FINALIZADO',
+    'match.status.en_edicion': 'EN EDICIÓN',
+    'match.status.pendiente': 'PENDIENTE',
+    'match.status.no_disputado': 'NO DISPUTADO',
+    'stats.eventMap.title': 'Mapa de Eventos por Zona',
+    'stats.eventMap.guide': 'Distribución territorial de las intervenciones del equipo (recuperaciones, duelos, tiros y faltas). Indica dónde está trabajando, ganando disputas o sufriendo el equipo en el terreno de juego.',
+    'stats.eventMap.pass_insufficient': 'Red de pases no disponible: Se requieren al menos 5 pases registrados para generar la red táctica. Se muestra el mapa de intervenciones por zona.',
+    'stats.passNetwork.guide': 'Cada nodo representa la posición media del jugador y el grosor de las líneas indica el volumen de pases entre compañeros. Permite identificar las sociedades clave y la fluidez asociativa en la salida de balón.',
+    'stats.theater.close': 'Cerrar modo teatro',
+    'stats.theater.theater_mode': 'Modo Teatro',
+    'stats.theater.fullscreen': 'Pantalla Completa',
+    'stats.theater.exit_fullscreen': 'Salir de Pantalla Completa'
   },
 
   'English (EN)': {
@@ -4210,7 +4228,25 @@ export const translations = {
     'capture.hud.unattributed': 'Unattributed',
     'capture.criteria.title': 'Capture Criteria Manual',
     'capture.criteria.search': 'Search criterion...',
-    'capture.criteria.downloadPdf': 'Download Official PDF'
+    'capture.criteria.downloadPdf': 'Download Official PDF',
+    'capture.refine_title': 'Refine individual attribution (optional)',
+    'capture.refine_subtitle': 'Team totals are already computed. Assign only what you want to reflect on ratings, radars, and XP.',
+    'capture.refine_empty': 'Nothing pending ✅',
+    'capture.refine_skip': 'Skip',
+    'capture.refine_prompt_title': 'Refine individual attribution now? (optional)',
+    'capture.refine_btn': 'Refine attribution',
+    'match.status.finalizado': 'FINISHED',
+    'match.status.en_edicion': 'IN EDITING',
+    'match.status.pendiente': 'PENDING',
+    'match.status.no_disputado': 'NOT PLAYED',
+    'stats.eventMap.title': 'Zone Event Map',
+    'stats.eventMap.guide': 'Spatial distribution of team actions (recoveries, duels, shots, and fouls). Highlights where the team is working, winning duels, or conceding ground on the pitch.',
+    'stats.eventMap.pass_insufficient': 'Pass network unavailable: At least 5 recorded passes are required to generate tactical passing links. Showing zone event distribution instead.',
+    'stats.passNetwork.guide': 'Each node represents a player\'s average position and line thickness reflects pass volume between teammates. It identifies key passing partnerships and ball circulation dynamics.',
+    'stats.theater.close': 'Close theater mode',
+    'stats.theater.theater_mode': 'Theater Mode',
+    'stats.theater.fullscreen': 'Fullscreen',
+    'stats.theater.exit_fullscreen': 'Exit Fullscreen'
   }
 };
 

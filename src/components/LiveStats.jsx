@@ -27,6 +27,7 @@ import { StatsFilters } from './MatchStats/StatsFilters';
 import { MatchActionsToolbar } from './MatchStats/MatchActionsToolbar';
 import { HeatMap } from './MatchStats/HeatMap';
 import { PassNetwork } from './MatchStats/PassNetwork';
+import { ZoneEventMap } from './MatchStats/ZoneEventMap';
 import { ShotMap } from './MatchStats/ShotMap';
 import { ShotCaptureModal } from './ShotCaptureModal';
 import { MatchRadarChart } from './MatchStats/MatchRadarChart';
@@ -1283,26 +1284,28 @@ const LiveStats = ({
                   id="livestats-unattributed-counter-btn"
                   className="jugador-unattributed-btn"
                   onClick={() => setShowUnattributedModal(true)}
-                  title={isEn ? 'Manage unattributed events' : 'Gestionar eventos sin atribuir'}
+                  title={isEn ? 'Refine individual attribution (optional)' : 'Refinar atribución individual (opcional)'}
                   style={{
-                    minHeight: '38px',
+                    minHeight: '48px',
                     borderRadius: '8px',
-                    padding: '0 10px',
-                    background: unattributedCount > 0 ? 'rgba(239, 68, 68, 0.15)' : (darkMode ? 'rgba(255, 255, 255, 0.05)' : 'rgba(100, 116, 139, 0.08)'),
-                    border: `1.5px solid ${unattributedCount > 0 ? '#EF4444' : (darkMode ? 'rgba(255, 255, 255, 0.15)' : '#94A3B8')}`,
-                    color: unattributedCount > 0 ? '#EF4444' : (darkMode ? '#94A3B8' : '#475569'),
+                    padding: '0 12px',
+                    background: unattributedCount > 0
+                      ? (darkMode ? 'rgba(212, 168, 67, 0.15)' : 'rgba(212, 168, 67, 0.10)')
+                      : (darkMode ? 'rgba(255, 255, 255, 0.05)' : 'rgba(100, 116, 139, 0.08)'),
+                    border: `1.5px solid ${unattributedCount > 0 ? '#D4A843' : (darkMode ? 'rgba(255, 255, 255, 0.15)' : '#94A3B8')}`,
+                    color: unattributedCount > 0 ? '#D4A843' : (darkMode ? '#94A3B8' : '#475569'),
                     fontWeight: 800,
                     fontSize: '11px',
                     display: 'flex',
                     alignItems: 'center',
-                    gap: '5px',
+                    gap: '6px',
                     cursor: 'pointer'
                   }}
                 >
-                  <span>{unattributedCount > 0 ? '🔘' : '✅'}</span>
+                  <span>{unattributedCount > 0 ? '✨' : '✅'}</span>
                   <span>{unattributedCount > 0 
-                    ? (isEn ? `Unattributed (${unattributedCount})` : `Sin atribuir (${unattributedCount})`) 
-                    : (isEn ? 'All attributed ✅' : 'Todo atribuido ✅')}</span>
+                    ? (isEn ? `Refine (${unattributedCount})` : `Refinar (${unattributedCount})`) 
+                    : t('capture.refine_empty')}</span>
                 </button>
                 <button
                   type="button"
@@ -1891,12 +1894,18 @@ const LiveStats = ({
               teamName={homeTeamName}
             />
 
-            {/* Red de Pases Táctica (Condicional: solo si existen pases registrados) */}
-            {passesList && passesList.length > 0 && (
+            {/* Red de Pases Táctica (si >= 5 pases) o Mapa de Eventos por Zona (si < 5) */}
+            {passesList && passesList.length >= 5 ? (
               <PassNetwork
                 passes={passesList}
                 players={playersList}
                 teamName={homeTeamName}
+              />
+            ) : (
+              <ZoneEventMap
+                events={filteredEvents}
+                teamName={homeTeamName}
+                isSubstitute={true}
               />
             )}
 

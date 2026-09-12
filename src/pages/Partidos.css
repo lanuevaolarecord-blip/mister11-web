@@ -287,8 +287,12 @@ html.dark select option {
   background: #1b3a2d;
   color: white;
 }
-.status-badge.terminado { background: var(--partidos-gold); color: #1b3a2d; }
+.status-badge.terminado,
+.status-badge.finalizado { background: var(--partidos-gold, #D4A843); color: #1b3a2d; }
+.status-badge.en-edicion,
+.status-badge.editing { background: #3B82F6; color: #FFFFFF; }
 .status-badge.pendiente { background: #1b3a2d; color: white; }
+.status-badge.no-disputado { background: rgba(148, 163, 184, 0.2); color: var(--partidos-text-muted, #94A3B8); border: 1px solid rgba(148, 163, 184, 0.35); }
 
 .mc-date { font-size: 13px; color: var(--partidos-text-primary); font-weight: 700; }
 

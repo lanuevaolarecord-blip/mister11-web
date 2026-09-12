@@ -1,6 +1,7 @@
 import React, { useState, useMemo, useRef, useCallback } from 'react';
 import { Flame, Maximize2, Minimize2, Eye } from 'lucide-react';
 import { useTranslation } from '../../hooks/useTranslation';
+import { useTheaterFullscreen } from '../../hooks/useTheaterFullscreen';
 
 // ── Mapa semántico: tipo de evento → zona estimada (0–100) ──────────────────
 const ZONE_MAP = {
@@ -46,27 +47,13 @@ export const HeatMap = ({
   const { isEn } = useTranslation();
   const [hoveredCell, setHoveredCell] = useState(null);
   const [activeTab, setActiveTab] = useState('density');
-  const [isFullscreen, setIsFullscreen] = useState(false);
   const [showTacticalGuide, setShowTacticalGuide] = useState(false);
   const wrapperRef = useRef(null);
+  const { isFullscreen, isTheater, toggle: toggleFullscreen } = useTheaterFullscreen(wrapperRef);
+  const isExpanded = isFullscreen || isTheater;
 
   const COLS = 15;
   const ROWS = 10;
-
-  const toggleFullscreen = useCallback(() => {
-    if (!wrapperRef.current) return;
-    if (!document.fullscreenElement) {
-      wrapperRef.current.requestFullscreen?.().catch(() => {});
-    } else {
-      document.exitFullscreen?.().catch(() => {});
-    }
-  }, []);
-
-  React.useEffect(() => {
-    const handler = () => setIsFullscreen(!!document.fullscreenElement);
-    document.addEventListener('fullscreenchange', handler);
-    return () => document.removeEventListener('fullscreenchange', handler);
-  }, []);
 
   // Filtrar eventos por jugador y modo
   const filteredEvents = useMemo(() => {
@@ -132,8 +119,8 @@ export const HeatMap = ({
   return (
     <div
       ref={wrapperRef}
-      className={`heat-map-container ${isFullscreen ? 'heat-map-fullscreen-active' : ''}`}
-      style={isFullscreen ? {
+      className={`heat-map-container ${isExpanded ? 'heat-map-fullscreen-active' : ''}`}
+      style={isExpanded ? {
         position: 'fixed',
         top: 0,
         left: 0,
@@ -144,7 +131,8 @@ export const HeatMap = ({
         maxHeight: '100dvh',
         background: '#0b1712',
         padding: '12px 16px',
-        overflow: 'hidden',
+        overflowY: 'auto',
+        overflowX: 'hidden',
         display: 'flex',
         flexDirection: 'column',
         zIndex: 999999,
@@ -152,7 +140,7 @@ export const HeatMap = ({
       } : {}}
     >
       {/* Header del Mapa de Calor */}
-      <div className="heat-map-header" style={{ flexShrink: 0, marginBottom: isFullscreen ? '8px' : '16px' }}>
+      <div className="heat-map-header" style={{ flexShrink: 0, marginBottom: isExpanded ? '8px' : '16px' }}>
         <div className="heat-map-title">
           <Flame size={20} className="flame-icon" />
           <h3>{isEn ? `Tactical Heat Map (${teamName})` : `Mapa de Calor Táctico (${teamName})`}</h3>
@@ -194,7 +182,7 @@ export const HeatMap = ({
       {/* Campo SVG con rejilla superpuesta (Zero-scroll en Fullscreen) */}
       <div
         className="field-heatmap-wrapper"
-        style={isFullscreen ? {
+        style={isExpanded ? {
           flex: 1,
           minHeight: 0,
           display: 'flex',
@@ -210,17 +198,18 @@ export const HeatMap = ({
           type="button"
           className="btn-floating-pitch-fullscreen"
           onClick={toggleFullscreen}
-          title={isFullscreen ? (isEn ? 'Exit Fullscreen' : 'Salir de Pantalla Completa') : (isEn ? 'View Fullscreen' : 'Ver en Pantalla Completa')}
+          style={{ minWidth: '48px', minHeight: '48px' }}
+          title={isExpanded ? (isEn ? 'Exit Fullscreen' : 'Salir de Pantalla Completa') : (isEn ? 'View Fullscreen' : 'Ver en Pantalla Completa')}
         >
-          {isFullscreen ? <Minimize2 size={18} /> : <Maximize2 size={18} />}
+          {isExpanded ? <Minimize2 size={18} /> : <Maximize2 size={18} />}
         </button>
 
-        <div style={{ position: 'relative', width: '100%', height: isFullscreen ? '100%' : 'auto', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div style={{ position: 'relative', width: '100%', height: isExpanded ? '100%' : 'auto', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <svg
             viewBox="0 0 105 68"
             className="football-pitch-svg"
             preserveAspectRatio="none"
-            style={isFullscreen ? { maxHeight: 'calc(100dvh - 120px)', width: 'auto', maxWidth: '100%', objectFit: 'contain' } : {}}
+            style={isExpanded ? { maxHeight: 'calc(100dvh - 120px)', width: 'auto', maxWidth: '100%', objectFit: 'contain' } : {}}
           >
             <rect x="0" y="0" width="105" height="68" fill="#1b4d2e" />
             {Array.from({ length: 9 }).map((_, i) => (

@@ -8,8 +8,8 @@ test.describe('Míster11 — E2E Captura Rediseñada, 2D Pitch, Sin Atribuir y C
   ];
 
   const languages = [
-    { code: 'ES', label: 'Español (ES)', criteriaTitle: /Manual de Criterios/i, unattributedBadge: /Sin atribuir|Todo atribuido/i },
-    { code: 'EN', label: 'English (EN)', criteriaTitle: /Capture Criteria Manual/i, unattributedBadge: /Unattributed|All attributed/i }
+    { code: 'ES', label: 'Español (ES)', criteriaTitle: /Manual de Criterios/i, unattributedBadge: /Refinar|Sin atribuir|Todo atribuido|Nada pendiente/i },
+    { code: 'EN', label: 'English (EN)', criteriaTitle: /Capture Criteria Manual/i, unattributedBadge: /Refine|Unattributed|All attributed|Nothing pending/i }
   ];
 
   for (const vp of viewports) {

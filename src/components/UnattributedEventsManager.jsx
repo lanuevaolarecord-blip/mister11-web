@@ -66,6 +66,14 @@ export const UnattributedEventsManager = ({
 }) => {
   const { t, isEn } = useTranslation();
   const [targetPlayerByGroup, setTargetPlayerByGroup] = useState({});
+  const [expandedGroups, setExpandedGroups] = useState({});
+
+  const toggleGroup = (type) => {
+    setExpandedGroups(prev => ({
+      ...prev,
+      [type]: !prev[type]
+    }));
+  };
 
   // Filtrar exclusivamente eventos propios atribuibles pendientes
   const unattributedEvents = useMemo(() => {
@@ -135,22 +143,26 @@ export const UnattributedEventsManager = ({
   if (!isOpen) return null;
 
   return (
-    <div className="unattr-modal-overlay" onClick={onClose}>
+    <div className="unattr-modal-overlay" onClick={onClose} role="dialog" aria-modal="true" aria-labelledby="refine-modal-title">
       <div className="unattr-modal-sheet" onClick={e => e.stopPropagation()}>
         {/* Cabecera */}
         <div className="unattr-modal-header">
           <div className="unattr-title-row">
-            <h3 className="unattr-title">
+            <h3 className="unattr-title" id="refine-modal-title">
               <span>📋</span>
-              <span>{isEn ? 'Unattributed Events' : 'Eventos Sin Atribuir'}</span>
+              <span>{t('capture.refine_title')}</span>
               <span className="unattr-count-pill">{unattributedEvents.length}</span>
             </h3>
-            <button type="button" className="unattr-close-btn" onClick={onClose}>✕</button>
+            <button
+              type="button"
+              className="unattr-close-btn"
+              onClick={onClose}
+              aria-label={isEn ? 'Close' : 'Cerrar'}
+              style={{ minWidth: '48px', minHeight: '48px' }}
+            >✕</button>
           </div>
           <p className="unattr-subtitle">
-            {isEn
-              ? 'Assign events to players to update individual ratings, radars, and XP. Team totals remain unchanged.'
-              : 'Asigna eventos a jugadores para computar notas, radares y XP individual. Los totales de equipo se mantienen intactos.'}
+            {t('capture.refine_subtitle')}
           </p>
         </div>
 
@@ -158,18 +170,29 @@ export const UnattributedEventsManager = ({
         <div className="unattr-modal-body">
           {unattributedEvents.length === 0 ? (
             <div className="unattr-empty-state">
-              <span style={{ fontSize: '36px' }}>✨</span>
-              <h4>{isEn ? 'All events are attributed!' : '¡Todos los eventos están atribuidos!'}</h4>
-              <p>{isEn ? 'There are no pending events to assign.' : 'No hay eventos pendientes de asignación en este partido.'}</p>
+              <span style={{ fontSize: '36px' }}>✅</span>
+              <h4>{t('capture.refine_empty')}</h4>
+              <p>{isEn ? 'Team totals are already computed. There are no actions waiting to be assigned.' : 'Los totales de equipo ya están computados. No hay acciones pendientes de asignación.'}</p>
             </div>
           ) : (
             <div className="unattr-groups-list">
               {Object.entries(groupedEvents).map(([type, evtsList]) => {
                 const currentSelectedPlayer = targetPlayerByGroup[type] || '';
+                const isExpanded = Boolean(expandedGroups[type]);
+
                 return (
-                  <div key={type} className="unattr-group-card">
+                  <div key={type} className={`unattr-group-card ${isExpanded ? 'expanded' : 'collapsed'}`}>
                     <div className="unattr-group-header">
-                      <div className="unattr-group-info">
+                      <div
+                        className="unattr-group-info"
+                        onClick={() => toggleGroup(type)}
+                        style={{ cursor: 'pointer', userSelect: 'none', minHeight: '48px', display: 'flex', alignItems: 'center', gap: '8px' }}
+                        role="button"
+                        tabIndex={0}
+                        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleGroup(type); } }}
+                        aria-expanded={isExpanded}
+                      >
+                        <span style={{ fontSize: '12px', color: '#D4A843' }}>{isExpanded ? '▼' : '▶'}</span>
                         <strong>{getActionLabel(type)}</strong>
                         <span className="unattr-badge-qty">
                           {evtsList.length} {evtsList.length === 1 ? (isEn ? 'event' : 'evento') : (isEn ? 'events' : 'eventos')}
@@ -183,6 +206,7 @@ export const UnattributedEventsManager = ({
                             className="unattr-player-select"
                             value={currentSelectedPlayer}
                             onChange={(e) => setTargetPlayerByGroup(prev => ({ ...prev, [type]: e.target.value }))}
+                            aria-label={isEn ? 'Select player for batch' : 'Seleccionar jugador para lote'}
                           >
                             <option value="">{isEn ? 'Select player for batch...' : 'Seleccionar jugador para lote...'}</option>
                             {playersList.map(p => (
@@ -196,6 +220,7 @@ export const UnattributedEventsManager = ({
                             className="unattr-btn-batch"
                             disabled={!currentSelectedPlayer}
                             onClick={() => handleBatchAttribute(type)}
+                            style={{ minHeight: '48px' }}
                           >
                             {isEn ? `Assign All (${evtsList.length})` : `Asignar Todos (${evtsList.length})`}
                           </button>
@@ -203,29 +228,31 @@ export const UnattributedEventsManager = ({
                       )}
                     </div>
 
-                    {/* Desglose de eventos individuales del grupo */}
-                    <div className="unattr-events-sublist">
-                      {evtsList.map((e, idx) => (
-                        <div key={e.id || idx} className="unattr-event-item">
-                          <div className="unattr-event-meta">
-                            <span className="unattr-min-badge">{e.minute || 0}'</span>
-                            <span className="unattr-sector-badge">{e.zone || e.sector || 'centro'}</span>
-                          </div>
-                          {!readOnly && (
-                            <div className="unattr-item-quick-assign" style={{ flex: 1, minWidth: 0 }}>
-                              <PlayerChipRow
-                                players={playersList}
-                                selectedId={null}
-                                onSelect={(pId) => handleSingleAttribute(e, pId)}
-                                showUnassigned={false}
-                                allowDeselect={false}
-                                ariaLabel={isEn ? 'Assign event to player' : 'Asignar evento a jugador'}
-                              />
+                    {/* Desglose de eventos individuales del grupo (colapsado por defecto) */}
+                    {isExpanded && (
+                      <div className="unattr-events-sublist">
+                        {evtsList.map((e, idx) => (
+                          <div key={e.id || idx} className="unattr-event-item">
+                            <div className="unattr-event-meta">
+                              <span className="unattr-min-badge">{e.minute || 0}'</span>
+                              <span className="unattr-sector-badge">{e.zone || e.sector || 'centro'}</span>
                             </div>
-                          )}
-                        </div>
-                      ))}
-                    </div>
+                            {!readOnly && (
+                              <div className="unattr-item-quick-assign" style={{ flex: 1, minWidth: 0 }}>
+                                <PlayerChipRow
+                                  players={playersList}
+                                  selectedId={null}
+                                  onSelect={(pId) => handleSingleAttribute(e, pId)}
+                                  showUnassigned={false}
+                                  allowDeselect={false}
+                                  ariaLabel={isEn ? 'Assign event to player' : 'Asignar evento a jugador'}
+                                />
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 );
               })}
@@ -235,7 +262,12 @@ export const UnattributedEventsManager = ({
 
         {/* Footer */}
         <div className="unattr-modal-footer">
-          <button type="button" className="unattr-btn-done" onClick={onClose}>
+          <button
+            type="button"
+            className="unattr-btn-done"
+            onClick={onClose}
+            style={{ minHeight: '48px' }}
+          >
             {isEn ? 'Done' : 'Listo'}
           </button>
         </div>

@@ -570,23 +570,34 @@ const ActaOficialPanel = ({
           type="button"
           id="acta-unattributed-btn"
           onClick={() => setShowUnattributedModal(true)}
-          title={isEn ? 'Manage unattributed events' : 'Gestionar eventos sin atribuir'}
+          title={isEn ? 'Refine individual attribution (optional)' : 'Refinar atribución individual (opcional)'}
           style={{
             padding: '8px 16px',
+            minHeight: '48px',
             borderRadius: '8px',
             fontSize: '12.5px',
             fontWeight: 800,
             cursor: 'pointer',
-            border: `1.5px solid ${unattributedCount > 0 ? '#EF4444' : 'var(--partidos-border)'}`,
-            background: unattributedCount > 0 ? 'rgba(239, 68, 68, 0.15)' : 'transparent',
-            color: unattributedCount > 0 ? '#EF4444' : 'var(--partidos-text-muted)',
+            border: `1.5px solid ${unattributedCount > 0 ? '#D4A843' : 'var(--partidos-border)'}`,
+            background: unattributedCount > 0 ? 'rgba(212, 168, 67, 0.15)' : 'transparent',
+            color: unattributedCount > 0 ? '#D4A843' : 'var(--partidos-text-muted)',
             display: 'flex',
             alignItems: 'center',
             gap: '6px',
             marginLeft: 'auto'
           }}
         >
-          🔘 {isEn ? `Unattributed (${unattributedCount})` : `Sin atribuir (${unattributedCount})`}
+          {unattributedCount > 0 ? (
+            <>
+              <span>✨</span>
+              <span>{isEn ? `Refine (${unattributedCount})` : `Refinar (${unattributedCount})`}</span>
+            </>
+          ) : (
+            <>
+              <span>✅</span>
+              <span>{t('capture.refine_empty')}</span>
+            </>
+          )}
         </button>
       </div>
 

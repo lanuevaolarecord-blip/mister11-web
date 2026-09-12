@@ -141,8 +141,8 @@ export const getStartingXI = (titulares = [], suplentes = [], events = []) => {
   const subbedOutStarters = new Set();
 
   subEvents.forEach(e => {
-    const pIn = String(e.playerInId || e.subInId || e.jugadorEntraId || e.inId || '');
-    const pOut = String(e.playerOutId || e.subOutId || e.jugadorSaleId || e.outId || '');
+    const pIn = String(e.playerInId || e.subInId || e.jugadorEntraId || e.inId || e.entraId || '');
+    const pOut = String(e.playerOutId || e.subOutId || e.jugadorSaleId || e.outId || e.saleId || '');
     if (pIn) subbedInPlayers.add(pIn);
     if (pOut && !subbedInPlayers.has(pOut)) {
       subbedOutStarters.add(pOut);
@@ -235,10 +235,10 @@ export const calculateMinutesFromEvents = (
   );
 
   const subOutEvents = subEvents.filter(e =>
-    String(e.subOutId || e.jugadorSaleId || e.playerOutId || e.outId || '') === pid
+    String(e.subOutId || e.jugadorSaleId || e.playerOutId || e.outId || e.saleId || '') === pid
   );
   const subInEvents = subEvents.filter(e =>
-    String(e.subInId || e.jugadorEntraId || e.playerInId || e.inId || '') === pid
+    String(e.subInId || e.jugadorEntraId || e.playerInId || e.inId || e.entraId || '') === pid
   );
 
   const hasSubInEvent = subInEvents.length > 0;

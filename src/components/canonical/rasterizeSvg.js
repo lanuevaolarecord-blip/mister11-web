@@ -8,24 +8,57 @@
  */
 
 /**
- * Convierte un SVG string a PNG Base64 DataURL a escala 3x
- * @param {string} svgString - Contenido XML/SVG completo con atributos xmlns, width, height, viewBox
- * @param {number} targetWidth - Ancho en px lógicos (CSS)
- * @param {number} targetHeight - Alto en px lógicos (CSS)
- * @param {number} scale - Factor de escala para alta densidad (default 3x)
+ * Convierte un SVG string o elemento React SVG a PNG Base64 DataURL a escala 3x
+ * @param {string|React.ReactElement} svgInput - Contenido XML/SVG o elemento React
+ * @param {number|Object} targetWidthOrOptions - Ancho en px o { width, height, scale }
+ * @param {number} [targetHeight] - Alto en px si se usa firma posicional
+ * @param {number} [scale=3] - Factor de escala para alta densidad (default 3x)
  * @returns {Promise<string|null>} DataURL en formato image/png
  */
-export async function rasterizeSvgToDataUrl(svgString, targetWidth, targetHeight, scale = 3) {
-  if (!svgString || typeof window === 'undefined') return null;
+export async function rasterizeSvgToDataUrl(svgInput, targetWidthOrOptions, targetHeight, scale = 3) {
+  if (!svgInput) return null;
 
-  return new Promise((resolve) => {
+  let width = targetWidthOrOptions;
+  let height = targetHeight;
+  let s = scale;
+
+  if (typeof targetWidthOrOptions === 'object' && targetWidthOrOptions !== null) {
+    width = targetWidthOrOptions.width ?? targetWidthOrOptions.w;
+    height = targetWidthOrOptions.height ?? targetWidthOrOptions.h;
+    s = targetWidthOrOptions.scale ?? 3;
+  }
+
+  const numW = Math.round(Number(width) || 640);
+  const numH = Math.round(Number(height) || 200);
+  const numScale = Number(s) || 3;
+
+  // Convertir elemento React a string SVG si es necesario
+  let cleanSvg = '';
+  if (typeof svgInput === 'string') {
+    cleanSvg = svgInput;
+  } else if (typeof svgInput === 'object') {
     try {
-      // Asegurar namespace xmlns en la raíz del SVG
-      let cleanSvg = svgString;
-      if (!cleanSvg.includes('xmlns="http://www.w3.org/2000/svg"')) {
-        cleanSvg = cleanSvg.replace('<svg', '<svg xmlns="http://www.w3.org/2000/svg"');
-      }
+      const { renderToStaticMarkup } = await import('react-dom/server');
+      cleanSvg = renderToStaticMarkup(svgInput);
+    } catch (e) {
+      console.warn('[rasterizeSvgToDataUrl] Error en renderToStaticMarkup:', e);
+      return null;
+    }
+  }
 
+  if (!cleanSvg || typeof cleanSvg !== 'string') return null;
+
+  // Asegurar namespace xmlns y dimensiones en la raíz del SVG
+  if (!cleanSvg.includes('xmlns="http://www.w3.org/2000/svg"')) {
+    cleanSvg = cleanSvg.replace('<svg', '<svg xmlns="http://www.w3.org/2000/svg"');
+  }
+
+  if (typeof window === 'undefined') {
+    return null;
+  }
+
+  return new Promise((resolve, reject) => {
+    try {
       const blob = new Blob([cleanSvg], { type: 'image/svg+xml;charset=utf-8' });
       const url = URL.createObjectURL(blob);
       const img = new Image();
@@ -33,36 +66,38 @@ export async function rasterizeSvgToDataUrl(svgString, targetWidth, targetHeight
       img.onload = () => {
         try {
           const canvas = document.createElement('canvas');
-          canvas.width = Math.round(targetWidth * scale);
-          canvas.height = Math.round(targetHeight * scale);
+          canvas.width = Math.round(numW * numScale);
+          canvas.height = Math.round(numH * numScale);
           const ctx = canvas.getContext('2d');
 
           if (ctx) {
-            ctx.scale(scale, scale);
+            ctx.scale(numScale, numScale);
             ctx.imageSmoothingEnabled = true;
             ctx.imageSmoothingQuality = 'high';
-            ctx.drawImage(img, 0, 0, targetWidth, targetHeight);
+            ctx.drawImage(img, 0, 0, numW, numH);
             const dataUrl = canvas.toDataURL('image/png', 0.95);
             URL.revokeObjectURL(url);
-            resolve(dataUrl);
-            return;
+            if (dataUrl && dataUrl.length > 500) {
+              resolve(dataUrl);
+              return;
+            }
           }
         } catch (canvasErr) {
-          console.warn('[rasterizeSvgToDataUrl] Error en canvas:', canvasErr);
+          console.error('[rasterizeSvgToDataUrl] Error en canvas:', canvasErr);
         }
         URL.revokeObjectURL(url);
         resolve(null);
       };
 
       img.onerror = (err) => {
-        console.warn('[rasterizeSvgToDataUrl] Error cargando SVG Blob como imagen:', err);
+        console.error('[rasterizeSvgToDataUrl] Error cargando SVG Blob como imagen:', err);
         URL.revokeObjectURL(url);
         resolve(null);
       };
 
       img.src = url;
     } catch (e) {
-      console.warn('[rasterizeSvgToDataUrl] Excepción general:', e);
+      console.error('[rasterizeSvgToDataUrl] Excepción general:', e);
       resolve(null);
     }
   });

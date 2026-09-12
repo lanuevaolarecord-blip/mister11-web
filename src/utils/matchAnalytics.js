@@ -270,6 +270,10 @@ export function getMatchAnalytics(matchData = {}, rawEvents = [], options = {}) 
       ownOnTargetCount,
       rivalGoalsCount,
       rivalOnTargetCount,
+      ownOnTarget: ownOnTargetCount,
+      ownOffTarget: Math.max(0, ownShots.length - ownOnTargetCount),
+      rivalOnTarget: rivalOnTargetCount,
+      rivalOffTarget: Math.max(0, rivalShots.length - rivalOnTargetCount),
       conversionRate: ownShots.length > 0 ? Math.round((ownGoalsCount / ownShots.length) * 100) : 0,
       bySector: sectorCounts
     },

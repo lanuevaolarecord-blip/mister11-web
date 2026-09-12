@@ -203,8 +203,23 @@ export const generateMatchPdfReport = async ({
     const safeTeamName = cleanPdfText(teamName);
     const dateLoc = isEn ? 'en-US' : 'es-ES';
     const fechaStr = matchData?.date ? new Date(matchData.date).toLocaleDateString(dateLoc) : new Date().toLocaleDateString(dateLoc);
-    const goalsFor = matchData?.goalsFor ?? matchData?.golesLocal ?? 0;
-    const goalsAgainst = matchData?.goalsAgainst ?? matchData?.golesVisita ?? 0;
+
+    // Eventos de gol propios y rivales
+    const ownGoalEvents = safeEvents.filter(e => e && (
+      e.type === 'gol_local' || e.type === 'goal_own' ||
+      (String(e.type || '').includes('own') && (e.outcome === 'goal' || e.isGoal || e.result === 'gol'))
+    ));
+    const rivalGoalEvents = safeEvents.filter(e => e && (
+      e.type === 'gol_rival' || e.type === 'goal_rival' ||
+      (String(e.type || '').includes('rival') && (e.outcome === 'goal' || e.isGoal || e.result === 'gol'))
+    ));
+
+    const goalsFor = ownGoalEvents.length > 0
+      ? ownGoalEvents.length
+      : (matchData?.goalsFor ?? matchData?.golesLocal ?? 0);
+    const goalsAgainst = rivalGoalEvents.length > 0
+      ? rivalGoalEvents.length
+      : (matchData?.goalsAgainst ?? matchData?.golesVisita ?? 0);
 
     // ── 1. ENCABEZADO INSTITUCIONAL ────────────────────────────────────────
     doc.setFillColor(...colorPrimary);
@@ -233,12 +248,13 @@ export const generateMatchPdfReport = async ({
     doc.setTextColor(...colorAccent);
     doc.text(`MÍSTER 11 — ${titleText}`, pageW / 2, 14, { align: 'center' });
 
-    // Subtítulo con Metadatos del Encuentro
+    // Subtítulo con Metadatos del Encuentro (sin artefactos de corchetes e.g. "BURRIANA B vs Xilxes (visitante)")
     doc.setFontSize(8.5);
     doc.setFont('helvetica', 'normal');
     doc.setTextColor(226, 232, 240);
     const timeStr = matchData?.time ? ` ${matchData.time}` : '';
-    const matchTypeStr = matchData?.type ? ` [${cleanPdfText(matchData.type)}]` : '';
+    const matchTypeClean = matchData?.type ? cleanPdfText(matchData.type) : '';
+    const matchTypeStr = matchTypeClean ? ` (${matchTypeClean})` : '';
     doc.text(
       `${isEn ? 'Date' : 'Fecha'}: ${fechaStr}${timeStr}   |   ${safeTeamName} vs ${rivalName}${matchTypeStr}`,
       pageW / 2,
@@ -282,7 +298,30 @@ export const generateMatchPdfReport = async ({
     doc.setTextColor(100, 116, 139);
     const durationMin = getEffectiveMatchDuration(matchData) || matchData.actaOficial?.totalDuration || matchData.duration || 90;
     const venueStr = cleanPdfText(matchData.field || matchData.lugar || (isEn ? 'Standard Pitch' : 'Campo Oficial'));
-    const mvpStr = cleanPdfText(matchData.mvp || 'N/A');
+
+    // Cálculo y selección de MVP transparente: solo entre jugadores con estadísticas atribuidas
+    let mvpStr = cleanPdfText(matchData.mvp || '');
+    if (!mvpStr) {
+      const candidates = (Array.isArray(players) ? players : []).map((pl) => {
+        const pEvts = safeEvents.filter((e) => e && String(e.playerId || e.jugadorId) === String(pl.id));
+        const goals = pEvts.filter((e) => e.type === 'gol_local' || e.type === 'goal_own' || e.outcome === 'goal').length;
+        const saves = pEvts.filter((e) => e.type === 'save' || e.type === 'save_own').length;
+        const duels = pEvts.filter((e) => e.type === 'duel_won').length;
+        const hasStats = (goals + saves + duels) > 0;
+        const score = (goals * 4) + (saves * 2) + duels;
+        return { name: cleanPdfText(pl.name || pl.nombre || 'Jugador'), score, hasStats };
+      }).sort((a, b) => b.score - a.score);
+
+      const topWithStats = candidates.find((c) => c.hasStats);
+      if (topWithStats) {
+        mvpStr = topWithStats.name;
+      } else if (candidates.length > 0) {
+        mvpStr = `${candidates[0].name} (${isEn ? 'mixed rating' : 'nota mixta'})`;
+      } else {
+        mvpStr = isEn ? 'Not specified' : 'No especificado';
+      }
+    }
+
     doc.text(
       `MVP: ${mvpStr}   |   ${isEn ? 'Duration' : 'Duración'}: ${durationMin}'   |   ${isEn ? 'Venue' : 'Lugar'}: ${venueStr}   |   ${isEn ? 'Formation' : 'Formación'}: ${matchData?.lineup || '4-3-3'}`,
       20,
@@ -512,15 +551,36 @@ export const generateMatchPdfReport = async ({
       doc.text(isEn ? 'OFFICIAL MATCH INCIDENTS (GOALS, CARDS & SUBS)' : 'INCIDENCIAS OFICIALES (GOLES, TARJETAS Y CAMBIOS)', 14, y);
       y += 5;
 
+      // Lista completa de anotaciones (propio y rival)
+      const allScorersListActa = [];
+      if (Array.isArray(matchData.goleadoresList) && matchData.goleadoresList.length > 0) {
+        matchData.goleadoresList.forEach((g) => {
+          const p = players.find((pl) => String(pl.id) === String(g.jugadorId));
+          const pName = p ? cleanPdfText(p.name || p.nombre) : (isEn ? 'Player' : 'Jugador');
+          const minStr = (g.minuto || g.minute) ? `${g.minuto || g.minute}'` : (isEn ? 's/m' : 's/m');
+          allScorersListActa.push(`${pName} (${minStr})`);
+        });
+      } else if (ownGoalEvents.length > 0) {
+        ownGoalEvents.forEach((g) => {
+          const p = players.find((pl) => String(pl.id) === String(g.playerId || g.jugadorId));
+          const pName = p ? cleanPdfText(p.name || p.nombre) : safeTeamName;
+          const minStr = (g.minute || g.minuto) ? `${g.minute || g.minuto}'` : (isEn ? 's/m' : 's/m');
+          allScorersListActa.push(`${pName} (${minStr})`);
+        });
+      }
+
+      if (rivalGoalEvents.length > 0) {
+        rivalGoalEvents.forEach((rg) => {
+          const minStr = (rg.minute || rg.minuto) ? `${rg.minute || rg.minuto}'` : (isEn ? 's/m' : 's/m');
+          allScorersListActa.push(`${rivalName} (${minStr})`);
+        });
+      } else if (goalsAgainst > 0 && allScorersListActa.length === 0) {
+        allScorersListActa.push(`${rivalName} (${isEn ? 'Goal' : 'Gol'})`);
+      }
+
       let scorersText = matchData.scorers;
-      if (!scorersText && matchData.goleadoresList && matchData.goleadoresList.length > 0) {
-        scorersText = matchData.goleadoresList
-          .map((g) => {
-            const p = players.find((pl) => String(pl.id) === String(g.jugadorId));
-            const pName = p ? cleanPdfText(p.name || p.nombre) : (isEn ? 'Player' : 'Jugador');
-            return `${pName} (${g.minuto}')`;
-          })
-          .join(', ');
+      if (!scorersText && allScorersListActa.length > 0) {
+        scorersText = allScorersListActa.join(', ');
       }
       if (!scorersText) scorersText = isEn ? 'None recorded' : 'Ninguno registrado';
 
@@ -531,25 +591,54 @@ export const generateMatchPdfReport = async ({
             const p = players.find((pl) => String(pl.id) === String(t.jugadorId));
             const pName = p ? cleanPdfText(p.name || p.nombre) : (isEn ? 'Player' : 'Jugador');
             const tipo = t.tipo === 'amarilla' ? (isEn ? 'Yellow' : 'Amarilla') : (isEn ? 'Red' : 'Roja');
-            return `${tipo} - ${pName} (${t.minuto}')`;
+            const minStr = (t.minuto || t.minute) ? `${t.minuto || t.minute}'` : (isEn ? 's/m' : 's/m');
+            return `${tipo} - ${pName} (${minStr})`;
           })
           .join(', ');
       }
       if (!cardsText) cardsText = isEn ? 'None recorded' : 'Ninguna registrada';
 
-      let subsText = '';
+      const allSubsListActa = [];
       if (matchData.cambiosList && matchData.cambiosList.length > 0) {
-        subsText = matchData.cambiosList
-          .map((c) => {
-            const pIn = players.find((pl) => String(pl.id) === String(c.entraId));
-            const pOut = players.find((pl) => String(pl.id) === String(c.saleId));
-            const nameIn = pIn ? cleanPdfText(pIn.name || pIn.nombre) : (isEn ? 'In' : 'Entra');
-            const nameOut = pOut ? cleanPdfText(pOut.name || pOut.nombre) : (isEn ? 'Out' : 'Sale');
-            return `Min ${c.minuto}': ${nameIn} <-> ${nameOut}`;
-          })
-          .join(' | ');
+        matchData.cambiosList.forEach((c) => {
+          const pIn = players.find((pl) => String(pl.id) === String(c.entraId || c.inId || c.playerInId));
+          const pOut = players.find((pl) => String(pl.id) === String(c.saleId || c.outId || c.playerOutId));
+          const nameIn = pIn ? cleanPdfText(pIn.name || pIn.nombre) : (isEn ? 'In' : 'Entra');
+          const nameOut = pOut ? cleanPdfText(pOut.name || pOut.nombre) : (isEn ? 'Out' : 'Sale');
+          const minStr = (c.minuto || c.minute) ? `${c.minuto || c.minute}'` : (isEn ? 's/m' : 's/m');
+          allSubsListActa.push(`Min ${minStr}: ${nameIn} <-> ${nameOut}`);
+        });
       }
-      if (!subsText) subsText = isEn ? 'No substitutions recorded' : 'Sin cambios registrados';
+
+      const subEventsFromSafe = safeEvents.filter(e => e && (
+        e.type === 'cambio' || e.type === 'sustitucion' || e.type === 'substitution' || e.type === 'sub'
+      ));
+      subEventsFromSafe.forEach(se => {
+        const inId = se.subInId || se.jugadorEntraId || se.playerInId || se.inId;
+        const outId = se.subOutId || se.jugadorSaleId || se.playerOutId || se.outId;
+        const pIn = players.find(pl => String(pl.id) === String(inId));
+        const pOut = players.find(pl => String(pl.id) === String(outId));
+        const nameIn = pIn ? cleanPdfText(pIn.name || pIn.nombre) : (inId ? `J#${inId}` : (isEn ? 'In' : 'Entra'));
+        const nameOut = pOut ? cleanPdfText(pOut.name || pOut.nombre) : (outId ? `J#${outId}` : (isEn ? 'Out' : 'Sale'));
+        const minStr = (se.minute || se.minuto) ? `${se.minute || se.minuto}'` : (isEn ? 's/m' : 's/m');
+        const entry = `Min ${minStr}: ${nameIn} <-> ${nameOut}`;
+        if (!allSubsListActa.includes(entry)) {
+          allSubsListActa.push(entry);
+        }
+      });
+
+      if (allSubsListActa.length === 0) {
+        const subsWithMinutes = squadRoster.filter(r => !r.isStarter && (Number(r.minutes) > 0));
+        if (subsWithMinutes.length > 0) {
+          subsWithMinutes.forEach(s => {
+            allSubsListActa.push(`${isEn ? 'Sub In' : 'Entra'}: ${s.name} (${s.minutes}')`);
+          });
+        }
+      }
+
+      let subsText = allSubsListActa.length > 0
+        ? allSubsListActa.join(' | ')
+        : (isEn ? 'No substitutions recorded' : 'Sin sustituciones registradas');
 
       const incidentsTable = [
         [isEn ? 'Goals & Scorers' : 'Goleadores y Anotaciones', scorersText],
@@ -587,7 +676,13 @@ export const generateMatchPdfReport = async ({
         const gkBody = gkRosterActa.map(r => {
           const pEvts = safeEvents.filter(e => e && String(e.playerId) === String(r.pid));
           const saves = pEvts.filter(e => e.type === 'save' || e.type === 'save_own').length;
-          const conceded = pEvts.filter(e => e.type === 'conceded').length;
+          let conceded = pEvts.filter(e => e.type === 'conceded').length;
+
+          // Derivación fiel: si el rival marcó goles y el portero estuvo en campo, registrar encajados
+          if (conceded === 0 && goalsAgainst > 0) {
+            conceded = goalsAgainst;
+          }
+
           const penSaves = pEvts.filter(e => e.type === 'penaltySave').length;
           const claims = pEvts.filter(e => e.type === 'claim').length;
           const total = saves + conceded;
@@ -723,42 +818,94 @@ export const generateMatchPdfReport = async ({
       // ── PÁGINA 1: SECCIÓN 1 — MARCADOR & CRONOLOGÍA DE EVENTOS ────────────
       y = drawSectionHeader('sec1_timeline');
 
-      let scorersText = matchData.scorers;
-      if (!scorersText && matchData.goleadoresList && matchData.goleadoresList.length > 0) {
-        scorersText = matchData.goleadoresList
-          .map((g) => {
-            const p = players.find((pl) => String(pl.id) === String(g.jugadorId));
-            return `${p ? cleanPdfText(p.name || p.nombre) : (isEn ? 'Player' : 'Jugador')} (${g.minuto}')`;
-          })
-          .join(', ');
+      // 1. Goleadores y anotaciones (propios y rivales con minuto obligatorio)
+      const allScorersListPost = [];
+      if (Array.isArray(matchData.goleadoresList) && matchData.goleadoresList.length > 0) {
+        matchData.goleadoresList.forEach((g) => {
+          const p = players.find((pl) => String(pl.id) === String(g.jugadorId));
+          const pName = p ? cleanPdfText(p.name || p.nombre) : (isEn ? 'Player' : 'Jugador');
+          const minStr = (g.minuto || g.minute) ? `${g.minuto || g.minute}'` : (isEn ? 's/m' : 's/m');
+          allScorersListPost.push(`${pName} (${minStr})`);
+        });
+      } else if (ownGoalEvents.length > 0) {
+        ownGoalEvents.forEach((g) => {
+          const p = players.find((pl) => String(pl.id) === String(g.playerId || g.jugadorId));
+          const pName = p ? cleanPdfText(p.name || p.nombre) : safeTeamName;
+          const minStr = (g.minute || g.minuto) ? `${g.minute || g.minuto}'` : (isEn ? 's/m' : 's/m');
+          allScorersListPost.push(`${pName} (${minStr})`);
+        });
       }
-      if (!scorersText) scorersText = isEn ? 'No records' : 'Sin registros';
+
+      if (rivalGoalEvents.length > 0) {
+        rivalGoalEvents.forEach((rg) => {
+          const minStr = (rg.minute || rg.minuto) ? `${rg.minute || rg.minuto}'` : (isEn ? 's/m' : 's/m');
+          allScorersListPost.push(`${rivalName} (${minStr})`);
+        });
+      } else if (goalsAgainst > 0 && allScorersListPost.length === 0) {
+        allScorersListPost.push(`${rivalName} (${isEn ? 'Goal' : 'Gol'})`);
+      }
+
+      let scorersText = matchData.scorers;
+      if (!scorersText && allScorersListPost.length > 0) {
+        scorersText = allScorersListPost.join(', ');
+      }
+      if (!scorersText) scorersText = isEn ? 'None recorded' : 'Ninguno registrado';
 
       let cardsText = '';
       if (matchData.tarjetasList && matchData.tarjetasList.length > 0) {
         cardsText = matchData.tarjetasList
           .map((t) => {
             const p = players.find((pl) => String(pl.id) === String(t.jugadorId));
+            const pName = p ? cleanPdfText(p.name || p.nombre) : (isEn ? 'Player' : 'Jugador');
             const tipo = t.tipo === 'amarilla' ? (isEn ? 'Yellow' : 'Amarilla') : (isEn ? 'Red' : 'Roja');
-            return `${tipo} - ${p ? cleanPdfText(p.name || p.nombre) : (isEn ? 'Player' : 'Jugador')} (${t.minuto}')`;
+            const minStr = (t.minuto || t.minute) ? `${t.minuto || t.minute}'` : (isEn ? 's/m' : 's/m');
+            return `${tipo} - ${pName} (${minStr})`;
           })
           .join(', ');
       }
-      if (!cardsText) cardsText = isEn ? 'None' : 'Ninguna';
+      if (!cardsText) cardsText = isEn ? 'None recorded' : 'Ninguna registrada';
 
-      let subsText = '';
+      const allSubsListPost = [];
       if (matchData.cambiosList && matchData.cambiosList.length > 0) {
-        subsText = matchData.cambiosList
-          .map((c) => {
-            const pIn = players.find((pl) => String(pl.id) === String(c.entraId));
-            const pOut = players.find((pl) => String(pl.id) === String(c.saleId));
-            const nameIn = pIn ? cleanPdfText(pIn.name || pIn.nombre) : (isEn ? 'In' : 'Entra');
-            const nameOut = pOut ? cleanPdfText(pOut.name || pOut.nombre) : (isEn ? 'Out' : 'Sale');
-            return `Min ${c.minuto}': ${nameIn} <-> ${nameOut}`;
-          })
-          .join(' | ');
+        matchData.cambiosList.forEach((c) => {
+          const pIn = players.find((pl) => String(pl.id) === String(c.entraId || c.inId || c.playerInId));
+          const pOut = players.find((pl) => String(pl.id) === String(c.saleId || c.outId || c.playerOutId));
+          const nameIn = pIn ? cleanPdfText(pIn.name || pIn.nombre) : (isEn ? 'In' : 'Entra');
+          const nameOut = pOut ? cleanPdfText(pOut.name || pOut.nombre) : (isEn ? 'Out' : 'Sale');
+          const minStr = (c.minuto || c.minute) ? `${c.minuto || c.minute}'` : (isEn ? 's/m' : 's/m');
+          allSubsListPost.push(`Min ${minStr}: ${nameIn} <-> ${nameOut}`);
+        });
       }
-      if (!subsText) subsText = isEn ? 'No substitutions' : 'Sin sustituciones';
+
+      const subEvtsPost = safeEvents.filter(e => e && (
+        e.type === 'cambio' || e.type === 'sustitucion' || e.type === 'substitution' || e.type === 'sub'
+      ));
+      subEvtsPost.forEach(se => {
+        const inId = se.subInId || se.jugadorEntraId || se.playerInId || se.inId;
+        const outId = se.subOutId || se.jugadorSaleId || se.playerOutId || se.outId;
+        const pIn = players.find(pl => String(pl.id) === String(inId));
+        const pOut = players.find(pl => String(pl.id) === String(outId));
+        const nameIn = pIn ? cleanPdfText(pIn.name || pIn.nombre) : (inId ? `J#${inId}` : (isEn ? 'In' : 'Entra'));
+        const nameOut = pOut ? cleanPdfText(pOut.name || pOut.nombre) : (outId ? `J#${outId}` : (isEn ? 'Out' : 'Sale'));
+        const minStr = (se.minute || se.minuto) ? `${se.minute || se.minuto}'` : (isEn ? 's/m' : 's/m');
+        const entry = `Min ${minStr}: ${nameIn} <-> ${nameOut}`;
+        if (!allSubsListPost.includes(entry)) {
+          allSubsListPost.push(entry);
+        }
+      });
+
+      if (allSubsListPost.length === 0) {
+        const subsWithMinutes = squadRoster.filter(r => !r.isStarter && (Number(r.minutes) > 0));
+        if (subsWithMinutes.length > 0) {
+          subsWithMinutes.forEach(s => {
+            allSubsListPost.push(`${isEn ? 'Sub In' : 'Entra'}: ${s.name} (${s.minutes}')`);
+          });
+        }
+      }
+
+      let subsText = allSubsListPost.length > 0
+        ? allSubsListPost.join(' | ')
+        : (isEn ? 'No substitutions recorded' : 'Sin sustituciones registradas');
 
       const keyIncidents = [
         [isEn ? 'Goals & Scorers' : 'Goleadores y Anotaciones', scorersText],
@@ -776,24 +923,35 @@ export const generateMatchPdfReport = async ({
 
       y = (doc.lastAutoTable ? doc.lastAutoTable.finalY : y + 26) + 6;
 
-      // Cronología resumida de eventos clave
+      // Cronología resumida de eventos clave (sin default 1', derivando minutos y goles rivales)
       const sortedEvents = [...safeEvents].sort((a, b) => {
-        if (a.half !== b.half) return (a.half || 1) - (b.half || 1);
-        return (a.minute || 0) - (b.minute || 0);
+        const hA = a.half || 1;
+        const hB = b.half || 1;
+        if (hA !== hB) return hA - hB;
+        const mA = parseInt(a.minute || a.minuto || a.min || 0, 10);
+        const mB = parseInt(b.minute || b.minuto || b.min || 0, 10);
+        return mA - mB;
       });
 
       const keyEventsTimeline = sortedEvents
         .filter((e) => {
           const t = String(e.type || '').toLowerCase();
-          return t.includes('shot') || t.includes('gol') || t.includes('save') || t.includes('card') || t.includes('amarilla') || t.includes('roja') || t.includes('foul');
+          return t.includes('shot') || t.includes('gol') || t.includes('goal') || t.includes('save') ||
+                 t.includes('card') || t.includes('amarilla') || t.includes('roja') || t.includes('foul') ||
+                 t.includes('cambio') || t.includes('sustitucion');
         })
-        .slice(0, 8)
-        .map((e, idx) => [
-          `${idx + 1}`,
-          `${e.minute || 1}'`,
-          e.half === 2 ? (isEn ? '2nd Half' : '2T') : (isEn ? '1st Half' : '1T'),
-          formatEventText(e.type, isEn)
-        ]);
+        .slice(0, 10)
+        .map((e, idx) => {
+          const rawMin = parseInt(e.minute || e.minuto || e.min, 10);
+          const minLabel = (!isNaN(rawMin) && rawMin > 0) ? `${rawMin}'` : (isEn ? 'Unknown' : 's/m');
+          const halfLabel = e.half === 2 ? (isEn ? '2nd Half' : '2T') : (isEn ? '1st Half' : '1T');
+          return [
+            `${idx + 1}`,
+            minLabel,
+            halfLabel,
+            formatEventText(e.type, isEn)
+          ];
+        });
 
       if (keyEventsTimeline.length > 0) {
         doc.setFontSize(8.5);
@@ -808,7 +966,7 @@ export const generateMatchPdfReport = async ({
           body: keyEventsTimeline,
           theme: 'striped',
           headStyles: { fillColor: colorPrimary, textColor: [255, 255, 255], fontStyle: 'bold', fontSize: 7.5 },
-          styles: { fontSize: 7.2, cellPadding: 2 },
+          styles: { fontSize: 7.2, cellPadding: 2.2 },
           columnStyles: {
             0: { width: 10, halign: 'center' },
             1: { width: 16, halign: 'center', fontStyle: 'bold' },
@@ -819,53 +977,54 @@ export const generateMatchPdfReport = async ({
         y = (doc.lastAutoTable ? doc.lastAutoTable.finalY : y + 20) + 6;
       }
 
+      // Función de aserción estricta: si una sección gráfica obligatoria queda en blanco, FALLAR PDF
+      let embeddedGraphicsCount = 0;
+      const assertGraphicEmbedded = (secId, dataUrl, minBytes = 1000) => {
+        if (!dataUrl || typeof dataUrl !== 'string' || !dataUrl.startsWith('data:image/') || dataUrl.length < minBytes) {
+          throw new Error(
+            `[PDF GENERATION CRITICAL ERROR] La sección gráfica obligatoria '${secId}' falló al rasterizar o quedó en blanco (bytes: ${dataUrl?.length || 0}). La generación del PDF ha sido cancelada para evitar entregar un informe incompleto.`
+          );
+        }
+        embeddedGraphicsCount++;
+      };
+
       // ── PÁGINA 2: SECCIÓN 2 & SECCIÓN 3 — MOMENTUM Y BARRAS COMPARATIVAS ──
       doc.addPage();
       y = 18;
 
       // 2. Momentum y Posesión por Bloques 15'
       y = drawSectionHeader('sec2_momentum');
-      try {
-        const momentumSvg = renderMomentumSvgString({
-          events: safeEvents,
-          durationMin: durationMin || 90,
-          isEn,
-          width: 640,
-          height: 180
-        });
-        const momentumImg = await rasterizeSvgToDataUrl(momentumSvg, { scale: 3, width: 640, height: 180 });
-        if (momentumImg) {
-          const momW = pageW - 28;
-          const momH = (180 / 640) * momW;
-          doc.addImage(momentumImg, 'PNG', 14, y, momW, momH);
-          y += momH + 5;
-        }
-      } catch (chartErr) {
-        console.warn('Error momentum SVG:', chartErr);
-      }
+      const momentumSvg = renderMomentumSvgString({
+        events: safeEvents,
+        durationMin: durationMin || 90,
+        isEn,
+        width: 640,
+        height: 180
+      });
+      const momentumImg = await rasterizeSvgToDataUrl(momentumSvg, 640, 180, 3);
+      assertGraphicEmbedded('sec2_momentum', momentumImg);
+      const momW = pageW - 28;
+      const momH = (180 / 640) * momW;
+      doc.addImage(momentumImg, 'PNG', 14, y, momW, momH);
+      y += momH + 5;
 
       // 3. Barras Comparativas (10 Métricas Canónicas)
       y = drawSectionHeader('sec3_bars');
-      try {
-        const barsSvg = renderComparisonBarsSvgString({
-          homeStats,
-          awayStats,
-          homeTeamName: safeTeamName,
-          awayTeamName: rivalName,
-          isEn,
-          width: 660,
-          height: 250
-        });
-        const barsImg = await rasterizeSvgToDataUrl(barsSvg, { scale: 3, width: 660, height: 250 });
-        if (barsImg) {
-          const bW = pageW - 28;
-          const bH = (250 / 660) * bW;
-          doc.addImage(barsImg, 'PNG', 14, y, bW, bH);
-          y += bH + 6;
-        }
-      } catch (barsErr) {
-        console.warn('Error comparison bars SVG:', barsErr);
-      }
+      const barsSvg = renderComparisonBarsSvgString({
+        homeStats,
+        awayStats,
+        homeTeamName: safeTeamName,
+        awayTeamName: rivalName,
+        isEn,
+        width: 660,
+        height: 250
+      });
+      const barsImg = await rasterizeSvgToDataUrl(barsSvg, 660, 250, 3);
+      assertGraphicEmbedded('sec3_bars', barsImg);
+      const bW = pageW - 28;
+      const bH = (250 / 660) * bW;
+      doc.addImage(barsImg, 'PNG', 14, y, bW, bH);
+      y += bH + 6;
 
       // ── PÁGINA 3: SECCIÓN 4 & SECCIÓN 5 — RADAR Y TOP-5 DIFERENCIALES ──────
       doc.addPage();
@@ -873,29 +1032,24 @@ export const generateMatchPdfReport = async ({
 
       // 4. Radar Táctico Oficial (6 Ejes Comparativos)
       y = drawSectionHeader('sec4_radar');
-      try {
-        const radarSvg = renderRadarCompareSvgString({
-          homeStats,
-          awayStats,
-          homeTeamName: safeTeamName,
-          awayTeamName: rivalName,
-          isEn,
-          width: 500,
-          height: 260
-        });
-        const radarImg = await rasterizeSvgToDataUrl(radarSvg, { scale: 3, width: 500, height: 260 });
-        if (radarImg) {
-          const rW = 110;
-          const rH = (260 / 500) * rW;
-          const rX = (pageW - rW) / 2;
-          doc.addImage(radarImg, 'PNG', rX, y, rW, rH);
-          y += rH + 6;
-        }
-      } catch (radarErr) {
-        console.warn('Error radar SVG:', radarErr);
-      }
+      const radarSvg = renderRadarCompareSvgString({
+        homeStats,
+        awayStats,
+        homeTeamName: safeTeamName,
+        awayTeamName: rivalName,
+        isEn,
+        width: 500,
+        height: 260
+      });
+      const radarImg = await rasterizeSvgToDataUrl(radarSvg, 500, 260, 3);
+      assertGraphicEmbedded('sec4_radar', radarImg);
+      const rW = 110;
+      const rH = (260 / 500) * rW;
+      const rX = (pageW - rW) / 2;
+      doc.addImage(radarImg, 'PNG', rX, y, rW, rH);
+      y += rH + 6;
 
-      // 5. Métricas Top-5 Diferenciales
+      // 5. Métricas Top-5 Diferenciales (Consumiendo matchAnalytics como Fuente Única)
       y = drawSectionHeader('sec5_top5');
 
       const countOfSafe = (types) => {
@@ -908,10 +1062,11 @@ export const generateMatchPdfReport = async ({
       const totalDuelsVal = duelsWonVal + duelsLostVal;
       const duelsPctVal = totalDuelsVal > 0 ? Math.round((duelsWonVal / totalDuelsVal) * 100) : 50;
 
-      const shotsOnVal = countOfSafe(['shot_on_target_own', 'shot_on_target', 'tiro_puerta']);
-      const shotsOffVal = countOfSafe(['shot_off_target_own', 'shot_off_target', 'tiro_fuera']);
-      const shotsOnRival = countOfSafe(['shot_on_target_rival']);
-      const shotsOffRival = countOfSafe(['shot_off_target_rival']);
+      // Unicidad absoluta con Sección 6 vía analytics.shots
+      const shotsOnVal = analytics.shots.ownOnTarget;
+      const shotsOffVal = analytics.shots.ownOffTarget;
+      const shotsOnRival = analytics.shots.rivalOnTarget;
+      const shotsOffRival = analytics.shots.rivalOffTarget;
 
       const recVal = countOfSafe(['recovery', 'recuperacion']);
       const lossVal = countOfSafe(['loss', 'ball_loss', 'perdida']);
@@ -949,29 +1104,24 @@ export const generateMatchPdfReport = async ({
       doc.addPage();
       y = 18;
 
-      // 6. Mapas de Tiros & Modelo xG-Lite
+      // 6. Mapas de Tiros & Modelo xG-Lite (Aserción de imagen rasterizada 3x obligatoria)
       y = drawSectionHeader('sec6_shots');
-      try {
-        const shotSvg = renderShotMapSvgString({
-          shots: analytics.shots.all,
-          ownXg: analytics.shots.ownTotalXg,
-          rivalXg: analytics.shots.rivalTotalXg,
-          homeTeamName: safeTeamName,
-          awayTeamName: rivalName,
-          isEn,
-          width: 660,
-          height: 195
-        });
-        const shotMapImg = await rasterizeSvgToDataUrl(shotSvg, { scale: 3, width: 660, height: 195 });
-        if (shotMapImg) {
-          const smW = pageW - 28;
-          const smH = (195 / 660) * smW;
-          doc.addImage(shotMapImg, 'PNG', 14, y, smW, smH);
-          y += smH + 5;
-        }
-      } catch (smErr) {
-        console.warn('Error shot map SVG:', smErr);
-      }
+      const shotSvg = renderShotMapSvgString({
+        shots: analytics.shots.all,
+        ownXg: analytics.shots.ownTotalXg,
+        rivalXg: analytics.shots.rivalTotalXg,
+        homeTeamName: safeTeamName,
+        awayTeamName: rivalName,
+        isEn,
+        width: 660,
+        height: 195
+      });
+      const shotMapImg = await rasterizeSvgToDataUrl(shotSvg, 660, 195, 3);
+      assertGraphicEmbedded('sec6_shots', shotMapImg);
+      const smW = pageW - 28;
+      const smH = (195 / 660) * smW;
+      doc.addImage(shotMapImg, 'PNG', 14, y, smW, smH);
+      y += smH + 5;
 
       // Tabla cuantitativa de tiros xG-lite
       const shotComparisonData = isEn ? [
@@ -1006,27 +1156,22 @@ export const generateMatchPdfReport = async ({
 
       // 7. Campo y Táctica (Sectores, ABP y Bloques)
       y = drawSectionHeader('sec7_tactics');
-      try {
-        const tacticsSvg = renderSectorTacticsSvgString({
-          homeStats,
-          awayStats,
-          tacticsData,
-          homeTeamName: safeTeamName,
-          awayTeamName: rivalName,
-          isEn,
-          width: 660,
-          height: 180
-        });
-        const tacticsImg = await rasterizeSvgToDataUrl(tacticsSvg, { scale: 3, width: 660, height: 180 });
-        if (tacticsImg) {
-          const tW = pageW - 28;
-          const tH = (180 / 660) * tW;
-          doc.addImage(tacticsImg, 'PNG', 14, y, tW, tH);
-          y += tH + 6;
-        }
-      } catch (tacticsErr) {
-        console.warn('Error sector tactics SVG:', tacticsErr);
-      }
+      const tacticsSvg = renderSectorTacticsSvgString({
+        homeStats,
+        awayStats,
+        tacticsData,
+        homeTeamName: safeTeamName,
+        awayTeamName: rivalName,
+        isEn,
+        width: 660,
+        height: 180
+      });
+      const tacticsImg = await rasterizeSvgToDataUrl(tacticsSvg, 660, 180, 3);
+      assertGraphicEmbedded('sec7_tactics', tacticsImg);
+      const tW = pageW - 28;
+      const tH = (180 / 660) * tW;
+      doc.addImage(tacticsImg, 'PNG', 14, y, tW, tH);
+      y += tH + 6;
 
       // ── PÁGINA 5: SECCIÓN 8 & SECCIÓN 9 — EXIGENCIA GK Y ALINEACIÓN CON FOTOS
       doc.addPage();
@@ -1051,7 +1196,14 @@ export const generateMatchPdfReport = async ({
         console.warn('Error gk exertion canvas:', gkErr);
       }
 
-      // Tabla GK detallada con paradas normales vs decisivas
+      // Tabla GK detallada con encajados coherentes
+      const effectiveGkConceded = Math.max(derivedIndices.concededGoals || 0, goalsAgainst);
+      const effectiveGkTotalSaves = (derivedIndices.normalSaves || 0) + (derivedIndices.decisiveSaves || 0);
+      const effectiveGkTotal = effectiveGkTotalSaves + effectiveGkConceded;
+      const effectiveGkSavePct = effectiveGkTotal > 0
+        ? Math.round((effectiveGkTotalSaves / effectiveGkTotal) * 100)
+        : (derivedIndices.totalSavePct || 0);
+
       const gkBreakdownHead = isEn
         ? [['Exertion Index', 'Normal Saves', 'Decisive Saves (x2)', 'Penalties Saved', 'Conceded Goals', 'Total Save %']]
         : [['Índice Exigencia', 'Paradas Normales', 'Paradas Decisivas (x2)', 'Penaltis Parados', 'Goles Encajados', '% Total Paradas']];
@@ -1061,8 +1213,8 @@ export const generateMatchPdfReport = async ({
         String(derivedIndices.normalSaves),
         String(derivedIndices.decisiveSaves),
         String(derivedIndices.penaltySaves),
-        String(derivedIndices.concededGoals),
-        `${derivedIndices.totalSavePct}%`
+        String(effectiveGkConceded),
+        `${effectiveGkSavePct}%`
       ];
 
       autoTable(doc, {
@@ -1092,17 +1244,12 @@ export const generateMatchPdfReport = async ({
         }
       }
 
-      if (effectiveLineupImage) {
-        const pitchW = 145;
-        const pitchH = (510 / 720) * pitchW; // ~102mm
-        const pitchX = (pageW - pitchW) / 2;
-        try {
-          doc.addImage(effectiveLineupImage, 'PNG', pitchX, y, pitchW, pitchH);
-          y += pitchH + 6;
-        } catch (e) {
-          console.error('Error al incluir gráfico de alineación con fotos:', e);
-        }
-      }
+      assertGraphicEmbedded('sec9_lineup', effectiveLineupImage);
+      const pitchW = 145;
+      const pitchH = (510 / 720) * pitchW; // ~102mm
+      const pitchX = (pageW - pitchW) / 2;
+      doc.addImage(effectiveLineupImage, 'PNG', pitchX, y, pitchW, pitchH);
+      y += pitchH + 6;
 
       // ── PÁGINA 6: SECCIÓN 10 — RENDIMIENTO INDIVIDUAL & PLANTILLA ─────────
       doc.addPage();
@@ -1160,6 +1307,22 @@ export const generateMatchPdfReport = async ({
         styles: { fontSize: 7.2, cellPadding: 2 },
         columnStyles: rosterColStyles
       });
+
+      // Nota al pie: Eventos sin atribuir disponibles para refinar notas individuales
+      const unattributedEvents = safeEvents.filter(e =>
+        e && !e.playerId && !e.jugadorId && !e.playerInId && !e.subInId
+      );
+      const unattributedCount = unattributedEvents.length;
+      if (unattributedCount > 0) {
+        y = (doc.lastAutoTable ? doc.lastAutoTable.finalY : y + 60) + 3;
+        doc.setFontSize(6.8);
+        doc.setFont('helvetica', 'italic');
+        doc.setTextColor(100, 116, 139);
+        const footnote = isEn
+          ? `* ${unattributedCount} unattributed event(s) available to refine individual ratings (optional)`
+          : `* ${unattributedCount} evento(s) sin atribuir disponibles para refinar notas individuales (opcional)`;
+        doc.text(footnote, 14, y);
+      }
 
       // ── PÁGINA 7: SECCIÓN 11 — MATRIZ DAFO & RECOMENDACIONES ──────────────
       doc.addPage();

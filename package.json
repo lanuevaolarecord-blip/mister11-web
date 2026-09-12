@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "test": "node scripts/ci-i18n-gate.mjs && node scripts/check-circular-deps.mjs && node scripts/check-chart-palette.mjs && node scripts/test-chart-data-unicity.mjs && node scripts/test-render-smoke.mjs && node scripts/assert-test-pdf.mjs",
+    "test": "node scripts/ci-i18n-gate.mjs && node scripts/check-circular-deps.mjs && node scripts/check-chart-palette.mjs && node scripts/test-chart-data-unicity.mjs && node scripts/test-render-smoke.mjs && node scripts/assert-test-pdf.mjs && node scripts/test-artifacts-i18n.mjs && node scripts/assert-pdf-images.mjs && node scripts/assert-event-integrity.mjs",
     "test:smoke": "node scripts/test-render-smoke.mjs",
     "check:cycles": "node scripts/check-circular-deps.mjs",
     "check:palette": "node scripts/check-chart-palette.mjs",

@@ -8,7 +8,7 @@
  * con estricto LANGUAGE LOCK sin inventar datos.
  */
 
-import { calculateMatchDerivedIndices } from '../config/xgWeights';
+import { calculateMatchDerivedIndices } from '../config/xgWeights.js';
 
 export const SWOT_RULES = [
   // ── FORTALEZAS (Strengths) ────────────────────────────────────────────────
@@ -17,9 +17,9 @@ export const SWOT_RULES = [
     quadrant: 'strengths',
     textKey: 'swot.rule.high_xg_diff',
     metricRefs: (m) => [
-      { label: 'xG Propio', value: `${m.ownXg} vs ${m.rivalXg}`, targetRef: 'sec_shots' }
+      { label: 'xG Propio vs Rival', value: `${m.ownXg} vs ${m.rivalXg} (+${(m.ownXg - m.rivalXg).toFixed(2)})`, targetRef: 'sec_shots' }
     ],
-    condition: (m) => (m.ownXg >= m.rivalXg + 0.4) || (m.ownXg >= 1.5 && m.ownGoals >= 2)
+    condition: (m) => (m.ownShotsCount >= 5) && (m.ownXg >= m.rivalXg + 0.5)
   },
   {
     id: 'gk_decisive_hero',
@@ -28,16 +28,16 @@ export const SWOT_RULES = [
     metricRefs: (m) => [
       { label: 'Paradas Decisivas', value: `${m.decisiveSaves} (Total: ${m.totalSaves})`, targetRef: 'sec_gk' }
     ],
-    condition: (m) => m.decisiveSaves >= 2 || (m.decisiveSaves >= 1 && m.totalSavePct >= 75)
+    condition: (m) => (m.totalSaves >= 4) && (m.decisiveSaves >= 2 || (m.decisiveSaves >= 1 && m.totalSavePct >= 70))
   },
   {
     id: 'wing_defense_solid',
     quadrant: 'strengths',
     textKey: 'swot.rule.wing_defense_solid',
     metricRefs: (m) => [
-      { label: 'Tiros Cómodos en Banda', value: `${m.defensiveExposureMap?.dentro_lateral?.comodo ?? 0}`, targetRef: 'sec_shots' }
+      { label: 'Tiros en Banda (0 cómodos)', value: `${m.defensiveExposureMap?.dentro_lateral?.total ?? 0} concedidos`, targetRef: 'sec_shots' }
     ],
-    condition: (m) => (m.defensiveExposureMap?.dentro_lateral?.comodo === 0) && (m.rivalShotsCount >= 2)
+    condition: (m) => (m.rivalShotsCount >= 5) && ((m.defensiveExposureMap?.dentro_lateral?.total ?? 0) >= 2) && (m.defensiveExposureMap?.dentro_lateral?.comodo === 0)
   },
   {
     id: 'duels_superiority',
@@ -46,7 +46,7 @@ export const SWOT_RULES = [
     metricRefs: (m) => [
       { label: 'Duelos Ganados', value: `${m.duelsWonPct}% (${m.duelsWon}/${m.totalDuels})`, targetRef: 'sec_radar' }
     ],
-    condition: (m) => m.duelsWonPct >= 55 || (m.duelsWon >= 8 && m.duelsWonPct >= 50)
+    condition: (m) => (m.totalDuels >= 5) && (m.duelsWonPct >= 58) && (m.duelsWon - m.duelsLost >= 2)
   },
 
   // ── DEBILIDADES (Weaknesses) ──────────────────────────────────────────────
@@ -55,9 +55,9 @@ export const SWOT_RULES = [
     quadrant: 'weaknesses',
     textKey: 'swot.rule.low_xg_conv',
     metricRefs: (m) => [
-      { label: 'xG vs Goles', value: `${m.ownXg} xG / ${m.ownGoals} Goles`, targetRef: 'sec_shots' }
+      { label: 'Déficit xG vs Goles', value: `${m.ownXg} xG / ${m.ownGoals} Goles`, targetRef: 'sec_shots' }
     ],
-    condition: (m) => (m.ownXg >= 1.2 && m.ownGoals < m.ownXg * 0.6) || (m.ownShotsCount >= 8 && m.ownGoals === 0)
+    condition: (m) => (m.ownShotsCount >= 5) && (m.ownXg >= 1.5) && (m.ownXg - m.ownGoals >= 1.5)
   },
   {
     id: 'central_box_leak',
@@ -66,25 +66,28 @@ export const SWOT_RULES = [
     metricRefs: (m) => [
       { label: 'Tiros Área Central', value: `${m.defensiveExposureMap?.dentro_centro?.total ?? 0} (${m.defensiveExposureMap?.dentro_centro?.comodo ?? 0} cómodos)`, targetRef: 'sec_shots' }
     ],
-    condition: (m) => (m.defensiveExposureMap?.dentro_centro?.total >= 3) || (m.defensiveExposureMap?.dentro_centro?.comodo >= 2)
+    condition: (m) => (m.rivalShotsCount >= 5) && ((m.defensiveExposureMap?.dentro_centro?.total >= 3) || (m.defensiveExposureMap?.dentro_centro?.comodo >= 2))
   },
   {
     id: 'set_piece_threat',
     quadrant: 'weaknesses',
     textKey: 'swot.rule.set_piece_threat',
-    metricRefs: (m) => [
-      { label: 'Balón Parado Rival', value: `${m.rivalSetPieceShots ?? 0} tiros`, targetRef: 'sec_timeline' }
-    ],
-    condition: (m) => (m.rivalSetPieceShots >= 2) || (m.concededFromSetPiece >= 1)
+    metricRefs: (m) => {
+      if ((m.concededFromSetPiece ?? 0) >= 1) {
+        return [{ label: 'Goles ABP Encajados', value: `${m.concededFromSetPiece}`, targetRef: 'sec_timeline' }];
+      }
+      return [{ label: 'Tiros ABP Rival', value: `${m.rivalSetPieceShots ?? 0} tiros`, targetRef: 'sec_timeline' }];
+    },
+    condition: (m) => (m.concededFromSetPiece >= 1) || (m.rivalSetPieceShots >= 3)
   },
   {
     id: 'duels_fragility',
     quadrant: 'weaknesses',
     textKey: 'swot.rule.duels_fragility',
     metricRefs: (m) => [
-      { label: 'Eficacia Duelos', value: `${m.duelsWonPct}%`, targetRef: 'sec_radar' }
+      { label: 'Duelos Perdidos', value: `${100 - m.duelsWonPct}% (${m.duelsLost}/${m.totalDuels})`, targetRef: 'sec_radar' }
     ],
-    condition: (m) => (m.duelsWonPct > 0 && m.duelsWonPct < 45 && m.totalDuels >= 6)
+    condition: (m) => (m.totalDuels >= 5) && (m.duelsWonPct <= 42) && (m.duelsLost - m.duelsWon >= 2)
   },
 
   // ── OPORTUNIDADES (Opportunities) ─────────────────────────────────────────
@@ -92,19 +95,13 @@ export const SWOT_RULES = [
     id: 'counter_efficiency',
     quadrant: 'opportunities',
     textKey: 'swot.rule.counter_efficiency',
-    metricRefs: (m) => [
-      { label: 'Transiciones de Contra', value: `${m.ownCounterShots ?? 0} tiros`, targetRef: 'sec_shots' }
-    ],
-    condition: (m) => (m.ownCounterShots >= 2) || (m.ownCounterGoals >= 1)
-  },
-  {
-    id: 'high_attendance_cohesion',
-    quadrant: 'opportunities',
-    textKey: 'swot.rule.high_attendance_cohesion',
-    metricRefs: (m) => [
-      { label: 'Asistencia Plantilla', value: `${m.attendancePct}%`, targetRef: 'sec_lineup' }
-    ],
-    condition: (m) => m.attendancePct >= 80
+    metricRefs: (m) => {
+      if ((m.ownCounterGoals ?? 0) >= 1) {
+        return [{ label: 'Goles de Contra', value: `${m.ownCounterGoals}`, targetRef: 'sec_shots' }];
+      }
+      return [{ label: 'Transiciones de Contra', value: `${m.ownCounterShots ?? 0} tiros`, targetRef: 'sec_shots' }];
+    },
+    condition: (m) => (m.ownCounterGoals >= 1) || (m.ownCounterShots >= 3)
   },
 
   // ── AMENAZAS (Threats) ───────────────────────────────────────────────────
@@ -113,27 +110,30 @@ export const SWOT_RULES = [
     quadrant: 'threats',
     textKey: 'swot.rule.rival_high_comfort',
     metricRefs: (m) => [
-      { label: 'Comodidad Rival', value: `${m.rivalComfortPct}% tiros cómodos`, targetRef: 'sec_shots' }
+      { label: 'Tiros Cómodos Rival', value: `${m.rivalComfortableShots} (${m.rivalComfortPct}%)`, targetRef: 'sec_shots' }
     ],
-    condition: (m) => (m.rivalComfortPct >= 40 && m.rivalShotsCount >= 3)
+    condition: (m) => (m.rivalShotsCount >= 5) && (m.rivalComfortPct >= 50) && (m.rivalComfortableShots >= 3)
   },
   {
     id: 'gk_high_exertion',
     quadrant: 'threats',
     textKey: 'swot.rule.gk_high_exertion',
     metricRefs: (m) => [
-      { label: 'Índice de Exigencia', value: `${m.gkExertionIndex} (Tarde Exigente)`, targetRef: 'sec_gk' }
+      { label: 'Índice de Exigencia', value: `${m.gkExertionIndex} pts`, targetRef: 'sec_gk' }
     ],
-    condition: (m) => m.isDemandingMatch || m.gkExertionIndex >= 6
+    condition: (m) => (m.rivalShotsCount >= 5) && (m.isDemandingMatch || m.gkExertionIndex >= 6)
   },
   {
     id: 'late_fatigue',
     quadrant: 'threats',
     textKey: 'swot.rule.late_fatigue',
-    metricRefs: (m) => [
-      { label: 'Goles Últimos 15\'', value: `${m.concededLateGoals ?? 0}`, targetRef: 'sec_timeline' }
-    ],
-    condition: (m) => (m.concededLateGoals >= 1) || (m.rivalLateShots >= 3)
+    metricRefs: (m) => {
+      if ((m.concededLateGoals ?? 0) >= 1) {
+        return [{ label: 'Goles Encajados (75\'-90\')', value: `${m.concededLateGoals}`, targetRef: 'sec_timeline' }];
+      }
+      return [{ label: 'Tiros Concedidos (75\'-90\')', value: `${m.rivalLateShots ?? 0} tiros`, targetRef: 'sec_timeline' }];
+    },
+    condition: (m) => (m.concededLateGoals >= 1) || (m.rivalLateShots >= 3 && m.rivalShotsCount >= 5)
   }
 ];
 
@@ -192,10 +192,11 @@ export function extractSwotMetrics(matchData = {}, events = [], calledPlayers = 
   const totalDuels = duelsWon + duelsLost;
   const duelsWonPct = totalDuels > 0 ? Math.round((duelsWon / totalDuels) * 100) : 50;
 
-  // Asistencia calculada
+  // Presencia de plantilla (anteriormente rotulado erróneamente como Asistencia)
   const totalSquad = Array.isArray(matchData.players) ? matchData.players.length : (calledPlayers.length || 15);
   const calledCount = Array.isArray(calledPlayers) ? calledPlayers.length : (matchData.convocados?.length || 11);
   const attendancePct = totalSquad > 0 ? Math.min(100, Math.round((calledCount / totalSquad) * 100)) : 80;
+  const presencePct = attendancePct;
 
   return {
     ...derived,
@@ -212,6 +213,7 @@ export function extractSwotMetrics(matchData = {}, events = [], calledPlayers = 
     concededLateGoals,
     rivalLateShots,
     attendancePct,
+    presencePct,
   };
 }
 

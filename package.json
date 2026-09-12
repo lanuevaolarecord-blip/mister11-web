@@ -23,6 +23,7 @@
     "test:i18n": "node scripts/ci-i18n-gate.mjs",
     "lint": "eslint .",
     "preview": "vite preview",
+    "test:matrix": "node scripts/qa-cross-device-matrix.mjs",
     "test:e2e": "playwright test"
   },
   "dependencies": {

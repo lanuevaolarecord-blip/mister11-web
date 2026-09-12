@@ -239,8 +239,21 @@ const LiveStats = ({
     }
   }, [displayHalf, currentHalf]);
 
-  // ── Estados de Navegación por Pestañas ──────────────────────────────────────
-  const [activeTab, setActiveTab] = useState('capture'); // 'capture', 'tactical', 'analytics', 'players'
+  // ── Estados de Navegación por Pestañas (persistente y estable) ─────────────
+  const [activeTab, setActiveTabState] = useState(() => {
+    try {
+      return sessionStorage.getItem('mister11_livestats_subtab') || 'capture';
+    } catch (_) {
+      return 'capture';
+    }
+  });
+
+  const setActiveTab = useCallback((newTab) => {
+    setActiveTabState(newTab);
+    try {
+      sessionStorage.setItem('mister11_livestats_subtab', newTab);
+    } catch (_) {}
+  }, []);
 
   // ── Estados de Filtros Avanzados ──────────────────────────────────────────
   const [timeFilter, setTimeFilter] = useState('all'); // 'all', '1T', '2T', 'extra'
@@ -542,11 +555,11 @@ const LiveStats = ({
   // ── Listener de eventos Fullscreen nativos ──────────────────────────────────
   useEffect(() => {
     const handleFSChange = () => {
-      const isFS = !!(document.fullscreenElement || document.webkitFullscreenElement);
-      setIsFullscreen(isFS);
-      if (isFS) {
-        setActiveTab('capture');
-      }
+      const fsElem = document.fullscreenElement || document.webkitFullscreenElement;
+      // Solo es fullscreen de LiveStats si el contenedor raíz de LiveStats es el objetivo
+      const isContainerFS = Boolean(containerRef.current && (fsElem === containerRef.current || containerRef.current.contains(fsElem)));
+      setIsFullscreen(isContainerFS);
+      // NUNCA resetear ni forzar activeTab a 'capture' aquí
     };
     document.addEventListener('fullscreenchange', handleFSChange);
     document.addEventListener('webkitfullscreenchange', handleFSChange);
@@ -556,8 +569,8 @@ const LiveStats = ({
     };
   }, []);
 
-  const toggleFullscreen = () => {
-    setActiveTab('capture');
+  const toggleFullscreen = (e) => {
+    if (e && e.stopPropagation) e.stopPropagation();
     const elem = containerRef.current || document.documentElement;
     if (!document.fullscreenElement) {
       elem.requestFullscreen().catch(() => {});
@@ -1080,8 +1093,8 @@ const LiveStats = ({
         />
       )}
 
-      {/* ── 4. Cabecera Principal del Cronómetro (Modo captura y pantalla completa) ─── */}
-      {(activeTab === 'capture' || isFullscreen) && (
+      {/* ── 4. Cabecera Principal del Cronómetro (Modo captura) ─── */}
+      {activeTab === 'capture' && (
         <header className="livestats-header">
           {/* Cronómetro y Mitad */}
           <div className="livestats-timer-card">
@@ -1258,10 +1271,10 @@ const LiveStats = ({
         </header>
       )}
 
-      {/* ── 5. Contenido Dinámico por Pestaña ────────────────────────────── */}
+      {/* ── 5. Contenido Dinámico por Pestaña (CERO GHOSTING) ───────────── */}
       <main className="livestats-body">
         {/* PESTAÑA 1: Captura Rápida */}
-        {(activeTab === 'capture' || isFullscreen) && (
+        {activeTab === 'capture' && (
           <>
             {/* ── JUGADOR ACTIVO: Chip Selector Horizontal ─── */}
             <div className="jugador-activo-strip">

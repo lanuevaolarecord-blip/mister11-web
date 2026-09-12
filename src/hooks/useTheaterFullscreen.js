@@ -2,16 +2,17 @@ import { useState, useEffect, useCallback } from 'react';
 
 /**
  * useTheaterFullscreen
- * Hook para alternar entre pantalla completa nativa (requestFullscreen en Android/Desktop)
- * y un fallback universal de "Modo Teatro" en dispositivos sin soporte de API Fullscreen (Safari iOS).
+ * Hook para alternar entre pantalla completa y el fallback universal de "Modo Teatro" por Portal.
  *
  * Cumple con:
- * - Sin locks de orientación
+ * - Modo teatro inmediato por portal (createPortal a document.body)
+ * - Pantalla completa nativa sobre document.documentElement (el portal en body queda visible)
+ * - Cierre instantáneo y limpio (sin desincronización)
  * - Touch targets >= 48dp en controles
  * - Cierre mediante Escape o botón de cierre
- * - Preservación de estado reactivo del componente
+ * - Preservación de subtab activa y posición de scroll
  */
-export const useTheaterFullscreen = (targetRef) => {
+export const useTheaterFullscreen = (_targetRef) => {
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isTheater, setIsTheater] = useState(false);
 
@@ -23,21 +24,26 @@ export const useTheaterFullscreen = (targetRef) => {
   );
 
   const enter = useCallback(async () => {
-    const elem = targetRef?.current;
-    if (isNativeSupported && elem && typeof elem.requestFullscreen === 'function') {
+    setIsTheater(true);
+
+    if (isNativeSupported && typeof document !== 'undefined' && !document.fullscreenElement) {
       try {
-        await elem.requestFullscreen();
-        return;
-      } catch (err) {
-        // Fallback al modo teatro si el navegador rechaza o falla la pantalla completa nativa
-        setIsTheater(true);
+        const rootElem = document.documentElement;
+        if (typeof rootElem.requestFullscreen === 'function') {
+          await rootElem.requestFullscreen();
+        } else if (typeof rootElem.webkitRequestFullscreen === 'function') {
+          await rootElem.webkitRequestFullscreen();
+        }
+      } catch (_err) {
+        // En caso de rechazo (políticas del navegador o Safari iOS), el modo teatro por portal permanece activo
       }
-    } else {
-      setIsTheater(true);
     }
-  }, [isNativeSupported, targetRef]);
+  }, [isNativeSupported]);
 
   const exit = useCallback(async () => {
+    setIsTheater(false);
+    setIsFullscreen(false);
+
     if (typeof document !== 'undefined' && (document.fullscreenElement || document.webkitFullscreenElement)) {
       try {
         if (document.exitFullscreen) {
@@ -47,7 +53,6 @@ export const useTheaterFullscreen = (targetRef) => {
         }
       } catch (_) {}
     }
-    setIsTheater(false);
   }, []);
 
   const toggle = useCallback(() => {
@@ -60,22 +65,26 @@ export const useTheaterFullscreen = (targetRef) => {
 
   useEffect(() => {
     const handleFsChange = () => {
-      const activeFs = Boolean(
+      const fsElem = (
         document.fullscreenElement ||
         document.webkitFullscreenElement ||
         document.mozFullScreenElement ||
         document.msFullscreenElement
       );
-      setIsFullscreen(activeFs);
-      if (!activeFs) {
-        // Si sale de fullscreen nativo, asegurar que theater esté apagado
+
+      const isFsActive = Boolean(fsElem);
+      setIsFullscreen(isFsActive);
+
+      // Si el usuario sale de fullscreen nativo (ej. con Escape del navegador), cerrar también el modo teatro
+      if (!isFsActive) {
         setIsTheater(false);
       }
     };
 
     const handleKeyDown = (e) => {
-      if (e.key === 'Escape' && isTheater) {
-        setIsTheater(false);
+      if (e.key === 'Escape' && (isTheater || isFullscreen)) {
+        e.stopPropagation();
+        exit();
       }
     };
 
@@ -88,7 +97,7 @@ export const useTheaterFullscreen = (targetRef) => {
       document.removeEventListener('webkitfullscreenchange', handleFsChange);
       window.removeEventListener('keydown', handleKeyDown);
     };
-  }, [isTheater]);
+  }, [isTheater, isFullscreen, exit]);
 
   return {
     isActive: isFullscreen || isTheater,

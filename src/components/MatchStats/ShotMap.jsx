@@ -71,7 +71,10 @@ export const ShotMap = ({
         <button
           type="button"
           className="btn-fullscreen-match-card"
-          onClick={toggleFullscreen}
+          onClick={(e) => {
+            e.stopPropagation();
+            toggleFullscreen();
+          }}
           style={{ minHeight: '48px', minWidth: '48px' }}
         >
           {isFullscreen || isTheater ? <Minimize2 size={16} /> : <Maximize2 size={16} />}
@@ -333,7 +336,7 @@ export const ShotMap = ({
     >
       {renderContent()}
 
-      {/* Fallback de Pantalla Completa en Modo Teatro (Safari iPhone / iOS) */}
+      {/* Pantalla Completa / Modo Teatro mediante Portal */}
       <TheaterOverlay isOpen={isTheater} onClose={exitTheater} title={isEn ? 'Shot Map & xG Model' : 'Mapa de Tiros y Modelo xG'}>
         {renderContent()}
       </TheaterOverlay>

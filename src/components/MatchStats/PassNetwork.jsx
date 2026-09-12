@@ -2,6 +2,7 @@ import React, { useState, useMemo, useRef, useCallback } from 'react';
 import { Share2, Maximize2, Minimize2, Users } from 'lucide-react';
 import { useTranslation } from '../../hooks/useTranslation';
 import { useTheaterFullscreen } from '../../hooks/useTheaterFullscreen';
+import { TheaterOverlay } from '../common/TheaterOverlay';
 
 const ZONE_MAP = {
   shot_on_target_own:    { x: 88, y: 50 },
@@ -29,7 +30,7 @@ export const PassNetwork = ({
   const [showTacticalGuide, setShowTacticalGuide] = useState(false);
   const wrapperRef = useRef(null);
   const { t, isEn } = useTranslation();
-  const { isFullscreen, isTheater, toggle: toggleFullscreen } = useTheaterFullscreen(wrapperRef);
+  const { isFullscreen, isTheater, toggle: toggleFullscreen, exit } = useTheaterFullscreen(wrapperRef);
   const isExpanded = isFullscreen || isTheater;
 
   // Función para determinar coordenadas base reglamentarias según posición real
@@ -179,31 +180,10 @@ export const PassNetwork = ({
     return passEdges.reduce((max, e) => Math.max(max, e.count), 1);
   }, [passEdges]);
 
-  return (
-    <div
-      ref={wrapperRef}
-      className="pass-network-container"
-      style={isExpanded ? {
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        width: '100vw',
-        height: '100dvh',
-        maxHeight: '100dvh',
-        background: '#0b1712',
-        padding: '12px 16px',
-        overflowY: 'auto',
-        overflowX: 'hidden',
-        display: 'flex',
-        flexDirection: 'column',
-        zIndex: 999999,
-        boxSizing: 'border-box'
-      } : {}}
-    >
+  const renderNetworkContent = (inModal = false) => (
+    <div className="pass-network-inner" style={{ width: '100%', display: 'flex', flexDirection: 'column' }}>
       {/* Header de la red de pases */}
-      <div className="pass-network-header" style={{ flexShrink: 0, marginBottom: isExpanded ? '8px' : '12px' }}>
+      <div className="pass-network-header" style={{ flexShrink: 0, marginBottom: inModal ? '8px' : '12px' }}>
         <div className="pass-network-title">
           <Share2 size={20} className="network-icon" />
           <h3>{isEn ? `Tactical Pass Network (${teamName})` : `Red de Pases Táctica (${teamName})`}</h3>
@@ -211,15 +191,20 @@ export const PassNetwork = ({
         <div className="pass-network-summary" style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
           <span>{isEn ? 'Passes:' : 'Pases:'} <strong>{passes.length}</strong></span>
           <span>{isEn ? 'Connections:' : 'Conexiones:'} <strong>{passEdges.length}</strong></span>
-          <button
-            type="button"
-            className="btn-fullscreen-match-card"
-            onClick={toggleFullscreen}
-            style={{ minHeight: '48px', minWidth: '48px' }}
-          >
-            {isExpanded ? <Minimize2 size={16} /> : <Maximize2 size={16} />}
-            <span>{isExpanded ? (isEn ? 'Exit' : 'Salir') : (isEn ? 'Fullscreen' : 'Pantalla Completa')}</span>
-          </button>
+          {!inModal && (
+            <button
+              type="button"
+              className="btn-fullscreen-match-card"
+              onClick={(e) => {
+                e.stopPropagation();
+                toggleFullscreen();
+              }}
+              style={{ minHeight: '48px', minWidth: '48px' }}
+            >
+              {isExpanded ? <Minimize2 size={16} /> : <Maximize2 size={16} />}
+              <span>{isExpanded ? (isEn ? 'Exit' : 'Salir') : (isEn ? 'Fullscreen' : 'Pantalla Completa')}</span>
+            </button>
+          )}
         </div>
       </div>
 
@@ -242,10 +227,10 @@ export const PassNetwork = ({
         {t('stats.passNetwork.guide')}
       </div>
 
-      {/* Campo SVG con Nodos y Aristas (Zero-scroll) */}
+      {/* Campo SVG con Nodos y Aristas */}
       <div
         className="field-network-canvas"
-        style={isExpanded ? {
+        style={inModal ? {
           flex: 1,
           minHeight: 0,
           display: 'flex',
@@ -257,15 +242,20 @@ export const PassNetwork = ({
         } : { position: 'relative' }}
       >
         {/* Botón flotante directo en la esquina del campo */}
-        <button
-          type="button"
-          className="btn-floating-pitch-fullscreen"
-          onClick={toggleFullscreen}
-          style={{ minWidth: '48px', minHeight: '48px' }}
-          title={isExpanded ? (isEn ? 'Exit Fullscreen' : 'Salir de Pantalla Completa') : (isEn ? 'View Fullscreen' : 'Ver en Pantalla Completa')}
-        >
-          {isExpanded ? <Minimize2 size={18} /> : <Maximize2 size={18} />}
-        </button>
+        {!inModal && (
+          <button
+            type="button"
+            className="btn-floating-pitch-fullscreen"
+            onClick={(e) => {
+              e.stopPropagation();
+              toggleFullscreen();
+            }}
+            style={{ minWidth: '48px', minHeight: '48px' }}
+            title={isExpanded ? (isEn ? 'Exit Fullscreen' : 'Salir de Pantalla Completa') : (isEn ? 'View Fullscreen' : 'Ver en Pantalla Completa')}
+          >
+            {isExpanded ? <Minimize2 size={18} /> : <Maximize2 size={18} />}
+          </button>
+        )}
 
         <svg
           viewBox="0 0 105 68"
@@ -460,9 +450,32 @@ export const PassNetwork = ({
           <span>{isEn ? 'Thickness = Higher frequency' : 'Grosor = Mayor frecuencia'}</span>
         </div>
       </div>
+    </div>
+  );
+
+  return (
+    <div
+      ref={wrapperRef}
+      className="pass-network-container"
+      style={{
+        width: '100%',
+        boxSizing: 'border-box',
+        position: 'relative'
+      }}
+    >
+      {renderNetworkContent(false)}
+
+      {/* Fallback de Pantalla Completa / Modo Teatro mediante Portal */}
+      <TheaterOverlay
+        isOpen={isTheater}
+        onClose={exit}
+        title={isEn ? `Tactical Pass Network (${teamName})` : `Red de Pases Táctica (${teamName})`}
+      >
+        {renderNetworkContent(true)}
+      </TheaterOverlay>
 
       {/* Panel pedagógico y táctico (oculto en fullscreen para evitar scroll) */}
-      {!isFullscreen && (
+      {!isExpanded && (
         <div className="tactical-guide-panel" style={{ marginTop: '16px' }}>
           <div className="tactical-guide-header" onClick={() => setShowTacticalGuide(prev => !prev)}>
             <div className="tactical-guide-title">

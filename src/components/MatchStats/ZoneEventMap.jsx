@@ -94,8 +94,11 @@ export const ZoneEventMap = ({
           <button
             type="button"
             className="btn-fullscreen-match-card"
-            onClick={toggle}
-            style={{ minHeight: '44px', minWidth: '44px' }}
+            onClick={(e) => {
+              e.stopPropagation();
+              toggle();
+            }}
+            style={{ minHeight: '48px', minWidth: '48px' }}
           >
             {isFullscreen || isTheater ? <Minimize2 size={16} /> : <Maximize2 size={16} />}
             <span>{isFullscreen || isTheater ? (isEn ? 'Exit' : 'Salir') : (isEn ? 'Fullscreen' : 'Pantalla Completa')}</span>
@@ -292,7 +295,7 @@ export const ZoneEventMap = ({
     >
       {renderContent()}
 
-      {/* Fallback de Pantalla Completa en Modo Teatro (Safari iPhone / iOS) */}
+      {/* Pantalla Completa / Modo Teatro mediante Portal */}
       <TheaterOverlay isOpen={isTheater} onClose={exit} title={isEn ? 'Territorial Event Map' : 'Mapa de Eventos por Zona'}>
         {renderContent()}
       </TheaterOverlay>

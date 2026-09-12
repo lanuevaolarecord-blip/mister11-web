@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { useEffect } from 'react';
+import ReactDOM from 'react-dom';
 import { X, Theater } from 'lucide-react';
 import { useTranslation } from '../../hooks/useTranslation';
 
@@ -10,30 +11,55 @@ export const TheaterOverlay = ({
 }) => {
   const { t, isEn } = useTranslation();
 
-  if (!isOpen) return null;
+  useEffect(() => {
+    if (!isOpen) return;
 
-  return (
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape' && onClose) {
+        e.stopPropagation();
+        onClose();
+      }
+    };
+
+    const originalOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    window.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      document.body.style.overflow = originalOverflow;
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isOpen, onClose]);
+
+  if (!isOpen || typeof document === 'undefined') return null;
+
+  const overlayContent = (
     <div
       className="theater-modal-overlay"
-      onClick={onClose}
+      onClick={(e) => {
+        e.stopPropagation();
+        onClose && onClose();
+      }}
       role="dialog"
       aria-modal="true"
-      aria-label={title || t('stats.theater.theater_mode')}
+      aria-label={title || (isEn ? 'Theater Mode' : 'Modo Teatro')}
       style={{
         position: 'fixed',
         top: 0,
         left: 0,
         right: 0,
         bottom: 0,
-        zIndex: 999999,
-        background: 'rgba(0, 0, 0, 0.88)',
-        backdropFilter: 'blur(6px)',
-        WebkitBackdropFilter: 'blur(6px)',
+        zIndex: 2147483647,
+        background: 'rgba(0, 0, 0, 0.92)',
+        backdropFilter: 'blur(8px)',
+        WebkitBackdropFilter: 'blur(8px)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
         padding: '12px',
-        boxSizing: 'border-box'
+        boxSizing: 'border-box',
+        pointerEvents: 'auto',
+        animation: 'theaterFadeIn 0.2s ease-out'
       }}
     >
       <div
@@ -44,14 +70,17 @@ export const TheaterOverlay = ({
           maxWidth: '1280px',
           height: '90vh',
           maxHeight: '90vh',
-          background: 'var(--bg-card, #13241C)',
-          border: '1px solid var(--border-color, rgba(212, 168, 67, 0.35))',
+          background: '#13241C',
+          border: '1px solid rgba(212, 168, 67, 0.4)',
           borderRadius: '16px',
           display: 'flex',
           flexDirection: 'column',
           overflow: 'hidden',
-          boxShadow: '0 20px 50px rgba(0, 0, 0, 0.75)',
-          boxSizing: 'border-box'
+          boxShadow: '0 25px 60px rgba(0, 0, 0, 0.9)',
+          boxSizing: 'border-box',
+          position: 'relative',
+          zIndex: 2147483647,
+          pointerEvents: 'auto'
         }}
       >
         {/* Cabecera Modo Teatro */}
@@ -61,35 +90,43 @@ export const TheaterOverlay = ({
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
-            padding: '12px 18px',
-            borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
-            background: 'rgba(0, 0, 0, 0.25)',
-            flexShrink: 0
+            padding: '14px 20px',
+            borderBottom: '1px solid rgba(255, 255, 255, 0.12)',
+            background: 'rgba(0, 0, 0, 0.4)',
+            flexShrink: 0,
+            position: 'relative',
+            zIndex: 2147483647
           }}
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#D4A843' }}>
-            <Theater size={20} />
-            <strong style={{ fontSize: '15px', color: 'var(--text-primary, #FFFFFF)' }}>
-              {title || t('stats.theater.theater_mode')}
+            <Theater size={22} />
+            <strong style={{ fontSize: '15px', color: '#FFFFFF', letterSpacing: '0.3px' }}>
+              {title || (isEn ? 'Theater Mode' : 'Modo Teatro')}
             </strong>
           </div>
           <button
             type="button"
             className="theater-close-btn"
-            onClick={onClose}
-            title={t('stats.theater.close')}
-            aria-label={t('stats.theater.close')}
+            onClick={(e) => {
+              e.stopPropagation();
+              onClose && onClose();
+            }}
+            title={isEn ? 'Close theater mode' : 'Cerrar modo teatro'}
+            aria-label={isEn ? 'Close theater mode' : 'Cerrar modo teatro'}
             style={{
               minWidth: '48px',
               minHeight: '48px',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              background: 'transparent',
-              border: 'none',
-              color: 'var(--text-secondary, #94A3B8)',
+              background: 'rgba(255, 255, 255, 0.08)',
+              border: '1px solid rgba(255, 255, 255, 0.15)',
+              color: '#FFFFFF',
               cursor: 'pointer',
-              borderRadius: '8px'
+              borderRadius: '8px',
+              position: 'relative',
+              zIndex: 2147483647,
+              pointerEvents: 'auto'
             }}
           >
             <X size={22} />
@@ -108,7 +145,8 @@ export const TheaterOverlay = ({
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',
-            justifyContent: 'center'
+            justifyContent: 'center',
+            background: '#152C22'
           }}
         >
           {children}
@@ -116,6 +154,8 @@ export const TheaterOverlay = ({
       </div>
     </div>
   );
+
+  return ReactDOM.createPortal(overlayContent, document.body);
 };
 
 export default TheaterOverlay;

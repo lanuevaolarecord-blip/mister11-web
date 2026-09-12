@@ -11,6 +11,8 @@ import { CaptureCriteriaModal } from '../components/CaptureCriteriaModal';
 import { RadarCompareSVG } from '../components/canonical/RadarCompareSVG.js';
 import SectionErrorBoundary from '../components/common/SectionErrorBoundary';
 import ZoneEventMap from '../components/MatchStats/ZoneEventMap';
+import HeatMap from '../components/MatchStats/HeatMap';
+import ShotMap from '../components/MatchStats/ShotMap';
 import { getMatchDerivedStatus } from './Partidos';
 import { useLanguage } from '../context/LanguageContext';
 import './DemoMode.css';
@@ -484,10 +486,21 @@ function PartidosView() {
           </div>
 
           {statsSubTab === 'tactical' && (
-            <div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+              <HeatMap
+                events={mockEventsForZone}
+                players={DEMO_PLAYERS}
+                teamName={DEMO_TEAM.nombre}
+              />
               <ZoneEventMap
                 events={mockEventsForZone}
+                teamName={DEMO_TEAM.nombre}
                 t={t}
+              />
+              <ShotMap
+                events={mockEventsForZone}
+                teamName={DEMO_TEAM.nombre}
+                players={DEMO_PLAYERS}
               />
             </div>
           )}

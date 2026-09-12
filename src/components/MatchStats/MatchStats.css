@@ -520,7 +520,7 @@ html.light .stats-table-container,
   color: #FFFFFF;
 }
 
-/* Botones de Pantalla Completa para Análisis Táctico */
+/* Botones de Pantalla Completa para Análisis Táctico (Touch Target >= 48dp Android First) */
 .btn-fullscreen-match-card {
   display: inline-flex;
   align-items: center;
@@ -529,11 +529,13 @@ html.light .stats-table-container,
   border: 1.5px solid var(--accent-gold, #D4A843);
   color: var(--accent-gold, #D4A843);
   border-radius: 8px;
-  padding: 6px 12px;
+  padding: 8px 14px;
   font-size: 12px;
   font-weight: 700;
   cursor: pointer;
-  min-height: 38px;
+  min-height: 48px;
+  min-width: 48px;
+  box-sizing: border-box;
   transition: all 0.2s ease;
   white-space: nowrap;
   flex-shrink: 0;
@@ -553,8 +555,10 @@ html.light .stats-table-container,
   background: rgba(14, 28, 20, 0.85);
   border: 1.5px solid var(--accent-gold, #D4A843);
   color: var(--accent-gold, #D4A843);
-  width: 40px;
-  height: 40px;
+  width: 48px;
+  height: 48px;
+  min-width: 48px;
+  min-height: 48px;
   border-radius: 8px;
   display: flex;
   align-items: center;

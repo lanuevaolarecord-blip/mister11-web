@@ -1,40 +1,32 @@
-import React, { useState, useMemo, useRef, useCallback } from 'react';
-import { Flame, Maximize2, Minimize2, Eye } from 'lucide-react';
+/**
+ * src/components/MatchStats/HeatMap.jsx
+ * Míster11 — Mapa de Calor Táctico 10x15 (Interpolación y densidad por zonas)
+ */
+
+import React, { useState, useMemo, useRef } from 'react';
+import { Flame, Maximize2, Minimize2 } from 'lucide-react';
 import { useTranslation } from '../../hooks/useTranslation';
 import { useTheaterFullscreen } from '../../hooks/useTheaterFullscreen';
+import { TheaterOverlay } from '../common/TheaterOverlay';
 
-// ── Mapa semántico: tipo de evento → zona estimada (0–100) ──────────────────
+// Mapeo reglamentario de zonas para fallback si los eventos carecen de (x, y) precisos
 const ZONE_MAP = {
-  shot_on_target_own:    { x: 88, y: 50 },
-  shot_off_target_own:   { x: 80, y: 45 },
-  shot_on_target_rival:  { x: 12, y: 50 },
-  shot_off_target_rival: { x: 20, y: 55 },
-  gol:                   { x: 92, y: 50 },
-  goal:                  { x: 92, y: 50 },
-  gol_local:             { x: 92, y: 50 },
-  gol_rival:             { x: 8,  y: 50 },
-  pass:                  { x: 50, y: 50 },
-  pase:                  { x: 50, y: 50 },
-  pass_completed:        { x: 55, y: 50 },
-  pass_failed:           { x: 52, y: 50 },
-  key_pass:              { x: 74, y: 50 },
-  recovery:              { x: 55, y: 48 },
-  loss:                  { x: 45, y: 52 },
-  ball_loss:             { x: 45, y: 52 },
-  duel_won:              { x: 58, y: 45 },
-  duel_lost:             { x: 42, y: 55 },
-  foul_favor:            { x: 62, y: 50 },
-  foul_against:          { x: 38, y: 50 },
-  counter_not_cut:       { x: 30, y: 50 },
-  player_no_finish:      { x: 75, y: 50 },
-  corner_favor:          { x: 99, y: 5  },
-  corner_against:        { x: 1,  y: 95 },
-  card_yellow_own:       { x: 40, y: 50 },
-  card_red_own:          { x: 38, y: 52 },
-  card_yellow_rival:     { x: 60, y: 50 },
-  card_red_rival:        { x: 62, y: 48 },
-  offside_own:           { x: 82, y: 50 },
-  offside_rival:         { x: 18, y: 50 },
+  shot_on_target_own: { x: 88, y: 50 },
+  shot_off_target_own: { x: 82, y: 35 },
+  gol_local: { x: 92, y: 50 },
+  goal: { x: 92, y: 50 },
+  gol: { x: 92, y: 50 },
+  foul_favor: { x: 60, y: 70 },
+  foul_against: { x: 35, y: 30 },
+  recovery: { x: 45, y: 50 },
+  loss: { x: 55, y: 65 },
+  duel_won: { x: 50, y: 40 },
+  duel_lost: { x: 48, y: 60 },
+  corner_favor: { x: 98, y: 10 },
+  corner_against: { x: 2, y: 90 },
+  offside: { x: 75, y: 50 },
+  card_yellow_own: { x: 35, y: 45 },
+  card_red_own: { x: 30, y: 50 }
 };
 
 export const HeatMap = ({
@@ -49,7 +41,7 @@ export const HeatMap = ({
   const [activeTab, setActiveTab] = useState('density');
   const [showTacticalGuide, setShowTacticalGuide] = useState(false);
   const wrapperRef = useRef(null);
-  const { isFullscreen, isTheater, toggle: toggleFullscreen } = useTheaterFullscreen(wrapperRef);
+  const { isFullscreen, isTheater, toggle: toggleFullscreen, exit } = useTheaterFullscreen(wrapperRef);
   const isExpanded = isFullscreen || isTheater;
 
   const COLS = 15;
@@ -72,7 +64,6 @@ export const HeatMap = ({
     let total = 0;
 
     filteredEvents.forEach(e => {
-      // Determinar Y prioritariamente por sector lateral seleccionado
       let y = 50;
       const sec = String(e.sector || '').toLowerCase();
       if (sec === 'left' || sec.includes('izq')) {
@@ -87,7 +78,6 @@ export const HeatMap = ({
         y = ZONE_MAP[e.type].y;
       }
 
-      // Determinar X por coordenadas numéricas o zona según acción
       let fallbackX = ZONE_MAP[e.type]?.x ?? 50;
       if (e.type?.includes('shot') || e.type?.includes('goal') || e.type === 'corner_favor') fallbackX = 85;
       else if (e.type?.includes('foul') || e.type?.includes('card') || e.type === 'corner_against') fallbackX = 30;
@@ -114,33 +104,10 @@ export const HeatMap = ({
     return `rgba(239, 68, 68, ${0.65 + ratio * 0.35})`;
   };
 
-  const hasEvents = totalCount > 0;
-
-  return (
-    <div
-      ref={wrapperRef}
-      className={`heat-map-container ${isExpanded ? 'heat-map-fullscreen-active' : ''}`}
-      style={isExpanded ? {
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        width: '100vw',
-        height: '100dvh',
-        maxHeight: '100dvh',
-        background: '#0b1712',
-        padding: '12px 16px',
-        overflowY: 'auto',
-        overflowX: 'hidden',
-        display: 'flex',
-        flexDirection: 'column',
-        zIndex: 999999,
-        boxSizing: 'border-box'
-      } : {}}
-    >
+  const renderFieldContent = (inModal = false) => (
+    <div className="heat-map-inner" style={{ width: '100%', display: 'flex', flexDirection: 'column' }}>
       {/* Header del Mapa de Calor */}
-      <div className="heat-map-header" style={{ flexShrink: 0, marginBottom: isExpanded ? '8px' : '16px' }}>
+      <div className="heat-map-header" style={{ flexShrink: 0, marginBottom: inModal ? '8px' : '16px' }}>
         <div className="heat-map-title">
           <Flame size={20} className="flame-icon" />
           <h3>{isEn ? `Tactical Heat Map (${teamName})` : `Mapa de Calor Táctico (${teamName})`}</h3>
@@ -153,13 +120,28 @@ export const HeatMap = ({
               { key: 'passes', label: isEn ? 'Passes' : 'Pases' },
               { key: 'shots', label: isEn ? 'Shots' : 'Tiros' }
             ].map(({ key, label }) => (
-              <button key={key} type="button" className={`mode-pill ${activeTab === key ? 'active' : ''}`} onClick={() => setActiveTab(key)}>{label}</button>
+              <button
+                key={key}
+                type="button"
+                className={`mode-pill ${activeTab === key ? 'active' : ''}`}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setActiveTab(key);
+                }}
+              >
+                {label}
+              </button>
             ))}
           </div>
 
           {players.length > 0 && (
             <div className="player-filter-select-wrapper">
-              <select value={selectedPlayerId} onChange={e => onSelectPlayer && onSelectPlayer(e.target.value)} className="player-filter-select">
+              <select
+                value={selectedPlayerId}
+                onChange={e => onSelectPlayer && onSelectPlayer(e.target.value)}
+                className="player-filter-select"
+                onClick={e => e.stopPropagation()}
+              >
                 <option value="all">{isEn ? `Whole Team (${teamName})` : `Todo el equipo (${teamName})`}</option>
                 {players.map(p => (
                   <option key={p.id} value={p.id}>#{p.dorsal || p.number || '•'} {p.nombre || p.name || (isEn ? 'Player' : 'Jugador')}</option>
@@ -168,21 +150,27 @@ export const HeatMap = ({
             </div>
           )}
 
-          <button
-            type="button"
-            className="btn-fullscreen-match-card"
-            onClick={toggleFullscreen}
-          >
-            {isFullscreen ? <Minimize2 size={16} /> : <Maximize2 size={16} />}
-            <span>{isFullscreen ? (isEn ? 'Exit' : 'Salir') : (isEn ? 'Fullscreen' : 'Pantalla Completa')}</span>
-          </button>
+          {!inModal && (
+            <button
+              type="button"
+              className="btn-fullscreen-match-card"
+              onClick={(e) => {
+                e.stopPropagation();
+                toggleFullscreen();
+              }}
+              style={{ minHeight: '48px', minWidth: '48px' }}
+            >
+              {isExpanded ? <Minimize2 size={16} /> : <Maximize2 size={16} />}
+              <span>{isExpanded ? (isEn ? 'Exit' : 'Salir') : (isEn ? 'Fullscreen' : 'Pantalla Completa')}</span>
+            </button>
+          )}
         </div>
       </div>
 
-      {/* Campo SVG con rejilla superpuesta (Zero-scroll en Fullscreen) */}
+      {/* Campo SVG con rejilla superpuesta */}
       <div
         className="field-heatmap-wrapper"
-        style={isExpanded ? {
+        style={inModal ? {
           flex: 1,
           minHeight: 0,
           display: 'flex',
@@ -193,23 +181,27 @@ export const HeatMap = ({
           position: 'relative'
         } : { position: 'relative' }}
       >
-        {/* Botón flotante directo en la esquina del campo */}
-        <button
-          type="button"
-          className="btn-floating-pitch-fullscreen"
-          onClick={toggleFullscreen}
-          style={{ minWidth: '48px', minHeight: '48px' }}
-          title={isExpanded ? (isEn ? 'Exit Fullscreen' : 'Salir de Pantalla Completa') : (isEn ? 'View Fullscreen' : 'Ver en Pantalla Completa')}
-        >
-          {isExpanded ? <Minimize2 size={18} /> : <Maximize2 size={18} />}
-        </button>
+        {!inModal && (
+          <button
+            type="button"
+            className="btn-floating-pitch-fullscreen"
+            onClick={(e) => {
+              e.stopPropagation();
+              toggleFullscreen();
+            }}
+            style={{ minWidth: '48px', minHeight: '48px' }}
+            title={isExpanded ? (isEn ? 'Exit Fullscreen' : 'Salir de Pantalla Completa') : (isEn ? 'View Fullscreen' : 'Ver en Pantalla Completa')}
+          >
+            {isExpanded ? <Minimize2 size={18} /> : <Maximize2 size={18} />}
+          </button>
+        )}
 
-        <div style={{ position: 'relative', width: '100%', height: isExpanded ? '100%' : 'auto', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div style={{ position: 'relative', width: '100%', height: inModal ? '100%' : 'auto', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <svg
             viewBox="0 0 105 68"
             className="football-pitch-svg"
             preserveAspectRatio="none"
-            style={isExpanded ? { maxHeight: 'calc(100dvh - 120px)', width: 'auto', maxWidth: '100%', objectFit: 'contain' } : {}}
+            style={inModal ? { maxHeight: 'calc(100dvh - 120px)', width: 'auto', maxWidth: '100%', objectFit: 'contain' } : {}}
           >
             <rect x="0" y="0" width="105" height="68" fill="#1b4d2e" />
             {Array.from({ length: 9 }).map((_, i) => (
@@ -282,7 +274,7 @@ export const HeatMap = ({
       </div>
 
       {/* Leyenda de Intensidad */}
-      <div className="heatmap-legend" style={{ flexShrink: 0, marginTop: isFullscreen ? '6px' : '14px' }}>
+      <div className="heatmap-legend" style={{ flexShrink: 0, marginTop: inModal ? '6px' : '14px' }}>
         <div className="legend-scale">
           <span className="legend-label">{isEn ? 'Low activity' : 'Baja actividad'}</span>
           <div className="legend-gradient-bar" />
@@ -292,9 +284,32 @@ export const HeatMap = ({
           {isEn ? 'Total analyzed actions:' : 'Total acciones analizadas:'} <strong>{totalCount}</strong>
         </div>
       </div>
+    </div>
+  );
+
+  return (
+    <div
+      ref={wrapperRef}
+      className="heat-map-container"
+      style={{
+        width: '100%',
+        boxSizing: 'border-box',
+        position: 'relative'
+      }}
+    >
+      {renderFieldContent(false)}
+
+      {/* Fallback de Pantalla Completa / Modo Teatro mediante Portal */}
+      <TheaterOverlay
+        isOpen={isTheater}
+        onClose={exit}
+        title={isEn ? `Tactical Heat Map (${teamName})` : `Mapa de Calor Táctico (${teamName})`}
+      >
+        {renderFieldContent(true)}
+      </TheaterOverlay>
 
       {/* Panel explicativo pedagógico y táctico (oculto en fullscreen para evitar scroll) */}
-      {!isFullscreen && (
+      {!isExpanded && (
         <div className="tactical-guide-panel">
           <div className="tactical-guide-header" onClick={() => setShowTacticalGuide(prev => !prev)}>
             <div className="tactical-guide-title">
@@ -352,4 +367,3 @@ export const HeatMap = ({
 };
 
 export default HeatMap;
-

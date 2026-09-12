@@ -1106,19 +1106,23 @@ export const drawTacticalPitchCanvas = async ({
     ctx.fillStyle = '#0B1812';
     ctx.fillRect(0, 0, width, height);
 
-    // 2. Campo de Juego Césped (Dimensiones y Franjas)
-    const fieldX = 14;
+    // 2. Campo de Juego Césped (Proporción Reglamentaria FIFA 105:68)
+    // lw = 520px, lh = 337px -> 520/337 = 1.543:1 (Escala FIFA 105m x 68m)
+    const lineInset = 10;
+    const lw = 520;
+    const lh = 337;
+    const fieldW = lw + lineInset * 2; // 540px
+    const fieldH = lh + lineInset * 2; // 357px
+    const fieldX = Math.round((width - fieldW) / 2); // 90px (centrado)
     const fieldY = 14;
-    const fieldW = width - 28; // 692px
-    const fieldH = 345;
-    const fieldR = 10;
+    const fieldR = 8;
 
     ctx.save();
     drawCanvasRoundRect(ctx, fieldX, fieldY, fieldW, fieldH, fieldR);
     ctx.clip();
 
-    // Franjas de césped alternadas estilo estadio
-    const bands = 12;
+    // Franjas de césped alternadas estilo estadio (10 franjas proporcionales)
+    const bands = 10;
     const bandW = fieldW / bands;
     for (let i = 0; i < bands; i++) {
       ctx.fillStyle = (i % 2 === 0) ? '#1B4D24' : '#235F2D';
@@ -1127,30 +1131,27 @@ export const drawTacticalPitchCanvas = async ({
 
     // Borde exterior suave del césped
     ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)';
-    ctx.lineWidth = 3;
+    ctx.lineWidth = 2.5;
     drawCanvasRoundRect(ctx, fieldX, fieldY, fieldW, fieldH, fieldR);
     ctx.stroke();
 
     // Sombreado radial sutil
     const vigGrad = ctx.createRadialGradient(
       fieldX + fieldW / 2, fieldY + fieldH / 2, fieldW * 0.25,
-      fieldX + fieldW / 2, fieldY + fieldH / 2, fieldW * 0.6
+      fieldX + fieldW / 2, fieldY + fieldH / 2, fieldW * 0.65
     );
     vigGrad.addColorStop(0, 'rgba(0,0,0,0)');
-    vigGrad.addColorStop(1, 'rgba(0,0,0,0.3)');
+    vigGrad.addColorStop(1, 'rgba(0,0,0,0.32)');
     ctx.fillStyle = vigGrad;
     ctx.fillRect(fieldX, fieldY, fieldW, fieldH);
     ctx.restore();
 
-    // 3. Líneas Oficiales del Terreno de Juego (Blanco nítido 85%)
-    const lineInset = 12;
-    const lx = fieldX + lineInset;
-    const ly = fieldY + lineInset;
-    const lw = fieldW - lineInset * 2; // 668px
-    const lh = fieldH - lineInset * 2; // 321px
+    // 3. Líneas Oficiales del Terreno de Juego FIFA (Blanco nítido 88%)
+    const lx = fieldX + lineInset; // 100px
+    const ly = fieldY + lineInset; // 24px
 
     ctx.save();
-    ctx.strokeStyle = 'rgba(255, 255, 255, 0.85)';
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.88)';
     ctx.lineWidth = 2;
 
     // Línea perimetral
@@ -1164,9 +1165,10 @@ export const drawTacticalPitchCanvas = async ({
     ctx.lineTo(midX, ly + lh);
     ctx.stroke();
 
-    // Círculo central (radio 44)
+    // Círculo central reglamentario (radio 9.15m en escala 68m = 45.3px)
+    const centerRadius = Math.round((9.15 / 68) * lh); // 45px
     ctx.beginPath();
-    ctx.arc(midX, midY, 44, 0, Math.PI * 2);
+    ctx.arc(midX, midY, centerRadius, 0, Math.PI * 2);
     ctx.stroke();
 
     // Punto central
@@ -1175,31 +1177,34 @@ export const drawTacticalPitchCanvas = async ({
     ctx.fillStyle = '#FFFFFF';
     ctx.fill();
 
-    // Área grande izquierda
-    const penW = 75;
-    const penH = 160;
+    // Área grande reglamentaria (16.5m largo x 40.32m ancho)
+    const penW = Math.round((16.5 / 105) * lw); // 82px
+    const penH = Math.round((40.32 / 68) * lh); // 200px
     const penY = ly + (lh - penH) / 2;
     ctx.strokeRect(lx, penY, penW, penH);
 
-    // Área pequeña izquierda
-    const gBoxW = 26;
-    const gBoxH = 75;
+    // Área pequeña reglamentaria (5.5m largo x 18.32m ancho)
+    const gBoxW = Math.round((5.5 / 105) * lw); // 27px
+    const gBoxH = Math.round((18.32 / 68) * lh); // 91px
     const gBoxY = ly + (lh - gBoxH) / 2;
     ctx.strokeRect(lx, gBoxY, gBoxW, gBoxH);
 
-    // Punto de penalti izquierdo
-    const lSpotX = lx + 54;
+    // Punto de penalti izquierdo (11m)
+    const penDist = Math.round((11 / 105) * lw); // 54px
+    const lSpotX = lx + penDist;
     ctx.beginPath();
     ctx.arc(lSpotX, midY, 2.5, 0, Math.PI * 2);
     ctx.fill();
 
-    // Semicírculo del área izquierda
+    // Semicírculo del área izquierda (arco exterior)
     ctx.beginPath();
-    ctx.arc(lSpotX, midY, 36, -0.65, 0.65);
+    ctx.arc(lSpotX, midY, centerRadius, -0.68, 0.68);
     ctx.stroke();
 
-    // Portería izquierda
-    ctx.strokeRect(lx - 7, ly + (lh - 48) / 2, 7, 48);
+    // Portería izquierda (dorada reglamentaria fuera de la línea)
+    ctx.strokeStyle = '#D4A843';
+    ctx.strokeRect(lx - 8, ly + (lh - 50) / 2, 8, 50);
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.88)';
 
     // Área grande derecha
     ctx.strokeRect(lx + lw - penW, penY, penW, penH);
@@ -1207,25 +1212,27 @@ export const drawTacticalPitchCanvas = async ({
     // Área pequeña derecha
     ctx.strokeRect(lx + lw - gBoxW, gBoxY, gBoxW, gBoxH);
 
-    // Punto de penalti derecho
-    const rSpotX = lx + lw - 54;
+    // Punto de penalti derecho (11m)
+    const rSpotX = lx + lw - penDist;
     ctx.beginPath();
     ctx.arc(rSpotX, midY, 2.5, 0, Math.PI * 2);
     ctx.fill();
 
-    // Semicírculo del área derecha
+    // Semicírculo del área derecha (arco exterior)
     ctx.beginPath();
-    ctx.arc(rSpotX, midY, 36, Math.PI - 0.65, Math.PI + 0.65);
+    ctx.arc(rSpotX, midY, centerRadius, Math.PI - 0.68, Math.PI + 0.68);
     ctx.stroke();
 
-    // Portería derecha
-    ctx.strokeRect(lx + lw, ly + (lh - 48) / 2, 7, 48);
+    // Portería derecha (dorada reglamentaria fuera de la línea)
+    ctx.strokeStyle = '#D4A843';
+    ctx.strokeRect(lx + lw, ly + (lh - 50) / 2, 8, 50);
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.88)';
 
-    // Esquinas (Córners)
-    ctx.beginPath(); ctx.arc(lx, ly, 10, 0, Math.PI / 2); ctx.stroke();
-    ctx.beginPath(); ctx.arc(lx, ly + lh, 10, -Math.PI / 2, 0); ctx.stroke();
-    ctx.beginPath(); ctx.arc(lx + lw, ly, 10, Math.PI / 2, Math.PI); ctx.stroke();
-    ctx.beginPath(); ctx.arc(lx + lw, ly + lh, 10, Math.PI, -Math.PI / 2); ctx.stroke();
+    // Esquinas (Córners reglamentarios)
+    ctx.beginPath(); ctx.arc(lx, ly, 8, 0, Math.PI / 2); ctx.stroke();
+    ctx.beginPath(); ctx.arc(lx, ly + lh, 8, -Math.PI / 2, 0); ctx.stroke();
+    ctx.beginPath(); ctx.arc(lx + lw, ly, 8, Math.PI / 2, Math.PI); ctx.stroke();
+    ctx.beginPath(); ctx.arc(lx + lw, ly + lh, 8, Math.PI, -Math.PI / 2); ctx.stroke();
     ctx.restore();
 
     // 4. Precargar fotos de jugadores convocados a Base64
@@ -1388,16 +1395,17 @@ export const drawTacticalPitchCanvas = async ({
     }
 
     // 6. Bloque de Suplentes / Relevos en el inferior
+    const benchX = 14;
     const benchY = fieldY + fieldH + 10;
-    const benchH = height - benchY - 12; // ~129px
-    const benchW = fieldW;
+    const benchH = height - benchY - 12; // ~117px
+    const benchW = width - 28; // 692px
 
     ctx.fillStyle = '#172D21';
-    drawCanvasRoundRect(ctx, fieldX, benchY, benchW, benchH, 8);
+    drawCanvasRoundRect(ctx, benchX, benchY, benchW, benchH, 8);
     ctx.fill();
     ctx.strokeStyle = '#D4A843';
     ctx.lineWidth = 1.5;
-    drawCanvasRoundRect(ctx, fieldX, benchY, benchW, benchH, 8);
+    drawCanvasRoundRect(ctx, benchX, benchY, benchW, benchH, 8);
     ctx.stroke();
 
     // Encabezado de suplentes
@@ -1410,7 +1418,7 @@ export const drawTacticalPitchCanvas = async ({
     ctx.textBaseline = 'top';
     ctx.fillText(
       isEn ? `CALLED SUBSTITUTES (${subsPlayers.length})` : `CONVOCADOS SUPLENTES (${subsPlayers.length})`,
-      fieldX + 14,
+      benchX + 16,
       benchY + 10
     );
 
@@ -1420,9 +1428,10 @@ export const drawTacticalPitchCanvas = async ({
       const chipH = 26;
       const gapX = 8;
       const gapY = 6;
-      const startX = fieldX + 14;
-      const startY = benchY + 28;
       const maxCols = 4;
+      const totalChipsW = maxCols * chipW + (maxCols - 1) * gapX; // 640px
+      const startX = benchX + Math.round((benchW - totalChipsW) / 2); // 40px centrado
+      const startY = benchY + 28;
 
       subsPlayers.forEach((sub, sIdx) => {
         const col = sIdx % maxCols;

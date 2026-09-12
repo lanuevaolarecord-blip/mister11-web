@@ -2103,7 +2103,7 @@ export const drawGkExertionCanvas = ({
   gkIndices = {},
   isEn = false,
   width = 660,
-  height = 190
+  height = 200
 }) => {
   try {
     const scale = CANVAS_DPI_SCALE;
@@ -2217,13 +2217,13 @@ export const drawGkExertionCanvas = ({
 
     // Subbloque: Desglose de Exposición Defensiva por Zona
     const expY = 106;
-    const expH = 70;
+    const expH = 78;
     const expW = width - 36;
     ctx.fillStyle = '#0F172A';
     drawCanvasRoundRect(ctx, 18, expY, expW, expH, 8);
     ctx.fill();
 
-    ctx.font = 'bold 9px Arial, sans-serif';
+    ctx.font = 'bold 9.5px Arial, sans-serif';
     ctx.fillStyle = '#F8FAFC';
     ctx.textAlign = 'left';
     ctx.textBaseline = 'top';
@@ -2258,7 +2258,7 @@ export const drawGkExertionCanvas = ({
     const colW = (expW - 20) / 3;
     expZones.forEach((z, zIdx) => {
       const zx = 28 + zIdx * colW;
-      ctx.font = 'bold 9px Arial, sans-serif';
+      ctx.font = 'bold 9.5px Arial, sans-serif';
       ctx.fillStyle = z.status;
       ctx.fillText(z.name, zx, expY + 28);
 

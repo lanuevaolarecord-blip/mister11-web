@@ -1169,7 +1169,7 @@ export const generateMatchPdfReport = async ({
         }
       });
 
-      // ── PÁGINA 4: SECCIÓN 7 & SECCIÓN 8 — MAPAS DE TIROS Y CAMPO & TÁCTICA ─
+      // ── PÁGINA 4: SECCIÓN 7 — MAPAS DE TIROS Y MODELO xG-LITE ─────────────
       doc.addPage();
       y = 18;
 
@@ -1187,13 +1187,14 @@ export const generateMatchPdfReport = async ({
       });
       const shotMapImg = await rasterizeSvgToDataUrl(shotSvg, 1050, 680, 2);
       assertGraphicEmbedded('sec7_shots', shotMapImg);
-      const smW = pageW - 28;
+      const smW = 150;
       const smH = smW / 1.5441;
+      const smX = (pageW - smW) / 2;
       const shotMapAspect = smW / smH;
       if (Math.abs(shotMapAspect - 1.5441) > 0.05) {
         throw new Error(`[ASPECT RATIO ERROR] sec7_shots aspect ratio is ${shotMapAspect.toFixed(2)}, expected 1.54 ± 2%`);
       }
-      doc.addImage(shotMapImg, 'PNG', 14, y, smW, smH);
+      doc.addImage(shotMapImg, 'PNG', smX, y, smW, smH);
       y += smH + 5;
 
       // Tabla cuantitativa de tiros xG-lite
@@ -1230,26 +1231,37 @@ export const generateMatchPdfReport = async ({
         }
       });
 
-      y = (doc.lastAutoTable ? doc.lastAutoTable.finalY : y + 30) + 6;
+      // ── PÁGINA 5: SECCIÓN 8 & SECCIÓN 9 — CAMPO/TÁCTICA Y PORTERÍA ─────────
+      doc.addPage();
+      y = 18;
 
-      // 8. Campo & Táctica (Pasillos Reglamentarios, ABP y Territorio)
+      // 8. Campo & Táctica (Pasillos Reglamentarios FIFA 105:68, ABP y Territorio)
       y = drawSectionHeader('sec8_tactics');
       const tacticsSvg = renderSectorTacticsSvgString({
         tacticsData,
+        homeStats: {
+          corners: countOfSafe(['corner_favor']),
+          faltas: countOfSafe(['foul_committed']),
+          penaltis: countOfSafe(['penalty_goal_favor', 'penalty_miss_favor'])
+        },
+        awayStats: {
+          corners: countOfSafe(['corner_against']),
+          faltas: countOfSafe(['foul_received']),
+          penaltis: countOfSafe(['penalty_goal_against', 'penalty_saved'])
+        },
+        homeTeamName: safeTeamName,
+        awayTeamName: rivalName,
         isEn,
-        width: 660,
-        height: 180
+        width: 700,
+        height: 480
       });
-      const tacticsImg = await rasterizeSvgToDataUrl(tacticsSvg, 660, 180, 3);
+      const tacticsImg = await rasterizeSvgToDataUrl(tacticsSvg, 700, 480, 2);
       assertGraphicEmbedded('sec8_tactics', tacticsImg);
-      const tW = pageW - 28;
-      const tH = (180 / 660) * tW;
-      doc.addImage(tacticsImg, 'PNG', 14, y, tW, tH);
+      const tW = 150;
+      const tH = (480 / 700) * tW;
+      const tX = (pageW - tW) / 2;
+      doc.addImage(tacticsImg, 'PNG', tX, y, tW, tH);
       y += tH + 6;
-
-      // ── PÁGINA 5: SECCIÓN 9 — EXIGENCIA & RENDIMIENTO DE PORTERÍA ─────────
-      doc.addPage();
-      y = 18;
 
       // 9. Exigencia & Rendimiento de Portería
       y = drawSectionHeader('sec9_gk');
@@ -1272,11 +1284,11 @@ export const generateMatchPdfReport = async ({
           gkIndices: gkIndicesForCanvas,
           isEn,
           width: 660,
-          height: 155
+          height: 200
         });
         if (gkImg) {
           const gkW = pageW - 28;
-          const gkH = (155 / 660) * gkW;
+          const gkH = (200 / 660) * gkW;
           doc.addImage(gkImg, 'PNG', 14, y, gkW, gkH);
           y += gkH + 5;
         }

@@ -196,52 +196,52 @@ export function renderShotMapSvgString({
   </g>
 
   <!-- Barra Superior: Título y Badges de xG sin colisión -->
-  <rect x="25" y="8" width="1000" height="34" fill="rgba(21, 44, 34, 0.9)" rx="6" stroke="rgba(212, 168, 67, 0.4)" stroke-width="1" />
-  <text x="40" y="30" fill="${theme.gold}" font-size="14" font-weight="900" font-family="Arial, sans-serif" letter-spacing="0.5">
+  <rect x="25" y="8" width="1000" height="38" fill="#152C22" rx="7" stroke="rgba(212, 168, 67, 0.6)" stroke-width="1.2" />
+  <text x="42" y="32" fill="${theme.gold}" font-size="16" font-weight="900" font-family="Arial, sans-serif" letter-spacing="0.5">
     🎯 ${titleText}
   </text>
 
   <!-- Badges xG -->
-  <rect x="740" y="14" width="135" height="22" fill="rgba(76, 175, 125, 0.25)" stroke="${theme.teamHome}" stroke-width="1" rx="4" />
-  <text x="807" y="29" text-anchor="middle" fill="${theme.teamHome}" font-size="11" font-weight="800" font-family="Arial, sans-serif">
-    ${safeHome.slice(0, 10)} xG: ${safeOwnXg}
+  <rect x="715" y="14" width="150" height="26" fill="rgba(76, 175, 125, 0.35)" stroke="${theme.teamHome}" stroke-width="1.5" rx="5" />
+  <text x="790" y="31" text-anchor="middle" fill="#FFFFFF" font-size="13" font-weight="900" font-family="Arial, sans-serif">
+    ${safeHome.slice(0, 11)} xG: <tspan fill="${theme.teamHome}">${safeOwnXg}</tspan>
   </text>
 
-  <rect x="885" y="14" width="130" height="22" fill="rgba(239, 68, 68, 0.25)" stroke="${theme.teamAway}" stroke-width="1" rx="4" />
-  <text x="950" y="29" text-anchor="middle" fill="${theme.teamAway}" font-size="11" font-weight="800" font-family="Arial, sans-serif">
-    ${safeAway.slice(0, 10)} xG: ${safeRivalXg}
+  <rect x="875" y="14" width="145" height="26" fill="rgba(239, 68, 68, 0.35)" stroke="${theme.teamAway}" stroke-width="1.5" rx="5" />
+  <text x="947" y="31" text-anchor="middle" fill="#FFFFFF" font-size="13" font-weight="900" font-family="Arial, sans-serif">
+    ${safeAway.slice(0, 11)} xG: <tspan fill="${theme.teamAway}">${safeRivalXg}</tspan>
   </text>
 
   <!-- Barra Inferior: Leyenda Oficial con Conteos y Cómo se lee -->
-  <rect x="25" y="638" width="1000" height="34" fill="rgba(21, 44, 34, 0.95)" rx="6" stroke="rgba(76, 175, 125, 0.3)" stroke-width="1" />
+  <rect x="25" y="634" width="1000" height="38" fill="rgba(15, 30, 23, 0.98)" rx="7" stroke="rgba(76, 175, 125, 0.5)" stroke-width="1.2" />
   
-  <g transform="translate(45, 655)">
+  <g transform="translate(45, 653)">
     <!-- Gol -->
-    <circle cx="0" cy="0" r="6" fill="${theme.gold}" stroke="#FFFFFF" stroke-width="1.2" />
-    <text x="12" y="4" fill="${theme.textSecondary}" font-size="11" font-weight="700" font-family="Arial, sans-serif">
+    <circle cx="0" cy="0" r="7" fill="${theme.gold}" stroke="#FFFFFF" stroke-width="1.5" />
+    <text x="14" y="5" fill="#FFFFFF" font-size="12.5" font-weight="800" font-family="Arial, sans-serif">
       ${isEn ? `Goal (${countGoals})` : `Gol (${countGoals})`}
     </text>
 
     <!-- A puerta -->
-    <circle cx="110" cy="0" r="6" fill="${theme.teamHome}" stroke="#FFFFFF" stroke-width="1.2" />
-    <text x="122" y="4" fill="${theme.textSecondary}" font-size="11" font-weight="700" font-family="Arial, sans-serif">
+    <circle cx="120" cy="0" r="7" fill="${theme.teamHome}" stroke="#FFFFFF" stroke-width="1.5" />
+    <text x="134" y="5" fill="#FFFFFF" font-size="12.5" font-weight="800" font-family="Arial, sans-serif">
       ${isEn ? `On Target (${countOnTarget})` : `A puerta (${countOnTarget})`}
     </text>
 
     <!-- Fuera / Bloqueado -->
-    <circle cx="240" cy="0" r="5" fill="#94A3B8" stroke="#FFFFFF" stroke-width="1" />
-    <text x="252" y="4" fill="${theme.textSecondary}" font-size="11" font-weight="700" font-family="Arial, sans-serif">
+    <circle cx="260" cy="0" r="6" fill="#94A3B8" stroke="#FFFFFF" stroke-width="1.2" />
+    <text x="274" y="5" fill="#FFFFFF" font-size="12.5" font-weight="800" font-family="Arial, sans-serif">
       ${isEn ? `Off Target (${countOffTarget})` : `Fuera / Bloqueado (${countOffTarget})`}
     </text>
 
     <!-- Tiro Rival -->
-    <circle cx="430" cy="0" r="6" fill="${theme.teamAway}" stroke="#FFFFFF" stroke-width="1.2" />
-    <text x="442" y="4" fill="${theme.textSecondary}" font-size="11" font-weight="700" font-family="Arial, sans-serif">
+    <circle cx="470" cy="0" r="7" fill="${theme.teamAway}" stroke="#FFFFFF" stroke-width="1.5" />
+    <text x="484" y="5" fill="#FFFFFF" font-size="12.5" font-weight="800" font-family="Arial, sans-serif">
       ${isEn ? `Opponent Shot (${countRival})` : `Tiro Rival (${countRival})`}
     </text>
 
     <!-- Frase explicativa Cómo se lee -->
-    <text x="960" y="4" text-anchor="end" fill="rgba(242, 237, 228, 0.75)" font-size="10" font-weight="600" font-family="Arial, sans-serif">
+    <text x="960" y="5" text-anchor="end" fill="#CBD5E1" font-size="11" font-weight="700" font-family="Arial, sans-serif">
       💡 ${isEn ? 'Dot size indicates shot xG probability; rival shots mirrored towards attacking goal.' : 'Radio según valor xG (6-16px); tiros rivales orientados a su portería de ataque.'}
     </text>
   </g>

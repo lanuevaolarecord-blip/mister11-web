@@ -55,21 +55,20 @@ export const ZoneEventMap = ({
           <div style={{ display: 'flex', background: 'rgba(0,0,0,0.3)', borderRadius: '6px', padding: '2px', border: '1px solid rgba(76,175,125,0.2)' }}>
             <button
               type="button"
-              disabled={!passNetwork.available}
               onClick={() => {
-                if (passNetwork.available && onSwitchToPassNetwork) onSwitchToPassNetwork();
+                if (onSwitchToPassNetwork) onSwitchToPassNetwork();
               }}
-              title={!passNetwork.available ? (isEn ? passNetwork.tooltipEn : passNetwork.tooltipEs) : ''}
               style={{
                 background: 'transparent',
                 border: 'none',
-                color: passNetwork.available ? '#CBD5E1' : '#64748B',
-                padding: '6px 10px',
+                color: '#CBD5E1',
+                padding: '6px 12px',
                 borderRadius: '4px',
                 fontSize: '11px',
                 fontWeight: 700,
-                cursor: passNetwork.available ? 'pointer' : 'not-allowed',
-                opacity: passNetwork.available ? 1 : 0.45
+                cursor: 'pointer',
+                opacity: 1,
+                minHeight: '36px'
               }}
             >
               {t('charts.view.pass_network', isEn ? 'Pass Network' : 'Red de Pases')}

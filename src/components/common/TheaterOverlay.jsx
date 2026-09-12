@@ -5,14 +5,16 @@ import { useTranslation } from '../../hooks/useTranslation';
 
 export const TheaterOverlay = ({
   isOpen,
+  isTheater,
   onClose,
   title,
   children
 }) => {
+  const isVisible = isOpen !== undefined ? Boolean(isOpen) : Boolean(isTheater);
   const { t, isEn } = useTranslation();
 
   useEffect(() => {
-    if (!isOpen) return;
+    if (!isVisible) return;
 
     const handleKeyDown = (e) => {
       if (e.key === 'Escape' && onClose) {
@@ -29,9 +31,9 @@ export const TheaterOverlay = ({
       document.body.style.overflow = originalOverflow;
       window.removeEventListener('keydown', handleKeyDown);
     };
-  }, [isOpen, onClose]);
+  }, [isVisible, onClose]);
 
-  if (!isOpen || typeof document === 'undefined') return null;
+  if (!isVisible || typeof document === 'undefined') return null;
 
   const overlayContent = (
     <div

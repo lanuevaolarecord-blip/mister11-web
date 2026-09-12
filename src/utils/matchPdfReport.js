@@ -800,7 +800,7 @@ export const generateMatchPdfReport = async ({
       );
 
     } else {
-      // ── B) MODO INFORME TOTAL POST-PARTIDO: 9 SECCIONES CANÓNICAS ─────────
+      // ── B) MODO INFORME TOTAL POST-PARTIDO: 11 SECCIONES CANÓNICAS ─────────
       const effLangKey = isEn ? 'en' : 'es';
       const drawSectionHeader = (secId, yOffset = 0) => {
         const secDef = CANONICAL_REPORT_SECTIONS.find((s) => s.id === secId);
@@ -820,10 +820,83 @@ export const generateMatchPdfReport = async ({
       const { homeStats, awayStats, tacticsData } = analytics;
       const shotEvents = analytics.shots.all;
 
-      // ── PÁGINA 1: SECCIÓN 1 — MARCADOR & CRONOLOGÍA DE EVENTOS ────────────
-      y = drawSectionHeader('sec1_timeline');
+      // Función de aserción estricta: si una sección gráfica obligatoria queda en blanco, FALLAR PDF
+      let embeddedGraphicsCount = 0;
+      const assertGraphicEmbedded = (secId, dataUrl, minBytes = 1000) => {
+        if (!dataUrl || typeof dataUrl !== 'string' || !dataUrl.startsWith('data:image/') || dataUrl.length < minBytes) {
+          throw new Error(
+            `[PDF GENERATION CRITICAL ERROR] La sección gráfica obligatoria '${secId}' falló al rasterizar o quedó en blanco (bytes: ${dataUrl?.length || 0}). La generación del PDF ha sido cancelada para evitar entregar un informe incompleto.`
+          );
+        }
+        embeddedGraphicsCount++;
+      };
 
-      // 1. Goleadores y anotaciones (propios y rivales con minuto obligatorio)
+      // ── PÁGINA 1: SECCIÓN 1 — ALINEACIÓN TÁCTICA CON FOTOGRAFÍAS Y SUPLENTES ──
+      y = drawSectionHeader('sec1_lineup');
+      let effectiveLineupImage = lineupImage;
+      if (!effectiveLineupImage) {
+        try {
+          effectiveLineupImage = await drawTacticalPitchCanvas({
+            matchData,
+            calledPlayers,
+            players,
+            isEn
+          });
+        } catch (pitchGenErr) {
+          console.warn('Error generando terreno de juego táctico canvas:', pitchGenErr);
+        }
+      }
+
+      assertGraphicEmbedded('sec1_lineup', effectiveLineupImage);
+      const pitchW = 142;
+      const pitchH = (510 / 720) * pitchW; // ~100.5mm
+      const pitchX = (pageW - pitchW) / 2;
+      doc.addImage(effectiveLineupImage, 'PNG', pitchX, y, pitchW, pitchH);
+      y += pitchH + 4;
+
+      // Suplentes Convocados en el pie de la Página 1
+      const subsRoster = squadRoster.filter(r => !r.isStarter);
+      if (subsRoster.length > 0 && y < pageH - 24) {
+        doc.setFontSize(8);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(...colorPrimary);
+        doc.text(isEn ? 'SUBSTITUTES BENCH' : 'BANQUILLO DE SUPLENTES', 14, y);
+        y += 3;
+
+        const subHeaders = isEn ? ['#', 'Player Name', 'Pos', 'Minutes', 'Rating'] : ['#', 'Jugador', 'Pos', 'Minutos', 'Nota'];
+        const subRows = subsRoster.slice(0, 6).map(s => [
+          s.number,
+          s.name,
+          s.position,
+          `${s.minutes}'`,
+          s.rating
+        ]);
+
+        autoTable(doc, {
+          startY: y,
+          head: [subHeaders],
+          body: subRows,
+          theme: 'striped',
+          headStyles: { fillColor: colorPrimary, textColor: [255, 255, 255], fontStyle: 'bold', fontSize: 6.8 },
+          styles: { fontSize: 6.8, cellPadding: 1.6 },
+          columnStyles: {
+            0: { width: 8, halign: 'center' },
+            1: { fontStyle: 'bold' },
+            2: { width: 14, halign: 'center' },
+            3: { width: 16, halign: 'center', fontStyle: 'bold' },
+            4: { width: 14, halign: 'center' }
+          }
+        });
+      }
+
+      // ── PÁGINA 2: SECCIÓN 2 & SECCIÓN 3 — CRONOLOGÍA Y MOMENTUM ────────────
+      doc.addPage();
+      y = 18;
+
+      // 2. Marcador Oficial y Cronología de Eventos
+      y = drawSectionHeader('sec2_timeline');
+
+      // Goleadores y anotaciones (propios y rivales con minuto obligatorio)
       const allScorersListPost = [];
       if (Array.isArray(matchData.goleadoresList) && matchData.goleadoresList.length > 0) {
         matchData.goleadoresList.forEach((g) => {
@@ -935,7 +1008,7 @@ export const generateMatchPdfReport = async ({
 
       y = (doc.lastAutoTable ? doc.lastAutoTable.finalY : y + 26) + 6;
 
-      // Cronología resumida de eventos clave (sin default 1', derivando minutos y goles rivales)
+      // Cronología resumida de eventos clave
       const sortedEvents = [...safeEvents].sort((a, b) => {
         const hA = a.half || 1;
         const hB = b.half || 1;
@@ -952,7 +1025,7 @@ export const generateMatchPdfReport = async ({
                  t.includes('card') || t.includes('amarilla') || t.includes('roja') || t.includes('foul') ||
                  t.includes('cambio') || t.includes('sustitucion');
         })
-        .slice(0, 10)
+        .slice(0, 8)
         .map((e, idx) => {
           const rawMin = parseInt(e.minute || e.minuto || e.min, 10);
           const minLabel = (!isNaN(rawMin) && rawMin > 0) ? `${rawMin}'` : (isEn ? 'Unknown' : 's/m');
@@ -989,23 +1062,8 @@ export const generateMatchPdfReport = async ({
         y = (doc.lastAutoTable ? doc.lastAutoTable.finalY : y + 20) + 6;
       }
 
-      // Función de aserción estricta: si una sección gráfica obligatoria queda en blanco, FALLAR PDF
-      let embeddedGraphicsCount = 0;
-      const assertGraphicEmbedded = (secId, dataUrl, minBytes = 1000) => {
-        if (!dataUrl || typeof dataUrl !== 'string' || !dataUrl.startsWith('data:image/') || dataUrl.length < minBytes) {
-          throw new Error(
-            `[PDF GENERATION CRITICAL ERROR] La sección gráfica obligatoria '${secId}' falló al rasterizar o quedó en blanco (bytes: ${dataUrl?.length || 0}). La generación del PDF ha sido cancelada para evitar entregar un informe incompleto.`
-          );
-        }
-        embeddedGraphicsCount++;
-      };
-
-      // ── PÁGINA 2: SECCIÓN 2 & SECCIÓN 3 — MOMENTUM Y BARRAS COMPARATIVAS ──
-      doc.addPage();
-      y = 18;
-
-      // 2. Momentum y Posesión por Bloques 15'
-      y = drawSectionHeader('sec2_momentum');
+      // 3. Momentum y Posesión por Bloques 15'
+      y = drawSectionHeader('sec3_momentum');
       const momentumSvg = renderMomentumSvgString({
         events: safeEvents,
         durationMin: durationMin || 90,
@@ -1014,14 +1072,18 @@ export const generateMatchPdfReport = async ({
         height: 180
       });
       const momentumImg = await rasterizeSvgToDataUrl(momentumSvg, 640, 180, 3);
-      assertGraphicEmbedded('sec2_momentum', momentumImg);
+      assertGraphicEmbedded('sec3_momentum', momentumImg);
       const momW = pageW - 28;
       const momH = (180 / 640) * momW;
       doc.addImage(momentumImg, 'PNG', 14, y, momW, momH);
       y += momH + 5;
 
-      // 3. Barras Comparativas (10 Métricas Canónicas)
-      y = drawSectionHeader('sec3_bars');
+      // ── PÁGINA 3: SECCIÓN 4, 5 & 6 — BARRAS, RADAR Y TOP-5 ────────────────
+      doc.addPage();
+      y = 18;
+
+      // 4. Barras Comparativas (10 Métricas Canónicas)
+      y = drawSectionHeader('sec4_bars');
       const barsSvg = renderComparisonBarsSvgString({
         homeStats,
         awayStats,
@@ -1032,18 +1094,14 @@ export const generateMatchPdfReport = async ({
         height: 250
       });
       const barsImg = await rasterizeSvgToDataUrl(barsSvg, 660, 250, 3);
-      assertGraphicEmbedded('sec3_bars', barsImg);
+      assertGraphicEmbedded('sec4_bars', barsImg);
       const bW = pageW - 28;
       const bH = (250 / 660) * bW;
       doc.addImage(barsImg, 'PNG', 14, y, bW, bH);
       y += bH + 6;
 
-      // ── PÁGINA 3: SECCIÓN 4 & SECCIÓN 5 — RADAR Y TOP-5 DIFERENCIALES ──────
-      doc.addPage();
-      y = 18;
-
-      // 4. Radar Táctico Oficial (6 Ejes Comparativos)
-      y = drawSectionHeader('sec4_radar');
+      // 5. Radar Táctico Oficial (6 Ejes Comparativos)
+      y = drawSectionHeader('sec5_radar');
       const radarSvg = renderRadarCompareSvgString({
         homeStats,
         awayStats,
@@ -1054,15 +1112,15 @@ export const generateMatchPdfReport = async ({
         height: 260
       });
       const radarImg = await rasterizeSvgToDataUrl(radarSvg, 500, 260, 3);
-      assertGraphicEmbedded('sec4_radar', radarImg);
+      assertGraphicEmbedded('sec5_radar', radarImg);
       const rW = 110;
       const rH = (260 / 500) * rW;
       const rX = (pageW - rW) / 2;
       doc.addImage(radarImg, 'PNG', rX, y, rW, rH);
       y += rH + 6;
 
-      // 5. Métricas Top-5 Diferenciales (Consumiendo matchAnalytics como Fuente Única)
-      y = drawSectionHeader('sec5_top5');
+      // 6. Métricas Top-5 Diferenciales
+      y = drawSectionHeader('sec6_top5');
 
       const countOfSafe = (types) => {
         const arr = Array.isArray(types) ? types : [types];
@@ -1074,7 +1132,6 @@ export const generateMatchPdfReport = async ({
       const totalDuelsVal = duelsWonVal + duelsLostVal;
       const duelsPctVal = totalDuelsVal > 0 ? Math.round((duelsWonVal / totalDuelsVal) * 100) : 50;
 
-      // Unicidad absoluta con Sección 6 vía analytics.shots
       const shotsOnVal = analytics.shots.ownOnTarget;
       const totalOwnShots = analytics.shots.ownShots.length;
       const shotsOnRival = analytics.shots.rivalOnTarget;
@@ -1112,12 +1169,12 @@ export const generateMatchPdfReport = async ({
         }
       });
 
-      // ── PÁGINA 4: SECCIÓN 6 & SECCIÓN 7 — MAPAS DE TIROS Y CAMPO & TÁCTICA ─
+      // ── PÁGINA 4: SECCIÓN 7 & SECCIÓN 8 — MAPAS DE TIROS Y CAMPO & TÁCTICA ─
       doc.addPage();
       y = 18;
 
-      // 6. Mapas de Tiros & Modelo xG-Lite (Aserción de imagen rasterizada 3x obligatoria, PitchFrame 105:68)
-      y = drawSectionHeader('sec6_shots');
+      // 7. Mapas de Tiros & Modelo xG-Lite (PitchFrame 105:68)
+      y = drawSectionHeader('sec7_shots');
       const shotSvg = renderShotMapSvgString({
         shots: analytics.shots.all,
         ownXg: analytics.shots.ownTotalXg,
@@ -1129,17 +1186,17 @@ export const generateMatchPdfReport = async ({
         height: 680
       });
       const shotMapImg = await rasterizeSvgToDataUrl(shotSvg, 1050, 680, 2);
-      assertGraphicEmbedded('sec6_shots', shotMapImg);
+      assertGraphicEmbedded('sec7_shots', shotMapImg);
       const smW = pageW - 28;
       const smH = smW / 1.5441;
       const shotMapAspect = smW / smH;
       if (Math.abs(shotMapAspect - 1.5441) > 0.05) {
-        throw new Error(`[ASPECT RATIO ERROR] sec6_shots aspect ratio is ${shotMapAspect.toFixed(2)}, expected 1.54 ± 2%`);
+        throw new Error(`[ASPECT RATIO ERROR] sec7_shots aspect ratio is ${shotMapAspect.toFixed(2)}, expected 1.54 ± 2%`);
       }
       doc.addImage(shotMapImg, 'PNG', 14, y, smW, smH);
       y += smH + 5;
 
-      // Tabla cuantitativa de tiros xG-lite con porcentajes uniformes en ambos bandos
+      // Tabla cuantitativa de tiros xG-lite
       const ownComfortableCount = analytics.shots.ownShots.filter(e => e.shooterComfort === 'comodo').length;
       const ownComfortablePct = analytics.shots.ownShots.length > 0 ? Math.round((ownComfortableCount / analytics.shots.ownShots.length) * 100) : 0;
       const rivalComfortableCount = derivedIndices.rivalComfortableShots ?? analytics.shots.rivalShots.filter(e => e.shooterComfort === 'comodo').length;
@@ -1175,8 +1232,8 @@ export const generateMatchPdfReport = async ({
 
       y = (doc.lastAutoTable ? doc.lastAutoTable.finalY : y + 30) + 6;
 
-      // 7. Mapa de Sectores & Distribución Táctica
-      y = drawSectionHeader('sec7_tactics');
+      // 8. Campo & Táctica (Pasillos Reglamentarios, ABP y Territorio)
+      y = drawSectionHeader('sec8_tactics');
       const tacticsSvg = renderSectorTacticsSvgString({
         tacticsData,
         isEn,
@@ -1184,18 +1241,18 @@ export const generateMatchPdfReport = async ({
         height: 180
       });
       const tacticsImg = await rasterizeSvgToDataUrl(tacticsSvg, 660, 180, 3);
-      assertGraphicEmbedded('sec7_tactics', tacticsImg);
+      assertGraphicEmbedded('sec8_tactics', tacticsImg);
       const tW = pageW - 28;
       const tH = (180 / 660) * tW;
       doc.addImage(tacticsImg, 'PNG', 14, y, tW, tH);
       y += tH + 6;
 
-      // ── PÁGINA 5: SECCIÓN 8 & SECCIÓN 9 — EXIGENCIA GK Y ALINEACIÓN CON FOTOS
+      // ── PÁGINA 5: SECCIÓN 9 — EXIGENCIA & RENDIMIENTO DE PORTERÍA ─────────
       doc.addPage();
       y = 18;
 
-      // 8. Exigencia & Rendimiento de Portería
-      y = drawSectionHeader('sec8_gk');
+      // 9. Exigencia & Rendimiento de Portería
+      y = drawSectionHeader('sec9_gk');
       const effectiveGkConceded = Math.max(derivedIndices.concededGoals || 0, goalsAgainst);
       const effectiveGkTotalSaves = (derivedIndices.normalSaves || 0) + (derivedIndices.decisiveSaves || 0);
       const effectiveGkTotal = effectiveGkTotalSaves + effectiveGkConceded;
@@ -1227,7 +1284,7 @@ export const generateMatchPdfReport = async ({
         console.warn('Error gk exertion canvas:', gkErr);
       }
 
-      // Tabla GK detallada con encajados coherentes
+      // Tabla GK detallada
       const gkBreakdownHead = isEn
         ? [['Exertion Index', 'Normal Saves', 'Decisive Saves (x2)', 'Penalties Saved', 'Conceded Goals', 'Total Save %']]
         : [['Índice Exigencia', 'Paradas Normales', 'Paradas Decisivas (x2)', 'Penaltis Parados', 'Goles Encajados', '% Total Paradas']];
@@ -1249,31 +1306,6 @@ export const generateMatchPdfReport = async ({
         headStyles: { fillColor: colorPrimary, textColor: [255, 255, 255], fontStyle: 'bold', fontSize: 7.5, halign: 'center' },
         styles: { fontSize: 7.5, cellPadding: 2.2, halign: 'center' },
       });
-
-      y = (doc.lastAutoTable ? doc.lastAutoTable.finalY : y + 25) + 7;
-
-      // 9. Alineación Táctica con Fotografías [PROTEGIDA]
-      y = drawSectionHeader('sec9_lineup');
-      let effectiveLineupImage = lineupImage;
-      if (!effectiveLineupImage) {
-        try {
-          effectiveLineupImage = await drawTacticalPitchCanvas({
-            matchData,
-            calledPlayers,
-            players,
-            isEn
-          });
-        } catch (pitchGenErr) {
-          console.warn('Error generando terreno de juego táctico canvas:', pitchGenErr);
-        }
-      }
-
-      assertGraphicEmbedded('sec9_lineup', effectiveLineupImage);
-      const pitchW = 145;
-      const pitchH = (510 / 720) * pitchW; // ~102mm
-      const pitchX = (pageW - pitchW) / 2;
-      doc.addImage(effectiveLineupImage, 'PNG', pitchX, y, pitchW, pitchH);
-      y += pitchH + 6;
 
       // ── PÁGINA 6: SECCIÓN 10 — RENDIMIENTO INDIVIDUAL & PLANTILLA ─────────
       doc.addPage();
@@ -1332,7 +1364,7 @@ export const generateMatchPdfReport = async ({
         columnStyles: rosterColStyles
       });
 
-      // Nota al pie: Eventos sin atribuir disponibles para refinar notas individuales
+      // Nota al pie de eventos sin atribuir
       const unattributedEvents = safeEvents.filter(e =>
         e && !e.playerId && !e.jugadorId && !e.playerInId && !e.subInId
       );
@@ -1348,7 +1380,7 @@ export const generateMatchPdfReport = async ({
         doc.text(footnote, 14, y);
       }
 
-      // ── PÁGINA 7: SECCIÓN 11 — MATRIZ DAFO & RECOMENDACIONES ──────────────
+      // ── PÁGINA 7: SECCIÓN 11 — MATRIZ DAFO, RECOMENDACIONES Y FOTOS ───────
       doc.addPage();
       y = 18;
 
@@ -1449,6 +1481,90 @@ export const generateMatchPdfReport = async ({
           styles: { fontSize: 7.5, cellPadding: 2.5 },
           columnStyles: { 0: { fontStyle: 'bold', width: 45, fillColor: [241, 245, 249], textColor: colorPrimary } }
         });
+        y = (doc.lastAutoTable ? doc.lastAutoTable.finalY : y + 20) + 6;
+      }
+
+      // ── FOTOGRAFÍAS REGISTRADAS POR EL ENTRENADOR (postMatchImages) ────────
+      const rawPostImages = matchData.postMatchImages || (matchData.postMatchPhoto ? [matchData.postMatchPhoto] : []);
+      const validPostImages = Array.isArray(rawPostImages) ? rawPostImages.filter(Boolean) : [];
+      if (validPostImages.length > 0) {
+        const postImagesB64 = [];
+        for (const imgUrl of validPostImages) {
+          if (typeof imgUrl === 'string' && imgUrl.startsWith('data:image')) {
+            postImagesB64.push(imgUrl);
+          } else {
+            try {
+              const b64 = await imageUrlToBase64(imgUrl);
+              if (b64) postImagesB64.push(b64);
+            } catch (err) {
+              console.warn('Error convirtiendo imagen del entrenador a base64:', err);
+            }
+          }
+        }
+
+        if (postImagesB64.length > 0) {
+          if (y + 55 > pageH - 22) {
+            doc.addPage();
+            y = 18;
+          }
+          doc.setFillColor(...colorPrimary);
+          doc.roundedRect(14, y, pageW - 28, 8, 1.5, 1.5, 'F');
+          doc.setFontSize(8.5);
+          doc.setFont('helvetica', 'bold');
+          doc.setTextColor(255, 255, 255);
+          doc.text(
+            isEn ? 'COACH POST-MATCH PHOTOGRAPHS & EVIDENCE' : 'FOTOGRAFÍAS Y EVIDENCIAS DEL ENTRENADOR',
+            18,
+            y + 5.5
+          );
+          y += 12;
+
+          const colW = (pageW - 28 - 8) / 2; // ~87mm
+          const colH = 55;
+          for (let i = 0; i < postImagesB64.length; i += 2) {
+            if (y + colH > pageH - 22) {
+              doc.addPage();
+              y = 18;
+            }
+            const img1 = postImagesB64[i];
+            if (img1) {
+              try {
+                doc.setFillColor(248, 250, 252);
+                doc.roundedRect(14, y, colW, colH, 2, 2, 'F');
+                doc.setDrawColor(226, 232, 240);
+                doc.roundedRect(14, y, colW, colH, 2, 2, 'S');
+                doc.addImage(img1, 'JPEG', 15, y + 1, colW - 2, colH - 2);
+              } catch {
+                try {
+                  doc.addImage(img1, 'PNG', 15, y + 1, colW - 2, colH - 2);
+                } catch (imgErr) {
+                  console.warn('Error incrustando foto 1 del entrenador:', imgErr);
+                }
+              }
+            }
+
+            if (i + 1 < postImagesB64.length) {
+              const img2 = postImagesB64[i + 1];
+              const col2X = 14 + colW + 8;
+              if (img2) {
+                try {
+                  doc.setFillColor(248, 250, 252);
+                  doc.roundedRect(col2X, y, colW, colH, 2, 2, 'F');
+                  doc.setDrawColor(226, 232, 240);
+                  doc.roundedRect(col2X, y, colW, colH, 2, 2, 'S');
+                  doc.addImage(img2, 'JPEG', col2X + 1, y + 1, colW - 2, colH - 2);
+                } catch {
+                  try {
+                    doc.addImage(img2, 'PNG', col2X + 1, y + 1, colW - 2, colH - 2);
+                  } catch (imgErr2) {
+                    console.warn('Error incrustando foto 2 del entrenador:', imgErr2);
+                  }
+                }
+              }
+            }
+            y += colH + 6;
+          }
+        }
       }
     }
 

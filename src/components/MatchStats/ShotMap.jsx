@@ -485,7 +485,11 @@ export const ShotMap = ({
   return (
     <div ref={containerRef} className="match-shot-map-card" style={{ width: '100%' }}>
       {renderContent()}
-      <TheaterOverlay isTheater={isTheater} onClose={toggleFullscreen}>
+      <TheaterOverlay
+        isOpen={isTheater}
+        onClose={toggleFullscreen}
+        title={isEn ? `Shot Map & xG Model (${teamName})` : `Mapa de Tiros y Modelo xG (${teamName})`}
+      >
         {renderContent()}
       </TheaterOverlay>
     </div>

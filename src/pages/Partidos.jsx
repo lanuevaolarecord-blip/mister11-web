@@ -2556,26 +2556,26 @@ const Partidos = () => {
                     >
                       <span style={{ color: '#D4A843' }}>{sec.order}.</span>
                       {isGlobalEn
-                        ? (sec.titleKey === 'exports.report.sec1_timeline' ? 'Timeline'
-                          : sec.titleKey === 'exports.report.sec2_momentum' ? 'Momentum'
-                          : sec.titleKey === 'exports.report.sec3_bars' ? 'Comparison Bars'
-                          : sec.titleKey === 'exports.report.sec4_radar' ? 'Radar'
-                          : sec.titleKey === 'exports.report.sec5_top5' ? 'Top-5'
-                          : sec.titleKey === 'exports.report.sec6_shots' ? 'Shots & xG'
-                          : sec.titleKey === 'exports.report.sec7_tactics' ? 'Tactics & ABP'
-                          : sec.titleKey === 'exports.report.sec8_gk' ? 'Goalkeeping'
-                          : sec.titleKey === 'exports.report.sec9_lineup' ? 'Lineup'
+                        ? (sec.titleKey === 'exports.report.sec1_lineup' ? 'Lineup'
+                          : sec.titleKey === 'exports.report.sec2_timeline' ? 'Timeline'
+                          : sec.titleKey === 'exports.report.sec3_momentum' ? 'Momentum'
+                          : sec.titleKey === 'exports.report.sec4_bars' ? 'Comparison Bars'
+                          : sec.titleKey === 'exports.report.sec5_radar' ? 'Radar'
+                          : sec.titleKey === 'exports.report.sec6_top5' ? 'Top-5'
+                          : sec.titleKey === 'exports.report.sec7_shots' ? 'Shots & xG'
+                          : sec.titleKey === 'exports.report.sec8_tactics' ? 'Tactics & ABP'
+                          : sec.titleKey === 'exports.report.sec9_gk' ? 'Goalkeeping'
                           : sec.titleKey === 'exports.report.sec10_players' ? 'Players'
                           : 'SWOT')
-                        : (sec.titleKey === 'exports.report.sec1_timeline' ? 'Cronología'
-                          : sec.titleKey === 'exports.report.sec2_momentum' ? 'Momentum'
-                          : sec.titleKey === 'exports.report.sec3_bars' ? 'Barras (10)'
-                          : sec.titleKey === 'exports.report.sec4_radar' ? 'Radar'
-                          : sec.titleKey === 'exports.report.sec5_top5' ? 'Top-5'
-                          : sec.titleKey === 'exports.report.sec6_shots' ? 'Tiros & xG'
-                          : sec.titleKey === 'exports.report.sec7_tactics' ? 'Campo & ABP'
-                          : sec.titleKey === 'exports.report.sec8_gk' ? 'Portería'
-                          : sec.titleKey === 'exports.report.sec9_lineup' ? 'Alineación'
+                        : (sec.titleKey === 'exports.report.sec1_lineup' ? 'Alineación'
+                          : sec.titleKey === 'exports.report.sec2_timeline' ? 'Cronología'
+                          : sec.titleKey === 'exports.report.sec3_momentum' ? 'Momentum'
+                          : sec.titleKey === 'exports.report.sec4_bars' ? 'Barras (10)'
+                          : sec.titleKey === 'exports.report.sec5_radar' ? 'Radar'
+                          : sec.titleKey === 'exports.report.sec6_top5' ? 'Top-5'
+                          : sec.titleKey === 'exports.report.sec7_shots' ? 'Tiros & xG'
+                          : sec.titleKey === 'exports.report.sec8_tactics' ? 'Campo & ABP'
+                          : sec.titleKey === 'exports.report.sec9_gk' ? 'Portería'
                           : sec.titleKey === 'exports.report.sec10_players' ? 'Rendimiento'
                           : 'DAFO')}
                     </button>
@@ -2583,13 +2583,68 @@ const Partidos = () => {
                 </div>
 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '28px' }}>
-                  {/* ── SECCIÓN 1: MARCADOR & CRONOLOGÍA DE EVENTOS ── */}
-                  <SectionErrorBoundary sectionCode="SEC_TIMELINE" sectionTitle={isGlobalEn ? '1. Score & Event Timeline' : '1. Marcador y Cronología de Eventos'}>
+                  {/* ── SECCIÓN 1: ALINEACIÓN TÁCTICA CON FOTOGRAFÍAS [PROTEGIDA] ── */}
+                  <SectionErrorBoundary sectionCode="SEC_LINEUP" sectionTitle={isGlobalEn ? '1. Tactical Lineup with Photos' : '1. Alineación Táctica con Fotografías'}>
+                  <div id="sec_lineup" className="post-match-card" style={{ scrollMarginTop: '80px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '10px', borderBottom: '1.5px solid var(--partidos-border)', paddingBottom: '10px', marginBottom: '14px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <span style={{ background: '#172D21', color: '#D4A843', padding: '4px 10px', borderRadius: '6px', fontSize: '11px', fontWeight: '900' }}>1</span>
+                        <h4 className="card-section-title" style={{ margin: 0 }}>
+                          {isGlobalEn ? '1. Tactical Lineup with Photos' : '1. Alineación Táctica con Fotografías'}
+                        </h4>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setEditTab('ALINEACIÓN')}
+                        style={{
+                          background: '#1B3A2D',
+                          color: '#4CAF7D',
+                          border: '1px solid #4CAF7D',
+                          borderRadius: '6px',
+                          padding: '8px 14px',
+                          fontSize: '11px',
+                          fontWeight: '800',
+                          cursor: 'pointer',
+                          minHeight: '48px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '6px'
+                        }}
+                      >
+                        📐 {isGlobalEn ? 'Open Lineup & HD PNG' : 'Ver Alineación & Descargar PNG'}
+                      </button>
+                    </div>
+                    <p style={{ fontSize: '12px', color: 'var(--partidos-text-muted)', margin: '4px 0 12px 0' }}>
+                      {isGlobalEn
+                        ? 'Tactical pitch with starting XI and substitutes bench photos is rendered canonically in PDF and downloadable in ≥2048px HD PNG.'
+                        : 'El terreno táctico con fotos de los 11 titulares y el banquillo de suplentes se exporta de forma canónica en el informe PDF y cuenta con descarga PNG HD (≥2048px).'}
+                    </p>
+                    <div style={{ padding: '16px', background: 'rgba(255,255,255,0.03)', borderRadius: '8px', border: '1px solid var(--partidos-border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px' }}>
+                      <div>
+                        <div style={{ fontSize: '13px', fontWeight: '800', color: 'var(--partidos-text-primary)' }}>
+                          {matchData.formation || matchData.lineup || '4-3-3'}
+                        </div>
+                        <div style={{ fontSize: '11px', color: 'var(--partidos-text-muted)' }}>
+                          {Array.isArray(matchData.titulares) ? matchData.titulares.filter(Boolean).length : 11} {isGlobalEn ? 'starters' : 'titulares'} · {Array.isArray(matchData.suplentes) ? matchData.suplentes.filter(Boolean).length : 0} {isGlobalEn ? 'substitutes' : 'suplentes'}
+                        </div>
+                      </div>
+                      <div style={{ display: 'flex', gap: '6px' }}>
+                        {(Array.isArray(matchData.titulares) ? matchData.titulares : (calledPlayers || []).slice(0, 5)).slice(0, 5).map(pid => {
+                          const p = (players || []).find(pl => String(pl.id) === String(pid));
+                          return <PlayerAvatar key={pid} player={p} size={32} showNumber={false} />;
+                        })}
+                      </div>
+                    </div>
+                  </div>
+                  </SectionErrorBoundary>
+
+                  {/* ── SECCIÓN 2: MARCADOR & CRONOLOGÍA DE EVENTOS ── */}
+                  <SectionErrorBoundary sectionCode="SEC_TIMELINE" sectionTitle={isGlobalEn ? '2. Score & Event Timeline' : '2. Marcador y Cronología de Eventos'}>
                   <div id="sec_timeline" className="post-match-card" style={{ scrollMarginTop: '80px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px', borderBottom: '1.5px solid var(--partidos-border)', paddingBottom: '10px', marginBottom: '14px' }}>
-                      <span style={{ background: '#172D21', color: '#D4A843', padding: '4px 10px', borderRadius: '6px', fontSize: '11px', fontWeight: '900' }}>1</span>
+                      <span style={{ background: '#172D21', color: '#D4A843', padding: '4px 10px', borderRadius: '6px', fontSize: '11px', fontWeight: '900' }}>2</span>
                       <h4 className="card-section-title" style={{ margin: 0 }}>
-                        {isGlobalEn ? '1. Score & Event Timeline' : '1. Marcador y Cronología de Eventos'}
+                        {isGlobalEn ? '2. Score & Event Timeline' : '2. Marcador y Cronología de Eventos'}
                       </h4>
                     </div>
 
@@ -2698,13 +2753,13 @@ const Partidos = () => {
                   </div>
                   </SectionErrorBoundary>
 
-                  {/* ── SECCIÓN 2: MOMENTUM & POSESIÓN POR BLOQUES 15' ── */}
-                  <SectionErrorBoundary sectionCode="SEC_MOMENTUM" sectionTitle={isGlobalEn ? '2. Momentum & 15-Minute Possession Blocks' : '2. Momentum y Posesión por Bloques 15\''}>
+                  {/* ── SECCIÓN 3: MOMENTUM & POSESIÓN POR BLOQUES 15' ── */}
+                  <SectionErrorBoundary sectionCode="SEC_MOMENTUM" sectionTitle={isGlobalEn ? '3. Momentum & 15-Minute Possession Blocks' : '3. Momentum y Posesión por Bloques 15\''}>
                   <div id="sec_momentum" className="post-match-card" style={{ scrollMarginTop: '80px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px', borderBottom: '1.5px solid var(--partidos-border)', paddingBottom: '10px', marginBottom: '14px' }}>
-                      <span style={{ background: '#172D21', color: '#D4A843', padding: '4px 10px', borderRadius: '6px', fontSize: '11px', fontWeight: '900' }}>2</span>
+                      <span style={{ background: '#172D21', color: '#D4A843', padding: '4px 10px', borderRadius: '6px', fontSize: '11px', fontWeight: '900' }}>3</span>
                       <h4 className="card-section-title" style={{ margin: 0 }}>
-                        {isGlobalEn ? '2. Momentum & 15-Minute Possession Blocks' : '2. Momentum y Posesión por Bloques 15\''}
+                        {isGlobalEn ? '3. Momentum & 15-Minute Possession Blocks' : '3. Momentum y Posesión por Bloques 15\''}
                       </h4>
                     </div>
                     <div style={{ marginTop: '12px' }}>
@@ -2728,13 +2783,13 @@ const Partidos = () => {
                   </div>
                   </SectionErrorBoundary>
 
-                  {/* ── SECCIÓN 3: BARRAS COMPARATIVAS (10 MÉTRICAS) ── */}
-                  <SectionErrorBoundary sectionCode="SEC_BARS" sectionTitle={isGlobalEn ? '3. Comparative Bars (10 Key Metrics)' : '3. Barras Comparativas (10 Métricas Canónicas)'}>
+                  {/* ── SECCIÓN 4: BARRAS COMPARATIVAS (10 MÉTRICAS) ── */}
+                  <SectionErrorBoundary sectionCode="SEC_BARS" sectionTitle={isGlobalEn ? '4. Comparative Bars (10 Key Metrics)' : '4. Barras Comparativas (10 Métricas Canónicas)'}>
                   <div id="sec_bars" className="post-match-card" style={{ scrollMarginTop: '80px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px', borderBottom: '1.5px solid var(--partidos-border)', paddingBottom: '10px', marginBottom: '14px' }}>
-                      <span style={{ background: '#172D21', color: '#D4A843', padding: '4px 10px', borderRadius: '6px', fontSize: '11px', fontWeight: '900' }}>3</span>
+                      <span style={{ background: '#172D21', color: '#D4A843', padding: '4px 10px', borderRadius: '6px', fontSize: '11px', fontWeight: '900' }}>4</span>
                       <h4 className="card-section-title" style={{ margin: 0 }}>
-                        {isGlobalEn ? '3. Comparative Bars (10 Key Metrics)' : '3. Barras Comparativas (10 Métricas Canónicas)'}
+                        {isGlobalEn ? '4. Comparative Bars (10 Key Metrics)' : '4. Barras Comparativas (10 Métricas Canónicas)'}
                       </h4>
                     </div>
                     <div style={{ marginTop: '12px' }}>
@@ -2749,13 +2804,13 @@ const Partidos = () => {
                   </div>
                   </SectionErrorBoundary>
 
-                  {/* ── SECCIÓN 4: RADAR COMPARATIVO PROPIO VS RIVAL ── */}
-                  <SectionErrorBoundary sectionCode="SEC_RADAR" sectionTitle={isGlobalEn ? '4. Normalized Comparative Radar (Own vs Opponent)' : '4. Radar Comparativo Propio vs Rival (6 Ejes)'}>
+                  {/* ── SECCIÓN 5: RADAR COMPARATIVO PROPIO VS RIVAL ── */}
+                  <SectionErrorBoundary sectionCode="SEC_RADAR" sectionTitle={isGlobalEn ? '5. Normalized Comparative Radar (Own vs Opponent)' : '5. Radar Comparativo Propio vs Rival (6 Ejes)'}>
                   <div id="sec_radar" className="post-match-card" style={{ scrollMarginTop: '80px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px', borderBottom: '1.5px solid var(--partidos-border)', paddingBottom: '10px', marginBottom: '14px' }}>
-                      <span style={{ background: '#172D21', color: '#D4A843', padding: '4px 10px', borderRadius: '6px', fontSize: '11px', fontWeight: '900' }}>4</span>
+                      <span style={{ background: '#172D21', color: '#D4A843', padding: '4px 10px', borderRadius: '6px', fontSize: '11px', fontWeight: '900' }}>5</span>
                       <h4 className="card-section-title" style={{ margin: 0 }}>
-                        {isGlobalEn ? '4. Normalized Comparative Radar (Own vs Opponent)' : '4. Radar Comparativo Propio vs Rival (6 Ejes)'}
+                        {isGlobalEn ? '5. Normalized Comparative Radar (Own vs Opponent)' : '5. Radar Comparativo Propio vs Rival (6 Ejes)'}
                       </h4>
                     </div>
                     <div style={{ marginTop: '12px' }}>
@@ -2770,13 +2825,13 @@ const Partidos = () => {
                   </div>
                   </SectionErrorBoundary>
 
-                  {/* ── SECCIÓN 5: MÉTRICAS TOP-5 DIFERENCIALES ── */}
-                  <SectionErrorBoundary sectionCode="SEC_TOP5" sectionTitle={isGlobalEn ? '5. Top-5 Differential KPIs' : '5. Métricas Top-5 Diferenciales'}>
+                  {/* ── SECCIÓN 6: MÉTRICAS TOP-5 DIFERENCIALES ── */}
+                  <SectionErrorBoundary sectionCode="SEC_TOP5" sectionTitle={isGlobalEn ? '6. Top-5 Differential KPIs' : '6. Métricas Top-5 Diferenciales'}>
                   <div id="sec_top5" className="post-match-card" style={{ scrollMarginTop: '80px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px', borderBottom: '1.5px solid var(--partidos-border)', paddingBottom: '10px', marginBottom: '14px' }}>
-                      <span style={{ background: '#172D21', color: '#D4A843', padding: '4px 10px', borderRadius: '6px', fontSize: '11px', fontWeight: '900' }}>5</span>
+                      <span style={{ background: '#172D21', color: '#D4A843', padding: '4px 10px', borderRadius: '6px', fontSize: '11px', fontWeight: '900' }}>6</span>
                       <h4 className="card-section-title" style={{ margin: 0 }}>
-                        {isGlobalEn ? '5. Top-5 Differential KPIs' : '5. Métricas Top-5 Diferenciales'}
+                        {isGlobalEn ? '6. Top-5 Differential KPIs' : '6. Métricas Top-5 Diferenciales'}
                       </h4>
                     </div>
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '12px', marginTop: '14px' }}>
@@ -2833,14 +2888,14 @@ const Partidos = () => {
                   </div>
                   </SectionErrorBoundary>
 
-                  {/* ── SECCIÓN 6: MAPAS DE TIROS & MODELO xG-LITE ── */}
-                  <SectionErrorBoundary sectionCode="SEC_SHOTS" sectionTitle={isGlobalEn ? '6. Shot Maps & xG-Lite Model' : '6. Mapas de Tiros y Modelo xG-Lite'}>
+                  {/* ── SECCIÓN 7: MAPAS DE TIROS & MODELO xG-LITE ── */}
+                  <SectionErrorBoundary sectionCode="SEC_SHOTS" sectionTitle={isGlobalEn ? '7. Shot Maps & xG-Lite Model' : '7. Mapas de Tiros y Modelo xG-Lite'}>
                   <div id="sec_shots" className="post-match-card" style={{ scrollMarginTop: '80px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '10px', borderBottom: '1.5px solid var(--partidos-border)', paddingBottom: '10px', marginBottom: '14px' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <span style={{ background: '#172D21', color: '#D4A843', padding: '4px 10px', borderRadius: '6px', fontSize: '11px', fontWeight: '900' }}>6</span>
+                        <span style={{ background: '#172D21', color: '#D4A843', padding: '4px 10px', borderRadius: '6px', fontSize: '11px', fontWeight: '900' }}>7</span>
                         <h4 className="card-section-title" style={{ margin: 0 }}>
-                          {isGlobalEn ? '6. Shot Maps & xG-Lite Model' : '6. Mapas de Tiros y Modelo xG-Lite'}
+                          {isGlobalEn ? '7. Shot Maps & xG-Lite Model' : '7. Mapas de Tiros y Modelo xG-Lite'}
                         </h4>
                       </div>
                       <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
@@ -2863,13 +2918,13 @@ const Partidos = () => {
                   </div>
                   </SectionErrorBoundary>
 
-                  {/* ── SECCIÓN 7: CAMPO Y TÁCTICA: SECTORES, ABP Y BLOQUES ── */}
-                  <SectionErrorBoundary sectionCode="SEC_TACTICS" sectionTitle={isGlobalEn ? '7. Field & Tactics (Sectors, Set Pieces & Blocks)' : '7. Campo y Táctica (Pasillos, ABP y Territorio)'}>
+                  {/* ── SECCIÓN 8: CAMPO Y TÁCTICA: SECTORES, ABP Y BLOQUES ── */}
+                  <SectionErrorBoundary sectionCode="SEC_TACTICS" sectionTitle={isGlobalEn ? '8. Field & Tactics (Sectors, Set Pieces & Blocks)' : '8. Campo y Táctica (Pasillos, ABP y Territorio)'}>
                   <div id="sec_tactics" className="post-match-card" style={{ scrollMarginTop: '80px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px', borderBottom: '1.5px solid var(--partidos-border)', paddingBottom: '10px', marginBottom: '14px' }}>
-                      <span style={{ background: '#172D21', color: '#D4A843', padding: '4px 10px', borderRadius: '6px', fontSize: '11px', fontWeight: '900' }}>7</span>
+                      <span style={{ background: '#172D21', color: '#D4A843', padding: '4px 10px', borderRadius: '6px', fontSize: '11px', fontWeight: '900' }}>8</span>
                       <h4 className="card-section-title" style={{ margin: 0 }}>
-                        {isGlobalEn ? '7. Field & Tactics (Sectors, Set Pieces & Blocks)' : '7. Campo y Táctica (Pasillos, ABP y Territorio)'}
+                        {isGlobalEn ? '8. Field & Tactics (Sectors, Set Pieces & Blocks)' : '8. Campo y Táctica (Pasillos, ABP y Territorio)'}
                       </h4>
                     </div>
                     <div style={{ marginTop: '12px' }}>
@@ -2885,13 +2940,13 @@ const Partidos = () => {
                   </div>
                   </SectionErrorBoundary>
 
-                  {/* ── SECCIÓN 8: EXIGENCIA & RENDIMIENTO DE PORTERÍA ── */}
-                  <SectionErrorBoundary sectionCode="SEC_GK" sectionTitle={isGlobalEn ? '8. Goalkeeping Exertion & Performance' : '8. Exigencia y Rendimiento de Portería'}>
+                  {/* ── SECCIÓN 9: EXIGENCIA & RENDIMIENTO DE PORTERÍA ── */}
+                  <SectionErrorBoundary sectionCode="SEC_GK" sectionTitle={isGlobalEn ? '9. Goalkeeping Exertion & Performance' : '9. Exigencia y Rendimiento de Portería'}>
                   <div id="sec_gk" className="post-match-card" style={{ scrollMarginTop: '80px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px', borderBottom: '1.5px solid var(--partidos-border)', paddingBottom: '10px', marginBottom: '14px' }}>
-                      <span style={{ background: '#172D21', color: '#D4A843', padding: '4px 10px', borderRadius: '6px', fontSize: '11px', fontWeight: '900' }}>8</span>
+                      <span style={{ background: '#172D21', color: '#D4A843', padding: '4px 10px', borderRadius: '6px', fontSize: '11px', fontWeight: '900' }}>9</span>
                       <h4 className="card-section-title" style={{ margin: 0 }}>
-                        🧤 {isGlobalEn ? '8. Goalkeeping Exertion & Performance' : '8. Exigencia y Rendimiento de Portería'}
+                        🧤 {isGlobalEn ? '9. Goalkeeping Exertion & Performance' : '9. Exigencia y Rendimiento de Portería'}
                       </h4>
                       {postMatchDerivedIndices.isDemandingMatch && (
                         <span style={{ marginLeft: 'auto', background: '#EF4444', color: '#FFFFFF', padding: '3px 8px', borderRadius: '4px', fontSize: '10px', fontWeight: '800' }}>
@@ -2926,61 +2981,6 @@ const Partidos = () => {
                       <div style={{ padding: '12px', background: 'rgba(255,255,255,0.03)', borderRadius: '8px', border: '1px solid var(--partidos-border)', textAlign: 'center' }}>
                         <div style={{ fontSize: '11px', color: 'var(--partidos-text-muted)' }}>{isGlobalEn ? 'Total Save %' : '% Paradas'}</div>
                         <div style={{ fontSize: '20px', fontWeight: '900', color: '#22C55E', marginTop: '4px' }}>{postMatchDerivedIndices.totalSavePct}%</div>
-                      </div>
-                    </div>
-                  </div>
-                  </SectionErrorBoundary>
-
-                  {/* ── SECCIÓN 9: ALINEACIÓN TÁCTICA CON FOTOGRAFÍAS [PROTEGIDA] ── */}
-                  <SectionErrorBoundary sectionCode="SEC_LINEUP" sectionTitle={isGlobalEn ? '9. Tactical Lineup with Photos' : '9. Alineación Táctica con Fotografías'}>
-                  <div id="sec_lineup" className="post-match-card" style={{ scrollMarginTop: '80px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '10px', borderBottom: '1.5px solid var(--partidos-border)', paddingBottom: '10px', marginBottom: '14px' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <span style={{ background: '#172D21', color: '#D4A843', padding: '4px 10px', borderRadius: '6px', fontSize: '11px', fontWeight: '900' }}>9</span>
-                        <h4 className="card-section-title" style={{ margin: 0 }}>
-                          {isGlobalEn ? '9. Tactical Lineup with Photos' : '9. Alineación Táctica con Fotografías'}
-                        </h4>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => setEditTab('ALINEACIÓN')}
-                        style={{
-                          background: '#1B3A2D',
-                          color: '#4CAF7D',
-                          border: '1px solid #4CAF7D',
-                          borderRadius: '6px',
-                          padding: '8px 14px',
-                          fontSize: '11px',
-                          fontWeight: '800',
-                          cursor: 'pointer',
-                          minHeight: '48px',
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '6px'
-                        }}
-                      >
-                        📐 {isGlobalEn ? 'Open Lineup & HD PNG' : 'Ver Alineación & Descargar PNG'}
-                      </button>
-                    </div>
-                    <p style={{ fontSize: '12px', color: 'var(--partidos-text-muted)', margin: '4px 0 12px 0' }}>
-                      {isGlobalEn
-                        ? 'Tactical pitch with starting XI and substitutes bench photos is rendered canonically in PDF and downloadable in ≥2048px HD PNG.'
-                        : 'El terreno táctico con fotos de los 11 titulares y el banquillo de suplentes se exporta de forma canónica en el informe PDF y cuenta con descarga PNG HD (≥2048px).'}
-                    </p>
-                    <div style={{ padding: '16px', background: 'rgba(255,255,255,0.03)', borderRadius: '8px', border: '1px solid var(--partidos-border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px' }}>
-                      <div>
-                        <div style={{ fontSize: '13px', fontWeight: '800', color: 'var(--partidos-text-primary)' }}>
-                          {matchData.formation || matchData.lineup || '4-3-3'}
-                        </div>
-                        <div style={{ fontSize: '11px', color: 'var(--partidos-text-muted)' }}>
-                          {Array.isArray(matchData.titulares) ? matchData.titulares.filter(Boolean).length : 11} {isGlobalEn ? 'starters' : 'titulares'} · {Array.isArray(matchData.suplentes) ? matchData.suplentes.filter(Boolean).length : 0} {isGlobalEn ? 'substitutes' : 'suplentes'}
-                        </div>
-                      </div>
-                      <div style={{ display: 'flex', gap: '6px' }}>
-                        {(Array.isArray(matchData.titulares) ? matchData.titulares : (calledPlayers || []).slice(0, 5)).slice(0, 5).map(pid => {
-                          const p = (players || []).find(pl => String(pl.id) === String(pid));
-                          return <PlayerAvatar key={pid} player={p} size={32} showNumber={false} />;
-                        })}
                       </div>
                     </div>
                   </div>

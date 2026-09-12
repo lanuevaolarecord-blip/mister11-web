@@ -23,7 +23,8 @@ const ZONE_MAP = {
 export const PassNetwork = ({
   passes = [],
   players = [],
-  teamName = 'Local'
+  teamName = 'Local',
+  onSwitchToTerritory
 }) => {
   const [selectedNode, setSelectedNode] = useState(null);
   const [selectedEdge, setSelectedEdge] = useState(null);
@@ -189,6 +190,44 @@ export const PassNetwork = ({
           <h3>{isEn ? `Tactical Pass Network (${teamName})` : `Red de Pases Táctica (${teamName})`}</h3>
         </div>
         <div className="pass-network-summary" style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+          {/* Selector de Pestañas Tácticas [Red de Pases] | [Mapa Territorial] */}
+          {onSwitchToTerritory && (
+            <div style={{ display: 'flex', background: 'rgba(0,0,0,0.3)', borderRadius: '6px', padding: '2px', border: '1px solid rgba(76,175,125,0.2)' }}>
+              <button
+                type="button"
+                style={{
+                  background: '#4CAF7D',
+                  border: 'none',
+                  color: '#FFFFFF',
+                  padding: '6px 12px',
+                  borderRadius: '4px',
+                  fontSize: '11px',
+                  fontWeight: 800,
+                  cursor: 'default',
+                  minHeight: '36px'
+                }}
+              >
+                {t('charts.view.pass_network', isEn ? 'Pass Network' : 'Red de Pases')}
+              </button>
+              <button
+                type="button"
+                onClick={onSwitchToTerritory}
+                style={{
+                  background: 'transparent',
+                  border: 'none',
+                  color: '#CBD5E1',
+                  padding: '6px 12px',
+                  borderRadius: '4px',
+                  fontSize: '11px',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  minHeight: '36px'
+                }}
+              >
+                {t('charts.view.territorial_map', isEn ? 'Territorial Map' : 'Mapa Territorial')}
+              </button>
+            </div>
+          )}
           <span>{isEn ? 'Passes:' : 'Pases:'} <strong>{passes.length}</strong></span>
           <span>{isEn ? 'Connections:' : 'Conexiones:'} <strong>{passEdges.length}</strong></span>
           {!inModal && (
@@ -403,8 +442,63 @@ export const PassNetwork = ({
               </g>
             );
           })}
-        </svg>
-      </div>
+          </svg>
+
+          {/* Empty State Táctico Pedagógico cuando hay menos de 5 pases */}
+          {passes.length < 5 && (
+            <div
+              style={{
+                position: 'absolute',
+                inset: 0,
+                background: 'rgba(21, 44, 34, 0.88)',
+                backdropFilter: 'blur(4px)',
+                WebkitBackdropFilter: 'blur(4px)',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                padding: '24px',
+                textAlign: 'center',
+                zIndex: 10,
+                borderRadius: '8px'
+              }}
+            >
+              <Share2 size={38} color="#D4A843" style={{ marginBottom: '12px' }} />
+              <h4 style={{ color: '#F2EDE4', margin: '0 0 8px 0', fontSize: '16px', fontWeight: 800 }}>
+                {isEn ? 'Pass Network Not Available' : 'Red de Pases no disponible'}
+              </h4>
+              <p style={{ color: 'rgba(242, 237, 228, 0.85)', fontSize: '12.5px', maxWidth: '420px', margin: '0 0 18px 0', lineHeight: 1.5 }}>
+                {isEn
+                  ? `Only ${passes.length} pass(es) registered in this match. A minimum of 5 passes between identified players is required to calculate tactical connection links.`
+                  : `Solo se han registrado ${passes.length} pase(s) en este partido. Se requiere un mínimo de 5 pases entre jugadores para trazar las conexiones y asociaciones tácticas.`}
+              </p>
+              {onSwitchToTerritory && (
+                <button
+                  type="button"
+                  onClick={onSwitchToTerritory}
+                  style={{
+                    background: '#4CAF7D',
+                    color: '#FFFFFF',
+                    border: 'none',
+                    borderRadius: '8px',
+                    padding: '12px 22px',
+                    fontSize: '12px',
+                    fontWeight: 800,
+                    cursor: 'pointer',
+                    minHeight: '48px',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    boxShadow: '0 4px 14px rgba(0,0,0,0.35)',
+                    textTransform: 'uppercase'
+                  }}
+                >
+                  {isEn ? 'View Territorial Map' : 'Ver Mapa Territorial de Eventos'}
+                </button>
+              )}
+            </div>
+          )}
+        </div>
 
         {/* Panel de detalles al hacer click en nodo o arista */}
         {selectedNode && (

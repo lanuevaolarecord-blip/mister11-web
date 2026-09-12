@@ -47,6 +47,7 @@ const actualOrder = CANONICAL_REPORT_SECTIONS.map(s => s.order);
 assert(JSON.stringify(actualOrder) === JSON.stringify(expectedOrder), 'Las 11 secciones tienen órdenes correlativos 1 al 11');
 
 const expectedAnchors = [
+  'sec_lineup',
   'sec_timeline',
   'sec_momentum',
   'sec_bars',
@@ -55,7 +56,6 @@ const expectedAnchors = [
   'sec_shots',
   'sec_tactics',
   'sec_gk',
-  'sec_lineup',
   'sec_players',
   'sec_swot'
 ];
@@ -95,15 +95,15 @@ expectedAnchors.forEach(anchor => {
 
 // Comprobar que matchPdfReport.js dibuja las 11 secciones canónicas
 const expectedSecIds = [
-  'sec1_timeline',
-  'sec2_momentum',
-  'sec3_bars',
-  'sec4_radar',
-  'sec5_top5',
-  'sec6_shots',
-  'sec7_tactics',
-  'sec8_gk',
-  'sec9_lineup',
+  'sec1_lineup',
+  'sec2_timeline',
+  'sec3_momentum',
+  'sec4_bars',
+  'sec5_radar',
+  'sec6_top5',
+  'sec7_shots',
+  'sec8_tactics',
+  'sec9_gk',
   'sec10_players',
   'sec11_swot'
 ];
@@ -112,11 +112,11 @@ expectedSecIds.forEach(secId => {
 });
 
 // Integración de componentes canónicos SVG compartidos
-assert(partidosCode.includes('<ShotMapSVG') || partidosCode.includes('ShotMapSVG'), 'Partidos.jsx integra el componente ShotMapSVG en sec6_shots');
-assert(partidosCode.includes('<ComparisonBarsSVG') || partidosCode.includes('ComparisonBarsSVG'), 'Partidos.jsx integra el componente ComparisonBarsSVG en sec3_bars');
-assert(partidosCode.includes('<RadarCompareSVG') || partidosCode.includes('RadarCompareSVG'), 'Partidos.jsx integra el componente RadarCompareSVG en sec4_radar');
-assert(partidosCode.includes('<MomentumSVG') || partidosCode.includes('MomentumSVG'), 'Partidos.jsx integra el componente MomentumSVG en sec2_momentum');
-assert(partidosCode.includes('<SectorTacticsSVG') || partidosCode.includes('SectorTacticsSVG'), 'Partidos.jsx integra el componente SectorTacticsSVG en sec7_tactics');
+assert(partidosCode.includes('<ShotMapSVG') || partidosCode.includes('ShotMapSVG'), 'Partidos.jsx integra el componente ShotMapSVG en sec7_shots');
+assert(partidosCode.includes('<ComparisonBarsSVG') || partidosCode.includes('ComparisonBarsSVG'), 'Partidos.jsx integra el componente ComparisonBarsSVG en sec4_bars');
+assert(partidosCode.includes('<RadarCompareSVG') || partidosCode.includes('RadarCompareSVG'), 'Partidos.jsx integra el componente RadarCompareSVG en sec5_radar');
+assert(partidosCode.includes('<MomentumSVG') || partidosCode.includes('MomentumSVG'), 'Partidos.jsx integra el componente MomentumSVG en sec3_momentum');
+assert(partidosCode.includes('<SectorTacticsSVG') || partidosCode.includes('SectorTacticsSVG'), 'Partidos.jsx integra el componente SectorTacticsSVG en sec8_tactics');
 assert(partidosCode.includes('<SwotMatrix'), 'Partidos.jsx integra el componente <SwotMatrix /> en sec11_swot');
 assert(pdfReportCode.includes('renderShotMapSvgString'), 'matchPdfReport.js integra renderShotMapSvgString canónico');
 assert(pdfReportCode.includes('renderComparisonBarsSvgString'), 'matchPdfReport.js integra renderComparisonBarsSvgString canónico');

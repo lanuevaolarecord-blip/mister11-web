@@ -272,6 +272,7 @@ const LiveStats = ({
   // ── Estados de Acciones Rápidas ────────────────────────────────────────────
   const [tacticalNotes, setTacticalNotes] = useState([]);
   const [isHighlighted, setIsHighlighted] = useState(false);
+  const [tacticalSubView, setTacticalSubView] = useState('auto'); // 'auto' | 'passes' | 'territory'
 
   // ── JUGADOR ACTIVO (Captura Individual a Pie de Campo) ─────────────────────
   const [activePlayerId, setActivePlayerId] = useState(null);
@@ -1910,13 +1911,14 @@ const LiveStats = ({
               />
             </SectionErrorBoundary>
 
-            {/* Red de Pases Táctica (si >= 5 pases) o Mapa de Eventos por Zona (si < 5) */}
+            {/* Red de Pases Táctica o Mapa de Eventos por Zona */}
             <SectionErrorBoundary sectionCode="TACTICAL_PASS_NETWORK" sectionTitle={isEn ? 'Pass Network & Zones' : 'Red de Pases y Zonas'}>
-              {passesList && passesList.length >= 5 ? (
+              {(tacticalSubView === 'passes' || (tacticalSubView === 'auto' && passesList && passesList.length >= 5)) ? (
                 <PassNetwork
                   passes={passesList}
                   players={playersList}
                   teamName={homeTeamName}
+                  onSwitchToTerritory={() => setTacticalSubView('territory')}
                 />
               ) : (
                 <ZoneEventMap
@@ -1924,6 +1926,7 @@ const LiveStats = ({
                   matchData={matchData}
                   teamName={homeTeamName}
                   isSubstitute={true}
+                  onSwitchToPassNetwork={() => setTacticalSubView('passes')}
                 />
               )}
             </SectionErrorBoundary>

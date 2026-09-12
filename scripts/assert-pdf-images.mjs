@@ -48,12 +48,12 @@ check('matchPdfReport.js define assertGraphicEmbedded con error explícito', () 
 });
 
 const REQUIRED_SECTIONS = [
-  'sec2_momentum',
-  'sec3_bars',
-  'sec4_radar',
-  'sec6_shots',
-  'sec7_tactics',
-  'sec9_lineup'
+  'sec1_lineup',
+  'sec3_momentum',
+  'sec4_bars',
+  'sec5_radar',
+  'sec7_shots',
+  'sec8_tactics'
 ];
 
 REQUIRED_SECTIONS.forEach(secId => {

@@ -122,10 +122,9 @@ export const SpellCheckedTextarea = ({
               <span style={{ fontSize: '13px', fontWeight: '800', color: '#1B3A2D', display: 'flex', alignItems: 'center', gap: '6px' }}>
                 <span>✍️</span>
                 <span>
-                  {errors.length}{' '}
                   {errors.length === 1
-                    ? (t('spell.observations') || 'observación ortográfica')
-                    : (t('spell.observationsPlural') || 'observaciones ortográficas')}
+                    ? (t('spell.observations', { count: errors.length }) || '1 observación ortográfica')
+                    : (t('spell.observationsPlural', { count: errors.length }) || `${errors.length} observaciones ortográficas`)}
                 </span>
               </span>
             </div>

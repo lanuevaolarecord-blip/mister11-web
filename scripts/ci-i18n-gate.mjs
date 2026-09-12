@@ -23,7 +23,7 @@ console.log('🚀 [CI-I18N-GATE] INICIANDO VALIDACIÓN ESTRICTA DEL PROTOCOLO DE
 console.log('══════════════════════════════════════════════════════════════════════\n');
 
 // ── PASO 1: Paridad Simétrica de Claves (check-i18n.js) ────────────────────────
-console.log('▶ [Paso 1/4] Verificando paridad simétrica de claves ES ↔ EN...');
+console.log('▶ [Paso 1/5] Verificando paridad simétrica de claves ES ↔ EN...');
 try {
   const out = execSync('node scripts/check-i18n.js', { cwd: rootDir, encoding: 'utf-8' });
   console.log('   ✅ Paridad 100% verificada.');
@@ -33,7 +33,7 @@ try {
 }
 
 // ── PASO 2: Integridad Lingüística (qa-language.js) ───────────────────────────
-console.log('\n▶ [Paso 2/4] Verificando integridad lingüística y reglas de plurales...');
+console.log('\n▶ [Paso 2/5] Verificando integridad lingüística y reglas de plurales...');
 try {
   const out = execSync('node scripts/qa-language.js', { cwd: rootDir, encoding: 'utf-8' });
   console.log('   ✅ Integridad lingüística y plurales válidos.');
@@ -43,7 +43,7 @@ try {
 }
 
 // ── PASO 3: Auditoría de Literales Estáticos (audit-literals.mjs) ─────────────
-console.log('\n▶ [Paso 3/4] Auditando ausencia total de literales estáticos UI...');
+console.log('\n▶ [Paso 3/5] Auditando ausencia total de literales estáticos UI...');
 try {
   const out = execSync('node scripts/audit-literals.mjs --fail-on-found', { cwd: rootDir, encoding: 'utf-8' });
   console.log('   ✅ Cero literales estáticos detectados (0 offenders).');
@@ -52,8 +52,18 @@ try {
   process.exit(1);
 }
 
-// ── PASO 4: Breakage Resilience Test ──────────────────────────────────────────
-console.log('\n▶ [Paso 4/4] Ejecutando Breakage Test (Prueba de rotura simulada)...');
+// ── PASO 4: Auditoría de Interpolación (check-interpolation.mjs) ───────────────
+console.log('\n▶ [Paso 4/5] Verificando interpolación correcta de variables y placeholders...');
+try {
+  const out = execSync('node scripts/check-interpolation.mjs', { cwd: rootDir, encoding: 'utf-8' });
+  console.log('   ✅ 100% de placeholders interpolados correctamente.');
+} catch (err) {
+  console.error('   ❌ Error en interpolación de placeholders:\n', err.stdout || err.message);
+  process.exit(1);
+}
+
+// ── PASO 5: Breakage Resilience Test ──────────────────────────────────────────
+console.log('\n▶ [Paso 5/5] Ejecutando Breakage Test (Prueba de rotura simulada)...');
 const translationsPath = resolve(rootDir, 'src/i18n/translations.js');
 const originalContent = readFileSync(translationsPath, 'utf-8');
 
@@ -103,6 +113,6 @@ try {
 }
 
 console.log('\n══════════════════════════════════════════════════════════════════════');
-console.log('🎉 [CI-I18N-GATE] ¡TODOS LOS GATES LINGÜÍSTICOS APROBADOS CON ÉXITO! (4/4)');
+console.log('🎉 [CI-I18N-GATE] ¡TODOS LOS GATES LINGÜÍSTICOS APROBADOS CON ÉXITO! (5/5)');
 console.log('══════════════════════════════════════════════════════════════════════\n');
 process.exit(0);

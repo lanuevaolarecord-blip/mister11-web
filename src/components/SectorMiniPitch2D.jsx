@@ -58,8 +58,9 @@ export const SectorMiniPitch2D = ({
       {showLabel && (
         <div className="mini-pitch-2d-header">
           <span className="mini-pitch-2d-icon">📍</span>
-          <span className="mini-pitch-2d-title">{t('sector.activeZone') || (isEn ? 'Play Sector:' : 'Sector de la Jugada:')}</span>
-          <strong className="mini-pitch-2d-badge">{getActiveZoneLabel(selectedZone)}</strong>
+          <span className="mini-pitch-2d-title">
+            {t('sector.activeZone', { zone: getActiveZoneLabel(selectedZone) })}
+          </span>
         </div>
       )}
 

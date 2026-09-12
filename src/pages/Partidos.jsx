@@ -1897,7 +1897,7 @@ const Partidos = () => {
                                 <span className="futu-card-pos">{posLabel}</span>
                               </div>
                               <div className="futu-card-banner">
-                                {player ? `${player.number !== undefined && player.number !== null ? player.number + ' - ' : ''}${player.name || (isEn ? 'Player' : 'Jugador')}` : `Slot ${idx + 1}`}
+                                {player ? (player.name || (isEn ? 'Player' : 'Jugador')) : `Slot ${idx + 1}`}
                               </div>
                             </div>
                           </div>
@@ -2273,10 +2273,24 @@ const Partidos = () => {
                                   textAlign: 'left'
                                 }}
                               >
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                                   <PlayerAvatar player={p} size={32} showNumber={false} />
+                                  {(p.number || p.dorsal) ? (
+                                    <span style={{
+                                      fontSize: '11px',
+                                      fontWeight: 900,
+                                      color: 'var(--partidos-gold, #D4A843)',
+                                      minWidth: '22px',
+                                      textAlign: 'center',
+                                      background: 'rgba(212, 168, 67, 0.12)',
+                                      padding: '2px 6px',
+                                      borderRadius: '4px'
+                                    }}>
+                                      {p.number || p.dorsal}
+                                    </span>
+                                  ) : null}
                                   <span style={{ fontWeight: 800, fontSize: '13px' }}>
-                                    {p.number || p.dorsal ? `${p.number || p.dorsal} - ` : ''}{p.name || p.nombre}
+                                    {p.name || p.nombre}
                                   </span>
                                 </div>
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
@@ -2356,6 +2370,7 @@ const Partidos = () => {
                 onAddGoalAgainst={() => addEvent('gol_rival', 'Rival', isGlobalEn ? 'Opponent Goal' : 'Gol del Rival', currentMinute)}
                 onAddCard={(cardType, playerId, playerName) => addEvent(cardType, playerId || 'Equipo', playerName || (isGlobalEn ? 'Player' : 'Jugador'), currentMinute)}
                 onFinishMatch={handleFinishMatch}
+                onNavigateToLineup={() => handleTabChange('ALINEACIÓN')}
               />
             </div>
 
@@ -3386,7 +3401,7 @@ const Partidos = () => {
                     <span className="futu-card-pos">{posLabel}</span>
                   </div>
                   <div className="futu-card-banner">
-                    {player ? `${player.number ? player.number + ' - ' : ''}${player.name}` : `Slot ${idx + 1}`}
+                    {player ? (player.name || (isGlobalEn ? 'Player' : 'Jugador')) : `Slot ${idx + 1}`}
                   </div>
                 </div>
               </div>
@@ -3430,8 +3445,13 @@ const Partidos = () => {
                         {player.number || (player.name ? player.name.charAt(0).toUpperCase() : '?')}
                       </div>
                     )}
+                    {player.number ? (
+                      <span style={{ fontSize: '11px', fontWeight: '800', color: '#D4A843', background: 'rgba(212,168,67,0.2)', padding: '1px 5px', borderRadius: '4px' }}>
+                        {player.number}
+                      </span>
+                    ) : null}
                     <span style={{ fontSize: '12px', fontWeight: '700', color: '#FFFFFF' }}>
-                      {player.number ? `${player.number}. ` : ''}{player.name}
+                      {player.name}
                     </span>
                     <span style={{ fontSize: '10px', color: '#D4A843', fontWeight: '800', background: 'rgba(212,168,67,0.2)', padding: '1px 5px', borderRadius: '4px' }}>
                       {player.position || 'SUP'}

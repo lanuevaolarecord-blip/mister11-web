@@ -16,6 +16,7 @@ export const ShotCaptureModal = ({
   isOpen,
   onClose,
   onConfirmShot,
+  origin = 'team', // 'individual' | 'team' | 'goal_own' | 'goal_rival'
   initialTeam = 'own',
   initialSector = 'center',
   initialSector2D = 'centro_att',
@@ -28,7 +29,10 @@ export const ShotCaptureModal = ({
 }) => {
   const { t, isEn } = useTranslation();
 
-  const [team, setTeam] = useState(initialTeam);
+  const isOriginLocked = origin === 'individual' || origin === 'goal_own' || origin === 'goal_rival';
+  const lockedSide = (origin === 'goal_rival') ? 'rival' : 'own';
+
+  const [team, setTeam] = useState(isOriginLocked ? lockedSide : initialTeam);
   const [zone, setZone] = useState('centro_att');
   const [playType, setPlayType] = useState('jugada');
   const [result, setResult] = useState(initialResult);
@@ -41,7 +45,13 @@ export const ShotCaptureModal = ({
   // Inicializar estado al abrir el modal
   useEffect(() => {
     if (isOpen) {
-      setTeam(initialTeam || 'own');
+      if (origin === 'individual' || origin === 'goal_own') {
+        setTeam('own');
+      } else if (origin === 'goal_rival') {
+        setTeam('rival');
+      } else {
+        setTeam(initialTeam || 'own');
+      }
 
       // Pre-rellenar zona según el sector 2D activo
       let defZone = initialSector2D || 'centro_att';
@@ -181,20 +191,35 @@ export const ShotCaptureModal = ({
 
           {/* Toggle Equipo Propio / Rival */}
           <div className="shot-team-toggle-row">
-            <button
-              type="button"
-              className={`shot-team-chip ${team === 'own' ? 'active-own' : ''}`}
-              onClick={() => setTeam('own')}
-            >
-              {t('shot.team_own')}
-            </button>
-            <button
-              type="button"
-              className={`shot-team-chip ${team === 'rival' ? 'active-rival' : ''}`}
-              onClick={() => setTeam('rival')}
-            >
-              {t('shot.team_rival')}
-            </button>
+            {isOriginLocked ? (
+              <div
+                className={`shot-team-chip fixed-locked ${lockedSide === 'own' ? 'active-own' : 'active-rival'}`}
+                style={{ cursor: 'default', fontWeight: 800, minHeight: '38px', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+              >
+                <span>{lockedSide === 'own' ? '⚽' : '🥅'}</span>
+                <span>{lockedSide === 'own' ? t('shot.team_own') : t('shot.team_rival')}</span>
+                <span style={{ fontSize: '10px', opacity: 0.8, textTransform: 'uppercase', padding: '1px 5px', borderRadius: '4px', background: 'rgba(0,0,0,0.15)' }}>
+                  {isEn ? 'Fixed' : 'Fijo'}
+                </span>
+              </div>
+            ) : (
+              <>
+                <button
+                  type="button"
+                  className={`shot-team-chip ${team === 'own' ? 'active-own' : ''}`}
+                  onClick={() => setTeam('own')}
+                >
+                  {t('shot.team_own')}
+                </button>
+                <button
+                  type="button"
+                  className={`shot-team-chip ${team === 'rival' ? 'active-rival' : ''}`}
+                  onClick={() => setTeam('rival')}
+                >
+                  {t('shot.team_rival')}
+                </button>
+              </>
+            )}
           </div>
         </div>
 

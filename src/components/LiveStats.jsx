@@ -17,7 +17,7 @@ import { useTheme } from '../context/ThemeContext';
 import { useMatch } from '../context/MatchContext';
 import { SvgDonut, SvgComparisonBars, HalfBreakdown } from './LiveStatsCharts';
 import { getEffectiveLanguage } from '../i18n/translations';
-import { isMatchLocked, getStartingXI } from '../utils/minutesEngine';
+import { isMatchLocked, getStartingXI, calculateMinutesFromEvents, getEffectiveMatchDuration } from '../utils/minutesEngine';
 import { showToast } from '../utils/toast';
 import { t } from '../i18n/index.js';
 import MatchStatsBlock from './MatchStatsBlock';
@@ -33,7 +33,7 @@ import { MatchTimeline } from './MatchStats/MatchTimeline';
 import { ComparativeStatsBars } from './MatchStats/ComparativeStatsBars';
 import { StatsDataTable } from './MatchStats/StatsDataTable';
 import { SectorMiniPitch2D } from './SectorMiniPitch2D';
-import { UnattributedEventsManager } from './UnattributedEventsManager';
+import { UnattributedEventsManager, isAttributableOwnEvent } from './UnattributedEventsManager';
 import { CaptureCriteriaModal } from './CaptureCriteriaModal';
 import { CAPTURE_CRITERIA } from '../config/captureCriteria';
 
@@ -191,6 +191,7 @@ const LiveStats = ({
   resetLiveStats: parentResetLiveStats,
   onResetEvents,
   onFinishMatch,
+  onNavigateToLineup,
 }) => {
   const isEn = language === 'English (EN)';
   const tx = useCallback(
@@ -218,8 +219,10 @@ const LiveStats = ({
   const [currentHalf, setCurrentHalf] = useState(displayHalf);
   const [showResetModal, setShowResetModal] = useState(false);
   const [pendingPlayerSelection, setPendingPlayerSelection] = useState(null);
+  const [showBenchPopover, setShowBenchPopover] = useState(false);
   const [pendingShotModal, setPendingShotModal] = useState({
     isOpen: false,
+    origin: 'team',
     initialTeam: 'own',
     initialResult: null,
     initialDifficulty: null,
@@ -401,9 +404,9 @@ const LiveStats = ({
     ];
   }, [players, calledPlayers, matchData]);
 
-  // ── Jugadores actualmente en el campo (Alineación + Sustituciones dinámicas) ──
-  const onPitchPlayersList = useMemo(() => {
-    // 1. Extraer titulares canónicos
+  // ── Jugadores con minutos reales según minutesEngine (Titulares + Sustitutos entrados) ──
+  const activePlayersWithMinutes = useMemo(() => {
+    const duration = getEffectiveMatchDuration(matchData);
     const rawTitulares = Array.isArray(matchData?.titulares) && matchData.titulares.length > 0
       ? matchData.titulares
       : (Array.isArray(matchData?.alineacion?.titulares) && matchData.alineacion.titulares.length > 0
@@ -414,46 +417,38 @@ const LiveStats = ({
       ? matchData.suplentes
       : (calledPlayers || []).slice(11, 18);
 
-    const { initialTitulares } = getStartingXI(
-      (rawTitulares || []).map(p => (typeof p === 'object' && p ? p.id : p)),
-      (rawSuplentes || []).map(p => (typeof p === 'object' && p ? p.id : p)),
-      rawEvents
-    );
+    const titIds = (rawTitulares || []).map(p => (typeof p === 'object' && p ? p.id : p)).filter(Boolean).map(String);
+    const supIds = (rawSuplentes || []).map(p => (typeof p === 'object' && p ? p.id : p)).filter(Boolean).map(String);
 
-    const onPitchSet = new Set((initialTitulares || []).filter(Boolean).map(String));
-
-    // 2. Aplicar sustituciones cronológicamente
-    const subEvents = (rawEvents || [])
-      .filter(e => e && e.isValid !== false && (e.type === 'cambio' || e.type === 'sustitucion' || e.type === 'sub'))
-      .sort((a, b) => (parseInt(a.minute || a.minuto || 0, 10) - parseInt(b.minute || b.minuto || 0, 10)));
-
-    subEvents.forEach(e => {
-      const pIn = String(e.playerInId || e.subInId || e.jugadorEntraId || e.inId || '');
-      const pOut = String(e.playerOutId || e.subOutId || e.jugadorSaleId || e.outId || '');
-      if (pOut) onPitchSet.delete(pOut);
-      if (pIn) onPitchSet.add(pIn);
-    });
-
-    // 3. Quitar jugadores con tarjeta roja / expulsión
-    (rawEvents || []).forEach(e => {
-      if (!e || e.isValid === false) return;
-      const type = String(e.type || '').toLowerCase();
-      const card = String(e.card || e.tipo || '').toLowerCase();
-      const isRed = type === 'roja' || type === 'card_red_own' || type === 'expulsion' || (type === 'tarjeta' && card === 'roja');
-      if (isRed) {
-        const pId = String(e.playerId || e.jugadorId || '');
-        if (pId) onPitchSet.delete(pId);
-      }
-    });
-
-    // Fallback: Si no hay alineación configurada aún, mostrar los disponibles
-    if (onPitchSet.size === 0) {
-      return playersList;
+    if (titIds.length === 0 && supIds.length === 0) {
+      return [...playersList].sort((a, b) => Number(a.dorsal || a.number || 999) - Number(b.dorsal || b.number || 999));
     }
 
-    const filtered = playersList.filter(p => onPitchSet.has(String(p.id)));
-    return filtered.length > 0 ? filtered : playersList;
-  }, [matchData, rawEvents, calledPlayers, playersList]);
+    const list = (playersList || []).filter(p => {
+      const calc = calculateMinutesFromEvents(
+        p.id,
+        rawEvents,
+        titIds,
+        supIds,
+        duration,
+        matchData?.minutesOverrides?.[p.id],
+        matchData?.attendanceStatus?.[p.id],
+        matchData?.lateArrivals?.[p.id]
+      );
+      return (calc?.minutes || 0) > 0;
+    });
+
+    const result = list.length > 0 ? list : playersList;
+    return [...result].sort((a, b) => Number(a.dorsal || a.number || 999) - Number(b.dorsal || b.number || 999));
+  }, [matchData, calledPlayers, playersList, rawEvents]);
+
+  // Jugadores del banquillo con 0 minutos (no debutaron aún)
+  const benchPlayersZeroMinutes = useMemo(() => {
+    const activeIds = new Set(activePlayersWithMinutes.map(p => String(p.id)));
+    return (playersList || []).filter(p => !activeIds.has(String(p.id))).sort((a, b) => Number(a.dorsal || a.number || 999) - Number(b.dorsal || b.number || 999));
+  }, [playersList, activePlayersWithMinutes]);
+
+  const onPitchPlayersList = activePlayersWithMinutes;
 
   // Si el jugador activo sale de cambio o es expulsado, deseleccionarlo
   useEffect(() => {
@@ -464,6 +459,7 @@ const LiveStats = ({
       }
     }
   }, [onPitchPlayersList, activePlayerId]);
+
   const filteredEvents = useMemo(() => {
     return (rawEvents || []).filter(e => {
       if (!e) return false;
@@ -497,12 +493,7 @@ const LiveStats = ({
   }, [rawEvents, timeFilter, timeRange, teamFilter, selectedPlayers, zoneFilter]);
 
   const unattributedCount = useMemo(() => {
-    return (rawEvents || []).filter(e => {
-      if (!e) return false;
-      const isRival = e.team === 'rival' || e.team === 'away' || String(e.type || '').includes('rival');
-      if (isRival) return false;
-      return (!e.playerId || e.playerId === 'unassigned' || e.attributed === false);
-    }).length;
+    return (rawEvents || []).filter(isAttributableOwnEvent).length;
   }, [rawEvents]);
 
   const handleAttributeEvents = useCallback(async ({ eventIds = [], playerId, playerName }) => {
@@ -841,6 +832,7 @@ const LiveStats = ({
 
         setPendingShotModal({
           isOpen: true,
+          origin: activePlayerId ? 'individual' : 'team',
           initialTeam,
           initialResult,
           initialDifficulty
@@ -1167,7 +1159,7 @@ const LiveStats = ({
                 {onAddGoalFor && (
                   <button
                     type="button"
-                    onClick={isLocked ? undefined : () => setPendingShotModal({ isOpen: true, initialTeam: 'own', initialResult: 'gol', initialDifficulty: null })}
+                    onClick={isLocked ? undefined : () => setPendingShotModal({ isOpen: true, origin: 'goal_own', initialTeam: 'own', initialResult: 'gol', initialDifficulty: null })}
                     disabled={isLocked}
                     title={isLocked ? (isEn ? 'Match finished — Reopen match sheet to edit' : 'Partido finalizado — usa Reabrir Acta para corregir') : tx('live.goal.for')}
                     className="livestats-btn-goal for"
@@ -1186,7 +1178,7 @@ const LiveStats = ({
                 {onAddGoalAgainst && (
                   <button
                     type="button"
-                    onClick={isLocked ? undefined : () => setPendingShotModal({ isOpen: true, initialTeam: 'rival', initialResult: 'gol', initialDifficulty: null })}
+                    onClick={isLocked ? undefined : () => setPendingShotModal({ isOpen: true, origin: 'goal_rival', initialTeam: 'rival', initialResult: 'gol', initialDifficulty: null })}
                     disabled={isLocked}
                     title={isLocked ? (isEn ? 'Match finished — Reopen match sheet to edit' : 'Partido finalizado — usa Reabrir Acta para corregir') : tx('live.goal.against')}
                     className="livestats-btn-goal against"
@@ -1270,8 +1262,13 @@ const LiveStats = ({
             {/* ── JUGADOR ACTIVO: Chip Selector Horizontal ─── */}
             <div className="jugador-activo-strip">
               <div className="jugador-activo-label">
-                <span>⚡</span>
-                <span>{isEn ? 'ACTIVE PLAYER' : 'JUGADOR ACTIVO'}</span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <span>⚡</span>
+                  <span>{isEn ? 'ACTIVE PLAYER' : 'JUGADOR ACTIVO'}</span>
+                  <span className="jugador-count-badge" style={{ fontSize: '11px', padding: '2px 7px', borderRadius: '10px', background: darkMode ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.06)', fontWeight: 800, color: 'var(--partidos-gold)' }}>
+                    {activePlayersWithMinutes.length}
+                  </span>
+                </div>
                 {activePlayerId && (
                   <button
                     type="button"
@@ -1281,6 +1278,7 @@ const LiveStats = ({
                 )}
                 <button
                   type="button"
+                  id="livestats-unattributed-counter-btn"
                   className="jugador-unattributed-btn"
                   onClick={() => setShowUnattributedModal(true)}
                   title={isEn ? 'Manage unattributed events' : 'Gestionar eventos sin atribuir'}
@@ -1288,8 +1286,8 @@ const LiveStats = ({
                     minHeight: '38px',
                     borderRadius: '8px',
                     padding: '0 10px',
-                    background: unattributedCount > 0 ? 'rgba(239, 68, 68, 0.15)' : 'rgba(100, 116, 139, 0.15)',
-                    border: `1.5px solid ${unattributedCount > 0 ? '#EF4444' : '#64748B'}`,
+                    background: unattributedCount > 0 ? 'rgba(239, 68, 68, 0.15)' : (darkMode ? 'rgba(255, 255, 255, 0.05)' : 'rgba(100, 116, 139, 0.08)'),
+                    border: `1.5px solid ${unattributedCount > 0 ? '#EF4444' : (darkMode ? 'rgba(255, 255, 255, 0.15)' : '#94A3B8')}`,
                     color: unattributedCount > 0 ? '#EF4444' : (darkMode ? '#94A3B8' : '#475569'),
                     fontWeight: 800,
                     fontSize: '11px',
@@ -1299,8 +1297,10 @@ const LiveStats = ({
                     cursor: 'pointer'
                   }}
                 >
-                  <span>🔘</span>
-                  <span>{isEn ? `Unattributed (${unattributedCount})` : `Sin atribuir (${unattributedCount})`}</span>
+                  <span>{unattributedCount > 0 ? '🔘' : '✅'}</span>
+                  <span>{unattributedCount > 0 
+                    ? (isEn ? `Unattributed (${unattributedCount})` : `Sin atribuir (${unattributedCount})`) 
+                    : (isEn ? 'All attributed ✅' : 'Todo atribuido ✅')}</span>
                 </button>
                 <button
                   type="button"
@@ -1310,7 +1310,7 @@ const LiveStats = ({
                 >📋 {isEn ? 'Post-Match Entry' : 'Carga Post-Partido'}</button>
               </div>
               <div className="jugador-activo-chips">
-                {onPitchPlayersList.map(p => {
+                {activePlayersWithMinutes.map(p => {
                   const isActive = activePlayerId === p.id;
                   return (
                     <button
@@ -1324,6 +1324,84 @@ const LiveStats = ({
                     </button>
                   );
                 })}
+
+                {/* Popover colapsable para suplentes sin minutos */}
+                {benchPlayersZeroMinutes.length > 0 && (
+                  <div style={{ position: 'relative', display: 'inline-block' }}>
+                    <button
+                      type="button"
+                      className="jugador-chip bench-trigger-btn"
+                      onClick={() => setShowBenchPopover(prev => !prev)}
+                      style={{
+                        background: showBenchPopover ? 'rgba(212, 168, 67, 0.25)' : (darkMode ? 'rgba(255,255,255,0.05)' : '#F1F5F9'),
+                        border: '1px dashed #D4A843',
+                        color: 'var(--partidos-gold, #D4A843)',
+                        padding: '0 10px',
+                        cursor: 'pointer',
+                        whiteSpace: 'nowrap'
+                      }}
+                      title={isEn ? 'Bench players with 0 minutes' : 'Jugadores suplentes con 0 minutos'}
+                    >
+                      <span>🪑</span>
+                      <span>+ {isEn ? 'Bench' : 'Banquillo'} ({benchPlayersZeroMinutes.length})</span>
+                    </button>
+
+                    {showBenchPopover && (
+                      <div
+                        className="jugador-bench-popover"
+                        style={{
+                          position: 'absolute',
+                          bottom: '100%',
+                          left: 0,
+                          marginBottom: '8px',
+                          background: darkMode ? '#1E293B' : '#FFFFFF',
+                          border: '1px solid var(--partidos-border, #CBD5E1)',
+                          borderRadius: '10px',
+                          boxShadow: '0 10px 25px rgba(0,0,0,0.3)',
+                          padding: '8px',
+                          zIndex: 60,
+                          minWidth: '180px',
+                          maxHeight: '220px',
+                          overflowY: 'auto',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          gap: '4px'
+                        }}
+                      >
+                        <div style={{ fontSize: '11px', fontWeight: 800, color: 'var(--partidos-gold)', padding: '2px 6px', borderBottom: '1px solid rgba(255,255,255,0.08)', marginBottom: '4px' }}>
+                          🪑 {isEn ? 'BENCH (0 MIN)' : 'SUPLENTES (0 MIN)'}
+                        </div>
+                        {benchPlayersZeroMinutes.map(p => (
+                          <button
+                            key={p.id}
+                            type="button"
+                            className="jugador-bench-popover-item"
+                            style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '8px',
+                              padding: '6px 8px',
+                              background: 'transparent',
+                              border: 'none',
+                              color: 'var(--partidos-text-primary, #FFFFFF)',
+                              borderRadius: '6px',
+                              cursor: 'pointer',
+                              fontSize: '12px',
+                              textAlign: 'left'
+                            }}
+                            onClick={() => {
+                              setActivePlayerId(p.id);
+                              setShowBenchPopover(false);
+                            }}
+                          >
+                            <span style={{ fontWeight: 800, color: 'var(--partidos-gold)' }}>#{p.dorsal}</span>
+                            <span>{p.nombre || p.name}</span>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
 
               {/* Botones de Acción Individual Canónicos (5 controles + Avanzado desplegable) */}
@@ -1384,6 +1462,7 @@ const LiveStats = ({
                             onClick={() => {
                               setPendingShotModal({
                                 isOpen: true,
+                                origin: 'individual',
                                 initialTeam: 'own',
                                 initialResult: null,
                                 initialDifficulty: null
@@ -1441,34 +1520,76 @@ const LiveStats = ({
 
                         {/* Submenú de Faltas y Tarjetas si está abierto */}
                         {pendingFoulModal && (
-                          <div style={{ display: 'flex', gap: '8px', marginTop: '8px', padding: '8px', background: darkMode ? 'rgba(255,255,255,0.05)' : '#F8FAFC', borderRadius: '8px', border: '1px solid #CBD5E1' }}>
+                          <div style={{ display: 'flex', gap: '8px', marginTop: '8px', padding: '8px', background: darkMode ? 'rgba(255,255,255,0.05)' : '#F8FAFC', borderRadius: '8px', border: '1px solid #CBD5E1', flexWrap: 'wrap' }}>
                             <button
                               type="button"
-                              style={{ flex: 1, minHeight: '44px', borderRadius: '6px', background: '#FEF3C7', color: '#92400E', border: '1px solid #F59E0B', fontWeight: 700, fontSize: '11px', cursor: 'pointer' }}
+                              style={{ flex: 1, minHeight: '48px', borderRadius: '6px', background: '#FEF3C7', color: '#92400E', border: '1px solid #F59E0B', fontWeight: 700, fontSize: '11px', cursor: 'pointer' }}
                               onClick={() => { handleIndividualAction('foul_against'); setPendingFoulModal(false); }}
                             >
                               ✋ {isEn ? 'Foul Conceded' : 'Falta Cometida'}
                             </button>
                             <button
                               type="button"
-                              style={{ flex: 1, minHeight: '44px', borderRadius: '6px', background: '#CFFAFE', color: '#155E75', border: '1px solid #06B6D4', fontWeight: 700, fontSize: '11px', cursor: 'pointer' }}
+                              style={{ flex: 1, minHeight: '48px', borderRadius: '6px', background: '#CFFAFE', color: '#155E75', border: '1px solid #06B6D4', fontWeight: 700, fontSize: '11px', cursor: 'pointer' }}
                               onClick={() => { handleIndividualAction('foul_favor'); setPendingFoulModal(false); }}
                             >
                               ⚡ {isEn ? 'Foul Won' : 'Falta Recibida'}
                             </button>
                             <button
                               type="button"
-                              style={{ minHeight: '44px', minWidth: '44px', borderRadius: '6px', background: '#FEF08A', color: '#854D0E', border: '1px solid #EAB308', fontWeight: 800, cursor: 'pointer' }}
+                              aria-label={isEn ? 'Yellow card' : 'Tarjeta amarilla'}
+                              style={{
+                                minHeight: '48px',
+                                minWidth: '92px',
+                                padding: '0 10px',
+                                borderRadius: '6px',
+                                background: '#FEF08A',
+                                color: '#854D0E',
+                                border: '1px solid #EAB308',
+                                fontWeight: 800,
+                                fontSize: '12px',
+                                cursor: 'pointer',
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                gap: '5px'
+                              }}
                               onClick={() => { handlePress('card_yellow_own'); setPendingFoulModal(false); }}
+                              onTouchStart={() => handleTouchStartCriterion('card_yellow')}
+                              onTouchEnd={handleTouchEndCriterion}
+                              onMouseDown={() => handleTouchStartCriterion('card_yellow')}
+                              onMouseUp={handleTouchEndCriterion}
                             >
-                              🟨
+                              <span>🟨</span>
+                              <span>{isEn ? 'Yellow' : 'Tarjeta'}</span>
                             </button>
                             <button
                               type="button"
-                              style={{ minHeight: '44px', minWidth: '44px', borderRadius: '6px', background: '#FEE2E2', color: '#991B1B', border: '1px solid #EF4444', fontWeight: 800, cursor: 'pointer' }}
+                              aria-label={isEn ? 'Red card' : 'Tarjeta roja'}
+                              style={{
+                                minHeight: '48px',
+                                minWidth: '92px',
+                                padding: '0 10px',
+                                borderRadius: '6px',
+                                background: '#FEE2E2',
+                                color: '#991B1B',
+                                border: '1px solid #EF4444',
+                                fontWeight: 800,
+                                fontSize: '12px',
+                                cursor: 'pointer',
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                gap: '5px'
+                              }}
                               onClick={() => { handlePress('card_red_own'); setPendingFoulModal(false); }}
+                              onTouchStart={() => handleTouchStartCriterion('card_red')}
+                              onTouchEnd={handleTouchEndCriterion}
+                              onMouseDown={() => handleTouchStartCriterion('card_red')}
+                              onMouseUp={handleTouchEndCriterion}
                             >
-                              🟥
+                              <span>🟥</span>
+                              <span>{isEn ? 'Red' : 'Tarjeta'}</span>
                             </button>
                           </div>
                         )}
@@ -1533,19 +1654,49 @@ const LiveStats = ({
                 marginBottom: '16px'
               }}
             >
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <span style={{ fontSize: '20px' }}>🧤</span>
-                  <span style={{ fontWeight: 800, fontSize: '13px', color: darkMode ? '#93C5FD' : '#1E40AF', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                    {t('gk.activeGoalkeeper')}: <strong style={{ color: activeGoalkeeper ? (darkMode ? '#60A5FA' : '#1D4ED8') : '#EF4444' }}>{activeGoalkeeper ? (activeGoalkeeper.nombre || activeGoalkeeper.name) : t('gk.noActiveGoalkeeper')}</strong>
+              <button
+                type="button"
+                id="livestats-gk-banner-btn"
+                role="button"
+                tabIndex={0}
+                onClick={() => onNavigateToLineup && onNavigateToLineup()}
+                title={activeGoalkeeper ? (isEn ? 'Tap to edit goalkeeper in lineup' : 'Tocar para editar portero en alineación') : (isEn ? 'Tap to assign goalkeeper in lineup' : 'Tocar para asignar portero en alineación')}
+                style={{
+                  width: '100%',
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  marginBottom: '12px',
+                  padding: '10px 14px',
+                  borderRadius: '10px',
+                  border: activeGoalkeeper ? (darkMode ? '1px solid #1E3A8A' : '1px solid #BFDBFE') : '1.5px dashed #EF4444',
+                  background: activeGoalkeeper ? (darkMode ? 'rgba(59,130,246,0.1)' : '#EFF6FF') : (darkMode ? 'rgba(239, 68, 68, 0.15)' : '#FEF2F2'),
+                  cursor: 'pointer',
+                  minHeight: '48px',
+                  boxSizing: 'border-box',
+                  textAlign: 'left',
+                  transition: 'all 0.15s ease'
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flex: 1, minWidth: 0 }}>
+                  <span style={{ fontSize: '20px' }}>{activeGoalkeeper ? '🧤' : '⚠️'}</span>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', minWidth: 0 }}>
+                    <span style={{ fontWeight: 800, fontSize: '11px', color: darkMode ? '#93C5FD' : '#1E40AF', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                      {t('gk.activeGoalkeeper')}
+                    </span>
+                    <strong style={{ fontSize: '13px', color: activeGoalkeeper ? (darkMode ? '#60A5FA' : '#1D4ED8') : '#EF4444', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                      {activeGoalkeeper 
+                        ? `${activeGoalkeeper.nombre || activeGoalkeeper.name} #${activeGoalkeeper.dorsal || activeGoalkeeper.number || '1'}` 
+                        : t('gk.noActiveGoalkeeper')}
+                    </strong>
+                  </div>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <span style={{ fontSize: '11.5px', fontWeight: 800, color: activeGoalkeeper ? '#2563EB' : '#EF4444', whiteSpace: 'nowrap' }}>
+                    {activeGoalkeeper ? (isEn ? 'Edit in Lineup →' : 'Editar alineación →') : (isEn ? 'Tap to assign →' : 'Tocar para asignar →')}
                   </span>
                 </div>
-                {activeGoalkeeper && (
-                  <span style={{ fontSize: '12px', fontWeight: 'bold', background: darkMode ? 'rgba(59,130,246,0.2)' : '#DBEAFE', color: '#2563EB', padding: '2px 8px', borderRadius: '12px' }}>
-                    #{activeGoalkeeper.dorsal || activeGoalkeeper.number || '1'}
-                  </span>
-                )}
-              </div>
+              </button>
 
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '8px' }}>
                 {[
@@ -2496,6 +2647,7 @@ const LiveStats = ({
           isOpen={pendingShotModal.isOpen}
           onClose={() => setPendingShotModal(prev => ({ ...prev, isOpen: false }))}
           onConfirmShot={handleConfirmShot}
+          origin={pendingShotModal.origin || (activePlayerId ? 'individual' : 'team')}
           initialTeam={pendingShotModal.initialTeam}
           initialSector={selectedSector || 'center'}
           zone2D={selectedSector2D}
@@ -2503,7 +2655,7 @@ const LiveStats = ({
           initialDifficulty={pendingShotModal.initialDifficulty}
           activePlayerId={activePlayerId}
           activePlayerName={activePlayerId ? (playersList.find(p => String(p.id) === String(activePlayerId))?.nombre || '') : ''}
-          playersList={onPitchPlayersList.length > 0 ? onPitchPlayersList : playersList}
+          playersList={onPitchPlayersList.length > 0 ? onPitchPlayersList : (activePlayersWithMinutes.length > 0 ? activePlayersWithMinutes : playersList)}
           activeGoalkeeper={activeGoalkeeper}
         />
 

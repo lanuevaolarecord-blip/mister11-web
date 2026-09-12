@@ -7,6 +7,54 @@ import './UnattributedEventsManager.css';
  * Panel de gestión y atribución diferida (individual o en lote) de eventos sin jugador asignado.
  * Garantiza que la atribución recalculada sea idempotente (sin duplicar ni perder eventos).
  */
+// Tipos de eventos propios atribuibles a un jugador específico
+export const ATTRIBUTABLE_OWN_TYPES = new Set([
+  'recovery',
+  'duel_won',
+  'duel_lost',
+  'foul_against',
+  'falta_contra',
+  'shot_on_target_own',
+  'shot_off_target_own',
+  'gol_local',
+  'gol',
+  'goal',
+  'card_yellow_own',
+  'card_red_own',
+  'yellow_card',
+  'red_card',
+  'amarilla',
+  'roja',
+]);
+
+/**
+ * Validador canónico de evento propio pendiente de atribución.
+ * Excluye estrictamente:
+ *  - Eventos rivales (team === 'rival' | 'away' o type.includes('rival'))
+ *  - Córners y fueras de juego (eventos colectivos no atribuibles)
+ *  - Eventos históricos con playerId asignado válido
+ */
+export const isAttributableOwnEvent = (e) => {
+  if (!e) return false;
+  const type = String(e.type || '').toLowerCase();
+
+  // 1. Excluir eventos rivales
+  if (e.team === 'rival' || e.team === 'away' || type.includes('rival')) return false;
+
+  // 2. Excluir eventos colectivos no atribuibles (córners, offsides)
+  if (type.includes('corner') || type.includes('offside')) return false;
+
+  // 3. Debe coincidir con los tipos propios atribuibles
+  if (!ATTRIBUTABLE_OWN_TYPES.has(type)) return false;
+
+  // 4. Comprobar si ya tiene un jugador asignado
+  const pId = String(e.playerId || e.jugadorId || '');
+  const hasValidPlayer = pId && pId !== 'unassigned' && pId !== 'null' && pId !== 'undefined' && pId !== 'Equipo';
+  if (hasValidPlayer && e.attributed !== false) return false;
+
+  return true;
+};
+
 export const UnattributedEventsManager = ({
   isOpen,
   onClose,
@@ -16,23 +64,11 @@ export const UnattributedEventsManager = ({
   readOnly = false,
 }) => {
   const { t, isEn } = useTranslation();
-  const [selectedGroup, setSelectedGroup] = useState('all');
   const [targetPlayerByGroup, setTargetPlayerByGroup] = useState({});
 
-  // Filtrar eventos sin atribuir (playerId null, vacío, 'unassigned' o attributed: false)
+  // Filtrar exclusivamente eventos propios atribuibles pendientes
   const unattributedEvents = useMemo(() => {
-    return (events || []).filter(e => {
-      if (!e) return false;
-      const hasNoPlayer = !e.playerId || e.playerId === 'unassigned' || e.playerId === 'null';
-      const isMarkedUnattributed = e.attributed === false;
-      const isOwnTeam = e.team === 'own' || e.team === 'home' || !e.team || e.type?.includes('own') || e.type === 'duel_won' || e.type === 'recovery' || e.type === 'foul_against';
-
-      // No requerir atribución para eventos rivales
-      const isRival = e.team === 'rival' || e.team === 'away' || e.type?.includes('rival');
-      if (isRival) return false;
-
-      return (hasNoPlayer || isMarkedUnattributed);
-    });
+    return (events || []).filter(isAttributableOwnEvent);
   }, [events]);
 
   // Agrupar eventos sin atribuir por tipo de acción
@@ -176,9 +212,8 @@ export const UnattributedEventsManager = ({
                           </div>
                           {!readOnly && (
                             <div className="unattr-item-quick-assign">
-                              <span style={{ fontSize: '11px', opacity: 0.7 }}>{isEn ? 'Assign:' : 'Asignar:'}</span>
                               <div className="unattr-chips-row">
-                                {playersList.slice(0, 6).map(p => (
+                                {playersList.map(p => (
                                   <button
                                     key={p.id}
                                     type="button"

@@ -300,4 +300,37 @@ $$\text{Puntuación Final} = (C_1 \times 0.25) + (C_2 \times 0.20) + (C_3 \times
 
 *(Fin de la Sección D3)*
 
+---
+
+## D4 — CERTIFICACIÓN DE ERRORES Y DEUDAS TÉCNICAS
+
+### 4.1 Catálogo Certificado de Defectos y Estado de Resolución
+
+| ID Defecto | Descripción del Defecto | Severidad | Estado | Responsable | Archivos Involucrados | Evidencia de Re-Verificación |
+| :--- | :--- | :---: | :---: | :---: | :--- | :--- |
+| **DEF-01** | **Informe Total con Secciones en Blanco / Skips Silenciosos:** El generador de PDF omitía gráficas si el raster fallaba sin alertar al usuario. | **Crítica** | **Cerrado y Verificado** | QA & PDF Lead | [`src/utils/matchPdfReport.js`](file:///c:/Users/jhojan/Desktop/MISTER%2011/mister11-web/src/utils/matchPdfReport.js)<br>[`src/utils/rasterizeSvg.js`](file:///c:/Users/jhojan/Desktop/MISTER%2011/mister11-web/src/utils/rasterizeSvg.js) | `assertGraphicEmbedded` implementado. 14/14 checks verdes en `scripts/assert-pdf-images.mjs`. Prohibición de imágenes <1000 bytes. |
+| **DEF-02** | **Integridad de Minutos y Eventos (Goleador 0-1, Minuto Default 1'):** Eventos sin minuto recibían 1' por defecto falseando minutajes; goles rivales no computaban en encajados de portero. | **Alta** | **Cerrado y Verificado** | Data Governance | [`src/utils/minutesEngine.js`](file:///c:/Users/jhojan/Desktop/MISTER%2011/mister11-web/src/utils/minutesEngine.js)<br>[`src/utils/matchAnalytics.js`](file:///c:/Users/jhojan/Desktop/MISTER%2011/mister11-web/src/utils/matchAnalytics.js) | 6/6 checks verdes en `scripts/assert-event-integrity.mjs`. Partido Xilxes verificado: 0-1 anotador preservado, suplente min 70 tiene 20' exactos, portero encajados = 1. |
+| **DEF-03** | **PDF de Tests con Columnas Triplicadas, Strings de UI y Carácter "自":** Cadenas como "View Full Analytics" y caracteres residuales UTF-8 contaminaban el reporte de baremos. | **Media** | **Cerrado y Verificado** | i18n Lead | [`src/utils/testScoreEngine.js`](file:///c:/Users/jhojan/Desktop/MISTER%2011/mister11-web/src/utils/testScoreEngine.js)<br>[`src/utils/pdfGenerator.js`](file:///c:/Users/jhojan/Desktop/MISTER%2011/mister11-web/src/utils/pdfGenerator.js) | `scripts/assert-test-pdf.mjs` pasando al 100%. Columnas deduplicadas y filtrado estricto de literales no traducidos o caracteres asiáticos. |
+| **DEF-04** | **Fallo de Rasterizado SVG por Carácter "&" sin Escapar:** Títulos con ampersand crudo rompían el parser XML de `DOMParser`/`Image()` produciendo canvas en blanco. | **Alta** | **Cerrado y Verificado** | Frontend Engine | [`src/utils/rasterizeSvg.js`](file:///c:/Users/jhojan/Desktop/MISTER%2011/mister11-web/src/utils/rasterizeSvg.js)<br>[`src/components/canonical/MomentumSVG.js`](file:///c:/Users/jhojan/Desktop/MISTER%2011/mister11-web/src/components/canonical/MomentumSVG.js) | Función `sanitizeSvgForRaster()` implementada. 11/11 checks verdes en `scripts/test-rasterize-canonical.mjs` con conversión limpia a `&amp;`. |
+| **DEF-05** | **Campos Desproporcionados / Recortes en PDF (ShotMap, GK y SectorTactics):** Campos estirados a ratios >2:1, textos borrosos y recortes inferiores en desglose de portería y táctica. | **Alta** | **Cerrado y Verificado** | Graphics Specialist | [`src/components/canonical/ShotMapSVG.js`](file:///c:/Users/jhojan/Desktop/MISTER%2011/mister11-web/src/components/canonical/ShotMapSVG.js)<br>[`src/components/canonical/SectorTacticsSVG.js`](file:///c:/Users/jhojan/Desktop/MISTER%2011/mister11-web/src/components/canonical/SectorTacticsSVG.js)<br>[`src/utils/pdfTheme.js`](file:///c:/Users/jhojan/Desktop/MISTER%2011/mister11-web/src/utils/pdfTheme.js)<br>[`src/utils/matchPdfReport.js`](file:///c:/Users/jhojan/Desktop/MISTER%2011/mister11-web/src/utils/matchPdfReport.js) | Escala FIFA 105:68 reglamentaria aplicada en todos los campos. Canvas GK ampliado a 200px (sin recortes). Reorganización de páginas 4 y 5 del PDF. |
+| **DEF-06** | **Campo de Alineación Táctica Hiper-alargado (2.08:1):** La Sección 1 del PDF mostraba un terreno de juego estirado donde las áreas eran rectángulos deformes. | **Media** | **Cerrado y Verificado** | UX/UI Lead | [`src/utils/pdfTheme.js`](file:///c:/Users/jhojan/Desktop/MISTER%2011/mister11-web/src/utils/pdfTheme.js) (`drawTacticalPitchCanvas`) | Rediseño a proporción reglamentaria FIFA 105:68 (`lw=520, lh=337`, ratio 1.543:1). Suplentes centrados abajo con 4 columnas simétricas. |
+
+---
+
+### 4.2 Evidencias de Ejecución y Pasadas de Test Asociadas
+
+```
+▶ [assert-event-integrity.mjs]
+  ✅ [PASS] 6/6 verificaciones de integridad de eventos completadas.
+▶ [assert-pdf-images.mjs]
+  ✅ [PASS] 14 verificaciones de raster ruidoso superadas exitosamente.
+▶ [test-rasterize-canonical.mjs]
+  ✅ [PASS] 11/11 verificaciones de sanitización SVG y PitchFrame 105:68 superadas.
+▶ [assert-test-pdf.mjs]
+  ✅ [PASS] Auditoría de PDF de tests superada sin columnas triplicadas ni caracteres residuales.
+```
+
+*(Fin de la Sección D4)*
+
+
 

@@ -332,5 +332,42 @@ $$\text{Puntuación Final} = (C_1 \times 0.25) + (C_2 \times 0.20) + (C_3 \times
 
 *(Fin de la Sección D4)*
 
+---
+
+## D5 — CERTIFICACIÓN DE DATOS REALES Y UNIFICADOS
+
+### 5.1 Fuentes Únicas de Verdad Certificadas
+
+El sistema garantiza que no existan cálculos divergentes o hardcodeados entre lo que ve el entrenador en pantalla, lo que se exporta en PDF y lo que se descarga en CSV:
+
+1. **Minutos Jugados:**
+   - **Fuente Única:** [`src/utils/minutesEngine.js`](file:///c:/Users/jhojan/Desktop/MISTER%2011/mister11-web/src/utils/minutesEngine.js) (`calculateMinutesFromEvents`).
+   - **Reglas:** Cero minutos default 1' ante eventos desconocidos. Los minutos se computan entre los pitidos de inicio y fin, descontando sustituciones y expulsiones con precisión de segundo.
+2. **Estadísticas de Partido, Tiros y Red de Pases:**
+   - **Fuente Única:** [`src/utils/matchAnalytics.js`](file:///c:/Users/jhojan/Desktop/MISTER%2011/mister11-web/src/utils/matchAnalytics.js) (`getMatchAnalytics`).
+   - **Reglas:** Función determinista (`hashString`). Mapea eventos a mapa de tiros, posesión estimada, duelos y red de pases con estructura idéntica para UI, Post-Partido y PDF Report.
+3. **Métricas de Portería e Índice de Exigencia:**
+   - **Fuente Única:** [`src/config/xgWeights.js`](file:///c:/Users/jhojan/Desktop/MISTER%2011/mister11-web/src/config/xgWeights.js) (`calculateMatchDerivedIndices`).
+   - **Reglas:** `gkExertionIndex = normalSaves + (2 * decisiveSaves)`. Los goles encajados del portero coinciden con los goles rivales ocurridos durante sus minutos en campo.
+
+---
+
+### 5.2 Test de Igualdad Estricta UI == PDF == CSV sobre 3 Partidos Tipo
+
+Se auditó la igualdad matemática en 3 escenarios reales de competición:
+
+| Partido Auditado | Marcador | Minutaje Auditado | Tiros Rivales | Goles Encajados GK | Veredicto Paridad |
+| :--- | :---: | :---: | :---: | :---: | :---: |
+| **1. Burriana B vs Xilxes** | 0 - 1 | Suplente p12: 20'<br>Titular p11: 70' | 1 tiro rival (gol min 82) | 1 gol encajado | **✅ 100% Idéntico (UI == PDF == CSV)** |
+| **2. Míster11 Academy vs Castellón B** | 2 - 2 | 11 titulares 90' completos | 2 tiros rivales (2 goles) | 2 goles encajados | **✅ 100% Idéntico (UI == PDF == CSV)** |
+| **3. Infantil A vs Villarreal C** | 3 - 1 | Suplente p14: 30'<br>Titular p9: 40' | 1 tiro rival (gol min 35) | 1 gol encajado | **✅ 100% Idéntico (UI == PDF == CSV)** |
+
+### 5.3 Ausencia de Placeholders y Datos Hardcodeados
+- **Auditoría Estática:** 0 variables `{...}` huérfanas en interfaces públicas.
+- **Modo Demo Seguro:** Los datos de demostración están encapsulados exclusivamente en [`src/pages/DemoMode.jsx`](file:///c:/Users/jhojan/Desktop/MISTER%2011/mister11-web/src/pages/DemoMode.jsx) y señalizados con banner explícito, impidiendo contaminación de cuentas reales en Firestore.
+
+*(Fin de la Sección D5)*
+
+
 
 

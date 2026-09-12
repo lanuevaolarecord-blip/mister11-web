@@ -142,3 +142,49 @@ Míster11 opera sobre una arquitectura desacoplada y orientada a eventos con per
 ---
 
 *(Fin de la Sección D1)*
+
+---
+
+## D2 — ACTUALIZACIÓN DE LA PANTALLA PRINCIPAL (INICIO / PLANES / LOGIN)
+
+### 2.1 Justificación Técnica de las Propuestas de Layout
+
+Para maximizar la tasa de activación y asegurar la regla Android-First con targets táctiles ≥48dp, se evaluaron dos alternativas arquitectónicas:
+
+1. **Propuesta A (Elegida e Implementada — "Pizarra Compacta + Hero First-Fold 360px"):**
+   - **Objetivo:** Permitir que un entrenador en cualquier smartphone Android o iOS (desde 360px de ancho) vea el acceso a su cuenta sin necesidad de hacer scroll vertical.
+   - **Estructura:**
+     - **Navbar Sticky:** Logo oficial Míster11 + selector de idioma instantáneo (ES \| EN) + botón "INICIAR SESIÓN" con target táctil de `min-height: 48px`.
+     - **Hero Section Compacto:** Titular contundente, propuesta de valor técnica y botones de llamada a la acción ("PROBAR 7 DÍAS GRATIS" y "VER PLANES Y TARIFAS").
+     - **Matriz de Planes Comprensible en ≤10 segundos:** Tarjetas con selector de ciclo (Pase de Temporada 10 meses con 2 meses gratis vs Mensual), destacando en cada plan sus **3 Atributos Decisivos** (Capacidad de Equipos/Staff, Módulos Avanzados y Portal/IA) y un botón CTA directo con enlace preconfigurado (`/login?plan={id}&cycle={season|monthly}`).
+     - **Paleta Oficial Tierra y Campo:** `#1B3A2D` (Verde Selva), `#4CAF7D` (Verde Campo), `#D4A843` (Oro), `#F2EDE4` (Texto Blanco Marfil), `#111B21` (Fondo Pizarra). **Cero azules ni tonos navy.**
+     - **Viewport Elástico y Safe-Areas:** Implementación de `100dvh` y `env(safe-area-inset-top)` para evitar solapamientos con la barra de navegación del sistema o el notch.
+2. **Propuesta B (Descartada — "Pestañas Segmentadas Entrenador vs Club"):**
+   - Separaba la pantalla en dos pestañas ("Entrenadores" y "Clubes/Academias").
+   - **Motivo de Descarte:** Aumentaba la fricción cognitiva en la comparativa de precios, ocultaba el plan Club Starter (puente natural para un entrenador con varios equipos) y obligaba a hacer clics innecesarios para consultar la oferta completa.
+
+### 2.2 Evidencia de Implementación y Certificación en Código
+
+- **Archivos Modificados:**
+  - [`src/pages/LandingPage.jsx`](file:///c:/Users/jhojan/Desktop/MISTER%2011/mister11-web/src/pages/LandingPage.jsx): Integración de `useTranslation`, `PLANS` de `plans.js`, aria-labels bilingües y selector de ciclo.
+  - [`src/pages/LandingPage.css`](file:///c:/Users/jhojan/Desktop/MISTER%2011/mister11-web/src/pages/LandingPage.css): Estilos responsive con breakpoints en 768px y 380px, targets de 48px, clases temáticas Míster11 sin clases "azul".
+  - [`scripts/test-landing-responsive.mjs`](file:///c:/Users/jhojan/Desktop/MISTER%2011/mister11-web/scripts/test-landing-responsive.mjs): Suite e2e de verificación estática y responsive.
+
+### 2.3 Resultados de Certificación Automatizada (D2)
+```
+==============================================================================
+MÍSTER 11 — TEST E2E Y RESPONSIVE DE PANTALLA PRINCIPAL Y PLANES (D2)
+==============================================================================
+  ✅ [PASS] LandingPage incluye los 5 planes canónicos (free, pro, club_starter, club_pro, club_premium)
+  ✅ [PASS] LandingPage integra selector de idioma accesible ES/EN y useTranslation
+  ✅ [PASS] Navbar incluye botón Login con min-height >=48px para touch targets móviles
+  ✅ [PASS] Cada tarjeta de plan presenta lista de 3 atributos decisivos y CTA directo
+  ✅ [PASS] LandingPage.css respeta estrictamente la paleta Tierra y Campo (cero azules)
+  ✅ [PASS] LandingPage.css cuenta con soporte dvh para viewport elástico móvil
+==============================================================================
+🎉 [PASS] 6/6 VERIFICACIONES DE PANTALLA PRINCIPAL Y PLANES SUPERADAS
+==============================================================================
+```
+
+*(Fin de la Sección D2)*
+

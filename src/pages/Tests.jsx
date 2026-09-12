@@ -1621,14 +1621,7 @@ const Tests = () => {
                     return;
                   }
                   try {
-                    let graficaUrl = null;
-                    const element = document.getElementById('grafica-rendimiento-jugador');
-                    if (element) {
-                      const html2canvas = (await import('html2canvas')).default;
-                      const canvas = await html2canvas(element, { scale: 2, backgroundColor: null, useCORS: true, allowTaint: true });
-                      graficaUrl = canvas.toDataURL('image/png');
-                    }
-                    await generatePlayerTestReport(getPlayerById(histSelectedPlayer), tests, historyData, activeTeam, graficaUrl);
+                    await generatePlayerTestReport(getPlayerById(histSelectedPlayer), tests, historyData, activeTeam);
                   } catch (e) {
                     console.error(e);
                     await showAlert("Error", isEn ? "Error generating PDF." : "Error al generar el PDF.");
@@ -1821,14 +1814,7 @@ const Tests = () => {
                                 return;
                               }
                               try {
-                                let graficaUrl = null;
-                                const element = document.getElementById('grafica-rendimiento-jugador');
-                                if (element) {
-                                  const html2canvas = (await import('html2canvas')).default;
-                                  const canvas = await html2canvas(element, { scale: 2, backgroundColor: null, useCORS: true, allowTaint: true });
-                                  graficaUrl = canvas.toDataURL('image/png');
-                                }
-                                await generatePlayerTestReport(getPlayerById(histSelectedPlayer), tests, historyData, activeTeam, graficaUrl);
+                                await generatePlayerTestReport(getPlayerById(histSelectedPlayer), tests, historyData, activeTeam);
                               } catch (e) {
                                 console.error(e);
                                 await showAlert("Error", isEn ? "Error generating PDF." : "Error al generar el PDF.");

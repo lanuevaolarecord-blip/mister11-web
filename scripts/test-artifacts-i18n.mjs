@@ -34,24 +34,26 @@ function assert(condition, message) {
   }
 }
 
-// ── 1. VALIDACIÓN DE LAS 9 SECCIONES CANÓNICAS ─────────────────────────────
-console.log('▶ [1/4] Validando definición canónica de 9 secciones (reportSections.js)...');
+// ── 1. VALIDACIÓN DE LAS 11 SECCIONES CANÓNICAS ─────────────────────────────
+console.log('▶ [1/4] Validando definición canónica de 11 secciones (reportSections.js)...');
 const reportSectionsPath = path.join(rootDir, 'src', 'utils', 'reportSections.js');
 assert(fs.existsSync(reportSectionsPath), 'reportSections.js existe en src/utils/');
 
 const { CANONICAL_REPORT_SECTIONS, getCanonicalSections } = await import('../src/utils/reportSections.js');
-assert(Array.isArray(CANONICAL_REPORT_SECTIONS) && CANONICAL_REPORT_SECTIONS.length === 9, 'CANONICAL_REPORT_SECTIONS define exactamente 9 secciones');
+assert(Array.isArray(CANONICAL_REPORT_SECTIONS) && CANONICAL_REPORT_SECTIONS.length === 11, 'CANONICAL_REPORT_SECTIONS define exactamente 11 secciones');
 
-const expectedOrder = [1, 2, 3, 4, 5, 6, 7, 8, 9];
+const expectedOrder = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11];
 const actualOrder = CANONICAL_REPORT_SECTIONS.map(s => s.order);
-assert(JSON.stringify(actualOrder) === JSON.stringify(expectedOrder), 'Las 9 secciones tienen órdenes correlativos 1 al 9');
+assert(JSON.stringify(actualOrder) === JSON.stringify(expectedOrder), 'Las 11 secciones tienen órdenes correlativos 1 al 11');
 
 const expectedAnchors = [
   'sec_timeline',
   'sec_momentum',
+  'sec_bars',
   'sec_radar',
   'sec_top5',
   'sec_shots',
+  'sec_tactics',
   'sec_gk',
   'sec_lineup',
   'sec_players',
@@ -86,31 +88,41 @@ console.log('\n▶ [3/4] Validando paridad 1:1 entre Partidos.jsx y matchPdfRepo
 const partidosCode = fs.readFileSync(path.join(rootDir, 'src', 'pages', 'Partidos.jsx'), 'utf8');
 const pdfReportCode = fs.readFileSync(path.join(rootDir, 'src', 'utils', 'matchPdfReport.js'), 'utf8');
 
-// Comprobar que los 9 anchors existen en Partidos.jsx
+// Comprobar que los 11 anchors existen en Partidos.jsx
 expectedAnchors.forEach(anchor => {
   assert(partidosCode.includes(`id="${anchor}"`), `Partidos.jsx contiene el ancla UI: #${anchor}`);
 });
 
-// Comprobar que matchPdfReport.js dibuja las 9 secciones canónicas
+// Comprobar que matchPdfReport.js dibuja las 11 secciones canónicas
 const expectedSecIds = [
   'sec1_timeline',
   'sec2_momentum',
-  'sec3_radar',
-  'sec4_top5',
-  'sec5_shots',
-  'sec6_gk',
-  'sec7_lineup',
-  'sec8_players',
-  'sec9_swot'
+  'sec3_bars',
+  'sec4_radar',
+  'sec5_top5',
+  'sec6_shots',
+  'sec7_tactics',
+  'sec8_gk',
+  'sec9_lineup',
+  'sec10_players',
+  'sec11_swot'
 ];
 expectedSecIds.forEach(secId => {
   assert(pdfReportCode.includes(`'${secId}'`), `matchPdfReport.js procesa la sección canónica: ${secId}`);
 });
 
-// Integración de componentes canónicos
-assert(partidosCode.includes('<ShotMap'), 'Partidos.jsx integra el componente <ShotMap /> en sec_shots');
-assert(partidosCode.includes('<SwotMatrix'), 'Partidos.jsx integra el componente <SwotMatrix /> en sec_swot');
-assert(pdfReportCode.includes('drawShotMapCanvas'), 'matchPdfReport.js integra drawShotMapCanvas');
+// Integración de componentes canónicos SVG compartidos
+assert(partidosCode.includes('<ShotMapSVG') || partidosCode.includes('ShotMapSVG'), 'Partidos.jsx integra el componente ShotMapSVG en sec6_shots');
+assert(partidosCode.includes('<ComparisonBarsSVG') || partidosCode.includes('ComparisonBarsSVG'), 'Partidos.jsx integra el componente ComparisonBarsSVG en sec3_bars');
+assert(partidosCode.includes('<RadarCompareSVG') || partidosCode.includes('RadarCompareSVG'), 'Partidos.jsx integra el componente RadarCompareSVG en sec4_radar');
+assert(partidosCode.includes('<MomentumSVG') || partidosCode.includes('MomentumSVG'), 'Partidos.jsx integra el componente MomentumSVG en sec2_momentum');
+assert(partidosCode.includes('<SectorTacticsSVG') || partidosCode.includes('SectorTacticsSVG'), 'Partidos.jsx integra el componente SectorTacticsSVG en sec7_tactics');
+assert(partidosCode.includes('<SwotMatrix'), 'Partidos.jsx integra el componente <SwotMatrix /> en sec11_swot');
+assert(pdfReportCode.includes('renderShotMapSvgString'), 'matchPdfReport.js integra renderShotMapSvgString canónico');
+assert(pdfReportCode.includes('renderComparisonBarsSvgString'), 'matchPdfReport.js integra renderComparisonBarsSvgString canónico');
+assert(pdfReportCode.includes('renderRadarCompareSvgString'), 'matchPdfReport.js integra renderRadarCompareSvgString canónico');
+assert(pdfReportCode.includes('renderMomentumSvgString'), 'matchPdfReport.js integra renderMomentumSvgString canónico');
+assert(pdfReportCode.includes('renderSectorTacticsSvgString'), 'matchPdfReport.js integra renderSectorTacticsSvgString canónico');
 assert(pdfReportCode.includes('drawGkExertionCanvas'), 'matchPdfReport.js integra drawGkExertionCanvas');
 
 // ── 4. CLÁUSULA ANTI-REGRESIÓN (FOTOS, MINUTOS, DESCARGA PNG) ──────────────

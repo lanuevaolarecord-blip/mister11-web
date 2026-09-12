@@ -29,6 +29,12 @@ import { SwotMatrix } from '../components/SwotMatrix';
 import { evaluateSwotRules } from '../utils/swotRules';
 import { calculateMatchDerivedIndices } from '../config/xgWeights';
 import { CANONICAL_REPORT_SECTIONS } from '../utils/reportSections';
+import { ComparisonBarsSVG } from '../components/canonical/ComparisonBarsSVG';
+import { RadarCompareSVG } from '../components/canonical/RadarCompareSVG';
+import { MomentumSVG } from '../components/canonical/MomentumSVG';
+import { ShotMapSVG } from '../components/canonical/ShotMapSVG';
+import { SectorTacticsSVG } from '../components/canonical/SectorTacticsSVG';
+import { calculateCanonicalStats } from '../components/canonical/calculateCanonicalStats';
 import './Partidos.css';
 import { normalizeText } from '../utils/normalizeInput';
 import { normalizeLineup, applyLineupChange, formatMatchDateSafe } from '../utils/lineupEngine';
@@ -340,6 +346,10 @@ const Partidos = () => {
       return t.includes('shot') || t.startsWith('gol_') || t === 'goal';
     });
   }, [effectiveLiveEvents]);
+
+  const postMatchCanonicalStats = useMemo(() => {
+    return calculateCanonicalStats(matchData, effectiveLiveEvents || []);
+  }, [matchData, effectiveLiveEvents]);
 
   const matchHalfLabel = isMatchFinished
     ? (isEnLanguage ? 'Finished' : 'Finalizado')
@@ -2470,21 +2480,25 @@ const Partidos = () => {
                       {isGlobalEn
                         ? (sec.titleKey === 'exports.report.sec1_timeline' ? 'Timeline'
                           : sec.titleKey === 'exports.report.sec2_momentum' ? 'Momentum'
-                          : sec.titleKey === 'exports.report.sec3_radar' ? 'Radar'
-                          : sec.titleKey === 'exports.report.sec4_top5' ? 'Top-5'
-                          : sec.titleKey === 'exports.report.sec5_shots' ? 'Shots & xG'
-                          : sec.titleKey === 'exports.report.sec6_gk' ? 'Goalkeeping'
-                          : sec.titleKey === 'exports.report.sec7_lineup' ? 'Lineup'
-                          : sec.titleKey === 'exports.report.sec8_players' ? 'Players'
+                          : sec.titleKey === 'exports.report.sec3_bars' ? 'Comparison Bars'
+                          : sec.titleKey === 'exports.report.sec4_radar' ? 'Radar'
+                          : sec.titleKey === 'exports.report.sec5_top5' ? 'Top-5'
+                          : sec.titleKey === 'exports.report.sec6_shots' ? 'Shots & xG'
+                          : sec.titleKey === 'exports.report.sec7_tactics' ? 'Tactics & ABP'
+                          : sec.titleKey === 'exports.report.sec8_gk' ? 'Goalkeeping'
+                          : sec.titleKey === 'exports.report.sec9_lineup' ? 'Lineup'
+                          : sec.titleKey === 'exports.report.sec10_players' ? 'Players'
                           : 'SWOT')
                         : (sec.titleKey === 'exports.report.sec1_timeline' ? 'Cronología'
                           : sec.titleKey === 'exports.report.sec2_momentum' ? 'Momentum'
-                          : sec.titleKey === 'exports.report.sec3_radar' ? 'Radar'
-                          : sec.titleKey === 'exports.report.sec4_top5' ? 'Top-5'
-                          : sec.titleKey === 'exports.report.sec5_shots' ? 'Tiros & xG'
-                          : sec.titleKey === 'exports.report.sec6_gk' ? 'Portería'
-                          : sec.titleKey === 'exports.report.sec7_lineup' ? 'Alineación'
-                          : sec.titleKey === 'exports.report.sec8_players' ? 'Rendimiento'
+                          : sec.titleKey === 'exports.report.sec3_bars' ? 'Barras (10)'
+                          : sec.titleKey === 'exports.report.sec4_radar' ? 'Radar'
+                          : sec.titleKey === 'exports.report.sec5_top5' ? 'Top-5'
+                          : sec.titleKey === 'exports.report.sec6_shots' ? 'Tiros & xG'
+                          : sec.titleKey === 'exports.report.sec7_tactics' ? 'Campo & ABP'
+                          : sec.titleKey === 'exports.report.sec8_gk' ? 'Portería'
+                          : sec.titleKey === 'exports.report.sec9_lineup' ? 'Alineación'
+                          : sec.titleKey === 'exports.report.sec10_players' ? 'Rendimiento'
                           : 'DAFO')}
                     </button>
                   ))}
@@ -2613,45 +2627,69 @@ const Partidos = () => {
                       </h4>
                     </div>
                     <div style={{ marginTop: '12px' }}>
-                      <MatchStatsBlock
-                        matchData={matchData}
+                      <MomentumSVG
                         events={effectiveLiveEvents || []}
-                        language={currentGlobalLanguage || 'Español (ES)'}
-                        showDonuts={false}
-                        showComparison={false}
-                        showHalves={true}
-                        showDetailedTables={false}
+                        durationMin={getEffectiveMatchDuration(matchData)}
+                        isEn={isGlobalEn}
                       />
+                      <div style={{ marginTop: '14px' }}>
+                        <MatchStatsBlock
+                          matchData={matchData}
+                          events={effectiveLiveEvents || []}
+                          language={currentGlobalLanguage || 'Español (ES)'}
+                          showDonuts={false}
+                          showComparison={false}
+                          showHalves={true}
+                          showDetailedTables={false}
+                        />
+                      </div>
                     </div>
                   </div>
 
-                  {/* ── SECCIÓN 3: RADAR COMPARATIVO PROPIO VS RIVAL ── */}
-                  <div id="sec_radar" className="post-match-card" style={{ scrollMarginTop: '80px' }}>
+                  {/* ── SECCIÓN 3: BARRAS COMPARATIVAS (10 MÉTRICAS) ── */}
+                  <div id="sec_bars" className="post-match-card" style={{ scrollMarginTop: '80px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px', borderBottom: '1.5px solid var(--partidos-border)', paddingBottom: '10px', marginBottom: '14px' }}>
                       <span style={{ background: '#172D21', color: '#D4A843', padding: '4px 10px', borderRadius: '6px', fontSize: '11px', fontWeight: '900' }}>3</span>
                       <h4 className="card-section-title" style={{ margin: 0 }}>
-                        {isGlobalEn ? '3. Normalized Comparative Radar (Own vs Opponent)' : '3. Radar Comparativo Propio vs Rival (6 Ejes)'}
+                        {isGlobalEn ? '3. Comparative Bars (10 Key Metrics)' : '3. Barras Comparativas (10 Métricas Canónicas)'}
                       </h4>
                     </div>
                     <div style={{ marginTop: '12px' }}>
-                      <MatchStatsBlock
-                        matchData={matchData}
-                        events={effectiveLiveEvents || []}
-                        language={currentGlobalLanguage || 'Español (ES)'}
-                        showDonuts={false}
-                        showComparison={true}
-                        showHalves={false}
-                        showDetailedTables={false}
+                      <ComparisonBarsSVG
+                        homeStats={postMatchCanonicalStats.homeStats}
+                        awayStats={postMatchCanonicalStats.awayStats}
+                        homeTeamName={activeTeam?.nombre || (isGlobalEn ? 'My Team' : 'Mi Equipo')}
+                        awayTeamName={matchData.rival || (isGlobalEn ? 'Opponent' : 'Rival')}
+                        isEn={isGlobalEn}
                       />
                     </div>
                   </div>
 
-                  {/* ── SECCIÓN 4: MÉTRICAS TOP-5 DIFERENCIALES ── */}
-                  <div id="sec_top5" className="post-match-card" style={{ scrollMarginTop: '80px' }}>
+                  {/* ── SECCIÓN 4: RADAR COMPARATIVO PROPIO VS RIVAL ── */}
+                  <div id="sec_radar" className="post-match-card" style={{ scrollMarginTop: '80px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px', borderBottom: '1.5px solid var(--partidos-border)', paddingBottom: '10px', marginBottom: '14px' }}>
                       <span style={{ background: '#172D21', color: '#D4A843', padding: '4px 10px', borderRadius: '6px', fontSize: '11px', fontWeight: '900' }}>4</span>
                       <h4 className="card-section-title" style={{ margin: 0 }}>
-                        {isGlobalEn ? '4. Top-5 Differential KPIs' : '4. Métricas Top-5 Diferenciales'}
+                        {isGlobalEn ? '4. Normalized Comparative Radar (Own vs Opponent)' : '4. Radar Comparativo Propio vs Rival (6 Ejes)'}
+                      </h4>
+                    </div>
+                    <div style={{ marginTop: '12px' }}>
+                      <RadarCompareSVG
+                        homeStats={postMatchCanonicalStats.homeStats}
+                        awayStats={postMatchCanonicalStats.awayStats}
+                        homeTeamName={activeTeam?.nombre || (isGlobalEn ? 'My Team' : 'Mi Equipo')}
+                        awayTeamName={matchData.rival || (isGlobalEn ? 'Opponent' : 'Rival')}
+                        isEn={isGlobalEn}
+                      />
+                    </div>
+                  </div>
+
+                  {/* ── SECCIÓN 5: MÉTRICAS TOP-5 DIFERENCIALES ── */}
+                  <div id="sec_top5" className="post-match-card" style={{ scrollMarginTop: '80px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', borderBottom: '1.5px solid var(--partidos-border)', paddingBottom: '10px', marginBottom: '14px' }}>
+                      <span style={{ background: '#172D21', color: '#D4A843', padding: '4px 10px', borderRadius: '6px', fontSize: '11px', fontWeight: '900' }}>5</span>
+                      <h4 className="card-section-title" style={{ margin: 0 }}>
+                        {isGlobalEn ? '5. Top-5 Differential KPIs' : '5. Métricas Top-5 Diferenciales'}
                       </h4>
                     </div>
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '12px', marginTop: '14px' }}>
@@ -2707,13 +2745,13 @@ const Partidos = () => {
                     </div>
                   </div>
 
-                  {/* ── SECCIÓN 5: MAPAS DE TIROS & MODELO xG-LITE ── */}
+                  {/* ── SECCIÓN 6: MAPAS DE TIROS & MODELO xG-LITE ── */}
                   <div id="sec_shots" className="post-match-card" style={{ scrollMarginTop: '80px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '10px', borderBottom: '1.5px solid var(--partidos-border)', paddingBottom: '10px', marginBottom: '14px' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <span style={{ background: '#172D21', color: '#D4A843', padding: '4px 10px', borderRadius: '6px', fontSize: '11px', fontWeight: '900' }}>5</span>
+                        <span style={{ background: '#172D21', color: '#D4A843', padding: '4px 10px', borderRadius: '6px', fontSize: '11px', fontWeight: '900' }}>6</span>
                         <h4 className="card-section-title" style={{ margin: 0 }}>
-                          {isGlobalEn ? '5. Shot Maps & xG-Lite Model' : '5. Mapas de Tiros y Modelo xG-Lite'}
+                          {isGlobalEn ? '6. Shot Maps & xG-Lite Model' : '6. Mapas de Tiros y Modelo xG-Lite'}
                         </h4>
                       </div>
                       <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
@@ -2726,20 +2764,41 @@ const Partidos = () => {
                       </div>
                     </div>
                     <div style={{ marginTop: '12px' }}>
-                      <ShotMap
+                      <ShotMapSVG
                         shots={postMatchShotEvents}
-                        teamName={activeTeam?.nombre || activeTeam?.name || 'Mi Equipo'}
-                        players={players || []}
+                        ownXg={postMatchDerivedIndices.ownXg}
+                        rivalXg={postMatchDerivedIndices.rivalXg}
+                        isEn={isGlobalEn}
                       />
                     </div>
                   </div>
 
-                  {/* ── SECCIÓN 6: EXIGENCIA & RENDIMIENTO DE PORTERÍA ── */}
+                  {/* ── SECCIÓN 7: CAMPO Y TÁCTICA: SECTORES, ABP Y BLOQUES ── */}
+                  <div id="sec_tactics" className="post-match-card" style={{ scrollMarginTop: '80px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', borderBottom: '1.5px solid var(--partidos-border)', paddingBottom: '10px', marginBottom: '14px' }}>
+                      <span style={{ background: '#172D21', color: '#D4A843', padding: '4px 10px', borderRadius: '6px', fontSize: '11px', fontWeight: '900' }}>7</span>
+                      <h4 className="card-section-title" style={{ margin: 0 }}>
+                        {isGlobalEn ? '7. Field & Tactics (Sectors, Set Pieces & Blocks)' : '7. Campo y Táctica (Pasillos, ABP y Territorio)'}
+                      </h4>
+                    </div>
+                    <div style={{ marginTop: '12px' }}>
+                      <SectorTacticsSVG
+                        homeStats={postMatchCanonicalStats.homeStats}
+                        awayStats={postMatchCanonicalStats.awayStats}
+                        tacticsData={postMatchCanonicalStats.tacticsData}
+                        homeTeamName={activeTeam?.nombre || (isGlobalEn ? 'My Team' : 'Mi Equipo')}
+                        awayTeamName={matchData.rival || (isGlobalEn ? 'Opponent' : 'Rival')}
+                        isEn={isGlobalEn}
+                      />
+                    </div>
+                  </div>
+
+                  {/* ── SECCIÓN 8: EXIGENCIA & RENDIMIENTO DE PORTERÍA ── */}
                   <div id="sec_gk" className="post-match-card" style={{ scrollMarginTop: '80px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px', borderBottom: '1.5px solid var(--partidos-border)', paddingBottom: '10px', marginBottom: '14px' }}>
-                      <span style={{ background: '#172D21', color: '#D4A843', padding: '4px 10px', borderRadius: '6px', fontSize: '11px', fontWeight: '900' }}>6</span>
+                      <span style={{ background: '#172D21', color: '#D4A843', padding: '4px 10px', borderRadius: '6px', fontSize: '11px', fontWeight: '900' }}>8</span>
                       <h4 className="card-section-title" style={{ margin: 0 }}>
-                        🧤 {isGlobalEn ? '6. Goalkeeping Exertion & Performance' : '6. Exigencia y Rendimiento de Portería'}
+                        🧤 {isGlobalEn ? '8. Goalkeeping Exertion & Performance' : '8. Exigencia y Rendimiento de Portería'}
                       </h4>
                       {postMatchDerivedIndices.isDemandingMatch && (
                         <span style={{ marginLeft: 'auto', background: '#EF4444', color: '#FFFFFF', padding: '3px 8px', borderRadius: '4px', fontSize: '10px', fontWeight: '800' }}>
@@ -2778,13 +2837,13 @@ const Partidos = () => {
                     </div>
                   </div>
 
-                  {/* ── SECCIÓN 7: ALINEACIÓN TÁCTICA CON FOTOGRAFÍAS [PROTEGIDA] ── */}
+                  {/* ── SECCIÓN 9: ALINEACIÓN TÁCTICA CON FOTOGRAFÍAS [PROTEGIDA] ── */}
                   <div id="sec_lineup" className="post-match-card" style={{ scrollMarginTop: '80px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '10px', borderBottom: '1.5px solid var(--partidos-border)', paddingBottom: '10px', marginBottom: '14px' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <span style={{ background: '#172D21', color: '#D4A843', padding: '4px 10px', borderRadius: '6px', fontSize: '11px', fontWeight: '900' }}>7</span>
+                        <span style={{ background: '#172D21', color: '#D4A843', padding: '4px 10px', borderRadius: '6px', fontSize: '11px', fontWeight: '900' }}>9</span>
                         <h4 className="card-section-title" style={{ margin: 0 }}>
-                          {isGlobalEn ? '7. Tactical Lineup with Photos' : '7. Alineación Táctica con Fotografías'}
+                          {isGlobalEn ? '9. Tactical Lineup with Photos' : '9. Alineación Táctica con Fotografías'}
                         </h4>
                       </div>
                       <button
@@ -2831,12 +2890,12 @@ const Partidos = () => {
                     </div>
                   </div>
 
-                  {/* ── SECCIÓN 8: RENDIMIENTO INDIVIDUAL & PLANTILLA ── */}
+                  {/* ── SECCIÓN 10: RENDIMIENTO INDIVIDUAL & PLANTILLA ── */}
                   <div id="sec_players" className="post-match-card" style={{ scrollMarginTop: '80px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px', borderBottom: '1.5px solid var(--partidos-border)', paddingBottom: '10px', marginBottom: '14px' }}>
-                      <span style={{ background: '#172D21', color: '#D4A843', padding: '4px 10px', borderRadius: '6px', fontSize: '11px', fontWeight: '900' }}>8</span>
+                      <span style={{ background: '#172D21', color: '#D4A843', padding: '4px 10px', borderRadius: '6px', fontSize: '11px', fontWeight: '900' }}>10</span>
                       <h4 className="card-section-title" style={{ margin: 0 }}>
-                        {isGlobalEn ? '8. Individual Player Table & Goalkeeping' : '8. Rendimiento Individual y Minutos Oficiales'}
+                        {isGlobalEn ? '10. Individual Player Table & Goalkeeping' : '10. Rendimiento Individual y Minutos Oficiales'}
                       </h4>
                     </div>
 
@@ -3054,12 +3113,12 @@ const Partidos = () => {
                     </div>
                   </div>
 
-                  {/* ── SECCIÓN 9: MATRIZ DAFO & RECOMENDACIONES ── */}
+                  {/* ── SECCIÓN 11: MATRIZ DAFO & RECOMENDACIONES ── */}
                   <div id="sec_swot" className="post-match-card" style={{ scrollMarginTop: '80px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px', borderBottom: '1.5px solid var(--partidos-border)', paddingBottom: '10px', marginBottom: '14px' }}>
-                      <span style={{ background: '#172D21', color: '#D4A843', padding: '4px 10px', borderRadius: '6px', fontSize: '11px', fontWeight: '900' }}>9</span>
+                      <span style={{ background: '#172D21', color: '#D4A843', padding: '4px 10px', borderRadius: '6px', fontSize: '11px', fontWeight: '900' }}>11</span>
                       <h4 className="card-section-title" style={{ margin: 0 }}>
-                        {isGlobalEn ? '9. SWOT Matrix & Recommendations' : '9. Matriz DAFO Trazable y Recomendaciones'}
+                        {isGlobalEn ? '11. SWOT Matrix & Recommendations' : '11. Matriz DAFO Trazable y Recomendaciones'}
                       </h4>
                     </div>
 

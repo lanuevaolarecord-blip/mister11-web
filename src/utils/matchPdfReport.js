@@ -19,6 +19,13 @@ import {
 import { calculateMatchDerivedIndices } from '../config/xgWeights';
 import { evaluateSwotRules } from './swotRules';
 import { CANONICAL_REPORT_SECTIONS } from './reportSections';
+import { rasterizeSvgToDataUrl } from '../components/canonical/rasterizeSvg';
+import { renderMomentumSvgString } from '../components/canonical/MomentumSVG';
+import { renderComparisonBarsSvgString } from '../components/canonical/ComparisonBarsSVG';
+import { renderRadarCompareSvgString } from '../components/canonical/RadarCompareSVG';
+import { renderShotMapSvgString } from '../components/canonical/ShotMapSVG';
+import { renderSectorTacticsSvgString } from '../components/canonical/SectorTacticsSVG';
+import { calculateCanonicalStats } from '../components/canonical/calculateCanonicalStats';
 
 export { imageUrlToBase64 };
 
@@ -708,6 +715,7 @@ export const generateMatchPdfReport = async ({
 
       const derivedIndices = calculateMatchDerivedIndices(safeEvents);
       const swotResult = evaluateSwotRules(matchData, safeEvents, calledPlayers);
+      const { homeStats, awayStats, tacticsData } = calculateCanonicalStats(matchData, safeEvents);
       const shotEvents = safeEvents.filter((e) => {
         if (!e) return false;
         const t = String(e.type || '').toLowerCase();
@@ -813,64 +821,84 @@ export const generateMatchPdfReport = async ({
         y = (doc.lastAutoTable ? doc.lastAutoTable.finalY : y + 20) + 6;
       }
 
-      // ── PÁGINA 2: SECCIÓN 2 & SECCIÓN 3 — MOMENTUM Y RADAR TÁCTICO ────────
+      // ── PÁGINA 2: SECCIÓN 2 & SECCIÓN 3 — MOMENTUM Y BARRAS COMPARATIVAS ──
       doc.addPage();
       y = 18;
 
       // 2. Momentum y Posesión por Bloques 15'
       y = drawSectionHeader('sec2_momentum');
       try {
-        const momentumImg = drawMomentumChartCanvas(safeEvents, durationMin || 90, 640, 150, isEn);
+        const momentumSvg = renderMomentumSvgString({
+          events: safeEvents,
+          durationMin: durationMin || 90,
+          isEn,
+          width: 640,
+          height: 180
+        });
+        const momentumImg = await rasterizeSvgToDataUrl(momentumSvg, { scale: 3, width: 640, height: 180 });
         if (momentumImg) {
           const momW = pageW - 28;
-          const momH = (150 / 640) * momW;
+          const momH = (180 / 640) * momW;
           doc.addImage(momentumImg, 'PNG', 14, y, momW, momH);
           y += momH + 5;
         }
       } catch (chartErr) {
-        console.warn('Error momentum canvas:', chartErr);
+        console.warn('Error momentum SVG:', chartErr);
       }
 
+      // 3. Barras Comparativas (10 Métricas Canónicas)
+      y = drawSectionHeader('sec3_bars');
       try {
-        const sectorsImg = drawSectorsDistributionCanvas({ events: safeEvents, isEn, width: 640, height: 60 });
-        if (sectorsImg) {
-          const sW = pageW - 28;
-          const sH = (60 / 640) * sW;
-          doc.addImage(sectorsImg, 'PNG', 14, y, sW, sH);
-          y += sH + 7;
+        const barsSvg = renderComparisonBarsSvgString({
+          homeStats,
+          awayStats,
+          homeTeamName: safeTeamName,
+          awayTeamName: rivalName,
+          isEn,
+          width: 660,
+          height: 250
+        });
+        const barsImg = await rasterizeSvgToDataUrl(barsSvg, { scale: 3, width: 660, height: 250 });
+        if (barsImg) {
+          const bW = pageW - 28;
+          const bH = (250 / 660) * bW;
+          doc.addImage(barsImg, 'PNG', 14, y, bW, bH);
+          y += bH + 6;
         }
-      } catch (secErr) {
-        console.warn('Error sectors canvas:', secErr);
+      } catch (barsErr) {
+        console.warn('Error comparison bars SVG:', barsErr);
       }
 
-      // 3. Radar Táctico Oficial (6 Ejes Comparativos)
-      y = drawSectionHeader('sec3_radar');
+      // ── PÁGINA 3: SECCIÓN 4 & SECCIÓN 5 — RADAR Y TOP-5 DIFERENCIALES ──────
+      doc.addPage();
+      y = 18;
+
+      // 4. Radar Táctico Oficial (6 Ejes Comparativos)
+      y = drawSectionHeader('sec4_radar');
       try {
-        const radarImg = drawMatchRadarChartCanvas({
-          events: safeEvents,
+        const radarSvg = renderRadarCompareSvgString({
+          homeStats,
+          awayStats,
           homeTeamName: safeTeamName,
           awayTeamName: rivalName,
           isEn,
           width: 500,
-          height: 270
+          height: 260
         });
+        const radarImg = await rasterizeSvgToDataUrl(radarSvg, { scale: 3, width: 500, height: 260 });
         if (radarImg) {
           const rW = 110;
-          const rH = (270 / 500) * rW;
+          const rH = (260 / 500) * rW;
           const rX = (pageW - rW) / 2;
           doc.addImage(radarImg, 'PNG', rX, y, rW, rH);
           y += rH + 6;
         }
       } catch (radarErr) {
-        console.warn('Error radar canvas:', radarErr);
+        console.warn('Error radar SVG:', radarErr);
       }
 
-      // ── PÁGINA 3: SECCIÓN 4 & SECCIÓN 5 — TOP-5 Y MAPAS DE TIROS xG-LITE ─
-      doc.addPage();
-      y = 18;
-
-      // 4. Métricas Top-5 Diferenciales
-      y = drawSectionHeader('sec4_top5');
+      // 5. Métricas Top-5 Diferenciales
+      y = drawSectionHeader('sec5_top5');
 
       const countOfSafe = (types) => {
         const arr = Array.isArray(types) ? types : [types];
@@ -919,12 +947,14 @@ export const generateMatchPdfReport = async ({
         }
       });
 
-      y = (doc.lastAutoTable ? doc.lastAutoTable.finalY : y + 35) + 8;
+      // ── PÁGINA 4: SECCIÓN 6 & SECCIÓN 7 — MAPAS DE TIROS Y CAMPO & TÁCTICA ─
+      doc.addPage();
+      y = 18;
 
-      // 5. Mapas de Tiros & Modelo xG-Lite
-      y = drawSectionHeader('sec5_shots');
+      // 6. Mapas de Tiros & Modelo xG-Lite
+      y = drawSectionHeader('sec6_shots');
       try {
-        const shotMapImg = drawShotMapCanvas({
+        const shotSvg = renderShotMapSvgString({
           shots: shotEvents,
           ownXg: derivedIndices.ownXg,
           rivalXg: derivedIndices.rivalXg,
@@ -932,6 +962,7 @@ export const generateMatchPdfReport = async ({
           width: 660,
           height: 195
         });
+        const shotMapImg = await rasterizeSvgToDataUrl(shotSvg, { scale: 3, width: 660, height: 195 });
         if (shotMapImg) {
           const smW = pageW - 28;
           const smH = (195 / 660) * smW;
@@ -939,7 +970,7 @@ export const generateMatchPdfReport = async ({
           y += smH + 5;
         }
       } catch (smErr) {
-        console.warn('Error shot map canvas:', smErr);
+        console.warn('Error shot map SVG:', smErr);
       }
 
       // Tabla cuantitativa de tiros xG-lite
@@ -971,12 +1002,38 @@ export const generateMatchPdfReport = async ({
         }
       });
 
-      // ── PÁGINA 4: SECCIÓN 6 & SECCIÓN 7 — EXIGENCIA GK Y ALINEACIÓN CON FOTOS
+      y = (doc.lastAutoTable ? doc.lastAutoTable.finalY : y + 30) + 6;
+
+      // 7. Campo y Táctica (Sectores, ABP y Bloques)
+      y = drawSectionHeader('sec7_tactics');
+      try {
+        const tacticsSvg = renderSectorTacticsSvgString({
+          homeStats,
+          awayStats,
+          tacticsData,
+          homeTeamName: safeTeamName,
+          awayTeamName: rivalName,
+          isEn,
+          width: 660,
+          height: 180
+        });
+        const tacticsImg = await rasterizeSvgToDataUrl(tacticsSvg, { scale: 3, width: 660, height: 180 });
+        if (tacticsImg) {
+          const tW = pageW - 28;
+          const tH = (180 / 660) * tW;
+          doc.addImage(tacticsImg, 'PNG', 14, y, tW, tH);
+          y += tH + 6;
+        }
+      } catch (tacticsErr) {
+        console.warn('Error sector tactics SVG:', tacticsErr);
+      }
+
+      // ── PÁGINA 5: SECCIÓN 8 & SECCIÓN 9 — EXIGENCIA GK Y ALINEACIÓN CON FOTOS
       doc.addPage();
       y = 18;
 
-      // 6. Exigencia & Rendimiento de Portería
-      y = drawSectionHeader('sec6_gk');
+      // 8. Exigencia & Rendimiento de Portería
+      y = drawSectionHeader('sec8_gk');
       try {
         const gkImg = drawGkExertionCanvas({
           gkIndices: derivedIndices,
@@ -1019,8 +1076,8 @@ export const generateMatchPdfReport = async ({
 
       y = (doc.lastAutoTable ? doc.lastAutoTable.finalY : y + 25) + 7;
 
-      // 7. Alineación Táctica con Fotografías [PROTEGIDA]
-      y = drawSectionHeader('sec7_lineup');
+      // 9. Alineación Táctica con Fotografías [PROTEGIDA]
+      y = drawSectionHeader('sec9_lineup');
       let effectiveLineupImage = lineupImage;
       if (!effectiveLineupImage) {
         try {
@@ -1047,11 +1104,11 @@ export const generateMatchPdfReport = async ({
         }
       }
 
-      // ── PÁGINA 5: SECCIÓN 8 — RENDIMIENTO INDIVIDUAL & PLANTILLA ──────────
+      // ── PÁGINA 6: SECCIÓN 10 — RENDIMIENTO INDIVIDUAL & PLANTILLA ─────────
       doc.addPage();
       y = 18;
 
-      y = drawSectionHeader('sec8_players');
+      y = drawSectionHeader('sec10_players');
 
       const hasComments = squadRoster.some((r) => matchData?.playerComments?.[r.pid]);
       const rosterHeaders = isEn
@@ -1104,11 +1161,11 @@ export const generateMatchPdfReport = async ({
         columnStyles: rosterColStyles
       });
 
-      // ── PÁGINA 6: SECCIÓN 9 — MATRIZ DAFO & RECOMENDACIONES ───────────────
+      // ── PÁGINA 7: SECCIÓN 11 — MATRIZ DAFO & RECOMENDACIONES ──────────────
       doc.addPage();
       y = 18;
 
-      y = drawSectionHeader('sec9_swot');
+      y = drawSectionHeader('sec11_swot');
 
       // 1. Matriz DAFO 2x2
       const swotQuadrants = swotResult?.quadrants || {};

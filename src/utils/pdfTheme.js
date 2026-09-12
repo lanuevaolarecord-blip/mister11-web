@@ -11,8 +11,8 @@
  */
 
 import { ref as storageRef, getBlob } from 'firebase/storage';
-import { storage } from '../firebaseConfig';
-import { PREDEFINED_FORMATIONS } from './formaciones';
+import { storage } from '../firebaseConfig.js';
+import { PREDEFINED_FORMATIONS } from './formaciones.js';
 
 export const PDF_COLORS = {
   primary: [23, 45, 33],     // #172D21 Verde Institucional Míster11
@@ -73,6 +73,12 @@ export const cleanPdfText = (text) => {
     '🏷️': '[Etiqueta]',
     '🏷': '[Etiqueta]',
     '🔔': '[Aviso]',
+    '🏅': '[Medalla]',
+    '🥇': '[Oro]',
+    '🥈': '[Plata]',
+    '🥉': '[Bronce]',
+    '📈': '[Evolución]',
+    '⚡': '[Rayo]',
     '✓': '[OK]',
     '✔': '[OK]',
     '✗': '[X]',
@@ -84,7 +90,11 @@ export const cleanPdfText = (text) => {
   }
 
   // Eliminar cualquier otro emoji o caracter suplementario no soportado por fuentes estándar de PDF (Helvetica/WinAnsiEncoding)
-  str = str.replace(/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}\u{1F000}-\u{1F02F}\u{1F0A0}-\u{1F0FF}\u{1F100}-\u{1F64F}\u{1F680}-\u{1F6FF}]/gu, '');
+  str = str.replace(/[\u{1F000}-\u{1FAFF}\u{2600}-\u{27BF}\u{FE00}-\u{FE0F}]/gu, '');
+  // Eliminar glifo corrupto '自' y caracteres CJK no soportados en informes estándar
+  str = str.replace(/[\u4E00-\u9FFF\u3400-\u4DBF\uF900-\uFAFF]/g, '');
+  // Eliminar surrogates huérfanos UTF-16
+  str = str.replace(/[\uD800-\uDFFF]/g, '');
 
   return str;
 };

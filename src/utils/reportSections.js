@@ -1,10 +1,10 @@
 /**
  * src/utils/reportSections.js
- * Míster11 — Compositor Canónico de Informe Post-Partido (Fase 5)
+ * Míster11 — Compositor Canónico de Informe Post-Partido
  *
  * Define el registro canónico único consumido tanto por la pestaña POST-PARTIDO
  * de Partidos.jsx como por matchPdfReport.js para garantizar paridad 1:1,
- * orden estricto de 9 secciones, alineación con fotos protegida y cero duplicados.
+ * orden estricto de 11 secciones, alineación con fotos protegida y cero duplicados.
  */
 
 export const CANONICAL_REPORT_SECTIONS = [
@@ -27,66 +27,84 @@ export const CANONICAL_REPORT_SECTIONS = [
     description: 'Evolución del momentum ofensivo y posesión por bloques de 15 minutos.'
   },
   {
-    id: 'sec3_radar',
+    id: 'sec3_bars',
     order: 3,
-    titleKey: 'exports.report.sec3_radar',
+    titleKey: 'exports.report.sec3_bars',
+    anchorId: 'sec_bars',
+    dataSource: 'bars',
+    pdfPage: 2,
+    description: 'Barras comparativas de las 10 métricas canónicas del encuentro.'
+  },
+  {
+    id: 'sec4_radar',
+    order: 4,
+    titleKey: 'exports.report.sec4_radar',
     anchorId: 'sec_radar',
     dataSource: 'radar',
-    pdfPage: 2,
+    pdfPage: 3,
     description: 'Radar normalizado comparativo de 6 ejes: Propio vs Rival.'
   },
   {
-    id: 'sec4_top5',
-    order: 4,
-    titleKey: 'exports.report.sec4_top5',
+    id: 'sec5_top5',
+    order: 5,
+    titleKey: 'exports.report.sec5_top5',
     anchorId: 'sec_top5',
     dataSource: 'top5',
     pdfPage: 3,
     description: 'Tabla de las 5 métricas más diferenciales del encuentro.'
   },
   {
-    id: 'sec5_shots',
-    order: 5,
-    titleKey: 'exports.report.sec5_shots',
+    id: 'sec6_shots',
+    order: 6,
+    titleKey: 'exports.report.sec6_shots',
     anchorId: 'sec_shots',
     dataSource: 'shots',
-    pdfPage: 3,
+    pdfPage: 4,
     description: 'Mapas de tiros en campo con modelo de probabilidad xG-Lite y comodidad.'
   },
   {
-    id: 'sec6_gk',
-    order: 6,
-    titleKey: 'exports.report.sec6_gk',
+    id: 'sec7_tactics',
+    order: 7,
+    titleKey: 'exports.report.sec7_tactics',
+    anchorId: 'sec_tactics',
+    dataSource: 'tactics',
+    pdfPage: 4,
+    description: 'Campo y táctica: distribución por pasillos, balance ABP y bloques de territorio.'
+  },
+  {
+    id: 'sec8_gk',
+    order: 8,
+    titleKey: 'exports.report.sec8_gk',
     anchorId: 'sec_gk',
     dataSource: 'gk',
-    pdfPage: 4,
+    pdfPage: 5,
     description: 'Índice de exigencia, eficacia y desglose de paradas normales y decisivas.'
   },
   {
-    id: 'sec7_lineup',
-    order: 7,
-    titleKey: 'exports.report.sec7_lineup',
+    id: 'sec9_lineup',
+    order: 9,
+    titleKey: 'exports.report.sec9_lineup',
     anchorId: 'sec_lineup',
     dataSource: 'lineup',
-    pdfPage: 4,
+    pdfPage: 5,
     description: 'Alineación táctica en césped con fotos de titulares y bloque de suplentes [PROTEGIDA].'
   },
   {
-    id: 'sec8_players',
-    order: 8,
-    titleKey: 'exports.report.sec8_players',
+    id: 'sec10_players',
+    order: 10,
+    titleKey: 'exports.report.sec10_players',
     anchorId: 'sec_players',
     dataSource: 'players',
-    pdfPage: 5,
+    pdfPage: 6,
     description: 'Tabla de rendimiento individual, minutos disputados y bloque de portería.'
   },
   {
-    id: 'sec9_swot',
-    order: 9,
-    titleKey: 'exports.report.sec9_swot',
+    id: 'sec11_swot',
+    order: 11,
+    titleKey: 'exports.report.sec11_swot',
     anchorId: 'sec_swot',
     dataSource: 'swot',
-    pdfPage: 6,
+    pdfPage: 7,
     description: 'Matriz DAFO 2x2 trazable con chips de origen y síntesis táctica redactada.'
   }
 ];

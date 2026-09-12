@@ -625,39 +625,21 @@ export const generatePlayerTestReport = async (player, tests, historyData, activ
 
     let finalY = doc.lastAutoTable.finalY + 8;
 
-    // ── TABLA PSICOSOCIAL ─────────────────────────────────────────────────────
-    if (psychoRows.length > 0) {
+    // ── TABLA PSICOSOCIAL Y SOCIOEMOCIONAL (3 COLUMNAS FIJAS: TEST | PUNTUACIÓN | INTERPRETACIÓN) ──
+    const nonPhysicalRows = [...psychoRows, ...socioRows];
+    if (nonPhysicalRows.length > 0) {
       if (finalY > doc.internal.pageSize.getHeight() - 40) { doc.addPage(); finalY = 20; }
       autoTable(doc, {
         startY: finalY,
         head: [isEn 
-          ? ['Psychosocial / Mental Profile', 'Score', 'Interpretation'] 
-          : ['Perfil Psicosocial / Mental', 'Puntuación', 'Interpretación']],
-        body: psychoRows,
+          ? ['Psychosocial & Socioemotional Tests', 'Score', 'Interpretation'] 
+          : ['Pruebas Psicosociales y Socioemocionales', 'Puntuación', 'Interpretación']],
+        body: nonPhysicalRows,
         theme: 'grid',
         headStyles: { fillColor: [43, 62, 53], textColor: [255, 255, 255], fontStyle: 'bold', fontSize: 8.5, halign: 'center' },
         bodyStyles: { fillColor: [255, 255, 255], textColor: TEXT_DARK, fontSize: 8, cellPadding: 2.5 },
         alternateRowStyles: { fillColor: PDF_COLORS.bgLight },
-        columnStyles: { 0: { fontStyle: 'bold' }, 1: { halign: 'center' } },
-        margin: { left: 10, right: 10 }
-      });
-      finalY = doc.lastAutoTable.finalY + 8;
-    }
-
-    // ── TABLA SOCIOEMOCIONAL ──────────────────────────────────────────────────
-    if (socioRows.length > 0) {
-      if (finalY > doc.internal.pageSize.getHeight() - 40) { doc.addPage(); finalY = 20; }
-      autoTable(doc, {
-        startY: finalY,
-        head: [isEn 
-          ? ['Team Well-being / Socioemotional', 'Score', 'Interpretation'] 
-          : ['Bienestar en el Equipo / Socioemocional', 'Puntuación', 'Interpretación']],
-        body: socioRows,
-        theme: 'grid',
-        headStyles: { fillColor: [43, 62, 53], textColor: [255, 255, 255], fontStyle: 'bold', fontSize: 8.5, halign: 'center' },
-        bodyStyles: { fillColor: [255, 255, 255], textColor: TEXT_DARK, fontSize: 8, cellPadding: 2.5 },
-        alternateRowStyles: { fillColor: PDF_COLORS.bgLight },
-        columnStyles: { 0: { fontStyle: 'bold' }, 1: { halign: 'center' } },
+        columnStyles: { 0: { fontStyle: 'bold', halign: 'left' }, 1: { halign: 'center' }, 2: { halign: 'left' } },
         margin: { left: 10, right: 10 }
       });
       finalY = doc.lastAutoTable.finalY + 8;

@@ -26,6 +26,7 @@ import MatchStatsBlock from './MatchStatsBlock';
 import { StatsFilters } from './MatchStats/StatsFilters';
 import { MatchActionsToolbar } from './MatchStats/MatchActionsToolbar';
 import { HeatMap } from './MatchStats/HeatMap';
+import { PassNetwork } from './MatchStats/PassNetwork';
 import { ShotMap } from './MatchStats/ShotMap';
 import { ShotCaptureModal } from './ShotCaptureModal';
 import { MatchRadarChart } from './MatchStats/MatchRadarChart';
@@ -531,7 +532,7 @@ const LiveStats = ({
   // ── Extraer Pases para la Red de Pases ──────────────────────────────────────
   const passesList = useMemo(() => {
     return (filteredEvents || []).filter(e => 
-      e && ['pass', 'pase', 'pass_completed', 'pass_failed', 'key_pass', 'recovery', 'duel_won'].includes(e.type)
+      e && ['pass', 'pase', 'pass_completed', 'pass_failed', 'key_pass'].includes(e.type)
     );
   }, [filteredEvents]);
 
@@ -1895,12 +1896,14 @@ const LiveStats = ({
               teamName={homeTeamName}
             />
 
-            {/* Red de Pases Táctica */}
-            <PassNetwork
-              passes={passesList}
-              players={playersList}
-              teamName={homeTeamName}
-            />
+            {/* Red de Pases Táctica (Condicional: solo si existen pases registrados) */}
+            {passesList && passesList.length > 0 && (
+              <PassNetwork
+                passes={passesList}
+                players={playersList}
+                teamName={homeTeamName}
+              />
+            )}
 
             {/* Mapa de Tiros con Modelo xG */}
             <ShotMap

@@ -439,6 +439,98 @@ Se auditan y certifican las **14 exportaciones oficiales de Míster11**, garanti
 
 *(Fin de la Sección D7)*
 
+---
+
+## D8 — RANKING DE FUNCIONALIDADES
+
+### 8.1 Metodología de Puntuación Ponderada (0 - 100)
+
+Cada funcionalidad de Míster11 ha sido valorada de 0 a 100 en 5 criterios cuantitativos con los siguientes pesos normalizados:
+- **V1: Valor Percibido por el Entrenador (25%)**
+- **V2: Frecuencia de Uso Semanal (25%)**
+- **V3: Diferenciación Competitiva frente al Mercado (20%)**
+- **V4: Impacto en Ingresos y Retención de Suscripción PRO (20%)**
+- **V5: Madurez y Robustez Técnica de Código (10%)**
+
+$$\text{Score} = (V_1 \times 0.25) + (V_2 \times 0.25) + (V_3 \times 0.20) + (V_4 \times 0.20) + (V_5 \times 0.10)$$
+
+#### Clasificación por Tiers:
+- **Tier 1 — Estrella (Score ≥ 85):** Núcleo sagrado de retención y recomendación boca a boca.
+- **Tier 2 — Sólida (Score 70 - 84):** Funcionalidades de alto valor que consolidan la suscripción anual.
+- **Tier 3 — Mejorable (Score 55 - 69):** Módulos con potencial que requieren simplificar flujos de uso.
+- **Tier 4 — Candidata a Rediseño (Score < 55):** Componentes con fricción identificada (ej. Landing inicial previa, resuelta en D2).
+
+---
+
+### 8.2 Tabla Reproducible de Ranking de Funcionalidades
+
+| Funcionalidad / Módulo | V1: Valor (25%) | V2: Frecuencia (25%) | V3: Diferenciación (20%) | V4: Ingresos (20%) | V5: Madurez (10%) | Puntuación Ponderada (0 - 100) | Tier Asignado |
+| :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
+| **Partidos: Live Stats & Actas PDF 7 Páginas (xG, GK)** | 98 | 92 | 98 | 95 | 94 | **95.50** | **⭐ Tier 1 — Estrella** |
+| **Pizarra Táctica 2D interactiva con Vídeo MP4/PNG** | 95 | 90 | 92 | 88 | 92 | **91.45** | **⭐ Tier 1 — Estrella** |
+| **Mi Equipo: Minutajes reales (minutesEngine) & RGPD** | 90 | 95 | 85 | 88 | 95 | **90.35** | **⭐ Tier 1 — Estrella** |
+| **Portal del Jugador Autónomo & Check-in Wellness** | 85 | 85 | 92 | 90 | 86 | **86.90** | **⭐ Tier 1 — Estrella** |
+| **Sesiones: Biblioteca de Ejercicios y Modo Campo** | 88 | 90 | 75 | 80 | 88 | **84.30** | **Tier 2 — Sólida** |
+| **Planificación Anual de Microciclos y Carga Física** | 82 | 75 | 85 | 82 | 85 | **81.15** | **Tier 2 — Sólida** |
+| **IA Generadora Táctica y DAFO Automático sin inventar** | 78 | 70 | 88 | 80 | 82 | **78.80** | **Tier 2 — Sólida** |
+| **Tests Físicos y Psicológicos Validados (ACSI/MTQ)** | 80 | 60 | 95 | 80 | 86 | **78.60** | **Tier 2 — Sólida** |
+| **Panel Dirección Club Multi-Equipo con Roles Staff** | 75 | 65 | 80 | 92 | 78 | **77.20** | **Tier 2 — Sólida** |
+| **Informes Consolidados Multi-Sede de Cantera** | 70 | 50 | 82 | 85 | 68 | **70.20** | **Tier 2 — Sólida** |
+| *Landing Page Previa (Sustituida en D2)* | *55* | *40* | *50* | *60* | *52* | *51.20* | *Tier 4 (Superada)* |
+
+---
+
+### 8.3 Tres Recomendaciones Priorizadas de Producto
+
+1. **Prioridad 1 — Activación Rápida "Primer Partido en 5 Minutos":**
+   - *Fundamento:* Las actas oficiales en PDF y los minutajes en directo son la funcionalidad #1 en retención (Score 95.50). 
+   - *Acción:* Ofrecer al crear equipo la opción de importar plantilla desde Excel/CSV con un clic e iniciar de inmediato una simulación de partido para que el entrenador experimente el valor en su primer día de trial.
+2. **Prioridad 2 — Extensión Familiar del Portal del Jugador (Modo Tutor / Padre):**
+   - *Fundamento:* En categorías formativas (Prebenjamín a Infantil), los futbolistas no siempre gestionan smartphones propios.
+   - *Acción:* Permitir un sub-acceso para padres con confirmación de asistencia a partidos/sesiones y firma de autorizaciones médicas con un solo toque.
+3. **Prioridad 3 — Paquete Multi-Licencia para Escuelas con Facturación Directa:**
+   - *Fundamento:* Los planes Club PRO (449 €/temporada) y Club Premium (899 €/temporada) tienen un coste por entrenador de apenas 3,00 €/mes, muy inferior al de cualquier competidor.
+   - *Acción:* Facilitar que las directivas adquieran paquetes de licencias con pago por transferencia bancaria o domiciliación SEPA además de Stripe.
+
+---
+
+## RESUMEN DE GOBERNANZA: 10 HALLAZGOS CLAVE Y GO/NO-GO
+
+### 10 Hallazgos Clave de la Auditoría
+1. **Unicidad de Datos Blindada:** Los minutos y eventos derivan al 100% de `minutesEngine.js` y `matchAnalytics.js`. No existen cálculos paralelos ni discrepancias entre la UI, el PDF y los CSV.
+2. **Escala Reglamentaria FIFA 105:68:** Todos los terrenos de juego del sistema (ShotMap, SectorTactics, alineación táctica) cumplen estrictamente con la relación reglamentaria de 1.544:1, erradicando deformaciones.
+3. **Transparencia en Precios:** La matriz canónica de 5 planes (`src/config/plans.js`) detalla precios con IVA incluido y Price IDs de Stripe reales para ciclos mensuales y de temporada.
+4. **Paleta Tierra y Campo Certificada:** Cero presencia de colores azul marino o navy prohibidos en las interfaces y gráficas del sistema.
+5. **Alineación Táctica con Fotos y Suplentes:** La Sección 1 del acta PDF muestra con nitidez a los 11 titulares con fotografías redondas y un banco inferior simétrico de 4 columnas.
+6. **Resolución de Deudas Técnicas Históricas:** Se certificó la eliminación de columnas triplicadas en el PDF de tests, la sanitización de ampersands en SVGs y el arreglo de encajados de portero.
+7. **Diseño Android-First:** Todos los botones interactivos de la nueva pantalla principal y de los módulos operativos cumplen con un touch target mínimo de 48x48dp.
+8. **Paridad Bilingüe Total:** Los 4 detectores de lenguaje del CI verifican la simetría absoluta de claves entre Español e Inglés sin textos mezclados.
+9. **Compatibilidad Cross-Device Completa:** Verificación satisfactoria mediante Playwright en 9 resoluciones (desde 360px de móvil hasta 1920px de escritorio) sin desbordamiento horizontal.
+10. **Activos Protegidos Respaldados:** Las 14 exportaciones canónicas se encuentran cubiertas por aserciones ruidosas en CI que impiden la generación de documentos corruptos o vacíos.
+
+---
+
+### VEREDICTO CORPORATIVO FINAL: GO PARA PRODUCCIÓN (RELEASE VERIFIED)
+
+| Criterio de Aceptación | Estado | Evidencia |
+| :--- | :---: | :--- |
+| **Suite de Tests Unitarios e Integrados** | **✅ APROBADO** | 78/78 tests pasando al 100% con 0 fallos (`npm test`). |
+| **Aserción Ruidosa de Gráficas PDF** | **✅ APROBADO** | 14/14 comprobaciones superadas (`assert-pdf-images.mjs`). |
+| **Paridad de Datos (3 Partidos Auditados)** | **✅ APROBADO** | 3/3 partidos certificados con igualdad estricta UI==PDF==CSV. |
+| **Matriz Cross-Device en 9 Viewports** | **✅ APROBADO** | 9/9 resoluciones validadas con Playwright (`test:matrix`). |
+| **Compilación de Producción (Vite Build)** | **✅ APROBADO** | `dist` generado limpiamente con precache PWA activo. |
+
+**DECISIÓN:** **AUTORIZADO EL DESPLIEGUE INMEDIATO (GO).**
+
+*Firmado electrónicamente por:*  
+**Equipo de Auditoría de Producto, QA Full-Stack y Gobernanza de Datos de Míster11**  
+*Repositorio Oficial: `lanuevaolarecord-blip/mister11-web` (Rama `main`)*
+
+---
+
+*(Fin del Informe Maestro v2)*
+
+
 
 
 

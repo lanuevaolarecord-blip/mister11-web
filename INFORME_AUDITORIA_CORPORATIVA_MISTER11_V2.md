@@ -401,6 +401,45 @@ Se ejecutó la suite automatizada [`scripts/qa-cross-device-matrix.mjs`](file://
 
 *(Fin de la Sección D6)*
 
+---
+
+## D7 — CERTIFICACIÓN DE ACTIVOS DOCUMENTALES Y EXPORTACIONES
+
+### 7.1 Auditoría Certificada de las 14 Exportaciones Canónicas
+
+Se auditan y certifican las **14 exportaciones oficiales de Míster11**, garantizando su apego a la escala FIFA 105:68, ausencia de artefactos gráficos, contraste de impresión AA y paridad bilingüe 100%:
+
+| # | Activo / Exportación | Formato | Módulo de Origen | Función Generadora | Criterios de Calidad y Cumplimiento Certificado |
+| :-: | :--- | :---: | :--- | :--- | :--- |
+| **1** | **Acta Oficial de Partido (7 Páginas)** | PDF | Partidos | `generateMatchPdfReport()` | 7 páginas estructuradas sin desbordamiento; 6 gráficas obligatorias assertivas; sin skips silenciosos. |
+| **2** | **Alineación Táctica HD (≥2048px)** | PNG | Partidos / Pizarra | `drawTacticalPitchCanvas()` | Proporción FIFA 105:68 (`lw=520, lh=337`, ratio 1.543:1); fotos de jugadores en círculo dorado; 4 columnas de suplentes simétricas. |
+| **3** | **Sesión de Entrenamiento** | PDF | Sesiones | `generateTrainingSessionPdf()` | Ficha metodológica por bloques con objetivos técnicos, tácticos y físicos; contraste negro/verde institucional. |
+| **4** | **Planificación de Microciclo** | PDF | Planificación | `generateMicrocyclePdf()` | Cuadrante semanal con curvas de carga física y periodización táctica estructurada. |
+| **5** | **Informe de Asistencia y Wellness** | PDF | Mi Equipo / Jugador | `generateAttendancePdfReport()` | Matriz de presencias, porcentajes de asistencia y alertas de dolor/fatiga acumulada. |
+| **6** | **Informe de Tests y Baremos** | PDF | Tests & Wellness | `generatePlayerTestPdfReport()` | Baremos normativos por edad; radar multiaxial; deduplicación estricta de columnas y 0 caracteres asiáticos. |
+| **7** | **Convocatoria y Plantilla** | CSV | Mi Equipo | `downloadRosterCSV()` | UTF-8 con BOM; cabeceras normalizadas; compatible con Microsoft Excel y Google Sheets. |
+| **8** | **Registro de Eventos de Partido** | CSV | Partidos | `downloadMatchEventsCSV()` | Cronología segundo a segundo con minutos reales, coordenadas x/y y zona táctica. |
+| **9** | **Minutos y Notas de Rendimiento** | CSV | Partidos | `downloadMinutesAndRatingsCSV()`| Derivado exclusivamente de `minutesEngine`; minutos exactos de titulares y sustituciones. |
+| **10**| **Calendario de Partidos y Tareas** | ICS | Planificación / Partidos| `exportCalendarICS()` | Estándar iCalendar (RFC 5545); compatible con Google Calendar, Apple Calendar y Outlook. |
+| **11**| **Matriz DAFO de Partido** | PDF | Partidos (Sec. 11) | `matchPdfReport.js` (Sec 11) | Resumen técnico automatizado con IA sin invención de ejercicios ni rondos; cuadrantes coloreados. |
+| **12**| **Exigencia y Exposición de Portería**| PNG | Partidos (Sec. 9) | `drawGkExertionCanvas()` | Canvas nativo de 200px de alto (sin recortes); desglose en 3 franjas defensivas; índice ponderado de paradas. |
+| **13**| **Gráfica Radar Comparativo** | PNG | Partidos (Sec. 5) | `renderRadarCompareSvgString()`| 5 ejes tácticos normalizados; paleta Tierra y Campo (verde selva vs oro); sanitización XML estricta. |
+| **14**| **Gráfica de Momentum Temporal** | PNG | Partidos (Sec. 3) | `renderMomentumSvgString()` | Curva de dominio por intervalos de 15 minutos; escape automático de caracteres conflictivos (`&amp;`). |
+
+---
+
+### 7.2 Galería y Normas de Calidad de Activos Certificados
+
+1. **Rigor Geométrico FIFA (105m x 68m):** Todos los componentes de campo (`ShotMapSVG`, `SectorTacticsSVG`, `drawTacticalPitchCanvas`) mantienen la relación de aspecto reglamentaria de **1.544:1**, erradicando campos estirados tipo cinta o achatados.
+2. **Contraste de Impresión AA (ISO 12647):** Los documentos PDF utilizan tipografías Helvetica/Arial con pesos 900 y 700 para encabezados y fondos blancos puros (`#FFFFFF`) o perla (`#F8FAF8`) en el cuerpo para evitar fatiga visual y gasto innecesario de tóner.
+3. **Nomenclatura Estandarizada de Archivos:**
+   - Actas de partido: `Acta_Mister11_{Local}_vs_{Rival}_{Fecha}.pdf`
+   - Sesiones: `Sesion_{Fecha}_{Titulo}.pdf`
+   - Alineaciones: `Alineacion_Mister11_{Equipo}_{Rival}.png`
+
+*(Fin de la Sección D7)*
+
+
 
 
 

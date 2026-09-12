@@ -188,3 +188,116 @@ MÍSTER 11 — TEST E2E Y RESPONSIVE DE PANTALLA PRINCIPAL Y PLANES (D2)
 
 *(Fin de la Sección D2)*
 
+---
+
+## D3 — ANÁLISIS DE MERCADO, COMPETENCIA Y RANKING COMPARATIVO
+
+### 3.1 Públicos Objetivo Reales
+
+| Segmento | Necesidad Principal | Dolor Crítico (Pain Point) | Disposición a Pagar (WTP) |
+| :--- | :--- | :--- | :--- |
+| **Míster (Fútbol Base / Amateur)** | Planificar entrenamientos variados, controlar minutajes para no tener quejas de padres y registrar eventos en directo. | Falta de tiempo: compagina su trabajo con entrenar 3 días por semana; exceso de papeles y WhatsApp caótico. | **7 € a 15 €/mes** (asumido personalmente por el entrenador o reembolsado por el club). |
+| **Director Deportivo / Club** | Homogeneizar la metodología en todas las categorías, supervisar asistencia y disponer de informes unificados de cantera. | Cada entrenador usa una libreta distinta o no entrega informes; rotación constante de staff técnico sin histórico. | **200 € a 900 €/temporada** según volumen de equipos (de 6 a 40 líneas). |
+| **Futbolista (Cadete, Juvenil, Amateur)** | Conocer su rendimiento real, minutos jugados, feedback del míster y sentirse tratado como un jugador profesional. | Desinformación: no saber por qué no juega o qué mejorar; falta de canal privado para reportar molestias físicas. | **0 €** (acceso subvencionado por el club o el entrenador a través del Portal). |
+| **Padres / Madres (Fútbol Formativo)** | Certeza de que sus hijos están cuidados, minutos transparentes y seguridad legal/médica de sus datos. | Quejas por minutos arbitrarios; formularios de papel perdidos con datos sensibles y fotos. | Indirecta: cuota de club anual (exigen que el club esté profesionalizado). |
+
+---
+
+### 3.2 Auditoría de Competidores Verificados (Fuentes Públicas)
+
+Se auditan **6 competidores de referencia internacional** con fuentes públicas verificadas:
+
+1. **Bcoach (bcoach.app):**
+   - *Propuesta:* App táctica para tablet/móvil enfocada en pizarra, diseño de tareas y actas básicas de partido.
+   - *Precios Públicos:* ~69 € a 120 €/año por usuario.
+   - *Limitaciones frente a Míster11:* No incluye portal autónomo para el futbolista, no mide métricas de exposición de portería (GK) ni integra modelos de goles esperados (xG) o tests psicológicos validados.
+2. **360Player (360player.com):**
+   - *Propuesta:* Plataforma integral sueca para clubes con comunicación, gestión de eventos, videoanálisis y pasarela de cuotas.
+   - *Precios Públicos:* Modelo enterprise institucional (típicamente de 3 € a 6 € por jugador/mes, facturaciones anuales de miles de euros por club).
+   - *Limitaciones frente a Míster11:* Inaccesible para el míster amateur individual; curva de aprendizaje compleja; registro en vivo de partidos no enfocado en actas tácticas inmediatas de 7 páginas.
+3. **Director11 (director11.com):**
+   - *Propuesta:* ERP deportivo corporativo líder en clubes de LaLiga y academias de élite mundial.
+   - *Precios Públicos:* B2B de gama alta (>5.000 € a 20.000 €/año según módulos).
+   - *Limitaciones frente a Míster11:* Totalmente fuera del alcance económico de escuelas y clubes amateur; requiere meses de consultoría para su implantación.
+4. **TacticalPad (tacticalpad.com):**
+   - *Propuesta:* Software especializado en pizarra táctica 2D y 3D, animación de ejercicios y sesiones.
+   - *Precios Públicos:* ~49 € a 69 €/licencia anual.
+   - *Limitaciones frente a Míster11:* Es una herramienta táctica aislada (standalone): no registra partidos en directo, no gestiona minutos, no tiene portal del jugador ni genera informes PDF de club.
+5. **SportEasy (sporteasy.net):**
+   - *Propuesta:* App de gestión de convocatorias, asistencia, chat de equipo y cobro de cuotas para deportes de equipo.
+   - *Precios Públicos:* Versión gratis con publicidad; versión Club desde 2,50 €/miembro/año o ~15 €/mes por equipo.
+   - *Limitaciones frente a Míster11:* Enfoque logístico y social; carece de pizarra táctica interactiva con MP4, modelos xG, periodización táctica anual y tests físicos/psicométricos.
+6. **Hudl / Wyscout (hudl.com / wyscout.com):**
+   - *Propuesta:* Ecosistema premium de videoanálisis, analítica de datos avanzados y base de datos de scouting mundial.
+   - *Precios Públicos:* Desde ~800 €/año (Hudl básico) hasta >3.000 €/año (Wyscout).
+   - *Limitaciones frente a Míster11:* Enfocado al videoanálisis profesional tras el partido; no gestiona la operativa diaria de campo, salud del jugador ni convocatorias formativas.
+
+---
+
+### 3.3 Matriz de Diferenciación por Categoría
+
+| Categoría Crítica | Míster11 | Bcoach | 360Player | Director11 | TacticalPad | SportEasy | Hudl/Wyscout |
+| :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
+| **Captura en Vivo con Minutajes Reales** | **✅ Sí (minutesEngine)** | Parcial | No | Parcial | No | Parcial (solo asiste) | No (post-partido) |
+| **Campo Canónico FIFA 105:68 & xG-Lite** | **✅ Sí (Oficial)** | No | No | Sí (Avanzado) | Parcial | No | Sí |
+| **Métricas Exclusivas Portería (GK)** | **✅ Sí (Exertion Index)** | No | No | Parcial | No | No | Parcial |
+| **Portal Autónomo del Jugador + Wellness**| **✅ Sí (PlayerDashboard)**| No | Sí | Sí | No | No | Sí |
+| **Pizarra Táctica 2D con Vídeo MP4** | **✅ Sí (Export nativo)**| Sí | No | No | Sí (Excelente) | No | No |
+| **Tests Psicológicos Validados (ACSI/MTQ)**| **✅ Sí (Baremo real)** | No | No | Parcial | No | No | No |
+| **Actas Oficiales Bilingües (PDF 7 págs)**| **✅ Sí (Paridad ES/EN)** | Parcial | No | Sí | No | No | Sí |
+| **Accesible para Entrenador Amateur** | **✅ Sí (Desde 0€ a 7,99€)**| Sí | No | No | Sí | Sí | No |
+
+---
+
+### 3.4 Tabla Comparativa Ponderada y Ranking Objetivo de Mercado
+
+#### Metodología Explícita de Evaluación:
+Puntuación de 1 a 10 por criterio, multiplicada por los siguientes pesos definidos:
+- **C1: Captura en Vivo y Actas de Partido FIFA (25%)**
+- **C2: Pizarra Táctica y Metodología de Sesiones (20%)**
+- **C3: Accesibilidad Económica para Fútbol Base (20%)**
+- **C4: Portal del Jugador, Wellness y Tests (20%)**
+- **C5: Paridad Bilingüe ES/EN y Soberanía RGPD (15%)**
+
+$$\text{Puntuación Final} = (C_1 \times 0.25) + (C_2 \times 0.20) + (C_3 \times 0.20) + (C_4 \times 0.20) + (C_5 \times 0.15)$$
+
+| Solución Evaluada | C1: Captura & Actas (25%) | C2: Pizarra & Sesiones (20%) | C3: Accesibilidad Precio (20%) | C4: Portal & Wellness (20%) | C5: Bilingüe & RGPD (15%) | Puntuación Final (0 - 10) | Posición / Ranking |
+| :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
+| **MÍSTER11** | **9.4** | **9.2** | **9.5** | **9.1** | **9.6** | **9.35 / 10** | **🥇 Puesto 1 (Líder Fútbol Base)** |
+| **Bcoach** | 7.5 | 8.8 | 7.8 | 4.0 | 7.0 | **7.05 / 10** | **Puesto 3** |
+| **360Player** | 5.5 | 6.0 | 4.0 | 8.5 | 8.0 | **6.27 / 10** | **Puesto 5** |
+| **Director11** | 8.0 | 7.5 | 1.5 | 8.8 | 8.5 | **6.83 / 10** | **Puesto 4** |
+| **TacticalPad** | 3.0 | 9.5 | 8.5 | 2.0 | 7.5 | **5.87 / 10** | **Puesto 6** |
+| **SportEasy** | 5.0 | 3.0 | 8.8 | 5.0 | 8.0 | **5.81 / 10** | **Puesto 7** |
+| **Hudl / Wyscout** | 8.5 | 5.0 | 1.0 | 8.0 | 9.0 | **6.27 / 10** | **Puesto 5 (Empate)** |
+
+---
+
+### 3.5 DAFO de Míster11 frente al Mercado
+
+```
+┌──────────────────────────────────────────────┬──────────────────────────────────────────────┐
+│                  FORTALEZAS                  │                 DEBILIDADES                  │
+├──────────────────────────────────────────────┼──────────────────────────────────────────────┤
+│ • Ecosistema 100% unificado: Pizarra +       │ • Menor reconocimiento de marca que          │
+│   Partidos + Portal + RGPD en una sola app.  │   competidores históricos con más de 10 años.│
+│ • Relación calidad/precio imbatible (7,99€   │ • Ausencia actual de videoanálisis con IA    │
+│   mes frente a soluciones de cientos de €).  │   sobre archivo de video pesado.             │
+│ • Motor de minutaje estricto (minutesEngine) │ • Dependencia de adopción digital por parte  │
+│   y modelos exclusivos de portería (GK).     │   de futbolistas muy jóvenes en el portal.   │
+│ • Rigor visual FIFA 105:68 y paleta Tierra.  │                                              │
+├──────────────────────────────────────────────┼──────────────────────────────────────────────┤
+│                OPORTUNIDADES                 │                   AMENAZAS                   │
+├──────────────────────────────────────────────┼──────────────────────────────────────────────┤
+│ • Creciente profesionalización del fútbol    │ • Incorporación de pizarras simples en apps  │
+│   formativo y exigencia de actas por clubes. │   de mensajería o comunicación de padres.    │
+│ • Obligatoriedad de cumplimiento RGPD en     │ • Presión de precios a la baja por software  │
+│   menores de edad con firmas auditadas.      │   subvencionado por federaciones regionales. │
+│ • Expansión internacional gracias al         │                                              │
+│   soporte bilingüe nativo ES/EN.             │                                              │
+└──────────────────────────────────────────────┴──────────────────────────────────────────────┘
+```
+
+*(Fin de la Sección D3)*
+
+

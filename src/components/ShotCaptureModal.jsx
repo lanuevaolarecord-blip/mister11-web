@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useTranslation } from '../hooks/useTranslation';
 import { calculateShotXg } from '../config/xgWeights';
 import SectorMiniPitch2D from './SectorMiniPitch2D';
+import PlayerChipRow from './PlayerChipRow';
 import './ShotCaptureModal.css';
 
 /**
@@ -230,29 +231,16 @@ export const ShotCaptureModal = ({
               <label className="shot-group-label">
                 👤 {isEn ? 'Shooter / Player:' : 'Rematador / Jugador:'}
               </label>
-              <div className="shot-player-chips-scroll">
-                <button
-                  type="button"
-                  className={`shot-player-chip ${!selectedPlayerId ? 'selected-unassigned' : ''}`}
-                  onClick={() => setSelectedPlayerId(null)}
-                >
-                  {isEn ? '🔘 Unattributed' : '🔘 Sin atribuir'}
-                </button>
-                {playersList.map(p => {
-                  const isSelected = String(selectedPlayerId) === String(p.id);
-                  return (
-                    <button
-                      key={p.id}
-                      type="button"
-                      className={`shot-player-chip ${isSelected ? 'selected' : ''}`}
-                      onClick={() => setSelectedPlayerId(isSelected ? null : p.id)}
-                    >
-                      <span className="shot-player-dorsal">#{p.dorsal || p.number || ''}</span>
-                      <span>{(p.nombre || p.name || '').split(' ')[0]}</span>
-                    </button>
-                  );
-                })}
-              </div>
+              <PlayerChipRow
+                id="shot-shooter-chips"
+                players={playersList}
+                selectedId={selectedPlayerId}
+                onSelect={(id) => setSelectedPlayerId(id)}
+                showUnassigned={true}
+                unassignedLabel={isEn ? 'Unattributed' : 'Sin atribuir'}
+                unassignedIcon="🔘"
+                ariaLabel={isEn ? 'Select shooter or player' : 'Seleccionar rematador o jugador'}
+              />
             </div>
           )}
 
@@ -262,29 +250,16 @@ export const ShotCaptureModal = ({
               <label className="shot-group-label">
                 👟 {isEn ? 'Assist (Optional):' : 'Asistencia (Opcional):'}
               </label>
-              <div className="shot-player-chips-scroll">
-                <button
-                  type="button"
-                  className={`shot-player-chip ${!asistenciaId ? 'selected-none' : ''}`}
-                  onClick={() => setAsistenciaId(null)}
-                >
-                  {isEn ? 'None' : 'Ninguna'}
-                </button>
-                {playersList.filter(p => String(p.id) !== String(selectedPlayerId)).map(p => {
-                  const isSelected = String(asistenciaId) === String(p.id);
-                  return (
-                    <button
-                      key={p.id}
-                      type="button"
-                      className={`shot-player-chip ${isSelected ? 'selected-assist' : ''}`}
-                      onClick={() => setAsistenciaId(isSelected ? null : p.id)}
-                    >
-                      <span className="shot-player-dorsal">#{p.dorsal || p.number || ''}</span>
-                      <span>{(p.nombre || p.name || '').split(' ')[0]}</span>
-                    </button>
-                  );
-                })}
-              </div>
+              <PlayerChipRow
+                id="shot-assist-chips"
+                players={playersList.filter(p => String(p.id) !== String(selectedPlayerId))}
+                selectedId={asistenciaId}
+                onSelect={(id) => setAsistenciaId(id)}
+                showUnassigned={true}
+                unassignedLabel={isEn ? 'None' : 'Ninguna'}
+                unassignedIcon="👟"
+                ariaLabel={isEn ? 'Select assist player (optional)' : 'Seleccionar asistente (opcional)'}
+              />
             </div>
           )}
 

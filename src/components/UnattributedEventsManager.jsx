@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { useTranslation } from '../hooks/useTranslation';
+import PlayerChipRow from './PlayerChipRow';
 import './UnattributedEventsManager.css';
 
 /**
@@ -211,20 +212,15 @@ export const UnattributedEventsManager = ({
                             <span className="unattr-sector-badge">{e.zone || e.sector || 'centro'}</span>
                           </div>
                           {!readOnly && (
-                            <div className="unattr-item-quick-assign">
-                              <div className="unattr-chips-row">
-                                {playersList.map(p => (
-                                  <button
-                                    key={p.id}
-                                    type="button"
-                                    className="unattr-mini-chip"
-                                    onClick={() => handleSingleAttribute(e, p.id)}
-                                    title={p.nombre || p.name}
-                                  >
-                                    #{p.dorsal || p.number || ''} {(p.nombre || p.name || '').split(' ')[0]}
-                                  </button>
-                                ))}
-                              </div>
+                            <div className="unattr-item-quick-assign" style={{ flex: 1, minWidth: 0 }}>
+                              <PlayerChipRow
+                                players={playersList}
+                                selectedId={null}
+                                onSelect={(pId) => handleSingleAttribute(e, pId)}
+                                showUnassigned={false}
+                                allowDeselect={false}
+                                ariaLabel={isEn ? 'Assign event to player' : 'Asignar evento a jugador'}
+                              />
                             </div>
                           )}
                         </div>

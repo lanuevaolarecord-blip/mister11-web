@@ -33,6 +33,7 @@ import { MatchRadarChart } from './MatchStats/MatchRadarChart';
 import { MatchTimeline } from './MatchStats/MatchTimeline';
 import { ComparativeStatsBars } from './MatchStats/ComparativeStatsBars';
 import { StatsDataTable } from './MatchStats/StatsDataTable';
+import PlayerChipRow from './PlayerChipRow';
 import { SectorMiniPitch2D } from './SectorMiniPitch2D';
 import { UnattributedEventsManager, isAttributableOwnEvent } from './UnattributedEventsManager';
 import { CaptureCriteriaModal } from './CaptureCriteriaModal';
@@ -1310,100 +1311,94 @@ const LiveStats = ({
                   title={isEn ? 'Post-match load: quick entry of +/- counters' : 'Carga post-partido: entrada rápida de contadores +/-'}
                 >📋 {isEn ? 'Post-Match Entry' : 'Carga Post-Partido'}</button>
               </div>
-              <div className="jugador-activo-chips">
-                {activePlayersWithMinutes.map(p => {
-                  const isActive = activePlayerId === p.id;
-                  return (
-                    <button
-                      key={p.id}
-                      type="button"
-                      className={`jugador-chip ${isActive ? 'active' : ''}`}
-                      onClick={() => setActivePlayerId(isActive ? null : p.id)}
-                    >
-                      <span className="jugador-chip-dorsal">{p.dorsal}</span>
-                      <span className="jugador-chip-name">{(p.nombre || p.name || '').split(' ')[0]}</span>
-                    </button>
-                  );
-                })}
-
-                {/* Popover colapsable para suplentes sin minutos */}
-                {benchPlayersZeroMinutes.length > 0 && (
-                  <div style={{ position: 'relative', display: 'inline-block' }}>
-                    <button
-                      type="button"
-                      className="jugador-chip bench-trigger-btn"
-                      onClick={() => setShowBenchPopover(prev => !prev)}
-                      style={{
-                        background: showBenchPopover ? 'rgba(212, 168, 67, 0.25)' : (darkMode ? 'rgba(255,255,255,0.05)' : '#F1F5F9'),
-                        border: '1px dashed #D4A843',
-                        color: 'var(--partidos-gold, #D4A843)',
-                        padding: '0 10px',
-                        cursor: 'pointer',
-                        whiteSpace: 'nowrap'
-                      }}
-                      title={isEn ? 'Bench players with 0 minutes' : 'Jugadores suplentes con 0 minutos'}
-                    >
-                      <span>🪑</span>
-                      <span>+ {isEn ? 'Bench' : 'Banquillo'} ({benchPlayersZeroMinutes.length})</span>
-                    </button>
-
-                    {showBenchPopover && (
-                      <div
-                        className="jugador-bench-popover"
+              <PlayerChipRow
+                id="livestats-active-player-chips"
+                players={activePlayersWithMinutes}
+                selectedId={activePlayerId}
+                onSelect={(id) => setActivePlayerId(id)}
+                showUnassigned={false}
+                allowDeselect={true}
+                ariaLabel={isEn ? 'Active players on pitch' : 'Jugadores activos en campo'}
+                extraAfter={
+                  benchPlayersZeroMinutes.length > 0 ? (
+                    <div style={{ position: 'relative', display: 'inline-block' }}>
+                      <button
+                        type="button"
+                        className="player-chip-item bench-trigger-btn"
+                        onClick={() => setShowBenchPopover(prev => !prev)}
                         style={{
-                          position: 'absolute',
-                          bottom: '100%',
-                          left: 0,
-                          marginBottom: '8px',
-                          background: darkMode ? '#1E293B' : '#FFFFFF',
-                          border: '1px solid var(--partidos-border, #CBD5E1)',
-                          borderRadius: '10px',
-                          boxShadow: '0 10px 25px rgba(0,0,0,0.3)',
-                          padding: '8px',
-                          zIndex: 60,
-                          minWidth: '180px',
-                          maxHeight: '220px',
-                          overflowY: 'auto',
-                          display: 'flex',
-                          flexDirection: 'column',
-                          gap: '4px'
+                          background: showBenchPopover ? 'rgba(212, 168, 67, 0.25)' : (darkMode ? 'rgba(255,255,255,0.05)' : '#F1F5F9'),
+                          border: '1.5px dashed #D4A843',
+                          color: 'var(--partidos-gold, #D4A843)',
+                          padding: '0 12px',
+                          cursor: 'pointer',
+                          whiteSpace: 'nowrap'
                         }}
+                        title={isEn ? 'Bench players with 0 minutes' : 'Jugadores suplentes con 0 minutos'}
+                        aria-label={isEn ? `Bench: ${benchPlayersZeroMinutes.length} players with 0 minutes` : `Banquillo: ${benchPlayersZeroMinutes.length} jugadores con 0 minutos`}
                       >
-                        <div style={{ fontSize: '11px', fontWeight: 800, color: 'var(--partidos-gold)', padding: '2px 6px', borderBottom: '1px solid rgba(255,255,255,0.08)', marginBottom: '4px' }}>
-                          🪑 {isEn ? 'BENCH (0 MIN)' : 'SUPLENTES (0 MIN)'}
+                        <span>🪑</span>
+                        <span>+ {isEn ? 'Bench' : 'Banquillo'} ({benchPlayersZeroMinutes.length})</span>
+                      </button>
+
+                      {showBenchPopover && (
+                        <div
+                          className="jugador-bench-popover"
+                          style={{
+                            position: 'absolute',
+                            bottom: '100%',
+                            left: 0,
+                            marginBottom: '8px',
+                            background: darkMode ? '#1E293B' : '#FFFFFF',
+                            border: '1px solid var(--partidos-border, #CBD5E1)',
+                            borderRadius: '10px',
+                            boxShadow: '0 10px 25px rgba(0,0,0,0.3)',
+                            padding: '8px',
+                            zIndex: 60,
+                            minWidth: '180px',
+                            maxHeight: '220px',
+                            overflowY: 'auto',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            gap: '4px'
+                          }}
+                        >
+                          <div style={{ fontSize: '11px', fontWeight: 800, color: 'var(--partidos-gold)', padding: '2px 6px', borderBottom: '1px solid rgba(255,255,255,0.08)', marginBottom: '4px' }}>
+                            🪑 {isEn ? 'BENCH (0 MIN)' : 'SUPLENTES (0 MIN)'}
+                          </div>
+                          {benchPlayersZeroMinutes.map(p => (
+                            <button
+                              key={p.id}
+                              type="button"
+                              className="jugador-bench-popover-item"
+                              style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '8px',
+                                padding: '6px 8px',
+                                background: 'transparent',
+                                border: 'none',
+                                color: 'var(--partidos-text-primary, #FFFFFF)',
+                                borderRadius: '6px',
+                                cursor: 'pointer',
+                                fontSize: '12px',
+                                textAlign: 'left'
+                              }}
+                              onClick={() => {
+                                setActivePlayerId(p.id);
+                                setShowBenchPopover(false);
+                              }}
+                            >
+                              <span style={{ fontWeight: 800, color: 'var(--partidos-gold)' }}>#{p.dorsal}</span>
+                              <span>{p.nombre || p.name}</span>
+                            </button>
+                          ))}
                         </div>
-                        {benchPlayersZeroMinutes.map(p => (
-                          <button
-                            key={p.id}
-                            type="button"
-                            className="jugador-bench-popover-item"
-                            style={{
-                              display: 'flex',
-                              alignItems: 'center',
-                              gap: '8px',
-                              padding: '6px 8px',
-                              background: 'transparent',
-                              border: 'none',
-                              color: 'var(--partidos-text-primary, #FFFFFF)',
-                              borderRadius: '6px',
-                              cursor: 'pointer',
-                              fontSize: '12px',
-                              textAlign: 'left'
-                            }}
-                            onClick={() => {
-                              setActivePlayerId(p.id);
-                              setShowBenchPopover(false);
-                            }}
-                          >
-                            <span style={{ fontWeight: 800, color: 'var(--partidos-gold)' }}>#{p.dorsal}</span>
-                            <span>{p.nombre || p.name}</span>
-                          </button>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
+                      )}
+                    </div>
+                  ) : null
+                }
+              />
 
               {/* Botones de Acción Individual Canónicos (5 controles + Avanzado desplegable) */}
               {activePlayerId && (

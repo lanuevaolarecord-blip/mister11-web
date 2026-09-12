@@ -1,0 +1,180 @@
+/* src/components/PlayerChipRow.css
+ * Míster11 — Fila Canónica de Chips de Jugador
+ * 
+ * Garantiza:
+ * 1. Flex horizontal sin solapes (gap: 8px, cero márgenes negativos, cero position: absolute).
+ * 2. Scrollbar fina estilizada institucional (4px, sin barra gris nativa).
+ * 3. Touch target Android First (min-height: 48px).
+ * 4. Truncado accesible de nombres (max-width: 120px, ellipsis).
+ * 5. Cero saltos de layout en estado seleccionado (box-sizing + outline-offset: -2px).
+ */
+
+.player-chip-row-scroll {
+  display: flex !important;
+  align-items: center;
+  gap: 8px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: 6px 4px;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  -webkit-overflow-scrolling: touch;
+  scroll-behavior: smooth;
+
+  /* Firefox */
+  scrollbar-width: thin;
+  scrollbar-color: rgba(212, 168, 67, 0.4) transparent;
+}
+
+/* Scrollbar WebKit estilizada fina institucional (4px) */
+.player-chip-row-scroll::-webkit-scrollbar {
+  height: 4px;
+}
+
+.player-chip-row-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.player-chip-row-scroll::-webkit-scrollbar-thumb {
+  background: rgba(212, 168, 67, 0.35);
+  border-radius: 4px;
+  transition: background 0.2s ease;
+}
+
+.player-chip-row-scroll::-webkit-scrollbar-thumb:hover {
+  background: rgba(212, 168, 67, 0.85);
+}
+
+/* Chip Base */
+.player-chip-item {
+  flex-shrink: 0 !important;
+  min-height: 48px !important;
+  height: 48px;
+  display: inline-flex !important;
+  align-items: center;
+  gap: 8px;
+  padding: 0 14px;
+  border-radius: 10px;
+  box-sizing: border-box !important;
+  border: 1.5px solid rgba(255, 255, 255, 0.16);
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text-primary, #FFFFFF);
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  user-select: none;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+  outline: none;
+  margin: 0 !important; /* Prohibido margin negativo */
+  position: static !important; /* Prohibido position absolute */
+  text-decoration: none;
+}
+
+.theme-light .player-chip-item {
+  border-color: rgba(15, 23, 42, 0.14);
+  background: #F8FAFC;
+  color: #0F172A;
+}
+
+.player-chip-item:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(212, 168, 67, 0.4);
+}
+
+.theme-light .player-chip-item:hover {
+  background: #F1F5F9;
+  border-color: rgba(212, 168, 67, 0.6);
+}
+
+/* Chip Sin Atribuir / Unassigned (fijo primero, separado visualmente) */
+.player-chip-item.chip-unassigned {
+  border-style: dashed;
+  border-color: rgba(212, 168, 67, 0.55);
+  background: rgba(212, 168, 67, 0.08);
+  color: #FBBF24;
+  margin-right: 4px !important;
+}
+
+.theme-light .player-chip-item.chip-unassigned {
+  border-color: #D4A843;
+  background: #FEF3C7;
+  color: #92400E;
+}
+
+.player-chip-item.chip-unassigned .chip-icon {
+  font-size: 14px;
+}
+
+/* Estado Seleccionado: Outline Dorado + Fondo Institucional (CERO saltos de layout) */
+.player-chip-item.is-selected {
+  background: #1B3A2D !important;
+  color: #FFFFFF !important;
+  border-color: #D4A843 !important;
+  outline: 2px solid #D4A843 !important;
+  outline-offset: -2px !important;
+  box-shadow: 0 2px 8px rgba(212, 168, 67, 0.25);
+}
+
+.player-chip-item.chip-unassigned.is-selected {
+  background: #2A2415 !important;
+  color: #FDE047 !important;
+  border-color: #F59E0B !important;
+  outline: 2px solid #F59E0B !important;
+  outline-offset: -2px !important;
+}
+
+.theme-light .player-chip-item.chip-unassigned.is-selected {
+  background: #FEF3C7 !important;
+  color: #92400E !important;
+  border-color: #D4A843 !important;
+  outline: 2px solid #D4A843 !important;
+  outline-offset: -2px !important;
+}
+
+/* Badge de Dorsal */
+.player-chip-dorsal-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 26px;
+  height: 24px;
+  padding: 0 4px;
+  border-radius: 6px;
+  background: rgba(96, 165, 250, 0.15);
+  color: #60A5FA;
+  font-size: 12px;
+  font-weight: 900;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.player-chip-item.is-selected .player-chip-dorsal-badge {
+  background: rgba(212, 168, 67, 0.25);
+  color: #FDE047;
+}
+
+.theme-light .player-chip-dorsal-badge {
+  background: rgba(27, 58, 45, 0.1);
+  color: #1B3A2D;
+}
+
+/* Truncado de Nombre */
+.player-chip-name-text {
+  max-width: 120px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 700;
+  font-size: 12.5px;
+  letter-spacing: 0.2px;
+  display: inline-block;
+}
+
+/* Contenedor para elemento extra al final (ej. disparador de banquillo) */
+.player-chip-extra-wrapper {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+}

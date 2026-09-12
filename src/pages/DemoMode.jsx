@@ -5,6 +5,7 @@
  */
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { ShotCaptureModal } from '../components/ShotCaptureModal';
 import './DemoMode.css';
 
 // ── Mock Data ─────────────────────────────────────────────────────────────────
@@ -17,17 +18,24 @@ const DEMO_TEAM = {
 };
 
 const DEMO_PLAYERS = [
-  { id: 1,  nombre: 'Carlos Rodríguez', posicion: 'Portero',       dorsal: 1,  estado: 'disponible', edad: 17 },
-  { id: 2,  nombre: 'David Martínez',   posicion: 'Defensa',        dorsal: 2,  estado: 'disponible', edad: 17 },
-  { id: 3,  nombre: 'Sergio López',     posicion: 'Defensa Central',dorsal: 4,  estado: 'disponible', edad: 18 },
-  { id: 4,  nombre: 'Pablo Sánchez',    posicion: 'Defensa Central',dorsal: 5,  estado: 'disponible', edad: 17 },
-  { id: 5,  nombre: 'Adrián Torres',    posicion: 'Lateral Izq.',   dorsal: 3,  estado: 'disponible', edad: 17 },
-  { id: 6,  nombre: 'Miguel García',    posicion: 'Mediocentro',    dorsal: 6,  estado: 'disponible', edad: 18 },
-  { id: 7,  nombre: 'Álvaro Jiménez',   posicion: 'Interior Dcho.', dorsal: 8,  estado: 'disponible', edad: 17 },
-  { id: 8,  nombre: 'Rubén Moreno',     posicion: 'Mediapunta',     dorsal: 10, estado: 'disponible', edad: 18 },
-  { id: 9,  nombre: 'Iván Fernández',   posicion: 'Extremo Dcho.',  dorsal: 7,  estado: 'disponible', edad: 17 },
-  { id: 10, nombre: 'Marcos Díaz',     posicion: 'Delantero Centro',dorsal: 9, estado: 'disponible', edad: 18 },
-  { id: 11, nombre: 'Luis Herrero',    posicion: 'Extremo Izq.',   dorsal: 11, estado: 'disponible', edad: 17 },
+  { id: 1,  nombre: 'Carlos Rodríguez', posicion: 'Portero',        dorsal: 1,  estado: 'disponible', edad: 17 },
+  { id: 2,  nombre: 'David Martínez',   posicion: 'Defensa',         dorsal: 2,  estado: 'disponible', edad: 17 },
+  { id: 3,  nombre: 'Sergio López',     posicion: 'Defensa Central', dorsal: 4,  estado: 'disponible', edad: 18 },
+  { id: 4,  nombre: 'Pablo Sánchez',    posicion: 'Defensa Central', dorsal: 5,  estado: 'disponible', edad: 17 },
+  { id: 5,  nombre: 'Adrián Torres',    posicion: 'Lateral Izq.',    dorsal: 3,  estado: 'disponible', edad: 17 },
+  { id: 6,  nombre: 'Miguel García',    posicion: 'Mediocentro',     dorsal: 6,  estado: 'disponible', edad: 18 },
+  { id: 7,  nombre: 'Álvaro Jiménez',   posicion: 'Interior Dcho.',  dorsal: 8,  estado: 'disponible', edad: 17 },
+  { id: 8,  nombre: 'Rubén Moreno',     posicion: 'Mediapunta',      dorsal: 10, estado: 'disponible', edad: 18 },
+  { id: 9,  nombre: 'Iván Fernández',   posicion: 'Extremo Dcho.',   dorsal: 7,  estado: 'disponible', edad: 17 },
+  { id: 10, nombre: 'Marcos Díaz',      posicion: 'Delantero Centro',dorsal: 9,  estado: 'disponible', edad: 18 },
+  { id: 11, nombre: 'Luis Herrero',     posicion: 'Extremo Izq.',    dorsal: 11, estado: 'disponible', edad: 17 },
+  { id: 12, nombre: 'Hugo Romero',      posicion: 'Portero Suplente',dorsal: 13, estado: 'disponible', edad: 17 },
+  { id: 13, nombre: 'Alejandro Cano',   posicion: 'Mediocentro',     dorsal: 14, estado: 'disponible', edad: 18 },
+  { id: 14, nombre: 'Javier Morales',   posicion: 'Extremo Dcho.',   dorsal: 15, estado: 'disponible', edad: 17 },
+  { id: 15, nombre: 'Mateo Ruiz',       posicion: 'Delantero Centro',dorsal: 16, estado: 'disponible', edad: 17 },
+  { id: 16, nombre: 'Gonzalo Castillo', posicion: 'Defensa Central', dorsal: 17, estado: 'disponible', edad: 18 },
+  { id: 17, nombre: 'Lucas Navarro',    posicion: 'Lateral Dcho.',    dorsal: 18, estado: 'disponible', edad: 17 },
+  { id: 18, nombre: 'Daniel Gil',       posicion: 'Interior Izq.',    dorsal: 19, estado: 'disponible', edad: 18 },
 ];
 
 const DEMO_STATS = [
@@ -186,6 +194,8 @@ function SesionesView() {
 }
 
 function PartidosView() {
+  const [shotModalOpen, setShotModalOpen] = useState(false);
+
   return (
     <div className="demo-view">
       <h2>⏱️ Match-Day en Vivo — 2ª Parte (67')</h2>
@@ -209,7 +219,38 @@ function PartidosView() {
           <li style={{ padding: '6px 0', borderBottom: '1px solid #eee' }}>⚽ 58' Gol de Marcos Díaz (#9)</li>
           <li style={{ padding: '6px 0' }}>🔄 65' Cambio: Entra Rubén Moreno (#10)</li>
         </ul>
+        <button
+          type="button"
+          className="demo-open-shotmodal-btn"
+          onClick={() => setShotModalOpen(true)}
+          style={{
+            marginTop: '12px',
+            minHeight: '48px',
+            padding: '10px 18px',
+            borderRadius: '10px',
+            background: '#1B3A2D',
+            color: '#FFFFFF',
+            border: '1.5px solid #D4A843',
+            fontWeight: 800,
+            fontSize: '14px',
+            cursor: 'pointer',
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '8px'
+          }}
+        >
+          🎯 Abrir ShotModal (Prueba de Chips)
+        </button>
       </div>
+
+      <ShotCaptureModal
+        isOpen={shotModalOpen}
+        onClose={() => setShotModalOpen(false)}
+        onConfirmShot={() => setShotModalOpen(false)}
+        origin="team"
+        initialTeam="own"
+        playersList={DEMO_PLAYERS}
+      />
     </div>
   );
 }

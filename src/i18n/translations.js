@@ -2121,7 +2121,11 @@ export const translations = {
     'stats.theater.close': 'Cerrar modo teatro',
     'stats.theater.theater_mode': 'Modo Teatro',
     'stats.theater.fullscreen': 'Pantalla Completa',
-    'stats.theater.exit_fullscreen': 'Salir de Pantalla Completa'
+    'stats.theater.exit_fullscreen': 'Salir de Pantalla Completa',
+    'error.section_unavailable': 'Sección no disponible temporalmente',
+    'error.section_desc': 'Ha ocurrido una anomalía aislada al renderizar esta sección. El resto del partido continúa operativo.',
+    'error.retry_section': 'Reintentar',
+    'error.section_code': 'Código: {code}'
   },
 
   'English (EN)': {
@@ -4246,7 +4250,11 @@ export const translations = {
     'stats.theater.close': 'Close theater mode',
     'stats.theater.theater_mode': 'Theater Mode',
     'stats.theater.fullscreen': 'Fullscreen',
-    'stats.theater.exit_fullscreen': 'Exit Fullscreen'
+    'stats.theater.exit_fullscreen': 'Exit Fullscreen',
+    'error.section_unavailable': 'Section temporarily unavailable',
+    'error.section_desc': 'An isolated anomaly occurred while rendering this section. The rest of the match remains operational.',
+    'error.retry_section': 'Retry',
+    'error.section_code': 'Code: {code}'
   }
 };
 

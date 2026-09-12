@@ -39,6 +39,7 @@ import { SectorMiniPitch2D } from './SectorMiniPitch2D';
 import { UnattributedEventsManager, isAttributableOwnEvent } from './UnattributedEventsManager';
 import { CaptureCriteriaModal } from './CaptureCriteriaModal';
 import { CAPTURE_CRITERIA } from '../config/captureCriteria';
+import SectionErrorBoundary from './common/SectionErrorBoundary';
 
 import './LiveStats.css';
 import './MatchStats/MatchStats.css';
@@ -1888,33 +1889,39 @@ const LiveStats = ({
         {activeTab === 'tactical' && (
           <div className="tactical-tab-content">
             {/* Heat Map de Actividad */}
-            <HeatMap
-              events={filteredEvents}
-              players={playersList}
-              teamName={homeTeamName}
-            />
-
-            {/* Red de Pases Táctica (si >= 5 pases) o Mapa de Eventos por Zona (si < 5) */}
-            {passesList && passesList.length >= 5 ? (
-              <PassNetwork
-                passes={passesList}
+            <SectionErrorBoundary sectionCode="TACTICAL_HEATMAP" sectionTitle={isEn ? 'Activity Heatmap' : 'Mapa de Calor de Actividad'}>
+              <HeatMap
+                events={filteredEvents}
                 players={playersList}
                 teamName={homeTeamName}
               />
-            ) : (
-              <ZoneEventMap
-                events={filteredEvents}
-                teamName={homeTeamName}
-                isSubstitute={true}
-              />
-            )}
+            </SectionErrorBoundary>
+
+            {/* Red de Pases Táctica (si >= 5 pases) o Mapa de Eventos por Zona (si < 5) */}
+            <SectionErrorBoundary sectionCode="TACTICAL_PASS_NETWORK" sectionTitle={isEn ? 'Pass Network & Zones' : 'Red de Pases y Zonas'}>
+              {passesList && passesList.length >= 5 ? (
+                <PassNetwork
+                  passes={passesList}
+                  players={playersList}
+                  teamName={homeTeamName}
+                />
+              ) : (
+                <ZoneEventMap
+                  events={filteredEvents}
+                  teamName={homeTeamName}
+                  isSubstitute={true}
+                />
+              )}
+            </SectionErrorBoundary>
 
             {/* Mapa de Tiros con Modelo xG */}
-            <ShotMap
-              shots={shotsList}
-              players={playersList}
-              teamName={homeTeamName}
-            />
+            <SectionErrorBoundary sectionCode="TACTICAL_SHOT_MAP" sectionTitle={isEn ? 'Shot Map & xG' : 'Mapa de Tiros y xG'}>
+              <ShotMap
+                shots={shotsList}
+                players={playersList}
+                teamName={homeTeamName}
+              />
+            </SectionErrorBoundary>
           </div>
         )}
 
@@ -1959,71 +1966,77 @@ const LiveStats = ({
 
           return (
           <div className="analytics-tab-content">
-            <ComparativeStatsBars
-              homeStats={{
-                posesion: posHome,
-                tiros: tirosHome,
-                tirosPuerta: tirosPuertaHome,
-                paradas: countByType('save_own'),
-                pasesExitosos: pasesExHome,
-                pasesTotales: pasesTotHome,
-                recuperaciones: recHome,
-                corners: cornHome,
-                faltas: faultsBy,
-                amarillas: yellHome
-              }}
-              awayStats={{
-                posesion: posAway,
-                tiros: tirosAway,
-                tirosPuerta: tirosPuertaAway,
-                paradas: countByType('save_rival'),
-                pasesExitosos: pasesExAway,
-                pasesTotales: pasesTotAway,
-                recuperaciones: lossHome,
-                corners: cornAway,
-                faltas: faultsOpp,
-                amarillas: yellAway
-              }}
-              homeTeamName={homeTeamName}
-              awayTeamName={awayTeamName}
-            />
-
-            <div className="analytics-grid-two-cols">
-              <MatchRadarChart
-                events={filteredEvents}
+            <SectionErrorBoundary sectionCode="ANALYTICS_COMPARATIVE_BARS" sectionTitle={isEn ? 'Comparative Stats Bars' : 'Barras Comparativas'}>
+              <ComparativeStatsBars
                 homeStats={{
-                  pasesExitosos: pasesExHome,
-                  pasesTotales: Math.max(pasesExHome, 1),
+                  posesion: posHome,
                   tiros: tirosHome,
+                  tirosPuerta: tirosPuertaHome,
+                  paradas: countByType('save_own'),
+                  pasesExitosos: pasesExHome,
+                  pasesTotales: pasesTotHome,
                   recuperaciones: recHome,
-                  entradas: duelsWon,
-                  regates: cornHome,
-                  aereos: yellHome + redHome,
-                  presiones: faultsBy,
-                  intercepciones: countByType('offside_rival')
+                  corners: cornHome,
+                  faltas: faultsBy,
+                  amarillas: yellHome
                 }}
                 awayStats={{
-                  pasesExitosos: pasesExAway,
-                  pasesTotales: Math.max(pasesExAway, 1),
+                  posesion: posAway,
                   tiros: tirosAway,
+                  tirosPuerta: tirosPuertaAway,
+                  paradas: countByType('save_rival'),
+                  pasesExitosos: pasesExAway,
+                  pasesTotales: pasesTotAway,
                   recuperaciones: lossHome,
-                  entradas: duelsLost,
-                  regates: cornAway,
-                  aereos: yellAway + redAway,
-                  presiones: faultsOpp,
-                  intercepciones: countByType('offside_own')
+                  corners: cornAway,
+                  faltas: faultsOpp,
+                  amarillas: yellAway
                 }}
                 homeTeamName={homeTeamName}
                 awayTeamName={awayTeamName}
-                players={playersList}
               />
+            </SectionErrorBoundary>
 
-              <MatchTimeline
-                events={filteredEvents}
-                homeTeamName={homeTeamName}
-                awayTeamName={awayTeamName}
-                matchDuration={90}
-              />
+            <div className="analytics-grid-two-cols">
+              <SectionErrorBoundary sectionCode="ANALYTICS_RADAR_CHART" sectionTitle={isEn ? 'Team Performance Radar' : 'Radar de Rendimiento de Equipo'}>
+                <MatchRadarChart
+                  events={filteredEvents}
+                  homeStats={{
+                    pasesExitosos: pasesExHome,
+                    pasesTotales: Math.max(pasesExHome, 1),
+                    tiros: tirosHome,
+                    recuperaciones: recHome,
+                    entradas: duelsWon,
+                    regates: cornHome,
+                    aereos: yellHome + redHome,
+                    presiones: faultsBy,
+                    intercepciones: countByType('offside_rival')
+                  }}
+                  awayStats={{
+                    pasesExitosos: pasesExAway,
+                    pasesTotales: Math.max(pasesExAway, 1),
+                    tiros: tirosAway,
+                    recuperaciones: lossHome,
+                    entradas: duelsLost,
+                    regates: cornAway,
+                    aereos: yellAway + redAway,
+                    presiones: faultsOpp,
+                    intercepciones: countByType('offside_own')
+                  }}
+                  homeTeamName={homeTeamName}
+                  awayTeamName={awayTeamName}
+                  players={playersList}
+                />
+              </SectionErrorBoundary>
+
+              <SectionErrorBoundary sectionCode="ANALYTICS_TIMELINE" sectionTitle={isEn ? 'Match Momentum Timeline' : 'Cronología y Momentum'}>
+                <MatchTimeline
+                  events={filteredEvents}
+                  homeTeamName={homeTeamName}
+                  awayTeamName={awayTeamName}
+                  matchDuration={90}
+                />
+              </SectionErrorBoundary>
             </div>
           </div>
           );
@@ -2032,6 +2045,7 @@ const LiveStats = ({
         {/* PESTAÑA 4: Rendimiento Individual de Jugadores & CSV — derivado de eventos reales */}
         {activeTab === 'players' && (
           <div className="players-tab-content">
+            <SectionErrorBoundary sectionCode="PLAYERS_STATS_TABLE" sectionTitle={isEn ? 'Player Stats Table' : 'Tabla de Estadísticas de Jugadores'}>
             <StatsDataTable
               playerStats={playersList.map((p) => {
                 const pid = String(p.id);
@@ -2153,6 +2167,7 @@ const LiveStats = ({
               })}
               teamName={homeTeamName}
             />
+            </SectionErrorBoundary>
           </div>
         )}
 

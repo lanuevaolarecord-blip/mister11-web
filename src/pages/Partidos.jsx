@@ -44,6 +44,7 @@ import { sanitizeMatchData } from '../utils/sanitizeMatchData';
 import { showToast } from '../utils/toast';
 import { SpellCheckedTextarea } from '../components/ui/SpellCheckedTextarea';
 import UnattributedEventsManager from '../components/UnattributedEventsManager';
+import SectionErrorBoundary from '../components/common/SectionErrorBoundary';
 
 export const getMatchDerivedStatus = (m) => {
   if (!m) return 'NO_DISPUTADO';
@@ -2587,6 +2588,7 @@ const Partidos = () => {
 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '28px' }}>
                   {/* ── SECCIÓN 1: MARCADOR & CRONOLOGÍA DE EVENTOS ── */}
+                  <SectionErrorBoundary sectionCode="SEC_TIMELINE" sectionTitle={isGlobalEn ? '1. Score & Event Timeline' : '1. Marcador y Cronología de Eventos'}>
                   <div id="sec_timeline" className="post-match-card" style={{ scrollMarginTop: '80px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px', borderBottom: '1.5px solid var(--partidos-border)', paddingBottom: '10px', marginBottom: '14px' }}>
                       <span style={{ background: '#172D21', color: '#D4A843', padding: '4px 10px', borderRadius: '6px', fontSize: '11px', fontWeight: '900' }}>1</span>
@@ -2698,8 +2700,10 @@ const Partidos = () => {
                       </div>
                     </div>
                   </div>
+                  </SectionErrorBoundary>
 
                   {/* ── SECCIÓN 2: MOMENTUM & POSESIÓN POR BLOQUES 15' ── */}
+                  <SectionErrorBoundary sectionCode="SEC_MOMENTUM" sectionTitle={isGlobalEn ? '2. Momentum & 15-Minute Possession Blocks' : '2. Momentum y Posesión por Bloques 15\''}>
                   <div id="sec_momentum" className="post-match-card" style={{ scrollMarginTop: '80px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px', borderBottom: '1.5px solid var(--partidos-border)', paddingBottom: '10px', marginBottom: '14px' }}>
                       <span style={{ background: '#172D21', color: '#D4A843', padding: '4px 10px', borderRadius: '6px', fontSize: '11px', fontWeight: '900' }}>2</span>
@@ -2726,8 +2730,10 @@ const Partidos = () => {
                       </div>
                     </div>
                   </div>
+                  </SectionErrorBoundary>
 
                   {/* ── SECCIÓN 3: BARRAS COMPARATIVAS (10 MÉTRICAS) ── */}
+                  <SectionErrorBoundary sectionCode="SEC_BARS" sectionTitle={isGlobalEn ? '3. Comparative Bars (10 Key Metrics)' : '3. Barras Comparativas (10 Métricas Canónicas)'}>
                   <div id="sec_bars" className="post-match-card" style={{ scrollMarginTop: '80px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px', borderBottom: '1.5px solid var(--partidos-border)', paddingBottom: '10px', marginBottom: '14px' }}>
                       <span style={{ background: '#172D21', color: '#D4A843', padding: '4px 10px', borderRadius: '6px', fontSize: '11px', fontWeight: '900' }}>3</span>
@@ -2745,8 +2751,10 @@ const Partidos = () => {
                       />
                     </div>
                   </div>
+                  </SectionErrorBoundary>
 
                   {/* ── SECCIÓN 4: RADAR COMPARATIVO PROPIO VS RIVAL ── */}
+                  <SectionErrorBoundary sectionCode="SEC_RADAR" sectionTitle={isGlobalEn ? '4. Normalized Comparative Radar (Own vs Opponent)' : '4. Radar Comparativo Propio vs Rival (6 Ejes)'}>
                   <div id="sec_radar" className="post-match-card" style={{ scrollMarginTop: '80px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px', borderBottom: '1.5px solid var(--partidos-border)', paddingBottom: '10px', marginBottom: '14px' }}>
                       <span style={{ background: '#172D21', color: '#D4A843', padding: '4px 10px', borderRadius: '6px', fontSize: '11px', fontWeight: '900' }}>4</span>
@@ -2764,8 +2772,10 @@ const Partidos = () => {
                       />
                     </div>
                   </div>
+                  </SectionErrorBoundary>
 
                   {/* ── SECCIÓN 5: MÉTRICAS TOP-5 DIFERENCIALES ── */}
+                  <SectionErrorBoundary sectionCode="SEC_TOP5" sectionTitle={isGlobalEn ? '5. Top-5 Differential KPIs' : '5. Métricas Top-5 Diferenciales'}>
                   <div id="sec_top5" className="post-match-card" style={{ scrollMarginTop: '80px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px', borderBottom: '1.5px solid var(--partidos-border)', paddingBottom: '10px', marginBottom: '14px' }}>
                       <span style={{ background: '#172D21', color: '#D4A843', padding: '4px 10px', borderRadius: '6px', fontSize: '11px', fontWeight: '900' }}>5</span>
@@ -2825,8 +2835,10 @@ const Partidos = () => {
                       </div>
                     </div>
                   </div>
+                  </SectionErrorBoundary>
 
                   {/* ── SECCIÓN 6: MAPAS DE TIROS & MODELO xG-LITE ── */}
+                  <SectionErrorBoundary sectionCode="SEC_SHOTS" sectionTitle={isGlobalEn ? '6. Shot Maps & xG-Lite Model' : '6. Mapas de Tiros y Modelo xG-Lite'}>
                   <div id="sec_shots" className="post-match-card" style={{ scrollMarginTop: '80px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '10px', borderBottom: '1.5px solid var(--partidos-border)', paddingBottom: '10px', marginBottom: '14px' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -2853,8 +2865,10 @@ const Partidos = () => {
                       />
                     </div>
                   </div>
+                  </SectionErrorBoundary>
 
                   {/* ── SECCIÓN 7: CAMPO Y TÁCTICA: SECTORES, ABP Y BLOQUES ── */}
+                  <SectionErrorBoundary sectionCode="SEC_TACTICS" sectionTitle={isGlobalEn ? '7. Field & Tactics (Sectors, Set Pieces & Blocks)' : '7. Campo y Táctica (Pasillos, ABP y Territorio)'}>
                   <div id="sec_tactics" className="post-match-card" style={{ scrollMarginTop: '80px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px', borderBottom: '1.5px solid var(--partidos-border)', paddingBottom: '10px', marginBottom: '14px' }}>
                       <span style={{ background: '#172D21', color: '#D4A843', padding: '4px 10px', borderRadius: '6px', fontSize: '11px', fontWeight: '900' }}>7</span>
@@ -2873,8 +2887,10 @@ const Partidos = () => {
                       />
                     </div>
                   </div>
+                  </SectionErrorBoundary>
 
                   {/* ── SECCIÓN 8: EXIGENCIA & RENDIMIENTO DE PORTERÍA ── */}
+                  <SectionErrorBoundary sectionCode="SEC_GK" sectionTitle={isGlobalEn ? '8. Goalkeeping Exertion & Performance' : '8. Exigencia y Rendimiento de Portería'}>
                   <div id="sec_gk" className="post-match-card" style={{ scrollMarginTop: '80px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px', borderBottom: '1.5px solid var(--partidos-border)', paddingBottom: '10px', marginBottom: '14px' }}>
                       <span style={{ background: '#172D21', color: '#D4A843', padding: '4px 10px', borderRadius: '6px', fontSize: '11px', fontWeight: '900' }}>8</span>
@@ -2917,8 +2933,10 @@ const Partidos = () => {
                       </div>
                     </div>
                   </div>
+                  </SectionErrorBoundary>
 
                   {/* ── SECCIÓN 9: ALINEACIÓN TÁCTICA CON FOTOGRAFÍAS [PROTEGIDA] ── */}
+                  <SectionErrorBoundary sectionCode="SEC_LINEUP" sectionTitle={isGlobalEn ? '9. Tactical Lineup with Photos' : '9. Alineación Táctica con Fotografías'}>
                   <div id="sec_lineup" className="post-match-card" style={{ scrollMarginTop: '80px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '10px', borderBottom: '1.5px solid var(--partidos-border)', paddingBottom: '10px', marginBottom: '14px' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -2970,8 +2988,10 @@ const Partidos = () => {
                       </div>
                     </div>
                   </div>
+                  </SectionErrorBoundary>
 
                   {/* ── SECCIÓN 10: RENDIMIENTO INDIVIDUAL & PLANTILLA ── */}
+                  <SectionErrorBoundary sectionCode="SEC_PLAYERS" sectionTitle={isGlobalEn ? '10. Individual Player Table & Goalkeeping' : '10. Rendimiento Individual y Minutos Oficiales'}>
                   <div id="sec_players" className="post-match-card" style={{ scrollMarginTop: '80px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px', borderBottom: '1.5px solid var(--partidos-border)', paddingBottom: '10px', marginBottom: '14px' }}>
                       <span style={{ background: '#172D21', color: '#D4A843', padding: '4px 10px', borderRadius: '6px', fontSize: '11px', fontWeight: '900' }}>10</span>
@@ -3193,8 +3213,10 @@ const Partidos = () => {
                       </div>
                     </div>
                   </div>
+                  </SectionErrorBoundary>
 
                   {/* ── SECCIÓN 11: MATRIZ DAFO & RECOMENDACIONES ── */}
+                  <SectionErrorBoundary sectionCode="SEC_SWOT" sectionTitle={isGlobalEn ? '11. SWOT Matrix & Recommendations' : '11. Matriz DAFO Trazable y Recomendaciones'}>
                   <div id="sec_swot" className="post-match-card" style={{ scrollMarginTop: '80px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px', borderBottom: '1.5px solid var(--partidos-border)', paddingBottom: '10px', marginBottom: '14px' }}>
                       <span style={{ background: '#172D21', color: '#D4A843', padding: '4px 10px', borderRadius: '6px', fontSize: '11px', fontWeight: '900' }}>11</span>
@@ -3347,6 +3369,7 @@ const Partidos = () => {
                       </button>
                     </div>
                   </div>
+                  </SectionErrorBoundary>
                 </div>
               </div>
             )}

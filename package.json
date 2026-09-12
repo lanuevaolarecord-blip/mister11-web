@@ -6,7 +6,9 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "test": "node scripts/ci-i18n-gate.mjs",
+    "test": "node scripts/ci-i18n-gate.mjs && node scripts/check-circular-deps.mjs && node scripts/test-render-smoke.mjs",
+    "test:smoke": "node scripts/test-render-smoke.mjs",
+    "check:cycles": "node scripts/check-circular-deps.mjs",
     "check-viewport": "node scripts/check-viewport.mjs",
     "check-manifest": "node scripts/check-manifest.mjs",
     "check-i18n": "node scripts/check-i18n.js",

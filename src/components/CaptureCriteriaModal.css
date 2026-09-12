@@ -125,30 +125,72 @@
 }
 
 .criteria-cats-scroll {
-  display: flex;
-  gap: 6px;
+  display: flex !important;
+  align-items: center;
+  gap: 8px;
   overflow-x: auto;
-  padding: 4px 2px;
+  overflow-y: hidden;
+  padding: 6px 4px;
+  width: 100%;
+  box-sizing: border-box;
+  -webkit-overflow-scrolling: touch;
+  scroll-behavior: smooth;
+
+  /* Firefox */
   scrollbar-width: thin;
+  scrollbar-color: rgba(212, 168, 67, 0.4) transparent;
+}
+
+/* Scrollbar WebKit estilizada fina institucional (4px dorada) */
+.criteria-cats-scroll::-webkit-scrollbar {
+  height: 4px;
+}
+
+.criteria-cats-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.criteria-cats-scroll::-webkit-scrollbar-thumb {
+  background: rgba(212, 168, 67, 0.4);
+  border-radius: 4px;
+  transition: background 0.2s ease;
+}
+
+.criteria-cats-scroll::-webkit-scrollbar-thumb:hover {
+  background: rgba(212, 168, 67, 0.85);
 }
 
 .criteria-cat-chip {
+  flex-shrink: 0 !important;
+  min-height: 48px !important;
+  height: 48px;
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
   background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.15);
   color: var(--text-secondary, #CBD5E1);
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 700;
-  padding: 4px 10px;
-  border-radius: 12px;
+  padding: 0 16px;
+  border-radius: 24px;
   white-space: nowrap;
   cursor: pointer;
-  transition: all 0.15s ease;
+  box-sizing: border-box !important;
+  transition: all 0.18s ease;
+}
+
+.criteria-cat-chip:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(212, 168, 67, 0.5);
+  color: #FFFFFF;
 }
 
 .criteria-cat-chip.active {
-  background: #1E3A8A;
-  border-color: #3B82F6;
-  color: #FFFFFF;
+  background: linear-gradient(135deg, #1B3A2D 0%, #152E24 100%);
+  border-color: #D4A843;
+  color: #F8FAFC;
+  box-shadow: 0 2px 8px rgba(212, 168, 67, 0.25);
 }
 
 .criteria-modal-body {

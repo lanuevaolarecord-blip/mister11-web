@@ -146,7 +146,7 @@ export const ZoneEventMap = ({
           position: 'relative',
           width: '100%',
           aspectRatio: '105 / 68',
-          maxHeight: isFullscreen || isTheater ? 'calc(100vh - 220px)' : '480px',
+          maxHeight: isFullscreen || isTheater ? (typeof window !== 'undefined' && window.CSS?.supports?.('height: 100dvh') ? 'calc(100dvh - 220px)' : 'calc(100vh - 220px)') : '480px',
           borderRadius: '12px',
           overflow: 'hidden',
           border: '1.5px solid rgba(255, 255, 255, 0.15)',

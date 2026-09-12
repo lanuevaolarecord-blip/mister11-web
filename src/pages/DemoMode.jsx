@@ -7,6 +7,9 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ShotCaptureModal } from '../components/ShotCaptureModal';
 import { UnattributedEventsManager } from '../components/UnattributedEventsManager';
+import { CaptureCriteriaModal } from '../components/CaptureCriteriaModal';
+import { RadarCompareSVG } from '../components/canonical/RadarCompareSVG.js';
+import SectionErrorBoundary from '../components/common/SectionErrorBoundary';
 import ZoneEventMap from '../components/MatchStats/ZoneEventMap';
 import { getMatchDerivedStatus } from './Partidos';
 import { useLanguage } from '../context/LanguageContext';
@@ -197,6 +200,10 @@ function SesionesView() {
   );
 }
 
+function BuggySection() {
+  throw new Error('Simulated Section Error (Cannot access a before initialization)');
+}
+
 function PartidosView() {
   const { t } = useLanguage();
   const [shotModalOpen, setShotModalOpen] = useState(false);
@@ -245,6 +252,8 @@ function PartidosView() {
     }
   ];
 
+  const [criteriaModalOpen, setCriteriaModalOpen] = useState(false);
+  const [simularErrorRadar, setSimularErrorRadar] = useState(false);
   const [mockUnattributed, setMockUnattributed] = useState([
     { id: 'evt-1', type: 'recovery', minute: 14, timestamp: Date.now() - 40000 },
     { id: 'evt-2', type: 'duel_won', minute: 28, timestamp: Date.now() - 30000 },
@@ -368,6 +377,29 @@ function PartidosView() {
             >
               🎯 Abrir ShotModal (Prueba de Chips)
             </button>
+
+            <button
+              type="button"
+              id="demo-open-criteria-btn"
+              className="livestats-criteria-btn"
+              onClick={() => setCriteriaModalOpen(true)}
+              style={{
+                minHeight: '48px',
+                padding: '10px 18px',
+                borderRadius: '8px',
+                background: '#1B3A2D',
+                color: '#FFFFFF',
+                border: '1.5px solid #D4A843',
+                fontWeight: 800,
+                fontSize: '14px',
+                cursor: 'pointer',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '8px'
+              }}
+            >
+              📖 Manual de Criterios (Filtros Estilizados)
+            </button>
           </div>
 
           <h3 style={{ marginTop: '24px', marginBottom: '12px' }}>📋 Lista de Partidos (Badges Derivados)</h3>
@@ -431,6 +463,24 @@ function PartidosView() {
             >
               📍 Campo & Táctica
             </button>
+            <button
+              type="button"
+              id="demo-tab-radar-btn"
+              className={`sub-tab-btn ${statsSubTab === 'radar' ? 'active' : ''}`}
+              onClick={() => setStatsSubTab('radar')}
+              style={{
+                minHeight: '48px',
+                padding: '8px 16px',
+                borderRadius: '8px',
+                fontWeight: 700,
+                cursor: 'pointer',
+                background: statsSubTab === 'radar' ? '#1B3A2D' : '#e2e8f0',
+                color: statsSubTab === 'radar' ? '#ffffff' : '#333333',
+                border: 'none'
+              }}
+            >
+              🕸️ Radar Comparativo (6 Ejes)
+            </button>
           </div>
 
           {statsSubTab === 'tactical' && (
@@ -439,6 +489,45 @@ function PartidosView() {
                 events={mockEventsForZone}
                 t={t}
               />
+            </div>
+          )}
+
+          {statsSubTab === 'radar' && (
+            <div>
+              <div style={{ marginBottom: '12px', display: 'flex', gap: '8px' }}>
+                <button
+                  type="button"
+                  id="demo-toggle-radar-error-btn"
+                  onClick={() => setSimularErrorRadar(prev => !prev)}
+                  style={{
+                    minHeight: '40px',
+                    padding: '6px 14px',
+                    borderRadius: '6px',
+                    background: simularErrorRadar ? '#EF4444' : 'rgba(255,255,255,0.08)',
+                    color: '#FFFFFF',
+                    border: '1px solid rgba(255,255,255,0.2)',
+                    fontSize: '12px',
+                    fontWeight: 700,
+                    cursor: 'pointer'
+                  }}
+                >
+                  🧪 {simularErrorRadar ? 'Restaurar Radar Normal' : 'Simular Fallo Aislado en Sección'}
+                </button>
+              </div>
+
+              <SectionErrorBoundary sectionCode="SEC_RADAR" sectionTitle="4. Radar Comparativo Propio vs Rival (6 Ejes)">
+                {simularErrorRadar ? <BuggySection /> : (
+                  <div id="sec_radar" className="post-match-card" style={{ padding: '16px', background: 'rgba(255,255,255,0.03)', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.1)' }}>
+                    <RadarCompareSVG
+                      homeStats={{ posesion: 58, tiros: 12, tirosPuerta: 6, corners: 5, faltas: 8, amarillas: 1, duelosGanados: 54, expectedGoals: 1.85 }}
+                      awayStats={{ posesion: 42, tiros: 7, tirosPuerta: 4, corners: 3, faltas: 14, amarillas: 3, duelosGanados: 46, expectedGoals: 0.95 }}
+                      homeTeamName={DEMO_TEAM.nombre}
+                      awayTeamName={DEMO_NEXT_MATCH.rival}
+                      isEn={false}
+                    />
+                  </div>
+                )}
+              </SectionErrorBoundary>
             </div>
           )}
         </div>
@@ -459,6 +548,12 @@ function PartidosView() {
         events={mockUnattributed}
         onAttributeEvents={handleSaveAttribution}
         playersList={DEMO_PLAYERS}
+      />
+
+      <CaptureCriteriaModal
+        isOpen={criteriaModalOpen}
+        onClose={() => setCriteriaModalOpen(false)}
+        isEn={false}
       />
     </div>
   );

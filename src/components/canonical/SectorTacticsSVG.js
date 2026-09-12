@@ -139,12 +139,10 @@ export function renderSectorTacticsSvgString({
 
 export default function SectorTacticsSVG(props) {
   const svgMarkup = renderSectorTacticsSvgString(props);
-  return (
-    <div
-      className="m11-canonical-sectortactics-container"
-      style={{ width: '100%', overflowX: 'auto', display: 'flex', justifyContent: 'center' }}
-      dangerouslySetInnerHTML={{ __html: svgMarkup }}
-    />
-  );
+  return React.createElement('div', {
+    className: 'm11-canonical-sectortactics-container',
+    style: { width: '100%', overflowX: 'auto', display: 'flex', justifyContent: 'center' },
+    dangerouslySetInnerHTML: { __html: svgMarkup }
+  });
 }
 export { SectorTacticsSVG };

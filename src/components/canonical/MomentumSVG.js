@@ -155,13 +155,11 @@ export function renderMomentumSvgString({
 
 export const MomentumSVG = (props) => {
   const svgString = renderMomentumSvgString(props);
-  return (
-    <div
-      className="canonical-svg-wrapper momentum-svg-wrapper"
-      style={{ width: '100%', overflowX: 'auto', display: 'flex', justifyContent: 'center' }}
-      dangerouslySetInnerHTML={{ __html: svgString }}
-    />
-  );
+  return React.createElement('div', {
+    className: 'canonical-svg-wrapper momentum-svg-wrapper',
+    style: { width: '100%', overflowX: 'auto', display: 'flex', justifyContent: 'center' },
+    dangerouslySetInnerHTML: { __html: svgString }
+  });
 };
 
 export default MomentumSVG;

@@ -12,6 +12,7 @@
  */
 
 import React from 'react';
+import { computeRadarAxes } from '../../config/radarConfig.js';
 
 export function renderRadarCompareSvgString({
   events = [],
@@ -22,85 +23,22 @@ export function renderRadarCompareSvgString({
   isEn = false,
   width = 540,
   height = 290
-}) {
+} = {}) {
   const safeHome = String(homeTeamName || (isEn ? 'Home' : 'Local')).trim();
   const safeAway = String(awayTeamName || (isEn ? 'Away' : 'Rival')).trim();
-  const evts = Array.isArray(events) ? events.filter(Boolean) : [];
 
-  // Calcular métricas derivadas si no se pasan en homeStats/awayStats
-  const count = (types) => {
-    const arr = Array.isArray(types) ? types : [types];
-    return evts.filter(e => e && arr.includes(e.type)).length;
-  };
-
-  const ownShotsOn = homeStats.tirosPuerta ?? count(['shot_on_target_own', 'shot_on_target', 'gol_local', 'gol']);
-  const rivalShotsOn = awayStats.tirosPuerta ?? count(['shot_on_target_rival', 'gol_rival']);
-
-  const ownDuels = homeStats.duelosGanados ?? count(['duel_won', 'duelo_ganado', 'recovery', 'recuperacion']);
-  const rivalDuels = awayStats.duelosGanados ?? count(['duel_lost', 'duelo_perdido']);
-
-  const ownFouls = homeStats.faltas ?? count(['foul_against', 'falta_contra', 'foul', 'falta']);
-  const rivalFouls = awayStats.faltas ?? count(['foul_favor', 'falta_favor']);
-
-  const ownCards = (homeStats.amarillas ?? count(['card_yellow_own', 'card_own', 'amarilla'])) + (count(['card_red_own', 'roja']) * 2);
-  const rivalCards = (awayStats.amarillas ?? count(['card_yellow_rival', 'card_rival'])) + (count(['card_red_rival']) * 2);
-
-  const ownCorners = homeStats.corners ?? count(['corner_favor', 'corner_own']);
-  const rivalCorners = awayStats.corners ?? count(['corner_against', 'corner_rival']);
-
-  const ownXg = Number(homeStats.xg ?? 1.2);
-  const rivalXg = Number(awayStats.xg ?? 0.8);
-
-  // Normalización a escala 0-100
-  const axes = [
-    {
-      label: isEn ? 'Shots on Target' : 'Tiros a Puerta',
-      homeVal: Math.min(100, Math.max(10, Math.round((ownShotsOn / 8) * 100))),
-      awayVal: Math.min(100, Math.max(10, Math.round((rivalShotsOn / 8) * 100))),
-      homeRaw: ownShotsOn,
-      awayRaw: rivalShotsOn
-    },
-    {
-      label: isEn ? 'Duels / Possession' : 'Duelos / Posesión',
-      homeVal: Math.min(100, Math.max(10, Math.round((ownDuels / 12) * 100))),
-      awayVal: Math.min(100, Math.max(10, Math.round((rivalDuels / 12) * 100))),
-      homeRaw: ownDuels,
-      awayRaw: rivalDuels
-    },
-    {
-      label: isEn ? 'Foul Control' : 'Control Faltas',
-      homeVal: Math.min(100, Math.max(10, 100 - Math.min(90, ownFouls * 7))),
-      awayVal: Math.min(100, Math.max(10, 100 - Math.min(90, rivalFouls * 7))),
-      homeRaw: ownFouls,
-      awayRaw: rivalFouls
-    },
-    {
-      label: isEn ? 'Discipline' : 'Disciplina',
-      homeVal: Math.min(100, Math.max(10, 100 - Math.min(90, ownCards * 20))),
-      awayVal: Math.min(100, Math.max(10, 100 - Math.min(90, rivalCards * 20))),
-      homeRaw: ownCards,
-      awayRaw: rivalCards
-    },
-    {
-      label: isEn ? 'Corners (SP)' : 'Córners (ABP)',
-      homeVal: Math.min(100, Math.max(10, Math.round((ownCorners / 8) * 100))),
-      awayVal: Math.min(100, Math.max(10, Math.round((rivalCorners / 8) * 100))),
-      homeRaw: ownCorners,
-      awayRaw: rivalCorners
-    },
-    {
-      label: isEn ? 'xG Production' : 'Producción xG',
-      homeVal: Math.min(100, Math.max(10, Math.round((ownXg / 2.5) * 100))),
-      awayVal: Math.min(100, Math.max(10, Math.round((rivalXg / 2.5) * 100))),
-      homeRaw: ownXg.toFixed(1),
-      awayRaw: rivalXg.toFixed(1)
-    }
-  ];
+  // Cálculo resiliente y puro de los 6 ejes canónicos mediante radarConfig.js
+  const axes = computeRadarAxes({
+    homeStats,
+    awayStats,
+    events,
+    isEn
+  });
 
   const cX = width / 2;
   const cY = height / 2 + 10;
   const radius = Math.min(95, height / 2 - 35);
-  const totalAxes = axes.length;
+  const totalAxes = axes.length || 6;
 
   // Círculos/polígonos concéntricos de referencia (20, 40, 60, 80, 100)
   const levels = [0.2, 0.4, 0.6, 0.8, 1.0];
@@ -182,13 +120,22 @@ export function renderRadarCompareSvgString({
   <!-- Polígono Propio (Verde Esmeralda) -->
   <polygon points="${homePoints}" fill="rgba(16, 185, 129, 0.35)" stroke="#10B981" stroke-width="2" />
 
-  <!-- Vértices con puntos resaltados -->
+  <!-- Vértices con puntos resaltados (Local - Verde) -->
   ${axes.map((a, i) => {
     const angle = (Math.PI * 2 / totalAxes) * i - Math.PI / 2;
     const hr = (a.homeVal / 100) * radius;
     const hx = cX + Math.cos(angle) * hr;
-    const hy = cY + Math.sin(angle) * hy;
+    const hy = cY + Math.sin(angle) * hr;
     return `<circle cx="${hx.toFixed(1)}" cy="${hy.toFixed(1)}" r="3" fill="#10B981" stroke="#FFFFFF" stroke-width="0.8" />`;
+  }).join('')}
+
+  <!-- Vértices con puntos resaltados (Rival - Rojo) -->
+  ${axes.map((a, i) => {
+    const angle = (Math.PI * 2 / totalAxes) * i - Math.PI / 2;
+    const ar = (a.awayVal / 100) * radius;
+    const ax = cX + Math.cos(angle) * ar;
+    const ay = cY + Math.sin(angle) * ar;
+    return `<circle cx="${ax.toFixed(1)}" cy="${ay.toFixed(1)}" r="2.5" fill="#EF4444" stroke="#FFFFFF" stroke-width="0.6" />`;
   }).join('')}
 </svg>
   `.trim();
@@ -196,13 +143,11 @@ export function renderRadarCompareSvgString({
 
 export const RadarCompareSVG = (props) => {
   const svgString = renderRadarCompareSvgString(props);
-  return (
-    <div
-      className="canonical-svg-wrapper radar-compare-svg-wrapper"
-      style={{ width: '100%', overflowX: 'auto', display: 'flex', justifyContent: 'center' }}
-      dangerouslySetInnerHTML={{ __html: svgString }}
-    />
-  );
+  return React.createElement('div', {
+    className: 'canonical-svg-wrapper radar-compare-svg-wrapper',
+    style: { width: '100%', overflowX: 'auto', display: 'flex', justifyContent: 'center' },
+    dangerouslySetInnerHTML: { __html: svgString }
+  });
 };
 
 export default RadarCompareSVG;

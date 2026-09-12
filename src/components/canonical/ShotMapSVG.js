@@ -192,13 +192,11 @@ export function renderShotMapSvgString({
 
 export const ShotMapSVG = (props) => {
   const svgString = renderShotMapSvgString(props);
-  return (
-    <div
-      className="canonical-svg-wrapper shot-map-svg-wrapper"
-      style={{ width: '100%', overflowX: 'auto', display: 'flex', justifyContent: 'center' }}
-      dangerouslySetInnerHTML={{ __html: svgString }}
-    />
-  );
+  return React.createElement('div', {
+    className: 'canonical-svg-wrapper shot-map-svg-wrapper',
+    style: { width: '100%', overflowX: 'auto', display: 'flex', justifyContent: 'center' },
+    dangerouslySetInnerHTML: { __html: svgString }
+  });
 };
 
 export default ShotMapSVG;

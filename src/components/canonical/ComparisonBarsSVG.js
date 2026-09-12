@@ -131,13 +131,11 @@ export function renderComparisonBarsSvgString({
 
 export const ComparisonBarsSVG = (props) => {
   const svgString = renderComparisonBarsSvgString(props);
-  return (
-    <div
-      className="canonical-svg-wrapper comparison-bars-svg-wrapper"
-      style={{ width: '100%', overflowX: 'auto', display: 'flex', justifyContent: 'center' }}
-      dangerouslySetInnerHTML={{ __html: svgString }}
-    />
-  );
+  return React.createElement('div', {
+    className: 'canonical-svg-wrapper comparison-bars-svg-wrapper',
+    style: { width: '100%', overflowX: 'auto', display: 'flex', justifyContent: 'center' },
+    dangerouslySetInnerHTML: { __html: svgString }
+  });
 };
 
 export default ComparisonBarsSVG;

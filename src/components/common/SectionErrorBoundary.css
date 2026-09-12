@@ -1,0 +1,86 @@
+/* src/components/common/SectionErrorBoundary.css */
+
+.section-error-card {
+  background: var(--bg-card, #0F172A);
+  border: 1.5px solid rgba(245, 158, 11, 0.4);
+  border-radius: 12px;
+  padding: 20px;
+  margin: 14px 0;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  box-sizing: border-box;
+  animation: fadeIn 0.2s ease-out;
+}
+
+.section-error-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.section-error-icon {
+  font-size: 26px;
+  line-height: 1;
+}
+
+.section-error-titles {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.section-error-title {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 800;
+  color: #F59E0B;
+}
+
+.section-error-badge {
+  font-size: 11px;
+  font-weight: 700;
+  color: #94A3B8;
+  letter-spacing: 0.04em;
+}
+
+.section-error-desc {
+  margin: 0;
+  font-size: 13px;
+  color: var(--text-secondary, #CBD5E1);
+  line-height: 1.45;
+}
+
+.section-error-actions {
+  display: flex;
+  justify-content: flex-start;
+  margin-top: 4px;
+}
+
+.section-error-retry-btn {
+  min-height: 48px;
+  min-width: 120px;
+  padding: 0 20px;
+  border-radius: 8px;
+  background: rgba(245, 158, 11, 0.15);
+  border: 1px solid rgba(245, 158, 11, 0.4);
+  color: #F59E0B;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: all 0.15s ease;
+}
+
+.section-error-retry-btn:hover {
+  background: rgba(245, 158, 11, 0.25);
+  border-color: #F59E0B;
+}
+
+.section-error-retry-btn:active {
+  transform: scale(0.98);
+}

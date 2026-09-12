@@ -252,14 +252,16 @@ export function evaluateSwotRules(matchData = {}, events = [], calledPlayers = [
   };
 }
 
+export const EXERCISE_PATTERNS_REGEX = /\b(ejercicio|comod[ií]n|comodines|series|repeticiones|\d+\s*x\s*\d+\s*m|###\s*ejercicios|objetivo:\s*\*\*\s*mantener|drill|neutral player|sets and reps)\b/i;
+
 /**
  * Genera el resumen táctico mediante IA (Groq vía /api/ia-generate) con LANGUAGE LOCK estricto.
  * Recibe EXCLUSIVAMENTE los ítems derivados y textos de reglas.
  */
 export function buildSwotAiPrompt(swotQuadrants = {}, isEn = false, teamName = 'Mi Equipo') {
   const langDirective = isEn
-    ? 'CRITICAL INSTRUCTION: You MUST write 100% in English. Never use Spanish words. Strictly produce a professional tactical post-match summary based ONLY on the provided derived items.'
-    : 'INSTRUCCIÓN CRÍTICA: Debes escribir 100% en español profesional. No inventes métricas. Redacta una síntesis táctica basada EXCLUSIVAMENTE en los ítems DAFO derivados.';
+    ? 'CRITICAL INSTRUCTION: You are a technical writer. Summarize ONLY the provided SWOT items, in English, without adding exercises, drills, sets, reps, dimensions or advice not present in the items. Output exactly one coherent, objective technical paragraph.'
+    : 'INSTRUCCIÓN CRÍTICA: Eres un redactor técnico. Resume SOLO los ítems DAFO proporcionados, en español, sin añadir ejercicios, drills, series, repeticiones, dimensiones ni consejos no presentes en los ítems. Redacta un párrafo técnico fiel y conciso.';
 
   const sList = (swotQuadrants.strengths || []).map(i => `- ${i.text}`).join('\n');
   const wList = (swotQuadrants.weaknesses || []).map(i => `- ${i.text}`).join('\n');
@@ -282,14 +284,38 @@ ${oList || (isEn ? 'None recorded' : 'Ninguna registrada')}
 [THREATS]:
 ${tList || (isEn ? 'None recorded' : 'Ninguna registrada')}
 
-Write exactly two concise, coherent tactical paragraphs:
-1. Match diagnostics summarizing the key strengths and vulnerabilities.
-2. Immediate training recommendations for the upcoming weekly sessions.
-Do not output markdown headings like # or ##. Do not output reasoning or analysis steps.`;
+Write exactly one concise, fluid technical summary paragraph reflecting ONLY these items.
+Do not invent any exercise, drill, rondo, dimensions, sets or reps. Do not output markdown headings like # or ##.`;
 }
 
 /**
- * Invoca la IA para redactar el resumen táctico con fallback determinista.
+ * Genera el resumen plantillado determinista por reglas que concatena los ítems con conectores.
+ */
+export function generateDeterministicSwotSummary(translatedQuadrants, isEn = false) {
+  const s = (translatedQuadrants.strengths || []).map(i => i.text).filter(Boolean);
+  const w = (translatedQuadrants.weaknesses || []).map(i => i.text).filter(Boolean);
+  const o = (translatedQuadrants.opportunities || []).map(i => i.text).filter(Boolean);
+  const t = (translatedQuadrants.threats || []).map(i => i.text).filter(Boolean);
+
+  if (isEn) {
+    const parts = [];
+    if (s.length > 0) parts.push(`The team demonstrated solid strengths: ${s.join(' ')}`);
+    if (w.length > 0) parts.push(`Key areas requiring tactical refinement include: ${w.join(' ')}`);
+    if (t.length > 0) parts.push(`Vulnerabilities to neutralize: ${t.join(' ')}`);
+    if (o.length > 0) parts.push(`Identified opportunities: ${o.join(' ')}`);
+    return parts.join(' ') || 'The match metrics reflect a balanced performance without significant anomalies across quadrants.';
+  }
+
+  const parts = [];
+  if (s.length > 0) parts.push(`Como principales fortalezas, el equipo mostró: ${s.join(' ')}`);
+  if (w.length > 0) parts.push(`En cuanto a debilidades a corregir, se observó: ${w.join(' ')}`);
+  if (t.length > 0) parts.push(`Amenazas directas a neutralizar: ${t.join(' ')}`);
+  if (o.length > 0) parts.push(`Oportunidades a potenciar: ${o.join(' ')}`);
+  return parts.join(' ') || 'Las métricas del partido reflejan un desempeño equilibrado sin anomalías cuantitativas destacadas.';
+}
+
+/**
+ * Invoca la IA para redactar el resumen táctico con validador de salida y fallback determinista.
  */
 export async function generateSwotAiSummary({
   swotQuadrants = {},
@@ -305,10 +331,7 @@ export async function generateSwotAiSummary({
     threats: (swotQuadrants.threats || []).map(i => ({ ...i, text: t(i.textKey) || i.textKey })),
   };
 
-  // Fallback determinista limpio
-  const fallbackText = isEn
-    ? `TACTICAL DIAGNOSTIC: The team demonstrated clear strengths (${translatedQuadrants.strengths.map(s => s.text).join(' ')}), while needing to address key tactical points (${translatedQuadrants.weaknesses.map(w => w.text).join(' ')}).\n\nTARGER PRIORITIES: Focus weekly training on proactive defensive organization and refining attacking execution.`
-    : `DIAGNÓSTICO TÁCTICO: El equipo mostró fortalezas determinantes (${translatedQuadrants.strengths.map(s => s.text).join(' ')}), requiriendo corrección en aspectos clave (${translatedQuadrants.weaknesses.map(w => w.text).join(' ')}).\n\nPRIORIDADES DE TRABAJO: Enfatizar en los entrenamientos semanales la contención defensiva y la toma de decisiones en el último tercio.`;
+  const fallbackText = generateDeterministicSwotSummary(translatedQuadrants, isEn);
 
   try {
     const prompt = buildSwotAiPrompt(translatedQuadrants, isEn, teamName);
@@ -316,28 +339,38 @@ export async function generateSwotAiSummary({
       ? 'https://www.mister11.app/api/ia-generate'
       : '/api/ia-generate';
 
-    const res = await fetch(endpoint, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        prompt,
-        lang: isEn ? 'en' : 'es'
-      })
-    });
+    const callApi = async (p) => {
+      const res = await fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          prompt: p,
+          lang: isEn ? 'en' : 'es',
+          mode: 'swot'
+        })
+      });
+      if (!res.ok) return null;
+      const data = await res.json();
+      let text = data?.result;
+      if (!text || typeof text !== 'string') return null;
+      text = text.replace(/<think>[\s\S]*?<\/think>/gi, '').replace(/<\/?think>/gi, '').replace(/^#+\s+/gm, '').trim();
+      return text;
+    };
 
-    if (!res.ok) {
+    let text = await callApi(prompt);
+
+    // Validador de salida anti-drills con reintento único
+    if (text && EXERCISE_PATTERNS_REGEX.test(text)) {
+      console.warn('[generateSwotAiSummary] Patrón de ejercicio detectado en salida IA. Reintentando...');
+      const retryPrompt = `${prompt}\n\nCORRECCIÓN CRÍTICA: Prohibido incluir ejercicios, drills, series, repeticiones o dimensiones. Resume EXCLUSIVAMENTE los ítems DAFO.`;
+      text = await callApi(retryPrompt);
+    }
+
+    if (!text || EXERCISE_PATTERNS_REGEX.test(text) || text.length < 20) {
       return fallbackText;
     }
 
-    const data = await res.json();
-    let text = data?.result;
-    if (!text || typeof text !== 'string') {
-      return fallbackText;
-    }
-
-    // Limpieza de etiquetas think y preámbulos
-    text = text.replace(/<think>[\s\S]*?<\/think>/gi, '').replace(/<\/?think>/gi, '').trim();
-    return text || fallbackText;
+    return text;
   } catch (err) {
     console.warn('[generateSwotAiSummary] Error invocando IA, usando fallback determinista:', err);
     return fallbackText;

@@ -1,19 +1,104 @@
 /**
  * src/components/canonical/ShotMapSVG.js
- * Míster11 — Renderizador Canónico de Mapa de Tiros y xG (App + PDF)
+ * Míster11 — Renderizador Canónico de Mapa de Tiros Profesional 105:68 (App + PDF)
  *
  * Paleta Oficial Tierra y Campo:
- *  - Fondo institucional: #1B3A2D
  *  - Césped Táctico: #152C22
- *  - Tiros Propios a Puerta: #4CAF7D
- *  - Goles: #D4A843
- *  - Tiros Fuera / Bloqueados: #A3B5AD / #64748B
- *  - Tiros Rivales: #EF4444
- *  - Tipografía: #F2EDE4
+ *  - Goles: #D4A843 (halo blanco + sombra)
+ *  - A puerta: #4CAF7D
+ *  - Fuera / Bloqueado: #94A3B8 (gris neutro)
+ *  - Tiros Rivales: #EF4444 (espejado a la portería que ataca)
+ *  - Proporción Reglamentaria 105:68 (viewBox 0 0 1050 680, 1.544:1)
+ *  - Cero números o textos de xG dentro de los puntos
+ *  - Jitter determinista con anti-colisión
  */
 
 import React from 'react';
 import { CHART_THEME } from '../../config/chartTheme.js';
+import { getPitchFrameSvgMarkup } from './pitchMarkup.js';
+
+function hashString(str) {
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    hash = (hash << 5) - hash + str.charCodeAt(i);
+    hash |= 0;
+  }
+  return Math.abs(hash);
+}
+
+export function resolveShotCollisions(shots, pitchW = 1000, pitchH = 630, pitchX = 25, pitchY = 25) {
+  const items = shots.map((s, idx) => {
+    const isRival = s.team === 'rival' || String(s.type || '').includes('rival') || s.isRival === true;
+    const isGoal = s.outcome === 'goal' || s.isGoal || String(s.type || '').startsWith('gol') || String(s.type || '').startsWith('goal');
+    const isOnTarget = isGoal || s.outcome === 'on_target' || String(s.type || '').includes('on_target') || String(s.type || '').includes('puerta');
+
+    const xgVal = Number(s.xG ?? s.xg ?? 0.15);
+    // Radio proporcional al xG: 6px (mínimo) a 16px (máximo)
+    const radius = Math.max(6, Math.min(16, Math.round(6 + Math.min(1, xgVal) * 10)));
+
+    let normX = typeof s.x === 'number' ? s.x : (isRival ? 18 : 82);
+    let normY = typeof s.y === 'number' ? s.y : 50;
+
+    // Rival ataca hacia la portería izquierda (espejado)
+    if (isRival && normX > 50) {
+      normX = 100 - normX;
+    }
+
+    const seed = hashString(String(s.id || idx) + (s.minute || '0'));
+    const jitterAngle = (seed % 360) * (Math.PI / 180);
+    const jitterDist = ((seed % 10) / 10) * 10;
+
+    let x = pitchX + (Math.max(5, Math.min(95, normX)) / 100) * pitchW + Math.cos(jitterAngle) * jitterDist;
+    let y = pitchY + (Math.max(6, Math.min(94, normY)) / 100) * pitchH + Math.sin(jitterAngle) * jitterDist;
+
+    return {
+      ...s,
+      idx,
+      isRival,
+      isGoal,
+      isOnTarget,
+      radius,
+      x,
+      y
+    };
+  });
+
+  // Relajación anti-colisión determinista (mínimo = r1 + r2 + 2px)
+  for (let iter = 0; iter < 15; iter++) {
+    let moved = false;
+    for (let i = 0; i < items.length; i++) {
+      for (let j = i + 1; j < items.length; j++) {
+        const a = items[i];
+        const b = items[j];
+        const dx = b.x - a.x;
+        const dy = b.y - a.y;
+        const dist = Math.hypot(dx, dy);
+        const minDist = a.radius + b.radius + 3;
+
+        if (dist < minDist) {
+          const overlap = (minDist - dist) / 2;
+          const nx = dist === 0 ? 1 : dx / dist;
+          const ny = dist === 0 ? 0 : dy / dist;
+
+          a.x -= nx * overlap;
+          a.y -= ny * overlap;
+          b.x += nx * overlap;
+          b.y += ny * overlap;
+
+          a.x = Math.max(pitchX + a.radius + 4, Math.min(pitchX + pitchW - a.radius - 4, a.x));
+          a.y = Math.max(pitchY + a.radius + 4, Math.min(pitchY + pitchH - a.radius - 4, a.y));
+          b.x = Math.max(pitchX + b.radius + 4, Math.min(pitchX + pitchW - b.radius - 4, b.x));
+          b.y = Math.max(pitchY + b.radius + 4, Math.min(pitchY + pitchH - b.radius - 4, b.y));
+
+          moved = true;
+        }
+      }
+    }
+    if (!moved) break;
+  }
+
+  return items;
+}
 
 export function renderShotMapSvgString({
   shots = [],
@@ -23,8 +108,8 @@ export function renderShotMapSvgString({
   awayTeamName = 'Rival',
   isEn = false,
   isDark = true,
-  width = 660,
-  height = 240
+  width = 1050,
+  height = 680
 }) {
   const theme = isDark ? CHART_THEME.dark : CHART_THEME.light;
   const safeShots = Array.isArray(shots) ? shots.filter(Boolean) : [];
@@ -33,141 +118,132 @@ export function renderShotMapSvgString({
   const safeHome = String(homeTeamName || (isEn ? 'Home' : 'Local')).trim();
   const safeAway = String(awayTeamName || (isEn ? 'Away' : 'Rival')).trim();
 
-  // Dimensiones del campo dentro del SVG
-  const padX = 14;
-  const padY = 36;
-  const pW = width - padX * 2;
-  const pH = height - padY - 24;
+  // Resolver tiros con jitter determinista y anti-colisión sobre el marco 1050x680
+  const resolvedShots = resolveShotCollisions(safeShots, 1000, 630, 25, 25);
 
-  // Franjas de césped (10 franjas alternadas)
-  const stripeWidth = pW / 10;
-  const stripes = Array.from({ length: 10 }).map((_, i) => {
-    const fill = i % 2 === 0 ? 'rgba(0, 0, 0, 0.08)' : 'rgba(255, 255, 255, 0.02)';
-    return `<rect x="${padX + i * stripeWidth}" y="${padY}" width="${stripeWidth}" height="${pH}" fill="${fill}" />`;
-  }).join('');
+  // Conteos para la leyenda
+  let countGoals = 0;
+  let countOnTarget = 0;
+  let countOffTarget = 0;
+  let countRival = 0;
 
-  // Pasillos tácticos verticales (33% y 66%)
-  const corridor1 = padX + pW * 0.33;
-  const corridor2 = padX + pW * 0.66;
-
-  // Marcadores de tiro
-  const shotMarkers = safeShots.map((s, idx) => {
-    const isRival = s.team === 'rival' || String(s.type || '').includes('rival') || s.isRival === true;
-    const isGoal = s.outcome === 'goal' || s.isGoal || String(s.type || '').startsWith('gol') || String(s.type || '').startsWith('goal');
-    const isOnTarget = isGoal || s.outcome === 'on_target' || String(s.type || '').includes('on_target') || String(s.type || '').includes('puerta');
-
-    // Mapeo de coordenadas (x: 0-100 largo campo, y: 0-100 ancho campo)
-    let sx = typeof s.x === 'number' ? s.x : (isRival ? 25 : 75);
-    let sy = typeof s.y === 'number' ? s.y : 50;
-
-    const posX = padX + (Math.max(4, Math.min(96, sx)) / 100) * pW;
-    const posY = padY + (Math.max(4, Math.min(96, sy)) / 100) * pH;
-
-    // Colores según resultado y comodidad
-    const comfort = s.shooterComfort || 'normal';
-    let dotFill = theme.teamHome; // On target propio
-    let dotStroke = '#FFFFFF';
-    let radius = isGoal ? 6 : 4;
-
-    if (isRival) {
-      dotFill = isGoal ? theme.teamAway : '#F97316';
-      dotStroke = '#7F1D1D';
+  resolvedShots.forEach(s => {
+    if (s.isRival) {
+      countRival++;
+    } else if (s.isGoal) {
+      countGoals++;
+    } else if (s.isOnTarget) {
+      countOnTarget++;
     } else {
-      if (isGoal) {
-        dotFill = theme.gold;
-        dotStroke = '#FFFFFF';
-      } else if (!isOnTarget) {
-        dotFill = theme.textMuted;
-        dotStroke = 'rgba(255,255,255,0.4)';
-      }
+      countOffTarget++;
+    }
+  });
+
+  const shotMarkersSvg = resolvedShots.map((s) => {
+    let dotFill = theme.teamHome;
+    let dotStroke = '#FFFFFF';
+
+    if (s.isRival) {
+      dotFill = theme.teamAway; // #EF4444
+    } else if (s.isGoal) {
+      dotFill = theme.gold; // #D4A843
+    } else if (!s.isOnTarget) {
+      dotFill = '#94A3B8'; // Gris neutro
     }
 
-    const comfortRing = comfort === 'comodo'
-      ? `<circle cx="${posX.toFixed(1)}" cy="${posY.toFixed(1)}" r="${(radius + 2.5).toFixed(1)}" fill="none" stroke="${theme.gold}" stroke-width="1.2" stroke-dasharray="2 1" />`
+    const comfortRing = s.shooterComfort === 'comodo'
+      ? `<circle cx="${s.x.toFixed(1)}" cy="${s.y.toFixed(1)}" r="${(s.radius + 3).toFixed(1)}" fill="none" stroke="${theme.gold}" stroke-width="1.8" stroke-dasharray="3 2" />`
       : '';
 
-    const labelText = isGoal ? '⚽' : (s.xG !== undefined ? Number(s.xG).toFixed(2) : '');
-    const labelSvg = labelText ? `
-      <text x="${posX.toFixed(1)}" y="${(posY - radius - 2).toFixed(1)}" text-anchor="middle" fill="#FFFFFF" font-size="7" font-weight="800" font-family="Arial, sans-serif" stroke="#000000" stroke-width="0.3" style="paint-order: stroke fill;">${labelText}</text>
-    ` : '';
+    const goalRing = s.isGoal
+      ? `<circle cx="${s.x.toFixed(1)}" cy="${s.y.toFixed(1)}" r="${(s.radius + 4.5).toFixed(1)}" fill="none" stroke="${theme.gold}" stroke-width="2.2" />`
+      : '';
 
     return `
-      <g key="shot-${idx}">
+      <g key="shot-${s.idx}">
         ${comfortRing}
-        <circle cx="${posX.toFixed(1)}" cy="${posY.toFixed(1)}" r="${radius}" fill="${dotFill}" stroke="${dotStroke}" stroke-width="1.2" />
-        ${labelSvg}
+        ${goalRing}
+        <!-- Halo blanco 2px + punto limpio sin texto encima -->
+        <circle cx="${s.x.toFixed(1)}" cy="${s.y.toFixed(1)}" r="${(s.radius + 1.8).toFixed(1)}" fill="#FFFFFF" opacity="0.9" />
+        <circle cx="${s.x.toFixed(1)}" cy="${s.y.toFixed(1)}" r="${s.radius}" fill="${dotFill}" stroke="${dotStroke}" stroke-width="1.2" />
       </g>
     `;
   }).join('');
 
-  return `
-<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">
-  <!-- Fondo Contenedor Institucional Tierra y Campo -->
-  <rect x="0" y="0" width="${width}" height="${height}" fill="${theme.bgCard}" rx="10" stroke="${theme.border}" stroke-width="1" />
+  const pitchMarkings = getPitchFrameSvgMarkup({
+    isDark,
+    showTacticalCorridors: true,
+    showGoals: true,
+    showStripes: true,
+    corridorsLabel: true,
+    isEn
+  });
 
-  <!-- Cabecera Superior -->
-  <text x="14" y="20" fill="${theme.gold}" font-size="11.5" font-weight="800" font-family="Arial, sans-serif">
-    ${isEn ? '🎯 SHOT MAPS & xG-LITE MODEL' : '🎯 MAPA DE TIROS & MODELO xG-LITE'}
+  const titleText = isEn
+    ? 'TARGET SHOT MAPS &amp; xG-LITE MODEL'
+    : 'MAPA DE TIROS Y MODELO xG-LITE';
+
+  return `
+<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 1050 680" preserveAspectRatio="xMidYMid meet">
+  <!-- Fondo y Marcado Canónico 105:68 -->
+  <g id="pitch-base">
+    ${pitchMarkings}
+  </g>
+
+  <!-- Puntos de Remates sin texto encima y con anti-colisión -->
+  <g id="shot-markers">
+    ${shotMarkersSvg}
+  </g>
+
+  <!-- Barra Superior: Título y Badges de xG sin colisión -->
+  <rect x="25" y="8" width="1000" height="34" fill="rgba(21, 44, 34, 0.9)" rx="6" stroke="rgba(212, 168, 67, 0.4)" stroke-width="1" />
+  <text x="40" y="30" fill="${theme.gold}" font-size="14" font-weight="900" font-family="Arial, sans-serif" letter-spacing="0.5">
+    🎯 ${titleText}
   </text>
-  
-  <!-- Badges de xG sin colisión -->
-  <rect x="${width - 230}" y="8" width="105" height="18" fill="rgba(76, 175, 125, 0.2)" stroke="${theme.teamHome}" stroke-width="0.8" rx="4" />
-  <text x="${width - 178}" y="20" text-anchor="middle" fill="${theme.teamHome}" font-size="8.5" font-weight="800" font-family="Arial, sans-serif">
+
+  <!-- Badges xG -->
+  <rect x="740" y="14" width="135" height="22" fill="rgba(76, 175, 125, 0.25)" stroke="${theme.teamHome}" stroke-width="1" rx="4" />
+  <text x="807" y="29" text-anchor="middle" fill="${theme.teamHome}" font-size="11" font-weight="800" font-family="Arial, sans-serif">
     ${safeHome.slice(0, 10)} xG: ${safeOwnXg}
   </text>
 
-  <rect x="${width - 118}" y="8" width="105" height="18" fill="rgba(239, 68, 68, 0.2)" stroke="${theme.teamAway}" stroke-width="0.8" rx="4" />
-  <text x="${width - 66}" y="20" text-anchor="middle" fill="${theme.teamAway}" font-size="8.5" font-weight="800" font-family="Arial, sans-serif">
+  <rect x="885" y="14" width="130" height="22" fill="rgba(239, 68, 68, 0.25)" stroke="${theme.teamAway}" stroke-width="1" rx="4" />
+  <text x="950" y="29" text-anchor="middle" fill="${theme.teamAway}" font-size="11" font-weight="800" font-family="Arial, sans-serif">
     ${safeAway.slice(0, 10)} xG: ${safeRivalXg}
   </text>
 
-  <!-- Terreno de Juego Completo (105m x 68m) -->
-  <g id="pitch-field">
-    <!-- Césped con franjas -->
-    <rect x="${padX}" y="${padY}" width="${pW}" height="${pH}" fill="${theme.bgPitch}" rx="4" />
-    ${stripes}
+  <!-- Barra Inferior: Leyenda Oficial con Conteos y Cómo se lee -->
+  <rect x="25" y="638" width="1000" height="34" fill="rgba(21, 44, 34, 0.95)" rx="6" stroke="rgba(76, 175, 125, 0.3)" stroke-width="1" />
+  
+  <g transform="translate(45, 655)">
+    <!-- Gol -->
+    <circle cx="0" cy="0" r="6" fill="${theme.gold}" stroke="#FFFFFF" stroke-width="1.2" />
+    <text x="12" y="4" fill="${theme.textSecondary}" font-size="11" font-weight="700" font-family="Arial, sans-serif">
+      ${isEn ? `Goal (${countGoals})` : `Gol (${countGoals})`}
+    </text>
 
-    <!-- Pasillos Tácticos Sutiles -->
-    <line x1="${corridor1.toFixed(1)}" y1="${padY}" x2="${corridor1.toFixed(1)}" y2="${padY + pH}" stroke="rgba(255,255,255,0.12)" stroke-width="1" stroke-dasharray="3 3" />
-    <line x1="${corridor2.toFixed(1)}" y1="${padY}" x2="${corridor2.toFixed(1)}" y2="${padY + pH}" stroke="rgba(255,255,255,0.12)" stroke-width="1" stroke-dasharray="3 3" />
-    
-    <text x="${(padX + (corridor1 - padX) / 2).toFixed(1)}" y="${padY + 10}" fill="rgba(255,255,255,0.3)" font-size="6.5" font-weight="700" font-family="Arial, sans-serif" text-anchor="middle">${isEn ? 'LEFT' : 'IZQ'}</text>
-    <text x="${((corridor1 + corridor2) / 2).toFixed(1)}" y="${padY + 10}" fill="rgba(255,255,255,0.3)" font-size="6.5" font-weight="700" font-family="Arial, sans-serif" text-anchor="middle">${isEn ? 'CENTER' : 'CENTRO'}</text>
-    <text x="${(corridor2 + (width - padX - corridor2) / 2).toFixed(1)}" y="${padY + 10}" fill="rgba(255,255,255,0.3)" font-size="6.5" font-weight="700" font-family="Arial, sans-serif" text-anchor="middle">${isEn ? 'RIGHT' : 'DER'}</text>
+    <!-- A puerta -->
+    <circle cx="110" cy="0" r="6" fill="${theme.teamHome}" stroke="#FFFFFF" stroke-width="1.2" />
+    <text x="122" y="4" fill="${theme.textSecondary}" font-size="11" font-weight="700" font-family="Arial, sans-serif">
+      ${isEn ? `On Target (${countOnTarget})` : `A puerta (${countOnTarget})`}
+    </text>
 
-    <!-- Líneas reglamentarias -->
-    <rect x="${padX}" y="${padY}" width="${pW}" height="${pH}" fill="none" stroke="${theme.pitchLines}" stroke-width="1" />
-    <line x1="${(padX + pW / 2).toFixed(1)}" y1="${padY}" x2="${(padX + pW / 2).toFixed(1)}" y2="${padY + pH}" stroke="${theme.pitchLines}" stroke-width="1" />
-    <circle cx="${(padX + pW / 2).toFixed(1)}" cy="${(padY + pH / 2).toFixed(1)}" r="${(pH * 0.22).toFixed(1)}" fill="none" stroke="${theme.pitchLines}" stroke-width="1" />
-    <circle cx="${(padX + pW / 2).toFixed(1)}" cy="${(padY + pH / 2).toFixed(1)}" r="1.5" fill="${theme.pitchLines}" />
+    <!-- Fuera / Bloqueado -->
+    <circle cx="240" cy="0" r="5" fill="#94A3B8" stroke="#FFFFFF" stroke-width="1" />
+    <text x="252" y="4" fill="${theme.textSecondary}" font-size="11" font-weight="700" font-family="Arial, sans-serif">
+      ${isEn ? `Off Target (${countOffTarget})` : `Fuera / Bloqueado (${countOffTarget})`}
+    </text>
 
-    <!-- Áreas Grandes -->
-    <rect x="${padX}" y="${(padY + pH * 0.2).toFixed(1)}" width="${(pW * 0.16).toFixed(1)}" height="${(pH * 0.6).toFixed(1)}" fill="none" stroke="${theme.pitchLines}" stroke-width="1" />
-    <rect x="${(padX + pW * 0.84).toFixed(1)}" y="${(padY + pH * 0.2).toFixed(1)}" width="${(pW * 0.16).toFixed(1)}" height="${(pH * 0.6).toFixed(1)}" fill="none" stroke="${theme.pitchLines}" stroke-width="1" />
+    <!-- Tiro Rival -->
+    <circle cx="430" cy="0" r="6" fill="${theme.teamAway}" stroke="#FFFFFF" stroke-width="1.2" />
+    <text x="442" y="4" fill="${theme.textSecondary}" font-size="11" font-weight="700" font-family="Arial, sans-serif">
+      ${isEn ? `Opponent Shot (${countRival})` : `Tiro Rival (${countRival})`}
+    </text>
 
-    <!-- Porterías -->
-    <rect x="${padX - 4}" y="${(padY + pH * 0.38).toFixed(1)}" width="4" height="${(pH * 0.24).toFixed(1)}" fill="rgba(212,168,67,0.3)" stroke="${theme.gold}" stroke-width="1" />
-    <rect x="${padX + pW}" y="${(padY + pH * 0.38).toFixed(1)}" width="4" height="${(pH * 0.24).toFixed(1)}" fill="rgba(212,168,67,0.3)" stroke="${theme.gold}" stroke-width="1" />
-  </g>
-
-  <!-- Puntos de Remates -->
-  <g id="shot-markers">
-    ${shotMarkers}
-  </g>
-
-  <!-- Leyenda Inferior -->
-  <g transform="translate(${padX}, ${height - 10})">
-    <circle cx="5" cy="-2" r="3.5" fill="${theme.gold}" />
-    <text x="12" y="1" fill="${theme.textSecondary}" font-size="7.5" font-family="Arial, sans-serif">${isEn ? 'Goal' : 'Gol'}</text>
-
-    <circle cx="75" cy="-2" r="3.5" fill="${theme.teamHome}" />
-    <text x="82" y="1" fill="${theme.textSecondary}" font-size="7.5" font-family="Arial, sans-serif">${isEn ? 'On Target' : 'A puerta'}</text>
-
-    <circle cx="150" cy="-2" r="3" fill="${theme.textMuted}" />
-    <text x="156" y="1" fill="${theme.textSecondary}" font-size="7.5" font-family="Arial, sans-serif">${isEn ? 'Off Target / Blocked' : 'Fuera / Bloqueado'}</text>
-
-    <circle cx="240" cy="-2" r="3.5" fill="${theme.teamAway}" />
-    <text x="248" y="1" fill="${theme.textSecondary}" font-size="7.5" font-family="Arial, sans-serif">${isEn ? 'Opponent Shot' : 'Tiro Rival'}</text>
+    <!-- Frase explicativa Cómo se lee -->
+    <text x="960" y="4" text-anchor="end" fill="rgba(242, 237, 228, 0.75)" font-size="10" font-weight="600" font-family="Arial, sans-serif">
+      💡 ${isEn ? 'Dot size indicates shot xG probability; rival shots mirrored towards attacking goal.' : 'Radio según valor xG (6-16px); tiros rivales orientados a su portería de ataque.'}
+    </text>
   </g>
 </svg>
   `.trim();
@@ -177,7 +253,7 @@ export const ShotMapSVG = (props) => {
   const svgString = renderShotMapSvgString(props);
   return React.createElement('div', {
     className: 'canonical-svg-wrapper shot-map-svg-wrapper',
-    style: { width: '100%', overflowX: 'auto', display: 'flex', justifyContent: 'center' },
+    style: { width: '100%', maxWidth: '1050px', margin: '0 auto', display: 'flex', justifyContent: 'center' },
     dangerouslySetInnerHTML: { __html: svgString }
   });
 };

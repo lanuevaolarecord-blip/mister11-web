@@ -123,7 +123,7 @@ export function renderMomentumSvgString({
 
   <!-- Fila 1: Cabecera y Nombres -->
   <text x="16" y="22" fill="${theme.gold}" font-size="11.5" font-weight="800" font-family="Arial, sans-serif">
-    ${isEn ? '📈 MATCH MOMENTUM & 15-MINUTE SEGMENTS' : '📈 MOMENTUM DEL PARTIDO & TRAMOS DE 15 MINUTOS'}
+    ${isEn ? '📈 MATCH MOMENTUM &amp; 15-MINUTE SEGMENTS' : '📈 MOMENTUM DEL PARTIDO Y TRAMOS DE 15 MINUTOS'}
   </text>
 
   <!-- Indicadores de Dominio alineados a la derecha -->

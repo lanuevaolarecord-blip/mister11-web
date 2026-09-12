@@ -312,11 +312,9 @@ export const generateMatchPdfReport = async ({
         return { name: cleanPdfText(pl.name || pl.nombre || 'Jugador'), score, hasStats };
       }).sort((a, b) => b.score - a.score);
 
-      const topWithStats = candidates.find((c) => c.hasStats);
+      const topWithStats = candidates.find((c) => c.hasStats && c.score >= 2);
       if (topWithStats) {
         mvpStr = topWithStats.name;
-      } else if (candidates.length > 0) {
-        mvpStr = `${candidates[0].name} (${isEn ? 'mixed rating' : 'nota mixta'})`;
       } else {
         mvpStr = isEn ? 'Not specified' : 'No especificado';
       }
@@ -449,7 +447,7 @@ export const generateMatchPdfReport = async ({
       const actaKpis = [
         { label: isEn ? 'CALL-UP' : 'CONVOCADOS', val: `${totalConvocados} jug.`, color: colorPrimary },
         { label: isEn ? 'STARTERS / SUBS' : 'TIT. / SUPL.', val: `${titularesIds.length} / ${suplentesIds.length}`, color: colorPrimary },
-        { label: isEn ? 'ATTENDANCE' : 'ASISTENCIA', val: `${countPresent + countLate}`, color: [34, 197, 94] },
+        { label: isEn ? 'ROSTER PRESENCE' : 'PRESENCIA DE PLANTILLA', val: `${countPresent + countLate}`, color: [34, 197, 94] },
         { label: isEn ? 'ABSENCES' : 'FALTAS / TARDES', val: `${countAbsent} / ${countLate}`, color: countAbsent > 0 ? [220, 38, 38] : colorPrimary },
         { label: isEn ? 'TOTAL MINUTES' : 'MINUTOS TOT.', val: `${totalPlayerMinutes}'`, color: colorAccent }
       ];
@@ -474,16 +472,16 @@ export const generateMatchPdfReport = async ({
 
       y += 24;
 
-      // 2. Tabla Oficial de la Plantilla con Minutos y Asistencia
+      // 2. Tabla Oficial de la Plantilla con Minutos y Presencia
       doc.setFontSize(10.5);
       doc.setFont('helvetica', 'bold');
       doc.setTextColor(...colorPrimary);
-      doc.text(isEn ? 'OFFICIAL ROSTER, MINUTES & ATTENDANCE RECORD' : 'REGISTRO OFICIAL DE PLANTILLA, ASISTENCIA Y MINUTOS', 14, y);
+      doc.text(isEn ? 'OFFICIAL ROSTER, MINUTES & PRESENCE RECORD' : 'REGISTRO OFICIAL DE PLANTILLA, PRESENCIA Y MINUTOS', 14, y);
       y += 5;
 
       const actaTableHead = isEn
-        ? [['#', 'Player Name', 'Pos', 'Role', 'Official Attendance', 'Minutes', 'Source', 'Rating', 'RSVP']]
-        : [['#', 'Jugador', 'Pos', 'Rol', 'Estado Asistencia', 'Minutos', 'Fuente', 'Nota', 'RSVP']];
+        ? [['#', 'Player Name', 'Pos', 'Role', 'Official Presence', 'Minutes', 'Source', 'Rating', 'RSVP']]
+        : [['#', 'Jugador', 'Pos', 'Rol', 'Presencia Oficial', 'Minutos', 'Fuente', 'Nota', 'RSVP']];
 
       const actaTableBody = squadRoster.map((r) => [
         r.number,
@@ -574,15 +572,21 @@ export const generateMatchPdfReport = async ({
           const minStr = (rg.minute || rg.minuto) ? `${rg.minute || rg.minuto}'` : (isEn ? 's/m' : 's/m');
           allScorersListActa.push(`${rivalName} (${minStr})`);
         });
-      } else if (goalsAgainst > 0 && allScorersListActa.length === 0) {
+      } else if (goalsAgainst > 0) {
         allScorersListActa.push(`${rivalName} (${isEn ? 'Goal' : 'Gol'})`);
       }
 
-      let scorersText = matchData.scorers;
-      if (!scorersText && allScorersListActa.length > 0) {
+      let scorersText = '';
+      if (allScorersListActa.length > 0) {
         scorersText = allScorersListActa.join(', ');
+      } else if (matchData.scorers) {
+        scorersText = matchData.scorers;
+        if (goalsAgainst > 0 && !scorersText.toLowerCase().includes(rivalName.toLowerCase())) {
+          scorersText += `, ${rivalName} (${isEn ? 'Goal' : 'Gol'})`;
+        }
+      } else {
+        scorersText = isEn ? 'None recorded' : 'Ninguno registrado';
       }
-      if (!scorersText) scorersText = isEn ? 'None recorded' : 'Ninguno registrado';
 
       let cardsText = '';
       if (matchData.tarjetasList && matchData.tarjetasList.length > 0) {
@@ -631,7 +635,8 @@ export const generateMatchPdfReport = async ({
         const subsWithMinutes = squadRoster.filter(r => !r.isStarter && (Number(r.minutes) > 0));
         if (subsWithMinutes.length > 0) {
           subsWithMinutes.forEach(s => {
-            allSubsListActa.push(`${isEn ? 'Sub In' : 'Entra'}: ${s.name} (${s.minutes}')`);
+            const entryMin = Math.max(1, durationMin - Number(s.minutes));
+            allSubsListActa.push(`Min ${entryMin}': ${isEn ? 'Sub In' : 'Entra'} ${s.name} (${s.minutes}' ${isEn ? 'played' : 'jugados'})`);
           });
         }
       }
@@ -841,15 +846,21 @@ export const generateMatchPdfReport = async ({
           const minStr = (rg.minute || rg.minuto) ? `${rg.minute || rg.minuto}'` : (isEn ? 's/m' : 's/m');
           allScorersListPost.push(`${rivalName} (${minStr})`);
         });
-      } else if (goalsAgainst > 0 && allScorersListPost.length === 0) {
+      } else if (goalsAgainst > 0) {
         allScorersListPost.push(`${rivalName} (${isEn ? 'Goal' : 'Gol'})`);
       }
 
-      let scorersText = matchData.scorers;
-      if (!scorersText && allScorersListPost.length > 0) {
+      let scorersText = '';
+      if (allScorersListPost.length > 0) {
         scorersText = allScorersListPost.join(', ');
+      } else if (matchData.scorers) {
+        scorersText = matchData.scorers;
+        if (goalsAgainst > 0 && !scorersText.toLowerCase().includes(rivalName.toLowerCase())) {
+          scorersText += `, ${rivalName} (${isEn ? 'Goal' : 'Gol'})`;
+        }
+      } else {
+        scorersText = isEn ? 'None recorded' : 'Ninguno registrado';
       }
-      if (!scorersText) scorersText = isEn ? 'None recorded' : 'Ninguno registrado';
 
       let cardsText = '';
       if (matchData.tarjetasList && matchData.tarjetasList.length > 0) {
@@ -898,7 +909,8 @@ export const generateMatchPdfReport = async ({
         const subsWithMinutes = squadRoster.filter(r => !r.isStarter && (Number(r.minutes) > 0));
         if (subsWithMinutes.length > 0) {
           subsWithMinutes.forEach(s => {
-            allSubsListPost.push(`${isEn ? 'Sub In' : 'Entra'}: ${s.name} (${s.minutes}')`);
+            const entryMin = Math.max(1, durationMin - Number(s.minutes));
+            allSubsListPost.push(`Min ${entryMin}': ${isEn ? 'Sub In' : 'Entra'} ${s.name} (${s.minutes}' ${isEn ? 'played' : 'jugados'})`);
           });
         }
       }
@@ -1064,22 +1076,22 @@ export const generateMatchPdfReport = async ({
 
       // Unicidad absoluta con Sección 6 vía analytics.shots
       const shotsOnVal = analytics.shots.ownOnTarget;
-      const shotsOffVal = analytics.shots.ownOffTarget;
+      const totalOwnShots = analytics.shots.ownShots.length;
       const shotsOnRival = analytics.shots.rivalOnTarget;
-      const shotsOffRival = analytics.shots.rivalOffTarget;
+      const totalRivalShots = analytics.shots.rivalShots.length;
 
       const recVal = countOfSafe(['recovery', 'recuperacion']);
       const lossVal = countOfSafe(['loss', 'ball_loss', 'perdida']);
 
       const top5TableRows = isEn ? [
         ['1. Expected Goals (xG-Lite)', `${derivedIndices.ownXg} xG`, `${derivedIndices.rivalXg} xG`, `${derivedIndices.ownXg >= derivedIndices.rivalXg ? '+' : ''}${(derivedIndices.ownXg - derivedIndices.rivalXg).toFixed(2)} xG`],
-        ['2. Shots on Target Ratio', `${shotsOnVal} / ${shotsOnVal + shotsOffVal}`, `${shotsOnRival} / ${shotsOnRival + shotsOffRival}`, `${shotsOnVal >= shotsOnRival ? '+' : ''}${shotsOnVal - shotsOnRival}`],
+        ['2. Shots on Target Ratio', `${shotsOnVal} / ${totalOwnShots}`, `${shotsOnRival} / ${totalRivalShots}`, `${shotsOnVal >= shotsOnRival ? '+' : ''}${shotsOnVal - shotsOnRival}`],
         ['3. Individual Duels Won', `${duelsWonVal} (${duelsPctVal}%)`, `${duelsLostVal} (${100 - duelsPctVal}%)`, `${duelsPctVal >= 50 ? 'Favorable' : 'Deficit'}`],
         ['4. Ball Retention Balance', `${recVal} Recoveries`, `${lossVal} Losses`, `${recVal >= lossVal ? 'Positive' : 'Vulnerable'}`],
         ['5. Set Pieces & Cards', `${countOfSafe(['corner_favor'])} Corners`, `${countOfSafe(['corner_against'])} Corners`, `Y: ${countOfSafe(['card_yellow_own'])} / ${countOfSafe(['card_yellow_rival'])}`]
       ] : [
         ['1. Goles Esperados (xG-Lite)', `${derivedIndices.ownXg} xG`, `${derivedIndices.rivalXg} xG`, `${derivedIndices.ownXg >= derivedIndices.rivalXg ? '+' : ''}${(derivedIndices.ownXg - derivedIndices.rivalXg).toFixed(2)} xG`],
-        ['2. Efectividad a Puerta', `${shotsOnVal} / ${shotsOnVal + shotsOffVal}`, `${shotsOnRival} / ${shotsOnRival + shotsOffRival}`, `${shotsOnVal >= shotsOnRival ? '+' : ''}${shotsOnVal - shotsOnRival}`],
+        ['2. Efectividad a Puerta', `${shotsOnVal} / ${totalOwnShots}`, `${shotsOnRival} / ${totalRivalShots}`, `${shotsOnVal >= shotsOnRival ? '+' : ''}${shotsOnVal - shotsOnRival}`],
         ['3. Duelos Individuales', `${duelsWonVal} (${duelsPctVal}%)`, `${duelsLostVal} (${100 - duelsPctVal}%)`, `${duelsPctVal >= 50 ? 'Favorable' : 'Déficit'}`],
         ['4. Balance de Balón', `${recVal} Recuperaciones`, `${lossVal} Pérdidas`, `${recVal >= lossVal ? 'Positivo' : 'Vulnerable'}`],
         ['5. Balón Parado y Tarjetas', `${countOfSafe(['corner_favor'])} Córners`, `${countOfSafe(['corner_against'])} Córners`, `A: ${countOfSafe(['card_yellow_own'])} / ${countOfSafe(['card_yellow_rival'])}`]
@@ -1104,7 +1116,7 @@ export const generateMatchPdfReport = async ({
       doc.addPage();
       y = 18;
 
-      // 6. Mapas de Tiros & Modelo xG-Lite (Aserción de imagen rasterizada 3x obligatoria)
+      // 6. Mapas de Tiros & Modelo xG-Lite (Aserción de imagen rasterizada 3x obligatoria, PitchFrame 105:68)
       y = drawSectionHeader('sec6_shots');
       const shotSvg = renderShotMapSvgString({
         shots: analytics.shots.all,
@@ -1113,28 +1125,37 @@ export const generateMatchPdfReport = async ({
         homeTeamName: safeTeamName,
         awayTeamName: rivalName,
         isEn,
-        width: 660,
-        height: 195
+        width: 1050,
+        height: 680
       });
-      const shotMapImg = await rasterizeSvgToDataUrl(shotSvg, 660, 195, 3);
+      const shotMapImg = await rasterizeSvgToDataUrl(shotSvg, 1050, 680, 2);
       assertGraphicEmbedded('sec6_shots', shotMapImg);
       const smW = pageW - 28;
-      const smH = (195 / 660) * smW;
+      const smH = smW / 1.5441;
+      const shotMapAspect = smW / smH;
+      if (Math.abs(shotMapAspect - 1.5441) > 0.05) {
+        throw new Error(`[ASPECT RATIO ERROR] sec6_shots aspect ratio is ${shotMapAspect.toFixed(2)}, expected 1.54 ± 2%`);
+      }
       doc.addImage(shotMapImg, 'PNG', 14, y, smW, smH);
       y += smH + 5;
 
-      // Tabla cuantitativa de tiros xG-lite
+      // Tabla cuantitativa de tiros xG-lite con porcentajes uniformes en ambos bandos
+      const ownComfortableCount = analytics.shots.ownShots.filter(e => e.shooterComfort === 'comodo').length;
+      const ownComfortablePct = analytics.shots.ownShots.length > 0 ? Math.round((ownComfortableCount / analytics.shots.ownShots.length) * 100) : 0;
+      const rivalComfortableCount = derivedIndices.rivalComfortableShots ?? analytics.shots.rivalShots.filter(e => e.shooterComfort === 'comodo').length;
+      const rivalComfortablePct = derivedIndices.rivalComfortPct ?? (analytics.shots.rivalShots.length > 0 ? Math.round((rivalComfortableCount / analytics.shots.rivalShots.length) * 100) : 0);
+
       const shotComparisonData = isEn ? [
         ['Shot Metric', safeTeamName, rivalName],
         ['Cumulative xG-Lite', `${analytics.shots.ownTotalXg} xG`, `${analytics.shots.rivalTotalXg} xG`],
         ['Total Shot Attempts', `${analytics.shots.ownShots.length}`, `${analytics.shots.rivalShots.length}`],
-        ['Comfortable Shots (% Comfortable)', `${analytics.shots.ownShots.filter(e => e.shooterComfort === 'comodo').length}`, `${derivedIndices.rivalComfortableShots} (${derivedIndices.rivalComfortPct}%)`],
+        ['Comfortable Shots (% Comfortable)', `${ownComfortableCount} (${ownComfortablePct}%)`, `${rivalComfortableCount} (${rivalComfortablePct}%)`],
         ['Penalty Box Central Shots', `${analytics.shots.bySector.center.count}`, `${derivedIndices.defensiveExposureMap?.dentro_centro?.total ?? 0}`]
       ] : [
         ['Métrica de Remate', safeTeamName, rivalName],
         ['xG-Lite Acumulado', `${analytics.shots.ownTotalXg} xG`, `${analytics.shots.rivalTotalXg} xG`],
         ['Remates Totales', `${analytics.shots.ownShots.length}`, `${analytics.shots.rivalShots.length}`],
-        ['Tiros Cómodos (% Comodidad)', `${analytics.shots.ownShots.filter(e => e.shooterComfort === 'comodo').length}`, `${derivedIndices.rivalComfortableShots} (${derivedIndices.rivalComfortPct}%)`],
+        ['Tiros Cómodos (% Comodidad)', `${ownComfortableCount} (${ownComfortablePct}%)`, `${rivalComfortableCount} (${rivalComfortablePct}%)`],
         ['Tiros en Área Central', `${analytics.shots.bySector.center.count}`, `${derivedIndices.defensiveExposureMap?.dentro_centro?.total ?? 0}`]
       ];
 
@@ -1154,14 +1175,10 @@ export const generateMatchPdfReport = async ({
 
       y = (doc.lastAutoTable ? doc.lastAutoTable.finalY : y + 30) + 6;
 
-      // 7. Campo y Táctica (Sectores, ABP y Bloques)
+      // 7. Mapa de Sectores & Distribución Táctica
       y = drawSectionHeader('sec7_tactics');
       const tacticsSvg = renderSectorTacticsSvgString({
-        homeStats,
-        awayStats,
         tacticsData,
-        homeTeamName: safeTeamName,
-        awayTeamName: rivalName,
         isEn,
         width: 660,
         height: 180
@@ -1179,9 +1196,23 @@ export const generateMatchPdfReport = async ({
 
       // 8. Exigencia & Rendimiento de Portería
       y = drawSectionHeader('sec8_gk');
+      const effectiveGkConceded = Math.max(derivedIndices.concededGoals || 0, goalsAgainst);
+      const effectiveGkTotalSaves = (derivedIndices.normalSaves || 0) + (derivedIndices.decisiveSaves || 0);
+      const effectiveGkTotal = effectiveGkTotalSaves + effectiveGkConceded;
+      const effectiveGkSavePct = effectiveGkTotal > 0
+        ? Math.round((effectiveGkTotalSaves / effectiveGkTotal) * 100)
+        : (effectiveGkConceded > 0 ? 0 : 100);
+
+      const gkIndicesForCanvas = {
+        ...derivedIndices,
+        concededGoals: effectiveGkConceded,
+        totalSaves: effectiveGkTotalSaves,
+        totalSavePct: effectiveGkSavePct
+      };
+
       try {
         const gkImg = drawGkExertionCanvas({
-          gkIndices: derivedIndices,
+          gkIndices: gkIndicesForCanvas,
           isEn,
           width: 660,
           height: 155
@@ -1197,13 +1228,6 @@ export const generateMatchPdfReport = async ({
       }
 
       // Tabla GK detallada con encajados coherentes
-      const effectiveGkConceded = Math.max(derivedIndices.concededGoals || 0, goalsAgainst);
-      const effectiveGkTotalSaves = (derivedIndices.normalSaves || 0) + (derivedIndices.decisiveSaves || 0);
-      const effectiveGkTotal = effectiveGkTotalSaves + effectiveGkConceded;
-      const effectiveGkSavePct = effectiveGkTotal > 0
-        ? Math.round((effectiveGkTotalSaves / effectiveGkTotal) * 100)
-        : (derivedIndices.totalSavePct || 0);
-
       const gkBreakdownHead = isEn
         ? [['Exertion Index', 'Normal Saves', 'Decisive Saves (x2)', 'Penalties Saved', 'Conceded Goals', 'Total Save %']]
         : [['Índice Exigencia', 'Paradas Normales', 'Paradas Decisivas (x2)', 'Penaltis Parados', 'Goles Encajados', '% Total Paradas']];

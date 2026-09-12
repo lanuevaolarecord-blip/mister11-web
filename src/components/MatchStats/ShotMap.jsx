@@ -1,23 +1,27 @@
 /**
  * src/components/MatchStats/ShotMap.jsx
- * Míster11 — Mapa de Tiros y Modelo xG (Mi Equipo)
+ * Míster11 — Mapa de Tiros Profesional 105:68 con Modelo xG (App + PDF)
  *
- * Paleta Oficial Tierra y Campo (Cero azul):
+ * Paleta Oficial Tierra y Campo:
  *  - Fondo institucional: #1B3A2D
- *  - On Target: #4CAF7D (#10B981)
+ *  - On Target: #4CAF7D
  *  - Goles: #D4A843
- *  - Fuera / Bloqueado: #A3B5AD / #EF4444
- *  - Dispersión determinista (Jitter seed = hash(matchId + shotId))
- *  - Paridad 1:1 con Tab Estadísticas, Post-Partido y PDF Report
+ *  - Fuera / Bloqueado: #94A3B8 (gris neutro)
+ *  - Rival: #EF4444 (espejado a la portería que ataca)
+ *  - Ratio canónico 105:68 con PitchFrame reglamentario
+ *  - Puntos limpios sin texto encima (radio por xG: 6-16px)
+ *  - Jitter determinista anti-colisión y popover interactivo
+ *  - Toggle [Combinado | Propio | Rival] con chips accesibles
  */
 
-import React, { useState, useMemo, useRef } from 'react';
-import { Target, Trophy, Percent, Crosshair, X, Maximize2, Minimize2, AlertTriangle } from 'lucide-react';
+import React, { useState, useMemo, useRef, useEffect } from 'react';
+import { Target, Trophy, Percent, Crosshair, X, Maximize2, Minimize2, AlertTriangle, HelpCircle } from 'lucide-react';
 import { useTranslation } from '../../hooks/useTranslation';
 import { useTheaterFullscreen } from '../../hooks/useTheaterFullscreen';
 import { TheaterOverlay } from '../common/TheaterOverlay';
 import { getMatchAnalytics } from '../../utils/matchAnalytics';
-import { CHART_THEME } from '../../config/chartTheme';
+import { getPitchFrameSvgMarkup } from '../canonical/PitchFrame';
+import { resolveShotCollisions } from '../canonical/ShotMapSVG';
 
 export const ShotMap = ({
   shots = [],
@@ -27,12 +31,23 @@ export const ShotMap = ({
   players = []
 }) => {
   const [selectedShot, setSelectedShot] = useState(null);
-  const [showTacticalGuide, setShowTacticalGuide] = useState(false);
+  const [hoveredShot, setHoveredShot] = useState(null);
+  const [shotFilter, setShotFilter] = useState('combined'); // 'combined' | 'own' | 'rival'
   const containerRef = useRef(null);
   const { isEn, t } = useTranslation();
-  const { isFullscreen, isTheater, toggle: toggleFullscreen, exit: exitTheater } = useTheaterFullscreen(containerRef);
+  const { isFullscreen, isTheater, toggle: toggleFullscreen } = useTheaterFullscreen(containerRef);
 
-  // Consumir el Único Pipeline Canónico de Datos
+  // Cerrar popover al pulsar fuera
+  useEffect(() => {
+    const handleOutsideClick = (e) => {
+      if (selectedShot && !e.target.closest('.shot-marker-g') && !e.target.closest('.shot-popover-card')) {
+        setSelectedShot(null);
+      }
+    };
+    document.addEventListener('click', handleOutsideClick);
+    return () => document.removeEventListener('click', handleOutsideClick);
+  }, [selectedShot]);
+
   const rawEventsList = useMemo(() => {
     if (events && events.length > 0) return events;
     return shots || [];
@@ -42,47 +57,140 @@ export const ShotMap = ({
     return getMatchAnalytics(matchData, rawEventsList, { isEn });
   }, [matchData, rawEventsList, isEn]);
 
-  const { ownShots, ownTotalXg, ownGoalsCount, ownOnTargetCount, conversionRate, bySector } = analytics.shots;
+  const { ownShots, rivalShots, all: allShots, ownTotalXg, ownGoalsCount, ownOnTargetCount, conversionRate, bySector } = analytics.shots;
   const { hasFinishingDeficit, finishingDeficitTextEs, finishingDeficitTextEn } = analytics.narrative;
 
+  // Filtrar tiros según toggle
+  const displayedShots = useMemo(() => {
+    if (shotFilter === 'own') return ownShots;
+    if (shotFilter === 'rival') return rivalShots;
+    return allShots;
+  }, [shotFilter, ownShots, rivalShots, allShots]);
+
+  // Resolver colisiones sobre marco 1050x680
+  const resolvedShots = useMemo(() => {
+    return resolveShotCollisions(displayedShots, 1000, 630, 25, 25);
+  }, [displayedShots]);
+
+  // Conteos para la leyenda
+  const counts = useMemo(() => {
+    let goals = 0;
+    let onTarget = 0;
+    let offTarget = 0;
+    let rival = 0;
+    resolvedShots.forEach(s => {
+      if (s.isRival) rival++;
+      else if (s.isGoal) goals++;
+      else if (s.isOnTarget) onTarget++;
+      else offTarget++;
+    });
+    return { goals, onTarget, offTarget, rival };
+  }, [resolvedShots]);
+
   const getOutcomeBadge = (shot) => {
+    if (shot.isRival) {
+      return { label: isEn ? 'Opponent Shot' : 'Tiro Rival', color: '#EF4444', bg: 'rgba(239, 68, 68, 0.2)' };
+    }
     if (shot.isGoal) {
-      return { label: 'GOL', icon: '⚽', color: '#D4A843', bg: 'rgba(212, 168, 67, 0.2)', isGoal: true };
+      return { label: isEn ? 'GOAL' : 'GOL', color: '#D4A843', bg: 'rgba(212, 168, 67, 0.25)', isGoal: true };
     }
     if (shot.isOnTarget) {
-      return { label: isEn ? 'On Target' : 'A Puerta', icon: '🎯', color: '#4CAF7D', bg: 'rgba(76, 175, 125, 0.2)' };
+      return { label: isEn ? 'On Target' : 'A Puerta', color: '#4CAF7D', bg: 'rgba(76, 175, 125, 0.2)' };
     }
-    if (shot.outcome === 'blocked' || String(shot.type).includes('bloqueado')) {
-      return { label: isEn ? 'Blocked' : 'Bloqueado', icon: '🚫', color: '#EF4444', bg: 'rgba(239, 68, 68, 0.2)' };
-    }
-    return { label: isEn ? 'Missed' : 'Fuera', icon: '❌', color: '#A3B5AD', bg: 'rgba(163, 181, 173, 0.2)' };
+    return { label: isEn ? 'Off Target / Blocked' : 'Fuera / Bloqueado', color: '#94A3B8', bg: 'rgba(148, 163, 184, 0.2)' };
   };
 
+  const activePopoverShot = selectedShot || hoveredShot;
+
   const renderContent = () => (
-    <div className="shot-map-inner" style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+    <div className="shot-map-inner" style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: '14px' }}>
       {/* Header del Shot Map */}
-      <div className="shot-map-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexShrink: 0 }}>
+      <div className="shot-map-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <Target size={20} color="#D4A843" />
-          <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 800, color: '#F2EDE4' }}>
+          <Target size={22} color="#D4A843" />
+          <h3 style={{ margin: 0, fontSize: '17px', fontWeight: 800, color: '#F2EDE4' }}>
             {isEn ? `Shot Map & xG Model (${teamName})` : `Mapa de Tiros y Modelo xG (${teamName})`}
           </h3>
         </div>
-        <button
-          type="button"
-          className="btn-fullscreen-match-card"
-          onClick={(e) => {
-            e.stopPropagation();
-            toggleFullscreen();
-          }}
-          style={{ minHeight: '48px', minWidth: '48px' }}
-        >
-          {isFullscreen || isTheater ? <Minimize2 size={16} /> : <Maximize2 size={16} />}
-          <span>{isFullscreen || isTheater ? (isEn ? 'Exit' : 'Salir') : (isEn ? 'Fullscreen' : 'Pantalla Completa')}</span>
-        </button>
+
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          {/* Toggle de Selección [Combinado | Propio | Rival] */}
+          <div className="shot-filter-chips" style={{ display: 'flex', background: '#152C22', borderRadius: '8px', padding: '3px', border: '1px solid rgba(76, 175, 125, 0.3)' }}>
+            <button
+              type="button"
+              onClick={() => setShotFilter('combined')}
+              style={{
+                background: shotFilter === 'combined' ? '#4CAF7D' : 'transparent',
+                color: shotFilter === 'combined' ? '#FFFFFF' : '#CBD5E1',
+                border: 'none',
+                borderRadius: '6px',
+                padding: '6px 12px',
+                fontSize: '12px',
+                fontWeight: 700,
+                cursor: 'pointer',
+                minHeight: '48px',
+                minWidth: '48px',
+                transition: 'all 0.2s'
+              }}
+            >
+              {isEn ? 'Combined' : 'Combinado'}
+            </button>
+            <button
+              type="button"
+              onClick={() => setShotFilter('own')}
+              style={{
+                background: shotFilter === 'own' ? '#4CAF7D' : 'transparent',
+                color: shotFilter === 'own' ? '#FFFFFF' : '#CBD5E1',
+                border: 'none',
+                borderRadius: '6px',
+                padding: '6px 12px',
+                fontSize: '12px',
+                fontWeight: 700,
+                cursor: 'pointer',
+                minHeight: '48px',
+                minWidth: '48px',
+                transition: 'all 0.2s'
+              }}
+            >
+              {isEn ? 'Own' : 'Propio'}
+            </button>
+            <button
+              type="button"
+              onClick={() => setShotFilter('rival')}
+              style={{
+                background: shotFilter === 'rival' ? '#EF4444' : 'transparent',
+                color: shotFilter === 'rival' ? '#FFFFFF' : '#CBD5E1',
+                border: 'none',
+                borderRadius: '6px',
+                padding: '6px 12px',
+                fontSize: '12px',
+                fontWeight: 700,
+                cursor: 'pointer',
+                minHeight: '48px',
+                minWidth: '48px',
+                transition: 'all 0.2s'
+              }}
+            >
+              {isEn ? 'Rival' : 'Rival'}
+            </button>
+          </div>
+
+          <button
+            type="button"
+            className="btn-fullscreen-match-card"
+            onClick={(e) => {
+              e.stopPropagation();
+              toggleFullscreen();
+            }}
+            style={{ minHeight: '48px', minWidth: '48px', borderRadius: '8px' }}
+          >
+            {isFullscreen || isTheater ? <Minimize2 size={16} /> : <Maximize2 size={16} />}
+            <span>{isFullscreen || isTheater ? (isEn ? 'Exit' : 'Salir') : (isEn ? 'Fullscreen' : 'Pantalla Completa')}</span>
+          </button>
+        </div>
       </div>
 
-      {/* Alerta de Narrativa Táctica Automática (Regla: goles < xG - 1.5) */}
+      {/* Alerta de Narrativa Táctica Automática */}
       {hasFinishingDeficit && (
         <div
           style={{
@@ -103,241 +211,281 @@ export const ShotMap = ({
         </div>
       )}
 
-      {/* Tarjetas KPI de Tiros & xG */}
-      <div className="shot-kpi-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '10px' }}>
-        <div className="shot-kpi-card" style={{ background: '#152C22', padding: '10px', borderRadius: '8px', border: '1px solid rgba(212,168,67,0.3)', textAlign: 'center' }}>
-          <div style={{ fontSize: '18px', fontWeight: 900, color: '#D4A843' }}>{ownTotalXg}</div>
-          <div style={{ fontSize: '11px', color: 'rgba(242,237,228,0.7)', fontWeight: 600 }}>{isEn ? 'Expected xG' : 'xG Esperado'}</div>
+      {/* KPIs Oficiales con frase plana e icono */}
+      <div className="shot-kpi-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '10px' }}>
+        <div className="shot-kpi-card" style={{ background: '#152C22', padding: '10px', borderRadius: '8px', border: '1px solid rgba(212,168,67,0.35)', textAlign: 'center' }}>
+          <div style={{ fontSize: '19px', fontWeight: 900, color: '#D4A843' }}>{ownTotalXg}</div>
+          <div style={{ fontSize: '11.5px', color: 'rgba(242,237,228,0.75)', fontWeight: 600 }}>🎯 {isEn ? 'Expected xG' : 'xG Esperado'}</div>
         </div>
 
-        <div className="shot-kpi-card" style={{ background: '#152C22', padding: '10px', borderRadius: '8px', border: '1px solid rgba(76,175,125,0.3)', textAlign: 'center' }}>
-          <div style={{ fontSize: '18px', fontWeight: 900, color: '#4CAF7D' }}>{ownGoalsCount} / {ownShots.length}</div>
-          <div style={{ fontSize: '11px', color: 'rgba(242,237,228,0.7)', fontWeight: 600 }}>{isEn ? 'Goals / Shots' : 'Goles / Tiros'}</div>
+        <div className="shot-kpi-card" style={{ background: '#152C22', padding: '10px', borderRadius: '8px', border: '1px solid rgba(76,175,125,0.35)', textAlign: 'center' }}>
+          <div style={{ fontSize: '19px', fontWeight: 900, color: '#4CAF7D' }}>{ownGoalsCount} / {ownShots.length}</div>
+          <div style={{ fontSize: '11.5px', color: 'rgba(242,237,228,0.75)', fontWeight: 600 }}>⚽ {isEn ? 'Goals / Shots' : 'Goles / Tiros'}</div>
         </div>
 
-        <div className="shot-kpi-card" style={{ background: '#152C22', padding: '10px', borderRadius: '8px', border: '1px solid rgba(76,175,125,0.3)', textAlign: 'center' }}>
-          <div style={{ fontSize: '18px', fontWeight: 900, color: '#4CAF7D' }}>{ownOnTargetCount}</div>
-          <div style={{ fontSize: '11px', color: 'rgba(242,237,228,0.7)', fontWeight: 600 }}>{isEn ? 'On Target' : 'Tiros a Puerta'}</div>
+        <div className="shot-kpi-card" style={{ background: '#152C22', padding: '10px', borderRadius: '8px', border: '1px solid rgba(76,175,125,0.35)', textAlign: 'center' }}>
+          <div style={{ fontSize: '19px', fontWeight: 900, color: '#4CAF7D' }}>{ownOnTargetCount}</div>
+          <div style={{ fontSize: '11.5px', color: 'rgba(242,237,228,0.75)', fontWeight: 600 }}>🥅 {isEn ? 'On Target' : 'Tiros a Puerta'}</div>
         </div>
 
-        <div className="shot-kpi-card" style={{ background: '#152C22', padding: '10px', borderRadius: '8px', border: '1px solid rgba(212,168,67,0.3)', textAlign: 'center' }}>
-          <div style={{ fontSize: '18px', fontWeight: 900, color: '#D4A843' }}>{conversionRate}%</div>
-          <div style={{ fontSize: '11px', color: 'rgba(242,237,228,0.7)', fontWeight: 600 }}>{isEn ? 'Conversion' : 'Conversión'}</div>
+        <div className="shot-kpi-card" style={{ background: '#152C22', padding: '10px', borderRadius: '8px', border: '1px solid rgba(212,168,67,0.35)', textAlign: 'center' }}>
+          <div style={{ fontSize: '19px', fontWeight: 900, color: '#D4A843' }}>{conversionRate}%</div>
+          <div style={{ fontSize: '11.5px', color: 'rgba(242,237,228,0.75)', fontWeight: 600 }}>📈 {isEn ? 'Conversion' : 'Conversión'}</div>
         </div>
       </div>
 
       {/* Desglose Pedagógico de los 3 Pasillos de Remate */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px', fontSize: '11px' }}>
-        <div style={{ background: 'rgba(76, 175, 125, 0.08)', padding: '6px 10px', borderRadius: '6px', border: '1px solid rgba(76, 175, 125, 0.2)', textAlign: 'center' }}>
-          <span style={{ fontWeight: 800, color: '#F2EDE4' }}>{isEn ? 'Left Wing' : 'Banda Izquierda'}: </span>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '8px', fontSize: '11.5px' }}>
+        <div style={{ background: 'rgba(76, 175, 125, 0.08)', padding: '7px 12px', borderRadius: '6px', border: '1px solid rgba(76, 175, 125, 0.25)', textAlign: 'center' }}>
+          <span style={{ fontWeight: 800, color: '#F2EDE4' }}>{isEn ? 'Left Channel' : 'Banda Izquierda'}: </span>
           <strong style={{ color: '#4CAF7D' }}>{bySector.left.count} tiros</strong> ({bySector.left.onTarget} puerta · {bySector.left.goals} ⚽ · {bySector.left.xG} xG)
         </div>
-        <div style={{ background: 'rgba(212, 168, 67, 0.12)', padding: '6px 10px', borderRadius: '6px', border: '1px solid rgba(212, 168, 67, 0.3)', textAlign: 'center' }}>
-          <span style={{ fontWeight: 800, color: '#F2EDE4' }}>{isEn ? 'Center' : 'Pasillo Central'}: </span>
+        <div style={{ background: 'rgba(212, 168, 67, 0.12)', padding: '7px 12px', borderRadius: '6px', border: '1px solid rgba(212, 168, 67, 0.35)', textAlign: 'center' }}>
+          <span style={{ fontWeight: 800, color: '#F2EDE4' }}>{isEn ? 'Central Channel' : 'Pasillo Central'}: </span>
           <strong style={{ color: '#D4A843' }}>{bySector.center.count} tiros</strong> ({bySector.center.onTarget} puerta · {bySector.center.goals} ⚽ · {bySector.center.xG} xG)
         </div>
-        <div style={{ background: 'rgba(76, 175, 125, 0.08)', padding: '6px 10px', borderRadius: '6px', border: '1px solid rgba(76, 175, 125, 0.2)', textAlign: 'center' }}>
-          <span style={{ fontWeight: 800, color: '#F2EDE4' }}>{isEn ? 'Right Wing' : 'Banda Derecha'}: </span>
+        <div style={{ background: 'rgba(76, 175, 125, 0.08)', padding: '7px 12px', borderRadius: '6px', border: '1px solid rgba(76, 175, 125, 0.25)', textAlign: 'center' }}>
+          <span style={{ fontWeight: 800, color: '#F2EDE4' }}>{isEn ? 'Right Channel' : 'Banda Derecha'}: </span>
           <strong style={{ color: '#4CAF7D' }}>{bySector.right.count} tiros</strong> ({bySector.right.onTarget} puerta · {bySector.right.goals} ⚽ · {bySector.right.xG} xG)
         </div>
       </div>
 
-      {/* Campo Táctico Vertical de Medio Campo con los 21 Tiros Dispersados */}
+      {/* Terreno de Juego Canónico 105:68 Responsive */}
       <div
-        className="field-shot-canvas"
+        className="field-shot-canvas-container"
         style={{
           position: 'relative',
           width: '100%',
-          aspectRatio: '68 / 55',
+          maxWidth: '1050px',
+          margin: '0 auto',
+          aspectRatio: '1050 / 680',
           borderRadius: '10px',
           overflow: 'hidden',
-          border: '1.5px solid rgba(76, 175, 125, 0.3)',
+          border: '1.5px solid rgba(76, 175, 125, 0.35)',
           background: '#152C22',
-          boxShadow: '0 8px 24px rgba(0,0,0,0.4)'
+          boxShadow: '0 8px 28px rgba(0, 0, 0, 0.45)'
         }}
       >
         <svg
-          viewBox="0 0 68 55"
-          className="half-pitch-svg"
-          preserveAspectRatio="none"
+          viewBox="0 0 1050 680"
+          preserveAspectRatio="xMidYMid meet"
           style={{ width: '100%', height: '100%', display: 'block' }}
         >
-          {/* Césped táctico con franjas */}
-          <rect x="0" y="0" width="68" height="55" fill="#152C22" />
-          {Array.from({ length: 6 }).map((_, i) => (
-            <rect
-              key={i}
-              x="0"
-              y={i * (55 / 6)}
-              width="68"
-              height={55 / 6}
-              fill={i % 2 === 0 ? 'rgba(0, 0, 0, 0.08)' : 'rgba(255, 255, 255, 0.02)'}
-            />
-          ))}
+          {/* Base y marcado canónico */}
+          <g
+            id="pitch-base"
+            dangerouslySetInnerHTML={{
+              __html: getPitchFrameSvgMarkup({
+                isDark: true,
+                showTacticalCorridors: true,
+                showGoals: true,
+                showStripes: true,
+                corridorsLabel: true,
+                isEn
+              })
+            }}
+          />
 
-          {/* Pasillos Tácticos Verticales muy sutiles */}
-          <line x1="22.6" y1="3" x2="22.6" y2="52" stroke="rgba(242,237,228,0.15)" strokeWidth="0.5" strokeDasharray="2 2" />
-          <line x1="45.3" y1="3" x2="45.3" y2="52" stroke="rgba(242,237,228,0.15)" strokeWidth="0.5" strokeDasharray="2 2" />
-
-          {/* Líneas reglamentarias */}
-          <line x1="3" y1="3" x2="65" y2="3" stroke="rgba(255,255,255,0.6)" strokeWidth="0.7" />
-          <path d="M 24.85 3 A 9.15 9.15 0 0 0 43.15 3" fill="none" stroke="rgba(255,255,255,0.6)" strokeWidth="0.7" />
-          <circle cx="34" cy="3" r="0.8" fill="rgba(255,255,255,0.9)" />
-
-          <line x1="3" y1="3" x2="3" y2="52" stroke="rgba(255,255,255,0.6)" strokeWidth="0.7" />
-          <line x1="65" y1="3" x2="65" y2="52" stroke="rgba(255,255,255,0.6)" strokeWidth="0.7" />
-          <line x1="3" y1="52" x2="65" y2="52" stroke="rgba(255,255,255,0.6)" strokeWidth="0.7" />
-
-          {/* Área grande */}
-          <rect x="14" y="35.5" width="40" height="16.5" fill="none" stroke="rgba(255,255,255,0.6)" strokeWidth="0.7" />
-          {/* Área pequeña */}
-          <rect x="24.5" y="46.5" width="19" height="5.5" fill="none" stroke="rgba(255,255,255,0.6)" strokeWidth="0.7" />
-          {/* Punto de penalti */}
-          <circle cx="34" cy="41" r="0.7" fill="rgba(255,255,255,0.9)" />
-          {/* Arco de penalti */}
-          <path d="M 27.5 35.5 A 9.15 9.15 0 0 1 40.5 35.5" fill="none" stroke="rgba(255,255,255,0.6)" strokeWidth="0.7" />
-
-          {/* Portería */}
-          <rect x="30.34" y="52" width="7.32" height="2.2" fill="rgba(212,168,67,0.3)" stroke="#D4A843" strokeWidth="0.8" />
-          <text x="34" y="50" textAnchor="middle" fill="#D4A843" fontSize="2" fontWeight="800">{isEn ? 'GOAL' : 'PORTERÍA'}</text>
-
-          {/* Renderizado individual de CADA UNO de los tiros (visibles e interactivos) */}
-          {ownShots.map(shot => {
-            const posX = Math.max(5, Math.min(63, 3 + (shot.y / 100) * 62));
-            const rawX = typeof shot.x === 'number' ? shot.x : 78;
-            const posY = Math.max(6, Math.min(49, 3 + (Math.max(0, rawX - 45) / 55) * 46));
-
+          {/* Marcadores de Remates sin números encima, con radio dinámico y halo */}
+          {resolvedShots.map((shot) => {
             const badge = getOutcomeBadge(shot);
-            const radius = Math.max(2, Math.min(4.5, 1.8 + shot.xG * 3.2));
-            const isSelected = selectedShot?.id === shot.id;
+            const isSelected = selectedShot?.id === shot.id || hoveredShot?.id === shot.id;
 
             return (
               <g
-                key={shot.id}
-                transform={`translate(${posX}, ${posY})`}
-                onClick={() => setSelectedShot(shot)}
+                key={`shot-${shot.id || shot.idx}`}
+                className="shot-marker-g"
                 style={{ cursor: 'pointer' }}
-                className="shot-marker-group"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setSelectedShot(selectedShot?.id === shot.id ? null : shot);
+                }}
+                onMouseEnter={() => setHoveredShot(shot)}
+                onMouseLeave={() => setHoveredShot(null)}
               >
-                {/* Halo de selección */}
-                {isSelected && (
-                  <circle r={radius + 1.8} fill="none" stroke="#FFFFFF" strokeWidth="1.2" />
-                )}
-
-                {/* Círculo del tiro */}
-                <circle
-                  r={radius}
-                  fill={badge.color}
-                  stroke="#FFFFFF"
-                  strokeWidth="0.8"
-                  fillOpacity="0.95"
-                />
-
-                {/* Borde dorado de Gol */}
-                {badge.isGoal && (
+                {/* Anillo de comodidad si fue cómodo */}
+                {shot.shooterComfort === 'comodo' && (
                   <circle
-                    r={radius + 1.2}
+                    cx={shot.x}
+                    cy={shot.y}
+                    r={shot.radius + 3}
                     fill="none"
                     stroke="#D4A843"
-                    strokeWidth="0.9"
-                    strokeDasharray="1.5 1"
+                    strokeWidth="1.8"
+                    strokeDasharray="3 2"
                   />
                 )}
 
-                {/* Etiqueta de valor o icono */}
-                <text
-                  textAnchor="middle"
-                  dy="0.35em"
+                {/* Anillo de gol si fue gol */}
+                {badge.isGoal && (
+                  <circle
+                    cx={shot.x}
+                    cy={shot.y}
+                    r={shot.radius + 4.5}
+                    fill="none"
+                    stroke="#D4A843"
+                    strokeWidth="2.2"
+                  />
+                )}
+
+                {/* Halo blanco 2px */}
+                <circle
+                  cx={shot.x}
+                  cy={shot.y}
+                  r={shot.radius + (isSelected ? 3.5 : 2)}
                   fill="#FFFFFF"
-                  stroke="#000000"
-                  strokeWidth="0.25"
-                  fontSize="1.9"
-                  fontWeight="900"
-                  style={{ paintOrder: 'stroke fill' }}
-                >
-                  {badge.isGoal ? '⚽' : shot.xG.toFixed(2)}
-                </text>
+                  opacity={isSelected ? 1 : 0.9}
+                />
+
+                {/* Punto de remate coloreado */}
+                <circle
+                  cx={shot.x}
+                  cy={shot.y}
+                  r={shot.radius}
+                  fill={badge.color}
+                  stroke="#FFFFFF"
+                  strokeWidth="1.2"
+                />
               </g>
             );
           })}
         </svg>
 
-        {/* Modal / Card flotante de Detalle de Tiro seleccionado */}
-        {selectedShot && (
+        {/* Popover / Tooltip interactivo flotante al seleccionar o pasar el cursor */}
+        {activePopoverShot && (
           <div
-            className="shot-detail-card"
+            className="shot-popover-card"
             style={{
               position: 'absolute',
-              bottom: '12px',
-              left: '12px',
-              right: '12px',
+              bottom: '14px',
+              left: '14px',
+              right: '14px',
+              maxWidth: '480px',
+              margin: '0 auto',
               background: '#1B3A2D',
               border: '1.5px solid #D4A843',
               borderRadius: '8px',
               padding: '10px 14px',
-              boxShadow: '0 8px 24px rgba(0,0,0,0.6)',
-              zIndex: 10
+              boxShadow: '0 8px 24px rgba(0, 0, 0, 0.65)',
+              zIndex: 10,
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '6px'
             }}
           >
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <span style={{ background: getOutcomeBadge(selectedShot).bg, color: getOutcomeBadge(selectedShot).color, padding: '2px 8px', borderRadius: '4px', fontSize: '11px', fontWeight: 800 }}>
-                  {getOutcomeBadge(selectedShot).icon} {getOutcomeBadge(selectedShot).label}
+                <span
+                  style={{
+                    background: getOutcomeBadge(activePopoverShot).bg,
+                    color: getOutcomeBadge(activePopoverShot).color,
+                    padding: '3px 8px',
+                    borderRadius: '4px',
+                    fontSize: '11px',
+                    fontWeight: 800
+                  }}
+                >
+                  {getOutcomeBadge(activePopoverShot).label}
                 </span>
-                <strong style={{ fontSize: '12px', color: '#F2EDE4' }}>⏱ Minuto {selectedShot.minute}′</strong>
+                <strong style={{ fontSize: '12px', color: '#F2EDE4' }}>
+                  ⏱ Minuto {activePopoverShot.minute || activePopoverShot.minuto || 's/m'}′
+                </strong>
               </div>
               <button
                 type="button"
-                onClick={() => setSelectedShot(null)}
-                style={{ background: 'transparent', border: 'none', color: '#F2EDE4', cursor: 'pointer', padding: '4px' }}
+                onClick={() => {
+                  setSelectedShot(null);
+                  setHoveredShot(null);
+                }}
+                style={{
+                  background: 'transparent',
+                  border: 'none',
+                  color: '#F2EDE4',
+                  cursor: 'pointer',
+                  padding: '4px',
+                  display: 'flex',
+                  alignItems: 'center'
+                }}
               >
                 <X size={16} />
               </button>
             </div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px', fontSize: '11px', color: '#CBD5E1' }}>
-              <div>{isEn ? 'Player:' : 'Jugador:'} <strong style={{ color: '#FFFFFF' }}>{selectedShot.playerName}</strong></div>
-              <div>{isEn ? 'xG Value:' : 'Valor xG:'} <strong style={{ color: '#D4A843' }}>{selectedShot.xG}</strong></div>
-              <div>{isEn ? 'Distance:' : 'Distancia:'} <strong style={{ color: '#FFFFFF' }}>{selectedShot.distMeters} m</strong></div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px', fontSize: '11.5px', color: '#CBD5E1' }}>
+              <div>
+                {isEn ? 'Player:' : 'Jugador:'}{' '}
+                <strong style={{ color: '#FFFFFF' }}>{activePopoverShot.playerName || (activePopoverShot.isRival ? 'Rival' : 'Propio')}</strong>
+              </div>
+              <div>
+                {isEn ? 'xG Value:' : 'Valor xG:'}{' '}
+                <strong style={{ color: '#D4A843' }}>{Number(activePopoverShot.xG || activePopoverShot.xg || 0.15).toFixed(2)}</strong>
+              </div>
+              <div>
+                {isEn ? 'Comfort:' : 'Comodidad:'}{' '}
+                <strong style={{ color: activePopoverShot.shooterComfort === 'comodo' ? '#D4A843' : '#4CAF7D' }}>
+                  {activePopoverShot.shooterComfort === 'comodo' ? (isEn ? 'Comfortable' : 'Cómodo') : (isEn ? 'Pressured' : 'Presionado')}
+                </strong>
+              </div>
             </div>
           </div>
         )}
       </div>
 
-      {/* Leyenda Inferior de Remates */}
-      <div style={{ display: 'flex', gap: '16px', justifyContent: 'center', alignItems: 'center', flexWrap: 'wrap', fontSize: '11px', color: '#CBD5E1', padding: '4px 0' }}>
-        <span style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-          <span style={{ width: '10px', height: '10px', borderRadius: '50%', background: '#D4A843', display: 'inline-block' }} />
-          {isEn ? 'Goal (⚽)' : 'Gol (⚽)'}
-        </span>
-        <span style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-          <span style={{ width: '10px', height: '10px', borderRadius: '50%', background: '#4CAF7D', display: 'inline-block' }} />
-          {isEn ? 'On Target (🎯)' : 'A puerta (🎯)'}
-        </span>
-        <span style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-          <span style={{ width: '10px', height: '10px', borderRadius: '50%', background: '#A3B5AD', display: 'inline-block' }} />
-          {isEn ? 'Off Target / Blocked (❌)' : 'Fuera / Bloqueado (❌)'}
-        </span>
+      {/* Leyenda Canónica con Conteos y Cómo se Lee */}
+      <div
+        className="shot-legend-bar"
+        style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          flexWrap: 'wrap',
+          gap: '12px',
+          background: '#152C22',
+          padding: '10px 14px',
+          borderRadius: '8px',
+          border: '1px solid rgba(76, 175, 125, 0.25)',
+          fontSize: '11.5px'
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <span style={{ width: '10px', height: '10px', borderRadius: '50%', background: '#D4A843', display: 'inline-block' }} />
+            <span style={{ color: '#F2EDE4', fontWeight: 600 }}>{isEn ? `Goal (${counts.goals})` : `Gol (${counts.goals})`}</span>
+          </div>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <span style={{ width: '10px', height: '10px', borderRadius: '50%', background: '#4CAF7D', display: 'inline-block' }} />
+            <span style={{ color: '#F2EDE4', fontWeight: 600 }}>{isEn ? `On Target (${counts.onTarget})` : `A puerta (${counts.onTarget})`}</span>
+          </div>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <span style={{ width: '10px', height: '10px', borderRadius: '50%', background: '#94A3B8', display: 'inline-block' }} />
+            <span style={{ color: '#F2EDE4', fontWeight: 600 }}>{isEn ? `Off Target / Blocked (${counts.offTarget})` : `Fuera / Bloqueado (${counts.offTarget})`}</span>
+          </div>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <span style={{ width: '10px', height: '10px', borderRadius: '50%', background: '#EF4444', display: 'inline-block' }} />
+            <span style={{ color: '#F2EDE4', fontWeight: 600 }}>{isEn ? `Opponent Shot (${counts.rival})` : `Tiro Rival (${counts.rival})`}</span>
+          </div>
+        </div>
+
+        {/* Línea cómo se lee de una frase */}
+        <div style={{ color: 'rgba(242, 237, 228, 0.75)', fontSize: '11px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+          <HelpCircle size={14} color="#D4A843" />
+          <span>
+            {isEn
+              ? 'Dot size corresponds to xG probability (6-16px); rival shots mirrored towards attacking goal.'
+              : 'Radio según probabilidad xG (6-16px); tiros rivales espejados hacia la portería que ataca.'}
+          </span>
+        </div>
       </div>
     </div>
   );
 
   return (
-    <div
-      ref={containerRef}
-      className="shot-map-container"
-      style={{
-        width: '100%',
-        background: '#1B3A2D',
-        borderRadius: '12px',
-        padding: '16px',
-        border: '1px solid rgba(212, 168, 67, 0.25)',
-        boxSizing: 'border-box'
-      }}
-    >
+    <div ref={containerRef} className="match-shot-map-card" style={{ width: '100%' }}>
       {renderContent()}
-
-      {/* Pantalla Completa / Modo Teatro mediante Portal */}
-      <TheaterOverlay isOpen={isTheater} onClose={exitTheater} title={isEn ? 'Shot Map & xG Model' : 'Mapa de Tiros y Modelo xG'}>
+      <TheaterOverlay isTheater={isTheater} onClose={toggleFullscreen}>
         {renderContent()}
       </TheaterOverlay>
     </div>

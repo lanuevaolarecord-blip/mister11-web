@@ -196,12 +196,12 @@ export const HeatMap = ({
           </button>
         )}
 
-        <div style={{ position: 'relative', width: '100%', height: inModal ? '100%' : 'auto', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div style={{ position: 'relative', width: '100%', maxWidth: '1050px', margin: '0 auto', aspectRatio: '105 / 68', height: inModal ? '100%' : 'auto', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <svg
             viewBox="0 0 105 68"
             className="football-pitch-svg"
-            preserveAspectRatio="none"
-            style={inModal ? { maxHeight: 'calc(100dvh - 120px)', width: 'auto', maxWidth: '100%', objectFit: 'contain' } : {}}
+            preserveAspectRatio="xMidYMid meet"
+            style={inModal ? { maxHeight: 'calc(100dvh - 120px)', width: 'auto', maxWidth: '100%', objectFit: 'contain' } : { width: '100%', height: '100%', display: 'block' }}
           >
             <rect x="0" y="0" width="105" height="68" fill="#1b4d2e" />
             {Array.from({ length: 9 }).map((_, i) => (

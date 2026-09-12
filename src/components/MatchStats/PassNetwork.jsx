@@ -257,12 +257,13 @@ export const PassNetwork = ({
           </button>
         )}
 
-        <svg
-          viewBox="0 0 105 68"
-          className="network-svg"
-          preserveAspectRatio="none"
-          style={isFullscreen ? { maxHeight: 'calc(100dvh - 120px)', width: 'auto', maxWidth: '100%', objectFit: 'contain' } : {}}
-        >
+        <div style={{ position: 'relative', width: '100%', maxWidth: '1050px', margin: '0 auto', aspectRatio: '105 / 68', height: inModal ? '100%' : 'auto', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <svg
+            viewBox="0 0 105 68"
+            className="network-svg"
+            preserveAspectRatio="xMidYMid meet"
+            style={isFullscreen ? { maxHeight: 'calc(100dvh - 120px)', width: 'auto', maxWidth: '100%', objectFit: 'contain' } : { width: '100%', height: '100%', display: 'block' }}
+          >
           {/* Fondo del campo con césped estadio */}
           <rect x="0" y="0" width="105" height="68" fill="#153e24" />
 
@@ -403,6 +404,7 @@ export const PassNetwork = ({
             );
           })}
         </svg>
+      </div>
 
         {/* Panel de detalles al hacer click en nodo o arista */}
         {selectedNode && (

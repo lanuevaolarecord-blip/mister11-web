@@ -53,7 +53,7 @@ export function renderSectorTacticsSvgString({
       <rect x="0" y="0" width="${width}" height="${height}" fill="${theme.bgCard}" rx="10" stroke="${theme.border}" stroke-width="1" />
 
       <!-- Fila 1: Título de cabecera -->
-      <text x="20" y="24" fill="${theme.gold}" font-size="12" font-weight="800" letter-spacing="0.5">${isEn ? 'FIELD & TACTICAL ANALYSIS' : 'CAMPO Y TÁCTICA: SECTORES Y ABP'}</text>
+      <text x="20" y="24" fill="${theme.gold}" font-size="12" font-weight="800" letter-spacing="0.5">${isEn ? 'FIELD &amp; TACTICAL ANALYSIS' : 'CAMPO Y TÁCTICA: SECTORES Y ABP'}</text>
       <text x="${width - 20}" y="24" text-anchor="end" fill="${theme.textSecondary}" font-size="10" font-weight="700">${safeHome} vs ${safeAway}</text>
       <line x1="20" y1="34" x2="${width - 20}" y2="34" stroke="rgba(242,237,228,0.12)" stroke-width="1" />
 

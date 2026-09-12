@@ -149,6 +149,8 @@ export const ZoneEventMap = ({
         style={{
           position: 'relative',
           width: '100%',
+          maxWidth: '1050px',
+          margin: '0 auto',
           aspectRatio: '105 / 68',
           borderRadius: '10px',
           overflow: 'hidden',
@@ -160,7 +162,7 @@ export const ZoneEventMap = ({
         <svg
           viewBox="0 0 105 68"
           style={{ width: '100%', height: '100%', display: 'block' }}
-          preserveAspectRatio="none"
+          preserveAspectRatio="xMidYMid meet"
         >
           {/* Fondo césped táctico */}
           <rect x="0" y="0" width="105" height="68" fill="#152C22" />

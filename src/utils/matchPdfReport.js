@@ -178,9 +178,11 @@ export const generateMatchPdfReport = async ({
       : getUnifiedMatchEvents(matchData);
     const safeEvents = Array.isArray(rawEvents) ? rawEvents : [];
 
-    window.dispatchEvent(new CustomEvent('m11-loading', {
-      detail: { show: true, message: isEn ? 'Generating PDF Report...' : 'Generando Informe PDF...' }
-    }));
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('m11-loading', {
+        detail: { show: true, message: isEn ? 'Generating PDF Report...' : 'Generando Informe PDF...' }
+      }));
+    }
     await new Promise((r) => setTimeout(r, 100));
 
     const { jsPDF, autoTable } = await getPdfLibs();
@@ -312,24 +314,28 @@ export const generateMatchPdfReport = async ({
     const venueStr = cleanPdfText(matchData.field || matchData.lugar || (isEn ? 'Standard Pitch' : 'Campo Oficial'));
 
     // Cálculo y selección de MVP transparente: solo entre jugadores con estadísticas atribuidas
-    let mvpStr = cleanPdfText(matchData.mvp || '');
-    if (!mvpStr) {
-      const candidates = (Array.isArray(players) ? players : []).map((pl) => {
-        const pEvts = safeEvents.filter((e) => e && String(e.playerId || e.jugadorId) === String(pl.id));
-        const goals = pEvts.filter((e) => e.type === 'gol_local' || e.type === 'goal_own' || e.outcome === 'goal').length;
-        const saves = pEvts.filter((e) => e.type === 'save' || e.type === 'save_own').length;
-        const duels = pEvts.filter((e) => e.type === 'duel_won').length;
-        const hasStats = (goals + saves + duels) > 0;
-        const score = (goals * 4) + (saves * 2) + duels;
-        return { name: cleanPdfText(pl.name || pl.nombre || 'Jugador'), score, hasStats };
-      }).sort((a, b) => b.score - a.score);
+    let mvpStr = '';
+    const candidates = (Array.isArray(players) ? players : []).map((pl) => {
+      const pEvts = safeEvents.filter((e) => e && String(e.playerId || e.jugadorId) === String(pl.id));
+      const goals = pEvts.filter((e) => e.type === 'gol_local' || e.type === 'goal_own' || e.outcome === 'goal').length;
+      const saves = pEvts.filter((e) => e.type === 'save' || e.type === 'save_own').length;
+      const duels = pEvts.filter((e) => e.type === 'duel_won').length;
+      const hasStats = (goals + saves + duels) > 0;
+      const score = (goals * 4) + (saves * 2) + duels;
+      return { id: pl.id, name: cleanPdfText(pl.name || pl.nombre || 'Jugador'), score, hasStats };
+    }).sort((a, b) => b.score - a.score);
 
-      const topWithStats = candidates.find((c) => c.hasStats && c.score >= 2);
-      if (topWithStats) {
-        mvpStr = topWithStats.name;
-      } else {
-        mvpStr = isEn ? 'Not specified' : 'No especificado';
-      }
+    const topWithStats = candidates.find((c) => c.hasStats && c.score >= 2);
+    if (topWithStats) {
+      mvpStr = topWithStats.name;
+    } else {
+      // Regla MVP: si no hay estadísticas atribuidas significativas, el MVP se etiqueta:
+      // "MVP por valoración base y minutos (refina atribución para MVP estadístico)"
+      const baseLabel = isEn
+        ? 'MVP by base rating and minutes (refine attribution for statistical MVP)'
+        : 'MVP por valoración base y minutos (refina atribución para MVP estadístico)';
+      const designatedMvp = cleanPdfText(matchData.mvp || '');
+      mvpStr = designatedMvp ? `${designatedMvp} (${baseLabel})` : baseLabel;
     }
 
     doc.text(
@@ -349,22 +355,26 @@ export const generateMatchPdfReport = async ({
       ? matchData.suplentes.filter(Boolean).map(String)
       : (Array.isArray(matchData.convocados) ? matchData.convocados.slice(11).filter(Boolean).map(String) : []);
 
-    const allCalledIds = [...new Set([
-      ...titularesIds,
-      ...suplentesIds,
-      ...Object.keys(actualMap)
-    ])];
-
     const unifiedMatchEvents = getUnifiedMatchEvents({
       ...matchData,
       events: safeEvents,
       liveStatsEvents: safeEvents
     });
 
+    const { initialTitulares, initialSuplentes } = getStartingXI(titularesIds, suplentesIds, unifiedMatchEvents);
+    const effectiveTitulares = initialTitulares.length > 0 ? initialTitulares : titularesIds;
+    const effectiveSuplentes = initialSuplentes.length > 0 ? initialSuplentes : suplentesIds;
+
+    const allCalledIds = [...new Set([
+      ...effectiveTitulares,
+      ...effectiveSuplentes,
+      ...Object.keys(actualMap)
+    ])];
+
     const squadRoster = allCalledIds.map((pid) => {
       const pObj = players.find((pl) => String(pl.id) === String(pid)) || { name: 'Jugador', number: '-' };
       const actual = actualMap[pid] || {};
-      const isStarter = titularesIds.includes(String(pid));
+      const isStarter = effectiveTitulares.includes(String(pid));
       const statusKey = actual.status || (isStarter ? 'presente' : 'sin_registro');
       const isManual = actual.minutesOverride !== undefined && actual.minutesOverride !== null && actual.minutesOverride !== '';
 
@@ -1160,7 +1170,7 @@ export const generateMatchPdfReport = async ({
 
       // Suplentes Convocados en el pie de la Página 1
       const subsRoster = squadRoster.filter(r => !r.isStarter);
-      if (subsRoster.length > 0 && y < pageH - 24) {
+      if (subsRoster.length > 0 && y < pageH - 20) {
         doc.setFontSize(8);
         doc.setFont('helvetica', 'bold');
         doc.setTextColor(...colorPrimary);
@@ -1168,7 +1178,7 @@ export const generateMatchPdfReport = async ({
         y += 3;
 
         const subHeaders = isEn ? ['#', 'Player Name', 'Pos', 'Minutes', 'Rating'] : ['#', 'Jugador', 'Pos', 'Minutos', 'Nota'];
-        const subRows = subsRoster.slice(0, 6).map(s => [
+        const subRows = subsRoster.map(s => [
           s.number,
           s.name,
           s.position,
@@ -1181,8 +1191,8 @@ export const generateMatchPdfReport = async ({
           head: [subHeaders],
           body: subRows,
           theme: 'striped',
-          headStyles: { fillColor: colorPrimary, textColor: [255, 255, 255], fontStyle: 'bold', fontSize: 6.8 },
-          styles: { fontSize: 6.8, cellPadding: 1.6 },
+          headStyles: { fillColor: colorPrimary, textColor: [255, 255, 255], fontStyle: 'bold', fontSize: 6.5 },
+          styles: { fontSize: 6.5, cellPadding: 1.2 },
           columnStyles: {
             0: { width: 8, halign: 'center' },
             1: { fontStyle: 'bold' },
@@ -1253,29 +1263,21 @@ export const generateMatchPdfReport = async ({
       }
       if (!cardsText) cardsText = isEn ? 'None recorded' : 'Ninguna registrada';
 
-      const allSubsListPost = [];
-      if (matchData.cambiosList && matchData.cambiosList.length > 0) {
-        matchData.cambiosList.forEach((c) => {
-          const pIn = players.find((pl) => String(pl.id) === String(c.entraId || c.inId || c.playerInId));
-          const pOut = players.find((pl) => String(pl.id) === String(c.saleId || c.outId || c.playerOutId));
-          const nameIn = pIn ? cleanPdfText(pIn.name || pIn.nombre) : (isEn ? 'In' : 'Entra');
-          const nameOut = pOut ? cleanPdfText(pOut.name || pOut.nombre) : (isEn ? 'Out' : 'Sale');
-          const minStr = (c.minuto || c.minute) ? `${c.minuto || c.minute}'` : (isEn ? 's/m' : 's/m');
-          allSubsListPost.push(`Min ${minStr}: ${nameIn} <-> ${nameOut}`);
-        });
-      }
-
-      const subEvtsPost = safeEvents.filter(e => e && (
+      // Sustituciones generadas desde los mismos eventos que usa minutesEngine
+      const subEvtsPost = unifiedMatchEvents.filter(e => e && (
         e.type === 'cambio' || e.type === 'sustitucion' || e.type === 'substitution' || e.type === 'sub'
-      ));
+      )).sort((a, b) => (parseInt(a.minute ?? a.minuto ?? 0, 10) - parseInt(b.minute ?? b.minuto ?? 0, 10)));
+
+      const allSubsListPost = [];
       subEvtsPost.forEach(se => {
-        const inId = se.subInId || se.jugadorEntraId || se.playerInId || se.inId;
-        const outId = se.subOutId || se.jugadorSaleId || se.playerOutId || se.outId;
+        const inId = se.subInId || se.jugadorEntraId || se.playerInId || se.inId || se.entraId;
+        const outId = se.subOutId || se.jugadorSaleId || se.playerOutId || se.outId || se.saleId;
         const pIn = players.find(pl => String(pl.id) === String(inId));
         const pOut = players.find(pl => String(pl.id) === String(outId));
-        const nameIn = pIn ? cleanPdfText(pIn.name || pIn.nombre) : (inId ? `J#${inId}` : (isEn ? 'In' : 'Entra'));
-        const nameOut = pOut ? cleanPdfText(pOut.name || pOut.nombre) : (outId ? `J#${outId}` : (isEn ? 'Out' : 'Sale'));
-        const minStr = (se.minute || se.minuto) ? `${se.minute || se.minuto}'` : (isEn ? 's/m' : 's/m');
+        const nameIn = pIn ? cleanPdfText(pIn.name || pIn.nombre) : (se.playerInName || (inId ? `J#${inId}` : (isEn ? 'In' : 'Entra')));
+        const nameOut = pOut ? cleanPdfText(pOut.name || pOut.nombre) : (se.playerOutName || (outId ? `J#${outId}` : (isEn ? 'Out' : 'Sale')));
+        const rawMin = parseInt(se.minute ?? se.minuto, 10);
+        const minStr = (!isNaN(rawMin) && rawMin > 0) ? `${rawMin}'` : (isEn ? 's/m' : 's/m');
         const entry = `Min ${minStr}: ${nameIn} <-> ${nameOut}`;
         if (!allSubsListPost.includes(entry)) {
           allSubsListPost.push(entry);
@@ -1312,13 +1314,19 @@ export const generateMatchPdfReport = async ({
 
       y = (doc.lastAutoTable ? doc.lastAutoTable.finalY : y + 26) + 6;
 
-      // Cronología resumida de eventos clave
-      const sortedEvents = [...safeEvents].sort((a, b) => {
-        const hA = a.half || 1;
-        const hB = b.half || 1;
+      // Cronología resumida de eventos clave (sin default 1' y con mitad precisa)
+      const getEventHalf = (e) => {
+        if (e.half === 1 || e.half === 2) return e.half;
+        const m = parseInt(e.minute ?? e.minuto ?? e.min ?? 0, 10);
+        return m > 45 ? 2 : 1;
+      };
+
+      const sortedEvents = [...unifiedMatchEvents].sort((a, b) => {
+        const hA = getEventHalf(a);
+        const hB = getEventHalf(b);
         if (hA !== hB) return hA - hB;
-        const mA = parseInt(a.minute || a.minuto || a.min || 0, 10);
-        const mB = parseInt(b.minute || b.minuto || b.min || 0, 10);
+        const mA = parseInt(a.minute ?? a.minuto ?? a.min ?? 0, 10);
+        const mB = parseInt(b.minute ?? b.minuto ?? b.min ?? 0, 10);
         return mA - mB;
       });
 
@@ -1329,16 +1337,32 @@ export const generateMatchPdfReport = async ({
                  t.includes('card') || t.includes('amarilla') || t.includes('roja') || t.includes('foul') ||
                  t.includes('cambio') || t.includes('sustitucion');
         })
-        .slice(0, 8)
         .map((e, idx) => {
-          const rawMin = parseInt(e.minute || e.minuto || e.min, 10);
+          const rawMin = parseInt(e.minute ?? e.minuto ?? e.min, 10);
           const minLabel = (!isNaN(rawMin) && rawMin > 0) ? `${rawMin}'` : (isEn ? 'Unknown' : 's/m');
-          const halfLabel = e.half === 2 ? (isEn ? '2nd Half' : '2T') : (isEn ? '1st Half' : '1T');
+          const halfNum = getEventHalf(e);
+          const halfLabel = halfNum === 2 ? (isEn ? '2nd Half' : '2T') : (isEn ? '1st Half' : '1T');
+          
+          let desc = formatEventText(e.type, isEn);
+          if (e.playerId || e.jugadorId) {
+            const pl = players.find(p => String(p.id) === String(e.playerId || e.jugadorId));
+            if (pl) {
+              desc = `${desc} - ${cleanPdfText(pl.name || pl.nombre)}`;
+            }
+          } else if (e.playerInName && e.playerOutName) {
+            desc = `${desc}: ${e.playerInName} <-> ${e.playerOutName}`;
+          } else if (e.subInId || e.inId) {
+            const pIn = players.find(p => String(p.id) === String(e.subInId || e.inId || e.playerInId));
+            const pOut = players.find(p => String(p.id) === String(e.subOutId || e.outId || e.playerOutId));
+            if (pIn && pOut) {
+              desc = `${desc}: ${cleanPdfText(pIn.name || pIn.nombre)} <-> ${cleanPdfText(pOut.name || pOut.nombre)}`;
+            }
+          }
           return [
             `${idx + 1}`,
             minLabel,
             halfLabel,
-            formatEventText(e.type, isEn)
+            desc
           ];
         });
 
@@ -1897,8 +1921,12 @@ export const generateMatchPdfReport = async ({
     await savePdfUniversal(doc, filename);
   } catch (err) {
     console.error('Error al generar el informe PDF:', err);
-    alert(isEn ? 'Error generating PDF report. Please try again.' : 'Error al generar el PDF del informe. Intenta nuevamente.');
+    if (typeof alert === 'function') {
+      alert(isEn ? 'Error generating PDF report. Please try again.' : 'Error al generar el PDF del informe. Intenta nuevamente.');
+    }
   } finally {
-    window.dispatchEvent(new CustomEvent('m11-loading', { detail: { show: false } }));
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('m11-loading', { detail: { show: false } }));
+    }
   }
 };

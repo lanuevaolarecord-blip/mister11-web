@@ -78,6 +78,95 @@ export const getUnifiedMatchEvents = (match = {}) => {
     }
   });
 
+  // Reconciliar goles estructurados de matchData si no están en events
+  if (Array.isArray(match.goleadoresList)) {
+    match.goleadoresList.forEach((g, idx) => {
+      if (!g) return;
+      const gMin = parseInt(g.minuto ?? g.minute ?? 0, 10);
+      const pid = String(g.jugadorId || g.playerId || '');
+      const isRival = g.esRival || g.rival || false;
+      const gType = isRival ? 'gol_rival' : 'gol_local';
+      const key = g.id || `goal_${pid}_${gMin}_${idx}`;
+      const alreadyPresent = Array.from(map.values()).some((e) =>
+        (e.type === gType || (isRival && e.type === 'goal_rival') || (!isRival && (e.type === 'goal_own' || e.type === 'gol_local'))) &&
+        parseInt(e.minute ?? e.minuto ?? 0, 10) === gMin &&
+        (!pid || String(e.playerId || e.jugadorId || '') === pid)
+      );
+      if (!alreadyPresent && !map.has(key)) {
+        map.set(key, {
+          id: key,
+          type: gType,
+          minute: gMin > 0 ? gMin : null,
+          half: g.half || (gMin > 45 ? 2 : 1),
+          playerId: pid || null,
+          shooterComfort: g.shooterComfort || 'comodo',
+          sector: g.sector || 'center',
+          isGoal: true
+        });
+      }
+    });
+  }
+
+  // Reconciliar tarjetas estructuradas si no están en events
+  if (Array.isArray(match.tarjetasList)) {
+    match.tarjetasList.forEach((t, idx) => {
+      if (!t) return;
+      const tMin = parseInt(t.minuto ?? t.minute ?? 0, 10);
+      const pid = String(t.jugadorId || t.playerId || '');
+      const isRed = t.tipo === 'roja' || t.tipo === 'red';
+      const tType = isRed ? 'card_red_own' : 'card_yellow_own';
+      const key = t.id || `card_${pid}_${tMin}_${t.tipo || 'amarilla'}_${idx}`;
+      const alreadyPresent = Array.from(map.values()).some((e) =>
+        (String(e.type || '').includes('card') || String(e.type || '').includes('amarilla') || String(e.type || '').includes('roja')) &&
+        parseInt(e.minute ?? e.minuto ?? 0, 10) === tMin &&
+        (!pid || String(e.playerId || e.jugadorId || '') === pid)
+      );
+      if (!alreadyPresent && !map.has(key)) {
+        map.set(key, {
+          id: key,
+          type: tType,
+          minute: tMin > 0 ? tMin : null,
+          half: t.half || (tMin > 45 ? 2 : 1),
+          playerId: pid || null,
+          card: t.tipo || (isRed ? 'roja' : 'amarilla')
+        });
+      }
+    });
+  }
+
+  // Reconciliar cambios/sustituciones estructuradas si no están en events
+  if (Array.isArray(match.cambiosList)) {
+    match.cambiosList.forEach((c, idx) => {
+      if (!c) return;
+      const cMin = parseInt(c.minuto ?? c.minute ?? 0, 10);
+      const inId = String(c.entraId || c.inId || c.playerInId || c.subInId || '');
+      const outId = String(c.saleId || c.outId || c.playerOutId || c.subOutId || '');
+      const key = c.id || `sub_${inId}_${outId}_${cMin}_${idx}`;
+      const alreadyPresent = Array.from(map.values()).some((e) =>
+        (e.type === 'cambio' || e.type === 'sustitucion' || e.type === 'substitution' || e.type === 'sub') &&
+        parseInt(e.minute ?? e.minuto ?? 0, 10) === cMin &&
+        (!inId || String(e.subInId || e.jugadorEntraId || e.playerInId || e.inId || e.entraId || '') === inId) &&
+        (!outId || String(e.subOutId || e.jugadorSaleId || e.playerOutId || e.outId || e.saleId || '') === outId)
+      );
+      if (!alreadyPresent && !map.has(key)) {
+        map.set(key, {
+          id: key,
+          type: 'cambio',
+          minute: cMin > 0 ? cMin : null,
+          half: c.half || (cMin > 45 ? 2 : 1),
+          entraId: inId,
+          saleId: outId,
+          playerInId: inId,
+          playerOutId: outId,
+          subInId: inId,
+          subOutId: outId,
+          playerInName: c.playerInName || c.entraNombre || '',
+          playerOutName: c.playerOutName || c.saleNombre || ''
+        });
+      }
+    });
+  }
+
   const merged = Array.from(map.values());
   merged.sort((a, b) => {
     const mA = parseInt(a.minute || a.minuto || a.min || 0, 10);

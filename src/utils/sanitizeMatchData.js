@@ -102,7 +102,8 @@ export const sanitizeMatchData = (rawMatch = {}, players = []) => {
     // Limpiar eventos con nulls o formatos rotos
     const cleanEventsBase = rawEvents.filter(Boolean).map((e, idx) => {
       if (typeof e !== 'object') return null;
-      const evtMin = Math.max(1, parseInt(e.minute || e.minuto || e.time || 1, 10) || 1);
+      const rawMinParsed = parseInt(e.minute ?? e.minuto ?? e.time, 10);
+      const evtMin = (!isNaN(rawMinParsed) && rawMinParsed >= 0) ? rawMinParsed : null;
       const evtType = String(e.type || e.tipo || 'accion').trim();
       const evtId = e.id ? String(e.id) : `evt_${idx}_${Date.now()}`;
       const subOut = e.subOutId ? String(e.subOutId) : (e.playerOutId ? String(e.playerOutId) : (e.jugadorSaleId ? String(e.jugadorSaleId) : (e.outId ? String(e.outId) : null)));

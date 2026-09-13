@@ -40,10 +40,17 @@ const TEXT_DARK = PDF_COLORS.textDark;
 export const savePdfUniversal = async (doc, filename) => {
   try {
     const pdfBase64 = doc.output('dataurlstring').split(',')[1];
+    if (typeof window === 'undefined') {
+      const fs = await import('fs');
+      fs.writeFileSync(filename, Buffer.from(pdfBase64, 'base64'));
+      return;
+    }
     await downloadPDF(pdfBase64, filename);
   } catch (error) {
     console.error('Error al guardar PDF:', error);
-    alert(isEnglish() ? 'Error saving PDF. Please check your storage and permissions.' : 'Error al guardar el PDF. Revisa tu espacio y permisos.');
+    if (typeof alert === 'function') {
+      alert(isEnglish() ? 'Error saving PDF. Please check your storage and permissions.' : 'Error al guardar el PDF. Revisa tu espacio y permisos.');
+    }
   }
 };
 

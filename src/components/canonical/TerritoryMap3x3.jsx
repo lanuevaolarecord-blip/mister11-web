@@ -182,370 +182,394 @@ export const TerritoryMap3x3 = ({
     }
   };
 
-  const renderInnerContent = (inModal = false) => (
-    <div className="territory-map-inner" style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: '12px' }}>
-      {/* ── CABECERA Y SELECTOR DE VISTAS ──────────────────────────────────── */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <LayoutGrid size={22} color={theme.accentText} />
-          <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 800, color: theme.ink }}>
-            {isEn ? `Territorial Map (3x3)` : `Mapa Territorial (3x3)`}
-          </h3>
-          <span style={{ fontSize: '11px', background: 'rgba(212, 168, 67, 0.15)', color: theme.accentText, padding: '3px 8px', borderRadius: '6px', fontWeight: 800, border: '1px solid rgba(212, 168, 67, 0.3)' }}>
-            {computedZones.totalEvents} {isEn ? 'actions' : 'acciones'}
-          </span>
-        </div>
+  const renderInnerContent = (inModal = false) => {
+    const activeIsDark = inModal ? true : isDark;
+    const activeTheme = activeIsDark ? CHART_THEME.dark : theme;
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-          {/* Conmutador de Modos [Intensidad] | [Detalle] */}
-          <div style={{ display: 'flex', background: isDark ? 'rgba(0, 0, 0, 0.35)' : 'rgba(27, 58, 45, 0.08)', borderRadius: '8px', padding: '3px', border: `1px solid ${isDark ? 'rgba(76, 175, 125, 0.25)' : 'rgba(27, 58, 45, 0.15)'}` }}>
-            <button
-              type="button"
-              onClick={() => setViewMode('intensity')}
-              style={{
-                background: viewMode === 'intensity' ? '#D4A843' : 'transparent',
-                color: viewMode === 'intensity' ? '#1B3A2D' : theme.inkMuted,
-                border: 'none',
-                padding: '6px 14px',
-                borderRadius: '6px',
-                fontSize: '11px',
-                fontWeight: 800,
-                cursor: 'pointer',
-                minHeight: '38px',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '5px',
-                transition: 'all 0.15s ease'
-              }}
-            >
-              <Flame size={14} />
-              <span>{isEn ? 'Intensity' : 'Intensidad'}</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => setViewMode('detail')}
-              style={{
-                background: viewMode === 'detail' ? '#4CAF7D' : 'transparent',
-                color: viewMode === 'detail' ? '#FFFFFF' : theme.inkMuted,
-                border: 'none',
-                padding: '6px 14px',
-                borderRadius: '6px',
-                fontSize: '11px',
-                fontWeight: 800,
-                cursor: 'pointer',
-                minHeight: '38px',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '5px',
-                transition: 'all 0.15s ease'
-              }}
-            >
-              <LayoutGrid size={14} />
-              <span>{isEn ? 'Detail' : 'Detalle'}</span>
-            </button>
+    return (
+      <div
+        className="territory-map-inner"
+        style={{
+          width: '100%',
+          maxWidth: inModal ? '1100px' : '100%',
+          margin: '0 auto',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '12px'
+        }}
+      >
+        {/* ── CABECERA Y SELECTOR DE VISTAS ──────────────────────────────────── */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <LayoutGrid size={22} color={activeTheme.accentText} />
+            <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 800, color: activeTheme.ink }}>
+              {isEn ? `Territorial Map (3x3)` : `Mapa Territorial (3x3)`}
+            </h3>
+            <span style={{ fontSize: '11px', background: 'rgba(212, 168, 67, 0.15)', color: activeTheme.accentText, padding: '3px 8px', borderRadius: '6px', fontWeight: 800, border: '1px solid rgba(212, 168, 67, 0.3)' }}>
+              {computedZones.totalEvents} {isEn ? 'actions' : 'acciones'}
+            </span>
           </div>
 
-          {/* Botón Red de Pases integrada (si existen pases) */}
-          {(showPassNetworkButton || onSwitchToPassNetwork) && (
-            <button
-              type="button"
-              onClick={() => onSwitchToPassNetwork && onSwitchToPassNetwork()}
-              style={{
-                background: isDark ? 'rgba(255, 255, 255, 0.06)' : 'rgba(27, 58, 45, 0.05)',
-                border: `1px solid ${isDark ? 'rgba(242, 237, 228, 0.15)' : 'rgba(27, 58, 45, 0.15)'}`,
-                color: theme.ink,
-                padding: '6px 12px',
-                borderRadius: '6px',
-                fontSize: '11px',
-                fontWeight: 700,
-                cursor: 'pointer',
-                minHeight: '48px',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '6px'
-              }}
-            >
-              <Share2 size={14} />
-              <span>{t('charts.view.pass_network', isEn ? 'Pass Network' : 'Red de Pases')}</span>
-            </button>
-          )}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+            {/* Conmutador de Modos [Intensidad] | [Detalle] */}
+            <div style={{ display: 'flex', background: activeIsDark ? 'rgba(0, 0, 0, 0.35)' : 'rgba(27, 58, 45, 0.08)', borderRadius: '8px', padding: '3px', border: `1px solid ${activeIsDark ? 'rgba(76, 175, 125, 0.25)' : 'rgba(27, 58, 45, 0.15)'}` }}>
+              <button
+                type="button"
+                onClick={() => setViewMode('intensity')}
+                style={{
+                  background: viewMode === 'intensity' ? '#D4A843' : 'transparent',
+                  color: viewMode === 'intensity' ? '#1B3A2D' : activeTheme.inkMuted,
+                  border: 'none',
+                  padding: '6px 14px',
+                  borderRadius: '6px',
+                  fontSize: '11px',
+                  fontWeight: 800,
+                  cursor: 'pointer',
+                  minHeight: '48px',
+                  minWidth: '48px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '5px',
+                  transition: 'all 0.15s ease'
+                }}
+              >
+                <Flame size={14} />
+                <span>{isEn ? 'Intensity' : 'Intensidad'}</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setViewMode('detail')}
+                style={{
+                  background: viewMode === 'detail' ? '#4CAF7D' : 'transparent',
+                  color: viewMode === 'detail' ? '#FFFFFF' : activeTheme.inkMuted,
+                  border: 'none',
+                  padding: '6px 14px',
+                  borderRadius: '6px',
+                  fontSize: '11px',
+                  fontWeight: 800,
+                  cursor: 'pointer',
+                  minHeight: '48px',
+                  minWidth: '48px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '5px',
+                  transition: 'all 0.15s ease'
+                }}
+              >
+                <LayoutGrid size={14} />
+                <span>{isEn ? 'Detail' : 'Detalle'}</span>
+              </button>
+            </div>
 
-          {/* Botón Pantalla Completa / Teatro */}
-          {!inModal && (
-            <button
-              type="button"
-              className="btn-fullscreen-match-card"
-              onClick={(e) => {
-                e.stopPropagation();
-                toggleFullscreen();
-              }}
-              style={{ minHeight: '48px', minWidth: '48px' }}
-              title={isExpanded ? (isEn ? 'Exit' : 'Salir') : (isEn ? 'Fullscreen' : 'Pantalla Completa')}
-            >
-              {isExpanded ? <Minimize2 size={16} /> : <Maximize2 size={16} />}
-              <span>{isExpanded ? (isEn ? 'Exit' : 'Salir') : (isEn ? 'Fullscreen' : 'Pantalla Completa')}</span>
-            </button>
-          )}
-        </div>
-      </div>
+            {/* Botón Red de Pases integrada (si existen pases) */}
+            {(showPassNetworkButton || onSwitchToPassNetwork) && (
+              <button
+                type="button"
+                onClick={() => onSwitchToPassNetwork && onSwitchToPassNetwork()}
+                style={{
+                  background: activeIsDark ? 'rgba(255, 255, 255, 0.06)' : 'rgba(27, 58, 45, 0.05)',
+                  border: `1px solid ${activeIsDark ? 'rgba(242, 237, 228, 0.15)' : 'rgba(27, 58, 45, 0.15)'}`,
+                  color: activeTheme.ink,
+                  padding: '6px 12px',
+                  borderRadius: '6px',
+                  fontSize: '11px',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  minHeight: '48px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px'
+                }}
+              >
+                <Share2 size={14} />
+                <span>{t('charts.view.pass_network', isEn ? 'Pass Network' : 'Red de Pases')}</span>
+              </button>
+            )}
 
-      {/* ── BARRA DE CONTROLES: EQUIPO, ACCIONES Y JUGADOR ──────────────────── */}
-      <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
-        {/* Selector de Equipo */}
-        <div style={{ display: 'flex', background: isDark ? 'rgba(0, 0, 0, 0.3)' : 'rgba(27, 58, 45, 0.06)', borderRadius: '6px', padding: '2px', border: `1px solid ${isDark ? 'rgba(76, 175, 125, 0.2)' : 'rgba(27, 58, 45, 0.15)'}` }}>
-          {[
-            { key: 'home', label: teamName || (isEn ? 'My Team' : 'Mi Equipo') },
-            { key: 'away', label: rivalName || (isEn ? 'Opponent' : 'Rival') },
-            { key: 'both', label: isEn ? 'Both' : 'Ambos' },
-          ].map(opt => (
-            <button
-              key={opt.key}
-              type="button"
-              onClick={() => setTeamFilter(opt.key)}
-              style={{
-                background: teamFilter === opt.key ? (isDark ? 'rgba(76, 175, 125, 0.3)' : '#1B3A2D') : 'transparent',
-                color: teamFilter === opt.key ? (isDark ? '#4CAF7D' : '#FFFFFF') : theme.inkMuted,
-                border: 'none',
-                padding: '5px 10px',
-                borderRadius: '4px',
-                fontSize: '11px',
-                fontWeight: 700,
-                cursor: 'pointer',
-                minHeight: '36px'
-              }}
-            >
-              {opt.label}
-            </button>
-          ))}
-        </div>
-
-        {/* Chips de Filtro de Acción */}
-        <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', flex: 1 }}>
-          {[
-            { key: 'all', label: isEn ? 'All' : 'Todo' },
-            { key: 'recoveries', label: isEn ? 'Recoveries' : 'Recuperaciones' },
-            { key: 'duels', label: isEn ? 'Duels' : 'Duelos' },
-            { key: 'shots', label: isEn ? 'Shots' : 'Tiros' },
-            { key: 'fouls', label: isEn ? 'Fouls' : 'Faltas' },
-            { key: 'passes', label: isEn ? 'Passes' : 'Pases' },
-          ].map(chip => (
-            <button
-              key={chip.key}
-              type="button"
-              onClick={() => setActionFilter(chip.key)}
-              style={{
-                background: actionFilter === chip.key ? (isDark ? 'rgba(212, 168, 67, 0.2)' : '#D4A843') : (isDark ? 'rgba(255, 255, 255, 0.04)' : 'rgba(27, 58, 45, 0.04)'),
-                color: actionFilter === chip.key ? (isDark ? '#D4A843' : '#1B3A2D') : theme.inkMuted,
-                border: actionFilter === chip.key ? '1px solid rgba(212, 168, 67, 0.5)' : `1px solid ${isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(27, 58, 45, 0.1)'}`,
-                padding: '4px 10px',
-                borderRadius: '6px',
-                fontSize: '11px',
-                fontWeight: actionFilter === chip.key ? 800 : 600,
-                cursor: 'pointer',
-                minHeight: '36px'
-              }}
-            >
-              {chip.label}
-            </button>
-          ))}
+            {/* Botón Pantalla Completa / Teatro */}
+            {!inModal && (
+              <button
+                type="button"
+                className="btn-fullscreen-match-card"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  toggleFullscreen();
+                }}
+                style={{ minHeight: '48px', minWidth: '48px' }}
+                title={isExpanded ? (isEn ? 'Exit' : 'Salir') : (isEn ? 'Fullscreen' : 'Pantalla Completa')}
+              >
+                {isExpanded ? <Minimize2 size={16} /> : <Maximize2 size={16} />}
+                <span>{isExpanded ? (isEn ? 'Exit' : 'Salir') : (isEn ? 'Fullscreen' : 'Pantalla Completa')}</span>
+              </button>
+            )}
+          </div>
         </div>
 
-        {/* Selector de Jugador */}
-        {players.length > 0 && (
-          <div style={{ minWidth: '160px' }}>
+        {/* ── BARRA DE CONTROLES: EQUIPO, ACCIONES Y JUGADOR ──────────────────── */}
+        <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
+          {/* Selector de Equipo */}
+          <div style={{ display: 'flex', background: activeIsDark ? 'rgba(0, 0, 0, 0.3)' : 'rgba(27, 58, 45, 0.06)', borderRadius: '6px', padding: '2px', border: `1px solid ${activeIsDark ? 'rgba(76, 175, 125, 0.2)' : 'rgba(27, 58, 45, 0.15)'}` }}>
+            {[
+              { key: 'home', label: teamName || (isEn ? 'My Team' : 'Mi Equipo') },
+              { key: 'away', label: rivalName || (isEn ? 'Opponent' : 'Rival') },
+              { key: 'both', label: isEn ? 'Both' : 'Ambos' },
+            ].map(opt => (
+              <button
+                key={opt.key}
+                type="button"
+                onClick={() => setTeamFilter(opt.key)}
+                style={{
+                  background: teamFilter === opt.key ? (activeIsDark ? 'rgba(76, 175, 125, 0.3)' : '#1B3A2D') : 'transparent',
+                  color: teamFilter === opt.key ? (activeIsDark ? '#4CAF7D' : '#FFFFFF') : activeTheme.inkMuted,
+                  border: 'none',
+                  padding: '5px 10px',
+                  borderRadius: '4px',
+                  fontSize: '11px',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  minHeight: '48px'
+                }}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
+
+          {/* Chips de Filtro de Acción */}
+          <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', flex: 1 }}>
+            {[
+              { key: 'all', label: isEn ? 'All' : 'Todo' },
+              { key: 'recoveries', label: isEn ? 'Recoveries' : 'Recuperaciones' },
+              { key: 'duels', label: isEn ? 'Duels' : 'Duelos' },
+              { key: 'shots', label: isEn ? 'Shots' : 'Tiros' },
+              { key: 'fouls', label: isEn ? 'Fouls' : 'Faltas' },
+              { key: 'passes', label: isEn ? 'Passes' : 'Pases' },
+            ].map(chip => (
+              <button
+                key={chip.key}
+                type="button"
+                onClick={() => setActionFilter(chip.key)}
+                style={{
+                  background: actionFilter === chip.key ? (activeIsDark ? 'rgba(212, 168, 67, 0.2)' : '#D4A843') : (activeIsDark ? 'rgba(255, 255, 255, 0.04)' : 'rgba(27, 58, 45, 0.04)'),
+                  color: actionFilter === chip.key ? (activeIsDark ? '#D4A843' : '#1B3A2D') : activeTheme.inkMuted,
+                  border: actionFilter === chip.key ? '1px solid rgba(212, 168, 67, 0.5)' : `1px solid ${activeIsDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(27, 58, 45, 0.1)'}`,
+                  padding: '4px 10px',
+                  borderRadius: '6px',
+                  fontSize: '11px',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  minHeight: '48px',
+                  transition: 'all 0.15s'
+                }}
+              >
+                {chip.label}
+              </button>
+            ))}
+          </div>
+
+          {/* Selector de Jugador */}
+          {players && players.length > 0 && (
             <select
               value={selectedPlayerId}
-              onChange={e => setSelectedPlayerId(e.target.value)}
+              onChange={(e) => setSelectedPlayerId(e.target.value)}
               style={{
-                width: '100%',
-                background: isDark ? '#152C22' : '#FFFFFF',
-                color: theme.ink,
-                border: `1px solid ${isDark ? 'rgba(212, 168, 67, 0.3)' : 'rgba(27, 58, 45, 0.2)'}`,
+                background: activeIsDark ? '#152C22' : '#FFFFFF',
+                color: activeTheme.ink,
+                border: `1px solid ${activeTheme.border}`,
                 borderRadius: '6px',
                 padding: '6px 10px',
-                fontSize: '11px',
-                fontWeight: 700,
-                minHeight: '40px'
+                fontSize: '11.5px',
+                fontWeight: 600,
+                cursor: 'pointer',
+                minHeight: '48px'
               }}
             >
-              <option value="all">{isEn ? 'All Players' : 'Toda la plantilla'}</option>
+              <option value="all">{isEn ? 'All squad' : 'Toda la plantilla'}</option>
               {players.map(p => (
                 <option key={p.id} value={p.id}>
-                  #{p.dorsal || p.number || '•'} {p.nombre || p.name || (isEn ? 'Player' : 'Jugador')}
+                  {p.number ? `${p.number}. ` : ''}{p.name || (isEn ? 'Player' : 'Jugador')}
                 </option>
               ))}
             </select>
+          )}
+        </div>
+
+        {/* ── LÍNEA DE INSIGHT TÁCTICO AUTOMÁTICO ─────────────────────────────── */}
+        {computedZones.dominantZone && (
+          <div
+            style={{
+              background: activeIsDark ? 'rgba(212, 168, 67, 0.14)' : 'rgba(212, 168, 67, 0.1)',
+              border: '1px solid rgba(212, 168, 67, 0.4)',
+              borderRadius: '8px',
+              padding: '8px 12px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              color: activeTheme.accentText,
+              fontSize: '12px',
+              fontWeight: 700
+            }}
+          >
+            <Flame size={16} style={{ flexShrink: 0 }} />
+            <span>
+              {isEn
+                ? `Dominant Zone: ${computedZones.dominantZone.pct}% of interventions concentrated in ${computedZones.dominantZone.nameEn}.`
+                : `Zona dominante: El ${computedZones.dominantZone.pct}% de las intervenciones se concentraron en ${computedZones.dominantZone.nameEs}.`}
+            </span>
           </div>
         )}
-      </div>
 
-      {/* ── LÍNEA DE INSIGHT TÁCTICO AUTOMÁTICO ─────────────────────────────── */}
-      {computedZones.dominantZone && (
-        <div
+        {/* ── CAMPO REGLAMENTARIO PITCHFRAME (105:68) ─────────────────────────── */}
+        <PitchFrame
+          isDark={true}
+          showTacticalCorridors={false}
+          showGoals={true}
+          showStripes={true}
           style={{
-            background: isDark ? 'rgba(212, 168, 67, 0.14)' : 'rgba(212, 168, 67, 0.1)',
-            border: '1px solid rgba(212, 168, 67, 0.4)',
-            borderRadius: '8px',
-            padding: '8px 12px',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px',
-            color: theme.accentText,
-            fontSize: '12px',
-            fontWeight: 700
+            maxHeight: inModal ? 'min(58vh, 560px)' : undefined,
+            width: '100%',
+            maxWidth: '1050px',
+            margin: '0 auto'
           }}
         >
-          <Flame size={16} style={{ flexShrink: 0 }} />
-          <span>
-            {isEn
-              ? `Dominant Zone: ${computedZones.dominantZone.pct}% of interventions concentrated in ${computedZones.dominantZone.nameEn}.`
-              : `Zona dominante: El ${computedZones.dominantZone.pct}% de las intervenciones se concentraron en ${computedZones.dominantZone.nameEs}.`}
-          </span>
-        </div>
-      )}
+          {/* Renderizado interactivo de las 9 Zonas */}
+          {computedZones.definitions.map((zone, idx) => {
+            const colIdx = idx >= 6 ? 2 : (idx >= 3 ? 1 : 0); // def (0-2), med (3-5), att (6-8)
+            const rowIdx = idx % 3; // izq (0), centro (1), der (2)
 
-      {/* ── CAMPO REGLAMENTARIO PITCHFRAME (105:68) ─────────────────────────── */}
-      <PitchFrame isDark={true} showTacticalCorridors={false} showGoals={true} showStripes={true}>
-        {/* Renderizado interactivo de las 9 Zonas */}
-        {computedZones.definitions.map((zone, idx) => {
-          const colIdx = idx >= 6 ? 2 : (idx >= 3 ? 1 : 0); // def (0-2), med (3-5), att (6-8)
-          const rowIdx = idx % 3; // izq (0), centro (1), der (2)
+            const zX = colPositions[colIdx].startX;
+            const zY = rowPositions[rowIdx].startY;
+            const zStats = computedZones.stats[zone.id] || { total: 0, duelsWon: 0, duelsLost: 0, recoveries: 0, shots: 0, fouls: 0, passes: 0 };
+            const isHotspot = zStats.total > 0 && zStats.total === computedZones.maxZoneEvents;
 
-          const zX = colPositions[colIdx].startX;
-          const zY = rowPositions[rowIdx].startY;
-          const zStats = computedZones.stats[zone.id] || { total: 0, duelsWon: 0, duelsLost: 0, recoveries: 0, shots: 0, fouls: 0, passes: 0 };
-          const isHotspot = zStats.total > 0 && zStats.total === computedZones.maxZoneEvents;
+            const centerX = zX + colW / 2;
+            const centerY = zY + rowH / 2;
+            const zoneName = isEn ? zone.nameEn : zone.nameEs;
 
-          const centerX = zX + colW / 2;
-          const centerY = zY + rowH / 2;
-          const zoneName = isEn ? zone.nameEn : zone.nameEs;
+            const pct = computedZones.totalEvents > 0 ? Math.round((zStats.total / computedZones.totalEvents) * 100) : 0;
 
-          const pct = computedZones.totalEvents > 0 ? Math.round((zStats.total / computedZones.totalEvents) * 100) : 0;
-
-          return (
-            <g
-              key={zone.id}
-              style={{ cursor: 'pointer' }}
-              onMouseEnter={() => setHoveredCell({ zone, stats: zStats, pct })}
-              onMouseLeave={() => setHoveredCell(null)}
-            >
-              {/* Cuadrante de zona */}
-              <rect
-                x={zX}
-                y={zY}
-                width={colW}
-                height={rowH}
-                fill={getZoneColor(zStats.total, isHotspot)}
-                stroke={isHotspot ? '#D4A843' : 'rgba(242, 237, 228, 0.3)'}
-                strokeWidth={isHotspot ? 2.5 : 1}
-                strokeDasharray={isHotspot ? 'none' : '4,4'}
-              />
-
-              {/* Nombre de la zona */}
-              <text
-                x={centerX}
-                y={zY + 32}
-                textAnchor="middle"
-                fill={isHotspot ? '#D4A843' : '#F2EDE4'}
-                fontSize="15"
-                fontWeight="700"
-                letterSpacing="0.4"
+            return (
+              <g
+                key={zone.id}
+                style={{ cursor: 'pointer' }}
+                onMouseEnter={() => setHoveredCell({ zone, stats: zStats, pct })}
+                onMouseLeave={() => setHoveredCell(null)}
               >
-                {zoneName.toUpperCase()}
-              </text>
+                {/* Rectángulo de cuadrante */}
+                <rect
+                  x={zX}
+                  y={zY}
+                  width={colW}
+                  height={rowH}
+                  fill={getZoneColor(zStats.total, isHotspot)}
+                  stroke={isHotspot ? '#D4A843' : 'rgba(255, 255, 255, 0.18)'}
+                  strokeWidth={isHotspot ? 2.5 : 1}
+                  strokeDasharray={isHotspot ? 'none' : '4 4'}
+                />
 
-              {/* Modo Intensidad vs Modo Detalle */}
-              {viewMode === 'intensity' ? (
-                <>
-                  {/* Círculo de calor central en modo Intensidad */}
-                  <circle
-                    cx={centerX}
-                    cy={centerY}
-                    r={Math.min(50, Math.max(18, (zStats.total / (computedZones.maxZoneEvents || 1)) * 50))}
-                    fill={isHotspot ? 'rgba(212, 168, 67, 0.4)' : 'rgba(76, 175, 125, 0.4)'}
-                  />
-                  <text
-                    x={centerX}
-                    y={centerY + 12}
-                    textAnchor="middle"
-                    fill="#FFFFFF"
-                    fontSize="36"
-                    fontWeight="900"
-                  >
-                    {zStats.total}
-                  </text>
-                  <text
-                    x={centerX}
-                    y={centerY + 34}
-                    textAnchor="middle"
-                    fill="#C9D4CC"
-                    fontSize="13"
-                    fontWeight="700"
-                  >
-                    {pct}%
-                  </text>
-                </>
-              ) : (
-                <>
-                  {/* Modo Detalle: Recuento Grande + Micro-desglose */}
-                  <text
-                    x={centerX}
-                    y={centerY + 16}
-                    textAnchor="middle"
-                    fill={isHotspot ? '#D4A843' : '#FFFFFF'}
-                    fontSize="42"
-                    fontWeight="900"
-                  >
-                    {zStats.total}
-                  </text>
-                  {zStats.total > 0 && (
+                {/* Nombre de la zona */}
+                <text
+                  x={centerX}
+                  y={zY + 28}
+                  textAnchor="middle"
+                  fill={isHotspot ? '#D4A843' : '#F2EDE4'}
+                  fontSize="12.5"
+                  fontWeight="800"
+                  letterSpacing="0.5"
+                >
+                  {zoneName.toUpperCase()}
+                </text>
+
+                {viewMode === 'intensity' ? (
+                  <>
+                    {/* Círculo de calor central en modo Intensidad */}
+                    <circle
+                      cx={centerX}
+                      cy={centerY}
+                      r={Math.min(50, Math.max(18, (zStats.total / (computedZones.maxZoneEvents || 1)) * 50))}
+                      fill={isHotspot ? 'rgba(212, 168, 67, 0.4)' : 'rgba(76, 175, 125, 0.4)'}
+                    />
                     <text
                       x={centerX}
-                      y={centerY + 48}
+                      y={centerY + 12}
+                      textAnchor="middle"
+                      fill="#FFFFFF"
+                      fontSize="36"
+                      fontWeight="900"
+                    >
+                      {zStats.total}
+                    </text>
+                    <text
+                      x={centerX}
+                      y={centerY + 34}
                       textAnchor="middle"
                       fill="#C9D4CC"
                       fontSize="13"
                       fontWeight="700"
                     >
-                      {zStats.recoveries > 0 && `↑${zStats.recoveries} `}
-                      {zStats.duelsWon > 0 && `✊${zStats.duelsWon} `}
-                      {zStats.shots > 0 && `🎯${zStats.shots} `}
-                      {zStats.fouls > 0 && `⚡${zStats.fouls} `}
-                      {zStats.passes > 0 && `👟${zStats.passes}`}
+                      {pct}%
                     </text>
-                  )}
-                </>
-              )}
-            </g>
-          );
-        })}
-      </PitchFrame>
+                  </>
+                ) : (
+                  <>
+                    {/* Modo Detalle: Recuento Grande + Micro-desglose */}
+                    <text
+                      x={centerX}
+                      y={centerY + 16}
+                      textAnchor="middle"
+                      fill={isHotspot ? '#D4A843' : '#FFFFFF'}
+                      fontSize="42"
+                      fontWeight="900"
+                    >
+                      {zStats.total}
+                    </text>
+                    {zStats.total > 0 && (
+                      <text
+                        x={centerX}
+                        y={centerY + 48}
+                        textAnchor="middle"
+                        fill="#C9D4CC"
+                        fontSize="13"
+                        fontWeight="700"
+                      >
+                        {zStats.recoveries > 0 && `↑${zStats.recoveries} `}
+                        {zStats.duelsWon > 0 && `✊${zStats.duelsWon} `}
+                        {zStats.shots > 0 && `🎯${zStats.shots} `}
+                        {zStats.fouls > 0 && `⚡${zStats.fouls} `}
+                        {zStats.passes > 0 && `👟${zStats.passes}`}
+                      </text>
+                    )}
+                  </>
+                )}
+              </g>
+            );
+          })}
+        </PitchFrame>
 
-      {/* ── LEYENDA Y FOOTER DE CONTRASTE ──────────────────────────────────── */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px', fontSize: '11px', color: theme.inkMuted, padding: '4px 0' }}>
-        <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
-          <span>↑ {isEn ? 'Recoveries' : 'Recuperaciones'}</span>
-          <span>✊ {isEn ? 'Duels Won' : 'Duelos Ganados'}</span>
-          <span>🎯 {isEn ? 'Shots' : 'Tiros'}</span>
-          <span>⚡ {isEn ? 'Fouls' : 'Faltas'}</span>
-          <span>👟 {isEn ? 'Passes' : 'Pases'}</span>
+        {/* ── LEYENDA Y FOOTER DE CONTRASTE ──────────────────────────────────── */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px', fontSize: '11px', color: activeTheme.inkMuted, padding: '4px 0' }}>
+          <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+            <span>↑ {isEn ? 'Recoveries' : 'Recuperaciones'}</span>
+            <span>✊ {isEn ? 'Duels Won' : 'Duelos Ganados'}</span>
+            <span>🎯 {isEn ? 'Shots' : 'Tiros'}</span>
+            <span>⚡ {isEn ? 'Fouls' : 'Faltas'}</span>
+            <span>👟 {isEn ? 'Passes' : 'Pases'}</span>
+          </div>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <span>{isEn ? 'Intensity:' : 'Intensidad:'}</span>
+            <span style={{ width: '12px', height: '12px', background: 'rgba(76, 175, 125, 0.25)', border: '1px solid rgba(76, 175, 125, 0.5)', borderRadius: '2px' }} />
+            <span>{isEn ? 'Low' : 'Baja'}</span>
+            <span style={{ width: '12px', height: '12px', background: '#D4A843', borderRadius: '2px' }} />
+            <span>{isEn ? 'Hotspot' : 'Zona Reina'}</span>
+          </div>
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-          <span>{isEn ? 'Intensity:' : 'Intensidad:'}</span>
-          <span style={{ width: '12px', height: '12px', background: 'rgba(76, 175, 125, 0.25)', border: '1px solid rgba(76, 175, 125, 0.5)', borderRadius: '2px' }} />
-          <span>{isEn ? 'Low' : 'Baja'}</span>
-          <span style={{ width: '12px', height: '12px', background: '#D4A843', borderRadius: '2px' }} />
-          <span>{isEn ? 'Hotspot' : 'Zona Reina'}</span>
-        </div>
-      </div>
-
-      {/* ── GUÍA TÁCTICA COLAPSABLE PEDAGÓGICA (CONTRASTE AA GARANTIZADO) ──── */}
-      {!isExpanded && (
+        {/* ── GUÍA TÁCTICA COLAPSABLE PEDAGÓGICA (DISPONIBLE EN MODO NORMAL Y TEATRO) ──── */}
         <div
           style={{
-            background: isDark ? 'rgba(255, 255, 255, 0.03)' : 'rgba(27, 58, 45, 0.04)',
-            border: `1px solid ${isDark ? 'rgba(212, 168, 67, 0.25)' : 'rgba(27, 58, 45, 0.12)'}`,
+            background: activeIsDark ? 'rgba(255, 255, 255, 0.03)' : 'rgba(27, 58, 45, 0.04)',
+            border: `1px solid ${activeIsDark ? 'rgba(212, 168, 67, 0.25)' : 'rgba(27, 58, 45, 0.12)'}`,
             borderRadius: '10px',
             padding: '12px 14px',
             marginTop: '4px'
@@ -553,11 +577,11 @@ export const TerritoryMap3x3 = ({
         >
           <div
             onClick={() => setShowTacticalGuide(prev => !prev)}
-            style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer', userSelect: 'none' }}
+            style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer', userSelect: 'none', minHeight: '36px' }}
           >
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
               <span style={{ fontSize: '14px' }}>💡</span>
-              <strong style={{ fontSize: '12.5px', color: theme.ink }}>
+              <strong style={{ fontSize: '12.5px', color: activeTheme.ink }}>
                 {isEn ? 'Tactical Guide: How to read and interpret this Territorial Map?' : 'Guía Táctica: ¿Cómo interpretar y usar este Mapa Territorial?'}
               </strong>
             </div>
@@ -566,13 +590,15 @@ export const TerritoryMap3x3 = ({
               style={{
                 background: 'transparent',
                 border: 'none',
-                color: theme.accentText,
+                color: activeTheme.accentText,
                 fontSize: '11px',
                 fontWeight: 700,
                 display: 'flex',
                 alignItems: 'center',
                 gap: '4px',
-                cursor: 'pointer'
+                cursor: 'pointer',
+                minHeight: '48px',
+                minWidth: '48px'
               }}
             >
               <span>{showTacticalGuide ? (isEn ? 'Hide Guide' : 'Ocultar Guía') : (isEn ? 'View Methodology' : 'Ver Metodología')}</span>
@@ -580,40 +606,40 @@ export const TerritoryMap3x3 = ({
             </button>
           </div>
 
-          <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap', marginTop: '8px', fontSize: '11.5px', color: theme.inkMuted }}>
+          <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap', marginTop: '8px', fontSize: '11.5px', color: activeTheme.inkMuted }}>
             <span>📍 <strong>{isEn ? 'Thirds:' : 'Tercios:'}</strong> {isEn ? 'Def (0-35m) · Mid (35-70m) · Att (70-105m)' : 'Defensa (0-35m) · Medio (35-70m) · Ataque (70-105m)'}</span>
             <span>⚡ <strong>{isEn ? 'Channels:' : 'Pasillos:'}</strong> {isEn ? 'Left (0-33%) · Center (33-66%) · Right (66-100%)' : 'Banda Izq (0-33%) · Pasillo Central (33-66%) · Banda Der (66-100%)'}</span>
           </div>
 
           {showTacticalGuide && (
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '10px', marginTop: '12px' }}>
-              <div style={{ background: isDark ? 'rgba(0, 0, 0, 0.2)' : '#FFFFFF', padding: '10px', borderRadius: '8px', border: `1px solid ${isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(27, 58, 45, 0.08)'}` }}>
-                <h4 style={{ margin: '0 0 4px 0', fontSize: '12px', fontWeight: 800, color: theme.ink }}>
+              <div style={{ background: activeIsDark ? 'rgba(0, 0, 0, 0.2)' : '#FFFFFF', padding: '10px', borderRadius: '8px', border: `1px solid ${activeIsDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(27, 58, 45, 0.08)'}` }}>
+                <h4 style={{ margin: '0 0 4px 0', fontSize: '12px', fontWeight: 800, color: activeTheme.ink }}>
                   📖 {isEn ? 'What is this map?' : '¿Qué representa?'}
                 </h4>
-                <p style={{ margin: 0, fontSize: '11px', lineHeight: '1.45', color: theme.inkMuted }}>
+                <p style={{ margin: 0, fontSize: '11px', lineHeight: '1.45', color: activeTheme.inkMuted }}>
                   {isEn
                     ? 'A 3x3 territorial matrix (9 FIFA regulation sectors) showing where actions (recoveries, duels, shots, fouls, passes) were focused throughout the match.'
                     : 'Es una matriz territorial 3×3 (9 zonas reglamentarias) que muestra la concentración espacial e intervenciones del equipo o jugador en cada zona del campo.'}
                 </p>
               </div>
 
-              <div style={{ background: isDark ? 'rgba(0, 0, 0, 0.2)' : '#FFFFFF', padding: '10px', borderRadius: '8px', border: `1px solid ${isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(27, 58, 45, 0.08)'}` }}>
-                <h4 style={{ margin: '0 0 4px 0', fontSize: '12px', fontWeight: 800, color: theme.ink }}>
+              <div style={{ background: activeIsDark ? 'rgba(0, 0, 0, 0.2)' : '#FFFFFF', padding: '10px', borderRadius: '8px', border: `1px solid ${activeIsDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(27, 58, 45, 0.08)'}` }}>
+                <h4 style={{ margin: '0 0 4px 0', fontSize: '12px', fontWeight: 800, color: activeTheme.ink }}>
                   ⚖️ {isEn ? 'Offensive Asymmetries' : 'Asimetrías Ofensivas'}
                 </h4>
-                <p style={{ margin: 0, fontSize: '11px', lineHeight: '1.45', color: theme.inkMuted }}>
+                <p style={{ margin: 0, fontSize: '11px', lineHeight: '1.45', color: activeTheme.inkMuted }}>
                   {isEn
                     ? 'Detect whether the team attacks preferentially down one wing and whether the opponent exploits the opposite weak side.'
                     : 'Permite identificar si el equipo vuelca su ataque obsesivamente por una banda o si explota el pasillo interior para filtrar pases.'}
                 </p>
               </div>
 
-              <div style={{ background: isDark ? 'rgba(0, 0, 0, 0.2)' : '#FFFFFF', padding: '10px', borderRadius: '8px', border: `1px solid ${isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(27, 58, 45, 0.08)'}` }}>
-                <h4 style={{ margin: '0 0 4px 0', fontSize: '12px', fontWeight: 800, color: theme.ink }}>
+              <div style={{ background: activeIsDark ? 'rgba(0, 0, 0, 0.2)' : '#FFFFFF', padding: '10px', borderRadius: '8px', border: `1px solid ${activeIsDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(27, 58, 45, 0.08)'}` }}>
+                <h4 style={{ margin: '0 0 4px 0', fontSize: '12px', fontWeight: 800, color: activeTheme.ink }}>
                   🛡️ {isEn ? 'Block Height' : 'Altura del Bloque'}
                 </h4>
-                <p style={{ margin: 0, fontSize: '11px', lineHeight: '1.45', color: theme.inkMuted }}>
+                <p style={{ margin: 0, fontSize: '11px', lineHeight: '1.45', color: activeTheme.inkMuted }}>
                   {isEn
                     ? 'High volume in mid/defensive third indicates a low/medium block, while presence in attack third confirms effective high press.'
                     : 'Si el mayor volumen está en tercio medio y defensivo, el bloque fue medio-bajo; si predomina en tercio ofensivo, la presión alta tuvo éxito.'}
@@ -622,9 +648,9 @@ export const TerritoryMap3x3 = ({
             </div>
           )}
         </div>
-      )}
-    </div>
-  );
+      </div>
+    );
+  };
 
   return (
     <div

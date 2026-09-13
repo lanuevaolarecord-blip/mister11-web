@@ -1092,7 +1092,7 @@ export const drawTacticalPitchCanvas = async ({
   width = 720,
   height = 510
 }) => {
-  try {
+  const renderCanvas = async (allowImages = true) => {
     const scale = CANVAS_DPI_SCALE;
     const canvas = document.createElement('canvas');
     canvas.width = Math.round(width * scale);
@@ -1189,11 +1189,11 @@ export const drawTacticalPitchCanvas = async ({
     const gBoxY = ly + (lh - gBoxH) / 2;
     ctx.strokeRect(lx, gBoxY, gBoxW, gBoxH);
 
-    // Punto de penalti izquierdo (11m)
-    const penDist = Math.round((11 / 105) * lw); // 54px
-    const lSpotX = lx + penDist;
+    // Punto de penalti izquierdo (11m en escala 105m = 54.5px)
+    const lSpotX = lx + Math.round((11 / 105) * lw);
     ctx.beginPath();
     ctx.arc(lSpotX, midY, 2.5, 0, Math.PI * 2);
+    ctx.fillStyle = '#FFFFFF';
     ctx.fill();
 
     // Semicírculo del área izquierda (arco exterior)
@@ -1212,10 +1212,11 @@ export const drawTacticalPitchCanvas = async ({
     // Área pequeña derecha
     ctx.strokeRect(lx + lw - gBoxW, gBoxY, gBoxW, gBoxH);
 
-    // Punto de penalti derecho (11m)
-    const rSpotX = lx + lw - penDist;
+    // Punto de penalti derecho
+    const rSpotX = lx + lw - Math.round((11 / 105) * lw);
     ctx.beginPath();
     ctx.arc(rSpotX, midY, 2.5, 0, Math.PI * 2);
+    ctx.fillStyle = '#FFFFFF';
     ctx.fill();
 
     // Semicírculo del área derecha (arco exterior)
@@ -1235,35 +1236,37 @@ export const drawTacticalPitchCanvas = async ({
     ctx.beginPath(); ctx.arc(lx + lw, ly + lh, 8, Math.PI, -Math.PI / 2); ctx.stroke();
     ctx.restore();
 
-    // 4. Precargar fotos de jugadores convocados a Base64
+    // 4. Precargar fotos de jugadores convocados a Base64 si allowImages === true
     const imageMap = {};
-    const loadImageElement = (src) => {
-      return new Promise((resolve) => {
-        if (!src) return resolve(null);
-        const img = new Image();
-        img.crossOrigin = 'anonymous';
-        img.onload = () => resolve(img);
-        img.onerror = () => resolve(null);
-        img.src = src;
-      });
-    };
+    if (allowImages) {
+      const loadImageElement = (src) => {
+        return new Promise((resolve) => {
+          if (!src) return resolve(null);
+          const img = new Image();
+          img.crossOrigin = 'anonymous';
+          img.onload = () => resolve(img);
+          img.onerror = () => resolve(null);
+          img.src = src;
+        });
+      };
 
-    const uniquePlayerIds = [...new Set((calledPlayers || []).filter(Boolean))];
-    await Promise.all(
-      uniquePlayerIds.map(async (pid) => {
-        const p = players.find((x) => x && String(x.id) === String(pid));
-        const url = p?.avatarUrl || p?.photoUrl || p?.photo || p?.photoPreview;
-        if (url) {
-          try {
-            const b64 = await imageUrlToBase64(url, p?.name, false);
-            if (b64) {
-              const imgEl = await loadImageElement(b64);
-              if (imgEl) imageMap[pid] = imgEl;
-            }
-          } catch (_) {}
-        }
-      })
-    );
+      const uniquePlayerIds = [...new Set((calledPlayers || []).filter(Boolean))];
+      await Promise.all(
+        uniquePlayerIds.map(async (pid) => {
+          const p = players.find((x) => x && String(x.id) === String(pid));
+          const url = p?.avatarUrl || p?.photoUrl || p?.photo || p?.photoPreview;
+          if (url) {
+            try {
+              const b64 = await imageUrlToBase64(url, p?.name, false);
+              if (b64 && typeof b64 === 'string' && b64.startsWith('data:image/')) {
+                const imgEl = await loadImageElement(b64);
+                if (imgEl) imageMap[pid] = imgEl;
+              }
+            } catch (_) {}
+          }
+        })
+      );
+    }
 
     // 5. Renderizado de los 11 Titulares en sus posiciones tácticas
     const lineupName = matchData?.lineup || '4-3-3';
@@ -1328,21 +1331,29 @@ export const drawTacticalPitchCanvas = async ({
       const avatarCx = cx;
       const avatarCy = cardY + 18;
 
-      const playerImg = pid ? imageMap[pid] : null;
+      const playerImg = (allowImages && pid) ? imageMap[pid] : null;
+      let drawnImage = false;
       if (player && playerImg) {
-        ctx.save();
-        ctx.beginPath();
-        ctx.arc(avatarCx, avatarCy, avatarRadius, 0, Math.PI * 2);
-        ctx.clip();
-        ctx.drawImage(playerImg, avatarCx - avatarRadius, avatarCy - avatarRadius, avatarRadius * 2, avatarRadius * 2);
-        ctx.restore();
+        try {
+          ctx.save();
+          ctx.beginPath();
+          ctx.arc(avatarCx, avatarCy, avatarRadius, 0, Math.PI * 2);
+          ctx.clip();
+          ctx.drawImage(playerImg, avatarCx - avatarRadius, avatarCy - avatarRadius, avatarRadius * 2, avatarRadius * 2);
+          ctx.restore();
 
-        ctx.beginPath();
-        ctx.arc(avatarCx, avatarCy, avatarRadius, 0, Math.PI * 2);
-        ctx.strokeStyle = '#FFFFFF';
-        ctx.lineWidth = 1.5;
-        ctx.stroke();
-      } else {
+          ctx.beginPath();
+          ctx.arc(avatarCx, avatarCy, avatarRadius, 0, Math.PI * 2);
+          ctx.strokeStyle = '#FFFFFF';
+          ctx.lineWidth = 1.5;
+          ctx.stroke();
+          drawnImage = true;
+        } catch (_) {
+          drawnImage = false;
+        }
+      }
+
+      if (!drawnImage) {
         ctx.beginPath();
         ctx.arc(avatarCx, avatarCy, avatarRadius, 0, Math.PI * 2);
         ctx.fillStyle = player ? '#1B3A2D' : '#1E293B';
@@ -1419,30 +1430,23 @@ export const drawTacticalPitchCanvas = async ({
     ctx.fillText(
       isEn ? `CALLED SUBSTITUTES (${subsPlayers.length})` : `CONVOCADOS SUPLENTES (${subsPlayers.length})`,
       benchX + 16,
-      benchY + 10
+      benchY + 12
     );
 
-    // Fichas estilizadas de suplentes
+    // Grilla de Suplentes (hasta 7 fichas)
     if (subsPlayers.length > 0) {
-      const chipW = 154;
-      const chipH = 26;
-      const gapX = 8;
-      const gapY = 6;
       const maxCols = 4;
-      const totalChipsW = maxCols * chipW + (maxCols - 1) * gapX; // 640px
-      const startX = benchX + Math.round((benchW - totalChipsW) / 2); // 40px centrado
-      const startY = benchY + 28;
+      const chipW = Math.round((benchW - 32 - (maxCols - 1) * 8) / maxCols); // ~158px
+      const chipH = 26;
+      const chipStartY = benchY + 34;
 
-      subsPlayers.forEach((sub, sIdx) => {
-        const col = sIdx % maxCols;
+      subsPlayers.slice(0, 7).forEach((sub, sIdx) => {
         const row = Math.floor(sIdx / maxCols);
-        const chipX = startX + col * (chipW + gapX);
-        const chipY = startY + row * (chipH + gapY);
+        const col = sIdx % maxCols;
+        const chipX = benchX + 16 + col * (chipW + 8);
+        const chipY = chipStartY + row * (chipH + 8);
 
-        if (chipY + chipH > benchY + benchH - 4) return;
-
-        // Fondo del chip
-        ctx.fillStyle = 'rgba(255, 255, 255, 0.08)';
+        ctx.fillStyle = '#0B1812';
         drawCanvasRoundRect(ctx, chipX, chipY, chipW, chipH, 13);
         ctx.fill();
         ctx.strokeStyle = 'rgba(212, 168, 67, 0.4)';
@@ -1455,21 +1459,29 @@ export const drawTacticalPitchCanvas = async ({
         const subCx = chipX + 14;
         const subCy = chipY + chipH / 2;
 
-        const subImg = imageMap[sub.id];
+        const subImg = (allowImages && sub.id) ? imageMap[sub.id] : null;
+        let drawnSubImg = false;
         if (subImg) {
-          ctx.save();
-          ctx.beginPath();
-          ctx.arc(subCx, subCy, subRadius, 0, Math.PI * 2);
-          ctx.clip();
-          ctx.drawImage(subImg, subCx - subRadius, subCy - subRadius, subRadius * 2, subRadius * 2);
-          ctx.restore();
+          try {
+            ctx.save();
+            ctx.beginPath();
+            ctx.arc(subCx, subCy, subRadius, 0, Math.PI * 2);
+            ctx.clip();
+            ctx.drawImage(subImg, subCx - subRadius, subCy - subRadius, subRadius * 2, subRadius * 2);
+            ctx.restore();
 
-          ctx.beginPath();
-          ctx.arc(subCx, subCy, subRadius, 0, Math.PI * 2);
-          ctx.strokeStyle = '#D4A843';
-          ctx.lineWidth = 1;
-          ctx.stroke();
-        } else {
+            ctx.beginPath();
+            ctx.arc(subCx, subCy, subRadius, 0, Math.PI * 2);
+            ctx.strokeStyle = '#D4A843';
+            ctx.lineWidth = 1;
+            ctx.stroke();
+            drawnSubImg = true;
+          } catch (_) {
+            drawnSubImg = false;
+          }
+        }
+
+        if (!drawnSubImg) {
           ctx.beginPath();
           ctx.arc(subCx, subCy, subRadius, 0, Math.PI * 2);
           ctx.fillStyle = '#D4A843';
@@ -1511,9 +1523,20 @@ export const drawTacticalPitchCanvas = async ({
     }
 
     return canvas.toDataURL('image/png', 0.95);
-  } catch (e) {
-    console.warn('[drawTacticalPitchCanvas] Error:', e);
-    return null;
+  };
+
+  try {
+    const res = await renderCanvas(true);
+    if (res && res.length >= 1000) return res;
+    return await renderCanvas(false);
+  } catch (err) {
+    console.warn('[drawTacticalPitchCanvas] toDataURL con avatares falló, recurriendo a vector puro:', err);
+    try {
+      return await renderCanvas(false);
+    } catch (catastrophicErr) {
+      console.warn('[drawTacticalPitchCanvas] Fallo catastrófico en canvas:', catastrophicErr);
+      return null;
+    }
   }
 };
 

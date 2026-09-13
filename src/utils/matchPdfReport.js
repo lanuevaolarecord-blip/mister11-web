@@ -25,7 +25,7 @@ import { renderComparisonBarsSvgString } from '../components/canonical/Compariso
 import { renderRadarCompareSvgString } from '../components/canonical/RadarCompareSVG';
 import { renderShotMapSvgString } from '../components/canonical/ShotMapSVG';
 import { renderSectorTacticsSvgString } from '../components/canonical/SectorTacticsSVG';
-import { renderTerritoryMap3x3SvgString } from '../components/canonical/TerritoryMap3x3';
+import { renderTerritoryMap3x3SvgString } from '../components/canonical/TerritoryMap3x3SVG.js';
 import { calculateCanonicalStats } from '../components/canonical/calculateCanonicalStats';
 import { getMatchAnalytics } from './matchAnalytics';
 
@@ -167,21 +167,22 @@ export const generateMatchPdfReport = async ({
   lineupImage = null,
   language = null,
 }) => {
-  const effLang = getEffectiveLanguage(language || matchData?.language);
-  const isEn = effLang === 'English (EN)';
-
-  // Unificar eventos para garantizar datos completos bajo cualquier modo
-  const rawEvents = (Array.isArray(events) && events.length > 0)
-    ? events.filter(Boolean)
-    : getUnifiedMatchEvents(matchData);
-  const safeEvents = Array.isArray(rawEvents) ? rawEvents : [];
-
-  window.dispatchEvent(new CustomEvent('m11-loading', {
-    detail: { show: true, message: isEn ? 'Generating PDF Report...' : 'Generando Informe PDF...' }
-  }));
-  await new Promise((r) => setTimeout(r, 100));
-
+  let isEn = false;
   try {
+    const effLang = getEffectiveLanguage(language || matchData?.language);
+    isEn = effLang === 'English (EN)';
+
+    // Unificar eventos para garantizar datos completos bajo cualquier modo
+    const rawEvents = (Array.isArray(events) && events.length > 0)
+      ? events.filter(Boolean)
+      : getUnifiedMatchEvents(matchData);
+    const safeEvents = Array.isArray(rawEvents) ? rawEvents : [];
+
+    window.dispatchEvent(new CustomEvent('m11-loading', {
+      detail: { show: true, message: isEn ? 'Generating PDF Report...' : 'Generando Informe PDF...' }
+    }));
+    await new Promise((r) => setTimeout(r, 100));
+
     const { jsPDF, autoTable } = await getPdfLibs();
     const doc = new jsPDF('p', 'mm', 'a4');
     const pageW = doc.internal.pageSize.getWidth();
@@ -1497,7 +1498,16 @@ export const generateMatchPdfReport = async ({
         const postImagesB64 = [];
         for (const imgUrl of validPostImages) {
           if (typeof imgUrl === 'string' && imgUrl.startsWith('data:image')) {
-            postImagesB64.push(imgUrl);
+            if (imgUrl.startsWith('data:image/webp') || imgUrl.startsWith('data:image/svg')) {
+              try {
+                const converted = await imageUrlToBase64(imgUrl);
+                if (converted) postImagesB64.push(converted);
+              } catch (_) {
+                postImagesB64.push(imgUrl);
+              }
+            } else {
+              postImagesB64.push(imgUrl);
+            }
           } else {
             try {
               const b64 = await imageUrlToBase64(imgUrl);
@@ -1539,13 +1549,10 @@ export const generateMatchPdfReport = async ({
                 doc.roundedRect(14, y, colW, colH, 2, 2, 'F');
                 doc.setDrawColor(226, 232, 240);
                 doc.roundedRect(14, y, colW, colH, 2, 2, 'S');
-                doc.addImage(img1, 'JPEG', 15, y + 1, colW - 2, colH - 2);
-              } catch {
-                try {
-                  doc.addImage(img1, 'PNG', 15, y + 1, colW - 2, colH - 2);
-                } catch (imgErr) {
-                  console.warn('Error incrustando foto 1 del entrenador:', imgErr);
-                }
+                const fmt1 = (typeof img1 === 'string' && img1.includes('png')) ? 'PNG' : 'JPEG';
+                doc.addImage(img1, fmt1, 15, y + 1, colW - 2, colH - 2);
+              } catch (imgErr) {
+                console.warn('Error incrustando foto 1 del entrenador:', imgErr);
               }
             }
 
@@ -1558,13 +1565,10 @@ export const generateMatchPdfReport = async ({
                   doc.roundedRect(col2X, y, colW, colH, 2, 2, 'F');
                   doc.setDrawColor(226, 232, 240);
                   doc.roundedRect(col2X, y, colW, colH, 2, 2, 'S');
-                  doc.addImage(img2, 'JPEG', col2X + 1, y + 1, colW - 2, colH - 2);
-                } catch {
-                  try {
-                    doc.addImage(img2, 'PNG', col2X + 1, y + 1, colW - 2, colH - 2);
-                  } catch (imgErr2) {
-                    console.warn('Error incrustando foto 2 del entrenador:', imgErr2);
-                  }
+                  const fmt2 = (typeof img2 === 'string' && img2.includes('png')) ? 'PNG' : 'JPEG';
+                  doc.addImage(img2, fmt2, col2X + 1, y + 1, colW - 2, colH - 2);
+                } catch (imgErr2) {
+                  console.warn('Error incrustando foto 2 del entrenador:', imgErr2);
                 }
               }
             }

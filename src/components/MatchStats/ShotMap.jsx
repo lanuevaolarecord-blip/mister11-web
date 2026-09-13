@@ -102,8 +102,18 @@ export const ShotMap = ({
 
   const activePopoverShot = selectedShot || hoveredShot;
 
-  const renderContent = () => (
-    <div className="shot-map-inner" style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: '14px' }}>
+  const renderContent = (inModal = false) => (
+    <div
+      className="shot-map-inner"
+      style={{
+        width: '100%',
+        maxWidth: inModal ? '1100px' : '100%',
+        margin: '0 auto',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '14px'
+      }}
+    >
       {/* Header del Shot Map */}
       <div className="shot-map-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -175,18 +185,20 @@ export const ShotMap = ({
             </button>
           </div>
 
-          <button
-            type="button"
-            className="btn-fullscreen-match-card"
-            onClick={(e) => {
-              e.stopPropagation();
-              toggleFullscreen();
-            }}
-            style={{ minHeight: '48px', minWidth: '48px', borderRadius: '8px' }}
-          >
-            {isFullscreen || isTheater ? <Minimize2 size={16} /> : <Maximize2 size={16} />}
-            <span>{isFullscreen || isTheater ? (isEn ? 'Exit' : 'Salir') : (isEn ? 'Fullscreen' : 'Pantalla Completa')}</span>
-          </button>
+          {!inModal && (
+            <button
+              type="button"
+              className="btn-fullscreen-match-card"
+              onClick={(e) => {
+                e.stopPropagation();
+                toggleFullscreen();
+              }}
+              style={{ minHeight: '48px', minWidth: '48px', borderRadius: '8px' }}
+            >
+              {isFullscreen || isTheater ? <Minimize2 size={16} /> : <Maximize2 size={16} />}
+              <span>{isFullscreen || isTheater ? (isEn ? 'Exit' : 'Salir') : (isEn ? 'Fullscreen' : 'Pantalla Completa')}</span>
+            </button>
+          )}
         </div>
       </div>
 
@@ -257,6 +269,7 @@ export const ShotMap = ({
           position: 'relative',
           width: '100%',
           maxWidth: '1050px',
+          maxHeight: inModal ? 'min(58vh, 560px)' : undefined,
           margin: '0 auto',
           aspectRatio: '1050 / 680',
           borderRadius: '10px',
@@ -484,13 +497,18 @@ export const ShotMap = ({
 
   return (
     <div ref={containerRef} className="match-shot-map-card" style={{ width: '100%' }}>
-      {renderContent()}
+      {renderContent(false)}
       <TheaterOverlay
         isOpen={isTheater}
         onClose={toggleFullscreen}
         title={isEn ? `Shot Map & xG Model (${teamName})` : `Mapa de Tiros y Modelo xG (${teamName})`}
+        headerActions={
+          <span style={{ fontSize: '11.5px', background: 'rgba(212, 168, 67, 0.2)', color: '#D4A843', padding: '4px 10px', borderRadius: '6px', fontWeight: 800, border: '1px solid rgba(212, 168, 67, 0.4)' }}>
+            {ownTotalXg} xG · {ownGoalsCount} {isEn ? 'goals' : 'goles'}
+          </span>
+        }
       >
-        {renderContent()}
+        {renderContent(true)}
       </TheaterOverlay>
     </div>
   );

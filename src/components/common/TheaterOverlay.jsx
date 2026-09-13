@@ -8,6 +8,7 @@ export const TheaterOverlay = ({
   isTheater,
   onClose,
   title,
+  headerActions,
   children
 }) => {
   const isVisible = isOpen !== undefined ? Boolean(isOpen) : Boolean(isTheater);
@@ -70,8 +71,8 @@ export const TheaterOverlay = ({
         style={{
           width: '95vw',
           maxWidth: '1280px',
-          height: '90vh',
-          maxHeight: '90vh',
+          height: '92vh',
+          maxHeight: '92vh',
           background: '#13241C',
           border: '1px solid rgba(212, 168, 67, 0.4)',
           borderRadius: '16px',
@@ -92,50 +93,60 @@ export const TheaterOverlay = ({
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
-            padding: '14px 20px',
+            padding: '12px 20px',
             borderBottom: '1px solid rgba(255, 255, 255, 0.12)',
-            background: 'rgba(0, 0, 0, 0.4)',
+            background: 'rgba(0, 0, 0, 0.45)',
             flexShrink: 0,
             position: 'relative',
-            zIndex: 2147483647
+            zIndex: 2147483647,
+            gap: '12px'
           }}
         >
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#D4A843' }}>
-            <Theater size={22} />
-            <strong style={{ fontSize: '15px', color: '#FFFFFF', letterSpacing: '0.3px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#D4A843', minWidth: 0, flex: 1 }}>
+            <Theater size={22} style={{ flexShrink: 0 }} />
+            <strong style={{ fontSize: '15px', color: '#FFFFFF', letterSpacing: '0.3px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
               {title || (isEn ? 'Theater Mode' : 'Modo Teatro')}
             </strong>
           </div>
-          <button
-            type="button"
-            className="theater-close-btn"
-            onClick={(e) => {
-              e.stopPropagation();
-              onClose && onClose();
-            }}
-            title={isEn ? 'Close theater mode' : 'Cerrar modo teatro'}
-            aria-label={isEn ? 'Close theater mode' : 'Cerrar modo teatro'}
-            style={{
-              minWidth: '48px',
-              minHeight: '48px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              background: 'rgba(255, 255, 255, 0.08)',
-              border: '1px solid rgba(255, 255, 255, 0.15)',
-              color: '#FFFFFF',
-              cursor: 'pointer',
-              borderRadius: '8px',
-              position: 'relative',
-              zIndex: 2147483647,
-              pointerEvents: 'auto'
-            }}
-          >
-            <X size={22} />
-          </button>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexShrink: 0 }}>
+            {headerActions && (
+              <div className="theater-header-actions" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                {headerActions}
+              </div>
+            )}
+            <button
+              type="button"
+              className="theater-close-btn"
+              onClick={(e) => {
+                e.stopPropagation();
+                onClose && onClose();
+              }}
+              title={isEn ? 'Close theater mode' : 'Cerrar modo teatro'}
+              aria-label={isEn ? 'Close theater mode' : 'Cerrar modo teatro'}
+              style={{
+                minWidth: '48px',
+                minHeight: '48px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                background: 'rgba(255, 255, 255, 0.08)',
+                border: '1px solid rgba(255, 255, 255, 0.15)',
+                color: '#FFFFFF',
+                cursor: 'pointer',
+                borderRadius: '8px',
+                position: 'relative',
+                zIndex: 2147483647,
+                pointerEvents: 'auto',
+                transition: 'background 0.15s'
+              }}
+            >
+              <X size={22} />
+            </button>
+          </div>
         </div>
 
-        {/* Contenido con scroll interno */}
+        {/* Contenido con scroll interno sin recorte superior */}
         <div
           className="theater-modal-body"
           style={{
@@ -143,12 +154,13 @@ export const TheaterOverlay = ({
             minHeight: 0,
             overflowY: 'auto',
             overflowX: 'hidden',
-            padding: '16px',
+            padding: '16px 20px 24px',
             display: 'flex',
             flexDirection: 'column',
-            alignItems: 'center',
-            justifyContent: 'center',
-            background: '#152C22'
+            alignItems: 'stretch',
+            justifyContent: 'flex-start',
+            background: '#152C22',
+            WebkitOverflowScrolling: 'touch'
           }}
         >
           {children}

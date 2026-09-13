@@ -1513,15 +1513,17 @@ const Partidos = () => {
                     {matchData.status === 'Terminado' ? (isGlobalEn ? '✓ MATCH FINISHED' : '✓ PARTIDO TERMINADO') : (isGlobalEn ? '🏁 FINISH MATCH' : '🏁 FINALIZAR PARTIDO')}
                   </button>
                 )}
+                <button className="btn-primary-dark flex-1 md:flex-initial px-3 py-2 text-xs md:text-sm" onClick={handleSaveMatch} disabled={isSaving} style={{ minHeight: '48px' }}>
+                  {isSaving ? (isGlobalEn ? 'SAVING...' : 'GUARDANDO...') : (isGlobalEn ? 'SAVE MATCH' : 'GUARDAR PARTIDO')}
+                </button>
+                <button className="btn-outline-dark flex-1 md:flex-initial px-3 py-2 text-xs md:text-sm" onClick={handleCancel} style={{ minHeight: '48px' }}>
+                  {isGlobalEn ? 'CANCEL' : 'CANCELAR'}
+                </button>
                 {matchData.id && (
-                  <button className="btn-danger flex-1 md:flex-initial px-3 py-2 text-xs md:text-sm" onClick={handleDeleteMatch} disabled={isSaving} style={{ minHeight: '40px' }}>
+                  <button className="btn-danger flex-1 md:flex-initial px-3 py-2 text-xs md:text-sm" onClick={handleDeleteMatch} disabled={isSaving} style={{ minHeight: '48px' }}>
                     <TrashIcon /> {isGlobalEn ? 'DELETE' : 'ELIMINAR'}
                   </button>
                 )}
-                <button className="btn-outline-dark flex-1 md:flex-initial px-3 py-2 text-xs md:text-sm" onClick={handleCancel} style={{ minHeight: '40px' }}>{isGlobalEn ? 'CANCEL' : 'CANCELAR'}</button>
-                <button className="btn-primary-dark flex-1 md:flex-initial px-3 py-2 text-xs md:text-sm" onClick={handleSaveMatch} disabled={isSaving} style={{ minHeight: '40px' }}>
-                  {isSaving ? (isGlobalEn ? 'SAVING...' : 'GUARDANDO...') : (isGlobalEn ? 'SAVE MATCH' : 'GUARDAR PARTIDO')}
-                </button>
               </>
             )}
           </div>
@@ -2658,22 +2660,36 @@ const Partidos = () => {
                         if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
                       }}
                       style={{
+                        flex: '0 0 auto',
+                        flexShrink: 0,
                         minHeight: '48px',
-                        padding: '0 14px',
-                        borderRadius: '8px',
-                        border: '1px solid var(--partidos-border)',
-                        background: 'rgba(255, 255, 255, 0.05)',
-                        color: 'var(--partidos-text-primary)',
-                        fontSize: '11px',
+                        padding: '8px 16px',
+                        borderRadius: '24px',
+                        border: '1.5px solid var(--partidos-border, #d1d5db)',
+                        background: 'var(--partidos-panel-bg, #ffffff)',
+                        color: 'var(--partidos-text-primary, #1b3a2d)',
+                        fontSize: '12px',
                         fontWeight: '700',
                         whiteSpace: 'nowrap',
                         cursor: 'pointer',
-                        display: 'flex',
+                        display: 'inline-flex',
                         alignItems: 'center',
-                        gap: '6px'
+                        gap: '8px',
+                        boxShadow: '0 1px 3px rgba(0, 0, 0, 0.08)',
+                        transition: 'all 0.2s ease'
                       }}
                     >
-                      <span style={{ color: '#D4A843' }}>{sec.order}.</span>
+                      <span style={{
+                        background: 'var(--partidos-accent, #1b3a2d)',
+                        color: '#ffffff',
+                        padding: '2px 8px',
+                        borderRadius: '12px',
+                        fontSize: '11px',
+                        fontWeight: '900',
+                        lineHeight: '1.2'
+                      }}>
+                        {sec.order}
+                      </span>
                       {isGlobalEn
                         ? (sec.titleKey === 'exports.report.sec1_lineup' ? 'Lineup'
                           : sec.titleKey === 'exports.report.sec2_timeline' ? 'Timeline'

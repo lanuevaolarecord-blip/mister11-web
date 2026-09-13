@@ -176,25 +176,70 @@ html.dark select option {
 .btn-outline-dark:hover { background-color: rgba(0,0,0,0.05); }
 
 .btn-danger {
-  background-color: var(--partidos-danger-bg);
-  color: var(--partidos-danger);
-  border: 1px solid var(--partidos-danger);
-  padding: 10px 20px;
+  background-color: #DC2626 !important;
+  color: #FFFFFF !important;
+  border: 1px solid #B91C1C !important;
+  padding: 8px 16px;
   border-radius: 8px;
   font-weight: 700;
-  font-size: 0.9rem;
+  font-size: 0.85rem;
   cursor: pointer;
   text-transform: uppercase;
-  transition: opacity 0.2s;
-  display: flex;
+  transition: all 0.2s;
+  display: inline-flex;
   align-items: center;
-  gap: 8px;
+  justify-content: center;
+  gap: 6px;
+  min-height: 48px;
+  box-shadow: 0 2px 6px rgba(220, 38, 38, 0.25);
 }
-.btn-danger:hover { opacity: 0.8; }
+.btn-danger:hover {
+  background-color: #B91C1C !important;
+  opacity: 0.95;
+}
+
+html.dark .btn-danger {
+  background-color: #EF4444 !important;
+  color: #FFFFFF !important;
+  border: 1px solid #DC2626 !important;
+}
 
 .partidos-page-actions {
   display: flex;
-  gap: 12px;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+}
+
+@media (min-width: 768px) {
+  .partidos-page-actions {
+    width: auto;
+    flex-wrap: nowrap;
+    gap: 12px;
+  }
+}
+
+@media (max-width: 640px) {
+  .partidos-page-actions {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+    width: 100%;
+    padding: 0 4px;
+    box-sizing: border-box;
+  }
+  .partidos-page-actions button {
+    width: 100%;
+    min-height: 48px !important;
+    padding: 8px 6px !important;
+    font-size: 11px !important;
+    white-space: normal;
+    text-align: center;
+    justify-content: center;
+    box-sizing: border-box;
+  }
 }
 
 /* =========================================================

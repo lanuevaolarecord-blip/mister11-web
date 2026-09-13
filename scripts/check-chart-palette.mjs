@@ -35,6 +35,7 @@ const TARGET_FILES = [
   'src/components/canonical/MomentumSVG.js',
   'src/components/canonical/SectorTacticsSVG.js',
   'src/components/canonical/ShotMapSVG.js',
+  'src/components/canonical/TerritoryMap3x3.jsx',
   'src/components/MatchStats/ShotMap.jsx',
   'src/components/MatchStats/ZoneEventMap.jsx',
   'src/utils/matchAnalytics.js',

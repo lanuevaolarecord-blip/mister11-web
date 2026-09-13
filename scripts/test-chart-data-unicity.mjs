@@ -8,6 +8,7 @@
 
 import assert from 'assert';
 import { getMatchAnalytics, hashString } from '../src/utils/matchAnalytics.js';
+import { renderTerritoryMap3x3SvgString } from '../src/components/canonical/TerritoryMap3x3SVG.js';
 
 console.log('==============================================================================');
 console.log('MÍSTER 11 — TEST DE IGUALDAD Y UNICIDAD DE DATOS (CI)');
@@ -79,6 +80,27 @@ assert.strictEqual(analyticsTab.passNetwork.available, false, 'Red de pases debe
 assert.strictEqual(analyticsTab.zones.dominantZone?.id, 'centro_med', 'Centro del campo debe ser la zona dominante');
 assert.strictEqual(analyticsTab.narrative.hasFinishingDeficit, true, 'Debe dispararse la regla de déficit de eficacia rematadora');
 assert.strictEqual(analyticsTab.narrative.hasDefensiveAlert, false, 'No debe dispararse alerta defensiva si rival no supera 1.5 xG');
+
+// 5. Paridad Estricta de TerritoryMap3x3 (Modo Intensidad y Modo Detalle)
+console.log('4. Validando paridad de datos y generación SVG de TerritoryMap3x3...');
+const sumZoneStats = Object.values(analyticsTab.zones.stats).reduce((acc, s) => acc + s.total, 0);
+assert.strictEqual(sumZoneStats, analyticsTab.zones.totalOwnEvents, 'La suma de las 9 zonas debe coincidir exactamente con totalOwnEvents');
+
+const territorySvg = renderTerritoryMap3x3SvgString({
+  analytics: analyticsPdf,
+  matchData: mockMatch,
+  events: mockEvents,
+  teamName: 'Mi Equipo',
+  rivalName: 'Xilxes',
+  isEn: false,
+  isDark: true,
+  width: 1050,
+  height: 680
+});
+assert.ok(territorySvg.includes('viewBox="0 0 1050 680"'), 'TerritoryMap3x3 SVG debe tener viewBox 1050x680 (105:68)');
+assert.ok(territorySvg.includes('zone-centro_med'), 'TerritoryMap3x3 SVG debe incluir la zona centro_med');
+assert.ok(territorySvg.length > 1000, 'TerritoryMap3x3 SVG debe tener un tamaño sustancial > 1000 bytes');
+console.log('  ✅ TerritoryMap3x3 SVG modo Detalle validado con paridad 1:1.');
 
 console.log(`  ✅ 21 tiros verificados: ${analyticsTab.shots.ownGoalsCount} gol, ${analyticsTab.shots.ownOnTargetCount} a puerta, xG total: ${analyticsTab.shots.ownTotalXg}`);
 console.log(`  ✅ Red de pases condicional: ${analyticsTab.passNetwork.available ? 'Activa' : 'Deshabilitada (< 5 pases)'}`);

@@ -190,13 +190,13 @@ export function getMatchAnalytics(matchData = {}, rawEvents = [], options = {}) 
   // 4. Distribución Territorial 9 Zonas (3x3)
   const zoneStats = {};
   ZONE_9_DEFINITIONS.forEach(z => {
-    zoneStats[z.id] = { total: 0, duelsWon: 0, duelsLost: 0, recoveries: 0, shots: 0, fouls: 0 };
+    zoneStats[z.id] = { total: 0, duelsWon: 0, duelsLost: 0, recoveries: 0, shots: 0, fouls: 0, passes: 0 };
   });
 
   let totalOwnEventsInZones = 0;
   ownEvents.forEach(e => {
     const zoneId = normalizeEventTo9Zone(e);
-    if (!zoneStats[zoneId]) zoneStats[zoneId] = { total: 0, duelsWon: 0, duelsLost: 0, recoveries: 0, shots: 0, fouls: 0 };
+    if (!zoneStats[zoneId]) zoneStats[zoneId] = { total: 0, duelsWon: 0, duelsLost: 0, recoveries: 0, shots: 0, fouls: 0, passes: 0 };
 
     zoneStats[zoneId].total += 1;
     totalOwnEventsInZones += 1;
@@ -207,6 +207,7 @@ export function getMatchAnalytics(matchData = {}, rawEvents = [], options = {}) 
     else if (type === 'recovery' || type === 'recuperacion') zoneStats[zoneId].recoveries += 1;
     else if (type.includes('shot') || type.includes('tiro') || type.includes('gol') || type.includes('goal')) zoneStats[zoneId].shots += 1;
     else if (type.includes('foul') || type.includes('falta')) zoneStats[zoneId].fouls += 1;
+    else if (type.includes('pass') || type.includes('pase')) zoneStats[zoneId].passes += 1;
   });
 
   const maxZoneEvents = Math.max(1, ...Object.values(zoneStats).map(s => s.total));

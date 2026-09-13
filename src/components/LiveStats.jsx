@@ -25,6 +25,7 @@ import MatchStatsBlock from './MatchStatsBlock';
 // ── Nuevos Componentes de la Suite de Estadísticas ────────────────────────────
 import { StatsFilters } from './MatchStats/StatsFilters';
 import { MatchActionsToolbar } from './MatchStats/MatchActionsToolbar';
+import { TerritoryMap3x3 } from './canonical/TerritoryMap3x3';
 import { HeatMap } from './MatchStats/HeatMap';
 import { PassNetwork } from './MatchStats/PassNetwork';
 import { ZoneEventMap } from './MatchStats/ZoneEventMap';
@@ -1899,21 +1900,12 @@ const LiveStats = ({
           </>
         )}
 
-        {/* PESTAÑA 2: Campo & Táctica (Heat Map, Red de Pases, Shot Map) */}
+        {/* PESTAÑA 2: Campo & Táctica (Mapa Territorial 3x3 Canónico y Shot Map) */}
         {activeTab === 'tactical' && (
           <div className="tactical-tab-content">
-            {/* Heat Map de Actividad */}
-            <SectionErrorBoundary sectionCode="TACTICAL_HEATMAP" sectionTitle={isEn ? 'Activity Heatmap' : 'Mapa de Calor de Actividad'}>
-              <HeatMap
-                events={filteredEvents}
-                players={playersList}
-                teamName={homeTeamName}
-              />
-            </SectionErrorBoundary>
-
-            {/* Red de Pases Táctica o Mapa de Eventos por Zona */}
-            <SectionErrorBoundary sectionCode="TACTICAL_PASS_NETWORK" sectionTitle={isEn ? 'Pass Network & Zones' : 'Red de Pases y Zonas'}>
-              {(tacticalSubView === 'passes' || (tacticalSubView === 'auto' && passesList && passesList.length >= 5)) ? (
+            {/* Mapa Territorial Canónico 3x3 (Unificado: Modos Intensidad y Detalle) */}
+            <SectionErrorBoundary sectionCode="TACTICAL_TERRITORY_3X3" sectionTitle={isEn ? 'Territorial Map (3x3)' : 'Mapa Territorial (3x3)'}>
+              {tacticalSubView === 'passes' && passesList && passesList.length >= 5 ? (
                 <PassNetwork
                   passes={passesList}
                   players={playersList}
@@ -1921,11 +1913,13 @@ const LiveStats = ({
                   onSwitchToTerritory={() => setTacticalSubView('territory')}
                 />
               ) : (
-                <ZoneEventMap
+                <TerritoryMap3x3
                   events={filteredEvents}
                   matchData={matchData}
+                  players={playersList}
                   teamName={homeTeamName}
-                  isSubstitute={true}
+                  rivalName={awayTeamName}
+                  showPassNetworkButton={passesList && passesList.length >= 5}
                   onSwitchToPassNetwork={() => setTacticalSubView('passes')}
                 />
               )}

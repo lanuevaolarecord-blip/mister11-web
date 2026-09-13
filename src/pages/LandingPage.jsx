@@ -32,9 +32,9 @@ const LandingPage = () => {
 
   // Comparativa completa para auditoría detallada
   const comparisonRows = [
-    { category: isEn ? 'Squad & Staff' : 'Mi Equipo', feature: isEn ? 'Teams Included' : 'Equipos incluidos', free: '1 equipo', pro: '3 equipos', starter: '6 equipos', clubPro: '15 equipos', premium: isEn ? 'Up to 40 teams' : 'Hasta 40 equipos' },
+    { category: isEn ? 'Squad & Staff' : 'Mi Equipo', feature: isEn ? 'Teams Included' : 'Equipos incluidos', free: isEn ? '1 team' : '1 equipo', pro: isEn ? '3 teams' : '3 equipos', starter: isEn ? '6 teams' : '6 equipos', clubPro: isEn ? '15 teams' : '15 equipos', premium: isEn ? 'Up to 40 teams' : 'Hasta 40 equipos' },
     { category: isEn ? 'Squad & Staff' : 'Mi Equipo', feature: isEn ? 'Players per Team' : 'Jugadores por equipo', free: '23', pro: '23', starter: '23', clubPro: '23', premium: '23' },
-    { category: isEn ? 'Squad & Staff' : 'Mi Equipo', feature: isEn ? 'Staff per Team' : 'Staff por equipo', free: '1', pro: '1', starter: isEn ? 'Up to 4' : 'Hasta 4 staff', clubPro: isEn ? 'Up to 10' : 'Hasta 10 staff', premium: isEn ? 'Unlimited' : 'Ilimitado' },
+    { category: isEn ? 'Squad & Staff' : 'Mi Equipo', feature: isEn ? 'Staff per Team' : 'Staff por equipo', free: isEn ? '1 coach' : '1 entrenador', pro: isEn ? '1 coach' : '1 entrenador', starter: isEn ? 'Up to 4 staff' : 'Hasta 4 staff', clubPro: isEn ? 'Up to 10 staff' : 'Hasta 10 staff', premium: isEn ? 'Unlimited' : 'Ilimitado' },
     { category: isEn ? 'Squad & Staff' : 'Mi Equipo', feature: isEn ? 'Digital GDPR Signatures' : 'Consentimientos RGPD con firma digital', free: true, pro: true, starter: true, clubPro: true, premium: true },
     { category: isEn ? 'Training' : 'Sesiones', feature: isEn ? 'Training Sessions' : 'Sesiones de entrenamiento', free: '10', pro: isEn ? 'Unlimited' : 'Ilimitadas', starter: isEn ? 'Unlimited' : 'Ilimitadas', clubPro: isEn ? 'Unlimited' : 'Ilimitadas', premium: isEn ? 'Unlimited' : 'Ilimitadas' },
     { category: isEn ? 'Training' : 'Sesiones', feature: isEn ? 'Professional PDF Session Exports' : 'Exportar sesión a PDF profesional', free: false, pro: true, starter: true, clubPro: true, premium: true },
@@ -49,7 +49,7 @@ const LandingPage = () => {
     { category: isEn ? 'Player' : 'Portal Jugador', feature: isEn ? 'Daily Wellness & Psychological Tests' : 'Wellness diario y tests ACSI-28 / MTQ-10', free: false, pro: true, starter: true, clubPro: true, premium: true },
     { category: isEn ? 'Club' : 'Club & Dirección', feature: isEn ? 'Multi-Team Academy Dashboard' : 'Panel de dirección deportiva multi-equipo', free: false, pro: false, starter: true, clubPro: true, premium: true },
     { category: isEn ? 'Club' : 'Club & Dirección', feature: isEn ? 'Consolidated PDF/CSV Reports' : 'Informes consolidados de cantera', free: false, pro: false, starter: false, clubPro: true, premium: true },
-    { category: isEn ? 'Support' : 'Soporte', feature: isEn ? 'Technical Support Level' : 'Nivel de soporte técnico', free: isEn ? 'Community' : 'Comunitario', pro: isEn ? 'Standard' : 'Estándar', starter: isEn ? 'Priority' : 'Prioritario', clubPro: '24/7 Priority', premium: 'VIP Dedicated' }
+    { category: isEn ? 'Support' : 'Soporte', feature: isEn ? 'Technical Support Level' : 'Nivel de soporte técnico', free: isEn ? 'Community' : 'Comunitario', pro: isEn ? 'Standard' : 'Estándar', starter: isEn ? 'Priority' : 'Prioritario', clubPro: isEn ? '24/7 Priority' : 'Prioritario 24/7', premium: isEn ? 'VIP Dedicated' : 'VIP Onboarding Dedicado' }
   ];
 
   const renderCell = (val) => {
@@ -141,6 +141,69 @@ const LandingPage = () => {
             <span className="trust-item"><Check size={16} /> {isEn ? '7 days full trial' : '7 días de prueba total'}</span>
             <span className="trust-item"><Check size={16} /> {isEn ? 'No credit card needed' : 'Sin tarjeta de crédito'}</span>
             <span className="trust-item"><Check size={16} /> {isEn ? 'Web, PWA & Android' : 'Web, PWA y Android'}</span>
+          </div>
+        </div>
+
+        {/* Mockup / Preview de la Pizarra Táctica con campo y fichas */}
+        <div className="landing-hero-preview">
+          <div className="preview-field-container">
+            <div className="preview-field-header">
+              <div className="preview-dot red"></div>
+              <div className="preview-dot yellow"></div>
+              <div className="preview-dot green"></div>
+              <span className="preview-title">
+                {isEn ? 'Míster11 Tactical Board · Live Pitch' : 'Pizarra Táctica Míster11 · Campo y Fichas'}
+              </span>
+            </div>
+            <div className="preview-field-canvas">
+              {/* Football Field Markings SVG reglamentario FIFA 105:68 */}
+              <svg className="field-markings-svg" viewBox="0 0 120 80" xmlns="http://www.w3.org/2000/svg">
+                <defs>
+                  <marker id="m11-tactical-arrow" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                    <path d="M 0 2 L 8 5 L 0 8 z" fill="#D4A843" />
+                  </marker>
+                </defs>
+                {/* Perímetro del campo */}
+                <rect x="5" y="5" width="110" height="70" fill="none" stroke="rgba(242,237,228,0.45)" strokeWidth="0.8" />
+                {/* Línea central */}
+                <line x1="60" y1="5" x2="60" y2="75" stroke="rgba(242,237,228,0.45)" strokeWidth="0.8" />
+                {/* Círculo central */}
+                <circle cx="60" cy="40" r="12" fill="none" stroke="rgba(242,237,228,0.45)" strokeWidth="0.8" />
+                {/* Punto central */}
+                <circle cx="60" cy="40" r="1" fill="rgba(242,237,228,0.85)" />
+                
+                {/* Área grande izquierda */}
+                <rect x="5" y="20" width="18" height="40" fill="none" stroke="rgba(242,237,228,0.45)" strokeWidth="0.8" />
+                {/* Área pequeña izquierda */}
+                <rect x="5" y="29" width="6" height="22" fill="none" stroke="rgba(242,237,228,0.45)" strokeWidth="0.8" />
+                {/* Punto de penalti izquierdo */}
+                <circle cx="17" cy="40" r="0.8" fill="rgba(242,237,228,0.85)" />
+                {/* Semicírculo área izquierda */}
+                <path d="M 23 32 A 10 10 0 0 1 23 48" fill="none" stroke="rgba(242,237,228,0.45)" strokeWidth="0.8" />
+                {/* Portería izquierda */}
+                <rect x="1.5" y="33" width="3.5" height="14" fill="none" stroke="rgba(242,237,228,0.45)" strokeWidth="0.8" />
+
+                {/* Área grande derecha */}
+                <rect x="97" y="20" width="18" height="40" fill="none" stroke="rgba(242,237,228,0.45)" strokeWidth="0.8" />
+                {/* Área pequeña derecha */}
+                <rect x="109" y="29" width="6" height="22" fill="none" stroke="rgba(242,237,228,0.45)" strokeWidth="0.8" />
+                {/* Punto de penalti derecho */}
+                <circle cx="103" cy="40" r="0.8" fill="rgba(242,237,228,0.85)" />
+                {/* Semicírculo área derecha */}
+                <path d="M 97 32 A 10 10 0 0 0 97 48" fill="none" stroke="rgba(242,237,228,0.45)" strokeWidth="0.8" />
+                {/* Portería derecha */}
+                <rect x="115" y="33" width="3.5" height="14" fill="none" stroke="rgba(242,237,228,0.45)" strokeWidth="0.8" />
+                
+                {/* Flecha táctica de pase al hueco */}
+                <path d="M 54 28 Q 68 38 78 40" fill="none" stroke="#D4A843" strokeWidth="1.4" strokeDasharray="3,3" markerEnd="url(#m11-tactical-arrow)" />
+              </svg>
+
+              {/* Fichas de jugadores sobre el campo */}
+              <div className="player-node p-team p1" style={{ top: '35%', left: '45%' }}>10</div>
+              <div className="player-node p-team p2" style={{ top: '65%', left: '48%' }}>8</div>
+              <div className="player-node p-rival p3" style={{ top: '48%', left: '68%' }}>4</div>
+              <div className="ball-node" style={{ top: '50%', left: '55%' }}>⚽</div>
+            </div>
           </div>
         </div>
       </section>

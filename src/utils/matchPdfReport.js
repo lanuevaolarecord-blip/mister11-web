@@ -25,6 +25,7 @@ import { renderComparisonBarsSvgString } from '../components/canonical/Compariso
 import { renderRadarCompareSvgString } from '../components/canonical/RadarCompareSVG';
 import { renderShotMapSvgString } from '../components/canonical/ShotMapSVG';
 import { renderSectorTacticsSvgString } from '../components/canonical/SectorTacticsSVG';
+import { renderTerritoryMap3x3SvgString } from '../components/canonical/TerritoryMap3x3';
 import { calculateCanonicalStats } from '../components/canonical/calculateCanonicalStats';
 import { getMatchAnalytics } from './matchAnalytics';
 
@@ -815,7 +816,7 @@ export const generateMatchPdfReport = async ({
       };
 
       const analytics = getMatchAnalytics(matchData, safeEvents, { isEn });
-      const derivedIndices = calculateMatchDerivedIndices(safeEvents);
+      const derivedIndices = calculateMatchDerivedIndices(safeEvents, { goalsAgainst });
       const swotResult = evaluateSwotRules(matchData, safeEvents, calledPlayers);
       const { homeStats, awayStats, tacticsData } = analytics;
       const shotEvents = analytics.shots.all;
@@ -1235,30 +1236,23 @@ export const generateMatchPdfReport = async ({
       doc.addPage();
       y = 18;
 
-      // 8. Campo & Táctica (Pasillos Reglamentarios FIFA 105:68, ABP y Territorio)
+      // 8. Campo & Táctica (Mapa Territorial 3x3 Canónico - Modo Detalle)
       y = drawSectionHeader('sec8_tactics');
-      const tacticsSvg = renderSectorTacticsSvgString({
-        tacticsData,
-        homeStats: {
-          corners: countOfSafe(['corner_favor']),
-          faltas: countOfSafe(['foul_committed']),
-          penaltis: countOfSafe(['penalty_goal_favor', 'penalty_miss_favor'])
-        },
-        awayStats: {
-          corners: countOfSafe(['corner_against']),
-          faltas: countOfSafe(['foul_received']),
-          penaltis: countOfSafe(['penalty_goal_against', 'penalty_saved'])
-        },
-        homeTeamName: safeTeamName,
-        awayTeamName: rivalName,
+      const tacticsSvg = renderTerritoryMap3x3SvgString({
+        analytics,
+        matchData,
+        events: safeEvents,
+        teamName: safeTeamName,
+        rivalName: rivalName,
         isEn,
-        width: 700,
-        height: 480
+        isDark: true,
+        width: 1050,
+        height: 680
       });
-      const tacticsImg = await rasterizeSvgToDataUrl(tacticsSvg, 700, 480, 2);
+      const tacticsImg = await rasterizeSvgToDataUrl(tacticsSvg, 1050, 680, 2);
       assertGraphicEmbedded('sec8_tactics', tacticsImg);
       const tW = 150;
-      const tH = (480 / 700) * tW;
+      const tH = (680 / 1050) * tW;
       const tX = (pageW - tW) / 2;
       doc.addImage(tacticsImg, 'PNG', tX, y, tW, tH);
       y += tH + 6;

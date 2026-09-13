@@ -26,10 +26,15 @@ export const CHART_THEME = {
     goldLight: '#E5C06E',
     goldSubtle: 'rgba(212, 168, 67, 0.18)',
 
+    // Tokens de Contraste AA Tipográficos (WCAG AA Estricto)
+    ink: '#F2EDE4',               // Arena clara de alto contraste (fondo oscuro)
+    inkMuted: '#C9D4CC',          // Tinta secundaria atenuada (contraste >= 4.5:1)
+    accentText: '#E4C878',        // Dorado aclarado accesible sobre verdes oscuros
+
     // Tipografía y líneas
     textPrimary: '#F2EDE4',       // Arena clara de alto contraste
-    textSecondary: '#CBD5E1',     // Texto secundario
-    textMuted: 'rgba(242, 237, 228, 0.65)',
+    textSecondary: '#C9D4CC',     // Texto secundario legible
+    textMuted: '#C9D4CC',
     gridLines: 'rgba(76, 175, 125, 0.18)',
     pitchLines: 'rgba(255, 255, 255, 0.65)',
     border: 'rgba(212, 168, 67, 0.25)',
@@ -53,10 +58,15 @@ export const CHART_THEME = {
     goldLight: '#D4A843',
     goldSubtle: 'rgba(212, 168, 67, 0.15)',
 
+    // Tokens de Contraste AA Tipográficos (WCAG AA Estricto)
+    ink: '#1B3A2D',               // Verde institucional profundo sobre crema/blanco
+    inkMuted: '#4A5C50',          // Verde grisáceo oscuro (contraste >= 4.5:1 sobre crema)
+    accentText: '#85682B',        // Dorado tostado accesible (>= 4.5:1 sobre crema/blanco)
+
     // Tipografía y líneas
     textPrimary: '#1B3A2D',       // Verde selva oscuro
-    textSecondary: '#475569',
-    textMuted: '#64748B',
+    textSecondary: '#4A5C50',
+    textMuted: '#4A5C50',
     gridLines: 'rgba(27, 58, 45, 0.12)',
     pitchLines: 'rgba(27, 58, 45, 0.45)',
     border: 'rgba(27, 58, 45, 0.2)',

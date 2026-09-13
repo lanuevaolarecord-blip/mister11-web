@@ -10,8 +10,7 @@ import { UnattributedEventsManager } from '../components/UnattributedEventsManag
 import { CaptureCriteriaModal } from '../components/CaptureCriteriaModal';
 import { RadarCompareSVG } from '../components/canonical/RadarCompareSVG.js';
 import SectionErrorBoundary from '../components/common/SectionErrorBoundary';
-import ZoneEventMap from '../components/MatchStats/ZoneEventMap';
-import HeatMap from '../components/MatchStats/HeatMap';
+import TerritoryMap3x3 from '../components/canonical/TerritoryMap3x3';
 import ShotMap from '../components/MatchStats/ShotMap';
 import { getMatchDerivedStatus } from './Partidos';
 import { useLanguage } from '../context/LanguageContext';
@@ -487,15 +486,11 @@ function PartidosView() {
 
           {statsSubTab === 'tactical' && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-              <HeatMap
+              <TerritoryMap3x3
                 events={mockEventsForZone}
                 players={DEMO_PLAYERS}
                 teamName={DEMO_TEAM.nombre}
-              />
-              <ZoneEventMap
-                events={mockEventsForZone}
-                teamName={DEMO_TEAM.nombre}
-                t={t}
+                rivalName="Rival"
               />
               <ShotMap
                 events={mockEventsForZone}

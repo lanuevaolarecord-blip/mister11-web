@@ -20,6 +20,7 @@ import { renderComparisonBarsSvgString } from '../src/components/canonical/Compa
 import { renderRadarCompareSvgString } from '../src/components/canonical/RadarCompareSVG.js';
 import { renderShotMapSvgString } from '../src/components/canonical/ShotMapSVG.js';
 import { renderSectorTacticsSvgString } from '../src/components/canonical/SectorTacticsSVG.js';
+import { renderTerritoryMap3x3SvgString } from '../src/components/canonical/TerritoryMap3x3SVG.js';
 
 console.log('==============================================================================');
 console.log('MÍSTER 11 — TEST RASTER SVG SANITIZADO Y CANONICAL SVGS (CI)');
@@ -153,6 +154,25 @@ const tacticsSvgStr = renderSectorTacticsSvgString({
 check('SectorTacticsSVG en inglés tiene ampersand sanitizado', () => {
   assert.ok(tacticsSvgStr.includes('&amp;'), 'Debe contener ampersand sanitizado');
   assert.ok(!tacticsSvgStr.includes(' & '), 'No debe haber ampersand crudo en SectorTactics');
+});
+
+const territorySvgStr = renderTerritoryMap3x3SvgString({
+  zoneStats: [
+    { zone: 1, count: 5, percentage: 20, recoveries: 2, duels: 1, shots: 1, fouls: 0, passes: 1 },
+    { zone: 2, count: 10, percentage: 40, recoveries: 4, duels: 3, shots: 2, fouls: 1, passes: 0 },
+    { zone: 5, count: 10, percentage: 40, recoveries: 3, duels: 2, shots: 3, fouls: 0, passes: 2 }
+  ],
+  totalVolume: 25,
+  dominantZone: { zone: 2, name: 'Centro Defensivo', percentage: 40 },
+  isEn: false,
+  width: 1050,
+  height: 680
+});
+check('TerritoryMap3x3SVG genera XML reglamentario 1050x680 con 9 zonas', () => {
+  assert.ok(territorySvgStr.startsWith('<svg'), 'Debe comenzar con <svg');
+  assert.ok(territorySvgStr.endsWith('</svg>'), 'Debe terminar con </svg>');
+  assert.ok(territorySvgStr.includes('viewBox="0 0 1050 680"'), 'Debe usar viewBox reglamentario 1050x680');
+  assert.ok(territorySvgStr.includes('id="pitch-bg"'), 'Debe incluir fondo de césped');
 });
 
 // ── 4. VERIFICACIÓN DE SANITIZACIÓN UNIVERSAL EN rasterizeSvg.js ─────────────

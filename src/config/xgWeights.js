@@ -296,7 +296,7 @@ export function calculateMatchDerivedIndices(events = [], options = {}) {
           else if (comfort === 'muy_presionado') defensiveExposureMap[legacyZone].muy_presionado++;
         }
 
-        if (e.outcome === 'goal' || e.isGoal || e.result === 'gol') {
+        if (e.outcome === 'goal' || e.isGoal || e.result === 'gol' || type === 'gol_rival' || type === 'goal_rival') {
           concededGoals++;
         }
       } else if (isOwnShot) {
@@ -324,16 +324,22 @@ export function calculateMatchDerivedIndices(events = [], options = {}) {
     }
   });
 
+  const effectiveConceded = options.goalsAgainst !== undefined
+    ? Math.max(concededGoals, Number(options.goalsAgainst) || 0)
+    : concededGoals;
+
   const totalSaves = normalSaves + decisiveSaves;
-  const shotsFaced = totalSaves + concededGoals;
+  const shotsFaced = totalSaves + effectiveConceded;
 
   // Índice de Exigencia GK = paradas + 2*decisivas
   const gkExertionIndex = normalSaves + (2 * decisiveSaves);
   const isDemandingMatch = gkExertionIndex >= 6 || decisiveSaves >= 3;
 
   // Porcentaje de paradas total y por dificultad
-  const totalSavePct = shotsFaced > 0 ? Math.round((totalSaves / shotsFaced) * 100) : (concededGoals === 0 && totalSaves > 0 ? 100 : 0);
-  const normalSavePct = (normalSaves + concededGoals) > 0 ? Math.round((normalSaves / (normalSaves + concededGoals)) * 100) : 0;
+  const totalSavePct = shotsFaced > 0
+    ? Math.round((totalSaves / shotsFaced) * 100)
+    : (effectiveConceded === 0 && totalSaves > 0 ? 100 : (effectiveConceded > 0 ? 0 : 100));
+  const normalSavePct = (normalSaves + effectiveConceded) > 0 ? Math.round((normalSaves / (normalSaves + effectiveConceded)) * 100) : 0;
   const decisiveSavePct = decisiveSaves > 0 ? 100 : 0;
 
   // Índice de comodidad rival (% tiros cómodos)
@@ -352,7 +358,7 @@ export function calculateMatchDerivedIndices(events = [], options = {}) {
     decisiveSaves,
     totalSaves,
     penaltySaves,
-    concededGoals,
+    concededGoals: effectiveConceded,
     shotsFaced,
     totalSavePct,
     normalSavePct,

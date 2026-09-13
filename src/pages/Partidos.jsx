@@ -34,6 +34,7 @@ import { RadarCompareSVG } from '../components/canonical/RadarCompareSVG';
 import { MomentumSVG } from '../components/canonical/MomentumSVG';
 import { ShotMapSVG } from '../components/canonical/ShotMapSVG';
 import { SectorTacticsSVG } from '../components/canonical/SectorTacticsSVG';
+import { TerritoryMap3x3 } from '../components/canonical/TerritoryMap3x3';
 import { calculateCanonicalStats } from '../components/canonical/calculateCanonicalStats';
 import { getMatchAnalytics } from '../utils/matchAnalytics';
 import './Partidos.css';
@@ -361,30 +362,148 @@ const Partidos = () => {
   }, [matchData.events]);
 
   const derivedGoleadores = useMemo(() => {
-    return (matchData.events || [])
-      .filter(e => e && e.isValid !== false && e.type === 'gol_local')
-      .map(e => ({
-        jugadorId: e.playerId,
-        nombre: e.playerName || (players || []).find(p => p && String(p.id) === String(e.playerId))?.name || 'Jugador',
-        minuto: String(e.minute || 0),
-        asistenciaId: e.asistenciaId || ''
-      }));
-  }, [matchData.events, players]);
+    const list = [];
+    const rawEvents = matchData.events || [];
+    const rivalName = matchData.rival || (isGlobalEn ? 'Opponent' : 'Rival');
+
+    // Goles propios
+    rawEvents
+      .filter(e => e && e.isValid !== false && (e.type === 'gol_local' || e.type === 'goal' || e.type === 'gol'))
+      .forEach(e => {
+        const rawMin = parseInt(e.minute || e.minuto || e.min, 10);
+        const minStr = (!isNaN(rawMin) && rawMin > 0) ? String(rawMin) : 's/m';
+        list.push({
+          jugadorId: e.playerId,
+          nombre: e.playerName || (players || []).find(p => p && String(p.id) === String(e.playerId))?.name || (isGlobalEn ? 'Player' : 'Jugador'),
+          minuto: minStr,
+          isRival: false,
+          asistenciaId: e.asistenciaId || ''
+        });
+      });
+
+    // Goles rivales (para reflejar anotaciones si marcador es 0-1)
+    rawEvents
+      .filter(e => e && e.isValid !== false && (e.type === 'gol_rival' || e.type === 'goal_rival'))
+      .forEach(e => {
+        const rawMin = parseInt(e.minute || e.minuto || e.min, 10);
+        const minStr = (!isNaN(rawMin) && rawMin > 0) ? String(rawMin) : 's/m';
+        list.push({
+          jugadorId: 'rival',
+          nombre: `${rivalName} (${isGlobalEn ? 'Goal' : 'Gol'})`,
+          minuto: minStr,
+          isRival: true,
+          asistenciaId: ''
+        });
+      });
+
+    // Fallback si no hay eventos pero sí marcador
+    if (list.length === 0) {
+      if (derivedGoalsFor > 0) {
+        list.push({
+          jugadorId: 'own',
+          nombre: activeTeam?.nombre || (isGlobalEn ? 'My Team' : 'Mi Equipo'),
+          minuto: 's/m',
+          isRival: false,
+          asistenciaId: ''
+        });
+      }
+      if (derivedGoalsAgainst > 0) {
+        list.push({
+          jugadorId: 'rival',
+          nombre: rivalName,
+          minuto: 's/m',
+          isRival: true,
+          asistenciaId: ''
+        });
+      }
+    }
+
+    return list;
+  }, [matchData.events, matchData.rival, players, isGlobalEn, derivedGoalsFor, derivedGoalsAgainst, activeTeam?.nombre]);
 
   const derivedTarjetas = useMemo(() => {
     return (matchData.events || [])
-      .filter(e => e && e.isValid !== false && (e.type === 'amarilla' || e.type === 'roja'))
-      .map(e => ({
-        jugadorId: e.playerId,
-        nombre: e.playerName || (players || []).find(p => p && String(p.id) === String(e.playerId))?.name || 'Jugador',
-        tipo: e.type,
-        minuto: String(e.minute || 0)
-      }));
-  }, [matchData.events, players]);
+      .filter(e => e && e.isValid !== false && (e.type === 'amarilla' || e.type === 'roja' || e.type === 'card_yellow_own' || e.type === 'card_red_own' || e.type === 'card_yellow_rival' || e.type === 'card_red_rival'))
+      .map(e => {
+        const rawMin = parseInt(e.minute || e.minuto || e.min, 10);
+        const minStr = (!isNaN(rawMin) && rawMin > 0) ? String(rawMin) : 's/m';
+        const isYellow = e.type === 'amarilla' || e.type === 'card_yellow_own' || e.type === 'card_yellow_rival';
+        return {
+          jugadorId: e.playerId,
+          nombre: e.playerName || (players || []).find(p => p && String(p.id) === String(e.playerId))?.name || (e.type?.includes('rival') ? (matchData.rival || 'Rival') : (isGlobalEn ? 'Player' : 'Jugador')),
+          tipo: isYellow ? 'amarilla' : 'roja',
+          minuto: minStr
+        };
+      });
+  }, [matchData.events, matchData.rival, players, isGlobalEn]);
+
+  const derivedSubstitutions = useMemo(() => {
+    const subs = [];
+    if (Array.isArray(matchData.cambiosList) && matchData.cambiosList.length > 0) {
+      matchData.cambiosList.forEach(c => {
+        const pIn = (players || []).find(pl => String(pl.id) === String(c.entraId || c.inId || c.playerInId));
+        const pOut = (players || []).find(pl => String(pl.id) === String(c.saleId || c.outId || c.playerOutId));
+        const nameIn = pIn?.name || (isGlobalEn ? 'Sub In' : 'Entra');
+        const nameOut = pOut?.name || (isGlobalEn ? 'Sub Out' : 'Sale');
+        const rawMin = parseInt(c.minuto || c.minute, 10);
+        const minStr = (!isNaN(rawMin) && rawMin > 0) ? `Min. ${rawMin}'` : 's/m';
+        subs.push({ text: `${nameIn} ↔ ${nameOut}`, minuto: minStr });
+      });
+    }
+
+    const subEvents = (matchData.events || []).filter(e => e && e.isValid !== false && (e.type === 'cambio' || e.type === 'sustitucion' || e.type === 'substitution' || e.type === 'sub'));
+    subEvents.forEach(se => {
+      const inId = se.subInId || se.jugadorEntraId || se.playerInId || se.inId || se.entraId;
+      const outId = se.subOutId || se.jugadorSaleId || se.playerOutId || se.outId || se.saleId;
+      const pIn = (players || []).find(pl => String(pl.id) === String(inId));
+      const pOut = (players || []).find(pl => String(pl.id) === String(outId));
+      const nameIn = pIn?.name || (inId ? `J#${inId}` : (isGlobalEn ? 'Sub In' : 'Entra'));
+      const nameOut = pOut?.name || (outId ? `J#${outId}` : (isGlobalEn ? 'Sub Out' : 'Sale'));
+      const rawMin = parseInt(se.minute || se.minuto, 10);
+      const minStr = (!isNaN(rawMin) && rawMin > 0) ? `Min. ${rawMin}'` : 's/m';
+      const entry = { text: `${nameIn} ↔ ${nameOut}`, minuto: minStr };
+      if (!subs.some(s => s.text === entry.text)) {
+        subs.push(entry);
+      }
+    });
+
+    if (subs.length === 0) {
+      const rawTit = (Array.isArray(matchData.titulares) && matchData.titulares.length > 0) ? matchData.titulares : (calledPlayers || []).slice(0, 11);
+      const rawSup = (Array.isArray(matchData.suplentes) && matchData.suplentes.length > 0) ? matchData.suplentes : (calledPlayers || []).slice(11, 18);
+      const titIds = rawTit.filter(Boolean).map(String);
+      const supIds = rawSup.filter(Boolean).map(String);
+      const dur = getEffectiveMatchDuration(matchData);
+      const unifEvts = getUnifiedMatchEvents(matchData);
+
+      supIds.forEach(pid => {
+        const actual = matchData.actaOficial?.actual?.[pid] || {};
+        let minVal = 0;
+        if (actual.minutesOverride !== undefined && actual.minutesOverride !== null && actual.minutesOverride !== '') {
+          minVal = parseInt(actual.minutesOverride, 10);
+        } else if (typeof actual.minutes === 'number' && actual.minutes > 0) {
+          minVal = actual.minutes;
+        } else {
+          const calc = calculateMinutesFromEvents(pid, unifEvts, titIds, supIds, dur, null, actual.status || 'sin_registro', null, matchData.tarjetasList || []);
+          minVal = calc.minutes;
+        }
+
+        if (minVal > 0) {
+          const p = (players || []).find(pl => String(pl.id) === String(pid));
+          const entryMin = Math.max(1, dur - minVal);
+          subs.push({
+            text: `${isGlobalEn ? 'Sub In' : 'Entra'} ${p?.name || `J#${pid}`} (${minVal}' ${isGlobalEn ? 'played' : 'jugados'})`,
+            minuto: `Min. ${entryMin}'`
+          });
+        }
+      });
+    }
+
+    return subs;
+  }, [matchData, players, calledPlayers, isGlobalEn]);
 
   const postMatchDerivedIndices = useMemo(() => {
-    return calculateMatchDerivedIndices(effectiveLiveEvents || []);
-  }, [effectiveLiveEvents]);
+    return calculateMatchDerivedIndices(effectiveLiveEvents || [], { goalsAgainst: derivedGoalsAgainst });
+  }, [effectiveLiveEvents, derivedGoalsAgainst]);
 
   const postMatchSwotData = useMemo(() => {
     return evaluateSwotRules(matchData, effectiveLiveEvents || [], calledPlayers || []);
@@ -2682,8 +2801,8 @@ const Partidos = () => {
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                               {derivedGoleadores.map((g, idx) => (
                                 <div key={idx} style={{ display: 'flex', gap: '10px', alignItems: 'center', padding: '6px 10px', background: 'rgba(255,255,255,0.04)', borderRadius: '6px', minHeight: '48px' }}>
-                                  <span style={{ fontWeight: '700', fontSize: '12px', flex: 1 }}>{g.nombre}</span>
-                                  <span style={{ fontWeight: '800', fontSize: '12px', color: '#22C55E' }}>Min. {g.minuto}'</span>
+                                  <span style={{ fontWeight: '700', fontSize: '12px', flex: 1, color: g.isRival ? '#EF4444' : 'var(--partidos-text-primary)' }}>{g.nombre}</span>
+                                  <span style={{ fontWeight: '800', fontSize: '12px', color: g.isRival ? '#EF4444' : '#22C55E' }}>{g.minuto && g.minuto !== 's/m' ? `Min. ${g.minuto}'` : 's/m'}</span>
                                 </div>
                               ))}
                             </div>
@@ -2705,7 +2824,28 @@ const Partidos = () => {
                                 <div key={idx} style={{ display: 'flex', gap: '10px', alignItems: 'center', padding: '6px 10px', background: 'rgba(255,255,255,0.04)', borderRadius: '6px', minHeight: '48px' }}>
                                   <span style={{ fontWeight: '700', fontSize: '12px', flex: 1 }}>{t.nombre}</span>
                                   <span>{t.tipo === 'amarilla' ? '🟨' : '🟥'}</span>
-                                  <span style={{ fontWeight: '800', fontSize: '12px', color: 'var(--partidos-text-muted)' }}>Min. {t.minuto}'</span>
+                                  <span style={{ fontWeight: '800', fontSize: '12px', color: 'var(--partidos-text-muted)' }}>{t.minuto && t.minuto !== 's/m' ? `Min. ${t.minuto}'` : 's/m'}</span>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Sustituciones Realizadas */}
+                        <div style={{ marginTop: '12px' }}>
+                          <h5 style={{ margin: '0 0 8px 0', fontSize: '12px', fontWeight: '700', color: 'var(--partidos-text-muted)' }}>
+                            🔄 {isGlobalEn ? 'Substitutions' : 'Sustituciones Realizadas'}
+                          </h5>
+                          {derivedSubstitutions.length === 0 ? (
+                            <p style={{ margin: '4px 0', fontSize: '12px', color: 'var(--partidos-text-muted)', fontStyle: 'italic' }}>
+                              {isGlobalEn ? 'No substitutions recorded' : 'Sin sustituciones registradas'}
+                            </p>
+                          ) : (
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                              {derivedSubstitutions.map((s, idx) => (
+                                <div key={idx} style={{ display: 'flex', gap: '10px', alignItems: 'center', padding: '6px 10px', background: 'rgba(255,255,255,0.04)', borderRadius: '6px', minHeight: '48px' }}>
+                                  <span style={{ fontWeight: '700', fontSize: '12px', flex: 1 }}>{s.text}</span>
+                                  <span style={{ fontWeight: '800', fontSize: '12px', color: 'var(--partidos-accent)' }}>{s.minuto}</span>
                                 </div>
                               ))}
                             </div>
@@ -2918,23 +3058,23 @@ const Partidos = () => {
                   </div>
                   </SectionErrorBoundary>
 
-                  {/* ── SECCIÓN 8: CAMPO Y TÁCTICA: SECTORES, ABP Y BLOQUES ── */}
-                  <SectionErrorBoundary sectionCode="SEC_TACTICS" sectionTitle={isGlobalEn ? '8. Field & Tactics (Sectors, Set Pieces & Blocks)' : '8. Campo y Táctica (Pasillos, ABP y Territorio)'}>
+                  {/* ── SECCIÓN 8: CAMPO Y TÁCTICA: MAPA TERRITORIAL 3x3 ── */}
+                  <SectionErrorBoundary sectionCode="SEC_TACTICS" sectionTitle={isGlobalEn ? '8. Field & Tactics (Territory 3x3)' : '8. Campo y Táctica (Mapa Territorial 3x3)'}>
                   <div id="sec_tactics" className="post-match-card" style={{ scrollMarginTop: '80px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px', borderBottom: '1.5px solid var(--partidos-border)', paddingBottom: '10px', marginBottom: '14px' }}>
                       <span style={{ background: '#172D21', color: '#D4A843', padding: '4px 10px', borderRadius: '6px', fontSize: '11px', fontWeight: '900' }}>8</span>
                       <h4 className="card-section-title" style={{ margin: 0 }}>
-                        {isGlobalEn ? '8. Field & Tactics (Sectors, Set Pieces & Blocks)' : '8. Campo y Táctica (Pasillos, ABP y Territorio)'}
+                        {isGlobalEn ? '8. Field & Tactics (Territory 3x3)' : '8. Campo y Táctica (Mapa Territorial 3x3)'}
                       </h4>
                     </div>
                     <div style={{ marginTop: '12px' }}>
-                      <SectorTacticsSVG
-                        homeStats={postMatchCanonicalStats.homeStats}
-                        awayStats={postMatchCanonicalStats.awayStats}
-                        tacticsData={postMatchCanonicalStats.tacticsData}
-                        homeTeamName={activeTeam?.nombre || (isGlobalEn ? 'My Team' : 'Mi Equipo')}
-                        awayTeamName={matchData.rival || (isGlobalEn ? 'Opponent' : 'Rival')}
-                        isEn={isGlobalEn}
+                      <TerritoryMap3x3
+                        analytics={postMatchCanonicalStats}
+                        matchData={matchData}
+                        events={effectiveLiveEvents}
+                        teamName={activeTeam?.nombre || (isGlobalEn ? 'My Team' : 'Mi Equipo')}
+                        rivalName={matchData.rival || (isGlobalEn ? 'Opponent' : 'Rival')}
+                        initialMode="detail"
                       />
                     </div>
                   </div>

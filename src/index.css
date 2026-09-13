@@ -26,7 +26,11 @@
   /* THEME: LIGHT (DEFAULT) - INSTITUTIONAL HIGH CONTRAST */
   --text-primary: #1B3A2D;   /* Verde selva oscuro */
   --text-secondary: #2D2D2D; /* Carbón */
-  --text-muted: #1B3A2D;     /* Reemplazado gris por verde oscuro para legibilidad */
+  --text-muted: #4A5C50;     /* Muted accesible >= 4.5:1 */
+  --text-ink: #1B3A2D;       /* Tinta principal */
+  --text-ink-muted: #4A5C50; /* Tinta secundaria */
+  --text-accent: #85682B;    /* Dorado oscuro accesible */
+  --text-gold-accessible: #85682B;
   --bg-primary: #F5F0E8;     /* Arena */
   --bg-card: #FFFFFF;        /* Blanco puro para contraste */
   --bg-surface: #F4F8F5;     /* Superficie suave institucional */
@@ -59,7 +63,11 @@
 .dark, html.dark {
   --text-primary: #F5F0E8;   /* Arena clara */
   --text-secondary: #FFFFFF; /* Blanco puro */
-  --text-muted: #D4A843;     /* Dorado para destacar etiquetas secundarias */
+  --text-muted: #C9D4CC;     /* Muted claro accesible */
+  --text-ink: #F2EDE4;       /* Tinta clara */
+  --text-ink-muted: #C9D4CC; /* Tinta secundaria clara */
+  --text-accent: #E4C878;    /* Dorado claro accesible sobre verde oscuro */
+  --text-gold-accessible: #E4C878;
   --bg-primary: #0D0D0D;     /* Negro base */
   --bg-card: #1E1E1E;        /* Gris carbón */
   --bg-surface: #1E2822;     /* Verde carbón institucional oscuro */

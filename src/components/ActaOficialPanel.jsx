@@ -30,6 +30,11 @@ import { MatchRadarChart } from './MatchStats/MatchRadarChart';
 import { UnattributedEventsManager } from './UnattributedEventsManager';
 import { showToast } from '../utils/toast';
 import { generateMatchPdfReport } from '../utils/matchPdfReport.js';
+import { ShotMapSVG } from './canonical/ShotMapSVG.js';
+import { TerritoryMap3x3 } from './canonical/TerritoryMap3x3.jsx';
+import { MomentumSVG } from './canonical/MomentumSVG.js';
+import { calculateCanonicalStats } from './canonical/calculateCanonicalStats.js';
+import { getMatchAnalytics } from '../utils/matchAnalytics.js';
 import './MatchStats/MatchStats.css';
 
 const getRsvpLabels = (isEn) => ({
@@ -276,6 +281,18 @@ const ActaOficialPanel = ({
   }, [sheet?.actual, convocadosIds, initialTitularesSet, initialSuplentesSet, effectiveEvents]);
 
   const discrepancies = useMemo(() => getDiscrepancies(), [sheet]);
+
+  const analyticsActa = useMemo(() => {
+    return getMatchAnalytics(matchData, effectiveEvents, { isEn });
+  }, [matchData, effectiveEvents, isEn]);
+
+  const canonicalStatsActa = useMemo(() => {
+    return calculateCanonicalStats(matchData, effectiveEvents);
+  }, [matchData, effectiveEvents]);
+
+  const effectiveMatchDuration = useMemo(() => {
+    return getEffectiveMatchDuration(matchData);
+  }, [matchData]);
 
   // ── Handlers ─────────────────────────────────────────────
   const handleSmartPrefill = async () => {
@@ -633,6 +650,76 @@ const ActaOficialPanel = ({
             showHalves={true}
             showDetailedTables={true}
           />
+
+          {/* Mapa Canónico de Tiros (FIFA 105:68) */}
+          <div style={{
+            background: 'var(--partidos-card-bg, #FFFFFF)',
+            border: '1.5px solid var(--partidos-border, #CBD5E1)',
+            borderRadius: '12px',
+            padding: '16px',
+            boxShadow: '0 2px 8px rgba(0,0,0,0.04)'
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '10px', marginBottom: '14px', borderBottom: '1.5px solid var(--partidos-border)', paddingBottom: '10px' }}>
+              <h4 style={{ margin: 0, fontSize: '14px', fontWeight: '800', color: 'var(--partidos-accent)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                🎯 {isEn ? 'Official Shot Map & xG-Lite' : 'Mapa Oficial de Tiros y xG-Lite (FIFA 105:68)'}
+              </h4>
+              <div style={{ display: 'flex', gap: '10px', fontSize: '11px', fontWeight: '700' }}>
+                <span style={{ padding: '3px 8px', borderRadius: '4px', background: 'rgba(76,175,125,0.15)', color: '#4CAF7D', border: '1px solid rgba(76,175,125,0.3)' }}>
+                  {isEn ? 'Own xG:' : 'xG Propio:'} {analyticsActa.shots.ownTotalXg}
+                </span>
+                <span style={{ padding: '3px 8px', borderRadius: '4px', background: 'rgba(239,68,68,0.15)', color: '#EF4444', border: '1px solid rgba(239,68,68,0.3)' }}>
+                  {isEn ? 'Opponent xG:' : 'xG Rival:'} {analyticsActa.shots.rivalTotalXg}
+                </span>
+              </div>
+            </div>
+            <ShotMapSVG
+              shots={analyticsActa.shots.all}
+              ownXg={analyticsActa.shots.ownTotalXg}
+              rivalXg={analyticsActa.shots.rivalTotalXg}
+              isEn={isEn}
+            />
+          </div>
+
+          {/* Campo y Táctica: Mapa Territorial 3x3 */}
+          <div style={{
+            background: 'var(--partidos-card-bg, #FFFFFF)',
+            border: '1.5px solid var(--partidos-border, #CBD5E1)',
+            borderRadius: '12px',
+            padding: '16px',
+            boxShadow: '0 2px 8px rgba(0,0,0,0.04)'
+          }}>
+            <h4 style={{ margin: '0 0 14px', fontSize: '14px', fontWeight: '800', color: 'var(--partidos-accent)', display: 'flex', alignItems: 'center', gap: '8px', borderBottom: '1.5px solid var(--partidos-border)', paddingBottom: '10px' }}>
+              🗺️ {isEn ? 'Field & Tactics (Territory 3x3)' : 'Campo y Táctica (Mapa Territorial 3x3)'}
+            </h4>
+            <TerritoryMap3x3
+              analytics={canonicalStatsActa}
+              matchData={matchData}
+              events={effectiveEvents}
+              teamName={matchData?.local || matchData?.equipoLocal || (isEn ? 'My Team' : 'Mi Equipo')}
+              rivalName={matchData?.visitante || matchData?.equipoVisitante || matchData?.rival || (isEn ? 'Opponent' : 'Rival')}
+              initialMode="detail"
+            />
+          </div>
+
+          {/* Flujo y Curva de Momentum */}
+          <div style={{
+            background: 'var(--partidos-card-bg, #FFFFFF)',
+            border: '1.5px solid var(--partidos-border, #CBD5E1)',
+            borderRadius: '12px',
+            padding: '16px',
+            boxShadow: '0 2px 8px rgba(0,0,0,0.04)'
+          }}>
+            <h4 style={{ margin: '0 0 14px', fontSize: '14px', fontWeight: '800', color: 'var(--partidos-accent)', display: 'flex', alignItems: 'center', gap: '8px', borderBottom: '1.5px solid var(--partidos-border)', paddingBottom: '10px' }}>
+              ⚡ {isEn ? 'Match Momentum & Pressure Flow' : 'Flujo de Presión y Curva de Momentum'}
+            </h4>
+            <MomentumSVG
+              events={effectiveEvents}
+              matchDuration={effectiveMatchDuration}
+              homeTeamName={matchData?.local || matchData?.equipoLocal || (isEn ? 'My Team' : 'Mi Equipo')}
+              awayTeamName={matchData?.visitante || matchData?.equipoVisitante || matchData?.rival || (isEn ? 'Opponent' : 'Rival')}
+              isEn={isEn}
+            />
+          </div>
         </div>
       )}
 

@@ -831,6 +831,89 @@ export const generateMatchPdfReport = async ({
         console.warn('[PDF ACTA] Error rasterizando radar comparativo:', errRadar);
       }
 
+      // 3. Mapa Canónico de Tiros (FIFA 105:68)
+      try {
+        if (analyticsActa.shots.all && analyticsActa.shots.all.length > 0) {
+          doc.addPage();
+          y = 16;
+          doc.setFillColor(...colorPrimary);
+          doc.roundedRect(14, y, pageW - 28, 8, 1.5, 1.5, 'F');
+          doc.setFontSize(8.5);
+          doc.setFont('helvetica', 'bold');
+          doc.setTextColor(255, 255, 255);
+          doc.text(
+            isEn ? 'OFFICIAL SHOT MAP & xG-LITE MODEL' : 'MAPA OFICIAL DE TIROS Y MODELO xG-LITE',
+            18,
+            y + 5.5
+          );
+          y += 12;
+
+          const shotSvg = renderShotMapSvgString({
+            shots: analyticsActa.shots.all,
+            ownXg: analyticsActa.shots.ownTotalXg,
+            rivalXg: analyticsActa.shots.rivalTotalXg,
+            homeTeamName: safeTeamName,
+            awayTeamName: rivalName,
+            isEn,
+            width: 1050,
+            height: 680
+          });
+          const shotMapImg = await rasterizeSvgToDataUrl(shotSvg, 1050, 680, 2);
+          if (shotMapImg) {
+            const smW = 150;
+            const smH = smW / 1.5441;
+            const smX = (pageW - smW) / 2;
+            doc.addImage(shotMapImg, 'PNG', smX, y, smW, smH);
+            y += smH + 8;
+          }
+        }
+      } catch (errShots) {
+        console.warn('[PDF ACTA] Error rasterizando mapa de tiros:', errShots);
+      }
+
+      // 4. Campo y Táctica (Mapa Territorial 3x3)
+      try {
+        if (safeEvents.length > 0) {
+          if (y + 105 > pageH - 25) {
+            doc.addPage();
+            y = 16;
+          }
+          doc.setFillColor(...colorPrimary);
+          doc.roundedRect(14, y, pageW - 28, 8, 1.5, 1.5, 'F');
+          doc.setFontSize(8.5);
+          doc.setFont('helvetica', 'bold');
+          doc.setTextColor(255, 255, 255);
+          doc.text(
+            isEn ? 'OFFICIAL TERRITORY MAP (3x3 ZONES)' : 'MAPA TERRITORIAL OFICIAL (3x3 ZONAS)',
+            18,
+            y + 5.5
+          );
+          y += 12;
+
+          const territorySvg = renderTerritoryMap3x3SvgString({
+            analytics: analyticsActa,
+            matchData,
+            events: safeEvents,
+            teamName: safeTeamName,
+            rivalName,
+            isEn,
+            isDark: true,
+            width: 1050,
+            height: 680
+          });
+          const territoryImg = await rasterizeSvgToDataUrl(territorySvg, 1050, 680, 2);
+          if (territoryImg) {
+            const tW = 150;
+            const tH = (680 / 1050) * tW;
+            const tX = (pageW - tW) / 2;
+            doc.addImage(territoryImg, 'PNG', tX, y, tW, tH);
+            y += tH + 8;
+          }
+        }
+      } catch (errTerritory) {
+        console.warn('[PDF ACTA] Error rasterizando mapa territorial:', errTerritory);
+      }
+
       // 5. Doble Firma Reglamentaria (Entrenador / Delegado & Árbitro / Capitán)
       if (y + 35 > pageH - 25) {
         doc.addPage();

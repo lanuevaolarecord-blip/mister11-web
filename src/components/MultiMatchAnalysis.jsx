@@ -12,22 +12,31 @@ export const MultiMatchAnalysis = ({ matches = [], teamId, activeTeam = null, la
   const { isEn } = useTranslation();
   const { darkMode } = useTheme();
 
-  // Partidos jugados o con eventos estadísticos cargados
-  const playedMatches = useMemo(() => {
-    return matches.filter((m) => {
+  // Obtiene los últimos N partidos dando prioridad a los jugados y rellenando hasta count
+  const getRecentMatches = (count) => {
+    if (!matches || matches.length === 0) return [];
+    const sorted = [...matches].sort((a, b) => {
+      const tA = a.date ? new Date(a.date).getTime() : 0;
+      const tB = b.date ? new Date(b.date).getTime() : 0;
+      return tB - tA;
+    });
+
+    const played = sorted.filter((m) => {
       const hasEvents = (Array.isArray(m.events) && m.events.length > 0) ||
         (Array.isArray(m.liveStatsEvents) && m.liveStatsEvents.length > 0);
-      const isFinished = m.status === 'Terminado' || m.status === 'Finalizado';
+      const isFinished = m.status === 'Terminado' || m.status === 'Finalizado' || m.actaOficial?.closed;
       return isFinished || hasEvents;
     });
-  }, [matches]);
 
-  // Seleccionar por defecto los últimos 5 partidos con datos (o los que existan)
+    const notPlayed = sorted.filter((m) => !played.includes(m));
+    const prioritized = [...played, ...notPlayed];
+    return prioritized.slice(0, count);
+  };
+
+  // Seleccionar por defecto los últimos 5 partidos
   const defaultSelectedIds = useMemo(() => {
-    if (!matches || matches.length === 0) return [];
-    const pool = playedMatches.length > 0 ? playedMatches : matches;
-    return pool.slice(0, 5).map((m) => m.id);
-  }, [matches, playedMatches]);
+    return getRecentMatches(5).map((m) => m.id);
+  }, [matches]);
 
   const [selectedIds, setSelectedIds] = useState([]);
   const [viewMode, setViewMode] = useState('AVERAGES'); // 'AVERAGES' | 'TOTALS'
@@ -172,11 +181,10 @@ export const MultiMatchAnalysis = ({ matches = [], teamId, activeTeam = null, la
 
   // Selección rápida de partidos
   const handleShortcutSelect = (shortcut) => {
-    const pool = playedMatches.length > 0 ? playedMatches : matches;
     if (shortcut === 'LAST_3') {
-      setSelectedIds(pool.slice(0, 3).map((m) => m.id));
+      setSelectedIds(getRecentMatches(3).map((m) => m.id));
     } else if (shortcut === 'LAST_5') {
-      setSelectedIds(pool.slice(0, 5).map((m) => m.id));
+      setSelectedIds(getRecentMatches(5).map((m) => m.id));
     } else if (shortcut === 'ALL') {
       setSelectedIds(matches.map((m) => m.id));
     } else if (shortcut === 'CLEAR') {
@@ -195,17 +203,16 @@ export const MultiMatchAnalysis = ({ matches = [], teamId, activeTeam = null, la
     if (matches.length > 0 && selectedIds.length === matches.length && matches.every((m) => selectedIds.includes(m.id))) {
       return 'ALL';
     }
-    const pool = playedMatches.length > 0 ? playedMatches : matches;
-    const last3Ids = pool.slice(0, 3).map((m) => m.id);
-    if (selectedIds.length === last3Ids.length && last3Ids.length > 0 && last3Ids.every((id) => selectedIds.includes(id))) {
+    const last3Ids = getRecentMatches(3).map((m) => m.id);
+    if (last3Ids.length > 0 && selectedIds.length === last3Ids.length && last3Ids.every((id) => selectedIds.includes(id))) {
       return 'LAST_3';
     }
-    const last5Ids = pool.slice(0, 5).map((m) => m.id);
-    if (selectedIds.length === last5Ids.length && last5Ids.length > 0 && last5Ids.every((id) => selectedIds.includes(id))) {
+    const last5Ids = getRecentMatches(5).map((m) => m.id);
+    if (last5Ids.length > 0 && selectedIds.length === last5Ids.length && last5Ids.every((id) => selectedIds.includes(id))) {
       return 'LAST_5';
     }
     return 'CUSTOM';
-  }, [selectedIds, matches, playedMatches]);
+  }, [selectedIds, matches]);
 
   const tx = (key, params) => {
     return t(key, language, params);
@@ -303,7 +310,7 @@ export const MultiMatchAnalysis = ({ matches = [], teamId, activeTeam = null, la
             type="button"
             className="btn-export-analysis-pdf"
             onClick={handleExportPDF}
-            disabled={isExportingPdf || selectedMatches.length < 2}
+            disabled={isExportingPdf || selectedMatches.length < 1}
             title={tx('analisis.exportPdf')}
           >
             <FileDown size={18} />
@@ -312,7 +319,7 @@ export const MultiMatchAnalysis = ({ matches = [], teamId, activeTeam = null, la
         </div>
       </div>
 
-      {selectedIds.length < 2 ? (
+      {selectedIds.length === 0 ? (
         <div className="multi-match-empty">
           <span className="empty-icon">📊</span>
           <h3>{tx('analisis.noMatchesSelected')}</h3>

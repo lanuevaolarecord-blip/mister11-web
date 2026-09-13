@@ -1,11 +1,156 @@
-import { PDF_COLORS, cleanPdfText, drawRadarChartCanvas, imageUrlToBase64 } from './pdfTheme';
-import { savePdfUniversal } from './pdfGenerator';
+import { PDF_COLORS, cleanPdfText, drawRadarChartCanvas, imageUrlToBase64 } from './pdfTheme.js';
+import { savePdfUniversal } from './pdfGenerator.js';
 import autoTable from 'jspdf-autotable';
-import { getEffectiveLanguage } from '../i18n/translations';
+import { getEffectiveLanguage } from '../i18n/translations.js';
 
 const THEME_COLOR = PDF_COLORS.primary;
 const ACCENT_COLOR = PDF_COLORS.accent;
 const TEXT_DARK = PDF_COLORS.textDark;
+
+/**
+ * Dibuja la gráfica de evolución y tendencia por partido en Canvas 2D nativo para incrustar en el PDF.
+ */
+export const drawTrendLineChartCanvas = (perMatchMetrics = [], { isEn = false, width = 680, height = 300 } = {}) => {
+  if (!perMatchMetrics || perMatchMetrics.length === 0) return null;
+  try {
+    const scale = 2;
+    const canvas = document.createElement('canvas');
+    canvas.width = Math.round(width * scale);
+    canvas.height = Math.round(height * scale);
+    const ctx = canvas.getContext('2d');
+    ctx.scale(scale, scale);
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = 'high';
+
+    ctx.fillStyle = '#FFFFFF';
+    ctx.fillRect(0, 0, width, height);
+
+    ctx.strokeStyle = '#E2E8F0';
+    ctx.lineWidth = 1;
+    ctx.strokeRect(1, 1, width - 2, height - 2);
+
+    const pLeft = 45;
+    const pRight = 20;
+    const pTop = 38;
+    const pBottom = 42;
+    const chartW = width - pLeft - pRight;
+    const chartH = height - pTop - pBottom;
+
+    // Título
+    ctx.font = 'bold 11px Arial, sans-serif';
+    ctx.fillStyle = '#1B3A2D';
+    ctx.textAlign = 'left';
+    ctx.fillText(isEn ? 'MATCH PERFORMANCE TREND' : 'EVOLUCIÓN DE TENDENCIA POR PARTIDO', pLeft, 22);
+
+    // Leyenda
+    const legendItems = [
+      { label: isEn ? 'Recoveries' : 'Recuperaciones', color: '#4CAF7D' },
+      { label: isEn ? 'Losses' : 'Pérdidas', color: '#F59E0B' },
+      { label: isEn ? 'Shots on Target' : 'Tiros a Puerta', color: '#D4A843' },
+    ];
+    let legX = width - pRight;
+    ctx.textAlign = 'right';
+    for (let i = legendItems.length - 1; i >= 0; i--) {
+      const item = legendItems[i];
+      ctx.font = 'bold 9.5px Arial, sans-serif';
+      ctx.fillStyle = '#475569';
+      ctx.fillText(item.label, legX, 22);
+      const textW = ctx.measureText(item.label).width;
+      legX -= textW + 6;
+      ctx.beginPath();
+      ctx.arc(legX, 19, 4, 0, Math.PI * 2);
+      ctx.fillStyle = item.color;
+      ctx.fill();
+      legX -= 14;
+    }
+
+    const maxVal = Math.max(10, ...perMatchMetrics.map((d) => Math.max(d.recoveries || 0, d.losses || 0, d.shotsOwn || 0)));
+
+    const getX = (i) => {
+      if (perMatchMetrics.length <= 1) return pLeft + chartW / 2;
+      return pLeft + (i / (perMatchMetrics.length - 1)) * chartW;
+    };
+    const getY = (val) => {
+      return pTop + chartH - (val / maxVal) * chartH;
+    };
+
+    // Grid horizontal
+    [0, 0.25, 0.5, 0.75, 1].forEach((pct) => {
+      const y = pTop + chartH * (1 - pct);
+      const val = Math.round(maxVal * pct);
+      ctx.beginPath();
+      ctx.strokeStyle = '#E2E8F0';
+      ctx.lineWidth = 1;
+      ctx.setLineDash([4, 4]);
+      ctx.moveTo(pLeft, y);
+      ctx.lineTo(width - pRight, y);
+      ctx.stroke();
+      ctx.setLineDash([]);
+
+      ctx.font = '10px Arial, sans-serif';
+      ctx.fillStyle = '#94A3B8';
+      ctx.textAlign = 'right';
+      ctx.fillText(String(val), pLeft - 6, y + 3);
+    });
+
+    const drawSeries = (key, color, isDashed = false) => {
+      if (perMatchMetrics.length > 1) {
+        ctx.beginPath();
+        ctx.strokeStyle = color;
+        ctx.lineWidth = 2.5;
+        if (isDashed) ctx.setLineDash([5, 5]);
+        else ctx.setLineDash([]);
+
+        perMatchMetrics.forEach((d, i) => {
+          const x = getX(i);
+          const y = getY(d[key] || 0);
+          if (i === 0) ctx.moveTo(x, y);
+          else ctx.lineTo(x, y);
+        });
+        ctx.stroke();
+        ctx.setLineDash([]);
+      }
+
+      // Puntos
+      perMatchMetrics.forEach((d, i) => {
+        const x = getX(i);
+        const y = getY(d[key] || 0);
+        ctx.beginPath();
+        ctx.arc(x, y, 4.5, 0, Math.PI * 2);
+        ctx.fillStyle = color;
+        ctx.fill();
+        ctx.strokeStyle = '#FFFFFF';
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+      });
+    };
+
+    drawSeries('recoveries', '#4CAF7D');
+    drawSeries('losses', '#F59E0B');
+    drawSeries('shotsOwn', '#D4A843', true);
+
+    // Eje X
+    perMatchMetrics.forEach((d, i) => {
+      const x = getX(i);
+      ctx.font = 'bold 9.5px Arial, sans-serif';
+      ctx.fillStyle = '#152C22';
+      ctx.textAlign = 'center';
+      const label = `vs ${(d.rival || 'Rival').substring(0, 8)}`;
+      ctx.fillText(label, x, height - pBottom + 16);
+      if (d.date) {
+        ctx.font = '8px Arial, sans-serif';
+        ctx.fillStyle = '#94A3B8';
+        const dStr = d.date.split('-').reverse().slice(0, 2).join('/');
+        ctx.fillText(dStr, x, height - pBottom + 28);
+      }
+    });
+
+    return canvas.toDataURL('image/png', 0.95);
+  } catch (e) {
+    console.warn('[drawTrendLineChartCanvas] Error:', e);
+    return null;
+  }
+};
 
 /**
  * Exporta un informe completo en PDF con el análisis comparativo multipartido
@@ -187,7 +332,13 @@ export const exportMultiMatchAnalysisPDF = async ({
 
     y += cardH + 8;
 
-    // ── RADAR TÁCTICO COLECTIVO 360° ──────────────────────────────────────────
+    // ── GRÁFICAS DE RENDIMIENTO TÁCTICO ──────────────────────────────────────
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(9.5);
+    doc.setTextColor(...THEME_COLOR);
+    doc.text(isEn ? 'TACTICAL PERFORMANCE CHARTS' : 'GRÁFICAS DE RENDIMIENTO TÁCTICO', 12, y);
+    y += 4;
+
     const shotsScore = Math.min(99, Math.max(10, Math.round((aggregates.avgShotsOwn || 0) * 12)));
     const duelsScore = Math.min(99, Math.max(10, aggregates.avgDuelPct || 50));
     const recRatio = (aggregates.totalRecoveries || 1) / Math.max(1, aggregates.totalLosses || 1);
@@ -204,21 +355,21 @@ export const exportMultiMatchAnalysisPDF = async ({
       { label: isEn ? 'Counter-Attacks' : 'Contraataques', value: goalsScore },
     ];
 
+    const trendImg = drawTrendLineChartCanvas(perMatchMetrics, { isEn, width: 680, height: 320 });
     const radarImg = drawRadarChartCanvas(tacticalMetrics, 440);
-    if (radarImg) {
+
+    const chartHeightMm = 54;
+    if (trendImg && radarImg) {
+      doc.addImage(trendImg, 'PNG', 12, y, 112, chartHeightMm);
+      doc.addImage(radarImg, 'PNG', 128, y, 70, chartHeightMm);
+      y += chartHeightMm + 8;
+    } else if (trendImg) {
+      doc.addImage(trendImg, 'PNG', 12, y, pageW - 24, chartHeightMm);
+      y += chartHeightMm + 8;
+    } else if (radarImg) {
       const radarSize = 65;
       const radarX = (pageW - radarSize) / 2;
-      doc.setFont('helvetica', 'bold');
-      doc.setFontSize(9.5);
-      doc.setTextColor(...THEME_COLOR);
-      doc.text(
-        isEn ? 'AVERAGE TACTICAL PROFILE (360°)' : 'PERFIL TÁCTICO PROMEDIO DEL EQUIPO (360°)',
-        pageW / 2,
-        y,
-        { align: 'center' }
-      );
-
-      doc.addImage(radarImg, 'PNG', radarX, y + 3, radarSize, radarSize);
+      doc.addImage(radarImg, 'PNG', radarX, y, radarSize, radarSize);
       y += radarSize + 8;
     }
 

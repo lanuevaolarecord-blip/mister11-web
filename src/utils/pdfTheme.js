@@ -477,13 +477,13 @@ export const drawRadarChartCanvas = (metrics = [], size = 520) => {
       const val = Math.round(m.value ?? 0);
 
       ctx.font = 'bold 13px Arial, sans-serif';
-      ctx.fillStyle = '#0F172A';
+      ctx.fillStyle = '#152C22';
       ctx.textAlign = Math.abs(Math.cos(angle)) < 0.3 ? 'center' : (Math.cos(angle) > 0 ? 'left' : 'right');
       ctx.textBaseline = Math.abs(Math.sin(angle)) < 0.3 ? 'middle' : (Math.sin(angle) > 0 ? 'top' : 'bottom');
       ctx.fillText(`${m.label}`, lx, ly - 4);
 
       ctx.font = 'bold 12px Arial, sans-serif';
-      ctx.fillStyle = '#2E7D5C';
+      ctx.fillStyle = '#1B3A2D';
       ctx.fillText(`${val}%`, lx, ly + 11);
     }
 

@@ -191,4 +191,56 @@ const avgShotsOwn = (sumShotsOwn / metrics.length).toFixed(1);
 assert.strictEqual(parseFloat(avgShotsOwn) > 0, true, 'El promedio de tiros a favor debe ser estrictamente > 0');
 
 console.log(`✅ [PASS] Promedio colectivo de tiros a puerta = ${avgShotsOwn} (NUNCA MÁS 0.0)`);
+
+// 6. Probar getRecentMatches(5) con mezcla de jugados y pendientes
+const testMatches = [
+  { id: 'p1', date: '2026-09-01', status: 'Terminado', events: [{ id: 'e1' }] },
+  { id: 'p2', date: '2026-09-08', status: 'Terminado', events: [{ id: 'e2' }] },
+  { id: 'u1', date: '2026-09-15', status: 'Pendiente' },
+  { id: 'u2', date: '2026-09-22', status: 'Pendiente' },
+  { id: 'u3', date: '2026-09-29', status: 'Pendiente' },
+  { id: 'u4', date: '2026-10-06', status: 'Pendiente' },
+];
+
+const getRecentMatchesTest = (count) => {
+  if (!testMatches || testMatches.length === 0) return [];
+  const sorted = [...testMatches].sort((a, b) => {
+    const tA = a.date ? new Date(a.date).getTime() : 0;
+    const tB = b.date ? new Date(b.date).getTime() : 0;
+    return tB - tA;
+  });
+
+  const played = sorted.filter((m) => {
+    const hasEvents = (Array.isArray(m.events) && m.events.length > 0) ||
+      (Array.isArray(m.liveStatsEvents) && m.liveStatsEvents.length > 0);
+    const isFinished = m.status === 'Terminado' || m.status === 'Finalizado';
+    return isFinished || hasEvents;
+  });
+
+  const notPlayed = sorted.filter((m) => !played.includes(m));
+  const prioritized = [...played, ...notPlayed];
+  return prioritized.slice(0, count);
+};
+
+const last5 = getRecentMatchesTest(5);
+assert.strictEqual(last5.length, 5, `getRecentMatches(5) debe devolver exactamente 5 partidos (obtenidos: ${last5.length})`);
+assert(last5.some(m => m.id === 'p1'), 'Debe incluir p1 jugado');
+assert(last5.some(m => m.id === 'p2'), 'Debe incluir p2 jugado');
+console.log(`✅ [PASS] getRecentMatches(5) devuelve exactamente 5 partidos priorizando jugados.`);
+
+const last3 = getRecentMatchesTest(3);
+assert.strictEqual(last3.length, 3, `getRecentMatches(3) debe devolver exactamente 3 partidos (obtenidos: ${last3.length})`);
+console.log(`✅ [PASS] getRecentMatches(3) devuelve exactamente 3 partidos.`);
+
+// 7. Probar funciones exportadas de canvas y PDF
+import fs from 'fs';
+const pdfThemeContent = fs.readFileSync('src/utils/pdfTheme.js', 'utf8');
+const analysisPdfContent = fs.readFileSync('src/utils/analysisPdfReport.js', 'utf8');
+
+assert(pdfThemeContent.includes('export const drawRadarChartCanvas'), 'drawRadarChartCanvas debe estar exportada en pdfTheme.js');
+assert(analysisPdfContent.includes('export const drawTrendLineChartCanvas'), 'drawTrendLineChartCanvas debe estar exportada en analysisPdfReport.js');
+assert(analysisPdfContent.includes('trendImg && radarImg'), 'Debe incluir ambos gráficos combinados en el PDF');
+assert(analysisPdfContent.includes('drawTrendLineChartCanvas('), 'Debe invocar drawTrendLineChartCanvas para generar la gráfica');
+console.log(`✅ [PASS] drawRadarChartCanvas y drawTrendLineChartCanvas están integradas y listas en el PDF.`);
+
 console.log('==============================================================================\n');

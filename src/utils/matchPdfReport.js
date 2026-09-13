@@ -766,7 +766,7 @@ export const generateMatchPdfReport = async ({
         y = (doc.lastAutoTable ? doc.lastAutoTable.finalY : y + 20) + 8;
       }
 
-      // 4.5 Gráficas Oficiales y Radar Comparativo (Acta Oficial)
+      // 4.5 SUITE OFICIAL DE ESTADÍSTICAS Y GRÁFICAS DEL ACTA (DONAS, COMPARATIVA, MITADES, CATEGORÍAS Y SECTORES)
       doc.addPage();
       y = 16;
 
@@ -776,7 +776,146 @@ export const generateMatchPdfReport = async ({
       doc.setFont('helvetica', 'bold');
       doc.setTextColor(255, 255, 255);
       doc.text(
-        isEn ? 'OFFICIAL TACTICAL CHARTS & COMPARATIVE RADAR' : 'GRÁFICAS OFICIALES DEL ENCUENTRO Y RADAR TÁCTICO',
+        isEn ? 'OFFICIAL TACTICAL EFFICIENCY & MATCH COMPARISON' : 'EFICIENCIA TÁCTICA Y COMPARATIVA OFICIAL DEL PARTIDO',
+        18,
+        y + 5.5
+      );
+      y += 12;
+
+      // 1. Donas de Eficiencia Táctica (Duelos, Precisión, Posesión, Eficacia de Gol)
+      try {
+        const donutsImg = drawPostMatchDonutsCanvas({
+          events: safeEvents,
+          isEn,
+          width: 660,
+          height: 190
+        });
+        if (donutsImg) {
+          const dW = pageW - 28;
+          const dH = (190 / 660) * dW;
+          doc.addImage(donutsImg, 'PNG', 14, y, dW, dH);
+          y += dH + 6;
+        }
+      } catch (errDonuts) {
+        console.warn('[PDF ACTA] Error dibujando donas:', errDonuts);
+      }
+
+      // 2. Comparativa Propio vs Rival & Desglose por Mitades (Barras y Mitades)
+      try {
+        const compHalvesImg = drawStatsComparisonAndHalvesCanvas({
+          events: safeEvents,
+          homeTeamName: safeTeamName,
+          awayTeamName: rivalName,
+          isEn,
+          width: 660,
+          height: 240
+        });
+        if (compHalvesImg) {
+          const chW = pageW - 28;
+          const chH = (240 / 660) * chW;
+          doc.addImage(compHalvesImg, 'PNG', 14, y, chW, chH);
+          y += chH + 6;
+        }
+      } catch (errComp) {
+        console.warn('[PDF ACTA] Error dibujando comparativa y mitades:', errComp);
+      }
+
+      // 3. Detalle por Categorías (Remates, Defensa, Faltas, Disciplina)
+      if (y + 45 > pageH - 25) {
+        doc.addPage();
+        y = 16;
+      }
+      doc.setFontSize(9.5);
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(...colorPrimary);
+      doc.text(isEn ? 'CATEGORIZED STATISTICAL BREAKDOWN' : 'DETALLE POR CATEGORÍAS', 14, y);
+      y += 5;
+
+      const countOfSafe = (types) => {
+        const arr = Array.isArray(types) ? types : [types];
+        return safeEvents.filter(e => e && arr.includes(e.type)).length;
+      };
+
+      const shOnOwn = countOfSafe(['shot_on_target_own', 'shot_on_target', 'gol_local', 'gol']);
+      const shOffOwn = countOfSafe(['shot_off_target_own', 'shot_off_target']);
+      const shOnRiv = countOfSafe(['shot_on_target_rival', 'gol_rival']);
+      const shOffRiv = countOfSafe(['shot_off_target_rival']);
+      const recTot = countOfSafe(['recovery', 'recuperacion']);
+      const lossTot = countOfSafe(['loss', 'perdida']);
+      const dWonTot = countOfSafe(['duel_won', 'duelo_ganado']);
+      const dLostTot = countOfSafe(['duel_lost', 'duelo_perdido']);
+      const foulsFav = countOfSafe(['foul_favor', 'falta_favor']);
+      const foulsAg = countOfSafe(['foul_against', 'falta_contra', 'falta']);
+      const cNotCut = countOfSafe(['counter_not_cut']);
+      const unfin = countOfSafe(['player_no_finish']);
+      const cornFav = countOfSafe(['corner_favor', 'corner_own']);
+      const cornAg = countOfSafe(['corner_against', 'corner_rival']);
+      const offOwn = countOfSafe(['offside_own']);
+      const offRiv = countOfSafe(['offside_rival']);
+      const yelTot = countOfSafe(['yellow_card', 'amarilla', 'card_yellow_own']);
+      const redTot = countOfSafe(['red_card', 'roja', 'card_red_own']);
+      const yelRiv = countOfSafe(['card_yellow_rival']);
+      const redRiv = countOfSafe(['card_red_rival']);
+
+      const catBody = [
+        [
+          isEn ? '🎯 Shots & Finishing' : '🎯 Remates y Finalización',
+          `${isEn ? 'On Target' : 'A Puerta'}: ${shOnOwn} - ${shOnRiv} | ${isEn ? 'Off Target' : 'Fuera'}: ${shOffOwn} - ${shOffRiv} | Total: ${shOnOwn + shOffOwn} - ${shOnRiv + shOffRiv}`
+        ],
+        [
+          isEn ? '🛡️ Defense & Possession' : '🛡️ Defensa y Posesión',
+          `${isEn ? 'Recoveries' : 'Recuperaciones'}: ${recTot} | ${isEn ? 'Losses' : 'Pérdidas'}: ${lossTot} | ${isEn ? 'Duels (W/L)' : 'Duelos (G/P)'}: ${dWonTot}/${dLostTot}`
+        ],
+        [
+          isEn ? '⚡ Fouls & Transitions' : '⚡ Faltas y Transiciones',
+          `${isEn ? 'Fouls (For/Against)' : 'Faltas (Favor/Contra)'}: ${foulsFav}/${foulsAg} | ${isEn ? 'Unbroken Counters' : 'Contras no cortadas'}: ${cNotCut} | ${isEn ? 'Unfinished Plays' : 'Jugadas sin finalizar'}: ${unfin}`
+        ],
+        [
+          isEn ? '🟨 Discipline & Set Pieces' : '🟨 Disciplina y Balón Parado',
+          `${isEn ? 'Corners' : 'Córners'}: ${cornFav}/${cornAg} | ${isEn ? 'Offsides' : 'Fueras de juego'}: ${offOwn}/${offRiv} | ${isEn ? 'Cards (Y/R)' : 'Tarjetas (A/R)'}: ${yelTot}/${redTot} vs ${yelRiv}/${redRiv}`
+        ]
+      ];
+
+      autoTable(doc, {
+        startY: y,
+        body: catBody,
+        theme: 'striped',
+        styles: { fontSize: 7.5, cellPadding: 2.5 },
+        columnStyles: {
+          0: { width: 45, fontStyle: 'bold', textColor: colorPrimary },
+          1: { textColor: [30, 41, 59] }
+        }
+      });
+      y = (doc.lastAutoTable ? doc.lastAutoTable.finalY : y + 30) + 6;
+
+      // 4. Distribución por Sectores
+      try {
+        const secImg = drawSectorsDistributionCanvas({
+          events: safeEvents,
+          isEn,
+          width: 660,
+          height: 80
+        });
+        if (secImg) {
+          const sW = pageW - 28;
+          const sH = (80 / 660) * sW;
+          doc.addImage(secImg, 'PNG', 14, y, sW, sH);
+          y += sH + 6;
+        }
+      } catch (errSec) {
+        console.warn('[PDF ACTA] Error dibujando sectores:', errSec);
+      }
+
+      // 5. Radar Táctico Oficial y Mapa de Tiros
+      doc.addPage();
+      y = 16;
+      doc.setFillColor(...colorPrimary);
+      doc.roundedRect(14, y, pageW - 28, 8, 1.5, 1.5, 'F');
+      doc.setFontSize(8.5);
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(255, 255, 255);
+      doc.text(
+        isEn ? 'OFFICIAL TACTICAL RADAR & SHOT MAP' : 'RADAR TÁCTICO OFICIAL Y MAPA DE TIROS',
         18,
         y + 5.5
       );
@@ -786,7 +925,30 @@ export const generateMatchPdfReport = async ({
       const analyticsActa = getMatchAnalytics(matchData, safeEvents, { isEn });
       const { homeStats: hsActa, awayStats: asActa } = analyticsActa;
 
-      // 1. Barras Comparativas de Rendimiento (10 Métricas Canónicas)
+      // Radar Táctico Oficial (6 Ejes Comparativos)
+      try {
+        const radarSvg = renderRadarCompareSvgString({
+          homeStats: hsActa,
+          awayStats: asActa,
+          homeTeamName: safeTeamName,
+          awayTeamName: rivalName,
+          isEn,
+          width: 500,
+          height: 260
+        });
+        const radarImg = await rasterizeSvgToDataUrl(radarSvg, 500, 260, 3);
+        if (radarImg) {
+          const rW = 100;
+          const rH = (260 / 500) * rW;
+          const rX = (pageW - rW) / 2;
+          doc.addImage(radarImg, 'PNG', rX, y, rW, rH);
+          y += rH + 6;
+        }
+      } catch (errRadar) {
+        console.warn('[PDF ACTA] Error rasterizando radar comparativo:', errRadar);
+      }
+
+      // 6. Barras Comparativas de Rendimiento (10 Métricas Canónicas)
       try {
         const barsSvg = renderComparisonBarsSvgString({
           homeStats: hsActa,
@@ -806,29 +968,6 @@ export const generateMatchPdfReport = async ({
         }
       } catch (errBars) {
         console.warn('[PDF ACTA] Error rasterizando barras comparativas:', errBars);
-      }
-
-      // 2. Radar Táctico Oficial (6 Ejes Comparativos)
-      try {
-        const radarSvg = renderRadarCompareSvgString({
-          homeStats: hsActa,
-          awayStats: asActa,
-          homeTeamName: safeTeamName,
-          awayTeamName: rivalName,
-          isEn,
-          width: 500,
-          height: 260
-        });
-        const radarImg = await rasterizeSvgToDataUrl(radarSvg, 500, 260, 3);
-        if (radarImg) {
-          const rW = 110;
-          const rH = (260 / 500) * rW;
-          const rX = (pageW - rW) / 2;
-          doc.addImage(radarImg, 'PNG', rX, y, rW, rH);
-          y += rH + 6;
-        }
-      } catch (errRadar) {
-        console.warn('[PDF ACTA] Error rasterizando radar comparativo:', errRadar);
       }
 
       // 3. Mapa Canónico de Tiros (FIFA 105:68)

@@ -430,6 +430,10 @@ export const useMatchSheet = (teamPath, matchId, matchData, players = []) => {
         'actaOficial.closedBy': user.uid,
         'actaOficial.closedByName': user.displayName || 'Staff',
         'actaOficial.totalDuration': duration,
+        'actaOficial.reopenedAt': null,
+        status: 'Terminado',
+        actaReabierta: false,
+        reopenedAt: null,
         gkStats: gkStatsMap,
       });
 

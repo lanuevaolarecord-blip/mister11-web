@@ -48,51 +48,8 @@ import { SpellCheckedTextarea } from '../components/ui/SpellCheckedTextarea';
 import UnattributedEventsManager from '../components/UnattributedEventsManager';
 import SectionErrorBoundary from '../components/common/SectionErrorBoundary';
 
-export const getMatchDerivedStatus = (m) => {
-  if (!m) return 'NO_DISPUTADO';
-
-  // 1. Acta reabierta o partido explícitamente en edición
-  const isReopened = Boolean(
-    m.actaReabierta ||
-    m.reopenedAt ||
-    m.actaOficial?.reopenedAt ||
-    m.status === 'En Edicion' ||
-    m.status === 'En Edición'
-  );
-  if (isReopened) {
-    return 'EN_EDICION';
-  }
-
-  // 2. Finalizado: finishedAt o status finalizado o actaOficial.closedAt
-  const isFinished = Boolean(
-    m.finishedAt ||
-    m.actaOficial?.closedAt ||
-    m.status === 'Terminado' ||
-    m.status === 'Finalizado' ||
-    m.status === 'finished'
-  );
-  if (isFinished) {
-    return 'FINALIZADO';
-  }
-
-  // 3. Sin finalizar: evaluar fecha
-  const rawDate = m.fecha || m.date;
-  if (rawDate) {
-    const d = new Date(rawDate);
-    if (!isNaN(d.getTime())) {
-      const today = new Date();
-      const matchDay = new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
-      const currentDay = new Date(today.getFullYear(), today.getMonth(), today.getDate()).getTime();
-      if (matchDay >= currentDay) {
-        return 'PENDIENTE';
-      } else {
-        return 'NO_DISPUTADO';
-      }
-    }
-  }
-
-  return 'NO_DISPUTADO';
-};
+import { getMatchDerivedStatus } from '../utils/matchDerivedStatus';
+export { getMatchDerivedStatus };
 
 export const normalizeCapitalize = (str) => {
   if (!str || typeof str !== 'string') return '';
@@ -189,6 +146,8 @@ const Partidos = () => {
   const [viewMode, setViewMode] = useState('LIST'); // 'LIST' or 'EDIT'
   const [mainTab, setMainTab] = useState('LIST'); // 'LIST' or 'ANALISIS'
   const [filterMode, setFilterMode] = useState('Todos'); // 'Todos', 'Pendientes', 'Terminados'
+  const [sortBy, setSortBy] = useState('cercania'); // 'cercania', 'lejania', 'fecha_asc', 'fecha_desc', 'estado'
+  const [cardViewMode, setCardViewMode] = useState('compact'); // 'compact', 'detailed'
   const [isSaving, setIsSaving] = useState(false);
 
   // Edit State
@@ -695,7 +654,8 @@ const Partidos = () => {
         closedAt: currentMatch.actaOficial?.closedAt || nowIso,
         closedBy: currentMatch.actaOficial?.closedBy || user?.uid || 'staff',
         closedByName: currentMatch.actaOficial?.closedByName || user?.displayName || 'Staff',
-        totalDuration: effectiveDuration
+        totalDuration: effectiveDuration,
+        reopenedAt: null
       },
       gkStats: {
         ...(currentMatch.gkStats || {}),
@@ -1407,9 +1367,12 @@ const Partidos = () => {
         ...current, 
         ...(isFinished ? {
           status: 'Terminado',
+          actaReabierta: false,
+          reopenedAt: null,
           actaOficial: {
             ...(current.actaOficial || {}),
-            closed: true
+            closed: true,
+            reopenedAt: null
           }
         } : {}),
         titulares: norm.titulares,
@@ -1447,17 +1410,80 @@ const Partidos = () => {
     }
   };
 
+  const getMatchTime = (m) => {
+    if (!m) return 0;
+    const raw = m.date || m.fecha;
+    if (!raw) return 0;
+    const timeStr = m.hour || m.hora || '12:00';
+    if (typeof raw === 'string' && raw.includes('T')) {
+      const t = new Date(raw).getTime();
+      return isNaN(t) ? 0 : t;
+    }
+    const combined = `${raw}T${timeStr.length === 5 ? timeStr : '12:00'}:00`;
+    const t = new Date(combined).getTime();
+    if (!isNaN(t)) return t;
+    const fallback = new Date(raw).getTime();
+    return isNaN(fallback) ? 0 : fallback;
+  };
+
   const filteredMatches = matches.filter(m => {
     const derived = getMatchDerivedStatus(m);
     if (filterMode === 'Pendientes') return derived === 'PENDIENTE' || derived === 'NO_DISPUTADO';
     if (filterMode === 'Terminados') return derived === 'FINALIZADO' || derived === 'EN_EDICION';
     return true;
   }).sort((a, b) => {
-    const dateA = a.date || a.fecha;
-    const dateB = b.date || b.fecha;
-    if (!dateA) return 1;
-    if (!dateB) return -1;
-    return new Date(dateB) - new Date(dateA);
+    const timeA = getMatchTime(a);
+    const timeB = getMatchTime(b);
+    const now = Date.now();
+
+    if (sortBy === 'cercania') {
+      // Priorizar el partido más cercano en el calendario (próximo partido a jugar o más reciente)
+      const buffer = 2 * 60 * 60 * 1000;
+      const aIsFuture = timeA >= (now - buffer);
+      const bIsFuture = timeB >= (now - buffer);
+
+      if (aIsFuture && bIsFuture) {
+        return timeA - timeB; // El próximo en el calendario primero
+      }
+      if (aIsFuture && !bIsFuture) return -1; // Los próximos a jugar primero
+      if (!aIsFuture && bIsFuture) return 1;
+
+      // Si ambos ya se jugaron en el pasado, el más reciente primero
+      return Math.abs(now - timeA) - Math.abs(now - timeB);
+    }
+
+    if (sortBy === 'lejania') {
+      const diffA = timeA ? Math.abs(now - timeA) : 0;
+      const diffB = timeB ? Math.abs(now - timeB) : 0;
+      return diffB - diffA;
+    }
+
+    if (sortBy === 'fecha_asc') {
+      if (!timeA) return 1;
+      if (!timeB) return -1;
+      return timeA - timeB;
+    }
+
+    if (sortBy === 'fecha_desc') {
+      if (!timeA) return 1;
+      if (!timeB) return -1;
+      return timeB - timeA;
+    }
+
+    if (sortBy === 'estado') {
+      const statusOrder = {
+        'EN_EDICION': 1,
+        'PENDIENTE': 2,
+        'FINALIZADO': 3,
+        'NO_DISPUTADO': 4
+      };
+      const rankA = statusOrder[getMatchDerivedStatus(a)] || 99;
+      const rankB = statusOrder[getMatchDerivedStatus(b)] || 99;
+      if (rankA !== rankB) return rankA - rankB;
+      return (timeB || 0) - (timeA || 0);
+    }
+
+    return (timeB || 0) - (timeA || 0);
   });
 
   if (loadingMatches || loadingPlayers) {
@@ -1558,10 +1584,54 @@ const Partidos = () => {
                 </div>
               ) : (
                 <>
-                  <div className="list-filters">
-                    <button className={`filter-tab ${filterMode === 'Todos' ? 'active' : ''}`} onClick={() => setFilterMode('Todos')}>{isGlobalEn ? 'All' : 'Todos'}</button>
-                    <button className={`filter-tab ${filterMode === 'Pendientes' ? 'active' : ''}`} onClick={() => setFilterMode('Pendientes')}>{isGlobalEn ? 'Pending' : 'Pendientes'}</button>
-                    <button className={`filter-tab ${filterMode === 'Terminados' ? 'active' : ''}`} onClick={() => setFilterMode('Terminados')}>{isGlobalEn ? 'Finished' : 'Terminados'}</button>
+                  <div className="list-toolbar">
+                    <div className="list-filters">
+                      <button className={`filter-tab ${filterMode === 'Todos' ? 'active' : ''}`} onClick={() => setFilterMode('Todos')}>{isGlobalEn ? 'All' : 'Todos'}</button>
+                      <button className={`filter-tab ${filterMode === 'Pendientes' ? 'active' : ''}`} onClick={() => setFilterMode('Pendientes')}>{isGlobalEn ? 'Pending' : 'Pendientes'}</button>
+                      <button className={`filter-tab ${filterMode === 'Terminados' ? 'active' : ''}`} onClick={() => setFilterMode('Terminados')}>{isGlobalEn ? 'Finished' : 'Terminados'}</button>
+                    </div>
+
+                    <div className="list-sort-view-controls">
+                      {/* Selector de orden */}
+                      <div className="sort-control-group">
+                        <label htmlFor="matches-sort-select" className="sort-label">
+                          ⇅ {t('match.sort.label', settings?.language) || (isGlobalEn ? 'Sort:' : 'Ordenar:')}
+                        </label>
+                        <select
+                          id="matches-sort-select"
+                          className="sort-select"
+                          value={sortBy}
+                          onChange={(e) => setSortBy(e.target.value)}
+                          aria-label={isGlobalEn ? 'Sort matches' : 'Ordenar partidos'}
+                        >
+                          <option value="cercania">📅 {t('match.sort.cercania', settings?.language) || 'Más cercanos a hoy'}</option>
+                          <option value="lejania">⏳ {t('match.sort.lejania', settings?.language) || 'Más lejanos a hoy'}</option>
+                          <option value="fecha_asc">⬆️ {t('match.sort.fecha_asc', settings?.language) || 'Fecha (Próximos)'}</option>
+                          <option value="fecha_desc">⬇️ {t('match.sort.fecha_desc', settings?.language) || 'Fecha (Recientes)'}</option>
+                          <option value="estado">⚡ {t('match.sort.estado', settings?.language) || 'Por Estado / Prioridad'}</option>
+                        </select>
+                      </div>
+
+                      {/* Selector de modo de vista */}
+                      <div className="view-mode-toggle" role="group" aria-label={isGlobalEn ? 'View mode' : 'Modo de visualización'}>
+                        <button
+                          type="button"
+                          className={`view-btn ${cardViewMode === 'compact' ? 'active' : ''}`}
+                          onClick={() => setCardViewMode('compact')}
+                          title={isGlobalEn ? 'Cards view' : 'Vista en tarjetas'}
+                        >
+                          ▦ {t('match.view.cards', settings?.language) || (isGlobalEn ? 'Cards' : 'Tarjetas')}
+                        </button>
+                        <button
+                          type="button"
+                          className={`view-btn ${cardViewMode === 'detailed' ? 'active' : ''}`}
+                          onClick={() => setCardViewMode('detailed')}
+                          title={isGlobalEn ? 'Detailed view' : 'Vista detallada'}
+                        >
+                          ☰ {t('match.view.detailed', settings?.language) || (isGlobalEn ? 'Detailed' : 'Detallado')}
+                        </button>
+                      </div>
+                    </div>
                   </div>
 
                     <div className="matches-grid">
@@ -1591,8 +1661,12 @@ const Partidos = () => {
                             statusClass = 'no-disputado';
                             break;
                         }
+
+                        const actionsCount = (m.events?.length || m.liveStatsEvents?.length || 0);
+                        const squadCount = (m.convocados?.length || m.calledPlayers?.length || (m.titulares?.length ? m.titulares.length + (m.suplentes?.length || 0) : 0));
+
                         return (
-                          <div key={m.id || Math.random()} className="match-card" onClick={() => handleEditMatch(m)}>
+                          <div key={m.id || Math.random()} className={`match-card ${cardViewMode === 'detailed' ? 'detailed' : ''}`} onClick={() => handleEditMatch(m)}>
                             <div className="mc-header">
                               <span className={`status-badge ${statusClass}`} data-status={derivedStatus}>{statusLabel}</span>
                               <span className="mc-date">{formatMatchDateSafe(m, settings?.language)}</span>
@@ -1615,6 +1689,41 @@ const Partidos = () => {
                                 <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: 'var(--partidos-border)' }}></div>
                               </div>
                             </div>
+
+                            {cardViewMode === 'detailed' && (
+                              <div className="mc-detailed-badge-strip">
+                                {isFinishedCard && m.actaOficial?.closed && (
+                                  <span className="mc-meta-chip acta-cerrada">
+                                    ✓ {isGlobalEn ? 'Official Sheet Closed' : 'Acta Cerrada'}
+                                  </span>
+                                )}
+                                {derivedStatus === 'EN_EDICION' && (
+                                  <span className="mc-meta-chip acta-edicion">
+                                    ✎ {isGlobalEn ? 'Sheet in Edition' : 'Acta en Edición'}
+                                  </span>
+                                )}
+                                {actionsCount > 0 && (
+                                  <span className="mc-meta-chip">
+                                    ⚡ {actionsCount} {isGlobalEn ? 'actions' : 'acciones'}
+                                  </span>
+                                )}
+                                {m.goleadoresList && m.goleadoresList.length > 0 && (
+                                  <span className="mc-meta-chip goleadores">
+                                    ⚽ {m.goleadoresList.join(', ')}
+                                  </span>
+                                )}
+                                {!isFinishedCard && (
+                                  <>
+                                    <span className="mc-meta-chip">
+                                      👥 {squadCount} {isGlobalEn ? 'called' : 'convocados'}
+                                    </span>
+                                    <span className="mc-meta-chip">
+                                      🛡️ {m.type === 'Local' ? (isGlobalEn ? 'Home' : 'Local') : (isGlobalEn ? 'Away' : 'Visitante')}
+                                    </span>
+                                  </>
+                                )}
+                              </div>
+                            )}
 
                             <div className="mc-footer">
                               <span>📍 {m.location || (isGlobalEn ? 'No venue' : 'Sin ubicación')}</span>

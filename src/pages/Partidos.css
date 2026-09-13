@@ -268,6 +268,152 @@ html.dark .btn-danger {
   }
 }
 
+.list-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.list-toolbar .list-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 0;
+}
+
+.list-sort-view-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+}
+
+.sort-control-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.sort-label {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--partidos-text-muted, #94A3B8);
+  white-space: nowrap;
+}
+
+.sort-select {
+  height: 48px;
+  min-height: 48px;
+  background: var(--partidos-card-bg, #152C22);
+  color: var(--partidos-text-primary, #FFFFFF);
+  border: 1.5px solid var(--partidos-border, rgba(212, 168, 67, 0.3));
+  border-radius: 8px;
+  padding: 0 14px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  box-sizing: border-box;
+}
+
+.sort-select:focus,
+.sort-select:hover {
+  border-color: var(--partidos-gold, #D4A843);
+  box-shadow: 0 0 0 2px rgba(212, 168, 67, 0.2);
+}
+
+.sort-select option {
+  background: #11221A;
+  color: #FFFFFF;
+}
+
+.view-mode-toggle {
+  display: flex;
+  align-items: center;
+  background: var(--partidos-pill-bg, rgba(255, 255, 255, 0.05));
+  border: 1px solid var(--partidos-border, rgba(212, 168, 67, 0.2));
+  border-radius: 8px;
+  padding: 2px;
+  gap: 2px;
+}
+
+.view-btn {
+  height: 44px;
+  min-height: 44px;
+  min-width: 48px;
+  padding: 0 14px;
+  border-radius: 6px;
+  border: none;
+  background: transparent;
+  color: var(--partidos-text-muted, #94A3B8);
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.2s ease;
+}
+
+.view-btn:hover {
+  color: var(--partidos-text-primary, #FFFFFF);
+}
+
+.view-btn.active {
+  background: var(--partidos-gold, #D4A843);
+  color: #0B1812;
+  font-weight: 800;
+}
+
+/* Modo detallado para tarjetas de partidos */
+.match-card.detailed {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.mc-detailed-badge-strip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.mc-meta-chip {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--partidos-text-primary, #FFFFFF);
+  border: 1px solid var(--partidos-border, rgba(255, 255, 255, 0.15));
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.mc-meta-chip.acta-cerrada {
+  background: rgba(76, 175, 125, 0.15);
+  border-color: rgba(76, 175, 125, 0.4);
+  color: #4CAF7D;
+}
+
+.mc-meta-chip.acta-edicion {
+  background: rgba(59, 130, 246, 0.15);
+  border-color: rgba(59, 130, 246, 0.4);
+  color: #60A5FA;
+}
+
+.mc-meta-chip.goleadores {
+  background: rgba(212, 168, 67, 0.15);
+  border-color: rgba(212, 168, 67, 0.35);
+  color: var(--partidos-gold, #D4A843);
+}
+
 .list-filters {
   display: flex;
   gap: 12px;

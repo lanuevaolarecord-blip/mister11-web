@@ -30,6 +30,7 @@ import { MatchRadarChart } from './MatchStats/MatchRadarChart';
 import { UnattributedEventsManager } from './UnattributedEventsManager';
 import { showToast } from '../utils/toast';
 import { generateMatchPdfReport } from '../utils/matchPdfReport.js';
+import './MatchStats/MatchStats.css';
 
 const getRsvpLabels = (isEn) => ({
   going:       { label: isEn ? 'Going' : 'Irá',            emoji: '✅', color: '#10B981' },
@@ -1194,10 +1195,24 @@ const ActaOficialPanel = ({
       )}
 
       {/* ── Estadísticas Oficiales del Encuentro (Suite en Vivo) ── */}
-      <div style={{ marginTop: '24px' }}>
-        <h4 style={{ margin: '0 0 16px', fontSize: '15px', fontWeight: '800', color: 'var(--partidos-accent)', display: 'flex', alignItems: 'center', gap: '8px' }}>
-          📊 {isEn ? 'Official Match Statistics' : 'Estadísticas Oficiales del Encuentro'}
-        </h4>
+      <div style={{ marginTop: '24px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+        <div style={{
+          background: 'var(--partidos-card-bg, #FFFFFF)',
+          border: '1.5px solid var(--partidos-border, #CBD5E1)',
+          borderRadius: '12px',
+          padding: '16px',
+          boxShadow: '0 2px 8px rgba(0,0,0,0.04)'
+        }}>
+          <h4 style={{ margin: '0 0 14px', fontSize: '14px', fontWeight: '800', color: 'var(--partidos-accent)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+            🕸️ {isEn ? 'Official Tactical Radar (6 Axes)' : 'Radar Táctico Oficial (6 Ejes Comparativos)'}
+          </h4>
+          <MatchRadarChart
+            events={effectiveEvents}
+            homeTeamName={matchData?.local || matchData?.equipoLocal || 'Mi Equipo'}
+            awayTeamName={matchData?.visitante || matchData?.equipoVisitante || matchData?.rival || 'Rival'}
+          />
+        </div>
+
         <MatchStatsBlock
           matchData={matchData}
           events={effectiveEvents}

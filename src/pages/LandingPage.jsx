@@ -102,6 +102,106 @@ const LandingPage = () => {
 
       {/* ── 2. HERO SECTION FIRST-FOLD ────────────────────────────────────── */}
       <section className="landing-hero">
+        {/* Fondo de Campo de Fútbol como Pizarra Táctica Profesional */}
+        <div className="landing-tactical-bg" aria-hidden="true">
+          <svg className="tactical-pitch-svg" viewBox="0 0 1400 900" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <marker id="tactical-arrow-gold" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                <path d="M 0 2 L 8 5 L 0 8 z" fill="#D4A843" />
+              </marker>
+              <marker id="tactical-arrow-green" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                <path d="M 0 2 L 8 5 L 0 8 z" fill="#4CAF7D" />
+              </marker>
+              <radialGradient id="pitch-glow" cx="50%" cy="45%" r="55%">
+                <stop offset="0%" stopColor="#4CAF7D" stopOpacity="0.25" />
+                <stop offset="50%" stopColor="#1B3A2D" stopOpacity="0.12" />
+                <stop offset="100%" stopColor="#111B21" stopOpacity="0" />
+              </radialGradient>
+            </defs>
+
+            {/* Resplandor central del campo */}
+            <rect width="1400" height="900" fill="url(#pitch-glow)" />
+
+            {/* Franjas de corte de césped estilo pizarra */}
+            <g opacity="0.06">
+              <rect x="70" y="50" width="140" height="800" fill="#F2EDE4" />
+              <rect x="350" y="50" width="140" height="800" fill="#F2EDE4" />
+              <rect x="630" y="50" width="140" height="800" fill="#F2EDE4" />
+              <rect x="910" y="50" width="140" height="800" fill="#F2EDE4" />
+              <rect x="1190" y="50" width="140" height="800" fill="#F2EDE4" />
+            </g>
+
+            {/* Líneas reglamentarias de fútbol FIFA */}
+            <g stroke="rgba(242, 237, 228, 0.28)" strokeWidth="2.2">
+              <rect x="70" y="50" width="1260" height="800" rx="8" />
+              <line x1="700" y1="50" x2="700" y2="850" />
+              <circle cx="700" cy="450" r="130" fill="none" />
+              <circle cx="700" cy="450" r="4.5" fill="rgba(242, 237, 228, 0.6)" stroke="none" />
+
+              {/* Área grande y pequeña izquierda */}
+              <rect x="70" y="235" width="210" height="430" fill="none" />
+              <rect x="70" y="335" width="70" height="230" fill="none" />
+              <circle cx="210" cy="450" r="4" fill="rgba(242, 237, 228, 0.6)" stroke="none" />
+              <path d="M 280 370 A 130 130 0 0 1 280 530" fill="none" />
+              <rect x="30" y="375" width="40" height="150" fill="none" strokeDasharray="4,4" />
+
+              {/* Área grande y pequeña derecha */}
+              <rect x="1120" y="235" width="210" height="430" fill="none" />
+              <rect x="1260" y="335" width="70" height="230" fill="none" />
+              <circle cx="1190" cy="450" r="4" fill="rgba(242, 237, 228, 0.6)" stroke="none" />
+              <path d="M 1120 370 A 130 130 0 0 0 1120 530" fill="none" />
+              <rect x="1330" y="375" width="40" height="150" fill="none" strokeDasharray="4,4" />
+
+              {/* Córners */}
+              <path d="M 70 75 A 25 25 0 0 0 95 50" fill="none" />
+              <path d="M 1305 50 A 25 25 0 0 0 1330 75" fill="none" />
+              <path d="M 70 825 A 25 25 0 0 1 95 850" fill="none" />
+              <path d="M 1305 850 A 25 25 0 0 1 1330 825" fill="none" />
+            </g>
+
+            {/* Carriles tácticos (5 pasillos y 3 tercios de pizarra del entrenador) */}
+            <g stroke="rgba(212, 168, 67, 0.16)" strokeWidth="1.2" strokeDasharray="8,8">
+              <line x1="280" y1="50" x2="280" y2="850" />
+              <line x1="530" y1="50" x2="530" y2="850" />
+              <line x1="870" y1="50" x2="870" y2="850" />
+              <line x1="1120" y1="50" x2="1120" y2="850" />
+              <line x1="70" y1="316" x2="1330" y2="316" />
+              <line x1="70" y1="584" x2="1330" y2="584" />
+            </g>
+
+            {/* Trazos de pizarra táctica (Chalkboard Coach Routes) */}
+            <g opacity="0.9">
+              <polygon points="580,480 670,360 780,440" fill="rgba(212, 168, 67, 0.05)" stroke="rgba(212, 168, 67, 0.45)" strokeWidth="1.5" strokeDasharray="4,4" />
+              <path d="M 580 480 Q 710 390 840 290" fill="none" stroke="#D4A843" strokeWidth="2.2" strokeDasharray="6,4" markerEnd="url(#tactical-arrow-gold)" />
+              <path d="M 670 360 C 720 320 800 320 850 350" fill="none" stroke="#4CAF7D" strokeWidth="2" strokeDasharray="5,4" markerEnd="url(#tactical-arrow-green)" />
+              <path d="M 940 370 L 860 380" fill="none" stroke="rgba(224, 82, 82, 0.5)" strokeWidth="1.6" strokeDasharray="4,3" />
+            </g>
+
+            {/* Fichas y balón sobre la pizarra táctica */}
+            <g>
+              <circle cx="580" cy="480" r="16" fill="#1B3A2D" stroke="#D4A843" strokeWidth="2.5" />
+              <text x="580" y="485" textAnchor="middle" fill="#FFFFFF" fontSize="12" fontWeight="900" fontFamily="sans-serif">10</text>
+
+              <circle cx="670" cy="360" r="15" fill="#1B3A2D" stroke="#4CAF7D" strokeWidth="2.2" />
+              <text x="670" y="365" textAnchor="middle" fill="#FFFFFF" fontSize="11" fontWeight="900" fontFamily="sans-serif">8</text>
+
+              <circle cx="850" cy="285" r="15" fill="#1B3A2D" stroke="#D4A843" strokeWidth="2" />
+              <text x="850" y="290" textAnchor="middle" fill="#FFFFFF" fontSize="11" fontWeight="900" fontFamily="sans-serif">9</text>
+
+              <circle cx="470" cy="560" r="15" fill="#1B3A2D" stroke="#4CAF7D" strokeWidth="2" />
+              <text x="470" y="565" textAnchor="middle" fill="#FFFFFF" fontSize="11" fontWeight="900" fontFamily="sans-serif">6</text>
+
+              <circle cx="760" cy="410" r="13" fill="#8C1D1D" stroke="#FFFFFF" strokeWidth="1.8" opacity="0.85" />
+              <text x="760" y="414" textAnchor="middle" fill="#FFFFFF" fontSize="10" fontWeight="900" fontFamily="sans-serif">4</text>
+
+              <circle cx="830" cy="460" r="13" fill="#8C1D1D" stroke="#FFFFFF" strokeWidth="1.8" opacity="0.85" />
+              <text x="830" y="464" textAnchor="middle" fill="#FFFFFF" fontSize="10" fontWeight="900" fontFamily="sans-serif">5</text>
+
+              <circle cx="605" cy="455" r="8" fill="#F2EDE4" stroke="#111B21" strokeWidth="1.5" />
+            </g>
+          </svg>
+        </div>
+
         <div className="landing-hero-content">
           <div className="badge-promo">
             <span className="badge-icon">⚽</span>
@@ -210,6 +310,14 @@ const LandingPage = () => {
 
       {/* ── 3. MATRIZ DE PLANES CONDENSADA (DECISIÓN EN <= 10 SEGUNDOS) ────── */}
       <section id="pricing" className="landing-pricing-section">
+        <div className="pricing-tactical-watermark" aria-hidden="true">
+          <svg className="pricing-pitch-svg" viewBox="0 0 1200 400" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="600" cy="200" r="160" stroke="rgba(212, 168, 67, 0.12)" strokeWidth="1.8" />
+            <circle cx="600" cy="200" r="4" fill="rgba(212, 168, 67, 0.3)" />
+            <line x1="600" y1="0" x2="600" y2="400" stroke="rgba(212, 168, 67, 0.12)" strokeWidth="1.8" />
+            <path d="M 420 200 Q 600 120 780 200" stroke="rgba(76, 175, 125, 0.16)" strokeWidth="1.5" strokeDasharray="6,6" fill="none" />
+          </svg>
+        </div>
         <div className="pricing-container">
           <div className="pricing-header-block">
             <h2 className="pricing-title">

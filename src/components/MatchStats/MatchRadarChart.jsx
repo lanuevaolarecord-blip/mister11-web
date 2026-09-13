@@ -2,6 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { Activity, HelpCircle, X, Info } from 'lucide-react';
 import { useTheme } from '../../context/ThemeContext';
 import { useTranslation } from '../../hooks/useTranslation';
+import './MatchStats.css';
 
 export const MatchRadarChart = ({
   events = [],

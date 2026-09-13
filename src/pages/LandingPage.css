@@ -138,26 +138,62 @@
 
 /* ── 2. Hero Section ──────────────────────────────────────────── */
 .landing-hero {
+  position: relative;
   padding: 40px 5% 50px;
   display: grid;
   grid-template-columns: 1.15fr 0.85fr;
   gap: 40px;
   align-items: center;
-  max-width: 1240px;
+  max-width: 1320px;
   margin: 0 auto;
   box-sizing: border-box;
+  overflow: hidden;
   background: radial-gradient(circle at 50% 15%, rgba(27, 58, 45, 0.45) 0%, rgba(17, 27, 33, 0.95) 75%);
 }
 
+/* Capa de Fondo: Pizarra Táctica Profesional */
+.landing-tactical-bg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 0;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.tactical-pitch-svg {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0.85;
+  filter: drop-shadow(0 0 20px rgba(0, 0, 0, 0.6));
+}
+
 .landing-hero-content {
+  position: relative;
+  z-index: 2;
   display: flex;
   flex-direction: column;
   align-items: flex-start;
   text-align: left;
+  background: radial-gradient(circle at 20% 30%, rgba(17, 27, 33, 0.82) 0%, rgba(17, 27, 33, 0.65) 70%, transparent 100%);
+  padding: 20px 24px;
+  border-radius: 16px;
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
 }
 
 /* Mockup / Preview de la Pizarra Táctica */
 .landing-hero-preview {
+  position: relative;
+  z-index: 2;
   display: flex;
   justify-content: center;
   width: 100%;
@@ -380,12 +416,41 @@
 
 /* ── 3. Sección de Planes y Precios ──────────────────────────── */
 .landing-pricing-section {
+  position: relative;
   padding: 60px 5% 70px;
-  background: #0E161B;
-  border-top: 1px solid rgba(242, 237, 228, 0.06);
+  background-color: #0E161B;
+  background-image: 
+    radial-gradient(ellipse at 50% 15%, rgba(27, 58, 45, 0.45) 0%, rgba(14, 22, 27, 0.96) 80%),
+    repeating-linear-gradient(90deg, rgba(27, 58, 45, 0.15) 0px, rgba(27, 58, 45, 0.15) 60px, transparent 60px, transparent 120px);
+  border-top: 1px solid rgba(212, 168, 67, 0.15);
+  overflow: hidden;
+}
+
+.pricing-tactical-watermark {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0.65;
+}
+
+.pricing-pitch-svg {
+  width: 100%;
+  max-width: 1200px;
+  height: auto;
 }
 
 .pricing-container {
+  position: relative;
+  z-index: 2;
   max-width: 1280px;
   margin: 0 auto;
 }
@@ -801,6 +866,18 @@
 
 /* ── 6. Responsive Breakpoints ────────────────────────────────── */
 @media (max-width: 768px) {
+  .landing-hero {
+    grid-template-columns: 1fr;
+    padding: 30px 4% 35px;
+    gap: 28px;
+  }
+
+  .landing-hero-content {
+    align-items: center;
+    text-align: center;
+    padding: 14px 16px;
+  }
+
   .hero-title {
     font-size: 1.85rem;
   }

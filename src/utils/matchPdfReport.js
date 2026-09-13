@@ -766,6 +766,71 @@ export const generateMatchPdfReport = async ({
         y = (doc.lastAutoTable ? doc.lastAutoTable.finalY : y + 20) + 8;
       }
 
+      // 4.5 Gráficas Oficiales y Radar Comparativo (Acta Oficial)
+      doc.addPage();
+      y = 16;
+
+      doc.setFillColor(...colorPrimary);
+      doc.roundedRect(14, y, pageW - 28, 8, 1.5, 1.5, 'F');
+      doc.setFontSize(8.5);
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(255, 255, 255);
+      doc.text(
+        isEn ? 'OFFICIAL TACTICAL CHARTS & COMPARATIVE RADAR' : 'GRÁFICAS OFICIALES DEL ENCUENTRO Y RADAR TÁCTICO',
+        18,
+        y + 5.5
+      );
+      y += 12;
+
+      // Generar analítica canónica unificada para el acta
+      const analyticsActa = getMatchAnalytics(matchData, safeEvents, { isEn });
+      const { homeStats: hsActa, awayStats: asActa } = analyticsActa;
+
+      // 1. Barras Comparativas de Rendimiento (10 Métricas Canónicas)
+      try {
+        const barsSvg = renderComparisonBarsSvgString({
+          homeStats: hsActa,
+          awayStats: asActa,
+          homeTeamName: safeTeamName,
+          awayTeamName: rivalName,
+          isEn,
+          width: 660,
+          height: 250
+        });
+        const barsImg = await rasterizeSvgToDataUrl(barsSvg, 660, 250, 3);
+        if (barsImg) {
+          const bW = pageW - 28;
+          const bH = (250 / 660) * bW;
+          doc.addImage(barsImg, 'PNG', 14, y, bW, bH);
+          y += bH + 6;
+        }
+      } catch (errBars) {
+        console.warn('[PDF ACTA] Error rasterizando barras comparativas:', errBars);
+      }
+
+      // 2. Radar Táctico Oficial (6 Ejes Comparativos)
+      try {
+        const radarSvg = renderRadarCompareSvgString({
+          homeStats: hsActa,
+          awayStats: asActa,
+          homeTeamName: safeTeamName,
+          awayTeamName: rivalName,
+          isEn,
+          width: 500,
+          height: 260
+        });
+        const radarImg = await rasterizeSvgToDataUrl(radarSvg, 500, 260, 3);
+        if (radarImg) {
+          const rW = 110;
+          const rH = (260 / 500) * rW;
+          const rX = (pageW - rW) / 2;
+          doc.addImage(radarImg, 'PNG', rX, y, rW, rH);
+          y += rH + 6;
+        }
+      } catch (errRadar) {
+        console.warn('[PDF ACTA] Error rasterizando radar comparativo:', errRadar);
+      }
+
       // 5. Doble Firma Reglamentaria (Entrenador / Delegado & Árbitro / Capitán)
       if (y + 35 > pageH - 25) {
         doc.addPage();

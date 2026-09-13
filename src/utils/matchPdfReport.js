@@ -1,6 +1,6 @@
 import { savePdfUniversal } from './pdfGenerator.js';
 import { getEffectiveLanguage, t as i18nT } from '../i18n/translations.js';
-import { getUnifiedMatchEvents, calculateMinutesFromEvents, getEffectiveMatchDuration } from './minutesEngine.js';
+import { getUnifiedMatchEvents, calculateMinutesFromEvents, getEffectiveMatchDuration, getStartingXI } from './minutesEngine.js';
 import {
   drawPdfFooter,
   imageUrlToBase64,

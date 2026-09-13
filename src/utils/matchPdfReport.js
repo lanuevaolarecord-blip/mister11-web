@@ -1,6 +1,6 @@
-import { savePdfUniversal } from './pdfGenerator';
-import { getEffectiveLanguage, t as i18nT } from '../i18n/translations';
-import { getUnifiedMatchEvents, calculateMinutesFromEvents, getEffectiveMatchDuration } from './minutesEngine';
+import { savePdfUniversal } from './pdfGenerator.js';
+import { getEffectiveLanguage, t as i18nT } from '../i18n/translations.js';
+import { getUnifiedMatchEvents, calculateMinutesFromEvents, getEffectiveMatchDuration } from './minutesEngine.js';
 import {
   drawPdfFooter,
   imageUrlToBase64,
@@ -15,19 +15,19 @@ import {
   drawShotMapCanvas,
   cleanPdfText,
   PDF_COLORS
-} from './pdfTheme';
-import { calculateMatchDerivedIndices } from '../config/xgWeights';
-import { evaluateSwotRules } from './swotRules';
-import { CANONICAL_REPORT_SECTIONS } from './reportSections';
-import { rasterizeSvgToDataUrl } from '../components/canonical/rasterizeSvg';
-import { renderMomentumSvgString } from '../components/canonical/MomentumSVG';
-import { renderComparisonBarsSvgString } from '../components/canonical/ComparisonBarsSVG';
-import { renderRadarCompareSvgString } from '../components/canonical/RadarCompareSVG';
-import { renderShotMapSvgString } from '../components/canonical/ShotMapSVG';
-import { renderSectorTacticsSvgString } from '../components/canonical/SectorTacticsSVG';
+} from './pdfTheme.js';
+import { calculateMatchDerivedIndices } from '../config/xgWeights.js';
+import { evaluateSwotRules } from './swotRules.js';
+import { CANONICAL_REPORT_SECTIONS } from './reportSections.js';
+import { rasterizeSvgToDataUrl } from '../components/canonical/rasterizeSvg.js';
+import { renderMomentumSvgString } from '../components/canonical/MomentumSVG.js';
+import { renderComparisonBarsSvgString } from '../components/canonical/ComparisonBarsSVG.js';
+import { renderRadarCompareSvgString } from '../components/canonical/RadarCompareSVG.js';
+import { renderShotMapSvgString } from '../components/canonical/ShotMapSVG.js';
+import { renderSectorTacticsSvgString } from '../components/canonical/SectorTacticsSVG.js';
 import { renderTerritoryMap3x3SvgString } from '../components/canonical/TerritoryMap3x3SVG.js';
-import { calculateCanonicalStats } from '../components/canonical/calculateCanonicalStats';
-import { getMatchAnalytics } from './matchAnalytics';
+import { calculateCanonicalStats } from '../components/canonical/calculateCanonicalStats.js';
+import { getMatchAnalytics } from './matchAnalytics.js';
 
 export { imageUrlToBase64 };
 
@@ -230,17 +230,27 @@ export const generateMatchPdfReport = async ({
     doc.rect(0, 34, pageW, 2, 'F');
 
     // Logo oficial de Míster11 a la izquierda
-    const mr11LogoData = await imageUrlToBase64('/logo_mister11.png', 'M11', false);
-    if (mr11LogoData) {
-      doc.addImage(mr11LogoData, 'PNG', 14, 8, 18, 18);
+    try {
+      const mr11LogoData = await imageUrlToBase64('/logo_mister11.png', 'M11', false);
+      if (mr11LogoData) {
+        const fmt = (typeof mr11LogoData === 'string' && mr11LogoData.includes('jpeg')) ? 'JPEG' : 'PNG';
+        doc.addImage(mr11LogoData, fmt, 14, 8, 18, 18);
+      }
+    } catch (logoErr) {
+      console.warn('No se pudo añadir logo M11 en encabezado PDF:', logoErr);
     }
 
     // Escudo del equipo a la derecha
     if (matchData?.escudo || matchData?.activeTeam?.escudo) {
-      const shieldSrc = matchData.escudo || matchData.activeTeam.escudo;
-      const shieldData = await imageUrlToBase64(shieldSrc, safeTeamName, false);
-      if (shieldData) {
-        doc.addImage(shieldData, 'PNG', pageW - 32, 8, 18, 18);
+      try {
+        const shieldSrc = matchData.escudo || matchData.activeTeam.escudo;
+        const shieldData = await imageUrlToBase64(shieldSrc, safeTeamName, false);
+        if (shieldData) {
+          const fmt = (typeof shieldData === 'string' && shieldData.includes('jpeg')) ? 'JPEG' : 'PNG';
+          doc.addImage(shieldData, fmt, pageW - 32, 8, 18, 18);
+        }
+      } catch (shieldErr) {
+        console.warn('No se pudo añadir escudo en encabezado PDF:', shieldErr);
       }
     }
 
@@ -740,7 +750,12 @@ export const generateMatchPdfReport = async ({
         doc.text(isEn ? '[WARNINGS] NOTED IRREGULARITIES' : '[ADVERTENCIAS] ANOMALÍAS DETECTADAS EN ACTA', 14, y);
         y += 4;
 
-        const warnRows = warnings.map((w, idx) => [`${idx + 1}`, cleanPdfText(w)]);
+        const warnRows = warnings.map((w, idx) => {
+          const rawText = typeof w === 'object' && w !== null
+            ? (w.message || w.texto || w.text || JSON.stringify(w))
+            : String(w);
+          return [`${idx + 1}`, cleanPdfText(rawText)];
+        });
         autoTable(doc, {
           startY: y,
           body: warnRows,

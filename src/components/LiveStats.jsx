@@ -495,8 +495,9 @@ const LiveStats = ({
       if (teamFilter === 'away' && e.team === 'home') return false;
 
       // 3. Filtro de Jugador
-      if (selectedPlayers.length > 0) {
-        if (!e.playerId || !selectedPlayers.includes(e.playerId)) return false;
+      if (selectedPlayers && selectedPlayers.length > 0) {
+        const selSet = new Set(selectedPlayers.map(String));
+        if (!e.playerId || !selSet.has(String(e.playerId))) return false;
       }
 
       // 4. Filtro de Zona
@@ -1088,6 +1089,7 @@ const LiveStats = ({
           setZoneFilter={setZoneFilter}
           actionTypes={actionTypes}
           setActionTypes={setActionTypes}
+          availablePlayers={playersList}
           players={playersList}
           homeTeamName={homeTeamName}
           awayTeamName={awayTeamName}

@@ -1,7 +1,7 @@
 import { Filesystem, Directory, Encoding } from '@capacitor/filesystem';
 import { Capacitor } from '@capacitor/core';
 import { Share } from '@capacitor/share';
-import { showToast } from './toast';
+import { showToast } from './toast.js';
 import { t } from '../i18n/index.js';
 
 // ─── HELPER: Guarda en caché y lanza el visor nativo ─────────────────────────
@@ -67,12 +67,34 @@ export const downloadPDF = async (base64Data, filename) => {
       showToast(t('download.pdf_error'), 'error');
     }
   } else {
-    const link = document.createElement('a');
-    link.href = 'data:application/pdf;base64,' + base64Data;
-    link.download = filename;
-    document.body.appendChild(link);
-    link.click();
-    setTimeout(() => document.body.removeChild(link), 150);
+    try {
+      // Usar Blob URL para evitar límites de tamaño de dataURL y bloqueos en Chrome/Safari
+      const byteCharacters = atob(base64Data);
+      const byteNumbers = new Array(byteCharacters.length);
+      for (let i = 0; i < byteCharacters.length; i++) {
+        byteNumbers[i] = byteCharacters.charCodeAt(i);
+      }
+      const byteArray = new Uint8Array(byteNumbers);
+      const blob = new Blob([byteArray], { type: 'application/pdf' });
+      const blobUrl = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = blobUrl;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      setTimeout(() => {
+        document.body.removeChild(link);
+        URL.revokeObjectURL(blobUrl);
+      }, 500);
+    } catch (blobErr) {
+      console.warn('Fallback a data URI para PDF:', blobErr);
+      const link = document.createElement('a');
+      link.href = 'data:application/pdf;base64,' + base64Data;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      setTimeout(() => document.body.removeChild(link), 150);
+    }
   }
 };
 

@@ -29,6 +29,7 @@ import MatchStatsBlock from './MatchStatsBlock';
 import { MatchRadarChart } from './MatchStats/MatchRadarChart';
 import { UnattributedEventsManager } from './UnattributedEventsManager';
 import { showToast } from '../utils/toast';
+import { generateMatchPdfReport } from '../utils/matchPdfReport.js';
 
 const getRsvpLabels = (isEn) => ({
   going:       { label: isEn ? 'Going' : 'Irá',            emoji: '✅', color: '#10B981' },
@@ -385,7 +386,6 @@ const ActaOficialPanel = ({
 
   const handleExportActaPDF = async () => {
     try {
-      const { generateMatchPdfReport } = await import('../utils/matchPdfReport');
       await generateMatchPdfReport({
         mode: 'ACTA',
         teamName: activeTeam?.nombre || activeTeam?.name || 'Mi Equipo',
@@ -451,7 +451,7 @@ const ActaOficialPanel = ({
         </div>
         <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
           <button
-            style={{ ...styles.btnSecondary, background: 'rgba(59, 130, 246, 0.15)', borderColor: '#3B82F6', color: '#60A5FA', display: 'flex', alignItems: 'center', gap: '6px' }}
+            style={{ ...styles.btnSecondary, background: 'rgba(27, 58, 45, 0.15)', borderColor: 'var(--partidos-accent, #D4A843)', color: 'var(--partidos-accent, #D4A843)', display: 'flex', alignItems: 'center', gap: '6px' }}
             onClick={handleExportActaPDF}
             title={isEn ? 'Download official match sheet and complete stats in PDF' : 'Descarga el acta oficial y estadísticas completas en PDF'}
           >

@@ -20,9 +20,10 @@ export const StatsFilters = ({
   setTimeRange,
   teamFilter,
   setTeamFilter,
-  selectedPlayers,
+  selectedPlayers = [],
   setSelectedPlayers,
   availablePlayers = [],
+  players = [],
   zoneFilter,
   setZoneFilter,
   actionTypes,
@@ -35,10 +36,12 @@ export const StatsFilters = ({
   const [playerSearch, setPlayerSearch] = useState('');
 
   const togglePlayerSelection = (playerId) => {
-    if (selectedPlayers.includes(playerId)) {
-      setSelectedPlayers(selectedPlayers.filter(id => id !== playerId));
+    const sId = String(playerId);
+    const has = (selectedPlayers || []).some(id => String(id) === sId);
+    if (has) {
+      setSelectedPlayers((selectedPlayers || []).filter(id => String(id) !== sId));
     } else {
-      setSelectedPlayers([...selectedPlayers, playerId]);
+      setSelectedPlayers([...(selectedPlayers || []), playerId]);
     }
   };
 
@@ -49,10 +52,16 @@ export const StatsFilters = ({
     }));
   };
 
-  const filteredPlayersList = availablePlayers.filter(p => {
+  const candidatePlayers = (Array.isArray(availablePlayers) && availablePlayers.length > 0)
+    ? availablePlayers
+    : (Array.isArray(players) && players.length > 0 ? players : []);
+
+  const filteredPlayersList = candidatePlayers.filter(p => {
+    if (!p) return false;
     const name = (p.nombre || p.name || `Jugador ${p.dorsal || ''}`).toLowerCase();
     const dorsal = String(p.dorsal || p.number || '');
-    const q = playerSearch.toLowerCase();
+    const q = (playerSearch || '').toLowerCase().trim();
+    if (!q) return true;
     return name.includes(q) || dorsal.includes(q);
   });
 
@@ -174,7 +183,7 @@ export const StatsFilters = ({
                 <div className="empty-list-msg">{isEn ? 'No players found' : 'No se encontraron jugadores'}</div>
               ) : (
                 filteredPlayersList.map(p => {
-                  const isSelected = selectedPlayers.includes(p.id);
+                  const isSelected = (selectedPlayers || []).some(id => String(id) === String(p.id));
                   return (
                     <div
                       key={p.id}

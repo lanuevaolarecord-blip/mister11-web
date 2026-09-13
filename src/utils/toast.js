@@ -1,5 +1,7 @@
 // src/utils/toast.js
-import './toast.css';
+if (typeof window !== 'undefined') {
+  import('./toast.css');
+}
 
 export const showToast = (message, type = 'success') => {
   const toastContainer = document.getElementById('m11-toast-container') || createToastContainer();

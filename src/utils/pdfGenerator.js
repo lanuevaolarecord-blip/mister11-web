@@ -1,5 +1,5 @@
 import { downloadPDF } from './download.js';
-import { db, auth } from '../firebaseConfig';
+import { db, auth } from '../firebaseConfig.js';
 import { doc, getDoc } from 'firebase/firestore';
 import autoTable from 'jspdf-autotable';
 import { 
@@ -12,9 +12,9 @@ import {
   drawEvolutionChartCanvas,
   drawMomentumChartCanvas,
   cleanPdfText
-} from './pdfTheme';
-import { calculatePlayerPerformanceScores, consolidatePlayerEvaluations, CANONICAL_TESTS_MAP } from './testScoreEngine';
-import { getEffectiveLanguage } from '../i18n/translations';
+} from './pdfTheme.js';
+import { calculatePlayerPerformanceScores, consolidatePlayerEvaluations, CANONICAL_TESTS_MAP } from './testScoreEngine.js';
+import { getEffectiveLanguage } from '../i18n/translations.js';
 
 const isEnglish = () => {
   const l = getEffectiveLanguage();

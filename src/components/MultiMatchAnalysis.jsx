@@ -1,10 +1,10 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { FileDown, CheckCircle2, X } from 'lucide-react';
 import { t } from '../i18n/translations';
-import { db } from '../firebaseConfig';
-import { collection, getDocs } from '../firebase/firestore-proxy';
 import { useTheme } from '../context/ThemeContext';
 import { useTranslation } from '../hooks/useTranslation';
+import { getUnifiedMatchEvents } from '../utils/minutesEngine';
+import { calculateCanonicalStats } from './canonical/calculateCanonicalStats';
 import { exportMultiMatchAnalysisPDF } from '../utils/analysisPdfReport';
 import './MultiMatchAnalysis.css';
 
@@ -12,15 +12,25 @@ export const MultiMatchAnalysis = ({ matches = [], teamId, activeTeam = null, la
   const { isEn } = useTranslation();
   const { darkMode } = useTheme();
 
-  // Seleccionar por defecto los últimos 5 partidos (o los que existan)
-  const defaultSelectedIds = useMemo(() => {
-    return matches.slice(0, 5).map((m) => m.id);
+  // Partidos jugados o con eventos estadísticos cargados
+  const playedMatches = useMemo(() => {
+    return matches.filter((m) => {
+      const hasEvents = (Array.isArray(m.events) && m.events.length > 0) ||
+        (Array.isArray(m.liveStatsEvents) && m.liveStatsEvents.length > 0);
+      const isFinished = m.status === 'Terminado' || m.status === 'Finalizado';
+      return isFinished || hasEvents;
+    });
   }, [matches]);
+
+  // Seleccionar por defecto los últimos 5 partidos con datos (o los que existan)
+  const defaultSelectedIds = useMemo(() => {
+    if (!matches || matches.length === 0) return [];
+    const pool = playedMatches.length > 0 ? playedMatches : matches;
+    return pool.slice(0, 5).map((m) => m.id);
+  }, [matches, playedMatches]);
 
   const [selectedIds, setSelectedIds] = useState([]);
   const [viewMode, setViewMode] = useState('AVERAGES'); // 'AVERAGES' | 'TOTALS'
-  const [eventsCache, setEventsCache] = useState({});
-  const [loadingEvents, setLoadingEvents] = useState(false);
   const [showMatchModal, setShowMatchModal] = useState(false);
   const [isExportingPdf, setIsExportingPdf] = useState(false);
 
@@ -30,58 +40,6 @@ export const MultiMatchAnalysis = ({ matches = [], teamId, activeTeam = null, la
       setSelectedIds(defaultSelectedIds);
     }
   }, [defaultSelectedIds, selectedIds.length]);
-
-  // Cargar eventos de liveEvents desde Firestore para cada partido seleccionado
-  useEffect(() => {
-    let isMounted = true;
-    const fetchEvents = async () => {
-      const missingIds = selectedIds.filter((id) => !eventsCache[id]);
-      if (missingIds.length === 0) return;
-
-      setLoadingEvents(true);
-      const newCache = { ...eventsCache };
-
-      for (const mId of missingIds) {
-        if (!teamId || !mId) {
-          const matchObj = matches.find((m) => m.id === mId);
-          newCache[mId] = matchObj?.liveStatsEvents || matchObj?.events || [];
-          continue;
-        }
-
-        try {
-          const colRef = collection(db, 'teams', teamId, 'matches', mId, 'liveStats');
-          const snap = await getDocs(colRef);
-          if (snap && snap.docs && snap.docs.length > 0) {
-            newCache[mId] = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
-          } else {
-            // Intentar con subcolección alternativa 'liveEvents'
-            const altColRef = collection(db, 'teams', teamId, 'matches', mId, 'liveEvents');
-            const altSnap = await getDocs(altColRef);
-            if (altSnap && altSnap.docs && altSnap.docs.length > 0) {
-              newCache[mId] = altSnap.docs.map((d) => ({ id: d.id, ...d.data() }));
-            } else {
-              const matchObj = matches.find((m) => m.id === mId);
-              newCache[mId] = matchObj?.liveStatsEvents || matchObj?.events || [];
-            }
-          }
-        } catch (err) {
-          console.error('[MultiMatchAnalysis] Error cargando liveStats de', mId, err);
-          const matchObj = matches.find((m) => m.id === mId);
-          newCache[mId] = matchObj?.liveStatsEvents || matchObj?.events || [];
-        }
-      }
-
-      if (isMounted) {
-        setEventsCache(newCache);
-        setLoadingEvents(false);
-      }
-    };
-
-    fetchEvents();
-    return () => {
-      isMounted = false;
-    };
-  }, [selectedIds, teamId, matches, eventsCache]);
 
   // Lista de partidos seleccionados ordenados cronológicamente (antiguos a recientes)
   const selectedMatches = useMemo(() => {
@@ -94,38 +52,58 @@ export const MultiMatchAnalysis = ({ matches = [], teamId, activeTeam = null, la
       });
   }, [matches, selectedIds]);
 
-  // Cálculo de métricas por partido individual
+  // Cálculo canónico y verificable de métricas por partido
   const perMatchMetrics = useMemo(() => {
     return selectedMatches.map((match) => {
-      const evs = eventsCache[match.id] || [];
+      const evs = getUnifiedMatchEvents(match);
+      const { homeStats, awayStats } = calculateCanonicalStats(match, evs);
 
-      const countType = (type) => evs.filter((e) => e.type === type).length;
+      const countOf = (types) => {
+        const typeArr = Array.isArray(types) ? types : [types];
+        return evs.filter((e) => typeArr.includes(e.type)).length;
+      };
 
-      const shotsOwn = countType('shot_on_target_own');
-      const shotsRival = countType('shot_on_target_rival');
-      const duelsWon = countType('duel_won');
-      const duelsLost = countType('duel_lost');
+      const duelsWon = countOf(['duel_won', 'duelo_ganado']);
+      const duelsLost = countOf(['duel_lost', 'duelo_perdido']);
       const duelsTotal = duelsWon + duelsLost;
-      const duelPct = duelsTotal > 0 ? Math.round((duelsWon / duelsTotal) * 100) : 0;
+      const totalPossEvents = (homeStats?.recuperaciones || 0) + (awayStats?.recuperaciones || 0);
+      const duelPct = duelsTotal > 0
+        ? Math.round((duelsWon / duelsTotal) * 100)
+        : (totalPossEvents > 0 ? (homeStats?.posesion || 50) : 0);
 
-      const recoveries = countType('recovery');
-      const losses = countType('loss');
+      const shotsOwn = Math.max(
+        homeStats?.tirosPuerta || 0,
+        countOf(['shot_on_target_own', 'shot_on_target', 'gol_local', 'goal_own', 'goal', 'gol'])
+      );
+      const shotsRival = Math.max(
+        awayStats?.tirosPuerta || 0,
+        countOf(['shot_on_target_rival', 'gol_rival', 'goal_rival'])
+      );
 
-      const foulsFavor = countType('foul_favor');
-      const foulsAgainst = countType('foul_against');
+      const recoveries = countOf(['recovery', 'recuperacion']) || (homeStats?.recuperaciones || 0);
+      const losses = countOf(['loss', 'perdida', 'ball_loss', 'turnover']) || (awayStats?.recuperaciones || 0);
 
-      const cardsOwn = countType('card_own');
-      const cardsRival = countType('card_rival');
+      const foulsFavor = countOf(['foul_favor', 'falta_favor']) || (awayStats?.faltas || 0);
+      const foulsAgainst = countOf(['foul_against', 'foul', 'falta_contra', 'falta']) || (homeStats?.faltas || 0);
 
-      const counterEff = recoveries > 0 ? Math.round((shotsOwn / recoveries) * 100) : 0;
+      const cardsOwn = countOf(['card_own', 'card_yellow_own', 'card_red_own', 'amarilla', 'roja']) || (homeStats?.amarillas || 0);
+      const cardsRival = countOf(['card_rival', 'card_yellow_rival', 'card_red_rival', 'amarilla_rival', 'roja_rival']) || (awayStats?.amarillas || 0);
 
-      const goalsFor = match.goalsFor ?? match.golesLocal ?? 0;
-      const goalsAgainst = match.goalsAgainst ?? match.golesVisita ?? 0;
+      const counterEff = recoveries > 0
+        ? Math.min(100, Math.round((shotsOwn / recoveries) * 100))
+        : (shotsOwn > 0 ? 50 : 0);
+
+      const goalsFor = Number.isFinite(match.goalsFor)
+        ? match.goalsFor
+        : (Number.isFinite(match.golesLocal) ? match.golesLocal : (Number.isFinite(match.golesFavor) ? match.golesFavor : 0));
+      const goalsAgainst = Number.isFinite(match.goalsAgainst)
+        ? match.goalsAgainst
+        : (Number.isFinite(match.golesVisita) ? match.golesVisita : (Number.isFinite(match.golesContra) ? match.golesContra : 0));
 
       return {
         match,
         id: match.id,
-        rival: match.rival || 'Rival',
+        rival: match.rival || (isEn ? 'Opponent' : 'Rival'),
         date: match.date || '',
         goalsFor,
         goalsAgainst,
@@ -143,7 +121,7 @@ export const MultiMatchAnalysis = ({ matches = [], teamId, activeTeam = null, la
         counterEff,
       };
     });
-  }, [selectedMatches, eventsCache]);
+  }, [selectedMatches, isEn]);
 
   // Totales y promedios agregados
   const aggregates = useMemo(() => {
@@ -151,16 +129,18 @@ export const MultiMatchAnalysis = ({ matches = [], teamId, activeTeam = null, la
     if (count === 0) {
       return {
         matchCount: 0,
-        avgShotsOwn: 0,
-        avgShotsRival: 0,
+        avgShotsOwn: '0.0',
+        avgShotsRival: '0.0',
         totalShotsOwn: 0,
         totalShotsRival: 0,
         avgDuelPct: 0,
-        avgRecoveries: 0,
-        avgLosses: 0,
+        avgRecoveries: '0.0',
+        avgLosses: '0.0',
         totalRecoveries: 0,
         totalLosses: 0,
         avgCounterEff: 0,
+        totalGoalsFor: 0,
+        totalGoalsAgainst: 0,
       };
     }
 
@@ -170,6 +150,8 @@ export const MultiMatchAnalysis = ({ matches = [], teamId, activeTeam = null, la
     const sumRecoveries = perMatchMetrics.reduce((acc, m) => acc + m.recoveries, 0);
     const sumLosses = perMatchMetrics.reduce((acc, m) => acc + m.losses, 0);
     const sumCounterEff = perMatchMetrics.reduce((acc, m) => acc + m.counterEff, 0);
+    const sumGoalsFor = perMatchMetrics.reduce((acc, m) => acc + m.goalsFor, 0);
+    const sumGoalsAgainst = perMatchMetrics.reduce((acc, m) => acc + m.goalsAgainst, 0);
 
     return {
       matchCount: count,
@@ -183,15 +165,18 @@ export const MultiMatchAnalysis = ({ matches = [], teamId, activeTeam = null, la
       totalRecoveries: sumRecoveries,
       totalLosses: sumLosses,
       avgCounterEff: Math.round(sumCounterEff / count),
+      totalGoalsFor: sumGoalsFor,
+      totalGoalsAgainst: sumGoalsAgainst,
     };
   }, [perMatchMetrics]);
 
-  // Selección rápida
+  // Selección rápida de partidos
   const handleShortcutSelect = (shortcut) => {
+    const pool = playedMatches.length > 0 ? playedMatches : matches;
     if (shortcut === 'LAST_3') {
-      setSelectedIds(matches.slice(0, 3).map((m) => m.id));
+      setSelectedIds(pool.slice(0, 3).map((m) => m.id));
     } else if (shortcut === 'LAST_5') {
-      setSelectedIds(matches.slice(0, 5).map((m) => m.id));
+      setSelectedIds(pool.slice(0, 5).map((m) => m.id));
     } else if (shortcut === 'ALL') {
       setSelectedIds(matches.map((m) => m.id));
     } else if (shortcut === 'CLEAR') {
@@ -210,64 +195,20 @@ export const MultiMatchAnalysis = ({ matches = [], teamId, activeTeam = null, la
     if (matches.length > 0 && selectedIds.length === matches.length && matches.every((m) => selectedIds.includes(m.id))) {
       return 'ALL';
     }
-    const last3Ids = matches.slice(0, 3).map((m) => m.id);
-    if (selectedIds.length === last3Ids.length && last3Ids.every((id) => selectedIds.includes(id))) {
+    const pool = playedMatches.length > 0 ? playedMatches : matches;
+    const last3Ids = pool.slice(0, 3).map((m) => m.id);
+    if (selectedIds.length === last3Ids.length && last3Ids.length > 0 && last3Ids.every((id) => selectedIds.includes(id))) {
       return 'LAST_3';
     }
-    const last5Ids = matches.slice(0, 5).map((m) => m.id);
-    if (selectedIds.length === last5Ids.length && last5Ids.every((id) => selectedIds.includes(id))) {
+    const last5Ids = pool.slice(0, 5).map((m) => m.id);
+    if (selectedIds.length === last5Ids.length && last5Ids.length > 0 && last5Ids.every((id) => selectedIds.includes(id))) {
       return 'LAST_5';
     }
     return 'CUSTOM';
-  }, [selectedIds, matches]);
-
-  const FALLBACK_STRINGS = {
-    'analisis.title': 'Análisis Comparativo Multipartido',
-    'analisis.subtitle': 'Comparativa de rendimiento táctico y métricas avanzadas entre encuentros',
-    'analisis.selectMatches': 'Seleccionar Partidos',
-    'analisis.shortcuts.title': 'Atajos:',
-    'analisis.shortcuts.last3': 'Últimos 3',
-    'analisis.shortcuts.last5': 'Últimos 5',
-    'analisis.shortcuts.allSeason': 'Toda la Temporada',
-    'analisis.mode.title': 'Modo:',
-    'analisis.mode.averages': 'Promedios',
-    'analisis.mode.totals': 'Totales',
-    'analisis.loadingData': 'Cargando eventos de partidos...',
-    'analisis.noMatchesSelected': 'Selecciona al menos 2 partidos para realizar el análisis comparativo',
-    'analisis.kpi.shots': 'Tiros a Puerta',
-    'analisis.kpi.duels': 'Duelos Ganados (%)',
-    'analisis.kpi.recoveries': 'Recuperaciones / Pérdidas',
-    'analisis.kpi.counters': 'Efectividad Contraataque',
-    'analisis.chart.trend': 'Evolución de Tendencia por Partido',
-    'analisis.chart.bars': 'Comparativa Directa de Eventos',
-    'analisis.chart.radar': 'Radar de Perfil Táctico Promedio',
-    'analisis.table.title': 'Desglose Detallado por Encuentro',
-    'analisis.table.match': 'Partido / Rival',
-    'analisis.table.result': 'Resultado',
-    'analisis.table.shots': 'Tiros (P / R)',
-    'analisis.table.duels': 'Duelos %',
-    'analisis.table.recLoss': 'Rec / Pérd',
-    'analisis.table.fouls': 'Faltas (F / C)',
-    'analisis.table.cards': 'Tarjetas (A / R)',
-    'analisis.exportPdf': 'Descargar PDF Análisis',
-    'analisis.exportingPdf': 'Generando PDF...',
-    'analisis.modal.title': 'Seleccionar Partidos para Comparar',
-    'analisis.modal.confirm': 'ACEPTAR Y COMPARAR',
-    'analisis.modal.clear': 'Limpiar',
-    'analisis.modal.all': 'Todos',
-    'analisis.modal.selectedCount': '{count} partidos seleccionados',
-  };
+  }, [selectedIds, matches, playedMatches]);
 
   const tx = (key, params) => {
-    const val = t(key, language, params);
-    if (val && val !== key) return val;
-    let fallback = FALLBACK_STRINGS[key] || key;
-    if (params && typeof params === 'object') {
-      Object.keys(params).forEach((p) => {
-        fallback = fallback.replace(`{${p}}`, params[p]);
-      });
-    }
-    return fallback;
+    return t(key, language, params);
   };
 
   const handleExportPDF = async () => {
@@ -280,6 +221,7 @@ export const MultiMatchAnalysis = ({ matches = [], teamId, activeTeam = null, la
         aggregates,
         viewMode,
         activeTeam,
+        language,
       });
     } catch (err) {
       console.error('[MultiMatchAnalysis] Error al exportar PDF:', err);
@@ -370,13 +312,6 @@ export const MultiMatchAnalysis = ({ matches = [], teamId, activeTeam = null, la
         </div>
       </div>
 
-      {loadingEvents && (
-        <div className="multi-match-loading">
-          <div className="spinner"></div>
-          <span>{tx('analisis.loadingData')}</span>
-        </div>
-      )}
-
       {selectedIds.length < 2 ? (
         <div className="multi-match-empty">
           <span className="empty-icon">📊</span>
@@ -403,7 +338,7 @@ export const MultiMatchAnalysis = ({ matches = [], teamId, activeTeam = null, la
                     : `${aggregates.totalShotsOwn} / ${aggregates.totalShotsRival}`}
                 </span>
                 <span className="kpi-sub">
-                  {viewMode === 'AVERAGES' ? 'Prom. Propio vs Rival' : 'Total Propio vs Rival'}
+                  {viewMode === 'AVERAGES' ? tx('analisis.kpi.shotsSubAvg') : tx('analisis.kpi.shotsSubTot')}
                 </span>
               </div>
             </div>
@@ -413,7 +348,7 @@ export const MultiMatchAnalysis = ({ matches = [], teamId, activeTeam = null, la
               <div className="kpi-info">
                 <span className="kpi-title">{tx('analisis.kpi.duels')}</span>
                 <span className="kpi-value">{aggregates.avgDuelPct}%</span>
-                <span className="kpi-sub">Efectividad global en duelos</span>
+                <span className="kpi-sub">{tx('analisis.kpi.duelsSub')}</span>
               </div>
             </div>
 
@@ -427,7 +362,7 @@ export const MultiMatchAnalysis = ({ matches = [], teamId, activeTeam = null, la
                     : `${aggregates.totalRecoveries} / ${aggregates.totalLosses}`}
                 </span>
                 <span className="kpi-sub">
-                  {viewMode === 'AVERAGES' ? 'Promedio Rec / Pérdidas' : 'Total Rec / Pérdidas'}
+                  {viewMode === 'AVERAGES' ? tx('analisis.kpi.recLossSubAvg') : tx('analisis.kpi.recLossSubTot')}
                 </span>
               </div>
             </div>
@@ -437,7 +372,7 @@ export const MultiMatchAnalysis = ({ matches = [], teamId, activeTeam = null, la
               <div className="kpi-info">
                 <span className="kpi-title">{tx('analisis.kpi.counters')}</span>
                 <span className="kpi-value">{aggregates.avgCounterEff}%</span>
-                <span className="kpi-sub">Ratio de conversión de recuperaciones</span>
+                <span className="kpi-sub">{tx('analisis.kpi.countersSub')}</span>
               </div>
             </div>
           </div>
@@ -450,7 +385,7 @@ export const MultiMatchAnalysis = ({ matches = [], teamId, activeTeam = null, la
               <TrendLineChart
                 data={perMatchMetrics}
                 darkMode={darkMode}
-                viewMode={viewMode}
+                tx={tx}
               />
             </div>
 
@@ -460,6 +395,7 @@ export const MultiMatchAnalysis = ({ matches = [], teamId, activeTeam = null, la
               <ComparisonBarChart
                 data={perMatchMetrics}
                 darkMode={darkMode}
+                tx={tx}
               />
             </div>
 
@@ -469,6 +405,7 @@ export const MultiMatchAnalysis = ({ matches = [], teamId, activeTeam = null, la
               <RadarTacticalChart
                 aggregates={aggregates}
                 darkMode={darkMode}
+                tx={tx}
               />
             </div>
           </div>
@@ -504,7 +441,7 @@ export const MultiMatchAnalysis = ({ matches = [], teamId, activeTeam = null, la
                         </span>
                       </td>
                       <td>
-                        <span style={{ color: '#10B981', fontWeight: 'bold' }}>
+                        <span style={{ color: '#4CAF7D', fontWeight: 'bold' }}>
                           {pm.shotsOwn}
                         </span>{' '}
                         /{' '}
@@ -516,7 +453,7 @@ export const MultiMatchAnalysis = ({ matches = [], teamId, activeTeam = null, la
                         <span className="duel-badge">{pm.duelPct}%</span>
                       </td>
                       <td>
-                        <span style={{ color: '#3B82F6' }}>{pm.recoveries}</span> /{' '}
+                        <span style={{ color: '#D4A843', fontWeight: 'bold' }}>{pm.recoveries}</span> /{' '}
                         <span style={{ color: '#F59E0B' }}>{pm.losses}</span>
                       </td>
                       <td>
@@ -591,19 +528,19 @@ export const MultiMatchAnalysis = ({ matches = [], teamId, activeTeam = null, la
                       onChange={() => toggleMatchSelection(m.id)}
                     />
                     <div className="match-item-info">
-                      <span className="match-rival">vs {m.rival || 'Rival'}</span>
+                      <span className="match-rival">vs {m.rival || (isEn ? 'Opponent' : 'Rival')}</span>
                       <span className="match-meta">
-                        {m.date ? m.date.split('-').reverse().join('/') : 'Sin fecha'} |{' '}
-                        {m.type || 'Local'}
+                        {m.date ? m.date.split('-').reverse().join('/') : tx('analisis.modal.noDate')} |{' '}
+                        {m.type || (isEn ? 'Home' : 'Local')}
                       </span>
                     </div>
                     <div className="match-item-score">
-                      {m.status === 'Terminado' ? (
+                      {m.status === 'Terminado' || m.status === 'Finalizado' ? (
                         <span>
                           {m.goalsFor ?? 0} - {m.goalsAgainst ?? 0}
                         </span>
                       ) : (
-                        <span className="badge-pending">{m.status || 'Pendiente'}</span>
+                        <span className="badge-pending">{m.status || tx('analisis.modal.pending')}</span>
                       )}
                     </div>
                   </label>
@@ -630,7 +567,7 @@ export const MultiMatchAnalysis = ({ matches = [], teamId, activeTeam = null, la
 };
 
 // ── COMPONENTE SVG 1: GRÁFICA DE LÍNEAS DE EVOLUCIÓN Y TENDENCIA ──
-const TrendLineChart = ({ data, darkMode }) => {
+const TrendLineChart = ({ data, darkMode, tx }) => {
   if (!data || data.length === 0) return null;
 
   const width = 700;
@@ -643,7 +580,7 @@ const TrendLineChart = ({ data, darkMode }) => {
   const chartWidth = width - paddingLeft - paddingRight;
   const chartHeight = height - paddingTop - paddingBottom;
 
-  // Max value for scaling (Recuperaciones vs Pérdidas)
+  // Max value for scaling (Recuperaciones vs Pérdidas vs Tiros)
   const maxVal = Math.max(
     10,
     ...data.map((d) => Math.max(d.recoveries, d.losses, d.shotsOwn))
@@ -663,8 +600,8 @@ const TrendLineChart = ({ data, darkMode }) => {
   const lossPoints = data.map((d, i) => `${getX(i)},${getY(d.losses)}`).join(' ');
   const shotPoints = data.map((d, i) => `${getX(i)},${getY(d.shotsOwn)}`).join(' ');
 
-  const strokeColorGrid = darkMode ? 'rgba(255,255,255,0.1)' : '#E2E8F0';
-  const textColor = darkMode ? '#94A3B8' : '#64748B';
+  const strokeColorGrid = darkMode ? 'rgba(212, 168, 67, 0.25)' : '#E2E8F0';
+  const textColor = darkMode ? '#D2E6DC' : '#152C22';
 
   return (
     <div style={{ width: '100%', overflowX: 'auto' }}>
@@ -699,17 +636,17 @@ const TrendLineChart = ({ data, darkMode }) => {
           );
         })}
 
-        {/* Línea 1: Recuperaciones (Verde) */}
+        {/* Línea 1: Recuperaciones (Verde Campo #4CAF7D) */}
         <polyline
           fill="none"
-          stroke="#10B981"
+          stroke="#4CAF7D"
           strokeWidth="3"
           strokeLinecap="round"
           strokeLinejoin="round"
           points={recPoints}
         />
 
-        {/* Línea 2: Pérdidas (Naranja/Rojo) */}
+        {/* Línea 2: Pérdidas (Ámbar #F59E0B) */}
         <polyline
           fill="none"
           stroke="#F59E0B"
@@ -719,10 +656,10 @@ const TrendLineChart = ({ data, darkMode }) => {
           points={lossPoints}
         />
 
-        {/* Línea 3: Tiros Propios (Azul) */}
+        {/* Línea 3: Tiros Propios (Oro Institucional #D4A843) */}
         <polyline
           fill="none"
-          stroke="#3B82F6"
+          stroke="#D4A843"
           strokeWidth="3"
           strokeDasharray="5 5"
           strokeLinecap="round"
@@ -740,11 +677,11 @@ const TrendLineChart = ({ data, darkMode }) => {
           return (
             <g key={i}>
               {/* Punto Recuperaciones */}
-              <circle cx={x} cy={yRec} r="5" fill="#10B981" />
+              <circle cx={x} cy={yRec} r="5" fill="#4CAF7D" />
               {/* Punto Pérdidas */}
               <circle cx={x} cy={yLoss} r="5" fill="#F59E0B" />
               {/* Punto Tiros */}
-              <circle cx={x} cy={yShot} r="4" fill="#3B82F6" />
+              <circle cx={x} cy={yShot} r="4" fill="#D4A843" />
 
               {/* Etiqueta Eje X */}
               <text
@@ -762,16 +699,16 @@ const TrendLineChart = ({ data, darkMode }) => {
         })}
       </svg>
 
-      {/* Leyenda */}
+      {/* Leyenda Canónica */}
       <div className="chart-legend">
         <span className="legend-item">
-          <span className="dot" style={{ background: '#10B981' }}></span> Recuperaciones
+          <span className="dot" style={{ background: '#4CAF7D' }}></span> {tx('analisis.chart.recoveries')}
         </span>
         <span className="legend-item">
-          <span className="dot" style={{ background: '#F59E0B' }}></span> Pérdidas
+          <span className="dot" style={{ background: '#F59E0B' }}></span> {tx('analisis.chart.losses')}
         </span>
         <span className="legend-item">
-          <span className="dot" style={{ background: '#3B82F6' }}></span> Tiros a Puerta
+          <span className="dot" style={{ background: '#D4A843' }}></span> {tx('analisis.chart.shotsOwn')}
         </span>
       </div>
     </div>
@@ -779,7 +716,7 @@ const TrendLineChart = ({ data, darkMode }) => {
 };
 
 // ── COMPONENTE SVG 2: GRÁFICA DE BARRAS COMPARATIVAS ──
-const ComparisonBarChart = ({ data, darkMode }) => {
+const ComparisonBarChart = ({ data, darkMode, tx }) => {
   if (!data || data.length === 0) return null;
 
   const width = 500;
@@ -797,7 +734,7 @@ const ComparisonBarChart = ({ data, darkMode }) => {
 
   const maxVal = Math.max(8, ...data.map((d) => Math.max(d.shotsOwn, d.shotsRival)));
 
-  const textColor = darkMode ? '#94A3B8' : '#64748B';
+  const textColor = darkMode ? '#D2E6DC' : '#152C22';
 
   return (
     <div style={{ width: '100%', overflowX: 'auto' }}>
@@ -815,7 +752,7 @@ const ComparisonBarChart = ({ data, darkMode }) => {
               y1={y}
               x2={width - paddingRight}
               y2={y}
-              stroke={darkMode ? 'rgba(255,255,255,0.1)' : '#E2E8F0'}
+              stroke={darkMode ? 'rgba(212, 168, 67, 0.25)' : '#E2E8F0'}
               strokeDasharray="4 4"
             />
           );
@@ -841,7 +778,7 @@ const ComparisonBarChart = ({ data, darkMode }) => {
                 y={yOwn}
                 width={barWidth}
                 height={hOwn}
-                fill="#10B981"
+                fill="#4CAF7D"
                 rx="3"
               />
               <text
@@ -850,7 +787,7 @@ const ComparisonBarChart = ({ data, darkMode }) => {
                 textAnchor="middle"
                 fontSize="10"
                 fontWeight="800"
-                fill={darkMode ? '#FFFFFF' : '#0F172A'}
+                fill={darkMode ? '#FFFFFF' : '#152C22'}
               >
                 {d.shotsOwn}
               </text>
@@ -870,7 +807,7 @@ const ComparisonBarChart = ({ data, darkMode }) => {
                 textAnchor="middle"
                 fontSize="10"
                 fontWeight="800"
-                fill={darkMode ? '#FFFFFF' : '#0F172A'}
+                fill={darkMode ? '#FFFFFF' : '#152C22'}
               >
                 {d.shotsRival}
               </text>
@@ -893,10 +830,10 @@ const ComparisonBarChart = ({ data, darkMode }) => {
 
       <div className="chart-legend">
         <span className="legend-item">
-          <span className="dot" style={{ background: '#10B981' }}></span> Tiros a Puerta Propios
+          <span className="dot" style={{ background: '#4CAF7D' }}></span> {tx('analisis.chart.shotsOwnTitle')}
         </span>
         <span className="legend-item">
-          <span className="dot" style={{ background: '#EF4444' }}></span> Tiros Rival
+          <span className="dot" style={{ background: '#EF4444' }}></span> {tx('analisis.chart.shotsRival')}
         </span>
       </div>
     </div>
@@ -904,18 +841,18 @@ const ComparisonBarChart = ({ data, darkMode }) => {
 };
 
 // ── COMPONENTE SVG 3: GRÁFICA RADAR DE PERFIL TÁCTICO PROMEDIO ──
-const RadarTacticalChart = ({ aggregates, darkMode }) => {
+const RadarTacticalChart = ({ aggregates, darkMode, tx }) => {
   const size = 280;
   const center = size / 2;
   const radius = 95;
 
-  // 5 Ejes Tácticos
+  // 5 Ejes Tácticos Canónicos
   const axes = [
-    { label: 'Tiros a Puerta', val: Math.min(100, parseFloat(aggregates.avgShotsOwn) * 15) },
-    { label: '% Duelos', val: aggregates.avgDuelPct },
-    { label: 'Recuperaciones', val: Math.min(100, parseFloat(aggregates.avgRecoveries) * 10) },
-    { label: 'Control Pérdidas', val: Math.max(10, 100 - parseFloat(aggregates.avgLosses) * 8) },
-    { label: 'Eficacia Contras', val: aggregates.avgCounterEff },
+    { label: tx('analisis.chart.axisShots'), val: Math.min(100, parseFloat(aggregates.avgShotsOwn) * 15) },
+    { label: tx('analisis.chart.axisDuels'), val: aggregates.avgDuelPct },
+    { label: tx('analisis.chart.axisRecoveries'), val: Math.min(100, parseFloat(aggregates.avgRecoveries) * 10) },
+    { label: tx('analisis.chart.axisLossControl'), val: Math.max(10, 100 - parseFloat(aggregates.avgLosses) * 8) },
+    { label: tx('analisis.chart.axisCounterEff'), val: aggregates.avgCounterEff },
   ];
 
   const totalAxes = axes.length;
@@ -939,8 +876,8 @@ const RadarTacticalChart = ({ aggregates, darkMode }) => {
     })
     .join(' ');
 
-  const strokeColorGrid = darkMode ? 'rgba(255,255,255,0.15)' : '#CBD5E1';
-  const textColor = darkMode ? '#E2E8F0' : '#1E293B';
+  const strokeColorGrid = darkMode ? 'rgba(212, 168, 67, 0.25)' : '#CBD5E1';
+  const textColor = darkMode ? '#D2E6DC' : '#152C22';
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
@@ -980,11 +917,11 @@ const RadarTacticalChart = ({ aggregates, darkMode }) => {
           );
         })}
 
-        {/* Polígono de Rendimiento Táctico */}
+        {/* Polígono de Rendimiento Táctico (Tierra y Campo) */}
         <polygon
           points={polygonPoints}
-          fill="rgba(16, 185, 129, 0.35)"
-          stroke="#10B981"
+          fill="rgba(76, 175, 125, 0.35)"
+          stroke="#4CAF7D"
           strokeWidth="2.5"
         />
 
@@ -995,7 +932,7 @@ const RadarTacticalChart = ({ aggregates, darkMode }) => {
 
           return (
             <g key={i}>
-              <circle cx={x} cy={y} r="4" fill="#10B981" />
+              <circle cx={x} cy={y} r="4" fill="#4CAF7D" />
               <text
                 x={labelCoords.x}
                 y={labelCoords.y}

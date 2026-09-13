@@ -15,9 +15,11 @@ export const exportMultiMatchAnalysisPDF = async ({
   perMatchMetrics = [],
   aggregates = {},
   viewMode = 'AVERAGES',
-  activeTeam = null
+  activeTeam = null,
+  language = null,
 }) => {
-  const isEn = getEffectiveLanguage() === 'en';
+  const effLang = getEffectiveLanguage(language);
+  const isEn = effLang === 'English (EN)' || effLang === 'en';
   window.dispatchEvent(new CustomEvent('m11-loading', { detail: { show: true, message: isEn ? 'Generating Multi-Match Analysis Report...' : 'Generando Informe de Análisis Multipartido...' } }));
   await new Promise((r) => setTimeout(r, 150));
 
@@ -27,10 +29,12 @@ export const exportMultiMatchAnalysisPDF = async ({
     const pageW = doc.internal.pageSize.getWidth();
     const pageH = doc.internal.pageSize.getHeight();
 
-    const teamName = cleanPdfText(activeTeam?.nombre || activeTeam?.name || 'Mi Equipo');
-    const category = cleanPdfText(activeTeam?.categoria || activeTeam?.category || 'Oficial');
+    const teamName = cleanPdfText(activeTeam?.nombre || activeTeam?.name || (isEn ? 'My Team' : 'Mi Equipo'));
+    const category = cleanPdfText(activeTeam?.categoria || activeTeam?.category || (isEn ? 'Official' : 'Oficial'));
     const isAverages = viewMode === 'AVERAGES';
-    const modeLabel = isAverages ? 'PROMEDIOS POR PARTIDO' : 'TOTALES ACUMULADOS';
+    const modeLabel = isAverages
+      ? (isEn ? 'MATCH AVERAGES' : 'PROMEDIOS POR PARTIDO')
+      : (isEn ? 'CUMULATIVE TOTALS' : 'TOTALES ACUMULADOS');
 
     // ── CABECERA INSTITUCIONAL ────────────────────────────────────────────────
     doc.setFillColor(...THEME_COLOR);
@@ -51,13 +55,19 @@ export const exportMultiMatchAnalysisPDF = async ({
     doc.setTextColor(255, 255, 255);
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(14);
-    doc.text('MÍSTER 11 · ANÁLISIS COMPARATIVO MULTIPARTIDO', 36, 15);
+    doc.text(isEn ? 'MÍSTER 11 · MULTI-MATCH COMPARATIVE ANALYSIS' : 'MÍSTER 11 · ANÁLISIS COMPARATIVO MULTIPARTIDO', 36, 15);
 
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(8.5);
     doc.setTextColor(210, 230, 220);
-    const dateStr = new Date().toLocaleDateString('es-ES');
-    doc.text(`${teamName} (${category}) · Muestra: ${selectedMatches.length} partidos · Emisión: ${dateStr}`, 36, 23);
+    const dateStr = new Date().toLocaleDateString(isEn ? 'en-US' : 'es-ES');
+    doc.text(
+      isEn
+        ? `${teamName} (${category}) · Sample: ${selectedMatches.length} matches · Issued: ${dateStr}`
+        : `${teamName} (${category}) · Muestra: ${selectedMatches.length} partidos · Emisión: ${dateStr}`,
+      36,
+      23
+    );
 
     // Escudo del equipo si está disponible
     if (activeTeam?.escudo) {
@@ -82,7 +92,7 @@ export const exportMultiMatchAnalysisPDF = async ({
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(8.5);
     doc.setTextColor(...THEME_COLOR);
-    doc.text('RESUMEN DE LA MUESTRA ANALIZADA', 18, y + 6);
+    doc.text(isEn ? 'ANALYSIS SAMPLE SUMMARY' : 'RESUMEN DE LA MUESTRA ANALIZADA', 18, y + 6);
 
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(7.5);
@@ -93,7 +103,13 @@ export const exportMultiMatchAnalysisPDF = async ({
       ? selectedMatches[selectedMatches.length - 1].date.split('-').reverse().join('/')
       : '-';
 
-    doc.text(`Período de análisis: ${firstDate} al ${lastDate}   |   Partidos seleccionados: ${selectedMatches.length} encuentros   |   Modo: ${modeLabel}`, 18, y + 12);
+    doc.text(
+      isEn
+        ? `Analysis period: ${firstDate} to ${lastDate}   |   Selected matches: ${selectedMatches.length} matches   |   Mode: ${modeLabel}`
+        : `Período de análisis: ${firstDate} al ${lastDate}   |   Partidos seleccionados: ${selectedMatches.length} encuentros   |   Modo: ${modeLabel}`,
+      18,
+      y + 12
+    );
 
     y += 24;
 
@@ -101,7 +117,7 @@ export const exportMultiMatchAnalysisPDF = async ({
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(9.5);
     doc.setTextColor(...THEME_COLOR);
-    doc.text('INDICADORES CLAVE DE RENDIMIENTO (KPIS COLECTIVOS)', 12, y);
+    doc.text(isEn ? 'KEY PERFORMANCE INDICATORS (COLLECTIVE KPIS)' : 'INDICADORES CLAVE DE RENDIMIENTO (KPIS COLECTIVOS)', 12, y);
     y += 4;
 
     const cardW = (pageW - 24 - 9) / 4; // 4 tarjetas con 3 gaps de 3mm
@@ -109,32 +125,36 @@ export const exportMultiMatchAnalysisPDF = async ({
 
     const kpiData = [
       {
-        title: 'TIROS A PUERTA',
+        title: isEn ? 'SHOTS ON TARGET' : 'TIROS A PUERTA',
         value: isAverages
           ? `${aggregates.avgShotsOwn || 0} / ${aggregates.avgShotsRival || 0}`
           : `${aggregates.totalShotsOwn || 0} / ${aggregates.totalShotsRival || 0}`,
-        sub: isAverages ? 'Prom. Propio vs Rival' : 'Total Propio vs Rival',
-        color: [16, 185, 129], // Verde
+        sub: isAverages
+          ? (isEn ? 'Avg. Own vs Rival' : 'Prom. Propio vs Rival')
+          : (isEn ? 'Total Own vs Rival' : 'Total Propio vs Rival'),
+        color: [76, 175, 125], // Verde Campo #4CAF7D
       },
       {
-        title: 'DUELOS GANADOS',
+        title: isEn ? 'DUELS WON (%)' : 'DUELOS GANADOS (%)',
         value: `${aggregates.avgDuelPct || 0}%`,
-        sub: 'Efectividad en disputas',
-        color: [59, 130, 246], // Azul
+        sub: isEn ? 'Overall duel efficiency' : 'Efectividad global en duelos',
+        color: [212, 168, 67], // Oro Institucional #D4A843
       },
       {
-        title: 'RECUPERACIONES',
+        title: isEn ? 'RECOVERIES / LOSSES' : 'RECUPERACIONES / PÉRDIDAS',
         value: isAverages
           ? `${aggregates.avgRecoveries || 0} / ${aggregates.avgLosses || 0}`
           : `${aggregates.totalRecoveries || 0} / ${aggregates.totalLosses || 0}`,
-        sub: isAverages ? 'Prom. Rec / Perd' : 'Total Rec / Perd',
-        color: [245, 158, 11], // Ámbar
+        sub: isAverages
+          ? (isEn ? 'Avg. Rec / Loss' : 'Prom. Rec / Pérd')
+          : (isEn ? 'Total Rec / Loss' : 'Total Rec / Pérd'),
+        color: [245, 158, 11], // Ámbar #F59E0B
       },
       {
-        title: 'EFECT. CONTRAATAQUE',
+        title: isEn ? 'COUNTER-ATTACK EFF.' : 'EFECT. CONTRAATAQUE',
         value: `${aggregates.avgCounterEff || 0}%`,
-        sub: 'Ratio de conversión ofensiva',
-        color: [139, 92, 246], // Morado
+        sub: isEn ? 'Offensive conversion ratio' : 'Ratio de conversión ofensiva',
+        color: [27, 58, 45], // Verde Institucional Oscuro #1B3A2D
       },
     ];
 
@@ -177,11 +197,11 @@ export const exportMultiMatchAnalysisPDF = async ({
     const goalsScore = Math.min(99, Math.max(10, Math.round(50 + goalsBalance * 5)));
 
     const tacticalMetrics = [
-      { label: 'Tiros Puerta', value: shotsScore },
-      { label: 'Duelos Ganados', value: duelsScore },
-      { label: 'Recuperaciones', value: recScore },
-      { label: 'Contraataques', value: counterScore },
-      { label: 'Eficacia Goleadora', value: goalsScore },
+      { label: isEn ? 'Shots on Target' : 'Tiros Puerta', value: shotsScore },
+      { label: isEn ? 'Duels Won' : 'Duelos Ganados', value: duelsScore },
+      { label: isEn ? 'Recoveries' : 'Recuperaciones', value: recScore },
+      { label: isEn ? 'Loss Control' : 'Control Pérdidas', value: counterScore },
+      { label: isEn ? 'Counter-Attacks' : 'Contraataques', value: goalsScore },
     ];
 
     const radarImg = drawRadarChartCanvas(tacticalMetrics, 440);
@@ -191,7 +211,12 @@ export const exportMultiMatchAnalysisPDF = async ({
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(9.5);
       doc.setTextColor(...THEME_COLOR);
-      doc.text('PERFIL TÁCTICO PROMEDIO DEL EQUIPO (360°)', pageW / 2, y, { align: 'center' });
+      doc.text(
+        isEn ? 'AVERAGE TACTICAL PROFILE (360°)' : 'PERFIL TÁCTICO PROMEDIO DEL EQUIPO (360°)',
+        pageW / 2,
+        y,
+        { align: 'center' }
+      );
 
       doc.addImage(radarImg, 'PNG', radarX, y + 3, radarSize, radarSize);
       y += radarSize + 8;
@@ -201,20 +226,22 @@ export const exportMultiMatchAnalysisPDF = async ({
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(9.5);
     doc.setTextColor(...THEME_COLOR);
-    doc.text('DESGLOSE DETALLADO PARTIDO A PARTIDO', 12, y);
+    doc.text(isEn ? 'DETAILED MATCH-BY-MATCH BREAKDOWN' : 'DESGLOSE DETALLADO PARTIDO A PARTIDO', 12, y);
     y += 4;
 
-    const tableHeaders = ['Fecha', 'Rival / Partido', 'Resultado', 'Tiros (P/R)', '% Duelos', 'Rec / Pérd', 'Faltas (F/C)', 'Tarjetas'];
+    const tableHeaders = isEn
+      ? ['Date', 'Opponent / Match', 'Result', 'Shots (O/R)', '% Duels', 'Rec / Loss', 'Fouls (F/A)', 'Cards']
+      : ['Fecha', 'Rival / Partido', 'Resultado', 'Tiros (P/R)', '% Duelos', 'Rec / Pérd', 'Faltas (F/C)', 'Tarjetas'];
 
     const tableRows = perMatchMetrics.map((pm) => {
       const fDate = pm.date ? pm.date.split('-').reverse().join('/') : '--/--';
-      const rivalName = cleanPdfText(pm.rival || 'Rival');
+      const rivalName = cleanPdfText(pm.rival || (isEn ? 'Opponent' : 'Rival'));
       const scoreStr = `${pm.goalsFor ?? 0} - ${pm.goalsAgainst ?? 0}`;
       const shotsStr = `${pm.shotsOwn ?? 0} / ${pm.shotsRival ?? 0}`;
       const duelStr = `${pm.duelPct ?? 0}%`;
       const recStr = `${pm.recoveries ?? 0} / ${pm.losses ?? 0}`;
       const foulsStr = `${pm.foulsFavor ?? 0} / ${pm.foulsAgainst ?? 0}`;
-      const cardsStr = `A:${pm.cardsOwn ?? 0} | R:${pm.cardsRival ?? 0}`;
+      const cardsStr = isEn ? `Y:${pm.cardsOwn ?? 0} | R:${pm.cardsRival ?? 0}` : `A:${pm.cardsOwn ?? 0} | R:${pm.cardsRival ?? 0}`;
 
       return [fDate, `vs ${rivalName}`, scoreStr, shotsStr, duelStr, recStr, foulsStr, cardsStr];
     });
@@ -266,15 +293,23 @@ export const exportMultiMatchAnalysisPDF = async ({
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(8.5);
     doc.setTextColor(...THEME_COLOR);
-    doc.text('OBSERVACIONES Y NOTAS METODOLÓGICAS (CUERPO TÉCNICO)', 18, finalY + 6);
+    doc.text(
+      isEn ? 'TECHNICAL STAFF METHODOLOGICAL NOTES & CONCLUSIONS' : 'OBSERVACIONES Y NOTAS METODOLÓGICAS (CUERPO TÉCNICO)',
+      18,
+      finalY + 6
+    );
 
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(7.5);
     doc.setTextColor(71, 85, 105);
 
     const goalDiff = (aggregates.totalGoalsFor || 0) - (aggregates.totalGoalsAgainst || 0);
-    const balanceText = goalDiff >= 0 ? `Balance goleador positivo (+${goalDiff} goles)` : `Balance goleador a corregir (${goalDiff} goles)`;
-    const conclusionText = `Muestra de ${selectedMatches.length} partidos con efectividad global en duelos del ${aggregates.avgDuelPct || 0}%. Promedio de tiros a favor: ${aggregates.avgShotsOwn || 0} vs ${aggregates.avgShotsRival || 0} recibidos. ${balanceText}. Se recomienda consolidar la presión tras pérdida y finalizar las transiciones ofensivas.`;
+    const balanceText = goalDiff >= 0
+      ? (isEn ? `Positive goal balance (+${goalDiff} goals)` : `Balance goleador positivo (+${goalDiff} goles)`)
+      : (isEn ? `Goal balance to improve (${goalDiff} goals)` : `Balance goleador a corregir (${goalDiff} goles)`);
+    const conclusionText = isEn
+      ? `Sample of ${selectedMatches.length} matches with overall duel efficiency of ${aggregates.avgDuelPct || 0}%. Average shots on target: ${aggregates.avgShotsOwn || 0} for vs ${aggregates.avgShotsRival || 0} against. ${balanceText}. Recommended to consolidate counter-pressing and clinical offensive transitions.`
+      : `Muestra de ${selectedMatches.length} partidos con efectividad global en duelos del ${aggregates.avgDuelPct || 0}%. Promedio de tiros a favor: ${aggregates.avgShotsOwn || 0} vs ${aggregates.avgShotsRival || 0} recibidos. ${balanceText}. Se recomienda consolidar la presión tras pérdida y finalizar las transiciones ofensivas.`;
 
     const splitNotes = doc.splitTextToSize(cleanPdfText(conclusionText), pageW - 36);
     doc.text(splitNotes, 18, finalY + 12);
@@ -288,8 +323,17 @@ export const exportMultiMatchAnalysisPDF = async ({
       doc.setTextColor(255, 255, 255);
       doc.setFont('helvetica', 'normal');
       doc.setFontSize(7);
-      doc.text('Míster 11 Club Engine · Módulo de Inteligencia y Análisis Táctico', 12, pageH - 3.5);
-      doc.text(`Página ${p} de ${totalPages}`, pageW - 12, pageH - 3.5, { align: 'right' });
+      doc.text(
+        isEn ? 'Míster 11 Club Engine · Tactical Intelligence & Analytics Module' : 'Míster 11 Club Engine · Módulo de Inteligencia y Análisis Táctico',
+        12,
+        pageH - 3.5
+      );
+      doc.text(
+        isEn ? `Page ${p} of ${totalPages}` : `Página ${p} de ${totalPages}`,
+        pageW - 12,
+        pageH - 3.5,
+        { align: 'right' }
+      );
     }
 
     const safeName = teamName.replace(/\s+/g, '_');

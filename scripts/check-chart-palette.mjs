@@ -39,7 +39,10 @@ const TARGET_FILES = [
   'src/components/MatchStats/ShotMap.jsx',
   'src/components/MatchStats/ZoneEventMap.jsx',
   'src/utils/matchAnalytics.js',
-  'src/utils/matchPdfReport.js'
+  'src/utils/matchPdfReport.js',
+  'src/components/MultiMatchAnalysis.css',
+  'src/components/MultiMatchAnalysis.jsx',
+  'src/utils/analysisPdfReport.js'
 ];
 
 console.log('==============================================================================');

@@ -13,21 +13,21 @@
 }
 
 .multi-match-container.light-mode {
-  --mm-bg: #FFFFFF;
-  --mm-card-bg: #F8FAFC;
+  --mm-bg: #F4F6F4;
+  --mm-card-bg: #FFFFFF;
   --mm-border: #E2E8F0;
-  --mm-text-primary: #0F172A;
-  --mm-text-secondary: #64748B;
+  --mm-text-primary: #1B3A2D;
+  --mm-text-secondary: #475569;
   --mm-accent: #1B3A2D;
   --mm-accent-light: #E6F4ED;
 }
 
 .multi-match-container.dark-mode {
-  --mm-bg: #0F172A;
-  --mm-card-bg: #1E293B;
-  --mm-border: #334155;
-  --mm-text-primary: #F8FAFC;
-  --mm-text-secondary: #94A3B8;
+  --mm-bg: #0B1812;
+  --mm-card-bg: #152C22;
+  --mm-border: rgba(212, 168, 67, 0.25);
+  --mm-text-primary: #FFFFFF;
+  --mm-text-secondary: #D1D5DB;
   --mm-accent: #D4A843;
   --mm-accent-light: rgba(212, 168, 67, 0.15);
 }
@@ -224,7 +224,7 @@
 
 .dark-mode .btn-export-analysis-pdf {
   background: #D4A843;
-  color: #0F172A;
+  color: #0B1812;
   box-shadow: 0 2px 6px rgba(212, 168, 67, 0.25);
 }
 
@@ -430,7 +430,7 @@
 }
 
 .duel-badge {
-  color: #10B981;
+  color: #4CAF7D;
   font-weight: 800;
 }
 
@@ -633,7 +633,7 @@
 
 .dark-mode .btn-confirm-modal {
   background: #D4A843;
-  color: #0F172A;
+  color: #0B1812;
 }
 
 /* Media Query Responsive */

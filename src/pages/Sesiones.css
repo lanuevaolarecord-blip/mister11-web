@@ -557,14 +557,28 @@
 .block-editor-header {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: 15px;
-  padding: 15px 20px;
+  padding: 12px 20px;
   background: var(--bg-primary);
   border-bottom: 1px solid var(--border-color);
 }
-.block-number { width: 28px; height: 28px; background: var(--primary); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold;}
-.block-title-input { flex: 1; background: transparent; border: none; font-size: 15px; font-weight: bold; color: var(--text-primary); padding: 5px; outline: none; border-bottom: 1px solid transparent; transition: border-color 0.2s;}
-.block-title-input:focus { border-bottom-color: var(--accent); }
+.block-header-row-primary {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1;
+  min-width: 0;
+}
+.block-header-row-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+.block-number { width: 28px; height: 28px; background: var(--primary); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; flex-shrink: 0; }
+.block-title-input { flex: 1; min-width: 0; background: transparent; border: none; font-size: 15px; font-weight: bold; color: var(--text-primary); padding: 5px; outline: none; border-bottom: 1px solid transparent; transition: border-color 0.2s; text-overflow: ellipsis; white-space: nowrap; overflow: hidden; }
+.block-title-input:focus { border-bottom-color: var(--accent); text-overflow: clip; }
 
 .block-editor-body {
   padding: 20px;
@@ -716,23 +730,28 @@
     display: none !important;
   }
 
-  /* Fila 2 / Barra inferior fija obligatoria: CANCELAR (40%) + GUARDAR SESIÓN (60%) */
+  /* Fila 2 / Barra inferior fija obligatoria (DEF-M07-02): CANCELAR (40%) + GUARDAR SESIÓN (60%) sobre la nav inferior */
   .session-editor-bottom-bar {
     display: flex !important;
     position: fixed !important;
-    bottom: 0 !important;
+    bottom: calc(var(--bottom-nav-height, 64px) + env(safe-area-inset-bottom, 0px)) !important;
     left: 0 !important;
     right: 0 !important;
     width: 100vw !important;
     box-sizing: border-box !important;
-    z-index: 100 !important;
-    padding: 12px 16px !important;
-    padding-bottom: max(12px, env(safe-area-inset-bottom)) !important;
+    z-index: 60 !important;
+    padding: 10px 16px !important;
     background: var(--bg-card) !important;
     border-top: 1px solid var(--border-color) !important;
-    box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.15) !important;
+    box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.15) !important;
     gap: 10px !important;
     align-items: center !important;
+  }
+
+  /* Padding inferior compensatorio en editor para que ningún campo quede tapado */
+  .sesiones-page.session-editor-page,
+  .session-editor-container {
+    padding-bottom: calc(var(--bottom-nav-height, 64px) + 76px + env(safe-area-inset-bottom, 0px)) !important;
   }
 
   .session-editor-bottom-bar .btn-session-cancel {
@@ -825,11 +844,64 @@
     box-sizing: border-box !important;
   }
 
+  /* Header de bloque en dos filas (DEF-M07-03) */
   .block-editor-header {
+    display: flex !important;
+    flex-direction: column !important;
     padding: 10px 12px !important;
+    gap: 10px !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+  }
+
+  .block-header-row-primary {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
     gap: 8px !important;
     width: 100% !important;
     box-sizing: border-box !important;
+  }
+
+  .block-title-input {
+    flex: 1 !important;
+    min-width: 120px !important;
+    font-size: 15px !important;
+    font-weight: 700 !important;
+    color: var(--text-primary) !important;
+    background: transparent !important;
+    border: none !important;
+    border-bottom: 1px solid transparent !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    padding: 4px 6px !important;
+    box-sizing: border-box !important;
+  }
+
+  .block-title-input:focus {
+    text-overflow: clip !important;
+    border-bottom-color: var(--accent) !important;
+    background: rgba(0, 0, 0, 0.04) !important;
+    border-radius: 4px !important;
+  }
+
+  .block-header-row-actions {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    justify-content: flex-start !important;
+    gap: 6px !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+  }
+
+  .block-header-row-actions .drag-handle,
+  .block-header-row-actions .btn-touch-reorder,
+  .block-header-row-actions .btn-duplicate-block,
+  .block-header-row-primary .btn-del-icon {
+    min-width: 48px !important;
+    min-height: 48px !important;
   }
 
   .block-editor-body {

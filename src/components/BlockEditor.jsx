@@ -124,95 +124,109 @@ const BlockEditor = ({ block, index, totalBlocks, handleUpdateBlock, handleDelet
   return (
     <div ref={setNodeRef} style={style} className="block-editor-card">
       <div className="block-editor-header">
-        <div 
-          className="drag-handle" 
-          {...attributes} 
-          {...listeners} 
-          style={{ cursor: 'grab', padding: '8px 12px', display: 'flex', alignItems: 'center', justifyContent: 'center', minWidth: '48px', minHeight: '48px', touchAction: 'none', flexShrink: 0 }}
-        >
-          <span style={{ fontSize: '18px', color: 'var(--text-muted)' }}>☰</span>
-        </div>
-        {handleMoveBlock && (
-          <div className="touch-reorder-group" style={{ display: 'flex', alignItems: 'center', gap: '2px', flexShrink: 0 }}>
-            <button
-              type="button"
-              className="btn-touch-reorder btn-move-up"
-              onClick={() => handleMoveBlock(index, -1)}
-              disabled={index === 0}
-              style={{
-                minWidth: '48px',
-                minHeight: '48px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                background: 'transparent',
-                border: '1px solid var(--border-color, rgba(255,255,255,0.12))',
-                borderRadius: '8px',
-                cursor: index === 0 ? 'not-allowed' : 'pointer',
-                color: index === 0 ? 'var(--text-muted, #64748b)' : 'var(--text-primary, #ffffff)',
-                opacity: index === 0 ? 0.3 : 1,
-                fontSize: '15px',
-                touchAction: 'manipulation'
-              }}
-              title={isEn ? "Move exercise up" : "Mover ejercicio arriba"}
-              aria-label={isEn ? "Move exercise up" : "Mover ejercicio arriba"}
-            >
-              ▲
-            </button>
-            <button
-              type="button"
-              className="btn-touch-reorder btn-move-down"
-              onClick={() => handleMoveBlock(index, 1)}
-              disabled={index >= (totalBlocks || 1) - 1}
-              style={{
-                minWidth: '48px',
-                minHeight: '48px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                background: 'transparent',
-                border: '1px solid var(--border-color, rgba(255,255,255,0.12))',
-                borderRadius: '8px',
-                cursor: index >= (totalBlocks || 1) - 1 ? 'not-allowed' : 'pointer',
-                color: index >= (totalBlocks || 1) - 1 ? 'var(--text-muted, #64748b)' : 'var(--text-primary, #ffffff)',
-                opacity: index >= (totalBlocks || 1) - 1 ? 0.3 : 1,
-                fontSize: '15px',
-                touchAction: 'manipulation'
-              }}
-              title={isEn ? "Move exercise down" : "Mover ejercicio abajo"}
-              aria-label={isEn ? "Move exercise down" : "Mover ejercicio abajo"}
-            >
-              ▼
-            </button>
-          </div>
-        )}
-        <span className="block-number">{index + 1}</span>
-        <input 
-          type="text" 
-          className="block-title-input" 
-          value={getBlockDisplayName(block.name)} 
-          onChange={e => handleUpdateBlock(block.id, 'name', e.target.value)} 
-          placeholder={isEn ? "Exercise name" : "Nombre del ejercicio"} 
-        />
-        {handleDuplicateBlock && (
-          <button
+        {/* Fila 1 (DEF-M07-03): badge numérico + input de título (flex:1 >=120px) + botón borrar */}
+        <div className="block-header-row-primary">
+          <span className="block-number">{index + 1}</span>
+          <input 
+            type="text" 
+            className="block-title-input" 
+            value={getBlockDisplayName(block.name)} 
+            onChange={e => handleUpdateBlock(block.id, 'name', e.target.value)} 
+            onFocus={e => e.target.select()}
+            placeholder={isEn ? "Exercise name" : "Nombre del ejercicio"} 
+            title={getBlockDisplayName(block.name)}
+          />
+          <button 
             type="button"
-            title={isEn ? "Duplicate block" : "Duplicar bloque"}
-            onClick={() => handleDuplicateBlock(block)}
-            style={{ minWidth: '48px', minHeight: '48px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'transparent', border: '1px solid var(--border-light, #e2e8f0)', borderRadius: '8px', cursor: 'pointer', color: 'var(--text-secondary)', transition: 'all 0.2s', marginRight: '4px', flexShrink: 0 }}
+            className="btn-del-icon" 
+            onClick={() => handleDeleteBlock(block.id)}
+            style={{ minWidth: '48px', minHeight: '48px', display: 'flex', alignItems: 'center', justifyContent: 'center', touchAction: 'manipulation', flexShrink: 0 }}
+            title={isEn ? "Delete block" : "Eliminar bloque"}
+            aria-label={isEn ? "Delete block" : "Eliminar bloque"}
           >
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+            ✕
           </button>
-        )}
-        <button 
-          type="button"
-          className="btn-del-icon" 
-          onClick={() => handleDeleteBlock(block.id)}
-          style={{ minWidth: '48px', minHeight: '48px', display: 'flex', alignItems: 'center', justifyContent: 'center', touchAction: 'manipulation', flexShrink: 0 }}
-          title={isEn ? "Delete block" : "Eliminar bloque"}
-        >
-          ✕
-        </button>
+        </div>
+
+        {/* Fila 2 (DEF-M07-03): hamburguesa + ▲ + ▼ + duplicar (targets >=48dp) */}
+        <div className="block-header-row-actions">
+          <div 
+            className="drag-handle" 
+            {...attributes} 
+            {...listeners} 
+            style={{ cursor: 'grab', padding: '8px 12px', display: 'flex', alignItems: 'center', justifyContent: 'center', minWidth: '48px', minHeight: '48px', touchAction: 'none', flexShrink: 0 }}
+            title={isEn ? "Drag to reorder" : "Arrastrar para reordenar"}
+            aria-label={isEn ? "Drag to reorder" : "Arrastrar para reordenar"}
+          >
+            <span style={{ fontSize: '18px', color: 'var(--text-muted)' }}>☰</span>
+          </div>
+          {handleMoveBlock && (
+            <div className="touch-reorder-group" style={{ display: 'flex', alignItems: 'center', gap: '4px', flexShrink: 0 }}>
+              <button
+                type="button"
+                className="btn-touch-reorder btn-move-up"
+                onClick={() => handleMoveBlock(index, -1)}
+                disabled={index === 0}
+                style={{
+                  minWidth: '48px',
+                  minHeight: '48px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  background: 'transparent',
+                  border: '1px solid var(--border-color, rgba(255,255,255,0.12))',
+                  borderRadius: '8px',
+                  cursor: index === 0 ? 'not-allowed' : 'pointer',
+                  color: index === 0 ? 'var(--text-muted, #64748b)' : 'var(--text-primary, #ffffff)',
+                  opacity: index === 0 ? 0.3 : 1,
+                  fontSize: '15px',
+                  touchAction: 'manipulation'
+                }}
+                title={isEn ? "Move exercise up" : "Mover ejercicio arriba"}
+                aria-label={isEn ? "Move exercise up" : "Mover ejercicio arriba"}
+              >
+                ▲
+              </button>
+              <button
+                type="button"
+                className="btn-touch-reorder btn-move-down"
+                onClick={() => handleMoveBlock(index, 1)}
+                disabled={index >= (totalBlocks || 1) - 1}
+                style={{
+                  minWidth: '48px',
+                  minHeight: '48px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  background: 'transparent',
+                  border: '1px solid var(--border-color, rgba(255,255,255,0.12))',
+                  borderRadius: '8px',
+                  cursor: index >= (totalBlocks || 1) - 1 ? 'not-allowed' : 'pointer',
+                  color: index >= (totalBlocks || 1) - 1 ? 'var(--text-muted, #64748b)' : 'var(--text-primary, #ffffff)',
+                  opacity: index >= (totalBlocks || 1) - 1 ? 0.3 : 1,
+                  fontSize: '15px',
+                  touchAction: 'manipulation'
+                }}
+                title={isEn ? "Move exercise down" : "Mover ejercicio abajo"}
+                aria-label={isEn ? "Move exercise down" : "Mover ejercicio abajo"}
+              >
+                ▼
+              </button>
+            </div>
+          )}
+          {handleDuplicateBlock && (
+            <button
+              type="button"
+              className="btn-duplicate-block"
+              title={isEn ? "Duplicate block" : "Duplicar bloque"}
+              aria-label={isEn ? "Duplicate block" : "Duplicar bloque"}
+              onClick={() => handleDuplicateBlock(block)}
+              style={{ minWidth: '48px', minHeight: '48px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'transparent', border: '1px solid var(--border-light, #e2e8f0)', borderRadius: '8px', cursor: 'pointer', color: 'var(--text-secondary)', transition: 'all 0.2s', flexShrink: 0 }}
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+            </button>
+          )}
+        </div>
       </div>
       
       <div className="block-editor-body">

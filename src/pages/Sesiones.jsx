@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect, useMemo, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import { useSearchParams, useParams, useNavigate, useLocation } from 'react-router-dom';
 import { generateSessionPDF } from '../utils/pdfGenerator';
 import LiveFieldSession from '../components/LiveFieldSession';
@@ -1002,7 +1003,7 @@ const Sesiones = () => {
   // --- RENDER EDIT MODE ---
   if (viewMode === 'edit' && editData) {
     return (
-      <div className="sesiones-page">
+      <div className="sesiones-page session-editor-page">
         <header className="sesiones-header edit-mode-header">
           <div className="header-top">
             <div className="title-group">
@@ -1200,24 +1201,29 @@ const Sesiones = () => {
           </div>
         </div>
 
-        {/* Barra fija inferior de acciones para móvil <600px: Cancelar (40%) y Guardar (60%) */}
-        <div className="session-editor-bottom-bar">
-          <button
-            type="button"
-            className="btn-outline btn-session-cancel"
-            onClick={handleBackToList}
-          >
-            {t('common.cancel')}
-          </button>
-          <button
-            type="button"
-            className="btn-primary btn-session-save"
-            onClick={handleSaveSession}
-            disabled={isSaving}
-          >
-            {isSaving ? t('common.saving') : (isEn ? 'Save Session' : 'Guardar Sesión')}
-          </button>
-        </div>
+        {/* Barra fija inferior de acciones para móvil <600px: Cancelar (40%) y Guardar (60%) renderizada vía createPortal */}
+        {typeof document !== 'undefined' ? createPortal(
+          <div className="session-editor-bottom-bar" id="session-editor-bottom-bar-portal">
+            <button
+              type="button"
+              className="btn-outline btn-session-cancel"
+              onClick={handleBackToList}
+              data-testid="session-cancel-btn"
+            >
+              {t('common.cancel')}
+            </button>
+            <button
+              type="button"
+              className="btn-primary btn-session-save"
+              onClick={handleSaveSession}
+              disabled={isSaving}
+              data-testid="session-save-btn"
+            >
+              {isSaving ? t('common.saving') : (isEn ? 'Save Session' : 'Guardar Sesión')}
+            </button>
+          </div>,
+          document.body
+        ) : null}
 
         {/* PDF PREVIEW MODAL */}
         {pdfPreview && (

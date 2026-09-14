@@ -52,25 +52,39 @@ El módulo **Sesiones y Planificación** (`Sesiones.jsx` y `Planificacion.jsx`) 
 - Corrección sugerida: Añadir botones alternativos táctiles de flecha arriba/abajo ('▲' y '▼')
   como alternativa accesible al arrastre en pantallas menores a 600px.
 
-[DEF-M07-02] Overflow horizontal en editor de sesiones (360-412px) y título aplastado carácter por carácter
-- Severidad: S2 (Alta / Usabilidad en móvil real)
-- Estado: ✅ CORREGIDO Y VERIFICADO (Certificación 108/108 checks en matriz cross-device)
+[DEF-M07-02] Barra Cancelar/Guardar oculta tras la navegación inferior en móvil (<600px)
+- Severidad: S1 (Crítica / Bloqueante de guardado en móvil real)
+- Estado: ✅ CORREGIDO Y VERIFICADO (Certificación 108/108 checks en matriz cross-device + Playwright E2E)
 - Pasos de Repro (Original):
-  1. En móvil Android (360px-412px), navegar a /sesiones/nueva o /sesiones/:id.
-  2. El formulario desbordaba horizontalmente forzando scroll lateral indeseado.
-  3. El título h1 se colapsaba verticalmente aplastando las letras una encima de otra.
-  4. En escritorio los botones quedaban dispersos y en móvil eran difíciles de pulsar con el pulgar.
+  1. En móvil real Chrome Android (360x640 / 393x852 / 412x915), navegar a /sesiones/nueva o /sesiones/:id.
+  2. La barra inferior con los botones Cancelar y Guardar Sesión quedaba tapada detrás de la barra de navegación fija inferior (`.bottom-nav`).
+  3. Los últimos campos y ejercicios del formulario quedaban parcialmente solapados por la barra al hacer scroll.
 - Causa Raíz:
-  - Grid con `minmax(320px, 1fr)` más padding de 24px superaba los 360px del viewport.
-  - Título h1 sin `min-width: 0` ni `white-space: nowrap` forzaba rotura de palabras.
-  - Doble scroll container (`.sesiones-page` con `overflow-y: auto` dentro de `.main-wrapper`) provocaba capas duplicadas fantasma (ghosting) durante el scroll.
+  - `.session-editor-bottom-bar` utilizaba `bottom: 0` sin compensar la altura de la navegación global (`--bottom-nav-height: 64px`) ni el safe-area inset.
+  - La barra estaba renderizada dentro del contenedor interno en lugar de anclada directamente en el contexto global del viewport.
 - Solución Implementada:
-  - Cabecera en 2 niveles: Fila 1 fluida con `btn-icon-back` y `session-editor-title` con `text-overflow: ellipsis` en UNA sola línea.
-  - Barra fija inferior de acciones (`.session-editor-bottom-bar`) en <600px: Cancelar (40% ghost) y Guardar (60% primary) con touch target ≥48px y safe-area inset.
-  - Unificación de scroll container en `.main-wrapper` (anti-ghosting certificado en e2e).
-  - Formulario apilado en columna única en <600px con inputs y checklists fluidos al 100%.
-- Archivos modificados: src/pages/Sesiones.jsx, src/pages/Sesiones.css, src/components/BlockEditor.jsx
-- Pruebas E2E: e2e/session-editor-mobile-and-download.spec.js y scripts/qa-cross-device-matrix.mjs
+  - En `<600px`, la barra pasa a `position: fixed !important`, `bottom: calc(var(--bottom-nav-height, 64px) + env(safe-area-inset-bottom, 0px)) !important; z-index: 60 !important`.
+  - Renderizado mediante `createPortal(..., document.body)` para evitar que cualquier contexto de apilamiento o transform del layout interfiera con `position: fixed`.
+  - Añadido `padding-bottom: calc(var(--bottom-nav-height, 64px) + 90px + env(safe-area-inset-bottom, 0px))` al contenedor del editor para garantizar que ningún campo quede oculto.
+- Archivos modificados: src/pages/Sesiones.jsx, src/pages/Sesiones.css
+- Pruebas E2E: e2e/mobile-fixes-post-h0.spec.js y scripts/qa-cross-device-matrix.mjs
+
+[DEF-M07-03] Título de bloque en BlockEditor aplastado y controles amontonados en móvil (<600px)
+- Severidad: S2 (Alta / Usabilidad táctil en móvil real)
+- Estado: ✅ CORREGIDO Y VERIFICADO (Certificación Playwright E2E en 360px portrait)
+- Pasos de Repro (Original):
+  1. En teléfono Android en vertical (360px de ancho), abrir un bloque de ejercicio en el editor.
+  2. El título del bloque ("Calentamiento", "Posesión 5v5", etc.) quedaba comprimido a apenas 1-2 caracteres por fila o completamente ilegible.
+  3. Los botones de acción (arrastre, subir, bajar, duplicar, eliminar) se amontonaban sin espacio táctil suficiente.
+- Causa Raíz:
+  - Todos los elementos del header del bloque se disponían en una única fila horizontal con `flex-direction: row`, saturando el espacio disponible en 360px.
+- Solución Implementada:
+  - Reestructuración del header en **dos filas** exclusivamente en `<600px`:
+    - **Fila 1 (Principal)**: Badge numérico + input de título (`flex: 1`, `min-width: 120px`, elipsis en reposo y selección total automática en `onFocus`) + botón de borrado (`minWidth: 48px`, `minHeight: 48px`).
+    - **Fila 2 (Acciones)**: Hamburguesa de arrastre ☰ + botón ▲ + botón ▼ + botón duplicar (todos con touch targets ≥48dp garantizados).
+  - En pantallas `≥600px` (tablets y desktop), se conserva la disposición en fila única espaciada (`justify-content: space-between`).
+- Archivos modificados: src/components/BlockEditor.jsx, src/pages/Sesiones.css
+- Pruebas E2E: e2e/mobile-fixes-post-h0.spec.js
 ```
 
 ---

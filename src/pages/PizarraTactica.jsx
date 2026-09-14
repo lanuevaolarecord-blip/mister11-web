@@ -126,6 +126,28 @@ const PizarraTactica = () => {
   const lastStateRef = useRef(null);  // PERSISTENCIA: último estado serializado (siempre actualizado)
   const planIdRef    = useRef(null);  // PERSISTENCIA: último planId conocido (para closures)
   const deletedFrameIdsR = useRef(new Set());
+  const activeWorkerRef = useRef(null);
+  const recorderRef = useRef(null);
+  const watchdogTimerRef = useRef(null);
+  const isCancelledRef = useRef(false);
+
+  const cancelExport = useCallback(() => {
+    isCancelledRef.current = true;
+    if (watchdogTimerRef.current) {
+      clearTimeout(watchdogTimerRef.current);
+      watchdogTimerRef.current = null;
+    }
+    if (activeWorkerRef.current) {
+      activeWorkerRef.current.terminate();
+      activeWorkerRef.current = null;
+    }
+    if (recorderRef.current && recorderRef.current.state !== 'inactive') {
+      try { recorderRef.current.stop(); } catch (_) {}
+    }
+    setIsRecording(false);
+    setExportProgress(null);
+    showToast(isEn ? 'Export cancelled.' : 'Exportación cancelada.', 'info');
+  }, [isEn]);
 
   // ─── Utilidades de Escala ─────────────────────────────────────────────────
 
@@ -894,51 +916,115 @@ const PizarraTactica = () => {
       }
       
       const recorder = new MediaRecorder(stream, options);
+      recorderRef.current = recorder;
+      isCancelledRef.current = false;
       const chunks = [];
       recorder.ondataavailable = (e) => { if (e.data && e.data.size > 0) chunks.push(e.data); };
       
+      let stopped = false;
       recorder.onstop = async () => {
+        if (stopped) return;
+        stopped = true;
         recordingActive = false;
+        if (isCancelledRef.current) return;
+
         const fileType = options.mimeType && options.mimeType.includes('mp4') ? 'mp4' : 'webm';
         
         let blob = null;
+
+        const runWorkerWithWatchdog = () => new Promise((resolve, reject) => {
+          let worker = null;
+          try {
+            worker = new Worker(new URL('../workers/mp4EncoderWorker.js', import.meta.url), { type: 'module' });
+            activeWorkerRef.current = worker;
+          } catch (err) {
+            return reject(err);
+          }
+
+          const resetWatchdog = () => {
+            if (watchdogTimerRef.current) clearTimeout(watchdogTimerRef.current);
+            watchdogTimerRef.current = setTimeout(() => {
+              console.warn('[MP4 Export] Watchdog 20s expirado sin progreso del worker.');
+              if (activeWorkerRef.current) {
+                activeWorkerRef.current.terminate();
+                activeWorkerRef.current = null;
+              }
+              reject(new Error('WATCHDOG_TIMEOUT'));
+            }, 20000);
+          };
+
+          resetWatchdog();
+
+          worker.onmessage = (e) => {
+            if (isCancelledRef.current) {
+              if (watchdogTimerRef.current) clearTimeout(watchdogTimerRef.current);
+              worker.terminate();
+              activeWorkerRef.current = null;
+              return;
+            }
+            const msgType = e.data?.type;
+            if (msgType === 'PROGRESS' || msgType === 'ENCODE_PROGRESS') {
+              resetWatchdog();
+              setExportProgress(Math.min(99, Math.max(88, e.data.progress || 90)));
+            } else if (msgType === 'SUCCESS' || msgType === 'ENCODE_COMPLETE' || msgType === 'done') {
+              if (watchdogTimerRef.current) clearTimeout(watchdogTimerRef.current);
+              setExportProgress(100);
+              activeWorkerRef.current = null;
+              resolve(e.data.blob);
+              worker.terminate();
+            } else if (msgType === 'ERROR' || msgType === 'ENCODE_ERROR' || msgType === 'error') {
+              if (watchdogTimerRef.current) clearTimeout(watchdogTimerRef.current);
+              activeWorkerRef.current = null;
+              worker.terminate();
+              reject(new Error(e.data.error || e.data.reason || 'Error en codificación worker'));
+            }
+          };
+
+          worker.onerror = (err) => {
+            if (watchdogTimerRef.current) clearTimeout(watchdogTimerRef.current);
+            activeWorkerRef.current = null;
+            worker.terminate();
+            reject(err);
+          };
+
+          Promise.all(chunks.map(c => c.arrayBuffer())).then(buffers => {
+            if (isCancelledRef.current) return;
+            worker.postMessage({ type: 'ENCODE', buffers, mimeType: `video/${fileType}` }, buffers);
+          }).catch(reject);
+        });
+
         try {
           if (typeof Worker !== 'undefined') {
             setExportProgress(88);
-            const worker = new Worker(new URL('../workers/mp4EncoderWorker.js', import.meta.url), { type: 'module' });
-            const buffers = await Promise.all(chunks.map(c => c.arrayBuffer()));
-            blob = await new Promise((resolve, reject) => {
-              worker.onmessage = (e) => {
-                if (e.data.type === 'PROGRESS') {
-                  setExportProgress(Math.min(99, Math.max(88, e.data.progress)));
-                } else if (e.data.type === 'SUCCESS') {
-                  setExportProgress(100);
-                  resolve(e.data.blob);
-                  worker.terminate();
-                } else if (e.data.type === 'ERROR') {
-                  reject(new Error(e.data.error));
-                  worker.terminate();
-                }
-              };
-              worker.onerror = (err) => {
-                reject(err);
-                worker.terminate();
-              };
-              worker.postMessage({ type: 'ENCODE', buffers, mimeType: `video/${fileType}` }, buffers);
-            });
+            blob = await runWorkerWithWatchdog();
           } else {
             blob = new Blob(chunks, { type: `video/${fileType}` });
             setExportProgress(100);
           }
         } catch (workerErr) {
-          console.warn('[MP4 Export] Worker fallback:', workerErr);
-          blob = new Blob(chunks, { type: `video/${fileType}` });
-          setExportProgress(100);
+          console.warn('[MP4 Export] Falló worker o expiró watchdog (activando fallback):', workerErr);
+          // Fallback automático reintentando UNA vez con codificador main-thread (Blob directo)
+          try {
+            blob = new Blob(chunks, { type: `video/${fileType}` });
+            if (blob && blob.size > 0) {
+              setExportProgress(100);
+            } else {
+              throw new Error('Blob fallback vacío');
+            }
+          } catch (fbErr) {
+            console.error('[MP4 Export] Fallback también falló:', fbErr);
+            showToast(isEn ? 'Could not complete video; try with fewer steps.' : 'No se pudo completar el vídeo; intenta con menos pasos.', 'error');
+            setIsRecording(false);
+            setExportProgress(null);
+            return;
+          }
         }
-        
+
+        if (isCancelledRef.current) return;
+
         if (chunks.length === 0 || !blob || blob.size === 0) {
-          console.error('[MP4 Export] El blob de video está vacío. Puede que el canvas no tenga contenido o que MediaRecorder no capturó frames.');
-          showToast(isEn ? 'Error: the recorded video is empty. Make sure you have at least 2 frames with content.' : 'Error: el video grabado está vacío. Asegúrate de tener al menos 2 frames con contenido.', 'error');
+          console.error('[MP4 Export] El blob de video está vacío.');
+          showToast(isEn ? 'Could not complete video; try with fewer steps.' : 'No se pudo completar el vídeo; intenta con menos pasos.', 'error');
           setIsRecording(false);
           setExportProgress(null);
           return;
@@ -1655,6 +1741,7 @@ const PizarraTactica = () => {
           const objsActuales = fc.getObjects().filter(o => o.data?.type !== 'field');
           objsActuales.forEach(o => fc.remove(o));
           syncingR.current = true;
+          const fr = frRef.current;
           drawPlayers(fc, fr, fieldType, { local: localFormation, rival: rivalFormation }, isSwapped);
           syncingR.current = false;
           attachListeners();
@@ -1750,6 +1837,7 @@ const PizarraTactica = () => {
               const objsActuales = fc.getObjects().filter(o => o.data?.type !== 'field');
               objsActuales.forEach(o => fc.remove(o));
               syncingR.current = true;
+              const fr = frRef.current;
               drawPlayers(fc, fr, fieldType, { local: localFormation, rival: rivalFormation }, isSwapped);
               syncingR.current = false;
               attachListeners();
@@ -3538,6 +3626,28 @@ const PizarraTactica = () => {
           <div style={{ fontSize: '1.15rem', fontWeight: 800, color: '#10b981' }}>
             {exportProgress}%
           </div>
+          <button
+            type="button"
+            className="btn-cancel-export"
+            onClick={cancelExport}
+            style={{
+              marginTop: 18,
+              padding: '10px 20px',
+              minHeight: 44,
+              minWidth: 120,
+              borderRadius: 8,
+              border: '1px solid rgba(239, 68, 68, 0.4)',
+              background: 'rgba(239, 68, 68, 0.1)',
+              color: '#ef4444',
+              fontWeight: 700,
+              fontSize: '13px',
+              cursor: 'pointer',
+              textTransform: 'uppercase',
+              letterSpacing: '0.05em'
+            }}
+          >
+            {t('common.cancel')}
+          </button>
         </div>
       </div>
     )}

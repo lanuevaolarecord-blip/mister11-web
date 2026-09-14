@@ -148,7 +148,27 @@ async function run() {
         if (!isBarVisible) {
           console.warn(`   ⚠️ [Barra inferior] No visible en ${vp.name}`);
         } else {
-          console.log(`   ✅ [Barra inferior] Visible y fijada en <600px`);
+          const box = await bottomBar.boundingBox();
+          if (box) {
+            const aboveBottomNav = (box.y + box.height) <= vp.height + 2;
+            const notHidden = box.y >= 0 && box.height >= 40;
+            if (aboveBottomNav && notHidden) {
+              console.log(`   ✅ [Barra inferior] Visible, fijada y sobre nav en ${vp.name} (y=${box.y.toFixed(0)}, h=${box.height.toFixed(0)}, vp=${vp.width}x${vp.height})`);
+            } else {
+              console.warn(`   ⚠️ [Barra inferior] Posición anómala en ${vp.name}: y=${box.y}, h=${box.height}, vp=${vp.width}x${vp.height}`);
+            }
+          }
+          const barButtons = bottomBar.locator('button');
+          const btnCount = await barButtons.count();
+          for (let b = 0; b < btnCount; b++) {
+            const btnBox = await barButtons.nth(b).boundingBox();
+            if (btnBox) {
+              const isTargetOk = btnBox.height >= 44 && btnBox.width >= 44;
+              if (isTargetOk) {
+                console.log(`   ✅ [Touch Target] Botón de acción cumple touch target (w=${btnBox.width.toFixed(0)}px, h=${btnBox.height.toFixed(0)}px)`);
+              }
+            }
+          }
         }
       }
 

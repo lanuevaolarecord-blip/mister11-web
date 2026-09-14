@@ -51,6 +51,7 @@ La **Pizarra Táctica** (`PizarraTactica.jsx`) es una de las herramientas insign
 ```
 [DEF-M05-01] Tiempo de codificación MP4 prolongado en animaciones de más de 8 fotogramas
 - Severidad: S3 (Media / Rendimiento)
+- Estado: ✅ CORREGIDO con Web Worker dedicado (`src/workers/mp4EncoderWorker.js`).
 - Pasos de Repro:
   1. Crear una secuencia táctica compleja con 10 fotogramas y 22 fichas en movimiento.
   2. Pulsar "Exportar MP4".
@@ -58,7 +59,27 @@ La **Pizarra Táctica** (`PizarraTactica.jsx`) es una de las herramientas insign
      de canvas a través de MediaRecorder toma aproximadamente 18 segundos sin mostrar
      un porcentaje de avance en el loader.
 - Archivo responsable: src/pages/PizarraTactica.jsx (handleExportVideo)
-- Corrección sugerida: Implementar Web Worker dedicado para la captura y añadir barra porcentual (1% a 100%).
+- Corrección implementada: Web Worker dedicado para codificación y barra porcentual continua.
+
+[DEF-M05-02] Codificación MP4 colgada indefinidamente en 88% en móvil real y ausencia de cancelación
+- Severidad: S1 (Crítica / Bloqueante de exportación en móvil)
+- Estado: ✅ CORREGIDO Y VERIFICADO (Certificación Playwright E2E)
+- Pasos de Repro (Original):
+  1. En móvil real Chrome, crear una animación de pizarra táctica y pulsar "Exportar MP4".
+  2. El progreso avanzaba hasta 88% y quedaba congelado de forma indefinida.
+  3. El overlay de carga no tenía botón de cancelar ni escape, forzando a recargar la app y perdiendo el trabajo no guardado.
+- Causa Raíz:
+  - Discrepancia en el protocolo de mensajería: `PizarraTactica.jsx` enviaba `{ type: 'ENCODE' }` y esperaba respuestas `{ type: 'PROGRESS' }` / `{ type: 'SUCCESS' }`.
+  - El worker `mp4EncoderWorker.js` escuchaba `{ type: 'ENCODE_VIDEO' }` y emitía `{ type: 'ENCODE_COMPLETE' }`. Al no coincidir el tipo de mensaje, el worker descartaba la petición y la Promise principal quedaba pendiente de forma perpetua.
+  - Ausencia de watchdog timer contra workers colgados o contextos WebGL/MediaRecorder sin soporte en ciertos navegadores móviles.
+- Solución Implementada:
+  - Unificación bidireccional del protocolo en `mp4EncoderWorker.js`: compatibilidad dual transparente con `ENCODE`/`ENCODE_VIDEO`, `PROGRESS`/`ENCODE_PROGRESS` y `SUCCESS`/`ENCODE_COMPLETE`/`done`.
+  - Estructura `try/catch/finally` estricta con emisión garantizada de `progress: 100` y envío de `SUCCESS` antes de cualquier terminación del worker (cero `self.close()` prematuros).
+  - Watchdog de 20 segundos en el hilo principal: si en 20s no hay progreso, se aborta el worker y se activa fallback automático en hilo principal con `MediaRecorder`.
+  - Si el fallback también falla, se emite toast de error honesto y se cierra el overlay inmediatamente (prohibido cualquier spinner infinito).
+  - Botón "Cancelar" (`.btn-cancel-export`) siempre visible en el overlay con parada limpia de recorder/worker y liberación de recursos.
+- Archivos modificados: src/workers/mp4EncoderWorker.js, src/pages/PizarraTactica.jsx
+- Pruebas E2E: e2e/mobile-fixes-post-h0.spec.js
 ```
 
 ---

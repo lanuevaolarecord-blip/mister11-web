@@ -1,5 +1,5 @@
-import React, { useState, useRef, useEffect, useMemo } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import React, { useState, useRef, useEffect, useMemo, useCallback } from 'react';
+import { useSearchParams, useParams, useNavigate, useLocation } from 'react-router-dom';
 import { generateSessionPDF } from '../utils/pdfGenerator';
 import LiveFieldSession from '../components/LiveFieldSession';
 import { useSessions } from '../hooks/useSessions';
@@ -106,6 +106,9 @@ const Sesiones = () => {
   const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
   
   const [searchParams, setSearchParams] = useSearchParams();
+  const { id: urlSessionId } = useParams();
+  const navigate = useNavigate();
+  const location = useLocation();
   const [shareModal, setShareModal] = useState({ open: false, session: null, shareUrl: '', shareId: '', loading: false, copied: false });
   const [importModal, setImportModal] = useState({ open: false, activeTab: 'link', inputVal: '', loading: false, previewSession: null, file: null, error: '' });
 
@@ -456,28 +459,41 @@ const Sesiones = () => {
     downloadICSFile(`calendario_entrenamientos_${activeTeam?.nombre?.replace(/\s+/g, '_') || 'equipo'}.ics`, icsContent);
   };
 
+  const initNewSessionData = useCallback(() => ({
+    title: '',
+    date: new Date().toISOString().split('T')[0],
+    time: '18:00',
+    category: 'Táctica',
+    intensity: 'Media',
+    duration: 90,
+    players: (players || []).map(p => p.id), // All selected by default
+    files: [],
+    objectives: '',
+    materials: 'Balones, petos, conos, setas',
+    linkedPizarraId: '',
+    blocks: [
+      { id: Date.now() + Math.random(), name: isEn ? 'Warm-up' : 'Calentamiento', duration: 15, type: isEn ? 'Physical' : 'Física', description: '', imageUrl: null, imagenProtocolo: null }
+    ]
+  }), [players, isEn]);
+
   const handleCreateNew = () => {
     if (!isPro && sessions.length >= limits.SESSIONS) {
       setUpgradeModal({ open: true, message: isEn ? `You have reached the limit of ${limits.SESSIONS} sessions on the free plan.` : `Has alcanzado el límite de ${limits.SESSIONS} sesiones del plan gratuito.` });
       return;
     }
-    setEditData({
-      title: '',
-      date: new Date().toISOString().split('T')[0],
-      time: '18:00',
-      category: 'Táctica',
-      intensity: 'Media',
-      duration: 90,
-      players: players.map(p => p.id), // All selected by default
-      files: [],
-      objectives: '',
-      materials: 'Balones, petos, conos, setas',
-      linkedPizarraId: '',
-      blocks: [
-        { id: Date.now() + Math.random(), name: isEn ? 'Warm-up' : 'Calentamiento', duration: 15, type: isEn ? 'Physical' : 'Física', description: '' }
-      ]
-    });
+    setEditData(initNewSessionData());
     setViewMode('edit');
+    if (!location.pathname.endsWith('/sesiones/nueva')) {
+      navigate('/sesiones/nueva');
+    }
+  };
+
+  const handleBackToList = () => {
+    setViewMode('list');
+    setEditData(null);
+    if (location.pathname !== '/sesiones') {
+      navigate('/sesiones');
+    }
   };
 
   const handleEditSession = (sessionToEdit, e) => {
@@ -551,6 +567,9 @@ const Sesiones = () => {
       setEditData(cleanEditData);
       setSelectedSession(null);
       setViewMode('edit');
+      if (sess.id && !location.pathname.includes(`/sesiones/${sess.id}`)) {
+        navigate(`/sesiones/${sess.id}`);
+      }
       setTimeout(() => {
         window.scrollTo({ top: 0, behavior: 'smooth' });
       }, 50);
@@ -559,6 +578,32 @@ const Sesiones = () => {
       showToast(isEn ? `Error opening editor: ${err.message || err}` : `Error al abrir editor: ${err.message || err}`, 'error');
     }
   };
+
+  // Sincronización automática de URL con modo edición
+  useEffect(() => {
+    if (location.pathname.endsWith('/sesiones/nueva')) {
+      if (viewMode !== 'edit' || (editData && editData.id)) {
+        if (!isPro && sessions.length >= limits.SESSIONS) {
+          setUpgradeModal({
+            open: true,
+            message: isEn
+              ? `You have reached the limit of ${limits.SESSIONS} sessions on the free plan.`
+              : `Has alcanzado el límite de ${limits.SESSIONS} sesiones del plan gratuito.`
+          });
+          return;
+        }
+        setEditData(initNewSessionData());
+        setViewMode('edit');
+      }
+    } else if (urlSessionId && urlSessionId !== 'nueva') {
+      if (!loadingSessions && sessions && sessions.length > 0) {
+        const found = sessions.find(s => String(s.id) === String(urlSessionId));
+        if (found && (!editData || String(editData.id) !== String(found.id))) {
+          handleEditSession(found);
+        }
+      }
+    }
+  }, [location.pathname, urlSessionId, loadingSessions, sessions, initNewSessionData]);
 
   const handleDeleteSession = async (id) => {
     const confirmDelete = await showConfirm(isEn ? 'Confirm deletion' : 'Confirmar eliminación', isEn ? 'Delete this session?' : '¿Eliminar esta sesión?');
@@ -805,6 +850,10 @@ const Sesiones = () => {
         }
       }
       setViewMode('list');
+      setEditData(null);
+      if (location.pathname !== '/sesiones') {
+        navigate('/sesiones');
+      }
     } catch (error) {
       console.error('[Sesiones] Error al guardar sesión:', error);
       showToast(error?.message || (isEn ? 'Error saving the session' : 'Error al guardar la sesión'), 'error');
@@ -946,12 +995,31 @@ const Sesiones = () => {
         <header className="sesiones-header edit-mode-header">
           <div className="header-top">
             <div className="title-group">
-              <button className="btn-icon-back" onClick={() => setViewMode('list')}>← {t('common.back')}</button>
-              <h1>{editData.title || (isEn ? 'New Session' : 'Nueva Sesión')}</h1>
+              <button
+                type="button"
+                className="btn-icon-back"
+                onClick={handleBackToList}
+              >
+                ← {t('common.back')}
+              </button>
+              <h1 className="session-editor-title" title={editData.title || (isEn ? 'New Session' : 'Nueva Sesión')}>
+                {editData.title || (isEn ? 'New Session' : 'Nueva Sesión')}
+              </h1>
             </div>
-            <div className="sesiones-page-actions">
-              <button className="btn-outline" onClick={() => setViewMode('list')}>{t('common.cancel')}</button>
-              <button className="btn-primary" onClick={handleSaveSession} disabled={isSaving}>
+            <div className="sesiones-page-actions desktop-only-actions">
+              <button
+                type="button"
+                className="btn-outline btn-session-cancel"
+                onClick={handleBackToList}
+              >
+                {t('common.cancel')}
+              </button>
+              <button
+                type="button"
+                className="btn-primary btn-session-save"
+                onClick={handleSaveSession}
+                disabled={isSaving}
+              >
                 {isSaving ? t('common.saving') : (isEn ? 'Save Session' : 'Guardar Sesión')}
               </button>
             </div>
@@ -1117,6 +1185,25 @@ const Sesiones = () => {
               )}
             </div>
           </div>
+        </div>
+
+        {/* Barra fija inferior de acciones para móvil <600px: Cancelar (40%) y Guardar (60%) */}
+        <div className="session-editor-bottom-bar">
+          <button
+            type="button"
+            className="btn-outline btn-session-cancel"
+            onClick={handleBackToList}
+          >
+            {t('common.cancel')}
+          </button>
+          <button
+            type="button"
+            className="btn-primary btn-session-save"
+            onClick={handleSaveSession}
+            disabled={isSaving}
+          >
+            {isSaving ? t('common.saving') : (isEn ? 'Save Session' : 'Guardar Sesión')}
+          </button>
         </div>
 
         {/* PDF PREVIEW MODAL */}

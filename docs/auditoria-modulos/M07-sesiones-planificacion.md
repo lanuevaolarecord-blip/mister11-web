@@ -51,6 +51,26 @@ El módulo **Sesiones y Planificación** (`Sesiones.jsx` y `Planificacion.jsx`) 
 - Archivo responsable: src/pages/Sesiones.jsx (DraggableExerciseList)
 - Corrección sugerida: Añadir botones alternativos táctiles de flecha arriba/abajo ('▲' y '▼')
   como alternativa accesible al arrastre en pantallas menores a 600px.
+
+[DEF-M07-02] Overflow horizontal en editor de sesiones (360-412px) y título aplastado carácter por carácter
+- Severidad: S2 (Alta / Usabilidad en móvil real)
+- Estado: ✅ CORREGIDO Y VERIFICADO (Certificación 108/108 checks en matriz cross-device)
+- Pasos de Repro (Original):
+  1. En móvil Android (360px-412px), navegar a /sesiones/nueva o /sesiones/:id.
+  2. El formulario desbordaba horizontalmente forzando scroll lateral indeseado.
+  3. El título h1 se colapsaba verticalmente aplastando las letras una encima de otra.
+  4. En escritorio los botones quedaban dispersos y en móvil eran difíciles de pulsar con el pulgar.
+- Causa Raíz:
+  - Grid con `minmax(320px, 1fr)` más padding de 24px superaba los 360px del viewport.
+  - Título h1 sin `min-width: 0` ni `white-space: nowrap` forzaba rotura de palabras.
+  - Doble scroll container (`.sesiones-page` con `overflow-y: auto` dentro de `.main-wrapper`) provocaba capas duplicadas fantasma (ghosting) durante el scroll.
+- Solución Implementada:
+  - Cabecera en 2 niveles: Fila 1 fluida con `btn-icon-back` y `session-editor-title` con `text-overflow: ellipsis` en UNA sola línea.
+  - Barra fija inferior de acciones (`.session-editor-bottom-bar`) en <600px: Cancelar (40% ghost) y Guardar (60% primary) con touch target ≥48px y safe-area inset.
+  - Unificación de scroll container en `.main-wrapper` (anti-ghosting certificado en e2e).
+  - Formulario apilado en columna única en <600px con inputs y checklists fluidos al 100%.
+- Archivos modificados: src/pages/Sesiones.jsx, src/pages/Sesiones.css, src/components/BlockEditor.jsx
+- Pruebas E2E: e2e/session-editor-mobile-and-download.spec.js y scripts/qa-cross-device-matrix.mjs
 ```
 
 ---

@@ -4,7 +4,9 @@
   min-height: 100%;
   background-color: var(--bg-primary);
   padding: 24px;
-  overflow-y: auto;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 /* --- HEADERS --- */
@@ -22,12 +24,18 @@
   box-shadow: 0 4px 12px rgba(27, 58, 45, 0.05);
   margin-bottom: 24px;
   border: 1px solid var(--border-color);
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 .header-top {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
 }
 
 .header-top h1 {
@@ -39,20 +47,40 @@
 
 .title-group {
   display: flex;
-  flex-direction: column;
-  gap: 8px;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+  min-width: 0;
 }
 
-.title-group h1 {
+.session-editor-title {
   margin: 0;
+  font-family: var(--font-title);
+  font-size: 1.6rem;
+  color: var(--text-primary);
+  flex: 1;
+  min-width: 0;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  line-height: 1.2;
 }
 
 .btn-icon-back {
   color: var(--text-primary);
-  font-size: 13px;
+  font-size: 14px;
   font-weight: bold;
   text-align: left;
   transition: opacity 0.2s;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  min-width: 48px;
+  min-height: 48px;
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+  white-space: nowrap;
 }
 .btn-icon-back:hover {
   opacity: 0.8;
@@ -62,6 +90,11 @@
   display: flex;
   align-items: center;
   gap: 12px;
+  flex-shrink: 0;
+}
+
+.session-editor-bottom-bar {
+  display: none;
 }
 
 /* Tab Switcher */
@@ -314,9 +347,12 @@
 /* --- EDIT MODE (EDITOR) --- */
 .editor-content {
   display: grid;
-  grid-template-columns: minmax(320px, 1fr) minmax(320px, 1fr);
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   gap: 24px;
   flex: 1;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
   overflow: visible;
   margin-top: 16px;
 }
@@ -327,6 +363,10 @@
   flex-direction: column;
   gap: 24px;
   padding-right: 4px;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
 }
 
 .edit-section {
@@ -335,6 +375,10 @@
   border-radius: 16px;
   box-shadow: 0 4px 12px rgba(27, 58, 45, 0.03);
   border: 1px solid var(--border-color);
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
 }
 
 .edit-section h3 {
@@ -364,15 +408,19 @@
   display: flex;
   gap: 16px;
   margin-bottom: 16px;
+  width: 100%;
+  box-sizing: border-box;
 }
 .form-group {
   flex: 1;
   display: flex;
   flex-direction: column;
   gap: 6px;
+  min-width: 0;
+  box-sizing: border-box;
 }
 .form-group.mini { flex: unset; width: 120px; }
-.form-group.full { margin-bottom: 16px; }
+.form-group.full { margin-bottom: 16px; width: 100%; box-sizing: border-box; }
 
 .form-group label { font-size: 12px; font-weight: bold; color: var(--text-secondary); }
 .form-group input, .form-group select, .form-group textarea {
@@ -384,6 +432,9 @@
   color: var(--text-secondary);
   background: var(--bg-primary);
   transition: border-color 0.2s;
+  width: 100%;
+  box-sizing: border-box;
+  max-width: 100%;
 }
 .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
   outline: none;
@@ -405,27 +456,76 @@
 /* Players Checklist */
 .players-checklist {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
   gap: 10px;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 .player-check-item {
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 10px;
+  padding: 10px 12px;
   background: var(--bg-primary);
   border: 1px solid var(--border-color);
   border-radius: 8px;
   cursor: pointer;
   transition: all 0.2s;
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 .player-check-item.selected {
   background: rgba(76, 175, 125, 0.1);
   border-color: var(--accent);
 }
 .player-check-item input { display: none; }
-.p-num { font-family: var(--font-numbers); color: var(--gold); font-size: 1.2rem; font-weight: bold; width: 20px; text-align: center;}
-.p-name { font-size: 12px; font-weight: 600; color: var(--text-secondary); }
+.p-num { font-family: var(--font-numbers); color: var(--gold); font-size: 1.2rem; font-weight: bold; width: 22px; text-align: center; flex-shrink: 0; }
+.p-name { font-size: 12px; font-weight: 600; color: var(--text-secondary); flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* Botones de Imagen en Bloques */
+.block-image-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.btn-block-img-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 48px;
+  padding: 10px 16px;
+  min-width: 0;
+  box-sizing: border-box;
+  border-radius: 8px;
+  background: transparent;
+  border: 1.5px solid var(--primary);
+  color: var(--primary);
+  cursor: pointer;
+  font-weight: bold;
+  font-size: 13px;
+  text-transform: uppercase;
+  transition: all 0.2s;
+}
+
+.btn-block-img-action:hover {
+  background: rgba(27, 58, 45, 0.08);
+}
+
+.btn-block-img-action .btn-img-icon {
+  flex-shrink: 0;
+}
+
+.btn-block-img-action .btn-img-text {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
 
 /* Blocks Builder */
 .blocks-header {
@@ -556,6 +656,197 @@
 @media (max-width: 860px) {
   .editor-content {
     grid-template-columns: 1fr;
+    width: 100%;
+    max-width: 100%;
+  }
+}
+
+@media (max-width: 600px) {
+  .sesiones-page {
+    padding: 12px 12px 100px 12px;
+    max-width: 100vw;
+    box-sizing: border-box;
+  }
+
+  .edit-mode-header {
+    padding: 12px 14px;
+    margin-bottom: 16px;
+    border-radius: 12px;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+
+  .header-top {
+    flex-direction: row;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    min-width: 0;
+  }
+
+  /* Fila 1 obligatoria: botón Volver + título de sesión con text-overflow:ellipsis en UNA sola línea */
+  .title-group {
+    flex-direction: row;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    min-width: 0;
+    flex: 1;
+  }
+
+  .btn-icon-back {
+    font-size: 13px;
+    min-width: 44px;
+    min-height: 48px;
+    padding: 0 4px;
+    flex-shrink: 0;
+  }
+
+  .session-editor-title {
+    font-size: 1.15rem;
+    flex: 1;
+    min-width: 0;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+  }
+
+  .desktop-only-actions {
+    display: none !important;
+  }
+
+  /* Fila 2 / Barra inferior fija obligatoria: CANCELAR (40%) + GUARDAR SESIÓN (60%) */
+  .session-editor-bottom-bar {
+    display: flex !important;
+    position: fixed !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    width: 100vw !important;
+    box-sizing: border-box !important;
+    z-index: 100 !important;
+    padding: 12px 16px !important;
+    padding-bottom: max(12px, env(safe-area-inset-bottom)) !important;
+    background: var(--bg-card) !important;
+    border-top: 1px solid var(--border-color) !important;
+    box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.15) !important;
+    gap: 10px !important;
+    align-items: center !important;
+  }
+
+  .session-editor-bottom-bar .btn-session-cancel {
+    flex: 0 0 calc(40% - 5px) !important;
+    width: calc(40% - 5px) !important;
+    min-height: 48px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    text-transform: uppercase !important;
+    font-weight: 700 !important;
+    font-size: 13px !important;
+    border-radius: 8px !important;
+    border: 1.5px solid var(--border-color) !important;
+    background: transparent !important;
+    color: var(--text-secondary) !important;
+    padding: 8px !important;
+    cursor: pointer !important;
+    box-sizing: border-box !important;
+  }
+
+  .session-editor-bottom-bar .btn-session-save {
+    flex: 0 0 calc(60% - 5px) !important;
+    width: calc(60% - 5px) !important;
+    min-height: 48px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    text-transform: uppercase !important;
+    font-weight: 800 !important;
+    font-size: 13px !important;
+    border-radius: 8px !important;
+    border: none !important;
+    background: var(--primary) !important;
+    color: #ffffff !important;
+    padding: 8px !important;
+    box-shadow: 0 4px 12px rgba(27, 58, 45, 0.3) !important;
+    cursor: pointer !important;
+    box-sizing: border-box !important;
+  }
+
+  /* Formularios: UNA sola columna en <600px */
+  .form-row {
+    flex-direction: column !important;
+    gap: 12px !important;
+    margin-bottom: 12px !important;
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
+  .form-group {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+  }
+
+  .form-group.mini {
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
+  .form-group input,
+  .form-group select,
+  .form-group textarea {
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+    min-height: 48px !important;
+    font-size: 14px !important;
+  }
+
+  .edit-section {
+    padding: 16px !important;
+    border-radius: 12px !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+  }
+
+  .players-checklist {
+    grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)) !important;
+    gap: 8px !important;
+    width: 100% !important;
+  }
+
+  .block-editor-card {
+    border-radius: 12px !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+  }
+
+  .block-editor-header {
+    padding: 10px 12px !important;
+    gap: 8px !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+  }
+
+  .block-editor-body {
+    padding: 14px 12px !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .block-image-actions {
+    flex-direction: column !important;
+    gap: 8px !important;
+  }
+
+  .btn-block-img-action {
+    width: 100% !important;
   }
 }
 

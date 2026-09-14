@@ -1586,6 +1586,12 @@ export const translations = {
     'download.image_success': '✅ Imagen exportada exitosamente.',
     'download.csv_success': '✅ Plantilla exportada exitosamente.',
     'download.video_success': '✅ Animación exportada exitosamente.',
+    'download.lineup_saved': '✅ Alineación guardada en {path}',
+    'download.lineup_downloading': '⬇️ Descargando alineación: {filename}',
+    'download.save_error_share_fallback': '⚠️ No se pudo guardar automáticamente; usa Compartir.',
+    'download.lineup_share_title': 'Míster11 — Alineación {team}',
+    'download.lineup_share_dialog': 'Guardar o compartir alineación...',
+    'download.generic_error': 'Error al exportar alineación',
 
     // ── Notificaciones Push ──────────────────────────────────
     'push.foreground_toast': '🔔 {title}: {body}',
@@ -3793,6 +3799,12 @@ export const translations = {
     'download.image_success': '✅ Image exported successfully.',
     'download.csv_success': '✅ Template exported successfully.',
     'download.video_success': '✅ Animation exported successfully.',
+    'download.lineup_saved': '✅ Lineup saved to {path}',
+    'download.lineup_downloading': '⬇️ Downloading lineup: {filename}',
+    'download.save_error_share_fallback': '⚠️ Could not save file automatically; please use Share.',
+    'download.lineup_share_title': 'Mister11 — Lineup {team}',
+    'download.lineup_share_dialog': 'Save or share lineup...',
+    'download.generic_error': 'Error exporting lineup',
 
     // ── Push Notifications ───────────────────────────────────
     'push.foreground_toast': '🔔 {title}: {body}',

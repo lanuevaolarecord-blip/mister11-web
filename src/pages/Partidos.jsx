@@ -9,6 +9,7 @@ import { useSettings } from '../hooks/useSettings';
 import { useTeams } from '../hooks/useTeams';
 import { generatePostMatchReportPDF, generateMatchesCalendarPDF } from '../utils/pdfGenerator';
 import { generateGoogleCalendarUrl, generateICSContent, downloadICSFile } from '../utils/calendarHelper';
+import { downloadLineupPNG } from '../utils/download';
 import { PREDEFINED_FORMATIONS } from '../utils/formaciones';
 import { useCustomFormations } from '../hooks/useCustomFormations';
 import { useMatchEvents } from '../hooks/useMatchEvents';
@@ -1073,22 +1074,13 @@ const Partidos = () => {
       });
 
       const dataUrl = canvas.toDataURL('image/png');
-      const rivalName = (matchData.rival || (isGlobalEn ? 'match' : 'partido'))
-        .trim()
-        .replace(/[^a-zA-Z0-9_\-]/g, '_');
-      const lineupName = (matchData.lineup || '4-3-3').replace(/[^a-zA-Z0-9_\-]/g, '_');
-      const filename = `alineacion_${rivalName}_${lineupName}_${Date.now()}.png`;
-
-      const link = document.createElement('a');
-      link.href = dataUrl;
-      link.download = filename;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      showToast(isGlobalEn ? 'Lineup exported successfully' : 'Alineación exportada con éxito', 'success');
+      await downloadLineupPNG(dataUrl, {
+        teamName: activeTeam?.nombre || activeTeam?.name || 'equipo',
+        matchDate: matchData?.date || matchData?.fecha,
+      });
     } catch (err) {
       console.error('Error al descargar PNG de alineación:', err);
-      showToast(isGlobalEn ? 'Error exporting lineup' : 'Error al exportar alineación', 'error');
+      showToast(t('download.generic_error'), 'error');
     } finally {
       if (exportClone && exportClone.parentNode) {
         exportClone.parentNode.removeChild(exportClone);

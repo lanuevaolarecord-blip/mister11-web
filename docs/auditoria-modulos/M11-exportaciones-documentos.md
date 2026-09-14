@@ -87,6 +87,27 @@ TODAS LAS PRUEBAS DE RASTERIZADO Y CANONICAL SVG SUPERADAS CON ÉXITO
 - Archivo responsable: src/utils/matchPdfReport.js (generateMatchPdfReport)
 - Corrección sugerida: Ejecutar la rasterización secuencial en chunks de requestAnimationFrame
   o transferir el canvas a un OffscreenCanvas en background.
+
+[DEF-M11-02] Descarga simulada de alineación PNG en tablet y app nativa (Capacitor/WebView descarta anchor.download)
+- Severidad: S2 (Alta / Pérdida de función en tablet y Android nativo)
+- Estado: ✅ CORREGIDO Y VERIFICADO (Guardado real certificado por plataforma)
+- Pasos de Repro (Original):
+  1. En tablet o app Android nativa (Capacitor), acceder a /partidos -> pestaña ALINEACIÓN.
+  2. Pulsar botón "Descargar Alineación PNG".
+  3. La app mostraba un toast de éxito afirmando que se guardó el archivo.
+  4. Al revisar la carpeta Descargas o galería del dispositivo, el archivo NO existía porque WebView descarta los clicks sintéticos en enlaces `<a download>`.
+- Causa Raíz:
+  - Implementación web genérica (`link.click()`) ciega al entorno de ejecución nativo.
+  - Ausencia de verificación real de escritura física (`Filesystem.stat({ size > 0 })`).
+  - Toast de éxito prematuro sin comprobar la existencia del archivo en el sistema de archivos del SO.
+- Solución Implementada:
+  - Función centralizada `downloadLineupPNG(dataUrl, metadata)` en `src/utils/download.js` con detección de plataforma:
+    1. Capacitor Nativo: Escribe en `Directory.Documents/Mister11/{filename}` mediante `@capacitor/filesystem`. Realiza verificación obligatoria con `Filesystem.stat` asegurando `stat.size > 0` antes de emitir confirmación. Si Documents falla o está restringido, escribe en `Directory.Cache` y dispara el Share sheet nativo del sistema con `{ files: [uri] }`.
+    2. Web moderna / PWA: Conversión de base64 a `Blob` binario con comprobación de `blob.size > 0`, descarga mediante Object URL y `<a>` con click & revoke seguro.
+    3. WebView móvil/tablet sin API de descarga directa: Fallback honesto a `navigator.share({ files: [file] })` o toast de error/alerta con clave de diccionario internacionalizada (`download.save_error_share_fallback`).
+  - Cero ternarios inline de idioma en toasts: 100% claves `download.*` con interpolación `{path}` y `{filename}` (gate `ci-i18n-gate` en 0 offenders).
+- Archivos modificados: src/utils/download.js, src/pages/Partidos.jsx, src/i18n/translations.js
+- Pruebas E2E: e2e/session-editor-mobile-and-download.spec.js (mock con verificación Filesystem.stat > 0 y assert de rechazo honesto ante tamaño 0).
 ```
 
 ---

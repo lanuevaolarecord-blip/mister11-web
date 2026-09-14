@@ -8,21 +8,43 @@ import { getPlayerIdentitiesByEmail } from '../utils/playerIdentity';
 import { showToast } from '../utils/toast';
 import { t } from '../i18n/index.js';
 
+const MOCK_GUEST_USER = {
+  uid: 'invitado-local',
+  email: 'invitado@mister11.app',
+  displayName: 'Entrenador Invitado',
+  isAnonymous: true
+};
+
+const MOCK_GUEST_TEAM = {
+  id: 'team-invitado',
+  nombre: 'FC Invitado',
+  name: 'FC Invitado',
+  categoria: 'Juvenil',
+  category: 'Juvenil',
+  temporada: '2025-26',
+  colorLocal: '#10B981',
+  colorVisitante: '#059669',
+  color: '#10B981',
+  escudo: '',
+  source: 'personal'
+};
+
 const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(null);
+  const isLocalGuestInit = typeof window !== 'undefined' && localStorage.getItem('mister11_active_user_uid') === 'invitado-local';
+  const [user, setUser] = useState(() => isLocalGuestInit ? MOCK_GUEST_USER : null);
   const [userProfile, setUserProfile] = useState(null);
   const [club, setClub] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(() => !isLocalGuestInit);
   
   // FASE 1: Estados Duales por Rol (Coach vs Player)
-  const [activeCoachTeamId, setActiveCoachTeamId] = useState(() => localStorage.getItem('mister11_active_coach_team') || null);
+  const [activeCoachTeamId, setActiveCoachTeamId] = useState(() => localStorage.getItem('mister11_active_coach_team') || (isLocalGuestInit ? 'team-invitado' : null));
   const [activePlayerTeamId, setActivePlayerTeamId] = useState(() => localStorage.getItem('mister11_active_player_team') || null);
   const [showRoleSelectorModal, setShowRoleSelectorModal] = useState({ isOpen: false, role: null });
 
-  const [personalTeams, setPersonalTeams] = useState([]);
-  const [personalTeamsLoaded, setPersonalTeamsLoaded] = useState(false);
+  const [personalTeams, setPersonalTeams] = useState(() => isLocalGuestInit ? [MOCK_GUEST_TEAM] : []);
+  const [personalTeamsLoaded, setPersonalTeamsLoaded] = useState(() => isLocalGuestInit);
   const [clubTeams, setClubTeams] = useState([]);
   const [clubTeamsLoaded, setClubTeamsLoaded] = useState(false);
   const [sharedTeams, setSharedTeams] = useState([]);
@@ -30,7 +52,7 @@ export const AuthProvider = ({ children }) => {
   const [activeMode, setActiveModeState] = useState(() => localStorage.getItem('mister11_active_mode') || null);
 
   // Ref para saber si estamos en modo invitado sin depender del estado (evita loops)
-  const isGuestRef = React.useRef(false);
+  const isGuestRef = React.useRef(isLocalGuestInit);
 
   useEffect(() => {
     // Procesar credenciales de retorno si el usuario viene de un flujo OAuth Redirect
@@ -85,7 +107,10 @@ export const AuthProvider = ({ children }) => {
         }
       } else {
         // Si estamos en modo invitado, preservar el estado local
-        if (isGuestRef.current) return;
+        if (isGuestRef.current || localStorage.getItem('mister11_active_user_uid') === 'invitado-local') {
+          setLoading(false);
+          return;
+        }
         localStorage.removeItem('mister11_active_user_uid');
         setUser(null);
         setActiveCoachTeamId(null);

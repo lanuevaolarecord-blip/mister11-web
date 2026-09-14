@@ -132,6 +132,137 @@ export const downloadImage = async (dataUrl, filename) => {
   }
 };
 
+// ─── Alineación PNG con Verificación Real por Plataforma ───────────────────────
+export const downloadLineupPNG = async (dataUrl, metadata = {}) => {
+  if (!dataUrl) {
+    showToast(t('download.generic_error'), 'error');
+    return { success: false, error: 'No data URL provided' };
+  }
+
+  const { teamName = 'equipo', matchDate } = metadata;
+  const cleanTeam = String(teamName || 'equipo')
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9_\-]/g, '_')
+    .replace(/_+/g, '_');
+  const cleanDate = (matchDate || new Date().toISOString().split('T')[0])
+    .trim()
+    .replace(/[^a-zA-Z0-9_\-]/g, '_');
+  const filename = `mister11-alineacion_${cleanTeam}_${cleanDate}.png`;
+  const base64Data = dataUrl.includes(',') ? dataUrl.split(',')[1] : dataUrl;
+
+  // 1. Capacitor Nativo (Android / iOS app / tablet)
+  if (Capacitor.isNativePlatform()) {
+    try {
+      // Intentar primero guardar en Documents/Mister11/
+      await Filesystem.writeFile({
+        path: `Mister11/${filename}`,
+        data: base64Data,
+        directory: Directory.Documents,
+        recursive: true,
+      });
+
+      // Verificación estricta de metadata antes de emitir éxito
+      const stat = await Filesystem.stat({
+        path: `Mister11/${filename}`,
+        directory: Directory.Documents,
+      });
+
+      if (stat && stat.size > 0) {
+        showToast(t('download.lineup_saved', { path: `Documentos/Mister11/${filename}` }), 'success');
+        return { success: true, path: `Documentos/Mister11/${filename}`, filename };
+      }
+      throw new Error('Stat size 0 after write');
+    } catch (fsErr) {
+      console.warn('[downloadLineupPNG] Filesystem en Documents no verificado, probando Cache + Share:', fsErr);
+    }
+
+    // Fallback Capacitor: Guardar en Cache y abrir Share sheet
+    try {
+      const uri = await _saveToCache(filename, base64Data);
+      const cacheStat = await Filesystem.stat({
+        path: filename,
+        directory: Directory.Cache,
+      });
+
+      if (!cacheStat || cacheStat.size === 0) {
+        throw new Error('Cache stat empty');
+      }
+
+      await Share.share({
+        title: t('download.lineup_share_title', { team: cleanTeam }),
+        files: [uri],
+        dialogTitle: t('download.lineup_share_dialog'),
+      });
+
+      showToast(t('download.lineup_saved', { path: `Descargas/${filename}` }), 'success');
+      return { success: true, path: `Descargas/${filename}`, filename };
+    } catch (shareErr) {
+      if (shareErr?.name === 'AbortError' || shareErr?.message?.includes('canceled')) {
+        return { success: false, cancelled: true };
+      }
+      console.error('[downloadLineupPNG] Error en guardado nativo:', shareErr);
+      showToast(t('download.save_error_share_fallback'), 'error');
+      return { success: false, error: shareErr };
+    }
+  }
+
+  // 2. Web moderna (Desktop, Tablet navegador, Móvil PWA)
+  try {
+    const byteCharacters = atob(base64Data);
+    const byteNumbers = new Array(byteCharacters.length);
+    for (let i = 0; i < byteCharacters.length; i++) {
+      byteNumbers[i] = byteCharacters.charCodeAt(i);
+    }
+    const byteArray = new Uint8Array(byteNumbers);
+    const blob = new Blob([byteArray], { type: 'image/png' });
+
+    if (!blob || blob.size === 0) {
+      throw new Error('Blob generation failed');
+    }
+
+    // Si estamos en un WebView móvil/tablet que soporte navigator.share con archivos
+    const isMobileOrTablet = typeof navigator !== 'undefined' && /android|iphone|ipad|ipod/i.test(navigator.userAgent || '');
+    if (isMobileOrTablet && navigator.canShare && typeof File !== 'undefined') {
+      try {
+        const file = new File([blob], filename, { type: 'image/png' });
+        if (navigator.canShare({ files: [file] })) {
+          await navigator.share({
+            title: t('download.lineup_share_title', { team: cleanTeam }),
+            files: [file],
+          });
+          showToast(t('download.lineup_saved', { path: `Descargas/${filename}` }), 'success');
+          return { success: true, path: `Descargas/${filename}`, filename };
+        }
+      } catch (shareErr) {
+        if (shareErr?.name === 'AbortError') {
+          return { success: false, cancelled: true };
+        }
+        console.warn('[downloadLineupPNG] navigator.share fallo en web, usando anchor download:', shareErr);
+      }
+    }
+
+    const blobUrl = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = blobUrl;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+
+    setTimeout(() => {
+      document.body.removeChild(link);
+      URL.revokeObjectURL(blobUrl);
+    }, 500);
+
+    showToast(t('download.lineup_saved', { path: `Descargas/${filename}` }), 'success');
+    return { success: true, path: `Descargas/${filename}`, filename };
+  } catch (webErr) {
+    console.error('[downloadLineupPNG] Error en guardado web:', webErr);
+    showToast(t('download.save_error_share_fallback'), 'error');
+    return { success: false, error: webErr };
+  }
+};
+
 // ─── Web fallbacks ────────────────────────────────────────────────────────────
 const _downloadJSONWeb = (jsonString, filename) => {
   try {

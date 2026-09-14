@@ -382,6 +382,10 @@ function App() {
             <Route path="pizarra" element={<ErrorBoundary><PizarraTactica /></ErrorBoundary>} />
             <Route path="equipo" element={<ErrorBoundary><MiEquipo /></ErrorBoundary>} />
             <Route path="sesiones" element={<ErrorBoundary><Sesiones /></ErrorBoundary>} />
+            <Route path="sesiones/nueva" element={<ErrorBoundary><Sesiones /></ErrorBoundary>} />
+            <Route path="sesiones/:id" element={<ErrorBoundary><Sesiones /></ErrorBoundary>} />
+            <Route path="portal" element={<Navigate to="/player-dashboard" replace />} />
+            <Route path="ajustes" element={<Navigate to="/admin" state={{ activeTab: 'ajustes' }} replace />} />
             <Route path="planificacion" element={<ErrorBoundary><Planificacion /></ErrorBoundary>} />
             <Route path="tests" element={<ErrorBoundary><Tests /></ErrorBoundary>} />
             <Route path="partidos" element={<ErrorBoundary><Partidos /></ErrorBoundary>} />

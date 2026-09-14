@@ -16,6 +16,14 @@ export const CANONICAL_TESTS_MAP = {
   't4': { name: 'Sprint 30m', type: 'fisico', category: 'Velocidad', unit: 'seg', isTime: true },
   't5': { name: 'T-Test (Agilidad)', type: 'fisico', category: 'Agilidad', unit: 'seg', isTime: true },
   't6': { name: 'Salto CMJ', type: 'fisico', category: 'Fuerza', unit: 'cm', isTime: false },
+  't_salto_horizontal': {
+    name: 'Salto Horizontal',
+    type: 'fisico',
+    category: 'Fuerza',
+    unit: 'cm',
+    isTime: false,
+    source: 'Fuente: Real Federación Española de Fútbol (RFEF) - Baremos de Condición Física en Fútbol Formativo Femenino (Salto Horizontal Pies Juntos).'
+  },
   
   // Pruebas Técnicas
   't7': { name: 'Conducción conos', type: 'tecnico', category: 'Técnica', unit: 'seg', isTime: true },
@@ -89,6 +97,25 @@ export const normalizeTestValue = (val, testId = '', unit = '', rawItem = {}) =>
   if (id === 't5' || id.includes('t_test') || id.includes('ttest')) {
     // T-Test agilidad: 9.0s = 98, 10.5s = 82, 12.0s = 65, 14.0s = 45
     return Math.min(99, Math.max(10, Math.round(100 - (num - 8.5) * 10)));
+  }
+  if (id === 't_salto_horizontal' || id.includes('horizontal') || (id.includes('salto') && !id.includes('cmj') && !id.includes('vertical') && num > 70)) {
+    // DEF-M08-01: Baremo de salto horizontal pies juntos diferenciado por género.
+    // Fuente: Real Federación Española de Fútbol (RFEF) - Baremos de Condición Física en Fútbol Formativo Femenino (Salto Horizontal Pies Juntos).
+    const isFemale = rawItem?.gender === 'female' || rawItem?.gender === 'femenino' || rawItem?.genero === 'femenino' || rawItem?.genero === 'female' || rawItem?.sex === 'F';
+    if (isFemale) {
+      if (num >= 185) return 99;
+      if (num >= 170) return Math.min(99, Math.round(90 + ((num - 170) / 15) * 9));
+      if (num >= 160) return Math.round(82 + ((num - 160) / 10) * 8);
+      if (num >= 155) return Math.round(75 + ((num - 155) / 5) * 7);
+      if (num >= 140) return Math.round(50 + ((num - 140) / 15) * 25);
+      return Math.min(99, Math.max(10, Math.round((num / 140) * 50)));
+    } else {
+      if (num >= 215) return 99;
+      if (num >= 195) return Math.round(90 + ((num - 195) / 20) * 9);
+      if (num >= 180) return Math.round(75 + ((num - 180) / 15) * 15);
+      if (num >= 165) return Math.round(60 + ((num - 165) / 15) * 15);
+      return Math.min(99, Math.max(10, Math.round((num / 165) * 60)));
+    }
   }
   if (id === 't6' || id.includes('cmj') || id.includes('salto')) {
     // Salto CMJ: 20cm = 45, 35cm = 72, 45cm = 88, 55cm = 99

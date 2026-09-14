@@ -270,10 +270,16 @@
 }
 
 .shot-modal-footer {
+  position: sticky;
+  bottom: 0;
+  background: var(--bg-card, #13241C);
+  z-index: 20;
   padding: 12px 18px 16px;
   border-top: 1px solid rgba(255, 255, 255, 0.08);
   display: flex;
-  justify-content: flex-end;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
 }
 
 .shot-btn-cancel {

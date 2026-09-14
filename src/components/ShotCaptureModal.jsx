@@ -475,6 +475,32 @@ export const ShotCaptureModal = ({
           <button type="button" className="shot-btn-cancel" onClick={onClose}>
             {t('shot.cancel')}
           </button>
+          <button
+            type="button"
+            className="shot-btn-save"
+            onClick={() => finishAndDispatch(shooterComfort || 'comodo', saveDifficulty || 'normal', result || 'fuera', selectedPlayerId, asistenciaId)}
+            disabled={!result}
+            style={{
+              minHeight: '48px',
+              padding: '0 24px',
+              borderRadius: '8px',
+              border: 'none',
+              background: result ? '#1B4D24' : 'rgba(255, 255, 255, 0.1)',
+              color: result ? '#FFFFFF' : 'var(--text-muted, #94A3B8)',
+              fontWeight: 800,
+              fontSize: '13px',
+              letterSpacing: '0.5px',
+              textTransform: 'uppercase',
+              cursor: result ? 'pointer' : 'not-allowed',
+              transition: 'all 0.15s ease',
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '6px'
+            }}
+          >
+            <span>💾</span> {isEn ? 'SAVE SHOT' : 'GUARDAR TIRO'}
+          </button>
         </div>
       </div>
     </div>

@@ -677,3 +677,19 @@
   font-size: 13px;
 }
 
+/* DEF-M02-01: Ellipsis + Tooltip al toque en nombre de rival >32 caracteres */
+.upcoming-match-rival-title {
+  max-width: 140px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  display: block;
+}
+
+@media (max-width: 480px) {
+  .upcoming-match-rival-title {
+    max-width: 180px;
+  }
+}
+
+

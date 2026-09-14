@@ -321,12 +321,10 @@ const LandingPage = () => {
         <div className="pricing-container">
           <div className="pricing-header-block">
             <h2 className="pricing-title">
-              {isEn ? 'Transparent Pricing for Coaches & Academies' : 'Planes Transparentes para Entrenadores y Clubes'}
+              {t('pricing.header.title')}
             </h2>
             <p className="pricing-subtitle">
-              {isEn 
-                ? 'All prices include VAT. Annual season pass grants 10 full months of competition with July & August completely free.' 
-                : 'Precios con IVA incluido. El pase de temporada cubre los 10 meses de competición oficial con Julio y Agosto gratis.'}
+              {t('pricing.header.subtitle')}
             </p>
 
             {/* Selector de Ciclo de Facturación */}
@@ -336,15 +334,15 @@ const LandingPage = () => {
                 className={`billing-switch-btn ${billingCycle === 'season' ? 'active' : ''}`}
                 onClick={() => setBillingCycle('season')}
               >
-                {isEn ? 'Full Season Pass (10 Months)' : 'Pase Temporada (10 Meses)'}
-                <span className="badge-discount">{isEn ? '2 MONTHS FREE' : '2 MESES GRATIS'}</span>
+                {t('pricing.billing.season')}
+                <span className="badge-discount">{t('pricing.billing.discountBadge')}</span>
               </button>
               <button
                 type="button"
                 className={`billing-switch-btn ${billingCycle === 'monthly' ? 'active' : ''}`}
                 onClick={() => setBillingCycle('monthly')}
               >
-                {isEn ? 'Monthly' : 'Mensual'}
+                {t('pricing.billing.monthly')}
               </button>
             </div>
           </div>
@@ -354,28 +352,28 @@ const LandingPage = () => {
             {/* PLAN GRATUITO */}
             <div className="pricing-card card-free">
               <div className="card-header">
-                <span className="plan-name">{PLANS.free.nombre}</span>
-                <p className="plan-tagline">{PLANS.free.tagline}</p>
+                <span className="plan-name">{t('pricing.plan.free.name')}</span>
+                <p className="plan-tagline">{t('pricing.plan.free.tagline')}</p>
                 <div className="price-display">
                   <span className="price-amount">0 €</span>
-                  <span className="price-freq">{isEn ? '/ forever' : '/ para siempre'}</span>
+                  <span className="price-freq">{t('pricing.freq.forever')}</span>
                 </div>
-                <span className="vat-notice">{isEn ? 'VAT Included' : 'IVA incluido'}</span>
+                <span className="vat-notice">{t('pricing.vat.included')}</span>
               </div>
 
               {/* 3 Atributos Decisivos */}
               <ul className="decisive-attributes-list">
                 <li>
                   <Users size={16} className="attr-icon" />
-                  <span><strong>1 {isEn ? 'Team' : 'Equipo'}</strong> (23 {isEn ? 'players' : 'jugadores'}) · 1 {isEn ? 'Staff' : 'Entrenador'}</span>
+                  <span><strong>{t('pricing.free.attr1_strong')}</strong> {t('pricing.free.attr1_text')}</span>
                 </li>
                 <li>
                   <Activity size={16} className="attr-icon" />
-                  <span><strong>10 {isEn ? 'Sessions' : 'Sesiones'}</strong> · {isEn ? 'Basic Tactics Board' : 'Pizarra básica'} · 5 IA/{isEn ? 'mo' : 'mes'}</span>
+                  <span><strong>{t('pricing.free.attr2_strong')}</strong> · {t('pricing.free.attr2_text')}</span>
                 </li>
                 <li>
                   <ShieldCheck size={16} className="attr-icon" />
-                  <span><strong>{isEn ? 'Digital Signatures' : 'Firma Digital RGPD'}</strong> {isEn ? 'included' : 'incluida'}</span>
+                  <span><strong>{t('pricing.free.attr3_strong')}</strong> {t('pricing.free.attr3_text')}</span>
                 </li>
               </ul>
 
@@ -384,28 +382,26 @@ const LandingPage = () => {
                 className="btn-plan-cta btn-plan-free"
                 onClick={() => handleStart('free')}
               >
-                {isEn ? 'START FREE' : 'COMENZAR GRATIS'}
+                {t('pricing.btn.startFree')}
               </button>
             </div>
 
             {/* PLAN PRO (RECOMENDADO MÍSTER) */}
             <div className="pricing-card card-pro featured">
-              <div className="badge-card-corner">{isEn ? 'MOST POPULAR COACH' : 'MÁS ELEGIDO ENTRENADORES'}</div>
+              <div className="badge-card-corner">{t('pricing.badge.mostPopularCoach')}</div>
               <div className="card-header">
-                <span className="plan-name">{PLANS.pro.nombre}</span>
-                <p className="plan-tagline">{PLANS.pro.tagline}</p>
+                <span className="plan-name">{t('pricing.plan.pro.name')}</span>
+                <p className="plan-tagline">{t('pricing.plan.pro.tagline')}</p>
                 <div className="price-display">
                   <span className="price-amount">
                     {billingCycle === 'season' ? `${PLANS.pro.precioTemporada} €` : `${PLANS.pro.precioMes} €`}
                   </span>
                   <span className="price-freq">
-                    {billingCycle === 'season' ? (isEn ? '/ season' : '/ temporada') : (isEn ? '/ month' : '/ mes')}
+                    {billingCycle === 'season' ? t('pricing.freq.season') : t('pricing.freq.month')}
                   </span>
                 </div>
                 <span className="vat-notice">
-                  {billingCycle === 'season' 
-                    ? (isEn ? 'Equivalent to 6.90 €/mo (2 months free)' : 'Equivale a 6,90 €/mes · IVA incluido')
-                    : (isEn ? 'Billed monthly · Cancel anytime' : 'Facturado mensual · Cancela cuando quieras')}
+                  {billingCycle === 'season' ? t('pricing.pro.vatSeason') : t('pricing.pro.vatMonthly')}
                 </span>
               </div>
 
@@ -413,15 +409,15 @@ const LandingPage = () => {
               <ul className="decisive-attributes-list">
                 <li>
                   <Users size={16} className="attr-icon" />
-                  <span><strong>{isEn ? 'Up to 3 Teams' : 'Hasta 3 Equipos'}</strong> · {isEn ? 'Unlimited Sessions & Live Stats' : 'Sesiones ilimitadas y Live Stats'}</span>
+                  <span><strong>{t('pricing.pro.attr1_strong')}</strong> · {t('pricing.pro.attr1_text')}</span>
                 </li>
                 <li>
                   <FileText size={16} className="attr-icon" />
-                  <span><strong>{isEn ? 'Official 7-Page PDF Report' : 'Acta Oficial PDF 7 Páginas'}</strong> · xG-Lite (105:68) &amp; {isEn ? 'GK Metrics' : 'Portería'}</span>
+                  <span><strong>{t('pricing.pro.attr2_strong')}</strong> · {t('pricing.pro.attr2_text')}</span>
                 </li>
                 <li>
                   <Sparkles size={16} className="attr-icon" />
-                  <span><strong>{isEn ? 'Player Portal' : 'Portal del Jugador'}</strong> · {isEn ? 'Daily Wellness, Tests & Unlimited AI' : 'Wellness diario, Tests e IA ilimitada'}</span>
+                  <span><strong>{t('pricing.pro.attr3_strong')}</strong> · {t('pricing.pro.attr3_text')}</span>
                 </li>
               </ul>
 
@@ -430,25 +426,25 @@ const LandingPage = () => {
                 className="btn-plan-cta btn-plan-pro"
                 onClick={() => handleStart('pro')}
               >
-                {isEn ? 'TRY 7 DAYS FREE' : 'PROBAR 7 DÍAS GRATIS'}
+                {t('pricing.btn.tryPro')}
               </button>
             </div>
 
             {/* CLUB STARTER */}
             <div className="pricing-card card-club">
               <div className="card-header">
-                <span className="plan-name">{PLANS.club_starter.nombre}</span>
-                <p className="plan-tagline">{PLANS.club_starter.tagline}</p>
+                <span className="plan-name">{t('pricing.plan.clubStarter.name')}</span>
+                <p className="plan-tagline">{t('pricing.plan.clubStarter.tagline')}</p>
                 <div className="price-display">
                   <span className="price-amount">
                     {billingCycle === 'season' ? `${PLANS.club_starter.precioTemporada} €` : `${PLANS.club_starter.precioMes} €`}
                   </span>
                   <span className="price-freq">
-                    {billingCycle === 'season' ? (isEn ? '/ season' : '/ temp.') : (isEn ? '/ mes' : '/ mes')}
+                    {billingCycle === 'season' ? t('pricing.freq.seasonShort') : t('pricing.freq.month')}
                   </span>
                 </div>
                 <span className="vat-notice">
-                  {isEn ? `~5.50 €/coach/mo · VAT included` : `~5,50 €/entrenador/mes · IVA incluido`}
+                  {t('pricing.starter.vat')}
                 </span>
               </div>
 
@@ -456,15 +452,15 @@ const LandingPage = () => {
               <ul className="decisive-attributes-list">
                 <li>
                   <Users size={16} className="attr-icon" />
-                  <span><strong>{isEn ? 'Up to 6 Teams' : 'Hasta 6 Equipos'}</strong> · {isEn ? 'Up to 4 Staff per team' : 'Hasta 4 staff por equipo'}</span>
+                  <span><strong>{t('pricing.starter.attr1_strong')}</strong> · {t('pricing.starter.attr1_text')}</span>
                 </li>
                 <li>
                   <Layers size={16} className="attr-icon" />
-                  <span><strong>{isEn ? 'All PRO Features Included' : 'Todo lo incluido en el Plan PRO'}</strong></span>
+                  <span><strong>{t('pricing.starter.attr2_strong')}</strong></span>
                 </li>
                 <li>
                   <Trophy size={16} className="attr-icon" />
-                  <span><strong>{isEn ? 'Academy Multi-Coach Panel' : 'Panel Multi-Entrenador con Roles'}</strong></span>
+                  <span><strong>{t('pricing.starter.attr3_strong')}</strong></span>
                 </li>
               </ul>
 
@@ -473,26 +469,26 @@ const LandingPage = () => {
                 className="btn-plan-cta btn-plan-club"
                 onClick={() => handleStart('club_starter')}
               >
-                {isEn ? 'SELECT STARTER' : 'SELECCIONAR STARTER'}
+                {t('pricing.btn.selectStarter')}
               </button>
             </div>
 
             {/* CLUB PRO */}
             <div className="pricing-card card-club featured-club">
-              <div className="badge-card-corner">{isEn ? 'BEST VALUE FOR ACADEMIES' : 'MÁS POPULAR CLUBES'}</div>
+              <div className="badge-card-corner">{t('pricing.badge.bestValueAcademies')}</div>
               <div className="card-header">
-                <span className="plan-name">{PLANS.club_pro.nombre}</span>
-                <p className="plan-tagline">{PLANS.club_pro.tagline}</p>
+                <span className="plan-name">{t('pricing.plan.clubPro.name')}</span>
+                <p className="plan-tagline">{t('pricing.plan.clubPro.tagline')}</p>
                 <div className="price-display">
                   <span className="price-amount">
                     {billingCycle === 'season' ? `${PLANS.club_pro.precioTemporada} €` : `${PLANS.club_pro.precioMes} €`}
                   </span>
                   <span className="price-freq">
-                    {billingCycle === 'season' ? (isEn ? '/ season' : '/ temp.') : (isEn ? '/ mes' : '/ mes')}
+                    {billingCycle === 'season' ? t('pricing.freq.seasonShort') : t('pricing.freq.month')}
                   </span>
                 </div>
                 <span className="vat-notice">
-                  {isEn ? `~3.00 €/coach/mo · VAT included` : `~3,00 €/entrenador/mes · IVA incluido`}
+                  {t('pricing.clubPro.vat')}
                 </span>
               </div>
 
@@ -500,15 +496,15 @@ const LandingPage = () => {
               <ul className="decisive-attributes-list">
                 <li>
                   <Users size={16} className="attr-icon" />
-                  <span><strong>{isEn ? 'Up to 15 Teams' : 'Hasta 15 Equipos'}</strong> · {isEn ? 'Up to 10 Staff per team' : 'Hasta 10 staff por equipo'}</span>
+                  <span><strong>{t('pricing.clubPro.attr1_strong')}</strong> · {t('pricing.clubPro.attr1_text')}</span>
                 </li>
                 <li>
                   <Layers size={16} className="attr-icon" />
-                  <span><strong>{isEn ? 'Consolidated PDF/CSV Reports' : 'Informes Consolidados de Club'}</strong></span>
+                  <span><strong>{t('pricing.clubPro.attr2_strong')}</strong></span>
                 </li>
                 <li>
                   <Trophy size={16} className="attr-icon" />
-                  <span><strong>{isEn ? 'Youth Academy Historical Hub' : 'Histórico Global de Cantera y 24/7'}</strong></span>
+                  <span><strong>{t('pricing.clubPro.attr3_strong')}</strong></span>
                 </li>
               </ul>
 
@@ -517,39 +513,39 @@ const LandingPage = () => {
                 className="btn-plan-cta btn-plan-club"
                 onClick={() => handleStart('club_pro')}
               >
-                {isEn ? 'SELECT CLUB PRO' : 'SELECCIONAR CLUB PRO'}
+                {t('pricing.btn.selectClubPro')}
               </button>
             </div>
 
             {/* CLUB PREMIUM */}
             <div className="pricing-card card-club">
               <div className="card-header">
-                <span className="plan-name">{PLANS.club_premium.nombre}</span>
-                <p className="plan-tagline">{PLANS.club_premium.tagline}</p>
+                <span className="plan-name">{t('pricing.plan.clubPremium.name')}</span>
+                <p className="plan-tagline">{t('pricing.plan.clubPremium.tagline')}</p>
                 <div className="price-display">
                   <span className="price-amount">
                     {billingCycle === 'season' ? `${PLANS.club_premium.precioTemporada} €` : `${PLANS.club_premium.precioMes} €`}
                   </span>
                   <span className="price-freq">
-                    {billingCycle === 'season' ? (isEn ? '/ season' : '/ temp.') : (isEn ? '/ mes' : '/ mes')}
+                    {billingCycle === 'season' ? t('pricing.freq.seasonShort') : t('pricing.freq.month')}
                   </span>
                 </div>
-                <span className="vat-notice">{isEn ? 'VAT Included · VIP Dedicated' : 'IVA incluido · Soporte VIP'}</span>
+                <span className="vat-notice">{t('pricing.premium.vat')}</span>
               </div>
 
               {/* 3 Atributos Decisivos */}
               <ul className="decisive-attributes-list">
                 <li>
                   <Users size={16} className="attr-icon" />
-                  <span><strong>{isEn ? 'Up to 40 Teams' : 'Hasta 40 Equipos'}</strong> · <strong>{isEn ? 'Unlimited Staff' : 'Staff Ilimitado'}</strong></span>
+                  <span><strong>{t('pricing.premium.attr1_strong')}</strong> · <strong>{t('pricing.premium.attr1_text')}</strong></span>
                 </li>
                 <li>
                   <Layers size={16} className="attr-icon" />
-                  <span><strong>{isEn ? 'Multi-Site Academy Licenses' : 'Licencias Multi-Sede y Códigos'}</strong></span>
+                  <span><strong>{t('pricing.premium.attr2_strong')}</strong></span>
                 </li>
                 <li>
                   <Trophy size={16} className="attr-icon" />
-                  <span><strong>{isEn ? 'Dedicated VIP Onboarding' : 'Onboarding Personalizado y VIP'}</strong></span>
+                  <span><strong>{t('pricing.premium.attr3_strong')}</strong></span>
                 </li>
               </ul>
 
@@ -558,7 +554,7 @@ const LandingPage = () => {
                 className="btn-plan-cta btn-plan-club"
                 onClick={() => handleStart('club_premium')}
               >
-                {isEn ? 'SELECT PREMIUM' : 'SELECCIONAR PREMIUM'}
+                {t('pricing.btn.selectPremium')}
               </button>
             </div>
           </div>
@@ -569,19 +565,17 @@ const LandingPage = () => {
       <section id="comparison" className="landing-comparison-section">
         <div className="comparison-container">
           <h3 className="comparison-title">
-            {isEn ? 'Detailed Feature Comparison Matrix' : 'Matriz Comparativa Detallada de Características'}
+            {t('pricing.comparison.title')}
           </h3>
           <p className="comparison-subtitle">
-            {isEn 
-              ? 'Examine every single feature across individual and academy tiers with code-verified entitlements.' 
-              : 'Analiza cada característica en detalle entre planes individuales y de club con entitlements verificados.'}
+            {t('pricing.comparison.subtitle')}
           </p>
 
           <div className="comparison-table-wrapper">
             <table className="comparison-table">
               <thead>
                 <tr>
-                  <th className="th-feature">{isEn ? 'Module & Feature' : 'Módulo y Función'}</th>
+                  <th className="th-feature">{t('pricing.comparison.thModule')}</th>
                   <th className="th-plan">{PLANS.free.nombre}</th>
                   <th className="th-plan featured-col">{PLANS.pro.nombre}</th>
                   <th className="th-plan">{PLANS.club_starter.nombre}</th>
@@ -618,28 +612,26 @@ const LandingPage = () => {
               <span className="footer-brand-name">MÍSTER 11</span>
             </div>
             <p className="footer-tagline">
-              {isEn 
-                ? 'The professional intelligence platform for grassroots and amateur football.' 
-                : 'La plataforma de inteligencia técnica para el fútbol base y amateur.'}
+              {t('pricing.footer.tagline')}
             </p>
           </div>
 
           <div className="footer-links-block">
             <a href="/legal/consentimiento.html" target="_blank" rel="noopener noreferrer">
-              {isEn ? 'RGPD & Privacy' : 'RGPD y Privacidad'}
+              {t('pricing.footer.rgpd')}
             </a>
             <span className="footer-dot">·</span>
             <a href="/login">
-              {isEn ? 'Coach Login' : 'Acceso Entrenadores'}
+              {t('pricing.footer.login')}
             </a>
             <span className="footer-dot">·</span>
             <a href="/instalar">
-              {isEn ? 'Install App / PWA' : 'Instalar App / PWA'}
+              {t('pricing.footer.install')}
             </a>
           </div>
         </div>
         <div className="footer-bottom">
-          <p>© {new Date().getFullYear()} Míster 11. {isEn ? 'All rights reserved.' : 'Todos los derechos reservados.'} Paleta Oficial Tierra y Campo.</p>
+          <p>© {new Date().getFullYear()} Míster 11. {t('pricing.footer.rights')}</p>
         </div>
       </footer>
     </div>

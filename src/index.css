@@ -1640,5 +1640,15 @@ body.dark .btn-modal-cancel:hover {
   box-shadow: 0 6px 16px rgba(220, 38, 38, 0.4) !important;
 }
 
+/* DEF-M10-01: gap 8px + padding 6px 12px en selector de tema */
+.theme-toggle-container {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  border-radius: 8px;
+}
+
+
 
 

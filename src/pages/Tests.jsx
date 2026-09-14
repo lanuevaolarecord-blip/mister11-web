@@ -36,6 +36,7 @@ const DEFAULT_TESTS = [
   { id: 't4', type: 'fisico', category: 'Velocidad', name: 'Sprint 30m', unit: 'seg', desc: 'Velocidad máxima lanzada.', imagenProtocolo: '/img/tests/sprint_30m.png', protocol: { ejecucion: 'Sprint de 30 metros al máximo esfuerzo desde posición estática.', medicion: 'Tiempo en segundos cronometrado.', objetivo: 'Medir la velocidad máxima y capacidad anaeróbica aláctica.' } },
   { id: 't5', type: 'fisico', category: 'Agilidad', name: 'T-Test', unit: 'seg', desc: 'Desplazamientos frontales, laterales y de espaldas.', imagenProtocolo: '/img/tests/t_test.png', protocol: { ejecucion: 'Sprint 10m al frente, desplazamiento lateral 5m a la izquierda, 10m a la derecha, 5m al centro y 10m de espaldas al inicio.', medicion: 'Tiempo en segundos. Se penaliza si se cruzan las piernas en el lateral.', objetivo: 'Evaluar la agilidad, equilibrio y cambios de dirección rápidos.' } },
   { id: 't6', type: 'fisico', category: 'Fuerza', name: 'Salto CMJ', unit: 'cm', desc: 'Salto vertical con contramovimiento.', imagenProtocolo: '/img/tests/salto_cmj.png', protocol: { ejecucion: 'Manos en las caderas. Bajar el centro de gravedad (flexión de rodillas) e inmediatamente saltar lo más alto posible.', medicion: 'Altura del salto en centímetros (usar plataforma de contacto o app de video).', objetivo: 'Medir la potencia explosiva del tren inferior (fuerza reactiva).' } },
+  { id: 't_salto_horizontal', type: 'fisico', category: 'Fuerza', name: 'Salto Horizontal', unit: 'cm', desc: 'Salto horizontal a pies juntos.', imagenProtocolo: '/img/tests/salto_cmj.png', source: 'Fuente: Real Federación Española de Fútbol (RFEF) - Baremos de Condición Física en Fútbol Formativo Femenino (Salto Horizontal Pies Juntos).', protocol: { ejecucion: 'Pies juntos tras la línea de batida. Salto impulsando con ambos brazos.', medicion: 'Distancia en cm hasta el talón más retrasado. Distinción por género RFEF.', objetivo: 'Medir la potencia explosiva horizontal del tren inferior.', baremoTooltip: 'Fuente: Real Federación Española de Fútbol (RFEF) - Baremos de Condición Física en Fútbol Formativo Femenino (Salto Horizontal Pies Juntos).' } },
   { id: 't7', type: 'fisico', category: 'Técnica', name: 'Conducción conos', unit: 'seg', desc: 'Slalom entre conos con finalización.', imagenProtocolo: '/img/tests/conduccion_conos.png', protocol: { ejecucion: 'Conducir el balón haciendo slalom entre 5 conos separados por 2 metros y dar un pase a un objetivo.', medicion: 'Tiempo total en segundos desde inicio hasta que el pase entra al objetivo.', objetivo: 'Evaluar el control del balón en velocidad y precisión final.' } },
   { id: 't8', type: 'fisico', category: 'Técnica', name: 'Pase a portería', unit: 'pts', desc: 'Precisión de pase a zonas objetivo (10 pases).', imagenProtocolo: '/img/tests/pase_porteria.png', protocol: { ejecucion: '10 pases desde la frontal del área hacia pequeñas porterías o zonas marcadas.', medicion: '1 punto por cada acierto. Total de 10 puntos posibles.', objetivo: 'Medir la precisión del golpeo y concentración técnica.' } },
 
@@ -2372,6 +2373,32 @@ const Tests = () => {
                 <div className="test-meta" style={{ marginTop: '16px' }}>
                   <span><strong>{isEn ? 'Unit of measurement:' : 'Unidad de medida:'}</strong> {selectedTestDetail.unit}</span>
                 </div>
+
+                {(selectedTestDetail.id?.includes('salto') || selectedTestDetail.name?.toLowerCase().includes('salto') || selectedTestDetail.source) && (
+                  <div
+                    className="baremo-rfef-tooltip-box"
+                    title={isEn
+                      ? "Source: Real Federación Española de Fútbol (RFEF) - Physical Fitness Standards in Youth Female Football (Standing Long Jump)."
+                      : "Fuente: Real Federación Española de Fútbol (RFEF) - Baremos de Condición Física en Fútbol Formativo Femenino (Salto Horizontal Pies Juntos)."}
+                    style={{
+                      marginTop: '16px',
+                      padding: '12px 14px',
+                      background: 'rgba(16, 185, 129, 0.08)',
+                      border: '1px solid #10B981',
+                      borderRadius: '8px'
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontWeight: 800, color: '#10B981', marginBottom: '4px', fontSize: '12px' }}>
+                      <span>🏅</span>
+                      <span>{isEn ? 'Official RFEF Benchmark (Male & Female Percentiles)' : 'Baremo Oficial RFEF (Percentiles Masculino y Femenino)'}</span>
+                    </div>
+                    <p style={{ margin: 0, fontSize: '11.5px', color: 'var(--text-secondary)' }}>
+                      {isEn
+                        ? 'Source: Real Federación Española de Fútbol (RFEF) - Physical Fitness Standards in Youth Female Football (Standing Long Jump).'
+                        : 'Fuente: Real Federación Española de Fútbol (RFEF) - Baremos de Condición Física en Fútbol Formativo Femenino (Salto Horizontal Pies Juntos).'}
+                    </p>
+                  </div>
+                )}
               </div>
 
               {/* Botones de acción integrados en la zona de scroll con colchón pb-24 */}

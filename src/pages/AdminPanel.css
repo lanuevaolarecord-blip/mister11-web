@@ -492,6 +492,16 @@
   border-bottom: 1px solid rgba(255,255,255,0.05);
 }
 
+/* DEF-M10-01: gap 8px + padding 6px 12px en selector de tema */
+.theme-toggle-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  border-radius: 8px;
+}
+
 .toggle-switch {
   width: 44px;
   height: 24px;

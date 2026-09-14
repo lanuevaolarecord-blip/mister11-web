@@ -43,20 +43,21 @@ $$\text{Puntuación de Salud} = (\text{Funcionalidad} \times 0.40) + (\text{Acce
 
 ---
 
-## 4. Top-10 Defectos Transversales Priorizados
+## 4. Top-10 Defectos Transversales Priorizados + DEF-M10-01 (Cierre H0 Pre-Release - Build 93)
 
-| ID Defecto | Módulo | Severidad | Descripción del Defecto | Impacto Técnico / Usuario | Prioridad | Coste |
-| :--- | :---: | :---: | :--- | :--- | :---: | :---: |
-| **DEF-M12-01** | M12 | **S2** | Mezcla lingüística en tarjetas de planes de la Landing Page | Tarjetas en ES con botones/badges en EN | **P1** | **S** |
-| **DEF-M06-01** | M06 | **S3** | Apertura del ShotModal en orientación vertical en teléfonos <5.5" | Requiere scroll para confirmar tiro con teclado abierto | **P2** | **S** |
-| **DEF-M07-01** | M07 | **S3** | Reordenación por arrastre de ejercicios en pantallas táctiles <380px | Conflicto entre drag-and-drop y scroll vertical | **P2** | **S** |
-| **DEF-M05-01** | M05 | **S3** | Latencia en codificación de vídeos MP4 tácticos de más de 8 pasos | Espera de ~18s sin barra de progreso porcentual | **P2** | **M** |
-| **DEF-M11-01** | M11 | **S3** | Generación de PDF de 7 páginas en dispositivos con <2GB de RAM | Ligero lag en UI durante la rasterización de 5 SVGs | **P2** | **M** |
-| **DEF-M03-01** | M03 | **S3** | Sincronización de fotos de avatar >5MB en redes móviles 3G lentas | Falta de porcentaje numérico de subida | **P3** | **S** |
-| **DEF-M08-01** | M08 | **S3** | Baremos de salto horizontal en fútbol femenino categoría Alevín | Aplica baremo estándar mixto en lugar del percentil RFEF | **P3** | **S** |
-| **DEF-M01-01** | M01 | **S3** | Advertencia no bloqueante para menores de 14 años sin email de tutor | Permite completar borrador previo a la firma | **P3** | **S** |
-| **DEF-M04-01** | M04 | **S4** | Ausencia de bloqueo anti-rebote en botón de envío de Wellness | Posibilidad de doble escritura en conexión lenta | **P3** | **S** |
-| **DEF-M02-01** | M02 | **S4** | Desbordamiento de texto largo en nombre de rival en tarjeta compacta | Salto de línea estético en pantallas de 360px | **P3** | **S** |
+| ID Defecto | Módulo | Severidad | Descripción del Defecto | Estado H0 | Prioridad | Coste |
+| :--- | :---: | :---: | :--- | :---: | :---: | :---: |
+| **DEF-M12-01** | M12 | **S2** | Mezcla lingüística en tarjetas de planes de la Landing Page | ✅ **CERRADO** (Build 93) | **P1** | **S** |
+| **DEF-M06-01** | M06 | **S3** | Apertura del ShotModal en orientación vertical en teléfonos <5.5" | ✅ **CERRADO** (Build 93) | **P2** | **S** |
+| **DEF-M07-01** | M07 | **S3** | Reordenación por arrastre de ejercicios en pantallas táctiles <380px | ✅ **CERRADO** (Build 93) | **P2** | **S** |
+| **DEF-M05-01** | M05 | **S3** | Latencia en codificación de vídeos MP4 tácticos de más de 8 pasos | ✅ **CERRADO** (Build 93) | **P2** | **M** |
+| **DEF-M11-01** | M11 | **S3** | Generación de PDF de 7 páginas en dispositivos con <2GB de RAM | ✅ **CERRADO** (Build 93) | **P2** | **M** |
+| **DEF-M03-01** | M03 | **S3** | Sincronización de fotos de avatar >5MB en redes móviles 3G lentas | ✅ **CERRADO** (Build 93) | **P3** | **S** |
+| **DEF-M08-01** | M08 | **S3** | Baremos de salto horizontal en fútbol femenino categoría Alevín | ✅ **CERRADO** (Build 93) | **P3** | **S** |
+| **DEF-M01-01** | M01 | **S3** | Advertencia no bloqueante para menores de 14 años sin email de tutor | ✅ **CERRADO** (Build 93) | **P3** | **S** |
+| **DEF-M04-01** | M04 | **S4** | Ausencia de bloqueo anti-rebote en botón de envío de Wellness | ✅ **CERRADO** (Build 93) | **P3** | **S** |
+| **DEF-M02-01** | M02 | **S4** | Desbordamiento de texto largo en nombre de rival en tarjeta compacta | ✅ **CERRADO** (Build 93) | **P3** | **S** |
+| **DEF-M10-01** | M10 | **S4** | Espaciado del selector de tema en administración (gap 8px, padding 6px 12px) | ✅ **CERRADO** (Build 93) | **P3** | **S** |
 
 ---
 

@@ -197,7 +197,7 @@ const Dashboard = () => {
   const stats = [
     { label: t('dashboard.stats.players', settings.language), value: players.length, icon: <Users size={24} />, color: '#4CAF7D', route: '/equipo' },
     { label: t('dashboard.stats.sessions', settings.language), value: sessions.length, icon: <ClipboardList size={24} />, color: '#4CAF7D', route: '/sesiones' },
-    { label: t('dashboard.stats.rival', settings.language), value: nextMatch ? (nextMatch.rival || '').split(' ')[0] || t('dashboard.stats.noRival', settings.language) : t('dashboard.stats.noRival', settings.language), icon: <Trophy size={24} />, color: '#4CAF7D', route: '/partidos' },
+    { label: t('dashboard.stats.rival', settings.language), value: nextMatch ? nextMatch.rival || t('dashboard.stats.noRival', settings.language) : t('dashboard.stats.noRival', settings.language), icon: <Trophy size={24} />, color: '#4CAF7D', route: '/partidos' },
     { label: t('dashboard.stats.matches', settings.language), value: matches.length, icon: <Calendar size={24} />, color: '#4CAF7D', route: '/partidos' },
   ];
 
@@ -665,7 +665,17 @@ const Dashboard = () => {
                   <span style={{ color: 'var(--text-secondary)', fontSize: '12px', textTransform: 'uppercase', fontWeight: 'bold' }}>{s.label}</span>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginTop: '8px' }}>
-                  <div style={{ fontSize: '28px', fontWeight: 'bold', color: 'var(--text-primary)', fontFamily: 'var(--font-heading)', lineHeight: 1 }}>{s.value}</div>
+                  {idx === 2 ? (
+                    <div
+                      className="upcoming-match-rival-title"
+                      title={nextMatch ? nextMatch.rival : s.value}
+                      style={{ fontSize: '20px', fontWeight: 'bold', color: 'var(--text-primary)', fontFamily: 'var(--font-heading)', lineHeight: 1.2 }}
+                    >
+                      {s.value}
+                    </div>
+                  ) : (
+                    <div style={{ fontSize: '28px', fontWeight: 'bold', color: 'var(--text-primary)', fontFamily: 'var(--font-heading)', lineHeight: 1 }}>{s.value}</div>
+                  )}
                   <div style={{ width: '40px', height: '2px', background: 'var(--accent-gold)' }}></div>
                   <div style={{ width: '20px', height: '2px', background: 'var(--accent-green)' }}></div>
                 </div>

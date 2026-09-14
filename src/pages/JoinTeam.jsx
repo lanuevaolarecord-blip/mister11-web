@@ -13,6 +13,7 @@ const POSITIONS = ['POR', 'DEF', 'LTD', 'LTI', 'MCD', 'MC', 'MCO', 'EXT', 'DEL']
 
 import { normalizeEmail } from '../utils/normalizeEmail';
 import { getPlayerIdentitiesByEmail } from '../utils/playerIdentity';
+import { calcularEdad } from '../utils/calcularEdad';
 
 const JoinTeam = () => {
   const { t, isEn } = useTranslation();
@@ -42,6 +43,9 @@ const JoinTeam = () => {
   const [childName, setChildName] = useState('');
   const [childBirthDate, setChildBirthDate] = useState('');
   const [parentName, setParentName] = useState('');
+  const [tutorEmail, setTutorEmail] = useState('');
+  const [tutorConfirmed, setTutorConfirmed] = useState(false);
+  const [isDraftSaved, setIsDraftSaved] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
@@ -196,6 +200,16 @@ const JoinTeam = () => {
         setError('Ingresa el nombre del jugador y su fecha de nacimiento.');
         return;
       }
+      // DEF-M01-01: Paso 2 del registro de menor bloqueado hasta email de tutor confirmado
+      const calcAge = calcularEdad(birthDate);
+      if (calcAge.years < 14) {
+        if (!tutorEmail.trim() || !tutorConfirmed) {
+          setError(isEn
+            ? 'RGPD / LOPDGDD: Players under 14 require a verified parent/guardian email before activation.'
+            : 'RGPD / LOPDGDD: Los menores de 14 años requieren el correo de su tutor confirmado antes de la activación.');
+          return;
+        }
+      }
     } else {
       if (!childName.trim() || !childBirthDate) {
         setError('Ingresa el nombre de tu hijo/a y su fecha de nacimiento.');
@@ -223,6 +237,9 @@ const JoinTeam = () => {
           birthDate,
           position,
           jerseyNumber: jerseyNumber.trim() || 'S/N',
+          tutorEmail: calcularEdad(birthDate).years < 14 ? tutorEmail.trim() : null,
+          tutorConfirmed: calcularEdad(birthDate).years < 14 ? tutorConfirmed : null,
+          isMinor: calcularEdad(birthDate).years < 14,
         } : {
           childName: childName.trim(),
           childBirthDate,
@@ -432,6 +449,48 @@ const JoinTeam = () => {
                     <label>{isEn ? 'Preferred Jersey Number (Optional)' : 'Dorsal Preferido (Opcional)'}</label>
                     <div className="input-with-icon"><Shirt size={18} /><input type="text" placeholder={isEn ? 'e.g. 10' : 'Ej. 10'} value={jerseyNumber} onChange={(e) => setJerseyNumber(e.target.value)} /></div>
                   </div>
+
+                  {birthDate && calcularEdad(birthDate).years < 14 && (
+                    <div className="minor-protection-card" style={{
+                      background: 'rgba(239, 68, 68, 0.08)',
+                      border: '1.5px solid #EF4444',
+                      borderRadius: '12px',
+                      padding: '16px',
+                      marginBottom: '18px'
+                    }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#EF4444', fontWeight: 800, fontSize: '13px', marginBottom: '6px' }}>
+                        <span>🔒</span>
+                        <span>{isEn ? 'Minor Protection (<14 years old - RGPD / LOPDGDD)' : 'Protección de Menores (<14 años - RGPD / LOPDGDD)'}</span>
+                      </div>
+                      <p style={{ margin: '0 0 12px 0', fontSize: '12px', color: '#CBD5E1', lineHeight: '1.45' }}>
+                        {isEn
+                          ? 'Per data protection regulations, players under 14 require legal guardian authorization. You can save your draft, but full activation is locked until your guardian email is confirmed.'
+                          : 'Conforme a la normativa RGPD/LOPDGDD, los menores de 14 años requieren autorización del tutor legal. Puedes guardar un borrador, pero la activación está bloqueada hasta confirmar el email de tu tutor/a.'}
+                      </p>
+                      <div className="input-group-auth" style={{ marginBottom: '12px' }}>
+                        <label>{isEn ? 'Parent / Guardian Email *' : 'Email del Padre / Madre / Tutor *'}</label>
+                        <div className="input-with-icon">
+                          <Mail size={18} />
+                          <input
+                            type="email"
+                            placeholder={isEn ? "guardian@email.com" : "tutor@email.com"}
+                            value={tutorEmail}
+                            onChange={(e) => setTutorEmail(e.target.value)}
+                            required
+                          />
+                        </div>
+                      </div>
+                      <label style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', cursor: 'pointer', fontSize: '12px', color: '#CBD5E1' }}>
+                        <input
+                          type="checkbox"
+                          checked={tutorConfirmed}
+                          onChange={(e) => setTutorConfirmed(e.target.checked)}
+                          style={{ marginTop: '2px', width: '16px', height: '16px' }}
+                        />
+                        <span>{isEn ? 'I confirm this is my legal guardian email and consent is requested. *' : 'Confirmo que este es el email de mi tutor/a legal y autoriza esta solicitud. *'}</span>
+                      </label>
+                    </div>
+                  )}
                 </>
               ) : (
                 <>
@@ -451,8 +510,32 @@ const JoinTeam = () => {
                 </>
               )}
 
-              <button type="submit" className="btn-submit-auth" disabled={submitting}>
-                {submitting ? (isEn ? 'Sending request...' : 'Enviando solicitud...') : (isEn ? 'SUBMIT REQUEST TO COACH' : 'ENVIAR SOLICITUD AL ENTRENADOR')}
+              {requesterRole === 'player' && birthDate && calcularEdad(birthDate).years < 14 && (!tutorEmail.trim() || !tutorConfirmed) && (
+                <button
+                  type="button"
+                  className="btn-outline"
+                  style={{ width: '100%', minHeight: '48px', marginBottom: '10px', borderColor: '#C9A84C', color: '#C9A84C', fontWeight: 800 }}
+                  onClick={() => {
+                    localStorage.setItem('mister11_join_draft', JSON.stringify({ playerName, birthDate, position, jerseyNumber, tutorEmail }));
+                    setIsDraftSaved(true);
+                    showToast(isEn ? 'Draft saved. Activation requires guardian email confirmation.' : 'Borrador guardado. La activación requiere confirmar el email del tutor.', 'info');
+                  }}
+                >
+                  💾 {isDraftSaved ? (isEn ? 'Draft Saved ✓' : 'Borrador Guardado ✓') : (isEn ? 'Save Draft (Activation Locked)' : 'Guardar Borrador (Activación Bloqueada)')}
+                </button>
+              )}
+
+              <button
+                type="submit"
+                className="btn-submit-auth"
+                disabled={submitting || (requesterRole === 'player' && birthDate && calcularEdad(birthDate).years < 14 && (!tutorEmail.trim() || !tutorConfirmed))}
+                style={(requesterRole === 'player' && birthDate && calcularEdad(birthDate).years < 14 && (!tutorEmail.trim() || !tutorConfirmed)) ? { opacity: 0.6, cursor: 'not-allowed' } : {}}
+              >
+                {submitting
+                  ? (isEn ? 'Sending request...' : 'Enviando solicitud...')
+                  : (requesterRole === 'player' && birthDate && calcularEdad(birthDate).years < 14 && (!tutorEmail.trim() || !tutorConfirmed))
+                    ? (isEn ? '🔒 ACTIVATION BLOCKED (GUARDIAN REQUIRED)' : '🔒 ACTIVACIÓN BLOQUEADA (TUTOR OBLIGATORIO)')
+                    : (isEn ? 'SUBMIT REQUEST TO COACH' : 'ENVIAR SOLICITUD AL ENTRENADOR')}
                 <ArrowRight size={18} />
               </button>
             </form>

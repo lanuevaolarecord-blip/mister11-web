@@ -12,7 +12,7 @@ import { normalizeText } from '../utils/normalizeInput';
 import { normalizeEmail } from '../utils/normalizeEmail';
 import { storage, db } from '../firebaseConfig';
 import { collection, onSnapshot, doc, setDoc, deleteDoc, updateDoc, addDoc, serverTimestamp, query, orderBy } from 'firebase/firestore';
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
 import { showToast } from '../utils/toast';
 import { savePlayerIdentity, deletePlayerIdentity } from '../utils/playerIdentity';
 import { sendChatNotification } from '../hooks/useLocalNotifications';
@@ -96,6 +96,7 @@ const MiEquipo = () => {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editData, setEditData] = useState(emptyPlayer);
   const [isSaving, setIsSaving] = useState(false);
+  const [avatarUploadProgress, setAvatarUploadProgress] = useState(null);
   const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
 
   // ── REC-5: Estado del Publicador de Comunicados Oficiales ──
@@ -431,10 +432,26 @@ const MiEquipo = () => {
       if (editData.photoFile && savedPlayerId) {
         const teamPathClean = getTeamPath(activeTeam?.id).replace(/^\/+|\/+$/g, '');
         const fileRef = ref(storage, `${teamPathClean}/players/${savedPlayerId}/avatar.webp`);
-        await uploadBytes(fileRef, editData.photoFile);
+        setAvatarUploadProgress(0);
+        const uploadTask = uploadBytesResumable(fileRef, editData.photoFile);
+        await new Promise((resolve, reject) => {
+          uploadTask.on(
+            'state_changed',
+            (snapshot) => {
+              const progress = Math.round((snapshot.bytesTransferred / (snapshot.totalBytes || 1)) * 100);
+              setAvatarUploadProgress(progress);
+            },
+            (uploadErr) => {
+              console.error('Error subiendo avatar:', uploadErr);
+              reject(uploadErr);
+            },
+            () => resolve()
+          );
+        });
         const avatarUrl = await getDownloadURL(fileRef);
         await updatePlayer(savedPlayerId, { avatarUrl });
         playerDataToSave.avatarUrl = avatarUrl;
+        setAvatarUploadProgress(null);
       } else if (editData.avatarUrl === '') {
         // If photo was explicitly removed
         await updatePlayer(savedPlayerId, { avatarUrl: '' });
@@ -469,6 +486,7 @@ const MiEquipo = () => {
       setFormError(isEn ? 'Could not save. Check your connection and try again.' : 'No se pudo guardar. Verifica tu conexión e inténtalo de nuevo.');
     } finally {
       setIsSaving(false);
+      setAvatarUploadProgress(null);
     }
   };
 
@@ -793,7 +811,9 @@ const MiEquipo = () => {
                       gap: '6px'
                     }}>
                       <span style={{ fontSize: '16px' }}>📷</span>
-                      {isUploadingPhoto ? (isEn ? 'Processing...' : 'Procesando...') : (isEn ? 'Upload photo' : 'Subir foto')}
+                      {avatarUploadProgress !== null
+                        ? `${isEn ? 'Uploading' : 'Subiendo'} ${avatarUploadProgress}%...`
+                        : isUploadingPhoto ? (isEn ? 'Processing...' : 'Procesando...') : (isEn ? 'Upload photo' : 'Subir foto')}
                     </label>
                     {(editData.photoPreview || editData.avatarUrl) && (
                       <button
@@ -812,6 +832,14 @@ const MiEquipo = () => {
                       >
                         {isEn ? 'Remove Photo' : 'Eliminar Foto'}
                       </button>
+                    )}
+                    {avatarUploadProgress !== null && (
+                      <div className="avatar-upload-progress" style={{ width: '100%', marginTop: '4px' }}>
+                        <div style={{ height: '6px', background: 'rgba(0,0,0,0.1)', borderRadius: '3px', overflow: 'hidden' }}>
+                          <div style={{ width: `${avatarUploadProgress}%`, height: '100%', background: '#22C55E', transition: 'width 0.2s' }} />
+                        </div>
+                        <span style={{ fontSize: '11px', fontWeight: 800, color: '#10B981' }}>{avatarUploadProgress}%</span>
+                      </div>
                     )}
                   </div>
                 </div>
@@ -910,7 +938,9 @@ const MiEquipo = () => {
               <div className="footer-actions">
                 <button type="button" className="btn-secondary" onClick={() => setIsFormOpen(false)}>{t('common.cancel')}</button>
                 <button type="button" className="btn-primary" onClick={handleSavePlayer} disabled={isSaving}>
-                  {isSaving ? t('common.loading') : t('common.save')}
+                  {avatarUploadProgress !== null
+                    ? `${isEn ? 'Uploading' : 'Subiendo'} ${avatarUploadProgress}%...`
+                    : isSaving ? t('common.loading') : t('common.save')}
                 </button>
               </div>
             </div>

@@ -1380,7 +1380,7 @@ const AdminPanel = () => {
                         : (isEn ? 'Available on Android application (APK).' : 'Disponible en la aplicación Android (APK).')}
                     </p>
                   </div>
-                  <div className="toggle-group">
+                  <div className="toggle-group theme-toggle-container">
                     <span>{isEn ? 'Dark Mode' : 'Modo Oscuro'}</span>
                     <div 
                       className={`toggle-switch ${darkMode ? 'active' : ''}`}

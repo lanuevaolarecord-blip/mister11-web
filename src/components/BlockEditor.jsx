@@ -18,7 +18,7 @@ const BLOCK_NAME_TRANSLATIONS = {
   'Partido condicionado': 'Conditioned Match'
 };
 
-const BlockEditor = ({ block, index, handleUpdateBlock, handleDeleteBlock, handleDuplicateBlock, teamId, sessionId }) => {
+const BlockEditor = ({ block, index, totalBlocks, handleUpdateBlock, handleDeleteBlock, handleDuplicateBlock, handleMoveBlock, teamId, sessionId }) => {
   const { isEn } = useTranslation();
   const fileInputRef = useRef(null);
   const [showCaptureModal, setShowCaptureModal] = useState(false);
@@ -132,6 +132,60 @@ const BlockEditor = ({ block, index, handleUpdateBlock, handleDeleteBlock, handl
         >
           <span style={{ fontSize: '18px', color: 'var(--text-muted)' }}>☰</span>
         </div>
+        {handleMoveBlock && (
+          <div className="touch-reorder-group" style={{ display: 'flex', alignItems: 'center', gap: '2px', flexShrink: 0 }}>
+            <button
+              type="button"
+              className="btn-touch-reorder btn-move-up"
+              onClick={() => handleMoveBlock(index, -1)}
+              disabled={index === 0}
+              style={{
+                minWidth: '48px',
+                minHeight: '48px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                background: 'transparent',
+                border: '1px solid var(--border-color, rgba(255,255,255,0.12))',
+                borderRadius: '8px',
+                cursor: index === 0 ? 'not-allowed' : 'pointer',
+                color: index === 0 ? 'var(--text-muted, #64748b)' : 'var(--text-primary, #ffffff)',
+                opacity: index === 0 ? 0.3 : 1,
+                fontSize: '15px',
+                touchAction: 'manipulation'
+              }}
+              title={isEn ? "Move exercise up" : "Mover ejercicio arriba"}
+              aria-label={isEn ? "Move exercise up" : "Mover ejercicio arriba"}
+            >
+              ▲
+            </button>
+            <button
+              type="button"
+              className="btn-touch-reorder btn-move-down"
+              onClick={() => handleMoveBlock(index, 1)}
+              disabled={index >= (totalBlocks || 1) - 1}
+              style={{
+                minWidth: '48px',
+                minHeight: '48px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                background: 'transparent',
+                border: '1px solid var(--border-color, rgba(255,255,255,0.12))',
+                borderRadius: '8px',
+                cursor: index >= (totalBlocks || 1) - 1 ? 'not-allowed' : 'pointer',
+                color: index >= (totalBlocks || 1) - 1 ? 'var(--text-muted, #64748b)' : 'var(--text-primary, #ffffff)',
+                opacity: index >= (totalBlocks || 1) - 1 ? 0.3 : 1,
+                fontSize: '15px',
+                touchAction: 'manipulation'
+              }}
+              title={isEn ? "Move exercise down" : "Mover ejercicio abajo"}
+              aria-label={isEn ? "Move exercise down" : "Mover ejercicio abajo"}
+            >
+              ▼
+            </button>
+          </div>
+        )}
         <span className="block-number">{index + 1}</span>
         <input 
           type="text" 

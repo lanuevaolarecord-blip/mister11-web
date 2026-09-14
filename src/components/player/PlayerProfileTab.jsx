@@ -127,6 +127,7 @@ export const PlayerProfileTab = ({ player, team, teamPath, onNavigateTab }) => {
   });
   const [wellnessSubmitted, setWellnessSubmitted] = useState(false);
   const [savingWellness, setSavingWellness] = useState(false);
+  const isSubmittingWellnessRef = useRef(false);
 
   // Estados de Consentimiento Parental
   const [consents, setConsents] = useState(player?.consents || {
@@ -314,12 +315,13 @@ export const PlayerProfileTab = ({ player, team, teamPath, onNavigateTab }) => {
     setHasDrawn(false);
   };
 
-  // Enviar Check-in de Bienestar
+  // Enviar Check-in de Bienestar (DEF-M04-01: bloqueo sincrónico inmediato anti doble pulsación)
   const handleSubmitWellness = async (e) => {
     e.preventDefault();
-    const effectivePlayerId = (player?.id && player.id !== 'player-self') ? player.id : (user?.uid || 'player-self');
-
+    if (isSubmittingWellnessRef.current || savingWellness) return;
+    isSubmittingWellnessRef.current = true;
     setSavingWellness(true);
+    const effectivePlayerId = (player?.id && player.id !== 'player-self') ? player.id : (user?.uid || 'player-self');
     try {
       const wellnessPayload = {
         ...wellnessData,
@@ -357,6 +359,7 @@ export const PlayerProfileTab = ({ player, team, teamPath, onNavigateTab }) => {
       showToast(t('player.profile.wellness_saved'), 'success');
     } finally {
       setSavingWellness(false);
+      isSubmittingWellnessRef.current = false;
     }
   };
 

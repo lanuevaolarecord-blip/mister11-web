@@ -496,6 +496,7 @@ const PizarraTactica = () => {
   const [isCapturing,    setIsCapturing]    = useState(false);
   const [captureToast,   setCaptureToast]   = useState(null);  // { type: 'success'|'error', msg: string }
   const [isRecording,    setIsRecording]    = useState(false);
+  const [exportProgress, setExportProgress] = useState(null);
   const fileImportInputRef = useRef(null);
 
   const autoExport = new URLSearchParams(location.search).get('autoExport');
@@ -851,6 +852,7 @@ const PizarraTactica = () => {
     }
     if (isRecording) return;
     setIsRecording(true);
+    setExportProgress(1);
     showToast(isEn ? 'Generating video, please wait...' : 'Generando video, por favor espera...', 'info');
     
     let recordingActive = true;
@@ -895,15 +897,50 @@ const PizarraTactica = () => {
       const chunks = [];
       recorder.ondataavailable = (e) => { if (e.data && e.data.size > 0) chunks.push(e.data); };
       
-      recorder.onstop = () => {
+      recorder.onstop = async () => {
         recordingActive = false;
         const fileType = options.mimeType && options.mimeType.includes('mp4') ? 'mp4' : 'webm';
-        const blob = new Blob(chunks, { type: `video/${fileType}` });
         
-        if (chunks.length === 0 || blob.size === 0) {
+        let blob = null;
+        try {
+          if (typeof Worker !== 'undefined') {
+            setExportProgress(88);
+            const worker = new Worker(new URL('../workers/mp4EncoderWorker.js', import.meta.url), { type: 'module' });
+            const buffers = await Promise.all(chunks.map(c => c.arrayBuffer()));
+            blob = await new Promise((resolve, reject) => {
+              worker.onmessage = (e) => {
+                if (e.data.type === 'PROGRESS') {
+                  setExportProgress(Math.min(99, Math.max(88, e.data.progress)));
+                } else if (e.data.type === 'SUCCESS') {
+                  setExportProgress(100);
+                  resolve(e.data.blob);
+                  worker.terminate();
+                } else if (e.data.type === 'ERROR') {
+                  reject(new Error(e.data.error));
+                  worker.terminate();
+                }
+              };
+              worker.onerror = (err) => {
+                reject(err);
+                worker.terminate();
+              };
+              worker.postMessage({ type: 'ENCODE', buffers, mimeType: `video/${fileType}` }, buffers);
+            });
+          } else {
+            blob = new Blob(chunks, { type: `video/${fileType}` });
+            setExportProgress(100);
+          }
+        } catch (workerErr) {
+          console.warn('[MP4 Export] Worker fallback:', workerErr);
+          blob = new Blob(chunks, { type: `video/${fileType}` });
+          setExportProgress(100);
+        }
+        
+        if (chunks.length === 0 || !blob || blob.size === 0) {
           console.error('[MP4 Export] El blob de video está vacío. Puede que el canvas no tenga contenido o que MediaRecorder no capturó frames.');
           showToast(isEn ? 'Error: the recorded video is empty. Make sure you have at least 2 frames with content.' : 'Error: el video grabado está vacío. Asegúrate de tener al menos 2 frames con contenido.', 'error');
           setIsRecording(false);
+          setExportProgress(null);
           return;
         }
 
@@ -913,6 +950,7 @@ const PizarraTactica = () => {
           console.error('[MP4 Export] Error al leer el blob de video.');
           showToast(isEn ? 'Error processing the generated video.' : 'Error al procesar el video generado.', 'error');
           setIsRecording(false);
+          setExportProgress(null);
         };
         reader.onloadend = async () => {
           const dataURL = reader.result;
@@ -939,6 +977,7 @@ const PizarraTactica = () => {
           }
 
           setIsRecording(false);
+          setTimeout(() => setExportProgress(null), 800);
           const autoExport = new URLSearchParams(window.location.search).get('autoExport');
           if (autoExport === 'true' && window.parent) {
             window.parent.postMessage({ type: 'EXPORT_DONE', base64data, filename, mimeType: finalMime }, '*');
@@ -1016,6 +1055,8 @@ const PizarraTactica = () => {
 
         setFrameIdx(idx);
         frameIdxR.current = idx;
+        const totalF = framesR.current.length || 1;
+        setExportProgress(Math.min(85, Math.max(1, Math.round(((idx + 1) / totalF) * 85))));
 
         const fA = framesR.current[idx];
         const fB = framesR.current[idx + 1];
@@ -3449,6 +3490,55 @@ const PizarraTactica = () => {
           marginLeft: 'auto', background: 'none', border: 'none',
           color: 'rgba(255,255,255,0.6)', cursor: 'pointer', fontSize: 16, padding: 0
         }}>✕</button>
+      </div>
+    )}
+    {/* ── BARRA PORCENTUAL DE CODIFICACIÓN MP4 (DEF-M05-01) ── */}
+    {exportProgress !== null && (
+      <div className="export-progress-overlay" style={{
+        position: 'fixed', inset: 0, zIndex: 9999,
+        background: 'rgba(0,0,0,0.75)',
+        display: 'flex', flexDirection: 'column',
+        alignItems: 'center', justifyContent: 'center',
+        padding: 20
+      }}>
+        <div style={{
+          background: 'var(--bg-card, #1e293b)',
+          border: '1px solid var(--border-color, #334155)',
+          borderRadius: 16,
+          padding: '28px 32px',
+          width: '90%',
+          maxWidth: 420,
+          textAlign: 'center',
+          boxShadow: '0 12px 40px rgba(0,0,0,0.6)'
+        }}>
+          <div style={{ fontSize: 36, marginBottom: 12 }}>🎬</div>
+          <h3 style={{ margin: '0 0 8px 0', fontSize: '1.25rem', color: 'var(--text-primary, #ffffff)', fontWeight: 700 }}>
+            {t('board.export.encodingTitle')}
+          </h3>
+          <p style={{ margin: '0 0 20px 0', fontSize: '0.9rem', color: 'var(--text-secondary, #94a3b8)' }}>
+            {t('board.export.encodingProgress')}
+          </p>
+          <div style={{
+            width: '100%', height: 16,
+            background: 'rgba(255,255,255,0.1)',
+            borderRadius: 8, overflow: 'hidden',
+            marginBottom: 12, position: 'relative'
+          }}>
+            <div
+              className="export-progress-bar"
+              style={{
+                width: `${exportProgress}%`,
+                height: '100%',
+                background: 'linear-gradient(90deg, #10b981, #3b82f6)',
+                borderRadius: 8,
+                transition: 'width 0.2s ease-in-out'
+              }}
+            />
+          </div>
+          <div style={{ fontSize: '1.15rem', fontWeight: 800, color: '#10b981' }}>
+            {exportProgress}%
+          </div>
+        </div>
       </div>
     )}
     </>

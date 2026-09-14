@@ -172,6 +172,15 @@ export async function rasterizeSvgToDataUrl(svgInput, targetWidthOrOptions, targ
     return null;
   }
 
+  // DEF-M11-01: Yield execution to avoid blocking UI thread during heavy rasterization in <2GB RAM devices
+  await new Promise((resolve) => {
+    if (typeof requestAnimationFrame === 'function') {
+      requestAnimationFrame(() => resolve());
+    } else {
+      setTimeout(resolve, 0);
+    }
+  });
+
   // 4. Cadena de Fallbacks:
   // Fallback 1: Blob URL
   // Fallback 2: DataURL encodeURIComponent
@@ -181,13 +190,45 @@ export async function rasterizeSvgToDataUrl(svgInput, targetWidthOrOptions, targ
       const img = new Image();
       let resolved = false;
 
-      img.onload = () => {
+      img.onload = async () => {
         if (resolved) return;
         resolved = true;
         try {
+          const scaledW = Math.round(numW * numScale);
+          const scaledH = Math.round(numH * numScale);
+
+          // DEF-M11-01: Usar OffscreenCanvas si está disponible para evitar alocación de nodos DOM pesados
+          if (typeof OffscreenCanvas !== 'undefined') {
+            try {
+              const offCanvas = new OffscreenCanvas(scaledW, scaledH);
+              const offCtx = offCanvas.getContext('2d');
+              if (offCtx) {
+                offCtx.scale(numScale, numScale);
+                offCtx.imageSmoothingEnabled = true;
+                offCtx.imageSmoothingQuality = 'high';
+                offCtx.drawImage(img, 0, 0, numW, numH);
+                const blobRes = await offCanvas.convertToBlob({ type: 'image/png', quality: 0.95 });
+                const offDataUrl = await new Promise((resBlob) => {
+                  const reader = new FileReader();
+                  reader.onloadend = () => resBlob(reader.result);
+                  reader.readAsDataURL(blobRes);
+                });
+                if (isBlob && srcUrl.startsWith('blob:')) {
+                  URL.revokeObjectURL(srcUrl);
+                }
+                if (offDataUrl && offDataUrl.length > 500) {
+                  resolve(offDataUrl);
+                  return;
+                }
+              }
+            } catch (offErr) {
+              console.warn('[rasterizeSvgToDataUrl] OffscreenCanvas fallback a DOM canvas:', offErr);
+            }
+          }
+
           const canvas = document.createElement('canvas');
-          canvas.width = Math.round(numW * numScale);
-          canvas.height = Math.round(numH * numScale);
+          canvas.width = scaledW;
+          canvas.height = scaledH;
           const ctx = canvas.getContext('2d');
 
           if (ctx) {

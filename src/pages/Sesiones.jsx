@@ -895,6 +895,17 @@ const Sesiones = () => {
     });
   };
 
+  const handleMoveBlock = (index, direction) => {
+    setEditData(prev => {
+      const newIndex = index + direction;
+      if (newIndex < 0 || newIndex >= prev.blocks.length) return prev;
+      const newBlocks = [...prev.blocks];
+      const [movedBlock] = newBlocks.splice(index, 1);
+      newBlocks.splice(newIndex, 0, movedBlock);
+      return { ...prev, blocks: newBlocks };
+    });
+  };
+
   const handleTogglePlayer = (playerId) => {
     setEditData(prev => {
       const has = prev.players.includes(playerId);
@@ -1173,9 +1184,11 @@ const Sesiones = () => {
                         key={block.id}
                         block={block}
                         index={index}
+                        totalBlocks={editData.blocks.length}
                         handleUpdateBlock={handleUpdateBlock}
                         handleDeleteBlock={handleDeleteBlock}
                         handleDuplicateBlock={handleDuplicateBlock}
+                        handleMoveBlock={handleMoveBlock}
                         teamId={activeTeam?.id}
                         sessionId={editData?.id}
                       />

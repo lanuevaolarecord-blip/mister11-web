@@ -12,6 +12,7 @@
 
 import { ref as storageRef, getBlob } from 'firebase/storage';
 import { storage } from '../firebaseConfig.js';
+import { getAuth } from 'firebase/auth';
 import { PREDEFINED_FORMATIONS } from './formaciones.js';
 
 export const PDF_COLORS = {
@@ -254,11 +255,13 @@ export const imageUrlToBase64 = async (url, fallbackInitials = 'M11', isAvatar =
     targetUrl = `${origin}${cleanPath}`;
   }
 
-  // Timeout helper (5000ms)
-  const withTimeout = (promise, ms = 5000) =>
+  // Timeout helper configurable
+  const withTimeout = (promise, ms = 12000) =>
     Promise.race([promise, new Promise((resolve) => setTimeout(() => resolve(null), ms))]);
 
-  // 2. PRIORIDAD 1: Firebase Storage SDK con extracción limpia del path (Evita 400 Bad Request y bloqueos CORS)
+  // 2. PRIORIDAD 1: Firebase Storage SDK con extracción limpia del path
+  //    (Evita 400 Bad Request y bloqueos CORS — funciona incluso en Android WebView)
+  //    Timeout aumentado a 12s para dispositivos móviles lentos.
   if (typeof targetUrl === 'string' && (targetUrl.includes('firebasestorage.googleapis.com') || targetUrl.includes('firebasestorage') || targetUrl.startsWith('gs://'))) {
     try {
       let path = targetUrl;
@@ -269,47 +272,83 @@ export const imageUrlToBase64 = async (url, fallbackInitials = 'M11', isAvatar =
         path = decodeURIComponent(rawPath);
       }
       const fileRef = storageRef(storage, path);
-      const blob = await withTimeout(getBlob(fileRef), 5000);
+      const blob = await withTimeout(getBlob(fileRef), 12000);
       if (blob) {
         const b64 = await blobToDataURL(blob);
         if (b64) {
-          if (b64.startsWith('data:image/webp')) {
-            const png = await convertImageToPngViaCanvas(b64, 2000);
+          if (b64.startsWith('data:image/webp') || b64.startsWith('data:image/svg')) {
+            const png = await convertImageToPngViaCanvas(b64, 3000);
             return png || b64;
           }
           return b64;
         }
       }
+      console.warn('[imageUrlToBase64] Firebase Storage getBlob devolvió blob nulo para path:', path);
     } catch (sdkErr) {
-      console.warn('[imageUrlToBase64] Firebase Storage getBlob falló:', sdkErr);
+      console.warn('[imageUrlToBase64] Firebase Storage getBlob falló:', sdkErr?.code || sdkErr?.message || sdkErr);
     }
   }
 
-  // 3. PRIORIDAD 2: Direct Fetch con mode: 'cors'
+  // 3. PRIORIDAD 2: Fetch autenticado con token Bearer (funciona en Android WebView cuando getBlob falla)
+  //    Obtiene el token del usuario actual y lo pasa en el header Authorization.
+  if (typeof targetUrl === 'string' && targetUrl.includes('firebasestorage')) {
+    try {
+      const _auth = getAuth();
+      const currentUser = _auth?.currentUser;
+      if (currentUser) {
+        const idToken = await currentUser.getIdToken(false);
+        const controller2 = new AbortController();
+        const timer2 = setTimeout(() => controller2.abort(), 8000);
+        const authResp = await fetch(targetUrl, {
+          headers: { Authorization: `Bearer ${idToken}` },
+          signal: controller2.signal
+        });
+        clearTimeout(timer2);
+        if (authResp.ok) {
+          const blob2 = await authResp.blob();
+          const b64auth = await blobToDataURL(blob2);
+          if (b64auth) {
+            if (b64auth.startsWith('data:image/webp') || b64auth.startsWith('data:image/svg')) {
+              const png2 = await convertImageToPngViaCanvas(b64auth, 3000);
+              return png2 || b64auth;
+            }
+            return b64auth;
+          }
+        }
+      }
+    } catch (_authFetchErr) {
+      // Silencioso
+    }
+  }
+
+  // 4. PRIORIDAD 3: Direct Fetch con mode: 'cors' (funciona en web, puede fallar en Android WebView)
   try {
     const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), 3500);
+    const timer = setTimeout(() => controller.abort(), 5000);
     const response = await fetch(targetUrl, { mode: 'cors', signal: controller.signal });
     clearTimeout(timer);
     if (response.ok) {
       const blob = await response.blob();
       const b64 = await blobToDataURL(blob);
       if (b64) {
-        if (b64.startsWith('data:image/webp')) {
-          const png = await convertImageToPngViaCanvas(b64, 2000);
+        if (b64.startsWith('data:image/webp') || b64.startsWith('data:image/svg')) {
+          const png = await convertImageToPngViaCanvas(b64, 3000);
           return png || b64;
         }
         return b64;
       }
     }
-  } catch (_) {}
+  } catch (_fetchErr) {
+    // Silencioso: esperado en Android WebView sin CORS en Firebase Storage
+  }
 
-  // 4. PRIORIDAD 3: Fallback Canvas 2D
+  // 4. PRIORIDAD 3: Fallback Canvas 2D (img element + crossOrigin)
   try {
-    const canvasB64 = await convertImageToPngViaCanvas(targetUrl, 2500);
+    const canvasB64 = await convertImageToPngViaCanvas(targetUrl, 4000);
     if (canvasB64) return canvasB64;
   } catch (_) {}
 
+  // 5. Fallback final: avatar con iniciales si es avatar, null si es diagrama/logo
   if (isAvatar) {
     return generateInitialsAvatar(fallbackInitials);
   }

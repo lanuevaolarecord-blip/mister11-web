@@ -1026,8 +1026,31 @@ const Partidos = () => {
     setIsDownloadingPng(true);
     let exportClone = null;
     try {
-      const html2canvasMod = await import('html2canvas');
+      const [html2canvasMod, { imageUrlToBase64 }] = await Promise.all([
+        import('html2canvas'),
+        import('../utils/pdfTheme'),
+      ]);
       const html2canvas = html2canvasMod.default || html2canvasMod;
+
+      // ── PRE-CARGA DE FOTOS COMO BASE64 VÍA FIREBASE SDK ──────────────────────
+      // Evita el "canvas tainted" de html2canvas causado por CORS en Firebase Storage.
+      // imageUrlToBase64 usa getBlob() del SDK (autenticado) y devuelve un DataURL puro.
+      const photoBase64Map = {}; // key: avatarUrl original → value: dataURL base64
+      const convocadosIds = (calledPlayers || []).filter(Boolean);
+      await Promise.all(
+        convocadosIds.map(async (pid) => {
+          const p = (players || []).find((x) => x && String(x.id) === String(pid));
+          const rawUrl = p?.avatarUrl || p?.photoUrl || p?.photo || p?.photoPreview || p?.foto || p?.avatar;
+          if (rawUrl && !photoBase64Map[rawUrl]) {
+            try {
+              const b64 = await imageUrlToBase64(rawUrl, p?.name || p?.nombre, true);
+              if (b64 && b64.startsWith('data:image/')) {
+                photoBase64Map[rawUrl] = b64;
+              }
+            } catch (_) {}
+          }
+        })
+      );
 
       // Crear clon fuera de pantalla para forzar SIEMPRE renderizado HD profesional
       // idéntico a la versión de escritorio (780px, campo amplio, tarjetas FIFA completas y suplentes en 1 fila)
@@ -1041,6 +1064,21 @@ const Partidos = () => {
       exportClone.style.minWidth = '780px';
       exportClone.style.boxSizing = 'border-box';
       exportClone.style.zIndex = '-9999';
+
+      // ── SUSTITUIR src DE IMÁGENES EN EL CLON CON BASE64 ─────────────────────
+      // html2canvas lee los src directamente; al tener base64 no hay petición cross-origin.
+      const cloneImgs = exportClone.querySelectorAll('img[src]');
+      cloneImgs.forEach((img) => {
+        const originalSrc = img.getAttribute('src');
+        if (originalSrc && photoBase64Map[originalSrc]) {
+          img.setAttribute('src', photoBase64Map[originalSrc]);
+          img.removeAttribute('crossorigin');
+          img.removeAttribute('crossOrigin');
+        } else if (originalSrc && (originalSrc.includes('firebasestorage') || originalSrc.startsWith('gs://'))) {
+          // Imagen Firebase que no se pudo convertir → ocultar para evitar taint
+          img.style.display = 'none';
+        }
+      });
 
       // Reubicar cada ficha del clon usando coordenadas exactas sin CSS transform
       // para eliminar completamente el bug de desplazamiento vertical hacia arriba de html2canvas
@@ -1060,13 +1098,13 @@ const Partidos = () => {
 
       document.body.appendChild(exportClone);
 
-      // Breve pausa para asegurar renderizado de fuentes y estilos en el clon
-      await new Promise((resolve) => setTimeout(resolve, 80));
+      // Pausa para asegurar renderizado de fuentes, estilos y reemplazo de imágenes
+      await new Promise((resolve) => setTimeout(resolve, 120));
 
       const canvas = await html2canvas(exportClone, {
         scale: 2,
-        useCORS: true,
-        allowTaint: true,
+        useCORS: false,      // No necesario: todas las imgs son ya base64 o están ocultas
+        allowTaint: false,   // Estricto: sin taint para garantizar toDataURL sin errores
         backgroundColor: '#1B3A2D',
         logging: false,
         width: 780,
@@ -2192,7 +2230,7 @@ const Partidos = () => {
                               <div className={`futu-card-frame ${player ? '' : 'empty-slot'}`}>
                                 {player ? (
                                   photoUrl ? (
-                                    <img src={photoUrl} alt={player.name} className="futu-card-photo" />
+                                    <img src={photoUrl} alt={player.name} className="futu-card-photo" crossOrigin="anonymous" />
                                   ) : (
                                     <div className="futu-card-initials">
                                       {player.number || (player.name ? player.name.charAt(0).toUpperCase() : idx + 1)}
@@ -2246,7 +2284,7 @@ const Partidos = () => {
                               {player ? (
                                 <>
                                   {photoUrl ? (
-                                    <img src={photoUrl} alt={player.name} className="bench-player-avatar-img" />
+                                    <img src={photoUrl} alt={player.name} className="bench-player-avatar-img" crossOrigin="anonymous" />
                                   ) : (
                                     <div className="bench-player-avatar-placeholder">
                                       {player.number || (player.name ? player.name.charAt(0).toUpperCase() : 'S')}

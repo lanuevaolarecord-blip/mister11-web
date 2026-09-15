@@ -24,9 +24,9 @@ const firebaseConfig = {
 
 const pkgJson   = JSON.parse(readFileSync(resolve(__dirname, 'package.json'), 'utf8'));
 const VERSION   = pkgJson.version;          // e.g. "1.1.63"
-const BUILD     = 84;
+const BUILD     = 93;
 
-const APK_PATH  = resolve(__dirname, 'android/app/build/outputs/apk/release/mister11-universal.apk');
+const APK_PATH  = resolve(__dirname, 'android/app/build/outputs/apk/release/mister11.apk');
 const AAB_PATH  = resolve(__dirname, 'android/app/build/outputs/bundle/release/app-release.aab');
 
 const APK_URL_FALLBACK = 'https://firebasestorage.googleapis.com/v0/b/mister11.firebasestorage.app/o/mister11.apk?alt=media';

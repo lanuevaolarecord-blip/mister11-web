@@ -10,6 +10,7 @@ import { usePlayerSeasonStats } from '../../hooks/usePlayerSeasonStats';
 import { calculatePlayerMatchStats } from '../../utils/playerMatchStats';
 import { calculatePlayerPerformanceScores, consolidatePlayerEvaluations } from '../../utils/testScoreEngine';
 import { calcularEdad } from '../../utils/calcularEdad';
+import { updatePhysicalStats } from '../../utils/playerProfile';
 import PlayerHealthTab from '../PlayerHealthTab';
 import { PlayerPlansPortalTab } from './PlayerPlansPortalTab';
 import { PlayerAttendanceSubTab } from '../PlayerAttendanceSubTab';
@@ -33,7 +34,11 @@ import {
   Mail,
   Trash2,
   AlertTriangle,
-  Ban
+  Ban,
+  Ruler,
+  Weight,
+  Save,
+  Loader2
 } from 'lucide-react';
 
 const BODY_ZONES = ['Ninguna', 'Gemelo Izquierdo', 'Gemelo Derecho', 'Cuádriceps', 'Isquiotibiales', 'Rodilla', 'Tobillo', 'Espalda / Lumbar', 'Aductor', 'Hombro'];
@@ -60,6 +65,59 @@ export const PlayerProfileTab = ({ player, team, teamPath, onNavigateTab }) => {
   const [activeSubTab, setActiveSubTab] = useState('GENERAL'); // 'GENERAL' | 'FÍSICO' | 'SALUD' | 'PLANES' | 'ESTS.' | 'ASISTENCIA'
 
   const { t, isEn, locale } = useTranslation();
+
+  // Estados para edición de datos físicos (Feature 1)
+  const [editableHeight, setEditableHeight] = useState(player?.height || '');
+  const [editableWeight, setEditableWeight] = useState(player?.weight || '');
+  const [heightError, setHeightError] = useState('');
+  const [weightError, setWeightError] = useState('');
+  const [isSavingPhysical, setIsSavingPhysical] = useState(false);
+
+  useEffect(() => {
+    setEditableHeight(player?.height || '');
+    setEditableWeight(player?.weight || '');
+  }, [player?.height, player?.weight]);
+
+  const handleSavePhysicalStats = async () => {
+    let hasErr = false;
+    let hErr = '';
+    let wErr = '';
+
+    if (editableHeight !== '' && editableHeight !== null) {
+      const h = Number(editableHeight);
+      if (isNaN(h) || h < 100 || h > 230) {
+        hErr = t('playerProfile.heightRangeError');
+        hasErr = true;
+      }
+    }
+
+    if (editableWeight !== '' && editableWeight !== null) {
+      const w = Number(editableWeight);
+      if (isNaN(w) || w < 30 || w > 150) {
+        wErr = t('playerProfile.weightRangeError');
+        hasErr = true;
+      }
+    }
+
+    setHeightError(hErr);
+    setWeightError(wErr);
+
+    if (hasErr) return;
+
+    setIsSavingPhysical(true);
+    try {
+      const pPath = cleanTeamPath || teamPath || (effectiveTeamId ? `equipos/${effectiveTeamId}` : '');
+      await updatePhysicalStats(pPath, effectivePlayerId, {
+        height: editableHeight,
+        weight: editableWeight
+      });
+      showToast(t('playerProfile.statsSaved'), 'success');
+    } catch (err) {
+      showToast(t('playerProfile.saveError'), 'error');
+    } finally {
+      setIsSavingPhysical(false);
+    }
+  };
 
   // Estadísticas sincronizadas de partidos
   const effectiveTeamId = team?.id || activeTeamId;
@@ -533,32 +591,150 @@ export const PlayerProfileTab = ({ player, team, teamPath, onNavigateTab }) => {
       {activeSubTab === 'FÍSICO' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '10px' }}>
-            <div style={{ background: 'var(--bg-card)', padding: '16px 8px', borderRadius: '12px', border: '1px solid var(--border-color)', textAlign: 'center' }}>
-              <div style={{ fontSize: '20px', fontWeight: '900', color: 'var(--text-primary)' }}>
-                {player?.height || '--'} <span style={{ fontSize: '12px', fontWeight: 'bold', color: 'var(--text-secondary)' }}>cm</span>
+            
+            {/* Altura Editable */}
+            <div style={{ 
+              background: 'var(--bg-card)', 
+              padding: '16px 8px', 
+              borderRadius: '12px', 
+              border: heightError ? '1.5px solid #EF4444' : '1px solid var(--border-color)', 
+              textAlign: 'center',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center'
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px', width: '100%' }}>
+                <Ruler size={16} color="var(--accent-green)" />
+                <input
+                  type="number"
+                  min="100"
+                  max="230"
+                  value={editableHeight}
+                  onChange={(e) => {
+                    setEditableHeight(e.target.value);
+                    if (heightError) setHeightError('');
+                  }}
+                  onBlur={handleSavePhysicalStats}
+                  placeholder="--"
+                  style={{
+                    fontSize: '18px',
+                    fontWeight: '900',
+                    color: 'var(--text-primary)',
+                    width: '64px',
+                    textAlign: 'center',
+                    background: 'transparent',
+                    border: 'none',
+                    borderBottom: '1px dashed var(--border-color)',
+                    padding: '2px 0',
+                    outline: 'none'
+                  }}
+                />
+                <span style={{ fontSize: '12px', fontWeight: 'bold', color: 'var(--text-secondary)' }}>cm</span>
               </div>
-              <span style={{ fontSize: '11px', color: 'var(--text-secondary)', textTransform: 'uppercase', fontWeight: 'bold' }}>{t('player.profile.height')}</span>
+              <span style={{ fontSize: '11px', color: 'var(--text-secondary)', textTransform: 'uppercase', fontWeight: 'bold', marginTop: '6px' }}>
+                {t('playerProfile.heightLabel')}
+              </span>
+              {heightError && (
+                <span style={{ fontSize: '10px', color: '#EF4444', marginTop: '4px' }}>
+                  {heightError}
+                </span>
+              )}
             </div>
 
-            <div style={{ background: 'var(--bg-card)', padding: '16px 8px', borderRadius: '12px', border: '1px solid var(--border-color)', textAlign: 'center' }}>
-              <div style={{ fontSize: '20px', fontWeight: '900', color: 'var(--text-primary)' }}>
-                {player?.weight || '--'} <span style={{ fontSize: '12px', fontWeight: 'bold', color: 'var(--text-secondary)' }}>kg</span>
+            {/* Peso Editable */}
+            <div style={{ 
+              background: 'var(--bg-card)', 
+              padding: '16px 8px', 
+              borderRadius: '12px', 
+              border: weightError ? '1.5px solid #EF4444' : '1px solid var(--border-color)', 
+              textAlign: 'center',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center'
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px', width: '100%' }}>
+                <Weight size={16} color="var(--accent-green)" />
+                <input
+                  type="number"
+                  min="30"
+                  max="150"
+                  step="0.5"
+                  value={editableWeight}
+                  onChange={(e) => {
+                    setEditableWeight(e.target.value);
+                    if (weightError) setWeightError('');
+                  }}
+                  onBlur={handleSavePhysicalStats}
+                  placeholder="--"
+                  style={{
+                    fontSize: '18px',
+                    fontWeight: '900',
+                    color: 'var(--text-primary)',
+                    width: '64px',
+                    textAlign: 'center',
+                    background: 'transparent',
+                    border: 'none',
+                    borderBottom: '1px dashed var(--border-color)',
+                    padding: '2px 0',
+                    outline: 'none'
+                  }}
+                />
+                <span style={{ fontSize: '12px', fontWeight: 'bold', color: 'var(--text-secondary)' }}>kg</span>
               </div>
-              <span style={{ fontSize: '11px', color: 'var(--text-secondary)', textTransform: 'uppercase', fontWeight: 'bold' }}>{t('player.profile.weight')}</span>
+              <span style={{ fontSize: '11px', color: 'var(--text-secondary)', textTransform: 'uppercase', fontWeight: 'bold', marginTop: '6px' }}>
+                {t('playerProfile.weightLabel')}
+              </span>
+              {weightError && (
+                <span style={{ fontSize: '10px', color: '#EF4444', marginTop: '4px' }}>
+                  {weightError}
+                </span>
+              )}
             </div>
 
+            {/* IMC Reactivo */}
             <div style={{ background: 'var(--bg-card)', padding: '16px 8px', borderRadius: '12px', border: '1px solid var(--border-color)', textAlign: 'center' }}>
               <div style={{ fontSize: '20px', fontWeight: '900', color: 'var(--accent-green)' }}>
-                {(player?.weight && player?.height) ? (player.weight / Math.pow(player.height/100, 2)).toFixed(1) : '--'}
+                {(editableWeight && editableHeight && Number(editableHeight) > 0)
+                  ? (Number(editableWeight) / Math.pow(Number(editableHeight)/100, 2)).toFixed(1)
+                  : '--'}
               </div>
-              <span style={{ fontSize: '11px', color: 'var(--text-secondary)', textTransform: 'uppercase', fontWeight: 'bold' }}>{t('player.profile.bmi')}</span>
+              <span style={{ fontSize: '11px', color: 'var(--text-secondary)', textTransform: 'uppercase', fontWeight: 'bold' }}>
+                {t('playerProfile.bmi')}
+              </span>
             </div>
+          </div>
+
+          {/* Botón manual de guardado si hay cambios pendientes */}
+          <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+            <button
+              type="button"
+              onClick={handleSavePhysicalStats}
+              disabled={isSavingPhysical}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '6px',
+                padding: '8px 16px',
+                borderRadius: '8px',
+                backgroundColor: 'var(--accent-green)',
+                color: '#ffffff',
+                fontSize: '12px',
+                fontWeight: '700',
+                border: 'none',
+                cursor: 'pointer'
+              }}
+            >
+              {isSavingPhysical ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
+              <span>{isSavingPhysical ? t('attendance.saving') : t('btn.save')}</span>
+            </button>
           </div>
 
           <div style={{ background: 'var(--bg-card)', padding: '16px', borderRadius: '12px', border: '1px solid var(--border-color)' }}>
             <h4 style={{ margin: '0 0 8px 0', fontSize: '13px', fontWeight: '800', color: 'var(--text-primary)' }}>{t('player.profile.bodyComp')}</h4>
             <p style={{ margin: 0, fontSize: '12px', color: 'var(--text-secondary)', lineHeight: '1.5' }}>
-              {t('player.profile.bodyCompDesc')}
+              {t('playerProfile.readOnlyNotice')}
             </p>
           </div>
         </div>

@@ -12,6 +12,25 @@ export const WEIGHT_MIN = 30;
 export const WEIGHT_MAX = 150;
 
 /**
+ * Calcula el IMC (BMI) reactivo a partir de altura (cm) y peso (kg).
+ * @param {number|string} height - Altura en cm
+ * @param {number|string} weight - Peso en kg
+ * @returns {{ value: number, statusKey: 'underweight'|'normal'|'overweight'|'obese' } | null}
+ */
+export const calculateBMI = (height, weight) => {
+  const h = Number(height);
+  const w = Number(weight);
+  if (!h || !w || h <= 0 || w <= 0) return null;
+  const heightM = h / 100;
+  const bmiVal = Number((w / (heightM * heightM)).toFixed(1));
+  let statusKey = 'normal';
+  if (bmiVal < 18.5) statusKey = 'underweight';
+  else if (bmiVal >= 25 && bmiVal < 30) statusKey = 'overweight';
+  else if (bmiVal >= 30) statusKey = 'obese';
+  return { value: bmiVal, statusKey };
+};
+
+/**
  * Valida los rangos físicos de altura y peso.
  * @param {{ height?: number|string, weight?: number|string }} stats
  * @returns {{ valid: boolean, errors: { height?: string, weight?: string } }}

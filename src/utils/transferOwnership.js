@@ -10,6 +10,30 @@ import { PLANS } from '../config/plans';
 export const ERR_TARGET_FREE_LIMIT = 'ERR_TARGET_FREE_LIMIT';
 
 /**
+ * Valida si un usuario receptor puede recibir la propiedad de un equipo según su plan y equipos actuales.
+ * @param {Object} targetUserData
+ * @param {number} ownedTeamsCount
+ * @returns {{ allowed: boolean, reason?: string, message?: string }}
+ */
+export const canTransferOwnership = (targetUserData = {}, ownedTeamsCount = 0) => {
+  const plan = (targetUserData.plan || 'free').toLowerCase();
+  const isPro = plan === 'pro' || plan.startsWith('club');
+  const freeLimit = PLANS.free?.teamLimit || 1;
+
+  if (!isPro && ownedTeamsCount >= freeLimit) {
+    return {
+      allowed: false,
+      reason: 'target_limit_exceeded',
+      message: 'El usuario seleccionado ya posee el límite máximo de equipos de su plan gratuito (1 equipo).'
+    };
+  }
+
+  return {
+    allowed: true
+  };
+};
+
+/**
  * Valida y ejecuta la transferencia de propiedad de un equipo.
  * @param {string} teamId - ID del equipo
  * @param {string} teamPath - Ruta del equipo en Firestore (opcional)

@@ -141,6 +141,41 @@ service cloud.firestore {
           && !('actaOficial' in request.resource.data.diff(resource.data).affectedKeys());
       }
 
+      // ── Sesiones de entrenamiento y calificaciones de jugadores por staff ──
+      match /sessions/{sessionId} {
+        allow read, write: if isAuth();
+
+        match /ratings/{playerId} {
+          allow read, write: if isAuth();
+        }
+      }
+
+      // ── Control oficial de asistencia por el cuerpo técnico ────────────────
+      match /attendance/{attId} {
+        allow read, write: if isAuth();
+      }
+
+      match /{subcollection=**} {
+        allow read, write: if isAuth();
+      }
+    }
+
+    // ── Colección Raíz de Equipos (Ruta determinista /equipos/{teamId}) ───────
+    match /equipos/{teamId} {
+      allow read, write: if isAuth();
+
+      match /sessions/{sessionId} {
+        allow read, write: if isAuth();
+
+        match /ratings/{playerId} {
+          allow read, write: if isAuth();
+        }
+      }
+
+      match /attendance/{attId} {
+        allow read, write: if isAuth();
+      }
+
       match /{subcollection=**} {
         allow read, write: if isAuth();
       }

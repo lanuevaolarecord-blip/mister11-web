@@ -4,6 +4,8 @@ import { useTeams } from '../hooks/useTeams';
 import { useTeamMembers } from '../hooks/useTeamMembers';
 import { useAuth } from '../context/AuthContext';
 import { isDeveloperEmail } from '../config/admins';
+import { useEffectivePlan } from '../hooks/usePlan';
+import BadgePlanHeredado from './BadgePlanHeredado';
 import { ChevronDown, Sun, Moon, Bell, Settings, Shield, LogOut, User } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
 import { useMatch } from '../context/MatchContext';
@@ -19,6 +21,7 @@ const Header = ({ onToggleNotif }) => {
   const { darkMode, toggleTheme } = useTheme();
   const { isRunning, matchSeconds, formatMatchTime } = useMatch();
   const { t, isEn } = useTranslation();
+  const { isStaffHeredado, ownerName, gracePeriod } = useEffectivePlan(activeTeam?.id);
 
   const handleLogout = async () => {
     if (window.confirm(t('header.logoutConfirm'))) {
@@ -107,6 +110,10 @@ const Header = ({ onToggleNotif }) => {
               })}
             </select>
           </div>
+        )}
+
+        {isStaffHeredado && (
+          <BadgePlanHeredado isStaffHeredado={isStaffHeredado} ownerName={ownerName} />
         )}
 
         {/* Selector interactivo de Rol en el Cuerpo Técnico (Basado en Icono) */}

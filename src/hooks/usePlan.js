@@ -4,6 +4,7 @@ import { db } from '../firebaseConfig';
 import { doc, onSnapshot, collection } from 'firebase/firestore';
 import { DEVELOPER_EMAILS } from '../config/admins';
 import { PLANS, getPlanById, findPlanByPriceId } from '../config/plans';
+import { calculateGracePeriod } from '../utils/downgradeGracePeriod';
 
 /**
  * Objeto de límites heredado para compatibilidad.
@@ -335,5 +336,119 @@ export const usePlan = () => {
     canCreateSession,
     canInviteStaff,
     hasFeature
+  };
+};
+
+/**
+ * Hook de Permisos por Contexto de Equipo ("Staff Heredado").
+ * Si el usuario es Free y el equipo pertenece a un Owner PRO/Club,
+ * el usuario hereda los privilegios PRO para ese equipo sin poder crear equipos propios adicionales.
+ */
+export const useEffectivePlan = (teamId) => {
+  const userPlanState = usePlan();
+  const { user, teams, activeTeamId } = useAuth();
+  const [teamDocData, setTeamDocData] = useState(null);
+
+  const targetTeamId = teamId || activeTeamId;
+  const teamFromContext = teams?.find(t => t.id === targetTeamId) || null;
+
+  useEffect(() => {
+    if (!targetTeamId || targetTeamId === 'demo-team') {
+      setTeamDocData(null);
+      return;
+    }
+
+    const teamPath = teamFromContext?.teamPath || (teamFromContext?.userId ? `users/${teamFromContext.userId}/teams/${targetTeamId}` : `equipos/${targetTeamId}`);
+    const unsub = onSnapshot(doc(db, teamPath), (snap) => {
+      if (snap.exists()) {
+        setTeamDocData(snap.data());
+      } else {
+        setTeamDocData(null);
+      }
+    }, () => {
+      setTeamDocData(null);
+    });
+
+    return () => unsub();
+  }, [targetTeamId, teamFromContext?.teamPath, teamFromContext?.userId]);
+
+  const activeTeamData = teamDocData || teamFromContext;
+  const isTeamClub = activeTeamData?.source === 'club' || teamFromContext?.source === 'club';
+
+  // 1. Plan del propietario o del equipo
+  let teamOwnerPlan = 'free';
+  if (isTeamClub) {
+    teamOwnerPlan = 'club_pro';
+  } else if (activeTeamData?.ownerPlan) {
+    teamOwnerPlan = activeTeamData.ownerPlan;
+  } else if (activeTeamData?.plan) {
+    teamOwnerPlan = activeTeamData.plan;
+  } else if (activeTeamData?.userId === user?.uid) {
+    teamOwnerPlan = userPlanState.plan;
+  }
+
+  // 2. Verificar periodo de gracia (Caso Límite 2)
+  const gracePeriod = calculateGracePeriod(activeTeamData?.downgradeDate);
+
+  // 3. Determinar plan efectivo para este contexto de equipo
+  const userPlan = userPlanState.plan;
+  const isOwner = activeTeamData?.userId === user?.uid || activeTeamData?.ownerUid === user?.uid;
+  const isTeamOwnerPro = (teamOwnerPlan === 'pro' || teamOwnerPlan.startsWith('club')) && !gracePeriod.isBlocked;
+
+  let effectivePlan = userPlan;
+  let isStaffHeredado = false;
+
+  if (userPlanState.isDeveloper && !userPlanState.isSimulatingFree) {
+    effectivePlan = 'club_premium';
+  } else if (isTeamClub) {
+    effectivePlan = 'club_pro';
+  } else if (gracePeriod.isBlocked) {
+    // Si la gracia expiró sin pago, se bloquean funciones PRO para todo el equipo
+    effectivePlan = 'free';
+  } else if (!isOwner && userPlan === 'free' && isTeamOwnerPro) {
+    // Staff Heredado: el usuario Free hereda PRO dentro del equipo
+    effectivePlan = teamOwnerPlan;
+    isStaffHeredado = true;
+  } else if (userPlanState.isPro) {
+    effectivePlan = userPlan;
+  } else if (isOwner && isTeamOwnerPro) {
+    effectivePlan = teamOwnerPlan;
+  }
+
+  const isEffectivePro = userPlanState.isDeveloper
+    ? !userPlanState.isSimulatingFree
+    : (!gracePeriod.isBlocked && (effectivePlan === 'pro' || effectivePlan.startsWith('club') || userPlanState.isPro));
+
+  const ownerName = activeTeamData?.ownerName || activeTeamData?.coachName || teamFromContext?.ownerName || '';
+  const ownerUid = activeTeamData?.ownerUid || activeTeamData?.userId || teamFromContext?.userId || '';
+
+  const effectivePlanDef = getPlanById(effectivePlan);
+  const effectiveLimits = {
+    ...userPlanState.limits,
+    PLAYERS: effectivePlanDef.playerLimit,
+    SESSIONS: effectivePlanDef.sessionLimit,
+    PDF_EXPORT: effectivePlanDef.pdfExport,
+    IA_GENERATIONS: effectivePlanDef.iaLimit,
+    playerLimit: effectivePlanDef.playerLimit,
+    sessionLimit: effectivePlanDef.sessionLimit,
+    iaLimit: effectivePlanDef.iaLimit,
+  };
+
+  return {
+    ...userPlanState,
+    effectivePlan,
+    plan: effectivePlan,
+    isEffectivePro,
+    isPro: isEffectivePro,
+    isProActive: isEffectivePro,
+    isStaffHeredado,
+    ownerName,
+    ownerUid,
+    gracePeriod,
+    userPlan,
+    teamOwnerPlan,
+    limits: effectiveLimits,
+    // REGLA CRÍTICA: Un usuario Free invitado a un equipo PRO NO puede crear más de 1 equipo propio
+    canCreateTeam: userPlanState.canCreateTeam
   };
 };

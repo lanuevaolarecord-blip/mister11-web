@@ -113,6 +113,18 @@ const Sesiones = () => {
   const [shareModal, setShareModal] = useState({ open: false, session: null, shareUrl: '', shareId: '', loading: false, copied: false });
   const [importModal, setImportModal] = useState({ open: false, activeTab: 'link', inputVal: '', loading: false, previewSession: null, file: null, error: '' });
 
+  // Ocultar BottomNav mientras se edita una sesión en móvil para evitar doble barra sobrepuesta
+  useEffect(() => {
+    if (viewMode === 'edit') {
+      document.body.classList.add('session-editor-active');
+      return () => {
+        document.body.classList.remove('session-editor-active');
+      };
+    } else {
+      document.body.classList.remove('session-editor-active');
+    }
+  }, [viewMode]);
+
   // Manejador para compartir sesión (Web Share API + Clipboard Fallback)
   const handleShareSession = async (sessionToShare) => {
     if (!sessionToShare) return;

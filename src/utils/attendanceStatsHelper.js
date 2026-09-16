@@ -251,7 +251,11 @@ export const extractPlayerVerifiedTimeline = (playerId, attendanceList = [], mat
   });
 
   // Ordenar cronológicamente (más antiguo primero para el cálculo de rachas)
-  timeline.sort((a, b) => new Date(a.date) - new Date(b.date));
+  timeline.sort((a, b) => {
+    const da = a.date ? new Date(a.date).getTime() : 0;
+    const db = b.date ? new Date(b.date).getTime() : 0;
+    return (isNaN(da) ? 0 : da) - (isNaN(db) ? 0 : db);
+  });
 
   return timeline;
 };

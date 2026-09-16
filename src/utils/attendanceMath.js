@@ -24,26 +24,57 @@
  */
 export const toDateKey = (rawDate) => {
   if (!rawDate) return '';
-  if (typeof rawDate === 'string') {
-    if (rawDate.includes('T')) return rawDate.split('T')[0];
-    if (rawDate.includes('/')) {
-      const parts = rawDate.split('/');
-      if (parts.length === 3) {
-        // Asumiendo DD/MM/YYYY o YYYY/MM/DD
-        if (parts[0].length === 4) return `${parts[0]}-${parts[1].padStart(2, '0')}-${parts[2].padStart(2, '0')}`;
-        return `${parts[2]}-${parts[1].padStart(2, '0')}-${parts[0].padStart(2, '0')}`;
-      }
+  try {
+    if (rawDate instanceof Date) {
+      if (isNaN(rawDate.getTime())) return '';
+      return rawDate.toISOString().split('T')[0];
     }
-    return rawDate.substring(0, 10);
-  }
-  if (rawDate instanceof Date) {
-    return rawDate.toISOString().split('T')[0];
-  }
-  if (rawDate?.toDate && typeof rawDate.toDate === 'function') {
-    return rawDate.toDate().toISOString().split('T')[0];
-  }
-  if (rawDate?.seconds) {
-    return new Date(rawDate.seconds * 1000).toISOString().split('T')[0];
+    if (rawDate?.toDate && typeof rawDate.toDate === 'function') {
+      const d = rawDate.toDate();
+      if (d instanceof Date && !isNaN(d.getTime())) {
+        return d.toISOString().split('T')[0];
+      }
+      return '';
+    }
+    if (typeof rawDate?.seconds === 'number' && !isNaN(rawDate.seconds)) {
+      const d = new Date(rawDate.seconds * 1000);
+      if (!isNaN(d.getTime())) {
+        return d.toISOString().split('T')[0];
+      }
+      return '';
+    }
+    if (typeof rawDate === 'number' && !isNaN(rawDate)) {
+      const d = new Date(rawDate);
+      if (!isNaN(d.getTime())) {
+        return d.toISOString().split('T')[0];
+      }
+      return '';
+    }
+    if (typeof rawDate === 'string') {
+      const clean = rawDate.trim();
+      if (!clean || clean === 'undefined' || clean === 'null' || clean === 'NaN') return '';
+      if (clean.includes('T')) {
+        const part = clean.split('T')[0];
+        if (/^\d{4}-\d{2}-\d{2}$/.test(part)) return part;
+      }
+      if (clean.includes('/')) {
+        const parts = clean.split('/');
+        if (parts.length === 3) {
+          if (parts[0].length === 4) return `${parts[0]}-${parts[1].padStart(2, '0')}-${parts[2].padStart(2, '0')}`;
+          return `${parts[2]}-${parts[1].padStart(2, '0')}-${parts[0].padStart(2, '0')}`;
+        }
+      }
+      if (/^\d{4}-\d{2}-\d{2}$/.test(clean.substring(0, 10))) {
+        return clean.substring(0, 10);
+      }
+      const parsed = new Date(clean);
+      if (!isNaN(parsed.getTime())) {
+        return parsed.toISOString().split('T')[0];
+      }
+      return '';
+    }
+  } catch (_) {
+    return '';
   }
   return '';
 };
@@ -257,18 +288,23 @@ export const determineCallupRecommendation = (pct, thresholds = {}) => {
  * @returns {Object} { windowType: 'microcycle'|'week', startDate: string, endDate: string, nextMatch: Object|null, previousMatch: Object|null, title: string, titleEn: string }
  */
 export const getMicrocycleDateRange = ({ matches = [], sessions = [], targetDate = new Date() } = {}) => {
-  const refDate = targetDate instanceof Date ? targetDate : new Date(targetDate);
-  const todayStr = toDateKey(refDate);
+  const refDate = targetDate instanceof Date && !isNaN(targetDate.getTime()) ? new Date(targetDate.getTime()) : new Date();
+  const todayStr = toDateKey(refDate) || new Date().toISOString().split('T')[0];
 
   // 1. Buscar el próximo partido dentro de los próximos 7 días
-  const next7DaysStr = toDateKey(new Date(refDate.getTime() + 7 * 24 * 60 * 60 * 1000));
+  const next7DaysDate = new Date(refDate.getTime() + 7 * 24 * 60 * 60 * 1000);
+  const next7DaysStr = toDateKey(next7DaysDate);
   
   const upcomingMatches = (matches || [])
     .filter((m) => {
       const d = toDateKey(m.date || m.fecha);
-      return d >= todayStr && d <= next7DaysStr;
+      return d && d >= todayStr && (!next7DaysStr || d <= next7DaysStr);
     })
-    .sort((a, b) => new Date(a.date || a.fecha).getTime() - new Date(b.date || b.fecha).getTime());
+    .sort((a, b) => {
+      const da = new Date(a.date || a.fecha).getTime() || 0;
+      const db = new Date(b.date || b.fecha).getTime() || 0;
+      return da - db;
+    });
 
   const nextMatch = upcomingMatches[0] || null;
 
@@ -279,24 +315,37 @@ export const getMicrocycleDateRange = ({ matches = [], sessions = [], targetDate
     const pastMatchesBefore = (matches || [])
       .filter((m) => {
         const d = toDateKey(m.date || m.fecha);
-        return d < nextMatchDateStr;
+        return d && d < nextMatchDateStr;
       })
-      .sort((a, b) => new Date(b.date || b.fecha).getTime() - new Date(a.date || a.fecha).getTime());
+      .sort((a, b) => {
+        const da = new Date(a.date || a.fecha).getTime() || 0;
+        const db = new Date(b.date || b.fecha).getTime() || 0;
+        return db - da;
+      });
 
     const previousMatch = pastMatchesBefore[0] || null;
     let startDateStr = '';
 
     if (previousMatch) {
       const prevDate = new Date(previousMatch.date || previousMatch.fecha);
-      prevDate.setDate(prevDate.getDate() + 1); // Día siguiente al partido anterior
-      startDateStr = toDateKey(prevDate);
-    } else {
-      // Si no hay partido previo, usar el lunes de la semana del próximo partido
+      if (!isNaN(prevDate.getTime())) {
+        prevDate.setDate(prevDate.getDate() + 1); // Día siguiente al partido anterior
+        startDateStr = toDateKey(prevDate);
+      }
+    }
+    
+    if (!startDateStr) {
+      // Si no hay partido previo o fue inválido, usar el lunes de la semana del próximo partido
       const nDate = new Date(nextMatchDateStr);
-      const day = nDate.getDay();
-      const diff = nDate.getDate() - day + (day === 0 ? -6 : 1);
-      const monday = new Date(nDate.setDate(diff));
-      startDateStr = toDateKey(monday);
+      if (!isNaN(nDate.getTime())) {
+        const day = nDate.getDay();
+        const diff = nDate.getDate() - day + (day === 0 ? -6 : 1);
+        const monday = new Date(nDate);
+        monday.setDate(diff);
+        startDateStr = toDateKey(monday);
+      } else {
+        startDateStr = todayStr;
+      }
     }
 
     return {
@@ -312,8 +361,9 @@ export const getMicrocycleDateRange = ({ matches = [], sessions = [], targetDate
 
   // 2. Si no hay partido en 7 días, usar la semana en curso (Lunes a Domingo)
   const day = refDate.getDay();
-  const diffToMonday = refDate.getDate() - day + (day === 0 ? -6 : 1);
-  const monday = new Date(refDate.setDate(diffToMonday));
+  const diffToMonday = (day === 0 ? -6 : 1) - day;
+  const monday = new Date(refDate);
+  monday.setDate(refDate.getDate() + diffToMonday);
   const sunday = new Date(monday);
   sunday.setDate(monday.getDate() + 6);
 
@@ -327,7 +377,7 @@ export const getMicrocycleDateRange = ({ matches = [], sessions = [], targetDate
     nextMatch: null,
     previousMatch: null,
     title: `Semana en Curso (${startStr} al ${endStr})`,
-    titleEn: `Current Week (${startStr} to ${endStr})`
+    titleEn: `Current week (${startStr} to ${endStr})`
   };
 };
 

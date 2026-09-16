@@ -18,6 +18,7 @@ import {
 import { getPendingEvents, getUnclosedAttendanceEvents } from '../utils/attendanceStatsHelper';
 import { doc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../firebaseConfig';
+import { Save, Loader2, Check, Lock, FileText } from 'lucide-react';
 
 const STATUS_CONFIG = {
   present:   { label: 'Presente',   labelEn: 'Present',   color: '#22C55E', bg: 'rgba(34, 197, 94, 0.12)', border: '#22C55E', icon: '✅' },
@@ -724,15 +725,19 @@ export const TeamAttendanceTab = ({ players = [], activeTeam = null }) => {
                 style={{
                   padding: '8px 14px',
                   borderRadius: '8px',
-                  background: '#3B82F6',
+                  background: '#1B3A2D',
                   color: '#FFFFFF',
                   fontWeight: '800',
                   fontSize: '12px',
-                  border: 'none',
-                  cursor: 'pointer'
+                  border: '1px solid #D4A843',
+                  cursor: 'pointer',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '6px'
                 }}
               >
-                🏆 {isEn ? 'Close Match Sheet' : 'Cerrar Acta Partido'}
+                <FileText size={14} color="#D4A843" />
+                <span>{isEn ? 'Close Match Sheet' : 'Cerrar Acta Partido'}</span>
               </button>
             )}
           </div>
@@ -909,7 +914,7 @@ export const TeamAttendanceTab = ({ players = [], activeTeam = null }) => {
                       🌧️ {isEn ? 'Suspended Session' : 'Sesión Suspendida'}
                     </span>
                   ) : isSessionFuture ? (
-                    <span style={{ padding: '6px 12px', borderRadius: '8px', background: 'rgba(59, 130, 246, 0.15)', color: '#3B82F6', fontWeight: '800', fontSize: '12px' }}>
+                    <span style={{ padding: '6px 12px', borderRadius: '8px', background: 'rgba(76, 175, 125, 0.15)', color: '#4CAF7D', fontWeight: '800', fontSize: '12px' }}>
                       🕐 {isEn ? 'Future session' : 'Sesión futura'}
                     </span>
                   ) : hasStaffRecord ? (
@@ -978,15 +983,19 @@ export const TeamAttendanceTab = ({ players = [], activeTeam = null }) => {
                   minHeight: '44px',
                   padding: '0 16px',
                   borderRadius: '10px',
-                  border: '1px solid #22C55E',
-                  background: 'rgba(34, 197, 94, 0.1)',
-                  color: '#22C55E',
+                  border: '1px solid #4CAF7D',
+                  background: 'rgba(76, 175, 125, 0.12)',
+                  color: '#4CAF7D',
                   fontWeight: '700',
                   fontSize: '12px',
-                  cursor: 'pointer'
+                  cursor: 'pointer',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '6px'
                 }}
               >
-                ✅ {isEn ? 'Mark All Present' : 'Marcar Todos Presentes'}
+                <Check size={15} />
+                <span>{isEn ? 'Mark All Present' : 'Marcar Todos Presentes'}</span>
               </button>
 
               <button
@@ -998,15 +1007,19 @@ export const TeamAttendanceTab = ({ players = [], activeTeam = null }) => {
                   padding: '0 20px',
                   borderRadius: '10px',
                   border: 'none',
-                  background: 'var(--accent-green)',
+                  background: 'var(--accent-green, #4CAF7D)',
                   color: '#FFFFFF',
                   fontWeight: '800',
                   fontSize: '13px',
-                  cursor: 'pointer',
-                  boxShadow: '0 4px 12px rgba(34, 197, 94, 0.3)'
+                  cursor: isSaving ? 'not-allowed' : 'pointer',
+                  boxShadow: '0 4px 12px rgba(76, 175, 125, 0.3)',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '8px'
                 }}
               >
-                {isSaving ? (isEn ? 'Saving...' : 'Guardando...') : `💾 ${isEn ? 'Save Attendance' : 'Guardar Asistencia'}`}
+                {isSaving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
+                <span>{isSaving ? (isEn ? 'Saving...' : 'Guardando...') : (isEn ? 'Save Attendance' : 'Guardar Asistencia')}</span>
               </button>
 
               {selectedSessionType === 'match' && (
@@ -1019,19 +1032,20 @@ export const TeamAttendanceTab = ({ players = [], activeTeam = null }) => {
                       minHeight: '44px',
                       padding: '0 18px',
                       borderRadius: '10px',
-                      border: 'none',
-                      background: '#3B82F6',
+                      border: '1px solid #D4A843',
+                      background: '#1B3A2D',
                       color: '#FFFFFF',
                       fontWeight: '800',
                       fontSize: '13px',
-                      cursor: 'pointer',
-                      boxShadow: '0 4px 12px rgba(59, 130, 246, 0.3)',
-                      display: 'flex',
+                      cursor: isSaving ? 'not-allowed' : 'pointer',
+                      boxShadow: '0 4px 12px rgba(27, 58, 45, 0.25)',
+                      display: 'inline-flex',
                       alignItems: 'center',
-                      gap: '6px'
+                      gap: '8px'
                     }}
                   >
-                    🔒 {isEn ? 'Save & Close Match Sheet' : 'Guardar y Cerrar Acta'}
+                    {isSaving ? <Loader2 size={16} className="animate-spin" /> : <Lock size={16} color="#D4A843" />}
+                    <span>{isSaving ? (isEn ? 'Closing Sheet...' : 'Cerrando Acta...') : (isEn ? 'Save & Close Match Sheet' : 'Guardar y Cerrar Acta')}</span>
                   </button>
                 ) : (
                   <button
@@ -1096,7 +1110,7 @@ export const TeamAttendanceTab = ({ players = [], activeTeam = null }) => {
                 </span>
               )}
               {rsvpCounters.justified > 0 && (
-                <span style={{ fontSize: '11px', fontWeight: '700', color: '#3B82F6', background: 'rgba(59,130,246,0.12)', padding: '3px 10px', borderRadius: '6px' }}>
+                <span style={{ fontSize: '11px', fontWeight: '700', color: '#D4A843', background: 'rgba(212,168,67,0.15)', padding: '3px 10px', borderRadius: '6px' }}>
                   📄 {rsvpCounters.justified} {isEn ? 'Justified' : 'Justificado'}
                 </span>
               )}

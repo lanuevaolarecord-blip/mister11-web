@@ -463,6 +463,23 @@ export const calculatePlayerPerformanceScores = (evaluations = [], player = {}, 
     ? Math.round(validDimensions.reduce((acc, v) => acc + v, 0) / validDimensions.length)
     : (testCount > 0 ? Math.round((fis + tec + psi + soc) / 4) : 0);
 
+  // 6ta Dimensión: ENTRENAMIENTO (calificación de sesiones de entrenamiento 0 a 99)
+  const rawTrain = options.trainingRating !== undefined && options.trainingRating !== null
+    ? Number(options.trainingRating)
+    : (player?.trainingRating ?? player?.evaluacion?.entrenamiento ?? 0);
+  const entrenamiento = rawTrain > 0
+    ? Math.min(99, Math.max(0, Math.round(rawTrain <= 10 ? rawTrain * 10 : rawTrain)))
+    : 0;
+
+  const radarData6 = [
+    { subject: 'FÍSICO', label: 'FÍSICO', value: fis },
+    { subject: 'TÉCNICA', label: 'TÉCNICA', value: tec },
+    { subject: 'TÁCTICA', label: 'TÁCTICA', value: tactica },
+    { subject: 'MENTAL', label: 'MENTAL', value: psi },
+    { subject: 'ASISTENCIA', label: 'ASISTENCIA', value: asistencia },
+    { subject: 'ENTRENAMIENTO', label: 'ENTRENAMIENTO', value: entrenamiento }
+  ];
+
   return {
     fis,
     tec,
@@ -470,6 +487,7 @@ export const calculatePlayerPerformanceScores = (evaluations = [], player = {}, 
     soc,
     tactica,
     asistencia,
+    entrenamiento,
     overall,
     testCount,
     streak: testCount,
@@ -493,7 +511,8 @@ export const calculatePlayerPerformanceScores = (evaluations = [], player = {}, 
       { subject: 'MENTAL', label: 'MENTAL', value: psi },
       { subject: 'ASISTENCIA', label: 'ASISTENCIA', value: asistencia }
     ],
-    radarData: [
+    radarData6,
+    radarData: entrenamiento > 0 ? radarData6 : [
       { subject: 'FÍSICO', label: 'FÍSICO', value: fis },
       { subject: 'TÉCNICA', label: 'TÉCNICA', value: tec },
       { subject: 'TÁCTICA', label: 'TÁCTICA', value: tactica },

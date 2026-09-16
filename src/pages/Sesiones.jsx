@@ -18,7 +18,7 @@ import { useExercises } from '../hooks/useExercises';
 import { downloadJSON, downloadImage } from '../utils/download.js';
 import { generateGoogleCalendarUrl, generateICSContent, downloadICSFile } from '../utils/calendarHelper';
 import { shareSessionToFirestore, getSharedSession, exportSessionToJSONFile, exportSessionToICSFile, parseSessionFile } from '../utils/sessionSharing';
-import { Share2, Link as LinkIcon, Download, Upload, Copy, Check, Calendar, ArrowRight } from 'lucide-react';
+import { Share2, Link as LinkIcon, Download, Upload, Copy, Check, Calendar, ArrowRight, Star } from 'lucide-react';
 import { normalizeText } from '../utils/normalizeInput';
 import { useTranslation } from '../hooks/useTranslation';
 import { SpellCheckedInput } from '../components/ui/SpellCheckedInput';
@@ -43,6 +43,8 @@ import { CSS } from '@dnd-kit/utilities';
 import './Sesiones.css';
 import BlockEditor from '../components/BlockEditor';
 import { ImageModal } from '../components/SessionImageViewer/ImageModal';
+import SessionPlayerRating from '../components/session/SessionPlayerRating';
+import GatedFeature from '../components/GatedFeature';
 
 const Sesiones = () => {
   const { user, activeTeamId, getTeamPath } = useAuth();
@@ -99,6 +101,7 @@ const Sesiones = () => {
 
   const [viewMode, setViewMode] = useState('list'); // 'list' | 'edit'
   const [selectedSession, setSelectedSession] = useState(null);
+  const [ratingModalSession, setRatingModalSession] = useState(null);
   const [selectedCapture, setSelectedCapture] = useState(null);
   const [selectedAnimation, setSelectedAnimation] = useState(null);
   const [editData, setEditData] = useState(null);
@@ -1512,6 +1515,16 @@ const Sesiones = () => {
                       <span style={{ fontSize: '13px', color: 'var(--text-secondary)', fontWeight: 'bold' }}>{duration} min</span>
                     </div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <GatedFeature feature="sessions" teamContext={activeTeamId} silent={true}>
+                        <button
+                          type="button"
+                          onClick={(e) => { e.stopPropagation(); setRatingModalSession(session); }}
+                          style={{ background: 'rgba(212, 168, 67, 0.15)', border: '1px solid var(--accent-gold)', color: 'var(--accent-gold)', padding: '4px 10px', borderRadius: '12px', fontSize: '12px', fontWeight: 'bold', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px' }}
+                          title={isEn ? 'Rate players' : 'Calificar jugadores'}
+                        >
+                          <Star size={13} color="#D4A843" fill="#D4A843" /> {t('sessionRating.rateButton')}
+                        </button>
+                      </GatedFeature>
                       <button
                         type="button"
                         onClick={(e) => { e.stopPropagation(); handleEditSession(session); }}
@@ -1808,6 +1821,17 @@ const Sesiones = () => {
                 </div>
                 
                 <div className="preview-actions">
+                  <GatedFeature feature="sessions" teamContext={activeTeamId} silent={true}>
+                    <button
+                      type="button"
+                      className="btn-primary full-width"
+                      style={{ marginBottom: '10px', backgroundColor: '#1B3A2D', color: '#ffffff', fontWeight: '800', border: '1px solid var(--accent-gold)', minHeight: '44px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
+                      onClick={() => setRatingModalSession(selectedSession)}
+                    >
+                      <Star size={16} color="#D4A843" fill="#D4A843" />
+                      {t('sessionRating.rateButton')} ({t('sessionRating.title')})
+                    </button>
+                  </GatedFeature>
                   <button
                     className="btn-primary full-width"
                     style={{ marginBottom: '10px', backgroundColor: '#22c55e', color: '#000', fontWeight: '800', border: 'none', minHeight: '44px' }}
@@ -2204,6 +2228,15 @@ const Sesiones = () => {
           onClose={() => setShowLiveField(false)}
         />
       )}
+
+      {/* Modal de Calificación de Jugadores en la Sesión */}
+      <SessionPlayerRating
+        isOpen={Boolean(ratingModalSession)}
+        onClose={() => setRatingModalSession(null)}
+        session={ratingModalSession}
+        players={players}
+        teamPath={(getTeamPath && activeTeamId ? getTeamPath(activeTeamId) : '') || (activeTeam?.id ? `equipos/${activeTeam.id}` : (activeTeamId ? `equipos/${activeTeamId}` : ''))}
+      />
 
       {/* Custom Dialog Modal (Glassmorphism Premium) */}
       {modalConfig.isOpen && (

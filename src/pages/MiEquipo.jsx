@@ -21,9 +21,10 @@ import PlayerPlansTab from '../components/PlayerPlansTab';
 import { TeamAttendanceTab } from '../components/TeamAttendanceTab';
 import { PlayerAttendanceSubTab } from '../components/PlayerAttendanceSubTab';
 import { TeamStaffTab } from '../components/TeamStaffTab';
+import { TrainingPerformanceTable } from '../components/team/TrainingPerformanceTable';
 import { PlayerTabs } from '../components/player/PlayerTabs';
 import { PlayerChatTab } from '../components/player/PlayerChatTab';
-import { MessageSquare, FileText, Pencil, Edit, X, UserPlus, Share2, Mail, Trash2, Bell, Megaphone, Flag, Ban, CheckCircle, AlertTriangle } from 'lucide-react';
+import { MessageSquare, FileText, Pencil, Edit, X, UserPlus, Share2, Mail, Trash2, Bell, Megaphone, Flag, Ban, CheckCircle, AlertTriangle, TrendingUp } from 'lucide-react';
 import { useTranslation } from '../hooks/useTranslation';
 import { SpellCheckedTextarea } from '../components/ui/SpellCheckedTextarea';
 import './MiEquipo.css';
@@ -592,6 +593,15 @@ const MiEquipo = () => {
             <span>🛡️</span>
             <span>{t('equipo.tab.staff') || 'Cuerpo Técnico'}</span>
           </button>
+          <button 
+            type="button"
+            className={`chip ${mainTeamTab === 'training_ratings' ? 'active' : ''}`}
+            style={{ fontWeight: '800', minHeight: '44px', padding: '0 18px', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '6px' }}
+            onClick={() => setMainTeamTab('training_ratings')}
+          >
+            <TrendingUp size={15} />
+            <span>{t('sessionRating.performanceTableTitle')}</span>
+          </button>
 
           {teamReports.length > 0 && (
             <button 
@@ -636,6 +646,8 @@ const MiEquipo = () => {
         <TeamStaffTab activeTeam={activeTeam} />
       ) : mainTeamTab === 'attendance' ? (
         <TeamAttendanceTab players={players} activeTeam={activeTeam} />
+      ) : mainTeamTab === 'training_ratings' ? (
+        <TrainingPerformanceTable players={players} activeTeam={activeTeam} teamPath={teamPath} />
       ) : players.length === 0 ? (
         <div className="empty-team-state">
           <div className="empty-icon">⚽</div>

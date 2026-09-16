@@ -54,6 +54,7 @@ export const PlayerStatsTab = ({ player, team, teamPath, isParentView = false, a
   const [allTeamMatches, setAllTeamMatches] = useState([]);
   const [allAttendance, setAllAttendance] = useState([]);
   const [allSessions, setAllSessions] = useState([]);
+  const [trainingRatingsHistory, setTrainingRatingsHistory] = useState([]);
   const [allPlayers, setAllPlayers] = useState([]);
   const [playerMatchStats, setPlayerMatchStats] = useState({
     matchesPlayed: 0,
@@ -324,6 +325,59 @@ export const PlayerStatsTab = ({ player, team, teamPath, isParentView = false, a
     };
   }, [cleanPath, effectivePlayerId, player?.notaMedia]);
 
+  // 3.5. Cargar calificaciones individuales de sesiones de entrenamiento
+  useEffect(() => {
+    if (!cleanPath || !effectivePlayerId || allSessions.length === 0) return;
+
+    let isMounted = true;
+
+    const loadTrainingRatings = async () => {
+      try {
+        const sortedSessions = [...allSessions].sort((a, b) => {
+          const dateA = a.date || a.fecha || '';
+          const dateB = b.date || b.fecha || '';
+          return dateB.localeCompare(dateA);
+        }).slice(0, 10);
+
+        const ratings = [];
+        await Promise.all(
+          sortedSessions.map(async (sess) => {
+            try {
+              const ratingDoc = await getDoc(doc(db, `${cleanPath}/sessions/${sess.id}/ratings/${effectivePlayerId}`));
+              if (ratingDoc.exists()) {
+                const data = ratingDoc.data();
+                ratings.push({
+                  sessionId: sess.id,
+                  sessionTitle: sess.title || sess.titulo || (isEn ? 'Session' : 'Sesión'),
+                  date: sess.date || sess.fecha || '',
+                  rating: Number(data.rating || 0),
+                  comment: data.comment || ''
+                });
+              }
+            } catch (err) {
+              // Silencioso si no hay rating registrado
+            }
+          })
+        );
+
+        // Ordenar cronológicamente para la gráfica de evolución temporal
+        ratings.sort((a, b) => (a.date || '').localeCompare(b.date || ''));
+
+        if (isMounted) {
+          setTrainingRatingsHistory(ratings);
+        }
+      } catch (e) {
+        console.warn('Error cargando training ratings del jugador:', e);
+      }
+    };
+
+    loadTrainingRatings();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [cleanPath, effectivePlayerId, allSessions, isEn]);
+
   // 4. Comparativa Privada con Promedios del Equipo (FASE 4)
   const teamComparison = useMemo(() => {
     if (allPlayers.length === 0) return null;
@@ -417,10 +471,15 @@ export const PlayerStatsTab = ({ player, team, teamPath, isParentView = false, a
     ? Number(playerMatchStats.avgRating)
     : (player?.notaMedia && !isNaN(Number(player.notaMedia)) ? Number(player.notaMedia) : null);
 
+  const avgTrainingScore = trainingRatingsHistory.length > 0
+    ? (trainingRatingsHistory.reduce((acc, curr) => acc + curr.rating, 0) / trainingRatingsHistory.length)
+    : (player?.trainingRating ? Number(player.trainingRating) : null);
+
   // Cálculo canónico unificado de radar y baremos deportivos
   const scores = calculatePlayerPerformanceScores(evaluations, player, {
     attendancePct: effectiveAttendance,
-    matchRating: effectiveRating
+    matchRating: effectiveRating,
+    trainingRating: avgTrainingScore
   });
 
   const rawFisico = scores.fis;
@@ -428,8 +487,9 @@ export const PlayerStatsTab = ({ player, team, teamPath, isParentView = false, a
   const rawTactica = scores.tactica;
   const rawMental = scores.psi;
   const rawAsistencia = scores.asistencia;
+  const rawEntrenamiento = scores.entrenamiento;
 
-  const radarMetrics = scores.radarData5;
+  const radarMetrics = scores.radarData;
   const zeroMetrics = radarMetrics.filter(m => m.value === 0);
   const overallTPI = scores.overall;
 
@@ -440,6 +500,7 @@ export const PlayerStatsTab = ({ player, team, teamPath, isParentView = false, a
     if (norm.includes('TÁC') || norm.includes('TAC')) return t('player.stats.axis.tactical', {}, isEn ? 'TACTICAL' : 'TÁCTICA');
     if (norm.includes('MEN') || norm.includes('PSI')) return t('player.stats.axis.mental', {}, isEn ? 'MENTAL' : 'MENTAL');
     if (norm.includes('ASIS') || norm.includes('ATT')) return t('player.stats.axis.attendance', {}, isEn ? 'ATTENDANCE' : 'ASISTENCIA');
+    if (norm.includes('ENTREN') || norm.includes('TRAIN')) return t('sessionRating.radarAxisTraining', {}, isEn ? 'TRAINING' : 'ENTRENAMIENTO');
     return axis;
   };
 
@@ -1350,6 +1411,9 @@ export const PlayerStatsTab = ({ player, team, teamPath, isParentView = false, a
               <li><strong>{isEn ? 'Tactical' : 'Táctica'} ({rawTactica}):</strong> {t('player.stats.radarTact')}</li>
               <li><strong>Mental ({rawMental}):</strong> {t('player.stats.radarMental')}</li>
               <li><strong>{t('player.leaderboard.tabAttendance')} ({rawAsistencia}):</strong> {t('player.stats.radarAtt')}</li>
+              {rawEntrenamiento > 0 && (
+                <li><strong>{t('sessionRating.radarAxisTraining')} ({rawEntrenamiento}):</strong> {isEn ? 'Rating from coach in training sessions' : 'Calificación técnica en sesiones de entrenamiento'}</li>
+              )}
             </ul>
           </div>
         )}
@@ -1501,6 +1565,169 @@ export const PlayerStatsTab = ({ player, team, teamPath, isParentView = false, a
           </div>
         )}
       </div>
+
+      {/* 5.5. EVOLUCIÓN EN ENTRENAMIENTOS (GRÁFICA SVG Y NOTAS DEL MÍSTER) */}
+      {trainingRatingsHistory.length > 0 && (
+        <div className="hud-card" style={{ marginBottom: '20px', padding: '16px' }}>
+          <div className="hud-header" style={{ marginBottom: '12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px' }}>
+            <span className="hud-badge" style={{ color: '#4CAF7D', borderColor: 'rgba(76, 175, 125, 0.3)' }}>
+              <TrendingUp size={14} /> {t('sessionRating.evolutionTitle')}
+            </span>
+
+            {avgTrainingScore !== null && (
+              <span
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '4px',
+                  padding: '3px 10px',
+                  borderRadius: '999px',
+                  backgroundColor: 'rgba(212, 168, 67, 0.15)',
+                  border: '1px solid rgba(212, 168, 67, 0.4)',
+                  color: '#D4A843',
+                  fontSize: '12px',
+                  fontWeight: '800'
+                }}
+              >
+                <Star size={12} fill="#D4A843" color="#D4A843" />
+                {t('sessionRating.averageRating')}: {Number(avgTrainingScore).toFixed(1)} / 10
+              </span>
+            )}
+          </div>
+
+          {/* Gráfico SVG de Evolución Temporal de Calificaciones de Sesión */}
+          {(() => {
+            const w = 420;
+            const h = 130;
+            const padX = 36;
+            const padY = 24;
+            const innerW = w - padX * 2;
+            const innerH = h - padY * 2;
+
+            const pts = trainingRatingsHistory.map((item, idx) => {
+              const val = Math.max(0, Math.min(10, item.rating));
+              const x = trainingRatingsHistory.length === 1
+                ? w / 2
+                : padX + (idx / (trainingRatingsHistory.length - 1)) * innerW;
+              const y = h - padY - (val / 10) * innerH;
+              return { x, y, val, date: item.date || `S${idx + 1}`, comment: item.comment, title: item.sessionTitle };
+            });
+
+            const pathD = pts.length === 1
+              ? `M ${pts[0].x - 24} ${pts[0].y} L ${pts[0].x + 24} ${pts[0].y}`
+              : pts.reduce((acc, p, idx) => `${acc} ${idx === 0 ? 'M' : 'L'} ${p.x.toFixed(1)} ${p.y.toFixed(1)}`, '');
+
+            return (
+              <div style={{ background: darkMode ? 'rgba(0,0,0,0.25)' : 'rgba(27,58,45,0.03)', padding: '12px', borderRadius: '12px', border: '1px solid var(--border-light)' }}>
+                <div style={{ width: '100%', overflowX: 'auto' }}>
+                  <svg viewBox={`0 0 ${w} ${h}`} style={{ width: '100%', maxHeight: '150px', display: 'block' }}>
+                    {/* Líneas de cuadrícula (0, 5, 10) */}
+                    {[0, 5, 10].map((level) => {
+                      const y = h - padY - (level / 10) * innerH;
+                      return (
+                        <g key={level}>
+                          <line
+                            x1={padX}
+                            y1={y}
+                            x2={w - padX}
+                            y2={y}
+                            stroke={darkMode ? 'rgba(255,255,255,0.08)' : 'rgba(27,58,45,0.1)'}
+                            strokeDasharray="3 3"
+                          />
+                          <text
+                            x={padX - 8}
+                            y={y + 3}
+                            textAnchor="end"
+                            fontSize="9"
+                            fill={darkMode ? '#94A3B8' : '#64748B'}
+                            fontWeight="600"
+                          >
+                            {level}
+                          </text>
+                        </g>
+                      );
+                    })}
+
+                    {/* Trazo de evolución */}
+                    <path
+                      d={pathD}
+                      fill="none"
+                      stroke="#4CAF7D"
+                      strokeWidth="2.5"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+
+                    {/* Puntos de datos */}
+                    {pts.map((p, idx) => (
+                      <g key={idx}>
+                        <circle
+                          cx={p.x}
+                          cy={p.y}
+                          r="4.5"
+                          fill="#D4A843"
+                          stroke={darkMode ? '#1B3A2D' : '#ffffff'}
+                          strokeWidth="1.5"
+                        />
+                        <text
+                          x={p.x}
+                          y={p.y - 7}
+                          textAnchor="middle"
+                          fontSize="9"
+                          fontWeight="800"
+                          fill={darkMode ? '#FFFFFF' : '#1B3A2D'}
+                        >
+                          {p.val.toFixed(1)}
+                        </text>
+                        <text
+                          x={p.x}
+                          y={h - 6}
+                          textAnchor="middle"
+                          fontSize="8"
+                          fill={darkMode ? '#94A3B8' : '#64748B'}
+                        >
+                          {p.date}
+                        </text>
+                      </g>
+                    ))}
+                  </svg>
+                </div>
+
+                {/* Comentarios recientes del entrenador */}
+                {pts.some(p => p.comment && p.comment.trim()) && (
+                  <div style={{ marginTop: '12px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                    {pts.filter(p => p.comment && p.comment.trim()).slice(-3).map((p, cIdx) => (
+                      <div
+                        key={cIdx}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'flex-start',
+                          gap: '8px',
+                          padding: '8px 10px',
+                          borderRadius: '8px',
+                          backgroundColor: darkMode ? 'rgba(255,255,255,0.04)' : '#FFFFFF',
+                          border: '1px solid var(--border-light)',
+                          fontSize: '11.5px'
+                        }}
+                      >
+                        <MessageSquare size={14} color="#D4A843" style={{ flexShrink: 0, marginTop: '2px' }} />
+                        <div style={{ flex: 1 }}>
+                          <span style={{ fontWeight: '700', color: 'var(--text-primary)' }}>
+                            {p.title} ({p.date}):
+                          </span>{' '}
+                          <span style={{ color: 'var(--text-secondary)', fontStyle: 'italic' }}>
+                            "{p.comment}"
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            );
+          })()}
+        </div>
+      )}
 
       {/* TARJETA DE ESTADO DE BIENESTAR Y CARGA */}
       <div className="hud-card" style={{ marginBottom: '24px', padding: '16px' }}>

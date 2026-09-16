@@ -174,7 +174,11 @@ export const TeamAttendanceTab = ({ players = [], activeTeam = null }) => {
         type: 'match',
         isSuspended: false
       }))
-    ].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+    ].sort((a, b) => {
+      const tb = b.date ? new Date(b.date).getTime() : 0;
+      const ta = a.date ? new Date(a.date).getTime() : 0;
+      return (isNaN(tb) ? 0 : tb) - (isNaN(ta) ? 0 : ta);
+    });
   }, [sessions, matches]);
 
   const selectedMatch = selectedSessionType === 'match'
@@ -531,8 +535,9 @@ export const TeamAttendanceTab = ({ players = [], activeTeam = null }) => {
     if (callupWindow === 'week') {
       const curr = new Date();
       const day = curr.getDay();
-      const diffToMonday = curr.getDate() - day + (day === 0 ? -6 : 1);
-      const monday = new Date(curr.setDate(diffToMonday));
+      const diffToMonday = (day === 0 ? -6 : 1) - day;
+      const monday = new Date(curr);
+      monday.setDate(curr.getDate() + diffToMonday);
       const sunday = new Date(monday);
       sunday.setDate(monday.getDate() + 6);
       return { startDate: toDateKey(monday), endDate: toDateKey(sunday) };

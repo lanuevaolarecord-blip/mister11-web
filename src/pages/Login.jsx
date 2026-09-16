@@ -169,6 +169,60 @@ const Login = () => {
               : (isEn ? 'Sign in to manage your team or access the Player Portal.' : 'Inicia sesión para gestionar tu equipo o acceder al Portal del Jugador.')}
           </p>
 
+          {/* Main Role Selection Buttons */}
+          <div className="role-entry-grid">
+            <button
+              type="button"
+              className={`role-entry-btn ${selectedRole === 'coach' ? 'active' : ''}`}
+              onClick={() => {
+                setSelectedRole('coach');
+                if (authMode !== 'google' && authMode !== 'email_login' && authMode !== 'email_register') {
+                  setAuthMode('email_login');
+                }
+              }}
+            >
+              <div className="role-entry-icon-box">
+                <User size={24} />
+              </div>
+              <div className="role-entry-content">
+                <div className="role-entry-title">{isEn ? 'I am a Coach / Mister' : 'Soy Entrenador / Míster'}</div>
+                <div className="role-entry-desc">
+                  {isEn 
+                    ? 'Create or manage your team, drills, tactics, and call-ups.' 
+                    : 'Crea tu cuenta de entrenador o inicia sesión para gestionar tu equipo.'}
+                </div>
+              </div>
+              <ArrowRight size={18} color="#4CAF7D" />
+            </button>
+
+            <Link
+              to="/join-team"
+              className="role-entry-btn"
+            >
+              <div className="role-entry-icon-box">
+                <Users size={24} />
+              </div>
+              <div className="role-entry-content">
+                <div className="role-entry-title">{isEn ? 'I am a Player or Parent / Guardian' : 'Soy Jugador o Padre/Tutor'}</div>
+                <div className="role-entry-desc">
+                  {isEn 
+                    ? 'Join an existing team with a 6-letter code or scan QR.' 
+                    : 'Portal de unión al equipo con código de 6 caracteres o QR.'}
+                </div>
+              </div>
+              <ArrowRight size={18} color="#4CAF7D" />
+            </Link>
+          </div>
+
+          {/* Invited Staff Callout */}
+          <Link to="/join-staff" className="staff-invite-link-banner">
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <UserPlus size={16} />
+              <span>{isEn ? 'Invited as Technical Staff member? Join here' : '¿Has sido invitado al cuerpo técnico? Únete como Staff'}</span>
+            </div>
+            <ArrowRight size={14} />
+          </Link>
+
           <div className="auth-mode-tabs">
             <button 
               type="button"

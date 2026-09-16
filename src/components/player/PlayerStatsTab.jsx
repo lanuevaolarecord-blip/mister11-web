@@ -654,7 +654,7 @@ export const PlayerStatsTab = ({ player, team, teamPath, isParentView = false, a
 
             <div style={{ background: darkMode ? 'rgba(0,0,0,0.3)' : 'rgba(255,255,255,0.7)', padding: '10px', borderRadius: '10px', textAlign: 'center', border: '1px solid var(--border-light)' }}>
               <span style={{ fontSize: '11px', color: 'var(--text-secondary)', fontWeight: 'bold' }}>{t('gk.savePercentage')}</span>
-              <div style={{ fontSize: '18px', fontWeight: '900', marginTop: '3px', color: '#3B82F6' }}>
+              <div style={{ fontSize: '18px', fontWeight: '900', marginTop: '3px', color: '#4CAF7D' }}>
                 {playerMatchStats.gkStats?.savePercentage ?? 0}%
               </div>
             </div>
@@ -709,7 +709,7 @@ export const PlayerStatsTab = ({ player, team, teamPath, isParentView = false, a
 
             return (
               <div style={{ marginTop: '12px', background: darkMode ? 'rgba(0,0,0,0.2)' : 'rgba(255,255,255,0.5)', padding: '12px', borderRadius: '10px', border: '1px solid var(--border-light)' }}>
-                <div style={{ fontSize: '11px', fontWeight: '800', color: '#3B82F6', marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                <div style={{ fontSize: '11px', fontWeight: '800', color: '#4CAF7D', marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
                   📈 {t('gk.evolution')}
                 </div>
                 <div style={{ width: '100%', overflowX: 'auto' }}>
@@ -1567,36 +1567,83 @@ export const PlayerStatsTab = ({ player, team, teamPath, isParentView = false, a
       </div>
 
       {/* 5.5. EVOLUCIÓN EN ENTRENAMIENTOS (GRÁFICA SVG Y NOTAS DEL MÍSTER) */}
-      {trainingRatingsHistory.length > 0 && (
-        <div className="hud-card" style={{ marginBottom: '20px', padding: '16px' }}>
-          <div className="hud-header" style={{ marginBottom: '12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px' }}>
-            <span className="hud-badge" style={{ color: '#4CAF7D', borderColor: 'rgba(76, 175, 125, 0.3)' }}>
-              <TrendingUp size={14} /> {t('sessionRating.evolutionTitle')}
+      <div className="hud-card" style={{ marginBottom: '20px', padding: '16px' }}>
+        <div className="hud-header" style={{ marginBottom: '12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px' }}>
+          <span className="hud-badge" style={{ color: '#4CAF7D', borderColor: 'rgba(76, 175, 125, 0.3)' }}>
+            <TrendingUp size={14} /> {t('sessionRating.evolutionTitle')}
+          </span>
+
+          {avgTrainingScore !== null ? (
+            <span
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '4px',
+                padding: '3px 10px',
+                borderRadius: '999px',
+                backgroundColor: 'rgba(212, 168, 67, 0.15)',
+                border: '1px solid rgba(212, 168, 67, 0.4)',
+                color: '#D4A843',
+                fontSize: '12px',
+                fontWeight: '800'
+              }}
+            >
+              <Star size={12} fill="#D4A843" color="#D4A843" />
+              {t('sessionRating.averageRating')}: {Number(avgTrainingScore).toFixed(1)} / 10
             </span>
+          ) : (
+            <span
+              style={{
+                fontSize: '11px',
+                fontWeight: '700',
+                color: 'var(--text-secondary)',
+                backgroundColor: darkMode ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.04)',
+                padding: '3px 8px',
+                borderRadius: '6px'
+              }}
+            >
+              {isEn ? 'Pending ratings' : 'Pendiente de calificaciones'}
+            </span>
+          )}
+        </div>
 
-            {avgTrainingScore !== null && (
-              <span
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '4px',
-                  padding: '3px 10px',
-                  borderRadius: '999px',
-                  backgroundColor: 'rgba(212, 168, 67, 0.15)',
-                  border: '1px solid rgba(212, 168, 67, 0.4)',
-                  color: '#D4A843',
-                  fontSize: '12px',
-                  fontWeight: '800'
-                }}
-              >
-                <Star size={12} fill="#D4A843" color="#D4A843" />
-                {t('sessionRating.averageRating')}: {Number(avgTrainingScore).toFixed(1)} / 10
-              </span>
-            )}
+        {trainingRatingsHistory.length === 0 ? (
+          <div
+            style={{
+              padding: '24px 16px',
+              textAlign: 'center',
+              backgroundColor: darkMode ? 'rgba(0,0,0,0.2)' : 'rgba(27,58,45,0.02)',
+              borderRadius: '12px',
+              border: '1px dashed var(--border-light)'
+            }}
+          >
+            <div
+              style={{
+                width: '44px',
+                height: '44px',
+                borderRadius: '50%',
+                backgroundColor: 'rgba(76, 175, 125, 0.15)',
+                color: '#4CAF7D',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                margin: '0 auto 10px'
+              }}
+            >
+              <TrendingUp size={22} />
+            </div>
+            <h4 style={{ margin: '0 0 6px 0', fontSize: '14px', fontWeight: '800', color: 'var(--text-primary)' }}>
+              {isEn ? 'No training session ratings yet' : 'Sin calificaciones de entrenamiento aún'}
+            </h4>
+            <p style={{ margin: 0, fontSize: '12px', color: 'var(--text-secondary)', maxWidth: '360px', marginInline: 'auto', lineHeight: 1.5 }}>
+              {isEn
+                ? 'Your coaching staff can rate performance and leave tactical feedback after every training session from the Sessions module.'
+                : 'El cuerpo técnico puede calificar el rendimiento y registrar notas técnicas tras cada entrenamiento desde el módulo de Sesiones.'}
+            </p>
           </div>
-
-          {/* Gráfico SVG de Evolución Temporal de Calificaciones de Sesión */}
-          {(() => {
+        ) : (
+          /* Gráfico SVG de Evolución Temporal de Calificaciones de Sesión */
+          (() => {
             const w = 420;
             const h = 130;
             const padX = 36;
@@ -1725,9 +1772,9 @@ export const PlayerStatsTab = ({ player, team, teamPath, isParentView = false, a
                 )}
               </div>
             );
-          })()}
-        </div>
-      )}
+          })()
+        )}
+      </div>
 
       {/* TARJETA DE ESTADO DE BIENESTAR Y CARGA */}
       <div className="hud-card" style={{ marginBottom: '24px', padding: '16px' }}>

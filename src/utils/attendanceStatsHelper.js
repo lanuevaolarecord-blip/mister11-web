@@ -68,6 +68,59 @@ export const normalizeEventStatus = (statusRaw) => {
 };
 
 /**
+ * Formatea de forma segura una fecha de evento evitando RangeError: Invalid time value
+ * @param {string|Date|Object} rawDate
+ * @param {string} fallback
+ * @returns {string}
+ */
+export const safeFormatAttendanceDate = (rawDate, fallback = '') => {
+  if (!rawDate) return fallback;
+  try {
+    let d;
+    if (typeof rawDate === 'string') {
+      const clean = rawDate.trim();
+      if (!clean) return fallback;
+      if (clean.includes('T')) {
+        d = new Date(clean);
+      } else if (clean.includes('-')) {
+        d = new Date(`${clean}T12:00:00`);
+      } else if (clean.includes('/')) {
+        const parts = clean.split('/');
+        if (parts.length === 3) {
+          if (parts[0].length === 4) {
+            d = new Date(`${parts[0]}-${parts[1].padStart(2, '0')}-${parts[2].padStart(2, '0')}T12:00:00`);
+          } else {
+            d = new Date(`${parts[2]}-${parts[1].padStart(2, '0')}-${parts[0].padStart(2, '0')}T12:00:00`);
+          }
+        } else {
+          d = new Date(clean);
+        }
+      } else {
+        d = new Date(clean);
+      }
+    } else if (rawDate instanceof Date) {
+      d = rawDate;
+    } else if (rawDate?.toDate && typeof rawDate.toDate === 'function') {
+      d = rawDate.toDate();
+    } else if (rawDate?.seconds) {
+      d = new Date(rawDate.seconds * 1000);
+    } else {
+      d = new Date(rawDate);
+    }
+
+    if (!d || isNaN(d.getTime())) {
+      if (typeof rawDate === 'string' && rawDate.length >= 10) {
+        return rawDate.slice(0, 10);
+      }
+      return fallback;
+    }
+    return d.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit' });
+  } catch (_) {
+    return fallback;
+  }
+};
+
+/**
  * Extrae la lista cronológica unificada de eventos deportivos con verificación oficial
  * para un jugador dado (sesiones de entrenamiento + partidos).
  *
@@ -720,7 +773,7 @@ export const getEventAttendanceStats = (event, { attendanceRecords = [], players
       rawId: cleanMId,
       title: `🏆 [Partido] vs ${event.rival || event.opponent || 'Rival'}`,
       date: dateKey,
-      formattedDate: dateKey ? new Date(dateKey + 'T12:00:00').toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit' }) : 'Partido',
+      formattedDate: safeFormatAttendanceDate(dateKey, 'Partido'),
       pct,
       pctAbsent,
       pctLate,
@@ -806,7 +859,7 @@ export const getEventAttendanceStats = (event, { attendanceRecords = [], players
       rawId: cleanSId,
       title: `⚽ [Sesión] ${event.title || event.titulo || 'Entrenamiento'}`,
       date: dateKey,
-      formattedDate: dateKey ? new Date(dateKey + 'T12:00:00').toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit' }) : 'Sesión',
+      formattedDate: safeFormatAttendanceDate(dateKey, 'Sesión'),
       pct,
       pctAbsent,
       pctLate,

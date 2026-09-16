@@ -63,6 +63,28 @@ service cloud.firestore {
       allow write: if isAuth();
     }
 
+    match /staff_codes/{codeId} {
+      allow read: if true;
+      allow write: if isAuth();
+    }
+
+    match /teams/{teamId} {
+      allow read: if isAuth() && 
+        (resource.data.ownerId == request.auth.uid || 
+         resource.data.members[request.auth.uid] != null ||
+         resource.data.staffMembers[request.auth.uid] != null);
+      
+      allow write: if isAuth();
+
+      match /sessions/{sessionId} {
+        allow read, write: if isAuth();
+      }
+
+      match /{subcollection=**} {
+        allow read, write: if isAuth();
+      }
+    }
+
     match /staff_invitations/{invitationId} {
       allow read: if true;
       allow create, update, delete: if isAuth();

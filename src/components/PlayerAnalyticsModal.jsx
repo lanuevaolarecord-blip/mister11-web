@@ -266,7 +266,8 @@ const PlayerAnalyticsModal = ({
     attendancePct: player?.attendancePct ? Number(player.attendancePct) : 0,
     matchRating: player?.notaMedia || null
   });
-  const { fis, tec, psi, soc, tactica, asistencia, overall, testCount: totalTests, radarData5: radarData } = scores;
+  const { fis, tec, psi, soc, tactica, asistencia, entrenamiento, overall, testCount: totalTests, radarData6 } = scores;
+  const radarData = radarData6 || scores.radarData;
 
   const initials = (player.name || '').split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
 
@@ -476,14 +477,15 @@ const PlayerAnalyticsModal = ({
                   {isEn ? 'out of 100' : 'sobre 100'}
                 </span>
               </div>
-              {/* Attribute badges (5 ejes canónicos del radar pentagonal) */}
+              {/* Attribute badges (6 ejes canónicos del perfil integral) */}
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(95px, 1fr))', gap: 10 }}>
                 {[
                   { label: isEn ? 'PHYSICAL' : 'FÍSICO', value: fis, color: '#4CAF7D' },
-                  { label: isEn ? 'TECHNICAL' : 'TÉCNICA', value: tec, color: '#2196F3' },
+                  { label: isEn ? 'TECHNICAL' : 'TÉCNICA', value: tec, color: '#2E7D5C' },
                   { label: isEn ? 'TACTICAL' : 'TÁCTICA', value: tactica, color: '#10B981' },
                   { label: isEn ? 'MENTAL' : 'MENTAL', value: psi, color: C_GOLD },
                   { label: isEn ? 'ATTENDANCE' : 'ASISTENCIA', value: asistencia, color: '#8B5CF6' },
+                  { label: isEn ? 'TRAINING' : 'ENTRENAMIENTO', value: entrenamiento, color: '#D4A843' },
                 ].map(({ label, value, color }) => (
                   <div key={label} style={{
                     background: '#FFF', borderRadius: 12, padding: '12px 8px',

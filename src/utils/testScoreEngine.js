@@ -512,13 +512,7 @@ export const calculatePlayerPerformanceScores = (evaluations = [], player = {}, 
       { subject: 'ASISTENCIA', label: 'ASISTENCIA', value: asistencia }
     ],
     radarData6,
-    radarData: entrenamiento > 0 ? radarData6 : [
-      { subject: 'FÍSICO', label: 'FÍSICO', value: fis },
-      { subject: 'TÉCNICA', label: 'TÉCNICA', value: tec },
-      { subject: 'TÁCTICA', label: 'TÁCTICA', value: tactica },
-      { subject: 'MENTAL', label: 'MENTAL', value: psi },
-      { subject: 'ASISTENCIA', label: 'ASISTENCIA', value: asistencia }
-    ]
+    radarData: radarData6
   };
 };
 

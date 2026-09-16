@@ -8,10 +8,13 @@ import { showToast } from '../utils/toast';
 import { ensureTeamCode } from '../utils/teamCode';
 import { collection, onSnapshot, query, doc, updateDoc, setDoc, addDoc, serverTimestamp, deleteDoc, getDocs } from 'firebase/firestore';
 import { db } from '../firebaseConfig';
-import { Shield, UserPlus, Trash2, Mail, Copy, Check, Clock, Users, Award, KeyRound, Share2, CheckCircle2, XCircle } from 'lucide-react';
+import { Shield, UserPlus, Trash2, Mail, Copy, Check, Clock, Users, Award, KeyRound, Share2, CheckCircle2, XCircle, QrCode, LogIn } from 'lucide-react';
 import { normalizeEmail } from '../utils/normalizeEmail';
 import { savePlayerIdentity } from '../utils/playerIdentity';
 import { useTranslation } from '../hooks/useTranslation';
+import { ensureStaffInviteCode, joinTeamAsStaff } from '../utils/staffInviteManager';
+import { QRInviteModal } from './QRInviteModal';
+import { InviteStaffModal } from './InviteStaffModal';
 
 export const TeamStaffTab = ({ activeTeam }) => {
   const { user } = useAuth();
@@ -117,12 +120,20 @@ export const TeamStaffTab = ({ activeTeam }) => {
 
   const { getTeamPath } = useAuth();
   const [teamCode, setTeamCode] = useState(activeTeam?.teamCode || '');
+  const [staffInviteCode, setStaffInviteCode] = useState(activeTeam?.staffInviteCode || '');
+  const [isStaffQRModalOpen, setIsStaffQRModalOpen] = useState(false);
+  const [isStaffEmailModalOpen, setIsStaffEmailModalOpen] = useState(false);
+  const [copiedStaffCode, setCopiedStaffCode] = useState(false);
+  const [joinStaffCodeInput, setJoinStaffCodeInput] = useState('');
+  const [isJoiningStaff, setIsJoiningStaff] = useState(false);
+
   const [joinRequests, setJoinRequests] = useState([]);
   const [rosterPlayers, setRosterPlayers] = useState([]);
   const [parentPlayerSelection, setParentPlayerSelection] = useState({});
   const [copiedTeamCode, setCopiedTeamCode] = useState(false);
   const [processingId, setProcessingId] = useState(null);
 
+  const isTeamOwner = activeTeam?.ownerId === user?.uid || currentUserRole === 'first_coach';
   const teamPath = activeTeam?.teamPath || (activeTeam?.id ? getTeamPath(activeTeam.id) : null);
 
   useEffect(() => {
@@ -132,7 +143,64 @@ export const TeamStaffTab = ({ activeTeam }) => {
         if (code) setTeamCode(code);
       })
       .catch(console.error);
+
+    ensureStaffInviteCode(activeTeam.id, teamPath, activeTeam.nombre || activeTeam.name, activeTeam.ownerId || user?.uid)
+      .then(code => {
+        if (code) setStaffInviteCode(code);
+      })
+      .catch(console.error);
   }, [activeTeam?.id, teamPath, user?.uid]);
+
+  const handleCopyStaffCode = async () => {
+    if (!staffInviteCode) return;
+    const ok = await copyToClipboard(staffInviteCode);
+    if (ok) {
+      setCopiedStaffCode(true);
+      showToast(isEn ? 'Staff code copied.' : 'Código de staff copiado.', 'success');
+      setTimeout(() => setCopiedStaffCode(false), 2000);
+    }
+  };
+
+  const handleShareStaffLink = async () => {
+    const raw = (staffInviteCode || '').replace(/^STAFF-/, '');
+    const link = `${window.location.origin}/join-staff?code=${raw}&teamId=${activeTeam?.id || ''}`;
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: isEn ? `Join ${activeTeam?.nombre || 'Team'} Coaching Staff` : `Únete al Cuerpo Técnico de ${activeTeam?.nombre || 'Mi Equipo'}`,
+          text: isEn ? `Join our coaching staff on Míster11:\n${link}\nCode: ${staffInviteCode}` : `Únete a nuestro cuerpo técnico en Míster11:\n${link}\nCódigo: ${staffInviteCode}`,
+          url: link
+        });
+      } catch (_) {}
+    } else {
+      const ok = await copyToClipboard(link);
+      if (ok) showToast(isEn ? 'Staff invitation link copied.' : 'Enlace de staff copiado.', 'success');
+    }
+  };
+
+  const handleJoinStaffByInput = async () => {
+    if (!joinStaffCodeInput.trim() || !user) return;
+    setIsJoiningStaff(true);
+    try {
+      const res = await joinTeamAsStaff(joinStaffCodeInput.trim(), user);
+      if (res.success) {
+        showToast(
+          isEn
+            ? `Joined ${res.teamName || 'team'} coaching staff!`
+            : `¡Te has unido al cuerpo técnico de ${res.teamName || 'el equipo'}!`,
+          'success'
+        );
+        setJoinStaffCodeInput('');
+        window.location.reload();
+      } else {
+        showToast(isEn ? 'Invalid or expired staff code.' : 'Código de staff no válido o expirado.', 'error');
+      }
+    } catch (_) {
+      showToast(isEn ? 'Error joining team.' : 'Error al unirse al equipo.', 'error');
+    } finally {
+      setIsJoiningStaff(false);
+    }
+  };
 
   // Escuchar jugadores de la plantilla para vinculación rápida
   useEffect(() => {
@@ -474,6 +542,149 @@ export const TeamStaffTab = ({ activeTeam }) => {
               <Share2 size={16} /> {t('staff.shareLink')}
             </button>
           </div>
+        </div>
+      </div>
+
+      {/* CÓDIGO DE ACCESO PARA ENTRENADORES/STAFF */}
+      <div style={{
+        background: darkMode ? 'linear-gradient(135deg, rgba(212, 168, 67, 0.12) 0%, rgba(27, 58, 45, 0.7) 100%)' : 'linear-gradient(135deg, #FFFBEB 0%, #FEF3C7 100%)',
+        border: '1.5px solid #D4A843',
+        borderRadius: '14px',
+        padding: '18px 20px',
+        marginBottom: '24px',
+        boxShadow: '0 4px 16px rgba(0,0,0,0.1)'
+      }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '14px' }}>
+          <div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#D4A843', fontWeight: 800, fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+              <Shield size={18} /> {isEn ? 'COACHING STAFF / STAFF ACCESS CODE' : 'CÓDIGO DE ACCESO PARA ENTRENADORES/STAFF'}
+            </div>
+            {isTeamOwner ? (
+              <>
+                <h4 style={{ margin: '4px 0 2px 0', fontSize: '1.25rem', color: textColorPrimary, fontWeight: 900, fontFamily: 'monospace', letterSpacing: '2px' }}>
+                  {staffInviteCode || t('common.loading')}
+                </h4>
+                <p style={{ margin: 0, fontSize: '0.8rem', color: textColorSecondary }}>
+                  {isEn ? 'Invite other coaches and specialists to your team staff.' : 'Invita a otros entrenadores al cuerpo técnico de tu equipo.'}
+                </p>
+              </>
+            ) : (
+              <p style={{ margin: '4px 0 0 0', fontSize: '0.85rem', color: textColorSecondary }}>
+                {isEn ? 'If invited by the head coach of another team, enter your code below:' : 'Si has sido invitado por el míster principal a otro equipo, ingresa tu código aquí:'}
+              </p>
+            )}
+          </div>
+
+          {isTeamOwner ? (
+            <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '8px' }}>
+              <button
+                className="btn-outline"
+                onClick={handleCopyStaffCode}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  padding: '8px 14px',
+                  fontSize: '0.85rem',
+                  fontWeight: 700,
+                  minHeight: '44px'
+                }}
+              >
+                {copiedStaffCode ? <Check size={16} color="#D4A843" /> : <Copy size={16} />}
+                {copiedStaffCode ? t('staff.copied') : t('staff.copyCode')}
+              </button>
+
+              <button
+                className="btn-primary"
+                onClick={handleShareStaffLink}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  padding: '8px 14px',
+                  fontSize: '0.85rem',
+                  fontWeight: 700,
+                  minHeight: '44px',
+                  background: '#2E7D5C'
+                }}
+              >
+                <Share2 size={16} /> {t('staff.shareLink')}
+              </button>
+
+              <button
+                className="btn-outline"
+                onClick={() => setIsStaffEmailModalOpen(true)}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  padding: '8px 14px',
+                  fontSize: '0.85rem',
+                  fontWeight: 700,
+                  minHeight: '44px'
+                }}
+              >
+                <Mail size={16} /> {isEn ? 'Invite by Email' : 'Invitar por Email'}
+              </button>
+
+              <button
+                className="btn-outline"
+                onClick={() => setIsStaffQRModalOpen(true)}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  padding: '8px 14px',
+                  fontSize: '0.85rem',
+                  fontWeight: 700,
+                  minHeight: '44px',
+                  borderColor: '#D4A843',
+                  color: '#D4A843'
+                }}
+              >
+                <QrCode size={16} /> {isEn ? 'QR' : 'QR'}
+              </button>
+            </div>
+          ) : (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <input
+                type="text"
+                value={joinStaffCodeInput}
+                onChange={e => setJoinStaffCodeInput(e.target.value.toUpperCase())}
+                placeholder={isEn ? 'e.g. ABC123' : 'Ej. ABC123'}
+                maxLength={12}
+                style={{
+                  padding: '10px 14px',
+                  borderRadius: '8px',
+                  border: '1.5px solid #D4A843',
+                  backgroundColor: inputBgColor,
+                  color: textColorPrimary,
+                  fontWeight: 800,
+                  letterSpacing: '1px',
+                  fontSize: '0.9rem',
+                  minHeight: '44px'
+                }}
+              />
+              <button
+                type="button"
+                className="btn-primary"
+                onClick={handleJoinStaffByInput}
+                disabled={isJoiningStaff || !joinStaffCodeInput.trim()}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  padding: '10px 16px',
+                  fontWeight: 800,
+                  minHeight: '44px',
+                  background: '#1B3A2D',
+                  color: '#FFFFFF'
+                }}
+              >
+                <LogIn size={16} /> {isJoiningStaff ? (isEn ? 'Joining...' : 'Uniéndose...') : (isEn ? 'JOIN TEAM' : 'UNIRME AL EQUIPO')}
+              </button>
+            </div>
+          )}
         </div>
       </div>
 
@@ -1028,6 +1239,26 @@ export const TeamStaffTab = ({ activeTeam }) => {
           </div>
         </div>
       )}
+
+      {/* Modal de Invitación de Staff por Email */}
+      <InviteStaffModal
+        isOpen={isStaffEmailModalOpen}
+        onClose={() => setIsStaffEmailModalOpen(false)}
+        teamId={activeTeam?.id}
+        teamName={activeTeam?.nombre || activeTeam?.name}
+        staffInviteCode={staffInviteCode}
+        onOpenQR={() => setIsStaffQRModalOpen(true)}
+      />
+
+      {/* Modal QR de Invitación de Staff */}
+      <QRInviteModal
+        isOpen={isStaffQRModalOpen}
+        onClose={() => setIsStaffQRModalOpen(false)}
+        type="coach_invite"
+        code={staffInviteCode}
+        teamId={activeTeam?.id}
+        teamName={activeTeam?.nombre || activeTeam?.name}
+      />
 
       {/* Modal de Upgrade cuando se supera el límite de staff */}
       <UpgradeModal

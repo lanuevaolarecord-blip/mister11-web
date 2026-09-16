@@ -5,8 +5,9 @@ import { db, signInWithGoogle, signInWithEmail, registerWithEmail } from '../fir
 import { useAuth } from '../context/AuthContext';
 import { useTranslation } from '../hooks/useTranslation';
 import { getTeamByCode } from '../utils/teamCode';
+import { searchTeamByCode, validateTeamCode } from '../utils/teamCodeManager';
 import { showToast } from '../utils/toast';
-import { Shield, CheckCircle, AlertCircle, Users, ArrowRight, Loader, KeyRound, Mail, Lock, User, Calendar, Shirt } from 'lucide-react';
+import { Shield, CheckCircle, AlertCircle, Users, ArrowRight, Loader, KeyRound, Mail, Lock, User, Calendar, Shirt, QrCode, MessageCircle, ExternalLink } from 'lucide-react';
 import './Login.css';
 
 const POSITIONS = ['POR', 'DEF', 'LTD', 'LTI', 'MCD', 'MC', 'MCO', 'EXT', 'DEL'];
@@ -30,6 +31,43 @@ const JoinTeam = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [myExistingRequest, setMyExistingRequest] = useState(null);
+  const [isStaffCodeDetected, setIsStaffCodeDetected] = useState(false);
+  const [isRealtimeSearching, setIsRealtimeSearching] = useState(false);
+
+  // Validación debounce en tiempo real (300ms)
+  useEffect(() => {
+    if (!inputCode) {
+      setIsStaffCodeDetected(false);
+      setError('');
+      return;
+    }
+    const clean = inputCode.trim().replace(/^M11-/, '').toUpperCase();
+    if (clean.length === 6 || inputCode.toUpperCase().startsWith('STAFF-')) {
+      const timer = setTimeout(async () => {
+        setIsRealtimeSearching(true);
+        const res = await searchTeamByCode(inputCode);
+        setIsRealtimeSearching(false);
+        if (res.found) {
+          setError('');
+          setIsStaffCodeDetected(false);
+        } else if (res.isStaffCode) {
+          setIsStaffCodeDetected(true);
+          setError('is_staff_code');
+        } else {
+          setIsStaffCodeDetected(false);
+          setError(res.error || 'not_found');
+        }
+      }, 300);
+      return () => clearTimeout(timer);
+    } else {
+      setIsStaffCodeDetected(false);
+      if (clean.length > 0 && clean.length < 6) {
+        setError('length');
+      } else {
+        setError('');
+      }
+    }
+  }, [inputCode]);
 
   const [authTab, setAuthTab] = useState('login');
   const [authEmail, setAuthEmail] = useState('');
@@ -92,18 +130,24 @@ const JoinTeam = () => {
   const handleVerifyCode = async (codeToVerify) => {
     const code = (codeToVerify || inputCode).trim().toUpperCase();
     if (!code) {
-      setError('Por favor ingresa un código de equipo válido (ej. M11-ABC123).');
+      setError('format');
       return;
     }
 
     setLoading(true);
     setError('');
+    setIsStaffCodeDetected(false);
     try {
-      const data = await getTeamByCode(code);
-      if (!data) {
-        setError('Código de equipo no encontrado. Verifica que esté bien escrito.');
+      const res = await searchTeamByCode(code);
+      if (res.isStaffCode) {
+        setIsStaffCodeDetected(true);
+        setError('is_staff_code');
+        setTeamData(null);
+      } else if (!res.found || !res.team) {
+        setError(res.error || 'not_found');
         setTeamData(null);
       } else {
+        const data = res.team;
         setTeamData(data);
         setInputCode(code);
 
@@ -123,7 +167,7 @@ const JoinTeam = () => {
 
               localStorage.setItem('mister11_active_mode', 'player');
               localStorage.setItem(`lastPlayerTeam_${user.uid}`, data.teamId);
-              showToast(t('joinTeam.already_member'), 'success');
+              showToast(t('joinTeam.already_member') || 'Ya eres miembro de este equipo', 'success');
               navigate('/player-dashboard');
               return;
             }
@@ -280,13 +324,17 @@ const JoinTeam = () => {
         <div className="login-card">
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', marginBottom: '8px', color: '#4CAF7D' }}>
             <Users size={24} />
-            <h2 style={{ margin: 0 }}>Portal del Jugador y Familia</h2>
+            <h2 style={{ margin: 0 }}>{isEn ? 'Join Your Team' : 'Únete a tu Equipo'}</h2>
           </div>
           <p className="login-subtitle">
-            Únete al equipo para consultar entrenamientos, convocatorias de partidos, asistencia y progreso deportivo.
+            {isEn 
+              ? 'Join your team to view training sessions, match call-ups, attendance, and progress.' 
+              : 'Únete al equipo para consultar entrenamientos, convocatorias de partidos, asistencia y progreso deportivo.'}
           </p>
 
-          {error && <div className="login-error">{error}</div>}
+          {error && error !== 'length' && error !== 'not_found' && error !== 'is_staff_code' && error !== 'expired' && error !== 'already_used' && (
+            <div className="login-error">{error}</div>
+          )}
 
           {myExistingRequest && myExistingRequest.status === 'pending' && (
             <div style={{
@@ -399,17 +447,239 @@ const JoinTeam = () => {
                 <User size={16} color="#4CAF7D" />
                 <span>{isEn ? 'Logged in as: ' : 'Sesión activa como: '}<strong>{user.email || user.displayName}</strong></span>
               </div>
+
               <div className="input-group-auth" style={{ marginTop: '16px' }}>
                 <label>{isEn ? 'Enter Team Code (provided by your coach)' : 'Ingresa el Código de Equipo (proporcionado por el entrenador)'}</label>
-                <div className="input-with-icon">
-                  <KeyRound size={18} />
-                  <input type="text" placeholder={isEn ? 'e.g. M11-ABC123' : 'Ej. M11-ABC123'} value={inputCode} onChange={(e) => setInputCode(e.target.value.toUpperCase())} style={{ textTransform: 'uppercase', letterSpacing: '2px', fontWeight: 'bold', fontSize: '16px' }} />
+                <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                  <div className="input-with-icon" style={{ flex: 1 }}>
+                    <KeyRound size={18} />
+                    <input 
+                      type="text" 
+                      placeholder={isEn ? 'e.g. M11-ABC123' : 'Ej. M11-ABC123'} 
+                      value={inputCode} 
+                      onChange={(e) => setInputCode(e.target.value.toUpperCase())} 
+                      style={{ textTransform: 'uppercase', letterSpacing: '2px', fontWeight: 'bold', fontSize: '16px' }} 
+                    />
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => navigate('/invite-coach')}
+                    title={isEn ? 'Scan QR' : 'Escanear QR'}
+                    style={{
+                      width: '48px',
+                      height: '48px',
+                      minWidth: '48px',
+                      borderRadius: '8px',
+                      border: '1px solid rgba(76, 175, 125, 0.4)',
+                      background: 'rgba(76, 175, 125, 0.1)',
+                      color: '#4CAF7D',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    <QrCode size={22} />
+                  </button>
                 </div>
               </div>
-              <button type="button" className="btn-submit-auth" onClick={() => handleVerifyCode(inputCode)} disabled={loading || !inputCode.trim()}>
+
+              {/* Real-time Status Banner */}
+              {isRealtimeSearching && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#4CAF7D', fontSize: '12px', margin: '8px 0' }}>
+                  <Loader size={14} className="spin" style={{ animation: 'spin 1.5s linear infinite' }} />
+                  <span>{isEn ? 'Searching team in real time...' : 'Buscando equipo en tiempo real...'}</span>
+                </div>
+              )}
+
+              {isStaffCodeDetected && (
+                <div style={{
+                  background: 'rgba(212, 168, 67, 0.12)',
+                  border: '1px solid #D4A843',
+                  borderRadius: '10px',
+                  padding: '12px',
+                  margin: '10px 0',
+                  textAlign: 'left'
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#D4A843', fontWeight: 'bold', fontSize: '13px' }}>
+                    <AlertCircle size={16} />
+                    <span>{isEn ? 'Staff Invite Code Detected' : 'Código de Cuerpo Técnico Detectado'}</span>
+                  </div>
+                  <p style={{ fontSize: '12px', color: '#CBD5E1', margin: '6px 0 8px 0', lineHeight: '1.4' }}>
+                    {isEn 
+                      ? 'This code is for Coaches, Fitness Trainers, or Staff members to join a team.' 
+                      : 'Este código es para Entrenadores, Preparadores o Staff que se unen al cuerpo técnico.'}
+                  </p>
+                  <Link
+                    to={`/join-staff?code=${inputCode}`}
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                      background: '#1B3A2D',
+                      color: '#4CAF7D',
+                      border: '1px solid #4CAF7D',
+                      borderRadius: '6px',
+                      padding: '8px 12px',
+                      fontSize: '12px',
+                      fontWeight: 'bold',
+                      textDecoration: 'none'
+                    }}
+                  >
+                    <Users size={14} />
+                    {isEn ? 'Join as Staff Member →' : 'Unirme como Entrenador / Staff →'}
+                  </Link>
+                </div>
+              )}
+
+              {error === 'length' && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#F59E0B', fontSize: '12px', margin: '8px 0' }}>
+                  <AlertCircle size={14} />
+                  <span>{isEn ? 'The team code must have 6 alphanumeric characters.' : 'El código de equipo debe tener 6 caracteres.'}</span>
+                </div>
+              )}
+
+              {error === 'not_found' && (
+                <div style={{
+                  background: 'rgba(239, 68, 68, 0.1)',
+                  border: '1px solid rgba(239, 68, 68, 0.4)',
+                  borderRadius: '10px',
+                  padding: '12px',
+                  margin: '10px 0',
+                  textAlign: 'left'
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#EF4444', fontWeight: 'bold', fontSize: '13px' }}>
+                    <AlertCircle size={16} />
+                    <span>{isEn ? 'Team not found' : 'Equipo no encontrado'}</span>
+                  </div>
+                  <p style={{ fontSize: '12px', color: '#CBD5E1', margin: '6px 0 0 0', lineHeight: '1.4' }}>
+                    {isEn 
+                      ? 'Verify the code with your coach or choose one of the alternative options below.' 
+                      : 'Verifica el código o contacta a tu entrenador. También puedes usar las alternativas siguientes.'}
+                  </p>
+                </div>
+              )}
+
+              {error === 'already_used' && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#EF4444', fontSize: '12px', margin: '8px 0' }}>
+                  <AlertCircle size={14} />
+                  <span>{isEn ? 'This code has already been used.' : 'Este código ya fue utilizado.'}</span>
+                </div>
+              )}
+
+              {error === 'expired' && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#EF4444', fontSize: '12px', margin: '8px 0' }}>
+                  <AlertCircle size={14} />
+                  <span>{isEn ? 'This invitation has expired.' : 'Esta invitación ha expirado.'}</span>
+                </div>
+              )}
+
+              <button 
+                type="button" 
+                className="btn-submit-auth" 
+                onClick={() => handleVerifyCode(inputCode)} 
+                disabled={loading || isRealtimeSearching || inputCode.trim().replace(/^M11-/, '').length < 6}
+                style={{ marginTop: '8px' }}
+              >
                 {loading ? (isEn ? 'Searching team...' : 'Buscando equipo...') : (isEn ? 'SEARCH TEAM' : 'BUSCAR EQUIPO')}
                 <ArrowRight size={18} />
               </button>
+
+              {/* Alternative Options Section */}
+              <div style={{
+                marginTop: '20px',
+                paddingTop: '16px',
+                borderTop: '1px solid rgba(255, 255, 255, 0.08)',
+                textAlign: 'left'
+              }}>
+                <div style={{ fontSize: '12px', color: 'var(--text-muted)', fontWeight: 'bold', marginBottom: '10px' }}>
+                  {isEn ? 'Don\'t have a code or having issues?' : '¿No tienes código o tienes problemas?'}
+                </div>
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  <a
+                    href="https://wa.me/?text=Hola%20M%C3%ADster%2C%20necesito%20el%20c%C3%B3digo%20de%206%20caracteres%20de%20M%C3%ADster11%20para%20unirme%20al%20equipo."
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      padding: '10px 12px',
+                      borderRadius: '8px',
+                      background: 'rgba(255, 255, 255, 0.04)',
+                      border: '1px solid rgba(255, 255, 255, 0.08)',
+                      color: '#CBD5E1',
+                      fontSize: '12px',
+                      textDecoration: 'none',
+                      minHeight: '48px'
+                    }}
+                  >
+                    <MessageCircle size={16} color="#4CAF7D" />
+                    <span>{isEn ? 'Request code from coach via WhatsApp' : 'Solicitar código al entrenador por WhatsApp'}</span>
+                  </a>
+
+                  <Link
+                    to="/invite-coach"
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      padding: '10px 12px',
+                      borderRadius: '8px',
+                      background: 'rgba(255, 255, 255, 0.04)',
+                      border: '1px solid rgba(255, 255, 255, 0.08)',
+                      color: '#CBD5E1',
+                      fontSize: '12px',
+                      textDecoration: 'none',
+                      minHeight: '48px'
+                    }}
+                  >
+                    <QrCode size={16} color="#D4A843" />
+                    <span>{isEn ? 'Scan invitation QR Code' : 'Escanear QR de invitación'}</span>
+                  </Link>
+
+                  <Link
+                    to="/register?role=coach"
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      padding: '10px 12px',
+                      borderRadius: '8px',
+                      background: 'rgba(255, 255, 255, 0.04)',
+                      border: '1px solid rgba(255, 255, 255, 0.08)',
+                      color: '#CBD5E1',
+                      fontSize: '12px',
+                      textDecoration: 'none',
+                      minHeight: '48px'
+                    }}
+                  >
+                    <User size={16} color="#4CAF7D" />
+                    <span>{isEn ? 'I am a Coach: Create my own team' : 'Soy Entrenador: Crear mi propio equipo'}</span>
+                  </Link>
+
+                  <Link
+                    to="/join-staff"
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      padding: '10px 12px',
+                      borderRadius: '8px',
+                      background: 'rgba(212, 168, 67, 0.06)',
+                      border: '1px solid rgba(212, 168, 67, 0.2)',
+                      color: '#D4A843',
+                      fontSize: '12px',
+                      textDecoration: 'none',
+                      minHeight: '48px'
+                    }}
+                  >
+                    <Users size={16} color="#D4A843" />
+                    <span>{isEn ? 'Invited Coach/Staff: Join Technical Staff here' : '¿Entrenador invitado? Únete al Cuerpo Técnico aquí'}</span>
+                  </Link>
+                </div>
+              </div>
             </div>
           )}
 

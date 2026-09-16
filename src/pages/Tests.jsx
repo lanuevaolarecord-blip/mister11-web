@@ -1658,14 +1658,16 @@ const Tests = () => {
                   attendancePct: player?.attendancePct ? Number(player.attendancePct) : 0,
                   matchRating: effectiveRating
                 });
-                const { fis, tec, psi, soc, tactica, asistencia, overall, testCount, stats4: stats, radarData5: radarData } = scores;
+                const { fis, tec, psi, soc, tactica, asistencia, overall, testCount, stats4: stats, radarData6 } = scores;
+                const radarData = radarData6 || scores.radarData;
 
                 const radarLabelMap = {
                   'FÍSICO': 'PHYSICAL',
                   'TÉCNICA': 'TECHNICAL',
                   'TÁCTICA': 'TACTICAL',
                   'MENTAL': 'MENTAL',
-                  'ASISTENCIA': 'ATTENDANCE'
+                  'ASISTENCIA': 'ATTENDANCE',
+                  'ENTRENAMIENTO': 'TRAINING'
                 };
                 const localizedRadarData = (radarData || []).map(d => ({
                   ...d,

@@ -34,6 +34,8 @@ const ConsentimientoFirma = lazy(() => import('./pages/ConsentimientoFirma'));
 const ConsentForm       = lazy(() => import('./pages/ConsentForm'));
 const DemoMode          = lazy(() => import('./pages/DemoMode'));
 const PlayerDashboard   = lazy(() => import('./pages/PlayerDashboard'));
+const InviteCoach       = lazy(() => import('./pages/InviteCoach'));
+const Register          = lazy(() => import('./pages/Register'));
 
 import { TeamRoleSelectorModal } from './components/TeamRoleSelectorModal';
 import I18nDevOverlay from './components/I18nDevOverlay';
@@ -56,6 +58,13 @@ function compareVersions(remote, local) {
 function RedirectToRoot() {
   const location = useLocation();
   return <Navigate to={`/${location.search}`} replace />;
+}
+
+function LoginRedirect() {
+  const location = useLocation();
+  const params = new URLSearchParams(location.search);
+  const returnUrl = params.get('returnUrl');
+  return <Navigate to={returnUrl || '/'} replace />;
 }
 
 function App() {
@@ -308,7 +317,27 @@ function App() {
 
           <Route 
             path="/login" 
-            element={user ? <Navigate to="/" replace /> : <Login />} 
+            element={user ? <LoginRedirect /> : <Login />} 
+          />
+
+          <Route 
+            path="/register" 
+            element={user ? <LoginRedirect /> : <Register />} 
+          />
+
+          <Route 
+            path="/invite-coach" 
+            element={<InviteCoach />} 
+          />
+
+          <Route 
+            path="/join-staff" 
+            element={<InviteCoach />} 
+          />
+
+          <Route 
+            path="/join-staff/:code" 
+            element={<InviteCoach />} 
           />
 
           <Route 

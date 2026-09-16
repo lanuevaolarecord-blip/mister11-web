@@ -21,13 +21,15 @@ import {
   Info,
   Shield,
   CheckCircle,
-  Settings
+  Settings,
+  UserPlus
 } from 'lucide-react';
 import { useTranslation } from '../hooks/useTranslation';
 import { useTheme } from '../context/ThemeContext';
 import { db, auth } from '../firebaseConfig';
 import { doc, getDoc, collection, onSnapshot } from '../firebase/firestore-proxy';
 import UpgradeModal from '../components/UpgradeModal';
+import { JoinStaffModal } from '../components/JoinStaffModal';
 import { createNotification } from '../firebase/db';
 import './Dashboard.css';
 
@@ -38,6 +40,7 @@ const Dashboard = () => {
   const { user, activeTeamId, refreshTeam, teams, getTeamPath } = useAuth();
   const activeTeam = teams?.find(t => t.id === activeTeamId) || null;
   const isAdmin = isDeveloperEmail(user?.email);
+  const [isJoinStaffModalOpen, setIsJoinStaffModalOpen] = useState(false);
 
 
   // Detect payment success from Stripe — solo limpia URL y muestra confirmación.
@@ -401,11 +404,33 @@ const Dashboard = () => {
           <h1 className="page-title">{t('dashboard.welcome', { name: (settings.profileName || user?.displayName || 'Míster').trim().split(' ')[0] })}</h1>
           <p className="page-subtitle">{t('dashboard.activity', { club: settings.clubName || activeTeam?.name || 'Mi Equipo' })}</p>
         </div>
-        <div className="card-base" style={{ padding: '8px 16px', textAlign: 'center' }}>
-          <span style={{ fontSize: '10px', color: 'var(--text-secondary)', textTransform: 'uppercase' }}>
-            {new Date().toLocaleDateString(settings.language === 'English (EN)' ? 'en-US' : 'es-ES', { month: 'long', year: 'numeric' })}
-          </span>
-          <strong style={{ display: 'block', fontSize: '14px', color: 'var(--text-primary)' }}>{t('dashboard.today', settings.language)}</strong>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <button
+            type="button"
+            className="btn-outline"
+            onClick={() => setIsJoinStaffModalOpen(true)}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              padding: '8px 14px',
+              fontSize: '0.85rem',
+              fontWeight: 700,
+              minHeight: '44px',
+              borderColor: '#D4A843',
+              color: '#D4A843',
+              backgroundColor: 'rgba(212, 168, 67, 0.08)'
+            }}
+          >
+            <UserPlus size={16} />
+            {isEn ? 'Join as Staff' : 'Unirse a un equipo como Staff'}
+          </button>
+          <div className="card-base" style={{ padding: '8px 16px', textAlign: 'center' }}>
+            <span style={{ fontSize: '10px', color: 'var(--text-secondary)', textTransform: 'uppercase' }}>
+              {new Date().toLocaleDateString(settings.language === 'English (EN)' ? 'en-US' : 'es-ES', { month: 'long', year: 'numeric' })}
+            </span>
+            <strong style={{ display: 'block', fontSize: '14px', color: 'var(--text-primary)' }}>{t('dashboard.today', settings.language)}</strong>
+          </div>
         </div>
       </header>
 
@@ -840,6 +865,11 @@ const Dashboard = () => {
           isSuccessState={true}
         />
       )}
+
+      <JoinStaffModal
+        isOpen={isJoinStaffModalOpen}
+        onClose={() => setIsJoinStaffModalOpen(false)}
+      />
     </div>
   );
 };

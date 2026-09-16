@@ -63,7 +63,8 @@ export const PlayerPerformanceBanner = ({ player, teamPath, onNavigateTab, onOpe
     attendancePct: player?.attendancePct ? Number(player.attendancePct) : 0,
     matchRating: player?.notaMedia || null
   });
-  const { fis, tec, psi, soc, overall, testCount, stats4: stats, radarData5: radarData } = scores;
+  const { fis, tec, psi, soc, overall, testCount, stats4: stats, radarData6 } = scores;
+  const radarData = radarData6 || scores.radarData;
   const validDimensions = [fis, tec, psi, soc].filter(v => v > 0);
 
   return (

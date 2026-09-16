@@ -274,6 +274,20 @@ export const useTeamMembers = (teamIdOverride = null) => {
       await setDoc(doc(db, `${teamPath}/staff_invitations`, token), inviteData);
       await setDoc(doc(db, 'staff_invitations', token), inviteData);
       await setDoc(doc(db, 'staff_invitations', inviteCode), inviteData);
+
+      // Sincronizar en staff_codes para validación instantánea
+      const staffCodePayload = {
+        teamId: targetTeamId,
+        teamPath,
+        teamName: currentTeam?.nombre || currentTeam?.name || 'Mi Equipo',
+        ownerUid: user.uid,
+        rawCode: inviteCode,
+        role: normalizeRole(role),
+        createdAt: serverTimestamp(),
+        active: true
+      };
+      await setDoc(doc(db, 'staff_codes', inviteCode), { ...staffCodePayload, code: inviteCode }, { merge: true });
+      await setDoc(doc(db, 'staff_codes', `STAFF-${inviteCode}`), { ...staffCodePayload, code: `STAFF-${inviteCode}` }, { merge: true });
     } catch (e) {
       console.warn('[useTeamMembers] Error guardando invitación en Firestore:', e);
     }

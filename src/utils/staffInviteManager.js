@@ -5,7 +5,7 @@
  * Códigos diferenciados (STAFF-XXXXXX), validación atómica y permisos heredados.
  */
 
-import { doc, getDoc, setDoc, updateDoc, deleteDoc, serverTimestamp } from 'firebase/firestore';
+import { doc, getDoc, setDoc, updateDoc, deleteDoc, serverTimestamp, query, where, collection, getDocs } from 'firebase/firestore';
 import { db } from '../firebaseConfig.js';
 import { STAFF_ROLES } from '../config/staffRoles.js';
 
@@ -33,7 +33,7 @@ export const ensureStaffInviteCode = async (teamId, teamPath, teamName, ownerUid
       const data = snap.data();
       if (data.staffInviteCode) {
         const fullCode = data.staffInviteCode.toUpperCase();
-        const rawCode = fullCode.replace(/^STAFF-/, '');
+        const rawCode = fullCode.replace(/^STAFF-/, '').replace(/^STF-/, '');
 
         // Asegurar índices en staff_codes
         await setDoc(doc(db, 'staff_codes', fullCode), {
@@ -92,15 +92,46 @@ export const ensureStaffInviteCode = async (teamId, teamPath, teamName, ownerUid
 };
 
 /**
- * Valida un código de staff en tiempo real
+ * Valida un código de staff en tiempo real buscando en múltiples fuentes canónicas:
+ * 1. staff_codes (ej. STAFF-UZOWSY o UZOWSY)
+ * 2. staff_invitations (doc id o inviteCode)
+ * 3. team_codes (en caso de usar código de equipo)
+ * 4. Colección teams por staffInviteCode
  */
 export const validateStaffInviteCode = async (rawInput) => {
   if (!rawInput || typeof rawInput !== 'string') {
     return { valid: false, error: 'empty' };
   }
 
-  const clean = rawInput.trim().toUpperCase();
-  const rawCode = clean.replace(/^STAFF-/, '');
+  const clean = rawInput.trim();
+
+  // Si parece un token de staff_invitations (ej. staff_17265289_abc123)
+  if (clean.toLowerCase().startsWith('staff_')) {
+    try {
+      const invSnap = await getDoc(doc(db, 'staff_invitations', clean.toLowerCase()));
+      if (invSnap.exists()) {
+        const data = invSnap.data();
+        if (data.status === 'revoked' || data.status === 'cancelled') return { valid: false, error: 'cancelled' };
+        if (data.expiresAt && new Date(data.expiresAt) < new Date()) return { valid: false, error: 'expired' };
+        return {
+          valid: true,
+          teamId: data.teamId,
+          teamPath: data.teamPath,
+          teamName: data.teamName || 'Mi Equipo',
+          ownerUid: data.invitedByUid || '',
+          code: data.inviteCode || clean,
+          rawCode: data.inviteCode || clean,
+          role: data.role || 'assistant_coach',
+          invitationId: invSnap.id,
+          email: data.email || null,
+          source: 'staff_invitations_token'
+        };
+      }
+    } catch (_) {}
+  }
+
+  const upper = clean.toUpperCase();
+  const rawCode = upper.replace(/^STAFF-/, '').replace(/^STF-/, '').replace(/^M11-/, '');
 
   if (rawCode.length !== 6) {
     return { valid: false, error: 'length' };
@@ -111,9 +142,9 @@ export const validateStaffInviteCode = async (rawInput) => {
     return { valid: false, error: 'invalid_chars' };
   }
 
-  // Buscar en staff_codes
-  const codesToTry = [`STAFF-${rawCode}`, rawCode];
-  for (const c of codesToTry) {
+  // 1. Buscar en staff_codes (ej. STAFF-UZOWSY, UZOWSY, STF-UZOWSY)
+  const staffCodesToTry = [`STAFF-${rawCode}`, rawCode, `STF-${rawCode}`];
+  for (const c of staffCodesToTry) {
     try {
       const snap = await getDoc(doc(db, 'staff_codes', c));
       if (snap.exists()) {
@@ -126,14 +157,148 @@ export const validateStaffInviteCode = async (rawInput) => {
           teamId: data.teamId,
           teamPath: data.teamPath,
           teamName: data.teamName || 'Mi Equipo',
-          ownerUid: data.ownerUid || '',
+          ownerUid: data.ownerUid || data.coachUid || data.ownerId || '',
           code: data.code || `STAFF-${rawCode}`,
-          rawCode
+          rawCode,
+          role: data.role || 'assistant_coach',
+          source: 'staff_codes'
         };
       }
     } catch (err) {
       console.warn('[staffInviteManager] Error consultando staff_codes:', c, err);
     }
+  }
+
+  // 2. Buscar en staff_invitations (por ID exacto en mayúsculas o minúsculas)
+  const invIdsToTry = [rawCode, rawCode.toLowerCase(), `staff_${rawCode}`, `staff_${rawCode.toLowerCase()}`];
+  for (const invId of invIdsToTry) {
+    try {
+      const invSnap = await getDoc(doc(db, 'staff_invitations', invId));
+      if (invSnap.exists()) {
+        const data = invSnap.data();
+        if (data.status === 'revoked' || data.status === 'cancelled') {
+          return { valid: false, error: 'cancelled' };
+        }
+        if (data.expiresAt && new Date(data.expiresAt) < new Date()) {
+          return { valid: false, error: 'expired' };
+        }
+        return {
+          valid: true,
+          teamId: data.teamId,
+          teamPath: data.teamPath,
+          teamName: data.teamName || 'Mi Equipo',
+          ownerUid: data.invitedByUid || '',
+          code: rawCode,
+          rawCode,
+          role: data.role || 'assistant_coach',
+          invitationId: invId,
+          email: data.email || null,
+          source: 'staff_invitations'
+        };
+      }
+    } catch (err) {
+      console.warn('[staffInviteManager] Error consultando staff_invitations doc:', invId, err);
+    }
+  }
+
+  // 3. Query en staff_invitations donde inviteCode == rawCode
+  try {
+    const qInv = query(collection(db, 'staff_invitations'), where('inviteCode', '==', rawCode));
+    const qSnap = await getDocs(qInv);
+    if (!qSnap.empty) {
+      const docMatch = qSnap.docs[0];
+      const data = docMatch.data();
+      if (data.status === 'revoked' || data.status === 'cancelled') {
+        return { valid: false, error: 'cancelled' };
+      }
+      if (data.expiresAt && new Date(data.expiresAt) < new Date()) {
+        return { valid: false, error: 'expired' };
+      }
+      return {
+        valid: true,
+        teamId: data.teamId,
+        teamPath: data.teamPath,
+        teamName: data.teamName || 'Mi Equipo',
+        ownerUid: data.invitedByUid || '',
+        code: rawCode,
+        rawCode,
+        role: data.role || 'assistant_coach',
+        invitationId: docMatch.id,
+        email: data.email || null,
+        source: 'staff_invitations_query'
+      };
+    }
+  } catch (err) {
+    console.warn('[staffInviteManager] Error en query staff_invitations:', err);
+  }
+
+  // 4. Buscar en team_codes (en caso de que el usuario haya introducido el código de equipo)
+  const teamCodesToTry = [`M11-${rawCode}`, rawCode];
+  for (const tc of teamCodesToTry) {
+    try {
+      const tcSnap = await getDoc(doc(db, 'team_codes', tc));
+      if (tcSnap.exists()) {
+        const data = tcSnap.data();
+        return {
+          valid: true,
+          teamId: data.teamId,
+          teamPath: data.teamPath,
+          teamName: data.teamName || 'Mi Equipo',
+          ownerUid: data.ownerUid || data.coachUid || data.ownerId || '',
+          code: rawCode,
+          rawCode,
+          role: 'assistant_coach',
+          source: 'team_codes'
+        };
+      }
+    } catch (err) {
+      console.warn('[staffInviteManager] Error consultando team_codes:', tc, err);
+    }
+  }
+
+  // 5. Query en coleccion teams por staffInviteCode o teamCode
+  try {
+    const qTeams = query(collection(db, 'teams'), where('staffInviteCode', 'in', [`STAFF-${rawCode}`, rawCode]));
+    const teamsSnap = await getDocs(qTeams);
+    if (!teamsSnap.empty) {
+      const tDoc = teamsSnap.docs[0];
+      const tData = tDoc.data();
+      return {
+        valid: true,
+        teamId: tDoc.id,
+        teamPath: `teams/${tDoc.id}`,
+        teamName: tData.nombre || tData.name || 'Mi Equipo',
+        ownerUid: tData.ownerId || tData.ownerUid || tData.userId || '',
+        code: rawCode,
+        rawCode,
+        role: 'assistant_coach',
+        source: 'teams_query'
+      };
+    }
+  } catch (err) {
+    console.warn('[staffInviteManager] Error en query teams staffInviteCode:', err);
+  }
+
+  try {
+    const qTeamsCode = query(collection(db, 'teams'), where('teamCode', 'in', [`M11-${rawCode}`, rawCode]));
+    const teamsCodeSnap = await getDocs(qTeamsCode);
+    if (!teamsCodeSnap.empty) {
+      const tDoc = teamsCodeSnap.docs[0];
+      const tData = tDoc.data();
+      return {
+        valid: true,
+        teamId: tDoc.id,
+        teamPath: `teams/${tDoc.id}`,
+        teamName: tData.nombre || tData.name || 'Mi Equipo',
+        ownerUid: tData.ownerId || tData.ownerUid || tData.userId || '',
+        code: rawCode,
+        rawCode,
+        role: 'assistant_coach',
+        source: 'teams_teamCode_query'
+      };
+    }
+  } catch (err) {
+    console.warn('[staffInviteManager] Error en query teams teamCode:', err);
   }
 
   return { valid: false, error: 'not_found' };
@@ -152,55 +317,97 @@ export const joinTeamAsStaff = async (code, user, selectedRole = 'assistant_coac
     return { success: false, error: validation.error };
   }
 
-  const { teamId, teamPath, teamName, ownerUid } = validation;
+  const { teamId, teamPath, teamName, ownerUid, invitationId } = validation;
 
   if (user.uid === ownerUid) {
     return { success: false, error: 'already_owner', teamId, teamName };
   }
 
   try {
-    const teamRef = doc(db, teamPath);
+    const teamRef = doc(db, teamPath || `teams/${teamId}`);
     const teamSnap = await getDoc(teamRef);
     const teamData = teamSnap.exists() ? teamSnap.data() : {};
 
-    const existingMembers = teamData.members || {};
-    const existingMemberKeys = Array.isArray(existingMembers)
-      ? existingMembers.map(m => (typeof m === 'object' ? m.uid || m.id : m))
-      : Object.keys(existingMembers);
+    // Verificar si el usuario ya es miembro
+    const existingMembers = teamData.members || [];
+    const isAlreadyMember = Array.isArray(existingMembers)
+      ? existingMembers.some(m => (typeof m === 'object' ? (m.uid || m.id) : m) === user.uid)
+      : Boolean(teamData.members && teamData.members[user.uid]);
 
-    if (existingMemberKeys.includes(user.uid)) {
-      return { success: true, alreadyMember: true, teamId, teamName };
+    if (isAlreadyMember) {
+      return { success: false, error: 'already_member', teamId, teamName };
     }
 
-    const memberData = {
+    const effectiveRole = validation.role || selectedRole || 'assistant_coach';
+
+    // 1. Marcar invitación como aceptada si vino de staff_invitations
+    if (invitationId) {
+      try {
+        await updateDoc(doc(db, 'staff_invitations', invitationId), {
+          status: 'accepted',
+          acceptedByUid: user.uid,
+          acceptedByEmail: user.email || '',
+          acceptedAt: serverTimestamp()
+        });
+        if (teamPath) {
+          await updateDoc(doc(db, `${teamPath}/staff_invitations`, invitationId), {
+            status: 'accepted',
+            acceptedByUid: user.uid,
+            acceptedByEmail: user.email || '',
+            acceptedAt: serverTimestamp()
+          }).catch(() => {});
+        }
+      } catch (_) {}
+    }
+
+    // 2. Guardar en subcolección members: ${teamPath}/members/${user.uid}
+    const memberDocData = {
+      id: user.uid,
       uid: user.uid,
       email: user.email || '',
       displayName: user.displayName || user.email?.split('@')[0] || 'Entrenador Staff',
-      role: selectedRole,
+      name: user.displayName || user.email?.split('@')[0] || 'Entrenador Staff',
+      role: effectiveRole,
+      normalizedRole: effectiveRole,
       joinedAt: new Date().toISOString()
     };
 
-    // Actualizar members en team
-    if (Array.isArray(teamData.members)) {
-      await updateDoc(teamRef, {
-        members: [...teamData.members, memberData],
-        [`staffMembers.${user.uid}`]: memberData,
-        updatedAt: serverTimestamp()
-      });
-    } else {
-      await updateDoc(teamRef, {
-        [`members.${user.uid}`]: memberData,
-        [`staffMembers.${user.uid}`]: memberData,
-        updatedAt: serverTimestamp()
-      });
+    if (teamPath) {
+      try {
+        await setDoc(doc(db, `${teamPath}/members`, user.uid), memberDocData, { merge: true });
+      } catch (err) {
+        console.warn('[staffInviteManager] Error escribiendo subcoleccion members:', err);
+      }
     }
 
-    // Vincular al usuario en shared_teams
+    // 3. Actualizar documento principal del equipo (members, staffMembers, memberRoles)
+    try {
+      if (Array.isArray(teamData.members)) {
+        const withoutUser = teamData.members.filter(m => (m.uid || m.id) !== user.uid);
+        await updateDoc(teamRef, {
+          members: [...withoutUser, memberDocData],
+          [`staffMembers.${user.uid}`]: memberDocData,
+          [`memberRoles.${user.uid}`]: effectiveRole,
+          updatedAt: serverTimestamp()
+        });
+      } else {
+        await updateDoc(teamRef, {
+          [`members.${user.uid}`]: memberDocData,
+          [`staffMembers.${user.uid}`]: memberDocData,
+          [`memberRoles.${user.uid}`]: effectiveRole,
+          updatedAt: serverTimestamp()
+        });
+      }
+    } catch (e) {
+      console.warn('[staffInviteManager] Error actualizando team doc:', e);
+    }
+
+    // 4. Vincular al usuario en shared_teams
     await setDoc(doc(db, `users/${user.uid}/shared_teams`, teamId), {
       teamId,
-      teamPath,
+      teamPath: teamPath || `teams/${teamId}`,
       teamName: teamName || 'Mi Equipo',
-      role: selectedRole,
+      role: effectiveRole,
       isStaff: true,
       joinedAt: serverTimestamp()
     }, { merge: true });

@@ -15,6 +15,7 @@ import { useTranslation } from '../hooks/useTranslation';
 import { ensureStaffInviteCode, joinTeamAsStaff } from '../utils/staffInviteManager';
 import { QRInviteModal } from './QRInviteModal';
 import { InviteStaffModal } from './InviteStaffModal';
+import { StaffDetailModal } from './StaffDetailModal';
 
 export const TeamStaffTab = ({ activeTeam }) => {
   const { user } = useAuth();
@@ -42,6 +43,8 @@ export const TeamStaffTab = ({ activeTeam }) => {
   const [generatedCode, setGeneratedCode] = useState('');
   const [copied, setCopied] = useState(false);
   const [copiedCode, setCopiedCode] = useState(false);
+  const [selectedInvitation, setSelectedInvitation] = useState(null);
+  const [selectedMember, setSelectedMember] = useState(null);
 
   const copyToClipboard = async (text) => {
     try {
@@ -133,9 +136,17 @@ export const TeamStaffTab = ({ activeTeam }) => {
   const [copiedTeamCode, setCopiedTeamCode] = useState(false);
   const [processingId, setProcessingId] = useState(null);
 
-  const isTeamOwner = activeTeam?.ownerId === user?.uid || currentUserRole === 'first_coach';
+  const isTeamOwner = activeTeam?.ownerId === user?.uid || 
+    activeTeam?.ownerUid === user?.uid || 
+    activeTeam?.userId === user?.uid || 
+    activeTeam?.coachUid === user?.uid ||
+    currentUserRole === 'admin' || 
+    currentUserRole === 'first_coach' ||
+    currentUserRole === 'owner';
+
   const teamPath = activeTeam?.teamPath || (activeTeam?.id ? getTeamPath(activeTeam.id) : null);
 
+  // Generar o sincronizar código de staff para el equipo activo
   useEffect(() => {
     if (!activeTeam?.id || !teamPath) return;
     ensureTeamCode(activeTeam.id, teamPath, activeTeam.nombre || activeTeam.name, user?.uid)
@@ -144,26 +155,26 @@ export const TeamStaffTab = ({ activeTeam }) => {
       })
       .catch(console.error);
 
-    ensureStaffInviteCode(activeTeam.id, teamPath, activeTeam.nombre || activeTeam.name, activeTeam.ownerId || user?.uid)
+    ensureStaffInviteCode(activeTeam.id, teamPath, activeTeam.nombre || activeTeam.name, activeTeam.ownerId || activeTeam.ownerUid || user?.uid)
       .then(code => {
         if (code) setStaffInviteCode(code);
       })
-      .catch(console.error);
-  }, [activeTeam?.id, teamPath, user?.uid]);
+      .catch(err => console.warn('[TeamStaffTab] Error asegurando código de staff:', err));
+  }, [activeTeam?.id, teamPath, activeTeam?.nombre, activeTeam?.name, activeTeam?.ownerId, activeTeam?.ownerUid, user?.uid]);
 
   const handleCopyStaffCode = async () => {
     if (!staffInviteCode) return;
     const ok = await copyToClipboard(staffInviteCode);
     if (ok) {
       setCopiedStaffCode(true);
-      showToast(isEn ? 'Staff code copied.' : 'Código de staff copiado.', 'success');
-      setTimeout(() => setCopiedStaffCode(false), 2000);
+      showToast(t('staff.copied'), 'success');
+      setTimeout(() => setCopiedStaffCode(false), 2500);
     }
   };
 
   const handleShareStaffLink = async () => {
-    const raw = (staffInviteCode || '').replace(/^STAFF-/, '');
-    const link = `${window.location.origin}/join-staff?code=${raw}&teamId=${activeTeam?.id || ''}`;
+    const rawCode = staffInviteCode.replace(/^STAFF-/, '');
+    const link = `${window.location.origin}/join-staff?code=${rawCode}&teamId=${activeTeam?.id || ''}`;
     if (navigator.share) {
       try {
         await navigator.share({
@@ -193,7 +204,17 @@ export const TeamStaffTab = ({ activeTeam }) => {
         setJoinStaffCodeInput('');
         window.location.reload();
       } else {
-        showToast(isEn ? 'Invalid or expired staff code.' : 'Código de staff no válido o expirado.', 'error');
+        if (res.error === 'already_owner') {
+          showToast(isEn ? 'You are already the owner of this team.' : 'Ya eres el creador de este equipo.', 'info');
+        } else if (res.error === 'already_member') {
+          showToast(isEn ? 'You are already a member of this coaching staff.' : 'Ya eres miembro del cuerpo técnico de este equipo.', 'info');
+        } else if (res.error === 'expired') {
+          showToast(isEn ? 'This staff invitation has expired.' : 'Esta invitación de staff ha expirado.', 'warning');
+        } else if (res.error === 'cancelled') {
+          showToast(isEn ? 'This staff invitation was cancelled.' : 'Esta invitación fue cancelada por el míster.', 'warning');
+        } else {
+          showToast(isEn ? 'Invalid or expired staff code. Contact the head coach.' : 'Código de staff no válido o expirado. Contacta al míster.', 'error');
+        }
       }
     } catch (_) {
       showToast(isEn ? 'Error joining team.' : 'Error al unirse al equipo.', 'error');
@@ -946,8 +967,8 @@ export const TeamStaffTab = ({ activeTeam }) => {
               </div>
 
               {/* Acciones de administración de rol */}
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderTop: `1px solid ${darkMode ? 'rgba(255,255,255,0.1)' : '#E2E8F0'}`, paddingTop: '12px', marginTop: '10px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '8px', borderTop: `1px solid ${darkMode ? 'rgba(255,255,255,0.1)' : '#E2E8F0'}`, paddingTop: '12px', marginTop: '10px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
                   <span style={{ fontSize: '0.8rem', color: textColorSecondary, fontWeight: 700 }}>{t('staff.changeRole')}</span>
                   <select
                     value={member.role || (isOwner ? 'admin' : 'assistant')}
@@ -971,30 +992,53 @@ export const TeamStaffTab = ({ activeTeam }) => {
                   </select>
                 </div>
 
-                {!isSelf && permissions.canManageStaff && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                   <button
-                    onClick={() => {
-                      if (window.confirm(t('staff.removeConfirm', { name: member.displayName || member.email }))) {
-                        removeMember(member.uid || member.id);
-                      }
-                    }}
+                    type="button"
+                    className="btn-outline"
+                    onClick={() => setSelectedMember(member)}
                     style={{
-                      background: 'rgba(239, 68, 68, 0.15)',
-                      border: 'none',
-                      color: '#EF4444',
                       padding: '6px 10px',
-                      borderRadius: '6px',
-                      cursor: 'pointer',
+                      fontSize: '0.75rem',
+                      fontWeight: 700,
                       display: 'flex',
                       alignItems: 'center',
                       gap: '4px',
-                      fontSize: '0.75rem',
-                      fontWeight: 700
+                      borderColor: '#4CAF7D',
+                      color: '#4CAF7D',
+                      minHeight: '36px'
                     }}
                   >
-                    <Trash2 size={14} /> {t('staff.remove')}
+                    <Shield size={14} /> {isEn ? 'Details & Access' : 'Detalles y Permisos'}
                   </button>
-                )}
+
+                  {!isSelf && permissions.canManageStaff && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (window.confirm(t('staff.removeConfirm', { name: member.displayName || member.email }))) {
+                          removeMember(member.uid || member.id);
+                        }
+                      }}
+                      style={{
+                        background: 'rgba(239, 68, 68, 0.15)',
+                        border: 'none',
+                        color: '#EF4444',
+                        padding: '6px 10px',
+                        borderRadius: '6px',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '4px',
+                        fontSize: '0.75rem',
+                        fontWeight: 700,
+                        minHeight: '36px'
+                      }}
+                    >
+                      <Trash2 size={14} /> {t('staff.remove')}
+                    </button>
+                  )}
+                </div>
               </div>
             </div>
           );
@@ -1019,7 +1063,12 @@ export const TeamStaffTab = ({ activeTeam }) => {
                 : rawRole;
               const baseRole = STAFF_ROLES[inv.role?.toUpperCase()] || STAFF_ROLES.ASSISTANT;
               const roleLabel = t(`staff.role.${roleId}`, { defaultValue: baseRole.label });
-              const link = `${window.location.origin}/join-team/${inv.token || inv.id}`;
+
+              const invCode = inv.inviteCode || 
+                (inv.code ? inv.code.replace(/^STAFF-/, '') : '') || 
+                (inv.token ? inv.token.split('_').pop()?.toUpperCase() : '') || 
+                '';
+              const link = invCode ? `${window.location.origin}/join-staff?code=${invCode}&teamId=${activeTeam?.id || ''}` : `${window.location.origin}/join-team/${inv.token || inv.id}`;
 
               return (
                 <div
@@ -1028,44 +1077,87 @@ export const TeamStaffTab = ({ activeTeam }) => {
                     backgroundColor: cardBackgroundColor,
                     border: `1.5px dashed ${darkMode ? 'rgba(212, 168, 67, 0.5)' : '#D4A843'}`,
                     borderRadius: '10px',
-                    padding: '12px 16px',
+                    padding: '14px 18px',
                     display: 'flex',
                     justifyContent: 'space-between',
                     alignItems: 'center',
                     flexWrap: 'wrap',
-                    gap: '10px'
+                    gap: '12px',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s ease'
                   }}
+                  onClick={() => setSelectedInvitation(inv)}
                 >
-                  <div>
-                    <div style={{ fontWeight: 800, fontSize: '0.95rem', color: textColorPrimary }}>
-                      {inv.email}
+                  <div style={{ flex: 1, minWidth: '220px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px', flexWrap: 'wrap' }}>
+                      <span style={{ fontWeight: 800, fontSize: '0.95rem', color: textColorPrimary }}>
+                        {inv.email || (isEn ? 'Open invitation' : 'Invitación abierta')}
+                      </span>
+                      {invCode && (
+                        <span
+                          style={{
+                            backgroundColor: 'rgba(212, 168, 67, 0.15)',
+                            color: '#D4A843',
+                            border: '1px solid #D4A843',
+                            borderRadius: '6px',
+                            padding: '2px 8px',
+                            fontSize: '0.8rem',
+                            fontFamily: 'monospace',
+                            fontWeight: 900,
+                            letterSpacing: '1px'
+                          }}
+                        >
+                          {invCode}
+                        </span>
+                      )}
                     </div>
                     <div style={{ fontSize: '0.8rem', color: textColorSecondary, fontWeight: 600 }}>
-                      {isEn ? 'Role:' : 'Rol:'} <strong style={{ color: '#D4A843' }}>{roleLabel}</strong> · {t('staff.createdDate', { date: formatDate ? formatDate(inv.createdAt) : new Date(inv.createdAt).toLocaleDateString(isEn ? 'en-US' : 'es-ES') })}
+                      {isEn ? 'Role:' : 'Rol:'} <strong style={{ color: '#4CAF7D' }}>{roleLabel}</strong> · {t('staff.createdDate', { date: formatDate ? formatDate(inv.createdAt) : new Date(inv.createdAt).toLocaleDateString(isEn ? 'en-US' : 'es-ES') })}
                     </div>
                   </div>
 
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }} onClick={e => e.stopPropagation()}>
                     <button
+                      type="button"
+                      className="btn-outline"
+                      onClick={() => setSelectedInvitation(inv)}
+                      style={{ padding: '8px 14px', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '6px', borderColor: '#D4A843', color: '#D4A843', fontWeight: 700, minHeight: '44px' }}
+                    >
+                      <QrCode size={16} /> {isEn ? 'View Code & QR' : 'Ver Código y QR'}
+                    </button>
+
+                    <button
+                      type="button"
                       className="btn-outline"
                       onClick={() => {
                         navigator.clipboard.writeText(link);
                         showToast(t('staff.inviteLinkCopied'), 'success');
                       }}
-                      style={{ padding: '6px 12px', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '6px' }}
+                      style={{ padding: '8px 14px', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '6px', minHeight: '44px' }}
                     >
                       <Copy size={14} /> {t('staff.copyLink')}
                     </button>
 
                     {permissions.canManageStaff && (
                       <button
-                        onClick={() => cancelInvitation(inv.token || inv.id)}
+                        type="button"
+                        onClick={() => {
+                          if (window.confirm(isEn ? 'Cancel and delete this invitation?' : '¿Cancelar y eliminar esta invitación?')) {
+                            cancelInvitation(inv.token || inv.id);
+                          }
+                        }}
                         style={{
-                          background: 'transparent',
-                          border: 'none',
+                          background: 'rgba(239, 68, 68, 0.1)',
+                          border: '1px solid rgba(239, 68, 68, 0.3)',
                           color: '#EF4444',
                           cursor: 'pointer',
-                          padding: '6px'
+                          padding: '8px 12px',
+                          borderRadius: '6px',
+                          minHeight: '44px',
+                          minWidth: '44px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center'
                         }}
                         title={t('staff.cancelInvitation')}
                       >
@@ -1265,6 +1357,29 @@ export const TeamStaffTab = ({ activeTeam }) => {
         isOpen={isUpgradeModalOpen}
         onClose={() => setIsUpgradeModalOpen(false)}
         message={isEn ? `You've reached the limit of ${limits.staffLimit === 1 ? '1 coach' : `${limits.staffLimit} staff members`} on your current plan. Choose a Club Plan to collaborate with more coaches and specialists.` : `Has alcanzado el límite de ${limits.staffLimit === 1 ? '1 entrenador' : `${limits.staffLimit} miembros de staff`} de tu plan actual. Elige un Plan Club para colaborar con más entrenadores y especialistas.`}
+      />
+
+      {/* Modal de Detalle de Staff / Invitación */}
+      <StaffDetailModal
+        isOpen={Boolean(selectedInvitation || selectedMember)}
+        onClose={() => {
+          setSelectedInvitation(null);
+          setSelectedMember(null);
+        }}
+        invitation={selectedInvitation}
+        member={selectedMember}
+        teamId={activeTeam?.id}
+        teamName={activeTeam?.nombre || activeTeam?.name}
+        onCancelInvitation={(id) => {
+          cancelInvitation(id);
+          setSelectedInvitation(null);
+        }}
+        onUpdateMemberRole={(uid, role) => updateMemberRole(uid, role)}
+        onRemoveMember={(uid) => {
+          removeMember(uid);
+          setSelectedMember(null);
+        }}
+        canManage={permissions.canManageStaff}
       />
     </div>
   );

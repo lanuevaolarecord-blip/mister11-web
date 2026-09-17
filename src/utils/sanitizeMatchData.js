@@ -62,7 +62,42 @@ export const sanitizeMatchData = (rawMatch = {}, players = []) => {
       ? raw.convocados
       : (Array.isArray(raw.alineacion?.convocados) ? raw.alineacion.convocados : []);
 
-    const normLineup = normalizeLineup(rawTitulares, rawSuplentes, rawConvocados);
+    // Depuración defensiva: Si se dispone de la plantilla activa, purgar IDs fantasmas / eliminados
+    let safeTitulares = rawTitulares;
+    let safeSuplentes = rawSuplentes;
+    let safeConvocados = rawConvocados;
+
+    if (Array.isArray(players) && players.length > 0) {
+      const validPlayerIds = new Set(players.filter(p => p && p.id != null).map(p => String(p.id)));
+      if (validPlayerIds.size > 0) {
+        let ghostPurgedCount = 0;
+        safeTitulares = rawTitulares.map(id => {
+          if (!id) return null;
+          if (validPlayerIds.has(String(id))) return String(id);
+          ghostPurgedCount++;
+          return null;
+        });
+        safeSuplentes = rawSuplentes.map(id => {
+          if (!id) return null;
+          if (validPlayerIds.has(String(id))) return String(id);
+          ghostPurgedCount++;
+          return null;
+        });
+        safeConvocados = rawConvocados.filter(id => {
+          if (!id) return false;
+          const isValid = validPlayerIds.has(String(id));
+          if (!isValid) ghostPurgedCount++;
+          return isValid;
+        }).map(String);
+
+        if (ghostPurgedCount > 0) {
+          warnings.push(`Se eliminaron ${ghostPurgedCount} jugador(es) desvinculados o inexistentes de la alineación y convocatoria.`);
+          isCorrupted = true;
+        }
+      }
+    }
+
+    const normLineup = normalizeLineup(safeTitulares, safeSuplentes, safeConvocados);
     const lineup = String(raw.lineup || raw.formacion || raw.alineacionNombre || '4-3-3').trim();
 
     // ── 3. Cronómetro y Tiempos de Cierre ──────────────────────────────────

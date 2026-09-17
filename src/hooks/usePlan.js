@@ -87,6 +87,8 @@ export const usePlan = () => {
   const [dbTrialStartDate, setDbTrialStartDate] = useState(null);
   const [stripeActivePlan, setStripeActivePlan] = useState('free');
   const [stripeProExpiration, setStripeProExpiration] = useState(null);
+  const [inheritedTeamPlan, setInheritedTeamPlan] = useState(null);
+  const [isTeamOwnerDeveloper, setIsTeamOwnerDeveloper] = useState(false);
   const [loading, setLoading] = useState(true);
 
   // Simulated plan toggle — SOLO para emails de desarrollador verificados.
@@ -99,6 +101,8 @@ export const usePlan = () => {
       setDbTrialStartDate(null);
       setStripeActivePlan('free');
       setStripeProExpiration(null);
+      setInheritedTeamPlan(null);
+      setIsTeamOwnerDeveloper(false);
       setLoading(false);
       return;
     }
@@ -108,6 +112,8 @@ export const usePlan = () => {
       setDbProExpiration(null);
       setStripeActivePlan('free');
       setStripeProExpiration(null);
+      setInheritedTeamPlan(null);
+      setIsTeamOwnerDeveloper(false);
 
       let localStart = localStorage.getItem('mister11_trial_start');
       let cookieStart = getCookie('mister11_trial_start');
@@ -135,6 +141,16 @@ export const usePlan = () => {
     const activeTeam = teams?.find(t => t.id === activeTeamId);
     const isActiveTeamClub = activeTeam?.source === 'club';
 
+    // 1. Chequeo de privilegios de desarrollador en el propietario del equipo activo
+    const directOwnerEmail = (activeTeam?.ownerEmail || activeTeam?.coachEmail || activeTeam?.createdByEmail || '').toLowerCase();
+    const directIsOwnerDev = DEVELOPER_EMAILS.some(e => e.toLowerCase() === directOwnerEmail);
+    setIsTeamOwnerDeveloper(directIsOwnerDev);
+
+    const directTeamPlan = activeTeam?.subscriptionPlan || activeTeam?.ownerPlan || activeTeam?.plan || null;
+    if (directTeamPlan) {
+      setInheritedTeamPlan(directTeamPlan);
+    }
+
     let unsub = () => {};
 
     if (isActiveTeamClub) {
@@ -143,10 +159,22 @@ export const usePlan = () => {
       setDbTrialStartDate(null);
       setLoading(false);
     } else {
-      unsub = onSnapshot(doc(db, 'users', user.uid, 'teams', activeTeamId), (docSnap) => {
+      // Si el equipo es compartido o tiene teamPath específico, escuchar ese documento
+      const teamDocPath = activeTeam?.teamPath 
+        || (activeTeam?.ownerUid ? `users/${activeTeam.ownerUid}/teams/${activeTeamId}` : null)
+        || (activeTeam?.userId && activeTeam.userId !== user.uid ? `users/${activeTeam.userId}/teams/${activeTeamId}` : null)
+        || `users/${user.uid}/teams/${activeTeamId}`;
+
+      unsub = onSnapshot(doc(db, teamDocPath), (docSnap) => {
         if (docSnap.exists()) {
           const data = docSnap.data();
-          setDbPlan(data.plan || 'free');
+          const docOwnerEmail = (data.ownerEmail || data.coachEmail || data.createdByEmail || directOwnerEmail || '').toLowerCase();
+          const docIsOwnerDev = DEVELOPER_EMAILS.some(e => e.toLowerCase() === docOwnerEmail);
+          setIsTeamOwnerDeveloper(docIsOwnerDev);
+
+          const resolvedPlan = data.plan || data.ownerPlan || data.subscriptionPlan || (docIsOwnerDev ? 'club_premium' : 'free');
+          setDbPlan(resolvedPlan);
+          setInheritedTeamPlan(resolvedPlan);
           setDbProExpiration(data.proExpiration || null);
           if (data.trialStartDate) {
             setDbTrialStartDate(typeof data.trialStartDate.toDate === 'function' ? data.trialStartDate.toDate() : new Date(data.trialStartDate));
@@ -154,13 +182,25 @@ export const usePlan = () => {
             setDbTrialStartDate(null);
           }
         } else {
-          setDbPlan('free');
-          setDbProExpiration(null);
-          setDbTrialStartDate(null);
+          if (directIsOwnerDev) {
+            setIsTeamOwnerDeveloper(true);
+            setDbPlan('club_premium');
+            setInheritedTeamPlan('club_premium');
+          } else {
+            setDbPlan('free');
+            setInheritedTeamPlan(null);
+            setDbProExpiration(null);
+            setDbTrialStartDate(null);
+          }
         }
         setLoading(false);
       }, (err) => {
-        console.error("Error loading plan:", err);
+        console.warn("Error loading team doc in usePlan:", err);
+        if (directIsOwnerDev) {
+          setIsTeamOwnerDeveloper(true);
+          setDbPlan('club_premium');
+          setInheritedTeamPlan('club_premium');
+        }
         setLoading(false);
       });
     }
@@ -241,6 +281,11 @@ export const usePlan = () => {
   const isActiveTeamClub = activeTeam?.source === 'club';
   const isClubActive = isClubMember && club && club.status === 'active';
 
+  // Lógica de herencia de privilegios de staff en el equipo activo
+  const activeOwnerEmail = (activeTeam?.ownerEmail || activeTeam?.coachEmail || activeTeam?.createdByEmail || '').toLowerCase();
+  const isOwnerDeveloper = isTeamOwnerDeveloper || DEVELOPER_EMAILS.some(e => e.toLowerCase() === activeOwnerEmail);
+  const isInheritedPro = isOwnerDeveloper || (inheritedTeamPlan === 'pro' || (inheritedTeamPlan && String(inheritedTeamPlan).startsWith('club')));
+
   // Lógica del plan individual del usuario
   const rawCurrentPlan = dbPlan !== 'free' && dbPlan !== 'trial' ? dbPlan : stripeActivePlan;
   const resolvedPlanDef = getPlanById(rawCurrentPlan);
@@ -249,8 +294,8 @@ export const usePlan = () => {
   const isRealPaidPro = (currentPlanId !== 'free') && !isRealExpired;
   const isOnTrial = (dbPlan === 'trial') && !isTrialExpired && !isRealPaidPro;
 
-  // isPro si es desarrollador, equipo de club activo, plan de pago activo o trial
-  const isPro = isDeveloper || (isActiveTeamClub ? isClubActive : (isRealPaidPro || isOnTrial));
+  // isPro si es desarrollador, propietario desarrollador, equipo de club activo, plan de pago activo, trial o staff heredado
+  const isPro = isDeveloper || isOwnerDeveloper || (isActiveTeamClub ? isClubActive : (isRealPaidPro || isOnTrial || isInheritedPro));
 
   // isSimulatingFree: testing UX
   const isSimulatingFree = isDeveloper && simulatedPlan === 'free';
@@ -259,22 +304,28 @@ export const usePlan = () => {
   let effectivePlanId = 'free';
   if (isDeveloper) {
     effectivePlanId = isSimulatingFree ? 'free' : 'club_premium';
+  } else if (isOwnerDeveloper) {
+    effectivePlanId = 'club_premium';
   } else if (isActiveTeamClub && isClubActive) {
     // Si el club tiene un plan específico (ej: club_starter, club_pro, club_premium)
     effectivePlanId = club?.plan ? getPlanById(club.plan).id : 'club_pro';
   } else if (isRealPaidPro) {
     effectivePlanId = currentPlanId;
+  } else if (isInheritedPro) {
+    effectivePlanId = inheritedTeamPlan || 'pro';
   } else if (isOnTrial) {
     effectivePlanId = 'pro';
   }
 
+  const isStaffHeredado = !isDeveloper && (isOwnerDeveloper || isInheritedPro) && !isRealPaidPro;
   const activePlanDef = isSimulatingFree ? PLANS.free : getPlanById(effectivePlanId);
-  const isClub = isDeveloper || (activePlanDef.id.startsWith('club') && (isActiveTeamClub ? isClubActive : isRealPaidPro));
+  const isClub = isDeveloper || isOwnerDeveloper || (activePlanDef.id.startsWith('club') && (isActiveTeamClub ? isClubActive : (isRealPaidPro || isInheritedPro)));
 
   // Helpers de validación de límites
   const canCreateTeam = (currentTeamsCount) => {
     if (isDeveloper && !isSimulatingFree) return true;
-    return (currentTeamsCount || 0) < activePlanDef.teamLimit;
+    const personalLimit = getPlanById(isRealPaidPro ? currentPlanId : 'free').teamLimit;
+    return (currentTeamsCount || 0) < personalLimit;
   };
 
   const canCreateSession = (currentSessionsCount) => {
@@ -313,11 +364,13 @@ export const usePlan = () => {
     isPro,
     isClub,
     isDeveloper,
+    isOwnerDeveloper,
+    isStaffHeredado,
     isSimulatingFree,
     limits,
     loading,
     proExpiration: activeExpiration?.toDate ? activeExpiration.toDate() : (activeExpiration ? new Date(activeExpiration) : null),
-    isExpired: isDeveloper ? false : (isTrialExpired && !isRealPaidPro && !isClubActive),
+    isExpired: (isDeveloper || isOwnerDeveloper) ? false : (isTrialExpired && !isRealPaidPro && !isClubActive && !isInheritedPro),
     simulatedPlan,
     toggleSimulatedPlan,
     trialDaysRemaining,
@@ -376,8 +429,13 @@ export const useEffectivePlan = (teamId) => {
   const isTeamClub = activeTeamData?.source === 'club' || teamFromContext?.source === 'club';
 
   // 1. Plan del propietario o del equipo
+  const teamOwnerEmail = (activeTeamData?.ownerEmail || activeTeamData?.coachEmail || activeTeamData?.createdByEmail || teamFromContext?.ownerEmail || '').toLowerCase();
+  const isTeamOwnerDev = DEVELOPER_EMAILS.some(e => e.toLowerCase() === teamOwnerEmail);
+
   let teamOwnerPlan = 'free';
-  if (isTeamClub) {
+  if (isTeamOwnerDev) {
+    teamOwnerPlan = 'club_premium';
+  } else if (isTeamClub) {
     teamOwnerPlan = 'club_pro';
   } else if (activeTeamData?.ownerPlan) {
     teamOwnerPlan = activeTeamData.ownerPlan;

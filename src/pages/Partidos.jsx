@@ -309,6 +309,27 @@ const Partidos = () => {
     }
   }, [location.state, matches]);
 
+  // Saneado reactivo: cuando la plantilla de jugadores está cargada, purgar cualquier ID fantasma que persista
+  useEffect(() => {
+    if (players && players.length > 0 && Array.isArray(calledPlayers) && calledPlayers.some(Boolean)) {
+      const validSet = new Set(players.filter(p => p && p.id != null).map(p => String(p.id)));
+      const hasGhost = calledPlayers.some(id => id && !validSet.has(String(id)));
+      if (hasGhost) {
+        const cleaned = calledPlayers.map(id => (id && validSet.has(String(id))) ? String(id) : null);
+        const titulares = cleaned.slice(0, 11);
+        const suplentes = cleaned.slice(11, 18);
+        const convocados = [...titulares.filter(Boolean), ...suplentes.filter(Boolean)];
+        setCalledPlayers(cleaned);
+        setMatchData(prev => ({
+          ...prev,
+          titulares,
+          suplentes,
+          convocados
+        }));
+      }
+    }
+  }, [players, calledPlayers]);
+
   // formatTime usa la función del contexto
   const formatTime = formatMatchTime;
 
@@ -1370,10 +1391,15 @@ const Partidos = () => {
   };
 
   const togglePlayerCall = (id) => {
-    const isCurrentlyCalled = calledPlayers.some(p => p === id);
+    const idStr = String(id);
+    const validSet = new Set((players || []).filter(p => p && p.id != null).map(p => String(p.id)));
+    // Limpiar de antemano cualquier residuo de IDs fantasmas/desvinculados
+    const cleanCalled = calledPlayers.map(p => (p && validSet.has(String(p))) ? String(p) : null);
+    const isCurrentlyCalled = cleanCalled.some(p => p && String(p) === idStr);
+
     if (isCurrentlyCalled) {
       // Liberar el slot asignando null
-      const updated = calledPlayers.map(p => (p === id ? null : p));
+      const updated = cleanCalled.map(p => (p && String(p) === idStr ? null : p));
       const titulares = updated.slice(0, 11);
       const suplentes = updated.slice(11, 18);
       const convocados = [...titulares.filter(Boolean), ...suplentes.filter(Boolean)];
@@ -1385,18 +1411,18 @@ const Partidos = () => {
         convocados
       }));
     } else {
-      const activeCount = calledPlayers.filter(Boolean).length;
+      const activeCount = cleanCalled.filter(Boolean).length;
       if (activeCount >= 18) return alert(isEnLanguage ? "Maximum 18 players can be called up for the match sheet." : "Máximo 18 jugadores permitidos en la convocatoria (11 titulares y 7 suplentes).");
 
-      const updated = [...calledPlayers];
+      const updated = [...cleanCalled];
       while (updated.length < 18) {
         updated.push(null);
       }
       const firstEmptyIdx = updated.findIndex(p => !p);
       if (firstEmptyIdx !== -1 && firstEmptyIdx < 18) {
-        updated[firstEmptyIdx] = id;
+        updated[firstEmptyIdx] = idStr;
       } else {
-        updated.push(id);
+        updated.push(idStr);
       }
       const titulares = updated.slice(0, 11);
       const suplentes = updated.slice(11, 18);
@@ -1949,12 +1975,12 @@ const Partidos = () => {
                 <div className="conv-header">
                   <h3 className="section-title">{isGlobalEn ? 'Player Selection' : 'Selección de Jugadores'}</h3>
                   <div className="conv-count">
-                    {calledPlayers.filter(Boolean).length} / 18 {isGlobalEn ? 'Called' : 'Convocados'}
+                    {calledPlayers.filter(cId => cId && (players || []).some(pl => String(pl.id) === String(cId))).length} / 18 {isGlobalEn ? 'Called' : 'Convocados'}
                   </div>
                 </div>
                 <div className="players-checklist">
                   {players.map(p => {
-                    const isSelected = calledPlayers.includes(p.id);
+                    const isSelected = calledPlayers.some(cId => cId && String(cId) === String(p.id));
                     return (
                       <div
                         key={p.id}

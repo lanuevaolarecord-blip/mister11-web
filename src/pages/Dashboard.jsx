@@ -399,37 +399,41 @@ const Dashboard = () => {
 
   return (
     <div className="page-wrapper">
-      <header className="page-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <div>
+      <header className="page-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '14px' }}>
+        <div style={{ minWidth: '220px', flex: '1 1 auto' }}>
           <h1 className="page-title">{t('dashboard.welcome', { name: (settings.profileName || user?.displayName || 'Míster').trim().split(' ')[0] })}</h1>
           <p className="page-subtitle">{t('dashboard.activity', { club: settings.clubName || activeTeam?.name || 'Mi Equipo' })}</p>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap', flexShrink: 0 }}>
           <button
             type="button"
             className="btn-outline"
             onClick={() => setIsJoinStaffModalOpen(true)}
             style={{
-              display: 'flex',
+              display: 'inline-flex',
               alignItems: 'center',
-              gap: '6px',
-              padding: '8px 14px',
+              justifyContent: 'center',
+              gap: '8px',
+              padding: '10px 16px',
               fontSize: '0.85rem',
               fontWeight: 700,
-              minHeight: '44px',
+              minHeight: '48px',
+              whiteSpace: 'nowrap',
+              flexShrink: 0,
+              borderRadius: '8px',
               borderColor: '#D4A843',
               color: '#D4A843',
               backgroundColor: 'rgba(212, 168, 67, 0.08)'
             }}
           >
-            <UserPlus size={16} />
+            <UserPlus size={18} />
             {isEn ? 'Join as Staff' : 'Unirse a un equipo como Staff'}
           </button>
-          <div className="card-base" style={{ padding: '8px 16px', textAlign: 'center' }}>
-            <span style={{ fontSize: '10px', color: 'var(--text-secondary)', textTransform: 'uppercase' }}>
+          <div className="card-base" style={{ padding: '8px 16px', textAlign: 'center', whiteSpace: 'nowrap', flexShrink: 0, minHeight: '48px', display: 'flex', flexDirection: 'column', justifyContent: 'center', borderRadius: '8px' }}>
+            <span style={{ fontSize: '11px', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.5px', whiteSpace: 'nowrap' }}>
               {new Date().toLocaleDateString(settings.language === 'English (EN)' ? 'en-US' : 'es-ES', { month: 'long', year: 'numeric' })}
             </span>
-            <strong style={{ display: 'block', fontSize: '14px', color: 'var(--text-primary)' }}>{t('dashboard.today', settings.language)}</strong>
+            <strong style={{ display: 'block', fontSize: '14px', color: 'var(--text-primary)', whiteSpace: 'nowrap' }}>{t('dashboard.today', settings.language)}</strong>
           </div>
         </div>
       </header>

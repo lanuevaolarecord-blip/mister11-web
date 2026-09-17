@@ -60,7 +60,7 @@ test.describe('Míster11 — Flujos de Invitación y Onboarding por Roles', () =
     // Cambiar a pestaña QR
     await qrTab.click();
     await page.waitForTimeout(300);
-    await expect(page.locator('text=Escanear|Scan|Cámara|Camera')).toBeVisible();
+    await expect(page.getByRole('heading', { name: /Escanear QR|Scan/i })).toBeVisible();
   });
 
 });

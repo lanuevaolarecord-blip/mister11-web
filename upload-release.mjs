@@ -23,8 +23,10 @@ const firebaseConfig = {
 };
 
 const pkgJson   = JSON.parse(readFileSync(resolve(__dirname, 'package.json'), 'utf8'));
-const VERSION   = pkgJson.version;          // e.g. "1.1.63"
-const BUILD     = 93;
+const VERSION   = pkgJson.version;
+const buildGradle = readFileSync(resolve(__dirname, 'android/app/build.gradle'), 'utf8');
+const versionCodeMatch = buildGradle.match(/versionCode\s+(\d+)/);
+const BUILD     = versionCodeMatch ? parseInt(versionCodeMatch[1], 10) : 95;
 
 const APK_PATH  = resolve(__dirname, 'android/app/build/outputs/apk/release/mister11.apk');
 const AAB_PATH  = resolve(__dirname, 'android/app/build/outputs/bundle/release/app-release.aab');

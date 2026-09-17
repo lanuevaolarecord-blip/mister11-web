@@ -1,5 +1,58 @@
 # 📋 Release Notes — Míster 11
 
+## v1.1.77 — Compilación de Producción Google Play Store & Firebase
+
+**Fecha de compilación:** 2026-09-17  
+**Estado:** ✅ Lista para producción y subida a Google Play Store  
+**versionCode:** 95  
+**versionName:** 1.1.77  
+**ApplicationID:** `com.mister11.app`  
+
+---
+
+## 📦 Artefactos Generados
+
+| Artefacto | Ruta | Tamaño | Estado |
+|-----------|------|--------|--------|
+| **AAB (Google Play)** | `android/app/build/outputs/bundle/release/app-release.aab` | 16.9 MB | ✅ |
+| **AAB (Copia Raíz)** | `../mister11_v1.1.77_build95.aab` / `Mister11.aab` | 16.9 MB | ✅ |
+| **APK (Distribución directa)** | `android/app/build/outputs/apk/release/mister11.apk` | 15.9 MB | ✅ |
+| **APK (Copia Raíz)** | `../mister11_v1.1.77_build95.apk` / `Mister11.apk` | 15.9 MB | ✅ |
+| **Firebase Storage** | `gs://mister11.firebasestorage.app/mister11.apk` | 15.9 MB | ✅ Subido |
+| **Firestore Global** | `config/global` (v1.1.77 / build 95) | - | ✅ Actualizado |
+
+---
+
+## 🚀 Cambios y Mejoras en v1.1.77 (Build 95)
+
+### 1. Sistema de Staff e Invitaciones Avanzadas
+- Incorporación de flujo de invitaciones segregado por roles canónicos: Entrenador, Jugador y Padre/Familia.
+- Generador y lector de códigos QR para unirse a equipos y cuerpos técnicos.
+- Soporte para validación multi-fuente de códigos de acceso (código directo, prefijo M11 y prefijo STAFF).
+- Modal interactivo de detalles de permisos y responsabilidades por rol de cuerpo técnico.
+- Corrección de superposición visual entre el FAB de adición y la barra de navegación.
+
+### 2. Motor de Asistencia y Gestión de Microciclos
+- Blindaje definitivo contra `RangeError: Invalid time value` en `toDateKey` y rangos de fechas de microciclos.
+- Gestión de guardado en asistencias garantizado con bloque `try-finally` seguro.
+- Paleta visual adaptada a tonos de alto contraste Tierra y Campo.
+
+### 3. Calificación y Rendimiento en Sesiones
+- Sistema de puntuación y calificación individual por jugador en sesiones de entrenamiento.
+- Incorporación del sexto eje canónico en el gráfico de radar (`ENTRENAMIENTO`) del portal del jugador.
+- Visualización de medias acumuladas de sesiones de trabajo en plantilla y ficha técnica.
+
+### 4. Perfil de Jugador y Salud Deportiva
+- Validación física estricta de parámetros antropométricos (altura 100-230 cm, peso 30-150 kg).
+- Cálculo reactivo de Índice de Masa Corporal (IMC/BMI) con clasificación deportiva.
+- Protección y auditoría de campos sensibles en perfiles de jugadores.
+
+### 5. Experiencia de Usuario Móvil (Android First)
+- Ocultación inteligente de la barra inferior (bottom navigation) y anclaje de acciones fijas (Guardar / Cancelar) durante la edición táctica de sesiones.
+- Touch targets garantizados de mínimo 48×48 dp en todos los componentes interactivos.
+
+---
+
 ## v1.1.11 — Compilación de Producción Google Play Store
 
 **Fecha de compilación:** 2026-07-17  

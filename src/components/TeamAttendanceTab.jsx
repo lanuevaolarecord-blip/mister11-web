@@ -1454,7 +1454,15 @@ export const TeamAttendanceTab = ({ players = [], activeTeam = null }) => {
                 {callupSquadStats.map((item) => {
                   const p = item.player;
                   const hasData = item.hasData && typeof item.pct === 'number';
-                  const guidance = item.callupGuidance || determineCallupRecommendation(item.pct);
+                  const guidance = item.callupGuidance || determineCallupRecommendation(item.pct, {}, {
+                    present: item.present,
+                    late: item.late,
+                    justified: item.justified,
+                    injured: item.injured,
+                    absent: item.absent,
+                    noRecord: item.noRecord,
+                    attended: item.attended
+                  });
 
                   return (
                     <tr
@@ -1489,7 +1497,17 @@ export const TeamAttendanceTab = ({ players = [], activeTeam = null }) => {
                             {item.pct}%
                           </span>
                         ) : (
-                          <span style={{ color: 'var(--text-secondary)', fontWeight: '700' }}>—</span>
+                          <span style={{
+                            padding: '4px 8px',
+                            borderRadius: '6px',
+                            fontWeight: '800',
+                            fontSize: '11px',
+                            color: guidance.color,
+                            background: guidance.bg,
+                            border: `1px solid ${guidance.border}`
+                          }}>
+                            {item.justified > 0 && (item.attended === 0 || !item.attended) ? (isEn ? 'Justified' : 'Justificado') : '—'}
+                          </span>
                         )}
                       </td>
 
@@ -1499,9 +1517,7 @@ export const TeamAttendanceTab = ({ players = [], activeTeam = null }) => {
                           <span style={{ color: '#F97316' }} title={isEn ? 'Late' : 'Tarde'}>{item.late ?? 0}T</span>
                           <span style={{ color: '#EAB308' }} title={isEn ? 'Justified' : 'Justificado'}>{item.justified ?? 0}J</span>
                           <span style={{ color: '#EF4444' }} title={isEn ? 'Absent' : 'Ausente'}>{item.absent ?? 0}A</span>
-                          {(item.noRecord ?? 0) > 0 && (
-                            <span style={{ color: '#94A3B8' }} title={isEn ? 'No staff record' : 'Sin registro del staff'}>{item.noRecord}SR</span>
-                          )}
+                          <span style={{ color: (item.noRecord ?? 0) > 0 ? '#94A3B8' : 'var(--text-secondary)', opacity: (item.noRecord ?? 0) > 0 ? 1 : 0.6 }} title={isEn ? 'No staff record' : 'Sin registro del staff'}>{item.noRecord ?? 0}SR</span>
                         </div>
                       </td>
 

@@ -144,12 +144,32 @@ export const calculateAttendanceMetrics = ({
   // 1. Caso: 0 eventos pasados programados o sin eventos evaluables
   if (totalPast === 0 || eligible <= 0) {
     if (totalPast > 0 && (j > 0 || inj > 0) && a === 0 && nr === 0) {
-      // Si todos los eventos fueron justificados o lesionados (100% justificado)
+      // Si asistió físicamente a alguna sesión (attended > 0), el % sobre lo requerido es 100%
+      if (attended > 0) {
+        return {
+          pct: 100,
+          present: p,
+          late: l,
+          attended,
+          scheduledPast: totalPast,
+          noRecord: nr,
+          justified: j,
+          injured: inj,
+          suspended: susp,
+          absent: a,
+          eligible: 0,
+          hasData: true,
+          status: 'optimal',
+          labelKey: 'common.optimal'
+        };
+      }
+      // Si NO asistió a ninguna sesión física (attended === 0), no tiene sesiones físicas evaluables
+      // No debe inflarse artificialmente con un 100% irreal
       return {
-        pct: 100,
+        pct: null,
         present: p,
         late: l,
-        attended,
+        attended: 0,
         scheduledPast: totalPast,
         noRecord: nr,
         justified: j,
@@ -157,9 +177,9 @@ export const calculateAttendanceMetrics = ({
         suspended: susp,
         absent: a,
         eligible: 0,
-        hasData: true,
-        status: 'optimal',
-        labelKey: 'common.optimal'
+        hasData: false,
+        status: 'justified_only',
+        labelKey: 'common.noData'
       };
     }
 
@@ -229,11 +249,22 @@ export const calculateSquadAveragePct = (squadStatsList = []) => {
  * @param {Object} thresholds - { convocMinPct: 80, dudaMinPct: 50 }
  * @returns {Object} { recommendation: 'recommended'|'doubtful'|'not_recommended'|'no_data', label: string, labelEn: string, color: string, bg: string, border: string, badge: string }
  */
-export const determineCallupRecommendation = (pct, thresholds = {}) => {
+export const determineCallupRecommendation = (pct, thresholds = {}, context = {}) => {
   const convocMin = Number(thresholds?.convocMinPct ?? 80);
   const dudaMin = Number(thresholds?.dudaMinPct ?? 50);
 
   if (pct === null || pct === undefined || isNaN(pct) || !Number.isFinite(pct)) {
+    if ((context?.justified > 0 || context?.injured > 0) && (context?.attended === 0 || !context?.attended)) {
+      return {
+        recommendation: 'doubtful',
+        label: 'Valorar (Justificado)',
+        labelEn: 'Consider (Justified)',
+        color: '#F59E0B',
+        bg: 'rgba(245, 158, 11, 0.12)',
+        border: 'rgba(245, 158, 11, 0.35)',
+        badge: '⚠️'
+      };
+    }
     return {
       recommendation: 'no_data',
       label: 'Sin sesiones en ventana',
@@ -607,7 +638,15 @@ export const calculatePlayerAttendanceOnSchedule = (
     scheduledPast
   });
 
-  let callupGuidance = determineCallupRecommendation(metrics.pct, thresholds);
+  let callupGuidance = determineCallupRecommendation(metrics.pct, thresholds, {
+    present,
+    late,
+    justified,
+    injured,
+    absent,
+    noRecord,
+    attended: metrics.attended
+  });
 
   // Salvaguarda innegociable de justicia: Jugador suspendido disciplinariamente
   if (player?.isSuspended === true || player?.status === 'suspended' || player?.estado === 'suspendido') {

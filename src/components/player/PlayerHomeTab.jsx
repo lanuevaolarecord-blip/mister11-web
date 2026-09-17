@@ -28,9 +28,30 @@ export const PlayerHomeTab = ({ player, team, teamPath, onNavigateTab, isParentV
 
     const parseDateSafe = (dStr) => {
       if (!dStr) return null;
-      if (typeof dStr === 'string') return new Date(dStr.split('T')[0]);
-      if (dStr.toDate) return dStr.toDate();
+      if (typeof dStr === 'number') return new Date(dStr);
+      if (dStr.toDate && typeof dStr.toDate === 'function') return dStr.toDate();
+      if (dStr.seconds) return new Date(dStr.seconds * 1000);
       if (dStr instanceof Date) return dStr;
+      if (typeof dStr === 'string') {
+        if (dStr.includes('-')) {
+          const parts = dStr.split('T')[0].split('-').map(n => parseInt(n, 10));
+          if (parts.length === 3) {
+            return new Date(parts[0], parts[1] - 1, parts[2]);
+          }
+        }
+        if (dStr.includes('/')) {
+          const parts = dStr.split('T')[0].split('/').map(n => parseInt(n, 10));
+          if (parts.length === 3) {
+            const [p0, p1, p2] = parts;
+            const y = p0 > 1000 ? p0 : p2;
+            const m = p1;
+            const d = p0 > 1000 ? p2 : p0;
+            return new Date(y, m - 1, d);
+          }
+        }
+        const d = new Date(dStr);
+        return isNaN(d.getTime()) ? null : d;
+      }
       return null;
     };
 
@@ -109,10 +130,18 @@ export const PlayerHomeTab = ({ player, team, teamPath, onNavigateTab, isParentV
     if (!teamPath) return;
 
     const annRef = collection(db, `${teamPath}/announcements`);
-    const q = query(annRef, limit(5));
+    const q = query(annRef, limit(10));
     const unsubAnn = onSnapshot(q, (snap) => {
       const all = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-      all.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
+      const getTime = (doc) => {
+        if (!doc.createdAt) return 0;
+        if (typeof doc.createdAt.toMillis === 'function') return doc.createdAt.toMillis();
+        if (doc.createdAt.seconds) return doc.createdAt.seconds * 1000;
+        if (doc.createdAt instanceof Date) return doc.createdAt.getTime();
+        const t = new Date(doc.createdAt).getTime();
+        return isNaN(t) ? 0 : t;
+      };
+      all.sort((a, b) => getTime(b) - getTime(a));
       setAnnouncements(all);
     }, (err) => {
       console.warn('Error cargando anuncios:', err);
@@ -379,7 +408,11 @@ export const PlayerHomeTab = ({ player, team, teamPath, onNavigateTab, isParentV
                 <div className="ann-header">
                   <span className="ann-author">⚽ {ann.authorName || (isEn ? 'Coaching Staff' : 'Cuerpo Técnico')}</span>
                   <span className="ann-date">
-                    {ann.createdAt?.seconds ? formatDate(ann.createdAt.seconds * 1000) : (isEn ? 'Recent' : 'Reciente')}
+                    {(() => {
+                      if (!ann.createdAt) return isEn ? 'Recent' : 'Reciente';
+                      const ms = typeof ann.createdAt.toMillis === 'function' ? ann.createdAt.toMillis() : (ann.createdAt.seconds ? ann.createdAt.seconds * 1000 : new Date(ann.createdAt).getTime());
+                      return !isNaN(ms) && ms > 0 ? formatDate(ms, { day: 'numeric', month: 'short' }) : (isEn ? 'Recent' : 'Reciente');
+                    })()}
                   </span>
                 </div>
                 <h4 className="ann-title">{ann.title}</h4>

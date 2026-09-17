@@ -69,6 +69,30 @@ export const normalizeLineup = (rawTitulares = [], rawSuplentes = [], rawConvoca
     });
   }
 
+  // 3. Rellenar huecos vacíos en titulares o suplentes con convocados no asignados
+  const unassignedConvocados = (Array.isArray(rawConvocados) ? rawConvocados : [])
+    .map(id => (id !== null && id !== undefined ? String(id).trim() : ''))
+    .filter(idStr => idStr && !seen.has(idStr));
+
+  if (unassignedConvocados.length > 0) {
+    // Primero rellenar slots vacíos de titulares
+    for (let i = 0; i < 11 && unassignedConvocados.length > 0; i++) {
+      if (!titulares[i]) {
+        const nextId = unassignedConvocados.shift();
+        titulares[i] = nextId;
+        seen.add(nextId);
+      }
+    }
+    // Luego rellenar slots vacíos de suplentes
+    for (let i = 0; i < 7 && unassignedConvocados.length > 0; i++) {
+      if (!suplentes[i]) {
+        const nextId = unassignedConvocados.shift();
+        suplentes[i] = nextId;
+        seen.add(nextId);
+      }
+    }
+  }
+
   const convocados = [...titulares.filter(Boolean), ...suplentes.filter(Boolean)];
 
   return {

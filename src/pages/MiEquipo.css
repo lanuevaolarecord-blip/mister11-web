@@ -57,6 +57,31 @@
   border-color: var(--accent) !important;
 }
 
+/* Barra de Pestañas Superior de Mi Equipo */
+.team-tabs-bar {
+  display: flex !important;
+  flex-wrap: nowrap !important;
+  overflow-x: auto !important;
+  -webkit-overflow-scrolling: touch !important;
+  scrollbar-width: none !important;
+}
+
+.team-tabs-bar::-webkit-scrollbar {
+  display: none !important;
+}
+
+.team-tab-btn {
+  flex-shrink: 0 !important;
+  white-space: nowrap !important;
+  min-height: 46px !important;
+  border-radius: 24px !important;
+  transition: all 0.2s ease !important;
+}
+
+.team-tab-btn span {
+  white-space: nowrap !important;
+}
+
 /* Players Grid */
 .players-grid {
   display: grid;

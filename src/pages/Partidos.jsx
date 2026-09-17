@@ -87,34 +87,56 @@ const getGeneralZone = (pos) => {
 
 // Distribuidor inteligente de jugadores según posiciones naturales
 const alignStartersByPosition = (calledIds = [], players = [], positionsList = []) => {
-  const startersIds = calledIds.slice(0, 11).filter(Boolean);
-  const subsIds = Array.from({ length: 7 }, (_, i) => calledIds[11 + i] || null);
-  const starters = startersIds.map(id => players.find(p => p && p.id === id)).filter(Boolean);
-  const assigned = Array(11).fill(null);
-  const unassigned = [...starters];
+  const allUniqueIds = Array.from(new Set(calledIds.filter(Boolean)));
+  const allPlayerObjs = allUniqueIds
+    .map(id => players.find(p => p && p.id === id))
+    .filter(Boolean);
 
-  // 1ra pasada: coincidencias exactas
-  positionsList.forEach((slot, slotIdx) => {
-    const exactMatchIdx = unassigned.findIndex(p => p.position === slot.pos);
+  const assigned = Array(11).fill(null);
+  const unassigned = [...allPlayerObjs];
+
+  // Si no hay positionsList o viene vacía, fallback a 4-3-3
+  const slots = positionsList && positionsList.length === 11 
+    ? positionsList 
+    : getFormationPositions('4-3-3');
+
+  // Paso 1: Asignar Portero (slot 0 suele ser POR en todas las formaciones)
+  const gkSlotIdx = slots.findIndex(s => s.pos === 'POR' || getGeneralZone(s.pos) === 'POR');
+  const targetGkSlot = gkSlotIdx !== -1 ? gkSlotIdx : 0;
+  const gkPlayerIdx = unassigned.findIndex(p => p.position === 'POR' || p.posicion === 'POR');
+  if (gkPlayerIdx !== -1) {
+    assigned[targetGkSlot] = unassigned[gkPlayerIdx].id;
+    unassigned.splice(gkPlayerIdx, 1);
+  }
+
+  // Paso 2: Coincidencia exacta de posición para el resto de slots
+  slots.forEach((slot, slotIdx) => {
+    if (assigned[slotIdx]) return;
+    const exactMatchIdx = unassigned.findIndex(p => 
+      (p.position && p.position.toUpperCase() === slot.pos.toUpperCase()) ||
+      (p.posicion && p.posicion.toUpperCase() === slot.pos.toUpperCase())
+    );
     if (exactMatchIdx !== -1) {
       assigned[slotIdx] = unassigned[exactMatchIdx].id;
       unassigned.splice(exactMatchIdx, 1);
     }
   });
 
-  // 2da pasada: zona general (ej: lateral derecho en defensa)
-  positionsList.forEach((slot, slotIdx) => {
+  // Paso 3: Coincidencia por zona general (DEF, MC, DEL)
+  slots.forEach((slot, slotIdx) => {
     if (assigned[slotIdx]) return;
     const slotZone = getGeneralZone(slot.pos);
-    const zoneMatchIdx = unassigned.findIndex(p => getGeneralZone(p.position) === slotZone);
+    const zoneMatchIdx = unassigned.findIndex(p => 
+      getGeneralZone(p.position || p.posicion) === slotZone
+    );
     if (zoneMatchIdx !== -1) {
       assigned[slotIdx] = unassigned[zoneMatchIdx].id;
       unassigned.splice(zoneMatchIdx, 1);
     }
   });
 
-  // 3ra pasada: rellenar slots vacíos restantes con los jugadores sobrantes
-  positionsList.forEach((slot, slotIdx) => {
+  // Paso 4: Rellenar huecos restantes en los 11 titulares si quedan jugadores
+  slots.forEach((slot, slotIdx) => {
     if (assigned[slotIdx]) return;
     if (unassigned.length > 0) {
       assigned[slotIdx] = unassigned[0].id;
@@ -122,8 +144,13 @@ const alignStartersByPosition = (calledIds = [], players = [], positionsList = [
     }
   });
 
-  const alignedXI = assigned.map(val => val || null);
-  return [...alignedXI, ...subsIds];
+  // Paso 5: Todos los jugadores restantes van ordenados al banquillo de suplentes (slots 11 a 17)
+  const subs = Array(7).fill(null);
+  for (let i = 0; i < 7 && unassigned.length > 0; i++) {
+    subs[i] = unassigned[i].id;
+  }
+
+  return [...assigned, ...subs];
 };
 
 
@@ -1014,7 +1041,9 @@ const Partidos = () => {
 
     setMatchData(prev => ({
       ...prev,
-      convocados: newCalled,
+      titulares: newCalled.slice(0, 11),
+      suplentes: newCalled.slice(11, 18),
+      convocados: newCalled.filter(Boolean),
       customPositions: {},
       customRoles: {}
     }));
@@ -1357,7 +1386,7 @@ const Partidos = () => {
       }));
     } else {
       const activeCount = calledPlayers.filter(Boolean).length;
-      if (activeCount >= 23) return alert(isEnLanguage ? "Maximum 23 selected players allowed." : "Máximo 23 convocados permitidos.");
+      if (activeCount >= 18) return alert(isEnLanguage ? "Maximum 18 players can be called up for the match sheet." : "Máximo 18 jugadores permitidos en la convocatoria (11 titulares y 7 suplentes).");
 
       const updated = [...calledPlayers];
       while (updated.length < 18) {
@@ -1920,7 +1949,7 @@ const Partidos = () => {
                 <div className="conv-header">
                   <h3 className="section-title">{isGlobalEn ? 'Player Selection' : 'Selección de Jugadores'}</h3>
                   <div className="conv-count">
-                    {calledPlayers.filter(Boolean).length} / {players.length || 23} {isGlobalEn ? 'Called' : 'Convocados'}
+                    {calledPlayers.filter(Boolean).length} / 18 {isGlobalEn ? 'Called' : 'Convocados'}
                   </div>
                 </div>
                 <div className="players-checklist">
@@ -2024,7 +2053,12 @@ const Partidos = () => {
                         if (slots) {
                           const newCalled = alignStartersByPosition(calledPlayers, players, slots);
                           setCalledPlayers(newCalled);
-                          setMatchData(prev => ({ ...prev, convocados: newCalled }));
+                          setMatchData(prev => ({ 
+                            ...prev, 
+                            titulares: newCalled.slice(0, 11),
+                            suplentes: newCalled.slice(11, 18),
+                            convocados: newCalled.filter(Boolean)
+                          }));
                         }
                       }}
                       onNewFormation={() => {

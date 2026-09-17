@@ -86,8 +86,8 @@ export const PlayerScheduleTab = ({ player, team, teamPath, isParentView = false
 
         const combined = [...sessions, ...matches];
         combined.sort((a, b) => {
-          const dateA = new Date(a.date || 0).getTime() || 0;
-          const dateB = new Date(b.date || 0).getTime() || 0;
+          const dateA = parseEventDate(a.date || a.fecha)?.dateObj?.getTime() || 0;
+          const dateB = parseEventDate(b.date || b.fecha)?.dateObj?.getTime() || 0;
           return dateA - dateB;
         });
         setEvents(combined);
@@ -238,7 +238,12 @@ export const PlayerScheduleTab = ({ player, team, teamPath, isParentView = false
         const clean = rawDate.split('T')[0];
         const parts = clean.split('/').map(n => parseInt(n, 10));
         if (parts.length === 3) {
-          const [d, m, y] = parts;
+          let y, m, d;
+          if (parts[0] > 1000) {
+            [y, m, d] = parts;
+          } else {
+            [d, m, y] = parts;
+          }
           return { year: y, month: m - 1, day: d, dateObj: new Date(y, m - 1, d) };
         }
       }
@@ -334,7 +339,7 @@ export const PlayerScheduleTab = ({ player, team, teamPath, isParentView = false
             const officialStatus = actaClosed && actaActualData ? actaActualData.status : null;
 
             return (
-              <div key={evt.id} className={`event-card-item ${isMatch ? 'match-card' : 'session-card'}`}>
+              <div key={evt.id} className={`event-card-item ${isMatch ? 'match-card' : 'schedule-session-card'}`}>
                 <div className="event-card-top">
                   <div className="event-type-badge">
                     {isMatch ? `🏆 ${t('player.schedule.match')}` : `⚽ ${t('player.schedule.training')}`}

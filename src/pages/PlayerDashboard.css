@@ -642,6 +642,11 @@ html.light .player-dashboard-layout,
   border: 1px solid var(--border-color);
   border-radius: 14px;
   padding: 16px;
+  display: flex !important;
+  flex-direction: column !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+  overflow: hidden;
 }
 
 .event-card-top {
@@ -649,6 +654,7 @@ html.light .player-dashboard-layout,
   justify-content: space-between;
   align-items: center;
   margin-bottom: 8px;
+  width: 100%;
 }
 
 .event-type-badge {
@@ -669,14 +675,20 @@ html.light .player-dashboard-layout,
   font-size: 1.15rem;
   font-weight: 800;
   color: var(--text-primary, #ffffff);
+  width: 100% !important;
+  word-break: normal !important;
+  white-space: normal !important;
+  line-height: 1.35 !important;
 }
 
 .event-meta-info {
   display: flex;
+  flex-wrap: wrap;
   gap: 14px;
   font-size: 12px;
   color: var(--text-secondary, #94a3b8);
   margin-bottom: 14px;
+  width: 100% !important;
 }
 
 .event-meta-info span {
@@ -688,6 +700,7 @@ html.light .player-dashboard-layout,
 .rsvp-section {
   border-top: 1px solid var(--border-color, rgba(255, 255, 255, 0.08));
   padding-top: 12px;
+  width: 100% !important;
 }
 
 .rsvp-prompt {

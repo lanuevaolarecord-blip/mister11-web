@@ -565,64 +565,128 @@ const MiEquipo = () => {
         </div>
 
         {/* Selector de Pestañas a Nivel de Equipo */}
-        <div style={{ display: 'flex', gap: '8px', marginBottom: '16px', borderBottom: '2px solid var(--border-color)', paddingBottom: '8px', overflowX: 'auto' }}>
+        <div className="team-tabs-bar" style={{
+          display: 'flex',
+          flexWrap: 'nowrap',
+          gap: '10px',
+          marginBottom: '20px',
+          borderBottom: '2px solid var(--border-color)',
+          paddingBottom: '10px',
+          overflowX: 'auto',
+          WebkitOverflowScrolling: 'touch',
+          scrollbarWidth: 'none',
+          width: '100%',
+          boxSizing: 'border-box'
+        }}>
           <button 
             type="button"
-            className={`chip ${mainTeamTab === 'squad' ? 'active' : ''}`}
-            style={{ fontWeight: '800', minHeight: '44px', padding: '0 18px', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '6px' }}
+            className={`team-tab-btn chip ${mainTeamTab === 'squad' ? 'active' : ''}`}
+            style={{
+              fontWeight: '800',
+              minHeight: '46px',
+              padding: '0 20px',
+              fontSize: '13.5px',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '8px',
+              flexShrink: 0,
+              whiteSpace: 'nowrap',
+              borderRadius: '24px',
+              cursor: 'pointer'
+            }}
             onClick={() => setMainTeamTab('squad')}
           >
             <span>👥</span>
-            <span>{t('equipo.tab.squad') || 'Plantilla'}</span>
+            <span style={{ whiteSpace: 'nowrap' }}>{t('equipo.tab.squad') || 'Plantilla'}</span>
           </button>
           <button 
             type="button"
-            className={`chip ${mainTeamTab === 'attendance' ? 'active' : ''}`}
-            style={{ fontWeight: '800', minHeight: '44px', padding: '0 18px', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '6px' }}
+            className={`team-tab-btn chip ${mainTeamTab === 'attendance' ? 'active' : ''}`}
+            style={{
+              fontWeight: '800',
+              minHeight: '46px',
+              padding: '0 20px',
+              fontSize: '13.5px',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '8px',
+              flexShrink: 0,
+              whiteSpace: 'nowrap',
+              borderRadius: '24px',
+              cursor: 'pointer'
+            }}
             onClick={() => setMainTeamTab('attendance')}
           >
             <span>📋</span>
-            <span>{t('equipo.tab.attendance') || 'Control de Asistencia'}</span>
+            <span style={{ whiteSpace: 'nowrap' }}>{t('equipo.tab.attendance') || 'Control de Asistencia'}</span>
           </button>
           <button 
             type="button"
-            className={`chip ${mainTeamTab === 'staff' ? 'active' : ''}`}
-            style={{ fontWeight: '800', minHeight: '44px', padding: '0 18px', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '6px' }}
+            className={`team-tab-btn chip ${mainTeamTab === 'staff' ? 'active' : ''}`}
+            style={{
+              fontWeight: '800',
+              minHeight: '46px',
+              padding: '0 20px',
+              fontSize: '13.5px',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '8px',
+              flexShrink: 0,
+              whiteSpace: 'nowrap',
+              borderRadius: '24px',
+              cursor: 'pointer'
+            }}
             onClick={() => setMainTeamTab('staff')}
           >
             <span>🛡️</span>
-            <span>{t('equipo.tab.staff') || 'Cuerpo Técnico'}</span>
+            <span style={{ whiteSpace: 'nowrap' }}>{t('equipo.tab.staff') || 'Cuerpo Técnico'}</span>
           </button>
           <button 
             type="button"
-            className={`chip ${mainTeamTab === 'training_ratings' ? 'active' : ''}`}
-            style={{ fontWeight: '800', minHeight: '44px', padding: '0 18px', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '6px' }}
+            className={`team-tab-btn chip ${mainTeamTab === 'training_ratings' ? 'active' : ''}`}
+            style={{
+              fontWeight: '800',
+              minHeight: '46px',
+              padding: '0 20px',
+              fontSize: '13.5px',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '8px',
+              flexShrink: 0,
+              whiteSpace: 'nowrap',
+              borderRadius: '24px',
+              cursor: 'pointer'
+            }}
             onClick={() => setMainTeamTab('training_ratings')}
           >
-            <TrendingUp size={15} />
-            <span>{t('sessionRating.performanceTableTitle')}</span>
+            <TrendingUp size={16} />
+            <span style={{ whiteSpace: 'nowrap' }}>{t('sessionRating.performanceTableTitle')}</span>
           </button>
 
           {teamReports.length > 0 && (
             <button 
               type="button"
-              className={`chip ${isModerationModalOpen ? 'active' : ''}`}
+              className={`team-tab-btn chip ${isModerationModalOpen ? 'active' : ''}`}
               style={{ 
                 fontWeight: '800', 
-                minHeight: '44px', 
-                padding: '0 18px', 
-                fontSize: '13px', 
-                display: 'flex', 
+                minHeight: '46px', 
+                padding: '0 20px', 
+                fontSize: '13.5px', 
+                display: 'inline-flex', 
                 alignItems: 'center', 
-                gap: '6px',
+                gap: '8px',
+                flexShrink: 0,
+                whiteSpace: 'nowrap',
+                borderRadius: '24px',
+                cursor: 'pointer',
                 background: openReportsCount > 0 ? 'rgba(239, 68, 68, 0.15)' : undefined,
                 color: openReportsCount > 0 ? '#EF4444' : undefined,
                 borderColor: openReportsCount > 0 ? '#EF4444' : undefined
               }}
               onClick={() => setIsModerationModalOpen(true)}
             >
-              <Flag size={15} color={openReportsCount > 0 ? '#EF4444' : 'currentColor'} />
-              <span>{t('player.chat.moderation.badge') || 'Reportes'} {openReportsCount > 0 && `(${openReportsCount})`}</span>
+              <Flag size={16} color={openReportsCount > 0 ? '#EF4444' : 'currentColor'} />
+              <span style={{ whiteSpace: 'nowrap' }}>{t('player.chat.moderation.badge') || 'Reportes'} {openReportsCount > 0 && `(${openReportsCount})`}</span>
             </button>
           )}
         </div>

@@ -11,15 +11,19 @@ import {
   Layers, 
   FileText, 
   Activity, 
-  Globe
+  Globe,
+  Sun,
+  Moon
 } from 'lucide-react';
 import { PLANS, calcularDesgloseIVA } from '../config/plans';
 import { useTranslation } from '../hooks/useTranslation';
+import { useTheme } from '../context/ThemeContext';
 import './LandingPage.css';
 
 const LandingPage = () => {
   const navigate = useNavigate();
   const { t, isEn, setLanguage } = useTranslation();
+  const { darkMode, toggleTheme } = useTheme();
   const [billingCycle, setBillingCycle] = useState('season'); // 'season' | 'monthly'
 
   const handleStart = (planId = 'pro') => {
@@ -88,6 +92,17 @@ const LandingPage = () => {
               EN
             </button>
           </div>
+
+          {/* Conmutador de tema Claro / Oscuro (Touch target >=48dp) */}
+          <button 
+            type="button" 
+            className="landing-theme-toggle" 
+            onClick={toggleTheme}
+            title={isEn ? (darkMode ? "Switch to Light Mode" : "Switch to Dark Mode") : (darkMode ? "Cambiar a Modo Claro" : "Cambiar a Modo Oscuro")}
+            aria-label={isEn ? "Toggle Theme" : "Cambiar Tema"}
+          >
+            {darkMode ? <Sun size={19} color="#D4A843" /> : <Moon size={19} color="#1B3A2D" />}
+          </button>
 
           <button 
             type="button" 

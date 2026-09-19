@@ -5,10 +5,12 @@ import { useAuth } from '../context/AuthContext';
 import { showToast } from '../utils/toast';
 import { useTranslation } from '../hooks/useTranslation';
 import { User, Users, Shield, ArrowRight, Lock, Mail, Eye, EyeOff, UserPlus, LogIn, QrCode } from 'lucide-react';
+import { useTheme } from '../context/ThemeContext';
 import './Login.css';
 
 const Register = () => {
   const { t, isEn } = useTranslation();
+  const { darkMode } = useTheme();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const initialRole = searchParams.get('role') || 'coach';
@@ -98,27 +100,11 @@ const Register = () => {
             <label style={{ display: 'block', fontSize: '12px', fontWeight: 'bold', color: 'var(--text-secondary)', marginBottom: '8px', textAlign: 'left' }}>
               {isEn ? 'SELECT YOUR ROLE *' : 'SELECCIONA TU ROL *'}
             </label>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '8px' }}>
+            <div className="register-role-grid">
               <button
                 type="button"
                 onClick={() => { setRole('coach'); setError(''); }}
-                style={{
-                  minHeight: '52px',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '4px',
-                  padding: '8px 4px',
-                  borderRadius: '10px',
-                  border: role === 'coach' ? '2px solid #4CAF7D' : '1px solid rgba(255, 255, 255, 0.1)',
-                  background: role === 'coach' ? 'rgba(76, 175, 125, 0.2)' : 'rgba(255, 255, 255, 0.04)',
-                  color: role === 'coach' ? '#4CAF7D' : '#CBD5E1',
-                  cursor: 'pointer',
-                  fontWeight: 'bold',
-                  fontSize: '11px',
-                  transition: 'all 0.2s ease'
-                }}
+                className={`register-role-btn coach ${role === 'coach' ? 'active coach' : ''}`}
               >
                 <User size={18} />
                 <span>{isEn ? 'Coach / Mister' : 'Entrenador'}</span>
@@ -127,23 +113,7 @@ const Register = () => {
               <button
                 type="button"
                 onClick={() => { setRole('player'); setError(''); }}
-                style={{
-                  minHeight: '52px',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '4px',
-                  padding: '8px 4px',
-                  borderRadius: '10px',
-                  border: role === 'player' ? '2px solid #4CAF7D' : '1px solid rgba(255, 255, 255, 0.1)',
-                  background: role === 'player' ? 'rgba(76, 175, 125, 0.2)' : 'rgba(255, 255, 255, 0.04)',
-                  color: role === 'player' ? '#4CAF7D' : '#CBD5E1',
-                  cursor: 'pointer',
-                  fontWeight: 'bold',
-                  fontSize: '11px',
-                  transition: 'all 0.2s ease'
-                }}
+                className={`register-role-btn player ${role === 'player' ? 'active player' : ''}`}
               >
                 <Users size={18} />
                 <span>{isEn ? 'Player' : 'Jugador'}</span>
@@ -152,23 +122,7 @@ const Register = () => {
               <button
                 type="button"
                 onClick={() => { setRole('parent'); setError(''); }}
-                style={{
-                  minHeight: '52px',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '4px',
-                  padding: '8px 4px',
-                  borderRadius: '10px',
-                  border: role === 'parent' ? '2px solid #D4A843' : '1px solid rgba(255, 255, 255, 0.1)',
-                  background: role === 'parent' ? 'rgba(212, 168, 67, 0.2)' : 'rgba(255, 255, 255, 0.04)',
-                  color: role === 'parent' ? '#D4A843' : '#CBD5E1',
-                  cursor: 'pointer',
-                  fontWeight: 'bold',
-                  fontSize: '11px',
-                  transition: 'all 0.2s ease'
-                }}
+                className={`register-role-btn parent ${role === 'parent' ? 'active parent' : ''}`}
               >
                 <Shield size={18} />
                 <span>{isEn ? 'Parent / Guardian' : 'Padre / Tutor'}</span>
@@ -261,8 +215,8 @@ const Register = () => {
           {/* Player Flow: Join Team */}
           {role === 'player' && (
             <div style={{
-              background: 'rgba(76, 175, 125, 0.08)',
-              border: '1.5px solid rgba(76, 175, 125, 0.35)',
+              background: darkMode ? 'rgba(76, 175, 125, 0.08)' : '#ECFDF5',
+              border: `1.5px solid ${darkMode ? 'rgba(76, 175, 125, 0.35)' : '#A7F3D0'}`,
               borderRadius: '12px',
               padding: '20px',
               textAlign: 'center',
@@ -272,7 +226,7 @@ const Register = () => {
                 width: '48px',
                 height: '48px',
                 borderRadius: '50%',
-                background: 'rgba(76, 175, 125, 0.2)',
+                background: darkMode ? 'rgba(76, 175, 125, 0.2)' : 'rgba(76, 175, 125, 0.15)',
                 color: '#4CAF7D',
                 display: 'flex',
                 alignItems: 'center',
@@ -281,10 +235,10 @@ const Register = () => {
               }}>
                 <Users size={24} />
               </div>
-              <h3 style={{ color: '#ffffff', margin: '0 0 8px 0', fontSize: '1.15rem' }}>
+              <h3 style={{ color: darkMode ? '#ffffff' : '#1B3A2D', margin: '0 0 8px 0', fontSize: '1.15rem', fontWeight: 700 }}>
                 {isEn ? 'Join as Player' : 'Unirse como Jugador'}
               </h3>
-              <p style={{ fontSize: '13px', color: '#CBD5E1', lineHeight: '1.5', margin: '0 0 16px 0' }}>
+              <p style={{ fontSize: '13px', color: darkMode ? '#CBD5E1' : '#334155', lineHeight: '1.5', margin: '0 0 16px 0' }}>
                 {isEn 
                   ? 'Players join their team through the Team Code (6 letters) provided by the coach or by scanning the team QR code.' 
                   : 'Los jugadores se unen a su equipo mediante el Código de 6 letras facilitado por su míster o escaneando el código QR del equipo.'}
@@ -304,8 +258,8 @@ const Register = () => {
           {/* Parent Flow: Join Team */}
           {role === 'parent' && (
             <div style={{
-              background: 'rgba(212, 168, 67, 0.08)',
-              border: '1.5px solid rgba(212, 168, 67, 0.35)',
+              background: darkMode ? 'rgba(212, 168, 67, 0.08)' : '#FFFBEB',
+              border: `1.5px solid ${darkMode ? 'rgba(212, 168, 67, 0.35)' : '#FDE68A'}`,
               borderRadius: '12px',
               padding: '20px',
               textAlign: 'center',
@@ -315,7 +269,7 @@ const Register = () => {
                 width: '48px',
                 height: '48px',
                 borderRadius: '50%',
-                background: 'rgba(212, 168, 67, 0.2)',
+                background: darkMode ? 'rgba(212, 168, 67, 0.2)' : 'rgba(212, 168, 67, 0.15)',
                 color: '#D4A843',
                 display: 'flex',
                 alignItems: 'center',
@@ -324,10 +278,10 @@ const Register = () => {
               }}>
                 <Shield size={24} />
               </div>
-              <h3 style={{ color: '#ffffff', margin: '0 0 8px 0', fontSize: '1.15rem' }}>
+              <h3 style={{ color: darkMode ? '#ffffff' : '#1B3A2D', margin: '0 0 8px 0', fontSize: '1.15rem', fontWeight: 700 }}>
                 {isEn ? 'Join as Parent / Legal Guardian' : 'Unirse como Padre / Tutor Legal'}
               </h3>
-              <p style={{ fontSize: '13px', color: '#CBD5E1', lineHeight: '1.5', margin: '0 0 16px 0' }}>
+              <p style={{ fontSize: '13px', color: darkMode ? '#CBD5E1' : '#334155', lineHeight: '1.5', margin: '0 0 16px 0' }}>
                 {isEn 
                   ? 'Follow your child’s call-ups, attendance, and sports progress with the team code and RGPD consent validation.' 
                   : 'Sigue las convocatorias, asistencia y progreso deportivo de tu hijo/a introduciendo el código del equipo del entrenador.'}
@@ -368,7 +322,7 @@ const Register = () => {
           </Link>
 
           {/* Link to Login */}
-          <div style={{ marginTop: '20px', paddingTop: '16px', borderTop: '1px solid rgba(255, 255, 255, 0.08)' }}>
+          <div style={{ marginTop: '20px', paddingTop: '16px', borderTop: `1px solid ${darkMode ? 'rgba(255, 255, 255, 0.08)' : '#E2E8F0'}` }}>
             <span style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>
               {isEn ? 'Already have an account? ' : '¿Ya tienes cuenta? '}
             </span>

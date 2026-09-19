@@ -10,6 +10,7 @@ import { useSearchParams, useNavigate, Link } from 'react-router-dom';
 import { Shield, KeyRound, QrCode, Search, AlertCircle, CheckCircle, ArrowRight, UserPlus, LogIn } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useTranslation } from '../hooks/useTranslation';
+import { useTheme } from '../context/ThemeContext';
 import { validateStaffInviteCode, joinTeamAsStaff } from '../utils/staffInviteManager';
 import { STAFF_ROLES } from '../config/staffRoles';
 import { showToast } from '../utils/toast';
@@ -17,6 +18,7 @@ import { showToast } from '../utils/toast';
 const InviteCoach = () => {
   const { user } = useAuth();
   const { t, isEn } = useTranslation();
+  const { darkMode } = useTheme();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
 
@@ -114,13 +116,13 @@ const InviteCoach = () => {
     <div
       style={{
         minHeight: '100vh',
-        backgroundColor: '#0F1E17',
+        backgroundColor: darkMode ? '#0F1E17' : '#F5F0E8',
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
         padding: '24px 16px',
-        color: '#FFFFFF'
+        color: darkMode ? '#FFFFFF' : '#0F172A'
       }}
     >
       {/* Tarjeta Principal */}
@@ -128,11 +130,11 @@ const InviteCoach = () => {
         style={{
           width: '100%',
           maxWidth: '460px',
-          backgroundColor: '#1B3A2D',
-          border: '1.5px solid #D4A843',
+          backgroundColor: darkMode ? '#1B3A2D' : '#FFFFFF',
+          border: darkMode ? '1.5px solid #D4A843' : '1px solid #CBD5E1',
           borderRadius: '16px',
           padding: '28px 24px',
-          boxShadow: '0 16px 40px rgba(0, 0, 0, 0.6)',
+          boxShadow: darkMode ? '0 16px 40px rgba(0, 0, 0, 0.6)' : '0 10px 30px rgba(0, 0, 0, 0.08)',
           textAlign: 'center'
         }}
       >
@@ -142,7 +144,7 @@ const InviteCoach = () => {
             width: '56px',
             height: '56px',
             borderRadius: '50%',
-            backgroundColor: 'rgba(212, 168, 67, 0.15)',
+            backgroundColor: darkMode ? 'rgba(212, 168, 67, 0.15)' : 'rgba(212, 168, 67, 0.12)',
             border: '2px solid #D4A843',
             color: '#D4A843',
             display: 'flex',
@@ -154,10 +156,10 @@ const InviteCoach = () => {
           <Shield size={28} />
         </div>
 
-        <h2 style={{ margin: '0 0 6px 0', fontSize: '1.35rem', fontWeight: 900, color: '#FFFFFF' }}>
+        <h2 style={{ margin: '0 0 6px 0', fontSize: '1.35rem', fontWeight: 900, color: darkMode ? '#FFFFFF' : '#1B3A2D' }}>
           {isEn ? 'Join Coaching Staff' : 'Unirse al Cuerpo Técnico'}
         </h2>
-        <p style={{ margin: '0 0 20px 0', fontSize: '0.85rem', color: '#94A3B8', lineHeight: 1.4 }}>
+        <p style={{ margin: '0 0 20px 0', fontSize: '0.85rem', color: darkMode ? '#94A3B8' : '#475569', lineHeight: 1.4 }}>
           {isEn
             ? 'Collaborate as coach, fitness trainer or specialist in your team.'
             : 'Colabora como segundo entrenador, preparador físico o especialista.'}
@@ -169,7 +171,7 @@ const InviteCoach = () => {
             display: 'grid',
             gridTemplateColumns: '1fr 1fr',
             gap: '8px',
-            backgroundColor: 'rgba(0, 0, 0, 0.25)',
+            backgroundColor: darkMode ? 'rgba(0, 0, 0, 0.25)' : '#F1F5F9',
             borderRadius: '12px',
             padding: '4px',
             marginBottom: '20px'
@@ -183,7 +185,7 @@ const InviteCoach = () => {
               border: 'none',
               borderRadius: '8px',
               backgroundColor: activeTab === 'code' ? '#4CAF7D' : 'transparent',
-              color: '#FFFFFF',
+              color: activeTab === 'code' ? '#FFFFFF' : (darkMode ? '#CBD5E1' : '#64748B'),
               fontWeight: 700,
               fontSize: '0.85rem',
               cursor: 'pointer',
@@ -205,7 +207,7 @@ const InviteCoach = () => {
               border: 'none',
               borderRadius: '8px',
               backgroundColor: activeTab === 'qr' ? '#4CAF7D' : 'transparent',
-              color: '#FFFFFF',
+              color: activeTab === 'qr' ? '#FFFFFF' : (darkMode ? '#CBD5E1' : '#64748B'),
               fontWeight: 700,
               fontSize: '0.85rem',
               cursor: 'pointer',
@@ -222,7 +224,7 @@ const InviteCoach = () => {
 
         {activeTab === 'code' && (
           <div>
-            <label style={{ display: 'block', textAlign: 'left', fontSize: '0.8rem', fontWeight: 700, color: '#E2E8F0', marginBottom: '6px' }}>
+            <label style={{ display: 'block', textAlign: 'left', fontSize: '0.8rem', fontWeight: 700, color: darkMode ? '#E2E8F0' : '#334155', marginBottom: '6px' }}>
               {isEn ? '6-Character Staff Code *' : 'Código de Staff (6 caracteres) *'}
             </label>
             <input
@@ -236,9 +238,9 @@ const InviteCoach = () => {
                 minHeight: '48px',
                 padding: '12px',
                 borderRadius: '10px',
-                border: '1.5px solid rgba(212, 168, 67, 0.5)',
-                backgroundColor: 'rgba(0, 0, 0, 0.25)',
-                color: '#D4A843',
+                border: darkMode ? '1.5px solid rgba(212, 168, 67, 0.5)' : '1.5px solid #CBD5E1',
+                backgroundColor: darkMode ? 'rgba(0, 0, 0, 0.25)' : '#FFFFFF',
+                color: darkMode ? '#D4A843' : '#1B3A2D',
                 fontSize: '1.15rem',
                 fontWeight: 900,
                 letterSpacing: '3px',
@@ -250,7 +252,7 @@ const InviteCoach = () => {
             />
 
             {isValidating && (
-              <div style={{ fontSize: '0.85rem', color: '#D4A843', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', marginBottom: '12px' }}>
+              <div style={{ fontSize: '0.85rem', color: darkMode ? '#D4A843' : '#B45309', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', marginBottom: '12px' }}>
                 <Search size={14} className="spin" /> {isEn ? 'Searching team...' : 'Buscando equipo...'}
               </div>
             )}
@@ -262,7 +264,7 @@ const InviteCoach = () => {
                   border: '1px solid rgba(239, 68, 68, 0.4)',
                   borderRadius: '10px',
                   padding: '10px 14px',
-                  color: '#FCA5A5',
+                  color: '#DC2626',
                   fontSize: '0.85rem',
                   display: 'flex',
                   alignItems: 'center',
@@ -279,26 +281,26 @@ const InviteCoach = () => {
             {teamData && (
               <div
                 style={{
-                  backgroundColor: 'rgba(76, 175, 125, 0.12)',
-                  border: '1.5px solid #4CAF7D',
+                  backgroundColor: darkMode ? 'rgba(76, 175, 125, 0.12)' : '#ECFDF5',
+                  border: `1.5px solid ${darkMode ? '#4CAF7D' : '#10B981'}`,
                   borderRadius: '12px',
                   padding: '14px',
                   marginBottom: '18px',
                   textAlign: 'left'
                 }}
               >
-                <div style={{ fontSize: '0.75rem', color: '#4CAF7D', fontWeight: 800, textTransform: 'uppercase' }}>
+                <div style={{ fontSize: '0.75rem', color: darkMode ? '#4CAF7D' : '#047857', fontWeight: 800, textTransform: 'uppercase' }}>
                   {isEn ? 'Team Found' : 'Equipo Encontrado'}
                 </div>
-                <div style={{ fontSize: '1.2rem', fontWeight: 900, marginTop: '2px' }}>
+                <div style={{ fontSize: '1.2rem', fontWeight: 900, marginTop: '2px', color: darkMode ? '#FFFFFF' : '#1B3A2D' }}>
                   {teamData.teamName}
                 </div>
-                <div style={{ fontSize: '0.8rem', color: '#94A3B8', marginTop: '2px' }}>
+                <div style={{ fontSize: '0.8rem', color: darkMode ? '#94A3B8' : '#475569', marginTop: '2px' }}>
                   {isEn ? 'Verified Coaching Staff Code' : 'Código de Cuerpo Técnico Verificado'}
                 </div>
 
                 <div style={{ marginTop: '12px' }}>
-                  <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, color: '#E2E8F0', marginBottom: '4px' }}>
+                  <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, color: darkMode ? '#E2E8F0' : '#334155', marginBottom: '4px' }}>
                     {isEn ? 'Assigned Staff Role' : 'Rol en el Cuerpo Técnico'}
                   </label>
                   <select
@@ -308,9 +310,9 @@ const InviteCoach = () => {
                       width: '100%',
                       padding: '10px',
                       borderRadius: '8px',
-                      border: '1px solid rgba(255, 255, 255, 0.2)',
-                      backgroundColor: '#1B3A2D',
-                      color: '#FFFFFF',
+                      border: darkMode ? '1px solid rgba(255, 255, 255, 0.2)' : '1px solid #CBD5E1',
+                      backgroundColor: darkMode ? '#1B3A2D' : '#FFFFFF',
+                      color: darkMode ? '#FFFFFF' : '#0F172A',
                       fontSize: '0.85rem',
                       fontWeight: 700
                     }}
@@ -431,12 +433,12 @@ const InviteCoach = () => {
           </div>
         )}
 
-        <div style={{ marginTop: '20px', borderTop: '1px solid rgba(255, 255, 255, 0.1)', paddingTop: '14px' }}>
+        <div style={{ marginTop: '20px', borderTop: `1px solid ${darkMode ? 'rgba(255, 255, 255, 0.1)' : '#E2E8F0'}`, paddingTop: '14px' }}>
           <Link
             to="/login"
             style={{
               fontSize: '0.85rem',
-              color: '#D4A843',
+              color: darkMode ? '#D4A843' : '#15803D',
               textDecoration: 'none',
               fontWeight: 700
             }}

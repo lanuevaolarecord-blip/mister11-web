@@ -9,6 +9,7 @@ import { searchTeamByCode, validateTeamCode } from '../utils/teamCodeManager';
 import { showToast } from '../utils/toast';
 import { Shield, CheckCircle, AlertCircle, Users, ArrowRight, Loader, KeyRound, Mail, Lock, User, Calendar, Shirt, QrCode, MessageCircle, ExternalLink } from 'lucide-react';
 import QrScannerModal from '../components/QrScannerModal';
+import { useTheme } from '../context/ThemeContext';
 import './Login.css';
 
 const POSITIONS = ['POR', 'DEF', 'LTD', 'LTI', 'MCD', 'MC', 'MCO', 'EXT', 'DEL'];
@@ -19,6 +20,7 @@ import { calcularEdad } from '../utils/calcularEdad';
 
 const JoinTeam = () => {
   const { t, isEn } = useTranslation();
+  const { darkMode } = useTheme();
   const { token: routeToken, code: routeCode } = useParams();
   const [searchParams] = useSearchParams();
   const codeParam = (searchParams.get('code') || searchParams.get('token') || routeCode || routeToken || '').trim();
@@ -349,8 +351,8 @@ const JoinTeam = () => {
 
           {myExistingRequest && myExistingRequest.status === 'pending' && (
             <div style={{
-              background: 'rgba(76, 175, 125, 0.08)',
-              border: '1px solid rgba(76, 175, 125, 0.3)',
+              background: darkMode ? 'rgba(76, 175, 125, 0.08)' : '#ECFDF5',
+              border: `1px solid ${darkMode ? 'rgba(76, 175, 125, 0.3)' : '#A7F3D0'}`,
               borderRadius: '12px',
               padding: '20px',
               textAlign: 'center'
@@ -359,7 +361,7 @@ const JoinTeam = () => {
                 width: '50px',
                 height: '50px',
                 borderRadius: '50%',
-                background: 'rgba(76, 175, 125, 0.2)',
+                background: darkMode ? 'rgba(76, 175, 125, 0.2)' : 'rgba(76, 175, 125, 0.15)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -368,10 +370,10 @@ const JoinTeam = () => {
               }}>
                 <Loader size={26} className="spin" style={{ animation: 'spin 2s linear infinite' }} />
               </div>
-              <h3 style={{ color: '#ffffff', margin: '0 0 6px 0', fontSize: '1.2rem' }}>
+              <h3 style={{ color: darkMode ? '#ffffff' : '#1B3A2D', margin: '0 0 6px 0', fontSize: '1.2rem', fontWeight: 800 }}>
                 {isEn ? 'Request Pending Approval' : 'Solicitud Pendiente de Aprobación'}
               </h3>
-              <p style={{ fontSize: '13px', color: 'var(--text-secondary)', lineHeight: '1.5', margin: '0 0 16px 0' }}>
+              <p style={{ fontSize: '13px', color: darkMode ? '#CBD5E1' : '#475569', lineHeight: '1.5', margin: '0 0 16px 0' }}>
                 {isEn ? (
                   <>You have requested to join <strong>{myExistingRequest.teamName}</strong> as {myExistingRequest.requesterRole === 'parent' ? `Parent/Guardian of ${myExistingRequest.childName}` : `Player (${myExistingRequest.playerName})`}. Your coach will review your request and grant access soon.</>
                 ) : (
@@ -379,17 +381,18 @@ const JoinTeam = () => {
                 )}
               </p>
               <div style={{
-                background: 'rgba(0,0,0,0.3)',
+                background: darkMode ? 'rgba(0,0,0,0.3)' : '#F1F5F9',
+                border: darkMode ? 'none' : '1px solid #E2E8F0',
                 padding: '10px 14px',
                 borderRadius: '8px',
                 fontSize: '12px',
-                color: 'var(--text-muted)',
+                color: darkMode ? '#CBD5E1' : '#334155',
                 marginBottom: '16px',
                 textAlign: 'left'
               }}>
                 <div>• {isEn ? 'Type:' : 'Tipo:'} <strong>{myExistingRequest.requesterRole === 'parent' ? (isEn ? '👨👦 Parent / Guardian' : '👨👦 Padre / Tutor') : (isEn ? '⚽ Player' : '⚽ Jugador')}</strong></div>
                 <div>• {isEn ? 'Requester:' : 'Solicitante:'} <strong>{myExistingRequest.requesterName}</strong></div>
-                <div>• {isEn ? 'Status:' : 'Estado:'} <span style={{ color: '#C9A84C', fontWeight: 'bold' }}>{isEn ? 'Awaiting coach confirmation' : 'En espera de confirmación del míster'}</span></div>
+                <div>• {isEn ? 'Status:' : 'Estado:'} <span style={{ color: darkMode ? '#C9A84C' : '#B45309', fontWeight: 'bold' }}>{isEn ? 'Awaiting coach confirmation' : 'En espera de confirmación del míster'}</span></div>
               </div>
               <button 
                 className="btn-guest" 
@@ -404,41 +407,21 @@ const JoinTeam = () => {
           {!user && !myExistingRequest && (
             <div className="join-auth-step">
               {teamData && (
-                <div style={{
-                  background: 'rgba(76, 175, 125, 0.12)',
-                  border: '1.5px solid rgba(76, 175, 125, 0.4)',
-                  borderRadius: '12px',
-                  padding: '14px 16px',
-                  marginBottom: '18px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  textAlign: 'left'
-                }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                    <div style={{
-                      width: '40px',
-                      height: '40px',
-                      borderRadius: '50%',
-                      background: 'rgba(76, 175, 125, 0.2)',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      color: '#4CAF7D',
-                      flexShrink: 0
-                    }}>
+                <div className="team-banner-found">
+                  <div className="team-banner-content">
+                    <div className="team-banner-icon">
                       <Shield size={22} />
                     </div>
                     <div>
-                      <div style={{ fontSize: '11px', color: '#4CAF7D', fontWeight: 'bold', textTransform: 'uppercase' }}>
+                      <div className="team-banner-label">
                         ⚽ {isEn ? 'You are joining:' : 'Te estás uniendo a:'}
                       </div>
-                      <div style={{ fontSize: '16px', fontWeight: 'bold', color: '#FFFFFF', marginTop: '2px' }}>
+                      <div className="team-banner-name">
                         {teamData.teamName || 'Equipo'}
                       </div>
                     </div>
                   </div>
-                  <span style={{ fontSize: '12px', color: '#4CAF7D', background: 'rgba(76, 175, 125, 0.2)', padding: '4px 10px', borderRadius: '6px', fontWeight: 'bold', letterSpacing: '1px' }}>
+                  <span className="team-banner-code">
                     {inputCode}
                   </span>
                 </div>
@@ -573,18 +556,18 @@ const JoinTeam = () => {
 
               {isStaffCodeDetected && (
                 <div style={{
-                  background: 'rgba(212, 168, 67, 0.12)',
-                  border: '1px solid #D4A843',
+                  background: darkMode ? 'rgba(212, 168, 67, 0.12)' : '#FFFBEB',
+                  border: `1.5px solid ${darkMode ? '#D4A843' : '#F59E0B'}`,
                   borderRadius: '10px',
                   padding: '12px',
                   margin: '10px 0',
                   textAlign: 'left'
                 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#D4A843', fontWeight: 'bold', fontSize: '13px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: darkMode ? '#D4A843' : '#92400E', fontWeight: 'bold', fontSize: '13px' }}>
                     <AlertCircle size={16} />
                     <span>{isEn ? 'Staff Invite Code Detected' : 'Código de Cuerpo Técnico Detectado'}</span>
                   </div>
-                  <p style={{ fontSize: '12px', color: '#CBD5E1', margin: '6px 0 8px 0', lineHeight: '1.4' }}>
+                  <p style={{ fontSize: '12px', color: darkMode ? '#CBD5E1' : '#475569', margin: '6px 0 8px 0', lineHeight: '1.4' }}>
                     {isEn 
                       ? 'This code is for Coaches, Fitness Trainers, or Staff members to join a team.' 
                       : 'Este código es para Entrenadores, Preparadores o Staff que se unen al cuerpo técnico.'}
@@ -596,8 +579,8 @@ const JoinTeam = () => {
                       alignItems: 'center',
                       gap: '6px',
                       background: '#1B3A2D',
-                      color: '#4CAF7D',
-                      border: '1px solid #4CAF7D',
+                      color: '#FFFFFF',
+                      border: '1px solid #1B3A2D',
                       borderRadius: '6px',
                       padding: '8px 12px',
                       fontSize: '12px',
@@ -612,7 +595,7 @@ const JoinTeam = () => {
               )}
 
               {error === 'length' && (
-                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#F59E0B', fontSize: '12px', margin: '8px 0' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: darkMode ? '#F59E0B' : '#B45309', fontSize: '12px', margin: '8px 0' }}>
                   <AlertCircle size={14} />
                   <span>{isEn ? 'The team code must have 6 alphanumeric characters.' : 'El código de equipo debe tener 6 caracteres.'}</span>
                 </div>
@@ -620,18 +603,18 @@ const JoinTeam = () => {
 
               {error === 'not_found' && (
                 <div style={{
-                  background: 'rgba(239, 68, 68, 0.1)',
-                  border: '1px solid rgba(239, 68, 68, 0.4)',
+                  background: darkMode ? 'rgba(239, 68, 68, 0.1)' : '#FEF2F2',
+                  border: `1.5px solid ${darkMode ? 'rgba(239, 68, 68, 0.4)' : '#FCA5A5'}`,
                   borderRadius: '10px',
                   padding: '12px',
                   margin: '10px 0',
                   textAlign: 'left'
                 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#EF4444', fontWeight: 'bold', fontSize: '13px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: darkMode ? '#EF4444' : '#DC2626', fontWeight: 'bold', fontSize: '13px' }}>
                     <AlertCircle size={16} />
                     <span>{isEn ? 'Team not found' : 'Equipo no encontrado'}</span>
                   </div>
-                  <p style={{ fontSize: '12px', color: '#CBD5E1', margin: '6px 0 0 0', lineHeight: '1.4' }}>
+                  <p style={{ fontSize: '12px', color: darkMode ? '#CBD5E1' : '#475569', margin: '6px 0 0 0', lineHeight: '1.4' }}>
                     {isEn 
                       ? 'Verify the code with your coach or choose one of the alternative options below.' 
                       : 'Verifica el código o contacta a tu entrenador. También puedes usar las alternativas siguientes.'}
@@ -680,43 +663,16 @@ const JoinTeam = () => {
                     href="https://wa.me/?text=Hola%20M%C3%ADster%2C%20necesito%20el%20c%C3%B3digo%20de%206%20caracteres%20de%20M%C3%ADster11%20para%20unirme%20al%20equipo."
                     target="_blank"
                     rel="noopener noreferrer"
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '8px',
-                      padding: '10px 12px',
-                      borderRadius: '8px',
-                      background: 'rgba(255, 255, 255, 0.04)',
-                      border: '1px solid rgba(255, 255, 255, 0.08)',
-                      color: '#CBD5E1',
-                      fontSize: '12px',
-                      textDecoration: 'none',
-                      minHeight: '48px'
-                    }}
+                    className="join-alternative-link"
                   >
-                    <MessageCircle size={16} color="#4CAF7D" />
+                    <MessageCircle size={16} color="#047857" />
                     <span>{isEn ? 'Request code from coach via WhatsApp' : 'Solicitar código al entrenador por WhatsApp'}</span>
                   </a>
 
                   <button
                     type="button"
                     onClick={() => setIsQrScannerOpen(true)}
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '8px',
-                      padding: '10px 12px',
-                      borderRadius: '8px',
-                      background: 'rgba(255, 255, 255, 0.04)',
-                      border: '1px solid rgba(255, 255, 255, 0.08)',
-                      color: '#CBD5E1',
-                      fontSize: '12px',
-                      textDecoration: 'none',
-                      minHeight: '48px',
-                      width: '100%',
-                      cursor: 'pointer',
-                      textAlign: 'left'
-                    }}
+                    className="join-alternative-link"
                   >
                     <QrCode size={16} color="#D4A843" />
                     <span>{isEn ? 'Scan invitation QR Code' : 'Escanear QR de invitación'}</span>
@@ -724,39 +680,16 @@ const JoinTeam = () => {
 
                   <Link
                     to="/register?role=coach"
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '8px',
-                      padding: '10px 12px',
-                      borderRadius: '8px',
-                      background: 'rgba(255, 255, 255, 0.04)',
-                      border: '1px solid rgba(255, 255, 255, 0.08)',
-                      color: '#CBD5E1',
-                      fontSize: '12px',
-                      textDecoration: 'none',
-                      minHeight: '48px'
-                    }}
+                    className="join-alternative-link"
                   >
-                    <User size={16} color="#4CAF7D" />
+                    <User size={16} color="#047857" />
                     <span>{isEn ? 'I am a Coach: Create my own team' : 'Soy Entrenador: Crear mi propio equipo'}</span>
                   </Link>
 
                   <Link
                     to="/join-staff"
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '8px',
-                      padding: '10px 12px',
-                      borderRadius: '8px',
-                      background: 'rgba(212, 168, 67, 0.06)',
-                      border: '1px solid rgba(212, 168, 67, 0.2)',
-                      color: '#D4A843',
-                      fontSize: '12px',
-                      textDecoration: 'none',
-                      minHeight: '48px'
-                    }}
+                    className="join-alternative-link"
+                    style={{ color: '#D4A843' }}
                   >
                     <Users size={16} color="#D4A843" />
                     <span>{isEn ? 'Invited Coach/Staff: Join Technical Staff here' : '¿Entrenador invitado? Únete al Cuerpo Técnico aquí'}</span>
@@ -768,17 +701,35 @@ const JoinTeam = () => {
 
           {user && !myExistingRequest && teamData && (
             <form onSubmit={handleSubmitRequest} className="join-player-form">
-              <div style={{ background: 'rgba(76, 175, 125, 0.12)', border: '1.5px solid rgba(76, 175, 125, 0.4)', borderRadius: '12px', padding: '14px', marginBottom: '18px', textAlign: 'left' }}>
-                <div style={{ fontSize: '11px', textTransform: 'uppercase', color: '#4CAF7D', fontWeight: 'bold' }}>⚽ {isEn ? 'Team Found' : 'Equipo Encontrado'}</div>
-                <div style={{ fontSize: '17px', fontWeight: '900', color: '#ffffff', marginTop: '2px' }}>{teamData.teamName}</div>
-                <div style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: '2px' }}>{isEn ? 'Code: ' : 'Código: '}<strong style={{ color: '#C9A84C' }}>{inputCode}</strong></div>
+              <div className="team-banner-found">
+                <div style={{ textAlign: 'left' }}>
+                  <div className="team-banner-label">⚽ {isEn ? 'Team Found' : 'Equipo Encontrado'}</div>
+                  <div className="team-banner-name">{teamData.teamName}</div>
+                  <div className="team-banner-sub">
+                    {isEn ? 'Code: ' : 'Código: '}<strong>{inputCode}</strong>
+                  </div>
+                </div>
               </div>
 
               <div style={{ marginBottom: '18px' }}>
-                <label style={{ display: 'block', fontSize: '13px', fontWeight: '800', color: '#ffffff', marginBottom: '8px' }}>{isEn ? 'Who is joining the team? *' : '¿Quién se une al equipo? *'}</label>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
-                  <button type="button" onClick={() => setRequesterRole('player')} style={{ minHeight: '52px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', padding: '10px 12px', borderRadius: '10px', fontSize: '13px', fontWeight: '800', cursor: 'pointer', border: requesterRole === 'player' ? '2px solid #4CAF7D' : '1px solid var(--border-color)', background: requesterRole === 'player' ? 'rgba(76, 175, 125, 0.2)' : 'rgba(255, 255, 255, 0.04)', color: requesterRole === 'player' ? '#4CAF7D' : '#CBD5E1', transition: 'all 0.2s ease', touchAction: 'manipulation' }}>⚽ {isEn ? "I'm the player" : 'Soy el jugador'}</button>
-                  <button type="button" onClick={() => setRequesterRole('parent')} style={{ minHeight: '52px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', padding: '10px 12px', borderRadius: '10px', fontSize: '13px', fontWeight: '800', cursor: 'pointer', border: requesterRole === 'parent' ? '2px solid #C9A84C' : '1px solid var(--border-color)', background: requesterRole === 'parent' ? 'rgba(201, 168, 76, 0.2)' : 'rgba(255, 255, 255, 0.04)', color: requesterRole === 'parent' ? '#C9A84C' : '#CBD5E1', transition: 'all 0.2s ease', touchAction: 'manipulation' }}>👨 {isEn ? "I'm a parent / guardian" : 'Soy padre / tutor'}</button>
+                <label style={{ display: 'block', fontSize: '13px', fontWeight: '800', color: darkMode ? '#FFFFFF' : '#1B3A2D', marginBottom: '8px' }}>
+                  {isEn ? 'Who is joining the team? *' : '¿Quién se une al equipo? *'}
+                </label>
+                <div className="join-role-grid">
+                  <button
+                    type="button"
+                    className={`join-role-btn player ${requesterRole === 'player' ? 'active' : ''}`}
+                    onClick={() => setRequesterRole('player')}
+                  >
+                    ⚽ {isEn ? "I'm the player" : 'Soy el jugador'}
+                  </button>
+                  <button
+                    type="button"
+                    className={`join-role-btn parent ${requesterRole === 'parent' ? 'active' : ''}`}
+                    onClick={() => setRequesterRole('parent')}
+                  >
+                    👨 {isEn ? "I'm a parent / guardian" : 'Soy padre / tutor'}
+                  </button>
                 </div>
               </div>
 
@@ -794,8 +745,12 @@ const JoinTeam = () => {
                   </div>
                   <div className="input-group-auth">
                     <label>{isEn ? 'Primary Position' : 'Posición Habitual'}</label>
-                    <select value={position} onChange={(e) => setPosition(e.target.value)} style={{ width: '100%', minHeight: '48px', padding: '12px 14px', background: 'rgba(0, 0, 0, 0.3)', border: '1px solid var(--border-color, rgba(255, 255, 255, 0.1))', borderRadius: '8px', color: '#ffffff', fontSize: '14px' }}>
-                      {POSITIONS.map(pos => <option key={pos} value={pos} style={{ background: '#121814', color: '#ffffff' }}>{pos}</option>)}
+                    <select
+                      value={position}
+                      onChange={(e) => setPosition(e.target.value)}
+                      className="auth-select"
+                    >
+                      {POSITIONS.map(pos => <option key={pos} value={pos}>{pos}</option>)}
                     </select>
                   </div>
                   <div className="input-group-auth" style={{ marginBottom: '18px' }}>
@@ -804,18 +759,21 @@ const JoinTeam = () => {
                   </div>
 
                   {birthDate && calcularEdad(birthDate).years < 14 && (
-                    <div className="minor-protection-card" style={{
-                      background: 'rgba(239, 68, 68, 0.08)',
-                      border: '1.5px solid #EF4444',
-                      borderRadius: '12px',
-                      padding: '16px',
-                      marginBottom: '18px'
-                    }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#EF4444', fontWeight: 800, fontSize: '13px', marginBottom: '6px' }}>
+                    <div
+                      className="minor-protection-card"
+                      style={{
+                        background: darkMode ? 'rgba(239, 68, 68, 0.08)' : '#FEF2F2',
+                        border: '1.5px solid #EF4444',
+                        borderRadius: '12px',
+                        padding: '16px',
+                        marginBottom: '18px'
+                      }}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#DC2626', fontWeight: 800, fontSize: '13px', marginBottom: '6px' }}>
                         <span>🔒</span>
                         <span>{isEn ? 'Minor Protection (<14 years old - RGPD / LOPDGDD)' : 'Protección de Menores (<14 años - RGPD / LOPDGDD)'}</span>
                       </div>
-                      <p style={{ margin: '0 0 12px 0', fontSize: '12px', color: '#CBD5E1', lineHeight: '1.45' }}>
+                      <p style={{ margin: '0 0 12px 0', fontSize: '12px', color: darkMode ? '#CBD5E1' : '#475569', lineHeight: '1.45' }}>
                         {isEn
                           ? 'Per data protection regulations, players under 14 require legal guardian authorization. You can save your draft, but full activation is locked until your guardian email is confirmed.'
                           : 'Conforme a la normativa RGPD/LOPDGDD, los menores de 14 años requieren autorización del tutor legal. Puedes guardar un borrador, pero la activación está bloqueada hasta confirmar el email de tu tutor/a.'}
@@ -833,7 +791,7 @@ const JoinTeam = () => {
                           />
                         </div>
                       </div>
-                      <label style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', cursor: 'pointer', fontSize: '12px', color: '#CBD5E1' }}>
+                      <label style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', cursor: 'pointer', fontSize: '12px', color: darkMode ? '#CBD5E1' : '#334155' }}>
                         <input
                           type="checkbox"
                           checked={tutorConfirmed}

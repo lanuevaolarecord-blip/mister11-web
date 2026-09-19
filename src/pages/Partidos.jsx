@@ -1125,7 +1125,22 @@ const Partidos = () => {
 
       exportClone = pitchExportRef.current.cloneNode(true);
       exportClone.classList.add('export-lineup-hd-capture');
-      exportClone.style.cssText = 'position:fixed;left:-9999px;top:0;width:780px;max-width:780px;min-width:780px;box-sizing:border-box;z-index:-9999;display:flex !important;visibility:visible !important;';
+      // Posición fuera del viewport pero totalmente visible para que html2canvas
+      // compute correctamente todos los estilos CSS (incluyendo display:flex, grid, etc.)
+      // opacity:0 evita parpadeo; NO usar z-index negativo ni display:none
+      exportClone.style.position = 'absolute';
+      exportClone.style.left = '-9999px';
+      exportClone.style.top = '0px';
+      exportClone.style.width = '780px';
+      exportClone.style.maxWidth = '780px';
+      exportClone.style.minWidth = '780px';
+      exportClone.style.boxSizing = 'border-box';
+      exportClone.style.zIndex = '99999';
+      exportClone.style.display = 'flex';
+      exportClone.style.flexDirection = 'column';
+      exportClone.style.visibility = 'visible';
+      exportClone.style.opacity = '0';
+      exportClone.style.pointerEvents = 'none';
 
       const cloneImgs = exportClone.querySelectorAll('img[src]');
       cloneImgs.forEach((img) => {
@@ -1139,27 +1154,26 @@ const Partidos = () => {
         }
       });
 
+      // Eliminar transforms residuales en fichas de jugador para evitar desplazamientos
       const playerChips = exportClone.querySelectorAll('.pitch-player-3d');
       playerChips.forEach((chip) => {
-        const topVal = parseFloat(chip.style.top || '50%');
-        const leftVal = parseFloat(chip.style.left || '50%');
         chip.style.transform = 'none';
         chip.style.webkitTransform = 'none';
-        chip.style.left = `calc(${leftVal}% - 29px)`;
-        chip.style.top = `calc(${topVal}% - 38px)`;
       });
 
       document.body.appendChild(exportClone);
-      await new Promise((r) => setTimeout(r, 120));
+      // Esperar a que el browser layoutee y pinte todos los sub-elementos
+      await new Promise((r) => setTimeout(r, 300));
 
       const canvas = await html2canvas(exportClone, {
         scale: 2,
-        useCORS: false,
+        useCORS: true,
         allowTaint: false,
-        backgroundColor: '#1B3A2D',
+        backgroundColor: '#142a20',
         logging: false,
         width: 780,
-        windowWidth: 1024
+        windowWidth: 1200,
+        ignoreElements: (el) => el.tagName === 'BUTTON' || el.classList.contains('pos-assignment-panel')
       });
 
       return canvas.toDataURL('image/png');

@@ -1162,46 +1162,19 @@ export const generateMatchPdfReport = async ({
       }
 
       assertGraphicEmbedded('sec1_lineup', effectiveLineupImage);
-      const pitchW = 142;
-      const pitchH = (510 / 720) * pitchW; // ~100.5mm
+
+      // Calcular dimensiones usando el ratio NATURAL de la imagen capturada
+      // para evitar distorsión (el board incluye campo + banquillo integrado)
+      const imgProps = doc.getImageProperties(effectiveLineupImage);
+      const naturalRatio = imgProps.height / imgProps.width; // alto/ancho (>1 = portrait, <1 = landscape)
+      const pitchW = Math.min(162, pageW - 28); // ancho máximo con márgenes laterales
+      const pitchH = pitchW * naturalRatio;
       const pitchX = (pageW - pitchW) / 2;
       doc.addImage(effectiveLineupImage, 'PNG', pitchX, y, pitchW, pitchH);
-      y += pitchH + 4;
+      y += pitchH + 6;
 
-      // Suplentes Convocados en el pie de la Página 1
-      const subsRoster = squadRoster.filter(r => !r.isStarter);
-      if (subsRoster.length > 0 && y < pageH - 20) {
-        doc.setFontSize(8);
-        doc.setFont('helvetica', 'bold');
-        doc.setTextColor(...colorPrimary);
-        doc.text(isEn ? 'SUBSTITUTES BENCH' : 'BANQUILLO DE SUPLENTES', 14, y);
-        y += 3;
-
-        const subHeaders = isEn ? ['#', 'Player Name', 'Pos', 'Minutes', 'Rating'] : ['#', 'Jugador', 'Pos', 'Minutos', 'Nota'];
-        const subRows = subsRoster.map(s => [
-          s.number,
-          s.name,
-          s.position,
-          `${s.minutes}'`,
-          s.rating
-        ]);
-
-        autoTable(doc, {
-          startY: y,
-          head: [subHeaders],
-          body: subRows,
-          theme: 'striped',
-          headStyles: { fillColor: colorPrimary, textColor: [255, 255, 255], fontStyle: 'bold', fontSize: 6.5 },
-          styles: { fontSize: 6.5, cellPadding: 1.2 },
-          columnStyles: {
-            0: { width: 8, halign: 'center' },
-            1: { fontStyle: 'bold' },
-            2: { width: 14, halign: 'center' },
-            3: { width: 16, halign: 'center', fontStyle: 'bold' },
-            4: { width: 14, halign: 'center' }
-          }
-        });
-      }
+      // NOTA: NO se agrega tabla de suplentes aquí porque el board capturado
+      // ya incluye el "BANQUILLO DE SUPLENTES" integrado visualmente en la imagen.
 
       // ── PÁGINA 2: SECCIÓN 2 & SECCIÓN 3 — CRONOLOGÍA Y MOMENTUM ────────────
       doc.addPage();

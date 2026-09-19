@@ -1,5 +1,6 @@
 import React from 'react';
 import { useTranslation } from '../hooks/useTranslation';
+import PlayerAvatar from './PlayerAvatar';
 import './LegendCard.css';
 
 const RunningSvg = () => (
@@ -75,14 +76,8 @@ const LegendCard = ({ player, stats, overall, position, streak, type = "gold" })
           
           <div className="card-avatar-wrapper">
             <CrownSvg />
-            <div className="card-avatar-circle">
-              {(() => {
-                const photoSrc = player?.avatarUrl || player?.photoPreview || player?.photo || player?.foto || player?.imageUrl || player?.avatar;
-                if (photoSrc) {
-                  return <img src={photoSrc} alt={player?.name || (isEn ? 'Player' : 'Jugador')} className="card-avatar-img" crossOrigin="anonymous" />;
-                }
-                return <span className="avatar-placeholder">{player?.name?.charAt(0).toUpperCase() || 'P'}</span>;
-              })()}
+            <div className="card-avatar-circle" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', padding: 0 }}>
+              <PlayerAvatar player={player} size={84} />
             </div>
           </div>
 

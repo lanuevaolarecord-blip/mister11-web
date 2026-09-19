@@ -16,6 +16,7 @@ import { PlayerPlansPortalTab } from './PlayerPlansPortalTab';
 import { PlayerAttendanceSubTab } from '../PlayerAttendanceSubTab';
 import { PlayerTabs } from './PlayerTabs';
 import LegendCard from '../LegendCard';
+import PlayerAvatar from '../PlayerAvatar';
 import { useTranslation } from '../../hooks/useTranslation';
 import { 
   User, 
@@ -469,6 +470,33 @@ export const PlayerProfileTab = ({ player, team, teamPath, onNavigateTab }) => {
   return (
     <div className="player-tab-content player-profile-tab" style={{ paddingBottom: '30px' }}>
       
+      {/* Cabecera del Portal con Avatar 120x120 */}
+      <div
+        style={{
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: '10px',
+          marginBottom: '16px',
+          padding: '16px',
+          borderRadius: '16px',
+          backgroundColor: 'var(--bg-card)',
+          border: '1px solid var(--border-color)',
+          textAlign: 'center'
+        }}
+      >
+        <PlayerAvatar player={player} size={120} showNumber={true} />
+        <div>
+          <h2 style={{ margin: 0, fontSize: '20px', fontWeight: '900', color: 'var(--text-primary)' }}>
+            {playerName}
+          </h2>
+          <span style={{ fontSize: '13px', fontWeight: '800', color: 'var(--accent-gold, #D4A843)' }}>
+            #{playerNumber} · {playerPosition}
+          </span>
+        </div>
+      </div>
+
       {/* 1. TARJETA LEGEND CARD EXCLUSIVA (SIN BANNER TÁCTICO) */}
       <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '20px', width: '100%' }}>
         <LegendCard
@@ -498,17 +526,17 @@ export const PlayerProfileTab = ({ player, team, teamPath, onNavigateTab }) => {
                   <>
                     <div>
                       <span style={{ fontSize: '10px', color: 'var(--text-secondary)', textTransform: 'uppercase', fontWeight: 'bold' }}>{t('gk.saves')}</span>
-                      <div style={{ fontSize: '18px', fontWeight: '900', color: '#3B82F6' }}>🧤 {playerSeasonStats.gkStats?.saves ?? 0}</div>
+                      <div style={{ fontSize: '18px', fontWeight: '900', color: '#D4A843' }}>{playerSeasonStats.gkStats?.saves ?? 0}</div>
                     </div>
                     <div>
                       <span style={{ fontSize: '10px', color: 'var(--text-secondary)', textTransform: 'uppercase', fontWeight: 'bold' }}>{t('gk.cleanSheetsShort')}</span>
-                      <div style={{ fontSize: '18px', fontWeight: '900', color: '#10B981' }}>🧼 {playerSeasonStats.gkStats?.cleanSheets ?? 0}</div>
+                      <div style={{ fontSize: '18px', fontWeight: '900', color: '#4CAF7D' }}>{playerSeasonStats.gkStats?.cleanSheets ?? 0}</div>
                     </div>
                   </>
                 ) : (
                   <div>
                     <span style={{ fontSize: '10px', color: 'var(--text-secondary)', textTransform: 'uppercase', fontWeight: 'bold' }}>{t('player.profile.goals')}</span>
-                    <div style={{ fontSize: '18px', fontWeight: '900', color: 'var(--accent-green)' }}>⚽ {playerSeasonStats.goals}</div>
+                    <div style={{ fontSize: '18px', fontWeight: '900', color: '#4CAF7D' }}>{playerSeasonStats.goals}</div>
                   </div>
                 )}
                 <div>

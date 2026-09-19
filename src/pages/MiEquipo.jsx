@@ -769,26 +769,21 @@ const MiEquipo = () => {
             return (
               <div key={player.id} className="card-base" style={{ padding: '0', cursor: 'pointer', textAlign: 'center', position: 'relative', overflow: 'hidden' }} onClick={() => setSelectedPlayer(player)}>
                 <div style={{ background: 'var(--accent-green-light)', height: '60px', width: '100%' }}></div>
-                <div style={{ position: 'relative', marginTop: '-30px', marginBottom: '12px' }}>
-                  <div style={{ width: '60px', height: '60px', borderRadius: '50%', background: !player.avatarUrl ? stringToColor(player.id || player.name) : '#FFF', margin: '0 auto', border: '3px solid var(--bg-card)', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    {player.avatarUrl ? <img src={player.avatarUrl} alt={player.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <span style={{ color: '#FFF', fontSize: '20px', fontWeight: 'bold' }}>{getInitials(player.name)}</span>}
-                  </div>
-                  <div style={{ position: 'absolute', bottom: '0', right: 'calc(50% - 30px)', background: 'var(--accent-gold)', color: '#FFF', borderRadius: '50%', width: '22px', height: '22px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '10px', fontWeight: 'bold', border: '2px solid var(--bg-card)' }}>
-                    {player.number}
-                  </div>
+                <div style={{ position: 'relative', marginTop: '-30px', marginBottom: '12px', display: 'flex', justifyContent: 'center' }}>
+                  <PlayerAvatar player={player} size={60} showNumber={true} />
                 </div>
                 <h3 style={{ margin: '0 0 16px 0', fontSize: '15px', color: 'var(--text-primary)', fontFamily: 'var(--font-heading)' }}>{player.name}</h3>
                 
                 {/* Badges de Rendimiento en Partidos */}
                 <div style={{ display: 'flex', justifyContent: 'center', gap: '6px', marginBottom: '8px' }}>
                   {pStats.goals > 0 && (
-                    <span style={{ background: 'rgba(16, 185, 129, 0.15)', color: '#10B981', border: '1px solid rgba(16, 185, 129, 0.3)', borderRadius: '12px', padding: '2px 8px', fontSize: '10.5px', fontWeight: '800' }}>
-                      ⚽ {pStats.goals}
+                    <span style={{ background: 'rgba(76, 175, 125, 0.15)', color: '#4CAF7D', border: '1px solid rgba(76, 175, 125, 0.3)', borderRadius: '12px', padding: '2px 8px', fontSize: '10.5px', fontWeight: '800' }}>
+                      {pStats.goals} GOL
                     </span>
                   )}
                   {pStats.matchesPlayed > 0 && (
                     <span style={{ background: 'rgba(212, 168, 67, 0.15)', color: 'var(--accent-gold)', border: '1px solid rgba(212, 168, 67, 0.3)', borderRadius: '12px', padding: '2px 8px', fontSize: '10.5px', fontWeight: '800' }}>
-                      🏟️ {pStats.matchesPlayed} {t('player.matchesAbbr')}
+                      {pStats.matchesPlayed} {t('player.matchesAbbr')}
                     </span>
                   )}
                 </div>

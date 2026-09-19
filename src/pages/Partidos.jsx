@@ -2155,11 +2155,11 @@ const Partidos = () => {
                               fontSize: '10px',
                               padding: '3px 8px',
                               borderRadius: '4px',
-                              background: isGk ? 'rgba(37,99,235,0.12)' : 'rgba(0,0,0,0.06)',
-                              color: isGk ? '#2563EB' : 'var(--partidos-text-muted)',
+                              background: isGk ? 'rgba(212,168,67,0.15)' : 'rgba(0,0,0,0.06)',
+                              color: isGk ? '#D4A843' : 'var(--partidos-text-muted)',
                               fontWeight: '800'
                             }}>
-                              {isGk ? '🧤 POR' : posName}
+                              {isGk ? 'POR' : posName}
                             </span>
                           </div>
                         );
@@ -2302,19 +2302,7 @@ const Partidos = () => {
                           >
                             <div className="futu-card-badge">
                               <div className={`futu-card-frame ${player ? '' : 'empty-slot'}`}>
-                                {player ? (
-                                  photoUrl ? (
-                                    <img src={photoUrl} alt={player.name} className="futu-card-photo" crossOrigin="anonymous" />
-                                  ) : (
-                                    <div className="futu-card-initials">
-                                      {player.number || (player.name ? player.name.charAt(0).toUpperCase() : idx + 1)}
-                                    </div>
-                                  )
-                                ) : (
-                                  <div className="futu-card-initials empty">
-                                    {idx + 1}
-                                  </div>
-                                )}
+                                <PlayerAvatar player={player} size={32} />
                                 <span className="futu-card-number">{player?.number ?? (idx + 1)}</span>
                                 <span className="futu-card-pos">{posLabel}</span>
                               </div>
@@ -2331,7 +2319,6 @@ const Partidos = () => {
                     <div className="lineup-bench-board">
                       <div className="lineup-bench-header">
                         <span className="lineup-bench-title">
-                          <span>🪑</span>
                           <span>{t('matches.lineup.benchTitle')}</span>
                         </span>
                         <span className="lineup-bench-count">
@@ -2346,7 +2333,6 @@ const Partidos = () => {
                           const player = pid ? (players.find(p => p && p.id === pid) || null) : null;
                           const isSelected = selectedSlotIdx === idx;
                           const isGk = player && (player.position === 'POR' || player.posicion === 'POR');
-                          const photoUrl = player ? (player.avatarUrl || player.photoUrl || player.photo || player.photoPreview) : null;
 
                           return (
                             <div
@@ -2357,18 +2343,12 @@ const Partidos = () => {
                             >
                               {player ? (
                                 <>
-                                  {photoUrl ? (
-                                    <img src={photoUrl} alt={player.name} className="bench-player-avatar-img" crossOrigin="anonymous" />
-                                  ) : (
-                                    <div className="bench-player-avatar-placeholder">
-                                      {player.number || (player.name ? player.name.charAt(0).toUpperCase() : 'S')}
-                                    </div>
-                                  )}
+                                  <PlayerAvatar player={player} size={28} />
                                   <span className="bench-player-name">
                                     {player.name}
                                   </span>
-                                  <span className="bench-player-pos" style={{ color: isGk ? '#60A5FA' : '#D4A843' }}>
-                                    {isGk ? '🧤 POR' : (player.position || player.posicion || `SUB ${subIdx + 1}`)}
+                                  <span className="bench-player-pos" style={{ color: isGk ? '#D4A843' : 'var(--partidos-text-muted)' }}>
+                                    {isGk ? 'POR' : (player.position || player.posicion || `SUB ${subIdx + 1}`)}
                                   </span>
                                 </>
                               ) : (

@@ -121,22 +121,22 @@ const generateInitialsAvatar = (fallbackInitials) => {
     ctx.imageSmoothingEnabled = true;
     ctx.imageSmoothingQuality = 'high';
     
-    ctx.fillStyle = '#172D21';
+    ctx.fillStyle = '#4CAF7D'; // Regla universal: Verde Campo #4CAF7D
     ctx.beginPath();
     ctx.arc(60, 60, 60, 0, 2 * Math.PI);
     ctx.fill();
 
-    ctx.strokeStyle = '#D4A843';
-    ctx.lineWidth = 4;
+    ctx.strokeStyle = '#FFFFFF';
+    ctx.lineWidth = 3;
     ctx.beginPath();
     ctx.arc(60, 60, 56, 0, 2 * Math.PI);
     ctx.stroke();
 
     ctx.fillStyle = '#FFFFFF';
-    ctx.font = 'bold 44px Arial, sans-serif';
+    ctx.font = 'bold 48px Arial, sans-serif';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillText(safeInitials, 60, 62);
+    ctx.fillText(safeInitials.charAt(0) || 'J', 60, 62);
 
     return canvas.toDataURL('image/png');
   } catch (e) {
@@ -1395,17 +1395,18 @@ export const drawTacticalPitchCanvas = async ({
       if (!drawnImage) {
         ctx.beginPath();
         ctx.arc(avatarCx, avatarCy, avatarRadius, 0, Math.PI * 2);
-        ctx.fillStyle = player ? '#1B3A2D' : '#1E293B';
+        ctx.fillStyle = player ? '#4CAF7D' : '#1E293B';
         ctx.fill();
-        ctx.strokeStyle = player ? '#D4A843' : '#64748B';
+        ctx.strokeStyle = player ? '#FFFFFF' : '#64748B';
         ctx.lineWidth = 1.5;
         ctx.stroke();
 
-        ctx.fillStyle = player ? '#D4A843' : '#94A3B8';
+        ctx.fillStyle = '#FFFFFF';
         ctx.font = 'bold 11px Arial, sans-serif';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        ctx.fillText(player ? (player.number || (player.name ? player.name.charAt(0).toUpperCase() : idx + 1)) : `${idx + 1}`, avatarCx, avatarCy);
+        const initialText = player?.name ? player.name.trim().charAt(0).toUpperCase() : (player?.number || `${idx + 1}`);
+        ctx.fillText(player ? initialText : `${idx + 1}`, avatarCx, avatarCy);
       }
 
       // Dorsal (esquina superior izquierda de la tarjeta)
@@ -1523,13 +1524,18 @@ export const drawTacticalPitchCanvas = async ({
         if (!drawnSubImg) {
           ctx.beginPath();
           ctx.arc(subCx, subCy, subRadius, 0, Math.PI * 2);
-          ctx.fillStyle = '#D4A843';
+          ctx.fillStyle = '#4CAF7D';
           ctx.fill();
-          ctx.fillStyle = '#172D21';
+          ctx.strokeStyle = '#FFFFFF';
+          ctx.lineWidth = 1;
+          ctx.stroke();
+
+          ctx.fillStyle = '#FFFFFF';
           ctx.font = 'bold 8.5px Arial, sans-serif';
           ctx.textAlign = 'center';
           ctx.textBaseline = 'middle';
-          ctx.fillText(sub.number ? `${sub.number}` : (sub.name ? sub.name[0] : '?'), subCx, subCy);
+          const subInitial = sub.name ? sub.name.trim().charAt(0).toUpperCase() : (sub.number ? String(sub.number) : '?');
+          ctx.fillText(subInitial, subCx, subCy);
         }
 
         // Dorsal + Nombre
@@ -2082,28 +2088,28 @@ export const drawSectorsDistributionCanvas = ({
     ctx.textAlign = 'left';
     ctx.textBaseline = 'top';
     ctx.fillText(
-      isEn ? '📍 PITCH SECTOR DISTRIBUTION' : '📍 DISTRIBUCIÓN TÁCTICA POR SECTORES',
+      isEn ? 'PITCH SECTOR DISTRIBUTION' : 'DISTRIBUCIÓN TÁCTICA POR SECTORES',
       14,
       10
     );
 
     const sectors = [
       {
-        name: isEn ? '⬅️ Left Wing' : '⬅️ Banda Izquierda',
+        name: isEn ? 'Left Wing' : 'Banda Izquierda',
         count: sectorLeft,
         pct: pctLeft,
-        color: '#A855F7',
-        bg: 'rgba(168, 85, 247, 0.08)'
+        color: '#8B5CF6',
+        bg: 'rgba(139, 92, 246, 0.08)'
       },
       {
-        name: isEn ? '⏺️ Center Corridor' : '⏺️ Pasillo Central',
+        name: isEn ? 'Center Corridor' : 'Pasillo Central',
         count: sectorCenter,
         pct: pctCenter,
-        color: '#3B82F6',
-        bg: 'rgba(59, 130, 246, 0.08)'
+        color: '#D4A843',
+        bg: 'rgba(212, 168, 67, 0.08)'
       },
       {
-        name: isEn ? '➡️ Right Wing' : '➡️ Banda Derecha',
+        name: isEn ? 'Right Wing' : 'Banda Derecha',
         count: sectorRight,
         pct: pctRight,
         color: '#0D9488',

@@ -4,6 +4,7 @@ import { collection, getDocs, query, orderBy, limit } from 'firebase/firestore';
 import { db } from '../../firebaseConfig';
 import { getSessionRatings, calculatePlayerAverageRating } from '../../utils/sessionRatings';
 import { useTranslation } from '../../hooks/useTranslation';
+import PlayerAvatar from '../PlayerAvatar';
 
 /**
  * TrainingPerformanceTable
@@ -300,7 +301,8 @@ export const TrainingPerformanceTable = ({ players = [], activeTeam, teamPath = 
                       borderBottom: '1px solid var(--border-color)'
                     }}
                   >
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                      <PlayerAvatar player={player} size={32} />
                       <span
                         style={{
                           fontSize: '11px',

@@ -4,6 +4,7 @@ import { saveSessionRatings, getSessionRatings } from '../../utils/sessionRating
 import { useAuth } from '../../context/AuthContext';
 import { useTranslation } from '../../hooks/useTranslation';
 import { showToast } from '../../utils/toast';
+import PlayerAvatar from '../PlayerAvatar';
 
 /**
  * SessionPlayerRating
@@ -250,7 +251,8 @@ export const SessionPlayerRating = ({
                 >
                   {/* Fila superior: Jugador y Nota Actual */}
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                      <PlayerAvatar player={player} size={32} />
                       <span
                         style={{
                           fontSize: '11px',

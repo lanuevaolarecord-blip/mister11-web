@@ -1,10 +1,13 @@
 import React, { useState } from 'react';
 
 /**
- * PlayerAvatar - Componente único y uniforme para renderizar la foto o iniciales de un jugador.
- * Valida imágenes y muestra fallback a iniciales con dorsal y posición.
+ * PlayerAvatar - Componente único y uniforme para renderizar la foto o inicial de un jugador.
+ * Cumple la regla de fallback obligatoria: círculo Verde Campo (#4CAF7D) + inicial en blanco (#FFFFFF).
  *
  * @param {Object} player - Objeto del jugador { name, number, position, avatarUrl, photoUrl, photo }
+ * @param {string} url - URL directa de la foto (alternativa a player.photoUrl)
+ * @param {string} name - Nombre directo (alternativa a player.name)
+ * @param {number|string} number - Dorsal directo (alternativa a player.number)
  * @param {number} size - Tamaño en px (default: 36)
  * @param {boolean} showNumber - Si se muestra el badge del dorsal (default: false)
  * @param {string} className - Clases CSS adicionales
@@ -12,6 +15,10 @@ import React, { useState } from 'react';
  */
 export const PlayerAvatar = ({
   player = null,
+  url = null,
+  photoUrl: directPhotoUrl = null,
+  name: directName = null,
+  number: directNumber = null,
   size = 36,
   showNumber = false,
   className = '',
@@ -19,22 +26,24 @@ export const PlayerAvatar = ({
 }) => {
   const [imgError, setImgError] = useState(false);
 
-  const getInitials = (name) => {
-    if (!name) return '?';
-    const parts = String(name).trim().split(/\s+/);
-    if (parts.length === 1) return parts[0].substring(0, 2).toUpperCase();
-    return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+  const effectiveName = directName || player?.name || player?.nombre || '';
+  const effectiveNumber = directNumber !== null && directNumber !== undefined
+    ? directNumber
+    : (player?.number !== undefined ? player?.number : player?.dorsal);
+
+  const rawUrl = directPhotoUrl || url || player?.avatarUrl || player?.photoUrl || player?.photo || player?.photoPreview || null;
+
+  const getInitial = (nameStr) => {
+    if (!nameStr) return '?';
+    const trimmed = String(nameStr).trim();
+    return trimmed.charAt(0).toUpperCase() || '?';
   };
 
-  const photoUrl = player && !imgError
-    ? (player.avatarUrl || player.photoUrl || player.photo || player.photoPreview || null)
-    : null;
-
-  // Filtrar si la URL no es válida o es un placeholder roto
   const isValidPhoto = Boolean(
-    photoUrl &&
-    typeof photoUrl === 'string' &&
-    (photoUrl.startsWith('http://') || photoUrl.startsWith('https://') || photoUrl.startsWith('data:image/') || photoUrl.startsWith('blob:'))
+    rawUrl &&
+    !imgError &&
+    typeof rawUrl === 'string' &&
+    (rawUrl.startsWith('http://') || rawUrl.startsWith('https://') || rawUrl.startsWith('data:image/') || rawUrl.startsWith('blob:'))
   );
 
   return (
@@ -44,27 +53,29 @@ export const PlayerAvatar = ({
         position: 'relative',
         width: `${size}px`,
         height: `${size}px`,
+        minWidth: `${size}px`,
+        minHeight: `${size}px`,
         borderRadius: '50%',
         flexShrink: 0,
         display: 'inline-flex',
         alignItems: 'center',
         justifyContent: 'center',
-        background: 'linear-gradient(135deg, #1B3A2D, #2E7D5C)',
+        backgroundColor: '#4CAF7D', // Regla universal: Verde Campo #4CAF7D
         color: '#FFFFFF',
         fontWeight: '800',
-        fontSize: `${Math.max(10, Math.round(size * 0.38))}px`,
-        border: '1.5px solid rgba(255, 255, 255, 0.2)',
-        boxShadow: '0 2px 6px rgba(0, 0, 0, 0.15)',
+        fontSize: `${Math.max(11, Math.round(size * 0.44))}px`,
+        border: '1.5px solid rgba(255, 255, 255, 0.35)',
+        boxShadow: '0 2px 5px rgba(0, 0, 0, 0.2)',
         userSelect: 'none',
         overflow: 'hidden',
         ...style
       }}
-      title={player ? `#${player.number ?? '-'} ${player.name || ''}` : ''}
+      title={effectiveName ? `#${effectiveNumber ?? '-'} ${effectiveName}` : ''}
     >
       {isValidPhoto ? (
         <img
-          src={photoUrl}
-          alt={player?.name || 'Jugador'}
+          src={rawUrl}
+          alt={effectiveName || 'Jugador'}
           onError={() => setImgError(true)}
           style={{
             width: '100%',
@@ -74,16 +85,16 @@ export const PlayerAvatar = ({
           }}
         />
       ) : (
-        <span>{player ? getInitials(player.name) : '?'}</span>
+        <span style={{ lineHeight: 1, letterSpacing: 0 }}>{getInitial(effectiveName)}</span>
       )}
 
-      {showNumber && player?.number !== undefined && player?.number !== null && (
+      {showNumber && effectiveNumber !== undefined && effectiveNumber !== null && (
         <span
           style={{
             position: 'absolute',
             bottom: '-2px',
             right: '-2px',
-            background: '#D4A843',
+            backgroundColor: '#D4A843',
             color: '#000000',
             fontSize: `${Math.max(8, Math.round(size * 0.28))}px`,
             fontWeight: '900',
@@ -93,7 +104,7 @@ export const PlayerAvatar = ({
             border: '1px solid #000'
           }}
         >
-          {player.number}
+          {effectiveNumber}
         </span>
       )}
     </div>

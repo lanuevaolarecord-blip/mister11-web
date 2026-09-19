@@ -1305,7 +1305,7 @@ html.dark .btn-danger {
 
 .futu-card-frame {
   width: 100%;
-  height: 56px;
+  height: 58px;
   background: linear-gradient(135deg, #FFF5D0 0%, #D4A843 50%, #8C6207 100%);
   border: 2px solid #FFF8DC;
   border-radius: 8px 8px 16px 16px;
@@ -1313,21 +1313,70 @@ html.dark .btn-danger {
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: flex-start;
-  padding: 2px;
+  justify-content: center;
+  padding: 0;
   position: relative;
   overflow: hidden;
 }
 
 @media (min-width: 640px) {
   .futu-card-frame {
-    height: 66px;
+    height: 70px;
   }
 }
 
 .futu-card-frame.empty-slot {
   background: linear-gradient(135deg, #334155 0%, #1E293B 100%);
   border-color: rgba(255, 255, 255, 0.3);
+}
+
+.futu-card-img-full {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: top center;
+  border-radius: 6px 6px 14px 14px;
+  z-index: 1;
+}
+
+/* Sombra/degradado inferior para realzar badges y dar profundidad profesional de cromo */
+.futu-card-frame::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 48%;
+  background: linear-gradient(to top, rgba(11, 23, 18, 0.75) 0%, rgba(11, 23, 18, 0.25) 50%, transparent 100%);
+  pointer-events: none;
+  z-index: 2;
+}
+
+.futu-card-fallback-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: #4CAF7D;
+  color: #FFFFFF;
+  font-size: 15px;
+  font-weight: 900;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1.5px solid rgba(255, 255, 255, 0.5);
+  box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+  z-index: 1;
+}
+
+@media (min-width: 640px) {
+  .futu-card-fallback-avatar {
+    width: 44px;
+    height: 44px;
+    font-size: 18px;
+  }
 }
 
 .futu-card-photo {
@@ -1374,16 +1423,18 @@ html.dark .btn-danger {
   position: absolute;
   top: 2px;
   left: 3px;
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 900;
-  color: #1B3A2D;
-  text-shadow: 0 1px 2px rgba(255,255,255,0.9);
+  color: #FFFFFF;
+  text-shadow: 0 1px 3px rgba(0,0,0,0.95), 0 0 2px #000000;
+  z-index: 3;
+  line-height: 1;
 }
 
 @media (min-width: 640px) {
   .futu-card-number {
-    font-size: 11px;
-    top: 2px;
+    font-size: 12px;
+    top: 3px;
     left: 4px;
   }
 }
@@ -1392,12 +1443,16 @@ html.dark .btn-danger {
   position: absolute;
   bottom: 2px;
   right: 3px;
-  font-size: 8px;
+  font-size: 8.5px;
   font-weight: 900;
   background: #1B3A2D;
   color: #FFF5D0;
-  padding: 1px 3px;
+  padding: 1px 4px;
   border-radius: 3px;
+  border: 1px solid rgba(212, 168, 67, 0.65);
+  box-shadow: 0 2px 4px rgba(0,0,0,0.5);
+  z-index: 3;
+  line-height: 1.1;
 }
 
 .futu-card-banner {
@@ -3284,14 +3339,22 @@ html.dark .alin-player-item span.slot-role {
 }
 
 .export-lineup-hd-capture .futu-card-frame {
-  height: 66px !important;
+  height: 70px !important;
 }
 
+.export-lineup-hd-capture .futu-card-img-full {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover !important;
+  border-radius: 6px 6px 14px 14px !important;
+}
+
+.export-lineup-hd-capture .futu-card-fallback-avatar,
 .export-lineup-hd-capture .futu-card-photo,
 .export-lineup-hd-capture .futu-card-initials {
   width: 44px !important;
   height: 44px !important;
-  font-size: 16px !important;
+  font-size: 18px !important;
 }
 
 .export-lineup-hd-capture .futu-card-banner {

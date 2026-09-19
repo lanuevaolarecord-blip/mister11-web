@@ -969,7 +969,7 @@ const PizarraTactica = () => {
           isEn ? 'Video exported successfully.' : 'Video exportado exitosamente.',
           'success'
         );
-        downloadVideo(result.base64data, result.filename, result.mimeType);
+        downloadVideo(result.blob || result.base64data, result.filename, result.mimeType);
       }
     } catch (err) {
       console.error('[MP4 Export] Error durante exportación:', err);

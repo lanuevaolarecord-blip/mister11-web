@@ -26,6 +26,7 @@ import { TrainingPerformanceTable } from '../components/team/TrainingPerformance
 import { PlayerTabs } from '../components/player/PlayerTabs';
 import { PlayerChatTab } from '../components/player/PlayerChatTab';
 import { MessageSquare, FileText, Pencil, Edit, X, UserPlus, Share2, Mail, Trash2, Bell, Megaphone, Flag, Ban, CheckCircle, AlertTriangle, TrendingUp, ClipboardList, Users, Shield } from 'lucide-react';
+import PlayerAvatar from '../components/PlayerAvatar';
 import { useTranslation } from '../hooks/useTranslation';
 import { SpellCheckedTextarea } from '../components/ui/SpellCheckedTextarea';
 import './MiEquipo.css';

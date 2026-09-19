@@ -23,17 +23,17 @@
  *     factor: 0.0147 (antes 0.021, reducción exacta de 30%)
  */
 export const WHITEBOARD_CONFIG = {
-  // Jugadores
+  // Jugadores (+25% sobre escala previa para visibilidad óptima)
   player: {
-    // Escala dinámica según ancho de canvas (reducido 30%)
-    radiusFactor: 0.0147, // ANTES: 0.0210
-    minRadius: 6.0,       // ANTES: 8.5
-    maxRadius: 11.0,      // ANTES: 15.5
+    // Escala dinámica según ancho de canvas (+25%)
+    radiusFactor: 0.0184, // ANTES: 0.0147 (+25%)
+    minRadius: 7.5,       // ANTES: 6.0 (+25%)
+    maxRadius: 13.75,     // ANTES: 11.0 (+25%)
     borderFactor: 0.18,
-    minBorderWidth: 1.5,  // ANTES: 2.0
+    minBorderWidth: 1.9,  // ANTES: 1.5 (+25%)
     // Tipografía del dorsal
-    fontFactor: 0.82,     // ANTES: 0.85
-    minFontSize: 6,       // ANTES: 9
+    fontFactor: 0.82,
+    minFontSize: 7.5,     // ANTES: 6 (+25%)
     // Foto / Avatar dentro del token
     photoSizeFactor: 1.8, // 90% del diámetro (radius * 2)
   },

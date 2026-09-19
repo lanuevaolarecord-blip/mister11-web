@@ -76,8 +76,8 @@ const ExportMP4Button = ({
         }
       });
 
-      // Descargar video exportado
-      downloadVideo(result.base64data, result.filename, result.mimeType);
+      // Descargar video exportado usando blob para evitar límite de 2MB de data URLs
+      downloadVideo(result.blob || result.base64data, result.filename, result.mimeType);
 
       if (typeof onShowToast === 'function') {
         onShowToast(

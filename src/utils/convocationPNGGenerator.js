@@ -31,13 +31,19 @@ import {
  */
 export const classifyPosition = (pos = '') => {
   const p = String(pos).trim().toUpperCase();
-  if (['POR', 'GK', 'ARQ', 'PORTERO', 'GOALKEEPER', 'ARQUERO'].includes(p)) {
+  if (['POR', 'GK', 'ARQ', 'PORTERO', 'GOALKEEPER', 'ARQUERO'].some(k => p === k || p.includes(k))) {
     return 'GK';
   }
-  if (['DEF', 'DF', 'CB', 'LB', 'RB', 'LWB', 'RWB', 'DEFENSA', 'CENTRAL', 'LATERAL', 'CEN', 'LAT', 'DEFENDER'].some(k => p.includes(k))) {
+  if ([
+    'DEF', 'DF', 'CB', 'LB', 'RB', 'LTD', 'LTI', 'LD', 'LI', 'CAD', 'CAI', 'LWB', 'RWB',
+    'DEFENSA', 'CENTRAL', 'LATERAL', 'CEN', 'LAT', 'DEFENDER'
+  ].some(k => p === k || p.includes(k))) {
     return 'DEF';
   }
-  if (['MED', 'MC', 'MCD', 'MCO', 'MI', 'MD', 'MID', 'CENTROCAMPISTA', 'MEDIOCAMPISTA', 'VOL', 'VOLANTE', 'PIVOTE', 'INTERIOR', 'MIDFIELDER'].some(k => p.includes(k))) {
+  if ([
+    'MED', 'MC', 'MCD', 'MCO', 'MI', 'MD', 'MID',
+    'CENTROCAMPISTA', 'MEDIOCAMPISTA', 'VOL', 'VOLANTE', 'PIVOTE', 'INTERIOR', 'MIDFIELDER'
+  ].some(k => p === k || p.includes(k))) {
     return 'MID';
   }
   return 'FWD'; // Por defecto o DEL / DC / EXT / ED / EI / FORWARD / DELANTERO

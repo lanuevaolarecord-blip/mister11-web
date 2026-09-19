@@ -289,21 +289,10 @@ const Sesiones = () => {
         setExportingId(anim.id);
         const response = await fetch(anim.videoUrl);
         const blob = await response.blob();
-        const reader = new FileReader();
-        reader.readAsDataURL(blob);
-        reader.onloadend = async () => {
-          try {
-            const base64data = reader.result.split(',')[1];
-            const fileType = anim.videoMimeType && anim.videoMimeType.includes('mp4') ? 'mp4' : 'webm';
-            const { downloadVideo } = await import('../utils/download.js');
-            await downloadVideo(base64data, `animacion_sesion.${fileType}`, anim.videoMimeType || 'video/webm');
-          } catch (e) {
-            console.error("Error al procesar descarga de video existente:", e);
-            showToast(isEn ? 'Error saving the video locally.' : 'Error al guardar el video localmente.', 'error');
-          } finally {
-            setExportingId(null);
-          }
-        };
+        const fileType = anim.videoMimeType && anim.videoMimeType.includes('mp4') ? 'mp4' : 'webm';
+        const { downloadVideo } = await import('../utils/download.js');
+        await downloadVideo(blob, `animacion_sesion.${fileType}`, anim.videoMimeType || 'video/webm');
+        setExportingId(null);
       } catch (err) {
         console.error("Fallo al descargar video pre-renderizado:", err);
         // Fallback: renderizar en segundo plano si el enlace de storage no responde

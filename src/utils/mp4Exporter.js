@@ -56,10 +56,18 @@ export async function exportAnimationMP4({
     throw new Error('captureStream no soportado en este navegador');
   }
 
+  // Anclar canvas compuesto al DOM para garantizar que captureStream emite frames
+  // en todos los navegadores (Chrome/Firefox suspenden emisión de off-screen canvases)
+  const isInDom = document.contains(recCanvas);
+  if (!isInDom) {
+    recCanvas.style.cssText = 'position:fixed;left:-9999px;top:0;opacity:0;pointer-events:none;z-index:-1;';
+    document.body.appendChild(recCanvas);
+  }
+
   const chunks = [];
   const recorder = new MediaRecorder(stream, {
     mimeType,
-    videoBitsPerSecond: 6000000
+    videoBitsPerSecond: 8000000
   });
 
   recorder.ondataavailable = (e) => {
@@ -68,7 +76,8 @@ export async function exportAnimationMP4({
     }
   };
 
-  recorder.start();
+  // Solicitar datos cada 500ms para evitar chunks vacíos al final
+  recorder.start(500);
 
   const videoTrack = stream.getVideoTracks ? stream.getVideoTracks()[0] : null;
 
@@ -109,6 +118,12 @@ export async function exportAnimationMP4({
     }
   }
 
+  // Solicitar datos finales antes de detener
+  if (recorder.state === 'recording') {
+    recorder.requestData();
+    await new Promise(r => setTimeout(r, 120));
+  }
+
   // Detener grabación de stream
   await new Promise((resolve) => {
     recorder.onstop = () => resolve();
@@ -122,6 +137,11 @@ export async function exportAnimationMP4({
       resolve();
     }
   });
+
+  // Retirar canvas del DOM si lo añadimos nosotros
+  if (!isInDom && document.contains(recCanvas)) {
+    document.body.removeChild(recCanvas);
+  }
 
   if (typeof onStatus === 'function') {
     onStatus('Empaquetando video final...');

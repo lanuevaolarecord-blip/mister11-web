@@ -325,29 +325,72 @@ const _downloadCSVWeb = (csvString, filename) => {
 };
 
 // ─── Video (Animaciones) ──────────────────────────────────────────────────────
-export const downloadVideo = async (base64Data, filename, mimeType) => {
+export const downloadVideo = async (videoData, filename, mimeType = 'video/mp4') => {
   if (Capacitor.isNativePlatform()) {
     try {
-      const uri = await _saveToCache(filename, base64Data);
-      await _openNative(uri, mimeType, filename, base64Data);
+      let base64 = videoData;
+      if (videoData instanceof Blob) {
+        base64 = await new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onloadend = () => {
+            const res = reader.result || '';
+            resolve(String(res).split(',')[1] || '');
+          };
+          reader.onerror = reject;
+          reader.readAsDataURL(videoData);
+        });
+      } else if (typeof videoData === 'string' && videoData.startsWith('data:')) {
+        base64 = videoData.split(',')[1] || '';
+      }
+      const uri = await _saveToCache(filename, base64);
+      await _openNative(uri, mimeType, filename, base64);
       showToast(t('download.video_success'), 'success');
     } catch (err) {
       console.error('[download] Error Video Android:', err);
-      _downloadVideoWeb(base64Data, filename, mimeType);
+      _downloadVideoWeb(videoData, filename, mimeType);
     }
   } else {
-    _downloadVideoWeb(base64Data, filename, mimeType);
+    _downloadVideoWeb(videoData, filename, mimeType);
   }
 };
 
-const _downloadVideoWeb = (base64Data, filename, mimeType) => {
+const _downloadVideoWeb = (videoData, filename, mimeType = 'video/mp4') => {
   try {
+    let blob;
+    if (videoData instanceof Blob) {
+      blob = videoData;
+    } else if (typeof videoData === 'string' && (videoData.startsWith('blob:') || videoData.startsWith('http'))) {
+      const link = document.createElement('a');
+      link.href = videoData;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      setTimeout(() => document.body.removeChild(link), 150);
+      return;
+    } else {
+      // Decodificar base64 a Uint8Array y crear un Blob nativo
+      const cleanBase64 = typeof videoData === 'string' && videoData.includes(',')
+        ? videoData.split(',')[1]
+        : String(videoData || '');
+      const binaryString = atob(cleanBase64);
+      const len = binaryString.length;
+      const bytes = new Uint8Array(len);
+      for (let i = 0; i < len; i++) {
+        bytes[i] = binaryString.charCodeAt(i);
+      }
+      blob = new Blob([bytes], { type: mimeType });
+    }
+
+    const objectUrl = URL.createObjectURL(blob);
     const link = document.createElement('a');
-    link.href = `data:${mimeType};base64,${base64Data}`;
+    link.href = objectUrl;
     link.download = filename;
     document.body.appendChild(link);
     link.click();
-    setTimeout(() => document.body.removeChild(link), 150);
+    setTimeout(() => {
+      if (link.parentNode) link.parentNode.removeChild(link);
+      URL.revokeObjectURL(objectUrl);
+    }, 5000);
   } catch (err) {
     console.error('[download] Error _downloadVideoWeb:', err);
   }

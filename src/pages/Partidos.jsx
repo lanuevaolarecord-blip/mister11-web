@@ -80,10 +80,11 @@ const TABS_CONFIG = [
 
 // Auxiliar para determinar la zona general de una posición táctica
 const getGeneralZone = (pos) => {
-  if (['POR'].includes(pos)) return 'POR';
-  if (['DEF', 'LTD', 'LTI'].includes(pos)) return 'DEF';
-  if (['MC', 'MCD', 'MCO', 'MD', 'MI'].includes(pos)) return 'MC';
-  if (['DEL', 'EXT'].includes(pos)) return 'DEL';
+  const p = String(pos || '').trim().toUpperCase();
+  if (['POR', 'GK', 'ARQ'].some(k => p === k || p.includes(k))) return 'POR';
+  if (['DEF', 'DF', 'CB', 'LB', 'RB', 'LTD', 'LTI', 'LD', 'LI', 'CAD', 'CAI', 'LATERAL', 'CENTRAL'].some(k => p === k || p.includes(k))) return 'DEF';
+  if (['MC', 'MCD', 'MCO', 'MD', 'MI', 'MED', 'VOL', 'PIVOTE'].some(k => p === k || p.includes(k))) return 'MC';
+  if (['DEL', 'EXT', 'DC', 'EI', 'ED', 'PUNTA'].some(k => p === k || p.includes(k))) return 'DEL';
   return 'MC';
 };
 
@@ -100,7 +101,7 @@ const alignStartersByPosition = (calledIds = [], players = [], positionsList = [
   // Si no hay positionsList o viene vacía, fallback a 4-3-3
   const slots = positionsList && positionsList.length === 11 
     ? positionsList 
-    : getFormationPositions('4-3-3');
+    : (PREDEFINED_FORMATIONS['4-3-3'] || []);
 
   // Paso 1: Asignar Portero (slot 0 suele ser POR en todas las formaciones)
   const gkSlotIdx = slots.findIndex(s => s.pos === 'POR' || getGeneralZone(s.pos) === 'POR');
@@ -1065,21 +1066,40 @@ const Partidos = () => {
     }));
   };
 
-  const handleResetPositions = () => {
-    const currentLineup = matchData.lineup || '4-3-3';
-    const slots = getFormationPositions(currentLineup);
-    const newCalled = alignStartersByPosition(calledPlayers, players, slots);
-    setCalledPlayers(newCalled);
+  const handleResetPositions = async () => {
+    try {
+      const currentLineup = matchData.lineup || '4-3-3';
+      const slots = getFormationPositions(currentLineup);
+      let newCalled = calledPlayers;
+      try {
+        newCalled = alignStartersByPosition(calledPlayers, players, slots);
+      } catch (err) {
+        console.warn('alignStartersByPosition fallback:', err);
+      }
+      setCalledPlayers(newCalled);
 
-    setMatchData(prev => ({
-      ...prev,
-      titulares: newCalled.slice(0, 11),
-      suplentes: newCalled.slice(11, 18),
-      convocados: newCalled.filter(Boolean),
-      customPositions: {},
-      customRoles: {}
-    }));
-    setSelectedSlotIdx(null);
+      const resetFields = {
+        titulares: newCalled.slice(0, 11),
+        suplentes: newCalled.slice(11, 18),
+        convocados: newCalled.filter(Boolean),
+        customPositions: {},
+        customRoles: {}
+      };
+
+      setMatchData(prev => ({
+        ...prev,
+        ...resetFields
+      }));
+      setSelectedSlotIdx(null);
+
+      if (matchData.id) {
+        await updateMatch(matchData.id, resetFields);
+      }
+      showToast(isGlobalEn ? 'Formation positions reset successfully' : 'Posiciones del campo restablecidas correctamente', 'success');
+    } catch (err) {
+      console.error('Error al restablecer posiciones:', err);
+      showToast(isGlobalEn ? 'Error resetting positions' : 'Error al restablecer posiciones', 'error');
+    }
   };
 
   const handleDownloadLineupPng = async () => {
@@ -2302,7 +2322,18 @@ const Partidos = () => {
                           >
                             <div className="futu-card-badge">
                               <div className={`futu-card-frame ${player ? '' : 'empty-slot'}`}>
-                                <PlayerAvatar player={player} size={32} />
+                                {photoUrl ? (
+                                  <img
+                                    src={photoUrl}
+                                    alt={player?.name || 'Jugador'}
+                                    className="futu-card-img-full"
+                                    crossOrigin="anonymous"
+                                  />
+                                ) : (
+                                  <div className="futu-card-fallback-avatar">
+                                    {player ? (player.name ? player.name.trim().charAt(0).toUpperCase() : (idx + 1)) : (idx + 1)}
+                                  </div>
+                                )}
                                 <span className="futu-card-number">{player?.number ?? (idx + 1)}</span>
                                 <span className="futu-card-pos">{posLabel}</span>
                               </div>
@@ -3894,16 +3925,17 @@ const Partidos = () => {
               <div key={idx} className={`pitch-player-3d ${player ? '' : 'empty-slot'}`} style={{ top: topPos, left: leftPos }}>
                 <div className="futu-card-badge">
                   <div className={`futu-card-frame ${player ? '' : 'empty-slot'}`}>
-                    {player ? (
-                      photoUrl ? (
-                        <img src={photoUrl} alt={player.name} width="36" height="36" style={{ width: '36px', height: '36px', maxWidth: '36px', maxHeight: '36px', borderRadius: '50%', objectFit: 'cover' }} className="futu-card-photo" crossOrigin="anonymous" />
-                      ) : (
-                        <div className="futu-card-initials" style={{ background: '#1B3A2D', color: '#D4A843', display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%', height: '100%', borderRadius: '50%', fontWeight: 'bold', fontSize: '15px' }}>
-                          {player.number || (player.name ? player.name.charAt(0).toUpperCase() : idx + 1)}
-                        </div>
-                      )
+                    {player && photoUrl ? (
+                      <img
+                        src={photoUrl}
+                        alt={player.name}
+                        className="futu-card-img-full"
+                        crossOrigin="anonymous"
+                      />
                     ) : (
-                      <div className="futu-card-initials empty">{idx + 1}</div>
+                      <div className="futu-card-fallback-avatar">
+                        {player ? (player.name ? player.name.trim().charAt(0).toUpperCase() : (idx + 1)) : (idx + 1)}
+                      </div>
                     )}
                     <span className="futu-card-number">{player?.number || idx + 1}</span>
                     <span className="futu-card-pos">{posLabel}</span>

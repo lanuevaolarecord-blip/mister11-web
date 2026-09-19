@@ -39,6 +39,7 @@ const CanvasToolbar = ({
   isCapturing,
   exportAnimationVideo,
   isRecording,
+  exportProgress,
   handleSave,
   setLeftPanelOpen,
   setRightPanelOpen,
@@ -190,8 +191,40 @@ const CanvasToolbar = ({
             <button className="topbar-btn secondary" onClick={handleNewPizarra} title={t('board.toolbar.new')} style={{ background: 'var(--accent)', color: 'white', fontWeight: 'bold' }}>✨ {t('board.toolbar.new')}</button>
             <button className="topbar-btn" onClick={() => handleCapture(true)} disabled={isCapturing} title="PNG">📸 PNG</button>
             <button className="topbar-btn" onClick={handleExportPDF} disabled={isCapturing} title="PDF">📄 PDF</button>
-            <button className="topbar-btn" onClick={exportAnimationVideo} disabled={isRecording} title={t('board.toolbar.exportMp4')} style={{ background: 'var(--accent)', color: 'white', fontWeight: 'bold' }}>
-              {isRecording ? t('board.toolbar.exportingMp4') : t('board.toolbar.exportMp4')}
+            <button
+              className={`topbar-btn ${isRecording ? 'exporting disabled' : ''}`}
+              onClick={exportAnimationVideo}
+              disabled={isRecording}
+              title={t('board.toolbar.exportMp4')}
+              style={{
+                background: isRecording ? '#1B3A2D' : 'var(--accent)',
+                color: 'white',
+                fontWeight: 'bold',
+                position: 'relative',
+                overflow: 'hidden',
+                minWidth: isRecording ? '140px' : undefined
+              }}
+            >
+              {isRecording ? (
+                <span>
+                  ⏳ {exportProgress !== null && exportProgress !== undefined ? `${exportProgress}%` : t('board.toolbar.exportingMp4')}
+                </span>
+              ) : (
+                t('board.toolbar.exportMp4')
+              )}
+              {isRecording && typeof exportProgress === 'number' && exportProgress > 0 && (
+                <div
+                  style={{
+                    position: 'absolute',
+                    bottom: 0,
+                    left: 0,
+                    height: '4px',
+                    width: `${exportProgress}%`,
+                    backgroundColor: '#D4A843',
+                    transition: 'width 0.2s ease-out'
+                  }}
+                />
+              )}
             </button>
             <button id="btn-guardar-pizarra" className="topbar-btn primary" onClick={handleSave} disabled={isCapturing} title={t('board.toolbar.save')}>💾 {t('board.toolbar.save')}</button>
           </div>

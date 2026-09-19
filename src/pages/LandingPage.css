@@ -944,11 +944,11 @@ html.light .landing-wrapper,
   --m11-oro: #B45309;
   --m11-pizarra: #F8FAFC;
   --m11-card-bg: #FFFFFF;
-  --m11-texto: #0F172A;
+  --m11-texto: #182820;
   --m11-muted: #475569;
   --m11-border: #CBD5E1;
   background-color: #F8FAFC;
-  color: #0F172A;
+  color: #182820;
 }
 
 html.light .landing-header,
@@ -1031,7 +1031,7 @@ html.light .badge-text,
 
 html.light .hero-title,
 :root:not(.dark) .hero-title {
-  color: #0F172A;
+  color: #182820;
 }
 
 html.light .highlight-text,
@@ -1060,7 +1060,7 @@ html.light .btn-m11-primary:hover,
 
 html.light .btn-m11-secondary,
 :root:not(.dark) .btn-m11-secondary {
-  color: #0F172A;
+  color: #182820;
   border-color: #CBD5E1;
   background: #FFFFFF;
 }
@@ -1109,7 +1109,7 @@ html.light .pricing-tactical-watermark,
 
 html.light .pricing-title,
 :root:not(.dark) .pricing-title {
-  color: #0F172A;
+  color: #182820;
 }
 
 html.light .pricing-subtitle,
@@ -1163,7 +1163,7 @@ html.light .pricing-card.featured-club,
 
 html.light .plan-name,
 :root:not(.dark) .plan-name {
-  color: #0F172A;
+  color: #182820;
 }
 
 html.light .plan-tagline,
@@ -1191,7 +1191,7 @@ html.light .decisive-attributes-list li,
 html.light .btn-plan-free,
 :root:not(.dark) .btn-plan-free {
   background: #F1F5F9;
-  color: #0F172A;
+  color: #182820;
   border: 1px solid #CBD5E1;
 }
 
@@ -1207,7 +1207,7 @@ html.light .landing-comparison-section,
 
 html.light .comparison-title,
 :root:not(.dark) .comparison-title {
-  color: #0F172A;
+  color: #182820;
 }
 
 html.light .comparison-subtitle,
@@ -1225,7 +1225,7 @@ html.light .comparison-table-wrapper,
 html.light .comparison-table th,
 :root:not(.dark) .comparison-table th {
   background: #F1F5F9;
-  color: #0F172A;
+  color: #182820;
   border-bottom: 1px solid #CBD5E1;
 }
 
@@ -1244,12 +1244,12 @@ html.light .comparison-table td.featured-col,
 
 html.light .feature-name,
 :root:not(.dark) .feature-name {
-  color: #0F172A;
+  color: #182820;
 }
 
 html.light .cell-text,
 :root:not(.dark) .cell-text {
-  color: #0F172A;
+  color: #182820;
 }
 
 html.light .td-val,
@@ -1259,8 +1259,8 @@ html.light .td-val,
 
 html.light .landing-footer,
 :root:not(.dark) .landing-footer {
-  background: #0F172A;
-  border-top: 1px solid #1E293B;
+  background: #182820;
+  border-top: 1px solid #233B2F;
   color: #E2E8F0;
 }
 

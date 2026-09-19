@@ -37,6 +37,7 @@ import { savePizarraLocal, getPizarraLocal, clearPizarraLocal } from '../lib/piz
 import { getDocument, setDocument } from '../firebase/db';
 import { downloadJSON, downloadImage, downloadVideo } from '../utils/download.js';
 import { generatePizarraPDF } from '../utils/pdfGenerator.js';
+import { exportAnimationMP4 } from '../utils/mp4Exporter.js';
 import CanvasToolbar from '../components/pizarra/CanvasToolbar';
 import MaterialsPanel from '../components/pizarra/MaterialsPanel';
 import SavedPlaysPanel from '../components/pizarra/SavedPlaysPanel';
@@ -879,421 +880,112 @@ const PizarraTactica = () => {
     return null;
   }, []);
 
-  // ─── Export Animation Video (MP4/WebM) ────────────────────────────────────
+  // ─── Export Animation Video (MP4/WebM Determinista FIX 4) ────────────────
   const exportAnimationVideo = async () => {
-    // Helper local: showToast usa el sistema de notificaciones real del componente
     const showToast = (msg, type = 'info') => {
       setCaptureToast({ type: type === 'info' ? 'success' : type, msg });
       setTimeout(() => setCaptureToast(null), type === 'error' ? 5000 : 3500);
     };
 
     if (!isProActive) {
-      setUpgradeModal({ open: true, message: isEn ? 'Exporting animations as MP4 video is a PRO feature. Upgrade to use it.' : 'La exportación de animaciones en video MP4 es una función PRO. Sube de nivel para usarla.' });
+      setUpgradeModal({
+        open: true,
+        message: isEn
+          ? 'Exporting animations as MP4 video is a PRO feature. Upgrade to use it.'
+          : 'La exportación de animaciones en video MP4 es una función PRO. Sube de nivel para usarla.'
+      });
       return;
     }
+
     const fc = fcRef.current;
     const fieldCanvas = fieldCanvasRef.current;
     if (!fc || !fieldCanvas || framesR.current.length < 2) {
-      showToast(isEn ? 'You need at least 2 frames to export a video.' : 'Necesitas al menos 2 frames para exportar un video.', 'info');
+      showToast(
+        isEn
+          ? 'You need at least 2 frames to export a video.'
+          : 'Necesitas al menos 2 frames para exportar un video.',
+        'info'
+      );
       return;
     }
+
     if (isRecording) return;
     setIsRecording(true);
     setExportProgress(1);
-    showToast(isEn ? 'Generating video, please wait...' : 'Generando video, por favor espera...', 'info');
-    
-    let recordingActive = true;
+    showToast(
+      isEn ? 'Generating video, please wait...' : 'Generando video, por favor espera...',
+      'info'
+    );
 
-    
     try {
-      // 1. Asegurar que los frames estén guardados antes de exportar
+      // 1. Guardar frame actual antes de exportar
       await saveFrameState(true);
-      
-      // 2. Crear un canvas de grabación a ALTA RESOLUCIÓN (2x) para máxima nitidez
-      const scale = 2;
-      const recCanvas = document.createElement('canvas');
-      recCanvas.width = fc.width * scale;
-      recCanvas.height = fc.height * scale;
-      const recCtx = recCanvas.getContext('2d');
-      
-      // Optimizar suavizado del renderizado
-      recCtx.imageSmoothingEnabled = true;
-      recCtx.imageSmoothingQuality = 'high';
-      
-      // 3. Capturar stream a 30fps con bitrate premium (8 Mbps) para calidad profesional
-      const stream = recCanvas.captureStream(30);
-      // Detectar el mejor formato soportado (else-if para no sobrescribir formatos válidos)
-      let options;
-      if (typeof MediaRecorder.isTypeSupported === 'function') {
-        if (MediaRecorder.isTypeSupported('video/webm;codecs=vp9')) {
-          options = { mimeType: 'video/webm;codecs=vp9', videoBitsPerSecond: 8000000 };
-        } else if (MediaRecorder.isTypeSupported('video/webm;codecs=vp8')) {
-          options = { mimeType: 'video/webm;codecs=vp8', videoBitsPerSecond: 8000000 };
-        } else if (MediaRecorder.isTypeSupported('video/webm')) {
-          options = { mimeType: 'video/webm', videoBitsPerSecond: 8000000 };
-        } else if (MediaRecorder.isTypeSupported('video/mp4')) {
-          options = { mimeType: 'video/mp4', videoBitsPerSecond: 8000000 };
-        } else {
-          options = { videoBitsPerSecond: 8000000 };
+
+      // 2. Exportación determinista frame a frame
+      const result = await exportAnimationMP4({
+        fc,
+        fr: frRef.current,
+        fieldCanvas,
+        frames: framesR.current,
+        planId: planId || 'export',
+        onProgress: (pct) => {
+          setExportProgress(pct);
+        },
+        onStatus: (msg) => {
+          // Mensaje de estado disponible
         }
-      } else {
-        options = { videoBitsPerSecond: 8000000 };
+      });
+
+      // 3. Subir a Firebase Storage si el usuario está autenticado
+      if (user && activeTeamId && user.uid !== 'invitado-local') {
+        try {
+          const fileType = result.mimeType.includes('mp4') ? 'mp4' : 'webm';
+          const storagePath = `pizarras/${getTeamPath()}/${planId}/video.${fileType}`;
+          const storageRef = ref(storage, storagePath);
+          await uploadString(storageRef, result.dataURL, 'data_url');
+          const downloadURL = await getDownloadURL(storageRef);
+          const exerciseRef = doc(db, getTeamPath(), 'exercises', planId);
+          await setDoc(exerciseRef, {
+            videoUrl: downloadURL,
+            videoMimeType: result.mimeType,
+            updatedAt: serverTimestamp()
+          }, { merge: true });
+        } catch (uploadErr) {
+          console.error('Error al guardar el video en la nube:', uploadErr);
+        }
       }
-      
-      const recorder = new MediaRecorder(stream, options);
-      recorderRef.current = recorder;
-      isCancelledRef.current = false;
-      const chunks = [];
-      recorder.ondataavailable = (e) => { if (e.data && e.data.size > 0) chunks.push(e.data); };
-      
-      let stopped = false;
-      recorder.onstop = async () => {
-        if (stopped) return;
-        stopped = true;
-        recordingActive = false;
-        if (isCancelledRef.current) return;
 
-        const fileType = options.mimeType && options.mimeType.includes('mp4') ? 'mp4' : 'webm';
-        
-        let blob = null;
-
-        const runWorkerWithWatchdog = () => new Promise((resolve, reject) => {
-          let worker = null;
-          try {
-            worker = new Worker(new URL('../workers/mp4EncoderWorker.js', import.meta.url), { type: 'module' });
-            activeWorkerRef.current = worker;
-          } catch (err) {
-            return reject(err);
-          }
-
-          const resetWatchdog = () => {
-            if (watchdogTimerRef.current) clearTimeout(watchdogTimerRef.current);
-            watchdogTimerRef.current = setTimeout(() => {
-              console.warn('[MP4 Export] Watchdog 20s expirado sin progreso del worker.');
-              if (activeWorkerRef.current) {
-                activeWorkerRef.current.terminate();
-                activeWorkerRef.current = null;
-              }
-              reject(new Error('WATCHDOG_TIMEOUT'));
-            }, 20000);
-          };
-
-          resetWatchdog();
-
-          worker.onmessage = (e) => {
-            if (isCancelledRef.current) {
-              if (watchdogTimerRef.current) clearTimeout(watchdogTimerRef.current);
-              worker.terminate();
-              activeWorkerRef.current = null;
-              return;
-            }
-            const msgType = e.data?.type;
-            if (msgType === 'PROGRESS' || msgType === 'ENCODE_PROGRESS') {
-              resetWatchdog();
-              setExportProgress(Math.min(99, Math.max(88, e.data.progress || 90)));
-            } else if (msgType === 'SUCCESS' || msgType === 'ENCODE_COMPLETE' || msgType === 'done') {
-              if (watchdogTimerRef.current) clearTimeout(watchdogTimerRef.current);
-              setExportProgress(100);
-              activeWorkerRef.current = null;
-              resolve(e.data.blob);
-              worker.terminate();
-            } else if (msgType === 'ERROR' || msgType === 'ENCODE_ERROR' || msgType === 'error') {
-              if (watchdogTimerRef.current) clearTimeout(watchdogTimerRef.current);
-              activeWorkerRef.current = null;
-              worker.terminate();
-              reject(new Error(e.data.error || e.data.reason || 'Error en codificación worker'));
-            }
-          };
-
-          worker.onerror = (err) => {
-            if (watchdogTimerRef.current) clearTimeout(watchdogTimerRef.current);
-            activeWorkerRef.current = null;
-            worker.terminate();
-            reject(err);
-          };
-
-          Promise.all(chunks.map(c => c.arrayBuffer())).then(buffers => {
-            if (isCancelledRef.current) return;
-            worker.postMessage({ type: 'ENCODE', buffers, mimeType: `video/${fileType}` }, buffers);
-          }).catch(reject);
-        });
-
-        try {
-          if (typeof Worker !== 'undefined') {
-            setExportProgress(88);
-            blob = await runWorkerWithWatchdog();
-          } else {
-            blob = new Blob(chunks, { type: `video/${fileType}` });
-            setExportProgress(100);
-          }
-        } catch (workerErr) {
-          console.warn('[MP4 Export] Falló worker o expiró watchdog (activando fallback):', workerErr);
-          // Fallback automático reintentando UNA vez con codificador main-thread (Blob directo)
-          try {
-            blob = new Blob(chunks, { type: `video/${fileType}` });
-            if (blob && blob.size > 0) {
-              setExportProgress(100);
-            } else {
-              throw new Error('Blob fallback vacío');
-            }
-          } catch (fbErr) {
-            console.error('[MP4 Export] Fallback también falló:', fbErr);
-            showToast(isEn ? 'Could not complete video; try with fewer steps.' : 'No se pudo completar el vídeo; intenta con menos pasos.', 'error');
-            setIsRecording(false);
-            setExportProgress(null);
-            return;
-          }
-        }
-
-        if (isCancelledRef.current) return;
-
-        if (chunks.length === 0 || !blob || blob.size === 0) {
-          console.error('[MP4 Export] El blob de video está vacío.');
-          showToast(isEn ? 'Could not complete video; try with fewer steps.' : 'No se pudo completar el vídeo; intenta con menos pasos.', 'error');
-          setIsRecording(false);
-          setExportProgress(null);
-          return;
-        }
-
-        const reader = new FileReader();
-        reader.readAsDataURL(blob);
-        reader.onerror = () => {
-          console.error('[MP4 Export] Error al leer el blob de video.');
-          showToast(isEn ? 'Error processing the generated video.' : 'Error al procesar el video generado.', 'error');
-          setIsRecording(false);
-          setExportProgress(null);
-        };
-        reader.onloadend = async () => {
-          const dataURL = reader.result;
-          const base64data = dataURL.split(',')[1];
-          const filename = `animacion-mister11-${planId || 'export'}.${fileType}`;
-          const finalMime = `video/${fileType}`;
-
-          // Subir a Firebase Storage si el usuario está autenticado
-          if (user && activeTeamId && user.uid !== 'invitado-local') {
-            try {
-              const storagePath = `pizarras/${getTeamPath()}/${planId}/video.${fileType}`;
-              const storageRef = ref(storage, storagePath);
-              await uploadString(storageRef, dataURL, 'data_url');
-              const downloadURL = await getDownloadURL(storageRef);
-              const exerciseRef = doc(db, getTeamPath(), 'exercises', planId);
-              await setDoc(exerciseRef, {
-                videoUrl: downloadURL,
-                videoMimeType: finalMime,
-                updatedAt: serverTimestamp()
-              }, { merge: true });
-            } catch (uploadErr) {
-              console.error('Error al guardar el video en la nube:', uploadErr);
-            }
-          }
-
-          setIsRecording(false);
-          setTimeout(() => setExportProgress(null), 800);
-          const autoExport = new URLSearchParams(window.location.search).get('autoExport');
-          if (autoExport === 'true' && window.parent) {
-            window.parent.postMessage({ type: 'EXPORT_DONE', base64data, filename, mimeType: finalMime }, '*');
-          } else {
-            showToast(isEn ? 'Video exported successfully.' : 'Video exportado exitosamente.', 'success');
-            downloadVideo(base64data, filename, finalMime);
-          }
-        };
-      };
-      
-      // 4. Render Combiner: Dibuja el campo y los jugadores escalados al tamaño de recCanvas
-      // NOTA: fc.getElement() es el canvas real donde Fabric pinta los objetos.
-      // fabricElemRef.current es el <canvas> DOM original (vacío tras init de Fabric).
-      const fabricCanvas = fc.getElement();
-      const renderCombiner = () => {
-        recCtx.clearRect(0, 0, recCanvas.width, recCanvas.height);
-        recCtx.drawImage(fieldCanvas, 0, 0, recCanvas.width, recCanvas.height);
-        if (fabricCanvas && fabricCanvas.width > 0) {
-          recCtx.drawImage(fabricCanvas, 0, 0, recCanvas.width, recCanvas.height);
-        }
-      };
-      
-      // 5. Bucle de renderizado continuo sincronizado con la pantalla (para movimientos perfectos y suaves)
-      const drawLoop = () => {
-        if (!recordingActive) return;
-        renderCombiner();
-        requestAnimationFrame(drawLoop);
-      };
-      requestAnimationFrame(drawLoop);
-      
-      recorder.start();
-      setIsPlaying(true);
-      playingR.current = true;
-      
-      // ── Helper para detener la grabación de forma segura ────────────────────────
-      // Garantiza que isRecording SIEMPRE vuelve a false, sin importar qué falle.
-      const safeStop = (reason) => {
-        console.log('[MP4 Export] Deteniendo grabación:', reason);
-        recordingActive = false;
-        setIsPlaying(false);
-        playingR.current = false;
-        try {
-          if (recorder.state !== 'inactive') recorder.stop();
-        } catch (e) {
-          console.warn('[MP4 Export] recorder.stop() falló:', e);
-          setIsRecording(false); // fallback directo si stop() falla
-        }
-      };
-
-      // ── Timeout de seguridad (60s) ─────────────────────────────────────
-      // Si ningún error es capturado pero la grabación no termina,
-      // este timeout garantiza que el botón siempre quede usable.
-      const safetyTimeout = setTimeout(() => {
-        if (recordingActive) {
-          console.warn('[MP4 Export] Timeout de seguridad. Forzando parada.');
-          safeStop('safety-timeout');
-          showToast(isEn ? 'Export took too long. Try with fewer frames.' : 'La exportación tardó demasiado. Intenta con menos frames.', 'error');
-          setIsRecording(false);
-        }
-      }, 60000);
-
-      // ── Función de animación de grabación (con protección completa) ───────
-      const runRecordingAnimation = (idx) => {
-        if (!playingR.current || !recordingActive) {
-          clearTimeout(safetyTimeout);
-          safeStop('stopped-early');
-          return;
-        }
-        if (idx >= framesR.current.length - 1) {
-          clearTimeout(safetyTimeout);
-          loadFrame(framesR.current.length - 1, false);
-          setTimeout(() => safeStop('animation-complete'), 500);
-          return;
-        }
-
-        setFrameIdx(idx);
-        frameIdxR.current = idx;
-        const totalF = framesR.current.length || 1;
-        setExportProgress(Math.min(85, Math.max(1, Math.round(((idx + 1) / totalF) * 85))));
-
-        const fA = framesR.current[idx];
-        const fB = framesR.current[idx + 1];
-        if (!fA || !fB) {
-          clearTimeout(safetyTimeout);
-          safeStop('frame-undefined');
-          showToast(isEn ? 'Error: frame not found during export.' : 'Error: frame no encontrado durante la exportación.', 'error');
-          setIsRecording(false);
-          return;
-        }
-
-        // Normalizar state (puede ser string JSON o objeto)
-        const parseState = (s) => {
-          if (!s) return { objects: [] };
-          if (typeof s === 'string') { try { return JSON.parse(s); } catch(_) { return { objects: [] }; } }
-          return s;
-        };
-        const stateA = parseState(fA.state);
-        const stateB = parseState(fB.state);
-        const dur = fB.duration || 800;
-
-        try {
-          cargarFrame(stateA, () => {
-            try {
-              if (!playingR.current || !recordingActive) {
-                clearTimeout(safetyTimeout);
-                safeStop('stopped-after-cargarFrame-A');
-                return;
-              }
-              const objs = fc.getObjects();
-              const rawTargets = Array.isArray(stateB.objects) ? stateB.objects : [];
-
-              if (objs.length === 0 || rawTargets.length === 0) {
-                // Fallback: corte directo al frame B
-                try {
-                  cargarFrame(stateB, () => {
-                    try {
-                      if (!playingR.current || !recordingActive) { clearTimeout(safetyTimeout); safeStop('stopped-fallback-B'); return; }
-                      fc.renderAll();
-                      setTimeout(() => runRecordingAnimation(idx + 1), 300);
-                    } catch (e) { clearTimeout(safetyTimeout); safeStop('err-fallback-B-cb'); showToast(isEn ? 'Error exporting frame B.' : 'Error exportación frame B.', 'error'); setIsRecording(false); }
-                  });
-                } catch (e) { clearTimeout(safetyTimeout); safeStop('err-cargarFrame-B-fallback'); showToast(isEn ? 'Error loading frame B.' : 'Error cargando frame B.', 'error'); setIsRecording(false); }
-                return;
-              }
-
-              const targetsByKey = new Map();
-              const targetListWithPos = rawTargets.map((objData, i) => {
-                let left, top;
-                if (objData.xRel !== undefined && objData.yRel !== undefined) {
-                  const point = frRef.current.getCanvasPoint(objData.xRel, objData.yRel);
-                  left = point.x; top = point.y;
-                } else {
-                  left = (objData.left / CANVAS_REF_WIDTH) * fc.width;
-                  top  = (objData.top / CANVAS_REF_HEIGHT) * fc.height;
-                }
-                const id = getObjectIdentifier(objData);
-                const tInfo = { left, top, id, data: objData, index: i };
-                if (id) targetsByKey.set(id, tInfo);
-                return tInfo;
-              });
-
-              const animatableObjs = objs.filter(o => o.type !== 'field' && o.data?.type !== 'field' && o.data?.type !== 'background');
-              let completed = 0;
-              let transitionScheduled = false;
-
-              animatableObjs.forEach((obj, i) => {
-                const objId = getObjectIdentifier(obj);
-                const t = (objId && targetsByKey.get(objId)) || targetListWithPos[i] || { left: obj.left, top: obj.top };
-                const sLeft = obj.left || 0;
-                const sTop  = obj.top  || 0;
-                const tLeft = t.left !== undefined ? t.left : sLeft;
-                const tTop  = t.top !== undefined ? t.top : sTop;
-                fabric.util.animate({
-                  startValue: 0, endValue: 1, duration: dur,
-                  easing: fabric.util.ease.easeInOutSine,
-                  onChange: (v) => {
-                    if (!playingR.current) return;
-                    obj.set({ left: sLeft + (tLeft - sLeft) * v, top: sTop + (tTop - sTop) * v });
-                    fc.renderAll();
-                  },
-                  onComplete: () => {
-                    if (!playingR.current || !recordingActive || transitionScheduled) return;
-                    completed++;
-                    if (completed >= animatableObjs.length) {
-                      transitionScheduled = true;
-                      try {
-                        cargarFrame(stateB, () => {
-                          try {
-                            if (!playingR.current || !recordingActive) return;
-                            fc.renderAll();
-                            setTimeout(() => runRecordingAnimation(idx + 1), 200);
-                          } catch (e) { clearTimeout(safetyTimeout); safeStop('err-cargarFrame-B-complete-cb'); showToast(isEn ? 'Final export error.' : 'Error exportación final.', 'error'); setIsRecording(false); }
-                        });
-                      } catch (e) { clearTimeout(safetyTimeout); safeStop('err-cargarFrame-B-complete'); showToast(isEn ? 'Export error.' : 'Error exportación.', 'error'); setIsRecording(false); }
-                    }
-                  },
-                });
-              });
-            } catch (cbErr) {
-              clearTimeout(safetyTimeout);
-              console.error('[MP4 Export] Error en callback cargarFrame A:', cbErr);
-              safeStop('err-in-A-callback');
-              showToast(isEn ? 'Error animating players.' : 'Error al animar los jugadores.', 'error');
-              setIsRecording(false);
-            }
-          });
-        } catch (e) {
-          clearTimeout(safetyTimeout);
-          console.error('[MP4 Export] Error al llamar cargarFrame A:', e);
-          safeStop('err-calling-A');
-          showToast(isEn ? 'Error loading export frame.' : 'Error al cargar frame de exportación.', 'error');
-          setIsRecording(false);
-        }
-      };
-      runRecordingAnimation(0);
-
+      setExportProgress(100);
+      const autoExport = new URLSearchParams(window.location.search).get('autoExport');
+      if (autoExport === 'true' && window.parent) {
+        window.parent.postMessage({
+          type: 'EXPORT_DONE',
+          base64data: result.base64data,
+          filename: result.filename,
+          mimeType: result.mimeType
+        }, '*');
+      } else {
+        showToast(
+          isEn ? 'Video exported successfully.' : 'Video exportado exitosamente.',
+          'success'
+        );
+        downloadVideo(result.base64data, result.filename, result.mimeType);
+      }
     } catch (err) {
-      console.error("Error al exportar video:", err);
-      showToast(isEn ? "Error exporting animation as video." : "Error al exportar la animación como video.", 'error');
-      setIsRecording(false);
-      recordingActive = false;
+      console.error('[MP4 Export] Error durante exportación:', err);
+      showToast(
+        isEn
+          ? `Could not complete video: ${err?.message || 'error'}. Click to retry.`
+          : `No se pudo completar el vídeo: ${err?.message || 'error'}. Pulsa para reintentar.`,
+        'error'
+      );
       const autoExport = new URLSearchParams(window.location.search).get('autoExport');
       if (autoExport === 'true' && window.parent) {
         window.parent.postMessage('EXPORT_ERROR', '*');
       }
+    } finally {
+      setIsRecording(false);
+      setTimeout(() => setExportProgress(null), 1000);
     }
   };
 
@@ -3302,6 +2994,7 @@ const PizarraTactica = () => {
         isCapturing={isCapturing}
         exportAnimationVideo={exportAnimationVideo}
         isRecording={isRecording}
+        exportProgress={exportProgress}
         handleSave={handleSave}
         setLeftPanelOpen={setLeftPanelOpen}
         setRightPanelOpen={setRightPanelOpen}

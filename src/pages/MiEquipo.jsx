@@ -25,7 +25,7 @@ import { TeamStaffTab } from '../components/TeamStaffTab';
 import { TrainingPerformanceTable } from '../components/team/TrainingPerformanceTable';
 import { PlayerTabs } from '../components/player/PlayerTabs';
 import { PlayerChatTab } from '../components/player/PlayerChatTab';
-import { MessageSquare, FileText, Pencil, Edit, X, UserPlus, Share2, Mail, Trash2, Bell, Megaphone, Flag, Ban, CheckCircle, AlertTriangle, TrendingUp, ClipboardList, Users, Shield } from 'lucide-react';
+import { MessageSquare, FileText, Pencil, Edit, X, UserPlus, Share2, Mail, Trash2, Bell, Megaphone, Flag, Ban, CheckCircle, AlertTriangle, TrendingUp, Users, Shield } from 'lucide-react';
 import PlayerAvatar from '../components/PlayerAvatar';
 import { useTranslation } from '../hooks/useTranslation';
 import { SpellCheckedTextarea } from '../components/ui/SpellCheckedTextarea';
@@ -553,35 +553,6 @@ const MiEquipo = () => {
             <p className="page-subtitle">{fmtPlural(players.length, 'team.squadCount')}</p>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
-            {/* Acceso Rápido: Convocatoria del Próximo Partido */}
-            <button
-              type="button"
-              onClick={() => {
-                if (upcomingMatch?.id) {
-                  navigate(`/partidos?matchId=${upcomingMatch.id}&tab=convocation`);
-                } else {
-                  navigate('/partidos');
-                }
-              }}
-              style={{
-                minHeight: '44px',
-                padding: '0 16px',
-                borderRadius: '10px',
-                border: '1.5px solid #D4A843',
-                background: 'rgba(212, 168, 67, 0.12)',
-                color: '#D4A843',
-                fontWeight: '800',
-                fontSize: '13px',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px',
-                transition: 'all 0.15s ease'
-              }}
-            >
-              <ClipboardList size={16} />
-              <span>{t('convocation.quickAccess')}</span>
-            </button>
 
             <button
               type="button"

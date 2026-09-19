@@ -965,21 +965,14 @@ const Partidos = () => {
     let lineupImageBase64 = null;
     try {
       const { generateMatchPdfReport } = await import('../utils/matchPdfReport');
-      const { drawTacticalPitchCanvas } = await import('../utils/pdfTheme');
 
       const effLang = currentGlobalLanguage || getEffectiveLanguage();
       const isEn = isGlobalEn;
 
       try {
-        lineupImageBase64 = await drawTacticalPitchCanvas({
-          matchData,
-          calledPlayers: calledPlayers || [],
-          players: players || [],
-          customFormations,
-          isEn
-        });
+        lineupImageBase64 = await captureLineupDataUrl();
       } catch (pitchErr) {
-        console.warn('Could not generate tactical pitch canvas for PDF:', pitchErr);
+        console.warn('Could not capture lineup for PDF:', pitchErr);
       }
 
       await generateMatchPdfReport({
@@ -1102,9 +1095,11 @@ const Partidos = () => {
     }
   };
 
-  const handleDownloadLineupPng = async () => {
-    if (!pitchExportRef.current) return;
-    setIsDownloadingPng(true);
+  // ── FUNCIÓN COMPARTIDA: captura el campo de alineación con html2canvas ───────
+  // Usada tanto por el PNG de la pestaña como por el informe PDF para que
+  // ambas imágenes sean IDÉNTICAS (tarjetas FIFA con fotos reales).
+  const captureLineupDataUrl = async () => {
+    if (!pitchExportRef.current) return null;
     let exportClone = null;
     try {
       const [html2canvasMod, { imageUrlToBase64 }] = await Promise.all([
@@ -1113,10 +1108,7 @@ const Partidos = () => {
       ]);
       const html2canvas = html2canvasMod.default || html2canvasMod;
 
-      // ── PRE-CARGA DE FOTOS COMO BASE64 VÍA FIREBASE SDK ──────────────────────
-      // Evita el "canvas tainted" de html2canvas causado por CORS en Firebase Storage.
-      // imageUrlToBase64 usa getBlob() del SDK (autenticado) y devuelve un DataURL puro.
-      const photoBase64Map = {}; // key: avatarUrl original → value: dataURL base64
+      const photoBase64Map = {};
       const convocadosIds = (calledPlayers || []).filter(Boolean);
       await Promise.all(
         convocadosIds.map(async (pid) => {
@@ -1125,74 +1117,66 @@ const Partidos = () => {
           if (rawUrl && !photoBase64Map[rawUrl]) {
             try {
               const b64 = await imageUrlToBase64(rawUrl, p?.name || p?.nombre, true);
-              if (b64 && b64.startsWith('data:image/')) {
-                photoBase64Map[rawUrl] = b64;
-              }
+              if (b64 && b64.startsWith('data:image/')) photoBase64Map[rawUrl] = b64;
             } catch (_) {}
           }
         })
       );
 
-      // Crear clon fuera de pantalla para forzar SIEMPRE renderizado HD profesional
-      // idéntico a la versión de escritorio (780px, campo amplio, tarjetas FIFA completas y suplentes en 1 fila)
       exportClone = pitchExportRef.current.cloneNode(true);
       exportClone.classList.add('export-lineup-hd-capture');
-      exportClone.style.position = 'fixed';
-      exportClone.style.left = '-9999px';
-      exportClone.style.top = '0';
-      exportClone.style.width = '780px';
-      exportClone.style.maxWidth = '780px';
-      exportClone.style.minWidth = '780px';
-      exportClone.style.boxSizing = 'border-box';
-      exportClone.style.zIndex = '-9999';
+      exportClone.style.cssText = 'position:fixed;left:-9999px;top:0;width:780px;max-width:780px;min-width:780px;box-sizing:border-box;z-index:-9999;';
 
-      // ── SUSTITUIR src DE IMÁGENES EN EL CLON CON BASE64 ─────────────────────
-      // html2canvas lee los src directamente; al tener base64 no hay petición cross-origin.
       const cloneImgs = exportClone.querySelectorAll('img[src]');
       cloneImgs.forEach((img) => {
-        const originalSrc = img.getAttribute('src');
-        if (originalSrc && photoBase64Map[originalSrc]) {
-          img.setAttribute('src', photoBase64Map[originalSrc]);
+        const src = img.getAttribute('src');
+        if (src && photoBase64Map[src]) {
+          img.setAttribute('src', photoBase64Map[src]);
           img.removeAttribute('crossorigin');
           img.removeAttribute('crossOrigin');
-        } else if (originalSrc && (originalSrc.includes('firebasestorage') || originalSrc.startsWith('gs://'))) {
-          // Imagen Firebase que no se pudo convertir → ocultar para evitar taint
+        } else if (src && (src.includes('firebasestorage') || src.startsWith('gs://'))) {
           img.style.display = 'none';
         }
       });
 
-      // Reubicar cada ficha del clon usando coordenadas exactas sin CSS transform
-      // para eliminar completamente el bug de desplazamiento vertical hacia arriba de html2canvas
       const playerChips = exportClone.querySelectorAll('.pitch-player-3d');
       playerChips.forEach((chip) => {
-        const topStr = chip.style.top || '50%';
-        const leftStr = chip.style.left || '50%';
-        const topVal = parseFloat(topStr);
-        const leftVal = parseFloat(leftStr);
-
+        const topVal = parseFloat(chip.style.top || '50%');
+        const leftVal = parseFloat(chip.style.left || '50%');
         chip.style.transform = 'none';
         chip.style.webkitTransform = 'none';
-        // Centro exacto sin transform: ancho de tarjeta 58px / 2 = 29px; alto efectivo ~76px / 2 = 38px
         chip.style.left = `calc(${leftVal}% - 29px)`;
         chip.style.top = `calc(${topVal}% - 38px)`;
       });
 
       document.body.appendChild(exportClone);
-
-      // Pausa para asegurar renderizado de fuentes, estilos y reemplazo de imágenes
-      await new Promise((resolve) => setTimeout(resolve, 120));
+      await new Promise((r) => setTimeout(r, 120));
 
       const canvas = await html2canvas(exportClone, {
         scale: 2,
-        useCORS: false,      // No necesario: todas las imgs son ya base64 o están ocultas
-        allowTaint: false,   // Estricto: sin taint para garantizar toDataURL sin errores
+        useCORS: false,
+        allowTaint: false,
         backgroundColor: '#1B3A2D',
         logging: false,
         width: 780,
         windowWidth: 1024
       });
 
-      const dataUrl = canvas.toDataURL('image/png');
+      return canvas.toDataURL('image/png');
+    } catch (err) {
+      console.warn('[captureLineupDataUrl] Error capturando campo:', err);
+      return null;
+    } finally {
+      if (exportClone && exportClone.parentNode) exportClone.parentNode.removeChild(exportClone);
+    }
+  };
+
+  const handleDownloadLineupPng = async () => {
+    if (!pitchExportRef.current) return;
+    setIsDownloadingPng(true);
+    try {
+      const dataUrl = await captureLineupDataUrl();
+      if (!dataUrl) throw new Error('No se pudo capturar el campo');
       await downloadLineupPNG(dataUrl, {
         teamName: activeTeam?.nombre || activeTeam?.name || 'equipo',
         matchDate: matchData?.date || matchData?.fecha,
@@ -1201,12 +1185,10 @@ const Partidos = () => {
       console.error('Error al descargar PNG de alineación:', err);
       showToast(t('download.generic_error'), 'error');
     } finally {
-      if (exportClone && exportClone.parentNode) {
-        exportClone.parentNode.removeChild(exportClone);
-      }
       setIsDownloadingPng(false);
     }
   };
+
 
   const getSlotPosition = (idx) => {
     if (matchData.customRoles && matchData.customRoles[idx]) {

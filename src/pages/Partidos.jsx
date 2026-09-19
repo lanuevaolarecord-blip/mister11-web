@@ -1125,10 +1125,10 @@ const Partidos = () => {
 
       exportClone = pitchExportRef.current.cloneNode(true);
       exportClone.classList.add('export-lineup-hd-capture');
-      // Posición fuera del viewport pero totalmente visible para que html2canvas
-      // compute correctamente todos los estilos CSS (incluyendo display:flex, grid, etc.)
-      // opacity:0 evita parpadeo; NO usar z-index negativo ni display:none
-      exportClone.style.position = 'absolute';
+      // IMPORTANTE: NO usar opacity:0 porque html2canvas lo respeta y captura
+      // el elemento como transparente → imagen negra/vacía en el PDF.
+      // Usar solo left:-9999px para ocultarlo visualmente al usuario.
+      exportClone.style.position = 'fixed';
       exportClone.style.left = '-9999px';
       exportClone.style.top = '0px';
       exportClone.style.width = '780px';
@@ -1139,7 +1139,7 @@ const Partidos = () => {
       exportClone.style.display = 'flex';
       exportClone.style.flexDirection = 'column';
       exportClone.style.visibility = 'visible';
-      exportClone.style.opacity = '0';
+      exportClone.style.opacity = '1';
       exportClone.style.pointerEvents = 'none';
 
       const cloneImgs = exportClone.querySelectorAll('img[src]');

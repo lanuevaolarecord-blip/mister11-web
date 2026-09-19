@@ -48,6 +48,8 @@ import { showToast } from '../utils/toast';
 import { SpellCheckedTextarea } from '../components/ui/SpellCheckedTextarea';
 import UnattributedEventsManager from '../components/UnattributedEventsManager';
 import SectionErrorBoundary from '../components/common/SectionErrorBoundary';
+import { ClipboardList } from 'lucide-react';
+import ConvocationSelector from '../components/match/ConvocationSelector';
 
 import { getMatchDerivedStatus } from '../utils/matchDerivedStatus';
 export { getMatchDerivedStatus };
@@ -65,14 +67,14 @@ export const normalizeCapitalize = (str) => {
     .join(' ');
 };
 
-// Pestañas con traducción automática
+// Pestañas con traducción automática (Cero emojis, Lucide icons en UI)
 const TABS_CONFIG = [
   { id: 'PRE-PARTIDO', es: 'PRE-PARTIDO', en: 'PRE-MATCH' },
-  { id: 'CONVOCATORIA', es: 'CONVOCATORIA', en: 'SQUAD' },
+  { id: 'CONVOCATORIA', es: 'CONVOCATORIA', en: 'SQUAD', icon: ClipboardList },
   { id: 'ALINEACIÓN', es: 'ALINEACIÓN', en: 'LINEUP' },
   { id: 'MATCH-DAY', es: 'DÍA DEL PARTIDO', en: 'MATCH-DAY' },
   { id: 'LIVE-STATS', es: 'ESTADÍSTICAS', en: 'LIVE STATS' },
-  { id: 'ACTA', es: '📋 ACTA OFICIAL', en: '📋 MATCH SHEET' },
+  { id: 'ACTA', es: 'ACTA OFICIAL', en: 'MATCH SHEET' },
   { id: 'POST-PARTIDO', es: 'POST-PARTIDO', en: 'POST-MATCH' },
 ];
 
@@ -297,17 +299,26 @@ const Partidos = () => {
     }
   }, [matchData?.id, setActiveMatchId]);
 
-  // Manejar navegación directa a un partido si viene desde location.state
+  // Manejar navegación directa a un partido si viene desde location.state o location.search (?matchId=...&tab=...)
   useEffect(() => {
-    if (location.state?.matchId && matches && matches.length > 0) {
-      const targetMatch = matches.find(m => m.id === location.state.matchId);
+    const searchParams = new URLSearchParams(location.search);
+    const targetMatchId = searchParams.get('matchId') || location.state?.matchId;
+    const targetTab = searchParams.get('tab') || location.state?.tab;
+
+    if (targetMatchId && matches && matches.length > 0) {
+      const targetMatch = matches.find(m => m.id === targetMatchId);
       if (targetMatch) {
         handleEditMatch(targetMatch);
+        if (targetTab) {
+          const tabUpper = targetTab.toUpperCase();
+          const normTab = (tabUpper === 'CONVOCATION' || tabUpper === 'CONVOCATORIA') ? 'CONVOCATORIA' : tabUpper;
+          setEditTab(normTab);
+        }
       }
     } else if (location.state?.mode === 'create') {
       handleNewMatch();
     }
-  }, [location.state, matches]);
+  }, [location.state, location.search, matches]);
 
   // Saneado reactivo: cuando la plantilla de jugadores está cargada, purgar cualquier ID fantasma que persista
   useEffect(() => {
@@ -1972,38 +1983,41 @@ const Partidos = () => {
             {/* PESTAÑA: CONVOCATORIA */}
             {editTab === 'CONVOCATORIA' && (
               <div className="tab-pane convocatoria-container" style={{ padding: '24px', boxSizing: 'border-box' }}>
-                <div className="conv-header">
-                  <h3 className="section-title">{isGlobalEn ? 'Player Selection' : 'Selección de Jugadores'}</h3>
-                  <div className="conv-count">
-                    {calledPlayers.filter(cId => cId && (players || []).some(pl => String(pl.id) === String(cId))).length} / 18 {isGlobalEn ? 'Called' : 'Convocados'}
-                  </div>
-                </div>
-                <div className="players-checklist">
-                  {players.map(p => {
-                    const isSelected = calledPlayers.some(cId => cId && String(cId) === String(p.id));
-                    return (
-                      <div
-                        key={p.id}
-                        className={`player-card ${isSelected ? 'selected' : ''}`}
-                        onClick={() => togglePlayerCall(p.id)}
-                        style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '10px 14px' }}
-                      >
-                        <PlayerAvatar player={p} size={36} showNumber={true} />
-                        <div className="pc-info" style={{ flex: 1, minWidth: 0 }}>
-                          <span className="pc-name" style={{ fontWeight: '700', fontSize: '13px' }}>{p.name}</span>
-                          <span className="pc-pos" style={{
-                            fontSize: '11px',
-                            color: (p.position === 'POR' || p.posicion === 'POR') ? '#2563EB' : 'var(--partidos-text-muted)',
-                            fontWeight: (p.position === 'POR' || p.posicion === 'POR') ? '800' : 'normal'
-                          }}>
-                            {(p.position === 'POR' || p.posicion === 'POR') ? '🧤 POR' : (p.position || p.posicion || 'JUG')}
-                          </span>
-                        </div>
-                        <div className="pc-check">{isSelected ? '✓' : ''}</div>
-                      </div>
-                    );
-                  })}
-                </div>
+                <ConvocationSelector
+                  matchData={matchData}
+                  players={players || []}
+                  teamData={activeTeam || {}}
+                  teamId={effectiveTeamId}
+                  teamPath={activeTeam?.id ? `teams/${activeTeam.id}` : null}
+                  coachName={user?.displayName || user?.email?.split('@')[0] || 'Míster Principal'}
+                  lang={currentGlobalLanguage}
+                  currentUserId={user?.uid}
+                  onSaveConvocation={async (newConvocados) => {
+                    const clean = (newConvocados || []).slice(0, 18);
+                    const titulares = clean.slice(0, 11);
+                    const suplentes = clean.slice(11, 18);
+                    setCalledPlayers(clean);
+                    setMatchData(prev => ({
+                      ...prev,
+                      titulares,
+                      suplentes,
+                      convocados: clean
+                    }));
+                    if (matchData?.id && updateMatch) {
+                      try {
+                        const { actaOficial: _ignored, ...currentWithoutActa } = matchDataRef.current || matchData;
+                        await updateMatch(matchData.id, {
+                          ...currentWithoutActa,
+                          titulares,
+                          suplentes,
+                          convocados: clean
+                        });
+                      } catch (err) {
+                        console.error('[Partidos] Error saving convocation:', err);
+                      }
+                    }
+                  }}
+                />
               </div>
             )}
 

@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { usePlayers } from '../hooks/usePlayers';
 import { useAuth } from '../context/AuthContext';
 import { useTeams } from '../hooks/useTeams';
@@ -24,7 +25,7 @@ import { TeamStaffTab } from '../components/TeamStaffTab';
 import { TrainingPerformanceTable } from '../components/team/TrainingPerformanceTable';
 import { PlayerTabs } from '../components/player/PlayerTabs';
 import { PlayerChatTab } from '../components/player/PlayerChatTab';
-import { MessageSquare, FileText, Pencil, Edit, X, UserPlus, Share2, Mail, Trash2, Bell, Megaphone, Flag, Ban, CheckCircle, AlertTriangle, TrendingUp } from 'lucide-react';
+import { MessageSquare, FileText, Pencil, Edit, X, UserPlus, Share2, Mail, Trash2, Bell, Megaphone, Flag, Ban, CheckCircle, AlertTriangle, TrendingUp, ClipboardList, Users, Shield } from 'lucide-react';
 import { useTranslation } from '../hooks/useTranslation';
 import { SpellCheckedTextarea } from '../components/ui/SpellCheckedTextarea';
 import './MiEquipo.css';
@@ -77,6 +78,7 @@ const emptyPlayer = {
 const MiEquipo = () => {
   const { user, activeTeamId, getTeamPath } = useAuth();
   const { activeTeam } = useTeams();
+  const navigate = useNavigate();
   const { isPro, limits, isProActive } = usePlan();
   const { players, loading, addPlayer, updatePlayer, removePlayer } = usePlayers(activeTeamId);
   const { matches, allPlayersStats } = usePlayerSeasonStats(activeTeamId);
@@ -88,6 +90,15 @@ const MiEquipo = () => {
   const [upgradeModal, setUpgradeModal] = useState({ open: false, message: '' });
 
   const teamPath = activeTeam?.teamPath || (activeTeamId && getTeamPath ? getTeamPath(activeTeamId) : (user?.uid && activeTeamId ? `users/${user.uid}/teams/${activeTeamId}` : ''));
+
+  // Próximo partido programado para acceso directo a convocatoria
+  const upcomingMatch = useMemo(() => {
+    if (!matches || matches.length === 0) return null;
+    const pendingMatches = matches
+      .filter(m => m.status !== 'Terminado')
+      .sort((a, b) => (a.date || '').localeCompare(b.date || ''));
+    return pendingMatches[0] || matches[0];
+  }, [matches]);
 
   // Estadísticas sincronizadas con el módulo de Partidos
   const playersStatsMap = useMemo(() => allPlayersStats(players), [players, allPlayersStats]);
@@ -540,28 +551,60 @@ const MiEquipo = () => {
             <h1 className="page-title">{t('equipo.title')}</h1>
             <p className="page-subtitle">{fmtPlural(players.length, 'team.squadCount')}</p>
           </div>
-          <button
-            type="button"
-            onClick={() => setIsAnnouncementModalOpen(true)}
-            style={{
-              minHeight: '44px',
-              padding: '0 16px',
-              borderRadius: '10px',
-              border: '1.5px solid #10B981',
-              background: 'rgba(16, 185, 129, 0.12)',
-              color: '#10B981',
-              fontWeight: '800',
-              fontSize: '13px',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
-              transition: 'all 0.15s ease'
-            }}
-          >
-            <Megaphone size={16} />
-            <span>📢 {t('equipo.publishAnnouncement')}</span>
-          </button>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+            {/* Acceso Rápido: Convocatoria del Próximo Partido */}
+            <button
+              type="button"
+              onClick={() => {
+                if (upcomingMatch?.id) {
+                  navigate(`/partidos?matchId=${upcomingMatch.id}&tab=convocation`);
+                } else {
+                  navigate('/partidos');
+                }
+              }}
+              style={{
+                minHeight: '44px',
+                padding: '0 16px',
+                borderRadius: '10px',
+                border: '1.5px solid #D4A843',
+                background: 'rgba(212, 168, 67, 0.12)',
+                color: '#D4A843',
+                fontWeight: '800',
+                fontSize: '13px',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                transition: 'all 0.15s ease'
+              }}
+            >
+              <ClipboardList size={16} />
+              <span>{t('convocation.quickAccess')}</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setIsAnnouncementModalOpen(true)}
+              style={{
+                minHeight: '44px',
+                padding: '0 16px',
+                borderRadius: '10px',
+                border: '1.5px solid #4CAF7D',
+                background: 'rgba(76, 175, 125, 0.12)',
+                color: '#4CAF7D',
+                fontWeight: '800',
+                fontSize: '13px',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                transition: 'all 0.15s ease'
+              }}
+            >
+              <Megaphone size={16} />
+              <span>{t('equipo.publishAnnouncement')}</span>
+            </button>
+          </div>
         </div>
 
         {/* Selector de Pestañas a Nivel de Equipo */}
@@ -596,7 +639,7 @@ const MiEquipo = () => {
             }}
             onClick={() => setMainTeamTab('squad')}
           >
-            <span>👥</span>
+            <Users size={16} />
             <span style={{ whiteSpace: 'nowrap' }}>{t('equipo.tab.squad') || 'Plantilla'}</span>
           </button>
           <button 
@@ -617,7 +660,7 @@ const MiEquipo = () => {
             }}
             onClick={() => setMainTeamTab('attendance')}
           >
-            <span>📋</span>
+            <ClipboardList size={16} />
             <span style={{ whiteSpace: 'nowrap' }}>{t('equipo.tab.attendance') || 'Control de Asistencia'}</span>
           </button>
           <button 
@@ -638,7 +681,7 @@ const MiEquipo = () => {
             }}
             onClick={() => setMainTeamTab('staff')}
           >
-            <span>🛡️</span>
+            <Shield size={16} />
             <span style={{ whiteSpace: 'nowrap' }}>{t('equipo.tab.staff') || 'Cuerpo Técnico'}</span>
           </button>
           <button 

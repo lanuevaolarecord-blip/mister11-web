@@ -15,7 +15,21 @@ class ErrorBoundary extends Component {
     this.setState({ errorInfo });
   }
 
-  handleReload = () => {
+  handleReload = async () => {
+    try {
+      if ('serviceWorker' in navigator) {
+        const regs = await navigator.serviceWorker.getRegistrations();
+        for (const reg of regs) {
+          await reg.update();
+        }
+      }
+      if ('caches' in window) {
+        const keys = await caches.keys();
+        for (const key of keys) {
+          await caches.delete(key);
+        }
+      }
+    } catch (_) {}
     window.location.reload();
   };
 

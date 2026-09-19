@@ -117,7 +117,7 @@ export default defineConfig(({ mode }) => {
           ]
         },
         manifest: {
-          id: '/?v=1.1.71',
+          id: '/?v=1.1.72',
           name: 'Míster 11',
           short_name: 'Míster 11',
           description: 'Plataforma para Entrenadores de Fútbol',

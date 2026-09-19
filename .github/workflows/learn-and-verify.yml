@@ -1,0 +1,42 @@
+name: Learn and Verify
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  analyze-and-verify:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Before Implement Consultation Check
+        run: npm run before-implement
+
+      - name: Validate Knowledge Base Integrity
+        run: npm run update-knowledge
+
+      - name: Scan Code for Anti-Patterns
+        run: npm run learn-from-errors
+
+      - name: Palette Compliance Check
+        run: node scripts/check-chart-palette.mjs
+
+      - name: i18n Zero-Offenders Gate
+        run: node scripts/ci-i18n-gate.mjs
+
+      - name: Production Build Check
+        run: npm run build

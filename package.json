@@ -26,7 +26,10 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "test:matrix": "node scripts/qa-cross-device-matrix.mjs",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "before-implement": "node scripts/before-implement-check.js",
+    "learn-from-errors": "node scripts/learn-from-errors.js",
+    "update-knowledge": "node scripts/update-knowledge-base.js"
   },
   "dependencies": {
     "@capacitor-firebase/authentication": "^8.2.0",

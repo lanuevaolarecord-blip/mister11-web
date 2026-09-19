@@ -5,10 +5,10 @@ import { useTheme } from '../context/ThemeContext';
 import { usePlan } from '../hooks/usePlan';
 import UpgradeModal from './UpgradeModal';
 import { showToast } from '../utils/toast';
-import { ensureTeamCode } from '../utils/teamCode';
+import { ensureTeamCode, regenerateTeamCode } from '../utils/teamCode';
 import { collection, onSnapshot, query, doc, updateDoc, setDoc, addDoc, serverTimestamp, deleteDoc, getDocs } from 'firebase/firestore';
 import { db } from '../firebaseConfig';
-import { Shield, UserPlus, Trash2, Mail, Copy, Check, Clock, Users, Award, KeyRound, Share2, CheckCircle2, XCircle, QrCode, LogIn } from 'lucide-react';
+import { Shield, UserPlus, Trash2, Mail, Copy, Check, Clock, Users, Award, KeyRound, Share2, CheckCircle2, XCircle, QrCode, LogIn, RotateCcw } from 'lucide-react';
 import { normalizeEmail } from '../utils/normalizeEmail';
 import { savePlayerIdentity } from '../utils/playerIdentity';
 import { useTranslation } from '../hooks/useTranslation';
@@ -134,6 +134,8 @@ export const TeamStaffTab = ({ activeTeam }) => {
   const [rosterPlayers, setRosterPlayers] = useState([]);
   const [parentPlayerSelection, setParentPlayerSelection] = useState({});
   const [copiedTeamCode, setCopiedTeamCode] = useState(false);
+  const [isPlayerQRModalOpen, setIsPlayerQRModalOpen] = useState(false);
+  const [isRegeneratingTeamCode, setIsRegeneratingTeamCode] = useState(false);
   const [processingId, setProcessingId] = useState(null);
 
   const isTeamOwner = activeTeam?.ownerId === user?.uid || 
@@ -481,6 +483,28 @@ export const TeamStaffTab = ({ activeTeam }) => {
     }
   };
 
+  const handleRegenerateTeamCode = async () => {
+    if (!activeTeam?.id || !teamPath || isRegeneratingTeamCode) return;
+    const confirmMsg = isEn 
+      ? 'Are you sure you want to generate a new player access code? The previous code will be replaced.'
+      : '¿Estás seguro de que deseas generar un nuevo código para jugadores y familias? El código anterior será reemplazado.';
+    if (!window.confirm(confirmMsg)) return;
+
+    setIsRegeneratingTeamCode(true);
+    try {
+      const newCode = await regenerateTeamCode(activeTeam.id, teamPath, activeTeam.nombre || activeTeam.name, user?.uid);
+      if (newCode) {
+        setTeamCode(newCode);
+        showToast(isEn ? 'New player team code generated successfully!' : '¡Nuevo código de equipo generado con éxito!', 'success');
+      }
+    } catch (err) {
+      console.error('[TeamStaffTab] Error regenerando código:', err);
+      showToast(isEn ? 'Failed to regenerate code.' : 'Error al regenerar el código.', 'error');
+    } finally {
+      setIsRegeneratingTeamCode(false);
+    }
+  };
+
   const handleShareTeamLink = async () => {
     if (!teamCode) return;
     const shareUrl = `${window.location.origin}/join-team?code=${teamCode}`;
@@ -528,10 +552,12 @@ export const TeamStaffTab = ({ activeTeam }) => {
             </p>
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
             <button
+              type="button"
               className="btn-outline"
               onClick={handleCopyTeamCode}
+              title={isEn ? 'Copy Code' : 'Copiar Código'}
               style={{
                 display: 'flex',
                 alignItems: 'center',
@@ -547,8 +573,51 @@ export const TeamStaffTab = ({ activeTeam }) => {
             </button>
 
             <button
+              type="button"
+              className="btn-outline"
+              onClick={() => setIsPlayerQRModalOpen(true)}
+              title={isEn ? 'View QR Code' : 'Ver Código QR'}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                padding: '8px 14px',
+                fontSize: '0.85rem',
+                fontWeight: 700,
+                minHeight: '44px'
+              }}
+            >
+              <QrCode size={16} />
+              {isEn ? 'QR' : 'QR'}
+            </button>
+
+            <button
+              type="button"
+              className="btn-outline"
+              onClick={handleRegenerateTeamCode}
+              disabled={isRegeneratingTeamCode}
+              title={isEn ? 'Regenerate Code' : 'Regenerar Código'}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                padding: '8px 14px',
+                fontSize: '0.85rem',
+                fontWeight: 700,
+                minHeight: '44px',
+                borderColor: '#4CAF7D',
+                color: '#4CAF7D'
+              }}
+            >
+              <RotateCcw size={16} className={isRegeneratingTeamCode ? 'spin' : ''} />
+              {isEn ? 'Regenerate' : 'Regenerar'}
+            </button>
+
+            <button
+              type="button"
               className="btn-primary"
               onClick={handleShareTeamLink}
+              title={isEn ? 'Share Link' : 'Compartir Enlace'}
               style={{
                 display: 'flex',
                 alignItems: 'center',
@@ -1350,6 +1419,17 @@ export const TeamStaffTab = ({ activeTeam }) => {
         code={staffInviteCode}
         teamId={activeTeam?.id}
         teamName={activeTeam?.nombre || activeTeam?.name}
+      />
+
+      {/* Modal QR de Invitación de Jugadores y Familias */}
+      <QRInviteModal
+        isOpen={isPlayerQRModalOpen}
+        onClose={() => setIsPlayerQRModalOpen(false)}
+        type="player_invite"
+        code={teamCode}
+        teamId={activeTeam?.id}
+        teamName={activeTeam?.nombre || activeTeam?.name}
+        customUrl={`${window.location.origin}/join-team?code=${teamCode}`}
       />
 
       {/* Modal de Upgrade cuando se supera el límite de staff */}

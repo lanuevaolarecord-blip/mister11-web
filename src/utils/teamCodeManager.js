@@ -44,6 +44,15 @@ export const validateTeamCode = (rawCode) => {
 };
 
 /**
+ * Normaliza y formatea un código al formato estándar M11-XXXXXX
+ */
+export const formatTeamCode = (code) => {
+  if (!code) return '';
+  const clean = String(code).trim().toUpperCase().replace(/^M11-/, '');
+  return clean ? `M11-${clean}` : '';
+};
+
+/**
  * Busca equipo en Firestore a partir del código de 6 caracteres o M11-XXXXXX
  */
 export const searchTeamByCode = async (rawCode) => {
@@ -63,20 +72,48 @@ export const searchTeamByCode = async (rawCode) => {
       const snap = await getDoc(ref);
       if (snap.exists()) {
         const data = snap.data();
-        return {
-          found: true,
+        const teamInfo = {
           code: c,
           teamId: data.teamId,
           teamPath: data.teamPath,
-          teamName: data.teamName || data.name || 'Mi Equipo',
+          teamName: data.teamName || data.name || data.nombre || 'Mi Equipo',
           coachUid: data.coachUid || data.ownerId || '',
           category: data.category || data.categoria || 'General',
           isUsed: Boolean(data.isUsed || data.inviteCodeUsed)
+        };
+        return {
+          found: true,
+          ...teamInfo,
+          team: teamInfo
         };
       }
     } catch (err) {
       console.warn('[teamCodeManager] Error consultando código:', c, err);
     }
+  }
+
+  // Fallback: consultar getTeamByCode si no estaba en team_codes
+  try {
+    const { getTeamByCode } = await import('./teamCode.js');
+    const fallbackData = await getTeamByCode(rawCode);
+    if (fallbackData && fallbackData.teamId) {
+      const teamInfo = {
+        code: check.fullCode,
+        teamId: fallbackData.teamId,
+        teamPath: fallbackData.teamPath,
+        teamName: fallbackData.teamName || 'Mi Equipo',
+        coachUid: fallbackData.coachUid || '',
+        category: fallbackData.category || 'General',
+        isUsed: false
+      };
+      return {
+        found: true,
+        ...teamInfo,
+        team: teamInfo
+      };
+    }
+  } catch (fbErr) {
+    console.warn('[teamCodeManager] Fallback getTeamByCode error:', fbErr);
   }
 
   // Comprobar si pertenece a staff_codes

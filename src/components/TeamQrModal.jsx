@@ -11,7 +11,8 @@ export default function TeamQrModal({ isOpen, onClose, teamCode, teamName }) {
   const [copiedCode, setCopiedCode] = useState(false);
   const [copiedLink, setCopiedLink] = useState(false);
 
-  const joinUrl = `https://mister11.app/join?code=${encodeURIComponent(teamCode || '')}`;
+  const origin = (typeof window !== 'undefined' && window.location.origin) ? window.location.origin : 'https://mister11.app';
+  const joinUrl = `${origin}/join-team?code=${encodeURIComponent(teamCode || '')}`;
 
   useEffect(() => {
     if (isOpen && teamCode && canvasRef.current) {

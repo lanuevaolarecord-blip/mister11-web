@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useSearchParams, useNavigate, Link } from 'react-router-dom';
+import { useSearchParams, useNavigate, Link, useParams } from 'react-router-dom';
 import { doc, getDoc, setDoc, addDoc, collection, serverTimestamp, onSnapshot, query, where } from 'firebase/firestore';
 import { db, signInWithGoogle, signInWithEmail, registerWithEmail } from '../firebaseConfig';
 import { useAuth } from '../context/AuthContext';
@@ -8,6 +8,7 @@ import { getTeamByCode } from '../utils/teamCode';
 import { searchTeamByCode, validateTeamCode } from '../utils/teamCodeManager';
 import { showToast } from '../utils/toast';
 import { Shield, CheckCircle, AlertCircle, Users, ArrowRight, Loader, KeyRound, Mail, Lock, User, Calendar, Shirt, QrCode, MessageCircle, ExternalLink } from 'lucide-react';
+import QrScannerModal from '../components/QrScannerModal';
 import './Login.css';
 
 const POSITIONS = ['POR', 'DEF', 'LTD', 'LTI', 'MCD', 'MC', 'MCO', 'EXT', 'DEL'];
@@ -18,8 +19,9 @@ import { calcularEdad } from '../utils/calcularEdad';
 
 const JoinTeam = () => {
   const { t, isEn } = useTranslation();
+  const { token: routeToken, code: routeCode } = useParams();
   const [searchParams] = useSearchParams();
-  const codeParam = searchParams.get('code') || searchParams.get('token') || '';
+  const codeParam = (searchParams.get('code') || searchParams.get('token') || routeCode || routeToken || '').trim();
   
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -33,6 +35,7 @@ const JoinTeam = () => {
   const [myExistingRequest, setMyExistingRequest] = useState(null);
   const [isStaffCodeDetected, setIsStaffCodeDetected] = useState(false);
   const [isRealtimeSearching, setIsRealtimeSearching] = useState(false);
+  const [isQrScannerOpen, setIsQrScannerOpen] = useState(false);
 
   // Validación debounce en tiempo real (300ms)
   useEffect(() => {
@@ -102,9 +105,17 @@ const JoinTeam = () => {
 
   useEffect(() => {
     if (codeParam) {
+      setInputCode(codeParam.toUpperCase());
       handleVerifyCode(codeParam);
     }
   }, [codeParam]);
+
+  const handleScanSuccess = (scannedValue) => {
+    if (!scannedValue) return;
+    const clean = scannedValue.trim().toUpperCase();
+    setInputCode(clean);
+    handleVerifyCode(clean);
+  };
 
   useEffect(() => {
     if (!user || user.uid === 'invitado-local') return;
@@ -143,11 +154,11 @@ const JoinTeam = () => {
         setIsStaffCodeDetected(true);
         setError('is_staff_code');
         setTeamData(null);
-      } else if (!res.found || !res.team) {
+      } else if (!res.found || !(res.team || res.teamId)) {
         setError(res.error || 'not_found');
         setTeamData(null);
       } else {
-        const data = res.team;
+        const data = res.team || res;
         setTeamData(data);
         setInputCode(code);
 
@@ -392,6 +403,74 @@ const JoinTeam = () => {
 
           {!user && !myExistingRequest && (
             <div className="join-auth-step">
+              {teamData && (
+                <div style={{
+                  background: 'rgba(76, 175, 125, 0.12)',
+                  border: '1.5px solid rgba(76, 175, 125, 0.4)',
+                  borderRadius: '12px',
+                  padding: '14px 16px',
+                  marginBottom: '18px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  textAlign: 'left'
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                    <div style={{
+                      width: '40px',
+                      height: '40px',
+                      borderRadius: '50%',
+                      background: 'rgba(76, 175, 125, 0.2)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      color: '#4CAF7D',
+                      flexShrink: 0
+                    }}>
+                      <Shield size={22} />
+                    </div>
+                    <div>
+                      <div style={{ fontSize: '11px', color: '#4CAF7D', fontWeight: 'bold', textTransform: 'uppercase' }}>
+                        ⚽ {isEn ? 'You are joining:' : 'Te estás uniendo a:'}
+                      </div>
+                      <div style={{ fontSize: '16px', fontWeight: 'bold', color: '#FFFFFF', marginTop: '2px' }}>
+                        {teamData.teamName || 'Equipo'}
+                      </div>
+                    </div>
+                  </div>
+                  <span style={{ fontSize: '12px', color: '#4CAF7D', background: 'rgba(76, 175, 125, 0.2)', padding: '4px 10px', borderRadius: '6px', fontWeight: 'bold', letterSpacing: '1px' }}>
+                    {inputCode}
+                  </span>
+                </div>
+              )}
+
+              {!teamData && (
+                <button
+                  type="button"
+                  onClick={() => setIsQrScannerOpen(true)}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '8px',
+                    width: '100%',
+                    padding: '10px 14px',
+                    borderRadius: '8px',
+                    background: 'rgba(76, 175, 125, 0.08)',
+                    border: '1px dashed rgba(76, 175, 125, 0.4)',
+                    color: '#4CAF7D',
+                    fontSize: '13px',
+                    fontWeight: 'bold',
+                    cursor: 'pointer',
+                    marginBottom: '16px',
+                    minHeight: '48px'
+                  }}
+                >
+                  <QrCode size={18} />
+                  <span>{isEn ? 'Scan Team QR Code' : 'Escanear QR de invitación'}</span>
+                </button>
+              )}
+
               <div className="auth-mode-tabs">
                 <button type="button" className={`auth-tab-btn ${authTab === 'login' ? 'active' : ''}`} onClick={() => setAuthTab('login')}>{isEn ? 'I already have an account' : 'Ya tengo cuenta'}</button>
                 <button type="button" className={`auth-tab-btn ${authTab === 'register' ? 'active' : ''}`} onClick={() => setAuthTab('register')}>{isEn ? 'Create new account' : 'Crear cuenta nueva'}</button>
@@ -463,7 +542,7 @@ const JoinTeam = () => {
                   </div>
                   <button
                     type="button"
-                    onClick={() => navigate('/invite-coach')}
+                    onClick={() => setIsQrScannerOpen(true)}
                     title={isEn ? 'Scan QR' : 'Escanear QR'}
                     style={{
                       width: '48px',
@@ -619,8 +698,9 @@ const JoinTeam = () => {
                     <span>{isEn ? 'Request code from coach via WhatsApp' : 'Solicitar código al entrenador por WhatsApp'}</span>
                   </a>
 
-                  <Link
-                    to="/invite-coach"
+                  <button
+                    type="button"
+                    onClick={() => setIsQrScannerOpen(true)}
                     style={{
                       display: 'flex',
                       alignItems: 'center',
@@ -632,12 +712,15 @@ const JoinTeam = () => {
                       color: '#CBD5E1',
                       fontSize: '12px',
                       textDecoration: 'none',
-                      minHeight: '48px'
+                      minHeight: '48px',
+                      width: '100%',
+                      cursor: 'pointer',
+                      textAlign: 'left'
                     }}
                   >
                     <QrCode size={16} color="#D4A843" />
                     <span>{isEn ? 'Scan invitation QR Code' : 'Escanear QR de invitación'}</span>
-                  </Link>
+                  </button>
 
                   <Link
                     to="/register?role=coach"
@@ -816,6 +899,12 @@ const JoinTeam = () => {
           </div>
         </div>
       </div>
+
+      <QrScannerModal
+        isOpen={isQrScannerOpen}
+        onClose={() => setIsQrScannerOpen(false)}
+        onScanSuccess={handleScanSuccess}
+      />
     </div>
   );
 };
